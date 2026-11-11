@@ -197,6 +197,65 @@ final class ConsentHostTests: XCTestCase {
         XCTAssertEqual(events.log, ["presented:\(settings)", "presented:\(prompt.id)", "outcome:\(settings)"])
     }
 
+    /// The scene is inactive when settings close, so the prompt that follows cannot show yet. The
+    /// settings' outcome waits for it, and goes after it once the scene is active again.
+    func testOnAnInactiveSceneThePromptThatFollowsIsReportedBeforeTheOutcome() async throws {
+        let (core, driver, events, canvas, settings) = try await settingsWithAPromptOwedBehind()
+        canvas.available = false
+        driver.close(sessionID: settings)
+        XCTAssertEqual(events.log, ["presented:\(settings)"], "held until the prompt that follows is on screen")
+
+        canvas.available = true
+        driver.retry()
+        let prompt = try XCTUnwrap(events.presented.last)
+        XCTAssertEqual(prompt.shows, .prompt)
+        XCTAssertEqual(events.log, ["presented:\(settings)", "presented:\(prompt.id)", "outcome:\(settings)"])
+        XCTAssertNil(core.snapshot().explicitChoice)
+    }
+
+    /// The app goes to the background and no window comes back: the outcome is not held forever.
+    func testAHeldOutcomeIsSentWhenNoWindowComesBack() async throws {
+        let (_, driver, events, canvas, settings) = try await settingsWithAPromptOwedBehind()
+        driver.replacementWait = .milliseconds(30)
+        canvas.available = false
+        driver.close(sessionID: settings)
+        await until { !events.outcomes.isEmpty }
+        XCTAssertEqual(events.log, ["presented:\(settings)", "outcome:\(settings)", "unavailable"])
+
+        canvas.available = true
+        driver.retry()
+        XCTAssertEqual(events.presented.count, 2, "the owed prompt still shows on return")
+    }
+
+    /// No prompt will follow once the app opts out, so the outcome goes at once.
+    func testAHeldOutcomeIsSentWhenTheAppOptsOut() async throws {
+        let (core, driver, events, canvas, settings) = try await settingsWithAPromptOwedBehind()
+        canvas.available = false
+        driver.close(sessionID: settings)
+        try driver.configure(core: core, autoPresent: false, privacyPolicyURL: url)
+        XCTAssertEqual(events.log, ["presented:\(settings)", "outcome:\(settings)"])
+        canvas.available = true
+        driver.retry()
+        XCTAssertEqual(events.presented.count, 1)
+    }
+
+    /// Settings the app opened, with a prompt owed behind them.
+    private func settingsWithAPromptOwedBehind() async throws
+        -> (ConsentCore, ConsentHostDriver, Events, Canvas, String) {
+        let (core, _) = try await boot("category-init.json")
+        XCTAssertEqual(core.save(.all).status, .committed)
+        let (driver, events, canvas) = driver()
+        try driver.configure(core: core, autoPresent: true, privacyPolicyURL: url)
+        guard case let .presented(settings, .preferences) = try driver.present(core: core, preferences: true, privacyPolicyURL: url) else {
+            throw XCTSkip("expected settings")
+        }
+        core.reset()
+        await core.waitUntilIdle()
+        await settle()
+        XCTAssertEqual(events.log, ["presented:\(settings)"])
+        return (core, driver, events, canvas, settings)
+    }
+
     /// iOS shows no system alert over a cover that is still leaving, so the outcome waits for it.
     func testTheOutcomeWaitsForTheCoverToLeave() async throws {
         let (core, _) = try await boot("category-init.json")

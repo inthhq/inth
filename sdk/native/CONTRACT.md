@@ -546,8 +546,16 @@ resumed Activity, so an owed prompt presents on the new core too.
 Before reporting a session's outcome, the host lets the prompt open what is
 owed next and reports that first: `presented` for the new session, then the
 outcome of the old one. A step that waits for c15t's screens to close, such as
-the ATT request, never runs between the two. On iOS the outcome is sent once the
-cover has animated away.
+the ATT request, never runs between the two. The new session often cannot show
+at once. On Android the app's Activity is still paused under the host Activity
+that is finishing, and resumes only after that Activity's `onPause`. On iOS the
+scene may not be active. So the old outcome waits until the new session is
+reported presented. It goes at once when nothing is owed any more, when the app
+turns auto-present off, when the core is uninstalled or the runtime detaches,
+and after two seconds at most, so an app sent to the background still hears it.
+In that last case `onConsentPresenterUnavailable` follows it, and the prompt
+shows when the app returns. On iOS the outcome also waits for the cover to
+animate away.
 
 `ConsentProvider` mirrors only what is on screen, from these events and from the
 answers to the app's own `presentConsentPrompt` and `presentPreferences`, so the

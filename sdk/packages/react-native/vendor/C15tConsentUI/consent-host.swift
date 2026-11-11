@@ -99,8 +99,14 @@ public final class ConsentHostDriver {
     private var held: Session?
     /// The owed prompt last reported as having no window, so it is reported once.
     private var unavailableFor: String?
-    /// Outcomes decided while a cover still animates away, sent once it has gone.
-    private var leaving: [() -> Void] = []
+    /// Outcomes waiting to go, in order: for their cover to animate away, and for the prompt that
+    /// replaces them, if one is owed, to be reported presented first.
+    private var waiting: [() -> Void] = []
+    private var waitTask: Task<Void, Never>?
+    /// How long an outcome waits for the prompt that replaces it when no window can show it yet,
+    /// such as while the scene is inactive. Short enough that an app sent to the background still
+    /// hears the outcome.
+    var replacementWait: Duration = .seconds(2)
 
     public init(canvas: ConsentHostCanvas) {
         self.canvas = canvas
@@ -176,7 +182,7 @@ public final class ConsentHostDriver {
         configured = false
         autoPresent = false
         held = nil
-        leaving = []
+        sendWaiting(force: true)
         canvas.hide()
         subscription?.cancel()
         subscription = nil
@@ -230,6 +236,8 @@ public final class ConsentHostDriver {
 
     private func drop(_ core: ConsentCore) {
         guard let dropped = prompt, dropped.core === core else { return }
+        // No prompt of this core will follow.
+        sendWaiting(force: true)
         if let session = held, session.prompt === dropped {
             held = nil
             canvas.hide()
@@ -256,13 +264,16 @@ public final class ConsentHostDriver {
         let presenter = prompt.presenter
         guard presenter.presentationID != nil || presenter.noticeVisible else {
             unavailableFor = nil
-            if leaving.isEmpty, !presenter.covering { canvas.hide() }
+            sendWaiting()
+            hideIfIdle()
             return
         }
         guard let url = privacyPolicyURL else { return }
         do {
             try open(prompt, url: url, automatic: true)
         } catch {
+            // An outcome is waiting for this prompt; the wait reports it if no window comes.
+            if !waiting.isEmpty { return armWait() }
             let key = presenter.presentationID?.uuidString ?? "notice"
             guard unavailableFor != key else { return }
             unavailableFor = key
@@ -288,6 +299,7 @@ public final class ConsentHostDriver {
         held = session
         unavailableFor = nil
         onPresented?(session.id, session.shows, automatic)
+        sendWaiting()
         return session
     }
 
@@ -309,24 +321,59 @@ public final class ConsentHostDriver {
             ending = .committed
         }
         held = nil
-        // The prompt that follows, if one is owed, is on screen and reported before this outcome,
-        // so a step that waits for c15t's screens to close never runs between the two.
+        // The prompt that follows, if one is owed, is reported before this outcome, so a step that
+        // waits for c15t's screens to close never runs between the two. With no window to show it
+        // on yet, the outcome waits for it, and for no longer than ``replacementWait``.
         presenter.presentIfOwed()
-        reconcile()
         let report: () -> Void = { [weak self] in self?.onOutcome?(session.id, ending, snapshot.revision) }
-        // Reported once the cover has animated away: iOS shows no system alert, such as App
-        // Tracking Transparency, over a presentation that is still leaving.
-        if presenter.covering { leaving.append(report) } else { report() }
-        if held == nil, leaving.isEmpty, !presenter.covering { canvas.hide() }
+        waiting.append(report)
+        reconcile()
+        sendWaiting()
+        hideIfIdle()
+    }
+
+    /// A prompt is owed and open in the prompt, but not on screen yet.
+    private var replacementOwed: Bool {
+        guard held == nil, let presenter = prompt?.presenter else { return false }
+        return presenter.presentationID != nil || presenter.noticeVisible
+    }
+
+    /// Send the waiting outcomes once their cover has gone, iOS shows no system alert such as App
+    /// Tracking Transparency over a presentation that is still leaving, and once no replacement is
+    /// owed and not shown. `force` sends them at once; `timedOut` stops waiting for a replacement.
+    private func sendWaiting(force: Bool = false, timedOut: Bool = false) {
+        guard !waiting.isEmpty else { return }
+        if !force {
+            if prompt?.presenter.covering == true { return }
+            if !timedOut, replacementOwed { return armWait() }
+        }
+        waitTask?.cancel()
+        waitTask = nil
+        let reports = waiting
+        waiting = []
+        reports.forEach { $0() }
+    }
+
+    private func armWait() {
+        guard waitTask == nil else { return }
+        let delay = replacementWait
+        waitTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: delay)
+            guard let self, !Task.isCancelled else { return }
+            self.waitTask = nil
+            self.sendWaiting(timedOut: true)
+            self.reconcile()
+        }
+    }
+
+    /// Take the canvas down once nothing of ours is on it or leaving it.
+    private func hideIfIdle() {
+        guard held == nil, prompt?.presenter.covering != true else { return }
+        canvas.hide()
     }
 
     private func coverDismissed() {
-        let reports = leaving
-        leaving = []
-        reports.forEach { $0() }
-        if held == nil, let prompt, !prompt.presenter.covering, prompt.presenter.presentationID == nil,
-           !prompt.presenter.noticeVisible {
-            canvas.hide()
-        }
+        sendWaiting()
+        hideIfIdle()
     }
 }

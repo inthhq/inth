@@ -244,6 +244,64 @@ class ConsentHostAutoPresentTest {
         assertEquals(listOf("presented:${settings.sessionId}", "presented:${prompt.first}", "outcome:${settings.sessionId}"), events.log)
     }
 
+    /**
+     * As on a device: the full-screen settings Activity pauses the app's Activity under it, and
+     * closing it only asks it to finish. The app's Activity resumes after that, so the prompt that
+     * follows can only show then. The settings' outcome waits for it.
+     */
+    @Test fun onADeviceThePromptThatFollowsSettingsIsReportedBeforeTheirOutcome() {
+        val (core, host, settings) = settingsOverAPausedApp()
+        ConsentHost.close(settings)
+        idle()
+        assertEquals("held until the prompt that follows is on screen", listOf("presented:$settings"), events.log)
+
+        host.resume()
+        idle()
+        val prompt = events.presented.last()
+        assertEquals(ConsentHostPresentation.PROMPT, prompt.second)
+        assertEquals(listOf("presented:$settings", "presented:${prompt.first}", "outcome:$settings"), events.log)
+        assertNull(core.snapshot().explicitChoice)
+    }
+
+    /** The app goes to the background instead and never comes back: the outcome is not held forever. */
+    @Test fun aHeldOutcomeIsSentWhenNoActivityComesBack() {
+        val (_, host, settings) = settingsOverAPausedApp()
+        ConsentHost.close(settings)
+        host.stop()
+        shadowOf(Looper.getMainLooper()).idleFor(ConsentHost.replacementWaitMs + 100, TimeUnit.MILLISECONDS)
+        assertEquals(listOf("presented:$settings", "outcome:$settings", "unavailable"), events.log)
+
+        host.start().resume()
+        idle()
+        assertEquals("the owed prompt still shows on return", 2, events.presented.size)
+    }
+
+    /** No prompt will follow once the app opts out, so the outcome goes at once. */
+    @Test fun aHeldOutcomeIsSentWhenTheAppOptsOut() {
+        val (core, host, settings) = settingsOverAPausedApp()
+        ConsentHost.close(settings)
+        configure(core, null, autoPresent = false)
+        assertEquals(listOf("presented:$settings", "outcome:$settings"), events.log)
+        host.resume()
+        idle()
+        assertEquals(1, events.presented.size)
+    }
+
+    /** Settings the app opened, over an Activity paused by them, with a prompt owed behind them. */
+    private fun settingsOverAPausedApp(): Triple<ConsentCore, ActivityController<HostActivity>, String> {
+        val core = boot("category-init.json")
+        core.save(CommitIntent.All)
+        val host = host()
+        configure(core, host, autoPresent = true)
+        val settings = ConsentHost.present(host.get(), core, true, PRIVACY_URL, owner = owner, outcome = events::outcome) as ConsentHostSession.Presented
+        hosts += Robolectric.buildActivity(ConsentHostActivity::class.java, shadowOf(host.get()).nextStartedActivity).setup().visible()
+        host.pause()
+        core.reset()
+        idle()
+        assertEquals(listOf("presented:${settings.sessionId}"), events.log)
+        return Triple(core, host, settings.sessionId)
+    }
+
     @Test fun rotationKeepsOneSession() {
         val core = boot("category-init.json")
         val host = host()

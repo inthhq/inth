@@ -103,6 +103,20 @@ object ConsentHost {
         var noticeLifecycle: Application.ActivityLifecycleCallbacks? = null
     }
 
+    /**
+     * How long a session's outcome waits for the prompt that replaces it to show, when no Activity
+     * can show it yet. Long enough for the app's Activity to resume after the host Activity
+     * finishes; short enough that an app sent to the background still hears the outcome.
+     */
+    internal var replacementWaitMs = 2_000L
+
+    /**
+     * Outcomes of sessions whose replacement is owed but not on screen yet, in order. They go
+     * once it is reported presented, once none will be, or after [replacementWaitMs].
+     */
+    private val waiting = mutableListOf<() -> Unit>()
+    private val waited = Runnable { sendWaiting(); reconcile() }
+
     /** This host's claim on the prompt, beside any Compose screen's. */
     private val token = Any()
     /** The prompt this host follows: the installed core's, dropped when that core is uninstalled. */
@@ -212,6 +226,7 @@ object ConsentHost {
      */
     fun detach(owner: Any) {
         if (this.owner.get() !== owner) return
+        sendWaiting()
         held?.outcome = null
         this.owner.clear()
         listener = null
@@ -250,6 +265,8 @@ object ConsentHost {
                 old.detach(token)
                 // A session of a core this host no longer follows is not the runtime's any more.
                 held?.takeIf { it.prompt === old }?.let { held = null; release(it) }
+                // No prompt of that core will follow on this host.
+                sendWaiting()
             }
             subscription?.close()
             prompt = next
@@ -268,6 +285,8 @@ object ConsentHost {
 
     private fun drop(core: ConsentCore) {
         val dropped = prompt ?: return
+        // No prompt of this core will follow.
+        sendWaiting()
         held?.takeIf { it.prompt === dropped }?.let {
             val revision = core.snapshot().revision
             held = null
@@ -310,11 +329,14 @@ object ConsentHost {
         val prompt = prompt ?: return
         if (current() != null || prompt.host !== token) return
         val presenter = prompt.presenter
-        if (presenter.presentationID == null && !presenter.noticeVisible) { unavailableFor = null; return }
+        if (presenter.presentationID == null && !presenter.noticeVisible) { unavailableFor = null; sendWaiting(); return }
         val url = privacyPolicyUrl ?: return
         val activity = foreground.get()?.takeIf { !it.isFinishing && !it.isDestroyed }
         val failure = if (activity == null) "No Activity is in the foreground to show the owed consent prompt on yet"
         else try { open(activity, prompt, url, automatic = true, outcome = null); return } catch (error: Exception) { error.message ?: error.toString() }
+        // An outcome is waiting for this prompt: the app's Activity is about to resume, typically,
+        // after the host Activity that just finished. [waited] reports it if it never does.
+        if (waiting.isNotEmpty()) return
         val key = presenter.presentationID ?: "notice"
         if (unavailableFor != key) {
             unavailableFor = key
@@ -340,6 +362,7 @@ object ConsentHost {
             throw error
         }
         listener?.presented(session.id, session.presentation, automatic)
+        sendWaiting()
         return session
     }
 
@@ -374,12 +397,28 @@ object ConsentHost {
         }
         held = null
         release(session)
-        // The prompt that follows, if one is owed, is on screen and reported before this outcome,
-        // so a step that waits for c15t's screens to close, such as Apple's tracking request,
-        // never runs between the two.
+        // The prompt that follows, if one is owed, is reported before this outcome, so a step that
+        // waits for c15t's screens to close, such as Apple's tracking request, never runs between
+        // the two. On a device the app's Activity is still paused under the finishing host
+        // Activity here, so the prompt that follows often shows only once it resumes: the outcome
+        // waits for that, and for no longer than [replacementWaitMs].
         presenter.presentIfOwed()
+        // Bound now: the outcome is for the runtime that heard this session, even if another has
+        // configured the host by the time it goes.
+        val callback = session.outcome ?: listener?.let { it::outcome }
+        session.outcome = null
+        waiting += { callback?.invoke(result) }
         reconcile()
-        deliver(session, result)
+        if (waiting.isNotEmpty()) { main.removeCallbacks(waited); main.postDelayed(waited, replacementWaitMs) }
+    }
+
+    /** Send every waiting outcome, in order. */
+    private fun sendWaiting() {
+        main.removeCallbacks(waited)
+        if (waiting.isEmpty()) return
+        val sent = waiting.toList()
+        waiting.clear()
+        for (send in sent) send()
     }
 
     private fun deliver(session: Session, result: ConsentHostOutcome) {
