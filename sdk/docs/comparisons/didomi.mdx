@@ -1,6 +1,6 @@
 ---
 title: c15t vs Didomi
-description: Choose c15t for native framework components, open-source consent logic and backend ownership. Compare Didomi's SDKs, notice console and experiments.
+description: Choose c15t for native framework components, open-source consent logic and backend ownership. Compare Didomi's web and mobile SDKs, notice console and experiments.
 group: reference
 ---
 
@@ -42,6 +42,20 @@ Use your feature-flag tool to assign c15t [banner variants](/docs/guides/banner-
 The experiment changes presentation and theme. The policy, categories and policy text stay fixed.
 
 Didomi also has A/B tests. c15t's advantage for application teams is the ability to define the experiment in product code and choose the record backend.
+
+## Mobile apps
+
+<include src="../shared/comparisons/mobile-c15t.mdx" />
+
+| What you need | c15t (private prerelease) | Didomi |
+| --- | --- | --- |
+| Platforms | Swift, Kotlin, React Native and Expo | Android and Android TV, iOS and tvOS SDKs. React Native and Flutter plugins for Android and iOS. A Unity SDK for mobile and TV |
+| Stock consent screens | SwiftUI and Compose screens. React Native opens the same native screens | Notice and preferences shown by `setupUI`, configured in the Didomi Console |
+| Your own UI | Headless APIs in Swift and Kotlin, and React Native hooks | Your own notice when the standard one is disabled, with a status transaction to save choices |
+| IAB TCF | Native TCF choices, TC strings and `IABTCF_` keys | TCF needs a Console configuration. A local or remote config file disables it |
+| Consent in WebViews | Not in the prerelease. See [Mobile availability](/docs/guides/mobile-status#first-release-scope) | `getJavaScriptForWebView` passes app consent to the Didomi Web SDK in a WebView |
+
+Sources: [Mobile and TV SDKs](https://developers.didomi.io/cmp/mobile-sdk), [Android setup](https://developers.didomi.io/cmp/mobile-sdk/android/setup), [iOS API](https://developers.didomi.io/cmp/mobile-sdk/ios/reference/api), [React Native](https://developers.didomi.io/cmp/mobile-sdk/react-native), [Flutter](https://developers.didomi.io/cmp/mobile-sdk/flutter), [Unity](https://developers.didomi.io/cmp/mobile-sdk/unity-sdk) and [sharing consent with WebViews](https://developers.didomi.io/cmp/mobile-sdk/share-consent-with-webviews), checked on 10 November 2026.
 
 ## What c15t does not include
 
