@@ -1392,6 +1392,12 @@ alpha channel, or a field neither renderer draws fails the prebuild. Fields only
 the React Native components draw (`motion`, `typography.fontWeight`,
 `typography.lineHeight`, and colors such as `border`) are checked and not
 written.
+`typography.fontFamily` and `typography.headlineFont` take one string or
+`{ ios, android }`: iOS reads a PostScript name and Android a font resource name.
+A single string must be a valid resource name (lowercase letters, digits, `_`), or
+for `headlineFont` a keyword such as `serif`; otherwise the prebuild fails and
+shows the per-platform form. A per-platform name is written to that platform's
+key only. The body readers know no keywords, so `fontFamily: 'serif'` fails too.
 With `theme` set the plugin owns every key above and clears the ones the prop no
 longer names; without it the plugin registers no theme write, so an app-owned
 config plugin keeps working. The copy keys (`headline`, `introduction`) are not

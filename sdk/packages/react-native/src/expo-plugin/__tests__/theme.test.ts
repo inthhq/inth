@@ -54,7 +54,7 @@ const FULL_THEME: C15tThemePluginProps = {
 	},
 	spacing: { lg: 28, md: 20, sm: 8, xl: 40, xs: 4 },
 	typography: {
-		fontFamily: 'Inter',
+		fontFamily: { android: 'inter_regular', ios: 'Inter-Regular' },
 		fontSize: { base: 18, lg: 36, sm: 15 },
 		headlineFont: 'serif',
 	},
@@ -119,7 +119,7 @@ describe('theme prop', () => {
 			'com.c15t.consent.canvas': '#F8F4EE',
 			'com.c15t.consent.consentBannerTitle.fontSize': 36,
 			'com.c15t.consent.decision': '#172554,#DBEAFE',
-			'com.c15t.consent.fontFamily': 'Inter',
+			'com.c15t.consent.fontFamily': 'Inter-Regular',
 			'com.c15t.consent.fontSizeBase': 18,
 			'com.c15t.consent.fontSizeLg': 36,
 			'com.c15t.consent.fontSizeSm': 15,
@@ -156,7 +156,7 @@ describe('theme prop', () => {
 			'com.c15t.consent.CANVAS': '#F8F4EE',
 			'com.c15t.consent.CONSENT_BANNER_TITLE_FONT_SIZE': '36',
 			'com.c15t.consent.DECISION': '#172554,#DBEAFE',
-			'com.c15t.consent.FONT_FAMILY': 'Inter',
+			'com.c15t.consent.FONT_FAMILY': 'inter_regular',
 			'com.c15t.consent.FONT_SIZE_BASE': '18',
 			'com.c15t.consent.FONT_SIZE_LG': '36',
 			'com.c15t.consent.FONT_SIZE_SM': '15',
@@ -234,6 +234,80 @@ describe('theme prop', () => {
 		).toBe('#111111');
 	});
 
+	it('writes a per-platform headline font to each platform only', async () => {
+		const theme = {
+			typography: {
+				headlineFont: { android: 'inter_bold', ios: 'Inter-Bold' },
+			},
+		};
+		expect((await themedPlist(theme))['com.c15t.consent.headlineFont']).toBe(
+			'Inter-Bold'
+		);
+		expect(
+			(await themedMetaData(theme))['com.c15t.consent.HEADLINE_FONT']
+		).toBe('inter_bold');
+	});
+
+	it('writes one platform when only that one is named', async () => {
+		const theme = { typography: { headlineFont: { ios: 'Inter-Bold' } } };
+		expect((await themedPlist(theme))['com.c15t.consent.headlineFont']).toBe(
+			'Inter-Bold'
+		);
+		expect(
+			(await themedMetaData(theme))['com.c15t.consent.HEADLINE_FONT']
+		).toBeUndefined();
+	});
+
+	it('writes a per-platform body font to each platform only', async () => {
+		const theme = {
+			typography: {
+				fontFamily: { android: 'inter_regular', ios: 'Inter-Regular' },
+			},
+		};
+		expect((await themedPlist(theme))['com.c15t.consent.fontFamily']).toBe(
+			'Inter-Regular'
+		);
+		expect((await themedMetaData(theme))['com.c15t.consent.FONT_FAMILY']).toBe(
+			'inter_regular'
+		);
+	});
+
+	it('writes one platform when only that one names a body font', async () => {
+		const theme = { typography: { fontFamily: { android: 'inter_regular' } } };
+		expect(
+			(await themedPlist(theme))['com.c15t.consent.fontFamily']
+		).toBeUndefined();
+		expect((await themedMetaData(theme))['com.c15t.consent.FONT_FAMILY']).toBe(
+			'inter_regular'
+		);
+	});
+
+	it.each(['inter_regular', '@font/inter_regular'])(
+		'writes the one-string body font %s to both platforms',
+		async (fontFamily) => {
+			const theme = { typography: { fontFamily } };
+			expect((await themedPlist(theme))['com.c15t.consent.fontFamily']).toBe(
+				fontFamily
+			);
+			expect(
+				(await themedMetaData(theme))['com.c15t.consent.FONT_FAMILY']
+			).toBe(fontFamily);
+		}
+	);
+
+	it.each(['inter_bold', '@font/inter_bold', 'Serif', 'sans-serif'])(
+		'writes the one-string font %s to both platforms',
+		async (headlineFont) => {
+			const theme = { typography: { headlineFont } };
+			expect((await themedPlist(theme))['com.c15t.consent.headlineFont']).toBe(
+				headlineFont
+			);
+			expect(
+				(await themedMetaData(theme))['com.c15t.consent.HEADLINE_FONT']
+			).toBe(headlineFont);
+		}
+	);
+
 	it.each([
 		[
 			'a CSS colour',
@@ -295,6 +369,64 @@ describe('theme prop', () => {
 			/theme\.slots\.buttonSecondary\.color\.dark must be a hex colour/u,
 		],
 		['copy', { copy: { headline: 'Hi' } }, /theme has no "copy" field/u],
+		[
+			'one font string Android cannot resolve',
+			{ typography: { headlineFont: 'Inter-Bold' } },
+			/"Inter-Bold" is not an Android font resource name/u,
+		],
+		[
+			'one body font string Android cannot resolve',
+			{ typography: { fontFamily: 'Inter-Regular' } },
+			/fontFamily "Inter-Regular" is not an Android font resource name/u,
+		],
+		[
+			'an Android body font that is not a resource name',
+			{
+				typography: {
+					fontFamily: { android: 'Inter-Regular', ios: 'Inter-Regular' },
+				},
+			},
+			/fontFamily\.android "Inter-Regular" is not an Android font resource name/u,
+		],
+		[
+			'a per-platform body font naming neither platform',
+			{ typography: { fontFamily: {} } },
+			/fontFamily needs ios, android or both/u,
+		],
+		[
+			'a per-platform body font for another platform',
+			{ typography: { fontFamily: { web: 'Inter' } } },
+			/fontFamily has no "web" field/u,
+		],
+		[
+			'a built-in face as the body font, which native body text cannot use',
+			{ typography: { fontFamily: 'serif' } },
+			/fontFamily "serif" names a built-in face/u,
+		],
+		[
+			'a built-in face as one platform body font',
+			{ typography: { fontFamily: { ios: 'rounded' } } },
+			/fontFamily\.ios "rounded" names a built-in face/u,
+		],
+		[
+			'an Android font that is not a resource name',
+			{
+				typography: {
+					headlineFont: { android: 'Inter-Bold', ios: 'Inter-Bold' },
+				},
+			},
+			/headlineFont\.android "Inter-Bold" is not an Android font resource name/u,
+		],
+		[
+			'a per-platform font naming neither platform',
+			{ typography: { headlineFont: {} } },
+			/headlineFont needs ios, android or both/u,
+		],
+		[
+			'a per-platform font for another platform',
+			{ typography: { headlineFont: { web: 'Inter' } } },
+			/headlineFont has no "web" field/u,
+		],
 		[
 			'a hidden brand with a name',
 			{ brand: { hidden: true, name: 'Acme' } },

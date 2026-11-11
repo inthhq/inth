@@ -28,6 +28,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
 	assertAndroidSdkFloor,
 	findAndroidSdkSettings,
+	gradleStatements,
 	readAndroidSdkFiles,
 	stripGradleComments,
 } from '../android-sdk-floor';
@@ -175,6 +176,47 @@ describe.each(TEMPLATES)('the Expo %s template', (template) => {
 			contents.replace(MIN_SDK_LINE, 'minSdkVersion(26)')
 		);
 		await expect(finalize(root)).resolves.toBeDefined();
+	});
+
+	it('reads the template defaultConfig as android/defaultConfig', () => {
+		const root = templateProject(template);
+		const source = stripGradleComments(
+			readFileSync(join(root, 'android', 'app', 'build.gradle'), 'utf8')
+		);
+		expect(
+			gradleStatements(source).find((entry) => entry.text === MIN_SDK_LINE)
+		).toStrictEqual({ block: 'android/defaultConfig', text: MIN_SDK_LINE });
+	});
+
+	it('fails on a compact block appended to the template', async () => {
+		const root = templateProject(template);
+		editAppGradle(
+			root,
+			(contents) =>
+				`${contents}\nandroid { defaultConfig { minSdkVersion(21) } }\n`
+		);
+		await expect(finalize(root)).rejects.toThrowError(
+			/minSdk is 21 in android\/app\/build\.gradle/u
+		);
+	});
+
+	it('takes the last level within the template defaultConfig', async () => {
+		const low = templateProject(template);
+		editAppGradle(low, (contents) =>
+			contents.replace(
+				MIN_SDK_LINE,
+				'minSdkVersion 24\n        minSdkVersion 21'
+			)
+		);
+		await expect(finalize(low)).rejects.toThrowError(/minSdk is 21/u);
+		const high = templateProject(template);
+		editAppGradle(high, (contents) =>
+			contents.replace(
+				MIN_SDK_LINE,
+				'minSdkVersion 21\n        minSdkVersion 24'
+			)
+		);
+		await expect(finalize(high)).resolves.toBeDefined();
 	});
 
 	it('lets an app literal override a low expo-build-properties value', async () => {
@@ -405,6 +447,128 @@ describe('assertAndroidSdkFloor', () => {
 			await expect(finalize(root)).rejects.toThrowError(
 				/compileSdk is 35 in android\/app\/build\.gradle\.kts/u
 			);
+		});
+	});
+
+	describe('compact blocks and statement boundaries', () => {
+		it.each([
+			[
+				'Groovy defaultConfig { minSdkVersion(21) }',
+				'app/build.gradle',
+				'android {\n  defaultConfig { minSdkVersion(21) }\n}',
+				'minSdk is 21',
+			],
+			[
+				'Groovy defaultConfig { minSdkVersion 23 }',
+				'app/build.gradle',
+				'defaultConfig { minSdkVersion 23 }',
+				'minSdk is 23',
+			],
+			[
+				'Groovy statements split by ;',
+				'app/build.gradle',
+				'android { compileSdkVersion 35; buildToolsVersion "35.0.0" }',
+				'compileSdk is 35',
+			],
+			[
+				'Groovy last in block is low',
+				'app/build.gradle',
+				'defaultConfig {\n  minSdkVersion 24\n  minSdkVersion 21\n}',
+				'minSdk is 21',
+			],
+			[
+				'Groovy compact root ext',
+				'build.gradle',
+				'buildscript { ext { minSdkVersion = 21 } }',
+				'minSdk is 21',
+			],
+			[
+				'Kotlin android { compileSdk = 35 }',
+				'app/build.gradle.kts',
+				'android { compileSdk = 35 }',
+				'compileSdk is 35',
+			],
+			[
+				'Kotlin nested on one line',
+				'app/build.gradle.kts',
+				'android { defaultConfig { minSdk = 21; targetSdk = 35 } }',
+				'minSdk is 21',
+			],
+			[
+				'Kotlin last in block is low',
+				'app/build.gradle.kts',
+				'defaultConfig { minSdk = 24; minSdk = 21 }',
+				'minSdk is 21',
+			],
+			[
+				'Kotlin flavor below a compliant defaultConfig',
+				'app/build.gradle.kts',
+				'android {\n    defaultConfig { minSdk = 24 }\n    productFlavors { create("legacy") { minSdk = 21 } }\n}',
+				'minSdk is 21',
+			],
+		])('refuses %s', (_label, file, contents, message) => {
+			expect(() => assertAndroidSdkFloor({ [file]: contents })).toThrowError(
+				new RegExp(`${message} in android/${file.replaceAll('.', '\\.')}`, 'u')
+			);
+		});
+
+		it.each([
+			[
+				'Groovy last in block wins',
+				{
+					'app/build.gradle':
+						'defaultConfig {\n  minSdkVersion 21\n  minSdkVersion 24\n}',
+				},
+			],
+			[
+				'Kotlin last in block wins on one line',
+				{
+					'app/build.gradle.kts': 'defaultConfig { minSdk = 21; minSdk = 24 }',
+				},
+			],
+			[
+				'a later block of the same name',
+				{
+					'app/build.gradle':
+						'defaultConfig { minSdkVersion 21 }\ndefaultConfig { minSdkVersion 24 }',
+				},
+			],
+			[
+				'a comment inside a compact block',
+				{
+					'app/build.gradle':
+						'defaultConfig { /* minSdkVersion 21 */ minSdkVersion 24 }',
+				},
+			],
+			[
+				'braces and ; inside a Groovy string',
+				{
+					'app/build.gradle':
+						'defaultConfig { buildConfigField "String", "X", "\\"a; minSdkVersion 21 }\\""; minSdkVersion 24 }',
+				},
+			],
+			[
+				'braces and ; inside a Kotlin string',
+				{
+					'app/build.gradle.kts': 'android { namespace = "a{b}; minSdk = 21" }',
+				},
+			],
+			[
+				'a compact app call over a low property',
+				{
+					'app/build.gradle': 'android { defaultConfig { minSdkVersion(26) } }',
+					'gradle.properties': 'android.minSdkVersion=23',
+				},
+			],
+			[
+				'a call spanning lines before the level',
+				{
+					'app/build.gradle.kts':
+						'defaultConfig {\n    manifestPlaceholders.putAll(mapOf(\n        "a" to "minSdk = 21"\n    ))\n    minSdk = 24\n}',
+				},
+			],
+		])('passes %s', (_label, files) => {
+			expect(() => assertAndroidSdkFloor(files)).not.toThrow();
 		});
 	});
 
