@@ -13,8 +13,12 @@ import {
 import type { ConfigPlugin, ExportedConfig } from '@expo/config-plugins';
 
 import { applyAndroidManifest } from './android';
-import { iosConfig } from './config-plugins';
+import { androidConfig, iosConfig } from './config-plugins';
 import { EXTRA_KEY } from './constants';
+import {
+	applyGoogleConsentDefaultsToApplication,
+	applyGoogleConsentDefaultsToInfoPlist,
+} from './google-consent-mode';
 import { applyAppBuildGradle, applyProjectBuildGradle } from './gradle';
 import {
 	applyInfoPlist,
@@ -164,7 +168,9 @@ export const applyParamsOnConfig = function applyParamsOnConfig(
 
 	next = withInfoPlist(next, (configWithPlist) => ({
 		...configWithPlist,
-		modResults: applyInfoPlist(params, configWithPlist.modResults),
+		modResults: applyGoogleConsentDefaultsToInfoPlist(
+			applyInfoPlist(params, configWithPlist.modResults)
+		),
 	}));
 
 	// Localized prompt copy has no mod of its own in the config plugin version
@@ -241,10 +247,16 @@ export const applyParamsOnConfig = function applyParamsOnConfig(
 		]);
 	}
 
-	next = withAndroidManifest(next, (configWithManifest) => ({
-		...configWithManifest,
-		modResults: applyAndroidManifest(params, configWithManifest.modResults),
-	}));
+	next = withAndroidManifest(next, (configWithManifest) => {
+		const manifest = applyAndroidManifest(
+			params,
+			configWithManifest.modResults
+		);
+		const application =
+			androidConfig.Manifest.getMainApplicationOrThrow(manifest);
+		applyGoogleConsentDefaultsToApplication(application);
+		return { ...configWithManifest, modResults: manifest };
+	});
 
 	next = withProjectBuildGradle(next, (configWithGradle) => ({
 		...configWithGradle,

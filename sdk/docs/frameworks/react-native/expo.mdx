@@ -55,7 +55,12 @@ a fresh installation to resolve a conservative policy without a network
 connection. You can add it after the online path works.
 
 The plugin configures native launch metadata, Android startup and internet
-permission, SDK floors and iOS privacy declarations. The native engine owns
+permission, SDK floors and iOS privacy declarations. It also sets Google
+Analytics for Firebase's four
+[Consent Mode defaults](/docs/integrations/firebase-analytics#deny-consent-mode-signals-by-default)
+to denied in `Info.plist` and `AndroidManifest.xml`, so Firebase grants nothing
+before c15t's consent is read. These keys are harmless in an app without
+Firebase. The native engine owns
 policy resolution and storage. You do not pass a backend URL to
 `ConsentProvider` in JavaScript.
 

@@ -142,10 +142,14 @@ describe.each(vendors)('$name', ({ connect }) => {
 		const integration = connect(apply, { onError: vi.fn() });
 		await vi.waitFor(() => expect(apply).toHaveBeenCalledWith(true));
 		fake.pushSnapshot(snapshot(1, false));
+		// The withdrawal does not wait for the pending grant.
+		expect(apply).toHaveBeenLastCalledWith(false);
 		wait.release();
 		await integration.ready;
-		expect(vendorAllowed).toBe(false);
-		expect(apply.mock.calls).toEqual([[true], [false]]);
+		// The grant settles after the withdrawal, and denial is applied again.
+		await vi.waitFor(() => expect(vendorAllowed).toBe(false));
+		expect(apply.mock.calls[0]).toEqual([true]);
+		expect(apply.mock.calls.slice(1).every(([allowed]) => !allowed)).toBe(true);
 		await integration.disconnect();
 	});
 
@@ -159,12 +163,17 @@ describe.each(vendors)('$name', ({ connect }) => {
 		await vi.waitFor(() => expect(apply).toHaveBeenCalledOnce());
 		const stop = integration.disconnect();
 		expect(integration.disconnect()).toBe(stop);
+		// Disconnect does not wait for the pending grant.
+		expect(apply).toHaveBeenLastCalledWith(false);
 		wait.release();
 		await stop;
 		fake.pushSnapshot(snapshot(1, false));
 		fake.pushSnapshot(snapshot(2, true));
-		await Promise.resolve();
-		expect(apply.mock.calls).toEqual([[true], [false]]);
+		await new Promise<void>((resolve) => {
+			setTimeout(resolve, 0);
+		});
+		expect(apply.mock.calls[0]).toEqual([true]);
+		expect(apply.mock.calls.slice(1).every(([allowed]) => !allowed)).toBe(true);
 	});
 
 	test('reports vendor failures and permits explicit retry and later withdrawal', async () => {

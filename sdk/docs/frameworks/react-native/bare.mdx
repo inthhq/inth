@@ -116,6 +116,11 @@ Disable automatic startup in each optional vendor SDK and add the
 initializer runs. The provider cannot undo work that happened before React
 loaded.
 
+If the app uses Google Analytics for Firebase, set its four Consent Mode
+defaults to denied in `firebase.json`, as shown in
+[Deny Consent Mode signals by default](/docs/integrations/firebase-analytics#deny-consent-mode-signals-by-default).
+The Expo plugin writes these keys for you; a bare app has to set them itself.
+
 ## Build and verify
 
 Use the native run commands from your app directory:

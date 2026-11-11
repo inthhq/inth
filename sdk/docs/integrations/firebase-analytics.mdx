@@ -2,14 +2,17 @@
 title: Firebase Analytics
 description: Connect Firebase Analytics to native c15t permissions in Swift, Kotlin, React Native and Expo, with withdrawal, reset and startup handling.
 seoTitle: Firebase Analytics consent for mobile with c15t
-seoDescription: Connect Firebase Analytics to c15t in Swift, Android, React Native and Expo. Configure startup, withdrawal and reset while advertising consent stays denied.
+seoDescription: Connect Firebase Analytics to c15t in Swift, Android, React Native and Expo, with all four Consent Mode v2 signals driven by consent.
 group: integrations
 ---
 
-Use the bundled Firebase Analytics helper to enable collection while your
-app's measurement permission is granted. Pending or denied permission disables
-collection. The helper also sends Firebase's consent settings and keeps all
-advertising permissions denied.
+Use the bundled Firebase Analytics helper to send Firebase's four Consent
+Mode v2 signals from c15t consent and to enable collection while measurement
+is granted. Measurement drives `analytics_storage`. Marketing drives
+`ad_storage`, `ad_user_data` and `ad_personalization`. This is the same
+[category mapping](/docs/integrations/google-tag#how-categories-map-to-google-consent-types)
+the web's Google helpers use. Pending permission denies every signal and
+keeps collection disabled.
 
 The helper is included in `C15tApple`, `c15t-android` and
 `@c15t/react-native/integrations`. Firebase remains a dependency your app
@@ -23,9 +26,10 @@ This page covers Firebase Analytics in native mobile apps.
 Complete the [Swift](/docs/frameworks/swift/quickstart),
 [Android](/docs/frameworks/android/quickstart) or
 [React Native](/docs/frameworks/react-native/quickstart) quickstart. Your Inth
-policy and native configuration must include `measurement`, or the optional
-category you choose for analytics. Use the same installed engine for the
-consent screens and the integration.
+policy and native configuration must include `measurement`, and `marketing`
+if the app runs Google ads or ad measurement. A category the policy does not
+include stays denied. Use the same installed engine for the consent screens
+and the integration.
 
 Add Firebase through its official [Apple](https://firebase.google.com/docs/ios/setup),
 [Android](https://firebase.google.com/docs/android/setup) or
@@ -34,9 +38,8 @@ Configure the Firebase app and Analytics module before connecting its APIs.
 c15t's mobile packages are currently a private prerelease; see
 [mobile availability](/docs/guides/mobile-status) for installation access.
 
-This recipe is for analytics without Firebase advertising storage, advertising
-user data or ad personalization. It does not grant IAB vendor permissions,
-replace a Google Mobile Ads integration or request ATT. Use
+The helper sends Consent Mode signals to Firebase only. It does not grant IAB
+vendor permissions, configure Google Mobile Ads or request ATT. Use
 [mobile IAB and ads](/docs/guides/mobile-iab) for advertising requirements.
 
 ## Control native startup first
@@ -70,12 +73,76 @@ automatically registered Android providers or app-delegate setup in that path.
 [Firebase's collection guide](https://firebase.google.com/docs/analytics/configure-data-collection)
 explains the persisted setting.
 
+### Deny Consent Mode signals by default
+
+Firebase reads its Consent Mode defaults at launch, before the helper sends
+the first `setConsent`. Without defaults, Firebase sets no consent values.
+Set all four to denied, so nothing is granted before c15t's consent is read.
+For iOS, add these Booleans to the app target's `Info.plist`:
+
+{/* example: fragment */}
+
+```xml title="Info.plist"
+<key>GOOGLE_ANALYTICS_DEFAULT_ALLOW_ANALYTICS_STORAGE</key>
+<false/>
+<key>GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_STORAGE</key>
+<false/>
+<key>GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_USER_DATA</key>
+<false/>
+<key>GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_PERSONALIZATION_SIGNALS</key>
+<false/>
+```
+
+On Android, add this metadata inside the manifest's `application`:
+
+{/* example: fragment */}
+
+```xml title="AndroidManifest.xml"
+<meta-data
+	android:name="google_analytics_default_allow_analytics_storage"
+	android:value="false" />
+<meta-data
+	android:name="google_analytics_default_allow_ad_storage"
+	android:value="false" />
+<meta-data
+	android:name="google_analytics_default_allow_ad_user_data"
+	android:value="false" />
+<meta-data
+	android:name="google_analytics_default_allow_ad_personalization_signals"
+	android:value="false" />
+```
+
+React Native Firebase writes the same keys from `firebase.json`, and on
+Android it writes `true` for a key that file leaves out. In a bare React
+Native app, set the four keys to `false` in `firebase.json` next to the
+collection default:
+
+{/* example: fragment */}
+
+```json title="firebase.json"
+{
+	"react-native": {
+		"analytics_auto_collection_enabled": false,
+		"analytics_default_allow_analytics_storage": false,
+		"analytics_default_allow_ad_storage": false,
+		"analytics_default_allow_ad_user_data": false,
+		"analytics_default_allow_ad_personalization_signals": false
+	}
+}
+```
+
+In an Expo app, c15t's config plugin writes the four denied defaults into
+`Info.plist` and `AndroidManifest.xml` on every prebuild. On Android it marks
+them `tools:replace="android:value"`, so they win over React Native
+Firebase's library values.
+
 For React Native and Expo, a JavaScript connection runs after native startup.
 It cannot prevent earlier Firebase collection. Apply the native settings
 through the vendor's supported build configuration and keep the
 [native startup gate](/docs/frameworks/react-native/native-behaviour). Expo
 needs a custom native build containing both packages. c15t's config plugin
-does not configure Firebase, and Expo Go cannot load this integration.
+writes only the Consent Mode defaults above. It does not install or configure
+Firebase, and Expo Go cannot load this integration.
 
 ## Connect a Swift app
 
@@ -98,9 +165,9 @@ let firebaseOwner = FirebaseAnalyticsOwner(
     setConsent: { consent in
         Analytics.setConsent([
             .analyticsStorage: consent.analyticsStorage ? .granted : .denied,
-            .adStorage: .denied,
-            .adUserData: .denied,
-            .adPersonalization: .denied,
+            .adStorage: consent.adStorage ? .granted : .denied,
+            .adUserData: consent.adUserData ? .granted : .denied,
+            .adPersonalization: consent.adPersonalization ? .granted : .denied,
         ])
     },
     setCollectionEnabled: { Analytics.setAnalyticsCollectionEnabled($0) }
@@ -113,10 +180,9 @@ run synchronously on the registering thread or the thread publishing a native
 consent change. Pass the vendor calls directly; dispatching them into separate
 asynchronous tasks can reorder grants and withdrawals.
 
-The owner uses `measurement` by default. For another optional category,
-configure `category` on its `FirebaseAnalyticsIntegration` initializer. Keep
-the owner alive across screen changes. Releasing it cancels the integration
-and disables collection.
+The helper follows the shared Consent Mode mapping, so no category option
+exists. Keep the owner alive across screen changes. Releasing it cancels the
+integration, denies every signal and disables collection.
 
 ## Connect an Android app
 
@@ -126,8 +192,8 @@ package name:
 <include src="../shared/examples/native/examples/consent-demo/android-firebase-integration.mdx" />
 
 Call it from your `Application` service setup after installing c15t and
-configuring Firebase. Map the helper's analytics permission to the Firebase
-instance you actually use:
+configuring Firebase. Map the helper's four signals to the Firebase instance
+you actually use:
 
 {/* example: fragment */}
 
@@ -142,9 +208,12 @@ val firebaseConsent = connectAppFirebaseAnalytics(
 		firebase.setConsent(mapOf(
 			ConsentType.ANALYTICS_STORAGE to
 				if (consent.analyticsStorage) ConsentStatus.GRANTED else ConsentStatus.DENIED,
-			ConsentType.AD_STORAGE to ConsentStatus.DENIED,
-			ConsentType.AD_USER_DATA to ConsentStatus.DENIED,
-			ConsentType.AD_PERSONALIZATION to ConsentStatus.DENIED,
+			ConsentType.AD_STORAGE to
+				if (consent.adStorage) ConsentStatus.GRANTED else ConsentStatus.DENIED,
+			ConsentType.AD_USER_DATA to
+				if (consent.adUserData) ConsentStatus.GRANTED else ConsentStatus.DENIED,
+			ConsentType.AD_PERSONALIZATION to
+				if (consent.adPersonalization) ConsentStatus.GRANTED else ConsentStatus.DENIED,
 		))
 	},
 	setCollectionEnabled = firebase::setAnalyticsCollectionEnabled,
@@ -161,7 +230,7 @@ handle those failures in the app's service lifecycle.
 
 Native callbacks run synchronously and are serialized per helper. Do not post
 the vendor changes into independent jobs. The helper disables collection
-before changing consent and enables it only while the category remains
+before changing consent and enables it only while measurement remains
 allowed. A vendor failure means you cannot assume that the requested change
 reached Firebase.
 
@@ -216,10 +285,10 @@ those promises at their call sites. Keep the handle in an app-lifetime owner;
 a route's effect should not disconnect app-wide analytics on navigation.
 
 The connection serializes asynchronous Firebase calls and rereads native
-permission before enabling collection. While permission is pending or denied,
-it disables collection and sends denied consent. On a grant, it sends
-analytics storage consent and enables collection. The three advertising
-consent fields remain `false` on every update.
+permission before enabling collection. While permission is pending, it
+disables collection and sends every field as `false`. Each update sends
+`analytics_storage` from measurement and the three advertising fields from
+marketing. Collection is enabled only while `analytics_storage` is `true`.
 
 ## Handle reset and teardown
 
@@ -238,17 +307,20 @@ delete historical Firebase data or retract requests already sent.
 Use Firebase's supported debug tools and inspect actual collection in your
 app. Test a policy that asks for a choice:
 
-1. Launch with no saved choice. Analytics collection stays disabled while
-   native permission is pending and after Reject all.
-2. Grant measurement. Confirm analytics storage is granted, the three
-   advertising fields remain denied and collection becomes enabled.
-3. Withdraw measurement. Confirm collection is disabled and analytics storage
-   becomes denied.
-4. Terminate and relaunch after both grant and refusal. Check native startup
+1. Launch with no saved choice. Confirm all four signals are denied and
+   collection stays disabled while native permission is pending and after
+   Reject all.
+2. Grant measurement only. Confirm analytics storage is granted, the three
+   advertising fields stay denied and collection becomes enabled.
+3. Grant marketing. Confirm ad storage, ad user data and ad personalization
+   become granted.
+4. Withdraw both. Confirm collection is disabled and all four signals become
+   denied.
+5. Terminate and relaunch after both grant and refusal. Check native startup
    before JavaScript as well as the eventual SDK state.
-5. Reset vendor settings, call `sync()` and confirm that current permission
+6. Reset vendor settings, call `sync()` and confirm that current permission
    is reapplied without creating a consent record.
-6. Exercise your vendor-failure handler and final teardown.
+7. Exercise your vendor-failure handler and final teardown.
 
 The c15t helper tests exercise native authority, lifecycle changes, reset and
 callback ordering. The RN mapping was type-checked against React Native
