@@ -138,10 +138,10 @@
 			"note": "Gzipped JavaScript the tarball ships. Measured 80,627 B on the integrated mobile release wave (#134), for the same surfaces and Expo plugin steps as js_shipped_bytes. The ceiling keeps the earlier headroom ratio (49,152 over 40,254, or 1.2210)."
 		},
 		"ios_binary_bytes": {
-			"max": 1048576,
+			"max": 2661357,
 			"unit": "bytes",
 			"source": "allowance",
-			"note": "Bytes C15tCore adds to an iOS binary, measured as the linked __TEXT plus __DATA of the arm64 slice. 1 MiB is the ceiling for the Swift core with no IAB."
+			"note": "Bytes C15tCore adds to an iOS binary, measured as the linked __TEXT plus __DATA of the arm64 simulator slice of a Release build. The integrated mobile release wave (#134) measures 1,207,625 B on the macOS runner. The growth over the 475,805 B recorded in results/latest.json bought IAB TCF in the core, the GPP encoder and resolver, WebView consent sync, observable models, the bundled and in-code policy paths, and the prompt-owed bookkeeping auto-present reads. The ceiling keeps the headroom ratio of the earlier 1 MiB ceiling over that 475,805 B measurement (2.2038), the only iOS measurement on record."
 		},
 		"ios_binding_bytes": {
 			"max": 262144,
