@@ -153,6 +153,8 @@ public enum C15tPayload {
             "nativeSdkVersion": .string(sdkVersion),
             "subjectId": stringOrNull(snapshot.subject?.id),
             "hasStoredSnapshot": .bool(hasStoredSnapshot),
+            // This build passes a commit's `revision` to the core as `expectedRevision`.
+            "commitRevision": .bool(true),
         ])
     }
 
@@ -378,6 +380,25 @@ public enum C15tPayload {
     /// Anything unreadable, or outside the three actions, returns `nil` and the caller
     /// answers `invalid-intent`. A commit is evidence, so a malformed one is refused
     /// rather than rounded to the nearest action.
+    /// Apply a `commit(intent)` body to `core` and encode the result.
+    ///
+    /// A draft names the snapshot revision it was built on, and the core refuses the
+    /// commit with `concurrent-change` if the record moved since: JavaScript reads a
+    /// cached snapshot, so only this check can see a decision recorded in between. A
+    /// `revision` that is not a whole number is refused as `invalid-intent` rather than
+    /// saved unchecked.
+    public static func commit(_ raw: String?, core: ConsentCore) -> String {
+        guard let parsed = parseCommitIntent(raw) else { return invalidIntent(raw: raw) }
+        var revision: Int?
+        if let value = parseObject(raw)?["revision"] {
+            guard let whole = value.intValue.flatMap({ Int(exactly: $0) }) else {
+                return invalidIntent(raw: raw)
+            }
+            revision = whole
+        }
+        return commitResult(core.save(parsed, expectedRevision: revision), snapshot: core.snapshot())
+    }
+
     public static func parseCommitIntent(_ raw: String?) -> CommitIntent? {
         guard let body = parseObject(raw) else { return nil }
         // `explicit` is `action` and `consents`; `all` and `necessary` are `action`

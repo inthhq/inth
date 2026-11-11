@@ -229,6 +229,39 @@ class C15tPayloadTest {
 	}
 
 	@Test
+	fun `a commit built on an older revision is refused and changes nothing`() {
+		val kernel = bridgeKernel(C15tStore(MemoryStore()))
+		kernel.bootstrap()
+		val current = kernel.snapshot().revision
+		val before = kernel.snapshot()
+
+		assertTrue(
+			"the binary says it checks a commit's revision",
+			parse(C15tPayload.bootstrap(kernel.snapshot(), kernel.hasStoredSnapshot))["commitRevision"]!!.jsonPrimitive.boolean,
+		)
+		val stale = parse(C15tPayload.commit("""{"action":"explicit","consents":{"marketing":true},"revision":${current - 1}}""", kernel))
+		assertFalse(stale["ok"]!!.jsonPrimitive.boolean)
+		assertEquals("concurrent-change", stale["reason"]!!.jsonPrimitive.content)
+		assertEquals("a refused draft must not touch the record", before, kernel.snapshot())
+
+		for (raw in listOf(
+			"""{"action":"explicit","consents":{"marketing":true},"revision":"$current"}""",
+			"""{"action":"explicit","consents":{"marketing":true},"revision":null}""",
+			"""{"action":"explicit","consents":{"marketing":true},"revision":1.5}""",
+		)) {
+			val refused = parse(C15tPayload.commit(raw, kernel))
+			assertEquals("a revision that is not a whole number is not ignored: $raw", "invalid-intent", refused["reason"]!!.jsonPrimitive.content)
+		}
+		assertEquals(before, kernel.snapshot())
+
+		val pinned = parse(C15tPayload.commit("""{"action":"explicit","consents":{"marketing":true},"revision":$current}""", kernel))
+		assertTrue(
+			"the current revision passes the check: ${pinned["reason"]}",
+			pinned["ok"]!!.jsonPrimitive.boolean || pinned["reason"]?.jsonPrimitive?.content != "concurrent-change",
+		)
+	}
+
+	@Test
 	fun `an accepted commit carries no reason at all`() {
 		val result = CommitResult(
 			ok = true,

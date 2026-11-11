@@ -33,4 +33,12 @@ export interface BootstrapPayload {
 	 * connectivity still answers `getSnapshot()` immediately.
 	 */
 	readonly hasStoredSnapshot: boolean;
+	/**
+	 * `true` when the native build honours a commit's `revision`: it refuses
+	 * the commit with `concurrent-change` if the record moved past that
+	 * revision. A draft save pins itself to the revision it was built on, so a
+	 * decision recorded anywhere in between is never overwritten. A binary
+	 * older than this field reads as `false`; see `useConsentDraft`.
+	 */
+	readonly commitRevision: boolean;
 }

@@ -48,6 +48,7 @@ import type {
 } from '../protocol';
 import type { AllConsentNames } from '../protocol/vocabulary';
 import { CONSENT_CATEGORIES } from '../protocol/vocabulary';
+import { ADDITIVE_BOOTSTRAP_DEFAULTS } from '../protocol/wire-shape';
 import { NativeBridgeError } from './bridge-error';
 import { getNativeC15t, getNativeC15tEvents } from './module';
 import type {
@@ -333,6 +334,9 @@ const readString = function readString(
  *
  * Read off `globalThis` because a React Native bundle may have no `process` at all,
  * depending on the polyfill the bundler chose.
+ *
+ * @returns `true` in a production bundle.
+ * @internal
  */
 export const isProduction = function isProduction(): boolean {
 	return (
@@ -480,10 +484,8 @@ const parseBootstrap = function parseBootstrap(raw: string): BootstrapPayload {
 
 	warnBridgeDrift('bootstrap', parsed);
 
-	const { hasStoredSnapshot, protocolVersion, subjectId } = parsed as Record<
-		string,
-		unknown
-	>;
+	const { commitRevision, hasStoredSnapshot, protocolVersion, subjectId } =
+		parsed as Record<string, unknown>;
 
 	if (typeof protocolVersion !== 'number') {
 		// A native build that reports no version predates the handshake, which
@@ -492,6 +494,11 @@ const parseBootstrap = function parseBootstrap(raw: string): BootstrapPayload {
 	}
 
 	return {
+		// Only a boolean from the binary counts; an older binary sends nothing.
+		commitRevision:
+			typeof commitRevision === 'boolean'
+				? commitRevision
+				: ADDITIVE_BOOTSTRAP_DEFAULTS.commitRevision,
 		hasStoredSnapshot: hasStoredSnapshot === true,
 		maxSupportedProtocolVersion: readNumber(
 			parsed,

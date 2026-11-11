@@ -4,7 +4,9 @@
 
 import { useCallback, useMemo } from 'react';
 
+import { useConsentDraftStore } from '../draft/consent-draft-provider';
 import type {
+	CommitIntent,
 	CommitResult,
 	NativeOverridesInput,
 	TrackingAuthorization,
@@ -112,13 +114,29 @@ export type SaveConsentsInput =
 	| 'none'
 	| Readonly<Partial<Record<OptionalConsentCategory, boolean>>>;
 
+/** The native intent for an explicit {@link SaveConsentsInput}. */
+const intentFor = function intentFor(input: SaveConsentsInput): CommitIntent {
+	if (input === 'all') {
+		return { action: 'all' };
+	}
+	if (input === 'none') {
+		return { action: 'necessary' };
+	}
+	return { action: 'explicit', consents: input };
+};
+
 /**
- * Save the subject's consent choice.
+ * Save the subject's consent choice, as `@c15t/react`'s `save` does.
+ *
+ * With no argument it saves the current draft: the nearest
+ * `ConsentDraftProvider`'s, or the draft every `useConsentDraft()` outside one
+ * shares. A stale draft is refused with `reason: 'concurrent-change'`.
  *
  * @example
  * ```tsx
  * const save = useSaveConsents();
  * <Button onPress={() => save('all')} title="Accept all" />
+ * <Button onPress={() => save()} title="Save choices" />
  * ```
  *
  * @returns A stable function. Its promise resolves with the local commit
@@ -126,21 +144,28 @@ export type SaveConsentsInput =
  *   queued: true` is durable local success. Delivery is separate.
  */
 export const useSaveConsents = function useSaveConsents(): (
-	input: SaveConsentsInput
+	input?: SaveConsentsInput
 ) => Promise<CommitResult> {
 	const client = useConsentClient();
+	const draft = useConsentDraftStore();
 
 	return useCallback(
-		(input: SaveConsentsInput) => {
-			if (input === 'all') {
-				return client.commit({ action: 'all' });
+		async (input?: SaveConsentsInput) => {
+			if (input === undefined) {
+				return draft.save();
 			}
-			if (input === 'none') {
-				return client.commit({ action: 'necessary' });
+			const submitted = draft.getState().values;
+			const result = await draft.whileSaving(() =>
+				client.commit(intentFor(input))
+			);
+			// A saved choice supersedes the edits the draft held when it was made, as on
+			// web; an edit made while the save was pending is newer and stays.
+			if (result.ok) {
+				draft.settle(submitted, result.revision);
 			}
-			return client.commit({ action: 'explicit', consents: input });
+			return result;
 		},
-		[client]
+		[client, draft]
 	);
 };
 
