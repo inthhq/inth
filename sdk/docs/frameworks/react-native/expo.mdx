@@ -100,10 +100,15 @@ draw is `#RRGGBB`. A native `dark` value needs the same field in `colors`.
 | `spacing.xs` to `spacing.xl` | `--c15t-space-*` | Page gutters, section gaps and padding, in points or dp |
 | `typography.fontSize.sm`, `.base`, `.lg` | `--c15t-font-size-*` | Supporting, body and headline text sizes, in points or sp |
 | `typography.fontFamily` | `--c15t-font-family` | A bundled font for every role but the headline |
-| `typography.headlineFont` | None | `serif`, `rounded`, `sans` or a bundled font |
+| `typography.headlineFont` | None | `serif`, `rounded`, `sans` or a bundled font; see below |
 | `slots.consentBannerTitle`, `slots.consentBannerDescription`, `slots.buttonPrimary`, `slots.buttonSecondary` | Web `slots` | One part's `color`, `backgroundColor`, `borderRadius` or `fontSize` |
 | `brand.name`, `brand.mark`, `brand.hidden` | None | App name and mark above the headline |
 | `branding.provider`, `branding.name`, `branding.mark`, `branding.hidden` | None | Provider attribution |
+
+For a bundled headline font, iOS needs the PostScript name and Android
+needs the font resource name. One string works on both when it is a valid
+resource name, such as `inter_bold`. When the names differ, pass both:
+`headlineFont: { ios: 'Inter-Bold', android: 'inter_bold' }`.
 
 Fields only the React Native components draw, such as `motion`,
 `colors.border` or `typography.lineHeight`, are checked and not written.

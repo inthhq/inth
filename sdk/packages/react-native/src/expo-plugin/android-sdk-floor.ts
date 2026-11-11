@@ -26,8 +26,9 @@ interface SdkFloor {
 	/**
 	 * Whole Gradle statements that set the level in a module: `minSdkVersion 24`,
 	 * `minSdkVersion = 24`, `minSdk = 24`, and the call forms `minSdkVersion(24)`
-	 * and `minSdk(24)`, which Groovy accepts and the Kotlin DSL uses. Anchored to
-	 * the line, so the name inside a string or a call argument is not a setting.
+	 * and `minSdk(24)`, which Groovy accepts and the Kotlin DSL uses. Each must be
+	 * a whole statement (see {@link gradleStatements}), so the name inside a
+	 * string or a call argument is not a setting.
 	 */
 	readonly gradle: readonly RegExp[];
 	/**
@@ -51,9 +52,8 @@ const propertyPattern = (key: string): RegExp =>
 		'gmu'
 	);
 
-/** One statement on its own line, optionally ending in `;`. */
-const statement = (body: string): RegExp =>
-	new RegExp(`^[ \\t]*${body}[ \\t]*;?[ \\t]*$`, 'gmu');
+/** One whole statement, as {@link gradleStatements} yields it. */
+const statement = (body: string): RegExp => new RegExp(`^${body}$`, 'u');
 
 const LEVEL = '(?<value>\\d{1,3})';
 
@@ -100,6 +100,22 @@ const SDK_FLOORS: readonly SdkFloor[] = [
 ];
 
 /**
+ * Index just past the string literal opening at `start`: `'...'`, `"..."`, or
+ * a triple-quoted one, honouring backslash escapes.
+ */
+const stringEnd = function stringEnd(source: string, start: number): number {
+	const char = source[start] ?? '';
+	const quote = source.startsWith(char.repeat(3), start)
+		? char.repeat(3)
+		: char;
+	let end = start + quote.length;
+	while (end < source.length && !source.startsWith(quote, end)) {
+		end += source[end] === '\\' ? 2 : 1;
+	}
+	return Math.min(source.length, end + quote.length);
+};
+
+/**
  * Blank out Groovy and Kotlin comments, keeping strings and line breaks.
  *
  * Strings are skipped rather than parsed, so `//` inside `"https://..."` and
@@ -127,14 +143,7 @@ export const stripGradleComments = function stripGradleComments(
 			continue;
 		}
 		if (char === '"' || char === "'") {
-			const quote = source.startsWith(char.repeat(3), index)
-				? char.repeat(3)
-				: char;
-			let end = index + quote.length;
-			while (end < source.length && !source.startsWith(quote, end)) {
-				end += source[end] === '\\' ? 2 : 1;
-			}
-			end = Math.min(source.length, end + quote.length);
+			const end = stringEnd(source, index);
 			output += source.slice(index, end);
 			index = end;
 			continue;
@@ -145,18 +154,116 @@ export const stripGradleComments = function stripGradleComments(
 	return output;
 };
 
-/** Every level the patterns find, in file order across all of them. */
-const matches = function matches(
-	contents: string | undefined,
-	patterns: RegExp | readonly RegExp[]
-): number[] {
-	if (contents === undefined) {
-		return [];
+/** One Gradle statement and the blocks it sits in. */
+export interface GradleStatement {
+	/** The statement, trimmed, without its `;`. */
+	readonly text: string;
+	/** Enclosing block labels, outermost first, such as `android/defaultConfig`. */
+	readonly block: string;
+}
+
+/**
+ * Split comment-free Groovy or Kotlin DSL into statements.
+ *
+ * A statement ends at a line break, a `;`, a `{` or a `}`, outside strings and
+ * outside `(...)` or `[...]`, so `defaultConfig { minSdkVersion(21) }` and
+ * `minSdk = 21; targetSdk = 35` yield one statement per setting. The text
+ * before a `{` labels the block it opens. This tracks only what the SDK floor
+ * needs; it is not a Gradle parser.
+ *
+ * @param source - Output of {@link stripGradleComments}.
+ * @returns The statements in file order.
+ */
+export const gradleStatements = function gradleStatements(
+	source: string
+): GradleStatement[] {
+	const statements: GradleStatement[] = [];
+	const blocks: { readonly label: string; readonly depth: number }[] = [];
+	let current = '';
+	let depth = 0;
+	const flush = (): string => {
+		const text = current.trim();
+		current = '';
+		if (text !== '') {
+			statements.push({
+				block: blocks.map((entry) => entry.label).join('/'),
+				text,
+			});
+		}
+		return text;
+	};
+	let index = 0;
+	while (index < source.length) {
+		const char = source[index] ?? '';
+		if (char === '"' || char === "'") {
+			const end = stringEnd(source, index);
+			current += source.slice(index, end);
+			index = end;
+			continue;
+		}
+		if (char === '(' || char === '[') {
+			depth += 1;
+		} else if ((char === ')' || char === ']') && depth > 0) {
+			depth -= 1;
+		}
+		if (char === '{') {
+			const label = current.trim();
+			current = '';
+			blocks.push({ depth, label });
+			depth = 0;
+		} else if (char === '}') {
+			flush();
+			depth = blocks.pop()?.depth ?? 0;
+		} else if (char === ';' || (char === '\n' && depth === 0)) {
+			flush();
+		} else {
+			current += char;
+		}
+		index += 1;
 	}
-	return (Array.isArray(patterns) ? patterns : [patterns])
-		.flatMap((pattern: RegExp) => [...contents.matchAll(pattern)])
-		.sort((first, second) => (first.index ?? 0) - (second.index ?? 0))
-		.map((match) => Number.parseInt(match.groups?.value ?? '', 10));
+	flush();
+	return statements;
+};
+
+interface LevelMatch {
+	readonly block: string;
+	readonly value: number;
+}
+
+/** Every statement one of the patterns matches, in file order. */
+const matches = function matches(
+	statements: readonly GradleStatement[],
+	patterns: readonly RegExp[]
+): LevelMatch[] {
+	return statements.flatMap((entry) => {
+		for (const pattern of patterns) {
+			const value = pattern.exec(entry.text)?.groups?.value;
+			if (value !== undefined) {
+				return [{ block: entry.block, value: Number.parseInt(value, 10) }];
+			}
+		}
+		return [];
+	});
+};
+
+/** The last match per block, in order of each block's first match. */
+const lastPerBlock = function lastPerBlock(
+	found: readonly LevelMatch[]
+): number[] {
+	const byBlock = new Map<string, number>();
+	for (const match of found) {
+		byBlock.set(match.block, match.value);
+	}
+	return [...byBlock.values()];
+};
+
+/** The last `gradle.properties` entry the pattern matches. */
+const lastProperty = function lastProperty(
+	contents: string | undefined,
+	pattern: RegExp
+): number | undefined {
+	const value = [...(contents ?? '').matchAll(pattern)].at(-1)?.groups?.value;
+	return value === undefined ? undefined : Number.parseInt(value, 10);
 };
 
 const firstFile = function firstFile(
@@ -176,9 +283,10 @@ const firstFile = function firstFile(
  * already meets c15t's floors, so only an explicit value can fall below them.
  *
  * Only the value Gradle applies counts. A literal in the app module wins over
- * the other two, and every literal there counts, because a product flavor's
- * level applies to that flavor's variants. Otherwise the last root `ext`
- * assignment wins, and otherwise the last `gradle.properties` entry, as
+ * the other two. Within one block, such as `android/defaultConfig`, the last
+ * assignment wins, as in Gradle; each block's value counts, because a product
+ * flavor's level applies to that flavor's variants. Otherwise the last root
+ * `ext` assignment wins, and otherwise the last `gradle.properties` entry, as
  * `java.util.Properties` reads it. Comments never count.
  *
  * @param files - File contents keyed by path under `android/`.
@@ -189,22 +297,24 @@ export const findAndroidSdkSettings = function findAndroidSdkSettings(
 ): AndroidSdkSetting[] {
 	const app = firstFile(files, ['app/build.gradle', 'app/build.gradle.kts']);
 	const root = firstFile(files, ['build.gradle', 'build.gradle.kts']);
-	const appSource =
-		app === undefined ? undefined : stripGradleComments(files[app] ?? '');
-	const rootSource =
-		root === undefined ? undefined : stripGradleComments(files[root] ?? '');
+	const statementsOf = (path: string | undefined): GradleStatement[] =>
+		path === undefined
+			? []
+			: gradleStatements(stripGradleComments(files[path] ?? ''));
+	const appStatements = statementsOf(app);
+	const rootStatements = statementsOf(root);
 	const properties = files['gradle.properties'];
 
 	return SDK_FLOORS.flatMap((floor): AndroidSdkSetting[] => {
-		const inApp = matches(appSource, floor.gradle);
+		const inApp = lastPerBlock(matches(appStatements, floor.gradle));
 		if (app !== undefined && inApp.length > 0) {
 			return inApp.map((value) => ({ file: app, level: floor.level, value }));
 		}
-		const inRoot = matches(rootSource, floor.ext).at(-1);
+		const inRoot = matches(rootStatements, floor.ext).at(-1)?.value;
 		if (root !== undefined && inRoot !== undefined) {
 			return [{ file: root, level: floor.level, value: inRoot }];
 		}
-		const inProperties = matches(properties, floor.property).at(-1);
+		const inProperties = lastProperty(properties, floor.property);
 		if (inProperties !== undefined) {
 			return [
 				{ file: 'gradle.properties', level: floor.level, value: inProperties },

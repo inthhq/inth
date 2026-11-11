@@ -185,6 +185,8 @@ export interface ResolvedC15tTheme {
 	readonly entries: readonly {
 		readonly key: ThemeKey;
 		readonly value: ThemeValue;
+		/** Write to one platform only; absent writes both. */
+		readonly platform?: 'ios' | 'android';
 	}[];
 }
 
@@ -359,7 +361,7 @@ const checkNumbers = function checkNumbers(
 const POINTS = 'points (dp on Android)';
 
 /** Native entries one part of the theme resolves to. */
-type ThemeEntries = { key: ThemeKey; value: ThemeValue }[];
+type ThemeEntries = ResolvedC15tTheme['entries'][number][];
 
 /** Keep only the values that were set. */
 const entriesOf = (
@@ -438,6 +440,75 @@ const resolveSpacing = function resolveSpacing(value: unknown): ThemeEntries {
 	]);
 };
 
+/** Names both native readers take as a built-in face. */
+const HEADLINE_FONT_KEYWORDS = [
+	'serif',
+	'rounded',
+	'sans',
+	'sans-serif',
+	'sansserif',
+	'system',
+];
+
+/** What Android's `getIdentifier(name, "font", ...)` can resolve. */
+const ANDROID_FONT_RESOURCE = /^(?:@font\/)?[a-z][\d_a-z]*$/u;
+
+const isKeyword = (name: string): boolean =>
+	HEADLINE_FONT_KEYWORDS.includes(name.toLowerCase());
+
+/**
+ * Resolve `headlineFont`, per platform when the names differ.
+ *
+ * iOS takes a PostScript name such as `Inter-Bold`; Android takes a font
+ * resource name, which is lowercase letters, digits and `_`. A string that is
+ * not a resource name would leave Android on its default face without a word,
+ * so it fails here and asks for the `{ ios, android }` form.
+ */
+const resolveHeadlineFont = function resolveHeadlineFont(
+	value: unknown
+): ThemeEntries {
+	const label = 'theme.typography.headlineFont';
+	const fontKey = THEME_KEYS.headlineFont;
+	const androidName = (name: string, field: string): string => {
+		if (!isKeyword(name) && !ANDROID_FONT_RESOURCE.test(name)) {
+			throw new C15tPluginError(
+				`${field} ${quote(name)} is not an Android font resource name ` +
+					`(lowercase letters, digits and _), so Android would keep its ` +
+					`default face. Use { "ios": ${quote(name)}, "android": ` +
+					`"<res/font name>" }.`
+			);
+		}
+		return name;
+	};
+	if (value === undefined || typeof value === 'string') {
+		const name = readText(value, label);
+		return name === null
+			? []
+			: [{ key: fontKey, value: androidName(name, label) }];
+	}
+	const fonts = asObject(value, label);
+	assertKnownFields(fonts, label, ['ios', 'android'], '');
+	const ios = readText(fonts.ios, `${label}.ios`);
+	const android = readText(fonts.android, `${label}.android`);
+	if (ios === null && android === null) {
+		throw new C15tPluginError(`${label} needs ios, android or both.`);
+	}
+	return [
+		...(ios === null
+			? []
+			: [{ key: fontKey, platform: 'ios' as const, value: ios }]),
+		...(android === null
+			? []
+			: [
+					{
+						key: fontKey,
+						platform: 'android' as const,
+						value: androidName(android, `${label}.android`),
+					},
+				]),
+	];
+};
+
 const resolveTypography = function resolveTypography(
 	value: unknown
 ): ThemeEntries {
@@ -480,19 +551,20 @@ const resolveTypography = function resolveTypography(
 			'points (sp on Android)',
 			true
 		);
-	return entriesOf([
-		[
-			THEME_KEYS.fontFamily,
-			readText(typography.fontFamily, 'theme.typography.fontFamily'),
-		],
-		[
-			THEME_KEYS.headlineFont,
-			readText(typography.headlineFont, 'theme.typography.headlineFont'),
-		],
-		[THEME_KEYS.fontSizeSm, size('sm')],
-		[THEME_KEYS.fontSizeBase, size('base')],
-		[THEME_KEYS.fontSizeLg, size('lg')],
-	]);
+	return [
+		...entriesOf([
+			[
+				THEME_KEYS.fontFamily,
+				readText(typography.fontFamily, 'theme.typography.fontFamily'),
+			],
+		]),
+		...resolveHeadlineFont(typography.headlineFont),
+		...entriesOf([
+			[THEME_KEYS.fontSizeSm, size('sm')],
+			[THEME_KEYS.fontSizeBase, size('base')],
+			[THEME_KEYS.fontSizeLg, size('lg')],
+		]),
+	];
 };
 
 const resolveSlots = function resolveSlots(value: unknown): ThemeEntries {
@@ -668,7 +740,7 @@ export const applyThemeInfoPlist = function applyThemeInfoPlist(
 	for (const owned of THEME_OWNED_KEYS) {
 		Reflect.deleteProperty(next, owned.ios);
 	}
-	for (const entry of theme.entries) {
+	for (const entry of theme.entries.filter((e) => e.platform !== 'android')) {
 		next[entry.key.ios] = entry.value;
 	}
 	return next;
@@ -696,7 +768,7 @@ export const applyThemeAndroidManifest = function applyThemeAndroidManifest(
 			(item) => !owned.has(item.$['android:name'])
 		);
 	}
-	for (const entry of theme.entries) {
+	for (const entry of theme.entries.filter((e) => e.platform !== 'ios')) {
 		androidConfig.Manifest.addMetaDataItemToMainApplication(
 			application,
 			entry.key.android,
