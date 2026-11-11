@@ -32,10 +32,8 @@
 		"react": "19.2.7"
 	},
 	"devDependencies": {
-		"@babel/core": "7.29.7",
 		"@c15t/typescript-config": "workspace:*",
 		"@types/node": "^24.10.1",
-		"metro-transform-plugins": "0.84.5",
 		"react-test-renderer": "19.2.8",
 		"typescript": "7.0.2",
 		"vitest": "4.1.10"

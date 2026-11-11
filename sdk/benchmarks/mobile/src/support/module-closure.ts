@@ -25,7 +25,12 @@ import { existsSync, readFileSync, statSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, resolve } from 'node:path';
 
-const require = createRequire(import.meta.url);
+// Metro's plugins are dev dependencies of the React Native package, which is what
+// they model. A benchmark package cannot declare a dependency its base revision
+// lacks (scripts/benchmark-overlay.ts), so this resolves them from there.
+const require = createRequire(
+	new URL('../../../../packages/react-native/package.json', import.meta.url)
+);
 
 /** Which Metro build the walk models. */
 export type ClosureBuild = 'release' | 'development';

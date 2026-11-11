@@ -108,6 +108,7 @@
 		"@expo/config-plugins": "57.0.9"
 	},
 	"devDependencies": {
+		"@babel/core": "7.29.7",
 		"@babel/parser": "7.28.5",
 		"@c15t/core": "workspace:*",
 		"@c15t/iab": "workspace:*",
@@ -117,6 +118,7 @@
 		"@react-native/codegen": "0.87.1",
 		"@types/react-dom": "19.2.3",
 		"jsdom": "25.0.1",
+		"metro-transform-plugins": "0.84.5",
 		"react": "19.2.7",
 		"react-dom": "19.2.7",
 		"react-native": "0.87.1",
