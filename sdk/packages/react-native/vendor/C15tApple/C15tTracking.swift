@@ -99,12 +99,12 @@ public enum C15tTracking {
     /// Spelled by hand because `#selector` cannot reach a declaration this build never saw:
     /// the request arrives with iOS and iPadOS 27.2, newer than the SDK the pod compiles
     /// against. The string is Apple's own, from the symbol identifier behind
-    /// `requestTrackingAuthorization(usingExpandedInterface:additionalInformationAction:completionHandler:)`.
+    /// `requestTrackingAuthorization(preferExpandedInterface:additionalInformationAction:completionHandler:)`.
     /// It is a public constant and the test target pins it, so if Apple renames the method
     /// before it leaves beta the failure is a red test rather than a permission prompt that
     /// quietly never appears.
     public static let expandedRequestSelectorName =
-        "requestTrackingAuthorizationUsingExpandedInterface:additionalInformationAction:completionHandler:"
+        "requestTrackingAuthorizationPreferringExpandedInterface:additionalInformationAction:completionHandler:"
 
     #if canImport(ObjectiveC)
     /// The selector ``expandedRequestSelectorName`` names.
@@ -141,7 +141,7 @@ public enum C15tTracking {
     ///
     /// - Parameters:
     ///   - preferExpandedInterface: Passed straight through as Apple's
-    ///     `usingExpandedInterface`. The full-page sheet Apple shows for it depends on
+    ///     `preferExpandedInterface`. The full-page sheet Apple shows for it depends on
     ///     `NSUserTrackingMarkdownUsageDescription` being in the binary, and Apple may show
     ///     the plain alert anyway outside the EU, so this is a preference and not a promise.
     ///   - additionalInformationSelected: Runs when the subject taps Additional Information.
