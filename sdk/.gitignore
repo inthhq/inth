@@ -134,3 +134,7 @@ packages/*/SKILL.md
 /ci-build.tar
 /ci-build-cache.tar
 /.ci-reports/
+
+# Python bytecode from repo scripts
+__pycache__/
+*.pyc
