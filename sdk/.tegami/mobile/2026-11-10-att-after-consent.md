@@ -1,6 +1,7 @@
 ---
 packages:
   'swift:c15t-swift': patch
+  'maven:c15t-android': patch
 ---
 
 ### Ask for App Tracking Transparency after the consent prompt on Swift
@@ -18,3 +19,8 @@ which is the previous behaviour. `.beforeConsent` also covers
 `ConsentPrompt.presentPrompt()`, but not settings. No order asks once a stored
 choice refuses marketing, while a notice card shows, or while no scene is
 attached. Android has no ATT and no option.
+
+Breaking change on Swift and Android: `ConsentPrompt.presenter` is no longer
+public. Opening the prompt through it skipped the host rules and, on Swift, the
+tracking order. Call `presentPrompt()` and `presentPreferences()` on
+`ConsentPrompt` instead.
