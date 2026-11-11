@@ -585,7 +585,7 @@ final class C15tTrackingGateTests: XCTestCase {
         // expanded prompt quietly stops appearing on the devices that could have shown it.
         XCTAssertEqual(
             C15tTracking.expandedRequestSelectorName,
-            "requestTrackingAuthorizationUsingExpandedInterface:additionalInformationAction:completionHandler:"
+            "requestTrackingAuthorizationPreferringExpandedInterface:additionalInformationAction:completionHandler:"
         )
     }
 
