@@ -52,3 +52,8 @@ final class VendorCalls: @unchecked Sendable {
     @discardableResult
     func drain() -> [String] { lock.lock(); defer { lock.unlock() }; let out = recorded; recorded = []; return out }
 }
+
+extension GoogleAdsConsent {
+    static let granted = GoogleAdsConsent(adStorage: true, adUserData: true, adPersonalization: true)
+    static let denied = GoogleAdsConsent(adStorage: false, adUserData: false, adPersonalization: false)
+}

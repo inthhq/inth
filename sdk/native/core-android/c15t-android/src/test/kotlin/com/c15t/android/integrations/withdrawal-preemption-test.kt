@@ -61,6 +61,32 @@ internal val integrationHelpers = listOf(
 	IntegrationHelper("PostHog", { core, r, e -> PostHogIntegration(core, optIn = { r("optIn") }, optOut = { r("optOut") }, onError = e) }),
 	IntegrationHelper("Mixpanel", { core, r, e -> MixpanelIntegration(core, optInTracking = { r("optIn") }, optOutTracking = { r("optOut") }, onError = e) }),
 	IntegrationHelper("Sentry Replay", { core, r, e -> SentryReplayIntegration(core, start = { r("start") }, stop = { r("stop") }, onError = e) }),
+	IntegrationHelper("AdMob", { core, r, e -> AdMobIntegration(core, setConsent = { r("ads:${it.adStorage}") }, onError = e) }),
+	IntegrationHelper("AppsFlyer", { core, r, e ->
+		AppsFlyerIntegration(core, setConsentData = { r("consent:${it.adUserData}") }, stop = { r("stop:$it") }, start = { r("start") }, onError = e)
+	}, { core, r, e ->
+		AppsFlyerIntegration(core, MEASUREMENT, setConsentData = { r("consent:${it.adUserData}") }, stop = { r("stop:$it") }, start = { r("start") }, onError = e)
+	}),
+	IntegrationHelper("Adjust", { core, r, e ->
+		AdjustIntegration(core, enable = { r("enable") }, disable = { r("disable") }, trackThirdPartySharing = { r("sharing:${it.adUserData}") }, onError = e)
+	}, { core, r, e ->
+		AdjustIntegration(core, MEASUREMENT, enable = { r("enable") }, disable = { r("disable") }, trackThirdPartySharing = { r("sharing:${it.adUserData}") }, onError = e)
+	}),
+	IntegrationHelper("Meta App Events", { core, r, e ->
+		MetaAppEventsIntegration(core,
+			setAutoLogAppEventsEnabled = { r("autoLog:$it") },
+			setAdvertiserIDCollectionEnabled = { r("advertiserId:$it") },
+			setLimitedDataUse = { r("ldu:$it") },
+			onError = e,
+		)
+	}, { core, r, e ->
+		MetaAppEventsIntegration(core, MEASUREMENT,
+			setAutoLogAppEventsEnabled = { r("autoLog:$it") },
+			setAdvertiserIDCollectionEnabled = { r("advertiserId:$it") },
+			setLimitedDataUse = { r("ldu:$it") },
+			onError = e,
+		)
+	}),
 )
 
 @RunWith(Parameterized::class)

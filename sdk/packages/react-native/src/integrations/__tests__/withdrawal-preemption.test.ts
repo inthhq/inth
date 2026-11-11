@@ -8,8 +8,12 @@ import { resetNativeStub } from '../../__tests__/helpers/react-native-stub';
 import { resetConsentClient } from '../../native/client';
 import type { ConsentSnapshot } from '../../protocol';
 import {
+	connectAdjust,
+	connectAdMob,
 	connectAmplitude,
+	connectAppsFlyer,
 	connectFirebaseAnalytics,
+	connectMetaAppEvents,
 	connectMixpanel,
 	connectPostHog,
 	connectSentryReplay,
@@ -128,6 +132,10 @@ const helpers: readonly (readonly [string, Connect])[] = [
 	['Mixpanel', connectMixpanel],
 	['Sentry Replay', connectSentryReplay],
 	['Amplitude', connectAmplitude],
+	['AdMob', (client, options) => connectAdMob(client, options)],
+	['AppsFlyer', connectAppsFlyer],
+	['Adjust', connectAdjust],
+	['Meta App Events', connectMetaAppEvents],
 ];
 
 /** The calls a helper makes for denial, and those only a grant makes. */

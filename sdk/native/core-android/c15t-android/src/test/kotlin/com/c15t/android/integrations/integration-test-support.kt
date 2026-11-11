@@ -54,5 +54,8 @@ internal fun ConsentCore.choose(vararg categories: Pair<ConsentCategory, Boolean
 
 internal fun unexpectedError(error: Exception): Unit = throw AssertionError("Unexpected vendor failure", error)
 
+internal val ADS_GRANTED = GoogleAdsConsent(adStorage = true, adUserData = true, adPersonalization = true)
+internal val ADS_DENIED = GoogleAdsConsent(adStorage = false, adUserData = false, adPersonalization = false)
+
 /** Take and clear the recorded calls. */
 internal fun MutableList<String>.drain(): List<String> = toList().also { clear() }

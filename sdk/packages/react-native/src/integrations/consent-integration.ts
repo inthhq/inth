@@ -6,6 +6,8 @@ import type {
 	AllConsentNames,
 	OptionalConsentCategory,
 } from '../protocol/vocabulary';
+import { resolveGoogleAdsConsent } from './google-consent-mode';
+import type { GoogleAdsConsent } from './google-consent-mode';
 
 /** An app-owned connection between native consent and one vendor SDK. */
 export interface ConsentIntegration {
@@ -262,4 +264,32 @@ export const settleAll = async (
 			throw result.reason;
 		}
 	}
+};
+
+/** Whether a vendor may run under its category, with the advertising types. */
+export interface TrackingAndAds {
+	readonly tracking: boolean;
+	readonly ads: GoogleAdsConsent;
+}
+
+/**
+ * Connect a vendor that runs under one category, defaulting to marketing, and
+ * also takes the Consent Mode advertising types.
+ */
+export const connectTrackingAndAds = (
+	options: AnalyticsIntegrationOptions,
+	apply: (
+		current: () => TrackingAndAds,
+		previous: TrackingAndAds | undefined
+	) => Promise<TrackingAndAds>
+): ConsentIntegration => {
+	const category = optionalCategory(options, 'marketing');
+	return connectConsentState(
+		options,
+		(isAllowed) => ({
+			ads: resolveGoogleAdsConsent(isAllowed),
+			tracking: isAllowed(category),
+		}),
+		apply
+	);
 };

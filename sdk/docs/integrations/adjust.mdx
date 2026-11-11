@@ -1,0 +1,197 @@
+---
+title: Adjust
+description: Keep the Adjust SDK disabled until c15t consent allows it and send third-party sharing with Google's DMA options, in Swift, Kotlin, React Native and Expo.
+seoTitle: Adjust consent for mobile apps with c15t
+seoDescription: Enable and disable Adjust from c15t consent and send Google DMA third-party sharing in Swift, Android, React Native and Expo apps.
+group: integrations
+---
+
+The Adjust helper keeps the SDK disabled until a category allows it. When
+the category is granted it enables Adjust and sends
+[third-party sharing](https://dev.adjust.com/en/sdk/android/features/privacy)
+with Google's `google_dma` options. The category defaults to `marketing`. The
+DMA values come from the shared
+[Consent Mode mapping](/docs/integrations/google-tag#how-categories-map-to-google-consent-types),
+so marketing grants them.
+
+The helper ships in `C15tApple`, `c15t-android` and
+`@c15t/react-native/integrations`. c15t adds no Adjust dependency. The web
+has no Adjust helper.
+
+## What the helper changes
+
+| Consent | Adjust calls |
+| --- | --- |
+| Category denied or pending | `disable()` |
+| Category granted | `enable()`, once per grant, then third-party sharing |
+| Marketing changes while the category stays granted | Third-party sharing only |
+
+Adjust sends nothing while disabled, ignores calls made while disabled and
+remembers the disabled state across launches. That is why the helper enables
+first and sends sharing second, and sends no sharing on withdrawal.
+
+| Third-party sharing | From |
+| --- | --- |
+| Sharing enabled | `adUserData` |
+| `google_dma` `eea` | Your app |
+| `google_dma` `ad_personalization` | `adPersonalization` |
+| `google_dma` `ad_user_data` | `adUserData` |
+
+c15t's policy model says how the app asks for consent, not where the user
+is, so `eea` comes from your own region logic. Adjust and Google expect `"1"`
+only for users in the European Economic Area.
+
+## Before you start
+
+Complete the [Swift](/docs/frameworks/swift/quickstart),
+[Android](/docs/frameworks/android/quickstart) or
+[React Native](/docs/frameworks/react-native/quickstart) quickstart, with
+`marketing` in your Inth policy and native configuration. Install Adjust SDK
+v5 through its [iOS](https://dev.adjust.com/en/sdk/ios/features/privacy),
+[Android](https://dev.adjust.com/en/sdk/android/features/privacy) or
+[React Native](https://dev.adjust.com/en/sdk/react-native/features/privacy)
+guide.
+
+Connect the helper **before** `Adjust.initSdk`. Adjust holds `disable`,
+`enable` and third-party sharing calls made before initialization and applies
+them at start, so the first session already follows consent.
+
+## Connect a Swift app
+
+```swift title="AdjustConsentOwner.swift"
+import AdjustSdk
+import C15tApple
+import C15tCore
+
+final class AdjustConsentOwner {
+    private let integration: AdjustIntegration
+
+    init(core: ConsentCore, inEEA: Bool) {
+        integration = AdjustIntegration(
+            core: core,
+            enable: { Adjust.enable() },
+            disable: { Adjust.disable() },
+            trackThirdPartySharing: { consent in
+                guard let sharing = ADJThirdPartySharing(isEnabled: NSNumber(value: consent.adUserData)) else { return }
+                sharing.addGranularOption("google_dma", key: "eea", value: inEEA ? "1" : "0")
+                sharing.addGranularOption("google_dma", key: "ad_personalization", value: consent.adPersonalization ? "1" : "0")
+                sharing.addGranularOption("google_dma", key: "ad_user_data", value: consent.adUserData ? "1" : "0")
+                Adjust.trackThirdPartySharing(sharing)
+            }
+        )
+    }
+
+    func stop() { integration.cancel() }
+    func syncAfterReset() { integration.sync() }
+}
+```
+
+Create the owner, then call `Adjust.initSdk`. Keep it for the app's
+lifetime.
+
+## Connect an Android app
+
+```kotlin title="AdjustConsent.kt"
+import com.adjust.sdk.Adjust
+import com.adjust.sdk.AdjustThirdPartySharing
+import com.c15t.android.integrations.AdjustIntegration
+import com.c15t.core.C15t
+
+fun connectAdjustConsent(inEea: Boolean, onError: (Exception) -> Unit): AdjustIntegration {
+	val core = checkNotNull(C15t.current) { "Install c15t before connecting Adjust" }
+	val flag = { granted: Boolean -> if (granted) "1" else "0" }
+	return AdjustIntegration(
+		core = core,
+		enable = Adjust::enable,
+		disable = Adjust::disable,
+		trackThirdPartySharing = { consent ->
+			val sharing = AdjustThirdPartySharing(consent.adUserData)
+			sharing.addGranularOption("google_dma", "eea", flag(inEea))
+			sharing.addGranularOption("google_dma", "ad_personalization", flag(consent.adPersonalization))
+			sharing.addGranularOption("google_dma", "ad_user_data", flag(consent.adUserData))
+			Adjust.trackThirdPartySharing(sharing)
+		},
+		onError = onError,
+	)
+}
+```
+
+Call it in `Application.onCreate` before `Adjust.initSdk(config)`, and keep
+the returned helper on the application.
+
+## Connect React Native or Expo
+
+Copy the checked connection function into `adjust-consent.ts`:
+
+<include src="../shared/examples/react-native-bare/rn-adjust-integration.mdx" />
+
+Then supply `react-native-adjust`:
+
+{/* example: fragment */}
+
+```ts title="adjust-vendor.ts"
+import { Adjust, AdjustThirdPartySharing } from 'react-native-adjust';
+
+import { connectAppAdjust } from './adjust-consent';
+
+const flag = (granted: boolean) => (granted ? '1' : '0');
+
+export const connectAdjustVendor = (
+	inEea: boolean,
+	onError: (error: unknown) => void
+) =>
+	connectAppAdjust(
+		{
+			disable: () => Adjust.disable(),
+			enable: () => Adjust.enable(),
+			trackThirdPartySharing: ({ adUserData, adPersonalization }) => {
+				const sharing = new AdjustThirdPartySharing(adUserData);
+				sharing.addGranularOption('google_dma', 'eea', flag(inEea));
+				sharing.addGranularOption(
+					'google_dma',
+					'ad_personalization',
+					flag(adPersonalization)
+				);
+				sharing.addGranularOption(
+					'google_dma',
+					'ad_user_data',
+					flag(adUserData)
+				);
+				Adjust.trackThirdPartySharing(sharing);
+			},
+		},
+		onError
+	);
+```
+
+Call it before `Adjust.initSdk`. JavaScript runs after native startup, so a
+persisted disabled state from an earlier launch is what holds Adjust back
+until then. Expo needs a development build with both native modules.
+
+## Handle reset and teardown
+
+`sync()` enables Adjust again if allowed and resends third-party sharing.
+Teardown (`stop()`, `close()` or `disconnect()`) disables Adjust. Neither
+call deletes data. For an erasure request, use Adjust's `gdprForgetMe`, which
+is permanent.
+
+## Check the integration
+
+1. Launch with no saved choice. Confirm `Adjust.isEnabled` reports `false`
+   and no session reaches Adjust.
+2. Grant marketing. Confirm a third-party sharing package with the
+   `google_dma` options set to `1`, followed by sessions.
+3. Withdraw. Confirm Adjust is disabled and sends nothing more.
+4. Relaunch after withdrawal. Confirm Adjust starts disabled.
+
+The helper tests cover enable order, withdrawal during enable and
+marketing-only changes with recorded calls. They were not run against the
+Adjust SDK.
+
+The snippets were written against these SDK majors and checked as shown:
+
+| Platform | Version | How |
+| --- | --- | --- |
+| React Native | `react-native-adjust` 5.8.1 | Type-checked against the package's published types |
+| Android | `adjust-android` 5.8.1 | Method signatures read from the published AAR |
+| iOS | Adjust 5.8.1 | Checked against the SDK's public headers |

@@ -67,6 +67,34 @@ final class WithdrawalPreemptionTests: XCTestCase {
             let helper = SentryReplayIntegration(core: core, start: { r("start") }, stop: { r("stop") })
             return ConnectedHelper(cancel: helper.cancel)
         }),
+        ("AdMob", { core, r in
+            let helper = AdMobIntegration(core: core) { r("ads:\($0.adStorage)") }
+            return ConnectedHelper(cancel: helper.cancel)
+        }),
+        ("AppsFlyer", { core, r in
+            let helper = AppsFlyerIntegration(
+                core: core,
+                setConsentData: { r("consent:\($0.adUserData)") },
+                setStopped: { r("stopped:\($0)") },
+                start: { r("start") })
+            return ConnectedHelper(cancel: helper.cancel)
+        }),
+        ("Adjust", { core, r in
+            let helper = AdjustIntegration(
+                core: core,
+                enable: { r("enable") },
+                disable: { r("disable") },
+                trackThirdPartySharing: { r("sharing:\($0.adUserData)") })
+            return ConnectedHelper(cancel: helper.cancel)
+        }),
+        ("Meta App Events", { core, r in
+            let helper = MetaAppEventsIntegration(
+                core: core,
+                setAutoLogAppEventsEnabled: { r("autoLog:\($0)") },
+                setAdvertiserIDCollectionEnabled: { r("advertiserId:\($0)") },
+                setLimitedDataUse: { r("ldu:\($0)") })
+            return ConnectedHelper(cancel: helper.cancel)
+        }),
     ]
 
     /// The calls a helper makes for denial, for a grant, and those only a grant makes.
@@ -187,7 +215,35 @@ final class WithdrawalPreemptionTests: XCTestCase {
 
     /// Helpers that take a category, connected under measurement. The others read a
     /// fixed set of categories and connect as in ``helpers``.
-    private let measured: [String: (ConsentCore, @escaping @Sendable (String) -> Void) -> ConnectedHelper] = [:]
+    private let measured: [String: (ConsentCore, @escaping @Sendable (String) -> Void) -> ConnectedHelper] = [
+        "AppsFlyer": { core, r in
+            let helper = AppsFlyerIntegration(
+                core: core,
+                category: .measurement,
+                setConsentData: { r("consent:\($0.adUserData)") },
+                setStopped: { r("stopped:\($0)") },
+                start: { r("start") })
+            return ConnectedHelper(cancel: helper.cancel)
+        },
+        "Adjust": { core, r in
+            let helper = AdjustIntegration(
+                core: core,
+                category: .measurement,
+                enable: { r("enable") },
+                disable: { r("disable") },
+                trackThirdPartySharing: { r("sharing:\($0.adUserData)") })
+            return ConnectedHelper(cancel: helper.cancel)
+        },
+        "Meta App Events": { core, r in
+            let helper = MetaAppEventsIntegration(
+                core: core,
+                category: .measurement,
+                setAutoLogAppEventsEnabled: { r("autoLog:\($0)") },
+                setAdvertiserIDCollectionEnabled: { r("advertiserId:\($0)") },
+                setLimitedDataUse: { r("ldu:\($0)") })
+            return ConnectedHelper(cancel: helper.cancel)
+        },
+    ]
 
     func testSecondWithdrawalRunsAtOnceAfterTheFirstPreemptingWithdrawalReturned() async throws {
         for (name, plain) in helpers {
