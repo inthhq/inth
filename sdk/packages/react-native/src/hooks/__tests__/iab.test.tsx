@@ -174,7 +174,7 @@ const handle = function handle(): IABDraftHandle {
 const mount = function mount(snapshot: ConsentSnapshot): RenderHandle {
 	fake = createFakeNativeModule({ snapshot });
 	return renderTree(
-		<ConsentProvider>
+		<ConsentProvider autoPresent={false}>
 			<Probe />
 		</ConsentProvider>
 	);

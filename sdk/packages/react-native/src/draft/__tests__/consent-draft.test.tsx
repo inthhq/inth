@@ -65,7 +65,9 @@ const mount = function mount(
 	snapshot: ConsentSnapshot
 ): RenderHandle {
 	fake = createFakeNativeModule({ snapshot });
-	return renderTree(<ConsentProvider>{children}</ConsentProvider>);
+	return renderTree(
+		<ConsentProvider autoPresent={false}>{children}</ConsentProvider>
+	);
 };
 
 /** An EU opt-in scope with marketing and measurement shown. */
