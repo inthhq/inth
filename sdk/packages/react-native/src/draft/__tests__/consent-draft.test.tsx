@@ -350,6 +350,32 @@ describe('useConsentDraft', () => {
 		]);
 	});
 
+	test('a category outside the displayed scope is never staged', () => {
+		mount(<DraftProbe name="screen" />, scoped());
+
+		// `experience` is not on screen, so nothing can show or save this edit.
+		flush(() => handle('screen').set('experience', true));
+		expect(handle('screen').values.experience).toBe(false);
+		expect(handle('screen').isDirty).toBe(false);
+		// The policy starts displaying another category.
+		flush(() =>
+			fake.pushSnapshot(
+				scoped({
+					consentCategories: [
+						'necessary',
+						'measurement',
+						'marketing',
+						'functionality',
+					],
+					revision: 1,
+				})
+			)
+		);
+
+		expect(handle('screen').isStale).toBe(false);
+		expect(handle('screen').displayedCategories).toContain('functionality');
+	});
+
 	test('a bulk save supersedes the staged edits', async () => {
 		mount(
 			<>

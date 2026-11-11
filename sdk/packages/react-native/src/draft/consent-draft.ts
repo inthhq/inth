@@ -59,9 +59,12 @@ export interface ConsentDraft {
 	readonly getState: () => ConsentDraftState;
 	/** Listen for state changes. Returns the unsubscribe function. */
 	readonly subscribe: (listener: () => void) => () => void;
-	/** Stage one category. `necessary` is ignored. */
+	/**
+	 * Stage one category. `necessary` and categories the policy does not
+	 * display are ignored.
+	 */
 	readonly set: (category: AllConsentNames, value: boolean) => void;
-	/** Stage several categories. */
+	/** Stage several categories; undisplayed ones are ignored. */
 	readonly update: (patch: Partial<ConsentState>) => void;
 	/** Stage a grant for every displayed optional category. */
 	readonly acceptAll: () => void;
@@ -76,6 +79,16 @@ export interface ConsentDraft {
 	readonly save: () => Promise<CommitResult>;
 	/** Replace the defaults for categories without a receipt. */
 	readonly setDefaults: (defaults: Partial<ConsentState> | undefined) => void;
+	/**
+	 * Run a save that will be settled into this draft. Until it resolves, a
+	 * receipt change on a staged category is left for `settle` to judge, since
+	 * the save's own write moves receipts too.
+	 *
+	 * @internal
+	 */
+	readonly whileSaving: (
+		save: () => Promise<CommitResult>
+	) => Promise<CommitResult>;
 	/**
 	 * After a successful save of `submitted` (the values staged when the save
 	 * began), reseed from the record and keep only the edits made since. When
@@ -193,6 +206,8 @@ export const createConsentDraft = function createConsentDraft(
 	let { values } = seed;
 	let stale = false;
 	let staleCategories: readonly OptionalConsentCategory[] = [];
+	/** Saves through this draft, or settled into it, whose reply has not arrived. */
+	let savesInFlight = 0;
 	let state: ConsentDraftState = {
 		displayedCategories: seed.displayed,
 		isDirty: false,
@@ -267,7 +282,13 @@ export const createConsentDraft = function createConsentDraft(
 		for (const [category, receipt] of staged) {
 			if (next.values[category] === values[category]) {
 				staged.delete(category);
-			} else if (receiptOf(snapshot, category) === receipt) {
+			} else if (
+				receiptOf(snapshot, category) === receipt ||
+				savesInFlight > 0
+			) {
+				// While a save is in flight its own write moves the receipt too, and
+				// nothing here can tell it from another surface's. settle() judges the
+				// edit once the reply names the save's revision.
 				kept[category] = values[category];
 			} else {
 				staged.delete(category);
@@ -301,8 +322,11 @@ export const createConsentDraft = function createConsentDraft(
 
 	const stage = function stage(patch: Partial<ConsentState>): void {
 		sync();
+		// Only what the policy displays can be staged: nothing else is shown or
+		// saved, and a hidden staged entry would turn a clean draft stale later.
 		const touched = OPTIONAL_CONSENT_CATEGORIES.filter(
-			(category) => patch[category] !== undefined
+			(category) =>
+				patch[category] !== undefined && seed.displayed.includes(category)
 		);
 		const changed = touched.filter(
 			(category) => patch[category] !== values[category]
@@ -382,10 +406,34 @@ export const createConsentDraft = function createConsentDraft(
 	 * `bootstrap.commitRevision` reports, saves unpinned with the JavaScript-side
 	 * check alone.
 	 */
+	/**
+	 * Read the record and judge every staged category against the receipt it was
+	 * staged on, including the ones a save in flight left for later.
+	 */
+	const rejudge = function rejudge(): void {
+		sync();
+		if (stale || savesInFlight > 0) {
+			return;
+		}
+		rebase(seedFrom(snapshot, currentDefaults));
+		publish();
+	};
+
+	const whileSaving = async function whileSaving(
+		save: () => Promise<CommitResult>
+	): Promise<CommitResult> {
+		savesInFlight += 1;
+		try {
+			return await save();
+		} finally {
+			savesInFlight -= 1;
+		}
+	};
+
 	const commitDraft = async function commitDraft(
 		retry: boolean
 	): Promise<CommitResult> {
-		sync();
+		rejudge();
 		if (stale || staleCategories.length > 0) {
 			return STALE_RESULT;
 		}
@@ -399,21 +447,24 @@ export const createConsentDraft = function createConsentDraft(
 		if (!pinned) {
 			warnUnpinned(client);
 		}
-		const result = await client.commit(
-			pinned
-				? { action: 'explicit', consents, revision: snapshot.revision }
-				: { action: 'explicit', consents }
+		const result = await whileSaving(() =>
+			client.commit(
+				pinned
+					? { action: 'explicit', consents, revision: snapshot.revision }
+					: { action: 'explicit', consents }
+			)
 		);
 		if (result.ok) {
 			settle(submitted, result.revision);
 			return result;
 		}
+		// Nothing of this save was written, so every receipt that moved while it
+		// was in flight was moved by someone else: judge them now, which also
+		// brings `isStale` and `staleCategories` up to the record that refused it.
+		rejudge();
 		if (pinned && retry && result.reason === 'concurrent-change') {
 			return commitDraft(false);
 		}
-		// Bring the draft up to the record that refused it, so `isStale` and
-		// `staleCategories` say why.
-		sync();
 		return result;
 	};
 
@@ -463,6 +514,7 @@ export const createConsentDraft = function createConsentDraft(
 			};
 		},
 		update: stage,
+		whileSaving,
 	};
 };
 

@@ -79,9 +79,12 @@ export const useConsentDraftStore =
 
 /** A local, unsaved selection, committed only by an explicit save. */
 export interface ConsentDraftHandle extends ConsentDraftState {
-	/** Stage one category. `necessary` is ignored. */
+	/**
+	 * Stage one category. `necessary` and categories the policy does not
+	 * display are ignored.
+	 */
 	readonly set: (category: AllConsentNames, value: boolean) => void;
-	/** Stage several categories. */
+	/** Stage several categories; undisplayed ones are ignored. */
 	readonly update: (patch: Partial<ConsentState>) => void;
 	/** Stage a grant for every displayed optional category. */
 	readonly acceptAll: () => void;
