@@ -91,15 +91,35 @@ export interface NativeIABChoices {
  * ever installed, which is a host wiring bug rather than a consent outcome.
  * Both native bridges already report it; this union is what lets JavaScript
  * name it.
+ *
+ * A TCF commit adds its own refusals: `iab-unavailable` (no IAB policy or
+ * configuration), `iab-list-stale` (the vendor list expired), `iab-draft-required`
+ * (no `revision`), `iab-choices-required`, `invalid-iab-choices` (IDs or legal
+ * bases the list does not allow) and `additional-consent-unavailable`. Any
+ * commit can also meet `bundled-policy-expired`, `additional-consent-list-stale`
+ * and `invalid-action-time` (the device clock is not usable).
  */
-export type CommitFailureReason =
-	| 'invalid-intent'
-	| 'no-subject'
-	| 'not-bootstrapped'
-	| 'policy-pending'
-	| 'encode-failed'
-	| 'queue-write-failed'
-	| 'concurrent-change';
+export const COMMIT_FAILURE_REASONS = [
+	'invalid-intent',
+	'no-subject',
+	'not-bootstrapped',
+	'policy-pending',
+	'encode-failed',
+	'queue-write-failed',
+	'concurrent-change',
+	'bundled-policy-expired',
+	'invalid-action-time',
+	'additional-consent-list-stale',
+	'additional-consent-unavailable',
+	'iab-unavailable',
+	'iab-list-stale',
+	'iab-draft-required',
+	'iab-choices-required',
+	'invalid-iab-choices',
+] as const;
+
+/** See {@link COMMIT_FAILURE_REASONS}. */
+export type CommitFailureReason = (typeof COMMIT_FAILURE_REASONS)[number];
 
 /**
  * Result of `commit(intent)`.

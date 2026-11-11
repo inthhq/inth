@@ -6,7 +6,7 @@
 
 import type { ReactNode } from 'react';
 import { useEffect } from 'react';
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import {
 	buildSnapshot,
@@ -399,6 +399,91 @@ describe('headless IAB hooks', () => {
 
 		expect(handle().choices.purposeConsents).toEqual([1, 3]);
 		expect(handle().isDirty).toBe(true);
+	});
+
+	test('an IAB edit made while the save is pending survives a core that records the save', async () => {
+		mount(tcf());
+		// As both cores do: the commit is applied, the committed decision moves and a
+		// change event goes out, and only then does the reply reach JavaScript.
+		vi.mocked(fake.commit).mockImplementation((raw: string) => {
+			fake.commitIntents.push(raw);
+			const intent = JSON.parse(raw) as { choices: NativeIABChoices };
+			fake.pushSnapshot(
+				tcf({
+					iab: {
+						acceptAll: NATIVE_ACCEPT_ALL,
+						committed: {
+							addtlConsent: null,
+							choices: intent.choices,
+							tcString: 'CQ-2',
+						},
+						editable: true,
+						gvl: GVL,
+						headlessUnsupported: [],
+					},
+					revision: 5,
+				})
+			);
+			return Promise.resolve(
+				JSON.stringify({
+					confirmed: [],
+					ok: true,
+					queued: true,
+					revision: 5,
+					subjectId: 'sub-1',
+				})
+			);
+		});
+
+		flush(() => handle().setVendorConsent(9, true));
+		const saving = handle().save();
+		flush(() => handle().setPurposeConsent(3, true));
+		await saving;
+		await flushPromises();
+
+		// The save's own write is not a decision made elsewhere.
+		expect(handle().isStale).toBe(false);
+		expect(handle().choices.purposeConsents).toEqual([1, 3]);
+		expect(handle().isDirty).toBe(true);
+	});
+
+	test('an IAB edit made while the save is pending turns stale when another decision lands after the save', async () => {
+		mount(tcf());
+		vi.mocked(fake.commit).mockImplementation((raw: string) => {
+			fake.commitIntents.push(raw);
+			const intent = JSON.parse(raw) as { choices: NativeIABChoices };
+			const committed = (choices: NativeIABChoices, revision: number) =>
+				tcf({
+					iab: {
+						acceptAll: NATIVE_ACCEPT_ALL,
+						committed: { addtlConsent: null, choices, tcString: 'CQ-2' },
+						editable: true,
+						gvl: GVL,
+						headlessUnsupported: [],
+					},
+					revision,
+				});
+			fake.pushSnapshot(committed(intent.choices, 5));
+			// Another screen commits a different TCF decision before the reply arrives.
+			fake.pushSnapshot(committed(NATIVE_ACCEPT_ALL, 6));
+			return Promise.resolve(
+				JSON.stringify({
+					confirmed: [],
+					ok: true,
+					queued: true,
+					revision: 5,
+					subjectId: 'sub-1',
+				})
+			);
+		});
+
+		flush(() => handle().setVendorConsent(9, true));
+		const saving = handle().save();
+		flush(() => handle().setPurposeConsent(3, true));
+		await saving;
+		await flushPromises();
+
+		expect(handle().isStale).toBe(true);
 	});
 
 	test('offer no edits while native cannot open a draft', () => {

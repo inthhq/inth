@@ -10,6 +10,7 @@
  */
 
 export type { BootstrapPayload } from './bootstrap';
+export { COMMIT_FAILURE_REASONS } from './commit';
 export type {
 	CommitFailureReason,
 	CommitIntent,
