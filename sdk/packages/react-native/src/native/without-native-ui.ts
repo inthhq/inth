@@ -23,6 +23,9 @@ interface WatchedClient {
 /** Mounted prompt surfaces per client. */
 const claims = new WeakMap<WatchedClient, number>();
 
+/** Each watched client's check, run again when its last surface unmounts. */
+const rechecks = new WeakMap<WatchedClient, () => void>();
+
 /**
  * Say that a surface which renders the owed prompt is mounted for `client`.
  *
@@ -40,7 +43,13 @@ export const claimPrompt = function claimPrompt(
 	return () => {
 		if (!released) {
 			released = true;
-			claims.set(client, (claims.get(client) ?? 1) - 1);
+			const left = (claims.get(client) ?? 1) - 1;
+			claims.set(client, left);
+			// Nothing renders the prompt any more, and no snapshot change may come
+			// to say so: look again now.
+			if (left === 0) {
+				rechecks.get(client)?.();
+			}
 		}
 	};
 };
@@ -106,9 +115,11 @@ export const watchWithoutNativeUI = function watchWithoutNativeUI(
 	};
 
 	const unsubscribe = client.subscribe((snapshot) => snapshot, check);
+	rechecks.set(client, check);
 	check();
 	return () => {
 		unsubscribe();
+		rechecks.delete(client);
 		if (timer !== null) {
 			clearTimeout(timer);
 			timer = null;

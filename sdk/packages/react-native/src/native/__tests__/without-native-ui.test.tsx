@@ -110,6 +110,28 @@ describe('a build without the stock native screens', () => {
 		expect(unclaimedWarnings()).toHaveLength(0);
 	});
 
+	test('warns once the last prompt surface unmounts while the prompt is still owed', () => {
+		createFakeNativeModule({
+			bootstrap: WITHOUT_UI,
+			snapshot: buildSnapshot(),
+		});
+		const tree = renderTree(
+			<ConsentProvider>
+				<ConsentPrompt>{() => null}</ConsentPrompt>
+			</ConsentProvider>
+		);
+		// The timer fires while the prompt is claimed, so nothing is said yet.
+		vi.advanceTimersByTime(UNCLAIMED_PROMPT_MS * 2);
+		expect(unclaimedWarnings()).toHaveLength(0);
+
+		// The screen goes away; nothing in the snapshot changes.
+		tree.unmount();
+		vi.advanceTimersByTime(UNCLAIMED_PROMPT_MS - 1);
+		expect(unclaimedWarnings()).toHaveLength(0);
+		vi.advanceTimersByTime(1);
+		expect(unclaimedWarnings()).toHaveLength(1);
+	});
+
 	test('stays quiet in production and with the stock screens', () => {
 		const snapshot = buildSnapshot();
 		const stop = watchWithoutNativeUI(
