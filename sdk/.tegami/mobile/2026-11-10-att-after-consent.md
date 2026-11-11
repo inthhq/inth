@@ -24,3 +24,16 @@ Breaking change on Swift and Android: `ConsentPrompt.presenter` is no longer
 public. Opening the prompt through it skipped the host rules and, on Swift, the
 tracking order. Call `presentPrompt()` and `presentPreferences()` on
 `ConsentPrompt` instead.
+
+`.beforeConsent` now also asks at a launch that owes no consent prompt, while
+Apple's answer is not determined and marketing is not refused.
+
+New `trackingReprompt:` parameter on `.c15tConsent(...)` and
+`ConsentRootViewController`: `.never` (default) or `.yearly`, which calls the
+request once per launch when Apple's answer is `authorized` or `denied`,
+marketing is granted, and 365 days have passed since the SDK last saw an answer.
+Apple decides whether to show anything. `C15tTrackingController` records that
+time in a `C15tTrackingAnswerLog` and takes an injectable clock.
+
+Under an IAB TCF policy, marketing counts as granted for ATT only while the TC
+String also grants the `marketing` purposes, as the web IAB module derives them.

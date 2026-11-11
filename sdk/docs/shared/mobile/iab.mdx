@@ -133,11 +133,12 @@ The SDK asks Apple only when all of these hold:
 
 - The app enabled ATT: `enableAppTrackingTransparency` in the Expo plugin, or
   `NSUserTrackingUsageDescription` in `Info.plist`.
-- Apple's answer is still not determined. An app that has already been answered
-  is never asked again by the SDK, on any path.
+- Apple's answer is still not determined. Once Apple has answered, the SDK asks
+  again only with the yearly re-ask below, which is off by default.
 - The person's stored choice does not refuse marketing. This holds in every
   order, including `beforeConsent`. Apple asks apps not to show its alert to
-  people who opted out in a separate consent control.
+  people who opted out in a separate consent control. Under an IAB TCF policy,
+  the TC String counts too; see [ATT and IAB TCF](#att-and-iab-tcf).
 - The app is active. Apple shows nothing to an app that is not active, so the
   request waits for the app to return to the foreground.
 - No c15t screen is open. That includes a notice card, and a prompt or settings
@@ -172,9 +173,9 @@ How it behaves:
   itself, one the SDK opens after another screen closes, or one your app opens
   with `presentConsentPrompt()` in React Native or `ConsentPrompt.presentPrompt()`
   in Swift.
-- A launch that owes no consent prompt asks nothing, so someone whose stored
-  choice is still valid and whose ATT answer is still not determined is asked
-  only right before their next consent prompt.
+- A launch that owes no consent prompt asks at launch, while Apple's answer is
+  not determined and marketing is not refused: granted, or no stored choice
+  that refuses it.
 - It asks at most once per launch, and only under the conditions above, so a
   stored refusal of marketing skips it. If a later prompt opens after that
   refusal is gone, for example after a reset, it asks then.
@@ -187,15 +188,68 @@ How it behaves:
 - If the provider unmounts while your app's own `presentConsentPrompt()` call
   waits, that call opens the prompt without Apple's alert.
 
-On Apple's expanded EU sheet, Additional Information opens c15t's privacy
-settings. Closing them applies the same rule again, so Apple's alert returns
-only while marketing is granted.
+On Apple's expanded EU sheet, Additional Information closes Apple's sheet with
+no answer recorded and opens c15t's privacy settings. Closing them applies the
+after-consent rule in either order, so Apple's alert returns only while
+marketing is granted. Germany, France, Italy, Poland and Romania always get the
+full-page sheet; the rest of the EU gets it when the app prefers it, which c15t
+does. `NSUserTrackingMarkdownUsageDescription` (`trackingMarkdownUsageDescription`
+in the Expo plugin) is the optional rich-text copy for that sheet.
+
+### Ask again after a year (EU)
+
+In the European Union Apple lets an app show its alert again one year after the
+person's previous answer, whichever way it went. It is off by default. Turn it
+on with `trackingReprompt` on `<ConsentProvider>` in React Native, or
+`trackingReprompt:` on `.c15tConsent(...)` and `ConsentRootViewController` in
+Swift:
+
+| Value | What happens |
+| --- | --- |
+| `never` (default) | Only while Apple's answer is not determined. |
+| `yearly` | Also once per launch when the answer is `authorized` or `denied`, marketing is granted, and 365 days have passed since the SDK last saw an answer. |
+
+Apple decides whether anything shows. There is no way to ask Apple whether the
+person is eligible, so the SDK calls the request and Apple either prompts or
+returns the stored answer at once. Outside the EU the call shows nothing.
+
+The SDK stores when it last saw an answer. An answer given before this version
+has no stored time, so the SDK stores the current time when it first reads it
+and waits a full year from then. It never asks again when marketing is
+refused, when tracking is restricted, or with `trackingRequest` set to
+`manual`. If the person turned off "Allow Apps to Request to Track", Apple shows
+nothing and returns the stored answer.
 
 Android has no ATT, so `trackingRequest` does nothing there.
 
 Apple's answer never changes stored consent, and consent never stands in for
 Apple's answer. Gate tracking on both, for example with
 `useIsTrackingAllowed('marketing')`.
+
+### ATT and IAB TCF
+
+ATT and TCF answer different questions, and tracking needs both:
+
+- TCF records the person's legal consent in the TC String: which purposes and
+  vendors they allow.
+- ATT is Apple's own gate on the device: whether this app may track them across
+  other companies' apps and websites.
+- A refusal in either stops tracking. An `authorized` ATT answer does not grant
+  a purpose or vendor, and a TCF consent does not bypass an ATT denial.
+- The SDK never writes an ATT answer into the TC String, and never changes the
+  ATT answer because of the TC String.
+
+Under an IAB TCF policy, the after-consent rule reads marketing the way the web
+IAB module derives it from the TC String: the `marketing` category stands for
+TCF purposes 2, 3 and 4, and counts as consented only when every one of them
+that some vendor asks consent for is consented. The c15t `marketing` category
+must be granted as well. So Accept all asks Apple, Reject all never does, and a
+custom choice asks only when it grants those purposes. A stored TC String that
+does not grant them counts as a refusal, so `beforeConsent` skips it too.
+
+Additional Information on Apple's sheet opens the TCF preferences. When the
+person closes them, Apple's alert comes back only if those purposes are still
+consented.
 
 ### Why consent comes first
 
