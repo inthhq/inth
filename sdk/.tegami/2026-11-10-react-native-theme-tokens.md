@@ -16,6 +16,11 @@ The plugin's `theme` option adds `radius.sm` and `radius.lg`, `spacing`,
 screens. It accepts the fields only the components draw, such as `motion` and
 `colors.border`, and leaves them out of the native keys.
 
+`typography.fontFamily` takes the same per-platform form as `headlineFont`:
+one font resource name such as `inter_regular`, or
+`{ ios: 'Inter-Regular', android: 'inter_regular' }`. `createConsentTheme`
+takes the same shape, and its components draw the name for their platform.
+
 **Breaking.** The React Native theme uses the web names:
 
 - `onPrimary` is `textOnPrimary`, `switchTrackOn` is `switchTrackActive` and
