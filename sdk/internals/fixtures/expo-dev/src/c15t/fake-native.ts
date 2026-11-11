@@ -433,6 +433,17 @@ class FakeCore {
 						}
 					)
 				),
+			requestTrackingAuthorizationWithOptions: (_options: string) =>
+				// Rejected with the code the real Android bridge uses, so a host that
+				// calls this against the fake sees the shape it would ship against.
+				Promise.reject(
+					Object.assign(
+						new Error('The fake core has no platform gate to ask'),
+						{
+							code: 'C15T_TRACKING_UNSUPPORTED',
+						}
+					)
+				),
 			reset: async () => {
 				this.resetConsent();
 				await settle();
