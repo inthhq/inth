@@ -506,6 +506,23 @@ C15tAndroid.install(this, NativeConfig(
     policy = policy,
 ))`;
 
+const ESCAPES: Record<string, string> = {
+	'\t': '\\t',
+	'\n': '\\n',
+	'\r': '\\r',
+};
+
+/**
+ * `value` as a Swift string literal. A URL can carry a quote or backslash that
+ * `new URL` accepts by percent-encoding, so it is escaped, never pasted raw.
+ */
+export const swiftString = (value: string): string =>
+	`"${value.replaceAll(/["\\\n\r\t]/gu, (char) => ESCAPES[char] ?? `\\${char}`)}"`;
+
+/** `value` as a Kotlin string literal, with `$` escaped so it starts no template. */
+export const kotlinString = (value: string): string =>
+	`"${value.replaceAll(/["$\\\n\r\t]/gu, (char) => ESCAPES[char] ?? `\\${char}`)}"`;
+
 const indentBlock = (text: string, prefix: string): string =>
 	text
 		.split('\n')
@@ -522,7 +539,7 @@ export const swiftConfiguration = (options: MobileSetupOptions): string => {
 	const transport = options.mode === 'self-hosted' ? 'selfHosted' : 'hosted';
 	const url = options.backendURL ?? 'https://your-project.inth.app';
 	return `C15tAppleConfiguration(
-    transport: .${transport}(URL(string: "${url}")!),
+    transport: .${transport}(URL(string: ${swiftString(url)})!),
     consentCategories: [${swiftCategories(options.categories)}]
 )`;
 };
@@ -541,11 +558,11 @@ export const swiftUIEntry = (
 ): string =>
 	configuration === null
 		? `ContentView()
-    .c15tConsent(privacyPolicyURL: URL(string: "${privacyPolicyURL}")!)`
+    .c15tConsent(privacyPolicyURL: URL(string: ${swiftString(privacyPolicyURL)})!)`
 		: `ContentView()
     .c15tConsent(
         ${indentBlock(configuration, '        ')},
-        privacyPolicyURL: URL(string: "${privacyPolicyURL}")!
+        privacyPolicyURL: URL(string: ${swiftString(privacyPolicyURL)})!
     )`;
 
 /** The UIKit entry point, `ConsentRootViewController(root:configuration:privacyPolicyURL:)`. */
@@ -559,7 +576,7 @@ export const uiKitEntry = (
 				: `
     configuration: ${indentBlock(configuration, '    ')},`
 		}
-    privacyPolicyURL: URL(string: "${privacyPolicyURL}")!
+    privacyPolicyURL: URL(string: ${swiftString(privacyPolicyURL)})!
 )`;
 
 /** Opens privacy settings from the app's own control, on Apple platforms. */
@@ -573,7 +590,7 @@ export const SWIFT_PRIVACY_SETTINGS =
  */
 export const kotlinInstall = (options: MobileSetupOptions): string =>
 	`C15tAndroid.install(this, NativeConfig(
-    backendUrl = "${options.backendURL ?? 'https://your-project.inth.app'}",
+    backendUrl = ${kotlinString(options.backendURL ?? 'https://your-project.inth.app')},
     consentCategories = listOf(${kotlinCategories(options.categories)}),
 ))`;
 
@@ -582,11 +599,11 @@ export const kotlinInstall = (options: MobileSetupOptions): string =>
  * from the auto-present API.
  */
 export const composeEntry = (privacyPolicyURL: string): string =>
-	`C15tConsent(privacyPolicyUrl = "${privacyPolicyURL}")`;
+	`C15tConsent(privacyPolicyUrl = ${kotlinString(privacyPolicyURL)})`;
 
 /** The entry point for an Activity with views, after `setContentView`. */
 export const activityEntry = (privacyPolicyURL: string): string =>
-	`val consent = attachConsent("${privacyPolicyURL}")
+	`val consent = attachConsent(${kotlinString(privacyPolicyURL)})
 privacySettings.setOnClickListener { consent.presentPreferences() }`;
 
 /** Opens privacy settings from the app's own control on Android. */
@@ -615,7 +632,7 @@ const swiftInstallStep = (options: MobileSetupOptions): string => {
 		case 'offline':
 			return `iOS: at launch, before the first view, install the engine with the policy in code:\n${swiftOfflineInstall(options.categories)}\nThen attach the consent screens, which open the prompt when the policy asks for one. ${screens(null)}\nReplace the example rule with your own, as guides/mobile-offline.mdx describes (${SOURCE_DOCS}).`;
 		case 'custom':
-			return `iOS: install the engine with your own transport at launch, as "Use your own transport" in frameworks/swift/headless.mdx shows (${SOURCE_DOCS}). Then attach the consent screens. ${screens(null)}`;
+			return `iOS: install the engine with your own transport at launch, as "Use your own transport" in frameworks/swift/headless.mdx shows (${SOURCE_DOCS}), passing the categories you chose in the CoreConfig:\nconsentCategories: [${swiftCategories(options.categories)}]\nThen attach the consent screens. ${screens(null)}`;
 		default:
 			return `iOS: attach the consent screens. They install the engine at launch and open the prompt when the policy asks for one. ${screens(swiftConfiguration(options))}`;
 	}
@@ -628,7 +645,7 @@ const androidInstallStep = (options: MobileSetupOptions): string => {
 		case 'offline':
 			return `Android: in Application.onCreate, install the engine with the policy in code (imports: ${KOTLIN_OFFLINE_IMPORTS.join(', ')}):\n${kotlinOfflineInstall(options.categories)}\n${screens}\nReplace the example rule with your own, as guides/mobile-offline.mdx describes (${SOURCE_DOCS}).`;
 		case 'custom':
-			return `Android: install the engine with your own transport in Application.onCreate, as "Use your own transport" in frameworks/android/configuration.mdx shows (${SOURCE_DOCS}). ${screens} Add android.permission.INTERNET to the manifest.`;
+			return `Android: install the engine with your own transport in Application.onCreate, as "Use your own transport" in frameworks/android/configuration.mdx shows (${SOURCE_DOCS}), passing the categories you chose in the NativeConfig:\nconsentCategories = listOf(${kotlinCategories(options.categories)}),\n${screens} Add android.permission.INTERNET to the manifest.`;
 		default:
 			return `Android: in Application.onCreate, install the engine (imports: ${KOTLIN_INSTALL_IMPORTS.join(', ')}):\n${kotlinInstall(options)}\n${screens} Add android.permission.INTERNET to the manifest.`;
 	}

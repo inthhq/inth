@@ -29,10 +29,12 @@ import {
 	KOTLIN_OFFLINE_IMPORTS,
 	kotlinInstall,
 	kotlinOfflineInstall,
+	kotlinString,
 	mergeExpoAppJson,
 	providerImport,
 	swiftConfiguration,
 	swiftOfflineInstall,
+	swiftString,
 } from '../../mobile/scaffold';
 import { normalizeMobileURL, resolveMobileOptions } from '../../mobile/setup';
 import type { MobilePrompts, MobileSetupResult } from '../../mobile/setup';
@@ -617,11 +619,24 @@ describe('offline setup in a Swift or Android app', () => {
 		const root = await project({ 'Package.swift': '', 'settings.gradle': '' });
 
 		const steps = (
-			await setup(root, ['custom', '--backend-url', 'https://a.test'])
+			await setup(root, [
+				'custom',
+				'--backend-url',
+				'https://a.test',
+				'--categories',
+				'functionality',
+			])
 		).data.steps.join('\n');
 
 		expect(steps).toContain(
 			'"Use your own transport" in frameworks/swift/headless.mdx'
+		);
+		// The guidance examples hardcode or omit categories, so the steps carry the choice.
+		expect(steps).toContain(
+			'in the CoreConfig:\nconsentCategories: [.necessary, .functionality]\n'
+		);
+		expect(steps).toContain(
+			'in the NativeConfig:\nconsentCategories = listOf(ConsentCategory.NECESSARY, ConsentCategory.FUNCTIONALITY),\n'
 		);
 		expect(steps).toContain(
 			'"Use your own transport" in frameworks/android/configuration.mdx'
@@ -636,6 +651,40 @@ describe('offline setup in a Swift or Android app', () => {
 				'## Use your own transport'
 			);
 		}
+	});
+});
+
+describe('URLs in the printed Swift and Kotlin', () => {
+	it('are escaped as string literals, not pasted raw', async () => {
+		const root = await project({ 'Package.swift': '', 'build.gradle.kts': '' });
+
+		// `new URL` accepts the quote by percent-encoding it; `$` is valid in both URLs.
+		const steps = (
+			await setup(root, [
+				'--backend-url',
+				'https://example.com/"x$y',
+				'--privacy-policy-url',
+				'https://app.example/a$b',
+			])
+		).data.steps.join('\n');
+
+		expect(steps).toContain(
+			'transport: .hosted(URL(string: "https://example.com/\\"x$y")!),'
+		);
+		expect(steps).toContain('backendUrl = "https://example.com/\\"x\\$y",');
+		expect(steps).toContain(
+			'privacyPolicyURL: URL(string: "https://app.example/a$b")!'
+		);
+		expect(steps).toContain(
+			'C15tConsent(privacyPolicyUrl = "https://app.example/a\\$b")'
+		);
+		expect(steps).toContain('attachConsent("https://app.example/a\\$b")');
+		expect(steps).not.toContain('"https://example.com/"x');
+	});
+
+	it('escape backslashes and control characters too', () => {
+		expect(swiftString('a\\b"c\n')).toBe('"a\\\\b\\"c\\n"');
+		expect(kotlinString('a\\b"c$d\t')).toBe('"a\\\\b\\"c\\$d\\t"');
 	});
 });
 
