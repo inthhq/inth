@@ -143,6 +143,31 @@ final class C15tPayloadTests: XCTestCase {
         XCTAssertEqual(slot(choices)["headlessUnsupported"] as? [String], [])
     }
 
+    func testTheSnapshotAndItsAdditionsAreReadAsOneRevision() throws {
+        func snapshot(revision: Int) throws -> ConsentSnapshot {
+            var wire = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(ConsentSnapshot.coldStart)) as? [String: Any])
+            wire["revision"] = revision
+            return try JSONDecoder().decode(ConsentSnapshot.self, from: JSONSerialization.data(withJSONObject: wire))
+        }
+        // A commit lands between the first snapshot read and the additions.
+        var revisions = [try snapshot(revision: 4), try snapshot(revision: 5), try snapshot(revision: 5)]
+        var reads = 0
+        let (read, additions) = C15tPayload.consistently(snapshot: { revisions.removeFirst() }) { () -> String in
+            reads += 1
+            return "decision \(reads)"
+        }
+        XCTAssertEqual(read.revision, 5)
+        XCTAssertEqual(additions, "decision 2", "the additions are the ones read with revision 5")
+
+        let steadySnapshot = try snapshot(revision: 7)
+        var steady = 0
+        let (_, once) = C15tPayload.consistently(snapshot: { steadySnapshot }) { () -> Int in
+            steady += 1
+            return steady
+        }
+        XCTAssertEqual(once, 1, "a quiet core is read once")
+    }
+
     func testHeadlessIABEditingClosesWhileACustomScreenCouldNotDiscloseEverything() throws {
         var wire = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(ConsentSnapshot.coldStart)) as? [String: Any])
         wire["iab"] = ["gvl": NSNull()]

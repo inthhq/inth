@@ -452,10 +452,12 @@ export const createConsentDraft = function createConsentDraft(
 		const edits = Object.fromEntries(
 			later.map((category) => [category, values[category]])
 		);
-		// A TCF edit made while the save was pending is newer than the save.
+		// A TCF edit made while the save was pending is newer than the save, held
+		// back or not.
+		const pendingIAB = iab ?? withdrawnIAB;
 		const laterIAB =
-			submittedIAB !== undefined && !sameIABChoices(iab, submittedIAB)
-				? iab
+			submittedIAB !== undefined && !sameIABChoices(pendingIAB, submittedIAB)
+				? pendingIAB
 				: null;
 		snapshot = client.getSnapshot();
 		// The record moved past this save, so another decision landed after it. It
@@ -475,6 +477,14 @@ export const createConsentDraft = function createConsentDraft(
 			// The same rule for the TCF selection: a decision after the save may have
 			// been made over it, so the subject reviews before saving it.
 			stale = overtaken;
+		} else if (laterIAB !== null && snapshot.model === 'iab') {
+			// Native cannot open a draft now. Hold the edit back, as a withdrawal
+			// does, and hand it back when native can. Unless something landed after
+			// this save, the decision it was made over is the one the save committed.
+			withdrawnIAB = laterIAB;
+			stale = true;
+			staleByWithdrawal = !overtaken;
+			seed = { ...seed, iab: overtaken ? null : (submittedIAB ?? null) };
 		}
 		publish();
 	};
@@ -580,7 +590,16 @@ export const createConsentDraft = function createConsentDraft(
 		},
 		setDefaults: (next) => {
 			currentDefaults = next;
-			if (!differs(values, iab, seed)) {
+			// Only a clean draft takes new defaults: a staged edit, an overtaken
+			// category, a policy change or a held-back TCF selection still waits for
+			// the subject's review.
+			if (
+				staged.size === 0 &&
+				staleCategories.length === 0 &&
+				!stale &&
+				withdrawnIAB === null &&
+				!differs(values, iab, seed)
+			) {
 				reseed();
 			}
 		},

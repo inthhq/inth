@@ -486,6 +486,63 @@ describe('headless IAB hooks', () => {
 		expect(handle().isStale).toBe(true);
 	});
 
+	test('an IAB edit withdrawn while the save settles comes back when editing returns', async () => {
+		mount(tcf());
+		const slot = (
+			choices: NativeIABChoices,
+			editable: boolean
+		): ConsentSnapshot['iab'] => ({
+			acceptAll: editable ? NATIVE_ACCEPT_ALL : null,
+			committed: { addtlConsent: null, choices, tcString: 'CQ-2' },
+			editable,
+			gvl: GVL,
+			headlessUnsupported: [],
+		});
+		let saved: NativeIABChoices = COMMITTED;
+		let reply: () => void = () => undefined;
+		// The save lands at revision 5; its reply arrives when the test says so.
+		vi.mocked(fake.commit).mockImplementation((raw: string) => {
+			fake.commitIntents.push(raw);
+			saved = (JSON.parse(raw) as { choices: NativeIABChoices }).choices;
+			fake.pushSnapshot(tcf({ iab: slot(saved, true), revision: 5 }));
+			return new Promise((resolve) => {
+				reply = () =>
+					resolve(
+						JSON.stringify({
+							confirmed: [],
+							ok: true,
+							queued: true,
+							revision: 5,
+							subjectId: 'sub-1',
+						})
+					);
+			});
+		});
+
+		flush(() => handle().setVendorConsent(9, true));
+		const saving = handle().save();
+		flush(() => handle().setPurposeConsent(3, true));
+		// Then the list stops being editable, before the reply.
+		flush(() =>
+			fake.pushSnapshot(tcf({ iab: slot(saved, false), revision: 6 }))
+		);
+		reply();
+		await saving;
+		await flushPromises();
+		expect(current().iab).toBeNull();
+
+		// Editing returns. The edit is handed back, for review: something landed
+		// after the save, so it may have been made over a newer decision.
+		flush(() =>
+			fake.pushSnapshot(tcf({ iab: slot(saved, true), revision: 7 }))
+		);
+		expect(handle().choices.purposeConsents).toEqual([1, 3]);
+		expect(handle().isStale).toBe(true);
+		flush(() => handle().reset());
+		expect(handle().isStale).toBe(false);
+		expect(handle().choices.purposeConsents).toEqual(saved.purposeConsents);
+	});
+
 	test('offer no edits while native cannot open a draft', () => {
 		mount(
 			tcf({
