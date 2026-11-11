@@ -289,12 +289,18 @@ describe('commitResult.reason', () => {
 	);
 });
 
+/** Let every drift check already scheduled load the checker and report. */
+const flushDriftChecks = async (): Promise<void> => {
+	await import('../bridge-schema');
+	await new Promise((settle) => setTimeout(settle, 0));
+};
+
 describe('the consent client at the boundary', () => {
 	afterEach(() => {
 		vi.restoreAllMocks();
 	});
 
-	test('warns once, by key, about a renamed bootstrap field', () => {
+	test('warns once, by key, about a renamed bootstrap field', async () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 		const { subjectId, ...rest } = FAKE_BOOTSTRAP;
 		const bootstrap = { ...rest, subject: subjectId };
@@ -308,6 +314,9 @@ describe('the consent client at the boundary', () => {
 			getNativeC15tEvents()
 		).dispose();
 
+		// The checker loads lazily, in development only, so the warning lands a tick later.
+		await vi.waitFor(() => expect(warn).toHaveBeenCalled());
+		await flushDriftChecks();
 		expect(warn).toHaveBeenCalledTimes(1);
 		expect(warn).toHaveBeenCalledWith(
 			'c15t ConsentClient: the native bootstrap payload does not match the declared wire shape.',
@@ -333,13 +342,14 @@ describe('the consent client at the boundary', () => {
 		await client.commit({ action: 'all' });
 		client.dispose();
 
+		await vi.waitFor(() => expect(warn).toHaveBeenCalled());
 		expect(warn).toHaveBeenCalledWith(
 			'c15t ConsentClient: the native commitResult payload does not match the declared wire shape.',
 			['queued: required, absent from the payload']
 		);
 	});
 
-	test('stays quiet in production', () => {
+	test('stays quiet in production', async () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 		vi.stubEnv('NODE_ENV', 'production');
 		const { hasStoredSnapshot, ...rest } = FAKE_BOOTSTRAP;
@@ -352,6 +362,7 @@ describe('the consent client at the boundary', () => {
 		).dispose();
 		vi.unstubAllEnvs();
 
+		await flushDriftChecks();
 		expect(warn).not.toHaveBeenCalled();
 	});
 });

@@ -10,8 +10,6 @@
  */
 
 export type { BootstrapPayload } from './bootstrap';
-export type { BridgePayloadName } from './bridge-schema';
-export { BRIDGE_PAYLOADS, describeBridgePayloadDrift } from './bridge-schema';
 export type {
 	CommitFailureReason,
 	CommitIntent,

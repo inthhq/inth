@@ -1,6 +1,10 @@
 {
 	"$schema": "https://unpkg.com/knip@latest/schema.json",
-	"entry": ["./src/index.ts", "./src/specs/NativeC15t.ts"],
+	"entry": [
+		"./src/index.ts",
+		"./src/protocol/bridge-schema.ts",
+		"./src/specs/NativeC15t.ts"
+	],
 	"ignoreBinaries": ["oxfmt", "oxlint", "rslib", "tsc", "tsx", "vitest"],
 	"ignore": [
 		"**/*.spec.{js,ts,tsx}",

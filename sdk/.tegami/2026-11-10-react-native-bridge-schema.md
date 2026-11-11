@@ -7,8 +7,10 @@ packages:
 
 `BRIDGE_PAYLOADS` lists the keys of every JSON payload that crosses the native
 module, and `describeBridgePayloadDrift(name, value)` names the keys a payload
-got wrong. In development, the consent client now warns when the bootstrap or a
-commit result from the native build is missing a declared key.
+got wrong. Import both from `@c15t/react-native/bridge-schema`. In development,
+the consent client now warns when the bootstrap or a commit result from the
+native build is missing a declared key. It loads the table only in a `__DEV__`
+build, so a release app does not carry it.
 
 The protocol types now declare what the native builds already send:
 `CommitResult.detail` on an unreadable intent, `SnapshotResolution.reason` on a
@@ -19,7 +21,7 @@ did not fail.
 
 `CommitFailureReason` and the new `COMMIT_FAILURE_REASONS` include the IAB and
 bundled-policy refusals the native cores return, such as
-`bundled-policy-expired` and `iab-list-stale`, and the iOS-only
+`bundled-policy-unusable` and `iab-list-stale`, and the iOS-only
 `invalid-additional-consent`, which a save returns when the Google ATP
 choices do not match the disclosed providers. Android reports that input as
 `invalid-iab-choices`.
@@ -27,7 +29,8 @@ choices do not match the disclosed providers. Android reports that input as
 Breaking: `CommitIntent` no longer has `categories`. Neither native core ever
 honoured it, so `all` or `necessary` with a category list recorded the whole
 choice scope. Both native decoders now refuse, as `invalid-intent`, any key
-the action does not take: `explicit` takes `action` and `consents`, and `all`
-and `necessary` take `action` alone. Use `explicit` to decide a
+the action does not take: `explicit` takes `action`, `consents` and an optional
+`revision`, `iab` adds `choices`, and `all` and `necessary` take `action`
+alone. Use `explicit` to decide a
 subset. `ConsentSnapshot.subject` is now `NativeConsentSubject`, without
 `identityProvider`, which no native snapshot carries.

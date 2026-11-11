@@ -102,7 +102,7 @@ To check a payload yourself, pass it to `describeBridgePayloadDrift`:
 {/* example: fragment */}
 
 ```ts
-import { describeBridgePayloadDrift } from '@c15t/react-native';
+import { describeBridgePayloadDrift } from '@c15t/react-native/bridge-schema';
 
 const problems = describeBridgePayloadDrift('commitResult', result, {
 	allowUnknownKeys: true,
@@ -111,7 +111,9 @@ const problems = describeBridgePayloadDrift('commitResult', result, {
 
 It returns one line per problem, or an empty list when the payload matches.
 `BridgePayloadName` names the payloads it checks, and `BRIDGE_PAYLOADS` lists
-the keys of each. Production builds print no warning.
+the keys of each. They live in the `@c15t/react-native/bridge-schema` subpath
+rather than the main entry, so a release app does not carry the table.
+Production builds print no warning.
 
 ## A save resolves but the choice is unchanged
 

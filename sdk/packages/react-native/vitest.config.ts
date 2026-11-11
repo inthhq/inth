@@ -58,6 +58,8 @@ const collectCoverage =
 const config = mergeConfig(
 	baseConfig,
 	defineConfig({
+		// React Native defines `__DEV__`; these tests run the development build's paths.
+		define: { __DEV__: 'true' },
 		resolve: {
 			alias: [
 				// A faithful stand-in for the two `react-native` surfaces the

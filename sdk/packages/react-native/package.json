@@ -68,6 +68,12 @@
 			"import": "./dist/index.js",
 			"default": "./dist/index.js"
 		},
+		"./bridge-schema": {
+			"types": "./dist-types/protocol/bridge-schema.d.ts",
+			"react-native": "./dist/protocol/bridge-schema.js",
+			"import": "./dist/protocol/bridge-schema.js",
+			"default": "./dist/protocol/bridge-schema.js"
+		},
 		"./integrations": {
 			"types": "./dist-types/integrations/index.d.ts",
 			"react-native": "./dist/integrations/index.js",

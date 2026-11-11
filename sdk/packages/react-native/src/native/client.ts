@@ -27,7 +27,6 @@ import {
 } from '../lib/selectors';
 import { isTrackingPermitted } from '../lib/tracking';
 import {
-	describeBridgePayloadDrift,
 	describeSnapshotWireDrift,
 	isProtocolVersionSupported,
 	NATIVE_EVENT_NAMES,
@@ -38,7 +37,6 @@ import {
 } from '../protocol';
 import type {
 	BootstrapPayload,
-	BridgePayloadName,
 	CommitIntent,
 	CommitResult,
 	ConsentSnapshot,
@@ -47,6 +45,7 @@ import type {
 	TrackingAuthorization,
 	TrackingRequestPayload,
 } from '../protocol';
+import type { BridgePayloadName } from '../protocol/bridge-schema';
 import type { AllConsentNames } from '../protocol/vocabulary';
 import { CONSENT_CATEGORIES } from '../protocol/vocabulary';
 import {
@@ -406,15 +405,27 @@ const warnSnapshotDrift = function warnSnapshotDrift(
 	);
 };
 
+/**
+ * React Native's build flag. Metro replaces it with `false` in a release bundle,
+ * and it is undefined outside React Native.
+ */
+declare const __DEV__: boolean | undefined;
+
 /** Payload problem sets already reported, so a repeated payload stays quiet. */
 const reportedBridgeDrift = new Set<string>();
 
 /**
- * Name the keys a native payload got wrong, once per distinct set of problems.
+ * Name the keys a native payload got wrong, once per distinct set of problems,
+ * in a development build.
  *
  * Checked against `BRIDGE_PAYLOADS`, the table `native/protocol/bridge/payloads.json`
  * is generated from, so a key one native build renamed shows up here by name
  * instead of as an `undefined` read. Keys a newer native build added stay quiet.
+ *
+ * The table and its checker load inside the `__DEV__` branch. Metro inlines
+ * `__DEV__` as `false` in a release bundle and folds the branch away with the
+ * import in it, so a release app carries none of it. The warning therefore
+ * arrives a tick after the payload is read.
  *
  * @param name - Which payload `parsed` is.
  * @param parsed - The parsed JSON.
@@ -423,21 +434,24 @@ const warnBridgeDrift = function warnBridgeDrift(
 	name: BridgePayloadName,
 	parsed: unknown
 ): void {
-	if (isProduction()) {
-		return;
+	if (typeof __DEV__ !== 'undefined' && __DEV__ && !isProduction()) {
+		void import('../protocol/bridge-schema').then(
+			({ describeBridgePayloadDrift }) => {
+				const problems = describeBridgePayloadDrift(name, parsed, {
+					allowUnknownKeys: true,
+				});
+				const signature = `${name}\n${problems.join('\n')}`;
+				if (problems.length === 0 || reportedBridgeDrift.has(signature)) {
+					return;
+				}
+				reportedBridgeDrift.add(signature);
+				console.warn(
+					`c15t ConsentClient: the native ${name} payload does not match the declared wire shape.`,
+					problems
+				);
+			}
+		);
 	}
-	const problems = describeBridgePayloadDrift(name, parsed, {
-		allowUnknownKeys: true,
-	});
-	const signature = `${name}\n${problems.join('\n')}`;
-	if (problems.length === 0 || reportedBridgeDrift.has(signature)) {
-		return;
-	}
-	reportedBridgeDrift.add(signature);
-	console.warn(
-		`c15t ConsentClient: the native ${name} payload does not match the declared wire shape.`,
-		problems
-	);
 };
 
 /**
