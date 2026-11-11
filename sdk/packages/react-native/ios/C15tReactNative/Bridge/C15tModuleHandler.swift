@@ -241,14 +241,14 @@ public struct C15tModuleHandler {
     /// An unreadable intent and a missing core both resolve rather than reject: the
     /// result type carries the reason, and JavaScript renders it.
     public func commitPayload(intent: String) -> String {
-        guard let parsed = C15tPayload.parseCommitIntent(intent) else {
+        // An unreadable intent is refused before a core is started for it.
+        guard C15tPayload.parseCommitIntent(intent) != nil else {
             return C15tPayload.invalidIntent(raw: intent)
         }
         guard ensureCore(), let core = C15t.current else {
             return C15tPayload.notBootstrapped()
         }
-        let revision = C15tPayload.parseExpectedRevision(intent)
-        return C15tPayload.commitResult(core.save(parsed, expectedRevision: revision), snapshot: core.snapshot())
+        return C15tPayload.commit(intent, core: core)
     }
 
     /// Replace the geographic, language, and GPC overrides.

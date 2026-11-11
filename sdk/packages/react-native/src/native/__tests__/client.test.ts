@@ -69,6 +69,23 @@ afterEach(() => {
 });
 
 describe('handshake', () => {
+	// A JavaScript-only update can run over a binary that ignores a commit's
+	// `revision`. Its silence must read as "unchecked", so a draft never trusts it.
+	test.each([
+		['absent', undefined, false],
+		['false', false, false],
+		['true', true, true],
+		['not a boolean', 'true', false],
+	])(
+		'reads a %s commitRevision flag as %s',
+		(_label, commitRevision, expected) => {
+			const { client } = makeClient({
+				bootstrap: { ...FAKE_BOOTSTRAP, commitRevision },
+			});
+			expect(client.bootstrap.commitRevision).toBe(expected);
+		}
+	);
+
 	// A JavaScript-only update can run over a binary built before `nativeUI` existed.
 	// That binary links the stock screens, so its silence must read as `true`;
 	// only an explicit `false` from a `c15t.nativeUI=false` build means they are out.

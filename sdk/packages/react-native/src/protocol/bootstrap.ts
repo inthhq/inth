@@ -33,6 +33,14 @@ export interface BootstrapPayload {
 	 */
 	readonly hasStoredSnapshot: boolean;
 	/**
+	 * `true` when the native build honours a commit's `revision`: it refuses
+	 * the commit with `concurrent-change` if the record moved past that
+	 * revision. A draft save pins itself to the revision it was built on, so a
+	 * decision recorded anywhere in between is never overwritten. A binary
+	 * older than this field reads as `false`; see `useConsentDraft`.
+	 */
+	readonly commitRevision: boolean;
+	/**
 	 * Whether the binary links the stock native consent screens. `false` in a
 	 * build with `c15t.nativeUI` false (the Expo plugin's `nativeUI: false`),
 	 * where `presentConsentPrompt` and `presentPreferences` reject with

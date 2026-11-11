@@ -10,6 +10,7 @@
  * different policy.
  */
 
+import { isProduction } from '../native/client';
 import type { ConsentClient } from '../native/client';
 import type {
 	CommitResult,
@@ -127,7 +128,6 @@ interface Seed {
 	readonly iab: NativeIABChoices | null;
 	readonly displayed: readonly AllConsentNames[];
 	readonly policyKey: string;
-	readonly revision: number;
 }
 
 const isOptional = (
@@ -160,7 +160,6 @@ const seedFrom = function seedFrom(
 			snapshot.model,
 			snapshot.iab?.gvl?.vendorListVersion ?? null,
 		]),
-		revision: snapshot.revision,
 		values,
 	};
 };
@@ -186,6 +185,23 @@ const differs = function differs(
 			(category) =>
 				isOptional(category) && values[category] !== baseline.values[category]
 		)
+	);
+};
+
+/** Clients already warned that their binary cannot pin a draft save. */
+const warnedUnpinned = new WeakSet<ConsentClient>();
+
+/**
+ * Say once, in development, that this binary saves drafts without the native
+ * revision check.
+ */
+const warnUnpinned = function warnUnpinned(client: ConsentClient): void {
+	if (warnedUnpinned.has(client) || isProduction()) {
+		return;
+	}
+	warnedUnpinned.add(client);
+	console.warn(
+		'c15t: this native build does not check a draft save against the snapshot it was built on (bootstrap.commitRevision is false), so a decision another surface records while the save is in flight can be overwritten. Rebuild the app with this version of @c15t/react-native.'
 	);
 };
 
@@ -436,6 +452,58 @@ export const createConsentDraft = function createConsentDraft(
 		publish();
 	};
 
+	/**
+	 * Save the draft, pinned to the revision it was last rebased on.
+	 *
+	 * The client serves a cached snapshot until a change event or a reply
+	 * arrives, so a decision another surface records can already be in native
+	 * when this reads. Only native can check that atomically: the commit names
+	 * the revision, and native refuses it with `concurrent-change` if the record
+	 * moved. The draft then reads the record, which rebases it under the same
+	 * receipt rules as any other change, and tries once more if nothing the
+	 * subject staged was overtaken. A binary without the check, which
+	 * `bootstrap.commitRevision` reports, saves unpinned with the JavaScript-side
+	 * check alone.
+	 */
+	const commitDraft = async function commitDraft(
+		retry: boolean
+	): Promise<CommitResult> {
+		sync();
+		if (stale || staleCategories.length > 0) {
+			return STALE_RESULT;
+		}
+		const consents = Object.fromEntries(
+			seed.displayed
+				.filter(isOptional)
+				.map((category) => [category, values[category]])
+		) as Partial<Record<OptionalConsentCategory, boolean>>;
+		const submitted = values;
+		const submittedIAB = iab;
+		// A binary that commits a TCF draft also checks the revision, so a TCF
+		// selection is always pinned; it travels with the categories.
+		const pinned = iab !== null || client.bootstrap.commitRevision;
+		if (!pinned) {
+			warnUnpinned(client);
+		}
+		const revision = pinned ? { revision: snapshot.revision } : {};
+		const result = await client.commit(
+			iab === null
+				? { action: 'explicit', consents, ...revision }
+				: { action: 'iab', choices: iab, consents, ...revision }
+		);
+		if (result.ok) {
+			settle(submitted, result.revision, submittedIAB);
+			return result;
+		}
+		if (pinned && retry && result.reason === 'concurrent-change') {
+			return commitDraft(false);
+		}
+		// Bring the draft up to the record that refused it, so `isStale` and
+		// `staleCategories` say why.
+		sync();
+		return result;
+	};
+
 	return {
 		acceptAll: () => stageDisplayed(true),
 		client,
@@ -452,30 +520,7 @@ export const createConsentDraft = function createConsentDraft(
 			snapshot = client.getSnapshot();
 			reseed();
 		},
-		save: async () => {
-			sync();
-			if (stale || staleCategories.length > 0) {
-				return STALE_RESULT;
-			}
-			const consents = Object.fromEntries(
-				seed.displayed
-					.filter(isOptional)
-					.map((category) => [category, values[category]])
-			) as Partial<Record<OptionalConsentCategory, boolean>>;
-			const submitted = values;
-			const submittedIAB = iab;
-			// Under TCF the purposes and vendors travel with the categories, pinned to
-			// the revision the selection was made against.
-			const result = await client.commit(
-				iab === null
-					? { action: 'explicit', consents }
-					: { action: 'iab', choices: iab, consents, revision: seed.revision }
-			);
-			if (result.ok) {
-				settle(submitted, result.revision, submittedIAB);
-			}
-			return result;
-		},
+		save: () => commitDraft(true),
 		set: (category, value) => {
 			stage({ [category]: value });
 		},
