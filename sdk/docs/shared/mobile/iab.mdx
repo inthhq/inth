@@ -171,7 +171,10 @@ How it behaves:
 - Apple's alert comes right before a consent prompt opens: one that opens by
   itself, one the SDK opens after another screen closes, or one your app opens
   with `presentConsentPrompt()` in React Native or `ConsentPrompt.presentPrompt()`
-  in Swift. A launch that owes no prompt asks nothing.
+  in Swift.
+- A launch that owes no consent prompt asks nothing, so someone whose stored
+  choice is still valid and whose ATT answer is still not determined is asked
+  only right before their next consent prompt.
 - It asks at most once per launch, and only under the conditions above, so a
   stored refusal of marketing skips it. If a later prompt opens after that
   refusal is gone, for example after a reset, it asks then.
