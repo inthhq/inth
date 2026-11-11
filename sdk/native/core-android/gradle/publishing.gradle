@@ -34,6 +34,28 @@ def apiDocs = tasks.register('apiDocsJar', Jar) {
 	from layout.buildDirectory.dir('dokka/html')
 }
 
+// AGENTS.md is the pointer an agent in a consumer app finds: at the root of the sources
+// jar, and as the module overview page of the API docs, which Dokka wants under a
+// `# Module <name>` heading.
+def agentNotes = rootProject.file('AGENTS.md')
+def agentModuleDoc = tasks.register('agentModuleDoc') {
+	def output = layout.buildDirectory.file('generated/dokka/module.md')
+	inputs.file(agentNotes)
+	outputs.file(output)
+	doLast {
+		output.get().asFile.with {
+			parentFile.mkdirs()
+			text = "# Module ${artifactName}\n\n" + agentNotes.text.replaceFirst(/^# [^\n]*\n/, '')
+		}
+	}
+}
+dokka {
+	dokkaSourceSets.configureEach { includes.from(agentModuleDoc) }
+}
+tasks.matching { it.name in ['sourcesJar', 'sourceReleaseJar'] }.configureEach {
+	from(agentNotes)
+}
+
 tasks.withType(AbstractArchiveTask).configureEach {
 	preserveFileTimestamps = false
 	reproducibleFileOrder = true

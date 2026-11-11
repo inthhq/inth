@@ -171,6 +171,11 @@ describe('Swift source distribution', () => {
 			repo.write(path, 'must not ship');
 		}
 		repo.write(`${nativeRoot}/Resources/binary.dat`, Buffer.from([0, 255, 10]));
+		repo.write(
+			`${nativeRoot}/AGENTS.md`,
+			'# c15t for Swift: notes for coding agents\n'
+		);
+		repo.write('AGENTS.md', '# Monorepo contributor guide\n');
 		const sourceCommit = repo.commit();
 		repo.write(sourcePath, 'uncommitted source must not ship');
 		repo.write(`${nativeRoot}/Sources/C15tCore/untracked.swift`, 'untracked');
@@ -201,6 +206,11 @@ describe('Swift source distribution', () => {
 		).toBe(false);
 		expect(exported).not.toContain(`${nativeRoot}/C15tCore.podspec`);
 		expect(exported).not.toContain(`${nativeRoot}/CHANGELOG.md`);
+		// The consumer notes ship; the monorepo's contributor AGENTS.md does not.
+		expect(readFileSync(join(repo.output, `${nativeRoot}/AGENTS.md`))).toEqual(
+			repo.read(`${nativeRoot}/AGENTS.md`)
+		);
+		expect(exported).not.toContain('AGENTS.md');
 		expect(
 			readFileSync(join(repo.output, `${nativeRoot}/Package.swift`))
 		).toEqual(repo.read(`${nativeRoot}/Package.swift`));

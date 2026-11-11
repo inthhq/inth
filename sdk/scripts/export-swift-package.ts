@@ -29,6 +29,9 @@ const sourceFiles = new Set([
 	'NOTICE',
 	manifestPath,
 	`${nativeRoot}/README.md`,
+	// Where the guides are, for an agent in an app that depends on the package. The
+	// monorepo's root AGENTS.md is contributor guidance and stays out.
+	`${nativeRoot}/AGENTS.md`,
 ]);
 const excludedSegments = new Set([
 	'.build',
