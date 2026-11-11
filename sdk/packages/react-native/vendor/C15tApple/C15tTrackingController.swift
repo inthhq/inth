@@ -40,6 +40,12 @@ public struct C15tTrackingController: Sendable {
 
     public let trackingWaiters = C15tTrackingWaiters()
 
+    /// When this SDK last saw an `authorized` or `denied` answer. See ``C15tTrackingAnswerLog``.
+    public let answerLog: C15tTrackingAnswerLog
+
+    /// The clock the answer log is stamped with. Injectable so a test can move a year ahead.
+    public let now: @Sendable () -> Date
+
     public init(
         trackingPlatformStatus: @escaping @Sendable () -> C15tTrackingPlatformStatus? = { C15tTracking.platformStatus() },
         trackingPromptStringPresent: @escaping @Sendable () -> Bool = { C15tTracking.promptStringPresent() },
@@ -55,13 +61,31 @@ public struct C15tTrackingController: Sendable {
                 additionalInformationSelected: additionalInformationSelected,
                 completion: completion
             )
-        }
+        },
+        answerLog: C15tTrackingAnswerLog = .userDefaults(),
+        now: @escaping @Sendable () -> Date = { Date() }
     ) {
+        self.answerLog = answerLog
+        self.now = now
         self.trackingPlatformStatus = trackingPlatformStatus
         self.trackingPromptStringPresent = trackingPromptStringPresent
         self.trackingPrompt = trackingPrompt
         self.trackingExpandedInterfaceAvailable = trackingExpandedInterfaceAvailable
         self.trackingExpandedPrompt = trackingExpandedPrompt
+    }
+
+    /// When this SDK last saw Apple answer `authorized` or `denied`, or `nil` while Apple has
+    /// no such answer on file.
+    ///
+    /// An answer given before this log existed has no stored time. It is stamped now, so the
+    /// yearly re-ask waits a full year from today rather than asking at once.
+    public func lastAnswerDate() -> Date? {
+        let status = trackingPlatformStatus()
+        guard status == .authorized || status == .denied else { return nil }
+        if let stored = answerLog.lastAnswerAt { return stored }
+        let stamp = now()
+        answerLog.record(stamp)
+        return stamp
     }
 
     /// Ask Apple explicitly, coalescing simultaneous requests into one prompt.
@@ -111,7 +135,11 @@ public struct C15tTrackingController: Sendable {
         // `expanded` would describe an attempt rather than what happened. The distinction is
         // the only thing a host has for telling "Apple had the expanded sheet and chose not
         // to use it" apart from "this binary never asked for it".
-        let deliver: (C15tTrackingPresentation, C15tTrackingPlatformStatus?) -> Void = { [trackingWaiters] ran, answered in
+        let deliver: (C15tTrackingPresentation, C15tTrackingPlatformStatus?) -> Void = { [trackingWaiters, answerLog, now] ran, answered in
+            // A final answer starts the year Apple counts before it may ask again in the EU.
+            if answered == .authorized || answered == .denied, !additionalInformationSelected.isSet {
+                answerLog.record(now())
+            }
             let result = C15tTrackingGate.requestResult(
                 platform: answered,
                 presentation: ran,
