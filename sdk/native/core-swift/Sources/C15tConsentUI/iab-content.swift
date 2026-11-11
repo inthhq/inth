@@ -154,6 +154,7 @@ struct IABPreferencesContent: Equatable, Sendable {
         let list = presentation.list
         let copy = IABCopy.forLanguage(presentation.language)
         let projections = presentation.vendors.values
+        let custom = presentation.customVendors
         purposes = presentation.declaredPurposeIds.compactMap { id in
             list.purposes[id].map { definition in
                 let counts = presentation.partnerCounts(purposeId: id)
