@@ -151,6 +151,7 @@ export const BRIDGE_PAYLOADS = {
 		},
 		gppString: 'string | null',
 		iab: 'object | null',
+		iabMarketingPurposes: 'boolean | null',
 		location: {
 			fields: { countryCode: 'string | null', regionCode: 'string | null' },
 			nullable: true,

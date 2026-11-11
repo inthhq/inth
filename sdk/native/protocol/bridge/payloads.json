@@ -341,6 +341,11 @@
 					"required": true,
 					"type": "object"
 				},
+				"iabMarketingPurposes": {
+					"nullable": true,
+					"required": true,
+					"type": "boolean"
+				},
 				"location": {
 					"nullable": true,
 					"required": true,

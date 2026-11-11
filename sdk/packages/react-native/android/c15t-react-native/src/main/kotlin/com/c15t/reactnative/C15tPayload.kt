@@ -213,6 +213,9 @@ object C15tPayload {
 		// Not kernel state, so SnapshotWire leaves it out; JavaScript reads it to tell a new
 		// owed prompt from one it already presented, even when it skipped the snapshots between.
 		conformed["promptOwedSince"] = snapshot.promptOwedSince?.let(::JsonPrimitive) ?: JsonNull
+		// The iOS bridge reads whether the TC String consents to the marketing purposes, for
+		// App Tracking Transparency. Android has no ATT, so the key is always present and null.
+		conformed["iabMarketingPurposes"] = JsonNull
 
 		// The headless TCF state rides inside `iab`: the committed decision a screen shows and
 		// reopens with (`null` while none is current), whether a draft can be edited and saved
