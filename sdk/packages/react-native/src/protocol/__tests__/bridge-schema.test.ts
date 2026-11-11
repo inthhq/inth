@@ -25,6 +25,7 @@ import {
 	normalizeBridgeField,
 	renderBridgeSchema,
 } from '../bridge-schema';
+import { parseTrackingAnsweredAt } from '../tracking';
 import { withAdditiveSnapshotDefaults } from '../wire-shape';
 
 const PROTOCOL_DIR = resolve(
@@ -139,6 +140,23 @@ describe('describeBridgePayloadDrift', () => {
 			'location.countryCode: required, absent from the payload',
 			'location.country: not a key this payload declares',
 		]);
+	});
+
+	test('accepts the tracking answer time the iOS bridge sends', () => {
+		// What `C15tPayload.trackingAuthorization(.authorized, answeredAt:)`
+		// encodes in C15tPayloadTests.swift, keys sorted as the iOS encoder sorts them.
+		const raw = '{"answeredAt":1800000000500,"status":"authorized"}';
+
+		expect(
+			describeBridgePayloadDrift('trackingAuthorization', JSON.parse(raw))
+		).toEqual([]);
+		expect(parseTrackingAnsweredAt(raw)).toBe(1_800_000_000_500);
+		expect(
+			describeBridgePayloadDrift('trackingAuthorization', {
+				answeredAt: '2027-01-15',
+				status: 'authorized',
+			})
+		).toEqual(['answeredAt: expected number, found string']);
 	});
 
 	test('refuses a payload that is not an object', () => {

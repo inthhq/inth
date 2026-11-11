@@ -556,6 +556,11 @@
 		"trackingAuthorization": {
 			"direction": "native-to-js",
 			"fields": {
+				"answeredAt": {
+					"nullable": false,
+					"required": false,
+					"type": "number"
+				},
 				"status": {
 					"nullable": false,
 					"required": true,

@@ -211,6 +211,7 @@ export const BRIDGE_PAYLOADS = {
 		revision: 'number',
 	},
 	trackingAuthorization: {
+		answeredAt: 'number?',
 		status: { enum: TRACKING_AUTHORIZATION_STATUSES },
 	},
 	trackingRequest: {

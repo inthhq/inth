@@ -68,6 +68,10 @@ final class C15tBridgeSchemaTests: XCTestCase {
             ("commitResult", C15tPayload.notBootstrapped()),
             ("trackingAuthorization", C15tPayload.trackingAuthorization(.notDetermined)),
             (
+                "trackingAuthorization",
+                C15tPayload.trackingAuthorization(.authorized, answeredAt: Date(timeIntervalSince1970: 1_800_000_000.5))
+            ),
+            (
                 "trackingRequest",
                 C15tPayload.trackingRequestResult(
                     C15tTrackingRequestResult(status: .notDetermined, stage: .additionalInformation, presentation: .expanded)

@@ -50,6 +50,12 @@ export type TrackingAuthorization =
 export interface TrackingAuthorizationPayload {
 	/** The platform answer, after the build-time check. */
 	readonly status: TrackingAuthorization;
+	/**
+	 * When this SDK last saw Apple answer `authorized` or `denied`, in epoch
+	 * milliseconds, for the yearly re-ask. iOS only, and absent while no answer
+	 * is on file; read it with `parseTrackingAnsweredAt`.
+	 */
+	readonly answeredAt?: number;
 }
 
 /**
