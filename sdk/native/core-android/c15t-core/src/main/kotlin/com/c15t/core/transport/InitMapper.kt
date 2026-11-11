@@ -62,7 +62,7 @@ data class MappedInit(
 	 *
 	 * It is null in the third case by construction, and that costs nothing: this field never takes
 	 * anything away. The kernel keeps the last list it accepted across a list-less or failed `/init`,
-	 * for the reason written at [com.c15t.core.C15tKernel.vendorList], so a device that has already
+	 * for the reason written at [com.c15t.core.ConsentCore.vendorList], so a device that has already
 	 * drawn purpose names off a list keeps being able to say who they belong to. Reading this field
 	 * as "install it, or clear what you have" would be the bug that comment is there to prevent.
 	 *

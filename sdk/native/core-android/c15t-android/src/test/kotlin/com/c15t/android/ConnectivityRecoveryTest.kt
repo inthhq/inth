@@ -23,16 +23,16 @@ import org.junit.Test
 
 class ConnectivityRecoveryTest {
 	@Before
-	fun clearInstalledCore() = C15t.reset()
+	fun clearInstalledCore() = C15t.uninstall()
 
 	@After
-	fun leaveNoInstalledCore() = C15t.reset()
+	fun leaveNoInstalledCore() = C15t.uninstall()
 
 	@Test
 	fun `connectivity recovery replays the queue off callback thread and refreshes policy`() {
 		val transport = RecordingTransport()
 		C15t.bootstrap(
-			NativeConfig(portalUrl = "https://example.test", consentCategories = listOf(ConsentCategory.MEASUREMENT)),
+			NativeConfig(backendUrl = "https://example.test", consentCategories = listOf(ConsentCategory.MEASUREMENT)),
 			C15tStore(MemoryStore()),
 			transport = transport,
 			executor = TaskExecutor { it() },

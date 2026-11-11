@@ -25,12 +25,12 @@ import org.junit.Test
 class MeasurementConsentGateTest {
     @After fun cleanUp() {
         Handler.drain()
-        C15t.reset()
+        C15t.uninstall()
     }
 
     @Test fun delayedGrantCannotEnableCollectionAfterCommittedRefusal() {
         C15t.bootstrap(
-            NativeConfig(portalUrl = "https://example.test", consentCategories = ConsentCategory.entries),
+            NativeConfig(backendUrl = "https://example.test", consentCategories = ConsentCategory.entries),
             C15tStore(MemoryStore()),
             executor = TaskExecutor.DIRECT,
             transport = object : C15tTransport {

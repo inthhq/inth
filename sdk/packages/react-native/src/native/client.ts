@@ -188,7 +188,7 @@ export interface ConsentClient {
 	 * which is right for a render path and wrong for the one moment the answer
 	 * genuinely moves: the subject went to the Settings app, changed tracking, and
 	 * came back. Apple tells a running process nothing when that happens, so this is
-	 * the read that has to be asked for, and it is what {@link C15tProvider} calls
+	 * the read that has to be asked for, and it is what {@link ConsentProvider} calls
 	 * when the app returns to the foreground.
 	 *
 	 * @returns The freshly read arm, with subscribers notified only when it moved.
@@ -666,7 +666,7 @@ export const createConsentClient = function createConsentClient(
 	 *
 	 * Reconciling here rather than waiting for the event means a resolved
 	 * promise and the rendered snapshot never disagree, which is what a caller
-	 * that awaits `acceptAll()` and then reads `useConsent()` expects.
+	 * that awaits `acceptAll()` and then reads `useSnapshot()` expects.
 	 */
 	const afterMutation = async function afterMutation<ReturnType>(
 		settled: Promise<ReturnType>

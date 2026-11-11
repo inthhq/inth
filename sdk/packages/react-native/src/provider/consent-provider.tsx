@@ -25,9 +25,9 @@ import {
 import type { ConsentSafeAreaInsets } from './safe-area-context';
 
 /**
- * Props for {@link C15tProvider}.
+ * Props for {@link ConsentProvider}.
  */
-export interface C15tProviderProps {
+export interface ConsentProviderProps {
 	/** The app subtree that may read consent. */
 	readonly children: ReactNode;
 	/**
@@ -45,9 +45,9 @@ export interface C15tProviderProps {
 	 *
 	 * const insets = useSafeAreaInsets();
 	 *
-	 * <C15tProvider safeAreaInsets={insets}>
+	 * <ConsentProvider safeAreaInsets={insets}>
 	 *     <Root />
-	 * </C15tProvider>;
+	 * </ConsentProvider>;
 	 * ```
 	 */
 	readonly safeAreaInsets?: ConsentSafeAreaInsets;
@@ -62,13 +62,13 @@ export interface C15tProviderProps {
  *
  * @example
  * ```tsx
- * import { C15tProvider } from '@c15t/react-native';
+ * import { ConsentProvider } from '@c15t/react-native';
  *
  * export function App() {
  *     return (
- *         <C15tProvider>
+ *         <ConsentProvider>
  *             <Root />
- *         </C15tProvider>
+ *         </ConsentProvider>
  *     );
  * }
  * ```
@@ -84,10 +84,10 @@ export interface C15tProviderProps {
  *   protocol this bundle does not support. The message names both sides and the
  *   fix, which is a rebuild rather than a JavaScript update.
  */
-export const C15tProvider = ({
+export const ConsentProvider = ({
 	children,
 	safeAreaInsets,
-}: C15tProviderProps): ReactNode => {
+}: ConsentProviderProps): ReactNode => {
 	const inherited = useContext(ConsentClientContext);
 	const inheritedInsets = useConsentSafeAreaInsets();
 

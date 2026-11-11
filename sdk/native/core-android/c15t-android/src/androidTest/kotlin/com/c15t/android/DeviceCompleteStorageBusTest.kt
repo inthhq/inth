@@ -28,7 +28,7 @@ class DeviceCompleteStorageBusTest {
 		val prefs = PreferenceManager.getDefaultSharedPreferences(context)
 		val config = NativeConfig("https://consent.instrumentation.invalid", iab = IabConfiguration(53, 7, "GB",
 			numCustomPurposes = 2, publisherRestrictions = listOf(IabPublisherRestriction(3, 0, listOf(1)))))
-		val first = C15tKernel(config, C15tStores.create(context), clock = Clock { DEVICE_IAB_NOW },
+		val first = ConsentCore(config, C15tStores.create(context), clock = Clock { DEVICE_IAB_NOW },
 			transport = NativeIabDeviceBackend(), executor = TaskExecutor.DIRECT)
 		first.bootstrap()
 		assertEquals(53, prefs.getInt(TcStorageBusKeys.CMP_SDK_ID, -1))
@@ -58,7 +58,7 @@ class DeviceCompleteStorageBusTest {
 		assertEquals(saved.tcString, prefs.getString(TcStorageBusKeys.TC_STRING, null))
 		val before = prefs.all.filterKeys { it in TcStorageBusKeys.ALL_NAMES }
 		prefs.edit().remove(TcStorageBusKeys.PURPOSE_CONSENTS).putString(TcStorageBusKeys.PUBLISHER_RESTRICTIONS + "7", "2").commit()
-		val cold = C15tKernel(config, C15tStores.create(context), clock = Clock { DEVICE_IAB_NOW }, executor = TaskExecutor { })
+		val cold = ConsentCore(config, C15tStores.create(context), clock = Clock { DEVICE_IAB_NOW }, executor = TaskExecutor { })
 		cold.bootstrap()
 		assertEquals(before, prefs.all.filterKeys { it in TcStorageBusKeys.ALL_NAMES })
 		assertTrue(cold.save(CommitIntent.Necessary).ok)
@@ -99,7 +99,7 @@ class DeviceCompleteStorageBusTest {
 		val config = NativeConfig("https://consent.instrumentation.invalid", iab = IabConfiguration(53, 7, "GB"))
 		var now = DEVICE_IAB_NOW
 		fun store() = C15tStore(backend, tcStorageBus = DefaultPreferencesTcStorageBus(context))
-		val core = C15tKernel(config, store(), clock = Clock { now }, transport = NativeIabDeviceBackend(), executor = TaskExecutor.DIRECT)
+		val core = ConsentCore(config, store(), clock = Clock { now }, transport = NativeIabDeviceBackend(), executor = TaskExecutor.DIRECT)
 		core.bootstrap()
 		assertTrue(core.save(CommitIntent.All).ok)
 		val before = prefs.all.filterKeys { it in TcStorageBusKeys.ALL_NAMES }
@@ -109,7 +109,7 @@ class DeviceCompleteStorageBusTest {
 		assertEquals(before, prefs.all.filterKeys { it in TcStorageBusKeys.ALL_NAMES })
 		assertEquals(record, backend.read(C15tStoreKeys.SNAPSHOT))
 		now += 8 * 86_400_000L
-		val cold = C15tKernel(config, store(), clock = Clock { now }, executor = TaskExecutor { })
+		val cold = ConsentCore(config, store(), clock = Clock { now }, executor = TaskExecutor { })
 		cold.bootstrap()
 		assertNull(prefs.getString(TcStorageBusKeys.TC_STRING, null))
 		assertNull(prefs.getString(TcStorageBusKeys.ADDTL_CONSENT, null))

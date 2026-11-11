@@ -8,10 +8,10 @@
  */
 
 import {
-	C15tProvider,
+	ConsentProvider,
 	getConsentClient,
 	useConsentStatus,
-	useIsAllowed,
+	useConsent,
 } from '@c15t/react-native';
 import { createElement } from 'react';
 import type { ReactNode } from 'react';
@@ -55,7 +55,7 @@ const probe = function probe<ValueType>(
 
 /** Watches one boolean category. */
 const MarketingProbe = (): ReactNode =>
-	probe('marketing', useIsAllowed('marketing'));
+	probe('marketing', useConsent('marketing'));
 
 /**
  * Build a probe that watches one category.
@@ -68,7 +68,7 @@ const categoryProbe = function categoryProbe(
 	name: string,
 	category: 'marketing' | 'measurement'
 ): () => ReactNode {
-	return () => probe(name, useIsAllowed(category));
+	return () => probe(name, useConsent(category));
 };
 
 /** Two watchers of a category no scenario in here touches. */
@@ -82,7 +82,7 @@ const StatusProbe = (): ReactNode =>
 /** The tree under test: the real provider, four subscribed components. */
 const BenchTree = (): ReactNode =>
 	createElement(
-		C15tProvider,
+		ConsentProvider,
 		null,
 		createElement(MarketingProbe),
 		createElement(MeasurementProbe),

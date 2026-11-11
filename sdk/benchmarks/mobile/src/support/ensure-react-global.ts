@@ -1,7 +1,7 @@
 /**
  * Work around a defect in the shipped `@c15t/react-native` output.
  *
- * `dist/provider/c15t-provider.js` compiles its JSX with the classic runtime
+ * `dist/provider/consent-provider.js` compiles its JSX with the classic runtime
  * (`React.createElement`) without importing `React`, while every other file in
  * the same build uses the automatic runtime. Nothing in a React Native app
  * defines a `React` global, so the provider would throw on first render there.

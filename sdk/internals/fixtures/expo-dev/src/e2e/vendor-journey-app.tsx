@@ -12,7 +12,7 @@ import {
 	presentConsentPrompt,
 	presentPreferences,
 	useConsentStatus,
-	useIsAllowed,
+	useConsent,
 } from '@c15t/react-native';
 import { useEffect, useState } from 'react';
 import { Button, Text, View } from 'react-native';
@@ -39,7 +39,7 @@ const present = async (
 export const VendorJourneyApp = () => {
 	const vendors = useE2eVendorProbe(config.e2e);
 	const status = useConsentStatus();
-	const measurement = useIsAllowed('measurement');
+	const measurement = useConsent('measurement');
 	const [error, setError] = useState('');
 
 	const handleProbe = vendors.probe;

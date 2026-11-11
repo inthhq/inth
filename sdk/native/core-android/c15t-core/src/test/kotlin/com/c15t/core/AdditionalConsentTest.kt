@@ -25,7 +25,7 @@ class AdditionalConsentTest {
 		val base = Json.parseToJsonElement(initBody(model = "\"iab\"", gvl = GlobalVendorListJson.toJson(v.gvl))).jsonObject
 		return initSuccess(body = JsonObject(base + ("adTechProviders" to providers)).toString())
 	}
-	private fun boot(store: C15tStore = C15tStore(InMemoryKeyValueStore()), http: RecordingTransport = RecordingTransport()): C15tKernel {
+	private fun boot(store: C15tStore = C15tStore(InMemoryKeyValueStore()), http: RecordingTransport = RecordingTransport()): ConsentCore {
 		http.respondInit(response()).respondSave(SaveOutcome.Unavailable("offline"))
 		return testKernel(config = config, store = store, transport = http, clock = FixedClock(v.now)).also { it.bootstrap() }
 	}

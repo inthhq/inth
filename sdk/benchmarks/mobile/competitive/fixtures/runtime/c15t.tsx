@@ -1,7 +1,7 @@
 import {
-	C15tProvider,
+	ConsentProvider,
 	presentPreferences,
-	useConsent,
+	useSnapshot,
 } from '@c15t/react-native';
 import type { PropsWithChildren } from 'react';
 
@@ -9,10 +9,10 @@ import { benchmarkConfig } from './benchmark-config';
 import type { RuntimeConsent } from './runtime-types';
 
 export const ConsentBoundary = ({ children }: PropsWithChildren) => (
-	<C15tProvider>{children}</C15tProvider>
+	<ConsentProvider>{children}</ConsentProvider>
 );
 export const useRuntimeConsent = (): RuntimeConsent => {
-	const raw = useConsent();
+	const raw = useSnapshot();
 	const choice = raw.explicitChoice?.categories.measurement;
 	const ready =
 		raw.ready &&

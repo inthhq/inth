@@ -11,11 +11,11 @@ import com.c15t.core.transport.C15tProtocol
  * semantics on its own. The backend identifies the project by URL, the same way
  * the hosted transport in `@c15t/core` assumes, so there is no key in this type.
  *
- * @property portalUrl c15t backend base URL, without a trailing slash.
- * @property initUrl Overrides `$portalUrl/init`, for a deployment fronted by a
+ * @property backendUrl c15t backend base URL, without a trailing slash.
+ * @property initUrl Overrides `$backendUrl/init`, for a deployment fronted by a
  * same-origin proxy.
  * @property domain Value sent as the `domain` field of `POST /subjects`. Defaults
- * to the host of [portalUrl].
+ * to the host of [backendUrl].
  * @property consentCategories Categories the host offers. `null` or empty declares
  * none: a strict policy offers its full scope and a permissive one offers
  * `necessary` alone, with an acknowledgement prompt.
@@ -25,7 +25,7 @@ import com.c15t.core.transport.C15tProtocol
  * Web puts that option to three uses: filtering the GVL request, narrowing the list the
  * module holds through `narrowGVLToVendors`, and clearing a summary that had counted the
  * wider list. The first one reaches this core as the `x-c15t-vendors` request header, the
- * second is what [com.c15t.core.C15tKernel] does with this field on every path a list
+ * second is what [com.c15t.core.ConsentCore] does with this field on every path a list
  * arrives by, and the third has no native equivalent yet because this build holds one
  * list and reports it whole.
  *
@@ -56,7 +56,7 @@ import com.c15t.core.transport.C15tProtocol
  * @property maxPendingSaves Offline write queue depth; the contract maximum is 20.
  */
 data class NativeConfig(
-	val portalUrl: String,
+	val backendUrl: String,
 	val initUrl: String? = null,
 	val domain: String? = null,
 	val sdkVersion: String = C15tProtocol.DEFAULT_SDK_VERSION,
@@ -73,6 +73,6 @@ data class NativeConfig(
 ) {
 	init {
 		require(iabListMaxAgeMs > 0)
-		require(portalUrl.isNotBlank()) { "NativeConfig.portalUrl must not be blank" }
+		require(backendUrl.isNotBlank()) { "NativeConfig.backendUrl must not be blank" }
 	}
 }

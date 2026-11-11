@@ -29,7 +29,7 @@ class HostedTransport(
 	private val clock: Clock = Clock.SYSTEM,
 	private val json: Json = Json { ignoreUnknownKeys = true },
 ) : C15tTransport {
-	private val base: String = trimTrailingSlash(config.portalUrl)
+	private val base: String = trimTrailingSlash(config.backendUrl)
 	private val initUrl: String = config.initUrl?.takeIf { it.isNotBlank() } ?: "$base/init"
 	private val domain: String = config.domain?.takeIf { it.isNotBlank() } ?: hostOf(base)
 

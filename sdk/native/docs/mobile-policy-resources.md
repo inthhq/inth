@@ -48,7 +48,7 @@ subject, receipt, effective permissions, TC string, delivery queue or
 | Host | Configuration |
 | --- | --- |
 | Bare iOS | Add the JSON to Copy Bundle Resources. Set `com.c15t.policy.resource` to its filename in Info.plist. Keep the hosted backend URL and mode configured. |
-| Bare Android | Put the JSON in `app/src/main/assets`. Set `com.c15t.POLICY_RESOURCE` to its asset path in application metadata. Keep `com.c15t.PORTAL_URL` configured. |
+| Bare Android | Put the JSON in `app/src/main/assets`. Set `com.c15t.POLICY_RESOURCE` to its asset path in application metadata. Keep `com.c15t.BACKEND_URL` configured. |
 | Expo development or release build | Set the config plugin's `policyResource` to the JSON path relative to the Expo project, alongside `backendURL`. Prebuild copies the exact bytes into both native projects and registers the iOS resource. Rebuild the binary after changing it. |
 | Swift host | Load `BundledPolicyResource` from resource URL or Data with the configured endpoint, then pass it as `CoreConfig.bundledPolicy` before bootstrapping. |
 | Kotlin host | Read the resource into `NativeConfig.bundledPolicy` before bootstrapping. `C15tAndroid.configFrom` can load the declared asset for you. |

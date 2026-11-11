@@ -39,7 +39,7 @@ Apply `c15tConsent(presenter:privacyPolicyURL:)` to the SwiftUI root. Call
 compiled reference is `ios/Sources/consent-demo-app.swift`.
 
 On Android, install with `C15tAndroid.install`, then attach a
-`com.c15t.consentui.ConsentPresenter` to that same `C15tKernel`. Keep the presenter
+`com.c15t.consentui.ConsentPresenter` to that same `ConsentCore`. Keep the presenter
 in a `ViewModelStore` so it survives activity recreation. Place
 `C15tConsent(presenter, privacyPolicyUrl)` beside the host's content. Call
 `presentPreferences()` from Privacy settings. The compiled reference is

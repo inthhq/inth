@@ -126,11 +126,11 @@ presentation and Settings changes still need on-device verification.
 
 ## Versions and validation limits
 
-Core requests report `x-c15t-version: <c15t.version>`. Platform-created
+Core requests report `x-c15t-version: <C15t.version>`. Platform-created
 hosted transports also report `x-c15t-platform: apple-><C15tApple.version>` on
 init, save and identity requests. These native source versions are independent
 of the RN npm version. None is the internal 12-bit IAB CMP version or a claim of
-CMP registration or certification. `c15t.version` in `Transports.swift` is the
+CMP registration or certification. `C15t.version` in `Transports.swift` is the
 source of truth for the Swift native package. `C15tApple.version` aliases it and
 the local `C15tCore.podspec` reads it directly. The pod no longer accepts an
 independent `C15T_CORE_POD_VERSION`. Tests compare the native module versions;

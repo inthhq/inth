@@ -1,6 +1,6 @@
 package com.c15t.reactnative
 
-import com.c15t.core.C15tKernel
+import com.c15t.core.ConsentCore
 import com.c15t.core.NativeConfig
 import com.c15t.core.spi.KeyValueStore
 import com.c15t.core.spi.TaskExecutor
@@ -40,8 +40,8 @@ internal class MemoryStore(
  */
 internal fun bridgeKernel(
 	store: C15tStore,
-	config: NativeConfig = NativeConfig(portalUrl = "https://test.c15t.app"),
-): C15tKernel = C15tKernel(
+	config: NativeConfig = NativeConfig(backendUrl = "https://test.c15t.app"),
+): ConsentCore = ConsentCore(
 	config = config,
 	store = store,
 	transport = com.c15t.core.transport.C15tTransport.NONE,

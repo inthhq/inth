@@ -159,7 +159,7 @@ class C15tPayloadTest {
 		val kernel = bridgeKernel(
 			C15tStore(MemoryStore()),
 			config = NativeConfig(
-				portalUrl = "https://test.c15t.app",
+				backendUrl = "https://test.c15t.app",
 				overrides = KernelOverrides(gpc = true),
 				detectedGpc = false,
 			),
@@ -192,7 +192,7 @@ class C15tPayloadTest {
 		val kernel = bridgeKernel(C15tStore(MemoryStore()))
 		kernel.bootstrap()
 
-		val result = kernel.save(CommitIntent.Explicit(mapOf(ConsentCategory.MEASUREMENT to true, ConsentCategory.MARKETING to false)))
+		val result = kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MEASUREMENT to true, ConsentCategory.MARKETING to false)))
 		val payload = parse(C15tPayload.commitResult(result, kernel.snapshot()))
 
 		assertTrue(payload["ok"]!!.jsonPrimitive.boolean)
@@ -273,7 +273,7 @@ class C15tPayloadTest {
 		assertTrue(C15tPayload.parseCommitIntent("{\"action\":\"all\"}") is CommitIntent.All)
 		assertTrue(C15tPayload.parseCommitIntent("{\"action\":\"necessary\"}") is CommitIntent.Necessary)
 		val explicit = C15tPayload.parseCommitIntent("{\"action\":\"explicit\",\"consents\":{\"measurement\":false}}")
-		assertTrue(explicit is CommitIntent.Explicit && explicit.consents.values.toList() == listOf(false))
+		assertTrue(explicit is CommitIntent.Custom && explicit.consents.values.toList() == listOf(false))
 	}
 
 	@Test

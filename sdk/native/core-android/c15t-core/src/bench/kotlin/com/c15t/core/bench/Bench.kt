@@ -1,6 +1,6 @@
 package com.c15t.core.bench
 
-import com.c15t.core.C15tKernel
+import com.c15t.core.ConsentCore
 import com.c15t.core.CommitIntent
 import com.c15t.core.NativeConfig
 import com.c15t.core.model.ActiveUI
@@ -276,8 +276,8 @@ object Bench {
 			),
 		)
 
-		fun kernel(): C15tKernel = C15tKernel(
-			config = NativeConfig(portalUrl = "https://bench.c15t.app"),
+		fun kernel(): ConsentCore = ConsentCore(
+			config = NativeConfig(backendUrl = "https://bench.c15t.app"),
 			store = store(),
 			clock = Clock { now },
 			// Nothing here reaches a socket: the point is the local commit path.
@@ -299,8 +299,8 @@ object Bench {
 		 * a store ahead of its cold measure, which keeps the two spans symmetrical:
 		 * encode warm on both sides, decode cold on both sides.
 		 */
-		fun coldKernel(): C15tKernel = C15tKernel(
-			config = NativeConfig(portalUrl = "https://bench.c15t.app"),
+		fun coldKernel(): ConsentCore = ConsentCore(
+			config = NativeConfig(backendUrl = "https://bench.c15t.app"),
 			store = store(),
 			clock = Clock { now },
 			// Nothing here reaches a socket either way; init is dropped, not awaited.

@@ -239,8 +239,8 @@ class SubjectIdentityTest {
 	private fun kernel(
 		store: C15tStore,
 		transport: C15tTransport = C15tTransport.NONE,
-	): C15tKernel = C15tKernel(
-		config = NativeConfig(portalUrl = "https://test.c15t.app"),
+	): ConsentCore = ConsentCore(
+		config = NativeConfig(backendUrl = "https://test.c15t.app"),
 		store = store,
 		clock = FixedClock(),
 		transport = transport,

@@ -58,7 +58,7 @@ before it evaluates `app.config.ts`, so one file feeds both halves:
 
 - `app.config.ts` passes `backendURL` to the config plugin, which writes
   `com.c15t.backend.url` / `com.c15t.backend.mode` into `ios/Info.plist` and
-  `com.c15t.PORTAL_URL` into `AndroidManifest.xml` at prebuild time.
+  `com.c15t.BACKEND_URL` into `AndroidManifest.xml` at prebuild time.
 - The `EXPO_PUBLIC_` copies are inlined into the JavaScript bundle and drive what the
   screens report and which core the app attaches to.
 
@@ -267,7 +267,7 @@ native projects. After a prebuild you should find:
 ios/c15tExpoDev/Info.plist              com.c15t.backend.url, com.c15t.backend.mode
 ios/c15tExpoDev/Info.plist              NSUserTrackingUsageDescription, NSUserTrackingMarkdownUsageDescription
 ios/.../Supporting/de.lproj/InfoPlist.strings   NSUserTrackingMarkdownUsageDescription
-android/.../AndroidManifest.xml         <meta-data android:name="com.c15t.PORTAL_URL" ...>
+android/.../AndroidManifest.xml         <meta-data android:name="com.c15t.BACKEND_URL" ...>
 android/.../AndroidManifest.xml         com.c15t.reactnative.C15tReactNativeInitializer
 ```
 

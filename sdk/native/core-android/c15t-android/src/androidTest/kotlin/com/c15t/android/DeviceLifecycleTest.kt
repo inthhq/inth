@@ -25,7 +25,7 @@ import org.junit.runner.RunWith
  * The lifecycle ports, on a device, where they are the only thing that can answer.
  *
  * [ReachabilityGateTest] already pins which connectivity callbacks earn a replay, and
- * `C15tKernel.bootstrap`'s launch retry is covered in `:c15t-core`. What a JVM cannot say is
+ * `ConsentCore.bootstrap`'s launch retry is covered in `:c15t-core`. What a JVM cannot say is
  * whether the observer `install` registers is actually attached to the process, whether the
  * leg it fires on stays off the main thread, and what the platform answers when a host has
  * not asked for the permission the third leg needs.

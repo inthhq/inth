@@ -51,9 +51,9 @@ class LaunchFromManifestTest {
 	fun testConfigFromReadsTheMergedManifest() {
 		val declared = C15tAndroid.configFrom(appContext())
 
-		assertNotNull("the instrumented APK declares com.c15t.PORTAL_URL", declared)
+		assertNotNull("the instrumented APK declares com.c15t.BACKEND_URL", declared)
 		val config = requireNotNull(declared)
-		assertEquals("https://consent.instrumentation.invalid", config.portalUrl)
+		assertEquals("https://consent.instrumentation.invalid", config.backendUrl)
 		assertEquals("https://consent.instrumentation.invalid/api/consent/init", config.initUrl)
 		assertEquals("consent.instrumentation.invalid", config.domain)
 		// The manifest spells this one unquoted, so the parser hands over a Boolean. A reader
@@ -129,7 +129,7 @@ class LaunchFromManifestTest {
 		val latecomer = DeviceBackend(initiallyOnline = true)
 		C15tAndroid.install(
 			context,
-			deviceConfig().copy(portalUrl = "https://elsewhere.instrumentation.invalid"),
+			deviceConfig().copy(backendUrl = "https://elsewhere.instrumentation.invalid"),
 			transport = latecomer,
 		)
 
@@ -146,7 +146,7 @@ class LaunchFromManifestTest {
 	}
 
 	/**
-	 * A host that declared no portal url leaves the core uninstalled, and reads keep answering.
+	 * A host that declared no backend URL leaves the core uninstalled, and reads keep answering.
 	 *
 	 * Two spellings of "declared nothing" go through the real package manager, because they are
 	 * the two ways out of `configFrom`: an application declaration that exists and names nothing
@@ -155,7 +155,7 @@ class LaunchFromManifestTest {
 	 * hook that runs before the first Activity exists.
 	 */
 	@Test
-	fun testUndeclaredPortalUrlLeavesTheCoreUninstalledAndReadsStillAnswer() {
+	fun testUndeclaredBackendUrlLeavesTheCoreUninstalledAndReadsStillAnswer() {
 		val context = appContext()
 
 		for (host in listOf(declaresNothingC15t(context), declaresNothingAtAll(context))) {

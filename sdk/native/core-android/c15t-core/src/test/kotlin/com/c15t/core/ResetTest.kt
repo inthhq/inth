@@ -113,7 +113,7 @@ class ResetTest {
 		val store = C15tStore(InMemoryKeyValueStore())
 		val kernel = testKernel(
 			config = NativeConfig(
-				portalUrl = "https://test.c15t.app",
+				backendUrl = "https://test.c15t.app",
 				consentCategories = listOf(ConsentCategory.MEASUREMENT),
 				overrides = KernelOverrides(country = "DE", language = "de"),
 			),
@@ -304,7 +304,7 @@ class ResetTest {
 	}
 
 	/** A kernel that bootstrapped against a resolved opt-in rule and then decided [intent]. */
-	private fun decidedKernel(intent: CommitIntent): C15tKernel {
+	private fun decidedKernel(intent: CommitIntent): ConsentCore {
 		val kernel = testKernel(
 			store = C15tStore(InMemoryKeyValueStore()),
 			transport = RecordingTransport().respondInit(initSuccess()),

@@ -96,7 +96,7 @@ not be included as one.
 | Embedded policy JSON | Yes |
 | Hosted policy or disclosure refresh | No; the engine loads the served data |
 
-The RN adapter checks its protocol during `C15tProvider` attachment. The
+The RN adapter checks its protocol during `ConsentProvider` attachment. The
 current protocol is 1. An incompatible binary throws
 `C15tProtocolMismatchError`. A binary can also lack a newer additive method
 while sharing that protocol number, so rebuild if a native command reports
@@ -111,7 +111,7 @@ runtimes. Removing that check cannot add missing code to an older app binary.
 
 ## Migrate an existing consent screen
 
-Keep one `C15tProvider` and move optional SDK startup behind native gates.
+Keep one `ConsentProvider` and move optional SDK startup behind native gates.
 Replace overlapping stock React dialogs with the native presenter setup in
 the [quickstart](/docs/frameworks/react-native/quickstart). Keep Privacy
 settings reachable after the first choice.

@@ -44,16 +44,17 @@ export interface ConsentPromptProps {
  * The built-in surfaces live in `@c15t/react-native/components`; this is the
  * slot for an app that designs its own banner and dialog. It reads the four
  * lifecycle fields, so a snapshot event that changes neither the surface nor
- * the requirement leaves it alone.
+ * the requirement leaves it alone. Your banner and dialog record the answer
+ * with `useSaveConsents()`.
  *
  * @example
  * ```tsx
  * <ConsentPrompt>
- *     {({ actions, activeUI, promptRequirement }) =>
+ *     {({ activeUI, promptRequirement }) =>
  *         activeUI === 'banner' ? (
- *             <MyBanner onAccept={actions.acceptAll} requirement={promptRequirement} />
+ *             <MyBanner requirement={promptRequirement} />
  *         ) : (
- *             <MyDialog onAccept={actions.acceptAll} />
+ *             <MyDialog />
  *         )
  *     }
  * </ConsentPrompt>

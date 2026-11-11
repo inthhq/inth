@@ -19,10 +19,12 @@
 export const ANDROID_META = {
 	/** Present only when the host bootstraps the core itself. */
 	autoBootstrap: 'com.c15t.reactnative.AUTO_BOOTSTRAP',
+	/** c15t backend base URL, the value the core calls `backendUrl`. */
+	backendUrl: 'com.c15t.BACKEND_URL',
 	/** Comma-separated category ids the app offers, read by `C15tAndroid`. */
 	categories: 'com.c15t.CATEGORIES',
 	/** Value sent as the `domain` field of `POST /subjects`. */
-	domain: 'com.c15t.DOMAIN',
+	domain: 'com.c15t.BACKEND_DOMAIN',
 	/** Staged-build switch that forces GPC on. */
 	forceGpc: 'com.c15t.FORCE_GPC',
 	/** Registered IAB CMP ID, read by `C15tAndroid.declaredIab`. */
@@ -33,11 +35,9 @@ export const ANDROID_META = {
 	iabConsentScreen: 'com.c15t.IAB_CONSENT_SCREEN',
 	/** Two-letter publisher country code, required with the CMP ID. */
 	iabPublisherCountryCode: 'com.c15t.IAB_PUBLISHER_COUNTRY_CODE',
-	/** Overrides `${portalUrl}/init` for a proxied init route. */
-	initUrl: 'com.c15t.INIT_URL',
+	/** Overrides `${backendUrl}/init` for a proxied init route. */
+	initUrl: 'com.c15t.BACKEND_INIT_URL',
 	policyResource: 'com.c15t.POLICY_RESOURCE',
-	/** c15t backend base URL, the value the core calls `portalUrl`. */
-	portalUrl: 'com.c15t.PORTAL_URL',
 	/**
 	 * Comma-separated IAB vendor ids the app may disclose, read by `C15tAndroid`.
 	 *
@@ -59,7 +59,7 @@ export const IOS_PLIST_KEY = {
 	/** Value sent as the `domain` field of `POST /subjects`. */
 	domain: 'com.c15t.backend.domain',
 	/** Staged-build switch that forces GPC on, as a real Boolean. */
-	gpc: 'com.c15t.gpc',
+	forceGPC: 'com.c15t.forceGPC',
 	/** Registered IAB CMP ID, as a plist integer. */
 	iabCmpId: 'com.c15t.iab.cmpId',
 	/** CMP version, as a plist integer. */

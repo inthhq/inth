@@ -6,7 +6,7 @@ import FoundationNetworking
 // MARK: - Version and header contract
 
 /// The values every c15t-bound request carries.
-public enum c15t {
+extension C15t {
     /// Version of this native core.
     ///
     /// Source of truth for the native Swift package, including the Apple platform
@@ -391,7 +391,7 @@ public struct InitResponse: Sendable, Equatable {
     /// A missing header means the producer predates the declaration, which is not
     /// an error; the body still gets read strictly.
     static func producerContractError(in response: HTTPResponse) -> Result<Void, C15tError>? {
-        guard let declared = response.header(c15t.policyContractHeader) else { return nil }
+        guard let declared = response.header(C15t.policyContractHeader) else { return nil }
         guard let version = Int(declared.trimmingCharacters(in: .whitespaces)) else {
             return .failure(.unsupportedContract(
                 declared: declared,
@@ -567,8 +567,8 @@ public struct HostedTransport: C15tTransport {
         if let country = context.overrides.country { headers["x-c15t-country"] = country }
         if let region = context.overrides.region { headers["x-c15t-region"] = region }
         if context.overrides.gpc == true { headers["sec-gpc"] = "1" }
-        if let scope = c15t.vendorScopeHeaderValue(context.vendors) {
-            headers[c15t.vendorScopeHeader] = scope
+        if let scope = C15t.vendorScopeHeaderValue(context.vendors) {
+            headers[C15t.vendorScopeHeader] = scope
         }
 
         do {
@@ -662,7 +662,7 @@ public struct HostedTransport: C15tTransport {
             "accept": "application/json",
             "content-type": "application/json",
         ]
-        for (name, value) in c15t.protocolHeaders { headers[name] = value }
+        for (name, value) in C15t.protocolHeaders { headers[name] = value }
         for (name, value) in extraHeaders { headers[name] = value }
         return headers
     }

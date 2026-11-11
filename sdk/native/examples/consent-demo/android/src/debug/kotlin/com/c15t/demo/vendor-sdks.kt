@@ -8,7 +8,7 @@ import com.c15t.android.integrations.FirebaseAnalyticsIntegration
 import com.c15t.android.integrations.MixpanelIntegration
 import com.c15t.android.integrations.PostHogIntegration
 import com.c15t.android.integrations.SentryReplayIntegration
-import com.c15t.core.C15tKernel
+import com.c15t.core.ConsentCore
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
 import com.google.firebase.analytics.FirebaseAnalytics
@@ -132,7 +132,7 @@ object PostHogLiveProbe {
 		File(context.cacheDir, "posthog-disk-queue").walkTopDown().count { it.isFile }
 }
 
-internal fun connectVendorSdks(context: Context, core: C15tKernel, request: VendorSdkRequest, onError: (Exception) -> Unit): VendorProbe? {
+internal fun connectVendorSdks(context: Context, core: ConsentCore, request: VendorSdkRequest, onError: (Exception) -> Unit): VendorProbe? {
 	if (!request.requested) return null
 	val helpers = mutableListOf<AutoCloseable>()
 	val vendors = mutableListOf<String>()

@@ -6,10 +6,16 @@
  */
 
 export { useC15tBootstrap } from './use-c15t-bootstrap';
-export { useConsent } from './use-consent';
-export { useConsentActions } from './use-consent-actions';
+export { useSnapshot } from './use-snapshot';
+export {
+	useConsentActions,
+	useDismissNotice,
+	useIdentify,
+	useSaveConsents,
+	useSetOverrides,
+} from './use-consent-actions';
 export { useConsentDecision } from './use-consent-decision';
-export type { ConsentActions } from './use-consent-actions';
+export type { ConsentActions, SaveConsentsInput } from './use-consent-actions';
 export { useConsentSelector } from './use-consent-selector';
 export { useConsentStatus } from './use-consent-status';
 export { useIsTrackingAllowed } from './use-is-tracking-allowed';
@@ -22,4 +28,4 @@ export type {
 } from './use-tracking-request';
 export { useConsentSafeArea } from './use-consent-safe-area';
 export type { ConsentSafeArea } from './use-consent-safe-area';
-export { useIsAllowed } from './use-is-allowed';
+export { useConsent } from './use-consent';

@@ -25,7 +25,7 @@ import {
 import { resolveParams } from './params';
 import type {
 	C15tPluginProps,
-	C15tProviderTransportKind,
+	ConsentProviderTransportKind,
 	ResolvedC15tParams,
 } from './params';
 import {
@@ -48,7 +48,7 @@ import type { WorkflowContext } from './workflow';
 /** What the plugin publishes under `extra.c15t`. */
 export interface C15tExtraConfig {
 	/** Transport mode in the spelling the JavaScript provider takes. */
-	mode: C15tProviderTransportKind;
+	mode: ConsentProviderTransportKind;
 	/** Backend base URL, or `null` when none is embedded. */
 	backendURL: string | null;
 	/** Init URL override, or `null`. */

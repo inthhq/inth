@@ -60,7 +60,7 @@ class PendingQueueTest {
 		val transport = RecordingTransport().respondSave(SaveOutcome.Unavailable("offline"))
 		val kernel = testKernel(store = C15tStore(InMemoryKeyValueStore()), transport = transport)
 		kernel.bootstrap()
-		kernel.save(CommitIntent.Explicit(mapOf(ConsentCategory.MEASUREMENT to true)))
+		kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MEASUREMENT to true)))
 
 		val attempted = transport.saveRequests.single()
 		// Compared on the payload, not the queue row: the row carries how many times these
@@ -93,8 +93,8 @@ class PendingQueueTest {
 		val kernel = testKernel(store = C15tStore(InMemoryKeyValueStore()), transport = transport)
 		kernel.bootstrap()
 
-		kernel.save(CommitIntent.Explicit(mapOf(ConsentCategory.MEASUREMENT to true)))
-		kernel.save(CommitIntent.Explicit(mapOf(ConsentCategory.MEASUREMENT to false, ConsentCategory.MARKETING to true)))
+		kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MEASUREMENT to true)))
+		kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MEASUREMENT to false, ConsentCategory.MARKETING to true)))
 
 		assertEquals(2, transport.saveRequests.size, "both commits must be queued, not superseded")
 		val attempted = transport.saveRequests.map { json.encodeToString(it.payload) }
@@ -189,7 +189,7 @@ class PendingQueueTest {
 		val http = RecordingHttpClient { responseFor(it) }
 		val kernel = testKernel(
 			store = C15tStore(InMemoryKeyValueStore()),
-			transport = HostedTransport(http, NativeConfig(portalUrl = "https://test.c15t.app/")),
+			transport = HostedTransport(http, NativeConfig(backendUrl = "https://test.c15t.app/")),
 		)
 		kernel.bootstrap()
 		kernel.save(CommitIntent.All)

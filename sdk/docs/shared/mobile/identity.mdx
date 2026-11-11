@@ -17,9 +17,10 @@ retain the withdrawal obligations needed for it.
 
 ## Withdraw optional consent
 
-Use `rejectAll()` for the visitor's explicit refusal or withdrawal. Check the
-result before showing a saved confirmation. React Native uses
-`CommitResult.ok`; Swift uses the commit status, and Kotlin exposes its
+Use `saveConsents('none')` in React Native, `.necessary` in Swift or
+`CommitIntent.Necessary` in Kotlin for the visitor's explicit refusal or
+withdrawal. Check the result before showing a saved confirmation. React Native
+uses `CommitResult.ok`; Swift uses the commit status, and Kotlin exposes its
 native commit result. Stock presenters keep drafts and retry controls open
 when storage refuses a save.
 
@@ -39,7 +40,7 @@ reject-all, account erasure or deletion of remote records.
 | Swift | `reset()` on the installed `ConsentCore` |
 | Kotlin | `reset()` on the installed kernel, available as `C15t.current` |
 
-Kotlin's static `C15t.reset()` is teardown of the process singleton. It leaves
+Kotlin's static `C15t.uninstall()` is teardown of the process singleton. It leaves
 persisted consent intact and is not the consent-reset command.
 
 The engine retains required IAB withdrawal obligations when resetting existing

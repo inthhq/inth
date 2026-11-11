@@ -13,7 +13,7 @@ class MutationErrorCallbackTest {
 	@Test fun `throwing mutation releases the gate for the next action`() {
 		val fail = AtomicBoolean(false)
 		val failure = IllegalStateException("clock unavailable")
-		val core = C15tKernel(config = TEST_CONFIG, store = C15tStore(InMemoryKeyValueStore()),
+		val core = ConsentCore(config = TEST_CONFIG, store = C15tStore(InMemoryKeyValueStore()),
 			transport = RecordingTransport().respondInit(initSuccess()),
 			executor = TaskExecutor.DIRECT,
 			clock = Clock {
@@ -54,7 +54,7 @@ class MutationErrorCallbackTest {
 
 	@Test fun `refusal logger may change an override`() {
 		val once = AtomicBoolean(false)
-		lateinit var core: C15tKernel
+		lateinit var core: ConsentCore
 		core = testKernel(store = C15tStore(InMemoryKeyValueStore()),
 			transport = RecordingTransport().respondInit(initSuccess()),
 			logger = { if (once.compareAndSet(false, true)) core.setOverrides(KernelOverrides(language = "de")) })

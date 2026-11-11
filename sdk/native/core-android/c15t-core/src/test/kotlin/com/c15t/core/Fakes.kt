@@ -227,7 +227,7 @@ private const val BASE58_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghij
  * acknowledgement, and most tests are about the optional categories themselves.
  */
 val TEST_CONFIG = NativeConfig(
-	portalUrl = "https://test.c15t.app",
+	backendUrl = "https://test.c15t.app",
 	consentCategories = ConsentCategory.entries.toList(),
 )
 
@@ -245,7 +245,7 @@ fun testKernel(
 	executor: TaskExecutor? = null,
 	/** Receives every error the core emits, so a test can assert on the codes. */
 	logger: (KernelError) -> Unit = {},
-): C15tKernel {
+): ConsentCore {
 	var queueSequence = 0
 	val nextQueueId: () -> String = {
 		queueSequence += 1
@@ -260,7 +260,7 @@ fun testKernel(
 		subjectSequence += 1
 		subjectIdForSequence(subjectSequence)
 	}
-	return C15tKernel(
+	return ConsentCore(
 		config = config,
 		store = store,
 		clock = clock,

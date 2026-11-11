@@ -8,7 +8,7 @@
  * writes nothing.
  */
 
-import { useConsent } from '@c15t/react-native';
+import { useSnapshot } from '@c15t/react-native';
 
 import { OPTIONAL_CATEGORIES } from '../c15t/fake-native';
 import type { OptionalCategory } from '../c15t/fake-native';
@@ -28,7 +28,7 @@ const formatWhen = (at: number): string =>
 
 /** One receipt line per category the subject has actually touched. */
 const ReceiptLine = ({ category }: { readonly category: OptionalCategory }) => {
-	const snapshot = useConsent();
+	const snapshot = useSnapshot();
 	const decision = snapshot.explicitChoice?.categories[category];
 
 	if (decision === undefined) {
@@ -59,7 +59,7 @@ export const PreferencesScreen = ({
 }: {
 	readonly onOpenCentre: () => void;
 }) => {
-	const snapshot = useConsent();
+	const snapshot = useSnapshot();
 	const restrictions = Object.entries(snapshot.restrictions);
 
 	return (

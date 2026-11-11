@@ -12,7 +12,7 @@ import {
 	ConsentPreferences,
 	useTrackingRequest,
 	useConsentStatus,
-	useConsent,
+	useSnapshot,
 	presentConsentPrompt,
 	presentPreferences,
 	onConsentPresenterOutcome,
@@ -79,7 +79,7 @@ class ErrorBoundary extends Component<
 						{this.state.error.message}
 					</NativeText>
 					<Hint>
-						`C15tProvider` throws on purpose when the binary cannot speak the
+						`ConsentProvider` throws on purpose when the binary cannot speak the
 						protocol this bundle expects. Rebuild the app, or install the
 						@c15t/react-native version that shipped with the binary.
 					</Hint>
@@ -210,7 +210,7 @@ const LegacyApp = () => {
 export const UnavailableScreen = MissingNativeCore;
 
 const NativeApp = () => {
-	const snapshot = useConsent();
+	const snapshot = useSnapshot();
 	const status = useConsentStatus();
 	const [outcome, setOutcome] = useState('No native decision');
 	useEffect(

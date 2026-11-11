@@ -61,7 +61,7 @@ class IabCommitTest {
 		store: C15tStore,
 		config: NativeConfig = this.config,
 		transport: RecordingTransport = transport(),
-	): C15tKernel =
+	): ConsentCore =
 		testKernel(
 				config = config,
 				store = store,
@@ -149,7 +149,7 @@ class IabCommitTest {
 	}
 
 	@Test
-	fun `blank domains freeze the same portal host used by HostedTransport`() {
+	fun `blank domains freeze the same backend host used by HostedTransport`() {
 		for (domain in listOf("", " \t")) {
 			val store = C15tStore(InMemoryKeyValueStore())
 			val core = boot(store, config.copy(domain = domain))

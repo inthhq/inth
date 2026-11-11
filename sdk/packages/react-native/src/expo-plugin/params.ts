@@ -27,7 +27,7 @@ export const TRANSPORT_MODES = [
 export type C15tTransportMode = (typeof TRANSPORT_MODES)[number];
 
 /** Transport kind `@c15t/core`'s provider factories report. */
-export type C15tProviderTransportKind = 'custom' | 'hosted' | 'offline';
+export type ConsentProviderTransportKind = 'custom' | 'hosted' | 'offline';
 
 /**
  * One locale's Markdown prompt copy, ready to write into a string table.
@@ -65,7 +65,7 @@ export const IOS_TRANSPORT_MODE: Record<C15tTransportMode, string> = {
  */
 export const PROVIDER_TRANSPORT_MODE: Record<
 	C15tTransportMode,
-	C15tProviderTransportKind
+	ConsentProviderTransportKind
 > = {
 	custom: 'custom',
 	hosted: 'hosted',
@@ -281,7 +281,7 @@ export interface ResolvedC15tParams {
 	/** Transport the embedded core should run. */
 	readonly mode: C15tTransportMode;
 	/** {@link mode} as the JavaScript provider spells it. */
-	readonly providerMode: C15tProviderTransportKind;
+	readonly providerMode: ConsentProviderTransportKind;
 	/** Normalised backend base URL, or `null` when no backend is embedded. */
 	readonly backendURL: string | null;
 	/** Hostname of {@link backendURL}, used for the iOS privacy manifest. */

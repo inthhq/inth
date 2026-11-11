@@ -10,26 +10,28 @@
  *
  * Three layers, top down:
  *
- * - {@link C15tProvider} attaches to the native instance the app already booted
+ * - {@link ConsentProvider} attaches to the native instance the app already booted
  *   and checks the protocol handshake.
- * - The hooks ({@link useConsent}, {@link useIsAllowed},
- *   {@link useConsentStatus}, {@link useConsentActions},
- *   {@link useConsentSelector}) subscribe to the slice a component actually
+ * - The read hooks ({@link useSnapshot}, {@link useConsent},
+ *   {@link useConsentStatus}, {@link useConsentSelector}) subscribe to the slice a component actually
  *   reads, so a consent change rerenders the components whose value moved.
+ *   The action hooks ({@link useSaveConsents}, {@link useIdentify},
+ *   {@link useSetOverrides}, {@link useDismissNotice},
+ *   {@link useConsentActions}) forward decisions to the native core.
  * - The headless components (`ConsentGate`, `ConsentReady`, `ConsentPrompt`)
  *   call a function with that slice, for apps that build their own UI.
  *
  * @example
  * ```tsx
  * import {
- *     C15tProvider,
+ *     ConsentProvider,
  *     ConsentGate,
- *     useConsentActions,
- *     useIsAllowed,
+ *     useConsent,
+ *     useSaveConsents,
  * } from '@c15t/react-native';
  *
  * function Analytics() {
- *     const allowed = useIsAllowed('measurement');
+ *     const allowed = useConsent('measurement');
  *
  *     return allowed ? <VendorInit /> : null;
  * }
@@ -96,14 +98,20 @@ export type {
 	ConsentReadyProps,
 	ConsentReadyState,
 } from './headless';
-export { useC15tBootstrap, useConsent } from './hooks';
-export { useConsentActions } from './hooks';
-export type { ConsentActions } from './hooks';
+export { useC15tBootstrap, useSnapshot } from './hooks';
+export {
+	useConsentActions,
+	useDismissNotice,
+	useIdentify,
+	useSaveConsents,
+	useSetOverrides,
+} from './hooks';
+export type { ConsentActions, SaveConsentsInput } from './hooks';
 export { useConsentSelector } from './hooks';
 export { useConsentStatus } from './hooks';
 export { useConsentSafeArea } from './hooks';
 export type { ConsentSafeArea } from './hooks';
-export { useConsentDecision, useIsAllowed } from './hooks';
+export { useConsent, useConsentDecision } from './hooks';
 export { useIsTrackingAllowed, useTrackingAuthorization } from './hooks';
 export { useTrackingRequest } from './hooks';
 export type {
@@ -156,11 +164,11 @@ export type {
 } from './native';
 export * from './protocol';
 export {
-	C15tProvider,
+	ConsentProvider,
 	ConsentClientContext,
 	useConsentClient,
 } from './provider';
-export type { C15tProviderProps } from './provider';
+export type { ConsentProviderProps } from './provider';
 export type { ConsentSafeAreaInsets } from './provider';
 
 // The Codegen spec is exported as types only. Importing it for values would

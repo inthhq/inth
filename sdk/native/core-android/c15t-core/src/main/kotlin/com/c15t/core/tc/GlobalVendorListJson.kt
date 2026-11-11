@@ -88,7 +88,7 @@ object GlobalVendorListJson {
 	 * Never throws. A `gvl` that is absent, not an object, missing a key the acceptance rules ask
 	 * for, or shaped so this model cannot name it all answer null, which is the same answer as "IAB
 	 * is off". A caller holding a list must not clear it on this null -- the latch that keeps that
-	 * promise is in [com.c15t.core.C15tKernel.runInit].
+	 * promise is in [com.c15t.core.ConsentCore.runInit].
 	 */
 	fun fromInitBody(body: JsonObject?): GlobalVendorList? = read(body?.get(GVL_KEY))
 

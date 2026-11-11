@@ -14,7 +14,7 @@ import java.util.UUID
 enum class ConsentPresenterOutcome { SAVED, DISMISSED }
 
 /** One host-owned native session. Retain through activity recreation with ViewModelStore. */
-class ConsentPresenter(val core: C15tKernel, private val automaticPresentation: Boolean = true) : ViewModel() {
+class ConsentPresenter(val core: ConsentCore, private val automaticPresentation: Boolean = true) : ViewModel() {
     var snapshot by mutableStateOf(core.snapshot()); private set
     var presentationID by mutableStateOf<String?>(null); private set
     var preferences by mutableStateOf(false); private set
@@ -180,7 +180,7 @@ class ConsentPresenter(val core: C15tKernel, private val automaticPresentation: 
                     val intent = when (action) {
                         Action.ACCEPT -> CommitIntent.All
                         Action.REJECT -> CommitIntent.Necessary
-                        Action.SAVE -> if (isIab) CommitIntent.Iab(choiceDraft, categoryDraft) else CommitIntent.Explicit(categoryDraft)
+                        Action.SAVE -> if (isIab) CommitIntent.Iab(choiceDraft, categoryDraft) else CommitIntent.Custom(categoryDraft)
                         Action.ACKNOWLEDGE -> error("handled above")
                     }
                     core.save(intent, expectedRevision = revision).let { it.ok to it.error?.code }

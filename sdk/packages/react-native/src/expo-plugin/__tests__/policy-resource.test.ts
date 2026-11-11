@@ -111,7 +111,7 @@ it('removing policyResource disables the old fallback on incremental prebuild', 
 	).toBe(false);
 	expect(
 		application['meta-data']?.find(
-			(item) => item.$['android:name'] === ANDROID_META.portalUrl
+			(item) => item.$['android:name'] === ANDROID_META.backendUrl
 		)?.$['android:value']
 	).toBe(endpoint);
 });

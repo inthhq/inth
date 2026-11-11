@@ -3,7 +3,7 @@ package com.c15t.core
 import com.c15t.core.model.KernelError
 
 /**
- * Outcome of [C15tKernel.save].
+ * Outcome of [ConsentCore.save].
  *
  * [ok] is the answer to "is this decision committed on this device", which is a
  * device-side claim with three parts: the receipts are applied to the snapshot, the
@@ -45,7 +45,7 @@ data class CommitResult(
 	val error: KernelError? = null,
 )
 
-/** Outcome of [C15tKernel.flushPending]. */
+/** Outcome of [ConsentCore.flushPending]. */
 data class FlushResult(
 	/** Entries the backend accepted during this flush. */
 	val delivered: Int,

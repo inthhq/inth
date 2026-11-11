@@ -3,7 +3,7 @@ title: Mobile consent action outcomes
 description: Handle refused native commits and durable offline success in mobile clients.
 ---
 
-Check `CommitResult.ok` after awaiting `save`, `acceptAll` or `rejectAll`.
+Check `CommitResult.ok` after awaiting a `useSaveConsents()` call.
 A resolved promise can carry `ok: false`. That result means the native engine
 refused the action. Keep the draft and offer a retry. `reason` identifies failures
 such as `policy-pending`, `queue-write-failed` or `concurrent-change`.

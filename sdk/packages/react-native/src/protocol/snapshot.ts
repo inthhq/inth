@@ -176,7 +176,7 @@ export interface ConsentSnapshot {
 	 * upgrading from a build that kept the list only there keeps its disclosure.
 	 *
 	 * A host app's own code reads the same document off the same state: Kotlin's
-	 * `C15tKernel.vendorListBody()` and Swift's `globalVendorList()` are both the
+	 * `ConsentCore.vendorListBody()` and Swift's `globalVendorList()` are both the
 	 * snapshot field, which is what keeps a disclosure drawn natively and one drawn
 	 * through this bridge naming the same vendors.
 	 *

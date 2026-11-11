@@ -70,7 +70,7 @@ export const buildMetaDataPairs = function buildMetaDataPairs(
 	}
 
 	if (params.backendURL !== null) {
-		pairs.push({ name: ANDROID_META.portalUrl, value: params.backendURL });
+		pairs.push({ name: ANDROID_META.backendUrl, value: params.backendURL });
 	}
 	if (params.initURL !== null) {
 		pairs.push({ name: ANDROID_META.initUrl, value: params.initURL });
@@ -97,7 +97,7 @@ export const buildMetaDataPairs = function buildMetaDataPairs(
 	}
 	// `C15tAndroid.declaredIab` reads these. Absent keys leave IAB TCF off.
 	if (params.iab !== null) {
-		// Android has no offline mode: without a portal URL `C15tAndroid.configFrom`
+		// Android has no offline mode: without a backend URL `C15tAndroid.configFrom`
 		// installs no core, so no IABTCF_* signals or IAB screens, and with one the
 		// bootstrap builds a hosted transport, so the "offline" build goes online.
 		if (params.mode === 'offline') {

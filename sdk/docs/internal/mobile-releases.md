@@ -38,7 +38,7 @@ The main npm flow reads only `.tegami/*.md`. It does not consume these nested
 native notes. The native flow ignores npm workspaces and writes its own
 `.tegami/mobile/publish-lock.yaml`. Do not edit either publish lock by hand.
 
-Swift versioning updates `c15t.version` and regenerates the RN vendored core.
+Swift versioning updates `C15t.version` and regenerates the RN vendored core.
 `C15tApple.version` and the local core podspec continue to read that version.
 Android versioning updates `c15t.native.version`, request metadata and both RN
 artifact pins together. It leaves the RN npm version unchanged.

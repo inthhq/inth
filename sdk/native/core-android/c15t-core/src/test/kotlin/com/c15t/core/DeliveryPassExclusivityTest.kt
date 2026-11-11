@@ -89,7 +89,7 @@ class DeliveryPassExclusivityTest {
 		harness.transport.outcome = SaveOutcome.Unavailable("airplane mode")
 		harness.boot(kernel)
 		kernel.save(CommitIntent.All)
-		kernel.save(CommitIntent.Explicit(mapOf(ConsentCategory.MEASUREMENT to false)))
+		kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MEASUREMENT to false)))
 		assertEquals(2, harness.pendingDepth(), "both decisions are owed")
 		val beforeOne = harness.transport.sendsFor(ENTRY_ONE)
 		val beforeTwo = harness.transport.sendsFor(ENTRY_TWO)
@@ -154,7 +154,7 @@ class DeliveryPassExclusivityTest {
 		assertTrue(kernel.save(CommitIntent.All).queued)
 		assertTrue(harness.transport.awaitSendOpen(ENTRY_ONE), "the first save's send has to be open")
 
-		assertTrue(kernel.save(CommitIntent.Explicit(mapOf(ConsentCategory.MEASUREMENT to false))).queued)
+		assertTrue(kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MEASUREMENT to false))).queued)
 		// Give a concurrent executor the chance to run this save's first send, so a zero below
 		// means it was answered by the running pass rather than simply not scheduled yet. If it
 		// is scheduled later, the exactly-once assertions after the release still hold.
@@ -182,7 +182,7 @@ class DeliveryPassExclusivityTest {
 		harness.transport.holdSends()
 		kernel.save(CommitIntent.All)
 		assertTrue(harness.transport.awaitSendOpen(ENTRY_ONE))
-		kernel.save(CommitIntent.Explicit(mapOf(ConsentCategory.MEASUREMENT to false)))
+		kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MEASUREMENT to false)))
 		Thread.sleep(SETTLE_MS)
 		harness.transport.releaseSends()
 		harness.awaitIdle()
@@ -217,7 +217,7 @@ class DeliveryPassExclusivityTest {
 		assertTrue(kernel.snapshot().ready, "bootstrap's init was one of the tasks run above")
 
 		assertTrue(kernel.save(CommitIntent.All).queued)
-		assertTrue(kernel.save(CommitIntent.Explicit(mapOf(ConsentCategory.MEASUREMENT to false))).queued)
+		assertTrue(kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MEASUREMENT to false))).queued)
 
 		val pass = kernel.flushPending()
 		assertEquals(2, pass.delivered, "one pass owes both bodies")
@@ -284,7 +284,7 @@ class DeliveryPassExclusivityTest {
 			else -> null
 		}
 
-		fun kernel(): C15tKernel = testKernel(
+		fun kernel(): ConsentCore = testKernel(
 			store = store,
 			transport = transport,
 			executor = executor?.let { pool -> TaskExecutor { task -> pool.execute(task) } },
@@ -298,7 +298,7 @@ class DeliveryPassExclusivityTest {
 		 * contract's guarded swap working as designed. A test that saves into that window is
 		 * testing the wrong thing, so it waits for the first moment the snapshot stops moving.
 		 */
-		fun boot(kernel: C15tKernel) {
+		fun boot(kernel: ConsentCore) {
 			kernel.bootstrap()
 			await("the launch init to resolve") { kernel.snapshot().ready }
 			awaitIdle()
@@ -316,7 +316,7 @@ class DeliveryPassExclusivityTest {
 		 * Without it, a scheduling hiccup would let the flush run once the send had landed, and
 		 * the test would go green having proved nothing.
 		 */
-		fun flushWhileSendOpen(kernel: C15tKernel): FlushResult {
+		fun flushWhileSendOpen(kernel: ConsentCore): FlushResult {
 			assertEquals(1, transport.openSendCount, "a send must still be open when the flush is asked for")
 			timeline.record("flush:request depth=${pendingDepth()}")
 			val result = kernel.flushPending()

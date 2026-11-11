@@ -160,7 +160,7 @@ export const buildInfoPlistEntries = function buildInfoPlistEntries(
 		}
 	}
 	if (params.forceGPC) {
-		entries[IOS_PLIST_KEY.gpc] = true;
+		entries[IOS_PLIST_KEY.forceGPC] = true;
 	}
 	// Only the opt-out is worth recording; on is the bridge's own default.
 	if (!params.autoBootstrap) {

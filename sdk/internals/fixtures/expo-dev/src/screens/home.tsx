@@ -2,16 +2,20 @@
  * The main fixture screen: what the core says, and every action a subject can take.
  *
  * Read it as the headless surface laid out in one column. The snapshot card is
- * what `useConsent` returns, the permissions card is what `useIsAllowed` returns
- * per category, and the actions card calls one method of `useConsentActions` per
- * button, including the ones a consent UI normally hides behind a prompt. The
+ * what `useSnapshot` returns, the permissions card is what `useConsent` returns
+ * per category, and the actions card makes one action-hook call per button,
+ * including the ones a consent UI normally hides behind a prompt. The
  * tracking card is one whole `useTrackingRequest` journey, and nothing else.
  */
 
 import {
-	useConsent,
-	useConsentActions,
 	useC15tBootstrap,
+	useConsentActions,
+	useDismissNotice,
+	useIdentify,
+	useSaveConsents,
+	useSetOverrides,
+	useSnapshot,
 } from '@c15t/react-native';
 import type { TrackingRequest } from '@c15t/react-native';
 import { useState } from 'react';
@@ -51,7 +55,7 @@ const OVERRIDE_STEPS = [
 const time = (at: number): string =>
 	at === 0 ? 'never' : new Date(at).toISOString().slice(11, 23);
 
-type Snapshot = ReturnType<typeof useConsent>;
+type Snapshot = ReturnType<typeof useSnapshot>;
 
 const promptLabel = (requirement: Snapshot['promptRequirement']): string =>
 	'reason' in requirement
@@ -101,6 +105,10 @@ const ActionsCard = ({
 	readonly onOpenPreferences: () => void;
 }) => {
 	const actions = useConsentActions();
+	const dismissNotice = useDismissNotice();
+	const identify = useIdentify();
+	const saveConsents = useSaveConsents();
+	const setOverrides = useSetOverrides();
 	const [busy, setBusy] = useState(false);
 	const [lastResult, setLastResult] = useState('nothing yet');
 	const [overrideStep, setOverrideStep] = useState(0);
@@ -141,14 +149,14 @@ const ActionsCard = ({
 					busy={busy}
 					label="Accept all"
 					onPress={() => {
-						run('acceptAll', actions.acceptAll);
+						run('acceptAll', () => saveConsents('all'));
 					}}
 				/>
 				<Button
 					busy={busy}
 					label="Reject all"
 					onPress={() => {
-						run('rejectAll', actions.rejectAll);
+						run('rejectAll', () => saveConsents('none'));
 					}}
 				/>
 				<Button
@@ -156,7 +164,7 @@ const ActionsCard = ({
 					label="Save custom"
 					onPress={() => {
 						run('save', () =>
-							actions.save({ experience: true, marketing: false })
+							saveConsents({ experience: true, marketing: false })
 						);
 					}}
 				/>
@@ -164,7 +172,7 @@ const ActionsCard = ({
 					busy={busy}
 					label={`Identify ${EXTERNAL_ID}`}
 					onPress={() => {
-						run('identify', () => actions.identify(EXTERNAL_ID));
+						run('identify', () => identify({ externalId: EXTERNAL_ID }));
 					}}
 				/>
 				<Button
@@ -187,16 +195,14 @@ const ActionsCard = ({
 					onPress={() => {
 						const step = OVERRIDE_STEPS[overrideStep] ?? OVERRIDE_STEPS[0];
 						setOverrideStep((index) => (index + 1) % OVERRIDE_STEPS.length);
-						run('setOverrides', () =>
-							actions.setOverrides({ country: step.country })
-						);
+						run('setOverrides', () => setOverrides({ country: step.country }));
 					}}
 				/>
 				<Button
 					busy={busy}
 					label="Dismiss notice"
 					onPress={() => {
-						actions.dismissNotice();
+						dismissNotice();
 						setLastResult('dismissNotice: local, nothing sent');
 					}}
 				/>
@@ -325,7 +331,7 @@ export const HomeScreen = ({
 	readonly onOpenPreferences: () => void;
 	readonly tracking: TrackingRequest;
 }) => {
-	const snapshot = useConsent();
+	const snapshot = useSnapshot();
 	const bootstrap = useC15tBootstrap();
 	const { kind } = useConsentSource();
 

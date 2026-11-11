@@ -1,17 +1,17 @@
 // #region docs:commit-results title="privacy-actions.tsx"
-import { useConsentActions } from '@c15t/react-native';
+import { useSaveConsents } from '@c15t/react-native';
 import { useState } from 'react';
 import { Button, Text, View } from 'react-native';
 
 export const RejectOptionalUse = ({ onSaved }: { onSaved: () => void }) => {
-	const { rejectAll } = useConsentActions();
+	const saveConsents = useSaveConsents();
 	const [message, setMessage] = useState('');
 	const [pending, setPending] = useState(false);
 	const reject = async () => {
 		setPending(true);
 		let saved = false;
 		try {
-			const result = await rejectAll();
+			const result = await saveConsents('none');
 			if (result.ok) {
 				saved = true;
 			} else {

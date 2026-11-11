@@ -1,6 +1,6 @@
 import {
-	C15tProvider,
-	useConsent,
+	ConsentProvider,
+	useSnapshot,
 	presentPreferences,
 	getConsentClient,
 } from '@c15t/react-native';
@@ -9,7 +9,7 @@ import type { PropsWithChildren } from 'react';
 import { benchmarkConfig } from './benchmark-config';
 import type { RuntimeConsent, RuntimeRead } from './runtime-types';
 
-const read = (raw: ReturnType<typeof useConsent>): RuntimeRead => {
+const read = (raw: ReturnType<typeof useSnapshot>): RuntimeRead => {
 	const choice = raw.explicitChoice?.categories.measurement;
 	const { error } = raw;
 	const transport =
@@ -34,10 +34,10 @@ const read = (raw: ReturnType<typeof useConsent>): RuntimeRead => {
 	return { ready, snapshot: raw, targetId: 'measurement' };
 };
 export const ConsentBoundary = ({ children }: PropsWithChildren) => (
-	<C15tProvider>{children}</C15tProvider>
+	<ConsentProvider>{children}</ConsentProvider>
 );
 export const useRuntimeConsent = (): RuntimeConsent => {
-	const raw = useConsent();
+	const raw = useSnapshot();
 	return {
 		...read(raw),
 		open: () => {

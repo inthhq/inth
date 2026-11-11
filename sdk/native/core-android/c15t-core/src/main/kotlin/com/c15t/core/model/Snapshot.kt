@@ -308,7 +308,7 @@ data class ConsentSnapshot(
 	 *
 	 * Latched, and it travels with the snapshot rather than beside it: a `/init`
 	 * that serves no list leaves the list already there, and only
-	 * [com.c15t.core.C15tKernel.reset] takes it back. The reason is on that field --
+	 * [com.c15t.core.ConsentCore.reset] takes it back. The reason is on that field --
 	 * once a purpose or vendor name has been on screen, replacing it with nothing
 	 * changes a claim the subject was already given, and the backend embeds a list
 	 * only while the matched model is `iab`.

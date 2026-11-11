@@ -78,7 +78,7 @@ class ConsentDemoActivity : ComponentActivity() {
 }
 
 class DemoModel(application: Application) : AndroidViewModel(application) {
-    var core by mutableStateOf<C15tKernel?>(null); private set
+    var core by mutableStateOf<ConsentCore?>(null); private set
     var snapshot by mutableStateOf(ConsentSnapshot.denyAll()); private set
     var pending by mutableIntStateOf(0); private set
     var lastError by mutableStateOf("none"); private set
@@ -154,11 +154,11 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
                             require(uri.host in listOf("localhost", "127.0.0.1"))
                             reportUrl = uri.resolve("/e2e/state").toString()
                         }
-                        val config = NativeConfig(portalUrl = backend ?: "https://fixture.invalid", consentCategories = ConsentCategory.entries, detectedGpc = scenario == "gpc-on",
+                        val config = NativeConfig(backendUrl = backend ?: "https://fixture.invalid", consentCategories = ConsentCategory.entries, detectedGpc = scenario == "gpc-on",
                             iab = if (mode == "iab") IabConfiguration(cmpId = 53, cmpVersion = 7, publisherCountryCode = "GB", publisherRestrictions = listOf(IabPublisherRestriction(7,0,listOf(2)))) else null)
                         val durableStore = C15tStore(store)
                         fixtureStore = durableStore
-                        val kernel = C15tKernel(config, durableStore, transport = HostedTransport(if (backend == null) peer else C15tHttpClient(),config), executor = TaskExecutor.DIRECT)
+                        val kernel = ConsentCore(config, durableStore, transport = HostedTransport(if (backend == null) peer else C15tHttpClient(),config), executor = TaskExecutor.DIRECT)
                         kernel.bootstrap()
                         fault = store; http = peer
                         policyUrl = "https://example.test/privacy"
@@ -171,7 +171,7 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
                         vendorProbe = connectVendorSdks(context, kernel, vendors) { e -> viewModelScope.launch { lastError = "vendor: ${e.message}" } }
                         kernel
                     } else {
-                        val config = profile?.nativeConfig() ?: NativeConfig(portalUrl = hostedBackend!!, consentCategories = ConsentCategory.entries)
+                        val config = profile?.nativeConfig() ?: NativeConfig(backendUrl = hostedBackend!!, consentCategories = ConsentCategory.entries)
                         C15tAndroid.install(context, config)
                         policyUrl = hostedPrivacy!!
                         if (profile != null) {

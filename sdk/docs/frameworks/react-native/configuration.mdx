@@ -5,7 +5,7 @@ group: frameworks
 ---
 
 Configure the consent engine in the native app before React starts. Expo uses
-the config plugin; bare RN uses native metadata. `C15tProvider` reads the
+the config plugin; bare RN uses native metadata. `ConsentProvider` reads the
 installed engine and has no backend or policy-options prop.
 
 ## Choose where policy and records live
@@ -61,13 +61,13 @@ Use these keys when configuring the same engine without Expo:
 
 | Expo option | iOS `Info.plist` key | Android application metadata |
 | --- | --- | --- |
-| `backendURL` | `com.c15t.backend.url` | `com.c15t.PORTAL_URL` |
-| `initURL` | `com.c15t.backend.initUrl` | `com.c15t.INIT_URL` |
-| `domain` | `com.c15t.backend.domain` | `com.c15t.DOMAIN` |
+| `backendURL` | `com.c15t.backend.url` | `com.c15t.BACKEND_URL` |
+| `initURL` | `com.c15t.backend.initUrl` | `com.c15t.BACKEND_INIT_URL` |
+| `domain` | `com.c15t.backend.domain` | `com.c15t.BACKEND_DOMAIN` |
 | `consentCategories` | `com.c15t.categories`, string array | `com.c15t.CATEGORIES`, comma-separated |
 | `vendors` | `com.c15t.vendors` | `com.c15t.VENDORS`, comma-separated |
 | `policyResource` | `com.c15t.policy.resource` | `com.c15t.POLICY_RESOURCE` |
-| `forceGPC` | `com.c15t.gpc` | `com.c15t.FORCE_GPC` |
+| `forceGPC` | `com.c15t.forceGPC` | `com.c15t.FORCE_GPC` |
 | `iab` | `com.c15t.iab.*`, see below | `com.c15t.IAB_*`, see below |
 | `autoBootstrap: false` | `com.c15t.reactnative.AutoBootstrap` | `com.c15t.reactnative.AUTO_BOOTSTRAP` |
 
@@ -117,7 +117,7 @@ themselves; see [IAB setup](/docs/guides/mobile-iab).
 
 ## Preview a regional policy
 
-`useConsentActions().setOverrides` accepts `country`, `region`, `language` and
+The function `useSetOverrides()` returns accepts `country`, `region`, `language` and
 `gpc`. Use these in a debug menu to exercise your policy rules. Omitted values
 stay as they are; explicit null clears country, region or GPC overrides.
 

@@ -82,18 +82,18 @@ final class ProtocolFixtureTests: XCTestCase {
         )
         XCTAssertEqual(
             index.protocolVersion,
-            c15t.protocolVersion,
-            "index.json is protocol \(index.protocolVersion); this build speaks \(c15t.protocolVersion). Rebuild or regenerate, do not compare across versions."
+            C15t.protocolVersion,
+            "index.json is protocol \(index.protocolVersion); this build speaks \(C15t.protocolVersion). Rebuild or regenerate, do not compare across versions."
         )
         XCTAssertEqual(
             index.policyContractHeader.name,
-            c15t.policyContractHeader,
+            C15t.policyContractHeader,
             "the fixture index declares a different contract header than this build sends"
         )
         XCTAssertEqual(
             index.policyContractHeader.value,
-            c15t.protocolHeaders[c15t.policyContractHeader],
-            "the fixture index pins policy contract \(index.policyContractHeader.value); this build sends \(c15t.protocolHeaders[c15t.policyContractHeader] ?? "nothing")"
+            C15t.protocolHeaders[C15t.policyContractHeader],
+            "the fixture index pins policy contract \(index.policyContractHeader.value); this build sends \(C15t.protocolHeaders[C15t.policyContractHeader] ?? "nothing")"
         )
         for entry in index.fixtures {
             XCTAssertEqual(
@@ -1229,10 +1229,10 @@ final class ProtocolFixtureTests: XCTestCase {
         guard let parsed = C15tJSON.parse(data) else {
             throw Failure.unsupported(fixture: entry.id, detail: "\(entry.file) is not JSON")
         }
-        guard parsed["protocolVersion"]?.intValue == Int64(c15t.protocolVersion) else {
+        guard parsed["protocolVersion"]?.intValue == Int64(C15t.protocolVersion) else {
             throw Failure.unsupported(
                 fixture: entry.id,
-                detail: "fixture protocolVersion \(parsed["protocolVersion"]?.intValue ?? -1) is not this build's \(c15t.protocolVersion)"
+                detail: "fixture protocolVersion \(parsed["protocolVersion"]?.intValue ?? -1) is not this build's \(C15t.protocolVersion)"
             )
         }
         return parsed

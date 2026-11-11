@@ -187,7 +187,7 @@ class IabLifecycleTest {
 			}
 		}
 		val transport = http()
-		val core = C15tKernel(config, C15tStore(InMemoryKeyValueStore()), clock, transport, TaskExecutor.DIRECT)
+		val core = ConsentCore(config, C15tStore(InMemoryKeyValueStore()), clock, transport, TaskExecutor.DIRECT)
 		core.bootstrap()
 		assertTrue(core.save(CommitIntent.All).ok)
 		transport.respondInit(TransportOutcome.NetworkFailure("offline"))

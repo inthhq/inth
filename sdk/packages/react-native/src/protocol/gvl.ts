@@ -217,7 +217,7 @@ export interface GVLVendor {
  * Kotlin's retention test names the two promises that matter to a reader: `a
  * refresh with no gvl keeps the list the device already holds`, and `the list comes
  * back on the next launch through a failed init`. A host that does not go through
- * the bridge reads the same field from `C15tKernel.vendorListBody()` or Swift's
+ * the bridge reads the same field from `ConsentCore.vendorListBody()` or Swift's
  * `globalVendorList()`.
  *
  * Both cores gate a list on the same four fields before they hold one --
