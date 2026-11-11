@@ -194,7 +194,7 @@ public enum C15tPayload {
         fallbackLanguage: String = defaultLanguage,
         iabConsent: IABCommittedConsent? = nil,
         iabAcceptAll: IABChoices? = nil,
-        iabHeadlessGaps: [String] = [],
+        iabPresentation: IABPresentation? = nil,
         iabMarketingPurposes: Bool? = nil
     ) -> String {
         guard var wire = value(of: snapshot) else {
@@ -246,16 +246,21 @@ public enum C15tPayload {
 
         // The headless TCF state rides inside `iab`: the committed decision a screen shows
         // and reopens with (`null` while none is current), whether a draft can be edited and
-        // saved now, and what Accept all saves under the publisher's disclosure. `acceptAll`
-        // is `null` exactly when `editable` is false. `headlessUnsupported` names what a screen
-        // built on the served list could not disclose; while it is not empty, `editable` stays
-        // false, so no custom screen saves choices it could not show.
+        // saved now, what Accept all saves under the publisher's disclosure, and `disclosure`,
+        // the core's own projection the stock screens draw (legal bases after publisher
+        // restrictions, Additional Consent providers, partner counts, the first-layer summary).
+        // `acceptAll` is `null` exactly when `editable` is false, and editing needs the
+        // disclosure, so no custom screen saves choices it was not given the means to show.
+        // `headlessUnsupported` is always empty from this build: older builds listed
+        // `publisher-restrictions` and `additional-consent-providers` there, before
+        // `disclosure` carried both.
         if case var .object(iab)? = fields["iab"] {
-            let acceptAll = iabHeadlessGaps.isEmpty ? iabAcceptAll : nil
+            let acceptAll = iabPresentation == nil ? nil : iabAcceptAll
             iab["committed"] = iabConsent.map(committedIAB) ?? .null
             iab["editable"] = .bool(acceptAll != nil)
             iab["acceptAll"] = acceptAll.flatMap { value(of: $0) } ?? .null
-            iab["headlessUnsupported"] = .array(iabHeadlessGaps.map { .string($0) })
+            iab["headlessUnsupported"] = .array([])
+            iab["disclosure"] = iabPresentation.map(iabDisclosure) ?? .null
             fields["iab"] = .object(iab)
         }
 
@@ -263,9 +268,6 @@ public enum C15tPayload {
         return encodeValue(wire) ?? "{}"
     }
 
-    /// What a custom screen built on the served vendor list could not disclose. Publisher
-    /// restrictions change a vendor's legal bases away from the list, and Additional Consent
-    /// providers are not on the snapshot at all; the stock screens show both.
     /// Read the snapshot and the bridge's additions to it as one revision.
     ///
     /// The core locks each accessor on its own, so a commit between `snapshot()` and
@@ -287,17 +289,51 @@ public enum C15tPayload {
         return (before, read)
     }
 
-    public static func headlessIABGaps(
-        publisherRestrictions: [IABPublisherRestriction], adTechProviders: [AdTechProvider]?
-    ) -> [String] {
-        var gaps: [String] = []
-        if !publisherRestrictions.isEmpty { gaps.append(headlessGapPublisherRestrictions) }
-        if !(adTechProviders ?? []).isEmpty { gaps.append(headlessGapAdditionalConsent) }
-        return gaps
+    /// The `iab.disclosure` object: what ``IABPresentation`` gives the stock screens, so a
+    /// headless screen shows the same legal bases, providers and counts without computing them.
+    static func iabDisclosure(_ presentation: IABPresentation) -> JSONValue {
+        func ids(_ values: [Int]) -> JSONValue { .array(values.map { .integer(Int64($0)) }) }
+        let vendors = presentation.vendors.map { id, disclosure in
+            (String(id), JSONValue.object([
+                "consentPurposes": ids(disclosure.consentPurposes),
+                "consentRequiredPurposes": ids(disclosure.consentRequiredPurposes),
+                "legitimateInterestPurposes": ids(disclosure.legitimateInterestPurposes),
+                "legitimateInterestRequiredPurposes": ids(disclosure.legitimateInterestRequiredPurposes),
+                "notAllowedPurposes": ids(disclosure.notAllowedPurposes),
+            ]))
+        }
+        let purposes = presentation.declaredPurposeIds.map { id in
+            let counts = presentation.partnerCounts(purposeId: id)
+            return (String(id), JSONValue.object([
+                "consentPartnerCount": .integer(Int64(counts.consent)),
+                "legitimateInterestPartnerCount": .integer(Int64(counts.legitimateInterest)),
+            ]))
+        }
+        let summary = presentation.bannerSummary
+        return .object([
+            "adTechProviderPurposeIds": ids(presentation.adTechProviderPurposeIds),
+            "adTechProviders": presentation.adTechProviders.map { providers in
+                .array(providers.map { provider in
+                    .object([
+                        "id": .integer(Int64(provider.id)),
+                        "name": .string(provider.name),
+                        "policyUrl": .string(provider.policyUrl),
+                    ])
+                })
+            } ?? .null,
+            "bannerSummary": .object([
+                "displayItems": .array(summary.displayItems.map { .string($0) }),
+                "remainingCount": .integer(Int64(summary.remainingCount)),
+                "vendorCount": .integer(Int64(summary.vendorCount)),
+            ]),
+            "consentStorageMaxDays": presentation.consentStorageMaxDays.map { .integer(Int64($0)) } ?? .null,
+            "declaredPurposeIds": ids(presentation.declaredPurposeIds),
+            "declaredSpecialFeatureIds": ids(presentation.declaredSpecialFeatureIds),
+            "language": .string(presentation.language),
+            "purposes": .object(Dictionary(uniqueKeysWithValues: purposes)),
+            "vendors": .object(Dictionary(uniqueKeysWithValues: vendors)),
+        ])
     }
-
-    public static let headlessGapPublisherRestrictions = "publisher-restrictions"
-    public static let headlessGapAdditionalConsent = "additional-consent-providers"
 
     /// The committed IAB decision as JavaScript reads it.
     static func committedIAB(_ consent: IABCommittedConsent) -> JSONValue {
@@ -520,7 +556,31 @@ public enum C15tPayload {
             }
             revision = whole
         }
+        // A headless draft may not carry a vendor signal the publisher's restrictions rule out.
+        // The stock screens never offer one, and the TC encoder would keep its bit. Read against
+        // the disclosure the draft was opened on; a newer one fails `concurrent-change` anyway.
+        if case let .iab(choices, _) = parsed, let presentation = core.iabPresentation(),
+           presentation.draft.revision == revision, !presentation.restrictionConflicts(choices).isEmpty {
+            return refused(reasonInvalidIABChoices, snapshot: core.snapshot())
+        }
         return commitResult(core.save(parsed, expectedRevision: revision), snapshot: core.snapshot())
+    }
+
+    /// Reported for a headless TCF draft that contradicts a publisher restriction, the same code
+    /// the core uses for IDs and legal bases the list does not allow.
+    public static let reasonInvalidIABChoices = "invalid-iab-choices"
+
+    /// The failure shape for a commit the bridge refused before it reached the core.
+    static func refused(_ reason: String, snapshot: ConsentSnapshot) -> String {
+        encode([
+            "ok": .bool(false),
+            "revision": .null,
+            "confirmed": .array([]),
+            "subjectId": stringOrNull(snapshot.subject?.id),
+            "queued": .bool(false),
+            "delivered": .bool(false),
+            "reason": .string(reason),
+        ])
     }
 
     public static func parseCommitIntent(_ raw: String?) -> CommitIntent? {

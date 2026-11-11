@@ -44,11 +44,58 @@ public struct IABPresentation: Sendable {
         self.language = language
     }
 
+    /// Purposes 1, 3 and 4: Google counts an ad tech provider's consent only while all three are
+    /// consented, and the core records every provider as off otherwise. Ascending.
+    public var adTechProviderPurposeIds: [Int] { GlobalVendorList.adTechProviderPurposeIds.sorted() }
+
+    /// How many partners ask for consent to `purposeId`, and how many rely on legitimate interest
+    /// for it, after publisher restrictions. Google ad tech providers count toward consent for
+    /// purposes 1, 3 and 4, as the web counts them.
+    public func partnerCounts(purposeId: Int) -> IABPurposePartnerCounts {
+        let providers = GlobalVendorList.adTechProviderPurposeIds.contains(purposeId) ? adTechProviders?.count ?? 0 : 0
+        return IABPurposePartnerCounts(
+            consent: vendors.values.filter { $0.consentPurposes.contains(purposeId) }.count + providers,
+            legitimateInterest: vendors.values.filter { $0.legitimateInterestPurposes.contains(purposeId) }.count)
+    }
+
+    /// Vendor signals in `choices` that the publisher's restrictions rule out: a consent for a
+    /// vendor whose every declared consent purpose a restriction removed or moved to legitimate
+    /// interest, or a legitimate interest for a vendor whose every legitimate-interest purpose a
+    /// restriction removed or moved to consent. The stock screens never offer these switches; a
+    /// headless commit carrying one is refused.
+    /// - Parameter choices: A complete draft.
+    /// - Returns: `vendorConsents:<id>` and `vendorLegitimateInterests:<id>` entries, ascending by
+    ///   id. Empty when nothing contradicts a restriction.
+    public func restrictionConflicts(_ choices: IABChoices) -> [String] {
+        func conflicts(_ ids: [Int], _ name: String, declared: (GVLVendor) -> [Int], disclosed: (IABVendorDisclosure) -> [Int]) -> [String] {
+            Set(ids).sorted().compactMap { id in
+                guard let vendor = list.vendors[id], let disclosure = vendors[id] else { return nil }
+                return disclosed(disclosure).isEmpty && !declared(vendor).isEmpty ? "\(name):\(id)" : nil
+            }
+        }
+        return conflicts(choices.vendorConsents, "vendorConsents", declared: \.purposes, disclosed: \.consentPurposes)
+            + conflicts(choices.vendorLegitimateInterests, "vendorLegitimateInterests",
+                declared: { $0.legIntPurposes.filter { !IABAuthority.neverLI.contains($0) } },
+                disclosed: \.legitimateInterestPurposes)
+    }
+
     /// Whole days, rounded up, for a validity in milliseconds. `nil` for no positive limit.
     static func days(ms: Int64?) -> Int? {
         guard let ms, ms > 0 else { return nil }
         let (days, rest) = ms.quotientAndRemainder(dividingBy: 86_400_000)
         return Int(clamping: days + (rest > 0 ? 1 : 0))
+    }
+}
+
+/// Partners per purpose after publisher restrictions, as the purpose rows show them.
+public struct IABPurposePartnerCounts: Sendable, Equatable {
+    /// Vendors that ask for consent, plus Google ad tech providers for purposes 1, 3 and 4.
+    public let consent: Int
+    /// Vendors that rely on legitimate interest.
+    public let legitimateInterest: Int
+    public init(consent: Int, legitimateInterest: Int) {
+        self.consent = consent
+        self.legitimateInterest = legitimateInterest
     }
 }
 
@@ -149,7 +196,14 @@ public enum IABVendorSelectionStatus: Sendable, Equatable { case off, partial, o
 public struct IABVendorDisclosure: Sendable, Equatable {
     public let consentPurposes: [Int]
     public let legitimateInterestPurposes: [Int]
+    /// Purposes a publisher restriction does not allow this vendor at all.
     public let notAllowedPurposes: [Int]
+    /// Purposes the vendor declares on legitimate interest that a publisher restriction moved
+    /// to consent. Each is also in ``consentPurposes``.
+    public let consentRequiredPurposes: [Int]
+    /// Purposes the vendor declares on consent that a publisher restriction moved to
+    /// legitimate interest. Each is also in ``legitimateInterestPurposes``.
+    public let legitimateInterestRequiredPurposes: [Int]
 
     /// Summarize selections using the projected legal bases. This does not grant authority.
     public func selectionStatus(vendorId: Int, choices: IABChoices) -> IABVendorSelectionStatus {
@@ -171,12 +225,16 @@ extension IABConfiguration {
     /// - Returns: Permitted bases and explicitly prohibited purposes.
     public func disclosure(for vendor: GVLVendor) -> IABVendorDisclosure {
         let purposes = Set(vendor.purposes + vendor.legIntPurposes + vendor.flexiblePurposes)
+        let consent = purposes.filter { discloses(vendor, purposeId: $0, basis: .consent) }.sorted()
+        let interest = purposes.filter { discloses(vendor, purposeId: $0, basis: .legitimateInterest) }.sorted()
         return IABVendorDisclosure(
-            consentPurposes: purposes.filter { discloses(vendor, purposeId: $0, basis: .consent) }.sorted(),
-            legitimateInterestPurposes: purposes.filter { discloses(vendor, purposeId: $0, basis: .legitimateInterest) }.sorted(),
+            consentPurposes: consent,
+            legitimateInterestPurposes: interest,
             notAllowedPurposes: purposes.filter { id in
                 publisherRestrictions.contains { $0.purposeId == id && $0.vendorIds.contains(vendor.id) && $0.type == 0 }
-            }.sorted())
+            }.sorted(),
+            consentRequiredPurposes: consent.filter { !vendor.purposes.contains($0) },
+            legitimateInterestRequiredPurposes: interest.filter { !vendor.legIntPurposes.contains($0) })
     }
 
     /// Shared by disclosure rendering and synchronous native gates. Does not allocate a projection.

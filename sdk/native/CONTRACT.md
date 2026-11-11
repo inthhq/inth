@@ -1255,17 +1255,37 @@ headless TCF draft: `choices` names every `IABChoices` list (IDs are JSON number
 `consents` the categories it confirms, and an optional `revision` the core passes as
 `expectedRevision`, so a change since the draft was opened is refused as
 `concurrent-change`. The core validates IDs and legal bases as for the stock
-presenter. The bridge adds four keys inside the snapshot's `iab` object, beside the
+presenter. The bridge adds five keys inside the snapshot's `iab` object, beside the
 core's `gvl`: `committed: { tcString, addtlConsent, choices } | null` from
-`iabConsent()`; `headlessUnsupported`, which lists `publisher-restrictions` when
-`iabPublisherRestrictions` is not empty and `additional-consent-providers` when
-`adTechProviderDisclosures()` is not empty, the disclosures a screen built on the raw
-list cannot make; `acceptAll: IABChoices | null` from `iabAcceptAllChoices()`, sent
-only while `headlessUnsupported` is empty; and `editable`, which is
-`acceptAll != null`. They are additive without a protocol bump:
-`ADDITIVE_IAB_DEFAULTS` in `wire-shape.ts` reads an older bridge as
-`committed: null, editable: false, acceptAll: null, headlessUnsupported: []`, so
-JavaScript offers no edit it cannot commit.
+`iabConsent()`; `disclosure`, the core's `iabPresentation()` as the stock screens
+read it (each active vendor's `consentPurposes`, `legitimateInterestPurposes`,
+`notAllowedPurposes`, `consentRequiredPurposes` and
+`legitimateInterestRequiredPurposes` after publisher restrictions; per-purpose
+`consentPartnerCount` and `legitimateInterestPartnerCount` from `partnerCounts`;
+`declaredPurposeIds`, `declaredSpecialFeatureIds`, `adTechProviders` with `id`,
+`name` and `policyUrl`, `adTechProviderPurposeIds`, `bannerSummary`,
+`consentStorageMaxDays` and `language`), or `null` without one; `acceptAll:
+IABChoices | null` from `iabAcceptAllChoices()`, sent only while `disclosure` is
+not null; `editable`, which is `acceptAll != null`; and `headlessUnsupported`,
+which this build always sends empty. Builds before `disclosure` listed
+`publisher-restrictions` and `additional-consent-providers` there and kept
+`editable` false, and the JavaScript draft still refuses to open while the list
+is not empty. A headless `iab` intent carrying a vendor consent for a vendor
+whose `consentPurposes` are empty, or a vendor legitimate interest for one whose
+`legitimateInterestPurposes` are empty, while a restriction removed what it
+declared on that basis (`IABPresentation.restrictionConflicts`), is refused by
+the bridge as `invalid-iab-choices` before it reaches the core. The stock
+screens offer no such switch. Purpose signals are the subject's answer per
+purpose and are not refused, as on the stock screens.
+`native/protocol/iab/headless-disclosure-cases.json`, generated from
+`packages/iab`, holds the disclosure, the TC and AC strings both the stock save
+and the headless commit write, and the refused selections. The web encoder
+writes restriction vendors that are adjacent in the narrowed list as one range,
+which also covers the IDs between them; both native encoders write each vendor,
+so the fixture avoids such groups. These keys are additive without a protocol
+bump: `ADDITIVE_IAB_DEFAULTS` in `wire-shape.ts` reads an older bridge as
+`committed: null, disclosure: null, editable: false, acceptAll: null,
+headlessUnsupported: []`, so JavaScript offers no edit it cannot commit.
 
 `c15t.nativeUI` false (`Podfile.properties.json` or `C15T_NATIVE_UI=0` for the pod,
 `gradle.properties` for Android) builds the bridge without the stock screens: the

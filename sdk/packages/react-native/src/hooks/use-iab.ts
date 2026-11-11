@@ -44,8 +44,10 @@ export const useIABEnabled = function useIABEnabled(): boolean {
 };
 
 /**
- * The IAB slice of the snapshot: the served vendor list and the committed
- * decision. `null` when no list was served.
+ * The IAB slice of the snapshot: the served vendor list, the committed
+ * decision, and `disclosure`, the native core's projection the stock screens
+ * draw (legal bases after publisher restrictions, Additional Consent
+ * providers, partner counts). `null` when no list was served.
  *
  * @returns The IAB state, or `null`.
  */
@@ -109,6 +111,24 @@ export const useSpecialFeatureOptIn = function useSpecialFeatureOptIn(
 ): boolean {
 	return useConsentDraftSlice(
 		(state) => state.iab?.specialFeatureOptIns.includes(featureId) ?? false
+	);
+};
+
+/**
+ * The draft's consent selection for one Google Additional Consent provider,
+ * including changes not saved yet. List the providers from
+ * `useIABSnapshot()?.disclosure?.adTechProviders`. Native records every
+ * provider as off unless purposes 1, 3 and 4 all have consent, whatever this
+ * says. See {@link useVendorConsent}.
+ *
+ * @param providerId - Google's provider ID.
+ * @returns Whether the provider is selected.
+ */
+export const useAdTechProviderConsent = function useAdTechProviderConsent(
+	providerId: number
+): boolean {
+	return useConsentDraftSlice(
+		(state) => state.iab?.adTechProviderConsents?.includes(providerId) ?? false
 	);
 };
 
@@ -182,8 +202,9 @@ export interface IABDraftHandle {
  *
  * @returns The handle, or `null` when the policy is not `iab`, no vendor list
  *   was served, or native cannot open a draft now (`useIABSnapshot()?.editable`
- *   is `false`: a stale or offline list, a missing Additional Consent list, or a
- *   binary without the headless bridge).
+ *   is `false`: a stale or offline list, a missing Additional Consent list, a
+ *   binary without the headless bridge, or one from before `disclosure` that
+ *   lists `headlessUnsupported`).
  */
 export const useIAB = function useIAB(): IABDraftHandle | null {
 	const draft = useConsentDraftStore();

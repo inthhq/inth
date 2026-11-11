@@ -124,6 +124,7 @@ export {
 export type { ConsentActions, SaveConsentsInput } from './hooks';
 export { ConsentDraftProvider, useConsentDraft } from './draft';
 export {
+	useAdTechProviderConsent,
 	useIAB,
 	useIABEnabled,
 	useIABSnapshot,

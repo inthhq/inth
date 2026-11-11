@@ -47,7 +47,8 @@ export const seedIABChoices = function seedIABChoices(
 	// Only while native can open and save a draft. A stale or offline list, a
 	// missing Additional Consent list, and a binary without a headless bridge all
 	// read `editable: false`, and a selection staged then would only be refused.
-	// A configuration a custom screen could not disclose never opens one, whatever
+	// A binary from before `iab.disclosure` names the configurations it could not
+	// give a custom screen in `headlessUnsupported`; those never open one, whatever
 	// `editable` says.
 	if (
 		snapshot.model !== 'iab' ||

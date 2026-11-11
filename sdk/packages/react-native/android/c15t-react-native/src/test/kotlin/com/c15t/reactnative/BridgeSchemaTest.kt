@@ -5,13 +5,24 @@ import com.c15t.consentui.ConsentHostPresentation
 import com.c15t.consentui.ConsentHostSession
 import com.c15t.core.CommitIntent
 import com.c15t.core.CommitResult
+import com.c15t.core.iab.AdTechProvider
+import com.c15t.core.iab.IabChoices
+import com.c15t.core.iab.IabCommittedConsent
+import com.c15t.core.iab.IabConfiguration
+import com.c15t.core.iab.IabDraft
+import com.c15t.core.iab.IabPresentation
+import com.c15t.core.iab.IabVendorDisclosure
 import com.c15t.core.model.ConsentCategory
 import com.c15t.core.model.ConsentLocation
 import com.c15t.core.model.ConsentSnapshot
 import com.c15t.core.model.ConsentSubject
 import com.c15t.core.model.KernelError
+import com.c15t.core.model.KernelIabState
 import com.c15t.core.model.KernelOverrides
 import com.c15t.core.store.C15tStore
+import com.c15t.core.tc.GlobalVendorList
+import com.c15t.core.tc.GvlLocalizedEntry
+import com.c15t.core.tc.GvlVendorEntry
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -47,6 +58,29 @@ class BridgeSchemaTest {
 		json.parseToJsonElement(schemaFile().readText()).jsonObject["payloads"]!!.jsonObject
 	}
 
+	/** A snapshot with every headless IAB key filled, the disclosure included. */
+	private fun iabSnapshot(): String {
+		val list = GlobalVendorList(
+			purposes = mapOf(1 to GvlLocalizedEntry(id = 1, name = "Store and/or access information on a device")),
+			vendors = mapOf(755 to GvlVendorEntry(id = 755, name = "Vendor", purposes = listOf(1))),
+			vendorListVersion = 177,
+			tcfPolicyVersion = 5,
+		)
+		val choices = IabChoices(purposeConsents = listOf(1), vendorConsents = listOf(755))
+		val presentation = IabPresentation(
+			IabDraft(1, choices), list, mapOf(755 to IabVendorDisclosure(listOf(1), emptyList(), emptyList())),
+			listOf(AdTechProvider(id = 89, name = "Provider", policyUrl = "https://provider.invalid/privacy")),
+			canEdit = true, consentStorageMaxDays = 30,
+		)
+		val committed = IabCommittedConsent(
+			configuration = IabConfiguration(cmpId = 9, cmpVersion = 1, publisherCountryCode = "DE"),
+			choices = choices, subjectId = "sub", externalId = null, fingerprint = "fp", vendorListVersion = 177,
+			policyVersion = 5, consentVersion = 1, createdAt = 1, actionAt = 1, tcString = "CQ-test",
+		)
+		return C15tPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list)), iabConsent = committed,
+			iabAcceptAll = choices, iabPresentation = presentation)
+	}
+
 	@Test
 	fun `every encoder writes the keys the schema declares`() {
 		val kernel = bridgeKernel(C15tStore(MemoryStore()))
@@ -62,6 +96,7 @@ class BridgeSchemaTest {
 			"bootstrap" to C15tPayload.bootstrap(kernel.snapshot(), kernel.hasStoredSnapshot),
 			"snapshot" to C15tPayload.snapshot(kernel.snapshot()),
 			"snapshot" to C15tPayload.snapshot(identified),
+			"snapshot" to iabSnapshot(),
 			"commitResult" to C15tPayload.commitResult(saved, kernel.snapshot()),
 			"commitResult" to C15tPayload.commitResult(
 				CommitResult(

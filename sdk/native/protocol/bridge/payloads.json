@@ -390,6 +390,119 @@
 				"iab": {
 					"nullable": true,
 					"required": true,
+					"fields": {
+						"acceptAll": {
+							"nullable": true,
+							"required": true,
+							"type": "object"
+						},
+						"committed": {
+							"nullable": true,
+							"required": true,
+							"fields": {
+								"addtlConsent": {
+									"nullable": true,
+									"required": true,
+									"type": "string"
+								},
+								"choices": {
+									"nullable": false,
+									"required": true,
+									"type": "object"
+								},
+								"tcString": {
+									"nullable": false,
+									"required": true,
+									"type": "string"
+								}
+							},
+							"type": "object"
+						},
+						"disclosure": {
+							"nullable": true,
+							"required": true,
+							"fields": {
+								"adTechProviderPurposeIds": {
+									"nullable": false,
+									"required": true,
+									"type": "array"
+								},
+								"adTechProviders": {
+									"nullable": true,
+									"required": true,
+									"type": "array"
+								},
+								"bannerSummary": {
+									"nullable": false,
+									"required": true,
+									"fields": {
+										"displayItems": {
+											"nullable": false,
+											"required": true,
+											"type": "array"
+										},
+										"remainingCount": {
+											"nullable": false,
+											"required": true,
+											"type": "number"
+										},
+										"vendorCount": {
+											"nullable": false,
+											"required": true,
+											"type": "number"
+										}
+									},
+									"type": "object"
+								},
+								"consentStorageMaxDays": {
+									"nullable": true,
+									"required": true,
+									"type": "number"
+								},
+								"declaredPurposeIds": {
+									"nullable": false,
+									"required": true,
+									"type": "array"
+								},
+								"declaredSpecialFeatureIds": {
+									"nullable": false,
+									"required": true,
+									"type": "array"
+								},
+								"language": {
+									"nullable": false,
+									"required": true,
+									"type": "string"
+								},
+								"purposes": {
+									"nullable": false,
+									"required": true,
+									"type": "object"
+								},
+								"vendors": {
+									"nullable": false,
+									"required": true,
+									"type": "object"
+								}
+							},
+							"type": "object"
+						},
+						"editable": {
+							"nullable": false,
+							"required": true,
+							"type": "boolean"
+						},
+						"gvl": {
+							"nullable": true,
+							"required": true,
+							"type": "object"
+						},
+						"headlessUnsupported": {
+							"nullable": false,
+							"required": true,
+							"type": "array"
+						}
+					},
 					"type": "object"
 				},
 				"iabMarketingPurposes": {

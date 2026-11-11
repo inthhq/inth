@@ -10,7 +10,8 @@ import com.c15t.core.iab.AdTechProvider
 import com.c15t.core.iab.IabChoices
 import com.c15t.core.iab.IabCommittedConsent
 import com.c15t.core.iab.IabConfiguration
-import com.c15t.core.iab.IabPublisherRestriction
+import com.c15t.core.iab.IabDraft
+import com.c15t.core.iab.IabPresentation
 import com.c15t.core.model.ConsentAction
 import com.c15t.core.model.ConsentCategory
 import com.c15t.core.model.ConsentLocation
@@ -140,7 +141,7 @@ class C15tPayloadTest {
 
 		assertEquals(
 			"the kernel's `KernelIABState` carries `gvl`, and the bridge adds the headless TCF state",
-			setOf("gvl", "committed", "editable", "acceptAll", "headlessUnsupported"),
+			setOf("gvl", "committed", "editable", "acceptAll", "headlessUnsupported", "disclosure"),
 			iab.keys,
 		)
 		assertEquals("nothing is committed yet", JsonNull, iab["committed"])
@@ -334,9 +335,10 @@ class C15tPayloadTest {
 
 		assertEquals("CQ-test", committed["tcString"]!!.jsonPrimitive.content)
 		assertEquals(JsonNull, committed["addtlConsent"])
-		val editable = parse(C15tPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list)), iabAcceptAll = IabChoices(vendorConsents = listOf(7))))
-			.getValue("iab").jsonObject
-		assertTrue("an accept-all answer means a draft can open", editable["editable"]!!.jsonPrimitive.boolean)
+		val presentation = IabPresentation(IabDraft(1, IabChoices()), list, emptyMap(), null, canEdit = true)
+		val editable = parse(C15tPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list)),
+			iabAcceptAll = IabChoices(vendorConsents = listOf(7)), iabPresentation = presentation)).getValue("iab").jsonObject
+		assertTrue("an accept-all answer with its disclosure means a draft can open", editable["editable"]!!.jsonPrimitive.boolean)
 		assertEquals(listOf("7"), editable.getValue("acceptAll").jsonObject.getValue("vendorConsents").jsonArray.map { it.jsonPrimitive.content })
 		val choices = committed.getValue("choices").jsonObject
 		assertEquals(listOf("1", "3"), choices.getValue("purposeConsents").jsonArray.map { it.jsonPrimitive.content })
@@ -362,24 +364,106 @@ class C15tPayloadTest {
 	}
 
 	@Test
-	fun `headless IAB editing closes while a custom screen could not disclose everything`() {
+	fun `headless IAB editing needs the disclosure and names no gap`() {
 		val list = GlobalVendorList(purposes = emptyMap(), vendors = emptyMap(), vendorListVersion = 177, tcfPolicyVersion = 5)
-		val restriction = IabPublisherRestriction(purposeId = 2, type = 1, vendorIds = listOf(7))
-		val provider = AdTechProvider(id = 89, name = "Provider", policyUrl = "https://provider.invalid/privacy")
+		val presentation = IabPresentation(
+			IabDraft(3, IabChoices()), list, emptyMap(),
+			listOf(AdTechProvider(id = 89, name = "Provider", policyUrl = "https://provider.invalid/privacy")),
+			canEdit = true,
+		)
+		val choices = IabChoices(vendorConsents = listOf(7))
 
-		assertEquals(emptyList<String>(), C15tPayload.headlessIabGaps(emptyList(), emptyList()))
-		assertEquals(emptyList<String>(), C15tPayload.headlessIabGaps(emptyList(), null))
-		val gaps = C15tPayload.headlessIabGaps(listOf(restriction), listOf(provider))
-		assertEquals(listOf("publisher-restrictions", "additional-consent-providers"), gaps)
+		val closed = parse(C15tPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list)), iabAcceptAll = choices))
+			.getValue("iab").jsonObject
+		assertFalse("a draft that could open is not offered without the disclosure", closed["editable"]!!.jsonPrimitive.boolean)
+		assertEquals(JsonNull, closed["acceptAll"])
+		assertEquals(JsonNull, closed["disclosure"])
 
-		val iab = parse(C15tPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list)),
-			iabAcceptAll = IabChoices(vendorConsents = listOf(7)), iabHeadlessGaps = gaps)).getValue("iab").jsonObject
-		assertFalse("a draft that could open still is not offered to a custom screen", iab["editable"]!!.jsonPrimitive.boolean)
-		assertEquals(JsonNull, iab["acceptAll"])
-		assertEquals(gaps, iab.getValue("headlessUnsupported").jsonArray.map { it.jsonPrimitive.content })
-		val open = parse(C15tPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list)),
-			iabAcceptAll = IabChoices(vendorConsents = listOf(7)))).getValue("iab").jsonObject
-		assertEquals(0, open.getValue("headlessUnsupported").jsonArray.size)
+		val open = parse(C15tPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list)), iabAcceptAll = choices,
+			iabPresentation = presentation)).getValue("iab").jsonObject
+		assertTrue(open["editable"]!!.jsonPrimitive.boolean)
+		assertEquals("this build names no gap, restrictions and providers included", 0, open.getValue("headlessUnsupported").jsonArray.size)
+		val providers = open.getValue("disclosure").jsonObject.getValue("adTechProviders").jsonArray
+		assertEquals("https://provider.invalid/privacy", providers.single().jsonObject.getValue("policyUrl").jsonPrimitive.content)
+	}
+
+	/** `native/protocol/iab/headless-disclosure-cases.json` and the vendor list it names. */
+	private val headless: JsonObject by lazy { json.parseToJsonElement(protocolFile("iab/headless-disclosure-cases.json")).jsonObject }
+
+	private fun protocolFile(path: String): String =
+		generateSequence(java.io.File(System.getProperty("user.dir"))) { it.parentFile }
+			.map { java.io.File(it, "native/protocol/$path") }
+			.first { it.exists() }
+			.readText()
+
+	/** A core that served the fixture's list and providers under an IAB policy, as a device would hold it. */
+	private fun headlessCore(): com.c15t.core.ConsentCore {
+		val vendorList = json.parseToJsonElement(protocolFile("iab/${headless.getValue("vendorList").jsonPrimitive.content}")).jsonObject
+		// A served IAB policy, unchanged, from the kernel-generated evaluation fixture.
+		val served = json.parseToJsonElement(protocolFile("evaluation-narrow-iab-no-receipt.json")).jsonObject
+			.getValue("input").jsonObject.getValue("transport").jsonObject.getValue("body").jsonObject
+		val body = JsonObject(served + mapOf("gvl" to vendorList.getValue("gvl"), "adTechProviders" to vendorList.getValue("adTechProviders")))
+		val transport = object : com.c15t.core.transport.C15tTransport {
+			override fun init(context: com.c15t.core.transport.InitContext) =
+				com.c15t.core.transport.TransportOutcome.Success(body, mapOf("x-c15t-policy-contract" to "1"))
+
+			override fun save(entry: com.c15t.core.model.QueuedSave) = com.c15t.core.transport.SaveOutcome.Unavailable("offline")
+
+			override fun identify(subject: ConsentSubject, user: com.c15t.core.model.KernelUser) =
+				com.c15t.core.transport.TransportOutcome.Success(null, emptyMap())
+		}
+		val now = headless.getValue("now").jsonPrimitive.content.toLong()
+		val configuration = Json.decodeFromJsonElement(IabConfiguration.serializer(), headless.getValue("configuration"))
+		return com.c15t.core.ConsentCore(
+			config = NativeConfig(backendUrl = "https://test.c15t.app", iab = configuration),
+			store = C15tStore(MemoryStore()),
+			clock = { now },
+			transport = transport,
+			executor = com.c15t.core.spi.TaskExecutor.DIRECT,
+		).also { it.bootstrap() }
+	}
+
+	private fun headlessSnapshot(core: com.c15t.core.ConsentCore): JsonObject =
+		parse(C15tPayload.snapshot(core.snapshot(), iabConsent = core.iabConsent, iabAcceptAll = core.iabAcceptAllChoices(),
+			iabPresentation = core.iabPresentation())).getValue("iab").jsonObject
+
+	private fun headlessCommit(core: com.c15t.core.ConsentCore, choices: JsonObject, revision: Long): JsonObject =
+		parse(C15tPayload.commit("""{"action":"iab","choices":$choices,"consents":{},"revision":$revision}""", core))
+
+	@Test
+	fun `the snapshot carries the disclosure the stock screens draw`() {
+		val iab = headlessSnapshot(headlessCore())
+		assertTrue(iab.getValue("editable").jsonPrimitive.boolean)
+		assertEquals(0, iab.getValue("headlessUnsupported").jsonArray.size)
+		val disclosure = iab.getValue("disclosure").jsonObject
+		assertEquals("the policy's 30-day choice validity", "30", disclosure.getValue("consentStorageMaxDays").jsonPrimitive.content)
+		assertEquals(headless.getValue("disclosure"), JsonObject(disclosure - "consentStorageMaxDays"))
+		assertEquals(headless.getValue("acceptAll"), iab.getValue("acceptAll"))
+	}
+
+	@Test
+	fun `a headless commit writes the strings the stock save writes`() {
+		for (row in headless.getValue("cases").jsonArray.map { it.jsonObject }) {
+			val id = row.getValue("id").jsonPrimitive.content
+			val core = headlessCore()
+			val result = headlessCommit(core, row.getValue("choices").jsonObject, core.snapshot().revision)
+			assertTrue("$id: $result", result.getValue("ok").jsonPrimitive.boolean)
+			val committed = headlessSnapshot(core).getValue("committed").jsonObject
+			assertEquals(id, row.getValue("tcString"), committed.getValue("tcString"))
+			assertEquals(id, row.getValue("addtlConsent"), committed.getValue("addtlConsent"))
+		}
+	}
+
+	@Test
+	fun `a headless commit that contradicts a restriction is refused`() {
+		for (row in headless.getValue("conflicts").jsonArray.map { it.jsonObject }) {
+			val id = row.getValue("id").jsonPrimitive.content
+			val core = headlessCore()
+			val result = headlessCommit(core, row.getValue("choices").jsonObject, core.snapshot().revision)
+			assertFalse(id, result.getValue("ok").jsonPrimitive.boolean)
+			assertEquals(id, "invalid-iab-choices", result.getValue("reason").jsonPrimitive.content)
+			assertNull("$id: nothing is recorded", core.iabConsent)
+		}
 	}
 
 	@Test

@@ -163,7 +163,45 @@ export const BRIDGE_PAYLOADS = {
 			nullable: true,
 		},
 		gppString: 'string | null',
-		iab: 'object | null',
+		iab: {
+			fields: {
+				acceptAll: 'object | null',
+				committed: {
+					fields: {
+						addtlConsent: 'string | null',
+						choices: 'object',
+						tcString: 'string',
+					},
+					nullable: true,
+				},
+				// Older binaries leave out the keys below `gvl`; `ADDITIVE_IAB_DEFAULTS`
+				// in `wire-shape.ts` fills them before a snapshot is read or graded.
+				disclosure: {
+					fields: {
+						adTechProviderPurposeIds: 'array',
+						adTechProviders: 'array | null',
+						bannerSummary: {
+							fields: {
+								displayItems: 'array',
+								remainingCount: 'number',
+								vendorCount: 'number',
+							},
+						},
+						consentStorageMaxDays: 'number | null',
+						declaredPurposeIds: 'array',
+						declaredSpecialFeatureIds: 'array',
+						language: 'string',
+						purposes: 'object',
+						vendors: 'object',
+					},
+					nullable: true,
+				},
+				editable: 'boolean',
+				gvl: 'object | null',
+				headlessUnsupported: 'array',
+			},
+			nullable: true,
+		},
 		iabMarketingPurposes: 'boolean | null',
 		location: {
 			fields: { countryCode: 'string | null', regionCode: 'string | null' },

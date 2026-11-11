@@ -152,14 +152,12 @@ struct IABPreferencesContent: Equatable, Sendable {
         let list = presentation.list
         let copy = IABCopy.forLanguage(presentation.language)
         let projections = presentation.vendors.values
-        let providerCount = presentation.adTechProviders?.count ?? 0
         purposes = presentation.declaredPurposeIds.compactMap { id in
             list.purposes[id].map { definition in
-                IABPurposeContent(definition: IABDefinitionContent(.purpose, definition),
-                    // Google ad tech providers need consent to purposes 1, 3 and 4, as the web counts them.
-                    consentPartnerCount: projections.filter { $0.consentPurposes.contains(id) }.count
-                        + (adTechProviderPurposeIds.contains(id) ? providerCount : 0),
-                    legitimateInterestPartnerCount: projections.filter { $0.legitimateInterestPurposes.contains(id) }.count,
+                let counts = presentation.partnerCounts(purposeId: id)
+                return IABPurposeContent(definition: IABDefinitionContent(.purpose, definition),
+                    consentPartnerCount: counts.consent,
+                    legitimateInterestPartnerCount: counts.legitimateInterest,
                     copy: copy)
             }
         }

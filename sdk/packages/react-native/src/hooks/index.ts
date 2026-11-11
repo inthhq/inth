@@ -31,6 +31,7 @@ export { useConsentSafeArea } from './use-consent-safe-area';
 export type { ConsentSafeArea } from './use-consent-safe-area';
 export { useConsent } from './use-consent';
 export {
+	useAdTechProviderConsent,
 	useIAB,
 	useIABEnabled,
 	useIABSnapshot,

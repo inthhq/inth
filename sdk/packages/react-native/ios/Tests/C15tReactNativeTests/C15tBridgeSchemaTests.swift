@@ -34,6 +34,14 @@ final class C15tBridgeSchemaTests: XCTestCase {
         return try XCTUnwrap(payload["fields"] as? [String: Any])
     }
 
+    func testTheHeadlessIABSlotWritesTheKeysTheSchemaDeclares() async throws {
+        let core = try await headlessIABCore()
+        let snapshot = try XCTUnwrap(jsonObject(C15tPayload.snapshot(core.snapshot(), iabConsent: core.iabConsent(),
+            iabAcceptAll: core.iabAcceptAllChoices(), iabPresentation: core.iabPresentation())) as [String: Any]?)
+        XCTAssertNotNil((snapshot["iab"] as? [String: Any])?["disclosure"] as? [String: Any])
+        XCTAssertEqual(describe(try fields("snapshot"), snapshot, path: "snapshot."), [])
+    }
+
     func testEveryEncoderWritesTheKeysTheSchemaDeclares() throws {
         let subject = SubjectSnapshot(id: "sub_1", externalId: "user-1")
         let committed = CommitResult(

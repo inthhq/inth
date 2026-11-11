@@ -126,19 +126,20 @@ export interface NativeIABState {
 	/**
 	 * Whether a headless draft can be edited and saved now: an IAB policy, CMP
 	 * configuration, a vendor list that is still usable, a current Additional
-	 * Consent list where one is required, and nothing in
-	 * {@link NativeIABState.headlessUnsupported}. `false` while the list is
-	 * stale or offline; refresh, then offer controls again. A binary older than
-	 * this field cannot commit a headless draft and reads as `false`.
+	 * Consent list where one is required, a {@link NativeIABState.disclosure},
+	 * and nothing in {@link NativeIABState.headlessUnsupported}. `false` while
+	 * the list is stale or offline; refresh, then offer controls again. A binary
+	 * older than this field cannot commit a headless draft and reads as `false`.
 	 */
 	readonly editable: boolean;
 	/**
 	 * What a custom screen built on this snapshot could not disclose, so
-	 * `editable` stays `false` for as long as the list is not empty. Publisher
-	 * restrictions move vendors' legal bases away from the served list, and
-	 * Additional Consent provider names are not on the snapshot. Use the stock
-	 * screens for these configurations. A binary older than this field reads as
-	 * `[]`; it is not `editable` either.
+	 * `editable` stays `false` for as long as the list is not empty. This
+	 * release's binaries always send `[]`: they carry publisher restrictions and
+	 * Additional Consent providers in {@link NativeIABState.disclosure}. A
+	 * binary from before `disclosure` lists `'publisher-restrictions'` or
+	 * `'additional-consent-providers'` here; use the stock screens there. A
+	 * binary older than this field reads as `[]`; it is not `editable` either.
 	 */
 	readonly headlessUnsupported: readonly NativeIABHeadlessGap[];
 	/**
@@ -147,15 +148,112 @@ export interface NativeIABState {
 	 * restrictions. `null` exactly when {@link NativeIABState.editable} is false.
 	 */
 	readonly acceptAll: NativeIABChoices | null;
+	/**
+	 * The native core's own disclosure, the one the stock screens draw: each
+	 * vendor's legal bases after publisher restrictions, the Additional Consent
+	 * providers, partner counts per purpose and the first-layer summary. Show
+	 * these rather than the raw `gvl` declarations. `null` while no IAB policy
+	 * and configuration apply, and from a binary older than this field.
+	 */
+	readonly disclosure: NativeIABDisclosure | null;
 }
 
 /**
- * A configuration a headless IAB screen cannot disclose: publisher
- * restrictions, or Additional Consent providers on the served list.
+ * A configuration a binary from before {@link NativeIABState.disclosure}
+ * could not give a headless IAB screen: publisher restrictions, or
+ * Additional Consent providers on the served list.
  */
 export type NativeIABHeadlessGap =
 	| 'additional-consent-providers'
 	| 'publisher-restrictions';
+
+/**
+ * One vendor's legal bases after publisher restrictions, as the native gates
+ * evaluate them. Every list is ascending.
+ */
+export interface NativeIABVendorDisclosure {
+	/** Purposes the vendor asks consent for. Offer a vendor consent switch only when not empty. */
+	readonly consentPurposes: readonly number[];
+	/**
+	 * Purposes the vendor relies on legitimate interest for. Offer a vendor
+	 * legitimate-interest (objection) switch only when not empty.
+	 */
+	readonly legitimateInterestPurposes: readonly number[];
+	/** Purposes a publisher restriction does not allow this vendor at all. */
+	readonly notAllowedPurposes: readonly number[];
+	/**
+	 * Purposes the vendor declares on legitimate interest that a restriction
+	 * moved to consent. Each is also in `consentPurposes`.
+	 */
+	readonly consentRequiredPurposes: readonly number[];
+	/**
+	 * Purposes the vendor declares on consent that a restriction moved to
+	 * legitimate interest. Each is also in `legitimateInterestPurposes`.
+	 */
+	readonly legitimateInterestRequiredPurposes: readonly number[];
+}
+
+/** Partners per purpose after publisher restrictions. */
+export interface NativeIABPurposePartnerCounts {
+	/** Vendors that ask for consent, plus Google ad tech providers for purposes 1, 3 and 4. */
+	readonly consentPartnerCount: number;
+	/** Vendors that rely on legitimate interest. */
+	readonly legitimateInterestPartnerCount: number;
+}
+
+/** A Google Additional Consent provider, which is not on the IAB vendor list. */
+export interface NativeAdTechProvider {
+	/** Google's provider ID. */
+	readonly id: number;
+	readonly name: string;
+	/** The provider's privacy policy. */
+	readonly policyUrl: string;
+}
+
+/**
+ * What the stock native screens show for an IAB policy, from the native
+ * core's own projection. A headless screen reads it instead of deriving
+ * legal bases from the raw vendor list.
+ */
+export interface NativeIABDisclosure {
+	/** Active vendors in the served list, by vendor ID. */
+	readonly vendors: Readonly<Record<string, NativeIABVendorDisclosure>>;
+	/** Partner counts for each of {@link NativeIABDisclosure.declaredPurposeIds}, by purpose ID. */
+	readonly purposes: Readonly<Record<string, NativeIABPurposePartnerCounts>>;
+	/**
+	 * Purposes some vendor declares, plus 1, 3 and 4 when Additional Consent
+	 * providers are listed: the purposes the second layer lists. Ascending.
+	 */
+	readonly declaredPurposeIds: readonly number[];
+	/** Special features some vendor declares. Ascending. */
+	readonly declaredSpecialFeatureIds: readonly number[];
+	/**
+	 * Google Additional Consent providers to list apart from IAB vendors, with
+	 * a switch and privacy-policy link each. `null` when none are configured.
+	 */
+	readonly adTechProviders: readonly NativeAdTechProvider[] | null;
+	/**
+	 * Purposes 1, 3 and 4: native records every provider as off unless all
+	 * three have consent. Say so beside the provider list.
+	 */
+	readonly adTechProviderPurposeIds: readonly number[];
+	/** The first layer's partner count and purpose, stack and feature names. */
+	readonly bannerSummary: {
+		/** IAB vendors and Additional Consent providers together. */
+		readonly vendorCount: number;
+		readonly displayItems: readonly string[];
+		/** How many names the cap left out, for an "and N more" line. */
+		readonly remainingCount: number;
+	};
+	/**
+	 * The longest a saved decision and its TC String stay in use on this
+	 * device, in whole days, from the policy's choice validity. `null` when no
+	 * limit applies.
+	 */
+	readonly consentStorageMaxDays: number | null;
+	/** The two-letter upper-case language of the list's names and descriptions. */
+	readonly language: string;
+}
 
 /** The committed TCF decision a headless IAB screen shows and reopens with. */
 export interface NativeIABCommittedConsent {

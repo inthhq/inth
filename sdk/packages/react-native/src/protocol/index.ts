@@ -52,9 +52,13 @@ export {
 } from './tracking';
 export type {
 	ConsentSnapshot,
+	NativeAdTechProvider,
 	NativeIABCommittedConsent,
+	NativeIABDisclosure,
 	NativeIABHeadlessGap,
+	NativeIABPurposePartnerCounts,
 	NativeIABState,
+	NativeIABVendorDisclosure,
 	NativeConsentSubject,
 	NativeModel,
 	NativeGpcSignal,

@@ -845,11 +845,10 @@ private val adTechProviderPurposeIds = setOf(1, 3, 4)
 
 @Composable private fun Purpose(p: ConsentPresenter, id: Int, item: GvlLocalizedEntry, partners: () -> Unit) {
     var expanded by rememberSaveable { mutableStateOf(false) }
-    val vendors = p.disclosure?.vendors?.values.orEmpty()
-    // Google ad tech providers need consent to purposes 1, 3 and 4, as the web counts them.
-    val providerCount = if (id in adTechProviderPurposeIds) p.disclosure?.adTechProviders.orEmpty().size else 0
-    val consentCount = vendors.count { id in it.consentPurposes } + providerCount
-    val liCount = vendors.count { id in it.legitimateInterestPurposes }
+    // The core's count, which the React Native bridge sends too.
+    val counts = p.disclosure?.partnerCounts(id)
+    val consentCount = counts?.consent ?: 0
+    val liCount = counts?.legitimateInterest ?: 0
     val li = liCount > 0
     val theme = LocalConsentTheme.current
     // How many partners ask, on the row itself rather than only behind Details. Zero is
