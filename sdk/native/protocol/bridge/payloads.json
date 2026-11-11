@@ -101,6 +101,7 @@
 						"iab-list-stale",
 						"iab-choices-required",
 						"invalid-iab-choices",
+						"invalid-additional-consent",
 						"invalid-action-time"
 					]
 				},

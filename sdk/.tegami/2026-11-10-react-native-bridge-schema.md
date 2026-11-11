@@ -19,7 +19,10 @@ did not fail.
 
 `CommitFailureReason` and the new `COMMIT_FAILURE_REASONS` include the IAB and
 bundled-policy refusals the native cores return, such as
-`bundled-policy-expired` and `iab-list-stale`.
+`bundled-policy-expired` and `iab-list-stale`, and the iOS-only
+`invalid-additional-consent`, which a save returns when the Google ATP
+choices do not match the disclosed providers. Android reports that input as
+`invalid-iab-choices`.
 
 Breaking: `CommitIntent` no longer has `categories`. Neither native core ever
 honoured it, so `all` or `necessary` with a category list recorded the whole

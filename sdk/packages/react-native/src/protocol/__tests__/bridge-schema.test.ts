@@ -7,7 +7,7 @@
  * snapshot entry agrees with what the TypeScript kernel produces.
  */
 
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -227,31 +227,57 @@ describe('commitResult.reason', () => {
 				/(?:\.failure\(\s*CoreErrorInfo\(|let info = CoreErrorInfo\()\s*code:\s*(?:\w+\s*\?\s*)?"(?<first>[a-z-]+)"(?:\s*:\s*"(?<second>[a-z-]+)")?/gu
 			),
 		].flatMap((match) => [match.groups?.first, match.groups?.second]);
+		// `save` also forwards a `CoreErrorInfo` thrown by a helper it calls
+		// (`catch let info as CoreErrorInfo { return .failure(info) }`), such as
+		// `invalid-additional-consent` from `AdditionalConsent.encode` under
+		// `IABAuthority.build`. Those codes are not written in `save` itself, so
+		// every literal code thrown in C15tCore counts while that catch exists.
+		expect(swiftSave).toMatch(
+			/catch let info as CoreErrorInfo \{ return \.failure\(info\) \}/u
+		);
+		const coreDir = 'native/core-swift/Sources/C15tCore';
+		const thrown = readdirSync(resolve(REPO, coreDir))
+			.filter((file) => file.endsWith('.swift'))
+			.flatMap((file) => [
+				...read(`${coreDir}/${file}`).matchAll(
+					/throw\s+CoreErrorInfo\(\s*code:\s*"(?<code>[a-z-]+)"/gu
+				),
+			])
+			.map((match) => match.groups?.code);
+		expect(thrown).toEqual(
+			expect.arrayContaining([
+				'invalid-additional-consent',
+				'invalid-iab-choices',
+			])
+		);
 		const bridge = ['invalid-intent', 'not-bootstrapped'];
 		const declared = new Set<string>(BRIDGE_PAYLOADS.commitResult.reason.enum);
 
 		// Floors, so a pattern that stops matching cannot pass by finding nothing.
 		expect(new Set(kotlin).size).toBeGreaterThanOrEqual(10);
 		expect(new Set(swift).size).toBeGreaterThanOrEqual(14);
-		const undeclared = [...new Set([...kotlin, ...swift, ...bridge])]
+		const undeclared = [...new Set([...kotlin, ...swift, ...thrown, ...bridge])]
 			.filter((code): code is string => code !== undefined)
 			.filter((code) => !declared.has(code))
 			.sort();
 		expect(undeclared).toEqual([]);
 	});
 
-	test('a legitimate IAB refusal is not reported as drift', () => {
-		expect(
-			describeBridgePayloadDrift('commitResult', {
-				confirmed: [],
-				ok: false,
-				queued: false,
-				reason: 'bundled-policy-expired',
-				revision: null,
-				subjectId: null,
-			})
-		).toEqual([]);
-	});
+	test.each(['bundled-policy-expired', 'invalid-additional-consent'])(
+		'a legitimate refusal (%s) is not reported as drift',
+		(reason) => {
+			expect(
+				describeBridgePayloadDrift('commitResult', {
+					confirmed: [],
+					ok: false,
+					queued: false,
+					reason,
+					revision: null,
+					subjectId: null,
+				})
+			).toEqual([]);
+		}
+	);
 });
 
 describe('the consent client at the boundary', () => {

@@ -62,6 +62,9 @@ export const COMMIT_FAILURE_REASONS = [
 	'iab-list-stale',
 	'iab-choices-required',
 	'invalid-iab-choices',
+	// iOS only: thrown by `AdditionalConsent.encode` inside the IAB build and
+	// forwarded by `save`. Android reports the same input as `invalid-iab-choices`.
+	'invalid-additional-consent',
 	'invalid-action-time',
 ] as const;
 
