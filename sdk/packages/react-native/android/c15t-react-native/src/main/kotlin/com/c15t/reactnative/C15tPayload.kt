@@ -6,6 +6,7 @@ import com.c15t.core.ConsentCore
 import com.c15t.core.iab.AdTechProvider
 import com.c15t.core.iab.IabChoices
 import com.c15t.core.iab.IabCommittedConsent
+import com.c15t.core.iab.IabCustomVendor
 import com.c15t.core.iab.IabPublisherRestriction
 import com.c15t.core.model.ConsentCategory
 import com.c15t.core.model.ConsentSnapshot
@@ -14,6 +15,8 @@ import com.c15t.core.model.KernelOverrides
 import com.c15t.core.store.C15tJson
 import com.c15t.core.transport.C15tProtocol
 import com.c15t.core.wire.SnapshotWire
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
@@ -185,6 +188,7 @@ object C15tPayload {
 		iabConsent: IabCommittedConsent? = null,
 		iabAcceptAll: IabChoices? = null,
 		iabHeadlessGaps: List<String> = emptyList(),
+		iabCustomVendors: List<IabCustomVendor> = emptyList(),
 	): String {
 		val wire = SnapshotWire.toJsonElement(snapshot)
 		val overrides = wire["overrides"] as? JsonObject ?: JsonObject(emptyMap())
@@ -231,6 +235,9 @@ object C15tPayload {
 					"editable" to JsonPrimitive(acceptAll != null),
 					"acceptAll" to (acceptAll?.let { C15tJson.storage.encodeToJsonElement(IabChoices.serializer(), it) } ?: JsonNull),
 					"headlessUnsupported" to JsonArray(iabHeadlessGaps.map { JsonPrimitive(it) }),
+					// The core's `iabCustomVendors()`: the non-IAB partners a screen lists and decides
+					// on. Absent optionals are left out, as Swift encodes them.
+					"customVendors" to CUSTOM_VENDOR_JSON.encodeToJsonElement(ListSerializer(IabCustomVendor.serializer()), iabCustomVendors),
 				),
 			)
 		}
@@ -436,11 +443,15 @@ object C15tPayload {
 				val raw = body["choices"] as? JsonObject ?: return null
 				// Tree decoding reads a quoted "1" as 1, which Swift refuses. Every ID must be
 				// a JSON number on both platforms.
-				val numeric = raw.values.all { list ->
+				val numeric = raw.filterKeys { it !in IAB_CUSTOM_VENDOR_LISTS }.values.all { list ->
 					list == JsonNull || (list as? JsonArray)?.all { (it as? JsonPrimitive)?.isString == false } == true
 				}
+				// Custom vendor IDs are strings on both platforms; a number is refused, as Swift does.
+				val named = raw.filterKeys { it in IAB_CUSTOM_VENDOR_LISTS }.values.all { list ->
+					(list as? JsonArray)?.all { (it as? JsonPrimitive)?.isString == true } == true
+				}
 				// A complete draft, as Swift's decoder requires: every list is present.
-				if (!numeric || !raw.keys.containsAll(IAB_CHOICE_LISTS)) return null
+				if (!numeric || !named || !raw.keys.containsAll(IAB_CHOICE_LISTS)) return null
 				val choices = try {
 					C15tJson.storage.decodeFromJsonElement(IabChoices.serializer(), raw)
 				} catch (_: Exception) {
@@ -453,6 +464,11 @@ object C15tPayload {
 			else -> null
 		}
 	}
+
+	private val CUSTOM_VENDOR_JSON = Json { encodeDefaults = true; explicitNulls = false }
+
+	/** The custom vendor lists a headless draft may name, by string vendor ID. */
+	private val IAB_CUSTOM_VENDOR_LISTS = setOf("customVendorConsents", "customVendorLegitimateInterests")
 
 	/** The `IabChoices` lists a headless draft must name, empty or not. */
 	private val IAB_CHOICE_LISTS = listOf(

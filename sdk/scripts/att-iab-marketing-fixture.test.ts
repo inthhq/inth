@@ -22,6 +22,8 @@ interface FixtureCase {
 	readonly vendorConsents: readonly number[];
 	readonly adTechProvidersListed: boolean;
 	readonly adTechProviderConsents: readonly number[];
+	readonly customVendors: Readonly<Record<string, readonly number[]>>;
+	readonly customVendorConsents: readonly string[];
 	readonly expected: {
 		readonly purposes: boolean;
 		readonly marketing: boolean;
@@ -32,10 +34,14 @@ const fixture = JSON.parse(
 	readFileSync(join(root, 'native/protocol/att/iab-marketing.json'), 'utf8')
 ) as { readonly cases: readonly FixtureCase[] };
 
-/** The web's consent basis: vendor purposes, plus 1, 3 and 4 for ad tech providers. */
+/**
+ * The web's consent basis: registered and custom vendor purposes, plus 1, 3
+ * and 4 for ad tech providers.
+ */
 const basisOf = (fixtureCase: FixtureCase): Set<number> =>
 	new Set([
 		...Object.values(fixtureCase.vendors).flat(),
+		...Object.values(fixtureCase.customVendors).flat(),
 		...(fixtureCase.adTechProvidersListed ? [1, 3, 4] : []),
 	]);
 
@@ -60,5 +66,12 @@ describe('ATT IAB marketing fixture: the purpose half is the web derivation', ()
 			fixture.cases.some((c) => c.expected.purposes && !c.expected.marketing)
 		).toBe(true);
 		expect(fixture.cases.some((c) => c.expected.marketing)).toBe(true);
+		// A custom vendor can be the one who could track, and refusing it is a refusal.
+		expect(names).toContain(
+			'the only consented marketing vendor is a custom one'
+		);
+		expect(names).toContain(
+			'the only marketing vendor is a custom one and it is refused'
+		);
 	});
 });

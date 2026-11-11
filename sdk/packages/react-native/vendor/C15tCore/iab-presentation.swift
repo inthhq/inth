@@ -10,12 +10,14 @@ public struct IABPresentation: Sendable {
     /// Active (non-deleted) vendors in ``list``, keyed by id.
     public let vendors: [Int: IABVendorDisclosure]
     public let adTechProviders: [AdTechProvider]?
+    /// Partners the publisher declares outside the Global Vendor List, in the order served.
+    public let customVendors: [IABCustomVendor]
     /// The first layer's vendor count and purpose, stack and special-feature names.
     public let bannerSummary: IABBannerSummary
-    /// Purposes some active vendor declares for consent or legitimate interest, plus
+    /// Purposes some active or custom vendor declares for consent or legitimate interest, plus
     /// purposes 1, 3 and 4 when ad tech providers are listed. Ascending.
     public let declaredPurposeIds: [Int]
-    /// Special features some active vendor declares. Ascending.
+    /// Special features some active or custom vendor declares. Ascending.
     public let declaredSpecialFeatureIds: [Int]
     /// The longest a saved decision, and the TC String published from it, stays in use on
     /// this device, in whole days rounded up. It comes from the policy's choice validity.
@@ -29,17 +31,25 @@ public struct IABPresentation: Sendable {
 
     init(
         canEdit: Bool, draft: IABDraft, list: GlobalVendorList, vendors: [Int: IABVendorDisclosure],
-        adTechProviders: [AdTechProvider]?, consentStorageMaxDays: Int?, language: String
+        adTechProviders: [AdTechProvider]?, customVendors: [IABCustomVendor] = [],
+        consentStorageMaxDays: Int?, language: String
     ) {
         self.canEdit = canEdit
         self.draft = draft
         self.list = list
         self.vendors = vendors
         self.adTechProviders = adTechProviders
+        self.customVendors = customVendors
         let providerCount = adTechProviders?.count ?? 0
-        self.bannerSummary = IABBannerSummary.resolve(list: list, adTechProviderCount: providerCount)
-        self.declaredPurposeIds = list.declaredPurposeIds(adTechProviderCount: providerCount)
-        self.declaredSpecialFeatureIds = list.declaredSpecialFeatureIds()
+        // The banner counts custom vendors but names only what registered vendors declare, as
+        // `resolveIABBannerSummary` does. The preference centre lists every purpose some
+        // partner declares, custom ones included, as `processPurposes` does.
+        self.bannerSummary = IABBannerSummary.resolve(
+            list: list, adTechProviderCount: providerCount, customVendorCount: customVendors.count)
+        let customPurposes = Set(customVendors.flatMap { $0.purposes + $0.legIntPurposes })
+        self.declaredPurposeIds = Array(Set(list.declaredPurposeIds(adTechProviderCount: providerCount))
+            .union(customPurposes.filter { list.purposes[$0] != nil })).sorted()
+        self.declaredSpecialFeatureIds = list.declaredSpecialFeatureIds(customVendors: customVendors)
         self.consentStorageMaxDays = consentStorageMaxDays
         self.language = language
     }
@@ -135,15 +145,33 @@ extension GlobalVendorList {
         }
     }
 
-    /// Special features some active vendor declares. Only features the list defines.
-    func declaredSpecialFeatureIds() -> [Int] {
+    /// Special features some active vendor, or one of `customVendors`, declares. Only features
+    /// the list defines.
+    func declaredSpecialFeatureIds(customVendors: [IABCustomVendor] = []) -> [Int] {
         let active = activeVendors
-        return specialFeatures.keys.sorted().filter { id in active.contains { $0.specialFeatures.contains(id) } }
+        return specialFeatures.keys.sorted().filter { id in
+            active.contains { $0.specialFeatures.contains(id) } || customVendors.contains { $0.specialFeatures.contains(id) }
+        }
     }
 }
 
 /// Summary of the draft's permitted consent and legitimate-interest selections.
 public enum IABVendorSelectionStatus: Sendable, Equatable { case off, partial, on }
+
+extension IABCustomVendor {
+    /// The same summary for a custom vendor. Legitimate interest on purposes 1, 3, 4, 5 and 6
+    /// is never shown or signalled, as for registered vendors.
+    public func selectionStatus(choices: IABChoices) -> IABVendorSelectionStatus {
+        let consent = purposes.map { choices.customVendorConsents.contains(id) && choices.purposeConsents.contains($0) }
+        let interest = legIntPurposes.filter { !IABAuthority.neverLI.contains($0) }.map {
+            choices.customVendorLegitimateInterests.contains(id) && choices.purposeLegitimateInterests.contains($0)
+                && !choices.purposeObjections.contains($0)
+        }
+        let enabled = consent + interest
+        guard enabled.contains(true) else { return .off }
+        return enabled.allSatisfy { $0 } ? .on : .partial
+    }
+}
 
 /// Legal bases after publisher restrictions. Uses the same rule as native gates.
 public struct IABVendorDisclosure: Sendable, Equatable {

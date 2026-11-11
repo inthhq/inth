@@ -297,9 +297,10 @@ public struct HydrationRecords: Sendable, Equatable {
 /// something on mobile. `gvl` is read: the backend embeds it whenever the matched
 /// policy model is `iab` (`buildInitResponse` in `packages/backend/src/http/init.ts`),
 /// and a mobile consent surface needs the purposes and vendor names to render the
-/// same dialog the web one does. `gvlReference`, `customVendors`, and `cmpId` stay
-/// unread, because this build has no IAB runtime to hand them to and no publisher-side
-/// non-IAB list to draw; `branding` drives a web theme there is no native surface for.
+/// same dialog the web one does. `customVendors` is read for the same reason: the dialog
+/// lists them and they get their own consent. `gvlReference` and `cmpId` stay unread, because
+/// the native list is always embedded and the CMP id is the app's own configuration;
+/// `branding` drives a web theme there is no native surface for.
 /// Anything absent here leaves the current snapshot value alone, which is also what the
 /// web transport does with an omitted field.
 public struct InitResponse: Sendable, Equatable {
@@ -331,6 +332,10 @@ public struct InitResponse: Sendable, Equatable {
     public let gvl: GlobalVendorList?
     public let adTechProviders: [AdTechProvider]?
     public let adTechProvidersInvalid: Bool
+    /// `nil` when the response has no `customVendors` key, which keeps the list held.
+    public let customVendors: [IABCustomVendor]?
+    /// A `customVendors` value that is not a readable list. The core then holds none.
+    public let customVendorsInvalid: Bool
 
     public init(
         policyResolution: JSONValue? = nil,
@@ -342,7 +347,8 @@ public struct InitResponse: Sendable, Equatable {
         resolvedPrivacySignals: ResolvedPrivacySignals? = nil,
         records: HydrationRecords? = nil,
         gvl: GlobalVendorList? = nil,
-        adTechProviders: [AdTechProvider]? = nil, adTechProvidersInvalid: Bool = false
+        adTechProviders: [AdTechProvider]? = nil, adTechProvidersInvalid: Bool = false,
+        customVendors: [IABCustomVendor]? = nil, customVendorsInvalid: Bool = false
     ) {
         self.policyResolution = policyResolution
         self.subjectId = subjectId
@@ -355,6 +361,8 @@ public struct InitResponse: Sendable, Equatable {
         self.gvl = gvl
         self.adTechProviders = adTechProviders
         self.adTechProvidersInvalid = adTechProvidersInvalid
+        self.customVendors = customVendors
+        self.customVendorsInvalid = customVendorsInvalid
     }
 
     /// Read a response body. Anything that is not a JSON object is
@@ -381,7 +389,10 @@ public struct InitResponse: Sendable, Equatable {
             gvl: GlobalVendorList.read(from: parsed["gvl"]),
             adTechProviders: AdditionalConsent.providers(parsed["adTechProviders"]),
             adTechProvidersInvalid: parsed["adTechProviders"] != nil && parsed["adTechProviders"] != .null
-                && AdditionalConsent.providers(parsed["adTechProviders"]) == nil
+                && AdditionalConsent.providers(parsed["adTechProviders"]) == nil,
+            customVendors: IABCustomVendor.list(parsed["customVendors"]),
+            customVendorsInvalid: parsed["customVendors"] != nil
+                && IABCustomVendor.list(parsed["customVendors"]) == nil
         ))
     }
 

@@ -143,6 +143,7 @@ private fun ConsentDialog(presenter: ConsentPresenter, privacyPolicyUrl: String)
         if (presenter.pending) return
         when {
             page.startsWith("vendor:") -> page = "vendors"
+            page.startsWith("custom-vendor:") -> page = "custom-vendors"
             page != "root" -> page = "root"
             presenter.preferences -> presenter.requestClose()
             else -> presenter.backFromFirstLayer()
@@ -171,7 +172,8 @@ private fun ConsentDialog(presenter: ConsentPresenter, privacyPolicyUrl: String)
             }) { settings ->
                 if (settings) SettingsScaffold(presenter, privacyPolicyUrl, page, purposeFilter, ::back,
                     openPartners = { purpose -> purposeFilter = purpose; page = "vendors" },
-                    openVendor = { page = "vendor:$it" }, openProviders = { page = "providers" }, clearFilter = { purposeFilter = null })
+                    openVendor = { page = "vendor:$it" }, openProviders = { page = "providers" }, clearFilter = { purposeFilter = null },
+                    openCustomVendors = { purpose -> purposeFilter = purpose; page = "custom-vendors" }, openCustomVendor = { page = "custom-vendor:$it" })
                 else FirstLayerScreen(presenter, privacyPolicyUrl) { presenter.customize(); page = "vendors" }
             }
             if (presenter.confirmDiscard) AlertDialog(onDismissRequest = { presenter.confirmDiscard = false },
@@ -186,11 +188,14 @@ private fun ConsentDialog(presenter: ConsentPresenter, privacyPolicyUrl: String)
 
 @Composable
 private fun SettingsScaffold(p: ConsentPresenter, policyUrl: String, page: String, purposeFilter: Int?, back: () -> Unit,
-    openPartners: (Int?) -> Unit, openVendor: (Int) -> Unit, openProviders: () -> Unit, clearFilter: () -> Unit) {
+    openPartners: (Int?) -> Unit, openVendor: (Int) -> Unit, openProviders: () -> Unit, clearFilter: () -> Unit,
+    openCustomVendors: (Int?) -> Unit, openCustomVendor: (String) -> Unit) {
     val theme = LocalConsentTheme.current
     val title = when {
         page == "vendors" -> p.iabCopy.appIabPartners
         page == "providers" -> p.iabCopy.preferenceCenterVendorListAdTechProvidersHeading
+        page == "custom-vendors" -> p.iabCopy.preferenceCenterVendorListCustomVendorsHeading
+        page.startsWith("custom-vendor:") -> p.disclosure?.customVendors?.firstOrNull { it.id == page.substringAfter(':') }?.name ?: p.iabCopy.appPartner
         page.startsWith("vendor:") -> p.disclosure?.list?.vendors?.get(page.substringAfter(':').toInt())?.name ?: p.iabCopy.appPartner
         else -> p.iabCopy.preferenceCenterTitle
     }
@@ -198,6 +203,8 @@ private fun SettingsScaffold(p: ConsentPresenter, policyUrl: String, page: Strin
         page == "root" -> "c15t.prefs.cancel"
         page.startsWith("vendor:") -> "c15t.iab.vendor.back"
         page == "providers" -> "c15t.ac.back"
+        page == "custom-vendors" -> "c15t.iab.custom-vendors.back"
+        page.startsWith("custom-vendor:") -> "c15t.iab.custom-vendor.back"
         else -> "c15t.iab.vendors.back"
     }
     val close = page == "root" && !p.returnsToFirstLayer
@@ -213,7 +220,7 @@ private fun SettingsScaffold(p: ConsentPresenter, policyUrl: String, page: Strin
         },
         bottomBar = { if (page == "root" && (!p.snapshot.policyPending || p.core.bundledPolicyInfo != null)) DecisionFooter(p, first = false) },
     ) { padding ->
-        val depth = { name: String -> when { name == "root" -> 0; name.startsWith("vendor:") -> 2; else -> 1 } }
+        val depth = { name: String -> when { name == "root" -> 0; name.startsWith("vendor:") || name.startsWith("custom-vendor:") -> 2; else -> 1 } }
         AnimatedContent(targetState = page, modifier = Modifier.padding(padding), label = "consent-page", transitionSpec = {
             val forward = depth(targetState) >= depth(initialState)
             if (forward) slideInHorizontally { it / 3 } + fadeIn() togetherWith slideOutHorizontally { -it / 3 } + fadeOut()
@@ -222,10 +229,12 @@ private fun SettingsScaffold(p: ConsentPresenter, policyUrl: String, page: Strin
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
                 Box(Modifier.widthIn(max = ContentWidth).fillMaxSize()) {
                     when {
-                        current == "vendors" -> Vendors(p, purposeFilter, clearFilter, openVendor, openProviders)
+                        current == "vendors" -> Vendors(p, purposeFilter, clearFilter, openVendor, openProviders, openCustomVendors)
                         current.startsWith("vendor:") -> Vendor(p, current.substringAfter(':').toInt())
                         current == "providers" -> Providers(p)
-                        else -> Preferences(p, policyUrl, openPartners, openProviders)
+                        current == "custom-vendors" -> CustomVendors(p, purposeFilter, openCustomVendor)
+                        current.startsWith("custom-vendor:") -> CustomVendor(p, current.substringAfter(':'))
+                        else -> Preferences(p, policyUrl, openPartners, openProviders) { openCustomVendors(null) }
                     }
                 }
             }
@@ -687,7 +696,7 @@ private fun LazyListScope.group(count: Int, key: (Int) -> Any, content: @Composa
 // MARK: Preferences
 
 /** Standing settings in the platform's own voice: grouped cards on the canvas. */
-@Composable private fun Preferences(p: ConsentPresenter, policyUrl: String, partners: (Int?) -> Unit, providers: () -> Unit) {
+@Composable private fun Preferences(p: ConsentPresenter, policyUrl: String, partners: (Int?) -> Unit, providers: () -> Unit, customVendors: () -> Unit) {
     val theme = LocalConsentTheme.current
     val page = actionsInPage()
     val list = rememberLazyListState()
@@ -756,7 +765,7 @@ private fun LazyListScope.group(count: Int, key: (Int) -> Any, content: @Composa
                     group(specialPurposes.size, key = { "sp-${specialPurposes[it].key}" }) { index -> val (id, item) = specialPurposes[index]; Definition(item, "c15t.iab.special-purpose.$id", copy) }
                     item { Footnote(d.list.standardTexts?.specialPurposes.orEmpty()) }
                 }
-                val usedFeatures = active.flatMap { it.features.orEmpty() }.map { it.toInt() }.toSet()
+                val usedFeatures = active.flatMap { it.features.orEmpty() }.map { it.toInt() }.toSet() + d.customVendors.flatMap { it.features }
                 val features = d.list.features.orEmpty().toSortedMap().entries.filter { it.key in usedFeatures }
                 if (features.isNotEmpty()) {
                     item { SectionLabel(copy.preferenceCenterFeaturesTitle) }
@@ -765,10 +774,14 @@ private fun LazyListScope.group(count: Int, key: (Int) -> Any, content: @Composa
                 }
                 item { SectionLabel(copy.appPartners) }
                 val providerCount = d.adTechProviders.orEmpty().size
-                val rows = if (providerCount > 0) 2 else 1
-                group(rows, key = { "partners-$it" }) { index ->
-                    if (index == 0) NavigationRow(copy.appIabPartners, "${d.vendors.size}", "c15t.iab.partners") { partners(null) }
-                    else NavigationRow(p.iabCopy.preferenceCenterVendorListAdTechProvidersHeading, "$providerCount", "c15t.iab.other-partners", providers)
+                val customCount = d.customVendors.size
+                val rows = listOfNotNull("iab", if (providerCount > 0) "providers" else null, if (customCount > 0) "custom" else null)
+                group(rows.size, key = { "partners-${rows[it]}" }) { index ->
+                    when (rows[index]) {
+                        "iab" -> NavigationRow(copy.appIabPartners, "${d.vendors.size}", "c15t.iab.partners") { partners(null) }
+                        "providers" -> NavigationRow(p.iabCopy.preferenceCenterVendorListAdTechProvidersHeading, "$providerCount", "c15t.iab.other-partners", providers)
+                        else -> NavigationRow(p.iabCopy.preferenceCenterVendorListCustomVendorsHeading, "$customCount", "c15t.iab.custom-partners", customVendors)
+                    }
                 }
                 // Where the TC String lives and for how long, which IAB asks the second layer to say.
                 d.consentStorageMaxDays?.let { days ->
@@ -848,8 +861,10 @@ private val adTechProviderPurposeIds = setOf(1, 3, 4)
     val vendors = p.disclosure?.vendors?.values.orEmpty()
     // Google ad tech providers need consent to purposes 1, 3 and 4, as the web counts them.
     val providerCount = if (id in adTechProviderPurposeIds) p.disclosure?.adTechProviders.orEmpty().size else 0
-    val consentCount = vendors.count { id in it.consentPurposes } + providerCount
-    val liCount = vendors.count { id in it.legitimateInterestPurposes }
+    // Custom partners count where they declare the purpose, as the web's `processPurposes` lists them.
+    val custom = p.disclosure?.customVendors.orEmpty()
+    val consentCount = vendors.count { id in it.consentPurposes } + providerCount + custom.count { id in it.purposes }
+    val liCount = vendors.count { id in it.legitimateInterestPurposes } + custom.count { id in it.legIntPurposes && id !in customNeverLI }
     val li = liCount > 0
     val theme = LocalConsentTheme.current
     // How many partners ask, on the row itself rather than only behind Details. Zero is
@@ -994,7 +1009,7 @@ private class SearchFieldLayout {
         modifier = modifier.background(if (off) theme.colors.surfaceMuted.color() else theme.colors.primary.color().copy(alpha = 0.14f), CircleShape).padding(horizontal = 8.dp, vertical = 4.dp))
 }
 
-@Composable private fun Vendors(p: ConsentPresenter, purpose: Int?, clear: () -> Unit, open: (Int) -> Unit, openProviders: () -> Unit) {
+@Composable private fun Vendors(p: ConsentPresenter, purpose: Int?, clear: () -> Unit, open: (Int) -> Unit, openProviders: () -> Unit, openCustomVendors: (Int?) -> Unit) {
     var search by rememberSaveable { mutableStateOf("") }
     val collator = remember { Collator.getInstance() }
     val theme = LocalConsentTheme.current
@@ -1032,7 +1047,111 @@ private class SearchFieldLayout {
                 }
                 item { Footnote(p.iabCopy.preferenceCenterVendorListAdTechProvidersNotice) }
             }
+            // Custom partners are listed with IAB partners, as on the web, on a page of their own.
+            val customCount = p.disclosure?.customVendors.orEmpty().count { purpose == null || purpose in it.purposes || purpose in it.legIntPurposes }
+            if (search.isEmpty() && customCount > 0) {
+                item { Spacer(Modifier.height(16.dp)) }
+                group(1, key = { "custom-partners" }) {
+                    NavigationRow(p.iabCopy.preferenceCenterVendorListCustomVendorsHeading, "$customCount", "c15t.iab.vendors.custom-partners") { openCustomVendors(purpose) }
+                }
+                item { Footnote(p.iabCopy.preferenceCenterVendorListCustomVendorsNotice) }
+            }
         }
+    }
+}
+
+/** Purposes TCF never lets anyone claim under legitimate interest. */
+private val customNeverLI = setOf(1, 3, 4, 5, 6)
+
+@Composable private fun CustomVendors(p: ConsentPresenter, purpose: Int?, open: (String) -> Unit) {
+    var search by rememberSaveable { mutableStateOf("") }
+    val collator = remember { Collator.getInstance() }
+    val theme = LocalConsentTheme.current
+    val vendors = p.disclosure?.customVendors.orEmpty().filter { v ->
+        v.name.searchKey().contains(search.searchKey()) && (purpose == null || purpose in v.purposes || purpose in v.legIntPurposes)
+    }.sortedWith { a, b -> collator.compare(a.name, b.name) }
+    Column(Modifier.fillMaxSize().testTag("c15t.iab.custom-vendors")) {
+        SearchField(search, { search = it }, p.iabCopy.appSearchPartners, "c15t.iab.custom-vendors.search")
+        LazyColumn(contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)) {
+            item { Body(p.iabCopy.preferenceCenterVendorListCustomVendorsNotice, Modifier.padding(horizontal = 16.dp, vertical = 8.dp).testTag("c15t.iab.custom-vendors.intro")) }
+            if (vendors.isEmpty()) item { Body(p.iabCopy.format(p.iabCopy.appNoPartnersMatch, mapOf("search" to search)), Modifier.padding(16.dp).testTag("c15t.iab.custom-vendors.empty")) }
+            group(vendors.size, key = { "custom-${vendors[it].id}" }) { index ->
+                val v = vendors[index]
+                val selection = v.selectionStatus(p.choices)
+                Row(Modifier.fillMaxWidth().clickable(role = Role.Button) { open(v.id) }.testTag("c15t.iab.custom-vendors.vendor.${v.id}").padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(v.name, style = MaterialTheme.typography.titleMedium, color = theme.colors.text.color())
+                        Text(p.iabCopy.format(p.iabCopy.appVendorPurposeSummary, mapOf("purposes" to "${v.purposes.size}", "legitimateInterest" to "${v.legIntPurposes.count { it !in customNeverLI }}")), style = MaterialTheme.typography.bodySmall, color = theme.colors.textMuted.color())
+                    }
+                    StatusTag(p.customPartnerStatus(v.id), selection == IabVendorSelectionStatus.OFF, Modifier.testTag("c15t.iab.custom-vendors.vendor.${v.id}.status"))
+                }
+            }
+        }
+    }
+}
+
+@Composable private fun CustomVendor(p: ConsentPresenter, id: String) {
+    val d = p.disclosure ?: return
+    val v = d.customVendors.firstOrNull { it.id == id } ?: return
+    val theme = LocalConsentTheme.current
+    val copy = p.iabCopy
+    fun names(ids: List<Int>) = ids.mapNotNull { d.list.purposes[it]?.name }.joinToString(", ")
+    val enabled = !p.pending && !p.stale && !p.listUnavailable
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 8.dp, vertical = 8.dp).testTag("c15t.iab.custom-vendor.$id")) {
+        GroupedRow(0, 1) {
+            Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Body(copy.commonCustomPartner, Modifier.testTag("c15t.iab.custom-vendor.$id.note"))
+                v.description?.takeIf { it.isNotEmpty() }?.let { Body(it) }
+                ExternalLink(copy.preferenceCenterVendorListPrivacyPolicy, v.privacyPolicyUrl, "c15t.iab.custom-vendor.$id.privacy-link")
+            }
+        }
+        SectionLabel(copy.appYourChoices)
+        val choiceRows = listOfNotNull(if (v.purposes.isNotEmpty()) "consent" else null, if (v.legIntPurposes.isNotEmpty()) "li" else null)
+        choiceRows.forEachIndexed { index, kind ->
+            GroupedRow(index, choiceRows.size) {
+                if (kind == "consent") ChoiceRow(copy.appConsent, names(v.purposes), id in p.choices.customVendorConsents, "c15t.iab.custom-vendor.$id.consent", enabled) { on ->
+                    p.edit { it.copy(customVendorConsents = (if (on) it.customVendorConsents + id else it.customVendorConsents - id).distinct().sorted()) }
+                }
+                else ChoiceRow(copy.preferenceCenterPurposeItemLegitimateInterest, names(v.legIntPurposes.filter { it !in customNeverLI }), id in p.choices.customVendorLegitimateInterests, "c15t.iab.custom-vendor.$id.li", enabled,
+                    note = copy.appTurnOffToObject) { on ->
+                    p.edit { it.copy(customVendorLegitimateInterests = (if (on) it.customVendorLegitimateInterests + id else it.customVendorLegitimateInterests - id).distinct().sorted()) }
+                }
+            }
+        }
+        @Composable fun plainGroup(title: String, values: List<String>, trailing: (Int) -> String?, tag: String? = null) {
+            if (values.isEmpty()) return
+            SectionLabel(title)
+            Column(if (tag != null) Modifier.testTag(tag) else Modifier) {
+                values.forEachIndexed { index, name ->
+                    GroupedRow(index, values.size) {
+                        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Text(name, style = MaterialTheme.typography.bodyLarge, color = theme.colors.text.color(), modifier = Modifier.weight(1f))
+                            trailing(index)?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = theme.colors.textMuted.color()) }
+                        }
+                    }
+                }
+            }
+        }
+        val features = v.features.mapNotNull { feature -> d.list.features?.get(feature)?.let { feature to it } }
+        if (features.isNotEmpty()) {
+            SectionLabel(copy.preferenceCenterFeaturesTitle)
+            features.forEachIndexed { index, (feature, item) ->
+                GroupedRow(index, features.size) { Definition(item, "c15t.iab.custom-vendor.$id.feature.$feature", copy) }
+            }
+            Footnote(featuresExplanation(d.list, copy))
+        }
+        val specials = v.specialFeatures.filter { d.list.specialFeatures?.get(it) != null }
+        plainGroup(copy.preferenceCenterVendorListSpecialFeatures, specials.map { d.list.specialFeatures?.get(it)?.name.orEmpty() }, trailing = { index -> if (specials[index] in p.choices.specialFeatureOptIns) copy.appOn else copy.appOff })
+        if (specials.isNotEmpty()) Footnote(copy.appSpecialFeaturesElsewhere)
+        plainGroup(copy.appDataCollected, v.dataCategories.mapNotNull { d.list.dataCategories?.get(it)?.name }, trailing = { null })
+        val retentionRows = v.dataRetentionDays?.let { listOf(copy.appStandardRetention to dayCount(it.toLong(), copy)) } ?: listOf(copy.appRetentionNotProvided to null)
+        plainGroup(copy.appRetentionTitle, retentionRows.map { it.first }, trailing = { retentionRows[it].second }, tag = "c15t.iab.custom-vendor.$id.retention")
+        val storageRows = if (!v.usesCookies && !v.usesNonCookieAccess) listOf(copy.appNoDeviceStorage to null)
+            else listOfNotNull(v.cookieMaxAgeSeconds?.let { copy.appStoredForUpTo to storageDuration(it.toLong(), copy) },
+                copy.appOtherDeviceAccess to (if (v.usesNonCookieAccess) copy.appYes else copy.appNo))
+        plainGroup(copy.appDeviceStorage, storageRows.map { it.first }, trailing = { storageRows[it].second }, tag = "c15t.iab.custom-vendor.$id.storage")
+        Spacer(Modifier.height(16.dp))
     }
 }
 

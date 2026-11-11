@@ -15,8 +15,10 @@ import {
 } from '../draft/consent-draft-provider';
 import {
 	acceptAllIAB,
+	isCustomVendor,
 	rejectAllIAB,
 	withChoice,
+	withCustomVendorChoice,
 	withLegitimateInterest,
 } from '../draft/iab-choices';
 import type {
@@ -65,19 +67,24 @@ export const useTCString = function useTCString(): string | null {
 };
 
 /**
- * The draft's consent selection for one IAB vendor, including changes not saved
- * yet. Use it to render a control, not to gate a vendor: native gates read the
- * committed TC String.
+ * The draft's consent selection for one vendor, registered or custom (non-IAB),
+ * including changes not saved yet. Use it to render a control, not to gate a
+ * vendor: native gates read the committed decision.
  *
- * @param vendorId - Numeric or string vendor ID.
+ * @param vendorId - Numeric or string vendor ID. A custom vendor's ID is the
+ *   `id` in `useIABSnapshot()?.customVendors`.
  * @returns Whether the vendor is selected.
  */
 export const useVendorConsent = function useVendorConsent(
 	vendorId: string | number
 ): boolean {
 	const id = Number(vendorId);
+	const key = String(vendorId);
 	return useConsentDraftSlice(
-		(state) => state.iab?.vendorConsents.includes(id) ?? false
+		(state) =>
+			(state.iab?.vendorConsents.includes(id) ||
+				state.iab?.customVendorConsents?.includes(key)) ??
+			false
 	);
 };
 
@@ -122,11 +129,16 @@ export interface IABDraftHandle {
 	readonly isDirty: boolean;
 	/** Whether the policy or vendor list changed under an unsaved edit. */
 	readonly isStale: boolean;
+	/**
+	 * A registered or custom (non-IAB) vendor, as `@c15t/react`'s `useIAB()`
+	 * takes either. A custom vendor's ID is the `id` in
+	 * `useIABSnapshot()?.customVendors`.
+	 */
 	readonly setVendorConsent: (
 		vendorId: string | number,
 		value: boolean
 	) => void;
-	/** `false` objects to the vendor's legitimate interest. */
+	/** `false` objects to the vendor's legitimate interest, registered or custom. */
 	readonly setVendorLegitimateInterest: (
 		vendorId: string | number,
 		value: boolean
@@ -222,13 +234,31 @@ export const useIAB = function useIAB(): IABDraftHandle | null {
 				);
 			},
 			setSpecialFeatureOptIn: toggle('specialFeatureOptIns'),
-			setVendorConsent: toggle('vendorConsents'),
+			setVendorConsent: (vendorId: string | number, value: boolean) => {
+				stageIAB((current, snapshot) =>
+					isCustomVendor(snapshot, vendorId)
+						? withCustomVendorChoice(
+								current,
+								'customVendorConsents',
+								String(vendorId),
+								value
+							)
+						: withChoice(current, 'vendorConsents', Number(vendorId), value)
+				);
+			},
 			setVendorLegitimateInterest: (
 				vendorId: string | number,
 				value: boolean
 			) => {
-				stageIAB((current) =>
-					withLegitimateInterest(current, 'vendor', Number(vendorId), value)
+				stageIAB((current, snapshot) =>
+					isCustomVendor(snapshot, vendorId)
+						? withCustomVendorChoice(
+								current,
+								'customVendorLegitimateInterests',
+								String(vendorId),
+								value
+							)
+						: withLegitimateInterest(current, 'vendor', Number(vendorId), value)
 				);
 			},
 		}),

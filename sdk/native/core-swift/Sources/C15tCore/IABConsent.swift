@@ -54,7 +54,50 @@ public struct IABChoices: Sendable, Codable, Equatable {
     public var publisherLegitimateInterests: [Int] = []
     public var publisherCustomConsents: [Int] = []
     public var publisherCustomLegitimateInterests: [Int] = []
+    /// Custom (non-IAB) vendors with consent, by ``IABCustomVendor/id``. Never in the TC String.
+    public var customVendorConsents: [String] = []
+    /// Custom vendors whose legitimate interest stands. One not listed is objected to.
+    public var customVendorLegitimateInterests: [String] = []
     public init() {}
+
+    enum CodingKeys: String, CodingKey {
+        case adTechProviderConsents, purposeConsents, purposeLegitimateInterests, purposeObjections
+        case vendorConsents, vendorLegitimateInterests, vendorObjections, specialFeatureOptIns
+        case publisherConsents, publisherLegitimateInterests, publisherCustomConsents
+        case publisherCustomLegitimateInterests, customVendorConsents, customVendorLegitimateInterests
+    }
+
+    /// Every TCF list is required. The custom vendor lists may be absent: a decision stored
+    /// before they existed, or a headless draft that names none, holds no custom grant.
+    public init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        adTechProviderConsents = try c.decodeIfPresent([Int].self, forKey: .adTechProviderConsents)
+        purposeConsents = try c.decode([Int].self, forKey: .purposeConsents)
+        purposeLegitimateInterests = try c.decode([Int].self, forKey: .purposeLegitimateInterests)
+        purposeObjections = try c.decode([Int].self, forKey: .purposeObjections)
+        vendorConsents = try c.decode([Int].self, forKey: .vendorConsents)
+        vendorLegitimateInterests = try c.decode([Int].self, forKey: .vendorLegitimateInterests)
+        vendorObjections = try c.decode([Int].self, forKey: .vendorObjections)
+        specialFeatureOptIns = try c.decode([Int].self, forKey: .specialFeatureOptIns)
+        publisherConsents = try c.decode([Int].self, forKey: .publisherConsents)
+        publisherLegitimateInterests = try c.decode([Int].self, forKey: .publisherLegitimateInterests)
+        publisherCustomConsents = try c.decode([Int].self, forKey: .publisherCustomConsents)
+        publisherCustomLegitimateInterests = try c.decode([Int].self, forKey: .publisherCustomLegitimateInterests)
+        customVendorConsents = try c.decodeIfPresent([String].self, forKey: .customVendorConsents) ?? []
+        customVendorLegitimateInterests =
+            try c.decodeIfPresent([String].self, forKey: .customVendorLegitimateInterests) ?? []
+    }
+
+    /// The same choices with custom vendor grants kept only for vendors still in `vendors` and
+    /// still declaring that basis, as the web restores its receipt against the current list.
+    func keepingCustomVendors(_ vendors: [IABCustomVendor]) -> IABChoices {
+        var kept = self
+        let consent = Set(vendors.filter { !$0.purposes.isEmpty }.map(\.id))
+        let interest = Set(vendors.filter { !$0.legIntPurposes.isEmpty }.map(\.id))
+        kept.customVendorConsents = customVendorConsents.filter(consent.contains)
+        kept.customVendorLegitimateInterests = customVendorLegitimateInterests.filter(interest.contains)
+        return kept
+    }
 }
 
 /// One durable IAB decision. Native callers read this without crossing into JS.
@@ -89,7 +132,8 @@ enum IABAuthority {
         configuration c: IABConfiguration, choices requested: IABChoices,
         gvl: GlobalVendorList, subjectId: String, externalId: String?,
         fingerprint: String, actionAt: Int64,
-        previous: IABCommittedConsent?, additionalConsentList: AdditionalConsentList? = nil
+        previous: IABCommittedConsent?, additionalConsentList: AdditionalConsentList? = nil,
+        customVendors: [IABCustomVendor] = []
     ) throws -> IABCommittedConsent {
         func require(_ condition: Bool) throws {
             if !condition {
@@ -126,6 +170,14 @@ enum IABAuthority {
         try ids(requested.vendorLegitimateInterests, within: vendors)
         try ids(requested.vendorObjections, within: vendors)
         try ids(requested.specialFeatureOptIns, within: features)
+        // Custom vendors: a grant only on a basis the vendor declares. Kept beside the TC String,
+        // never in it, as the web keeps them in its authority receipt.
+        func names(_ values: [String], within allowed: Set<String>) throws {
+            try require(values.count == Set(values).count && Set(values).isSubset(of: allowed))
+        }
+        try names(requested.customVendorConsents, within: Set(customVendors.filter { !$0.purposes.isEmpty }.map(\.id)))
+        try names(requested.customVendorLegitimateInterests,
+            within: Set(customVendors.filter { !$0.legIntPurposes.isEmpty }.map(\.id)))
         try ids(requested.publisherConsents, within: purposes)
         try ids(requested.publisherLegitimateInterests, within: purposes.subtracting(neverLI))
         let custom = Set((0..<c.numCustomPurposes).map { $0 + 1 })
@@ -215,6 +267,8 @@ enum IABAuthority {
         choices.adTechProviderConsents = choices.adTechProviderConsents?.sorted()
         choices.vendorConsents = shaped.vendorConsents.ids.sorted()
         choices.vendorLegitimateInterests = shaped.vendorLegitimateInterests.ids.sorted()
+        choices.customVendorConsents = choices.customVendorConsents.sorted()
+        choices.customVendorLegitimateInterests = choices.customVendorLegitimateInterests.sorted()
         guard case .encoded(let tcString) = TcStringEncoder.encode(shaped) else {
             throw CoreErrorInfo(code: "invalid-iab-choices", message: "Native TC encoding refused the draft.")
         }
@@ -231,13 +285,18 @@ enum IABAuthority {
     /// (TCF Policies 5(3), 5(6) and 5(8)). Listed ad tech providers add purposes 1, 3 and 4.
     /// Publisher purposes are never shown, so they stay unset, as on the web.
     static func accepting(
-        _ gvl: GlobalVendorList, configuration: IABConfiguration, adTechProviders: [Int]? = nil
+        _ gvl: GlobalVendorList, configuration: IABConfiguration, adTechProviders: [Int]? = nil,
+        customVendors: [IABCustomVendor] = []
     ) -> IABChoices {
         let disclosures = gvl.activeVendors.sorted { $0.id < $1.id }
             .map { (id: $0.id, bases: configuration.disclosure(for: $0)) }
+        // Custom vendors count as the web's `applyBlanket` counts them: their purposes, their
+        // legitimate-interest purposes TCF allows, and their special features.
         let consent = Set(disclosures.flatMap(\.bases.consentPurposes))
             .union(adTechProviders?.isEmpty == false ? GlobalVendorList.adTechProviderPurposeIds : [])
+            .union(customVendors.flatMap(\.purposes))
         let interest = Set(disclosures.flatMap(\.bases.legitimateInterestPurposes))
+            .union(customVendors.flatMap(\.legIntPurposes)).subtracting(neverLI)
         let purposeIds = gvl.purposes.keys.filter { (1...24).contains($0) }.sorted()
         var c = IABChoices()
         c.adTechProviderConsents = adTechProviders
@@ -245,7 +304,9 @@ enum IABAuthority {
         c.purposeLegitimateInterests = purposeIds.filter(interest.contains)
         c.vendorConsents = disclosures.filter { !$0.bases.consentPurposes.isEmpty }.map(\.id)
         c.vendorLegitimateInterests = disclosures.filter { !$0.bases.legitimateInterestPurposes.isEmpty }.map(\.id)
-        c.specialFeatureOptIns = gvl.declaredSpecialFeatureIds()
+        c.specialFeatureOptIns = gvl.declaredSpecialFeatureIds(customVendors: customVendors)
+        c.customVendorConsents = customVendors.filter { !$0.purposes.isEmpty }.map(\.id).sorted()
+        c.customVendorLegitimateInterests = customVendors.filter { !$0.legIntPurposes.isEmpty }.map(\.id).sorted()
         return c
     }
 }
@@ -271,6 +332,18 @@ extension IABCommittedConsent {
 }
 
 extension IABCommittedConsent {
+    /// This decision with custom vendor grants kept only for vendors still listed. The TC String
+    /// and everything else stay as they were.
+    func keepingCustomVendors(_ vendors: [IABCustomVendor]) -> IABCommittedConsent {
+        let kept = choices.keepingCustomVendors(vendors)
+        guard kept != choices else { return self }
+        return IABCommittedConsent(
+            configuration: configuration, choices: kept, subjectId: subjectId, externalId: externalId,
+            fingerprint: fingerprint, vendorListVersion: vendorListVersion, policyVersion: policyVersion,
+            consentVersion: consentVersion, createdAt: createdAt, actionAt: actionAt, tcString: tcString,
+            disclosureID: disclosureID, addtlConsent: addtlConsent, adTechProvidersID: adTechProvidersID)
+    }
+
     func isCurrent(now: Int64, maxAge: Int64) -> Bool {
         now >= 0 && actionAt >= 0 && actionAt - now <= 600_000 && max(0, now - actionAt) < maxAge
     }

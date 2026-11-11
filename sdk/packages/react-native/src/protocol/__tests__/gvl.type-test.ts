@@ -168,7 +168,12 @@ expectTypeOf<
 // The IAB slot: the kernel's list, its own "no list yet", and the committed
 // decision the bridge adds beside it.
 expectTypeOf<keyof NativeIABState>().toEqualTypeOf<
-	'acceptAll' | 'committed' | 'editable' | 'gvl' | 'headlessUnsupported'
+	| 'acceptAll'
+	| 'committed'
+	| 'customVendors'
+	| 'editable'
+	| 'gvl'
+	| 'headlessUnsupported'
 >();
 expectTypeOf<NativeIABState['gvl']>().toEqualTypeOf<GlobalVendorList | null>();
 expectTypeOf<

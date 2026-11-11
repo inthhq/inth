@@ -150,7 +150,17 @@ export const BRIDGE_PAYLOADS = {
 			nullable: true,
 		},
 		gppString: 'string | null',
-		iab: 'object | null',
+		iab: {
+			fields: {
+				acceptAll: 'object | null',
+				committed: 'object | null',
+				customVendors: 'array',
+				editable: 'boolean',
+				gvl: 'object | null',
+				headlessUnsupported: 'array',
+			},
+			nullable: true,
+		},
 		iabMarketingPurposes: 'boolean | null',
 		location: {
 			fields: { countryCode: 'string | null', regionCode: 'string | null' },

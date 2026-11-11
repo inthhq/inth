@@ -10,6 +10,7 @@ import com.c15t.core.iab.AdTechProvider
 import com.c15t.core.iab.IabChoices
 import com.c15t.core.iab.IabCommittedConsent
 import com.c15t.core.iab.IabConfiguration
+import com.c15t.core.iab.IabCustomVendor
 import com.c15t.core.iab.IabPublisherRestriction
 import com.c15t.core.model.ConsentAction
 import com.c15t.core.model.ConsentCategory
@@ -140,7 +141,7 @@ class C15tPayloadTest {
 
 		assertEquals(
 			"the kernel's `KernelIABState` carries `gvl`, and the bridge adds the headless TCF state",
-			setOf("gvl", "committed", "editable", "acceptAll", "headlessUnsupported"),
+			setOf("gvl", "committed", "editable", "acceptAll", "headlessUnsupported", "customVendors"),
 			iab.keys,
 		)
 		assertEquals("nothing is committed yet", JsonNull, iab["committed"])
@@ -380,6 +381,30 @@ class C15tPayloadTest {
 		val open = parse(C15tPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list)),
 			iabAcceptAll = IabChoices(vendorConsents = listOf(7)))).getValue("iab").jsonObject
 		assertEquals(0, open.getValue("headlessUnsupported").jsonArray.size)
+	}
+
+	@Test
+	fun `custom vendors cross inside the IAB slot and their choices as strings`() {
+		val list = GlobalVendorList(purposes = emptyMap(), vendors = emptyMap(), vendorListVersion = 177, tcfPolicyVersion = 5)
+		val vendor = IabCustomVendor("internal-ads", "Internal ads", "https://example.test/ads", listOf(1, 3))
+		val iab = parse(C15tPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list)), iabCustomVendors = listOf(vendor)))
+			.getValue("iab").jsonObject
+		val listed = iab.getValue("customVendors").jsonArray.single().jsonObject
+		assertEquals("internal-ads", listed.getValue("id").jsonPrimitive.content)
+		assertEquals(listOf("1", "3"), listed.getValue("purposes").jsonArray.map { it.jsonPrimitive.content })
+		assertFalse("absent optionals stay out, as Swift writes them", "description" in listed)
+		assertEquals(0, parse(C15tPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list))))
+			.getValue("iab").jsonObject.getValue("customVendors").jsonArray.size)
+
+		val lists = """"purposeConsents":[],"purposeLegitimateInterests":[],"purposeObjections":[],"vendorConsents":[],""" +
+			""""vendorLegitimateInterests":[],"vendorObjections":[],"specialFeatureOptIns":[],"publisherConsents":[],""" +
+			""""publisherLegitimateInterests":[],"publisherCustomConsents":[],"publisherCustomLegitimateInterests":[]"""
+		val raw = """{"action":"iab","choices":{$lists,"customVendorConsents":["internal-ads"],"customVendorLegitimateInterests":[]},"consents":{}}"""
+		val intent = C15tPayload.parseCommitIntent(raw) as CommitIntent.Iab
+		assertEquals(listOf("internal-ads"), intent.choices.customVendorConsents)
+		assertNull("custom vendor ids are strings", C15tPayload.parseCommitIntent(raw.replace("[\"internal-ads\"]", "[1]")))
+		val without = C15tPayload.parseCommitIntent("""{"action":"iab","choices":{$lists},"consents":{}}""") as CommitIntent.Iab
+		assertEquals("a draft that names no custom vendor grants none", emptyList<String>(), without.choices.customVendorConsents)
 	}
 
 	@Test

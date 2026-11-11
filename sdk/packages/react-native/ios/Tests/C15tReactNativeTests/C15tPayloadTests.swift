@@ -156,6 +156,28 @@ final class C15tPayloadTests: XCTestCase {
         XCTAssertEqual(slot(choices)["headlessUnsupported"] as? [String], [])
     }
 
+    func testCustomVendorsCrossInsideTheIABSlotAndTheirChoicesAsStrings() throws {
+        var wire = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(ConsentSnapshot.coldStart)) as? [String: Any])
+        wire["iab"] = ["gvl": NSNull()]
+        let snapshot = try JSONDecoder().decode(ConsentSnapshot.self, from: JSONSerialization.data(withJSONObject: wire))
+        let vendor = IABCustomVendor(id: "internal-ads", name: "Internal ads",
+            privacyPolicyUrl: "https://example.test/ads", purposes: [1, 3])
+        let slot = try XCTUnwrap(jsonObject(C15tPayload.snapshot(snapshot, iabCustomVendors: [vendor]))["iab"] as? [String: Any])
+        let listed = try XCTUnwrap(slot["customVendors"] as? [[String: Any]])
+        XCTAssertEqual(listed.first?["id"] as? String, "internal-ads")
+        XCTAssertEqual(listed.first?["purposes"] as? [Int], [1, 3])
+        XCTAssertNil(listed.first?["description"], "absent optionals stay out, as Kotlin writes them")
+        XCTAssertEqual((jsonObject(C15tPayload.snapshot(snapshot))["iab"] as? [String: Any])?["customVendors"] as? [Any], [])
+
+        let lists = #""purposeConsents":[],"purposeLegitimateInterests":[],"purposeObjections":[],"vendorConsents":[],"vendorLegitimateInterests":[],"vendorObjections":[],"specialFeatureOptIns":[],"publisherConsents":[],"publisherLegitimateInterests":[],"publisherCustomConsents":[],"publisherCustomLegitimateInterests":[]"#
+        let raw = #"{"action":"iab","choices":{"# + lists + #","customVendorConsents":["internal-ads"],"customVendorLegitimateInterests":[]},"consents":{}}"#
+        var choices = IABChoices()
+        choices.customVendorConsents = ["internal-ads"]
+        XCTAssertEqual(C15tPayload.parseCommitIntent(raw), .iab(choices, categories: [:]))
+        XCTAssertNil(C15tPayload.parseCommitIntent(raw.replacingOccurrences(of: #"["internal-ads"]"#, with: "[1]")),
+            "custom vendor ids are strings")
+    }
+
     func testTheSnapshotAndItsAdditionsAreReadAsOneRevision() throws {
         func snapshot(revision: Int) throws -> ConsentSnapshot {
             var wire = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(ConsentSnapshot.coldStart)) as? [String: Any])

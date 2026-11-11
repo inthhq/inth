@@ -160,6 +160,8 @@ class ConsentCore(
 	private var lastIabActionAt: Long? = null
 	private var bundledPolicyAuthority: BundledPolicyAuthority? = null
 	private var additionalConsentList: AdditionalConsentList? = null
+	/** `/init`'s `customVendors`, kept until a response serves another list, as on the web. */
+	private var customVendors: List<IabCustomVendor> = emptyList()
 	private var iabListFetchedAt: Long? = null
 	private var iabListFromCache = true
 	private var iabListOffline = false
@@ -221,6 +223,28 @@ class ConsentCore(
 	val bundledPolicyInfo: BundledPolicyAuthority? get() = readView.get().authority
 	fun adTechProviders(): List<AdTechProvider>? = synchronized(mutationLock) { currentAdditionalConsentList()?.providers?.toList() }
 	fun isAdTechProviderAllowed(id: Long): Boolean = iabConsent?.choices?.adTechProviderConsents?.contains(id) == true
+
+	/** The custom (non-IAB) vendors `/init` served, in the order served. Empty when none. */
+	fun iabCustomVendors(): List<IabCustomVendor> = synchronized(mutationLock) { customVendors.toList() }
+
+	/** Check committed custom vendor consent without a JS runtime. */
+	fun isCustomVendorAllowed(id: String): Boolean = iabConsent?.choices?.customVendorConsents?.contains(id) == true
+
+	/**
+	 * The c15t categories the committed TC String grants, by the web's derivation
+	 * ([IabPurposeCategories]), or null when no decision is current. Registered vendors after
+	 * publisher restrictions, custom vendors and listed ad tech providers decide which purposes count.
+	 */
+	fun iabPurposeCategories(): Map<ConsentCategory, Boolean>? {
+		val consent = iabConsent ?: return null
+		val presentation = iabPresentation() ?: return null
+		val basis = IabPurposeCategories.consentBasis(
+			presentation.vendors.values.map { it.consentPurposes },
+			presentation.customVendors,
+			presentation.adTechProviders?.isNotEmpty() == true,
+		)
+		return IabPurposeCategories.categories(consent.choices.purposeConsents.toSet(), basis)
+	}
 	fun additionalConsentStatus(): IabListAvailability = synchronized(mutationLock) {
 		when {
 			iabConfiguration == null -> IabListAvailability.UNAVAILABLE
@@ -255,7 +279,7 @@ class ConsentCore(
 		if (openIabDraft() == null) return@synchronized null
 		val gvl = state.get().iab?.gvl ?: return@synchronized null
 		val configuration = iabConfiguration ?: return@synchronized null
-		IabAuthority.accepting(gvl, configuration, currentAdditionalConsentList()?.providers?.map { it.id })
+		IabAuthority.accepting(gvl, configuration, currentAdditionalConsentList()?.providers?.map { it.id }, customVendors)
 	}
 
     /** Capture retained disclosure and a draft atomically. Check canEdit before offering grants. */
@@ -272,7 +296,8 @@ class ConsentCore(
             // validity passes (`isCurrent`, the TC storage bus projection).
             consentStorageMaxDays = IabPresentation.days(evaluationPolicy?.choiceMs),
             // The language the TC String declares, so screen copy and signals agree.
-            language = configuration.consentLanguage)
+            language = configuration.consentLanguage,
+            customVendors = customVendors.toList())
     }
 
 	fun saveIab(draft: IabDraft, categories: Map<ConsentCategory, Boolean>): CommitResult =
@@ -429,6 +454,7 @@ class ConsentCore(
 				evaluationPolicy = envelope.evaluationPolicy
 				bundledPolicyAuthority = envelope.bundledPolicyAuthority
 				additionalConsentList = envelope.additionalConsentList
+				customVendors = envelope.customVendors.orEmpty()
 				iabListFetchedAt = envelope.iabListFetchedAt
 				committedIab = envelope.iabConsent
 				// A backward clock jump must not let a restart reuse an action time.
@@ -885,7 +911,7 @@ class ConsentCore(
 				val choices =
 					when (intent) {
 						is CommitIntent.All -> IabAuthority.accepting(
-							gvl, configuration, currentAdditionalConsentList()?.providers?.map { it.id })
+							gvl, configuration, currentAdditionalConsentList()?.providers?.map { it.id }, customVendors)
 						is CommitIntent.Necessary -> IabChoices()
 						is CommitIntent.Iab -> intent.choices
 						is CommitIntent.Custom ->
@@ -908,6 +934,7 @@ class ConsentCore(
 							actionAt,
 							committedIab,
 							currentAdditionalConsentList(),
+							customVendors,
 						)
 				} catch (_: IllegalArgumentException) {
 					return@mutate refusedCommit(
@@ -1006,6 +1033,7 @@ class ConsentCore(
 				lastIabActionAt = if (isIab) actionAt else lastIabActionAt,
 				iabListFetchedAt = iabListFetchedAt,
 				additionalConsentList = additionalConsentList,
+				customVendors = customVendors,
 			)
 		}
 		if (!store.commit(envelope, entry, config.maxPendingSaves, supersedeGrants = isIab, publishBus = false)) {
@@ -1084,7 +1112,8 @@ class ConsentCore(
             val envelope = SnapshotEnvelope(bundledPolicyAuthority = bundledPolicyAuthority,
                 snapshot = next.copy(iab = null), evaluationPolicy = policy,
                 noticeDismissal = dismissal, gvl = state.get().iab?.gvl, iabConsent = committedIab,
-                additionalConsentList = additionalConsentList, iabListFetchedAt = iabListFetchedAt, lastIabActionAt = lastIabActionAt)
+                additionalConsentList = additionalConsentList,
+				customVendors = customVendors, iabListFetchedAt = iabListFetchedAt, lastIabActionAt = lastIabActionAt)
             Triple(next, dismissal, envelope)
         }
         if (!store.writeEnvelope(plan.third, publishBus = false)) {
@@ -1456,6 +1485,7 @@ class ConsentCore(
 			evaluationPolicy = null
 			bundledPolicyAuthority = null
 			additionalConsentList = null
+			customVendors = emptyList()
 			iabListFetchedAt = null
 			iabListFromCache = true
 			iabListOffline = false
@@ -1665,6 +1695,14 @@ class ConsentCore(
 			// through this line on the launch that served it, and on the read that hydrated it.
 			if (mapped.adTechProvidersInvalid) additionalConsentList = null
 			else mapped.adTechProviders?.let { additionalConsentList = AdditionalConsentList(it, if (bundle == null) clock.nowMillis() else bundle.atpFetchedAt ?: -1) }
+			// Absent keeps the list held, as `init-lifecycle.ts` does on the web; an unreadable one is
+			// none. A grant for a vendor no longer listed goes with it.
+			if (mapped.customVendorsInvalid) customVendors = emptyList()
+			else mapped.customVendors?.let { customVendors = it }
+			committedIab = committedIab?.let { saved ->
+				val kept = saved.choices.keepingCustomVendors(customVendors)
+				if (kept == saved.choices) saved else saved.copy(choices = kept)
+			}
 			iabListOffline = !online
 			if (mapped.gvl != null) {
 				iabListFetchedAt = if (bundle == null) clock.nowMillis() else bundle.gvlFetchedAt
@@ -1958,6 +1996,7 @@ class ConsentCore(
 							saved.actionAt,
 							saved,
 							currentAdditionalConsentList(),
+							customVendors,
 						)
 					rebuilt.tcString == saved.tcString && rebuilt.choices == saved.choices &&
 						rebuilt.addtlConsent == saved.addtlConsent && rebuilt.adTechProvidersID == saved.adTechProvidersID
@@ -2029,6 +2068,7 @@ class ConsentCore(
 					lastIabActionAt = lastIabActionAt,
 					iabListFetchedAt = if (reset) null else iabListFetchedAt,
 					additionalConsentList = if (reset) null else additionalConsentList,
+					customVendors = if (reset) null else customVendors,
 				)
 			envelope to next
 		} ?: return null
@@ -2038,6 +2078,7 @@ class ConsentCore(
 			noticeDismissal = null
 			if (reset) {
 				additionalConsentList = null
+				customVendors = emptyList()
 				evaluationPolicy = null
 				iabListFetchedAt = null
 				iabListFromCache = true
@@ -2288,6 +2329,7 @@ class ConsentCore(
 				gvl = snapshot.iab?.gvl,
 					iabConsent = committedIab,
 					additionalConsentList = additionalConsentList,
+				customVendors = customVendors,
 					iabListFetchedAt = iabListFetchedAt,
 					lastIabActionAt = lastIabActionAt,
 				)

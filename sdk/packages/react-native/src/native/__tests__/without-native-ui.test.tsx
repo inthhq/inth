@@ -29,6 +29,7 @@ const restrictedIAB = (): ConsentSnapshot =>
 		iab: {
 			acceptAll: null,
 			committed: null,
+			customVendors: [],
 			editable: false,
 			gvl: null,
 			headlessUnsupported: ['publisher-restrictions'],

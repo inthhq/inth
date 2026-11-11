@@ -25,18 +25,29 @@ data class IabPresentation(
      * served list is English today, so this is "EN". Use it to pick the UI copy around the list.
      */
     val language: String = TcVendorList.DEFAULT_LANGUAGE,
+    /** Partners the publisher declares outside the Global Vendor List, in the order served. */
+    val customVendors: List<IabCustomVendor> = emptyList(),
 ) {
-    /** The first layer's vendor count and purpose, stack and special-feature names. */
-    val bannerSummary: IabBannerSummary by lazy { IabBannerSummary.resolve(list, adTechProviders?.size ?: 0) }
+    /**
+     * The first layer's vendor count and purpose, stack and special-feature names. It counts custom
+     * vendors but names only what registered vendors declare, as `resolveIABBannerSummary` does.
+     */
+    val bannerSummary: IabBannerSummary by lazy {
+        IabBannerSummary.resolve(list, adTechProviders?.size ?: 0, customVendors.size)
+    }
 
     /**
-     * Purposes some active vendor declares for consent or legitimate interest, plus purposes 1, 3
-     * and 4 when ad tech providers are listed. Ascending.
+     * Purposes some active or custom vendor declares for consent or legitimate interest, plus
+     * purposes 1, 3 and 4 when ad tech providers are listed. Ascending. The preference centre lists
+     * every one, as the web's `processPurposes` does.
      */
-    val declaredPurposeIds: List<Int> by lazy { list.declaredPurposeIds(adTechProviders?.size ?: 0) }
+    val declaredPurposeIds: List<Int> by lazy {
+        val custom = customVendors.flatMap { it.purposes + it.legIntPurposes }.filter { it in list.purposes.keys }
+        (list.declaredPurposeIds(adTechProviders?.size ?: 0) + custom).toSortedSet().toList()
+    }
 
-    /** Special features some active vendor declares. Ascending. */
-    val declaredSpecialFeatureIds: List<Int> by lazy { list.declaredSpecialFeatureIds() }
+    /** Special features some active or custom vendor declares. Ascending. */
+    val declaredSpecialFeatureIds: List<Int> by lazy { list.declaredSpecialFeatureIds(customVendors) }
 
     internal companion object {
         /** Whole days, rounded up, for a validity in milliseconds. Null for no positive limit. */
@@ -133,10 +144,12 @@ internal fun GlobalVendorList.declaredPurposeIds(adTechProviderCount: Int): List
     }
 }
 
-/** Special features some active vendor declares. Only features the list defines. */
-internal fun GlobalVendorList.declaredSpecialFeatureIds(): List<Int> {
+/** Special features some active vendor, or one of [customVendors], declares. Only features the list defines. */
+internal fun GlobalVendorList.declaredSpecialFeatureIds(customVendors: List<IabCustomVendor> = emptyList()): List<Int> {
     val active = activeVendors()
-    return specialFeatures.orEmpty().keys.sorted().filter { id -> active.any { id.toLong() in it.specialFeatures.orEmpty() } }
+    return specialFeatures.orEmpty().keys.sorted().filter { id ->
+        active.any { id.toLong() in it.specialFeatures.orEmpty() } || customVendors.any { id in it.specialFeatures }
+    }
 }
 
 /** Summary of the draft's permitted consent and legitimate-interest selections. */

@@ -191,7 +191,8 @@ public enum C15tPayload {
         iabConsent: IABCommittedConsent? = nil,
         iabAcceptAll: IABChoices? = nil,
         iabHeadlessGaps: [String] = [],
-        iabMarketingPurposes: Bool? = nil
+        iabMarketingPurposes: Bool? = nil,
+        iabCustomVendors: [IABCustomVendor] = []
     ) -> String {
         guard var wire = value(of: snapshot) else {
             // Encoding the core's own snapshot cannot fail in practice, and a silent
@@ -245,13 +246,15 @@ public enum C15tPayload {
         // saved now, and what Accept all saves under the publisher's disclosure. `acceptAll`
         // is `null` exactly when `editable` is false. `headlessUnsupported` names what a screen
         // built on the served list could not disclose; while it is not empty, `editable` stays
-        // false, so no custom screen saves choices it could not show.
+        // false, so no custom screen saves choices it could not show. `customVendors` is the
+        // core's `iabCustomVendors()`: the non-IAB partners a screen lists and decides on.
         if case var .object(iab)? = fields["iab"] {
             let acceptAll = iabHeadlessGaps.isEmpty ? iabAcceptAll : nil
             iab["committed"] = iabConsent.map(committedIAB) ?? .null
             iab["editable"] = .bool(acceptAll != nil)
             iab["acceptAll"] = acceptAll.flatMap { value(of: $0) } ?? .null
             iab["headlessUnsupported"] = .array(iabHeadlessGaps.map { .string($0) })
+            iab["customVendors"] = value(of: iabCustomVendors) ?? .array([])
             fields["iab"] = .object(iab)
         }
 

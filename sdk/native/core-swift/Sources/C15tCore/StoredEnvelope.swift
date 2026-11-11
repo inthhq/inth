@@ -14,6 +14,9 @@ struct StoredEnvelope: Sendable, Codable, Equatable {
     static let currentVersion = 1
 
     let additionalConsentList: AdditionalConsentList?
+    /// `/init`'s custom (non-IAB) vendors. Absent in an envelope written before they were kept,
+    /// which reads as none.
+    let customVendors: [IABCustomVendor]?
     let bundledPolicyAuthority: BundledPolicyAuthority?
     let iabListFetchedAt: Int64?
     let lastIABActionAt: Int64?
@@ -43,9 +46,11 @@ struct StoredEnvelope: Sendable, Codable, Equatable {
         pendingSaves: [PendingSaveEntry]? = nil,
         lastIABActionAt: Int64? = nil,
         iabListFetchedAt: Int64? = nil,
-        additionalConsentList: AdditionalConsentList? = nil
+        additionalConsentList: AdditionalConsentList? = nil,
+        customVendors: [IABCustomVendor] = []
     ) {
         self.additionalConsentList = additionalConsentList
+        self.customVendors = customVendors.isEmpty ? nil : customVendors
         self.bundledPolicyAuthority = bundledPolicyAuthority
         self.iabListFetchedAt = iabListFetchedAt
         self.lastIABActionAt = lastIABActionAt ?? iabConsent?.actionAt

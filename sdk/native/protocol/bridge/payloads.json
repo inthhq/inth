@@ -339,6 +339,38 @@
 				"iab": {
 					"nullable": true,
 					"required": true,
+					"fields": {
+						"acceptAll": {
+							"nullable": true,
+							"required": true,
+							"type": "object"
+						},
+						"committed": {
+							"nullable": true,
+							"required": true,
+							"type": "object"
+						},
+						"customVendors": {
+							"nullable": false,
+							"required": true,
+							"type": "array"
+						},
+						"editable": {
+							"nullable": false,
+							"required": true,
+							"type": "boolean"
+						},
+						"gvl": {
+							"nullable": true,
+							"required": true,
+							"type": "object"
+						},
+						"headlessUnsupported": {
+							"nullable": false,
+							"required": true,
+							"type": "array"
+						}
+					},
 					"type": "object"
 				},
 				"iabMarketingPurposes": {

@@ -57,7 +57,8 @@ attach the RN adapter to that engine.
 
 Use the native presenter from your platform quickstart. The stock IAB flow
 handles purpose and partner choices, legitimate-interest objections, special
-features, publisher restrictions and Additional Consent providers.
+features, publisher restrictions, Additional Consent providers and custom
+partners.
 
 The visitor can open Customize, inspect purpose details, search partners and
 read their disclosures before saving. Keep a Privacy settings action in the
@@ -67,6 +68,20 @@ choice.
 In React Native you can draw the IAB screens yourself with `useIAB()` and
 `useTCString()`; the native engine still validates and commits the selection.
 See [Build your own IAB screen](/docs/frameworks/react-native/headless#build-your-own-iab-screen).
+
+### Custom partners
+
+Custom vendors you configure in the policy's IAB settings reach the app with
+the vendor list. The stock flow lists them on their own Custom Partners page,
+apart from IAB partners, each with its purposes, data use and privacy policy,
+and its own consent and legitimate-interest switches. Accept all grants them
+and Reject all withdraws their consent, as on the web.
+
+Their choices are stored with the native decision but never in the TC String,
+which only names IAB vendors. Check one with `isCustomVendorAllowed(id)` on
+either platform. The id is the vendor's configured id as a string. In React
+Native, `useIABSnapshot()?.customVendors` lists them, and `useIAB()`'s
+`setVendorConsent` and `setVendorLegitimateInterest` take their ids.
 
 Draft changes are not consent. A successful save validates the current
 disclosures and stores the decision locally. If the list changed while the
@@ -81,6 +96,10 @@ that integration uses. Swift exposes `isIABAllowed`; Kotlin exposes
 `isIabAllowed`. Additional Consent integrations use
 `isAdTechProviderAllowed`. Keep the subscription alive so withdrawal stops or
 reconfigures collection through the vendor's supported API.
+
+For a custom partner, check `isCustomVendorAllowed(id)` instead. To know which
+c15t categories the committed decision grants by the web's rules, read
+`iabPurposeCategories()`; custom partners' purposes count there too.
 
 TCF consent, legitimate interest, special-feature opt-in and Additional
 Consent are distinct answers. Additional Consent providers depend on consent
@@ -271,14 +290,14 @@ and the ATT answer do.
 Under an IAB TCF policy, the after-consent rule reads marketing the way the web
 IAB module derives it from the TC String: the `marketing` category stands for
 TCF purposes 2, 3 and 4, and counts as consented only when every one of them
-that some vendor asks consent for is consented. Someone must also be able to
-track: at least one consented vendor that asks consent for one of those
-purposes, or a consented Google ad tech provider. The c15t `marketing` category
-must be granted as well. So Accept all asks Apple, Reject all never does, and a
-custom choice asks only when it grants those purposes to a vendor. A stored TC
-String that does not counts as a refusal, so `beforeConsent` skips it too.
-Native IAB stores no consent for custom (non-IAB) vendors, so only registered
-vendors and ad tech providers count there.
+that some vendor asks consent for is consented. Custom partners count as
+vendors here. Someone must also be able to track: at least one consented
+vendor or custom partner that asks consent for one of those purposes, or a
+consented Google ad tech provider. The c15t `marketing` category must be
+granted as well. So Accept all asks Apple, Reject all never does, and a custom
+choice asks only when it grants those purposes to a vendor or custom partner.
+A stored TC String that does not counts as a refusal, so `beforeConsent` skips
+it too.
 
 Additional Information on Apple's sheet opens the TCF preferences. When the
 person closes them, Apple's alert comes back only if those purposes are still

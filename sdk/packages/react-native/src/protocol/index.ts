@@ -53,6 +53,7 @@ export {
 export type {
 	ConsentSnapshot,
 	NativeIABCommittedConsent,
+	NativeIABCustomVendor,
 	NativeIABHeadlessGap,
 	NativeIABState,
 	NativeConsentSubject,

@@ -85,6 +85,8 @@ const GVL = {
 } as unknown as GlobalVendorList;
 
 const COMMITTED: NativeIABChoices = {
+	customVendorConsents: [],
+	customVendorLegitimateInterests: [],
 	publisherConsents: [],
 	publisherCustomConsents: [],
 	publisherCustomLegitimateInterests: [],
@@ -119,6 +121,7 @@ const tcf = (overrides: Partial<ConsentSnapshot> = {}): ConsentSnapshot =>
 		iab: {
 			acceptAll: NATIVE_ACCEPT_ALL,
 			committed: { addtlConsent: null, choices: COMMITTED, tcString: 'CQ-1' },
+			customVendors: [],
 			editable: true,
 			gvl: GVL,
 			headlessUnsupported: [],
@@ -258,6 +261,7 @@ describe('headless IAB hooks', () => {
 				iab: {
 					acceptAll: NATIVE_ACCEPT_ALL,
 					committed: null,
+					customVendors: [],
 					editable: true,
 					gvl: GVL,
 					headlessUnsupported: [],
@@ -304,6 +308,7 @@ describe('headless IAB hooks', () => {
 							choices: COMMITTED,
 							tcString: 'CQ-1',
 						},
+						customVendors: [],
 						editable: false,
 						gvl: GVL,
 						headlessUnsupported: [],
@@ -323,6 +328,7 @@ describe('headless IAB hooks', () => {
 			iab: {
 				acceptAll: null,
 				committed: { addtlConsent: null, choices: COMMITTED, tcString: 'CQ-1' },
+				customVendors: [],
 				editable: false,
 				gvl: GVL,
 				headlessUnsupported: [],
@@ -351,6 +357,7 @@ describe('headless IAB hooks', () => {
 					iab: {
 						acceptAll: null,
 						committed: null,
+						customVendors: [],
 						editable: false,
 						gvl: GVL,
 						headlessUnsupported: [],
@@ -369,6 +376,7 @@ describe('headless IAB hooks', () => {
 							choices: NATIVE_ACCEPT_ALL,
 							tcString: 'CQ-2',
 						},
+						customVendors: [],
 						editable: true,
 						gvl: GVL,
 						headlessUnsupported: [],
@@ -417,6 +425,7 @@ describe('headless IAB hooks', () => {
 							choices: intent.choices,
 							tcString: 'CQ-2',
 						},
+						customVendors: [],
 						editable: true,
 						gvl: GVL,
 						headlessUnsupported: [],
@@ -457,6 +466,7 @@ describe('headless IAB hooks', () => {
 					iab: {
 						acceptAll: NATIVE_ACCEPT_ALL,
 						committed: { addtlConsent: null, choices, tcString: 'CQ-2' },
+						customVendors: [],
 						editable: true,
 						gvl: GVL,
 						headlessUnsupported: [],
@@ -494,6 +504,7 @@ describe('headless IAB hooks', () => {
 		): ConsentSnapshot['iab'] => ({
 			acceptAll: editable ? NATIVE_ACCEPT_ALL : null,
 			committed: { addtlConsent: null, choices, tcString: 'CQ-2' },
+			customVendors: [],
 			editable,
 			gvl: GVL,
 			headlessUnsupported: [],
@@ -553,6 +564,7 @@ describe('headless IAB hooks', () => {
 						choices: COMMITTED,
 						tcString: 'CQ-1',
 					},
+					customVendors: [],
 					editable: false,
 					gvl: GVL,
 					headlessUnsupported: [],
@@ -577,6 +589,7 @@ describe('headless IAB hooks', () => {
 						choices: COMMITTED,
 						tcString: 'CQ-1',
 					},
+					customVendors: [],
 					editable: true,
 					gvl: GVL,
 					headlessUnsupported: ['publisher-restrictions'],
@@ -616,6 +629,7 @@ describe('headless IAB hooks', () => {
 							choices: { ...COMMITTED, vendorConsents: [] },
 							tcString: 'CQ-2',
 						},
+						customVendors: [],
 						editable: true,
 						gvl: GVL,
 						headlessUnsupported: [],
@@ -644,6 +658,7 @@ describe('headless IAB hooks', () => {
 							choices: { ...COMMITTED, vendorConsents: [] },
 							tcString: 'CQ-2',
 						},
+						customVendors: [],
 						editable: true,
 						gvl: GVL,
 						headlessUnsupported: [],
@@ -688,6 +703,7 @@ describe('headless IAB hooks', () => {
 					iab: {
 						acceptAll: NATIVE_ACCEPT_ALL,
 						committed: null,
+						customVendors: [],
 						editable: true,
 						gvl: { ...GVL, vendorListVersion: 178 },
 						headlessUnsupported: [],
@@ -701,5 +717,128 @@ describe('headless IAB hooks', () => {
 		const refused = await handle().save();
 		expect(refused.reason).toBe('concurrent-change');
 		expect(fake.commit).not.toHaveBeenCalled();
+	});
+});
+
+/** One custom vendor on consent and legitimate interest, one with a numeric id. */
+const CUSTOM_VENDORS = [
+	{
+		dataCategories: [],
+		features: [],
+		id: 'internal-ads',
+		legIntPurposes: [7],
+		name: 'Internal ads',
+		privacyPolicyUrl: 'https://example.test/ads',
+		purposes: [1, 3],
+		specialFeatures: [],
+		usesCookies: true,
+		usesNonCookieAccess: false,
+	},
+	{
+		dataCategories: [],
+		features: [],
+		id: '1000482',
+		legIntPurposes: [],
+		name: 'Fraud checks',
+		privacyPolicyUrl: 'https://example.test/fraud',
+		purposes: [1],
+		specialFeatures: [],
+		usesCookies: false,
+		usesNonCookieAccess: false,
+	},
+] as const;
+
+const withCustomVendors = (overrides: Partial<ConsentSnapshot> = {}) =>
+	tcf({
+		iab: {
+			acceptAll: {
+				...NATIVE_ACCEPT_ALL,
+				customVendorConsents: ['1000482', 'internal-ads'],
+				customVendorLegitimateInterests: ['internal-ads'],
+			},
+			committed: { addtlConsent: null, choices: COMMITTED, tcString: 'CQ-1' },
+			customVendors: CUSTOM_VENDORS,
+			editable: true,
+			gvl: GVL,
+			headlessUnsupported: [],
+		},
+		...overrides,
+	});
+
+describe('headless IAB hooks: custom vendors', () => {
+	test('stage into their own lists by string id and save beside the TCF lists', async () => {
+		mount(withCustomVendors());
+
+		expect(handle().choices.customVendorConsents).toEqual([]);
+		flush(() => handle().setVendorConsent('internal-ads', true));
+		flush(() => handle().setVendorLegitimateInterest('internal-ads', true));
+		// A numeric id the list does not register is a custom vendor too.
+		flush(() => handle().setVendorConsent(1_000_482, true));
+
+		expect(handle().choices.vendorConsents).toEqual([7]);
+		expect(handle().choices.customVendorConsents).toEqual([
+			'1000482',
+			'internal-ads',
+		]);
+		expect(handle().choices.customVendorLegitimateInterests).toEqual([
+			'internal-ads',
+		]);
+		expect(handle().isDirty).toBe(true);
+
+		await current().save();
+		await flushPromises();
+		const intent = JSON.parse(fake.commitIntents[0] ?? '') as {
+			choices: NativeIABChoices;
+		};
+		expect(intent.choices.customVendorConsents).toEqual([
+			'1000482',
+			'internal-ads',
+		]);
+		expect(intent.choices.customVendorLegitimateInterests).toEqual([
+			'internal-ads',
+		]);
+		expect(intent.choices.vendorConsents).toEqual([7]);
+	});
+
+	test('accept all and reject all cover them', () => {
+		mount(withCustomVendors());
+
+		flush(() => handle().acceptAll());
+		expect(handle().choices.customVendorConsents).toEqual([
+			'1000482',
+			'internal-ads',
+		]);
+		expect(handle().choices.customVendorLegitimateInterests).toEqual([
+			'internal-ads',
+		]);
+		flush(() => handle().rejectAll());
+		// As for registered vendors: consent withdrawn, legitimate interest kept.
+		expect(handle().choices.customVendorConsents).toEqual([]);
+		expect(handle().choices.customVendorLegitimateInterests).toEqual([
+			'internal-ads',
+		]);
+	});
+
+	test('a committed custom grant reopens with the draft', () => {
+		mount(
+			withCustomVendors({
+				iab: {
+					acceptAll: NATIVE_ACCEPT_ALL,
+					committed: {
+						addtlConsent: null,
+						choices: { ...COMMITTED, customVendorConsents: ['internal-ads'] },
+						tcString: 'CQ-1',
+					},
+					customVendors: CUSTOM_VENDORS,
+					editable: true,
+					gvl: GVL,
+					headlessUnsupported: [],
+				},
+			})
+		);
+
+		expect(handle().choices.customVendorConsents).toEqual(['internal-ads']);
+		expect(handle().choices.customVendorLegitimateInterests).toEqual([]);
+		expect(handle().isDirty).toBe(false);
 	});
 });

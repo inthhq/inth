@@ -104,6 +104,12 @@ class ConsentPresenter(val core: ConsentCore, autoPresent: Boolean = true) : Vie
         IabVendorSelectionStatus.PARTIAL -> iabCopy.appPartlyOn
         IabVendorSelectionStatus.ON -> iabCopy.appOn
     }
+    /** The same summary for a custom (non-IAB) partner. */
+    fun customPartnerStatus(id: String): String = when (disclosure?.customVendors?.firstOrNull { it.id == id }?.selectionStatus(choices) ?: IabVendorSelectionStatus.OFF) {
+        IabVendorSelectionStatus.OFF -> iabCopy.appOff
+        IabVendorSelectionStatus.PARTIAL -> iabCopy.appPartlyOn
+        IabVendorSelectionStatus.ON -> iabCopy.appOn
+    }
     val offeredCategories get() = snapshot.consentCategories?.mapNotNull(ConsentCategory::fromWireName) ?: listOf(ConsentCategory.NECESSARY)
     /**
      * What the last refused commit means for the person; the retry is offered beside it. Stays set

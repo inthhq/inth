@@ -1,5 +1,5 @@
 {
-	"description": "Whether the ATT sequence treats an IAB TCF choice as granting marketing. `vendors` maps each registered vendor to its purposes on consent after publisher restrictions; the consent basis is their union, plus 1, 3 and 4 when ad tech providers are listed. `purposes` is the web half, `iabPurposesToC15tConsents(purposeConsents, basis).marketing`. `marketing` also needs a consented vendor that asks consent for a deciding marketing purpose, or a consented ad tech provider.",
+	"description": "Whether the ATT sequence treats an IAB TCF choice as granting marketing. `vendors` maps each registered vendor to its purposes on consent after publisher restrictions, and `customVendors` each custom (non-IAB) vendor to its purposes; the consent basis is their union, plus 1, 3 and 4 when ad tech providers are listed. `purposes` is the web half, `iabPurposesToC15tConsents(purposeConsents, basis).marketing`. `marketing` also needs a consented registered or custom vendor that asks consent for a deciding marketing purpose, or a consented ad tech provider.",
 	"cases": [
 		{
 			"name": "accept all with a list that never asks for purpose 2",
@@ -8,6 +8,8 @@
 			"vendorConsents": [1, 2],
 			"adTechProvidersListed": false,
 			"adTechProviderConsents": [],
+			"customVendors": {},
+			"customVendorConsents": [],
 			"expected": { "purposes": true, "marketing": true }
 		},
 		{
@@ -17,6 +19,8 @@
 			"vendorConsents": [],
 			"adTechProvidersListed": false,
 			"adTechProviderConsents": [],
+			"customVendors": {},
+			"customVendorConsents": [],
 			"expected": { "purposes": true, "marketing": false }
 		},
 		{
@@ -26,6 +30,8 @@
 			"vendorConsents": [2],
 			"adTechProvidersListed": false,
 			"adTechProviderConsents": [],
+			"customVendors": {},
+			"customVendorConsents": [],
 			"expected": { "purposes": true, "marketing": false }
 		},
 		{
@@ -35,6 +41,8 @@
 			"vendorConsents": [1],
 			"adTechProvidersListed": false,
 			"adTechProviderConsents": [],
+			"customVendors": {},
+			"customVendorConsents": [],
 			"expected": { "purposes": false, "marketing": false }
 		},
 		{
@@ -44,6 +52,8 @@
 			"vendorConsents": [1],
 			"adTechProvidersListed": false,
 			"adTechProviderConsents": [],
+			"customVendors": {},
+			"customVendorConsents": [],
 			"expected": { "purposes": true, "marketing": false }
 		},
 		{
@@ -53,6 +63,8 @@
 			"vendorConsents": [],
 			"adTechProvidersListed": true,
 			"adTechProviderConsents": [89],
+			"customVendors": {},
+			"customVendorConsents": [],
 			"expected": { "purposes": true, "marketing": true }
 		},
 		{
@@ -62,6 +74,8 @@
 			"vendorConsents": [1],
 			"adTechProvidersListed": true,
 			"adTechProviderConsents": [],
+			"customVendors": {},
+			"customVendorConsents": [],
 			"expected": { "purposes": true, "marketing": false }
 		},
 		{
@@ -71,6 +85,41 @@
 			"vendorConsents": [],
 			"adTechProvidersListed": false,
 			"adTechProviderConsents": [],
+			"customVendors": {},
+			"customVendorConsents": [],
+			"expected": { "purposes": false, "marketing": false }
+		},
+		{
+			"name": "the only consented marketing vendor is a custom one",
+			"purposeConsents": [1, 2, 3, 4],
+			"vendors": { "1": [1, 7] },
+			"vendorConsents": [1],
+			"adTechProvidersListed": false,
+			"adTechProviderConsents": [],
+			"customVendors": { "internal-ads": [2, 3, 4] },
+			"customVendorConsents": ["internal-ads"],
+			"expected": { "purposes": true, "marketing": true }
+		},
+		{
+			"name": "the only marketing vendor is a custom one and it is refused",
+			"purposeConsents": [1, 2, 3, 4],
+			"vendors": { "1": [1, 7] },
+			"vendorConsents": [1],
+			"adTechProvidersListed": false,
+			"adTechProviderConsents": [],
+			"customVendors": { "internal-ads": [2, 3, 4] },
+			"customVendorConsents": [],
+			"expected": { "purposes": true, "marketing": false }
+		},
+		{
+			"name": "a custom vendor's purpose decides the category",
+			"purposeConsents": [1, 3, 4],
+			"vendors": { "1": [1, 3, 4] },
+			"vendorConsents": [1],
+			"adTechProvidersListed": false,
+			"adTechProviderConsents": [],
+			"customVendors": { "1000482": [2] },
+			"customVendorConsents": [],
 			"expected": { "purposes": false, "marketing": false }
 		}
 	]
