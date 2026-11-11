@@ -73,8 +73,9 @@ one:
 
 <include src="../../shared/examples/react-native-bare/app-entry.mdx" />
 
-The provider waits until the native core has restored saved choices and
-resolved the policy. It presents the prompt once per owed prompt. A stored
+The native consent prompt decides when to open, as it does in a Swift or Kotlin
+app: it waits until the native core has restored saved choices and resolved the
+policy, then presents once per owed prompt. A stored
 choice that is still valid shows nothing. A new policy or an expired choice
 presents it again on the next launch or refresh. The native presenter handles
 choices, navigation, saving and retry. React receives the updated consent

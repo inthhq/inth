@@ -89,6 +89,10 @@ public enum C15tPayload {
 
     /// Event names, matching `NATIVE_EVENT_NAMES` in `src/protocol`.
     public static let eventSnapshot = "snapshot"
+    /// The presenter events, by the names `src/native/presenter.ts` listens for.
+    public static let eventPresenterOutcome = "onConsentPresenterOutcome"
+    public static let eventPresenterPresented = "onConsentPresenterPresented"
+    public static let eventPresenterUnavailable = "onConsentPresenterUnavailable"
     public static let eventError = "error"
     public static let eventInitialized = "initialized"
 
@@ -462,6 +466,29 @@ public enum C15tPayload {
             "kind": .string(kind),
             "revision": .integer(Int64(outcome.revision)),
         ])
+    }
+
+    /// An `onConsentPresenterPresented` event: a session is on screen.
+    public static func consentHostPresented(sessionID: String, presentation: ConsentHostPresentation, automatic: Bool) -> String {
+        encode([
+            "sessionId": .string(sessionID),
+            "presentation": .string(presentation.rawValue),
+            "automatic": .bool(automatic),
+        ])
+    }
+
+    /// An `onConsentPresenterUnavailable` event: an owed prompt has nowhere to show yet.
+    public static func presenterUnavailable(code: String, message: String) -> String {
+        encode(["code": .string(code), "message": .string(message)])
+    }
+
+    /// Read a `configureAutoPresent` body, the `NativeAutoPresentSettings` shape.
+    /// - Returns: The settings, or `nil` when `autoPresent` is not a boolean.
+    public static func autoPresentSettings(_ raw: String) -> (autoPresent: Bool, privacyPolicyURL: String?)? {
+        guard let data = raw.data(using: .utf8),
+              let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let autoPresent = object["autoPresent"] as? Bool else { return nil }
+        return (autoPresent, object["privacyPolicyURL"] as? String)
     }
 
     /// An `error` event, in the `NativeSnapshotError` shape.

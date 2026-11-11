@@ -31,6 +31,35 @@ export interface ConsentPresenterOutcome {
 	readonly revision: number;
 }
 
+/**
+ * A session native opened and put on screen: one it opened by itself
+ * (`automatic`), or one the app asked for. Sent once it is drawn, before the
+ * outcome of any session it replaced.
+ */
+export interface ConsentPresenterPresented {
+	readonly sessionId: string;
+	readonly presentation: ConsentPresenterPresentation;
+	readonly automatic: boolean;
+}
+
+/**
+ * Native owes a prompt but cannot put it on screen yet, such as before the
+ * host has a foreground window or Activity. It keeps the prompt and shows it
+ * once it can; nothing has to ask again.
+ */
+export interface ConsentPresenterUnavailable {
+	readonly code: string;
+	readonly message: string;
+}
+
+/** What the provider tells native, as `configureAutoPresent` reads it. */
+export interface NativeAutoPresentSettings {
+	/** Native presents an owed prompt by itself. */
+	readonly autoPresent: boolean;
+	/** The HTTPS privacy policy an automatic prompt links to; `null` while off. */
+	readonly privacyPolicyURL: string | null;
+}
+
 /** Decode the compact native outcome without trusting a mismatched binary.
  * @param payload - Native JSON event.
  * @returns The validated outcome.
@@ -93,6 +122,45 @@ const parseSession = (payload: string): ConsentPresenterSession => {
 	throw new TypeError('Invalid native consent presenter session');
 };
 
+const parsePresented = (payload: string): ConsentPresenterPresented => {
+	const value: unknown = JSON.parse(payload);
+	if (
+		typeof value === 'object' &&
+		value !== null &&
+		'sessionId' in value &&
+		typeof value.sessionId === 'string' &&
+		'presentation' in value &&
+		(value.presentation === 'prompt' || value.presentation === 'preferences')
+	) {
+		return {
+			automatic: 'automatic' in value && value.automatic === true,
+			presentation: value.presentation,
+			sessionId: value.sessionId,
+		};
+	}
+	throw new TypeError('Invalid native consent presenter presentation');
+};
+
+const parseUnavailable = (payload: string): ConsentPresenterUnavailable => {
+	const value: unknown = JSON.parse(payload);
+	return {
+		code:
+			typeof value === 'object' &&
+			value !== null &&
+			'code' in value &&
+			typeof value.code === 'string'
+				? value.code
+				: 'C15T_PRESENTER_UNAVAILABLE',
+		message:
+			typeof value === 'object' &&
+			value !== null &&
+			'message' in value &&
+			typeof value.message === 'string'
+				? value.message
+				: '',
+	};
+};
+
 type SessionListener = (
 	sessionId: string,
 	presentation: 'prompt' | 'preferences'
@@ -102,8 +170,8 @@ const sessionListeners = new Set<SessionListener>();
 
 /**
  * Hear every session an app's own `presentConsentPrompt` or `presentPreferences`
- * call finds open, with what it shows. The auto-present ledger records them, so
- * what the person dismissed there counts whether or not auto-present was on.
+ * call finds open, with what it shows. The provider mirrors them, so the ATT
+ * sequence waits for them to close.
  *
  * @internal
  * @param listener - Receives the session id and what it shows.
@@ -149,9 +217,9 @@ const remember = (
 };
 
 /**
- * The privacy-policy URL a session was opened with. Every native outcome comes
- * from a session JavaScript opened with a URL, so a step that follows the
- * outcome, such as opening settings, always has one.
+ * The privacy-policy URL a session the app opened was opened with, so a step
+ * that follows the outcome, such as opening settings, has one. A session
+ * native opened by itself used the provider's URL.
  *
  * @internal
  * @param sessionId - The outcome's session.
@@ -169,9 +237,10 @@ export const sessionPrivacyPolicyURL = (
 let beforeConsentPrompt: (() => Promise<boolean>) | null = null;
 
 /**
- * Run `hook` before every native prompt request, so a provider with
- * `trackingRequest="beforeConsent"` asks Apple first, whoever opens the
- * prompt: the app, or the ledger on a trigger or after a session closes.
+ * Run `hook` before every prompt the app asks for, so a provider with
+ * `trackingRequest="beforeConsent"` asks Apple first. A prompt native opens
+ * by itself waits too: the provider keeps auto-present off until Apple was
+ * asked.
  *
  * @internal
  * @param hook - Resolves when the prompt may open; `false` if its provider left.
@@ -188,14 +257,6 @@ export const setBeforeConsentPrompt = (
 	};
 };
 
-/**
- * Ask native for the owed prompt without announcing the answer: the
- * auto-present ledger's own call, which records its answer itself.
- *
- * @internal
- * @param privacyPolicyURL - The app's HTTPS privacy-policy URL.
- * @returns Presentation identity.
- */
 const callNativePrompt = async (
 	privacyPolicyURL: string
 ): Promise<ConsentPresenterSession> =>
@@ -203,18 +264,6 @@ const callNativePrompt = async (
 		parseSession(await getNativeC15t().presentConsentPrompt(privacyPolicyURL)),
 		privacyPolicyURL
 	);
-
-export const requestConsentPrompt = async (
-	privacyPolicyURL: string
-): Promise<ConsentPresenterSession> => {
-	// Only with a hook: an `await` on nothing would still yield, and let a racing
-	// call reach native first. A provider that left while it waited asks for
-	// nothing now; the ledger asks again on its next trigger.
-	if (beforeConsentPrompt !== null && !(await beforeConsentPrompt())) {
-		return { sessionId: null, status: 'not-required' };
-	}
-	return callNativePrompt(privacyPolicyURL);
-};
 
 /** Open an owed native prompt on the installed engine. With a provider set to
  * `trackingRequest="beforeConsent"`, Apple's tracking alert comes first.
@@ -252,6 +301,58 @@ export const presentPreferences = async (
  */
 export const closeConsentPresenter = (sessionId: string): Promise<void> =>
 	getNativeC15t().closeConsentPresenter(sessionId);
+
+/**
+ * Hand native the provider's auto-present settings.
+ *
+ * @internal
+ * @param settings - Whether native presents by itself, and the URL it links to.
+ * @returns Once native applied them, or `null` from a binary that predates
+ *   native auto-present and has no such method.
+ */
+export const configureNativeAutoPresent = (
+	settings: NativeAutoPresentSettings
+): Promise<void> | null => {
+	const nativeModule = getNativeC15t();
+	return typeof nativeModule.configureAutoPresent === 'function'
+		? nativeModule.configureAutoPresent(JSON.stringify(settings))
+		: null;
+};
+
+/**
+ * Hear each session native puts on screen.
+ *
+ * @internal
+ * @param listener - Receives the session, what it shows, and whether native
+ *   opened it by itself.
+ * @returns Stop listening.
+ */
+export const onConsentPresenterPresented = (
+	listener: (presented: ConsentPresenterPresented) => void
+): (() => void) => {
+	const subscription = getNativeC15tEvents().addListener(
+		'onConsentPresenterPresented',
+		(payload) => listener(parsePresented(payload))
+	);
+	return () => subscription.remove();
+};
+
+/**
+ * Hear each time native owes a prompt it cannot put on screen yet.
+ *
+ * @internal
+ * @param listener - Receives the code and a message for the log.
+ * @returns Stop listening.
+ */
+export const onConsentPresenterUnavailable = (
+	listener: (unavailable: ConsentPresenterUnavailable) => void
+): (() => void) => {
+	const subscription = getNativeC15tEvents().addListener(
+		'onConsentPresenterUnavailable',
+		(payload) => listener(parseUnavailable(payload))
+	);
+	return () => subscription.remove();
+};
 
 /** Subscribe before presenting. Native interaction continues while JS is busy.
  * @param listener - Receives one final outcome per session, no draft toggle events.

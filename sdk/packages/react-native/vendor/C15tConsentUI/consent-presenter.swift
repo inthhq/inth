@@ -110,7 +110,9 @@ public final class ConsentPresenter: ObservableObject {
         presentIfOwed()
     }
 
-    private func presentIfOwed() {
+    /// Open an owed prompt now if ``autoPresent`` says so. Idempotent. A host calls it before it
+    /// reports an outcome, so the prompt that follows is on screen first.
+    func presentIfOwed() {
         guard autoPresent, snapshot.ready, !snapshot.policyPending, snapshot.promptRequirement.kind == .choice,
               presentationID == nil, !pending, suppressedPrompt != promptKey else { return }
         presentationID = UUID()
@@ -132,10 +134,21 @@ public final class ConsentPresenter: ObservableObject {
         confirmDiscard = false
     }
 
+    /// End a session a host asked for but could not put on screen. Nothing was decided or
+    /// dismissed, so it reports no outcome.
+    func withdrawSession() {
+        guard !pending else { return }
+        if presentationID != nil { presentationID = nil }
+        if requestedNotice != nil { requestedNotice = nil }
+        confirmDiscard = false
+    }
+
     /// Close the open session without a commit. Closing the prompt settles it; closing standing
     /// settings does not, so an owed prompt they covered is presented now.
     private func closeSession() {
         if sessionIsPrompt { suppressedPrompt = promptKey }
+        // Closing a notice the host asked for ends that request; it stays owed for the next one.
+        if presentationID == nil, requestedNotice != nil { requestedNotice = nil }
         presentationID = nil
         onOutcome?(.dismissed)
         presentIfOwed()

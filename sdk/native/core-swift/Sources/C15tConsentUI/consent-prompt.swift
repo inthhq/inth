@@ -31,6 +31,11 @@ public final class ConsentPrompt: ObservableObject {
     /// Called each time a prompt or settings session closes, with how it ended. A step that has
     /// to follow the consent prompt, such as a platform permission request, starts here.
     public var onFinished: ((ConsentPresenterOutcome) -> Void)?
+    /// Told first, each time a session closes: the ``ConsentHostDriver`` drawing this prompt for a
+    /// runtime such as React Native.
+    var onHostFinished: ((ConsentPresenterOutcome) -> Void)?
+    /// Told once a cover or sheet has finished animating away, for the same driver.
+    var onHostCoverDismissed: (() -> Void)?
     /// When App Tracking Transparency is asked, relative to this prompt. Set by the scene that
     /// attaches; see ``ConsentTrackingRequest``.
     public private(set) var trackingRequest = ConsentTrackingRequest.afterConsent
@@ -72,7 +77,10 @@ public final class ConsentPrompt: ObservableObject {
         self.isActive = isActive
         self.presenter = ConsentPresenter(core: core, autoPresent: false)
         presenter.onOutcome = { [weak self] outcome in self?.finished(outcome) }
-        presenter.onCoverDismissed = { [weak self] in self?.requestOwedTracking() }
+        presenter.onCoverDismissed = { [weak self] in
+            self?.onHostCoverDismissed?()
+            self?.requestOwedTracking()
+        }
         observers = [
             presenter.$snapshot.sink { [weak self] in
                 self?.checkLaunch($0)
@@ -249,6 +257,7 @@ public final class ConsentPrompt: ObservableObject {
     }
 
     private func finished(_ outcome: ConsentPresenterOutcome) {
+        onHostFinished?(outcome)
         onFinished?(outcome)
         owe(.afterPrompt)
     }

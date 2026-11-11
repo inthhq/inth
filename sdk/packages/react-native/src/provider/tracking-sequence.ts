@@ -10,7 +10,7 @@
 
 import { AppState } from 'react-native';
 
-import { isSnapshotReady } from '../lib/selectors';
+import { isPromptOwed, isSnapshotReady } from '../lib/selectors';
 import type { ConsentDecision } from '../lib/selectors';
 import type { ConsentClient } from '../native/client';
 import { setBeforeConsentPrompt } from '../native/presenter';
@@ -18,11 +18,7 @@ import type {
 	TrackingAuthorization,
 	TrackingRequestPayload,
 } from '../protocol';
-import {
-	isConsentScreenBusy,
-	onConsentScreenChange,
-	selectOwedPromptKey,
-} from './auto-present';
+import { isConsentScreenBusy, onConsentScreenChange } from './auto-present';
 
 /**
  * When the provider asks for App Tracking Transparency.
@@ -275,18 +271,17 @@ const whenActive = (token: SequenceToken): Promise<boolean> =>
 	});
 
 /**
- * Wait until no c15t screen is open or being asked for. Apple will not show
- * its alert over a presentation, and the person should finish one screen first.
+ * Wait until native reports no c15t screen open. Apple will not show its alert
+ * over a presentation, and the person should finish one screen first.
  *
  * @returns `false` when `token` was cancelled first.
  */
 const whenScreensClosed = (
 	client: ConsentClient,
-	token: SequenceToken,
-	includeInFlight: boolean
+	token: SequenceToken
 ): Promise<boolean> =>
 	new Promise((resolve) => {
-		if (token.cancelled || !isConsentScreenBusy(client, includeInFlight)) {
+		if (token.cancelled || !isConsentScreenBusy(client)) {
 			resolve(!token.cancelled);
 			return;
 		}
@@ -298,7 +293,7 @@ const whenScreensClosed = (
 		};
 		token.cleanups.add(settle);
 		listener.stop = onConsentScreenChange(client, () => {
-			if (!isConsentScreenBusy(client, includeInFlight)) {
+			if (!isConsentScreenBusy(client)) {
 				settle(true);
 			}
 		});
@@ -307,21 +302,14 @@ const whenScreensClosed = (
 /** Both waits, again until they hold at once. */
 const whenClear = async function whenClear(
 	client: ConsentClient,
-	token: SequenceToken,
-	stage: ConsentTrackingStage
+	token: SequenceToken
 ): Promise<boolean> {
-	// Before a prompt, the present call in flight is the one this wait gates.
-	const includeInFlight = stage === 'afterPrompt';
-	if (
-		!(await whenActive(token)) ||
-		!(await whenScreensClosed(client, token, includeInFlight))
-	) {
+	if (!(await whenActive(token)) || !(await whenScreensClosed(client, token))) {
 		return false;
 	}
-	return AppState.currentState === 'active' &&
-		!isConsentScreenBusy(client, includeInFlight)
+	return AppState.currentState === 'active' && !isConsentScreenBusy(client)
 		? true
-		: whenClear(client, token, stage);
+		: whenClear(client, token);
 };
 
 /** Apple's request in flight per client, shared so two effects ask once. */
@@ -367,7 +355,7 @@ export const requestSequencedTracking = async function requestSequencedTracking(
 	stage: ConsentTrackingStage,
 	token: SequenceToken
 ): Promise<SequenceResult> {
-	if (!(await whenClear(client, token, stage))) {
+	if (!(await whenClear(client, token))) {
 		return 'cancelled';
 	}
 	// Back from Additional Information: the after-consent rule applies in either order.
@@ -440,6 +428,91 @@ export const requestTrackingBeforeConsent =
 		}
 		return true;
 	};
+
+/** The effect whose before-consent check the auto-present hold started and awaits. */
+const holding = new WeakMap<ConsentClient, SequenceToken>();
+/** Clients whose owed prompt was checked, so native may present it. */
+const released = new WeakSet<ConsentClient>();
+
+/** Ask Apple, or find it need not, for the owed prompt; then release the hold. */
+const checkBeforeConsent = async function checkBeforeConsent(
+	client: ConsentClient,
+	token: SequenceToken,
+	release: () => void
+): Promise<void> {
+	const checked = await requestTrackingBeforeConsent(client, token);
+	if (holding.get(client) === token) {
+		holding.delete(client);
+	}
+	if (checked) {
+		released.add(client);
+	}
+	if (!token.cancelled) {
+		release();
+	}
+};
+
+/**
+ * Whether native auto-present must wait for Apple, for `beforeConsent`.
+ *
+ * Native opens an owed prompt the moment its core owes it, before JavaScript
+ * hears the snapshot, so the hold is in place before a prompt is owed. Until
+ * Apple has answered in this launch, auto-present is released for one owed
+ * prompt at a time: once a prompt is owed, this asks Apple, or finds it need
+ * not, and calls `release` to turn auto-present on. {@link reholdAutoPresent}
+ * takes it back when that prompt's session closes, so the next owed prompt is
+ * checked again: a refusal that a reset cleared no longer skips the ask. A
+ * build where Apple asks nothing (Android, no prompt string) never holds.
+ *
+ * This is the ATT order only. When a prompt is owed is native's to decide.
+ *
+ * @param client - The provider's client.
+ * @param timing - The provider's `trackingRequest`.
+ * @param token - The calling effect's claim.
+ * @param release - Called once the owed prompt was checked, to read the hold again.
+ * @returns `true` while native must not present by itself.
+ */
+export const holdsAutoPresent = function holdsAutoPresent(
+	client: ConsentClient,
+	timing: ConsentTrackingRequest,
+	token: SequenceToken,
+	release: () => void
+): boolean {
+	if (
+		timing !== 'beforeConsent' ||
+		beforeConsentDone.has(client) ||
+		released.has(client)
+	) {
+		return false;
+	}
+	const authorization = client.getTrackingAuthorization();
+	if (authorization === 'unsupported' || authorization === 'restricted') {
+		return false;
+	}
+	// A check a cancelled effect started, such as strict mode's first mount, is
+	// started again by the effect that replaced it.
+	const pending = holding.get(client);
+	if (
+		(pending === undefined || pending.cancelled) &&
+		isPromptOwed(client.getSnapshot())
+	) {
+		holding.set(client, token);
+		void checkBeforeConsent(client, token, release);
+	}
+	return true;
+};
+
+/**
+ * A session closed: hold auto-present again until the next owed prompt is
+ * checked, for `beforeConsent`. See {@link holdsAutoPresent}.
+ *
+ * @param client - The provider's client.
+ */
+export const reholdAutoPresent = function reholdAutoPresent(
+	client: ConsentClient
+): void {
+	released.delete(client);
+};
 
 /** Whether the first ready snapshot owed no prompt, so launch still asks. */
 const launchAsk = new WeakMap<ConsentClient, boolean>();
@@ -526,9 +599,9 @@ const removeBeforeConsentPrompt = function removeBeforeConsentPrompt(
 };
 
 /**
- * Install or remove the wait that holds every native prompt request until
- * Apple has been asked, for `beforeConsent`: the app's own, and the ledger's on
- * a trigger or after a session closes.
+ * Install or remove the wait that holds every prompt the app asks for until
+ * Apple has been asked, for `beforeConsent`. A prompt native opens by itself
+ * is held by {@link holdsAutoPresent} instead.
  *
  * The provider calls this while it renders, before any descendant effect can
  * call `presentConsentPrompt`: React runs child effects, layout and passive,
@@ -559,9 +632,7 @@ export const syncBeforeConsentPrompt = function syncBeforeConsentPrompt(
 		return asked || holder.registration?.proceed === true;
 	};
 	const remove = setBeforeConsentPrompt((): Promise<boolean> =>
-		selectOwedPromptKey(client.getSnapshot()) === null
-			? Promise.resolve(true)
-			: wait()
+		isPromptOwed(client.getSnapshot()) ? wait() : Promise.resolve(true)
 	);
 	holder.registration = {
 		proceed: false,
@@ -595,7 +666,7 @@ export const releaseBeforeConsentPrompt = function releaseBeforeConsentPrompt(
 			registration.releasing &&
 			beforeConsentRegistrations.get(client) === registration
 		) {
-			// The provider has gone: the ledger's waiting request asks for nothing.
+			// The provider has gone: nothing waits on it any more.
 			removeBeforeConsentPrompt(client, false);
 		}
 	});

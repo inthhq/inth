@@ -139,7 +139,8 @@ class ConsentPresenter(val core: ConsentCore, autoPresent: Boolean = true) : Vie
         // Nothing owed ends the episode: the next owed prompt presents even if it looks like an old one.
         presentIfOwed()
     }
-    private fun presentIfOwed() {
+    /** Open an owed prompt now if [autoPresent] says so. Idempotent; a host calls it before it reports an outcome, so the prompt that follows is on screen first. */
+    internal fun presentIfOwed() {
         if (autoPresent && snapshot.ready && !snapshot.policyPending && snapshot.promptRequirement.acknowledge && presentationID == null && !pending && suppressed != promptKey) {
             presentationID = UUID.randomUUID().toString(); preferences = false; fromFirst = false; loadDraft()
             automaticSession = presentationID
@@ -152,6 +153,10 @@ class ConsentPresenter(val core: ConsentCore, autoPresent: Boolean = true) : Vie
      */
     internal fun withdrawAutomaticSession() {
         if (!pending && presentationID != null && presentationID == automaticSession) presentationID = null
+    }
+    /** End a session a host asked for but could not put on screen. Nothing was decided or dismissed, so it reports no outcome. */
+    internal fun withdrawSession() {
+        if (!pending) { presentationID = null; requestedNotice = null }
     }
     /** Open standing privacy settings without replacing an in-flight presentation. */
     fun presentPreferences() {
@@ -214,6 +219,8 @@ class ConsentPresenter(val core: ConsentCore, autoPresent: Boolean = true) : Vie
      */
     private fun closeSession(outcome: ConsentPresenterOutcome) {
         if (sessionIsPrompt) suppressed = promptKey
+        // Closing a notice the host asked for ends that request; it stays owed for the next one.
+        if (presentationID == null) requestedNotice = null
         presentationID = null
         onOutcome?.invoke(outcome)
         presentIfOwed()

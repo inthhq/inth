@@ -69,8 +69,8 @@ export const SNAPSHOT_KEYS = [
  * They are native bookkeeping rather than kernel state, so `@c15t/core` has no such
  * field and the protocol fixtures, which {@link SNAPSHOT_KEYS} is checked against, do
  * not carry them. `promptOwedSince` is the revision at which the prompt owed now
- * became owed, which the auto-present ledger uses to tell a new owed prompt from one
- * it already presented when the bridge delivered only the latest snapshot.
+ * became owed. The native presenters key their auto-present on it; JavaScript only
+ * passes it through.
  */
 export const BRIDGE_SNAPSHOT_KEYS = [
 	'promptOwedSince',
@@ -93,8 +93,7 @@ export const BRIDGE_SNAPSHOT_KEYS = [
  * `gppString: null` means the build writes no GPP string, which is also what a build
  * with GPP off reports. `iabMarketingPurposes: null` means no TC String answer is
  * known, so the ATT sequence does not ask under an IAB policy. `promptOwedSince: null`
- * means the build names no owed prompt, so auto-present falls back to telling prompts
- * apart by the transitions it observes.
+ * means the build names no owed prompt.
  */
 export const ADDITIVE_SNAPSHOT_DEFAULTS = {
 	gppString: null,

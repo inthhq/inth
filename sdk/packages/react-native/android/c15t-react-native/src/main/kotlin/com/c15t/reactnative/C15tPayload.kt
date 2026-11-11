@@ -143,6 +143,11 @@ object C15tPayload {
 		},
 	)
 
+	/** The presenter events, by the names `src/native/presenter.ts` listens for. */
+	const val EVENT_PRESENTER_OUTCOME = "onConsentPresenterOutcome"
+	const val EVENT_PRESENTER_PRESENTED = "onConsentPresenterPresented"
+	const val EVENT_PRESENTER_UNAVAILABLE = "onConsentPresenterUnavailable"
+
 	/** What a presenter call rejects with in a build without the stock consent screens. */
 	const val REJECT_NATIVE_UI_EXCLUDED = "C15T_NATIVE_UI_EXCLUDED"
 	const val MESSAGE_NATIVE_UI_EXCLUDED =
@@ -368,6 +373,29 @@ object C15tPayload {
 			put("policyPending", false)
 		},
 	)
+
+	/** An `onConsentPresenterUnavailable` event: an owed prompt has nowhere to show yet. */
+	fun presenterUnavailable(code: String, message: String): String = encode(
+		buildJsonObject {
+			put("code", code)
+			put("message", message)
+		},
+	)
+
+	/** What `configureAutoPresent` reads: whether native presents by itself, and the URL. */
+	data class AutoPresentSettings(val autoPresent: Boolean, val privacyPolicyUrl: String?)
+
+	/**
+	 * Read a `configureAutoPresent` body, the `NativeAutoPresentSettings` shape.
+	 *
+	 * @return The settings, or `null` when `autoPresent` is not a boolean.
+	 */
+	fun parseAutoPresentSettings(raw: String?): AutoPresentSettings? {
+		val body = parseObject(raw) ?: return null
+		val autoPresent = (body["autoPresent"] as? JsonPrimitive)?.takeIf { !it.isString }?.booleanOrNull ?: return null
+		val url = (body["privacyPolicyURL"] as? JsonPrimitive)?.takeIf { it.isString }?.content
+		return AutoPresentSettings(autoPresent, url)
+	}
 
 	/** An `error` event, in the `NativeSnapshotError` shape. */
 	fun errorEvent(error: KernelError): String = encode(

@@ -247,7 +247,7 @@ class C15tReactNativeModule(appContext: ReactApplicationContext) : NativeC15tSpe
 			if (activity == null || activity.isFinishing || core == null) {
 				promise.reject("C15T_PRESENTER_UNAVAILABLE", "Native presenter needs an active Activity and installed core"); return@runOnUiQueueThread
 			}
-			try { promise.resolve(C15tNativeUi.present(activity, core, preferences, privacyPolicyURL, owner = this) { publish("onConsentPresenterOutcome", it) }) }
+			try { promise.resolve(C15tNativeUi.present(activity, core, preferences, privacyPolicyURL, owner = this) { publish(C15tPayload.EVENT_PRESENTER_OUTCOME, it) }) }
 			// The host refuses the URL before it touches any UI. Retrying the same URL cannot help.
 			catch (error: IllegalArgumentException) { promise.reject("C15T_PRESENTER_INVALID_URL", error.message, error) }
 			catch (error: Exception) { promise.reject("C15T_PRESENTER_UNAVAILABLE", error.message, error) }
@@ -255,6 +255,36 @@ class C15tReactNativeModule(appContext: ReactApplicationContext) : NativeC15tSpe
 	}
 	override fun closeConsentPresenter(sessionId: String, promise: Promise) {
 		context.runOnUiQueueThread { C15tNativeUi.close(sessionId); promise.resolve(null) }
+	}
+
+	/**
+	 * Hand the native prompt the provider's auto-present settings. The native `ConsentPrompt`
+	 * decides when a prompt is owed and presents it; this forwards what it shows as events.
+	 */
+	override fun configureAutoPresent(settings: String, promise: Promise) {
+		val parsed = C15tPayload.parseAutoPresentSettings(settings)
+		if (parsed == null) {
+			promise.reject(REJECT_SETTINGS, "configureAutoPresent needs {\"autoPresent\": boolean, \"privacyPolicyURL\": string | null}"); return
+		}
+		if (!C15tNativeUi.AVAILABLE) {
+			// Nothing to present in this build, so turning it off is already true.
+			if (parsed.autoPresent) promise.reject(C15tPayload.REJECT_NATIVE_UI_EXCLUDED, C15tPayload.MESSAGE_NATIVE_UI_EXCLUDED)
+			else promise.resolve(null)
+			return
+		}
+		if (!ensureCore()) { promise.reject(REJECT_NOT_BOOTSTRAPPED, C15tPayload.MESSAGE_NOT_BOOTSTRAPPED); return }
+		context.runOnUiQueueThread {
+			val core = C15t.current
+			if (core == null) { promise.reject(REJECT_NOT_BOOTSTRAPPED, C15tPayload.MESSAGE_NOT_BOOTSTRAPPED); return@runOnUiQueueThread }
+			val application = context.applicationContext as android.app.Application
+			try {
+				C15tNativeUi.configure(application, context.currentActivity, core, parsed.autoPresent, parsed.privacyPolicyUrl, owner = this, emit = ::publish)
+				followed = core
+				promise.resolve(null)
+			}
+			// Refused before anything changed. Retrying the same URL cannot help.
+			catch (error: IllegalArgumentException) { promise.reject("C15T_PRESENTER_INVALID_URL", error.message, error) }
+		}
 	}
 
 	override fun addListener(eventName: String) {
@@ -284,8 +314,25 @@ class C15tReactNativeModule(appContext: ReactApplicationContext) : NativeC15tSpe
 		val started = C15tReactNativeBootstrap.ensure(context)
 		if (started) {
 			subscribeToCore()
+			followPrompt()
 		}
 		return started
+	}
+
+	/** The core the native prompt was last moved to, so a new install moves it once. */
+	@Volatile
+	private var followed: com.c15t.core.ConsentCore? = null
+
+	/**
+	 * After `C15t.uninstall()` and a new install, move the native prompt to the new core, so
+	 * an owed prompt is presented there too. Only once auto-present was configured.
+	 */
+	private fun followPrompt() {
+		val core = C15t.current ?: return
+		val previous = followed ?: return
+		if (previous === core) return
+		followed = core
+		context.runOnUiQueueThread { C15tNativeUi.follow(core) }
 	}
 
 	/** Subscribe once the core exists, since a subscription before it would be inert. */
@@ -334,5 +381,6 @@ class C15tReactNativeModule(appContext: ReactApplicationContext) : NativeC15tSpe
 		const val REJECT_LOGOUT = "C15T_LOGOUT_FAILED"
 		const val REJECT_RESET = "C15T_RESET_FAILED"
 		const val REJECT_NOT_BOOTSTRAPPED = "C15T_NOT_BOOTSTRAPPED"
+		const val REJECT_SETTINGS = "C15T_INVALID_SETTINGS"
 	}
 }

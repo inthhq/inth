@@ -1,6 +1,21 @@
 {
 	"$comment": "Generated from packages/react-native/src/protocol/bridge-schema.ts by `bun run --cwd packages/react-native generate:bridge-schema`. Do not edit by hand.",
 	"payloads": {
+		"autoPresentSettings": {
+			"direction": "js-to-native",
+			"fields": {
+				"autoPresent": {
+					"nullable": false,
+					"required": true,
+					"type": "boolean"
+				},
+				"privacyPolicyURL": {
+					"nullable": true,
+					"required": true,
+					"type": "string"
+				}
+			}
+		},
 		"bootstrap": {
 			"direction": "native-to-js",
 			"fields": {
@@ -224,6 +239,27 @@
 				}
 			}
 		},
+		"presenterPresented": {
+			"direction": "native-to-js",
+			"fields": {
+				"automatic": {
+					"nullable": false,
+					"required": true,
+					"type": "boolean"
+				},
+				"presentation": {
+					"nullable": false,
+					"required": true,
+					"type": "string",
+					"values": ["prompt", "preferences"]
+				},
+				"sessionId": {
+					"nullable": false,
+					"required": true,
+					"type": "string"
+				}
+			}
+		},
 		"presenterSession": {
 			"direction": "native-to-js",
 			"fields": {
@@ -243,6 +279,21 @@
 					"required": true,
 					"type": "string",
 					"values": ["presented", "already-presented", "not-required"]
+				}
+			}
+		},
+		"presenterUnavailable": {
+			"direction": "native-to-js",
+			"fields": {
+				"code": {
+					"nullable": false,
+					"required": true,
+					"type": "string"
+				},
+				"message": {
+					"nullable": false,
+					"required": true,
+					"type": "string"
 				}
 			}
 		},
