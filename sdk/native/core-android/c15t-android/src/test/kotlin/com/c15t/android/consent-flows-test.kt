@@ -173,6 +173,7 @@ class ConsentFlowsTest {
 		const val OPT_IN = """{"policyResolution":{"version":1,"status":"matched","policyId":"eu",""" +
 			""""matchedBy":"country","fingerprints":{"policy":"p1","choice":"c1","notice":"n1"},""" +
 			""""policy":{"id":"eu","model":"opt-in","prompt":"choice","scopeMode":"permissive",""" +
+			""""rights":["disclosure","preferences"],""" +
 			""""validity":{"choiceMs":2592000000,"noticeMs":15552000000}}},"policySnapshotToken":"snap-1"}"""
 	}
 }
