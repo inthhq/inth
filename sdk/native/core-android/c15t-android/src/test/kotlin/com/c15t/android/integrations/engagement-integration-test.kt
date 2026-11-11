@@ -136,7 +136,7 @@ class BranchIntegrationTest {
 class SingularIntegrationTest {
 	private fun singular(core: ConsentCore, calls: MutableList<String>, category: ConsentCategory = MARKETING) =
 		SingularIntegration(core, category,
-			start = { calls += "start:$it" },
+			start = { calls += "start:$it"; true },
 			limitDataSharing = { calls += "limit:$it" },
 			stopAllTracking = { calls += "stop" },
 			resumeAllTracking = { calls += "resume" },
@@ -177,7 +177,7 @@ class SingularIntegrationTest {
 		val failures = mutableListOf<Exception>()
 		var failStop = false
 		val integration = SingularIntegration(core,
-			start = { calls += "start:$it" },
+			start = { calls += "start:$it"; true },
 			limitDataSharing = { calls += "limit:$it" },
 			stopAllTracking = {
 				if (failStop) error("Singular rejected stop")
@@ -194,6 +194,56 @@ class SingularIntegrationTest {
 		assertEquals(listOf("limit:true"), calls)
 		assertEquals(listOf("Singular rejected stop"), failures.map { it.message })
 		failStop = false
+		integration.close()
+	}
+
+	@Test
+	fun `a failed start is reported, makes no tracking call, and is retried`() {
+		val core = kernel()
+		val calls = mutableListOf<String>()
+		val failures = mutableListOf<Exception>()
+		val outcomes = ArrayDeque(listOf<() -> Boolean>({ error("Singular init threw") }, { false }, { true }))
+		val integration = SingularIntegration(core,
+			start = { calls += "start:$it"; outcomes.removeFirst()() },
+			limitDataSharing = { calls += "limit:$it" },
+			stopAllTracking = { calls += "stop" },
+			resumeAllTracking = { calls += "resume" },
+			trackingOptIn = { calls += "optIn" },
+			onError = failures::add,
+		)
+		assertTrue(core.save(CommitIntent.All).ok)
+		assertEquals("a start that throws makes no tracking call", listOf("start:false"), calls.drain())
+		// An explicit sync throws the failure to its caller.
+		try {
+			integration.sync()
+			throw AssertionError("sync must report the failed start")
+		} catch (error: IllegalStateException) {
+			assertEquals("Singular did not start", error.message)
+		}
+		assertEquals("a start that returns false makes no tracking call", listOf("start:false"), calls.drain())
+		integration.sync()
+		assertEquals(listOf("start:false", "limit:false", "resume", "optIn"), calls.drain())
+		assertEquals(listOf("Singular init threw"), failures.map { it.message })
+		assertTrue(core.save(CommitIntent.Necessary).ok)
+		assertEquals(listOf("stop", "limit:true"), calls.drain())
+		integration.close()
+	}
+
+	@Test
+	fun `a withdrawal after a failed start still stops what start may have begun`() {
+		val core = kernel()
+		val calls = mutableListOf<String>()
+		val integration = SingularIntegration(core,
+			start = { calls += "start:$it"; false },
+			limitDataSharing = { calls += "limit:$it" },
+			stopAllTracking = { calls += "stop" },
+			resumeAllTracking = { calls += "resume" },
+			trackingOptIn = { calls += "optIn" },
+			onError = {},
+		)
+		assertTrue(core.save(CommitIntent.All).ok)
+		assertTrue(core.save(CommitIntent.Necessary).ok)
+		assertEquals(listOf("start:false", "stop", "limit:true"), calls)
 		integration.close()
 	}
 

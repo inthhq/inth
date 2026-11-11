@@ -518,3 +518,67 @@ describe('Braze, Singular and Branch withdrawal survives a failing vendor call',
 		await vi.waitFor(() => expect(calls).toEqual(['level:NONE', 'dma:false']));
 	});
 });
+
+describe('Singular start', () => {
+	const singularClient = (
+		calls: string[],
+		start: (limit: boolean) => Promise<void> | undefined
+	) => ({
+		limitDataSharing: (limit: boolean) => log(calls, `limit:${limit}`),
+		resumeAllTracking: () => log(calls, 'resume'),
+		start: (limit: boolean) => {
+			log(calls, `start:${limit}`);
+			return start(limit);
+		},
+		stopAllTracking: () => log(calls, 'stop'),
+		trackingOptIn: () => log(calls, 'optIn'),
+	});
+
+	test('a failed start is reported, makes no tracking call, and is retried', async () => {
+		const fake = createFakeNativeModule({ snapshot: grant() });
+		const calls: string[] = [];
+		const failure = new Error('Singular init threw');
+		const onError = vi.fn();
+		let fail = true;
+		const integration = connectSingular(
+			singularClient(calls, () => (fail ? Promise.reject(failure) : undefined)),
+			{ onError }
+		);
+		await integration.ready;
+		fake.pushSnapshot(grant('marketing'));
+		await vi.waitFor(() => expect(onError).toHaveBeenCalledWith(failure));
+		await settle(calls);
+		expect(calls.splice(0)).toEqual(['start:false']);
+		fail = false;
+		await integration.sync();
+		await settle(calls);
+		expect(calls.splice(0)).toEqual([
+			'start:false',
+			'limit:false',
+			'resume',
+			'optIn',
+		]);
+		fake.pushSnapshot(grant());
+		await settle(calls);
+		expect(calls).toEqual(['stop', 'limit:true']);
+		await integration.disconnect();
+	});
+
+	test('a withdrawal after a failed start still stops what start may have begun', async () => {
+		const fake = createFakeNativeModule({ snapshot: grant() });
+		const calls: string[] = [];
+		const integration = connectSingular(
+			singularClient(calls, () =>
+				Promise.reject(new Error('Singular init threw'))
+			),
+			{ onError: vi.fn() }
+		);
+		await integration.ready;
+		fake.pushSnapshot(grant('marketing'));
+		await settle(calls);
+		fake.pushSnapshot(grant());
+		await settle(calls);
+		expect(calls).toEqual(['start:false', 'stop', 'limit:true']);
+		await integration.disconnect();
+	});
+});

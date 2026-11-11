@@ -108,6 +108,46 @@ final class EngagementIntegrationTests: XCTestCase {
         await core.waitUntilIdle()
     }
 
+    func testSingularFailedStartMakesNoTrackingCallAndIsRetried() async throws {
+        let core = try await resolvedCore()
+        let calls = VendorCalls()
+        let outcomes = StartOutcomes([false, true])
+        let integration = SingularIntegration(
+            core: core,
+            start: { calls.append("start:\($0)"); return outcomes.next() },
+            limitDataSharing: { calls.append("limit:\($0)") },
+            stopAllTracking: { calls.append("stop") },
+            resumeAllTracking: { calls.append("resume") },
+            trackingOptIn: { calls.append("optIn") }
+        )
+        XCTAssertEqual(core.save(.all).status, .committed)
+        XCTAssertEqual(calls.drain(), ["start:false"], "a start that returns false makes no tracking call")
+        integration.sync()
+        XCTAssertEqual(calls.drain(), ["start:false", "limit:false", "resume", "optIn"])
+        XCTAssertEqual(core.save(.necessary).status, .committed)
+        XCTAssertEqual(calls.drain(), ["stop", "limit:true"])
+        integration.cancel()
+        await core.waitUntilIdle()
+    }
+
+    func testSingularWithdrawalAfterAFailedStartStillStops() async throws {
+        let core = try await resolvedCore()
+        let calls = VendorCalls()
+        let integration = SingularIntegration(
+            core: core,
+            start: { calls.append("start:\($0)"); return false },
+            limitDataSharing: { calls.append("limit:\($0)") },
+            stopAllTracking: { calls.append("stop") },
+            resumeAllTracking: { calls.append("resume") },
+            trackingOptIn: { calls.append("optIn") }
+        )
+        XCTAssertEqual(core.save(.all).status, .committed)
+        XCTAssertEqual(core.save(.necessary).status, .committed)
+        XCTAssertEqual(calls.all, ["start:false", "stop", "limit:true"])
+        integration.cancel()
+        await core.waitUntilIdle()
+    }
+
     func testSingularMarketingOnlyChangeWhileTrackingChangesOnlyTheLimit() async throws {
         let core = try await resolvedCore()
         let calls = VendorCalls()
@@ -163,11 +203,22 @@ final class EngagementIntegrationTests: XCTestCase {
         SingularIntegration(
             core: core,
             category: category,
-            start: { calls.append("start:\($0)") },
+            start: { calls.append("start:\($0)"); return true },
             limitDataSharing: { calls.append("limit:\($0)") },
             stopAllTracking: { calls.append("stop") },
             resumeAllTracking: { calls.append("resume") },
             trackingOptIn: { calls.append("optIn") }
         )
+    }
+}
+
+/// Start results handed out in order, safe from any thread.
+private final class StartOutcomes: @unchecked Sendable {
+    private let lock = NSLock()
+    private var remaining: [Bool]
+    init(_ outcomes: [Bool]) { remaining = outcomes }
+    func next() -> Bool {
+        lock.lock(); defer { lock.unlock() }
+        return remaining.isEmpty ? true : remaining.removeFirst()
     }
 }

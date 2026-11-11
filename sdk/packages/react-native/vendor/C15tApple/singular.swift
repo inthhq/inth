@@ -9,8 +9,11 @@ import Foundation
 /// Singular's privacy calls need a started SDK, and `Singular.start` begins a session
 /// at once, so the helper owns starting. Do not call `Singular.start` yourself. On
 /// the first grant, the helper calls `start` with the data-sharing limit; call
-/// `Singular.limitDataSharing` with it and then `Singular.start` there. It then calls
-/// `resumeAllTracking` and `trackingOptIn` once per grant. While the category has
+/// `Singular.limitDataSharing` with it, then return what `Singular.start` returns. If
+/// it returns `false`, the helper makes no tracking call and tries `start` again on
+/// the next update or ``sync()``; restricting calls still follow consent while it may
+/// have started. Once Singular started, the helper calls `resumeAllTracking` and
+/// `trackingOptIn` once per grant. While the category has
 /// never been granted in this process, the helper makes no Singular call, because
 /// Singular is not running. After it has started, withdrawal calls `stopAllTracking`,
 /// which Singular keeps across launches.
@@ -26,7 +29,8 @@ public final class SingularIntegration: @unchecked Sendable {
     /// - Parameters:
     ///   - core: The app's installed native engine.
     ///   - category: The permission that lets Singular track, defaulting to marketing.
-    ///   - start: Starts Singular with the given data-sharing limit. Called once.
+    ///   - start: Starts Singular with the given data-sharing limit and returns whether
+    ///     it started. Called until it returns `true`.
     ///   - limitDataSharing: Calls `Singular.limitDataSharing` with the given value.
     ///   - stopAllTracking: Calls `Singular.stopAllTracking()`.
     ///   - resumeAllTracking: Calls `Singular.resumeAllTracking()`.
@@ -34,30 +38,36 @@ public final class SingularIntegration: @unchecked Sendable {
     public init(
         core: ConsentCore,
         category: OptionalConsentCategory = .marketing,
-        start: @escaping @Sendable (_ limitDataSharing: Bool) -> Void,
+        start: @escaping @Sendable (_ limitDataSharing: Bool) -> Bool,
         limitDataSharing: @escaping @Sendable (Bool) -> Void,
         stopAllTracking: @escaping @Sendable () -> Void,
         resumeAllTracking: @escaping @Sendable () -> Void,
         trackingOptIn: @escaping @Sendable () -> Void
     ) {
-        let started = StartedFlag()
+        let progress = StartProgress()
         binding = trackingAndAdsBinding(core: core, category: category.category) { previous, state, current in
             if state.tracking {
-                // Set before start runs, so a withdrawal during start stops what it began.
-                if current().tracking && started.claim() {
-                    start(!(state.ads.adUserData && state.ads.adPersonalization))
+                // Restricting comes first, so a start in flight or failing cannot delay it.
+                var limited = false
+                if progress.mayHaveStarted && limits(current().ads) {
+                    limitDataSharing(true)
+                    limited = true
+                }
+                if current().tracking && progress.beginStart() {
+                    progress.finishStart(started: start(limits(state.ads)))
                 }
                 // Each call that follows reads current consent; a withdrawal is applied next.
                 let now = current()
-                guard now.tracking else { return }
-                limitDataSharing(!(now.ads.adUserData && now.ads.adPersonalization))
+                guard now.tracking && progress.started else { return }
+                let limit = limits(now.ads)
+                if !(limit && limited) { limitDataSharing(limit) }
                 if previous?.tracking != true && current().tracking {
                     resumeAllTracking()
                     if current().tracking { trackingOptIn() }
                 }
-            } else if started.value {
+            } else if progress.mayHaveStarted {
                 stopAllTracking()
-                limitDataSharing(!(state.ads.adUserData && state.ads.adPersonalization))
+                limitDataSharing(true)
             }
         }
     }
@@ -72,23 +82,36 @@ public final class SingularIntegration: @unchecked Sendable {
     deinit { binding.cancel() }
 }
 
-/// Whether Singular was started, readable from any thread.
-private final class StartedFlag: @unchecked Sendable {
-    private let lock = NSLock()
-    private var started = false
+/// Whether Singular must limit data sharing: unless both DMA signals are granted.
+private func limits(_ ads: GoogleAdsConsent) -> Bool {
+    !(ads.adUserData && ads.adPersonalization)
+}
 
-    var value: Bool {
-        lock.lock()
-        defer { lock.unlock() }
-        return started
+/// How far starting Singular got, readable from any thread.
+private final class StartProgress: @unchecked Sendable {
+    private let lock = NSLock()
+    private var attempted = false
+    private var inFlight = false
+    private var succeeded = false
+
+    /// Whether `start` ever ran, so Singular may be running.
+    var mayHaveStarted: Bool { lock.lock(); defer { lock.unlock() }; return attempted }
+
+    /// Whether `start` reported success.
+    var started: Bool { lock.lock(); defer { lock.unlock() }; return succeeded }
+
+    /// Claims a start. Returns `false` while one is in flight or after one succeeded.
+    func beginStart() -> Bool {
+        lock.lock(); defer { lock.unlock() }
+        guard !succeeded && !inFlight else { return false }
+        attempted = true
+        inFlight = true
+        return true
     }
 
-    /// Marks Singular started. Returns `true` only for the first caller.
-    func claim() -> Bool {
-        lock.lock()
-        defer { lock.unlock() }
-        guard !started else { return false }
-        started = true
-        return true
+    func finishStart(started: Bool) {
+        lock.lock(); defer { lock.unlock() }
+        inFlight = false
+        succeeded = started
     }
 }

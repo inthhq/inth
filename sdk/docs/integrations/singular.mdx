@@ -45,6 +45,12 @@ launch silent. Instead, the helper calls your `start` callback on the first
 grant, with the data-sharing limit for the config, and makes no Singular call
 before that.
 
+If starting fails (Swift and Kotlin `start` return `false`, or it throws or
+rejects), the helper reports it, makes no tracking call, and tries `start`
+again on the next consent update or `sync()`. Calls that restrict tracking,
+such as `stopAllTracking()` and `limitDataSharing(true)`, still follow consent
+after a failed start, because Singular may have started anyway.
+
 ## Before you start
 
 Complete the [Swift](/docs/frameworks/swift/quickstart),
@@ -76,7 +82,7 @@ final class SingularConsentOwner {
             core: core,
             start: { limit in
                 Singular.limitDataSharing(limit)
-                Singular.start(SingularConfig(apiKey: "YOUR_SDK_KEY", andSecret: "YOUR_SDK_SECRET"))
+                return Singular.start(SingularConfig(apiKey: "YOUR_SDK_KEY", andSecret: "YOUR_SDK_SECRET"))
             },
             limitDataSharing: { Singular.limitDataSharing($0) },
             stopAllTracking: { Singular.stopAllTracking() },
