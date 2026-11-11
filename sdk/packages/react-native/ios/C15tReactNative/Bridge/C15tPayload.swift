@@ -172,7 +172,10 @@ public enum C15tPayload {
     /// says whether the app or the device caused it.
     public static func snapshot(
         _ snapshot: ConsentSnapshot,
-        fallbackLanguage: String = defaultLanguage
+        fallbackLanguage: String = defaultLanguage,
+        iabConsent: IABCommittedConsent? = nil,
+        iabAcceptAll: IABChoices? = nil,
+        iabHeadlessGaps: [String] = []
     ) -> String {
         guard var wire = value(of: snapshot) else {
             // Encoding the core's own snapshot cannot fail in practice, and a silent
@@ -218,8 +221,68 @@ public enum C15tPayload {
         // new owed prompt from one it already presented, even when it skipped snapshots between.
         fields["promptOwedSince"] = snapshot.promptOwedSince.map { .integer(Int64($0)) } ?? .null
 
+        // The headless TCF state rides inside `iab`: the committed decision a screen shows
+        // and reopens with (`null` while none is current), whether a draft can be edited and
+        // saved now, and what Accept all saves under the publisher's disclosure. `acceptAll`
+        // is `null` exactly when `editable` is false. `headlessUnsupported` names what a screen
+        // built on the served list could not disclose; while it is not empty, `editable` stays
+        // false, so no custom screen saves choices it could not show.
+        if case var .object(iab)? = fields["iab"] {
+            let acceptAll = iabHeadlessGaps.isEmpty ? iabAcceptAll : nil
+            iab["committed"] = iabConsent.map(committedIAB) ?? .null
+            iab["editable"] = .bool(acceptAll != nil)
+            iab["acceptAll"] = acceptAll.flatMap { value(of: $0) } ?? .null
+            iab["headlessUnsupported"] = .array(iabHeadlessGaps.map { .string($0) })
+            fields["iab"] = .object(iab)
+        }
+
         wire = .object(fields)
         return encodeValue(wire) ?? "{}"
+    }
+
+    /// What a custom screen built on the served vendor list could not disclose. Publisher
+    /// restrictions change a vendor's legal bases away from the list, and Additional Consent
+    /// providers are not on the snapshot at all; the stock screens show both.
+    /// Read the snapshot and the bridge's additions to it as one revision.
+    ///
+    /// The core locks each accessor on its own, so a commit between `snapshot()` and
+    /// `iabConsent()` would pair one revision's snapshot with the next one's TCF decision,
+    /// and JavaScript caches a payload by its revision. The additions are read between two
+    /// snapshot reads and kept only when both name the same revision; otherwise the read
+    /// starts again, up to `attempts` times, and the last read is returned.
+    public static func consistently<Additions>(
+        snapshot: () -> ConsentSnapshot, attempts: Int = 4, additions: () -> Additions
+    ) -> (ConsentSnapshot, Additions) {
+        var before = snapshot()
+        var read = additions()
+        for _ in 1..<max(attempts, 1) {
+            let after = snapshot()
+            if after.revision == before.revision { return (before, read) }
+            before = after
+            read = additions()
+        }
+        return (before, read)
+    }
+
+    public static func headlessIABGaps(
+        publisherRestrictions: [IABPublisherRestriction], adTechProviders: [AdTechProvider]?
+    ) -> [String] {
+        var gaps: [String] = []
+        if !publisherRestrictions.isEmpty { gaps.append(headlessGapPublisherRestrictions) }
+        if !(adTechProviders ?? []).isEmpty { gaps.append(headlessGapAdditionalConsent) }
+        return gaps
+    }
+
+    public static let headlessGapPublisherRestrictions = "publisher-restrictions"
+    public static let headlessGapAdditionalConsent = "additional-consent-providers"
+
+    /// The committed IAB decision as JavaScript reads it.
+    static func committedIAB(_ consent: IABCommittedConsent) -> JSONValue {
+        .object([
+            "addtlConsent": stringOrNull(consent.addtlConsent),
+            "choices": value(of: consent.choices) ?? .null,
+            "tcString": .string(consent.tcString),
+        ])
     }
 
     /// The `CommitResult` for `result`.
@@ -413,22 +476,39 @@ public enum C15tPayload {
         case "necessary":
             return .necessary
         case "explicit":
-            guard let consents = body["consents"]?.objectValue else { return nil }
-            var parsed: [OptionalConsentCategory: Bool] = [:]
-            for (name, value) in consents {
-                guard let category = OptionalConsentCategory(rawValue: name),
-                      let granted = value.boolValue
-                else {
-                    // `necessary` is nobody's choice, and an unknown category is not
-                    // one this build should invent a permission for.
-                    return nil
-                }
-                parsed[category] = granted
-            }
+            guard let consents = body["consents"]?.objectValue,
+                  let parsed = parseCategories(consents)
+            else { return nil }
             return .custom(parsed)
+        case "iab":
+            // A complete TCF draft from a headless screen. The core validates every ID
+            // and legal basis against the served list; this only refuses a body that is
+            // not the documented shape.
+            guard let raw = body["choices"], raw.objectValue != nil,
+                  let text = encodeValue(raw), let data = text.data(using: .utf8),
+                  let choices = try? JSONDecoder().decode(IABChoices.self, from: data),
+                  let consents = body["consents"]?.objectValue,
+                  let categories = parseCategories(consents)
+            else { return nil }
+            return .iab(choices, categories: categories)
         default:
             return nil
         }
+    }
+
+    private static func parseCategories(_ consents: [String: JSONValue]) -> [OptionalConsentCategory: Bool]? {
+        var parsed: [OptionalConsentCategory: Bool] = [:]
+        for (name, value) in consents {
+            guard let category = OptionalConsentCategory(rawValue: name),
+                  let granted = value.boolValue
+            else {
+                // `necessary` is nobody's choice, and an unknown category is not
+                // one this build should invent a permission for.
+                return nil
+            }
+            parsed[category] = granted
+        }
+        return parsed
     }
 
     /// Read a `NativeOverridesInput` into a complete override record.

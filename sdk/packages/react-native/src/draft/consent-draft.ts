@@ -12,7 +12,11 @@
 
 import { isProduction } from '../native/client';
 import type { ConsentClient } from '../native/client';
-import type { CommitResult, ConsentSnapshot } from '../protocol';
+import type {
+	CommitResult,
+	ConsentSnapshot,
+	NativeIABChoices,
+} from '../protocol';
 import {
 	CONSENT_CATEGORIES,
 	OPTIONAL_CONSENT_CATEGORIES,
@@ -22,6 +26,7 @@ import type {
 	ConsentState,
 	OptionalConsentCategory,
 } from '../protocol/vocabulary';
+import { sameIABChoices, seedIABChoices } from './iab-choices';
 
 /** What a draft holds at one moment. */
 export interface ConsentDraftState {
@@ -49,6 +54,11 @@ export interface ConsentDraftState {
 	 * `reset`, so an older intention never overwrites a newer decision.
 	 */
 	readonly staleCategories: readonly OptionalConsentCategory[];
+	/**
+	 * The staged TCF selection under an `iab` policy with a served vendor list,
+	 * seeded from the committed decision. `null` otherwise.
+	 */
+	readonly iab: NativeIABChoices | null;
 }
 
 /** A draft store bound to one native client. */
@@ -80,6 +90,17 @@ export interface ConsentDraft {
 	/** Replace the defaults for categories without a receipt. */
 	readonly setDefaults: (defaults: Partial<ConsentState> | undefined) => void;
 	/**
+	 * Stage a change to the TCF selection. Ignored outside TCF.
+	 *
+	 * @internal
+	 */
+	readonly stageIAB: (
+		edit: (
+			choices: NativeIABChoices,
+			snapshot: ConsentSnapshot
+		) => NativeIABChoices
+	) => void;
+	/**
 	 * Run a save that will be settled into this draft. Until it resolves, a
 	 * receipt change on a staged category is left for `settle` to judge, since
 	 * the save's own write moves receipts too.
@@ -100,7 +121,8 @@ export interface ConsentDraft {
 	 */
 	readonly settle: (
 		submitted: Readonly<ConsentState>,
-		revision: number | null
+		revision: number | null,
+		submittedIAB?: NativeIABChoices | null
 	) => void;
 }
 
@@ -116,6 +138,7 @@ const STALE_RESULT: CommitResult = {
 
 interface Seed {
 	readonly values: ConsentState;
+	readonly iab: NativeIABChoices | null;
 	readonly displayed: readonly AllConsentNames[];
 	readonly policyKey: string;
 }
@@ -142,10 +165,13 @@ const seedFrom = function seedFrom(
 	) as ConsentState;
 	return {
 		displayed,
+		iab: seedIABChoices(snapshot),
 		policyKey: JSON.stringify([
 			snapshot.resolution.policyId,
 			snapshot.resolution.fingerprint,
 			displayed,
+			snapshot.model,
+			snapshot.iab?.gvl?.vendorListVersion ?? null,
 		]),
 		values,
 	};
@@ -163,12 +189,15 @@ const receiptOf = (
 
 const differs = function differs(
 	values: ConsentState,
-	baseline: ConsentState,
-	displayed: readonly AllConsentNames[]
+	iab: NativeIABChoices | null,
+	baseline: Seed
 ): boolean {
-	return displayed.some(
-		(category) =>
-			isOptional(category) && values[category] !== baseline[category]
+	return (
+		!sameIABChoices(iab, baseline.iab) ||
+		baseline.displayed.some(
+			(category) =>
+				isOptional(category) && values[category] !== baseline.values[category]
+		)
 	);
 };
 
@@ -203,13 +232,18 @@ export const createConsentDraft = function createConsentDraft(
 	let currentDefaults = defaults;
 	let snapshot = client.getSnapshot();
 	let seed = seedFrom(snapshot, currentDefaults);
-	let { values } = seed;
+	let { iab, values } = seed;
 	let stale = false;
 	let staleCategories: readonly OptionalConsentCategory[] = [];
+	/** An edited TCF selection held back while native cannot open a draft. */
+	let withdrawnIAB: NativeIABChoices | null = null;
+	/** Whether losing editability is the only reason the draft is stale. */
+	let staleByWithdrawal = false;
 	/** Saves through this draft, or settled into it, whose reply has not arrived. */
 	let savesInFlight = 0;
 	let state: ConsentDraftState = {
 		displayedCategories: seed.displayed,
+		iab,
 		isDirty: false,
 		isStale: false,
 		staleCategories,
@@ -227,13 +261,15 @@ export const createConsentDraft = function createConsentDraft(
 	const publish = function publish(): void {
 		const next: ConsentDraftState = {
 			displayedCategories: seed.displayed,
-			isDirty: differs(values, seed.values, seed.displayed),
+			iab,
+			isDirty: differs(values, iab, seed),
 			isStale: stale || staleCategories.length > 0,
 			staleCategories,
 			values,
 		};
 		if (
 			next.values === state.values &&
+			next.iab === state.iab &&
 			next.displayedCategories === state.displayedCategories &&
 			next.isDirty === state.isDirty &&
 			next.isStale === state.isStale &&
@@ -250,10 +286,12 @@ export const createConsentDraft = function createConsentDraft(
 	/** Reseed from the record, dropping staged edits. */
 	const reseed = function reseed(): void {
 		seed = seedFrom(snapshot, currentDefaults);
-		({ values } = seed);
+		({ iab, values } = seed);
 		staged.clear();
 		stale = false;
 		staleCategories = [];
+		withdrawnIAB = null;
+		staleByWithdrawal = false;
 		publish();
 	};
 
@@ -308,14 +346,50 @@ export const createConsentDraft = function createConsentDraft(
 		}
 		snapshot = latest;
 		const next = seedFrom(snapshot, currentDefaults);
-		if (staged.size === 0 && staleCategories.length === 0) {
+		if (withdrawnIAB !== null && next.iab !== null) {
+			// Native can open a draft again: hand the selection back, so it can be
+			// saved or reset. Nothing else changed if the policy and the committed
+			// decision are the ones it was made against.
+			iab = withdrawnIAB;
+			withdrawnIAB = null;
+			if (
+				staleByWithdrawal &&
+				next.policyKey === seed.policyKey &&
+				sameIABChoices(seed.iab, next.iab)
+			) {
+				stale = false;
+			}
+			staleByWithdrawal = false;
+		}
+		const iabEdited = !sameIABChoices(iab ?? withdrawnIAB, seed.iab);
+		if (staged.size === 0 && staleCategories.length === 0 && !iabEdited) {
 			seed = next;
-			({ values } = next);
+			({ iab, values } = next);
+			withdrawnIAB = null;
 			stale = false;
-		} else if (next.policyKey === seed.policyKey) {
-			rebase(next);
-		} else {
+		} else if (
+			next.policyKey !== seed.policyKey ||
+			(iabEdited && !sameIABChoices(seed.iab, next.iab))
+		) {
+			// Native can no longer open a draft at all: withdraw the selection so no
+			// control offers an edit every save would refuse, and keep it to hand
+			// back when native can again.
+			if (next.iab === null && iab !== null) {
+				staleByWithdrawal = !stale && next.policyKey === seed.policyKey;
+				withdrawnIAB = iab;
+				iab = null;
+			}
+			// A new policy, or a TCF decision committed elsewhere under an edited
+			// selection: saving the edit would overwrite something the subject never
+			// saw, so it waits for a review.
 			stale = true;
+		} else {
+			// The same authority. Untouched parts take the new record, and the save is
+			// pinned to its revision.
+			if (!iabEdited) {
+				({ iab } = next);
+			}
+			rebase(next);
 		}
 		publish();
 	};
@@ -369,7 +443,8 @@ export const createConsentDraft = function createConsentDraft(
 
 	const settle = function settle(
 		submitted: Readonly<ConsentState>,
-		revision: number | null
+		revision: number | null,
+		submittedIAB?: NativeIABChoices | null
 	): void {
 		const later = [...staged.keys()].filter(
 			(category) => values[category] !== submitted[category]
@@ -377,6 +452,13 @@ export const createConsentDraft = function createConsentDraft(
 		const edits = Object.fromEntries(
 			later.map((category) => [category, values[category]])
 		);
+		// A TCF edit made while the save was pending is newer than the save, held
+		// back or not.
+		const pendingIAB = iab ?? withdrawnIAB;
+		const laterIAB =
+			submittedIAB !== undefined && !sameIABChoices(pendingIAB, submittedIAB)
+				? pendingIAB
+				: null;
 		snapshot = client.getSnapshot();
 		// The record moved past this save, so another decision landed after it. It
 		// may have decided a category edited during the save; nothing here can tell
@@ -387,10 +469,24 @@ export const createConsentDraft = function createConsentDraft(
 			markStale(
 				later.filter((category) => seed.values[category] !== edits[category])
 			);
-			publish();
 		} else {
 			stage(edits);
 		}
+		if (laterIAB !== null && iab !== null) {
+			iab = laterIAB;
+			// The same rule for the TCF selection: a decision after the save may have
+			// been made over it, so the subject reviews before saving it.
+			stale = overtaken;
+		} else if (laterIAB !== null && snapshot.model === 'iab') {
+			// Native cannot open a draft now. Hold the edit back, as a withdrawal
+			// does, and hand it back when native can. Unless something landed after
+			// this save, the decision it was made over is the one the save committed.
+			withdrawnIAB = laterIAB;
+			stale = true;
+			staleByWithdrawal = !overtaken;
+			seed = { ...seed, iab: overtaken ? null : (submittedIAB ?? null) };
+		}
+		publish();
 	};
 
 	/**
@@ -443,19 +539,23 @@ export const createConsentDraft = function createConsentDraft(
 				.map((category) => [category, values[category]])
 		) as Partial<Record<OptionalConsentCategory, boolean>>;
 		const submitted = values;
-		const pinned = client.bootstrap.commitRevision;
+		const submittedIAB = iab;
+		// A binary that commits a TCF draft also checks the revision, so a TCF
+		// selection is always pinned; it travels with the categories.
+		const pinned = iab !== null || client.bootstrap.commitRevision;
 		if (!pinned) {
 			warnUnpinned(client);
 		}
+		const revision = pinned ? { revision: snapshot.revision } : {};
 		const result = await whileSaving(() =>
 			client.commit(
-				pinned
-					? { action: 'explicit', consents, revision: snapshot.revision }
-					: { action: 'explicit', consents }
+				iab === null
+					? { action: 'explicit', consents, ...revision }
+					: { action: 'iab', choices: iab, consents, ...revision }
 			)
 		);
 		if (result.ok) {
-			settle(submitted, result.revision);
+			settle(submitted, result.revision, submittedIAB);
 			return result;
 		}
 		// Nothing of this save was written, so every receipt that moved while it
@@ -491,18 +591,30 @@ export const createConsentDraft = function createConsentDraft(
 		setDefaults: (next) => {
 			currentDefaults = next;
 			// Only a clean draft takes new defaults: a staged edit, an overtaken
-			// category or a policy change still waits for the subject's review.
+			// category, a policy change or a held-back TCF selection still waits for
+			// the subject's review.
 			if (
 				staged.size === 0 &&
 				staleCategories.length === 0 &&
 				!stale &&
-				!differs(values, seed.values, seed.displayed)
+				withdrawnIAB === null &&
+				!differs(values, iab, seed)
 			) {
 				reseed();
 			}
 		},
 		settle,
-
+		stageIAB: (edit) => {
+			sync();
+			if (iab === null) {
+				return;
+			}
+			const next = edit(iab, snapshot);
+			if (next !== iab) {
+				iab = next;
+				publish();
+			}
+		},
 		subscribe: (listener) => {
 			listeners.add(listener);
 			if (unsubscribeClient === null) {

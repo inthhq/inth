@@ -116,6 +116,16 @@ export {
 } from './hooks';
 export type { ConsentActions, SaveConsentsInput } from './hooks';
 export { ConsentDraftProvider, useConsentDraft } from './draft';
+export {
+	useIAB,
+	useIABEnabled,
+	useIABSnapshot,
+	usePurposeConsent,
+	useSpecialFeatureOptIn,
+	useTCString,
+	useVendorConsent,
+} from './hooks';
+export type { IABDraftHandle } from './hooks';
 export type {
 	ConsentDraftHandle,
 	ConsentDraftProviderProps,

@@ -237,6 +237,25 @@ class ConsentCore(
 		else IabDraft(state.get().revision, committedIab?.choices?.detached() ?: IabChoices())
 	}
 
+	/**
+	 * What Accept all saves on the current disclosed list: every live partner's bases under the
+	 * publisher's disclosure and restrictions, exactly as [save] builds them for [CommitIntent.All].
+	 * `null` whenever [openIabDraft] is.
+	 */
+	/**
+	 * The publisher restrictions this core was configured with, empty without IAB. A screen that
+	 * shows the served list as it is discloses the wrong legal bases while any are set; the core's
+	 * own projection is in [iabPresentation].
+	 */
+	val iabPublisherRestrictions: List<IabPublisherRestriction> get() = iabConfiguration?.publisherRestrictions.orEmpty()
+
+	fun iabAcceptAllChoices(): IabChoices? = synchronized(mutationLock) {
+		if (openIabDraft() == null) return@synchronized null
+		val gvl = state.get().iab?.gvl ?: return@synchronized null
+		val configuration = iabConfiguration ?: return@synchronized null
+		IabAuthority.accepting(gvl, configuration, currentAdditionalConsentList()?.providers?.map { it.id })
+	}
+
     /** Capture retained disclosure and a draft atomically. Check canEdit before offering grants. */
     fun iabPresentation(): IabPresentation? = synchronized(mutationLock) {
         if (evaluationPolicy?.model != ConsentModel.IAB) return@synchronized null

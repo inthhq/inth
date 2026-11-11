@@ -77,6 +77,23 @@ export const useConsentDraftStore =
 		return shared?.client === client ? shared : rootConsentDraft(client);
 	};
 
+/**
+ * One slice of the nearest draft. The component rerenders only when the slice
+ * changes, so a vendor row does not redraw for an edit to another vendor.
+ *
+ * @param selector - Picks the slice. Return a primitive or a reference the
+ *   draft already holds.
+ * @returns The selected slice.
+ * @internal
+ */
+export const useConsentDraftSlice = function useConsentDraftSlice<SliceType>(
+	selector: (state: ConsentDraftState) => SliceType
+): SliceType {
+	const draft = useConsentDraftStore();
+	const read = () => selector(draft.getState());
+	return useSyncExternalStore(draft.subscribe, read, read);
+};
+
 /** A local, unsaved selection, committed only by an explicit save. */
 export interface ConsentDraftHandle extends ConsentDraftState {
 	/**

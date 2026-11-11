@@ -6,6 +6,10 @@ import com.c15t.consentui.ConsentHostSession
 import com.c15t.core.CommitIntent
 import com.c15t.core.CommitResult
 import com.c15t.core.ConsentCore
+import com.c15t.core.iab.AdTechProvider
+import com.c15t.core.iab.IabChoices
+import com.c15t.core.iab.IabCommittedConsent
+import com.c15t.core.iab.IabPublisherRestriction
 import com.c15t.core.model.ConsentCategory
 import com.c15t.core.model.ConsentSnapshot
 import com.c15t.core.model.KernelError
@@ -175,6 +179,9 @@ object C15tPayload {
 	fun snapshot(
 		snapshot: ConsentSnapshot,
 		fallbackLanguage: String = DEFAULT_LANGUAGE,
+		iabConsent: IabCommittedConsent? = null,
+		iabAcceptAll: IabChoices? = null,
+		iabHeadlessGaps: List<String> = emptyList(),
 	): String {
 		val wire = SnapshotWire.toJsonElement(snapshot)
 		val overrides = wire["overrides"] as? JsonObject ?: JsonObject(emptyMap())
@@ -203,7 +210,71 @@ object C15tPayload {
 		// Not kernel state, so SnapshotWire leaves it out; JavaScript reads it to tell a new
 		// owed prompt from one it already presented, even when it skipped the snapshots between.
 		conformed["promptOwedSince"] = snapshot.promptOwedSince?.let(::JsonPrimitive) ?: JsonNull
+
+		// The headless TCF state rides inside `iab`: the committed decision a screen shows and
+		// reopens with (`null` while none is current), whether a draft can be edited and saved
+		// now, and what Accept all saves under the publisher's disclosure. `acceptAll` is `null`
+		// exactly when `editable` is false. `headlessUnsupported` names what a screen built on
+		// the served list could not disclose; while it is not empty, `editable` stays false, so
+		// no custom screen saves choices it could not show.
+		(conformed["iab"] as? JsonObject)?.let { iab ->
+			val acceptAll = iabAcceptAll?.takeIf { iabHeadlessGaps.isEmpty() }
+			conformed["iab"] = JsonObject(
+				iab + mapOf(
+					"committed" to (iabConsent?.let(::committedIab) ?: JsonNull),
+					"editable" to JsonPrimitive(acceptAll != null),
+					"acceptAll" to (acceptAll?.let { C15tJson.storage.encodeToJsonElement(IabChoices.serializer(), it) } ?: JsonNull),
+					"headlessUnsupported" to JsonArray(iabHeadlessGaps.map { JsonPrimitive(it) }),
+				),
+			)
+		}
 		return encode(JsonObject(conformed))
+	}
+
+	/**
+	 * What a custom screen built on the served vendor list could not disclose. Publisher
+	 * restrictions change a vendor's legal bases away from the list, and Additional Consent
+	 * providers are not on the snapshot at all; the stock screens show both.
+	 */
+	/**
+	 * Read the snapshot and the bridge's additions to it as one revision.
+	 *
+	 * The core locks each accessor on its own, so a commit between `snapshot()` and
+	 * `iabConsent` would pair one revision's snapshot with the next one's TCF decision, and
+	 * JavaScript caches a payload by its revision. The additions are read between two
+	 * snapshot reads and kept only when both name the same revision; otherwise the read
+	 * starts again, up to [attempts] times, and the last read is returned.
+	 */
+	fun <AdditionsType> consistently(
+		snapshot: () -> ConsentSnapshot,
+		attempts: Int = 4,
+		additions: () -> AdditionsType,
+	): Pair<ConsentSnapshot, AdditionsType> {
+		var before = snapshot()
+		var read = additions()
+		repeat(attempts - 1) {
+			val after = snapshot()
+			if (after.revision == before.revision) return before to read
+			before = after
+			read = additions()
+		}
+		return before to read
+	}
+
+	fun headlessIabGaps(publisherRestrictions: List<IabPublisherRestriction>, adTechProviders: List<AdTechProvider>?): List<String> =
+		buildList {
+			if (publisherRestrictions.isNotEmpty()) add(HEADLESS_GAP_PUBLISHER_RESTRICTIONS)
+			if (!adTechProviders.isNullOrEmpty()) add(HEADLESS_GAP_ADDITIONAL_CONSENT)
+		}
+
+	const val HEADLESS_GAP_PUBLISHER_RESTRICTIONS = "publisher-restrictions"
+	const val HEADLESS_GAP_ADDITIONAL_CONSENT = "additional-consent-providers"
+
+	/** The committed IAB decision as JavaScript reads it. */
+	internal fun committedIab(consent: IabCommittedConsent): JsonObject = buildJsonObject {
+		putElement("addtlConsent", consent.addtlConsent)
+		put("choices", C15tJson.storage.encodeToJsonElement(IabChoices.serializer(), consent.choices))
+		put("tcString", consent.tcString)
 	}
 
 	/**
@@ -391,22 +462,55 @@ object C15tPayload {
 			"necessary" -> CommitIntent.Necessary
 			"explicit" -> {
 				val consents = body["consents"] as? JsonObject ?: return null
-				val parsed = LinkedHashMap<ConsentCategory, Boolean>(consents.size)
-				for ((name, value) in consents) {
-					val category = ConsentCategory.fromWireName(name) ?: return null
-					val granted = optBoolean(value) ?: return null
-					if (!category.optional) {
-						// `necessary` is nobody's choice, so an intent offering it is not
-						// one this build should apply.
-						return null
-					}
-					parsed[category] = granted
+				CommitIntent.Custom(parseCategories(consents) ?: return null)
+			}
+
+			"iab" -> {
+				// A complete TCF draft from a headless screen. The core validates every ID and
+				// legal basis against the served list; this only refuses a body that is not
+				// the documented shape, unknown keys included.
+				val raw = body["choices"] as? JsonObject ?: return null
+				// Tree decoding reads a quoted "1" as 1, which Swift refuses. Every ID must be
+				// a JSON number on both platforms.
+				val numeric = raw.values.all { list ->
+					list == JsonNull || (list as? JsonArray)?.all { (it as? JsonPrimitive)?.isString == false } == true
 				}
-				CommitIntent.Custom(parsed)
+				// A complete draft, as Swift's decoder requires: every list is present.
+				if (!numeric || !raw.keys.containsAll(IAB_CHOICE_LISTS)) return null
+				val choices = try {
+					C15tJson.storage.decodeFromJsonElement(IabChoices.serializer(), raw)
+				} catch (_: Exception) {
+					return null
+				}
+				val consents = body["consents"] as? JsonObject ?: return null
+				CommitIntent.Iab(choices, parseCategories(consents) ?: return null)
 			}
 
 			else -> null
 		}
+	}
+
+	/** The `IabChoices` lists a headless draft must name, empty or not. */
+	private val IAB_CHOICE_LISTS = listOf(
+		"purposeConsents", "purposeLegitimateInterests", "purposeObjections",
+		"vendorConsents", "vendorLegitimateInterests", "vendorObjections", "specialFeatureOptIns",
+		"publisherConsents", "publisherLegitimateInterests", "publisherCustomConsents",
+		"publisherCustomLegitimateInterests",
+	)
+
+	private fun parseCategories(consents: JsonObject): Map<ConsentCategory, Boolean>? {
+		val parsed = LinkedHashMap<ConsentCategory, Boolean>(consents.size)
+		for ((name, value) in consents) {
+			val category = ConsentCategory.fromWireName(name) ?: return null
+			val granted = optBoolean(value) ?: return null
+			if (!category.optional) {
+				// `necessary` is nobody's choice, so an intent offering it is not
+				// one this build should apply.
+				return null
+			}
+			parsed[category] = granted
+		}
+		return parsed
 	}
 
 	/**

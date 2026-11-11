@@ -37,7 +37,46 @@ export type CommitIntent =
 			 * `concurrent-change` when the record moved since; an older one ignores it.
 			 */
 			readonly revision?: number;
+	  }
+	| {
+			/**
+			 * A complete TCF draft from a headless IAB screen. The native core checks
+			 * every ID and legal basis against the served vendor list and encodes the
+			 * TC String.
+			 */
+			readonly action: 'iab';
+			readonly choices: NativeIABChoices;
+			/** The categories this action confirms. */
+			readonly consents: Readonly<
+				Partial<Record<OptionalConsentCategory, boolean>>
+			>;
+			/**
+			 * The snapshot revision the draft was opened on. Native refuses the commit
+			 * with `concurrent-change` when the state moved since.
+			 */
+			readonly revision?: number;
 	  };
+
+/**
+ * A complete TCF selection, as both native cores hold it. Each list holds IDs
+ * from the served vendor list; an absent ID has no grant. Every list is
+ * required, empty or not.
+ */
+export interface NativeIABChoices {
+	readonly purposeConsents: readonly number[];
+	readonly purposeLegitimateInterests: readonly number[];
+	readonly purposeObjections: readonly number[];
+	readonly vendorConsents: readonly number[];
+	readonly vendorLegitimateInterests: readonly number[];
+	readonly vendorObjections: readonly number[];
+	readonly specialFeatureOptIns: readonly number[];
+	readonly publisherConsents: readonly number[];
+	readonly publisherLegitimateInterests: readonly number[];
+	readonly publisherCustomConsents: readonly number[];
+	readonly publisherCustomLegitimateInterests: readonly number[];
+	/** Google Additional Consent providers, or `null` when none are listed. */
+	readonly adTechProviderConsents?: readonly number[] | null;
+}
 
 /**
  * Why native refused a local commit.
@@ -49,6 +88,13 @@ export type CommitIntent =
  * ever installed, which is a host wiring bug rather than a consent outcome.
  * Both native bridges already report it; this union is what lets JavaScript
  * name it.
+ *
+ * A TCF commit adds its own refusals: `iab-unavailable` (no IAB policy or
+ * configuration), `iab-list-stale` (the vendor list expired), `iab-draft-required`
+ * (no `revision`), `iab-choices-required`, `invalid-iab-choices` (IDs or legal
+ * bases the list does not allow) and `additional-consent-unavailable`. Any
+ * commit can also meet `bundled-policy-expired`, `additional-consent-list-stale`
+ * and `invalid-action-time` (the device clock is not usable).
  */
 export const COMMIT_FAILURE_REASONS = [
 	'invalid-intent',

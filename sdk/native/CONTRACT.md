@@ -1175,6 +1175,23 @@ is not a whole number is `invalid-intent`. `getBootstrap()` reports
 `commitRevision: true` from builds that do this; `ADDITIVE_BOOTSTRAP_DEFAULTS` reads
 an older binary as `false`, and the draft then saves unpinned.
 
+`commit` takes `all`, `necessary`, `explicit`, and `iab`. An `iab` intent is a
+headless TCF draft: `choices` names every `IABChoices` list (IDs are JSON numbers),
+`consents` the categories it confirms, and an optional `revision` the core passes as
+`expectedRevision`, so a change since the draft was opened is refused as
+`concurrent-change`. The core validates IDs and legal bases as for the stock
+presenter. The bridge adds four keys inside the snapshot's `iab` object, beside the
+core's `gvl`: `committed: { tcString, addtlConsent, choices } | null` from
+`iabConsent()`; `headlessUnsupported`, which lists `publisher-restrictions` when
+`iabPublisherRestrictions` is not empty and `additional-consent-providers` when
+`adTechProviderDisclosures()` is not empty, the disclosures a screen built on the raw
+list cannot make; `acceptAll: IABChoices | null` from `iabAcceptAllChoices()`, sent
+only while `headlessUnsupported` is empty; and `editable`, which is
+`acceptAll != null`. They are additive without a protocol bump:
+`ADDITIVE_IAB_DEFAULTS` in `wire-shape.ts` reads an older bridge as
+`committed: null, editable: false, acceptAll: null, headlessUnsupported: []`, so
+JavaScript offers no edit it cannot commit.
+
 Events: `snapshot`, `error`, `initialized`, and `onConsentPresenterOutcome` for the
 native presenter. The payload is a JSON string. The
 module never sends a snapshot the JavaScript side already holds: it emits the new

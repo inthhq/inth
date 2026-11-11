@@ -6,6 +6,11 @@ import com.c15t.consentui.ConsentHostSession
 import com.c15t.core.CommitIntent
 import com.c15t.core.CommitResult
 import com.c15t.core.NativeConfig
+import com.c15t.core.iab.AdTechProvider
+import com.c15t.core.iab.IabChoices
+import com.c15t.core.iab.IabCommittedConsent
+import com.c15t.core.iab.IabConfiguration
+import com.c15t.core.iab.IabPublisherRestriction
 import com.c15t.core.model.ConsentAction
 import com.c15t.core.model.ConsentCategory
 import com.c15t.core.model.ConsentLocation
@@ -133,10 +138,13 @@ class C15tPayloadTest {
 			.jsonObject
 
 		assertEquals(
-			"the kernel's `KernelIABState` carries `gvl` and nothing beside it",
-			setOf("gvl"),
+			"the kernel's `KernelIABState` carries `gvl`, and the bridge adds the headless TCF state",
+			setOf("gvl", "committed", "editable", "acceptAll", "headlessUnsupported"),
 			iab.keys,
 		)
+		assertEquals("nothing is committed yet", JsonNull, iab["committed"])
+		assertFalse("no draft can open without an accept-all answer", iab["editable"]!!.jsonPrimitive.boolean)
+		assertEquals(JsonNull, iab["acceptAll"])
 		val document = iab["gvl"]!!.jsonObject
 		assertEquals(
 			"the version a disclosure is labelled with",
@@ -302,6 +310,99 @@ class C15tPayloadTest {
 			C15tPayload.parseCommitIntent("{\"action\":\"explicit\",\"consents\":{\"necessary\":true}}"),
 		)
 		assertEquals("a refused intent must not mutate the snapshot", before, kernel.snapshot().revision)
+	}
+
+	@Test
+	fun `a committed IAB decision crosses with its TC String and choices`() {
+		val consent = IabCommittedConsent(
+			configuration = IabConfiguration(cmpId = 9, cmpVersion = 1, publisherCountryCode = "DE"),
+			choices = IabChoices(purposeConsents = listOf(1, 3), vendorConsents = listOf(755), specialFeatureOptIns = listOf(1)),
+			subjectId = "sub",
+			externalId = null,
+			fingerprint = "fp",
+			vendorListVersion = 177,
+			policyVersion = 5,
+			consentVersion = 1,
+			createdAt = 1,
+			actionAt = 1,
+			tcString = "CQ-test",
+		)
+		val list = GlobalVendorList(purposes = emptyMap(), vendors = emptyMap(), vendorListVersion = 177, tcfPolicyVersion = 5)
+		val committed = parse(C15tPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list)), iabConsent = consent))
+			.getValue("iab").jsonObject.getValue("committed").jsonObject
+
+		assertEquals("CQ-test", committed["tcString"]!!.jsonPrimitive.content)
+		assertEquals(JsonNull, committed["addtlConsent"])
+		val editable = parse(C15tPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list)), iabAcceptAll = IabChoices(vendorConsents = listOf(7))))
+			.getValue("iab").jsonObject
+		assertTrue("an accept-all answer means a draft can open", editable["editable"]!!.jsonPrimitive.boolean)
+		assertEquals(listOf("7"), editable.getValue("acceptAll").jsonObject.getValue("vendorConsents").jsonArray.map { it.jsonPrimitive.content })
+		val choices = committed.getValue("choices").jsonObject
+		assertEquals(listOf("1", "3"), choices.getValue("purposeConsents").jsonArray.map { it.jsonPrimitive.content })
+		assertEquals("every list is written, empty or not", 0, choices.getValue("vendorObjections").jsonArray.size)
+		assertEquals(JsonNull, choices["adTechProviderConsents"])
+	}
+
+	@Test
+	fun `the snapshot and its additions are read as one revision`() {
+		// A commit lands between the first snapshot read and the additions.
+		val revisions = ArrayDeque(listOf(4L, 5L, 5L))
+		var reads = 0
+		val (snapshot, additions) = C15tPayload.consistently({ ConsentSnapshot(revision = revisions.removeFirst()) }) {
+			reads += 1
+			"decision $reads"
+		}
+		assertEquals(5L, snapshot.revision)
+		assertEquals("the additions are the ones read with revision 5", "decision 2", additions)
+
+		var steady = 0
+		val (_, once) = C15tPayload.consistently({ ConsentSnapshot(revision = 7L) }) { ++steady }
+		assertEquals("a quiet core is read once", 1, once)
+	}
+
+	@Test
+	fun `headless IAB editing closes while a custom screen could not disclose everything`() {
+		val list = GlobalVendorList(purposes = emptyMap(), vendors = emptyMap(), vendorListVersion = 177, tcfPolicyVersion = 5)
+		val restriction = IabPublisherRestriction(purposeId = 2, type = 1, vendorIds = listOf(7))
+		val provider = AdTechProvider(id = 89, name = "Provider", policyUrl = "https://provider.invalid/privacy")
+
+		assertEquals(emptyList<String>(), C15tPayload.headlessIabGaps(emptyList(), emptyList()))
+		assertEquals(emptyList<String>(), C15tPayload.headlessIabGaps(emptyList(), null))
+		val gaps = C15tPayload.headlessIabGaps(listOf(restriction), listOf(provider))
+		assertEquals(listOf("publisher-restrictions", "additional-consent-providers"), gaps)
+
+		val iab = parse(C15tPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list)),
+			iabAcceptAll = IabChoices(vendorConsents = listOf(7)), iabHeadlessGaps = gaps)).getValue("iab").jsonObject
+		assertFalse("a draft that could open still is not offered to a custom screen", iab["editable"]!!.jsonPrimitive.boolean)
+		assertEquals(JsonNull, iab["acceptAll"])
+		assertEquals(gaps, iab.getValue("headlessUnsupported").jsonArray.map { it.jsonPrimitive.content })
+		val open = parse(C15tPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list)),
+			iabAcceptAll = IabChoices(vendorConsents = listOf(7)))).getValue("iab").jsonObject
+		assertEquals(0, open.getValue("headlessUnsupported").jsonArray.size)
+	}
+
+	@Test
+	fun `an iab intent parses to the kernel's IAB draft with its categories and revision`() {
+		val raw = """{"action":"iab","choices":{"purposeConsents":[1,2],"purposeLegitimateInterests":[],""" +
+			""""purposeObjections":[],"vendorConsents":[755],"vendorLegitimateInterests":[],"vendorObjections":[],""" +
+			""""specialFeatureOptIns":[],"publisherConsents":[],"publisherLegitimateInterests":[],""" +
+			""""publisherCustomConsents":[],"publisherCustomLegitimateInterests":[]},"consents":{"marketing":true},"revision":12}"""
+		val intent = C15tPayload.parseCommitIntent(raw)
+
+		assertTrue(intent is CommitIntent.Iab)
+		intent as CommitIntent.Iab
+		assertEquals(listOf(1, 2), intent.choices.purposeConsents)
+		assertEquals(listOf(755), intent.choices.vendorConsents)
+		assertEquals(mapOf(ConsentCategory.MARKETING to true), intent.consents)
+		for (bad in listOf(
+			"""{"action":"iab","consents":{}}""",
+			raw.replace("[1,2]", "[\"1\",2]"),
+			raw.replace("\"purposeObjections\":[],", ""),
+			"""{"action":"iab","choices":{"vendorGrants":[1]},"consents":{}}""",
+			"""{"action":"iab","choices":{},"consents":{"necessary":true}}""",
+		)) {
+			assertNull("must refuse: $bad", C15tPayload.parseCommitIntent(bad))
+		}
 	}
 
 	@Test

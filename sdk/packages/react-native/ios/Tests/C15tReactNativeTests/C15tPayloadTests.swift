@@ -94,6 +94,98 @@ final class C15tPayloadTests: XCTestCase {
         )
     }
 
+    func testAnIABIntentReadsACompleteDraftWithItsCategoriesAndRevision() {
+        let raw = #"{"action":"iab","choices":{"purposeConsents":[1,2],"purposeLegitimateInterests":[],"purposeObjections":[],"vendorConsents":[755],"vendorLegitimateInterests":[],"vendorObjections":[],"specialFeatureOptIns":[],"publisherConsents":[],"publisherLegitimateInterests":[],"publisherCustomConsents":[],"publisherCustomLegitimateInterests":[]},"consents":{"marketing":true},"revision":12}"#
+        var choices = IABChoices()
+        choices.purposeConsents = [1, 2]
+        choices.vendorConsents = [755]
+        XCTAssertEqual(C15tPayload.parseCommitIntent(raw), .iab(choices, categories: [.marketing: true]))
+        for bad in [
+            #"{"action":"iab","consents":{}}"#,
+            raw.replacingOccurrences(of: "[1,2]", with: #"["1",2]"#),
+            raw.replacingOccurrences(of: #""purposeObjections":[],"#, with: ""),
+            raw.replacingOccurrences(of: #""consents":{"marketing":true}"#, with: #""consents":{"necessary":true}"#),
+        ] {
+            XCTAssertNil(C15tPayload.parseCommitIntent(bad), "\(bad) must not become a commit")
+        }
+    }
+
+    func testACommittedIABDecisionCrossesInsideTheIABSlot() throws {
+        // The memberwise initializer is internal to C15tCore; the Codable form is public.
+        let choices = String(decoding: try JSONEncoder().encode(IABChoices()), as: UTF8.self)
+        let configuration = String(decoding: try JSONEncoder().encode(
+            IABConfiguration(cmpId: 9, cmpVersion: 1, publisherCountryCode: "DE")), as: UTF8.self)
+        let consent = try JSONDecoder().decode(IABCommittedConsent.self, from: Data("""
+            {"configuration":\(configuration),"choices":\(choices),"subjectId":"sub","fingerprint":"fp",
+            "vendorListVersion":177,"policyVersion":5,"consentVersion":1,"createdAt":1,"actionAt":1,"tcString":"CQ-test"}
+            """.utf8))
+        let committed = C15tPayload.committedIAB(consent).objectValue
+        XCTAssertEqual(committed?["tcString"], .string("CQ-test"))
+        XCTAssertEqual(committed?["addtlConsent"], .null)
+        XCTAssertEqual(committed?["choices"]?.objectValue?["vendorConsents"], .array([]))
+    }
+
+    func testTheIABSlotSaysWhetherADraftCanOpenAndWhatAcceptAllSaves() throws {
+        // `iab` is immutable on the public type, so the snapshot comes through its Codable form.
+        var wire = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(ConsentSnapshot.coldStart)) as? [String: Any])
+        wire["iab"] = ["gvl": NSNull()]
+        let snapshot = try JSONDecoder().decode(ConsentSnapshot.self, from: JSONSerialization.data(withJSONObject: wire))
+        func slot(_ acceptAll: IABChoices?) -> [String: Any] {
+            (jsonObject(C15tPayload.snapshot(snapshot, iabAcceptAll: acceptAll))["iab"] as? [String: Any]) ?? [:]
+        }
+        XCTAssertEqual(slot(nil)["editable"] as? Bool, false)
+        XCTAssertTrue(slot(nil)["acceptAll"] is NSNull)
+        var choices = IABChoices()
+        choices.vendorConsents = [7]
+        XCTAssertEqual(slot(choices)["editable"] as? Bool, true)
+        XCTAssertEqual((slot(choices)["acceptAll"] as? [String: Any])?["vendorConsents"] as? [Int], [7])
+        XCTAssertEqual(slot(choices)["headlessUnsupported"] as? [String], [])
+    }
+
+    func testTheSnapshotAndItsAdditionsAreReadAsOneRevision() throws {
+        func snapshot(revision: Int) throws -> ConsentSnapshot {
+            var wire = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(ConsentSnapshot.coldStart)) as? [String: Any])
+            wire["revision"] = revision
+            return try JSONDecoder().decode(ConsentSnapshot.self, from: JSONSerialization.data(withJSONObject: wire))
+        }
+        // A commit lands between the first snapshot read and the additions.
+        var revisions = [try snapshot(revision: 4), try snapshot(revision: 5), try snapshot(revision: 5)]
+        var reads = 0
+        let (read, additions) = C15tPayload.consistently(snapshot: { revisions.removeFirst() }) { () -> String in
+            reads += 1
+            return "decision \(reads)"
+        }
+        XCTAssertEqual(read.revision, 5)
+        XCTAssertEqual(additions, "decision 2", "the additions are the ones read with revision 5")
+
+        let steadySnapshot = try snapshot(revision: 7)
+        var steady = 0
+        let (_, once) = C15tPayload.consistently(snapshot: { steadySnapshot }) { () -> Int in
+            steady += 1
+            return steady
+        }
+        XCTAssertEqual(once, 1, "a quiet core is read once")
+    }
+
+    func testHeadlessIABEditingClosesWhileACustomScreenCouldNotDiscloseEverything() throws {
+        var wire = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(ConsentSnapshot.coldStart)) as? [String: Any])
+        wire["iab"] = ["gvl": NSNull()]
+        let snapshot = try JSONDecoder().decode(ConsentSnapshot.self, from: JSONSerialization.data(withJSONObject: wire))
+        let restriction = IABPublisherRestriction(purposeId: 2, type: 1, vendorIds: [7])
+        let provider = AdTechProvider(id: 89, name: "Provider", policyUrl: "https://provider.invalid/privacy")
+        XCTAssertEqual(C15tPayload.headlessIABGaps(publisherRestrictions: [], adTechProviders: nil), [])
+        let gaps = C15tPayload.headlessIABGaps(publisherRestrictions: [restriction], adTechProviders: [provider])
+        XCTAssertEqual(gaps, ["publisher-restrictions", "additional-consent-providers"])
+
+        var choices = IABChoices()
+        choices.vendorConsents = [7]
+        let slot = (jsonObject(C15tPayload.snapshot(snapshot, iabAcceptAll: choices, iabHeadlessGaps: gaps))["iab"]
+            as? [String: Any]) ?? [:]
+        XCTAssertEqual(slot["editable"] as? Bool, false, "a draft that could open still is not offered to a custom screen")
+        XCTAssertTrue(slot["acceptAll"] is NSNull)
+        XCTAssertEqual(slot["headlessUnsupported"] as? [String], gaps)
+    }
+
     func testCommitIntentFailsClosedOnAnythingElse() {
         // A commit is audit evidence, so a half-readable one is refused outright.
         for raw in [

@@ -9,6 +9,7 @@
  * object from `getSnapshot()`; the JavaScript layer never derives it.
  */
 
+import type { NativeIABChoices } from './commit';
 import type { GlobalVendorList } from './gvl';
 import type { NativeOverrides } from './overrides';
 import type {
@@ -116,6 +117,54 @@ export interface NativeSnapshotError {
 export interface NativeIABState {
 	/** Global Vendor List (IAB-registered vendors + purposes), or `null`. */
 	readonly gvl: GlobalVendorList | null;
+	/**
+	 * The current committed TCF decision, or `null` when none is current. The
+	 * bridge adds it beside the core's `gvl`; a binary older than this field
+	 * omits it, which the client reads as `null`.
+	 */
+	readonly committed: NativeIABCommittedConsent | null;
+	/**
+	 * Whether a headless draft can be edited and saved now: an IAB policy, CMP
+	 * configuration, a vendor list that is still usable, a current Additional
+	 * Consent list where one is required, and nothing in
+	 * {@link NativeIABState.headlessUnsupported}. `false` while the list is
+	 * stale or offline; refresh, then offer controls again. A binary older than
+	 * this field cannot commit a headless draft and reads as `false`.
+	 */
+	readonly editable: boolean;
+	/**
+	 * What a custom screen built on this snapshot could not disclose, so
+	 * `editable` stays `false` for as long as the list is not empty. Publisher
+	 * restrictions move vendors' legal bases away from the served list, and
+	 * Additional Consent provider names are not on the snapshot. Use the stock
+	 * screens for these configurations. A binary older than this field reads as
+	 * `[]`; it is not `editable` either.
+	 */
+	readonly headlessUnsupported: readonly NativeIABHeadlessGap[];
+	/**
+	 * What Accept all saves on the current list, as the native core builds it:
+	 * every live partner's bases under the publisher's disclosure and
+	 * restrictions. `null` exactly when {@link NativeIABState.editable} is false.
+	 */
+	readonly acceptAll: NativeIABChoices | null;
+}
+
+/**
+ * A configuration a headless IAB screen cannot disclose: publisher
+ * restrictions, or Additional Consent providers on the served list.
+ */
+export type NativeIABHeadlessGap =
+	| 'additional-consent-providers'
+	| 'publisher-restrictions';
+
+/** The committed TCF decision a headless IAB screen shows and reopens with. */
+export interface NativeIABCommittedConsent {
+	/** The encoded TC String, the same one native writes to the storage bus. */
+	readonly tcString: string;
+	/** The Google Additional Consent string, or `null`. */
+	readonly addtlConsent: string | null;
+	/** The selection the TC String encodes. */
+	readonly choices: NativeIABChoices;
 }
 
 /**

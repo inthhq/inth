@@ -48,7 +48,10 @@ import type {
 } from '../protocol';
 import type { AllConsentNames } from '../protocol/vocabulary';
 import { CONSENT_CATEGORIES } from '../protocol/vocabulary';
-import { ADDITIVE_BOOTSTRAP_DEFAULTS } from '../protocol/wire-shape';
+import {
+	ADDITIVE_BOOTSTRAP_DEFAULTS,
+	withAdditiveIABDefaults,
+} from '../protocol/wire-shape';
 import { NativeBridgeError } from './bridge-error';
 import { getNativeC15t, getNativeC15tEvents } from './module';
 import type {
@@ -606,12 +609,15 @@ export const createConsentClient = function createConsentClient(
 
 		rawSnapshot = raw;
 
-		// An older binary leaves out keys added since protocol version 1; fill them
-		// before grading the shape, so the public type holds and that is not drift.
+		// An older binary leaves out keys added since protocol version 1; fill what
+		// their absence means before anything reads or grades the payload, so the
+		// public type holds and that is not drift.
 		const object = parseObject(raw);
 		const parsed =
 			typeof object === 'object' && object !== null
-				? withAdditiveSnapshotDefaults(object as Record<string, unknown>)
+				? withAdditiveIABDefaults(
+						withAdditiveSnapshotDefaults(object as Record<string, unknown>)
+					)
 				: object;
 		if (typeof parsed === 'object' && parsed !== null) {
 			const problems = describeSnapshotWireDrift(parsed, {

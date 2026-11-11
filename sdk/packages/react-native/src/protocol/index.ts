@@ -15,6 +15,7 @@ export { BRIDGE_PAYLOADS, describeBridgePayloadDrift } from './bridge-schema';
 export type {
 	CommitFailureReason,
 	CommitIntent,
+	NativeIABChoices,
 	CommitResult,
 	NativeSavePayload,
 } from './commit';
@@ -51,6 +52,8 @@ export {
 } from './tracking';
 export type {
 	ConsentSnapshot,
+	NativeIABCommittedConsent,
+	NativeIABHeadlessGap,
 	NativeIABState,
 	NativeConsentSubject,
 	NativeModel,

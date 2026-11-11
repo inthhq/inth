@@ -309,12 +309,36 @@ public final class ConsentCore: @unchecked Sendable {
     /// Open a draft on the current disclosed list. Retry after a missing or stale list.
     public func openIABDraft() -> IABDraft? {
         lock.withLock {
-            guard config?.iab != nil, resolvedPolicy?.policy.model == .iab,
-                !currentSnapshot.policyPending, listIsUsableLocked(),
-                (bundledPolicyAuthority?.requiresAtp != true && additionalConsentList?.providers.isEmpty != false) || currentAdditionalConsentListLocked() != nil
-            else { return nil }
+            guard iabDraftOpenableLocked() else { return nil }
             return IABDraft(revision: currentSnapshot.revision, choices: committedIAB?.choices ?? IABChoices())
         }
+    }
+
+    /// The publisher restrictions this core was configured with, empty without IAB. A screen that
+    /// shows the served list as it is discloses the wrong legal bases while any are set; the core's
+    /// own projection is in ``iabPresentation()``.
+    public var iabPublisherRestrictions: [IABPublisherRestriction] {
+        lock.withLock { config?.iab?.publisherRestrictions ?? [] }
+    }
+
+    /// What Accept all saves on the current disclosed list: every live partner's bases under the
+    /// publisher's disclosure and restrictions, exactly as ``save(_:expectedRevision:)`` builds them
+    /// for ``CommitIntent/all``. `nil` whenever ``openIABDraft()`` is.
+    public func iabAcceptAllChoices() -> IABChoices? {
+        lock.withLock {
+            guard iabDraftOpenableLocked(), let configuration = config?.iab, let gvl = currentSnapshot.iab?.gvl else { return nil }
+            return IABAuthority.accepting(
+                gvl, configuration: configuration,
+                adTechProviders: currentAdditionalConsentListLocked()?.providers.map(\.id))
+        }
+    }
+
+    /// Whether a draft can open and be saved now: an IAB policy, configuration, a usable list and,
+    /// where one is required, a current Additional Consent list. The caller holds `lock`.
+    private func iabDraftOpenableLocked() -> Bool {
+        config?.iab != nil && resolvedPolicy?.policy.model == .iab && !currentSnapshot.policyPending && listIsUsableLocked()
+            && ((bundledPolicyAuthority?.requiresAtp != true && additionalConsentList?.providers.isEmpty != false)
+                || currentAdditionalConsentListLocked() != nil)
     }
 
     /// Capture retained disclosure and a draft atomically. Check `canEdit` before offering grants.
