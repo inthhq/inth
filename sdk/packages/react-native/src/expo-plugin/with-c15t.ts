@@ -15,6 +15,7 @@ import {
 import type { ConfigPlugin, ExportedConfig } from '@expo/config-plugins';
 
 import { applyAndroidManifest } from './android';
+import { withAndroidSdkFloor } from './android-sdk-floor';
 import { fetchBundledManifest, manifestBuild } from './bundle-manifest';
 import { androidConfig, iosConfig } from './config-plugins';
 import { EXTRA_KEY } from './constants';
@@ -22,7 +23,7 @@ import {
 	applyGoogleConsentDefaultsToApplication,
 	applyGoogleConsentDefaultsToInfoPlist,
 } from './google-consent-mode';
-import { applyAppBuildGradle, applyProjectBuildGradle } from './gradle';
+import { applyProjectBuildGradle } from './gradle';
 import {
 	applyInfoPlist,
 	applyLocalizedMarkdownDescriptions,
@@ -44,6 +45,7 @@ import {
 	removeXcodeResource,
 	writePolicyRules,
 } from './policy-resource';
+import { resolveTheme, withC15tTheme } from './theme';
 import {
 	assertUpdatesCannotOutrunTheBinary,
 	buildProtocolInfo,
@@ -157,6 +159,7 @@ export const applyParamsOnConfig = function applyParamsOnConfig(
 	context: Partial<WorkflowContext> = {}
 ): ExportedConfig {
 	const params = resolveParams(props);
+	const theme = resolveTheme(props?.theme);
 
 	assertCustomNativeBuild(params, {
 		argv: context.argv,
@@ -346,10 +349,7 @@ export const applyParamsOnConfig = function applyParamsOnConfig(
 
 	next = withAppBuildGradle(next, (configWithGradle) => {
 		assertNoManualGradleRegistration(configWithGradle.modResults.contents);
-		return {
-			...configWithGradle,
-			modResults: applyAppBuildGradle(configWithGradle.modResults),
-		};
+		return configWithGradle;
 	});
 
 	next = withMainApplication(next, (configWithApplication) => {
@@ -363,6 +363,9 @@ export const applyParamsOnConfig = function applyParamsOnConfig(
 		assertNoManualIosRegistration(configWithPodfile.modResults.contents);
 		return configWithPodfile;
 	});
+
+	next = withC15tTheme(next, theme);
+	next = withAndroidSdkFloor(next);
 
 	return next;
 };

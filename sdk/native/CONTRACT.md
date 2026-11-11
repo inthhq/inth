@@ -1624,6 +1624,42 @@ the same values from `extra.c15t`: `backendURL`, `initURL`, `domain`,
 `mode`, `enableAppTrackingTransparency`, and the `protocol` range.
 There is no second config source.
 
+Theme keys
+----------
+
+The `theme` prop writes the native theme keys, `com.c15t.consent.*`, that
+`ConsentTheme.InfoPlistKey` in `consent-theme.swift` and `ConsentTheme.Meta` in
+`consent-theme.kt` read. Its field names follow the web `Theme` in `@c15t/ui`,
+so a later rename of the native tokens does not rename the prop. The plugin maps
+them in `src/expo-plugin/theme.ts`:
+
+    theme field              web token                 iOS / Android key suffix
+    colors.primary           --c15t-primary            accent / ACCENT
+    colors.textOnPrimary     --c15t-text-on-primary    onAccent / ON_ACCENT
+    colors.surface           --c15t-surface            surface / SURFACE
+    colors.text              --c15t-text               text / TEXT
+    colors.textMuted         --c15t-text-muted         textSecondary / TEXT_SECONDARY
+    colors.canvas            (none)                    canvas / CANVAS
+    colors.surfaceMuted      (none)                    surfaceMuted / SURFACE_MUTED
+    colors.decision          (none)                    decision / DECISION
+    colors.textOnDecision    (none)                    onDecision / ON_DECISION
+    radius.md                --c15t-radius-md          cornerRadius / CORNER_RADIUS
+    typography.headlineFont  (none)                    headlineFont / HEADLINE_FONT
+    brand.name, brand.mark   (none)                    brandName, brandMark / BRAND_NAME, BRAND_MARK
+    brand.hidden (inverted)  (none)                    brand / BRAND
+    branding.provider        (none)                    brandingProvider / BRANDING_PROVIDER
+    branding.name, .mark     (none)                    brandingName, brandingMark / BRANDING_NAME, BRANDING_MARK
+    branding.hidden (inv.)   (none)                    branding / BRANDING
+
+`dark.<color>` joins its `colors.<color>` as the `#light,#dark` pair both readers
+parse, and needs that light value. Colors must be `#RRGGBB`; a CSS function, an
+alpha channel, or a field the native screens do not draw fails the prebuild.
+With `theme` set the plugin owns every key above and clears the ones the prop no
+longer names; without it the plugin registers no theme write, so an app-owned
+config plugin keeps working. The copy keys (`headline`, `introduction`) are not
+part of the prop. `__tests__/theme.test.ts` checks every key against both reader
+sources.
+
 Rules the plugin enforces at build time
 ---------------------------------------
 
@@ -1664,17 +1700,22 @@ Rules the plugin enforces at build time
   permission buys only the reachability leg of the queue replay, and a host that
   wants the shorter retry declares it itself; the plugin writing it would trade
   every host's manifest for one wake-up nobody asked for.
-- The root and app gradle files have `minSdk` and `compileSdk` raised to 24 and
-  36, the floors in `native/core-android/gradle/libs.versions.toml`. Below them
-  the manifest merger fails with a message that names neither c15t nor the
-  number. Only literal values are touched, never `targetSdkVersion` or a
-  `rootProject.ext` indirection. That carve-out now swallows the whole rule: an
-  SDK 57 template writes no literal SDK number anywhere, because
-  `app/build.gradle` reads `rootProject.ext.compileSdkVersion` and the
-  `expo-root-project` Gradle plugin supplies it at build time. So the raise
-  never fires on a current template, and nothing here has measured what that
-  plugin resolves. Checking the floors against the resolved values, or dropping
-  this step, is open work.
+- The Android SDK floor, `minSdk` 24 and `compileSdk` 36 from
+  `native/core-android/gradle/libs.versions.toml`, is checked, not raised.
+  Below it the manifest merger or the AAR compile fails with a message that
+  names neither c15t nor the number. An Expo 55 to 58 template writes no SDK
+  number: `app/build.gradle` reads `rootProject.ext.*`, and the
+  `expo-root-project` Gradle plugin fills that from a root `ext` block, then the
+  `android.minSdkVersion` and `android.compileSdkVersion` keys in
+  `gradle.properties` (which `expo-build-properties` writes), then React
+  Native's version catalog. The catalog defaults (24, and 36 or 37) meet the
+  floor, so only an explicit value can fall below it, and an explicit value was
+  set on purpose and would be written back by the next prebuild. A finalized
+  Android mod, which runs after every other plugin's mods, reads
+  `gradle.properties` and the root and app `build.gradle(.kts)` and fails the
+  prebuild naming each literal below the floor and where to change it.
+  `__tests__/android-sdk-floor.test.ts` runs it against the unchanged SDK 55,
+  57 and 58 templates. `targetSdkVersion` is never read.
 - Expo Go fails the build with a message rather than failing at runtime. The
   check stays quiet when an `EAS_BUILD*` variable is set, when the command is a
   native one (`prebuild`, `run:`, `build`, `config`, `doctor`), or when an `ios/`

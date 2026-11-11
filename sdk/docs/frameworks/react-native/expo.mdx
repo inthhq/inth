@@ -66,9 +66,54 @@ policy resolution and storage. You do not pass a backend URL to
 
 The plugin raises the iOS deployment target to 16.4 when needed and preserves
 a higher target. This includes Expo 55, whose default target is 15.1. Android
-still requires API 24 or later. Use compile SDK 36 for Expo 55 through 57 and
-37 for Expo 58, with JDK 17 and the host's compatible Gradle, Android Gradle
-Plugin and Kotlin setup. Do not lower a higher host SDK setting.
+requires API 24 or later and compile SDK 36 or later. Expo 55 through 57
+default to compile SDK 36 and Expo 58 to 37, so a new app meets both. Use JDK
+17 and the host's compatible Gradle, Android Gradle Plugin and Kotlin setup.
+
+The plugin does not change Android SDK levels. If `expo-build-properties` or
+a Gradle file sets `minSdkVersion` below 24 or `compileSdkVersion` below 36,
+prebuild fails and names the file and value to change.
+
+## Theme the native screens
+
+Add a `theme` to the plugin options to set the colors, corner radius, headline
+font, app identity and provider attribution of the native consent screens.
+The plugin writes them into `Info.plist` and `AndroidManifest.xml` at prebuild,
+so you do not need your own config plugin. Pass this object as `theme` in the
+`consent` options above:
+
+<include src="../../shared/examples/expo-dev/expo-theme.mdx" />
+
+Field names follow the web theme from `@c15t/ui`. `colors` holds the light
+values and `dark` overrides them in dark mode. Each color is `#RRGGBB`. A
+`dark` value needs the same field in `colors`.
+
+| Field | Web token | Native setting |
+| --- | --- | --- |
+| `colors.primary` | `--c15t-primary` | Accent: links, switches, Save |
+| `colors.textOnPrimary` | `--c15t-text-on-primary` | Text on the accent |
+| `colors.surface` | `--c15t-surface` | Cards and list rows |
+| `colors.text` | `--c15t-text` | Main text |
+| `colors.textMuted` | `--c15t-text-muted` | Secondary text |
+| `colors.canvas` | None | Page background |
+| `colors.surfaceMuted` | None | Quieter surface for partner lists |
+| `colors.decision`, `colors.textOnDecision` | None | Accept all and Reject all fill and text |
+| `radius.md` | `--c15t-radius-md` | Button and card radius, in points or dp |
+| `typography.headlineFont` | None | `serif`, `rounded`, `sans` or a bundled font; see below |
+| `brand.name`, `brand.mark`, `brand.hidden` | None | App name and mark above the headline |
+| `branding.provider`, `branding.name`, `branding.mark`, `branding.hidden` | None | Provider attribution |
+
+For a bundled headline font, iOS needs the PostScript name and Android
+needs the font resource name. One string works on both when it is a valid
+resource name, such as `inter_bold`. When the names differ, pass both:
+`headlineFont: { ios: 'Inter-Bold', android: 'inter_bold' }`.
+
+Prebuild fails on a value the native screens cannot draw, such as an
+`hsl()` color, a web token the native screens do not support or `copy`. With
+`theme` set, the plugin owns these native keys and removes ones you delete
+from it. Without `theme`, it leaves them alone. Headline and introduction copy
+are separate; see [Customize](/docs/frameworks/react-native/customize#copy-and-languages).
+Rebuild the binary after you change the theme.
 
 ## Add the React root
 

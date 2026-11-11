@@ -168,8 +168,9 @@ alone is not sufficient. See [native SDK gates](/docs/frameworks/react-native/na
 The native presenter uses native `ConsentTheme` settings. React theme props
 style only the React-rendered components. Apply the
 [native theme keys](/docs/frameworks/react-native/customize) and rebuild.
-For Expo, preserve those keys through an app-owned config plugin if prebuild
-regenerates your native files.
+For Expo, set them with the config plugin's
+[`theme` option](/docs/frameworks/react-native/expo#theme-the-native-screens)
+so prebuild writes them each time.
 
 ## An ATT request fails
 

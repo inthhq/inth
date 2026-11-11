@@ -12,7 +12,7 @@ native build metadata. React `style` props and web CSS do not style them.
 
 | Change | Use |
 | --- | --- |
-| Colors, corner radius and headline font | Native theme metadata or native `ConsentTheme`. |
+| Colors, corner radius and headline font | The Expo plugin's `theme` option, native theme metadata or native `ConsentTheme`. |
 | Your app's name and logo | Native app-identity settings. |
 | c15t, Inth or custom provider attribution | Native branding settings. |
 | First-layer heading and introduction | Native copy settings. |
@@ -54,10 +54,14 @@ A single `#RRGGBB` color applies in both appearances. A comma-separated pair
 selects light and dark values. Corner radius uses points on iOS and dp on
 Android. Rebuild the binary, open Privacy settings and check both appearances.
 
-For Expo, the c15t config plugin does not expose a `theme` prop. Apply these
-native keys through an app-owned Expo config plugin, or maintain them in your
-native projects when your app owns those files. Regenerating native files
-with prebuild can replace manual edits.
+For Expo, set the same values with the config plugin's `theme` option instead
+of editing native files, which prebuild regenerates. This example sets the
+accent, decision colors, radius and headline font:
+
+<include src="../../shared/examples/expo-dev/expo-theme.mdx" />
+
+[Expo and EAS](/docs/frameworks/react-native/expo#theme-the-native-screens)
+lists every `theme` field and the native setting it writes.
 
 ## Add your app's identity
 
@@ -87,22 +91,23 @@ or accessibility text needs more space.
 ## Native setting reference
 
 Every iOS suffix below starts with `com.c15t.consent.`. Android suffixes use
-the same prefix inside application metadata.
+the same prefix inside application metadata. The Expo column is the field in
+the config plugin's `theme` option.
 
-| Setting | iOS suffix | Android suffix |
-| --- | --- | --- |
-| Accent and text on accent | `accent`, `onAccent` | `ACCENT`, `ON_ACCENT` |
-| Page and card surfaces | `canvas`, `surface`, `surfaceMuted` | `CANVAS`, `SURFACE`, `SURFACE_MUTED` |
-| Main and secondary text | `text`, `textSecondary` | `TEXT`, `TEXT_SECONDARY` |
-| Decision buttons | `decision`, `onDecision` | `DECISION`, `ON_DECISION` |
-| Corner radius | `cornerRadius` | `CORNER_RADIUS` |
-| Headline font | `headlineFont` | `HEADLINE_FONT` |
-| App name and mark | `brandName`, `brandMark` | `BRAND_NAME`, `BRAND_MARK` |
-| Show app identity | `brand` | `BRAND` |
-| First-layer copy | `headline`, `introduction` | `HEADLINE`, `INTRODUCTION` |
-| Show provider attribution | `branding` | `BRANDING` |
-| Built-in provider | `brandingProvider` | `BRANDING_PROVIDER` |
-| Custom provider name and mark | `brandingName`, `brandingMark` | `BRANDING_NAME`, `BRANDING_MARK` |
+| Setting | iOS suffix | Android suffix | Expo `theme` field |
+| --- | --- | --- | --- |
+| Accent and text on accent | `accent`, `onAccent` | `ACCENT`, `ON_ACCENT` | `colors.primary`, `colors.textOnPrimary` |
+| Page and card surfaces | `canvas`, `surface`, `surfaceMuted` | `CANVAS`, `SURFACE`, `SURFACE_MUTED` | `colors.canvas`, `colors.surface`, `colors.surfaceMuted` |
+| Main and secondary text | `text`, `textSecondary` | `TEXT`, `TEXT_SECONDARY` | `colors.text`, `colors.textMuted` |
+| Decision buttons | `decision`, `onDecision` | `DECISION`, `ON_DECISION` | `colors.decision`, `colors.textOnDecision` |
+| Corner radius | `cornerRadius` | `CORNER_RADIUS` | `radius.md` |
+| Headline font | `headlineFont` | `HEADLINE_FONT` | `typography.headlineFont` |
+| App name and mark | `brandName`, `brandMark` | `BRAND_NAME`, `BRAND_MARK` | `brand.name`, `brand.mark` |
+| Show app identity | `brand` | `BRAND` | `brand.hidden` (inverted) |
+| First-layer copy | `headline`, `introduction` | `HEADLINE`, `INTRODUCTION` | None |
+| Show provider attribution | `branding` | `BRANDING` | `branding.hidden` (inverted) |
+| Built-in provider | `brandingProvider` | `BRANDING_PROVIDER` | `branding.provider` |
+| Custom provider name and mark | `brandingName`, `brandingMark` | `BRANDING_NAME`, `BRANDING_MARK` | `branding.name`, `branding.mark` |
 
 Body text uses the system face. Android maps `rounded` headline type to its
 system sans face. Check contrast and larger text after changing theme values;
