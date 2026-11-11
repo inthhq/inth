@@ -158,6 +158,43 @@ describe('theme prop', () => {
 		).toBe('#111111');
 	});
 
+	it('writes a per-platform headline font to each platform only', async () => {
+		const theme = {
+			typography: {
+				headlineFont: { android: 'inter_bold', ios: 'Inter-Bold' },
+			},
+		};
+		expect((await themedPlist(theme))['com.c15t.consent.headlineFont']).toBe(
+			'Inter-Bold'
+		);
+		expect(
+			(await themedMetaData(theme))['com.c15t.consent.HEADLINE_FONT']
+		).toBe('inter_bold');
+	});
+
+	it('writes one platform when only that one is named', async () => {
+		const theme = { typography: { headlineFont: { ios: 'Inter-Bold' } } };
+		expect((await themedPlist(theme))['com.c15t.consent.headlineFont']).toBe(
+			'Inter-Bold'
+		);
+		expect(
+			(await themedMetaData(theme))['com.c15t.consent.HEADLINE_FONT']
+		).toBeUndefined();
+	});
+
+	it.each(['inter_bold', '@font/inter_bold', 'Serif', 'sans-serif'])(
+		'writes the one-string font %s to both platforms',
+		async (headlineFont) => {
+			const theme = { typography: { headlineFont } };
+			expect((await themedPlist(theme))['com.c15t.consent.headlineFont']).toBe(
+				headlineFont
+			);
+			expect(
+				(await themedMetaData(theme))['com.c15t.consent.HEADLINE_FONT']
+			).toBe(headlineFont);
+		}
+	);
+
 	it.each([
 		[
 			'a CSS colour',
@@ -188,6 +225,30 @@ describe('theme prop', () => {
 			/theme\.typography has no "fontFamily" field/u,
 		],
 		['copy', { copy: { headline: 'Hi' } }, /theme has no "copy" field/u],
+		[
+			'one font string Android cannot resolve',
+			{ typography: { headlineFont: 'Inter-Bold' } },
+			/"Inter-Bold" is not an Android font resource name/u,
+		],
+		[
+			'an Android font that is not a resource name',
+			{
+				typography: {
+					headlineFont: { android: 'Inter-Bold', ios: 'Inter-Bold' },
+				},
+			},
+			/headlineFont\.android "Inter-Bold" is not an Android font resource name/u,
+		],
+		[
+			'a per-platform font naming neither platform',
+			{ typography: { headlineFont: {} } },
+			/headlineFont needs ios, android or both/u,
+		],
+		[
+			'a per-platform font for another platform',
+			{ typography: { headlineFont: { web: 'Inter' } } },
+			/headlineFont has no "web" field/u,
+		],
 		[
 			'a hidden brand with a name',
 			{ brand: { hidden: true, name: 'Acme' } },
