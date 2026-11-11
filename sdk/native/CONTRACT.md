@@ -2053,3 +2053,178 @@ cases with the expected string and in-app rows. `GppTest.kt` and
 `GPPTests.swift` assert every case, and
 `packages/iab/src/__tests__/native-gpp-fixtures.test.ts` checks each expected
 string against the web encoder and decodes it with `@iabgpp/cmpapi`.
+
+## WebView consent
+
+An app that opens its own site in a WebView passes the native decision to the
+page, so web c15t shows no second banner. Native stays the authority: the page
+gets a read-only copy, and nothing it does is recorded as a native choice.
+
+### Scripts
+
+`native/protocol/webview/` holds the two scripts every platform injects, byte
+for byte. `bun run generate:webview-consent-scripts` copies them into
+`WebViewConsentScripts` (Swift and Kotlin) and `scripts.generated.ts` (React
+Native); `scripts/generate-webview-consent-scripts.test.ts` fails on drift. Each
+file is one parenthesized function expression, called with JSON arguments.
+
+    document-start.js   <script>(<origins>, <token>, <key>, <state>);
+                        runs before any page script. It returns at once unless
+                        location.origin is one of <origins> and the frame is the
+                        top frame. Otherwise it defines window.__c15tNativeConsent
+                        as a frozen object on a non-writable, non-configurable
+                        property: { version: 1, getState(), subscribe(listener),
+                        update(token, state), openPreferences() }.
+    update.js           <script>(<origins>, <token>, <state>);
+                        runs in the loaded main frame when consent changes. It
+                        checks the origin the same way, then calls
+                        update(<token>, <state>). A wrong token changes nothing.
+
+`origins.json` in the same directory fixes how an allowed origin is written:
+`https://host[:port]`, or `http://` on `localhost`, `127.0.0.1` or `[::1]`;
+lowercase; no default port; no path, query, fragment, credentials, wildcard or
+non-ASCII host. Every platform rejects the whole list when one entry fails, and
+an empty list.
+
+### State
+
+    {
+      "version": 1,
+      "ready": boolean,           // snapshot.ready && !snapshot.policyPending
+      "revision": number,         // snapshot.revision
+      "model": "opt-in" | "opt-out" | "none" | "iab",
+      "permissions": { "necessary": true, "functionality", "experience",
+                       "measurement", "marketing" },  // effectivePermissions,
+                                                      // all false until ready
+      "tcString": string | null,  // the committed native TC string under IAB
+      "gppString": null           // reserved for GPP (#94)
+    }
+
+Nothing else crosses: no subject id, external id, policy snapshot token,
+location, overrides, translations or receipts. The web side does not need any
+of them, because it records nothing.
+
+### Platform glue
+
+- Swift and Kotlin: `WebViewConsentScript` and `WebViewConsentState` build the
+  scripts, and `WebViewConsentSync` owns the rules below, in C15tCore and in
+  `com.c15t.core.webview`, with no WebKit or Android in them. `ConsentWebView`
+  connects a sync to a `WKWebView` (C15tApple: a main-frame-only `WKUserScript`
+  at document start) or an `android.webkit.WebView` (c15t-android:
+  `WebViewCompat.addDocumentStartJavaScript` with the origins as origin rules;
+  `attach` returns `null`, and injects nothing, without `DOCUMENT_START_SCRIPT`).
+- React Native: the bridge method `getWebViewConsent()` returns
+  `{ state, token, key }` from the native types above; `useWebViewConsent()`
+  builds `injectedJavaScriptBeforeContentLoaded` and pushes updates with
+  `injectJavaScript`.
+
+Each WebView gets two 128-bit secrets from the platform CSPRNG
+(`SecRandomCopyBytes`, `SecureRandom`; React Native takes them from the
+bridge): the update token and the preferences request key. Both live only in
+the top frame's document-start closure. A sync observes the core before it
+reads the first state, so a change in between is not missed. A sync that
+replaces another on the same WebView keeps both secrets, because a page loaded
+under the old one accepts only the token it was given. The native helpers live
+as long as their WebView (an associated object on iOS, a weak registry on
+Android), and a Swift sync released without `close()` still removes its
+script, so no document-start script outlives its sync carrying an old state.
+
+A page that stops being listed is revoked, not abandoned. Updates are addressed
+to the listed origins, so a page loaded from an origin the app drops would keep
+its last state, grants included, with nothing able to reach it. Before a sync
+stops serving an origin it runs `update.js` for that origin alone, with the
+page's token and the revoked state (`ready: false`, every optional category
+denied): `close()` revokes every listed origin, and a replacement revokes the
+origins it drops. The page denies everything and follows the app no further;
+web c15t reloads it when a category it used is withdrawn, and the reload shows
+the site's own banner because nothing is injected any more. A Swift sync
+released without `close()` revokes nothing, because its web view is gone. React
+Native revokes dropped origins when `allowedOrigins` changes.
+
+On iOS a `WKUserContentController` is one consent scope. Its user scripts run in
+every web view attached to it, and a document-start script cannot tell which web
+view it is in, so a helper's state and allowlist reach every web view on its
+controller. A controller therefore has exactly one authority: one `ConsentCore`
+and one allowlist (compared after normalization, in any order). Attaching a
+helper with another core or another allowlist to a controller that already has
+a helper throws `WebViewConsentGroup.ScopeConflict` before anything changes; the
+app gives each differently scoped web view its own controller. The one exception
+is a web view's own sole helper, which a new helper on that web view replaces,
+so a controller with one web view can change scope. Helpers with the same core
+and allowlist share the controller: one message handler (WebKit raises
+`NSInvalidArgumentException` on a second handler under a name in use), installed
+with the first and removed with the last, which finds the helper through the
+message's web view; and one token and request key, so whichever script defines a
+page's object, every helper's updates and requests match it.
+`WebViewConsentGroup` in C15tCore keeps the count, the authority and the secrets.
+
+A web view that shares a helper's controller without a helper of its own is in
+that helper's scope too: it receives the state at document start but no live
+updates, because the helper evaluates updates only in its own web view.
+Attach a helper to every web view on the controller, or give the web view its own
+controller. Android injects per WebView (`addDocumentStartJavaScript` takes the
+WebView), and `react-native-webview` gives every WebView its own
+`WKUserContentController` on iOS and injects per WebView on Android, whatever
+`useSharedProcessPool` or `sharedCookiesEnabled` say; neither has this
+scope.
+
+The GPP string is read in one place per platform:
+`WebViewConsentState.gppStringOf(snapshot)` (Kotlin) and
+`WebViewConsentState.gppString(of:)` (Swift). Both return `null` until the
+snapshot carries a GPP string; a test on each platform fails once it does and
+the seam still returns `null`.
+
+### Web side
+
+`webViewConsentSource()` in `@c15t/core` returns an `ExternalConsentSource`
+when it finds the injected object with its locks (non-writable,
+non-configurable, frozen, version 1), and `undefined` everywhere else. A site
+passes it as `consentSource`, so it opts in explicitly. Under a consent source
+web c15t shows no banner or dialog, stores nothing, sends no receipt and mounts
+no IAB CMP; permissions follow the injected state and are all denied until
+`ready`.
+
+### Direction
+
+One way, native to web. A choice cannot be made in the page: the consent
+source disables the web choice UI. The page may only ask the app to open its
+own preferences, by posting `{"type":"c15t:open-preferences","key":"<key>"}`
+to the `c15tConsent` message handler (iOS), the `c15tConsent` web message
+listener (Android) or `ReactNativeWebView` (React Native). Every platform
+requires the exact key. A frame can post to the same channel (React Native's
+Android fallback exposes it to every frame and reports the top page's URL), but
+it cannot read the key, which sits in the top frame's closure. Swift and Kotlin
+also require platform main-frame metadata and a listed origin; React Native
+requires a listed page URL and drops requests less than a second apart. Script
+in the top frame of a listed page can intercept the posted message and learn
+the key, which lets it ask for the preferences screen, as calling
+`openPreferences()` already does. The key opens nothing else, and it is not
+the update token.
+
+Web-to-native choices are deliberately absent. Native would have to record a
+receipt in the subject's name on the word of page script, and nothing in a page
+can prove that a person, rather than any script on the page, made the choice.
+
+### Threat model
+
+- An unlisted page, including one the WebView navigated to, gets nothing. The
+  scripts check `location.origin` themselves, so this holds even where the
+  platform cannot filter (iOS user scripts, React Native on Android). Android
+  also filters with origin rules.
+- A third-party iframe gets nothing: the scripts run in the top frame only, and
+  a cross-origin frame cannot read the parent's globals. The page posts no
+  messages to frames, and the web side listens for none.
+- Script on a listed page can read the state, as it can read any consent state
+  the page uses. It cannot replace the object, which was defined before it ran
+  and cannot be redefined. It cannot change the state without the token, which
+  lives only in the closure and in scripts the app evaluates.
+- The update script reads the origin before it touches the global, so a page
+  that navigated off the list never receives the token.
+- In a normal browser, a script that runs before c15t could fake the object
+  with the same locks. That script could equally write c15t's own consent
+  cookie, so this adds nothing it could not already do. Sites that do not pass
+  `webViewConsentSource()` never read the global.
+- Residual: where React Native on Android injects late (react-native-webview
+  without document-start support), a page script on a listed origin could
+  define the global first and capture the token. It could then forge updates
+  for that page only; native state is never affected.

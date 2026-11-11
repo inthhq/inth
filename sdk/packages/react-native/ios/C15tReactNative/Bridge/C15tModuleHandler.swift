@@ -205,6 +205,15 @@ public struct C15tModuleHandler {
             iabConsent: additions.0, iabAcceptAll: additions.1, iabHeadlessGaps: additions.2)
     }
 
+    /// The `getWebViewConsent()` payload: `{ state, token, key }`.
+    public func webViewConsentPayload() -> String {
+        ensureCore()
+        let state = C15t.current.map { WebViewConsentState(core: $0) }
+            ?? WebViewConsentState(snapshot: C15t.snapshot(), tcString: nil)
+        return "{\"state\":\(state.json()),\"token\":\"\(WebViewConsentScript.newToken())\","
+            + "\"key\":\"\(WebViewConsentScript.newToken())\"}"
+    }
+
     /// The `getTrackingAuthorization()` payload.
     ///
     /// No `ensureCore()` here, unlike every other read: the platform answer is not consent

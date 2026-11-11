@@ -5,6 +5,8 @@ import com.c15t.core.Subscription
 import com.c15t.core.model.ConsentSnapshot
 import com.c15t.core.model.KernelError
 import com.c15t.core.model.KernelUser
+import com.c15t.core.webview.WebViewConsentScript
+import com.c15t.core.webview.WebViewConsentState
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.modules.core.DeviceEventManagerModule
@@ -70,6 +72,15 @@ class C15tReactNativeModule(appContext: ReactApplicationContext) : NativeC15tSpe
 		}
 		return C15tPayload.snapshot(snapshot, fallbackLanguage = deviceLanguage(), iabConsent = additions.first,
 			iabAcceptAll = additions.second, iabHeadlessGaps = additions.third)
+	}
+
+	/** WebView consent: the state a page reads, and a fresh token and request key for one WebView. */
+	override fun getWebViewConsent(): String {
+		ensureCore()
+		val core = C15t.current
+		val state = if (core != null) WebViewConsentState.from(core) else WebViewConsentState.from(C15t.snapshot(), null)
+		return "{\"state\":${state.toJson()},\"token\":\"${WebViewConsentScript.newToken()}\"," +
+			"\"key\":\"${WebViewConsentScript.newToken()}\"}"
 	}
 
 	/**

@@ -210,6 +210,22 @@ export const createFakeNativeModule = function createFakeNativeModule(
 
 			return JSON.stringify({ status: trackingStatus });
 		}),
+		getWebViewConsent: vi.fn(() => {
+			const current = typeof snapshot === 'string' ? buildSnapshot() : snapshot;
+			return JSON.stringify({
+				key: 'fedcba9876543210fedcba9876543210',
+				state: {
+					gppString: null,
+					model: current.model,
+					permissions: current.effectivePermissions,
+					ready: current.ready && !current.policyPending,
+					revision: current.revision,
+					tcString: null,
+					version: 1,
+				},
+				token: '0123456789abcdef0123456789abcdef',
+			});
+		}),
 		identify: vi.fn((externalId: string) => {
 			fake.identifyCalls.push(externalId);
 

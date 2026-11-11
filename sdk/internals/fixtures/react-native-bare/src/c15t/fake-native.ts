@@ -414,6 +414,7 @@ class FakeCore {
 			// inventing a third one: nothing to ask, and the c15t decision alone
 			// decides. See `C15tTracking.kt`.
 			getTrackingAuthorization: () => JSON.stringify({ status: 'unsupported' }),
+			getWebViewConsent: () => this.webViewConsent(),
 			identify: async (externalId) => {
 				this.identify(externalId);
 				await settle();
@@ -799,6 +800,33 @@ class FakeCore {
 			revision: this.revision,
 			snapshot: this.snapshot,
 			subjectId: this.subjectId,
+		});
+	}
+
+	/**
+	 * The WebView consent payload the native cores build from a snapshot. The
+	 * token and key are fixed: the fixture has no WebView to protect.
+	 */
+	private webViewConsent(): string {
+		const snapshot = JSON.parse(this.getSnapshot()) as {
+			effectivePermissions: Record<string, boolean>;
+			model: string;
+			policyPending: boolean;
+			ready: boolean;
+			revision: number;
+		};
+		return JSON.stringify({
+			key: '11111111111111111111111111111111',
+			state: {
+				gppString: null,
+				model: snapshot.model,
+				permissions: snapshot.effectivePermissions,
+				ready: snapshot.ready && !snapshot.policyPending,
+				revision: snapshot.revision,
+				tcString: null,
+				version: 1,
+			},
+			token: '00000000000000000000000000000000',
 		});
 	}
 
