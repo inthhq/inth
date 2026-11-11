@@ -77,6 +77,35 @@ class WebViewConsentSyncTest {
 		assertTrue(target.evaluated.size >= 2, "the change is pushed after the first state")
 	}
 
+	/** How many snapshot callbacks the core holds. */
+	private fun registrations(core: com.c15t.core.ConsentCore): Int =
+		(com.c15t.core.ConsentCore::class.java.getDeclaredField("snapshotObservers")
+			.apply { isAccessible = true }.get(core) as Collection<*>).size
+
+	/** Start a sync and keep nothing of it but a weak reference. */
+	private fun abandonedSync(core: com.c15t.core.ConsentCore, target: RecordingTarget) =
+		java.lang.ref.WeakReference(WebViewConsentSync.start(core, listOf("https://app.example"), target, post = post))
+
+	@Test fun `a sync collected without close lets go of its core registration`() {
+		val core = core()
+		val before = registrations(core)
+		val target = RecordingTarget()
+		val sync = abandonedSync(core, target)
+		assertEquals(before + 1, registrations(core))
+		repeat(50) {
+			if (sync.get() == null) return@repeat
+			System.gc()
+			Thread.sleep(10)
+		}
+		kotlin.test.assertNull(sync.get(), "nothing but the test held the sync")
+
+		core.identify(KernelUser(externalId = "user-1"))
+		drain()
+
+		assertEquals(before, registrations(core), "the callback closed its own registration")
+		assertEquals(1, target.installed.size, "a collected sync pushes nothing")
+	}
+
 	@Test fun `an unchanged state is not pushed again`() {
 		val core = core()
 		val target = RecordingTarget()

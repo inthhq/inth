@@ -3,6 +3,7 @@ package com.c15t.core.webview
 import com.c15t.core.ConsentCore
 import com.c15t.core.Subscription
 import java.lang.ref.WeakReference
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Keeps one WebView in step with a [ConsentCore], with no Android in it.
@@ -48,9 +49,16 @@ class WebViewConsentSync private constructor(
 
 	private fun start() {
 		// The core holds this callback until [close]. It reaches the sync weakly, so a
-		// sync dropped without close() is collected with its WebView, not kept by the core.
+		// sync dropped without close() is collected with its WebView, not kept by the
+		// core, and the first change after that closes the callback's own registration.
 		val sync = WeakReference(this)
-		subscription = core.onChange { sync.get()?.let { it.post { it.publish() } } }
+		val own = AtomicReference<Subscription?>(null)
+		val registration = core.onChange {
+			val live = sync.get()
+			if (live == null) own.getAndSet(null)?.close() else live.post { live.publish() }
+		}
+		own.set(registration)
+		subscription = registration
 		publish()
 	}
 
