@@ -20,7 +20,7 @@ final class DurableCategorySaveTests: XCTestCase {
         }
     }
 
-    private final class Observer: SnapshotObserver, @unchecked Sendable {
+    private final class Observer: @unchecked Sendable {
         private(set) var snapshots: [ConsentSnapshot] = []
         func consentDidChange(_ snapshot: ConsentSnapshot) { snapshots.append(snapshot) }
     }
@@ -39,7 +39,7 @@ final class DurableCategorySaveTests: XCTestCase {
         let storedBefore = store.data(for: StorageKey.snapshot)
         let sentBefore = http.recordedSaveRequests.count
         let observer = Observer()
-        let subscription = core.onChange(observer)
+        let subscription = core.onChange { observer.consentDidChange($0) }
         defer { subscription.cancel() }
         store.refusesSnapshot = true
         store.onSnapshotWrite = { XCTAssertEqual(core.snapshot(), before, "reads must not see an uncommitted grant") }

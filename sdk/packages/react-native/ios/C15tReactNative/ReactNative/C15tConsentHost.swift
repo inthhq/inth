@@ -14,17 +14,21 @@ final class C15tConsentHost {
     private var overlay: ConsentPassthroughView?
     private var controller: UIHostingController<AnyView>?
     private var sessionID: String?
-    private var outcome: ((String) -> Void)?
+    private var outcome: ((ConsentHostOutcome) -> Void)?
 
-    func present(preferences: Bool, privacyPolicyURL: String, outcome: @escaping (String) -> Void) throws -> String {
+    func present(
+        preferences: Bool,
+        privacyPolicyURL: String,
+        outcome: @escaping (ConsentHostOutcome) -> Void
+    ) throws -> ConsentHostSession {
         guard let url = URL(string: privacyPolicyURL), url.scheme == "https", url.host != nil else {
             throw HostError.invalidPrivacyPolicy
         }
-        if let sessionID { return encode(["sessionId": sessionID, "status": "already-presented"]) }
+        if let sessionID { return .alreadyPresented(sessionID: sessionID) }
         guard let core = C15t.current else { throw HostError.noCore }
         let snapshot = core.snapshot()
         if !preferences && (snapshot.policyPending || snapshot.promptRequirement.kind == .none) {
-            return encode(["sessionId": NSNull(), "status": "not-required"])
+            return .notRequired
         }
         guard let root = UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene })
             .filter({ $0.activationState == .foregroundActive })
@@ -40,10 +44,19 @@ final class C15tConsentHost {
         let notice = !preferences && snapshot.promptRequirement.kind == .notice
         presenter.onOutcome = { [weak self] result in
             guard let self, self.sessionID == id else { return }
-            let kind = result == .dismissed ? (presenter.snapshot.policyPending ? "unavailable" : "dismissed") : (notice && !presenter.preferences ? "acknowledged" : "committed")
-            let payload = self.encode(["sessionId": id, "kind": kind, "revision": core.snapshot().revision])
+            let revision = core.snapshot().revision
+            let ended: ConsentHostOutcome
+            if result == .dismissed {
+                ended = presenter.snapshot.policyPending
+                    ? .unavailable(sessionID: id, revision: revision)
+                    : .dismissed(sessionID: id, revision: revision)
+            } else if notice && !presenter.preferences {
+                ended = .acknowledged(sessionID: id, revision: revision)
+            } else {
+                ended = .committed(sessionID: id, revision: revision)
+            }
             self.detach()
-            outcome(payload)
+            outcome(ended)
         }
         presenter.onAnnouncement = { UIAccessibility.post(notification: .announcement, argument: $0) }
         let overlay = ConsentPassthroughView(frame: parent.view.bounds)
@@ -58,7 +71,7 @@ final class C15tConsentHost {
         self.overlay = overlay
         controller.didMove(toParent: parent)
         self.controller = controller
-        return encode(["sessionId": id, "status": "presented"])
+        return .presented(sessionID: id)
     }
 
     func close(sessionID: String) {
@@ -79,9 +92,6 @@ final class C15tConsentHost {
         presenter = nil
     }
 
-    private func encode(_ value: [String: Any]) -> String {
-        String(data: try! JSONSerialization.data(withJSONObject: value, options: [.sortedKeys]), encoding: .utf8)!
-    }
     enum HostError: Error { case invalidPrivacyPolicy, noCore, noHost }
 }
 

@@ -179,8 +179,6 @@ class ConsentDecisionTest {
 		kernel.gateDecision(ConsentCategory.MARKETING) { decision -> seen += decision }
 
 		var publications = 0
-		// The core holds snapshot observers weakly, so the lambda needs an owner for
-		// as long as the run lasts.
 		val observer: (ConsentSnapshot) -> Unit = { publications += 1 }
 		val watcher = kernel.onChange(observer)
 

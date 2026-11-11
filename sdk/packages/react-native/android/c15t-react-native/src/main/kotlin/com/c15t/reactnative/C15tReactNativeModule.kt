@@ -33,8 +33,7 @@ class C15tReactNativeModule(appContext: ReactApplicationContext) : NativeC15tSpe
 	private val context: ReactApplicationContext = appContext
 	private val pump = C15tChangePump(sink = this::publish)
 
-	// Held as fields on purpose: the core keeps snapshot observers weakly, so the
-	// module has to own the lambdas or the callbacks would silently stop.
+	// The subscriptions own these lambdas until invalidate() closes them.
 	private val snapshotObserver: (ConsentSnapshot) -> Unit = pump::onSnapshot
 
 	private val errorObserver: (KernelError) -> Unit = pump::onError
@@ -218,7 +217,12 @@ class C15tReactNativeModule(appContext: ReactApplicationContext) : NativeC15tSpe
 			if (activity == null || activity.isFinishing || core == null) {
 				promise.reject("C15T_PRESENTER_UNAVAILABLE", "Native presenter needs an active Activity and installed core"); return@runOnUiQueueThread
 			}
-			try { promise.resolve(ConsentHost.present(activity, core, preferences, privacyPolicyURL, owner = this) { publish("onConsentPresenterOutcome", it) }) }
+			try {
+				val session = ConsentHost.present(activity, core, preferences, privacyPolicyURL, owner = this) {
+					publish("onConsentPresenterOutcome", C15tPayload.consentHostOutcome(it))
+				}
+				promise.resolve(C15tPayload.consentHostSession(session))
+			}
 			catch (error: Exception) { promise.reject("C15T_PRESENTER_UNAVAILABLE", error.message, error) }
 		}
 	}

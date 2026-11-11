@@ -196,11 +196,15 @@ object C15t {
 		return active.gateDecision(category, onDecision)
 	}
 
-	/** Observe every snapshot change, held weakly. */
+	/**
+	 * Observe every snapshot change. The core holds [observer] until the returned
+	 * handle is closed. Before [bootstrap] there is nothing to observe and the handle
+	 * has nothing to close.
+	 */
 	fun onChange(observer: (ConsentSnapshot) -> Unit): Subscription =
 		kernel.get()?.onChange(observer) ?: Subscription {}
 
-	/** Observe emitted errors. */
+	/** Observe emitted errors, held until the returned handle is closed. */
 	fun onError(observer: (KernelError) -> Unit): Subscription = kernel.get()?.onError(observer) ?: Subscription {}
 
 	/** Record a decision, or a no-op result when the core was never installed. */

@@ -78,14 +78,13 @@ public final class C15tChangePump: @unchecked Sendable {
 
 /// Holds the core subscriptions a React module needs, and feeds them to a pump.
 ///
-/// Exists as its own type for two reasons. The core holds snapshot observers weakly,
-/// so somebody has to own the observer object for as long as the module wants
-/// callbacks; and the subscriptions have to be installed once, against whichever core
-/// is running, without the module growing the bookkeeping itself.
+/// Exists as its own type so the subscriptions are installed once, against whichever
+/// core is running, without the module growing the bookkeeping itself. The snapshot
+/// handle it keeps owns the callback, so the module hears changes until it detaches.
 ///
 /// Nothing here is React-specific, which is what makes the event behaviour testable
 /// without Pods installed.
-public final class C15tCoreSubscriber: SnapshotObserver, @unchecked Sendable {
+public final class C15tCoreSubscriber: @unchecked Sendable {
     private let lock = NSLock()
     private let pump: C15tChangePump
 
@@ -108,7 +107,9 @@ public final class C15tCoreSubscriber: SnapshotObserver, @unchecked Sendable {
         }
         let previous = (snapshotSubscription, errorStreamTask)
         attachedCore = core
-        snapshotSubscription = core.onChange(self)
+        // Captures the pump, not `self`: the core holds this closure until the handle
+        // ends, and a closure holding `self` would keep `deinit` from ever detaching.
+        snapshotSubscription = core.onChange { [pump] snapshot in pump.onSnapshot(snapshot) }
         lock.unlock()
 
         previous.0?.cancel()
@@ -148,13 +149,6 @@ public final class C15tCoreSubscriber: SnapshotObserver, @unchecked Sendable {
 
     /// Report a published snapshot.
     public func report(_ snapshot: ConsentSnapshot) {
-        pump.onSnapshot(snapshot)
-    }
-
-    // MARK: - SnapshotObserver
-
-    /// Called on an arbitrary queue by the core.
-    public func consentDidChange(_ snapshot: ConsentSnapshot) {
         pump.onSnapshot(snapshot)
     }
 

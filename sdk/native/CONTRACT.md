@@ -317,17 +317,30 @@ Native API (Swift and Kotlin, same shape)
     decision(_ category)              // granted | denied | pending
     isReady() -> Bool                 // hydrated, and the first init has resolved
     gate(_ category, onChange)        // fires now and on every change
-    onChange(_ observer)              // snapshot observer, weakly held
+    onChange(_ observer)              // snapshot callback, owned by its handle
     save(_ intent) -> CommitResult    // 'all' | 'necessary' | explicit map
     dismissNotice()
     refresh()
     identify(user) / logout()
-    setOverrides({ country, region, language, test })
+    setOverrides({ country, region, language, gpc })
     flushPending()                    // retry the offline queue
     reset()                           // wipe consent, keep the subject id
 
 `snapshot()` and `isAllowed()` must not touch the network, the disk, or a lock
 that can be held across either. They are called from ad SDKs on the main thread.
+
+Every observer method (`onChange`, `gate`, Kotlin's `gateDecision` and
+`onError`) takes a callback and returns a subscription handle that owns it. The
+core holds the callback strongly and never drops it on its own, so a closure
+written inline keeps firing with nothing else referencing it. The registration
+ends when the caller ends the handle: `close()` in Kotlin, `cancel()` or
+releasing the `ConsentSubscription` in Swift. Swift's ARC releases a dropped
+handle at once, and the methods are not `@discardableResult`, so a discarded
+handle draws a warning. The JVM has no prompt release, so a Kotlin handle that
+is dropped without `close()` keeps its callback for the life of the core. A
+callback that captures its owner captures it weakly, or the owner keeps its own
+registration alive. Swift reports errors through `eventStream`, whose consumer
+task owns its lifetime.
 
 Native SDK gating
 -----------------

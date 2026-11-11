@@ -1,5 +1,7 @@
 package com.c15t.reactnative
 
+import com.c15t.consentui.ConsentHostOutcome
+import com.c15t.consentui.ConsentHostSession
 import com.c15t.core.CommitIntent
 import com.c15t.core.CommitResult
 import com.c15t.core.NativeConfig
@@ -480,6 +482,38 @@ class C15tPayloadTest {
 		val read = C15tPayload.parseOverrides(raw, current)
 		assertTrue("expected the document to apply: $raw", read is OverridesRead.Applied)
 		return (read as OverridesRead.Applied).overrides
+	}
+
+	@Test
+	fun `consent host answers encode as the presenter session JSON reads them`() {
+		assertEquals(
+			"{\"sessionId\":\"one\",\"status\":\"presented\"}",
+			C15tPayload.consentHostSession(ConsentHostSession.Presented("one")),
+		)
+		assertEquals(
+			"{\"sessionId\":\"one\",\"status\":\"already-presented\"}",
+			C15tPayload.consentHostSession(ConsentHostSession.AlreadyPresented("one")),
+		)
+		assertEquals(
+			"{\"sessionId\":null,\"status\":\"not-required\"}",
+			C15tPayload.consentHostSession(ConsentHostSession.NotRequired),
+		)
+	}
+
+	@Test
+	fun `consent host outcomes encode every kind with session and revision`() {
+		val kinds = mapOf(
+			"committed" to ConsentHostOutcome.Committed("one", 4),
+			"acknowledged" to ConsentHostOutcome.Acknowledged("one", 4),
+			"dismissed" to ConsentHostOutcome.Dismissed("one", 4),
+			"unavailable" to ConsentHostOutcome.Unavailable("one", 4),
+		)
+		for ((kind, outcome) in kinds) {
+			assertEquals(
+				"{\"sessionId\":\"one\",\"kind\":\"$kind\",\"revision\":4}",
+				C15tPayload.consentHostOutcome(outcome),
+			)
+		}
 	}
 
 	private fun parse(raw: String): JsonObject = json.parseToJsonElement(raw).jsonObject

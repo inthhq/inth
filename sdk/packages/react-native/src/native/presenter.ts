@@ -1,12 +1,21 @@
 import { getNativeC15t, getNativeC15tEvents } from './module';
 
-/** A native presentation request. Repeated commands keep the same session. */
-export interface ConsentPresenterSession {
-	readonly sessionId: string | null;
-	readonly status: 'presented' | 'already-presented' | 'not-required';
-}
+/**
+ * A native presentation request. Repeated commands keep the same session.
+ * Mirrors `ConsentHostSession` in the native SDKs: `not-required` alone has no
+ * session ID.
+ */
+export type ConsentPresenterSession =
+	| {
+			readonly sessionId: string;
+			readonly status: 'presented' | 'already-presented';
+	  }
+	| { readonly sessionId: null; readonly status: 'not-required' };
 
-/** One final native outcome. Committed means durable on-device storage. */
+/**
+ * One final native outcome. Committed means durable on-device storage.
+ * Mirrors `ConsentHostOutcome` in the native SDKs.
+ */
 export interface ConsentPresenterOutcome {
 	readonly sessionId: string;
 	readonly kind: 'committed' | 'acknowledged' | 'dismissed' | 'unavailable';
@@ -48,23 +57,23 @@ export const parseConsentPresenterOutcome = (
 const parseSession = (payload: string): ConsentPresenterSession => {
 	const value: unknown = JSON.parse(payload);
 	if (
-		typeof value !== 'object' ||
-		value === null ||
-		!('sessionId' in value) ||
-		!('status' in value) ||
-		(value.status !== 'presented' &&
-			value.status !== 'already-presented' &&
-			value.status !== 'not-required') ||
-		(value.status === 'not-required'
-			? value.sessionId !== null
-			: typeof value.sessionId !== 'string')
+		typeof value === 'object' &&
+		value !== null &&
+		'sessionId' in value &&
+		'status' in value
 	) {
-		throw new TypeError('Invalid native consent presenter session');
+		const { sessionId, status } = value;
+		if (status === 'not-required' && sessionId === null) {
+			return { sessionId, status };
+		}
+		if (
+			(status === 'presented' || status === 'already-presented') &&
+			typeof sessionId === 'string'
+		) {
+			return { sessionId, status };
+		}
 	}
-	return {
-		sessionId: typeof value.sessionId === 'string' ? value.sessionId : null,
-		status: value.status,
-	};
+	throw new TypeError('Invalid native consent presenter session');
 };
 
 /** Open an owed native prompt on the installed engine.

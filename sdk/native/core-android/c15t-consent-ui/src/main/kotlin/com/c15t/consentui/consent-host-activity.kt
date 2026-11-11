@@ -15,14 +15,46 @@ import androidx.activity.compose.setContent
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
 import com.c15t.core.ConsentCore
-import org.json.JSONObject
 import java.lang.ref.WeakReference
 import java.util.UUID
+
+/** What [ConsentHost.present] did with a request. */
+sealed interface ConsentHostSession {
+    /** A new session opened. Its outcome arrives once, through the `outcome` callback. */
+    data class Presented(val sessionId: String) : ConsentHostSession
+
+    /** A session was already open. The request reused it and its draft. */
+    data class AlreadyPresented(val sessionId: String) : ConsentHostSession
+
+    /** A prompt request found no prompt owed, so nothing opened. Preferences never answer this. */
+    data object NotRequired : ConsentHostSession
+}
+
+/** How a host session ended. Delivered once per session. */
+sealed interface ConsentHostOutcome {
+    /** The session that ended. */
+    val sessionId: String
+
+    /** The core's snapshot revision when the session ended. */
+    val revision: Long
+
+    /** A decision was saved durably on the device. */
+    data class Committed(override val sessionId: String, override val revision: Long) : ConsentHostOutcome
+
+    /** A notice was acknowledged. No consent decision was recorded. */
+    data class Acknowledged(override val sessionId: String, override val revision: Long) : ConsentHostOutcome
+
+    /** The subject closed the session without a decision. */
+    data class Dismissed(override val sessionId: String, override val revision: Long) : ConsentHostOutcome
+
+    /** The session closed because the policy was still unresolved. */
+    data class Unavailable(override val sessionId: String, override val revision: Long) : ConsentHostOutcome
+}
 
 /** Optional native Activity host. The registry owns one session, never a second engine. */
 object ConsentHost {
     private class Session(val id: String, val presenter: ConsentPresenter, val store: ViewModelStore,
-        val privacyPolicyUrl: String, var owner: WeakReference<Any>, var outcome: ((String) -> Unit)?, val notice: Boolean) {
+        val privacyPolicyUrl: String, var owner: WeakReference<Any>, var outcome: ((ConsentHostOutcome) -> Unit)?, val notice: Boolean) {
         var activity = WeakReference<ConsentHostActivity>(null)
         var launching = true
         var noticeView = WeakReference<ComposeView>(null)
@@ -33,8 +65,13 @@ object ConsentHost {
     private var active: Session? = null
     private const val NOTICE_SESSION_STATE = "com.c15t.consentui.notice.session"
 
-    /** Call on the main thread. Repeated requests reuse the current session and its draft. */
-    fun present(activity: Activity, core: ConsentCore, preferences: Boolean, privacyPolicyUrl: String, owner: Any = activity, outcome: (String) -> Unit): String {
+    /**
+     * Call on the main thread. Repeated requests reuse the current session and its draft.
+     *
+     * @param outcome Receives how the session ended, once. A repeated request replaces it.
+     * @returns Whether a session opened, was already open, or was not needed.
+     */
+    fun present(activity: Activity, core: ConsentCore, preferences: Boolean, privacyPolicyUrl: String, owner: Any = activity, outcome: (ConsentHostOutcome) -> Unit): ConsentHostSession {
         val uri = android.net.Uri.parse(privacyPolicyUrl)
         require(uri.scheme == "https" && !uri.host.isNullOrBlank()) { "An HTTPS privacy-policy URL is required" }
         active?.let {
@@ -42,7 +79,7 @@ object ConsentHost {
             it.outcome = outcome
             if (it.notice) {
                 attachNotice(activity, it)
-                return result(it.id, "already-presented")
+                return ConsentHostSession.AlreadyPresented(it.id)
             }
             val host = it.activity.get()
             if (!it.launching && (host == null || host.isFinishing || host.isDestroyed)) {
@@ -54,11 +91,11 @@ object ConsentHost {
                     throw error
                 }
             }
-            return result(it.id, "already-presented")
+            return ConsentHostSession.AlreadyPresented(it.id)
         }
         val snapshot = core.snapshot()
         if (!preferences && (snapshot.policyPending || !snapshot.promptRequirement.acknowledge && !snapshot.promptRequirement.notice))
-            return JSONObject().put("sessionId", JSONObject.NULL).put("status", "not-required").toString()
+            return ConsentHostSession.NotRequired
         val store = ViewModelStore()
         val presenter = ViewModelProvider(store, object : ViewModelProvider.Factory {
             override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
@@ -72,13 +109,17 @@ object ConsentHost {
         active = session
         presenter.onOutcome = { value ->
             if (active === session) {
-                val payload = JSONObject().put("sessionId", id).put("revision", core.snapshot().revision)
-                    .put("kind", if (value == ConsentPresenterOutcome.DISMISSED) { if (core.snapshot().policyPending) "unavailable" else "dismissed" }
-                        else if (session.notice && !presenter.preferences) "acknowledged" else "committed").toString()
+                val snapshot = core.snapshot()
+                val result = when {
+                    value == ConsentPresenterOutcome.DISMISSED && snapshot.policyPending -> ConsentHostOutcome.Unavailable(id, snapshot.revision)
+                    value == ConsentPresenterOutcome.DISMISSED -> ConsentHostOutcome.Dismissed(id, snapshot.revision)
+                    session.notice && !presenter.preferences -> ConsentHostOutcome.Acknowledged(id, snapshot.revision)
+                    else -> ConsentHostOutcome.Committed(id, snapshot.revision)
+                }
                 active = null
                 releaseNotice(session)
                 session.activity.get()?.finish()
-                session.outcome?.invoke(payload)
+                session.outcome?.invoke(result)
                 session.outcome = null
                 store.clear()
             }
@@ -93,7 +134,7 @@ object ConsentHost {
             store.clear()
             throw error
         }
-        return result(id, "presented")
+        return ConsentHostSession.Presented(id)
     }
     fun close(sessionID: String) { active?.takeIf { it.id == sessionID }?.presenter?.requestClose() }
     /** Detach a torn-down JS runtime without cancelling native durable work. */
@@ -163,7 +204,6 @@ object ConsentHost {
         }
         session.noticeView.clear()
     }
-    private fun result(id: String, status: String) = JSONObject().put("sessionId", id).put("status", status).toString()
 }
 
 /** Shares drafts and pending work across configuration changes. No exported launch entry. */

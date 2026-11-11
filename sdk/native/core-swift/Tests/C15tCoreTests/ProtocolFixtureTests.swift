@@ -282,7 +282,7 @@ final class ProtocolFixtureTests: XCTestCase {
         run.http.enqueueInit(try Self.initResponse(from: transport, entry: entry))
 
         let witness = WipeWitness(store: run.store)
-        let subscription = run.core.onChange(witness)
+        let subscription = run.core.onChange { witness.consentDidChange($0) }
         run.core.reset()
         subscription.cancel()
 
@@ -326,7 +326,7 @@ final class ProtocolFixtureTests: XCTestCase {
     /// The store has to be read from inside the callback. A wipe deletes and then re-runs
     /// init, and that init caches the policy it resolves, so by the time the call stack
     /// unwinds the bytes the wipe removed have been replaced by bytes that are allowed.
-    private final class WipeWitness: SnapshotObserver, @unchecked Sendable {
+    private final class WipeWitness: @unchecked Sendable {
         private let store: any ConsentStore
         private let lock = NSLock()
         private var first: ConsentSnapshot?
@@ -376,7 +376,7 @@ final class ProtocolFixtureTests: XCTestCase {
         await run.core.bootstrapAndSettle(run.config)
 
         let witness = RevisionWitness()
-        let subscription = run.core.onChange(witness)
+        let subscription = run.core.onChange { witness.consentDidChange($0) }
         var observations: [JSONValue] = []
         var initResponses = 1
         for step in steps {
@@ -436,7 +436,7 @@ final class ProtocolFixtureTests: XCTestCase {
     ///
     /// Held strongly by the caller: the core's observer set is weak, so an observer
     /// nobody owns stops being an observer.
-    private final class RevisionWitness: SnapshotObserver, @unchecked Sendable {
+    private final class RevisionWitness: @unchecked Sendable {
         private let lock = NSLock()
         private var publications = 0
 

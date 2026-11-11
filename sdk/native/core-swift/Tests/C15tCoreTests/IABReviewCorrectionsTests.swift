@@ -72,7 +72,7 @@ extension IABCommitTests {
             seen.mutate { if $0 == nil { $0 = snapshot } }
             stored.mutate { if $0 == nil { $0 = store.data(for: StorageKey.snapshot).flatMap(StoredEnvelope.decode) } }
         }
-        let subscription = core.onChange(witness)
+        let subscription = core.onChange { witness.consentDidChange($0) }
         core.reset()
         subscription.cancel()
         let baseline = try XCTUnwrap(seen.value)
@@ -93,7 +93,7 @@ extension IABCommitTests {
     }
 }
 
-private final class ReviewSnapshotObserver: SnapshotObserver, @unchecked Sendable {
+private final class ReviewSnapshotObserver: @unchecked Sendable {
     let receive: @Sendable (ConsentSnapshot) -> Void
     init(_ receive: @escaping @Sendable (ConsentSnapshot) -> Void) { self.receive = receive }
     func consentDidChange(_ snapshot: ConsentSnapshot) { receive(snapshot) }

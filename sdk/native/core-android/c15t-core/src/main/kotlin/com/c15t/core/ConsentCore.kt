@@ -327,9 +327,15 @@ class ConsentCore(
 	@Volatile
 	private var detectedGpc: Boolean? = null
 
-	private val snapshotObservers = CopyOnWriteArrayList<WeakReference<(ConsentSnapshot) -> Unit>>()
-	private val strongObservers = CopyOnWriteArrayList<(ConsentSnapshot) -> Unit>()
-	private val errorObservers = CopyOnWriteArrayList<WeakReference<(KernelError) -> Unit>>()
+	/**
+	 * Every snapshot and error callback, held strongly until its [Subscription] is
+	 * closed. Nothing here is weak: a weakly held lambda can be collected while the
+	 * host still expects updates, and then they stop with no error. Each entry is a
+	 * [Registration], so registering the same lambda twice gives two handles that
+	 * close independently.
+	 */
+	private val snapshotObservers = CopyOnWriteArrayList<Registration<(ConsentSnapshot) -> Unit>>()
+	private val errorObservers = CopyOnWriteArrayList<Registration<(KernelError) -> Unit>>()
 
 	private val queue = PendingSaveQueue(store, config.maxPendingSaves, queueIdGenerator)
 
@@ -587,8 +593,8 @@ class ConsentCore(
 	 * this API." A host that acts on the transition keeps its own last value and
 	 * compares. A host that wants the dedupe uses [gateDecision].
 	 *
-	 * The observer is held strongly for as long as the returned handle is open, so
-	 * a caller that keeps only the handle still gets callbacks.
+	 * The core holds [onChange] until the returned handle is closed, like every
+	 * other observer.
 	 *
 	 * This is the boolean surface the React Native bridge forwards. A host that has to
 	 * tell a refusal apart from an unresolved policy wants [gateDecision] instead.
@@ -597,10 +603,9 @@ class ConsentCore(
 		category: ConsentCategory,
 		onChange: (Boolean) -> Unit,
 	): Subscription {
-		val observer: (ConsentSnapshot) -> Unit = { onChange(it.isAllowed(category)) }
-		strongObservers += observer
+		val subscription = observe(snapshotObservers) { onChange(it.isAllowed(category)) }
 		onChange(isAllowed(category))
-		return Subscription { strongObservers.remove(observer) }
+		return subscription
 	}
 
 	/**
@@ -651,12 +656,12 @@ class ConsentCore(
 		// than putting an older decision on the end of the callback's sequence. Missing
 		// a change would leave an SDK switched off with nothing left listening, so the
 		// most this ordering can cost is one redundant delivery.
-		strongObservers += observer
+		val subscription = observe(snapshotObservers, observer)
 		val current = decision(category)
 		if (lastDelivered.compareAndSet(null, current)) {
 			onDecision(current)
 		}
-		return Subscription { strongObservers.remove(observer) }
+		return subscription
 	}
 
 	/**
@@ -681,18 +686,32 @@ class ConsentCore(
 	 */
 	fun isReady(): Boolean = snapshot().isReady
 
-	/** Observe every snapshot change. The lambda is held weakly, per the contract. */
-	fun onChange(observer: (ConsentSnapshot) -> Unit): Subscription {
-		val reference = WeakReference(observer)
-		snapshotObservers += reference
-		return Subscription { snapshotObservers.remove(reference) }
-	}
+	/**
+	 * Observe every snapshot change.
+	 *
+	 * The core holds [observer] until the returned handle is closed, so an inline
+	 * lambda keeps firing with nothing else referencing it. Close the handle when the
+	 * owner goes away, or the lambda and everything it captures stay alive with the
+	 * core.
+	 */
+	fun onChange(observer: (ConsentSnapshot) -> Unit): Subscription = observe(snapshotObservers, observer)
 
-	/** Observe errors the core emits, including an unsupported policy contract. */
-	fun onError(observer: (KernelError) -> Unit): Subscription {
-		val reference = WeakReference(observer)
-		errorObservers += reference
-		return Subscription { errorObservers.remove(reference) }
+	/**
+	 * Observe errors the core emits, including an unsupported policy contract. Held
+	 * until the returned handle is closed, like [onChange].
+	 */
+	fun onError(observer: (KernelError) -> Unit): Subscription = observe(errorObservers, observer)
+
+	/** One callback slot. Compared by identity, so each registration closes alone. */
+	private class Registration<CallbackType>(val callback: CallbackType)
+
+	private fun <CallbackType> observe(
+		registry: CopyOnWriteArrayList<Registration<CallbackType>>,
+		callback: CallbackType,
+	): Subscription {
+		val registration = Registration(callback)
+		registry += registration
+		return Subscription { registry.remove(registration) }
 	}
 
 	/**
@@ -2164,11 +2183,8 @@ class ConsentCore(
 
 	private fun notifySnapshot() {
 		val snapshot = snapshot()
-		for (reference in snapshotObservers) {
-			reference.get()?.invoke(snapshot) ?: snapshotObservers.remove(reference)
-		}
-		for (observer in strongObservers) {
-			observer.invoke(snapshot)
+		for (registration in snapshotObservers) {
+			registration.callback(snapshot)
 		}
 	}
 
@@ -2178,8 +2194,8 @@ class ConsentCore(
 			return
 		}
 		logger(error)
-		for (reference in errorObservers) {
-			reference.get()?.invoke(error) ?: errorObservers.remove(reference)
+		for (registration in errorObservers) {
+			registration.callback(error)
 		}
 	}
 

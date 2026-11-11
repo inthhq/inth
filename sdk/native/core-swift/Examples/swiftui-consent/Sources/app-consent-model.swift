@@ -5,7 +5,7 @@ import Combine
 import Foundation
 
 @MainActor
-final class AppConsentModel: ObservableObject, SnapshotObserver {
+final class AppConsentModel: ObservableObject {
     @Published private(set) var snapshot: ConsentSnapshot?
     @Published private(set) var presenter: ConsentPresenter?
     @Published private(set) var installationError: Error?
@@ -41,7 +41,8 @@ final class AppConsentModel: ObservableObject, SnapshotObserver {
             core = installed
             installationError = nil
             // #region docs:swiftui-observe title="Sources/app-consent-model.swift"
-            observation = installed.onChange(self)
+            // The handle owns the closure, so capture the model weakly.
+            observation = installed.onChange { [weak self] in self?.consentDidChange($0) }
             receive(installed.snapshot())
             measurementGate = installed.gate(ConsentCategory.measurement) { [measurement] decision in
                 // The callback can run on any queue. This service synchronizes its own state.
