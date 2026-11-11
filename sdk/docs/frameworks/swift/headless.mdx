@@ -95,6 +95,27 @@ The example project links the UI product to support its separate stock mode.
 An app that ships only its own UI can remove that product and its imports.
 Its engine and platform services remain the same.
 
+## Use your own transport
+
+`C15tApple.install` also takes a `CoreConfig`, for an app whose requests must go
+through its own networking stack or proxy. Supply your `C15tTransport` and a
+protected store:
+
+{/* example: fragment */}
+
+```swift
+let core = try C15tApple.install(CoreConfig(
+    store: KeychainStore(),
+    transport: MyConsentTransport(),
+    consentCategories: [.necessary, .measurement, .marketing]
+))
+```
+
+Your transport provides `domain`, `performInit`, `sendSave` and
+`patchIdentity`. `sendSave` receives bytes the core already stored, so send
+them unchanged. With a custom store or transport, your app owns their
+protection and retry policy.
+
 ## Own the complete consent flow
 
 Your custom UI also owns policy-specific disclosures, accept and reject
