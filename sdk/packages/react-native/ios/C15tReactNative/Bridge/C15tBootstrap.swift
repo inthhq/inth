@@ -487,7 +487,7 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
         case .hosted: transport = backendURL.map(C15tAppleConfiguration.Transport.hosted) ?? .offline
         case .selfHosted: transport = backendURL.map(C15tAppleConfiguration.Transport.selfHosted) ?? .offline
         }
-        return C15tAppleConfiguration(
+        var configuration = C15tAppleConfiguration(
             transport: transport, storage: appleStorage(fileStoreDirectory: fileStoreDirectory),
             initURL: initURL, domain: domain, consentCategories: consentCategories,
             vendors: vendors, overrides: overrides, gpc: gpc,
@@ -497,6 +497,10 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
             },
             iab: iab
         )
+        // A core this bridge configures serves a React Native app, so requests say `rn`,
+        // as the Android binding does.
+        configuration.platform = "rn"
+        return configuration
     }
 }
 

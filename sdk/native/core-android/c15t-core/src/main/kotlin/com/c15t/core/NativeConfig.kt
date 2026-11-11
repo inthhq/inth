@@ -51,6 +51,9 @@ import com.c15t.core.transport.C15tProtocol
  *   lives: a WebView's `isGlobalPrivacyControlEnabled`, an equivalent Android check, or the React
  *   Native layer. `null` means "no signal", which is not the same answer as `false`. An app
  *   override on [overrides] wins over this.
+ * @property platform The host that built this core, sent as `x-c15t-platform: <platform>-><sdkVersion>`.
+ *   [C15tProtocol.PLATFORM_ANDROID] for a Kotlin or Java app, and the React Native binding sets
+ *   [C15tProtocol.PLATFORM_REACT_NATIVE]. `null` sends no platform header.
  * @property extraHeaders Extra request headers, for a deployment that needs its own auth or tenant
  *   header.
  * @property maxPendingSaves Offline write queue depth; the contract maximum is 20.
@@ -60,6 +63,7 @@ data class NativeConfig(
 	val initUrl: String? = null,
 	val domain: String? = null,
 	val sdkVersion: String = C15tProtocol.DEFAULT_SDK_VERSION,
+	val platform: String? = C15tProtocol.PLATFORM_ANDROID,
 	val consentCategories: List<ConsentCategory>? = null,
 	val vendors: List<Int>? = null,
 	val iab: com.c15t.core.iab.IabConfiguration? = null,

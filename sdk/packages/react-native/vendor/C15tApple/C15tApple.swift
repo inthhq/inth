@@ -63,6 +63,11 @@ public struct C15tAppleConfiguration: Sendable {
     /// IAB choices. There is no default CMP ID.
     public var iab: IABConfiguration?
 
+    /// The host reported as `x-c15t-platform: <platform>-><version>` on hosted
+    /// requests. `apple` for a Swift app; the React Native bridge sets `rn`, so the
+    /// backend can tell the two apart now that `x-c15t-version` carries no prefix.
+    public var platform = "apple"
+
     /// Choose hosted or self-hosted explicitly. Keychain is the default store.
     public init(
         transport: Transport,
@@ -96,7 +101,7 @@ public struct C15tAppleConfiguration: Sendable {
             if let initURL { try C15tApple.validate(initURL) }
             return HostedTransport(
                 baseURL: url, initURL: initURL, domain: domain,
-                extraHeaders: ["x-c15t-platform": "apple->\(C15tApple.version)"],
+                extraHeaders: ["x-c15t-platform": "\(platform)->\(C15tApple.version)"],
                 client: client
             )
         case .offline: return OfflineTransport(domain: domain ?? "offline")
