@@ -122,6 +122,16 @@ export interface Spec extends TurboModule {
 	presentPreferences: (privacyPolicyURL: string) => Promise<string>;
 	/** Request dismissal of the matching session. Pending commits remain locked. */
 	closeConsentPresenter: (sessionId: string) => Promise<void>;
+	/**
+	 * Hand native the provider's auto-present settings, a JSON-encoded
+	 * `NativeAutoPresentSettings`. The native `ConsentPrompt` decides when a
+	 * prompt is owed and presents it; JavaScript only hears
+	 * `onConsentPresenterPresented`, `onConsentPresenterUnavailable` and
+	 * `onConsentPresenterOutcome`. Rejects with `C15T_PRESENTER_INVALID_URL`
+	 * for a URL native refuses, and `C15T_NATIVE_UI_EXCLUDED` in a build
+	 * without the stock screens. A binary that predates it has no such method.
+	 */
+	configureAutoPresent: (settings: string) => Promise<void>;
 	/** Register interest in an event; required by the event-emitter spec. */
 	addListener: (eventName: string) => void;
 	/** Report the number of live listeners; required by the emitter spec. */

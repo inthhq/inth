@@ -334,11 +334,12 @@ bare RN and Expo examples use these screens when the native core is installed.
 Their explicit fake mode retains the existing JavaScript demo. Headless hooks
 and custom UI remain available.
 
-`ConsentProvider` presents the owed prompt by itself through
-`presentConsentPrompt`, once per owed prompt, unless the app passes
-`autoPresent={false}`. Its ledger is keyed by client, so strict mode, remounts
-and nested providers make one call; the native host answers any racing call
-with `already-presented`. The bare RN and Expo fixtures pass
+`ConsentProvider` hands its `autoPresent` setting and URL to native with
+`configureAutoPresent`, and the native `ConsentPrompt` presents the owed prompt
+once per owed prompt, as it does for a Swift or Kotlin app. JavaScript keeps no
+record of its own; it hears `onConsentPresenterPresented`,
+`onConsentPresenterUnavailable` and `onConsentPresenterOutcome`. The native host
+answers any racing call with `already-presented`. The bare RN and Expo fixtures pass
 `autoPresent={false}` because they draw the JavaScript banner.
 
 Subscribe with `onConsentPresenterOutcome` before calling

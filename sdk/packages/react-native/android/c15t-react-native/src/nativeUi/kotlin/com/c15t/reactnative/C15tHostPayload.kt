@@ -45,6 +45,15 @@ internal object C15tHostPayload {
 		ConsentHostPresentation.PREFERENCES -> "preferences"
 	}
 
+	/** An `onConsentPresenterPresented` event: a session is on screen. */
+	fun consentHostPresented(sessionId: String, presentation: ConsentHostPresentation, automatic: Boolean): String = encode(
+		buildJsonObject {
+			put("sessionId", sessionId)
+			put("presentation", presentation(presentation))
+			put("automatic", automatic)
+		},
+	)
+
 	/** An `onConsentPresenterOutcome` event, in the `ConsentPresenterOutcome` shape. */
 	fun consentHostOutcome(outcome: ConsentHostOutcome): String = encode(
 		buildJsonObject {

@@ -11,6 +11,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import {
 	buildSnapshot,
 	createFakeNativeModule,
+	emitPresented,
 	flushPromises,
 	renderTree,
 } from '../../__tests__/helpers/fake-native';
@@ -59,6 +60,18 @@ const saved = (marketing: boolean, revision = 2): ConsentSnapshot =>
 		revision,
 	});
 
+/**
+ * Native auto-present, as far as these tests need it: with auto-present on and
+ * nothing open, native opens an owed prompt, before JavaScript hears the
+ * snapshot that owes it. Records `prompt` and reports the session on screen.
+ */
+const native = { on: false, open: null as string | null, sessions: 0 };
+
+const owes = (snapshot: ConsentSnapshot): boolean =>
+	snapshot.ready &&
+	!snapshot.policyPending &&
+	snapshot.promptRequirement.kind !== 'none';
+
 /** Boot a fake on iOS with ATT enabled and Apple not yet asked. */
 const boot = function boot(
 	snapshot: ConsentSnapshot,
@@ -85,11 +98,37 @@ const boot = function boot(
 	});
 	const preferences = vi.fn(() => {
 		order.push('preferences');
+		native.open = 'p1';
 		return Promise.resolve(
-			JSON.stringify({ sessionId: 's2', status: 'presented' })
+			JSON.stringify({ sessionId: 'p1', status: 'presented' })
 		);
 	});
 	fake.presentPreferences = preferences;
+	native.on = false;
+	native.open = null;
+	native.sessions = 0;
+	let current = snapshot;
+	const openOwed = (): void => {
+		if (native.on && native.open === null && owes(current)) {
+			native.sessions += 1;
+			const id = `s${String(native.sessions)}`;
+			native.open = id;
+			order.push('prompt');
+			queueMicrotask(() => emitPresented(id));
+		}
+	};
+	fake.configureAutoPresent = vi.fn((raw: string) => {
+		fake.autoPresentSettings.push(JSON.parse(raw));
+		native.on = fake.autoPresent?.autoPresent === true;
+		openOwed();
+		return Promise.resolve();
+	});
+	const push = fake.pushSnapshot;
+	fake.pushSnapshot = (next: ConsentSnapshot) => {
+		current = next;
+		openOwed();
+		push(next);
+	};
 	return { fake, order, preferences };
 };
 
@@ -99,10 +138,12 @@ const finish = function finish(
 	next: ConsentSnapshot,
 	kind = 'committed'
 ): void {
+	const sessionId = native.open ?? 's1';
+	native.open = null;
 	fake.pushSnapshot(next);
 	emitNativeEvent(
 		'onConsentPresenterOutcome',
-		JSON.stringify({ kind, revision: next.revision, sessionId: 's1' })
+		JSON.stringify({ kind, revision: next.revision, sessionId })
 	);
 };
 
@@ -529,9 +570,15 @@ describe('never over a c15t screen', () => {
 			})
 		);
 		await flushPromises();
+		expect(order).toStrictEqual(['preferences']);
+		// Settings close; native opens the owed prompt and reports it before
+		// the settings' outcome.
+		native.open = 's1';
+		order.push('prompt');
+		emitPresented('s1');
 		emitNativeEvent(
 			'onConsentPresenterOutcome',
-			JSON.stringify({ kind: 'committed', revision: 3, sessionId: 's2' })
+			JSON.stringify({ kind: 'committed', revision: 3, sessionId: 'p1' })
 		);
 		await flushPromises();
 		expect(order).toStrictEqual(['preferences', 'prompt']);
@@ -892,17 +939,6 @@ describe('ATT under IAB TCF', () => {
 		'Additional Information opens TCF settings; purposes kept %s',
 		async (kept) => {
 			const { fake, order, preferences } = boot(owedIAB);
-			let sessions = 0;
-			fake.presentConsentPrompt = vi.fn(() => {
-				order.push('prompt');
-				sessions += 1;
-				return Promise.resolve(
-					JSON.stringify({
-						sessionId: `p${String(sessions)}`,
-						status: 'presented',
-					})
-				);
-			});
 			fake.queueTrackingRequestReplies([
 				{
 					presentation: 'expanded',
@@ -913,11 +949,8 @@ describe('ATT under IAB TCF', () => {
 			]);
 			const tree = renderTree(<App />);
 			await flushPromises();
-			fake.pushSnapshot(iab(true, true));
-			emitNativeEvent(
-				'onConsentPresenterOutcome',
-				JSON.stringify({ kind: 'committed', revision: 2, sessionId: 'p1' })
-			);
+			// Native opened the owed prompt by itself; the person accepts it.
+			finish(fake, iab(true, true));
 			await flushPromises();
 			expect(preferences).toHaveBeenCalledTimes(1);
 			expect(order).toStrictEqual(['prompt', 'tracking', 'preferences']);
@@ -926,7 +959,7 @@ describe('ATT under IAB TCF', () => {
 			fake.pushSnapshot(iab(kept, kept, 3));
 			emitNativeEvent(
 				'onConsentPresenterOutcome',
-				JSON.stringify({ kind: 'committed', revision: 3, sessionId: 's2' })
+				JSON.stringify({ kind: 'committed', revision: 3, sessionId: 'p1' })
 			);
 			await flushPromises();
 			expect(fake.trackingRequestCalls).toBe(kept ? 2 : 1);

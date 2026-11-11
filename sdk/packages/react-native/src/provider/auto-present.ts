@@ -1,48 +1,40 @@
 /**
- * Present the native consent prompt when one is owed, once per owed prompt.
+ * Auto-present belongs to native. The native `ConsentPrompt` on each platform
+ * decides when a prompt is owed and presents it, exactly as it does for a
+ * Swift or Kotlin app. This file only tells native the provider's settings and
+ * mirrors what native reports on screen, so the ATT sequence can wait for a
+ * c15t screen to close.
  *
- * The provider calls {@link presentOwedPrompt} on mount, on every change to the
- * owed prompt, and on each return to the foreground. The decisions are the state
- * machine in `auto-present-machine.ts`; this file runs its effects. There is one
- * ledger per client, so React strict mode, a remounted provider and a nested
- * provider all see the same record. The native host is the second guard: a call
- * while a session is open answers `already-presented`, names what that session
- * shows, and opens nothing.
+ * There is one mirror per client, so React strict mode, a remounted provider
+ * and a nested provider all see the same record.
  */
 
-import { isPromptOwed } from '../lib/selectors';
 import { isProduction } from '../native/client';
 import type { ConsentClient } from '../native/client';
 import {
-	closeConsentPresenter,
+	configureNativeAutoPresent,
 	onConsentPresenterOutcome,
+	onConsentPresenterPresented,
 	onConsentPresenterSession,
-	requestConsentPrompt,
+	onConsentPresenterUnavailable,
 } from '../native/presenter';
-import type { ConsentSnapshot } from '../protocol';
-import {
-	INITIAL_AUTO_PRESENT_FACTS,
-	stepAutoPresent,
-} from './auto-present-machine';
 import type {
-	AutoPresentContext,
-	AutoPresentFacts,
-	AutoPresentInput,
-} from './auto-present-machine';
+	ConsentPresenterPresentation,
+	NativeAutoPresentSettings,
+} from '../native/presenter';
 import { isPrivacyPolicyURL } from './privacy-policy-url';
 
 /**
  * The code a native presenter rejects with when it refuses the privacy-policy URL.
  *
- * The only permanent refusal: the same URL fails the same way on every attempt. Every other
- * rejection, such as no foreground window or a core that is still installing, is transient.
+ * Permanent: the same URL fails the same way on every attempt.
  */
 export const PRESENTER_INVALID_URL_CODE = 'C15T_PRESENTER_INVALID_URL';
 
 /**
  * The code presenters reject with in a binary built without the stock native screens
  * (`c15t.nativeUI=false`, the Expo plugin's `nativeUI: false`). Permanent: the binary
- * cannot gain them, so it is reported once and never retried.
+ * cannot gain them, so it is reported once.
  */
 export const NATIVE_UI_EXCLUDED_CODE = 'C15T_NATIVE_UI_EXCLUDED';
 
@@ -67,260 +59,224 @@ export const linksNativeUI = function linksNativeUI(
 	);
 };
 
-/**
- * Name the owed prompt a snapshot describes.
- *
- * Two snapshots owe the same prompt when the matched policy, the kind of prompt,
- * the reason and `promptOwedSince` all agree. A new policy or an expired choice
- * changes the key, which is what makes the prompt present again. So does the same
- * requirement owed again after nothing was owed: native moves `promptOwedSince`
- * for it, so the key changes even when the bridge delivered only the latest
- * snapshot and the moment with nothing owed never reached JavaScript. A binary
- * that predates `promptOwedSince` reports `null`, and the ledger falls back to the
- * transitions it observes. The native presenters key their own suppression the
- * same way.
- *
- * @param snapshot - The snapshot to read.
- * @returns The key, or `null` while the core is not ready or nothing is owed.
- */
-export const selectOwedPromptKey = function selectOwedPromptKey(
-	snapshot: ConsentSnapshot
-): string | null {
-	if (!isPromptOwed(snapshot)) {
-		return null;
-	}
-	const requirement = snapshot.promptRequirement;
-	const reason = requirement.kind === 'none' ? '' : requirement.reason;
-	const since = snapshot.promptOwedSince ?? '';
-	return `${snapshot.resolution.fingerprint ?? ''}:${requirement.kind}:${reason}:${since}`;
-};
-
-const errorCode = function errorCode(error: unknown): string | undefined {
-	return typeof error === 'object' && error !== null && 'code' in error
-		? String(error.code)
-		: undefined;
-};
-
-/** Close a prompt nobody presenting asked for. Its outcome arrives either way. */
-const withdraw = async function withdraw(sessionId: string): Promise<void> {
-	try {
-		await closeConsentPresenter(sessionId);
-	} catch {
-		// Already closed: the outcome that closed it reaches the ledger.
-	}
-};
-
-/** Which input a presenter rejection is. Only the two permanent codes stop retries. */
-const rejection = function rejection(
-	error: unknown
-): 'refused' | 'excluded' | 'failed' {
-	switch (errorCode(error)) {
-		case PRESENTER_INVALID_URL_CODE:
-			return 'refused';
-		case NATIVE_UI_EXCLUDED_CODE:
-			return 'excluded';
-		default:
-			return 'failed';
-	}
-};
-
-/** One client's ledger: the stored facts, and the side effects each input asks for. */
-class AutoPresentLedger {
-	facts: AutoPresentFacts = INITIAL_AUTO_PRESENT_FACTS;
-	/** Providers currently presenting through this client. */
-	active = 0;
-	/** The URL the provider passes now. */
-	url: string;
-	/** The owed prompt a transient failure was last reported for, so each is reported once. */
-	warned: string | null = null;
-	/** Counts triggers, for the context. */
-	generation = 0;
-	/** The latest native call, so a caller can wait for the chain to settle. */
-	settled: Promise<void> = Promise.resolve();
-	/** Told after every input, for steps that wait until no c15t screen is up. */
-	readonly watchers = new Set<() => void>();
-	private readonly client: ConsentClient;
-
-	constructor(client: ConsentClient) {
-		this.client = client;
-		this.url = '';
-		// What the app opens itself is on screen too, and a prompt the person dismissed
-		// there stays dismissed when auto-present turns on.
-		onConsentPresenterSession((sessionId, presentation) => {
-			this.dispatch({ presentation, sessionId, type: 'seen' });
-		});
-		// For the client's lifetime, so an outcome is not lost while no provider is
-		// mounted or the app opted out; a session reported open is always heard closing.
-		try {
-			onConsentPresenterOutcome((outcome) => {
-				this.dispatch({
-					kind: outcome.kind,
-					sessionId: outcome.sessionId,
-					type: 'outcome',
-				});
-			});
-		} catch {
-			// No native event emitter: nothing can be presented either.
-		}
-	}
-
-	/** The current inputs, read fresh for every input. */
-	private context(): AutoPresentContext {
-		return {
-			active: this.active > 0,
-			generation: this.generation,
-			key: selectOwedPromptKey(this.client.getSnapshot()),
-			nativeUI: linksNativeUI(this.client),
-			url: this.url,
-		};
-	}
-
-	/**
-	 * Apply `input`, decide afresh, and run what that asks for.
-	 *
-	 * @param input - What happened.
-	 * @param error - The rejection behind a `refused` or `failed` input, for the report.
-	 */
-	dispatch(input: AutoPresentInput, error?: unknown): void {
-		if (input.type === 'trigger') {
-			this.generation += 1;
-		}
-		const failedKey = this.facts.inFlight?.key ?? null;
-		const { effects, facts } = stepAutoPresent(
-			this.facts,
-			input,
-			this.context()
-		);
-		this.facts = facts;
-		for (const effect of effects) {
-			switch (effect) {
-				case 'present':
-					this.settled = this.callNative();
-					break;
-				case 'report-refused':
-					// oxlint-disable-next-line no-console -- An owed consent prompt that can never show must be visible in every build.
-					console.error(
-						`c15t ConsentProvider: the native presenter refused privacyPolicyURL ${JSON.stringify(facts.refused)}, so the owed consent prompt cannot show. Pass an absolute HTTPS URL with a DNS host.`,
-						error
-					);
-					break;
-				case 'withdraw':
-					if (facts.withdrawn !== null) {
-						void withdraw(facts.withdrawn);
-					}
-					break;
-				case 'report-excluded':
-					// oxlint-disable-next-line no-console -- An owed consent prompt that can never show must be visible in every build.
-					console.error(
-						'c15t ConsentProvider: this binary was built without the stock native consent screens (c15t.nativeUI=false), so the owed consent prompt cannot be presented natively. Pass autoPresent={false} and draw the consent UI in JavaScript.',
-						error
-					);
-					break;
-				default:
-					this.warnUnavailable(failedKey, error);
-			}
-		}
-		for (const watcher of [...this.watchers]) {
-			watcher();
-		}
-	}
-
-	private warnUnavailable(key: string | null, error: unknown): void {
-		if (this.warned === key || isProduction()) {
-			return;
-		}
-		this.warned = key;
-		console.warn(
-			'c15t ConsentProvider: the native presenter could not open the owed consent prompt yet. It retries when the consent state changes or the app returns to the foreground.',
-			error
-		);
-	}
-
-	private async callNative(): Promise<void> {
-		const { url } = this;
-		try {
-			const session = await requestConsentPrompt(url);
-			if (session.status === 'not-required' || session.sessionId === null) {
-				this.dispatch({ type: 'not-required' });
-			} else {
-				this.dispatch({
-					presentation: session.presentation,
-					sessionId: session.sessionId,
-					type: session.status === 'presented' ? 'shown' : 'already-presented',
-				});
-			}
-		} catch (error: unknown) {
-			this.dispatch({ type: rejection(error) }, error);
-		}
-	}
+/** What one client knows of native's consent screens. */
+interface PresenterMirror {
+	/** The session native last reported on screen, until its outcome arrives. */
+	onScreen: {
+		readonly sessionId: string;
+		readonly presentation: ConsentPresenterPresentation;
+	} | null;
+	/** The settings native was last sent, so an unchanged render sends nothing. */
+	sent: string | null;
+	/** Reported once each: an old binary, a binary without screens, a refused URL. */
+	readonly reported: Set<string>;
+	/** Told after every change, for steps that wait until no c15t screen is up. */
+	readonly watchers: Set<() => void>;
 }
 
-const ledgers = new WeakMap<ConsentClient, AutoPresentLedger>();
+const mirrors = new WeakMap<ConsentClient, PresenterMirror>();
 
-const ledgerFor = function ledgerFor(client: ConsentClient): AutoPresentLedger {
-	let ledger = ledgers.get(client);
-	if (ledger === undefined) {
-		ledger = new AutoPresentLedger(client);
-		ledgers.set(client, ledger);
+const changed = function changed(mirror: PresenterMirror): void {
+	for (const watcher of [...mirror.watchers]) {
+		watcher();
 	}
-	return ledger;
+};
+
+const report = function report(
+	mirror: PresenterMirror,
+	key: string,
+	log: () => void
+): void {
+	if (!mirror.reported.has(key)) {
+		mirror.reported.add(key);
+		log();
+	}
+};
+
+const mirrorFor = function mirrorFor(client: ConsentClient): PresenterMirror {
+	const existing = mirrors.get(client);
+	if (existing !== undefined) {
+		return existing;
+	}
+	const mirror: PresenterMirror = {
+		onScreen: null,
+		reported: new Set(),
+		sent: null,
+		watchers: new Set(),
+	};
+	mirrors.set(client, mirror);
+	const show = (
+		sessionId: string,
+		presentation: ConsentPresenterPresentation
+	): void => {
+		mirror.onScreen = { presentation, sessionId };
+		changed(mirror);
+	};
+	// The app's own calls answer with the session they find open.
+	onConsentPresenterSession(show);
+	// For the client's lifetime, so a session reported open is always heard closing.
+	try {
+		onConsentPresenterPresented(({ presentation, sessionId }) => {
+			show(sessionId, presentation);
+		});
+		onConsentPresenterOutcome(({ sessionId }) => {
+			if (mirror.onScreen?.sessionId === sessionId) {
+				mirror.onScreen = null;
+				changed(mirror);
+			}
+		});
+		onConsentPresenterUnavailable((unavailable) => {
+			if (isProduction()) {
+				return;
+			}
+			// Native keeps the owed prompt and shows it once it can. Said once
+			// per launch: it is a note for the developer, not an error.
+			report(mirror, 'unavailable', () => {
+				console.warn(
+					`c15t ConsentProvider: the native presenter could not show the owed consent prompt yet (${unavailable.code}). It shows it once the app has a foreground window or Activity.`,
+					unavailable.message
+				);
+			});
+		});
+	} catch {
+		// No native event emitter: nothing can be presented either.
+	}
+	return mirror;
 };
 
 /**
- * Start recording what native shows for `client`, whether or not anything
- * auto-presents. The outermost provider calls it while it renders, so a prompt
- * the app opens and the person dismisses is remembered before auto-present is
- * ever turned on. Idempotent: there is one ledger per client, for its lifetime.
+ * Start mirroring what native shows for `client`, whether or not anything
+ * auto-presents. The outermost provider calls it while it renders, before any
+ * child effect can open a session. Idempotent.
  *
  * @param client - The client.
  */
 export const recordConsentPresenter = function recordConsentPresenter(
 	client: ConsentClient
 ): void {
-	ledgerFor(client);
+	mirrorFor(client);
 };
 
-/**
- * Decide, with the current snapshot, whether to hand an owed prompt to native.
- *
- * The provider calls it on mount, on every change to the owed prompt, and on
- * each return to the foreground. The decision is {@link stepAutoPresent}'s. A
- * refused privacy-policy URL is reported with `console.error` and not offered
- * again; outside production the first transient failure for each owed prompt is
- * logged and the next trigger retries.
- *
- * @param client - The client whose snapshot decides.
- * @param privacyPolicyURL - The app's HTTPS privacy-policy URL.
- * @returns Once the native call this trigger started, if any, has settled.
- */
-export const presentOwedPrompt = function presentOwedPrompt(
-	client: ConsentClient,
-	privacyPolicyURL: string
+const failed = function failed(
+	mirror: PresenterMirror,
+	settings: NativeAutoPresentSettings,
+	error: unknown
+): void {
+	const code =
+		typeof error === 'object' && error !== null && 'code' in error
+			? String(error.code)
+			: undefined;
+	// Sent again on the next change, so a corrected URL is tried.
+	mirror.sent = null;
+	if (code === PRESENTER_INVALID_URL_CODE) {
+		report(mirror, `url:${String(settings.privacyPolicyURL)}`, () => {
+			// oxlint-disable-next-line no-console -- An owed consent prompt that can never show must be visible in every build.
+			console.error(
+				`c15t ConsentProvider: the native presenter refused privacyPolicyURL ${JSON.stringify(settings.privacyPolicyURL)}, so the owed consent prompt cannot show. Pass an absolute HTTPS URL with a DNS host.`,
+				error
+			);
+		});
+	} else if (code === NATIVE_UI_EXCLUDED_CODE) {
+		report(mirror, 'excluded', () => {
+			// oxlint-disable-next-line no-console -- An owed consent prompt that can never show must be visible in every build.
+			console.error(
+				'c15t ConsentProvider: this binary was built without the stock native consent screens (c15t.nativeUI=false), so the owed consent prompt cannot be presented natively. Pass autoPresent={false} and draw the consent UI in JavaScript.',
+				error
+			);
+		});
+	} else if (!isProduction()) {
+		console.warn(
+			'c15t ConsentProvider: native refused the auto-present settings.',
+			error
+		);
+	}
+};
+
+/** Report a refusal of `call`, once it settles. */
+const settle = async function settle(
+	mirror: PresenterMirror,
+	settings: NativeAutoPresentSettings,
+	call: Promise<void>
 ): Promise<void> {
-	const ledger = ledgerFor(client);
-	ledger.url = privacyPolicyURL;
-	ledger.dispatch({ type: 'trigger' });
-	return ledger.settled;
+	try {
+		await call;
+	} catch (error: unknown) {
+		failed(mirror, settings, error);
+	}
 };
 
 /**
- * Count a provider that presents through `client`, for as long as it is mounted.
+ * Tell native whether to present an owed prompt by itself, and with which URL.
  *
- * Rechecks after a call or a session closes run only while one is.
+ * Native decides when a prompt is owed; this only hands it the provider's
+ * settings. Unchanged settings are not sent again. A binary that predates
+ * native auto-present cannot take them: an app that asked for auto-present is
+ * told once, with `console.error` in every build, and nothing presents by
+ * itself until the app is rebuilt. `presentConsentPrompt` still works there.
  *
- * @param client - The client.
- * @param privacyPolicyURL - The URL that provider passes.
- * @returns Stop counting it.
+ * @param client - The client to configure.
+ * @param settings - Whether native presents by itself, and the URL it links to.
  */
-export const attachAutoPresent = function attachAutoPresent(
+export const configureAutoPresent = function configureAutoPresent(
 	client: ConsentClient,
-	privacyPolicyURL: string
+	settings: NativeAutoPresentSettings
+): void {
+	const mirror = mirrorFor(client);
+	const encoded = JSON.stringify(settings);
+	if (mirror.sent === encoded) {
+		return;
+	}
+	mirror.sent = encoded;
+	let call: Promise<void> | null;
+	try {
+		call = configureNativeAutoPresent(settings);
+	} catch (error: unknown) {
+		failed(mirror, settings, error);
+		return;
+	}
+	if (call === null) {
+		if (settings.autoPresent) {
+			report(mirror, 'old-binary', () => {
+				// oxlint-disable-next-line no-console -- An owed consent prompt that never shows must be visible in every build.
+				console.error(
+					'c15t ConsentProvider: this native build predates native auto-present (no configureAutoPresent), so the consent prompt does not present by itself. Rebuild the app with this version of @c15t/react-native, or call presentConsentPrompt yourself until then.'
+				);
+			});
+		}
+		return;
+	}
+	void settle(mirror, settings, call);
+};
+
+/**
+ * Whether native reports a c15t screen on screen.
+ *
+ * @internal
+ * @param client - The client to read.
+ * @returns `true` from a session's presentation until its outcome.
+ */
+export const isConsentScreenBusy = function isConsentScreenBusy(
+	client: ConsentClient
+): boolean {
+	return mirrorFor(client).onScreen !== null;
+};
+
+/**
+ * Hear every change to {@link isConsentScreenBusy}.
+ *
+ * @internal
+ * @param client - The client to follow.
+ * @param listener - Called after each change.
+ * @returns Stop listening.
+ */
+export const onConsentScreenChange = function onConsentScreenChange(
+	client: ConsentClient,
+	listener: () => void
 ): () => void {
-	const ledger = ledgerFor(client);
-	ledger.url = privacyPolicyURL;
-	ledger.active += 1;
+	const { watchers } = mirrorFor(client);
+	watchers.add(listener);
 	return () => {
-		ledger.active -= 1;
+		watchers.delete(listener);
 	};
 };
 
@@ -331,45 +287,6 @@ export const attachAutoPresent = function attachAutoPresent(
  * @throws {TypeError} When it is missing or is a URL a native presenter would
  *   refuse. See {@link isPrivacyPolicyURL} for the exact rules.
  */
-/**
- * Whether a c15t screen is open or being asked for, as far as the ledger
- * knows: the app's own calls and its own.
- *
- * @internal
- * @param client - The client to read.
- * @param includeInFlight - Count a present call still in flight. A wait that
- *   gates that very call passes `false`, or it would wait for itself.
- * @returns `true` while something may be on screen.
- */
-export const isConsentScreenBusy = function isConsentScreenBusy(
-	client: ConsentClient,
-	includeInFlight = true
-): boolean {
-	const { facts } = ledgerFor(client);
-	return (
-		facts.onScreen !== null || (includeInFlight && facts.inFlight !== null)
-	);
-};
-
-/**
- * Hear every ledger input, to re-check {@link isConsentScreenBusy}.
- *
- * @internal
- * @param client - The client to follow.
- * @param listener - Called after each input.
- * @returns Stop listening.
- */
-export const onConsentScreenChange = function onConsentScreenChange(
-	client: ConsentClient,
-	listener: () => void
-): () => void {
-	const { watchers } = ledgerFor(client);
-	watchers.add(listener);
-	return () => {
-		watchers.delete(listener);
-	};
-};
-
 export const assertPrivacyPolicyURL: (
 	privacyPolicyURL: string | undefined
 ) => asserts privacyPolicyURL is string = function assertPrivacyPolicyURL(

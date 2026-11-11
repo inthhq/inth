@@ -44,14 +44,19 @@ describe('native/protocol/bridge/payloads.json', () => {
 		expect(onDisk).toEqual(renderBridgeSchema());
 	});
 
-	test('marks the three payloads JavaScript sends', () => {
+	test('marks the four payloads JavaScript sends', () => {
 		const { payloads } = renderBridgeSchema();
 
 		expect(
 			Object.entries(payloads)
 				.filter(([, payload]) => payload.direction === 'js-to-native')
 				.map(([name]) => name)
-		).toEqual(['commitIntent', 'overridesInput', 'trackingRequestOptions']);
+		).toEqual([
+			'autoPresentSettings',
+			'commitIntent',
+			'overridesInput',
+			'trackingRequestOptions',
+		]);
 	});
 });
 
@@ -198,6 +203,7 @@ describe('describeBridgePayloadDrift', () => {
 
 	test('covers every payload in the table', () => {
 		expect(Object.keys(BRIDGE_PAYLOADS).sort()).toEqual([
+			'autoPresentSettings',
 			'bootstrap',
 			'commitIntent',
 			'commitResult',
@@ -205,7 +211,9 @@ describe('describeBridgePayloadDrift', () => {
 			'initializedEvent',
 			'overridesInput',
 			'presenterOutcome',
+			'presenterPresented',
 			'presenterSession',
+			'presenterUnavailable',
 			'snapshot',
 			'snapshotEvent',
 			'trackingAuthorization',

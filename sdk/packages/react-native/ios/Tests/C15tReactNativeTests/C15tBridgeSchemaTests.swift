@@ -91,6 +91,8 @@ final class C15tBridgeSchemaTests: XCTestCase {
             ("presenterSession", C15tPayload.consentHostSession(.notRequired)),
             ("presenterOutcome", C15tPayload.consentHostOutcome(.committed(sessionID: "one", revision: 4))),
             ("presenterOutcome", C15tPayload.consentHostOutcome(.unavailable(sessionID: "one", revision: 4))),
+            ("presenterPresented", C15tPayload.consentHostPresented(sessionID: "one", presentation: .prompt, automatic: true)),
+            ("presenterUnavailable", C15tPayload.presenterUnavailable(code: "C15T_PRESENTER_UNAVAILABLE", message: "no window yet")),
         ]
 
         var problems: [String] = []
@@ -165,6 +167,25 @@ final class C15tBridgeSchemaTests: XCTestCase {
         }
         XCTAssertTrue(C15tPayload.trackingRequestOffersAdditionalInformation(try encode(document)))
         XCTAssertFalse(C15tPayload.trackingRequestOffersAdditionalInformation("{}"))
+    }
+
+    func testTheAutoPresentSettingsDecoderReadsTheKeysTheSchemaDeclares() throws {
+        var document: [String: Any] = [:]
+        for key in try fields("autoPresentSettings").keys {
+            switch key {
+            case "autoPresent": document[key] = true
+            case "privacyPolicyURL": document[key] = "https://example.com/privacy"
+            default: XCTFail("autoPresentSettings.\(key) has no sample here; add one")
+            }
+        }
+        let read = try XCTUnwrap(C15tPayload.autoPresentSettings(try encode(document)))
+        XCTAssertTrue(read.autoPresent)
+        XCTAssertEqual(read.privacyPolicyURL, "https://example.com/privacy")
+        // The URL is nullable: a provider that turns auto-present off may have none.
+        let off = try XCTUnwrap(C15tPayload.autoPresentSettings(#"{"autoPresent":false,"privacyPolicyURL":null}"#))
+        XCTAssertFalse(off.autoPresent)
+        XCTAssertNil(off.privacyPolicyURL)
+        XCTAssertNil(C15tPayload.autoPresentSettings(#"{"autoPresent":"yes"}"#))
     }
 
     func testAnIntentThatNamesAScopeIsRefusedNotWidened() {

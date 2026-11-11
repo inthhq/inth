@@ -22,13 +22,12 @@ remounts, nested providers and a manual `presentConsentPrompt` call never open
 a second prompt.
 
 The native snapshot now carries `promptOwedSince`, the revision at which the prompt
-owed now became owed. The provider keys its record on it, so the same prompt owed
+owed now became owed. The native presenters key their record on it, so the same prompt owed
 again after an answer or a reset is presented even when the bridge delivered only
 the latest snapshot. A binary built before this field reads it as `null` and keeps
 the previous behaviour.
 
-The provider follows what native says is on screen, and the decision is one
-state machine. An owed prompt that meets open privacy settings is presented once
+An owed prompt that meets open privacy settings is presented once
 they close; a session that closes while the app has opted out is still heard; a
 corrected privacy-policy URL is retried. A prompt the app opened with
 `presentConsentPrompt` and the person dismissed stays dismissed when

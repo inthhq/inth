@@ -16,7 +16,10 @@ import { expectTypeOf } from 'vitest';
 
 import type {
 	ConsentPresenterOutcome,
+	ConsentPresenterPresented,
 	ConsentPresenterSession,
+	ConsentPresenterUnavailable,
+	NativeAutoPresentSettings,
 } from '../../native/presenter';
 import type { BootstrapPayload } from '../bootstrap';
 import type { BRIDGE_PAYLOADS } from '../bridge-schema';
@@ -168,6 +171,9 @@ type Matches<Type, Fields> = [
 		};
 
 expectTypeOf<
+	Matches<NativeAutoPresentSettings, Schema['autoPresentSettings']>
+>().toEqualTypeOf<true>();
+expectTypeOf<
 	Matches<BootstrapPayload, Schema['bootstrap']>
 >().toEqualTypeOf<true>();
 expectTypeOf<
@@ -189,7 +195,13 @@ expectTypeOf<
 	Matches<ConsentPresenterOutcome, Schema['presenterOutcome']>
 >().toEqualTypeOf<true>();
 expectTypeOf<
+	Matches<ConsentPresenterPresented, Schema['presenterPresented']>
+>().toEqualTypeOf<true>();
+expectTypeOf<
 	Matches<ConsentPresenterSession, Schema['presenterSession']>
+>().toEqualTypeOf<true>();
+expectTypeOf<
+	Matches<ConsentPresenterUnavailable, Schema['presenterUnavailable']>
 >().toEqualTypeOf<true>();
 expectTypeOf<
 	Matches<ConsentSnapshot, Schema['snapshot']>

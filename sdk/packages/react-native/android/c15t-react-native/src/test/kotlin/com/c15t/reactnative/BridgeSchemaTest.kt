@@ -85,6 +85,8 @@ class BridgeSchemaTest {
 			"presenterSession" to C15tHostPayload.consentHostSession(ConsentHostSession.NotRequired),
 			"presenterOutcome" to C15tHostPayload.consentHostOutcome(ConsentHostOutcome.Committed("one", 4)),
 			"presenterOutcome" to C15tHostPayload.consentHostOutcome(ConsentHostOutcome.Unavailable("one", 4)),
+			"presenterPresented" to C15tHostPayload.consentHostPresented("one", ConsentHostPresentation.PROMPT, automatic = true),
+			"presenterUnavailable" to C15tPayload.presenterUnavailable("C15T_PRESENTER_UNAVAILABLE", "no Activity yet"),
 		)
 
 		val problems = samples.flatMap { (name, raw) ->
@@ -141,6 +143,27 @@ class BridgeSchemaTest {
 			val parsed = C15tPayload.parseCommitIntent(buildJsonObject { put("action", action) }.toString())
 			assertTrue("action \"$action\" from the schema must decode", parsed != null)
 		}
+	}
+
+	@Test
+	fun `the auto-present settings decoder reads the keys the schema declares`() {
+		val document = sample(fields("autoPresentSettings")) { key, _ ->
+			when (key) {
+				"autoPresent" -> JsonPrimitive(true)
+				"privacyPolicyURL" -> JsonPrimitive("https://example.com/privacy")
+				else -> throw AssertionError("autoPresentSettings.$key has no sample here; add one")
+			}
+		}
+		assertEquals(
+			C15tPayload.AutoPresentSettings(true, "https://example.com/privacy"),
+			C15tPayload.parseAutoPresentSettings(document.toString()),
+		)
+		// The URL is nullable: a provider that turns auto-present off may have none.
+		assertEquals(
+			C15tPayload.AutoPresentSettings(false, null),
+			C15tPayload.parseAutoPresentSettings("{\"autoPresent\":false,\"privacyPolicyURL\":null}"),
+		)
+		assertEquals(null, C15tPayload.parseAutoPresentSettings("{\"autoPresent\":\"yes\"}"))
 	}
 
 	@Test

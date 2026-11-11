@@ -101,6 +101,7 @@ class C15tModuleSurfaceTest {
 				"reset",
 				"requestTrackingAuthorization",
 				"requestTrackingAuthorizationWithOptions",
+				"configureAutoPresent",
 			)
 	}
 }

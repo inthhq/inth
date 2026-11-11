@@ -1,12 +1,14 @@
 package com.c15t.reactnative
 
 import android.app.Activity
+import android.app.Application
 import com.c15t.core.ConsentCore
 
 /**
  * A build without the stock consent screens: the `c15t.nativeUI` Gradle property is
  * `false`, so `c15t-consent-ui` is not a dependency and this file replaces
- * `src/nativeUi`. The module rejects presenter calls before reaching [present].
+ * `src/nativeUi`. The module rejects presenter calls before reaching [present], and an
+ * auto-present request before reaching [configure].
  */
 internal object C15tNativeUi {
 	/** Whether this build links the stock consent screens. */
@@ -20,6 +22,18 @@ internal object C15tNativeUi {
 		owner: Any,
 		outcome: (String) -> Unit,
 	): String = throw UnsupportedOperationException(C15tPayload.MESSAGE_NATIVE_UI_EXCLUDED)
+
+	fun configure(
+		application: Application,
+		activity: Activity?,
+		core: ConsentCore,
+		autoPresent: Boolean,
+		privacyPolicyUrl: String?,
+		owner: Any,
+		emit: (event: String, payload: String) -> Unit,
+	) = Unit
+
+	fun follow(core: ConsentCore) = Unit
 
 	fun close(sessionId: String) = Unit
 

@@ -59,10 +59,13 @@ class ConsentPrompt private constructor(val core: ConsentCore) {
      */
     var onFinished: ((ConsentPresenterOutcome) -> Unit)? = null
 
+    /** Told first, each time a session closes: the [ConsentHost] drawing this prompt for a runtime such as React Native. */
+    internal var onHostFinished: ((ConsentPresenterOutcome) -> Unit)? = null
+
     internal var host by mutableStateOf<Any?>(null); private set
     internal var hostStarted by mutableStateOf(false); private set
 
-    init { presenter.onOutcome = { onFinished?.invoke(it) } }
+    init { presenter.onOutcome = { onHostFinished?.invoke(it); onFinished?.invoke(it) } }
 
     /** Open an owed prompt now. Does nothing while a prompt or settings session is open. */
     fun presentPrompt() = presenter.presentPrompt()

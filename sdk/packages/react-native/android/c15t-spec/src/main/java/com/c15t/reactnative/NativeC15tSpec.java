@@ -91,6 +91,8 @@ public abstract class NativeC15tSpec extends ReactContextBaseJavaModule implemen
 	public abstract void presentPreferences(String privacyPolicyURL, Promise promise);
 	@ReactMethod
 	public abstract void closeConsentPresenter(String sessionId, Promise promise);
+	@ReactMethod
+	public abstract void configureAutoPresent(String settings, Promise promise);
 
 
 	@ReactMethod

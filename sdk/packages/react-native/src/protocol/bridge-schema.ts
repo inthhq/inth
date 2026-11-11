@@ -79,6 +79,10 @@ export interface BridgeFields {
  * are what the native decoders read.
  */
 export const BRIDGE_PAYLOADS = {
+	autoPresentSettings: {
+		autoPresent: 'boolean',
+		privacyPolicyURL: 'string | null',
+	},
 	bootstrap: {
 		commitRevision: 'boolean',
 		hasStoredSnapshot: 'boolean',
@@ -126,10 +130,19 @@ export const BRIDGE_PAYLOADS = {
 		revision: 'number',
 		sessionId: 'string',
 	},
+	presenterPresented: {
+		automatic: 'boolean',
+		presentation: { enum: ['prompt', 'preferences'] },
+		sessionId: 'string',
+	},
 	presenterSession: {
 		presentation: { enum: ['prompt', 'preferences'], optional: true },
 		sessionId: 'string | null',
 		status: { enum: ['presented', 'already-presented', 'not-required'] },
+	},
+	presenterUnavailable: {
+		code: 'string',
+		message: 'string',
 	},
 	snapshot: {
 		activeUI: { enum: ACTIVE_SURFACES, nullable: true },
@@ -229,6 +242,7 @@ export type BridgePayloadName = keyof typeof BRIDGE_PAYLOADS;
 
 /** Payloads JavaScript sends to native; every other payload goes the other way. */
 export const JS_TO_NATIVE_PAYLOADS = [
+	'autoPresentSettings',
 	'commitIntent',
 	'overridesInput',
 	'trackingRequestOptions',

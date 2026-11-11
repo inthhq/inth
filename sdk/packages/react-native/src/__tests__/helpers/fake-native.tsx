@@ -13,6 +13,7 @@ import type { Root } from 'react-dom/client';
 import { vi } from 'vitest';
 
 import type { NativeC15tTurboModule } from '../../native/module';
+import type { NativeAutoPresentSettings } from '../../native/presenter';
 import { NATIVE_C15T_MODULE_NAME } from '../../protocol';
 import type {
 	ConsentSnapshot,
@@ -157,7 +158,51 @@ export interface FakeNativeModule extends NativeC15tTurboModule {
 	setBootstrap: (payload: unknown) => void;
 	/** Make `commit()` resolve with text that is not a `CommitResult`. */
 	failCommitWith: (raw: string) => void;
+	/** Settings handed to `configureAutoPresent()`, parsed, in order. */
+	autoPresentSettings: NativeAutoPresentSettings[];
+	/** The last settings native was sent, or `null` before any. */
+	readonly autoPresent: NativeAutoPresentSettings | null;
 }
+
+/**
+ * Report a session native put on screen, the way both hosts do.
+ *
+ * @param sessionId - The session.
+ * @param presentation - What it shows.
+ * @param automatic - Native opened it by itself.
+ */
+export const emitPresented = function emitPresented(
+	sessionId: string,
+	presentation: 'prompt' | 'preferences' = 'prompt',
+	automatic = true
+): void {
+	emitNativeEvent(
+		'onConsentPresenterPresented',
+		JSON.stringify({ automatic, presentation, sessionId })
+	);
+};
+
+/**
+ * Report a session's outcome, the way both hosts do.
+ *
+ * @param sessionId - The session that closed.
+ * @param kind - How it ended.
+ * @param revision - The core's revision then.
+ */
+export const emitOutcome = function emitOutcome(
+	sessionId: string,
+	kind:
+		| 'committed'
+		| 'acknowledged'
+		| 'dismissed'
+		| 'unavailable' = 'dismissed',
+	revision = 1
+): void {
+	emitNativeEvent(
+		'onConsentPresenterOutcome',
+		JSON.stringify({ kind, revision, sessionId })
+	);
+};
 
 /**
  * Create a fake module and register it under the real module name.
@@ -187,6 +232,10 @@ export const createFakeNativeModule = function createFakeNativeModule(
 
 	const fake = {
 		addListener: vi.fn(),
+		get autoPresent(): NativeAutoPresentSettings | null {
+			return fake.autoPresentSettings.at(-1) ?? null;
+		},
+		autoPresentSettings: [] as NativeAutoPresentSettings[],
 		bootstrapCalls: 0,
 		closeConsentPresenter: () => Promise.resolve(),
 		commit: vi.fn((intent: string) => {
@@ -195,6 +244,12 @@ export const createFakeNativeModule = function createFakeNativeModule(
 			return Promise.resolve(commitReply);
 		}),
 		commitIntents: [] as string[],
+		configureAutoPresent: vi.fn((settings: string) => {
+			fake.autoPresentSettings.push(
+				JSON.parse(settings) as NativeAutoPresentSettings
+			);
+			return Promise.resolve();
+		}),
 		dismissCalls: 0,
 		dismissNotice: vi.fn(() => {
 			fake.dismissCalls += 1;

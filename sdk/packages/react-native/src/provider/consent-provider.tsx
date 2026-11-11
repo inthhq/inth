@@ -9,8 +9,9 @@
  *
  * It holds two pieces of app-wide work. A foreground listener re-reads the
  * platform tracking answer, because the Settings app changes it without telling
- * a running process. And unless the app opts out, it presents the native consent
- * prompt when one is owed. Both belong here rather than in a hook so they happen
+ * a running process. And it tells native whether to present the consent prompt
+ * by itself: the native `ConsentPrompt` decides when one is owed, as it does in
+ * a Swift or Kotlin app. Both belong here rather than in a hook so they happen
  * once per app.
  */
 
@@ -27,11 +28,9 @@ import {
 } from '../native/presenter';
 import {
 	assertPrivacyPolicyURL,
-	attachAutoPresent,
+	configureAutoPresent,
 	linksNativeUI,
-	presentOwedPrompt,
 	recordConsentPresenter,
-	selectOwedPromptKey,
 } from './auto-present';
 import { ConsentClientContext } from './consent-context';
 import {
@@ -43,7 +42,9 @@ import {
 	cancelSequence,
 	checkTrackingAtLaunch,
 	createSequenceToken,
+	holdsAutoPresent,
 	markAfterInformation,
+	reholdAutoPresent,
 	releaseBeforeConsentPrompt,
 	requestSequencedTracking,
 	setTrackingInformationHandled,
@@ -222,7 +223,7 @@ export const ConsentProvider = ({
 	// speak this protocol is a configuration error, and the app should stop at
 	// the provider rather than render a consent UI over state it cannot trust.
 	const client = useMemo(() => inherited ?? getConsentClient(), [inherited]);
-	// Record what native shows from the first render, before any child effect can
+	// Mirror what native shows from the first render, before any child effect can
 	// open a session, whether or not this provider presents. Idempotent per client.
 	if (inherited === null) {
 		recordConsentPresenter(client);
@@ -285,30 +286,56 @@ export const ConsentProvider = ({
 		};
 	}, [client]);
 
-	// Present the owed prompt now, whenever the owed prompt changes, and on the
-	// way back to the foreground, where a call that found no window can succeed.
+	// Tell native whether to present an owed prompt by itself. Native decides
+	// when one is owed and opens it, also after backgrounding, rotation or a host
+	// that was not ready yet. With beforeConsent it waits until Apple was asked.
+	// Unmounting turns it off, so a later provider with autoPresent={false}
+	// inherits nothing.
 	useEffect(() => {
-		if (!presents || privacyPolicyURL === undefined) {
+		if (inherited !== null) {
 			return;
 		}
-		const detach = attachAutoPresent(client, privacyPolicyURL);
-		const present = (): void => {
-			void presentOwedPrompt(client, privacyPolicyURL);
+		const off = (): void => {
+			configureAutoPresent(client, {
+				autoPresent: false,
+				privacyPolicyURL: privacyPolicyURL ?? null,
+			});
 		};
-		present();
-		const unsubscribe = client.subscribe(selectOwedPromptKey, present);
-		const subscription = AppState.addEventListener('change', (state): void => {
-			if (state === 'active') {
-				present();
+		if (!presents || privacyPolicyURL === undefined) {
+			off();
+			return;
+		}
+		const token = createSequenceToken();
+		const sync = (): void => {
+			if (token.cancelled) {
+				return;
 			}
-		});
+			configureAutoPresent(client, {
+				autoPresent: !holdsAutoPresent(client, trackingRequest, token, sync),
+				privacyPolicyURL,
+			});
+		};
+		sync();
+		// Only the ATT hold reads these; native follows the core by itself.
+		const stops =
+			trackingRequest === 'beforeConsent'
+				? [
+						client.subscribe((snapshot) => snapshot.revision, sync),
+						onConsentPresenterOutcome(() => {
+							reholdAutoPresent(client);
+							sync();
+						}),
+					]
+				: [];
 
 		return () => {
-			unsubscribe();
-			subscription.remove();
-			detach();
+			cancelSequence(token);
+			for (const stop of stops) {
+				stop();
+			}
+			off();
 		};
-	}, [client, presents, privacyPolicyURL]);
+	}, [client, inherited, presents, privacyPolicyURL, trackingRequest]);
 
 	// With beforeConsent, a prompt the app opens itself waits for Apple's alert
 	// too. The wait was installed while rendering; this keeps it through strict
@@ -380,7 +407,8 @@ export const ConsentProvider = ({
 			if (outcome.kind === 'unavailable') {
 				return;
 			}
-			// The session was opened with a URL, also with autoPresent off.
+			// A session the app opened carries its URL; one native opened by itself
+			// used the provider's.
 			const url =
 				sessionPrivacyPolicyURL(outcome.sessionId) ?? privacyPolicyURL;
 			void afterPrompt(url);

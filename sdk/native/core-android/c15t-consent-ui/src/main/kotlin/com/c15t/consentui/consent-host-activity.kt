@@ -7,16 +7,11 @@ import android.os.Bundle
 import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.ui.Modifier
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelStore
-import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.launch
 import com.c15t.core.ConsentCore
 import java.lang.ref.WeakReference
 import java.util.UUID
@@ -63,24 +58,89 @@ sealed interface ConsentHostOutcome {
     data class Unavailable(override val sessionId: String, override val revision: Long) : ConsentHostOutcome
 }
 
-/** Optional native Activity host. The registry owns one session, never a second engine. */
+/**
+ * Draws the app's [ConsentPrompt] over the app's own Activities, for a runtime that owns no
+ * Compose tree of its own, such as React Native.
+ *
+ * The prompt decides. [configure] attaches this host to it with the runtime's `autoPresent`, and
+ * from then on the prompt opens an owed prompt by itself, once per owed prompt, exactly as it does
+ * for [C15tConsent]. This host only puts what the prompt opened on screen, on the Activity in the
+ * foreground, and reports it: [Listener.presented] once a session is on screen,
+ * [Listener.unavailable] while an owed prompt has no Activity to show on yet, and one outcome per
+ * session. An owed prompt that cannot show yet stays owed and shows once an Activity resumes, so it
+ * is not lost across backgrounding, rotation, a host Activity that is not ready yet, or
+ * [com.c15t.core.C15t.uninstall] followed by a new install. [present] opens a session the app
+ * asked for, through the same prompt, so what the person dismissed counts either way.
+ *
+ * Use it from the main thread.
+ */
 object ConsentHost {
-    private class Session(val id: String, val presenter: ConsentPresenter, val store: ViewModelStore,
-        val privacyPolicyUrl: String, var owner: WeakReference<Any>, var outcome: ((ConsentHostOutcome) -> Unit)?, val notice: Boolean,
-        val preferences: Boolean) {
+    /** What this host tells its runtime besides each request's answer. Called on the main thread. */
+    interface Listener {
+        /** A session is on screen: one the prompt opened by itself ([automatic]), or one the app asked for. */
+        fun presented(sessionId: String, presentation: ConsentHostPresentation, automatic: Boolean)
+
+        /** An owed prompt has no Activity to show on yet. It shows once one resumes; nothing has to ask again. */
+        fun unavailable(code: String, message: String)
+
+        /** How a session ended. Delivered once per session, after the session that replaced it is reported. */
+        fun outcome(outcome: ConsentHostOutcome)
+    }
+
+    private class Session(val id: String, val prompt: ConsentPrompt, val privacyPolicyUrl: String,
+        var outcome: ((ConsentHostOutcome) -> Unit)?, val notice: Boolean, val preferences: Boolean, val automatic: Boolean) {
+        val presenter get() = prompt.presenter
         /** What the session shows. */
         val presentation get() = if (preferences) ConsentHostPresentation.PREFERENCES else ConsentHostPresentation.PROMPT
         /** Whether anything of this session is on screen or still saving. */
         val showing get() = presenter.presentationID != null || presenter.noticeVisible || presenter.pending
         var activity = WeakReference<ConsentHostActivity>(null)
-        var launching = true
+        /** A [ConsentHostActivity] was started for this session and has not attached yet. */
+        var launching = false
         var noticeView = WeakReference<ComposeView>(null)
         var noticeActivity = WeakReference<Activity>(null)
         var noticeApplication: Application? = null
         var noticeLifecycle: Application.ActivityLifecycleCallbacks? = null
     }
-    /** The session last opened. Read it through [current], which never returns one that shows nothing. */
+
+    /**
+     * How long a session's outcome waits for the prompt that replaces it to show, when no Activity
+     * can show it yet. Long enough for the app's Activity to resume after the host Activity
+     * finishes; short enough that an app sent to the background still hears the outcome.
+     */
+    internal var replacementWaitMs = 2_000L
+
+    /**
+     * Outcomes of sessions whose replacement is owed but not on screen yet, in order. They go
+     * once it is reported presented, once none will be, or after [replacementWaitMs].
+     */
+    private val waiting = mutableListOf<() -> Unit>()
+    private val waited = Runnable { sendWaiting(); reconcile() }
+
+    /** This host's claim on the prompt, beside any Compose screen's. */
+    private val token = Any()
+    /** The prompt this host follows: the installed core's, dropped when that core is uninstalled. */
+    private var prompt: ConsentPrompt? = null
+    /** Hears the followed core, so what its prompt opens by itself is shown. */
+    private var subscription: com.c15t.core.Subscription? = null
+    /** Owned here: the core holds the subscription's callback only through [subscription]. */
+    private var observer: ((com.c15t.core.model.ConsentSnapshot) -> Unit)? = null
+    private val main by lazy { android.os.Handler(android.os.Looper.getMainLooper()) }
+    private var autoPresent = false
+    private var privacyPolicyUrl: String? = null
+    private var listener: Listener? = null
+    private var owner = WeakReference<Any>(null)
+    /** The app's own Activity in the foreground, which an automatic session is shown on. */
+    private var foreground = WeakReference<Activity>(null)
+    private var application: Application? = null
+    /** The owed prompt last reported as having no Activity, so it is reported once. */
+    private var unavailableFor: String? = null
+    /** The session on screen. Read it through [current], which never returns one that shows nothing. */
     private var held: Session? = null
+
+    init {
+        com.c15t.core.C15t.onUninstall { core -> if (prompt?.core === core) drop(core) }
+    }
 
     /**
      * The open session, derived from what is on screen: a held session that shows nothing (its
@@ -89,10 +149,39 @@ object ConsentHost {
      * visible.
      */
     private fun current(): Session? {
-        held?.takeIf { !it.showing }?.presenter?.onOutcome?.invoke(ConsentPresenterOutcome.DISMISSED)
+        held?.takeIf { !it.showing }?.let { finish(it, ConsentPresenterOutcome.DISMISSED) }
         return held
     }
     private const val NOTICE_SESSION_STATE = "com.c15t.consentui.notice.session"
+
+    /**
+     * Attach this host to [core]'s prompt with the runtime's settings. Call it again whenever they
+     * change. With [autoPresent] on, the prompt presents an owed prompt by itself; with it off,
+     * nothing opens until [present], and a session the prompt opened by itself that is not on
+     * screen yet is withdrawn, so an app that opted out never sees a prompt it did not ask for.
+     *
+     * @param activity The Activity in the foreground now, if any.
+     * @param privacyPolicyUrl The HTTPS privacy policy an automatic prompt links to.
+     * @param owner The runtime, so [detach] can tell its sessions apart.
+     * @throws IllegalArgumentException When [autoPresent] is on and [privacyPolicyUrl] is not HTTPS.
+     */
+    fun configure(application: Application, activity: Activity?, core: ConsentCore, autoPresent: Boolean,
+        privacyPolicyUrl: String?, owner: Any, listener: Listener) {
+        if (autoPresent) requireHttps(privacyPolicyUrl)
+        // A new runtime, such as React Native after a reload, has not heard of what is on screen.
+        val fresh = this.owner.get() !== owner
+        this.owner = WeakReference(owner)
+        this.listener = listener
+        this.autoPresent = autoPresent
+        if (privacyPolicyUrl != null) this.privacyPolicyUrl = privacyPolicyUrl
+        track(application)
+        if (activity != null && activity !is ConsentHostActivity) foreground = WeakReference(activity)
+        val attached = attach(core)
+        if (fresh) current()?.let { listener.presented(it.id, it.presentation, it.automatic) }
+        // Opened by itself and never shown: not for an app that has just opted out.
+        if (!autoPresent && held == null) attached.presenter.withdrawAutomaticSession()
+        reconcile()
+    }
 
     /**
      * Call on the main thread. Repeated requests reuse the current session and its draft.
@@ -101,83 +190,58 @@ object ConsentHost {
      * @returns Whether a session opened, was already open, or was not needed.
      */
     fun present(activity: Activity, core: ConsentCore, preferences: Boolean, privacyPolicyUrl: String, owner: Any = activity, outcome: (ConsentHostOutcome) -> Unit): ConsentHostSession {
-        val uri = android.net.Uri.parse(privacyPolicyUrl)
-        require(uri.scheme == "https" && !uri.host.isNullOrBlank()) { "An HTTPS privacy-policy URL is required" }
+        requireHttps(privacyPolicyUrl)
+        track(activity.application)
+        if (activity !is ConsentHostActivity) foreground = WeakReference(activity)
+        val prompt = attach(core)
+        val presenter = prompt.presenter
         // A repeated prompt request re-asks the open session, so a notice cleared and owed again shows.
         held?.takeIf { !preferences }?.presenter?.presentPrompt()
         current()?.let {
-            it.owner = WeakReference(owner)
+            this.owner = WeakReference(owner)
             it.outcome = outcome
-            if (it.notice) {
-                attachNotice(activity, it)
-                return ConsentHostSession.AlreadyPresented(it.id, it.presentation)
-            }
-            val host = it.activity.get()
-            if (!it.launching && (host == null || host.isFinishing || host.isDestroyed)) {
-                it.launching = true
-                try {
-                    activity.startActivity(Intent(activity, ConsentHostActivity::class.java).putExtra("c15t.session", it.id))
-                } catch (error: Exception) {
-                    it.launching = false
-                    throw error
-                }
-            }
+            show(it, activity)
             return ConsentHostSession.AlreadyPresented(it.id, it.presentation)
+        }
+        // The prompt opened a session by itself that had no Activity to show on until now.
+        if (presenter.presentationID != null || presenter.noticeVisible) {
+            val session = open(activity, prompt, privacyPolicyUrl, automatic = true, outcome = outcome)
+            return ConsentHostSession.AlreadyPresented(session.id, session.presentation)
         }
         val snapshot = core.snapshot()
         if (!preferences && (snapshot.policyPending || !snapshot.promptRequirement.acknowledge && !snapshot.promptRequirement.notice))
             return ConsentHostSession.NotRequired
-        val store = ViewModelStore()
-        val presenter = ViewModelProvider(store, object : ViewModelProvider.Factory {
-            override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
-                @Suppress("UNCHECKED_CAST")
-                return ConsentPresenter(core, autoPresent = false) as T
-            }
-        })[ConsentPresenter::class.java]
-        if (preferences) presenter.presentPreferences() else presenter.presentPrompt()
-        val id = presenter.presentationID ?: UUID.randomUUID().toString()
-        val session = Session(id, presenter, store, privacyPolicyUrl, WeakReference(owner), outcome,
-            !preferences && snapshot.promptRequirement.notice && !snapshot.promptRequirement.acknowledge, preferences)
-        held = session
-        presenter.onOutcome = { value ->
-            if (held === session) {
-                val snapshot = core.snapshot()
-                val result = when {
-                    value == ConsentPresenterOutcome.DISMISSED && snapshot.policyPending -> ConsentHostOutcome.Unavailable(id, snapshot.revision)
-                    value == ConsentPresenterOutcome.DISMISSED -> ConsentHostOutcome.Dismissed(id, snapshot.revision)
-                    session.notice && !presenter.preferences -> ConsentHostOutcome.Acknowledged(id, snapshot.revision)
-                    else -> ConsentHostOutcome.Committed(id, snapshot.revision)
-                }
-                held = null
-                releaseNotice(session)
-                session.activity.get()?.finish()
-                session.outcome?.invoke(result)
-                session.outcome = null
-                store.clear()
-            }
-        }
-        // A notice cleared outside this session (`dismissNotice()`, a reset) leaves it showing
-        // nothing and with no decision to close it: end it, so its outcome reaches JavaScript.
-        presenter.viewModelScope.launch {
-            snapshotFlow { session.showing }.collect { showing ->
-                if (!showing && held === session) presenter.onOutcome?.invoke(ConsentPresenterOutcome.DISMISSED)
-            }
-        }
-        try {
-            if (session.notice) attachNotice(activity, session)
-            else activity.startActivity(Intent(activity, ConsentHostActivity::class.java).putExtra("c15t.session", id))
-        } catch (error: Exception) {
-            held = null
-            releaseNotice(session)
-            presenter.onOutcome = null
-            store.clear()
-            throw error
-        }
-        return ConsentHostSession.Presented(id, session.presentation)
+        if (preferences) prompt.presentPreferences() else prompt.presentPrompt()
+        if (presenter.presentationID == null && !presenter.noticeVisible) return ConsentHostSession.NotRequired
+        this.owner = WeakReference(owner)
+        val session = open(activity, prompt, privacyPolicyUrl, automatic = false, outcome = outcome)
+        return ConsentHostSession.Presented(session.id, session.presentation)
     }
+
     fun close(sessionID: String) { current()?.takeIf { it.id == sessionID }?.presenter?.requestClose() }
-    /** Detach a torn-down JS runtime without cancelling native durable work. */
-    fun detach(owner: Any) { held?.takeIf { it.owner.get() === owner }?.let { it.outcome = null; it.owner.clear() } }
+
+    /**
+     * Detach a torn-down runtime without cancelling native durable work. A session on screen stays
+     * for the person to finish; nothing presents by itself until a runtime configures this host again.
+     */
+    fun detach(owner: Any) {
+        if (this.owner.get() !== owner) return
+        sendWaiting()
+        held?.outcome = null
+        this.owner.clear()
+        listener = null
+        autoPresent = false
+        prompt?.detach(token)
+    }
+
+    /**
+     * Follow [core]'s prompt with the current settings. A core installed after an uninstall gets a
+     * new prompt, and this host moves to it, so an owed prompt is presented on the new core too.
+     */
+    fun follow(core: ConsentCore) {
+        if (listener != null) { attach(core); reconcile() }
+    }
+
     internal fun attach(activity: ConsentHostActivity, id: String?): Boolean {
         val session = current()?.takeIf { it.id == id } ?: return false
         session.activity = WeakReference(activity)
@@ -185,6 +249,190 @@ object ConsentHost {
         activity.setContent { C15tConsent(session.presenter, session.privacyPolicyUrl) }
         return true
     }
+
+    private fun requireHttps(privacyPolicyUrl: String?) {
+        val uri = android.net.Uri.parse(privacyPolicyUrl ?: "")
+        require(uri.scheme == "https" && !uri.host.isNullOrBlank()) { "An HTTPS privacy-policy URL is required" }
+    }
+
+    /** Attach this host's claim to [core]'s prompt, moving from another core's if it changed. */
+    private fun attach(core: ConsentCore): ConsentPrompt {
+        val next = ConsentPrompt.of(core)
+        val previous = prompt
+        if (previous !== next) {
+            previous?.let { old ->
+                old.onHostFinished = null
+                old.detach(token)
+                // A session of a core this host no longer follows is not the runtime's any more.
+                held?.takeIf { it.prompt === old }?.let { held = null; release(it) }
+                // No prompt of that core will follow on this host.
+                sendWaiting()
+            }
+            subscription?.close()
+            prompt = next
+            next.onHostFinished = { finished(next, it) }
+            // After the presenter has applied the same change, which it hears first: a notice
+            // cleared outside a session ends it, so its outcome reaches the runtime, and what the
+            // prompt opened by itself is shown. Not Compose state: an app with no Compose UI yet
+            // never sends its apply notifications.
+            val listener: (com.c15t.core.model.ConsentSnapshot) -> Unit = { main.post { if (prompt === next) reconcile() } }
+            observer = listener
+            subscription = core.onChange(listener)
+        }
+        next.attach(token, started = true, autoPresent = autoPresent && listener != null)
+        return next
+    }
+
+    private fun drop(core: ConsentCore) {
+        val dropped = prompt ?: return
+        // No prompt of this core will follow.
+        sendWaiting()
+        held?.takeIf { it.prompt === dropped }?.let {
+            val revision = core.snapshot().revision
+            held = null
+            release(it)
+            deliver(it, ConsentHostOutcome.Unavailable(it.id, revision))
+        }
+        dropped.onHostFinished = null
+        subscription?.close()
+        subscription = null
+        observer = null
+        prompt = null
+    }
+
+    /** Track the app's foreground Activity, so a session that opens by itself has somewhere to show. */
+    private fun track(app: Application) {
+        if (application === app) return
+        application?.unregisterActivityLifecycleCallbacks(foregroundCallbacks)
+        application = app
+        app.registerActivityLifecycleCallbacks(foregroundCallbacks)
+    }
+
+    private val foregroundCallbacks = object : Application.ActivityLifecycleCallbacks {
+            override fun onActivityResumed(activity: Activity) {
+                if (activity is ConsentHostActivity) return
+                foreground = WeakReference(activity)
+                com.c15t.core.C15t.current?.let(::follow) ?: reconcile()
+            }
+            override fun onActivityPaused(activity: Activity) {
+                if (foreground.get() === activity) foreground.clear()
+            }
+            override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) = Unit
+            override fun onActivityStarted(activity: Activity) = Unit
+            override fun onActivityStopped(activity: Activity) = Unit
+            override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
+            override fun onActivityDestroyed(activity: Activity) = Unit
+    }
+
+    /** End a held session that shows nothing, and show what the prompt opened by itself. */
+    private fun reconcile() {
+        val prompt = prompt ?: return
+        if (current() != null || prompt.host !== token) return
+        val presenter = prompt.presenter
+        if (presenter.presentationID == null && !presenter.noticeVisible) { unavailableFor = null; sendWaiting(); return }
+        val url = privacyPolicyUrl ?: return
+        val activity = foreground.get()?.takeIf { !it.isFinishing && !it.isDestroyed }
+        val failure = if (activity == null) "No Activity is in the foreground to show the owed consent prompt on yet"
+        else try { open(activity, prompt, url, automatic = true, outcome = null); return } catch (error: Exception) { error.message ?: error.toString() }
+        // An outcome is waiting for this prompt: the app's Activity is about to resume, typically,
+        // after the host Activity that just finished. [waited] reports it if it never does.
+        if (waiting.isNotEmpty()) return
+        val key = presenter.presentationID ?: "notice"
+        if (unavailableFor != key) {
+            unavailableFor = key
+            listener?.unavailable("C15T_PRESENTER_UNAVAILABLE", failure)
+        }
+    }
+
+    /** Hold what [prompt] shows now as a session, put it on [activity], and report it. */
+    private fun open(activity: Activity, prompt: ConsentPrompt, privacyPolicyUrl: String, automatic: Boolean,
+        outcome: ((ConsentHostOutcome) -> Unit)?): Session {
+        val presenter = prompt.presenter
+        val notice = presenter.presentationID == null && presenter.noticeVisible
+        val session = Session(presenter.presentationID ?: UUID.randomUUID().toString(), prompt, privacyPolicyUrl, outcome,
+            notice, presenter.preferences && !presenter.returnsToFirstLayer, automatic)
+        held = session
+        unavailableFor = null
+        try { show(session, activity) } catch (error: Exception) {
+            held = null
+            release(session)
+            // One the prompt opened by itself stays open, to show once an Activity can take it. One
+            // the app asked for is withdrawn: not on screen, so not the person's, and still owed.
+            if (!automatic) presenter.withdrawSession()
+            throw error
+        }
+        listener?.presented(session.id, session.presentation, automatic)
+        sendWaiting()
+        return session
+    }
+
+    /** Put [session] on [activity]: the notice card in its content, anything else in a [ConsentHostActivity]. */
+    private fun show(session: Session, activity: Activity) {
+        if (session.notice) return attachNotice(activity, session)
+        val host = session.activity.get()
+        if (session.launching || host != null && !host.isFinishing && !host.isDestroyed) return
+        session.launching = true
+        try {
+            activity.startActivity(Intent(activity, ConsentHostActivity::class.java).putExtra("c15t.session", session.id))
+        } catch (error: Exception) {
+            session.launching = false
+            throw error
+        }
+    }
+
+    private fun finished(prompt: ConsentPrompt, value: ConsentPresenterOutcome) {
+        val session = held?.takeIf { it.prompt === prompt } ?: return
+        finish(session, value)
+    }
+
+    private fun finish(session: Session, value: ConsentPresenterOutcome) {
+        if (held !== session) return
+        val presenter = session.presenter
+        val snapshot = session.prompt.core.snapshot()
+        val result = when {
+            value == ConsentPresenterOutcome.DISMISSED && snapshot.policyPending -> ConsentHostOutcome.Unavailable(session.id, snapshot.revision)
+            value == ConsentPresenterOutcome.DISMISSED -> ConsentHostOutcome.Dismissed(session.id, snapshot.revision)
+            session.notice && !presenter.preferences -> ConsentHostOutcome.Acknowledged(session.id, snapshot.revision)
+            else -> ConsentHostOutcome.Committed(session.id, snapshot.revision)
+        }
+        held = null
+        release(session)
+        // The prompt that follows, if one is owed, is reported before this outcome, so a step that
+        // waits for c15t's screens to close, such as Apple's tracking request, never runs between
+        // the two. On a device the app's Activity is still paused under the finishing host
+        // Activity here, so the prompt that follows often shows only once it resumes: the outcome
+        // waits for that, and for no longer than [replacementWaitMs].
+        presenter.presentIfOwed()
+        // Bound now: the outcome is for the runtime that heard this session, even if another has
+        // configured the host by the time it goes.
+        val callback = session.outcome ?: listener?.let { it::outcome }
+        session.outcome = null
+        waiting += { callback?.invoke(result) }
+        reconcile()
+        if (waiting.isNotEmpty()) { main.removeCallbacks(waited); main.postDelayed(waited, replacementWaitMs) }
+    }
+
+    /** Send every waiting outcome, in order. */
+    private fun sendWaiting() {
+        main.removeCallbacks(waited)
+        if (waiting.isEmpty()) return
+        val sent = waiting.toList()
+        waiting.clear()
+        for (send in sent) send()
+    }
+
+    private fun deliver(session: Session, result: ConsentHostOutcome) {
+        val callback = session.outcome ?: listener?.let { it::outcome }
+        session.outcome = null
+        callback?.invoke(result)
+    }
+
+    private fun release(session: Session) {
+        releaseNotice(session)
+        session.activity.get()?.finish()
+        session.activity.clear()
+    }
+
     private fun attachNotice(activity: Activity, session: Session) {
         val existing = session.noticeView.get()
         if (existing?.isAttachedToWindow == true && existing.context === activity) return

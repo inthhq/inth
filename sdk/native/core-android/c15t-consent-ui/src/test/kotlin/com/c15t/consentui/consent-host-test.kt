@@ -266,7 +266,7 @@ class ConsentHostTest {
     private fun presenter(): ConsentPresenter? {
         val field = ConsentHost::class.java.getDeclaredField("held").apply { isAccessible = true }
         val session = field.get(ConsentHost) ?: return null
-        return session.javaClass.getDeclaredField("presenter").apply { isAccessible = true }.get(session) as ConsentPresenter
+        return (session.javaClass.getDeclaredField("prompt").apply { isAccessible = true }.get(session) as ConsentPrompt).presenter
     }
 
     private fun opened(session: ConsentHostSession): ConsentHostSession.Presented {
