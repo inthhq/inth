@@ -3703,3 +3703,1725 @@ export const nativeAppLabels: Record<string, NativeAppLabels> = {
 		yourChoices: '您的选择',
 	},
 };
+
+/**
+ * Category-mode labels for the native iOS and Android screens that the web
+ * copy doesn't cover: sentences about an app rather than a website, status
+ * notes, accessibility announcements and save errors. Buttons, headings and
+ * category names reuse web keys instead. Only
+ * `scripts/generate-native-iab-copy.ts` reads them.
+ *
+ * @internal
+ */
+export interface NativeConsentLabels {
+	/** Save error when the device clock looks wrong. */
+	actionTimeInvalid: string;
+	/** Placeholder brand name until the app sets its own. */
+	brandPlaceholder: string;
+	/** Shown above the first layer when an earlier choice expired. */
+	choiceExpired: string;
+	/** Accessibility announcement after choices are saved. */
+	choicesSaved: string;
+	/** Error when dismissing the notice fails. */
+	dismissFailed: string;
+	/** What the experience category covers in an app. */
+	experienceDescription: string;
+	/** Second sentence of the first layer, under the introduction. */
+	firstLayerDescription: string;
+	/** What the functionality category covers in an app. */
+	functionalityDescription: string;
+	/** Default sentence under the first-layer headline. */
+	introduction: string;
+	/** What the marketing category covers in an app. */
+	marketingDescription: string;
+	/** What the measurement category covers in an app. */
+	measurementDescription: string;
+	/** What the strictly necessary category covers in an app. */
+	necessaryDescription: string;
+	/** Note under a category the policy doesn't offer in this region. */
+	notOffered: string;
+	/** Accessibility announcement after the notice is acknowledged. */
+	noticeAcknowledged: string;
+	/** Body of the privacy notice. */
+	noticeDescription: string;
+	/** Shown above the first layer when the policy changed. */
+	policyChanged: string;
+	/** Introduction at the top of category-mode Privacy Settings. */
+	preferencesDescription: string;
+	/** Note under a category that Global Privacy Control turned off. */
+	restrictedByGpc: string;
+	/** Error when saving choices fails. */
+	saveFailed: string;
+	/** Accessibility state of a button while choices are saving. */
+	saving: string;
+}
+
+/** Native category-mode labels by language code. */
+export const nativeConsentLabels: Record<string, NativeConsentLabels> = {
+	ar: {
+		actionTimeInvalid:
+			'تعذّر الحفظ لأن تاريخ هذا الجهاز ووقته يبدوان غير صحيحين. صحّحهما في الإعدادات أولًا.',
+		brandPlaceholder: 'علامتك التجارية هنا',
+		choiceExpired: 'انتهت صلاحية اختيارك السابق، لذا نسألك مرة أخرى.',
+		choicesSaved: 'تم حفظ خيارات الخصوصية',
+		dismissFailed: 'تعذّر إغلاق هذا الإشعار. لم يتغير شيء على هذا الجهاز.',
+		experienceDescription: 'تكييف التطبيق مع طريقة استخدامك له.',
+		firstLayerDescription:
+			'أنت تقرر الاستخدامات التي تسمح بها، ويمكنك تغيير رأيك في أي وقت من إعدادات الخصوصية.',
+		functionalityDescription: 'تذكّر إعداداتك واختياراتك.',
+		introduction:
+			'نستخدم البيانات لتحسين تجربتك وقياس كيفية استخدام التطبيق وعرض إعلانات ملائمة.',
+		marketingDescription: 'عرض إعلانات ملائمة لك.',
+		measurementDescription: 'مساعدتنا على فهم كيفية استخدام التطبيق.',
+		necessaryDescription: 'مطلوبة لكي يعمل التطبيق.',
+		notOffered: 'غير متاح في منطقتك.',
+		noticeAcknowledged: 'تم الاطلاع على إشعار الخصوصية',
+		noticeDescription:
+			'يمكنك مراجعة ذلك أو تغييره في أي وقت من إعدادات الخصوصية.',
+		policyChanged:
+			'تغيّرت طريقة استخدام هذا التطبيق للبيانات منذ اختيارك الأخير، لذا نسألك مرة أخرى.',
+		preferencesDescription:
+			'اختر أنواع استخدام البيانات التي تسمح بها. تُطبَّق التغييرات على هذا الجهاز بمجرد الحفظ.',
+		restrictedByGpc: 'مُعطَّل لأن جهازك يرسل إشارة Global Privacy Control.',
+		saveFailed: 'تعذّر حفظ خياراتك. لم يتغير شيء على هذا الجهاز.',
+		saving: 'جارٍ حفظ الخيارات',
+	},
+	bg: {
+		actionTimeInvalid:
+			'Не можа да се запази, защото датата и часът на това устройство изглеждат грешни. Първо ги поправете в Настройки.',
+		brandPlaceholder: 'Вашата марка тук',
+		choiceExpired: 'Предишният ви избор е изтекъл, затова питаме отново.',
+		choicesSaved: 'Изборът за поверителност е запазен',
+		dismissFailed:
+			'Това известие не можа да бъде затворено. Нищо не е променено на това устройство.',
+		experienceDescription:
+			'Приспособява приложението към начина, по който го използвате.',
+		firstLayerDescription:
+			'Вие решавате кои употреби да разрешите и можете да промените решението си по всяко време от Настройки за поверителност.',
+		functionalityDescription: 'Запомня вашите настройки и избор.',
+		introduction:
+			'Използваме данни, за да подобрим вашето изживяване, да измерваме как се използва приложението и да показваме подходяща реклама.',
+		marketingDescription: 'Показва реклама, подходяща за вас.',
+		measurementDescription:
+			'Помага ни да разберем как се използва приложението.',
+		necessaryDescription: 'Необходими за работата на приложението.',
+		notOffered: 'Не се предлага във вашия регион.',
+		noticeAcknowledged: 'Известието за поверителност е прието',
+		noticeDescription:
+			'Можете да прегледате или промените това по всяко време от Настройки за поверителност.',
+		policyChanged:
+			'Начинът, по който това приложение използва данни, се промени след последния ви избор, затова питаме отново.',
+		preferencesDescription:
+			'Изберете кои видове използване на данни разрешавате. Промените важат на това устройство веднага щом запазите.',
+		restrictedByGpc:
+			'Изключено, защото устройството ви изпраща сигнал Global Privacy Control.',
+		saveFailed:
+			'Изборът ви не можа да бъде запазен. Нищо не е променено на това устройство.',
+		saving: 'Изборът се запазва',
+	},
+	bn: {
+		actionTimeInvalid:
+			'সংরক্ষণ করা যায়নি, কারণ এই ডিভাইসের তারিখ ও সময় ভুল মনে হচ্ছে। আগে সেটিংসে সেগুলো ঠিক করুন।',
+		brandPlaceholder: 'আপনার ব্র্যান্ড এখানে',
+		choiceExpired:
+			'আপনার আগের পছন্দের মেয়াদ শেষ হয়ে গেছে, তাই আমরা আবার জিজ্ঞেস করছি।',
+		choicesSaved: 'গোপনীয়তার পছন্দ সংরক্ষিত হয়েছে',
+		dismissFailed: 'এই বিজ্ঞপ্তিটি বন্ধ করা যায়নি। এই ডিভাইসে কিছুই পরিবর্তন হয়নি।',
+		experienceDescription:
+			'আপনি যেভাবে অ্যাপটি ব্যবহার করেন, সেভাবে এটিকে মানিয়ে নেয়।',
+		firstLayerDescription:
+			'কোন কোন ব্যবহারের অনুমতি দেবেন তা আপনিই ঠিক করেন, এবং গোপনীয়তা সেটিংসে যেকোনো সময় মত বদলাতে পারেন।',
+		functionalityDescription: 'আপনার সেটিংস ও পছন্দ মনে রাখে।',
+		introduction:
+			'আপনার অভিজ্ঞতা উন্নত করতে, অ্যাপটি কীভাবে ব্যবহার হয় তা পরিমাপ করতে এবং প্রাসঙ্গিক বিজ্ঞাপন দেখাতে আমরা ডেটা ব্যবহার করি।',
+		marketingDescription: 'আপনার জন্য প্রাসঙ্গিক বিজ্ঞাপন দেখায়।',
+		measurementDescription: 'অ্যাপটি কীভাবে ব্যবহার হয় তা বুঝতে আমাদের সাহায্য করে।',
+		necessaryDescription: 'অ্যাপটি চালানোর জন্য প্রয়োজনীয়।',
+		notOffered: 'আপনার অঞ্চলে দেওয়া হয় না।',
+		noticeAcknowledged: 'গোপনীয়তা বিজ্ঞপ্তি স্বীকার করা হয়েছে',
+		noticeDescription:
+			'গোপনীয়তা সেটিংসে যেকোনো সময় আপনি এটি দেখতে বা পরিবর্তন করতে পারেন।',
+		policyChanged:
+			'আপনার শেষ পছন্দের পর এই অ্যাপ ডেটা যেভাবে ব্যবহার করে তা বদলেছে, তাই আমরা আবার জিজ্ঞেস করছি।',
+		preferencesDescription:
+			'কোন ধরনের ডেটা ব্যবহারের অনুমতি দেবেন তা বেছে নিন। সংরক্ষণ করার সঙ্গে সঙ্গে এই ডিভাইসে পরিবর্তন কার্যকর হয়।',
+		restrictedByGpc:
+			'বন্ধ, কারণ আপনার ডিভাইস একটি Global Privacy Control সংকেত পাঠায়।',
+		saveFailed: 'আপনার পছন্দ সংরক্ষণ করা যায়নি। এই ডিভাইসে কিছুই পরিবর্তন হয়নি।',
+		saving: 'পছন্দ সংরক্ষণ করা হচ্ছে',
+	},
+	cs: {
+		actionTimeInvalid:
+			'Uložení se nezdařilo, protože datum a čas tohoto zařízení vypadají chybně. Nejdřív je opravte v Nastavení.',
+		brandPlaceholder: 'Vaše značka',
+		choiceExpired:
+			'Platnost vaší dřívější volby vypršela, proto se ptáme znovu.',
+		choicesSaved: 'Volby soukromí uloženy',
+		dismissFailed:
+			'Toto oznámení se nepodařilo zavřít. V tomto zařízení se nic nezměnilo.',
+		experienceDescription: 'Přizpůsobuje aplikaci tomu, jak ji používáte.',
+		firstLayerDescription:
+			'Sami rozhodujete, která použití povolíte, a svůj názor můžete kdykoli změnit v Nastavení soukromí.',
+		functionalityDescription: 'Pamatuje si vaše nastavení a volby.',
+		introduction:
+			'Údaje používáme ke zlepšení vašeho zážitku, k měření toho, jak se aplikace používá, a k zobrazování relevantní reklamy.',
+		marketingDescription: 'Zobrazuje reklamu, která je pro vás relevantní.',
+		measurementDescription: 'Pomáhá nám pochopit, jak se aplikace používá.',
+		necessaryDescription: 'Nutné pro fungování aplikace.',
+		notOffered: 'Ve vaší oblasti není k dispozici.',
+		noticeAcknowledged: 'Oznámení o ochraně soukromí potvrzeno',
+		noticeDescription:
+			'Toto nastavení můžete kdykoli zkontrolovat nebo změnit v Nastavení soukromí.',
+		policyChanged:
+			'Způsob, jakým tato aplikace používá údaje, se od vaší poslední volby změnil, proto se ptáme znovu.',
+		preferencesDescription:
+			'Vyberte, jaké druhy použití údajů povolíte. Změny platí v tomto zařízení hned po uložení.',
+		restrictedByGpc:
+			'Vypnuto, protože vaše zařízení odesílá signál Global Privacy Control.',
+		saveFailed:
+			'Vaše volby se nepodařilo uložit. V tomto zařízení se nic nezměnilo.',
+		saving: 'Ukládání voleb',
+	},
+	cy: {
+		actionTimeInvalid:
+			'Methwyd cadw oherwydd bod dyddiad ac amser y ddyfais hon yn edrych yn anghywir. Cywirwch nhw yn y Gosodiadau yn gyntaf.',
+		brandPlaceholder: 'Eich brand yma',
+		choiceExpired:
+			'Mae eich dewis blaenorol wedi dod i ben, felly rydym yn gofyn eto.',
+		choicesSaved: 'Dewisiadau preifatrwydd wedi’u cadw',
+		dismissFailed:
+			'Methwyd cau’r hysbysiad hwn. Does dim wedi newid ar y ddyfais hon.',
+		experienceDescription: 'Addasu’r ap i’r ffordd rydych chi’n ei ddefnyddio.',
+		firstLayerDescription:
+			'Chi sy’n penderfynu pa ddefnyddiau i’w caniatáu, a gallwch newid eich meddwl unrhyw bryd yn Gosodiadau preifatrwydd.',
+		functionalityDescription: 'Cofio eich gosodiadau a’ch dewisiadau.',
+		introduction:
+			'Rydym yn defnyddio data i wella eich profiad, mesur sut mae’r ap yn cael ei ddefnyddio a dangos hysbysebion perthnasol.',
+		marketingDescription: 'Dangos hysbysebion sy’n berthnasol i chi.',
+		measurementDescription:
+			'Ein helpu i ddeall sut mae’r ap yn cael ei ddefnyddio.',
+		necessaryDescription: 'Yn ofynnol er mwyn i’r ap weithio.',
+		notOffered: 'Ddim ar gael lle rydych chi.',
+		noticeAcknowledged: 'Hysbysiad preifatrwydd wedi’i gydnabod',
+		noticeDescription:
+			'Gallwch adolygu neu newid hyn unrhyw bryd yn Gosodiadau preifatrwydd.',
+		policyChanged:
+			'Mae’r ffordd mae’r ap hwn yn defnyddio data wedi newid ers eich dewis diwethaf, felly rydym yn gofyn eto.',
+		preferencesDescription:
+			'Dewiswch pa fathau o ddefnydd data rydych chi’n eu caniatáu. Mae newidiadau’n dod i rym ar y ddyfais hon cyn gynted ag y byddwch yn cadw.',
+		restrictedByGpc:
+			'I ffwrdd oherwydd bod eich dyfais yn anfon signal Global Privacy Control.',
+		saveFailed:
+			'Methwyd cadw eich dewisiadau. Does dim wedi newid ar y ddyfais hon.',
+		saving: 'Wrthi’n cadw dewisiadau',
+	},
+	da: {
+		actionTimeInvalid:
+			'Kunne ikke gemme, fordi enhedens dato og klokkeslæt ser forkerte ud. Ret dem først under Indstillinger.',
+		brandPlaceholder: 'Dit brand her',
+		choiceExpired: 'Dit tidligere valg er udløbet, så vi spørger igen.',
+		choicesSaved: 'Privatlivsvalg gemt',
+		dismissFailed:
+			'Meddelelsen kunne ikke lukkes. Intet er ændret på denne enhed.',
+		experienceDescription: 'Tilpasser appen til, hvordan du bruger den.',
+		firstLayerDescription:
+			'Du bestemmer, hvilke former for brug du tillader, og du kan ændre mening når som helst under Privatlivsindstillinger.',
+		functionalityDescription: 'Husker dine indstillinger og valg.',
+		introduction:
+			'Vi bruger data til at forbedre din oplevelse, måle hvordan appen bruges og vise relevante annoncer.',
+		marketingDescription: 'Viser annoncer, der er relevante for dig.',
+		measurementDescription: 'Hjælper os med at forstå, hvordan appen bruges.',
+		necessaryDescription: 'Nødvendige for, at appen virker.',
+		notOffered: 'Tilbydes ikke, hvor du er.',
+		noticeAcknowledged: 'Privatlivsmeddelelse bekræftet',
+		noticeDescription:
+			'Du kan se eller ændre dette når som helst under Privatlivsindstillinger.',
+		policyChanged:
+			'Måden, denne app bruger data på, er ændret siden dit sidste valg, så vi spørger igen.',
+		preferencesDescription:
+			'Vælg, hvilke former for databrug du tillader. Ændringer gælder på denne enhed, så snart du gemmer.',
+		restrictedByGpc:
+			'Slået fra, fordi din enhed sender et Global Privacy Control-signal.',
+		saveFailed: 'Dine valg kunne ikke gemmes. Intet er ændret på denne enhed.',
+		saving: 'Gemmer valg',
+	},
+	de: {
+		actionTimeInvalid:
+			'Speichern nicht möglich, weil Datum und Uhrzeit dieses Geräts falsch zu sein scheinen. Korrigiere sie zuerst in den Einstellungen des Geräts.',
+		brandPlaceholder: 'Deine Marke hier',
+		choiceExpired:
+			'Deine frühere Auswahl ist abgelaufen, deshalb fragen wir erneut.',
+		choicesSaved: 'Datenschutz-Auswahl gespeichert',
+		dismissFailed:
+			'Dieser Hinweis konnte nicht geschlossen werden. Auf diesem Gerät wurde nichts geändert.',
+		experienceDescription: 'Passt die App daran an, wie du sie nutzt.',
+		firstLayerDescription:
+			'Du entscheidest, welche Nutzungen du erlaubst, und kannst deine Meinung jederzeit in den Einstellungen ändern.',
+		functionalityDescription:
+			'Merkt sich deine Einstellungen und deine Auswahl.',
+		introduction:
+			'Wir nutzen Daten, um dein Erlebnis zu verbessern, die Nutzung der App zu messen und relevante Werbung zu zeigen.',
+		marketingDescription: 'Zeigt dir Werbung, die für dich relevant ist.',
+		measurementDescription: 'Hilft uns zu verstehen, wie die App genutzt wird.',
+		necessaryDescription: 'Erforderlich, damit die App funktioniert.',
+		notOffered: 'In deiner Region nicht angeboten.',
+		noticeAcknowledged: 'Datenschutzhinweis bestätigt',
+		noticeDescription:
+			'Du kannst das jederzeit in den Einstellungen prüfen oder ändern.',
+		policyChanged:
+			'Seit deiner letzten Auswahl hat sich geändert, wie diese App Daten nutzt, deshalb fragen wir erneut.',
+		preferencesDescription:
+			'Wähle aus, welche Arten der Datennutzung du erlaubst. Änderungen gelten auf diesem Gerät, sobald du speicherst.',
+		restrictedByGpc:
+			'Aus, weil dein Gerät ein Global-Privacy-Control-Signal sendet.',
+		saveFailed:
+			'Deine Auswahl konnte nicht gespeichert werden. Auf diesem Gerät wurde nichts geändert.',
+		saving: 'Auswahl wird gespeichert',
+	},
+	el: {
+		actionTimeInvalid:
+			'Η αποθήκευση δεν ήταν δυνατή, επειδή η ημερομηνία και η ώρα της συσκευής φαίνονται λανθασμένες. Διορθώστε τες πρώτα στις Ρυθμίσεις.',
+		brandPlaceholder: 'Η επωνυμία σας εδώ',
+		choiceExpired:
+			'Η προηγούμενη επιλογή σας έχει λήξει, γι’ αυτό σας ρωτάμε ξανά.',
+		choicesSaved: 'Οι επιλογές απορρήτου αποθηκεύτηκαν',
+		dismissFailed:
+			'Δεν ήταν δυνατό να κλείσει αυτή η ειδοποίηση. Δεν άλλαξε τίποτα σε αυτή τη συσκευή.',
+		experienceDescription:
+			'Προσαρμόζει την εφαρμογή στον τρόπο που τη χρησιμοποιείτε.',
+		firstLayerDescription:
+			'Εσείς αποφασίζετε ποιες χρήσεις επιτρέπετε και μπορείτε να αλλάξετε γνώμη ανά πάσα στιγμή από τις Ρυθμίσεις απορρήτου.',
+		functionalityDescription: 'Θυμάται τις ρυθμίσεις και τις επιλογές σας.',
+		introduction:
+			'Χρησιμοποιούμε δεδομένα για να βελτιώσουμε την εμπειρία σας, να μετράμε πώς χρησιμοποιείται η εφαρμογή και να προβάλλουμε σχετικές διαφημίσεις.',
+		marketingDescription: 'Προβάλλει διαφημίσεις σχετικές με εσάς.',
+		measurementDescription:
+			'Μας βοηθά να καταλάβουμε πώς χρησιμοποιείται η εφαρμογή.',
+		necessaryDescription: 'Απαιτούνται για να λειτουργεί η εφαρμογή.',
+		notOffered: 'Δεν προσφέρεται στην περιοχή σας.',
+		noticeAcknowledged: 'Η ειδοποίηση απορρήτου επιβεβαιώθηκε',
+		noticeDescription:
+			'Μπορείτε να το ελέγξετε ή να το αλλάξετε ανά πάσα στιγμή από τις Ρυθμίσεις απορρήτου.',
+		policyChanged:
+			'Ο τρόπος που αυτή η εφαρμογή χρησιμοποιεί δεδομένα άλλαξε από την τελευταία σας επιλογή, γι’ αυτό σας ρωτάμε ξανά.',
+		preferencesDescription:
+			'Επιλέξτε ποια είδη χρήσης δεδομένων επιτρέπετε. Οι αλλαγές ισχύουν σε αυτή τη συσκευή μόλις τις αποθηκεύσετε.',
+		restrictedByGpc:
+			'Ανενεργό, επειδή η συσκευή σας στέλνει σήμα Global Privacy Control.',
+		saveFailed:
+			'Δεν ήταν δυνατή η αποθήκευση των επιλογών σας. Δεν άλλαξε τίποτα σε αυτή τη συσκευή.',
+		saving: 'Αποθήκευση επιλογών',
+	},
+	en: {
+		actionTimeInvalid:
+			"Couldn't save because this device's date and time look wrong. Fix them in Settings first.",
+		brandPlaceholder: 'Your brand here',
+		choiceExpired: "Your earlier choice has expired, so we're asking again.",
+		choicesSaved: 'Privacy choices saved',
+		dismissFailed:
+			"Couldn't dismiss this notice. Nothing changed on this device.",
+		experienceDescription: 'Adapt the app to how you use it.',
+		firstLayerDescription:
+			'You decide which uses to allow, and you can change your mind at any time in Privacy Settings.',
+		functionalityDescription: 'Remember your settings and choices.',
+		introduction:
+			'We use data to improve your experience, measure how the app is used and show relevant advertising.',
+		marketingDescription: 'Show advertising relevant to you.',
+		measurementDescription: 'Help us understand how the app is used.',
+		necessaryDescription: 'Required for the app to work.',
+		notOffered: 'Not offered where you are.',
+		noticeAcknowledged: 'Privacy notice acknowledged',
+		noticeDescription:
+			'You can review or change this at any time in Privacy Settings.',
+		policyChanged:
+			"How this app uses data has changed since your last choice, so we're asking again.",
+		preferencesDescription:
+			'Choose which kinds of data use you allow. Changes apply on this device as soon as you save.',
+		restrictedByGpc:
+			'Off because your device sends a Global Privacy Control signal.',
+		saveFailed: "Couldn't save your choices. Nothing changed on this device.",
+		saving: 'Saving choices',
+	},
+	es: {
+		actionTimeInvalid:
+			'No se ha podido guardar porque la fecha y la hora de este dispositivo parecen incorrectas. Corrígelas primero en Ajustes.',
+		brandPlaceholder: 'Tu marca aquí',
+		choiceExpired:
+			'Tu elección anterior ha caducado, así que volvemos a preguntarte.',
+		choicesSaved: 'Opciones de privacidad guardadas',
+		dismissFailed:
+			'No se ha podido cerrar este aviso. No ha cambiado nada en este dispositivo.',
+		experienceDescription: 'Adapta la aplicación a cómo la usas.',
+		firstLayerDescription:
+			'Tú decides qué usos permites y puedes cambiar de opinión en cualquier momento en Configuración de privacidad.',
+		functionalityDescription: 'Recuerda tus ajustes y tus opciones.',
+		introduction:
+			'Usamos datos para mejorar tu experiencia, medir cómo se usa la aplicación y mostrar publicidad relevante.',
+		marketingDescription: 'Muestra publicidad relevante para ti.',
+		measurementDescription: 'Nos ayuda a entender cómo se usa la aplicación.',
+		necessaryDescription: 'Necesarias para que la aplicación funcione.',
+		notOffered: 'No disponible en tu región.',
+		noticeAcknowledged: 'Aviso de privacidad aceptado',
+		noticeDescription:
+			'Puedes revisarlo o cambiarlo en cualquier momento en Configuración de privacidad.',
+		policyChanged:
+			'La forma en que esta aplicación usa los datos ha cambiado desde tu última elección, así que volvemos a preguntarte.',
+		preferencesDescription:
+			'Elige qué tipos de uso de datos permites. Los cambios se aplican en este dispositivo en cuanto guardas.',
+		restrictedByGpc:
+			'Desactivado porque tu dispositivo envía una señal de Global Privacy Control.',
+		saveFailed:
+			'No se han podido guardar tus opciones. No ha cambiado nada en este dispositivo.',
+		saving: 'Guardando opciones',
+	},
+	et: {
+		actionTimeInvalid:
+			'Salvestamine ebaõnnestus, sest selle seadme kuupäev ja kellaaeg tunduvad valed. Parandage need esmalt seadetes.',
+		brandPlaceholder: 'Teie bränd siia',
+		choiceExpired: 'Teie varasem valik on aegunud, seega küsime uuesti.',
+		choicesSaved: 'Privaatsusvalikud salvestatud',
+		dismissFailed:
+			'Seda teadet ei õnnestunud sulgeda. Selles seadmes ei muutunud midagi.',
+		experienceDescription:
+			'Kohandab rakendust selle järgi, kuidas te seda kasutate.',
+		firstLayerDescription:
+			'Teie otsustate, milliseid kasutusviise lubate, ja saate meelt muuta igal ajal privaatsusseadetes.',
+		functionalityDescription: 'Jätab meelde teie seaded ja valikud.',
+		introduction:
+			'Kasutame andmeid, et parandada teie kogemust, mõõta rakenduse kasutamist ja näidata asjakohast reklaami.',
+		marketingDescription: 'Näitab teile asjakohast reklaami.',
+		measurementDescription: 'Aitab meil mõista, kuidas rakendust kasutatakse.',
+		necessaryDescription: 'Vajalikud rakenduse toimimiseks.',
+		notOffered: 'Teie piirkonnas ei pakuta.',
+		noticeAcknowledged: 'Privaatsusteade kinnitatud',
+		noticeDescription:
+			'Saate seda igal ajal privaatsusseadetes vaadata või muuta.',
+		policyChanged:
+			'See, kuidas rakendus andmeid kasutab, on pärast teie viimast valikut muutunud, seega küsime uuesti.',
+		preferencesDescription:
+			'Valige, milliseid andmekasutuse liike lubate. Muudatused kehtivad selles seadmes kohe pärast salvestamist.',
+		restrictedByGpc:
+			'Väljas, sest teie seade saadab Global Privacy Controli signaali.',
+		saveFailed:
+			'Teie valikuid ei õnnestunud salvestada. Selles seadmes ei muutunud midagi.',
+		saving: 'Valikute salvestamine',
+	},
+	fi: {
+		actionTimeInvalid:
+			'Tallennus epäonnistui, koska tämän laitteen päivämäärä ja kellonaika näyttävät väärältä. Korjaa ne ensin Asetuksissa.',
+		brandPlaceholder: 'Brändisi tähän',
+		choiceExpired: 'Aiempi valintasi on vanhentunut, joten kysymme uudelleen.',
+		choicesSaved: 'Tietosuojavalinnat tallennettu',
+		dismissFailed:
+			'Ilmoitusta ei voitu sulkea. Tässä laitteessa ei muuttunut mitään.',
+		experienceDescription: 'Mukauttaa sovelluksen siihen, miten käytät sitä.',
+		firstLayerDescription:
+			'Sinä päätät, mitkä käyttötavat sallit, ja voit muuttaa mieltäsi milloin tahansa Tietosuoja-asetuksissa.',
+		functionalityDescription: 'Muistaa asetuksesi ja valintasi.',
+		introduction:
+			'Käytämme tietoja parantaaksemme käyttökokemustasi, mitataksemme sovelluksen käyttöä ja näyttääksemme osuvaa mainontaa.',
+		marketingDescription: 'Näyttää sinulle osuvaa mainontaa.',
+		measurementDescription:
+			'Auttaa meitä ymmärtämään, miten sovellusta käytetään.',
+		necessaryDescription: 'Välttämättömiä sovelluksen toiminnalle.',
+		notOffered: 'Ei tarjolla alueellasi.',
+		noticeAcknowledged: 'Tietosuojailmoitus kuitattu',
+		noticeDescription:
+			'Voit tarkistaa tai muuttaa tämän milloin tahansa Tietosuoja-asetuksissa.',
+		policyChanged:
+			'Tapa, jolla tämä sovellus käyttää tietoja, on muuttunut viimeisen valintasi jälkeen, joten kysymme uudelleen.',
+		preferencesDescription:
+			'Valitse, millaisen tietojen käytön sallit. Muutokset tulevat voimaan tässä laitteessa heti tallennuksen jälkeen.',
+		restrictedByGpc:
+			'Pois päältä, koska laitteesi lähettää Global Privacy Control -signaalin.',
+		saveFailed:
+			'Valintojasi ei voitu tallentaa. Tässä laitteessa ei muuttunut mitään.',
+		saving: 'Tallennetaan valintoja',
+	},
+	fr: {
+		actionTimeInvalid:
+			"Enregistrement impossible : la date et l'heure de cet appareil semblent incorrectes. Corrigez-les d'abord dans Réglages.",
+		brandPlaceholder: 'Votre marque ici',
+		choiceExpired:
+			'Votre choix précédent a expiré, nous vous demandons donc à nouveau.',
+		choicesSaved: 'Choix de confidentialité enregistrés',
+		dismissFailed:
+			"Impossible de fermer cet avis. Rien n'a changé sur cet appareil.",
+		experienceDescription: "Adapte l'application à votre façon de l'utiliser.",
+		firstLayerDescription:
+			"Vous décidez des utilisations que vous autorisez et pouvez changer d'avis à tout moment dans Paramètres de confidentialité.",
+		functionalityDescription: 'Mémorise vos réglages et vos choix.',
+		introduction:
+			"Nous utilisons des données pour améliorer votre expérience, mesurer l'utilisation de l'application et afficher des publicités pertinentes.",
+		marketingDescription: 'Affiche des publicités pertinentes pour vous.',
+		measurementDescription:
+			"Nous aide à comprendre comment l'application est utilisée.",
+		necessaryDescription: "Nécessaires au fonctionnement de l'application.",
+		notOffered: 'Non proposé dans votre région.',
+		noticeAcknowledged: 'Avis de confidentialité pris en compte',
+		noticeDescription:
+			'Vous pouvez le consulter ou le modifier à tout moment dans Paramètres de confidentialité.',
+		policyChanged:
+			'La façon dont cette application utilise les données a changé depuis votre dernier choix, nous vous demandons donc à nouveau.',
+		preferencesDescription:
+			"Choisissez les types d'utilisation des données que vous autorisez. Les modifications s'appliquent sur cet appareil dès l'enregistrement.",
+		restrictedByGpc:
+			'Désactivé, car votre appareil envoie un signal Global Privacy Control.',
+		saveFailed:
+			"Impossible d'enregistrer vos choix. Rien n'a changé sur cet appareil.",
+		saving: 'Enregistrement des choix',
+	},
+	ga: {
+		actionTimeInvalid:
+			'Níorbh fhéidir sábháil mar is cosúil go bhfuil dáta agus am an ghléis seo mícheart. Ceartaigh iad sna Socruithe ar dtús.',
+		brandPlaceholder: 'Do bhranda anseo',
+		choiceExpired:
+			'Tá do rogha roimhe seo imithe in éag, mar sin táimid ag fiafraí arís.',
+		choicesSaved: 'Roghanna príobháideachais sábháilte',
+		dismissFailed:
+			'Níorbh fhéidir an fógra seo a dhúnadh. Níor athraíodh aon rud ar an ngléas seo.',
+		experienceDescription:
+			'Cuireann sé an aip in oiriúint don chaoi a n-úsáideann tú í.',
+		firstLayerDescription:
+			'Is tusa a shocraíonn cé na húsáidí a cheadaíonn tú, agus is féidir leat d’intinn a athrú am ar bith i Socruithe Príobháideachais.',
+		functionalityDescription:
+			'Cuimhníonn sé ar do shocruithe agus do roghanna.',
+		introduction:
+			'Úsáidimid sonraí chun d’eispéireas a fheabhsú, chun úsáid na haipe a thomhas agus chun fógraíocht ábhartha a thaispeáint.',
+		marketingDescription: 'Taispeánann sé fógraíocht atá ábhartha duit.',
+		measurementDescription:
+			'Cabhraíonn sé linn tuiscint a fháil ar an gcaoi a n-úsáidtear an aip.',
+		necessaryDescription: 'Riachtanach chun go n-oibreoidh an aip.',
+		notOffered: 'Níl sé ar fáil i do cheantar.',
+		noticeAcknowledged: 'Fógra príobháideachais admhaithe',
+		noticeDescription:
+			'Is féidir leat é seo a athbhreithniú nó a athrú am ar bith i Socruithe Príobháideachais.',
+		policyChanged:
+			'Tá athrú tagtha ar an gcaoi a n-úsáideann an aip seo sonraí ó rinne tú do rogha dheireanach, mar sin táimid ag fiafraí arís.',
+		preferencesDescription:
+			'Roghnaigh na cineálacha úsáide sonraí a cheadaíonn tú. Bíonn feidhm ag athruithe ar an ngléas seo chomh luath agus a shábhálann tú.',
+		restrictedByGpc:
+			'As, mar go seolann do ghléas comhartha Global Privacy Control.',
+		saveFailed:
+			'Níorbh fhéidir do roghanna a shábháil. Níor athraíodh aon rud ar an ngléas seo.',
+		saving: 'Roghanna á sábháil',
+	},
+	gu: {
+		actionTimeInvalid:
+			'સાચવી શકાયું નહીં, કારણ કે આ ઉપકરણની તારીખ અને સમય ખોટાં લાગે છે. પહેલાં તેને સેટિંગ્સમાં સુધારો.',
+		brandPlaceholder: 'તમારી બ્રાન્ડ અહીં',
+		choiceExpired:
+			'તમારી અગાઉની પસંદગીની મુદત પૂરી થઈ ગઈ છે, તેથી અમે ફરી પૂછી રહ્યા છીએ.',
+		choicesSaved: 'ગોપનીયતા પસંદગીઓ સાચવી',
+		dismissFailed: 'આ સૂચના બંધ કરી શકાઈ નહીં. આ ઉપકરણ પર કંઈ બદલાયું નથી.',
+		experienceDescription: 'તમે ઍપનો જે રીતે ઉપયોગ કરો છો તે મુજબ તેને અનુકૂળ બનાવે છે.',
+		firstLayerDescription:
+			'કયા ઉપયોગોને મંજૂરી આપવી તે તમે નક્કી કરો છો, અને ગોપનીયતા સેટિંગ્સમાં ગમે ત્યારે તમારો વિચાર બદલી શકો છો.',
+		functionalityDescription: 'તમારી સેટિંગ્સ અને પસંદગીઓ યાદ રાખે છે.',
+		introduction:
+			'તમારો અનુભવ સુધારવા, ઍપનો ઉપયોગ કેવી રીતે થાય છે તે માપવા અને સંબંધિત જાહેરાતો બતાવવા માટે અમે ડેટાનો ઉપયોગ કરીએ છીએ.',
+		marketingDescription: 'તમારા માટે સંબંધિત જાહેરાતો બતાવે છે.',
+		measurementDescription: 'ઍપનો ઉપયોગ કેવી રીતે થાય છે તે સમજવામાં અમને મદદ કરે છે.',
+		necessaryDescription: 'ઍપ ચાલવા માટે જરૂરી.',
+		notOffered: 'તમારા પ્રદેશમાં ઉપલબ્ધ નથી.',
+		noticeAcknowledged: 'ગોપનીયતા સૂચના સ્વીકારી',
+		noticeDescription:
+			'તમે ગોપનીયતા સેટિંગ્સમાં ગમે ત્યારે આની સમીક્ષા કરી શકો છો અથવા તેને બદલી શકો છો.',
+		policyChanged:
+			'તમારી છેલ્લી પસંદગી પછી આ ઍપ ડેટાનો ઉપયોગ કેવી રીતે કરે છે તે બદલાયું છે, તેથી અમે ફરી પૂછી રહ્યા છીએ.',
+		preferencesDescription:
+			'તમે કયા પ્રકારના ડેટા ઉપયોગને મંજૂરી આપો છો તે પસંદ કરો. તમે સાચવો કે તરત જ ફેરફારો આ ઉપકરણ પર લાગુ થાય છે.',
+		restrictedByGpc:
+			'બંધ, કારણ કે તમારું ઉપકરણ Global Privacy Control સિગ્નલ મોકલે છે.',
+		saveFailed: 'તમારી પસંદગીઓ સાચવી શકાઈ નહીં. આ ઉપકરણ પર કંઈ બદલાયું નથી.',
+		saving: 'પસંદગીઓ સાચવી રહ્યા છીએ',
+	},
+	he: {
+		actionTimeInvalid:
+			'לא ניתן היה לשמור כי התאריך והשעה במכשיר נראים שגויים. יש לתקן אותם קודם בהגדרות.',
+		brandPlaceholder: 'המותג שלך כאן',
+		choiceExpired: 'תוקף הבחירה הקודמת שלך פג, ולכן אנחנו שואלים שוב.',
+		choicesSaved: 'בחירות הפרטיות נשמרו',
+		dismissFailed: 'לא ניתן היה לסגור את ההודעה. דבר לא השתנה במכשיר הזה.',
+		experienceDescription: 'התאמת האפליקציה לאופן השימוש שלך בה.',
+		firstLayerDescription:
+			'ההחלטה אילו שימושים לאשר היא שלך, ואפשר לשנות אותה בכל עת בהגדרות פרטיות.',
+		functionalityDescription: 'שמירת ההגדרות והבחירות שלך.',
+		introduction:
+			'אנחנו משתמשים בנתונים כדי לשפר את החוויה שלך, למדוד את השימוש באפליקציה ולהציג פרסום רלוונטי.',
+		marketingDescription: 'הצגת פרסום רלוונטי עבורך.',
+		measurementDescription: 'עוזרות לנו להבין איך משתמשים באפליקציה.',
+		necessaryDescription: 'נדרשות כדי שהאפליקציה תפעל.',
+		notOffered: 'לא זמין באזור שלך.',
+		noticeAcknowledged: 'הודעת הפרטיות אושרה',
+		noticeDescription: 'אפשר לעיין בזה או לשנות זאת בכל עת בהגדרות פרטיות.',
+		policyChanged:
+			'האופן שבו האפליקציה משתמשת בנתונים השתנה מאז הבחירה האחרונה שלך, ולכן אנחנו שואלים שוב.',
+		preferencesDescription:
+			'בחירת סוגי השימוש בנתונים שמותרים. השינויים חלים במכשיר הזה מיד עם השמירה.',
+		restrictedByGpc: 'כבוי כי המכשיר שלך שולח אות Global Privacy Control.',
+		saveFailed: 'לא ניתן היה לשמור את הבחירות שלך. דבר לא השתנה במכשיר הזה.',
+		saving: 'הבחירות נשמרות',
+	},
+	hi: {
+		actionTimeInvalid:
+			'सेव नहीं हो सका, क्योंकि इस डिवाइस की तारीख और समय गलत लग रहे हैं. पहले उन्हें सेटिंग्स में ठीक करें.',
+		brandPlaceholder: 'आपका ब्रांड यहां',
+		choiceExpired:
+			'आपकी पिछली पसंद की अवधि खत्म हो गई है, इसलिए हम फिर से पूछ रहे हैं.',
+		choicesSaved: 'गोपनीयता विकल्प सेव हो गए',
+		dismissFailed: 'यह सूचना बंद नहीं हो सकी. इस डिवाइस पर कुछ नहीं बदला.',
+		experienceDescription: 'ऐप को आपके इस्तेमाल के तरीके के मुताबिक ढालता है.',
+		firstLayerDescription:
+			'किन इस्तेमालों की अनुमति देनी है, यह आप तय करते हैं, और गोपनीयता सेटिंग्स में कभी भी अपना फैसला बदल सकते हैं.',
+		functionalityDescription: 'आपकी सेटिंग्स और विकल्प याद रखता है.',
+		introduction:
+			'हम आपके अनुभव को बेहतर बनाने, ऐप के इस्तेमाल को मापने और काम के विज्ञापन दिखाने के लिए डेटा का इस्तेमाल करते हैं.',
+		marketingDescription: 'आपके काम के विज्ञापन दिखाता है.',
+		measurementDescription:
+			'यह समझने में हमारी मदद करता है कि ऐप का इस्तेमाल कैसे होता है.',
+		necessaryDescription: 'ऐप के काम करने के लिए ज़रूरी.',
+		notOffered: 'आपके क्षेत्र में उपलब्ध नहीं है.',
+		noticeAcknowledged: 'गोपनीयता सूचना स्वीकार की गई',
+		noticeDescription:
+			'आप गोपनीयता सेटिंग्स में कभी भी इसकी समीक्षा कर सकते हैं या इसे बदल सकते हैं.',
+		policyChanged:
+			'आपकी पिछली पसंद के बाद से यह ऐप डेटा का इस्तेमाल जिस तरह करता है, वह बदल गया है, इसलिए हम फिर से पूछ रहे हैं.',
+		preferencesDescription:
+			'चुनें कि आप किस तरह के डेटा इस्तेमाल की अनुमति देते हैं. सेव करते ही बदलाव इस डिवाइस पर लागू हो जाते हैं.',
+		restrictedByGpc:
+			'बंद है, क्योंकि आपका डिवाइस Global Privacy Control सिग्नल भेजता है.',
+		saveFailed: 'आपके विकल्प सेव नहीं हो सके. इस डिवाइस पर कुछ नहीं बदला.',
+		saving: 'विकल्प सेव हो रहे हैं',
+	},
+	hr: {
+		actionTimeInvalid:
+			'Spremanje nije uspjelo jer datum i vrijeme na ovom uređaju izgledaju pogrešno. Najprije ih ispravite u Postavkama.',
+		brandPlaceholder: 'Vaš brend ovdje',
+		choiceExpired: 'Vaš raniji izbor je istekao pa vas ponovno pitamo.',
+		choicesSaved: 'Izbori privatnosti spremljeni',
+		dismissFailed:
+			'Ovu obavijest nije moguće zatvoriti. Na ovom uređaju ništa se nije promijenilo.',
+		experienceDescription:
+			'Prilagođava aplikaciju načinu na koji je koristite.',
+		firstLayerDescription:
+			'Vi odlučujete koje upotrebe dopuštate i možete se predomisliti u bilo kojem trenutku u Postavkama privatnosti.',
+		functionalityDescription: 'Pamti vaše postavke i izbore.',
+		introduction:
+			'Podatke koristimo kako bismo poboljšali vaše iskustvo, mjerili kako se aplikacija koristi i prikazivali relevantne oglase.',
+		marketingDescription: 'Prikazuje oglase relevantne za vas.',
+		measurementDescription: 'Pomaže nam razumjeti kako se aplikacija koristi.',
+		necessaryDescription: 'Potrebni za rad aplikacije.',
+		notOffered: 'Nije dostupno u vašoj regiji.',
+		noticeAcknowledged: 'Obavijest o privatnosti potvrđena',
+		noticeDescription:
+			'To možete pregledati ili promijeniti u bilo kojem trenutku u Postavkama privatnosti.',
+		policyChanged:
+			'Način na koji ova aplikacija koristi podatke promijenio se od vašeg posljednjeg izbora pa vas ponovno pitamo.',
+		preferencesDescription:
+			'Odaberite koje vrste korištenja podataka dopuštate. Promjene vrijede na ovom uređaju čim spremite.',
+		restrictedByGpc:
+			'Isključeno jer vaš uređaj šalje signal Global Privacy Control.',
+		saveFailed:
+			'Vaše izbore nije moguće spremiti. Na ovom uređaju ništa se nije promijenilo.',
+		saving: 'Spremanje izbora',
+	},
+	ht: {
+		actionTimeInvalid:
+			'Nou pa t ka anrejistre paske dat ak lè aparèy sa a sanble pa bon. Korije yo nan Paramèt yo anvan.',
+		brandPlaceholder: 'Mak ou isit la',
+		choiceExpired:
+			'Chwa ou te fè anvan an ekspire, se pou sa n ap mande ou ankò.',
+		choicesSaved: 'Chwa konfidansyalite yo anrejistre',
+		dismissFailed:
+			'Nou pa t ka fèmen avi sa a. Anyen pa chanje sou aparèy sa a.',
+		experienceDescription: 'Adapte aplikasyon an ak fason ou itilize l.',
+		firstLayerDescription:
+			'Se ou ki deside ki itilizasyon ou otorize, epi ou ka chanje lide nenpòt ki lè nan Paramèt konfidansyalite.',
+		functionalityDescription: 'Sonje paramèt ak chwa ou yo.',
+		introduction:
+			'Nou itilize done pou amelyore eksperyans ou, mezire jan moun itilize aplikasyon an epi montre piblisite ki enpòtan pou ou.',
+		marketingDescription: 'Montre piblisite ki enpòtan pou ou.',
+		measurementDescription: 'Ede nou konprann jan moun itilize aplikasyon an.',
+		necessaryDescription: 'Nesesè pou aplikasyon an mache.',
+		notOffered: 'Pa disponib kote ou ye a.',
+		noticeAcknowledged: 'Avi konfidansyalite a resevwa',
+		noticeDescription:
+			'Ou ka revize oswa chanje sa nenpòt ki lè nan Paramèt konfidansyalite.',
+		policyChanged:
+			'Fason aplikasyon sa a itilize done chanje depi dènye chwa ou, se pou sa n ap mande ou ankò.',
+		preferencesDescription:
+			'Chwazi ki kalite itilizasyon done ou otorize. Chanjman yo aplike sou aparèy sa a depi ou anrejistre.',
+		restrictedByGpc:
+			'Fèmen paske aparèy ou voye yon siyal Global Privacy Control.',
+		saveFailed:
+			'Nou pa t ka anrejistre chwa ou yo. Anyen pa chanje sou aparèy sa a.',
+		saving: 'N ap anrejistre chwa yo',
+	},
+	hu: {
+		actionTimeInvalid:
+			'A mentés nem sikerült, mert az eszköz dátuma és ideje hibásnak tűnik. Először javítsa ki őket a Beállításokban.',
+		brandPlaceholder: 'Az Ön márkája itt',
+		choiceExpired: 'Korábbi választása lejárt, ezért újra megkérdezzük.',
+		choicesSaved: 'Adatvédelmi választások mentve',
+		dismissFailed:
+			'Ezt az értesítést nem sikerült bezárni. Ezen az eszközön semmi sem változott.',
+		experienceDescription:
+			'Az alkalmazást ahhoz igazítja, ahogyan Ön használja.',
+		firstLayerDescription:
+			'Ön dönti el, mely felhasználásokat engedélyezi, és bármikor meggondolhatja magát az Adatvédelmi beállításokban.',
+		functionalityDescription: 'Megjegyzi a beállításait és választásait.',
+		introduction:
+			'Adatokat használunk az élmény javítására, az alkalmazás használatának mérésére és releváns hirdetések megjelenítésére.',
+		marketingDescription: 'Önnek releváns hirdetéseket jelenít meg.',
+		measurementDescription:
+			'Segít megérteni, hogyan használják az alkalmazást.',
+		necessaryDescription: 'Az alkalmazás működéséhez szükségesek.',
+		notOffered: 'Az Ön régiójában nem érhető el.',
+		noticeAcknowledged: 'Adatvédelmi tájékoztató tudomásul véve',
+		noticeDescription:
+			'Ezt bármikor áttekintheti vagy módosíthatja az Adatvédelmi beállításokban.',
+		policyChanged:
+			'Legutóbbi választása óta megváltozott, hogyan használja ez az alkalmazás az adatokat, ezért újra megkérdezzük.',
+		preferencesDescription:
+			'Válassza ki, milyen adatfelhasználást engedélyez. A módosítások a mentés után azonnal érvényesek ezen az eszközön.',
+		restrictedByGpc:
+			'Kikapcsolva, mert az eszköze Global Privacy Control jelzést küld.',
+		saveFailed:
+			'Választásait nem sikerült menteni. Ezen az eszközön semmi sem változott.',
+		saving: 'Választások mentése',
+	},
+	id: {
+		actionTimeInvalid:
+			'Tidak dapat menyimpan karena tanggal dan waktu perangkat ini tampak salah. Perbaiki dulu di Pengaturan.',
+		brandPlaceholder: 'Merek Anda di sini',
+		choiceExpired:
+			'Pilihan Anda sebelumnya sudah kedaluwarsa, jadi kami bertanya lagi.',
+		choicesSaved: 'Pilihan privasi disimpan',
+		dismissFailed:
+			'Pemberitahuan ini tidak dapat ditutup. Tidak ada yang berubah di perangkat ini.',
+		experienceDescription:
+			'Menyesuaikan aplikasi dengan cara Anda menggunakannya.',
+		firstLayerDescription:
+			'Anda yang menentukan penggunaan mana yang diizinkan, dan Anda dapat berubah pikiran kapan saja di Pengaturan Privasi.',
+		functionalityDescription: 'Mengingat pengaturan dan pilihan Anda.',
+		introduction:
+			'Kami menggunakan data untuk meningkatkan pengalaman Anda, mengukur cara aplikasi digunakan, dan menampilkan iklan yang relevan.',
+		marketingDescription: 'Menampilkan iklan yang relevan bagi Anda.',
+		measurementDescription: 'Membantu kami memahami cara aplikasi digunakan.',
+		necessaryDescription: 'Diperlukan agar aplikasi berfungsi.',
+		notOffered: 'Tidak tersedia di wilayah Anda.',
+		noticeAcknowledged: 'Pemberitahuan privasi diterima',
+		noticeDescription:
+			'Anda dapat meninjau atau mengubahnya kapan saja di Pengaturan Privasi.',
+		policyChanged:
+			'Cara aplikasi ini menggunakan data telah berubah sejak pilihan terakhir Anda, jadi kami bertanya lagi.',
+		preferencesDescription:
+			'Pilih jenis penggunaan data yang Anda izinkan. Perubahan berlaku di perangkat ini segera setelah Anda menyimpan.',
+		restrictedByGpc:
+			'Nonaktif karena perangkat Anda mengirim sinyal Global Privacy Control.',
+		saveFailed:
+			'Pilihan Anda tidak dapat disimpan. Tidak ada yang berubah di perangkat ini.',
+		saving: 'Menyimpan pilihan',
+	},
+	is: {
+		actionTimeInvalid:
+			'Ekki tókst að vista því dagsetning og tími tækisins virðast röng. Lagaðu þau fyrst í Stillingum.',
+		brandPlaceholder: 'Vörumerkið þitt hér',
+		choiceExpired: 'Fyrra val þitt er útrunnið, svo við spyrjum aftur.',
+		choicesSaved: 'Persónuverndarval vistað',
+		dismissFailed:
+			'Ekki tókst að loka þessari tilkynningu. Ekkert breyttist í þessu tæki.',
+		experienceDescription: 'Lagar forritið að því hvernig þú notar það.',
+		firstLayerDescription:
+			'Þú ákveður hvaða notkun þú leyfir og getur skipt um skoðun hvenær sem er í Persónuverndastillingum.',
+		functionalityDescription: 'Man stillingar þínar og val.',
+		introduction:
+			'Við notum gögn til að bæta upplifun þína, mæla hvernig forritið er notað og sýna viðeigandi auglýsingar.',
+		marketingDescription: 'Sýnir þér viðeigandi auglýsingar.',
+		measurementDescription:
+			'Hjálpar okkur að skilja hvernig forritið er notað.',
+		necessaryDescription: 'Nauðsynlegar til að forritið virki.',
+		notOffered: 'Ekki í boði þar sem þú ert.',
+		noticeAcknowledged: 'Persónuverndartilkynning staðfest',
+		noticeDescription:
+			'Þú getur skoðað þetta eða breytt því hvenær sem er í Persónuverndastillingum.',
+		policyChanged:
+			'Hvernig þetta forrit notar gögn hefur breyst frá síðasta vali þínu, svo við spyrjum aftur.',
+		preferencesDescription:
+			'Veldu hvers konar gagnanotkun þú leyfir. Breytingar taka gildi í þessu tæki um leið og þú vistar.',
+		restrictedByGpc:
+			'Slökkt því tækið þitt sendir Global Privacy Control-merki.',
+		saveFailed:
+			'Ekki tókst að vista valið þitt. Ekkert breyttist í þessu tæki.',
+		saving: 'Vistar val',
+	},
+	it: {
+		actionTimeInvalid:
+			"Impossibile salvare perché la data e l'ora di questo dispositivo sembrano errate. Correggile prima in Impostazioni.",
+		brandPlaceholder: 'Il tuo marchio qui',
+		choiceExpired:
+			'La tua scelta precedente è scaduta, quindi te lo chiediamo di nuovo.',
+		choicesSaved: 'Scelte sulla privacy salvate',
+		dismissFailed:
+			'Impossibile chiudere questo avviso. Su questo dispositivo non è cambiato nulla.',
+		experienceDescription: "Adatta l'app al modo in cui la usi.",
+		firstLayerDescription:
+			'Decidi tu quali usi consentire e puoi cambiare idea in qualsiasi momento in Impostazioni di privacy.',
+		functionalityDescription: 'Ricorda le tue impostazioni e le tue scelte.',
+		introduction:
+			"Usiamo i dati per migliorare la tua esperienza, misurare come viene usata l'app e mostrare pubblicità pertinente.",
+		marketingDescription: 'Mostra pubblicità pertinente per te.',
+		measurementDescription: "Ci aiuta a capire come viene usata l'app.",
+		necessaryDescription: "Necessari per il funzionamento dell'app.",
+		notOffered: 'Non disponibile nella tua zona.',
+		noticeAcknowledged: 'Informativa sulla privacy confermata',
+		noticeDescription:
+			'Puoi rivedere o modificare questa scelta in qualsiasi momento in Impostazioni di privacy.',
+		policyChanged:
+			'Il modo in cui questa app usa i dati è cambiato dalla tua ultima scelta, quindi te lo chiediamo di nuovo.',
+		preferencesDescription:
+			'Scegli quali tipi di uso dei dati consenti. Le modifiche si applicano su questo dispositivo non appena salvi.',
+		restrictedByGpc:
+			'Disattivato perché il tuo dispositivo invia un segnale Global Privacy Control.',
+		saveFailed:
+			'Impossibile salvare le tue scelte. Su questo dispositivo non è cambiato nulla.',
+		saving: 'Salvataggio delle scelte',
+	},
+	ja: {
+		actionTimeInvalid:
+			'このデバイスの日付と時刻が正しくないため、保存できませんでした。先に設定で修正してください。',
+		brandPlaceholder: 'ブランド名',
+		choiceExpired:
+			'以前の選択の有効期限が切れたため、もう一度お尋ねしています。',
+		choicesSaved: 'プライバシーの選択を保存しました',
+		dismissFailed:
+			'このお知らせを閉じられませんでした。このデバイスでは何も変更されていません。',
+		experienceDescription: 'ご利用方法に合わせてアプリを調整します。',
+		firstLayerDescription:
+			'どの利用を許可するかはお客様が決められます。プライバシー設定でいつでも変更できます。',
+		functionalityDescription: '設定や選択内容を記憶します。',
+		introduction:
+			'データは、体験の向上、アプリの利用状況の測定、関連性の高い広告の表示に使用します。',
+		marketingDescription: 'お客様に関連性の高い広告を表示します。',
+		measurementDescription: 'アプリの利用状況を把握するのに役立ちます。',
+		necessaryDescription: 'アプリの動作に必要です。',
+		notOffered: 'お住まいの地域では提供されていません。',
+		noticeAcknowledged: 'プライバシーに関するお知らせを確認しました',
+		noticeDescription: 'プライバシー設定でいつでも確認や変更ができます。',
+		policyChanged:
+			'前回の選択以降、このアプリのデータの使い方が変わったため、もう一度お尋ねしています。',
+		preferencesDescription:
+			'許可するデータ利用の種類を選んでください。変更は保存するとすぐにこのデバイスに適用されます。',
+		restrictedByGpc:
+			'お使いのデバイスが Global Privacy Control 信号を送信しているため、オフになっています。',
+		saveFailed:
+			'選択内容を保存できませんでした。このデバイスでは何も変更されていません。',
+		saving: '選択内容を保存しています',
+	},
+	kn: {
+		actionTimeInvalid:
+			'ಈ ಸಾಧನದ ದಿನಾಂಕ ಮತ್ತು ಸಮಯ ತಪ್ಪಾಗಿರುವಂತೆ ಕಾಣುವುದರಿಂದ ಉಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ಮೊದಲು ಅವುಗಳನ್ನು ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಸರಿಪಡಿಸಿ.',
+		brandPlaceholder: 'ನಿಮ್ಮ ಬ್ರ್ಯಾಂಡ್ ಇಲ್ಲಿ',
+		choiceExpired: 'ನಿಮ್ಮ ಹಿಂದಿನ ಆಯ್ಕೆಯ ಅವಧಿ ಮುಗಿದಿದೆ, ಆದ್ದರಿಂದ ನಾವು ಮತ್ತೆ ಕೇಳುತ್ತಿದ್ದೇವೆ.',
+		choicesSaved: 'ಗೌಪ್ಯತಾ ಆಯ್ಕೆಗಳನ್ನು ಉಳಿಸಲಾಗಿದೆ',
+		dismissFailed: 'ಈ ಸೂಚನೆಯನ್ನು ಮುಚ್ಚಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ಈ ಸಾಧನದಲ್ಲಿ ಏನೂ ಬದಲಾಗಿಲ್ಲ.',
+		experienceDescription: 'ನೀವು ಆ್ಯಪ್ ಬಳಸುವ ರೀತಿಗೆ ಅದನ್ನು ಹೊಂದಿಸುತ್ತದೆ.',
+		firstLayerDescription:
+			'ಯಾವ ಬಳಕೆಗಳಿಗೆ ಅನುಮತಿ ನೀಡಬೇಕೆಂದು ನೀವೇ ನಿರ್ಧರಿಸುತ್ತೀರಿ, ಮತ್ತು ಗೌಪ್ಯತಾ ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಯಾವಾಗ ಬೇಕಾದರೂ ನಿಮ್ಮ ನಿರ್ಧಾರ ಬದಲಿಸಬಹುದು.',
+		functionalityDescription: 'ನಿಮ್ಮ ಸೆಟ್ಟಿಂಗ್‌ಗಳು ಮತ್ತು ಆಯ್ಕೆಗಳನ್ನು ನೆನಪಿಡುತ್ತದೆ.',
+		introduction:
+			'ನಿಮ್ಮ ಅನುಭವವನ್ನು ಸುಧಾರಿಸಲು, ಆ್ಯಪ್ ಹೇಗೆ ಬಳಕೆಯಾಗುತ್ತದೆ ಎಂಬುದನ್ನು ಅಳೆಯಲು ಮತ್ತು ಸಂಬಂಧಿತ ಜಾಹೀರಾತುಗಳನ್ನು ತೋರಿಸಲು ನಾವು ಡೇಟಾವನ್ನು ಬಳಸುತ್ತೇವೆ.',
+		marketingDescription: 'ನಿಮಗೆ ಸಂಬಂಧಿತ ಜಾಹೀರಾತುಗಳನ್ನು ತೋರಿಸುತ್ತದೆ.',
+		measurementDescription:
+			'ಆ್ಯಪ್ ಹೇಗೆ ಬಳಕೆಯಾಗುತ್ತದೆ ಎಂಬುದನ್ನು ಅರ್ಥಮಾಡಿಕೊಳ್ಳಲು ನಮಗೆ ಸಹಾಯ ಮಾಡುತ್ತದೆ.',
+		necessaryDescription: 'ಆ್ಯಪ್ ಕೆಲಸ ಮಾಡಲು ಅಗತ್ಯ.',
+		notOffered: 'ನಿಮ್ಮ ಪ್ರದೇಶದಲ್ಲಿ ಲಭ್ಯವಿಲ್ಲ.',
+		noticeAcknowledged: 'ಗೌಪ್ಯತಾ ಸೂಚನೆಯನ್ನು ಸ್ವೀಕರಿಸಲಾಗಿದೆ',
+		noticeDescription:
+			'ಗೌಪ್ಯತಾ ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ನೀವು ಇದನ್ನು ಯಾವಾಗ ಬೇಕಾದರೂ ಪರಿಶೀಲಿಸಬಹುದು ಅಥವಾ ಬದಲಿಸಬಹುದು.',
+		policyChanged:
+			'ನಿಮ್ಮ ಕೊನೆಯ ಆಯ್ಕೆಯ ನಂತರ ಈ ಆ್ಯಪ್ ಡೇಟಾವನ್ನು ಬಳಸುವ ರೀತಿ ಬದಲಾಗಿದೆ, ಆದ್ದರಿಂದ ನಾವು ಮತ್ತೆ ಕೇಳುತ್ತಿದ್ದೇವೆ.',
+		preferencesDescription:
+			'ಯಾವ ರೀತಿಯ ಡೇಟಾ ಬಳಕೆಗೆ ಅನುಮತಿ ನೀಡುತ್ತೀರಿ ಎಂಬುದನ್ನು ಆಯ್ಕೆಮಾಡಿ. ನೀವು ಉಳಿಸಿದ ತಕ್ಷಣ ಬದಲಾವಣೆಗಳು ಈ ಸಾಧನದಲ್ಲಿ ಅನ್ವಯವಾಗುತ್ತವೆ.',
+		restrictedByGpc:
+			'ಆಫ್ ಆಗಿದೆ, ಏಕೆಂದರೆ ನಿಮ್ಮ ಸಾಧನ Global Privacy Control ಸಂಕೇತವನ್ನು ಕಳುಹಿಸುತ್ತದೆ.',
+		saveFailed: 'ನಿಮ್ಮ ಆಯ್ಕೆಗಳನ್ನು ಉಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ಈ ಸಾಧನದಲ್ಲಿ ಏನೂ ಬದಲಾಗಿಲ್ಲ.',
+		saving: 'ಆಯ್ಕೆಗಳನ್ನು ಉಳಿಸಲಾಗುತ್ತಿದೆ',
+	},
+	ko: {
+		actionTimeInvalid:
+			'이 기기의 날짜와 시간이 잘못된 것 같아 저장하지 못했습니다. 먼저 설정에서 수정하세요.',
+		brandPlaceholder: '브랜드 이름',
+		choiceExpired: '이전 선택이 만료되어 다시 여쭙니다.',
+		choicesSaved: '개인정보 보호 선택이 저장되었습니다',
+		dismissFailed:
+			'이 안내를 닫지 못했습니다. 이 기기에서는 아무것도 변경되지 않았습니다.',
+		experienceDescription: '사용 방식에 맞게 앱을 조정합니다.',
+		firstLayerDescription:
+			'어떤 용도를 허용할지는 직접 결정하며, 개인정보 보호 설정에서 언제든지 변경할 수 있습니다.',
+		functionalityDescription: '설정과 선택 사항을 기억합니다.',
+		introduction:
+			'저희는 사용 경험을 개선하고, 앱 사용 방식을 측정하고, 관련성 높은 광고를 보여 주기 위해 데이터를 사용합니다.',
+		marketingDescription: '관련성 높은 광고를 보여 줍니다.',
+		measurementDescription: '앱이 어떻게 사용되는지 파악하는 데 도움이 됩니다.',
+		necessaryDescription: '앱이 작동하는 데 필요합니다.',
+		notOffered: '현재 지역에서는 제공되지 않습니다.',
+		noticeAcknowledged: '개인정보 보호 안내를 확인했습니다',
+		noticeDescription:
+			'개인정보 보호 설정에서 언제든지 확인하거나 변경할 수 있습니다.',
+		policyChanged:
+			'마지막으로 선택한 이후 이 앱의 데이터 사용 방식이 바뀌어 다시 여쭙니다.',
+		preferencesDescription:
+			'허용할 데이터 사용 유형을 선택하세요. 변경 사항은 저장하는 즉시 이 기기에 적용됩니다.',
+		restrictedByGpc:
+			'기기가 Global Privacy Control 신호를 보내므로 꺼져 있습니다.',
+		saveFailed:
+			'선택 사항을 저장하지 못했습니다. 이 기기에서는 아무것도 변경되지 않았습니다.',
+		saving: '선택 사항 저장 중',
+	},
+	lb: {
+		actionTimeInvalid:
+			'Konnt net gespäichert ginn, well Datum an Zäit vun dësem Apparat falsch schéngen. Korrigéiert se fir d’éischt an den Astellungen.',
+		brandPlaceholder: 'Är Mark hei',
+		choiceExpired: 'Är fréier Wiel ass ofgelaf, dofir froe mir nach eng Kéier.',
+		choicesSaved: 'Privatsphär-Wiel gespäichert',
+		dismissFailed:
+			'Dësen Hiweis konnt net zougemaach ginn. Op dësem Apparat huet näischt geännert.',
+		experienceDescription: 'Passt d’App un, wéi Dir se benotzt.',
+		firstLayerDescription:
+			'Dir entscheet, wéi eng Notzunge Dir erlaabt, an Dir kënnt Är Meenung ëmmer an de Privatsphär Astellungen änneren.',
+		functionalityDescription: 'Behält Är Astellungen an Är Wiel.',
+		introduction:
+			'Mir benotzen Donnéeën, fir Är Erfarung ze verbesseren, ze moossen, wéi d’App benotzt gëtt, a relevant Reklamm ze weisen.',
+		marketingDescription: 'Weist Iech Reklamm, déi fir Iech relevant ass.',
+		measurementDescription: 'Hëlleft eis ze verstoen, wéi d’App benotzt gëtt.',
+		necessaryDescription: 'Néideg, fir datt d’App funktionéiert.',
+		notOffered: 'An Ärer Regioun net ugebueden.',
+		noticeAcknowledged: 'Dateschutzhiweis confirméiert',
+		noticeDescription:
+			'Dir kënnt dat ëmmer an de Privatsphär Astellungen nokucken oder änneren.',
+		policyChanged:
+			'Zënter Ärer leschter Wiel huet sech geännert, wéi dës App Donnéeë benotzt, dofir froe mir nach eng Kéier.',
+		preferencesDescription:
+			'Wielt, wéi eng Zorte vun Donnéeënotzung Dir erlaabt. Ännerunge gëllen op dësem Apparat, soubal Dir späichert.',
+		restrictedByGpc:
+			'Aus, well Ären Apparat e Global-Privacy-Control-Signal schéckt.',
+		saveFailed:
+			'Är Wiel konnt net gespäichert ginn. Op dësem Apparat huet näischt geännert.',
+		saving: 'Wiel gëtt gespäichert',
+	},
+	lt: {
+		actionTimeInvalid:
+			'Nepavyko išsaugoti, nes šio įrenginio data ir laikas atrodo neteisingi. Pirmiausia pataisykite juos nustatymuose.',
+		brandPlaceholder: 'Jūsų prekės ženklas',
+		choiceExpired:
+			'Ankstesnio jūsų pasirinkimo galiojimas baigėsi, todėl klausiame dar kartą.',
+		choicesSaved: 'Privatumo pasirinkimai išsaugoti',
+		dismissFailed:
+			'Nepavyko uždaryti šio pranešimo. Šiame įrenginyje niekas nepasikeitė.',
+		experienceDescription: 'Pritaiko programėlę prie to, kaip ja naudojatės.',
+		firstLayerDescription:
+			'Jūs sprendžiate, kokius naudojimo būdus leisti, ir bet kada galite persigalvoti Privatumo nustatymuose.',
+		functionalityDescription: 'Įsimena jūsų nustatymus ir pasirinkimus.',
+		introduction:
+			'Duomenis naudojame jūsų patirčiai gerinti, programėlės naudojimui matuoti ir aktualiai reklamai rodyti.',
+		marketingDescription: 'Rodo jums aktualią reklamą.',
+		measurementDescription: 'Padeda mums suprasti, kaip naudojama programėlė.',
+		necessaryDescription: 'Būtini, kad programėlė veiktų.',
+		notOffered: 'Jūsų regione nesiūloma.',
+		noticeAcknowledged: 'Privatumo pranešimas patvirtintas',
+		noticeDescription:
+			'Tai bet kada galite peržiūrėti arba pakeisti Privatumo nustatymuose.',
+		policyChanged:
+			'Nuo paskutinio jūsų pasirinkimo pasikeitė, kaip ši programėlė naudoja duomenis, todėl klausiame dar kartą.',
+		preferencesDescription:
+			'Pasirinkite, kokį duomenų naudojimą leidžiate. Pakeitimai šiame įrenginyje įsigalioja vos išsaugojus.',
+		restrictedByGpc:
+			'Išjungta, nes jūsų įrenginys siunčia Global Privacy Control signalą.',
+		saveFailed:
+			'Nepavyko išsaugoti jūsų pasirinkimų. Šiame įrenginyje niekas nepasikeitė.',
+		saving: 'Išsaugomi pasirinkimai',
+	},
+	lv: {
+		actionTimeInvalid:
+			'Neizdevās saglabāt, jo šīs ierīces datums un laiks šķiet nepareizi. Vispirms izlabojiet tos iestatījumos.',
+		brandPlaceholder: 'Jūsu zīmols šeit',
+		choiceExpired:
+			'Jūsu iepriekšējās izvēles derīgums ir beidzies, tāpēc jautājam vēlreiz.',
+		choicesSaved: 'Privātuma izvēle saglabāta',
+		dismissFailed:
+			'Šo paziņojumu neizdevās aizvērt. Šajā ierīcē nekas netika mainīts.',
+		experienceDescription: 'Pielāgo lietotni tam, kā jūs to lietojat.',
+		firstLayerDescription:
+			'Jūs izlemjat, kādu izmantošanu atļaut, un jebkurā laikā varat pārdomāt sadaļā Privātuma iestatījumi.',
+		functionalityDescription: 'Atceras jūsu iestatījumus un izvēles.',
+		introduction:
+			'Mēs izmantojam datus, lai uzlabotu jūsu pieredzi, mērītu, kā tiek lietota lietotne, un rādītu atbilstošas reklāmas.',
+		marketingDescription: 'Rāda jums atbilstošas reklāmas.',
+		measurementDescription: 'Palīdz mums saprast, kā tiek lietota lietotne.',
+		necessaryDescription: 'Nepieciešamas, lai lietotne darbotos.',
+		notOffered: 'Jūsu reģionā netiek piedāvāts.',
+		noticeAcknowledged: 'Privātuma paziņojums apstiprināts',
+		noticeDescription:
+			'To jebkurā laikā varat pārskatīt vai mainīt sadaļā Privātuma iestatījumi.',
+		policyChanged:
+			'Kopš jūsu pēdējās izvēles ir mainījies tas, kā šī lietotne izmanto datus, tāpēc jautājam vēlreiz.',
+		preferencesDescription:
+			'Izvēlieties, kādu datu izmantošanu atļaujat. Izmaiņas šajā ierīcē stājas spēkā, tiklīdz saglabājat.',
+		restrictedByGpc:
+			'Izslēgts, jo jūsu ierīce sūta Global Privacy Control signālu.',
+		saveFailed:
+			'Jūsu izvēli neizdevās saglabāt. Šajā ierīcē nekas netika mainīts.',
+		saving: 'Saglabā izvēli',
+	},
+	ml: {
+		actionTimeInvalid:
+			'ഈ ഉപകരണത്തിലെ തീയതിയും സമയവും തെറ്റാണെന്ന് തോന്നുന്നതിനാൽ സംരക്ഷിക്കാനായില്ല. ആദ്യം ക്രമീകരണങ്ങളിൽ അവ ശരിയാക്കുക.',
+		brandPlaceholder: 'നിങ്ങളുടെ ബ്രാൻഡ് ഇവിടെ',
+		choiceExpired:
+			'നിങ്ങളുടെ മുൻ തിരഞ്ഞെടുപ്പിന്റെ കാലാവധി കഴിഞ്ഞു, അതിനാൽ ഞങ്ങൾ വീണ്ടും ചോദിക്കുന്നു.',
+		choicesSaved: 'സ്വകാര്യതാ തിരഞ്ഞെടുപ്പുകൾ സംരക്ഷിച്ചു',
+		dismissFailed: 'ഈ അറിയിപ്പ് അടയ്ക്കാനായില്ല. ഈ ഉപകരണത്തിൽ ഒന്നും മാറിയിട്ടില്ല.',
+		experienceDescription:
+			'നിങ്ങൾ ആപ്പ് ഉപയോഗിക്കുന്ന രീതിക്ക് അനുസരിച്ച് അതിനെ ക്രമീകരിക്കുന്നു.',
+		firstLayerDescription:
+			'ഏതൊക്കെ ഉപയോഗങ്ങൾ അനുവദിക്കണമെന്ന് നിങ്ങൾ തീരുമാനിക്കുന്നു, സ്വകാര്യതാ ക്രമീകരണങ്ങളിൽ എപ്പോൾ വേണമെങ്കിലും തീരുമാനം മാറ്റാം.',
+		functionalityDescription: 'നിങ്ങളുടെ ക്രമീകരണങ്ങളും തിരഞ്ഞെടുപ്പുകളും ഓർമ്മിക്കുന്നു.',
+		introduction:
+			'നിങ്ങളുടെ അനുഭവം മെച്ചപ്പെടുത്താനും ആപ്പ് എങ്ങനെ ഉപയോഗിക്കുന്നുവെന്ന് അളക്കാനും പ്രസക്തമായ പരസ്യങ്ങൾ കാണിക്കാനും ഞങ്ങൾ ഡാറ്റ ഉപയോഗിക്കുന്നു.',
+		marketingDescription: 'നിങ്ങൾക്ക് പ്രസക്തമായ പരസ്യങ്ങൾ കാണിക്കുന്നു.',
+		measurementDescription:
+			'ആപ്പ് എങ്ങനെ ഉപയോഗിക്കുന്നുവെന്ന് മനസ്സിലാക്കാൻ ഞങ്ങളെ സഹായിക്കുന്നു.',
+		necessaryDescription: 'ആപ്പ് പ്രവർത്തിക്കാൻ ആവശ്യമാണ്.',
+		notOffered: 'നിങ്ങളുടെ പ്രദേശത്ത് ലഭ്യമല്ല.',
+		noticeAcknowledged: 'സ്വകാര്യതാ അറിയിപ്പ് സ്വീകരിച്ചു',
+		noticeDescription:
+			'സ്വകാര്യതാ ക്രമീകരണങ്ങളിൽ എപ്പോൾ വേണമെങ്കിലും നിങ്ങൾക്ക് ഇത് പരിശോധിക്കുകയോ മാറ്റുകയോ ചെയ്യാം.',
+		policyChanged:
+			'നിങ്ങളുടെ അവസാന തിരഞ്ഞെടുപ്പിന് ശേഷം ഈ ആപ്പ് ഡാറ്റ ഉപയോഗിക്കുന്ന രീതി മാറി, അതിനാൽ ഞങ്ങൾ വീണ്ടും ചോദിക്കുന്നു.',
+		preferencesDescription:
+			'ഏതുതരം ഡാറ്റാ ഉപയോഗം അനുവദിക്കണമെന്ന് തിരഞ്ഞെടുക്കുക. സംരക്ഷിച്ചാലുടൻ മാറ്റങ്ങൾ ഈ ഉപകരണത്തിൽ ബാധകമാകും.',
+		restrictedByGpc:
+			'ഓഫാണ്, കാരണം നിങ്ങളുടെ ഉപകരണം ഒരു Global Privacy Control സിഗ്നൽ അയയ്ക്കുന്നു.',
+		saveFailed:
+			'നിങ്ങളുടെ തിരഞ്ഞെടുപ്പുകൾ സംരക്ഷിക്കാനായില്ല. ഈ ഉപകരണത്തിൽ ഒന്നും മാറിയിട്ടില്ല.',
+		saving: 'തിരഞ്ഞെടുപ്പുകൾ സംരക്ഷിക്കുന്നു',
+	},
+	mr: {
+		actionTimeInvalid:
+			'जतन करता आले नाही, कारण या डिव्हाइसची तारीख आणि वेळ चुकीची दिसते. आधी सेटिंग्जमध्ये ती दुरुस्त करा.',
+		brandPlaceholder: 'तुमचा ब्रँड येथे',
+		choiceExpired:
+			'तुमच्या आधीच्या निवडीची मुदत संपली आहे, म्हणून आम्ही पुन्हा विचारत आहोत.',
+		choicesSaved: 'गोपनीयता निवडी जतन केल्या',
+		dismissFailed: 'ही सूचना बंद करता आली नाही. या डिव्हाइसवर काहीही बदलले नाही.',
+		experienceDescription: 'तुम्ही अ‍ॅप जसे वापरता त्यानुसार ते जुळवून घेते.',
+		firstLayerDescription:
+			'कोणत्या वापरांना परवानगी द्यायची हे तुम्ही ठरवता, आणि गोपनीयता सेटिंग्जमध्ये कधीही तुमचा निर्णय बदलू शकता.',
+		functionalityDescription: 'तुमच्या सेटिंग्ज आणि निवडी लक्षात ठेवते.',
+		introduction:
+			'तुमचा अनुभव सुधारण्यासाठी, अ‍ॅप कसे वापरले जाते हे मोजण्यासाठी आणि संबंधित जाहिराती दाखवण्यासाठी आम्ही डेटा वापरतो.',
+		marketingDescription: 'तुमच्यासाठी संबंधित जाहिराती दाखवते.',
+		measurementDescription: 'अ‍ॅप कसे वापरले जाते हे समजून घेण्यास आम्हाला मदत करते.',
+		necessaryDescription: 'अ‍ॅप चालण्यासाठी आवश्यक.',
+		notOffered: 'तुमच्या प्रदेशात उपलब्ध नाही.',
+		noticeAcknowledged: 'गोपनीयता सूचना स्वीकारली',
+		noticeDescription: 'गोपनीयता सेटिंग्जमध्ये तुम्ही हे कधीही तपासू किंवा बदलू शकता.',
+		policyChanged:
+			'तुमच्या शेवटच्या निवडीनंतर हे अ‍ॅप डेटा कसा वापरते ते बदलले आहे, म्हणून आम्ही पुन्हा विचारत आहोत.',
+		preferencesDescription:
+			'तुम्ही कोणत्या प्रकारच्या डेटा वापराला परवानगी देता ते निवडा. जतन करताच बदल या डिव्हाइसवर लागू होतात.',
+		restrictedByGpc: 'बंद, कारण तुमचे डिव्हाइस Global Privacy Control सिग्नल पाठवते.',
+		saveFailed:
+			'तुमच्या निवडी जतन करता आल्या नाहीत. या डिव्हाइसवर काहीही बदलले नाही.',
+		saving: 'निवडी जतन करत आहे',
+	},
+	ms: {
+		actionTimeInvalid:
+			'Tidak dapat menyimpan kerana tarikh dan masa peranti ini kelihatan salah. Betulkannya dahulu dalam Tetapan.',
+		brandPlaceholder: 'Jenama anda di sini',
+		choiceExpired:
+			'Pilihan anda sebelum ini telah tamat tempoh, jadi kami bertanya semula.',
+		choicesSaved: 'Pilihan privasi disimpan',
+		dismissFailed:
+			'Notis ini tidak dapat ditutup. Tiada apa-apa yang berubah pada peranti ini.',
+		experienceDescription:
+			'Menyesuaikan aplikasi dengan cara anda menggunakannya.',
+		firstLayerDescription:
+			'Anda yang menentukan penggunaan yang dibenarkan, dan anda boleh mengubah fikiran pada bila-bila masa dalam Tetapan Privasi.',
+		functionalityDescription: 'Mengingati tetapan dan pilihan anda.',
+		introduction:
+			'Kami menggunakan data untuk menambah baik pengalaman anda, mengukur cara aplikasi digunakan dan memaparkan iklan yang berkaitan.',
+		marketingDescription: 'Memaparkan iklan yang berkaitan dengan anda.',
+		measurementDescription: 'Membantu kami memahami cara aplikasi digunakan.',
+		necessaryDescription: 'Diperlukan supaya aplikasi berfungsi.',
+		notOffered: 'Tidak ditawarkan di kawasan anda.',
+		noticeAcknowledged: 'Notis privasi diakui',
+		noticeDescription:
+			'Anda boleh menyemak atau mengubahnya pada bila-bila masa dalam Tetapan Privasi.',
+		policyChanged:
+			'Cara aplikasi ini menggunakan data telah berubah sejak pilihan terakhir anda, jadi kami bertanya semula.',
+		preferencesDescription:
+			'Pilih jenis penggunaan data yang anda benarkan. Perubahan berkuat kuasa pada peranti ini sebaik sahaja anda menyimpan.',
+		restrictedByGpc:
+			'Dimatikan kerana peranti anda menghantar isyarat Global Privacy Control.',
+		saveFailed:
+			'Pilihan anda tidak dapat disimpan. Tiada apa-apa yang berubah pada peranti ini.',
+		saving: 'Menyimpan pilihan',
+	},
+	mt: {
+		actionTimeInvalid:
+			'Ma setax jiġi ssejvjat għax id-data u l-ħin ta’ dan it-tagħmir jidhru ħżiena. Ikkoreġihom l-ewwel fis-Settings.',
+		brandPlaceholder: 'Il-marka tiegħek hawn',
+		choiceExpired:
+			'L-għażla preċedenti tiegħek skadiet, għalhekk qed nerġgħu nistaqsuk.',
+		choicesSaved: 'L-għażliet tal-privatezza ġew issejvjati',
+		dismissFailed:
+			'Dan l-avviż ma setax jingħalaq. Xejn ma nbidel fuq dan it-tagħmir.',
+		experienceDescription: 'Tadatta l-app għall-mod kif tużaha.',
+		firstLayerDescription:
+			'Inti tiddeċiedi liema użi tippermetti, u tista’ tbiddel fehmtek fi kwalunkwe ħin fis-Settings tal-privatezza.',
+		functionalityDescription: 'Tiftakar is-settings u l-għażliet tiegħek.',
+		introduction:
+			'Nużaw id-data biex intejbu l-esperjenza tiegħek, inkejlu kif tintuża l-app u nuru reklami rilevanti.',
+		marketingDescription: 'Turik reklami rilevanti għalik.',
+		measurementDescription: 'Tgħinna nifhmu kif tintuża l-app.',
+		necessaryDescription: 'Meħtieġa biex taħdem l-app.',
+		notOffered: 'Mhux offrut fejn tinsab.',
+		noticeAcknowledged: 'L-avviż dwar il-privatezza ġie rikonoxxut',
+		noticeDescription:
+			'Tista’ tirrevedi jew tbiddel dan fi kwalunkwe ħin fis-Settings tal-privatezza.',
+		policyChanged:
+			'Il-mod kif din l-app tuża d-data nbidel mill-aħħar għażla tiegħek, għalhekk qed nerġgħu nistaqsuk.',
+		preferencesDescription:
+			'Agħżel liema tipi ta’ użu tad-data tippermetti. Il-bidliet japplikaw fuq dan it-tagħmir hekk kif tissejvja.',
+		restrictedByGpc:
+			'Mitfi għax it-tagħmir tiegħek jibgħat sinjal Global Privacy Control.',
+		saveFailed:
+			'L-għażliet tiegħek ma setgħux jiġu ssejvjati. Xejn ma nbidel fuq dan it-tagħmir.',
+		saving: 'Qed jiġu ssejvjati l-għażliet',
+	},
+	nb: {
+		actionTimeInvalid:
+			'Kunne ikke lagre fordi dato og klokkeslett på denne enheten ser feil ut. Rett dem i Innstillinger først.',
+		brandPlaceholder: 'Merkevaren din her',
+		choiceExpired: 'Det forrige valget ditt har utløpt, så vi spør igjen.',
+		choicesSaved: 'Personvernvalg lagret',
+		dismissFailed:
+			'Kunne ikke lukke denne meldingen. Ingenting er endret på denne enheten.',
+		experienceDescription: 'Tilpasser appen til hvordan du bruker den.',
+		firstLayerDescription:
+			'Du bestemmer hvilke bruksområder du tillater, og du kan ombestemme deg når som helst i Personverninnstillinger.',
+		functionalityDescription: 'Husker innstillingene og valgene dine.',
+		introduction:
+			'Vi bruker data til å forbedre opplevelsen din, måle hvordan appen brukes og vise relevant reklame.',
+		marketingDescription: 'Viser reklame som er relevant for deg.',
+		measurementDescription: 'Hjelper oss å forstå hvordan appen brukes.',
+		necessaryDescription: 'Nødvendige for at appen skal fungere.',
+		notOffered: 'Tilbys ikke der du er.',
+		noticeAcknowledged: 'Personvernmelding bekreftet',
+		noticeDescription:
+			'Du kan se gjennom eller endre dette når som helst i Personverninnstillinger.',
+		policyChanged:
+			'Måten denne appen bruker data på, har endret seg siden det forrige valget ditt, så vi spør igjen.',
+		preferencesDescription:
+			'Velg hvilke typer databruk du tillater. Endringer gjelder på denne enheten så snart du lagrer.',
+		restrictedByGpc:
+			'Av fordi enheten din sender et Global Privacy Control-signal.',
+		saveFailed:
+			'Kunne ikke lagre valgene dine. Ingenting er endret på denne enheten.',
+		saving: 'Lagrer valg',
+	},
+	nl: {
+		actionTimeInvalid:
+			'Opslaan is mislukt omdat de datum en tijd van dit apparaat niet lijken te kloppen. Corrigeer ze eerst in Instellingen.',
+		brandPlaceholder: 'Jouw merk hier',
+		choiceExpired: 'Je eerdere keuze is verlopen, dus we vragen het opnieuw.',
+		choicesSaved: 'Privacykeuzes opgeslagen',
+		dismissFailed:
+			'Deze melding kon niet worden gesloten. Er is niets veranderd op dit apparaat.',
+		experienceDescription: 'Past de app aan op hoe je hem gebruikt.',
+		firstLayerDescription:
+			'Jij bepaalt welk gebruik je toestaat, en je kunt op elk moment van gedachten veranderen in Privacy-instellingen.',
+		functionalityDescription: 'Onthoudt je instellingen en keuzes.',
+		introduction:
+			'We gebruiken gegevens om je ervaring te verbeteren, te meten hoe de app wordt gebruikt en relevante advertenties te tonen.',
+		marketingDescription: 'Toont advertenties die relevant voor je zijn.',
+		measurementDescription: 'Helpt ons begrijpen hoe de app wordt gebruikt.',
+		necessaryDescription: 'Nodig om de app te laten werken.',
+		notOffered: 'Niet beschikbaar in jouw regio.',
+		noticeAcknowledged: 'Privacymelding bevestigd',
+		noticeDescription:
+			'Je kunt dit op elk moment bekijken of wijzigen in Privacy-instellingen.',
+		policyChanged:
+			'Hoe deze app gegevens gebruikt, is veranderd sinds je laatste keuze, dus we vragen het opnieuw.',
+		preferencesDescription:
+			'Kies welk soort gegevensgebruik je toestaat. Wijzigingen gelden op dit apparaat zodra je opslaat.',
+		restrictedByGpc:
+			'Uit omdat je apparaat een Global Privacy Control-signaal verstuurt.',
+		saveFailed:
+			'Je keuzes konden niet worden opgeslagen. Er is niets veranderd op dit apparaat.',
+		saving: 'Keuzes opslaan',
+	},
+	nn: {
+		actionTimeInvalid:
+			'Kunne ikkje lagre fordi dato og klokkeslett på denne eininga ser feil ut. Rett dei i Innstillingar først.',
+		brandPlaceholder: 'Merkevara di her',
+		choiceExpired: 'Det førre valet ditt har gått ut, så vi spør igjen.',
+		choicesSaved: 'Personvernval lagra',
+		dismissFailed:
+			'Kunne ikkje lukke denne meldinga. Ingenting er endra på denne eininga.',
+		experienceDescription: 'Tilpassar appen til korleis du brukar han.',
+		firstLayerDescription:
+			'Du bestemmer kva bruk du tillèt, og du kan ombestemme deg når som helst i Personverninnstillingar.',
+		functionalityDescription: 'Hugsar innstillingane og vala dine.',
+		introduction:
+			'Vi brukar data til å gjere opplevinga di betre, måle korleis appen blir brukt og vise relevant reklame.',
+		marketingDescription: 'Viser reklame som er relevant for deg.',
+		measurementDescription: 'Hjelper oss å forstå korleis appen blir brukt.',
+		necessaryDescription: 'Naudsynte for at appen skal fungere.',
+		notOffered: 'Blir ikkje tilbode der du er.',
+		noticeAcknowledged: 'Personvernmelding stadfesta',
+		noticeDescription:
+			'Du kan sjå gjennom eller endre dette når som helst i Personverninnstillingar.',
+		policyChanged:
+			'Måten denne appen brukar data på, har endra seg sidan det førre valet ditt, så vi spør igjen.',
+		preferencesDescription:
+			'Vel kva typar databruk du tillèt. Endringar gjeld på denne eininga så snart du lagrar.',
+		restrictedByGpc:
+			'Av fordi eininga di sender eit Global Privacy Control-signal.',
+		saveFailed:
+			'Kunne ikkje lagre vala dine. Ingenting er endra på denne eininga.',
+		saving: 'Lagrar val',
+	},
+	pa: {
+		actionTimeInvalid:
+			'ਸੰਭਾਲਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ, ਕਿਉਂਕਿ ਇਸ ਡੀਵਾਈਸ ਦੀ ਮਿਤੀ ਅਤੇ ਸਮਾਂ ਗਲਤ ਲੱਗਦੇ ਹਨ। ਪਹਿਲਾਂ ਉਨ੍ਹਾਂ ਨੂੰ ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਠੀਕ ਕਰੋ।',
+		brandPlaceholder: 'ਤੁਹਾਡਾ ਬ੍ਰਾਂਡ ਇੱਥੇ',
+		choiceExpired:
+			'ਤੁਹਾਡੀ ਪਿਛਲੀ ਚੋਣ ਦੀ ਮਿਆਦ ਖਤਮ ਹੋ ਗਈ ਹੈ, ਇਸ ਲਈ ਅਸੀਂ ਦੁਬਾਰਾ ਪੁੱਛ ਰਹੇ ਹਾਂ।',
+		choicesSaved: 'ਪਰਦੇਦਾਰੀ ਚੋਣਾਂ ਸੰਭਾਲੀਆਂ ਗਈਆਂ',
+		dismissFailed: 'ਇਹ ਸੂਚਨਾ ਬੰਦ ਨਹੀਂ ਹੋ ਸਕੀ। ਇਸ ਡੀਵਾਈਸ ’ਤੇ ਕੁਝ ਨਹੀਂ ਬਦਲਿਆ।',
+		experienceDescription: 'ਐਪ ਨੂੰ ਤੁਹਾਡੇ ਵਰਤਣ ਦੇ ਤਰੀਕੇ ਮੁਤਾਬਕ ਢਾਲਦਾ ਹੈ।',
+		firstLayerDescription:
+			'ਕਿਹੜੀਆਂ ਵਰਤੋਂਆਂ ਦੀ ਇਜਾਜ਼ਤ ਦੇਣੀ ਹੈ, ਇਹ ਤੁਸੀਂ ਤੈਅ ਕਰਦੇ ਹੋ, ਅਤੇ ਪਰਦੇਦਾਰੀ ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਕਦੇ ਵੀ ਆਪਣਾ ਫੈਸਲਾ ਬਦਲ ਸਕਦੇ ਹੋ।',
+		functionalityDescription: 'ਤੁਹਾਡੀਆਂ ਸੈਟਿੰਗਾਂ ਅਤੇ ਚੋਣਾਂ ਯਾਦ ਰੱਖਦਾ ਹੈ।',
+		introduction:
+			'ਅਸੀਂ ਤੁਹਾਡਾ ਅਨੁਭਵ ਬਿਹਤਰ ਬਣਾਉਣ, ਐਪ ਦੀ ਵਰਤੋਂ ਮਾਪਣ ਅਤੇ ਢੁਕਵੇਂ ਇਸ਼ਤਿਹਾਰ ਦਿਖਾਉਣ ਲਈ ਡਾਟਾ ਵਰਤਦੇ ਹਾਂ।',
+		marketingDescription: 'ਤੁਹਾਡੇ ਲਈ ਢੁਕਵੇਂ ਇਸ਼ਤਿਹਾਰ ਦਿਖਾਉਂਦਾ ਹੈ।',
+		measurementDescription: 'ਐਪ ਦੀ ਵਰਤੋਂ ਕਿਵੇਂ ਹੁੰਦੀ ਹੈ, ਇਹ ਸਮਝਣ ਵਿੱਚ ਸਾਡੀ ਮਦਦ ਕਰਦਾ ਹੈ।',
+		necessaryDescription: 'ਐਪ ਚੱਲਣ ਲਈ ਲੋੜੀਂਦੇ।',
+		notOffered: 'ਤੁਹਾਡੇ ਖੇਤਰ ਵਿੱਚ ਉਪਲਬਧ ਨਹੀਂ।',
+		noticeAcknowledged: 'ਪਰਦੇਦਾਰੀ ਸੂਚਨਾ ਸਵੀਕਾਰ ਕੀਤੀ ਗਈ',
+		noticeDescription:
+			'ਤੁਸੀਂ ਪਰਦੇਦਾਰੀ ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਕਦੇ ਵੀ ਇਸ ਦੀ ਸਮੀਖਿਆ ਕਰ ਸਕਦੇ ਹੋ ਜਾਂ ਇਸ ਨੂੰ ਬਦਲ ਸਕਦੇ ਹੋ।',
+		policyChanged:
+			'ਤੁਹਾਡੀ ਪਿਛਲੀ ਚੋਣ ਤੋਂ ਬਾਅਦ ਇਹ ਐਪ ਡਾਟਾ ਜਿਵੇਂ ਵਰਤਦਾ ਹੈ ਉਹ ਬਦਲ ਗਿਆ ਹੈ, ਇਸ ਲਈ ਅਸੀਂ ਦੁਬਾਰਾ ਪੁੱਛ ਰਹੇ ਹਾਂ।',
+		preferencesDescription:
+			'ਚੁਣੋ ਕਿ ਤੁਸੀਂ ਕਿਸ ਤਰ੍ਹਾਂ ਦੀ ਡਾਟਾ ਵਰਤੋਂ ਦੀ ਇਜਾਜ਼ਤ ਦਿੰਦੇ ਹੋ। ਸੰਭਾਲਦੇ ਹੀ ਬਦਲਾਅ ਇਸ ਡੀਵਾਈਸ ’ਤੇ ਲਾਗੂ ਹੋ ਜਾਂਦੇ ਹਨ।',
+		restrictedByGpc:
+			'ਬੰਦ, ਕਿਉਂਕਿ ਤੁਹਾਡਾ ਡੀਵਾਈਸ Global Privacy Control ਸਿਗਨਲ ਭੇਜਦਾ ਹੈ।',
+		saveFailed: 'ਤੁਹਾਡੀਆਂ ਚੋਣਾਂ ਸੰਭਾਲੀਆਂ ਨਹੀਂ ਜਾ ਸਕੀਆਂ। ਇਸ ਡੀਵਾਈਸ ’ਤੇ ਕੁਝ ਨਹੀਂ ਬਦਲਿਆ।',
+		saving: 'ਚੋਣਾਂ ਸੰਭਾਲੀਆਂ ਜਾ ਰਹੀਆਂ ਹਨ',
+	},
+	pl: {
+		actionTimeInvalid:
+			'Nie udało się zapisać, ponieważ data i godzina na tym urządzeniu wyglądają na nieprawidłowe. Najpierw popraw je w Ustawieniach.',
+		brandPlaceholder: 'Twoja marka',
+		choiceExpired: 'Twój wcześniejszy wybór wygasł, więc pytamy ponownie.',
+		choicesSaved: 'Wybory dotyczące prywatności zapisane',
+		dismissFailed:
+			'Nie udało się zamknąć tej informacji. Na tym urządzeniu nic się nie zmieniło.',
+		experienceDescription:
+			'Dopasowuje aplikację do tego, jak z niej korzystasz.',
+		firstLayerDescription:
+			'To Ty decydujesz, na jakie wykorzystanie się zgadzasz, i w każdej chwili możesz zmienić zdanie w Ustawieniach prywatności.',
+		functionalityDescription: 'Zapamiętuje Twoje ustawienia i wybory.',
+		introduction:
+			'Używamy danych, aby ulepszać Twoje wrażenia, mierzyć, jak używana jest aplikacja, i wyświetlać trafne reklamy.',
+		marketingDescription: 'Wyświetla reklamy dopasowane do Ciebie.',
+		measurementDescription: 'Pomaga nam zrozumieć, jak używana jest aplikacja.',
+		necessaryDescription: 'Niezbędne do działania aplikacji.',
+		notOffered: 'Niedostępne w Twoim regionie.',
+		noticeAcknowledged: 'Potwierdzono informację o prywatności',
+		noticeDescription:
+			'W każdej chwili możesz to przejrzeć lub zmienić w Ustawieniach prywatności.',
+		policyChanged:
+			'Od Twojego ostatniego wyboru zmienił się sposób, w jaki ta aplikacja używa danych, więc pytamy ponownie.',
+		preferencesDescription:
+			'Wybierz, na jakie rodzaje wykorzystania danych się zgadzasz. Zmiany obowiązują na tym urządzeniu od razu po zapisaniu.',
+		restrictedByGpc:
+			'Wyłączone, ponieważ Twoje urządzenie wysyła sygnał Global Privacy Control.',
+		saveFailed:
+			'Nie udało się zapisać Twoich wyborów. Na tym urządzeniu nic się nie zmieniło.',
+		saving: 'Zapisywanie wyborów',
+	},
+	pt: {
+		actionTimeInvalid:
+			'Não foi possível salvar porque a data e a hora deste dispositivo parecem erradas. Corrija-as primeiro nos Ajustes do aparelho.',
+		brandPlaceholder: 'Sua marca aqui',
+		choiceExpired:
+			'Sua escolha anterior expirou, por isso estamos perguntando de novo.',
+		choicesSaved: 'Escolhas de privacidade salvas',
+		dismissFailed:
+			'Não foi possível fechar este aviso. Nada mudou neste dispositivo.',
+		experienceDescription: 'Adapta o app à forma como você o usa.',
+		firstLayerDescription:
+			'Você decide quais usos permitir e pode mudar de ideia a qualquer momento em Configurações.',
+		functionalityDescription: 'Lembra suas configurações e escolhas.',
+		introduction:
+			'Usamos dados para melhorar sua experiência, medir como o app é usado e mostrar publicidade relevante.',
+		marketingDescription: 'Mostra publicidade relevante para você.',
+		measurementDescription: 'Nos ajuda a entender como o app é usado.',
+		necessaryDescription: 'Necessários para o app funcionar.',
+		notOffered: 'Não disponível na sua região.',
+		noticeAcknowledged: 'Aviso de privacidade confirmado',
+		noticeDescription:
+			'Você pode revisar ou alterar isso a qualquer momento em Configurações.',
+		policyChanged:
+			'A forma como este app usa dados mudou desde sua última escolha, por isso estamos perguntando de novo.',
+		preferencesDescription:
+			'Escolha quais tipos de uso de dados você permite. As alterações valem neste dispositivo assim que você salvar.',
+		restrictedByGpc:
+			'Desativado porque seu dispositivo envia um sinal Global Privacy Control.',
+		saveFailed:
+			'Não foi possível salvar suas escolhas. Nada mudou neste dispositivo.',
+		saving: 'Salvando escolhas',
+	},
+	rm: {
+		actionTimeInvalid:
+			'Impussibel da memorisar, perquai che la data e l’ura da quest apparat paran fallidas. Curregi ellas l’emprim en las configuraziuns.',
+		brandPlaceholder: 'Vossa marca qua',
+		choiceExpired:
+			'Vossa tscherna anteriura è scadida, perquai dumandain nus danovamain.',
+		choicesSaved: 'Tschernas da la sfera privata memorisadas',
+		dismissFailed:
+			'Impussibel da serrar questa infurmaziun. Nagut n’è vegnì midà sin quest apparat.',
+		experienceDescription: 'Adatta l’app a la moda co Vus l’utilisais.',
+		firstLayerDescription:
+			'Vus decidais tge utilisaziuns permetter, e Vus pudais midar opiniun da tut temp en las Configuraziuns da la sfera privata.',
+		functionalityDescription:
+			'Sa regorda da Vossas configuraziuns e tschernas.',
+		introduction:
+			'Nus utilisain datas per meglierar Vossa experientscha, per mesirar co l’app vegn utilisada e per mussar reclama relevanta.',
+		marketingDescription: 'Mussa reclama relevanta per Vus.',
+		measurementDescription: 'Ans gida a chapir co l’app vegn utilisada.',
+		necessaryDescription: 'Necessari per che l’app funcziunia.',
+		notOffered: 'Betg disponibel en Vossa regiun.',
+		noticeAcknowledged: 'Infurmaziun davart la protecziun da datas confermada',
+		noticeDescription:
+			'Vus pudais controllar u midar quai da tut temp en las Configuraziuns da la sfera privata.',
+		policyChanged:
+			'La moda co questa app utilisescha datas è sa midada dapi Vossa ultima tscherna, perquai dumandain nus danovamain.',
+		preferencesDescription:
+			'Tschernai tge sorts d’utilisaziun da datas Vus permettais. Las midadas valan sin quest apparat uschespert che Vus memorisais.',
+		restrictedByGpc:
+			'Deactivà, perquai che Voss apparat trametta in signal Global Privacy Control.',
+		saveFailed:
+			'Impussibel da memorisar Vossas tschernas. Nagut n’è vegnì midà sin quest apparat.',
+		saving: 'Las tschernas vegnan memorisadas',
+	},
+	ro: {
+		actionTimeInvalid:
+			'Nu s-a putut salva, deoarece data și ora acestui dispozitiv par greșite. Corectează-le mai întâi în Setări.',
+		brandPlaceholder: 'Marca ta aici',
+		choiceExpired:
+			'Alegerea ta anterioară a expirat, așa că te întrebăm din nou.',
+		choicesSaved: 'Alegerile de confidențialitate au fost salvate',
+		dismissFailed:
+			'Notificarea nu a putut fi închisă. Nimic nu s-a schimbat pe acest dispozitiv.',
+		experienceDescription: 'Adaptează aplicația la felul în care o folosești.',
+		firstLayerDescription:
+			'Tu decizi ce utilizări permiți și te poți răzgândi oricând din Setări de confidențialitate.',
+		functionalityDescription: 'Reține setările și alegerile tale.',
+		introduction:
+			'Folosim date pentru a-ți îmbunătăți experiența, a măsura cum este folosită aplicația și a afișa publicitate relevantă.',
+		marketingDescription: 'Afișează publicitate relevantă pentru tine.',
+		measurementDescription:
+			'Ne ajută să înțelegem cum este folosită aplicația.',
+		necessaryDescription: 'Necesare pentru ca aplicația să funcționeze.',
+		notOffered: 'Nu este disponibil în regiunea ta.',
+		noticeAcknowledged:
+			'Notificarea privind confidențialitatea a fost confirmată',
+		noticeDescription:
+			'Poți verifica sau schimba asta oricând din Setări de confidențialitate.',
+		policyChanged:
+			'Modul în care această aplicație folosește datele s-a schimbat de la ultima ta alegere, așa că te întrebăm din nou.',
+		preferencesDescription:
+			'Alege ce tipuri de utilizare a datelor permiți. Modificările se aplică pe acest dispozitiv imediat ce salvezi.',
+		restrictedByGpc:
+			'Dezactivat deoarece dispozitivul tău trimite un semnal Global Privacy Control.',
+		saveFailed:
+			'Alegerile tale nu au putut fi salvate. Nimic nu s-a schimbat pe acest dispozitiv.',
+		saving: 'Se salvează alegerile',
+	},
+	ru: {
+		actionTimeInvalid:
+			'Не удалось сохранить: дата и время на этом устройстве выглядят неверными. Сначала исправьте их в настройках.',
+		brandPlaceholder: 'Ваш бренд',
+		choiceExpired:
+			'Срок действия вашего прежнего выбора истёк, поэтому мы спрашиваем снова.',
+		choicesSaved: 'Выбор конфиденциальности сохранён',
+		dismissFailed:
+			'Не удалось закрыть это уведомление. На этом устройстве ничего не изменилось.',
+		experienceDescription:
+			'Подстраивает приложение под то, как вы им пользуетесь.',
+		firstLayerDescription:
+			'Вы сами решаете, какое использование разрешить, и можете передумать в любое время в настройках конфиденциальности.',
+		functionalityDescription: 'Запоминает ваши настройки и выбор.',
+		introduction:
+			'Мы используем данные, чтобы улучшать ваш опыт, измерять, как используется приложение, и показывать подходящую рекламу.',
+		marketingDescription: 'Показывает рекламу, которая вам подходит.',
+		measurementDescription: 'Помогает нам понять, как используется приложение.',
+		necessaryDescription: 'Нужны для работы приложения.',
+		notOffered: 'Недоступно в вашем регионе.',
+		noticeAcknowledged: 'Уведомление о конфиденциальности принято',
+		noticeDescription:
+			'Вы можете просмотреть или изменить это в любое время в настройках конфиденциальности.',
+		policyChanged:
+			'С момента вашего последнего выбора изменилось то, как это приложение использует данные, поэтому мы спрашиваем снова.',
+		preferencesDescription:
+			'Выберите, какие виды использования данных вы разрешаете. Изменения вступают в силу на этом устройстве сразу после сохранения.',
+		restrictedByGpc:
+			'Выключено, потому что ваше устройство отправляет сигнал Global Privacy Control.',
+		saveFailed:
+			'Не удалось сохранить ваш выбор. На этом устройстве ничего не изменилось.',
+		saving: 'Сохранение выбора',
+	},
+	sk: {
+		actionTimeInvalid:
+			'Uloženie zlyhalo, pretože dátum a čas tohto zariadenia vyzerajú nesprávne. Najprv ich opravte v Nastaveniach.',
+		brandPlaceholder: 'Vaša značka',
+		choiceExpired:
+			'Platnosť vašej predchádzajúcej voľby vypršala, preto sa pýtame znova.',
+		choicesSaved: 'Voľby súkromia uložené',
+		dismissFailed:
+			'Toto oznámenie sa nepodarilo zavrieť. V tomto zariadení sa nič nezmenilo.',
+		experienceDescription: 'Prispôsobuje aplikáciu tomu, ako ju používate.',
+		firstLayerDescription:
+			'Sami rozhodujete, ktoré použitia povolíte, a svoj názor môžete kedykoľvek zmeniť v Nastaveniach súkromia.',
+		functionalityDescription: 'Pamätá si vaše nastavenia a voľby.',
+		introduction:
+			'Údaje používame na zlepšenie vášho zážitku, na meranie toho, ako sa aplikácia používa, a na zobrazovanie relevantnej reklamy.',
+		marketingDescription: 'Zobrazuje reklamu, ktorá je pre vás relevantná.',
+		measurementDescription: 'Pomáha nám pochopiť, ako sa aplikácia používa.',
+		necessaryDescription: 'Potrebné na fungovanie aplikácie.',
+		notOffered: 'Vo vašej oblasti nie je k dispozícii.',
+		noticeAcknowledged: 'Oznámenie o ochrane súkromia potvrdené',
+		noticeDescription:
+			'Toto môžete kedykoľvek skontrolovať alebo zmeniť v Nastaveniach súkromia.',
+		policyChanged:
+			'Spôsob, akým táto aplikácia používa údaje, sa od vašej poslednej voľby zmenil, preto sa pýtame znova.',
+		preferencesDescription:
+			'Vyberte, aké druhy použitia údajov povolíte. Zmeny platia v tomto zariadení hneď po uložení.',
+		restrictedByGpc:
+			'Vypnuté, pretože vaše zariadenie odosiela signál Global Privacy Control.',
+		saveFailed:
+			'Vaše voľby sa nepodarilo uložiť. V tomto zariadení sa nič nezmenilo.',
+		saving: 'Ukladanie volieb',
+	},
+	sl: {
+		actionTimeInvalid:
+			'Shranjevanje ni uspelo, ker sta datum in čas v tej napravi videti napačna. Najprej ju popravite v Nastavitvah.',
+		brandPlaceholder: 'Vaša blagovna znamka',
+		choiceExpired:
+			'Vaša prejšnja izbira je potekla, zato vas sprašujemo znova.',
+		choicesSaved: 'Izbire glede zasebnosti so shranjene',
+		dismissFailed:
+			'Tega obvestila ni bilo mogoče zapreti. V tej napravi se ni nič spremenilo.',
+		experienceDescription: 'Prilagodi aplikacijo načinu, kako jo uporabljate.',
+		firstLayerDescription:
+			'Sami se odločite, katere uporabe dovolite, in si lahko kadar koli premislite v Nastavitvah zasebnosti.',
+		functionalityDescription: 'Zapomni si vaše nastavitve in izbire.',
+		introduction:
+			'Podatke uporabljamo za izboljšanje vaše izkušnje, merjenje uporabe aplikacije in prikazovanje ustreznih oglasov.',
+		marketingDescription: 'Prikazuje oglase, ki so za vas ustrezni.',
+		measurementDescription:
+			'Pomaga nam razumeti, kako se aplikacija uporablja.',
+		necessaryDescription: 'Potrebni za delovanje aplikacije.',
+		notOffered: 'Ni na voljo v vaši regiji.',
+		noticeAcknowledged: 'Obvestilo o zasebnosti potrjeno',
+		noticeDescription:
+			'To lahko kadar koli pregledate ali spremenite v Nastavitvah zasebnosti.',
+		policyChanged:
+			'Način, kako ta aplikacija uporablja podatke, se je od vaše zadnje izbire spremenil, zato vas sprašujemo znova.',
+		preferencesDescription:
+			'Izberite, katere vrste uporabe podatkov dovolite. Spremembe v tej napravi začnejo veljati takoj, ko shranite.',
+		restrictedByGpc:
+			'Izklopljeno, ker vaša naprava pošilja signal Global Privacy Control.',
+		saveFailed:
+			'Vaših izbir ni bilo mogoče shraniti. V tej napravi se ni nič spremenilo.',
+		saving: 'Shranjevanje izbir',
+	},
+	sv: {
+		actionTimeInvalid:
+			'Det gick inte att spara eftersom enhetens datum och tid ser fel ut. Rätta dem först i Inställningar.',
+		brandPlaceholder: 'Ditt varumärke här',
+		choiceExpired: 'Ditt tidigare val har gått ut, så vi frågar igen.',
+		choicesSaved: 'Integritetsval sparade',
+		dismissFailed:
+			'Det gick inte att stänga meddelandet. Ingenting har ändrats på den här enheten.',
+		experienceDescription: 'Anpassar appen efter hur du använder den.',
+		firstLayerDescription:
+			'Du bestämmer vilka användningar du tillåter, och du kan ändra dig när som helst i Integritetsinställningar.',
+		functionalityDescription: 'Kommer ihåg dina inställningar och val.',
+		introduction:
+			'Vi använder data för att förbättra din upplevelse, mäta hur appen används och visa relevant reklam.',
+		marketingDescription: 'Visar reklam som är relevant för dig.',
+		measurementDescription: 'Hjälper oss att förstå hur appen används.',
+		necessaryDescription: 'Krävs för att appen ska fungera.',
+		notOffered: 'Erbjuds inte där du befinner dig.',
+		noticeAcknowledged: 'Integritetsmeddelandet har bekräftats',
+		noticeDescription:
+			'Du kan granska eller ändra detta när som helst i Integritetsinställningar.',
+		policyChanged:
+			'Hur appen använder data har ändrats sedan ditt senaste val, så vi frågar igen.',
+		preferencesDescription:
+			'Välj vilka typer av dataanvändning du tillåter. Ändringar gäller på den här enheten så fort du sparar.',
+		restrictedByGpc:
+			'Av eftersom din enhet skickar en Global Privacy Control-signal.',
+		saveFailed:
+			'Det gick inte att spara dina val. Ingenting har ändrats på den här enheten.',
+		saving: 'Sparar val',
+	},
+	ta: {
+		actionTimeInvalid:
+			'இந்தச் சாதனத்தின் தேதியும் நேரமும் தவறாகத் தெரிவதால் சேமிக்க முடியவில்லை. முதலில் அமைப்புகளில் அவற்றைச் சரிசெய்யவும்.',
+		brandPlaceholder: 'உங்கள் பிராண்ட் இங்கே',
+		choiceExpired: 'உங்கள் முந்தைய தேர்வின் காலம் முடிந்துவிட்டது, அதனால் மீண்டும் கேட்கிறோம்.',
+		choicesSaved: 'தனியுரிமைத் தேர்வுகள் சேமிக்கப்பட்டன',
+		dismissFailed: 'இந்த அறிவிப்பை மூட முடியவில்லை. இந்தச் சாதனத்தில் எதுவும் மாறவில்லை.',
+		experienceDescription:
+			'நீங்கள் ஆப்ஸைப் பயன்படுத்தும் விதத்திற்கு ஏற்ப அதை மாற்றியமைக்கிறது.',
+		firstLayerDescription:
+			'எந்தப் பயன்பாடுகளை அனுமதிப்பது என்பதை நீங்களே முடிவு செய்கிறீர்கள், தனியுரிமை அமைப்புகளில் எப்போது வேண்டுமானாலும் உங்கள் முடிவை மாற்றலாம்.',
+		functionalityDescription: 'உங்கள் அமைப்புகளையும் தேர்வுகளையும் நினைவில் வைக்கிறது.',
+		introduction:
+			'உங்கள் அனுபவத்தை மேம்படுத்தவும், ஆப்ஸ் எவ்வாறு பயன்படுத்தப்படுகிறது என்பதை அளவிடவும், தொடர்புடைய விளம்பரங்களைக் காட்டவும் தரவைப் பயன்படுத்துகிறோம்.',
+		marketingDescription: 'உங்களுக்குத் தொடர்புடைய விளம்பரங்களைக் காட்டுகிறது.',
+		measurementDescription:
+			'ஆப்ஸ் எவ்வாறு பயன்படுத்தப்படுகிறது என்பதைப் புரிந்துகொள்ள எங்களுக்கு உதவுகிறது.',
+		necessaryDescription: 'ஆப்ஸ் செயல்படத் தேவையானவை.',
+		notOffered: 'உங்கள் பகுதியில் கிடைக்கவில்லை.',
+		noticeAcknowledged: 'தனியுரிமை அறிவிப்பு ஏற்கப்பட்டது',
+		noticeDescription:
+			'தனியுரிமை அமைப்புகளில் எப்போது வேண்டுமானாலும் இதை மதிப்பாய்வு செய்யலாம் அல்லது மாற்றலாம்.',
+		policyChanged:
+			'உங்கள் கடைசித் தேர்வுக்குப் பிறகு இந்த ஆப்ஸ் தரவைப் பயன்படுத்தும் விதம் மாறியுள்ளது, அதனால் மீண்டும் கேட்கிறோம்.',
+		preferencesDescription:
+			'எந்த வகையான தரவுப் பயன்பாட்டை அனுமதிக்கிறீர்கள் என்பதைத் தேர்வுசெய்யவும். சேமித்தவுடன் மாற்றங்கள் இந்தச் சாதனத்தில் பொருந்தும்.',
+		restrictedByGpc:
+			'முடக்கப்பட்டுள்ளது, ஏனெனில் உங்கள் சாதனம் Global Privacy Control சிக்னலை அனுப்புகிறது.',
+		saveFailed:
+			'உங்கள் தேர்வுகளைச் சேமிக்க முடியவில்லை. இந்தச் சாதனத்தில் எதுவும் மாறவில்லை.',
+		saving: 'தேர்வுகள் சேமிக்கப்படுகின்றன',
+	},
+	te: {
+		actionTimeInvalid:
+			'ఈ పరికరం తేదీ, సమయం తప్పుగా కనిపిస్తున్నందున సేవ్ చేయలేకపోయాం. ముందుగా సెట్టింగ్‌లలో వాటిని సరిచేయండి.',
+		brandPlaceholder: 'మీ బ్రాండ్ ఇక్కడ',
+		choiceExpired: 'మీ మునుపటి ఎంపిక గడువు ముగిసింది, అందుకే మళ్లీ అడుగుతున్నాం.',
+		choicesSaved: 'గోప్యతా ఎంపికలు సేవ్ అయ్యాయి',
+		dismissFailed: 'ఈ నోటీసును మూసివేయలేకపోయాం. ఈ పరికరంలో ఏదీ మారలేదు.',
+		experienceDescription: 'మీరు యాప్‌ను ఉపయోగించే విధానానికి అనుగుణంగా దాన్ని మారుస్తుంది.',
+		firstLayerDescription:
+			'ఏ వినియోగాలను అనుమతించాలో మీరే నిర్ణయిస్తారు, గోప్యతా సెట్టింగ్‌లలో ఎప్పుడైనా మీ నిర్ణయాన్ని మార్చుకోవచ్చు.',
+		functionalityDescription: 'మీ సెట్టింగ్‌లు, ఎంపికలను గుర్తుంచుకుంటుంది.',
+		introduction:
+			'మీ అనుభవాన్ని మెరుగుపరచడానికి, యాప్ ఎలా ఉపయోగించబడుతుందో కొలవడానికి, సంబంధిత ప్రకటనలు చూపడానికి మేము డేటాను ఉపయోగిస్తాము.',
+		marketingDescription: 'మీకు సంబంధించిన ప్రకటనలను చూపుతుంది.',
+		measurementDescription: 'యాప్ ఎలా ఉపయోగించబడుతుందో అర్థం చేసుకోవడానికి మాకు సహాయపడుతుంది.',
+		necessaryDescription: 'యాప్ పని చేయడానికి అవసరం.',
+		notOffered: 'మీ ప్రాంతంలో అందుబాటులో లేదు.',
+		noticeAcknowledged: 'గోప్యతా నోటీసు ఆమోదించబడింది',
+		noticeDescription: 'గోప్యతా సెట్టింగ్‌లలో మీరు దీన్ని ఎప్పుడైనా సమీక్షించవచ్చు లేదా మార్చవచ్చు.',
+		policyChanged:
+			'మీ చివరి ఎంపిక తర్వాత ఈ యాప్ డేటాను ఉపయోగించే విధానం మారింది, అందుకే మళ్లీ అడుగుతున్నాం.',
+		preferencesDescription:
+			'మీరు ఏ రకమైన డేటా వినియోగాన్ని అనుమతిస్తారో ఎంచుకోండి. సేవ్ చేసిన వెంటనే మార్పులు ఈ పరికరంలో వర్తిస్తాయి.',
+		restrictedByGpc:
+			'ఆఫ్‌లో ఉంది, ఎందుకంటే మీ పరికరం Global Privacy Control సిగ్నల్‌ను పంపుతుంది.',
+		saveFailed: 'మీ ఎంపికలను సేవ్ చేయలేకపోయాం. ఈ పరికరంలో ఏదీ మారలేదు.',
+		saving: 'ఎంపికలను సేవ్ చేస్తోంది',
+	},
+	th: {
+		actionTimeInvalid:
+			'บันทึกไม่ได้เพราะวันที่และเวลาของอุปกรณ์นี้ดูไม่ถูกต้อง โปรดแก้ไขในการตั้งค่าก่อน',
+		brandPlaceholder: 'แบรนด์ของคุณ',
+		choiceExpired: 'ตัวเลือกก่อนหน้าของคุณหมดอายุแล้ว เราจึงขอถามอีกครั้ง',
+		choicesSaved: 'บันทึกตัวเลือกความเป็นส่วนตัวแล้ว',
+		dismissFailed: 'ปิดประกาศนี้ไม่ได้ ไม่มีการเปลี่ยนแปลงใดในอุปกรณ์นี้',
+		experienceDescription: 'ปรับแอปให้เข้ากับวิธีที่คุณใช้งาน',
+		firstLayerDescription:
+			'คุณเป็นผู้ตัดสินใจว่าจะอนุญาตการใช้งานแบบใด และเปลี่ยนใจได้ทุกเมื่อในการตั้งค่าความเป็นส่วนตัว',
+		functionalityDescription: 'จดจำการตั้งค่าและตัวเลือกของคุณ',
+		introduction:
+			'เราใช้ข้อมูลเพื่อปรับปรุงประสบการณ์ของคุณ วัดผลการใช้งานแอป และแสดงโฆษณาที่เกี่ยวข้อง',
+		marketingDescription: 'แสดงโฆษณาที่เกี่ยวข้องกับคุณ',
+		measurementDescription: 'ช่วยให้เราเข้าใจว่ามีการใช้งานแอปอย่างไร',
+		necessaryDescription: 'จำเป็นต่อการทำงานของแอป',
+		notOffered: 'ไม่มีให้บริการในพื้นที่ของคุณ',
+		noticeAcknowledged: 'รับทราบประกาศความเป็นส่วนตัวแล้ว',
+		noticeDescription: 'คุณตรวจสอบหรือเปลี่ยนแปลงได้ทุกเมื่อในการตั้งค่าความเป็นส่วนตัว',
+		policyChanged: 'วิธีที่แอปนี้ใช้ข้อมูลเปลี่ยนไปตั้งแต่ตัวเลือกล่าสุดของคุณ เราจึงขอถามอีกครั้ง',
+		preferencesDescription:
+			'เลือกประเภทการใช้ข้อมูลที่คุณอนุญาต การเปลี่ยนแปลงจะมีผลในอุปกรณ์นี้ทันทีที่คุณบันทึก',
+		restrictedByGpc: 'ปิดอยู่เพราะอุปกรณ์ของคุณส่งสัญญาณ Global Privacy Control',
+		saveFailed: 'บันทึกตัวเลือกของคุณไม่ได้ ไม่มีการเปลี่ยนแปลงใดในอุปกรณ์นี้',
+		saving: 'กำลังบันทึกตัวเลือก',
+	},
+	tr: {
+		actionTimeInvalid:
+			'Bu cihazın tarihi ve saati yanlış göründüğü için kaydedilemedi. Önce bunları Ayarlar’da düzeltin.',
+		brandPlaceholder: 'Markanız burada',
+		choiceExpired:
+			'Önceki seçiminizin süresi doldu, bu yüzden yeniden soruyoruz.',
+		choicesSaved: 'Gizlilik seçimleri kaydedildi',
+		dismissFailed: 'Bu bildirim kapatılamadı. Bu cihazda hiçbir şey değişmedi.',
+		experienceDescription: 'Uygulamayı kullanım şeklinize göre uyarlar.',
+		firstLayerDescription:
+			'Hangi kullanımlara izin vereceğinize siz karar verirsiniz ve fikrinizi istediğiniz zaman Gizlilik Ayarları’ndan değiştirebilirsiniz.',
+		functionalityDescription: 'Ayarlarınızı ve seçimlerinizi hatırlar.',
+		introduction:
+			'Verileri deneyiminizi iyileştirmek, uygulamanın nasıl kullanıldığını ölçmek ve ilgili reklamlar göstermek için kullanırız.',
+		marketingDescription: 'Sizinle ilgili reklamlar gösterir.',
+		measurementDescription:
+			'Uygulamanın nasıl kullanıldığını anlamamıza yardımcı olur.',
+		necessaryDescription: 'Uygulamanın çalışması için gereklidir.',
+		notOffered: 'Bulunduğunuz bölgede sunulmuyor.',
+		noticeAcknowledged: 'Gizlilik bildirimi onaylandı',
+		noticeDescription:
+			'Bunu istediğiniz zaman Gizlilik Ayarları’ndan inceleyebilir veya değiştirebilirsiniz.',
+		policyChanged:
+			'Son seçiminizden bu yana bu uygulamanın verileri kullanma şekli değişti, bu yüzden yeniden soruyoruz.',
+		preferencesDescription:
+			'Hangi tür veri kullanımına izin verdiğinizi seçin. Değişiklikler kaydettiğiniz anda bu cihazda geçerli olur.',
+		restrictedByGpc:
+			'Kapalı, çünkü cihazınız Global Privacy Control sinyali gönderiyor.',
+		saveFailed: 'Seçimleriniz kaydedilemedi. Bu cihazda hiçbir şey değişmedi.',
+		saving: 'Seçimler kaydediliyor',
+	},
+	ur: {
+		actionTimeInvalid:
+			'محفوظ نہیں ہو سکا کیونکہ اس ڈیوائس کی تاریخ اور وقت غلط لگتے ہیں۔ پہلے انہیں ترتیبات میں درست کریں۔',
+		brandPlaceholder: 'آپ کا برانڈ یہاں',
+		choiceExpired:
+			'آپ کے پچھلے انتخاب کی مدت ختم ہو گئی ہے، اس لیے ہم دوبارہ پوچھ رہے ہیں۔',
+		choicesSaved: 'رازداری کے انتخاب محفوظ ہو گئے',
+		dismissFailed: 'یہ نوٹس بند نہیں ہو سکا۔ اس ڈیوائس پر کچھ نہیں بدلا۔',
+		experienceDescription: 'ایپ کو آپ کے استعمال کے طریقے کے مطابق ڈھالتی ہیں۔',
+		firstLayerDescription:
+			'کن استعمالات کی اجازت دینی ہے یہ آپ طے کرتے ہیں، اور رازداری کی ترتیبات میں کسی بھی وقت اپنا فیصلہ بدل سکتے ہیں۔',
+		functionalityDescription: 'آپ کی ترتیبات اور انتخاب یاد رکھتی ہیں۔',
+		introduction:
+			'ہم آپ کے تجربے کو بہتر بنانے، ایپ کے استعمال کی پیمائش کرنے اور متعلقہ اشتہارات دکھانے کے لیے ڈیٹا استعمال کرتے ہیں۔',
+		marketingDescription: 'آپ کے لیے متعلقہ اشتہارات دکھاتی ہیں۔',
+		measurementDescription:
+			'یہ سمجھنے میں ہماری مدد کرتی ہیں کہ ایپ کیسے استعمال ہوتی ہے۔',
+		necessaryDescription: 'ایپ کے کام کرنے کے لیے ضروری۔',
+		notOffered: 'آپ کے علاقے میں دستیاب نہیں۔',
+		noticeAcknowledged: 'رازداری کا نوٹس تسلیم کر لیا گیا',
+		noticeDescription:
+			'آپ رازداری کی ترتیبات میں کسی بھی وقت اس کا جائزہ لے سکتے ہیں یا اسے بدل سکتے ہیں۔',
+		policyChanged:
+			'آپ کے پچھلے انتخاب کے بعد سے یہ ایپ ڈیٹا جس طرح استعمال کرتی ہے وہ بدل گیا ہے، اس لیے ہم دوبارہ پوچھ رہے ہیں۔',
+		preferencesDescription:
+			'منتخب کریں کہ آپ کس قسم کے ڈیٹا کے استعمال کی اجازت دیتے ہیں۔ محفوظ کرتے ہی تبدیلیاں اس ڈیوائس پر لاگو ہو جاتی ہیں۔',
+		restrictedByGpc:
+			'بند ہے کیونکہ آپ کی ڈیوائس Global Privacy Control سگنل بھیجتی ہے۔',
+		saveFailed: 'آپ کے انتخاب محفوظ نہیں ہو سکے۔ اس ڈیوائس پر کچھ نہیں بدلا۔',
+		saving: 'انتخاب محفوظ ہو رہے ہیں',
+	},
+	vi: {
+		actionTimeInvalid:
+			'Không thể lưu vì ngày giờ trên thiết bị này có vẻ không đúng. Hãy sửa lại trong Cài đặt trước.',
+		brandPlaceholder: 'Thương hiệu của bạn',
+		choiceExpired:
+			'Lựa chọn trước đây của bạn đã hết hạn, vì vậy chúng tôi hỏi lại.',
+		choicesSaved: 'Đã lưu lựa chọn quyền riêng tư',
+		dismissFailed:
+			'Không thể đóng thông báo này. Không có gì thay đổi trên thiết bị này.',
+		experienceDescription: 'Điều chỉnh ứng dụng theo cách bạn sử dụng.',
+		firstLayerDescription:
+			'Bạn quyết định cho phép những mục đích sử dụng nào và có thể đổi ý bất cứ lúc nào trong Cài đặt quyền riêng tư.',
+		functionalityDescription: 'Ghi nhớ cài đặt và lựa chọn của bạn.',
+		introduction:
+			'Chúng tôi dùng dữ liệu để cải thiện trải nghiệm của bạn, đo lường cách ứng dụng được sử dụng và hiển thị quảng cáo phù hợp.',
+		marketingDescription: 'Hiển thị quảng cáo phù hợp với bạn.',
+		measurementDescription: 'Giúp chúng tôi hiểu cách ứng dụng được sử dụng.',
+		necessaryDescription: 'Cần thiết để ứng dụng hoạt động.',
+		notOffered: 'Không có ở khu vực của bạn.',
+		noticeAcknowledged: 'Đã xác nhận thông báo về quyền riêng tư',
+		noticeDescription:
+			'Bạn có thể xem lại hoặc thay đổi điều này bất cứ lúc nào trong Cài đặt quyền riêng tư.',
+		policyChanged:
+			'Cách ứng dụng này sử dụng dữ liệu đã thay đổi kể từ lựa chọn gần nhất của bạn, vì vậy chúng tôi hỏi lại.',
+		preferencesDescription:
+			'Chọn những loại sử dụng dữ liệu bạn cho phép. Thay đổi có hiệu lực trên thiết bị này ngay khi bạn lưu.',
+		restrictedByGpc:
+			'Đang tắt vì thiết bị của bạn gửi tín hiệu Global Privacy Control.',
+		saveFailed:
+			'Không thể lưu lựa chọn của bạn. Không có gì thay đổi trên thiết bị này.',
+		saving: 'Đang lưu lựa chọn',
+	},
+	yi: {
+		actionTimeInvalid:
+			'מע האָט נישט געקענט אױפֿהיטן, װײַל די דאַטע און צײַט פֿון דעם מכשיר זעען אױס פֿאַלש. פֿאַרריכט זײ צוערשט אין די אײַנשטעלונגען.',
+		brandPlaceholder: 'אײַער מאַרקע דאָ',
+		choiceExpired:
+			'אײַער פֿריִערדיקע ברירה איז אױסגעגאַנגען, דערפֿאַר פֿרעגן מיר נאָכאַמאָל.',
+		choicesSaved: 'פּריװאַטקײט־ברירות אױפֿגעהיט',
+		dismissFailed:
+			'מע האָט נישט געקענט פֿאַרמאַכן די מעלדונג. גאָרנישט האָט זיך געביטן אױף דעם מכשיר.',
+		experienceDescription: 'פּאַסט צו די אַפּ צו װי איר ניצט זי.',
+		firstLayerDescription:
+			'איר באַשליסט װעלכע ניצונגען צו דערלױבן, און איר קענט זיך איבערטראַכטן װען עס איז אין די פּריװאַטקײט־אײַנשטעלונגען.',
+		functionalityDescription: 'געדענקט אײַערע אײַנשטעלונגען און ברירות.',
+		introduction:
+			'מיר ניצן דאַטן כּדי צו פֿאַרבעסערן אײַער דערפֿאַרונג, מעסטן װי מע ניצט די אַפּ און װײַזן פּאַסיקע רעקלאַמע.',
+		marketingDescription: 'װײַזט רעקלאַמע װאָס פּאַסט פֿאַר אײַך.',
+		measurementDescription: 'העלפֿט אונדז פֿאַרשטײן װי מע ניצט די אַפּ.',
+		necessaryDescription: 'נײטיק כּדי די אַפּ זאָל אַרבעטן.',
+		notOffered: 'נישט פֿאַראַן װוּ איר געפֿינט זיך.',
+		noticeAcknowledged: 'פּריװאַטקײט־מעלדונג באַשטעטיקט',
+		noticeDescription:
+			'איר קענט דאָס איבערקוקן אָדער ענדערן װען עס איז אין די פּריװאַטקײט־אײַנשטעלונגען.',
+		policyChanged:
+			'זינט אײַער לעצטער ברירה האָט זיך געביטן װי די אַפּ ניצט דאַטן, דערפֿאַר פֿרעגן מיר נאָכאַמאָל.',
+		preferencesDescription:
+			'קלײַבט אױס װעלכע סאָרטן ניצונג פֿון דאַטן איר דערלױבט. ענדערונגען גילטן אױף דעם מכשיר באַלד װי איר היט אױף.',
+		restrictedByGpc:
+			'אױסגעלאָשן, װײַל אײַער מכשיר שיקט אַ Global Privacy Control סיגנאַל.',
+		saveFailed:
+			'מע האָט נישט געקענט אױפֿהיטן אײַערע ברירות. גאָרנישט האָט זיך געביטן אױף דעם מכשיר.',
+		saving: 'מע היט אױף די ברירות',
+	},
+	zh: {
+		actionTimeInvalid:
+			'无法保存，因为此设备的日期和时间似乎不正确。请先在设置中更正。',
+		brandPlaceholder: '您的品牌名称',
+		choiceExpired: '您之前的选择已过期，因此我们再次询问。',
+		choicesSaved: '隐私选择已保存',
+		dismissFailed: '无法关闭此通知。此设备上没有任何更改。',
+		experienceDescription: '根据您的使用方式调整应用。',
+		firstLayerDescription:
+			'允许哪些用途由您决定，您可以随时在隐私设置中改变主意。',
+		functionalityDescription: '记住您的设置和选择。',
+		introduction:
+			'我们使用数据来改善您的体验、衡量应用的使用情况并展示相关广告。',
+		marketingDescription: '向您展示相关广告。',
+		measurementDescription: '帮助我们了解应用的使用情况。',
+		necessaryDescription: '应用正常运行所必需。',
+		notOffered: '您所在的地区不提供此项。',
+		noticeAcknowledged: '已确认隐私声明',
+		noticeDescription: '您可以随时在隐私设置中查看或更改此项。',
+		policyChanged:
+			'自您上次选择以来，此应用使用数据的方式已发生变化，因此我们再次询问。',
+		preferencesDescription:
+			'选择您允许的数据使用类型。保存后，更改会立即在此设备上生效。',
+		restrictedByGpc: '已关闭，因为您的设备发送了 Global Privacy Control 信号。',
+		saveFailed: '无法保存您的选择。此设备上没有任何更改。',
+		saving: '正在保存选择',
+	},
+};

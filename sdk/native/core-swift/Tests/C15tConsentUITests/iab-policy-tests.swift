@@ -147,8 +147,8 @@ final class IABPolicyTests: XCTestCase {
         XCTAssertEqual(plan.pair.map(\.label), ["Reject All", "Accept All"])
         XCTAssertEqual(plan.next.kind, .customize)
         XCTAssertEqual(plan.next.label, "Customize")
-        // Outside IAB mode the category prompt keeps its own labels.
-        XCTAssertEqual(DecisionLabels.standard.acceptAll, "Accept all")
+        // Outside IAB mode the category prompt reads the web's category-mode keys.
+        XCTAssertEqual(DecisionLabels(copy: ConsentCopy.forLanguage("en")).acceptAll, "Accept All")
     }
 
     // TCF-CHECK: P11
@@ -157,7 +157,7 @@ final class IABPolicyTests: XCTestCase {
             let plan = DecisionPlan.rows(first: first, labels: DecisionLabels(copy: english))
             XCTAssertEqual(Set(plan.pair.map(\.style)).count, 1, "Accept all and Reject all share a style")
         }
-        XCTAssertEqual(DecisionPlan.rows(first: true, labels: .standard).pair.first?.style, .decision)
+        XCTAssertEqual(DecisionPlan.rows(first: true, labels: DecisionLabels(copy: ConsentCopy.forLanguage("en"))).pair.first?.style, .decision)
         XCTAssertGreaterThanOrEqual(ConsentTheme.c15t.decisionContrast, ConsentTheme.minimumDecisionContrast)
     }
 

@@ -132,8 +132,14 @@ public final class ConsentPresenter: ObservableObject {
         let language = String(Locale.preferredLanguages.first?.prefix(2) ?? "en")
         return disclosure.flatMap { IABVendorContent($0, id: id, language: language) }
     }
-    /// The shared IAB copy in the served list's language.
-    var iabCopy: IABCopy { IABCopy.forLanguage(disclosure?.language ?? "en") }
+    /// The language every label is shown in. IAB mode follows the served list, English until it
+    /// loads; category mode follows the policy's translation language.
+    var copyLanguage: String { iab ? disclosure?.language ?? "en" : snapshot.overrides.language }
+    /// The shared IAB copy in ``copyLanguage``.
+    var iabCopy: IABCopy { IABCopy.forLanguage(copyLanguage) }
+    /// Category-mode copy in ``copyLanguage``. Hosts replace only the headline and introduction,
+    /// through the theme.
+    var copy: ConsentCopy { ConsentCopy.forLanguage(copyLanguage) }
     /// "Last changed" with the date in the copy's language, not the device's.
     func lastChanged(at epochMs: Int64) -> String {
         let copy = iabCopy
@@ -141,9 +147,9 @@ public final class ConsentPresenter: ObservableObject {
             .formatted(Date.FormatStyle(date: .abbreviated, time: .omitted).locale(Locale(identifier: copy.language)))
         return copy.format(copy.appLastChanged, ["date": date])
     }
-    /// Button labels: the IAB copy in IAB mode, the stock labels otherwise.
+    /// Button labels: the IAB copy in IAB mode, the category-mode copy otherwise.
     var decisionLabels: DecisionLabels {
-        guard iab, let disclosure else { return .standard }
+        guard iab, let disclosure else { return DecisionLabels(copy: copy) }
         return DecisionLabels(copy: IABCopy.forLanguage(disclosure.language))
     }
     public var offeredCategories: [ConsentCategory] { snapshot.consentCategories ?? [.necessary] }
@@ -152,11 +158,9 @@ public final class ConsentPresenter: ObservableObject {
     /// only on success or a reload.
     public var errorMessage: String? {
         guard let errorCode else { return nil }
-        if errorCode == "invalid-action-time" {
-            return "Couldn't save because this device's date and time look wrong. Fix them in Settings first."
-        }
-        if case .acknowledge = lastIntent { return "Couldn't dismiss this notice. Nothing changed on this device." }
-        return "Couldn't save your choices. Nothing changed on this device."
+        if errorCode == "invalid-action-time" { return copy.actionTimeInvalid }
+        if case .acknowledge = lastIntent { return copy.dismissFailed }
+        return copy.saveFailed
     }
     /// Google's Additional Consent only takes effect while TCF purposes 1, 3 and 4 are consented;
     /// the core records every provider as off otherwise. The provider page says so in those
@@ -322,14 +326,14 @@ public final class ConsentPresenter: ObservableObject {
                 failedAction = nil
                 suppressedPrompt = promptKey
                 presentationID = nil
-                if case .acknowledge = action { onAnnouncement?("Privacy notice acknowledged") }
-                else { onAnnouncement?("Privacy choices saved") }
+                if case .acknowledge = action { onAnnouncement?(copy.noticeAcknowledged) }
+                else { onAnnouncement?(copy.choicesSaved) }
                 onOutcome?(.saved)
             } else {
                 errorCode = outcome.1 ?? "save-rejected"
                 failedAction = action
                 stale = errorCode == "concurrent-change"
-                onAnnouncement?(stale ? iabCopy.appSettingsChanged : errorMessage ?? "Couldn't save your choices.")
+                onAnnouncement?(stale ? iabCopy.appSettingsChanged : errorMessage ?? copy.saveFailed)
             }
         }
     }

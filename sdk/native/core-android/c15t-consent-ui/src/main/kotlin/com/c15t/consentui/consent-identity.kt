@@ -36,8 +36,9 @@ internal data class HeaderIdentity(
     val provider: ConsentTheme.Branding? = null,
 ) {
     companion object {
-        fun resolve(context: Context, brand: ConsentTheme.Brand, provider: ConsentTheme.Branding): HeaderIdentity {
-            val name = brand.name ?: "Your brand here"
+        /** [placeholder] stands in for a brand with no name, in the screen's language. */
+        fun resolve(context: Context, brand: ConsentTheme.Brand, provider: ConsentTheme.Branding, placeholder: String): HeaderIdentity {
+            val name = brand.name ?: placeholder
             fun drawable(id: Int?): Int? = id?.takeIf {
                 runCatching { context.resources.getResourceTypeName(it) in listOf("drawable", "mipmap") }.getOrDefault(false)
             }
@@ -53,10 +54,10 @@ internal data class HeaderIdentity(
 }
 
 /** The mark is decorative; the replaceable brand label is read once. */
-@Composable internal fun IdentityHeader() {
+@Composable internal fun IdentityHeader(placeholder: String) {
     val theme = LocalConsentTheme.current
     val context = LocalContext.current
-    val identity = remember(theme.brand, theme.branding) { HeaderIdentity.resolve(context, theme.brand, theme.branding) }
+    val identity = remember(theme.brand, theme.branding, placeholder) { HeaderIdentity.resolve(context, theme.brand, theme.branding, placeholder) }
     val shape = RoundedCornerShape(22)
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         val tile = Modifier.size(56.dp).clip(shape)

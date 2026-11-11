@@ -141,10 +141,10 @@ data class ConsentTheme(
 
     /**
      * The replaceable app identity above the headline. The stock header uses the selected
-     * provider logo and "Your brand here" until the host supplies its own name or mark.
+     * provider logo and a placeholder name until the host supplies its own name or mark.
      */
     data class Brand(
-        /** Short name shown as an eyebrow. `null` uses "Your brand here". */
+        /** Short name shown as an eyebrow. `null` shows a placeholder in the policy's language. */
         val name: String? = null,
         /** Drawable resource for the mark. `null` uses the selected provider logo. An unreadable
          * explicit mark gets the name's initial. Rendered in a 56dp square tile. */
@@ -158,7 +158,7 @@ data class ConsentTheme(
         }
     }
 
-    /** Provider identity displayed after "Secured by". Built-in marks are bundled vectors. */
+    /** Provider identity displayed in the provider tag. Built-in marks are bundled vectors. */
     sealed interface Branding {
         val name: String
         data object C15t : Branding { override val name = "c15t" }
@@ -167,18 +167,20 @@ data class ConsentTheme(
         data class Custom(override val name: String, val markResId: Int? = null) : Branding
     }
 
-    /** First-layer copy a host may replace. Decision labels are not here on purpose. */
+    /**
+     * First-layer copy a host may replace. Decision labels are not here on purpose. A `null` field
+     * shows the stock copy from `@c15t/translations` in the policy's language; a host string is
+     * shown as given in every language.
+     */
     data class Copy(
         /** The headline. Keep it short: it is set in display type. */
-        val headline: String,
+        val headline: String? = null,
         /** The sentence under the headline. Partner and category details stay native. */
-        val introduction: String,
+        val introduction: String? = null,
     ) {
         companion object {
-            val c15t = Copy(
-                headline = "Your privacy, your choice.",
-                introduction = "We use data to improve your experience, measure how the app is used and show relevant advertising.",
-            )
+            /** The stock copy, translated. */
+            val c15t = Copy()
         }
     }
 

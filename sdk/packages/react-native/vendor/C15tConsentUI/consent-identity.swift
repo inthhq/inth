@@ -8,8 +8,10 @@ struct ResolvedIdentity {
     var icon: UIImage?
     var provider: ConsentTheme.Branding?
 
-    static func resolve(_ brand: ConsentTheme.Brand, provider: ConsentTheme.Branding, bundle: Bundle = .main) -> ResolvedIdentity {
-        let name = brand.name ?? "Your brand here"
+    /// `placeholder` stands in for a brand with no name, in the screen's language.
+    static func resolve(_ brand: ConsentTheme.Brand, provider: ConsentTheme.Branding, placeholder: String,
+        bundle: Bundle = .main) -> ResolvedIdentity {
+        let name = brand.name ?? placeholder
         if let mark = brand.markImageName {
             return ResolvedIdentity(name: name, icon: UIImage(named: mark, in: bundle, with: nil) ?? UIImage(named: mark))
         }

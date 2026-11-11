@@ -76,10 +76,17 @@ Other color and shape keys are declared in `ConsentTheme.InfoPlistKey`.
 
 ## Account for language and screen size
 
-The stock native action labels, navigation and category explanations currently
-use English. `ConsentTheme.Copy` changes the headline and introduction; it
-does not provide a complete localization dictionary. Changing the requested
-policy language does not translate all native UI strings.
+The stock screens read every label from `@c15t/translations`, in the policy's
+translation language: the language `/init` serves, or `overrides.language` in
+`CoreConfig`. Buttons, headings and category names use the web banner's keys,
+so they read "Accept All" and "Reject All". App-only sentences, such as the
+category explanations and save errors, come from native-only keys in the same
+package. A language c15t has no copy for falls back to English. IAB screens
+follow the served vendor list's language.
+
+`ConsentTheme.Copy` changes the headline and introduction. Leave a field `nil`
+to keep the translated stock copy; a string you set is shown as given in every
+language. It is not a localization dictionary for the other labels.
 
 The presenter follows Dynamic Type, safe areas and window geometry. On
 supported iOS layouts with enough side-column space, compact attribution can

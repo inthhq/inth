@@ -163,7 +163,7 @@ private fun ConsentDialog(presenter: ConsentPresenter, privacyPolicyUrl: String)
         BackHandler { back() }
         Box(Modifier.fillMaxSize().background(theme.colors.canvas.color()).semantics {
             testTagsAsResourceId = true
-            paneTitle = if (presenter.preferences) presenter.iabCopy.preferenceCenterTitle else theme.copy.headline
+            paneTitle = if (presenter.preferences) presenter.iabCopy.preferenceCenterTitle else theme.copy.headline ?: presenter.copy.headline
         }) {
             AnimatedContent(targetState = presenter.preferences, label = "consent-layer", transitionSpec = {
                 if (targetState) slideInHorizontally { it / 3 } + fadeIn() togetherWith slideOutHorizontally { -it / 3 } + fadeOut()
@@ -265,12 +265,12 @@ private enum class ButtonVariant { DECISION, ACCENT, QUIET }
  * the label's row so the label never moves and the equal-width layout never reflows mid-save.
  */
 @Composable private fun ConsentButton(text: String, id: String, enabled: Boolean, variant: ButtonVariant = ButtonVariant.DECISION,
-    progress: Boolean = false, onClick: () -> Unit) {
+    progress: Boolean = false, progressLabel: String = "", onClick: () -> Unit) {
     val theme = LocalConsentTheme.current
     val shape = RoundedCornerShape(theme.cornerRadius)
     val modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 52.dp).testTag(id).semantics {
         contentDescription = text
-        if (progress) stateDescription = "Saving choices"
+        if (progress) stateDescription = progressLabel
     }
     val label: @Composable () -> Unit = {
         Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -436,10 +436,10 @@ private fun showsPinnedStatus(p: ConsentPresenter) = !p.stale && p.failedAction 
     val theme = LocalConsentTheme.current
     val prefix = if (first) "c15t.first-layer" else if (p.iab) "c15t.iab" else "c15t.prefs"
     val errorId = (if (first) "c15t.first-layer" else "c15t.prefs") + ".error"
-    // IAB labels come from the generated translations, as on the web; the category UI keeps its own.
-    val rejectAll = if (p.iab) p.iabCopy.commonRejectAll else "Reject all"
-    val acceptAll = if (p.iab) p.iabCopy.commonAcceptAll else "Accept all"
-    val save = if (p.iab) p.iabCopy.commonSaveSettings else "Save choices"
+    // Both modes take their labels from the generated translations, as on the web.
+    val rejectAll = if (p.iab) p.iabCopy.commonRejectAll else p.copy.rejectAll
+    val acceptAll = if (p.iab) p.iabCopy.commonAcceptAll else p.copy.acceptAll
+    val save = if (p.iab) p.iabCopy.commonSaveSettings else p.copy.save
     // Only the pressed action shows progress; the rest are disabled with their labels intact.
     fun busy(action: ConsentPresenter.Action) = p.showProgress && p.pendingAction == action
     @Composable fun reload() = ConsentButton(p.iabCopy.appLoadCurrentSettings, "c15t.prefs.stale.reload", !p.pending, ButtonVariant.ACCENT) { p.loadDraft() }
@@ -448,7 +448,7 @@ private fun showsPinnedStatus(p: ConsentPresenter) = !p.stale && p.failedAction 
     @Composable fun decision(label: String, action: ConsentPresenter.Action) {
         val suffix = when (action) { ConsentPresenter.Action.ACCEPT -> "accept-all"; ConsentPresenter.Action.REJECT -> "reject-all"; ConsentPresenter.Action.SAVE -> "save"; ConsentPresenter.Action.ACKNOWLEDGE -> "acknowledge" }
         val variant = if (action == ConsentPresenter.Action.SAVE) ButtonVariant.ACCENT else if (first) ButtonVariant.DECISION else ButtonVariant.QUIET
-        ConsentButton(label, "$prefix.$suffix", !p.pending, variant, progress = busy(action)) { p.commit(action) }
+        ConsentButton(label, "$prefix.$suffix", !p.pending, variant, progress = busy(action), progressLabel = p.copy.saving) { p.commit(action) }
     }
     @Composable fun decisions() {
         if (p.snapshot.policyPending) {
@@ -465,8 +465,8 @@ private fun showsPinnedStatus(p: ConsentPresenter) = !p.stale && p.failedAction 
                 decision(acceptAll, ConsentPresenter.Action.ACCEPT)
             }
             if (first) {
-                ConsentButton(if (p.iab) p.iabCopy.commonCustomize else "Customize", "c15t.first-layer.customize", !p.pending, ButtonVariant.QUIET) { p.customize() }
-                if (theme.showsBranding) Branding()
+                ConsentButton(if (p.iab) p.iabCopy.commonCustomize else p.copy.customize, "c15t.first-layer.customize", !p.pending, ButtonVariant.QUIET) { p.customize() }
+                if (theme.showsBranding) Branding(p.copy.securedBy)
             } else if (part == DecisionPart.ALL) decision(save, ConsentPresenter.Action.SAVE)
         }
     }
@@ -503,7 +503,7 @@ private fun showsPinnedStatus(p: ConsentPresenter) = !p.stale && p.failedAction 
     }
 }
 
-@Composable private fun Branding() { ProviderBranding() }
+@Composable private fun Branding(securedBy: String) { ProviderBranding(securedBy) }
 
 // MARK: First layer
 
@@ -517,15 +517,15 @@ private fun showsPinnedStatus(p: ConsentPresenter) = !p.stale && p.failedAction 
     Scaffold(containerColor = theme.colors.canvas.color(), bottomBar = { DecisionFooter(p, first = true) }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).testTag("c15t.first-layer"), horizontalAlignment = Alignment.CenterHorizontally) {
             Column(Modifier.widthIn(max = ContentWidth).fillMaxWidth().padding(start = 24.dp, end = 24.dp, top = 32.dp, bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
-                if (!theme.brand.hidden) IdentityHeader()
+                if (!theme.brand.hidden) IdentityHeader(p.copy.brandPlaceholder)
                 when (p.snapshot.promptRequirement.reason?.wireName) {
-                    "expired" -> InfoCallout(Modifier.testTag("c15t.first-layer.reason")) { Text("Your earlier choice has expired, so we're asking again.") }
-                    "policy-changed" -> InfoCallout(Modifier.testTag("c15t.first-layer.reason")) { Text("How this app uses data has changed since your last choice, so we're asking again.") }
+                    "expired" -> InfoCallout(Modifier.testTag("c15t.first-layer.reason")) { Text(p.copy.choiceExpired) }
+                    "policy-changed" -> InfoCallout(Modifier.testTag("c15t.first-layer.reason")) { Text(p.copy.policyChanged) }
                 }
-                Heading(theme.copy.headline, "c15t.first-layer.title", headlineStyle(theme))
+                Heading(theme.copy.headline ?: p.copy.headline, "c15t.first-layer.title", headlineStyle(theme))
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(theme.copy.introduction, style = MaterialTheme.typography.bodyLarge, color = theme.colors.text.color(), modifier = Modifier.testTag("c15t.first-layer.body"))
-                    if (!p.iab) Body("You decide which uses to allow, and you can change your mind at any time in Privacy settings.")
+                    Text(theme.copy.introduction ?: p.copy.introduction, style = MaterialTheme.typography.bodyLarge, color = theme.colors.text.color(), modifier = Modifier.testTag("c15t.first-layer.body"))
+                    if (!p.iab) Body(p.copy.firstLayerDescription)
                 }
                 if (p.iab) IabFirstLayer(p, partners)
                 PolicyLink(policyUrl, p.iabCopy)
@@ -591,12 +591,12 @@ private fun showsPinnedStatus(p: ConsentPresenter) = !p.stale && p.failedAction 
     Surface(Modifier.padding(12.dp).widthIn(max = ContentWidth).semantics { testTagsAsResourceId = true }.testTag("c15t.notice"),
         shape = shape, color = theme.colors.surface.color(), shadowElevation = 6.dp, border = BorderStroke(1.dp, theme.colors.text.color().copy(alpha = 0.1f))) {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Heading("How this app uses your data", "c15t.notice.title", MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold))
-            Body("You can review or change this at any time in Privacy settings.")
+            Heading(presenter.copy.noticeTitle, "c15t.notice.title", MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold))
+            Body(presenter.copy.noticeDescription)
             EqualDecisions {
-                ConsentButton("Got it", "c15t.notice.acknowledge", !presenter.pending,
-                    progress = presenter.showProgress && presenter.pendingAction == ConsentPresenter.Action.ACKNOWLEDGE) { presenter.commit(ConsentPresenter.Action.ACKNOWLEDGE) }
-                ConsentButton("Privacy settings", "c15t.notice.settings", !presenter.pending, ButtonVariant.QUIET) { presenter.presentPreferences() }
+                ConsentButton(presenter.copy.acknowledge, "c15t.notice.acknowledge", !presenter.pending,
+                    progress = presenter.showProgress && presenter.pendingAction == ConsentPresenter.Action.ACKNOWLEDGE, progressLabel = presenter.copy.saving) { presenter.commit(ConsentPresenter.Action.ACKNOWLEDGE) }
+                ConsentButton(presenter.copy.privacySettings, "c15t.notice.settings", !presenter.pending, ButtonVariant.QUIET) { presenter.presentPreferences() }
             }
             PolicyLink(privacyPolicyUrl, presenter.iabCopy)
             presenter.errorMessage?.let { FailureRow(it, "c15t.notice.error", !presenter.pending, presenter.iabCopy.appTryAgain, presenter::retry) }
@@ -659,17 +659,17 @@ private fun LazyListScope.group(count: Int, key: (Int) -> Any, content: @Composa
 }
 
 @Composable private fun Category(p: ConsentPresenter, c: ConsentCategory) {
-    val title = if (c == ConsentCategory.NECESSARY) "Strictly necessary" else c.wireName.replaceFirstChar { it.titlecase() }
-    val description = when (c) {
-        ConsentCategory.NECESSARY -> "Required for the app to work."
-        ConsentCategory.FUNCTIONALITY -> "Remember your settings and choices."
-        ConsentCategory.EXPERIENCE -> "Adapt the app to how you use it."
-        ConsentCategory.MEASUREMENT -> "Help us understand how the app is used."
-        ConsentCategory.MARKETING -> "Show advertising relevant to you."
+    val copy = p.copy
+    val (title, description) = when (c) {
+        ConsentCategory.NECESSARY -> copy.necessaryTitle to copy.necessaryDescription
+        ConsentCategory.FUNCTIONALITY -> copy.functionalityTitle to copy.functionalityDescription
+        ConsentCategory.EXPERIENCE -> copy.experienceTitle to copy.experienceDescription
+        ConsentCategory.MEASUREMENT -> copy.measurementTitle to copy.measurementDescription
+        ConsentCategory.MARKETING -> copy.marketingTitle to copy.marketingDescription
     }
     if (c.optional && !p.restricted(c)) ChoiceRow(title, description, p.categories[c] == true, "c15t.prefs.category.${c.wireName}.switch", !p.pending && !p.stale && !p.listUnavailable) { p.setCategory(c, it) }
     else StatusRow(title, description, if (c.optional) p.iabCopy.appOff else p.iabCopy.appAlwaysOn, "c15t.prefs.category.${c.wireName}.locked",
-        note = if (c.optional) (if ("gpc" in p.snapshot.restrictions[c.wireName].orEmpty()) "Off because your device sends a Global Privacy Control signal." else "Not offered where you are.") else null,
+        note = if (c.optional) (if ("gpc" in p.snapshot.restrictions[c.wireName].orEmpty()) copy.restrictedByGpc else copy.notOffered) else null,
         noteTag = if (c.optional) "c15t.prefs.category.${c.wireName}.restricted" else null)
 }
 
@@ -712,7 +712,7 @@ private fun LazyListScope.group(count: Int, key: (Int) -> Any, content: @Composa
                         TextButton(onClick = { partners(null) }, contentPadding = PaddingValues(horizontal = 4.dp), modifier = Modifier.testTag("c15t.iab.partner-count")) {
                             Text(p.iabCopy.format(p.iabCopy.appIabPartnerCount, mapOf("count" to "${p.disclosure?.vendors?.size ?: 0}")), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = theme.colors.accent.color())
                         }
-                    } else Body("Choose which kinds of data use you allow. Changes apply on this device as soon as you save.")
+                    } else Body(p.copy.preferencesDescription)
                 }
             }
             if (page && showsShortcuts(p)) item { DecisionGroup(p, first = false, DecisionPart.SHORTCUTS, Modifier.padding(start = 8.dp, end = 8.dp, top = 8.dp)) }
