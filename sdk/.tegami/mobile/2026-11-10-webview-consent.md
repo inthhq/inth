@@ -17,7 +17,8 @@ banner.
   `null` without it. c15t-android now depends on `androidx.webkit` 1.14.0.
 
 Only the top frame of a listed origin receives the state: permissions, model,
-the committed IAB TC string and a GPP slot. The subject ID stays in the app.
+the committed IAB TC string and, when GPP is on, the GPP string. The subject ID
+stays in the app.
 Consent flows from the app to the page; a page can only ask the app to open its
 preferences, and that request must carry a key only the page's top frame
 holds. `WebViewConsentScript`, `WebViewConsentState` and `WebViewConsentSync`
