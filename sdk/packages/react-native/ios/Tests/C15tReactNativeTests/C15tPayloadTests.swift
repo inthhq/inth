@@ -168,6 +168,14 @@ final class C15tPayloadTests: XCTestCase {
         XCTAssertEqual(listed.first?["purposes"] as? [Int], [1, 3])
         XCTAssertNil(listed.first?["description"], "absent optionals stay out, as Kotlin writes them")
         XCTAssertEqual(((jsonObject(C15tPayload.snapshot(snapshot))["iab"] as? [String: Any])?["customVendors"] as? [Any])?.count, 0)
+        // The same state crosses as the same bytes, every time.
+        var accepted = IABChoices()
+        accepted.customVendorConsents = ["chat", "internal-ads"]
+        accepted.customVendorLegitimateInterests = ["internal-ads"]
+        let first = C15tPayload.snapshot(snapshot, iabAcceptAll: accepted, iabCustomVendors: [vendor, vendor])
+        for _ in 0..<20 {
+            XCTAssertEqual(C15tPayload.snapshot(snapshot, iabAcceptAll: accepted, iabCustomVendors: [vendor, vendor]), first)
+        }
 
         let lists = #""purposeConsents":[],"purposeLegitimateInterests":[],"purposeObjections":[],"vendorConsents":[],"vendorLegitimateInterests":[],"vendorObjections":[],"specialFeatureOptIns":[],"publisherConsents":[],"publisherLegitimateInterests":[],"publisherCustomConsents":[],"publisherCustomLegitimateInterests":[]"#
         let raw = #"{"action":"iab","choices":{"# + lists + #","customVendorConsents":["internal-ads"],"customVendorLegitimateInterests":[]},"consents":{}}"#
@@ -351,10 +359,16 @@ final class C15tPayloadTests: XCTestCase {
     }
 
     func testACommitBuiltOnAnOlderRevisionIsRefusedAndChangesNothing() throws {
+        let store = InMemoryStore()
         let core = ConsentCore()
-        core.bootstrap(CoreConfig(store: InMemoryStore()))
+        core.bootstrap(CoreConfig(store: store))
         let current = core.snapshot().revision
-        let before = try JSONEncoder().encode(core.snapshot())
+        // Sorted keys, as the store writes: a plain `JSONEncoder` builds each object from a fresh
+        // dictionary, so its key order can differ between two encodes of one unchanged value.
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys]
+        let before = try encoder.encode(core.snapshot())
+        let stored = store.data(for: StorageKey.snapshot)
 
         XCTAssertEqual(
             jsonObject(C15tPayload.bootstrap(snapshot: core.snapshot(), hasStoredSnapshot: false))["commitRevision"] as? Bool,
@@ -363,7 +377,8 @@ final class C15tPayloadTests: XCTestCase {
             #"{"action":"explicit","consents":{"marketing":true},"revision":\#(current - 1)}"#, core: core))
         XCTAssertEqual(stale["ok"] as? Bool, false)
         XCTAssertEqual(stale["reason"] as? String, "concurrent-change")
-        XCTAssertEqual(try JSONEncoder().encode(core.snapshot()), before, "a refused draft must not touch the record")
+        XCTAssertEqual(try encoder.encode(core.snapshot()), before, "a refused draft must not touch the record")
+        XCTAssertEqual(store.data(for: StorageKey.snapshot), stored, "a refused draft writes nothing")
 
         for raw in [
             #"{"action":"explicit","consents":{"marketing":true},"revision":"\#(current)"}"#,
@@ -373,7 +388,8 @@ final class C15tPayloadTests: XCTestCase {
             XCTAssertEqual(jsonObject(C15tPayload.commit(raw, core: core))["reason"] as? String, "invalid-intent",
                 "a revision that is not a whole number is not ignored: \(raw)")
         }
-        XCTAssertEqual(try JSONEncoder().encode(core.snapshot()), before)
+        XCTAssertEqual(try encoder.encode(core.snapshot()), before)
+        XCTAssertEqual(store.data(for: StorageKey.snapshot), stored)
 
         let pinned = jsonObject(C15tPayload.commit(
             #"{"action":"explicit","consents":{"marketing":true},"revision":\#(current)}"#, core: core))

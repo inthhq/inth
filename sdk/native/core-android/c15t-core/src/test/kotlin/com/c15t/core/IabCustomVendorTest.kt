@@ -118,6 +118,33 @@ class IabCustomVendorTest {
 		assertEquals(emptyList(), cold.iabConsent?.choices?.customVendorLegitimateInterests)
 	}
 
+	/**
+	 * What reaches the store and the backend is a pure function of the state: the same state encodes
+	 * to the same bytes however many times it is written, with custom vendors in it.
+	 */
+	@Test fun `the stored envelope and save body are the same bytes for the same state`() {
+		val backend = InMemoryKeyValueStore()
+		val store = C15tStore(backend)
+		val core = boot(store)
+		val draft = assertNotNull(core.openIabDraft())
+		// Out of order on purpose: the stored decision sorts them.
+		val choices = draft.choices.copy(
+			customVendorConsents = listOf("internal-ads", "chat"),
+			customVendorLegitimateInterests = listOf("internal-ads", "1000482"),
+		)
+		assertTrue(core.saveIab(draft.copy(choices = choices), emptyMap()).ok)
+		val bytes = assertNotNull(backend.read(C15tStoreKeys.SNAPSHOT))
+		val envelope = C15tJson.storage.decodeFromString(SnapshotEnvelope.serializer(), bytes)
+		assertEquals(listOf("chat", "internal-ads"), envelope.iabConsent?.choices?.customVendorConsents)
+		assertEquals(listOf("1000482", "internal-ads"), envelope.iabConsent?.choices?.customVendorLegitimateInterests)
+		assertEquals(listOf("internal-ads", "1000482", "chat"), envelope.customVendors?.map { it.id })
+		val body = assertNotNull(store.readPending().single().body)
+		repeat(20) {
+			assertEquals(bytes, C15tJson.storage.encodeToString(SnapshotEnvelope.serializer(), envelope))
+			assertEquals(body, assertNotNull(store.readPending().single().body))
+		}
+	}
+
 	@Test fun `a draft grants only what a vendor declares`() {
 		val core = boot()
 		val draft = assertNotNull(core.openIabDraft())

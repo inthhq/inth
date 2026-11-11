@@ -395,6 +395,12 @@ class C15tPayloadTest {
 		assertFalse("absent optionals stay out, as Swift writes them", "description" in listed)
 		assertEquals(0, parse(C15tPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list))))
 			.getValue("iab").jsonObject.getValue("customVendors").jsonArray.size)
+		// The same state crosses as the same bytes, every time.
+		val accepted = IabChoices(customVendorConsents = listOf("chat", "internal-ads"), customVendorLegitimateInterests = listOf("internal-ads"))
+		val first = C15tPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list)), iabAcceptAll = accepted, iabCustomVendors = listOf(vendor, vendor))
+		repeat(20) {
+			assertEquals(first, C15tPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list)), iabAcceptAll = accepted, iabCustomVendors = listOf(vendor, vendor)))
+		}
 
 		val lists = """"purposeConsents":[],"purposeLegitimateInterests":[],"purposeObjections":[],"vendorConsents":[],""" +
 			""""vendorLegitimateInterests":[],"vendorObjections":[],"specialFeatureOptIns":[],"publisherConsents":[],""" +

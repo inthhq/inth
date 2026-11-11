@@ -129,6 +129,39 @@ final class IABCustomVendorTests: XCTestCase {
         XCTAssertEqual(cold.iabConsent()?.choices.customVendorLegitimateInterests, [])
     }
 
+    /// What reaches the store and the backend is a pure function of the state: the same state
+    /// encodes to the same bytes however many times it is written, with custom vendors in it.
+    func testTheStoredEnvelopeAndSaveBodyAreTheSameBytesForTheSameState() async throws {
+        let v = try fixture()
+        let store = InMemoryStore()
+        let core = try await boot(v, store: store)
+        var draft = try XCTUnwrap(core.openIABDraft())
+        // Out of order on purpose: the stored decision sorts them.
+        draft.choices.customVendorConsents = ["internal-ads", "chat"]
+        draft.choices.customVendorLegitimateInterests = ["internal-ads", "1000482"]
+        XCTAssertEqual(core.saveIAB(draft, categories: [:]).status, .committed)
+        await core.waitUntilIdle()
+        let bytes = try XCTUnwrap(store.data(for: StorageKey.snapshot))
+        let envelope = try XCTUnwrap(StoredEnvelope.decode(bytes))
+        XCTAssertEqual(envelope.iabConsent?.choices.customVendorConsents, ["chat", "internal-ads"])
+        XCTAssertEqual(envelope.iabConsent?.choices.customVendorLegitimateInterests, ["1000482", "internal-ads"])
+        XCTAssertEqual(envelope.customVendors?.map(\.id), ["internal-ads", "1000482", "chat"])
+        let body = try XCTUnwrap(envelope.pendingSaves?.first?.body)
+        for _ in 0..<20 {
+            XCTAssertEqual(try C15tJSON.encode(envelope), bytes, "the envelope re-encodes to the bytes stored")
+            let again = try XCTUnwrap(StoredEnvelope.decode(try C15tJSON.encode(envelope)))
+            XCTAssertEqual(again.pendingSaves?.first?.body, body)
+        }
+        // What a relaunch writes is stable too, and keeps the lists as they were.
+        let cold = ConsentCore()
+        cold.bootstrap(CoreConfig(store: store, iab: v.configuration, now: { v.now }, flushPendingOnBootstrap: false))
+        let relaunched = try XCTUnwrap(store.data(for: StorageKey.snapshot))
+        let restored = try XCTUnwrap(StoredEnvelope.decode(relaunched))
+        XCTAssertEqual(try C15tJSON.encode(restored), relaunched)
+        XCTAssertEqual(restored.customVendors, envelope.customVendors)
+        XCTAssertEqual(restored.iabConsent?.choices, envelope.iabConsent?.choices)
+    }
+
     func testADraftGrantsOnlyWhatAVendorDeclares() async throws {
         let v = try fixture()
         let core = try await boot(v)
