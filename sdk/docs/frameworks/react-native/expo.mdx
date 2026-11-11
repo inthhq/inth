@@ -218,9 +218,12 @@ For a feature that needs Apple's tracking authorization, set
 `trackingMarkdownUsageDescription`, its localization map,
 `skAdNetworkIdentifiers` and `privacyTrackingDomains`.
 
-These options configure native declarations. Your app explicitly calls
-`requestTrackingAuthorization()` at the appropriate point in its flow. A c15t
-consent grant does not trigger or replace the system prompt. Read
+Once ATT is enabled, `<ConsentProvider>` asks for it after the consent prompt
+closes, and only if the person granted marketing. Set `trackingRequest` to
+`beforeConsent` or `manual` to change that. A c15t consent grant does not
+replace Apple's answer. Read
+[ask for ATT after the consent prompt](/docs/frameworks/react-native/iab#ask-for-att-after-the-consent-prompt)
+for the order and the App Store reasoning, and
 [ATT and ads](/docs/frameworks/react-native/iab#keep-att-separate) before adding
 an advertising SDK.
 

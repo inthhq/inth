@@ -289,24 +289,58 @@ final class AutoPresentTests: XCTestCase {
     private func runSequence(seed: UInt64, fixture: String) async throws {
         var random = SeededRandom(seed: seed)
         let (core, peer) = try await boot(fixture)
-        let prompt = ConsentPrompt.shared(for: core)
+        // App Tracking Transparency rides along: enabled or not, with or without the EU sheet,
+        // and Apple's answer held back and delivered at arbitrary points.
+        let apple = TrackingSequenceTests.Apple()
+        apple.promptString = seed % 3 != 0
+        apple.additionalInformation = seed % 4 == 0
+        let prompt = ConsentPrompt(core: core, tracking: apple.controller, isActive: { apple.active },
+                                   becameActive: apple.activations.eraseToAnyPublisher())
         let presenter = prompt.presenter
+        var trackingFailures: [String] = []
+        /// The app called `ConsentPrompt.presentPrompt()`; the session it opens, maybe later, is the app's.
+        var appAsked = false
+        apple.onAsk = {
+            // ATT invariants, at the moment Apple is asked.
+            if presenter.presentationID != nil || presenter.noticeVisible || presenter.covering {
+                trackingFailures.append("asked while a c15t screen is up")
+            }
+            if prompt.trackingRequest == .manual { trackingFailures.append("asked in manual") }
+            let s = core.snapshot()
+            if s.explicitChoice?.categories[.marketing]?.value == false {
+                trackingFailures.append("asked after marketing was refused")
+            }
+            if prompt.trackingRequest == .afterConsent, ConsentDecision(snapshot: s, category: .marketing) != .granted {
+                trackingFailures.append("asked after consent without marketing granted")
+            }
+            if !apple.additionalInformation, apple.asks > 1 { trackingFailures.append("asked twice in one launch") }
+            if !apple.promptString { trackingFailures.append("asked without the prompt string") }
+        }
         /// One attached scene, with the UIKit touch region a root view controller would give it.
         @MainActor final class Scene {
             let region = NoticeTouchRegion(hostID: UUID())
             var autoPresent: Bool
             var active: Bool
-            init(_ prompt: ConsentPrompt, autoPresent: Bool, active: Bool) {
+            var tracking: ConsentTrackingRequest
+            init(_ prompt: ConsentPrompt, autoPresent: Bool, active: Bool,
+                 tracking: ConsentTrackingRequest = .afterConsent) {
                 self.autoPresent = autoPresent
                 self.active = active
+                self.tracking = tracking
                 region.prompt = prompt
                 region.frame = CGRect(x: 0, y: 600, width: 400, height: 200)
             }
         }
-        var scenes = [Scene(prompt, autoPresent: true, active: true)]
+        let modes = ConsentTrackingRequest.allCases
+        var scenes = [Scene(prompt, autoPresent: true, active: true, tracking: modes[Int(seed % 3)])]
         // Every scene claims again when the drawing scene or its state changes, as the SwiftUI host does.
         func reclaim() {
-            for _ in 0..<3 { for scene in scenes { prompt.attach(scene.region.hostID, active: scene.active, autoPresent: scene.autoPresent) } }
+            for _ in 0..<3 {
+                for scene in scenes {
+                    prompt.attach(scene.region.hostID, active: scene.active, autoPresent: scene.autoPresent,
+                                  trackingRequest: scene.tracking)
+                }
+            }
         }
         reclaim()
         /// Who asked for the open session: the app, the scene it opened for, or nobody.
@@ -327,7 +361,8 @@ final class AutoPresentTests: XCTestCase {
             await until { presenter.snapshot.revision == core.snapshot().revision && !presenter.pending }
         }
         let actions = ["saved", "reset", "policy", "preferences", "manual", "discard", "customize", "accept", "save",
-                       "toggle", "dismiss-notice", "acknowledge", "attach", "detach", "background"]
+                       "toggle", "dismiss-notice", "acknowledge", "attach", "detach", "background",
+                       "reject", "att-mode", "app-state", "apple-hold", "apple-answer", "app-prompt"]
         for _ in 0..<40 {
             let action = actions[Int(random.next() % UInt64(actions.count))]
             trace.append(action)
@@ -361,10 +396,30 @@ final class AutoPresentTests: XCTestCase {
                     presenter.commit(.save)
                 }
             case "dismiss-notice": _ = core.dismissNotice()
+            case "reject": if presenter.presentationID != nil { presenter.commit(.reject) }
+            case "att-mode":
+                if !scenes.isEmpty {
+                    let index = Int(random.next() % UInt64(scenes.count))
+                    scenes[index].tracking = modes[Int(random.next() % UInt64(modes.count))]
+                    trace.append("scene \(index) tracking=\(scenes[index].tracking)")
+                    reclaim()
+                }
+            case "app-state":
+                apple.active.toggle()
+                if apple.active { apple.activations.send() }
+            case "apple-hold": apple.hold.toggle()
+            case "apple-answer": apple.reply()
+            case "app-prompt":
+                // The public call, which beforeConsent holds until Apple has been asked.
+                appAsked = true
+                let s = core.snapshot()
+                if presenter.presentationID == nil, !presenter.pending, s.promptRequirement.kind == .notice { requested = key() }
+                prompt.presentPrompt()
             case "acknowledge": if presenter.noticeVisible { presenter.commit(.acknowledge) }
             case "attach":
                 if scenes.count < 4 {
-                    let scene = Scene(prompt, autoPresent: random.next() % 2 == 0, active: random.next() % 2 == 0)
+                    let scene = Scene(prompt, autoPresent: random.next() % 2 == 0, active: random.next() % 2 == 0,
+                                      tracking: modes[Int(random.next() % UInt64(modes.count))])
                     scenes.append(scene)
                     trace.append("scene \(scenes.count - 1) autoPresent=\(scene.autoPresent) active=\(scene.active)")
                     reclaim()
@@ -395,7 +450,14 @@ final class AutoPresentTests: XCTestCase {
             let opened = presenter.presentationID
             let failure = "seed \(seed) (\(fixture)) after \(trace)"
             if let opened, opened != before {
-                opener = action == "manual" || action == "preferences" ? .app : prompt.host.map(Opener.scene) ?? .nobody
+                // beforeConsent: a prompt never opens while Apple would be asked and has not answered.
+                if !presenter.preferences || presenter.returnsToFirstLayer, action != "manual",
+                   prompt.trackingRequest == .beforeConsent, apple.answers == 0, prompt.holdsForTracking {
+                    trackingFailures.append("a beforeConsent prompt opened before Apple was asked")
+                }
+                let byApp = action == "manual" || action == "preferences" || appAsked
+                appAsked = false
+                opener = byApp ? .app : prompt.host.map(Opener.scene) ?? .nobody
                 if opener != .app, dismissed == key() {
                     return XCTFail("a dismissed prompt opened by itself, \(failure)")
                 }
@@ -403,9 +465,12 @@ final class AutoPresentTests: XCTestCase {
             // A scene that auto-presents would have opened it itself, so it takes it over.
             if opened != nil, opener != .app, let drawing, drawing.autoPresent { opener = .scene(drawing.region.hostID) }
             if opened == nil { opener = .nobody }
-            if presenter.autoPresent != (drawing?.autoPresent ?? false) {
+            // (d), with one hold: beforeConsent keeps the prompt back until Apple was asked or skipped.
+            let held = drawing != nil && prompt.holdsForTracking
+            if presenter.autoPresent != ((drawing?.autoPresent ?? false) && !held) {
                 return XCTFail("auto-present is not the drawing scene's, \(failure)")
             }
+            if let first = trackingFailures.first { return XCTFail("\(first), \(failure)") }
             if let drawing, !drawing.autoPresent, opened != nil, opener != .app, opener != .scene(drawing.region.hostID) {
                 return XCTFail("a scene that opted out draws a prompt it did not ask for, \(failure)")
             }

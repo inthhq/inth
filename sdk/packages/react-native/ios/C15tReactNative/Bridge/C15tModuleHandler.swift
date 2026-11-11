@@ -199,10 +199,11 @@ public struct C15tModuleHandler {
             (core?.iabConsent(), core?.iabAcceptAllChoices(), core.map {
                 C15tPayload.headlessIABGaps(
                     publisherRestrictions: $0.iabPublisherRestrictions, adTechProviders: $0.adTechProviderDisclosures())
-            } ?? [])
+            } ?? [], core.flatMap { C15tTrackingConsent.iabMarketingConsented($0) })
         }
         return C15tPayload.snapshot(snapshot, fallbackLanguage: deviceLanguage,
-            iabConsent: additions.0, iabAcceptAll: additions.1, iabHeadlessGaps: additions.2)
+            iabConsent: additions.0, iabAcceptAll: additions.1, iabHeadlessGaps: additions.2,
+            iabMarketingPurposes: additions.3)
     }
 
     /// The `getWebViewConsent()` payload: `{ state, token, key }`.
@@ -225,7 +226,8 @@ public struct C15tModuleHandler {
             C15tTrackingGate.authorization(
                 platform: trackingPlatformStatus(),
                 promptStringPresent: trackingPromptStringPresent()
-            )
+            ),
+            answeredAt: trackingPromptStringPresent() ? trackingController.lastAnswerDate() : nil
         )
     }
 

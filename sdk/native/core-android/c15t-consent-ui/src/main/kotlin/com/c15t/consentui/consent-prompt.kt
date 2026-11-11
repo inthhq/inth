@@ -40,8 +40,12 @@ import java.util.WeakHashMap
 class ConsentPrompt private constructor(val core: ConsentCore) {
     private val store = ViewModelStore()
 
-    /** The presenter behind the prompt. Auto-present stays off until a screen attaches. */
-    val presenter: ConsentPresenter = ViewModelProvider(store, object : ViewModelProvider.Factory {
+    /**
+     * The presenter behind the prompt. Auto-present stays off until a screen attaches. Internal:
+     * opening it directly would skip the host rules, so apps open the prompt through
+     * [presentPrompt] and [presentPreferences].
+     */
+    internal val presenter: ConsentPresenter = ViewModelProvider(store, object : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             @Suppress("UNCHECKED_CAST")
             return ConsentPresenter(core, autoPresent = false) as T

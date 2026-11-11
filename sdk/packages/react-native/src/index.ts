@@ -203,6 +203,8 @@ export type {
 	ConsentProviderBaseProps,
 	ConsentProviderPromptProps,
 	ConsentProviderProps,
+	ConsentTrackingReprompt,
+	ConsentTrackingRequest,
 } from './provider';
 export type { ConsentSafeAreaInsets } from './provider';
 

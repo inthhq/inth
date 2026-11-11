@@ -124,7 +124,7 @@ of dismissing an overlapping React dialog.
 | `logout()` | Detach that external identity. |
 | `reset()` | Clear local consent authority and require a new choice while keeping the c15t subject. |
 | `setOverrides(overrides)` | Set QA country, region, language or GPC inputs. |
-| `requestTrackingAuthorization()` | Explicitly request Apple's separate tracking authorization where supported. |
+| `requestTrackingAuthorization()` | Request Apple's separate tracking authorization where supported. `<ConsentProvider>` already asks after consent unless `trackingRequest="manual"`. |
 
 Await asynchronous actions and handle their errors. See
 [identity and reset](/docs/frameworks/react-native/identity),

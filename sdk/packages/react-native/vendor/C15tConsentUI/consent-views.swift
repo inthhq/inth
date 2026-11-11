@@ -226,12 +226,14 @@ private struct ConsentPresentationModifier: ViewModifier {
                         .environment(\.consentTheme, theme).environment(\.failureFocus, failureFocus).environment(\.iabCopy, presenter.iabCopy).environment(\.consentCopy, presenter.copy)
                 }
             }
-            .fullScreenCover(item: session(fullScreen: true)) { session in
+            .fullScreenCover(item: session(fullScreen: true), onDismiss: { presenter.coverDismissed() }) { session in
                 ConsentScreen(presenter: presenter, privacyPolicyURL: privacyPolicyURL).id(session.id)
+                    .onAppear { presenter.coverAppeared() }
                     .environment(\.consentTheme, theme).environment(\.failureFocus, failureFocus).environment(\.iabCopy, presenter.iabCopy).environment(\.consentCopy, presenter.copy)
             }
-            .sheet(item: session(fullScreen: false)) { session in
+            .sheet(item: session(fullScreen: false), onDismiss: { presenter.coverDismissed() }) { session in
                 ConsentScreen(presenter: presenter, privacyPolicyURL: privacyPolicyURL).id(session.id)
+                    .onAppear { presenter.coverAppeared() }
                     .environment(\.consentTheme, theme).environment(\.failureFocus, failureFocus).environment(\.iabCopy, presenter.iabCopy).environment(\.consentCopy, presenter.copy)
                     .presentationDetents([.large]).presentationDragIndicator(.hidden)
             }

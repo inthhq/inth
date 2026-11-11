@@ -8,6 +8,10 @@ export type {
 	ConsentProviderPromptProps,
 	ConsentProviderProps,
 } from './consent-provider';
+export type {
+	ConsentTrackingReprompt,
+	ConsentTrackingRequest,
+} from './tracking-sequence';
 export { ConsentClientContext, useConsentClient } from './consent-context';
 export { ConsentSafeAreaContext } from './safe-area-context';
 export type { ConsentSafeAreaInsets } from './safe-area-context';

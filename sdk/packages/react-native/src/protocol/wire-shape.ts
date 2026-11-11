@@ -72,7 +72,10 @@ export const SNAPSHOT_KEYS = [
  * became owed, which the auto-present ledger uses to tell a new owed prompt from one
  * it already presented when the bridge delivered only the latest snapshot.
  */
-export const BRIDGE_SNAPSHOT_KEYS = ['promptOwedSince'] as const;
+export const BRIDGE_SNAPSHOT_KEYS = [
+	'promptOwedSince',
+	'iabMarketingPurposes',
+] as const;
 
 /**
  * Snapshot keys added after protocol version 1 shipped, with the value an older native
@@ -88,11 +91,14 @@ export const BRIDGE_SNAPSHOT_KEYS = ['promptOwedSince'] as const;
  * absence cannot be answered that way needs a protocol version instead.
  *
  * `gppString: null` means the build writes no GPP string, which is also what a build
- * with GPP off reports. `promptOwedSince: null` means the build names no owed prompt,
- * so auto-present falls back to telling prompts apart by the transitions it observes.
+ * with GPP off reports. `iabMarketingPurposes: null` means no TC String answer is
+ * known, so the ATT sequence does not ask under an IAB policy. `promptOwedSince: null`
+ * means the build names no owed prompt, so auto-present falls back to telling prompts
+ * apart by the transitions it observes.
  */
 export const ADDITIVE_SNAPSHOT_DEFAULTS = {
 	gppString: null,
+	iabMarketingPurposes: null,
 	promptOwedSince: null,
 } as const satisfies Partial<
 	Record<

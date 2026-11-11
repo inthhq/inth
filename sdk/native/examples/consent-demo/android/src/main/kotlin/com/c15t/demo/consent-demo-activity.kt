@@ -51,9 +51,9 @@ class ConsentDemoActivity : ComponentActivity() {
                 else {
                     // The app-wide prompt the one-line composable attaches to, so the journeys run
                     // the default auto-present path.
-                    val presenter = remember(core) { ConsentPrompt.of(core) }.presenter
+                    val prompt = remember(core) { ConsentPrompt.of(core) }
                     Box(Modifier.fillMaxSize().semantics { testTagsAsResourceId = true }) {
-                        Host(model, presenter)
+                        Host(model, prompt)
                         val theme = if (model.fixtureTheme == "brand") PantryBrand.theme else null
                         val providerTheme = when (model.fixtureBranding) {
                             "inth" -> (theme ?: ConsentTheme.c15t).copy(branding = ConsentTheme.Branding.Inth)
@@ -307,13 +307,13 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
         model.setupError?.let { Text(it) }
     }
 }
-@Composable private fun Host(model: DemoModel, presenter: ConsentPresenter) {
+@Composable private fun Host(model: DemoModel, prompt: ConsentPrompt) {
     if (model.showReviewDiagnostics) {
         ReviewDiagnostics(model, onClose = model::showConsentScreen)
     } else {
         LazyColumn(Modifier.fillMaxSize().safeDrawingPadding().padding(24.dp).testTag("fixture.state"), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             item { Text("Privacy demo", style = MaterialTheme.typography.headlineMedium); Text(if (model.fixture) "Local protocol fixture" else "Inth hosted project") }
-            item { Button(onClick = presenter::presentPreferences, modifier = Modifier.testTag("fixture.open-preferences")) { Text("Privacy settings") } }
+            item { Button(onClick = prompt::presentPreferences, modifier = Modifier.testTag("fixture.open-preferences")) { Text("Privacy settings") } }
             if (model.reviewing) {
                 item { Text("Hosted IAB TCF review. This is a preparation app, not a certification result.") }
                 if (model.snapshot.ready && !model.snapshot.policyPending && model.snapshot.model != ConsentModel.IAB) {

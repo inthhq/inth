@@ -77,6 +77,7 @@ export const buildSnapshot = function buildSnapshot(
 		explicitChoice: null,
 		gppString: null,
 		iab: null,
+		iabMarketingPurposes: null,
 		location: { countryCode: 'DE', regionCode: null },
 		model: 'opt-in',
 		nextDeadline: null,
@@ -128,6 +129,8 @@ export interface FakeNativeModule extends NativeC15tTurboModule {
 	pushUnreadableSnapshot: (raw: string) => void;
 	/** Serve a different platform tracking arm from the next read. */
 	setTrackingAuthorization: (status: TrackingAuthorization) => void;
+	/** Serve `answeredAt` (epoch ms) with the tracking arm, or leave it out with `null`. */
+	setTrackingAnsweredAt: (answeredAt: number | null) => void;
 	/** Make the next tracking request reject, the way a build without the plist key does. */
 	rejectTrackingRequestWith: (code: string, message: string) => void;
 	/**
@@ -169,6 +172,7 @@ export const createFakeNativeModule = function createFakeNativeModule(
 	let snapshot: ConsentSnapshot | string = options.snapshot ?? buildSnapshot();
 	let bootstrap: unknown = options.bootstrap ?? FAKE_BOOTSTRAP;
 	let trackingStatus: TrackingAuthorization = 'unsupported';
+	let trackingAnsweredAt: number | null = null;
 	let trackingRequestReply: TrackingRequestReply = { status: 'unsupported' };
 	const trackingRequestQueue: TrackingRequestReply[] = [];
 	let commitReply = JSON.stringify({
@@ -209,7 +213,11 @@ export const createFakeNativeModule = function createFakeNativeModule(
 		getTrackingAuthorization: vi.fn(() => {
 			fake.trackingReadCalls += 1;
 
-			return JSON.stringify({ status: trackingStatus });
+			return JSON.stringify(
+				trackingAnsweredAt === null
+					? { status: trackingStatus }
+					: { answeredAt: trackingAnsweredAt, status: trackingStatus }
+			);
 		}),
 		getWebViewConsent: vi.fn(() => {
 			const current = typeof snapshot === 'string' ? buildSnapshot() : snapshot;
@@ -331,6 +339,9 @@ export const createFakeNativeModule = function createFakeNativeModule(
 
 			return Promise.resolve();
 		}),
+		setTrackingAnsweredAt: (answeredAt: number | null) => {
+			trackingAnsweredAt = answeredAt;
+		},
 		setTrackingAuthorization: (status: TrackingAuthorization) => {
 			trackingStatus = status;
 			trackingRequestReply = { status };

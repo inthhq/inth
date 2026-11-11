@@ -137,6 +137,8 @@ class AutoPresentLedger {
 	generation = 0;
 	/** The latest native call, so a caller can wait for the chain to settle. */
 	settled: Promise<void> = Promise.resolve();
+	/** Told after every input, for steps that wait until no c15t screen is up. */
+	readonly watchers = new Set<() => void>();
 	private readonly client: ConsentClient;
 
 	constructor(client: ConsentClient) {
@@ -217,6 +219,9 @@ class AutoPresentLedger {
 				default:
 					this.warnUnavailable(failedKey, error);
 			}
+		}
+		for (const watcher of [...this.watchers]) {
+			watcher();
 		}
 	}
 
@@ -326,6 +331,45 @@ export const attachAutoPresent = function attachAutoPresent(
  * @throws {TypeError} When it is missing or is a URL a native presenter would
  *   refuse. See {@link isPrivacyPolicyURL} for the exact rules.
  */
+/**
+ * Whether a c15t screen is open or being asked for, as far as the ledger
+ * knows: the app's own calls and its own.
+ *
+ * @internal
+ * @param client - The client to read.
+ * @param includeInFlight - Count a present call still in flight. A wait that
+ *   gates that very call passes `false`, or it would wait for itself.
+ * @returns `true` while something may be on screen.
+ */
+export const isConsentScreenBusy = function isConsentScreenBusy(
+	client: ConsentClient,
+	includeInFlight = true
+): boolean {
+	const { facts } = ledgerFor(client);
+	return (
+		facts.onScreen !== null || (includeInFlight && facts.inFlight !== null)
+	);
+};
+
+/**
+ * Hear every ledger input, to re-check {@link isConsentScreenBusy}.
+ *
+ * @internal
+ * @param client - The client to follow.
+ * @param listener - Called after each input.
+ * @returns Stop listening.
+ */
+export const onConsentScreenChange = function onConsentScreenChange(
+	client: ConsentClient,
+	listener: () => void
+): () => void {
+	const { watchers } = ledgerFor(client);
+	watchers.add(listener);
+	return () => {
+		watchers.delete(listener);
+	};
+};
+
 export const assertPrivacyPolicyURL: (
 	privacyPolicyURL: string | undefined
 ) => asserts privacyPolicyURL is string = function assertPrivacyPolicyURL(

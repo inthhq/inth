@@ -166,6 +166,38 @@ export const parseTrackingRequest = function parseTrackingRequest(
  * @param raw - JSON text from the bridge.
  * @returns The arm the payload names, or `denied` when it names none of them.
  */
+/**
+ * Read when the SDK last saw Apple answer `authorized` or `denied`, from a
+ * `getTrackingAuthorization()` payload.
+ *
+ * Platform bookkeeping for the yearly re-ask, not consent. Android, an iOS
+ * build that predates the field, and an answer that is not on file all read as
+ * `null`.
+ *
+ * @param raw - The payload.
+ * @returns Epoch milliseconds, or `null`.
+ */
+export const parseTrackingAnsweredAt = function parseTrackingAnsweredAt(
+	raw: string
+): number | null {
+	try {
+		const parsed: unknown = JSON.parse(raw);
+		if (
+			typeof parsed === 'object' &&
+			parsed !== null &&
+			'answeredAt' in parsed
+		) {
+			const { answeredAt } = parsed;
+			return typeof answeredAt === 'number' && Number.isFinite(answeredAt)
+				? answeredAt
+				: null;
+		}
+	} catch {
+		// An unreadable payload carries no time.
+	}
+	return null;
+};
+
 export const parseTrackingAuthorization = function parseTrackingAuthorization(
 	raw: string
 ): TrackingAuthorization {

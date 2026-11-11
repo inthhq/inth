@@ -35,6 +35,11 @@ public final class ConsentPresenter: ObservableObject {
     @Published public var confirmDiscard = false
     public var onOutcome: ((ConsentPresenterOutcome) -> Void)?
     public var onAnnouncement: ((String) -> Void)?
+    /// A cover or sheet is on screen, including while it animates away after ``onOutcome``.
+    public private(set) var covering = false
+    /// Called once the cover or sheet has finished animating away. iOS will not show a system
+    /// alert, such as App Tracking Transparency, over a presentation that is still leaving.
+    public var onCoverDismissed: (() -> Void)?
     private var subscription: ConsentSubscription?
     private var baseRevision = 0
     private var seedCategories: [OptionalConsentCategory: Bool] = [:]
@@ -318,6 +323,11 @@ public final class ConsentPresenter: ObservableObject {
         } else {
             closeSession()
         }
+    }
+    func coverAppeared() { covering = true }
+    func coverDismissed() {
+        covering = false
+        onCoverDismissed?()
     }
     public func retry() {
         guard let lastIntent else { return }

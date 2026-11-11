@@ -281,4 +281,13 @@ export interface ConsentSnapshot {
 	 * binary built before it existed omits it, and the client reads that as `null`.
 	 */
 	readonly promptOwedSince: number | null;
+	/**
+	 * Under an IAB TCF policy, whether the committed TC String grants the
+	 * `marketing` category: every TCF purpose it maps to that some vendor asks
+	 * consent for, as `iabPurposesToC15tConsents` in `@c15t/iab` derives it.
+	 * `null` outside IAB, before a TC String is saved, and on a binary that
+	 * predates the field. The ATT sequence reads it; purpose vectors stay in
+	 * native authority.
+	 */
+	readonly iabMarketingPurposes: boolean | null;
 }

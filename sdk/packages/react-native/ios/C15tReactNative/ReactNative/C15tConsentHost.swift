@@ -21,6 +21,8 @@ final class C15tConsentHost {
     /// The open session shows standing settings rather than the owed prompt.
     private var sessionPreferences = false
     private var watch: AnyCancellable?
+    /// Reports the decided outcome once the cover has animated away. Set while it is leaving.
+    private var finishing: (() -> Void)?
 
     /// Whether anything of the open session is on screen or still saving.
     private var showing: Bool {
@@ -36,6 +38,8 @@ final class C15tConsentHost {
         guard let url = URL(string: privacyPolicyURL), url.scheme == "https", url.host != nil else {
             throw HostError.invalidPrivacyPolicy
         }
+        // A session whose outcome is decided is only animating away: report it now and open anew.
+        finishing?()
         // A repeated prompt request re-asks the open session, so a notice cleared and owed again shows.
         if sessionID != nil, !preferences { presenter?.presentPrompt() }
         if let sessionID = current() {
@@ -65,7 +69,8 @@ final class C15tConsentHost {
         }
         let notice = !preferences && snapshot.promptRequirement.kind == .notice
         presenter.onOutcome = { [weak self] result in
-            guard let self, self.sessionID == id else { return }
+            // A decided outcome stays decided: a later read of the empty session must not replace it.
+            guard let self, self.sessionID == id, self.finishing == nil else { return }
             let revision = core.snapshot().revision
             let ended: ConsentHostOutcome
             if result == .dismissed {
@@ -77,8 +82,16 @@ final class C15tConsentHost {
             } else {
                 ended = .committed(sessionID: id, revision: revision)
             }
-            self.detach()
-            outcome(ended)
+            // Report once the cover has animated away, so a step that follows the prompt, such as
+            // the App Tracking Transparency alert, is not asked while the cover is still leaving.
+            let finish = { [weak self] in
+                self?.detach()
+                outcome(ended)
+            }
+            if presenter.covering {
+                self.finishing = finish
+                presenter.onCoverDismissed = finish
+            } else { finish() }
         }
         presenter.onAnnouncement = { UIAccessibility.post(notification: .announcement, argument: $0) }
         let overlay = ConsentPassthroughView(frame: parent.view.bounds)
@@ -100,6 +113,8 @@ final class C15tConsentHost {
     /// notice was cleared by `dismissNotice()` or a reset, with no decision to close it) is ended
     /// here with a dismissed outcome, so no request is answered with a session that is not visible.
     private func current() -> String? {
+        // Closing: nothing of it is the person's to act on any more.
+        if finishing != nil { return nil }
         if sessionID != nil, !showing { presenter?.onOutcome?(.dismissed) }
         return sessionID
     }
@@ -112,10 +127,12 @@ final class C15tConsentHost {
     }
 
     func detach() {
+        finishing = nil
         watch = nil
         outcome = nil
         sessionID = nil
         presenter?.onOutcome = nil
+        presenter?.onCoverDismissed = nil
         controller?.willMove(toParent: nil)
         controller?.view.removeFromSuperview()
         controller?.removeFromParent()

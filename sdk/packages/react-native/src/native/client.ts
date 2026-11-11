@@ -31,6 +31,7 @@ import {
 	describeSnapshotWireDrift,
 	isProtocolVersionSupported,
 	NATIVE_EVENT_NAMES,
+	parseTrackingAnsweredAt,
 	parseTrackingAuthorization,
 	parseTrackingRequest,
 	withAdditiveSnapshotDefaults,
@@ -162,10 +163,11 @@ export interface ConsentClient {
 	/**
 	 * Ask the platform for tracking authorization.
 	 *
-	 * Nothing in this package calls it. It belongs after the consent UI has been
-	 * answered, because a platform prompt that arrives before the subject has been
-	 * told anything is the rejection Apple writes back to the developer, and it is
-	 * the ordering the ATT prompt string exists to serve.
+	 * {@link ConsentProvider} calls it after the consent prompt closes with
+	 * marketing granted, unless `trackingRequest` says otherwise. A platform
+	 * prompt that arrives before the subject has been told anything is the
+	 * rejection Apple writes back to the developer, and it is the ordering the ATT
+	 * prompt string exists to serve.
 	 *
 	 * How often this can produce a prompt is Apple's decision and not this
 	 * package's. Outside the European Union Apple shows its dialog once and answers
@@ -173,8 +175,8 @@ export interface ConsentClient {
 	 * again a year after the answer, whichever way it went. So this always asks
 	 * Apple and never answers from a cached arm, which is the only way an eligible
 	 * install can ever be asked again, and it costs nothing when it is not eligible:
-	 * Apple shows nothing and calls back with the arm on file. Nothing here prompts
-	 * on its own, so a host that never calls this never re-prompts.
+	 * Apple shows nothing and calls back with the arm on file. The provider asks
+	 * only while the answer is `not-determined`, so it never re-prompts by itself.
 	 *
 	 * It rejects with `C15T_TRACKING_NOT_CONFIGURED` on an iOS build that carries no
 	 * `NSUserTrackingUsageDescription`, because Apple then suppresses the dialog and
@@ -231,6 +233,15 @@ export interface ConsentClient {
 	 * @returns `true` when consent and the platform both allow it.
 	 */
 	isTrackingAllowed: (category: AllConsentNames) => boolean;
+	/**
+	 * When the SDK last saw Apple answer `authorized` or `denied`, in epoch
+	 * milliseconds, as of the last tracking read. `null` while no such answer is
+	 * on file and on Android. Read by the yearly re-ask.
+	 *
+	 * @internal
+	 * @returns Epoch milliseconds, or `null`.
+	 */
+	getTrackingAnsweredAt: () => number | null;
 	/**
 	 * Register interest in the platform tracking answer.
 	 *
@@ -617,6 +628,8 @@ export const createConsentClient = function createConsentClient(
 	 * one moment it is not.
 	 */
 	let tracking: TrackingAuthorization | null = null;
+	/** When the last tracking read said the SDK last saw an answer. */
+	let trackingAnsweredAt: number | null = null;
 	/** Consumers that watch the platform answer and no slice of the snapshot. */
 	const trackingSubscribers = new Set<() => void>();
 	/** Keeps the missing-surface warning to one line per client. */
@@ -804,9 +817,9 @@ export const createConsentClient = function createConsentClient(
 			return 'denied';
 		}
 
-		tracking = parseTrackingAuthorization(
-			nativeModule.getTrackingAuthorization()
-		);
+		const raw = nativeModule.getTrackingAuthorization();
+		tracking = parseTrackingAuthorization(raw);
+		trackingAnsweredAt = parseTrackingAnsweredAt(raw);
 
 		return tracking;
 	};
@@ -940,6 +953,10 @@ export const createConsentClient = function createConsentClient(
 			trackingSubscribers.clear();
 		},
 		getSnapshot: currentSnapshot,
+		getTrackingAnsweredAt: (): number | null => {
+			currentTracking();
+			return trackingAnsweredAt;
+		},
 		getTrackingAuthorization: currentTracking,
 		getWebViewConsent: () =>
 			typeof nativeModule.getWebViewConsent === 'function'

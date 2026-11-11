@@ -135,6 +135,59 @@ const announce = (
 	return session;
 };
 
+/** The open native session and the privacy-policy URL it was opened with. */
+let openSession: { readonly id: string; readonly url: string } | null = null;
+
+const remember = (
+	session: ConsentPresenterSession,
+	url: string
+): ConsentPresenterSession => {
+	if (session.status === 'presented' && session.sessionId !== null) {
+		openSession = { id: session.sessionId, url };
+	}
+	return session;
+};
+
+/**
+ * The privacy-policy URL a session was opened with. Every native outcome comes
+ * from a session JavaScript opened with a URL, so a step that follows the
+ * outcome, such as opening settings, always has one.
+ *
+ * @internal
+ * @param sessionId - The outcome's session.
+ * @returns The URL, or `undefined` for a session this bundle did not open.
+ */
+export const sessionPrivacyPolicyURL = (
+	sessionId: string
+): string | undefined =>
+	openSession?.id === sessionId ? openSession.url : undefined;
+
+/**
+ * Runs before every native prompt request, or `null`. Resolves `false` when
+ * the provider that installed it has gone while it waited.
+ */
+let beforeConsentPrompt: (() => Promise<boolean>) | null = null;
+
+/**
+ * Run `hook` before every native prompt request, so a provider with
+ * `trackingRequest="beforeConsent"` asks Apple first, whoever opens the
+ * prompt: the app, or the ledger on a trigger or after a session closes.
+ *
+ * @internal
+ * @param hook - Resolves when the prompt may open; `false` if its provider left.
+ * @returns Remove the hook, if it is still this one.
+ */
+export const setBeforeConsentPrompt = (
+	hook: () => Promise<boolean>
+): (() => void) => {
+	beforeConsentPrompt = hook;
+	return () => {
+		if (beforeConsentPrompt === hook) {
+			beforeConsentPrompt = null;
+		}
+	};
+};
+
 /**
  * Ask native for the owed prompt without announcing the answer: the
  * auto-present ledger's own call, which records its answer itself.
@@ -143,19 +196,40 @@ const announce = (
  * @param privacyPolicyURL - The app's HTTPS privacy-policy URL.
  * @returns Presentation identity.
  */
-export const requestConsentPrompt = async (
+const callNativePrompt = async (
 	privacyPolicyURL: string
 ): Promise<ConsentPresenterSession> =>
-	parseSession(await getNativeC15t().presentConsentPrompt(privacyPolicyURL));
+	remember(
+		parseSession(await getNativeC15t().presentConsentPrompt(privacyPolicyURL)),
+		privacyPolicyURL
+	);
 
-/** Open an owed native prompt on the installed engine.
+export const requestConsentPrompt = async (
+	privacyPolicyURL: string
+): Promise<ConsentPresenterSession> => {
+	// Only with a hook: an `await` on nothing would still yield, and let a racing
+	// call reach native first. A provider that left while it waited asks for
+	// nothing now; the ledger asks again on its next trigger.
+	if (beforeConsentPrompt !== null && !(await beforeConsentPrompt())) {
+		return { sessionId: null, status: 'not-required' };
+	}
+	return callNativePrompt(privacyPolicyURL);
+};
+
+/** Open an owed native prompt on the installed engine. With a provider set to
+ * `trackingRequest="beforeConsent"`, Apple's tracking alert comes first.
  * @param privacyPolicyURL - The app's HTTPS privacy-policy URL.
  * @returns Presentation identity. Decisions arrive through onConsentPresenterOutcome.
  */
 export const presentConsentPrompt = async (
 	privacyPolicyURL: string
-): Promise<ConsentPresenterSession> =>
-	announce(await requestConsentPrompt(privacyPolicyURL), 'prompt');
+): Promise<ConsentPresenterSession> => {
+	// The app asked, so the prompt opens even if the provider left meanwhile.
+	if (beforeConsentPrompt !== null) {
+		await beforeConsentPrompt();
+	}
+	return announce(await callNativePrompt(privacyPolicyURL), 'prompt');
+};
 
 /** Open native standing preferences, including when no prompt is owed.
  * @param privacyPolicyURL - The app's HTTPS privacy-policy URL.
@@ -165,7 +239,10 @@ export const presentPreferences = async (
 	privacyPolicyURL: string
 ): Promise<ConsentPresenterSession> =>
 	announce(
-		parseSession(await getNativeC15t().presentPreferences(privacyPolicyURL)),
+		remember(
+			parseSession(await getNativeC15t().presentPreferences(privacyPolicyURL)),
+			privacyPolicyURL
+		),
 		'preferences'
 	);
 
