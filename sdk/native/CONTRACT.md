@@ -1648,14 +1648,32 @@ the site's own banner because nothing is injected any more. A Swift sync
 released without `close()` revokes nothing, because its web view is gone. React
 Native revokes dropped origins when `allowedOrigins` changes.
 
-Several `WKWebView`s may share one `WKUserContentController`, and with it every
-document-start script and message handler. WebKit raises
-`NSInvalidArgumentException` when a second handler is added under a name in use.
-The helpers on one controller therefore share one handler, installed with the
-first and removed with the last, which finds the helper through the message's
-web view; and they share one token and request key, so whichever script defines
-a page's object, every helper's updates and requests match it.
-`WebViewConsentGroup` in C15tCore keeps the count and the secrets.
+On iOS a `WKUserContentController` is one consent scope. Its user scripts run in
+every web view attached to it, and a document-start script cannot tell which web
+view it is in, so a helper's state and allowlist reach every web view on its
+controller. A controller therefore has exactly one authority: one `ConsentCore`
+and one allowlist (compared after normalization, in any order). Attaching a
+helper with another core or another allowlist to a controller that already has
+a helper throws `WebViewConsentGroup.ScopeConflict` before anything changes; the
+app gives each differently scoped web view its own controller. The one exception
+is a web view's own sole helper, which a new helper on that web view replaces,
+so a controller with one web view can change scope. Helpers with the same core
+and allowlist share the controller: one message handler (WebKit raises
+`NSInvalidArgumentException` on a second handler under a name in use), installed
+with the first and removed with the last, which finds the helper through the
+message's web view; and one token and request key, so whichever script defines a
+page's object, every helper's updates and requests match it.
+`WebViewConsentGroup` in C15tCore keeps the count, the authority and the secrets.
+
+A web view that shares a helper's controller without a helper of its own is in
+that helper's scope too: it receives the state at document start but no live
+updates, because the helper evaluates updates only in its own web view.
+Attach a helper to every web view on the controller, or give the web view its own
+controller. Android injects per WebView (`addDocumentStartJavaScript` takes the
+WebView), and `react-native-webview` gives every WebView its own
+`WKUserContentController` on iOS and injects per WebView on Android, whatever
+`useSharedProcessPool` or `sharedCookiesEnabled` say; neither has this
+scope.
 
 The GPP string is read in one place per platform:
 `WebViewConsentState.gppStringOf(snapshot)` (Kotlin) and

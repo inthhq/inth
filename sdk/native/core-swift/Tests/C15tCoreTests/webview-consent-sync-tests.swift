@@ -170,6 +170,39 @@ final class WebViewConsentSyncTests: XCTestCase {
         replacement.close()
     }
 
+    /// One `WKUserContentController` runs every helper's script in every web view on
+    /// it, so it may serve one core and one allowlist. Web view 1 allows
+    /// `https://a.example`, web view 2 only `https://b.example`: web view 2 must not
+    /// join, or loading `https://a.example` there would run A's script with A's state.
+    func testAControllerServesOneCoreAndOneAllowlist() async throws {
+        let core = await core()
+        let otherCore = await self.core()
+        let group = WebViewConsentGroup()
+        let a = try WebViewConsentScript(allowedOrigins: ["https://a.example"])
+        XCTAssertNoThrow(try group.admit(core: core, allowedOrigins: ["https://a.example"], replacingMember: false))
+        XCTAssertTrue(group.join(a, core: core))
+
+        XCTAssertThrowsError(
+            try group.admit(core: core, allowedOrigins: ["https://b.example"], replacingMember: false)
+        ) { error in XCTAssertTrue(error is WebViewConsentGroup.ScopeConflict, "\(error)") }
+        XCTAssertThrowsError(
+            try group.admit(core: otherCore, allowedOrigins: ["https://a.example"], replacingMember: false)
+        ) { error in XCTAssertTrue(error is WebViewConsentGroup.ScopeConflict, "\(error)") }
+        XCTAssertThrowsError(
+            try group.admit(core: core, allowedOrigins: ["https://a.example", "https://b.example"], replacingMember: false)
+        )
+        // The same scope, however it is written, may share the controller.
+        XCTAssertNoThrow(try group.admit(core: core, allowedOrigins: ["https://A.example/"], replacingMember: false))
+        // The sole member may be replaced by any scope; the controller then has one again.
+        XCTAssertNoThrow(try group.admit(core: otherCore, allowedOrigins: ["https://b.example"], replacingMember: true))
+        XCTAssertTrue(group.leave())
+        XCTAssertNoThrow(try group.admit(core: otherCore, allowedOrigins: ["https://b.example"], replacingMember: false))
+        // A bad list is still an origin error, not a scope one.
+        XCTAssertThrowsError(try group.admit(core: core, allowedOrigins: ["http://a.example"], replacingMember: false)) { error in
+            XCTAssertTrue(error is WebViewConsentScript.OriginError, "\(error)")
+        }
+    }
+
     func testWebViewsSharingAControllerShareSecretsAndOneChannel() async throws {
         let core = await core()
         let group = WebViewConsentGroup()
@@ -177,12 +210,12 @@ final class WebViewConsentSyncTests: XCTestCase {
         let a = try WebViewConsentSync(
             core: core, allowedOrigins: ["https://app.example"], target: first,
             secretsFrom: group.secrets, post: queue.post)
-        XCTAssertTrue(group.join(a.script), "the first member installs the channel")
+        XCTAssertTrue(group.join(a.script, core: core), "the first member installs the channel")
         let second = RecordingTarget()
         let b = try WebViewConsentSync(
             core: core, allowedOrigins: ["https://app.example"], target: second,
             secretsFrom: group.secrets, post: queue.post)
-        XCTAssertFalse(group.join(b.script), "a second member must not add the handler again")
+        XCTAssertFalse(group.join(b.script, core: core), "a second member must not add the handler again")
         XCTAssertEqual(token(in: try XCTUnwrap(first.installed.first)), token(in: try XCTUnwrap(second.installed.first)))
         let key = try XCTUnwrap(match(#"\],"[0-9a-f]{32}","([0-9a-f]{32})","#, in: try XCTUnwrap(first.installed.first)))
         XCTAssertTrue(b.script.isPreferencesRequest(#"{"type":"c15t:open-preferences","key":"\#(key)"}"#))

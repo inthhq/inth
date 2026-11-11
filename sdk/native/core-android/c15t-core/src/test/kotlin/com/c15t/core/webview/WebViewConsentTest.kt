@@ -85,7 +85,13 @@ class WebViewConsentTest {
 		val carries = ConsentSnapshot::class.java.declaredFields.any { it.name == "gppString" }
 		val state = WebViewConsentState.from(snapshot, null)
 		if (carries) {
-			assertEquals("DBABMA~CQ", state.gppString, "return snapshot.gppString from WebViewConsentState.gppStringOf")
+			assertEquals(
+				"DBABMA~CQ",
+				state.gppString,
+				"#113 landed: in native/core-android/c15t-core/src/main/kotlin/com/c15t/core/webview/WebViewConsent.kt, " +
+					"delete @Suppress(\"UNUSED_PARAMETER\") above gppStringOf and change it to " +
+					"`internal fun gppStringOf(snapshot: ConsentSnapshot): String? = snapshot.gppString`",
+			)
 		} else {
 			assertNull(state.gppString)
 		}

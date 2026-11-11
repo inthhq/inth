@@ -28,6 +28,37 @@ final class WebViewSharedControllerTests: XCTestCase {
         return String(source[range])
     }
 
+    /// The council's sequence: web views 1 and 2 share a controller, helper A allows
+    /// `https://a.example` on web view 1, helper B only `https://b.example` on web
+    /// view 2. Every script on the controller runs in both web views, so B must be
+    /// refused, and the controller must be left exactly as A configured it.
+    func testASecondScopeOnOneControllerIsRefusedAndChangesNothing() throws {
+        let controller = WKUserContentController()
+        let first = webView(sharing: controller)
+        let second = webView(sharing: controller)
+        let core = ConsentCore()
+        let a = try ConsentWebView(webView: first, core: core, allowedOrigins: ["https://a.example"]) {}
+        let scripts = controller.userScripts.map(\.source)
+
+        for (refusedCore, origins) in [(core, ["https://b.example"]), (ConsentCore(), ["https://a.example"])] {
+            do {
+                _ = try ConsentWebView(webView: second, core: refusedCore, allowedOrigins: origins) {}
+                XCTFail("a second scope on one controller must be refused: \(origins)")
+            } catch {
+                XCTAssertTrue(error is WebViewConsentGroup.ScopeConflict, "\(error)")
+            }
+        }
+        XCTAssertEqual(controller.userScripts.map(\.source), scripts, "a refused helper adds or removes nothing")
+
+        // The web view that already has a helper may still change its own scope,
+        // because it is the controller's only member.
+        let replaced = try ConsentWebView(webView: first, core: core, allowedOrigins: ["https://b.example"]) {}
+        XCTAssertEqual(controller.userScripts.count, 1)
+        replaced.close()
+        a.close()
+        _ = (first, second)
+    }
+
     func testTwoWebViewsOnOneControllerShareOneHandlerAndOneToken() throws {
         let controller = WKUserContentController()
         let first = webView(sharing: controller)

@@ -93,4 +93,55 @@ class DeviceWebViewConsentTest {
 		assumeTrue("WebView without document-start scripts", ConsentWebView.isSupported())
 		assertEquals("\"none\"", load("https://elsewhere.example/", listOf("https://app.example")))
 	}
+
+	/**
+	 * The iOS shared-controller leak cannot happen here: Android injects per WebView.
+	 * Helper A allows a.example on one WebView and helper B only b.example on
+	 * another, both alive at once. a.example loaded in B's WebView gets nothing, and
+	 * in A's WebView it gets A's state.
+	 */
+	@Test
+	fun testHelpersOnTwoWebViewsKeepTheirOwnScopes() {
+		assumeTrue("WebView without document-start scripts", ConsentWebView.isSupported())
+		val core = C15t.current
+		assertNotNull("the installed core", core)
+		lateinit var first: WebView
+		lateinit var second: WebView
+		val helpers = mutableListOf<ConsentWebView?>()
+		instrumentation.runOnMainSync {
+			first = WebView(appContext()).apply { settings.javaScriptEnabled = true }
+			second = WebView(appContext()).apply { settings.javaScriptEnabled = true }
+			helpers += ConsentWebView.attach(first, core!!, listOf("https://a.example"))
+			helpers += ConsentWebView.attach(second, core, listOf("https://b.example"))
+		}
+
+		fun seenIn(webView: WebView, baseUrl: String): String {
+			val loaded = CountDownLatch(1)
+			val seen = CountDownLatch(1)
+			var result = ""
+			instrumentation.runOnMainSync {
+				webView.webViewClient = object : WebViewClient() {
+					override fun onPageFinished(view: WebView, url: String?) = loaded.countDown()
+				}
+				webView.loadDataWithBaseURL(baseUrl, page, "text/html", "utf-8", null)
+			}
+			assertEquals(true, loaded.await(30, TimeUnit.SECONDS))
+			instrumentation.runOnMainSync {
+				webView.evaluateJavascript("window.seenAtStart") { value ->
+					result = value
+					seen.countDown()
+				}
+			}
+			assertEquals(true, seen.await(10, TimeUnit.SECONDS))
+			return result
+		}
+
+		assertEquals("\"none\"", seenIn(second, "https://a.example/"))
+		assertEquals(true, seenIn(first, "https://a.example/").contains("\\\"version\\\":1"))
+		instrumentation.runOnMainSync {
+			helpers.forEach { it?.close() }
+			first.destroy()
+			second.destroy()
+		}
+	}
 }

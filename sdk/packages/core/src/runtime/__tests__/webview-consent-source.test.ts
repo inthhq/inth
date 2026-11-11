@@ -169,6 +169,39 @@ test('only the native token can change the state', () => {
 	expect(source?.getPermissions()?.measurement).toBe(true);
 });
 
+test('scripts cannot scope consent by web view, so a shared controller needs one authority', () => {
+	// Web views 1 and 2 share a WKUserContentController. Helper A (web view 1)
+	// allows a.example; helper B (web view 2) allows only b.example.
+	const a = call(
+		DOCUMENT_START,
+		['https://a.example'],
+		TOKEN,
+		KEY,
+		nativeState({ permissions: { marketing: true }, tcString: 'CQ-A' })
+	);
+	const b = call(
+		DOCUMENT_START,
+		['https://b.example'],
+		'0'.repeat(32),
+		'1'.repeat(32),
+		nativeState()
+	);
+
+	// Shared controller: web view 2 loads a.example and runs both scripts.
+	const shared = openWindow('https://a.example');
+	shared.eval(a);
+	shared.eval(b);
+	expect(webViewConsentSource()?.getState()).toMatchObject({
+		permissions: { marketing: true },
+		tcString: 'CQ-A',
+	});
+
+	// Own controller: web view 2 runs only B's script, and a.example gets nothing.
+	const own = openWindow('https://a.example');
+	own.eval(b);
+	expect(webViewConsentSource()).toBeUndefined();
+});
+
 test('removing an origin from the list revokes the page already loaded from it', () => {
 	const page = openWindow();
 	const granted = nativeState({

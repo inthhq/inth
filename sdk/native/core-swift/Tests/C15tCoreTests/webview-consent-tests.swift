@@ -78,7 +78,9 @@ final class WebViewConsentTests: XCTestCase {
         if carries {
             XCTAssertTrue(
                 WebViewConsentState.readsSnapshotGPP,
-                "return snapshot.gppString from WebViewConsentState.gppString(of:) and set readsSnapshotGPP"
+                "#113 landed: in native/core-swift/Sources/C15tCore/WebViewConsent.swift, change the seam to "
+                    + "`static func gppString(of snapshot: ConsentSnapshot) -> String? { snapshot.gppString }` "
+                    + "and set `static let readsSnapshotGPP = true`"
             )
         } else {
             XCTAssertNil(WebViewConsentState.gppString(of: snapshot))

@@ -32,9 +32,14 @@ import WebKit
 /// first and keeps its secrets, so a page that is already loaded keeps receiving
 /// changes.
 ///
-/// Several web views may share one `WKUserContentController`. Their helpers then
-/// share one message handler (installed with the first, removed with the last) and
-/// one set of secrets; see ``WebViewConsentGroup``.
+/// A `WKUserContentController` is one consent scope: its user scripts run in every
+/// web view attached to it, so a helper's state and allowlist reach all of them.
+/// Several web views may share one controller only when their helpers use the same
+/// ``ConsentCore`` and the same `allowedOrigins`; they then share one message
+/// handler and one set of secrets. Attaching a helper with another core or
+/// allowlist to a controller that already has one throws
+/// ``WebViewConsentGroup/ScopeConflict``: give that web view its own controller.
+/// See ``WebViewConsentGroup``.
 ///
 /// The ordering, replacement and revocation rules live in ``WebViewConsentSync`` in
 /// C15tCore; this class only connects it to WebKit.
@@ -57,19 +62,27 @@ public final class ConsentWebView {
     ///   - onPreferencesRequested: Called when a listed page asks for preferences,
     ///     such as from a "Cookie settings" link.
     /// - Throws: ``WebViewConsentScript/OriginError`` when an origin is not accepted
-    ///   or the list is empty.
+    ///   or the list is empty, and ``WebViewConsentGroup/ScopeConflict`` when the web
+    ///   view's content controller already serves another core or allowlist. Both are
+    ///   programming errors, and nothing has changed when either is thrown.
     public init(
         webView: WKWebView,
         core: ConsentCore,
         allowedOrigins: [String],
         onPreferencesRequested: (@MainActor () -> Void)? = nil
     ) throws {
-        _ = try WebViewConsentScript(allowedOrigins: allowedOrigins)
+        let channel = ControllerChannel.of(webView.configuration.userContentController)
+        let previous = objc_getAssociatedObject(webView, &Self.associationKey) as? ConsentWebView
+        // Checked before anything changes, so a refused helper leaves the controller,
+        // and any helper already on this web view, as they were.
+        try channel.group.admit(
+            core: core,
+            allowedOrigins: allowedOrigins,
+            replacingMember: previous.map { !$0.closed } ?? false
+        )
         self.webView = webView
         self.onPreferencesRequested = onPreferencesRequested
-        let channel = ControllerChannel.of(webView.configuration.userContentController)
         target = WebKitTarget(webView: webView, channel: channel)
-        let previous = objc_getAssociatedObject(webView, &Self.associationKey) as? ConsentWebView
         let replaced = previous?.detachForReplacement()
         let sync = try WebViewConsentSync(
             core: core,
@@ -80,7 +93,7 @@ public final class ConsentWebView {
             post: { block in DispatchQueue.main.async(execute: block) }
         )
         self.sync = sync
-        target.join(sync.script)
+        target.join(sync.script, core: core)
         // Tie the helper's lifetime to the web view's.
         objc_setAssociatedObject(webView, &Self.associationKey, self, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
     }
@@ -159,10 +172,10 @@ private final class WebKitTarget: WebViewConsentTarget, @unchecked Sendable {
 
     /// Take a place in the controller's channel, installing its handler first.
     @MainActor
-    func join(_ script: WebViewConsentScript) {
+    func join(_ script: WebViewConsentScript, core: ConsentCore) {
         guard !joined else { return }
         joined = true
-        if channel.group.join(script) {
+        if channel.group.join(script, core: core) {
             controller?.add(channel.handler, name: WebViewConsentScript.channel)
         }
     }

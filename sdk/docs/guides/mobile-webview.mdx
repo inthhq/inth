@@ -99,20 +99,31 @@ final class SiteViewController: UIViewController {
         super.viewDidLoad()
         view = webView
         guard let core = C15t.current else { return }
-        consentSync = try? ConsentWebView(
-            webView: webView,
-            core: core,
-            allowedOrigins: ["https://www.example.com"]
-        ) { [weak self] in
-            self?.presentConsentPreferences()
+        do {
+            consentSync = try ConsentWebView(
+                webView: webView,
+                core: core,
+                allowedOrigins: ["https://www.example.com"]
+            ) { [weak self] in
+                self?.presentConsentPreferences()
+            }
+        } catch {
+            assertionFailure("\(error)")
         }
         webView.load(URLRequest(url: URL(string: "https://www.example.com/")!))
     }
 }
 ```
 
-The initializer throws when an origin is not accepted. The closure runs on the
-main actor when a listed page asks for preferences. The web view keeps the
+The initializer throws when an origin is not accepted, or when the web view's
+`WKUserContentController` already serves another core or allowlist. Both are
+programming errors, so surface them rather than swallowing them with `try?`. The
+closure runs on the main actor when a listed page asks for preferences.
+
+A `WKUserContentController` runs its scripts in every web view attached to it,
+so one controller is one consent scope. Web views that share a controller must
+all use the same core and allowlist, and each needs its own helper to receive
+updates. Give a web view with a different scope its own controller. The web view keeps the
 helper alive, so you don't need to hold it; call `close()` to stop it while the
 web view stays in use.
 
@@ -219,8 +230,11 @@ reloads the page, unless you set `reloadOnConsentRevoked: false`.
   category and no longer follows the app. If it was using a category, web c15t
   reloads it, and the reload shows your site's own banner. It never keeps a
   grant the app can no longer update.
-- On iOS, web views that share one `WKUserContentController` share one message
-  handler and one set of secrets, so you can attach a helper to each.
+- On iOS, one `WKUserContentController` is one consent scope, because its
+  scripts run in all of its web views. Helpers with the same core and allowlist
+  can share a controller. A helper with a different scope is refused, so one
+  web view's consent never reaches another web view's pages. Android and
+  `react-native-webview` inject per WebView.
 - In a normal browser, `webViewConsentSource()` returns `undefined` unless a
   script that ran before c15t defined the object. Such a script could equally
   write c15t's own consent cookie.
