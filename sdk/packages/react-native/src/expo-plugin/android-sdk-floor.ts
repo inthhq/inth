@@ -24,13 +24,20 @@ interface SdkFloor {
 	readonly level: AndroidSdkSetting['level'];
 	readonly floor: number;
 	/**
-	 * One whole Gradle statement: `minSdkVersion 24`, `minSdkVersion = 24`,
-	 * `minSdk = 24`. Anchored to the line, so the name inside a string or a call
-	 * argument is not a setting.
+	 * Whole Gradle statements that set the level in a module: `minSdkVersion 24`,
+	 * `minSdkVersion = 24`, `minSdk = 24`, and the call forms `minSdkVersion(24)`
+	 * and `minSdk(24)`, which Groovy accepts and the Kotlin DSL uses. Anchored to
+	 * the line, so the name inside a string or a call argument is not a setting.
 	 */
-	readonly gradle: RegExp;
-	/** The same statement in the root `ext` block, which may spell `ext.` first. */
-	readonly ext: RegExp;
+	readonly gradle: readonly RegExp[];
+	/**
+	 * Statements that set the root project's extra property, which
+	 * `expo-root-project` reads before `gradle.properties`: Groovy
+	 * `ext { minSdkVersion = 24 }`, `ext.minSdkVersion = 24`, and the Kotlin DSL
+	 * `extra["minSdkVersion"] = 24`, `extra.set("minSdkVersion", 24)` and
+	 * `val minSdkVersion by extra(24)`.
+	 */
+	readonly ext: readonly RegExp[];
 	/** `gradle.properties` key, the one `expo-build-properties` writes. */
 	readonly property: RegExp;
 	/** The `expo-build-properties` option path that writes the property. */
@@ -44,26 +51,49 @@ const propertyPattern = (key: string): RegExp =>
 		'gmu'
 	);
 
-const gradlePattern = (names: string, prefix = ''): RegExp =>
-	new RegExp(
-		`^[ \\t]*${prefix}(?:${names})(?:[ \\t]*=[ \\t]*|[ \\t]+)(?<value>\\d{1,3})[ \\t]*;?[ \\t]*$`,
-		'gmu'
-	);
+/** One statement on its own line, optionally ending in `;`. */
+const statement = (body: string): RegExp =>
+	new RegExp(`^[ \\t]*${body}[ \\t]*;?[ \\t]*$`, 'gmu');
+
+const LEVEL = '(?<value>\\d{1,3})';
+
+/** Assignment, Groovy command and call forms of `<name> <level>`. */
+const settingPatterns = (name: string): RegExp[] => [
+	statement(`${name}(?:[ \\t]*=[ \\t]*|[ \\t]+)${LEVEL}`),
+	statement(`${name}[ \\t]*\\([ \\t]*${LEVEL}[ \\t]*\\)`),
+];
+
+/** The root extra-property forms for one property name. */
+const extPatterns = (name: string): RegExp[] => {
+	const key = `["']${name}["']`;
+	return [
+		...settingPatterns(`(?:ext\\.)?${name}`),
+		statement(
+			`(?:ext|extra)[ \\t]*\\[[ \\t]*${key}[ \\t]*\\][ \\t]*=[ \\t]*${LEVEL}`
+		),
+		statement(
+			`(?:ext|extra)\\.set[ \\t]*\\([ \\t]*${key}[ \\t]*,[ \\t]*${LEVEL}[ \\t]*\\)`
+		),
+		statement(
+			`val[ \\t]+${name}[ \\t]+by[ \\t]+extra[ \\t]*\\([ \\t]*${LEVEL}[ \\t]*\\)`
+		),
+	];
+};
 
 const SDK_FLOORS: readonly SdkFloor[] = [
 	{
 		buildProperty: 'android.minSdkVersion',
-		ext: gradlePattern('minSdkVersion', '(?:ext\\.)?'),
+		ext: extPatterns('minSdkVersion'),
 		floor: MIN_ANDROID_MIN_SDK,
-		gradle: gradlePattern('minSdkVersion|minSdk'),
+		gradle: settingPatterns('(?:minSdkVersion|minSdk)'),
 		level: 'minSdk',
 		property: propertyPattern('android.minSdkVersion'),
 	},
 	{
 		buildProperty: 'android.compileSdkVersion',
-		ext: gradlePattern('compileSdkVersion', '(?:ext\\.)?'),
+		ext: extPatterns('compileSdkVersion'),
 		floor: MIN_ANDROID_COMPILE_SDK,
-		gradle: gradlePattern('compileSdkVersion|compileSdk'),
+		gradle: settingPatterns('(?:compileSdkVersion|compileSdk)'),
 		level: 'compileSdk',
 		property: propertyPattern('android.compileSdkVersion'),
 	},
@@ -115,15 +145,18 @@ export const stripGradleComments = function stripGradleComments(
 	return output;
 };
 
+/** Every level the patterns find, in file order across all of them. */
 const matches = function matches(
 	contents: string | undefined,
-	pattern: RegExp
+	patterns: RegExp | readonly RegExp[]
 ): number[] {
-	return contents === undefined
-		? []
-		: [...contents.matchAll(pattern)].map((match) =>
-				Number.parseInt(match.groups?.value ?? '', 10)
-			);
+	if (contents === undefined) {
+		return [];
+	}
+	return (Array.isArray(patterns) ? patterns : [patterns])
+		.flatMap((pattern: RegExp) => [...contents.matchAll(pattern)])
+		.sort((first, second) => (first.index ?? 0) - (second.index ?? 0))
+		.map((match) => Number.parseInt(match.groups?.value ?? '', 10));
 };
 
 const firstFile = function firstFile(
