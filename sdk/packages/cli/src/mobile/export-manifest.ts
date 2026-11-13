@@ -91,6 +91,18 @@ const exportDisclosures = async (
 			data: narrowGVLToVendors(data as GlobalVendorListDocument, vendors ?? []),
 			fetchedAt,
 		};
+		// Sent as `[]` when there are none. Both cores read a bundle without the
+		// key as "keep what you hold", since an older CLI wrote none.
+		const customVendors = manifest.iab.customVendors ?? [];
+		// Both cores key a custom vendor by `String(id)` and discard the whole
+		// list when two share one, so `1` and `"1"` would leave the app with none.
+		const customIds = customVendors.map((vendor) => String(vendor.id));
+		if (new Set(customIds).size !== customIds.length) {
+			throw new Error(
+				'Custom vendors need unique ids: devices discard a list where two share one, such as 1 and "1".'
+			);
+		}
+		disclosures.customVendors = customVendors;
 		const ac = manifest.iab.additionalConsent;
 		if (ac) {
 			const atpResponse = await get(

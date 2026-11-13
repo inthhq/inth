@@ -304,15 +304,18 @@ final class BundledPolicyTests: XCTestCase {
         let now = v["now"]!.intValue!
         let configuration = try C15tJSON.decode(
             IABConfiguration.self, from: C15tJSON.encode(v["configuration"]!))
+        // An older CLI wrote no `customVendors`; an unreadable list still loads the bundle, with none.
         for fault in [
             "valid", "missing-gvl", "stale-gvl", "future-gvl", "missing-atp", "stale-atp",
-            "future-atp",
+            "future-atp", "no-custom-vendors", "invalid-custom-vendors",
         ] {
             var body = C15tJSON.parse(Data(v["resource"]!["payload"]!.stringValue!.utf8))!
                 .objectValue!
             var disclosures = body["disclosures"]!.objectValue!
             let key = fault.hasSuffix("gvl") ? "gvl" : "atp"
             if fault.hasPrefix("missing") { disclosures.removeValue(forKey: key) }
+            if fault == "no-custom-vendors" { disclosures.removeValue(forKey: "customVendors") }
+            if fault == "invalid-custom-vendors" { disclosures["customVendors"] = .string("invalid") }
             if fault.hasPrefix("stale") || fault.hasPrefix("future") {
                 var disclosure = disclosures[key]!.objectValue!
                 disclosure["fetchedAt"] = .integer(
@@ -340,9 +343,14 @@ final class BundledPolicyTests: XCTestCase {
                     transport: OfflineTransport.offline(), iab: configuration, now: { now },
                     initRetry: .disabled))
             await core.waitUntilIdle()
-            if fault == "valid" {
-                XCTAssertNotNil(core.openIABDraft())
-                XCTAssertEqual(core.save(.all).status, .committed)
+            if fault == "valid" || fault.hasSuffix("custom-vendors") {
+                XCTAssertNotNil(core.openIABDraft(), fault)
+                // A launch served only by the bundle lists its custom vendors, and Accept all
+                // grants them.
+                let listed = fault == "valid" ? ["internal-ads"] : []
+                XCTAssertEqual(core.iabCustomVendors().map(\.id), listed, fault)
+                XCTAssertEqual(core.save(.all).status, .committed, fault)
+                XCTAssertEqual(core.iabConsent()?.choices.customVendorConsents, listed, fault)
                 await core.waitUntilIdle()
                 let envelope = try XCTUnwrap(
                     store.data(for: StorageKey.snapshot).flatMap(StoredEnvelope.decode))
@@ -365,6 +373,100 @@ final class BundledPolicyTests: XCTestCase {
                 if fault == "stale-gvl" { XCTAssertNotNil(core.globalVendorList()) }
             }
         }
+    }
+
+    /// A bundle from an older CLI has no `customVendors` key. Adopted over a held list, it keeps the
+    /// list and its grants: unlike a live `/init`, its silence says nothing about the publisher.
+    func testANewerBundleWithoutCustomVendorsKeepsTheHeldList() async throws {
+        let url = IABCommitTests.fixtureURL.deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent("bundled-policy/iab.json")
+        let v = try XCTUnwrap(C15tJSON.parse(Data(contentsOf: url)))
+        let now = v["now"]!.intValue!
+        let endpoint = v["endpoint"]!.stringValue!
+        let configuration = try C15tJSON.decode(
+            IABConfiguration.self, from: C15tJSON.encode(v["configuration"]!))
+        let original = C15tJSON.parse(Data(v["resource"]!["payload"]!.stringValue!.utf8))!
+            .objectValue!
+        func resource(_ body: [String: JSONValue]) throws -> BundledPolicyResource {
+            let payload = String(data: try C15tJSON.encode(JSONValue.object(body)), encoding: .utf8)!
+            let digest = SHA256.hash(data: Data(payload.utf8)).map { String(format: "%02x", $0) }
+                .joined()
+            let data = try XCTUnwrap(C15tJSON.encode(
+                JSONValue.object(["payload": .string(payload), "sha256": .string(digest)])))
+            return BundledPolicyResource(data: data, endpoint: endpoint)
+        }
+        let store = InMemoryStore()
+        let first = ConsentCore()
+        first.bootstrap(
+            CoreConfig(
+                store: store, bundledPolicy: try resource(original),
+                transport: OfflineTransport.offline(), iab: configuration, now: { now },
+                initRetry: .disabled))
+        await first.waitUntilIdle()
+        XCTAssertEqual(first.save(.all).status, .committed)
+        XCTAssertEqual(first.iabConsent()?.choices.customVendorConsents, ["internal-ads"])
+        await first.waitUntilIdle()
+
+        var newer = original
+        newer["issuedAt"] = .integer(now + 1000)
+        var disclosures = newer["disclosures"]!.objectValue!
+        disclosures.removeValue(forKey: "customVendors")
+        newer["disclosures"] = .object(disclosures)
+        let second = ConsentCore()
+        second.bootstrap(
+            CoreConfig(
+                store: store, bundledPolicy: try resource(newer),
+                transport: OfflineTransport.offline(), iab: configuration, now: { now + 5000 },
+                initRetry: .disabled))
+        await second.waitUntilIdle()
+        XCTAssertEqual(second.iabCustomVendors().map(\.id), ["internal-ads"])
+        XCTAssertEqual(second.iabConsent()?.choices.customVendorConsents, ["internal-ads"])
+    }
+
+    /// A newer bundle that lists none withdraws the vendor and its grant, and the withdrawal is
+    /// stored: a relaunch with the older bundle, which is not adopted again, must not bring it back.
+    func testANewerBundleListingNoneWithdrawsThemAcrossARelaunch() async throws {
+        let url = IABCommitTests.fixtureURL.deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent("bundled-policy/iab.json")
+        let v = try XCTUnwrap(C15tJSON.parse(Data(contentsOf: url)))
+        let now = v["now"]!.intValue!
+        let endpoint = v["endpoint"]!.stringValue!
+        let configuration = try C15tJSON.decode(
+            IABConfiguration.self, from: C15tJSON.encode(v["configuration"]!))
+        let original = C15tJSON.parse(Data(v["resource"]!["payload"]!.stringValue!.utf8))!
+            .objectValue!
+        let store = InMemoryStore()
+        func launch(_ body: [String: JSONValue], at: Int64) async throws -> ConsentCore {
+            let payload = String(data: try C15tJSON.encode(JSONValue.object(body)), encoding: .utf8)!
+            let digest = SHA256.hash(data: Data(payload.utf8)).map { String(format: "%02x", $0) }
+                .joined()
+            let data = try XCTUnwrap(C15tJSON.encode(
+                JSONValue.object(["payload": .string(payload), "sha256": .string(digest)])))
+            let core = ConsentCore()
+            core.bootstrap(
+                CoreConfig(
+                    store: store, bundledPolicy: BundledPolicyResource(data: data, endpoint: endpoint),
+                    transport: OfflineTransport.offline(), iab: configuration, now: { at },
+                    initRetry: .disabled))
+            await core.waitUntilIdle()
+            return core
+        }
+        let first = try await launch(original, at: now)
+        XCTAssertEqual(first.save(.all).status, .committed)
+        await first.waitUntilIdle()
+
+        var withdrawn = original
+        withdrawn["issuedAt"] = .integer(now + 1000)
+        var disclosures = withdrawn["disclosures"]!.objectValue!
+        disclosures["customVendors"] = .array([])
+        withdrawn["disclosures"] = .object(disclosures)
+        let second = try await launch(withdrawn, at: now + 5000)
+        XCTAssertEqual(second.iabCustomVendors(), [])
+        XCTAssertEqual(second.iabConsent()?.choices.customVendorConsents, [])
+
+        let third = try await launch(original, at: now + 6000)
+        XCTAssertEqual(third.iabCustomVendors(), [])
+        XCTAssertFalse(third.isCustomVendorAllowed("internal-ads"))
     }
 
     func testHostedRefreshPreservesSameFingerprintAndRepromptsForChangedFingerprint() async throws {

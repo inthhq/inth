@@ -87,6 +87,15 @@ const iabManifest = await buildConsentManifestFromConfig({
 			endpoint: 'https://lists.example.test/atp',
 			providers: [1, 2],
 		},
+		customVendors: [
+			{
+				id: 'internal-ads',
+				legIntPurposes: [],
+				name: 'Internal ads',
+				privacyPolicyUrl: 'https://example.com/ads-privacy',
+				purposes: [1],
+			},
+		],
 		enabled: true,
 		endpoint: 'https://lists.example.test/gvl',
 	},

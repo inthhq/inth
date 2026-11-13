@@ -1653,6 +1653,11 @@ class ConsentCore(
 		var emitted: KernelError?
 		synchronized(mutationLock) {
 			val base = state.get()
+			// The shortcut below compares the snapshot only. A bundle can change the custom vendor
+			// list and the grants kept with it while the snapshot stays equal, and those must reach
+			// the store.
+			val heldCustomVendors = customVendors
+			val heldIab = committedIab
 			if (online || bundle != null) bundledPolicyAuthority = bundle?.authority
 			val subject = mapped.subjectId?.let { serverId ->
 				base.subject?.copy(id = serverId) ?: ConsentSubject(id = serverId)
@@ -1770,6 +1775,7 @@ class ConsentCore(
 			published = validateIab(published)
 			if (!online && !mapped.policyUnreadable && evaluationPolicy?.model == ConsentModel.IAB &&
 				base.iab?.gvl != null && listIsUsable() &&
+				customVendors == heldCustomVendors && committedIab == heldIab &&
 				published.copy(revision = base.revision, evaluatedAt = base.evaluatedAt,
 					error = base.error, nextDeadline = base.nextDeadline) == base
 			) return@mutate false to emitted

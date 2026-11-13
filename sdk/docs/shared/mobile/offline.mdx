@@ -209,6 +209,14 @@ fallback is absent. For a scoped IAB app, supply `--vendors` with the
 comma-separated vendor IDs. Export also needs the GVL and all configured
 Additional Consent provider disclosures.
 
+The resource carries the manifest's custom (non-IAB) vendors, so a launch
+served only by the bundle lists them and Accept all grants them. A resource
+exported by an older CLI carries none, so the app keeps the list it already
+holds. On a first launch that list is empty until a live `/init` answers.
+Re-export the resource after you update the CLI or change the list. Export
+fails when two custom vendors share an id, such as `1` and `"1"`, because the
+app would discard the whole list.
+
 Repository maintainers re-export the example apps' fixtures with
 `bunx tsx scripts/export-mobile-policy.ts`, which takes an explicit
 `--expires-at`.

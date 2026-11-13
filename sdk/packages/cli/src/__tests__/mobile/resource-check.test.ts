@@ -112,4 +112,75 @@ describe('export and reuse never produce a resource a device discards', () => {
 			await rm(directory, { force: true, recursive: true });
 		}
 	});
+
+	const customVendor = {
+		id: 'internal-ads',
+		legIntPurposes: [],
+		name: 'Internal ads',
+		privacyPolicyUrl: 'https://example.com/ads',
+		purposes: [1],
+	};
+
+	// Without them, an app served only by this file lists none and Accept all
+	// stores no grant for them. With none declared the list is `[]`, since both
+	// cores read a bundle without the key as "keep what you hold".
+	const exportCustomVendors = async (
+		customVendors: readonly (typeof customVendor)[] | undefined
+	) => {
+		const source = read('iab/additional-consent-cases.json');
+		const manifest = await buildConsentManifestFromConfig({
+			iab: {
+				customVendors: customVendors ? [...customVendors] : undefined,
+				enabled: true,
+				endpoint: 'https://lists.example.test/gvl',
+			},
+			policyRules: [
+				{
+					id: 'iab',
+					match: { isDefault: true },
+					model: 'iab',
+					prompt: 'choice',
+				},
+			],
+		});
+		const gvl = {
+			...source.gvl,
+			lastUpdated: new Date(now - 86_400_000).toISOString(),
+		};
+		return exportMobilePolicy({
+			endpoint,
+			expiresAt: now + 86_400_000,
+			fetch: (url) =>
+				Promise.resolve(
+					new Response(
+						JSON.stringify(String(url).endsWith('/manifest') ? manifest : gvl)
+					)
+				),
+			now,
+		});
+	};
+
+	it.each([
+		['declares', [customVendor]],
+		['declares none', undefined],
+	] as const)(
+		'bundles the custom vendors an IAB manifest %s',
+		async (_case, customVendors) => {
+			const resource = await exportCustomVendors(customVendors);
+			expect(resourceProblem(resource, { endpoint, now })).toBeNull();
+			const payload = JSON.parse(JSON.parse(resource).payload);
+			expect(payload.disclosures.customVendors).toEqual(customVendors ?? []);
+		}
+	);
+
+	it('refuses custom vendors whose ids collide as strings', async () => {
+		// The manifest accepts 1 and "1"; both cores read them as one id and
+		// discard the whole list.
+		await expect(
+			exportCustomVendors([
+				{ ...customVendor, id: 1 as never },
+				{ ...customVendor, id: '1', name: 'Other' },
+			])
+		).rejects.toThrow(/unique ids/u);
+	});
 });

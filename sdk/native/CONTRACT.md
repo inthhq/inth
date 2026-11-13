@@ -2032,8 +2032,10 @@ and leaves it out when it declares none. So a live answer for a matched IAB poli
 without the key withdraws the list and its grants, and removing every custom vendor
 reaches the device on its next `/init`. Other answers carry no IAB payload and keep
 the list. The list lives in the stored envelope's `customVendors` key and goes with
-reset. Bundled manifests carry none, so a launch served only by a bundle
-lists none until a live `/init` answers.
+reset. A bundled manifest carries the list as `disclosures.customVendors`, `[]` when
+there are none, and both cores read it with the same rules, so a launch served only
+by a bundle lists the vendors and Accept all grants them. A bundle exported before
+that key existed keeps the held list, which is none on a first launch.
 
 A custom vendor's id is a string, `String(vendor.id)`, as the web keys its consent
 maps. `IABChoices` carries `customVendorConsents` and

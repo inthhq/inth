@@ -338,11 +338,14 @@ class BundledPolicyTest {
 	@Test fun `offline IAB preserves source dates and refuses absent stale or future disclosures`() {
 		val v = Json.parseToJsonElement(generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }.map { File(it, "native/protocol/bundled-policy/iab.json") }.first { it.exists() }.readText()).jsonObject
 		val configuration = Json { ignoreUnknownKeys = true }.decodeFromJsonElement<com.c15t.core.iab.IabConfiguration>(v.getValue("configuration"))
-		for (fault in listOf("valid", "missing-gvl", "stale-gvl", "future-gvl", "missing-atp", "stale-atp", "future-atp")) {
+		// An older CLI wrote no `customVendors`; an unreadable list still loads the bundle, with none.
+		for (fault in listOf("valid", "missing-gvl", "stale-gvl", "future-gvl", "missing-atp", "stale-atp", "future-atp", "no-custom-vendors", "invalid-custom-vendors")) {
 			val body = Json.parseToJsonElement(v.getValue("resource").jsonObject.getValue("payload").jsonPrimitive.content).jsonObject.toMutableMap()
 			val disclosures = body.getValue("disclosures").jsonObject.toMutableMap()
 			val key = if (fault.endsWith("gvl")) "gvl" else "atp"
 			if (fault.startsWith("missing")) disclosures.remove(key)
+			if (fault == "no-custom-vendors") disclosures.remove("customVendors")
+			if (fault == "invalid-custom-vendors") disclosures["customVendors"] = JsonPrimitive("invalid")
 			if (fault.startsWith("stale") || fault.startsWith("future")) disclosures[key] = JsonObject(disclosures.getValue(key).jsonObject + ("fetchedAt" to JsonPrimitive(if (fault.startsWith("stale")) now - 604800000 else now + 1)))
 			body["disclosures"] = JsonObject(disclosures)
 			val payload = JsonObject(body).toString()
@@ -350,8 +353,13 @@ class BundledPolicyTest {
 			val store = C15tStore(InMemoryKeyValueStore())
 			val config = NativeConfig(endpoint, bundledPolicy = raw, iab = configuration)
 			val core = testKernel(config, store, FixedClock(now), RecordingTransport()).also { it.bootstrap() }
-			if (fault == "valid") {
-				assertNotNull(core.openIabDraft()); assertTrue(core.save(CommitIntent.All).ok)
+			if (fault == "valid" || fault.endsWith("custom-vendors")) {
+				assertNotNull(core.openIabDraft(), fault)
+				// A launch served only by the bundle lists its custom vendors, and Accept all grants them.
+				val listed = if (fault == "valid") listOf("internal-ads") else emptyList()
+				assertEquals(listed, core.iabCustomVendors().map { it.id }, fault)
+				assertTrue(core.save(CommitIntent.All).ok, fault)
+				assertEquals(listed, core.iabConsent?.choices?.customVendorConsents, fault)
 				assertEquals(now - 1000, store.readEnvelope()?.iabListFetchedAt)
 				assertEquals(now - 2000, store.readEnvelope()?.additionalConsentList?.fetchedAt)
 				val restored = testKernel(config, store, FixedClock(now + 5000), RecordingTransport()).also { it.bootstrap() }
@@ -363,6 +371,62 @@ class BundledPolicyTest {
 				if (fault == "stale-gvl") assertNotNull(core.vendorList)
 			}
 		}
+	}
+
+	/**
+	 * A bundle from an older CLI has no `customVendors` key. Adopted over a held list, it keeps the
+	 * list and its grants: unlike a live `/init`, its silence says nothing about the publisher.
+	 */
+	@Test fun `a newer bundle without custom vendors keeps the held list`() {
+		val v = Json.parseToJsonElement(generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }.map { File(it, "native/protocol/bundled-policy/iab.json") }.first { it.exists() }.readText()).jsonObject
+		val configuration = Json { ignoreUnknownKeys = true }.decodeFromJsonElement<com.c15t.core.iab.IabConfiguration>(v.getValue("configuration"))
+		val original = Json.parseToJsonElement(v.getValue("resource").jsonObject.getValue("payload").jsonPrimitive.content).jsonObject
+		fun raw(body: JsonObject): String {
+			val payload = body.toString()
+			return buildJsonObject { put("payload", payload); put("sha256", MessageDigest.getInstance("SHA-256").digest(payload.toByteArray()).joinToString("") { "%02x".format(it) }) }.toString()
+		}
+		val store = C15tStore(InMemoryKeyValueStore())
+		val first = testKernel(NativeConfig(endpoint, bundledPolicy = raw(original), iab = configuration), store, FixedClock(now)).also { it.bootstrap() }
+		assertTrue(first.save(CommitIntent.All).ok)
+		assertEquals(listOf("internal-ads"), first.iabConsent?.choices?.customVendorConsents)
+
+		val newer = JsonObject(original + mapOf(
+			"issuedAt" to JsonPrimitive(now + 1000),
+			"disclosures" to JsonObject(original.getValue("disclosures").jsonObject - "customVendors"),
+		))
+		val second = testKernel(NativeConfig(endpoint, bundledPolicy = raw(newer), iab = configuration), store, FixedClock(now + 5000)).also { it.bootstrap() }
+		assertEquals(listOf("internal-ads"), second.iabCustomVendors().map { it.id })
+		assertEquals(listOf("internal-ads"), second.iabConsent?.choices?.customVendorConsents)
+	}
+
+	/**
+	 * A newer bundle that lists none withdraws the vendor and its grant, and the withdrawal is
+	 * stored: a relaunch with the older bundle, which is not adopted again, must not bring it back.
+	 */
+	@Test fun `a newer bundle listing none withdraws them across a relaunch`() {
+		val v = Json.parseToJsonElement(generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }.map { File(it, "native/protocol/bundled-policy/iab.json") }.first { it.exists() }.readText()).jsonObject
+		val configuration = Json { ignoreUnknownKeys = true }.decodeFromJsonElement<com.c15t.core.iab.IabConfiguration>(v.getValue("configuration"))
+		val original = Json.parseToJsonElement(v.getValue("resource").jsonObject.getValue("payload").jsonPrimitive.content).jsonObject
+		fun raw(body: JsonObject): String {
+			val payload = body.toString()
+			return buildJsonObject { put("payload", payload); put("sha256", MessageDigest.getInstance("SHA-256").digest(payload.toByteArray()).joinToString("") { "%02x".format(it) }) }.toString()
+		}
+		fun launch(store: C15tStore, body: JsonObject, at: Long) =
+			testKernel(NativeConfig(endpoint, bundledPolicy = raw(body), iab = configuration), store, FixedClock(at)).also { it.bootstrap() }
+		val store = C15tStore(InMemoryKeyValueStore())
+		assertTrue(launch(store, original, now).save(CommitIntent.All).ok)
+
+		val withdrawn = JsonObject(original + mapOf(
+			"issuedAt" to JsonPrimitive(now + 1000),
+			"disclosures" to JsonObject(original.getValue("disclosures").jsonObject + ("customVendors" to JsonArray(emptyList()))),
+		))
+		val second = launch(store, withdrawn, now + 5000)
+		assertEquals(emptyList(), second.iabCustomVendors())
+		assertEquals(emptyList(), store.readEnvelope()?.iabConsent?.choices?.customVendorConsents)
+
+		val third = launch(store, original, now + 6000)
+		assertEquals(emptyList(), third.iabCustomVendors())
+		assertFalse(third.isCustomVendorAllowed("internal-ads"))
 	}
 
 	@Test fun `hosted same fingerprint preserves choice while changed fingerprint prompts again`() {

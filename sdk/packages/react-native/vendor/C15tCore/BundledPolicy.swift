@@ -114,6 +114,9 @@ public struct BundledPolicyResource: Sendable {
         let providers = AdditionalConsent.providers(disclosure?["atp"]?["providers"])
         let gvlAt = disclosure?["gvl"]?["fetchedAt"]?.intValue
         let atpAt = disclosure?["atp"]?["fetchedAt"]?.intValue
+        // Absent keeps the held list, since an older CLI wrote no key; unreadable holds none.
+        let customVendorsValue = disclosure?["customVendors"]
+        let customVendors = IABCustomVendor.list(customVendorsValue)
         return Selection(
             authority: authority,
             response: InitResponse(
@@ -121,7 +124,9 @@ public struct BundledPolicyResource: Sendable {
                 location: LocationContext(
                     countryCode: overrides.country, regionCode: overrides.region),
                 translations: bundleTranslations,
-                gvl: gvl, adTechProviders: providers),
+                gvl: gvl, adTechProviders: providers,
+                customVendors: customVendors,
+                customVendorsInvalid: customVendorsValue != nil && customVendors == nil),
             gvlFetchedAt: gvlAt.flatMap { $0 >= 0 && $0 <= issued ? $0 : nil },
             atpFetchedAt: atpAt.flatMap { $0 >= 0 && $0 <= issued ? $0 : nil })
     }

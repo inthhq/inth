@@ -75,6 +75,7 @@ object BundledPolicy {
 			put("location", buildJsonObject { put("countryCode", overrides.country?.let(::JsonPrimitive) ?: JsonNull); put("regionCode", overrides.region?.let(::JsonPrimitive) ?: JsonNull) })
 			gvl?.get("data")?.let { put("gvl", it) }
 			atp?.get("providers")?.let { put("adTechProviders", it) }
+			disclosures?.get("customVendors")?.let { put("customVendors", it) }
 		}
 		val mapped = InitMapper.map(TransportOutcome.Success(body, emptyMap()))
 		require(!mapped.policyPending)
