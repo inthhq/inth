@@ -2317,9 +2317,16 @@ public final class ConsentCore: @unchecked Sendable {
             } else if let providers = response.adTechProviders {
                 additionalConsentList = AdditionalConsentList(providers: providers, fetchedAt: bundle == nil ? nowMs : bundle?.atpFetchedAt ?? -1)
             }
-            // Absent keeps the list held, as `init-lifecycle.ts` does on the web; an unreadable one
-            // is none. A grant for a vendor no longer listed goes with it.
-            if response.customVendorsInvalid {
+            // An unreadable list is none. An absent one keeps the list held, as
+            // `init-lifecycle.ts` does on the web, except in a live answer for a matched IAB
+            // policy: the backend sends the key whenever it declares custom vendors there, so
+            // leaving it out means it declares none. A bundle from an older CLI has no key and
+            // keeps the list. A grant for a vendor no longer listed goes with it.
+            var declaresNone = false
+            if bundle == nil, response.customVendors == nil, case let .resolved(resolved) = incomingPolicy {
+                declaresNone = resolved.resolution.status == .matched && resolved.policy.model == .iab
+            }
+            if response.customVendorsInvalid || declaresNone {
                 customVendors = []
             } else if let served = response.customVendors {
                 customVendors = served

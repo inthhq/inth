@@ -1695,9 +1695,14 @@ class ConsentCore(
 			// through this line on the launch that served it, and on the read that hydrated it.
 			if (mapped.adTechProvidersInvalid) additionalConsentList = null
 			else mapped.adTechProviders?.let { additionalConsentList = AdditionalConsentList(it, if (bundle == null) clock.nowMillis() else bundle.atpFetchedAt ?: -1) }
-			// Absent keeps the list held, as `init-lifecycle.ts` does on the web; an unreadable one is
-			// none. A grant for a vendor no longer listed goes with it.
-			if (mapped.customVendorsInvalid) customVendors = emptyList()
+			// An unreadable list is none. An absent one keeps the list held, as `init-lifecycle.ts` does
+			// on the web, except in a live answer for a matched IAB policy: the backend sends the key
+			// whenever it declares custom vendors there, so leaving it out means it declares none. A
+			// bundle from an older CLI has no key and keeps the list. A grant for a vendor no longer
+			// listed goes with it.
+			val declaresNone = bundle == null && mapped.customVendors == null && mapped.resolution.matched &&
+				mapped.evaluationPolicy?.model == ConsentModel.IAB
+			if (mapped.customVendorsInvalid || declaresNone) customVendors = emptyList()
 			else mapped.customVendors?.let { customVendors = it }
 			committedIab = committedIab?.let { saved ->
 				val kept = saved.choices.keepingCustomVendors(customVendors)

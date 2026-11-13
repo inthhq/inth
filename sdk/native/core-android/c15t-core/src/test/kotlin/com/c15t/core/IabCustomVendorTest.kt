@@ -164,11 +164,6 @@ class IabCustomVendorTest {
 		val core = boot(http = http)
 		assertTrue(core.save(CommitIntent.All).ok)
 		val before = assertNotNull(core.iabConsent)
-		// Absent keeps the list held, as on the web.
-		http.respondInit(response(null))
-		core.refresh()
-		assertEquals(3, core.iabCustomVendors().size)
-		assertEquals(before, core.iabConsent)
 		// A list without `chat` withdraws its grant; the TC String stands.
 		http.respondInit(response(JsonArray(served.take(2))))
 		core.refresh()
@@ -181,6 +176,28 @@ class IabCustomVendorTest {
 		assertEquals(emptyList(), core.iabCustomVendors())
 		assertEquals(emptyList(), core.iabConsent?.choices?.customVendorConsents)
 		assertEquals(before.tcString, core.iabConsent?.tcString)
+	}
+
+	/**
+	 * The backend leaves `customVendors` out of a matched IAB answer when it declares none, so
+	 * there the absent key withdraws the list. Any other answer leaves the key out because it
+	 * carries no IAB payload, and keeps the list held.
+	 */
+	@Test fun `a matched IAB answer without the key withdraws them`() {
+		val http = RecordingTransport()
+		val core = boot(http = http)
+		assertTrue(core.save(CommitIntent.All).ok)
+		val before = assertNotNull(core.iabConsent)
+		http.respondInit(response(null))
+		core.refresh()
+		assertEquals(emptyList(), core.iabCustomVendors())
+		assertEquals(emptyList(), core.iabConsent?.choices?.customVendorConsents)
+		assertEquals(before.tcString, core.iabConsent?.tcString)
+		http.respondInit(response(served))
+		core.refresh()
+		http.respondInit(initSuccess(body = initBody()))
+		core.refresh()
+		assertEquals(3, core.iabCustomVendors().size, "not an IAB answer")
 	}
 
 	@Test fun `presentation and derivation count them`() {

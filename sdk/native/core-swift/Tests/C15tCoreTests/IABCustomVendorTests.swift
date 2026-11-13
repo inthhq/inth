@@ -187,12 +187,6 @@ final class IABCustomVendorTests: XCTestCase {
         let core = try await boot(v, http: http)
         XCTAssertEqual(core.save(.all).status, .committed)
         let before = try XCTUnwrap(core.iabConsent())
-        // Absent keeps the list held, as on the web.
-        http.initResponse = try response(v, customVendors: nil)
-        core.refresh()
-        await core.waitUntilIdle()
-        XCTAssertEqual(core.iabCustomVendors().count, 3)
-        XCTAssertEqual(core.iabConsent(), before)
         // A list without `chat` withdraws its grant; the TC String stands.
         http.initResponse = try response(v, customVendors: .array(Array(Self.served.arrayValue!.prefix(2))))
         core.refresh()
@@ -207,6 +201,33 @@ final class IABCustomVendorTests: XCTestCase {
         XCTAssertEqual(core.iabCustomVendors(), [])
         XCTAssertEqual(core.iabConsent()?.choices.customVendorConsents, [])
         XCTAssertEqual(core.iabConsent()?.tcString, before.tcString)
+    }
+
+    /// The backend leaves `customVendors` out of a matched IAB answer when it declares none, so
+    /// there the absent key withdraws the list. Any other answer leaves the key out because it
+    /// carries no IAB payload, and keeps the list held.
+    func testAMatchedIABAnswerWithoutTheKeyWithdrawsThem() async throws {
+        let v = try fixture()
+        let http = StubHTTP()
+        let core = try await boot(v, http: http)
+        XCTAssertEqual(core.save(.all).status, .committed)
+        let before = try XCTUnwrap(core.iabConsent())
+        http.initResponse = try response(v, customVendors: nil)
+        core.refresh()
+        await core.waitUntilIdle()
+        XCTAssertEqual(core.iabCustomVendors(), [])
+        XCTAssertEqual(core.iabConsent()?.choices.customVendorConsents, [])
+        XCTAssertEqual(core.iabConsent()?.tcString, before.tcString)
+        http.initResponse = try response(v, customVendors: Self.served)
+        core.refresh()
+        await core.waitUntilIdle()
+        http.initResponse = HTTPResponse(
+            status: 200,
+            body: Fixture.initBody(
+                policyResolution: Fixture.matchedResolution(policy: Fixture.rule(model: "opt-in"))))
+        core.refresh()
+        await core.waitUntilIdle()
+        XCTAssertEqual(core.iabCustomVendors().count, 3, "not an IAB answer")
     }
 
     func testPresentationAndDerivationCountThem() async throws {

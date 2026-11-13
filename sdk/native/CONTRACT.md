@@ -2026,10 +2026,13 @@ declares that are not on the Global Vendor List. Both cores read `/init`'s
 `customVendors` with `nonIABVendorSchema`'s rules (`IABCustomVendor`,
 `IabCustomVendor`). An entry that breaks them, or two entries with one id, makes the
 core hold none, as for ad tech providers. An absent key keeps the list held, as
-`init-lifecycle.ts` does on the web; the backend leaves the key out once a publisher
-removes every custom vendor, so a device keeps its last list until a response serves
-a new one (#138). The list lives in the stored envelope's `customVendors` key and
-goes with reset. Bundled manifests carry none, so a launch served only by a bundle
+`init-lifecycle.ts` does on the web, with one exception. The backend sends the key
+in every answer for a matched IAB policy when the publisher declares custom vendors,
+and leaves it out when it declares none. So a live answer for a matched IAB policy
+without the key withdraws the list and its grants, and removing every custom vendor
+reaches the device on its next `/init`. Other answers carry no IAB payload and keep
+the list. The list lives in the stored envelope's `customVendors` key and goes with
+reset. Bundled manifests carry none, so a launch served only by a bundle
 lists none until a live `/init` answers.
 
 A custom vendor's id is a string, `String(vendor.id)`, as the web keys its consent
