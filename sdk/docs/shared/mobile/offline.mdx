@@ -4,12 +4,27 @@ Saved choices already survive a process restart without a network connection.
 The native engine restores its protected record before returning from
 installation. Optional SDKs stay off while authority is unresolved or invalid.
 
-A fresh installation has no saved policy. Bundle an exported policy if that
-first launch must explain consent without connectivity. Keep hosted transport
-configured so the app can refresh policy and deliver queued records when it
-reconnects.
+The mobile SDKs have one mode. The app points at your Inth project, fetches
+policy from it and sends consent records to it. There is no mode without a
+backend and no self-hosted backend on mobile.
 
-In backend mode the SDK picks the policy in this order:
+A fresh installation has no saved policy. If that first launch must show the
+prompt without connectivity, give the app a policy at build time:
+
+| Policy source | Where the rules come from | Use it when |
+| --- | --- | --- |
+| [Bundled manifest](#bundle-the-manifest-at-build-time) | Exported from your Inth project at build time | Production. The rules are the ones your project serves, and IAB TCF works. |
+| [In-code policy](#define-the-policy-in-code) | Rules you write in source control | You accept keeping the code and the dashboard in step by hand. No IAB TCF. |
+
+The two do not mix. With either one, the engine stores the choice on the
+device, queues the consent record and delivers it to your Inth project when
+the app reconnects.
+
+`dryRun` is a separate switch for development and CI. It drops consent
+records instead of sending them, and a release build refuses it. See
+[Run without sending records](#run-without-sending-records).
+
+Without an in-code policy, the SDK picks the policy in this order:
 
 1. The live `/init` response.
 2. The last good response cached on the device.
@@ -18,24 +33,29 @@ In backend mode the SDK picks the policy in this order:
 A newer bundled manifest replaces an older bundled one cached by an earlier
 build. It never replaces a cached live response.
 
-No-backend mode (`mode: 'offline'`) sends nothing and reads no bundled
-manifest. Its only policy source is a policy you keep in source control. The
-two modes do not mix, so Expo prebuild refuses `backendURL`, `initURL`,
-`policyResource` and `iab` in offline mode.
+With an in-code policy, the device resolves the rules itself and never calls
+`/init`.
 
 ## Define the policy in code
 
-In no-backend mode, write the policy as rules in the backend's `PolicyRule`
-names: `id`, `match`, `model`, `prompt`, `categories`, `scopeMode`,
-`preselectedCategories`, `actions`, `validity`, `privacySignals` and
-`copyRevision`. The SDK resolves them on the device with the backend's
-matching order: region, country, `regionFallbacks`, `fallback`, then
-`isDefault`.
+Write the policy as rules in the backend's `PolicyRule` names: `id`, `match`,
+`model`, `prompt`, `categories`, `scopeMode`, `preselectedCategories`,
+`actions`, `validity`, `privacySignals` and `copyRevision`. The SDK resolves
+them on the device with the backend's matching order: region, country,
+`regionFallbacks`, `fallback`, then `isDefault`. Consent records still go to
+your Inth project at `backendURL`.
 
-The device has no geolocation without a backend. The `fallback` rule applies
-unless your app sets an override country and region, so every policy needs a
-rule with `match.fallback` or `match.isDefault`. Choices stay on the device;
-nothing sends them anywhere.
+Inth recomputes each decision against the policy your project serves. It
+rejects a record whose policy it does not serve, with HTTP 422 and the reason
+`decision-mismatch`. Keep the in-code rules identical to the project's policy
+in the dashboard, and change both together. A bundled manifest avoids the
+problem, because the build exports it from the project. Prefer it for
+production.
+
+The device learns its location from `/init`, which an in-code policy never
+calls. The `fallback` rule applies unless your app sets an override country
+and region, so every policy needs a rule with `match.fallback` or
+`match.isDefault`.
 
 ```ts title="app.config.ts"
 export default {
@@ -43,7 +63,7 @@ export default {
 		[
 			'@c15t/react-native/expo-plugin',
 			{
-				mode: 'offline',
+				backendURL: 'https://your-project.inth.app',
 				consentCategories: ['necessary', 'measurement', 'marketing'],
 				policy: {
 					rules: [
@@ -73,7 +93,10 @@ let policy = try ConsentPolicy(rules: [
     PolicyRule(id: "everywhere_else", match: PolicyMatch(fallback: true, isDefault: true),
                model: .optIn, prompt: .choice),
 ])
-core.bootstrap(CoreConfig(policy: policy, transport: OfflineTransport.offline()))
+let core = try C15tApple.install(C15tAppleConfiguration(
+    backendURL: "https://your-project.inth.app",
+    policy: policy
+))
 ```
 
 ```kotlin title="Kotlin"
@@ -81,7 +104,10 @@ val policy = ConsentPolicy(listOf(
     PolicyRule("germany", PolicyMatch(countries = listOf("DE")), ConsentModel.OPT_IN, PolicyPrompt.CHOICE),
     PolicyRule("everywhere_else", PolicyMatch(fallback = true, isDefault = true), ConsentModel.OPT_IN, PolicyPrompt.CHOICE),
 ))
-C15tAndroid.install(context, NativeConfig(backendUrl = null, policy = policy))
+C15tAndroid.install(
+    context,
+    NativeConfig(backendUrl = "https://your-project.inth.app", policy = policy),
+)
 ```
 
 Both cores also read the same rules as JSON, `{"rules": [...]}`:
@@ -105,9 +131,15 @@ people are asked again after the update. Changing `validity.choiceDays` asks
 again for category choices only, and changing `validity.noticeDays` asks again
 for notice acknowledgements only.
 
-IAB TCF does not work in no-backend mode. The `iab` model needs the Global
-Vendor List, and only a backend serves it, so the SDK refuses an `iab` rule
-without one. Use backend mode with a bundled manifest for offline IAB.
+IAB TCF does not work with an in-code policy. The `iab` model needs the Global
+Vendor List, which comes from `/init`, so the SDK refuses an `iab` rule in
+code and Expo prebuild refuses `iab` beside `policy`. Use a bundled manifest
+for IAB on a launch without network.
+
+An in-code policy also does not mix with a bundled manifest. Expo prebuild
+refuses `policy` beside `policyResource` or `bundleManifest`, and Kotlin's
+`NativeConfig` throws when both `policy` and `bundledPolicy` are set. In
+Swift the bundled manifest wins.
 
 ## Bundle the manifest at build time
 
@@ -217,6 +249,11 @@ Re-export the resource after you update the CLI or change the list. Export
 fails when two custom vendors share an id, such as `1` and `"1"`, because the
 app would discard the whole list.
 
+A `dryRun` build can point at a host outside Inth, such as a staging or
+loopback backend. Pass `--dry-run` to `c15t mobile-manifest` for that build so
+the command accepts the same URL. Expo's `bundleManifest` passes it for you
+when `dryRun` is on.
+
 Repository maintainers re-export the example apps' fixtures with
 `bunx tsx scripts/export-mobile-policy.ts`, which takes an explicit
 `--expires-at`.
@@ -270,6 +307,37 @@ On reconnect, queued records must not restore an earlier grant over a newer
 withdrawal. Do not clear the queue or edit platform IAB keys to recover from a
 delivery failure. See [identity and reset](/docs/guides/mobile-identity) for
 the difference between withdrawal and starting over.
+
+## Run without sending records
+
+`dryRun` is for development and CI. The prompt, storage, SDK gates and consent
+signals work as normal. The engine drops each consent record instead of
+queueing or sending it, and identity calls change local state and send
+nothing. A save reports success with nothing queued. A queue left by an
+earlier build without `dryRun` is never sent, and the first dry-run save
+drops it, so an old record cannot be delivered after a newer choice.
+
+The app still fetches policy from `/init`, so you preview your project's real
+policy. With a bundled manifest or an in-code policy, a dry-run launch needs
+no network at all.
+
+| App | Turn it on |
+| --- | --- |
+| Expo | `dryRun: true` in the config plugin |
+| Bare RN | `com.c15t.dryRun` set to true in `Info.plist`, `com.c15t.DRY_RUN` in Android metadata |
+| Swift | `C15tAppleConfiguration(backendURL:dryRun:)`, inside `#if DEBUG` |
+| Kotlin | `NativeConfig(backendUrl = ..., dryRun = true)`, or `com.c15t.DRY_RUN` metadata |
+
+A release build refuses `dryRun` and starts no engine. Swift decides with
+`#if DEBUG`, because the SDK ships as source and compiles with your app's
+configuration. Android checks whether the host app is debuggable at runtime,
+because the SDK ships as release AARs. `C15tApple.install` throws
+`dryRunInReleaseBuild`, and `C15tAndroid.install` throws
+`IllegalStateException`. The launch hooks that read `Info.plist` or manifest
+metadata log the refusal instead, and every read answers deny-all.
+
+In a debug build, `dryRun` also relaxes the project URL rule to any `https`
+URL, or `http` on `localhost`, `127.0.0.1` or `[::1]`, with a port and a path.
 
 ## Check that it works
 

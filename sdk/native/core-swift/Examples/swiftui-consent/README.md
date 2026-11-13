@@ -1,6 +1,6 @@
 # SwiftUI consent example
 
-A standalone iOS app using the local Swift package's public `C15tCore`,
+A standalone iOS app using the local Swift package's `C15tCore`,
 `C15tApple` and `C15tConsentUI` products. Requires Xcode, XcodeGen and iOS 16.4
 or later. It does not use React Native, Expo, CocoaPods or JavaScript.
 
@@ -52,8 +52,11 @@ with a saved choice. A fresh app stays pending. Keychain can survive uninstall.
 Use a fresh task-owned simulator for a fresh install; do not clear another app's
 Keychain service.
 
-For hosted consent, set `C15T_BACKEND_URL` to your public Inth project HTTPS URL
-and `C15T_PRIVACY_POLICY_URL` to your app's HTTPS privacy policy in the app
+The local demonstration injects a sample transport through the SDK's internal
+API. An app does not do this: it passes its project URL, as the hosted path does.
+
+For hosted consent, set `C15T_BACKEND_URL` to the project URL from your Inth
+dashboard, such as `https://your-project.inth.app`, and `C15T_PRIVACY_POLICY_URL` to your app's HTTPS privacy policy in the app
 target's build settings. Configure the backend policy before running. The
 installer uses a separate hosted Keychain service. Invalid configuration fails
 visibly and keeps measurement off. No credentials belong in this sample.

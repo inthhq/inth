@@ -209,12 +209,8 @@ class BundledPolicyTest {
 		assertFalse(later.snapshot().policyPending)
 	}
 
-	@Test fun `no-backend config refuses a bundled manifest and sends nothing`() {
-		assertFailsWith<IllegalArgumentException> { NativeConfig(null, bundledPolicy = resource()) }
-		val core = testKernel(NativeConfig(null), C15tStore(InMemoryKeyValueStore()), FixedClock(now), com.c15t.core.transport.OfflineTransport).also { it.bootstrap() }
-		assertTrue(core.snapshot().policyPending)
-		assertNull(core.bundledPolicyInfo)
-		ConsentCategory.OPTIONAL.forEach { assertFalse(core.isAllowed(it)) }
+	@Test fun `an in-code policy refuses a bundled manifest`() {
+		assertFailsWith<IllegalArgumentException> { NativeConfig(endpoint, bundledPolicy = resource(), policyError = "refused") }
 	}
 
 	private fun liveResponse(raw: String): TransportOutcome {

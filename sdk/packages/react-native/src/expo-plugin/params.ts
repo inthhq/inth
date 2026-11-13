@@ -8,28 +8,8 @@ import type { C15tConsentCategoryId } from './constants';
 import { C15tPluginError } from './errors';
 import { resolveAndroidMavenRepository } from './maven';
 import type { C15tAndroidMavenRepository } from './maven';
+import { normalizeProjectURL, ProjectURLError } from './project-url';
 import type { C15tThemePluginProps } from './theme';
-
-/**
- * Transport the embedded core should run.
- *
- * The iOS bridge names four modes and the JavaScript provider accepts three
- * (`ProviderTransportKind` in `@c15t/core`); Android names none, because it
- * infers all of them from which keys are present. This is the host-facing
- * spelling, and the two maps below translate it per platform.
- */
-export const TRANSPORT_MODES = [
-	'custom',
-	'hosted',
-	'offline',
-	'selfHosted',
-] as const;
-
-/** Transport the embedded core should run. */
-export type C15tTransportMode = (typeof TRANSPORT_MODES)[number];
-
-/** Transport kind `@c15t/core`'s provider factories report. */
-export type ConsentProviderTransportKind = 'custom' | 'hosted' | 'offline';
 
 /**
  * One locale's Markdown prompt copy, ready to write into a string table.
@@ -43,37 +23,6 @@ export interface C15tTrackingMarkdownLocalization {
 	/** Markdown prompt copy, trimmed. */
 	readonly value: string;
 }
-
-/**
- * `com.c15t.backend.mode` values, per mode.
- *
- * `custom` becomes the iOS bridge's `none`: no transport at all, so an async
- * command from a frame the host has not installed over is a no-op rather than a
- * write that looks delivered.
- */
-export const IOS_TRANSPORT_MODE: Record<C15tTransportMode, string> = {
-	custom: 'none',
-	hosted: 'hosted',
-	offline: 'offline',
-	selfHosted: 'selfHosted',
-};
-
-/**
- * What JavaScript is told the mode is.
- *
- * A self-hosted `@c15t/backend` speaks the hosted wire, so the provider wants
- * `hosted()`. Reporting `selfHosted` would leave a host looking for a provider
- * factory that does not exist.
- */
-export const PROVIDER_TRANSPORT_MODE: Record<
-	C15tTransportMode,
-	ConsentProviderTransportKind
-> = {
-	custom: 'custom',
-	hosted: 'hosted',
-	offline: 'offline',
-	selfHosted: 'hosted',
-};
 
 /**
  * IAB TCF settings for the embedded cores.
@@ -170,10 +119,9 @@ export interface C15tPolicyMatch {
 /**
  * One rule of the in-code policy, in the backend's `PolicyRule` names.
  *
- * It is the same shape `@c15t/backend` reads, minus `iab`, which needs a
- * backend to serve the Global Vendor List, and minus the `rights`, `proof`,
- * `i18n` and `legacyMaterial` fields, which only matter where records reach a
- * backend.
+ * It is the same shape `@c15t/backend` reads, minus `iab`, because the vendor
+ * list comes from `/init`, and minus the `rights`, `proof`, `i18n` and
+ * `legacyMaterial` fields, which the device does not read.
  */
 export interface C15tPolicyRule {
 	id: string;
@@ -196,7 +144,7 @@ export interface C15tPolicyRule {
 	copyRevision?: string;
 }
 
-/** The in-code policy for no-backend mode. */
+/** The in-code policy: rules the device resolves itself, without `/init`. */
 export interface C15tPolicy {
 	rules: readonly C15tPolicyRule[];
 }
@@ -216,7 +164,8 @@ export interface C15tPluginProps {
 	policyResource?: string;
 	/**
 	 * Fetch the latest manifest from `backendURL` at prebuild and bundle it, so a
-	 * first launch with no network still shows the prompt.
+	 * first launch with no network still shows the prompt. With `dryRun`, the
+	 * command gets `--dry-run` and takes the same relaxed URL rule.
 	 *
 	 * Runs `c15t mobile-manifest` from the app's `@c15t/cli` dev dependency. If
 	 * the fetch fails, a release build fails and a debug build warns and
@@ -241,29 +190,34 @@ export interface C15tPluginProps {
 				out?: string;
 		  };
 	/**
-	 * The policy for `mode: 'offline'`, kept in source control and the only
-	 * policy source in that mode. Required there, refused in every other mode.
+	 * Policy rules kept in source control. The device resolves them itself and
+	 * never calls `/init`; consent records still go to `backendURL`.
 	 *
-	 * The device has no geolocation without a backend, so the `fallback` rule
-	 * applies unless the app sets an override country and region. Records stay
-	 * on the device.
+	 * The device has no location without `/init`, so the `fallback` rule applies
+	 * unless the app sets an override country and region. Cannot be combined
+	 * with `policyResource`, `bundleManifest` or `iab`.
 	 */
 	policy?: C15tPolicy;
 	/**
-	 * c15t backend base URL, without a trailing slash.
+	 * The project URL from your Inth dashboard, such as
+	 * `https://your-project.inth.app`. Required.
 	 *
-	 * Required for every mode except `offline`, which refuses it. A path is
-	 * allowed, so a deployment fronted by a same-origin route works unchanged.
+	 * The mobile SDKs work only with Inth, so the host must be a project host
+	 * under `inth.app`, with no port or path. `dryRun` relaxes
+	 * that.
 	 */
-	backendURL?: string;
+	backendURL: string;
 	/**
-	 * URL used for `GET /init`, for a proxied init route.
+	 * Development and CI switch: consent works as normal on the device, and
+	 * consent records are dropped instead of sent.
 	 *
-	 * Defaults to `${backendURL}/init`. Set it when init resolves from a
-	 * same-origin route while consent saves still go to `backendURL`, which is
-	 * what `initURL` does in `@c15t/core`. Both embedded cores honour it.
+	 * It also relaxes the `backendURL` rule to any `https` URL, or `http` on
+	 * `localhost`, `127.0.0.1` or `[::1]`. A release build refuses to start
+	 * c15t with `dryRun` on, so remove it before you ship.
+	 *
+	 * @defaultValue false
 	 */
-	initURL?: string;
+	dryRun?: boolean;
 	/** Value sent as the `domain` field of `POST /subjects`. */
 	domain?: string;
 	/**
@@ -301,19 +255,6 @@ export interface C15tPluginProps {
 	 * section. Omit it to leave GPP off.
 	 */
 	gpp?: boolean | C15tGppPluginProps;
-	/**
-	 * Transport mode.
-	 *
-	 * `hosted` starts the core from the embedded config. `selfHosted` is the
-	 * same wire against a `@c15t/backend` the host runs itself. `offline` is
-	 * no-backend mode on iOS and Android: nothing is sent, and it takes no
-	 * `backendURL`, `initURL`, `policyResource` or `iab`, because the two modes
-	 * do not mix and IAB TCF needs a backend to serve the vendor list. `custom`
-	 * leaves the core unstarted so the host can install its own transport.
-	 *
-	 * @defaultValue 'hosted'
-	 */
-	mode?: C15tTransportMode;
 	/**
 	 * Write the App Tracking Transparency usage description and SKAdNetwork
 	 * items.
@@ -396,8 +337,8 @@ export interface C15tPluginProps {
 	/**
 	 * Let the embedded core start itself at launch.
 	 *
-	 * Set `false` when the host calls into the core itself. Defaults to `false`
-	 * for `mode: 'custom'`, where leaving it on would race the host.
+	 * Set `false` when the native app installs c15t itself before React Native
+	 * starts.
 	 *
 	 * @defaultValue true
 	 */
@@ -436,18 +377,14 @@ export interface ResolvedC15tParams {
 	readonly policyResource: string | null;
 	/** Build-time manifest fetch settings, or `null` when the plugin fetches nothing. */
 	readonly bundleManifest: ResolvedBundleManifest | null;
-	/** The in-code policy rules for no-backend mode, or `null` in backend modes. */
+	/** The in-code policy rules, or `null` when the policy comes from `/init`. */
 	readonly policyRules: readonly C15tPolicyRule[] | null;
-	/** Transport the embedded core should run. */
-	readonly mode: C15tTransportMode;
-	/** {@link mode} as the JavaScript provider spells it. */
-	readonly providerMode: ConsentProviderTransportKind;
-	/** Normalised backend base URL, or `null` when no backend is embedded. */
-	readonly backendURL: string | null;
+	/** The project URL in its normal form, without a trailing slash. */
+	readonly backendURL: string;
 	/** Hostname of {@link backendURL}, used for the iOS privacy manifest. */
-	readonly backendHost: string | null;
-	/** Normalised init URL override, or `null`. */
-	readonly initURL: string | null;
+	readonly backendHost: string;
+	/** Whether consent records are dropped instead of sent. */
+	readonly dryRun: boolean;
 	/** `domain` sent on subject writes, or `null` to let the core derive it. */
 	readonly domain: string | null;
 	/**
@@ -501,72 +438,75 @@ export interface ResolvedC15tParams {
 
 const USAGE =
 	'configure it in app.json as ' +
-	`{ "plugins": [["@c15t/react-native/expo-plugin", { "backendURL": "https://consent.example.com" }]] }`;
-
-const isLoopbackHost = function isLoopbackHost(hostname: string): boolean {
-	return (
-		hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]'
-	);
-};
+	`{ "plugins": [["@c15t/react-native/expo-plugin", { "backendURL": "https://your-project.inth.app" }]] }`;
 
 /**
- * Parse a URL prop into a `URL`, rejecting the shapes that cannot work.
+ * Options this plugin used to take, with what replaces each one.
  *
- * Credentials, a query, and a hash are all wrong here: the value lands in a
- * public binary and is read by the core as a base to append paths to.
+ * Props come from `app.json`, so the keys are checked at prebuild even though
+ * the type no longer has them.
  */
-const parseURL = function parseURL(value: string): URL | null {
-	let parsed: URL;
+const RETIRED_MODES: Readonly<Record<string, string>> = {
+	custom:
+		"mode 'custom' was removed. Set autoBootstrap to false: the native app " +
+		'installs c15t itself before React Native starts. Custom transports ' +
+		'are gone.',
+	hosted:
+		"mode 'hosted' was removed. Hosted is the only mode: remove mode and " +
+		'keep backendURL.',
+	offline:
+		"mode 'offline' was removed. Use dryRun: true for development and CI. " +
+		'In production keep backendURL; bundleManifest or an in-code policy ' +
+		'covers a launch without network.',
+	selfHosted:
+		"mode 'selfHosted' was removed and has no replacement. The mobile SDKs " +
+		'work only with Inth: remove mode and set backendURL to your Inth ' +
+		'project URL.',
+};
+
+const assertNoRetiredOptions = function assertNoRetiredOptions(
+	props: C15tPluginProps
+): void {
+	const given = props as { initURL?: unknown; mode?: unknown };
+	if (given.mode !== undefined) {
+		throw new C15tPluginError(
+			(Object.hasOwn(RETIRED_MODES, String(given.mode))
+				? RETIRED_MODES[String(given.mode)]
+				: undefined) ??
+				`mode was removed; got ${JSON.stringify(given.mode)}. Hosted is ` +
+					'the only mode: remove mode and set backendURL to your Inth ' +
+					'project URL.'
+		);
+	}
+	if (given.initURL !== undefined) {
+		throw new C15tPluginError(
+			'initURL was removed and has no replacement. Policy is fetched from ' +
+				'backendURL: remove initURL.'
+		);
+	}
+};
+
+/** The project URL in its normal form, or the plugin's error for a refused one. */
+const resolveBackendURL = function resolveBackendURL(
+	value: unknown,
+	dryRun: boolean
+): string {
+	if (typeof value !== 'string') {
+		throw new C15tPluginError(`backendURL is required. ${USAGE}`);
+	}
 	try {
-		parsed = new URL(value.trim());
-	} catch {
-		return null;
+		return normalizeProjectURL(value, { relaxed: dryRun });
+	} catch (error) {
+		if (error instanceof ProjectURLError) {
+			throw new C15tPluginError(error.message, error.reason);
+		}
+		throw error;
 	}
-	if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
-		return null;
-	}
-	if (parsed.protocol === 'http:' && !isLoopbackHost(parsed.hostname)) {
-		return null;
-	}
-	if (parsed.username !== '' || parsed.password !== '') {
-		return null;
-	}
-	if (parsed.search !== '' || parsed.hash !== '') {
-		return null;
-	}
-	return parsed;
 };
 
-/** Normalise a URL prop, or throw with the shape that was expected. */
-const normalizeURL = function normalizeURL(
-	value: string,
-	label: string
-): { readonly href: string; readonly hostname: string } {
-	const parsed = parseURL(value);
-	if (parsed === null) {
-		throw new C15tPluginError(
-			`${label} must be an https URL without credentials, a query, or a ` +
-				`hash, or plain http on a loopback host. Got ${JSON.stringify(value)}. ` +
-				`${USAGE}`
-		);
-	}
-	const trimmed = value.trim().replace(/\/+$/u, '');
-	return { hostname: parsed.hostname, href: trimmed };
-};
-
-const normalizeMode = function normalizeMode(
-	mode: C15tTransportMode | undefined
-): C15tTransportMode {
-	if (mode === undefined) {
-		return 'hosted';
-	}
-	if (!TRANSPORT_MODES.includes(mode)) {
-		throw new C15tPluginError(
-			`mode must be one of ${TRANSPORT_MODES.join(', ')}; got ` +
-				`${JSON.stringify(mode)}.`
-		);
-	}
-	return mode;
+/** `www.example.com` from the normal form, without a port. */
+const hostOf = function hostOf(backendURL: string): string {
+	return new URL(backendURL).hostname;
 };
 
 const normalizeOptionalText = function normalizeOptionalText(
@@ -1044,6 +984,7 @@ const normalizeBundleManifest = function normalizeBundleManifest(
 	}
 	return {
 		allowStaleManifest: options.allowStaleManifest === true,
+		dryRun: props.dryRun === true,
 		expiresInDays: days ?? null,
 		languages: (options.languages ?? []).map((language) => language.trim()),
 		out:
@@ -1139,7 +1080,7 @@ const modelProblem = function modelProblem(
 	if (prompts === undefined) {
 		return (
 			`${label} has model ${JSON.stringify(rule.model)}. Use 'opt-in', ` +
-			"'opt-out' or 'none'; 'iab' needs a backend to serve the Global Vendor List."
+			"'opt-out' or 'none'; 'iab' needs the vendor list, which comes from /init."
 		);
 	}
 	return prompts.includes(rule.prompt as string)
@@ -1412,7 +1353,7 @@ const reviewProblem = function reviewProblem(
 
 /**
  * Check one rule with the rules both native cores apply at launch: the backend's
- * authoring rules (`inspectPolicyRules` in `@c15t/schema`) plus the no-backend
+ * authoring rules (`inspectPolicyRules` in `@c15t/schema`) plus the in-code
  * limits. `native/protocol/local-policy/parity.json` lists the cases all three
  * refuse, and the tests of each read it.
  *
@@ -1499,52 +1440,33 @@ const normalizePolicy = function normalizePolicy(
 	) {
 		throw new C15tPluginError(
 			'policy needs a rule with match.fallback or match.isDefault, because ' +
-				'the device has no location without a backend.'
+				'the device has no location without /init.'
 		);
 	}
 	return valid;
 };
 
 /**
- * Keep backend mode and no-backend mode apart.
+ * Keep the in-code policy apart from the other policy sources.
  *
- * A bundled manifest belongs to a backend, IAB TCF needs a backend to serve the
- * Global Vendor List, and the in-code policy is the only source without one.
+ * A bundled manifest is a second policy source, and IAB TCF needs the vendor
+ * list, which comes from `/init`. An in-code policy never calls `/init`.
  */
-const assertModesDoNotMix = function assertModesDoNotMix(
-	mode: C15tTransportMode,
+const assertPolicySourcesDoNotMix = function assertPolicySourcesDoNotMix(
 	props: C15tPluginProps
 ): void {
-	if (mode !== 'offline') {
-		if (props.policy !== undefined) {
-			throw new C15tPluginError(
-				`policy is for mode 'offline'. Mode ${JSON.stringify(mode)} takes its ` +
-					'policy from the backend; remove policy, or switch to offline.'
-			);
-		}
+	if (props.policy === undefined) {
 		return;
 	}
-	const mixed = (
-		[
-			'backendURL',
-			'initURL',
-			'policyResource',
-			'bundleManifest',
-			'iab',
-		] as const
-	).filter((key) => props[key] !== undefined);
+	const mixed = (['policyResource', 'bundleManifest', 'iab'] as const).filter(
+		(key) => props[key] !== undefined
+	);
 	if (mixed.length > 0) {
 		throw new C15tPluginError(
-			`mode 'offline' is no-backend mode and takes no ${mixed.join(', ')}. ` +
-				'Use a backend mode for a bundled manifest or IAB TCF, which ' +
-				'needs a backend to serve the Global Vendor List.'
-		);
-	}
-	if (props.policy === undefined) {
-		throw new C15tPluginError(
-			"mode 'offline' needs policy: it is the only policy source " +
-				'without a backend. Add { "policy": { "rules": [...] } } with a ' +
-				'fallback rule.'
+			`policy cannot be combined with ${mixed.join(', ')}. The device ` +
+				'resolves an in-code policy itself and never calls /init, which ' +
+				'is where a bundled manifest and the IAB vendor list come from. ' +
+				'Remove policy, or remove the others.'
 		);
 	}
 };
@@ -1563,25 +1485,16 @@ export const resolveParams = function resolveParams(
 		throw new C15tPluginError(`no parameters were passed; ${USAGE}`);
 	}
 
-	const mode = normalizeMode(props.mode);
-
-	let backendURL: string | null = null;
-	let backendHost: string | null = null;
-	if (props.backendURL !== undefined) {
-		const parsed = normalizeURL(props.backendURL, 'backendURL');
-		backendURL = parsed.href;
-		backendHost = parsed.hostname;
-	} else if (mode !== 'offline') {
+	assertNoRetiredOptions(props);
+	if (props.dryRun !== undefined && typeof props.dryRun !== 'boolean') {
 		throw new C15tPluginError(
-			`backendURL is required for mode ${JSON.stringify(mode)}. ${USAGE}`
+			`dryRun must be true or false. Got ${JSON.stringify(props.dryRun)}.`
 		);
 	}
-	assertModesDoNotMix(mode, props);
-
-	const initURL =
-		props.initURL === undefined
-			? null
-			: normalizeURL(props.initURL, 'initURL').href;
+	const dryRun = props.dryRun === true;
+	const backendURL = resolveBackendURL(props.backendURL, dryRun);
+	const backendHost = hostOf(backendURL);
+	assertPolicySourcesDoNotMix(props);
 
 	const att = resolveAppTrackingTransparency(props);
 
@@ -1599,11 +1512,11 @@ export const resolveParams = function resolveParams(
 		privacyTrackingDomains = [
 			...new Set(props.privacyTrackingDomains.map(normalizeTrackingDomain)),
 		];
-	} else if (att.enabled && backendHost !== null) {
+	} else if (att.enabled) {
 		privacyTrackingDomains = [backendHost];
 	}
 
-	if (att.enabled && backendHost !== null) {
+	if (att.enabled) {
 		if (!privacyTrackingDomains.includes(backendHost)) {
 			throw new C15tPluginError(
 				`privacyTrackingDomains must list ${backendHost}, the host of ` +
@@ -1619,17 +1532,16 @@ export const resolveParams = function resolveParams(
 			props.androidMavenRepository
 		),
 		appTrackingTransparency: att,
-		autoBootstrap: props.autoBootstrap ?? mode !== 'custom',
+		autoBootstrap: props.autoBootstrap ?? true,
 		backendHost,
 		backendURL,
 		bundleManifest: normalizeBundleManifest(props),
 		consentCategories: normalizeConsentCategories(props.consentCategories),
 		domain: normalizeOptionalText(props.domain, 'domain'),
+		dryRun,
 		forceGPC: props.forceGPC ?? false,
 		gpp: normalizeGpp(props.gpp),
 		iab: normalizeIab(props.iab),
-		initURL,
-		mode,
 		policyResource: normalizeOptionalText(
 			props.bundleManifest === undefined
 				? props.policyResource
@@ -1638,7 +1550,6 @@ export const resolveParams = function resolveParams(
 		),
 		policyRules: normalizePolicy(props.policy),
 		privacyTrackingDomains,
-		providerMode: PROVIDER_TRANSPORT_MODE[mode],
 		skipNativeBuildCheck: props.skipNativeBuildCheck ?? false,
 		vendors: normalizeVendors(props.vendors),
 	};

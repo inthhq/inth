@@ -14,9 +14,14 @@
 		<meta-data
 			android:name="com.c15t.BACKEND_URL"
 			android:value="https://consent.instrumentation.invalid" />
+		<!--
+			The instrumented APK is debuggable, so dryRun is allowed, and it is what lets
+			the manifest path take a host outside Inth. Tests that deliver records install
+			through the internal door with their own transport and do not read this.
+		-->
 		<meta-data
-			android:name="com.c15t.BACKEND_INIT_URL"
-			android:value="https://consent.instrumentation.invalid/api/consent/init" />
+			android:name="com.c15t.DRY_RUN"
+			android:value="true" />
 		<meta-data
 			android:name="com.c15t.BACKEND_DOMAIN"
 			android:value="consent.instrumentation.invalid" />

@@ -50,11 +50,11 @@ subject, receipt, effective permissions, TC string, delivery queue or
 
 | Host | Configuration |
 | --- | --- |
-| Bare iOS | Add the JSON to Copy Bundle Resources. Set `com.c15t.policy.resource` to its filename in Info.plist. Keep the hosted backend URL and mode configured. |
+| Bare iOS | Add the JSON to Copy Bundle Resources. Set `com.c15t.policy.resource` to its filename in Info.plist. Keep `com.c15t.backend.url` set to your Inth project URL. |
 | Bare Android | Put the JSON in `app/src/main/assets`. Set `com.c15t.POLICY_RESOURCE` to its asset path in application metadata. Keep `com.c15t.BACKEND_URL` configured. |
 | Expo development or release build | Set the config plugin's `policyResource` to the JSON path relative to the Expo project, alongside `backendURL`. Prebuild copies the exact bytes into both native projects and registers the iOS resource. Rebuild the binary after changing it. |
-| Swift host | Load `BundledPolicyResource` from resource URL or Data with the configured endpoint, then pass it as `CoreConfig.bundledPolicy` before bootstrapping. |
-| Kotlin host | Read the resource into `NativeConfig.bundledPolicy` before bootstrapping. `C15tAndroid.configFrom` can load the declared asset for you. |
+| Swift host | Load `BundledPolicyResource` from resource URL or Data with the configured endpoint, then pass it as `C15tAppleConfiguration.bundledPolicy` to `C15tApple.install`. |
+| Kotlin host | Read the resource into `NativeConfig.bundledPolicy` and pass it to `C15tAndroid.install`. `C15tAndroid.configFrom` can load the declared asset for you. |
 
 Precedence is the live `/init` response, then the last good cached response,
 then the bundled manifest. A cached live response always wins over the bundle.
@@ -62,9 +62,7 @@ A cached bundle gives way to this build's bundle when the cached one is stale,
 older or bound to another endpoint.
 Stored bundled authority stays usable without loading seed bytes again when the
 configured backend URL is unchanged. Swift's `HostedTransport` supplies that URL.
-A custom Swift transport can expose `policyEndpoint`; otherwise it needs the
-matching seed endpoint. Changing or omitting the configured endpoint denies
-retained bundled authority.
+Changing the configured endpoint denies retained bundled authority.
 
 Removing Expo's `policyResource` option disables the plugin-owned resource on the
 next prebuild by removing its activation metadata. Prebuild preserves custom
@@ -83,11 +81,12 @@ still need current GVL and ATP disclosures, which have their own age limit.
 A successful hosted refresh replaces bundle authority and uses normal fingerprint
 and reconsent behavior.
 
-Keep the hosted transport installed. Local decisions become successful only after
+Local decisions become successful only after
 the native durable commit. Failed delivery stays queued under the original subject
 with the original confirmation timestamps and assertions. Reconnect replays the
-queue through the existing delivery code. Advanced self-hosted and custom transports
-remain supported by the same native APIs.
+queue to the Inth project through the existing delivery code. The mobile SDKs
+work only with Inth hosted projects, so there is no self-hosted or custom
+transport. Under `dryRun`, records are dropped instead of queued.
 
 ## Offline IAB and Additional Consent
 

@@ -13,6 +13,8 @@ kotlin {
 	compilerOptions {
 		apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_1)
 		languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_1)
+		// The transport door is internal API. This module and its tests own it.
+		optIn.add("com.c15t.core.C15tInternalApi")
 	}
 	jvmToolchain(17)
 }

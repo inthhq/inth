@@ -1,8 +1,8 @@
-import C15tCore
+@_spi(C15tInternal) import C15tCore
 import Foundation
 import XCTest
 
-@testable import C15tReactNativeBridge
+@_spi(C15tInternal) @testable import C15tReactNativeBridge
 
 /// The foreground leg, from the cheapest distance to each way it can be wrong.
 ///
@@ -155,7 +155,7 @@ final class C15tForegroundObserverTests: XCTestCase {
 
         // The launch hook and the module's `ensureCore()` both reach startup, and they are
         // allowed to.
-        XCTAssertTrue(C15tReactNativeBootstrap.start(configuration: memoryConfiguration()))
+        XCTAssertTrue(startMemoryCore())
         let initsBefore = http.initCount
 
         NotificationCenter.default.post(name: C15tForegroundObserver.didBecomeActive, object: nil)

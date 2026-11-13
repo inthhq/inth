@@ -1,61 +1,26 @@
 #if canImport(C15tApple)
-import C15tApple
+@_spi(C15tInternal) import C15tApple
 #endif
 #if canImport(C15tCore)
 // SwiftPM builds the consent kernel as its own module. CocoaPods compiles the vendored
 // copy into this module instead, where the import would fail, so it is conditional
 // rather than assumed.
-import C15tCore
+@_spi(C15tInternal) import C15tCore
 #endif
 import Foundation
 
 /// Everything the iOS bridge needs from the host app, read from `Info.plist`.
 ///
-/// The consent core needs a store, a transport, and a language before the first
+/// The consent core needs a store, a project URL, and a language before the first
 /// JavaScript frame, which is before any Swift or JavaScript the app writes has run.
 /// `Info.plist` is the one place available that early, it is what Expo already
 /// surfaces through `app.json`'s `ios.infoPlist`, and it keeps the Android and iOS
-/// set-up stories the same shape: declare the backend, install, rebuild.
+/// set-up stories the same shape: declare the project URL, install, rebuild.
 ///
 /// An app that needs more than these keys can install a configured core itself with
 /// ``C15tReactNativeBootstrap/install(_:)`` and set `com.c15t.reactnative.AutoBootstrap`
 /// to `false`.
 public struct C15tBridgeConfiguration: Sendable, Equatable {
-    /// How the core reaches a backend.
-    ///
-    /// The raw values are the spellings accepted in `Info.plist`, which is why
-    /// `self-hosted` is kebab-case: an `Info.plist` value is typed by hand, and
-    /// `selfHosted` is the kind of thing people write as `self-hosted`.
-    public enum TransportMode: String, Sendable {
-        /// The c15t cloud project URL in `com.c15t.backend.url`.
-        case hosted = "hosted"
-        /// A self-hosted `@c15t/backend` base URL, same wire.
-        case selfHosted = "self-hosted"
-        /// Never send. Saves queue up and apply locally.
-        case offline = "offline"
-        /// No transport at all: async commands become no-ops. For preview builds.
-        ///
-        /// Named `disabled`, not `none`. An enum case called `none` is shadowed by
-        /// `Optional.none` wherever an optional mode is in scope, which the Xcode
-        /// compiler rejects outright; the `Info.plist` spelling stays `none`.
-        case disabled = "none"
-
-        /// Read a mode name tolerantly, so casing and separator choices in the plist
-        /// do not silently fall back to a different mode.
-        ///
-        /// - Returns: The mode, or `nil` for a name this build does not know. An
-        ///   unknown name is treated as "not declared" and inferred from the URL.
-        public static func parse(_ raw: String) -> TransportMode? {
-            switch raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
-            case "hosted", "host", "cloud": return .hosted
-            case "self-hosted", "selfhosted", "self_hosted": return .selfHosted
-            case "offline": return .offline
-            case "none": return .disabled
-            default: return nil
-            }
-        }
-    }
-
     /// Where the snapshot envelope and consent records live.
     public enum StorageMode: String, Sendable {
         /// Keychain generic password items. The contract's requirement, and the default.
@@ -66,8 +31,8 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
         /// Nothing survives relaunch. Tests and preview builds.
         case memory = "memory"
 
-        /// Read a storage name tolerantly, the same way ``TransportMode/parse(_:)``
-        /// does, so a typo becomes the Keychain rather than a plaintext store.
+        /// Read a storage name tolerantly, so a typo becomes the Keychain rather than
+        /// a plaintext store.
         public static func parse(_ raw: String) -> StorageMode? {
             switch raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
             case "keychain": return .keychain
@@ -82,12 +47,11 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
     /// code rather than from `Info.plist`.
     ///
     /// Every parameter is defaulted so an app that only cares about the backend names
-    /// the two fields that matter and inherits the contract's defaults elsewhere.
+    /// the project URL and inherits the contract's defaults elsewhere.
     public init(
         autoBootstrap: Bool = true,
-        transportMode: TransportMode = .offline,
-        backendURL: URL? = nil,
-        initURL: URL? = nil,
+        backendURL: String? = nil,
+        dryRun: Bool = false,
         domain: String? = nil,
         storageMode: StorageMode = .keychain,
         keychainService: String = C15tBridgeConfiguration.defaultKeychainService,
@@ -101,9 +65,8 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
         gpp: GPPOptions? = nil
     ) {
         self.autoBootstrap = autoBootstrap
-        self.transportMode = transportMode
         self.backendURL = backendURL
-        self.initURL = initURL
+        self.dryRun = dryRun
         self.domain = domain
         self.storageMode = storageMode
         self.keychainService = keychainService
@@ -119,16 +82,12 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
 
     /// Whether the launch hook should start the core.
     public var autoBootstrap: Bool
-    public var transportMode: TransportMode
-    /// Hosted project URL or self-hosted base URL, depending on `transportMode`.
-    public var backendURL: URL?
-    /// The URL used for `GET /init`, or `nil` for `${backendURL}/init`.
-    ///
-    /// The override exists for a same-origin proxy that resolves init from its own
-    /// route while consent saves still go to the backend. It is honoured exactly the
-    /// way `@c15t/core` and the Android core honour theirs: the value is used as
-    /// given, and only an absent key falls back to `${backendURL}/init`.
-    public var initURL: URL?
+    /// The Inth project URL, as written in `com.c15t.backend.url`. It is checked when
+    /// the core starts: a missing or refused value leaves the core uninstalled.
+    public var backendURL: String?
+    /// `com.c15t.dryRun`. Development and CI only: consent records are dropped, not
+    /// queued or sent. A release build refuses to start with it.
+    public var dryRun: Bool
     /// The `domain` field sent on `POST /subjects`.
     public var domain: String?
     public var storageMode: StorageMode
@@ -154,8 +113,8 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
     public var vendors: [Int]?
     /// Filename of an endpoint-bound policy export in the main app bundle.
     public var bundledPolicyResource: String?
-    /// Filename of the in-code policy, `{"rules": [...]}`, in the main app bundle. Read
-    /// only in offline mode, where it is the only policy source.
+    /// Filename of the in-code policy, `{"rules": [...]}`, in the main app bundle. With
+    /// one, the device resolves the rules locally and never calls `/init`.
     public var policyRulesResource: String?
     /// The host app's Global Privacy Control signal, or `nil` when it has none.
     public var gpc: Bool?
@@ -172,10 +131,11 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
     /// Keys read out of `Info.plist`. All optional.
     public enum InfoPlistKey {
         public static let autoBootstrap = "com.c15t.reactnative.AutoBootstrap"
+        /// The Inth project URL, such as `https://your-project.inth.app`.
         public static let backendURL = "com.c15t.backend.url"
-        public static let transportMode = "com.c15t.backend.mode"
+        /// `true` drops consent records. Development and CI only.
+        public static let dryRun = "com.c15t.dryRun"
         public static let domain = "com.c15t.backend.domain"
-        public static let initURL = "com.c15t.backend.initUrl"
         public static let storageMode = "com.c15t.storage"
         public static let keychainService = "com.c15t.keychain.service"
         public static let country = "com.c15t.country"
@@ -190,7 +150,7 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
         public static let vendors = "com.c15t.vendors"
         public static let forceGPC = "com.c15t.forceGPC"
         public static let bundledPolicyResource = "com.c15t.policy.resource"
-        /// Filename of the in-code policy rules, read in offline mode.
+        /// Filename of the in-code policy rules.
         public static let policyRulesResource = "com.c15t.policy.rules"
         /// IAB Europe CMP ID, 2 to 4095. Required when any `com.c15t.iab.*` key is present.
         public static let iabCmpId = "com.c15t.iab.cmpId"
@@ -235,10 +195,27 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
     /// `overrides.test`; refusing the plist key here is the same rule on the way in.
     /// `com.c15t.forceGPC` is offered because it is the key a host reaching for test mode
     /// usually wants, and it is the GPC signal, which is a different thing: it feeds
-    /// the core's detection, never ``ConsentOverrides/gpc``. The Expo config plugin
-    /// writes none of these keys.
+    /// the core's detection, never ``ConsentOverrides/gpc``.
+    ///
+    /// `com.c15t.backend.mode` and `com.c15t.backend.initUrl` went when mobile became
+    /// Inth hosted only. `replacement` is a full sentence, because for these the answer
+    /// is not always another key. The Expo config plugin writes none of these keys.
     public static let retiredInfoPlistKeys: [RetiredInfoPlistKey] = [
-        RetiredInfoPlistKey(key: "com.c15t.test", replacement: "com.c15t.forceGPC"),
+        RetiredInfoPlistKey(
+            key: "com.c15t.test",
+            replacement: "Remove it. There is no test-mode override. Use com.c15t.forceGPC "
+                + "to report a Global Privacy Control signal."),
+        RetiredInfoPlistKey(
+            key: "com.c15t.backend.mode",
+            replacement: "Remove it. Hosted is the only mode, so keep com.c15t.backend.url set to "
+                + "your Inth project URL. Mobile works only with Inth, so there is no self-hosted "
+                + "mode. For development and CI, set com.c15t.dryRun to true instead of the "
+                + "offline or none mode. A bundled manifest or an in-code policy covers a launch "
+                + "without network. To install c15t yourself, set "
+                + "com.c15t.reactnative.AutoBootstrap to false."),
+        RetiredInfoPlistKey(
+            key: "com.c15t.backend.initUrl",
+            replacement: "Remove it. Policy is fetched from com.c15t.backend.url."),
     ]
 
     /// The retired keys present in `infoPlist`, in declaration order.
@@ -248,23 +225,45 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
 
     /// The reason this build will not start a core from `infoPlist`, or `nil`.
     ///
-    /// - Returns: An error naming every retired key found and what replaces it. It is
-    ///   the same sentence the launch hook logs and the module reports, so the console
-    ///   and the JavaScript rejection cannot disagree.
+    /// - Returns: An error naming every retired key found and what replaces it. The
+    ///   launch hook logs it.
     public static func retirementIssue(in infoPlist: [String: Any]) -> C15tBridgeError? {
         let retired = retiredKeys(in: infoPlist)
         guard !retired.isEmpty else { return nil }
         let named = retired
-            .map { "\($0.key) (use \($0.replacement) instead)" }
-            .joined(separator: ", ")
+            .map { "\($0.key): \($0.replacement)" }
+            .joined(separator: " ")
         return C15tBridgeError(
             code: "C15T_CONFIGURATION_RETIRED",
-            message: "Info.plist declares the retired key(s) \(named), which this build does "
-                + "not reinterpret: publisher test mode is a client option that never reaches "
-                + "a save body, and there is no test-mode override in the protocol. The "
-                + "consent core was not started, so consent reads deny-all until the key is "
-                + "removed or the core is installed from code."
+            message: "Info.plist declares key(s) this build no longer reads. \(named) "
+                + "The consent core was not started, so consent reads deny-all until the "
+                + "key(s) are removed or the core is installed from code."
         )
+    }
+
+    /// The reason this configuration cannot start a core, or `nil`.
+    ///
+    /// Checked when the core starts: `dryRun` in a release build, then a missing
+    /// project URL, then a URL that is not an Inth project URL. With `dryRun` in a
+    /// debug build any `https` URL, or `http` on a loopback host, is accepted.
+    public func configurationIssue() -> C15tBridgeError? {
+        let key = InfoPlistKey.backendURL
+        if dryRun, !C15tBuild.isDebug {
+            return C15tBridgeError(
+                code: "C15T_CONFIGURATION_DRY_RUN",
+                message: C15tBuild.dryRunRefusal(remove: "\(InfoPlistKey.dryRun) in Info.plist, or dryRun in the Expo plugin options")
+                    + " The consent core was not started, so consent reads deny-all."
+            )
+        }
+        do {
+            _ = try InthProjectURL.normalize(backendURL ?? "", relaxed: dryRun, option: key)
+            return nil
+        } catch {
+            return C15tBridgeError(
+                code: "C15T_CONFIGURATION_BACKEND_URL",
+                message: "\(error) The consent core was not started, so consent reads deny-all."
+            )
+        }
     }
 
     /// The default Keychain service, which matches the core's own default so a core
@@ -274,29 +273,15 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
     /// Read the configuration a host app declared.
     ///
     /// Bad values fall back to the safe option rather than failing the launch: an
-    /// unparseable storage mode becomes the Keychain, and a malformed URL becomes no
-    /// transport, which keeps consent local instead of sending it somewhere the app
-    /// did not intend.
+    /// unparseable storage mode becomes the Keychain. The project URL is kept as
+    /// written and checked when the core starts, see ``configurationIssue()``.
     ///
     /// - Parameter infoPlist: The bundle's `Info.plist`, `Bundle.main.infoDictionary`
     ///   by default.
     public static func from(infoPlist: [String: Any] = Bundle.main.infoDictionary ?? [:]) -> C15tBridgeConfiguration {
-        let urlString = (infoPlist[InfoPlistKey.backendURL] as? String)?
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        let url = (urlString?.isEmpty == false) ? URL(string: urlString!) : nil
-
-        // An empty string is a value that parses to nothing, so it stays absent, which
-        // is the same call `backendURL` makes about an empty string.
-        let initURLString = (infoPlist[InfoPlistKey.initURL] as? String)?
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        let initURL = (initURLString?.isEmpty == false) ? URL(string: initURLString!) : nil
-
-        let declaredMode = (infoPlist[InfoPlistKey.transportMode] as? String)
-            .flatMap(TransportMode.parse(_:))
-        // An unreadable mode string is an unreadable mode, not a request to go
-        // offline. A URL without a declared mode is hosted: that is the common case,
-        // and guessing `offline` would silently stop a working integration syncing.
-        let mode = declaredMode ?? (url == nil ? .offline : .hosted)
+        // An empty string is a value that parses to nothing, so it stays absent.
+        let backendURL = (infoPlist[InfoPlistKey.backendURL] as? String)
+            .flatMap { $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : $0 }
 
         let deviceLanguage = Locale.preferredLanguages.first ?? C15tPayload.defaultLanguage
         let language = (infoPlist[InfoPlistKey.language] as? String)
@@ -307,9 +292,8 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
 
         return C15tBridgeConfiguration(
             autoBootstrap: (infoPlist[InfoPlistKey.autoBootstrap] as? Bool) ?? true,
-            transportMode: mode,
-            backendURL: url,
-            initURL: initURL,
+            backendURL: backendURL,
+            dryRun: (infoPlist[InfoPlistKey.dryRun] as? Bool) ?? false,
             domain: infoPlist[InfoPlistKey.domain] as? String,
             storageMode: (infoPlist[InfoPlistKey.storageMode] as? String)
                 .flatMap(StorageMode.parse(_:)) ?? .keychain,
@@ -513,11 +497,11 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
     /// back.
     ///
     /// - Returns: The config, or `nil` when storage or backend configuration is refused,
-    ///   such as a Keychain on a platform without one or HTTP outside exact loopback hosts.
-    ///   Starting with an unencrypted store because the intended one is unavailable
-    ///   is not a fallback this makes quietly.
+    ///   such as a Keychain on a platform without one, or when ``configurationIssue()``
+    ///   names a problem. Starting with an unencrypted store because the intended one
+    ///   is unavailable is not a fallback this makes quietly.
     public func makeCoreConfiguration(fileStoreDirectory: URL? = nil) -> CoreConfig? {
-        try? appleConfiguration(fileStoreDirectory: fileStoreDirectory).makeCoreConfiguration()
+        try? appleConfiguration(fileStoreDirectory: fileStoreDirectory)?.makeCoreConfiguration()
     }
 
     /// The store for this configuration, or `nil` when the requested one is
@@ -532,12 +516,6 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
         case .file: return .file(directory: fileStoreDirectory)
         case .keychain: return .keychain(service: keychainService)
         }
-    }
-
-    /// The transport, or `nil` when disabled or the backend URL is refused.
-    /// The startup path logs configuration refusals before returning `false`.
-    public func makeTransport() -> (any C15tTransport)? {
-        try? appleConfiguration(fileStoreDirectory: nil).makeTransport()
     }
 
     /// The in-code policy the app declared, or why it was refused. `nil` when none is declared.
@@ -555,22 +533,19 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
         return result
     }
 
-    fileprivate func appleConfiguration(fileStoreDirectory: URL?) -> C15tAppleConfiguration {
+    /// The Apple configuration this maps to, or `nil` with no project URL declared.
+    fileprivate func appleConfiguration(fileStoreDirectory: URL?) -> C15tAppleConfiguration? {
+        guard let backendURL else { return nil }
         let declared = declaredPolicy
-        let transport: C15tAppleConfiguration.Transport
-        switch transportMode {
-        case .disabled: transport = .disabled
-        case .offline: transport = .offline
-        case .hosted: transport = backendURL.map(C15tAppleConfiguration.Transport.hosted) ?? .offline
-        case .selfHosted: transport = backendURL.map(C15tAppleConfiguration.Transport.selfHosted) ?? .offline
-        }
         var configuration = C15tAppleConfiguration(
-            transport: transport, storage: appleStorage(fileStoreDirectory: fileStoreDirectory),
-            initURL: initURL, domain: domain, consentCategories: consentCategories,
+            backendURL: backendURL, dryRun: dryRun,
+            storage: appleStorage(fileStoreDirectory: fileStoreDirectory),
+            domain: domain, consentCategories: consentCategories,
             vendors: vendors, overrides: overrides, gpc: gpc,
+            // The Apple configuration rebinds the manifest to the checked project URL.
             bundledPolicy: bundledPolicyResource.flatMap { name -> BundledPolicyResource? in
-                guard let endpoint = backendURL?.absoluteString, let url = Bundle.main.url(forResource: name, withExtension: nil) else { return nil }
-                return BundledPolicyResource(url: url, endpoint: endpoint)
+                guard let url = Bundle.main.url(forResource: name, withExtension: nil) else { return nil }
+                return BundledPolicyResource(url: url, endpoint: backendURL)
             },
             policy: try? declared?.get(),
             policyError: declared.flatMap { result in
@@ -615,6 +590,16 @@ public enum C15tReactNativeBootstrap {
         infoPlist: [String: Any] = Bundle.main.infoDictionary ?? [:],
         fileStoreDirectory: URL? = nil
     ) -> Bool {
+        start(infoPlist: infoPlist, fileStoreDirectory: fileStoreDirectory, transport: { try $0.makeTransport() })
+    }
+
+    /// ``start(infoPlist:fileStoreDirectory:)`` with the transport replaced. Internal API for tests.
+    @_spi(C15tInternal) @discardableResult
+    public static func start(
+        infoPlist: [String: Any],
+        fileStoreDirectory: URL?,
+        transport: (C15tAppleConfiguration) throws -> (any C15tTransport)?
+    ) -> Bool {
         let configuration = C15tBridgeConfiguration.from(infoPlist: infoPlist)
         guard configuration.autoBootstrap else { return C15t.current != nil }
 
@@ -635,10 +620,13 @@ public enum C15tReactNativeBootstrap {
             NSLog("%@", "c15t: \(issue.message)")
         }
 
-        return start(configuration: configuration, fileStoreDirectory: fileStoreDirectory)
+        return start(configuration: configuration, fileStoreDirectory: fileStoreDirectory, transport: transport)
     }
 
     /// Start the core with an explicit configuration.
+    ///
+    /// A missing or refused project URL, or `dryRun` in a release build, is logged
+    /// and leaves the core uninstalled, so consent reads deny-all.
     ///
     /// - Returns: `true` when a core is installed after the call.
     @discardableResult
@@ -646,15 +634,31 @@ public enum C15tReactNativeBootstrap {
         configuration: C15tBridgeConfiguration,
         fileStoreDirectory: URL? = nil
     ) -> Bool {
+        start(configuration: configuration, fileStoreDirectory: fileStoreDirectory, transport: { try $0.makeTransport() })
+    }
+
+    /// ``start(configuration:fileStoreDirectory:)`` with the transport replaced. Internal
+    /// API for tests, which return `nil` to start a core that opens no socket. Every
+    /// configuration check still runs.
+    @_spi(C15tInternal) @discardableResult
+    public static func start(
+        configuration: C15tBridgeConfiguration,
+        fileStoreDirectory: URL?,
+        transport: (C15tAppleConfiguration) throws -> (any C15tTransport)?
+    ) -> Bool {
         // The opt-out is honoured here as well as in the `Info.plist` entry point, so
         // `autoBootstrap == false` means "the app starts it" whichever door is used.
         guard configuration.autoBootstrap else { return observeInstalledCore() }
         if C15t.current == nil {
+            if let issue = configuration.configurationIssue() {
+                NSLog("%@", "c15t: \(issue.message)")
+                return false
+            }
+            guard let apple = configuration.appleConfiguration(fileStoreDirectory: fileStoreDirectory) else {
+                return false
+            }
             do {
-                let coreConfiguration = try configuration
-                    .appleConfiguration(fileStoreDirectory: fileStoreDirectory)
-                    .makeCoreConfiguration()
-                try C15tApple.install(coreConfiguration)
+                try C15tApple.install(apple.makeCoreConfiguration(transport: try transport(apple)))
             } catch {
                 NSLog("%@", "c15t: Apple installation failed: \(error)")
                 return false
@@ -665,8 +669,9 @@ public enum C15tReactNativeBootstrap {
 
     /// Adopt a core the app already built and started.
     ///
-    /// This is the escape hatch for a host that configures stores, transports, or
-    /// headers the `Info.plist` keys cannot express. Call it before the first
+    /// This is for a host that installs c15t itself, with
+    /// `C15tApple.install(C15tAppleConfiguration(backendURL:))`, and sets
+    /// `com.c15t.reactnative.AutoBootstrap` to `false`. Call it before the first
     /// JavaScript frame; the bridge attaches to this core and never builds its own.
     ///
     /// - Returns: `true` when `core` is the instance the bridge will use.

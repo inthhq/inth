@@ -18,14 +18,14 @@ consumer or device criteria.
 
 ## Install before SDK startup
 
-Call `C15tApple.install(C15tAppleConfiguration(...))` before starting optional SDKs
-or the RN host. Choose `.hosted(projectURL)` or `.selfHosted(backendURL)`.
-Both require an absolute HTTPS URL in production. Development HTTP is accepted
-only for `localhost`, `127.0.0.1` and `[::1]`, matching the Expo plugin. Lookalike
-hosts and other HTTP addresses are refused before installation. `initURL` follows
-the same rule and overrides init only; consent saves
-and identity requests stay on the backend URL. Keychain is the default storage.
-The platform module selects the existing native storage and transport types.
+Call `C15tApple.install(C15tAppleConfiguration(backendURL: ...))` before starting
+optional SDKs or the RN host. `backendURL` is the project URL from the Inth
+dashboard. `InthProjectURL` checks it against the cases in
+`native/protocol/project-url/cases.json` and installation throws
+`invalidBackendURL` for any other host. There is no self-hosted mode and no
+`initURL`. `dryRun: true` drops consent records for development and CI, lets a
+debug build use any HTTPS URL or HTTP on `localhost`, `127.0.0.1` and `[::1]`,
+and is refused in a release build. Keychain is the default storage.
 
 Installation verifies a storage write, read and delete, then hydrates the existing
 native engine synchronously. Network resolution and queue delivery use the core's
@@ -40,19 +40,17 @@ store. Do not call raw `C15t.bootstrap` concurrently with production installatio
 Raw `CoreConfig()` uses memory and no transport, so it is unsuitable as a
 production startup recipe.
 
-`C15tApple.install(CoreConfig)` supports custom native services and validates their
-storage in the same way. The host owns a custom store's protection and its retry
-policy. Custom stores must implement `ConsentStore.read(for:)`, returning `nil`
-only for a missing item and throwing on operational read failures. The default
-implementation accepts readable bytes from `data(for:)` but throws on its
-ambiguous `nil`; it cannot establish absence for a fresh custom store.
-`.memory`, `.file` and `.disabled` are explicit development options.
+`C15tApple.install(CoreConfig)` is internal API (`@_spi(C15tInternal)`) for tests
+and first-party fixtures. It validates storage in the same way and skips the
+host rule. A custom store must implement `ConsentStore.read(for:)`, returning
+`nil` only for a missing item and throwing on operational read failures.
+`.memory` and `.file` are explicit development storage options.
 File writes are atomic on every platform. iOS-family targets also request complete
 file protection; macOS and Mac Catalyst omit that unsupported Data Protection
 option. File storage on macOS is not a protected-storage substitute for Keychain.
-Offline mode retains local choices and undelivered saves but cannot resolve a
-missing policy or deliver remote records. It is not recommended for production
-environments as the only launch transport.
+A launch without network keeps local choices and queues undelivered saves. It
+needs a bundled manifest or an in-code policy to show a first prompt. A
+`CoreConfig` with no transport is internal test configuration.
 
 ## Handle protected storage failure
 

@@ -389,14 +389,15 @@ final class PendingSaveQueue: @unchecked Sendable {
     }
 
     /// Ordinary publications retain delivery bookkeeping from the atomic record.
-    func persist(_ envelope: StoredEnvelope) -> Bool {
+    /// `droppingQueue` empties the queue in the same write, for a dry-run save.
+    func persist(_ envelope: StoredEnvelope, droppingQueue: Bool = false) -> Bool {
         lock.withLock {
             let stored = store.data(for: StorageKey.snapshot).flatMap(StoredEnvelope.decode)
             guard stored == nil || stored!.snapshot.revision <= envelope.snapshot.revision else {
                 return false
             }
             var next = envelope
-            next.pendingSaves = stored?.pendingSaves
+            next.pendingSaves = droppingQueue ? [] : stored?.pendingSaves
             return store.encode(next, for: StorageKey.snapshot)
         }
     }

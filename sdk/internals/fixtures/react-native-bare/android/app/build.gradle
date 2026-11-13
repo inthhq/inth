@@ -132,6 +132,11 @@ dependencies {
     }
 }
 
+// MainApplication's E2E install supplies its own transport, which is internal c15t API.
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+    compilerOptions.freeCompilerArgs.add("-opt-in=com.c15t.core.C15tInternalApi")
+}
+
 if (providers.gradleProperty("c15t.appE2e").orNull == "true") {
     android.sourceSets.main.assets.srcDirs = [providers.gradleProperty("c15t.policyAssets").get()]
 }

@@ -405,7 +405,7 @@ public extension View {
     /// ```swift
     /// WindowGroup {
     ///     ContentView().c15tConsent(
-    ///         C15tAppleConfiguration(transport: .hosted(URL(string: "https://your-project.inth.app")!)),
+    ///         C15tAppleConfiguration(backendURL: "https://your-project.inth.app"),
     ///         privacyPolicyURL: URL(string: "https://example.com/privacy")!
     ///     )
     /// }
@@ -431,7 +431,7 @@ public extension View {
     }
 
     /// Add the stock consent prompt and settings for a core the app installed itself, such as an
-    /// IAB core from `C15tApple.install(_: CoreConfig)`. Behaves like the configuration form and
+    /// IAB core from `C15tApple.install(C15tAppleConfiguration(backendURL:iab:))`. Behaves like the configuration form and
     /// attaches once a core is installed.
     @MainActor
     func c15tConsent(privacyPolicyURL: URL, theme: ConsentTheme? = nil, autoPresent: Bool = true,
@@ -539,7 +539,7 @@ private struct ConsentPromptHost: View {
 /// ```swift
 /// window.rootViewController = ConsentRootViewController(
 ///     root: MainViewController(),
-///     configuration: C15tAppleConfiguration(transport: .hosted(URL(string: "https://your-project.inth.app")!)),
+///     configuration: C15tAppleConfiguration(backendURL: "https://your-project.inth.app"),
 ///     privacyPolicyURL: URL(string: "https://example.com/privacy")!
 /// )
 /// ```

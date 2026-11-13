@@ -43,7 +43,8 @@ public struct CommitResult: Sendable, Equatable {
     /// leaves the snapshot alone, because a decision nothing remembers having to
     /// deliver is worse than a refusal the caller can act on.
     public enum Status: String, Sendable, Equatable {
-        /// Receipts applied locally and durably queued for delivery.
+        /// Receipts applied locally and durably queued for delivery. Under `dryRun`
+        /// they are applied and stored, and ``CommitResult/queued`` is false.
         case committed
         /// Nothing changed, so nothing was recorded or sent.
         case noop
@@ -59,6 +60,9 @@ public struct CommitResult: Sendable, Equatable {
     public let confirmed: [OptionalConsentCategory: Bool]
     /// Set when `status == .rejected`.
     public let error: CoreErrorInfo?
+    /// Whether a record is queued for delivery. True for every committed save, except
+    /// under `dryRun`, which stores the decision and drops the record.
+    public let queued: Bool
 
     public init(
         status: Status,
@@ -66,7 +70,8 @@ public struct CommitResult: Sendable, Equatable {
         permissions: ConsentState,
         consentAction: ConsentAction,
         confirmed: [OptionalConsentCategory: Bool] = [:],
-        error: CoreErrorInfo? = nil
+        error: CoreErrorInfo? = nil,
+        queued: Bool? = nil
     ) {
         self.status = status
         self.revision = revision
@@ -74,6 +79,14 @@ public struct CommitResult: Sendable, Equatable {
         self.consentAction = consentAction
         self.confirmed = confirmed
         self.error = error
+        self.queued = queued ?? (status == .committed)
+    }
+
+    /// The same result for a save whose record was dropped.
+    func withoutRecord() -> CommitResult {
+        CommitResult(
+            status: status, revision: revision, permissions: permissions,
+            consentAction: consentAction, confirmed: confirmed, error: error, queued: false)
     }
 }
 

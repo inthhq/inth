@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-@testable import C15tCore
+@_spi(C15tInternal) @testable import C15tCore
 
 final class ServerReceiptTests: XCTestCase {
     private let choiceFingerprint = String(repeating: "a", count: 64)

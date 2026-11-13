@@ -35,17 +35,13 @@ export const MOBILE_CATEGORIES = [
 /** One of {@link MOBILE_CATEGORIES}. */
 export type MobileCategory = (typeof MOBILE_CATEGORIES)[number];
 
-/** Setup modes, spelled as `c15t setup <mode>` takes them. */
-export type MobileMode = 'hosted' | 'self-hosted' | 'offline' | 'custom';
-
 /** The answers a mobile setup needs. */
 export interface MobileSetupOptions {
-	readonly mode: MobileMode;
-	/** Required for every mode but `offline`. */
-	readonly backendURL?: string;
+	/** The Inth project URL, in its normal form. */
+	readonly backendURL: string;
 	/** Always starts with `necessary`. */
 	readonly categories: readonly MobileCategory[];
-	/** Bundle the hosted manifest at prebuild. Hosted and self-hosted only. */
+	/** Expo: bundle the hosted manifest at prebuild. */
 	readonly bundleManifest: boolean;
 	readonly privacyPolicyURL: string;
 }
@@ -74,63 +70,15 @@ export interface MobileSetupPlan {
 const RN_DOCS = 'node_modules/@c15t/react-native/docs';
 const SOURCE_DOCS = 'docs in the c15t source your maintainer supplied';
 
-const PLUGIN_MODE: Record<MobileMode, string | undefined> = {
-	custom: 'custom',
-	hosted: undefined,
-	offline: 'offline',
-	'self-hosted': 'selfHosted',
-};
-
-/**
- * The example policy offline setup writes: one rule that asks for a choice
- * everywhere. The app replaces it with its own rules.
- */
-export const OFFLINE_RULES = [
-	{
-		id: 'everywhere',
-		match: { fallback: true, isDefault: true },
-		model: 'opt-in',
-		prompt: 'choice',
-	},
-] as const;
-
-/**
- * Where a bare React Native app keeps the offline rules: the Android assets
- * folder, which the Android reader loads by name. The iOS target references the
- * same file, so the two platforms cannot drift.
- */
-export const BARE_POLICY_RULES_PATH =
-	'android/app/src/main/assets/c15t-policy-rules.json';
-
-/**
- * The rules file, byte for byte what the Expo plugin's `writePolicyRules`
- * writes: `{"rules": [...]}`, the shape both native cores read.
- */
-export const policyRulesFile = (): string =>
-	`${JSON.stringify({ rules: OFFLINE_RULES }, null, 2)}\n`;
-
-/**
- * The Expo config plugin entry for these options.
- *
- * Offline mode carries a one-rule policy that asks for a choice everywhere,
- * because the plugin refuses offline mode without one. The app replaces it with
- * its real rules.
- */
+/** The Expo config plugin entry for these options. */
 export const expoPluginEntry = (
 	options: MobileSetupOptions
 ): [string, Record<string, unknown>] => {
-	const props: Record<string, unknown> = {};
-	const mode = PLUGIN_MODE[options.mode];
-	if (mode !== undefined) {
-		props.mode = mode;
-	}
-	if (options.mode !== 'offline' && options.backendURL) {
-		props.backendURL = options.backendURL;
-	}
-	props.consentCategories = [...options.categories];
-	if (options.mode === 'offline') {
-		props.policy = { rules: OFFLINE_RULES };
-	} else if (options.bundleManifest) {
+	const props: Record<string, unknown> = {
+		backendURL: options.backendURL,
+		consentCategories: [...options.categories],
+	};
+	if (options.bundleManifest) {
 		props.bundleManifest = true;
 	}
 	return [EXPO_PLUGIN, props];
@@ -235,50 +183,21 @@ const xml = (value: string): string =>
 		.replaceAll('>', '&gt;')
 		.replaceAll('"', '&quot;');
 
-const IOS_MODE: Record<MobileMode, string> = {
-	custom: 'none',
-	hosted: 'hosted',
-	offline: 'offline',
-	'self-hosted': 'selfHosted',
-};
-
-/**
- * The `Info.plist` entries a bare app adds. Offline mode names the rules file
- * instead of a backend.
- */
+/** The `Info.plist` entries a bare app adds. */
 export const infoPlistEntries = (options: MobileSetupOptions): string =>
 	[
-		'<key>com.c15t.backend.mode</key>',
-		`<string>${IOS_MODE[options.mode]}</string>`,
-		...(options.mode === 'offline'
-			? [
-					'<key>com.c15t.policy.rules</key>',
-					'<string>c15t-policy-rules.json</string>',
-				]
-			: [
-					'<key>com.c15t.backend.url</key>',
-					`<string>${xml(options.backendURL ?? '')}</string>`,
-				]),
+		'<key>com.c15t.backend.url</key>',
+		`<string>${xml(options.backendURL)}</string>`,
 		'<key>com.c15t.categories</key>',
 		'<array>',
 		...options.categories.map((category) => `\t<string>${category}</string>`),
 		'</array>',
 	].join('\n');
 
-/**
- * The `<application>` meta-data a bare app adds. Offline mode selects no-backend
- * mode and names the rules asset instead of a backend.
- */
+/** The `<application>` meta-data a bare app adds. */
 export const androidManifestEntries = (options: MobileSetupOptions): string =>
 	[
-		...(options.mode === 'offline'
-			? [
-					'<meta-data android:name="com.c15t.MODE" android:value="offline" />',
-					'<meta-data android:name="com.c15t.POLICY_RULES" android:value="c15t-policy-rules.json" />',
-				]
-			: [
-					`<meta-data android:name="com.c15t.BACKEND_URL" android:value="${xml(options.backendURL ?? '')}" />`,
-				]),
+		`<meta-data android:name="com.c15t.BACKEND_URL" android:value="${xml(options.backendURL)}" />`,
 		`<meta-data android:name="com.c15t.CATEGORIES" android:value="${options.categories.join(', ')}" />`,
 	].join('\n');
 
@@ -293,8 +212,6 @@ export interface ProjectFiles {
 	readonly dynamicConfig: string | null;
 	/** Whether a `src` directory exists. */
 	readonly hasSrc: boolean;
-	/** Whether a bare app already has the offline rules file. */
-	readonly policyRulesExists: boolean;
 	/** Whether the provider file already exists. */
 	readonly providerExists: boolean;
 	/** The root component the app renders, such as `app/_layout.tsx`. */
@@ -393,13 +310,6 @@ export const planReactNativeSetup = (
 	steps.push(wrapStep(files, providerFile, options.privacyPolicyURL));
 
 	if (project.kind === 'expo') {
-		if (options.mode === 'custom') {
-			// The plugin turns automatic start-up off in custom mode, and the provider
-			// only attaches to an engine that already exists.
-			steps.push(
-				`Custom mode starts no consent engine at launch. Install one in native code that runs before React starts, with your own transport: see "When your app owns native installation" in ${RN_DOCS}/frameworks/react-native/bare.md, and "Use your own transport" in ${RN_DOCS}/frameworks/swift/headless.md and ${RN_DOCS}/frameworks/android/configuration.md. Expo regenerates native code on prebuild, so add that code through a config plugin of your own.`
-			);
-		}
 		steps.push(
 			`Android resolves the native SDK from the private Maven repository you were given. Add it with the plugin's androidMavenRepository option. See ${RN_DOCS}/frameworks/react-native/expo.md.`
 		);
@@ -414,38 +324,10 @@ export const planReactNativeSetup = (
 		return { files: planned, skipped, steps };
 	}
 
-	if (options.mode === 'custom') {
-		steps.push(
-			`Custom mode installs no consent engine from app metadata. Turn automatic start-up off and install the engine with your own transport before React starts: see "When your app owns native installation" in ${RN_DOCS}/frameworks/react-native/bare.md, and "Use your own transport" in ${RN_DOCS}/frameworks/swift/headless.md and ${RN_DOCS}/frameworks/android/configuration.md.`
-		);
-	} else {
-		if (options.mode === 'offline') {
-			if (files.policyRulesExists && !overwrite) {
-				skipped.push(
-					`${BARE_POLICY_RULES_PATH} exists; pass --overwrite to replace it.`
-				);
-			} else {
-				planned.push({
-					action: files.policyRulesExists ? 'update' : 'create',
-					contents: policyRulesFile(),
-					path: BARE_POLICY_RULES_PATH,
-				});
-			}
-		}
-		const iosRules =
-			options.mode === 'offline'
-				? ` In Xcode, also add ${BARE_POLICY_RULES_PATH} to the app target without copying it, so Copy Bundle Resources includes the same rules file Android reads.`
-				: '';
-		steps.push(
-			`iOS: add these entries inside the root <dict> of your app target's Info.plist, then run pod install in ios/.${iosRules}\n${infoPlistEntries(options)}`,
-			`Android: add the private Maven repository you were given to android/build.gradle (${RN_DOCS}/frameworks/react-native/bare.md, Set up Android), and these entries inside <application> in android/app/src/main/AndroidManifest.xml:\n${androidManifestEntries(options)}`
-		);
-		if (options.mode === 'offline') {
-			steps.push(
-				`Replace the example rule in ${BARE_POLICY_RULES_PATH} with your own, as guides/mobile-offline.mdx describes (${SOURCE_DOCS}).`
-			);
-		}
-	}
+	steps.push(
+		`iOS: add these entries inside the root <dict> of your app target's Info.plist, then run pod install in ios/.\n${infoPlistEntries(options)}`,
+		`Android: add the private Maven repository you were given to android/build.gradle (${RN_DOCS}/frameworks/react-native/bare.md, Set up Android), and these entries inside <application> in android/app/src/main/AndroidManifest.xml:\n${androidManifestEntries(options)}`
+	);
 	steps.push('Rebuild both apps; native configuration needs a new binary.');
 	return { files: planned, skipped, steps };
 };
@@ -457,54 +339,6 @@ const kotlinCategories = (categories: readonly MobileCategory[]): string =>
 
 const swiftCategories = (categories: readonly MobileCategory[]): string =>
 	categories.map((category) => `.${category}`).join(', ');
-
-/**
- * The Swift install for offline mode: a one-rule policy in code and the offline
- * transport.
- *
- * `native/core-swift/Tests/C15tAppleTests/CLISnippetTests.swift` compiles this exact
- * text against `C15tCore` and `C15tApple`, and the CLI tests compare the two, so the
- * printed step cannot drift from the API.
- */
-export const swiftOfflineInstall = (
-	categories: readonly MobileCategory[]
-): string => `let policy = try ConsentPolicy(rules: [
-    PolicyRule(id: "everywhere", match: PolicyMatch(fallback: true, isDefault: true), model: .optIn, prompt: .choice),
-])
-let core = try C15tApple.install(C15tAppleConfiguration(
-    transport: .offline,
-    consentCategories: [${swiftCategories(categories)}],
-    policy: policy
-))`;
-
-/** The Kotlin imports {@link kotlinOfflineInstall} needs. */
-export const KOTLIN_OFFLINE_IMPORTS = [
-	'com.c15t.android.C15tAndroid',
-	'com.c15t.core.ConsentPolicy',
-	'com.c15t.core.NativeConfig',
-	'com.c15t.core.PolicyMatch',
-	'com.c15t.core.PolicyRule',
-	'com.c15t.core.model.ConsentCategory',
-	'com.c15t.core.model.ConsentModel',
-	'com.c15t.core.policy.PolicyPrompt',
-] as const;
-
-/**
- * The Kotlin install for offline mode, for `Application.onCreate`.
- *
- * `c15t-android`'s `CliSnippetTest.kt` compiles this exact text, and the CLI tests
- * compare the two.
- */
-export const kotlinOfflineInstall = (
-	categories: readonly MobileCategory[]
-): string => `val policy = ConsentPolicy(listOf(
-    PolicyRule("everywhere", PolicyMatch(fallback = true, isDefault = true), ConsentModel.OPT_IN, PolicyPrompt.CHOICE),
-))
-C15tAndroid.install(this, NativeConfig(
-    backendUrl = null,
-    consentCategories = listOf(${kotlinCategories(categories)}),
-    policy = policy,
-))`;
 
 const ESCAPES: Record<string, string> = {
 	'\t': '\\t',
@@ -530,19 +364,16 @@ const indentBlock = (text: string, prefix: string): string =>
 		.join('\n');
 
 /**
- * The Swift configuration for hosted and self-hosted mode.
+ * The Swift configuration: the project URL and the categories the app offers.
  *
  * `CLISnippetTests.swift` compiles this text with the default categories, so it
  * cannot drift from `C15tAppleConfiguration`.
  */
-export const swiftConfiguration = (options: MobileSetupOptions): string => {
-	const transport = options.mode === 'self-hosted' ? 'selfHosted' : 'hosted';
-	const url = options.backendURL ?? 'https://your-project.inth.app';
-	return `C15tAppleConfiguration(
-    transport: .${transport}(URL(string: ${swiftString(url)})!),
+export const swiftConfiguration = (options: MobileSetupOptions): string =>
+	`C15tAppleConfiguration(
+    backendURL: ${swiftString(options.backendURL)},
     consentCategories: [${swiftCategories(options.categories)}]
 )`;
-};
 
 /**
  * The SwiftUI entry point: the stock screens on the root view, which install the
@@ -551,7 +382,7 @@ export const swiftConfiguration = (options: MobileSetupOptions): string => {
  *
  * This is the auto-present API (`.c15tConsent(_:privacyPolicyURL:)`).
  * `native/core-swift/Tests/C15tConsentUITests/cli-entry-snippet-tests.swift` compiles
- * this text with the hosted configuration, and the CLI tests compare the two.
+ * this text with the printed configuration, and the CLI tests compare the two.
  */
 export const swiftUIEntry = (
 	configuration: string | null,
@@ -585,13 +416,13 @@ export const SWIFT_PRIVACY_SETTINGS =
 	'ConsentPrompt.current?.presentPreferences()';
 
 /**
- * The Kotlin install for hosted and self-hosted mode, for `Application.onCreate`.
+ * The Kotlin install, for `Application.onCreate`.
  *
  * `CliSnippetTest.kt` compiles this text with the default categories.
  */
 export const kotlinInstall = (options: MobileSetupOptions): string =>
 	`C15tAndroid.install(this, NativeConfig(
-    backendUrl = ${kotlinString(options.backendURL ?? 'https://your-project.inth.app')},
+    backendUrl = ${kotlinString(options.backendURL)},
     consentCategories = listOf(${kotlinCategories(options.categories)}),
 ))`;
 
@@ -627,29 +458,13 @@ export const KOTLIN_SCREEN_IMPORTS = [
 
 const swiftInstallStep = (options: MobileSetupOptions): string => {
 	const url = options.privacyPolicyURL;
-	const screens = (configuration: string | null) =>
-		`With import C15tApple and import C15tConsentUI. SwiftUI, on your root view:\n${swiftUIEntry(configuration, url)}\nUIKit, as the window's root view controller:\n${uiKitEntry(configuration, url)}\nOpen privacy settings from your own control with ${SWIFT_PRIVACY_SETTINGS}.`;
-	switch (options.mode) {
-		case 'offline':
-			return `iOS: at launch, before the first view, install the engine with the policy in code:\n${swiftOfflineInstall(options.categories)}\nThen attach the consent screens, which open the prompt when the policy asks for one. ${screens(null)}\nReplace the example rule with your own, as guides/mobile-offline.mdx describes (${SOURCE_DOCS}).`;
-		case 'custom':
-			return `iOS: install the engine with your own transport at launch, as "Use your own transport" in frameworks/swift/headless.mdx shows (${SOURCE_DOCS}), passing the categories you chose in the CoreConfig:\nconsentCategories: [${swiftCategories(options.categories)}]\nThen attach the consent screens. ${screens(null)}`;
-		default:
-			return `iOS: attach the consent screens. They install the engine at launch and open the prompt when the policy asks for one. ${screens(swiftConfiguration(options))}`;
-	}
+	const configuration = swiftConfiguration(options);
+	return `iOS: attach the consent screens. They install the engine at launch and open the prompt when the policy asks for one. With import C15tApple and import C15tConsentUI. SwiftUI, on your root view:\n${swiftUIEntry(configuration, url)}\nUIKit, as the window's root view controller:\n${uiKitEntry(configuration, url)}\nOpen privacy settings from your own control with ${SWIFT_PRIVACY_SETTINGS}.`;
 };
 
 const androidInstallStep = (options: MobileSetupOptions): string => {
 	const url = options.privacyPolicyURL;
-	const screens = `Then show the consent screens, which open the prompt when the policy asks for one (imports: ${KOTLIN_SCREEN_IMPORTS.join(', ')}). In a Compose activity, beside your content:\n${composeEntry(url)}\nIn an Activity with views, after setContentView:\n${activityEntry(url)}\nOpen privacy settings from your own control with ${KOTLIN_PRIVACY_SETTINGS}.`;
-	switch (options.mode) {
-		case 'offline':
-			return `Android: in Application.onCreate, install the engine with the policy in code (imports: ${KOTLIN_OFFLINE_IMPORTS.join(', ')}):\n${kotlinOfflineInstall(options.categories)}\n${screens}\nReplace the example rule with your own, as guides/mobile-offline.mdx describes (${SOURCE_DOCS}).`;
-		case 'custom':
-			return `Android: install the engine with your own transport in Application.onCreate, as "Use your own transport" in frameworks/android/configuration.mdx shows (${SOURCE_DOCS}), passing the categories you chose in the NativeConfig:\nconsentCategories = listOf(${kotlinCategories(options.categories)}),\n${screens} Add android.permission.INTERNET to the manifest.`;
-		default:
-			return `Android: in Application.onCreate, install the engine (imports: ${KOTLIN_INSTALL_IMPORTS.join(', ')}):\n${kotlinInstall(options)}\n${screens} Add android.permission.INTERNET to the manifest.`;
-	}
+	return `Android: in Application.onCreate, install the engine (imports: ${KOTLIN_INSTALL_IMPORTS.join(', ')}):\n${kotlinInstall(options)}\nThen show the consent screens, which open the prompt when the policy asks for one (imports: ${KOTLIN_SCREEN_IMPORTS.join(', ')}). In a Compose activity, beside your content:\n${composeEntry(url)}\nIn an Activity with views, after setContentView:\n${activityEntry(url)}\nOpen privacy settings from your own control with ${KOTLIN_PRIVACY_SETTINGS}. Add android.permission.INTERNET to the manifest.`;
 };
 
 /**

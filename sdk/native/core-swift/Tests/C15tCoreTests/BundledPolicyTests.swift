@@ -2,7 +2,7 @@ import CryptoKit
 import Foundation
 import XCTest
 
-@testable import C15tCore
+@_spi(C15tInternal) @testable import C15tCore
 
 final class BundledPolicyTests: XCTestCase {
     private var vector: JSONValue {
@@ -97,7 +97,7 @@ final class BundledPolicyTests: XCTestCase {
             let core = ConsentCore()
             core.bootstrap(
                 CoreConfig(
-                    store: store, bundledPolicy: resource, transport: OfflineTransport.offline(),
+                    store: store, bundledPolicy: resource, transport: UnreachableTransport(),
                     consentCategories: ConsentCategory.allCases, now: clock.reading,
                     initRetry: .disabled))
             return core
@@ -166,7 +166,7 @@ final class BundledPolicyTests: XCTestCase {
         func boot() async -> ConsentCore {
             let core = ConsentCore()
             await core.bootstrapAndSettle(CoreConfig(
-                store: store, bundledPolicy: bundle, transport: OfflineTransport.offline(),
+                store: store, bundledPolicy: bundle, transport: UnreachableTransport(),
                 consentCategories: ConsentCategory.allCases,
                 overrides: ConsentOverrides(country: "US", region: nil, language: "en"),
                 now: clock.reading, initRetry: .disabled))
@@ -340,7 +340,7 @@ final class BundledPolicyTests: XCTestCase {
                     store: store,
                     bundledPolicy: BundledPolicyResource(
                         data: raw, endpoint: v["endpoint"]!.stringValue!),
-                    transport: OfflineTransport.offline(), iab: configuration, now: { now },
+                    transport: UnreachableTransport(), iab: configuration, now: { now },
                     initRetry: .disabled))
             await core.waitUntilIdle()
             if fault == "valid" || fault.hasSuffix("custom-vendors") {
@@ -400,7 +400,7 @@ final class BundledPolicyTests: XCTestCase {
         first.bootstrap(
             CoreConfig(
                 store: store, bundledPolicy: try resource(original),
-                transport: OfflineTransport.offline(), iab: configuration, now: { now },
+                transport: UnreachableTransport(), iab: configuration, now: { now },
                 initRetry: .disabled))
         await first.waitUntilIdle()
         XCTAssertEqual(first.save(.all).status, .committed)
@@ -416,7 +416,7 @@ final class BundledPolicyTests: XCTestCase {
         second.bootstrap(
             CoreConfig(
                 store: store, bundledPolicy: try resource(newer),
-                transport: OfflineTransport.offline(), iab: configuration, now: { now + 5000 },
+                transport: UnreachableTransport(), iab: configuration, now: { now + 5000 },
                 initRetry: .disabled))
         await second.waitUntilIdle()
         XCTAssertEqual(second.iabCustomVendors().map(\.id), ["internal-ads"])
@@ -446,7 +446,7 @@ final class BundledPolicyTests: XCTestCase {
             core.bootstrap(
                 CoreConfig(
                     store: store, bundledPolicy: BundledPolicyResource(data: data, endpoint: endpoint),
-                    transport: OfflineTransport.offline(), iab: configuration, now: { at },
+                    transport: UnreachableTransport(), iab: configuration, now: { at },
                     initRetry: .disabled))
             await core.waitUntilIdle()
             return core
@@ -507,7 +507,7 @@ final class BundledPolicyTests: XCTestCase {
         let bundle = try resource { $0["expiresAt"] = .integer(expiry) }
         let core = ConsentCore()
         await core.bootstrapAndSettle(CoreConfig(
-            bundledPolicy: bundle, transport: OfflineTransport.offline(),
+            bundledPolicy: bundle, transport: UnreachableTransport(),
             consentCategories: ConsentCategory.allCases, now: clock.reading, initRetry: .disabled))
         XCTAssertFalse(core.isPolicyStale)
         let stream = core.eventStream
@@ -541,7 +541,7 @@ final class BundledPolicyTests: XCTestCase {
         let core = ConsentCore()
         let stream = core.eventStream
         core.bootstrap(CoreConfig(
-            store: store, bundledPolicy: try resource(), transport: OfflineTransport.offline(),
+            store: store, bundledPolicy: try resource(), transport: UnreachableTransport(),
             consentCategories: ConsentCategory.allCases, now: clock.reading, initRetry: .disabled))
         var stale: BundledPolicyAuthority?
         for await event in stream {

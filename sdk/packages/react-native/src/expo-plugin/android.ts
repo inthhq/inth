@@ -11,6 +11,7 @@ import {
 	ANDROID_STARTUP_META_VALUE,
 	ANDROID_STARTUP_PROVIDER,
 	GPP_NO_OPT_OUT_CATEGORIES,
+	RETIRED_ANDROID_META_KEYS,
 } from './constants';
 import { C15tPluginError } from './errors';
 import type { ResolvedC15tParams } from './params';
@@ -55,18 +56,13 @@ const metaDataEntry = function metaDataEntry(
  * The `<meta-data>` set that configures the core, in the names
  * `com.c15t.android.C15tAndroid.configFrom` and the bridge's bootstrap read.
  *
- * Only no-backend mode writes a mode key, `com.c15t.MODE` set to `offline`,
- * which starts the core with no backend URL and an offline transport. `hosted`
- * and `selfHosted` differ only by URL, and `custom` turns the launch hook off so
- * the host's own `C15t.bootstrap` call wins the race.
+ * There is one mode, so no mode key: the core starts against the project URL.
+ * `com.c15t.DRY_RUN` is written only when `dryRun` is on.
  */
 export const buildMetaDataPairs = function buildMetaDataPairs(
 	params: ResolvedC15tParams
 ): MetaDataPair[] {
 	const pairs: MetaDataPair[] = [];
-	if (params.mode === 'offline') {
-		pairs.push({ name: ANDROID_META.mode, value: 'offline' });
-	}
 	if (params.policyRules !== null) {
 		pairs.push({ name: ANDROID_META.policyRules, value: POLICY_RULES_NAME });
 	}
@@ -77,11 +73,9 @@ export const buildMetaDataPairs = function buildMetaDataPairs(
 		});
 	}
 
-	if (params.backendURL !== null) {
-		pairs.push({ name: ANDROID_META.backendUrl, value: params.backendURL });
-	}
-	if (params.initURL !== null) {
-		pairs.push({ name: ANDROID_META.initUrl, value: params.initURL });
+	pairs.push({ name: ANDROID_META.backendUrl, value: params.backendURL });
+	if (params.dryRun) {
+		pairs.push({ name: ANDROID_META.dryRun, value: 'true' });
 	}
 	if (params.domain !== null) {
 		pairs.push({ name: ANDROID_META.domain, value: params.domain });
@@ -261,12 +255,14 @@ export const applyAndroidManifest = function applyAndroidManifest(
 				!ANDROID_GPP_META_KEYS.includes(item.$['android:name'])
 		);
 	}
-	// The plugin owns the mode and policy rules keys, so switching back to a
-	// backend mode removes them.
+	// The plugin owns the dryRun and policy rules keys, so a removed option
+	// leaves neither behind. The retired keys go too: a prebuild without
+	// --clean keeps the old manifest, and the cores refuse them.
 	if (application['meta-data']) {
 		application['meta-data'] = application['meta-data'].filter(
 			(item) =>
-				item.$['android:name'] !== ANDROID_META.mode &&
+				!RETIRED_ANDROID_META_KEYS.includes(item.$['android:name']) &&
+				item.$['android:name'] !== ANDROID_META.dryRun &&
 				(item.$['android:name'] !== ANDROID_META.policyRules ||
 					item.$['android:value'] !== POLICY_RULES_NAME)
 		);

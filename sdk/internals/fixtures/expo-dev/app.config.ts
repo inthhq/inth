@@ -16,7 +16,7 @@ const theme: C15tPluginProps['theme'] = consentTheme;
 // #endregion docs:expo-theme
 
 /**
- * Backend and key for the embedded consent core.
+ * The Inth project URL for the embedded consent core.
  *
  * Expo loads `.env` into `process.env` before it evaluates this file, so one file
  * feeds both the native configuration (here, through the config plugin) and the
@@ -38,8 +38,22 @@ const isOff = (value: string | undefined): boolean =>
  * loopback E2E backend over plain HTTP. `scripts/vendor-e2e.sh` sets this, the
  * backend URL and `C15T_E2E_POLICY`, the policy resource it exported from that
  * backend. Normal builds keep the hosted demo and the committed resource.
+ *
+ * The c15t plugin accepts only an Inth project URL, and a Release build cannot
+ * use `dryRun`. So in this mode the plugin gets the demo project as a placeholder
+ * with `autoBootstrap: false`, and `plugins/with-c15t-e2e-install` makes the
+ * native app install the core against the loopback backend before React Native
+ * starts. The JavaScript screens still read the loopback URL.
  */
 const appE2e = process.env.EXPO_PUBLIC_C15T_APP_E2E === '1';
+
+const consentCategories: NonNullable<C15tPluginProps['consentCategories']> = [
+	'necessary',
+	'functionality',
+	'experience',
+	'measurement',
+	'marketing',
+];
 
 /**
  * The installed Expo SDK. A packed consumer from
@@ -105,28 +119,20 @@ const c15tPluginProps: C15tPluginProps = {
 					process.env.C15T_MAVEN_URL ??
 					'https://maven.pkg.github.com/inthhq/c15t-private',
 			},
-	backendURL,
-	consentCategories: [
-		'necessary',
-		'functionality',
-		'experience',
-		'measurement',
-		'marketing',
-	],
+	backendURL: appE2e ? 'https://example-inth.inth.app' : backendURL,
+	consentCategories,
+	// `C15T_DRY_RUN=1` drops consent records and lets a debug build use a staging
+	// or loopback URL. A release build refuses to start c15t with it on.
+	dryRun: process.env.C15T_DRY_RUN === '1',
 	// The App Tracking Transparency opt-in. Consent to marketing cookies is not Apple
 	// tracking authorization, so this fixture asks for both: the banner decides what
 	// c15t may store, and the Apple sheet decides what the advertising identifier is
 	// worth. See the tracking card on the Consent tab for the request itself.
 	enableAppTrackingTransparency: true,
-	// Self-hosted and hosted speak the same wire; the mode only decides where the
-	// core starts looking.
-	mode:
-		new URL(backendURL).hostname === 'c15t.com' ||
-		new URL(backendURL).hostname.endsWith('.c15t.com') ||
-		new URL(backendURL).hostname.endsWith('.inth.app')
-			? 'hosted'
-			: 'selfHosted',
-	policyResource: process.env.C15T_E2E_POLICY ?? './c15t-policy.json',
+	// An App E2E build installs the core itself, with its own policy resource.
+	...(appE2e
+		? { autoBootstrap: false }
+		: { policyResource: process.env.C15T_E2E_POLICY ?? './c15t-policy.json' }),
 	// `C15T_NATIVE_UI=0` builds without the stock native consent screens; the app
 	// then draws its own with the headless hooks (src/screens/headless.tsx).
 	...(process.env.C15T_NATIVE_UI === '0' ? { nativeUI: false } : { theme }),
@@ -177,6 +183,19 @@ const plugins: PluginEntry[] = [
 	['@sentry/react-native/expo', { disableAutoUpload: true }],
 	// c15t's 16.4 floor for every pod, as the bare fixture's Podfile sets it.
 	['./plugins/with-pod-deployment-floor', { floor: '16.4' }],
+	// The native install against the loopback backend, in an App E2E build only.
+	...(appE2e
+		? [
+				[
+					'./plugins/with-c15t-e2e-install',
+					{
+						backendURL,
+						consentCategories,
+						policy: process.env.C15T_E2E_POLICY,
+					},
+				] satisfies PluginEntry,
+			]
+		: []),
 ];
 
 /**

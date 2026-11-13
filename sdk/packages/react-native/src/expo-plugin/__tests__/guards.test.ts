@@ -17,7 +17,7 @@ import {
 	runMod,
 } from './helpers';
 
-const PROPS = { backendURL: 'https://consent.example.com' };
+const PROPS = { backendURL: 'https://acme.inth.app' };
 
 const CLEAN_MAIN_APPLICATION = `package com.example.consentdemo
 

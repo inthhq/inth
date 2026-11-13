@@ -1,5 +1,6 @@
 package com.c15t.core.transport
 
+import com.c15t.core.C15tInternalApi
 import com.c15t.core.NativeConfig
 import com.c15t.core.model.ConsentSubject
 import com.c15t.core.model.KernelUser
@@ -22,17 +23,19 @@ import java.net.URI
  * transport in `@c15t/core`. It holds no state: it turns a
  * [com.c15t.core.spi.HttpClient] into the three commands the core delegates, and
  * leaves every decision to [InitMapper] and the kernel.
+ *
+ * Internal: `C15tAndroid.install` builds this one. Tests and first-party fixtures build
+ * their own to reach a loopback or test backend.
  */
+@C15tInternalApi
 class HostedTransport(
 	private val http: HttpClient,
 	private val config: NativeConfig,
 	private val clock: Clock = Clock.SYSTEM,
 	private val json: Json = Json { ignoreUnknownKeys = true },
 ) : C15tTransport {
-	private val base: String = trimTrailingSlash(
-		requireNotNull(config.backendUrl) { "HostedTransport needs NativeConfig.backendUrl" },
-	)
-	private val initUrl: String = config.initUrl?.takeIf { it.isNotBlank() } ?: "$base/init"
+	private val base: String = trimTrailingSlash(config.backendUrl)
+	private val initUrl: String = "$base/init"
 	private val domain: String = config.domain?.takeIf { it.isNotBlank() } ?: hostOf(base)
 
 	override fun init(context: InitContext): TransportOutcome {

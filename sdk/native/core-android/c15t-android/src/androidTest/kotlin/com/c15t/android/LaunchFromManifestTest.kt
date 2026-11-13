@@ -54,7 +54,7 @@ class LaunchFromManifestTest {
 		assertNotNull("the instrumented APK declares com.c15t.BACKEND_URL", declared)
 		val config = requireNotNull(declared)
 		assertEquals("https://consent.instrumentation.invalid", config.backendUrl)
-		assertEquals("https://consent.instrumentation.invalid/api/consent/init", config.initUrl)
+		assertTrue("the debuggable test APK declares com.c15t.DRY_RUN", config.dryRun)
 		assertEquals("consent.instrumentation.invalid", config.domain)
 		// The manifest spells this one unquoted, so the parser hands over a Boolean. A reader
 		// built on `getString` plus `toBooleanStrictOrNull` would still see it, and would then

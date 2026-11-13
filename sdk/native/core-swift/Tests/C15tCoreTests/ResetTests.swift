@@ -1,6 +1,6 @@
 import Foundation
 import XCTest
-@testable import C15tCore
+@_spi(C15tInternal) @testable import C15tCore
 
 /// `reset()` as `native/CONTRACT.md` states it under "Wiping consent (reset)": a device
 /// that answered comes back looking like a device that never did.

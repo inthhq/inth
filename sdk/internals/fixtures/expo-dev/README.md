@@ -57,8 +57,9 @@ cp .env.example .env
 before it evaluates `app.config.ts`, so one file feeds both halves:
 
 - `app.config.ts` passes `backendURL` to the config plugin, which writes
-  `com.c15t.backend.url` / `com.c15t.backend.mode` into `ios/Info.plist` and
-  `com.c15t.BACKEND_URL` into `AndroidManifest.xml` at prebuild time.
+  `com.c15t.backend.url` into `ios/Info.plist` and
+  `com.c15t.BACKEND_URL` into `AndroidManifest.xml` at prebuild time. With
+  `C15T_DRY_RUN=1` it also writes `com.c15t.dryRun` and `com.c15t.DRY_RUN`.
 - The `EXPO_PUBLIC_` copies are inlined into the JavaScript bundle and drive what the
   screens report and which core the app attaches to.
 
@@ -72,8 +73,11 @@ URL, run `bun run prebuild` again; a running binary keeps the value it was built
 That the bundle and the binary each carry a copy of the backend URL is a property of
 the design, not a mistake in this example.
 
-Advanced self-hosted deployments use the same transport contract. Keep the native
-and JavaScript URLs equal and export the resource from that deployment's manifest.
+The mobile SDKs work only with Inth hosted projects, so the plugin refuses any
+other host. To point a debug build at a staging or loopback backend, set
+`C15T_DRY_RUN=1`. It drops consent records, and a release build refuses to start
+c15t with it. Keep the native and JavaScript URLs equal and export the resource
+from the same backend's manifest.
 
 ## Commands
 
@@ -118,6 +122,14 @@ instead of the shell. It starts the SDKs with the bare fixture's code in
 `react-native-bare/src/vendors`, imported unchanged, so both apps prove the same
 helpers. `metro-vendor-sources.js` lets Metro read those files and resolves their
 packages from this app, so the bundle never picks up the bare app's React Native.
+
+The c15t plugin accepts only an Inth project URL, and a Release build cannot use
+`dryRun`. So an E2E build gives the plugin the demo project with
+`autoBootstrap: false`, and `plugins/with-c15t-e2e-install.js` makes the native
+app install the core against the loopback backend before React Native starts,
+through c15t's internal install path. It writes `C15tE2EInstall.kt` and a call in
+`MainApplication.kt` on Android, a helper and a call in `AppDelegate.swift` on
+iOS, and bundles the exported policy as `c15t-e2e-policy.json` on both.
 
 ```sh
 bash scripts/vendor-e2e.sh ios
@@ -264,7 +276,7 @@ to change the native keys, since those are compiled into the binary.
 native projects. After a prebuild you should find:
 
 ```
-ios/c15tExpoDev/Info.plist              com.c15t.backend.url, com.c15t.backend.mode
+ios/c15tExpoDev/Info.plist              com.c15t.backend.url
 ios/c15tExpoDev/Info.plist              NSUserTrackingUsageDescription, NSUserTrackingMarkdownUsageDescription
 ios/.../Supporting/de.lproj/InfoPlist.strings   NSUserTrackingMarkdownUsageDescription
 android/.../AndroidManifest.xml         <meta-data android:name="com.c15t.BACKEND_URL" ...>

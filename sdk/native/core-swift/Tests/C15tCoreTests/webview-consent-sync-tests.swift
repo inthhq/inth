@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-@testable import C15tCore
+@_spi(C15tInternal) @testable import C15tCore
 
 /// The ordering, replacement and release rules the iOS helper depends on.
 /// `ConsentWebView` in C15tApple only connects this logic to WebKit.

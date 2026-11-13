@@ -1,5 +1,5 @@
-import C15tCore
-import C15tReactNativeBridge
+@_spi(C15tInternal) import C15tCore
+@_spi(C15tInternal) import C15tReactNativeBridge
 import Foundation
 import XCTest
 
@@ -21,10 +21,13 @@ final class C15tBridgeIABConfigurationTests: XCTestCase {
     }
 
     func testAPlistWithoutIABKeysLeavesIABOff() {
-        let configuration = C15tBridgeConfiguration.from(infoPlist: [:])
+        let plist: [String: Any] = [Key.storageMode: "memory", Key.backendURL: testProjectURL]
+        let configuration = C15tBridgeConfiguration.from(infoPlist: plist)
         XCTAssertNil(configuration.iab)
-        XCTAssertNil(C15tBridgeConfiguration.iabIssue(in: [:]))
-        XCTAssertNil(configuration.makeCoreConfiguration()?.iab)
+        XCTAssertNil(C15tBridgeConfiguration.iabIssue(in: plist))
+        let core = configuration.makeCoreConfiguration()
+        XCTAssertNotNil(core)
+        XCTAssertNil(core?.iab)
     }
 
     func testIABConsentLanguageFollowsTheResolvedLanguage() {
@@ -45,6 +48,7 @@ final class C15tBridgeIABConfigurationTests: XCTestCase {
     func testDeclaredIABSettingsReachTheCoreConfiguration() {
         let configuration = C15tBridgeConfiguration.from(infoPlist: [
             Key.storageMode: "memory",
+            Key.backendURL: testProjectURL,
             Key.iabCmpId: NSNumber(value: 1234),
             Key.iabCmpVersion: NSNumber(value: 7),
             Key.iabPublisherCountryCode: "de",
@@ -93,9 +97,9 @@ final class C15tBridgeIABConfigurationTests: XCTestCase {
     }
 
     func testARefusedDeclarationStartsTheCoreWithoutACMPID() {
-        XCTAssertTrue(C15tReactNativeBootstrap.start(infoPlist: [
+        XCTAssertTrue(startWithoutNetwork(infoPlist: [
             Key.storageMode: "memory",
-            Key.transportMode: "none",
+            Key.backendURL: testProjectURL,
             Key.iabCmpId: 1,
             Key.iabCmpVersion: 7,
             Key.iabPublisherCountryCode: "DE",
@@ -106,9 +110,9 @@ final class C15tBridgeIABConfigurationTests: XCTestCase {
 
     func testTheLaunchHookPublishesTheDeclaredCMPIdentity() {
         // TCF-CHECK: T4
-        XCTAssertTrue(C15tReactNativeBootstrap.start(infoPlist: [
+        XCTAssertTrue(startWithoutNetwork(infoPlist: [
             Key.storageMode: "memory",
-            Key.transportMode: "none",
+            Key.backendURL: testProjectURL,
             Key.iabCmpId: 1234,
             Key.iabCmpVersion: 7,
             Key.iabPublisherCountryCode: "DE",

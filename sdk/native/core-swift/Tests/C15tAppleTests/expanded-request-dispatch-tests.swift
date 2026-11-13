@@ -2,7 +2,7 @@
 import Foundation
 import ObjectiveC.runtime
 import XCTest
-@testable import C15tApple
+@_spi(C15tInternal) @testable import C15tApple
 
 /// The expanded request reaches a class method by the released selector, with its arguments in
 /// Apple's order. Each test registers a class under its own name, so no fake `ATTrackingManager`

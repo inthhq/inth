@@ -43,6 +43,8 @@ android {
 			apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_1)
 			languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_1)
 			jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+			// c15t's own modules and tests use the internal transport door.
+			optIn.add("com.c15t.core.C15tInternalApi")
 		}
 	}
 

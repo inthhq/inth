@@ -43,17 +43,22 @@ public final class C15tReactNativeRuntime: NSObject {
     /// the `Info.plist` values after all, at a moment it chose.
     @objc @discardableResult
     public static func startCore() -> Bool {
-        C15tReactNativeBootstrap.start(
-            configuration: C15tBridgeConfiguration.from(infoPlist: Bundle.main.infoDictionary ?? [:])
+        let infoPlist = Bundle.main.infoDictionary ?? [:]
+        // A retired key refuses this start too, as it does the launch hook.
+        if C15t.current == nil, let issue = C15tBridgeConfiguration.retirementIssue(in: infoPlist) {
+            NSLog("%@", "c15t: \(issue.message)")
+            return false
+        }
+        return C15tReactNativeBootstrap.start(
+            configuration: C15tBridgeConfiguration.from(infoPlist: infoPlist)
         )
     }
 
     /// Adopt a core the app built itself.
     ///
     /// Call this from `application(_:didFinishLaunchingWithOptions:)` before the React
-    /// host starts. The bridge attaches to this core and never builds its own, which is
-    /// the only way a host can supply a transport, store, or header set that the
-    /// `Info.plist` keys cannot express.
+    /// host starts, with the core `C15tApple.install(C15tAppleConfiguration(backendURL:))`
+    /// returned. The bridge attaches to this core and never builds its own.
     ///
     /// Swift only, and deliberately so. `ConsentCore` has no Objective-C representation,
     /// so an `@objc` declaration of this method cannot compile. The pod does not need

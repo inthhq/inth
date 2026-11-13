@@ -1,5 +1,5 @@
-@testable import C15tReactNativeBridge
-import C15tCore
+@_spi(C15tInternal) @testable import C15tReactNativeBridge
+@_spi(C15tInternal) import C15tCore
 import XCTest
 
 /// Event behaviour, and the rule that exactly one core is running.
@@ -90,82 +90,130 @@ final class C15tBootstrapTests: XCTestCase {
     }
 
     override func tearDown() {
+        C15tBuild.simulate(debug: nil)
         C15t.resetForTests()
         super.tearDown()
     }
 
-    func testEmptyPlistStartsOfflineWithTheKeychainAndADeviceLanguage() {
+    func testEmptyPlistHasNoProjectURLAndDoesNotStart() {
         let configuration = C15tBridgeConfiguration.from(infoPlist: [:])
 
         XCTAssertTrue(configuration.autoBootstrap, "automatic startup is the default")
-        XCTAssertEqual(configuration.transportMode, .offline, "a made-up host would send consent somewhere nobody chose")
+        XCTAssertNil(configuration.backendURL, "a made-up host would send consent somewhere nobody chose")
+        XCTAssertFalse(configuration.dryRun)
         XCTAssertEqual(configuration.storageMode, .keychain)
         XCTAssertFalse(configuration.overrides.language.isEmpty, "translations need exactly one language")
+
+        let issue = configuration.configurationIssue()
+        XCTAssertEqual(issue?.code, "C15T_CONFIGURATION_BACKEND_URL")
+        XCTAssertTrue(
+            issue?.message.hasPrefix(
+                "com.c15t.backend.url must be the project URL from your Inth dashboard, such as "
+                    + "https://your-project.inth.app. Got \"\": the value is empty.") == true,
+            issue?.message ?? "")
+        XCTAssertFalse(startWithoutNetwork(infoPlist: [C15tBridgeConfiguration.InfoPlistKey.storageMode: "memory"]))
+        XCTAssertNil(C15t.current, "no project URL leaves the core uninstalled")
     }
 
-    func testBackendURLWithoutAModeIsTreatedAsHosted() {
-        let configuration = C15tBridgeConfiguration.from(infoPlist: [
-            C15tBridgeConfiguration.InfoPlistKey.backendURL: "https://example.eu.c15t.app",
+    func testAProjectURLBuildsTheHostedTransportOnItsNormalForm() throws {
+        var configuration = C15tBridgeConfiguration.from(infoPlist: [
+            C15tBridgeConfiguration.InfoPlistKey.backendURL: " Your-Project.Inth.App/ ",
         ])
+        configuration.storageMode = .memory
+        XCTAssertNil(configuration.configurationIssue())
 
-        XCTAssertEqual(configuration.transportMode, .hosted)
-        XCTAssertNotNil(configuration.makeTransport())
-    }
-
-    func testInitURLOverrideReachesTheTransport() {
-        // The Expo plugin writes this key for a same-origin proxy that resolves init
-        // from its own route while saves still go to the backend. Reads of it have to
-        // agree with `@c15t/core` and Android, or the same `app.json` sends iOS to
-        // `${base}/init` and the proxy is silently bypassed on one platform only.
-        let configuration = C15tBridgeConfiguration.from(infoPlist: [
-            C15tBridgeConfiguration.InfoPlistKey.backendURL: "https://consent.example.com",
-            C15tBridgeConfiguration.InfoPlistKey.initURL: "https://app.example.com/api/consent/init",
-        ])
-
-        let transport = configuration.makeTransport() as? HostedTransport
-        XCTAssertNotNil(transport, "a hosted backend must build a hosted transport")
+        let core = try XCTUnwrap(configuration.makeCoreConfiguration())
+        let transport = try XCTUnwrap(core.transport as? HostedTransport)
+        XCTAssertEqual(transport.baseURL, URL(string: "https://your-project.inth.app"))
+        XCTAssertEqual(transport.domain, "your-project.inth.app")
         // ENG-530: a React Native app reports `rn`, not the Swift app's `apple`.
-        XCTAssertEqual(transport?.extraHeaders["x-c15t-platform"], "rn->\(C15t.version)")
-        XCTAssertEqual(transport?.initURL, URL(string: "https://app.example.com/api/consent/init"))
-        XCTAssertEqual(
-            transport?.baseURL,
-            URL(string: "https://consent.example.com"),
-            "the override moves init only; saves stay on the backend"
-        )
+        XCTAssertEqual(transport.extraHeaders["x-c15t-platform"], "rn->\(C15t.version)")
+        XCTAssertFalse(core.dryRun)
     }
 
-    func testAbsentOrBlankInitURLKeepsTheDefaultRoute() {
-        let defaultURL = URL(string: "https://consent.example.com/init")
+    func testAHostThatIsNotAnInthProjectDoesNotStart() {
+        for backend in ["https://consent.example.com", "http://localhost:8787", "https://your-project.inth.app/api"] {
+            var configuration = memoryConfiguration()
+            configuration.backendURL = backend
+            XCTAssertEqual(configuration.configurationIssue()?.code, "C15T_CONFIGURATION_BACKEND_URL", backend)
+            XCTAssertNil(configuration.makeCoreConfiguration(), backend)
+            XCTAssertFalse(startMemoryCore(configuration), backend)
+            XCTAssertNil(C15t.current, backend)
+        }
+    }
 
-        let absent = C15tBridgeConfiguration.from(infoPlist: [
-            C15tBridgeConfiguration.InfoPlistKey.backendURL: "https://consent.example.com",
+    func testDryRunIsReadFromThePlistAndRelaxesTheHostInADebugBuild() throws {
+        var configuration = C15tBridgeConfiguration.from(infoPlist: [
+            C15tBridgeConfiguration.InfoPlistKey.backendURL: "http://localhost:8787",
+            C15tBridgeConfiguration.InfoPlistKey.dryRun: true,
         ])
-        XCTAssertEqual((absent.makeTransport() as? HostedTransport)?.initURL, defaultURL)
+        configuration.storageMode = .memory
+        XCTAssertTrue(configuration.dryRun)
+        XCTAssertNil(configuration.configurationIssue())
+        XCTAssertTrue(try XCTUnwrap(configuration.makeCoreConfiguration()).dryRun)
 
-        // The plugin never writes an empty value, but a hand-edited `Info.plist` can,
-        // and fetching "" is worse than fetching the route nobody overrode.
-        let blank = C15tBridgeConfiguration.from(infoPlist: [
-            C15tBridgeConfiguration.InfoPlistKey.backendURL: "https://consent.example.com",
-            C15tBridgeConfiguration.InfoPlistKey.initURL: "   ",
-        ])
-        XCTAssertNil(blank.initURL, "a blank key is not an override")
-        XCTAssertEqual((blank.makeTransport() as? HostedTransport)?.initURL, defaultURL)
+        XCTAssertTrue(startMemoryCore(configuration))
+        XCTAssertNotNil(C15t.current)
+    }
 
-        var selfHosted = absent
-        selfHosted.transportMode = .selfHosted
-        selfHosted.initURL = URL(string: "https://consent.example.com/api/init")
-        XCTAssertEqual((selfHosted.makeTransport() as? HostedTransport)?.initURL, URL(string: "https://consent.example.com/api/init"))
+    func testDryRunInAReleaseBuildDoesNotStart() {
+        C15tBuild.simulate(debug: false)
+        defer { C15tBuild.simulate(debug: nil) }
+        var configuration = memoryConfiguration()
+        configuration.dryRun = true
+
+        let issue = configuration.configurationIssue()
+        XCTAssertEqual(issue?.code, "C15T_CONFIGURATION_DRY_RUN")
+        XCTAssertTrue(
+            issue?.message.hasPrefix(
+                "dryRun is for development and CI and cannot run in a release build. Remove dryRun "
+                    + "(com.c15t.dryRun in Info.plist, or dryRun in the Expo plugin options).") == true,
+            issue?.message ?? "")
+        XCTAssertNil(configuration.makeCoreConfiguration())
+        XCTAssertFalse(startMemoryCore(configuration))
+        XCTAssertNil(C15t.current, "a refused dryRun leaves the core uninstalled")
+
+        // The same build starts once dryRun is gone.
+        configuration.dryRun = false
+        XCTAssertTrue(startMemoryCore(configuration))
+    }
+
+    func testRetiredBackendKeysRefuseTheLaunchAndNameTheReplacement() {
+        let expected: [(key: String, value: String, says: [String])] = [
+            ("com.c15t.backend.mode", "hosted", ["Hosted is the only mode", "com.c15t.backend.url"]),
+            ("com.c15t.backend.mode", "self-hosted", ["Mobile works only with Inth"]),
+            ("com.c15t.backend.mode", "offline", ["com.c15t.dryRun"]),
+            ("com.c15t.backend.mode", "none", ["com.c15t.reactnative.AutoBootstrap"]),
+            ("com.c15t.backend.initUrl", "https://app.example.com/init", ["Policy is fetched from com.c15t.backend.url"]),
+        ]
+        for (key, value, says) in expected {
+            let plist: [String: Any] = [
+                C15tBridgeConfiguration.InfoPlistKey.backendURL: testProjectURL,
+                C15tBridgeConfiguration.InfoPlistKey.storageMode: "memory",
+                key: value,
+            ]
+            XCTAssertEqual(C15tBridgeConfiguration.retiredKeys(in: plist).map(\.key), [key])
+            guard let issue = C15tBridgeConfiguration.retirementIssue(in: plist) else {
+                XCTFail("\(key) must produce a readable refusal")
+                continue
+            }
+            XCTAssertEqual(issue.code, "C15T_CONFIGURATION_RETIRED")
+            XCTAssertTrue(issue.message.contains(key), "name the key: \(issue.message)")
+            for phrase in says {
+                XCTAssertTrue(issue.message.contains(phrase), "\(key)=\(value) should say \"\(phrase)\": \(issue.message)")
+            }
+            XCTAssertFalse(startWithoutNetwork(infoPlist: plist), key)
+            XCTAssertNil(C15t.current, key)
+        }
     }
 
     func testUnreadableValuesFallBackToTheSafeOption() {
         let configuration = C15tBridgeConfiguration.from(infoPlist: [
-            C15tBridgeConfiguration.InfoPlistKey.transportMode: "teleport",
             C15tBridgeConfiguration.InfoPlistKey.storageMode: "nonsense",
             C15tBridgeConfiguration.InfoPlistKey.categories: ["marketing", "telepathy"],
         ])
 
         XCTAssertEqual(configuration.storageMode, .keychain, "an unparseable store must not become plaintext")
-        XCTAssertEqual(configuration.transportMode, .offline, "no declared mode and no URL cannot mean a network")
         XCTAssertEqual(configuration.consentCategories, [.marketing], "unknown categories are dropped, not trusted")
     }
 
@@ -182,7 +230,7 @@ final class C15tBootstrapTests: XCTestCase {
     /// declaration at all.
     func testDeclaredVendorsParseFromEveryShapeAHostCanWrite() throws {
         let keyed = C15tBridgeConfiguration.from(infoPlist: [
-            C15tBridgeConfiguration.InfoPlistKey.backendURL: "https://consent.example.com",
+            C15tBridgeConfiguration.InfoPlistKey.backendURL: testProjectURL,
             C15tBridgeConfiguration.InfoPlistKey.vendors: "755, 42,8, 42",
         ])
         XCTAssertEqual(keyed.vendors, [755, 42, 8], "declaration order, spaces trimmed, repeats dropped")
@@ -216,7 +264,7 @@ final class C15tBootstrapTests: XCTestCase {
         }
 
         let configuration = C15tBridgeConfiguration.from(infoPlist: [
-            C15tBridgeConfiguration.InfoPlistKey.backendURL: "https://consent.example.com",
+            C15tBridgeConfiguration.InfoPlistKey.backendURL: testProjectURL,
             C15tBridgeConfiguration.InfoPlistKey.vendors: "vendor-42",
         ])
         XCTAssertNil(configuration.vendors)
@@ -225,49 +273,12 @@ final class C15tBootstrapTests: XCTestCase {
         XCTAssertNil(try XCTUnwrap(unusableIntoCore.makeCoreConfiguration()).vendors)
     }
 
-    func testDeclaredModeWinsOverURLInference() {
-        let configuration = C15tBridgeConfiguration.from(infoPlist: [
-            C15tBridgeConfiguration.InfoPlistKey.backendURL: "https://consent.example.com",
-            C15tBridgeConfiguration.InfoPlistKey.transportMode: "self-hosted",
-        ])
-
-        XCTAssertEqual(configuration.transportMode, .selfHosted)
-    }
-
-    func testSelfHostedAndNoTransportModesMapToTheirTransports() {
-        let selfHosted = C15tBridgeConfiguration(
-            autoBootstrap: true,
-            transportMode: .selfHosted,
-            backendURL: URL(string: "https://consent.example.com"),
-            domain: "example.com",
-            storageMode: .memory,
-            keychainService: C15tBridgeConfiguration.defaultKeychainService,
-            overrides: ConsentOverrides(country: nil, region: nil, language: "en", gpc: nil),
-            consentCategories: nil,
-            gpc: nil
-        )
-
-        XCTAssertNotNil(selfHosted.makeTransport())
-
-        var withoutBackend = selfHosted
-        withoutBackend.transportMode = .disabled
-        XCTAssertNil(withoutBackend.makeTransport(), "mode none means async commands become no-ops")
-    }
-
-    func testHostedModeWithAMissingURLDegradesToOffline() {
-        var configuration = memoryConfiguration()
-        configuration.transportMode = .hosted
-        configuration.backendURL = nil
-
-        XCTAssertTrue(configuration.makeTransport() is OfflineTransport)
-    }
-
     func testStartInstallsOneCoreAndLaterCallsAttachToIt() {
         XCTAssertNil(C15t.current)
-        XCTAssertTrue(C15tReactNativeBootstrap.start(configuration: memoryConfiguration()))
+        XCTAssertTrue(startMemoryCore())
 
         guard let first = C15t.current else { return XCTFail("expected a running core") }
-        XCTAssertTrue(C15tReactNativeBootstrap.start(configuration: memoryConfiguration()))
+        XCTAssertTrue(startMemoryCore())
 
         XCTAssertTrue(C15t.current === first, "a second start must attach, not install a second kernel")
         XCTAssertTrue(C15tReactNativeBootstrap.isRunning)
@@ -278,7 +289,7 @@ final class C15tBootstrapTests: XCTestCase {
         appCore.bootstrap(CoreConfig(store: InMemoryStore()))
 
         XCTAssertTrue(C15tReactNativeBootstrap.install(appCore))
-        XCTAssertTrue(C15tReactNativeBootstrap.start(configuration: memoryConfiguration()))
+        XCTAssertTrue(startMemoryCore())
         XCTAssertTrue(C15t.current === appCore, "the bridge reads the core the app started")
     }
 
@@ -286,7 +297,7 @@ final class C15tBootstrapTests: XCTestCase {
         var configuration = memoryConfiguration()
         configuration.autoBootstrap = false
 
-        XCTAssertFalse(C15tReactNativeBootstrap.start(configuration: configuration))
+        XCTAssertFalse(startMemoryCore(configuration))
         XCTAssertNil(C15t.current)
         // Failing closed rather than inventing a store is what the contract asks for.
         let snapshot = C15t.snapshot()

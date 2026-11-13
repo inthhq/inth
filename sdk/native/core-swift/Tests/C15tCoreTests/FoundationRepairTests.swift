@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-@testable import C15tCore
+@_spi(C15tInternal) @testable import C15tCore
 
 /// Cold-launch, queue liveness and policy-transition regressions.
 final class FoundationRepairTests: XCTestCase {

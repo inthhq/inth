@@ -1,7 +1,8 @@
-import C15tCore
+@_spi(C15tInternal) import C15tCore
 import Foundation
 
 /// Local sample policy. Saves stay queued; this transport never claims remote delivery.
+/// Transports are internal API, used here so the demo runs with no backend.
 struct DemoTransport: C15tTransport {
     let domain = "swiftui-consent-demo"
     var unavailable = false

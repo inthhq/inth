@@ -1,6 +1,6 @@
 import Foundation
 import XCTest
-@testable import C15tCore
+@_spi(C15tInternal) @testable import C15tCore
 
 /// Accept All grants only what the served list declares, as `applyBlanket` in
 /// `packages/iab/src/index.ts` does (TCF Policies 5(3), 5(6) and 5(8)).

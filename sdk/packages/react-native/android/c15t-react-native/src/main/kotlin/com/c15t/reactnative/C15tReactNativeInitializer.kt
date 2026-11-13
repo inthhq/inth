@@ -24,7 +24,7 @@ class C15tReactNativeInitializer : Initializer<Unit> {
 	 *
 	 * The pure Android library registers its own initializer, and either one winning
 	 * is correct: both install the same core with the same manifest configuration, and
-	 * [C15t.bootstrap] ignores a second call.
+	 * a second install is ignored.
 	 */
 	override fun dependencies(): List<Class<out Initializer<*>>> = emptyList()
 }

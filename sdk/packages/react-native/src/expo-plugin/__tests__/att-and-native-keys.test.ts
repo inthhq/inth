@@ -1,13 +1,13 @@
 import { join } from 'node:path';
 
 import { AndroidConfig } from '@expo/config-plugins';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { applyParamsOnConfig } from '../with-c15t';
 import {
 	FIXTURE_DIR,
-	OFFLINE,
 	PREBUILD_ARGV,
+	WITH_POLICY,
 	applyToFixture,
 	fixtureConfig,
 	runInfoPlist,
@@ -16,7 +16,7 @@ import {
 	GOOGLE_CONSENT_PLIST_DEFAULTS,
 } from './helpers';
 
-const BACKEND = 'https://consent.example.com';
+const BACKEND = 'https://acme.inth.app';
 const ATT_PROPS = {
 	backendURL: BACKEND,
 	enableAppTrackingTransparency: true,
@@ -65,7 +65,6 @@ describe('App Tracking Transparency', () => {
 				{ SKAdNetworkIdentifier: 'cstr6suwn9.skadnetwork' },
 				{ SKAdNetworkIdentifier: '4f3dc5j5db.skadnetwork' },
 			],
-			'com.c15t.backend.mode': 'hosted',
 			'com.c15t.backend.url': BACKEND,
 		});
 	});
@@ -75,7 +74,7 @@ describe('App Tracking Transparency', () => {
 
 		expect(config.ios?.privacyManifests).toStrictEqual({
 			NSPrivacyTracking: true,
-			NSPrivacyTrackingDomains: ['consent.example.com'],
+			NSPrivacyTrackingDomains: ['acme.inth.app'],
 		});
 	});
 
@@ -90,7 +89,6 @@ describe('App Tracking Transparency', () => {
 		expect(applied.ios?.infoPlist).toStrictEqual({
 			...GOOGLE_CONSENT_PLIST_DEFAULTS,
 			ITSAppUsesNonExemptEncryption: false,
-			'com.c15t.backend.mode': 'hosted',
 			'com.c15t.backend.url': BACKEND,
 		});
 	});
@@ -109,7 +107,6 @@ describe('App Tracking Transparency', () => {
 		expect(applied.ios?.infoPlist).toStrictEqual({
 			...GOOGLE_CONSENT_PLIST_DEFAULTS,
 			ITSAppUsesNonExemptEncryption: false,
-			'com.c15t.backend.mode': 'hosted',
 			'com.c15t.backend.url': BACKEND,
 			'com.c15t.forceGPC': true,
 		});
@@ -168,7 +165,7 @@ describe('App Tracking Transparency', () => {
 				},
 			],
 			NSPrivacyTracking: true,
-			NSPrivacyTrackingDomains: ['ads.example.com', 'consent.example.com'],
+			NSPrivacyTrackingDomains: ['ads.example.com', 'acme.inth.app'],
 		});
 	});
 
@@ -205,13 +202,13 @@ describe('App Tracking Transparency', () => {
 				...ATT_PROPS,
 				privacyTrackingDomains: ['ads.example.com'],
 			})
-		).toThrowError(/must list consent\.example\.com/u);
+		).toThrowError(/must list acme\.inth\.app/u);
 	});
 });
 
-describe('transport modes', () => {
-	it('embeds no backend and no tracking for offline', async () => {
-		const config = applyToFixture(OFFLINE);
+describe('the native keys', () => {
+	it('writes the project URL and no mode key', async () => {
+		const config = applyToFixture({ backendURL: ' Acme.Inth.App/ ' });
 		const plist = (await runInfoPlist(config)).ios?.infoPlist;
 		const manifest = (
 			await runMod(config, 'android', 'manifest', await readFixtureManifest())
@@ -220,44 +217,103 @@ describe('transport modes', () => {
 		expect(plist).toStrictEqual({
 			...GOOGLE_CONSENT_PLIST_DEFAULTS,
 			ITSAppUsesNonExemptEncryption: false,
-			'com.c15t.backend.mode': 'offline',
-			'com.c15t.policy.rules': 'c15t-policy-rules.json',
+			'com.c15t.backend.url': BACKEND,
 		});
 		expect(config.extra?.c15t).toMatchObject({
-			backendURL: null,
-			mode: 'offline',
+			backendURL: BACKEND,
+			dryRun: false,
+		});
+		expect(config.extra?.c15t).not.toHaveProperty('mode');
+		expect(metaNamesOf(manifest)).toStrictEqual([
+			'expo.modules.updates.ENABLED',
+			'com.c15t.BACKEND_URL',
+			...GOOGLE_CONSENT_META_DATA_NAMES,
+		]);
+		expect(providerOf(manifest)).toHaveLength(1);
+	});
+
+	it('keeps the in-code policy beside the project URL', async () => {
+		const config = applyToFixture(WITH_POLICY);
+		const plist = (await runInfoPlist(config)).ios?.infoPlist;
+		const manifest = (
+			await runMod(config, 'android', 'manifest', await readFixtureManifest())
+		).modResults as AndroidConfig.Manifest.AndroidManifest;
+
+		expect(plist).toStrictEqual({
+			...GOOGLE_CONSENT_PLIST_DEFAULTS,
+			ITSAppUsesNonExemptEncryption: false,
+			'com.c15t.backend.url': BACKEND,
+			'com.c15t.policy.rules': 'c15t-policy-rules.json',
 		});
 		expect(metaNamesOf(manifest)).toStrictEqual([
 			'expo.modules.updates.ENABLED',
-			'com.c15t.MODE',
 			'com.c15t.POLICY_RULES',
+			'com.c15t.BACKEND_URL',
 			...GOOGLE_CONSENT_META_DATA_NAMES,
 		]);
 	});
 
-	it('keeps a self-hosted base URL with its path, and calls it hosted to JavaScript', async () => {
-		const config = applyToFixture({
-			backendURL: 'https://consent.internal.example.com/c15t',
-			mode: 'selfHosted',
-		});
-		const plist = (await runInfoPlist(config)).ios?.infoPlist;
+	it('writes the dryRun flag, takes a loopback URL and warns once', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		try {
+			const props = {
+				backendURL: 'http://localhost:8787/api/self-host/',
+				dryRun: true,
+			};
+			const config = applyToFixture(props);
+			applyToFixture(props);
+			const plist = (await runInfoPlist(config)).ios?.infoPlist;
+			const manifest = (
+				await runMod(config, 'android', 'manifest', await readFixtureManifest())
+			).modResults as AndroidConfig.Manifest.AndroidManifest;
 
-		expect(plist).toMatchObject({
-			'com.c15t.backend.mode': 'selfHosted',
-			'com.c15t.backend.url': 'https://consent.internal.example.com/c15t',
-		});
-		expect(config.extra?.c15t).toMatchObject({ mode: 'hosted' });
+			expect(plist).toStrictEqual({
+				...GOOGLE_CONSENT_PLIST_DEFAULTS,
+				ITSAppUsesNonExemptEncryption: false,
+				'com.c15t.backend.url': 'http://localhost:8787/api/self-host',
+				'com.c15t.dryRun': true,
+			});
+			expect(
+				AndroidConfig.Manifest.getMainApplicationOrThrow(manifest)['meta-data']
+			).toContainEqual({
+				$: { 'android:name': 'com.c15t.DRY_RUN', 'android:value': 'true' },
+			});
+			expect(config.extra?.c15t).toMatchObject({
+				backendURL: 'http://localhost:8787/api/self-host',
+				dryRun: true,
+			});
+			const warnings = warn.mock.calls.filter(([message]) =>
+				String(message).includes('dryRun is on')
+			);
+			expect(warnings).toHaveLength(1);
+			expect(String(warnings[0]?.[0])).toContain(
+				'a release build will refuse to start c15t'
+			);
+		} finally {
+			warn.mockRestore();
+		}
 	});
 
-	it('leaves the core unstarted for a host-supplied transport', async () => {
-		const config = applyToFixture({ backendURL: BACKEND, mode: 'custom' });
+	it('refuses the same loopback URL without dryRun', () => {
+		expect(() =>
+			applyToFixture({ backendURL: 'http://localhost:8787/api/self-host' })
+		).toThrowError(
+			/backendURL must be the project URL from your Inth dashboard/u
+		);
+	});
+
+	it('leaves the core unstarted when the native app installs it', async () => {
+		const config = applyToFixture({
+			autoBootstrap: false,
+			backendURL: BACKEND,
+		});
 		const plist = (await runInfoPlist(config)).ios?.infoPlist;
 		const manifest = (
 			await runMod(config, 'android', 'manifest', await readFixtureManifest())
 		).modResults as AndroidConfig.Manifest.AndroidManifest;
 
 		expect(plist).toMatchObject({
-			'com.c15t.backend.mode': 'none',
+			'com.c15t.backend.url': BACKEND,
 			'com.c15t.reactnative.AutoBootstrap': false,
 		});
 		expect(metaNamesOf(manifest)).toStrictEqual([
@@ -288,11 +344,10 @@ describe('transport modes', () => {
 		});
 	});
 
-	it('keeps init URL and domain on both platforms', async () => {
+	it('keeps the domain on both platforms', async () => {
 		const config = applyToFixture({
 			backendURL: BACKEND,
 			domain: 'app.example.com',
-			initURL: 'https://app.example.com/api/consent/init',
 		});
 		const manifest = (
 			await runMod(config, 'android', 'manifest', await readFixtureManifest())
@@ -300,15 +355,23 @@ describe('transport modes', () => {
 
 		expect((await runInfoPlist(config)).ios?.infoPlist).toMatchObject({
 			'com.c15t.backend.domain': 'app.example.com',
-			'com.c15t.backend.initUrl': 'https://app.example.com/api/consent/init',
 		});
 		expect(
 			AndroidConfig.Manifest.getMainApplicationOrThrow(manifest)['meta-data']
 		).toContainEqual({
 			$: {
-				'android:name': 'com.c15t.BACKEND_INIT_URL',
-				'android:value': 'https://app.example.com/api/consent/init',
+				'android:name': 'com.c15t.BACKEND_DOMAIN',
+				'android:value': 'app.example.com',
 			},
 		});
 	});
+
+	it.each(['hosted', 'selfHosted', 'offline', 'custom'])(
+		'refuses the retired mode %s before anything is written',
+		(mode) => {
+			expect(() =>
+				applyToFixture({ backendURL: BACKEND, mode } as never)
+			).toThrowError(new RegExp(`mode '${mode}' was removed`, 'u'));
+		}
+	);
 });

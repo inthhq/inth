@@ -37,7 +37,7 @@ Disable vendor auto-initializers that can run before your installation and gate.
 
 `C15t.decision` distinguishes pending, denied and granted. `gate` and `gateDecision` provide native subscriptions; close the handle when its owner ends. Stop or reconfigure optional collection when the gate closes. A startup-only check does not cover withdrawal.
 
-For app-owned storage/transport or IAB settings, use `NativeConfig` and the existing platform installer. `backendUrl` identifies hosted Inth or a backend implementing the same protocol. A build-exported resource uses `bundledPolicy`, or the platform's `com.c15t.POLICY_RESOURCE` assets entry. Keep transport available for refresh and durable queue replay.
+For app-owned installation or IAB settings, use `NativeConfig` and the existing platform installer. `backendUrl` is the project URL from your Inth dashboard, such as `https://your-project.inth.app`; the installer throws on any other host. A build-exported resource uses `bundledPolicy`, or the platform's `com.c15t.POLICY_RESOURCE` assets entry. The installer replays the durable queue to your Inth project on foreground and reconnect.
 
 ## Add Compose screens deliberately
 

@@ -184,27 +184,31 @@ describe('bundling the manifest at build time', () => {
 });
 
 describe('c15t mobile-manifest', () => {
+	const projectUrl = 'https://acme.inth.app';
 	const context = (flags: Record<string, string | boolean>) =>
 		({
 			cwd: directory,
 			flags,
 			logger: { success: vi.fn(), warn: vi.fn() },
 		}) as unknown as CliContext;
-
-	it('passes flags through and defaults to a release build', async () => {
-		const run = vi.fn(() =>
+	const skipped = () =>
+		vi.fn(() =>
 			Promise.resolve({ status: 'skipped' as const, warning: 'offline' })
 		);
+
+	it('passes flags through and defaults to a release build', async () => {
+		const run = skipped();
 		const ctx = context({
 			'allow-stale-manifest': true,
-			'backend-url': backendUrl,
+			'backend-url': projectUrl,
 			languages: 'en, fr',
 			vendors: '1,2',
 		});
 		await mobileManifest(ctx, run);
 		expect(run).toHaveBeenCalledWith({
+			allowLoopback: false,
 			allowStaleManifest: true,
-			backendUrl,
+			backendUrl: projectUrl,
 			build: 'release',
 			expiresInDays: undefined,
 			languages: ['en', 'fr'],
@@ -214,10 +218,85 @@ describe('c15t mobile-manifest', () => {
 		expect(ctx.logger.warn).toHaveBeenCalledWith('offline');
 	});
 
+	it('binds the manifest to the normal form of the project URL', async () => {
+		const run = skipped();
+		await mobileManifest(context({ 'backend-url': ' Acme.Inth.App/// ' }), run);
+		expect(run).toHaveBeenCalledWith(
+			expect.objectContaining({ backendUrl: projectUrl })
+		);
+	});
+
+	it.each([
+		['https://consent.example.com', 'host'],
+		['http://localhost:8787', 'scheme'],
+		['https://acme.inth.app/api/c15t', 'path'],
+		['https://acme.inth.app:8443', 'port'],
+	])('refuses %s without --dry-run', async (url, reason) => {
+		const run = skipped();
+		await expect(
+			mobileManifest(context({ 'backend-url': url }), run)
+		).rejects.toMatchObject({
+			code: 'FLAG_INVALID',
+			context: {
+				details: expect.stringContaining(
+					`--backend-url must be the project URL from your Inth dashboard, such as https://your-project.inth.app. Got "${url}": `
+				),
+				reason,
+			},
+		});
+		expect(run).not.toHaveBeenCalled();
+	});
+
+	it.each([
+		[
+			'https://staging.consent.example.com/',
+			'https://staging.consent.example.com',
+		],
+		[
+			'http://localhost:8787/api/self-host/',
+			'http://localhost:8787/api/self-host',
+		],
+	])('takes %s with --dry-run', async (url, normalized) => {
+		const run = skipped();
+		await mobileManifest(context({ 'backend-url': url, 'dry-run': true }), run);
+		expect(run).toHaveBeenCalledWith(
+			expect.objectContaining({ allowLoopback: true, backendUrl: normalized })
+		);
+	});
+
+	it('still refuses http off loopback and credentials with --dry-run', async () => {
+		for (const [url, reason] of [
+			['http://staging.consent.example.com', 'scheme'],
+			['https://user:secret@consent.example.com', 'credentials'],
+		]) {
+			// oxlint-disable-next-line no-await-in-loop -- One URL at a time.
+			await expect(
+				mobileManifest(
+					context({ 'backend-url': url as string, 'dry-run': true }),
+					skipped()
+				)
+			).rejects.toMatchObject({ code: 'FLAG_INVALID', context: { reason } });
+		}
+	});
+
+	it('fetches a dryRun manifest from a loopback backend over http', async () => {
+		const result = await bundleMobileManifest({
+			allowLoopback: true,
+			backendUrl: 'http://localhost:8787/api/self-host',
+			build: 'debug',
+			fetch: await online(),
+			now,
+			out,
+		});
+		expect(result.status).toBe('fetched');
+		const payload = JSON.parse(JSON.parse(await readFile(out, 'utf8')).payload);
+		expect(payload.endpoint).toBe('http://localhost:8787/api/self-host');
+	});
+
 	it('refuses a missing backend URL and an unknown build type', async () => {
 		await expect(mobileManifest(context({}))).rejects.toThrow();
 		await expect(
-			mobileManifest(context({ 'backend-url': backendUrl, build: 'staging' }))
+			mobileManifest(context({ 'backend-url': projectUrl, build: 'staging' }))
 		).rejects.toThrow();
 	});
 });

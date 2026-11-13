@@ -1,6 +1,18 @@
 import Foundation
 import XCTest
-@testable import C15tCore
+@_spi(C15tInternal) @testable import C15tCore
+
+/// A backend nobody can reach: every call fails with `.offline`. It names no policy
+/// endpoint, so a bundled manifest keeps its own binding.
+struct UnreachableTransport: C15tTransport {
+    var domain = "offline"
+
+    func performInit(_ context: InitContext) async -> Result<InitResponse, C15tError> { .failure(.offline) }
+    func sendSave(_ body: Data) async -> Result<Void, C15tError> { .failure(.offline) }
+    func patchIdentity(
+        subjectId: String, externalId: String, identityProvider: String?
+    ) async -> Result<Void, C15tError> { .failure(.offline) }
+}
 
 /// A controllable clock, so expiry and `actionAt` are set rather than waited for.
 final class TestClock: @unchecked Sendable {

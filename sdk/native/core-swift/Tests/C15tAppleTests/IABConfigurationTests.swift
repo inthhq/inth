@@ -1,10 +1,11 @@
-import C15tApple
-import C15tCore
+@_spi(C15tInternal) import C15tApple
+@_spi(C15tInternal) import C15tCore
 import Foundation
 import XCTest
 
 /// `C15tAppleConfiguration.iab` is how a host, including the RN auto-bootstrap, turns IAB TCF on.
 final class IABConfigurationTests: XCTestCase {
+    private let backend = "https://your-project.inth.app"
     private let iab = IABConfiguration(cmpId: 1234, cmpVersion: 7, publisherCountryCode: "DE", consentScreen: 3)
 
     override func setUp() {
@@ -22,9 +23,9 @@ final class IABConfigurationTests: XCTestCase {
     }
 
     func testCoreConfigurationCarriesTheDeclaredIABSettings() throws {
-        let configured = C15tAppleConfiguration(transport: .offline, storage: .memory, iab: iab)
+        let configured = C15tAppleConfiguration(backendURL: backend, storage: .memory, iab: iab)
         XCTAssertEqual(try configured.makeCoreConfiguration().iab, iab)
-        XCTAssertNil(try C15tAppleConfiguration(transport: .offline, storage: .memory).makeCoreConfiguration().iab)
+        XCTAssertNil(try C15tAppleConfiguration(backendURL: backend, storage: .memory).makeCoreConfiguration().iab)
     }
 
     func testOutOfRangeSettingsRefuseInstallationBeforeAnyCMPIDIsWritten() {
@@ -41,7 +42,7 @@ final class IABConfigurationTests: XCTestCase {
         for configuration in invalid {
             XCTAssertNotNil(C15tApple.iabIssue(configuration), "\(configuration)")
             XCTAssertThrowsError(try C15tApple.install(
-                C15tAppleConfiguration(transport: .offline, storage: .memory, iab: configuration)
+                C15tAppleConfiguration(backendURL: backend, storage: .memory, iab: configuration)
             ), "\(configuration)") {
                 XCTAssertEqual($0 as? C15tAppleInstallationError, .invalidIABConfiguration)
             }
@@ -54,7 +55,7 @@ final class IABConfigurationTests: XCTestCase {
 
     func testInstalledCorePublishesTheCMPIdentityToStandardUserDefaults() async throws {
         // TCF-CHECK: T4
-        let core = try C15tApple.install(C15tAppleConfiguration(transport: .disabled, storage: .memory, iab: iab))
+        let core = try C15tApple.install(withoutNetwork(C15tAppleConfiguration(backendURL: backend, storage: .memory, iab: iab)))
         await core.waitUntilIdle()
         let defaults = UserDefaults.standard
         XCTAssertEqual(defaults.object(forKey: TcStorageBusKeys.cmpSdkID) as? Int, 1234)
@@ -62,10 +63,16 @@ final class IABConfigurationTests: XCTestCase {
     }
 
     func testInstallWithoutIABWritesNoCMPIdentity() async throws {
-        let core = try C15tApple.install(C15tAppleConfiguration(transport: .disabled, storage: .memory))
+        let core = try C15tApple.install(withoutNetwork(C15tAppleConfiguration(backendURL: backend, storage: .memory)))
         await core.waitUntilIdle()
         XCTAssertNil(UserDefaults.standard.object(forKey: TcStorageBusKeys.cmpSdkID))
         XCTAssertNil(UserDefaults.standard.object(forKey: TcStorageBusKeys.cmpSdkVersion))
+    }
+
+    /// The core this configuration makes, with no transport, so a test opens no socket.
+    private func withoutNetwork(_ configuration: C15tAppleConfiguration) throws -> CoreConfig {
+        let made = try configuration.makeCoreConfiguration()
+        return CoreConfig(store: made.store, iab: made.iab, storageBus: made.storageBus)
     }
 
     private func clearBus() {

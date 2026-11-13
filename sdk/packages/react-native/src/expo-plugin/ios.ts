@@ -14,9 +14,9 @@ import {
 	IOS_GPP_PLIST_KEYS,
 	IOS_IAB_PLIST_KEYS,
 	IOS_PLIST_KEY,
+	RETIRED_IOS_PLIST_KEYS,
 } from './constants';
 import { C15tPluginError } from './errors';
-import { IOS_TRANSPORT_MODE } from './params';
 import type { ResolvedC15tParams } from './params';
 import { POLICY_RESOURCE_NAME, POLICY_RULES_NAME } from './policy-resource';
 
@@ -124,20 +124,18 @@ export const buildInfoPlistEntries = function buildInfoPlistEntries(
 	params: ResolvedC15tParams
 ): Record<string, string | number | boolean | string[]> {
 	const entries: Record<string, string | number | boolean | string[]> = {
-		[IOS_PLIST_KEY.transportMode]: IOS_TRANSPORT_MODE[params.mode],
+		[IOS_PLIST_KEY.backendURL]: params.backendURL,
 	};
+	// Only when on. Native code refuses it in a release build.
+	if (params.dryRun) {
+		entries[IOS_PLIST_KEY.dryRun] = true;
+	}
 
 	if (params.policyResource !== null) {
 		entries[IOS_PLIST_KEY.policyResource] = POLICY_RESOURCE_NAME;
 	}
 	if (params.policyRules !== null) {
 		entries[IOS_PLIST_KEY.policyRules] = POLICY_RULES_NAME;
-	}
-	if (params.backendURL !== null) {
-		entries[IOS_PLIST_KEY.backendURL] = params.backendURL;
-	}
-	if (params.initURL !== null) {
-		entries[IOS_PLIST_KEY.initURL] = params.initURL;
 	}
 	if (params.domain !== null) {
 		entries[IOS_PLIST_KEY.domain] = params.domain;
@@ -288,7 +286,14 @@ export const applyInfoPlist = function applyInfoPlist(
 	const next: InfoPlist = { ...infoPlist };
 	// The plugin owns every IAB and GPP key. Clear them first, so a removed
 	// `iab` or `gpp` option leaves no earlier CMP identity or GPP switch behind.
-	for (const key of [...IOS_IAB_PLIST_KEYS, ...IOS_GPP_PLIST_KEYS]) {
+	// The dryRun key goes the same way, and so do the retired keys: a prebuild
+	// without --clean keeps the old plist, and the bridge refuses them.
+	for (const key of [
+		...IOS_IAB_PLIST_KEYS,
+		...IOS_GPP_PLIST_KEYS,
+		...RETIRED_IOS_PLIST_KEYS,
+		IOS_PLIST_KEY.dryRun,
+	]) {
 		Reflect.deleteProperty(next, key);
 	}
 	Object.assign(next, buildInfoPlistEntries(params));

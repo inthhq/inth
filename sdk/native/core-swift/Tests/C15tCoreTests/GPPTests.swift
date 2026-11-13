@@ -1,6 +1,6 @@
 import Foundation
 import XCTest
-@testable import C15tCore
+@_spi(C15tInternal) @testable import C15tCore
 
 /// `native/protocol/gpp/cases.json`: the strings and in-app keys `core-android` and the
 /// web encoder produce for the same inputs. `GppTest.kt` runs the same cases.

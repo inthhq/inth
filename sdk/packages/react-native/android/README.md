@@ -104,14 +104,18 @@ produces nothing, or if the spec reaches the AAR.
 
 ## Configuration
 
-The core reads its backend from `AndroidManifest.xml` meta-data (see
+The core reads its configuration from `AndroidManifest.xml` meta-data (see
 [`native/core-android`](../../../native/core-android)): `com.c15t.BACKEND_URL`,
-`com.c15t.BACKEND_INIT_URL`, `com.c15t.BACKEND_DOMAIN`, `com.c15t.FORCE_GPC`. Without a backend URL nothing
-installs, and the module answers with the deny-all snapshot. Each is read whichever type
+`com.c15t.DRY_RUN`, `com.c15t.BACKEND_DOMAIN`, `com.c15t.FORCE_GPC`. `com.c15t.BACKEND_URL` is the
+project URL from the Inth dashboard, such as `https://your-project.inth.app`; the mobile SDKs
+work only with Inth. `com.c15t.DRY_RUN` is for development and CI: consent works on the device
+and no record is sent, and a build that is not debuggable refuses it. Without a backend URL, or
+with one that is refused, nothing installs, the reason is logged under the `c15t` tag, and the
+module answers with the deny-all snapshot. Each is read whichever type
 the manifest parser gave it, so a bare `true` and a quoted `"true"` mean the same thing;
 `true`, `TRUE`, and `1` all count, and anything else reads as absent.
 
-An app that calls `C15t.bootstrap` itself opts out of the launch hook:
+An app that calls `C15tAndroid.install` itself opts out of the launch hook:
 
 ```xml
 <meta-data android:name="com.c15t.reactnative.AUTO_BOOTSTRAP" android:value="false" />

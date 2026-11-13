@@ -1,9 +1,10 @@
-import C15tCore
+@_spi(C15tInternal) import C15tCore
 import C15tConsentUI
 import Foundation
 import XCTest
 
-/// Uses only the public API, as a host app does. No `@testable` import in this file.
+/// Uses only the public UI API, as a host app does. No `@testable` import in this file.
+/// The core itself is started through the internal door so the test opens no socket.
 @MainActor
 final class PublicAPITests: XCTestCase {
     /// A host's settings screen reopens privacy choices with one public call, after any decision.

@@ -1,5 +1,5 @@
-@testable import C15tReactNativeBridge
-import C15tCore
+@_spi(C15tInternal) @testable import C15tReactNativeBridge
+@_spi(C15tInternal) import C15tCore
 import XCTest
 
 /// The handler is what the TurboModule forwards to, so these cover the answers the
@@ -24,7 +24,7 @@ final class C15tModuleHandlerTests: XCTestCase {
             calls += 1
             lock.unlock()
             guard shouldStart else { return false }
-            return C15tReactNativeBootstrap.start(configuration: memoryConfiguration())
+            return startMemoryCore()
         }
     }
 
@@ -84,7 +84,7 @@ final class C15tModuleHandlerTests: XCTestCase {
     }
 
     func testOverridesAreAppliedAgainstTheLiveSnapshot() {
-        let handler = C15tModuleHandler(startCore: { C15tReactNativeBootstrap.start(configuration: memoryConfiguration()) })
+        let handler = C15tModuleHandler(startCore: { startMemoryCore() })
 
         XCTAssertTrue(handler.ensureCore())
         // `language` is required by the protocol and the stored config already has one,
@@ -99,7 +99,7 @@ final class C15tModuleHandlerTests: XCTestCase {
     }
 
     func testAnUnreadableOverridesDocumentChangesNothing() {
-        let handler = C15tModuleHandler(startCore: { C15tReactNativeBootstrap.start(configuration: memoryConfiguration()) })
+        let handler = C15tModuleHandler(startCore: { startMemoryCore() })
         XCTAssertTrue(handler.applyOverrides(#"{"country":"DE","language":"de"}"#).isSuccess)
 
         assertBridgeFailure(handler.applyOverrides("nonsense"), C15tBridgeError.unreadableOverrides)
@@ -107,7 +107,7 @@ final class C15tModuleHandlerTests: XCTestCase {
     }
 
     func testARetiredOverrideIsRefusedAndLeavesTheLiveOverridesAlone() {
-        let handler = C15tModuleHandler(startCore: { C15tReactNativeBootstrap.start(configuration: memoryConfiguration()) })
+        let handler = C15tModuleHandler(startCore: { startMemoryCore() })
         XCTAssertTrue(handler.applyOverrides(#"{"country":"DE","language":"de"}"#).isSuccess)
 
         // The old shape named an override that does not exist. Applying the readable
@@ -125,7 +125,7 @@ final class C15tModuleHandlerTests: XCTestCase {
     }
 
     func testAGpcOverrideIsAppliedAndTheTripleGoesOutComplete() {
-        let handler = C15tModuleHandler(startCore: { C15tReactNativeBootstrap.start(configuration: memoryConfiguration()) })
+        let handler = C15tModuleHandler(startCore: { startMemoryCore() })
         XCTAssertTrue(handler.applyOverrides(#"{"gpc":true}"#).isSuccess)
 
         // The bridge's half is that the override reaches the core and that the signal
@@ -155,7 +155,7 @@ final class C15tModuleHandlerTests: XCTestCase {
     }
 
     func testIdentifyAndLogoutKeepTheSubjectId() {
-        let handler = C15tModuleHandler(startCore: { C15tReactNativeBootstrap.start(configuration: memoryConfiguration()) })
+        let handler = C15tModuleHandler(startCore: { startMemoryCore() })
         XCTAssertTrue(handler.ensureCore())
         guard let subjectBefore = C15t.snapshot().subject?.id else {
             return XCTFail("a started core has a subject id")
@@ -170,7 +170,7 @@ final class C15tModuleHandlerTests: XCTestCase {
     }
 
     func testResetKeepsIdentityAndConfigurationAndOwesTheChoiceAgain() {
-        let handler = C15tModuleHandler(startCore: { C15tReactNativeBootstrap.start(configuration: memoryConfiguration()) })
+        let handler = C15tModuleHandler(startCore: { startMemoryCore() })
         XCTAssertTrue(handler.ensureCore())
         XCTAssertTrue(handler.applyOverrides(#"{"country":"FR","language":"fr"}"#).isSuccess)
         guard let subjectBefore = C15t.snapshot().subject?.id else {

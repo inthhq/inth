@@ -1,5 +1,5 @@
-import C15tCore
-import C15tReactNativeBridge
+@_spi(C15tInternal) import C15tCore
+@_spi(C15tInternal) import C15tReactNativeBridge
 import Foundation
 import XCTest
 
@@ -39,7 +39,8 @@ final class C15tBridgeGPPConfigurationTests: XCTestCase {
 
     func testTheOptOutListReachesTheCoreConfiguration() {
         let configuration = C15tBridgeConfiguration.from(infoPlist: [
-            Key.storageMode: "memory", Key.gpp: true, Key.gppOptOutCategories: [String](),
+            Key.storageMode: "memory", Key.backendURL: testProjectURL,
+            Key.gpp: true, Key.gppOptOutCategories: [String](),
         ])
         XCTAssertEqual(configuration.gpp?.optOutCategories, [])
         XCTAssertEqual(configuration.makeCoreConfiguration()?.gpp?.optOutCategories, [])

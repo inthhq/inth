@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-@testable import C15tCore
+@_spi(C15tInternal) @testable import C15tCore
 
 /// What the decoder refuses, and what it keeps that a projection flattens away.
 ///

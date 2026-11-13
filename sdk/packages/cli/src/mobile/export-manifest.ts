@@ -144,7 +144,7 @@ export const exportMobilePolicy = async (options: {
 	vendors?: number[];
 	now?: number;
 	fetch?: typeof globalThis.fetch;
-	/** Only deterministic loopback app tests may disable TLS. */
+	/** Only loopback app tests and `dryRun` builds may disable TLS. */
 	testOnlyAllowLoopback?: boolean;
 }): Promise<string> => {
 	const endpoint = options.endpoint.replace(/\/+$/u, '');
@@ -160,7 +160,7 @@ export const exportMobilePolicy = async (options: {
 				!(
 					options.testOnlyAllowLoopback &&
 					parsed.protocol === 'http:' &&
-					['localhost', '127.0.0.1'].includes(parsed.hostname)
+					['localhost', '127.0.0.1', '[::1]'].includes(parsed.hostname)
 				))
 		) {
 			throw new Error(

@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-@testable import C15tCore
+@_spi(C15tInternal) @testable import C15tCore
 
 /// Pins the corrected overrides and privacy signals: what the core encodes, what
 /// it refuses to read back, and what a save body has to carry.

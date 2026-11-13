@@ -1,5 +1,5 @@
-@testable import C15tReactNativeBridge
-import C15tCore
+@_spi(C15tInternal) @testable import C15tReactNativeBridge
+@_spi(C15tInternal) import C15tCore
 import XCTest
 
 /// The wire boundary is the part of the iOS bridge most likely to drift from the
@@ -394,6 +394,13 @@ final class C15tPayloadTests: XCTestCase {
         XCTAssertEqual(accepted["confirmed"] as? [String], ["marketing"])
         XCTAssertEqual(accepted["subjectId"] as? String, "sub-1")
         XCTAssertEqual(accepted["queued"] as? Bool, true, "the payload is durable before the call returns")
+
+        // dryRun stores the decision and drops the record: success, and nothing queued.
+        let dropped = CommitResult(
+            status: .committed, revision: 7, permissions: .necessaryOnly, consentAction: .all, queued: false)
+        let dryRun = jsonObject(C15tPayload.commitResult(dropped, snapshot: snapshot))
+        XCTAssertEqual(dryRun["ok"] as? Bool, true)
+        XCTAssertEqual(dryRun["queued"] as? Bool, false)
 
         let rejected = CommitResult(
             status: .rejected,

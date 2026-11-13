@@ -95,7 +95,7 @@ extension C15t {
 
 /// A transport or configuration failure, with a stable machine code.
 public enum C15tError: Error, Sendable, Equatable {
-    /// No connectivity, or a transport that never sends.
+    /// No connectivity.
     case offline
     /// The producer serves a policy contract this build cannot represent. The
     /// contract calls this a hard configuration error: the core reports it and
@@ -211,11 +211,13 @@ public struct HTTPResponse: Sendable, Equatable {
 /// `URLSession` conforms. A test substitutes something that returns bytes and
 /// records requests, which is how the header contract and the persist-before-send
 /// ordering get asserted without a server.
-public protocol HTTPTransport: Sendable {
+///
+/// Internal API for tests and first-party fixtures. Apps configure a project URL.
+@_spi(C15tInternal) public protocol HTTPTransport: Sendable {
     func send(_ request: HTTPRequest) async throws -> HTTPResponse
 }
 
-extension URLSession: HTTPTransport {
+@_spi(C15tInternal) extension URLSession: HTTPTransport {
     public func send(_ request: HTTPRequest) async throws -> HTTPResponse {
         var urlRequest = URLRequest(url: request.url)
         urlRequest.httpMethod = request.method.rawValue
@@ -471,9 +473,11 @@ public struct InitResponse: Sendable, Equatable {
 /// Implementations are value types or internally synchronized classes. None of
 /// them may hold consent state: the core owns it, and a transport that cached
 /// permissions would be a second kernel.
-public protocol C15tTransport: Sendable {
+///
+/// Internal API for tests and first-party fixtures. Apps configure a project URL.
+@_spi(C15tInternal) public protocol C15tTransport: Sendable {
     /// Backend that supplies consent policy, used to validate stored bundled authority.
-    /// Custom transports can provide this URL to retain authority without seed bytes.
+    /// A test transport can provide this URL to retain authority without seed bytes.
     var policyEndpoint: URL? { get }
 
     /// The `domain` field sent on `POST /subjects`.
@@ -495,15 +499,11 @@ public protocol C15tTransport: Sendable {
     ) async -> Result<Void, C15tError>
 }
 
-extension C15tTransport {
-    /// No endpoint is assumed for a custom or offline transport.
+@_spi(C15tInternal) extension C15tTransport {
+    /// No endpoint is assumed for a test transport.
     public var policyEndpoint: URL? { nil }
 
-    /// The hosted transport for a c15t cloud project URL.
-    ///
-    /// The URL comes from the caller's project rather than a compiled-in default:
-    /// this repository ships no cloud host constant, and inventing one here would
-    /// send consent data somewhere the maintainer did not choose.
+    /// The hosted transport for a project URL.
     public static func hosted(
         projectURL: URL,
         domain: String? = nil,
@@ -517,54 +517,27 @@ extension C15tTransport {
             client: client
         )
     }
-
-    /// The hosted transport pointed at a self-hosted `@c15t/backend`. Same wire,
-    /// different producer.
-    public static func selfHosted(
-        baseURL: URL,
-        domain: String? = nil,
-        headers: [String: String] = [:],
-        client: any HTTPTransport = URLSession.shared
-    ) -> HostedTransport {
-        HostedTransport(
-            baseURL: baseURL,
-            domain: domain,
-            extraHeaders: headers,
-            client: client
-        )
-    }
-
-    /// A transport that never sends. Consent still applies locally, and the queue
-    /// keeps anything that cannot be delivered.
-    public static func offline() -> OfflineTransport {
-        OfflineTransport()
-    }
 }
 
 /// Talks to a c15t backend's `/init`, `/subjects`, and `/subjects/:id`.
 ///
-/// Hosted and self-hosted are the same protocol against a different base URL, so
-/// they are one type with two factories rather than two implementations that can
-/// drift.
-public struct HostedTransport: C15tTransport {
+/// Internal API. This type does not check the host: the public install path
+/// normalises the project URL before it builds one.
+@_spi(C15tInternal) public struct HostedTransport: C15tTransport {
     public let baseURL: URL
     public var policyEndpoint: URL? { baseURL }
-    /// Defaults to `${baseURL}/init`, overridable for a same-origin proxy.
-    public let initURL: URL
     public let domain: String
     public let extraHeaders: [String: String]
     public let client: any HTTPTransport
 
     public init(
         baseURL: URL,
-        initURL: URL? = nil,
         domain: String? = nil,
         extraHeaders: [String: String] = [:],
         client: any HTTPTransport = URLSession.shared
     ) {
         let base = baseURL.trimmingTrailingSlash()
         self.baseURL = base
-        self.initURL = initURL ?? base.appendingPathComponent("init")
         self.domain = domain ?? base.host ?? base.absoluteString
         self.extraHeaders = extraHeaders
         self.client = client
@@ -681,6 +654,7 @@ public struct HostedTransport: C15tTransport {
     /// Overrides ride as query parameters so a proxy that forwards `/init`
     /// unchanged still resolves the same policy the client expects.
     private func initURL(withContext context: InitContext) -> URL {
+        let initURL = baseURL.appendingPathComponent("init")
         guard var components = URLComponents(url: initURL, resolvingAgainstBaseURL: false)
         else { return initURL }
         var items = components.queryItems ?? []
@@ -698,35 +672,6 @@ public struct HostedTransport: C15tTransport {
         }
         if !items.isEmpty { components.queryItems = items }
         return components.url ?? initURL
-    }
-}
-
-/// A transport for a device with no reachable backend.
-///
-/// Not the same as "no transport": offline still fails, which keeps
-/// `policyPending` true and the UI quiet, while a missing transport is a
-/// configuration choice that makes the async commands no-ops.
-public struct OfflineTransport: C15tTransport {
-    public let domain: String
-
-    public init(domain: String = "offline") {
-        self.domain = domain
-    }
-
-    public func performInit(_ context: InitContext) async -> Result<InitResponse, C15tError> {
-        .failure(.offline)
-    }
-
-    public func sendSave(_ body: Data) async -> Result<Void, C15tError> {
-        .failure(.offline)
-    }
-
-    public func patchIdentity(
-        subjectId: String,
-        externalId: String,
-        identityProvider: String?
-    ) async -> Result<Void, C15tError> {
-        .failure(.offline)
     }
 }
 

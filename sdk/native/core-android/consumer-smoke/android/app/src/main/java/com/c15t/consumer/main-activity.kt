@@ -12,7 +12,7 @@ import com.c15t.core.wire.SnapshotWire
 class MainActivity : Activity() {
     override fun onCreate(state: Bundle?) {
         super.onCreate(state)
-        C15tAndroid.install(this, NativeConfig("https://consent.example.com"))
+        C15tAndroid.install(this, NativeConfig("https://your-project.inth.app"))
         setContentView(TextView(this).apply {
             text = "${C15t.isAllowed(ConsentCategory.MARKETING)}: ${C15t.snapshot()?.let { SnapshotWire.encodeToString(it) }}"
         })

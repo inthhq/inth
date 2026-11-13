@@ -9,7 +9,7 @@ import {
 } from '../native-ui';
 import { applyToFixture } from './helpers';
 
-const BACKEND = 'https://consent.example.com';
+const BACKEND = 'https://acme.inth.app';
 
 describe('nativeUI prop', () => {
 	it('defaults to the stock screens and leaves both build files clean', () => {

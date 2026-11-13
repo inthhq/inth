@@ -1,5 +1,6 @@
 package com.c15t.core.transport
 
+import com.c15t.core.C15tInternalApi
 import com.c15t.core.model.KernelOverrides
 import com.c15t.core.model.KernelUser
 import com.c15t.core.model.ConsentSubject
@@ -35,7 +36,10 @@ data class InitContext(
  * report it as [TransportOutcome.HttpFailure] and let the core decide. The core
  * treats a thrown exception as a connectivity failure and keeps the previous
  * state, which is what makes a retry meaningful.
+ *
+ * Internal: apps do not supply a transport. Tests and first-party fixtures do.
  */
+@C15tInternalApi
 interface C15tTransport {
 	/** Fetch policy, location, translations, and any server-side subject id. */
 	fun init(context: InitContext): TransportOutcome
@@ -54,8 +58,7 @@ interface C15tTransport {
 
 	companion object {
 		/**
-		 * A transport that answers nothing. Commands become local-only, which is
-		 * the right behaviour for an app that ships without a backend, and the
+		 * A transport that answers nothing. Commands become local-only, which is the
 		 * fail-closed path a test drives.
 		 */
 		val NONE: C15tTransport = object : C15tTransport {

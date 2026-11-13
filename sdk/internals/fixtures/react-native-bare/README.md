@@ -72,10 +72,13 @@ No hosted save has been verified against the public demo.
 Use your Inth project URL for your app. Update the JS environment value and
 regenerate the resource when changing endpoints. Point the native core at it by editing the two files the core actually reads:
 
-- `ios/C15tBare/Info.plist` → `com.c15t.backend.url`, `com.c15t.backend.mode`
+- `ios/C15tBare/Info.plist` → `com.c15t.backend.url`
 - `android/app/src/main/AndroidManifest.xml` → `com.c15t.BACKEND_URL`
 
-Android has no mode key; it infers the transport from which keys are present. An
+There is no mode key. The mobile SDKs work only with Inth hosted projects, and both
+platforms refuse any other host at launch. For a debug build against a staging or
+loopback backend, also set `com.c15t.dryRun` (iOS) and `com.c15t.DRY_RUN` (Android);
+that drops consent records, and a release build refuses it. An
 absent key means "not configured", so leave a value out rather than setting it to an
 empty string. `internals/fixtures/expo-dev` gets the same keys written by the config plugin.
 
@@ -94,9 +97,10 @@ systems and outside those countries. Per-locale Markdown goes in
 for the identifier is usually linking data across apps, and that key currently says it
 does not. Leave it `false` only if you ask and then never track.
 
-Advanced self-hosted deployments remain supported by the same transport API.
 The deterministic native E2E lane uses a task-owned loopback backend on port 3108
-and replaces only build artifacts. It does not change these hosted defaults.
+and replaces only build artifacts. Its Release build reaches loopback through the
+SDK's internal install API, which an app does not use. It does not change these
+hosted defaults.
 
 ## Drive it from a shell
 
@@ -575,7 +579,6 @@ The test backend binds loopback port 39873 by default. Set
 manifest and serves the existing `native/protocol/evaluation-eu-fresh-install.json`
 response after reconnection. Only the E2E build artifact uses that endpoint and
 resource. The checked-in reference defaults remain the public Inth demo.
-Self-hosted transport remains an advanced option.
 
 `C15T_APP_E2E=1` embeds a fixture-only observer that publishes the real
 TurboModule snapshot to the test backend. The test fails unless the active core

@@ -1,6 +1,6 @@
 import Foundation
 import XCTest
-@testable import C15tCore
+@_spi(C15tInternal) @testable import C15tCore
 
 /// `promptOwedSince` names each owed prompt, so a reader that skipped snapshots still sees a new one.
 final class PromptOwedSinceTests: XCTestCase {

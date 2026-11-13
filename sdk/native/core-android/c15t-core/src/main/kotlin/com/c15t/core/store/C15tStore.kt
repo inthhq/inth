@@ -193,10 +193,11 @@ class C15tStore(
 	fun writeEnvelope(envelope: SnapshotEnvelope): Boolean = writeEnvelope(envelope, publishBus = true)
 
 	@Synchronized
-	internal fun writeEnvelope(envelope: SnapshotEnvelope, publishBus: Boolean): Boolean {
+	internal fun writeEnvelope(envelope: SnapshotEnvelope, publishBus: Boolean, dropPending: Boolean = false): Boolean {
 		val old = readEnvelope()
 		if (old != null && old.snapshot.revision > envelope.snapshot.revision) return false
-		val next = envelope.copy(pendingSaves = old?.pendingSaves)
+		// A dry-run save empties the queue in the same write as the decision.
+		val next = envelope.copy(pendingSaves = if (dropPending) emptyList() else old?.pendingSaves)
 		return writeAtomic(next, publishBus)
 	}
 

@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-@testable import C15tCore
+@_spi(C15tInternal) @testable import C15tCore
 
 /// The Swift half of "WebView consent" in `native/CONTRACT.md`. The scripts
 /// themselves run in a browser in the `@c15t/core` and `@c15t/browser` tests.

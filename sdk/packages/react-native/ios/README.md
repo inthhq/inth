@@ -75,7 +75,8 @@ first JavaScript frame. It is a `+load` on a class rather than a bare
 archive member that neither is referenced nor defines an Objective-C class, and a file
 holding only a constructor is neither. An app that owns its own setup sets
 `com.c15t.reactnative.AutoBootstrap` to `false` and calls
-`C15tReactNativeRuntime.install(core:)` (its own configured core) or
+`C15tReactNativeRuntime.install(core:)` with the core that
+`C15tApple.install(C15tAppleConfiguration(backendURL:))` returned, or
 `startCore()` (the `Info.plist` values, later) itself.
 
 ## Platform lifecycle
@@ -115,21 +116,27 @@ Read by `C15tBridgeConfiguration.from(infoPlist:)`. Expo apps set these through
 | Key | Meaning |
 | --- | --- |
 | `com.c15t.reactnative.AutoBootstrap` | `false` opts out of the pre-RN start. |
-| `com.c15t.backend.url` | Hosted project URL, or a self-hosted base URL. |
-| `com.c15t.backend.mode` | `hosted`, `self-hosted`, `offline`, `none`. Inferred from the URL when absent. |
+| `com.c15t.backend.url` | The project URL from your Inth dashboard, such as `https://your-project.inth.app`. Required. Any other host is refused. |
+| `com.c15t.dryRun` | `true` drops consent records instead of queueing and sending them. Development and CI only: a release build refuses to start with it. In a debug build it also accepts any `https` URL, or `http` on `localhost`. |
 | `com.c15t.backend.domain` | Domain sent with each request. |
-| `com.c15t.backend.initUrl` | URL for `GET /init`, defaulting to `${com.c15t.backend.url}/init`. For a same-origin proxy route. |
 | `com.c15t.storage` | `keychain` (default) or `file`. |
 | `com.c15t.keychain.service` | Keychain service name, default `com.c15t.core`. |
 | `com.c15t.country`, `com.c15t.region`, `com.c15t.language` | Override geo/locale detection. |
 | `com.c15t.categories` | Category ids the app declares. |
 | `com.c15t.forceGPC` | Report the Global Privacy Control signal. Detection only: it never becomes an override. |
 
-`com.c15t.test` is retired. Publisher test mode is a client option rather than an
-override, and never reaches a save body, so nothing reads the key. The launch hook
-refuses to start a core from a plist that still declares it rather than ignoring the
-key quietly: the console names it, and every read answers deny-all until it is removed
-or the core is installed from code.
+A missing or refused `com.c15t.backend.url`, or `com.c15t.dryRun` in a release build,
+leaves the core uninstalled. The console line starting with `c15t:` says why, and every
+read answers deny-all.
+
+Three keys are retired. The launch hook refuses to start a core from a plist that still
+declares one, and the console names the key and what to do instead:
+
+| Retired key | Instead |
+| --- | --- |
+| `com.c15t.backend.mode` | Remove it. Hosted is the only mode. Mobile works only with Inth, so there is no self-hosted mode. Use `com.c15t.dryRun` for development and CI in place of `offline` or `none`. To install c15t yourself, set `com.c15t.reactnative.AutoBootstrap` to `false`. |
+| `com.c15t.backend.initUrl` | Remove it. Policy is fetched from `com.c15t.backend.url`. |
+| `com.c15t.test` | Remove it. There is no test-mode override. `com.c15t.forceGPC` reports a Global Privacy Control signal. |
 
 ## Integrating
 

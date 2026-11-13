@@ -187,6 +187,12 @@ if ((agpMajor < 9 || builtInKotlin.equalsIgnoreCase('false')) && !project.plugin
 	}
 }
 
+// This module's unit tests build cores with fake transports, which is internal c15t API.
+// Only the test compile opts in, so the shipped bridge stays on the public API.
+project.tasks.matching { it.name.startsWith('compile') && it.name.endsWith('UnitTestKotlin') }.configureEach { task ->
+	task.compilerOptions.freeCompilerArgs.add('-opt-in=com.c15t.core.C15tInternalApi')
+}
+
 android {
 	compileSdk = compileSdkValue
 

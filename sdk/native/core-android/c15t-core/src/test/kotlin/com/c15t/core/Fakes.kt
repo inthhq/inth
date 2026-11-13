@@ -89,6 +89,7 @@ class RecordingTransport(
 	val initRequests = mutableListOf<InitContext>()
 	val saveRequests = mutableListOf<QueuedSave>()
 	val identifyRequests = mutableListOf<Pair<String, String>>()
+	val logoutRequests = mutableListOf<String>()
 
 	/** Queue one more init answer; the last one sticks. */
 	fun respondInit(outcome: TransportOutcome): RecordingTransport {
@@ -127,6 +128,11 @@ class RecordingTransport(
 		user: KernelUser,
 	): TransportOutcome {
 		identifyRequests += subject.id to user.externalId
+		return TransportOutcome.Success(null, emptyMap())
+	}
+
+	override fun logout(subject: ConsentSubject): TransportOutcome {
+		logoutRequests += subject.id
 		return TransportOutcome.Success(null, emptyMap())
 	}
 }

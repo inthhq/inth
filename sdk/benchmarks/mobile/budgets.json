@@ -150,10 +150,10 @@
 			"note": "TurboModule binding bytes on iOS. 256 KiB is the ceiling for a Codegen spec, a JSON marshalling layer, and an event emitter, with no consent logic in it."
 		},
 		"android_binary_bytes": {
-			"max": 3495968,
+			"max": 3867560,
 			"unit": "bytes",
 			"source": "allowance",
-			"note": "Uncompressed class bytes of the first-party core, Android adapter, Compose consent UI and RN bridge Release artifacts, before DEX, R8 or compression and excluding transitive dependencies. The integrated mobile release wave (#134) measures 3,181,950 B: core jar 1,817,708 B, android aar 260,093 B, consent UI aar 1,003,309 B, bridge aar 100,840 B. The growth over the 2,385,975 B 2026-10-30 baseline bought the GPP encoder and resolver, WebView consent sync, StateFlow models, automatic prompt presentation, offline mode and policy in code, wider theme tokens and slots, localized category copy, and the AdMob, AppsFlyer, Adjust, Meta, Braze, Branch, Singular and Amplitude helpers. The ceiling keeps the earlier headroom ratio (2,621,440 over 2,385,975, or 1.0987). Matched Release consumer builds measure app-size contribution separately."
+			"note": "Uncompressed class bytes of the first-party core, Android adapter, Compose consent UI and RN bridge Release artifacts, before DEX, R8 or compression and excluding transitive dependencies. The integrated mobile release wave (#134) measures 3,181,950 B: core jar 1,817,708 B, android aar 260,093 B, consent UI aar 1,003,309 B, bridge aar 100,840 B. The growth over the 2,385,975 B 2026-10-30 baseline bought the GPP encoder and resolver, WebView consent sync, StateFlow models, automatic prompt presentation, offline mode and policy in code, wider theme tokens and slots, localized category copy, and the AdMob, AppsFlyer, Adjust, Meta, Braze, Branch, Singular and Amplitude helpers. The ceiling keeps the earlier headroom ratio (2,621,440 over 2,385,975, or 1.0987). Matched Release consumer builds measure app-size contribution separately. Re-baselined on 2026-11-13: canary with the headless consent components (#156) measures 3,493,430 B, and the Inth hosted-only change (#157) adds about 26.6 KB for the project URL rule, the retired-key errors and dryRun. The 2026-11-13 calibration measures 3,520,124 B: core jar 1,915,988 B, android aar 275,104 B, consent UI aar 1,202,171 B, bridge aar 126,861 B. The ceiling is that measurement times the same ratio."
 		},
 		"js_hydrate_envelope_ms": {
 			"max": 3,

@@ -7,27 +7,34 @@ import type { CliContext } from '../context/types';
 import { CliError } from '../core/errors';
 import type { MobileProject, ReactNativeProject } from './detect';
 import { isPrivacyPolicyURL } from './privacy-policy-url';
+import { normalizeProjectURL, ProjectURLError } from './project-url';
 import {
 	MOBILE_CATEGORIES,
 	planNativeSetup,
-	BARE_POLICY_RULES_PATH,
 	planReactNativeSetup,
 	UNKNOWN_ROOT_COMPONENT,
 } from './scaffold';
 import type {
 	MobileCategory,
-	MobileMode,
 	MobileSetupOptions,
 	MobileSetupPlan,
 	ProjectFiles,
 } from './scaffold';
 
-const MODES: readonly MobileMode[] = [
-	'hosted',
-	'self-hosted',
-	'offline',
-	'custom',
-];
+/**
+ * Setup modes mobile projects used to take, with what replaces each one. The
+ * mobile SDKs work only with Inth, so there is one mode and no name for it.
+ */
+const RETIRED_MODES: Readonly<Record<string, string>> = {
+	custom:
+		'Mobile setup no longer takes the custom mode. Custom transports are gone. If the native app installs c15t itself before React Native starts, set autoBootstrap to false in the Expo plugin.',
+	hosted:
+		'Mobile setup no longer takes a mode. Hosted is the only one: remove it and keep --backend-url.',
+	offline:
+		'Mobile setup no longer takes the offline mode. Use dryRun: true for development and CI. In production keep the backend URL; a bundled manifest or an in-code policy covers a launch without network.',
+	'self-hosted':
+		'Mobile setup no longer takes the self-hosted mode, and nothing replaces it. The mobile SDKs work only with Inth: pass your Inth project URL as --backend-url.',
+};
 const DEFAULT_CATEGORIES: readonly MobileCategory[] = [
 	'necessary',
 	'measurement',
@@ -83,43 +90,23 @@ const text = (value: unknown): string | undefined =>
 	typeof value === 'string' && value.trim() !== '' ? value.trim() : undefined;
 
 /**
- * A URL the Expo config plugin will accept, trimmed and without a trailing slash, or
- * `null`.
+ * The Inth project URL in its normal form, checked with the strict rule the
+ * Expo plugin and both native cores apply.
  *
- * Mirrors `parseURL` and `normalizeURL` in
- * `packages/react-native/src/expo-plugin/params.ts`: https, or plain http on a
- * loopback host, and no credentials, query or fragment. The plugin refuses anything
- * else at prebuild, so setup refuses it first rather than write an `app.json` that
- * cannot build. `mobile-setup.test.ts` runs both on one table of cases.
+ * @throws {CliError} `FLAG_INVALID`, with the rule's reason code in `context.reason`.
  */
-export const normalizeMobileURL = (value: string): string | null => {
-	let url: URL;
+export const readProjectURL = (value: string, option: string): string => {
 	try {
-		url = new URL(value.trim());
-	} catch {
-		return null;
+		return normalizeProjectURL(value, { option });
+	} catch (error) {
+		if (error instanceof ProjectURLError) {
+			throw new CliError('FLAG_INVALID', {
+				details: error.message,
+				reason: error.reason,
+			});
+		}
+		throw error;
 	}
-	const loopback = ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
-	if (url.protocol !== 'https:' && !(url.protocol === 'http:' && loopback)) {
-		return null;
-	}
-	if (url.username !== '' || url.password !== '') {
-		return null;
-	}
-	if (url.search !== '' || url.hash !== '') {
-		return null;
-	}
-	return value.trim().replace(/\/+$/u, '');
-};
-
-const readURL = (value: string, flag: string): string => {
-	const url = normalizeMobileURL(value);
-	if (url === null) {
-		throw new CliError('FLAG_INVALID', {
-			details: `${flag} must be an https URL without credentials, a query or a fragment, or plain http on a loopback host.`,
-		});
-	}
-	return url;
 };
 
 const readCategories = (values: readonly string[]): MobileCategory[] => {
@@ -143,54 +130,28 @@ const isInteractive = (context: CliContext): boolean =>
 	context.flags.yes !== true &&
 	process.stdin.isTTY === true;
 
-const resolveMode = async (
-	context: CliContext,
-	prompts: MobilePrompts | null
-): Promise<MobileMode> => {
-	const positional = text(context.commandArgs[0]);
-	const flagged = text(context.flags.mode);
-	// Same rule as the web setup: two different modes is invalid input, not a
-	// choice for this command to make.
-	if (
-		positional !== undefined &&
-		flagged !== undefined &&
-		positional !== flagged
-	) {
-		throw new CliError('FLAG_INVALID', {
-			details: 'The positional mode conflicts with --mode.',
-		});
+/** Refuse a mode from before mobile setup had only one. */
+const refuseRetiredMode = (context: CliContext): void => {
+	const mode = text(context.commandArgs[0]) ?? text(context.flags.mode);
+	if (mode === undefined) {
+		return;
 	}
-	let mode = positional ?? flagged;
-	if (mode === undefined && prompts) {
-		mode = await prompts.select('How will the app resolve its policy?', MODES);
-	}
-	mode ??= 'hosted';
-	if (!(MODES as readonly string[]).includes(mode)) {
-		throw new CliError('FLAG_INVALID', {
-			details: `Mobile setup takes one mode: ${MODES.join(', ')}.`,
-		});
-	}
-	return mode as MobileMode;
+	throw new CliError('FLAG_INVALID', {
+		details:
+			(Object.hasOwn(RETIRED_MODES, mode) ? RETIRED_MODES[mode] : undefined) ??
+			`Mobile setup takes no mode; got ${mode}. Remove it and pass your Inth project URL as --backend-url.`,
+	});
 };
 
 const resolveBackendURL = async (
 	context: CliContext,
-	mode: MobileMode,
 	prompts: MobilePrompts | null
-): Promise<string | undefined> => {
+): Promise<string> => {
 	let backendURL = text(context.flags['backend-url']);
-	if (mode === 'offline') {
-		if (backendURL !== undefined) {
-			throw new CliError('FLAG_INVALID', {
-				details: 'Offline mode sends nothing, so it takes no --backend-url.',
-			});
-		}
-		return undefined;
-	}
 	if (backendURL === undefined && prompts) {
 		backendURL = text(
 			await prompts.text(
-				'Backend URL (your Inth project URL or self-hosted backend)',
+				'Inth project URL (from your Inth dashboard)',
 				'https://your-project.inth.app'
 			)
 		);
@@ -198,10 +159,10 @@ const resolveBackendURL = async (
 	if (backendURL === undefined) {
 		throw new CliError('INPUT_REQUIRED', {
 			details:
-				'Pass --backend-url https://your-project.inth.app, the URL the app will use.',
+				'Pass --backend-url https://your-project.inth.app, the project URL from your Inth dashboard.',
 		});
 	}
-	return readURL(backendURL, '--backend-url');
+	return readProjectURL(backendURL, '--backend-url');
 };
 
 const resolveCategories = async (
@@ -229,16 +190,14 @@ const resolveCategories = async (
 const resolveBundleManifest = (
 	context: CliContext,
 	project: MobileProject,
-	mode: MobileMode,
 	prompts: MobilePrompts | null
 ): Promise<boolean> => {
-	const canBundle =
-		project.kind === 'expo' && (mode === 'hosted' || mode === 'self-hosted');
+	const canBundle = project.kind === 'expo';
 	if (context.flags['bundle-manifest'] === true) {
 		if (!canBundle) {
 			throw new CliError('FLAG_INVALID', {
 				details:
-					'--bundle-manifest needs an Expo app in hosted or self-hosted mode. Other apps run `c15t mobile-manifest` in their build.',
+					'--bundle-manifest needs an Expo app. Other apps run `c15t mobile-manifest` in their build.',
 			});
 		}
 		return Promise.resolve(true);
@@ -293,17 +252,12 @@ export const resolveMobileOptions = async (
 	project: MobileProject,
 	prompts: MobilePrompts | null
 ): Promise<MobileSetupOptions> => {
-	const mode = await resolveMode(context, prompts);
-	const backendURL = await resolveBackendURL(context, mode, prompts);
+	refuseRetiredMode(context);
+	const backendURL = await resolveBackendURL(context, prompts);
 	const categories = await resolveCategories(context, prompts);
-	const bundleManifest = await resolveBundleManifest(
-		context,
-		project,
-		mode,
-		prompts
-	);
+	const bundleManifest = await resolveBundleManifest(context, project, prompts);
 	const privacyPolicyURL = await resolvePrivacyPolicyURL(context, prompts);
-	return { backendURL, bundleManifest, categories, mode, privacyPolicyURL };
+	return { backendURL, bundleManifest, categories, privacyPolicyURL };
 };
 
 const readIfExists = async (file: string): Promise<string | null> => {
@@ -376,8 +330,6 @@ export const readProjectFiles = async (
 				: null,
 		hasSrc,
 		installCommand: INSTALL[packageManager] ?? 'npm install',
-		policyRulesExists:
-			(await readIfExists(path.join(root, BARE_POLICY_RULES_PATH))) !== null,
 		providerExists: (await readIfExists(path.join(root, provider))) !== null,
 		rootComponent,
 	};

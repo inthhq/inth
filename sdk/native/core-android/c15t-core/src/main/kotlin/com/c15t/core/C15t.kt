@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicReference
  * ad SDK that starts earlier than c15t from ever seeing a permissive answer.
  *
  * ```kotlin
- * C15t.bootstrap(config, store, clock, transport, null)
+ * C15tAndroid.install(context, NativeConfig(backendUrl = "https://your-project.inth.app"))
  * when (C15t.decision(ConsentCategory.MEASUREMENT)) {
  *     ConsentDecision.GRANTED -> measurementSdk.init()
  *     ConsentDecision.DENIED -> Unit
@@ -55,7 +55,11 @@ object C15t {
 	 * @param executor Where init and delivery run; `null` uses a daemon thread.
 	 * @return The installed core. A repeated call returns the core already
 	 * installed, with its original config.
+	 *
+	 * Internal, because it takes a store and a transport. Apps call
+	 * `C15tAndroid.install`.
 	 */
+	@C15tInternalApi
 	fun bootstrap(
 		config: NativeConfig,
 		store: C15tStore,
@@ -228,7 +232,7 @@ object C15t {
 			confirmed = emptyMap(),
 			queued = false,
 			delivered = false,
-			error = KernelError("not-bootstrapped", "c15t: C15t.bootstrap() has not run"),
+			error = KernelError("not-bootstrapped", "c15t: no core is installed. Call C15tAndroid.install first"),
 		)
 		return active.save(intent)
 	}

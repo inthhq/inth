@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-@testable import C15tCore
+@_spi(C15tInternal) @testable import C15tCore
 
 final class ConsentPolicyTests: XCTestCase {
     private var fixture: JSONValue {
@@ -24,7 +24,7 @@ final class ConsentPolicyTests: XCTestCase {
     ) async -> ConsentCore {
         let core = ConsentCore()
         await core.bootstrapAndSettle(CoreConfig(
-            store: store, policy: policy, transport: OfflineTransport.offline(),
+            store: store, policy: policy, transport: UnreachableTransport(),
             consentCategories: ConsentCategory.allCases, overrides: overrides, initRetry: .disabled))
         return core
     }
@@ -99,7 +99,7 @@ final class ConsentPolicyTests: XCTestCase {
         let stream = core.eventStream
         core.bootstrap(CoreConfig(
             policyError: "Policy 'x': a partial category scope needs a scopeMode",
-            transport: OfflineTransport.offline(), initRetry: .disabled))
+            transport: UnreachableTransport(), initRetry: .disabled))
         var reported: String?
         for await event in stream {
             if case let .error(info) = event { reported = info.code }
@@ -121,7 +121,7 @@ final class ConsentPolicyTests: XCTestCase {
         let refused = ConsentCore()
         await refused.bootstrapAndSettle(CoreConfig(
             store: store, policyError: "Policy 'x': a partial category scope needs a scopeMode",
-            transport: OfflineTransport.offline(), consentCategories: ConsentCategory.allCases,
+            transport: UnreachableTransport(), consentCategories: ConsentCategory.allCases,
             initRetry: .disabled))
         XCTAssertTrue(refused.snapshot().policyPending)
         XCTAssertEqual(refused.snapshot().error?.code, "policy-invalid")
@@ -136,7 +136,7 @@ final class ConsentPolicyTests: XCTestCase {
         let core = ConsentCore()
         await core.bootstrapAndSettle(CoreConfig(
             policyError: "Policy 'x': a partial category scope needs a scopeMode",
-            transport: OfflineTransport.offline(), initRetry: .disabled))
+            transport: UnreachableTransport(), initRetry: .disabled))
         XCTAssertEqual(core.snapshot().error?.code, "policy-invalid")
         core.reset()
         await core.waitUntilIdle()
@@ -148,7 +148,7 @@ final class ConsentPolicyTests: XCTestCase {
     func testBootstrapAppliesTheInCodePolicyOnce() async throws {
         let core = ConsentCore()
         core.bootstrap(CoreConfig(
-            policy: try policy(), transport: OfflineTransport.offline(),
+            policy: try policy(), transport: UnreachableTransport(),
             consentCategories: ConsentCategory.allCases, initRetry: .disabled))
         let revision = core.snapshot().revision
         await core.waitUntilIdle()
@@ -265,7 +265,7 @@ final class ConsentPolicyTests: XCTestCase {
         let policy = try policy()
         let core = ConsentCore()
         core.bootstrap(CoreConfig(
-            store: store, policy: policy, transport: OfflineTransport.offline(),
+            store: store, policy: policy, transport: UnreachableTransport(),
             consentCategories: ConsentCategory.allCases, initRetry: .disabled))
         XCTAssertFalse(core.snapshot().policyPending)
         XCTAssertEqual(core.snapshot().resolution.policyId, "everywhere_else")

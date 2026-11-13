@@ -1,5 +1,5 @@
-@testable import C15tReactNativeBridge
-import C15tCore
+@_spi(C15tInternal) @testable import C15tReactNativeBridge
+@_spi(C15tInternal) import C15tCore
 import Foundation
 import XCTest
 

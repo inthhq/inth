@@ -1,7 +1,7 @@
 import CryptoKit
 import Foundation
 
-@testable import C15tCore
+@_spi(C15tInternal) @testable import C15tCore
 
 /// What one surviving vendor claims about itself, as the web filter left it in the fixture.
 ///

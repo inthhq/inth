@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import androidCalibration from '../../snapshots/android-raw-classes-2026-11-11.json';
+import androidCalibration from '../../snapshots/android-raw-classes-2026-11-13.json';
 import { loadBudgets } from '../budgets';
 import { buildCheck, verdict } from '../report';
 import { makeRow, ROWS } from '../rows';

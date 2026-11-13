@@ -1,6 +1,6 @@
 #if canImport(WebKit) && !os(tvOS) && !os(watchOS)
-import C15tApple
-import C15tCore
+@_spi(C15tInternal) import C15tApple
+@_spi(C15tInternal) import C15tCore
 import Foundation
 import WebKit
 import XCTest

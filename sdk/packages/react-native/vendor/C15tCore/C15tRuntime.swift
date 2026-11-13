@@ -51,10 +51,15 @@ public final class C15t: @unchecked Sendable {
     ///
     /// - Parameter config: Configuration to start with, used only on the call that
     ///   actually starts the core.
-    /// - Returns: The running core.
+    /// - Returns: The running core. A `dryRun` configuration in a release build is
+    ///   refused: with no core running, the result is an unstarted core that was not
+    ///   published.
+    ///
+    /// Internal API. Apps install through `C15tApple.install(C15tAppleConfiguration(backendURL:))`.
     @discardableResult
-    public static func bootstrap(_ config: CoreConfig) -> ConsentCore {
+    @_spi(C15tInternal) public static func bootstrap(_ config: CoreConfig) -> ConsentCore {
         let core = lock.withLock { () -> ConsentCore in
+            if installed == nil, config.dryRun, !C15tBuild.isDebug { return ConsentCore() }
             if let installed {
                 return installed
             }

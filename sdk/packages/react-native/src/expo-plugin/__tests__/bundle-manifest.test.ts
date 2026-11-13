@@ -21,9 +21,10 @@ import {
 } from '../policy-resource';
 import { applyToFixture, FIXTURE_DIR, runMod } from './helpers';
 
-const backendURL = 'https://consent.example.com';
+const backendURL = 'https://acme.inth.app';
 const settings = {
 	allowStaleManifest: true,
+	dryRun: false,
 	expiresInDays: 14,
 	languages: ['en', 'de'],
 	out: 'c15t-policy.json',
@@ -144,7 +145,7 @@ describe('bundling the manifest at prebuild', () => {
 		}
 	});
 
-	it('replaces policyResource and belongs to backend mode', () => {
+	it('replaces policyResource and does not mix with an in-code policy', () => {
 		const resolved = resolveParams({ backendURL, bundleManifest: true });
 		expect(resolved.policyResource).toBe('c15t-policy.json');
 		expect(resolved.bundleManifest?.allowStaleManifest).toBe(false);
@@ -160,11 +161,11 @@ describe('bundling the manifest at prebuild', () => {
 		).toThrow(/expiresInDays/u);
 		expect(() =>
 			resolveParams({
+				backendURL,
 				bundleManifest: true,
-				mode: 'offline',
 				policy: { rules: [] },
 			})
-		).toThrow(/bundleManifest/u);
+		).toThrow(/policy cannot be combined with bundleManifest/u);
 	});
 
 	it('rejects a resource that expires before it was issued, and embeds a merely expired one', async () => {

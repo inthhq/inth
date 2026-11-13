@@ -1,6 +1,6 @@
 import Foundation
 import XCTest
-@testable import C15tCore
+@_spi(C15tInternal) @testable import C15tCore
 
 /// Custom (non-IAB) vendors: read from `/init`, listed with their own choices, kept beside the TC
 /// String and never in it, and counted where the web counts them.

@@ -18,7 +18,7 @@ import {
 } from '../policy-resource';
 import { FIXTURE_DIR } from './helpers';
 
-const endpoint = 'https://demo.example.test';
+const endpoint = 'https://demo.inth.app';
 describe('Expo native policy embedding', () => {
 	it('copies exact bytes to assets and refuses wrong project or expired authority', async () => {
 		const root = await mkdtemp(join(tmpdir(), 'c15t-policy-'));

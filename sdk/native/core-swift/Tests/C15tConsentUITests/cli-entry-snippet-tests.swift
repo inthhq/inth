@@ -25,7 +25,7 @@ final class CLIEntrySnippetTests: XCTestCase {
             ContentView()
                 .c15tConsent(
                     C15tAppleConfiguration(
-                        transport: .hosted(URL(string: "https://your-project.inth.app")!),
+                        backendURL: "https://your-project.inth.app",
                         consentCategories: [.necessary, .measurement, .marketing]
                     ),
                     privacyPolicyURL: URL(string: "https://app.example/privacy")!
@@ -40,7 +40,7 @@ final class CLIEntrySnippetTests: XCTestCase {
         window.rootViewController = ConsentRootViewController(
             root: UIHostingController(rootView: ContentView()),
             configuration: C15tAppleConfiguration(
-                transport: .hosted(URL(string: "https://your-project.inth.app")!),
+                backendURL: "https://your-project.inth.app",
                 consentCategories: [.necessary, .measurement, .marketing]
             ),
             privacyPolicyURL: URL(string: "https://app.example/privacy")!

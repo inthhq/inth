@@ -1,6 +1,6 @@
 ---
 title: Configuration
-description: Configure the React Native project's backend, category scope, native startup, policy resources and Expo build options.
+description: Configure the React Native app's Inth project URL, dryRun, category scope, native startup, policy resources and Expo build options.
 group: frameworks
 ---
 
@@ -8,22 +8,88 @@ Configure the consent engine in the native app before React starts. Expo uses
 the config plugin; bare RN uses native metadata. `ConsentProvider` reads the
 installed engine and has no backend or policy-options prop.
 
-## Choose where policy and records live
+## Set your Inth project URL
 
-Hosted Inth is the standard setup. Use the HTTPS project URL from your Inth
-dashboard. A self-hosted deployment implements the same backend protocol.
-App-owned native installation is available for custom services.
+The mobile SDKs work only with Inth hosted projects. There is one mode, so
+there is no `mode` option and no self-hosted backend on mobile. Set
+`backendURL` to the project URL from your Inth dashboard. The app fetches
+policy from that project and sends consent records to it.
 
-| `mode` | Behavior |
+`backendURL` takes these forms. Each one becomes
+`https://your-project.inth.app`:
+
+| You write | What happens |
 | --- | --- |
-| `hosted` | Resolve policy and deliver records through your Inth project. |
-| `selfHosted` | Use the same protocol against your own backend. |
-| `offline` | No-backend mode on iOS and Android. Nothing is sent. It needs `policy` and takes no `backendURL`, `initURL`, `policyResource` or `iab`. |
-| `custom` | Your app installs native services before RN starts. Expo defaults automatic bootstrap off in this mode. |
+| `https://your-project.inth.app` | Used as written. |
+| `your-project.inth.app` | A missing scheme means `https`. |
+| `https://your-project.inth.app/` | Trailing slashes are dropped. |
+| `HTTPS://Your-Project.Inth.App` | The scheme and host are lowercased. |
 
-`initURL` changes policy initialization only. Consent saves and identity
-requests still use `backendURL`. The URL is public binary configuration;
-keep credentials out of it.
+Whitespace around the value is trimmed.
+
+Prebuild refuses everything else: another host, `http`, a port, a path, a
+query, a fragment, or a username or password. The error quotes your value and
+names the rule it broke:
+
+{/* example: fragment */}
+
+```txt
+backendURL must be the project URL from your Inth dashboard, such as https://your-project.inth.app. Got "https://consent.example.com": the host must be a project host under inth.app.
+```
+
+Native startup checks the URL again with the same rule. The URL is public
+binary configuration; keep credentials out of it.
+
+### Replace removed options
+
+`mode` and `initURL` are gone. Prebuild stops with an error that names the
+replacement:
+
+| Removed | Use instead |
+| --- | --- |
+| `mode: 'hosted'` | Remove it. Hosted is the only mode. |
+| `mode: 'selfHosted'` | Nothing. Mobile works only with Inth. Set `backendURL` to your Inth project URL. |
+| `mode: 'offline'` | `dryRun: true` in development and CI. In production keep `backendURL`; `bundleManifest` or `policy` covers a launch without network. |
+| `mode: 'custom'` | `autoBootstrap: false`. Your native app installs c15t before React Native starts. Custom transports are gone. |
+| `initURL` | Nothing. The app fetches policy from `backendURL`. |
+
+## Use dryRun in development and CI
+
+`dryRun: true` runs consent on the device and sends no consent records. The
+prompt, storage, SDK gates and consent signals (the TC string, the GPP string,
+the `IABTCF_*` and `IABGPP_*` keys and Consent Mode) work as normal. The engine
+drops each consent record instead of queueing or sending it. Identity calls,
+such as the one `useIdentify()` returns, change local state and send nothing.
+A save still succeeds, with nothing queued.
+
+The app still fetches policy from `/init`, so you see your project's real
+policy. With a bundled manifest or an in-code `policy`, a dry-run launch needs
+no network.
+
+{/* example: fragment */}
+
+```ts title="app.config.ts"
+{
+	backendURL: 'https://your-project.inth.app',
+	dryRun: process.env.C15T_DRY_RUN === '1',
+}
+```
+
+A release build refuses `dryRun`. No engine starts, every read answers
+deny-all, and the device log says why. Prebuild cannot see which build comes
+next, so the plugin writes the flag and warns once, and native code decides at
+launch:
+
+| Platform | What counts as a release build | Where the refusal appears |
+| --- | --- | --- |
+| iOS | The app was compiled without `DEBUG`. The pod compiles the engine with your app's configuration. | Console, code `C15T_CONFIGURATION_DRY_RUN` |
+| Android | The app is not debuggable (`FLAG_DEBUGGABLE` is off). | Logcat, tag `c15t` |
+
+Remove `dryRun`, or leave its environment variable unset, in release builds.
+
+With `dryRun` on, `backendURL` also takes any `https` URL, or `http` on
+`localhost`, `127.0.0.1` or `[::1]`, with a port and a path. Usernames,
+passwords, queries and fragments stay refused.
 
 ## Set Expo options
 
@@ -32,9 +98,8 @@ for a working `app.config.ts`. The plugin accepts:
 
 | Option | Purpose |
 | --- | --- |
-| `backendURL` | Public backend URL. Required in every mode except offline, which refuses it. |
-| `mode` | Transport and installation mode. |
-| `initURL` | Optional policy-initialization URL override. |
+| `backendURL` | Required. The project URL from your Inth dashboard. See [Set your Inth project URL](#set-your-inth-project-url). |
+| `dryRun` | Development and CI switch that drops consent records. Defaults to false. See [Use dryRun in development and CI](#use-dryrun-in-development-and-ci). |
 | `domain` | Domain value sent with subject writes. |
 | `consentCategories` | Optional app category declaration. |
 | `vendors` | Optional IAB disclosure scope. |
@@ -42,9 +107,9 @@ for a working `app.config.ts`. The plugin accepts:
 | `gpp` | Optional IAB GPP string and `IABGPP_*` keys. See [IAB GPP](/docs/frameworks/react-native/gpp). |
 | `policyResource` | Build-exported policy JSON, relative to the Expo project. |
 | `bundleManifest` | Fetch the manifest at prebuild with `c15t mobile-manifest` and bundle it. Replaces `policyResource`. See [bundle the manifest at build time](/docs/guides/mobile-offline#bundle-the-manifest-at-build-time). |
-| `policy` | The policy in source control for offline mode, as `{ rules: [...] }` in the backend's `PolicyRule` names. See [define the policy in code](/docs/guides/mobile-offline#define-the-policy-in-code). |
+| `policy` | Policy rules in source control, as `{ rules: [...] }` in the backend's `PolicyRule` names. The device resolves them and never calls `/init`. It cannot be combined with `policyResource`, `bundleManifest` or `iab`. See [define the policy in code](/docs/guides/mobile-offline#define-the-policy-in-code). |
 | `androidMavenRepository` | Build-time native artifact repository and credential environment-variable names. |
-| `autoBootstrap` | Whether native launch installs the engine. Defaults to true except for custom mode. |
+| `autoBootstrap` | Whether native launch installs the engine. Defaults to true. Set false when your native app installs it. |
 | `forceGPC` | GPC input for a staged or test build. |
 | `enableAppTrackingTransparency` | Enable Apple's tracking-authorization declarations. Defaults to false. |
 | `trackingUsageDescription` | App-specific plain-text ATT explanation, required when ATT is enabled. |
@@ -65,7 +130,7 @@ Use these keys when configuring the same engine without Expo:
 | Expo option | iOS `Info.plist` key | Android application metadata |
 | --- | --- | --- |
 | `backendURL` | `com.c15t.backend.url` | `com.c15t.BACKEND_URL` |
-| `initURL` | `com.c15t.backend.initUrl` | `com.c15t.BACKEND_INIT_URL` |
+| `dryRun` | `com.c15t.dryRun`, boolean | `com.c15t.DRY_RUN` |
 | `domain` | `com.c15t.backend.domain` | `com.c15t.BACKEND_DOMAIN` |
 | `consentCategories` | `com.c15t.categories`, string array | `com.c15t.CATEGORIES`, comma-separated |
 | `vendors` | `com.c15t.vendors` | `com.c15t.VENDORS`, comma-separated |
@@ -74,10 +139,22 @@ Use these keys when configuring the same engine without Expo:
 | `iab` | `com.c15t.iab.*`, see below | `com.c15t.IAB_*`, see below |
 | `autoBootstrap: false` | `com.c15t.reactnative.AutoBootstrap` | `com.c15t.reactnative.AUTO_BOOTSTRAP` |
 
-The iOS transport mode uses `com.c15t.backend.mode`. Android derives transport
-from the supplied native configuration; there is no matching Android mode
-metadata key. Follow [bare setup](/docs/frameworks/react-native/bare) for the
-full file context and linking steps.
+The project URL follows the [same rule](#set-your-inth-project-url) as the
+Expo option, and both platforms check it at launch. Follow
+[bare setup](/docs/frameworks/react-native/bare) for the full file context and
+linking steps.
+
+Remove these retired keys. Expo prebuild deletes them for you.
+
+| Retired key | Use instead |
+| --- | --- |
+| `com.c15t.backend.mode` (iOS), `com.c15t.MODE` (Android) | Nothing for hosted. `com.c15t.dryRun` or `com.c15t.DRY_RUN` in development and CI. |
+| `com.c15t.backend.initUrl` (iOS), `com.c15t.BACKEND_INIT_URL` (Android) | Nothing. The app fetches policy from the project URL. |
+
+A build that still declares one does not start the engine. iOS logs
+`C15T_CONFIGURATION_RETIRED` with the key and its replacement. Android logs an
+error under the `c15t` tag. Every read answers deny-all until you remove the
+key.
 
 ## Declare the categories your app uses
 
@@ -130,17 +207,20 @@ values remain separate. Remove test overrides before shipping.
 
 ## Add a policy for offline startup
 
-A valid bundled policy lets a fresh installation resolve a conservative
-choice while disconnected. Set `policyResource` in Expo or the corresponding
-native metadata, and retain hosted transport for refresh and queued delivery.
+A valid bundled policy lets a fresh installation show its prompt while
+disconnected. Set `bundleManifest` or `policyResource` in Expo, or the
+corresponding native metadata. The engine queues the choice and delivers it to
+your Inth project when the app reconnects.
 [Offline policies](/docs/guides/mobile-offline) explains export, embedding,
 expiry and updates.
 
 ## Let your app install the engine
 
-Use `autoBootstrap: false` when your app owns native installation. Install
-once, before RN and optional SDK startup, then attach the RN adapter to that
-engine. Custom stores and transports are native integration contracts.
+Use `autoBootstrap: false` when your app owns native installation, as a
+brownfield app does. Install once, before RN and optional SDK startup, with
+`C15tApple.install` on iOS and `C15tAndroid.install` on Android, then attach
+the RN adapter to that engine. The native installers take the same Inth
+project URL and `dryRun` switch. They do not take a custom transport.
 
 The [native startup guide](/docs/frameworks/react-native/native-behaviour)
 explains ordering and protected-storage recovery. Use

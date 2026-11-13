@@ -11,7 +11,7 @@
  *     [
  *       "@c15t/react-native/expo-plugin",
  *       {
- *         "backendURL": "https://consent.example.com",
+ *         "backendURL": "https://your-project.inth.app",
  *         "androidMavenRepository": { "url": "https://maven.example.com/c15t" }
  *       }
  *     ]
@@ -47,14 +47,17 @@ export type {
 	C15tGppPluginProps,
 	C15tIabPluginProps,
 	C15tPluginProps,
-	ConsentProviderTransportKind,
 	C15tTrackingMarkdownLocalization,
-	C15tTransportMode,
 	ResolvedC15tGppParams,
 	ResolvedC15tIabParams,
 	ResolvedC15tParams,
 } from './params';
-export { TRANSPORT_MODES } from './params';
+export {
+	INTH_PROJECT_HOST_SUFFIXES,
+	normalizeProjectURL,
+	ProjectURLError,
+} from './project-url';
+export type { ProjectURLOptions, ProjectURLReason } from './project-url';
 export type { WorkflowContext } from './workflow';
 
 export type { C15tAndroidMavenRepository } from './maven';

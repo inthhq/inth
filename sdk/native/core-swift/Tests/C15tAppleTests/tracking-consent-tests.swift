@@ -1,6 +1,6 @@
 import Foundation
 import XCTest
-@testable import C15tApple
+@_spi(C15tInternal) @testable import C15tApple
 
 /// The IAB half of the ATT gate, from the fixture the web derivation also runs, and the
 /// controller's answer-log and Additional Information rules.

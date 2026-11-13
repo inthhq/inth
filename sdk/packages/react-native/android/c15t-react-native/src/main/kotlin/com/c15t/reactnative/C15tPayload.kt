@@ -86,9 +86,10 @@ object C15tPayload {
 
 	/** What a host hears when no core exists, naming both ways to fix it. */
 	const val MESSAGE_NOT_BOOTSTRAPPED =
-		"c15t has no backend configured, so the consent core was not started. Declare " +
-			"com.c15t.BACKEND_URL in the manifest, or call C15t.bootstrap() yourself " +
-			"before React Native initializes."
+		"c15t has no usable configuration, so the consent core was not started. Declare " +
+			"com.c15t.BACKEND_URL in the manifest with your Inth project URL, such as " +
+			"https://your-project.inth.app, or call C15tAndroid.install yourself before " +
+			"React Native initializes. If the key is declared, logcat tag c15t says why it was refused."
 
 	/** The override keys `NativeOverridesInput` declares, in wire order. */
 	private val OVERRIDE_INPUT_KEYS = setOf("country", "region", "language", "gpc")

@@ -1,28 +1,40 @@
 #if canImport(C15tCore)
-import C15tCore
+@_spi(C15tInternal) import C15tCore
 #endif
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 /// Installation failures leave optional SDKs gated. Retry after protected data is available.
-public enum C15tAppleInstallationError: Error, Equatable, Sendable {
-    case invalidBackendURL
+public enum C15tAppleInstallationError: Error, Equatable, Sendable, LocalizedError, CustomStringConvertible {
+    /// `backendURL` is not an Inth project URL. The value says which rule failed.
+    case invalidBackendURL(InthProjectURLError)
+    /// `dryRun` is on in a release build. No core was started.
+    case dryRunInReleaseBuild
     /// The IAB settings are outside the TCF ranges. No CMP ID is written for them.
     case invalidIABConfiguration
     case protectedStorageUnavailable
     case unbootstrappedCore
+
+    public var description: String {
+        switch self {
+        case let .invalidBackendURL(error): return error.message
+        case .dryRunInReleaseBuild: return C15tBuild.dryRunRefusal()
+        case .invalidIABConfiguration:
+            return "The IAB settings are outside the TCF ranges. C15tApple.iabIssue(_:) names the field."
+        case .protectedStorageUnavailable:
+            return "Consent storage is not available yet. Retry after protected data is available."
+        case .unbootstrappedCore:
+            return "The installed consent core was never started."
+        }
+    }
+
+    public var errorDescription: String? { description }
 }
 
 /// Production installation for SwiftUI, UIKit and RN. No UI or JS runtime is required.
 public struct C15tAppleConfiguration: Sendable {
-    public enum Transport: Sendable {
-        case hosted(URL)
-        case selfHosted(URL)
-        /// Durable local state and an undelivered queue, with no policy resolution.
-        case offline
-        /// Preview only. Async commands have no transport.
-        case disabled
-    }
-
     public enum Storage: Sendable {
         case keychain(service: String = "com.c15t.core")
         /// Development only. Consent is not Keychain-protected.
@@ -47,17 +59,23 @@ public struct C15tAppleConfiguration: Sendable {
         }
     }
 
-    public let transport: Transport
+    /// The project URL from your Inth dashboard, such as `https://your-project.inth.app`.
+    /// A missing scheme means `https`. Any other host is refused at install.
+    public let backendURL: String
+    /// Development and CI only. Everything works as normal and consent records are
+    /// dropped: not queued, not sent. A release build refuses to install with it. In a
+    /// debug build it also lets `backendURL` be any `https` URL or `http` on a loopback host.
+    public var dryRun: Bool
     public let storage: Storage
-    public var initURL: URL?
     public var domain: String?
     public var consentCategories: [ConsentCategory]?
     public var vendors: [Int]?
     public var overrides: ConsentOverrides
     public var gpc: Bool?
     public var bundledPolicy: BundledPolicyResource?
-    /// The policy in source control. Used only with the `offline` or `disabled`
-    /// transport, where it is the only policy source.
+    /// The policy in source control. With one, the device resolves the rules locally
+    /// and never calls `/init`. Records still go to `backendURL`. It does not mix with
+    /// ``bundledPolicy``, which wins when both are set.
     public var policy: ConsentPolicy?
     /// Why a declared in-code policy was refused. The core reports it as `policy-invalid`.
     public var policyError: String?
@@ -76,11 +94,11 @@ public struct C15tAppleConfiguration: Sendable {
     /// backend can tell the two apart now that `x-c15t-version` carries no prefix.
     public var platform = "apple"
 
-    /// Choose hosted or self-hosted explicitly. Keychain is the default store.
+    /// Keychain is the default store.
     public init(
-        transport: Transport,
+        backendURL: String,
+        dryRun: Bool = false,
         storage: Storage = .keychain(),
-        initURL: URL? = nil,
         domain: String? = nil,
         consentCategories: [ConsentCategory]? = nil,
         vendors: [Int]? = nil,
@@ -92,9 +110,9 @@ public struct C15tAppleConfiguration: Sendable {
         iab: IABConfiguration? = nil,
         gpp: GPPOptions? = nil
     ) {
-        self.transport = transport
+        self.backendURL = backendURL
+        self.dryRun = dryRun
         self.storage = storage
-        self.initURL = initURL
         self.domain = domain
         self.consentCategories = consentCategories
         self.vendors = vendors
@@ -107,39 +125,58 @@ public struct C15tAppleConfiguration: Sendable {
         self.gpp = gpp
     }
 
-    /// Build the native transport. HTTP is allowed only for exact loopback hosts.
-    public func makeTransport(client: any HTTPTransport = URLSession.shared) throws -> (any C15tTransport)? {
-        switch transport {
-        case let .hosted(url), let .selfHosted(url):
-            try C15tApple.validate(url)
-            if let initURL { try C15tApple.validate(initURL) }
-            return HostedTransport(
-                baseURL: url, initURL: initURL, domain: domain,
-                extraHeaders: ["x-c15t-platform": "\(platform)->\(C15tApple.version)"],
-                client: client
-            )
-        case .offline: return OfflineTransport(domain: domain ?? "offline")
-        case .disabled: return nil
+    /// The checked project URL in its normal form: `https://<host>`, no trailing slash.
+    ///
+    /// The same string reaches the transport, the bundled policy binding and the
+    /// save body `domain`.
+    /// - Throws: ``C15tAppleInstallationError/dryRunInReleaseBuild`` for `dryRun` in a
+    ///   release build, or ``C15tAppleInstallationError/invalidBackendURL(_:)``.
+    public func normalizedBackendURL() throws -> URL {
+        if dryRun, !C15tBuild.isDebug { throw C15tAppleInstallationError.dryRunInReleaseBuild }
+        do {
+            return try InthProjectURL.normalize(backendURL, relaxed: dryRun)
+        } catch let error as InthProjectURLError {
+            throw C15tAppleInstallationError.invalidBackendURL(error)
         }
     }
 
+    /// Build the hosted transport for the checked project URL. Internal API.
+    @_spi(C15tInternal) public func makeTransport(
+        client: any HTTPTransport = URLSession.shared
+    ) throws -> any C15tTransport {
+        HostedTransport(
+            baseURL: try normalizedBackendURL(), domain: domain,
+            extraHeaders: ["x-c15t-platform": "\(platform)->\(C15tApple.version)"],
+            client: client
+        )
+    }
+
     /// Configure one core with protected storage and the native platform key projection.
+    /// Internal API: `C15tApple.install(C15tAppleConfiguration)` calls it.
     /// - Throws: ``C15tAppleInstallationError/invalidIABConfiguration`` when ``iab`` is out of range,
-    ///   before any store or transport is built.
-    public func makeCoreConfiguration() throws -> CoreConfig {
+    ///   and the errors of ``normalizedBackendURL()``, before any store is built.
+    @_spi(C15tInternal) public func makeCoreConfiguration() throws -> CoreConfig {
+        try makeCoreConfiguration(transport: try makeTransport())
+    }
+
+    /// ``makeCoreConfiguration()`` with `transport` in place of the hosted one. Every
+    /// check still runs. Tests pass `nil` to start a core that opens no socket.
+    @_spi(C15tInternal) public func makeCoreConfiguration(
+        transport: (any C15tTransport)?
+    ) throws -> CoreConfig {
         if let iab, C15tApple.iabIssue(iab) != nil {
             throw C15tAppleInstallationError.invalidIABConfiguration
         }
-        // The two modes do not mix: an in-code policy needs a transport with no backend.
-        let noBackend: Bool
-        switch transport {
-        case .offline, .disabled: noBackend = true
-        case .hosted, .selfHosted: noBackend = false
+        let endpoint = try normalizedBackendURL()
+        // A manifest is bound to the normal form, whatever spelling the app passed.
+        let bundle = bundledPolicy.map {
+            BundledPolicyResource(data: $0.data, endpoint: endpoint.absoluteString)
         }
+        // An in-code policy and a bundled manifest do not mix. The manifest wins.
         return CoreConfig(
-            store: try storage.makeStore(), bundledPolicy: noBackend ? nil : bundledPolicy,
-            policy: noBackend ? policy : nil, policyError: noBackend ? policyError : nil,
-            transport: try makeTransport(),
+            store: try storage.makeStore(), bundledPolicy: bundle,
+            policy: bundle == nil ? policy : nil, policyError: bundle == nil ? policyError : nil,
+            transport: transport, dryRun: dryRun,
             consentCategories: consentCategories, vendors: vendors, iab: iab,
             overrides: overrides, gpc: gpc, storageBus: UserDefaultsStorageBus(), gpp: gpp
         )
@@ -157,7 +194,8 @@ public enum C15tApple {
     private static var reachability: C15tReachability?
 
     /// Install once. Later calls return the same hydrated core and keep its original config.
-    /// - Throws: An installation error when URLs or durable storage are unavailable.
+    /// - Throws: An installation error when `backendURL` is not an Inth project URL,
+    ///   `dryRun` is on in a release build, or durable storage is unavailable.
     @discardableResult
     public static func install(_ configuration: C15tAppleConfiguration) throws -> ConsentCore {
         lock.lock()
@@ -166,16 +204,16 @@ public enum C15tApple {
         return try install(configuration.makeCoreConfiguration())
     }
 
-    /// Install custom native services. The caller owns their protection and retry policy.
+    /// Internal API for tests and first-party fixtures. It does not check the backend
+    /// host. It still refuses `dryRun` in a release build.
     /// Storage must support a verified write/read/delete before any engine is published.
     @discardableResult
-    public static func install(_ configuration: CoreConfig) throws -> ConsentCore {
+    @_spi(C15tInternal) public static func install(_ configuration: CoreConfig) throws -> ConsentCore {
         lock.lock()
         defer { lock.unlock() }
         if let core = C15t.current { return try installed(core) }
-        if let transport = configuration.transport as? HostedTransport {
-            try validate(transport.baseURL)
-            try validate(transport.initURL)
+        if configuration.dryRun, !C15tBuild.isDebug {
+            throw C15tAppleInstallationError.dryRunInReleaseBuild
         }
         try prepare(configuration.store)
         let core = C15t.bootstrap(configuration)
@@ -251,18 +289,6 @@ public enum C15tApple {
             return "Custom purpose count \(configuration.numCustomPurposes) is outside 0 to 63."
         }
         return nil
-    }
-
-    static func validate(_ url: URL) throws {
-        let scheme = url.scheme?.lowercased()
-        let host = url.host?.lowercased()
-        // Foundation versions differ on whether URL.host keeps IPv6 brackets.
-        let loopback = host == "localhost" || host == "127.0.0.1" || host == "::1" || host == "[::1]"
-        guard let host, !host.isEmpty,
-              scheme == "https" || (scheme == "http" && loopback),
-              url.user == nil, url.password == nil else {
-            throw C15tAppleInstallationError.invalidBackendURL
-        }
     }
 
     private static func prepare(_ store: any ConsentStore) throws {

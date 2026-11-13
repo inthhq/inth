@@ -95,7 +95,7 @@ export const renderPackageSkill = function renderPackageSkill(
 			'- Keep drafts open after refused commits. Never turn a policy refresh, hydration, ATT result or notice acknowledgement into a consent grant.',
 			'- Keep hosted transport when embedding an offline policy. Verify endpoint binding, authority expiry and original disclosure timestamps. Withdrawals must persist without network access.',
 			'- ATT is separate. Marketing consent, a TC String and platform storage keys do not prove AdMob interoperability, Google certification or IAB registration.',
-			'- Prefer native stock presenter commands. Configure their supported themes natively. Use headless hooks or advanced self-hosted APIs when the app owns UI or native services.',
+			'- Prefer native stock presenter commands. Configure their supported themes natively. Use headless hooks when the app owns the UI. Mobile works only with Inth hosted projects; there is no self-hosted backend or custom transport.',
 			'- Match RN, React, Expo and native protocol versions. Native APIs, themes, permissions, Codegen and bundled-policy changes require a new binary.',
 			'',
 			'./AGENTS.md lists every bundled page. Verify real native builds and device journeys separately from JavaScript type checks.',

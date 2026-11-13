@@ -31,7 +31,7 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window.rootViewController = ConsentRootViewController(
             root: UIHostingController(rootView: ContentView()),
             configuration: C15tAppleConfiguration(
-                transport: .hosted(URL(string: "https://your-project.inth.app")!),
+                backendURL: "https://your-project.inth.app",
                 consentCategories: [.necessary, .measurement, .marketing]
             ),
             privacyPolicyURL: URL(string: "https://example.com/privacy")!

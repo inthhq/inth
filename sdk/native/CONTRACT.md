@@ -675,8 +675,8 @@ does not have to know what it missed.
 One launch hook per app, owned by the layer that documents the opt-out. Android's core
 library registers an `androidx.startup` initializer of its own and the React Native
 binding registers one too, so two entries merge unless the binding says otherwise. The
-core's takes no flag: it installs a core whenever `com.c15t.BACKEND_URL` or
-`com.c15t.MODE=offline` is declared, and
+core's takes no flag: it installs a core whenever `com.c15t.BACKEND_URL` is
+declared and passes the start-time checks, and
 installation is first-wins, so a host that set the binding's `AUTO_BOOTSTRAP` to install
 its own configured core would get the manifest core instead and have its own refused with
 no warning. The binding therefore removes the core's entry from a React Native app's
@@ -1017,7 +1017,30 @@ union in `packages/react-native/src/protocol` and both bridges move with it.
 Transports
 ----------
 
-Same three modes as the web SDK, same backend endpoints, same headers.
+One mode. The mobile SDKs work only with the Inth hosted service: the same backend
+endpoints and headers as the web SDK's hosted mode, and no self-hosted, offline or
+custom mode. The web SDK keeps its three modes.
+
+Configuration is the project URL plus an optional `dryRun` boolean:
+
+    Expo plugin        backendURL             dryRun
+    Swift              backendURL (String)    dryRun
+    Kotlin             backendUrl             dryRun
+    iOS Info.plist     com.c15t.backend.url   com.c15t.dryRun
+    Android meta-data  com.c15t.BACKEND_URL   com.c15t.DRY_RUN
+
+The transport types are not public API. Swift marks `C15tTransport`,
+`HostedTransport`, `HTTPTransport`, the `CoreConfig`-level `C15tApple.install` and
+`ConsentCore.bootstrap` `@_spi(C15tInternal)`. Kotlin puts `C15tTransport`,
+`HostedTransport`, `C15t.bootstrap`, the `ConsentCore` constructor and the
+`C15tAndroid.install` overload that takes a transport behind
+`@C15tInternalApi`, a `RequiresOptIn` at error level. Tests, examples, the device
+fixtures and the React Native bridge use that door. It does not check the project
+URL, which is how a Release fixture reaches a loopback backend. It still refuses
+`dryRun` in a release build, except Kotlin's `C15t.bootstrap` and `ConsentCore`
+constructor in `c15t-core`, which have no Android context to ask.
+
+Every request carries these headers:
 
     x-c15t-version:            <C15t.version> on Swift, <NativeConfig.sdkVersion> on Kotlin
     x-c15t-platform:           apple-><C15tApple.version> for a Swift app, android-><sdkVersion>
@@ -1051,6 +1074,105 @@ Writes go through a pending queue:
 
 IAB disclosure bindings use the `gvl-v2:` format. Older projected bindings require
 a fresh decision because their stored lists may have discarded unknown fields.
+
+Project URL
+-----------
+
+`native/protocol/project-url/cases.json` is the shared fixture. Each platform keeps
+one constant equal to its `allowedHostSuffixes` (`inth.app`) and a test
+that checks the constant and runs every `strict` and `relaxed` case. The
+implementations are `inth-project-url.swift`, `InthProjectUrl.kt`, and
+`project-url.ts` in the Expo plugin and in the CLI, which are byte-for-byte copies.
+
+The strict rule applies in every build. Steps run in this order and the first
+failure wins:
+
+1. Trim whitespace. Empty is `empty`.
+2. Whitespace left inside the value is `malformed`.
+3. With no `://`, prepend `https://`.
+4. The scheme, compared without case, must be `https`, else `scheme`. A value with
+   no readable host is `malformed`.
+5. A username or password is `credentials`.
+6. The lowercased host must be one or more labels in front of an allowed suffix,
+   else `host`.
+7. An explicit port is `port`.
+8. A path other than slashes is `path`.
+9. A query or fragment is `query`.
+
+The normal form is `https://<lowercased host>` with no trailing slash. The same
+string reaches the transport, the bundled-policy endpoint binding and the save
+body `domain` on every platform.
+
+The relaxed rule applies only when `dryRun` is on in a debug build. It takes any
+`https` URL, or `http` on exactly `localhost`, `127.0.0.1` or `[::1]`, with a port
+and a path. Credentials, a query and a fragment stay refused. Its normal form
+keeps the port and path and strips trailing slashes.
+
+The error has one shape, with the platform's own option name in front
+(`backendURL`, `backendUrl`, `--backend-url`, or the plist or meta-data key), and
+carries the fixture's reason code so tests assert the code:
+
+    backendURL must be the project URL from your Inth dashboard, such as https://your-project.inth.app. Got "<input as given>": <what is wrong>.
+
+The rule runs where there is a build step (Expo prebuild, the CLI) and again at
+start in native code: `C15tApple.install(C15tAppleConfiguration)`,
+`C15tAndroid.install(context, NativeConfig)`, and the `Info.plist` and manifest
+launch hooks. The install calls throw. The launch hooks log and start no core.
+
+dryRun
+------
+
+`dryRun` is for development and CI. With it on:
+
+- The prompt, storage, gating and the consent signals (TC string, GPP, `IABTCF_*`
+  and `IABGPP_*` keys, Consent Mode) behave as normal.
+- Consent records are dropped: not queued, not sent. A save reports success with
+  `queued` false and emits no save-queued event.
+- `identify`, `patchIdentity` and `logout` change local state and send nothing.
+- A pending queue left by an earlier run without `dryRun` is not flushed. The
+  first dry-run save drops it, so an old grant cannot replay after a newer choice.
+- `/init` is still fetched unless an in-code policy is set. With a bundled or
+  in-code policy no network is needed.
+- The core logs one line at start saying `dryRun` is on.
+
+A release build refuses `dryRun` and starts no core:
+
+    dryRun is for development and CI and cannot run in a release build. Remove dryRun (...).
+
+Each platform tells a release build from a debug one differently:
+
+- Swift ships as source, through SwiftPM and vendored into the React Native pod,
+  so the app's configuration compiles it. `C15tBuild.isDebug` reads `#if DEBUG`
+  in one place. `C15tApple.install` throws `dryRunInReleaseBuild`; the React
+  Native launch hook reports `C15T_CONFIGURATION_DRY_RUN`.
+- Android ships as release AARs, so the SDK's own `BuildConfig.DEBUG` is always
+  false. `C15tAndroid` reads the host app's `ApplicationInfo.FLAG_DEBUGGABLE` at
+  runtime. `install` throws `IllegalStateException`; the manifest path logs an
+  error under the `c15t` tag.
+- Expo prebuild and the CLI cannot see the build type. With `dryRun` on they
+  apply the relaxed URL rule and write the flag, the plugin warns once, and
+  native start enforces the rest.
+
+Retired configuration
+---------------------
+
+No compatibility shims. Each retired option fails with an error that names its
+replacement:
+
+    Retired                                              Replacement
+    mode: 'hosted', com.c15t.backend.mode                Remove it. Hosted is the only mode.
+    mode: 'selfHosted'                                   None. Set the Inth project URL.
+    mode: 'offline', com.c15t.MODE=offline,              dryRun for development and CI. In production
+      NativeConfig(backendUrl = null)                      keep the project URL; a bundled manifest or
+                                                           in-code policy covers a launch without network.
+    mode: 'custom'                                       autoBootstrap: false. Custom transports are gone.
+    initURL, com.c15t.backend.initUrl,                   None. Policy is fetched from the project URL.
+      com.c15t.BACKEND_INIT_URL, NativeConfig.initUrl
+
+The Expo plugin throws on `mode` and `initURL`. The iOS launch hook refuses
+`com.c15t.backend.mode` and `com.c15t.backend.initUrl` with
+`C15T_CONFIGURATION_RETIRED`. Android refuses `com.c15t.MODE` and
+`com.c15t.BACKEND_INIT_URL` with a logged error and leaves the core uninstalled.
 
 Platform lifecycle
 ------------------
@@ -1691,20 +1813,25 @@ default export is `withC15t` inside `createRunOncePlugin`, and
 tests drive. A standard install adds one `plugins` entry and nothing else:
 
     ["@c15t/react-native/expo-plugin", {
-      "backendURL": "https://consent.example.com"
+      "backendURL": "https://your-project.inth.app"
     }]
 
-`backendURL` is required in every mode but `offline`, and a base path is allowed
-so a same-origin deployment works unchanged. `mode` is `hosted`, `selfHosted`,
-`offline`, or `custom`. There is no credential parameter: a project is identified
+`backendURL` is required and must pass the rule in "Project URL". The
+plugin embeds its normal form. `dryRun` is an optional boolean; with it on the
+plugin applies the relaxed URL rule, writes the flag and warns once, because
+prebuild cannot see the build type. `mode` and `initURL` are gone, and each
+throws an error naming its replacement. `policy` works with `backendURL`; it is
+still refused beside `policyResource`, `bundleManifest` or `iab`. There is no
+credential parameter: a project is identified
 by its backend URL, and neither core's `/init` nor its `/subjects` request carries
 a key, so the plugin has nowhere honest to put one. `forceGPC` is for staged
 builds. `consentCategories` declares the categories the app offers, so the same
 backend and the same declaration list the same rows as a web app; an unknown id
 or an empty list fails the prebuild rather than quietly meaning something else.
 `autoBootstrap`
-defaults to `true`, and to `false` under `mode: 'custom'`, where leaving it on
-would race the host. `skipNativeBuildCheck` waives the Expo Go check for a
+defaults to `true`. `false` is the brownfield switch: the native app installs
+c15t itself before React Native starts, against the same Inth project URL.
+`skipNativeBuildCheck` waives the Expo Go check for a
 harness that drives `expo start` in a container without opening Expo Go.
 
 Keys the plugin writes
@@ -1716,11 +1843,10 @@ Android through `C15tAndroid` and `C15tReactNativeBootstrap`:
 
     iOS Info.plist                      Android <meta-data>
     com.c15t.backend.url                com.c15t.BACKEND_URL
-    com.c15t.backend.mode               com.c15t.MODE (offline only)
+    com.c15t.dryRun                     com.c15t.DRY_RUN
     com.c15t.policy.rules               com.c15t.POLICY_RULES
     com.c15t.backend.domain             com.c15t.BACKEND_DOMAIN
     com.c15t.forceGPC                   com.c15t.FORCE_GPC
-    com.c15t.backend.initUrl            com.c15t.BACKEND_INIT_URL
     com.c15t.categories                 com.c15t.CATEGORIES
     com.c15t.reactnative.AutoBootstrap  com.c15t.reactnative.AUTO_BOOTSTRAP
 
@@ -1728,7 +1854,12 @@ Each key keeps its platform's casing, lowercase dotted on iOS and upper snake on
 Android, and both spell the same concept with the same words. Absent values stay absent: the
 bridge treats a missing key as "not configured" and has to parse an empty
 string. `AutoBootstrap` is written only in the opt-out case, since on is the
-bridge's own default.
+bridge's own default. The `dryRun` keys are written only when `dryRun` is on.
+
+Prebuild also deletes the retired keys `com.c15t.backend.mode`,
+`com.c15t.backend.initUrl`, `com.c15t.MODE` and `com.c15t.BACKEND_INIT_URL`. A
+prebuild without `--clean` keeps the old plist and manifest, and native start
+refuses a build that still declares one.
 
 `consentCategories` is the host-facing parameter; the two keys are its native
 spellings, the same declaration a web host passes to its provider as
@@ -1759,18 +1890,12 @@ reader sources and fails the build when the plugin writes a key no constant name
 An unread key is not a spare knob: it is a wrong promise carried inside a shipped
 binary, and the app looks configured while one platform runs something else.
 `com.c15t.backend.publicKey` / `com.c15t.PUBLIC_KEY` were exactly that and are
-gone; iOS `com.c15t.backend.initUrl` was a silent wrong-backend bug, since Android
-honoured its `com.c15t.BACKEND_INIT_URL` and iOS kept building `${base}/init`, and the
-bridge now passes it to `HostedTransport` the way `@c15t/core` and Android do:
-the value is used as given, and only an absent key takes the default.
+gone. The init URL keys went with `initURL`: policy is fetched from the project
+URL.
 
-`mode` is spelled three ways on purpose. `custom` is the iOS bridge's `none` and
-no androidx.startup initializer on Android. `offline` embeds no backend URL at
-all. `selfHosted` reaches JavaScript as `hosted`, because
-`ProviderTransportKind` in `@c15t/core` has no self-hosted kind. JavaScript reads
-the same values from `extra.c15t`: `backendURL`, `initURL`, `domain`,
-`mode`, `enableAppTrackingTransparency`, and the `protocol` range.
-There is no second config source.
+JavaScript reads the same values from `extra.c15t`: `backendURL` in its normal
+form, `dryRun`, `domain`, `enableAppTrackingTransparency`, and the `protocol`
+range. There is no second config source.
 
 Theme keys
 ----------
@@ -1928,8 +2053,8 @@ template under /tmp. `expo config --type prebuild` loaded the plugin on Node
 `ERR_REQUIRE_ESM` under that flag. `expo prebuild --platform ios --no-install`
 and `--platform android --no-install` both finished clean, and the `Info.plist`,
 `PrivacyInfo.xcprivacy`, and `AndroidManifest.xml` they wrote carry the keys
-above, including the `mode: 'custom'` shape: `com.c15t.backend.mode` of `none`,
-both auto-bootstrap keys `false`, and no androidx.startup provider at all. The
+above. That run predates the Inth hosted only change, so it also covered the
+since-removed `mode: 'custom'` shape, whose replacement is `autoBootstrap: false`. The
 privacy manifest is the plugin's doing and not the template's, since the same
 template with no plugin writes no `PrivacyInfo.xcprivacy`.
 
@@ -2073,19 +2198,26 @@ reference, device latency and power-loss behavior remain separate evidence gates
 
 ## Build policy fallback
 
-Configuration picks one of two modes, and they do not mix.
+Every configuration has a project URL. It picks one of two policy sources, and
+they do not mix.
 
-- Backend mode has a backend URL. Policy precedence is the live `/init`
+- Without an in-code policy, precedence is the live `/init`
   response, then the last good cached response, then the manifest bundled at
   build time. A bundled manifest replaces a cached one only when the cached one
   also came from a bundle and is stale, older, or bound to another endpoint.
-- No-backend mode has no backend URL. Swift uses `OfflineTransport`, Kotlin
-  uses `OfflineTransport` with `NativeConfig.backendUrl = null`, and the
-  Android manifest key `com.c15t.MODE=offline` selects it. A bundled manifest
-  is refused: Kotlin's `NativeConfig` throws, and the Expo plugin refuses
-  `policyResource` and `iab` with `mode: 'offline'`. The only policy source is
-  `ConsentPolicy`, rules in the backend's `PolicyRule` names (`CoreConfig.policy`,
-  `NativeConfig.policy`, Expo `policy`). Both cores normalize rules exactly as
+- An in-code policy is a `ConsentPolicy`, rules in the backend's `PolicyRule`
+  names (`C15tAppleConfiguration.policy`, `NativeConfig.policy`, Expo `policy`).
+  The device resolves the rules locally and never calls `/init`. Records go to
+  the project through the hosted transport, or are dropped under `dryRun`. The
+  backend recomputes each decision against the project's own policy and rejects
+  a record whose policy it does not serve (`decision-mismatch`, HTTP 422), so
+  the in-code rules must match the project's policy. A bundled manifest is
+  exported from the project and cannot drift that way. An in-code policy beside
+  a bundled manifest is refused: Kotlin's `NativeConfig` throws, the Android
+  manifest path refuses `com.c15t.POLICY_RULES` beside
+  `com.c15t.POLICY_RESOURCE`, the Expo plugin refuses `policy` beside
+  `policyResource` or `bundleManifest`, and `C15tAppleConfiguration` lets the
+  manifest win. Both cores normalize rules exactly as
   `normalizePolicyRule` does and match them as `resolvePolicyRules` does;
   `native/protocol/local-policy/parity.json`, generated from `@c15t/schema`,
   holds the shared cases: a matrix of every `PolicyRule` field against every
@@ -2106,7 +2238,7 @@ Configuration picks one of two modes, and they do not mix.
   declared policy a core refuses is reported as `policy-invalid` with resolution
   reason `invalid-configuration`, and fails closed: a policy cached by an earlier
   build stops applying and optional gates are denied, while stored choices stay
-  for a later build with a usable policy. Bootstrap and `reset()` both report it. The `iab` model is refused without a backend. iOS reads the
+  for a later build with a usable policy. Bootstrap and `reset()` both report it. The `iab` model is refused in an in-code policy, because the vendor list comes from `/init`. iOS reads the
   rules file from `com.c15t.policy.rules`, Android from `com.c15t.POLICY_RULES`.
 
 Native bootstrap can resolve an endpoint-bound resource exported from hosted

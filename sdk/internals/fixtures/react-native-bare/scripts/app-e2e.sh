@@ -132,7 +132,6 @@ if [[ "${PLATFORM}" == ios ]]; then
     ONLY_ACTIVE_ARCH=YES > "${OUT}/build.log" 2>&1
   # Override the built test artifact, never the reference app's checked-in config.
   APP_PLIST="${C15T_APP_E2E_DERIVED:-${OUT}/derived}/Build/Products/Release-iphonesimulator/C15tBare.app/Info.plist"
-  /usr/libexec/PlistBuddy -c 'Set :com.c15t.backend.mode selfHosted' "${APP_PLIST}"
   /usr/libexec/PlistBuddy -c "Set :com.c15t.backend.url ${C15T_E2E_URL}/api/self-host" "${APP_PLIST}"
   /usr/libexec/PlistBuddy -c "Add :C15tAppE2EURL string ${C15T_E2E_URL}" "${APP_PLIST}"
   /usr/libexec/PlistBuddy -c "Set :com.c15t.reactnative.AutoBootstrap false" "${APP_PLIST}" 2>/dev/null || /usr/libexec/PlistBuddy -c "Add :com.c15t.reactnative.AutoBootstrap bool false" "${APP_PLIST}"

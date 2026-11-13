@@ -121,14 +121,14 @@ public struct ConsentPolicyError: Error, Equatable, CustomStringConvertible {
     public init(_ message: String) { self.message = message }
 }
 
-/// A policy kept in source control: the only policy source in no-backend mode.
+/// A policy kept in source control. With one, the device never calls `/init`.
 ///
-/// Pass it as `CoreConfig.policy` with ``OfflineTransport`` or no transport. The device
-/// has no geolocation without a backend, so the `fallback` rule applies unless the app
-/// sets `overrides` country and region itself. Records stay on the device.
+/// Pass it as `C15tAppleConfiguration.policy`. The device resolves the rules itself and
+/// has no geolocation, so the `fallback` rule applies unless the app sets `overrides`
+/// country and region. Records are still delivered to the backend.
 ///
 /// Rules are checked with the backend's authoring rules (`inspectPolicyRules` in
-/// `@c15t/schema`), plus three no-backend limits: no `iab` model, a rule for an unknown
+/// `@c15t/schema`), plus three in-code limits: no `iab` model, a rule for an unknown
 /// location, and a validity of at least one millisecond.
 public struct ConsentPolicy: Sendable, Equatable {
     public let rules: [PolicyRule]

@@ -91,6 +91,19 @@ Call `C15tApple.install` before starting optional SDKs. It verifies protected
 storage and hydrates the process's single core before returning. A fresh
 installation remains pending until a usable policy is available.
 
+The mobile SDKs work with the Inth hosted service. The configuration takes one
+`backendURL`, the project URL from your Inth dashboard, such as
+`https://your-project.inth.app`. Any other host is refused at install with an
+error that says what to write. There is no self-hosted or offline mode and no
+custom transport. A bundled manifest or an in-code `policy` covers a launch
+with no network.
+
+`dryRun: true` is for development and CI. The prompt, storage, gates and
+consent signals work as normal, and consent records are dropped instead of
+queued or sent. A release build refuses to install with it, so pass it only
+inside `#if DEBUG`. In a debug build it also lets `backendURL` be any `https`
+URL or `http` on `localhost`.
+
 `isAllowed`, `decision(for:)`, `snapshot` and `isReady` read cached native
 state. They do not fetch a policy or wait for storage. Keep a `gate`
 subscription for integrations that must stop after withdrawal, and cancel its
@@ -115,8 +128,8 @@ before advertising work. A category Boolean or a served vendor list is not a
 complete IAB decision.
 
 The Apple installer projects vendor-readable `IABTCF_*` values to standard
-UserDefaults while the protected native record remains authoritative. Custom
-installation must supply its platform storage bus explicitly. IAB registration,
+UserDefaults while the protected native record remains authoritative. Pass
+`iab:` to `C15tAppleConfiguration` to turn IAB TCF on. IAB registration,
 mobile validation and Google App certification remain separate requirements.
 
 ## Build and test

@@ -39,7 +39,8 @@ shutil.copytree(args.app.resolve(), app, symlinks=True)
 result['appFiles'] = files(app)
 info = plistlib.loads((app / 'Info.plist').read_bytes())
 assert info['CFBundleIdentifier'] == 'com.c15t.expodev'
-assert info['com.c15t.backend.mode'] == 'hosted'
+assert 'com.c15t.backend.mode' not in info and 'com.c15t.backend.initUrl' not in info
+assert info.get('com.c15t.dryRun', False) is False
 assert info['com.c15t.backend.url'].rstrip('/') == result['backend'].rstrip('/')
 result['hostedPlist'] = {key: value for key, value in info.items() if 'c15t' in key.lower()}
 (out / 'source-head.txt').write_text(run(['git', 'rev-parse', 'HEAD']))

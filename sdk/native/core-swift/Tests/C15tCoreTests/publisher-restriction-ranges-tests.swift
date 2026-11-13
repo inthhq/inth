@@ -1,6 +1,6 @@
 import XCTest
 
-@testable import C15tCore
+@_spi(C15tInternal) @testable import C15tCore
 
 final class PublisherRestrictionRangesTests: XCTestCase {
     func testSparseDisclosedVendorsDoNotRestrictNumericGaps() throws {

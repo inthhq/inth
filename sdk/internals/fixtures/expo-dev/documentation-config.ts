@@ -12,7 +12,6 @@ const consent: C15tPluginProps = {
 	},
 	backendURL: 'https://example-inth.inth.app/',
 	consentCategories: ['necessary', 'measurement', 'marketing'],
-	mode: 'hosted',
 	policyResource: './c15t-policy.json',
 };
 

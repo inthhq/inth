@@ -12,6 +12,9 @@ import com.c15t.core.model.KernelError
  * here. A commit made on a plane is `ok = true, queued = true, delivered = false` and
  * gates correctly, and its delivery is reported later, when the queue drains.
  *
+ * Under `NativeConfig.dryRun` the first two parts hold and the third does not: the
+ * record is dropped, so the result is `ok = true, queued = false`.
+ *
  * A refusal changes none of the three. [revision] is the snapshot the decision was
  * *not* applied to, so a caller that renders from it stays honest.
  */
@@ -22,7 +25,10 @@ data class CommitResult(
 	val revision: Long,
 	/** Exactly the categories this action confirmed. Empty on a refusal. */
 	val confirmed: Map<String, Boolean>,
-	/** The payload is persisted and waiting for, or undergoing, delivery. */
+	/**
+	 * The payload is persisted and waiting for, or undergoing, delivery. `false` on a
+	 * committed save under `NativeConfig.dryRun`, which drops the record.
+	 */
 	val queued: Boolean,
 	/**
 	 * The backend accepted this body, and the queue released it, before this call returned.

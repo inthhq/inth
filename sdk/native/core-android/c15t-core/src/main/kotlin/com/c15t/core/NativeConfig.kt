@@ -11,11 +11,11 @@ import com.c15t.core.transport.C15tProtocol
  * semantics on its own. The backend identifies the project by URL, the same way
  * the hosted transport in `@c15t/core` assumes, so there is no key in this type.
  *
- * @property backendUrl c15t backend base URL, without a trailing slash. `null` selects
- * no-backend mode: nothing is sent, and a [bundledPolicy] is refused because a bundled
- * manifest belongs to a backend.
- * @property initUrl Overrides `$backendUrl/init`, for a deployment fronted by a
- * same-origin proxy.
+ * @property backendUrl The project URL from the Inth dashboard, such as
+ * `https://your-project.inth.app`. `C15tAndroid.install` checks it with [InthProjectUrl].
+ * @property dryRun For development and CI. Prompts, storage, gating and consent signals
+ * work as normal, and consent records and identity calls are dropped instead of sent.
+ * `C15tAndroid.install` refuses it in an app that is not debuggable.
  * @property domain Value sent as the `domain` field of `POST /subjects`. Defaults
  * to the host of [backendUrl].
  * @property consentCategories Categories the host offers. `null` or empty declares
@@ -63,8 +63,7 @@ import com.c15t.core.transport.C15tProtocol
  *   storage keys. `null`, the default, writes no GPP signal. See [com.c15t.core.gpp.GppOptions].
  */
 data class NativeConfig(
-	val backendUrl: String?,
-	val initUrl: String? = null,
+	val backendUrl: String,
 	val domain: String? = null,
 	val sdkVersion: String = C15tProtocol.DEFAULT_SDK_VERSION,
 	val platform: String? = C15tProtocol.PLATFORM_ANDROID,
@@ -82,8 +81,8 @@ data class NativeConfig(
 	 */
 	val bundledPolicy: String? = null,
 	/**
-	 * The policy in source control, the only policy source in no-backend mode. Needs a
-	 * `null` [backendUrl]: the two modes do not mix.
+	 * The policy in source control. The device resolves it locally and never calls
+	 * `/init`; records still go to [backendUrl]. Does not mix with [bundledPolicy].
 	 */
 	val policy: ConsentPolicy? = null,
 	/**
@@ -93,15 +92,13 @@ data class NativeConfig(
 	 */
 	val policyError: String? = null,
 	val gpp: com.c15t.core.gpp.GppOptions? = null,
+	val dryRun: Boolean = false,
 ) {
 	init {
 		require(iabListMaxAgeMs > 0)
-		require(backendUrl == null || backendUrl.isNotBlank()) { "NativeConfig.backendUrl must not be blank" }
-		require(backendUrl != null || bundledPolicy == null) {
-			"NativeConfig.bundledPolicy needs backendUrl: a bundled manifest belongs to backend mode"
-		}
-		require(policy == null && policyError == null || backendUrl == null) {
-			"NativeConfig.policy is no-backend mode and does not mix with backendUrl"
+		require(backendUrl.isNotBlank()) { "NativeConfig.backendUrl must not be blank" }
+		require(policy == null && policyError == null || bundledPolicy == null) {
+			"NativeConfig.policy does not mix with bundledPolicy"
 		}
 	}
 }

@@ -23,8 +23,9 @@ npm install /absolute/path/to/c15t-react-native.tgz
 
 Prepare an Inth project URL and your app's privacy-policy URL as described in
 the [quickstart](/docs/frameworks/react-native/quickstart#before-you-start).
-The steps below configure hosted transport. [Configuration](/docs/frameworks/react-native/configuration)
-covers other modes.
+The mobile SDK works only with Inth hosted projects.
+[Configuration](/docs/frameworks/react-native/configuration) lists every key,
+including `dryRun` for development and CI.
 
 ## Set up iOS
 
@@ -51,7 +52,9 @@ In your app target's `Info.plist`, add these entries inside the root `<dict>`:
 
 <include src="../../shared/examples/react-native-bare/bare-ios-configuration.mdx" />
 
-Replace `https://example-inth.inth.app/` with the URL from your Inth project.
+Replace `https://example-inth.inth.app/` with the project URL from your Inth
+dashboard. Any other host stops the launch with
+`C15T_CONFIGURATION_BACKEND_URL` in the console.
 Adjust the optional categories to match the features your app uses.
 `necessary` stays enabled.
 
@@ -144,14 +147,14 @@ describes the expected results.
 Keep automatic bootstrap for the standard setup. It also covers IAB CMP
 identity and publisher country through the keys in
 [Turn on IAB TCF](/docs/frameworks/react-native/configuration#turn-on-iab-tcf).
-If your app needs custom storage, transport or IAB publisher restrictions,
-disable it and install the engine before RN starts:
+If your native app must install the engine itself, as a brownfield app or one
+with IAB publisher restrictions does, disable it and install the engine before
+RN starts. Both installers take your Inth project URL:
 
-- iOS uses `com.c15t.reactnative.AutoBootstrap: false`. Install through the
-  APIs in `C15tReactNative`, then attach the core with
-  `C15tReactNativeBootstrap.install(core)`. A core built from
-  `C15tBridgeConfiguration.makeCoreConfiguration()` already reports React
-  Native. If you build `C15tAppleConfiguration` yourself, set
+- iOS uses `com.c15t.reactnative.AutoBootstrap: false`. Call
+  `C15tApple.install(C15tAppleConfiguration(backendURL:))` from the
+  `C15tReactNative` module, then attach the core with
+  `C15tReactNativeBootstrap.install(core)`. Set
   `configuration.platform = "rn"` before installing, or requests are
   attributed to a Swift app.
 - Android uses `com.c15t.reactnative.AUTO_BOOTSTRAP: false`. Install through

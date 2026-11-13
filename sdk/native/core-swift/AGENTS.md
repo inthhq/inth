@@ -23,6 +23,11 @@ mobile SDKs are public, the pages move to `https://c15t.com/docs/frameworks/swif
 - Install one engine, once, at launch, with
   `C15tApple.install(C15tAppleConfiguration(...))`, and keep the returned core.
   `C15t.current` returns it later. Never install a second engine.
+- `backendURL` is the project URL from the Inth dashboard, such as
+  `https://your-project.inth.app`. Mobile works only with Inth: no self-hosted
+  backend, no offline mode, no custom transport, no `initURL`.
+- `dryRun: true` drops consent records and is for development and CI. A release
+  build refuses it, so pass it only inside `#if DEBUG`.
 - `snapshot()`, `isAllowed(_:)`, `decision(for:)` and `isReady()` read cached
   state and never block, so SDK start-up code may call them on the main thread.
 - Start an optional SDK only on `.granted`, and keep a `gate` subscription so a
@@ -30,5 +35,5 @@ mobile SDKs are public, the pages move to `https://c15t.com/docs/frameworks/swif
   vendor's own automatic start first.
 - Keep a Privacy settings action reachable after the first prompt closes.
 - A successful save means the choice is stored on the device and queued for
-  delivery. It does not mean the backend has it.
+  delivery. It does not mean the backend has it. Under `dryRun` nothing is queued.
 - App Tracking Transparency and consent are separate. Neither grants the other.

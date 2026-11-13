@@ -1,6 +1,6 @@
-import C15tApple
+@_spi(C15tInternal) import C15tApple
 import C15tConsentUI
-import C15tCore
+@_spi(C15tInternal) import C15tCore
 import SwiftUI
 
 /// What the launch arguments ask for, so a script can put the app on any screen with no taps.

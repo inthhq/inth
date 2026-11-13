@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-@testable import C15tCore
+@_spi(C15tInternal) @testable import C15tCore
 
 /// The exclusivity rule in `native/CONTRACT.md`, "The pending save queue": only one
 /// delivery pass may be in flight per core.

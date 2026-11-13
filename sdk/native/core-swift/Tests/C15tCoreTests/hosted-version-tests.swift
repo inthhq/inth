@@ -1,4 +1,4 @@
-import C15tCore
+@_spi(C15tInternal) import C15tCore
 import Foundation
 import XCTest
 
@@ -8,7 +8,7 @@ final class HostedVersionTests: XCTestCase {
         let gateway = SemverOnlyGateway()
         let transports: [HostedTransport] = [
             .hosted(projectURL: endpoint, client: gateway),
-            .selfHosted(baseURL: endpoint, client: gateway),
+            HostedTransport(baseURL: endpoint, client: gateway),
         ]
         let context = InitContext(
             overrides: KernelOverridesWire(country: "GB", region: nil, language: "en", gpc: nil),

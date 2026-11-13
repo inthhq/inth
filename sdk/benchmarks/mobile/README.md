@@ -114,7 +114,10 @@ resources, DEX conversion, R8 shrinking and APK compression. It is a raw artifac
 guard; measuring the size added to a shipped app requires matched Release consumer
 builds with and without the SDK.
 
-The raw-class allowance is 3,495,968 B. Its [2026-11-11 calibration](./snapshots/android-raw-classes-2026-11-11.json)
+The raw-class allowance is 3,867,560 B. Its [2026-11-13 calibration](./snapshots/android-raw-classes-2026-11-13.json)
+records 3,520,124 B after the headless consent components and the Inth
+hosted-only change, and the allowance keeps the same headroom ratio. The earlier 3,495,968 B allowance's
+[2026-11-11 calibration](./snapshots/android-raw-classes-2026-11-11.json)
 records 3,181,950 B across the four artifacts on the integrated mobile release
 wave, and the allowance keeps the 2026-10-30 headroom ratio: 2.5 MiB over that
 calibration's [2,385,975 B](./snapshots/android-raw-classes-2026-10-30.json).

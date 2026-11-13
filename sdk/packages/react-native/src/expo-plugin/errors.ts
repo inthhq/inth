@@ -1,3 +1,5 @@
+import type { ProjectURLReason } from './project-url';
+
 /**
  * The single error type the plugin raises.
  *
@@ -7,10 +9,18 @@
  */
 export class C15tPluginError extends Error {
 	/**
-	 * @param message - Actionable detail, without the package prefix.
+	 * Why `backendURL` was refused, in the reason codes of
+	 * `native/protocol/project-url/cases.json`. Unset for every other error.
 	 */
-	constructor(message: string) {
+	readonly reason?: ProjectURLReason;
+
+	/**
+	 * @param message - Actionable detail, without the package prefix.
+	 * @param reason - The project URL reason code, for a refused `backendURL`.
+	 */
+	constructor(message: string, reason?: ProjectURLReason) {
 		super(`@c15t/react-native config plugin: ${message}`);
 		this.name = 'C15tPluginError';
+		this.reason = reason;
 	}
 }

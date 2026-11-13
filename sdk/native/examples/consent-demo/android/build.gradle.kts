@@ -4,7 +4,7 @@ android {
     compileSdk = 36
     defaultConfig { applicationId = "com.c15t.prototype.consent"; versionCode = 1; versionName = "1.0"; minSdk = 24; targetSdk = 36; testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
-    kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }
+    kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17); optIn.add("com.c15t.core.C15tInternalApi") } }
     buildFeatures { compose = true; buildConfig = true }
     sourceSets["main"].assets.srcDir("../fixtures")
 }

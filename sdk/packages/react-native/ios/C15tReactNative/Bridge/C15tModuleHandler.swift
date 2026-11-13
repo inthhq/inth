@@ -29,7 +29,7 @@ public struct C15tBridgeError: Error, Equatable, Sendable {
     /// found no backend at all.
     public static let notBootstrapped = C15tBridgeError(
         code: "C15T_NOT_BOOTSTRAPPED",
-        message: "c15t has no backend configured, so the consent core was not started. Set com.c15t.backend.url in Info.plist, or start the core yourself before React Native initializes. Check the console for a c15t configuration refusal if the key is already set."
+        message: "c15t has no usable configuration, so the consent core was not started. Set com.c15t.backend.url in Info.plist to your Inth project URL, such as https://your-project.inth.app, or install the core yourself before React Native initializes. If the key is set, the console line starting with c15t: says why it was refused."
     )
 
     /// The overrides document could not be read.

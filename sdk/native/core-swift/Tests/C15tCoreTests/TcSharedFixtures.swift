@@ -2,7 +2,7 @@ import CryptoKit
 import Foundation
 import XCTest
 
-@testable import C15tCore
+@_spi(C15tInternal) @testable import C15tCore
 
 /// One shared `tc-string` fixture, parsed.
 ///

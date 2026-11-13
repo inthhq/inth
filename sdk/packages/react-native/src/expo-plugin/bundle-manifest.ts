@@ -11,6 +11,8 @@ export type ManifestBuild = 'release' | 'debug';
 /** Validated `bundleManifest` settings. */
 export interface ResolvedBundleManifest {
 	readonly allowStaleManifest: boolean;
+	/** The build is a `dryRun` build, so the command takes the relaxed URL rule. */
+	readonly dryRun: boolean;
 	readonly expiresInDays: number | null;
 	readonly languages: readonly string[];
 	/** Where the fetched copy is kept, relative to the Expo project. */
@@ -93,6 +95,7 @@ export const manifestArguments = function manifestArguments(
 		out,
 		'--build',
 		build,
+		...(settings.dryRun ? ['--dry-run'] : []),
 		...(settings.allowStaleManifest ? ['--allow-stale-manifest'] : []),
 		...(settings.expiresInDays === null
 			? []
@@ -144,7 +147,7 @@ export const fetchBundledManifest = function fetchBundledManifest(
 				_reject(
 					new C15tPluginError(
 						`c15t mobile-manifest could not fetch the manifest for this ${build} build. ` +
-							'Connect the build to the backend, set bundleManifest.allowStaleManifest ' +
+							'Connect the build to the network, set bundleManifest.allowStaleManifest ' +
 							'to reuse the last fetched copy, or set C15T_MANIFEST_BUILD=debug for a debug build.'
 					)
 				);

@@ -39,7 +39,7 @@ Replace these values before building:
 
 | Value | Use |
 | --- | --- |
-| `backendURL` | The HTTPS URL from your Inth project, such as `https://your-project.inth.app`. |
+| `backendURL` | The project URL from your Inth dashboard, such as `https://your-project.inth.app`. The mobile SDKs work only with Inth, so prebuild refuses any other host. |
 | `consentCategories` | The categories your app uses, also configured in the project's policy. |
 | `androidMavenRepository.url` | The versioned repository supplied for your native artifacts. |
 | Maven environment variable names | Names available in your local and cloud build environments. Their values stay outside app configuration. |
@@ -53,6 +53,11 @@ If you keep `policyResource`, follow [offline policies](/docs/guides/mobile-offl
 to export `c15t-policy.json` beside `app.config.ts` before prebuild. This allows
 a fresh installation to resolve a conservative policy without a network
 connection. You can add it after the online path works.
+
+For development and CI, add `dryRun: true`. Consent works on the device and
+the app sends no consent records. A release build refuses to start c15t with
+it, so keep it out of release configuration. See
+[Use dryRun in development and CI](/docs/frameworks/react-native/configuration#use-dryrun-in-development-and-ci).
 
 The plugin configures native launch metadata, Android startup and internet
 permission, SDK floors and iOS privacy declarations. It also sets Google
@@ -235,9 +240,8 @@ Set the plugin's `iab` option to turn on IAB TCF. It takes your registered
 out of range. [Turn on IAB TCF](/docs/frameworks/react-native/configuration#turn-on-iab-tcf)
 lists the ranges and native keys.
 
-`iab` needs a backend mode with a `backendURL`, because a backend serves the
-Global Vendor List. Prebuild fails if you combine `iab` with
-`mode: 'offline'`.
+`iab` does not work with an in-code `policy`, because the Global Vendor List
+comes from your project's `/init` response. Prebuild fails if you set both.
 
 `vendors` narrows the disclosed vendor list; it does not turn IAB on. For
 publisher restrictions or custom purposes, use the

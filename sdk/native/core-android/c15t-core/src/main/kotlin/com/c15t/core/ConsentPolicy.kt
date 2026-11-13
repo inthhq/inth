@@ -78,14 +78,15 @@ data class PolicyRule(
 )
 
 /**
- * A policy kept in source control: the only policy source in no-backend mode.
+ * A policy kept in source control, resolved on the device.
  *
- * Pass it as `NativeConfig.policy` with no backend URL. The device has no geolocation
- * without a backend, so the `fallback` rule applies unless the app sets
- * `NativeConfig.overrides` country and region itself. Records stay on the device.
+ * Pass it as `NativeConfig.policy`. The core then never calls `/init`, so the device has
+ * no geolocation and the `fallback` rule applies unless the app sets
+ * `NativeConfig.overrides` country and region itself. Records still go to
+ * `NativeConfig.backendUrl`, or are dropped under `dryRun`.
  *
  * Rules are checked with the backend's authoring rules (`inspectPolicyRules` in
- * `@c15t/schema`), plus three no-backend limits: no `iab` model, a rule for an unknown
+ * `@c15t/schema`), plus three in-code limits: no `iab` model, a rule for an unknown
  * location, and a validity of at least one millisecond.
  *
  * @throws IllegalArgumentException when the policy breaks any of those rules.
@@ -160,7 +161,7 @@ class ConsentPolicy(val rules: List<PolicyRule>) {
 		 * array. `review` is ignored, as the backend never hashes it.
 		 *
 		 * @throws IllegalArgumentException for anything the backend would refuse, and for
-		 *   the fields no-backend mode does not support.
+		 *   the fields an in-code policy does not support.
 		 */
 		fun fromJson(json: String): ConsentPolicy {
 			val list = try {
@@ -184,7 +185,7 @@ class ConsentPolicy(val rules: List<PolicyRule>) {
 
 		private fun millis(days: Double?): Long = Math.round((days ?: DEFAULT_VALIDITY_DAYS) * DAY_MS)
 
-		/** The authoring rules `inspectPolicyRules` in `@c15t/schema` checks, plus the no-backend limits. */
+		/** The authoring rules `inspectPolicyRules` in `@c15t/schema` checks, plus the in-code limits. */
 		private fun validate(rule: PolicyRule) {
 			val label = "Policy '${rule.id}'"
 			require(rule.id.isNotBlank()) { "ConsentPolicy rule ids must not be blank" }
@@ -326,7 +327,7 @@ class ConsentPolicy(val rules: List<PolicyRule>) {
 
 		/**
 		 * The rule as a matched wire. Fingerprints hash the backend's fingerprint inputs on
-		 * the device: they never leave it in no-backend mode, so the encoding stays local.
+		 * the device, so the encoding stays local.
 		 */
 		private fun wire(rule: PolicyRule): JsonObject {
 			val inputs = fingerprintInputs(rule)

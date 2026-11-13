@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-@testable import C15tCore
+@_spi(C15tInternal) @testable import C15tCore
 
 /// Independent reference bytes from @iabtechlabtcf/core 1.5.22.
 final class IABAuthorityOracleTests: XCTestCase {

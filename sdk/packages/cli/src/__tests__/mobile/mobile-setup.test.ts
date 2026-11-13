@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -10,10 +10,9 @@ import {
 	ANDROID_META,
 	IOS_PLIST_KEY,
 } from '../../../../react-native/src/expo-plugin/constants';
-// The Expo plugin's own URL rules, which setup mirrors. Test-only, so the published
-// CLI takes no dependency on the private React Native package.
+// The Expo plugin's own rules, which setup has to agree with. Test-only, so the
+// published CLI takes no dependency on the private React Native package.
 import { resolveParams } from '../../../../react-native/src/expo-plugin/params';
-import { writePolicyRules } from '../../../../react-native/src/expo-plugin/policy-resource';
 import type { CliCommand, CliContext } from '../../context/types';
 import { runCli } from '../../index';
 import {
@@ -27,22 +26,21 @@ import {
 	expoPluginEntry,
 	activityEntry,
 	composeEntry,
+	infoPlistEntries,
+	androidManifestEntries,
 	KOTLIN_INSTALL_IMPORTS,
-	KOTLIN_OFFLINE_IMPORTS,
 	KOTLIN_PRIVACY_SETTINGS,
 	kotlinInstall,
-	kotlinOfflineInstall,
 	kotlinString,
 	mergeExpoAppJson,
 	providerImport,
 	SWIFT_PRIVACY_SETTINGS,
 	swiftConfiguration,
-	swiftOfflineInstall,
 	swiftString,
 	swiftUIEntry,
 	uiKitEntry,
 } from '../../mobile/scaffold';
-import { normalizeMobileURL, resolveMobileOptions } from '../../mobile/setup';
+import { readProjectURL, resolveMobileOptions } from '../../mobile/setup';
 import type { MobilePrompts, MobileSetupResult } from '../../mobile/setup';
 import { createCliLogger } from '../../utils/logger';
 
@@ -168,15 +166,13 @@ describe('the Expo plugin entry', () => {
 		privacyPolicyURL: 'https://example.com/privacy',
 	};
 
-	it('writes only what each mode takes', () => {
-		expect(
-			expoPluginEntry({
-				...base,
-				backendURL: 'https://a.inth.app',
-				bundleManifest: true,
-				mode: 'hosted',
-			})
-		).toEqual([
+	it('writes the project URL and the categories, and no mode', () => {
+		const entry = expoPluginEntry({
+			...base,
+			backendURL: 'https://a.inth.app',
+			bundleManifest: true,
+		});
+		expect(entry).toEqual([
 			EXPO_PLUGIN,
 			{
 				backendURL: 'https://a.inth.app',
@@ -185,17 +181,15 @@ describe('the Expo plugin entry', () => {
 			},
 		]);
 		expect(
-			expoPluginEntry({
-				...base,
-				backendURL: 'https://b.test',
-				mode: 'self-hosted',
-			})[1]
-		).toMatchObject({ mode: 'selfHosted' });
-		const [, offline] = expoPluginEntry({ ...base, mode: 'offline' });
-		expect(offline).not.toHaveProperty('backendURL');
-		expect(offline).toMatchObject({
-			mode: 'offline',
-			policy: { rules: [{ match: { fallback: true, isDefault: true } }] },
+			expoPluginEntry({ ...base, backendURL: 'https://a.inth.app' })[1]
+		).toEqual({
+			backendURL: 'https://a.inth.app',
+			consentCategories: ['necessary', 'measurement'],
+		});
+		// The plugin takes exactly what setup writes.
+		expect(resolveParams(entry[1] as never)).toMatchObject({
+			backendURL: 'https://a.inth.app',
+			dryRun: false,
 		});
 	});
 
@@ -205,7 +199,6 @@ describe('the Expo plugin entry', () => {
 		const entry = expoPluginEntry({
 			...base,
 			backendURL: 'https://a.inth.app',
-			mode: 'hosted',
 		});
 		const merged = mergeExpoAppJson(raw, entry, false) as string;
 		expect(JSON.parse(merged).expo.plugins).toEqual(['expo-router', entry]);
@@ -268,30 +261,6 @@ describe('c15t setup in a mobile project', () => {
 		expect(result.data.steps.join('\n')).toContain('-D @c15t/cli');
 	});
 
-	it('tells an Expo app in custom mode to install the engine itself', async () => {
-		const root = await project({ 'package.json': pkg({ expo: '57.0.0' }) });
-
-		const steps = (
-			await setup(root, ['custom', '--backend-url', 'https://a.test'])
-		).data.steps.join('\n');
-
-		expect(steps).toContain('Custom mode starts no consent engine at launch.');
-		expect(steps).toContain(
-			'"When your app owns native installation" in node_modules/@c15t/react-native/docs/frameworks/react-native/bare.md'
-		);
-		expect(
-			await readFile(
-				path.join(REPO, 'docs/frameworks/react-native/bare.mdx'),
-				'utf8'
-			)
-		).toContain('## When your app owns native installation');
-		// Other modes start the engine from the plugin, so they get no such step.
-		const hosted = (
-			await setup(root, ['--backend-url', 'https://a.test', '--overwrite'])
-		).data.steps.join('\n');
-		expect(hosted).not.toContain('Custom mode starts no consent engine');
-	});
-
 	it('prints the entry for a dynamic app config instead of editing it', async () => {
 		const root = await project({
 			'app.config.ts': 'export default {};\n',
@@ -299,7 +268,8 @@ describe('c15t setup in a mobile project', () => {
 		});
 
 		const result = await setup(root, [
-			'offline',
+			'--backend-url',
+			'acme.inth.app',
 			'--privacy-policy-url',
 			'https://example.com/privacy',
 		]);
@@ -311,6 +281,10 @@ describe('c15t setup in a mobile project', () => {
 		expect(result.data.steps[0]).toContain(
 			'Add this entry to "plugins" in app.config.ts'
 		);
+		expect(result.data.steps[0]).toContain(
+			'"backendURL": "https://acme.inth.app"'
+		);
+		expect(result.data.steps[0]).not.toContain('"mode"');
 		expect(result.data.steps.join('\n')).not.toContain('tarball');
 		expect(await readFile(path.join(root, 'app.config.ts'), 'utf8')).toBe(
 			'export default {};\n'
@@ -341,9 +315,8 @@ describe('c15t setup in a mobile project', () => {
 		await mkdir(path.join(root, 'src'));
 
 		const result = await setup(root, [
-			'self-hosted',
 			'--backend-url',
-			'https://consent.example.com',
+			'https://Acme.inth.app/',
 			'--dry-run',
 		]);
 
@@ -352,10 +325,15 @@ describe('c15t setup in a mobile project', () => {
 			'src/c15t/privacy-app.jsx',
 		]);
 		const steps = result.data.steps.join('\n');
-		expect(steps).toContain('<string>selfHosted</string>');
 		expect(steps).toContain(
-			'<meta-data android:name="com.c15t.BACKEND_URL" android:value="https://consent.example.com" />'
+			`<key>${IOS_PLIST_KEY.backendURL}</key>\n<string>https://acme.inth.app</string>`
 		);
+		expect(steps).toContain(
+			`<meta-data android:name="${ANDROID_META.backendUrl}" android:value="https://acme.inth.app" />`
+		);
+		// One mode, so no mode key on either platform.
+		expect(steps).not.toContain('com.c15t.backend.mode');
+		expect(steps).not.toContain('com.c15t.MODE');
 		expect(steps).toContain(
 			'android:value="necessary, measurement, marketing"'
 		);
@@ -367,64 +345,29 @@ describe('c15t setup in a mobile project', () => {
 		).rejects.toThrow();
 	});
 
-	it('sets up a bare React Native app for offline mode the way the Expo plugin does', async () => {
-		const root = await project({
-			'package.json': pkg({ 'react-native': '0.86.0' }),
-		});
-
-		const result = await setup(root, ['offline']);
-
-		expect(result.success).toBe(true);
-		const rulesPath = 'android/app/src/main/assets/c15t-policy-rules.json';
-		expect(result.data.files.map((file) => file.path)).toContain(rulesPath);
-		// Byte for byte what the plugin writes for the same rules, so both cores read it.
-		const pluginCopy = path.join(root, 'plugin-rules.json');
-		await writePolicyRules(
-			pluginCopy,
-			expoPluginEntry({
-				bundleManifest: false,
-				categories: DEFAULT_CATEGORIES,
-				mode: 'offline',
-				privacyPolicyURL: 'https://example.com/privacy',
-			})[1].policy.rules
-		);
-		expect(await readFile(path.join(root, rulesPath), 'utf8')).toBe(
-			await readFile(pluginCopy, 'utf8')
-		);
-		const steps = result.data.steps.join('\n');
-		expect(steps).toContain(`<key>${IOS_PLIST_KEY.policyRules}</key>`);
-		expect(steps).toContain(
-			'<key>com.c15t.backend.mode</key>\n<string>offline</string>'
-		);
-		expect(steps).toContain(
-			`android:name="${ANDROID_META.mode}" android:value="offline"`
-		);
-		expect(steps).toContain(
-			`android:name="${ANDROID_META.policyRules}" android:value="c15t-policy-rules.json"`
-		);
-		expect(steps).not.toContain(ANDROID_META.backendUrl);
-		expect(steps).not.toContain(IOS_PLIST_KEY.backendURL);
-		expect(steps).not.toContain('frameworks/react-native/configuration.md');
-	});
-
-	it('points a bare React Native app in custom mode at app-owned installation', async () => {
-		const root = await project({
-			'package.json': pkg({ 'react-native': '0.86.0' }),
-		});
-
-		const steps = (
-			await setup(root, [
-				'custom',
-				'--backend-url',
-				'https://a.test',
-				'--dry-run',
-			])
-		).data.steps.join('\n');
-
-		expect(steps).toContain(
-			'"When your app owns native installation" in node_modules/@c15t/react-native/docs/frameworks/react-native/bare.md'
-		);
-		expect(steps).not.toContain('frameworks/react-native/configuration.md');
+	it('prints only native keys the Expo plugin also writes', () => {
+		const options = {
+			backendURL: 'https://a.inth.app',
+			bundleManifest: false,
+			categories: DEFAULT_CATEGORIES,
+			privacyPolicyURL: PRIVACY_URL,
+		};
+		const plistKeys = [
+			...infoPlistEntries(options).matchAll(/<key>(?<key>[^<]+)<\/key>/gu),
+		].map((match) => match.groups?.key);
+		const metaNames = [
+			...androidManifestEntries(options).matchAll(
+				/android:name="(?<name>[^"]+)"/gu
+			),
+		].map((match) => match.groups?.name);
+		expect(plistKeys).toEqual([
+			IOS_PLIST_KEY.backendURL,
+			IOS_PLIST_KEY.categories,
+		]);
+		expect(metaNames).toEqual([
+			ANDROID_META.backendUrl,
+			ANDROID_META.categories,
+		]);
 	});
 
 	it('prints steps for Swift and Android apps and writes nothing', async () => {
@@ -465,7 +408,7 @@ describe('c15t setup in a mobile project', () => {
 			'consentCategories = listOf(ConsentCategory.NECESSARY, ConsentCategory.MEASUREMENT),'
 		);
 		expect(steps).toContain(
-			`.c15tConsent(\n        C15tAppleConfiguration(\n            transport: .hosted(URL(string: "https://a.inth.app")!),`
+			`.c15tConsent(\n        C15tAppleConfiguration(\n            backendURL: "https://a.inth.app",`
 		);
 		expect(steps).toContain(`privacyPolicyURL: URL(string: "${PRIVACY_URL}")!`);
 		expect(steps).toContain('ConsentRootViewController(');
@@ -475,28 +418,35 @@ describe('c15t setup in a mobile project', () => {
 		expect(steps).not.toContain('example.com/privacy');
 	});
 
-	it('refuses a positional mode that conflicts with --mode', async () => {
-		const root = await project({ 'package.json': pkg({ expo: '57.0.0' }) });
+	it.each([
+		['hosted', 'Hosted is the only one: remove it and keep --backend-url'],
+		['self-hosted', 'The mobile SDKs work only with Inth'],
+		['offline', 'Use dryRun: true for development and CI'],
+		['custom', 'set autoBootstrap to false in the Expo plugin'],
+	])(
+		'refuses the retired %s mode and names what replaces it',
+		async (mode, replacement) => {
+			const root = await project({ 'package.json': pkg({ expo: '57.0.0' }) });
 
-		const conflict = await setup(root, ['hosted', '--mode', 'offline']);
-		const agree = await setup(root, [
-			'offline',
-			'--mode',
-			'offline',
-			'--dry-run',
-		]);
-
-		expect(conflict.success).toBe(false);
-		expect(conflict.error?.message).toContain('conflicts with --mode');
-		expect(agree.success).toBe(true);
-		expect(agree.data.options.mode).toBe('offline');
-	});
+			for (const args of [[mode], ['--mode', mode]]) {
+				// oxlint-disable-next-line no-await-in-loop -- Two spellings.
+				const refused = await setup(root, [
+					...args,
+					'--backend-url',
+					'https://a.inth.app',
+				]);
+				expect(refused.success).toBe(false);
+				expect(refused.error?.code).toBe('FLAG_INVALID');
+				expect(refused.error?.message).toContain(replacement);
+			}
+		}
+	);
 
 	it('refuses missing or invalid answers without prompting', async () => {
 		const root = await project({ 'package.json': pkg({ expo: '57.0.0' }) });
 
 		expect((await setup(root, [])).error?.message).toContain('--backend-url');
-		const noPolicy = await run(root, ['--backend-url', 'https://a.test']);
+		const noPolicy = await run(root, ['--backend-url', 'https://a.inth.app']);
 		expect(noPolicy.error?.code).toBe('INPUT_REQUIRED');
 		expect(noPolicy.error?.message).toContain('--privacy-policy-url');
 		for (const url of [
@@ -507,30 +457,25 @@ describe('c15t setup in a mobile project', () => {
 			// oxlint-disable-next-line no-await-in-loop -- One URL at a time.
 			const refused = await setup(root, [
 				'--backend-url',
-				'https://a.test',
+				'https://a.inth.app',
 				'--privacy-policy-url',
 				url,
 			]);
 			expect(refused.error?.code, url).toBe('FLAG_INVALID');
 		}
 		expect(
-			(await setup(root, ['--backend-url', 'http://consent.example.com'])).error
-				?.message
-		).toContain('https');
+			(await setup(root, ['--backend-url', 'http://a.inth.app'])).error?.message
+		).toContain('the scheme must be https');
 		expect(
 			(
 				await setup(root, [
 					'--backend-url',
-					'https://a.test',
+					'https://a.inth.app',
 					'--categories',
 					'ads',
 				])
 			).error?.message
 		).toContain('Unknown categories: ads');
-		expect(
-			(await setup(root, ['offline', '--backend-url', 'https://a.test'])).error
-				?.message
-		).toContain('takes no --backend-url');
 	});
 });
 
@@ -562,8 +507,9 @@ describe('the provider import', () => {
 			'tsconfig.json': '{}',
 		});
 
-		const top = (await setup(root, ['--backend-url', 'https://a.test'])).data;
-		const inSrc = (await setup(nested, ['--backend-url', 'https://a.test']))
+		const top = (await setup(root, ['--backend-url', 'https://a.inth.app']))
+			.data;
+		const inSrc = (await setup(nested, ['--backend-url', 'https://a.inth.app']))
 			.data;
 
 		expect(top.files.map((file) => file.path)).toContain(
@@ -581,35 +527,16 @@ describe('the provider import', () => {
 	});
 });
 
-describe('offline setup in a Swift or Android app', () => {
-	it('prints the offline install, not a backend one', async () => {
-		const root = await project({ 'Package.swift': '', 'build.gradle.kts': '' });
-
-		const steps = (await setup(root, ['offline'])).data.steps.join('\n');
-
-		expect(steps).toContain(swiftOfflineInstall(DEFAULT_CATEGORIES));
-		expect(steps).toContain(kotlinOfflineInstall(DEFAULT_CATEGORIES));
-		expect(steps).not.toContain('backendURL:');
-		expect(steps).not.toContain('backendUrl = "');
-		expect(steps).not.toContain('your-project.inth.app');
-	});
-
+describe('the Swift and Kotlin the steps print', () => {
 	it('prints exactly the code the native tests compile', async () => {
 		const hosted = {
 			backendURL: 'https://your-project.inth.app',
 			bundleManifest: false,
 			categories: DEFAULT_CATEGORIES,
-			mode: 'hosted',
 			privacyPolicyURL: PRIVACY_URL,
 		} as const;
-		expect(swiftOfflineInstall(DEFAULT_CATEGORIES)).toBe(
-			await nativeSnippet(SWIFT_SNIPPETS, 'offline')
-		);
 		expect(swiftConfiguration(hosted)).toBe(
 			await nativeSnippet(SWIFT_SNIPPETS, 'hosted')
-		);
-		expect(kotlinOfflineInstall(DEFAULT_CATEGORIES)).toBe(
-			await nativeSnippet(KOTLIN_SNIPPETS, 'offline')
 		);
 		expect(kotlinInstall(hosted)).toBe(
 			await nativeSnippet(KOTLIN_SNIPPETS, 'hosted')
@@ -634,50 +561,11 @@ describe('offline setup in a Swift or Android app', () => {
 		);
 		const source = await readFile(path.join(REPO, KOTLIN_SNIPPETS), 'utf8');
 		// The test sits in com.c15t.android, so C15tAndroid needs no import there.
-		const imported = [
-			...KOTLIN_OFFLINE_IMPORTS,
-			...KOTLIN_INSTALL_IMPORTS,
-		].filter((entry) => entry !== 'com.c15t.android.C15tAndroid');
+		const imported = KOTLIN_INSTALL_IMPORTS.filter(
+			(entry) => entry !== 'com.c15t.android.C15tAndroid'
+		);
 		for (const entry of imported) {
 			expect(source).toContain(`import ${entry}\n`);
-		}
-	});
-
-	it('points custom mode at the custom transport guidance', async () => {
-		const root = await project({ 'Package.swift': '', 'settings.gradle': '' });
-
-		const steps = (
-			await setup(root, [
-				'custom',
-				'--backend-url',
-				'https://a.test',
-				'--categories',
-				'functionality',
-			])
-		).data.steps.join('\n');
-
-		expect(steps).toContain(
-			'"Use your own transport" in frameworks/swift/headless.mdx'
-		);
-		// The guidance examples hardcode or omit categories, so the steps carry the choice.
-		expect(steps).toContain(
-			'in the CoreConfig:\nconsentCategories: [.necessary, .functionality]\n'
-		);
-		expect(steps).toContain(
-			'in the NativeConfig:\nconsentCategories = listOf(ConsentCategory.NECESSARY, ConsentCategory.FUNCTIONALITY),\n'
-		);
-		expect(steps).toContain(
-			'"Use your own transport" in frameworks/android/configuration.mdx'
-		);
-		expect(steps).not.toContain('mobile-offline');
-		for (const page of [
-			'frameworks/swift/headless.mdx',
-			'frameworks/android/configuration.mdx',
-		]) {
-			// oxlint-disable-next-line no-await-in-loop -- Two pages.
-			expect(await readFile(path.join(REPO, 'docs', page), 'utf8')).toContain(
-				'## Use your own transport'
-			);
 		}
 	});
 });
@@ -686,20 +574,18 @@ describe('URLs in the printed Swift and Kotlin', () => {
 	it('are escaped as string literals, not pasted raw', async () => {
 		const root = await project({ 'Package.swift': '', 'build.gradle.kts': '' });
 
-		// `new URL` accepts the quote by percent-encoding it; `$` is valid in both URLs.
+		// `$` is valid in a URL and starts a template in Kotlin.
 		const steps = (
 			await setup(root, [
 				'--backend-url',
-				'https://example.com/"x$y',
+				'https://a.inth.app',
 				'--privacy-policy-url',
 				'https://app.example/a$b',
 			])
 		).data.steps.join('\n');
 
-		expect(steps).toContain(
-			'transport: .hosted(URL(string: "https://example.com/\\"x$y")!),'
-		);
-		expect(steps).toContain('backendUrl = "https://example.com/\\"x\\$y",');
+		expect(steps).toContain('backendURL: "https://a.inth.app",');
+		expect(steps).toContain('backendUrl = "https://a.inth.app",');
 		expect(steps).toContain(
 			'privacyPolicyURL: URL(string: "https://app.example/a$b")!'
 		);
@@ -707,7 +593,21 @@ describe('URLs in the printed Swift and Kotlin', () => {
 			'C15tConsent(privacyPolicyUrl = "https://app.example/a\\$b")'
 		);
 		expect(steps).toContain('attachConsent("https://app.example/a\\$b")');
-		expect(steps).not.toContain('"https://example.com/"x');
+	});
+
+	it('escape a quote and a dollar in a configuration value', () => {
+		const options = {
+			backendURL: 'https://example.com/"x$y',
+			bundleManifest: false,
+			categories: DEFAULT_CATEGORIES,
+			privacyPolicyURL: PRIVACY_URL,
+		};
+		expect(swiftConfiguration(options)).toContain(
+			'backendURL: "https://example.com/\\"x$y",'
+		);
+		expect(kotlinInstall(options)).toContain(
+			'backendUrl = "https://example.com/\\"x\\$y",'
+		);
 	});
 
 	it('escape backslashes and control characters too', () => {
@@ -741,7 +641,7 @@ describe('where setup looks for the project', () => {
 
 		const result = await setup(path.join(root, 'src/screens'), [
 			'--backend-url',
-			'https://a.test',
+			'https://a.inth.app',
 			'--dry-run',
 		]);
 
@@ -786,7 +686,7 @@ describe('where setup looks for the project', () => {
 		);
 		const result = await setup(path.join(swift, 'Sources/Feature'), [
 			'--backend-url',
-			'https://a.test',
+			'https://a.inth.app',
 		]);
 		expect(result.data.platform).toBe('native');
 		// Other commands still walk to the package above, as before.
@@ -806,52 +706,98 @@ describe('where setup looks for the project', () => {
 });
 
 describe('backend URLs', () => {
-	const cases = [
-		'https://your-project.inth.app',
-		'https://your-project.inth.app/',
-		'https://consent.example.com/api/c15t',
-		'  https://padded.example.com  ',
-		'http://localhost:8787',
-		'http://127.0.0.1:8787',
-		'http://[::1]:8787',
-		'http://consent.example.com',
-		'https://user:secret@consent.example.com',
-		'https://consent.example.com?tenant=a',
-		'https://consent.example.com#top',
-		'ftp://consent.example.com',
-		'not a url',
-	];
+	const fixture = JSON.parse(
+		readFileSync(
+			path.join(REPO, 'native/protocol/project-url/cases.json'),
+			'utf8'
+		)
+	) as {
+		strict: {
+			accept: { input: string; normalized: string }[];
+			reject: { input: string; reason: string }[];
+		};
+	};
 
-	it('are accepted and rejected exactly as the Expo plugin does', () => {
-		for (const value of cases) {
-			let plugin: string | null;
-			try {
-				plugin = resolveParams({ backendURL: value }).backendURL;
-			} catch {
-				plugin = null;
-			}
-			expect(normalizeMobileURL(value), value).toBe(plugin);
+	it('are normalised and refused exactly as the Expo plugin does', () => {
+		for (const { input, normalized } of fixture.strict.accept) {
+			expect(readProjectURL(input, '--backend-url'), input).toBe(normalized);
+			expect(resolveParams({ backendURL: input }).backendURL, input).toBe(
+				normalized
+			);
+		}
+		for (const { input, reason } of fixture.strict.reject) {
+			expect(() => readProjectURL(input, '--backend-url'), input).toThrow(
+				expect.objectContaining({
+					code: 'FLAG_INVALID',
+					context: expect.objectContaining({ reason }),
+				})
+			);
+			expect(() => resolveParams({ backendURL: input }), input).toThrow(
+				expect.objectContaining({ reason })
+			);
 		}
 	});
 
-	it('refuses credentials, a query and a fragment before writing app.json', async () => {
+	it('writes acme.inth.app as https://acme.inth.app', async () => {
 		const root = await project({
 			'app.json': '{"expo":{}}',
 			'package.json': pkg({ expo: '57.0.0' }),
 		});
 
-		for (const url of [
-			'https://u:p@a.test',
-			'https://a.test?x=1',
-			'https://a.test#y',
-		]) {
+		const result = await setup(root, ['--backend-url', ' Acme.inth.app/ ']);
+
+		expect(result.success).toBe(true);
+		expect(result.data.options.backendURL).toBe('https://acme.inth.app');
+		expect(
+			JSON.parse(await readFile(path.join(root, 'app.json'), 'utf8')).expo
+				.plugins[0][1].backendURL
+		).toBe('https://acme.inth.app');
+	});
+
+	it('refuses a URL that is not an Inth project before writing app.json', async () => {
+		const root = await project({
+			'app.json': '{"expo":{}}',
+			'package.json': pkg({ expo: '57.0.0' }),
+		});
+
+		for (const [url, detail] of [
+			[
+				'https://consent.example.com',
+				'the host must be a project host under inth.app',
+			],
+			['http://localhost:8787', 'the scheme must be https'],
+			['https://acme.inth.app/api/c15t', 'it must not have a path'],
+			['https://u:p@acme.inth.app', 'it must not carry a username or password'],
+			['https://acme.inth.app?x=1', 'it must not have a query or a fragment'],
+		] as const) {
 			// oxlint-disable-next-line no-await-in-loop -- One URL at a time.
 			const result = await setup(root, ['--backend-url', url]);
 			expect(result.success, url).toBe(false);
+			expect(result.error?.code, url).toBe('FLAG_INVALID');
+			expect(result.error?.message, url).toContain(
+				`--backend-url must be the project URL from your Inth dashboard, such as https://your-project.inth.app. Got "${url}": ${detail}.`
+			);
 		}
 		expect(await readFile(path.join(root, 'app.json'), 'utf8')).toBe(
 			'{"expo":{}}'
 		);
+	});
+
+	it('refuses the same URLs on every mobile platform', async () => {
+		const bare = await project({
+			'package.json': pkg({ 'react-native': '0.86.0' }),
+		});
+		const native = await project({ 'Package.swift': '', 'build.gradle': '' });
+
+		for (const root of [bare, native]) {
+			// oxlint-disable-next-line no-await-in-loop -- One project at a time.
+			const result = await setup(root, [
+				'--backend-url',
+				'https://consent.example.com',
+			]);
+			expect(result.success).toBe(false);
+			expect(result.error?.message).toContain('--backend-url must be');
+		}
 	});
 });
 
@@ -980,18 +926,13 @@ describe('the doc paths the steps print', () => {
 		});
 		const native = await project({ 'Package.swift': '', 'build.gradle': '' });
 		const steps = [
-			...(await setup(expo, ['--backend-url', 'https://a.test'])).data.steps,
-			...(await setup(bare, ['--backend-url', 'https://a.test', '--dry-run']))
-				.data.steps,
+			...(await setup(expo, ['--backend-url', 'https://a.inth.app'])).data
+				.steps,
 			...(
-				await setup(bare, [
-					'custom',
-					'--backend-url',
-					'https://a.test',
-					'--dry-run',
-				])
+				await setup(bare, ['--backend-url', 'https://a.inth.app', '--dry-run'])
 			).data.steps,
-			...(await setup(native, ['offline'])).data.steps,
+			...(await setup(native, ['--backend-url', 'https://a.inth.app'])).data
+				.steps,
 		].join('\n');
 
 		expect(steps).not.toContain('https://c15t.com/docs');

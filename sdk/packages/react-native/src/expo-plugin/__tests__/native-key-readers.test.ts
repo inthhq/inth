@@ -30,7 +30,7 @@ import { expect, it } from 'vitest';
 import { ANDROID_META, IOS_PLIST_KEY } from '../constants';
 import {
 	FIXTURE_DIR,
-	OFFLINE,
+	WITH_POLICY,
 	applyToFixture,
 	runInfoPlist,
 	runMod,
@@ -65,15 +65,16 @@ const C15T_KEY_PREFIX = 'com.c15t.';
 /**
  * The plugin parameters that make it write every key it owns.
  *
- * `custom` with `autoBootstrap: false` is what puts the opt-out key on disk;
- * `forceGPC` is the only other conditional write. Everything else is written
- * whenever it has a value, so one install covers the whole surface.
+ * `autoBootstrap: false` is what puts the opt-out key on disk; `forceGPC` and
+ * `dryRun` are the other conditional writes. `dryRun` also lets the URL be one
+ * a strict build refuses. Everything else is written whenever it has a value.
  */
 const EVERY_KEY_PROPS = {
 	autoBootstrap: false,
-	backendURL: 'https://consent.example.com',
+	backendURL: 'https://acme.inth.app',
 	consentCategories: ['necessary', 'functionality', 'measurement', 'marketing'],
 	domain: 'app.example.com',
+	dryRun: true,
 	forceGPC: true,
 	gpp: {
 		mspaMode: 'opt-out-option',
@@ -86,8 +87,6 @@ const EVERY_KEY_PROPS = {
 		consentScreen: 3,
 		publisherCountryCode: 'DE',
 	},
-	initURL: 'https://app.example.com/api/consent/init',
-	mode: 'custom',
 	policyResource: './c15t-policy.json',
 	vendors: [8, 42, 755],
 } as const;
@@ -156,11 +155,11 @@ const writtenKeys = async function writtenKeys(): Promise<{
 		// must not be allowed to filter it out of view here.
 		return Object.keys(plist).filter((key) => key.startsWith(C15T_KEY_PREFIX));
 	};
-	// No-backend mode writes the keys a backend build cannot: the two modes do
-	// not mix, so no single configuration writes every key.
-	const offline = applyToFixture(OFFLINE);
+	// An in-code policy does not mix with a bundled manifest, so no single
+	// configuration writes every key.
+	const inCode = applyToFixture(WITH_POLICY);
 	const ios = [
-		...new Set([...(await iosKeys(config)), ...(await iosKeys(offline))]),
+		...new Set([...(await iosKeys(config)), ...(await iosKeys(inCode))]),
 	].sort();
 
 	const androidKeys = async (
@@ -184,7 +183,7 @@ const writtenKeys = async function writtenKeys(): Promise<{
 	const android = [
 		...new Set([
 			...(await androidKeys(config)),
-			...(await androidKeys(offline)),
+			...(await androidKeys(inCode)),
 		]),
 	];
 

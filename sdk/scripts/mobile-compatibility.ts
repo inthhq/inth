@@ -93,7 +93,7 @@ function PrivacyStatus() {
 export const App = () => <ConsentProvider privacyPolicyURL="https://example.com/privacy"><PrivacyStatus /></ConsentProvider>;
 export const plugin: typeof withC15t = withC15t;
 export const configuration: C15tPluginProps = {
-	mode: 'offline',
+	backendURL: 'https://your-project.inth.app',
 	policy: {
 		rules: [
 			{ id: 'fallback', match: { fallback: true }, model: 'opt-in', prompt: 'choice' },
@@ -306,9 +306,9 @@ const main = function main(): void {
 							[
 								'@c15t/react-native/expo-plugin',
 								{
+									backendURL: 'https://your-project.inth.app',
 									consentCategories: ['necessary', 'measurement'],
-									mode: 'offline',
-									// Offline mode has no backend, so the policy is in code.
+									// The policy is in code, so the build needs no network.
 									policy: {
 										rules: [
 											{

@@ -19,12 +19,14 @@
 export const ANDROID_META = {
 	/** Present only when the host bootstraps the core itself. */
 	autoBootstrap: 'com.c15t.reactnative.AUTO_BOOTSTRAP',
-	/** c15t backend base URL, the value the core calls `backendUrl`. */
+	/** Inth project URL, the value the core calls `backendUrl`. */
 	backendUrl: 'com.c15t.BACKEND_URL',
 	/** Comma-separated category ids the app offers, read by `C15tAndroid`. */
 	categories: 'com.c15t.CATEGORIES',
 	/** Value sent as the `domain` field of `POST /subjects`. */
 	domain: 'com.c15t.BACKEND_DOMAIN',
+	/** `true` drops consent records instead of sending them. Debug builds only. */
+	dryRun: 'com.c15t.DRY_RUN',
 	/** Staged-build switch that forces GPC on. */
 	forceGpc: 'com.c15t.FORCE_GPC',
 	/** `true` turns on the IAB GPP string, read by `C15tAndroid.declaredGpp`. */
@@ -43,12 +45,8 @@ export const ANDROID_META = {
 	iabConsentScreen: 'com.c15t.IAB_CONSENT_SCREEN',
 	/** Two-letter publisher country code, required with the CMP ID. */
 	iabPublisherCountryCode: 'com.c15t.IAB_PUBLISHER_COUNTRY_CODE',
-	/** Overrides `${backendUrl}/init` for a proxied init route. */
-	initUrl: 'com.c15t.BACKEND_INIT_URL',
-	/** `offline` selects no-backend mode, read by `C15tAndroid.configFrom`. */
-	mode: 'com.c15t.MODE',
 	policyResource: 'com.c15t.POLICY_RESOURCE',
-	/** Asset path of the in-code policy, read in no-backend mode. */
+	/** Asset path of the in-code policy. */
 	policyRules: 'com.c15t.POLICY_RULES',
 	/**
 	 * Comma-separated IAB vendor ids the app may disclose, read by `C15tAndroid`.
@@ -64,12 +62,14 @@ export const ANDROID_META = {
 export const IOS_PLIST_KEY = {
 	/** Present only when the host bootstraps the core itself. */
 	autoBootstrap: 'com.c15t.reactnative.AutoBootstrap',
-	/** Hosted project URL or self-hosted base URL. */
+	/** Inth project URL. */
 	backendURL: 'com.c15t.backend.url',
 	/** Category id array the app offers, read by the iOS bridge. */
 	categories: 'com.c15t.categories',
 	/** Value sent as the `domain` field of `POST /subjects`. */
 	domain: 'com.c15t.backend.domain',
+	/** `true` drops consent records instead of sending them, as a real Boolean. */
+	dryRun: 'com.c15t.dryRun',
 	/** Staged-build switch that forces GPC on, as a real Boolean. */
 	forceGPC: 'com.c15t.forceGPC',
 	/** `true` turns on the IAB GPP string, as a real Boolean. */
@@ -88,13 +88,9 @@ export const IOS_PLIST_KEY = {
 	iabConsentScreen: 'com.c15t.iab.consentScreen',
 	/** Two-letter publisher country code. */
 	iabPublisherCountryCode: 'com.c15t.iab.publisherCountryCode',
-	/** Overrides `${backendURL}/init`, for a proxied init route. */
-	initURL: 'com.c15t.backend.initUrl',
 	policyResource: 'com.c15t.policy.resource',
-	/** Bundle filename of the in-code policy, read in offline mode. */
+	/** Bundle filename of the in-code policy. */
 	policyRules: 'com.c15t.policy.rules',
-	/** One of the iOS bridge's own `TransportMode` raw values. */
-	transportMode: 'com.c15t.backend.mode',
 	/**
 	 * Comma-separated IAB vendor ids the app may disclose, read by the iOS bridge.
 	 *
@@ -103,6 +99,21 @@ export const IOS_PLIST_KEY = {
 	 */
 	vendors: 'com.c15t.vendors',
 } as const;
+
+/**
+ * Meta-data names earlier versions wrote. The native cores refuse them, so
+ * prebuild removes them from a manifest that was not regenerated.
+ */
+export const RETIRED_ANDROID_META_KEYS: readonly string[] = [
+	'com.c15t.MODE',
+	'com.c15t.BACKEND_INIT_URL',
+];
+
+/** `Info.plist` keys earlier versions wrote, removed for the same reason. */
+export const RETIRED_IOS_PLIST_KEYS: readonly string[] = [
+	'com.c15t.backend.mode',
+	'com.c15t.backend.initUrl',
+];
 
 /** androidx.startup provider the app manifest declares. */
 export const ANDROID_STARTUP_PROVIDER =

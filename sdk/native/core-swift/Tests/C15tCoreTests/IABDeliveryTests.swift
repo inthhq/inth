@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-@testable import C15tCore
+@_spi(C15tInternal) @testable import C15tCore
 
 /// Delivery obligations survive local-authority invalidation.
 final class IABDeliveryTests: XCTestCase {

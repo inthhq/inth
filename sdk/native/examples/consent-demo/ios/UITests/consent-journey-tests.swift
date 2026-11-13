@@ -99,6 +99,8 @@ final class ConsentJourneyTests: XCTestCase {
     }
     func test21HostedSetupInstallsProtectedStorage() {
         app = XCUIApplication()
+        // dryRun in this Debug build accepts a host outside Inth and sends no record.
+        app.launchEnvironment = ["C15T_DEMO_DRY_RUN": "1"]
         app.launch()
         let backend = app.textFields["Inth project URL"]
         XCTAssertTrue(backend.waitForExistence(timeout: 5))

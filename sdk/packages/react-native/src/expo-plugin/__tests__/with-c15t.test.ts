@@ -16,7 +16,7 @@ import {
 	GOOGLE_CONSENT_PLIST_DEFAULTS,
 } from './helpers';
 
-const BACKEND = 'https://consent.example.com';
+const BACKEND = 'https://acme.inth.app';
 
 /**
  * Android's manifest placeholder for the application id, expanded when the
@@ -51,7 +51,6 @@ describe('withC15t standard install', () => {
 		expect(applied.ios?.infoPlist).toStrictEqual({
 			...GOOGLE_CONSENT_PLIST_DEFAULTS,
 			ITSAppUsesNonExemptEncryption: false,
-			'com.c15t.backend.mode': 'hosted',
 			'com.c15t.backend.url': BACKEND,
 		});
 	});
@@ -63,9 +62,8 @@ describe('withC15t standard install', () => {
 			c15t: {
 				backendURL: BACKEND,
 				domain: null,
+				dryRun: false,
 				enableAppTrackingTransparency: false,
-				initURL: null,
-				mode: 'hosted',
 				protocol: {
 					maxSupportedProtocolVersion: 1,
 					minSupportedProtocolVersion: 1,
@@ -134,7 +132,6 @@ describe('withC15t standard install', () => {
 		expect(applied.ios?.infoPlist).toStrictEqual({
 			...GOOGLE_CONSENT_PLIST_DEFAULTS,
 			ITSAppUsesNonExemptEncryption: false,
-			'com.c15t.backend.mode': 'hosted',
 			'com.c15t.backend.url': BACKEND,
 			'com.c15t.vendors': '755,42,8',
 		});
@@ -171,7 +168,6 @@ describe('withC15t standard install', () => {
 		expect(applied.ios?.infoPlist).toStrictEqual({
 			...GOOGLE_CONSENT_PLIST_DEFAULTS,
 			ITSAppUsesNonExemptEncryption: false,
-			'com.c15t.backend.mode': 'hosted',
 			'com.c15t.backend.url': BACKEND,
 			'com.c15t.iab.cmpId': 1234,
 			'com.c15t.iab.cmpVersion': 7,
@@ -229,7 +225,6 @@ describe('withC15t standard install', () => {
 		expect(applied.ios?.infoPlist).toStrictEqual({
 			...GOOGLE_CONSENT_PLIST_DEFAULTS,
 			ITSAppUsesNonExemptEncryption: false,
-			'com.c15t.backend.mode': 'hosted',
 			'com.c15t.backend.url': BACKEND,
 			'com.c15t.categories': [
 				'necessary',
@@ -314,7 +309,7 @@ describe('withC15t standard install', () => {
 		);
 
 		expect(xml).toContain(
-			'<meta-data android:name="com.c15t.BACKEND_URL" android:value="https://consent.example.com"/>'
+			'<meta-data android:name="com.c15t.BACKEND_URL" android:value="https://acme.inth.app"/>'
 		);
 		expect(xml).toContain(
 			'<uses-permission android:name="android.permission.INTERNET"/>'

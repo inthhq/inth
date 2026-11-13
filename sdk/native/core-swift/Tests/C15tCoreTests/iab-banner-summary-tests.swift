@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-@testable import C15tCore
+@_spi(C15tInternal) @testable import C15tCore
 
 /// The first-layer summary against the web's `resolveIABBannerSummary`, through
 /// `native/protocol/iab/banner-summary-*.json`. Regenerate the fixtures with

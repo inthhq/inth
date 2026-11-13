@@ -15,6 +15,9 @@ npx c15t setup --backend-url https://your-project.inth.app \
 	--privacy-policy-url https://your-app.example/privacy
 ```
 
+The mobile SDKs work only with Inth hosted projects, so mobile setup takes no
+mode. `--backend-url` is the project URL from your Inth dashboard.
+
 The mobile SDKs are a private prerelease. Install the `@c15t/react-native`
 tarball and get Maven access from your maintainer first.
 [Mobile availability](/docs/guides/mobile-status) covers distribution.
@@ -22,7 +25,7 @@ tarball and get Maven access from your maintainer first.
 | Project | Detected by | What setup does |
 | --- | --- | --- |
 | Expo | `expo` in `package.json` | Adds the config plugin entry to `app.json` and writes the provider file. |
-| Bare React Native | `react-native` without `expo` | Writes the provider file and prints the `Info.plist` and `AndroidManifest.xml` entries. Offline mode also writes the policy rules to `android/app/src/main/assets/c15t-policy-rules.json`, which the iOS target references. |
+| Bare React Native | `react-native` without `expo` | Writes the provider file and prints the `Info.plist` and `AndroidManifest.xml` entries. |
 | Swift | An Xcode project, workspace or `Package.swift`, with no `package.json` | Prints the package, products and the code that installs the engine and attaches the consent screens, for SwiftUI and UIKit. |
 | Android | A Gradle build, with no `package.json` | Prints the repository, dependencies and the code that installs the engine and attaches the consent screens, for Compose and for an Activity with views. |
 
@@ -31,7 +34,7 @@ prints those changes for you to make.
 
 ## What Expo setup writes
 
-The plugin entry carries the backend URL and the categories your app offers.
+The plugin entry carries the project URL and the categories your app offers.
 For example:
 
 ```json title="app.json"
@@ -67,17 +70,44 @@ native module.
 
 | Option | Purpose |
 | --- | --- |
-| `hosted`, `self-hosted`, `offline`, `custom` | The mode, as the first argument. Defaults to `hosted`. |
-| `--backend-url <url>` | The backend URL the app uses: https, or plain http on a loopback host, with no credentials, query or fragment. Required except in offline mode, which refuses it. |
+| `--backend-url <url>` | Required. The project URL from your Inth dashboard, such as `https://your-project.inth.app`. See [the project URL](#the-project-url). |
 | `--categories <list>` | Comma-separated categories the app offers. `necessary` is always included. Defaults to `measurement,marketing`. |
 | `--privacy-policy-url <url>` | Required. Your privacy policy, which the consent screens link to on every platform. It must be https with a DNS name or IPv4 host, as the iOS and Android screens require, so plain http is refused even on a loopback host. |
 | `--bundle-manifest` | Expo only: bundle the hosted policy at prebuild with [`c15t mobile-manifest`](/docs/cli/commands/mobile-manifest). |
 | `--overwrite` | Replace an existing c15t plugin entry and provider file. |
-| `--dry-run` | Show the files and steps without writing anything. |
+| `--dry-run` | Show the files and steps without writing anything. It does not turn on the SDK's `dryRun` option. |
 | `--json` | Print the result as JSON and turn off prompts. |
 
-Offline mode writes a policy with one rule that asks for a choice everywhere.
-For a Swift or Android app it prints the same rule as code, with the offline
-install. Replace it with your rules, as
-[define the policy in code](/docs/guides/mobile-offline#define-the-policy-in-code)
-describes.
+## The project URL
+
+Setup checks `--backend-url` with the rule the Expo plugin and the native SDKs
+apply, and writes its normal form, `https://your-project.inth.app`:
+
+- A missing scheme means `https`, so `your-project.inth.app` works.
+- Trailing slashes and surrounding whitespace are dropped, and the scheme and
+  host are lowercased.
+- Another host, `http`, a port, a path, a query, a fragment, or a username or
+  password is refused with `FLAG_INVALID`.
+
+The error quotes your value and names the rule it broke:
+
+{/* example: fragment */}
+
+```txt
+--backend-url must be the project URL from your Inth dashboard, such as https://your-project.inth.app. Got "https://consent.example.com": the host must be a project host under inth.app.
+```
+
+## Modes that no longer exist
+
+Mobile setup used to take a mode as its first argument or as `--mode`. It now
+refuses one and names the replacement:
+
+| Removed | Use instead |
+| --- | --- |
+| `hosted` | Remove it. Hosted is the only mode. |
+| `self-hosted` | Nothing. Pass your Inth project URL as `--backend-url`. |
+| `offline` | `dryRun: true` in the SDK configuration for development and CI. In production keep the project URL; a bundled manifest or an in-code policy covers a launch without network. |
+| `custom` | `autoBootstrap: false` in the Expo plugin, when the native app installs c15t itself. Custom transports are gone. |
+
+To keep policy rules in source control, see
+[define the policy in code](/docs/guides/mobile-offline#define-the-policy-in-code).

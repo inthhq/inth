@@ -1,5 +1,5 @@
 import Foundation
-import C15tCore
+@_spi(C15tInternal) import C15tCore
 
 // Measures the budgets in `native/CONTRACT.md` and prints numbers. Nothing here is
 // a claim: every line is a measured distribution, and a budget that is not met

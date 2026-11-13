@@ -1,6 +1,6 @@
 import Foundation
 import XCTest
-@testable import C15tCore
+@_spi(C15tInternal) @testable import C15tCore
 
 /// What a React Native screen drawing its own TCF UI is given and what its commit writes, under
 /// publisher restrictions and Google Additional Consent providers.

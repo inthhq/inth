@@ -36,14 +36,15 @@ Pick the path for your app. Each one turns GPP on with the defaults below.
 `Info.plist`, and `<meta-data android:name="com.c15t.GPP" android:value="true" />`
 to the `<application>` element of `AndroidManifest.xml`.
 
-**Swift.** Pass `GPPOptions` to `C15tAppleConfiguration(gpp:)`, or to
-`CoreConfig(gpp:)` when you build the core configuration yourself:
+**Swift.** Pass `GPPOptions` to `C15tAppleConfiguration(gpp:)`:
 
 {/* example: fragment */}
 
 ```swift
-var configuration = C15tAppleConfiguration(transport: .hosted(url))
-configuration.gpp = GPPOptions()
+let configuration = C15tAppleConfiguration(
+    backendURL: "https://your-project.inth.app",
+    gpp: GPPOptions()
+)
 ```
 
 **Kotlin.** Pass `GppOptions` in `NativeConfig`:

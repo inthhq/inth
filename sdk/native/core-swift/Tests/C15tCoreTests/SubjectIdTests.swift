@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-@testable import C15tCore
+@_spi(C15tInternal) @testable import C15tCore
 
 /// Subject id generation, pinned to the vectors the two native cores and the web SDK
 /// share, and to the regex the backend actually applies.

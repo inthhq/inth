@@ -32,11 +32,7 @@ import {
 } from './ios';
 import { resolveNativeUI, withC15tNativeUI } from './native-ui';
 import { resolveParams } from './params';
-import type {
-	C15tPluginProps,
-	ConsentProviderTransportKind,
-	ResolvedC15tParams,
-} from './params';
+import type { C15tPluginProps, ResolvedC15tParams } from './params';
 import {
 	embedPolicyResource,
 	androidPolicyDestination,
@@ -61,12 +57,10 @@ import type { WorkflowContext } from './workflow';
 
 /** What the plugin publishes under `extra.c15t`. */
 export interface C15tExtraConfig {
-	/** Transport mode in the spelling the JavaScript provider takes. */
-	mode: ConsentProviderTransportKind;
-	/** Backend base URL, or `null` when none is embedded. */
-	backendURL: string | null;
-	/** Init URL override, or `null`. */
-	initURL: string | null;
+	/** The Inth project URL, in its normal form. */
+	backendURL: string;
+	/** Whether consent records are dropped instead of sent. */
+	dryRun: boolean;
 	/** `domain` sent on subject writes, or `null`. */
 	domain: string | null;
 	/** Whether the binary carries the App Tracking Transparency keys. */
@@ -81,11 +75,28 @@ const buildExtra = function buildExtra(
 	return {
 		backendURL: params.backendURL,
 		domain: params.domain,
+		dryRun: params.dryRun,
 		enableAppTrackingTransparency: params.appTrackingTransparency.enabled,
-		initURL: params.initURL,
-		mode: params.providerMode,
 		protocol: buildProtocolInfo(),
 	};
+};
+
+let warnedAboutDryRun = false;
+
+/**
+ * Say once per prebuild that this build is a dry run. Prebuild cannot see the
+ * build type, so it writes the flag and native code refuses it in a release.
+ */
+const warnAboutDryRun = function warnAboutDryRun(): void {
+	if (warnedAboutDryRun) {
+		return;
+	}
+	warnedAboutDryRun = true;
+	console.warn(
+		'c15t: dryRun is on. Consent records are dropped, not sent, and a ' +
+			'release build will refuse to start c15t. Remove dryRun before you ' +
+			'build a release.'
+	);
 };
 
 const resolveProjectRoot = function resolveProjectRoot(
@@ -160,6 +171,9 @@ export const applyParamsOnConfig = function applyParamsOnConfig(
 	context: Partial<WorkflowContext> = {}
 ): ExportedConfig {
 	const params = resolveParams(props);
+	if (params.dryRun) {
+		warnAboutDryRun();
+	}
 	const theme = resolveTheme(props?.theme);
 	const nativeUI = resolveNativeUI(props?.nativeUI, props?.theme);
 
@@ -230,7 +244,7 @@ export const applyParamsOnConfig = function applyParamsOnConfig(
 		// removed rather than shipped: reusing an old copy is what
 		// allowStaleManifest is for, and then the fetch leaves that copy in place.
 		const ready = async (projectRoot: string): Promise<boolean> => {
-			if (bundle === null || params.backendURL === null) {
+			if (bundle === null) {
 				return true;
 			}
 			await fetchBundledManifest(projectRoot, params.backendURL, bundle, build);

@@ -1,11 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import { C15tPluginError } from '../errors';
-import { TRANSPORT_MODES, resolveParams } from '../params';
+import { resolveParams } from '../params';
 import type { C15tIabPluginProps } from '../params';
-import { OFFLINE } from './helpers';
 
-const BACKEND = 'https://consent.example.com';
+const BACKEND = 'https://acme.inth.app';
 
 describe('resolveParams', () => {
 	it('defaults a hosted install', () => {
@@ -16,60 +15,125 @@ describe('resolveParams', () => {
 				usageDescription: null,
 			},
 			autoBootstrap: true,
-			backendHost: 'consent.example.com',
+			backendHost: 'acme.inth.app',
 			backendURL: BACKEND,
 			domain: null,
+			dryRun: false,
 			forceGPC: false,
-			initURL: null,
-			mode: 'hosted',
-			providerMode: 'hosted',
 			skipNativeBuildCheck: false,
 		});
 	});
 
-	it('trims trailing slashes and keeps a base path', () => {
-		expect(
-			resolveParams({ backendURL: 'https://consent.example.com/c15t///' })
-				.backendURL
-		).toBe('https://consent.example.com/c15t');
-	});
-
-	it('accepts plain http on a loopback backend', () => {
-		expect(
-			resolveParams({ backendURL: 'http://localhost:8787' }).backendURL
-		).toBe('http://localhost:8787');
+	it('writes the project URL in its normal form', () => {
+		expect(resolveParams({ backendURL: ' Acme.Inth.App/// ' })).toMatchObject({
+			backendHost: 'acme.inth.app',
+			backendURL: BACKEND,
+		});
 	});
 
 	it.each([
-		['a bare host', 'consent.example.com'],
-		['plain http off loopback', 'http://consent.example.com'],
-		['credentials', 'https://user:pass@consent.example.com'],
-		['a query string', `${BACKEND}?key=leaked`],
-		['a fragment', `${BACKEND}#fragment`],
-		['an empty string', ''],
-	])('rejects %s: %s', (_label, value) => {
-		expect(() => resolveParams({ backendURL: value })).toThrowError(
-			C15tPluginError
+		[
+			'a host that is not an Inth project',
+			'https://consent.example.com',
+			'host',
+		],
+		['plain http', 'http://acme.inth.app', 'scheme'],
+		['a loopback backend', 'http://localhost:8787', 'scheme'],
+		['a path', `${BACKEND}/api/c15t`, 'path'],
+		['a port', `${BACKEND}:8443`, 'port'],
+		['credentials', 'https://user:pass@acme.inth.app', 'credentials'],
+		['a query string', `${BACKEND}?key=leaked`, 'query'],
+		['an empty string', '', 'empty'],
+	])('rejects %s: %s', (_label, value, reason) => {
+		const refused = () => resolveParams({ backendURL: value });
+		expect(refused).toThrowError(C15tPluginError);
+		expect(refused).toThrowError(
+			expect.objectContaining({
+				message: expect.stringContaining(
+					`backendURL must be the project URL from your Inth dashboard, such as https://your-project.inth.app. Got "${value}": `
+				),
+				reason,
+			})
 		);
 	});
 
-	it('requires a backend for every mode but offline', () => {
-		for (const mode of TRANSPORT_MODES) {
-			if (mode === 'offline') {
-				continue;
-			}
-			expect(() => resolveParams({ mode })).toThrowError(
-				/backendURL is required/u
-			);
-		}
-
-		expect(resolveParams(OFFLINE).backendURL).toBeNull();
+	it('requires backendURL', () => {
+		expect(() => resolveParams({} as never)).toThrowError(
+			/backendURL is required/u
+		);
+		expect(() => resolveParams({ dryRun: true } as never)).toThrowError(
+			/backendURL is required/u
+		);
 	});
 
-	it('rejects an unknown mode with the list of real ones', () => {
+	it.each([
+		['hosted', /Hosted is the only mode: remove mode and keep backendURL/u],
+		['selfHosted', /has no replacement\. The mobile SDKs work only with Inth/u],
+		['offline', /Use dryRun: true for development and CI/u],
+		['custom', /Set autoBootstrap to false/u],
+		['proxied', /mode was removed; got "proxied"/u],
+	])(
+		'refuses the retired mode %s and names what replaces it',
+		(mode, message) => {
+			const refused = () =>
+				resolveParams({ backendURL: BACKEND, mode } as never);
+			expect(refused).toThrowError(C15tPluginError);
+			expect(refused).toThrowError(message);
+		}
+	);
+
+	it('refuses the retired initURL and says where policy comes from', () => {
 		expect(() =>
-			resolveParams({ backendURL: BACKEND, mode: 'proxied' as never })
-		).toThrowError(/must be one of custom, hosted, offline, selfHosted/u);
+			resolveParams({
+				backendURL: BACKEND,
+				initURL: `${BACKEND}/init`,
+			} as never)
+		).toThrowError(/initURL was removed.*Policy is fetched from backendURL/u);
+	});
+
+	describe('dryRun', () => {
+		it('is off unless set, and must be a boolean', () => {
+			expect(resolveParams({ backendURL: BACKEND }).dryRun).toBe(false);
+			expect(resolveParams({ backendURL: BACKEND, dryRun: true }).dryRun).toBe(
+				true
+			);
+			expect(() =>
+				resolveParams({ backendURL: BACKEND, dryRun: 'yes' as never })
+			).toThrowError(/dryRun must be true or false/u);
+		});
+
+		it.each([
+			['http://localhost:8787', 'http://localhost:8787', 'localhost'],
+			[
+				'http://127.0.0.1:3000/api/self-host/',
+				'http://127.0.0.1:3000/api/self-host',
+				'127.0.0.1',
+			],
+			[
+				'https://staging.consent.example.com/',
+				'https://staging.consent.example.com',
+				'staging.consent.example.com',
+			],
+		])('relaxes the host rule: %s', (value, backendURL, backendHost) => {
+			expect(resolveParams({ backendURL: value, dryRun: true })).toMatchObject({
+				backendHost,
+				backendURL,
+			});
+			expect(() => resolveParams({ backendURL: value })).toThrowError(
+				C15tPluginError
+			);
+		});
+
+		it('still refuses http off loopback and credentials', () => {
+			for (const [value, reason] of [
+				['http://staging.consent.example.com', 'scheme'],
+				['https://user:secret@consent.example.com', 'credentials'],
+			]) {
+				expect(() =>
+					resolveParams({ backendURL: value as string, dryRun: true })
+				).toThrowError(expect.objectContaining({ reason }));
+			}
+		});
 	});
 
 	it('defaults to no declared category scope', () => {
@@ -234,38 +298,19 @@ describe('resolveParams', () => {
 			privacyTrackingDomains: [
 				'ADS.example.com',
 				'ads.example.com',
-				'consent.example.com',
+				'acme.inth.app',
 			],
 			trackingUsageDescription: 'Relevant ads.',
 		});
 
 		expect(resolved.privacyTrackingDomains).toStrictEqual([
 			'ads.example.com',
-			'consent.example.com',
+			'acme.inth.app',
 		]);
 	});
 
-	it('has no backend host to default tracking domains to when offline', () => {
-		const resolved = resolveParams({
-			enableAppTrackingTransparency: true,
-			...OFFLINE,
-			trackingUsageDescription: 'Relevant ads.',
-		});
-
-		expect(resolved.privacyTrackingDomains).toStrictEqual([]);
-	});
-
-	it('lets the host override the auto-bootstrap default in either direction', () => {
-		expect(
-			resolveParams({ backendURL: BACKEND, mode: 'custom' }).autoBootstrap
-		).toBe(false);
-		expect(
-			resolveParams({
-				autoBootstrap: true,
-				backendURL: BACKEND,
-				mode: 'custom',
-			}).autoBootstrap
-		).toBe(true);
+	it('starts the core at launch unless the native app installs it', () => {
+		expect(resolveParams({ backendURL: BACKEND }).autoBootstrap).toBe(true);
 		expect(
 			resolveParams({ autoBootstrap: false, backendURL: BACKEND }).autoBootstrap
 		).toBe(false);

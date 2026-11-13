@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-@testable import C15tCore
+@_spi(C15tInternal) @testable import C15tCore
 
 /// A publisher's declared vendor scope, taken from ``CoreConfig/vendors`` through the kernel.
 ///

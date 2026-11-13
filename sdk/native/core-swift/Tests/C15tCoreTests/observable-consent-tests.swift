@@ -3,7 +3,7 @@ import Combine
 import Foundation
 import Observation
 import XCTest
-@testable import C15tCore
+@_spi(C15tInternal) @testable import C15tCore
 
 /// The observable models: they follow the core with no observer code in the app, and
 /// every update reaches the main thread.

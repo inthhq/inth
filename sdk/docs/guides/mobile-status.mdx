@@ -42,6 +42,11 @@ Its iOS pod includes the native Swift sources. Its Android bridge resolves the
 native version pinned by that package. The npm version and native version can
 differ; keep the adapter's selected native version.
 
+All four work only with Inth hosted projects. Each takes the project URL from
+your Inth dashboard, such as `https://your-project.inth.app`, and refuses any
+other host. There is no self-hosted backend and no mode without a backend on
+mobile. The web packages keep their self-hosting and browser-only modes.
+
 Public npm, Maven Central and tagged SwiftPM installation instructions will
 replace these private setup steps after publication and clean registry installs
 are verified. Do not substitute a similarly named public package.
@@ -50,7 +55,9 @@ are verified. Do not substitute a similarly named public package.
 
 The implementation includes native category consent, notice acknowledgement,
 TCF choices, Additional Consent v2, protected platform storage, SDK gates,
-offline policy resources and SwiftUI/Compose presenters. The RN adapter exposes
+bundled policy manifests and in-code policies for a first launch without
+network, queued delivery after reconnecting, a `dryRun` switch for development
+and CI, and SwiftUI/Compose presenters. The RN adapter exposes
 category commands, hooks and native presenter sessions. The Expo plugin and
 bare RN metadata configure category startup and IAB CMP identity and publisher
 country during native builds.

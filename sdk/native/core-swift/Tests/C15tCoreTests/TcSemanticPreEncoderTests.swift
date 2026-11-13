@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-@testable import C15tCore
+@_spi(C15tInternal) @testable import C15tCore
 
 /// The vendor-validity pass the encoder runs before a bit is written, graded one rule at
 /// a time.

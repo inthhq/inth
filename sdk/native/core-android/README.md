@@ -39,6 +39,15 @@ instructions.
 
 ## Consent and IAB authority
 
+The Android SDK works only with the Inth hosted service. `NativeConfig.backendUrl`
+(or `com.c15t.BACKEND_URL` meta-data) is the project URL from the Inth dashboard,
+such as `https://your-project.inth.app`. `C15tAndroid.install` throws on any other
+value; the manifest path logs the reason and leaves the engine uninstalled.
+
+`NativeConfig.dryRun` (or `com.c15t.DRY_RUN`) is for development and CI. Prompts,
+storage, gating and consent signals work as normal, and consent records and
+identity calls are dropped. An app that is not debuggable refuses it.
+
 `C15tAndroid.install` installs and hydrates the process's native engine. Read
 `C15t.current` to access it. The facade's `snapshot`, `isAllowed`, `decision` and
 `isReady` methods read cached state without network or storage work.

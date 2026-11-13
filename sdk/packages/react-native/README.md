@@ -26,7 +26,7 @@ c15t is used by [2,100+ sites](https://www.wappalyzer.com/technologies/cookie-co
 - React >=19.2.0 <19.4.0, using the version prescribed by your React Native or Expo release
 - iOS 16.4 or newer and Android `minSdk` 24. Android needs JDK 17 and `compileSdk` 36, or 37 for RN 0.87, RN 0.88 and Expo 58
 - Expo SDK 55 through 58 requires a custom native build. Expo Go cannot load this package's native module
-- An Inth hosted project URL, such as https://your-project.inth.app. Advanced self-hosted deployments remain supported.
+- The project URL from your Inth dashboard, such as https://your-project.inth.app. The mobile SDK works only with Inth hosted projects
 
 ## Installation
 
@@ -70,9 +70,9 @@ Start with the guide for your app. The package also includes version-matched Mar
 
 Native IAB and Additional Consent APIs do not establish IAB registration, Google certification or AdMob interoperability. Vendor scope alone is not approved CMP configuration: set the Expo plugin's `iab` option, or the matching native metadata in bare RN, with your registered CMP ID, CMP version and publisher country code. There is no default CMP ID. ATT is a separate platform permission and never grants consent. Keep an ad integration disabled until its actual SDK, policy and certification requirements are verified.
 
-## Self-hosted and headless integration
+## Inth hosted only, with dryRun for development
 
-Hosted Inth is the recommended starting point. The existing self-hosted transports, native installation APIs, React components and headless hooks remain available. Browser script-loader and CSS APIs are not native SDK gates.
+The mobile SDK works only with Inth hosted projects. Set `backendURL` to the project URL from your Inth dashboard; prebuild and native startup refuse any other host. There is no `mode`, `initURL`, self-hosted backend or custom transport. A bundled manifest or an in-code `policy` covers a first launch without network, and queued records deliver after reconnecting. `dryRun: true` is for development and CI: consent works on the device and no consent record is sent. A release build refuses to start c15t with it. Set `autoBootstrap: false` when your native app installs the engine itself. The React components and headless hooks work the same either way. Browser script-loader and CSS APIs are not native SDK gates. See [configuration](https://c15t.com/docs/frameworks/react-native/configuration).
 
 ## First release scope
 

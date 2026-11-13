@@ -1,6 +1,6 @@
 import Foundation
 import XCTest
-@testable import C15tCore
+@_spi(C15tInternal) @testable import C15tCore
 
 /// The native SDK gate: what ``ConsentDecision`` means, and the two rules it is derived
 /// from. Half of these tests are the pure derivation over hand-built snapshots, because
@@ -111,7 +111,7 @@ final class ConsentDecisionTests: XCTestCase {
         let core = ConsentCore()
         await core.bootstrapAndSettle(Fixture.configured(
             store: store,
-            transport: OfflineTransport(),
+            transport: UnreachableTransport(),
             clock: clock
         ))
 
@@ -313,7 +313,7 @@ final class ConsentDecisionTests: XCTestCase {
         let core = ConsentCore()
         await core.bootstrapAndSettle(Fixture.configured(
             store: store,
-            transport: OfflineTransport(),
+            transport: UnreachableTransport(),
             clock: clock
         ))
 

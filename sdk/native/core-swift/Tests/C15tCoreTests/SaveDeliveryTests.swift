@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-@testable import C15tCore
+@_spi(C15tInternal) @testable import C15tCore
 
 /// What a save promises, and whether the core keeps that promise.
 ///
@@ -200,8 +200,8 @@ final class SaveDeliveryTests: XCTestCase {
     ///
     /// The entry stays queued for whichever launch finally has a transport, which is
     /// right, and invisible from `CommitResult`, which is not. Reached the way a host
-    /// actually reaches it: a policy resolved on an earlier launch, then a launch with
-    /// `com.c15t.backend.mode` set to `none`.
+    /// actually reaches it: a policy resolved on an earlier launch, then a launch whose
+    /// configuration has no transport.
     func testSaveWithoutATransportReportsTheUndeliveredObligation() async {
         let first = await bootstrappedCore()
         http.setSavesFail(true)

@@ -15,7 +15,7 @@ class ArtifactTest {
             load(requireNotNull(ArtifactTest::class.java.getResourceAsStream("/META-INF/c15t/c15t-core.properties")))
         }
         assertEquals(expected, metadata.getProperty("version"))
-        assertEquals(expected, NativeConfig("https://consent.example.com").sdkVersion)
+        assertEquals(expected, NativeConfig("https://your-project.inth.app").sdkVersion)
         assertEquals(expected, C15tProtocol.protocolHeaders()[C15tProtocol.VERSION_HEADER])
         assertEquals("android->$expected", C15tProtocol.protocolHeaders(platform = C15tProtocol.PLATFORM_ANDROID)[C15tProtocol.PLATFORM_HEADER])
         assertFalse(C15t.isAllowed(ConsentCategory.MARKETING))

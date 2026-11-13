@@ -25,7 +25,7 @@ const NATIVE_ROOT = resolve(
 	'../../../../../native'
 );
 
-const BACKEND = 'https://consent.example.com';
+const BACKEND = 'https://acme.inth.app';
 
 /** A theme that sets every field the prop accepts. */
 const FULL_THEME: C15tThemePluginProps = {

@@ -11,12 +11,11 @@
       android:theme="@style/AppTheme"
       android:usesCleartextTraffic="${usesCleartextTraffic}"
       android:supportsRtl="true">
-      <!-- c15t native core configuration. Android infers the transport from
-           which keys are present, so there is no mode key here the way iOS has
-           one. Absent means "not configured".
+      <!-- c15t native core configuration. Absent means "not configured".
 
-             com.c15t.BACKEND_URL      required: the backend base URL
-             com.c15t.BACKEND_INIT_URL        init-route override for a proxy
+             com.c15t.BACKEND_URL      required: the Inth project URL
+             com.c15t.DRY_RUN                 true drops records, for development and
+                                      CI; refused unless the app is debuggable
              com.c15t.BACKEND_DOMAIN          domain sent on subject writes
              com.c15t.CATEGORIES      comma-separated category scope the app
                                       offers; iOS spells this the

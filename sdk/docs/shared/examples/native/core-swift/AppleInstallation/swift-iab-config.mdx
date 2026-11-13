@@ -6,21 +6,18 @@ import C15tCore
 import Foundation
 
 func installIABConsent(
-    backendURL: URL,
+    backendURL: String,
     cmpID: Int,
     cmpVersion: Int,
     publisherCountryCode: String
 ) throws -> ConsentCore {
-    let platform = C15tAppleConfiguration(transport: .hosted(backendURL))
-    return try C15tApple.install(CoreConfig(
-        store: try platform.storage.makeStore(),
-        transport: try platform.makeTransport(),
+    try C15tApple.install(C15tAppleConfiguration(
+        backendURL: backendURL,
         iab: IABConfiguration(
             cmpId: cmpID,
             cmpVersion: cmpVersion,
             publisherCountryCode: publisherCountryCode
-        ),
-        storageBus: UserDefaultsStorageBus()
+        )
     ))
 }
 ```

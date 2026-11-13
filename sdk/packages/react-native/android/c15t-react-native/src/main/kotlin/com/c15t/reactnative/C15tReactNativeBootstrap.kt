@@ -13,7 +13,7 @@ import java.util.Locale
 /**
  * Starts the consent core, once, ahead of the React host.
  *
- * Hydration is the reason this exists as its own step: [C15t.bootstrap] reads the
+ * Hydration is the reason this exists as its own step: the core's bootstrap reads the
  * stored envelope synchronously before it puts anything on a worker thread, so a
  * launch hook that runs here means the first JavaScript frame already resolves
  * `getBootstrap()` and `getSnapshot()` against real stored consent instead of an
@@ -21,7 +21,7 @@ import java.util.Locale
  *
  * An app that installs the core itself sets `com.c15t.reactnative.AUTO_BOOTSTRAP` to
  * `false`, and this then stays out of the way: the reads answer deny-all until that
- * app calls [C15t.bootstrap], and the module keeps working against whatever core is
+ * app calls [C15tAndroid.install], and the module keeps working against whatever core is
  * installed.
  */
 object C15tReactNativeBootstrap {
@@ -42,6 +42,9 @@ object C15tReactNativeBootstrap {
 		if (!autoBootstrapEnabled(context)) {
 			return false
 		}
+		// `configFrom` applies the start-time rules: a retired key, a URL that is not an Inth
+		// project URL, or dryRun in a release build is logged there and reads as nothing
+		// declared. JavaScript then hears `C15tPayload.MESSAGE_NOT_BOOTSTRAPPED`.
 		val config = C15tAndroid.configFrom(context)?.withDeviceLanguage()?.forReactNative() ?: return false
 		synchronized(lock) {
 			if (C15t.current != null) {

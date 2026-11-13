@@ -1,5 +1,7 @@
-import C15tApple
-import C15tCore
+// The Debug fixture scenarios inject an HTTP peer and a fault store, which is the
+// SDK's internal API. An app imports these modules plainly and passes a project URL.
+@_spi(C15tInternal) import C15tApple
+@_spi(C15tInternal) import C15tCore
 import C15tConsentUI
 import SwiftUI
 
@@ -47,12 +49,23 @@ final class DemoSession: ObservableObject {
     @Published private(set) var reviewReconnect = false
     @Published private(set) var consentUIEnabled = true
 
+    /// Debug builds only: `C15T_DEMO_DRY_RUN=1` drops consent records and lets the
+    /// project URL be any https host. A release build refuses dryRun.
+    nonisolated static var dryRun: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.environment["C15T_DEMO_DRY_RUN"] == "1"
+        #else
+        return false
+        #endif
+    }
+
     func start(url: String? = nil, policy: String? = nil, localScenario: String? = nil, review: IABReviewProfile? = nil, inspectBeforeShowingConsent: Bool = false) async {
         guard !started && !starting else { return }
         starting = true
         setupError = nil
         defer { starting = false }
         let env = ProcessInfo.processInfo.environment
+        let dryRun = Self.dryRun
         do {
             let core: ConsentCore
             if let scenario = localScenario ?? env["C15T_FIXTURE_SCENARIO"] {
@@ -96,13 +109,12 @@ final class DemoSession: ObservableObject {
                 if let review = review ?? savedReview {
                     let service = (Bundle.main.bundleIdentifier ?? "com.c15t.prototype.consent") + ".iab-review"
                     core = try await Task.detached {
-                        let platform = C15tAppleConfiguration(transport: .hosted(review.backendURL), storage: .keychain(service: service))
-                        return try C15tApple.install(CoreConfig(
-                            store: platform.storage.makeStore(), transport: platform.makeTransport(),
+                        try C15tApple.install(C15tAppleConfiguration(
+                            backendURL: review.backendURL.absoluteString, dryRun: dryRun,
+                            storage: .keychain(service: service),
                             consentCategories: [.necessary, .functionality, .experience, .measurement, .marketing],
                             vendors: review.vendorIDs,
-                            iab: IABConfiguration(cmpId: review.cmpId, cmpVersion: review.cmpVersion, publisherCountryCode: review.publisherCountry),
-                            storageBus: UserDefaultsStorageBus()))
+                            iab: IABConfiguration(cmpId: review.cmpId, cmpVersion: review.cmpVersion, publisherCountryCode: review.publisherCountry)))
                     }.value
                     self.policyURL = review.privacyPolicyURL
                     reviewProfile = review
@@ -115,7 +127,7 @@ final class DemoSession: ObservableObject {
                     guard let backend = URL(string: raw), backend.scheme == "https", backend.host != nil,
                         let policyURL = URL(string: privacy), policyURL.scheme == "https", policyURL.host != nil else { return }
                     self.policyURL = policyURL
-                    let config = C15tAppleConfiguration(transport: .hosted(backend), consentCategories: [.necessary, .functionality, .experience, .measurement, .marketing])
+                    let config = C15tAppleConfiguration(backendURL: backend.absoluteString, dryRun: dryRun, consentCategories: [.necessary, .functionality, .experience, .measurement, .marketing])
                     core = try await Task.detached { try C15tApple.install(config) }.value
                 }
             }

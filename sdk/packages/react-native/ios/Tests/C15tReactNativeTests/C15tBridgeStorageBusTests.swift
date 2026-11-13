@@ -1,5 +1,5 @@
-import C15tCore
-import C15tReactNativeBridge
+@_spi(C15tInternal) import C15tCore
+@_spi(C15tInternal) import C15tReactNativeBridge
 import Foundation
 import XCTest
 
@@ -59,11 +59,11 @@ final class C15tBridgeStorageBusTests: XCTestCase {
 
     func testInstalledCoreCarriesABusSinkOnStandardUserDefaults() {
         XCTAssertTrue(
-            C15tReactNativeBootstrap.start(infoPlist: [
+            // No transport, so the bus writes this counts are the core's own rather
+            // than whatever a launch that reached a backend decided to add.
+            startWithoutNetwork(infoPlist: [
                 C15tBridgeConfiguration.InfoPlistKey.storageMode: "memory",
-                // No transport, so the bus writes this counts are the core's own rather
-                // than whatever a launch that reached a backend decided to add.
-                C15tBridgeConfiguration.InfoPlistKey.transportMode: "none",
+                C15tBridgeConfiguration.InfoPlistKey.backendURL: testProjectURL,
             ])
         )
         guard let core = C15t.current else { return XCTFail("the bridge must install a core") }

@@ -41,12 +41,17 @@ class MainApplication : Application(), ReactApplication {
       val declared = control.optJSONArray("categories")?.let { values ->
         (0 until values.length()).map { name -> com.c15t.core.model.ConsentCategory.entries.first { it.wireName == values.getString(name) } }
       } ?: com.c15t.core.model.ConsentCategory.entries.toList()
-      com.c15t.android.C15tAndroid.install(this, com.c15t.core.NativeConfig(
+      // A Release E2E build that talks to a loopback backend, so it installs through
+      // c15t's internal door. An app calls install(context, config) with its Inth URL.
+      val config = com.c15t.core.NativeConfig(
         backendUrl = "http://localhost:3000/api/self-host",
         bundledPolicy = assets.open("c15t-policy.json").bufferedReader().use { it.readText() },
         consentCategories = declared,
         iab = com.c15t.core.iab.IabConfiguration(cmpId = 53, cmpVersion = 7, publisherCountryCode = "GB")
-      ), clock = com.c15t.core.spi.Clock { if (control.has("now")) clock.get() else System.currentTimeMillis() })
+      )
+      com.c15t.android.C15tAndroid.install(this, config,
+        transport = com.c15t.core.transport.HostedTransport(com.c15t.android.C15tHttpClient(), config),
+        clock = com.c15t.core.spi.Clock { if (control.has("now")) clock.get() else System.currentTimeMillis() })
       java.util.Timer("c15t-fixture-observer", true).scheduleAtFixedRate(object : java.util.TimerTask() {
         override fun run() {
           try {

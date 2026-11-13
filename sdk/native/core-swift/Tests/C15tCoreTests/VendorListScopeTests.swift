@@ -1,6 +1,6 @@
 import XCTest
 
-@testable import C15tCore
+@_spi(C15tInternal) @testable import C15tCore
 
 /// The publisher's vendor scope, applied to a served list, graded against the shared vectors.
 ///

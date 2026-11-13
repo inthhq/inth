@@ -1,4 +1,6 @@
-import C15tReactNative
+// The E2E artifact is a Release build that talks to a loopback backend, which only
+// the SDK's internal install path allows. An app imports C15tReactNative plainly.
+@_spi(C15tInternal) import C15tReactNative
 import FirebaseCore
 import UIKit
 import React

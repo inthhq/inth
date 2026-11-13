@@ -23,6 +23,8 @@ export interface BundleManifestOptions {
 	vendors?: number[];
 	now?: number;
 	fetch?: typeof globalThis.fetch;
+	/** Fetch over plain http from a loopback host, for a `dryRun` build. */
+	allowLoopback?: boolean;
 	testOnlyAllowLoopback?: boolean;
 }
 
@@ -85,7 +87,8 @@ export const bundleMobileManifest = async (
 			fetch: options.fetch,
 			languages: options.languages,
 			now,
-			testOnlyAllowLoopback: options.testOnlyAllowLoopback,
+			testOnlyAllowLoopback:
+				options.allowLoopback === true || options.testOnlyAllowLoopback,
 			vendors: options.vendors,
 		});
 		await mkdir(dirname(options.out), { recursive: true });

@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-@testable import C15tReactNativeBridge
+@_spi(C15tInternal) @testable import C15tReactNativeBridge
 
 /// Which connectivity updates earn a queue replay.
 ///

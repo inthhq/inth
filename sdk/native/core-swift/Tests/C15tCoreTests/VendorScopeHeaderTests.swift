@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-@testable import C15tCore
+@_spi(C15tInternal) @testable import C15tCore
 
 /// The `x-c15t-vendors` request line: its shape, and the cases where it stays off the request.
 ///

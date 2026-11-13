@@ -1,6 +1,6 @@
 import Foundation
 import XCTest
-@testable import C15tCore
+@_spi(C15tInternal) @testable import C15tCore
 
 /// The behaviours the mobile contract makes mandatory, plus the edges that make
 /// them mandatory under reuse: a relaunch, a dead backend, a policy that changes
@@ -220,7 +220,7 @@ final class ConsentCoreTests: XCTestCase {
         let offline = ConsentCore()
         await offline.bootstrapAndSettle(Fixture.configured(
             store: store,
-            transport: OfflineTransport(),
+            transport: UnreachableTransport(),
             clock: clock
         ))
         XCTAssertTrue(offline.snapshot().policyPending)

@@ -40,7 +40,7 @@ import {
 	runMod,
 } from './helpers';
 
-const BACKEND = 'https://consent.example.com';
+const BACKEND = 'https://acme.inth.app';
 
 /** ATT on, with only the prompt string Apple has always read. */
 const ATT_PROPS = {
@@ -166,7 +166,6 @@ describe('the Markdown prompt in Info.plist', () => {
 			ITSAppUsesNonExemptEncryption: false,
 			[MARKDOWN_KEY]: MARKDOWN,
 			[PLAIN_KEY]: 'We use your activity to pick the ads you see.',
-			'com.c15t.backend.mode': 'hosted',
 			'com.c15t.backend.url': BACKEND,
 		});
 	});

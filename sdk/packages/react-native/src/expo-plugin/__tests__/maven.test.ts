@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { OFFLINE, applyToFixture, gradleFile, runMod } from './helpers';
+import { WITH_POLICY, applyToFixture, gradleFile, runMod } from './helpers';
 
 const repository = {
 	credentials: {
@@ -13,7 +13,7 @@ const repository = {
 const apply = async (androidMavenRepository = repository, contents = '') => {
 	const config = applyToFixture({
 		androidMavenRepository,
-		backendURL: 'https://consent.example.com',
+		backendURL: 'https://acme.inth.app',
 	});
 	const result = await runMod(config, 'android', 'projectBuildGradle', {
 		...gradleFile('project-build.gradle'),
@@ -33,13 +33,13 @@ describe('Android Maven repository mod', () => {
 		expect(output).not.toContain('c15t-token-sentinel');
 		const config = applyToFixture({
 			androidMavenRepository: repository,
-			...OFFLINE,
+			...WITH_POLICY,
 		});
 		expect(config.extra?.c15t).not.toHaveProperty('androidMavenRepository');
 	});
 
 	it('removes its block when the option is removed and has no default repository', async () => {
-		const config = applyToFixture(OFFLINE);
+		const config = applyToFixture(WITH_POLICY);
 		const first = await apply();
 		const result = await runMod(config, 'android', 'projectBuildGradle', {
 			...gradleFile('project-build.gradle'),
@@ -51,7 +51,7 @@ describe('Android Maven repository mod', () => {
 	it('refuses to write Groovy repository syntax into a Kotlin DSL root', async () => {
 		const config = applyToFixture({
 			androidMavenRepository: repository,
-			...OFFLINE,
+			...WITH_POLICY,
 		});
 		await expect(
 			runMod(
@@ -102,7 +102,7 @@ describe('Android Maven repository mod', () => {
 	it('accepts explicit local staging without credentials', async () => {
 		const config = applyToFixture({
 			androidMavenRepository: { url: 'file:///tmp/c15t-staging' },
-			...OFFLINE,
+			...WITH_POLICY,
 		});
 		const result = await runMod(
 			config,

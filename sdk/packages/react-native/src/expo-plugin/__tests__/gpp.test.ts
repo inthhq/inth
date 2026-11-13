@@ -16,7 +16,7 @@ import { applyInfoPlist } from '../ios';
 import { resolveParams } from '../params';
 import { FIXTURE_DIR } from './helpers';
 
-const backendURL = 'https://demo.example.test';
+const backendURL = 'https://demo.inth.app';
 
 const metaData = async function metaData(
 	params: ReturnType<typeof resolveParams>[]

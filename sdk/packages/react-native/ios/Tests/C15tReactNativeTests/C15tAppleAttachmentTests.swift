@@ -1,7 +1,7 @@
 import Darwin
-import C15tApple
-import C15tCore
-import C15tReactNativeBridge
+@_spi(C15tInternal) import C15tApple
+@_spi(C15tInternal) import C15tCore
+@_spi(C15tInternal) import C15tReactNativeBridge
 import XCTest
 
 final class C15tAppleAttachmentTests: XCTestCase {
@@ -11,11 +11,12 @@ final class C15tAppleAttachmentTests: XCTestCase {
         super.tearDown()
     }
 
-    func testInfoPlistLoopbackHTTPInstallsBeforeJavaScript() {
+    func testDryRunLoopbackHTTPInstallsBeforeJavaScript() {
         C15tApple.shutdown()
         C15t.resetForTests()
+        // dryRun in a debug build is how a developer points the app at a local backend.
         let infoPlist: [String: Any] = [
-            "com.c15t.backend.mode": "self-hosted",
+            "com.c15t.dryRun": true,
             "com.c15t.backend.url": "http://localhost:8787",
             C15tBridgeConfiguration.InfoPlistKey.storageMode: "memory"
         ]
@@ -31,7 +32,6 @@ final class C15tAppleAttachmentTests: XCTestCase {
         C15tApple.shutdown()
         C15t.resetForTests()
         let configuration = C15tBridgeConfiguration.from(infoPlist: [
-            "com.c15t.backend.mode": "hosted",
             "com.c15t.backend.url": "http://invalid.example",
             C15tBridgeConfiguration.InfoPlistKey.storageMode: "memory"
         ])
@@ -51,8 +51,12 @@ final class C15tAppleAttachmentTests: XCTestCase {
         let diagnostic = String(decoding: pipe.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
         XCTAssertFalse(started)
         XCTAssertNil(C15t.current)
-        XCTAssertTrue(diagnostic.contains("Apple installation failed"), diagnostic)
-        XCTAssertTrue(diagnostic.contains("invalidBackendURL"), diagnostic)
+        XCTAssertTrue(
+            diagnostic.contains(
+                "com.c15t.backend.url must be the project URL from your Inth dashboard, such as "
+                    + "https://your-project.inth.app. Got \"http://invalid.example\": the scheme must be https."),
+            diagnostic)
+        XCTAssertEqual(configuration.configurationIssue()?.code, "C15T_CONFIGURATION_BACKEND_URL")
     }
 
     func testRNUsesTheEngineHydratedByTheStandaloneInstaller() throws {

@@ -354,9 +354,10 @@ public enum C15tPayload {
     /// its keys: a recorded denial is a receipt in the same way an acceptance is, and
     /// JavaScript reads only the names.
     ///
-    /// `queued` is `true` for any committed action because the core persists the
+    /// `queued` is `true` for a committed action because the core persists the
     /// payload before it returns and delivers afterwards. That matches Kotlin, which
-    /// reports `queued = true, delivered = false` for the same commit.
+    /// reports `queued = true, delivered = false` for the same commit. Under `dryRun`
+    /// the record is dropped, so `queued` is `false`.
     public static func commitResult(
         _ result: CommitResult,
         snapshot: ConsentSnapshot
@@ -368,7 +369,7 @@ public enum C15tPayload {
             "confirmed": .array(result.confirmed.keys.sorted(by: { $0.rawValue < $1.rawValue })
                 .map { .string($0.rawValue) }),
             "subjectId": stringOrNull(snapshot.subject?.id),
-            "queued": .bool(!rejected && result.status == .committed),
+            "queued": .bool(!rejected && result.queued),
             "delivered": .bool(false),
         ]
         if let error = result.error {

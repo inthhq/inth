@@ -118,7 +118,7 @@ private class PassReport(
  * one-pass-in-flight rule.
  * @param logger Receives every [KernelError] the core emits.
  */
-class ConsentCore(
+class ConsentCore @C15tInternalApi constructor(
 	private val config: NativeConfig,
 	private val store: C15tStore,
 	private val clock: Clock = Clock.SYSTEM,
@@ -529,8 +529,9 @@ class ConsentCore(
 			}
 		}
 		announcePolicyStale()
-		// In no-backend mode the in-code policy answers before the first read, once.
+		// An in-code policy answers before the first read, once.
 		if (inCodePolicy) runInit()
+		if (config.dryRun) logger(KernelError(DRY_RUN, "c15t: dryRun is on. Consent records and identity calls are dropped. Policy is still fetched from /init unless an in-code policy is set."))
 		background.execute { flushPending() }
 		if (!inCodePolicy) background.execute { runInit() }
 	}
@@ -1018,7 +1019,7 @@ class ConsentCore(
 
 		val isIab = policy?.model == ConsentModel.IAB
 		val frozen = com.c15t.core.transport.SaveBodyBuilder.build(payload,
-			config.domain?.takeIf { it.isNotBlank() } ?: config.backendUrl?.let { java.net.URI(it).host }.orEmpty()).toString()
+			config.domain?.takeIf { it.isNotBlank() } ?: java.net.URI(config.backendUrl).host.orEmpty()).toString()
 		val entry = QueuedSave(
 			if (isIab) UUID.randomUUID().toString() else queueIdGenerator(),
 			actionAt, payload, body = frozen,
@@ -1036,7 +1037,11 @@ class ConsentCore(
 				customVendors = customVendors,
 			)
 		}
-		if (!store.commit(envelope, entry, config.maxPendingSaves, supersedeGrants = isIab, publishBus = false)) {
+		// dryRun stores the decision and drops the record. The same write empties a queue an
+		// earlier run left, so an old grant cannot be sent after this newer choice.
+		val stored = if (config.dryRun) store.writeEnvelope(envelope, publishBus = false, dropPending = true)
+			else store.commit(envelope, entry, config.maxPendingSaves, supersedeGrants = isIab, publishBus = false)
+		if (!stored) {
 			publishCurrentTcStorageBus(allowConsent = false)
 			return@mutate refusedCommit(
 				"queue-write-failed",
@@ -1056,6 +1061,17 @@ class ConsentCore(
 		publishCurrentTcStorageBus()
 
 		mutation.release()
+
+		if (config.dryRun) {
+			notifySnapshot()
+			return@mutate CommitResult(
+				ok = true,
+				revision = published.revision,
+				confirmed = payload.confirmed.categories,
+				queued = false,
+				delivered = false,
+			)
+		}
 
 		// The first send is not joined. What this thread may claim about it is whatever the
 		// atomic holds at this instant and nothing more: `null` behind a pool, and the
@@ -1167,7 +1183,7 @@ class ConsentCore(
 				val snapshot = state.get()
 				notifySnapshot()
 				background.execute {
-					transport.identify(snapshot.subject!!, user)
+					if (!config.dryRun) transport.identify(snapshot.subject!!, user)
 					runInit()
 				}
 			}
@@ -1194,7 +1210,7 @@ class ConsentCore(
 		mutation.release()
 		notifySnapshot()
 		background.execute {
-			transport.identify(subject, user)
+			if (!config.dryRun) transport.identify(subject, user)
 			runInit()
 		}
 	}
@@ -1212,7 +1228,7 @@ class ConsentCore(
 			if (transition) {
 				val snapshot = state.get()
 				notifySnapshot()
-				background.execute { transport.logout(snapshot.subject!!) }
+				if (!config.dryRun) background.execute { transport.logout(snapshot.subject!!) }
 			}
 			else
 				emitError(
@@ -1240,7 +1256,7 @@ class ConsentCore(
 		persist()
 		mutation.release()
 		notifySnapshot()
-		background.execute { transport.logout(subject) }
+		if (!config.dryRun) background.execute { transport.logout(subject) }
 	}
 
 	/**
@@ -1323,6 +1339,8 @@ class ConsentCore(
 		if (queue.pending().isEmpty()) {
 			return FlushResult(delivered = 0, remaining = 0)
 		}
+		// dryRun sends nothing, including what an earlier run left queued.
+		if (config.dryRun) return FlushResult(delivered = 0, remaining = queue.pending().size)
 		val pass = requestDeliveryPass(ownSend = null)
 		return FlushResult(
 			delivered = pass.delivered,
@@ -1598,7 +1616,7 @@ class ConsentCore(
 		)
 	}
 
-	/** No-backend mode with an in-code policy, usable or refused. Init never uses the transport. */
+	/** An in-code policy, usable or refused. Init never uses the transport. */
 	private val inCodePolicy = config.policy != null || config.policyError != null
 
 	private fun runInit() {
@@ -2427,6 +2445,9 @@ class ConsentCore(
 
 		/** The app declared an in-code policy and the core could not use it. */
 		const val POLICY_INVALID = "policy-invalid"
+
+		/** Code of the one log line that says dryRun is on. */
+		const val DRY_RUN = "dry-run"
 
 		val deadlineScheduler = ScheduledThreadPoolExecutor(1) { runnable ->
 			Thread(runnable, "c15t-deadline").apply { isDaemon = true }

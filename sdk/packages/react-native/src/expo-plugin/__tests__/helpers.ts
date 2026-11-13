@@ -20,8 +20,8 @@ export const readFixture = function readFixture(name: string): string {
 };
 
 /** argv for `expo prebuild`, the command Continuous Native Generation runs. */
-/** The smallest in-code policy offline mode accepts. */
-export const OFFLINE_POLICY = {
+/** The smallest in-code policy the plugin accepts. */
+export const IN_CODE_POLICY = {
 	rules: [
 		{
 			id: 'everywhere',
@@ -32,8 +32,11 @@ export const OFFLINE_POLICY = {
 	],
 } as const;
 
-/** Offline-mode props, with the policy that mode requires. */
-export const OFFLINE = { mode: 'offline', policy: OFFLINE_POLICY } as const;
+/** Props for an app whose policy is in code. */
+export const WITH_POLICY = {
+	backendURL: 'https://acme.inth.app',
+	policy: IN_CODE_POLICY,
+} as const;
 
 export const PREBUILD_ARGV = ['node', '/usr/local/bin/expo', 'prebuild'];
 

@@ -14,14 +14,15 @@ apps use the same engine and prompt through the
 
 You need iOS 16.4 or later, Xcode with Swift 5.9 or later, and an
 [Inth project](https://inth.com). Configure the project's regional policies
-and the categories your app uses, then copy its HTTPS backend URL. This example
+and the categories your app uses, then copy its project URL, such as
+`https://your-project.inth.app`. This example
 declares `measurement` and `marketing` alongside `necessary`. Your project
 must offer the categories you intend to request.
 
-Have your app's HTTPS privacy-policy URL ready. The backend URL is public
-configuration, so no API key goes in the app. This guide uses hosted consent;
-[offline startup](/docs/guides/mobile-offline) is an additional setup when the
-first prompt must work without a connection.
+Have your app's HTTPS privacy-policy URL ready. The project URL is public
+configuration, so no API key goes in the app. The Swift SDK works only with
+Inth hosted projects. [Offline startup](/docs/guides/mobile-offline) is an
+additional setup when the first prompt must work without a connection.
 
 The SDK is currently available as private source. Use your authorized checkout
 for these steps. [Mobile availability](/docs/guides/mobile-status) records
@@ -62,8 +63,36 @@ prompt, so a second window or a reconnected scene never opens a second copy.
 
 If Keychain is locked when the app launches, installation fails and optional
 SDKs stay off. The modifier retries after the device unlocks or the app becomes
-active. A configuration error, such as an invalid backend URL, needs a fix in
-the app; retrying will not repair it.
+active. A configuration error needs a fix in the app; retrying will not repair
+it.
+
+`backendURL` must be your Inth project URL. A missing scheme means `https`,
+and a trailing slash is dropped. Any other host, a port, a path, a query or
+credentials make `C15tApple.install` throw
+`C15tAppleInstallationError.invalidBackendURL`. Its description quotes your
+value and names the rule it broke.
+
+### Run without sending records
+
+For development and CI, pass `dryRun: true` inside `#if DEBUG`:
+
+{/* example: fragment */}
+
+```swift
+var configuration = C15tAppleConfiguration(
+    backendURL: "https://your-project.inth.app",
+    consentCategories: [.necessary, .measurement, .marketing]
+)
+#if DEBUG
+configuration.dryRun = true
+#endif
+```
+
+The prompt, storage, gates and consent signals work as normal. The engine
+drops consent records instead of queueing or sending them. A release build
+throws `C15tAppleInstallationError.dryRunInReleaseBuild` and installs no
+engine. In a debug build `dryRun` also lets `backendURL` be any `https` URL,
+or `http` on `localhost`, `127.0.0.1` or `[::1]`.
 
 To present the prompt yourself, pass `autoPresent: false` and call
 `ConsentPrompt.current?.presentPrompt()` when you are ready.

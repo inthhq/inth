@@ -28,22 +28,26 @@ public struct CoreConfig: @unchecked Sendable {
     public let store: any ConsentStore
     /// Optional build resource. It never replaces a usable stored policy.
     public let bundledPolicy: BundledPolicyResource?
-    /// The policy in source control, the only policy source in no-backend mode. Use it
-    /// with ``OfflineTransport`` or no transport: the two modes do not mix.
+    /// The policy in source control. With one, the device resolves the rules locally and
+    /// never calls `/init`; records still go to the backend. It does not mix with
+    /// ``bundledPolicy``.
     public let policy: ConsentPolicy?
     /// Why the app's declared in-code policy was refused, when an adapter read one and
     /// could not use it. The core then reports `policy-invalid` in the snapshot and on
     /// the event stream instead of starting as if no policy had been declared.
     public let policyError: String?
-    /// No-backend mode with an in-code policy, usable or refused. Init never uses the transport.
+    /// An in-code policy, usable or refused. Init never uses the transport.
     var usesInCodePolicy: Bool { policy != nil || policyError != nil }
     var policyEndpoint: String? {
         transport?.policyEndpoint?.absoluteString ?? bundledPolicy?.endpoint
     }
-    /// `nil` makes the async commands no-ops, which is what an embedded or
-    /// preview build wants. Use ``C15tTransport/offline()`` instead when the
-    /// device is merely unreachable, so saves queue up for later.
-    public let transport: (any C15tTransport)?
+    /// `nil` makes the async commands no-ops. Internal API for tests and fixtures.
+    @_spi(C15tInternal) public let transport: (any C15tTransport)?
+    /// Development and CI only. The prompt, storage, gating and consent signals work as
+    /// normal, and consent records are dropped: not queued, not sent. Identity calls
+    /// change local state and send nothing. A queue left by an earlier run is not
+    /// flushed, and a dry-run save drops it. Refused in a release build, see ``C15tBuild/isDebug``.
+    public let dryRun: Bool
     /// Categories to offer. `nil` or empty declares none: a strict policy offers
     /// its full scope and a permissive one offers `necessary` alone, with an
     /// acknowledgement prompt.
@@ -107,12 +111,15 @@ public struct CoreConfig: @unchecked Sendable {
     /// rows on ``storageBus``. `nil`, the default, writes no GPP signal.
     public let gpp: GPPOptions?
 
-    public init(
+    /// Internal API for tests and first-party fixtures. Apps install through
+    /// `C15tApple.install(C15tAppleConfiguration(backendURL:))`.
+    @_spi(C15tInternal) public init(
         store: any ConsentStore = InMemoryStore(),
         bundledPolicy: BundledPolicyResource? = nil,
         policy: ConsentPolicy? = nil,
         policyError: String? = nil,
         transport: (any C15tTransport)? = nil,
+        dryRun: Bool = false,
         consentCategories: [ConsentCategory]? = nil,
         vendors: [Int]? = nil,
         iab: IABConfiguration? = nil,
@@ -128,12 +135,13 @@ public struct CoreConfig: @unchecked Sendable {
     ) {
         self.store = store
         precondition(
-            policy == nil && policyError == nil || bundledPolicy == nil && transport?.policyEndpoint == nil,
-            "CoreConfig.policy is no-backend mode and does not mix with a bundled manifest or a backend transport")
+            policy == nil && policyError == nil || bundledPolicy == nil,
+            "CoreConfig.policy does not mix with a bundled manifest")
         self.bundledPolicy = bundledPolicy
         self.policy = policy
         self.policyError = policyError
         self.transport = transport
+        self.dryRun = dryRun
         self.consentCategories = consentCategories
         self.vendors = vendors
         self.iab = iab
@@ -442,7 +450,15 @@ public final class ConsentCore: @unchecked Sendable {
     /// Hydration runs synchronously so that the first ``snapshot()`` after this
     /// returns already reflects stored consent with no network. The init request is
     /// what happens afterwards.
-    public func bootstrap(_ config: CoreConfig) {
+    ///
+    /// Internal API. Apps install through `C15tApple.install(C15tAppleConfiguration(backendURL:))`.
+    /// A `dryRun` configuration in a release build is refused: nothing starts and
+    /// reads stay deny-all.
+    @_spi(C15tInternal) public func bootstrap(_ config: CoreConfig) {
+        if config.dryRun, !C15tBuild.isDebug {
+            NSLog("%@", "c15t: \(C15tBuild.dryRunRefusal()) The consent core was not started.")
+            return
+        }
         let mutation = mutationGate.acquire()
         defer { mutation.release() }
         let adopted = lock.withLock {
@@ -464,8 +480,8 @@ public final class ConsentCore: @unchecked Sendable {
             shouldAdoptBundle(selection.authority, config: config) {
             applyPolicyUpdate(selection.response, bundle: selection)
         }
-        // In no-backend mode the in-code policy answers before the first read, once:
-        // there is no init to schedule after it.
+        // The in-code policy answers before the first read, once: there is no init to
+        // schedule after it.
         if let policy = config.policy {
             applyInCodePolicy(policy, overrides: config.overrides)
         } else if let reason = config.policyError {
@@ -474,6 +490,9 @@ public final class ConsentCore: @unchecked Sendable {
         if let stale = lock.withLock({ takeStaleAnnouncementLocked() }) { events.emit(.policyStale(stale)) }
         events.emit(.initialized)
 
+        if config.dryRun {
+            NSLog("%@", "c15t: dryRun is on. Consent records are dropped, not queued or sent.")
+        }
         if config.flushPendingOnBootstrap {
             schedule { await self.requestDeliveryPass(ownSend: nil) }
         }
@@ -1101,8 +1120,12 @@ public final class ConsentCore: @unchecked Sendable {
                     iabListFetchedAt: iabListFetchedAt,
                     additionalConsentList: additionalConsentList, customVendors: customVendors)
             }
-            let queued = envelope.flatMap {
-                plan.queue.commit($0, body: plan.body,
+            // dryRun stores the decision and drops the record. The same write empties a
+            // queue an earlier run left, so an old grant cannot be sent after this choice.
+            let dryRun = lock.withLock { config?.dryRun == true }
+            let queued: String? = envelope.flatMap {
+                if dryRun { return plan.queue.persist($0, droppingQueue: true) ? "" : nil }
+                return plan.queue.commit($0, body: plan.body,
                     subjectId: plan.payload.subjectId, actionAt: actionAt,
                     supersedeGrants: plan.isIAB)
             }
@@ -1110,7 +1133,9 @@ public final class ConsentCore: @unchecked Sendable {
                 let changed = lock.withLock { currentSnapshot.revision != plan.baseRevision }
                 let info = CoreErrorInfo(
                     code: changed ? "concurrent-change" : "queue-write-failed",
-                    message: "Pending save could not be persisted, so the decision was not recorded and nothing was sent."
+                    message: dryRun
+                        ? "The decision could not be stored, so it was not recorded."
+                        : "Pending save could not be persisted, so the decision was not recorded and nothing was sent."
                 )
                 mutation.release()
                 events.emit(.error(info))
@@ -1135,6 +1160,7 @@ public final class ConsentCore: @unchecked Sendable {
             writeTcStorageBus()
 
             publish(persist: false, mutation: mutation)
+            if dryRun { return plan.result.withoutRecord() }
             events.emit(.saveQueued(subjectId: plan.payload.subjectId))
             let body = plan.body
             let subjectId = plan.payload.subjectId
@@ -1795,8 +1821,10 @@ public final class ConsentCore: @unchecked Sendable {
         Int64(Date().timeIntervalSince1970 * 1_000)
     }
 
+    /// Where records and identity writes go. `nil` under dryRun, which sends neither
+    /// and leaves an existing queue alone.
     private var transport: (any C15tTransport)? {
-        lock.withLock { config?.transport }
+        lock.withLock { config?.dryRun == true ? nil : config?.transport }
     }
 
     /// What the device reports, with no override applied: the host's report when

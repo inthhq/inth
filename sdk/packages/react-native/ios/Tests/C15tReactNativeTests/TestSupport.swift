@@ -1,5 +1,5 @@
-import C15tCore
-import C15tReactNativeBridge
+@_spi(C15tInternal) import C15tCore
+@_spi(C15tInternal) import C15tReactNativeBridge
 import Foundation
 import XCTest
 
@@ -65,12 +65,15 @@ func assertBridgeFailure<ResultType>(
     XCTAssertEqual(error, expected, file: file, line: line)
 }
 
-/// A memory-backed configuration, so no test touches the Keychain or the network.
+/// The project URL the tests configure. Nothing is sent to it.
+let testProjectURL = "https://your-project.inth.app"
+
+/// A memory-backed configuration, so no test touches the Keychain. Start it with
+/// ``startMemoryCore(_:)`` so it does not touch the network either.
 func memoryConfiguration() -> C15tBridgeConfiguration {
     C15tBridgeConfiguration(
         autoBootstrap: true,
-        transportMode: .disabled,
-        backendURL: nil,
+        backendURL: testProjectURL,
         domain: nil,
         storageMode: .memory,
         keychainService: C15tBridgeConfiguration.defaultKeychainService,
@@ -78,6 +81,19 @@ func memoryConfiguration() -> C15tBridgeConfiguration {
         consentCategories: nil,
         gpc: nil
     )
+}
+
+/// Start the bridge's core through its own start path, with no transport behind it,
+/// so the async commands are no-ops and no test opens a socket.
+@discardableResult
+func startMemoryCore(_ configuration: C15tBridgeConfiguration = memoryConfiguration()) -> Bool {
+    C15tReactNativeBootstrap.start(configuration: configuration, fileStoreDirectory: nil, transport: { _ in nil })
+}
+
+/// ``startMemoryCore(_:)`` for a launch that reads `Info.plist`.
+@discardableResult
+func startWithoutNetwork(infoPlist: [String: Any]) -> Bool {
+    C15tReactNativeBootstrap.start(infoPlist: infoPlist, fileStoreDirectory: nil, transport: { _ in nil })
 }
 
 /// A transport that counts what the core asked it to send, and decides whether a save is

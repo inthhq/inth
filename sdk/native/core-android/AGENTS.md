@@ -24,6 +24,11 @@ Once the mobile SDKs are public, the pages move to
 - Install one engine, once, in `Application.onCreate`, with
   `C15tAndroid.install(context, NativeConfig(backendUrl = ...))`. Read it later
   through `C15t.current`. Never install a second engine.
+- `backendUrl` is the project URL from the Inth dashboard, such as
+  `https://your-project.inth.app`. No other host is accepted, and there is no
+  custom transport or offline mode.
+- Use `NativeConfig(dryRun = true)` only in debug builds and CI. It drops consent
+  records, and a release build refuses to start with it.
 - `snapshot`, `isAllowed`, `decision` and `isReady` read cached state and never
   block, so SDK initializers may call them on the main thread.
 - Start an optional SDK only on `ConsentDecision.GRANTED`, and keep a `gate` or
@@ -31,6 +36,7 @@ Once the mobile SDKs are public, the pages move to
   refusal: keep listening. Disable the vendor's own auto-initialization first.
 - Keep a Privacy settings action reachable after the first prompt closes.
 - `CommitResult.ok` means the choice is stored on the device and queued for
-  delivery. It does not mean the backend has it.
+  delivery. It does not mean the backend has it. Under `dryRun` the choice is
+  stored and nothing is queued, so `queued` is false.
 - Consent and Android platform permissions are separate. Neither grants the
   other.

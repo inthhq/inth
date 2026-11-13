@@ -1,5 +1,5 @@
-import C15tApple
-import C15tCore
+@_spi(C15tInternal) import C15tApple
+@_spi(C15tInternal) import C15tCore
 import Foundation
 import XCTest
 
@@ -11,6 +11,7 @@ final class InstallationTests: XCTestCase {
     }
 
     override func tearDown() {
+        C15tBuild.simulate(debug: nil)
         C15tApple.shutdown()
         C15t.resetForTests()
         super.tearDown()
@@ -96,42 +97,115 @@ final class InstallationTests: XCTestCase {
         XCTAssertEqual(C15tApple.version, C15t.version)
     }
 
-    func testHostedModesAcceptOnlyExactHTTPLoopbackHosts() async throws {
+    func testDryRunInADebugBuildReachesLoopbackAndStagingHosts() async throws {
         for backend in ["http://localhost:8787", "http://127.0.0.1:8787", "http://[::1]:8787", "https://consent.example.com"] {
-            for mode in [C15tAppleConfiguration.Transport.hosted(URL(string: backend)!), .selfHosted(URL(string: backend)!)] {
-                let http = try FixtureHTTP()
-                let configured = C15tAppleConfiguration(transport: mode, storage: .memory, initURL: URL(string: backend + "/custom-init"))
-                let native = try XCTUnwrap(configured.makeTransport(client: http))
-                let core = try C15tApple.install(configuration(store: InMemoryStore(), transport: native))
-                XCTAssertTrue(core.isBootstrapped)
-                await core.waitUntilIdle()
-                let requestURL = try XCTUnwrap(http.requests.first?.url)
-                XCTAssertEqual(requestURL.scheme, configured.initURL?.scheme)
-                XCTAssertEqual(requestURL.host, configured.initURL?.host)
-                XCTAssertEqual(requestURL.port, configured.initURL?.port)
-                XCTAssertEqual(requestURL.path, configured.initURL?.path)
-                C15tApple.shutdown()
-                C15t.resetForTests()
+            let http = try FixtureHTTP()
+            let configured = C15tAppleConfiguration(backendURL: backend, dryRun: true, storage: .memory)
+            let native = try configured.makeTransport(client: http)
+            let core = try C15tApple.install(configuration(store: InMemoryStore(), transport: native))
+            XCTAssertTrue(core.isBootstrapped)
+            await core.waitUntilIdle()
+            let requestURL = try XCTUnwrap(http.requests.first?.url)
+            let expected = try XCTUnwrap(URL(string: backend + "/init"))
+            XCTAssertEqual(requestURL.scheme, expected.scheme)
+            XCTAssertEqual(requestURL.host, expected.host)
+            XCTAssertEqual(requestURL.port, expected.port)
+            XCTAssertEqual(requestURL.path, expected.path)
+            C15tApple.shutdown()
+            C15t.resetForTests()
+        }
+    }
+
+    func testNonLoopbackHTTPAndLookalikesRefuseInstallation() throws {
+        for backend in ["http://invalid.example", "http://localhost.evil.example", "http://localhost.", "http://127.0.0.1.evil.example", "http://127.0.0.2", "http://[::2]", "http://localhost@evil.example", "https://user:password@consent.example.com", "ftp://localhost", "/relative"] {
+            for dryRun in [false, true] {
+                let configured = C15tAppleConfiguration(backendURL: backend, dryRun: dryRun, storage: .memory)
+                XCTAssertThrowsError(try C15tApple.install(configured), backend) {
+                    guard case .invalidBackendURL = $0 as? C15tAppleInstallationError else {
+                        return XCTFail("\(backend): \($0)")
+                    }
+                }
+                XCTAssertNil(C15t.current, backend)
+                XCTAssertFalse(C15t.isAllowed(.marketing))
             }
         }
     }
 
-    func testNonLoopbackHTTPAndLookalikesRefuseInstallationBeforeStorage() throws {
-        for backend in ["http://invalid.example", "http://localhost.evil.example", "http://localhost.", "http://127.0.0.1.evil.example", "http://127.0.0.2", "http://[::2]", "http://localhost@evil.example", "https://user:password@consent.example.com", "ftp://localhost", "/relative"] {
-            for overrideInit in [false, true] {
-                let store = CountingStore(InMemoryStore())
-                let transport = HostedTransport(
-                    baseURL: URL(string: overrideInit ? "https://consent.example.com" : backend)!,
-                    initURL: overrideInit ? URL(string: backend)! : nil
-                )
-                XCTAssertThrowsError(try C15tApple.install(configuration(store: store, transport: transport)), backend) {
-                    XCTAssertEqual($0 as? C15tAppleInstallationError, .invalidBackendURL)
+    func testOnlyAnInthProjectURLInstalls() throws {
+        for (backend, reason) in [
+            ("https://consent.example.com", InthProjectURLError.Reason.host),
+            ("http://localhost:8787", .scheme),
+            ("https://acme.inth.app/api/c15t", .path),
+            ("", .empty),
+        ] {
+            XCTAssertThrowsError(
+                try C15tApple.install(C15tAppleConfiguration(backendURL: backend, storage: .memory)), backend
+            ) { error in
+                guard case let .invalidBackendURL(refused) = error as? C15tAppleInstallationError else {
+                    return XCTFail("\(backend): \(error)")
                 }
-                XCTAssertNil(C15t.current, backend)
-                XCTAssertEqual(store.writes, 0, backend)
-                XCTAssertFalse(C15t.isAllowed(.marketing))
+                XCTAssertEqual(refused.reason, reason, backend)
+                XCTAssertEqual(refused.input, backend)
+                XCTAssertTrue(
+                    error.localizedDescription.hasPrefix(
+                        "backendURL must be the project URL from your Inth dashboard, such as "
+                            + "https://your-project.inth.app. Got \"\(backend)\": "),
+                    error.localizedDescription)
             }
+            XCTAssertNil(C15t.current, backend)
         }
+    }
+
+    func testTheNormalFormReachesTheTransportTheDomainAndTheBundledPolicy() throws {
+        let configured = C15tAppleConfiguration(
+            backendURL: " Acme.Inth.App/ ", storage: .memory,
+            bundledPolicy: BundledPolicyResource(data: Data(), endpoint: "https://Acme.Inth.App/"),
+            policy: try ConsentPolicy(rules: [
+                PolicyRule(id: "everywhere", match: PolicyMatch(fallback: true, isDefault: true), model: .optIn, prompt: .choice),
+            ]))
+        let core = try configured.makeCoreConfiguration()
+        let hosted = try XCTUnwrap(core.transport as? HostedTransport)
+        XCTAssertEqual(hosted.baseURL.absoluteString, "https://acme.inth.app")
+        XCTAssertEqual(hosted.policyEndpoint?.absoluteString, "https://acme.inth.app")
+        XCTAssertEqual(hosted.domain, "acme.inth.app")
+        XCTAssertEqual(core.bundledPolicy?.endpoint, "https://acme.inth.app")
+        XCTAssertNil(core.policy, "a bundled manifest and an in-code policy do not mix")
+        XCTAssertFalse(core.dryRun)
+    }
+
+    func testDryRunIsRefusedInAReleaseBuildOnBothDoors() throws {
+        C15tBuild.simulate(debug: false)
+        defer { C15tBuild.simulate(debug: nil) }
+        let configured = C15tAppleConfiguration(backendURL: "https://acme.inth.app", dryRun: true, storage: .memory)
+        XCTAssertThrowsError(try C15tApple.install(configured)) { error in
+            XCTAssertEqual(error as? C15tAppleInstallationError, .dryRunInReleaseBuild)
+            XCTAssertEqual(
+                error.localizedDescription,
+                "dryRun is for development and CI and cannot run in a release build. "
+                    + "Remove dryRun (pass it only inside #if DEBUG).")
+        }
+        XCTAssertNil(C15t.current)
+        XCTAssertThrowsError(try C15tApple.install(CoreConfig(store: InMemoryStore(), dryRun: true))) {
+            XCTAssertEqual($0 as? C15tAppleInstallationError, .dryRunInReleaseBuild)
+        }
+        XCTAssertNil(C15t.current)
+        // dryRun does not relax the host rule in a release build either.
+        XCTAssertThrowsError(
+            try C15tAppleConfiguration(backendURL: "http://localhost:8787", dryRun: true).normalizedBackendURL())
+        XCTAssertNoThrow(try C15tApple.install(
+            C15tAppleConfiguration(backendURL: "https://acme.inth.app", storage: .memory, policy: everywhere())))
+    }
+
+    func testDryRunInstallSavesLocallyAndQueuesNothing() async throws {
+        let core = try C15tApple.install(C15tAppleConfiguration(
+            backendURL: "http://localhost:8787", dryRun: true, storage: .memory,
+            consentCategories: [.necessary, .marketing], policy: everywhere()))
+        await core.waitUntilIdle()
+        XCTAssertFalse(core.snapshot().policyPending, "the in-code policy answers with no network")
+        XCTAssertEqual(core.save(.all).status, .committed)
+        await core.waitUntilIdle()
+        XCTAssertTrue(core.isAllowed(.marketing))
+        XCTAssertEqual(core.pendingSaveCount(), 0)
     }
 
     func testUnavailableProtectedStorageDoesNotPublishAnEngineAndCanRetry() throws {
@@ -272,32 +346,36 @@ final class InstallationTests: XCTestCase {
         XCTAssertEqual(http.requests.count, initial + 2)
     }
 
-    func testHostedAndSelfHostedMetadataNamesNativeModulesOnEveryRequest() async throws {
-        for mode in [C15tAppleConfiguration.Transport.hosted(URL(string: "https://consent.example.com")!), .selfHosted(URL(string: "https://consent.example.com")!)] {
-            let http = try FixtureHTTP()
-            let configured = C15tAppleConfiguration(transport: mode, initURL: URL(string: "https://init.example.com/custom"))
-            let native = try XCTUnwrap(configured.makeTransport(client: http))
-            _ = await native.performInit(InitContext(overrides: try JSONDecoder().decode(KernelOverridesWire.self, from: Data("{}".utf8)), user: nil, subjectId: "subject"))
-            _ = await native.sendSave(Data("{}".utf8))
-            _ = await native.patchIdentity(subjectId: "subject", externalId: "external", identityProvider: nil)
-            XCTAssertEqual(http.requests.count, 3)
-            XCTAssertEqual(http.requests.first?.url, configured.initURL)
-            for request in http.requests {
-                XCTAssertEqual(request.headers[C15t.versionHeader], C15t.version)
-                XCTAssertEqual(request.headers["x-c15t-platform"], "apple->\(C15tApple.version)")
-                XCTAssertFalse(request.headers.values.contains { $0.hasPrefix("rn->") })
-            }
+    func testHostedMetadataNamesNativeModulesOnEveryRequest() async throws {
+        let http = try FixtureHTTP()
+        let configured = C15tAppleConfiguration(backendURL: "https://acme.inth.app")
+        let native = try configured.makeTransport(client: http)
+        _ = await native.performInit(InitContext(overrides: try JSONDecoder().decode(KernelOverridesWire.self, from: Data("{}".utf8)), user: nil, subjectId: "subject"))
+        _ = await native.sendSave(Data("{}".utf8))
+        _ = await native.patchIdentity(subjectId: "subject", externalId: "external", identityProvider: nil)
+        XCTAssertEqual(http.requests.count, 3)
+        XCTAssertEqual(http.requests.first?.url, URL(string: "https://acme.inth.app/init"))
+        for request in http.requests {
+            XCTAssertEqual(request.headers[C15t.versionHeader], C15t.version)
+            XCTAssertEqual(request.headers["x-c15t-platform"], "apple->\(C15tApple.version)")
+            XCTAssertFalse(request.headers.values.contains { $0.hasPrefix("rn->") })
         }
     }
 
     func testInvalidProductionURLAndUnstartedAttachmentAreRefused() {
-        XCTAssertThrowsError(try C15tApple.install(C15tAppleConfiguration(transport: .hosted(URL(string: "http://example.com")!))))
+        XCTAssertThrowsError(try C15tApple.install(C15tAppleConfiguration(backendURL: "http://example.com")))
         XCTAssertFalse(C15tApple.attach(ConsentCore()))
         XCTAssertNil(C15t.current)
     }
 
     private func configuration(store: any ConsentStore, transport: (any C15tTransport)? = nil) -> CoreConfig {
         CoreConfig(store: store, transport: transport, consentCategories: [.necessary, .marketing, .measurement, .experience, .functionality], now: { 1_770_000_000_000 }, initRetry: .disabled, flushPendingOnBootstrap: false)
+    }
+
+    private func everywhere() throws -> ConsentPolicy {
+        try ConsentPolicy(rules: [
+            PolicyRule(id: "everywhere", match: PolicyMatch(fallback: true, isDefault: true), model: .optIn, prompt: .choice),
+        ])
     }
 
     private func transport(_ http: FixtureHTTP) -> HostedTransport {
