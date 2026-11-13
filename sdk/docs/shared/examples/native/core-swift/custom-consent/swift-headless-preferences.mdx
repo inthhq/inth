@@ -1,0 +1,83 @@
+{/* Generated from native/core-swift/Examples/custom-consent/Sources/ledger-consent.swift (docs:swift-headless-preferences) by scripts/sync-example-docs.ts. Edit the source file. */}
+
+```swift title="Sources/ledger-consent.swift"
+private struct PreferencesPage: View {
+    @ObservedObject var preferences: ConsentPreferencesScope
+    @ObservedObject var draft: ConsentDraft
+    @Binding var tab: Int
+    let policyURL: URL
+    @Environment(\.ledger) private var l
+
+    var body: some View {
+        let copy = draft.iabCopy
+        let iab = preferences.iab
+        VStack(spacing: 0) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(preferences.title).font(l.heading).foregroundColor(l.ink)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .accessibilityAddTraits(.isHeader).consentInitialFocus()
+                // Close goes through the scope, so unsaved edits ask first.
+                TextAction(text: copy.appClose, isEnabled: !draft.isSaving, id: "ledger.preferences.close", action: { preferences.requestClose() })
+            }
+            .padding(.horizontal, 28).padding(.top, 18).padding(.bottom, 8)
+            if iab != nil {
+                LedgerTabs(titles: [copy.appThisApp, copy.preferenceCenterVendorListPurposes, copy.appPartners], selected: $tab)
+                    .padding(.horizontal, 28)
+            }
+            LedgerRule(strong: true)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 4) {
+                    if draft.isStale {
+                        LedgerNotice(title: copy.appSettingsChanged, detail: copy.appSettingsChangedDetail, action: copy.appLoadCurrentSettings) { draft.reset() }
+                    }
+                    if draft.listUnavailable {
+                        LedgerNotice(title: copy.appListOutdated, action: copy.appTryAgain) { draft.refresh() }
+                    }
+                    if let iab, tab == 1 {
+                        IABPurposes(iab: iab)
+                    } else if let iab, tab == 2 {
+                        IABPartners(iab: iab)
+                    } else {
+                        Text(preferences.description).font(l.body).foregroundColor(l.ink).padding(.bottom, 12)
+                        // Each row carries its copy, its lock and the setter for its switch.
+                        ForEach(Array(preferences.categories.enumerated()), id: \.element.id) { index, row in
+                            LedgerRow(index: String(format: "%02d", index + 1), title: row.title, description: row.description, note: row.note,
+                                state: row.lockedLabel, isOn: row.locked ? nil : row.isOn, isEnabled: row.isEnabled,
+                                id: "ledger.category.\(row.category.rawValue)", onChange: { row.set($0) })
+                        }
+                        if let changed = preferences.lastChanged {
+                            Text(changed).font(l.small).foregroundColor(l.faint).padding(.top, 16)
+                        }
+                        LedgerLink(text: copy.preferenceCenterVendorListPrivacyPolicy, url: policyURL)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 28).padding(.vertical, 20)
+            }
+            LedgerRule(strong: true)
+            VStack(alignment: .leading, spacing: 12) {
+                if preferences.confirmDiscard {
+                    Text(copy.appDiscardChangesTitle).font(l.row).foregroundColor(l.ink)
+                    Text(copy.appDiscardChangesDetail).font(l.small).foregroundColor(l.faint)
+                    ConsentActions {
+                        Stamp(text: copy.appKeepEditing, draft: draft, filled: false, id: "ledger.discard.keep", onTap: { preferences.keepEditing() })
+                        Stamp(text: copy.appDiscardChanges, draft: draft, id: "ledger.discard.confirm", onTap: { preferences.discard() })
+                    }
+                } else {
+                    Failure(draft: draft, retry: { preferences.retry() })
+                    ConsentActions {
+                        Stamp(text: preferences.rejectAllLabel, draft: draft, action: .rejectAll, filled: false, id: "ledger.preferences.reject", onTap: { preferences.rejectAll() })
+                        Stamp(text: preferences.acceptAllLabel, draft: draft, action: .acceptAll, filled: false, id: "ledger.preferences.accept", onTap: { preferences.acceptAll() })
+                    }
+                    Stamp(text: preferences.saveLabel, draft: draft, action: .save, accent: true, id: "ledger.preferences.save", onTap: { preferences.save() })
+                }
+            }
+            .padding(.horizontal, 28).padding(.vertical, 16)
+        }
+        .background(l.paper.ignoresSafeArea())
+        .consentPane(preferences.title)
+        .accessibilityAddTraits(.isModal)
+        .accessibilityIdentifier("ledger.preferences")
+    }
+}
+```

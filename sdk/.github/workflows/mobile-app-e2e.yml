@@ -5,7 +5,19 @@ name: Mobile app E2E
 # .depot/workflows/android-emulator.yml.
 on:
   workflow_dispatch:
+    inputs:
+      only:
+        description: Run one job by its id, such as ios-custom-consent. Empty runs every job.
+        type: string
+        default: ''
+  # Callers pass nothing, so every job runs for them.
   workflow_call:
+    inputs:
+      only:
+        description: Run one job by its id. Empty runs every job.
+        type: string
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -17,6 +29,7 @@ env:
 jobs:
   ios:
     name: Release app on iOS Simulator, XCUITest
+    if: ${{ inputs.only == '' || inputs.only == 'ios' }}
     permissions:
       contents: read
       id-token: write
@@ -44,6 +57,7 @@ jobs:
 
   ios-vendor-sdks:
     name: Real vendor SDKs follow consent on iOS Simulator
+    if: ${{ inputs.only == '' || inputs.only == 'ios-vendor-sdks' }}
     permissions:
       contents: read
       id-token: write
@@ -115,8 +129,74 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+  ios-custom-consent:
+    name: Custom and stock consent screenshots on iOS Simulator
+    if: ${{ inputs.only == '' || inputs.only == 'ios-custom-consent' }}
+    permissions:
+      contents: read
+    runs-on: ${{ github.event.pull_request.head.repo.fork && 'macos-latest' || 'depot-macos-latest' }}
+    timeout-minutes: 45
+    env:
+      # Same acceptance list as mobile-device.yml and ci.yml.
+      C15T_XCODE_VERSIONS: '27 26'
+      C15T_SCREENSHOT_OUT: ${{ github.workspace }}/.ci-reports/custom-consent-ios
+    steps:
+      # The script needs Xcode and XcodeGen only, so this job skips the JavaScript setup.
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
+      - name: Select the pinned Xcode
+        run: |
+          target=""
+          for version in ${C15T_XCODE_VERSIONS}; do
+            # Newest point release of this major first; the glob sorts lexically, so
+            # take the last match. A missing major expands to no matches at all.
+            for candidate in /Applications/Xcode_${version}*.app /Applications/Xcode-${version}*.app; do
+              if [ -d "${candidate}/Contents/Developer" ]; then
+                target="${candidate}"
+              fi
+            done
+            if [ -n "${target}" ]; then
+              break
+            fi
+          done
+          if [ -z "${target}" ] && [ -d /Applications/Xcode.app/Contents/Developer ]; then
+            target=/Applications/Xcode.app
+          fi
+          if [ -z "${target}" ]; then
+            echo "No Xcode ${C15T_XCODE_VERSIONS} in /Applications. This runner has:" >&2
+            ls /Applications >&2
+            exit 1
+          fi
+          if [ "${target}" != "/Applications/Xcode.app" ] && [ ! -e /Applications/Xcode.app ]; then
+            sudo ln -s "${target}" /Applications/Xcode.app
+          fi
+          echo "DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer" >> "${GITHUB_ENV}"
+          xcodebuild -version
+          accepted="$(printf '%s' "${C15T_XCODE_VERSIONS}" | tr ' ' '|')"
+          xcodebuild -version | head -n 1 | grep -qE "^Xcode (${accepted})[. ]" || {
+            echo "Expected Xcode ${C15T_XCODE_VERSIONS}, found the version above." >&2
+            exit 1
+          }
+      - name: Install XcodeGen
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: '1'
+          HOMEBREW_NO_INSTALL_CLEANUP: '1'
+        run: command -v xcodegen || brew install xcodegen
+      - name: Build the custom consent example and capture each screen in light and dark
+        run: bash native/core-swift/Examples/custom-consent/capture-screenshots.sh
+      - name: Upload the stock and custom consent screenshots
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: custom-consent-ios-screenshots
+          path: ${{ github.workspace }}/.ci-reports/custom-consent-ios/*.png
+          if-no-files-found: error
+          retention-days: 7
+
   expo-ios-vendor-sdks:
     name: Expo ${{ matrix.cell }} with real vendor SDKs on iOS Simulator
+    if: ${{ inputs.only == '' || inputs.only == 'expo-ios-vendor-sdks' }}
     permissions:
       contents: read
       id-token: write

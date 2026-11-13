@@ -82,7 +82,7 @@ public final class ConsentPrompt: ObservableObject {
             self?.requestOwedTracking()
         }
         observers = [
-            presenter.$snapshot.sink { [weak self] in
+            presenter.draft.$snapshot.sink { [weak self] in
                 self?.checkLaunch($0)
                 self?.syncTrackingHold()
                 self?.requestOwedTracking()

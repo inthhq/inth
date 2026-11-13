@@ -95,6 +95,39 @@ jobs:
           if-no-files-found: warn
           retention-days: 7
 
+  # Device screenshots of the stock screens and of the app-owned example built on the headless
+  # blocks, for pull request descriptions. Dispatch it, or run it from a working tree with
+  # `depot ci run --workflow .depot/workflows/android-emulator.yml --job screenshots`.
+  screenshots:
+    name: Stock and custom consent screenshots
+    if: ${{ github.event_name != 'pull_request' && github.event_name != 'push' && github.event_name != 'schedule' }}
+    runs-on: depot-ubuntu-24.04-8
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
+      - name: Prepare the Android toolchain
+        run: bash .depot/android-toolchain.sh
+      - name: Boot the emulator
+        run: bash scripts/ci-android-emulator.sh start
+      - name: Capture every screen in light and dark
+        run: sh native/core-android/gradlew -p native/core-android --no-build-cache :consent-demo:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.c15t.demo.ConsentScreenshotTest
+      - name: Pull the screenshots
+        run: |
+          adb pull /sdcard/Download/c15t-consent-screenshots "${RUNNER_TEMP}/consent-screenshots"
+          test "$(find "${RUNNER_TEMP}/consent-screenshots" -name '*.png' | wc -l)" -eq 12
+      - name: Stop the emulator
+        if: always()
+        run: bash scripts/ci-android-emulator.sh stop
+      - name: Upload the screenshots
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: consent-screenshots-android
+          path: ${{ runner.temp }}/consent-screenshots/*.png
+          if-no-files-found: error
+          retention-days: 7
+
   react-native:
     name: Release RN app on Android Emulator, UIAutomator
     runs-on: depot-ubuntu-24.04-8

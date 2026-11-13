@@ -1,0 +1,87 @@
+{/* Generated from native/examples/consent-demo/android/src/main/kotlin/com/c15t/demo/custom-consent-ui.kt (docs:android-headless-iab) by scripts/sync-example-docs.ts. Edit the source file. */}
+
+```kotlin title="custom-consent-ui.kt"
+@Composable private fun IabPurposes(iab: IabDraftHandle) {
+    val l = LocalLedger.current
+    iab.purposes.forEach { purpose ->
+        Expandable("ledger.purpose.${purpose.id}", header = { toggle ->
+            LedgerRow("%02d".format(purpose.id), purpose.name, purpose.description, purpose.partnersNote, null, purpose.consent, purpose.enabled,
+                "ledger.purpose.${purpose.id}.consent", purpose.onConsentChange, more = toggle)
+        }) {
+            BasicText(purpose.legalDescription, style = l.small)
+            purpose.illustrations.forEach { BasicText("— $it", style = l.small) }
+            purpose.legitimateInterest?.let { interest ->
+                BasicText(iab.legitimateInterestExplanation, style = l.small)
+                LedgerRow("LI", iab.draftCopy.preferenceCenterPurposeItemLegitimateInterest, purpose.rightToObject, null, null, interest, purpose.enabled,
+                    "ledger.purpose.${purpose.id}.li", purpose.onLegitimateInterestChange)
+            }
+        }
+    }
+    Section(iab.draftCopy.preferenceCenterVendorListSpecialFeatures, iab.specialFeatures.isNotEmpty())
+    iab.specialFeatures.forEach { feature ->
+        LedgerRow("SF", feature.name, feature.description, iab.draftCopy.appSpecialFeatureOptIn, null, feature.optIn, feature.enabled, "ledger.special-feature.${feature.id}", feature.onOptInChange)
+        feature.illustrations.forEach { BasicText("— $it", style = l.small) }
+    }
+    // Special purposes and features take no choice: their standard text and no switch.
+    Section(iab.draftCopy.preferenceCenterVendorListSpecialPurposes, iab.specialPurposes.isNotEmpty())
+    iab.specialPurposes.forEach { LedgerRow("SP", it.name, it.description, null, iab.draftCopy.appNoChoice, null, false, "ledger.special-purpose.${it.id}", onChange = {}) }
+    if (iab.specialPurposes.isNotEmpty() && iab.specialPurposesExplanation.isNotEmpty()) BasicText(iab.specialPurposesExplanation, style = l.small)
+    Section(iab.draftCopy.preferenceCenterFeaturesTitle, iab.features.isNotEmpty())
+    iab.features.forEach { feature ->
+        LedgerRow("F", feature.name, feature.description, null, iab.draftCopy.appNoChoice, null, false, "ledger.feature.${feature.id}", onChange = {})
+        feature.illustrations.forEach { BasicText("— $it", style = l.small) }
+    }
+    if (iab.features.isNotEmpty()) BasicText(iab.featuresExplanation, style = l.small)
+    iab.consentStorage?.let { BasicText(it, Modifier.padding(top = 16.dp), style = l.small) }
+}
+
+@Composable private fun IabPartners(iab: IabDraftHandle) {
+    val l = LocalLedger.current
+    // The handle lists partners in the vendor list's order. People look for a name.
+    iab.vendors.sortedBy { it.name.lowercase() }.forEach { vendor -> Partner("ledger.vendor.${vendor.id}", vendor.name, vendor.summary, vendor.statusLabel, vendor.consent, vendor.legitimateInterest, vendor.enabled,
+        vendor.onConsentChange, vendor.onLegitimateInterestChange, iab) { vendor.details } }
+    // Providers and custom partners are not IAB vendors, so each gets its own section and notice.
+    Section(iab.adTechProvidersHeading, iab.adTechProviders.isNotEmpty())
+    if (iab.adTechProviders.isNotEmpty()) BasicText(iab.adTechProvidersNotice, style = l.small)
+    iab.adTechProviders.forEach { provider ->
+        LedgerRow("AC", provider.name, "", null, null, provider.consent, provider.enabled, "ledger.provider.${provider.id}", provider.onConsentChange)
+        Link(iab.draftCopy.preferenceCenterVendorListPrivacyPolicy, provider.policyUrl)
+    }
+    Section(iab.customVendorsHeading, iab.customVendors.isNotEmpty())
+    if (iab.customVendors.isNotEmpty()) BasicText(iab.customVendorsNotice, style = l.small)
+    iab.customVendors.forEach { vendor -> Partner("ledger.custom-vendor.${vendor.id}", vendor.name, vendor.summary, vendor.statusLabel, vendor.consent, vendor.legitimateInterest, vendor.enabled,
+        vendor.onConsentChange, vendor.onLegitimateInterestChange, iab) { vendor.details } }
+}
+
+/** One partner: a line in the ledger that opens in place to its switches and everything it discloses. */
+@Composable private fun Partner(tag: String, name: String, summary: String, status: String, consent: Boolean?, interest: Boolean?, enabled: Boolean,
+    onConsent: (Boolean) -> Unit, onInterest: (Boolean) -> Unit, iab: IabDraftHandle, details: () -> IabVendorDetail) {
+    val l = LocalLedger.current
+    val copy = iab.draftCopy
+    Expandable(tag, header = { toggle -> LedgerRow("→", name, summary, null, status, null, true, "$tag.row", {}, more = toggle) }) {
+        // Built when the line opens, and again when the disclosure is read anew.
+        val detail = remember(tag, iab.disclosure) { details() }
+        detail.privacyPolicyUrl?.let { Link(copy.preferenceCenterVendorListPrivacyPolicy, it) }
+        detail.legitimateInterestClaimUrl?.let { Link(copy.appLegitimateInterestStatement, it) }
+        consent?.let { LedgerRow("C", copy.appConsent, detail.consentPurposes.joinToString(", "), null, null, it, enabled, "$tag.consent", onConsent) }
+        interest?.let {
+            LedgerRow("LI", copy.preferenceCenterPurposeItemLegitimateInterest, detail.legitimateInterestPurposes.joinToString(", "), copy.appTurnOffToObject, null, it, enabled, "$tag.li", onInterest)
+            BasicText(iab.legitimateInterestExplanation, style = l.small)
+        }
+        if (detail.notAllowedPurposes.isNotEmpty()) BasicText(copy.format(copy.appNotAllowedPurposes, mapOf("purposes" to detail.notAllowedPurposes.joinToString(", "))), style = l.small)
+        Facts(copy.preferenceCenterVendorListSpecialPurposes, detail.specialPurposes.map { IabFact(it, copy.appNoChoice) })
+        // Wherever features appear they carry their standard text and illustrations, and no switch.
+        if (detail.features.isNotEmpty()) BasicText(copy.preferenceCenterFeaturesTitle.uppercase(), Modifier.padding(top = 10.dp), style = l.label)
+        detail.features.forEach { feature ->
+            LedgerRow("F", feature.name, feature.description, null, copy.appNoChoice, null, false, "$tag.feature.${feature.id}", onChange = {})
+            feature.illustrations.forEach { BasicText("\u2014 $it", style = l.small) }
+        }
+        if (detail.features.isNotEmpty()) BasicText(iab.featuresExplanation, Modifier.testTag("$tag.features-standard-text"), style = l.small)
+        Facts(copy.preferenceCenterVendorListSpecialFeatures, detail.specialFeatures)
+        Facts(copy.appDataCollected, detail.dataCategories.map { IabFact(it, null) })
+        Facts(copy.appRetentionTitle, detail.retention)
+        Facts(copy.appDeviceStorage, detail.storage)
+        detail.deviceStorageDisclosureUrl?.let { Link(copy.appDeviceStorageDetails, it) }
+    }
+}
+```

@@ -52,8 +52,11 @@ class ConsentDemoActivity : ComponentActivity() {
                     // The app-wide prompt the one-line composable attaches to, so the journeys run
                     // the default auto-present path.
                     val prompt = remember(core) { ConsentPrompt.of(core) }
+                    val ledger = remember(core) { LedgerConsentState() }
                     Box(Modifier.fillMaxSize().semantics { testTagsAsResourceId = true }) {
-                        Host(model, prompt)
+                        Host(model, openPreferences = { if (model.customUi) ledger.preferencesOpen = true else prompt.presentPreferences() })
+                        // The app's own consent UI on the headless blocks, in place of the stock screens.
+                        if (model.customUi) { LedgerConsent(core, model.policyUrl, ledger); return@Box }
                         val theme = if (model.fixtureTheme == "brand") PantryBrand.theme else null
                         val providerTheme = when (model.fixtureBranding) {
                             "inth" -> (theme ?: ConsentTheme.c15t).copy(branding = ConsentTheme.Branding.Inth)
@@ -87,6 +90,8 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
     var fixtureTheme by mutableStateOf<String?>(null); private set
     var fixtureBranding by mutableStateOf<String?>(null); private set
     var fixtureIdentity by mutableStateOf<String?>(null); private set
+    /** Draw consent with the app's own screens (`custom-consent-ui.kt`) instead of the stock ones. */
+    var customUi by mutableStateOf(false)
     var setupError by mutableStateOf<String?>(null); private set
     /** Debug launches can bind real vendor SDKs to the fixture core. */
     var vendorProbe by mutableStateOf<VendorProbe?>(null); private set
@@ -126,6 +131,7 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
             fixtureTheme = intent?.getStringExtra("C15T_FIXTURE_THEME")
             fixtureBranding = intent?.getStringExtra("C15T_FIXTURE_BRANDING")
             fixtureIdentity = intent?.getStringExtra("C15T_FIXTURE_IDENTITY")
+            if (intent?.getStringExtra("C15T_FIXTURE_UI") == "custom") customUi = true
         }
         if (scenario == null && (hostedBackend.isNullOrBlank() || hostedPrivacy.isNullOrBlank())) return
         if (scenario == null) {
@@ -296,6 +302,10 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
         if (BuildConfig.DEBUG) {
             Text("Local policy fixtures", style = MaterialTheme.typography.titleMedium)
             Text("No hosted project is contacted. IAB uses a test CMP identity and sample disclosures. Restart the app to choose another mode.")
+            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                Text("Custom consent UI (headless blocks)", modifier = Modifier.weight(1f))
+                Switch(checked = model.customUi, onCheckedChange = { model.customUi = it }, modifier = Modifier.testTag("demo.custom-ui").semantics { contentDescription = "Custom consent UI" })
+            }
             listOf("category", "notice", "iab").forEach { mode ->
                 Button(onClick = {
                     model.start(Intent().putExtra("C15T_FIXTURE_SCENARIO", "demo-$mode"))
@@ -307,13 +317,13 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
         model.setupError?.let { Text(it) }
     }
 }
-@Composable private fun Host(model: DemoModel, prompt: ConsentPrompt) {
+@Composable private fun Host(model: DemoModel, openPreferences: () -> Unit) {
     if (model.showReviewDiagnostics) {
         ReviewDiagnostics(model, onClose = model::showConsentScreen)
     } else {
         LazyColumn(Modifier.fillMaxSize().safeDrawingPadding().padding(24.dp).testTag("fixture.state"), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             item { Text("Privacy demo", style = MaterialTheme.typography.headlineMedium); Text(if (model.fixture) "Local protocol fixture" else "Inth hosted project") }
-            item { Button(onClick = prompt::presentPreferences, modifier = Modifier.testTag("fixture.open-preferences")) { Text("Privacy settings") } }
+            item { Button(onClick = openPreferences, modifier = Modifier.testTag("fixture.open-preferences")) { Text("Privacy settings") } }
             if (model.reviewing) {
                 item { Text("Hosted IAB TCF review. This is a preparation app, not a certification result.") }
                 if (model.snapshot.ready && !model.snapshot.policyPending && model.snapshot.model != ConsentModel.IAB) {

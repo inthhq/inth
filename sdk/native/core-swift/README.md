@@ -41,9 +41,49 @@ distribution and release status.
 `Examples/AppleInstallation/Quickstart` contains the quickstart's checked source
 files. Select either the SwiftUI or UIKit entry point, not both. The
 [runnable SwiftUI example](Examples/swiftui-consent/README.md) also has a custom
-category form, unavailable-policy mode and delivery status. The maintained
+category form, unavailable-policy mode and delivery status. The
+[custom consent example](Examples/custom-consent/README.md) draws its own
+prompt, preferences and IAB TCF screens on the headless blocks. The maintained
 [native consent demo](../examples/consent-demo/README.md) includes SwiftUI,
 UIKit and IAB review modes.
+
+## Headless blocks
+
+`C15tConsentUI` also has blocks that carry behaviour and no look, for an app
+that draws its own consent screens. c15t supplies the state, the actions, the
+localized copy and the accessibility. The stock screens run on the same draft.
+
+| Block | What it does |
+| --- | --- |
+| `ConsentDraft` | Staged category and IAB choices, a save that names the revision it was read at, stale and retry handling, and the copy |
+| `ConsentDraft.iab` | The IAB TCF selection with the commands `useIAB()` has on the web, and the disclosure as rows |
+| `HeadlessConsentPrompt` | Shows your first layer only while the policy owes one |
+| `HeadlessConsentPreferences` | Your preferences screen, with close-after-save and a check before unsaved edits are dropped |
+| `ConsentGate`, `ConsentReady` | Show content only while the saved decision allows it, or once a policy is resolved |
+| `ConsentActions` | Equal-width actions that stack when a label does not fit or text is large |
+| `consentPane(_:)`, `consentInitialFocus()` | VoiceOver hears the screen change and starts on your heading |
+
+```swift
+@StateObject private var draft = ConsentDraft(core: core)
+
+HeadlessConsentPrompt(draft: draft, onOpenPreferences: { showPreferences = true }) { prompt in
+    VStack {
+        Text(prompt.title)
+        Text(prompt.description)
+        ConsentActions {
+            Button(prompt.rejectAllLabel) { prompt.rejectAll() }
+            Button(prompt.acceptAllLabel) { prompt.acceptAll() }
+        }
+        Button(prompt.customizeLabel) { prompt.openPreferences() }
+    }
+    .consentPane(prompt.title)
+}
+```
+
+A save reports `true` once the choice is stored on the device. A
+`concurrent-change` refusal turns the draft stale and keeps the edits until
+`reset()`. A storage failure keeps the edits and sets `errorMessage`. Gate SDKs
+on the saved decision, never on a draft.
 
 ## Consent before optional SDK startup
 

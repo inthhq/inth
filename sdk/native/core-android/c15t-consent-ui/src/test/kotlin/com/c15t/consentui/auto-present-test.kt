@@ -142,9 +142,7 @@ class AutoPresentTest {
         assertNull(p.presentationID)
         assertTrue(core.save(CommitIntent.All).ok)
         core.reset()
-        val receive = ConsentPresenter::class.java.getDeclaredMethod("receive", ConsentSnapshot::class.java)
-            .apply { isAccessible = true }
-        receive.invoke(p, core.snapshot())
+        p.draft.receive(core.snapshot())
         assertNotNull("the same requirement owed again is presented", p.presentationID)
     }
 

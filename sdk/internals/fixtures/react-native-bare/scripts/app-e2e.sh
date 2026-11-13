@@ -54,6 +54,8 @@ cleanup() {
   elif [[ "${PLATFORM}" == android ]]; then
     if [[ -n "${DEVICE}" && "$("${ADB}" -s "${DEVICE}" get-state 2>/dev/null)" == device ]]; then
       "${ADB}" -s "${DEVICE}" logcat -d -v threadtime > "${OUT}/device-final.log" 2>&1
+      # The main buffer can drop an app crash's stack. The crash buffer keeps it.
+      "${ADB}" -s "${DEVICE}" logcat -b crash -d -v threadtime > "${OUT}/device-crash.log" 2>&1
       "${ADB}" -s "${DEVICE}" exec-out screencap -p > "${OUT}/final.png"
       "${ADB}" -s "${DEVICE}" pull /data/local/tmp/c15t-video.log "${OUT}/video.log"
       mkdir -p "${OUT}/video-segments"

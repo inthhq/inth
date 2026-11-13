@@ -256,11 +256,11 @@ class IabPolicyTest {
 
     @Test fun firstLayerTextFallsBackToTheNumberWhenTheLinkWordsDiffer() {
         val summary = IabBannerSummary(vendorCount = 12, displayItems = listOf("A"), remainingCount = 0)
-        val english = IabFirstLayerText.resolve(en, summary)
+        val english = com.c15t.consentui.headless.iabFirstLayer(en, summary)
         assertEquals("12 partners", english.partnersLabel)
         assertEquals(listOf("A"), english.summary)
         // Polish inflects "partners" differently in the sentence and the link, so only the number is tappable.
-        assertEquals("12", IabFirstLayerText.resolve(IabCopy.forLanguage("pl"), summary).partnersLabel)
+        assertEquals("12", com.c15t.consentui.headless.iabFirstLayer(IabCopy.forLanguage("pl"), summary).partnersLabel)
     }
 
     @Test fun backKeepsTheIabFirstLayerUntilADecisionAndLeavesCustomizeForIt() {

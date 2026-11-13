@@ -85,30 +85,6 @@ private struct TextLinkStyle: ButtonStyle {
     }
 }
 
-/// Measures both labels before choosing equal columns or a full-width stack.
-struct EqualDecisionLayout: Layout {
-    var spacing: CGFloat = 12
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let width = proposal.width ?? 320
-        let ideal = subviews.map { $0.sizeThatFits(.unspecified).width }.max() ?? 0
-        let row = 2 * ideal + spacing <= width
-        let sizes = subviews.map { $0.sizeThatFits(ProposedViewSize(width: row ? (width - spacing) / 2 : width, height: nil)) }
-        return CGSize(width: width, height: row ? sizes.map(\.height).max() ?? 0 : sizes.reduce(0) { $0 + $1.height } + spacing)
-    }
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        let ideal = subviews.map { $0.sizeThatFits(.unspecified).width }.max() ?? 0
-        let row = 2 * ideal + spacing <= bounds.width
-        var y = bounds.minY
-        for (index, view) in subviews.enumerated() {
-            let width = row ? (bounds.width - spacing) / 2 : bounds.width
-            let height = row ? bounds.height : view.sizeThatFits(ProposedViewSize(width: width, height: nil)).height
-            view.place(at: CGPoint(x: row ? bounds.minX + CGFloat(index) * (width + spacing) : bounds.minX, y: y),
-                proposal: ProposedViewSize(width: width, height: height))
-            if !row { y += height + spacing }
-        }
-    }
-}
-
 private enum Destination: Hashable { case vendors(Int?), vendor(Int), providers, customVendors(Int?), customVendor(String) }
 
 /// Widest a consent column gets; wider screens centre it.
@@ -686,9 +662,9 @@ private struct FirstLayer: View {
           ScrollView {
             VStack(alignment: .leading, spacing: theme.spacing.md + theme.spacing.xs) {
                 if !theme.brand.isHidden { IdentityHeader(identity: ResolvedIdentity.resolve(theme.brand, provider: theme.branding, placeholder: presenter.copy.brandPlaceholder)) }
-                if let reason = presenter.snapshot.promptRequirement.reason, reason.rawValue != "missing" {
+                if let reason = presenter.draft.promptReason {
                     InfoCallout {
-                        Text(reason.rawValue == "expired" ? presenter.copy.choiceExpired : presenter.copy.policyChanged)
+                        Text(reason)
                     }.accessibilityIdentifier("c15t.first-layer.reason")
                 }
                 BalancedTextLayout {
@@ -1178,7 +1154,9 @@ private struct PreferencesList: View {
 
     var body: some View {
         let page = typeSize.actionsInPage
-        let content = presenter.iabPreferences
+        // One handle per pass: its texts and its rows come from the same disclosure.
+        let rows = presenter.iabRows
+        let content = rows?.preferences
         ScrollViewReader { proxy in
           List {
             if presenter.snapshot.policyPending {
@@ -1221,16 +1199,17 @@ private struct PreferencesList: View {
                 Section { ForEach(presenter.offeredCategories, id: \.self) { category in CategoryRow(presenter: presenter, category: category) } }
                     header: { if presenter.iab { SectionLabel(presenter.iabCopy.appThisApp) } }
                     .listRowBackground(surface)
-                if let content, let disclosure = presenter.disclosure {
+                if let content, let rows {
+                    let disclosure = rows.disclosure
                     Section {
-                        ForEach(content.purposes) { purpose in
-                            PurposeRow(presenter: presenter, content: purpose, rightToObject: content.rightToObject) { path.append(.vendors(purpose.id)) }
+                        ForEach(rows.purposes) { purpose in
+                            PurposeRow(row: purpose) { path.append(.vendors(purpose.id)) }
                         }
                     } header: { SectionLabel(presenter.iabCopy.preferenceCenterVendorListPurposes) }
                         .listRowBackground(surface)
                     if !content.specialFeatures.isEmpty {
                         Section {
-                            ForEach(content.specialFeatures) { item in SpecialFeatureRow(presenter: presenter, item: item) }
+                            ForEach(rows.specialFeatures) { item in SpecialFeatureRow(row: item) }
                         } header: { SectionLabel(presenter.iabCopy.preferenceCenterVendorListSpecialFeatures) }
                             .listRowBackground(surface)
                     }
@@ -1271,8 +1250,8 @@ private struct PreferencesList: View {
                         Text(storage).font(theme.font(.footnote)).foregroundStyle(theme.colors.textMuted.color)
                             .accessibilityIdentifier("c15t.iab.consent-storage")
                     }
-                    if let changed = presenter.snapshot.explicitChoice?.categories.values.map(\.confirmedAt).max() {
-                        Text(presenter.lastChanged(at: changed))
+                    if let changed = presenter.draft.lastChanged {
+                        Text(changed)
                             .font(theme.font(.footnote)).foregroundStyle(theme.colors.textMuted.color).accessibilityIdentifier("c15t.prefs.last-changed")
                     }
                 }.listRowBackground(surface)
@@ -1370,46 +1349,25 @@ private struct CategoryRow: View {
     @ObservedObject var presenter: ConsentPresenter
     let category: ConsentCategory
     @Environment(\.consentTheme) private var theme
-    private var title: String {
-        let copy = presenter.copy
-        switch category {
-        case .necessary: return copy.necessaryTitle
-        case .functionality: return copy.functionalityTitle
-        case .experience: return copy.experienceTitle
-        case .measurement: return copy.measurementTitle
-        case .marketing: return copy.marketingTitle
-        }
-    }
-    private var description: String {
-        let copy = presenter.copy
-        switch category {
-        case .necessary: return copy.necessaryDescription
-        case .functionality: return copy.functionalityDescription
-        case .experience: return copy.experienceDescription
-        case .measurement: return copy.measurementDescription
-        case .marketing: return copy.marketingDescription
-        }
-    }
     var body: some View {
-        let optional = OptionalConsentCategory(rawValue: category.rawValue)
-        let restricted = optional.map(presenter.isRestricted) ?? false
+        // The draft's row carries the copy, the lock and the staged value.
+        let row = presenter.draft.category(category)
         Group {
-            if let optional, !restricted {
-                ConsentToggle(isOn: Binding(get: { presenter.categories[optional] ?? false }, set: { presenter.setCategory(optional, $0) })) {
-                    RowLabel(title: title, description: description)
+            if !row.locked {
+                ConsentToggle(isOn: row.binding) {
+                    RowLabel(title: row.title, description: row.description)
                 }.accessibilityIdentifier("c15t.prefs.category.\(category.rawValue).switch")
             } else {
                 ReadOnlyStatusRow(
-                    label: RowLabel(title: title, description: description,
-                        note: optional.flatMap { optional in restricted ? (presenter.snapshot.restrictions[optional]?.contains(.gpc) == true ? presenter.copy.restrictedByGpc : presenter.copy.notOffered) : nil }),
-                    status: Text(category == .necessary ? presenter.iabCopy.appAlwaysOn : presenter.iabCopy.appOff).font(theme.font(.subheadline)).foregroundStyle(theme.colors.textMuted.color)
+                    label: RowLabel(title: row.title, description: row.description, note: row.note),
+                    status: Text(row.lockedLabel ?? "").font(theme.font(.subheadline)).foregroundStyle(theme.colors.textMuted.color)
                         .accessibilityIdentifier("c15t.prefs.category.\(category.rawValue).locked")
                 )
                 .frame(minHeight: 44)
                 .accessibilityElement(children: .combine)
-                .accessibilityIdentifier(restricted ? "c15t.prefs.category.\(category.rawValue).restricted" : "c15t.prefs.category.\(category.rawValue).locked")
+                .accessibilityIdentifier(category == .necessary ? "c15t.prefs.category.\(category.rawValue).locked" : "c15t.prefs.category.\(category.rawValue).restricted")
             }
-        }.disabled(presenter.pending || presenter.stale || presenter.listUnavailable)
+        }.disabled(!presenter.draft.isEditable)
     }
 }
 
@@ -1468,44 +1426,40 @@ private struct ReadOnlyDefinition: View {
 }
 
 private struct PurposeRow: View {
-    @ObservedObject var presenter: ConsentPresenter
-    let content: IABPurposeContent
-    let rightToObject: String
+    let row: IABPurposeRow
     let openPartners: () -> Void
-    @Environment(\.consentTheme) private var theme
-    private var copy: IABCopy { presenter.iabCopy }
+    @Environment(\.iabCopy) private var copy
     var body: some View {
-        let id = content.id
+        let id = row.id
         VStack(alignment: .leading, spacing: 8) {
             // The partner counts sit on the collapsed row, not behind Details.
-            ConsentToggle(isOn: Binding(get: { presenter.choices.purposeConsents.contains(id) }, set: { presenter.edit(\.purposeConsents, id: id, enabled: $0) })) {
-                RowLabel(title: content.definition.name, description: content.definition.description, note: content.partnerCounts)
+            ConsentToggle(isOn: Binding(get: { row.consent }, set: { row.setConsent($0) })) {
+                RowLabel(title: row.name, description: row.description, note: row.partnersNote)
             }.accessibilityIdentifier("c15t.iab.purpose.\(id).consent")
-            DefinitionDetails(item: content.definition, id: "c15t.iab.purpose.\(id)") {
+            DefinitionDetails(item: row.definition, id: "c15t.iab.purpose.\(id)") {
                 Button(copy.appViewPartners, action: openPartners).buttonStyle(TextLinkStyle()).accessibilityIdentifier("c15t.iab.purpose.\(id).view-partners")
-                if content.offersObjection {
-                    ConsentToggle(isOn: Binding(get: { presenter.choices.purposeLegitimateInterests.contains(id) }, set: { presenter.editLI(purpose: true, id: id, enabled: $0) })) {
-                        RowLabel(title: copy.preferenceCenterPurposeItemLegitimateInterest, note: rightToObject + " " + copy.appTurnOffToObject)
+                if let interest = row.legitimateInterest {
+                    ConsentToggle(isOn: Binding(get: { interest }, set: { row.setLegitimateInterest($0) })) {
+                        RowLabel(title: copy.preferenceCenterPurposeItemLegitimateInterest, note: row.rightToObject)
                     }.accessibilityIdentifier("c15t.iab.purpose.\(id).li")
                 }
             }
-        }.padding(.vertical, 4).disabled(presenter.pending || presenter.stale || presenter.listUnavailable)
+        }.padding(.vertical, 4).disabled(!row.isEnabled)
     }
 }
 
 /// One opt-in per special feature, with its standard texts and illustrations behind Details.
 private struct SpecialFeatureRow: View {
-    @ObservedObject var presenter: ConsentPresenter
-    let item: IABDefinitionContent
-    private var copy: IABCopy { presenter.iabCopy }
+    let row: IABSpecialFeatureRow
+    @Environment(\.iabCopy) private var copy
     var body: some View {
-        let id = item.id
+        let id = row.id
         VStack(alignment: .leading, spacing: 8) {
-            ConsentToggle(isOn: Binding(get: { presenter.choices.specialFeatureOptIns.contains(id) }, set: { presenter.edit(\.specialFeatureOptIns, id: id, enabled: $0) })) {
-                RowLabel(title: item.name, description: item.description, note: copy.appSpecialFeatureOptIn)
+            ConsentToggle(isOn: Binding(get: { row.optIn }, set: { row.setOptIn($0) })) {
+                RowLabel(title: row.name, description: row.description, note: copy.appSpecialFeatureOptIn)
             }.accessibilityIdentifier("c15t.iab.special-feature.\(id).switch")
-            DefinitionDetails(item: item, id: "c15t.iab.special-feature.\(id)")
-        }.padding(.vertical, 4).disabled(presenter.pending || presenter.stale || presenter.listUnavailable)
+            DefinitionDetails(item: row.definition, id: "c15t.iab.special-feature.\(id)")
+        }.padding(.vertical, 4).disabled(!row.isEnabled)
     }
 }
 
@@ -1554,10 +1508,8 @@ private struct VendorList: View {
                     }.buttonStyle(TextLinkStyle()).accessibilityIdentifier("c15t.iab.vendors.filter.purpose.clear")
                 }
             }.listRowBackground(theme.colors.surface.color)
-            let vendors = (presenter.disclosure?.list.vendors.values.filter { vendor in
-                presenter.disclosure?.vendors[vendor.id] != nil && (search.isEmpty || vendor.name.localizedStandardContains(search))
-                    && (purpose == nil || presenter.disclosure?.vendors[vendor.id]?.consentPurposes.contains(purpose!) == true || presenter.disclosure?.vendors[vendor.id]?.legitimateInterestPurposes.contains(purpose!) == true)
-            } ?? []).sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+            // The handle's rows are the disclosed partners that use the purpose, by name.
+            let vendors = (presenter.iabRows?.vendors(purposeId: purpose) ?? []).filter { search.isEmpty || $0.name.localizedStandardContains(search) }
             Section {
                 if vendors.isEmpty {
                     Text(presenter.iabCopy.format(presenter.iabCopy.appNoPartnersMatch, ["search": search])).foregroundStyle(theme.colors.textMuted.color).accessibilityIdentifier("c15t.iab.vendors.empty")
@@ -1567,12 +1519,10 @@ private struct VendorList: View {
                         HStack(alignment: .center, spacing: 12) {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(vendor.name).font(theme.font(.body, weight: .semibold)).foregroundStyle(theme.colors.text.color)
-                                if let projection = presenter.disclosure?.vendors[vendor.id] {
-                                    Text(presenter.iabCopy.format(presenter.iabCopy.appVendorPurposeSummary, ["purposes": String(projection.consentPurposes.count), "legitimateInterest": String(projection.legitimateInterestPurposes.count)])).font(theme.font(.footnote)).foregroundStyle(theme.colors.textMuted.color)
-                                }
+                                Text(vendor.summary).font(theme.font(.footnote)).foregroundStyle(theme.colors.textMuted.color)
                             }
                             Spacer(minLength: 0)
-                            StatusTag(status: presenter.partnerStatus(vendor.id), off: presenter.partnerSelection(vendor.id) == .off).accessibilityIdentifier("c15t.iab.vendors.vendor.\(vendor.id).status")
+                            StatusTag(status: vendor.statusLabel, off: vendor.status == .off).accessibilityIdentifier("c15t.iab.vendors.vendor.\(vendor.id).status")
                         }.padding(.vertical, 6)
                     }.accessibilityIdentifier("c15t.iab.vendors.vendor.\(vendor.id)")
                 }
@@ -1654,7 +1604,7 @@ private struct VendorDetails: View {
             }
         } header: { SectionLabel(copy.appYourChoices) }
             .listRowBackground(theme.colors.surface.color)
-            .disabled(presenter.pending || presenter.stale || presenter.listUnavailable)
+            .disabled(!presenter.draft.isEditable)
     }
     private func noChoice(_ name: String) -> some View {
         ReadOnlyStatusRow(label: Text(name),
@@ -1718,9 +1668,9 @@ private struct CustomVendorList: View {
             } footer: {
                 Text(presenter.iabCopy.preferenceCenterVendorListCustomVendorsNotice).accessibilityIdentifier("c15t.iab.custom-vendors.intro")
             }.listRowBackground(theme.colors.surface.color)
-            let vendors = (presenter.disclosure?.customVendors ?? []).filter { vendor in
-                (search.isEmpty || vendor.name.localizedStandardContains(search))
-                    && (purpose.map { vendor.purposes.contains($0) || vendor.legIntPurposes.contains($0) } ?? true)
+            let vendors = (presenter.iabRows?.customVendors ?? []).filter { row in
+                (search.isEmpty || row.name.localizedStandardContains(search))
+                    && (purpose.map { row.vendor.purposes.contains($0) || row.vendor.legIntPurposes.contains($0) } ?? true)
             }.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
             Section {
                 if vendors.isEmpty {
@@ -1731,10 +1681,10 @@ private struct CustomVendorList: View {
                         HStack(alignment: .center, spacing: 12) {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(vendor.name).font(theme.font(.body, weight: .semibold)).foregroundStyle(theme.colors.text.color)
-                                Text(presenter.iabCopy.format(presenter.iabCopy.appVendorPurposeSummary, ["purposes": String(vendor.purposes.count), "legitimateInterest": String(vendor.legIntPurposes.filter { !customNeverLI.contains($0) }.count)])).font(theme.font(.footnote)).foregroundStyle(theme.colors.textMuted.color)
+                                Text(vendor.summary).font(theme.font(.footnote)).foregroundStyle(theme.colors.textMuted.color)
                             }
                             Spacer(minLength: 0)
-                            StatusTag(status: presenter.customPartnerStatus(vendor.id), off: presenter.customPartnerSelection(vendor.id) == .off).accessibilityIdentifier("c15t.iab.custom-vendors.vendor.\(vendor.id).status")
+                            StatusTag(status: vendor.statusLabel, off: vendor.status == .off).accessibilityIdentifier("c15t.iab.custom-vendors.vendor.\(vendor.id).status")
                         }.padding(.vertical, 6)
                     }.accessibilityIdentifier("c15t.iab.custom-vendors.vendor.\(vendor.id)")
                 }
@@ -1773,7 +1723,7 @@ private struct CustomVendorDetails: View {
                     }
                 } header: { SectionLabel(copy.appYourChoices) }
                     .listRowBackground(theme.colors.surface.color)
-                    .disabled(presenter.pending || presenter.stale || presenter.listUnavailable)
+                    .disabled(!presenter.draft.isEditable)
                 if !vendor.features.isEmpty {
                     Section {
                         ForEach(vendor.features) { item in ReadOnlyDefinition(item: item, id: "c15t.iab.custom-vendor.\(id).feature.\(item.id)") }
@@ -1818,9 +1768,7 @@ private struct ProviderList: View {
     @Environment(\.consentTheme) private var theme
     /// The web's notice, plus why the providers stay off while their purposes are.
     private var intro: String {
-        let copy = presenter.iabCopy
-        let notice = copy.preferenceCenterVendorListAdTechProvidersNotice
-        return presenter.providerPrerequisitesMet ? notice : notice + " " + copy.appProvidersOff
+        presenter.iabRows?.adTechProvidersNotice ?? presenter.iabCopy.preferenceCenterVendorListAdTechProvidersNotice
     }
     var body: some View {
         List {
@@ -1840,7 +1788,7 @@ private struct ProviderList: View {
                         if let url = URL(string: provider.policyUrl) {
                             Link(presenter.iabCopy.preferenceCenterVendorListPrivacyPolicy, destination: url).buttonStyle(TextLinkStyle()).accessibilityIdentifier("c15t.ac.provider.\(provider.id).privacy-link")
                         }
-                    }.disabled(presenter.pending || presenter.stale || presenter.listUnavailable)
+                    }.disabled(!presenter.draft.isEditable)
                 }
             }.listRowBackground(theme.colors.surface.color)
         }

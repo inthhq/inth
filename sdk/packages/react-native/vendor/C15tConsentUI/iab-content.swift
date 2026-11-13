@@ -11,30 +11,33 @@ import Foundation
 /// The first layer's IAB disclosure, in reading order, as the web prompt shows it:
 /// description with the partners link, the purpose summary, then the legitimate-interest,
 /// scope and withdrawal sentences.
-struct IABFirstLayerContent: Equatable, Sendable {
+public struct IABFirstLayerContent: Equatable, Sendable {
     /// Registered vendors plus Google ad tech providers, as on the web.
-    let partnerCount: Int
+    public let partnerCount: Int
     /// Text before the tappable partners link.
-    let descriptionLead: String
+    public let descriptionLead: String
     /// The link itself, such as "12 partners". It opens the partner list.
-    let partnersLink: String
+    public let partnersLink: String
     /// Text after the link. Ends with "to:" before the summary list.
-    let descriptionTail: String
+    public let descriptionTail: String
     /// Purpose 1, stacks, uncovered declared purposes and used special features, by their
     /// standard names.
-    let summaryItems: [String]
+    public let summaryItems: [String]
     /// "And N more..." when the summary was capped.
-    let moreItems: String?
-    let legitimateInterestNotice: String
-    let scope: String
-    let withdraw: String
+    public let moreItems: String?
+    public let legitimateInterestNotice: String
+    public let scope: String
+    public let withdraw: String
     let labels: DecisionLabels
 
     /// The whole description with the link text in place.
-    var description: String { descriptionLead + partnersLink + descriptionTail }
+    public var description: String { descriptionLead + partnersLink + descriptionTail }
+
+    /// The summary names, then the "and N more" line when the list was cut.
+    public var summary: [String] { summaryItems + (moreItems.map { [$0] } ?? []) }
 
     /// Every IAB sentence and summary line the first layer shows, in order.
-    var lines: [String] {
+    public var lines: [String] {
         [description] + summaryItems + (moreItems.map { [$0] } ?? []) + [legitimateInterestNotice, scope, withdraw]
     }
 
@@ -72,15 +75,15 @@ struct IABFirstLayerContent: Equatable, Sendable {
 }
 
 /// One GVL purpose, special purpose, feature or special feature, with its standard texts.
-struct IABDefinitionContent: Equatable, Sendable, Identifiable {
-    enum Kind: Equatable, Sendable { case purpose, specialPurpose, feature, specialFeature }
-    let kind: Kind
-    let id: Int
-    let name: String
-    let description: String
-    let descriptionLegal: String?
+public struct IABDefinitionContent: Equatable, Sendable, Identifiable {
+    public enum Kind: Equatable, Sendable { case purpose, specialPurpose, feature, specialFeature }
+    public let kind: Kind
+    public let id: Int
+    public let name: String
+    public let description: String
+    public let descriptionLegal: String?
     /// The GVL's standard illustrations, unmodified.
-    let illustrations: [String]
+    public let illustrations: [String]
 
     init(_ kind: Kind, _ definition: GVLDefinition) {
         self.kind = kind
@@ -92,7 +95,7 @@ struct IABDefinitionContent: Equatable, Sendable, Identifiable {
     }
 
     /// Whether a Details control has anything to reveal.
-    var hasDetails: Bool { descriptionLegal?.isEmpty == false || !illustrations.isEmpty }
+    public var hasDetails: Bool { descriptionLegal?.isEmpty == false || !illustrations.isEmpty }
 }
 
 /// A purpose row in preferences: its definition and how many partners rely on each legal basis.
@@ -194,33 +197,37 @@ let customNeverLI: Set<Int> = [1, 3, 4, 5, 6]
 
 /// One custom (non-IAB) partner's page: what it is, its legal bases and everything it declares,
 /// with the same rows a registered partner's page has. The names come from the served list.
-struct IABCustomVendorContent: Equatable, Sendable {
-    typealias Row = IABVendorContent.Row
-    let id: String
-    let name: String
+public struct IABCustomVendorContent: Equatable, Sendable {
+    public typealias Row = IABVendorContent.Row
+    public let id: String
+    public let name: String
     /// That this partner is not registered with IAB, in the web's words.
-    let note: String
-    let description: String?
-    let privacyPolicy: URL?
-    let consentPurposes: [String]
-    let legitimateInterestPurposes: [String]
-    let offersConsent: Bool
-    let offersLegitimateInterest: Bool
-    let features: [IABDefinitionContent]
-    let featuresStandardText: String
-    let specialFeatureIds: [Int]
-    let specialFeatures: [String]
-    let dataCategories: [String]
-    let retention: [Row]
-    let storage: [Row]
-    let storesOnDevice: Bool
+    public let note: String
+    public let description: String?
+    public let privacyPolicy: URL?
+    public let consentPurposes: [String]
+    public let legitimateInterestPurposes: [String]
+    public let offersConsent: Bool
+    public let offersLegitimateInterest: Bool
+    public let features: [IABDefinitionContent]
+    public let featuresStandardText: String
+    public let specialFeatureIds: [Int]
+    public let specialFeatures: [String]
+    public let dataCategories: [String]
+    public let retention: [Row]
+    public let storage: [Row]
+    public let storesOnDevice: Bool
 
     init?(_ presentation: IABPresentation, id: String) {
         guard let vendor = presentation.customVendors.first(where: { $0.id == id }) else { return nil }
+        self.init(presentation, vendor: vendor)
+    }
+
+    init(_ presentation: IABPresentation, vendor: IABCustomVendor) {
         let copy = IABCopy.forLanguage(presentation.language)
         let list = presentation.list
         func names(_ ids: [Int], in table: [Int: GVLDefinition]) -> [String] { ids.compactMap { table[$0]?.name } }
-        self.id = id
+        id = vendor.id
         name = vendor.name
         note = copy.commonCustomPartner
         description = vendor.description?.isEmpty == false ? vendor.description : nil
@@ -250,40 +257,44 @@ struct IABCustomVendorContent: Equatable, Sendable {
 }
 
 /// One partner's page: links, legal bases, everything it declares, retention and storage.
-struct IABVendorContent: Equatable, Sendable {
-    struct Row: Equatable, Sendable {
-        let label: String
-        let value: String
+public struct IABVendorContent: Equatable, Sendable {
+    public struct Row: Equatable, Sendable {
+        public let label: String
+        public let value: String
     }
-    let id: Int
-    let name: String
-    let privacyPolicy: URL?
+    public let id: Int
+    public let name: String
+    public let privacyPolicy: URL?
     /// The partner's statement of the legitimate interest at stake.
-    let legitimateInterestClaim: URL?
-    let consentPurposes: [String]
-    let legitimateInterestPurposes: [String]
-    let notAllowedPurposes: [String]
-    let specialPurposes: [String]
+    public let legitimateInterestClaim: URL?
+    public let consentPurposes: [String]
+    public let legitimateInterestPurposes: [String]
+    public let notAllowedPurposes: [String]
+    public let specialPurposes: [String]
     /// Read-only, with their texts and illustrations. They never get a control.
-    let features: [IABDefinitionContent]
-    let featuresStandardText: String
-    let specialFeatureIds: [Int]
-    let specialFeatures: [String]
-    let dataCategories: [String]
+    public let features: [IABDefinitionContent]
+    public let featuresStandardText: String
+    public let specialFeatureIds: [Int]
+    public let specialFeatures: [String]
+    public let dataCategories: [String]
     /// Per purpose, then per special purpose, then the standard period. Empty when the
     /// partner gives none.
-    let retention: [Row]
+    public let retention: [Row]
     /// Device storage rows. Empty when the partner stores nothing on the device.
-    let storage: [Row]
-    let storesOnDevice: Bool
-    let storageDisclosure: URL?
+    public let storage: [Row]
+    public let storesOnDevice: Bool
+    public let storageDisclosure: URL?
 
     init?(_ presentation: IABPresentation, id: Int, language: String) {
+        guard let vendor = presentation.list.vendors[id], let projection = presentation.vendors[id] else { return nil }
+        self.init(presentation, vendor: vendor, projection: projection, language: language)
+    }
+
+    init(_ presentation: IABPresentation, vendor: GVLVendor, projection: IABVendorDisclosure, language: String) {
         let copy = IABCopy.forLanguage(presentation.language)
         let list = presentation.list
-        guard let vendor = list.vendors[id], let projection = presentation.vendors[id] else { return nil }
         func names(_ ids: [Int], in table: [Int: GVLDefinition]) -> [String] { ids.compactMap { table[$0]?.name } }
-        self.id = id
+        id = vendor.id
         name = vendor.name
         let urls = vendor.urls.first { $0.langId.lowercased() == language.lowercased() }
             ?? vendor.urls.first { $0.langId.lowercased() == "en" } ?? vendor.urls.first
