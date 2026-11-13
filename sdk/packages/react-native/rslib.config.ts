@@ -1,6 +1,7 @@
 import { pluginReact } from '@rsbuild/plugin-react';
 import { defineConfig } from '@rslib/core';
 
+import { compactModuleMinify } from '../shared/rslib-modules';
 import {
 	getRsdoctorPlugins,
 	standardExcludePatterns,
@@ -46,6 +47,7 @@ export default defineConfig({
 	],
 	output: {
 		cleanDistPath: true,
+		minify: compactModuleMinify,
 		target: 'web',
 	},
 	plugins: [pluginReact()],
