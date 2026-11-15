@@ -776,7 +776,10 @@ private struct IABDisclosure: View {
 
 private struct Hairline: View {
     @Environment(\.consentTheme) private var theme
-    var body: some View { Rectangle().fill(theme.colors.text.color.opacity(0.1)).frame(height: 1 / UIScreen.main.scale) }
+    // The scale of the screen this view is on, not `UIScreen.main`, which iOS 26
+    // deprecates and which reports the wrong screen on an external display.
+    @Environment(\.displayScale) private var displayScale
+    var body: some View { Rectangle().fill(theme.colors.text.color.opacity(0.1)).frame(height: 1 / displayScale) }
 }
 
 private enum BrandingAnchor { case customize, inline }
