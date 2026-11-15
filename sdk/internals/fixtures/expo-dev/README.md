@@ -3,7 +3,7 @@
 See the [mobile demo index](../../../docs/frameworks/react-native/examples.mdx) for
 current native modes, setup commands and the limits of IAB and hosted coverage.
 
-An Expo SDK 57 custom native build for `@c15t/react-native`. Normal native mode
+An Expo SDK 58 custom native build for `@c15t/react-native`. Normal native mode
 requests the stock SwiftUI or Compose presenter and displays native state and
 outcomes. The labelled fake mode uses a separate React shell. It shares some
 fixture helpers with bare RN; the apps are not identical consumer journeys.
@@ -135,12 +135,13 @@ iOS, and bundles the exported policy as `c15t-e2e-policy.json` on both.
 bash scripts/vendor-e2e.sh ios
 bash scripts/vendor-e2e.sh android
 C15T_EXPO_CELL=expo-55 bash scripts/vendor-e2e.sh ios
+C15T_EXPO_CELL=expo-57 bash scripts/vendor-e2e.sh android
 ```
 
 The runner builds a Release app with the bundle inside the binary and the bare
 fixture's loopback backend and capture server. It creates its own Simulator or
 AVD and deletes it after the run. Without `C15T_EXPO_CELL` it builds this fixture in place.
-With `expo-55` or `expo-58` it packs `@c15t/react-native` and uses
+With `expo-55`, `expo-56` or `expo-57` it packs `@c15t/react-native` and uses
 `scripts/prepare-packed-consumer.py --cell` to make a consumer outside the
 checkout. That consumer takes Expo, React Native, React and the other Expo packages
 (`expoPackages`) from that cell of `scripts/mobile-compatibility.json`. The vendor SDKs keep this fixture's pins in every cell. The committed
@@ -162,9 +163,15 @@ Things that differ from the bare fixture:
   Xcode 27 refuses to build. `plugins/with-pod-deployment-floor.js` lifts every
   pod to 16.4 at the end of `post_install`, as the bare Podfile does by hand.
   SDK 57 raises resource bundles itself.
-- The generated app does not adopt the UIScene lifecycle. iOS 27 stops such an
-  app at launch when it is built with the iOS 27 SDK, so the runner picks the
-  oldest installed iOS runtime, as the bare runner does. CI builds with Xcode 26.
+- Expo SDK 58 generates a `SceneDelegate.swift`, so the runner gives this
+  fixture the newest installed iOS runtime. Below SDK 58 the generated app does
+  not adopt the UIScene lifecycle, and iOS 27 stops such an app at launch when it
+  is built with the iOS 27 SDK, so the runner picks the oldest installed runtime
+  for those cells, as the bare runner does.
+- The Android Release build runs R8. That is Expo SDK 58's default, and
+  `app.config.ts` turns it on for the older cells too, so every Android journey
+  runs minified code. The runner fails if R8 wrote no mapping file, and keeps it
+  as `r8-mapping.txt.gz` for reading stack traces.
 - Expo SDK 55 links a precompiled React Native core that dynamic framework pods
   cannot link against (`RCTRegisterModule` is undefined), so `app.config.ts`
   builds React Native from source below SDK 57.

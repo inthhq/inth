@@ -159,9 +159,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # The fixture's own Expo 57 build, and the oldest and newest Expo cells of
-        # scripts/mobile-compatibility.json as packed consumers.
-        cell: [fixture, expo-55, expo-58]
+        # The fixture's own Expo 58 build, and as packed consumers the oldest Expo
+        # cell of scripts/mobile-compatibility.json and the newest one below the
+        # fixture's SDK. Expo 56 gets the packed type, Codegen and prebuild checks.
+        cell: [fixture, expo-55, expo-57]
     env:
       C15T_EXPO_CELL: ${{ matrix.cell != 'fixture' && matrix.cell || '' }}
       C15T_APP_E2E_OUT: ${{ github.workspace }}/.ci-reports/expo-vendor-e2e/${{ matrix.cell }}-android

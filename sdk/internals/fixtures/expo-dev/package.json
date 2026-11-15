@@ -23,20 +23,20 @@
 		"@react-native-firebase/analytics": "27.1.0",
 		"@react-native-firebase/app": "27.1.0",
 		"@sentry/react-native": "8.33.0",
-		"expo": "57.0.22",
-		"expo-build-properties": "57.0.22",
-		"expo-constants": "57.0.18",
-		"expo-dev-client": "57.0.19",
+		"expo": "58.0.24",
+		"expo-build-properties": "58.0.12",
+		"expo-constants": "58.0.16",
+		"expo-dev-client": "58.0.19",
 		"mixpanel-react-native": "4.0.0",
 		"posthog-react-native": "4.85.1",
-		"react": "19.2.7",
-		"react-native": "0.86.3",
+		"react": "19.3.0",
+		"react-native": "0.88.1",
 		"react-native-get-random-values": "1.11.0"
 	},
 	"devDependencies": {
 		"@babel/runtime": "^7.25.0",
 		"@types/node": "25.5.0",
-		"@types/react": "~19.2.2",
+		"@types/react": "~19.3.0",
 		"typescript": "7.0.2"
 	}
 }

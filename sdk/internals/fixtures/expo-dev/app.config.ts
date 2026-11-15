@@ -163,13 +163,19 @@ const plugins: PluginEntry[] = [
 	[
 		'expo-build-properties',
 		{
-			// Plain HTTP reaches only the loopback E2E backend.
-			android: { usesCleartextTraffic: appE2e },
+			android: {
+				// R8 shrinks the Release build, the default from Expo SDK 58 and
+				// written out here so the older SDK cells build the same way. The
+				// consent journeys then run on the minified code users ship.
+				enableMinifyInReleaseBuilds: true,
+				// Plain HTTP reaches only the loopback E2E backend.
+				usesCleartextTraffic: appE2e,
+			},
 			ios: {
 				// Expo SDK 55 links a precompiled React Native core that pods built as
 				// dynamic frameworks cannot link against (`RCTRegisterModule` is
-				// undefined), so React Native builds from source there. SDK 57 links
-				// the precompiled core.
+				// undefined), so React Native builds from source there. SDK 57 and
+				// later link the precompiled core.
 				buildReactNativeFromSource: expoSdk < 57,
 				// React Native Firebase resolves the Firebase SDK through Swift
 				// Package Manager and refuses static linkage.

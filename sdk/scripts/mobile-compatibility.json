@@ -35,7 +35,12 @@
 		"expoTemplate": "56.0.38",
 		"reactNative": "0.85.3",
 		"react": "19.2.3",
-		"compileSdk": 36
+		"compileSdk": 36,
+		"expoPackages": {
+			"expo-build-properties": "56.0.27",
+			"expo-constants": "56.0.27",
+			"expo-dev-client": "56.0.28"
+		}
 	},
 	{
 		"id": "expo-57",
@@ -43,7 +48,12 @@
 		"expoTemplate": "57.0.33",
 		"reactNative": "0.86.3",
 		"react": "19.2.3",
-		"compileSdk": 36
+		"compileSdk": 36,
+		"expoPackages": {
+			"expo-build-properties": "57.0.22",
+			"expo-constants": "57.0.22",
+			"expo-dev-client": "57.0.20"
+		}
 	},
 	{
 		"id": "rn-87",
@@ -55,15 +65,15 @@
 	},
 	{
 		"id": "expo-58",
-		"expo": "58.0.22",
+		"expo": "58.0.24",
 		"expoTemplate": "58.0.31",
 		"reactNative": "0.88.1",
 		"react": "19.3.0",
 		"compileSdk": 37,
 		"expoPackages": {
 			"expo-build-properties": "58.0.12",
-			"expo-constants": "58.0.14",
-			"expo-dev-client": "58.0.18"
+			"expo-constants": "58.0.16",
+			"expo-dev-client": "58.0.19"
 		}
 	}
 ]

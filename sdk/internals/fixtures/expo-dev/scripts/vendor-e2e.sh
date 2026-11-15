@@ -4,7 +4,7 @@
 #
 #   scripts/vendor-e2e.sh ios|android
 #
-# C15T_EXPO_CELL=expo-55|expo-58 builds a packed consumer at that cell's pinned
+# C15T_EXPO_CELL=expo-55|expo-56|expo-57 builds a packed consumer at that cell's pinned
 # Expo, React Native and React (scripts/mobile-compatibility.json), outside the
 # checkout. Unset, it builds this fixture in place at its committed versions.
 # The backend, capture server and Firebase log check are the bare fixture's.
@@ -255,10 +255,26 @@ cat "${OUT}/versions.json"
 
 if [[ "${PLATFORM}" == ios ]]; then
   (cd "${APP}" && bun x expo prebuild --platform ios --clean) > "${OUT}/prebuild.log" 2>&1
-  # The oldest available iOS, as the bare runner picks. Expo's generated app does not
-  # adopt the UIScene lifecycle, and iOS 27 stops such an app built with the iOS 27 SDK.
-  RUNTIME="${C15T_IOS_RUNTIME:-$(xcrun simctl list runtimes -j | python3 -c 'import json,sys; print(next(r["identifier"] for r in json.load(sys.stdin)["runtimes"] if r["isAvailable"] and r["name"].startswith("iOS")))')}"
-  DEVICE="$(xcrun simctl create "c15t-expo-e2e-${LABEL}-${RUN_ID}" "${C15T_IOS_DEVICE:-iPhone 17 Pro}" "${RUNTIME}")"
+  # Expo SDK 58 generates a SceneDelegate, so that app runs on the newest iOS. Older
+  # SDKs do not adopt the UIScene lifecycle, and iOS 27 stops such an app built with
+  # the iOS 27 SDK, so they get the oldest available iOS, as the bare runner picks.
+  PICK=oldest
+  if compgen -G "${APP}/ios/*/SceneDelegate.swift" > /dev/null; then PICK=newest; fi
+  printf '%s\n' "${PICK}" > "${OUT}/runtime-pick.txt"
+  SIM_DEVICE="${C15T_IOS_DEVICE:-iPhone 17 Pro}"
+  # Only runtimes that can run the device (Xcode also ships device-specific ones) and
+  # that the selected Xcode's simulator SDK supports: a runner can carry newer
+  # runtimes than its pinned Xcode, as run-vendor-e2e.sh notes.
+  RUNTIME="${C15T_IOS_RUNTIME:-$(xcrun simctl list runtimes -j | PICK="${PICK}" SIM_DEVICE="${SIM_DEVICE}" \
+    SIM_SDK="$(xcrun --sdk iphonesimulator --show-sdk-version)" python3 -c 'import json,os,sys
+version=lambda text: tuple(int(part) for part in text.split(".")[:2])
+sdk=version(os.environ["SIM_SDK"])
+ios=sorted((version(r["version"]), r["identifier"]) for r in json.load(sys.stdin)["runtimes"]
+  if r["isAvailable"] and r["name"].startswith("iOS") and version(r["version"]) <= sdk
+  and os.environ["SIM_DEVICE"] in [d["name"] for d in r.get("supportedDeviceTypes", [])])
+if not ios: raise SystemExit("No iOS runtime at or below SDK " + os.environ["SIM_SDK"] + " runs " + os.environ["SIM_DEVICE"])
+print(ios[-1 if os.environ["PICK"] == "newest" else 0][1])')}"
+  DEVICE="$(xcrun simctl create "c15t-expo-e2e-${LABEL}-${RUN_ID}" "${SIM_DEVICE}" "${RUNTIME}")"
   printf '%s\n' "${DEVICE}" > "${OUT}/device-id.txt"
   printf '%s\n' "${RUNTIME}" > "${OUT}/device-version.txt"
   xcodebuild -version > "${OUT}/toolchain.txt"
@@ -332,6 +348,11 @@ else
   (cd "${APP}" && bun x expo prebuild --platform android --clean --no-install) > "${OUT}/prebuild.log" 2>&1
   sh "${APP}/android/gradlew" -p "${APP}/android" --refresh-dependencies :app:assembleRelease \
     -PreactNativeArchitectures="${ARCH}" > "${OUT}/build.log" 2>&1
+  # The journey must run on R8 output, as users' Release builds do. R8 writes this map.
+  MAPPING="${APP}/android/app/build/outputs/mapping/release/mapping.txt"
+  [[ -s "${MAPPING}" ]] || { echo "The Release build did not run R8: no ${MAPPING}" >&2; exit 1; }
+  # Kept to read obfuscated stack traces from the journey logs.
+  gzip -c "${MAPPING}" > "${OUT}/r8-mapping.txt.gz"
   AVD_NAME="c15t-expo-e2e-${LABEL}-${RUN_ID}"
   echo no | "${AVDMANAGER}" create avd --name "${AVD_NAME}" --package "${IMAGE}" --device pixel_6 > "${OUT}/avd.log" 2>&1
   # Start above the default 5554 so a developer's own emulator keeps its port.

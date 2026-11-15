@@ -20,9 +20,17 @@ const prepare = join(
 	root,
 	'internals/fixtures/expo-dev/scripts/prepare-packed-consumer.py'
 );
+const fixtureManifest = JSON.parse(
+	readFileSync(join(root, 'internals/fixtures/expo-dev/package.json'), 'utf8')
+);
+const [fixtureSdk] = fixtureManifest.dependencies.expo.split('.');
 const expoCells = matrix.filter((cell) => cell.expo !== null);
 const oldest = expoCells.at(0);
 const newest = expoCells.at(-1);
+/** The fixture builds its own SDK in place, so the packed range stops below it. */
+const newestBelowFixture = expoCells.findLast(
+	(cell) => cell.expo?.split('.')[0] !== fixtureSdk
+);
 
 /** A tarball whose only content is the manifest the helper checks. */
 const fakePackage = (directory: string): string => {
@@ -37,14 +45,14 @@ const fakePackage = (directory: string): string => {
 };
 
 describe('Expo vendor journey range', () => {
-	it('runs the fixture and both ends of the Expo range on iOS and Android', () => {
+	it('runs the fixture and both ends of the rest of the Expo range on iOS and Android', () => {
 		const github = parse(
 			readFileSync(join(root, '.github/workflows/mobile-app-e2e.yml'), 'utf8')
 		);
 		const depot = parse(
 			readFileSync(join(root, '.depot/workflows/android-emulator.yml'), 'utf8')
 		);
-		const expected = ['fixture', oldest?.id, newest?.id];
+		const expected = ['fixture', oldest?.id, newestBelowFixture?.id];
 		expect(github.jobs['expo-ios-vendor-sdks'].strategy.matrix.cell).toEqual(
 			expected
 		);
@@ -150,30 +158,59 @@ describe('Expo vendor journey range', () => {
 				(oldest && 'devPackages' in oldest ? oldest.devPackages : undefined) ??
 				{};
 			expect(consumer.devDependencies).toMatchObject(devPins);
+			// The fixture's React 19.3 types do not describe the oldest cell's React.
+			expect(consumer.devDependencies['@types/react']).toBe('~19.2.2');
 		} finally {
 			rmSync(directory, { force: true, recursive: true });
 		}
 	});
 
-	it('refuses an Expo cell without expoPackages pins', () => {
-		const directory = mkdtempSync(join(tmpdir(), 'c15t-expo-consumer-'));
-		try {
-			const result = spawnSync('python3', [
-				prepare,
-				'--package',
-				fakePackage(directory),
-				'--output',
-				join(directory, 'consumer'),
-				'--cell',
-				'expo-57',
-			]);
-			expect(result.status).toBe(2);
-			expect(String(result.stderr)).toContain(
-				'must be an Expo cell with expoPackages pins: expo-55, expo-58'
-			);
-		} finally {
-			rmSync(directory, { force: true, recursive: true });
+	it("pins every Expo cell's copy of the fixture's Expo packages", () => {
+		// prepare-packed-consumer.py refuses a cell without these pins, so a missing
+		// one would only surface when someone builds that cell.
+		const expoPackages = Object.keys(fixtureManifest.dependencies)
+			.filter((name) => name.startsWith('expo-'))
+			.sort();
+		const unpinned = expoCells.flatMap((cell) =>
+			expoPackages
+				.filter(
+					(name) =>
+						!('expoPackages' in cell) ||
+						!(name in (cell.expoPackages as Record<string, string>))
+				)
+				.map((name) => `${cell.id} ${name}`)
+		);
+		expect(unpinned).toEqual([]);
+	});
+
+	it("keeps the fixture's SDK cell on the fixture's exact versions", () => {
+		// Two different "SDK 58" setups would drift: the in-place fixture and the
+		// packed cell must test the same patch releases.
+		const cell = expoCells.find(
+			(candidate) => candidate.expo?.split('.')[0] === fixtureSdk
+		);
+		const dependencies = fixtureManifest.dependencies as Record<string, string>;
+		expect(cell?.expo).toBe(dependencies.expo);
+		expect(cell?.reactNative).toBe(dependencies['react-native']);
+		expect(cell?.react).toBe(dependencies.react);
+		const pinned = (
+			cell && 'expoPackages' in cell ? cell.expoPackages : {}
+		) as Record<string, string>;
+		for (const [name, version] of Object.entries(pinned)) {
+			expect({ name, version }).toEqual({ name, version: dependencies[name] });
 		}
+	});
+
+	it("builds the plugin against the fixture's Expo when the package pins one", () => {
+		// The plugin resolves expo/config-plugins from its own package, so in this
+		// repository a devDependency on another Expo would prebuild the fixture
+		// with that SDK's config plugins.
+		const sdkPackage = JSON.parse(
+			readFileSync(join(root, 'packages/react-native/package.json'), 'utf8')
+		) as { devDependencies?: Record<string, string> };
+		const fixtureExpo = fixtureManifest.dependencies.expo;
+		// No pin at all is fine: then the plugin resolves the fixture's Expo.
+		expect(sdkPackage.devDependencies?.expo ?? fixtureExpo).toBe(fixtureExpo);
 	});
 
 	it('refuses a cell without Expo instead of building a default', () => {

@@ -76,8 +76,8 @@ if cell is not None:
         if unknown:
             parser.error(f"{cell['id']} {field} pins packages the fixture does not use: {', '.join(unknown)}")
         config[section].update(overrides)
-    if cell['react'].startswith('19.3.'):
-        config['devDependencies']['@types/react'] = '19.3.0'
+    # The fixture's React types follow its own React; a cell on another minor needs its own.
+    config['devDependencies']['@types/react'] = '~19.3.0' if cell['react'].startswith('19.3.') else '~19.2.2'
     config['c15tCompatibilityCell'] = cell
 manifest.write_text(json.dumps(config, indent=2) + '\n')
 # Same release-age gate as the checkout, so a cell resolves the same way here.
