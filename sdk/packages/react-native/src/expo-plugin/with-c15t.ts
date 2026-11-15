@@ -60,12 +60,16 @@ import type { WorkflowContext } from './workflow';
 export interface C15tExtraConfig {
 	/** The Inth project URL, in its normal form. */
 	backendURL: string;
+	/** Categories the app declares, or `null` when it declares none. Read on web. */
+	consentCategories: readonly string[] | null;
 	/** Whether consent records are dropped instead of sent. */
 	dryRun: boolean;
 	/** `domain` sent on subject writes, or `null`. */
 	domain: string | null;
 	/** Whether the binary carries the App Tracking Transparency keys. */
 	enableAppTrackingTransparency: boolean;
+	/** Whether a GPC signal is reported for a staged or test build. Read on web. */
+	forceGPC: boolean;
 	/** Protocol range this bundle speaks. */
 	protocol: ReturnType<typeof buildProtocolInfo>;
 }
@@ -75,9 +79,14 @@ const buildExtra = function buildExtra(
 ): C15tExtraConfig {
 	return {
 		backendURL: params.backendURL,
+		consentCategories:
+			params.consentCategories.length > 0
+				? [...params.consentCategories]
+				: null,
 		domain: params.domain,
 		dryRun: params.dryRun,
 		enableAppTrackingTransparency: params.appTrackingTransparency.enabled,
+		forceGPC: params.forceGPC,
 		protocol: buildProtocolInfo(),
 	};
 };

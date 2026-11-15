@@ -16,7 +16,7 @@
 
 import { useEffect, useMemo, useRef } from 'react';
 import type { ReactNode } from 'react';
-import { Animated, Pressable, View } from 'react-native';
+import { Animated, Platform, Pressable, View } from 'react-native';
 import type { ViewStyle } from 'react-native';
 
 import { MIN_TAP_TARGET } from '../theme/consent-theme-parts';
@@ -174,7 +174,8 @@ export const ConsentSwitch = ({
 			duration:
 				first || reducedMotion ? SWITCH_REDUCED_DURATION : SWITCH_DURATION,
 			toValue: value ? 1 : 0,
-			useNativeDriver: true,
+			// The web has no native animation driver.
+			useNativeDriver: Platform.OS !== 'web',
 		}).start();
 	}, [position, reducedMotion, value]);
 

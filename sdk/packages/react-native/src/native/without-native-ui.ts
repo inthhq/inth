@@ -70,12 +70,15 @@ const UNCLAIMED_PROMPT_MESSAGE = `c15t: a consent prompt has been owed for ${Str
  *
  * @param client - The client to watch.
  * @param production - Whether this is a production bundle.
+ * @param identity - The client surfaces pass to {@link claimPrompt}, when
+ *   `client` is a view of it that reads without starting it. @default client
  * @returns The function that stops watching.
  * @internal
  */
 export const watchWithoutNativeUI = function watchWithoutNativeUI(
 	client: WatchedClient,
-	production: boolean
+	production: boolean,
+	identity: WatchedClient = client
 ): () => void {
 	let timer: ReturnType<typeof setTimeout> | null = null;
 	let warned = false;
@@ -107,7 +110,7 @@ export const watchWithoutNativeUI = function watchWithoutNativeUI(
 		}
 		timer ??= setTimeout(() => {
 			timer = null;
-			if (!warned && (claims.get(client) ?? 0) === 0 && owed()) {
+			if (!warned && (claims.get(identity) ?? 0) === 0 && owed()) {
 				warned = true;
 				console.warn(UNCLAIMED_PROMPT_MESSAGE);
 			}
@@ -115,11 +118,11 @@ export const watchWithoutNativeUI = function watchWithoutNativeUI(
 	};
 
 	const unsubscribe = client.subscribe((snapshot) => snapshot, check);
-	rechecks.set(client, check);
+	rechecks.set(identity, check);
 	check();
 	return () => {
 		unsubscribe();
-		rechecks.delete(client);
+		rechecks.delete(identity);
 		if (timer !== null) {
 			clearTimeout(timer);
 			timer = null;

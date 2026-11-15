@@ -882,6 +882,7 @@ export default defineDocsConfig({
 						'/guides/mobile-status',
 						'examples',
 						'expo',
+						'web',
 						'bare',
 						'/integrations/overview',
 					],

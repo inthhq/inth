@@ -669,7 +669,11 @@ describe('packages that must stay clear of the consent kernel', () => {
 	const kernelFreeFixture = function kernelFreeFixture(
 		name: string,
 		files: Record<string, string>,
-		dependencies: Record<string, string> = {}
+		dependencies: Record<string, string> = {},
+		peers: Pick<
+			PackageManifest,
+			'peerDependencies' | 'peerDependenciesMeta'
+		> = {}
 	) {
 		const packageDir = join(workDir, name);
 
@@ -679,6 +683,7 @@ describe('packages that must stay clear of the consent kernel', () => {
 				dependencies,
 				name: '@c15t/react-native',
 				version: '0.0.0',
+				...peers,
 			}),
 		});
 
@@ -718,6 +723,49 @@ describe('packages that must stay clear of the consent kernel', () => {
 				size: 0,
 			},
 		]);
+	});
+
+	// Web has no native core, so a universal app installs the browser engine for
+	// web itself. An optional peer is how it says so without installing it.
+	it('accepts the kernel as an optional peer and refuses a required one', () => {
+		const optional = kernelFreeFixture(
+			'optional-peer',
+			{ 'dist/index.js': 'export const x = 1;\n' },
+			{},
+			{
+				peerDependencies: { '@c15t/core': '^3.2.0' },
+				peerDependenciesMeta: { '@c15t/core': { optional: true } },
+			}
+		);
+		const required = kernelFreeFixture(
+			'required-peer',
+			{ 'dist/index.js': 'export const x = 1;\n' },
+			{},
+			{ peerDependencies: { '@c15t/core': '^3.2.0' } }
+		);
+
+		expect(scan(optional, ['dist/index.js'])).toStrictEqual([]);
+		expect(scan(required, ['dist/index.js']).map(({ path }) => path)).toEqual([
+			'peerDependencies.@c15t/core',
+		]);
+	});
+
+	it('lets only a .web module import the kernel', () => {
+		const packageDir = kernelFreeFixture('web-twin', {
+			'dist/native/client.js': "export * from '../protocol/vocabulary';\n",
+			'dist/native/client.web.js':
+				"import { createConsentRuntime } from '@c15t/core/runtime';\nexport const run = createConsentRuntime;\n",
+			'dist/web/engine.js':
+				"import { createConsentRuntime } from '@c15t/core/runtime';\nexport const run = createConsentRuntime;\n",
+		});
+
+		expect(
+			scan(packageDir, [
+				'dist/native/client.js',
+				'dist/native/client.web.js',
+				'dist/web/engine.js',
+			]).map(({ path }) => path)
+		).toStrictEqual(['dist/web/engine.js']);
 	});
 
 	it('reds a runtime import of the kernel under dist', () => {
@@ -835,16 +883,18 @@ describe('packages that must stay clear of the consent kernel', () => {
 
 			expect(manifest.name, manifestPath).toBe(packageName);
 
-			for (const field of [
-				'dependencies',
-				'peerDependencies',
-				'optionalDependencies',
-			] as const) {
+			for (const field of ['dependencies', 'optionalDependencies'] as const) {
 				expect(
 					manifest[field] ?? {},
 					`@c15t/core must not appear in ${field} of ${packageName}`
 				).not.toHaveProperty('@c15t/core');
 			}
+			// Web runs the browser engine; a native install never pulls it in.
+			expect(
+				manifest.peerDependencies?.['@c15t/core'] === undefined ||
+					manifest.peerDependenciesMeta?.['@c15t/core']?.optional === true,
+				`@c15t/core may only be an optional peer of ${packageName}`
+			).toBe(true);
 
 			expect(manifest.devDependencies).toHaveProperty('@c15t/core');
 		}

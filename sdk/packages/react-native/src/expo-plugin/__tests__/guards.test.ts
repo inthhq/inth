@@ -144,6 +144,51 @@ describe('Expo Go', () => {
 		).not.toThrowError();
 	});
 
+	it.each([
+		['--web', ['node', 'expo', 'start', '--web']],
+		['-w', ['node', 'expo', 'start', '-w']],
+		['serve', ['node', 'expo', 'serve']],
+	])(
+		'accepts the web build through %s without generated native projects',
+		(_label, argv) => {
+			expect(() =>
+				applyParamsOnConfig(fixtureConfig(), PROPS, {
+					argv,
+					env: {},
+					projectRoot: emptyProjectRoot,
+				})
+			).not.toThrowError();
+		}
+	);
+
+	it.each(['threadChild', 'processChild'])(
+		'leaves the check to the command when a Metro %s worker reads the config',
+		(worker) => {
+			// Expo's Babel preset reads the app config in each transform worker to
+			// inline it into a web bundle; the worker's argv names only the worker.
+			expect(() =>
+				applyParamsOnConfig(fixtureConfig(), PROPS, {
+					argv: [
+						'node',
+						`/app/node_modules/jest-worker/build/workers/${worker}.js`,
+					],
+					env: {},
+					projectRoot: emptyProjectRoot,
+				})
+			).not.toThrowError();
+		}
+	);
+
+	it('still refuses Expo Go when it opens beside the web build', () => {
+		expect(() =>
+			applyParamsOnConfig(fixtureConfig(), PROPS, {
+				argv: ['node', 'expo', 'start', '--web', '--go'],
+				env: {},
+				projectRoot: emptyProjectRoot,
+			})
+		).toThrowError(/needs a custom native build[\s\S]*npx expo start --web/u);
+	});
+
 	it('refuses a project whose only launch target is Expo Go', () => {
 		expect(() =>
 			applyParamsOnConfig(fixtureConfig(), PROPS, {

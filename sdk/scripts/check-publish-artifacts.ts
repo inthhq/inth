@@ -125,6 +125,14 @@ const SPECIFIER_PATTERNS = [
 	/require\(\s*['"](?<specifier>[^'"]+)['"]\s*\)/gu,
 ];
 
+/**
+ * Build output only a web bundle reads: a `.web` module, which Metro and the
+ * other React Native web bundlers resolve in place of its native sibling on web
+ * alone. `@c15t/react-native` runs the browser engine there, because a web
+ * build has no native core, so these files may import the kernel.
+ */
+const WEB_ONLY_OUTPUT = /\.web\.(?:[cm]?js|d\.ts)$/u;
+
 /** Whether a module specifier reaches the kernel, whole or by subpath. */
 const isKernelSpecifier = function isKernelSpecifier(
 	specifier: string | undefined
@@ -245,7 +253,13 @@ export const scanKernelFreePackage = function scanKernelFreePackage(
 	for (const field of INSTALLER_FIELDS) {
 		const declared = manifest[field] as Record<string, string> | undefined;
 
-		if (declared && KERNEL_PACKAGE in declared) {
+		// An optional peer is not installed for the app: only a web build that
+		// needs the browser engine adds it.
+		const optionalPeer =
+			field === 'peerDependencies' &&
+			manifest.peerDependenciesMeta?.[KERNEL_PACKAGE]?.optional === true;
+
+		if (declared && KERNEL_PACKAGE in declared && !optionalPeer) {
 			issues.push({
 				path: `${field}.${KERNEL_PACKAGE}`,
 				reason: `${KERNEL_PACKAGE} is a published dependency (${why})`,
@@ -258,7 +272,10 @@ export const scanKernelFreePackage = function scanKernelFreePackage(
 	const builtOutput = /^dist(?:-types)?\/.*\.(?:c|m)?js$/u;
 
 	for (const path of [...packedFilePaths].sort()) {
-		if (!builtOutput.test(path) && !path.endsWith('.d.ts')) {
+		if (
+			(!builtOutput.test(path) && !path.endsWith('.d.ts')) ||
+			WEB_ONLY_OUTPUT.test(path)
+		) {
 			continue;
 		}
 

@@ -38,7 +38,23 @@ const NATIVE_COMMAND_TOKENS = new Set([
 	'project:info',
 	'remove',
 	'run',
+	'serve',
 ]);
+
+/** `expo start` flags that open the web build, which needs no native project. */
+const WEB_START_FLAGS = new Set(['--web', '-w']);
+
+/** `expo start` flags that open Expo Go, which still needs refusing. */
+const EXPO_GO_FLAGS = new Set(['--go', '-g']);
+
+/**
+ * A Metro transform worker. Expo's Babel preset reads the app config again in
+ * each worker to inline it into a web bundle, and a worker's argv names the
+ * worker, not the command. The command that started the bundler already ran
+ * this check, so a worker skips it.
+ */
+const BUNDLER_WORKER_ENTRY =
+	/(?:^|\/)jest-worker\/build\/workers\/(?:threadChild|processChild)\.js$/u;
 
 const isNativeBuildInvocation = function isNativeBuildInvocation(
 	argv: readonly string[]
@@ -46,11 +62,15 @@ const isNativeBuildInvocation = function isNativeBuildInvocation(
 	const command = argv[2]?.trim();
 	const entry = argv[1]?.replaceAll('\\', '/');
 	return (
+		(entry !== undefined && BUNDLER_WORKER_ENTRY.test(entry)) ||
 		(entry !== undefined &&
 			/(?:^|\/)(?:eas(?:\.cmd)?|eas-cli\/bin\/run)$/u.test(entry)) ||
 		(command !== undefined &&
 			(NATIVE_COMMAND_TOKENS.has(command) || command.startsWith('run:'))) ||
-		argv.some((token) => token.trim().startsWith('--dev-client'))
+		argv.some((token) => token.trim().startsWith('--dev-client')) ||
+		// Web runs the browser engine, so no native core is missing there.
+		(argv.some((token) => WEB_START_FLAGS.has(token.trim())) &&
+			!argv.some((token) => EXPO_GO_FLAGS.has(token.trim())))
 	);
 };
 
@@ -111,6 +131,7 @@ export const assertCustomNativeBuild = function assertCustomNativeBuild(
 			`none, so it would launch in Expo Go with no consent core behind it. ` +
 			`Create a development build with "npx expo run:ios" or ` +
 			`"eas build --profile development --platform all" and open that instead. ` +
+			`For the web build alone, run "npx expo start --web". ` +
 			`In CI that only evaluates the config, pass "skipNativeBuildCheck": true.`
 	);
 };

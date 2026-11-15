@@ -9,7 +9,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated } from 'react-native';
+import { Animated, Platform } from 'react-native';
 import type { ViewProps } from 'react-native';
 
 /** Animated style shape accepted by `Animated.View`. */
@@ -136,7 +136,8 @@ export const usePromptMotion = function usePromptMotion(
 				exitDuration
 			),
 			toValue: open ? 1 : 0,
-			useNativeDriver: true,
+			// The web has no native animation driver.
+			useNativeDriver: Platform.OS !== 'web',
 		});
 
 		animation.start(({ finished }) => {

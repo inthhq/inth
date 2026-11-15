@@ -177,6 +177,15 @@ and error handling. Adding `App.tsx` to an Expo Router app does not replace its
 root layout. Keep the provider mounted across route changes and a standing
 Privacy settings action reachable after the first prompt closes.
 
+## Run the same app on web
+
+A universal app can also run on web with `npx expo start --web`. The same
+import then uses the c15t browser engine instead of the native core and reads
+this plugin's configuration. Install `@c15t/core` for web and mount
+`ConsentBanner` there, since web has no native screens. See
+[Expo web](/docs/frameworks/react-native/web) for the setup and for which
+features stay native-only.
+
 ## Build locally
 
 Run prebuild after adding or changing native plugin configuration, then build

@@ -16,7 +16,27 @@ import { fileURLToPath } from 'node:url';
 
 import { expect, test } from 'vitest';
 
-import { isForbiddenModule, moduleReferences } from './helpers/module-boundary';
+import {
+	isForbiddenModule,
+	isWebEngineModule,
+	isWebOnlyFile,
+	moduleReferences,
+} from './helpers/module-boundary';
+
+/**
+ * What a shipped file may name of the web packages: nothing, except that a
+ * `.web` file, which only a web bundle reads, runs on `@c15t/core`.
+ */
+const forbiddenIn = function forbiddenIn(
+	file: string,
+	specifiers: readonly string[]
+): string[] {
+	return specifiers
+		.filter(isForbiddenModule)
+		.filter(
+			(specifier) => !(isWebOnlyFile(file) && isWebEngineModule(specifier))
+		);
+};
 
 const objectOutput = function objectOutput(error: unknown): string {
 	return typeof error === 'object' && error !== null && 'stdout' in error
@@ -132,10 +152,36 @@ test('packed runtime, declarations and consumer stay independent of web consent 
 		expect(artifacts.length).toBeGreaterThan(50);
 		for (const file of artifacts) {
 			expect(
-				moduleReferences(readFileSync(file, 'utf8')).filter(isForbiddenModule),
+				forbiddenIn(file, moduleReferences(readFileSync(file, 'utf8'))),
 				file
 			).toEqual([]);
 		}
+		// The web twins ship, and an import of a platform-split module stays
+		// extensionless, which is the only form a bundler resolves per platform.
+		const twins = artifacts
+			.filter((file) => file.endsWith('.web.js'))
+			.map((file) => file.slice(0, -'.web.js'.length))
+			.filter((base) => existsSync(`${base}.js`));
+		expect(twins.map((base) => posix.relative(installed, base)).sort()).toEqual(
+			['dist/native/client', 'dist/native/presenter']
+		);
+		const pinned = artifacts
+			.filter((path) => path.endsWith('.js'))
+			.flatMap((file) =>
+				moduleReferences(readFileSync(file, 'utf8'))
+					.filter(
+						(specifier) =>
+							specifier.startsWith('.') &&
+							specifier.endsWith('.js') &&
+							twins.includes(resolve(dirname(file), specifier.slice(0, -3))) &&
+							// A twin names its own native sibling exactly, or it would
+							// resolve to itself on web.
+							`${resolve(dirname(file), specifier.slice(0, -3))}.web.js` !==
+								file
+					)
+					.map((specifier) => `${file} -> ${specifier}`)
+			);
+		expect(pinned).toEqual([]);
 		// Traverse the built Metro entry. Node resolution selects the same relative files;
 		// external native modules are leaves, not Node-executed substitutes for Metro.
 		const visited = new Set<string>();
@@ -145,6 +191,9 @@ test('packed runtime, declarations and consumer stay independent of web consent 
 			}
 			visited.add(path);
 			expect(path).not.toContain('expo-plugin');
+			// Node resolves `./client` to `client.js`, as Metro does for
+			// iOS and Android, so a native bundle never reads a `.web` file.
+			expect(isWebOnlyFile(path), path).toBe(false);
 			for (const specifier of moduleReferences(readFileSync(path, 'utf8'))) {
 				expect(specifier).not.toMatch(/^(?:expo(?:$|[-/])|@expo\/|node:)/u);
 				expect(specifier).not.toMatch(
@@ -358,15 +407,23 @@ test('the actual local mobile tarball contains useful generated docs and no web 
 				: undefined,
 			'peerDependencies' in manifest ? manifest.peerDependencies : undefined,
 		];
-		for (const dependencies of dependencyGroups) {
+		for (const [index, dependencies] of dependencyGroups.entries()) {
 			if (dependencies === undefined) {
 				continue;
 			}
 			if (typeof dependencies !== 'object' || dependencies === null) {
 				throw new Error('Packed dependency groups must be objects.');
 			}
-			expect(Object.keys(dependencies).filter(isForbiddenModule)).toEqual([]);
+			// Only web needs the browser engine, so it is an optional peer and
+			// nothing a native app installs.
+			expect(Object.keys(dependencies).filter(isForbiddenModule)).toEqual(
+				index === 2 ? ['@c15t/core'] : []
+			);
 		}
+		expect(read('package.json')).toMatch(
+			/"peerDependenciesMeta":\s*\{\s*"@c15t\/core":\s*\{\s*"optional":\s*true/u
+		);
+		expect(read('package.json')).not.toContain('workspace:');
 		expect(read('docs/frameworks/react-native/quickstart.md')).toContain(
 			'ConsentProvider'
 		);
@@ -393,8 +450,9 @@ test('the actual local mobile tarball contains useful generated docs and no web 
 		expect(runtimeFiles.length).toBeGreaterThan(0);
 		for (const path of runtimeFiles) {
 			expect(
-				moduleReferences(read(path.slice('package/'.length))).filter(
-					isForbiddenModule
+				forbiddenIn(
+					path,
+					moduleReferences(read(path.slice('package/'.length)))
 				),
 				path
 			).toEqual([]);

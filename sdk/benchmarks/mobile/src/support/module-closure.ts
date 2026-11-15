@@ -247,6 +247,38 @@ export const resolveWorkspaceEntry = function resolveWorkspaceEntry(
 };
 
 /**
+ * Suffixes Metro tries, in order, for an extensionless relative import on iOS
+ * and Android. The output names every other import with its extension; a
+ * platform-split module, such as `native/client` beside its `.web.js`
+ * twin, is the exception, because platform extensions only apply to a
+ * specifier without one. The `.web.js` file is never tried: a device bundle
+ * does not read it.
+ */
+const NATIVE_PLATFORM_SUFFIXES = [
+	'.ios.js',
+	'.android.js',
+	'.native.js',
+	'.js',
+];
+
+/**
+ * The file a native Metro build reads for a relative specifier, resolved.
+ *
+ * @param target - The specifier, joined onto the importing file's directory.
+ * @returns The file, or `undefined` when there is none.
+ */
+const resolveNativeFile = function resolveNativeFile(
+	target: string
+): string | undefined {
+	if (existsSync(target) && statSync(target).isFile()) {
+		return target;
+	}
+	return NATIVE_PLATFORM_SUFFIXES.map((suffix) => `${target}${suffix}`).find(
+		(candidate) => existsSync(candidate)
+	);
+};
+
+/**
  * Walk the built module graph from one entry.
  *
  * @param entryFile - Absolute path of the entry a consumer imports.
@@ -281,13 +313,13 @@ export const walkModuleClosure = function walkModuleClosure(
 			metroSource(readFileSync(file, 'utf8'), build)
 		)) {
 			if (spec.startsWith('.')) {
-				const target = resolve(dirname(file), spec);
-				if (existsSync(target)) {
+				const target = resolveNativeFile(resolve(dirname(file), spec));
+				if (target !== undefined) {
 					queue.push(target);
 					continue;
 				}
-				// Bundlers require an extension in this output; a relative edge that
-				// points at nothing is a broken artifact, not a skipped file.
+				// A relative edge that points at nothing is a broken artifact, not a
+				// skipped file.
 				unresolved.add(`${file} -> ${spec}`);
 				continue;
 			}

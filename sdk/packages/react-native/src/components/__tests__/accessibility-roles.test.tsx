@@ -152,6 +152,42 @@ describe('accessibility roles', () => {
 	);
 
 	test.each(SURFACES)(
+		'%s moves keyboard focus on web, which has no node handles',
+		async (_name, surface) => {
+			setPlatformOS('web');
+			const tree = mountSurface(surface());
+			const container = surfaceNode(tree.container());
+
+			try {
+				await expect.poll(() => document.activeElement).toBe(container);
+				expect(focusState.tags).toEqual([]);
+			} finally {
+				tree.unmount();
+			}
+		}
+	);
+
+	test.each(SURFACES)(
+		'%s hands keyboard focus back on web when it closes',
+		async (_name, surface) => {
+			setPlatformOS('web');
+			const before = document.createElement('button');
+			document.body.append(before);
+			before.focus();
+			const tree = mountSurface(surface());
+			const container = surfaceNode(tree.container());
+
+			try {
+				await expect.poll(() => document.activeElement).toBe(container);
+				tree.unmount();
+				expect(document.activeElement).toBe(before);
+			} finally {
+				before.remove();
+			}
+		}
+	);
+
+	test.each(SURFACES)(
 		'%s names only roles Android can compile',
 		(_name, surface) => {
 			const tree = mountSurface(surface());

@@ -39,6 +39,8 @@ export interface ModalA11y {
 		readonly accessible: boolean;
 		readonly accessibilityViewIsModal: true;
 		readonly collapsable: false;
+		/** Web only: lets the surface take keyboard focus outside the tab order. */
+		readonly tabIndex?: -1;
 	};
 }
 
@@ -70,11 +72,29 @@ export const useModalA11y = function useModalA11y({
 			return;
 		}
 
+		// On web, the element keyboard focus leaves for the surface, so closing
+		// the surface can hand focus back instead of dropping it on the body.
+		let previous: { focus?: () => void } | null = null;
+
 		// The reader needs a frame to settle on the new subtree before a tag is
 		// meaningful, and an unmounted sheet has no tag to move to.
 		const frame = requestAnimationFrame(() => {
 			const target =
 				Platform.OS === 'ios' ? headingRef.current : containerRef.current;
+			// React Native for Web has no node handles and no reader focus to
+			// move; a ref there is the DOM element, so move keyboard focus.
+			if (Platform.OS === 'web') {
+				// Through `globalThis`: this file also type-checks for native, which
+				// has no DOM types.
+				previous =
+					(
+						globalThis as {
+							document?: { activeElement?: { focus?: () => void } | null };
+						}
+					).document?.activeElement ?? null;
+				(target as { focus?: () => void } | null)?.focus?.();
+				return;
+			}
 			const tag = findNodeHandle(target);
 
 			if (typeof tag === 'number') {
@@ -84,6 +104,7 @@ export const useModalA11y = function useModalA11y({
 
 		return () => {
 			cancelAnimationFrame(frame);
+			previous?.focus?.();
 		};
 	}, [active]);
 
@@ -94,6 +115,9 @@ export const useModalA11y = function useModalA11y({
 			// is not explicitly accessible.
 			accessible: Platform.OS !== 'ios',
 			collapsable: false,
+			// A DOM `div` takes focus only with a tabindex; -1 lets the effect
+			// above move focus in without adding the surface to the tab order.
+			...(Platform.OS === 'web' && { tabIndex: -1 as const }),
 		},
 		containerRef,
 		headingRef,

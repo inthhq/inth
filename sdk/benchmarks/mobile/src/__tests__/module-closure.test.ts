@@ -55,6 +55,14 @@ describe('walking the built entry', () => {
 		expect(closure.unresolved).toEqual([]);
 	});
 
+	it('reads the native file of a platform-split module, never its web twin', () => {
+		const native = join(DIST_DIR, 'native', 'client.js');
+		expect(closure.files).toContain(native);
+		expect(closure.files.filter((file) => file.endsWith('.web.js'))).toEqual(
+			[]
+		);
+	});
+
 	it('reaches the boundary files it ships', () => {
 		const own = closure.files.filter((file) => file.startsWith(DIST_DIR));
 		expect(own.length).toBeGreaterThan(0);

@@ -9,6 +9,8 @@ export interface PackageManifest {
 	dependencies?: Record<string, string>;
 	peerDependencies?: Record<string, string>;
 	optionalDependencies?: Record<string, string>;
+	/** Which peers an installer may leave out. */
+	peerDependenciesMeta?: Record<string, { optional?: boolean }>;
 	main?: string;
 	module?: string;
 	types?: string;

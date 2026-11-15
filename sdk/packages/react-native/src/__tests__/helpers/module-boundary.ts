@@ -88,3 +88,25 @@ export const isForbiddenModule = function isForbiddenModule(
 		specifier.startsWith('@iabtechlabtcf/')
 	);
 };
+
+/**
+ * Whether a module is the browser consent engine the web twins run on.
+ *
+ * `@c15t/core` is the one web package a `.web` file may reach. The IAB codec,
+ * the backend and the umbrella package stay forbidden everywhere.
+ */
+export const isWebEngineModule = function isWebEngineModule(
+	specifier: string
+): boolean {
+	return specifier === '@c15t/core' || specifier.startsWith('@c15t/core/');
+};
+
+/**
+ * Whether a file only a web bundle can reach: a `.web` module, source or built.
+ *
+ * Metro and the other React Native web bundlers resolve `x.web.js` in place of
+ * `x.js` on web only, so nothing in an iOS or Android bundle reads one.
+ */
+export const isWebOnlyFile = function isWebOnlyFile(path: string): boolean {
+	return /\.web\.(?:[cm]?[jt]sx?|d\.ts)$/u.test(path);
+};

@@ -133,11 +133,15 @@
 		"typescript": "7.0.2"
 	},
 	"peerDependencies": {
+		"@c15t/core": "workspace:^",
 		"expo": ">=55.0.0 <59.0.0",
 		"react": ">=19.2.0 <19.4.0",
 		"react-native": ">=0.83.0 <0.89.0"
 	},
 	"peerDependenciesMeta": {
+		"@c15t/core": {
+			"optional": true
+		},
 		"expo": {
 			"optional": true
 		},

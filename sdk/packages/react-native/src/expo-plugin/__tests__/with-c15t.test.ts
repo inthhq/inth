@@ -61,9 +61,11 @@ describe('withC15t standard install', () => {
 		expect(config.extra).toStrictEqual({
 			c15t: {
 				backendURL: BACKEND,
+				consentCategories: null,
 				domain: null,
 				dryRun: false,
 				enableAppTrackingTransparency: false,
+				forceGPC: false,
 				protocol: {
 					maxSupportedProtocolVersion: 1,
 					minSupportedProtocolVersion: 1,

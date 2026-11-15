@@ -165,7 +165,12 @@ expect(consent.prompt.isOpen).toBe(true);
 load React Native the way any React Native component test needs, for example
 with a plugin that compiles `react-native` or an alias to a stand-in. Once
 `react-native` resolves, the test code is the same, with `test` and `expect`
-imported from `vitest`.
+imported from `vitest`. Add `@c15t/react-native` to `server.deps.inline` as
+well: the package leaves some imports without a file extension so Metro can
+pick each platform's file, and Node cannot load those on its own. A test that
+runs under a web preset gets the web client, which has no native screens:
+pass `nativeUI: false` to `createTestConsentClient()` and drive the
+JavaScript UI, since `consent.prompt` simulates the native screens only.
 
 ## What the fake does not cover
 
