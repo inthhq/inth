@@ -668,11 +668,12 @@
 				"$TURBO_ROOT$/docs/**",
 				"$TURBO_ROOT$/packages/cli/src/generate/docs-origin.ts",
 				"$TURBO_ROOT$/scripts/generate-package-docs.ts",
+				"$TURBO_ROOT$/scripts/package-skill.ts",
 				"$TURBO_ROOT$/scripts/package-doc-entry-points.ts",
 				"$TURBO_ROOT$/scripts/rewrite-package-doc-links.ts",
 				"package.json"
 			],
-			"outputs": ["docs/**", "AGENTS.md", "SKILL.md"]
+			"outputs": ["docs/**", "skills/**", "AGENTS.md", "SKILL.md"]
 		},
 		"check-types:test": {
 			"dependsOn": ["build", "^build"]

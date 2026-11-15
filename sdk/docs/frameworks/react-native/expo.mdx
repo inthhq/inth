@@ -27,6 +27,10 @@ Obtain the Maven repository URL and build-time access for Android. The plugin
 has no default artifact repository. [Mobile availability](/docs/guides/mobile-status)
 records the current distribution options.
 
+The package ships a `c15t-react-native` agent skill. Since SDK 58, Expo links
+agent skills that installed packages ship: run `npx @expo/agent-cli
+skills:sync` to link it for your coding agent.
+
 ## Configure the plugin
 
 Add `@c15t/react-native/expo-plugin` to your existing `app.config.ts`. Merge the

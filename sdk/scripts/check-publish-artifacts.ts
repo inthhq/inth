@@ -351,6 +351,10 @@ const requiredPackedFilesByPackage: Record<string, string[]> = {
 		'maestro/save-preferences.yaml',
 		'maestro/selectors.json',
 		'maestro/toggle-category.yaml',
+		// Expo's `skills:sync` links only `skills/<name>/SKILL.md`.
+		'skills/c15t-react-native/SKILL.md',
+		'skills/c15t-react-native/docs/README.md',
+		'skills/c15t-react-native/docs/frameworks/react-native/expo.md',
 	],
 	'@c15t/scripts': ['AGENTS.md', 'docs/README.md'],
 	'@c15t/ui': [

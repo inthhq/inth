@@ -24,7 +24,7 @@ import {
 	withPackageSetupLinks,
 } from './package-doc-entry-points';
 import type { PackageSkill } from './package-skill';
-import { renderPackageSkill } from './package-skill';
+import { packageSkillName, renderPackageSkill } from './package-skill';
 import {
 	packageDocLink,
 	packageIndexLinks,
@@ -41,6 +41,14 @@ export interface PackageDocsConfig {
 	include: string[];
 	/** Replaces leadtype's generic SKILL.md with c15t guidance. */
 	skill: PackageSkill;
+	/**
+	 * Also writes the skill to `skills/<name>/`, with its own copy of `docs/`.
+	 * Expo's `skills:sync` links only that layout, and an agent resolves a
+	 * link from a linked skill lexically, so the skill cannot point to
+	 * `../../docs`. Only packages without c15t dependencies use it: Expo also
+	 * links skills from transitive dependencies.
+	 */
+	skillDirectory?: boolean;
 }
 
 /** Every framework directory under `docs/frameworks`. */
@@ -85,6 +93,7 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			topic:
 				'the project uses React Native, Expo development builds, Swift or Kotlin native consent',
 		},
+		skillDirectory: true,
 		summary:
 			'Build consent into React Native, Expo, SwiftUI, UIKit and Android apps. Follow a platform quickstart, keep optional SDKs behind consent gates, customize native screens or supply your own UI.',
 	},
@@ -360,6 +369,9 @@ const runLeadtype = async function runLeadtype(config: PackageDocsConfig) {
 	const outDir = join(ROOT_DIR, config.outDir);
 	rmSync(join(outDir, 'AGENTS.md'), { force: true });
 	rmSync(join(outDir, 'docs'), { force: true, recursive: true });
+	if (config.skillDirectory) {
+		rmSync(join(outDir, 'skills'), { force: true, recursive: true });
+	}
 
 	const command = [
 		'bunx',
@@ -462,16 +474,19 @@ const runLeadtype = async function runLeadtype(config: PackageDocsConfig) {
 		)
 	);
 	writeFileSync(agentsPath, agentsContent);
-	writeFileSync(
-		join(outDir, 'SKILL.md'),
-		renderPackageSkill(config.name, config.skill, bundledFiles)
-	);
+	const skill = renderPackageSkill(config.name, config.skill, bundledFiles);
+	writeFileSync(join(outDir, 'SKILL.md'), skill);
 	mkdirSync(join(outDir, 'docs'), { recursive: true });
 	writeFileSync(
 		docsReadmePath,
 		agentsContent.replaceAll('(./docs/', '(./'),
 		'utf8'
 	);
+	if (config.skillDirectory) {
+		const skillDir = join(outDir, 'skills', packageSkillName(config.name));
+		cpSync(docsDir, join(skillDir, 'docs'), { recursive: true });
+		writeFileSync(join(skillDir, 'SKILL.md'), skill);
+	}
 };
 
 if (import.meta.main) {

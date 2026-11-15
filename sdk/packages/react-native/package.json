@@ -55,7 +55,8 @@
 		"maestro",
 		"AGENTS.md",
 		"SKILL.md",
-		"docs"
+		"docs",
+		"skills"
 	],
 	"type": "module",
 	"sideEffects": false,

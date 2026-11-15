@@ -128,6 +128,7 @@ live-vendors-report.json
 packages/*/docs/
 packages/*/AGENTS.md
 packages/*/SKILL.md
+packages/*/skills/
 
 # CI selection and same-run build handoff
 /ci-plan.json

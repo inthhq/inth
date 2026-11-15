@@ -5,7 +5,7 @@ import fg from 'fast-glob';
 import { expect, test } from 'vitest';
 
 import { PACKAGE_DOCS_CONFIGS } from './generate-package-docs';
-import { renderPackageSkill } from './package-skill';
+import { packageSkillName, renderPackageSkill } from './package-skill';
 
 const docsRoot = fileURLToPath(new URL('../docs', import.meta.url));
 const repoRoot = fileURLToPath(new URL('..', import.meta.url));
@@ -122,3 +122,60 @@ test('mobile skills describe native authority and link only bundled mobile guide
 	expect(skill).not.toContain('choices in the browser');
 	expect(skill).not.toContain('data-c15t-category');
 });
+
+test.each(PACKAGE_DOCS_CONFIGS.filter((config) => config.skillDirectory))(
+	'$name ships a skill that still works once Expo links it',
+	(config) => {
+		const manifest = JSON.parse(
+			readFileSync(`${repoRoot}/${config.outDir}/package.json`, 'utf8')
+		) as {
+			files?: string[];
+			dependencies?: Record<string, string>;
+			peerDependencies?: Record<string, string>;
+			optionalDependencies?: Record<string, string>;
+		};
+		expect(manifest.files).toContain('skills');
+		// Expo links the `skills/` directory of transitive dependencies too, so
+		// a c15t dependency that also ships one would link a second c15t skill
+		// into every app that installs this package. A dependency without a
+		// `skills/` directory (such as the web engine, an optional peer) links
+		// nothing.
+		const dependencies = Object.keys({
+			...manifest.dependencies,
+			...manifest.peerDependencies,
+			...manifest.optionalDependencies,
+		});
+		const linkedSkills = new Set(
+			PACKAGE_DOCS_CONFIGS.filter((other) => other.skillDirectory).map(
+				(other) => other.name
+			)
+		);
+		expect(dependencies.filter((name) => linkedSkills.has(name))).toEqual([]);
+
+		const bundled = new Set(
+			fg
+				.sync(config.include, { cwd: docsRoot })
+				.map((file) => file.replace(/\.mdx$/u, '.md'))
+		);
+		const skill = renderPackageSkill(config.name, config.skill, bundled);
+		// Expo uses the directory name and skills-npm the frontmatter name.
+		const name = /^name: (?<name>.+)$/mu.exec(skill)?.groups?.name;
+		expect(name).toBe(packageSkillName(config.name));
+		expect(name).toMatch(/^[A-Za-z0-9._-]+$/u);
+		expect(skill).toMatch(/^description: \S/mu);
+
+		// Agents read the skill through `.claude/skills/<name>` and resolve
+		// `..` against that link, so a path out of the skill directory breaks.
+		const paths = [...skill.matchAll(/\.{1,2}\/[\w./-]*[\w/]/gu)].map(
+			([path]) => path
+		);
+		expect(paths.length).toBeGreaterThan(0);
+		expect(
+			paths.filter(
+				(path) =>
+					!path.startsWith('./docs/') ||
+					!(path === './docs/README.md' || bundled.has(path.slice(7)))
+			)
+		).toEqual([]);
+	}
+);

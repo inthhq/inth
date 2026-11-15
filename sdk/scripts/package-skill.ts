@@ -23,6 +23,19 @@ export interface PackageSkill {
 	umbrella?: boolean;
 }
 
+/**
+ * The skill name for a package: its npm name without `@`, with `/` as `-`.
+ *
+ * The name is the frontmatter `name` and the `skills/<name>/` directory. Expo's
+ * `skills:sync` links a skill under its directory name, and skills-npm under
+ * its frontmatter name, so both must agree.
+ *
+ * @param packageName - The npm package name, such as `@c15t/react-native`.
+ * @returns The skill name, such as `c15t-react-native`.
+ */
+export const packageSkillName = (packageName: string): string =>
+	packageName.replace(/^@/u, '').replace(/\//gu, '-');
+
 const link = (
 	bundledFiles: ReadonlySet<string>,
 	file: string,
@@ -72,7 +85,7 @@ export const renderPackageSkill = function renderPackageSkill(
 			.filter(Boolean);
 		return [
 			'---',
-			'name: c15t-react-native',
+			`name: ${packageSkillName(packageName)}`,
 			'description: Set up or debug native c15t consent in React Native, Expo, Swift and Kotlin apps. Read the private prerelease distribution limits before installing.',
 			'---',
 			'',
@@ -98,11 +111,11 @@ export const renderPackageSkill = function renderPackageSkill(
 			'- Prefer native stock presenter commands. Configure their supported themes natively. Use headless hooks when the app owns the UI. Mobile works only with Inth hosted projects; there is no self-hosted backend or custom transport.',
 			'- Match RN, React, Expo and native protocol versions. Native APIs, themes, permissions, Codegen and bundled-policy changes require a new binary.',
 			'',
-			'./AGENTS.md lists every bundled page. Verify real native builds and device journeys separately from JavaScript type checks.',
+			'./docs/README.md lists every bundled page. Verify real native builds and device journeys separately from JavaScript type checks.',
 			'',
 		].join('\n');
 	}
-	const slug = packageName.replace(/^@/u, '').replace(/\//gu, '-');
+	const slug = packageSkillName(packageName);
 	// The umbrella package is itself named c15t, so "c15t with c15t" says
 	// nothing about which package the skill ships in.
 	const isUmbrella = packageName === 'c15t';
