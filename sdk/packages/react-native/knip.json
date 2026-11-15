@@ -3,6 +3,7 @@
 	"entry": [
 		"./src/index.ts",
 		"./src/protocol/bridge-schema.ts",
+		"./src/testing/index.ts",
 		"./src/specs/NativeC15t.ts"
 	],
 	"ignoreBinaries": ["oxfmt", "oxlint", "rslib", "tsc", "tsx", "vitest"],

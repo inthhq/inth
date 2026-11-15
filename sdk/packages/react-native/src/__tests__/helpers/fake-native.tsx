@@ -15,12 +15,13 @@ import { vi } from 'vitest';
 import type { NativeC15tTurboModule } from '../../native/module';
 import type { NativeAutoPresentSettings } from '../../native/presenter';
 import { NATIVE_C15T_MODULE_NAME } from '../../protocol';
-import type {
-	ConsentSnapshot,
-	TrackingAuthorization,
-	TrackingPresentation,
-	TrackingRequestStage,
-} from '../../protocol';
+import type { ConsentSnapshot, TrackingAuthorization } from '../../protocol';
+import {
+	buildFakeSnapshot,
+	createFakeNativeC15t,
+	FAKE_BOOTSTRAP,
+} from '../../testing/fake-native-c15t';
+import type { FakeTrackingReply } from '../../testing/fake-native-c15t';
 import { emitNativeEvent, setNativeModule } from './react-native-stub';
 
 // React only permits `act` when the environment says a test drives it.
@@ -29,16 +30,7 @@ import { emitNativeEvent, setNativeModule } from './react-native-stub';
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
 /** Handshake payload the fake module reports by default. */
-export const FAKE_BOOTSTRAP = {
-	commitRevision: true,
-	hasStoredSnapshot: true,
-	maxSupportedProtocolVersion: 1,
-	minSupportedProtocolVersion: 1,
-	nativeSdkVersion: 'rn->9.9.9',
-	nativeUI: true,
-	protocolVersion: 1,
-	subjectId: 'sub-1',
-};
+export { FAKE_BOOTSTRAP };
 
 /**
  * What the fake hands back from one `requestTrackingAuthorization()` call.
@@ -46,13 +38,7 @@ export const FAKE_BOOTSTRAP = {
  * `code` makes the call reject instead, which is how an Android request and an iOS build with
  * no prompt string both look to JavaScript.
  */
-export interface TrackingRequestReply {
-	readonly code?: string;
-	readonly message?: string;
-	readonly presentation?: TrackingPresentation;
-	readonly stage?: TrackingRequestStage;
-	readonly status?: TrackingAuthorization;
-}
+export type TrackingRequestReply = FakeTrackingReply;
 
 /**
  * Build a snapshot with realistic defaults.
@@ -60,43 +46,7 @@ export interface TrackingRequestReply {
  * @param overrides - Fields to replace, shallow over the defaults.
  * @returns A snapshot the client accepts.
  */
-export const buildSnapshot = function buildSnapshot(
-	overrides: Partial<ConsentSnapshot> = {}
-): ConsentSnapshot {
-	return {
-		activeUI: 'banner',
-		consentCategories: null,
-		effectivePermissions: {
-			experience: false,
-			functionality: true,
-			marketing: false,
-			measurement: false,
-			necessary: true,
-		},
-		error: null,
-		evaluatedAt: 1_770_000_000_000,
-		explicitChoice: null,
-		gppString: null,
-		iab: null,
-		iabMarketingPurposes: null,
-		location: { countryCode: 'DE', regionCode: null },
-		model: 'opt-in',
-		nextDeadline: null,
-		overrides: { country: 'DE', gpc: null, language: 'en', region: null },
-		policyPending: false,
-		policySnapshotToken: null,
-		privacySignals: { gpc: { active: false, detected: false, override: null } },
-		promptOwedSince: null,
-		promptRequirement: { kind: 'choice', reason: 'missing' },
-		ready: true,
-		resolution: { fingerprint: null, policyId: null, status: 'no-match' },
-		restrictions: {},
-		revision: 0,
-		subject: { subjectId: 'sub-1' },
-		translations: null,
-		...overrides,
-	};
-};
+export const buildSnapshot = buildFakeSnapshot;
 
 /**
  * The TurboModule double, with the counters the tests read.
@@ -216,93 +166,76 @@ export const createFakeNativeModule = function createFakeNativeModule(
 		readonly bootstrap?: unknown;
 	} = {}
 ): FakeNativeModule {
-	let snapshot: ConsentSnapshot | string = options.snapshot ?? buildSnapshot();
-	let bootstrap: unknown = options.bootstrap ?? FAKE_BOOTSTRAP;
-	let trackingStatus: TrackingAuthorization = 'unsupported';
-	let trackingAnsweredAt: number | null = null;
-	let trackingRequestReply: TrackingRequestReply = { status: 'unsupported' };
-	const trackingRequestQueue: TrackingRequestReply[] = [];
-	let commitReply = JSON.stringify({
-		confirmed: [],
-		ok: true,
-		queued: false,
-		revision: (options.snapshot ?? buildSnapshot()).revision,
-		subjectId: 'sub-1',
+	const initial = options.snapshot ?? buildSnapshot();
+	// The shared fake core, with the two behaviours these tests drive by hand turned
+	// off: a commit changes nothing until the test pushes a snapshot, and nothing
+	// presents until the test reports it.
+	const core = createFakeNativeC15t({
+		applyCommits: false,
+		autoPresents: false,
+		bootstrap: options.bootstrap,
+		emit: emitNativeEvent,
+		snapshot: initial,
 	});
+	const native = core.nativeModule;
+	core.failCommitWith(
+		JSON.stringify({
+			confirmed: [],
+			ok: true,
+			queued: false,
+			revision: initial.revision,
+			subjectId: 'sub-1',
+		})
+	);
 
 	const fake = {
 		addListener: vi.fn(),
 		get autoPresent(): NativeAutoPresentSettings | null {
 			return fake.autoPresentSettings.at(-1) ?? null;
 		},
-		autoPresentSettings: [] as NativeAutoPresentSettings[],
+		autoPresentSettings: core.autoPresentSettings,
 		bootstrapCalls: 0,
 		closeConsentPresenter: () => Promise.resolve(),
 		commit: vi.fn((intent: string) => {
 			fake.commitIntents.push(intent);
 
-			return Promise.resolve(commitReply);
+			return native.commit(intent);
 		}),
 		commitIntents: [] as string[],
-		configureAutoPresent: vi.fn((settings: string) => {
-			fake.autoPresentSettings.push(
-				JSON.parse(settings) as NativeAutoPresentSettings
-			);
-			return Promise.resolve();
-		}),
+		configureAutoPresent: vi.fn((settings: string) =>
+			native.configureAutoPresent(settings)
+		),
 		dismissCalls: 0,
 		dismissNotice: vi.fn(() => {
 			fake.dismissCalls += 1;
 		}),
-		failCommitWith: (raw: string) => {
-			commitReply = raw;
-		},
+		failCommitWith: core.failCommitWith,
 		getBootstrap: vi.fn(() => {
 			fake.bootstrapCalls += 1;
 
-			return JSON.stringify(bootstrap);
+			return native.getBootstrap();
 		}),
 		getSnapshot: vi.fn(() => {
 			fake.snapshotCalls += 1;
 
-			return typeof snapshot === 'string' ? snapshot : JSON.stringify(snapshot);
+			return native.getSnapshot();
 		}),
 		getTrackingAuthorization: vi.fn(() => {
 			fake.trackingReadCalls += 1;
 
-			return JSON.stringify(
-				trackingAnsweredAt === null
-					? { status: trackingStatus }
-					: { answeredAt: trackingAnsweredAt, status: trackingStatus }
-			);
+			return native.getTrackingAuthorization();
 		}),
-		getWebViewConsent: vi.fn(() => {
-			const current = typeof snapshot === 'string' ? buildSnapshot() : snapshot;
-			return JSON.stringify({
-				key: 'fedcba9876543210fedcba9876543210',
-				state: {
-					// Both bridges read the snapshot's GPP string into the WebView state.
-					gppString: current.gppString,
-					model: current.model,
-					permissions: current.effectivePermissions,
-					ready: current.ready && !current.policyPending,
-					revision: current.revision,
-					tcString: null,
-					version: 1,
-				},
-				token: '0123456789abcdef0123456789abcdef',
-			});
-		}),
+		getWebViewConsent: vi.fn(() => native.getWebViewConsent()),
 		identify: vi.fn((externalId: string) => {
 			fake.identifyCalls.push(externalId);
 
-			return Promise.resolve();
+			return native.identify(externalId);
 		}),
 		identifyCalls: [] as string[],
 		logout: vi.fn(() => {
 			fake.logoutCalls += 1;
 
-			return Promise.resolve();
+			return native.logout();
 		}),
 		logoutCalls: 0,
 		overrideCalls: [] as string[],
@@ -311,53 +244,29 @@ export const createFakeNativeModule = function createFakeNativeModule(
 		presentPreferences: () =>
 			Promise.reject(new Error('Native presenter requires native core')),
 		pushSnapshot: (next: ConsentSnapshot) => {
-			snapshot = next;
-
-			emitNativeEvent('snapshot', JSON.stringify({ revision: next.revision }));
+			core.pushSnapshot(next);
 		},
 		pushUnreadableSnapshot: (raw: string) => {
-			snapshot = raw;
-
-			emitNativeEvent('snapshot', JSON.stringify({ revision: 99 }));
+			core.pushSnapshot(raw, 99);
 		},
 		queueTrackingRequestReplies: (replies: readonly TrackingRequestReply[]) => {
-			trackingRequestQueue.push(...replies);
+			core.tracking.queue.push(...replies);
 		},
 		refresh: vi.fn(() => {
 			fake.refreshCalls += 1;
 
-			return Promise.resolve();
+			return native.refresh();
 		}),
 		refreshCalls: 0,
 		rejectTrackingRequestWith: (code: string, message: string) => {
-			trackingRequestReply = { code, message };
+			core.tracking.fallback = { code, message };
 		},
 		removeListeners: vi.fn(),
 		requestTrackingAuthorization: vi.fn(() => {
 			fake.trackingRequestCalls += 1;
 			fake.trackingRequestOptions.push(null);
 
-			const reply = trackingRequestQueue.shift() ?? trackingRequestReply;
-
-			if (reply.code !== undefined) {
-				return Promise.reject(
-					Object.assign(new Error(reply.message ?? ''), { code: reply.code })
-				);
-			}
-
-			trackingStatus = reply.status ?? trackingStatus;
-
-			// `JSON.stringify` drops the undefined keys, which is exactly the shape a
-			// binary that predates a field sends, so a test can ask for either.
-			const payload = JSON.stringify({
-				presentation: reply.presentation,
-				stage: reply.stage,
-				status: trackingStatus,
-			});
-
-			fake.trackingRequestPayloads.push(payload);
-
-			return Promise.resolve(payload);
+			return native.requestTrackingAuthorization();
 		}),
 		// The options form answers the same way, through whatever the test installed as
 		// the plain method, and records the options it was given.
@@ -370,56 +279,25 @@ export const createFakeNativeModule = function createFakeNativeModule(
 		reset: vi.fn(() => {
 			fake.resetCalls += 1;
 
-			// A wipe installs the state a first launch boots with: no receipt, the
-			// prompt owed again, optionals denied while policy is re-resolving. The
-			// subject id stays and the revision moves by one, like both cores do.
-			const current = typeof snapshot === 'string' ? buildSnapshot() : snapshot;
-
-			snapshot = buildSnapshot({
-				consentCategories: current.consentCategories,
-				effectivePermissions: {
-					experience: false,
-					functionality: false,
-					marketing: false,
-					measurement: false,
-					necessary: true,
-				},
-				explicitChoice: null,
-				location: current.location,
-				model: current.model,
-				policyPending: true,
-				policySnapshotToken: null,
-				promptRequirement: { kind: 'choice', reason: 'missing' },
-				ready: false,
-				revision: current.revision + 1,
-			});
-
-			return Promise.resolve();
+			return native.reset();
 		}),
 		resetCalls: 0,
-		setBootstrap: (payload: unknown) => {
-			bootstrap = payload;
-		},
+		setBootstrap: core.setBootstrap,
 		setOverrides: vi.fn((overrides: string) => {
 			fake.overrideCalls.push(overrides);
 
-			return Promise.resolve();
+			return native.setOverrides(overrides);
 		}),
-		setTrackingAnsweredAt: (answeredAt: number | null) => {
-			trackingAnsweredAt = answeredAt;
-		},
-		setTrackingAuthorization: (status: TrackingAuthorization) => {
-			trackingStatus = status;
-			trackingRequestReply = { status };
-		},
+		setTrackingAnsweredAt: core.setTrackingAnsweredAt,
+		setTrackingAuthorization: core.setTrackingAuthorization,
 		setTrackingRequestReply: (reply: TrackingRequestReply) => {
-			trackingRequestReply = reply;
+			core.tracking.fallback = reply;
 		},
 		snapshotCalls: 0,
 		trackingReadCalls: 0,
 		trackingRequestCalls: 0,
 		trackingRequestOptions: [] as (string | null)[],
-		trackingRequestPayloads: [] as string[],
+		trackingRequestPayloads: core.tracking.payloads,
 	};
 
 	setNativeModule(NATIVE_C15T_MODULE_NAME, fake);

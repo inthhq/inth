@@ -72,6 +72,8 @@ interface PresenterMirror {
 	readonly reported: Set<string>;
 	/** Told after every change, for steps that wait until no c15t screen is up. */
 	readonly watchers: Set<() => void>;
+	/** Detaches the native listeners, for a client that is thrown away. */
+	readonly listeners: (() => void)[];
 }
 
 const mirrors = new WeakMap<ConsentClient, PresenterMirror>();
@@ -99,6 +101,7 @@ const mirrorFor = function mirrorFor(client: ConsentClient): PresenterMirror {
 		return existing;
 	}
 	const mirror: PresenterMirror = {
+		listeners: [],
 		onScreen: null,
 		reported: new Set(),
 		sent: null,
@@ -113,35 +116,63 @@ const mirrorFor = function mirrorFor(client: ConsentClient): PresenterMirror {
 		changed(mirror);
 	};
 	// The app's own calls answer with the session they find open.
-	onConsentPresenterSession(show);
+	mirror.listeners.push(onConsentPresenterSession(show));
 	// For the client's lifetime, so a session reported open is always heard closing.
 	try {
-		onConsentPresenterPresented(({ presentation, sessionId }) => {
-			show(sessionId, presentation);
-		});
-		onConsentPresenterOutcome(({ sessionId }) => {
-			if (mirror.onScreen?.sessionId === sessionId) {
-				mirror.onScreen = null;
-				changed(mirror);
-			}
-		});
-		onConsentPresenterUnavailable((unavailable) => {
-			if (isProduction()) {
-				return;
-			}
-			// Native keeps the owed prompt and shows it once it can. Said once
-			// per launch: it is a note for the developer, not an error.
-			report(mirror, 'unavailable', () => {
-				console.warn(
-					`c15t ConsentProvider: the native presenter could not show the owed consent prompt yet (${unavailable.code}). It shows it once the app has a foreground window or Activity.`,
-					unavailable.message
-				);
-			});
-		});
+		mirror.listeners.push(
+			onConsentPresenterPresented(({ presentation, sessionId }) => {
+				show(sessionId, presentation);
+			})
+		);
+		mirror.listeners.push(
+			onConsentPresenterOutcome(({ sessionId }) => {
+				if (mirror.onScreen?.sessionId === sessionId) {
+					mirror.onScreen = null;
+					changed(mirror);
+				}
+			})
+		);
+		mirror.listeners.push(
+			onConsentPresenterUnavailable((unavailable) => {
+				if (isProduction()) {
+					return;
+				}
+				// Native keeps the owed prompt and shows it once it can. Said once
+				// per launch: it is a note for the developer, not an error.
+				report(mirror, 'unavailable', () => {
+					console.warn(
+						`c15t ConsentProvider: the native presenter could not show the owed consent prompt yet (${unavailable.code}). It shows it once the app has a foreground window or Activity.`,
+						unavailable.message
+					);
+				});
+			})
+		);
 	} catch {
 		// No native event emitter: nothing can be presented either.
 	}
 	return mirror;
+};
+
+/**
+ * Stop mirroring for a client that is thrown away, detaching its native
+ * listeners. An app's client lives as long as the app and never needs this;
+ * `@c15t/react-native/testing` calls it when a test client is disposed.
+ *
+ * @internal
+ * @param client - The client to forget.
+ */
+export const releaseConsentPresenter = function releaseConsentPresenter(
+	client: ConsentClient
+): void {
+	const mirror = mirrors.get(client);
+	if (mirror === undefined) {
+		return;
+	}
+	mirrors.delete(client);
+	for (const release of mirror.listeners.splice(0)) {
+		release();
+	}
+	mirror.watchers.clear();
 };
 
 /**

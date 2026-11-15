@@ -83,6 +83,12 @@
 			"import": "./dist/integrations/index.js",
 			"default": "./dist/integrations/index.js"
 		},
+		"./testing": {
+			"types": "./dist-types/testing/index.d.ts",
+			"react-native": "./dist/testing/index.js",
+			"import": "./dist/testing/index.js",
+			"default": "./dist/testing/index.js"
+		},
 		"./expo-plugin": {
 			"types": "./dist-types/expo-plugin/index.d.ts",
 			"require": "./dist/expo-plugin/index.cjs",

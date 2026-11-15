@@ -80,6 +80,41 @@ export class NativeC15tUnavailableError extends Error {
 }
 
 /**
+ * A module and emitter installed in place of the registry, or `null`.
+ *
+ * Only `@c15t/react-native/testing` installs one, so a Jest or Vitest run has
+ * a native core to talk to. Everything that reaches native goes through
+ * {@link getNativeC15t} and {@link getNativeC15tEvents}, so the presenter
+ * calls reach the same fake as the client does.
+ */
+let installed: {
+	readonly events: NativeEventsLike;
+	readonly nativeModule: NativeC15tTurboModule;
+} | null = null;
+
+/**
+ * Serve a module and emitter instead of the TurboModule registry.
+ *
+ * @internal
+ * @param nativeModule - The module every lookup returns while installed.
+ * @param events - The emitter every subscription attaches to.
+ * @returns Uninstall them again, if they are still the installed pair.
+ */
+export const installNativeC15t = function installNativeC15t(
+	nativeModule: NativeC15tTurboModule,
+	events: NativeEventsLike
+): () => void {
+	const pair = { events, nativeModule };
+	installed = pair;
+
+	return () => {
+		if (installed === pair) {
+			installed = null;
+		}
+	};
+};
+
+/**
  * Look the native module up.
  *
  * The lookup is not memoized: it is a property read, and skipping the memo
@@ -92,6 +127,10 @@ export class NativeC15tUnavailableError extends Error {
  *   caller gets the build diagnosis rather than an undefined read later.
  */
 export const getNativeC15t = function getNativeC15t(): NativeC15tTurboModule {
+	if (installed !== null) {
+		return installed.nativeModule;
+	}
+
 	let candidate: Spec | null | undefined = null;
 
 	try {
@@ -165,6 +204,10 @@ const toEventJson = function toEventJson(payload: unknown): string {
  */
 export const getNativeC15tEvents =
 	function getNativeC15tEvents(): NativeEventsLike {
+		if (installed !== null) {
+			return installed.events;
+		}
+
 		const nativeModule = getNativeC15t();
 
 		if (!hasNativeC15tSurface(nativeModule)) {

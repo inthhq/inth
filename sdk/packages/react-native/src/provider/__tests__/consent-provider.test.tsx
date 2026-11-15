@@ -20,10 +20,13 @@ import {
 import {
 	emitterState,
 	resetNativeStub,
+	setNativeModule,
 } from '../../__tests__/helpers/react-native-stub';
 import { useC15tBootstrap } from '../../hooks/use-c15t-bootstrap';
 import { useSnapshot } from '../../hooks/use-snapshot';
-import { resetConsentClient } from '../../native/client';
+import { createConsentClient, resetConsentClient } from '../../native/client';
+import { NATIVE_C15T_MODULE_NAME } from '../../protocol';
+import { buildFakeSnapshot } from '../../testing/fake-native-c15t';
 import { ConsentProvider } from '../consent-provider';
 
 /** Render the revision, so a test can see which consumers updated. */
@@ -205,5 +208,32 @@ describe('wiring', () => {
 		expect(
 			captureErrorMessage(() => renderToStaticMarkup(<RevisionProbe />))
 		).toContain('<ConsentProvider>');
+	});
+});
+
+describe('client prop', () => {
+	test('publishes the given client and never looks up the native module', () => {
+		const fake = createFakeNativeModule({
+			snapshot: buildFakeSnapshot({ revision: 41 }),
+		});
+		const client = createConsentClient(fake, {
+			addListener: () => ({ remove: () => undefined }),
+		});
+		// No module in the registry: a lookup now would throw.
+		setNativeModule(NATIVE_C15T_MODULE_NAME);
+
+		const handle = renderTree(
+			<ConsentProvider
+				autoPresent={false}
+				client={client}
+			>
+				<RevisionProbe />
+			</ConsentProvider>
+		);
+
+		expect(handle.text()).toBe('r41');
+		expect(fake.bootstrapCalls).toBe(1);
+		handle.unmount();
+		client.dispose();
 	});
 });

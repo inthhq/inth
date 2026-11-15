@@ -21,6 +21,7 @@ import { AppState } from 'react-native';
 
 import { isSnapshotReady } from '../lib/selectors';
 import { getConsentClient } from '../native/client';
+import type { ConsentClient } from '../native/client';
 import {
 	onConsentPresenterOutcome,
 	presentPreferences,
@@ -98,6 +99,31 @@ export type ConsentProviderProps = ConsentProviderBaseProps &
 export interface ConsentProviderBaseProps {
 	/** The app subtree that may read consent. */
 	readonly children?: ReactNode;
+	/**
+	 * The consent client to publish, instead of the one attached to the native
+	 * module in the running binary.
+	 *
+	 * For tests: pass the client from `createTestConsentClient()` in
+	 * `@c15t/react-native/testing`. Leave it unset in an app. The hooks read
+	 * this client, but presenting the prompt and preferences always goes to
+	 * the native module installed for the process, which the test client
+	 * replaces. A client built with `createConsentClient` over some other
+	 * module therefore changes what the hooks read, not what is presented. A
+	 * nested provider still never presents the prompt, even when it is given
+	 * its own client.
+	 *
+	 * @example
+	 * ```tsx
+	 * import { createTestConsentClient } from '@c15t/react-native/testing';
+	 *
+	 * const consent = createTestConsentClient({ consent: 'unset' });
+	 *
+	 * <ConsentProvider client={consent.client} autoPresent={false}>
+	 *     <Screen />
+	 * </ConsentProvider>;
+	 * ```
+	 */
+	readonly client?: ConsentClient;
 	/**
 	 * The system-reserved bands to lay the consent surfaces outside of.
 	 *
@@ -189,6 +215,8 @@ export interface ConsentProviderBaseProps {
  *
  * @param props - Provider props.
  * @param props.children - Subtree that may read consent.
+ * @param props.client - The client to publish instead of the native one, for
+ *   tests. Presenting still goes to the installed native module.
  * @param props.safeAreaInsets - Bands the surfaces stay clear of, when the host
  *   measured them.
  * @param props.autoPresent - `false` leaves presenting to the app.
@@ -211,6 +239,7 @@ export interface ConsentProviderBaseProps {
 export const ConsentProvider = ({
 	autoPresent = true,
 	children,
+	client: clientProp,
 	privacyPolicyURL,
 	safeAreaInsets,
 	trackingRequest = 'afterConsent',
@@ -222,7 +251,10 @@ export const ConsentProvider = ({
 	// The handshake runs here, during render, on purpose. A binary that cannot
 	// speak this protocol is a configuration error, and the app should stop at
 	// the provider rather than render a consent UI over state it cannot trust.
-	const client = useMemo(() => inherited ?? getConsentClient(), [inherited]);
+	const client = useMemo(
+		() => clientProp ?? inherited ?? getConsentClient(),
+		[clientProp, inherited]
+	);
 	// Mirror what native shows from the first render, before any child effect can
 	// open a session, whether or not this provider presents. Idempotent per client.
 	if (inherited === null) {

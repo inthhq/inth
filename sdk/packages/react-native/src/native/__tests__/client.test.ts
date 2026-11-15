@@ -785,13 +785,13 @@ describe('reset', () => {
 
 		const after = client.getSnapshot();
 
-		// A recorded denial would keep the receipt and stop asking. A wipe drops it,
-		// so the prompt is owed again and nothing is granted while policy comes back.
+		// A recorded denial would keep the receipt and stop asking. A wipe drops it
+		// and publishes the cold-start baseline in
+		// native/protocol/reset-consent-opt-in-grants.json: nothing granted, and no
+		// prompt until the policy comes back and the next init asks again.
 		expect(after.explicitChoice).toBeNull();
-		expect(after.promptRequirement).toEqual({
-			kind: 'choice',
-			reason: 'missing',
-		});
+		expect(after.promptRequirement).toEqual({ kind: 'none' });
+		expect(after.resolution.status).toBe('unconfigured');
 		expect(after.policyPending).toBe(true);
 		expect(after.revision).toBe(5);
 		// Identity is the one thing a wipe has no business touching: the backend

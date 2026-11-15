@@ -46,9 +46,11 @@
 		"@react-native/gradle-plugin": "0.87.1",
 		"@react-native/metro-config": "0.87.1",
 		"@react-native/typescript-config": "0.87.1",
+		"@testing-library/react-native": "14.1.0",
 		"@types/node": "25.5.0",
 		"@types/react": "~19.2.2",
 		"hermes-compiler": "250829098.0.17",
+		"test-renderer": "1.2.0",
 		"typescript": "7.0.2",
 		"vitest": "4.1.10"
 	},

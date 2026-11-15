@@ -423,19 +423,43 @@ declare const __DEV__: boolean | undefined;
 /** Payload problem sets already reported, so a repeated payload stays quiet. */
 const reportedBridgeDrift = new Set<string>();
 
+/** Whether a drift checker that failed to load has been reported already. */
+let warnedDriftLoad = false;
+
 /**
  * Report the drift {@link warnBridgeDrift} found, once the checker has loaded.
  *
+ * Never rejects. Jest without `--experimental-vm-modules` refuses the dynamic
+ * import, and the check is a development aid, so a runtime that cannot load it
+ * skips it rather than failing the test that read the payload.
+ *
+ * @internal
  * @param schema - The loading bridge-schema module.
  * @param name - Which payload `parsed` is.
  * @param parsed - The parsed JSON.
  */
-const reportBridgeDrift = async function reportBridgeDrift(
+export const reportBridgeDrift = async function reportBridgeDrift(
 	schema: Promise<typeof BridgeSchema>,
 	name: BridgePayloadName,
 	parsed: unknown
 ): Promise<void> {
-	const { describeBridgePayloadDrift } = await schema;
+	let checker: typeof BridgeSchema;
+	try {
+		checker = await schema;
+	} catch (error) {
+		// Jest's refusal is expected and silent. Anything else means the checker
+		// itself broke, which a development build should hear about once.
+		const message = error instanceof Error ? error.message : String(error);
+		if (!message.includes('experimental-vm-modules') && !warnedDriftLoad) {
+			warnedDriftLoad = true;
+			console.warn(
+				'c15t ConsentClient: the bridge drift check could not load, so native payloads are not checked in this build.',
+				error
+			);
+		}
+		return;
+	}
+	const { describeBridgePayloadDrift } = checker;
 	const problems = describeBridgePayloadDrift(name, parsed, {
 		allowUnknownKeys: true,
 	});
@@ -1103,6 +1127,24 @@ export const getConsentClient = function getConsentClient(): ConsentClient {
 	}
 
 	return client;
+};
+
+/**
+ * Make `next` the app's shared client, so {@link getConsentClient} returns it.
+ *
+ * Only `@c15t/react-native/testing` calls this, so an app's own
+ * `<ConsentProvider>` and its integrations reach the test client.
+ *
+ * @internal
+ * @param next - The client to share. The previous one is disposed.
+ */
+export const setConsentClient = function setConsentClient(
+	next: ConsentClient
+): void {
+	if (client !== next) {
+		client?.dispose();
+	}
+	client = next;
 };
 
 /**
