@@ -1,0 +1,21 @@
+{
+	"name": "@c15t/doc-snippets-expo",
+	"private": true,
+	"description": "Type-checked Expo code for docs pages that no fixture runs, such as gating Expo Observe and the EAS PostHog setup.",
+	"scripts": {
+		"check-types": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@c15t/react-native": "workspace:*",
+		"expo": "58.0.24",
+		"expo-observe": "58.0.19",
+		"posthog-react-native": "4.85.1",
+		"react": "19.3.0",
+		"react-native": "0.88.1"
+	},
+	"devDependencies": {
+		"@types/node": "25.5.0",
+		"@types/react": "~19.3.0",
+		"typescript": "7.0.2"
+	}
+}

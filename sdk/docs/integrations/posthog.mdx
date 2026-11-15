@@ -430,6 +430,54 @@ failures. The promises from `ready`, `sync()` and `disconnect()` also reject
 on failure; handle those at their call sites. If PostHog's own opt-out fails,
 you cannot assume capture is disabled.
 
+### Apps set up with the EAS PostHog integration
+
+`eas integrations:posthog:connect` prepares an Expo project for PostHog. In
+`eas-cli` 27.10.0 it does the following:
+
+- Creates or links a PostHog organization and project for the EAS project, in
+  the US or EU region you pick.
+- Installs `posthog-react-native`, `expo-file-system`, `expo-application`,
+  `expo-device` and `expo-localization`. It also installs
+  `@posthog/react-native-plugin` when you keep session replay, which the
+  command selects by default.
+- Adds the `posthog-react-native/expo` config plugin. The plugin changes
+  native build files to upload source maps and native debug symbols, and adds
+  an `onNewIntent` override to Android's `MainActivity`. It adds no code that
+  starts PostHog.
+- Writes `EXPO_PUBLIC_POSTHOG_API_KEY` and `EXPO_PUBLIC_POSTHOG_HOST` to
+  `.env.local` and to the project's EAS environment variables. With error
+  tracking it also stores `POSTHOG_CLI_API_KEY`, `POSTHOG_CLI_PROJECT_ID`
+  and `POSTHOG_CLI_HOST` for symbol uploads.
+
+The command does not create a PostHog client or start capture. Its next step
+tells you to wrap the app in `PostHogProvider`. A provider that receives the
+project token creates its own client when it mounts, with capture on unless
+its `options` set `defaultOptIn: false`. Build the client yourself from the
+same variables instead, with capture off, so c15t controls the one client
+your app uses:
+
+<include src="../shared/examples/expo/expo-posthog-client.mdx" />
+
+The client throws when the two variables are missing, so a build without
+them fails at launch instead of sending nowhere. It opts out as soon as it is
+built, because an opt-in that PostHog stored before your app used c15t
+overrides `defaultOptIn: false`. It also turns off remote
+feature flags and surveys, because both can call PostHog before anyone has
+consented. If your app uses flags or surveys, remove those two options
+and load them only after measurement is granted.
+
+Then give that client to the provider:
+
+<include src="../shared/examples/expo/expo-posthog-root.mdx" />
+
+Connect the same `posthog` instance to c15t as shown in
+[Connect React Native or Expo](#connect-react-native-or-expo). Leave session
+replay off until you have scoped and tested it, even if the command installed
+the replay plugin. The provider's `autocapture={false}` keeps screen and
+lifecycle autocapture off for the same reason. The config plugin's symbol
+uploads run on your build machine and send no data from users' devices.
+
 ### Reapply permission after reset
 
 PostHog's own reset can change its capture settings while c15t's saved choice

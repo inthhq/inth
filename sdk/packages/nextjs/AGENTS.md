@@ -117,6 +117,7 @@ These docs describe c15t v3. Find your app's row in Choose your setup, then foll
 - [Databuddy](./docs/integrations/databuddy.md): Load Databuddy only after measurement consent with the c15t databuddy helper, turn off tracking features you do not use, record sessions with the replay option, and check revocation in DevTools.
 - [Default](./docs/integrations/default-com.md): Load the Default Pixel after measurement consent or the standalone Forms SDK after functionality consent, configure loading and understand withdrawal limits.
 - [Dynamic Yield](./docs/integrations/dynamic-yield.md): Load Dynamic Yield personalization scripts after experience consent, set the page context and synchronize Active Cookie Consent with c15t.
+- [Expo Observe](./docs/integrations/expo-observe.md): Gate Expo Observe (EAS Observe) in Expo apps with c15t. Observe records on the device from native launch, so c15t can only turn its sending on and off.
 - [Fathom Analytics](./docs/integrations/fathom-analytics.md): Load Fathom Analytics only after measurement consent with the c15t fathomAnalytics helper, set its SPA mode, and check it in DevTools.
 - [Firebase Analytics](./docs/integrations/firebase-analytics.md): Connect Firebase Analytics to native c15t permissions in Swift, Kotlin, React Native and Expo, with withdrawal, reset and startup handling.
 - [Front Chat](./docs/integrations/front-chat.md): Load the Front Chat widget only after functionality consent with the c15t frontChat helper, forward CSP nonces, clear the session on revocation and check it in DevTools.

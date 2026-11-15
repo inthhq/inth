@@ -986,6 +986,7 @@ export default defineDocsConfig({
 						'gainsight-px',
 						'google-tag',
 						'firebase-analytics',
+						'expo-observe',
 						'oracle-eloqua',
 						'fullstory',
 						'ahrefs-analytics',

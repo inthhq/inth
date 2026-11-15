@@ -74,6 +74,7 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			'guides/mobile-*.mdx',
 			'integrations/overview.mdx',
 			'integrations/firebase-analytics.mdx',
+			'integrations/expo-observe.mdx',
 			'integrations/posthog.mdx',
 			'integrations/mixpanel-analytics.mdx',
 			'integrations/amplitude.mdx',
