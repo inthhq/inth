@@ -342,6 +342,15 @@ const requiredPackedFilesByPackage: Record<string, string[]> = {
 		'docs/frameworks/react-native/native-behaviour.md',
 		'docs/frameworks/react-native/offline.md',
 		'docs/frameworks/react-native/iab.md',
+		// App E2E suites reference these by path; see the E2E testing docs page.
+		'maestro/accept-all.yaml',
+		'maestro/close-preferences.yaml',
+		'maestro/dismiss-if-shown.yaml',
+		'maestro/open-preferences.yaml',
+		'maestro/reject-all.yaml',
+		'maestro/save-preferences.yaml',
+		'maestro/selectors.json',
+		'maestro/toggle-category.yaml',
 	],
 	'@c15t/scripts': ['AGENTS.md', 'docs/README.md'],
 	'@c15t/ui': [

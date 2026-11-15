@@ -872,7 +872,7 @@ export default defineDocsConfig({
 							title: 'Reference',
 						},
 						{
-							pages: ['verify', 'troubleshooting'],
+							pages: ['verify', 'e2e-testing', 'troubleshooting'],
 							slug: 'verify-and-troubleshoot',
 							title: 'Verify and troubleshoot',
 						},

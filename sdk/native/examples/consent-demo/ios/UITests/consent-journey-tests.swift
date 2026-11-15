@@ -190,9 +190,9 @@ final class ConsentJourneyTests: XCTestCase {
         XCTAssertTrue(button("c15t.first-layer.customize").waitForExistence(timeout: 10)); capture("ios-iab-first-layer")
         // The IAB first layer: description with the partner count, the purpose summary, then
         // legitimate interest, scope and withdrawal, all from the IAB copy.
-        let description = app.staticTexts["c15t.first-layer.iab-description"]
+        let description = app.staticTexts["c15t.first-layer.description"]
         XCTAssertTrue(description.label.contains("We and our 5 partners store and/or access information on your device"), description.label)
-        XCTAssertEqual(app.staticTexts["c15t.first-layer.summary.0"].label, "Store and access information on a device")
+        XCTAssertEqual(app.staticTexts["c15t.first-layer.summary.item.0"].label, "Store and access information on a device")
         XCTAssertFalse(app.staticTexts["c15t.first-layer.summary.more"].exists)
         XCTAssertTrue(app.staticTexts["c15t.first-layer.legitimate-interest"].label.contains("right to object"))
         XCTAssertEqual(app.staticTexts["c15t.first-layer.scope"].label, "Your consent applies only to this app and will not affect other services.")

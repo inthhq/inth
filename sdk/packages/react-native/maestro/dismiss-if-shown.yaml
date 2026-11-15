@@ -1,0 +1,52 @@
+# Answers the c15t consent prompt if it appears, then carries on.
+#
+# Waits up to C15T_TIMEOUT milliseconds (default 10000) for the first-layer
+# prompt or the notice. The prompt gets Reject all unless C15T_CHOICE is
+# accept-all; the notice gets Got it. With neither on screen the flow passes,
+# so it is safe at the start of every test.
+#
+#   - runFlow:
+#       file: ../node_modules/@c15t/react-native/maestro/dismiss-if-shown.yaml
+#       env:
+#         C15T_CHOICE: accept-all
+# Maestro needs an appId in every flow file; the calling flow's appId is used.
+appId: ${APP_ID}
+---
+# Wait for the first-layer headline or the notice card, not the buttons: at
+# accessibility text sizes the buttons start below the fold, where Maestro
+# does not see them.
+- extendedWaitUntil:
+    visible:
+      id: "c15t\\.(first-layer\\.title|notice)"
+    timeout: ${C15T_TIMEOUT || 10000}
+    optional: true
+- runFlow:
+    when:
+      visible:
+        id: 'c15t.first-layer.title'
+    commands:
+      - scrollUntilVisible:
+          element:
+            id: "c15t.first-layer.${C15T_CHOICE || 'reject-all'}"
+          direction: DOWN
+      - tapOn:
+          id: "c15t.first-layer.${C15T_CHOICE || 'reject-all'}"
+      - extendedWaitUntil:
+          notVisible:
+            id: 'c15t.first-layer'
+          timeout: ${C15T_TIMEOUT || 10000}
+- runFlow:
+    when:
+      visible:
+        id: 'c15t.notice'
+    commands:
+      - scrollUntilVisible:
+          element:
+            id: 'c15t.notice.acknowledge'
+          direction: DOWN
+      - tapOn:
+          id: 'c15t.notice.acknowledge'
+      - extendedWaitUntil:
+          notVisible:
+            id: 'c15t.notice'
+          timeout: ${C15T_TIMEOUT || 10000}

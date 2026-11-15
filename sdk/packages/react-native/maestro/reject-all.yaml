@@ -1,0 +1,25 @@
+# Waits for the c15t first-layer prompt and taps Reject all.
+# Fails if the prompt does not appear within C15T_TIMEOUT milliseconds
+# (default 15000). Use dismiss-if-shown.yaml when the prompt is optional.
+#
+#   - runFlow: ../node_modules/@c15t/react-native/maestro/reject-all.yaml
+# Maestro needs an appId in every flow file; the calling flow's appId is used.
+appId: ${APP_ID}
+---
+# The headline is at the top of the page at every text size; the button can
+# start below the fold at accessibility sizes, so scroll to it. Done means the
+# whole page has gone, which scrolling cannot fake.
+- extendedWaitUntil:
+    visible:
+      id: 'c15t.first-layer.title'
+    timeout: ${C15T_TIMEOUT || 15000}
+- scrollUntilVisible:
+    element:
+      id: 'c15t.first-layer.reject-all'
+    direction: DOWN
+- tapOn:
+    id: 'c15t.first-layer.reject-all'
+- extendedWaitUntil:
+    notVisible:
+      id: 'c15t.first-layer'
+    timeout: ${C15T_TIMEOUT || 15000}

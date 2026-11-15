@@ -736,12 +736,12 @@ private struct IABDisclosure: View {
         Text(description(content)).font(theme.font(.subheadline)).foregroundStyle(theme.colors.text.color)
             .tint(theme.colors.primary.color)
             .environment(\.openURL, OpenURLAction { _ in openPartners(); return .handled })
-            .accessibilityIdentifier("c15t.first-layer.iab-description")
+            .accessibilityIdentifier("c15t.first-layer.description")
         VStack(alignment: .leading, spacing: 0) {
             ForEach(Array(content.summaryItems.enumerated()), id: \.offset) { index, item in
                 Text(item).font(theme.font(.subheadline)).foregroundStyle(theme.colors.text.color)
                     .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 16).padding(.vertical, 10)
-                    .accessibilityIdentifier("c15t.first-layer.summary.\(index)")
+                    .accessibilityIdentifier("c15t.first-layer.summary.item.\(index)")
                 Hairline().padding(.leading, 16)
             }
             if let more = content.moreItems {
@@ -1075,14 +1075,22 @@ private struct DecisionButton: View {
     let id: String
     let commit: () -> Void
     @MainActor init(_ presenter: ConsentPresenter, first: Bool, label: String, action: ConsentPresenter.Action, style: DecisionStyle? = nil) {
-        let suffix: String = switch action { case .accept: "accept-all"; case .reject: "reject-all"; case .save: "save"; case .acknowledge: "acknowledge" }
-        let prefix = first ? "c15t.first-layer" : presenter.iab ? "c15t.iab" : "c15t.prefs"
         self.label = label
         self.variant = style ?? (action == .save ? .accent : first ? .decision : .quiet)
         self.busy = presenter.showProgress && presenter.pendingAction == action
         self.savingLabel = presenter.copy.saving
-        self.id = prefix + "." + suffix
+        self.id = Self.identifier(first: first, iab: presenter.iab, action: action)
         self.commit = { presenter.commit(action) }
+    }
+    /// Each decision's selector, spelled out whole: E2E suites tap these, and
+    /// `scripts/native-consent-selectors.test.ts` looks for every one in the source.
+    private static func identifier(first: Bool, iab: Bool, action: ConsentPresenter.Action) -> String {
+        switch action {
+        case .accept: first ? "c15t.first-layer.accept-all" : iab ? "c15t.iab.accept-all" : "c15t.prefs.accept-all"
+        case .reject: first ? "c15t.first-layer.reject-all" : iab ? "c15t.iab.reject-all" : "c15t.prefs.reject-all"
+        case .save: first ? "c15t.first-layer.save" : iab ? "c15t.iab.save" : "c15t.prefs.save"
+        case .acknowledge: first ? "c15t.first-layer.acknowledge" : iab ? "c15t.iab.acknowledge" : "c15t.prefs.acknowledge"
+        }
     }
     var body: some View {
         Button(label, action: commit)

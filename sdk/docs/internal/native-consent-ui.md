@@ -306,8 +306,10 @@ XCUITest lives in `ios/UITests/consent-journey-tests.swift`. Run it with the
 and Compose tests live in `android/src/androidTest`; build
 `:consent-demo:assembleDebugAndroidTest`, install both APKs on a task-owned
 emulator, then run `com.c15t.prototype.consent.test/androidx.test.runner.AndroidJUnitRunner`.
-Screens expose `c15t.*` accessibility identifiers and Compose resource IDs for
-later reuse. These standalone tests do not replace the separate bare RN app
+Screens expose `c15t.*` accessibility identifiers and Compose resource IDs. The
+subset app teams may rely on is listed in `packages/react-native/maestro/selectors.json`
+and documented on the React Native E2E testing page;
+`scripts/native-consent-selectors.test.ts` fails if one leaves either platform. These standalone tests do not replace the separate bare RN app
 journeys or packed-consumer acceptance.
 
 For the HTTP receipt journey, start the reviewed

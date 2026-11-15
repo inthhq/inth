@@ -438,6 +438,17 @@ private fun showsPinned(p: ConsentPresenter) = p.stale || pinnedAction(p) != nul
 private fun showsShortcuts(p: ConsentPresenter) = !p.stale && !p.snapshot.policyPending
 private fun showsPinnedStatus(p: ConsentPresenter) = !p.stale && p.failedAction != null && p.failedAction == pinnedAction(p)
 
+/**
+ * Each decision's test tag, spelled out whole: E2E suites tap these, and
+ * `scripts/native-consent-selectors.test.ts` looks for every one in the source.
+ */
+private fun decisionTag(first: Boolean, iab: Boolean, action: ConsentPresenter.Action): String = when (action) {
+    ConsentPresenter.Action.ACCEPT -> if (first) "c15t.first-layer.accept-all" else if (iab) "c15t.iab.accept-all" else "c15t.prefs.accept-all"
+    ConsentPresenter.Action.REJECT -> if (first) "c15t.first-layer.reject-all" else if (iab) "c15t.iab.reject-all" else "c15t.prefs.reject-all"
+    ConsentPresenter.Action.SAVE -> if (first) "c15t.first-layer.save" else if (iab) "c15t.iab.save" else "c15t.prefs.save"
+    ConsentPresenter.Action.ACKNOWLEDGE -> if (first) "c15t.first-layer.acknowledge" else if (iab) "c15t.iab.acknowledge" else "c15t.prefs.acknowledge"
+}
+
 /** The decision controls and the failure row beside them, in one of the [DecisionPart] cuts. */
 @Composable private fun DecisionGroup(p: ConsentPresenter, first: Boolean, part: DecisionPart, modifier: Modifier = Modifier) {
     val theme = LocalConsentTheme.current
@@ -453,9 +464,8 @@ private fun showsPinnedStatus(p: ConsentPresenter) = !p.stale && p.failedAction 
     @Composable fun failure() { p.errorMessage?.let { FailureRow(it, errorId, !p.pending, p.iabCopy.appTryAgain, p::retry) } }
     /** Labels stay put while a commit runs: the pressed action shows progress beside its own label. */
     @Composable fun decision(label: String, action: ConsentPresenter.Action) {
-        val suffix = when (action) { ConsentPresenter.Action.ACCEPT -> "accept-all"; ConsentPresenter.Action.REJECT -> "reject-all"; ConsentPresenter.Action.SAVE -> "save"; ConsentPresenter.Action.ACKNOWLEDGE -> "acknowledge" }
         val variant = if (action == ConsentPresenter.Action.SAVE) ButtonVariant.ACCENT else if (first) ButtonVariant.DECISION else ButtonVariant.QUIET
-        ConsentButton(label, "$prefix.$suffix", !p.pending, variant, progress = busy(action), progressLabel = p.copy.saving) { p.commit(action) }
+        ConsentButton(label, decisionTag(first, p.iab, action), !p.pending, variant, progress = busy(action), progressLabel = p.copy.saving) { p.commit(action) }
     }
     @Composable fun decisions() {
         if (p.snapshot.policyPending) {

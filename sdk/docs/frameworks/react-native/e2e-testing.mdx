@@ -1,0 +1,289 @@
+---
+title: E2E testing
+description: Get through the native c15t consent prompt in Maestro, EAS Workflows and agent-device tests of a React Native or Expo app, using stable selectors and shipped subflows.
+seoTitle: E2E testing the c15t consent prompt with Maestro and Expo
+seoDescription: Stable selectors and ready-made Maestro subflows to accept, reject, or customize the c15t consent prompt in your React Native and Expo E2E tests.
+group: frameworks
+---
+
+A fresh install shows the c15t consent prompt before your app's first screen,
+so every end-to-end test meets it. The stock SwiftUI and Compose screens carry
+the same stable selectors on iOS and Android, and `@c15t/react-native` ships
+Maestro subflows that answer the prompt. Start each test with one of them, or
+use the selectors to test your consent journeys.
+
+## Answer the prompt in Maestro
+
+Run `dismiss-if-shown.yaml` after `launchApp`. It waits for the prompt, taps
+Reject all, and passes without doing anything when no prompt appears. It also
+dismisses the notice that some regions get instead of a prompt.
+
+```yaml title=".maestro/home.yaml"
+appId: com.example.app
+---
+- launchApp:
+    clearState: true
+    clearKeychain: true
+- runFlow: ../node_modules/@c15t/react-native/maestro/dismiss-if-shown.yaml
+- assertVisible: 'Welcome!'
+```
+
+`runFlow` paths are relative to the file that calls them. The example assumes
+`.maestro/` sits next to `node_modules/`. Each subflow declares
+`appId: ${APP_ID}` because Maestro needs an `appId` in every file, but you do
+not set `APP_ID`: a subflow runs in the app of the flow that calls it.
+
+To accept instead, pass `C15T_CHOICE`:
+
+```yaml title=".maestro/home.yaml"
+- runFlow:
+    file: ../node_modules/@c15t/react-native/maestro/dismiss-if-shown.yaml
+    env:
+      C15T_CHOICE: accept-all
+```
+
+Rejecting is the safer default for most suites: optional SDKs stay off, so the
+test sends no analytics or ad traffic. Accept only in tests that need those
+SDKs running.
+
+### Shipped subflows
+
+All flows are in `node_modules/@c15t/react-native/maestro/`.
+
+| Flow | What it does | Variables |
+| --- | --- | --- |
+| `dismiss-if-shown.yaml` | Answers the prompt or notice if one appears within the timeout, then continues | `C15T_CHOICE` (`reject-all` or `accept-all`), `C15T_TIMEOUT` (default 10000 ms) |
+| `accept-all.yaml` | Waits for the first-layer prompt and taps Accept all. Fails if it does not appear | `C15T_TIMEOUT` (default 15000 ms) |
+| `reject-all.yaml` | Waits for the first-layer prompt and taps Reject all. Fails if it does not appear | `C15T_TIMEOUT` |
+| `open-preferences.yaml` | Taps Customize on the prompt or Privacy settings on the notice, then waits for preferences | `C15T_TIMEOUT` |
+| `toggle-category.yaml` | Flips one category switch in preferences | `C15T_CATEGORY`, such as `measurement` or `marketing` |
+| `save-preferences.yaml` | Taps Save in category or IAB preferences and waits for them to close | `C15T_TIMEOUT` |
+| `close-preferences.yaml` | Leaves preferences without saving and confirms Discard if asked | `C15T_TIMEOUT` |
+
+Set variables with `env` on `runFlow`. Each flow keeps its default when you
+leave a variable out.
+
+### Test a custom choice
+
+```yaml title=".maestro/consent-custom.yaml"
+appId: com.example.app
+---
+- launchApp:
+    clearState: true
+    clearKeychain: true
+- runFlow: ../node_modules/@c15t/react-native/maestro/open-preferences.yaml
+- runFlow:
+    file: ../node_modules/@c15t/react-native/maestro/toggle-category.yaml
+    env:
+      C15T_CATEGORY: measurement
+- runFlow: ../node_modules/@c15t/react-native/maestro/save-preferences.yaml
+```
+
+After the last step, the prompt is gone and only measurement is on. Assert
+that through your own UI, for example a screen that shows whether your
+analytics SDK started.
+
+### Reopen preferences from your app
+
+Your app opens preferences after the first decision, from its own Privacy
+settings entry that calls `presentPreferences()`. Tap that entry, wait for the
+preferences, then reuse the flows:
+
+```yaml title=".maestro/privacy-settings.yaml"
+- tapOn: 'Privacy settings'
+- extendedWaitUntil:
+    visible:
+      id: 'c15t\.(prefs|iab)\.save'
+    timeout: 15000
+- runFlow:
+    file: ../node_modules/@c15t/react-native/maestro/toggle-category.yaml
+    env:
+      C15T_CATEGORY: marketing
+- runFlow: ../node_modules/@c15t/react-native/maestro/save-preferences.yaml
+```
+
+## Start each test from a fresh install
+
+c15t keeps the decision in protected storage. On iOS that is the Keychain,
+which survives `clearState`, so use both options on `launchApp` to get the
+prompt again. On Android `clearState` is enough, and Maestro ignores
+`clearKeychain` there, so one flow works on both:
+
+```yaml
+- launchApp:
+    clearState: true
+    clearKeychain: true
+```
+
+`clearKeychain` clears the whole Simulator Keychain, not only your app's
+entries. To keep a decision across tests, for example after one login test
+answers the prompt, leave both options off.
+
+## Selectors
+
+Each selector is a SwiftUI `accessibilityIdentifier` on iOS and a Compose
+`testTag` exposed as the view's resource ID on Android. Maestro's `id:`,
+XCUITest's `identifier` and UI Automator's `By.res()` all read them. A part in
+angle brackets is filled at runtime.
+
+Maestro treats `id:` as a regular expression that must match the whole ID. The
+dots in these IDs match any character, which is harmless. Escape them when you
+combine IDs with `|`.
+
+| Selector | Screen | What it is |
+| --- | --- | --- |
+| `c15t.first-layer` | First layer | The full-screen prompt |
+| `c15t.first-layer.title` | First layer | Headline |
+| `c15t.first-layer.accept-all` | First layer | Accept all |
+| `c15t.first-layer.reject-all` | First layer | Reject all. While policy is still loading it is the only decision |
+| `c15t.first-layer.customize` | First layer | Opens preferences inside the prompt |
+| `c15t.first-layer.description` | First layer, IAB | The disclosure sentence with the partner count |
+| `c15t.first-layer.summary.item.<index>` | First layer, IAB | One purpose in the summary card, from 0 |
+| `c15t.first-layer.partner-count` | First layer, IAB | Opens the partner list |
+| `c15t.notice` | Notice | The notice card over your app |
+| `c15t.notice.acknowledge` | Notice | Got it. Records the dismissal and grants nothing |
+| `c15t.notice.settings` | Notice | Opens preferences |
+| `c15t.prefs` | Preferences | The category list |
+| `c15t.prefs.category.<category>.switch` | Preferences | Switch for an optional category, such as `measurement` |
+| `c15t.prefs.category.<category>.locked` | Preferences | Status of `necessary`, which cannot change. Use it for `necessary` only |
+| `c15t.prefs.category.<category>.restricted` | Preferences | An optional category the policy or a privacy signal keeps off. iOS puts it on the row, Android on the row's note |
+| `c15t.prefs.accept-all` | Preferences | Accept all |
+| `c15t.prefs.reject-all` | Preferences | Reject all |
+| `c15t.prefs.save` | Preferences | Save |
+| `c15t.prefs.cancel` | Preferences, IAB preferences | Back to the first layer, or Cancel and Close when your app opened preferences |
+| `c15t.prefs.discard.confirm` | Preferences, IAB preferences | Discard unsaved changes |
+| `c15t.prefs.discard.keep` | Preferences, IAB preferences | Keep editing |
+| `c15t.iab` | IAB preferences | The IAB list |
+| `c15t.iab.accept-all` | IAB preferences | Accept all |
+| `c15t.iab.reject-all` | IAB preferences | Reject all |
+| `c15t.iab.save` | IAB preferences | Save |
+| `c15t.iab.purpose.<purpose>.consent` | IAB preferences | Consent switch for an IAB purpose, by purpose ID |
+| `c15t.iab.special-feature.<feature>.switch` | IAB preferences | Opt-in switch for a special feature, by ID |
+| `c15t.iab.partners` | IAB preferences | Opens the partner list |
+| `c15t.iab.vendors` | Partner list | The IAB partner list |
+| `c15t.iab.vendors.search` | Partner list | Search field |
+| `c15t.iab.vendors.vendor.<vendor>` | Partner list | One partner, by Global Vendor List ID |
+| `c15t.iab.vendors.back` | Partner list | Back to IAB preferences |
+| `c15t.privacy-policy` | Any | Your privacy policy link |
+
+These selectors are a stable contract. c15t's own tests fail if one goes
+missing from either platform, so a rename cannot slip into a release unnoticed.
+The list is also in `node_modules/@c15t/react-native/maestro/selectors.json`.
+Other identifiers on these screens can change in any release.
+
+Below the accessibility text sizes, the decision buttons are pinned to the
+bottom of the screen. At the largest sizes they move into the scrolling page.
+The shipped flows scroll to them first. In your own flows, use
+`scrollUntilVisible` before `tapOn` if you test large text.
+
+## Choose what your test build talks to
+
+The prompt and its contents come from your Inth project's policy for the
+device's region. Decide where a test build sends consent records:
+
+- In a debug build, set `dryRun: true`. The prompt and gates work as normal and
+  no consent record is sent. See
+  [Use dryRun in development and CI](/docs/frameworks/react-native/configuration#use-dryrun-in-development-and-ci).
+- A release build refuses `dryRun`: no engine starts and every gate stays
+  closed. An EAS simulator build for E2E is a release build, so point it at a
+  separate Inth project for testing instead, with `backendURL` set per build
+  profile. Its records then stay out of your production project.
+
+The region decides which prompt appears: the first layer, a notice, or none.
+`dismiss-if-shown.yaml` handles all three, so a test that only needs to get
+past consent passes everywhere. A test of one region's journey can pin the
+region from a debug screen with `useSetOverrides()`; see
+[Preview a regional policy](/docs/frameworks/react-native/configuration#preview-a-regional-policy).
+
+To keep the native prompt from appearing at all, pass `autoPresent={false}` to
+`ConsentProvider` in your test build. No decision is recorded, so each gate
+keeps the region's answer for a user who has not chosen: closed under opt-in
+rules. This suits screens that do not depend on consent; tests of consent
+itself should answer the prompt.
+
+## Run on EAS Workflows
+
+The EAS Workflows `maestro` job checks out your repository, and its
+[documented steps](https://docs.expo.dev/eas/workflows/pre-packaged-jobs/)
+include no dependency install, so do not count on `node_modules` being there.
+Either install dependencies in the job's `after_checkout` hook, or copy the
+flows into your Maestro directory and commit them, repeating the copy when you
+upgrade `@c15t/react-native`:
+
+```sh
+mkdir -p .maestro/c15t
+cp node_modules/@c15t/react-native/maestro/* .maestro/c15t/
+```
+
+Then call them as `runFlow: c15t/dismiss-if-shown.yaml` from a flow in
+`.maestro/`. Add an E2E build profile to `eas.json` that builds for the
+Simulator and the Android Emulator and points at your test project:
+
+```json title="eas.json"
+{
+	"build": {
+		"e2e-test": {
+			"withoutCredentials": true,
+			"env": {
+				"C15T_BACKEND_URL": "https://your-test-project.inth.app"
+			},
+			"ios": { "simulator": true },
+			"android": { "buildType": "apk" }
+		}
+	}
+}
+```
+
+Replace the URL with the one from your test project in Inth. Read it in
+`app.config.ts`, beside the rest of your
+[c15t plugin options](/docs/frameworks/react-native/expo#configure-the-plugin):
+
+{/* example: fragment */}
+
+```ts title="app.config.ts"
+backendURL: process.env.C15T_BACKEND_URL ?? 'https://your-project.inth.app',
+```
+
+Then add a workflow that builds with that profile and runs your flows:
+
+```yaml title=".eas/workflows/e2e-test-ios.yml"
+name: e2e-test-ios
+on:
+  pull_request:
+    branches: ['*']
+jobs:
+  build_ios_for_e2e:
+    type: build
+    params:
+      platform: ios
+      profile: e2e-test
+  maestro_test:
+    needs: [build_ios_for_e2e]
+    type: maestro
+    params:
+      build_id: ${{ needs.build_ios_for_e2e.outputs.build_id }}
+      flow_path: ['.maestro/home.yaml', '.maestro/consent-custom.yaml']
+```
+
+For Android, use `platform: android` and a job named after it. Expo's
+[E2E tests guide](https://docs.expo.dev/eas/workflows/examples/e2e-tests/)
+covers the rest of the workflow setup.
+
+## Use agent-device and e2e.com
+
+[e2e.com](https://docs.expo.dev/guides/using-e2e/) drives the Simulator and
+Emulator through Callstack's agent-device, which reads the same accessibility
+tree. The selectors above work as `id=` selectors there, for example
+`agent-device press id=c15t.first-layer.reject-all`. Snapshots list them as
+each element's identifier, next to the visible label.
+
+On Android, Maestro and agent-device each start their own UI Automator driver.
+Close one tool's session before running the other on the same emulator, or
+Maestro fails with a driver start-up timeout.
+
+## Check what the selectors cover
+
+The selectors and flows target the stock native screens that
+`@c15t/react-native` presents. If you build your own consent UI with the
+[headless hooks](/docs/frameworks/react-native/headless), give your controls
+your own test IDs. The shipped flows will not find them.

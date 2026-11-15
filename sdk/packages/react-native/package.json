@@ -52,6 +52,7 @@
 		"vendor/C15tCore",
 		"vendor/C15tApple",
 		"vendor/C15tConsentUI",
+		"maestro",
 		"AGENTS.md",
 		"SKILL.md",
 		"docs"
