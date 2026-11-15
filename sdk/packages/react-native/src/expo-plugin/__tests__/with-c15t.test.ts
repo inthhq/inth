@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 
-import { AndroidConfig, XML } from '@expo/config-plugins';
+import { AndroidConfig, XML } from 'expo/config-plugins';
 import { describe, expect, it } from 'vitest';
 
 import { applyAndroidManifest } from '../android';

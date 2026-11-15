@@ -1,4 +1,4 @@
-import type { ExportedConfig } from '@expo/config-plugins';
+import type { ExportedConfig } from 'expo/config-plugins';
 
 import {
 	isProtocolVersionSupported,

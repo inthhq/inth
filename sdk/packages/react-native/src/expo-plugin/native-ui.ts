@@ -1,9 +1,6 @@
-import {
-	withGradleProperties,
-	withPodfileProperties,
-} from '@expo/config-plugins';
-import type { AndroidConfig, ConfigPlugin } from '@expo/config-plugins';
+import type { AndroidConfig, ConfigPlugin } from 'expo/config-plugins';
 
+import { withGradleProperties, withPodfileProperties } from './config-plugins';
 import { C15tPluginError } from './errors';
 
 /**

@@ -24,7 +24,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { AndroidConfig } from '@expo/config-plugins';
+import { AndroidConfig } from 'expo/config-plugins';
 import { expect, it } from 'vitest';
 
 import { ANDROID_META, IOS_PLIST_KEY } from '../constants';

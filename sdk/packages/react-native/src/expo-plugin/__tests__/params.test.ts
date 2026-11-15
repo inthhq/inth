@@ -318,7 +318,7 @@ describe('resolveParams', () => {
 
 	it('names the app.json shape when given no parameters at all', () => {
 		expect(() => resolveParams(undefined)).toThrowError(
-			/@c15t\/react-native\/expo-plugin/u
+			/"plugins": \[\["@c15t\/react-native", \{ "backendURL"/u
 		);
 	});
 });

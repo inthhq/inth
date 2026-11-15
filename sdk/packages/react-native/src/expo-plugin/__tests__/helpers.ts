@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import type { ExportedConfig, Mod } from '@expo/config-plugins';
+import type { ExportedConfig, Mod } from 'expo/config-plugins';
 
 import type { C15tPluginProps } from '../params';
 import { applyParamsOnConfig } from '../with-c15t';

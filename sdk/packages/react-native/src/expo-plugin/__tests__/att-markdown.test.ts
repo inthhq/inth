@@ -27,8 +27,8 @@ import {
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
-import { IOSConfig } from '@expo/config-plugins';
-import type { ExportedConfig, XcodeProject } from '@expo/config-plugins';
+import { IOSConfig } from 'expo/config-plugins';
+import type { ExportedConfig, XcodeProject } from 'expo/config-plugins';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { resolveParams } from '../params';

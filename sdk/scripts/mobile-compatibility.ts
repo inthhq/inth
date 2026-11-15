@@ -125,7 +125,7 @@ const verifyIosDeploymentTargets = function verifyIosDeploymentTargets(
 			[
 				'-e',
 				`
-		const { IOSConfig } = require('@expo/config-plugins');
+		const { IOSConfig } = require('expo/config-plugins');
 		const project = IOSConfig.XcodeUtils.getPbxproj(process.cwd());
 		const [, target] = IOSConfig.Target.findFirstNativeTarget(project);
 		const configurations = IOSConfig.XcodeUtils.getBuildConfigurationsForListId(project, target.buildConfigurationList);
@@ -201,9 +201,6 @@ const main = function main(): void {
 		['pm', 'pack', '--ignore-scripts', '--filename', archive],
 		PACKAGE
 	);
-	const producer = JSON.parse(
-		readFileSync(join(PACKAGE, 'package.json'), 'utf8')
-	);
 	cpSync(join(ROOT, 'bunfig.toml'), join(consumer, 'bunfig.toml'));
 	writeFileSync(
 		join(consumer, 'package.json'),
@@ -212,7 +209,6 @@ const main = function main(): void {
 				dependencies: {
 					...hostVersions(cell),
 					'@c15t/react-native': `file:${archive}`,
-					'@expo/config-plugins': producer.dependencies['@expo/config-plugins'],
 					'@types/node': '25.5.0',
 					'@types/react': cell.react.startsWith('19.3.') ? '19.3.0' : '19.2.17',
 				},
@@ -258,10 +254,12 @@ const main = function main(): void {
 					target: 'ES2022',
 					types: ['node', 'react'],
 				},
+				// The config plugin types come from the app's `expo`, which a bare
+				// React Native host does not install.
 				files: [
 					'consumer.tsx',
 					'sdk-source/index.ts',
-					'sdk-source/expo-plugin/index.ts',
+					...(cell.expo ? ['sdk-source/expo-plugin/index.ts'] : []),
 				],
 			},
 			null,
@@ -304,7 +302,7 @@ const main = function main(): void {
 						platforms: ['ios', 'android'],
 						plugins: [
 							[
-								'@c15t/react-native/expo-plugin',
+								'@c15t/react-native',
 								{
 									backendURL: 'https://your-project.inth.app',
 									consentCategories: ['necessary', 'measurement'],

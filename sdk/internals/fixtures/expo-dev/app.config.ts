@@ -157,7 +157,7 @@ const plugins: PluginEntry[] = [
 	// the plugin's Expo Go guard passes on its own. There is no `skipNativeBuildCheck`
 	// here on purpose: this project has no Expo Go path, and a bare `expo config` in
 	// CI should keep saying so.
-	['@c15t/react-native/expo-plugin', c15tPluginProps],
+	['@c15t/react-native', c15tPluginProps],
 	// The vendor SDKs the c15t integrations control. They are always linked and
 	// start only in an App E2E build (`src/e2e/vendor-journey-app.tsx`).
 	[

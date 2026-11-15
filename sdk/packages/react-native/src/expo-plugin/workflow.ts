@@ -138,7 +138,7 @@ const assertNotRegisteredManually = function assertNotRegisteredManually(
 		`${fileLabel} already registers the c15t native module by hand, and ` +
 			`this plugin registers it too, which fails the build with a duplicate ` +
 			`module name. Keep one: ${fix}, or remove ` +
-			`"@c15t/react-native/expo-plugin" from app.json if this app owns its ` +
+			`the c15t plugin from app.json if this app owns its ` +
 			`native wiring.`
 	);
 };

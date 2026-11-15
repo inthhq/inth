@@ -18,7 +18,7 @@ const consent: C15tPluginProps = {
 const config: ExpoConfig = {
 	name: 'My app',
 	platforms: ['ios', 'android'],
-	plugins: [['@c15t/react-native/expo-plugin', consent]],
+	plugins: [['@c15t/react-native', consent]],
 	runtimeVersion: { policy: 'fingerprint' },
 	slug: 'my-app',
 };

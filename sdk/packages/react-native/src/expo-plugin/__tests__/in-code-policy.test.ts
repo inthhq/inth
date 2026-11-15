@@ -3,7 +3,7 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
-import { AndroidConfig } from '@expo/config-plugins';
+import { AndroidConfig } from 'expo/config-plugins';
 import { describe, expect, it } from 'vitest';
 
 import { applyAndroidManifest } from '../android';

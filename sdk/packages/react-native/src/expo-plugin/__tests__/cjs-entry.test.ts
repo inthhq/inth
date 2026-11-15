@@ -1,5 +1,14 @@
-import { existsSync, readFileSync } from 'node:fs';
+import {
+	existsSync,
+	mkdirSync,
+	mkdtempSync,
+	readFileSync,
+	rmSync,
+	symlinkSync,
+	writeFileSync,
+} from 'node:fs';
 import { createRequire } from 'node:module';
+import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -85,17 +94,31 @@ describe('the CommonJS plugin entry', () => {
 		expect(typeof loaded.C15tPluginError).toBe('function');
 	});
 
-	it('is one bundled file that leaves @expo/config-plugins external', () => {
+	it("is one bundled file that loads the app's expo/config-plugins", () => {
 		const code = readFileSync(cjsEntryPath, 'utf8');
 
 		expect(code).toMatch(/["']use strict["']/u);
 		expect(code).not.toMatch(/^\s*import\s*[{'"*]/mu);
 		expect(code).not.toMatch(/^\s*export\s*[{'*]/mu);
 		// A second copy of @expo/config-plugins would register its mods through a
-		// separate `withMod`, so this has to stay a require of the host's copy.
-		expect(code).toMatch(
-			/require\((?<quote>["'])@expo\/config-plugins\k<quote>\)/u
-		);
+		// separate `withMod` and another SDK's helpers, so the bundle requires the
+		// copy the app's `expo` re-exports and names no other.
+		expect(code).toMatch(/\((?<quote>["'])expo\/config-plugins\k<quote>\)/u);
+		expect(code).not.toContain('@expo/config-plugins');
+	});
+
+	it('names the expo peer when it cannot resolve expo/config-plugins', () => {
+		builtCjsEntry();
+		const directory = mkdtempSync(join(tmpdir(), 'c15t-plugin-no-expo-'));
+		try {
+			const isolated = join(directory, 'index.cjs');
+			writeFileSync(isolated, readFileSync(cjsEntryPath));
+			expect(() => createRequire(isolated)(isolated)).toThrowError(
+				/C15tPluginError|expo is a peer dependency/u
+			);
+		} finally {
+			rmSync(directory, { force: true, recursive: true });
+		}
 	});
 });
 
@@ -105,5 +128,104 @@ describe('the ES module plugin entry', () => {
 
 		expect(existsSync(esmEntryPath)).toBe(true);
 		expect(readFileSync(esmEntryPath, 'utf8')).toContain('export default');
+	});
+});
+
+/**
+ * A throwaway app whose `node_modules` holds this package and the workspace's
+ * `expo`, which is all Expo's resolver reads.
+ */
+const withTemporaryApp = function withTemporaryApp<ResultType>(
+	run: (projectRoot: string) => ResultType
+): ResultType {
+	const projectRoot = mkdtempSync(join(tmpdir(), 'c15t-app-plugin-'));
+	try {
+		mkdirSync(join(projectRoot, 'node_modules/@c15t'), { recursive: true });
+		symlinkSync(packageRoot, join(projectRoot, 'node_modules', manifest.name));
+		symlinkSync(
+			dirname(requireFromPackage.resolve('expo/package.json')),
+			join(projectRoot, 'node_modules/expo')
+		);
+		return run(projectRoot);
+	} finally {
+		rmSync(projectRoot, { force: true, recursive: true });
+	}
+};
+
+describe('the root app.plugin.js', () => {
+	it('is published and exported, so Expo SDK 55 can resolve it', () => {
+		const { files } = manifest as unknown as { files: string[] };
+
+		expect(files).toContain('app.plugin.js');
+		// SDK 55 resolves `<package>/app.plugin.js` through the export map.
+		expect(manifest.exports['./app.plugin.js']).toBe('./app.plugin.js');
+	});
+
+	it('loads through Expo and configures the app like the subpath', () => {
+		builtCjsEntry();
+		const requireFromExpo = createRequire(
+			requireFromPackage.resolve('expo/package.json')
+		);
+		const { resolveConfigPluginFunctionWithInfo } = requireFromExpo(
+			'@expo/config-plugins/build/utils/plugin-resolver'
+		) as {
+			resolveConfigPluginFunctionWithInfo: (
+				projectRoot: string,
+				reference: string
+			) => {
+				isPluginFile: boolean;
+				plugin: (config: unknown, props: unknown) => Record<string, unknown>;
+				pluginFile: string;
+			};
+		};
+
+		withTemporaryApp((projectRoot) => {
+			const apply = (reference: string) => {
+				const resolved = resolveConfigPluginFunctionWithInfo(
+					projectRoot,
+					reference
+				);
+				const config = resolved.plugin(
+					{
+						_internal: { projectRoot },
+						android: { package: 'com.example.app' },
+						ios: { bundleIdentifier: 'com.example.app' },
+						name: 'Example',
+						slug: 'example',
+					},
+					{
+						androidMavenRepository: { url: 'https://maven.example.com/c15t' },
+						backendURL: 'https://acme.inth.app',
+						skipNativeBuildCheck: true,
+					}
+				);
+				const mods = config.mods as Record<string, Record<string, unknown>>;
+				return {
+					config: {
+						extra: config.extra,
+						history: config._internal,
+						ios: config.ios,
+						mods: Object.fromEntries(
+							Object.entries(mods).map(([platform, entries]) => [
+								platform,
+								Object.keys(entries).sort(),
+							])
+						),
+					},
+					resolved,
+				};
+			};
+
+			const root = apply(manifest.name);
+			const subpath = apply(`${manifest.name}/expo-plugin`);
+
+			expect(root.resolved.isPluginFile).toBe(true);
+			expect(root.resolved.pluginFile.endsWith('app.plugin.js')).toBe(true);
+			expect(root.resolved.plugin).toBe(subpath.resolved.plugin);
+			expect(root.config).toEqual(subpath.config);
+			expect(root.config.extra).toMatchObject({
+				c15t: { backendURL: 'https://acme.inth.app' },
+			});
+		});
 	});
 });

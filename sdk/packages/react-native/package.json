@@ -38,6 +38,7 @@
 		"src/specs",
 		"!src/specs/__tests__",
 		"C15tReactNative.podspec",
+		"app.plugin.js",
 		"LICENSE.md",
 		"NOTICE",
 		"react-native.config.js",
@@ -87,7 +88,8 @@
 			"require": "./dist/expo-plugin/index.cjs",
 			"import": "./dist/expo-plugin/index.js",
 			"default": "./dist/expo-plugin/index.js"
-		}
+		},
+		"./app.plugin.js": "./app.plugin.js"
 	},
 	"publishConfig": {
 		"access": "public"
@@ -106,9 +108,6 @@
 		"test:coverage": "C15T_COVERAGE_RATCHET=1 vitest run --passWithNoTests && bun scripts/check-coverage-ratchet.ts",
 		"test:watch": "vitest"
 	},
-	"dependencies": {
-		"@expo/config-plugins": "57.0.9"
-	},
 	"devDependencies": {
 		"@babel/core": "7.29.7",
 		"@babel/parser": "7.28.5",
@@ -119,6 +118,7 @@
 		"@iabtechlabtcf/core": "1.5.22",
 		"@react-native/codegen": "0.87.1",
 		"@types/react-dom": "19.2.3",
+		"expo": "58.0.24",
 		"jsdom": "25.0.1",
 		"metro-transform-plugins": "0.84.5",
 		"react": "19.2.7",
@@ -127,10 +127,14 @@
 		"typescript": "7.0.2"
 	},
 	"peerDependencies": {
+		"expo": ">=55.0.0 <59.0.0",
 		"react": ">=19.2.0 <19.4.0",
 		"react-native": ">=0.83.0 <0.89.0"
 	},
 	"peerDependenciesMeta": {
+		"expo": {
+			"optional": true
+		},
 		"react": {
 			"optional": true
 		}

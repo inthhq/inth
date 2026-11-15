@@ -1,4 +1,4 @@
-import type { AndroidConfig, InfoPlist } from '@expo/config-plugins';
+import type { AndroidConfig, InfoPlist } from 'expo/config-plugins';
 
 /**
  * Google Analytics for Firebase's Consent Mode v2 default keys in `Info.plist`.

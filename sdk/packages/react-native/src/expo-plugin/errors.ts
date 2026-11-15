@@ -17,9 +17,14 @@ export class C15tPluginError extends Error {
 	/**
 	 * @param message - Actionable detail, without the package prefix.
 	 * @param reason - The project URL reason code, for a refused `backendURL`.
+	 * @param options - The underlying error, as `cause`.
 	 */
-	constructor(message: string, reason?: ProjectURLReason) {
-		super(`@c15t/react-native config plugin: ${message}`);
+	constructor(
+		message: string,
+		reason?: ProjectURLReason,
+		options?: ErrorOptions
+	) {
+		super(`@c15t/react-native config plugin: ${message}`, options);
 		this.name = 'C15tPluginError';
 		this.reason = reason;
 	}

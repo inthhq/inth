@@ -2,14 +2,17 @@ import { existsSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { withPodfileProperties, withXcodeProject } from '@expo/config-plugins';
 import type {
 	ConfigPlugin,
 	InfoPlist,
 	XcodeProject,
-} from '@expo/config-plugins';
+} from 'expo/config-plugins';
 
-import { iosConfig } from './config-plugins';
+import {
+	iosConfig,
+	withPodfileProperties,
+	withXcodeProject,
+} from './config-plugins';
 import {
 	IOS_GPP_PLIST_KEYS,
 	IOS_IAB_PLIST_KEYS,
@@ -40,7 +43,16 @@ const minimumDeploymentTarget = (
 
 /** Keep Expo's app and CocoaPods targets at the native SDK's iOS minimum. */
 export const withIosDeploymentTargetFloor: ConfigPlugin = (config) => {
-	const minimum = minimumDeploymentTarget(config.ios?.deploymentTarget);
+	// `ios.deploymentTarget` joined the app config in Expo SDK 56; SDK 55's
+	// types lack it and its configs never carry it.
+	const { ios } = config;
+	const configured =
+		ios !== undefined &&
+		'deploymentTarget' in ios &&
+		typeof ios.deploymentTarget === 'string'
+			? ios.deploymentTarget
+			: undefined;
+	const minimum = minimumDeploymentTarget(configured);
 	const next = withPodfileProperties(config, (cfg) => ({
 		...cfg,
 		modResults: {
@@ -59,13 +71,13 @@ export const withIosDeploymentTargetFloor: ConfigPlugin = (config) => {
 		);
 		for (const [, configuration] of configurations) {
 			const current = configuration.buildSettings.IPHONEOS_DEPLOYMENT_TARGET;
-			iosConfig.DeploymentTarget.setDeploymentTargetForBuildConfiguration(
-				configuration,
+			// A plain write, not `IOSConfig.DeploymentTarget`: Expo SDK 55's
+			// config plugins have no such module, and its setter does only this.
+			configuration.buildSettings.IPHONEOS_DEPLOYMENT_TARGET =
 				minimumDeploymentTarget(
 					typeof current === 'string' ? current : undefined,
 					minimum
-				)
-			);
+				);
 		}
 		return cfg;
 	});

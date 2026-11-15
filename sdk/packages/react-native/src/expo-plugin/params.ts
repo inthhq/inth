@@ -438,7 +438,7 @@ export interface ResolvedC15tParams {
 
 const USAGE =
 	'configure it in app.json as ' +
-	`{ "plugins": [["@c15t/react-native/expo-plugin", { "backendURL": "https://your-project.inth.app" }]] }`;
+	`{ "plugins": [["@c15t/react-native", { "backendURL": "https://your-project.inth.app" }]] }`;
 
 /**
  * Options this plugin used to take, with what replaces each one.

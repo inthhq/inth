@@ -92,6 +92,8 @@ test('packed runtime, declarations and consumer stay independent of web consent 
 				dependencies: {
 					'@c15t/react-native': `file:${archive}`,
 					'@types/react': '19.2.17',
+					// The config plugin runs against the app's own expo/config-plugins.
+					expo: development.devDependencies.expo,
 					react: development.devDependencies.react,
 					'react-native': development.devDependencies['react-native'],
 				},

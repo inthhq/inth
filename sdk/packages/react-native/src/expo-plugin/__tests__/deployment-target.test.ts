@@ -2,8 +2,8 @@ import { copyFileSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { IOSConfig } from '@expo/config-plugins';
-import type { XcodeProject } from '@expo/config-plugins';
+import { IOSConfig } from 'expo/config-plugins';
+import type { XcodeProject } from 'expo/config-plugins';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { applyParamsOnConfig } from '../with-c15t';

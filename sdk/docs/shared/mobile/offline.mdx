@@ -61,7 +61,7 @@ and region, so every policy needs a rule with `match.fallback` or
 export default {
 	plugins: [
 		[
-			'@c15t/react-native/expo-plugin',
+			'@c15t/react-native',
 			{
 				backendURL: 'https://your-project.inth.app',
 				consentCategories: ['necessary', 'measurement', 'marketing'],
@@ -156,7 +156,7 @@ With Expo, add `@c15t/cli` to `devDependencies` and turn on
 export default {
 	plugins: [
 		[
-			'@c15t/react-native/expo-plugin',
+			'@c15t/react-native',
 			{
 				backendURL: 'https://your-project.inth.app',
 				bundleManifest: { allowStaleManifest: false, languages: ['de'] },

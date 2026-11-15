@@ -1,5 +1,6 @@
 /**
- * Entry point for `@c15t/react-native/expo-plugin`.
+ * Entry point for `@c15t/react-native/expo-plugin`, which the package root's
+ * `app.plugin.js` also loads, so `app.json` can name either.
  *
  * Add it to `app.json` with an explicit Android artifact repository: the native core gets its
  * bootstrap config, the launch hook, the Android permission, and the iOS privacy
@@ -9,7 +10,7 @@
  * {
  *   "plugins": [
  *     [
- *       "@c15t/react-native/expo-plugin",
+ *       "@c15t/react-native",
  *       {
  *         "backendURL": "https://your-project.inth.app",
  *         "androidMavenRepository": { "url": "https://maven.example.com/c15t" }
@@ -19,7 +20,7 @@
  * }
  * ```
  *
- * This module pulls in `node:fs` and `@expo/config-plugins`. It is a build-time
+ * This module pulls in `node:fs` and the app's `expo/config-plugins`. It is a build-time
  * tool and nothing in the package's React Native entry point imports it, so it
  * never reaches a Metro bundle.
  *
@@ -29,8 +30,7 @@
  * condition, and one bundled CommonJS file at `dist/expo-plugin/index.cjs` under
  * `require`, which is the file Expo loads. Both carry the same exports.
  */
-import { createRunOncePlugin } from '@expo/config-plugins';
-
+import { createRunOncePlugin } from './config-plugins';
 import { PLUGIN_NAME } from './constants';
 import { withC15t } from './with-c15t';
 

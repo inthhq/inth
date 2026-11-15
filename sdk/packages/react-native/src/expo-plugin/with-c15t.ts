@@ -2,22 +2,23 @@ import { existsSync } from 'node:fs';
 import { rm } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import type { ConfigPlugin, ExportedConfig } from 'expo/config-plugins';
+
+import { applyAndroidManifest } from './android';
+import { withAndroidSdkFloor } from './android-sdk-floor';
+import { fetchBundledManifest, manifestBuild } from './bundle-manifest';
 import {
+	androidConfig,
+	iosConfig,
 	withAndroidManifest,
-	withDangerousMod,
 	withAppBuildGradle,
+	withDangerousMod,
 	withInfoPlist,
 	withMainApplication,
 	withPodfile,
 	withProjectBuildGradle,
 	withXcodeProject,
-} from '@expo/config-plugins';
-import type { ConfigPlugin, ExportedConfig } from '@expo/config-plugins';
-
-import { applyAndroidManifest } from './android';
-import { withAndroidSdkFloor } from './android-sdk-floor';
-import { fetchBundledManifest, manifestBuild } from './bundle-manifest';
-import { androidConfig, iosConfig } from './config-plugins';
+} from './config-plugins';
 import { EXTRA_KEY } from './constants';
 import {
 	applyGoogleConsentDefaultsToApplication,
@@ -200,8 +201,8 @@ export const applyParamsOnConfig = function applyParamsOnConfig(
 		),
 	}));
 
-	// Localized prompt copy has no mod of its own in the config plugin version
-	// this package depends on, so it goes through the Xcode project, which is where
+	// Localized prompt copy has no mod of its own in the config plugin versions
+	// this package supports, so it goes through the Xcode project, which is where
 	// it has to be registered anyway: a string table that never reaches the
 	// Resources phase is a localization that ships nothing. Registered only when a
 	// locale was actually named, so a plain install leaves the project alone.

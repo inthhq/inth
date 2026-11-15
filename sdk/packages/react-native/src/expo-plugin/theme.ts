@@ -1,15 +1,18 @@
-import { withAndroidManifest, withInfoPlist } from '@expo/config-plugins';
 import type {
 	AndroidConfig,
 	ConfigPlugin,
 	InfoPlist,
-} from '@expo/config-plugins';
+} from 'expo/config-plugins';
 
 import type {
 	ConsentNativeSlot,
 	ConsentThemeOptions,
 } from '../components/theme/create-consent-theme';
-import { androidConfig } from './config-plugins';
+import {
+	androidConfig,
+	withAndroidManifest,
+	withInfoPlist,
+} from './config-plugins';
 import { C15tPluginError } from './errors';
 
 /**

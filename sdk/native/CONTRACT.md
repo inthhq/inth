@@ -1805,14 +1805,15 @@ Expo config plugin, as built
 ----------------------------
 
 `packages/react-native/src/expo-plugin/` is published as
-`@c15t/react-native/expo-plugin`. It runs at `expo prebuild`, `expo run:*`, and
+`@c15t/react-native/expo-plugin`, and the package root's `app.plugin.js` loads
+the same build, so `app.json` can name the plugin `@c15t/react-native`. It runs at `expo prebuild`, `expo run:*`, and
 `eas build` time and ships nothing that executes in the app, so Continuous
 Native Generation needs no patch step and `prebuild --clean` loses nothing. Its
 default export is `withC15t` inside `createRunOncePlugin`, and
 `applyParamsOnConfig` is exported next to it because that is the pure core the
 tests drive. A standard install adds one `plugins` entry and nothing else:
 
-    ["@c15t/react-native/expo-plugin", {
+    ["@c15t/react-native", {
       "backendURL": "https://your-project.inth.app"
     }]
 
@@ -2034,8 +2035,23 @@ fails the way the ESM tree did: the entry itself loads, then the real `require`
 of its `./constants.js` sibling throws `ERR_REQUIRE_ESM`. That is the exact error
 a real `expo config` produced before this was settled, and it is why the entry is
 `bundle: true` while the rest of the package stays bundleless.
-`@expo/config-plugins` stays external, so the plugin registers its mods through
-the host's own `withMod` rather than a second copy of the library.
+The plugin has no `@expo/config-plugins` dependency of its own. `expo` 55
+through 58 is an optional peer, and `src/expo-plugin/config-plugins.ts`
+`require`s `expo/config-plugins` from the plugin's own location, so mods go
+through the host's `withMod` and the helpers of the SDK the app installed. It
+is a `require` because `expo` has no `exports` map before SDK 58, where the ES
+module specifier does not resolve, and because Node 22 cannot see the lazy
+`AndroidConfig` and `IOSConfig` getters through a named ES import. Helpers that
+some supported SDK lacks are not used: SDK 55 has no
+`IOSConfig.DeploymentTarget`, so the deployment target floor writes the build
+setting itself.
+
+`app.plugin.js` is an ES module, because the package is `"type": "module"`.
+It imports `dist/expo-plugin/index.cjs`, so both names load one module and give
+the same config. Expo SDK 55 `require()`s it natively; SDK 56 and later compile
+it to CommonJS first. It is in `exports` because SDK 55 resolves
+`<package>/app.plugin.js` through the export map. Under
+`--no-experimental-require-module` on SDK 55 only the subpath loads.
 
 Node versions that are safe: `require()` of an ES module is unflagged on
 Node 20.19+, 22.12+, and 24+, and `@expo/require-utils` names that same set as

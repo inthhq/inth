@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 
-import { AndroidConfig } from '@expo/config-plugins';
+import { AndroidConfig } from 'expo/config-plugins';
 import { describe, expect, it, vi } from 'vitest';
 
 import { applyParamsOnConfig } from '../with-c15t';

@@ -4,7 +4,7 @@ import { copyFile, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { IOSConfig } from '@expo/config-plugins';
+import { IOSConfig } from 'expo/config-plugins';
 import { describe, expect, it, vi } from 'vitest';
 
 import {

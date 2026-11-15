@@ -33,11 +33,21 @@ skills:sync` to link it for your coding agent.
 
 ## Configure the plugin
 
-Add `@c15t/react-native/expo-plugin` to your existing `app.config.ts`. Merge the
-plugin entry into your current configuration so you retain your app's bundle
-identifier, package name and other plugins:
+Add `@c15t/react-native` to the `plugins` list in your existing
+`app.config.ts`. Merge the plugin entry into your current configuration so you
+retain your app's bundle identifier, package name and other plugins:
 
 <include src="../../shared/examples/expo-dev/expo-config.mdx" />
+
+Import the plugin's types from `@c15t/react-native/expo-plugin`, as the example
+does. That subpath also works as the plugin name, so an existing
+`'@c15t/react-native/expo-plugin'` entry needs no change. Both names give the
+same native configuration.
+
+The plugin runs on your app's own copy of Expo's config plugin library, the one
+`expo/config-plugins` provides, so it follows the Expo SDK you installed.
+`@c15t/react-native` declares `expo` 55 through 58 as an optional peer
+dependency; a bare React Native app does not need it.
 
 Replace these values before building:
 

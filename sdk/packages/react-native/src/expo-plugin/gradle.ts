@@ -1,4 +1,4 @@
-import type { AndroidConfig } from '@expo/config-plugins';
+import type { AndroidConfig } from 'expo/config-plugins';
 
 import { C15tPluginError } from './errors';
 import type { C15tAndroidMavenRepository } from './maven';
