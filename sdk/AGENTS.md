@@ -1,5 +1,7 @@
 # c15t Monorepo
 
+This folder is the c15t SDK as imported into the Inth repository. The backend, `node-sdk` and the c15t CLI were not imported; the SDK targets the hosted Inth backend. It still uses Bun and its own scripts until it joins the root pnpm workspace, so run every command below from `sdk/`. The workflows in `sdk/.github` do not run here.
+
 c15t is a developer-first consent management platform (CMP): cookie banners, consent dialogs, preference centers, consent-gated script loading, Google Consent Mode v2, and IAB TCF 2.4 for JavaScript, React, Next.js, Vue, Svelte, and Solid. This repo contains the published npm packages, the MDX source for the c15t.com docs, benchmarks, Storybook apps, and a demo.
 
 This file is the canonical agent guide. `CLAUDE.md` imports it. Deeper task guides live in `.agents/skills/` (symlinked into `.claude/skills/`, `.cursor/skills/`, and `.github/skills/`). Third-party skills are managed with the [skills CLI](https://skills.sh) and pinned in `skills-lock.json` — add or refresh them with `bunx skills add <owner>/<repo>` / `bunx skills update -y`, never by hand-editing their files. The first-party skills (`writing-docs`, `releasing`, `creating-a-package`) are maintained in this repo.
@@ -37,9 +39,8 @@ Read these instead:
 | `packages/integrations` | `@c15t/integrations` — consent-aware loaders for GTM, GA4, pixels, widgets |
 | `packages/scripts` | `@c15t/scripts` — deprecated v3 compatibility re-exports of `@c15t/integrations`; retire in v4 |
 | `packages/iab` | `@c15t/iab` — IAB TCF 2.4 addon (TC String, GVL, vendor consent) |
-| `packages/backend` | `@c15t/backend` — self-hostable consent backend (policies, audit, geo) |
-| `packages/cli` | `@c15t/cli` — scaffolding/setup CLI |
-| `packages/node-sdk`, `packages/schema`, `packages/translations`, `packages/logger`, `packages/dev-tools` | Node API client, Valibot schemas, i18n, logger, devtools |
+| `packages/cli/src/mobile` | Mobile setup and manifest code kept from the c15t CLI. It has no `package.json` and moves to `@inth/cli` |
+| `packages/schema`, `packages/translations`, `packages/logger`, `packages/dev-tools` | Valibot schemas, i18n, logger, devtools |
 | `packages/shared` | Not a package — shared build helpers (`rslib-utils.ts`) |
 | `docs/` | MDX source for c15t.com **and** the docs bundled into published packages |
 | `internals/` | `@c15t/typescript-config`, `@c15t/vitest-config`, storybook tests, bundle-analysis action |
@@ -50,12 +51,12 @@ Read these instead:
 
 ## Toolchain
 
-Bun `1.3.11` is the package manager and script runner. Turborepo orchestrates tasks. Packages build with **rslib** (ESM only into `dist/`, types into `dist-types/`). Tests run with **Vitest — not `bun test`** — including Playwright-backed browser tests. **Oxlint** handles linting and **Oxfmt** handles formatting through Ultracite presets. Versioning/publishing is **Tegami**. Lefthook installs a pre-commit hook (Oxfmt on staged files) on `bun install`.
+Bun `1.3.11` is the package manager and script runner. Turborepo orchestrates tasks. Packages build with **rslib** (ESM only into `dist/`, types into `dist-types/`). Tests run with **Vitest — not `bun test`** — including Playwright-backed browser tests. **Oxlint** handles linting and **Oxfmt** handles formatting through Ultracite presets. Versioning/publishing is **Tegami**.
 
 ## Commands
 
 ```bash
-bun install                                          # postinstall sets up lefthook
+bun install
 
 bun run build                                        # everything, via turbo
 bun turbo run build --filter=@c15t/react             # one package (+ its deps)
@@ -115,7 +116,6 @@ Conventions not enforced by tooling (hold new code to these; older code has exce
 | `AGENTS.md`, `SKILL.md` + `docs/` in the packages listed in `scripts/generate-package-docs.ts`, plus `skills/<name>/` where a config sets `skillDirectory` | `scripts/generate-package-docs.ts` (leadtype — see the `leadtype` skill), runs during those packages' builds | `docs/**/*.mdx` + `docs/docs.config.ts` |
 | `README.md` in packages that have a `readme.json` | `bun run generate:readmes` | that package's `readme.json` |
 | `packages/*/src/version.ts` | `genversion` via each package's `prebuild` | package.json version |
-| `packages/cli/src/generate/version.ts` | `packages/cli/scripts/write-version.ts` via `prebuild`, `pretest`, and `check-types` | package.json version |
 | `native/core-swift/Sources/C15tConsentUI/generated/{iab-copy,consent-copy}.generated.swift`, `native/core-android/c15t-consent-ui/.../generated/{iab-copy,consent-copy}.kt` and `.../resources/.../generated/{iab-copy,consent-copy}.json` | `bun run generate:native-iab-copy` | `iab` copy and the category-mode keys in `packages/translations`, plus `src/native-app-labels.ts` |
 | `native/protocol/iab/banner-summary-*.json` | `bun scripts/generate-iab-banner-summary-fixtures.ts` | web `resolveIABBannerSummary` in `packages/core` |
 | `native/protocol/bridge/payloads.json` | `bun run --cwd packages/react-native generate:bridge-schema` | `BRIDGE_PAYLOADS` in `packages/react-native/src/protocol/bridge-schema.ts` |
