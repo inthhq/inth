@@ -275,11 +275,11 @@
 		"access": "public"
 	},
 	"scripts": {
-		"build": "rslib build && bun ../../scripts/normalize-dist-types.mjs && tcm src/styles/components -p \"*.module.css\" -o types/styles/components --camelCase && bun scripts/generate-style-artifacts.ts && bun scripts/generate-css-entrypoints.ts",
+		"build": "rslib build && node ../../scripts/normalize-dist-types.mjs && tcm src/styles/components -p \"*.module.css\" -o types/styles/components --camelCase && bun scripts/generate-style-artifacts.ts && bun scripts/generate-css-entrypoints.ts",
 		"check-types": "tsc --noEmit && tsc -p tsconfig.type-tests.json",
 		"dev": "sh -c 'rslib build --no-dts --no-clean && tcm src/styles/components -p \"*.module.css\" -o types/styles/components --camelCase && bun scripts/generate-style-artifacts.ts && bun scripts/generate-css-entrypoints.ts && rslib build --watch --no-dts --no-clean'",
-		"fmt": "bun oxfmt .",
-		"lint": "bun oxlint ./src",
+		"fmt": "oxfmt .",
+		"lint": "oxlint ./src",
 		"test": "vitest run"
 	},
 	"dependencies": {
@@ -290,9 +290,13 @@
 		"@c15t/typescript-config": "workspace:*",
 		"@c15t/vitest-config": "workspace:*",
 		"@rslib/core": "0.23.2",
+		"jsdom": "25.0.1",
+		"oxfmt": "0.65.0",
+		"oxlint": "1.80.0",
 		"postcss": "8.5.10",
 		"typed-css-modules": "0.9.1",
 		"typescript": "7.0.2",
+		"vite": "8.1.3",
 		"vitest": "4.1.10"
 	}
 }

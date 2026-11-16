@@ -5,9 +5,9 @@
 	"description": "Consumer fixture: observes consent through the packed public exports of c15t, the way an external integration would.",
 	"type": "module",
 	"scripts": {
-		"fmt": "bun oxfmt --write .",
+		"fmt": "oxfmt --write .",
 		"install:packed": "bun scripts/install-packed.ts",
-		"lint": "bun oxlint .",
+		"lint": "oxlint .",
 		"test": "bun scripts/install-packed.ts && tsc --noEmit && vitest run"
 	},
 	"dependencies": {
@@ -20,9 +20,12 @@
 		"@types/react": "19.2.17",
 		"@types/react-dom": "19.2.3",
 		"jsdom": "^25.0.0",
+		"oxfmt": "0.65.0",
+		"oxlint": "1.80.0",
 		"react": "19.2.7",
 		"react-dom": "19.2.7",
 		"typescript": "6.0.3",
+		"vite": "8.1.3",
 		"vitest": "4.1.10"
 	}
 }

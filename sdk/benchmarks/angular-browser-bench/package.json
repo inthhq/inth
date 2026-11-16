@@ -3,7 +3,7 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"bench:gate": "BENCH_OUTPUT_DIR=../../.benchmarks/head/consent-gate bunx tsx scripts/run-gate.ts",
+		"bench:gate": "BENCH_OUTPUT_DIR=../../.benchmarks/head/consent-gate tsx scripts/run-gate.ts",
 		"build": "ng build gate && ng build control",
 		"check-types": "tsc --noEmit -p tsconfig.app.json"
 	},
@@ -29,6 +29,7 @@
 		"@types/express": "5.0.3",
 		"@types/node": "22.20.5",
 		"playwright": "1.61.1",
+		"tsx": "4.23.0",
 		"typescript": "6.0.3"
 	}
 }

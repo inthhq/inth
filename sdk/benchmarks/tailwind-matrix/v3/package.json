@@ -20,6 +20,7 @@
 	},
 	"devDependencies": {
 		"@astrojs/svelte": "9.0.1",
+		"@rsbuild/core": "1.7.5",
 		"@sveltejs/adapter-static": "3.0.10",
 		"@sveltejs/kit": "2.68.0",
 		"@sveltejs/vite-plugin-svelte": "7.3.1",

@@ -112,14 +112,14 @@
 		"access": "public"
 	},
 	"scripts": {
-		"build": "ng-packagr -p ng-package.json -c tsconfig.lib.json && bun run build:schematics",
+		"build": "ng-packagr -p ng-package.json -c tsconfig.lib.json && pnpm run build:schematics",
 		"build:docs": "bun ../../scripts/generate-package-docs.ts @c15t/angular",
-		"build:schematics": "tsc -p schematics/tsconfig.json && bun schematics/copy-assets.mjs",
+		"build:schematics": "tsc -p schematics/tsconfig.json && node schematics/copy-assets.mjs",
 		"check-types": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.spec.json",
 		"dev": "ng-packagr -p ng-package.json -c tsconfig.lib.json --watch",
-		"fmt": "bun oxfmt .",
-		"lint": "bun oxlint ./src",
-		"prepack": "bun run build:docs && bun run build",
+		"fmt": "oxfmt .",
+		"lint": "oxlint ./src",
+		"prepack": "pnpm run build:docs && pnpm run build",
 		"test": "vitest run",
 		"test:watch": "vitest"
 	},
@@ -155,6 +155,8 @@
 		"@schematics/angular": "22.2.6",
 		"jsdom": "^25.0.0",
 		"ng-packagr": "22.2.6",
+		"oxfmt": "0.65.0",
+		"oxlint": "1.80.0",
 		"rxjs": "7.8.2",
 		"typescript": "6.0.3",
 		"vite": "8.1.3",

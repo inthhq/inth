@@ -4,9 +4,9 @@
 	"type": "module",
 	"scripts": {
 		"build": "storybook build",
-		"prebuild": "bun run prepare:deps",
-		"prepare:deps": "bun --cwd ../../packages/core prebuild && bun --cwd ../../packages/svelte prebuild && bun --cwd ../../packages/iab prebuild",
-		"prestorybook": "bun run prepare:deps",
+		"prebuild": "pnpm run prepare:deps",
+		"prepare:deps": "pnpm --dir ../../packages/core run prebuild && pnpm --dir ../../packages/svelte run prebuild && pnpm --dir ../../packages/iab run prebuild",
+		"prestorybook": "pnpm run prepare:deps",
 		"storybook": "portless run --name storybook-astro sh -c 'storybook dev --port \"$PORT\" --host \"$HOST\"'",
 		"test-storybook": "test-storybook --url ${STORYBOOK_URL:-http://127.0.0.1:6010}"
 	},
@@ -28,6 +28,7 @@
 		"@storybook/html-vite": "10.4.6",
 		"@storybook/test-runner": "^0.24.4",
 		"@sveltejs/vite-plugin-svelte": "^6.2.4",
+		"@types/react": "19.2.17",
 		"@vitejs/plugin-react": "^5.0.4",
 		"@vitejs/plugin-vue": "6.0.7",
 		"astro": "^5.16.0",

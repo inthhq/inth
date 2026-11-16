@@ -284,17 +284,17 @@
 		"access": "public"
 	},
 	"scripts": {
-		"build": "bun prebuild && rslib build && bun ../../scripts/normalize-dist-types.mjs && bun ../../scripts/prune-dist-types.ts",
+		"build": "pnpm run prebuild && rslib build && node ../../scripts/normalize-dist-types.mjs && bun ../../scripts/prune-dist-types.ts",
 		"build:docs": "bun ../../scripts/generate-package-docs.ts @c15t/core",
-		"check-types": "bun prebuild && tsc --noEmit",
+		"check-types": "pnpm run prebuild && tsc --noEmit",
 		"check-types:test": "tsc -p tsconfig.test.json",
-		"dev": "sh -c 'bun prebuild && rslib build --no-dts --no-clean && rslib build --watch --no-dts --no-clean'",
-		"fmt": "bun oxfmt .",
-		"lint": "bun oxlint ./src",
+		"dev": "sh -c 'pnpm run prebuild && rslib build --no-dts --no-clean && rslib build --watch --no-dts --no-clean'",
+		"fmt": "oxfmt .",
+		"lint": "oxlint ./src",
 		"prebuild": "genversion --esm --semi src/version.ts",
-		"prepack": "bun run build:docs && bun ../../scripts/verify-package-artifacts.ts",
-		"test": "bun prebuild && vitest run",
-		"test:watch": "bun prebuild && vitest"
+		"prepack": "pnpm run build:docs && bun ../../scripts/verify-package-artifacts.ts",
+		"test": "pnpm run prebuild && vitest run",
+		"test:watch": "pnpm run prebuild && vitest"
 	},
 	"dependencies": {
 		"@c15t/schema": "workspace:*",
@@ -303,9 +303,14 @@
 	"devDependencies": {
 		"@c15t/typescript-config": "workspace:*",
 		"@c15t/vitest-config": "workspace:*",
+		"@rslib/core": "0.23.2",
 		"genversion": "3.2.0",
+		"jsdom": "25.0.1",
+		"oxfmt": "0.65.0",
+		"oxlint": "1.80.0",
 		"typescript": "7.0.2",
 		"vite": "^6.0.0",
+		"vitest": "4.1.10",
 		"vitest-localstorage-mock": "0.1.2"
 	},
 	"browserslist": [

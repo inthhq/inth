@@ -4,9 +4,9 @@
 	"description": "Measured numbers for the mobile budgets in native/CONTRACT.md: native cores, React rerenders, idle cost, and shipped bytes.",
 	"type": "module",
 	"scripts": {
-		"bench": "bunx tsx src/run.ts",
-		"bench:ci": "bunx tsx src/run.ts --check",
-		"bench:quick": "bunx tsx src/run.ts --quick",
+		"bench": "tsx src/run.ts",
+		"bench:ci": "tsx src/run.ts --check",
+		"bench:quick": "tsx src/run.ts --quick",
 		"build": "echo 'mobile benchmarks are source-only'",
 		"check-types": "tsc --noEmit",
 		"competitive": "python3 competitive/harness.py",
@@ -21,8 +21,8 @@
 		"competitive:runtime": "python3 competitive/harness.py runtime",
 		"competitive:test": "python3 competitive/tests.py",
 		"competitive:verify": "python3 competitive/harness.py verify",
-		"fmt": "bun oxfmt .",
-		"lint": "bun oxlint ./src",
+		"fmt": "oxfmt .",
+		"lint": "oxlint ./src",
 		"test": "vitest run"
 	},
 	"dependencies": {
@@ -34,8 +34,13 @@
 	"devDependencies": {
 		"@c15t/typescript-config": "workspace:*",
 		"@types/node": "^24.10.1",
+		"jsdom": "25.0.1",
+		"oxfmt": "0.65.0",
+		"oxlint": "1.80.0",
 		"react-test-renderer": "19.2.8",
+		"tsx": "4.23.0",
 		"typescript": "7.0.2",
+		"vite": "8.1.3",
 		"vitest": "4.1.10"
 	}
 }

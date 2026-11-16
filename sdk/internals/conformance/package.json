@@ -32,6 +32,7 @@
 		"@c15t/typescript-config": "workspace:*",
 		"@happy-dom/global-registrator": "^20.0.0",
 		"@iabtechlabtcf/core": "^1.5.22",
+		"react": "19.2.7",
 		"typescript": "6.0.3"
 	}
 }

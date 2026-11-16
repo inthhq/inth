@@ -131,16 +131,16 @@
 		"access": "public"
 	},
 	"scripts": {
-		"build": "bun prebuild && rslib build && bun scripts/copy-styles.ts && bun ../../scripts/normalize-dist-types.mjs",
+		"build": "pnpm run prebuild && rslib build && bun scripts/copy-styles.ts && node ../../scripts/normalize-dist-types.mjs",
 		"build:docs": "bun ../../scripts/generate-package-docs.ts @c15t/browser",
-		"check-types": "bun prebuild && tsc --noEmit",
-		"dev": "sh -c 'bun prebuild && rslib build --no-dts --no-clean && rslib build --watch --no-dts --no-clean'",
-		"fmt": "bun oxfmt .",
-		"lint": "bun oxlint ./src",
+		"check-types": "pnpm run prebuild && tsc --noEmit",
+		"dev": "sh -c 'pnpm run prebuild && rslib build --no-dts --no-clean && rslib build --watch --no-dts --no-clean'",
+		"fmt": "oxfmt .",
+		"lint": "oxlint ./src",
 		"prebuild": "genversion --esm --semi src/version.ts && bun scripts/build-styles.ts",
-		"prepack": "bun run build:docs && bun ../../scripts/verify-package-artifacts.ts",
-		"test": "bun prebuild && vitest run",
-		"test:watch": "bun prebuild && vitest"
+		"prepack": "pnpm run build:docs && bun ../../scripts/verify-package-artifacts.ts",
+		"test": "pnpm run prebuild && vitest run",
+		"test:watch": "pnpm run prebuild && vitest"
 	},
 	"dependencies": {
 		"@c15t/core": "workspace:*",
@@ -155,10 +155,15 @@
 		"@c15t/typescript-config": "workspace:*",
 		"@c15t/vitest-config": "workspace:*",
 		"@emotion/css": "11.13.5",
+		"@rslib/core": "0.23.2",
 		"genversion": "3.2.0",
 		"jsdom": "^25.0.0",
+		"oxfmt": "0.65.0",
+		"oxlint": "1.80.0",
 		"postcss": "8.5.10",
-		"typescript": "7.0.2"
+		"typescript": "7.0.2",
+		"vite": "8.1.3",
+		"vitest": "4.1.10"
 	},
 	"browserslist": [
 		">0.5%",

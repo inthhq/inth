@@ -4,12 +4,12 @@
 	"type": "module",
 	"scripts": {
 		"analyze": "ANALYZE=true next build",
-		"analyze:json": "bunx tsx analyze-bundle.ts --json",
-		"analyze:md": "bunx tsx analyze-bundle.ts --markdown",
-		"bench": "BENCH_OUTPUT_DIR=../../.benchmarks/current/bundle bunx tsx analyze-bundle.ts && BENCH_OUTPUT_DIR=../../.benchmarks/current/bundle bunx tsx analyze-entries.ts",
-		"bench:ci": "BENCH_OUTPUT_DIR=../../.benchmarks/head/bundle bunx tsx analyze-bundle.ts && BENCH_OUTPUT_DIR=../../.benchmarks/head/bundle bunx tsx analyze-entries.ts",
-		"bench:entries": "bunx tsx analyze-entries.ts",
-		"bench:nightly": "BENCH_OUTPUT_DIR=../../.benchmarks/nightly/bundle bunx tsx analyze-bundle.ts && BENCH_OUTPUT_DIR=../../.benchmarks/nightly/bundle bunx tsx analyze-entries.ts",
+		"analyze:json": "tsx analyze-bundle.ts --json",
+		"analyze:md": "tsx analyze-bundle.ts --markdown",
+		"bench": "BENCH_OUTPUT_DIR=../../.benchmarks/current/bundle tsx analyze-bundle.ts && BENCH_OUTPUT_DIR=../../.benchmarks/current/bundle tsx analyze-entries.ts",
+		"bench:ci": "BENCH_OUTPUT_DIR=../../.benchmarks/head/bundle tsx analyze-bundle.ts && BENCH_OUTPUT_DIR=../../.benchmarks/head/bundle tsx analyze-entries.ts",
+		"bench:entries": "tsx analyze-entries.ts",
+		"bench:nightly": "BENCH_OUTPUT_DIR=../../.benchmarks/nightly/bundle tsx analyze-bundle.ts && BENCH_OUTPUT_DIR=../../.benchmarks/nightly/bundle tsx analyze-entries.ts",
 		"build": "next build",
 		"dev": "next dev",
 		"test": "vitest run"
@@ -28,6 +28,10 @@
 		"@next/bundle-analyzer": "16.2.10",
 		"@types/node": "25.5.0",
 		"@types/react": "19.2.17",
-		"typescript": "6.0.3"
+		"jsdom": "25.0.1",
+		"tsx": "4.23.0",
+		"typescript": "6.0.3",
+		"vite": "8.1.3",
+		"vitest": "4.1.10"
 	}
 }

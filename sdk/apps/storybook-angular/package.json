@@ -4,8 +4,8 @@
 	"type": "module",
 	"scripts": {
 		"build": "storybook build",
-		"prestorybook": "bun --cwd ../../packages/core prebuild && bun --cwd ../../packages/iab prebuild",
-		"storybook": "bun run prestorybook && portless run --name storybook-angular sh -c 'storybook dev --port \"$PORT\" --host \"$HOST\"'",
+		"prestorybook": "pnpm --dir ../../packages/core run prebuild && pnpm --dir ../../packages/iab run prebuild",
+		"storybook": "pnpm run prestorybook && portless run --name storybook-angular sh -c 'storybook dev --port \"$PORT\" --host \"$HOST\"'",
 		"test-storybook": "test-storybook --url ${STORYBOOK_URL:-http://127.0.0.1:6006}"
 	},
 	"dependencies": {
@@ -31,6 +31,9 @@
 		"@storybook/addon-a11y": "10.4.6",
 		"@storybook/angular": "10.4.6",
 		"@storybook/test-runner": "^0.24.4",
+		"@types/node": "25.5.0",
+		"@types/react": "19.2.17",
+		"react": "19.2.7",
 		"storybook": "10.4.6",
 		"typescript": "6.0.3",
 		"vite": "8.1.3"
