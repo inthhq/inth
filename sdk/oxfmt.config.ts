@@ -5,10 +5,7 @@ export default defineConfig({
 	...ultracite,
 	ignorePatterns: [
 		...ultracite.ignorePatterns,
-		'.agents/**',
-		'.claude/**',
 		'.codex/**',
-		'.cursor/**',
 		'.repos/**',
 		'.tmp-bun/**',
 		'**/*.md',

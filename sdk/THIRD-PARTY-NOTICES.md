@@ -9,17 +9,6 @@ licences, listed here.
 | --- | --- | --- | --- |
 | `apps/shadcn-registry/vendor` | [shadcn-ui/ui](https://github.com/shadcn-ui/ui) | MIT | Copyright (c) 2023 shadcn |
 | `internals/fixtures/script-tag/vendor/posthog.js` | [PostHog/posthog-js](https://github.com/PostHog/posthog-js) install snippet, shortened | Apache-2.0, the SDK's own licence | Copyright 2020 Posthog / Hiberly, Inc. Copyright 2015 Mixpanel, Inc. |
-| `.agents/skills/turborepo` | [vercel/turborepo](https://github.com/vercel/turborepo) | MIT | Copyright (c) 2026 Vercel, Inc |
-| `.agents/skills/ultracite` | [haydenbleasel/ultracite](https://github.com/haydenbleasel/ultracite) | MIT | Copyright (c) 2022 to present Hayden Bleasel |
-| `.agents/skills/effect-ts` | [Effect-TS/skills](https://github.com/Effect-TS/skills) | MIT | Copyright (c) 2023 Effectful Technologies Inc |
-| `.agents/skills/vercel-composition-patterns`, `.agents/skills/vercel-react-best-practices` | [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills) | MIT | Vercel, Inc |
-
-The `vercel-labs/agent-skills` repository has no licence file. Both skills
-declare `license: MIT` and `author: vercel` in their `SKILL.md`. That
-repository's `web-design-guidelines` skill declares no licence, so it was
-not imported.
-
-`skills-lock.json` records the source of each skill.
 
 Files that carry their own licence header, such as the Android, Gradle and
 React Native template files under `internals/fixtures/react-native-bare`,

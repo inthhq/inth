@@ -1,6 +1,6 @@
 // NOTE: This package uses vitest (not bun test) because @testing-library/svelte
 // requires the @sveltejs/vite-plugin-svelte transform pipeline for component
-// compilation. This is an intentional exception to the CLAUDE.md guideline.
+// compilation.
 //
 // Two projects, because Svelte 5 dual-compiles components:
 // - `client` resolves the `browser` condition and gets client-compiled

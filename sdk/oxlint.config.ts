@@ -120,10 +120,7 @@ export default defineConfig({
 	extends: [core, react, vue, antiSlop],
 	ignorePatterns: [
 		...core.ignorePatterns,
-		'.agents/**',
-		'.claude/**',
 		'.codex/**',
-		'.cursor/**',
 		'.repos/**',
 		'.tmp-bun/**',
 		'apps/shadcn-registry/vendor/**',
