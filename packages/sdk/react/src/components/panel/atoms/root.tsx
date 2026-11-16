@@ -7,7 +7,7 @@ import type * as C15tCoreTypes from '@inth/sdk/engine';
  * Implements context provider pattern with theme support, state management,
  * focus trapping, scroll locking and portal rendering.
  */
-import { isDialogDismissKey } from '@inth/sdk/ui/primitives/dialog';
+import { onDialogDismiss } from '@inth/sdk/ui/primitives/dialog';
 import styles from '@inth/sdk/ui/styles/components/consent-dialog';
 import type { FC, HTMLAttributes, ReactNode, RefObject } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -246,15 +246,7 @@ const ConsentDialogRoot: FC<ConsentDialogRootProps> = ({
 			return;
 		}
 
-		const handleKeyDown = (event: KeyboardEvent) => {
-			if (isDialogDismissKey(event.key)) {
-				event.preventDefault();
-				closeUI();
-			}
-		};
-
-		document.addEventListener('keydown', handleKeyDown);
-		return () => document.removeEventListener('keydown', handleKeyDown);
+		return onDialogDismiss(document.documentElement, closeUI);
 	}, [closeUI, isOpen]);
 
 	// Lock scroll when required

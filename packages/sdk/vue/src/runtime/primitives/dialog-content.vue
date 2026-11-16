@@ -6,9 +6,9 @@
  */
 import {
 	getDialogState,
-	isDialogDismissKey,
+	onDialogDismiss,
 } from '@inth/sdk/ui/primitives/dialog';
-import { inject, onBeforeUnmount, onMounted, ref } from 'vue';
+import { inject, ref, watchEffect } from 'vue';
 
 import { dialogContextKey } from './keys';
 import { useFocusTrap } from './use-focus-trap';
@@ -21,21 +21,12 @@ useFocusTrap(root, () => isModal() && (dialog?.open() ?? false), {
 	initialFocus: 'first-tabbable',
 });
 
-const onKeydown = function onKeydown(event: KeyboardEvent) {
-	if (isDialogDismissKey(event.key)) {
-		event.preventDefault();
-		dialog?.close();
+// One document listener handles Escape wherever focus is, and closes only
+// the dialog on top when several are open.
+watchEffect((onCleanup) => {
+	if (root.value && (dialog?.open() ?? true)) {
+		onCleanup(onDialogDismiss(root.value, () => dialog?.close()));
 	}
-};
-
-// One document listener handles Escape wherever focus is. A second one on
-// the dialog element would close twice for a key pressed inside it.
-onMounted(() => {
-	document.addEventListener('keydown', onKeydown);
-});
-
-onBeforeUnmount(() => {
-	document.removeEventListener('keydown', onKeydown);
 });
 </script>
 
