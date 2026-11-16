@@ -51,7 +51,9 @@ export const CAPABILITIES = [
   "integrations.read",
   ...OPT_IN_CAPABILITIES,
 ];
-export const SCOPE = `openid profile email offline_access ${CAPABILITIES.filter((scope) => !OPT_IN_CAPABILITIES.includes(scope)).join(" ")}`;
+// wizard.run lets inth c15t --inth spend Inth's model budget on a setup run.
+// Only browser login asks for it; agent connections never get it.
+export const SCOPE = `openid profile email offline_access ${CAPABILITIES.filter((scope) => !OPT_IN_CAPABILITIES.includes(scope)).join(" ")} wizard.run`;
 
 export const requiresAgentConnection = (scopes: string[]): boolean =>
   scopes.some((scope) => OPT_IN_CAPABILITIES.includes(scope));

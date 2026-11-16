@@ -37,7 +37,7 @@ def run(conflict=False, cancel=False):
         child = subprocess.Popen(
             [sys.argv[1], "c15t", "--organization", "org_acme", "--skip-install"],
             cwd=directory, stdin=slave, stdout=slave, stderr=slave,
-            # No coding agents on PATH, so the setup prompt is recommended first.
+            # No coding agents on PATH, so Inth's setup agent is recommended first.
             env=dict(os.environ, PATH="/usr/bin:/bin", TERM="xterm-256color",
                      NO_COLOR="1", INTH_TELEMETRY_DISABLED="1",
                      INTH_TEST_C15T_INTERACTIVE="1"),
@@ -47,7 +47,8 @@ def run(conflict=False, cancel=False):
             read_until(master, child, output, b'Create a new project named "site"')
             os.write(master, b"\r")
             read_until(master, child, output, b"How do you want to set up c15t")
-            os.write(master, b"\x1b[B\r")
+            # Inth's setup agent, the prompt, then scaffold.
+            os.write(master, b"\x1b[B\x1b[B\r")
             if not conflict:
                 # Files are confirmed, and the region chosen, before creation.
                 read_until(master, child, output, b"Write these files?")
@@ -103,9 +104,10 @@ def run_default(installed_agent):
             output = bytearray()
             try:
                 recommended = (b"Use a coding agent (recommended)" if installed_agent
-                               else b"Show the setup prompt for your agent (recommended)")
+                               else b"Let Inth's setup agent do it (recommended)")
                 read_until(master, child, output, recommended)
-                os.write(master, b"\r")
+                # Without a coding agent, pick the prompt below Inth's setup agent.
+                os.write(master, b"\r" if installed_agent else b"\x1b[B\r")
                 if installed_agent:
                     read_until(master, child, output, b"Pick an agent")
                     os.write(master, b"\r")
@@ -151,7 +153,8 @@ def run_html_site():
         output = bytearray()
         try:
             read_until(master, child, output, b"Scaffold the framework quickstart files")
-            os.write(master, b"\x1b[B\r")
+            # Inth's setup agent, the prompt, then scaffold.
+            os.write(master, b"\x1b[B\x1b[B\r")
             read_until(master, child, output, b"Write these files?")
             os.write(master, b"\r")
             read_until(master, child, output, b"CALLS ")
@@ -178,4 +181,4 @@ run_default(installed_agent=False)
 run(conflict=True)
 run(cancel=True)
 run()
-print("c15t picker passed: agent setup is recommended; scaffold creation waits for checks and confirmation.")
+print("c15t picker passed: agent setup is recommended, Inth's setup agent without one; scaffold creation waits for checks and confirmation.")

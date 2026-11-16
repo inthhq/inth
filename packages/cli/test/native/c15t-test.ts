@@ -6,6 +6,7 @@ import { parseArguments } from "../../src/arguments.ts";
 import type { OAuthResponse } from "../../src/auth-types.ts";
 import { NativeApi } from "../../src/native/native-api.ts";
 import { runC15t } from "../../src/native/native-c15t.ts";
+import type { HostedAgent } from "../../src/native/native-c15t.ts";
 import { NativeContext } from "../../src/native/native-state.ts";
 
 const BACKEND = "https://acme-website.c15t.dev";
@@ -54,6 +55,13 @@ const reply = async (
       `{"success":true,"data":${project("Created", lookups > 1 ? BACKEND : "")}}`
     );
   }
+  if (method === "POST" && path.startsWith("/v1/wizard/sessions")) {
+    // scripts/c15t-checks.ts serves the gateway and the fx archive.
+    const gateway = process.env.INTH_TEST_GATEWAY ?? "";
+    return respond(
+      `{"success":true,"data":{"sessionId":"wzs_1","token":"iwz_v1.test.sig","gatewayUrl":${JSON.stringify(gateway)},"model":"claude-opus-5-5","smallModel":"claude-haiku-5-5","expiresAt":"2030-01-01T00:00:00.000Z"}}`
+    );
+  }
   throw new Error(`Unexpected request: ${method} ${path}`);
 };
 const api = new NativeApi(
@@ -69,6 +77,21 @@ const api = new NativeApi(
   },
   "inth_fixture"
 );
+// The hosted agent's archive comes from the check's local server, pinned to
+// the checksum the check computed.
+const hosted: HostedAgent = {
+  release: {
+    assets: {
+      [`${process.platform}-${process.arch}`]: {
+        name: "fx.tar.gz",
+        sha256: process.env.INTH_TEST_FX_SHA256 ?? "",
+      },
+    },
+    baseUrl: process.env.INTH_TEST_FX_URL ?? "http://127.0.0.1:9/",
+    version: "0.0.0-test",
+  },
+  stateDirectory: process.env.INTH_TEST_STATE ?? process.cwd(),
+};
 const controller = new AbortController();
 let exitCode = 0;
 try {
@@ -79,7 +102,8 @@ try {
     new NativeContext(process.cwd(), process.cwd()),
     controller.signal,
     // scripts/test-c15t-ui.py drives the pickers through a terminal.
-    process.env.INTH_TEST_C15T_INTERACTIVE === "1"
+    process.env.INTH_TEST_C15T_INTERACTIVE === "1",
+    hosted
   );
 } catch (error) {
   console.error(`ERROR ${error instanceof Error ? error.message : "failed"}`);

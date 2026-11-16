@@ -926,12 +926,14 @@ export const COMMAND_METADATA: CommandMetadata[] = [
       "Selects an Inth project or creates one with c15t branding. New projects require a region.",
       "Agent setup is recommended to adapt the integration to this app and verify consent in a browser. The picker defaults to an installed agent, or a prompt for another agent.",
       "Prompt prints public setup inputs. Agent flags start the chosen coding agent in this directory.",
+      "--inth runs Inth's setup agent (fx) here on macOS and Linux, with model use paid by Inth within daily limits. It downloads a checksum-pinned fx, writes the backend URL to .env, may install packages and edit files in this directory, and never commits, pushes or deploys. It needs a browser sign-in, not an API key.",
       "Scaffold writes framework quickstart files and installs c15t on the stable v3 release line. Existing files are preserved; conflicting generated files stop setup.",
       "Scaffold and prompt support --json. Agent sessions require a terminal.",
     ],
     examples: [
       "inth c15t",
       "inth c15t --codex --project Website",
+      "inth c15t --inth --project Website",
       "inth c15t prompt --project Website --json",
       "inth c15t scaffold --project Website --dry-run --json",
       "inth c15t scaffold --name Website --region eu --organization <id> --yes",
@@ -972,6 +974,11 @@ export const COMMAND_METADATA: CommandMetadata[] = [
         "resume",
         "boolean",
         "Undo an interrupted scaffold, then write again"
+      ),
+      option(
+        "inth",
+        "boolean",
+        "Let Inth's setup agent add c15t here; macOS and Linux"
       ),
       ...CODING_AGENTS.map((agent) =>
         option(

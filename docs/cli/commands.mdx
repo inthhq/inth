@@ -310,10 +310,11 @@ These commands require a person's approved connection. Chat uploads and discards
 
 ## How do I set up c15t in my app?
 
-Run `inth c15t` from your app directory to choose an Inth project and set up c15t v3. Agent setup is recommended. The agent can adapt the integration to your app, move existing tracking behind consent, and verify the result in a browser. The picker selects agent setup first when an agent is installed. Otherwise, it selects a setup prompt to paste into your agent.
+Run `inth c15t` from your app directory to choose an Inth project and set up c15t v3. Agent setup is recommended. The agent can adapt the integration to your app, move existing tracking behind consent, and verify the result in a browser. The picker selects agent setup first when an agent is installed. Otherwise, it selects Inth's setup agent, which needs no agent install or AI account.
 
 ```sh
 inth c15t
+inth c15t --inth --project Website --organization org_123
 inth c15t --codex --project Website --organization org_123
 inth c15t prompt --project Website --organization org_123 --json
 inth c15t scaffold --project Website --organization org_123 --dry-run --json
@@ -339,6 +340,14 @@ For an existing `.env`, scaffold distinguishes new keys from assignments to repl
 To create a hosted project, pass `--name Website --region <region-id>` instead of `--project`. Use `inth region list` to choose the region. Scaffold checks local files and asks for confirmation before creating a project. `--dry-run` previews the files without creating a project, writing files, or installing packages. `--yes` confirms file creation, and `--skip-install` leaves package installation to you. Windows always skips installation and prints the required packages. Use `--resume` to undo files from an interrupted scaffold before trying again.
 
 Agent flags include `--codex`, `--claude`, `--cursor`, `--grok`, and `--fx`. The agent must be installed on your path, and agent sessions run in the terminal on macOS and Linux. Use `prompt --json` to export public setup inputs for another agent. Scaffold and prompt accept `--json`; interactive agent sessions do not.
+
+### Inth's setup agent
+
+`--inth` runs Inth's setup agent in your app directory on macOS and Linux. Inth pays for its model use, within limits per run, per person and per organization each day. It needs a browser sign-in with `inth login`; organization API keys cannot start it. If your sign-in predates the agent, run `inth login` again to allow it.
+
+The agent is [fx](https://github.com/vercel-labs/fx), a native coding agent. On first use, inth downloads a pinned fx release, checks its SHA-256 checksum, and keeps it in inth's state directory. fx runs with its own settings there, so your own fx setup is not used or changed. inth writes the backend URL to `.env` the way scaffold names it, then fx works through the same setup prompt as other agents, without a browser. It can read your app, install packages, edit files in the app directory, and run your typecheck, lint, test, and build scripts. It cannot read or edit `.env` files, `.npmrc`, or keys, edit files outside the app directory, or commit, push, publish, or deploy.
+
+The run ends with a report, including the consent checks to do in a browser. Review the changes before you commit them. If a run stops at its model budget, run `inth c15t --inth` again to continue from your working tree.
 
 ## How do I migrate a hosted c15t app from v2 to v3?
 

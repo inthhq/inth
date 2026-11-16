@@ -12,6 +12,8 @@ import type { GenerationWorkflowResult } from "../../vendor/c15t/frontend/runtim
 import { boilerplateFrameworks } from "../../vendor/c15t/generate/index.ts";
 import type { BoilerplateFramework } from "../../vendor/c15t/generate/index.ts";
 import type { CliArguments } from "../arguments.ts";
+import { FX_RELEASE, fxAsset } from "../c15t-fx.ts";
+import type { FxRelease } from "../c15t-fx.ts";
 import {
   defaultProjectName,
   dependencyNames,
@@ -31,12 +33,14 @@ import { CliError } from "../cli-error.ts";
 import { chooseOrganization, terminalText } from "../organizations.ts";
 import type { Organization, OrganizationUI } from "../organizations.ts";
 import { printResult } from "../output.ts";
+import { nativeStateDirectory } from "../platform.ts";
 import { createAgentSetupPlan } from "./c15t-agent.ts";
 import {
   publicGenerationPlan,
   runGenerationWorkflow,
 } from "./c15t-generation.ts";
 import type { NativeApi } from "./native-api.ts";
+import { ensureFx, openWizardSession, runFx } from "./native-fx.ts";
 import { invalidResponse } from "./native-protocol.ts";
 import type { NativeContext } from "./native-state.ts";
 import { nativeUI } from "./native-ui.ts";
@@ -413,23 +417,38 @@ class C15tSetup {
     return requireProjectBackendURL(hostedProject(project));
   }
 
-  action(agents: CodingAgent[], scaffold: boolean): Promise<string> {
+  action(
+    agents: CodingAgent[],
+    scaffold: boolean,
+    hosted: boolean
+  ): Promise<string> {
     if (this.c15t.action) {
       return Promise.resolve(this.c15t.action);
     }
     if (!this.interactive) {
       throw new CliError(
         "interaction_required",
-        "Choose --codex, --claude, --cursor, --grok, --fx, scaffold, or prompt."
+        "Choose --inth, --codex, --claude, --cursor, --grok, --fx, scaffold, or prompt."
       );
     }
     const choices = agents.length
       ? [choice("agent", "Use a coding agent (recommended)")]
       : [];
+    // Inth's own agent leads when no coding agent is installed here.
+    if (hosted) {
+      choices.push(
+        choice(
+          "inth",
+          agents.length
+            ? "Let Inth's setup agent do it"
+            : "Let Inth's setup agent do it (recommended)"
+        )
+      );
+    }
     choices.push(
       choice(
         "prompt",
-        agents.length
+        agents.length || hosted
           ? "Show the setup prompt for another agent"
           : "Show the setup prompt for your agent (recommended)"
       )
@@ -696,13 +715,76 @@ const startAgent = async (
   );
 };
 
+export interface HostedAgent {
+  release: FxRelease;
+  stateDirectory: string;
+}
+
+interface HostedSetup {
+  api: NativeApi;
+  organization: string;
+  project: ApiProject;
+  backendURL: string;
+  framework: BoilerplateFramework | undefined;
+  binary: string;
+  stateDirectory: string;
+  prompt: string;
+}
+
+const hostedAgent = (testHosted?: HostedAgent): HostedAgent =>
+  testHosted ?? {
+    release: FX_RELEASE,
+    stateDirectory: nativeStateDirectory(),
+  };
+
+// Fetch and verify the setup agent before anything is created.
+const hostedBinary = async (
+  action: string,
+  hosted: HostedAgent,
+  signal: AbortSignal
+): Promise<string | undefined> =>
+  action === "inth"
+    ? await ensureFx(hosted.release, hosted.stateDirectory, signal)
+    : undefined;
+
+// Inth's setup agent: open a session for this project, run fx, print its report.
+const runHostedSetup = async (
+  setup: HostedSetup,
+  signal: AbortSignal
+): Promise<void> => {
+  const session = await openWizardSession(
+    setup.api,
+    setup.organization,
+    setup.project.id,
+    setup.framework ?? "unknown"
+  );
+  const report = await runFx(
+    {
+      backendURL: setup.backendURL,
+      binary: setup.binary,
+      cwd: process.cwd(),
+      framework: setup.framework,
+      projectName: setup.project.name,
+      prompt: setup.prompt,
+      session,
+      stateDirectory: setup.stateDirectory,
+    },
+    signal
+  );
+  console.log(report);
+  console.log("\nReview the changes before you commit them.");
+};
+
 export const runC15t = async (
   options: CliArguments,
   api: NativeApi,
   context: NativeContext,
   signal: AbortSignal,
-  allowInteractive: boolean
+  allowInteractive: boolean,
+  // Tests pass their own release and state directory.
+  testHosted?: HostedAgent
 ): Promise<void> => {
+  const hosted = hostedAgent(testHosted);
   const { c15t } = options;
   if (!c15t) {
     throw new CliError("usage_error", "Run inth c15t --help.");
@@ -719,12 +801,20 @@ export const runC15t = async (
   const agents = installedAgents();
   const organization = await setup.organization(context);
   const selection = await setup.chooseProject(organization, manifest, cwd);
-  const action = await setup.action(agents, canScaffold(manifest, detected));
+  const hostedSupported = Boolean(
+    fxAsset(hosted.release, process.platform, process.arch)
+  );
+  const action = await setup.action(
+    agents,
+    canScaffold(manifest, detected),
+    hostedSupported
+  );
   // c15t's installer refuses Windows, so write the files and print the command.
   const skipInstall = c15t.skipInstall || process.platform === "win32";
   // Check and confirm everything local before creating a project.
   const requestedAgent =
     action === "agent" ? await setup.agent(agents) : undefined;
+  const fx = await hostedBinary(action, hosted, signal);
   let scaffold: ScaffoldCheck | undefined;
   if (action === "scaffold") {
     requireScaffoldApp(manifest, detected);
@@ -747,12 +837,28 @@ export const runC15t = async (
     id: project.id,
     name: project.name,
   };
-  if (action === "agent" || action === "prompt") {
+  if (action !== "scaffold") {
     const plan = createAgentSetupPlan({
       backendURL,
       framework: detected,
       mode: "hosted",
     });
+    if (fx) {
+      await runHostedSetup(
+        {
+          api,
+          backendURL,
+          binary: fx,
+          framework: detected,
+          organization,
+          project,
+          prompt: plan.prompt,
+          stateDirectory: hosted.stateDirectory,
+        },
+        signal
+      );
+      return;
+    }
     if (action === "agent") {
       await startAgent(
         requestedAgent ?? (await setup.agent(agents)),

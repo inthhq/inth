@@ -26,7 +26,7 @@ export const CODING_AGENTS: CodingAgent[] = [
 ];
 
 export interface C15tOptions {
-  // "agent", "scaffold", "prompt", or "" to choose interactively.
+  // "agent", "inth", "scaffold", "prompt", or "" to choose interactively.
   action: string;
   // A CODING_AGENTS id when an agent flag was given.
   agent?: string;
@@ -42,7 +42,7 @@ export interface C15tOptions {
 }
 
 export const C15T_USAGE =
-  "Usage: inth c15t [scaffold|prompt|--codex|--claude|--cursor|--grok|--fx] [--project <id|name>] [--name <name> --region <id>] [--framework <name>] [--organization <id>] [--yes] [--dry-run] [--skip-install] [--resume] [--json]";
+  "Usage: inth c15t [scaffold|prompt|--inth|--codex|--claude|--cursor|--grok|--fx] [--project <id|name>] [--name <name> --region <id>] [--framework <name>] [--organization <id>] [--yes] [--dry-run] [--skip-install] [--resume] [--json]";
 
 export const c15tHelp = (): string =>
   [
@@ -51,9 +51,11 @@ export const c15tHelp = (): string =>
     C15T_USAGE,
     "",
     "Recommended: use a coding agent to adapt c15t to this app and verify consent in a browser.",
-    "If your agent is not installed here, use prompt and paste the output into it.",
+    "Without one, --inth runs Inth's setup agent. Or use prompt and paste the output into your agent.",
     "",
     "Actions:",
+    "  --inth    Let Inth's setup agent add c15t here. Needs no agent install",
+    "            or AI account; macOS and Linux",
     "  --codex, --claude, --cursor, --grok, --fx",
     "            Start that coding agent here with the c15t setup prompt",
     "  prompt    Print the setup prompt for any other agent",
@@ -144,7 +146,9 @@ const validate = (c15t: C15tOptions): void => {
     throw new CliError("usage_error", "Use --region with --name.");
   }
   if (
-    (c15t.action === "prompt" || c15t.action === "agent") &&
+    (c15t.action === "prompt" ||
+      c15t.action === "agent" ||
+      c15t.action === "inth") &&
     (c15t.dryRun || c15t.skipInstall || c15t.yes || c15t.resume)
   ) {
     throw new CliError(
@@ -164,7 +168,7 @@ const setAction = (c15t: C15tOptions, action: string, agent = ""): void => {
   if (c15t.action) {
     throw new CliError(
       "usage_error",
-      "Choose one of scaffold, prompt, --codex, --claude, --cursor, --grok, or --fx."
+      "Choose one of scaffold, prompt, --inth, --codex, --claude, --cursor, --grok, or --fx."
     );
   }
   c15t.action = action;
@@ -212,6 +216,8 @@ export const parseC15tArguments = (
       result.nonInteractive = true;
     } else if (setScaffoldFlag(c15t, arg)) {
       continue;
+    } else if (arg === "--inth") {
+      setAction(c15t, "inth");
     } else if (CODING_AGENTS.some((agent) => arg === `--${agent.id}`)) {
       setAction(c15t, "agent", arg.slice(2));
     } else if (arg.startsWith("--")) {
@@ -236,7 +242,7 @@ export const parseC15tArguments = (
     }
   }
   validate(c15t);
-  if (c15t.action === "agent" && result.json) {
+  if ((c15t.action === "agent" || c15t.action === "inth") && result.json) {
     throw new CliError(
       "usage_error",
       "Agent sessions use this terminal. Use inth c15t prompt --json to export the prompt."

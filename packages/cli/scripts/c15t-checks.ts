@@ -1,6 +1,8 @@
 /* eslint-disable no-await-in-loop -- Scenarios share an app directory and run in order. */
 import assert from "node:assert/strict";
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
+import { once } from "node:events";
 import {
   chmod,
   link as hardLink,
@@ -14,6 +16,8 @@ import {
   stat,
   writeFile,
 } from "node:fs/promises";
+import { createServer } from "node:http";
+import type { AddressInfo } from "node:net";
 import os from "node:os";
 import path from "node:path";
 
@@ -340,6 +344,155 @@ const verifyScaffold = async (
   assert.equal(conflictNew.status, 1, conflictNew.stderr);
   assert.match(conflictNew.stderr, /Refusing to overwrite existing file/u);
   assert.deepEqual(calls(conflictNew.stderr), []);
+};
+
+// Like run, but leaves this process's event loop free for the local server
+// the hosted agent downloads fx from.
+const runAsync = async (
+  binary: string,
+  args: string[],
+  cwd: string,
+  env: NodeJS.ProcessEnv
+): Promise<{ status: number | null; stdout: string; stderr: string }> => {
+  const child = spawn(binary, args, {
+    cwd,
+    env: { ...env, INTH_TELEMETRY_DISABLED: "1" },
+  });
+  let stdout = "";
+  let stderr = "";
+  child.stdout.on("data", (chunk: Buffer) => {
+    stdout += chunk.toString();
+  });
+  child.stderr.on("data", (chunk: Buffer) => {
+    stderr += chunk.toString();
+  });
+  await once(child, "close");
+  return { status: child.exitCode, stderr, stdout };
+};
+
+// `inth c15t --inth` with a stand-in fx: the fixture downloads its archive
+// from a local server, checks the checksum, writes fx's home, and runs it.
+const verifyHostedAgent = async (test: string, parent: string) => {
+  const directory = await app(parent, "hosted", {
+    next: "16.0.0",
+    react: "19.0.0",
+  });
+  await writeFile(path.join(directory, ".env"), "SECRET=1\n");
+  const source = path.join(parent, "fake-fx");
+  await mkdir(source);
+  // Records its arguments and environment beside its settings, then answers
+  // like `fx ask --json` for the mode the check picks.
+  await writeFile(
+    path.join(source, "fx"),
+    `#!/bin/sh
+printf '%s\\n' "$@" > "$FX_HOME/args.txt"
+env > "$FX_HOME/env.txt"
+if [ "$INTH_FAKE_FX" = budget ]; then
+  printf '%s\\n' '{"exit_code":1,"output":"API access denied · HTTP 403 · permission_error: This run used its model budget. Run the wizard again to continue.","final_output":""}'
+  exit 1
+fi
+printf '%s\\n' '{"exit_code":0,"output":"","final_output":"## c15t setup report\\nAdded c15t."}'
+`
+  );
+  await chmod(path.join(source, "fx"), 0o755);
+  const archive = path.join(parent, "fx.tar.gz");
+  assert.equal(
+    spawnSync("tar", ["-czf", archive, "fx"], { cwd: source }).status,
+    0
+  );
+  const bytes = await readFile(archive);
+  let downloads = 0;
+  const server = createServer((_request, response) => {
+    downloads += 1;
+    response.end(bytes);
+  });
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  // SAFETY: A server listening on a TCP host and port reports an AddressInfo.
+  const { port } = server.address() as AddressInfo;
+  const state = path.join(parent, "hosted-state");
+  const env = {
+    ...process.env,
+    FX_PROVIDER: "gateway",
+    INTH_TEST_FX_SHA256: createHash("sha256").update(bytes).digest("hex"),
+    INTH_TEST_FX_URL: `http://127.0.0.1:${port}/`,
+    INTH_TEST_GATEWAY: "https://api.inth.com/v1/wizard/gateway",
+    INTH_TEST_STATE: state,
+  };
+  const args = [
+    "c15t",
+    "--inth",
+    "--project",
+    "Website",
+    "--organization",
+    "org_acme",
+  ];
+  try {
+    const done = await runAsync(test, args, directory, env);
+    assert.equal(done.status, 0, done.stderr);
+    assert.match(done.stdout, /## c15t setup report\nAdded c15t\./u);
+    assert.ok(
+      calls(done.stderr).some(
+        (call) =>
+          call.startsWith("POST /v1/wizard/sessions") &&
+          call.includes('"framework":"next-app"')
+      ),
+      done.stderr
+    );
+    assert.equal(
+      await readFile(path.join(directory, ".env"), "utf-8"),
+      `SECRET=1\nNEXT_PUBLIC_C15T_BACKEND_URL=${BACKEND}\n`
+    );
+    const home = path.join(state, "fx-home");
+    const recorded = await readFile(path.join(home, "args.txt"), "utf-8");
+    assert.match(recorded, /^ask\n--json\n/u);
+    assert.match(recorded, /--provider\ninth\n/u);
+    assert.match(recorded, new RegExp(BACKEND, "u"));
+    const childEnv = await readFile(path.join(home, "env.txt"), "utf-8");
+    assert.match(childEnv, new RegExp(`^FX_HOME=${home}$`, "mu"));
+    assert.match(childEnv, /^INTH_WIZARD_TOKEN=iwz_v1\.test\.sig$/mu);
+    // The person's own fx provider does not reach this run.
+    assert.doesNotMatch(childEnv, /^FX_PROVIDER=/mu);
+    const settings = JSON.parse(
+      await readFile(path.join(home, "settings.json"), "utf-8")
+    );
+    assert.equal(
+      settings.providers.inth.base_url,
+      "https://api.inth.com/v1/wizard/gateway/v1"
+    );
+    assert.match(
+      await readFile(path.join(home, "AGENTS.md"), "utf-8"),
+      /NEXT_PUBLIC_C15T_BACKEND_URL/u
+    );
+
+    // A later run reuses the verified executable and explains a spent budget.
+    const spent = await runAsync(test, args, directory, {
+      ...env,
+      INTH_FAKE_FX: "budget",
+    });
+    assert.equal(spent.status, 1);
+    assert.match(spent.stderr, /used its model budget/u);
+    assert.match(spent.stderr, /run inth c15t --inth again/u);
+    assert.equal(downloads, 1);
+
+    // An archive that does not match its checksum never runs.
+    const tampered = path.join(parent, "tampered-state");
+    const refused = await runAsync(test, args, directory, {
+      ...env,
+      INTH_TEST_FX_SHA256: "0".repeat(64),
+      INTH_TEST_STATE: tampered,
+    });
+    assert.equal(refused.status, 1);
+    assert.match(refused.stderr, /did not match its published checksum/u);
+    assert.ok(
+      !calls(refused.stderr).some((call) =>
+        call.startsWith("POST /v1/wizard/sessions")
+      )
+    );
+    assert.deepEqual(await readdir(tampered).catch(() => []), []);
+  } finally {
+    server.close();
+  }
 };
 
 const verifyAgents = async (
@@ -1824,6 +1977,7 @@ export const verifyC15t = async (binary: string): Promise<void> => {
     verifyNewProject(test, await app(parent, "dashboard", { react: "19.0.0" }));
     if (!windows) {
       await verifyAgents(test, next, bin);
+      await verifyHostedAgent(test, parent);
     }
     const plain = await app(parent, "plain", {});
     const unknown = run(
