@@ -213,6 +213,39 @@ a server load cannot send functions to the browser. Prerendered, static and
 SPA-mode pages use the same `scripts` prop. If you pass an externally owned
 `runtime` to the provider, register scripts when creating that runtime instead.
 
+**Angular**
+
+Pass the scripts to the existing `provideC15t()` call in
+`src/app/app.config.ts`, next to `mode`:
+
+```ts title="src/app/app.config.ts"
+import { provideZonelessChangeDetection } from '@angular/core';
+import type { ApplicationConfig } from '@angular/core';
+import { hosted, provideC15t } from '@c15t/angular';
+
+import { scripts } from '../consent-scripts';
+
+export const appConfig: ApplicationConfig = {
+	providers: [
+		provideZonelessChangeDetection(),
+		provideC15t({
+			// Keep the mode and other options from your quickstart.
+			mode: hosted({ backendURL: 'https://your-project.inth.app' }),
+			scripts,
+		}),
+	],
+};
+```
+
+Keep the mode, styles and consent UI from the
+[Angular quickstart](https://c15t.com/docs/frameworks/angular/quickstart). The runtime
+starts one script loader in the browser after the first render, once it
+has applied the visitor's stored choice. With server rendering, the
+server starts the scripts the stored choice already allows. Keep
+`provideC15t()` in `app.config.ts`, which the server config merges, not
+in a server-only file. See
+[Angular scripts](../frameworks/angular/scripts.md).
+
 **HTML**
 
 The helpers in `@c15t/integrations` are ES modules that need a bundler. On a

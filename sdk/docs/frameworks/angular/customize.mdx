@@ -1,0 +1,159 @@
+---
+title: Customize
+description: Change c15t's colors, shape, button styles, copy and markup in an Angular app with a token stylesheet, theme slots, component inputs and ng-template slots.
+group: frameworks
+---
+
+## Pick the right tool
+
+| Change | Use |
+| --- | --- |
+| Brand colors, radius, type, spacing | `--c15t-*` variables in a global stylesheet |
+| One part of one component | `theme.slots` in `provideC15t()` |
+| Button styles by action | `theme.consentActions` |
+| Shape, position, blocking, button order | `<c15t-consent-banner>` inputs or `presentation` |
+| Wording and languages | Banner text inputs, or [translations](/docs/frameworks/angular/translations) |
+| Markup inside the banner's title, description or buttons | `ng-template` slots on `<c15t-consent-banner>` |
+| Different markup altogether | [Headless](/docs/frameworks/angular/headless) |
+
+[Customization](/docs/customization/overview) explains how the pieces fit
+together across frameworks.
+
+## Set brand colors and radius
+
+Write the `--c15t-*` variables on `:root` in a global stylesheet. c15t's
+default tokens carry no specificity, so your rule replaces them wherever each
+loads:
+
+<include src="../../shared/examples/angular/theme-css.mdx" />
+
+Add the file to the `styles` array of your build target in `angular.json`,
+or `@import` it from `src/styles.css`. Do not put it in a component's
+`styles`: Angular scopes component styles to that component, and the
+variables must be on `:root`.
+
+Set a hover color and a text color with the primary color, so buttons stay
+readable in each state. [Theme tokens](/docs/customization/tokens) lists
+every variable.
+
+Do not put colors, radius or other tokens in the `theme` option. In the
+browser, `theme` applies slots and `consentActions` only; the token values
+are ignored. In development, `ConsentTheme` logs a warning when `theme` has
+tokens and the page has no `<style id="c15t-theme">`.
+
+If your tokens come from data at runtime, `generateThemeCSS(theme)` from
+`@c15t/ui/theme` turns a theme object into the same CSS. Install `@c15t/ui`
+to use it, put the result in a `<style id="c15t-theme">` element, and expect
+the generator to add to your bundle. Its selectors outrank the stock
+defaults, so the element works wherever it sits. They also outrank a plain
+`:root` rule of your own, so if you mix both, write your overrides on
+`:root:root`.
+
+## Switch to dark tokens
+
+The `colorScheme` option switches on the dark token set: `'dark'` always,
+`'system'` when the operating system prefers dark, `'light'` never. It
+toggles a `c15t-dark` class on `<html>`. Left unset, `ConsentTheme` copies a
+`dark` class on `<html>` into `c15t-dark`, so an app with its own dark mode
+toggle gets the dark tokens without the option. Pass `null` if your app sets
+`c15t-dark` itself. Override dark values under `:root.dark` and
+`:root.c15t-dark` in your stylesheet. [Dark mode](/docs/customization/dark-mode)
+covers a dark first paint.
+
+## Style one part with theme slots
+
+The `theme` option applies slot styles in the browser. A slot takes a class
+name, or `{ className, style, noStyle }`:
+
+<include src="../../shared/examples/angular/theme.mdx" />
+
+Pass it as `theme` to `provideC15t()`. Define the class in a global
+stylesheet: the components render outside your component's view
+encapsulation, so a class in a component's `styles` does not reach them
+unless you use `::ng-deep`. The Angular components read these slots:
+
+| Component | Slots |
+| --- | --- |
+| `<c15t-consent-banner>` | `consentBanner`, `consentBannerCard`, `consentBannerHeader`, `consentBannerTitle`, `consentBannerDescription`, `consentBannerFooter`, `consentBannerFooterSubGroup`, `consentBannerRights`, `consentBannerRightLink`, `consentBannerTag`, `consentBannerOverlay` |
+| `<c15t-consent-dialog>` | `consentDialog`, `consentDialogCard`, `consentDialogHeader`, `consentDialogTitle`, `consentDialogDescription`, `consentDialogContent`, `consentDialogTag`, `consentDialogOverlay` |
+| `<c15t-consent-widget>` | `consentWidget`, `consentWidgetAccordion`, `consentWidgetFooter`, `consentWidgetFooterSubGroup`, `consentWidgetTag` |
+| `<c15t-consent-dialog-trigger>` | `consentDialogTrigger`, `consentDialogTriggerIcon`, and with dev tools `consentDialogTriggerToolbar`, `consentDialogTriggerToolbarItem`, `consentDialogTriggerToolbarIcon` |
+| `<c15t-iab-consent-banner>` | `iabConsentBanner`, `iabConsentBannerCard`, `iabConsentBannerHeader`, `iabConsentBannerFooter`, `iabConsentBannerTag`, `iabConsentBannerOverlay` |
+| `<c15t-iab-consent-dialog>` | `iabConsentDialog`, `iabConsentDialogCard`, `iabConsentDialogHeader`, `iabConsentDialogFooter`, `iabConsentDialogTag`, `iabConsentDialogOverlay` |
+| `<c15t-consent-gate>` | `consentGate`, `consentGateTitle`, `consentGateButton` |
+| Buttons in every component | `buttonPrimary`, `buttonSecondary` |
+
+Slot names are not React's `components.banner.card` keys; do not copy a React
+configuration. Use slots when one part should change and tokens when a value
+should change everywhere. The `rootClass` input on a component, such as
+`<c15t-consent-banner rootClass="...">`, goes on its root.
+[Component parts](/docs/customization/slots) explains the attributes each
+element carries, and [Tailwind CSS](/docs/customization/tailwind) covers
+Tailwind 4 and 3.
+
+## Change button styles by action
+
+`theme.consentActions` in the same theme picks each button's style by what it
+does, whichever order the policy puts the buttons in. The theme above sets
+outlined neutral buttons by default, filled primary buttons for the policy's
+primary action, and a filled neutral Reject button. A per-action entry
+overrides `primary`, which overrides `default`. The policy decides which
+action is primary.
+
+## Change the banner shape, position and copy
+
+Set the shape on the banner itself, or for every surface with the
+`presentation` option:
+
+<include src="../../shared/examples/angular/bottom-bar.mdx" />
+
+| `variant` | Positions |
+| --- | --- |
+| `floating` | `bottom-left` (default), `bottom-right`, `top-left`, `top-right`, `bottom-center`, `top-center` |
+| `bar` | `bottom` (default), `top` |
+| `widget` | `bottom-right` (default), `bottom-left`, `top-left`, `top-right` |
+| `wall` | `center` |
+
+`blocking` adds a backdrop, locks scrolling, traps focus and stops outside
+clicks from closing the banner. `layout` and `primaryButton` change the button
+order and emphasis. The policy wins where they conflict. A policy that
+requires a reject button keeps it, whatever the layout says.
+
+The text inputs, such as `heading` and `rejectButtonText`, replace the copy for
+this banner in every language. For site-wide copy, pass `i18n`;
+[translations](./translations) covers both.
+
+## Replace parts of the banner's markup
+
+`<c15t-consent-banner>` takes three `ng-template` slots. The policy still
+decides which actions show and in what order:
+
+<include src="../../shared/examples/angular/banner-templates.mdx" />
+
+| Template | Replaces | Context |
+| --- | --- | --- |
+| `c15tConsentBannerTitle` | The text inside the `<h2>` | `let-title`, the resolved title; `let-notice="notice"` |
+| `c15tConsentBannerDescription` | The description text. Legal links still follow it. | `let-description`; `let-notice="notice"` |
+| `c15tConsentBannerAction` | Each action button | `let-action`, `label`, `primary`, `variant`, `mode` and `testId` |
+
+`ConsentButton` (`button[c15t-consent-button]`) records the action and takes
+the stock button styles, so a custom action template stays styled and
+working. Import each template directive and the banner into your component's
+`imports`.
+
+## Turn off animations
+
+`disableAnimation` in `provideC15t()` turns off the banner and dialog
+animations, and the same input on `<c15t-consent-banner>`,
+`<c15t-consent-dialog>`, `<c15t-iab-consent-banner>` or
+`<c15t-iab-consent-dialog>` overrides it for one surface. Left unset, it
+follows the visitor's reduced motion setting.
+[Motion and animation](/docs/customization/motion) covers the duration and
+easing tokens.
+
+## Remove c15t's styles
+
+Set `noStyle` on one component or in `provideC15t()` to render the same
+markup and behavior without c15t's classes. Style the `data-*` attributes and
+your slot classes instead. For different markup, see
+[headless](./headless).

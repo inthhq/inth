@@ -35,6 +35,8 @@ const bundledPackages = function bundledPackages(
 ) {
 	return {
 		...alias,
+		'@c15t/schema/canonical-order$':
+			require.resolve('@c15t/schema/canonical-order'),
 		'@c15t/schema/types$': require.resolve('@c15t/schema/types'),
 		'@c15t/translations$': require.resolve('@c15t/translations'),
 		'@c15t/translations/all$': require.resolve('@c15t/translations/all'),

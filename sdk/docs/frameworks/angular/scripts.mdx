@@ -1,0 +1,136 @@
+---
+title: Scripts
+description: Load vendor scripts, iframes and network requests in an Angular app only after the visitor allows their consent category, send analytics events, and stop vendors when consent is withdrawn.
+group: frameworks
+---
+
+## Register scripts on the provider
+
+Pass the array from `src/scripts.ts` to `provideC15t()` as the `scripts`
+option. The [quickstart](/docs/frameworks/angular/quickstart) sets up this
+file:
+
+<include src="../../shared/examples/angular/scripts.mdx" />
+
+Replace the placeholder PostHog project key with your own.
+
+The script loader is a separate chunk, shared with the
+[network blocker](./network-blocker). The runtime loads it only when `scripts`
+is not empty or the blocker has rules, so an app with neither never downloads
+it. With [server rendering](./rendering), the server starts the scripts the
+visitor's stored consent already allows before the app hydrates.
+
+## How registered scripts load
+
+Each script configuration has a category. The loader adds a script to the
+page when its category becomes allowed and removes it when the category is
+withdrawn. Nothing optional loads while the policy is still resolving, or when
+it fails.
+
+Helpers in `@c15t/integrations`, such as `posthog()` from
+`@c15t/integrations/posthog`, return a configuration with the right category
+and the vendor's own consent calls. [Integrations](/docs/integrations/overview)
+lists every helper. For an SDK without a helper, write a configuration with an
+`id`, `category` and `src` as shown in
+[building integrations](/docs/integrations/building-integrations).
+
+Remove the vendor's original `<script>` tag from `index.html`, its entry in
+the `scripts` array of `angular.json`, and any SDK import before you register
+it. A banner does not block code that loads some other way, and a vendor
+loaded twice sends events twice.
+
+To add or remove scripts after bootstrap, call
+`ConsentManager.updateOptions({ scripts })` with the whole new array. New
+scripts go to the loader.
+
+## Script options
+
+Helpers set these for you. For a script without a helper, write the object
+yourself:
+
+| Option | Default | Behavior |
+| --- | --- | --- |
+| `id` | required | A unique name. The loader uses it to add and remove the script once. |
+| `category` | required | The category or condition, such as `'measurement'` or `{ and: ['measurement', 'marketing'] }`, that must be allowed. |
+| `src` or `textContent` | none | The script's URL, or inline code. |
+| `callbackOnly` | `false` | `true` or a zero-argument predicate returning `true` adds no `<script>` element and only runs callbacks. Predicates run before new mounts, for diagnostics and for server startup; keep them free of side effects and safe on the server. |
+| `alwaysLoad` | `false` | Loads at once, whatever the consent state. Only for scripts that apply consent themselves, such as a tag manager with Consent Mode. |
+| `persistAfterConsentRevoked` | `false` | `true` keeps the element after withdrawal, including pending downloads. `'loaded'` keeps only elements whose load event completed; pending and failed loads are removed. |
+| `target` | `'head'` | Where the element goes: `'head'` or `'body'`. |
+| `async`, `defer`, `fetchPriority`, `attributes`, `nonce` | none | Set on the `<script>` element. |
+| `anonymizeId` | `true` | Gives the element a random `id`, so ad blockers do not match it by name. |
+| `vendor` | none | Also waits for this vendor to be allowed, for vendor-level consent outside IAB. |
+| `onBeforeLoad`, `onLoad`, `onError`, `onConsentChange`, `onDispose` | none | Lifecycle callbacks. See [callbacks](./callbacks#script-callbacks). |
+
+## Send your own analytics events
+
+`injectEventDispatcher()` from `@c15t/angular/consent-gate` returns the application's
+event dispatcher. It sends to the provider's `scripts` and checks consent when
+an event goes out. Call it in an injection context, such as a field
+initializer, and send a page view on each `NavigationEnd`:
+
+<include src="../../shared/examples/angular/analytics-events.mdx" />
+
+Call `track('sign_up', { method: 'email' })` from an event handler for your
+own events. `track` sends to every registered script with an event API and
+drops the event while measurement is denied. `pageview` sends only to the
+integrations named in `pageviews`, and the first call records the path
+without sending. Every dispatcher under the provider shares one pageview
+history, so a component created again does not replay a navigation.
+`injectEventDispatcher()` throws outside an injection context, or without
+`provideC15t()`. See
+[send events only to allowed integrations](/docs/integrations/overview#send-events-only-to-allowed-integrations)
+for the supported vendors.
+
+## Gate embeds and your own content
+
+Iframes are not scripts. Wrap them in `<c15t-consent-gate>`, which keeps the
+iframe out of the DOM until its category is allowed:
+
+<include src="../../shared/examples/angular/youtube-embed.mdx" />
+
+For content without a placeholder, the `*c15tIfConsent` structural directive
+renders its template only while a condition holds. For iframes from a CMS or
+`[innerHTML]`, which you cannot wrap, use the iframe blocker's
+`data-category` and `data-src` attributes. [Embeds](./embeds) covers all
+three.
+
+## Block requests from code already on the page
+
+The `networkBlocker` option holds `fetch` and `XMLHttpRequest` calls to the
+domains you list until their category is allowed. It is a backstop for code
+you cannot move into `scripts`. [Network blocker](./network-blocker) covers
+the rules and what it cannot stop.
+
+## What happens when consent is withdrawn
+
+Removing a script tag cannot stop code that already ran. So when a save
+withdraws a category that was granted, the runtime reloads the page after the
+save request, and the new page starts with only the permitted code. Set
+`reloadOnConsentRevoked: false` in `provideC15t()` if you handle withdrawal
+yourself, for example through a vendor's own opt-out call in
+`onConsentChange`.
+
+`<c15t-consent-gate>` and `*c15tIfConsent` content is destroyed without a
+reload. To delete first-party cookies a vendor set, configure
+`clearOnRevocation`; see [clear on revocation](./clear-on-revocation).
+
+## Let visitors turn off one vendor
+
+A visitor can allow marketing and still switch off one vendor in it. Pass
+`vendors` to `provideC15t()`; helpers from `@c15t/integrations` already carry
+their vendor slug. See [vendor consent](./vendor-consent).
+
+## Verify vendor loading
+
+Open DevTools, clear site data for your origin and reload:
+
+1. With the banner showing, the Network panel has no requests to your vendors,
+   and gated iframes are absent from the Elements panel.
+2. Allow one category in preferences. Only that category's vendors load, and
+   its iframes appear.
+3. Reject, reload, and confirm the vendor requests stay absent.
+4. Withdraw a category you allowed. The page reloads and its vendors no longer
+   load.
+
+[Verify consent](/docs/guides/verify-consent) covers automated checks.

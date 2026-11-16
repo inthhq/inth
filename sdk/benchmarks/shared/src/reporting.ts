@@ -253,6 +253,11 @@ const summaryLines = function summaryLines(
 	lines.push(
 		`- Results: ${summary.results.compared}/${summary.results.expected} expected results compared; missing head ${summary.results.missingHead.length}; missing base ${summary.results.missingBase.length}; unexpected ${summary.results.unexpected.length}`
 	);
+	if (summary.results.newOnHead?.length) {
+		lines.push(
+			`- New on the head: ${summary.results.newOnHead.join(', ')}. The base revision has no bench for them, so the base comparison is skipped: ${summary.budgets.newOnHead ?? 0} relative budgets not evaluated, absolute budgets enforced.`
+		);
+	}
 	lines.push(
 		`- Budgets: ${summary.budgets.passed} passed, ${summary.budgets.failed} failed, ${summary.budgets.missingHeadMetric} missing head metric, ${summary.budgets.missingBaseMetric} missing base metric, ${summary.budgets.unevaluatedArm} unevaluated (arm), ${summary.budgets.missingDefinitions.length} missing definitions, ${summary.budgets.definitionMismatches.length} definition mismatches of ${summary.budgets.expected} expected`
 	);
@@ -306,6 +311,12 @@ export const toMarkdownComparison = function toMarkdownComparison(
 		if (result.status === 'missing-base') {
 			lines.push('');
 			lines.push('Base result missing: no regression comparison possible.');
+		}
+		if (result.status === 'new-on-head') {
+			lines.push('');
+			lines.push(
+				'New on the head: the base revision has no bench for this result. Relative budgets are skipped; absolute budgets apply.'
+			);
 		}
 		lines.push('');
 		lines.push('| Metric | Base Median | Head Median | Delta | Delta % |');

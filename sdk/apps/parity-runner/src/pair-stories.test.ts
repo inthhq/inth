@@ -4,7 +4,9 @@ import {
 	frameworkOf,
 	pairStories,
 	selectComparablePairs,
+	STORY_VISIT_BUDGET_MS,
 	storyKey,
+	storyVisitTimeout,
 } from './pair-stories';
 import type { StoryEntry } from './pair-stories';
 
@@ -13,6 +15,9 @@ test('frameworkOf extracts framework from title', () => {
 	expect(frameworkOf('COMPONENTS - SVELTE/Consent Banner')).toBe('svelte');
 	expect(frameworkOf('COMPONENTS - VUE/Dialog')).toBe('vue');
 	expect(frameworkOf('COMPONENTS - SOLID/Switch')).toBe('solid');
+	expect(frameworkOf('COMPONENTS - ANGULAR/Core/Consent Banner')).toBe(
+		'angular'
+	);
 });
 
 test('frameworkOf tolerates varied whitespace', () => {
@@ -170,4 +175,23 @@ test('selectComparablePairs never pairs docs recipe stories', () => {
 	);
 
 	expect(pairs.map((pair) => pair.key)).toEqual(['Button/Default']);
+});
+
+test('storyVisitTimeout grows with every story the test opens', () => {
+	const entry = (framework: string): StoryEntry => ({
+		id: `components-${framework}-button--primary`,
+		name: 'Primary',
+		title: `COMPONENTS - ${framework.toUpperCase()}/Button`,
+	});
+	const pair = (...frameworks: string[]) => ({
+		entries: Object.fromEntries(
+			frameworks.map((framework) => [framework, entry(framework)])
+		),
+		key: 'Button/Primary',
+	});
+	const pairs = Array.from({ length: 30 }, () =>
+		pair('react', 'svelte', 'vue', 'angular')
+	);
+	expect(storyVisitTimeout(pairs, 120_000)).toBe(120 * STORY_VISIT_BUDGET_MS);
+	expect(storyVisitTimeout([pair('react', 'svelte')], 120_000)).toBe(120_000);
 });

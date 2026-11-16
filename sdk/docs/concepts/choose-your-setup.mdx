@@ -32,6 +32,8 @@ to the alternatives it rules out.
 | Svelte with Vite | Svelte provider, browser resolves consent | [Svelte](/docs/frameworks/svelte/quickstart) |
 | SvelteKit with a server | Root layout load resolves consent on the server | [SvelteKit](/docs/frameworks/sveltekit/quickstart) |
 | SvelteKit with `adapter-static`, prerendered pages or SPA mode | Browser resolves consent | [SvelteKit rendering](/docs/frameworks/sveltekit/rendering#build-a-static-site) |
+| Angular without server rendering | `provideC15t()`, browser resolves consent | [Angular](/docs/frameworks/angular/quickstart) |
+| Angular with `@angular/ssr` | `provideC15tServer()` resolves consent on the server for each request | [Angular rendering](/docs/frameworks/angular/rendering) |
 | Plain HTML, a CMS, a page builder, or a static site generator such as Hugo or Eleventy | One script tag, stock banner included | [HTML](/docs/frameworks/html/quickstart) |
 | JavaScript with a bundler and no UI framework | `@c15t/browser` module, stock banner included | [JavaScript](/docs/frameworks/javascript/quickstart) |
 | Your own UI, or a framework without an adapter such as Solid | Headless runtime | [JavaScript headless](/docs/frameworks/javascript/headless) |
@@ -78,7 +80,7 @@ Where consent resolves decides what the visitor's first HTML contains.
 
 | Rendering | What the visitor gets |
 | --- | --- |
-| The server resolves consent for each request | The server reads the visitor's cookie and location headers, so the browser starts with the answer. The banner can be part of the HTML. In Next.js, TanStack Start, Nuxt and SvelteKit, scripts the visitor's consent already allows start before hydration. |
+| The server resolves consent for each request | The server reads the visitor's cookie and location headers, so the browser starts with the answer. The banner can be part of the HTML. In Next.js, TanStack Start, Nuxt, SvelteKit and Angular, scripts the visitor's consent already allows start before hydration. |
 | The browser resolves consent | The HTML is the same for everyone. After the page loads, the browser requests the policy, then shows the banner or runs gated scripts. |
 
 A static or prerendered page cannot contain one visitor's consent, because the

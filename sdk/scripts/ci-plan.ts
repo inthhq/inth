@@ -194,6 +194,7 @@ export const createCiPlan = function createCiPlan(
 		['react', 'react'],
 		['vue', 'vue'],
 		['svelte', 'svelte'],
+		['angular', 'angular'],
 		['html', 'script-tag'],
 		['javascript', 'javascript'],
 		['nuxt', 'nuxt'],
@@ -223,6 +224,7 @@ export const createCiPlan = function createCiPlan(
 			'react',
 			'vue',
 			'svelte',
+			'angular',
 			'html',
 			'javascript',
 			'nuxt',
@@ -240,11 +242,11 @@ export const createCiPlan = function createCiPlan(
 		);
 	}
 	// Starters are the `examples/` apps other than showcases, plus the Svelte
-	// compatibility apps, and each one's directory name is its smoke-test
-	// target. A new starter is selected without a second list here, and
-	// fails until it has a target.
+	// and Angular compatibility apps, and each one's directory name is its
+	// smoke-test target. A new starter is selected without a second list
+	// here, and fails until it has a target.
 	const starterDirectory =
-		/^(?:examples\/(?!showcase-)|internals\/svelte-compat\/)(?<target>[^/]+)$/u;
+		/^(?:examples\/(?!showcase-)|internals\/(?:svelte|angular)-compat\/)(?<target>[^/]+)$/u;
 	const starterTarget = (directory: string) =>
 		starterDirectory.exec(directory)?.groups?.target;
 	const starters = (
@@ -255,14 +257,24 @@ export const createCiPlan = function createCiPlan(
 		.sort();
 	const parity = selected
 		.filter((workspace) =>
-			/^apps\/storybook-(?:react|vue|svelte|astro)$/u.test(workspace.directory)
+			/^apps\/storybook-(?:react|vue|svelte|astro|angular)$/u.test(
+				workspace.directory
+			)
 		)
 		.map((workspace) => workspace.directory.replace('apps/storybook-', ''));
 	// React is the reference every framework compares against, and the Astro
-	// Storybook is only checked alongside the React, Svelte and Vue ones: the
-	// suite needs at least two of those to pair stories and DevTools panels.
-	if (parity.includes('react') || parity.includes('astro')) {
-		parity.splice(0, parity.length, 'react', 'svelte', 'vue', 'astro');
+	// and Angular Storybooks are only checked alongside the React, Svelte and
+	// Vue ones: the DevTools comparison needs at least two of those.
+	if (['react', 'astro', 'angular'].some((target) => parity.includes(target))) {
+		parity.splice(
+			0,
+			parity.length,
+			'react',
+			'svelte',
+			'vue',
+			'astro',
+			'angular'
+		);
 	}
 	if (parity.length && !parity.includes('react')) {
 		parity.unshift('react');
@@ -274,7 +286,7 @@ export const createCiPlan = function createCiPlan(
 		) &&
 		!parity.length
 	) {
-		parity.push('react', 'svelte', 'vue', 'astro');
+		parity.push('react', 'svelte', 'vue', 'astro', 'angular');
 	}
 	const journeys = selected
 		.filter((workspace) =>
@@ -296,6 +308,7 @@ export const createCiPlan = function createCiPlan(
 	// page), so it follows @c15t/browser and direct edits to its host or the
 	// harness rather than the host's React dependency.
 	const gateBenches: Record<string, string> = {
+		'benchmarks/angular-browser-bench': 'angular',
 		'benchmarks/astro-browser-bench': 'astro',
 		'benchmarks/nextjs-browser-bench': 'nextjs',
 		'benchmarks/nuxt-browser-bench': 'nuxt',
@@ -310,6 +323,7 @@ export const createCiPlan = function createCiPlan(
 		'astro',
 		'sveltekit',
 		'tanstack-start',
+		'angular',
 		'script-tag',
 	];
 	const gateSelected = new Set(
@@ -326,6 +340,11 @@ export const createCiPlan = function createCiPlan(
 		gateSelected.add('script-tag');
 	}
 	const gate = gateOrder.filter((target) => gateSelected.has(target));
+	const runtimeBenchmarks = selected.some(
+		(workspace) =>
+			workspace.directory.startsWith('benchmarks/') &&
+			Boolean(workspace.scripts['bench:ci'])
+	);
 	const compat = selected
 		.filter((workspace) => workspace.scripts['test:compat'])
 		.map((workspace) => workspace.name.replace('@c15t/next-compat-', ''));
@@ -411,11 +430,12 @@ export const createCiPlan = function createCiPlan(
 		mobileBrowserOrDevice,
 		mobileCompatibility: mobile || affected.has('@c15t/react-native'),
 		parity,
-		performance: selected.some(
-			(workspace) =>
-				workspace.directory.startsWith('benchmarks/') &&
-				Boolean(workspace.scripts['bench:ci'])
-		),
+		// The benchmark workflow runs for either kind of bench: the runtime
+		// suites (`bench:ci`) or the consent gate alone. Angular's bench has
+		// only a gate, so an Angular change selects the gate without the
+		// quick runtime suites.
+		performance: runtimeBenchmarks || gate.length > 0,
+		runtimeBenchmarks,
 		starters,
 		styles,
 		testBrowsers: tests.some((name) =>
@@ -454,6 +474,7 @@ export const ciSchedulingOutputs = (plan: CiPlan) => ({
 	packageChecks:
 		plan.tests.length + plan.types.length + plan.testTypes.length > 0,
 	performance: plan.performance,
+	runtimeBenchmarks: plan.runtimeBenchmarks,
 	testBrowsers: plan.testBrowsers,
 });
 

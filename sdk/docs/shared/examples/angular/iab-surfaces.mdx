@@ -1,0 +1,23 @@
+{/* Generated from internals/doc-snippets/angular/src/app/iab/iab-surfaces.ts (docs:iab-surfaces) by scripts/sync-example-docs.ts. Edit the source file. */}
+
+```ts title="src/app/iab/iab-surfaces.ts"
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ConsentBanner } from '@c15t/angular';
+import { ConsentDialog } from '@c15t/angular/consent-dialog';
+import { IABConsentBanner, IABConsentDialog } from '@c15t/angular/iab';
+
+@Component({
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	imports: [ConsentBanner, ConsentDialog, IABConsentBanner, IABConsentDialog],
+	selector: 'app-consent-surfaces',
+	template: `
+		<!-- Visitors whose policy is not IAB get the standard banner and dialog. -->
+		<c15t-consent-banner />
+		<c15t-consent-dialog />
+		<!-- Visitors under an IAB policy get the TCF banner and preference center. -->
+		<c15t-iab-consent-banner />
+		<c15t-iab-consent-dialog />
+	`,
+})
+export class ConsentSurfaces {}
+```

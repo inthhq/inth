@@ -10,6 +10,8 @@
  * server's own fetch, cookies included, at a host of the sender's choosing.
  */
 
+import { parseForwarded } from '@c15t/schema/types';
+
 /** Request headers as a Web `Headers` object or a Node header record. */
 export type RequestHeaderSource =
 	| Headers
@@ -87,27 +89,14 @@ const normalizeProtocol = function normalizeProtocol(
 const parseForwardedHeader = function parseForwardedHeader(
 	value: string | undefined
 ): { host?: string; protocol?: 'http' | 'https' } {
-	const first = firstListValue(value);
-	if (!first) {
-		return {};
-	}
+	const [first] = parseForwarded(value);
 	const result: { host?: string; protocol?: 'http' | 'https' } = {};
-	for (const pair of first.split(';')) {
-		const separator = pair.indexOf('=');
-		if (separator === -1) {
-			continue;
-		}
-		const key = pair.slice(0, separator).trim().toLowerCase();
-		const token = pair.slice(separator + 1).trim();
-		const raw =
-			token.length >= 2 && token.startsWith('"') && token.endsWith('"')
-				? token.slice(1, -1)
-				: token;
-		if (key === 'host' && raw) {
-			result.host = raw;
-		} else if (key === 'proto') {
-			result.protocol = normalizeProtocol(raw);
-		}
+	if (first?.host) {
+		result.host = first.host;
+	}
+	const protocol = normalizeProtocol(first?.proto);
+	if (protocol) {
+		result.protocol = protocol;
 	}
 	return result;
 };

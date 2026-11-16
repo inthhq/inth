@@ -7,6 +7,7 @@ import { captureDomSnapshot } from '../src/diff-dom';
 import { loadStorybookIndex } from '../src/storybook-index';
 
 const urls: Record<string, string> = {
+	angular: process.env.ANGULAR_STORYBOOK_URL ?? 'http://127.0.0.1:6011',
 	react: process.env.REACT_STORYBOOK_URL ?? 'http://127.0.0.1:6006',
 	svelte: process.env.SVELTE_STORYBOOK_URL ?? 'http://127.0.0.1:6007',
 	vue: process.env.VUE_STORYBOOK_URL ?? 'http://127.0.0.1:6008',

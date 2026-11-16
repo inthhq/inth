@@ -22,7 +22,7 @@ EXAMPLE_TARGET=nuxt,tanstack-start bun run --cwd internals/fixtures/acceptance t
 EXAMPLE_TARGET=all bun run --cwd internals/fixtures/acceptance test
 ```
 
-Targets are `nextjs`, `react`, `vue`, `svelte`, `javascript`, `nuxt`,
+Targets are `nextjs`, `react`, `vue`, `svelte`, `angular`, `javascript`, `nuxt`,
 `nuxt-prerender`, `nuxt-static`, `nuxt-vapor`, `nuxt-vapor-future`,
 `tanstack-start`, `tanstack-start-streamed`,
 `tanstack-start-same-origin`, `tanstack-start-static`, `astro`, `astro-static`,
@@ -36,7 +36,10 @@ Nuxt server. `nuxt-vapor` runs the journeys on `/consent-example` and
 component, and `nuxt-vapor-future` repeats them under the Nuxt 5 preview. The
 `tanstack-start-*` targets build the TanStack Start example
 with one of the alternative root routes in
-`internals/fixtures/tanstack-start/src/rendering`. The `vue` target also runs every
+`internals/fixtures/tanstack-start/src/rendering`. The `angular` target renders
+on the server with `provideC15tServer()`, taps its banner before hydration,
+and runs every journey against `/headless`, which replaces the stock consent
+UI with components built on `HeadlessConsent`. The `vue` target also runs every
 journey against `/headless`, which replaces the stock consent UI with the
 composables. `src/targets.ts` contains only paths,
 commands and environment aliases. No framework provider is implemented here.

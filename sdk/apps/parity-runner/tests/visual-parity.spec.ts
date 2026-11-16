@@ -16,7 +16,7 @@
  * a reason, keyed by check + framework + story + slot.
  *
  * Environment variables:
- *   - `{REACT,SVELTE,VUE,ASTRO}_STORYBOOK_URL`
+ *   - `{REACT,SVELTE,VUE,ASTRO,ANGULAR}_STORYBOOK_URL`
  *   - `PARITY_FRAMEWORKS` (comma list, default `react,svelte`)
  *   - `PARITY_SKIP_PIXEL=1` skips the pixel backstop. Font rasterisation is
  *     machine-specific, so the budget is calibrated for CI's pinned
@@ -31,7 +31,11 @@ import {
 	diffGeometry,
 	formatGeometryDiffs,
 } from '../src/geometry';
-import { selectComparablePairs } from '../src/pair-stories';
+import {
+	selectComparablePairs,
+	STORY_LOAD_TIMEOUT_MS,
+	storyVisitTimeout,
+} from '../src/pair-stories';
 import type { ComparablePair } from '../src/pair-stories';
 import {
 	findAllowEntry,
@@ -42,6 +46,7 @@ import { comparePng } from '../src/pixel-diff';
 import { loadStorybookIndex } from '../src/storybook-index';
 
 const FRAMEWORK_URLS: Record<string, string> = {
+	angular: process.env.ANGULAR_STORYBOOK_URL ?? 'http://127.0.0.1:6011',
 	astro: process.env.ASTRO_STORYBOOK_URL ?? 'http://127.0.0.1:6010',
 	react: process.env.REACT_STORYBOOK_URL ?? 'http://127.0.0.1:6006',
 	solid: process.env.SOLID_STORYBOOK_URL ?? 'http://127.0.0.1:6009',
@@ -127,7 +132,12 @@ const openStory = async function openStory(
 	storyId: string
 ): Promise<void> {
 	const url = new URL(`/iframe.html?id=${storyId}&viewMode=story`, baseUrl);
-	await page.goto(url.toString(), { waitUntil: 'networkidle' });
+	// A story that never settles fails here, by name, not as the
+	// whole test's timeout.
+	await page.goto(url.toString(), {
+		timeout: STORY_LOAD_TIMEOUT_MS,
+		waitUntil: 'networkidle',
+	});
 	await page.locator('#storybook-root').waitFor({ state: 'attached' });
 	await page.evaluate(() => document.fonts.ready);
 	// Enter/leave transitions on the banner and dialog settle well inside
@@ -143,8 +153,11 @@ test.describe('cross-framework visual parity', () => {
 		viewport: { height: 800, width: 1280 },
 	});
 
-	test('paired stories lay out identically to React', async ({ page }) => {
+	test('paired stories lay out identically to React', async ({
+		page,
+	}, testInfo) => {
 		const paired = await loadPairedStories();
+		test.setTimeout(storyVisitTimeout(paired, testInfo.timeout));
 		expect(paired.length, 'no paired stories to compare').toBeGreaterThan(0);
 
 		const failures: string[] = [];
@@ -222,6 +235,7 @@ test.describe('cross-framework visual parity', () => {
 		);
 
 		const paired = await loadPairedStories();
+		test.setTimeout(storyVisitTimeout(paired, testInfo.timeout));
 		const failures: string[] = [];
 		const usedEntries = new Set<ParityAllowEntry>();
 

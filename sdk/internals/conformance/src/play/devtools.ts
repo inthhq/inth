@@ -21,9 +21,32 @@ export const findDevToolsRoot =
 		return document.querySelector<HTMLElement>('[data-c15t-dev-tools]');
 	};
 
+/**
+ * Every mounted panel root, in shadow roots and in the page.
+ */
+const allDevToolsRoots = function allDevToolsRoots(): HTMLElement[] {
+	const roots = [...document.querySelectorAll('[data-c15t-dev-tools-host]')]
+		.map((host) =>
+			host.shadowRoot?.querySelector<HTMLElement>('[data-c15t-dev-tools]')
+		)
+		.filter((root): root is HTMLElement => Boolean(root));
+	return [
+		...roots,
+		...document.querySelectorAll<HTMLElement>('[data-c15t-dev-tools]'),
+	];
+};
+
+/**
+ * Waits for this story's panel. A story switch can leave the previous
+ * story's panel in the page for a moment (an Angular story is its own
+ * application, torn down when the next one renders), so a play that took
+ * the first root it found could keep a panel that is about to be removed.
+ */
 export const devToolsReady: PlayFunction = async () => {
 	await waitFor(() => {
-		expect(findDevToolsRoot()).not.toBeNull();
+		const roots = allDevToolsRoots();
+		expect(roots).toHaveLength(1);
+		expect(roots[0]?.isConnected).toBe(true);
 	});
 };
 

@@ -1,0 +1,188 @@
+---
+title: Quickstart
+description: Add a c15t cookie banner, preference dialog and consent-gated scripts to an Angular 20, 21 or 22 app with provideC15t, standalone components and Inth as the consent backend.
+group: frameworks
+---
+
+## Before you start
+
+This guide is for an Angular CLI app on Angular 20, 21 or 22, with standalone
+components. It works with zoneless change detection and with zone.js. The
+browser resolves consent after the app bootstraps, so the banner appears after
+the first paint. For a banner in the server HTML, follow this guide first and
+then add [server rendering](/docs/frameworks/angular/rendering).
+
+The guide uses [Inth](https://inth.com) for policies and consent records.
+[Create an Inth project](https://inth.com/dashboard/sign-up), then:
+
+1. Set its policy rules, including the `measurement` category for the
+   vendor below.
+2. Add your app's origin, such as `http://localhost:4200`, to its trusted
+   origins.
+3. Copy the project's backend URL.
+
+A self-hosted backend or local mode works too; see
+[other setups](#other-setups).
+
+The guide uses `hosted()` mode. The browser asks your backend for each
+visitor's policy, and the backend reads the visitor's location from the
+request, so regional policies need no extra setup. Policy, translation and
+vendor edits reach visitors on their next page load, without a rebuild.
+
+## Install
+
+`@c15t/angular` is its own package; the `c15t` umbrella package has no
+Angular entry point. It needs `@angular/common`, `@angular/core`,
+`@angular/forms` and `@angular/platform-browser` 20, 21 or 22, which an
+Angular CLI app already has.
+
+### Install with ng add
+
+Run this in the app's folder:
+
+```bash
+ng add @c15t/angular
+```
+
+The Angular CLI installs `@c15t/angular`, then asks where policies come
+from, for your backend URL, and whether to add the banner and dialog. With
+the default answers it makes two changes:
+
+1. It adds `provideC15t({ mode: hosted({ backendURL: '...' }) })` to the
+   providers in `src/app/app.config.ts`, or to the `bootstrapApplication()`
+   call in `src/main.ts` when the app has no config file.
+2. It adds `ConsentBanner` and `ConsentDialog` to the root component's
+   `imports`, and `<c15t-consent-banner />` and `<c15t-consent-dialog />` to
+   the end of its template. That is `src/app/app.ts` and `app.html`, or
+   `app.component.ts` and `app.component.html` in apps created before
+   Angular 20.
+
+To skip the prompts, pass the answers as flags, such as
+`ng add @c15t/angular --backend-url=https://your-project.inth.app`. If you
+leave the backend URL empty, it writes `https://your-project.inth.app` with
+a comment to replace it. `--mode=local` writes `local()` instead of
+`hosted()`; see [other setups](#other-setups). `--components=false` leaves
+the root component alone. Running
+`ng add` again adds only what is missing. When it cannot find the root
+component, as in an NgModule app, it prints what to add by hand. When it
+cannot tell whether the root providers already include `provideC15t()`, it
+adds neither the provider nor the components, and prints both steps.
+
+`ng add` does not create `src/scripts.ts`, add `scripts` to `provideC15t()`
+or add a privacy settings button. Install the vendor helpers:
+
+<CommandTabs command="@c15t/integrations" mode="install" />
+
+Then continue at [List the vendor scripts](#list-the-vendor-scripts), and
+skip the steps `ng add` already did.
+
+### Install by hand
+
+<CommandTabs command="@c15t/angular @c15t/integrations" mode="install" />
+
+`@c15t/integrations` holds the vendor helpers. Follow every step below.
+
+## List the vendor scripts
+
+Create `src/scripts.ts` with the vendors c15t should load:
+
+<include src="../../shared/examples/angular/scripts.mdx" />
+
+PostHog waits for measurement permission. Replace `phc_your_project_key`
+with your PostHog project key. Remove any `<script>` tags in `index.html` or
+SDK imports that already load PostHog, so c15t is the only thing that loads
+it.
+
+## Add provideC15t
+
+Add `provideC15t()` to the providers in `src/app/app.config.ts`:
+
+<include src="../../shared/examples/angular/app-config.mdx" />
+
+Replace `https://your-project.inth.app` with your project's backend URL,
+including any path prefix. The URL is public configuration, not a secret.
+
+`provideC15t()` creates the consent runtime with the application, before any
+component renders, so script gating starts even on routes without a banner.
+It provides `ConsentManager`, `HeadlessConsent` and `ConsentTheme`, which any
+component can `inject()`. In the browser, the runtime starts after the first
+render: it reads the stored choice, starts the script loader and makes one
+`/init` request. The backend picks the policy from the visitor's location and
+language and returns its current version. Consent choices go to the same
+backend.
+
+`provideC15t()` adds no change detection of its own. Keep
+`provideZonelessChangeDetection()` or zone.js, whichever your app uses.
+[provideC15t](/docs/frameworks/angular/provide-c15t) lists every option.
+
+## Render the banner and dialog
+
+Add the components to your root component, `src/app/app.ts`:
+
+<include src="../../shared/examples/angular/app-component.mdx" />
+
+`<c15t-consent-banner>` shows the banner when the visitor's policy asks for
+one. `<c15t-consent-dialog>`, from `@c15t/angular/consent-dialog`, is the
+preference dialog; it loads its code in idle time after the page loads,
+before anyone opens it. `c15tConsentDialogLink` turns your own button into the persistent way back
+to preferences. Put it where visitors look for privacy settings, such as the
+footer. The directive hides the button while the policy offers no
+preferences.
+
+There is no stylesheet to import. Each component adds the rules it uses to
+`<head>` as `<style>` elements when it first renders. With Tailwind CSS 3, or
+to put the rules in a cascade layer, add `@c15t/angular/styles.css` to the
+`styles` array in `angular.json` and pass `styles: false` to `provideC15t()`;
+see [stylesheets and CSS layers](/docs/customization/stylesheets#import-the-stylesheet-yourself).
+
+## Verify consent
+
+Build with `ng build` and serve the `dist/<app>/browser` folder with any
+static file server, then open the app in a private window with DevTools open
+on the Network tab:
+
+1. One `/init` request goes to your backend URL and the banner appears. No
+   requests go to PostHog yet.
+2. Select **Reject All**. Reload. The banner stays closed and PostHog requests
+   stay absent.
+3. Select **Privacy settings**, turn on **Analytics** (the `measurement`
+   category) and save. PostHog loads.
+4. Turn it off and save. The page reloads and PostHog does not load.
+
+`window.c15t` in the console shows `pkg: '@c15t/angular'`. If the banner does
+not appear, check the `/init` request, then see
+[troubleshooting](/docs/frameworks/angular/troubleshooting).
+[Verify consent](/docs/guides/verify-consent) has the release checklist.
+
+## Other setups
+
+**Local mode** resolves policies in the browser and keeps choices in the
+browser's cookie and local storage, with no backend and no consent records.
+Use it for local development and tests. Not recommended for production
+environments.
+
+{/* example: fragment */}
+
+```ts
+import { local, provideC15t } from '@c15t/angular';
+
+provideC15t({ mode: local(), scripts });
+```
+
+With no arguments, `local()` uses the recommended rules. They ask for opt-in
+in Europe and unknown locations, use opt-out in US privacy states, and show no
+banner where no consent law applies. Pass `local({ policyRules })` to use your
+own.
+[Data fetching](/docs/concepts/data-fetching#when-should-i-use-local-mode)
+explains the trade-offs.
+
+**A self-hosted backend** uses the same setup with your own backend URL. See
+[self-hosting](/docs/self-host/overview).
+
+**Server rendering** with `@angular/ssr` puts the banner in the first HTML
+and lets the browser talk only to your own origin. See
+[rendering and deployment](/docs/frameworks/angular/rendering).
+
+Next, [customize](/docs/frameworks/angular/customize) the banner or read
+consent in your own components with
+[ConsentManager](/docs/frameworks/angular/services).

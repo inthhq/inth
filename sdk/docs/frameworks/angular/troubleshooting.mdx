@@ -1,0 +1,125 @@
+---
+title: Troubleshooting
+description: Fix a missing c15t banner, a NullInjectorError, unstyled components, ignored theme colors, hydration mismatches and vendors that load before consent in an Angular app.
+group: frameworks
+---
+
+## Why is there no banner?
+
+**Check.** Render `consent.policyRule().prompt` and `consent.location()` from
+an injected `ConsentManager`, or open the [dev tools](./components/dev-tools).
+In the Network panel, find the `/init` request.
+
+**Fix.** Work through these causes in order:
+
+1. **The policy asks for no prompt.** Visitors in regions without a consent
+   law, and opt-out policies with no prompt, get no banner. See
+   [why the banner may be absent](/docs/concepts/policies#why-the-banner-may-be-absent).
+2. **A choice is already stored.** Clear site data for your origin, or use the
+   dev tools panel, and reload.
+3. **The backend request failed.** A CORS error means your site's origin is
+   not in the Inth project's trusted origins. A 404 means the backend URL is
+   wrong. While the request fails, optional categories stay denied and no
+   banner shows.
+4. **The component is not imported.** Angular reports
+   `'c15t-consent-banner' is not a known element` at build time. Add
+   `ConsentBanner` to the component's `imports`.
+5. **The policy uses the IAB model without the `iab` option.** The console
+   shows an `IABUnavailableError`. Set `iab` in `provideC15t()` and render
+   `<c15t-iab-consent-banner>`; see [IAB TCF](./iab).
+
+## NullInjectorError: No provider for ConsentManager
+
+**Check.** A component, directive or `injectEventDispatcher()` call ran in an
+injector without `provideC15t()` above it.
+
+**Fix.** Add `provideC15t()` to the `providers` of your `ApplicationConfig`.
+If you provide it in a lazy route's `providers`, every c15t component must
+render inside that route, not in the root component. With server rendering,
+keep `provideC15t()` in `app.config.ts`, which `app.config.server.ts` merges,
+so the server and the browser both have it.
+
+**Check.** If the provider is there, check that the app resolves one copy of
+`@c15t/angular`. Two copies, for example from a linked package, create two
+separate `ConsentManager` classes.
+
+**Fix.** Make the app resolve a single copy, and run `ng cache clean` after
+you change it.
+
+## Theme colors are ignored
+
+**Check.** The `theme` option applies slot styles and `consentActions` only.
+Colors, radius, typography and other tokens in `theme` are not turned into
+CSS in the browser, and in development `ConsentTheme` logs a warning about
+it.
+
+**Fix.** Set the `--c15t-*` variables on `:root` in a global stylesheet, or
+render `generateThemeCSS()` output as `<style id="c15t-theme">`. The
+[customize page](./customize) shows both.
+
+**Check.** If you set the variables in a component's `styles`, Angular scopes
+them to that component.
+
+**Fix.** Move them to a file in the `styles` array of `angular.json`, or to
+`src/styles.css`.
+
+**Check.** If your values still lose, inspect the element. A generated theme
+uses `:root:root`, so it beats your own `:root` rule.
+
+**Fix.** Write your rule on `:root:root` too, or move the value into the theme.
+
+## A slot class has no effect
+
+**Check.** The class is defined in a component's `styles`. Angular's emulated
+encapsulation adds an attribute selector to it, and c15t's elements do not
+carry your component's attribute.
+
+**Fix.** Define slot classes in a global stylesheet.
+
+## The dialog or banner has no styles
+
+**Check.** Look in `<head>` for `<style data-c15t-styles>` elements, and in
+the console for a Content Security Policy error.
+
+**Fix.**
+
+- No c15t `<style>` element: `provideC15t()` sets `styles: false` or
+  `noStyle`. With `styles: false`, add `@c15t/angular/styles.css` to the
+  `styles` array in `angular.json`.
+- The console reports a blocked inline style: set `ngCspNonce` on your root
+  element or provide `CSP_NONCE`, or set `styles: false` and import the
+  stylesheet. The [Content Security Policy page](./content-security-policy)
+  covers both.
+- IAB TCF components are unstyled with `styles: false`: add
+  `@c15t/angular/styles.css` and `@c15t/angular/iab/styles.css` together.
+
+## The server HTML and the browser disagree
+
+**Check.** With server rendering, the console shows an Angular hydration
+error (`NG0500` and similar) near a c15t component, or the banner flashes
+after load.
+
+**Fix.** Check that `provideClientHydration()` is in `app.config.ts` and
+`provideC15tServer()` in `app.config.server.ts`. The browser reads the
+server's state through `TransferState`, so both renders start from the same
+consent. A route rendered with `RenderMode.Prerender` is shared by every
+visitor and carries no visitor's consent; render consent pages with
+`RenderMode.Server`. See [rendering](./rendering).
+
+## A vendor loads before consent, or twice
+
+**Check.** The vendor is still loaded some other way: a `<script>` tag in
+`index.html`, an entry in the `scripts` array of `angular.json`, a tag
+manager, or an SDK import in your code. Check the Network panel with site
+data cleared; nothing from the vendor should load before you allow its
+category.
+
+**Fix.** Remove the other loader and keep only the `scripts` registration.
+
+## The page reloads after saving
+
+**Check.** When a save withdraws a category that was granted, the runtime
+reloads the page so code that already ran is gone. This is expected.
+
+**Fix.** Set `reloadOnConsentRevoked: false` in `provideC15t()` only if every
+registered vendor stops itself through its consent API.

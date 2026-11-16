@@ -97,6 +97,15 @@
 		pointer-events: auto;
 	}
 
+	/* An adapter that renders the banner on the server can mark the end of
+	   its markup. Painting the bottom-anchored card before that marker
+	   arrives would move it up as its content grows, when the HTML reaches
+	   the browser in more than one piece. The completed banner is visible
+	   without waiting for JavaScript. */
+	.root[data-c15t-streamed]:not(:has(> [data-c15t-stream-end])) {
+		visibility: hidden;
+	}
+
 	.root[data-blocking='true']:not(:global(.headless)) {
 		pointer-events: auto;
 	}

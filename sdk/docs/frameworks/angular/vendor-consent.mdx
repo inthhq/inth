@@ -1,0 +1,75 @@
+---
+title: Vendor consent
+description: Let visitors allow a category such as marketing in an Angular app and still turn off one vendor in it, with the vendors option of provideC15t and ConsentManager.
+group: frameworks
+---
+
+<import src="../../shared/scripts/vendor-consent.mdx#how" />
+
+## Declare the vendors
+
+Declaring a vendor turns on vendor switches. Built-in `@c15t/integrations`
+helpers then list their own vendor by name, so you only declare a vendor for a
+script of your own, or to replace a helper's name and privacy policy.
+
+Declare the vendors next to the scripts, using the `vendor` slug each script
+already carries:
+
+<include src="../../shared/examples/angular/vendors.mdx" />
+
+Then pass them to `provideC15t()` in `src/app/app.config.ts`:
+
+{/* example: fragment */}
+
+```ts title="src/app/app.config.ts (partial)"
+provideC15t({ mode, scripts, vendors });
+```
+
+A new array passed to `ConsentManager.updateOptions({ vendors })` replaces the
+declared vendors.
+
+<import src="../../shared/scripts/vendor-consent.mdx#fields" />
+
+<import src="../../shared/scripts/vendor-consent.mdx#targets" />
+
+`<c15t-consent-gate>` takes a `vendor` input as well as `category`, and waits
+for both: `<c15t-consent-gate category="marketing" vendor="x-pixel">`. For an
+iframe you do not render, add `data-vendor` and use the iframe blocker; see
+[embeds](/docs/frameworks/angular/embeds).
+
+## What the preference dialog shows
+
+`<c15t-consent-dialog>` and `<c15t-consent-widget>` list each declared vendor
+under its category, with its own switch.
+
+<import src="../../shared/scripts/vendor-consent.mdx#dialog" />
+
+## Build your own vendor switch
+
+`ConsentManager` stages vendor switches on the same draft as the category
+switches. `selectedVendors()` has one value per declared vendor,
+`setSelectedVendor(id, granted)` changes one, and `saveConsents('custom')`
+records the draft:
+
+<include src="../../shared/examples/angular/vendor-switch.mdx" />
+
+`saveConsents('custom')` rejects when the policy changed since the draft
+started. `vendorChoice().denied` lists the vendors the visitor recorded as
+off, and `getDisplayedVendors(category)` returns the vendors to list under one
+category. [ConsentManager](/docs/frameworks/angular/services#work-with-the-draft)
+covers the draft.
+
+## Check whether a vendor may run
+
+`isVendorAllowed(id)` on `ConsentManager` returns `true` while the vendor may
+run: it is declared, its category is allowed and the visitor has not switched
+it off. It reads signals, so a template or `computed()` that calls it updates
+when consent changes.
+
+<import src="../../shared/scripts/vendor-consent.mdx#undeclared" />
+
+<import src="../../shared/scripts/vendor-consent.mdx#storage" />
+
+<import src="../../shared/scripts/vendor-consent.mdx#limits" />
+
+<import src="../../shared/scripts/vendor-consent.mdx#verify" />

@@ -3,7 +3,8 @@
  *
  * React titles live under `COMPONENTS - REACT/...`; Svelte under
  * `COMPONENTS - SVELTE/...`; Vue under `COMPONENTS - VUE/...`; Solid
- * under `COMPONENTS - SOLID/...`; Astro under `COMPONENTS - ASTRO/...`.
+ * under `COMPONENTS - SOLID/...`; Astro under `COMPONENTS - ASTRO/...`;
+ * Angular under `COMPONENTS - ANGULAR/...`.
  * Pairing strips the `{FRAMEWORK}` segment so `COMPONENTS - REACT/Button`
  * pairs with `COMPONENTS - SVELTE/Button`, `COMPONENTS - VUE/Button`, etc.
  */
@@ -25,7 +26,7 @@ export interface PairedStory {
 }
 
 const FRAMEWORK_SEGMENT =
-	/^components\s*-\s*(?<capture1>react|svelte|vue|solid|astro)\//iu;
+	/^components\s*-\s*(?<capture1>react|svelte|vue|solid|astro|angular)\//iu;
 
 /**
  * Extract the framework code from a Storybook title, or null if the title
@@ -141,4 +142,34 @@ export const selectComparablePairs = function selectComparablePairs(
 			...pair,
 			missing: missingFrameworks(pair, options.frameworks),
 		}));
+};
+
+/** The longest one story may take to reach network idle. */
+export const STORY_LOAD_TIMEOUT_MS = 30_000;
+
+/**
+ * Time budget per story a test opens: navigation to network idle, fonts,
+ * the settle wait and the capture. One visit takes about 1 s on a
+ * developer machine; the budget leaves room for slower CI runners.
+ */
+export const STORY_VISIT_BUDGET_MS = 3000;
+
+/**
+ * The timeout for a test that opens every story of `pairs` once per
+ * framework. Such a test grows with the catalogue, so a fixed timeout
+ * fails on whichever story is open when the catalogue outgrows it.
+ *
+ * @param pairs - The pairs the test visits.
+ * @param floorMs - The configured timeout, kept for a small catalogue.
+ * @returns The test's timeout, in ms.
+ */
+export const storyVisitTimeout = function storyVisitTimeout(
+	pairs: readonly PairedStory[],
+	floorMs: number
+): number {
+	const visits = pairs.reduce(
+		(total, pair) => total + Object.keys(pair.entries).length,
+		0
+	);
+	return Math.max(floorMs, visits * STORY_VISIT_BUDGET_MS);
 };

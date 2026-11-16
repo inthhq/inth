@@ -634,9 +634,14 @@ export const getBlockedReason = function getBlockedReason(
 			) {
 				return null;
 			}
-			// svelte-package and nuxt-module-build ship declarations inside
-			// dist/ by design (no dist-types/ directory).
-			if (packageName === '@c15t/svelte' || packageName === '@c15t/vue') {
+			// svelte-package, nuxt-module-build and ng-packagr (Angular Package
+			// Format, `dist/types/`) ship declarations inside dist/ by design (no
+			// dist-types/ directory).
+			if (
+				packageName === '@c15t/svelte' ||
+				packageName === '@c15t/vue' ||
+				packageName === '@c15t/angular'
+			) {
 				return null;
 			}
 			return 'declaration file in runtime dist';

@@ -84,10 +84,25 @@
 			"import": "./shims/surface-actions/instant-commit.js",
 			"default": "./shims/surface-actions/instant-commit.js"
 		},
+		"./surface-actions/stored-records": {
+			"types": "./shims/surface-actions/stored-records.d.ts",
+			"import": "./shims/surface-actions/stored-records.js",
+			"default": "./shims/surface-actions/stored-records.js"
+		},
 		"./surface-actions/plain-scripts": {
 			"types": "./shims/surface-actions/plain-scripts.d.ts",
 			"import": "./shims/surface-actions/plain-scripts.js",
 			"default": "./shims/surface-actions/plain-scripts.js"
+		},
+		"./surface-state": {
+			"types": "./shims/surface-state.d.ts",
+			"import": "./shims/surface-state.js",
+			"default": "./shims/surface-state.js"
+		},
+		"./iab-support": {
+			"types": "./shims/iab-support.d.ts",
+			"import": "./shims/iab-support.js",
+			"default": "./shims/iab-support.js"
 		},
 		"./consent-categories": {
 			"types": "./shims/consent-categories.d.ts",

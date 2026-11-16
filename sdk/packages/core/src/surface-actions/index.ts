@@ -36,6 +36,7 @@ export { saveConsentBlanket } from './blanket';
 export {
 	EARLY_CONSENT_TAP_SCRIPT,
 	EARLY_TAP_OPT_OUT,
+	EARLY_TAP_ROOT,
 } from './early-tap-script';
 export { replayEarlyConsentTaps } from './early-taps';
 export type { ConsentSurfaceIAB } from './blanket';

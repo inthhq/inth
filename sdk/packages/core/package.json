@@ -99,10 +99,25 @@
 			"import": "./dist/surface-actions/instant-commit.js",
 			"default": "./dist/surface-actions/instant-commit.js"
 		},
+		"./surface-actions/stored-records": {
+			"types": "./dist-types/surface-actions/stored-records.d.ts",
+			"import": "./dist/surface-actions/stored-records.js",
+			"default": "./dist/surface-actions/stored-records.js"
+		},
 		"./surface-actions/plain-scripts": {
 			"types": "./dist-types/surface-actions/plain-scripts.d.ts",
 			"import": "./dist/surface-actions/plain-scripts.js",
 			"default": "./dist/surface-actions/plain-scripts.js"
+		},
+		"./surface-state": {
+			"types": "./dist-types/surface-state.d.ts",
+			"import": "./dist/surface-state.js",
+			"default": "./dist/surface-state.js"
+		},
+		"./iab-support": {
+			"types": "./dist-types/iab-support.d.ts",
+			"import": "./dist/iab-support.js",
+			"default": "./dist/iab-support.js"
 		},
 		"./consent-categories": {
 			"types": "./dist-types/consent-record/types.d.ts",

@@ -281,6 +281,40 @@ These docs describe c15t v3. Find your app's row in Choose your setup, then foll
 - [Troubleshooting](./docs/frameworks/sveltekit/troubleshooting.md): Fix a SvelteKit build that cannot fetch the c15t manifest, a missing bundled policy, a banner missing from server HTML, failed saves through the consent route, a wrong backend URL and ignored theme colors.
 - [Vendor consent](./docs/frameworks/sveltekit/vendor-consent.md): Let visitors allow a category such as marketing in a SvelteKit app and still turn off one vendor in it, with the vendors prop on ConsentRoot and getConsentManager.
 
+### Angular
+
+- [Callbacks](./docs/frameworks/angular/callbacks.md): Run your own code in an Angular app when a visitor records a choice, permissions change or a banner shows, with the callbacks option of provideC15t and script callbacks.
+- [Clear on revocation](./docs/frameworks/angular/clear-on-revocation.md): Delete the first-party cookies and Web Storage keys a consent category owns in an Angular app when that category is denied, with the clearOnRevocation option of provideC15t.
+- [Components](./docs/frameworks/angular/components.md): Selectors, inputs and behavior of every @c15t/angular component and directive, from c15t-consent-banner and c15t-consent-dialog to c15t-consent-gate, *c15tIfConsent and the dev tools.
+- [ConsentBanner](./docs/frameworks/angular/components/consent-banner.md): Show the c15t cookie banner in an Angular app with c15t-consent-banner, and set its variant, position, button layout, copy, ng-template slots, accessibility and styling hooks.
+- [ConsentButton](./docs/frameworks/angular/components/consent-button.md): Accept, reject, save or open preferences from your own Angular markup with the c15t-consent-button attribute component, and what each action records.
+- [ConsentDialog](./docs/frameworks/angular/components/consent-dialog.md): Add the c15t preference dialog to an Angular app with c15t-consent-dialog, how it loads its code, its inputs, opening and closing, accessibility and styling.
+- [ConsentDialogLink](./docs/frameworks/angular/components/consent-dialog-link.md): Turn your own footer button or link into the control that reopens c15t preferences in an Angular app with the c15tConsentDialogLink directive.
+- [ConsentDialogTrigger](./docs/frameworks/angular/components/consent-dialog-trigger.md): Add a floating, draggable privacy button to an Angular app with c15t-consent-dialog-trigger, and set its corner, size, saved position, accessible name and outputs.
+- [ConsentGate](./docs/frameworks/angular/components/consent-gate.md): Keep an embed or widget out of an Angular page until its consent category, and optionally one vendor, is allowed, with c15t-consent-gate and its content and placeholder templates.
+- [ConsentRoot](./docs/frameworks/angular/components/consent-root.md): Render the c15t banner and preference dialog in one tag in an Angular app with c15t-consent-root, its inputs, and when to use the two components on their own.
+- [ConsentWidget](./docs/frameworks/angular/components/consent-widget.md): Put c15t's category switches inline on an Angular privacy settings page with c15t-consent-widget, and how its draft, vendors and stale-policy alert behave.
+- [Dev tools](./docs/frameworks/angular/components/dev-tools.md): Inspect consent state, scripts, policy, IAB and events in an Angular app with the c15t DevTools panel from @c15t/angular/devtools, and keep it out of production.
+- [IABConsentBanner](./docs/frameworks/angular/components/iab-consent-banner.md): Show the IAB TCF 2.4 first-layer banner to visitors under an IAB policy in an Angular app with c15t-iab-consent-banner, its inputs and behavior.
+- [IABConsentDialog](./docs/frameworks/angular/components/iab-consent-dialog.md): Show the IAB TCF 2.4 preference center with purposes, features and vendors in an Angular app with c15t-iab-consent-dialog.
+- [Primitives](./docs/frameworks/angular/components/primitives.md): Build your own accessible consent dialog in Angular with the headless c15tDialog, c15tSwitch, c15tTabs, c15tAccordion, c15tCollapsible and c15tPreferenceItem directives, and the focus trap, scroll lock and portal directives.
+- [Content Security Policy](./docs/frameworks/angular/content-security-policy.md): Write a Content Security Policy for an Angular app using c15t, with the hosts to allow, Angular's CSP_NONCE and ngCspNonce, the nonce option of provideC15t and what c15t injects.
+- [Customize](./docs/frameworks/angular/customize.md): Change c15t's colors, shape, button styles, copy and markup in an Angular app with a token stylesheet, theme slots, component inputs and ng-template slots.
+- [Embeds](./docs/frameworks/angular/embeds.md): Keep YouTube videos, maps and other iframes out of an Angular page until their consent category is allowed, with c15t-consent-gate, *c15tIfConsent or the iframe blocker.
+- [IAB GPP](./docs/frameworks/angular/gpp.md): Expose the IAB Global Privacy Platform API (__gpp) from an Angular app with the gpp option of provideC15t, so ad tech can read US state opt-outs and the TCF EU consent string.
+- [Headless](./docs/frameworks/angular/headless.md): Replace the c15t banner or preference dialog with your own Angular templates while provideC15t keeps policy, storage and script loading, using HeadlessConsent, ConsentManager and the primitives.
+- [IAB TCF](./docs/frameworks/angular/iab.md): Turn on the IAB TCF 2.4 banner and preference center in an Angular app with c15t-iab-consent-banner, c15t-iab-consent-dialog and the iab option of provideC15t.
+- [Network blocker](./docs/frameworks/angular/network-blocker.md): Hold fetch, XMLHttpRequest and HttpClient calls to tracking domains in an Angular app until their consent category is allowed, with the networkBlocker option of provideC15t.
+- [provideC15t](./docs/frameworks/angular/provide-c15t.md): Every option of provideC15t in an Angular app, what it does when the application starts, how to change options later with updateOptions, and how to share one runtime.
+- [Quickstart](./docs/frameworks/angular/quickstart.md): Add a c15t cookie banner, preference dialog and consent-gated scripts to an Angular 20, 21 or 22 app with provideC15t, standalone components and Inth as the consent backend.
+- [Rendering and deployment](./docs/frameworks/angular/rendering.md): Put the c15t banner in the server HTML of an Angular app with @angular/ssr, provideC15tServer and a same-origin consent route, or deploy a browser-only build.
+- [Scripts](./docs/frameworks/angular/scripts.md): Load vendor scripts, iframes and network requests in an Angular app only after the visitor allows their consent category, send analytics events, and stop vendors when consent is withdrawn.
+- [ConsentManager](./docs/frameworks/angular/services.md): Reference for ConsentManager in an Angular app, from reading permissions and recorded choices as signals to saving, the preference draft, IAB state and kernel events.
+- [Testing](./docs/frameworks/angular/testing.md): Test an Angular app's c15t consent banner, dialog, preference widget, consent gate and IAB surfaces in TestBed with the Angular CDK component harnesses from @c15t/angular/testing.
+- [Translations](./docs/frameworks/angular/translations.md): Change c15t banner and dialog copy in an Angular app with component inputs, banner templates or the i18n option of provideC15t, and switch languages at runtime.
+- [Troubleshooting](./docs/frameworks/angular/troubleshooting.md): Fix a missing c15t banner, a NullInjectorError, unstyled components, ignored theme colors, hydration mismatches and vendors that load before consent in an Angular app.
+- [Vendor consent](./docs/frameworks/angular/vendor-consent.md): Let visitors allow a category such as marketing in an Angular app and still turn off one vendor in it, with the vendors option of provideC15t and ConsentManager.
+
 ### HTML script tag
 
 - [window.c15t API](./docs/frameworks/html/api.md): Reference for window.c15t on a plain HTML page, covering the call queue, manual start, reading permissions and recorded choices, saving choices, opening the banner and dialog, and properties.

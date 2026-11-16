@@ -20,7 +20,6 @@
  * (`createCMPApi`), stub installer (`initializeIABStub`).
  */
 
-import { c15tProtocolParams, registerIABControls } from '@c15t/core';
 import type {
 	AdditionalConsentConfig,
 	AdTechProvider,
@@ -33,6 +32,10 @@ import type {
 	KernelIABState,
 	NonIABVendor,
 } from '@c15t/core';
+import {
+	c15tProtocolParams,
+	registerIABControls,
+} from '@c15t/core/iab-support';
 import { appendInitParams } from '@c15t/schema/types';
 
 import {
@@ -263,6 +266,37 @@ export interface IABHandle {
 	save: () => Promise<void>;
 }
 
+/** Collisions already reported, so each logs once per page. */
+const reportedCollisions = new Set<string>();
+
+/**
+ * The custom vendors whose ids no registered vendor in `gvl` uses. A
+ * custom vendor and a registered one share the choice maps and the TC
+ * string's vendor vectors by id, so a custom vendor with a registered
+ * vendor's id is dropped: the registered vendor is the one a TCF signal
+ * can name.
+ */
+const distinctCustomVendors = function distinctCustomVendors(
+	customVendors: readonly NonIABVendor[],
+	gvl: GlobalVendorList | null | undefined
+): NonIABVendor[] {
+	const registered = gvl?.vendors ?? {};
+	return customVendors.filter((vendor) => {
+		const id = String(vendor.id);
+		if (!Object.hasOwn(registered, id)) {
+			return true;
+		}
+		const key = `${id}:${vendor.name}`;
+		if (!reportedCollisions.has(key)) {
+			reportedCollisions.add(key);
+			console.error(
+				`[c15t] Custom vendor "${vendor.name}" (id ${id}) is ignored: the Global Vendor List has a registered vendor with id ${id}. Give each custom vendor an id no registered vendor uses, such as a string.`
+			);
+		}
+		return false;
+	});
+};
+
 /**
  * Internal helper — synchronously seed the IAB snapshot with baseline
  * state so selectors have something to read immediately on mount.
@@ -282,8 +316,10 @@ const seedInitialIAB = function seedInitialIAB(
 	}
 	kernel.set.iab({
 		cmpId: options.cmpId,
-		customVendors:
+		customVendors: distinctCustomVendors(
 			options.customVendors ?? kernel.getSnapshot().iab?.customVendors ?? [],
+			gvl
+		),
 		enabled:
 			gvl !== null ||
 			(options.gvl === undefined &&
@@ -1453,6 +1489,11 @@ export const createIAB = function createIAB(
 			gvlReference: undefined,
 			...retainedAuthorityPatch(withdrawn, refreshed),
 		};
+		const { customVendors } = readIAB(kernel);
+		const distinct = distinctCustomVendors(customVendors, gvl);
+		if (distinct.length !== customVendors.length) {
+			update.customVendors = distinct;
+		}
 		// Configured on the client: its list replaces the backend's, now and
 		// after any later `/init`.
 		if (adTechProviders) {
@@ -1904,8 +1945,12 @@ export const createIAB = function createIAB(
 
 	const buildTCFConsentData = function buildTCFConsentData() {
 		const iab = readIAB(kernel);
+		// A custom vendor with a registered vendor's id was dropped: the
+		// registered vendor keeps its place in the vectors.
 		const customIds = new Set(
-			iab.customVendors.map((vendor) => String(vendor.id))
+			distinctCustomVendors(iab.customVendors, iab.gvl).map((vendor) =>
+				String(vendor.id)
+			)
 		);
 		const registeredChoices = (choices: Record<string, boolean>) =>
 			Object.fromEntries(

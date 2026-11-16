@@ -19,7 +19,7 @@ group: integrations
   point for your framework below. These are edits to that provider, not a second
   provider.
 
-  <Tabs items={['Next.js', 'TanStack Start', 'React', 'Nuxt', 'Vue', 'Astro', 'Svelte', 'SvelteKit', 'HTML', 'JavaScript']}>
+  <Tabs items={['Next.js', 'TanStack Start', 'React', 'Nuxt', 'Vue', 'Astro', 'Svelte', 'SvelteKit', 'Angular', 'HTML', 'JavaScript']}>
     <Tab value="Next.js">
       Add the configuration to `scripts` in `c15t.config.ts`, next to
       `next.config.ts`:
@@ -173,6 +173,22 @@ group: integrations
       a server load cannot send functions to the browser. Prerendered, static and
       SPA-mode pages use the same `scripts` prop. If you pass an externally owned
       `runtime` to the provider, register scripts when creating that runtime instead.
+    </Tab>
+
+    <Tab value="Angular">
+      Pass the scripts to the existing `provideC15t()` call in
+      `src/app/app.config.ts`, next to `mode`:
+
+      <include src="../examples/angular/integration-register.mdx" />
+
+      Keep the mode, styles and consent UI from the
+      [Angular quickstart](/docs/frameworks/angular/quickstart). The runtime
+      starts one script loader in the browser after the first render, once it
+      has applied the visitor's stored choice. With server rendering, the
+      server starts the scripts the stored choice already allows. Keep
+      `provideC15t()` in `app.config.ts`, which the server config merges, not
+      in a server-only file. See
+      [Angular scripts](/docs/frameworks/angular/scripts).
     </Tab>
 
     <Tab value="HTML">

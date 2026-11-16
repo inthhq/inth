@@ -159,6 +159,10 @@ const workspaceAliases = [
 		),
 	},
 	{
+		find: '@c15t/core/iab-support',
+		replacement: resolve(__dirname, '../core/src/iab-support.ts'),
+	},
+	{
 		find: '@c15t/core/surface-actions',
 		replacement: resolve(__dirname, '../core/src/surface-actions/index.ts'),
 	},
@@ -184,6 +188,10 @@ const workspaceAliases = [
 	{
 		find: '@c15t/schema/config',
 		replacement: resolve(__dirname, '../schema/src/config/index.ts'),
+	},
+	{
+		find: '@c15t/schema/canonical-order',
+		replacement: resolve(__dirname, '../schema/src/shared/canonical-order.ts'),
 	},
 	{
 		find: '@c15t/schema',

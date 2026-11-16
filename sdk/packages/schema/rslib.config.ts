@@ -28,6 +28,7 @@ export default defineConfig({
 	},
 	plugins: [
 		publicEntryAliases({
+			'canonical-order.js': './shared/canonical-order.js',
 			'config.js': './config/index.js',
 			'geo.js': './shared/geo-headers.js',
 		}),

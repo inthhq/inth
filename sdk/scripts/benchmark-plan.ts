@@ -5,6 +5,7 @@ const quickPackages = ['@c15t/core-benchmarks', '@c15t/script-lifecycle-bench'];
  * framework bench, so the script-lifecycle bench serves its page.
  */
 export const gateTargetPackages = {
+	angular: '@c15t/angular-browser-bench',
 	astro: '@c15t/astro-browser-bench',
 	nextjs: '@c15t/nextjs-browser-bench',
 	nuxt: '@c15t/nuxt-browser-bench',

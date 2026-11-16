@@ -1,0 +1,79 @@
+---
+title: Components
+description: Selectors, inputs and behavior of every @c15t/angular component and directive, from c15t-consent-banner and c15t-consent-dialog to c15t-consent-gate, *c15tIfConsent and the dev tools.
+group: frameworks
+---
+
+Every component and directive is standalone. Import the class into the
+`imports` of the component that uses it, and render it below
+`provideC15t()`. One that renders without the provider throws Angular's
+`NullInjectorError` for `ConsentManager`.
+
+## Every component
+
+What every page needs comes from `@c15t/angular`. The rest has an entry
+point of its own, so a page loads it only when it renders it. The dialog's
+body, with the widget and primitives it renders, is a chunk of its own that
+loads before anyone opens the dialog.
+
+| Selector | Class | Import from | Renders | Page |
+| --- | --- | --- | --- | --- |
+| `<c15t-consent-banner>` | `ConsentBanner` | `@c15t/angular` | The first-layer banner when the policy asks for one. | [ConsentBanner](./components/consent-banner) |
+| `[c15tConsentDialogLink]` | `ConsentDialogLink` | `@c15t/angular` | Your own button or link that opens preferences. | [ConsentDialogLink](./components/consent-dialog-link) |
+| `*c15tIfConsent` | `IfConsent` | `@c15t/angular` | A template only while a consent condition holds. | [Embeds](./embeds#render-content-only-while-consent-holds) |
+| `button[c15t-consent-button]` | `ConsentButton` | `@c15t/angular` | A button that accepts, rejects, saves or opens preferences. | [ConsentButton](./components/consent-button) |
+| `<c15t-consent-dialog>` | `ConsentDialog` | `@c15t/angular/consent-dialog` | The preference dialog, which loads its body on demand. | [ConsentDialog](./components/consent-dialog) |
+| `<c15t-consent-root>` | `ConsentRoot` | `@c15t/angular/consent-root` | The banner and the dialog in one tag. | [ConsentRoot](./components/consent-root) |
+| `<c15t-consent-widget>` | `ConsentWidget` | `@c15t/angular/consent-widget` | The preference controls inline, for a settings page. | [ConsentWidget](./components/consent-widget) |
+| `<c15t-consent-dialog-trigger>` | `ConsentDialogTrigger` | `@c15t/angular/consent-dialog-trigger` | A floating, draggable button that opens preferences. | [ConsentDialogTrigger](./components/consent-dialog-trigger) |
+| `<c15t-consent-gate>` | `ConsentGate` | `@c15t/angular/consent-gate` | Its content only while a category is allowed. | [ConsentGate](./components/consent-gate) |
+| `<c15t-iab-consent-banner>` | `IABConsentBanner` | `@c15t/angular/iab` | The IAB TCF banner, for visitors under an IAB policy. | [IABConsentBanner](./components/iab-consent-banner) |
+| `<c15t-iab-consent-dialog>` | `IABConsentDialog` | `@c15t/angular/iab` | The IAB TCF preference center. | [IABConsentDialog](./components/iab-consent-dialog) |
+| `<c15t-consent-dev-tools>` | `ConsentDevTools` | `@c15t/angular/devtools` | A development panel for the consent state. | [Dev tools](./components/dev-tools) |
+| `[c15tDialog]`, `[c15tSwitch]`, `[c15tTabs]` and others | `Dialog`, `Switch` and others | Unstyled building blocks for your own UI. | [Primitives](./components/primitives) |
+
+All components use `OnPush` change detection and read state from signals, so
+they work with zoneless change detection and with zone.js.
+
+## Styles
+
+There is no stylesheet to import. Each stock component adds the rules it
+uses to `<head>` as a `<style>` element, once per page, when it first renders.
+On a server-rendered page the rules are in the HTML, so the banner is styled
+before hydration. The dialog's rules load with the dialog's deferred code.
+
+The IAB TCF banner and dialog add their own rules. Pages without IAB
+components do not load the IAB sheets.
+
+To run the stylesheet through Tailwind CSS 3 or put it in a named cascade
+layer, set `styles: false` in `provideC15t()` and add
+`@c15t/angular/styles.css` to the `styles` array in `angular.json`. With IAB
+TCF, also add `@c15t/angular/iab/styles.css` after it. For Tailwind CSS 3,
+list `@c15t/angular/postcss-tailwind3` before `tailwindcss` in your PostCSS
+configuration.
+[Stylesheets and CSS layers](/docs/customization/stylesheets#import-the-stylesheet-yourself)
+explains when.
+
+## When components render nothing
+
+Every consent surface stays hidden until a policy resolves for the visitor,
+and again when the resolved policy asks for no prompt and grants no way to
+change preferences. A missing banner or link is usually a policy result, not
+a rendering bug. See
+[why the banner may be absent](/docs/concepts/policies#why-the-banner-may-be-absent).
+
+## Shared inputs
+
+Several inputs mean the same thing on every component:
+
+| Input | Behavior |
+| --- | --- |
+| `noStyle` | Renders the same markup and behavior without c15t's classes. Set it in `provideC15t()` for every component, or on one component. |
+| `rootClass` | Adds your class to the component's root element. |
+| `hideBranding` | Hides the "Secured by" tag on the banner and dialog. The widget hides it by default. |
+| `models` | The policy models a surface renders for: `opt-in`, `opt-out`, `iab` and `none`. |
+| `legalLinks` | Which of the provider's legal links a banner or dialog shows, as an array of keys, or `null` for none. |
+| `disableAnimation` | Turns off enter and exit transitions for one surface. |
+
+Theme slots style one part of one component; [customize](./customize) lists
+them.

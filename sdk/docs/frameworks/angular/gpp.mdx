@@ -1,0 +1,44 @@
+---
+title: IAB GPP
+description: Expose the IAB Global Privacy Platform API (__gpp) from an Angular app with the gpp option of provideC15t, so ad tech can read US state opt-outs and the TCF EU consent string.
+group: frameworks
+---
+
+## What GPP does
+
+The `gpp` option of `provideC15t()` installs `window.__gpp`, the GPP 1.1 CMP
+API, and keeps its GPP string in step with the visitor's choices. Prebid.js,
+Google Ad Manager and other ad tech read US privacy signals from it.
+
+## Turn on GPP
+
+Add `gpp` to `provideC15t()` in `src/app/app.config.ts`, keeping your
+existing `mode`, `scripts` and other options:
+
+{/* example: fragment */}
+
+```ts title="src/app/app.config.ts (partial)"
+provideC15t({ mode, scripts, gpp: true });
+```
+
+`gpp: true` or `gpp: {}` uses the defaults. Pass an object to change them,
+such as `gpp: { usFallback: 'none' }`; the options are listed below. Omit
+`gpp`, or pass `gpp: false`, to leave it off.
+
+`@c15t/angular` loads the GPP code from `@c15t/iab/gpp`, which it installs as
+a dependency, through a dynamic import. Apps without `gpp` never download it.
+The runtime installs `__gpp` once that chunk arrives, in the browser only, and
+removes it when the application is destroyed.
+
+The US section follows the policy and location your Inth project resolves for
+the visitor. With `local()` mode, pass the location yourself, for example
+`overrides: { country: 'US', region: 'CA' }`.
+
+The TCF EU section needs IAB TCF as well. Set it up with
+[IAB TCF](/docs/frameworks/angular/iab).
+
+With an external `runtime`, `provideC15t()` ignores `gpp`. Set `gpp` and
+`loadGPP: () => import('@c15t/iab/gpp')` in that runtime's
+`createConsentRuntime()` call instead.
+
+<include src="../../shared/iab-gpp.mdx" />

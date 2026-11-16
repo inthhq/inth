@@ -1,0 +1,67 @@
+---
+title: IABConsentDialog
+description: Show the IAB TCF 2.4 preference center with purposes, features and vendors in an Angular app with c15t-iab-consent-dialog.
+group: frameworks
+---
+
+## Show the TCF preference center
+
+`<c15t-iab-consent-dialog>` is the IAB TCF preference center. It has two
+tabs: purposes, with stacks, special features, features and legitimate
+interest objections, and vendors, with IAB vendors, custom vendors and Google
+ad tech providers. Render it next to `<c15t-iab-consent-banner>`; the banner's
+Customize button opens it:
+
+<include src="../../../shared/examples/angular/iab-surfaces.mdx" />
+
+## Inputs
+
+| Input | Type | Default | Behavior |
+| --- | --- | --- | --- |
+| `open` | `boolean` | follows the consent state | Shows the dialog regardless of the active surface. While `open` is `true`, the dialog stays open, even after Escape. Bind `[(open)]` to close it on Escape, the close button and its actions. |
+| `initialTab` | `'purposes'` or `'vendors'` | `'purposes'` | The tab it opens on, for example from a "See our partners" link. |
+| `hideBranding` | `boolean` | `false` | Hides the "Secured by" tag. |
+| `models` | `Model[]` | `['iab']` | Policy models it opens for. |
+| `noStyle` | `boolean` | provider's `noStyle` | Drops c15t's classes. |
+| `disableAnimation` | `boolean` | provider's value | Skips the backdrop's fade-in. |
+| `rootClass` | `string` | none | Extra class on the dialog card. |
+
+It has one output, `openChange`. It emits `false` when the visitor presses
+Escape or the close button, after a save, accept all or reject all, and
+when the dialog's code fails to load. With
+a one-way `[open]`, handle `(openChange)` yourself:
+
+```html
+<c15t-iab-consent-dialog [(open)]="preferencesOpen" />
+```
+
+## Behavior
+
+- It opens when the active surface is `'dialog'` under an IAB policy, the
+  same state `<c15t-consent-dialog>` uses for other policies. Opening
+  preferences from `c15tConsentDialogLink` therefore shows this dialog to IAB
+  visitors and `<c15t-consent-dialog>` to everyone else.
+- Its body is a chunk of its own. It loads when the dialog first opens, and
+  is prefetched in idle time before that. If the load fails, the next open
+  tries again, and the IAB banner comes back in the meantime.
+- Switches change purpose consent, legitimate interest, special feature
+  opt-ins and vendor consent in the TCF state. Save writes a new TC String.
+- It needs the Global Vendor List. While the list loads,
+  `ConsentManager.iab()?.isLoadingGVL` is `true`.
+
+## Accessibility
+
+The preference center is a `dialog` labelled with its title, with a close
+button labelled from the `common.close` translation. Escape closes it. While
+it is blocking, which is the default, focus stays inside it and the page does
+not scroll. The purposes and vendors tabs are keyboard-operable tabs.
+
+## Style the dialog
+
+The dialog adds its rules when it opens, including the base rules it needs
+when rendered without a banner. With `styles: false`, add
+`@c15t/angular/styles.css` and `@c15t/angular/iab/styles.css` to
+`angular.json`. It reads the `iabConsentDialog`, `iabConsentDialogCard`,
+`iabConsentDialogHeader`, `iabConsentDialogFooter`, `iabConsentDialogTag` and
+`iabConsentDialogOverlay` theme slots. The root carries
+`data-testid="iab-consent-dialog-root"`.

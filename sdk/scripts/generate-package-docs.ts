@@ -61,6 +61,7 @@ const umbrellaFrameworks = [
 	'astro',
 	'svelte',
 	'sveltekit',
+	'angular',
 	'html',
 	'javascript',
 ].map((framework) => `frameworks/${framework}/**/*.mdx`);
@@ -191,6 +192,24 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 		},
 		summary:
 			'Svelte and SvelteKit v3 providers, request loading and static hosting with Inth.',
+	},
+	{
+		include: [
+			'concepts/**/*.mdx',
+			'guides/**/!(mobile-*).mdx',
+			'frameworks/angular/**/*.mdx',
+			'customization/**/*.mdx',
+			'integrations/**/*.mdx',
+		],
+		name: '@c15t/angular',
+		outDir: 'packages/angular',
+		skill: {
+			install: '`npm install @c15t/angular`',
+			topic:
+				'the project is an Angular 20, 21 or 22 app, with or without `@angular/ssr`',
+		},
+		summary:
+			'Angular v3 provider, standalone components, signals, headless directives and server rendering with Inth.',
 	},
 	{
 		include: [

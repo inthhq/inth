@@ -50,6 +50,11 @@
 			"types": "./dist-types/shared/geo-headers.d.ts",
 			"import": "./dist/geo.js",
 			"default": "./dist/geo.js"
+		},
+		"./canonical-order": {
+			"types": "./dist-types/shared/canonical-order.d.ts",
+			"import": "./dist/canonical-order.js",
+			"default": "./dist/canonical-order.js"
 		}
 	},
 	"publishConfig": {

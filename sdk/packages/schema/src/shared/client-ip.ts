@@ -12,6 +12,8 @@
  * a consent record, so the default errs toward the smaller footprint.
  */
 
+import { forwardedNodeAddress, parseForwarded } from './forwarded';
+
 const DEFAULT_IP_HEADERS = [
 	'x-client-ip',
 	'x-forwarded-for',
@@ -182,6 +184,27 @@ export const maskIpAddress = function maskIpAddress(
 	return ip;
 };
 
+/**
+ * The client address of a header's first element. `Forwarded` is strict
+ * RFC 7239: its `for=` node. The legacy `X-Forwarded` comes in both forms,
+ * so an element with `for=` gives that node and a plain one is the address,
+ * as for the other headers.
+ */
+const firstAddress = function firstAddress(
+	name: string,
+	value: string
+): string | null | undefined {
+	const header = name.toLowerCase();
+	if (header === 'forwarded') {
+		return forwardedNodeAddress(parseForwarded(value)[0]?.for);
+	}
+	const first = value.split(',')[0]?.trim();
+	if (header === 'x-forwarded' && first?.includes('=')) {
+		return forwardedNodeAddress(parseForwarded(first)[0]?.for);
+	}
+	return first;
+};
+
 /** Header names checked in order, first match wins. */
 export const DEFAULT_IP_HEADERS_LIST: readonly string[] = DEFAULT_IP_HEADERS;
 
@@ -214,7 +237,7 @@ export const getIpAddress = function getIpAddress(
 			continue;
 		}
 		// A forwarding chain lists the original client first.
-		const ip = value.split(',')[0]?.trim();
+		const ip = firstAddress(key, value);
 		if (!ip) {
 			continue;
 		}

@@ -1392,6 +1392,7 @@ export const consentGateTargets = [
 	'astro',
 	'sveltekit',
 	'tanstack-start',
+	'angular',
 	'script-tag',
 ] as const;
 
@@ -1446,9 +1447,12 @@ const gateTapCeilingExceptionsMs: Partial<Record<ConsentGateTarget, number>> =
  * runners and the gate page's own differences, and still fails a banner that
  * waits for client JavaScript (about 1,000 ms or more at this profile).
  * React here is client-rendered inside Next.js, and the script tag injects
- * its banner from JavaScript, so neither has a server-rendered bar.
+ * its banner from JavaScript, so neither has a server-rendered bar. Angular
+ * renders its banner on the server through `provideC15tServer()`; CookieBench
+ * has no Angular round yet, so it takes the same ceiling.
  */
 const gateBannerCeilingMs: Partial<Record<ConsentGateTarget, number>> = {
+	angular: 600,
 	astro: 600,
 	nextjs: 600,
 	nuxt: 600,

@@ -136,6 +136,7 @@ test.each([
 	['svelte', 'Svelte'],
 	['sveltekit', 'SvelteKit'],
 	['svelte-kit', 'SvelteKit'],
+	['angular', 'Angular'],
 	['html', 'HTML'],
 	['javascript', 'JavaScript'],
 	['js', 'JS'],

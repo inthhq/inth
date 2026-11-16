@@ -75,6 +75,12 @@ These docs describe c15t v3. Find your app's row in Choose your setup, then foll
 - [Network blocker](./docs/frameworks/sveltekit/network-blocker.md): Hold browser fetch and XMLHttpRequest calls to tracking domains in a SvelteKit app until their consent category is allowed, with the networkBlocker option.
 - [Scripts](./docs/frameworks/sveltekit/scripts.md): Load vendor scripts, iframes and network requests in a SvelteKit app only after the visitor allows their consent category, and stop them when consent is withdrawn.
 
+### Angular
+
+- [Embeds](./docs/frameworks/angular/embeds.md): Keep YouTube videos, maps and other iframes out of an Angular page until their consent category is allowed, with c15t-consent-gate, *c15tIfConsent or the iframe blocker.
+- [Network blocker](./docs/frameworks/angular/network-blocker.md): Hold fetch, XMLHttpRequest and HttpClient calls to tracking domains in an Angular app until their consent category is allowed, with the networkBlocker option of provideC15t.
+- [Scripts](./docs/frameworks/angular/scripts.md): Load vendor scripts, iframes and network requests in an Angular app only after the visitor allows their consent category, send analytics events, and stop vendors when consent is withdrawn.
+
 ### HTML script tag
 
 - [Embeds](./docs/frameworks/html/embeds.md): Hold YouTube videos, maps and other iframes on a plain HTML page until their consent category is allowed with data-src and data-category, show a placeholder, and configure the c15t iframe blocker.

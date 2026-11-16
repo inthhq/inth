@@ -39,6 +39,7 @@ export type SupportedFramework =
 	| 'tanstack-start'
 	| 'svelte'
 	| 'vue'
+	| 'angular'
 	| 'solid';
 
 /**

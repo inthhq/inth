@@ -33,11 +33,11 @@
  *
  * @packageDocumentation
  */
-import { compareCanonical } from '@c15t/schema/types';
+import { compareCanonical } from '@c15t/schema/canonical-order';
 
 import { displayedCategories as listDisplayed } from '../consent/consent-types';
 import type { AllConsentNames } from '../consent/consent-types';
-import { listedVendors } from '../libs/vendors';
+import { listedVendors } from '../libs/vendor-listing';
 import { deniedVendorIds } from '../modules/has';
 import type {
 	ConsentKernel,

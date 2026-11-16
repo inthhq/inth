@@ -87,6 +87,7 @@ const alias = {
 	'@c15t/core/server': resolve(__dirname, '../core/src/server/index.ts'),
 	'@c15t/core/static': resolve(__dirname, '../core/src/static.ts'),
 	'@c15t/core/build': resolve(__dirname, '../core/src/build.ts'),
+	'@c15t/core/iab-support': resolve(__dirname, '../core/src/iab-support.ts'),
 	'@c15t/core/surface-actions': resolve(
 		__dirname,
 		'../core/src/surface-actions/index.ts'
@@ -156,6 +157,10 @@ const alias = {
 	'@c15t/translations': resolve(__dirname, '../translations/src/index.ts'),
 	'@c15t/schema/geo': resolve(__dirname, '../schema/src/shared/geo-headers.ts'),
 	'@c15t/schema/types': resolve(__dirname, '../schema/src/types.ts'),
+	'@c15t/schema/canonical-order': resolve(
+		__dirname,
+		'../schema/src/shared/canonical-order.ts'
+	),
 	'@c15t/schema': resolve(__dirname, '../schema/src/index.ts'),
 };
 

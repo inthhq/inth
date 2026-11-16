@@ -25,6 +25,10 @@
  *   suites are required (partial local runs); every suite by default
  * - `C15T_BENCH_ONLY` / `C15T_BENCH_SKIP` — the suites and scenarios the
  *   runner measured (see `src/selection.ts`); only those are required
+ * - `BENCHMARK_NEW_ON_HEAD` — comma list of result packages the base revision
+ *   has no bench for (a gate target new on the head; `scripts/benchmark-run.ts`
+ *   sets it). Their missing base results are not failures: relative budgets
+ *   are skipped and reported, and absolute budgets still apply
  * - `BENCHMARK_ENFORCE=true` — exit non-zero on any failure above
  * - `C15T_BENCH_BACKEND_LATENCY_MS` (alias `C15T_BENCH_INIT_LATENCY_MS`) and
  *   `C15T_BENCH_PROFILE` — the condition the browser benches ran under, which
@@ -43,6 +47,7 @@ import {
 } from './src/expected-results';
 import type { ExpectedBenchmarkResult } from './src/expected-results';
 import {
+	budgetNeedsBase,
 	evaluateBudget,
 	hasFailingBudgets,
 	indexMetrics,
@@ -53,6 +58,7 @@ import type {
 	BenchmarkBaseArm,
 	BenchmarkComparisonEntry,
 	BenchmarkComparisonResult,
+	BenchmarkComparisonStatus,
 	BenchmarkComparisonSummary,
 	BenchmarkResult,
 	MetricBudget,
@@ -109,6 +115,32 @@ const loadArmMap = function loadArmMap(): Map<string, string[]> {
 	} catch {
 		return new Map();
 	}
+};
+
+const newOnHeadPackages = parseList(process.env.BENCHMARK_NEW_ON_HEAD);
+
+/**
+ * Whether a result's base is missing because the base revision has no bench
+ * for it. A result the base did measure is compared as usual.
+ */
+const isNewOnHead = function isNewOnHead(
+	key: string,
+	baseResult: BenchmarkResult | undefined
+): boolean {
+	return (
+		baseResult === undefined &&
+		newOnHeadPackages.some((name) => key.startsWith(`${name}:`))
+	);
+};
+
+const statusOf = function statusOf(
+	baseResult: BenchmarkResult | undefined,
+	newOnHead: boolean
+): BenchmarkComparisonStatus {
+	if (baseResult) {
+		return 'compared';
+	}
+	return newOnHead ? 'new-on-head' : 'missing-base';
 };
 
 const resultKey = function resultKey(result: BenchmarkResult): string {
@@ -302,7 +334,8 @@ const evaluateBudgets = function evaluateBudgets(
 	headResult: BenchmarkResult,
 	baseResult: BenchmarkResult | undefined,
 	armResults: ArmResults,
-	baseKey: string
+	baseKey: string,
+	newOnHead = false
 ): MetricBudgetResult[] {
 	const indexedHeadMetrics = indexMetrics(headResult);
 	const indexedBaseMetrics = baseResult
@@ -315,6 +348,18 @@ const evaluateBudgets = function evaluateBudgets(
 			const headMetric = indexedHeadMetrics.get(budget.metric);
 			if (budget.baseArm) {
 				return evaluateArmBudget(budget, headMetric, armResults, baseKey);
+			}
+			if (newOnHead && budgetNeedsBase(budget)) {
+				return {
+					actual: null,
+					comparator: budget.comparator,
+					message: `New on the head: the base revision has no bench for ${baseKey}; relative budget not evaluated`,
+					metric: budget.metric,
+					pass: false,
+					secondaryThreshold: budget.secondaryThreshold,
+					status: 'new-on-head',
+					threshold: budget.threshold,
+				};
 			}
 			const evaluate =
 				headResult.suite === 'browser-runtime' ||
@@ -457,6 +502,7 @@ const buildSummary = function buildSummary(
 	const failures: string[] = [];
 	const missingHead: string[] = [];
 	const missingBase: string[] = [];
+	const newOnHead: string[] = [];
 	const missingDefinitions: string[] = [];
 	const definitionMismatches: string[] = [];
 	const unexpectedDefinitions: string[] = [];
@@ -471,7 +517,9 @@ const buildSummary = function buildSummary(
 		}
 		const baseKeys = armMap.get(entry.key) ?? [entry.key];
 		for (const baseKey of baseKeys) {
-			if (!baseResults.has(baseKey)) {
+			if (isNewOnHead(baseKey, baseResults.get(baseKey))) {
+				newOnHead.push(baseKey);
+			} else if (!baseResults.has(baseKey)) {
 				missingBase.push(baseKey);
 				failures.push(`missing base result ${baseKey} for ${entry.key}`);
 			}
@@ -495,6 +543,7 @@ const buildSummary = function buildSummary(
 	let missingHeadMetric = 0;
 	let missingBaseMetric = 0;
 	let unevaluatedArm = 0;
+	let newOnHeadBudgets = 0;
 	for (const result of comparison.results) {
 		for (const budget of result.budgets) {
 			const status = budget.status ?? 'evaluated';
@@ -519,6 +568,10 @@ const buildSummary = function buildSummary(
 				failures.push(`missing base metric ${label}: ${budget.message}`);
 				continue;
 			}
+			if (status === 'new-on-head') {
+				newOnHeadBudgets += 1;
+				continue;
+			}
 			unevaluatedArm += 1;
 			failures.push(
 				`unevaluated ${budget.baseArm ?? 'arm'} budget ${label}: supply the arm through BENCHMARK_ARM_BASE_DIRS`
@@ -536,6 +589,7 @@ const buildSummary = function buildSummary(
 			missingBaseMetric,
 			missingDefinitions,
 			missingHeadMetric,
+			newOnHead: newOnHeadBudgets,
 			passed,
 			unevaluatedArm,
 			unexpectedDefinitions,
@@ -551,6 +605,7 @@ const buildSummary = function buildSummary(
 			expected: expected.length,
 			missingBase,
 			missingHead,
+			newOnHead,
 			unexpected,
 		},
 	};
@@ -580,13 +635,20 @@ const main = async function main() {
 
 		for (const baseKey of comparisonBaseKeys) {
 			const baseResult = baseResults.get(baseKey);
+			const newOnHead = isNewOnHead(baseKey, baseResult);
 			comparison.baseSha ??= baseResult?.commitSha ?? headResult.baseSha;
 			comparison.headSha ??= headResult.commitSha;
 
 			comparison.results.push({
 				baseCommitSha: baseResult?.commitSha,
 				baseKey: baseKey === key ? undefined : baseKey,
-				budgets: evaluateBudgets(headResult, baseResult, armResults, baseKey),
+				budgets: evaluateBudgets(
+					headResult,
+					baseResult,
+					armResults,
+					baseKey,
+					newOnHead
+				),
 				framework: headResult.framework,
 				headCommitSha: headResult.commitSha,
 				key,
@@ -597,7 +659,7 @@ const main = async function main() {
 				notes: headResult.notes,
 				package: headResult.package,
 				scenario: headResult.scenario,
-				status: baseResult ? 'compared' : 'missing-base',
+				status: statusOf(baseResult, newOnHead),
 				suite: headResult.suite,
 			});
 		}
@@ -623,6 +685,11 @@ const main = async function main() {
 	console.log(
 		[
 			`Benchmark comparison: ${summary.results.compared}/${summary.results.expected} expected results compared`,
+			...(summary.results.newOnHead?.length
+				? [
+						`new on the head (absolute budgets only, ${summary.budgets.newOnHead} relative budgets skipped): ${summary.results.newOnHead.join(', ')}`,
+					]
+				: []),
 			`budgets: ${summary.budgets.passed} passed, ${summary.budgets.failed} failed, ${summary.budgets.missingHeadMetric} missing head metric, ${summary.budgets.missingBaseMetric} missing base metric, ${summary.budgets.unevaluatedArm} unevaluated arm, ${summary.budgets.missingDefinitions.length} missing definitions, ${summary.budgets.definitionMismatches.length} definition mismatches (${summary.budgets.expected} expected)`,
 			...Object.entries(summary.baseArms).map(
 				([arm, info]) =>

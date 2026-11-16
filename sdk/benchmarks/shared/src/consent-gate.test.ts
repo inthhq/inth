@@ -255,6 +255,7 @@ describe('consent gate budgets', () => {
 			'astro',
 			'sveltekit',
 			'tanstack-start',
+			'angular',
 		]);
 	});
 });

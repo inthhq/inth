@@ -1,5 +1,6 @@
 /**
- * Starters in `examples/` and `internals/svelte-compat/`, and how to run
+ * Starters in `examples/`, `internals/svelte-compat/` and
+ * `internals/angular-compat/`, and how to run
  * each one in production. Starters
  * hold no test code, so everything that points them at the test backend
  * lives here.
@@ -150,6 +151,17 @@ export const starterTargets: StarterTarget[] = [
 		// HOST.
 		directory: 'internals/svelte-compat/svelte-5-20',
 		id: 'svelte-5-20',
+		routes: ['/'],
+		serverRendered: true,
+		start: () => ['run', 'start'],
+	},
+	{
+		// The oldest Angular `@c15t/angular` supports. C15T_BACKEND_URL from
+		// the shared environment is where the server's consent route reads
+		// the manifest and forwards saves; the browser only talks to the
+		// app. `server.ts` reads PORT and HOST.
+		directory: 'internals/angular-compat/angular-20',
+		id: 'angular-20',
 		routes: ['/'],
 		serverRendered: true,
 		start: () => ['run', 'start'],

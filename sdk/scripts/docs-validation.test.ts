@@ -71,6 +71,7 @@ test('framework quickstarts resolve inside the host framework group', async () =
 		'astro',
 		'svelte',
 		'sveltekit',
+		'angular',
 		'html',
 		'javascript',
 		'react-native',
@@ -311,8 +312,10 @@ test('shared framework tabs match the selector and survive Markdown conversion',
 			expect(positions).toEqual(
 				[...positions].sort((left, right) => left - right)
 			);
+			// A tab carries a code fence, or includes a type-checked snippet;
+			// the conversion check below fails if an include is left unexpanded.
 			for (const tab of tabs) {
-				expect(tab.groups?.body).toContain('```');
+				expect(tab.groups?.body).toMatch(/```|<include src="[^"]+examples\//u);
 			}
 			expect(markdown).not.toMatch(/<(?:include|Tabs|Tab)\b/u);
 		})

@@ -93,7 +93,10 @@ import type {
 	ConsentProxyOptions,
 } from './consent-proxy';
 import { fetchCachedGvl } from './gvl-cache';
-import { resolveRequestBackendURL } from './request-origin';
+import {
+	resolveRequestBackendURL,
+	resolveRequestOrigin,
+} from './request-origin';
 
 /**
  * Request header a server render sets on its call to the init route: the
@@ -588,15 +591,36 @@ const toPathFetch = function toPathFetch(
  * Without `trustForwardedHeaders` the forwarding headers are
  * client-controlled and a `Request` has no socket address to check them
  * against, so only the request URL is believed and no client IP is sent.
+ * Its `proto` and `host` are the site's origin as the visitor sees it,
+ * from {@link resolveRequestOrigin}: the one origin the handler resolves a
+ * relative backend URL against, `forwarded` and the first value of each
+ * `x-forwarded-*` list included. Shared with the framework adapters'
+ * consent routes. An adapter that has
+ * the socket passes its address as `peer`: the client without trusted
+ * headers, else the last hop, appended to the trusted chain.
+ *
+ * @param request - The incoming request.
+ * @param trustForwardedHeaders - Believe `x-forwarded-*` headers.
+ * @param peer - The socket's remote address, when the adapter has one.
+ * @returns The forwarding the proxy sends on.
+ * @internal
  */
-const readRequestForwarding = function readRequestForwarding(
+export const readRequestForwarding = function readRequestForwarding(
 	request: Request,
-	trustForwardedHeaders: boolean
+	trustForwardedHeaders: boolean,
+	peer?: string
 ): ConsentProxyForwarding {
-	const { host, protocol } = new URL(request.url);
-	const proto = protocol.slice(0, -1);
+	const origin = new URL(
+		resolveRequestOrigin({
+			headers: request.headers,
+			requestURL: request.url,
+			trustForwardedHeaders,
+		}) ?? request.url
+	);
+	const { host } = origin;
+	const proto = origin.protocol.slice(0, -1);
 	if (!trustForwardedHeaders) {
-		return { host, proto };
+		return peer ? { for: peer, host, proto } : { host, proto };
 	}
 	// Unmasked on purpose: the WAF needs the real address to rate-limit and
 	// score the visitor, and the backend masks before it stores anything.
@@ -608,10 +632,13 @@ const readRequestForwarding = function readRequestForwarding(
 	if (clientIp && !chain.includes(clientIp)) {
 		chain.push(clientIp);
 	}
+	if (peer && !chain.includes(peer)) {
+		chain.push(peer);
+	}
 	return {
 		for: chain.length > 0 ? chain.join(', ') : undefined,
-		host: request.headers.get('x-forwarded-host') ?? host,
-		proto: request.headers.get('x-forwarded-proto') ?? proto,
+		host,
+		proto,
 	};
 };
 

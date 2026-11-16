@@ -2,5 +2,5 @@
 export {
 	resolveIABBannerSummary,
 	IAB_BANNER_MAX_DISPLAY_ITEMS,
-} from '@c15t/core';
-export type { ResolveIABBannerSummaryOptions } from '@c15t/core';
+} from '@c15t/core/iab-support';
+export type { ResolveIABBannerSummaryOptions } from '@c15t/core/iab-support';

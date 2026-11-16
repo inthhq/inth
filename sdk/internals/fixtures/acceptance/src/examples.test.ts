@@ -33,6 +33,7 @@ import { selectedTargets } from './targets';
 
 /** The `--c15t-primary` each example's Branded design sets, where checked. */
 const BRANDED_PRIMARY: Record<string, string> = {
+	angular: '#6943a3',
 	svelte: '#6943a3',
 	sveltekit: '#6943a3',
 };
@@ -42,6 +43,7 @@ const BRANDED_PRIMARY: Record<string, string> = {
  * before the framework's JavaScript has run.
  */
 const SERVER_BANNER_ROUTES: Record<string, readonly string[]> = {
+	angular: ['/'],
 	nextjs: ['/app-router', '/awaited', '/pages-router'],
 	nuxt: ['/consent-example'],
 	'tanstack-start': ['/consent-example'],
@@ -341,6 +343,7 @@ for (const target of selectedTargets()) {
 				// These routes await consent on the server, so the reloaded HTML
 				// reflects the stored rejection.
 				const cookieBackedHTML = [
+					'angular',
 					'nextjs',
 					'tanstack-start',
 					'tanstack-start-same-origin',
@@ -978,7 +981,7 @@ for (const target of selectedTargets()) {
 				// Restart before an SSR outage so prior requests cannot satisfy
 				// prefetch from an in-process manifest cache.
 				if (
-					['nuxt', 'astro'].includes(target.id) ||
+					['angular', 'nuxt', 'astro'].includes(target.id) ||
 					target.id.startsWith('nuxt-vapor') ||
 					target.id.startsWith('tanstack-start')
 				) {

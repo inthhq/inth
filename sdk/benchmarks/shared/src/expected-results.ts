@@ -193,6 +193,7 @@ const bundleRouteBudget = function bundleRouteBudget(
  * script-lifecycle bench.
  */
 export const consentGatePackages: Record<ConsentGateTarget, string> = {
+	angular: '@c15t/angular-browser-bench',
 	astro: '@c15t/astro-browser-bench',
 	nextjs: '@c15t/nextjs-browser-bench',
 	nuxt: '@c15t/vue',

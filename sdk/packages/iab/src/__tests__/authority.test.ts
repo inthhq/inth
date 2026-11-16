@@ -1179,6 +1179,38 @@ test('a newer choice from a sibling subdomain withdraws the TC string it cannot 
 	expect(fresh.getSnapshot().iab?.authority ?? null).toBeNull();
 });
 
+test('a custom vendor that reuses a GVL id is dropped, and the registered vendor keeps its signal', async () => {
+	const error = vi.spyOn(console, 'error').mockImplementation(() => {
+		/* The collision logs. */
+	});
+	const kernel = makeKernel();
+	const addon = createIAB({
+		cmpId: 28,
+		customVendors: [
+			{
+				id: 1,
+				name: 'Colliding custom',
+				privacyPolicyUrl: 'https://example.test/privacy',
+				purposes: [1],
+			},
+		],
+		gvl: completeGVL,
+		kernel,
+	});
+	disposers.push(addon.dispose);
+	addon.acceptAll();
+	await addon.save();
+
+	const snapshot = kernel.getSnapshot();
+	expect(snapshot.iab?.customVendors).toEqual([]);
+	const decoded = await decodeTCString(snapshot.iab?.authority?.tcString ?? '');
+	expect(decoded.vendorConsents[1]).toBe(true);
+	expect(error).toHaveBeenCalledWith(
+		expect.stringContaining('Custom vendor "Colliding custom" (id 1)')
+	);
+	error.mockRestore();
+});
+
 const customVendors = [
 	{
 		id: 9001,

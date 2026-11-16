@@ -689,3 +689,64 @@ describe('consent gate accepted shifts', () => {
 		}
 	);
 });
+
+describe('consent gate target new on the head', () => {
+	const pkg = '@c15t/angular-browser-bench';
+	const budgets = consentGateBudgets('angular');
+	const angularGate = (bannerMs: number): BenchmarkResult => ({
+		...makeResult('consent-gate:latency-200ms', {}, budgets, 'head'),
+		framework: 'angular',
+		metadata: { target: 'angular' },
+		metrics: budgets.map((budget) =>
+			summarizeMetric(
+				budget.metric,
+				'ms',
+				Array<number>(12).fill(
+					budget.metric === 'rejectedScriptRequests' ? 0 : bannerMs
+				)
+			)
+		),
+		package: pkg,
+		suite: 'consent-gate',
+	});
+	const compare = (bannerMs: number, newOnHead: string) =>
+		runCompare({
+			BENCHMARK_ARM_MAP: emptyArmMap(),
+			BENCHMARK_BASE_DIR: writeResults([]),
+			BENCHMARK_EXPECTED_PACKAGES: pkg,
+			BENCHMARK_EXPECTED_SUITES: 'consent-gate',
+			BENCHMARK_HEAD_DIR: writeResults([angularGate(bannerMs)]),
+			BENCHMARK_NEW_ON_HEAD: newOnHead,
+			BENCHMARK_PROFILE: 'regression',
+		});
+	const relative = budgets.filter(
+		(budget) => budget.comparator === 'absolute-or-percent-lte'
+	).length;
+
+	it('skips the base comparison and says so in the summary', () => {
+		const run = compare(300, pkg);
+		expect(run.code).toBe(0);
+		const summary = summaryOf(run);
+		expect(summary.results.missingBase).toEqual([]);
+		expect(summary.results.newOnHead).toEqual([
+			`${pkg}:consent-gate:latency-200ms:consent-gate`,
+		]);
+		expect(summary.budgets.newOnHead).toBe(relative);
+		expect(summary.budgets.evaluated).toBe(budgets.length - relative);
+		expect(run.comparison?.results[0]?.status).toBe('new-on-head');
+		expect(run.stdout).toContain('new on the head');
+	});
+
+	it('still enforces the absolute budgets', () => {
+		// 700 ms breaks the 600 ms banner ceiling.
+		const run = compare(700, pkg);
+		expect(run.code).not.toBe(0);
+		expect(summaryOf(run).failures.join('\n')).toContain('bannerVisibleMs');
+	});
+
+	it('fails a missing base for a target the base should have', () => {
+		const run = compare(300, '');
+		expect(run.code).not.toBe(0);
+		expect(summaryOf(run).results.missingBase).toHaveLength(1);
+	});
+});

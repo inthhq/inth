@@ -1,0 +1,38 @@
+{
+	"name": "@c15t/storybook-angular",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"build": "storybook build",
+		"prestorybook": "bun --cwd ../../packages/core prebuild && bun --cwd ../../packages/iab prebuild",
+		"storybook": "bun run prestorybook && portless run --name storybook-angular sh -c 'storybook dev --port \"$PORT\" --host \"$HOST\"'",
+		"test-storybook": "test-storybook --url ${STORYBOOK_URL:-http://127.0.0.1:6006}"
+	},
+	"dependencies": {
+		"@angular/animations": "22.2.5",
+		"@angular/common": "22.2.5",
+		"@angular/compiler": "22.2.5",
+		"@angular/core": "22.2.5",
+		"@angular/forms": "22.2.5",
+		"@angular/platform-browser": "22.2.5",
+		"@c15t/angular": "workspace:*",
+		"@c15t/conformance": "workspace:*",
+		"@c15t/core": "workspace:*",
+		"@c15t/ui": "workspace:*",
+		"rxjs": "7.8.2",
+		"tslib": "^2.8.1"
+	},
+	"devDependencies": {
+		"@analogjs/storybook-angular": "2.9.6",
+		"@analogjs/vite-plugin-angular": "2.9.6",
+		"@angular/build": "22.2.6",
+		"@angular/compiler-cli": "22.2.5",
+		"@c15t/typescript-config": "workspace:*",
+		"@storybook/addon-a11y": "10.4.6",
+		"@storybook/angular": "10.4.6",
+		"@storybook/test-runner": "^0.24.4",
+		"storybook": "10.4.6",
+		"typescript": "6.0.3",
+		"vite": "8.1.3"
+	}
+}

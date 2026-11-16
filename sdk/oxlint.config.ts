@@ -193,6 +193,59 @@ export default defineConfig({
 			},
 		},
 		{
+			// Angular declares components and directives as decorated classes.
+			// A primitive's parts share one file, marker directives have no
+			// body, and methods bound from templates need not read `this`.
+			files: [
+				'packages/angular/**/*.ts',
+				'internals/doc-snippets/angular/**/*.ts',
+				'internals/fixtures/angular/**/*.ts',
+				'benchmarks/angular-browser-bench/src/**/*.ts',
+			],
+			rules: {
+				'class-methods-use-this': 'off',
+				'max-classes-per-file': 'off',
+				'typescript/no-extraneous-class': [
+					'error',
+					{ allowWithDecorator: true },
+				],
+			},
+		},
+		{
+			// Angular's public name for the local-policy mode is `local()` from
+			// `@c15t/angular`. Core's deprecated `offline` alias must not reach
+			// Angular code, docs snippets, fixtures or benches.
+			files: [
+				'packages/angular/**/*.{ts,mts,js,mjs}',
+				'internals/doc-snippets/angular/**/*.{ts,mts,js,mjs}',
+				'internals/fixtures/angular/**/*.{ts,mts,js,mjs}',
+				'internals/angular-compat/**/*.{ts,mts,js,mjs}',
+				'benchmarks/angular-browser-bench/**/*.{ts,mts,js,mjs}',
+				'apps/storybook-angular/**/*.{ts,mts,js,mjs}',
+			],
+			rules: {
+				'no-restricted-imports': [
+					'error',
+					{
+						paths: [
+							{
+								importNames: ['offline'],
+								message: "Use local() from '@c15t/angular' instead of offline.",
+								name: '@c15t/core',
+							},
+						],
+						patterns: [
+							{
+								group: ['@c15t/core/*'],
+								importNames: ['offline'],
+								message: "Use local() from '@c15t/angular' instead of offline.",
+							},
+						],
+					},
+				],
+			},
+		},
+		{
 			files: [...nonReactFrameworkFiles],
 			rules: {
 				// Vue composables also use the `use*` convention, but do not follow

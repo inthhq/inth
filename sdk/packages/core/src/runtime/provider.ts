@@ -28,6 +28,11 @@
  * ```
  */
 export { claimEarlyJourney } from '../libs/journey';
+// The English defaults and the revocation reload a provider passes its
+// runtime, so a provider that loads its engine on demand never imports the
+// root entry, which first-load code may reach too.
+export { watchRevocationReload } from '../modules/revocation-reload';
+export { defaultTranslationConfig } from '../translations';
 export { lazyRuntimeModule } from './lazy-module';
 export { createConsentProviderRuntime } from './provider-runtime';
 export { lazyStreamPrefetch, streamPrefetchWith } from './stream-mode';

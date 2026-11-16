@@ -28,6 +28,7 @@ export type {
 export {
 	CONSENT_ROUTE_TIMEOUT_HEADER,
 	createConsentRouteHandler,
+	readRequestForwarding,
 	readWaitUntil,
 } from './consent-route';
 export type {

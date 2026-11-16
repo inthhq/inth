@@ -185,6 +185,12 @@ export {
 	type IpAddressConfig,
 	maskIpAddress,
 } from './shared/client-ip';
+// RFC 7239 Forwarded headers, for the client IP and a request's origin.
+export {
+	type ForwardedElement,
+	forwardedNodeAddress,
+	parseForwarded,
+} from './shared/forwarded';
 // Google Additional Consent providers - ad tech outside the GVL
 export {
 	ADDITIONAL_CONSENT_V2_PATTERN,

@@ -327,8 +327,13 @@ budget in `consentGateBudgets()`. Pull requests run only the targets whose
 bench the change reaches: `scripts/ci-plan.ts` emits them as the `gate`
 output (for example `react,nextjs,tanstack-start`), and `ci.yml` passes them
 as `gate_targets`. A change to `@c15t/core`, `@c15t/ui` or the gate harness
-runs all seven. A change to `@c15t/vue` runs Nuxt and Astro, and a change to
-`@c15t/browser` runs the script tag. Pushes to `canary`, the nightly run and
+runs all eight. A change to `@c15t/vue` runs Nuxt and Astro, a change to
+`@c15t/browser` runs the script tag, and a change to `@c15t/angular` runs
+Angular. The Angular bench has a gate and no runtime suites, so a pull
+request that reaches only Angular runs the workflow in `gate` mode, without
+the quick runtime jobs. A target whose bench the base revision does not have
+yet is measured on the head only and held to its absolute budgets; the
+summary lists it as new on the head. Pushes to `canary`, the nightly run and
 full validation run every target. Manual runs accept `mode: gate` and a
 `gate_targets` list. To run the same comparison locally, use
 `bun run bench:gate [--base <rev>] [--package <bench>]`; see

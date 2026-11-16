@@ -249,7 +249,9 @@ describe('release validation', () => {
 				performance: {
 					if: "needs.repository.outputs.performance == 'true' && !inputs.skip_performance",
 					with: {
-						mode: `\${{ github.event_name != 'pull_request' && 'full' || 'quick' }}`,
+						// A PR that reaches only a gate-only bench (Angular) runs the
+						// consent gate without the quick runtime suites.
+						mode: `\${{ github.event_name != 'pull_request' && 'full' || (needs.repository.outputs.runtimeBenchmarks == 'true' && 'quick' || 'gate') }}`,
 					},
 				},
 			},

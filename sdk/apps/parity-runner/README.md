@@ -1,6 +1,6 @@
 # Cross-framework parity
 
-The runner requires all 16 core stories in each configured React, Svelte, and Vue Storybook. A missing story or unavailable index fails discovery. Solid is excluded because it supplies primitives, not the core adapter contract.
+The runner requires all 16 core stories in each configured React, Svelte, Vue, and Angular Storybook. A missing story or unavailable index fails discovery. Solid is excluded because it supplies primitives, not the core adapter contract.
 
 Capture starts after story rendering and interaction play finish. It includes tagged UI roots portaled into the document body, their complete descendant trees, the accessibility tree, computed styles, dialog evidence, and per-framework screenshots. JSON attachments retain each framework's capture for review.
 
@@ -15,6 +15,7 @@ The DOM comparison recognizes these specific implementation equivalents:
 - Hidden SVG labels and the built-in icon marker class are presentation metadata. SVG paths, view boxes, stroke/fill attributes, and actual size, position, computed paint, and transforms remain compared. Intrinsic dimensions can match CSS dimensions only at the same rendered bounds.
 - Fixed trigger positions can use classes or inline coordinates when their actual bounds agree. Computed position and stacking order remain checked.
 - Small switch variant classes can match the corresponding size attribute. Checked/disabled state remains in the DOM, and computed styles include the switch track and thumb.
+- On an Angular page (one with an `[ng-version]` root), empty attributes named `c15t…` are the attribute selectors Angular writes into the DOM: dash-case for components, such as `c15t-consent-button=""`, and lowercased camelCase for directives, such as `c15tconsentdialoglink=""`. They carry no state. The same attribute outside Angular, or with a value, remains compared.
 
 Browser regressions cover incorrect dialog semantics, focus, visibility and geometry; wrong heading levels and ID references; changed SVG shape and position; substantive wrappers; and changed switch state or thumb styling. These rules do not permit blanket removal of attributes, classes, or descendants to make a failing story pass.
 
@@ -89,14 +90,16 @@ Every Storybook has to be built and served first:
 
 ```sh
 bun turbo run build --filter=@c15t/storybook-react --filter=@c15t/storybook-svelte \
-  --filter=@c15t/storybook-vue --filter=@c15t/storybook-astro
+  --filter=@c15t/storybook-vue --filter=@c15t/storybook-astro \
+  --filter=@c15t/storybook-angular
 
 bunx http-server apps/storybook-react/storybook-static  --port 6006 --silent &
 bunx http-server apps/storybook-svelte/storybook-static --port 6007 --silent &
 bunx http-server apps/storybook-vue/storybook-static    --port 6008 --silent &
 bunx http-server apps/storybook-astro/storybook-static  --port 6010 --silent &
+bunx http-server apps/storybook-angular/storybook-static --port 6011 --silent &
 
-PARITY_FRAMEWORKS=react,svelte,vue,astro PARITY_SKIP_PIXEL=1 \
+PARITY_FRAMEWORKS=react,svelte,vue,astro,angular PARITY_SKIP_PIXEL=1 \
   bun run --cwd apps/parity-runner test:parity --ignore-snapshots
 ```
 
@@ -107,6 +110,7 @@ PARITY_FRAMEWORKS=react,svelte,vue,astro PARITY_SKIP_PIXEL=1 \
 | `VUE_STORYBOOK_URL` | `http://127.0.0.1:6008` |
 | `SOLID_STORYBOOK_URL` | `http://127.0.0.1:6009` |
 | `ASTRO_STORYBOOK_URL` | `http://127.0.0.1:6010` |
+| `ANGULAR_STORYBOOK_URL` | `http://127.0.0.1:6011` |
 | `PARITY_FRAMEWORKS` | `react,svelte` |
 | `PARITY_SKIP_PIXEL` | unset |
 | `PARITY_DEBUG` | unset — prints the first DOM/a11y diff |
@@ -118,8 +122,9 @@ are darwin-only. `--update-snapshots` regenerates them.
 
 Stories pair by stripping the `{FRAMEWORK}` segment from the Storybook
 title, so `COMPONENTS - REACT/Core/Consent Banner` pairs with
-`COMPONENTS - SVELTE/Core/Consent Banner` and
-`COMPONENTS - ASTRO/Core/Consent Banner`. The rest of the title is part of
+`COMPONENTS - SVELTE/Core/Consent Banner`,
+`COMPONENTS - ASTRO/Core/Consent Banner` and
+`COMPONENTS - ANGULAR/Core/Consent Banner`. The rest of the title is part of
 the key: rename a section in one Storybook and that framework silently
 drops out of every comparison.
 
@@ -138,7 +143,9 @@ PARITY_FRAMEWORKS=react,svelte,vue bun run --cwd apps/parity-runner test:parity 
 ```
 
 This checks all seven tabs and the circular launcher at desktop and mobile
-sizes, in light and dark mode. It compares the floating panel itself, including
+sizes, in light and dark mode. The Angular Storybook has no DevTools story
+yet, so this comparison leaves Angular out even when `PARITY_FRAMEWORKS`
+names it. It compares the floating panel itself, including
 its portaled content, through DOM, accessibility, computed styles, and exact
 screenshots. It also rejects horizontal overflow and off-screen placement.
 

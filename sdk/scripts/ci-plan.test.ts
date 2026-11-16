@@ -136,6 +136,17 @@ describe('CI selection', () => {
 		// and Astro alone fail it before comparing anything.
 		const result = plan(['packages/astro/src/client.ts']);
 		expect([...result.parity].sort()).toEqual([
+			'angular',
+			'astro',
+			'react',
+			'svelte',
+			'vue',
+		]);
+	});
+	it('pairs an Angular-only change with every framework parity is measured against', () => {
+		const result = plan(['packages/angular/src/lib/banner/consent-banner.ts']);
+		expect([...result.parity].sort()).toEqual([
+			'angular',
 			'astro',
 			'react',
 			'svelte',
@@ -190,7 +201,7 @@ describe('CI selection', () => {
 		const result = plan([file]);
 		expect(result.full).toBe(true);
 		expect(result.backend).toBe(true);
-		expect(result.examples).toHaveLength(18);
+		expect(result.examples).toHaveLength(19);
 		expect(result.starters).toHaveLength(starterTargets.length);
 	});
 	it('gives every starter in examples/ a smoke target', () => {
@@ -238,6 +249,14 @@ describe('CI selection', () => {
 		]);
 		expect(fixture.starters).toEqual(['svelte-5-20']);
 		expect(fixture.build).toContain('@c15t/svelte');
+	});
+	it('runs the Angular example when @c15t/angular changes', () => {
+		expect(plan(['packages/angular/src/public-api.ts']).examples).toContain(
+			'angular'
+		);
+		expect(
+			plan(['internals/fixtures/angular/src/app/app.ts']).examples
+		).toEqual(['angular']);
 	});
 	it('runs every starter when the smoke harness changes', () => {
 		expect(
@@ -371,8 +390,33 @@ describe('consent gate selection', () => {
 			'astro',
 			'sveltekit',
 			'tanstack-start',
+			'angular',
 			'script-tag',
 		]);
+	});
+	it('measures only Angular for an Angular change, without the runtime suites', () => {
+		const result = plan(['packages/angular/src/public-api.ts']);
+		expect(result.gate).toEqual(['angular']);
+		// The Angular bench has a gate and no `bench:ci`, so the benchmark
+		// workflow runs in `gate` mode alone.
+		expect(result).toMatchObject({
+			performance: true,
+			runtimeBenchmarks: false,
+		});
+		expect(ciSchedulingOutputs(result)).toMatchObject({
+			gate: 'angular',
+			performance: true,
+			runtimeBenchmarks: false,
+		});
+		expect(
+			plan(['benchmarks/angular-browser-bench/scripts/run-gate.ts']).gate
+		).toEqual(['angular']);
+	});
+	it('keeps the runtime suites when a change reaches a runtime bench', () => {
+		expect(plan(['packages/core/src/kernel.ts'])).toMatchObject({
+			performance: true,
+			runtimeBenchmarks: true,
+		});
 	});
 	it('measures only the frameworks an adapter change reaches', () => {
 		const vue = plan(['packages/vue/src/index.ts']).gate;
@@ -395,7 +439,7 @@ describe('consent gate selection', () => {
 	});
 	it('measures every target when the gate harness changes', () => {
 		expect(plan(['benchmarks/shared/src/consent-gate.ts']).gate).toHaveLength(
-			7
+			8
 		);
 	});
 	it('runs no gate for documentation', () => {

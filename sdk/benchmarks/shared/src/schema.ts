@@ -18,6 +18,7 @@ export type BenchmarkSuite =
 	| 'consent-gate';
 
 export type BenchmarkFramework =
+	| 'angular'
 	| 'core'
 	| 'react'
 	| 'nextjs'
@@ -115,7 +116,12 @@ export type MetricBudgetStatus =
 	| 'evaluated'
 	| 'missing-head-metric'
 	| 'missing-base-metric'
-	| 'unevaluated-arm';
+	| 'unevaluated-arm'
+	/**
+	 * A relative budget on a result the base revision cannot produce (a
+	 * framework new on the head). Skipped; the absolute budgets still apply.
+	 */
+	| 'new-on-head';
 
 export interface MetricBudgetResult {
 	metric: string;
@@ -178,7 +184,11 @@ export interface BenchmarkComparisonMetric {
 	deltaPercent: number | null;
 }
 
-export type BenchmarkComparisonStatus = 'compared' | 'missing-base';
+export type BenchmarkComparisonStatus =
+	| 'compared'
+	| 'missing-base'
+	/** The base revision has no bench for it; see `MetricBudgetStatus`. */
+	| 'new-on-head';
 
 export interface BenchmarkComparisonEntry {
 	key: string;
@@ -209,6 +219,8 @@ export interface BenchmarkComparisonSummary {
 		compared: number;
 		missingHead: string[];
 		missingBase: string[];
+		/** Results the base revision cannot produce, judged on absolute budgets. */
+		newOnHead?: string[];
 		unexpected: string[];
 	};
 	budgets: {
@@ -219,6 +231,8 @@ export interface BenchmarkComparisonSummary {
 		missingHeadMetric: number;
 		missingBaseMetric: number;
 		unevaluatedArm: number;
+		/** Relative budgets skipped because their result is new on the head. */
+		newOnHead?: number;
 		/** Expected budgets the head artifact does not define at all. */
 		missingDefinitions: string[];
 		/**

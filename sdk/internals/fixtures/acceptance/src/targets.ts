@@ -56,6 +56,17 @@ export const targets: ExampleTarget[] = [
 		start: () => ['serve.ts'],
 	},
 	{
+		// Server-rendered with `provideC15tServer()`. C15T_BACKEND_URL is
+		// where the server's consent route reads the manifest and forwards
+		// saves; the browser only talks to the app. `/headless` swaps the
+		// stock surfaces for consent UI built on `HeadlessConsent`.
+		directory: 'angular',
+		failureRoute: '/',
+		id: 'angular',
+		routes: ['/', '/headless'],
+		start: () => ['run', 'start'],
+	},
+	{
 		directory: 'vue',
 		failureRoute: '/',
 		id: 'vue',

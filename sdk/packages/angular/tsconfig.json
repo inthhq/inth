@@ -1,0 +1,41 @@
+{
+	"extends": "@c15t/typescript-config/base.json",
+	"compilerOptions": {
+		"experimentalDecorators": false,
+		"importHelpers": true,
+		"lib": ["es2022", "DOM", "DOM.Iterable"],
+		"moduleResolution": "bundler",
+		"noImplicitOverride": true,
+		"noPropertyAccessFromIndexSignature": false,
+		"paths": {
+			"@c15t/angular": ["./src/public-api.ts"],
+			"@c15t/angular/*": ["./*/src/public-api.ts"]
+		},
+		"useDefineForClassFields": false
+	},
+	"angularCompilerOptions": {
+		"strictInjectionParameters": true,
+		"strictInputAccessModifiers": true,
+		"strictTemplates": true
+	},
+	"include": [
+		"src",
+		"consent-dialog/src",
+		"consent-dialog-trigger/src",
+		"consent-gate/src",
+		"consent-root/src",
+		"consent-widget/src",
+		"devtools/src",
+		"iab/src",
+		"primitives/src",
+		"ssr/src",
+		"testing/src"
+	],
+	"exclude": [
+		"node_modules",
+		"dist",
+		"**/__tests__/**",
+		"**/*.spec.ts",
+		"src/test-setup.ts"
+	]
+}

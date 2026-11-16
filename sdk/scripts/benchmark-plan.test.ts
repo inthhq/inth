@@ -56,7 +56,7 @@ describe('benchmark package selection', () => {
 	it.each([
 		['quick', 4],
 		['full', 10],
-		['gate', 7],
+		['gate', 8],
 		['examples', 1],
 	])('emits %s matrix jobs with unique artifact names', (mode, count) => {
 		const output = execFileSync(
@@ -96,8 +96,11 @@ describe('benchmark package selection', () => {
 				.filter((entry) => entry.mode === 'gate')
 				.map((entry) => entry.package)
 		).toEqual(['@c15t/script-lifecycle-bench']);
+		expect(selectGatePackages('angular')).toEqual([
+			'@c15t/angular-browser-bench',
+		]);
 		expect(selectGatePackages('none')).toEqual([]);
-		expect(selectGatePackages('all')).toHaveLength(7);
+		expect(selectGatePackages('all')).toHaveLength(8);
 		expect(() => selectGatePackages('react,solid')).toThrow(
 			'Unknown consent gate target: solid'
 		);

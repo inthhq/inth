@@ -101,6 +101,11 @@ const env = {
 	[BENCH_ONLY_ENV]: only.join(','),
 	[BENCH_SKIP_ENV]: skip.join(','),
 };
+// A gate target whose bench the base revision does not have (a framework
+// new on the head) cannot be measured there. The overlay leaves its bench
+// out of the base tree, so the base arm skips it, and the comparison holds
+// its head to the absolute budgets only. Filled in once the base exists.
+let baseMissing: string[] = [];
 // Kept in the report, so a failed later round still uploads the earlier ones.
 const roundDirectory = (round: number, arm: BenchmarkArm) =>
 	join(report, 'rounds', String(round + 1), arm);
@@ -133,21 +138,28 @@ const measure = async function measure(
 			{ cwd: root, env: { ...env, GITHUB_SHA: sha } }
 		);
 	} else if (mode === 'gate') {
+		const measured =
+			arm === 'base'
+				? packages.filter((name) => !baseMissing.includes(name))
+				: packages;
 		// The overlay brings each bench's `bench:gate` script to the base, but
 		// not the root turbo.json, so build through the `build` task every
-		// revision has and call the script directly.
-		await runCommand(
-			[
-				'bun',
-				'turbo',
-				'run',
-				'build',
-				'--output-logs=errors-only',
-				...packages.map((name) => `--filter=${name}`),
-			],
-			{ cwd, env: { ...env, GITHUB_SHA: sha } }
-		);
-		for (const name of packages) {
+		// revision has and call the script directly. With no filter, turbo
+		// would build every package, so a base with nothing to measure skips it.
+		if (measured.length > 0) {
+			await runCommand(
+				[
+					'bun',
+					'turbo',
+					'run',
+					'build',
+					'--output-logs=errors-only',
+					...measured.map((name) => `--filter=${name}`),
+				],
+				{ cwd, env: { ...env, GITHUB_SHA: sha } }
+			);
+		}
+		for (const name of measured) {
 			const benchDirectory = readWorkspaces(cwd).find(
 				(workspace) => workspace.name === name
 			)?.directory;
@@ -174,9 +186,13 @@ const measure = async function measure(
 			{ cwd, env: { ...env, GITHUB_SHA: sha } }
 		);
 	}
-	cpSync(join(cwd, '.benchmarks/head'), roundDirectory(round, arm), {
-		recursive: true,
-	});
+	const results = join(cwd, '.benchmarks/head');
+	if (existsSync(results)) {
+		cpSync(results, roundDirectory(round, arm), { recursive: true });
+	} else {
+		// Every package this arm would measure is new on the head.
+		mkdirSync(roundDirectory(round, arm), { recursive: true });
+	}
 };
 const revisions = {
 	base: { cwd: base, sha: baseSha },
@@ -196,12 +212,24 @@ try {
 	// dependency lockfiles and build configuration remain at their own revision.
 	// Record this overlay instead of pretending it is a pristine baseline tree.
 	replaceBenchmarkFixtures(root, base);
+	if (mode === 'gate') {
+		const baseWorkspaces = new Set(
+			readWorkspaces(base).map((workspace) => workspace.name)
+		);
+		baseMissing = packages.filter((name) => !baseWorkspaces.has(name));
+		for (const name of baseMissing) {
+			process.stdout.write(
+				`${name} is new on the head: the base revision has no such bench, so its head is held to the absolute budgets only.\n`
+			);
+		}
+	}
 	writeFileSync(
 		join(report, 'provenance.json'),
 		JSON.stringify(
 			{
 				backendLatencyMs,
 				baseHarnessOverlay: true,
+				baseMissing,
 				baseSha,
 				harnessDirty:
 					execFileSync(
@@ -251,6 +279,10 @@ try {
 			BENCHMARK_EXPECTED_PACKAGES: expectedPackages.join(','),
 			BENCHMARK_EXPECTED_SUITES: suites.join(','),
 			BENCHMARK_HEAD_DIR: join(report, 'head'),
+			// Result packages, so the Nuxt bench maps to `@c15t/vue`.
+			BENCHMARK_NEW_ON_HEAD: baseMissing
+				.map((name) => expectedPackages[packages.indexOf(name)])
+				.join(','),
 			BENCHMARK_PROFILE: 'regression',
 		},
 	});

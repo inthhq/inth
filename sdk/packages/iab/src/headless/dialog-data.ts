@@ -338,7 +338,11 @@ export const processGVLForDialog = function processGVLForDialog(
 		iab.gvl,
 		iab.publisherRestrictions
 	);
-	const customVendors = getCustomVendors(iab);
+	// A custom vendor with a registered vendor's id is dropped, as
+	// `createIAB()` drops it, so the two never share a row.
+	const customVendors = getCustomVendors(iab).filter(
+		(vendor) => !Object.hasOwn(iab.gvl?.vendors ?? {}, String(vendor.id))
+	);
 	const { language } = iab;
 	const purposes = processPurposes(
 		gvl,

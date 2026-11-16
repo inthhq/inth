@@ -36,6 +36,7 @@ import {
 	hasResolvedPrefetch,
 	normalizeKernelUser,
 } from './runtime-kernel';
+import { storageFor } from './storage-for';
 import type {
 	ConsentRuntime,
 	ConsentRuntimeIABHandle,
@@ -81,19 +82,7 @@ const isRecordSeed = function isRecordSeed(
 	);
 };
 
-/** The storage `persistence` resolves to, from one option set. @internal */
-export const storageFor = function storageFor(
-	options: Pick<
-		ConsentRuntimeOptions,
-		'consentSource' | 'persistence' | 'storageConfig'
-	>
-): ConsentRuntimeOptions['storageConfig'] {
-	return (
-		(!options.consentSource && typeof options.persistence === 'object'
-			? options.persistence.storageConfig
-			: undefined) ?? options.storageConfig
-	);
-};
+export { storageFor } from './storage-for';
 
 /**
  * Build a runtime from options and module factories.

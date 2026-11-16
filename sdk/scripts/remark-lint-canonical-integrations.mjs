@@ -6,7 +6,7 @@ import { parseDocument } from 'yaml';
 
 const defaultDocsRoot = fileURLToPath(new URL('../docs', import.meta.url));
 const platforms =
-	'(?:react-native|mobile|native|android|ios|apple|kotlin|jetpack-compose|compose|swiftui|swift|uikit|expo|rn|web|browser|react|next-js|nextjs|next|tanstack-start|nuxt-js|nuxt|vue-js|vue|astro|sveltekit|svelte-kit|svelte|solid-js|solid|javascript|js|html)';
+	'(?:react-native|mobile|native|android|ios|apple|kotlin|jetpack-compose|compose|swiftui|swift|uikit|expo|rn|web|browser|react|next-js|nextjs|next|tanstack-start|nuxt-js|nuxt|vue-js|vue|astro|sveltekit|svelte-kit|svelte|angular-js|angular|solid-js|solid|javascript|js|html)';
 const platformPrefix = new RegExp(`^(?:${platforms}-(?:(?:for|on)-)?)`, 'u');
 const platformSuffix = new RegExp(`(?:-(?:(?:for|on)-)?${platforms})$`, 'u');
 const pageRolePrefix =

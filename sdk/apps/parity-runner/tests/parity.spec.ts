@@ -1,8 +1,8 @@
 /**
  * Cross-framework parity spec.
  *
- * For required React, Svelte and Vue core stories, verify every configured
- * framework is present, then load the
+ * For required React, Svelte, Vue and Angular core stories, verify every
+ * configured framework is present, then load the
  * iframe in each Storybook and assert:
  *   1. Normalized DOM structure matches across frameworks.
  *   2. Accessibility tree matches across frameworks.
@@ -18,6 +18,7 @@
  *   - `REACT_STORYBOOK_URL` (default http://127.0.0.1:6006)
  *   - `SVELTE_STORYBOOK_URL` (default http://127.0.0.1:6007)
  *   - `VUE_STORYBOOK_URL` (default http://127.0.0.1:6008)
+ *   - `ANGULAR_STORYBOOK_URL` (default http://127.0.0.1:6011)
  *   - `PARITY_FRAMEWORKS` (comma list, default `react,svelte,vue`)
  * Solid is primitives-only and excluded from this core adapter contract.
  */
@@ -30,7 +31,11 @@ import { captureDialogEvidence } from '../src/dialog-evidence';
 import { captureA11yTree } from '../src/diff-a11y';
 import { captureComputedStyleMap } from '../src/diff-computed-style';
 import { captureDomSnapshot } from '../src/diff-dom';
-import { selectComparablePairs } from '../src/pair-stories';
+import {
+	selectComparablePairs,
+	STORY_LOAD_TIMEOUT_MS,
+	storyVisitTimeout,
+} from '../src/pair-stories';
 import type { ComparablePair } from '../src/pair-stories';
 import {
 	findAllowEntry,
@@ -40,6 +45,7 @@ import type { ParityAllowEntry } from '../src/parity-allowlist';
 import { loadStorybookIndex } from '../src/storybook-index';
 
 const FRAMEWORK_URLS: Record<string, string> = {
+	angular: process.env.ANGULAR_STORYBOOK_URL ?? 'http://127.0.0.1:6011',
 	astro: process.env.ASTRO_STORYBOOK_URL ?? 'http://127.0.0.1:6010',
 	react: process.env.REACT_STORYBOOK_URL ?? 'http://127.0.0.1:6006',
 	solid: process.env.SOLID_STORYBOOK_URL ?? 'http://127.0.0.1:6009',
@@ -51,6 +57,9 @@ const ENABLED_FRAMEWORKS = (process.env.PARITY_FRAMEWORKS ?? 'react,svelte,vue')
 	.split(',')
 	.map((f) => f.trim())
 	.filter(Boolean);
+
+/** The adapters that must ship every required core story when enabled. */
+const CORE_ADAPTERS = ['react', 'svelte', 'vue', 'angular'];
 
 const REQUIRED_CORE_STORIES = [
 	'Core/Consent Banner/Default',
@@ -102,12 +111,10 @@ const loadPairedStories = async function loadPairedStories(): Promise<
 		expect(
 			Object.keys(
 				paired.find((pair) => pair.key === key)?.entries ?? {}
-			).filter((framework) => ['react', 'svelte', 'vue'].includes(framework)),
+			).filter((framework) => CORE_ADAPTERS.includes(framework)),
 			key
 		).toEqual(
-			ENABLED_FRAMEWORKS.filter((entry) =>
-				['react', 'svelte', 'vue'].includes(entry)
-			)
+			ENABLED_FRAMEWORKS.filter((entry) => CORE_ADAPTERS.includes(entry))
 		);
 	}
 	console.log(
@@ -133,7 +140,12 @@ const openStory = async function openStory(
 	storyId: string
 ): Promise<void> {
 	const url = new URL(`/iframe.html?id=${storyId}&viewMode=story`, baseUrl);
-	await page.goto(url.toString(), { waitUntil: 'networkidle' });
+	// A story that never settles fails here, by name, not as the
+	// whole test's timeout.
+	await page.goto(url.toString(), {
+		timeout: STORY_LOAD_TIMEOUT_MS,
+		waitUntil: 'networkidle',
+	});
 	// Storybook renders inside `#storybook-root`. Wait for the element to
 	// be attached — stories whose components portal to `document.body`
 	// (banner, dialog) leave the root itself empty/hidden, so `visible`
@@ -220,8 +232,9 @@ test.describe('cross-framework parity', () => {
 
 	test('paired stories produce identical DOM + a11y + computed-style snapshots', async ({
 		page,
-	}) => {
+	}, testInfo) => {
 		const paired = await loadPairedStories();
+		test.setTimeout(storyVisitTimeout(paired, testInfo.timeout));
 		const failures: string[] = [];
 		const usedEntries = new Set<ParityAllowEntry>();
 
@@ -380,6 +393,7 @@ test.describe('cross-framework parity', () => {
 			'Committed baselines are opt-in; CI runs live pixel and geometry comparisons.'
 		);
 		const paired = await loadPairedStories();
+		test.setTimeout(storyVisitTimeout(paired, testInfo.timeout));
 		for (const pair of paired) {
 			for (const [framework, entry] of Object.entries(pair.entries)) {
 				const url = FRAMEWORK_URLS[framework];

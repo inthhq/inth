@@ -202,11 +202,16 @@ Add this component to pages using your consent-enabled base layout:
       if (this.dispose) return;
       const client = getConsentClient();
       if (!client) return;
-      this.dispose = mountConsentEmbed(
-        this,
-        client.runtime.kernel,
-        () => { void client.openDialog(); },
-      );
+      // The runtime loads after the page for a visitor the banner asks
+      // to choose; `client.ready` resolves once it is set.
+      void client.ready.then(() => {
+        if (this.dispose || !client.runtime) return;
+        this.dispose = mountConsentEmbed(
+          this,
+          client.runtime.kernel,
+          () => { void client.openDialog(); },
+        );
+      });
     };
 
     connectedCallback() {
@@ -289,6 +294,59 @@ Keep the SvelteKit root and its server-resolved state unchanged.
 The Svelte `ConsentGate` waits until the browser is mounted and the category is
 allowed. Its default placeholder opens preferences. Revocation removes the
 iframe.
+
+**Angular**
+
+Render this component anywhere below the existing `provideC15t()`.
+Import `ConsentEmbed` into the component that uses it.
+
+```ts title="src/app/consent-embed.ts"
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { DomSanitizer } from '@angular/platform-browser';
+import { ConsentGate, ConsentGateContent } from '@c15t/angular/consent-gate';
+
+import {
+	embedAspectRatio,
+	embedCategory,
+	embedTitle,
+	embedURL,
+} from '../embed-config';
+
+@Component({
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	imports: [ConsentGate, ConsentGateContent],
+	selector: 'app-consent-embed',
+	template: `
+		<c15t-consent-gate [category]="category">
+			<ng-template c15tConsentGateContent>
+				<iframe
+					[src]="url"
+					[title]="title"
+					loading="lazy"
+					allowfullscreen
+					[style.width]="'100%'"
+					[style.aspect-ratio]="aspectRatio"
+					[style.min-height]="'200px'"
+					[style.border]="'0'"
+				></iframe>
+			</ng-template>
+		</c15t-consent-gate>
+	`,
+})
+export class ConsentEmbed {
+	protected readonly category = embedCategory;
+	protected readonly title = embedTitle;
+	protected readonly aspectRatio = embedAspectRatio;
+	// A constant URL from your own config, so it is safe to trust.
+	protected readonly url =
+		inject(DomSanitizer).bypassSecurityTrustResourceUrl(embedURL);
+}
+```
+
+The iframe is in a `c15tConsentGateContent` template, so Angular creates
+it only while the category is allowed and destroys it on revocation. The
+gate fills in one frame after the first browser render, also after server
+rendering. Its default placeholder opens preferences.
 
 **HTML**
 

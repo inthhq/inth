@@ -8,6 +8,7 @@ export const frameworkGuides = [
 	['astro', 'Astro'],
 	['svelte', 'Svelte'],
 	['sveltekit', 'SvelteKit'],
+	['angular', 'Angular'],
 	['html', 'HTML script tag'],
 	['javascript', 'JavaScript'],
 ] as const;

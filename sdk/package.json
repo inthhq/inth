@@ -71,7 +71,7 @@
 		"test:full": "turbo run test",
 		"test:parity": "turbo run test:parity --filter=@c15t/parity-runner",
 		"test:scripts": "vitest run --config scripts/vitest.config.ts",
-		"test:storybook": "turbo run test-storybook --filter=@c15t/storybook-react --filter=@c15t/storybook-svelte --filter=@c15t/storybook-vue",
+		"test:storybook": "turbo run test-storybook --filter=@c15t/storybook-react --filter=@c15t/storybook-svelte --filter=@c15t/storybook-vue --filter=@c15t/storybook-angular",
 		"vercel-build": "tsx scripts/setup-docs.ts --vercel",
 		"version": "bun run tegami version",
 		"view-report": "turbo run view-report"

@@ -1,0 +1,21 @@
+{
+	"extends": "@c15t/typescript-config/base.json",
+	"compilerOptions": {
+		"experimentalDecorators": false,
+		"importHelpers": true,
+		"lib": ["es2022", "DOM", "DOM.Iterable"],
+		"moduleResolution": "bundler",
+		"noPropertyAccessFromIndexSignature": false,
+		"paths": {
+			"@c15t/angular": ["../../packages/angular/src/public-api.ts"],
+			"@c15t/angular/*": ["../../packages/angular/*/src/public-api.ts"]
+		},
+		"useDefineForClassFields": false
+	},
+	"angularCompilerOptions": {
+		"strictInjectionParameters": true,
+		"strictInputAccessModifiers": true,
+		"strictTemplates": true
+	},
+	"include": ["src", "declaration.d.ts"]
+}

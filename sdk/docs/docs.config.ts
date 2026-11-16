@@ -718,6 +718,76 @@ export default defineDocsConfig({
 					title: 'SvelteKit',
 				},
 				{
+					base: 'angular',
+					children: [
+						{
+							pages: [
+								'scripts',
+								'embeds',
+								'network-blocker',
+								'vendor-consent',
+								'clear-on-revocation',
+							],
+							slug: 'scripts-and-embeds',
+							title: 'Scripts and embeds',
+						},
+						{
+							pages: [
+								'customize',
+								'/customization/recipes',
+								'/customization/tokens',
+								'/customization/dark-mode',
+								'/customization/tailwind',
+								'translations',
+								'components/primitives',
+								'headless',
+							],
+							slug: 'customization',
+							title: 'Customization',
+						},
+						{
+							pages: [
+								'components',
+								'components/consent-banner',
+								'components/consent-dialog',
+								'components/consent-root',
+								'components/consent-widget',
+								'components/consent-dialog-link',
+								'components/consent-dialog-trigger',
+								'components/consent-gate',
+								'components/consent-button',
+								'components/iab-consent-banner',
+								'components/iab-consent-dialog',
+							],
+							slug: 'components',
+							title: 'Components',
+						},
+						{
+							pages: ['provide-c15t', 'services', 'callbacks'],
+							slug: 'consent-api',
+							title: 'Consent API',
+						},
+						{
+							pages: ['iab', 'gpp', 'content-security-policy'],
+							slug: 'advanced',
+							title: 'Advanced',
+						},
+						{
+							pages: [
+								'components/dev-tools',
+								'testing',
+								'troubleshooting',
+								'/guides/verify-consent',
+							],
+							slug: 'verify-and-troubleshoot',
+							title: 'Verify and troubleshoot',
+						},
+					],
+					pages: ['quickstart', 'rendering'],
+					slug: 'angular',
+					title: 'Angular',
+				},
+				{
 					base: 'html',
 					children: [
 						{

@@ -147,11 +147,19 @@ export default mergeConfig(
 					'@c15t/core/transports',
 					resolve(__dirname, '../core/src/transports/index.ts'),
 				],
+				[
+					'@c15t/core/iab-support',
+					resolve(__dirname, '../core/src/iab-support.ts'),
+				],
 				['@c15t/core', resolve(__dirname, '../core/src/index.ts')],
 				['@c15t/schema/types', resolve(__dirname, '../schema/src/types.ts')],
 				[
 					'@c15t/schema/config',
 					resolve(__dirname, '../schema/src/config/index.ts'),
+				],
+				[
+					'@c15t/schema/canonical-order',
+					resolve(__dirname, '../schema/src/shared/canonical-order.ts'),
 				],
 				['@c15t/schema', resolve(__dirname, '../schema/src/index.ts')],
 				[

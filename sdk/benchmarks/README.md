@@ -263,7 +263,11 @@ what CookieBench's does:
 
 Results use suite `consent-gate` and scenario `consent-gate:latency-200ms`.
 The script tag reports under `@c15t/script-lifecycle-bench`, and Nuxt
-reports under `@c15t/vue`. `consentGateBudgets()` in `shared/src/budgets.ts`
+reports under `@c15t/vue`. Angular's gate page and control page are two
+Angular apps in `angular-browser-bench`: `provideC15tServer()` needs
+`provideC15t()` in the root injector, so an app set up as the rendering
+guide says loads c15t on every route. Its `run-gate.ts` puts a small router
+in front of the two servers. `consentGateBudgets()` in `shared/src/budgets.ts`
 holds the budgets and their rationale. All of them fail the gate:
 
 - relative budgets on every metric, `absolute-or-percent-lte`, evaluated
@@ -280,8 +284,9 @@ holds the budgets and their rationale. All of them fail the gate:
   Astro's former 1,300 ms exception is gone: its Customize dialog now opens
   before the consent engine loads;
 - `bannerVisibleMs` at most 600 ms for the server-rendered frameworks
-  (Next.js, Nuxt, Astro, SvelteKit, TanStack Start). Round 8 CookieBench
-  medians were 222 to 275 ms.
+  (Next.js, Nuxt, Astro, SvelteKit, TanStack Start, Angular). Round 8
+  CookieBench medians were 222 to 275 ms. CookieBench has no Angular
+  fixture, so Angular takes the same ceiling.
 
 ### Accepted shifts
 
@@ -360,6 +365,16 @@ control routes built from `@c15t/benchmarking/consent-gate-page`, plus a
 `consentGateTargets` (budgets), `consentGatePackages` (expected results),
 `gateTargetPackages` (`scripts/benchmark-plan.ts`) and the selection in
 `scripts/ci-plan.ts`.
+
+Until the base branch has the new target's bench, the base revision cannot
+measure it: the fixture overlay leaves a bench the base lacks out of the base
+tree. `scripts/benchmark-run.ts` then measures that bench on the head only
+and passes it to the compare step as `BENCHMARK_NEW_ON_HEAD`. Its missing
+base result is not a failure. The relative budgets are skipped with status
+`new-on-head`, the absolute budgets (the 1,000 ms tap rule, the banner
+ceiling, no rejected script requests) still fail the gate, and the summary
+names the target as new on the head. Once the bench is on the base branch,
+the full comparison applies.
 
 ## Outputs
 

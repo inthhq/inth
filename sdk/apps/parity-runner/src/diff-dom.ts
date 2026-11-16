@@ -51,8 +51,10 @@ export const captureDomSnapshot = function captureDomSnapshot(
 			if (element.tagName === 'STYLE' && element.id === 'c15t-theme') {
 				return true;
 			}
-			// React's empty parser marker has no rendered or accessible content.
-			// Keep visible markers, added attributes and substantive content.
+			// The empty parser marker a server-rendered banner ends with (React's
+			// streamed IAB banner, Angular's banners) has no rendered or
+			// accessible content. Keep visible markers, added attributes and
+			// substantive content.
 			const parent = element.parentElement;
 			return (
 				element.tagName === 'SPAN' &&
@@ -60,7 +62,10 @@ export const captureDomSnapshot = function captureDomSnapshot(
 				element.getAttribute('data-c15t-stream-end') === '' &&
 				element.hasAttribute('hidden') &&
 				element.childNodes.length === 0 &&
-				parent?.getAttribute('data-testid') === 'iab-consent-banner-root' &&
+				parent !== null &&
+				['consent-banner-root', 'iab-consent-banner-root'].includes(
+					parent.getAttribute('data-testid') ?? ''
+				) &&
 				parent.hasAttribute('data-c15t-streamed') &&
 				parent.lastElementChild === element
 			);
@@ -115,6 +120,19 @@ export const captureDomSnapshot = function captureDomSnapshot(
 				name === 'aria-controls' ||
 				name === 'for'
 			) {
+				// An icon's `<title>` id: React's is fixed, Angular's is counted
+				// so two icons on a page never share one.
+				const svgTitle = (node: Element | null): boolean =>
+					node?.tagName.toLowerCase() === 'title' &&
+					node.parentElement?.tagName.toLowerCase() === 'svg';
+				if (
+					(name === 'id' && svgTitle(element)) ||
+					(name === 'aria-labelledby' &&
+						svgTitle(document.getElementById(value)) &&
+						document.getElementById(value)?.parentElement === element)
+				) {
+					return '__SVG_TITLE__';
+				}
 				const references = value.split(/\s+/u).map((id) => {
 					const referenceTarget =
 						name === 'id' ? element : document.getElementById(id);
@@ -298,6 +316,21 @@ export const captureDomSnapshot = function captureDomSnapshot(
 			}
 			return Array.from(element.childNodes);
 		};
+		// Angular writes the attribute a component or directive is selected
+		// by into the page: `<button c15t-consent-button>` (a component, so
+		// dash-case) renders `c15t-consent-button=""`, and
+		// `<button c15tConsentDialogLink>` (a directive, camelCase) renders
+		// `c15tconsentdialoglink=""`. The marker carries no state. Every
+		// @c15t/angular attribute selector starts with `c15t`, and no other
+		// adapter renders an attribute named that way (theirs are
+		// `data-c15t-*`), so the rule applies only on an Angular page and only
+		// to empty values.
+		const angularPage = document.querySelector('[ng-version]') !== null;
+		const angularSelectorMarker = (attribute: Attr): boolean =>
+			angularPage &&
+			attribute.value === '' &&
+			/^c15t[a-z0-9-]*$/u.test(attribute.name);
+
 		const hiddenSvgMetadata = (element: Element, attribute: Attr): boolean =>
 			element.tagName.toLowerCase() === 'svg' &&
 			Boolean(element.closest('[aria-hidden="true"]')) &&
@@ -364,6 +397,12 @@ export const captureDomSnapshot = function captureDomSnapshot(
 			attribute: Attr
 		): boolean =>
 			STRIP.has(attribute.name) ||
+			angularSelectorMarker(attribute) ||
+			// The flag that pairs with the end marker above. It changes
+			// nothing once the marker is in the DOM.
+			(attribute.name === 'data-c15t-streamed' &&
+				attribute.value === '' &&
+				element.getAttribute('data-testid') === 'consent-banner-root') ||
 			(attribute.name === 'value' &&
 				['INPUT', 'TEXTAREA', 'SELECT'].includes(element.tagName)) ||
 			(element.getAttribute('data-testid') === 'consent-dialog-trigger' &&

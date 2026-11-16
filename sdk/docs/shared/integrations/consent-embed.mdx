@@ -10,7 +10,7 @@ Create `src/embed-config.ts` using the configuration on this page, then select
 your framework. Keep the existing [consent setup](/docs/frameworks), its policy
 and preferences UI. These examples do not create a second consent provider.
 
-<Tabs items={['Next.js', 'TanStack Start', 'React', 'Nuxt', 'Vue', 'Astro', 'Svelte', 'SvelteKit', 'HTML', 'JavaScript']}>
+<Tabs items={['Next.js', 'TanStack Start', 'React', 'Nuxt', 'Vue', 'Astro', 'Svelte', 'SvelteKit', 'Angular', 'HTML', 'JavaScript']}>
   <Tab value="Next.js">
     Render this component inside your existing consent boundary or provider.
 
@@ -263,6 +263,18 @@ and preferences UI. These examples do not create a second consent provider.
     The Svelte `ConsentGate` waits until the browser is mounted and the category is
     allowed. Its default placeholder opens preferences. Revocation removes the
     iframe.
+  </Tab>
+
+  <Tab value="Angular">
+    Render this component anywhere below the existing `provideC15t()`.
+    Import `ConsentEmbed` into the component that uses it.
+
+    <include src="../examples/angular/integration-embed.mdx" />
+
+    The iframe is in a `c15tConsentGateContent` template, so Angular creates
+    it only while the category is allowed and destroys it on revocation. The
+    gate fills in one frame after the first browser render, also after server
+    rendering. Its default placeholder opens preferences.
   </Tab>
 
   <Tab value="HTML">

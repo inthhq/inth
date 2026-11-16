@@ -160,6 +160,12 @@ export default mergeConfig(
 					),
 				},
 				{
+					'@c15t/core/iab-support': resolve(
+						__dirname,
+						'../core/src/iab-support.ts'
+					),
+				},
+				{
 					'@c15t/core/surface-actions': resolve(
 						__dirname,
 						'../core/src/surface-actions/index.ts'
@@ -227,6 +233,12 @@ export default mergeConfig(
 					'@c15t/schema/config': resolve(
 						__dirname,
 						'../schema/src/config/index.ts'
+					),
+				},
+				{
+					'@c15t/schema/canonical-order': resolve(
+						__dirname,
+						'../schema/src/shared/canonical-order.ts'
 					),
 				},
 				{ '@c15t/schema': resolve(__dirname, '../schema/src/index.ts') }

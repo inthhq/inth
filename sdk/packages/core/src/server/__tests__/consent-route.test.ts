@@ -22,6 +22,7 @@ import type { ManifestFetch } from '../../libs/manifest-cache-runtime';
 import {
 	CONSENT_ROUTE_TIMEOUT_HEADER,
 	createConsentRouteHandler,
+	readRequestForwarding,
 	readWaitUntil,
 } from '../consent-route';
 import type { ConsentRouteHandlerOptions } from '../consent-route';
@@ -1546,5 +1547,32 @@ describe('readWaitUntil', () => {
 		expect(holder.tasks).toEqual([task]);
 		expect(readWaitUntil({})).toBeUndefined();
 		expect(readWaitUntil(undefined)).toBeUndefined();
+	});
+});
+
+describe('readRequestForwarding', () => {
+	const forwardingFor = (headers: Record<string, string>) =>
+		readRequestForwarding(
+			new Request('https://shop.example/api/c15t/init', { headers }),
+			true
+		).for;
+
+	test('takes the client from an RFC 7239 Forwarded header', () => {
+		expect(
+			forwardingFor({ forwarded: 'for=192.0.2.60;proto=https;by=203.0.113.43' })
+		).toBe('192.0.2.60');
+	});
+
+	test('reads a quoted IPv6 client with its port', () => {
+		expect(forwardingFor({ forwarded: 'for="[2001:db8:cafe::17]:4711"' })).toBe(
+			'2001:db8:cafe::17'
+		);
+	});
+
+	test('forwards no client for an unknown or obfuscated one', () => {
+		expect(
+			forwardingFor({ forwarded: 'for=unknown;proto=https' })
+		).toBeUndefined();
+		expect(forwardingFor({ forwarded: 'for=_gazonk' })).toBeUndefined();
 	});
 });

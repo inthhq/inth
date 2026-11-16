@@ -1,0 +1,41 @@
+// #region docs:switch-ngmodel
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import {
+	SwitchControl,
+	Switch,
+	SwitchHiddenInput,
+	SwitchThumb,
+} from '@c15t/angular/primitives';
+
+@Component({
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	imports: [FormsModule, SwitchControl, Switch, SwitchHiddenInput, SwitchThumb],
+	selector: 'app-marketing-switch',
+	template: `
+		<form
+			method="post"
+			action="/preferences"
+		>
+			<label id="marketing-label">Marketing emails</label>
+			<button
+				c15tSwitch
+				aria-labelledby="marketing-label"
+				[(ngModel)]="marketing"
+				name="marketing-switch"
+			>
+				<span c15tSwitchControl><span c15tSwitchThumb></span></span>
+				<!-- Submits "on" with the form while checked. -->
+				<input
+					c15tSwitchHiddenInput
+					name="marketing"
+				/>
+			</button>
+			<button type="submit">Save</button>
+		</form>
+	`,
+})
+export class MarketingSwitch {
+	protected readonly marketing = signal(false);
+}
+// #endregion docs:switch-ngmodel

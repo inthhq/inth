@@ -29,6 +29,49 @@ test('empty hidden stream markers normalize while visible or substantive content
 	}
 });
 
+test('Angular selector markers normalize only on an Angular page and only when empty', async ({
+	page,
+}) => {
+	const button = (attributes: string) =>
+		`<div data-testid="consent-banner-footer"><button ${attributes} data-testid="accept" type="button">Accept</button></div>`;
+	const angularRoot = '<app-root ng-version="22.2.5"></app-root>';
+	await page.setContent(button(''));
+	const plain = await captureDomSnapshot(page, 'body');
+
+	// Components select by dash-case attributes, directives by camelCase
+	// ones, which the DOM lowercases.
+	for (const marker of [
+		'c15t-consent-button=""',
+		'c15t-close-icon=""',
+		'c15tconsentdialoglink=""',
+	]) {
+		// oxlint-disable-next-line no-await-in-loop -- Each replacement uses the same page.
+		await page.setContent(`${angularRoot}${button(marker)}`);
+		// oxlint-disable-next-line no-await-in-loop -- Compare before replacing the fixture again.
+		expect(await captureDomSnapshot(page, 'body')).toBe(plain);
+	}
+
+	// Outside Angular, the same attributes are real markup.
+	for (const marker of ['c15t-consent-button=""', 'c15tconsentdialoglink=""']) {
+		// oxlint-disable-next-line no-await-in-loop -- Each replacement uses the same page.
+		await page.setContent(button(marker));
+		// oxlint-disable-next-line no-await-in-loop -- Compare before replacing the fixture again.
+		expect(await captureDomSnapshot(page, 'body')).not.toBe(plain);
+	}
+	// A value, or a name outside the c15t selectors, is never a marker.
+	for (const attributes of [
+		'c15t-consent-button="accept"',
+		'c15tconsentdialoglink="open"',
+		'action="accept"',
+		'data-c15t-action=""',
+	]) {
+		// oxlint-disable-next-line no-await-in-loop -- Each replacement uses the same page.
+		await page.setContent(`${angularRoot}${button(attributes)}`);
+		// oxlint-disable-next-line no-await-in-loop -- Compare before replacing the fixture again.
+		expect(await captureDomSnapshot(page, 'body')).not.toBe(plain);
+	}
+});
+
 test('native headings and explicit heading roles agree while wrong levels fail', async ({
 	page,
 }) => {
