@@ -1,0 +1,43 @@
+// #region docs:swift-uikit-app title="AppDelegate.swift"
+import C15tApple
+import C15tConsentUI
+import SwiftUI
+import UIKit
+
+@main
+final class AppDelegate: UIResponder, UIApplicationDelegate {
+    func application(
+        _ application: UIApplication,
+        configurationForConnecting session: UISceneSession,
+        options: UIScene.ConnectionOptions
+    ) -> UISceneConfiguration {
+        let configuration = UISceneConfiguration(name: "Main", sessionRole: session.role)
+        configuration.delegateClass = SceneDelegate.self
+        configuration.storyboard = nil
+        return configuration
+    }
+}
+
+final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+    var window: UIWindow?
+
+    func scene(
+        _ scene: UIScene,
+        willConnectTo session: UISceneSession,
+        options connectionOptions: UIScene.ConnectionOptions
+    ) {
+        guard let scene = scene as? UIWindowScene else { return }
+        let window = UIWindow(windowScene: scene)
+        window.rootViewController = ConsentRootViewController(
+            root: UIHostingController(rootView: ContentView()),
+            configuration: C15tAppleConfiguration(
+                backendURL: "https://your-project.inth.app",
+                consentCategories: [.necessary, .measurement, .marketing]
+            ),
+            privacyPolicyURL: URL(string: "https://example.com/privacy")!
+        )
+        window.makeKeyAndVisible()
+        self.window = window
+    }
+}
+// #endregion docs:swift-uikit-app

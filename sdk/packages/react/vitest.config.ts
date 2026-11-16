@@ -1,0 +1,255 @@
+import { resolve } from 'node:path';
+
+import { baseConfig } from '@c15t/vitest-config/base';
+import react from '@vitejs/plugin-react';
+import { playwright } from '@vitest/browser-playwright';
+import { defineConfig, mergeConfig } from 'vitest/config';
+
+/** `vitest run` is run mode; a bare `vitest` or `--watch` is watch mode. */
+const isVitestWatchMode = function isVitestWatchMode(): boolean {
+	const args = process.argv.slice(2);
+	if (args.includes('--watch')) {
+		return true;
+	}
+	return !(args.includes('run') || args.includes('--run'));
+};
+
+export default mergeConfig(
+	baseConfig,
+	defineConfig({
+		optimizeDeps: {
+			// Build tooling reached through rslib.config.ts / shared rslib-utils
+			// is not a browser dependency. Left to discovery, Vite pre-bundles
+			// it on first sight mid-run and reloads the page ("optimized
+			// dependencies changed"), which vitest-browser-react does not
+			// survive; a cold CI cache hits this on every run.
+			exclude: [
+				'@rsbuild/plugin-react',
+				'@rslib/core',
+				'@rsdoctor/rspack-plugin',
+				'@rsdoctor/core',
+				'@rspack/resolver',
+				'@rspack/resolver-binding-wasm32-wasi',
+			],
+		},
+		plugins: [react()],
+		resolve: {
+			alias: Object.fromEntries([
+				['~', resolve(__dirname, './src')],
+				// The suite renders the provider itself, on the server and in
+				// the browser; the client root has tests of its own.
+				['#consent-provider', resolve(__dirname, './src/provider.tsx')],
+				[
+					'#consent-banner',
+					resolve(__dirname, './src/components/prompt/index.ts'),
+				],
+				// The showcase uses the React hooks re-exported by the Next adapter.
+				['c15t/next', resolve(__dirname, './src/index.ts')],
+				// Astro's source island must share this test suite's React contexts
+				// and coverage, rather than importing a second copy from dist.
+				['@c15t/react/iab', resolve(__dirname, './src/iab.ts')],
+				['@c15t/react/context', resolve(__dirname, './src/context.ts')],
+				['@c15t/react', resolve(__dirname, './src/index.ts')],
+				// Resolve core package to source so Vite can handle its dynamic
+				// imports natively. rslib emits webpack-style chunks that Vite's
+				// browser bundler cannot analyse.
+				[
+					'@c15t/core/modules/clear-on-revocation',
+					resolve(
+						__dirname,
+						'../core/src/modules/clear-on-revocation/index.ts'
+					),
+				],
+				[
+					'@c15t/core/modules/script-loader',
+					resolve(__dirname, '../core/src/modules/script-loader/index.ts'),
+				],
+				[
+					'@c15t/core/modules/network-blocker',
+					resolve(__dirname, '../core/src/modules/network-blocker/index.ts'),
+				],
+				[
+					'@c15t/core/modules/network-hold',
+					resolve(__dirname, '../core/src/modules/network-blocker/hold.ts'),
+				],
+				[
+					'@c15t/core/modules/iframe-blocker',
+					resolve(__dirname, '../core/src/modules/iframe-blocker/index.ts'),
+				],
+				[
+					'@c15t/core/modules/persistence',
+					resolve(__dirname, '../core/src/modules/persistence/index.ts'),
+				],
+				[
+					'@c15t/core/modules/window-debug',
+					resolve(__dirname, '../core/src/modules/window-debug/index.ts'),
+				],
+				['@c15t/core/events', resolve(__dirname, '../core/src/events.ts')],
+				[
+					'@c15t/core/runtime/controls',
+					resolve(__dirname, '../core/src/runtime/controls.ts'),
+				],
+				[
+					'@c15t/core/preference-draft',
+					resolve(__dirname, '../core/src/preference-draft/index.ts'),
+				],
+				[
+					'@c15t/core/runtime/provider',
+					resolve(__dirname, '../core/src/runtime/provider.ts'),
+				],
+				[
+					'@c15t/core/runtime/deferred-boot',
+					resolve(__dirname, '../core/src/runtime/deferred-boot.ts'),
+				],
+				[
+					'@c15t/core/runtime/deferred-snapshot',
+					resolve(__dirname, '../core/src/runtime/deferred-snapshot.ts'),
+				],
+				[
+					'@c15t/core/transports/hosted-factory',
+					resolve(__dirname, '../core/src/transports/hosted-factory.ts'),
+				],
+				[
+					'@c15t/core/runtime',
+					resolve(__dirname, '../core/src/runtime/index.ts'),
+				],
+				[
+					'@c15t/core/server',
+					resolve(__dirname, '../core/src/server/index.ts'),
+				],
+				[
+					'@c15t/core/surface-actions/early-commit',
+					resolve(__dirname, '../core/src/surface-actions/early-commit.ts'),
+				],
+				[
+					'@c15t/core/surface-actions/instant-commit',
+					resolve(__dirname, '../core/src/surface-actions/instant-commit.ts'),
+				],
+				[
+					'@c15t/core/surface-actions/plain-scripts',
+					resolve(__dirname, '../core/src/surface-actions/plain-scripts.ts'),
+				],
+				[
+					'@c15t/core/surface-actions',
+					resolve(__dirname, '../core/src/surface-actions/index.ts'),
+				],
+				[
+					'@c15t/core/generated',
+					resolve(__dirname, '../core/src/generated.ts'),
+				],
+				[
+					'@c15t/core/transports/manifest-browser',
+					resolve(__dirname, '../core/src/transports/manifest-browser.ts'),
+				],
+				// After the `@c15t/core/transports/*` entries above: aliases match
+				// by prefix, in order.
+				[
+					'@c15t/core/transports',
+					resolve(__dirname, '../core/src/transports/index.ts'),
+				],
+				[
+					'@c15t/core/iab-support',
+					resolve(__dirname, '../core/src/iab-support.ts'),
+				],
+				['@c15t/core', resolve(__dirname, '../core/src/index.ts')],
+				['@c15t/schema/types', resolve(__dirname, '../schema/src/types.ts')],
+				[
+					'@c15t/schema/config',
+					resolve(__dirname, '../schema/src/config/index.ts'),
+				],
+				[
+					'@c15t/schema/canonical-order',
+					resolve(__dirname, '../schema/src/shared/canonical-order.ts'),
+				],
+				['@c15t/schema', resolve(__dirname, '../schema/src/index.ts')],
+				[
+					'@c15t/translations/all',
+					resolve(__dirname, '../translations/src/all.ts'),
+				],
+				[
+					'@c15t/translations/en',
+					resolve(__dirname, '../translations/src/translations/en.ts'),
+				],
+				[
+					'@c15t/translations',
+					resolve(__dirname, '../translations/src/index.ts'),
+				],
+				[
+					'@c15t/ui/primitives/collapsible',
+					resolve(__dirname, '../ui/src/primitives/collapsible/index.ts'),
+				],
+				[
+					'@c15t/ui/primitives/preference-item',
+					resolve(__dirname, '../ui/src/primitives/preference-item/index.ts'),
+				],
+				[
+					'@c15t/ui/primitives/tabs',
+					resolve(__dirname, '../ui/src/primitives/tabs/index.ts'),
+				],
+				[
+					'@c15t/ui/styles/primitives/collapsible',
+					resolve(__dirname, '../ui/src/styles/primitives/collapsible.ts'),
+				],
+				[
+					'@c15t/ui/styles/primitives/preference-item',
+					resolve(__dirname, '../ui/src/styles/primitives/preference-item.ts'),
+				],
+				[
+					'@c15t/ui/styles/primitives/tabs',
+					resolve(__dirname, '../ui/src/styles/primitives/tabs.ts'),
+				],
+				// @c15t/iab depends on @iabtechlabtcf/core which is only
+				// installed in the iab package's node_modules.
+				[
+					'@iabtechlabtcf/core',
+					resolve(__dirname, '../iab/node_modules/@iabtechlabtcf/core'),
+				],
+				['@c15t/iab/headless', resolve(__dirname, '../iab/src/headless.ts')],
+				['@c15t/iab/gpp', resolve(__dirname, '../iab/src/gpp.ts')],
+				['@c15t/iab', resolve(__dirname, '../iab/src/index.ts')],
+				['react', resolve(__dirname, './node_modules/react')],
+				['react-dom', resolve(__dirname, './node_modules/react-dom')],
+			]),
+		},
+		server: {
+			// Sibling packages regenerate `src/version.ts` in their own prebuild
+			// while these browser tests run against core source through the
+			// aliases above. With a file watcher active that rewrite reloads a
+			// test mid-run, which vitest-browser-react does not survive, so the
+			// watcher is off for `vitest run` and left on for watch mode (the
+			// `test:watch` scripts, or an explicit `--watch`).
+			watch: isVitestWatchMode() ? undefined : null,
+		},
+		test: {
+			browser: {
+				enabled: true,
+				headless: true,
+				instances: [{ browser: 'chromium' }],
+				// Headless Chromium hides scrollbars by default. Showing them keeps
+				// classic scrollbar layout (as on Windows and Linux) testable.
+				provider: playwright({
+					launchOptions: { ignoreDefaultArgs: ['--hide-scrollbars'] },
+				}),
+			},
+			coverage: {
+				// Coverage ratchet: floors below current coverage so regressions
+				// fail CI. Raise as coverage improves; never lower.
+				thresholds: {
+					branches: 50,
+					functions: 60,
+					lines: 65,
+					statements: 60,
+				},
+			},
+			include: [
+				'src/**/*.test.tsx',
+				'src/**/*.test.ts',
+				'src/**/*.spec.tsx',
+				'src/**/*.spec.ts',
+				'src/**/*.e2e.test.tsx',
+			],
+			retry: 2,
+			setupFiles: ['./src/test-setup.browser.ts'],
+		},
+	})
+);

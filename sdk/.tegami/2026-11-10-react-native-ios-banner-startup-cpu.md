@@ -1,0 +1,13 @@
+---
+packages:
+  '@c15t/react-native': patch
+---
+
+### Do less work when the iOS consent banner first appears
+
+The first consent screen on iOS no longer builds a navigation stack. The stack
+is created when preferences or a partner page opens. Parts of the screen that
+are not shown are no longer set up in advance.
+
+The `IABTCF_` keys in `UserDefaults` are not rewritten when they already hold
+the same values.

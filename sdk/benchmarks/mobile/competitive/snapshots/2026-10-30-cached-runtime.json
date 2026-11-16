@@ -1,0 +1,580 @@
+{
+	"schemaVersion": 1,
+	"profileId": "authoritative-cached-policy-denial-v3",
+	"historicalStrictProfileChanged": false,
+	"generatedUtc": "2026-10-30T17:50:05.856247+00:00",
+	"classification": {
+		"path": "metric-classification.json",
+		"sha256": "0f6969e1a6355adc8d7d12a0935b2e0267629e3f0d81b538d9b2168c7c1fe105",
+		"profileId": "authoritative-cached-policy-denial-v3",
+		"sourcepoint": "Public getUserData plus read-only proof from actual pinned SDK cache, including expiry/policy metadata omitted by wrapper. Offline campaign completion and UI remain separate."
+	},
+	"observer": {
+		"apkSha256": "0e0cc05beb0bc11c684566f0337896453594ec6c29577aeac944a435cc8a66e1",
+		"buildBindingSha256": "92244190de4ecbd2b1ce2d473db480218b291e6c84c8c3a19dbd2d51efc5c42e",
+		"sourceSha256": "02f5caa54e4b6de165b1fa4c1d8368b768ed25be6ad0f95c71fbd5b60e01a160"
+	},
+	"metrics": {
+		"cold": {
+			"c15t": {
+				"eligible": true,
+				"scheduled": 30,
+				"attempted": 30,
+				"valid": 30,
+				"failed": 0,
+				"p50Ms": 300.957375,
+				"p95Ms": 546.739458,
+				"samplesWithExposedRefreshError": 30,
+				"samplesWithSdkRefreshWarningLog": 30,
+				"failureReasons": []
+			},
+			"didomi": {
+				"eligible": true,
+				"scheduled": 30,
+				"attempted": 30,
+				"valid": 30,
+				"failed": 0,
+				"p50Ms": 422.374375,
+				"p95Ms": 775.375209,
+				"samplesWithExposedRefreshError": 0,
+				"samplesWithSdkRefreshWarningLog": 0,
+				"failureReasons": []
+			},
+			"usercentrics": {
+				"eligible": true,
+				"scheduled": 30,
+				"attempted": 30,
+				"valid": 30,
+				"failed": 0,
+				"p50Ms": 467.798,
+				"p95Ms": 1207.866292,
+				"samplesWithExposedRefreshError": 0,
+				"samplesWithSdkRefreshWarningLog": 0,
+				"failureReasons": []
+			},
+			"sourcepoint": {
+				"eligible": true,
+				"scheduled": 30,
+				"attempted": 30,
+				"valid": 30,
+				"failed": 0,
+				"p50Ms": 289.939875,
+				"p95Ms": 481.827083,
+				"samplesWithExposedRefreshError": 0,
+				"samplesWithSdkRefreshWarningLog": 30,
+				"failureReasons": []
+			}
+		},
+		"warm": {
+			"c15t": {
+				"eligible": true,
+				"scheduled": 30,
+				"attempted": 30,
+				"valid": 30,
+				"failed": 0,
+				"p50Ms": 36.474417,
+				"p95Ms": 69.502833,
+				"samplesWithExposedRefreshError": 30,
+				"samplesWithSdkRefreshWarningLog": 30,
+				"failureReasons": []
+			},
+			"didomi": {
+				"eligible": true,
+				"scheduled": 30,
+				"attempted": 30,
+				"valid": 30,
+				"failed": 0,
+				"p50Ms": 37.769542,
+				"p95Ms": 74.922834,
+				"samplesWithExposedRefreshError": 0,
+				"samplesWithSdkRefreshWarningLog": 0,
+				"failureReasons": []
+			},
+			"usercentrics": {
+				"eligible": true,
+				"scheduled": 30,
+				"attempted": 30,
+				"valid": 30,
+				"failed": 0,
+				"p50Ms": 38.132209,
+				"p95Ms": 68.347667,
+				"samplesWithExposedRefreshError": 0,
+				"samplesWithSdkRefreshWarningLog": 0,
+				"failureReasons": []
+			},
+			"sourcepoint": {
+				"eligible": true,
+				"scheduled": 30,
+				"attempted": 30,
+				"valid": 30,
+				"failed": 0,
+				"p50Ms": 36.544792,
+				"p95Ms": 63.078625,
+				"samplesWithExposedRefreshError": 30,
+				"samplesWithSdkRefreshWarningLog": 0,
+				"failureReasons": []
+			}
+		}
+	},
+	"stockUi": null,
+	"stockUiCohortStatus": "incomplete primary continuous-window cohort; separately labelled segmented descriptive observations",
+	"stockUiExploration": {
+		"profileId": "stock-settings-accessibility-segmented-observation-v1",
+		"primaryUiProfileQualified": false,
+		"qualificationFailure": "Original required uninterrupted 90-slot timing window aborted during ADB control transport failure. Only remaining slots continued. No failed attempts replaced. These are segmented descriptive observations, not a qualifying uninterrupted 30-sample comparison.",
+		"segments": {
+			"1": {
+				"c15t": {
+					"scheduledInSegment": 27,
+					"valid": 25,
+					"failed": 2,
+					"percentilesConditionalOnValidScenarios": true,
+					"phases": {
+						"open-before-accept": {
+							"valid": 25,
+							"p50Ms": 1611.705293,
+							"p95Ms": 2766.901376
+						},
+						"accept": {
+							"valid": 25,
+							"p50Ms": 555.903334,
+							"p95Ms": 1476.627751
+						},
+						"open-before-reject": {
+							"valid": 25,
+							"p50Ms": 1285.227583,
+							"p95Ms": 3719.927668
+						},
+						"reject": {
+							"valid": 25,
+							"p50Ms": 623.635667,
+							"p95Ms": 1973.279418
+						},
+						"open-before-save-grant": {
+							"valid": 25,
+							"p50Ms": 1351.015167,
+							"p95Ms": 3388.925043
+						},
+						"save-grant": {
+							"valid": 25,
+							"p50Ms": 492.923167,
+							"p95Ms": 1519.785584
+						},
+						"open-before-save-denial": {
+							"valid": 25,
+							"p50Ms": 1282.005125,
+							"p95Ms": 3553.024585
+						},
+						"save-denial": {
+							"valid": 25,
+							"p50Ms": 688.490751,
+							"p95Ms": 1542.83321
+						}
+					},
+					"failureReasons": [
+						"AssertionError: java.io.IOException: control unavailable [Capture current state]",
+						"raw marker binding: native result must bind to this run raw SDK marker"
+					]
+				},
+				"didomi": {
+					"scheduledInSegment": 26,
+					"valid": 26,
+					"failed": 0,
+					"percentilesConditionalOnValidScenarios": true,
+					"phases": {
+						"open-controls-only": {
+							"valid": 26,
+							"p50Ms": 1144.885834,
+							"p95Ms": 1828.525043
+						}
+					},
+					"failureReasons": []
+				},
+				"usercentrics": {
+					"scheduledInSegment": 27,
+					"valid": 27,
+					"failed": 0,
+					"percentilesConditionalOnValidScenarios": true,
+					"phases": {
+						"open-controls-only": {
+							"valid": 27,
+							"p50Ms": 1270.074334,
+							"p95Ms": 2328.673918
+						}
+					},
+					"failureReasons": []
+				},
+				"sourcepoint": {
+					"scheduledInSegment": 0,
+					"valid": 0,
+					"failed": 0,
+					"percentilesConditionalOnValidScenarios": true,
+					"phases": {},
+					"failureReasons": []
+				}
+			},
+			"2": {
+				"c15t": {
+					"scheduledInSegment": 3,
+					"valid": 2,
+					"failed": 1,
+					"percentilesConditionalOnValidScenarios": true,
+					"phases": {
+						"open-before-accept": {
+							"valid": 2,
+							"p50Ms": 515.181875,
+							"p95Ms": 524.308209
+						},
+						"accept": {
+							"valid": 2,
+							"p50Ms": 147.050291,
+							"p95Ms": 166.828209
+						},
+						"open-before-reject": {
+							"valid": 2,
+							"p50Ms": 466.244626,
+							"p95Ms": 524.820751
+						},
+						"reject": {
+							"valid": 2,
+							"p50Ms": 181.04925,
+							"p95Ms": 232.868084
+						},
+						"open-before-save-grant": {
+							"valid": 2,
+							"p50Ms": 557.401625,
+							"p95Ms": 611.236501
+						},
+						"save-grant": {
+							"valid": 2,
+							"p50Ms": 139.075375,
+							"p95Ms": 237.547
+						},
+						"open-before-save-denial": {
+							"valid": 2,
+							"p50Ms": 528.95675,
+							"p95Ms": 556.686959
+						},
+						"save-denial": {
+							"valid": 2,
+							"p50Ms": 194.680666,
+							"p95Ms": 206.718875
+						}
+					},
+					"failureReasons": [
+						"declared per-run screenshot unavailable after two transfers; harness boundary: AssertionError: "
+					]
+				},
+				"didomi": {
+					"scheduledInSegment": 4,
+					"valid": 4,
+					"failed": 0,
+					"percentilesConditionalOnValidScenarios": true,
+					"phases": {
+						"open-controls-only": {
+							"valid": 4,
+							"p50Ms": 759.879417,
+							"p95Ms": 812.608417
+						}
+					},
+					"failureReasons": []
+				},
+				"usercentrics": {
+					"scheduledInSegment": 3,
+					"valid": 3,
+					"failed": 0,
+					"percentilesConditionalOnValidScenarios": true,
+					"phases": {
+						"open-controls-only": {
+							"valid": 3,
+							"p50Ms": 548.165625,
+							"p95Ms": 550.295417
+						}
+					},
+					"failureReasons": []
+				},
+				"sourcepoint": {
+					"scheduledInSegment": 0,
+					"valid": 0,
+					"failed": 0,
+					"percentilesConditionalOnValidScenarios": true,
+					"phases": {},
+					"failureReasons": []
+				}
+			}
+		},
+		"combinedDescriptiveOnly": {
+			"c15t": {
+				"scheduledInSegment": 30,
+				"valid": 27,
+				"failed": 3,
+				"percentilesConditionalOnValidScenarios": true,
+				"phases": {
+					"open-before-accept": {
+						"valid": 27,
+						"p50Ms": 1310.244918,
+						"p95Ms": 2766.901376
+					},
+					"accept": {
+						"valid": 27,
+						"p50Ms": 545.647375,
+						"p95Ms": 1476.627751
+					},
+					"open-before-reject": {
+						"valid": 27,
+						"p50Ms": 1283.611709,
+						"p95Ms": 3719.927668
+					},
+					"reject": {
+						"valid": 27,
+						"p50Ms": 608.943626,
+						"p95Ms": 1973.279418
+					},
+					"open-before-save-grant": {
+						"valid": 27,
+						"p50Ms": 1293.431834,
+						"p95Ms": 3388.925043
+					},
+					"save-grant": {
+						"valid": 27,
+						"p50Ms": 484.195459,
+						"p95Ms": 1519.785584
+					},
+					"open-before-save-denial": {
+						"valid": 27,
+						"p50Ms": 1261.766084,
+						"p95Ms": 3553.024585
+					},
+					"save-denial": {
+						"valid": 27,
+						"p50Ms": 678.261708,
+						"p95Ms": 1542.83321
+					}
+				},
+				"failureReasons": [
+					"AssertionError: java.io.IOException: control unavailable [Capture current state]",
+					"raw marker binding: native result must bind to this run raw SDK marker",
+					"declared per-run screenshot unavailable after two transfers; harness boundary: AssertionError: "
+				]
+			},
+			"didomi": {
+				"scheduledInSegment": 30,
+				"valid": 30,
+				"failed": 0,
+				"percentilesConditionalOnValidScenarios": true,
+				"phases": {
+					"open-controls-only": {
+						"valid": 30,
+						"p50Ms": 1051.447334,
+						"p95Ms": 1828.525043
+					}
+				},
+				"failureReasons": []
+			},
+			"usercentrics": {
+				"scheduledInSegment": 30,
+				"valid": 30,
+				"failed": 0,
+				"percentilesConditionalOnValidScenarios": true,
+				"phases": {
+					"open-controls-only": {
+						"valid": 30,
+						"p50Ms": 1125.123417,
+						"p95Ms": 2328.673918
+					}
+				},
+				"failureReasons": []
+			},
+			"sourcepoint": {
+				"scheduledInSegment": 0,
+				"valid": 0,
+				"failed": 0,
+				"percentilesConditionalOnValidScenarios": true,
+				"phases": {},
+				"failureReasons": []
+			}
+		},
+		"rawRunIndex": {
+			"path": "ui-exploration-results.json",
+			"sha256": "8c044d3c4a236a38ceb3abb53470c0719c453ae526c03f468c99aa98f512f75b"
+		},
+		"audit": {
+			"path": "ui-exploration-audit.json",
+			"sha256": "6412e9e02c65d9195f5ac14ca94451298dcb6731d3e95561a19a1fff99855e54"
+		},
+		"continuationQuiet": {
+			"output": "Nothing to stop.\nKept 9 started in the last 2h. Add --all to stop them too.\nBusiest now: Google 21%, Google 12%, Grok 11%, Grok 11%, Google 10%\nDisk free: 49 GB.\n",
+			"sha256": "495d42f9355165b865aa539b9c34336b104e26e83a8d1ca0e79ea4c0eb646952"
+		}
+	},
+	"stockUiClassification": {
+		"schemaVersion": 1,
+		"profileId": "stock-settings-accessibility-v2",
+		"historicalStrictProfileChanged": false,
+		"coreCachedProfileChanged": false,
+		"timingStarted": false,
+		"clock": "Android elapsedRealtimeNanos",
+		"includes": "Accessibility, binder, polling, diagnostic state-read and wrapper validation costs",
+		"excludes": [
+			"Physical frame presentation",
+			"Isolated disk flush latency",
+			"Remote delivery or server acknowledgment"
+		],
+		"sdkCells": {
+			"c15t": {
+				"scheduledScenario": "accept-reject-and-changed-saves",
+				"readinessMetric": "accessibility-observed-stock-controls",
+				"actionMetric": "accessibility-click-to-valid-sdk-state-read",
+				"persistence": "immediate offline fresh PID required",
+				"calibrationPath": "ui-driver-calibration-v8/c15t"
+			},
+			"didomi": {
+				"scheduledScenario": "readiness-only",
+				"readinessMetric": "accessibility-observed-stock-target-and-save-controls",
+				"actionStatus": "failed untimed durability proof, not scheduled",
+				"failureEvidence": "ui-driver-calibration-v4/didomi/native-result.json",
+				"failure": "Actual Save produced cookies true in memory; immediate offline restart returned prior explicit false. No accepted save latency."
+			},
+			"usercentrics": {
+				"scheduledScenario": "readiness-only",
+				"readinessMetric": "accessibility-observed-stock-controls",
+				"actionStatus": "failed untimed durability proof, not scheduled",
+				"failureEvidence": "ui-driver-calibration-v2/usercentrics/native-result.json",
+				"failure": "Actual Accept all produced target true in memory; immediate offline restart returned prior explicit false. No accepted accept/reject latency."
+			},
+			"sourcepoint": {
+				"scheduledScenario": null,
+				"readinessStatus": "unsupported offline privacy-manager controls",
+				"actionStatus": "unsupported",
+				"failureEvidence": "ui-driver-calibration-v4/sourcepoint/native-result.json"
+			},
+			"onetrust": {
+				"scheduledScenario": null,
+				"status": "blocked, verified published App ID/CDN missing"
+			}
+		},
+		"untimedFailureBindings": {
+			"artifacts/ui-driver-v4.apk": "52636d6220126ae664eeb676ac065f66733c9a493b00d957c3b1efabea5ecead",
+			"inputs/ui-driver-v4.java": "c172256bc2096ba6d21a160ec98d5a0d27ee85dc7511f2eabba80ddedecd625f",
+			"ui-driver-calibration-v4/didomi/native-result.json": "2e9b5a82eeabdc1bc43130b6c85928b4bb0992b2eac96f2f89ad60dc49ddd501",
+			"ui-driver-calibration-v2/usercentrics/native-result.json": "f34cb9955fc87ffd6a7a64e603909403f39e176694b216ac0525443c1a9a94c6",
+			"ui-driver-calibration-v4/sourcepoint/native-result.json": "1809e6faaf9f8218656f3dc049875166d388825ded8ff37a21a48501e27ad765"
+		},
+		"stateInitialization": "All four real stock-denial caches restored from immutable same-APK, same-owned-AVD preflight archives after exploratory UI actions, before final UI calibration/schedule. No fabricated consent or cross-device keys.",
+		"fixtureFailure": "v7 restore used generic restorecon; child file SELinux access failed. Excluded as a fixture failure. v8 restores exact real archives with normal per-package labels from untouched DE directories before calibration."
+	},
+	"platformCoverage": {
+		"android": {
+			"cachedDenial": "measured for eligible apps; per-cell failures retained",
+			"warmForeground": "same PID fresh read, measured for eligible apps",
+			"stockUi": "Segmented descriptive observations only; original continuous-window profile incomplete after ADB control interruption. No failed slots replaced."
+		},
+		"ios": {
+			"size": "original immutable device-build profiles only",
+			"runtime": "unmeasured in this follow-up; cached/bundled simulator fixture has no matched instrumentation",
+			"hostedC15t": "immutable HTTP400 Swift->3.0.0-alpha.1 remains; no protocol spoofing"
+		},
+		"physicalPhones": "deferred",
+		"battery": "unmeasured",
+		"typedRnExpoIab": "incomplete; native fixture acceptance is separate"
+	},
+	"versions": {
+		"c15t": {
+			"wrapper": "3.0.0-alpha.2",
+			"androidNative": "3.0.0-alpha.1",
+			"producer": "256e903bfa542c15126e017c10fdfea70f421521"
+		},
+		"didomi": {
+			"wrapper": "2.38.1",
+			"androidNative": "2.53.0"
+		},
+		"usercentrics": {
+			"wrapper": "2.34.0",
+			"androidNative": "2.34.0"
+		},
+		"sourcepoint": {
+			"wrapper": "1.0.13",
+			"androidNative": "7.15.10"
+		},
+		"onetrust": {
+			"wrapper": "202609.2.0",
+			"androidNative": "202609.2.0.0"
+		}
+	},
+	"sourcepointScope": "Cached GDPR decision at last delivered policy, validated against real persisted expiry/policy and API state. Refresh transport errors preserved. Offline campaign completion/UI remain unsupported.",
+	"oneTrust": "Blocked without a verified published mobile App ID and matching CDN. Official docs and Executor discovery retained.",
+	"bindings": {
+		"artifacts/ui-driver-build.json": {
+			"path": "artifacts/ui-driver-build.json",
+			"sha256": "92244190de4ecbd2b1ce2d473db480218b291e6c84c8c3a19dbd2d51efc5c42e"
+		},
+		"protocol.md": {
+			"path": "protocol.md",
+			"sha256": "70985ea583a4e605dacdf22c14de05217236afcaff739e3ab24f9a4fe877dc83"
+		},
+		"preregistration.json": {
+			"path": "preregistration.json",
+			"sha256": "066d87463d2ff4b2b360f12486e469c2322896d0c47a53ba372f5835b5a5b671"
+		},
+		"metric-classification.json": {
+			"path": "metric-classification.json",
+			"sha256": "0f6969e1a6355adc8d7d12a0935b2e0267629e3f0d81b538d9b2168c7c1fe105"
+		},
+		"schedule.json": {
+			"path": "schedule.json",
+			"sha256": "4215a73420339705e5e227f935c669f2ca98e6731cb8748990e57f504a12c6c2"
+		},
+		"sample-results.json": {
+			"path": "sample-results.json",
+			"sha256": "bbb71322a463df0061c6323d858a5400bbfbe43b595ca09b816bc61ba5817665"
+		},
+		"sample-audit.json": {
+			"path": "sample-audit.json",
+			"sha256": "4ce484cf304eec2b537614be46952360c492eb92b008b80d51d095edd06ed98e"
+		},
+		"results.json": {
+			"path": "results.json",
+			"sha256": "e1e0b3aef79b62388d99d0826c2e13a4b11dde1ae7ec81b4b098d3ced689b3f2"
+		},
+		"ui-protocol-v2.md": {
+			"path": "ui-protocol-v2.md",
+			"sha256": "32a966d92591ab3807e9f68d7adcd2ec746295640552f38111bbc19cbc04becd"
+		},
+		"ui-preregistration-v2.json": {
+			"path": "ui-preregistration-v2.json",
+			"sha256": "145e3fced52b8422fd6b5cd05a5a43111afc5f215dfc55b89441b3db561459d8"
+		},
+		"ui-classification.json": {
+			"path": "ui-classification.json",
+			"sha256": "756560d092c5a234a8de150d5f18558974bf8894d5af522be5b849bb1095f0ba"
+		},
+		"ui-schedule.json": {
+			"path": "ui-schedule.json",
+			"sha256": "861d29c34b739db455fb9e33a6852333fff2336282e2cd92ee26d4c070a04bca"
+		},
+		"ui-sample-results.json": {
+			"path": "ui-sample-results.json",
+			"sha256": "ecf004b96208289592b8035ddc5b987eacbe368537fa82941c94754e89bb5370"
+		},
+		"inputs/runtime-artifact-bindings.json": {
+			"path": "inputs/runtime-artifact-bindings.json",
+			"sha256": "7202b2c2fad9e9c8d6a3d14d8b9724e2610066af2014ad3e200a14fedcddbd42"
+		},
+		"inputs/input-verification.json": {
+			"path": "inputs/input-verification.json",
+			"sha256": "7c444d645b77547511e7358f4d50beba13f73b488be81ea1f2d448ab7f1a3302"
+		},
+		"immutable-audit.json": {
+			"path": "immutable-audit.json",
+			"sha256": "4a572bae2474cec0f5dbf4c72d8b55dc0265d3d7727a5a85c14bea8884e31e66"
+		}
+	},
+	"publishableContent": "Summary statistics and hashes only. Raw app state, subjects, policies, caches and all vendor binaries remain external.",
+	"recordedEvidence": {
+		"artifactIndexSha256": "8627bc30345d587e3837444880f464ecaa0b919ccad90c200d5bae0983154eee",
+		"reviewArchiveSha256": "e7562557babafb85706e56748b4a8a3d391da21d07d7102409cb2b89cecdb61d",
+		"integrationProvenance": "Historical measurements used the frozen external fixtures and APK hashes in bindings. cached-runtime is a maintained derivative; no new native build or timing of that derivative has been performed.",
+		"uiRerunSupported": false,
+		"coreRerunSupported": true
+	}
+}

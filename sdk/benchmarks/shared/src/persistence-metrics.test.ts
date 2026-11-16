@@ -1,0 +1,99 @@
+import { createConsentKernel } from '@c15t/core';
+import { createPersistence } from '@c15t/core/modules/persistence';
+import { policyRulePresets, resolvePolicyRules } from '@c15t/schema/types';
+/** @vitest-environment jsdom */
+import { afterEach, expect, it, vi } from 'vitest';
+
+import { reactBrowserBudgetsForScenario } from './budgets';
+import { evaluateBudget } from './reporting';
+import { summarizeMetric } from './utils';
+
+afterEach(() => {
+	localStorage.clear();
+	vi.useRealTimers();
+});
+
+it('measures the real cookie projections and hydrates without writes', async () => {
+	vi.useFakeTimers();
+	const resolution = resolvePolicyRules({
+		countryCode: 'US',
+		regionCode: 'CA',
+		rules: [{ ...policyRulePresets.californiaOptOut(), prompt: 'notice' }],
+	});
+	const kernel = createConsentKernel({ initialPolicyResolution: resolution });
+	const persistence = createPersistence({ kernel });
+	await kernel.commands.init();
+	kernel.set.privacySignals({ gpc: true });
+	// A choice made while the notice is owed acknowledges it, so this one
+	// save writes the choice and the notice projections together.
+	await kernel.commands.save({ functionality: true });
+	expect(kernel.getSnapshot().promptRequirement.kind).toBe('none');
+	vi.advanceTimersByTime(0);
+	const cookies = document.cookie.split('; ').sort();
+	// The acknowledgement carries the subject ID in a companion cookie, so
+	// the v1 notice cookie keeps its format. The companion repeats the
+	// notice fields it is bound to and adds the ID.
+	expect(cookies.map((cookie) => cookie.split('=')[0]).sort()).toEqual([
+		'c15t',
+		'c15t-notice',
+		'c15t-notice-subject',
+	]);
+	const cookieValue = (name: string) =>
+		cookies
+			.find((cookie) => cookie.startsWith(`${name}=`))
+			?.slice(name.length + 1);
+	const subjectId = kernel.getSnapshot().subject?.subjectId;
+	expect(cookieValue('c15t-notice-subject')).toBe(
+		`${cookieValue('c15t-notice')}&sid=${subjectId}`
+	);
+	const bytes = Object.fromEntries(
+		cookies.map((cookie) => {
+			const [name, ...value] = cookie.split('=');
+			return [name, new TextEncoder().encode(value.join('=')).length];
+		})
+	);
+	console.log(
+		JSON.stringify({
+			aggregateCookieHeaderBytes: new TextEncoder().encode(cookies.join('; '))
+				.length,
+			cookieValueBytes: bytes,
+		})
+	);
+	const budget = reactBrowserBudgetsForScenario('policy-notice').find(
+		(entry) => entry.metric === 'c15tCookieBytes'
+	);
+	expect.assert(budget);
+	const headerBytes = new TextEncoder().encode(cookies.join('; ')).length;
+	expect(
+		evaluateBudget(
+			budget,
+			summarizeMetric('c15tCookieBytes', 'bytes', [headerBytes])
+		).pass
+	).toBe(true);
+	expect(
+		evaluateBudget(
+			budget,
+			summarizeMetric('c15tCookieBytes', 'bytes', [budget.threshold + 1])
+		).pass
+	).toBe(false);
+	const repeated = createConsentKernel({ initialPolicyResolution: resolution });
+	const repeatedPersistence = createPersistence({
+		kernel: repeated,
+		skipHydration: true,
+	});
+	const writes = vi.spyOn(Storage.prototype, 'setItem');
+	expect(repeatedPersistence.hydrate()).toBe(true);
+	vi.advanceTimersByTime(0);
+	expect(writes).not.toHaveBeenCalled();
+	expect(repeated.getSnapshot().promptRequirement.kind).toBe('none');
+	// GPC is live-only: the fresh runtime has no signal, so nothing restricts
+	// marketing under the opt-out policy.
+	expect(repeated.getSnapshot().effectivePermissions.marketing).toBe(true);
+	expect(document.cookie.split('; ').sort()).toEqual(cookies);
+	writes.mockRestore();
+	repeatedPersistence.dispose();
+	repeated.dispose();
+	persistence.clear();
+	persistence.dispose();
+	kernel.dispose();
+});

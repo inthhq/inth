@@ -1,0 +1,38 @@
+# Opens c15t preferences from the first-layer prompt (Customize) or the
+# notice (Privacy settings), then waits for the category or IAB list.
+#
+#   - runFlow: ../node_modules/@c15t/react-native/maestro/open-preferences.yaml
+#
+# To reopen preferences after a decision, tap your app's own Privacy settings
+# entry, which calls presentPreferences(), then wait for c15t.prefs or c15t.iab.
+# Maestro needs an appId in every flow file; the calling flow's appId is used.
+appId: ${APP_ID}
+---
+# Wait for the headline, not Customize: at accessibility text sizes the
+# first-layer actions start below the fold, where Maestro does not see them.
+- extendedWaitUntil:
+    visible:
+      id: "c15t\\.(first-layer\\.title|notice\\.settings)"
+    timeout: ${C15T_TIMEOUT || 15000}
+- runFlow:
+    when:
+      visible:
+        id: 'c15t.first-layer.title'
+    commands:
+      - scrollUntilVisible:
+          element:
+            id: 'c15t.first-layer.customize'
+          direction: DOWN
+      - tapOn:
+          id: 'c15t.first-layer.customize'
+- runFlow:
+    when:
+      visible:
+        id: 'c15t.notice.settings'
+    commands:
+      - tapOn:
+          id: 'c15t.notice.settings'
+- extendedWaitUntil:
+    visible:
+      id: "c15t\\.(prefs|iab)\\.save"
+    timeout: ${C15T_TIMEOUT || 15000}

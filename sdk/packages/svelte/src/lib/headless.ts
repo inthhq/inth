@@ -1,0 +1,44 @@
+export type { AllConsentNames } from '@c15t/core';
+export type { ConsentState, KernelActiveUI, KernelConfig } from '@c15t/core';
+export {
+	resolveActionLabels,
+	resolvePreferenceControlLabels,
+	resolvePromptCopy,
+} from '@c15t/core';
+export type {
+	PreferenceControl,
+	PresentationAction,
+	PromptCopy,
+} from '@c15t/core';
+export { focusTrap } from './actions/focus-trap';
+export { portal } from './actions/portal';
+export { scrollLock } from './actions/scroll-lock';
+export { default as InlineLegalLinks } from './components/inline-legal-links.svelte';
+export {
+	getConsentKernel,
+	getConsentManager,
+	getHeadlessConsent,
+	getIAB,
+	getSnapshot,
+	type HeadlessConsentSurfaceState,
+	type SvelteIABState,
+} from './context.svelte';
+export {
+	getEventDispatcher,
+	type EventDispatcher,
+	type EventProperties,
+	type GetEventDispatcherOptions,
+} from './event-dispatcher';
+export { getIABTranslations, type IABTranslations } from './iab-translations';
+export {
+	getIABBannerDisplayItems,
+	type ProcessedFeature,
+	type ProcessedGVLData,
+	type ProcessedPurpose,
+	type ProcessedSpecialFeature,
+	type ProcessedStack,
+	type ProcessedVendor,
+	processGVLData,
+	type VendorId,
+} from './iab-types';
+export type { ConsentManagerOptions } from './types';

@@ -1,0 +1,137 @@
+---
+title: Examples
+description: Run the SwiftUI, UIKit, Kotlin, React Native and Expo demo apps, including sample IAB choices and hosted review setup.
+group: frameworks
+---
+
+Use these apps to explore consent before adding it to your app. They live in
+the source repository and use the same native engine and screens as the SDK.
+For installation in your own app, start with the quickstart for your platform
+in the [framework list](/docs/frameworks).
+
+## Choose an example
+
+| Example | Source | What to try |
+| --- | --- | --- |
+| SwiftUI app | `native/core-swift/Examples/swiftui-consent` | Stock screens, a custom category form, a consent-gated counter and Keychain persistence |
+| SwiftUI and UIKit demo | `native/examples/consent-demo/ios` | Category, notice and IAB sample flows, plus hosted review configuration |
+| Kotlin/Compose demo | `native/examples/consent-demo/android` | The same native category and IAB journeys on Android |
+| Bare React Native | `internals/fixtures/react-native-bare` | Native presentation from RN, category hooks and preference reopening |
+| Expo | `internals/fixtures/expo-dev` | Config-plugin setup and native presentation in a custom build |
+| Minimal Swift starters | `native/core-swift/Examples/AppleInstallation/Quickstart` | The complete source files used by the Swift quickstart and UIKit guide |
+
+Local IAB scenarios use sample disclosures and test CMP ID 53. Hosted review
+mode uses the actual project, CMP configuration and platform storage you
+supply. Keep those modes separate when collecting review evidence.
+
+## Prepare the checkout
+
+Install Bun 1.3.11 and the toolchain for the app you want to run. iOS needs
+Xcode, an installed simulator runtime and XcodeGen. RN iOS builds also need
+CocoaPods. Android needs JDK 17 and the SDK requested by that consumer's build.
+Set `ANDROID_HOME` to your SDK directory.
+
+From the repository root:
+
+```sh
+bun install --frozen-lockfile
+bun run --cwd packages/react-native build
+```
+
+RN Android consumers need the versioned Maven artifacts described in
+[bare setup](/docs/frameworks/react-native/bare). The standalone native demo
+uses the local producer project.
+
+## Run the SwiftUI app
+
+Generate and open the example project:
+
+```sh
+xcodegen generate --spec native/core-swift/Examples/swiftui-consent/project.yml
+open native/core-swift/Examples/swiftui-consent/C15tSwiftUI.xcodeproj
+```
+
+Run the `C15tSwiftUI` scheme. The stock presenter is the default. Add
+`--headless` in the scheme's Run arguments to try the app-owned category form.
+The counter follows measurement permission, so you can see grant and
+withdrawal take effect. The example's README explains hosted configuration.
+
+The [SwiftUI walkthrough](/docs/frameworks/react-native/swiftui) follows this
+larger sample's model, subscriptions and custom draft handling.
+
+## Run the SwiftUI or UIKit demo
+
+Generate its project into a new or empty directory outside the checkout:
+
+```sh
+bun native/examples/consent-demo/ios/generate-project.ts /tmp/c15t-consent-demo
+open /tmp/c15t-consent-demo/C15tConsentDemo.xcodeproj
+```
+
+Run `C15tConsentDemo` for a SwiftUI app lifecycle or `C15tUIKitDemo` for UIKit.
+Both host the same presenter. Keep simulator signing enabled so the hosted
+installer's Keychain probe works.
+
+In Debug, choose a local Category, Notice or IAB sample in setup. Each sample
+keeps its own saved choices. Restart to select another profile. For a hosted
+run, supply your project URL and privacy-policy URL. IAB review also asks for
+CMP identity/version and publisher settings, as described under
+[mobile IAB setup](/docs/guides/mobile-iab).
+
+## Run the Android demo
+
+Build from the repository root:
+
+```sh
+sh native/core-android/gradlew -p native/core-android :consent-demo:assembleDebug
+```
+
+Open the native Gradle project in Android Studio and run `consent-demo` on your
+emulator or device. Its setup screen offers the local category, notice and IAB
+scenarios in Debug, plus hosted setup. The demo README contains launch extras
+for the maintained test runners.
+
+## Run bare React Native
+
+Follow `internals/fixtures/react-native-bare/README.md` for native dependency
+setup, then use the fixture's scripts for Metro and the platform build. Check
+its TypeScript integration with:
+
+```sh
+bun run --cwd internals/fixtures/react-native-bare check-types
+```
+
+Normal native mode opens SwiftUI or Compose screens through the public
+presenter commands. Reopen Privacy settings after a choice, restart the app
+and inspect the restored state. `C15T_FAKE_NATIVE=true` instead selects a
+labelled JavaScript UI fixture; use normal mode to exercise native consent.
+
+## Run Expo
+
+Follow `internals/fixtures/expo-dev/README.md` and the
+[Expo guide](/docs/frameworks/react-native/expo) for prebuild and native
+configuration. Check its types with:
+
+```sh
+bun run --cwd internals/fixtures/expo-dev check-types
+```
+
+Use a custom native build. Expo Go cannot load this module. The example
+configures categories through the typed plugin; IAB currently needs app-owned
+native installation.
+
+## Try the IAB journey
+
+In the native demo's local IAB scenario:
+
+1. Open Customize and expand a purpose's details.
+2. Open partners, search and inspect a vendor before changing its choice.
+3. Open Other ad partners for sample Additional Consent providers 10 and 20.
+4. Save a granular choice and inspect the host's native authority output.
+5. Accept all, reopen Privacy settings, then reject all to withdraw.
+6. Restart and check that the saved refusal remains.
+
+The provider choices depend on consent for TCF purposes 1, 3 and 4. A
+provider toggle alone does not grant those purposes. Use the hosted review
+mode with current disclosures for real review evidence, then follow
+[mobile verification](/docs/guides/mobile-verify).

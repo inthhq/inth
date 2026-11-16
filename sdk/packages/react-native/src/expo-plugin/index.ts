@@ -1,0 +1,68 @@
+/**
+ * Entry point for `@c15t/react-native/expo-plugin`, which the package root's
+ * `app.plugin.js` also loads, so `app.json` can name either.
+ *
+ * Add it to `app.json` with an explicit Android artifact repository: the native core gets its
+ * bootstrap config, the launch hook, the Android permission, and the iOS privacy
+ * keys, and the same values reach JavaScript through `extra.c15t`.
+ *
+ * ```json
+ * {
+ *   "plugins": [
+ *     [
+ *       "@c15t/react-native",
+ *       {
+ *         "backendURL": "https://your-project.inth.app",
+ *         "androidMavenRepository": { "url": "https://maven.example.com/c15t" }
+ *       }
+ *     ]
+ *   ]
+ * }
+ * ```
+ *
+ * This module pulls in `node:fs` and the app's `expo/config-plugins`. It is a build-time
+ * tool and nothing in the package's React Native entry point imports it, so it
+ * never reaches a Metro bundle.
+ *
+ * Expo resolves a plugin with `require`, and `require()` of an ES module is
+ * unflagged only on Node 20.19+, 22.12+, and 24+. This entry therefore ships
+ * twice: the ES module at `dist/expo-plugin/index.js` under the `import`
+ * condition, and one bundled CommonJS file at `dist/expo-plugin/index.cjs` under
+ * `require`, which is the file Expo loads. Both carry the same exports.
+ */
+import { createRunOncePlugin } from './config-plugins';
+import { PLUGIN_NAME } from './constants';
+import { withC15t } from './with-c15t';
+
+/** The plugin to name in an `app.json` `plugins` array. */
+const withC15tOnce = createRunOncePlugin(withC15t, PLUGIN_NAME);
+
+export default withC15tOnce;
+
+export { withC15t } from './with-c15t';
+export { applyParamsOnConfig, type C15tExtraConfig } from './with-c15t';
+export { C15tPluginError } from './errors';
+export type {
+	C15tGppMspaMode,
+	C15tGppPluginProps,
+	C15tIabPluginProps,
+	C15tPluginProps,
+	C15tTrackingMarkdownLocalization,
+	ResolvedC15tGppParams,
+	ResolvedC15tIabParams,
+	ResolvedC15tParams,
+} from './params';
+export {
+	INTH_PROJECT_HOST_SUFFIXES,
+	normalizeProjectURL,
+	ProjectURLError,
+} from './project-url';
+export type { ProjectURLOptions, ProjectURLReason } from './project-url';
+export type { WorkflowContext } from './workflow';
+
+export type { C15tAndroidMavenRepository } from './maven';
+export type {
+	C15tThemeColorName,
+	C15tThemeColors,
+	C15tThemePluginProps,
+} from './theme';

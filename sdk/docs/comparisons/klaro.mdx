@@ -1,0 +1,63 @@
+---
+title: c15t vs Klaro
+description: Choose c15t for native framework state and a backend you can run. Compare Klaro's open-source service controls, hosted records and scanning.
+group: reference
+---
+
+## Choose c15t for consent built into framework code
+
+c15t is the stronger fit when your product needs native components and an integrated path from consent state to backend records. Your developers can own both the interface and the engine.
+
+Klaro also has an open-source client and a hosted service. Its hosted plans include records and scans, so neither open source nor managed consent is exclusive to c15t.
+
+<include src="../shared/comparisons/inth-hosting.mdx" />
+
+## Compare the integration model
+
+| What you need | c15t | Klaro |
+| --- | --- | --- |
+| Integrate with application UI | Native framework components and reactive state | JavaScript consent manager with an API and state watchers |
+| Control individual services | Category and vendor rules for declared targets | Service configuration and annotated resources |
+| Change the interface | Themes, component parts and headless APIs | Open-source client and configurable styles |
+| Choose the Next.js response | Server resolution, streamed state or browser resolution | Browser integration in the reviewed setup guide |
+| Keep remote records | Inth hosts the backend and stores records in its database. Self-hosting is optional | Hosted plans include managed records |
+| Run the frontend yourself | Apache-2.0 packages | Open-source client that you can host |
+| Run the record backend yourself | Deployable open-source backend | Reviewed commercial pages describe a hosted record service |
+| Discover site services | **No scanner in the c15t packages** | Hosted plans include URL scans |
+
+Sources: [Klaro setup](https://klaro.org/docs/getting-started), [JavaScript API](https://klaro.org/docs/api/js_api), [configuration](https://klaro.org/docs/integration/annotated-configuration) and [hosted plans](https://www.klaro.org/pricing).
+
+## Keep application features on the same consent state
+
+c15t lets a privacy control, vendor script and video placeholder use the same state. Your team can change them with the rest of the application.
+
+Use [native components or headless APIs](/docs/frameworks/react/headless) to match your design. Register vendors through [integration helpers](/docs/integrations/overview) or a custom integration.
+
+Klaro's JavaScript API also exposes consent state and change notifications. c15t adds dedicated framework adapters and a backend implementation in the same project.
+
+## Keep service choices precise
+
+Both products can represent individual services. A migration must preserve those choices. Do not convert one service permission into consent for a whole category.
+
+With c15t, a visitor can accept a category but refuse one vendor. Its [vendor rules](/docs/frameworks/react/vendor-consent) apply to the scripts, requests and embeds that you declare.
+
+A vendor-only refusal does not trigger category cookie cleanup. Configure any additional cleanup your vendors need.
+
+## What c15t does not include
+
+- **Klaro's hosted website scans.** The c15t packages do not discover every service already on a site.
+- **A drop-in Klaro configuration importer.** Map the services, categories and previous choices explicitly.
+- **A managed backend at no cost.** Compare Inth terms with Klaro's hosted scope, or budget for your own operations.
+- **Automatic control of unregistered scripts.** Remove old loaders and connect their replacements to consent state.
+
+A manually configured Klaro client remains a reasonable choice for a site that needs browser service controls only.
+
+## Try a feature added after navigation
+
+Choose c15t when framework integration and backend ownership matter most. Start with [Inth and the framework guide](/docs/frameworks).
+
+Test one script in the initial page and another added after navigation. Check rejection, acceptance and withdrawal for both.
+
+Use the [verification guide](/docs/guides/verify-consent) to check requests and records. Compare hosted services separately from the free client libraries.
+
+Sources checked on 6 October 2026. A capability absent from the reviewed Klaro guides is not proof that no commercial option exists.

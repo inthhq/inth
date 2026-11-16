@@ -1,0 +1,28 @@
+{
+	"$schema": "https://unpkg.com/knip@latest/schema.json",
+	"entry": [
+		"src/api.ts",
+		"src/generated-manifest.ts",
+		"src/headless.ts",
+		"src/index.ts",
+		"src/index.react-server.ts",
+		"src/middleware.ts",
+		"src/pages.ts",
+		"src/proxy.ts",
+		"src/server.ts",
+		"src/static.ts",
+		"src/user-config.ts"
+	],
+	"project": ["src/**/*.ts"],
+	"ignore": ["**/*.test.ts", "**/*.d.ts"],
+	"ignoreDependencies": ["@types/*"],
+	"ignoreExportsUsedInFile": true,
+	"rules": {
+		"files": "error",
+		"dependencies": "error",
+		"devDependencies": "error",
+		"exports": "error",
+		"types": "error",
+		"duplicates": "error"
+	}
+}

@@ -1,0 +1,221 @@
+---
+title: Mixpanel
+description: Connect Mixpanel tracking to c15t consent on the web, Swift, Android, React Native and Expo, including startup, withdrawal and reset handling.
+seoTitle: Mixpanel consent for web and mobile with c15t
+seoDescription: Control Mixpanel tracking with c15t on the web, Swift, Android, React Native and Expo. Configure startup, opt-out, reset and withdrawal.
+icon: mixpanel
+group: integrations
+---
+
+Connect Mixpanel to c15t with the [web script helper](#web) or the
+[mobile SDK helpers](#mobile) for Swift, Android, React Native and Expo.
+The web helper uses `measurement`; mobile helpers default to that category.
+Startup and queue behavior differ by SDK.
+
+## Web
+
+The c15t `mixpanelAnalytics` helper loads the Mixpanel SDK on every page, before
+the visitor chooses. The helper uses `alwaysLoad`, but its category is
+`measurement`. After the SDK loads, the helper calls
+`mixpanel.opt_out_tracking()` while `measurement` has no consent. It calls
+`mixpanel.opt_in_tracking()` while `measurement` has consent. If the visitor
+withdraws consent, the helper calls `mixpanel.opt_out_tracking()` again. By
+default, c15t also reloads the page.
+
+### Configure Mixpanel
+
+Copy the 32-character project token from your Mixpanel installation snippet,
+where it is passed to `mixpanel.init`. Remove that snippet.
+
+<CommandTabs command="@c15t/integrations" mode="install" />
+
+```ts title="src/consent-scripts.ts"
+import { mixpanelAnalytics } from '@c15t/integrations/mixpanel-analytics';
+
+export const scripts = [
+	mixpanelAnalytics({ token: '0123456789abcdef0123456789abcdef' }),
+];
+```
+
+The helper sets `opt_out_tracking_by_default` and
+`opt_out_persistence_by_default` to `true`, so the SDK starts a visitor with no
+stored Mixpanel opt-in as opted out. It then applies the opt-in or opt-out call
+the helper queued before load. A visitor without consent stays opted out:
+nothing is tracked, including `track` calls your code queued before the SDK
+loaded, and no visitor ID is stored. The SDK still writes an empty `mp_*`
+cookie as it starts and removes it during the same page load.
+
+### Register the scripts
+
+<include src="../shared/integrations/register-scripts.mdx#registration" />
+
+### Options
+
+| Option | Default | Behavior |
+| --- | --- | --- |
+| `token` | Required | 32-character hexadecimal project token. Surrounding whitespace is trimmed. Any other value logs an error and the script does not load. |
+| `initOptions` | `{ opt_out_tracking_by_default: true, opt_out_persistence_by_default: true }` | Mixpanel config passed to `init`, merged over the defaults. Use JSON-serializable values only. |
+| `scriptUrl` | `https://cdn.mxpnl.com/libs/mixpanel-2-latest.min.js` | Loader URL override. |
+
+### Loading and revocation
+
+`mixpanelAnalytics` uses the `measurement` category with `alwaysLoad`, so the
+Mixpanel SDK loads on every page, before any choice. Before the SDK loads, the
+helper queues `mixpanel.opt_in_tracking()` if measurement is allowed and
+`mixpanel.opt_out_tracking()` if not. Mixpanel runs that call during init,
+before any queued `track` calls, so a visitor who already consented keeps
+those events. The helper calls the matching method again on each later consent
+change. The SDK stays on the page after revocation.
+
+Before the SDK loads, the helper queues `track`, `identify`, `reset`,
+`register`, `opt_in_tracking` and `opt_out_tracking` on the default instance.
+Named instances and `people.*` calls are not queued.
+
+### Verify Mixpanel
+
+1. In a private window with an opt-in policy, load the page. The request to
+   `cdn.mxpnl.com` appears before you choose. In the console,
+   `mixpanel.has_opted_out_tracking()` returns `true`.
+2. Click Reject, then reload. The SDK loads again and still reports opted
+   out. Call `mixpanel.track('Test')`; no tracking request goes to Mixpanel.
+3. Open Privacy settings and allow measurement. Without a reload,
+   `has_opted_out_tracking()` returns `false` and tracking requests appear.
+4. Turn measurement off again and save. c15t reloads the page, and the new
+   page loads the SDK opted out.
+
+See the [consent verification guide](/docs/guides/verify-consent) for
+navigation and hosting checks.
+
+## Mobile
+
+Use the bundled Mixpanel helper to submit opt-in and opt-out commands as native
+c15t permission changes. It defaults to `measurement`. Pending or denied
+permission submits opt-out; an allowed category submits opt-in.
+
+The helper ships in `C15tApple`, `c15t-android` and
+`@c15t/react-native/integrations`. Your app installs Mixpanel separately.
+
+### Before you start
+
+Complete the [Swift](/docs/frameworks/swift/quickstart),
+[Android](/docs/frameworks/android/quickstart) or
+[React Native](/docs/frameworks/react-native/quickstart) quickstart. Include
+`measurement` in the native configuration and your Inth policy. Use the same
+installed engine for your consent UI and analytics helpers. These SDKs are a
+[private prerelease](/docs/guides/mobile-status).
+
+Install Mixpanel using its official [Swift](https://mixpanel.github.io/mixpanel-swift/),
+[Android](https://mixpanel.github.io/mixpanel-android/) or
+[React Native](https://github.com/mixpanel/mixpanel-react-native) instructions.
+Configure it opted out and disable automatic tracking before optional collection
+can start. Persisted runtime state can override startup defaults on later launches.
+For strict startup, defer vendor initialization until native permission allows it.
+
+A JavaScript connection cannot stop collection that began before JavaScript.
+Native SDKs need a [native startup gate](/docs/frameworks/react-native/native-behaviour).
+Expo needs a development or release build containing both native modules;
+Expo Go does not load c15t's native engine.
+
+### Connect Swift
+
+Add this owner to your app target:
+
+<include src="../shared/examples/native/core-swift/AppleInstallation/swift-mixpanel-binding.mdx" />
+
+After c15t installation and the permitted vendor setup, connect the configured
+instance. `core` is the installed `ConsentCore`:
+
+{/* example: fragment */}
+
+```swift
+@preconcurrency import Mixpanel
+
+let mixpanel = Mixpanel.mainInstance()
+let mixpanelOwner = MixpanelOwner(
+    core: core,
+    optInTracking: { mixpanel.optInTracking() },
+    optOutTracking: { mixpanel.optOutTracking() }
+)
+```
+
+Retain `mixpanelOwner` for the analytics lifetime. The import annotation is
+needed for the checked Swift 6 consumer because this Mixpanel client does not
+declare `Sendable` conformance. Call the vendor methods directly in the callbacks.
+Adding another dispatch queue can reorder grants and withdrawals.
+
+### Connect Android
+
+Add this function to your app, replacing the sample package name:
+
+<include src="../shared/examples/native/examples/consent-demo/android-mixpanel-integration.mdx" />
+
+Connect the same initialized `MixpanelAPI` instance used for app events:
+
+{/* example: fragment */}
+
+```kotlin
+val mixpanelConsent = connectAppMixpanel(
+	optInTracking = { mixpanel.optInTracking() },
+	optOutTracking = { mixpanel.optOutTracking() },
+	onError = ::reportAnalyticsError,
+)
+```
+
+Keep the connection on your application or analytics service. The native core keeps
+applying consent until you call `close()`, even if the app drops the handle. An Activity
+rotation must not close an app-wide integration. The error handler must work
+while analytics is disabled and must not throw. Automatic callback failures go
+to `onError`; construction, `sync()` and `close()` can throw to their caller.
+
+### Connect React Native or Expo
+
+Copy this function into `mixpanel-consent.ts`:
+
+<include src="../shared/examples/react-native-bare/rn-mixpanel-integration.mdx" />
+
+In app startup, connect your initialized Mixpanel instance and retain the handle:
+
+{/* example: fragment */}
+
+```ts
+const mixpanelConsent = connectAppMixpanel(mixpanel, reportAnalyticsError);
+await mixpanelConsent.ready;
+```
+
+`onError` receives vendor callback failures. Handle rejections from `ready`,
+`sync()` and `disconnect()` too. With Mixpanel RN 4.0.0, opt-in/out methods
+return `void` and discard the native promises. c15t serializes their submission;
+its promises cannot confirm that Mixpanel's native queue finished or report
+native failures that Mixpanel does not return. Keep app-side event calls behind
+current permission.
+
+### Understand opt-in, reset and withdrawal
+
+Mixpanel's opt-in API emits its own `$opt_in` event. c15t skips unchanged
+permissions, but construction with an existing grant, a later grant and explicit
+`sync()` can submit opt-in. Use `sync()` after an app-owned vendor reset has
+completed, rather than on every render or screen change.
+
+Swift's Mixpanel implementation queues the commands internally. A status getter
+is not a completion barrier, so the helper does not use status reads to guess
+whether a queued grant or denial finished. Swift opt-out can flush older events
+and profile changes. Android opt-out clears its pending event queues and local
+user information. Do not depend on identical queue or identity behavior across
+platforms, or add a flush before withdrawal.
+
+For final teardown, call the Swift owner's `stop()`, Kotlin's `close()` or
+`await mixpanelConsent.disconnect()`. These detach consent observation and
+submit opt-out. They do not delete data already received by Mixpanel.
+
+### Verify your app
+
+Test pending permission and refusal before any optional event call, then a
+grant, an intentional event and withdrawal. Check relaunch after both grant
+and refusal. Complete a vendor reset, reapply permission and inspect both
+Mixpanel's identity and `$opt_in` events. Inspect queued traffic separately
+from newly accepted events.
+
+The checked mappings use Mixpanel Swift 7.0.0, Android 8.11.1 and RN 4.0.0.
+The helper tests prove native authority and command ordering. They do not
+prove delivery, native queue completion or device startup traffic. Use
+[mobile verification](/docs/guides/mobile-verify) with your actual vendor build.

@@ -1,0 +1,25 @@
+{/* Generated from internals/fixtures/react-native-bare/src/documentation/analytics-screen.tsx (docs:testing-screen) by scripts/sync-example-docs.ts. Edit the source file. */}
+
+```tsx title="analytics-screen.tsx"
+import { useConsent, useSaveConsents } from '@c15t/react-native';
+import { Pressable, Text, View } from 'react-native';
+
+export const AnalyticsScreen = () => {
+	const measurement = useConsent('measurement');
+	const saveConsents = useSaveConsents();
+
+	return (
+		<View>
+			<Text>{measurement ? 'Analytics on' : 'Analytics off'}</Text>
+			<Pressable
+				accessibilityRole="button"
+				onPress={() => {
+					void saveConsents('all');
+				}}
+			>
+				<Text>Accept all</Text>
+			</Pressable>
+		</View>
+	);
+};
+```

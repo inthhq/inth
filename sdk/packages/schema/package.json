@@ -1,0 +1,87 @@
+{
+	"name": "@c15t/schema",
+	"version": "3.1.1-canary.0",
+	"description": "Valibot schemas and TypeScript types for the c15t consent API, shared by the backend, frontends and Node.js SDK.",
+	"keywords": [
+		"ccpa",
+		"consent",
+		"gdpr",
+		"privacy",
+		"schema",
+		"typescript",
+		"valibot",
+		"validation"
+	],
+	"homepage": "https://c15t.com/docs",
+	"bugs": {
+		"url": "https://github.com/c15t/c15t/issues"
+	},
+	"license": "Apache-2.0",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/c15t/c15t.git",
+		"directory": "packages/schema"
+	},
+	"files": [
+		"dist",
+		"dist-types"
+	],
+	"type": "module",
+	"sideEffects": false,
+	"main": "./dist/index.js",
+	"types": "./dist-types/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist-types/index.d.ts",
+			"import": "./dist/index.js",
+			"default": "./dist/index.js"
+		},
+		"./types": {
+			"types": "./dist-types/types.d.ts",
+			"import": "./dist/types.js",
+			"default": "./dist/types.js"
+		},
+		"./config": {
+			"types": "./dist-types/config/index.d.ts",
+			"import": "./dist/config.js",
+			"default": "./dist/config.js"
+		},
+		"./geo": {
+			"types": "./dist-types/shared/geo-headers.d.ts",
+			"import": "./dist/geo.js",
+			"default": "./dist/geo.js"
+		},
+		"./canonical-order": {
+			"types": "./dist-types/shared/canonical-order.d.ts",
+			"import": "./dist/canonical-order.js",
+			"default": "./dist/canonical-order.js"
+		}
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"scripts": {
+		"build": "rslib build && bun ../../scripts/normalize-dist-types.mjs",
+		"check-types": "tsc --noEmit",
+		"dev": "sh -c 'rslib build --no-dts --no-clean && rslib build --watch --no-dts --no-clean'",
+		"fmt": "bun oxfmt .",
+		"lint": "bun oxlint ./src",
+		"test": "vitest run --passWithNoTests",
+		"test:watch": "vitest"
+	},
+	"dependencies": {
+		"@c15t/translations": "workspace:*",
+		"base-x": "5.0.1",
+		"valibot": "1.4.2"
+	},
+	"devDependencies": {
+		"@c15t/typescript-config": "workspace:*",
+		"@c15t/vitest-config": "workspace:*",
+		"typescript": "7.0.2"
+	},
+	"browserslist": [
+		">0.2%",
+		"not dead",
+		"not op_mini all"
+	]
+}

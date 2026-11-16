@@ -1,0 +1,90 @@
+---
+title: SwiftUI example
+description: Explore the complete SwiftUI example app, including stock consent screens, a custom form, native SDK gating and storage recovery.
+group: frameworks
+---
+
+Use the runnable app at `native/core-swift/Examples/swiftui-consent` to integrate c15t into SwiftUI. Its local demonstration runs without an Inth account: it injects a sample transport through the SDK's internal API, persists choices in Keychain and leaves consent records queued. Your app does not do that. It passes its Inth project URL, as the sample's hosted path does. For policy resolution and receipt delivery, configure your Inth project URL and privacy policy URL.
+
+For a new app integration, choose Swift in the [framework list](/docs/frameworks).
+This page follows the larger runnable example, including its demo dashboard
+and custom-form mode.
+
+## Install the Swift package
+
+The native modules are private source artifacts. In Xcode, choose File > Add Package Dependencies > Add Local, then select `native/core-swift`. Link `C15tCore`, `C15tApple` and `C15tConsentUI` to the app target. The source package has no remote SwiftPM release URL or tag. `import C15tCore`, `import C15tApple` and `import C15tConsentUI` refer to those products.
+
+The sample targets iOS 16.4 or later. It needs Xcode and XcodeGen. From the repository root:
+
+```sh
+xcodegen generate --spec native/core-swift/Examples/swiftui-consent/project.yml
+open native/core-swift/Examples/swiftui-consent/C15tSwiftUI.xcodeproj
+```
+
+Select the `C15tSwiftUI` scheme and an iOS simulator, then Run. The sample README has exact `xcodebuild` build and test commands. Its XcodeGen package entry resolves `../..` to `native/core-swift`; no npm package or JavaScript runtime is required.
+
+Keep simulator code signing enabled. The project uses ad-hoc simulator signing with no developer account. An unsigned simulator build can fail the installer's Keychain probe before policy loading starts.
+
+## Own one engine for the app
+
+The app constructs one `AppConsentModel` during `App.init` and gives it to `@StateObject`. Every scene observes that model. Views do not install engines when they appear.
+
+<include src="../../shared/examples/native/core-swift/swiftui-consent/swiftui-app.mdx" />
+
+`C15tApple.install` verifies protected storage and hydrates synchronously before returning the process's core. Stored consent can therefore gate optional SDK startup immediately. A fresh installation still needs asynchronous policy resolution. Installation success does not mean `isReady()` is true. While readiness is unresolved, `decision(for: .measurement)` is `.pending` and measurement stays off.
+
+The sample retries `protectedStorageUnavailable` after protected-data availability or scene activation. It keeps the failed installation visible and does not substitute memory or plaintext storage. `C15tApple` already owns foreground and reachability refresh. Do not add another refresh loop or call `shutdown()` when a view disappears.
+
+For hosted use, set `C15T_BACKEND_URL` and `C15T_PRIVACY_POLICY_URL` in the app target's build settings. Use the project URL from your Inth dashboard, such as `https://your-project.inth.app`, and your app's real privacy policy. Configure the project's policy before launch. The hosted branch uses this compiled installation code:
+
+<include src="../../shared/examples/native/core-swift/swiftui-consent/swiftui-hosted.mdx" />
+
+Repeated installation keeps the first configuration. Changing a build setting does not reconfigure an engine already running in the same process. The sample uses separate Keychain services for its local demo, hosted mode and UI tests. Keychain may survive uninstall.
+
+## Observe readiness and gate work
+
+`AppConsentModel.snapshot` is a published value. The dashboard reads `snapshot.ready && !snapshot.policyPending` for readiness and displays recorded choice separately from effective measurement permission.
+
+The model retains both subscription handles for its lifetime. `gate` delivers the current decision immediately, including `.pending`, then delivers changes. The sample's thread-safe counter starts only on `.granted` and stops on `.pending` or `.denied`.
+
+<include src="../../shared/examples/native/core-swift/swiftui-consent/swiftui-observe.mdx" />
+
+The model republishes its snapshot from a `PublishedConsent`, which updates on the main actor. The Combine sink needs no hop:
+
+<include src="../../shared/examples/native/core-swift/swiftui-consent/swiftui-snapshot.mdx" />
+
+`MeasurementService.recordTap(core:)` checks the core again before recording. Use the same checks around your actual analytics integration, and implement that vendor's stop, disable or reset behavior on withdrawal. A third-party SDK that auto-starts before the gate can already have collected data. The sample counter makes no network requests and proves no third-party vendor behavior.
+
+## Use stock consent screens
+
+The model retains one main-actor `ConsentPresenter` attached to the installed core. The modifier automatically presents an owed choice after policy resolution. The dashboard's Privacy settings button calls `presentPreferences()` for standing settings.
+
+<include src="../../shared/examples/native/core-swift/swiftui-consent/swiftui-presenter.mdx" />
+
+In the local demo, accept measurement, tap Record sample event, then open Privacy settings and turn measurement off. Save and confirm the event button becomes unavailable. Relaunch and confirm that the recorded choice remains. The demo's privacy link is an explicit `example.com/privacy` placeholder. Hosted mode requires your own policy URL.
+
+Stock copy and branding use `ConsentTheme` defaults. The introduction mentions advertising even though this sample requests only measurement. Before shipping, set app-specific `brand` and `copy` values and review the disclosures against your policy. See [Native appearance](/docs/frameworks/react-native/customize).
+
+The stock presenter saves on a worker, prevents duplicate actions and keeps a failed draft available for retry. A local `.committed` result means the choice and queued record reached durable storage. It does not mean the backend accepted a receipt. The model observes `eventStream` and `pendingSaveCount()` to show delivery separately. A hosted backend can later refuse a record or exhaust retries; surface and investigate those errors rather than claiming delivery.
+
+## Try a separate custom form
+
+Add `--headless` to the scheme's Run arguments and open Privacy settings. This mode never constructs `ConsentPresenter` or mounts `.c15tConsent`. Its category-only `HeadlessPreferences` form supports measurement, cancel, rejected writes and an explicit reload after concurrent changes. It refuses IAB editing. Use the stock presenter and current IAB configuration for vendor consent.
+
+The draft starts from explicit recorded choices and captures the revision it edits:
+
+<include src="../../shared/examples/native/core-swift/swiftui-consent/swiftui-draft.mdx" />
+
+Save calls the same native core on a worker. The form dismisses only after `.committed`. A refusal keeps its draft and shows a retry message; a concurrent change asks the person to reload current settings.
+
+<include src="../../shared/examples/native/core-swift/swiftui-consent/swiftui-save.mdx" />
+
+This small form is a category integration example. A production custom flow also owns policy-specific disclosures, localization, required actions, accessibility and unsaved-edit confirmation. Do not use it as a substitute for the stock IAB flow.
+
+## Check failures and persistence
+
+Add `--demo-unavailable` to simulate an unavailable policy transport. A fresh simulator stays pending, with measurement off. After a saved choice, relaunching unavailable hydrates the stored decision. The demo never sends consent records, so queued records remain visible. It is not a production offline policy recipe.
+
+The sample's XCTest suite checks pending gates, grant and withdrawal, refused writes, stale drafts, stored hydration, protected-storage retry and subscription teardown. Its UI tests launch the app, use the stock screens, relaunch against Keychain and exercise the separate custom form. These checks do not establish physical-device, live VoiceOver, download size, speed or certification results.
+
+See [Standalone Apple](/docs/frameworks/react-native/apple) for installation ownership and [Offline and persistence](/docs/frameworks/react-native/offline) for delivery behavior.

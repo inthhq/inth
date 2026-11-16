@@ -1,0 +1,115 @@
+import {
+	startsClosedByDefault,
+	toggleOpenClose,
+} from '@c15t/conformance/play/collapsible';
+import { getOpenState } from '@c15t/ui/primitives';
+import { collapsibleVariants } from '@c15t/ui/styles/primitives';
+import type { Meta, StoryObj } from '@storybook/vue3-vite';
+import { computed, ref } from 'vue';
+
+import { enTranslations } from '../../../packages/translations/src';
+
+const { consentTypes } = enTranslations;
+
+const meta = {
+	parameters: {
+		layout: 'centered',
+	},
+	title: 'Primitives/Collapsible',
+} satisfies Meta;
+
+export default meta;
+
+type Story = StoryObj<typeof meta>;
+
+const variants = collapsibleVariants();
+
+export const Default: Story = {
+	play: toggleOpenClose,
+	render: () => ({
+		setup() {
+			const open = ref(true);
+			const toggle = () => {
+				open.value = !open.value;
+			};
+			const openState = computed(() => getOpenState(open.value));
+			return {
+				contentClass: variants.content(),
+				contentInnerClass: variants.contentInner(),
+				contentViewportClass: variants.contentViewport(),
+				description: consentTypes.measurement.description,
+				open,
+				openState,
+				rootClass: variants.root(),
+				title: consentTypes.measurement.title,
+				toggle,
+				triggerClass: variants.trigger(),
+			};
+		},
+		template: `
+			<div :class="rootClass" :data-state="openState" style="--collapsible-gap:0.75rem;border:1px solid var(--c15t-border);border-radius:var(--c15t-radius-md);padding:1rem;width:32rem">
+				<button
+					:class="triggerClass"
+					type="button"
+					style="align-items:center;display:flex;font-weight:600;justify-content:space-between;width:100%"
+					@click="toggle"
+				>
+					<span>{{ title }}</span>
+					<span aria-hidden="true">+</span>
+				</button>
+				<div :class="contentClass" :data-state="openState">
+					<div :class="contentViewportClass">
+						<div :class="contentInnerClass">
+							<p style="margin:0">{{ description }}</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		`,
+	}),
+};
+
+export const ClosedByDefault: Story = {
+	play: startsClosedByDefault,
+	render: () => ({
+		setup() {
+			const open = ref(false);
+			const toggle = () => {
+				open.value = !open.value;
+			};
+			const openState = computed(() => getOpenState(open.value));
+			return {
+				contentClass: variants.content(),
+				contentInnerClass: variants.contentInner(),
+				contentViewportClass: variants.contentViewport(),
+				description: consentTypes.functionality.description,
+				open,
+				openState,
+				rootClass: variants.root(),
+				title: consentTypes.functionality.title,
+				toggle,
+				triggerClass: variants.trigger(),
+			};
+		},
+		template: `
+			<div :class="rootClass" :data-state="openState" style="--collapsible-gap:0.75rem;border:1px solid var(--c15t-border);border-radius:var(--c15t-radius-md);padding:1rem;width:32rem">
+				<button
+					:class="triggerClass"
+					type="button"
+					style="align-items:center;display:flex;font-weight:600;justify-content:space-between;width:100%"
+					@click="toggle"
+				>
+					<span>{{ title }}</span>
+					<span aria-hidden="true">+</span>
+				</button>
+				<div :class="contentClass" :data-state="openState">
+					<div :class="contentViewportClass">
+						<div :class="contentInnerClass">
+							<p style="margin:0">{{ description }}</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		`,
+	}),
+};

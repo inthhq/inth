@@ -1,0 +1,12 @@
+{
+	"recommendations": [
+		"oxc.oxc-vscode",
+		"bradlc.vscode-tailwindcss",
+		"ms-playwright.playwright",
+		"eamodio.gitlens"
+	],
+	"unwantedRecommendations": [
+		"dbaeumer.vscode-eslint",
+		"esbenp.prettier-vscode"
+	]
+}

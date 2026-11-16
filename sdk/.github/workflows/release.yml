@@ -1,0 +1,113 @@
+# .github/workflows/release.yml
+name: Release
+
+# Pushes open or update a version PR. Merging that PR publishes.
+on:
+  push:
+    branches: ['main', 'canary']
+  workflow_dispatch:
+    inputs:
+      skip_tests:
+        description: Skip CI and publish after building and checking package artifacts
+        type: boolean
+        default: false
+
+permissions: {}
+
+env:
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+  TURBO_CACHE_POLICY: ${{ vars.TURBO_CACHE_POLICY }}
+
+# Each run gets its own group, so checks for consecutive pushes overlap and
+# only the publish job below waits its turn. `queue: max` keeps every waiting
+# run; by default a new one cancels the one already waiting.
+concurrency:
+  group: release-run-${{ github.run_id }}
+  queue: max
+
+jobs:
+  # npm trusted publishing binds the OIDC identity to the *top-level* workflow
+  # file. Publishing must therefore start here and pull the checks in, rather
+  # than `ci.yml` calling this file — the reverse arrangement presents
+  # `ci.yml` as the workflow and npm rejects the token.
+  checks:
+    name: Checks
+    # Private copies still validate. Only public release runs may bypass checks.
+    if: github.repository != 'c15t/c15t' || !(github.event_name == 'workflow_dispatch' && inputs.skip_tests)
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+    uses: ./.github/workflows/ci.yml
+    with:
+      skip_performance: true
+      release_affected: ${{ github.ref == 'refs/heads/canary' }}
+      skip_mobile_device: true
+
+  publish:
+    name: Release ${{ github.ref == 'refs/heads/canary' && 'Canary' || '' }}
+    needs: checks
+    # Only one release per branch publishes at a time.
+    concurrency:
+      group: release-${{ github.ref }}
+      queue: max
+    # npm trusted publishing requires a GitHub-hosted runner.
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Tegami creates releases, tags, and version commits
+      pull-requests: write # Tegami opens version pull requests
+      id-token: write # Required for OIDC trusted publishing with npm (bypasses 2FA requirement)
+
+    if: >-
+      !cancelled() && github.repository == 'c15t/c15t' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/canary') && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && (needs.checks.result == 'success' || (github.event_name == 'workflow_dispatch' && inputs.skip_tests && needs.checks.result == 'skipped'))
+    steps:
+      - name: Check out code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          # Tegami uses release tags and changelog history.
+          fetch-depth: 0
+
+      - uses: ./.github/actions/setup
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+          built: ${{ needs.checks.outputs.built }}
+          cache-scope: publish
+
+      # Keep npm's OIDC support explicit even if the Node runner image changes.
+      - name: Upgrade npm for trusted publishing
+        run: npm install -g npm@11.5.1
+
+      # Checks overlap, so an older push can reach this job after a newer one.
+      # Releasing it would run Tegami on a stale tree, for example reopening a
+      # version PR the newer commit already merged, so a superseded run does
+      # not release. The check runs here, after this job holds the release
+      # group, so the tip it reads is as recent as possible.
+      - name: Skip superseded commits
+        id: tip
+        shell: bash
+        env:
+          REPOSITORY_URL: ${{ github.server_url }}/${{ github.repository }}
+        run: |
+          tip=$(git ls-remote --exit-code "$REPOSITORY_URL" "$GITHUB_REF" | cut -f1)
+          if [ -z "$tip" ]; then
+            echo "::error::Could not read $GITHUB_REF from $REPOSITORY_URL."
+            exit 1
+          fi
+          if [ "$tip" = "$GITHUB_SHA" ]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Not releasing $GITHUB_SHA: $GITHUB_REF is now at $tip, and that run releases this commit if its checks pass."
+            echo "current=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Version or publish packages
+        if: steps.tip.outputs.current == 'true'
+        run: bun run tegami ci
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_CONFIG_PROVENANCE: 'true'
+
+      - uses: ./.github/actions/save-turbo-cache
+        with:
+          scope: publish

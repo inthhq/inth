@@ -1,0 +1,1700 @@
+import type { PolicyBenchFixture } from './policy-fixtures';
+import type { MetricBudget, MetricBudgetResult } from './schema';
+
+/**
+ * v3 budget constants for `c15t`, `@c15t/react`, and `@c15t/nextjs`.
+ *
+ * These use `percent-lte` with NEGATIVE thresholds, meaning the v3 measurement
+ * must IMPROVE by at least |threshold|% against the base branch. The base
+ * branch is expected to carry the v2-era benchmark numbers documented in
+ * `benchmarks/BASELINE.md`, so the net effect is "v3 must be at least N%
+ * faster/smaller than the v2 baseline."
+ *
+ * The core runtime entries carry `baseArm: 'v2'`: the comparison runner
+ * evaluates them only against artifacts supplied for that arm through
+ * `BENCHMARK_ARM_BASE_DIRS`, and an enforced run fails when the arm is
+ * missing. A v3 base (every branch since the v3 promotion) is never treated
+ * as the v2 arm, because a -50% improvement threshold against a v3 base
+ * would either fail spuriously or, worse, pass against an implicit zero.
+ *
+ * These are attached to v3 benchmark output via the v3 runners' `budgetDefinitions`
+ * field (see `benchmarks/core-benchmarks/src/run.ts` for the v2 equivalent).
+ * Until the v3 runners exist (Track 2), these constants are exported but unused.
+ *
+ * Per `.context/plans/system-instruction-you-are-working-cryptic-pelican.md`:
+ *   Bundle: −30% or better
+ *   First-render / repeatVisitorInit: −50% or better
+ *   Retained heap: −50% or better
+ *   Zero unrelated React re-renders (enforced via separate profiler harness)
+ */
+export const coreRuntimeV3Budgets: MetricBudget[] = [
+	{
+		baseArm: 'v2',
+		// The v2 runner named store construction `createConsentManagerStore`
+		// (BASELINE.md, "createConsentKernel (was createConsentManagerStore)").
+		baseArmMetric: 'createConsentManagerStore',
+		comparator: 'percent-lte',
+		description:
+			'v3 kernel construction must not regress vs v2 baseline (target: sub-µs, pure).',
+		metric: 'createConsentKernel',
+		threshold: 0,
+	},
+	{
+		baseArm: 'v2',
+		baseArmMetric: 'initConsentManager',
+		comparator: 'percent-lte',
+		description: 'v3 full init must be at least 50% faster than v2 baseline.',
+		metric: 'initConsentManager',
+		threshold: -50,
+	},
+	{
+		baseArm: 'v2',
+		baseArmMetric: 'repeatVisitorInit',
+		comparator: 'percent-lte',
+		description:
+			'v3 repeat-visitor init must be at least 50% faster than v2 baseline.',
+		metric: 'repeatVisitorInit',
+		threshold: -50,
+	},
+];
+
+export const bundleV3Budgets: MetricBudget[] = [
+	{
+		comparator: 'percent-lte',
+		description:
+			'v3 /core-only route addition must be at least 30% smaller than v2 baseline.',
+		metric: 'core-only',
+		threshold: -30,
+	},
+	{
+		comparator: 'percent-lte',
+		description:
+			'v3 /react-headless route addition must be at least 30% smaller than v2 baseline.',
+		metric: 'react-headless',
+		threshold: -30,
+	},
+	{
+		comparator: 'percent-lte',
+		description:
+			'v3 /react-banner-only route addition must be at least 30% smaller than v2 baseline.',
+		metric: 'react-banner-only',
+		threshold: -30,
+	},
+	{
+		comparator: 'percent-lte',
+		description:
+			'v3 /react-full route addition must be at least 30% smaller than v2 baseline.',
+		metric: 'react-full',
+		threshold: -30,
+	},
+	{
+		comparator: 'percent-lte',
+		description:
+			'v3 /nextjs-basic route addition must be at least 30% smaller than v2 baseline.',
+		metric: 'nextjs-basic',
+		threshold: -30,
+	},
+];
+
+export const artifactV3Budgets: MetricBudget[] = [
+	{
+		comparator: 'percent-lte',
+		description:
+			'v3 @c15t/core tarball must be at least 30% smaller than the v2 core package (published as c15t).',
+		metric: '@c15t/core',
+		threshold: -30,
+	},
+	{
+		comparator: 'percent-lte',
+		description:
+			'v3 @c15t/react package tarball must be at least 30% smaller than v2.',
+		metric: '@c15t/react',
+		threshold: -30,
+	},
+	{
+		comparator: 'percent-lte',
+		description:
+			'v3 @c15t/nextjs package tarball must be at least 30% smaller than v2.',
+		metric: '@c15t/nextjs',
+		threshold: -30,
+	},
+];
+
+/** Empty-kernel operations run in microseconds; hosted jitter below 1µs is reported but not gated. */
+export const coreRuntimeBudgets: MetricBudget[] = [
+	{
+		comparator: 'absolute-or-percent-lte',
+		description:
+			'Kernel construction must not regress by both more than 1µs and 30%.',
+		metric: 'createConsentKernel',
+		secondaryThreshold: 30,
+		threshold: 1,
+	},
+	{
+		comparator: 'absolute-or-percent-lte',
+		description:
+			'Snapshot reads must not regress by both more than 1µs and 20%.',
+		metric: 'getSnapshot',
+		secondaryThreshold: 20,
+		threshold: 1,
+	},
+	// 2µs, not 1µs: a first-visit init stamps the banner's first impression
+	// (#1146), one frozen snapshot copy that costs ~0.35µs locally and
+	// lands close to 1µs on hosted runners.
+	{
+		comparator: 'absolute-or-percent-lte',
+		description:
+			'Empty-kernel init must not regress by both more than 2µs and 15%.',
+		metric: 'initConsentManager',
+		secondaryThreshold: 15,
+		threshold: 2,
+	},
+];
+
+/**
+ * Vendor-level consent (#1034) added the vendor gate, the denial-list codec
+ * with its subject copy, the paused-iframe marker, the vendor save path and
+ * the per-module owner registry with live iframe ownership to the kernel
+ * entry, with the declaration copy, retained-denial clear, frame
+ * ownership sweep, joint settlement of narrowed bulk actions, slug
+ * validation of stored denials and the vendor record reconcile after a
+ * prefetch that review added: about 3.5 kB gzip on the headless consumer
+ * scenario, measured on the PR that introduced it.
+ * The delta budgets below carry that once; they return to their previous
+ * values in the follow-up that lands after the feature is on the base
+ * branch.
+ */
+const VENDOR_CONSENT_GZIP_BYTES = 3584;
+/**
+ * The same allowance for the core package tarball, which carries the
+ * feature's hooks and modules uncompressed.
+ */
+const VENDOR_CONSENT_TARBALL_BYTES = 8192;
+
+/**
+ * The stock surfaces render their own styles: the first-paint rules moved
+ * from the stylesheet the app imported into the banner's JavaScript
+ * (`@c15t/ui/styles/sheets/first-paint`, about 8.8 kB gzip), and the
+ * dialog's rules into the dialog's lazy chunk (about 5.3 kB gzip). A route
+ * that drops its `styles.css` import loses about 13.5 kB gzip of
+ * render-blocking CSS in exchange. Measured on the PR that moved them; the
+ * budgets below carry it once, like the vendor consent allowance.
+ */
+const SURFACE_STYLES_INITIAL_GZIP_BYTES = 9216;
+const SURFACE_STYLES_DEFERRED_GZIP_BYTES = 5632;
+
+/**
+ * The lazy IAB entry also carries its banner and dialog sheets. Its total
+ * grew by 6,895 bytes more than the ordinary entry in the consumer bundle
+ * comparison. Both IAB sheets load after the ordinary banner, so this
+ * one-time 7 KiB allowance applies only to deferred and total JavaScript.
+ */
+const IAB_STYLES_DEFERRED_GZIP_BYTES = 7168;
+
+/** Bundle entries that render a stock surface. */
+const SURFACE_ENTRIES = new Set(['iab-lazy', 'ordinary-react']);
+
+/**
+ * `@c15t/browser` exports `manifest()`, whose browser resolver loads each
+ * non-English language's base copy through its own `import()`. esbuild
+ * emits a chunk for every `import()` in a file it scans, so an entry that
+ * only calls `init()` still emits the resolver chunks and 34 language
+ * chunks it cannot request: 86,849 bytes gzip on the browser entries,
+ * measured on #1450 against v3 at a6ceeba59. The same change cut those
+ * entries' first-load JavaScript by about 16 kB gzip and their reachable
+ * total by about 17 kB. The deferred budget carries the chunks once; it
+ * returns to its previous value after the change is on the base branch.
+ */
+const BROWSER_LANGUAGE_CHUNKS_GZIP_BYTES = 87_040;
+
+/** Bundle entries that import `manifest()` from `@c15t/browser`. */
+const BROWSER_MANIFEST_ENTRIES = new Set(['browser-full', 'browser-headless']);
+
+/**
+ * Google Additional Consent (#1478) added a heading and a notice for the ad
+ * tech provider section to every built-in language. `createManifestTransport`
+ * bundles every language on first load, so the copy lands in that entry's
+ * initial JavaScript: 3,579 bytes gzip, measured as the change between the
+ * PR's commits before and after the translations. Entries that load
+ * languages on demand carry it in chunks they cannot reach. The budgets
+ * below carry it once; they return to their previous values after the
+ * feature is on the base branch.
+ */
+const ADDITIONAL_CONSENT_COPY_GZIP_BYTES = 3584;
+
+/**
+ * Eleven built-in languages from #927 (ja, kn, ml, mr, ms, pa, ta, te, th,
+ * tr, vi) land in the same first-load JavaScript of entries that bundle
+ * every language: 28,415 bytes gzip, measured as the change from the base
+ * commit. The browser entries get eleven more language chunks (+35,256
+ * bytes gzip deferred), which `BROWSER_LANGUAGE_CHUNKS_GZIP_BYTES` already
+ * covers. The budgets below carry it once; they return to their previous
+ * values after the languages are on the base branch.
+ */
+const ASIA_LANGUAGES_GZIP_BYTES = 28_672;
+
+/** Bundle entries that bundle every built-in language on first load. */
+const ALL_LANGUAGE_ENTRIES = new Set(['manifest-transport']);
+
+/**
+ * `clientMode()` loads hosted mode, offline mode and the browser resolver
+ * from self-contained bundles (`dist/runtime/lazy-*.js`), so Rolldown does
+ * not split shared modules out of a page's first-load chunk. Each bundle
+ * repeats modules the bundleless build also ships: 55,452 packed bytes,
+ * measured on #1450 against v3 at a6ceeba59, where the tarball was 323,549
+ * bytes. The core tarball budget carries them once, in bytes and as a share
+ * of that tarball, and returns to its previous limits after the change is on
+ * the base branch.
+ */
+const CLIENT_MODE_BUNDLES_TARBALL_BYTES = 56_320;
+const CLIENT_MODE_BUNDLES_TARBALL_PERCENT = 18;
+
+/**
+ * The deferred engine (#51). In a browser bundle `ConsentProvider` is a
+ * shell that renders at once and loads the engine (the kernel, persistence,
+ * the transports and the provider itself) through `import()`; the shell can
+ * commit an Accept or Reject and open the stock dialog before the engine
+ * arrives. Measured on #51 against canary at a4bb264f7, after the IAB
+ * banner stopped carrying the `first-paint` sheet next to the banner's
+ * sheets and the trigger's sheet moved into the trigger's chunk:
+ *
+ * - `provider`: first load 57,712 → 29,854 bytes gzip. The engine leaves it
+ *   as 48 KB of deferred chunks, which cost about as much as they did
+ *   inside the first load, and the shell's own code (shell, deferred
+ *   kernel, instant commit, trigger routing, about 12 KB) takes its place.
+ *   The dialog group (the stock dialog, the preference widget, the trigger
+ *   and the `dialog`, `banner`, `button`, `trigger` and `tokens` sheets,
+ *   46 KB) was emitted but unreachable on the base and is reachable now,
+ *   through the shell's early dialog, so it counts in the total as well as
+ *   in the emitted bytes. Emitted deferred +53,089; initial plus reachable
+ *   deferred +70,488.
+ * - `ordinary-react`: first load 89,264 → 84,220. The engine's chunks, the
+ *   commit chunk, the engine host and the snapshot reader add to the
+ *   deferred bytes, and the engine split into twenty chunks compresses
+ *   worse than it did in two. Emitted +25,218; total +20,174.
+ * - `iab-lazy`: first load 85,573 → 83,930. Emitted +26,524; total +28,940.
+ *
+ * Each entry carries the measured growth past the bands and the style
+ * allowances above, once; the entries go when the change is on the base
+ * branch.
+ */
+const DEFERRED_ENGINE_GZIP_BYTES: Record<
+	string,
+	{ deferred: number; total: number }
+> = {
+	'iab-lazy': { deferred: 2048, total: 4096 },
+	'ordinary-react': { deferred: 7680, total: 2560 },
+	provider: { deferred: 26_624, total: 53_248 },
+};
+
+/**
+ * The same change in the `@c15t/react` tarball: the `deferred/` modules
+ * (shell, deferred kernel, commit path, engine host, registry, session,
+ * surfaces and their types), `static-banner` and the presentation hooks.
+ * 27,111 packed bytes (15.44%) over the base tarball of 175,651 bytes,
+ * measured on #51 against canary at a4bb264f7. The react tarball budget
+ * carries them once, in bytes and as a share of that tarball, and returns to
+ * its previous limits after the change is on the base branch.
+ */
+const DEFERRED_ROOT_TARBALL_BYTES = 12_288;
+const DEFERRED_ROOT_TARBALL_PERCENT = 6;
+
+export const bundleBudgets: MetricBudget[] = [
+	{
+		comparator: 'delta-bytes-lte',
+		description:
+			'The core-only route should not gain more than 1.5kB over the base branch, plus the vendor consent allowance.',
+		metric: 'core-only',
+		threshold: 1536 + VENDOR_CONSENT_GZIP_BYTES,
+	},
+	{
+		comparator: 'delta-bytes-lte',
+		description:
+			'Headless React bundle delta budget, plus the vendor consent allowance.',
+		metric: 'react-headless',
+		threshold: 2048 + VENDOR_CONSENT_GZIP_BYTES,
+	},
+	{
+		comparator: 'delta-bytes-lte',
+		description: 'React banner bundle delta budget.',
+		metric: 'react-banner-only',
+		threshold:
+			3072 + VENDOR_CONSENT_GZIP_BYTES + SURFACE_STYLES_INITIAL_GZIP_BYTES,
+	},
+	{
+		comparator: 'delta-bytes-lte',
+		description: 'React full bundle delta budget.',
+		metric: 'react-full',
+		threshold:
+			4096 + VENDOR_CONSENT_GZIP_BYTES + SURFACE_STYLES_INITIAL_GZIP_BYTES,
+	},
+	{
+		comparator: 'delta-bytes-lte',
+		description: 'Next.js package bundle delta budget.',
+		metric: 'nextjs-basic',
+		threshold:
+			3072 + VENDOR_CONSENT_GZIP_BYTES + SURFACE_STYLES_INITIAL_GZIP_BYTES,
+	},
+];
+
+/**
+ * Package tarball budgets. The measured tarball leaves out the bundled docs
+ * (`docs/`, `AGENTS.md`, `SKILL.md`), so these budgets cover code only and
+ * documentation changes never count against them.
+ */
+export const artifactBudgets: MetricBudget[] = [
+	{
+		comparator: 'absolute-and-percent-lte',
+		description:
+			'@c15t/core tarball growth, excluding bundled docs, must stay below 15kB and 10%, plus the vendor consent and clientMode() bundle allowances.',
+		metric: '@c15t/core',
+		secondaryThreshold: 10 + CLIENT_MODE_BUNDLES_TARBALL_PERCENT,
+		threshold:
+			15360 + VENDOR_CONSENT_TARBALL_BYTES + CLIENT_MODE_BUNDLES_TARBALL_BYTES,
+	},
+	{
+		comparator: 'absolute-and-percent-lte',
+		description:
+			'React package tarball growth, excluding bundled docs, must stay below 15kB and 10%, plus the deferred root allowance.',
+		metric: '@c15t/react',
+		secondaryThreshold: 10 + DEFERRED_ROOT_TARBALL_PERCENT,
+		threshold: 15360 + DEFERRED_ROOT_TARBALL_BYTES,
+	},
+	{
+		comparator: 'absolute-and-percent-lte',
+		description:
+			'Next.js package tarball growth, excluding bundled docs, must stay below 15kB and 10%.',
+		metric: '@c15t/nextjs',
+		secondaryThreshold: 10,
+		threshold: 15360,
+	},
+];
+
+export const browserBudgets: MetricBudget[] = [
+	{
+		comparator: 'absolute-and-percent-lte',
+		description:
+			'Banner readiness should not regress by more than 25ms and 15%.',
+		metric: 'bannerReadyMs',
+		secondaryThreshold: 15,
+		threshold: 25,
+	},
+	{
+		comparator: 'absolute-and-percent-lte',
+		description: 'Final app-script response end budget.',
+		metric: 'lastAppScriptEndMs',
+		secondaryThreshold: 10,
+		threshold: 15,
+	},
+	{
+		comparator: 'absolute-and-percent-lte',
+		description: 'Interaction latency budget.',
+		metric: 'interactionLatencyMs',
+		secondaryThreshold: 20,
+		threshold: 20,
+	},
+	{
+		comparator: 'percent-lte',
+		description: 'Long-task total should not grow by more than 25%.',
+		metric: 'longTaskTotalMs',
+		threshold: 25,
+	},
+	{
+		comparator: 'count-eq',
+		description: 'Client/prefetch initial request count invariant.',
+		metric: 'initRequestsAfterLoad',
+		threshold: 1,
+	},
+	{
+		comparator: 'count-eq',
+		description: 'SSR routes should not show browser-observed init requests.',
+		metric: 'ssrInitRequestsAfterLoad',
+		threshold: 0,
+	},
+];
+
+export const scriptLifecycleBudgets: MetricBudget[] = [
+	{
+		comparator: 'absolute-and-percent-lte',
+		description: 'Grant-standard script lifecycle budget.',
+		metric: 'grantStandardLifecycleMs',
+		secondaryThreshold: 20,
+		threshold: 20,
+	},
+	{
+		comparator: 'absolute-and-percent-lte',
+		description: 'Revoke-standard script lifecycle budget.',
+		metric: 'revokeStandardLifecycleMs',
+		secondaryThreshold: 20,
+		threshold: 25,
+	},
+	{
+		comparator: 'absolute-and-percent-lte',
+		description: 'Single-script reload lifecycle budget.',
+		metric: 'reloadSingleScriptMs',
+		secondaryThreshold: 20,
+		threshold: 15,
+	},
+	{
+		comparator: 'absolute-and-percent-lte',
+		description: 'Callback-only script lifecycle budget.',
+		metric: 'callbackOnlyToggleMs',
+		secondaryThreshold: 20,
+		threshold: 10,
+	},
+	{
+		comparator: 'absolute-and-percent-lte',
+		description: 'alwaysLoad script retention lifecycle budget.',
+		metric: 'alwaysLoadRetentionMs',
+		secondaryThreshold: 20,
+		threshold: 20,
+	},
+	{
+		comparator: 'absolute-and-percent-lte',
+		description: 'persistAfterConsentRevoked lifecycle budget.',
+		metric: 'persistAfterRevokedMs',
+		secondaryThreshold: 20,
+		threshold: 20,
+	},
+	{
+		comparator: 'count-eq',
+		description: 'Script lifecycle benchmark should not emit errors.',
+		metric: 'errorCount',
+		threshold: 0,
+	},
+];
+
+// ---------------------------------------------------------------------------
+// Issue #1025 coverage: budgets for metrics that had no ceiling before the
+// policy work. Thresholds marked "measured" were set from the repaired
+// baseline capture of the pre-change checkout (bbfcc04bb); thresholds marked
+// "allowance" are explicit absolute allowances for behavior the issue adds,
+// declared before the head was measured. See benchmarks/README.md.
+// ---------------------------------------------------------------------------
+
+/**
+ * Regression ceilings for the core runtime metrics that only had v2-arm
+ * improvement budgets. Same-key comparison against the pre-change base.
+ * Sub-microsecond medians are quantized by the timer, so each ceiling
+ * combines an absolute floor with a percentage (measured).
+ */
+export const coreRuntimeCoverageBudgets: MetricBudget[] = [
+	{
+		comparator: 'absolute-and-percent-lte',
+		description:
+			'Save-all commit path may grow by at most 3µs and 100% (measured base medians 2.9-3.9µs across fixtures, timer-quantized).',
+		metric: 'saveAll',
+		secondaryThreshold: 100,
+		threshold: 3,
+	},
+	{
+		comparator: 'absolute-and-percent-lte',
+		description:
+			'Repeat-visitor save+init path may grow by at most 3µs and 100% (measured base medians 3.0-3.6µs across fixtures, timer-quantized).',
+		metric: 'repeatVisitorInit',
+		secondaryThreshold: 100,
+		threshold: 3,
+	},
+	{
+		comparator: 'absolute-and-percent-lte',
+		description:
+			'Sync consent mutation may grow by at most 1µs and 100% (measured base medians 0.33-0.67µs across fixtures, timer-quantized).',
+		metric: 'setConsent',
+		secondaryThreshold: 100,
+		threshold: 1,
+	},
+];
+
+/**
+ * Policy wire payload and synchronous resolution budgets per fixed fixture.
+ *
+ * Byte allowances are declared per policy pack entry: the versioned
+ * resolution contract adds a normalized rule, three 64-character SHA-256
+ * fingerprints, and status fields to every pack entry and to the init
+ * response. 1.5kB raw / 640B gzip per entry is the allowance; the init
+ * response carries one entry.
+ *
+ * Timing allowances cover work the issue requires at resolution time:
+ * fingerprints are computed synchronously once per resolution (three
+ * pure-JS SHA-256 hashes of canonical JSON), and kernel init now evaluates
+ * stored records and derives the prompt requirement.
+ */
+/** Compound policy operations have the existing 150µs hydration-work allowance.
+ * Each sample asserts its actual choice, prompt and privacy result.
+ * These APIs have no historical empty-kernel equivalent; no v2 speedup is claimed.
+ */
+export const realPolicyOperationBudgets: MetricBudget[] = [
+	'realPolicyAcceptUs',
+	'realPolicyRejectUs',
+	'realPolicyPartialUs',
+	'realPolicyRepeatHydrationUs',
+	'realPolicyNoticeUs',
+	'realPolicyStandingGpcUs',
+].map((metric) => ({
+	comparator: 'absolute-lte',
+	description:
+		'Local policy operation without a save transport, including setup and behavioral assertions, stays within the existing 150µs hydration-work allowance; deferred transport completion is reported separately.',
+	metric,
+	threshold: 150,
+}));
+
+export const policyRuntimeBudgetsForFixture =
+	function policyRuntimeBudgetsForFixture(
+		fixture: Pick<PolicyBenchFixture, 'presets'>
+	): MetricBudget[] {
+		const packs = fixture.presets.length;
+		return [
+			...realPolicyOperationBudgets,
+			{
+				comparator: 'delta-bytes-lte',
+				description: `Manifest JSON may grow by at most 1536 bytes per pack entry (${packs} entries, allowance).`,
+				metric: 'manifestJsonBytes',
+				threshold: 1536 * packs,
+			},
+			{
+				comparator: 'delta-bytes-lte',
+				description: `Manifest gzip may grow by at most 640 bytes per pack entry (${packs} entries, allowance).`,
+				metric: 'manifestGzipBytes',
+				threshold: 640 * packs,
+			},
+			{
+				comparator: 'delta-bytes-lte',
+				description:
+					'Init JSON may grow by at most 1536 bytes for the versioned resolution contract (allowance).',
+				metric: 'initJsonBytes',
+				threshold: 1536,
+			},
+			{
+				comparator: 'delta-bytes-lte',
+				description:
+					'Init gzip may grow by at most 640 bytes for the versioned resolution contract (allowance).',
+				metric: 'initGzipBytes',
+				threshold: 640,
+			},
+			{
+				comparator: 'absolute-and-percent-lte',
+				description:
+					'Synchronous policy resolution may grow by at most 100µs: three sync SHA-256 fingerprints per resolution (allowance).',
+				metric: 'resolvePolicyUs',
+				threshold: 100,
+			},
+			{
+				comparator: 'absolute-and-percent-lte',
+				description:
+					'Init resolution from a manifest may grow by at most 100µs: fingerprints are precomputed once at resolution (allowance).',
+				metric: 'resolveInitUs',
+				threshold: 100,
+			},
+			{
+				comparator: 'absolute-and-percent-lte',
+				description:
+					'Kernel construction plus init apply may grow by at most 50µs: record evaluation and prompt derivation (allowance).',
+				metric: 'kernelInitUs',
+				threshold: 50,
+			},
+		];
+	};
+
+/**
+ * Browser policy scenarios (`@c15t/react-browser-bench` `policy-*`).
+ * Prompt readiness and render/request invariants for a fresh visitor
+ * resolving a real, source-emitted init payload.
+ */
+export const policyBrowserBudgets: MetricBudget[] = [
+	{
+		comparator: 'absolute-and-percent-lte',
+		description:
+			'Prompt readiness (banner visible or prompt resolved) should not regress by more than 25ms and 15%.',
+		metric: 'promptReadyMs',
+		secondaryThreshold: 15,
+		threshold: 25,
+	},
+	{
+		comparator: 'count-eq',
+		description: 'Fresh hosted load makes exactly one init request.',
+		metric: 'initRequestsAfterLoad',
+		threshold: 1,
+	},
+	{
+		comparator: 'count-eq',
+		description:
+			'No console errors or hydration warnings while the prompt settles.',
+		metric: 'consoleErrorCount',
+		threshold: 0,
+	},
+	{
+		comparator: 'percent-lte',
+		description:
+			'Probe commits until the prompt settles must not grow from the matching base scenario.',
+		metric: 'renderCount',
+		threshold: 0,
+	},
+	{
+		comparator: 'count-eq',
+		description: 'Provider mounts exactly once.',
+		metric: 'mountCount',
+		threshold: 1,
+	},
+];
+
+/**
+ * Cookie and local-storage projection bytes after an explicit choice.
+ *
+ * v3 records every category receipt with its own confirmation time and
+ * policy basis, and carries the subject once. The storage boundary
+ * measured a full-scope accept-all at 186 compact-cookie bytes versus 127
+ * for v2 and reject-all at 186 versus 64. The allowances below are
+ * absolute ceilings on the bytes the browser actually holds, declared
+ * from those measurements plus headroom for an identified subject: 320
+ * bytes for the consent cookie value, 1024 bytes for its localStorage
+ * JSON mirror. Notice and privacy projections are measured separately below.
+ */
+export const cookieProjectionBudgets: MetricBudget[] = [
+	{
+		comparator: 'absolute-lte',
+		description:
+			'Consent cookie value after a full explicit choice stays within 320 bytes (allowance; measured base 131 accept-all, 68 reject-all).',
+		metric: 'choiceCookieBytes',
+		threshold: 320,
+	},
+	{
+		comparator: 'absolute-lte',
+		description:
+			'Consent localStorage record after a full explicit choice stays within 1024 bytes (allowance; measured base 188-192).',
+		metric: 'choiceLocalStorageBytes',
+		threshold: 1024,
+	},
+	{
+		comparator: 'absolute-lte',
+		description:
+			'Total c15t cookie bytes on the page after a choice stay within 320 bytes (allowance).',
+		metric: 'c15tCookieBytes',
+		threshold: 320,
+	},
+	{
+		comparator: 'count-eq',
+		description: 'The choice cookie must actually be written.',
+		metric: 'choiceCookiePresent',
+		threshold: 1,
+	},
+];
+
+export const noticeProjectionBudgets: MetricBudget[] = [
+	{
+		comparator: 'absolute-lte',
+		description:
+			'Two-category privacy projection measured 29 bytes; 64 bytes allows all four categories.',
+		metric: 'privacyCookieBytes',
+		threshold: 64,
+	},
+	{
+		comparator: 'absolute-lte',
+		description:
+			'Partial choice and notice with the compatible notice-subject companion measure 416 bytes including names and separators; 464 bytes preserves headroom for encoding growth.',
+		metric: 'c15tCookieBytes',
+		threshold: 464,
+	},
+	{
+		comparator: 'absolute-lte',
+		description:
+			'Notice projection measured 86 bytes; 128-byte ceiling allows timestamp and encoding growth.',
+		metric: 'noticeCookieBytes',
+		threshold: 128,
+	},
+	{
+		comparator: 'absolute-lte',
+		description:
+			'Notice dismissal localStorage record stays within 256 bytes (measured 122, allowance).',
+		metric: 'noticeLocalStorageBytes',
+		threshold: 256,
+	},
+];
+
+/**
+ * Persisted repeat visitor: hydration must resolve the prompt from the
+ * stored record without a request, a re-render storm, or a warning, and
+ * the synchronous hydration itself must stay cheap.
+ */
+export const hydrationBudgets: MetricBudget[] = [
+	{
+		comparator: 'absolute-and-percent-lte',
+		description:
+			'Prompt resolution for a persisted repeat visitor should not regress by more than 25ms and 15%.',
+		metric: 'promptReadyMs',
+		secondaryThreshold: 15,
+		threshold: 25,
+	},
+	{
+		comparator: 'absolute-and-percent-lte',
+		description:
+			'Synchronous persistence hydration (real cookie + localStorage read into a kernel) may grow by at most 150µs: v3 decodes, validates and evaluates receipts (allowance).',
+		metric: 'hydrateUs',
+		threshold: 150,
+	},
+	{
+		comparator: 'count-eq',
+		description: 'Hydration applies the stored record.',
+		metric: 'hydratedFromStorage',
+		threshold: 1,
+	},
+	{
+		comparator: 'count-eq',
+		description: 'Hydration must not write back to storage.',
+		metric: 'hydrationWriteCount',
+		threshold: 0,
+	},
+	{
+		comparator: 'count-eq',
+		description:
+			'A persisted repeat visitor with a valid choice sees no first-layer prompt.',
+		metric: 'promptShownCount',
+		threshold: 0,
+	},
+	{
+		comparator: 'count-eq',
+		description:
+			'No console errors or hydration warnings for a persisted repeat visitor.',
+		metric: 'consoleErrorCount',
+		threshold: 0,
+	},
+	{
+		comparator: 'absolute-lte',
+		description:
+			'Probe commits until the prompt settles for a persisted repeat visitor: measured base is 3 (mount, hydrated render, init apply) (measured).',
+		metric: 'renderCount',
+		threshold: 3,
+	},
+	{
+		comparator: 'count-eq',
+		description: 'Repeat hosted load still makes exactly one init request.',
+		metric: 'initRequestsAfterLoad',
+		threshold: 1,
+	},
+];
+
+/**
+ * SSR consistency: matching server and client inputs must produce the
+ * same initial prompt without a flash or hydration warning.
+ */
+export const ssrConsistencyBudgets: MetricBudget[] = [
+	{
+		comparator: 'count-eq',
+		description:
+			'No hydration warnings or console errors during SSR hydration.',
+		metric: 'consoleErrorCount',
+		threshold: 0,
+	},
+	{
+		comparator: 'count-eq',
+		description:
+			'The active UI must not change between first client render and settle (no prompt flash).',
+		metric: 'promptTransitionCount',
+		threshold: 0,
+	},
+];
+
+/**
+ * Import boundary for the ordinary (non-IAB) React path, measured on the
+ * esbuild metafile of a synthetic entry: no IAB, devtools, or all-locale
+ * translation modules may be pulled in.
+ */
+export const importBoundaryBudgets: MetricBudget[] = [
+	...['iab', 'devtools', 'allLocales'].map((family): MetricBudget => ({
+		comparator: 'count-eq',
+		description: `Ordinary React imports no ${family} modules, including zero-byte eliminated inputs.`,
+		metric: `${family}InputModuleCount`,
+		threshold: 0,
+	})),
+	{
+		comparator: 'count-eq',
+		description: 'Ordinary route bundles no @c15t/iab module bytes.',
+		metric: 'iabInputBytes',
+		threshold: 0,
+	},
+	{
+		comparator: 'count-eq',
+		description: 'Ordinary route bundles no @c15t/dev-tools module bytes.',
+		metric: 'devtoolsInputBytes',
+		threshold: 0,
+	},
+	{
+		comparator: 'count-eq',
+		description:
+			'Ordinary route bundles no all-locale translation module bytes (only the default locale).',
+		metric: 'allLocalesInputBytes',
+		threshold: 0,
+	},
+];
+
+const sharedBrowserBudgetMetrics = [
+	'bannerReadyMs',
+	'lastAppScriptEndMs',
+	'interactionLatencyMs',
+	'longTaskTotalMs',
+];
+
+/** Shared browser budgets attached to every browser-runtime scenario. */
+export const sharedBrowserBudgets: MetricBudget[] = browserBudgets.filter(
+	(budget) => sharedBrowserBudgetMetrics.includes(budget.metric)
+);
+
+const SSR_SCENARIOS = new Set(['ssr', 'manifest-ssr', 'ssr-repeat']);
+
+const SAVED_CONSENT_SCENARIOS = new Set([
+	'saved-consent-accept',
+	'saved-consent-reject',
+]);
+
+/** The Next.js typical-install arm: a first visit and two returning visits. */
+const NEXTJS_TYPICAL_INSTALL_SCENARIOS = new Set([
+	'typical-install',
+	'typical-install-repeat',
+	'typical-install-returning',
+]);
+
+/** Typical-install visits that carry the stored accept-all choice. */
+const NEXTJS_TYPICAL_INSTALL_RETURNING_SCENARIOS = new Set([
+	'typical-install-repeat',
+	'typical-install-returning',
+]);
+
+/**
+ * Budgets for a saved-consent visit: a new browser context that carries the
+ * cookies and localStorage of an accepted or rejected fresh visit. The
+ * banner-readiness budget does not apply because no banner may render.
+ *
+ * @param options.serverRendered - The route renders consent on the server,
+ *   so the server HTML must omit the banner too.
+ */
+export const savedConsentBrowserBudgets =
+	function savedConsentBrowserBudgets(options: {
+		serverRendered: boolean;
+	}): MetricBudget[] {
+		const budgets: MetricBudget[] = [
+			...sharedBrowserBudgets.filter(
+				(budget) => budget.metric !== 'bannerReadyMs'
+			),
+			{
+				comparator: 'count-eq',
+				description:
+					'A saved-consent visit restores the stored choice from the carried-over storage.',
+				metric: 'hydratedChoicePresent',
+				threshold: 1,
+			},
+			{
+				comparator: 'count-eq',
+				description: 'A saved-consent visit shows no first-layer banner.',
+				metric: 'promptShownCount',
+				threshold: 0,
+			},
+		];
+		if (options.serverRendered) {
+			budgets.push({
+				comparator: 'count-eq',
+				description:
+					'A saved-consent visit over SSR gets no banner markup in the server HTML.',
+				metric: 'bannerInServerHtml',
+				threshold: 0,
+			});
+		}
+		return budgets;
+	};
+
+/**
+ * The Astro, SvelteKit, and Nuxt `repeat-visitor` arms seed a stored
+ * choice, so they render no banner and report no banner-readiness time.
+ */
+const withoutBannerReadinessForStoredConsent =
+	function withoutBannerReadinessForStoredConsent(
+		budgets: MetricBudget[],
+		scenario: string
+	): MetricBudget[] {
+		return scenario === 'repeat-visitor' ||
+			scenario === 'repeat-visitor-scripts'
+			? budgets.filter((budget) => budget.metric !== 'bannerReadyMs')
+			: budgets;
+	};
+
+/** Whether a scenario name is a saved-consent visit. */
+export const isSavedConsentScenario = function isSavedConsentScenario(
+	scenario: string
+): boolean {
+	return SAVED_CONSENT_SCENARIOS.has(scenario);
+};
+
+const nextjsInitRequestBudget = function nextjsInitRequestBudget(
+	scenario: string
+): MetricBudget | undefined {
+	if (SSR_SCENARIOS.has(scenario)) {
+		return {
+			comparator: 'count-eq',
+			description:
+				'SSR routes should not trigger browser-observed init requests.',
+			metric: 'initRequestsAfterLoad',
+			threshold: 0,
+		};
+	}
+	if (scenario === 'baseline') {
+		// The baseline arm renders no consent provider, so it never issues an
+		// init request.
+		return undefined;
+	}
+	if (NEXTJS_TYPICAL_INSTALL_SCENARIOS.has(scenario)) {
+		return {
+			comparator: 'count-eq',
+			description:
+				'The quickstart install resolves consent on the server from the cached manifest and makes no browser init request.',
+			metric: 'initRequestsAfterLoad',
+			threshold: 0,
+		};
+	}
+	if (SAVED_CONSENT_SCENARIOS.has(scenario)) {
+		return {
+			comparator: 'count-eq',
+			description:
+				'Saved-consent visits over manifest SSR make no browser init request.',
+			metric: 'initRequestsAfterLoad',
+			threshold: 0,
+		};
+	}
+	if (scenario === 'manifest-client') {
+		return {
+			comparator: 'count-eq',
+			description:
+				'Client manifest flow should resolve init from /manifest without a browser /init request.',
+			metric: 'initRequestsAfterLoad',
+			threshold: 0,
+		};
+	}
+	return {
+		comparator: 'count-eq',
+		description: 'Client flow should make one init request on cold load.',
+		metric: 'initRequestsAfterLoad',
+		threshold: 1,
+	};
+};
+
+/**
+ * Budgets for one `@c15t/nextjs-browser-bench` scenario. `-cold` / `-steady`
+ * manifest suffixes share the base scenario's budgets.
+ */
+export const nextjsBrowserBudgetsForScenario =
+	function nextjsBrowserBudgetsForScenario(scenario: string): MetricBudget[] {
+		const baseScenario = scenario.replace(/-(?:cold|steady)$/u, '');
+		const budgets =
+			SAVED_CONSENT_SCENARIOS.has(baseScenario) ||
+			NEXTJS_TYPICAL_INSTALL_RETURNING_SCENARIOS.has(baseScenario) ||
+			baseScenario === 'ssr-repeat'
+				? savedConsentBrowserBudgets({ serverRendered: true })
+				: [...sharedBrowserBudgets];
+		const initRequest = nextjsInitRequestBudget(baseScenario);
+		if (initRequest) {
+			budgets.push(initRequest);
+		}
+		if (baseScenario !== 'baseline') {
+			budgets.push(
+				...ssrConsistencyBudgets.filter(
+					(budget) => budget.metric === 'consoleErrorCount'
+				)
+			);
+		}
+		if (
+			SSR_SCENARIOS.has(baseScenario) ||
+			SAVED_CONSENT_SCENARIOS.has(baseScenario)
+		) {
+			// Only server-rendered arms can flash: the client-init arms go from
+			// no prompt to the banner once init resolves, which is one legitimate
+			// transition rather than a server/client disagreement.
+			budgets.push(
+				...ssrConsistencyBudgets.filter(
+					(budget) => budget.metric === 'promptTransitionCount'
+				)
+			);
+		}
+		return budgets;
+	};
+
+/**
+ * Budgets for one `@c15t/vue` Nuxt browser scenario. The baseline arm
+ * renders no consent provider and so carries no init-request invariant.
+ */
+export const nuxtBrowserBudgetsForScenario =
+	function nuxtBrowserBudgetsForScenario(scenario: string): MetricBudget[] {
+		const baseScenario = scenario.replace(/-(?:cold|steady)$/u, '');
+		if (baseScenario === 'baseline') {
+			return [...sharedBrowserBudgets];
+		}
+		if (baseScenario === 'baseline-client') {
+			return [
+				...sharedBrowserBudgets,
+				{
+					comparator: 'count-eq',
+					description:
+						'The provider-free client baseline must not make an init request.',
+					metric: 'initRequestsAfterLoad',
+					threshold: 0,
+				},
+			];
+		}
+		if (
+			baseScenario === 'ssr' ||
+			baseScenario === 'ssr-manifest' ||
+			baseScenario === 'repeat-visitor'
+		) {
+			return [
+				...withoutBannerReadinessForStoredConsent(
+					sharedBrowserBudgets,
+					baseScenario
+				),
+				{
+					comparator: 'count-eq',
+					description:
+						'SSR and repeat-visitor routes should not trigger browser-observed init requests.',
+					metric: 'initRequestsAfterLoad',
+					threshold: 0,
+				},
+			];
+		}
+		if (baseScenario === 'client-manifest') {
+			return [
+				...sharedBrowserBudgets,
+				{
+					comparator: 'count-eq',
+					description:
+						'Nuxt client manifest mode resolves from the browser manifest transport without any init request.',
+					metric: 'initRequestsAfterLoad',
+					threshold: 0,
+				},
+				{
+					comparator: 'count-eq',
+					description:
+						'Nuxt client manifest mode must not call a same-origin init endpoint.',
+					metric: 'sameOriginInitRequestsAfterLoad',
+					threshold: 0,
+				},
+			];
+		}
+		return [
+			...sharedBrowserBudgets,
+			{
+				comparator: 'count-eq',
+				description:
+					'Client SPA flow should make exactly one init request on cold load.',
+				metric: 'initRequestsAfterLoad',
+				threshold: 1,
+			},
+		];
+	};
+
+/** Budgets for one `@c15t/react-browser-bench` scenario. */
+export const reactBrowserBudgetsForScenario =
+	function reactBrowserBudgetsForScenario(scenario: string): MetricBudget[] {
+		switch (scenario) {
+			case 'policy-fresh':
+			case 'policy-reject':
+				return [...policyBrowserBudgets, ...cookieProjectionBudgets];
+			case 'policy-notice':
+				return [...policyBrowserBudgets, ...noticeProjectionBudgets];
+			case 'policy-none':
+				return policyBrowserBudgets;
+			case 'policy-repeat':
+				return hydrationBudgets;
+			case 'saved-consent-accept':
+			case 'saved-consent-reject':
+				return savedConsentBrowserBudgets({ serverRendered: false });
+			default:
+				return sharedBrowserBudgets;
+		}
+	};
+
+/** Budgets for one `@c15t/script-lifecycle-bench` scenario by primary metric. */
+export const scriptLifecycleBudgetsForMetric =
+	function scriptLifecycleBudgetsForMetric(metric: string): MetricBudget[] {
+		return scriptLifecycleBudgets.filter((budget) =>
+			[metric, 'errorCount'].includes(budget.metric)
+		);
+	};
+
+export const astroBrowserBudgetsForScenario =
+	function astroBrowserBudgetsForScenario(scenario: string): MetricBudget[] {
+		const shared = browserBudgets.filter((budget) =>
+			[
+				'bannerReadyMs',
+				'lastAppScriptEndMs',
+				'interactionLatencyMs',
+				'longTaskTotalMs',
+			].includes(budget.metric)
+		);
+
+		if (scenario === 'baseline') {
+			return [
+				...shared,
+				{
+					comparator: 'count-eq',
+					description:
+						'The zero-consent baseline must not touch a consent endpoint.',
+					metric: 'initRequestsAfterLoad',
+					threshold: 0,
+				},
+			];
+		}
+
+		// Every Astro arm is server-rendered and boots from the inlined config,
+		// so none of them should ever put an init request on the browser.
+		return [
+			...withoutBannerReadinessForStoredConsent(shared, scenario),
+			{
+				comparator: 'count-eq',
+				description:
+					'Astro pages inline the resolved config, so the browser never calls init.',
+				metric: 'initRequestsAfterLoad',
+				threshold: 0,
+			},
+		];
+	};
+
+export const sveltekitBrowserBudgetsForScenario =
+	function sveltekitBrowserBudgetsForScenario(
+		scenario: string
+	): MetricBudget[] {
+		const shared = browserBudgets.filter((budget) =>
+			[
+				'bannerReadyMs',
+				'lastAppScriptEndMs',
+				'interactionLatencyMs',
+				'longTaskTotalMs',
+			].includes(budget.metric)
+		);
+
+		if (scenario === 'baseline' || scenario === 'baseline-client') {
+			// Zero-consent floors: no consent traffic is the whole point.
+			return [
+				...shared,
+				{
+					comparator: 'count-eq',
+					description:
+						'The zero-consent baseline must not touch a consent endpoint.',
+					metric: 'initRequestsAfterLoad',
+					threshold: 0,
+				},
+			];
+		}
+
+		if (
+			scenario === 'ssr' ||
+			scenario === 'ssr-manifest' ||
+			scenario === 'repeat-visitor' ||
+			scenario === 'scripts' ||
+			scenario === 'repeat-visitor-scripts'
+		) {
+			return [
+				...withoutBannerReadinessForStoredConsent(shared, scenario),
+				{
+					comparator: 'count-eq',
+					description:
+						'SSR and repeat-visitor routes should not trigger browser-observed init requests.',
+					metric: 'initRequestsAfterLoad',
+					threshold: 0,
+				},
+			];
+		}
+
+		if (scenario === 'client-manifest') {
+			return [
+				...shared,
+				{
+					comparator: 'count-eq',
+					description:
+						'Browser-resolved manifest mode boots without any init request.',
+					metric: 'initRequestsAfterLoad',
+					threshold: 0,
+				},
+			];
+		}
+
+		return [
+			...shared,
+			{
+				comparator: 'count-eq',
+				description:
+					'Client SPA flow should make exactly one init request on cold load.',
+				metric: 'initRequestsAfterLoad',
+				threshold: 1,
+			},
+		];
+	};
+
+export const tanstackBrowserBudgetsForScenario =
+	function tanstackBrowserBudgetsForScenario(scenario: string): MetricBudget[] {
+		const baseScenario = scenario.replace(/-(?:cold|steady)$/u, '');
+		const shared = browserBudgets.filter((budget) =>
+			[
+				'bannerReadyMs',
+				'lastAppScriptEndMs',
+				'interactionLatencyMs',
+				'longTaskTotalMs',
+			].includes(budget.metric)
+		);
+
+		if (baseScenario === 'baseline') {
+			return [
+				...shared,
+				{
+					comparator: 'count-eq',
+					description: 'The zero-consent baseline must not call init.',
+					metric: 'initRequestsAfterLoad',
+					threshold: 0,
+				},
+			];
+		}
+
+		if (
+			baseScenario === 'ssr' ||
+			baseScenario === 'ssr-stream' ||
+			baseScenario === 'manifest-ssr' ||
+			baseScenario === 'manifest-ssr-proxy' ||
+			baseScenario === 'manifest-ssr-root'
+		) {
+			return [
+				...shared,
+				{
+					comparator: 'count-eq',
+					description:
+						'Authoritative SSR prefetch must avoid a second init request in the browser.',
+					metric: 'initRequestsAfterLoad',
+					threshold: 0,
+				},
+			];
+		}
+
+		if (SAVED_CONSENT_SCENARIOS.has(baseScenario)) {
+			return [
+				...savedConsentBrowserBudgets({ serverRendered: true }),
+				{
+					comparator: 'count-eq',
+					description:
+						'Saved-consent visits over manifest SSR make no browser init request.',
+					metric: 'initRequestsAfterLoad',
+					threshold: 0,
+				},
+			];
+		}
+
+		if (baseScenario === 'manifest-client') {
+			return [
+				...shared,
+				{
+					comparator: 'count-eq',
+					description:
+						'Client manifest flow should resolve init from /manifest without a browser /init request.',
+					metric: 'initRequestsAfterLoad',
+					threshold: 0,
+				},
+			];
+		}
+
+		return [
+			...shared,
+			{
+				comparator: 'count-eq',
+				description: 'Client flow should make one init request on cold load.',
+				metric: 'initRequestsAfterLoad',
+				threshold: 1,
+			},
+		];
+	};
+
+export const bundleEntryBudgets = function bundleEntryBudgets(
+	scenario: string
+): MetricBudget[] {
+	const surfaceStyles = SURFACE_ENTRIES.has(scenario)
+		? {
+				deferred: SURFACE_STYLES_DEFERRED_GZIP_BYTES,
+				initial: SURFACE_STYLES_INITIAL_GZIP_BYTES,
+			}
+		: { deferred: 0, initial: 0 };
+	// The deferred budget counts every emitted chunk, including chunks from
+	// imports esbuild later removes. The root provider entry emits the ordinary
+	// style chunks without being able to request them. The total gzip budget
+	// counts only reachable chunks; retain its existing allowance until the
+	// style change reaches the validated release base.
+	const emittedProviderStyles =
+		scenario === 'provider'
+			? SURFACE_STYLES_INITIAL_GZIP_BYTES + SURFACE_STYLES_DEFERRED_GZIP_BYTES
+			: 0;
+	const additionalDeferredStyles =
+		emittedProviderStyles +
+		(scenario === 'iab-lazy' ? IAB_STYLES_DEFERRED_GZIP_BYTES : 0);
+	// Unreachable, so only the deferred budget counts them.
+	const languageChunks = BROWSER_MANIFEST_ENTRIES.has(scenario)
+		? BROWSER_LANGUAGE_CHUNKS_GZIP_BYTES
+		: 0;
+	const allLanguageCopy = ALL_LANGUAGE_ENTRIES.has(scenario)
+		? ADDITIONAL_CONSENT_COPY_GZIP_BYTES + ASIA_LANGUAGES_GZIP_BYTES
+		: 0;
+	const deferredEngine = DEFERRED_ENGINE_GZIP_BYTES[scenario] ?? {
+		deferred: 0,
+		total: 0,
+	};
+	return [
+		{
+			comparator: 'delta-bytes-lte',
+			description:
+				'Consumer entry initial JavaScript may grow by at most 2 KiB gzip, plus the vendor consent allowance, the Additional Consent copy and new languages for entries that bundle every language and, for entries with a stock surface, its styles.',
+			metric: 'initialGzip',
+			threshold:
+				2048 +
+				VENDOR_CONSENT_GZIP_BYTES +
+				allLanguageCopy +
+				surfaceStyles.initial,
+		},
+		{
+			// Moving code out of first load grows the deferred chunks by as much
+			// as it shrinks the initial ones, so deferred JavaScript gets more
+			// room than initial JavaScript. The total budget below still stops
+			// growth that is not offset by a smaller first load.
+			comparator: 'delta-bytes-lte',
+			description:
+				'Deferred emitted JavaScript may grow by at most 12 KiB gzip, plus the ordinary or IAB styles, the browser language chunks emitted by this entry and the deferred engine allowance.',
+			metric: 'lazyGzip',
+			threshold:
+				12_288 +
+				surfaceStyles.deferred +
+				additionalDeferredStyles +
+				languageChunks +
+				deferredEngine.deferred,
+		},
+		{
+			comparator: 'delta-bytes-lte',
+			description:
+				'Initial plus reachable deferred JavaScript may grow by at most 3 KiB gzip, plus the ordinary or IAB style allowance, the Additional Consent copy and new languages for entries that bundle every language and the deferred engine allowance.',
+			metric: 'gzipSize',
+			threshold:
+				3072 +
+				allLanguageCopy +
+				surfaceStyles.initial +
+				surfaceStyles.deferred +
+				additionalDeferredStyles +
+				deferredEngine.total,
+		},
+		...(scenario === 'ordinary-react' ? importBoundaryBudgets : []),
+	];
+};
+
+/**
+ * Frameworks and the script tag the consent gate measures, one result each.
+ * See `consent-gate.ts` for the page, profile and metric definitions.
+ */
+export const consentGateTargets = [
+	'react',
+	'nextjs',
+	'nuxt',
+	'astro',
+	'sveltekit',
+	'tanstack-start',
+	'angular',
+	'script-tag',
+] as const;
+
+export type ConsentGateTarget = (typeof consentGateTargets)[number];
+
+/**
+ * Consent gate thresholds. Relative budgets use `absolute-or-percent-lte`:
+ * a metric fails only when its median grows by more than the absolute band
+ * *and* by more than the percentage, and (through
+ * `evaluateBrowserTimingBudget`) only when the 99% lower bound on that growth
+ * still breaks the limit.
+ *
+ * Bands come from three base-vs-base runs of the whole gate (perf-release
+ * `cc9745eb2` on both arms, 12 iterations per arm, an M1 Pro shared with
+ * other builds). The largest median move per metric across all seven
+ * targets: LCP delta 20 ms, banner 14 ms, consent-effective and dismissed
+ * 8 ms (13%), input-to-next-paint 8 ms (one Event Timing quantum), scripts
+ * complete 11 ms (3%), preferences 14 ms (3%). Each absolute band is about
+ * 2.5 times that, and tap bands are at least three 8 ms Event Timing quanta.
+ * The percentages sit just above the largest relative move, because on a
+ * slow base they decide: React's banner renders at about 2.7 s, where a
+ * 10% band let a 200 ms main-thread block through. None of the three runs
+ * would have failed any of these bands.
+ */
+const GATE_LCP_DELTA_NOISE_MS = 50;
+const GATE_BANNER_NOISE_MS = 50;
+const GATE_BANNER_NOISE_PERCENT = 3;
+const GATE_TAP_NOISE_MS = 25;
+const GATE_TAP_NOISE_PERCENT = 20;
+const GATE_SCRIPTS_NOISE_MS = 25;
+const GATE_SCRIPTS_NOISE_PERCENT = 5;
+const GATE_PREFERENCES_NOISE_MS = 60;
+const GATE_PREFERENCES_NOISE_PERCENT = 5;
+
+/** CookieBench's release rule: nothing a tap starts may take over 1,000 ms. */
+const GATE_TAP_CEILING_MS = 1000;
+
+/**
+ * Known exceptions to {@link GATE_TAP_CEILING_MS}, each a measured miss on
+ * the base that the gate must not hide or fail every run on. None today:
+ * Astro's Customize dialog, the last one, now opens before its consent
+ * engine loads and takes the 1,000 ms rule.
+ */
+const gateTapCeilingExceptionsMs: Partial<Record<ConsentGateTarget, number>> =
+	{};
+
+/**
+ * Absolute `banner.visible` ceilings for server-rendered frameworks, whose
+ * banner is in the first HTML. Round 8 CookieBench medians at the same
+ * mobile profile were 222 to 275 ms (Next.js 238, Nuxt 245, Astro 254,
+ * SvelteKit 222, TanStack Start 275); the ceiling leaves room for slower CI
+ * runners and the gate page's own differences, and still fails a banner that
+ * waits for client JavaScript (about 1,000 ms or more at this profile).
+ * React here is client-rendered inside Next.js, and the script tag injects
+ * its banner from JavaScript, so neither has a server-rendered bar. Angular
+ * renders its banner on the server through `provideC15tServer()`; CookieBench
+ * has no Angular round yet, so it takes the same ceiling.
+ */
+const gateBannerCeilingMs: Partial<Record<ConsentGateTarget, number>> = {
+	angular: 600,
+	astro: 600,
+	nextjs: 600,
+	nuxt: 600,
+	sveltekit: 600,
+	'tanstack-start': 600,
+};
+
+/**
+ * A relative gate budget the base cannot meet yet, accepted for a known
+ * reason until the change behind it reaches the base.
+ */
+export interface GateAcceptedShift {
+	/**
+	 * The commit that made the shift. While the base revision does not
+	 * contain it, the metric is judged against {@link expectedMs}; once the
+	 * base contains it, the entry is ignored and the relative band applies.
+	 */
+	untilBaseIncludes: string;
+	/** The head median the change was measured at, in ms. */
+	expectedMs: number;
+}
+
+/**
+ * The perf-release merge (all six fix branches). Remove the entries below
+ * once `perf-release` is on canary.
+ */
+const PERF_RELEASE_COMMIT = '7cff17a0b49e76b5afa2301f16ca9be69eb9b149';
+
+/**
+ * Accepted shifts, by target and metric.
+ *
+ * `preferencesVisibleMs`: perf-release defers the consent engine and the
+ * dialog, so a Customize tap now downloads dialog code that canary's eager
+ * page had already loaded. After the fixes it measures Next.js 530, Nuxt
+ * 658 (846 on the Rolldown 1.1 bench), TanStack Start 757, Astro 930 and
+ * the script tag 403 ms, against canary 416, 453, 430, 1,161 and 69 ms.
+ * Every one stays under the 1,000 ms tap rule, which still applies; the
+ * relative band against canary would fail the release. React (386 vs 424)
+ * and SvelteKit (about 460 vs 447) need no entry. `expectedMs` sits about
+ * 30 ms above each measurement (Nuxt above the Rolldown 1.1 figure).
+ */
+export const gateAcceptedShifts: Partial<
+	Record<ConsentGateTarget, Partial<Record<string, GateAcceptedShift>>>
+> = {
+	astro: {
+		preferencesVisibleMs: {
+			expectedMs: 960,
+			untilBaseIncludes: PERF_RELEASE_COMMIT,
+		},
+	},
+	nextjs: {
+		preferencesVisibleMs: {
+			expectedMs: 560,
+			untilBaseIncludes: PERF_RELEASE_COMMIT,
+		},
+	},
+	nuxt: {
+		preferencesVisibleMs: {
+			expectedMs: 870,
+			untilBaseIncludes: PERF_RELEASE_COMMIT,
+		},
+	},
+	'script-tag': {
+		preferencesVisibleMs: {
+			expectedMs: 430,
+			untilBaseIncludes: PERF_RELEASE_COMMIT,
+		},
+	},
+	'tanstack-start': {
+		preferencesVisibleMs: {
+			expectedMs: 790,
+			untilBaseIncludes: PERF_RELEASE_COMMIT,
+		},
+	},
+};
+
+/**
+ * Applies {@link gateAcceptedShifts} to a failed relative gate budget.
+ *
+ * While the base does not contain the entry's commit, the budget passes
+ * when the head median is within the budget's band of `expectedMs` (the
+ * larger of the absolute band and the percentage of `expectedMs`). The
+ * absolute ceilings are separate budgets and still apply. When the base
+ * contains the commit, or that cannot be told, the result stands.
+ *
+ * @param target - The gate target the result measured.
+ * @param budget - The budget definition.
+ * @param result - The evaluated result.
+ * @param headMedian - The head median of the budget's metric.
+ * @param baseIncludes - Whether the base revision contains a commit;
+ * `undefined` when unknown.
+ * @param shifts - The accepted shifts (for tests).
+ * @returns The result, passed under the accepted shift when it applies.
+ */
+export const applyGateAcceptedShift = function applyGateAcceptedShift(
+	target: string | undefined,
+	budget: MetricBudget,
+	result: MetricBudgetResult,
+	headMedian: number | undefined,
+	baseIncludes: (commit: string) => boolean | undefined,
+	shifts: typeof gateAcceptedShifts = gateAcceptedShifts
+): MetricBudgetResult {
+	const shift = target
+		? shifts[target as ConsentGateTarget]?.[budget.metric]
+		: undefined;
+	if (
+		!shift ||
+		result.pass ||
+		(result.status ?? 'evaluated') !== 'evaluated' ||
+		budget.comparator !== 'absolute-or-percent-lte' ||
+		typeof headMedian !== 'number'
+	) {
+		return result;
+	}
+	const included = baseIncludes(shift.untilBaseIncludes);
+	const commit = shift.untilBaseIncludes.slice(0, 9);
+	if (included !== false) {
+		return included === true
+			? result
+			: {
+					...result,
+					message: `${result.message}; accepted shift not applied: cannot tell whether the base contains ${commit}`,
+				};
+	}
+	const band = Math.max(
+		budget.threshold,
+		(shift.expectedMs * (budget.secondaryThreshold ?? 0)) / 100
+	);
+	const limit = shift.expectedMs + band;
+	const pass = headMedian <= limit;
+	return {
+		...result,
+		message: `${result.message}; accepted shift until the base contains ${commit}: head median ${headMedian.toFixed(2)} ms ${pass ? 'within' : 'above'} ${shift.expectedMs} ms + ${band.toFixed(2)} ms`,
+		pass,
+	};
+};
+
+const relativeGateBudget = function relativeGateBudget(
+	metric: string,
+	threshold: number,
+	percent: number,
+	description: string
+): MetricBudget {
+	return {
+		comparator: 'absolute-or-percent-lte',
+		description,
+		metric,
+		secondaryThreshold: percent,
+		threshold,
+	};
+};
+
+/**
+ * Budgets every consent gate result carries. All of them fail the gate.
+ *
+ * @param target - Framework or script tag the result measured.
+ */
+export const consentGateBudgets = function consentGateBudgets(
+	target: ConsentGateTarget
+): MetricBudget[] {
+	const ceiling = gateBannerCeilingMs[target];
+	const tapCeiling = gateTapCeilingExceptionsMs[target];
+	return [
+		{
+			comparator: 'absolute-or-percent-lte',
+			description: `page.lcp delta over the no-CMP control may not grow by more than ${GATE_LCP_DELTA_NOISE_MS} ms, the base-vs-base noise band of the paired delta. At 200 KB/s that is about 10 KB more before the hero.`,
+			metric: 'lcpDeltaMs',
+			threshold: GATE_LCP_DELTA_NOISE_MS,
+		},
+		relativeGateBudget(
+			'bannerVisibleMs',
+			GATE_BANNER_NOISE_MS,
+			GATE_BANNER_NOISE_PERCENT,
+			'banner.visible may not grow beyond the base-vs-base noise band.'
+		),
+		...(ceiling === undefined
+			? []
+			: [
+					{
+						comparator: 'absolute-lte' as const,
+						description: `banner.visible for a server-rendered banner at the mobile profile stays under ${ceiling} ms (round 8 CookieBench medians 222 to 275 ms).`,
+						metric: 'bannerVisibleMs',
+						threshold: ceiling,
+					},
+				]),
+		relativeGateBudget(
+			'consentEffectiveMs',
+			GATE_TAP_NOISE_MS,
+			GATE_TAP_NOISE_PERCENT,
+			'action.consent-effective after Accept may not grow beyond the noise band.'
+		),
+		relativeGateBudget(
+			'dismissedMs',
+			GATE_TAP_NOISE_MS,
+			GATE_TAP_NOISE_PERCENT,
+			'action.dismissed after Accept may not grow beyond the noise band.'
+		),
+		relativeGateBudget(
+			'inputToNextPaintMs',
+			GATE_TAP_NOISE_MS,
+			GATE_TAP_NOISE_PERCENT,
+			'action.input-to-next-paint of Accept may not grow beyond the noise band.'
+		),
+		relativeGateBudget(
+			'scriptsCompleteMs',
+			GATE_SCRIPTS_NOISE_MS,
+			GATE_SCRIPTS_NOISE_PERCENT,
+			'action.scripts-complete after Accept may not grow beyond the noise band.'
+		),
+		relativeGateBudget(
+			'preferencesVisibleMs',
+			GATE_PREFERENCES_NOISE_MS,
+			GATE_PREFERENCES_NOISE_PERCENT,
+			'action.preferences-visible after Customize may not grow beyond the noise band.'
+		),
+		{
+			comparator: 'absolute-or-percent-lte',
+			description: `page.lcp delta of a returning visitor who accepted, over the no-CMP control, may not grow by more than ${GATE_LCP_DELTA_NOISE_MS} ms, the band of the first-visit delta.`,
+			metric: 'returningLcpDeltaMs',
+			threshold: GATE_LCP_DELTA_NOISE_MS,
+		},
+		relativeGateBudget(
+			'returningScriptsMs',
+			GATE_SCRIPTS_NOISE_MS,
+			GATE_SCRIPTS_NOISE_PERCENT,
+			"A returning visitor's gated scripts may not start later beyond the scripts-complete noise band."
+		),
+		{
+			comparator: 'absolute-lte',
+			description:
+				'A visitor who accepted, came back, then rejected makes no request for a gated script. A request reaches the vendor after a no, even when the script never runs, so the allowance is zero. The visitor rejects in the preferences dialog, as a real visitor would; the count covers three replays per run.',
+			metric: 'rejectedScriptRequests',
+			threshold: 0,
+		},
+		{
+			comparator: 'absolute-lte',
+			description:
+				tapCeiling === undefined
+					? `No tap may take over ${GATE_TAP_CEILING_MS} ms to take effect, dismiss, paint, run its scripts or open the dialog (CookieBench release rule), judged on the median iteration's slowest tap metric.`
+					: `Known exception to the ${GATE_TAP_CEILING_MS} ms tap rule: the slowest tap metric (preferences-visible) already measures above it on the base, so it is held under ${tapCeiling} ms until the fix lands.`,
+			metric: 'slowestTapMs',
+			threshold: tapCeiling ?? GATE_TAP_CEILING_MS,
+		},
+	];
+};

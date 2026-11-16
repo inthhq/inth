@@ -1,0 +1,13 @@
+{
+	"name": "@c15t/typescript-config",
+	"version": "0.0.1",
+	"private": true,
+	"type": "module",
+	"publishConfig": {
+		"access": "public"
+	},
+	"scripts": {
+		"dev": "echo '@c15t/typescript-config has no watch task'",
+		"fmt": "bun oxfmt ."
+	}
+}

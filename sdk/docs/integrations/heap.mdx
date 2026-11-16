@@ -1,0 +1,62 @@
+---
+title: Heap
+description: Load the Heap config script and heap.js only after measurement consent with the c15t heap helper, and check it in DevTools.
+seoTitle: Heap cookie consent with c15t
+seoDescription: Load Heap only with measurement consent. The c15t heap helper keeps heap_config.js off the page and stops Heap when a visitor withdraws consent.
+icon: heap
+group: integrations
+---
+
+The c15t `heap` helper keeps Heap off the page until `measurement` has consent.
+Until then, c15t does not define `window.heap` or load `heap_config.js`, which
+loads the heap.js runtime. The helper never calls `heap.stopTracking`. If the
+visitor withdraws consent, c15t removes the config script element. By default,
+c15t also reloads the page. The reload stops heap.js.
+
+## Configure Heap
+
+Copy the environment ID from your Heap installation snippet. The `heap` helper
+loads that environment's `heap_config.js`, which then loads the heap.js
+runtime. Remove the original Heap snippet.
+
+<CommandTabs command="@c15t/integrations" mode="install" />
+
+```ts title="src/consent-scripts.ts"
+import { heap } from '@c15t/integrations/heap';
+
+export const scripts = [heap({ envId: 'YOUR_ENVIRONMENT_ID' })];
+```
+
+<include src="../shared/integrations/register-scripts.mdx" />
+
+## Options
+
+| Option | Default | Behavior |
+| --- | --- | --- |
+| `envId` | Required | Environment ID. Set as `heap.envId` and `heap.appid`, and used in the default loader URL. The helper trims it. Empty values log an error and the script does not load. |
+| `clientConfig` | `{}` | Client configuration set on `heap.clientConfig`. Values must be JSON-serializable with finite numbers; other values throw a `TypeError`. The helper always sets `shouldFetchServerConfig: false` and overrides any value you pass for it. |
+| `scriptUrl` | `https://cdn.us.heap-api.com/config/<envId>/heap_config.js` | Config loader URL override. A blank value falls back to the default. |
+
+## Loading and revocation
+
+`heap` uses the `measurement` category. When measurement becomes allowed, the
+helper creates `window.heap` with stubs for the heap.js v5 methods, which queue
+calls in `window.heapReadyCb`. Then it loads the config script, and heap.js
+replays the queued calls once it is ready.
+
+On revocation the helper removes the config script element and calls no Heap
+API. It does not call `heap.stopTracking`, so heap.js keeps capturing until the
+page unloads. If the visitor allows measurement again before the page reloads,
+the helper keeps the methods of the running heap.js instead of replacing them
+with queue stubs. If you set `reloadOnConsentRevoked: false`, call
+`window.heap.stopTracking()` from the `onConsentChange` callback of a
+callback-only script. See
+[custom integrations](/docs/integrations/building-integrations).
+
+## Verify Heap
+
+Filter DevTools Network by `heap`. After you allow measurement, the
+`heap_config.js` request for your environment ID loads, followed by the heap.js
+runtime it selects. `window.heap.envId` holds your environment ID.
+
+<include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

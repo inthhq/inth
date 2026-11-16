@@ -1,0 +1,67 @@
+---
+title: ConsentDialogTrigger
+description: Add a floating, draggable privacy button to an Angular app with c15t-consent-dialog-trigger, and set its corner, size, saved position, accessible name and outputs.
+group: frameworks
+---
+
+## Add a floating privacy button
+
+`<c15t-consent-dialog-trigger>` is a small round button, fixed to a corner of
+the viewport, that opens the preference dialog. It keeps preferences one click
+away on every page without a footer link. Import
+`ConsentDialogTrigger` and render it next to `<c15t-consent-dialog>`:
+
+{/* example: fragment */}
+
+```html
+<c15t-consent-dialog />
+<c15t-consent-dialog-trigger defaultPosition="bottom-left" size="sm" />
+```
+
+The dialog's `showTrigger` input renders the same button for you, but only
+after the dialog's deferred code loads. A separate
+`<c15t-consent-dialog-trigger>` is part of the page from the first render.
+
+## Inputs and outputs
+
+| Input or output | Type | Default | Behavior |
+| --- | --- | --- | --- |
+| `defaultPosition` | `'bottom-right'`, `'bottom-left'`, `'top-right'` or `'top-left'` | `'bottom-right'` | The corner it starts in. |
+| `persistPosition` | `boolean` | `true` | Remembers the corner a visitor drags it to, in local storage. |
+| `showWhen` | `'always'` or `'never'` | `'always'` | `'never'` hides it. |
+| `size` | `'sm'`, `'md'` or `'lg'` | `'md'` | Button size. |
+| `label` | `string` | `'Open privacy settings'` | Accessible name. Translate it yourself; it does not come from `i18n`. |
+| `noStyle` | `boolean` | `false` | Drops c15t's classes, including the fixed positioning. It does not follow the provider's `noStyle`. |
+| `rootClass` | `string` | none | Extra class on the button. |
+| `(triggerClick)` | `MouseEvent` | | Emits before the dialog opens. Call `$event.preventDefault()` to keep it closed. |
+| `(positionChange)` | corner | | Emits after a drag moves it to another corner. |
+
+## Behavior
+
+- The button renders only when the policy offers a way to change preferences,
+  and hides while the dialog is open.
+- Visitors can drag it. On release it snaps to the nearest corner in the
+  direction of the drag. A drag does not open the dialog; a click does.
+- It is rendered into `<body>` through `c15tPortal`, so a parent's `overflow`
+  or `transform` does not clip it.
+- It starts loading the dialog's code in idle time and on hover or focus, like
+  the other buttons that open the dialog.
+- While `<c15t-consent-dev-tools>` is rendered, it becomes a two-button
+  toolbar: the preferences button stays in the corner and a DevTools button
+  sits beside it. See [dev tools](./dev-tools).
+
+## Accessibility
+
+The trigger is a `<button type="button">` with `aria-label`, since it shows
+only an icon. Keep the label in the page's language by passing `label`.
+Dragging needs a pointer; keyboard users activate it with Enter or Space and
+cannot move it, so pick a `defaultPosition` that does not cover your own
+controls.
+
+## Style the trigger
+
+The button carries `data-testid="consent-dialog-trigger"`,
+`data-c15t-trigger="true"` and `data-c15t-rights`. It reads the
+`consentDialogTrigger` and `consentDialogTriggerIcon` theme slots, and its
+colors come from the `--c15t-*` tokens; [theme tokens](/docs/customization/tokens)
+lists them.

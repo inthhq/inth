@@ -1,0 +1,10 @@
+{/* Generated from native/core-swift/Examples/swiftui-consent/Sources/swiftui-consent-app.swift (docs:swiftui-presenter) by scripts/sync-example-docs.ts. Edit the source file. */}
+
+```swift title="Sources/swiftui-consent-app.swift"
+if let presenter = consent.presenter, let configuration {
+    ConsentDashboard(consent: consent, configuration: configuration)
+        .c15tConsent(presenter: presenter, privacyPolicyURL: configuration.privacyPolicyURL)
+} else {
+    ConsentDashboard(consent: consent, configuration: configuration)
+}
+```

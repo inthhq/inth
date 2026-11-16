@@ -1,0 +1,65 @@
+---
+title: IABConsentBanner
+description: Show the IAB TCF 2.4 first-layer banner to visitors under an IAB policy in an Angular app with c15t-iab-consent-banner, its inputs and behavior.
+group: frameworks
+---
+
+## Show the TCF banner
+
+`<c15t-iab-consent-banner>` is the first layer of the IAB TCF consent flow. It
+lists the purposes, special features and number of vendors from the Global
+Vendor List, and offers Accept all, Reject all and Customize. It renders only
+for visitors whose resolved policy uses the `iab` model, so render it next to
+the standard `<c15t-consent-banner>`, which covers everyone else:
+
+<include src="../../../shared/examples/angular/iab-surfaces.mdx" />
+
+Turn IAB on with the `iab` option of `provideC15t()` first; [IAB TCF](../iab)
+covers the CMP ID, the vendor list and the provider options.
+
+## Inputs
+
+| Input | Type | Default | Behavior |
+| --- | --- | --- | --- |
+| `primaryButton` | `'accept'`, `'reject'` or `'customize'` | `'customize'` | Which button gets the primary style. |
+| `hideBranding` | `boolean` | `false` | Hides the "Secured by" tag. |
+| `models` | `Model[]` | `['iab']` | Policy models the banner renders for. |
+| `noStyle` | `boolean` | provider's `noStyle` | Drops c15t's classes. |
+| `disableAnimation` | `boolean` | provider's value | Shows and hides without a transition. |
+| `scrollLock`, `trapFocus` | `boolean` | provider's value | Lock page scroll or trap focus while the banner shows. The policy's presentation can still make it blocking. |
+| `rootClass` | `string` | none | Extra class on the root element. |
+
+The banner has no text inputs. Its copy comes from the IAB translations, in
+the visitor's language. `getIABTranslations()` from `@c15t/angular/iab` returns
+the same copy for a custom IAB banner.
+
+## Behavior
+
+- The banner stays hidden until an IAB policy resolves and the vendor list is
+  available. Forcing it does not create either.
+- Accept all and Reject all record the visitor's TCF choice and write the TC
+  String. The banner closes as soon as the click is handled. It comes back
+  only if nothing could be recorded, such as when the vendor list failed to
+  load, so the visitor can try again. A failed backend request never reopens
+  it.
+- Customize opens `<c15t-iab-consent-dialog>` on the purposes tab, so render
+  it too. The partners link in the description opens it on the vendors tab.
+- The `__tcfapi` function is available once the TCF add-on loads, whether or
+  not the banner is showing, so vendor scripts can read the TC String.
+
+## Accessibility
+
+The banner card is a `region` labelled with the banner title. When the
+banner is blocking, it becomes a `dialog` with `aria-modal="true"`. The title
+is an `h2`, and every control is a native `<button>`.
+
+## Style the banner
+
+`<c15t-iab-consent-banner>` adds its own rules to `<head>`, including the
+first-paint rules it needs before its elements render. With `styles: false`,
+add `@c15t/angular/iab/styles.css` after `@c15t/angular/styles.css` in
+`angular.json`. It reads the `iabConsentBanner`, `iabConsentBannerCard`,
+`iabConsentBannerHeader`, `iabConsentBannerFooter`, `iabConsentBannerTag` and
+`iabConsentBannerOverlay` theme slots. Buttons carry
+`data-testid="iab-consent-banner-accept-button"`,
+`iab-consent-banner-reject-button` and `iab-consent-banner-customize-button`.

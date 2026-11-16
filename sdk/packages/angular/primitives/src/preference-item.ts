@@ -1,0 +1,334 @@
+import { NgTemplateOutlet } from '@angular/common';
+import {
+	ChangeDetectionStrategy,
+	Component,
+	computed,
+	contentChild,
+	Directive,
+	inject,
+	input,
+	model,
+	TemplateRef,
+} from '@angular/core';
+import { ɵresolveNoStyle as resolveNoStyle } from '@c15t/angular';
+import {
+	getDataDisabled,
+	getPreferenceItemState,
+	PREFERENCE_ITEM_INTERNAL_SLOTS,
+	PREFERENCE_ITEM_SLOTS,
+	togglePreferenceItemValue,
+} from '@c15t/ui/primitives';
+import { preferenceItemVariants } from '@c15t/ui/styles/primitives';
+
+import { uniqueId } from './unique-id';
+
+const variants = preferenceItemVariants();
+
+/**
+ * One row of a preference list: a header with a trigger and controls, and
+ * collapsible content. Bind `[(open)]` to control the content.
+ *
+ * The parts carry the stock `@c15t/ui` classes unless `noStyle` is set
+ * here or on the provider. Your own `class` attributes are kept either way.
+ *
+ * @example
+ * ```html
+ * <div c15tPreferenceItem [(open)]="open">
+ *   <div c15tPreferenceItemHeader>
+ *     <button c15tPreferenceItemTrigger>
+ *       <h3 c15tPreferenceItemTitle>Analytics</h3>
+ *     </button>
+ *     <div c15tPreferenceItemControl>
+ *       <button c15tSwitch [(checked)]="analytics" aria-label="Analytics"></button>
+ *     </div>
+ *   </div>
+ *   <div c15t-preference-item-content>Helps us understand how the site is used.</div>
+ * </div>
+ * ```
+ */
+@Directive({
+	exportAs: 'c15tPreferenceItem',
+	host: {
+		'[attr.data-disabled]': 'dataDisabled()',
+		'[attr.data-slot]': 'slot',
+		'[attr.data-state]': 'dataState()',
+		'[class]': 'className()',
+	},
+	selector: '[c15tPreferenceItem]',
+})
+export class PreferenceItem {
+	/** Whether the content is shown. */
+	readonly open = model(false);
+	/** Whether the trigger is ignored. */
+	readonly disabled = input(false);
+	/** Drop the stock classes. Defaults to the provider's `noStyle`. */
+	readonly noStyle = input<boolean | undefined>(undefined);
+
+	/** @internal */
+	readonly triggerId = uniqueId('c15t-preference-item-trigger');
+	/** @internal */
+	readonly contentId = uniqueId('c15t-preference-item-content');
+	/** @internal */
+	protected readonly slot = PREFERENCE_ITEM_SLOTS.root;
+	/** Whether the parts drop their stock classes. */
+	readonly resolvedNoStyle = resolveNoStyle(this.noStyle);
+	/** @internal */
+	readonly dataState = computed(() => getPreferenceItemState(this.open()));
+	/** @internal */
+	protected readonly dataDisabled = computed(() =>
+		getDataDisabled(this.disabled())
+	);
+	/** @internal */
+	protected readonly className = computed(() =>
+		this.resolvedNoStyle() ? '' : variants.root()
+	);
+
+	/** Toggle the content, unless disabled. */
+	toggle(): void {
+		if (!this.disabled()) {
+			this.open.set(togglePreferenceItemValue(this.open()));
+		}
+	}
+}
+
+/** Shared host for the plain layout parts. @internal */
+@Directive()
+abstract class PreferenceItemPart {
+	/** @internal */
+	protected readonly item = inject(PreferenceItem);
+	/** @internal */
+	protected abstract readonly slot: string;
+	/** @internal */
+	protected abstract variant(): string;
+	/** @internal */
+	protected readonly className = computed(() =>
+		this.item.resolvedNoStyle() ? '' : this.variant()
+	);
+}
+
+const PART_HOST = {
+	'[attr.data-slot]': 'slot',
+	'[class]': 'className()',
+};
+
+/** The row's header. */
+@Directive({ host: PART_HOST, selector: '[c15tPreferenceItemHeader]' })
+export class PreferenceItemHeader extends PreferenceItemPart {
+	/** @internal */
+	protected readonly slot = PREFERENCE_ITEM_SLOTS.header;
+	/** @internal */
+	protected variant(): string {
+		return variants.header();
+	}
+}
+
+/** Content before the title, such as an icon. */
+@Directive({ host: PART_HOST, selector: '[c15tPreferenceItemLeading]' })
+export class PreferenceItemLeading extends PreferenceItemPart {
+	/** @internal */
+	protected readonly slot = PREFERENCE_ITEM_SLOTS.leading;
+	/** @internal */
+	protected variant(): string {
+		return variants.leading();
+	}
+}
+
+/** The row's title. Put it on an `<h3>`. */
+@Directive({ host: PART_HOST, selector: '[c15tPreferenceItemTitle]' })
+export class PreferenceItemTitle extends PreferenceItemPart {
+	/** @internal */
+	protected readonly slot = PREFERENCE_ITEM_SLOTS.title;
+	/** @internal */
+	protected variant(): string {
+		return variants.title();
+	}
+}
+
+/** Secondary text under the title. */
+@Directive({ host: PART_HOST, selector: '[c15tPreferenceItemMeta]' })
+export class PreferenceItemMeta extends PreferenceItemPart {
+	/** @internal */
+	protected readonly slot = PREFERENCE_ITEM_SLOTS.meta;
+	/** @internal */
+	protected variant(): string {
+		return variants.meta();
+	}
+}
+
+/** Extra content next to the control. */
+@Directive({ host: PART_HOST, selector: '[c15tPreferenceItemAuxiliary]' })
+export class PreferenceItemAuxiliary extends PreferenceItemPart {
+	/** @internal */
+	protected readonly slot = PREFERENCE_ITEM_SLOTS.auxiliary;
+	/** @internal */
+	protected variant(): string {
+		return variants.auxiliary();
+	}
+}
+
+/** Holds the row's control, such as a switch. */
+@Directive({ host: PART_HOST, selector: '[c15tPreferenceItemControl]' })
+export class PreferenceItemControl extends PreferenceItemPart {
+	/** @internal */
+	protected readonly slot = PREFERENCE_ITEM_SLOTS.control;
+	/** @internal */
+	protected variant(): string {
+		return variants.control();
+	}
+}
+
+/** The `<button>` that toggles the row's content. */
+@Directive({
+	host: {
+		'(click)': 'item.toggle()',
+		'[attr.aria-controls]': 'item.contentId',
+		'[attr.aria-disabled]': 'item.disabled() || null',
+		'[attr.aria-expanded]': 'item.open()',
+		'[attr.data-disabled]': 'dataDisabled()',
+		'[attr.data-slot]': 'slot',
+		'[attr.data-state]': 'item.dataState()',
+		'[attr.disabled]': 'item.disabled() ? "" : null',
+		'[attr.type]': 'type()',
+		'[class]': 'className()',
+		'[id]': 'item.triggerId',
+	},
+	selector: '[c15tPreferenceItemTrigger]',
+})
+export class PreferenceItemTrigger extends PreferenceItemPart {
+	/** The button's `type`. */
+	readonly type = input<'button' | 'submit' | 'reset'>('button');
+	/** @internal */
+	protected readonly slot = PREFERENCE_ITEM_SLOTS.trigger;
+	/** @internal */
+	protected readonly dataDisabled = computed(() =>
+		getDataDisabled(this.item.disabled())
+	);
+	/** @internal */
+	protected variant(): string {
+		return variants.trigger();
+	}
+}
+
+/**
+ * Marks the `<ng-template>` a `c15t-preference-item-content` creates only from
+ * the item's first open, for content too heavy to build up front.
+ *
+ * A marker, not any `TemplateRef` child: control flow such as `@if` is a
+ * template too, and would otherwise render as the body with its condition
+ * ignored.
+ *
+ * @example
+ * ```html
+ * <div c15t-preference-item-content>
+ *   <ng-template c15tPreferenceItemBody><app-vendor-list /></ng-template>
+ * </div>
+ * ```
+ */
+@Directive({ selector: 'ng-template[c15tPreferenceItemBody]' })
+export class PreferenceItemBody {
+	/** @internal */
+	readonly template = inject(TemplateRef);
+}
+
+/**
+ * The row's collapsible content. `inert` and `aria-hidden` while closed.
+ *
+ * The projected content renders from the first open and then stays, so the
+ * close transition keeps it. For content that should not even be created
+ * before then, such as a long vendor list, pass it as an
+ * `<ng-template c15tPreferenceItemBody>` child instead.
+ *
+ * @example
+ * ```html
+ * <div c15t-preference-item-content>
+ *   <ng-template c15tPreferenceItemBody><app-vendor-list /></ng-template>
+ * </div>
+ * ```
+ */
+@Component({
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	host: {
+		'[attr.aria-hidden]': '!item.open()',
+		'[attr.aria-labelledby]': 'item.triggerId',
+		'[attr.data-slot]': 'slot',
+		'[attr.data-state]': 'item.dataState()',
+		'[attr.inert]': 'item.open() ? null : ""',
+		'[class]': 'contentClass()',
+		'[id]': 'item.contentId',
+	},
+	imports: [NgTemplateOutlet],
+	selector: '[c15t-preference-item-content]',
+	template: `<div
+		[class]="viewportClass()"
+		[attr.data-slot]="viewportSlot"
+	>
+		<div
+			[class]="innerClass()"
+			[attr.data-slot]="innerSlot"
+		>
+			@if (renderChildren()) {
+				@if (body(); as body) {
+					<ng-container [ngTemplateOutlet]="body.template" />
+				}
+				<ng-content />
+			}
+		</div>
+	</div>`,
+})
+export class PreferenceItemContent {
+	/** @internal */
+	protected readonly item = inject(PreferenceItem);
+	/** Render the content while the item has never been opened. */
+	readonly forceMount = input(false);
+	/**
+	 * Drop the stock classes. Defaults to the item's `noStyle`.
+	 */
+	readonly noStyle = input<boolean | undefined>(undefined);
+	/** Extra class for the inner wrapper. */
+	readonly innerClassName = input<string | undefined>(undefined);
+	/**
+	 * Extra class for the viewport wrapper.
+	 *
+	 * @internal
+	 */
+	readonly viewportClassName = input<string | undefined>(undefined);
+
+	/** @internal */
+	protected readonly body = contentChild(PreferenceItemBody);
+	/** @internal */
+	protected readonly slot = PREFERENCE_ITEM_SLOTS.content;
+	/** @internal */
+	protected readonly viewportSlot =
+		PREFERENCE_ITEM_INTERNAL_SLOTS.contentViewport;
+	/** @internal */
+	protected readonly innerSlot = PREFERENCE_ITEM_INTERNAL_SLOTS.contentInner;
+
+	#opened = false;
+	/** @internal */
+	protected readonly renderChildren = computed(() => {
+		if (this.forceMount() || this.item.open()) {
+			this.#opened = true;
+		}
+		return this.#opened;
+	});
+
+	readonly #noStyle = computed(
+		() => this.noStyle() ?? this.item.resolvedNoStyle()
+	);
+	/** @internal */
+	protected readonly contentClass = computed(() =>
+		this.#noStyle() ? '' : variants.content()
+	);
+	/** @internal */
+	protected readonly viewportClass = computed(() =>
+		this.#noStyle()
+			? (this.viewportClassName() ?? '')
+			: variants.contentViewport({ class: this.viewportClassName() })
+	);
+	/** @internal */
+	protected readonly innerClass = computed(() =>
+		this.#noStyle()
+			? (this.innerClassName() ?? '')
+			: variants.contentInner({ class: this.innerClassName() })
+	);
+}

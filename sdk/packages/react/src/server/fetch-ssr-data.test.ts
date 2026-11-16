@@ -1,0 +1,295 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { version } from '../version';
+import { fetchSSRData } from './fetch-ssr-data';
+
+const createRequestHeaders = function createRequestHeaders(): Headers {
+	const headers = new Headers();
+	headers.set('cf-ipcountry', 'US');
+	headers.set('host', 'example.com');
+	return headers;
+};
+
+const createResponse = function createResponse(payload: unknown) {
+	return {
+		headers: new Headers(),
+		json: vi.fn().mockResolvedValue(payload),
+		ok: true,
+	} as unknown as Response;
+};
+
+describe('fetchSSRData', () => {
+	afterEach(() => {
+		vi.restoreAllMocks();
+		vi.unstubAllGlobals();
+	});
+
+	it('returns SSR metadata with cache-hit diagnostics and request duration', async () => {
+		const initResponse = {
+			branding: 'c15t',
+			location: { countryCode: 'US', regionCode: 'CA' },
+			translations: { language: 'en', translations: {} },
+		};
+
+		vi.stubGlobal(
+			'fetch',
+			vi.fn().mockResolvedValue(
+				new Response(JSON.stringify(initResponse), {
+					headers: {
+						age: '10',
+						'content-type': 'application/json',
+						'x-vercel-cache': 'HIT',
+					},
+					status: 200,
+				})
+			)
+		);
+
+		const result = await fetchSSRData({
+			backendURL: '/api/c15t',
+			headers: createRequestHeaders(),
+		});
+
+		expect(result?.init).toEqual(initResponse);
+		expect(result?.metadata?.cache).toEqual({
+			detail: 'x-vercel-cache=HIT, age=10',
+			isHit: true,
+		});
+		expect(result?.metadata?.requestContext).toEqual({
+			backendURL: 'https://example.com/api/c15t',
+			country: 'US',
+			gpc: false,
+			language: null,
+			region: null,
+		});
+		expect(typeof result?.metadata?.requestDurationMs).toBe('number');
+		expect(result?.metadata?.requestDurationMs).toBeGreaterThanOrEqual(0);
+	});
+
+	it('returns cache metadata for non-hit responses', async () => {
+		const initResponse = {
+			branding: 'c15t',
+			location: { countryCode: 'DE', regionCode: null },
+			translations: { language: 'de', translations: {} },
+		};
+
+		vi.stubGlobal(
+			'fetch',
+			vi.fn().mockResolvedValue(
+				new Response(JSON.stringify(initResponse), {
+					headers: {
+						'content-type': 'application/json',
+						'x-vercel-cache': 'MISS',
+					},
+					status: 200,
+				})
+			)
+		);
+
+		const result = await fetchSSRData({
+			backendURL: '/api/c15t',
+			headers: createRequestHeaders(),
+		});
+
+		expect(result?.metadata?.cache).toEqual({
+			detail: 'x-vercel-cache=MISS',
+			isHit: false,
+		});
+	});
+
+	it.each([undefined, '3.0.0-proxy'])(
+		'sends the incoming version %s or the package version on init',
+		async (incomingVersion) => {
+			const fetchMock = vi
+				.fn()
+				.mockResolvedValue(createResponse({ categories: [], gvl: null }));
+			vi.stubGlobal('fetch', fetchMock);
+
+			const requestHeaders = createRequestHeaders();
+			if (incomingVersion !== undefined) {
+				requestHeaders.set('x-c15t-version', incomingVersion);
+			}
+
+			await fetchSSRData({
+				backendURL: 'https://consent.example.com/api/c15t',
+				headers: requestHeaders,
+			});
+
+			expect(fetchMock).toHaveBeenCalledWith(
+				'https://consent.example.com/api/c15t/init',
+				expect.objectContaining({
+					headers: expect.objectContaining({
+						'x-c15t-version': incomingVersion ?? version,
+					}),
+				})
+			);
+		}
+	);
+
+	it('resolves a relative backendURL against host, not a forged x-forwarded-host', async () => {
+		const fetchMock = vi
+			.fn()
+			.mockResolvedValue(createResponse({ categories: [], gvl: null }));
+		vi.stubGlobal('fetch', fetchMock);
+		const headers = createRequestHeaders();
+		headers.set('x-forwarded-host', 'attacker.example');
+		headers.set('x-forwarded-proto', 'http');
+
+		await fetchSSRData({ backendURL: '/api/c15t', headers });
+
+		expect(fetchMock).toHaveBeenCalledWith(
+			'https://example.com/api/c15t/init',
+			expect.any(Object)
+		);
+		const sent = fetchMock.mock.calls[0]?.[1]?.headers as Record<
+			string,
+			string
+		>;
+		expect(sent).not.toHaveProperty('x-forwarded-host');
+		expect(sent).not.toHaveProperty('x-forwarded-proto');
+	});
+
+	it('still fetches when only untrusted forwarding headers mark the request', async () => {
+		const fetchMock = vi
+			.fn()
+			.mockResolvedValue(createResponse({ categories: [], gvl: null }));
+		vi.stubGlobal('fetch', fetchMock);
+		const headers = new Headers({
+			host: 'example.com',
+			'x-forwarded-host': 'example.com',
+		});
+
+		await fetchSSRData({ backendURL: '/api/c15t', headers });
+
+		expect(fetchMock).toHaveBeenCalledWith(
+			'https://example.com/api/c15t/init',
+			expect.any(Object)
+		);
+		const sent = fetchMock.mock.calls[0]?.[1]?.headers as Record<
+			string,
+			string
+		>;
+		expect(sent).not.toHaveProperty('x-forwarded-host');
+	});
+
+	it('skips the fetch when the request carries no headers', async () => {
+		const fetchMock = vi.fn();
+		vi.stubGlobal('fetch', fetchMock);
+
+		const result = await fetchSSRData({
+			backendURL: 'https://consent.example.com',
+			headers: new Headers(),
+		});
+
+		expect(result).toBeUndefined();
+		expect(fetchMock).not.toHaveBeenCalled();
+	});
+
+	it('runs independent fetches for concurrent calls', async () => {
+		const fetchMock = vi
+			.fn()
+			.mockResolvedValue(createResponse({ categories: [], gvl: null }));
+		vi.stubGlobal('fetch', fetchMock);
+
+		const headers = createRequestHeaders();
+
+		await Promise.all([
+			fetchSSRData({
+				backendURL: 'https://consent.example.com/api/c15t',
+				headers,
+			}),
+			fetchSSRData({
+				backendURL: 'https://consent.example.com/api/c15t',
+				headers,
+			}),
+		]);
+
+		expect(fetchMock).toHaveBeenCalledTimes(2);
+	});
+
+	it('returns init data when backend responds with success', async () => {
+		const fetchMock = vi
+			.fn()
+			.mockResolvedValue(createResponse({ categories: [], gvl: null }));
+		vi.stubGlobal('fetch', fetchMock);
+
+		const headers = createRequestHeaders();
+
+		const result = await fetchSSRData({
+			backendURL: 'https://consent.example.com/api/c15t',
+			headers,
+		});
+
+		expect(result).toMatchObject({
+			gvl: null,
+			init: { categories: [], gvl: null },
+		});
+		expect(result?.metadata).toEqual({
+			cache: {
+				detail: null,
+				isHit: false,
+			},
+			requestContext: {
+				backendURL: 'https://consent.example.com/api/c15t',
+				country: 'US',
+				gpc: false,
+				language: null,
+				region: null,
+			},
+			requestDurationMs: expect.any(Number),
+		});
+	});
+
+	it('records overrides and gpc in request-context metadata', async () => {
+		const headers = createRequestHeaders();
+		headers.set('accept-language', 'en-GB');
+		headers.set('sec-gpc', '1');
+
+		vi.stubGlobal(
+			'fetch',
+			vi.fn().mockResolvedValue(
+				new Response(JSON.stringify({ categories: [], gvl: null }), {
+					headers: {
+						'content-type': 'application/json',
+					},
+					status: 200,
+				})
+			)
+		);
+
+		const result = await fetchSSRData({
+			backendURL: '/api/c15t',
+			headers,
+			overrides: {
+				country: 'DE',
+				language: 'de',
+				region: 'BE',
+			},
+		});
+
+		expect(result?.metadata?.requestContext).toEqual({
+			backendURL: 'https://example.com/api/c15t',
+			country: 'DE',
+			gpc: true,
+			language: 'de',
+			region: 'BE',
+		});
+	});
+
+	it('returns undefined when backend responds with non-ok status', async () => {
+		const fetchMock = vi.fn().mockResolvedValue({
+			ok: false,
+			status: 500,
+		} as Response);
+		vi.stubGlobal('fetch', fetchMock);
+
+		const headers = createRequestHeaders();
+
+		const result = await fetchSSRData({
+			backendURL: 'https://consent.example.com/api/c15t',
+			headers,
+		});
+
+		expect(result).toBeUndefined();
+	});
+});

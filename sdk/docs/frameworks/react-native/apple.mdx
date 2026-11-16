@@ -1,0 +1,47 @@
+---
+title: iOS native installation
+description: Understand the Swift products included in a React Native app and attach RN to an app-owned native installation.
+group: frameworks
+---
+
+The React Native package includes the Swift consent engine, Apple platform
+services and SwiftUI presenter in its CocoaPods target. This page covers that
+native ownership and app-owned installation in an RN app. For a standalone
+SwiftUI or UIKit app, choose Swift in the [framework list](/docs/frameworks).
+
+## Resolve the source products
+
+For authorized source integration, add `native/core-swift` as a local Swift package in Xcode. Link `C15tApple` and `C15tCore`; add `C15tConsentUI` only if you use the SwiftUI stock screens. The RN path is different: its CocoaPods target compiles these sources into `C15tReactNative`.
+
+The mobile UI target is iOS 16.4 or later. The source manifest also lists other Apple targets for core use; that is not a tested consent-UI or ATT support claim for those targets.
+
+## Install before optional SDKs
+
+This existing source example shows the public installer. Replace its placeholder with your Inth project URL and configure its policy before use.
+
+<include src="../../shared/examples/native/core-swift/AppleInstallation/apple-install.mdx" />
+
+Call it from app startup before optional SDK initialization or RN attachment. The installer validates storage, hydrates synchronously and returns the process's native core. It defaults to Keychain. Repeated installation returns the same engine and keeps its original configuration.
+
+Read `C15t.isAllowed(.measurement)` or `C15t.decision(for: .measurement)` before starting the corresponding optional SDK. Keep an observation alive to stop or reconfigure collection after withdrawal. Unknown or unavailable consent keeps the SDK off.
+
+`protectedStorageUnavailable` leaves no new core installed. Retry after protected-data availability or activation; never fall back to plaintext or memory. The repository's SwiftUI/UIKit installation examples show retry ownership. Keychain may survive reinstall, so uninstall is not a reset guarantee.
+
+## Present native screens
+
+Apply `.c15tConsent(privacyPolicyURL:theme:autoPresent:)` to your SwiftUI root, or make `ConsentRootViewController(root:privacyPolicyURL:)` the window root in UIKit. Both attach to the installed core through the shared `ConsentPrompt`, which owns drafts and presents an owed choice by default. `autoPresent: false` leaves presenting to `ConsentPrompt.current?.presentPrompt()`. When native code presents the prompt, pass `autoPresent={false}` to the JavaScript `ConsentProvider` so only one side presents it. `ConsentTheme` configures the [native appearance](/docs/frameworks/react-native/customize). An IAB host must supply native CMP/publisher settings and current disclosures before accepting vendor decisions.
+
+## Attach to an RN CocoaPods host
+
+Import only `C15tReactNative` for host-owned installation in a CocoaPods RN app. Set `com.c15t.reactnative.AutoBootstrap` to false, call that module's `C15tApple.install`, then `C15tReactNativeBootstrap.install(core)` before RN starts. Do not also link separately compiled core/platform products, which would create competing singleton authorities.
+
+The monorepo root also has a Swift package named `c15t` for standalone apps.
+It exports `C15tCore`, `C15tApple` and `C15tConsentUI`. An RN CocoaPods app
+already compiles those sources inside `C15tReactNative`; linking separate
+copies would create competing process authorities.
+
+## Use ATT and custom services separately
+
+`C15tApple.tracking` shares the explicit ATT orchestration with RN. It requires the app's usage description and never changes c15t consent. The stock prompt asks for ATT after consent by default, only with marketing granted; see [ask for ATT after the consent prompt](/docs/frameworks/react-native/iab#ask-for-att-after-the-consent-prompt). Platform services own foreground/reachability subscriptions; `C15tApple.shutdown()` tears down those subscriptions without clearing consent.
+
+`C15tAppleConfiguration` is the only installation an app uses. Its `backendURL` is the project URL from your Inth dashboard, and `C15tApple.install` throws `invalidBackendURL` for any other host. Pass `dryRun: true` inside `#if DEBUG` for development and CI; a release build throws `dryRunInReleaseBuild`. The `CoreConfig` installer and the transport types are internal API for c15t's own tests and fixtures.

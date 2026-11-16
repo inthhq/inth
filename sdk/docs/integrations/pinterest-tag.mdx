@@ -1,0 +1,92 @@
+---
+title: Pinterest Tag
+description: Load the Pinterest Tag only after marketing consent with the c15t pinterestTag helper, guard pintrk event calls, and check it in DevTools.
+seoTitle: Pinterest Tag cookie consent with c15t
+seoDescription: Load the Pinterest Tag only with marketing consent. The c15t pinterestTag helper sends pintrk setconsent signals for you.
+icon: pinterest
+group: integrations
+---
+
+The c15t `pinterestTag` helper keeps the Pinterest Tag off the page until
+`marketing` has consent. Until then, c15t does not define `pintrk`. When
+`marketing` has consent, the helper queues `load`, `pintrk('setconsent', true)`,
+and a page visit before the loader. If the visitor withdraws consent, the helper
+calls `pintrk('setconsent', false)`. The tag stays on the page. By default, c15t
+also reloads the page.
+
+## Configure the Pinterest Tag
+
+Copy the numeric tag ID from Pinterest Ads Manager. Remove Pinterest's base
+code and its `<noscript>` image. The helper does not emit that image, because
+it fires without JavaScript and c15t cannot gate it.
+
+<CommandTabs command="@c15t/integrations" mode="install" />
+
+```ts title="src/consent-scripts.ts"
+import { pinterestTag } from '@c15t/integrations/pinterest-tag';
+
+export const scripts = [pinterestTag({ tagId: '2613654212508' })];
+```
+
+<include src="../shared/integrations/register-scripts.mdx" />
+
+## Options
+
+| Option | Default | Behavior |
+| --- | --- | --- |
+| `tagId` | Required | Tag ID passed to `pintrk('load', ...)`. The helper trims it. Empty or whitespace-only values log an error and the script does not load. |
+| `loadOptions` | None | Object passed as the third argument to `pintrk('load', ...)`, such as `em` or `external_id` for enhanced match. Pass user data only when your app has the permission it needs. |
+| `trackPageVisit` | `true` | Queues `pintrk('page')` after `load`. Set `false` to send page visits yourself. |
+| `scriptUrl` | `https://s.pinimg.com/ct/core.js` | Loader URL override. A blank value falls back to the default. |
+
+## Loading and revocation
+
+`pinterestTag` uses the `marketing` category. Before marketing is allowed, c15t
+defines no `pintrk` function and loads nothing from Pinterest. When marketing
+becomes allowed, the helper queues `load`, `pintrk('setconsent', true)` and
+the page visit, then loads `core.js`.
+
+On revocation the helper keeps the tag and calls
+`pintrk('setconsent', false)`, which Pinterest documents as stopping events
+and clearing its first-party storage. If the visitor allows marketing again
+before the page reloads, the helper calls `pintrk('setconsent', true)`.
+
+## Guard your own pintrk calls
+
+The helper sends the page visit. Events your code sends, such as `checkout` or
+`lead`, need their own check. After revocation `window.pintrk` still exists, so
+its presence does not mean marketing is allowed. Check the permission first,
+then that the tag has loaded:
+
+```ts title="src/track-checkout.ts"
+export function trackCheckout(marketingAllowed: boolean, orderId: string) {
+	if (!marketingAllowed || typeof window.pintrk !== 'function') return;
+	window.pintrk('track', 'checkout', {
+		currency: 'USD',
+		event_id: orderId,
+		order_id: orderId,
+		value: 99.99,
+		line_items: [{ product_id: '1414', product_quantity: 1 }],
+	});
+}
+```
+
+Pass the current marketing permission from your framework, for example
+`useConsent('marketing')` in React. Put product details in `line_items`, and
+set `event_id` to deduplicate against the Conversions API. Pinterest reports
+conversions only for its 20 event types. It keeps other event names for
+audience targeting.
+
+`@c15t/integrations/pinterest-tag` also exports `pinterestTagEvent`, a typed wrapper
+around `pintrk('track', ...)`. It does nothing until `pintrk` exists and does
+not check permission, so apply the same guard before calling it. Its optional
+third argument receives Pinterest's `(didInit, error)` result.
+
+## Verify the Pinterest Tag
+
+After you allow marketing, `core.js` loads from `s.pinimg.com` and Pinterest
+Tag Helper shows the page visit. Trigger one guarded event and check that Tag
+Helper records it. Then revoke marketing. Until the page reloads, calling
+`trackCheckout` sends nothing.
+
+<include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

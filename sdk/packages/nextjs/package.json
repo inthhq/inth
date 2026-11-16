@@ -1,0 +1,210 @@
+{
+	"name": "@c15t/nextjs",
+	"version": "3.2.0-canary.0",
+	"description": "Next.js cookie consent banner and consent management platform for c15t. Server-rendered for the App Router and Pages Router, with a consent dialog and preference center.",
+	"keywords": [
+		"app-router",
+		"banner",
+		"ccpa",
+		"cmp",
+		"consent",
+		"consent-banner",
+		"consent-management",
+		"consent-management-platform",
+		"consent-manager",
+		"consent-mode-v2",
+		"cookie",
+		"cookie-banner",
+		"cookie-consent",
+		"gdpr",
+		"global-privacy-control",
+		"google-consent-mode",
+		"headless",
+		"iab",
+		"iab-tcf",
+		"lgpd",
+		"next",
+		"next-cmp",
+		"next-cookie-banner",
+		"nextjs",
+		"nextjs-cmp",
+		"nextjs-consent",
+		"nextjs-cookie-consent",
+		"pages-router",
+		"preference-center",
+		"privacy",
+		"react",
+		"rsc",
+		"server-components",
+		"server-side-rendering",
+		"ssr",
+		"tcf",
+		"tracking-consent",
+		"typescript"
+	],
+	"homepage": "https://c15t.com/docs/frameworks/next/quickstart",
+	"bugs": {
+		"url": "https://github.com/c15t/c15t/issues"
+	},
+	"license": "Apache-2.0",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/c15t/c15t.git",
+		"directory": "packages/nextjs"
+	},
+	"files": [
+		"dist",
+		"dist-types",
+		"AGENTS.md",
+		"SKILL.md",
+		"docs",
+		"styles.css",
+		"styles.tw3.css",
+		"iab",
+		"src/styles.css",
+		"src/styles.tw3.css",
+		"src/iab/styles.css",
+		"src/iab/styles.tw3.css"
+	],
+	"type": "module",
+	"sideEffects": [
+		"**/*.css"
+	],
+	"main": "./dist/index.js",
+	"types": "./dist-types/index.d.ts",
+	"imports": {
+		"#engine-now": {
+			"types": "./dist-types/engine-now.d.ts",
+			"edge-light": "./dist/engine-now.js",
+			"workerd": "./dist/engine-now.js",
+			"browser": "./dist/engine-now-browser.js",
+			"default": "./dist/engine-now.js"
+		}
+	},
+	"exports": {
+		"./styles.css": "./dist/styles.css",
+		"./styles.tw3.css": "./dist/styles.tw3.css",
+		"./iab/styles.css": "./dist/iab/styles.css",
+		"./iab/styles.tw3.css": "./dist/iab/styles.tw3.css",
+		"./postcss-tailwind3": {
+			"types": "./dist-types/postcss-tailwind3.d.ts",
+			"import": "./dist/postcss-tailwind3.js",
+			"default": "./dist/postcss-tailwind3.js"
+		},
+		"./headless": {
+			"types": "./dist-types/headless.d.ts",
+			"import": "./dist/headless.js",
+			"default": "./dist/headless.js"
+		},
+		"./components/consent-dialog-link": {
+			"types": "./dist-types/components/consent-dialog-link.d.ts",
+			"import": "./dist/components/consent-dialog-link.js",
+			"default": "./dist/components/consent-dialog-link.js"
+		},
+		".": {
+			"types": "./dist-types/index.d.ts",
+			"react-server": "./dist/index.react-server.js",
+			"import": "./dist/index.js",
+			"default": "./dist/index.js"
+		},
+		"./server": {
+			"types": "./dist-types/server.d.ts",
+			"import": "./dist/server.js",
+			"default": "./dist/server.js"
+		},
+		"./api": {
+			"types": "./dist-types/api.d.ts",
+			"import": "./dist/api.js",
+			"default": "./dist/api.js"
+		},
+		"./middleware": {
+			"types": "./dist-types/middleware.d.ts",
+			"import": "./dist/middleware.js",
+			"default": "./dist/middleware.js"
+		},
+		"./proxy": {
+			"types": "./dist-types/proxy.d.ts",
+			"import": "./dist/proxy.js",
+			"default": "./dist/proxy.js"
+		},
+		"./pages": {
+			"types": "./dist-types/pages.d.ts",
+			"import": "./dist/pages.js",
+			"default": "./dist/pages.js"
+		},
+		"./static": {
+			"types": "./dist-types/static.d.ts",
+			"import": "./dist/static.js",
+			"default": "./dist/static.js"
+		},
+		"./devtools": {
+			"types": "./dist-types/devtools.d.ts",
+			"import": "./dist/devtools.js",
+			"default": "./dist/devtools.js"
+		},
+		"./build": {
+			"types": "./dist-types/build.d.ts",
+			"import": "./dist/build.js",
+			"default": "./dist/build.js"
+		},
+		"./defer": {
+			"types": "./dist-types/defer.d.ts",
+			"import": "./dist/defer.js",
+			"default": "./dist/defer.js"
+		},
+		"./generated-manifest": {
+			"types": "./dist-types/generated-manifest.d.ts",
+			"import": "./dist/generated-manifest.js",
+			"default": "./dist/generated-manifest.js"
+		},
+		"./user-config": {
+			"types": "./dist-types/user-config.d.ts",
+			"import": "./dist/user-config.js",
+			"default": "./dist/user-config.js"
+		}
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"scripts": {
+		"build": "bun prebuild && rslib build && bun ../../scripts/normalize-dist-types.mjs && bun scripts/generate-distribution-css.ts && node ../shared/restore-client-directives.mjs src dist",
+		"build:docs": "bun ../../scripts/generate-package-docs.ts @c15t/nextjs",
+		"check-types": "bun prebuild && tsc --noEmit",
+		"dev": "sh -c 'bun prebuild && rslib build --no-dts --no-clean && bun scripts/generate-distribution-css.ts && rslib build --watch --no-dts --no-clean'",
+		"fmt": "bun oxfmt .",
+		"lint": "bun oxlint ./src",
+		"prebuild": "genversion --esm --semi src/version.ts",
+		"prepack": "bun run build:docs && bun ../../scripts/verify-package-artifacts.ts",
+		"test": "bun prebuild && vitest run --passWithNoTests",
+		"test:watch": "bun prebuild && vitest --passWithNoTests"
+	},
+	"dependencies": {
+		"@c15t/core": "workspace:*",
+		"@c15t/react": "workspace:*",
+		"@c15t/schema": "workspace:*",
+		"@c15t/translations": "workspace:*"
+	},
+	"devDependencies": {
+		"@c15t/conformance": "workspace:*",
+		"@c15t/typescript-config": "workspace:*",
+		"@c15t/vitest-config": "workspace:*",
+		"genversion": "3.2.0",
+		"typescript": "7.0.2"
+	},
+	"peerDependencies": {
+		"next": "^15.0.0 || ^16.0.0",
+		"react": "^18.0.0 || ^19.0.0 || ^19.0.0-rc",
+		"react-dom": "^18.0.0 || ^19.0.0 || ^19.0.0-rc"
+	},
+	"peerDependenciesMeta": {
+		"next": {
+			"optional": true
+		},
+		"react": {
+			"optional": true
+		},
+		"react-dom": {
+			"optional": true
+		}
+	}
+}

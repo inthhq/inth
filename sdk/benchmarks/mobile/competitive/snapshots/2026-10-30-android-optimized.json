@@ -1,0 +1,1244 @@
+{
+	"acceptance": {
+		"c15t": {
+			"afterRejectionPreferences": {
+				"categories": {
+					"experience": false,
+					"functionality": false,
+					"marketing": false,
+					"measurement": false
+				},
+				"lastChanged": "Last changed Oct 30, 2026"
+			},
+			"apkSha256": "066ae7f4678353139390d683c99477d43b0d2ce7aa41e6e17a7f28d363e6b0e0",
+			"beforeChoicePreferences": {
+				"categories": {
+					"experience": false,
+					"functionality": false,
+					"marketing": false,
+					"measurement": false
+				},
+				"lastChanged": null
+			},
+			"choiceBasis": "choice-v1",
+			"choiceTimestampMatchesCleanApkRejection": true,
+			"coldOfflineHostText": [
+				"Ready",
+				"Measurement denied",
+				"PRIVACY SETTINGS"
+			],
+			"confirmedAtEpochMs": 1793383016601,
+			"diagnosticApkSha256": "22f7f2f9e4b3ba4429ee766d8d000f5f8263222d66344f315c38e6a760cc800d",
+			"diagnosticErrorCode": "transport",
+			"diagnosticExcludedFromSize": true,
+			"diagnosticSameUid": true,
+			"durableDenial": true,
+			"freshProcess": true,
+			"installedApkSha256": "066ae7f4678353139390d683c99477d43b0d2ce7aa41e6e17a7f28d363e6b0e0",
+			"nativePreferencesActivity": true,
+			"offlineRestartHostText": [
+				"Ready",
+				"Measurement denied",
+				"PRIVACY SETTINGS"
+			],
+			"offlineRestartPreferences": {
+				"categories": {
+					"experience": false,
+					"functionality": false,
+					"marketing": false,
+					"measurement": false
+				},
+				"lastChanged": "Last changed Oct 30, 2026"
+			},
+			"rejectAllTapped": true,
+			"rejectionEndedEpochMs": 1793383019652,
+			"rejectionStartedEpochMs": 1793383016488
+		},
+		"commandsSha256": "2c3a15942864d736cfeff784f8f9c9878b252b4d450b4c077aec78cc5512dc2d",
+		"emulator": {
+			"abi": "arm64-v8a",
+			"adbDisconnected": true,
+			"api": 36,
+			"emulatorPortsClosed": true,
+			"serialAbsentAfterStop": false,
+			"serialStateAfterStop": "offline",
+			"stoppedBeforeLockRelease": true,
+			"taskOwned": true
+		},
+		"limits": [
+			"Untimed API36 arm64 emulator acceptance. No phone, speed, certification or feature-equivalence claim.",
+			"Clean size APK state comes from stock native preferences and RN Ready/denied text. Encrypted snapshots are retained externally without exporting keys.",
+			"Exact choice timestamp was read only by a separate excluded diagnostic APK installed over the same UID/data after the clean APK restart check, then the clean APK was restored.",
+			"The diagnostic state, including any error, remains in external evidence. Its internal error/policyPending fields do not establish those fields for the clean size fixture or runtime eligibility.",
+			"Other vendor observations establish stock UI rendering only. They do not prove durable consent, successful RN readiness for every vendor or runtime eligibility."
+		],
+		"logCaptureFailures": [],
+		"ownershipSha256": "bc8c8d49809a841d502860092c8091e09abfc707830d07c7dca1d2773fd76902",
+		"profile": "android-optimized",
+		"resultsSha256": "4fbc873be84bc53d316f9cfef25a4714507248b1d935eb8f3657062ee6e63aba",
+		"scriptSha256": "df20fa25734533f525f1f98cc3993dd99229388dbf15747123b67c872af479c9",
+		"status": "accepted",
+		"timingMeasured": false,
+		"vendors": {
+			"didomi": {
+				"installedApkSha256": "2c29188616165ae6118e6655957dd127ee52f1e539504418e3be518084fe36b1",
+				"observed": "stock consent notice",
+				"stockUiObserved": true,
+				"timingMeasured": false
+			},
+			"onetrust": {
+				"reason": "verified App ID missing",
+				"status": "compile-only"
+			},
+			"sourcepoint": {
+				"installedApkSha256": "e132a8e1f543c244ddd4ab88d7c3dda35d2f16832e49605aa2dc7c029490bbc9",
+				"observed": "stock GDPR campaign UI",
+				"stockUiObserved": true,
+				"timingMeasured": false
+			},
+			"usercentrics": {
+				"installedApkSha256": "7724b531ed8f788137a63bf7d45507e704b2e6f3d8aac5866fa2d7c7e27f41de",
+				"observed": "stock Privacy Settings",
+				"stockUiObserved": true,
+				"timingMeasured": false
+			}
+		}
+	},
+	"attempts": [
+		{
+			"name": "run-001",
+			"reason": "Baseline built; repeated preparation hit read-only shared input overwrite. Fixed in runner, all final cohort cells rebuilt.",
+			"status": "superseded"
+		},
+		{
+			"name": "run-002-c15t",
+			"reason": "Diagnostic-only c15t adapter biased size. Rebuilt clean c15t and retained this APK only for optional excluded timestamp read.",
+			"status": "excluded"
+		},
+		{
+			"name": "acceptance-clean-001",
+			"reason": "Port already occupied; no emulator was created.",
+			"status": "refused"
+		},
+		{
+			"name": "acceptance-clean-002",
+			"reason": "UI/state checks passed, but immediate ADB disappearance was false after process exit. Added explicit disconnect wait and reran.",
+			"status": "superseded"
+		},
+		{
+			"name": "acceptance-clean-003",
+			"reason": "ADB root connection closed after boot before any app install. Owned emulator process and ADB disconnect verified.",
+			"status": "failed"
+		},
+		{
+			"name": "acceptance-clean-004",
+			"reason": "Clean APK UI/state checks passed and emulator process/transport stopped. A stale offline ADB row failed the overly strict disappearance check; final cleanup now also verifies closed emulator ports.",
+			"status": "superseded"
+		},
+		{
+			"name": "acceptance-clean-005",
+			"reason": "Clean APK UI denial/restart and owned process/port/transport shutdown passed. Separate diagnostic state was not captured within the fixed delay; later full vendor logcat dump exited 255. Both failures retained.",
+			"status": "failed"
+		},
+		{
+			"name": "acceptance-clean-006",
+			"reason": "ADB transport became offline before preference checks. Process, ports and transport shutdown passed. Final run keeps emulator interfaces up and blocks only c15t UID over IPv4/IPv6.",
+			"status": "failed"
+		},
+		{
+			"name": "acceptance-clean-007",
+			"reason": "Clean size APK, native durable denial, separate timestamp read and owned emulator process/port/transport shutdown verified. Offline control is IPv4/IPv6 UID rejection.",
+			"status": "accepted"
+		}
+	],
+	"blocked": [],
+	"complete": true,
+	"evidenceSha256": "07cb93356a272d76548c1c69bc94035d41a90509a97cd28c4c6a330d4df26d39",
+	"excludedArtifacts": [
+		"22f7f2f9e4b3ba4429ee766d8d000f5f8263222d66344f315c38e6a760cc800d"
+	],
+	"frozenInputRecheck": {
+		"bridgeVendorsVerified": 5,
+		"inputs": {
+			"archiveSha256": "4d92e2c3377cf2059a905335c62c037de9a0cc9a46df42d474a3c5b2dc7a65bd",
+			"mavenFiles": 90,
+			"mavenManifestSha256": "62d6ccbfd9b8dc93da832a21635cd0bd4d71b8f5bab0745758997c68dcbb901f"
+		},
+		"mavenManifestFileSha256": "954bfe9c382ddf9c89db8b14f4dc85e172e521dd913b50ea9bb84024578f3d59",
+		"producerClean": true,
+		"producerHead": "256e903bfa542c15126e017c10fdfea70f421521",
+		"schemaVersion": 1,
+		"sourceFilesVerified": 1814,
+		"sourceManifestSha256": "fb9c798bd8459bc7c736d43f7d3f2b7f0a54c90413a6bf8026213c592d2765ff"
+	},
+	"host": {
+		"bundledC15tPolicySha256": "5b515f53a0ce181e443ddb710806bf510fee4b22e516ca4943e51ff4607ce7bd",
+		"commonResourceManifestSha256": "2ea52a0a5982e6b2de875d6148b50d3285dc84d3a7a7d5c7154788f4da2eeb56",
+		"expo": "57.0.22",
+		"react": "19.2.7",
+		"reactNative": "0.86.3"
+	},
+	"inputs": {
+		"archiveSha256": "4d92e2c3377cf2059a905335c62c037de9a0cc9a46df42d474a3c5b2dc7a65bd",
+		"mavenFiles": 90,
+		"mavenManifestSha256": "62d6ccbfd9b8dc93da832a21635cd0bd4d71b8f5bab0745758997c68dcbb901f"
+	},
+	"measurements": [
+		{
+			"addedBytes": 0,
+			"artifactSha256": "ba39dca96cf2024f16b5468635d698816b96b8d2fea260acf21c82b5a7dc630e",
+			"bytes": 20046042,
+			"compilerIdentitySha256": "27d177be3e409f2d6954b27e371e9429053aa09990c178a987a350621a16e5bc",
+			"compressedPayloadBytes": 19830810,
+			"dexClasses": 4544,
+			"groups": {
+				"dex": {
+					"compressedBytes": 2120905,
+					"uncompressedBytes": 4681104
+				},
+				"javascript": {
+					"compressedBytes": 1147196,
+					"uncompressedBytes": 1147196
+				},
+				"nativeLibraries": {
+					"compressedBytes": 15164896,
+					"uncompressedBytes": 15164896
+				},
+				"other": {
+					"compressedBytes": 159928,
+					"uncompressedBytes": 349705
+				},
+				"resources": {
+					"compressedBytes": 1237885,
+					"uncompressedBytes": 1404689
+				}
+			},
+			"mappingSha256": "e28852d78cd56f2315d5e0e327fdbc4bb9db1912c41c51747d43cec794122d6f",
+			"nativeDependenciesExactlyMatchPins": true,
+			"nativeDependencyManifestSha256": "96fb488e902c18c91ff30335538c56552a0b467428f98e012d61cab65eab4f53",
+			"nativeDependencyRows": 118,
+			"nativeLibraries": [
+				{
+					"bytes": 50400,
+					"compressedBytes": 50400,
+					"path": "lib/arm64-v8a/libappmodules.so",
+					"sha256": "1d2fcab13d010e40f381359fa5b87727364e5bd18cfa3fca68d4f5f924272380"
+				},
+				{
+					"bytes": 1292904,
+					"compressedBytes": 1292904,
+					"path": "lib/arm64-v8a/libc++_shared.so",
+					"sha256": "3e852764502d06e0cf1080d532ae7c608b7649d946a3a9d7e84e3d4b7d683214"
+				},
+				{
+					"bytes": 1457408,
+					"compressedBytes": 1457408,
+					"path": "lib/arm64-v8a/libexpo-modules-core.so",
+					"sha256": "055ac55270e63f4bba85718ff161f4b1ee417de7dbf2863d87f453386b2b0651"
+				},
+				{
+					"bytes": 177000,
+					"compressedBytes": 177000,
+					"path": "lib/arm64-v8a/libfbjni.so",
+					"sha256": "a9e35ba55d3f956920281f519385f8a72475ee24819799cb08375fdd4cce2b22"
+				},
+				{
+					"bytes": 318992,
+					"compressedBytes": 318992,
+					"path": "lib/arm64-v8a/libgifimage.so",
+					"sha256": "9f605249728da7091569772a38a4dde298ed48e1e73fed3da0e4b662ef38715c"
+				},
+				{
+					"bytes": 141432,
+					"compressedBytes": 141432,
+					"path": "lib/arm64-v8a/libhermestooling.so",
+					"sha256": "1db061bbbb050105fee9b208b861adc0cc02cc359551be6ba9562798a81f6cca"
+				},
+				{
+					"bytes": 2477320,
+					"compressedBytes": 2477320,
+					"path": "lib/arm64-v8a/libhermesvm.so",
+					"sha256": "bf38be45bf5d6ad8ba961eaf9deda5fa7e032f3ff7d3929ba2a624567093bffa"
+				},
+				{
+					"bytes": 8760,
+					"compressedBytes": 8760,
+					"path": "lib/arm64-v8a/libimagepipeline.so",
+					"sha256": "1b377992e4256fa9398ec057722f84a359c7d588e570c8a41f51d930c19ece7d"
+				},
+				{
+					"bytes": 412696,
+					"compressedBytes": 412696,
+					"path": "lib/arm64-v8a/libjsi.so",
+					"sha256": "5acb80d7eb93b2114a419c9e42b44476969299e806ad7eafe1b293e221b9a682"
+				},
+				{
+					"bytes": 23712,
+					"compressedBytes": 23712,
+					"path": "lib/arm64-v8a/libnative-filters.so",
+					"sha256": "4294b57460e70a6351ce7ae2733a79c088c907dfa54673a657227ec5bb669594"
+				},
+				{
+					"bytes": 585376,
+					"compressedBytes": 585376,
+					"path": "lib/arm64-v8a/libnative-imagetranscoder.so",
+					"sha256": "2aed28298a25afd52ac670cf9682398c6c7ba42a57195c01efd565e7ddfe17ca"
+				},
+				{
+					"bytes": 6985168,
+					"compressedBytes": 6985168,
+					"path": "lib/arm64-v8a/libreactnative.so",
+					"sha256": "14bb860cebebb0e29eb2c96a52d70da9b73e60253916694af955f6e3ef1e6b64"
+				},
+				{
+					"bytes": 501856,
+					"compressedBytes": 501856,
+					"path": "lib/arm64-v8a/libstatic-webp.so",
+					"sha256": "f3e5f9ab4f93f2a0a057285a2de9c93ba0ab59c76c22874d0356493ce283c4c7"
+				},
+				{
+					"bytes": 731872,
+					"compressedBytes": 731872,
+					"path": "lib/arm64-v8a/libzstd-kmp.so",
+					"sha256": "10ec47f13bee884450b0911066019ba7aa6b4164a4c1f8c33c9d30dd3fd8868a"
+				}
+			],
+			"preparedInputsSha256": "7e9697e7f3222607c4768deee08d55b45c7d3d491d113b87772def5bd5559633",
+			"profile": "android-optimized",
+			"r8": {
+				"configurationSha256": "25725da2fd3d5b09f4ed3b2111fb71ff62e80674ee2d13bd2e9b9548cc70cc8f",
+				"defaultFile": "proguard-android-optimize.txt",
+				"obfuscationEnabled": true,
+				"optimizationEnabled": true,
+				"shrinkingEnabled": true,
+				"version": "8.12.14"
+			},
+			"sdkRetention": {},
+			"sdkUniqueDexDestinations": 0,
+			"settings": {
+				"agpVersion": "Android Gradle Plugin version 8.12.0",
+				"applicationId": "com.c15t.expodev",
+				"architectures": "arm64-v8a",
+				"buildTools": "36.0.0",
+				"compileSdk": "36",
+				"gradleVersion": "9.3.1",
+				"hermesEnabled": "true",
+				"javaVersion": "17.0.20",
+				"jniLegacyPackaging": false,
+				"minSdk": "24",
+				"minifyEnabled": true,
+				"ndkVersion": "27.1.12297006",
+				"newArchEnabled": "true",
+				"shrinkResources": true,
+				"targetSdk": "36"
+			},
+			"signerSha256": "fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c",
+			"status": "measured",
+			"uncompressedPayloadBytes": 22747590,
+			"vendor": "baseline",
+			"zipAndSigningOverheadBytes": 215232
+		},
+		{
+			"addedBytes": 1388796,
+			"artifactSha256": "066ae7f4678353139390d683c99477d43b0d2ce7aa41e6e17a7f28d363e6b0e0",
+			"bytes": 21434838,
+			"compilerIdentitySha256": "27d177be3e409f2d6954b27e371e9429053aa09990c178a987a350621a16e5bc",
+			"compressedPayloadBytes": 21207126,
+			"dexClasses": 7080,
+			"groups": {
+				"dex": {
+					"compressedBytes": 3189496,
+					"uncompressedBytes": 6805400
+				},
+				"javascript": {
+					"compressedBytes": 1273512,
+					"uncompressedBytes": 1273512
+				},
+				"nativeLibraries": {
+					"compressedBytes": 15200568,
+					"uncompressedBytes": 15200568
+				},
+				"other": {
+					"compressedBytes": 196208,
+					"uncompressedBytes": 461794
+				},
+				"resources": {
+					"compressedBytes": 1347342,
+					"uncompressedBytes": 1515389
+				}
+			},
+			"mappingSha256": "7d48c45ec8055599082119ae02f17e39111e25b0146af2163056fa07892f0edc",
+			"nativeDependenciesExactlyMatchPins": true,
+			"nativeDependencyManifestSha256": "f7bfb61313f323b123e3a346cba6fe45a0a192375a9eb500c46dc60965898bcf",
+			"nativeDependencyRows": 152,
+			"nativeLibraries": [
+				{
+					"bytes": 10096,
+					"compressedBytes": 10096,
+					"path": "lib/arm64-v8a/libandroidx.graphics.path.so",
+					"sha256": "41e9a793c43a0f4fddb19e33f346bace464f30f888ba7b9eaf96294ea115bfb6"
+				},
+				{
+					"bytes": 75976,
+					"compressedBytes": 75976,
+					"path": "lib/arm64-v8a/libappmodules.so",
+					"sha256": "c0c154faa9be6263cad9548534c798035ad105d89de3c46f7c483f3a790196ef"
+				},
+				{
+					"bytes": 1292904,
+					"compressedBytes": 1292904,
+					"path": "lib/arm64-v8a/libc++_shared.so",
+					"sha256": "3e852764502d06e0cf1080d532ae7c608b7649d946a3a9d7e84e3d4b7d683214"
+				},
+				{
+					"bytes": 1457408,
+					"compressedBytes": 1457408,
+					"path": "lib/arm64-v8a/libexpo-modules-core.so",
+					"sha256": "a45efaa4365d30da3db5a7ebaa65fbe69cca7483ea56fb2f24fe47e1a598d8b8"
+				},
+				{
+					"bytes": 177000,
+					"compressedBytes": 177000,
+					"path": "lib/arm64-v8a/libfbjni.so",
+					"sha256": "a9e35ba55d3f956920281f519385f8a72475ee24819799cb08375fdd4cce2b22"
+				},
+				{
+					"bytes": 318992,
+					"compressedBytes": 318992,
+					"path": "lib/arm64-v8a/libgifimage.so",
+					"sha256": "9f605249728da7091569772a38a4dde298ed48e1e73fed3da0e4b662ef38715c"
+				},
+				{
+					"bytes": 141432,
+					"compressedBytes": 141432,
+					"path": "lib/arm64-v8a/libhermestooling.so",
+					"sha256": "1db061bbbb050105fee9b208b861adc0cc02cc359551be6ba9562798a81f6cca"
+				},
+				{
+					"bytes": 2477320,
+					"compressedBytes": 2477320,
+					"path": "lib/arm64-v8a/libhermesvm.so",
+					"sha256": "bf38be45bf5d6ad8ba961eaf9deda5fa7e032f3ff7d3929ba2a624567093bffa"
+				},
+				{
+					"bytes": 8760,
+					"compressedBytes": 8760,
+					"path": "lib/arm64-v8a/libimagepipeline.so",
+					"sha256": "1b377992e4256fa9398ec057722f84a359c7d588e570c8a41f51d930c19ece7d"
+				},
+				{
+					"bytes": 412696,
+					"compressedBytes": 412696,
+					"path": "lib/arm64-v8a/libjsi.so",
+					"sha256": "5acb80d7eb93b2114a419c9e42b44476969299e806ad7eafe1b293e221b9a682"
+				},
+				{
+					"bytes": 23712,
+					"compressedBytes": 23712,
+					"path": "lib/arm64-v8a/libnative-filters.so",
+					"sha256": "4294b57460e70a6351ce7ae2733a79c088c907dfa54673a657227ec5bb669594"
+				},
+				{
+					"bytes": 585376,
+					"compressedBytes": 585376,
+					"path": "lib/arm64-v8a/libnative-imagetranscoder.so",
+					"sha256": "2aed28298a25afd52ac670cf9682398c6c7ba42a57195c01efd565e7ddfe17ca"
+				},
+				{
+					"bytes": 6985168,
+					"compressedBytes": 6985168,
+					"path": "lib/arm64-v8a/libreactnative.so",
+					"sha256": "14bb860cebebb0e29eb2c96a52d70da9b73e60253916694af955f6e3ef1e6b64"
+				},
+				{
+					"bytes": 501856,
+					"compressedBytes": 501856,
+					"path": "lib/arm64-v8a/libstatic-webp.so",
+					"sha256": "f3e5f9ab4f93f2a0a057285a2de9c93ba0ab59c76c22874d0356493ce283c4c7"
+				},
+				{
+					"bytes": 731872,
+					"compressedBytes": 731872,
+					"path": "lib/arm64-v8a/libzstd-kmp.so",
+					"sha256": "10ec47f13bee884450b0911066019ba7aa6b4164a4c1f8c33c9d30dd3fd8868a"
+				}
+			],
+			"preparedInputsSha256": "7987d6f3a301d2060e13d11cf9bbbc2f92a7079d8be41437e391407b1cb58df9",
+			"profile": "android-optimized",
+			"r8": {
+				"configurationSha256": "3758bb1701993246233f2d6c9e93678aceb3d363ec76331ca2c18e5e90f1b15c",
+				"defaultFile": "proguard-android-optimize.txt",
+				"obfuscationEnabled": true,
+				"optimizationEnabled": true,
+				"shrinkingEnabled": true,
+				"version": "8.12.14"
+			},
+			"sdkRetention": {
+				"com.c15t.android.": 9,
+				"com.c15t.consentui.": 86,
+				"com.c15t.core.": 223,
+				"com.c15t.reactnative.": 13
+			},
+			"sdkUniqueDexDestinations": 331,
+			"settings": {
+				"agpVersion": "Android Gradle Plugin version 8.12.0",
+				"applicationId": "com.c15t.expodev",
+				"architectures": "arm64-v8a",
+				"buildTools": "36.0.0",
+				"compileSdk": "36",
+				"gradleVersion": "9.3.1",
+				"hermesEnabled": "true",
+				"javaVersion": "17.0.20",
+				"jniLegacyPackaging": false,
+				"minSdk": "24",
+				"minifyEnabled": true,
+				"ndkVersion": "27.1.12297006",
+				"newArchEnabled": "true",
+				"shrinkResources": true,
+				"targetSdk": "36"
+			},
+			"signerSha256": "fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c",
+			"status": "measured",
+			"uncompressedPayloadBytes": 25256663,
+			"vendor": "c15t",
+			"zipAndSigningOverheadBytes": 227712
+		},
+		{
+			"addedBytes": 910640,
+			"artifactSha256": "0dec3c707f7f3f2737ffdde63efb298d163766311347143d9b1480fe48188774",
+			"bytes": 20956682,
+			"compilerIdentitySha256": "27d177be3e409f2d6954b27e371e9429053aa09990c178a987a350621a16e5bc",
+			"compressedPayloadBytes": 20727977,
+			"dexClasses": 5575,
+			"groups": {
+				"dex": {
+					"compressedBytes": 2760902,
+					"uncompressedBytes": 6074260
+				},
+				"javascript": {
+					"compressedBytes": 1156304,
+					"uncompressedBytes": 1156304
+				},
+				"nativeLibraries": {
+					"compressedBytes": 15164896,
+					"uncompressedBytes": 15164896
+				},
+				"other": {
+					"compressedBytes": 161065,
+					"uncompressedBytes": 356280
+				},
+				"resources": {
+					"compressedBytes": 1484810,
+					"uncompressedBytes": 1843926
+				}
+			},
+			"mappingSha256": "4d1e0de9514b522e83f969106754ac8facf1657f3dc875e7e6b10a5e2f7f1fb4",
+			"nativeDependenciesExactlyMatchPins": true,
+			"nativeDependencyManifestSha256": "e7cd2cfd6bd4f562b57a3e87a4e2fbde4e2eb76701d9d4ab7989e693693db3a3",
+			"nativeDependencyRows": 150,
+			"nativeLibraries": [
+				{
+					"bytes": 50400,
+					"compressedBytes": 50400,
+					"path": "lib/arm64-v8a/libappmodules.so",
+					"sha256": "45e54aba1fa572fc6d6d7be35b5d05b43c806826ae0753ad6da7551ed7e25178"
+				},
+				{
+					"bytes": 1292904,
+					"compressedBytes": 1292904,
+					"path": "lib/arm64-v8a/libc++_shared.so",
+					"sha256": "3e852764502d06e0cf1080d532ae7c608b7649d946a3a9d7e84e3d4b7d683214"
+				},
+				{
+					"bytes": 1457408,
+					"compressedBytes": 1457408,
+					"path": "lib/arm64-v8a/libexpo-modules-core.so",
+					"sha256": "2a0c95666885a5daa99e11ebe836c4e8b8b1a5a376ca082621a6c7e05d2435d7"
+				},
+				{
+					"bytes": 177000,
+					"compressedBytes": 177000,
+					"path": "lib/arm64-v8a/libfbjni.so",
+					"sha256": "a9e35ba55d3f956920281f519385f8a72475ee24819799cb08375fdd4cce2b22"
+				},
+				{
+					"bytes": 318992,
+					"compressedBytes": 318992,
+					"path": "lib/arm64-v8a/libgifimage.so",
+					"sha256": "9f605249728da7091569772a38a4dde298ed48e1e73fed3da0e4b662ef38715c"
+				},
+				{
+					"bytes": 141432,
+					"compressedBytes": 141432,
+					"path": "lib/arm64-v8a/libhermestooling.so",
+					"sha256": "1db061bbbb050105fee9b208b861adc0cc02cc359551be6ba9562798a81f6cca"
+				},
+				{
+					"bytes": 2477320,
+					"compressedBytes": 2477320,
+					"path": "lib/arm64-v8a/libhermesvm.so",
+					"sha256": "bf38be45bf5d6ad8ba961eaf9deda5fa7e032f3ff7d3929ba2a624567093bffa"
+				},
+				{
+					"bytes": 8760,
+					"compressedBytes": 8760,
+					"path": "lib/arm64-v8a/libimagepipeline.so",
+					"sha256": "1b377992e4256fa9398ec057722f84a359c7d588e570c8a41f51d930c19ece7d"
+				},
+				{
+					"bytes": 412696,
+					"compressedBytes": 412696,
+					"path": "lib/arm64-v8a/libjsi.so",
+					"sha256": "5acb80d7eb93b2114a419c9e42b44476969299e806ad7eafe1b293e221b9a682"
+				},
+				{
+					"bytes": 23712,
+					"compressedBytes": 23712,
+					"path": "lib/arm64-v8a/libnative-filters.so",
+					"sha256": "4294b57460e70a6351ce7ae2733a79c088c907dfa54673a657227ec5bb669594"
+				},
+				{
+					"bytes": 585376,
+					"compressedBytes": 585376,
+					"path": "lib/arm64-v8a/libnative-imagetranscoder.so",
+					"sha256": "2aed28298a25afd52ac670cf9682398c6c7ba42a57195c01efd565e7ddfe17ca"
+				},
+				{
+					"bytes": 6985168,
+					"compressedBytes": 6985168,
+					"path": "lib/arm64-v8a/libreactnative.so",
+					"sha256": "14bb860cebebb0e29eb2c96a52d70da9b73e60253916694af955f6e3ef1e6b64"
+				},
+				{
+					"bytes": 501856,
+					"compressedBytes": 501856,
+					"path": "lib/arm64-v8a/libstatic-webp.so",
+					"sha256": "f3e5f9ab4f93f2a0a057285a2de9c93ba0ab59c76c22874d0356493ce283c4c7"
+				},
+				{
+					"bytes": 731872,
+					"compressedBytes": 731872,
+					"path": "lib/arm64-v8a/libzstd-kmp.so",
+					"sha256": "10ec47f13bee884450b0911066019ba7aa6b4164a4c1f8c33c9d30dd3fd8868a"
+				}
+			],
+			"preparedInputsSha256": "099a4bbf9a72ec544576593e1057cd818541aa5a1a142105422e99cc1fb83b6f",
+			"profile": "android-optimized",
+			"r8": {
+				"configurationSha256": "7177c9637d9f3492e341532e5745f0eddb21c824a0a53706a7608b29ad2d7dd1",
+				"defaultFile": "proguard-android-optimize.txt",
+				"obfuscationEnabled": true,
+				"optimizationEnabled": true,
+				"shrinkingEnabled": true,
+				"version": "8.12.14"
+			},
+			"sdkRetention": {
+				"com.onetrust.": 389
+			},
+			"sdkUniqueDexDestinations": 389,
+			"settings": {
+				"agpVersion": "Android Gradle Plugin version 8.12.0",
+				"applicationId": "com.c15t.expodev",
+				"architectures": "arm64-v8a",
+				"buildTools": "36.0.0",
+				"compileSdk": "36",
+				"gradleVersion": "9.3.1",
+				"hermesEnabled": "true",
+				"javaVersion": "17.0.20",
+				"jniLegacyPackaging": false,
+				"minSdk": "24",
+				"minifyEnabled": true,
+				"ndkVersion": "27.1.12297006",
+				"newArchEnabled": "true",
+				"shrinkResources": true,
+				"targetSdk": "36"
+			},
+			"signerSha256": "fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c",
+			"status": "measured",
+			"uncompressedPayloadBytes": 24595666,
+			"vendor": "onetrust",
+			"zipAndSigningOverheadBytes": 228705
+		},
+		{
+			"addedBytes": 4256118,
+			"artifactSha256": "2c29188616165ae6118e6655957dd127ee52f1e539504418e3be518084fe36b1",
+			"bytes": 24302160,
+			"compilerIdentitySha256": "27d177be3e409f2d6954b27e371e9429053aa09990c178a987a350621a16e5bc",
+			"compressedPayloadBytes": 24049787,
+			"dexClasses": 8432,
+			"groups": {
+				"dex": {
+					"compressedBytes": 3466790,
+					"uncompressedBytes": 7917312
+				},
+				"javascript": {
+					"compressedBytes": 1170644,
+					"uncompressedBytes": 1170644
+				},
+				"nativeLibraries": {
+					"compressedBytes": 16070280,
+					"uncompressedBytes": 16070280
+				},
+				"other": {
+					"compressedBytes": 823241,
+					"uncompressedBytes": 3380464
+				},
+				"resources": {
+					"compressedBytes": 2518832,
+					"uncompressedBytes": 2822465
+				}
+			},
+			"mappingSha256": "57f7a42783a2685a396e5333c0ee64b5b4dec142d6c0260a63e7e3921c3ec618",
+			"nativeDependenciesExactlyMatchPins": true,
+			"nativeDependencyManifestSha256": "b60c0fad11d3cd6191e56b9d7da2049560509d0155c8ca4478fe54f79ac3e788",
+			"nativeDependencyRows": 152,
+			"nativeLibraries": [
+				{
+					"bytes": 111576,
+					"compressedBytes": 111576,
+					"path": "lib/arm64-v8a/libappmodules.so",
+					"sha256": "957dffc503f0d6e8c3891eca0d3620c8da73f5047ae7dc87cb4c9ddaa91852ab"
+				},
+				{
+					"bytes": 1292904,
+					"compressedBytes": 1292904,
+					"path": "lib/arm64-v8a/libc++_shared.so",
+					"sha256": "3e852764502d06e0cf1080d532ae7c608b7649d946a3a9d7e84e3d4b7d683214"
+				},
+				{
+					"bytes": 1457408,
+					"compressedBytes": 1457408,
+					"path": "lib/arm64-v8a/libexpo-modules-core.so",
+					"sha256": "d594c78f6537c3b08352c3b41ab2a627d7b0cb8d254230a8def002dc2388199e"
+				},
+				{
+					"bytes": 177000,
+					"compressedBytes": 177000,
+					"path": "lib/arm64-v8a/libfbjni.so",
+					"sha256": "a9e35ba55d3f956920281f519385f8a72475ee24819799cb08375fdd4cce2b22"
+				},
+				{
+					"bytes": 318992,
+					"compressedBytes": 318992,
+					"path": "lib/arm64-v8a/libgifimage.so",
+					"sha256": "9f605249728da7091569772a38a4dde298ed48e1e73fed3da0e4b662ef38715c"
+				},
+				{
+					"bytes": 141432,
+					"compressedBytes": 141432,
+					"path": "lib/arm64-v8a/libhermestooling.so",
+					"sha256": "1db061bbbb050105fee9b208b861adc0cc02cc359551be6ba9562798a81f6cca"
+				},
+				{
+					"bytes": 2477320,
+					"compressedBytes": 2477320,
+					"path": "lib/arm64-v8a/libhermesvm.so",
+					"sha256": "bf38be45bf5d6ad8ba961eaf9deda5fa7e032f3ff7d3929ba2a624567093bffa"
+				},
+				{
+					"bytes": 8760,
+					"compressedBytes": 8760,
+					"path": "lib/arm64-v8a/libimagepipeline.so",
+					"sha256": "1b377992e4256fa9398ec057722f84a359c7d588e570c8a41f51d930c19ece7d"
+				},
+				{
+					"bytes": 412696,
+					"compressedBytes": 412696,
+					"path": "lib/arm64-v8a/libjsi.so",
+					"sha256": "5acb80d7eb93b2114a419c9e42b44476969299e806ad7eafe1b293e221b9a682"
+				},
+				{
+					"bytes": 23712,
+					"compressedBytes": 23712,
+					"path": "lib/arm64-v8a/libnative-filters.so",
+					"sha256": "4294b57460e70a6351ce7ae2733a79c088c907dfa54673a657227ec5bb669594"
+				},
+				{
+					"bytes": 585376,
+					"compressedBytes": 585376,
+					"path": "lib/arm64-v8a/libnative-imagetranscoder.so",
+					"sha256": "2aed28298a25afd52ac670cf9682398c6c7ba42a57195c01efd565e7ddfe17ca"
+				},
+				{
+					"bytes": 844208,
+					"compressedBytes": 844208,
+					"path": "lib/arm64-v8a/libquickjs.so",
+					"sha256": "535a179c2aafaad2e653b4f4944fe095eface9cc157897248f8b65f06ed3a9af"
+				},
+				{
+					"bytes": 6985168,
+					"compressedBytes": 6985168,
+					"path": "lib/arm64-v8a/libreactnative.so",
+					"sha256": "14bb860cebebb0e29eb2c96a52d70da9b73e60253916694af955f6e3ef1e6b64"
+				},
+				{
+					"bytes": 501856,
+					"compressedBytes": 501856,
+					"path": "lib/arm64-v8a/libstatic-webp.so",
+					"sha256": "f3e5f9ab4f93f2a0a057285a2de9c93ba0ab59c76c22874d0356493ce283c4c7"
+				},
+				{
+					"bytes": 731872,
+					"compressedBytes": 731872,
+					"path": "lib/arm64-v8a/libzstd-kmp.so",
+					"sha256": "10ec47f13bee884450b0911066019ba7aa6b4164a4c1f8c33c9d30dd3fd8868a"
+				}
+			],
+			"preparedInputsSha256": "ba7f913cdef212ae149aa177cf341ae5812c7405ef17d0e73242856e8c817be1",
+			"profile": "android-optimized",
+			"r8": {
+				"configurationSha256": "42164370cda066a784338865c3d157fe2bcf7d264cd4becf614879318f405fa2",
+				"defaultFile": "proguard-android-optimize.txt",
+				"obfuscationEnabled": true,
+				"optimizationEnabled": true,
+				"shrinkingEnabled": true,
+				"version": "8.12.14"
+			},
+			"sdkRetention": {
+				"io.didomi.": 2026
+			},
+			"sdkUniqueDexDestinations": 2026,
+			"settings": {
+				"agpVersion": "Android Gradle Plugin version 8.12.0",
+				"applicationId": "com.c15t.expodev",
+				"architectures": "arm64-v8a",
+				"buildTools": "36.0.0",
+				"compileSdk": "36",
+				"gradleVersion": "9.3.1",
+				"hermesEnabled": "true",
+				"javaVersion": "17.0.20",
+				"jniLegacyPackaging": false,
+				"minSdk": "24",
+				"minifyEnabled": true,
+				"ndkVersion": "27.1.12297006",
+				"newArchEnabled": "true",
+				"shrinkResources": true,
+				"targetSdk": "36"
+			},
+			"signerSha256": "fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c",
+			"status": "measured",
+			"uncompressedPayloadBytes": 31361165,
+			"vendor": "didomi",
+			"zipAndSigningOverheadBytes": 252373
+		},
+		{
+			"addedBytes": 822588,
+			"artifactSha256": "7724b531ed8f788137a63bf7d45507e704b2e6f3d8aac5866fa2d7c7e27f41de",
+			"bytes": 20868630,
+			"compilerIdentitySha256": "27d177be3e409f2d6954b27e371e9429053aa09990c178a987a350621a16e5bc",
+			"compressedPayloadBytes": 20644557,
+			"dexClasses": 6233,
+			"groups": {
+				"dex": {
+					"compressedBytes": 2783607,
+					"uncompressedBytes": 6281196
+				},
+				"javascript": {
+					"compressedBytes": 1202988,
+					"uncompressedBytes": 1202988
+				},
+				"nativeLibraries": {
+					"compressedBytes": 15201864,
+					"uncompressedBytes": 15201864
+				},
+				"other": {
+					"compressedBytes": 160391,
+					"uncompressedBytes": 350335
+				},
+				"resources": {
+					"compressedBytes": 1295707,
+					"uncompressedBytes": 1490077
+				}
+			},
+			"mappingSha256": "70cd4236de11a787a7484d4fc696ad735825d3e3131a4dd9a301b7506e1694dc",
+			"nativeDependenciesExactlyMatchPins": true,
+			"nativeDependencyManifestSha256": "be14c1ee033cc15b75b6d3d97a80e88caa816b2486324fc611ca848261e2be67",
+			"nativeDependencyRows": 131,
+			"nativeLibraries": [
+				{
+					"bytes": 87368,
+					"compressedBytes": 87368,
+					"path": "lib/arm64-v8a/libappmodules.so",
+					"sha256": "41ea47d1f983bc918ab9ec0c2fa17134dc1564db610ccc6405c934f11729049f"
+				},
+				{
+					"bytes": 1292904,
+					"compressedBytes": 1292904,
+					"path": "lib/arm64-v8a/libc++_shared.so",
+					"sha256": "3e852764502d06e0cf1080d532ae7c608b7649d946a3a9d7e84e3d4b7d683214"
+				},
+				{
+					"bytes": 1457408,
+					"compressedBytes": 1457408,
+					"path": "lib/arm64-v8a/libexpo-modules-core.so",
+					"sha256": "1deae651bd7a7c2a0fde895ef8bb15409c6f679118bb429280fdb2eda7161a8c"
+				},
+				{
+					"bytes": 177000,
+					"compressedBytes": 177000,
+					"path": "lib/arm64-v8a/libfbjni.so",
+					"sha256": "a9e35ba55d3f956920281f519385f8a72475ee24819799cb08375fdd4cce2b22"
+				},
+				{
+					"bytes": 318992,
+					"compressedBytes": 318992,
+					"path": "lib/arm64-v8a/libgifimage.so",
+					"sha256": "9f605249728da7091569772a38a4dde298ed48e1e73fed3da0e4b662ef38715c"
+				},
+				{
+					"bytes": 141432,
+					"compressedBytes": 141432,
+					"path": "lib/arm64-v8a/libhermestooling.so",
+					"sha256": "1db061bbbb050105fee9b208b861adc0cc02cc359551be6ba9562798a81f6cca"
+				},
+				{
+					"bytes": 2477320,
+					"compressedBytes": 2477320,
+					"path": "lib/arm64-v8a/libhermesvm.so",
+					"sha256": "bf38be45bf5d6ad8ba961eaf9deda5fa7e032f3ff7d3929ba2a624567093bffa"
+				},
+				{
+					"bytes": 8760,
+					"compressedBytes": 8760,
+					"path": "lib/arm64-v8a/libimagepipeline.so",
+					"sha256": "1b377992e4256fa9398ec057722f84a359c7d588e570c8a41f51d930c19ece7d"
+				},
+				{
+					"bytes": 412696,
+					"compressedBytes": 412696,
+					"path": "lib/arm64-v8a/libjsi.so",
+					"sha256": "5acb80d7eb93b2114a419c9e42b44476969299e806ad7eafe1b293e221b9a682"
+				},
+				{
+					"bytes": 23712,
+					"compressedBytes": 23712,
+					"path": "lib/arm64-v8a/libnative-filters.so",
+					"sha256": "4294b57460e70a6351ce7ae2733a79c088c907dfa54673a657227ec5bb669594"
+				},
+				{
+					"bytes": 585376,
+					"compressedBytes": 585376,
+					"path": "lib/arm64-v8a/libnative-imagetranscoder.so",
+					"sha256": "2aed28298a25afd52ac670cf9682398c6c7ba42a57195c01efd565e7ddfe17ca"
+				},
+				{
+					"bytes": 6985168,
+					"compressedBytes": 6985168,
+					"path": "lib/arm64-v8a/libreactnative.so",
+					"sha256": "14bb860cebebb0e29eb2c96a52d70da9b73e60253916694af955f6e3ef1e6b64"
+				},
+				{
+					"bytes": 501856,
+					"compressedBytes": 501856,
+					"path": "lib/arm64-v8a/libstatic-webp.so",
+					"sha256": "f3e5f9ab4f93f2a0a057285a2de9c93ba0ab59c76c22874d0356493ce283c4c7"
+				},
+				{
+					"bytes": 731872,
+					"compressedBytes": 731872,
+					"path": "lib/arm64-v8a/libzstd-kmp.so",
+					"sha256": "10ec47f13bee884450b0911066019ba7aa6b4164a4c1f8c33c9d30dd3fd8868a"
+				}
+			],
+			"preparedInputsSha256": "6376e65a676b4c92fc027aaa5ba5025aea673ac01fcc183f31f187534e16889c",
+			"profile": "android-optimized",
+			"r8": {
+				"configurationSha256": "fa176bc68072bcadfa1efadda328aa86cf110e03c87542140bf3ab6317de0655",
+				"defaultFile": "proguard-android-optimize.txt",
+				"obfuscationEnabled": true,
+				"optimizationEnabled": true,
+				"shrinkingEnabled": true,
+				"version": "8.12.14"
+			},
+			"sdkRetention": {
+				"com.usercentrics.": 1266
+			},
+			"sdkUniqueDexDestinations": 1266,
+			"settings": {
+				"agpVersion": "Android Gradle Plugin version 8.12.0",
+				"applicationId": "com.c15t.expodev",
+				"architectures": "arm64-v8a",
+				"buildTools": "36.0.0",
+				"compileSdk": "36",
+				"gradleVersion": "9.3.1",
+				"hermesEnabled": "true",
+				"javaVersion": "17.0.20",
+				"jniLegacyPackaging": false,
+				"minSdk": "24",
+				"minifyEnabled": true,
+				"ndkVersion": "27.1.12297006",
+				"newArchEnabled": "true",
+				"shrinkResources": true,
+				"targetSdk": "36"
+			},
+			"signerSha256": "fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c",
+			"status": "measured",
+			"uncompressedPayloadBytes": 24526460,
+			"vendor": "usercentrics",
+			"zipAndSigningOverheadBytes": 224073
+		},
+		{
+			"addedBytes": 863530,
+			"artifactSha256": "e132a8e1f543c244ddd4ab88d7c3dda35d2f16832e49605aa2dc7c029490bbc9",
+			"bytes": 20909572,
+			"compilerIdentitySha256": "27d177be3e409f2d6954b27e371e9429053aa09990c178a987a350621a16e5bc",
+			"compressedPayloadBytes": 20694689,
+			"dexClasses": 6066,
+			"groups": {
+				"dex": {
+					"compressedBytes": 2743823,
+					"uncompressedBytes": 6448984
+				},
+				"javascript": {
+					"compressedBytes": 1155008,
+					"uncompressedBytes": 1155008
+				},
+				"nativeLibraries": {
+					"compressedBytes": 15238320,
+					"uncompressedBytes": 15238320
+				},
+				"other": {
+					"compressedBytes": 165544,
+					"uncompressedBytes": 358999
+				},
+				"resources": {
+					"compressedBytes": 1391994,
+					"uncompressedBytes": 1593189
+				}
+			},
+			"mappingSha256": "fdd339f94a0643437780283e38b85fa1c433c97e7f56670bda4558f33ca166fc",
+			"nativeDependenciesExactlyMatchPins": true,
+			"nativeDependencyManifestSha256": "a8c3d6e650e5f98ba1fd9263cff9432d537023d40adc02034d3df4499e1c8fc7",
+			"nativeDependencyRows": 148,
+			"nativeLibraries": [
+				{
+					"bytes": 123824,
+					"compressedBytes": 123824,
+					"path": "lib/arm64-v8a/libappmodules.so",
+					"sha256": "7df32995523322db4366cdbbf69bf21d27118157df2c7416c6219ad9e991c97a"
+				},
+				{
+					"bytes": 1292904,
+					"compressedBytes": 1292904,
+					"path": "lib/arm64-v8a/libc++_shared.so",
+					"sha256": "3e852764502d06e0cf1080d532ae7c608b7649d946a3a9d7e84e3d4b7d683214"
+				},
+				{
+					"bytes": 1457408,
+					"compressedBytes": 1457408,
+					"path": "lib/arm64-v8a/libexpo-modules-core.so",
+					"sha256": "8fab2f4fd45b5f2ddb65a667bc98286555cf423e2ae6f33ac82daac4a1548eec"
+				},
+				{
+					"bytes": 177000,
+					"compressedBytes": 177000,
+					"path": "lib/arm64-v8a/libfbjni.so",
+					"sha256": "a9e35ba55d3f956920281f519385f8a72475ee24819799cb08375fdd4cce2b22"
+				},
+				{
+					"bytes": 318992,
+					"compressedBytes": 318992,
+					"path": "lib/arm64-v8a/libgifimage.so",
+					"sha256": "9f605249728da7091569772a38a4dde298ed48e1e73fed3da0e4b662ef38715c"
+				},
+				{
+					"bytes": 141432,
+					"compressedBytes": 141432,
+					"path": "lib/arm64-v8a/libhermestooling.so",
+					"sha256": "1db061bbbb050105fee9b208b861adc0cc02cc359551be6ba9562798a81f6cca"
+				},
+				{
+					"bytes": 2477320,
+					"compressedBytes": 2477320,
+					"path": "lib/arm64-v8a/libhermesvm.so",
+					"sha256": "bf38be45bf5d6ad8ba961eaf9deda5fa7e032f3ff7d3929ba2a624567093bffa"
+				},
+				{
+					"bytes": 8760,
+					"compressedBytes": 8760,
+					"path": "lib/arm64-v8a/libimagepipeline.so",
+					"sha256": "1b377992e4256fa9398ec057722f84a359c7d588e570c8a41f51d930c19ece7d"
+				},
+				{
+					"bytes": 412696,
+					"compressedBytes": 412696,
+					"path": "lib/arm64-v8a/libjsi.so",
+					"sha256": "5acb80d7eb93b2114a419c9e42b44476969299e806ad7eafe1b293e221b9a682"
+				},
+				{
+					"bytes": 23712,
+					"compressedBytes": 23712,
+					"path": "lib/arm64-v8a/libnative-filters.so",
+					"sha256": "4294b57460e70a6351ce7ae2733a79c088c907dfa54673a657227ec5bb669594"
+				},
+				{
+					"bytes": 585376,
+					"compressedBytes": 585376,
+					"path": "lib/arm64-v8a/libnative-imagetranscoder.so",
+					"sha256": "2aed28298a25afd52ac670cf9682398c6c7ba42a57195c01efd565e7ddfe17ca"
+				},
+				{
+					"bytes": 6985168,
+					"compressedBytes": 6985168,
+					"path": "lib/arm64-v8a/libreactnative.so",
+					"sha256": "14bb860cebebb0e29eb2c96a52d70da9b73e60253916694af955f6e3ef1e6b64"
+				},
+				{
+					"bytes": 501856,
+					"compressedBytes": 501856,
+					"path": "lib/arm64-v8a/libstatic-webp.so",
+					"sha256": "f3e5f9ab4f93f2a0a057285a2de9c93ba0ab59c76c22874d0356493ce283c4c7"
+				},
+				{
+					"bytes": 731872,
+					"compressedBytes": 731872,
+					"path": "lib/arm64-v8a/libzstd-kmp.so",
+					"sha256": "10ec47f13bee884450b0911066019ba7aa6b4164a4c1f8c33c9d30dd3fd8868a"
+				}
+			],
+			"preparedInputsSha256": "f1fddb82ae4f47afc732eba7b99553c0dec4d647f318b39443ad0248b08df7af",
+			"profile": "android-optimized",
+			"r8": {
+				"configurationSha256": "24927ddccd9c9f6a8ff394849af884ec4a6c260c3f30e080159efc865bce0903",
+				"defaultFile": "proguard-android-optimize.txt",
+				"obfuscationEnabled": true,
+				"optimizationEnabled": true,
+				"shrinkingEnabled": true,
+				"version": "8.12.14"
+			},
+			"sdkRetention": {
+				"com.sourcepoint.": 754
+			},
+			"sdkUniqueDexDestinations": 754,
+			"settings": {
+				"agpVersion": "Android Gradle Plugin version 8.12.0",
+				"applicationId": "com.c15t.expodev",
+				"architectures": "arm64-v8a",
+				"buildTools": "36.0.0",
+				"compileSdk": "36",
+				"gradleVersion": "9.3.1",
+				"hermesEnabled": "true",
+				"javaVersion": "17.0.20",
+				"jniLegacyPackaging": false,
+				"minSdk": "24",
+				"minifyEnabled": true,
+				"ndkVersion": "27.1.12297006",
+				"newArchEnabled": "true",
+				"shrinkResources": true,
+				"targetSdk": "36"
+			},
+			"signerSha256": "fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c",
+			"status": "measured",
+			"uncompressedPayloadBytes": 24794500,
+			"vendor": "sourcepoint",
+			"zipAndSigningOverheadBytes": 214883
+		}
+	],
+	"method": "Fresh six-app matched optimizing-R8 cohort. Clean stock c15t rebuilt separately after excluding a diagnostic attempt. Other fresh APKs reused only after actual source/settings/signing/native dependency parity. Signed APK lengths and ZIP entries, not runtime timing or isolated optimizer savings against the historical fixtures.",
+	"nativeBridgeRetention": {
+		"profile": "android-optimized",
+		"schemaVersion": 1,
+		"vendors": {
+			"c15t": {
+				"hermesActionPresent": true,
+				"mappedNativeBridgeCandidates": [
+					{
+						"dexDestination": "com.c15t.reactnative.C15tReactNativeModule",
+						"moduleNameEvidence": {
+							"dexDestination": "com.c15t.reactnative.NativeC15tSpec",
+							"getNameMemberInMapping": true,
+							"inheritedFrom": "com.c15t.reactnative.NativeC15tSpec",
+							"source": "android/c15t-react-native/build/generated/source/codegen/java/com/c15t/reactnative/NativeC15tSpec.java",
+							"sourceSha256": "9d87bc7928b1f88fbb3c41b8bb5042bb186a392cc6e4941043a3aa69fa8d2c50"
+						},
+						"originalClass": "com.c15t.reactnative.C15tReactNativeModule",
+						"source": "android/c15t-react-native/src/main/kotlin/com/c15t/reactnative/C15tReactNativeModule.kt",
+						"sourceSha256": "33217e2f46eebf49c29be283f0ba51470cf12874aa65e27da8cd3b1182123727",
+						"stockAction": "presentPreferences",
+						"stockActionMemberInMapping": true
+					}
+				]
+			},
+			"didomi": {
+				"hermesActionPresent": true,
+				"mappedNativeBridgeCandidates": [
+					{
+						"dexDestination": "io.didomi.reactnative.DidomiModule",
+						"moduleNameEvidence": {
+							"source": "android/src/main/java/io/didomi/reactnative/DidomiModule.kt",
+							"sourceSha256": "26c59de6a4b8a2968b46f6288e0b6ecafcc2928fa36bffa886b62b76572cfc1b"
+						},
+						"originalClass": "io.didomi.reactnative.DidomiModule",
+						"source": "android/src/main/java/io/didomi/reactnative/DidomiModule.kt",
+						"sourceSha256": "26c59de6a4b8a2968b46f6288e0b6ecafcc2928fa36bffa886b62b76572cfc1b",
+						"stockAction": "showPreferences",
+						"stockActionMemberInMapping": true
+					}
+				]
+			},
+			"onetrust": {
+				"hermesActionPresent": true,
+				"mappedNativeBridgeCandidates": [
+					{
+						"dexDestination": "com.onetrust.OneTrust",
+						"moduleNameEvidence": {
+							"source": "android/src/main/java/com/onetrust/OneTrust.java",
+							"sourceSha256": "d8c81a2df193d4b5ecdf37721c38b1b13a89553dba05393af01ef59dcb649e60"
+						},
+						"originalClass": "com.onetrust.OneTrust",
+						"source": "android/src/main/java/com/onetrust/OneTrust.java",
+						"sourceSha256": "d8c81a2df193d4b5ecdf37721c38b1b13a89553dba05393af01ef59dcb649e60",
+						"stockAction": "showPreferenceCenterUI",
+						"stockActionMemberInMapping": true
+					}
+				]
+			},
+			"sourcepoint": {
+				"hermesActionPresent": true,
+				"mappedNativeBridgeCandidates": [
+					{
+						"dexDestination": "com.sourcepoint.reactnativecmp.ReactNativeCmpModule",
+						"moduleNameEvidence": {
+							"source": "android/src/main/java/com/sourcepoint/reactnativecmp/ReactNativeCmpModule.kt",
+							"sourceSha256": "77aa03bf8510a50591b888ea7991e78b5931962b52b95e1bfb24cd70b7dddf56"
+						},
+						"originalClass": "com.sourcepoint.reactnativecmp.ReactNativeCmpModule",
+						"source": "android/src/main/java/com/sourcepoint/reactnativecmp/ReactNativeCmpModule.kt",
+						"sourceSha256": "77aa03bf8510a50591b888ea7991e78b5931962b52b95e1bfb24cd70b7dddf56",
+						"stockAction": "loadGDPRPrivacyManager",
+						"stockActionMemberInMapping": true
+					}
+				]
+			},
+			"usercentrics": {
+				"hermesActionPresent": true,
+				"mappedNativeBridgeCandidates": [
+					{
+						"dexDestination": "com.usercentrics.reactnative.RNUsercentricsModule",
+						"moduleNameEvidence": {
+							"source": "android/src/main/java/com/usercentrics/reactnative/RNUsercentricsModule.kt",
+							"sourceSha256": "e1388084d6ae4bf5690e30848ac9bfda14c33d21f7bcbe2672660994bcf8e2f8"
+						},
+						"originalClass": "com.usercentrics.reactnative.RNUsercentricsModule",
+						"source": "android/src/main/java/com/usercentrics/reactnative/RNUsercentricsModule.kt",
+						"sourceSha256": "e1388084d6ae4bf5690e30848ac9bfda14c33d21f7bcbe2672660994bcf8e2f8",
+						"stockAction": "showSecondLayer",
+						"stockActionMemberInMapping": true
+					}
+				]
+			}
+		}
+	},
+	"nativeLockEvidenceSha256": "5b72bd9f60a1f1c3cfed232b793e7572f3bff0a1d2d5624eda681eaf41910582",
+	"pinsSha256": "e314c4b34bce3c89b0dd753cc0aff88a3703b90009ca51ef7db3d940342e8a0a",
+	"producer": {
+		"androidMavenVersion": "3.0.0-alpha.1",
+		"gitHead": "256e903bfa542c15126e017c10fdfea70f421521",
+		"nativeCoreJarSha256": "f9fbf86009959e3c9c4dfdf8d7c2432f494dc96b5ccda768e42ae3fbde0e5efb",
+		"rnTarballSha256": "4d92e2c3377cf2059a905335c62c037de9a0cc9a46df42d474a3c5b2dc7a65bd",
+		"rnVersion": "3.0.0-alpha.2"
+	},
+	"profile": "android-optimized",
+	"runtimeSamples": 0,
+	"schemaVersion": 1
+}

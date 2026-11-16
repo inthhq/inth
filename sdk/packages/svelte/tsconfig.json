@@ -1,0 +1,24 @@
+{
+	"extends": "@c15t/typescript-config/base.json",
+	"compilerOptions": {
+		"moduleResolution": "bundler",
+		"paths": {
+			"@c15t/iab": ["../iab/src/index.ts"],
+			"@c15t/iab/*": ["../iab/src/*"],
+			"@c15t/schema": ["../schema/dist-types/index.d.ts"],
+			"@c15t/schema/*": ["../schema/dist-types/*"],
+			"@c15t/core": ["../core/dist-types/index.d.ts"],
+			"@c15t/core/*": ["../core/dist-types/*"],
+			"~/*": ["../core/src/*", "./src/lib/*"],
+			"#server-root": ["./src/lib/deferred/server-root.ts"]
+		}
+	},
+	"include": ["src"],
+	"exclude": [
+		"node_modules",
+		"dist",
+		"src/**/__tests__/**",
+		"src/**/*.test.ts",
+		"src/**/*.spec.ts"
+	]
+}

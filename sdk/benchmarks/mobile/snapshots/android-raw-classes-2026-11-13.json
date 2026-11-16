@@ -1,0 +1,47 @@
+{
+	"schemaVersion": 1,
+	"measuredOn": "2026-11-13",
+	"sourceCommit": "f6d1a19b65355edcb37e9416502710b3cfcfd175",
+	"verifiedAtCommit": "f6d1a19b65355edcb37e9416502710b3cfcfd175",
+	"metric": "Uncompressed first-party .class bytes from the core JAR and classes.jar in the Android adapter, Compose presenter and RN bridge Release AARs. Excludes transitive dependencies, DEX conversion, R8, compression and app packaging.",
+	"rebuildCommand": "bun run --cwd benchmarks/mobile bench:ci",
+	"artifacts": [
+		{
+			"module": "c15t-core",
+			"buildOutput": "native/core-android/c15t-core/build/libs/c15t-core.jar",
+			"producerCommit": "f6d1a19b65355edcb37e9416502710b3cfcfd175",
+			"artifactSha256": "c647179cf46d5f45c06c4f8f18e42bffbe7e95e0cb46d1ee1e6923f5f8a19c06",
+			"rawClassBytes": 1915988,
+			"classCount": 347
+		},
+		{
+			"module": "c15t-android",
+			"buildOutput": "native/core-android/c15t-android/build/outputs/aar/c15t-android-release.aar",
+			"producerCommit": "f6d1a19b65355edcb37e9416502710b3cfcfd175",
+			"artifactSha256": "d899680e7da5fd232333c6bd00f9e2292b9126ca7f368e6f3fff97de2232b559",
+			"rawClassBytes": 275104,
+			"classCount": 64
+		},
+		{
+			"module": "c15t-consent-ui",
+			"buildOutput": "native/core-android/c15t-consent-ui/build/outputs/aar/c15t-consent-ui-release.aar",
+			"producerCommit": "f6d1a19b65355edcb37e9416502710b3cfcfd175",
+			"artifactSha256": "a3f75ae9a1196c9545cd1e6a410b1981e4ee7af98ff69a75742f149dfc7ae6ff",
+			"rawClassBytes": 1202171,
+			"classCount": 112
+		},
+		{
+			"module": "c15t-react-native",
+			"buildOutput": "packages/react-native/android/c15t-react-native/build/outputs/aar/c15t-react-native-release.aar",
+			"producerCommit": "f6d1a19b65355edcb37e9416502710b3cfcfd175",
+			"artifactSha256": "bb097df727381e3f7651707732f811f4e50f1ed54183d8d66dabd857e2cf0956",
+			"rawClassBytes": 126861,
+			"classCount": 24
+		}
+	],
+	"totalRawClassBytes": 3520124,
+	"limitations": [
+		"Measured from a local Release build of each artifact on the Inth hosted-only branch (#157), after the headless consent components (#156). CI measured 3,520,020 B for the same commit; the 104 B difference comes from the build environment.",
+		"This is a code-growth allowance calibration, not an APK or store-download size measurement."
+	]
+}

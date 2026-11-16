@@ -1,0 +1,14 @@
+{
+	"extends": "@c15t/typescript-config/base.json",
+	"compilerOptions": {
+		"declaration": false,
+		"lib": ["es2022"],
+		"module": "CommonJS",
+		"outDir": "../dist/schematics",
+		"rootDir": ".",
+		"sourceMap": false,
+		"types": ["node"]
+	},
+	"include": ["**/*.ts"],
+	"exclude": ["**/*.spec.ts"]
+}

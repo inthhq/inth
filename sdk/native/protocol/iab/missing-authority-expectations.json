@@ -1,0 +1,137 @@
+{
+	"reason": "ENG-508 requires native IAB authority for every optional grant, including permissive categories outside policy scope. Legacy category records supply no IAB authority. The web category-evaluator fixtures do not apply that native requirement.",
+	"snapshots": {
+		"evaluation-narrow-iab-no-receipt": {
+			"activeUI": "banner",
+			"consentCategories": ["necessary", "functionality"],
+			"effectivePermissions": {
+				"necessary": true,
+				"functionality": false,
+				"experience": false,
+				"measurement": false,
+				"marketing": false
+			},
+			"error": null,
+			"evaluatedAt": 1770000000000,
+			"explicitChoice": null,
+			"iab": null,
+			"location": {
+				"countryCode": "PT",
+				"regionCode": null
+			},
+			"model": "opt-in",
+			"nextDeadline": null,
+			"overrides": {
+				"country": "PT",
+				"gpc": null,
+				"language": "en",
+				"region": null
+			},
+			"policyPending": false,
+			"policySnapshotToken": "tok-narrow-iab",
+			"privacySignals": {
+				"gpc": {
+					"active": false,
+					"detected": false,
+					"override": null
+				}
+			},
+			"promptRequirement": {
+				"kind": "choice",
+				"reason": "missing"
+			},
+			"ready": true,
+			"resolution": {
+				"fingerprint": "19df01ec384d2290e46d948ad65352593af25550090a6f1f511d05d5673003de",
+				"policyId": "fixture_narrow_iab_permissive",
+				"status": "matched"
+			},
+			"restrictions": {},
+			"revision": 1,
+			"subject": {
+				"subjectId": "sub_1119tDZHoarNxm6kSm3BN6ze9d"
+			},
+			"translations": {
+				"language": "en",
+				"translations": {
+					"common": {
+						"acceptAll": "Accept all",
+						"customize": "Customize",
+						"rejectAll": "Reject all",
+						"save": "Save"
+					},
+					"consentManagerDialog": {},
+					"consentTypes": {},
+					"cookieBanner": {},
+					"rights": {}
+				}
+			}
+		},
+		"evaluation-narrow-iab-denial": {
+			"activeUI": "banner",
+			"consentCategories": ["necessary", "functionality"],
+			"effectivePermissions": {
+				"necessary": true,
+				"functionality": false,
+				"experience": false,
+				"measurement": false,
+				"marketing": false
+			},
+			"error": null,
+			"evaluatedAt": 1770000000000,
+			"explicitChoice": null,
+			"iab": null,
+			"location": {
+				"countryCode": "PT",
+				"regionCode": null
+			},
+			"model": "opt-in",
+			"nextDeadline": null,
+			"overrides": {
+				"country": "PT",
+				"gpc": null,
+				"language": "en",
+				"region": null
+			},
+			"policyPending": false,
+			"policySnapshotToken": "tok-narrow-iab",
+			"privacySignals": {
+				"gpc": {
+					"active": false,
+					"detected": false,
+					"override": null
+				}
+			},
+			"promptRequirement": {
+				"kind": "choice",
+				"reason": "missing"
+			},
+			"ready": true,
+			"resolution": {
+				"fingerprint": "19df01ec384d2290e46d948ad65352593af25550090a6f1f511d05d5673003de",
+				"policyId": "fixture_narrow_iab_permissive",
+				"status": "matched"
+			},
+			"restrictions": {},
+			"revision": 1,
+			"subject": {
+				"subjectId": "sub_1119tDZHoarNxm6kSm3BN6ze9d"
+			},
+			"translations": {
+				"language": "en",
+				"translations": {
+					"common": {
+						"acceptAll": "Accept all",
+						"customize": "Customize",
+						"rejectAll": "Reject all",
+						"save": "Save"
+					},
+					"consentManagerDialog": {},
+					"consentTypes": {},
+					"cookieBanner": {},
+					"rights": {}
+				}
+			}
+		}
+	}
+}

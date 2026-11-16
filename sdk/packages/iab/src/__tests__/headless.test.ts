@@ -1,0 +1,454 @@
+import type { AdTechProvider, NonIABVendor } from '@c15t/core';
+import { describe, expect, test } from 'vitest';
+
+import {
+	applyPublisherRestrictionsToGVL,
+	countIABPartners,
+	processGVLForDialog,
+	resolveIABBannerSummary,
+	resolveIABDialogDisplayModel,
+} from '../headless';
+import { completeGVL } from './fixtures/gvl-sample';
+
+const customVendor: NonIABVendor = {
+	cookieMaxAgeSeconds: 31_536_000,
+	features: [1],
+	id: 'custom-analytics',
+	legIntPurposes: [9],
+	name: 'Custom Analytics',
+	privacyPolicyUrl: 'https://example.com/privacy',
+	purposes: [1, 8],
+	specialFeatures: [2],
+	usesCookies: true,
+	usesNonCookieAccess: false,
+};
+
+const adTechProviders: AdTechProvider[] = [
+	{ id: 89, name: 'Meta', policyUrl: 'https://www.facebook.com/privacy' },
+	{ id: 2677, name: 'Seedtag', policyUrl: 'https://www.seedtag.com/privacy' },
+];
+
+describe('@c15t/iab headless dialog data', () => {
+	test('derives purposes, vendors, stacks, features, and special features from a GVL', () => {
+		const data = processGVLForDialog({
+			customVendors: [customVendor],
+			gvl: completeGVL,
+		});
+
+		expect(data.isReady).toBe(true);
+		expect(data.isLoading).toBe(false);
+		expect(data.totalVendors).toBe(5);
+		expect(data.purposes).toHaveLength(11);
+		expect(data.specialPurposes.map((purpose) => purpose.id)).toEqual([1, 2]);
+		expect(data.features.map((feature) => feature.id)).toEqual([1, 2, 3]);
+		expect(data.specialFeatures.map((feature) => feature.id)).toEqual([1, 2]);
+		expect(data.stacks.map((stack) => stack.id)).toEqual([2, 3, 1, 4]);
+		expect(data.standalonePurposes.map((purpose) => purpose.id)).toEqual([1]);
+	});
+
+	test('includes custom vendors in purpose derivation', () => {
+		const data = processGVLForDialog({
+			customVendors: [customVendor],
+			gvl: completeGVL,
+		});
+
+		const storagePurpose = data.purposes.find((purpose) => purpose.id === 1);
+		const analyticsVendor = storagePurpose?.vendors.find(
+			(vendor) => vendor.id === 'custom-analytics'
+		);
+
+		expect(analyticsVendor).toMatchObject({
+			isCustom: true,
+			name: 'Custom Analytics',
+			policyUrl: 'https://example.com/privacy',
+			usesLegitimateInterest: false,
+		});
+	});
+
+	test('never offers legitimate interest on consent-only purposes', () => {
+		const data = processGVLForDialog({
+			customVendors: [
+				{
+					id: 'consent-only-li',
+					legIntPurposes: [1, 7],
+					name: 'Custom',
+					privacyPolicyUrl: 'https://example.com/privacy',
+					purposes: [],
+				},
+			],
+			gvl: completeGVL,
+		});
+		const vendorFor = (purposeId: number) =>
+			data.purposes
+				.find((purpose) => purpose.id === purposeId)
+				?.vendors.find((vendor) => vendor.id === 'consent-only-li');
+
+		// TCF Policies Appendix A: purpose 1 allows consent only.
+		expect(vendorFor(1)).toBeUndefined();
+		expect(vendorFor(7)?.usesLegitimateInterest).toBe(true);
+	});
+
+	test('partitions legitimate-interest vendors by purpose', () => {
+		const data = processGVLForDialog({
+			customVendors: [customVendor],
+			gvl: completeGVL,
+		});
+
+		const statisticsPurpose = data.purposes.find((purpose) => purpose.id === 9);
+		const liVendorIds = statisticsPurpose?.vendors
+			.filter((vendor) => vendor.usesLegitimateInterest)
+			.map((vendor) => vendor.id);
+
+		expect(liVendorIds).toEqual([10, 'custom-analytics']);
+		expect(
+			statisticsPurpose?.vendors.find((vendor) => vendor.id === 755)
+				?.usesLegitimateInterest
+		).toBe(false);
+	});
+});
+
+describe('@c15t/iab headless publisher restrictions', () => {
+	// Vendor 755 declares purposes 1 to 11 for consent and is flexible on
+	// 2, 7, 9, 10 and 11. Vendor 10 declares 2, 7, 9 and 10 for LI and is
+	// not flexible.
+	const vendorsFor = (
+		purposeId: number,
+		publisherRestrictions: Parameters<typeof applyPublisherRestrictionsToGVL>[1]
+	) =>
+		processGVLForDialog({
+			gvl: completeGVL,
+			publisherRestrictions,
+		}).purposes.find((purpose) => purpose.id === purposeId)?.vendors ?? [];
+	const vendor = (vendors: ReturnType<typeof vendorsFor>, id: number) =>
+		vendors.find((entry) => entry.id === id);
+
+	test('required LI (type 2) lists the vendor under legitimate interest', () => {
+		expect(vendor(vendorsFor(7, []), 755)?.usesLegitimateInterest).toBe(false);
+		const vendors = vendorsFor(7, [
+			{ purposeId: 7, restrictionType: 2, vendorIds: [755] },
+		]);
+		expect(vendor(vendors, 755)).toMatchObject({
+			legIntPurposes: [7],
+			usesLegitimateInterest: true,
+		});
+		expect(vendor(vendors, 755)?.purposes).not.toContain(7);
+	});
+
+	test('required consent (type 1) lists the vendor under consent', () => {
+		const flexible = {
+			...completeGVL,
+			vendors: {
+				...completeGVL.vendors,
+				10: { ...completeGVL.vendors[10], flexiblePurposes: [7] },
+			},
+		} as typeof completeGVL;
+		const data = processGVLForDialog({
+			gvl: flexible,
+			publisherRestrictions: [
+				{ purposeId: 7, restrictionType: 1, vendorIds: [10] },
+			],
+		});
+		const restricted = data.purposes
+			.find((purpose) => purpose.id === 7)
+			?.vendors.find((entry) => entry.id === 10);
+		expect(restricted?.usesLegitimateInterest).toBe(false);
+		expect(restricted?.purposes).toContain(7);
+	});
+
+	test('a prohibited purpose (type 0) no longer lists the vendor', () => {
+		const vendors = vendorsFor(7, [
+			{ purposeId: 7, restrictionType: 0, vendorIds: [755] },
+		]);
+		expect(vendor(vendors, 755)).toBeUndefined();
+		expect(vendor(vendors, 2)).toBeDefined();
+	});
+
+	test('a basis change the vendor list does not allow drops the purpose', () => {
+		// Vendor 10 is not flexible on purpose 7, so it may not process it at all.
+		expect(
+			vendor(
+				vendorsFor(7, [{ purposeId: 7, restrictionType: 1, vendorIds: [10] }]),
+				10
+			)
+		).toBeUndefined();
+	});
+
+	test.each([
+		[1, { legIntPurposes: [], purposes: [1, 7] }],
+		[2, { legIntPurposes: [7], purposes: [1] }],
+	] as const)(
+		'type %i lists a purpose declared on both bases once',
+		(restrictionType, expected) => {
+			// Out of spec, but seen in lists: the purpose appears in both arrays.
+			const both = {
+				...completeGVL,
+				vendors: {
+					...completeGVL.vendors,
+					755: {
+						...completeGVL.vendors[755],
+						flexiblePurposes: [7],
+						legIntPurposes: [7],
+						purposes: [1, 7],
+					},
+				},
+			} as typeof completeGVL;
+			const { vendors } = applyPublisherRestrictionsToGVL(both, [
+				{ purposeId: 7, restrictionType, vendorIds: [755] },
+			]);
+			expect(vendors[755]).toMatchObject(expected);
+		}
+	);
+
+	test.each([
+		['without restrictions', undefined, true],
+		[
+			'when the only consent vendor must use LI',
+			[{ purposeId: 7, restrictionType: 2 as const, vendorIds: [755] }],
+			false,
+		],
+	])('purpose 7 consent basis %s', (_name, publisherRestrictions, expected) => {
+		const { 10: liVendor, 755: consentVendor } = completeGVL.vendors;
+		if (!(liVendor && consentVendor)) {
+			throw new Error('Missing vendor fixtures');
+		}
+		const model = resolveIABDialogDisplayModel({
+			gvl: {
+				...completeGVL,
+				vendors: { 10: liVendor, 755: consentVendor },
+			},
+			publisherRestrictions,
+		});
+		const rows = model.consentRows.flatMap((row) =>
+			row.kind === 'stack' ? row.purposes : [row]
+		);
+		expect(
+			rows.find((row) => row.kind === 'purpose' && row.id === 7)
+				?.hasConsentBasis
+		).toBe(expected);
+	});
+
+	test('a vendor declaring the purpose on both bases keeps the consent switch', () => {
+		const { 755: vendor755 } = completeGVL.vendors;
+		if (!vendor755) {
+			throw new Error('Missing vendor fixture');
+		}
+		const model = resolveIABDialogDisplayModel({
+			gvl: {
+				...completeGVL,
+				vendors: {
+					755: { ...vendor755, legIntPurposes: [7], purposes: [1, 7] },
+				},
+			},
+		});
+		const rows = model.consentRows.flatMap((row) =>
+			row.kind === 'stack' ? row.purposes : [row]
+		);
+		expect(
+			rows.find((row) => row.kind === 'purpose' && row.id === 7)
+				?.hasConsentBasis
+		).toBe(true);
+	});
+
+	test('returns the same list when nothing is restricted', () => {
+		expect(applyPublisherRestrictionsToGVL(completeGVL, [])).toBe(completeGVL);
+		expect(applyPublisherRestrictionsToGVL(completeGVL, undefined)).toBe(
+			completeGVL
+		);
+	});
+});
+
+describe('@c15t/iab headless banner summary', () => {
+	test('derives vendor count and display summary from stack and special-feature data', () => {
+		const summary = resolveIABBannerSummary({
+			customVendors: [customVendor],
+			gvl: completeGVL,
+		});
+
+		expect(summary).toEqual({
+			displayItems: [
+				'Store and/or access information on a device',
+				'Personalised advertising profile and target audience measurement',
+				'Content personalisation',
+				'Advertising based on limited data and advertising measurement',
+				'Content measurement and product development',
+			],
+			isReady: true,
+			remainingCount: 2,
+			vendorCount: 5,
+		});
+	});
+});
+
+describe('@c15t/iab headless vendor counts with Google ad tech providers', () => {
+	const gvlVendorCount = Object.keys(completeGVL.vendors).length;
+	const input = {
+		adTechProviders,
+		customVendors: [customVendor],
+		gvl: completeGVL,
+	};
+
+	test('counts GVL vendors, custom vendors and ad tech providers on the vendors tab', () => {
+		const model = resolveIABDialogDisplayModel(input);
+
+		expect(model.data.totalVendors).toBe(gvlVendorCount + 1 + 2);
+		expect(model.vendorTabCount).toBe(gvlVendorCount + 1 + 2);
+	});
+
+	test('shows the purposes ad tech providers need even when no vendor declares them', () => {
+		const storageOnly: typeof completeGVL = {
+			...completeGVL,
+			// Vendor 755 alone, declaring only storage and access.
+			vendors: Object.fromEntries(
+				Object.entries(completeGVL.vendors)
+					.filter(([id]) => id === '755')
+					.map(([id, vendor]) => [
+						id,
+						{ ...vendor, legIntPurposes: [], purposes: [1] },
+					])
+			),
+		};
+		const purposeIds = (withProviders: boolean) =>
+			processGVLForDialog({
+				adTechProviders: withProviders ? adTechProviders : [],
+				gvl: storageOnly,
+			}).purposes.map((purpose) => purpose.id);
+		const bannerItems = (withProviders: boolean) =>
+			resolveIABBannerSummary({
+				adTechProviders: withProviders ? adTechProviders : [],
+				gvl: storageOnly,
+			}).displayItems;
+
+		expect(purposeIds(false)).toEqual([1]);
+		expect(purposeIds(true)).toEqual([1, 3, 4]);
+		// Purposes 3 and 4 make up most of the personalised advertising stack.
+		expect(bannerItems(true)).toEqual([
+			bannerItems(false)[0],
+			completeGVL.stacks[2]?.name,
+			...bannerItems(false).slice(1),
+		]);
+	});
+
+	test.each([
+		['with providers', adTechProviders, true],
+		['without providers', [], false],
+	])(
+		'purposes providers need offer consent %s, even with LI-only vendors',
+		(_name, providers, expected) => {
+			// Vendor 755 alone, processing purposes 3 and 4 only on legitimate
+			// interest, so no vendor gives them a consent basis.
+			const liOnly: typeof completeGVL = {
+				...completeGVL,
+				vendors: Object.fromEntries(
+					Object.entries(completeGVL.vendors)
+						.filter(([id]) => id === '755')
+						.map(([id, vendor]) => [
+							id,
+							{ ...vendor, legIntPurposes: [3, 4], purposes: [1] },
+						])
+				),
+			};
+			const rows = resolveIABDialogDisplayModel({
+				adTechProviders: providers,
+				gvl: liOnly,
+			}).consentRows.flatMap((row) =>
+				row.kind === 'stack' ? row.purposes : [row]
+			);
+			const basis = (id: number) =>
+				rows.find((row) => row.kind === 'purpose' && row.id === id)
+					?.hasConsentBasis;
+			expect(basis(3)).toBe(expected);
+			expect(basis(4)).toBe(expected);
+		}
+	);
+
+	test('a purpose only providers need offers consent', () => {
+		const storageOnly: typeof completeGVL = {
+			...completeGVL,
+			vendors: Object.fromEntries(
+				Object.entries(completeGVL.vendors)
+					.filter(([id]) => id === '755')
+					.map(([id, vendor]) => [
+						id,
+						{ ...vendor, legIntPurposes: [], purposes: [1] },
+					])
+			),
+		};
+		const rows = resolveIABDialogDisplayModel({
+			adTechProviders,
+			gvl: storageOnly,
+		}).consentRows.flatMap((row) =>
+			row.kind === 'stack' ? row.purposes : [row]
+		);
+		expect(
+			rows
+				.filter((row) => row.kind === 'purpose')
+				.map(({ hasConsentBasis, id }) => [id, hasConsentBasis])
+		).toEqual([
+			[1, true],
+			[3, true],
+			[4, true],
+		]);
+	});
+
+	test('names the providers as partners of the purposes they need', () => {
+		const storageOnly: typeof completeGVL = {
+			...completeGVL,
+			vendors: Object.fromEntries(
+				Object.entries(completeGVL.vendors)
+					.filter(([id]) => id === '755')
+					.map(([id, vendor]) => [
+						id,
+						{ ...vendor, legIntPurposes: [], purposes: [1] },
+					])
+			),
+		};
+		const rows = resolveIABDialogDisplayModel({
+			adTechProviders,
+			gvl: storageOnly,
+		}).consentRows.flatMap((row) =>
+			row.kind === 'stack' ? row.purposes : [row]
+		);
+		const partners = (id: number) => {
+			const row = rows.find((item) => item.id === id);
+			return {
+				providers: row?.adTechProviders?.map((provider) => provider.id),
+				vendors: row?.vendors.length,
+			};
+		};
+		expect(partners(3)).toEqual({ providers: [89, 2677], vendors: 0 });
+		expect(partners(4)).toEqual({ providers: [89, 2677], vendors: 0 });
+		expect(partners(1)).toEqual({ providers: [89, 2677], vendors: 1 });
+	});
+
+	test('counts each vendor and provider once across purposes', () => {
+		const [meta, seedtag] = adTechProviders;
+		const vendor = { id: 89 } as never;
+		expect(
+			countIABPartners([
+				{ adTechProviders: [meta, seedtag], vendors: [vendor] },
+				{ adTechProviders: [meta], vendors: [vendor] },
+				{ vendors: [] },
+			])
+		).toBe(3);
+	});
+
+	test('counts ad tech providers in the banner partner count', () => {
+		expect(resolveIABBannerSummary(input).vendorCount).toBe(
+			gvlVendorCount + 1 + 2
+		);
+	});
+
+	test('counts ad tech providers in a banner built from a server summary', () => {
+		const summary = resolveIABBannerSummary({
+			adTechProviders,
+			customVendors: [customVendor],
+			gvl: null,
+			gvlReference: {
+				summary: { items: ['Storage'], vendorCount: 100 },
+			},
+		});
+
+		expect(summary.isReady).toBe(true);
+		expect(summary.vendorCount).toBe(100 + 1 + 2);
+	});
+});

@@ -1,0 +1,40 @@
+---
+title: ConsentDialogLink
+description: Turn your own footer button or link into the control that reopens c15t preferences in an Angular app with the c15tConsentDialogLink directive.
+group: frameworks
+---
+
+## Add a preferences link
+
+`c15tConsentDialogLink` is an attribute directive. Put it on your own
+`<button>` or `<a>`, usually in the footer, and import
+`ConsentDialogLink`:
+
+<include src="../../../shared/examples/angular/app-component.mdx" />
+
+A click sets the active surface to `'dialog'`, so `<c15t-consent-dialog>`
+opens. Keep the dialog rendered. A click handler of yours that runs first and
+calls `event.preventDefault()` cancels the open.
+
+The directive adds no classes and no markup. Your element keeps its own
+styles, content and accessible name, so write the label in the page's
+language.
+
+## Behavior
+
+- While the policy offers no way back to preferences, the directive sets
+  `hidden` on the host and removes its test id, as if it were not rendered.
+  `ConsentManager.hasConsentPreferences()` is the same condition.
+- When it shows, the host carries `data-testid="consent-dialog-link"` and
+  `data-c15t-rights` with the rights the policy grants.
+- It starts loading the deferred dialog in idle time and on hover or focus, so
+  the first open does not wait for its code.
+
+On an `<a>`, the click's default navigation is prevented. Use a `<button>`
+unless your design needs a link.
+
+## Verify it
+
+Accept or reject in the banner, then select the link. The dialog opens with
+your choice in the switches. In a region where the policy offers no
+preferences, the element is hidden.

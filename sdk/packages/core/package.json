@@ -1,0 +1,316 @@
+{
+	"name": "@c15t/core",
+	"version": "3.2.0-canary.0",
+	"description": "Headless consent engine behind c15t. Stores consent, decides who sees the banner and gates configured scripts on each visitor's consent policy.",
+	"keywords": [
+		"banner",
+		"ccpa",
+		"cmp",
+		"consent",
+		"consent-banner",
+		"consent-management",
+		"consent-management-platform",
+		"consent-manager",
+		"consent-mode-v2",
+		"cookie",
+		"cookie-banner",
+		"cookie-consent",
+		"cookies",
+		"eu-cookie-law",
+		"gdpr",
+		"global-privacy-control",
+		"google-consent-mode",
+		"headless",
+		"iab",
+		"iab-tcf",
+		"javascript",
+		"lgpd",
+		"preference-center",
+		"privacy",
+		"script-blocking",
+		"self-hosted-cmp",
+		"server-side-rendering",
+		"ssr",
+		"tcf",
+		"tracking-consent",
+		"typescript"
+	],
+	"homepage": "https://c15t.com/docs/frameworks/javascript/quickstart",
+	"bugs": {
+		"url": "https://github.com/c15t/c15t/issues"
+	},
+	"license": "Apache-2.0",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/c15t/c15t.git",
+		"directory": "packages/core"
+	},
+	"files": [
+		"dist",
+		"dist-types",
+		"AGENTS.md",
+		"SKILL.md",
+		"docs",
+		"README.md",
+		"CHANGELOG.md"
+	],
+	"type": "module",
+	"sideEffects": false,
+	"main": "./dist/index.js",
+	"types": "./dist-types/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist-types/index.d.ts",
+			"import": "./dist/index.js",
+			"default": "./dist/index.js"
+		},
+		"./consent-record": {
+			"types": "./dist-types/consent-record/index.d.ts",
+			"import": "./dist/consent-record.js",
+			"default": "./dist/consent-record.js"
+		},
+		"./events": {
+			"types": "./dist-types/events.d.ts",
+			"import": "./dist/events.js",
+			"default": "./dist/events.js"
+		},
+		"./experiment": {
+			"types": "./dist-types/experiment.d.ts",
+			"import": "./dist/experiment.js",
+			"default": "./dist/experiment.js"
+		},
+		"./modes": {
+			"types": "./dist-types/modes.d.ts",
+			"import": "./dist/modes.js",
+			"default": "./dist/modes.js"
+		},
+		"./surface-actions": {
+			"types": "./dist-types/surface-actions/index.d.ts",
+			"import": "./dist/surface-actions/index.js",
+			"default": "./dist/surface-actions/index.js"
+		},
+		"./surface-actions/early-commit": {
+			"types": "./dist-types/surface-actions/early-commit.d.ts",
+			"import": "./dist/surface-actions/early-commit.js",
+			"default": "./dist/surface-actions/early-commit.js"
+		},
+		"./surface-actions/instant-commit": {
+			"types": "./dist-types/surface-actions/instant-commit.d.ts",
+			"import": "./dist/surface-actions/instant-commit.js",
+			"default": "./dist/surface-actions/instant-commit.js"
+		},
+		"./surface-actions/stored-records": {
+			"types": "./dist-types/surface-actions/stored-records.d.ts",
+			"import": "./dist/surface-actions/stored-records.js",
+			"default": "./dist/surface-actions/stored-records.js"
+		},
+		"./surface-actions/plain-scripts": {
+			"types": "./dist-types/surface-actions/plain-scripts.d.ts",
+			"import": "./dist/surface-actions/plain-scripts.js",
+			"default": "./dist/surface-actions/plain-scripts.js"
+		},
+		"./surface-state": {
+			"types": "./dist-types/surface-state.d.ts",
+			"import": "./dist/surface-state.js",
+			"default": "./dist/surface-state.js"
+		},
+		"./iab-support": {
+			"types": "./dist-types/iab-support.d.ts",
+			"import": "./dist/iab-support.js",
+			"default": "./dist/iab-support.js"
+		},
+		"./consent-categories": {
+			"types": "./dist-types/consent-record/types.d.ts",
+			"import": "./dist/consent-categories.js",
+			"default": "./dist/consent-categories.js"
+		},
+		"./transports": {
+			"types": "./dist-types/transports/index.d.ts",
+			"import": "./dist/transports.js",
+			"default": "./dist/transports.js"
+		},
+		"./transports/hosted-factory": {
+			"types": "./dist-types/transports/hosted-factory.d.ts",
+			"import": "./dist/transports/hosted-factory.js",
+			"default": "./dist/transports/hosted-factory.js"
+		},
+		"./transports/manifest": {
+			"types": "./dist-types/transports/manifest.d.ts",
+			"import": "./dist/transport-manifest.js",
+			"default": "./dist/transport-manifest.js"
+		},
+		"./transports/manifest-browser": {
+			"types": "./dist-types/transports/manifest-browser.d.ts",
+			"import": "./dist/transports/manifest-browser.js",
+			"default": "./dist/transports/manifest-browser.js"
+		},
+		"./transports/manifest-location": {
+			"types": "./dist-types/transports/manifest-browser-location.d.ts",
+			"import": "./dist/transports/manifest-browser-location.js",
+			"default": "./dist/transports/manifest-browser-location.js"
+		},
+		"./transports/manifest-cache": {
+			"types": "./dist-types/transports/manifest-cache.d.ts",
+			"import": "./dist/transport-manifest-cache.js",
+			"default": "./dist/transport-manifest-cache.js"
+		},
+		"./libs/generate-subject-id": {
+			"types": "./dist-types/libs/generate-subject-id.d.ts",
+			"import": "./dist/generate-subject-id.js",
+			"default": "./dist/generate-subject-id.js"
+		},
+		"./modules/clear-on-revocation": {
+			"types": "./dist-types/modules/clear-on-revocation/index.d.ts",
+			"import": "./dist/clear-on-revocation.js",
+			"default": "./dist/clear-on-revocation.js"
+		},
+		"./modules/script-loader": {
+			"types": "./dist-types/modules/script-loader/index.d.ts",
+			"import": "./dist/script-loader.js",
+			"default": "./dist/script-loader.js"
+		},
+		"./modules/network-blocker": {
+			"types": "./dist-types/modules/network-blocker/index.d.ts",
+			"import": "./dist/network-blocker.js",
+			"default": "./dist/network-blocker.js"
+		},
+		"./modules/network-hold": {
+			"types": "./dist-types/modules/network-blocker/hold.d.ts",
+			"import": "./dist/network-hold.js",
+			"default": "./dist/network-hold.js"
+		},
+		"./modules/iframe-blocker": {
+			"types": "./dist-types/modules/iframe-blocker/index.d.ts",
+			"import": "./dist/iframe-blocker.js",
+			"default": "./dist/iframe-blocker.js"
+		},
+		"./modules/persistence": {
+			"types": "./dist-types/modules/persistence/index.d.ts",
+			"import": "./dist/persistence.js",
+			"default": "./dist/persistence.js"
+		},
+		"./preference-draft": {
+			"types": "./dist-types/preference-draft/index.d.ts",
+			"import": "./dist/preference-draft.js",
+			"default": "./dist/preference-draft.js"
+		},
+		"./server": {
+			"types": "./dist-types/server/index.d.ts",
+			"import": "./dist/server.js",
+			"default": "./dist/server.js"
+		},
+		"./static": {
+			"types": "./dist-types/static.d.ts",
+			"import": "./dist/static.js",
+			"default": "./dist/static.js"
+		},
+		"./modules/window-debug": {
+			"types": "./dist-types/modules/window-debug/index.d.ts",
+			"import": "./dist/window-debug.js",
+			"default": "./dist/window-debug.js"
+		},
+		"./runtime": {
+			"types": "./dist-types/runtime/index.d.ts",
+			"import": "./dist/runtime.js",
+			"default": "./dist/runtime.js"
+		},
+		"./runtime/client-mode": {
+			"types": "./dist-types/runtime/client-mode.d.ts",
+			"import": "./dist/runtime/client-mode.js",
+			"default": "./dist/runtime/client-mode.js"
+		},
+		"./runtime/deferred-boot": {
+			"types": "./dist-types/runtime/deferred-boot.d.ts",
+			"import": "./dist/runtime/deferred-boot.js",
+			"default": "./dist/runtime/deferred-boot.js"
+		},
+		"./runtime/deferred-snapshot": {
+			"types": "./dist-types/runtime/deferred-snapshot.d.ts",
+			"import": "./dist/runtime/deferred-snapshot.js",
+			"default": "./dist/runtime/deferred-snapshot.js"
+		},
+		"./runtime/save-preload": {
+			"types": "./dist-types/runtime/save-preload.d.ts",
+			"import": "./dist/runtime/save-preload.js",
+			"default": "./dist/runtime/save-preload.js"
+		},
+		"./runtime/controls": {
+			"types": "./dist-types/runtime/controls.d.ts",
+			"import": "./dist/runtime/controls.js",
+			"default": "./dist/runtime/controls.js"
+		},
+		"./runtime/on-demand": {
+			"types": "./dist-types/runtime/on-demand.d.ts",
+			"import": "./dist/runtime/on-demand.js",
+			"default": "./dist/runtime/on-demand.js"
+		},
+		"./runtime/on-demand-factories": {
+			"types": "./dist-types/runtime/on-demand-factories.d.ts",
+			"import": "./dist/runtime/on-demand-factories.js",
+			"default": "./dist/runtime/on-demand-factories.js"
+		},
+		"./runtime/provider": {
+			"types": "./dist-types/runtime/provider.d.ts",
+			"import": "./dist/runtime/provider.js",
+			"default": "./dist/runtime/provider.js"
+		},
+		"./runtime/script-loader-preload": {
+			"types": "./dist-types/runtime/script-loader-preload.d.ts",
+			"import": "./dist/runtime/script-loader-preload.js",
+			"default": "./dist/runtime/script-loader-preload.js"
+		},
+		"./runtime/script-server-start": {
+			"types": "./dist-types/runtime/script-server-start.d.ts",
+			"import": "./dist/runtime/script-server-start.js",
+			"default": "./dist/runtime/script-server-start.js"
+		},
+		"./runtime/streamed-init": {
+			"types": "./dist-types/runtime/streamed-init.d.ts",
+			"import": "./dist/runtime/streamed-init.js",
+			"default": "./dist/runtime/streamed-init.js"
+		},
+		"./build": {
+			"types": "./dist-types/build.d.ts",
+			"import": "./dist/build.js",
+			"default": "./dist/build.js"
+		},
+		"./generated": {
+			"types": "./dist-types/generated.d.ts",
+			"import": "./dist/generated.js",
+			"default": "./dist/generated.js"
+		}
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"scripts": {
+		"build": "bun prebuild && rslib build && bun ../../scripts/normalize-dist-types.mjs && bun ../../scripts/prune-dist-types.ts",
+		"build:docs": "bun ../../scripts/generate-package-docs.ts @c15t/core",
+		"check-types": "bun prebuild && tsc --noEmit",
+		"check-types:test": "tsc -p tsconfig.test.json",
+		"dev": "sh -c 'bun prebuild && rslib build --no-dts --no-clean && rslib build --watch --no-dts --no-clean'",
+		"fmt": "bun oxfmt .",
+		"lint": "bun oxlint ./src",
+		"prebuild": "genversion --esm --semi src/version.ts",
+		"prepack": "bun run build:docs && bun ../../scripts/verify-package-artifacts.ts",
+		"test": "bun prebuild && vitest run",
+		"test:watch": "bun prebuild && vitest"
+	},
+	"dependencies": {
+		"@c15t/schema": "workspace:*",
+		"@c15t/translations": "workspace:*"
+	},
+	"devDependencies": {
+		"@c15t/typescript-config": "workspace:*",
+		"@c15t/vitest-config": "workspace:*",
+		"genversion": "3.2.0",
+		"typescript": "7.0.2",
+		"vite": "^6.0.0",
+		"vitest-localstorage-mock": "0.1.2"
+	},
+	"browserslist": [
+		">0.2%",
+		"not dead",
+		"not op_mini all"
+	]
+}

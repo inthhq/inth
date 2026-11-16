@@ -1,0 +1,82 @@
+---
+title: c15t vs Usercentrics
+description: Choose c15t for native framework components and control of the consent engine. Compare Usercentrics Web and App CMP features, service scope and costs.
+group: reference
+---
+
+## Choose c15t for consent your developers can own
+
+c15t is the stronger fit when your team wants native components, consent state in application code and an open-source backend. You can change the interface and the engine that drives it.
+
+This page compares Usercentrics Web CMP, and [Mobile apps](#mobile-apps) compares its App CMP. Its CTV CMP and other services have separate scope. [Cookiebot has its own comparison](/docs/comparisons/cookiebot).
+
+<include src="../shared/comparisons/inth-hosting.mdx" />
+
+## Compare control and service scope
+
+| What you need | c15t | Usercentrics Web CMP |
+| --- | --- | --- |
+| Use application consent state | Native framework hooks and components | Browser UI APIs and events |
+| Create a custom interface | Themes, component parts and headless APIs | Banner customisation. Headless Browser SDK for the earlier version, plus a headless SDK for the current version in beta |
+| Choose the Next.js response | Server resolution, streamed state or browser resolution | Web script integration. Confirm the required SDK version |
+| Own the consent engine | Apache-2.0 source and a deployable backend | Commercial managed service |
+| Keep remote records | Inth hosts the backend and stores records in its database. Self-hosting is optional | Central consent log |
+| Compare banner variants | Presentation experiments with your flags or built-in assignment | A/B tests, subject to plan or add-on |
+| Discover site technologies | **No scanner in the c15t packages** | Automated website scans |
+| Budget for use | No software licence fee. Backend costs remain | Session and domain allowances, with plan-dependent features |
+
+Sources: [Usercentrics pricing and features](https://usercentrics.com/pricing/), [developer documentation](https://usercentrics.com/docs/), [earlier Browser SDK](https://usercentrics.com/docs/web/features/v2/browser_sdk/browser_sdk/) and [current-version headless SDK](https://www.npmjs.com/package/@usercentrics/cmp-web-sdk).
+
+## Build consent into your own interface
+
+c15t lets the consent banner, video placeholders and privacy controls use the same application state. Your team can change those components through its normal review and test process.
+
+Start with the stock components, then use [custom styles](/docs/frameworks/react/customize) or a [headless interface](/docs/frameworks/react/headless). You control the markup and can build the interface that your product needs.
+
+Usercentrics also supports custom UI. Its documented headless Browser SDK targets the earlier version, and a headless SDK for the current version is in beta. Confirm support for the edition you plan to use.
+
+Choose c15t for the combination of native adapters and source ownership. Custom colours or API access alone do not distinguish the products.
+
+## Keep experiments and deployment in your workflow
+
+c15t [banner experiments](/docs/guides/banner-experiments) can use your current feature flags. Compare layouts and themes while the policy, categories and policy text stay fixed.
+
+Usercentrics also offers A/B tests. With c15t, your developers can define the experiment with the application and choose the backend that receives the records.
+
+In the Next.js App Router, [choose when the page waits for consent](/docs/frameworks/next/rendering). The default streamed path sends the banner in the server response, before hydration.
+
+## Mobile apps
+
+This section compares the Usercentrics App CMP.
+
+<include src="../shared/comparisons/mobile-c15t.mdx" />
+
+| What you need | c15t (private prerelease) | Usercentrics App CMP |
+| --- | --- | --- |
+| Platforms | Swift, Kotlin, React Native and Expo | Native iOS and Android SDKs, Flutter, React Native and Unity, plus tvOS and Android TV |
+| Stock consent screens | SwiftUI and Compose screens. React Native opens the same native screens | UsercentricsUI, a pre-built banner on top of Usercentrics Core |
+| Your own UI | Headless APIs in Swift and Kotlin, and React Native hooks | The Usercentrics Core API on iOS, Android, Flutter and React Native |
+| IAB TCF | Native TCF choices, TC strings and `IABTCF_` keys, with Additional Consent v2 | TCF 2.2 methods in the Core API, and Google Additional Consent data |
+| US opt-out | Opt-out policies. GPP is not in the prerelease. See [Mobile availability](/docs/guides/mobile-status#first-release-scope) | CCPA consent data and opt-out methods in the Core API |
+| Google Consent Mode | Not in the prerelease. See [Mobile availability](/docs/guides/mobile-status#first-release-scope) | Consent Mode for apps |
+
+Sources: [App CMP](https://usercentrics.com/in-app-sdk/), [quickstart](https://usercentrics.com/beta-docs/quickstart-flow-with-diagram) and [Core API for apps](https://usercentrics.com/beta-docs/usercentricscore-api), checked on 10 November 2026.
+
+## What c15t does not include
+
+- **Automated website scans or a generated library of legal clauses.** These are separate from the c15t consent packages.
+- **Every Usercentrics administration workflow.** Do not assume that the open-source backend includes its bulk changes, approval process or enterprise account controls.
+- **Automatic migration of current choices.** Map services, purposes and policy versions before you reuse records.
+- **A free managed service.** Compare current Inth terms with the Usercentrics plan for your actual traffic.
+
+The c15t backend supports identity links, but that alone does not establish parity with Usercentrics' cross-device workflow. Test the account and device flow that you need.
+
+## Prove the fit on one property
+
+Choose c15t when your application team wants control over the interface, runtime and backend. Usercentrics remains a strong fit for centrally managed website operations.
+
+Start with [Inth and a framework guide](/docs/frameworks). Test one direct vendor and one tag-manager vendor, then check withdrawal and saved records.
+
+Check each property's policy, language and origin configuration before a wider rollout. Use the [verification guide](/docs/guides/verify-consent) to confirm the actual requests.
+
+Sources checked on 6 October 2026. Prices and service inclusions depend on the selected plan.

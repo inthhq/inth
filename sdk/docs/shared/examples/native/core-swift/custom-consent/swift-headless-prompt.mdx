@@ -1,0 +1,38 @@
+{/* Generated from native/core-swift/Examples/custom-consent/Sources/ledger-consent.swift (docs:swift-headless-prompt) by scripts/sync-example-docs.ts. Edit the source file. */}
+
+```swift title="Sources/ledger-consent.swift"
+struct LedgerConsent: View {
+    @StateObject private var draft: ConsentDraft
+    @ObservedObject private var state: LedgerConsentState
+    private let privacyPolicyURL: URL
+    @Environment(\.colorScheme) private var colorScheme
+
+    init(core: ConsentCore, privacyPolicyURL: URL, state: LedgerConsentState) {
+        // One draft for both screens, kept for as long as this view is.
+        _draft = StateObject(wrappedValue: ConsentDraft(core: core))
+        self.state = state
+        self.privacyPolicyURL = privacyPolicyURL
+    }
+
+    var body: some View {
+        ZStack {
+            // The block decides when a prompt is owed. The sheet below is the app's own.
+            HeadlessConsentPrompt(draft: draft, onOpenPreferences: { state.preferencesOpen = true }) { prompt in
+                if !state.preferencesOpen {
+                    // The partner count in the IAB text opens the partner list itself, not the first tab.
+                    PromptSheet(prompt: prompt, draft: draft, policyURL: privacyPolicyURL, openPartners: {
+                        state.tab = 2
+                        prompt.openPreferences()
+                    })
+                }
+            }
+            if state.preferencesOpen {
+                HeadlessConsentPreferences(draft: draft, onClose: { state.preferencesOpen = false }) { preferences in
+                    PreferencesPage(preferences: preferences, draft: draft, tab: $state.tab, policyURL: privacyPolicyURL)
+                }
+            }
+        }
+        .environment(\.ledger, Ledger(dark: colorScheme == .dark))
+    }
+}
+```

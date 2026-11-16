@@ -1,0 +1,999 @@
+{
+	"description": "IAB GPP strings and in-app IABGPP_* keys both native cores must produce. Expected values come from the web encoder in packages/iab/src/gpp and decode with @iabgpp/cmpapi; packages/iab/src/__tests__/native-gpp-fixtures.test.ts checks both on every run. US National is MSPA version 2, the version the IAB reference libraries decode.",
+	"spec": {
+		"repository": "https://github.com/InteractiveAdvertisingBureau/Global-Privacy-Platform",
+		"usNationalVersion": 2,
+		"inAppKeys": "Core/CMP API Specification.md, \"In-App Key Names\"; Sections/EEA/GPPExtension: IAB Europe TCF.md, \"Key Names\""
+	},
+	"encoder": [
+		{
+			"id": "usnat-distinct-values",
+			"description": "Every US National field holds a different in-range value, so a field read from the wrong offset decodes wrong.",
+			"sections": [
+				{
+					"id": 7,
+					"usnat": {
+						"Version": 2,
+						"SharingNotice": 2,
+						"SaleOptOutNotice": 0,
+						"SharingOptOutNotice": 1,
+						"TargetedAdvertisingOptOutNotice": 2,
+						"SensitiveDataProcessingOptOutNotice": 0,
+						"SensitiveDataLimitUseNotice": 1,
+						"SaleOptOut": 2,
+						"SharingOptOut": 0,
+						"TargetedAdvertisingOptOut": 1,
+						"SensitiveDataProcessing": [
+							2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2
+						],
+						"KnownChildSensitiveDataConsents": [0, 1, 2],
+						"PersonalDataConsents": 1,
+						"MspaCoveredTransaction": 1,
+						"MspaOptOutOptionMode": 0,
+						"MspaServiceProviderMode": 1
+					},
+					"gpc": true
+				}
+			],
+			"expected": "DBABLA~ChhhhhhhhhlE.YA"
+		},
+		{
+			"id": "usnat-zero-values",
+			"description": "Every US National field not applicable, GPC off.",
+			"sections": [
+				{
+					"id": 7,
+					"usnat": {
+						"Version": 2,
+						"SharingNotice": 0,
+						"SaleOptOutNotice": 0,
+						"SharingOptOutNotice": 0,
+						"TargetedAdvertisingOptOutNotice": 0,
+						"SensitiveDataProcessingOptOutNotice": 0,
+						"SensitiveDataLimitUseNotice": 0,
+						"SaleOptOut": 0,
+						"SharingOptOut": 0,
+						"TargetedAdvertisingOptOut": 0,
+						"SensitiveDataProcessing": [
+							0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+						],
+						"KnownChildSensitiveDataConsents": [0, 0, 0],
+						"PersonalDataConsents": 0,
+						"MspaCoveredTransaction": 0,
+						"MspaOptOutOptionMode": 0,
+						"MspaServiceProviderMode": 0
+					},
+					"gpc": false
+				}
+			],
+			"expected": "DBABLA~CAAAAAAAAAAA.QA"
+		},
+		{
+			"id": "tcf-eu-and-usnat",
+			"description": "Two sections: the header lists 2 and 7 as a Fibonacci range, sections follow in ID order. The resolver never emits both, the encoder must still order them.",
+			"sections": [
+				{
+					"id": 7,
+					"usnat": {
+						"Version": 2,
+						"SharingNotice": 0,
+						"SaleOptOutNotice": 0,
+						"SharingOptOutNotice": 0,
+						"TargetedAdvertisingOptOutNotice": 0,
+						"SensitiveDataProcessingOptOutNotice": 0,
+						"SensitiveDataLimitUseNotice": 0,
+						"SaleOptOut": 0,
+						"SharingOptOut": 0,
+						"TargetedAdvertisingOptOut": 0,
+						"SensitiveDataProcessing": [
+							0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+						],
+						"KnownChildSensitiveDataConsents": [0, 0, 0],
+						"PersonalDataConsents": 0,
+						"MspaCoveredTransaction": 0,
+						"MspaOptOutOptionMode": 0,
+						"MspaServiceProviderMode": 0
+					},
+					"gpc": true
+				},
+				{
+					"id": 2,
+					"encoded": "CQX48QAQX48QAA1AHBENAqFgAEAAAAAAAAwIABEAAAAISACAAIAA.IABM.aAAAAAAAAQAA"
+				}
+			],
+			"expected": "DBACMMA~CQX48QAQX48QAA1AHBENAqFgAEAAAAAAAAwIABEAAAAISACAAIAA.IABM.aAAAAAAAAQAA~CAAAAAAAAAAA.YA"
+		}
+	],
+	"resolver": [
+		{
+			"id": "us-opt-out-no-choice",
+			"description": "A US visitor under an opt-out rule who has refused nothing. The opt-out notices are given and the visitor did not opt out.",
+			"input": {
+				"options": {},
+				"policy": {
+					"model": "opt-out",
+					"rights": ["disclosure", "opt-out", "preferences"]
+				},
+				"resolution": "matched",
+				"ready": true,
+				"policyPending": false,
+				"location": "US",
+				"overrideCountry": null,
+				"effectivePermissions": {
+					"experience": true,
+					"functionality": true,
+					"marketing": true,
+					"measurement": true
+				},
+				"gpc": false,
+				"tcString": null
+			},
+			"expected": {
+				"gppString": "DBABLA~CVQqAAAAAACA.QA",
+				"sectionIds": [7],
+				"usnat": {
+					"Version": 2,
+					"SharingNotice": 1,
+					"SaleOptOutNotice": 1,
+					"SharingOptOutNotice": 1,
+					"TargetedAdvertisingOptOutNotice": 1,
+					"SensitiveDataProcessingOptOutNotice": 0,
+					"SensitiveDataLimitUseNotice": 0,
+					"SaleOptOut": 2,
+					"SharingOptOut": 2,
+					"TargetedAdvertisingOptOut": 2,
+					"SensitiveDataProcessing": [
+						0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+					],
+					"KnownChildSensitiveDataConsents": [0, 0, 0],
+					"PersonalDataConsents": 0,
+					"MspaCoveredTransaction": 2,
+					"MspaOptOutOptionMode": 0,
+					"MspaServiceProviderMode": 0,
+					"Gpc": false
+				},
+				"storage": {
+					"IABGPP_7_String": "CVQqAAAAAACA.QA",
+					"IABGPP_GppSID": "7",
+					"IABGPP_HDR_GppString": "DBABLA~CVQqAAAAAACA.QA",
+					"IABGPP_HDR_Sections": "7",
+					"IABGPP_HDR_Version": "1"
+				}
+			}
+		},
+		{
+			"id": "us-opt-out-marketing-refused",
+			"description": "The same visitor after refusing marketing: sale, sharing and targeted advertising read opted out.",
+			"input": {
+				"options": {},
+				"policy": {
+					"model": "opt-out",
+					"rights": ["disclosure", "opt-out", "preferences"]
+				},
+				"resolution": "matched",
+				"ready": true,
+				"policyPending": false,
+				"location": "US",
+				"overrideCountry": null,
+				"effectivePermissions": {
+					"experience": true,
+					"functionality": true,
+					"marketing": false,
+					"measurement": true
+				},
+				"gpc": false,
+				"tcString": null
+			},
+			"expected": {
+				"gppString": "DBABLA~CVQVAAAAAACA.QA",
+				"sectionIds": [7],
+				"usnat": {
+					"Version": 2,
+					"SharingNotice": 1,
+					"SaleOptOutNotice": 1,
+					"SharingOptOutNotice": 1,
+					"TargetedAdvertisingOptOutNotice": 1,
+					"SensitiveDataProcessingOptOutNotice": 0,
+					"SensitiveDataLimitUseNotice": 0,
+					"SaleOptOut": 1,
+					"SharingOptOut": 1,
+					"TargetedAdvertisingOptOut": 1,
+					"SensitiveDataProcessing": [
+						0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+					],
+					"KnownChildSensitiveDataConsents": [0, 0, 0],
+					"PersonalDataConsents": 0,
+					"MspaCoveredTransaction": 2,
+					"MspaOptOutOptionMode": 0,
+					"MspaServiceProviderMode": 0,
+					"Gpc": false
+				},
+				"storage": {
+					"IABGPP_7_String": "CVQVAAAAAACA.QA",
+					"IABGPP_GppSID": "7",
+					"IABGPP_HDR_GppString": "DBABLA~CVQVAAAAAACA.QA",
+					"IABGPP_HDR_Sections": "7",
+					"IABGPP_HDR_Version": "1"
+				}
+			}
+		},
+		{
+			"id": "us-gpc-denies-marketing",
+			"description": "GPC is on and the rule maps it to marketing, so marketing is denied: Gpc is 1 and the opt-outs read opted out.",
+			"input": {
+				"options": {},
+				"policy": {
+					"model": "opt-out",
+					"rights": ["disclosure", "opt-out", "preferences"]
+				},
+				"resolution": "matched",
+				"ready": true,
+				"policyPending": false,
+				"location": "US",
+				"overrideCountry": null,
+				"effectivePermissions": {
+					"experience": true,
+					"functionality": true,
+					"marketing": false,
+					"measurement": true
+				},
+				"gpc": true,
+				"tcString": null
+			},
+			"expected": {
+				"gppString": "DBABLA~CVQVAAAAAACA.YA",
+				"sectionIds": [7],
+				"usnat": {
+					"Version": 2,
+					"SharingNotice": 1,
+					"SaleOptOutNotice": 1,
+					"SharingOptOutNotice": 1,
+					"TargetedAdvertisingOptOutNotice": 1,
+					"SensitiveDataProcessingOptOutNotice": 0,
+					"SensitiveDataLimitUseNotice": 0,
+					"SaleOptOut": 1,
+					"SharingOptOut": 1,
+					"TargetedAdvertisingOptOut": 1,
+					"SensitiveDataProcessing": [
+						0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+					],
+					"KnownChildSensitiveDataConsents": [0, 0, 0],
+					"PersonalDataConsents": 0,
+					"MspaCoveredTransaction": 2,
+					"MspaOptOutOptionMode": 0,
+					"MspaServiceProviderMode": 0,
+					"Gpc": true
+				},
+				"storage": {
+					"IABGPP_7_String": "CVQVAAAAAACA.YA",
+					"IABGPP_GppSID": "7",
+					"IABGPP_HDR_GppString": "DBABLA~CVQVAAAAAACA.YA",
+					"IABGPP_HDR_Sections": "7",
+					"IABGPP_HDR_Version": "1"
+				}
+			}
+		},
+		{
+			"id": "us-gpc-not-mapped",
+			"description": "GPC is on but the rule does not map it to a category. Gpc is reported, and the opt-outs follow the permissions, which still allow marketing.",
+			"input": {
+				"options": {},
+				"policy": {
+					"model": "opt-out",
+					"rights": ["disclosure", "opt-out", "preferences"]
+				},
+				"resolution": "matched",
+				"ready": true,
+				"policyPending": false,
+				"location": "US",
+				"overrideCountry": null,
+				"effectivePermissions": {
+					"experience": true,
+					"functionality": true,
+					"marketing": true,
+					"measurement": true
+				},
+				"gpc": true,
+				"tcString": null
+			},
+			"expected": {
+				"gppString": "DBABLA~CVQqAAAAAACA.YA",
+				"sectionIds": [7],
+				"usnat": {
+					"Version": 2,
+					"SharingNotice": 1,
+					"SaleOptOutNotice": 1,
+					"SharingOptOutNotice": 1,
+					"TargetedAdvertisingOptOutNotice": 1,
+					"SensitiveDataProcessingOptOutNotice": 0,
+					"SensitiveDataLimitUseNotice": 0,
+					"SaleOptOut": 2,
+					"SharingOptOut": 2,
+					"TargetedAdvertisingOptOut": 2,
+					"SensitiveDataProcessing": [
+						0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+					],
+					"KnownChildSensitiveDataConsents": [0, 0, 0],
+					"PersonalDataConsents": 0,
+					"MspaCoveredTransaction": 2,
+					"MspaOptOutOptionMode": 0,
+					"MspaServiceProviderMode": 0,
+					"Gpc": true
+				},
+				"storage": {
+					"IABGPP_7_String": "CVQqAAAAAACA.YA",
+					"IABGPP_GppSID": "7",
+					"IABGPP_HDR_GppString": "DBABLA~CVQqAAAAAACA.YA",
+					"IABGPP_HDR_Sections": "7",
+					"IABGPP_HDR_Version": "1"
+				}
+			}
+		},
+		{
+			"id": "us-opt-in-without-grant",
+			"description": "An opt-in rule with no grant yet: marketing is not permitted, so the opt-outs read opted out.",
+			"input": {
+				"options": {},
+				"policy": {
+					"model": "opt-in",
+					"rights": ["disclosure", "preferences"]
+				},
+				"resolution": "matched",
+				"ready": true,
+				"policyPending": false,
+				"location": "US",
+				"overrideCountry": null,
+				"effectivePermissions": {
+					"experience": false,
+					"functionality": false,
+					"marketing": false,
+					"measurement": false
+				},
+				"gpc": false,
+				"tcString": null
+			},
+			"expected": {
+				"gppString": "DBABLA~CVQVAAAAAACA.QA",
+				"sectionIds": [7],
+				"usnat": {
+					"Version": 2,
+					"SharingNotice": 1,
+					"SaleOptOutNotice": 1,
+					"SharingOptOutNotice": 1,
+					"TargetedAdvertisingOptOutNotice": 1,
+					"SensitiveDataProcessingOptOutNotice": 0,
+					"SensitiveDataLimitUseNotice": 0,
+					"SaleOptOut": 1,
+					"SharingOptOut": 1,
+					"TargetedAdvertisingOptOut": 1,
+					"SensitiveDataProcessing": [
+						0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+					],
+					"KnownChildSensitiveDataConsents": [0, 0, 0],
+					"PersonalDataConsents": 0,
+					"MspaCoveredTransaction": 2,
+					"MspaOptOutOptionMode": 0,
+					"MspaServiceProviderMode": 0,
+					"Gpc": false
+				},
+				"storage": {
+					"IABGPP_7_String": "CVQVAAAAAACA.QA",
+					"IABGPP_GppSID": "7",
+					"IABGPP_HDR_GppString": "DBABLA~CVQVAAAAAACA.QA",
+					"IABGPP_HDR_Sections": "7",
+					"IABGPP_HDR_Version": "1"
+				}
+			}
+		},
+		{
+			"id": "us-mspa-opt-out-option",
+			"description": "An MSPA signatory in opt-out option mode: the transaction is covered.",
+			"input": {
+				"options": {
+					"mspaMode": "opt-out-option"
+				},
+				"policy": {
+					"model": "opt-out",
+					"rights": ["disclosure", "opt-out", "preferences"]
+				},
+				"resolution": "matched",
+				"ready": true,
+				"policyPending": false,
+				"location": "US",
+				"overrideCountry": null,
+				"effectivePermissions": {
+					"experience": true,
+					"functionality": true,
+					"marketing": true,
+					"measurement": true
+				},
+				"gpc": false,
+				"tcString": null
+			},
+			"expected": {
+				"gppString": "DBABLA~CVQqAAAAAABY.QA",
+				"sectionIds": [7],
+				"usnat": {
+					"Version": 2,
+					"SharingNotice": 1,
+					"SaleOptOutNotice": 1,
+					"SharingOptOutNotice": 1,
+					"TargetedAdvertisingOptOutNotice": 1,
+					"SensitiveDataProcessingOptOutNotice": 0,
+					"SensitiveDataLimitUseNotice": 0,
+					"SaleOptOut": 2,
+					"SharingOptOut": 2,
+					"TargetedAdvertisingOptOut": 2,
+					"SensitiveDataProcessing": [
+						0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+					],
+					"KnownChildSensitiveDataConsents": [0, 0, 0],
+					"PersonalDataConsents": 0,
+					"MspaCoveredTransaction": 1,
+					"MspaOptOutOptionMode": 1,
+					"MspaServiceProviderMode": 2,
+					"Gpc": false
+				},
+				"storage": {
+					"IABGPP_7_String": "CVQqAAAAAABY.QA",
+					"IABGPP_GppSID": "7",
+					"IABGPP_HDR_GppString": "DBABLA~CVQqAAAAAABY.QA",
+					"IABGPP_HDR_Sections": "7",
+					"IABGPP_HDR_Version": "1"
+				}
+			}
+		},
+		{
+			"id": "us-mspa-service-provider",
+			"description": "MSPA service provider mode: the opt-outs and their notices are not applicable.",
+			"input": {
+				"options": {
+					"mspaMode": "service-provider"
+				},
+				"policy": {
+					"model": "opt-out",
+					"rights": ["disclosure", "opt-out", "preferences"]
+				},
+				"resolution": "matched",
+				"ready": true,
+				"policyPending": false,
+				"location": "US",
+				"overrideCountry": null,
+				"effectivePermissions": {
+					"experience": true,
+					"functionality": true,
+					"marketing": false,
+					"measurement": true
+				},
+				"gpc": false,
+				"tcString": null
+			},
+			"expected": {
+				"gppString": "DBABLA~CQAAAAAAAABk.QA",
+				"sectionIds": [7],
+				"usnat": {
+					"Version": 2,
+					"SharingNotice": 1,
+					"SaleOptOutNotice": 0,
+					"SharingOptOutNotice": 0,
+					"TargetedAdvertisingOptOutNotice": 0,
+					"SensitiveDataProcessingOptOutNotice": 0,
+					"SensitiveDataLimitUseNotice": 0,
+					"SaleOptOut": 0,
+					"SharingOptOut": 0,
+					"TargetedAdvertisingOptOut": 0,
+					"SensitiveDataProcessing": [
+						0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+					],
+					"KnownChildSensitiveDataConsents": [0, 0, 0],
+					"PersonalDataConsents": 0,
+					"MspaCoveredTransaction": 1,
+					"MspaOptOutOptionMode": 2,
+					"MspaServiceProviderMode": 1,
+					"Gpc": false
+				},
+				"storage": {
+					"IABGPP_7_String": "CQAAAAAAAABk.QA",
+					"IABGPP_GppSID": "7",
+					"IABGPP_HDR_GppString": "DBABLA~CQAAAAAAAABk.QA",
+					"IABGPP_HDR_Sections": "7",
+					"IABGPP_HDR_Version": "1"
+				}
+			}
+		},
+		{
+			"id": "us-opt-out-categories-measurement",
+			"description": "The app adds measurement to the opt-out categories, and the visitor refused measurement only.",
+			"input": {
+				"options": {
+					"optOutCategories": ["marketing", "measurement"]
+				},
+				"policy": {
+					"model": "opt-out",
+					"rights": ["disclosure", "opt-out", "preferences"]
+				},
+				"resolution": "matched",
+				"ready": true,
+				"policyPending": false,
+				"location": "US",
+				"overrideCountry": null,
+				"effectivePermissions": {
+					"experience": true,
+					"functionality": true,
+					"marketing": true,
+					"measurement": false
+				},
+				"gpc": false,
+				"tcString": null
+			},
+			"expected": {
+				"gppString": "DBABLA~CVQVAAAAAACA.QA",
+				"sectionIds": [7],
+				"usnat": {
+					"Version": 2,
+					"SharingNotice": 1,
+					"SaleOptOutNotice": 1,
+					"SharingOptOutNotice": 1,
+					"TargetedAdvertisingOptOutNotice": 1,
+					"SensitiveDataProcessingOptOutNotice": 0,
+					"SensitiveDataLimitUseNotice": 0,
+					"SaleOptOut": 1,
+					"SharingOptOut": 1,
+					"TargetedAdvertisingOptOut": 1,
+					"SensitiveDataProcessing": [
+						0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+					],
+					"KnownChildSensitiveDataConsents": [0, 0, 0],
+					"PersonalDataConsents": 0,
+					"MspaCoveredTransaction": 2,
+					"MspaOptOutOptionMode": 0,
+					"MspaServiceProviderMode": 0,
+					"Gpc": false
+				},
+				"storage": {
+					"IABGPP_7_String": "CVQVAAAAAACA.QA",
+					"IABGPP_GppSID": "7",
+					"IABGPP_HDR_GppString": "DBABLA~CVQVAAAAAACA.QA",
+					"IABGPP_HDR_Sections": "7",
+					"IABGPP_HDR_Version": "1"
+				}
+			}
+		},
+		{
+			"id": "us-empty-opt-out-categories",
+			"description": "The app set optOutCategories to an empty list and the visitor refused marketing: no category drives the opt-outs, so they stay did not opt out, as on web.",
+			"input": {
+				"options": {
+					"optOutCategories": []
+				},
+				"policy": {
+					"model": "opt-out",
+					"rights": ["disclosure", "opt-out", "preferences"]
+				},
+				"resolution": "matched",
+				"ready": true,
+				"policyPending": false,
+				"location": "US",
+				"overrideCountry": null,
+				"effectivePermissions": {
+					"experience": true,
+					"functionality": true,
+					"marketing": false,
+					"measurement": true
+				},
+				"gpc": false,
+				"tcString": null
+			},
+			"expected": {
+				"gppString": "DBABLA~CVQqAAAAAACA.QA",
+				"sectionIds": [7],
+				"usnat": {
+					"Version": 2,
+					"SharingNotice": 1,
+					"SaleOptOutNotice": 1,
+					"SharingOptOutNotice": 1,
+					"TargetedAdvertisingOptOutNotice": 1,
+					"SensitiveDataProcessingOptOutNotice": 0,
+					"SensitiveDataLimitUseNotice": 0,
+					"SaleOptOut": 2,
+					"SharingOptOut": 2,
+					"TargetedAdvertisingOptOut": 2,
+					"SensitiveDataProcessing": [
+						0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+					],
+					"KnownChildSensitiveDataConsents": [0, 0, 0],
+					"PersonalDataConsents": 0,
+					"MspaCoveredTransaction": 2,
+					"MspaOptOutOptionMode": 0,
+					"MspaServiceProviderMode": 0,
+					"Gpc": false
+				},
+				"storage": {
+					"IABGPP_7_String": "CVQqAAAAAACA.QA",
+					"IABGPP_GppSID": "7",
+					"IABGPP_HDR_GppString": "DBABLA~CVQqAAAAAACA.QA",
+					"IABGPP_HDR_Sections": "7",
+					"IABGPP_HDR_Version": "1"
+				}
+			}
+		},
+		{
+			"id": "us-none-rule-with-preferences",
+			"description": "A none rule the host gave the preferences right, without disclosure: the sharing notice reads not given.",
+			"input": {
+				"options": {},
+				"policy": {
+					"model": "none",
+					"rights": ["preferences"]
+				},
+				"resolution": "matched",
+				"ready": true,
+				"policyPending": false,
+				"location": "US",
+				"overrideCountry": null,
+				"effectivePermissions": {
+					"experience": true,
+					"functionality": true,
+					"marketing": true,
+					"measurement": true
+				},
+				"gpc": false,
+				"tcString": null
+			},
+			"expected": {
+				"gppString": "DBABLA~ClQqAAAAAACA.QA",
+				"sectionIds": [7],
+				"usnat": {
+					"Version": 2,
+					"SharingNotice": 2,
+					"SaleOptOutNotice": 1,
+					"SharingOptOutNotice": 1,
+					"TargetedAdvertisingOptOutNotice": 1,
+					"SensitiveDataProcessingOptOutNotice": 0,
+					"SensitiveDataLimitUseNotice": 0,
+					"SaleOptOut": 2,
+					"SharingOptOut": 2,
+					"TargetedAdvertisingOptOut": 2,
+					"SensitiveDataProcessing": [
+						0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+					],
+					"KnownChildSensitiveDataConsents": [0, 0, 0],
+					"PersonalDataConsents": 0,
+					"MspaCoveredTransaction": 2,
+					"MspaOptOutOptionMode": 0,
+					"MspaServiceProviderMode": 0,
+					"Gpc": false
+				},
+				"storage": {
+					"IABGPP_7_String": "ClQqAAAAAACA.QA",
+					"IABGPP_GppSID": "7",
+					"IABGPP_HDR_GppString": "DBABLA~ClQqAAAAAACA.QA",
+					"IABGPP_HDR_Sections": "7",
+					"IABGPP_HDR_Version": "1"
+				}
+			}
+		},
+		{
+			"id": "us-none-rule-without-rights",
+			"description": "A none rule with no rights offers no opt-out, so no US section applies even in the US.",
+			"input": {
+				"options": {},
+				"policy": {
+					"model": "none",
+					"rights": []
+				},
+				"resolution": "matched",
+				"ready": true,
+				"policyPending": false,
+				"location": "US",
+				"overrideCountry": null,
+				"effectivePermissions": {
+					"experience": true,
+					"functionality": true,
+					"marketing": true,
+					"measurement": true
+				},
+				"gpc": false,
+				"tcString": null
+			},
+			"expected": {
+				"gppString": null,
+				"sectionIds": [],
+				"usnat": null,
+				"storage": {}
+			}
+		},
+		{
+			"id": "us-override-country",
+			"description": "The backend located the visitor in Germany, and the app overrides the country to US.",
+			"input": {
+				"options": {},
+				"policy": {
+					"model": "opt-out",
+					"rights": ["disclosure", "opt-out", "preferences"]
+				},
+				"resolution": "matched",
+				"ready": true,
+				"policyPending": false,
+				"location": "DE",
+				"overrideCountry": "US",
+				"effectivePermissions": {
+					"experience": true,
+					"functionality": true,
+					"marketing": true,
+					"measurement": true
+				},
+				"gpc": false,
+				"tcString": null
+			},
+			"expected": {
+				"gppString": "DBABLA~CVQqAAAAAACA.QA",
+				"sectionIds": [7],
+				"usnat": {
+					"Version": 2,
+					"SharingNotice": 1,
+					"SaleOptOutNotice": 1,
+					"SharingOptOutNotice": 1,
+					"TargetedAdvertisingOptOutNotice": 1,
+					"SensitiveDataProcessingOptOutNotice": 0,
+					"SensitiveDataLimitUseNotice": 0,
+					"SaleOptOut": 2,
+					"SharingOptOut": 2,
+					"TargetedAdvertisingOptOut": 2,
+					"SensitiveDataProcessing": [
+						0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+					],
+					"KnownChildSensitiveDataConsents": [0, 0, 0],
+					"PersonalDataConsents": 0,
+					"MspaCoveredTransaction": 2,
+					"MspaOptOutOptionMode": 0,
+					"MspaServiceProviderMode": 0,
+					"Gpc": false
+				},
+				"storage": {
+					"IABGPP_7_String": "CVQqAAAAAACA.QA",
+					"IABGPP_GppSID": "7",
+					"IABGPP_HDR_GppString": "DBABLA~CVQqAAAAAACA.QA",
+					"IABGPP_HDR_Sections": "7",
+					"IABGPP_HDR_Version": "1"
+				}
+			}
+		},
+		{
+			"id": "non-us-opt-in",
+			"description": "A visitor in Germany under an opt-in rule gets no US section.",
+			"input": {
+				"options": {},
+				"policy": {
+					"model": "opt-in",
+					"rights": ["disclosure", "preferences"]
+				},
+				"resolution": "matched",
+				"ready": true,
+				"policyPending": false,
+				"location": "DE",
+				"overrideCountry": null,
+				"effectivePermissions": {
+					"experience": true,
+					"functionality": true,
+					"marketing": true,
+					"measurement": true
+				},
+				"gpc": false,
+				"tcString": null
+			},
+			"expected": {
+				"gppString": null,
+				"sectionIds": [],
+				"usnat": null,
+				"storage": {}
+			}
+		},
+		{
+			"id": "gpp-off",
+			"description": "The app did not turn GPP on: no string, whatever the rule and location.",
+			"input": {
+				"options": null,
+				"policy": {
+					"model": "opt-out",
+					"rights": ["disclosure", "opt-out", "preferences"]
+				},
+				"resolution": "matched",
+				"ready": true,
+				"policyPending": false,
+				"location": "US",
+				"overrideCountry": null,
+				"effectivePermissions": {
+					"experience": true,
+					"functionality": true,
+					"marketing": true,
+					"measurement": true
+				},
+				"gpc": false,
+				"tcString": null
+			},
+			"expected": {
+				"gppString": null,
+				"sectionIds": [],
+				"usnat": null,
+				"storage": {}
+			}
+		},
+		{
+			"id": "policy-pending",
+			"description": "No policy resolved yet: no string.",
+			"input": {
+				"options": {},
+				"policy": {
+					"model": "opt-out",
+					"rights": ["disclosure", "opt-out", "preferences"]
+				},
+				"resolution": "matched",
+				"ready": true,
+				"policyPending": true,
+				"location": "US",
+				"overrideCountry": null,
+				"effectivePermissions": {
+					"experience": true,
+					"functionality": true,
+					"marketing": true,
+					"measurement": true
+				},
+				"gpc": false,
+				"tcString": null
+			},
+			"expected": {
+				"gppString": null,
+				"sectionIds": [],
+				"usnat": null,
+				"storage": {}
+			}
+		},
+		{
+			"id": "no-match",
+			"description": "No rule matched: no string.",
+			"input": {
+				"options": {},
+				"policy": {
+					"model": "opt-out",
+					"rights": ["disclosure", "opt-out", "preferences"]
+				},
+				"resolution": "no-match",
+				"ready": true,
+				"policyPending": false,
+				"location": "US",
+				"overrideCountry": null,
+				"effectivePermissions": {
+					"experience": true,
+					"functionality": true,
+					"marketing": true,
+					"measurement": true
+				},
+				"gpc": false,
+				"tcString": null
+			},
+			"expected": {
+				"gppString": null,
+				"sectionIds": [],
+				"usnat": null,
+				"storage": {}
+			}
+		},
+		{
+			"id": "iab-with-tc-string",
+			"description": "An iab rule with a committed TC String: the TCF EU section is that TC String, unchanged.",
+			"input": {
+				"options": {},
+				"policy": {
+					"model": "iab",
+					"rights": ["disclosure", "preferences"]
+				},
+				"resolution": "matched",
+				"ready": true,
+				"policyPending": false,
+				"location": "DE",
+				"overrideCountry": null,
+				"effectivePermissions": {
+					"experience": true,
+					"functionality": true,
+					"marketing": true,
+					"measurement": true
+				},
+				"gpc": false,
+				"tcString": "CQX48QAQX48QAA1AHBENAqFgAEAAAAAAAAwIABEAAAAISACAAIAA.IABM.aAAAAAAAAQAA"
+			},
+			"expected": {
+				"gppString": "DBABMA~CQX48QAQX48QAA1AHBENAqFgAEAAAAAAAAwIABEAAAAISACAAIAA.IABM.aAAAAAAAAQAA",
+				"sectionIds": [2],
+				"usnat": null,
+				"storage": {
+					"IABGPP_2_String": "CQX48QAQX48QAA1AHBENAqFgAEAAAAAAAAwIABEAAAAISACAAIAA.IABM.aAAAAAAAAQAA",
+					"IABGPP_2_TCString": "CQX48QAQX48QAA1AHBENAqFgAEAAAAAAAAwIABEAAAAISACAAIAA.IABM.aAAAAAAAAQAA",
+					"IABGPP_GppSID": "2",
+					"IABGPP_HDR_GppString": "DBABMA~CQX48QAQX48QAA1AHBENAqFgAEAAAAAAAAwIABEAAAAISACAAIAA.IABM.aAAAAAAAAQAA",
+					"IABGPP_HDR_Sections": "2",
+					"IABGPP_HDR_Version": "1",
+					"IABGPP_TCFEU2_CmpSdkID": 53,
+					"IABGPP_TCFEU2_CmpSdkVersion": 7,
+					"IABGPP_TCFEU2_gdprApplies": 1,
+					"IABGPP_TCFEU2_PolicyVersion": 5,
+					"IABGPP_TCFEU2_PublisherCC": "GB",
+					"IABGPP_TCFEU2_PublisherConsent": "010000000000000000000000",
+					"IABGPP_TCFEU2_PublisherCustomPurposesConsents": "00",
+					"IABGPP_TCFEU2_PublisherCustomPurposesLegitimateInterests": "00",
+					"IABGPP_TCFEU2_PublisherLegitimateInterests": "000000000000000000000000",
+					"IABGPP_TCFEU2_PublisherRestrictions2": "_1",
+					"IABGPP_TCFEU2_PurposeConsents": "010000000000000000000000",
+					"IABGPP_TCFEU2_PurposeLegitimateInterests": "000000000000000000000000",
+					"IABGPP_TCFEU2_PurposeOneTreatment": 0,
+					"IABGPP_TCFEU2_SpecialFeaturesOptIns": "000000000000",
+					"IABGPP_TCFEU2_UseNonStandardStacks": 0,
+					"IABGPP_TCFEU2_VendorConsents": "01",
+					"IABGPP_TCFEU2_VendorLegitimateInterests": ""
+				}
+			}
+		},
+		{
+			"id": "iab-us-visitor-without-tc-string",
+			"description": "An iab rule before a TC String is committed gets no section, and a US visitor under it gets no US section.",
+			"input": {
+				"options": {},
+				"policy": {
+					"model": "iab",
+					"rights": ["disclosure", "preferences"]
+				},
+				"resolution": "matched",
+				"ready": true,
+				"policyPending": false,
+				"location": "US",
+				"overrideCountry": null,
+				"effectivePermissions": {
+					"experience": true,
+					"functionality": true,
+					"marketing": true,
+					"measurement": true
+				},
+				"gpc": false,
+				"tcString": null
+			},
+			"expected": {
+				"gppString": null,
+				"sectionIds": [],
+				"usnat": null,
+				"storage": {}
+			}
+		},
+		{
+			"id": "iab-tcf-off",
+			"description": "The app turned the TCF EU section off.",
+			"input": {
+				"options": {
+					"tcf": false
+				},
+				"policy": {
+					"model": "iab",
+					"rights": ["disclosure", "preferences"]
+				},
+				"resolution": "matched",
+				"ready": true,
+				"policyPending": false,
+				"location": "DE",
+				"overrideCountry": null,
+				"effectivePermissions": {
+					"experience": true,
+					"functionality": true,
+					"marketing": true,
+					"measurement": true
+				},
+				"gpc": false,
+				"tcString": "CQX48QAQX48QAA1AHBENAqFgAEAAAAAAAAwIABEAAAAISACAAIAA.IABM.aAAAAAAAAQAA"
+			},
+			"expected": {
+				"gppString": null,
+				"sectionIds": [],
+				"usnat": null,
+				"storage": {}
+			}
+		}
+	]
+}

@@ -1,0 +1,400 @@
+---
+title: Performance
+description: Bundle policy at build time to avoid manifest fetch latency, use runtime caching when policies must refresh without a rebuild, and optionally keep browser consent requests on your origin.
+group: frameworks
+---
+
+## Bundle the manifest during builds
+
+<include src="../../shared/build-manifests/next.mdx" />
+
+## Reuse cached policy data
+
+Use runtime manifest caching when policy changes must reach your app without
+a rebuild. Set the mode in `c15t.config.ts`:
+
+{/* example: fragment */}
+
+```ts title="c15t.config.ts"
+import { defineConsentConfig, manifest } from 'c15t/next';
+
+export default defineConsentConfig({ mode: manifest({ source: 'runtime' }) });
+```
+
+Keep `withConsentManifest`, which finds the config. A manifest contains public
+policy configuration that your app server can reuse across requests. Each
+visitor's consent still resolves separately.
+
+A warm cache avoids repeated backend policy resolution. It does not eliminate
+all requests. Your app may serve its consent route, cold caches fetch
+upstream data, and consent choices still reach Inth. IAB policies can also need
+a Global Vendor List fetch.
+
+Server rendering supplies the initial policy to the browser. For browser
+initialization that needs request geography, add the
+[consent route](/docs/frameworks/next/data-fetching-reference#do-i-need-the-consent-route).
+
+## Compare manifests with backend initialization
+
+A warm manifest cache can reduce initialization latency by avoiding an upstream
+backend request. The saving depends on backend latency, cache hits and where
+consent resolution sits in rendering. It is not a fixed speedup for the whole
+page.
+
+| Fetching path | Work during initialization |
+| --- | --- |
+| Build-time manifest, recommended | Resolve consent locally from the deployment's snapshot, including on a fresh server instance. |
+| Regular backend `/init` | Wait for the backend to resolve consent and return the result. |
+| Cold manifest cache | Fetch public policy from the backend, cache it and resolve consent locally. |
+| Warm manifest cache | Reuse cached policy and resolve consent locally; local route requests and rendering still take time. |
+
+### Measured performance
+
+Two benchmark reports measure these setups. Each report lists its machine,
+network conditions, samples and reproduction steps.
+
+- [Manifest versus backend init](https://github.com/c15t/c15t/tree/v3/benchmarks/reports/next-manifest-2026-09-10).
+  With 150 ms of simulated backend latency, a warm manifest cache cut the
+  median server response time for a new visitor from about 158 ms to about
+  7 ms. A cold cache still waits for the upstream fetch.
+- [Streamed versus awaited layout](https://github.com/c15t/c15t/tree/v3/benchmarks/reports/next-consent-boundary-2026-09-25).
+  With a 4× CPU slowdown, the streamed layout painted the page in about
+  90 ms and the awaited layout in about 390 ms, because React held the
+  awaited page's streamed reveal.
+
+Measure your own deployment before you choose a layout for speed.
+
+## Keep browser consent requests on your origin
+
+By default the browser saves consent to `${backendURL}/subjects`, a separate
+origin. Sending those requests through your own app can avoid a separate
+browser DNS lookup and TLS connection to the consent backend, and lets a
+`connect-src 'self'` policy cover them. Manifests and server rendering work
+without it.
+
+The app server still connects to the backend, and each save takes an extra
+hop through your server. Measure your deployment to check the effect on
+latency. Vendor scripts, pixels and iframes keep their own URLs; only c15t
+requests move. The same setup works with a self-hosted c15t backend.
+
+Set `routePrefix` and `proxy: true` in the config, and keep `backendURL`
+absolute:
+
+{/* example: fragment */}
+
+```ts title="c15t.config.ts"
+import { defineConsentConfig } from 'c15t/next';
+
+export default defineConsentConfig({ proxy: true, routePrefix: '/api/c15t' });
+```
+
+Then mount the consent route with `proxy: true`, so it forwards saves to the
+backend. In the App Router:
+
+{/* example: fragment */}
+
+```ts title="app/api/c15t/[...c15t]/route.ts"
+import { createConsentRoute } from 'c15t/next/api';
+
+export const { DELETE, GET, OPTIONS, PATCH, POST, PUT } = createConsentRoute({
+	proxy: true,
+});
+```
+
+In the Pages Router:
+
+{/* example: fragment */}
+
+```ts title="pages/api/c15t/[...c15t].ts"
+import { createPagesConsentRoute } from 'c15t/next/pages';
+
+export default createPagesConsentRoute({ proxy: true });
+```
+
+What the route serves:
+
+| Request | Handled by |
+| --- | --- |
+| `GET /api/c15t/init` | The route, from the bundled manifest, for this request's location, language and privacy signal |
+| `GET /api/c15t/manifest` | The route, serving the bundled manifest |
+| `POST /api/c15t/subjects` and other consent paths | Forwarded to your backend because `proxy: true` |
+| Any other path | `404`, so the route is never an open proxy |
+
+Keep these details right:
+
+- `proxy: true` in `c15t.config.ts` points the browser at `routePrefix` for
+  init and saves. `resolveConsent`, `withConsentProps` and the consent route
+  keep the absolute `backendURL` from the config or
+  `NEXT_PUBLIC_C15T_BACKEND_URL`, so the server never fetches its own route
+  and `withConsentManifest` still downloads the manifest from the backend.
+- `proxy` needs `routePrefix`. Without it, `defineConsentConfig` throws
+  ``@c15t/nextjs: `proxy` sends saves through the consent route, so it needs `routePrefix`.``
+- Set `proxy: true` in both places. With it only in the config, saves reach a
+  route that answers them with 404 or 405. To send only init through the route
+  and keep saves going straight to the backend, drop `proxy` from both and keep
+  `routePrefix`.
+- `options.mode` on `ConsentRoot`, or a `hosted({ backendURL })` with its own
+  URL, keeps talking to that URL.
+- The proxy forwards the visitor's user agent, language, origin and location
+  headers, so the backend's firewall sees a normal visitor. Set
+  `trustForwardedHeaders: true` on the route only when your host overwrites
+  `x-forwarded-for`, as Vercel and Cloudflare do. Otherwise a visitor could
+  send a false IP address to your backend.
+
+TanStack Start has the same option, `createConsentStateHandler({ proxy })`.
+A full [static export](/docs/frameworks/next/static-export) has no API routes.
+Use a hosting-level proxy or the public backend URL there.
+
+## Configure manifest cache refresh
+
+This section applies to runtime fetching. A build-time snapshot stays fixed
+until the next build and does not use cache revalidation.
+
+In the App Router, `resolveConsent` and `createConsentRoute` pass
+`next: { revalidate: 300 }` to upstream manifest fetches. Next.js's Data Cache
+can reuse that policy across requests and server instances when your host
+provides a shared cache. A new function instance can therefore read cached
+policy even with an empty SDK cache. A Data Cache miss still waits for the
+backend.
+
+The SDK also keeps an in-process manifest cache, which supports ETag
+revalidation and respects upstream cache headers, including responses marked
+private. Pages Router helpers use this cache; ordinary Pages Router fetches
+do not use the App Router Data Cache.
+
+For route handlers, `manifestRevalidateSeconds` changes the Data Cache's
+300-second revalidation interval. Set it to `false` or `0` to skip that layer.
+The SDK cache still follows the upstream cache headers. Visitor-specific
+backend `/init` calls use `cache: 'no-store'`, and resolved consent is never
+shared between visitors.
+
+Once the upstream `s-maxage` has passed, the in-process cache keeps serving the
+cached manifest for as long as the upstream `stale-while-revalidate` allows
+(an explicit `s-maxage` is required for that window to apply),
+and refreshes it in the background. Requests do not wait for that refresh, and
+a refresh that fails or times out leaves the cached manifest in place, so a
+slow or unavailable backend does not delay rendering on a server that has
+already loaded the manifest. Inth sends `s-maxage=300` and a 24 hour
+`stale-while-revalidate` by default; lower the second value on a self-hosted
+backend if a policy change must reach servers sooner after an outage. A server
+with both caches empty still waits for the first upstream response.
+
+The background refresh is detached from the request. On runtimes that stop
+work once a response is sent, register it with the platform so it can finish.
+Pass `onBackgroundRevalidate` to the route; it is called inside the handler
+with the refresh promise, which never rejects:
+
+```ts title="app/api/c15t/[...c15t]/route.ts"
+import { createConsentRoute } from 'c15t/next/api';
+import { after } from 'next/server';
+
+export const { GET } = createConsentRoute({
+	onBackgroundRevalidate: (refresh) => after(() => refresh),
+});
+```
+
+`after` is stable from
+Next 15.1; on Next 15.0 import `unstable_after` instead. Other hosts pass the
+promise to their equivalent, such as `waitUntil` on Vercel or Cloudflare.
+Without it the response still returns at once; only the refresh may be cut
+short, in which case the next request starts another.
+
+The same hook receives the route's session report. A host that resolves
+init from the manifest never calls `/init`, so after each resolution the route
+posts a small report to the backend's `POST /sessions`, server-to-server, and
+the backend counts the visitor from that instead. The browser makes no request.
+`resolveConsent` reports its renders the same way through its `waitUntil`
+option. Pass `reportSessions: false` to either to send none.
+
+Build-time snapshots need no background manifest refresh. On serverless
+hosts, `onBackgroundRevalidate` can still keep the optional session report
+alive after the response. It is not required for resolving consent from the
+snapshot.
+
+## Avoid repeating startup work
+
+Keep one boundary in the App Router root layout or Pages Router `_app.tsx`.
+Remounting it during navigation creates another runtime and repeats startup
+work. Keep the consent UI in that shared root too.
+
+Choose when to resolve consent according to your page. See
+[rendering and deployment](/docs/frameworks/next/rendering) for server
+rendering, streaming and browser initialization.
+
+Measure cold entry, warm requests and client navigation separately.
+Check server requests as well as the browser Network panel. Confirm that
+consent saves reach the backend and policy updates appear after a rebuild, or
+the configured refresh window with runtime caching. If you set `proxy: true`,
+also confirm browser consent requests use your origin.
+
+## Know when ConsentRoot loads its engine
+
+`ConsentRoot` keeps c15t's consent engine out of the page's first-load
+JavaScript. The engine is the code that stores consent, saves choices and
+renders the banner in React. The server still renders the whole root, so the
+banner, its styles and any [scripts the server starts](/docs/frameworks/next/rendering#start-allowed-scripts-before-hydration)
+are in the first HTML.
+
+In the browser the page under `ConsentRoot` hydrates at once. Until the engine
+loads, c15t's hooks return the consent state the server rendered with, and
+most of their actions, such as `useSetActiveUI()`, wait for the engine and run
+when it arrives. The banner keeps its server HTML.
+
+A tap on the banner before the engine loads is handled without waiting for
+all of it:
+
+- **Accept or Reject** hides the banner at once. For a visitor with no stored
+  choice, the choice takes effect while the browser is still handling the tap,
+  before any download. Plain scripts the choice allows (see below) are
+  inserted first, so their requests start at the tap. Then `useSnapshot()`
+  and the other hooks return the choice from the next render. React flushes
+  that render and its effects in the same task.
+- A small chunk (about 9 KB compressed), requested right after the tap, then
+  stores the consent record, queues the save for your backend and calls
+  `onChoiceRecorded` and `onPermissionsChanged`. On a slow connection that
+  is a few hundred milliseconds after the tap. A visitor who leaves the page
+  in that window has no stored choice, and the next page shows the banner
+  again. Then the engine loads. It starts from the stored choice, sends the
+  queued save and records nothing a second time.
+- A visitor who already has a stored choice, an active Global Privacy Control
+  signal, or a notice-only policy takes effect when that chunk has recorded
+  the choice, not at the tap. `useSaveConsents()` called with `'all'` or
+  `'none'` before the engine loads takes the same path as the banner.
+- **Customize** hides the banner at once and opens the dialog from its own
+  chunk, without the engine. That chunk starts downloading when the pointer
+  goes down on the button, before the click. The dialog's floating trigger
+  (`showTrigger`) loads separately, so the dialog does not wait for it. The
+  engine loads once the dialog is on screen.
+  A save from that dialog takes the same path as Accept or Reject.
+  `useSetActiveUI()` opening the dialog before the engine loads does the same.
+
+A plain `scripts` or `useScriptLoader()` entry (a `src` with no callbacks,
+vendor or IAB fields) starts with the choice; the script loader takes it over
+when it loads and does not insert it again. Entries with callbacks wait for
+the script loader, which then downloads alongside the choice's chunk. A choice that needs the
+engine, such as one with declared vendors or a cleared record, waits for it
+as before.
+
+When the engine loads depends on the visitor:
+
+| Visitor | Engine loads |
+| --- | --- |
+| The banner asks them to choose and no optional category is allowed | When the first of these happens: every `<img fetchpriority="high">` on the page has loaded, the visitor presses a pointer or key or scrolls anywhere outside the banner, a tap on the banner was recorded (see above), or 10 seconds pass. A page without a priority image waits for the `load` event instead. |
+| A returning visitor who already chose and sees no banner or dialog | At the same moments as the row above. Until then `ConsentRoot` inserts the plain `scripts` and `useScriptLoader()` entries their choice allows itself, as hydration starts. |
+| Any other visitor, such as one under an IAB policy or one whose browser holds a newer choice than the server read | As soon as the browser runs `ConsentRoot`'s first-load chunk, before hydration. |
+
+On a slow connection the engine would otherwise share bandwidth with the
+page's largest image and delay Largest Contentful Paint. The browser stops
+measuring that paint at the first input or scroll, so loading the engine then
+costs it nothing.
+
+For a returning visitor, the server leaves a small inline script after the
+page that checks the browser's stored records against the state the server
+read. When the browser holds something the server did not see, such as a
+newer denial in `localStorage`, a Global Privacy Control signal or a decision
+that has expired, the engine loads at once instead: it applies the change,
+and `onPermissionsChanged` reports it, before the page's priority images
+finish. The root checks again before each script it starts, and whenever
+another tab writes storage, the page becomes visible or gets focus, or the
+decision reaches its expiry while the engine waits. When the stored choice
+is current, nothing changes at load, so
+`onChoiceRecorded`, `onPermissionsChanged` and `onSurfaceShown` fire as they
+would with the engine loaded at once, when the visitor next acts. A `scripts`
+entry with a vendor or IAB fields still loads the engine at once, and so do
+some entries with callbacks (see below).
+
+Some pages need the engine sooner. `ConsentRoot` loads it at once when:
+
+- a `scripts` entry, in `c15t.config.ts` or on `ConsentRoot`, may run for
+  this visitor (`alwaysLoad`, or a category such as `necessary` that is
+  allowed) and nothing else starts it: the server did not start it from the
+  HTML, and it is not a plain `src` entry `ConsentRoot` starts itself for a
+  returning visitor (see the table above). An entry with callbacks, vendor
+  or IAB fields needs the engine, as does any entry under
+  `persistence: false` or `options.consentSource`;
+- an entry the server started has `onLoad`, `onError`, `onDispose` or
+  `persistAfterDispose`. Only the script
+  loader hears the element's `load` and `error` events, so those callbacks
+  would otherwise run late, or not at all if the visitor navigates away
+  first. A root that unmounts before its engine removes what the server
+  started, so only the script loader can keep the element or call
+  `onDispose`. The other fields let the engine wait. The server start
+  already ran the setup that `onBeforeLoad` does. `onConsentChange`
+  reports a later change, which loads the engine anyway, and the grant the
+  page started with once the script loader takes the script over.
+  `persistAfterConsentRevoked` only acts on a revoke, which loads the
+  engine too;
+- an entry the visitor denied sets `observeConsentBeforeLoad` and
+  `onConsentChange`, so it hears the denial straight away;
+- `useScriptLoader()` receives such a script, on mount or later.
+
+`ConsentRoot` renders the engine before the page hydrates, as a statically
+imported root would, when it has no `state`, when `options.enabled` is
+`false`, with an experiment, with a `networkBlocker` or `clearOnRevocation`
+in its config, for an IAB policy, or when the app renders `IABProvider`.
+
+`useNetworkBlocker()` and `useIframeBlocker()` work before the engine loads,
+from the server's state, and do not load it. `useEventDispatcher()` delivers
+events sent before the engine loads once it has loaded. `usePersistence()`
+starts once the engine has loaded.
+
+## Start returning visitors' scripts sooner
+
+`ConsentRoot` loads the script loader as a separate chunk, and only on pages
+whose `scripts` array is not empty. Pages without scripts never download it.
+By default the chunk loads once the page has hydrated.
+
+When `ConsentRoot` renders its engine at once and the visitor's consent
+already lets one of those scripts run, it starts the download during its
+first render in the browser instead, so the chunk loads while React hydrates
+the rest of the page. It decides as the provider would once mounted: with the
+state from `resolveConsent()`, once a streamed state arrives, the current
+policy, Global Privacy Control, the visitor's vendor switches and any newer
+denial stored in the browser. A grant any of those restricts does not count.
+The visitors this covers:
+
+- a returning visitor whose stored choice allows one of the scripts, when
+  the engine loads at once for them;
+- any visitor, when a script has `alwaysLoad`, since it runs whatever they
+  chose;
+- every visitor, when `options.enabled` is `false`, since a disabled provider
+  grants every category;
+- a visitor under a policy that allows the scripts without a choice, such as
+  an opt-out region.
+
+With `options.consentSource` set, and the provider not disabled, the external
+source decides consent after the page mounts, so only `alwaysLoad` scripts
+start the download early.
+
+A returning visitor whose engine waits (see
+[Know when ConsentRoot loads its engine](#know-when-consentroot-loads-its-engine))
+downloads neither chunk at first. `ConsentRoot` inserts the plain `scripts`
+and `useScriptLoader()` entries their choice allows itself, as hydration
+starts. The script loader downloads with the engine, at the moments that
+section's table lists, and takes those scripts over without inserting them
+again.
+
+The larger the tree inside `ConsentRoot`, the more of that request hydration
+covers. There is nothing to configure. The code that decides ships with
+`ConsentRoot` only: a `ConsentProvider` from `@c15t/react` rendered without
+`ConsentRoot` loads the chunk when it mounts.
+
+Next.js assigns chunk file names in the browser build, and the server
+rendering `ConsentRoot` cannot read them. So the browser records the engine's
+chunk URLs in `localStorage` (key `c15t-engine-chunks`) the first time it
+loads the engine. It records only URLs under `/_next/static/`, never the
+consent-gated scripts that start while the engine loads. When the server
+renders a visitor the engine must serve at once, `ConsentRoot` adds a small
+inline script after the page that preloads those URLs at low priority while
+the HTML is still parsing. For a returning visitor who already chose,
+the preload runs only when the stored-choice check before it finds the
+choice changed in the browser; otherwise their engine waits for the page's
+priority images and nothing is preloaded. A root that must load the engine
+at once anyway gets no check and the plain preload: a `scripts` entry on
+`ConsentRoot` or in `c15t.config.ts` that needs the script loader, a root
+with `persistence: false`, `options.consentSource`, `options.enabled:
+false`, an experiment or a `networkBlocker`. The record is
+tied to the page's build, so after a deploy nothing stale is fetched; the
+first visit after a deploy loads the engine without a preload and records the
+new URLs. With storage blocked, the engine loads when the first-load chunk
+runs.

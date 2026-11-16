@@ -1,0 +1,151 @@
+---
+title: Quickstart
+description: Add the stock c15t banner, preferences and script gating to a JavaScript app built with Vite or another bundler, with no UI framework, using @c15t/browser.
+group: frameworks
+---
+
+## Connect Inth
+
+[Create an Inth project](https://inth.com/dashboard/sign-up?framework=javascript), set its policy rules, add your
+app's origin to its trusted origins, and copy the project's backend URL.
+
+This guide uses `@c15t/browser` as an ES module in a Vite app, with your
+project's policy bundled at build time. `init()` starts the consent runtime
+and mounts the stock banner and preference dialog. For your own UI, use the
+[headless runtime](/docs/frameworks/javascript/headless) instead. Sites
+without a build step load the same package from a script tag;
+[choose your setup](/docs/concepts/choose-your-setup) points to that guide.
+
+Bundling the policy at build time is the recommended production setup.
+Rebuild after changing policies, translations or vendors.
+
+## Install
+
+<CommandTabs command="@c15t/browser c15t @c15t/integrations" mode="install" />
+
+`@c15t/browser` is not part of the `c15t` package. `c15t` supplies the Vite
+plugin at `c15t/build`, and `@c15t/integrations` the PostHog helper used
+below.
+
+## Bundle your policy
+
+Add `consentManifest` to `vite.config.ts`:
+
+<include src="../../shared/examples/javascript/vite-config.mdx" />
+
+The plugin reads `VITE_C15T_BACKEND_URL`. Set it to your project's backend URL,
+including any path prefix, in `.env` or wherever you build:
+
+```sh title=".env"
+VITE_C15T_BACKEND_URL=https://your-project.inth.app
+```
+
+If your app already sets `VITE_INTH_PROJECT_URL` for other Inth SDKs, that works
+too. When both are set, `VITE_C15T_BACKEND_URL` wins.
+
+`consentManifest` downloads your project's public policy from `/manifest`
+during `vite build`, or in `vite dev` when the app first loads it, and serves
+it to your app as `snapshot`
+from `c15t/generated`. No file is written into your project.
+
+<include src="../../shared/build-time-manifest-notes.mdx" />
+
+<include src="../../shared/vite-build-manifest.mdx" />
+
+## Start c15t
+
+Call `init()` once, in your browser entry point:
+
+<include src="../../shared/examples/javascript/init.mdx" />
+
+`manifest()` resolves the policy from the bundled snapshot in the browser,
+with no `/manifest` request. It reads the snapshot and the backend URL from
+what `consentManifest` downloaded. Consent choices go to that backend, and so
+does an `/init` request when the policy depends on the visitor's country or
+region and `overrides` does not supply it. That request returns the backend's
+current policy, which can be newer than the snapshot. Vite reads
+`VITE_C15T_BACKEND_URL` at build time, so set it before you build, not when
+you serve the files.
+
+To apply policy edits without rebuilding, pass `hosted()` from
+`@c15t/browser` as the mode instead. The browser then requests the policy from
+`/init` on every page load. Your bundle keeps only the mode you import.
+
+PostHog waits for measurement permission with `loadMode: 'after-consent'`, and
+`cookieless_mode: 'never'` turns off its cookieless capture. Replace
+`phc_your_project_key` with your PostHog project key. The PostHog helper sends
+events to PostHog's EU cloud; for a US project, add `region: 'us'`.
+
+Include the measurement category in your Inth policy. Remove any other loader
+for PostHog, such as a snippet in `index.html`, so it loads once and only
+through c15t. Add other vendors to the same list, each with the category it
+needs; the [integration guides](/docs/integrations/overview) give the helper
+for each one.
+
+`init()` returns the client. It reads stored choices, resolves the visitor's
+policy, shows the banner when the policy needs one, and loads each
+script once its category is allowed. The banner renders in a shadow root with
+its own styles, so you do not import a stylesheet. The client lasts for the
+page; call `consent.dispose()` only if your app removes consent entirely.
+
+When a visitor withdraws a permission they had given, the client saves the
+choice and reloads the page, because code that already ran cannot be unloaded.
+[Scripts](/docs/frameworks/javascript/scripts) explains how to change that.
+
+## Gate embeds and add a privacy settings button
+
+Put the embed's URL in `data-src` and name its category in `data-category`.
+The client sets `src` only while that category is allowed:
+
+<include src="../../shared/examples/javascript/embed.mdx" />
+
+Visitors need a way to change their choice after the banner closes. The
+client opens the preference dialog from any link to `#c15t-preferences`:
+
+<include src="../../shared/examples/javascript/preferences-link.mdx" />
+
+A button with `data-c15t-action="customize"` opens it too, without code.
+
+## Change the look
+
+Pass theme tokens in `ui.theme`, next to the options your `init()` call
+already has. This example turns the buttons purple and rounds the cards:
+
+<include src="../../shared/examples/javascript/theme.mdx" />
+
+`theme` takes the same tokens as every c15t package; see
+[theme tokens](/docs/customization/tokens). `presentation.prompt` changes the
+banner's shape and position, `ui.css` adds CSS inside the shadow root, and
+`i18n` changes the copy. [Customize](/docs/frameworks/javascript/customize)
+covers each option.
+
+## Check it works
+
+Run the app, open it in a private window, and open the browser's developer
+tools on the Network tab.
+
+1. Before you choose, filter for `posthog`. There are no requests, and the
+   YouTube iframe has no `src`.
+2. Click **Reject All** and reload. The banner stays closed and the PostHog
+   requests stay absent.
+3. Click **Privacy settings**, turn on **Analytics** (the `measurement` category) and save. PostHog and
+   the YouTube player load.
+4. Open **Privacy settings** again and turn **Analytics** off. The page reloads,
+   and PostHog and YouTube do not load again.
+
+If no banner appears, see [why is there no banner](/docs/guides/troubleshooting#why-is-there-no-banner).
+Run the full [verification checklist](/docs/guides/verify-consent) before you
+ship.
+
+## Next steps
+
+- Render your own banner with the [headless runtime](/docs/frameworks/javascript/headless).
+- Inspect consent with [DevTools](/docs/frameworks/javascript/dev-tools).
+- Read consent from your code. `consent.has('measurement')` answers whether a
+  category is allowed now, `consent.on('consent', listener)` reports changes,
+  and `consent.save({ measurement: true })` records a choice. The
+  [@c15t/browser API](/docs/frameworks/javascript/api/browser) lists every
+  method, and [options](/docs/frameworks/javascript/api/browser-options) every
+  option.
+- Run code on consent events with [callbacks](/docs/frameworks/javascript/callbacks).
+- Add languages with [translations](/docs/frameworks/javascript/translations).

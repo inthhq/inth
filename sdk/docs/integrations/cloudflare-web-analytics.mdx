@@ -1,0 +1,55 @@
+---
+title: Cloudflare Web Analytics
+description: Load the Cloudflare Web Analytics beacon only after measurement consent with the c15t cloudflareWebAnalytics helper, and check it in DevTools.
+seoTitle: Cloudflare Web Analytics cookie consent with c15t
+seoDescription: Load the Cloudflare Web Analytics beacon only with measurement consent. Set it up with the c15t cloudflareWebAnalytics helper.
+icon: cloudflare-web-analytics
+group: integrations
+---
+
+The c15t `cloudflareWebAnalytics` helper keeps the Cloudflare Web Analytics
+beacon, `beacon.min.js`, off the page until `measurement` has consent.
+Cloudflare says that the beacon sets no cookies, but c15t still waits for
+consent. The helper sends no consent signal to Cloudflare. If the visitor
+withdraws consent, c15t removes the script element. By default, c15t also
+reloads the page.
+
+## Configure Cloudflare Web Analytics
+
+Copy the beacon token from the Web Analytics installation snippet. If
+Cloudflare adds the beacon to this site automatically, turn that off so the
+page has one beacon and c15t controls it.
+
+<CommandTabs command="@c15t/integrations" mode="install" />
+
+```ts title="src/consent-scripts.ts"
+import { cloudflareWebAnalytics } from '@c15t/integrations/cloudflare-web-analytics';
+
+export const scripts = [cloudflareWebAnalytics({ token: 'YOUR_BEACON_TOKEN' })];
+```
+
+<include src="../shared/integrations/register-scripts.mdx" />
+
+## Options
+
+| Option | Default | Behavior |
+| --- | --- | --- |
+| `token` | Required | Beacon token, written into the `data-cf-beacon` attribute. The helper trims it. Empty values log an error and the script does not load. |
+| `spa` | `true` | Written into `data-cf-beacon`. Turns on Cloudflare's route tracking for single-page apps. Set `false` for a site with only full page loads. |
+| `scriptUrl` | `https://static.cloudflareinsights.com/beacon.min.js` | Loader URL override. |
+
+## Loading and revocation
+
+`cloudflareWebAnalytics` uses the `measurement` category. Cloudflare Web
+Analytics sets no cookies, but the helper still waits for measurement
+permission. It loads `beacon.min.js` with `defer`. On revocation the helper
+removes the script element and calls no Cloudflare API.
+
+## Verify Cloudflare Web Analytics
+
+Filter DevTools Network by `cloudflareinsights.com`. After you allow
+measurement, `beacon.min.js` loads and its script element carries
+`data-cf-beacon` with your token and `"spa":true`. Change route in your app and
+check that the beacon reports the new page.
+
+<include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

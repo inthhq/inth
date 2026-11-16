@@ -1,0 +1,42 @@
+{
+	"version": 1,
+	"cli": {
+		"analytics": false,
+		"packageManager": "bun"
+	},
+	"newProjectRoot": "projects",
+	"projects": {
+		"angular-20": {
+			"projectType": "application",
+			"root": "",
+			"sourceRoot": "src",
+			"prefix": "app",
+			"architect": {
+				"build": {
+					"builder": "@angular/build:application",
+					"options": {
+						"browser": "src/main.ts",
+						"index": "src/index.html",
+						"outputMode": "server",
+						"server": "src/main.server.ts",
+						"ssr": {
+							"entry": "src/server.ts"
+						},
+						"tsConfig": "tsconfig.app.json"
+					},
+					"configurations": {
+						"production": {
+							"outputHashing": "all"
+						},
+						"development": {
+							"extractLicenses": false,
+							"optimization": false,
+							"sourceMap": true
+						}
+					},
+					"defaultConfiguration": "production"
+				}
+			}
+		}
+	}
+}

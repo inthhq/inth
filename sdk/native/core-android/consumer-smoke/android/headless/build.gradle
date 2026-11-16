@@ -1,0 +1,23 @@
+plugins { id 'org.jetbrains.kotlin.jvm' }
+kotlin { jvmToolchain(17) }
+dependencies {
+    implementation "com.c15t:c15t-core:${providers.gradleProperty('c15t.core.version').get()}"
+    testImplementation 'junit:junit:4.13.2'
+}
+test { systemProperty 'c15t.expectedVersion', providers.gradleProperty('c15t.core.version').get() }
+
+// Inspect the resolved graph, including transitive dependencies, rather than source imports.
+tasks.register('verifyHeadlessGraph') {
+    doLast {
+        def artifacts = configurations.runtimeClasspath.resolvedConfiguration.resolvedArtifacts
+        def forbidden = artifacts.findAll {
+            it.extension == 'aar' || it.moduleVersion.id.group.startsWith('androidx') ||
+                it.moduleVersion.id.group.startsWith('com.facebook.react') ||
+                it.moduleVersion.id.name.contains('compose') || it.moduleVersion.id.name.contains('expo')
+        }
+        def stdlib = artifacts.find { it.moduleVersion.id.group == 'org.jetbrains.kotlin' && it.moduleVersion.id.name == 'kotlin-stdlib' }
+        assert stdlib.moduleVersion.id.version == '2.1.20' : "Unsupported stdlib baseline: $stdlib"
+        assert forbidden.empty : "Headless JVM core pulled in platform/UI dependencies: $forbidden"
+    }
+}
+test.dependsOn verifyHeadlessGraph

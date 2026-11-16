@@ -1,0 +1,273 @@
+---
+title: Expo and EAS
+description: Add the c15t Expo config plugin, build a custom native app and configure EAS access and OTA compatibility.
+group: frameworks
+---
+
+The c15t config plugin writes your Inth project and consent settings into the
+native app at build time. You then use the same provider, hooks and native
+consent screens as a bare React Native app.
+
+Use Expo SDK 55 through 58 and a development build or standalone app. Keep the
+React Native and React versions prescribed by that Expo release. For a new
+app, target Expo 58 and verify its native build and consent journeys before
+shipping. Expo Go cannot load this native module. See the
+[version pairings and acceptance limits](/docs/frameworks/react-native/platform-support).
+
+## Install the package
+
+The mobile prerelease uses a maintainer-provided package tarball and versioned
+Android artifacts. Install the tarball from your Expo app directory:
+
+```sh
+npm install /absolute/path/to/c15t-react-native.tgz
+```
+
+Obtain the Maven repository URL and build-time access for Android. The plugin
+has no default artifact repository. [Mobile availability](/docs/guides/mobile-status)
+records the current distribution options.
+
+The package ships a `c15t-react-native` agent skill. Since SDK 58, Expo links
+agent skills that installed packages ship: run `npx @expo/agent-cli
+skills:sync` to link it for your coding agent.
+
+## Configure the plugin
+
+Add `@c15t/react-native` to the `plugins` list in your existing
+`app.config.ts`. Merge the plugin entry into your current configuration so you
+retain your app's bundle identifier, package name and other plugins:
+
+<include src="../../shared/examples/expo-dev/expo-config.mdx" />
+
+Import the plugin's types from `@c15t/react-native/expo-plugin`, as the example
+does. That subpath also works as the plugin name, so an existing
+`'@c15t/react-native/expo-plugin'` entry needs no change. Both names give the
+same native configuration.
+
+The plugin runs on your app's own copy of Expo's config plugin library, the one
+`expo/config-plugins` provides, so it follows the Expo SDK you installed.
+`@c15t/react-native` declares `expo` 55 through 58 as an optional peer
+dependency; a bare React Native app does not need it.
+
+Replace these values before building:
+
+| Value | Use |
+| --- | --- |
+| `backendURL` | The project URL from your Inth dashboard, such as `https://your-project.inth.app`. The mobile SDKs work only with Inth, so prebuild refuses any other host. |
+| `consentCategories` | The categories your app uses, also configured in the project's policy. |
+| `androidMavenRepository.url` | The versioned repository supplied for your native artifacts. |
+| Maven environment variable names | Names available in your local and cloud build environments. Their values stay outside app configuration. |
+| `policyResource` | The optional build-exported policy file. Remove this option if you are not embedding one. |
+
+The checked example names the private pilot endpoint and repository. They are
+reference values, not your app's configuration. The Inth project URL is public
+and goes into the binary. Repository credentials are build-time inputs.
+
+If you keep `policyResource`, follow [offline policies](/docs/guides/mobile-offline)
+to export `c15t-policy.json` beside `app.config.ts` before prebuild. This allows
+a fresh installation to resolve a conservative policy without a network
+connection. You can add it after the online path works.
+
+For development and CI, add `dryRun: true`. Consent works on the device and
+the app sends no consent records. A release build refuses to start c15t with
+it, so keep it out of release configuration. See
+[Use dryRun in development and CI](/docs/frameworks/react-native/configuration#use-dryrun-in-development-and-ci).
+
+The plugin configures native launch metadata, Android startup and internet
+permission, SDK floors and iOS privacy declarations. It also sets Google
+Analytics for Firebase's four
+[Consent Mode defaults](/docs/integrations/firebase-analytics#deny-consent-mode-signals-by-default)
+to denied in `Info.plist` and `AndroidManifest.xml`, so Firebase grants nothing
+before c15t's consent is read. These keys are harmless in an app without
+Firebase. The native engine owns
+policy resolution and storage. You do not pass a backend URL to
+`ConsentProvider` in JavaScript.
+
+The plugin raises the iOS deployment target to 16.4 when needed and preserves
+a higher target. This includes Expo 55, whose default target is 15.1. Android
+requires API 24 or later and compile SDK 36 or later. Expo 55 through 57
+default to compile SDK 36 and Expo 58 to 37, so a new app meets both. Use JDK
+17 and the host's compatible Gradle, Android Gradle Plugin and Kotlin setup.
+
+The plugin does not change Android SDK levels. If `expo-build-properties` or
+a Gradle file sets `minSdkVersion` below 24 or `compileSdkVersion` below 36,
+prebuild fails and names the file and value to change.
+
+## Theme the native screens
+
+Add a `theme` to the plugin options to set the colors, radii, spacing, type,
+per-part slots, app identity and provider attribution of the native consent
+screens. The plugin writes them into `Info.plist` and `AndroidManifest.xml` at
+prebuild, so you do not need your own config plugin. The option takes the same
+object as `createConsentTheme`, so a JSON theme file can style the native
+screens here and the React Native components at runtime; see
+[Customize](/docs/frameworks/react-native/customize#theme-both-renderers-from-one-object).
+Pass the object as `theme` in the `consent` options above:
+
+<include src="../../shared/examples/expo-dev/expo-theme.mdx" />
+
+Field names follow the web theme from `@c15t/ui`. `colors` holds the light
+values and `dark` overrides them in dark mode. Each color the native screens
+draw is `#RRGGBB`. A native `dark` value needs the same field in `colors`.
+
+| Field | Web token | Native setting |
+| --- | --- | --- |
+| `colors.primary` | `--c15t-primary` | Accent: links, switches, Save |
+| `colors.textOnPrimary` | `--c15t-text-on-primary` | Text on the accent |
+| `colors.surface` | `--c15t-surface` | Cards and list rows |
+| `colors.text` | `--c15t-text` | Main text |
+| `colors.textMuted` | `--c15t-text-muted` | Secondary text |
+| `colors.canvas` | None | Page background |
+| `colors.surfaceMuted` | None | Quieter surface for partner lists |
+| `colors.decision`, `colors.textOnDecision` | None | Accept all and Reject all fill and text |
+| `radius.sm`, `radius.md`, `radius.lg` | `--c15t-radius-*` | Callout, button and card, and notice card radius, in points or dp |
+| `spacing.xs` to `spacing.xl` | `--c15t-space-*` | Page gutters, section gaps and padding, in points or dp |
+| `typography.fontSize.sm`, `.base`, `.lg` | `--c15t-font-size-*` | Supporting, body and headline text sizes, in points or sp |
+| `typography.fontFamily` | `--c15t-font-family` | A bundled font for every role but the headline; see below |
+| `typography.headlineFont` | None | `serif`, `rounded`, `sans` or a bundled font; see below |
+| `slots.consentBannerTitle`, `slots.consentBannerDescription`, `slots.buttonPrimary`, `slots.buttonSecondary` | Web `slots` | One part's `color`, `backgroundColor`, `borderRadius` or `fontSize` |
+| `brand.name`, `brand.mark`, `brand.hidden` | None | App name and mark above the headline |
+| `branding.provider`, `branding.name`, `branding.mark`, `branding.hidden` | None | Provider attribution |
+
+For a bundled font in `fontFamily` or `headlineFont`, iOS needs the
+PostScript name and Android needs the font resource name. One string works on
+both when it is a valid resource name, such as `inter_bold`. When the names
+differ, pass both: `headlineFont: { ios: 'Inter-Bold', android: 'inter_bold' }`.
+`fontFamily` takes a bundled font only; leave it out for the system face.
+
+To build without the stock native screens, set `nativeUI: false` instead of
+`theme`; see [Build without the stock native screens](/docs/frameworks/react-native/headless#build-without-the-stock-native-screens).
+
+Fields only the React Native components draw, such as `motion`,
+`colors.border` or `typography.lineHeight`, are checked and not written.
+Prebuild fails on a value the native screens cannot draw, such as an `hsl()`
+color, on a web field neither renderer draws, such as `shadows`, and on `copy`. With
+`theme` set, the plugin owns these native keys and removes ones you delete
+from it. Without `theme`, it leaves them alone. Headline and introduction copy
+are separate; see [Customize](/docs/frameworks/react-native/customize#copy-and-languages).
+Rebuild the binary after you change the theme.
+
+## Add the React root
+
+Create `setup.tsx` at the project root using the
+[quickstart's privacy-settings button](/docs/frameworks/react-native/quickstart#keep-privacy-settings-reachable).
+Keep this file outside the Expo Router route directory.
+
+For an app whose entry point is `App.tsx`, use the quickstart's `App.tsx`
+example directly.
+
+For Expo Router, change your existing root layout instead. Import
+`ConsentProvider` from `@c15t/react-native` in `app/_layout.tsx` or
+`src/app/_layout.tsx`. Wrap the existing `Stack` or `Slot` in that layout,
+keeping your other providers and navigation configuration. For example, this
+fragment wraps an existing `Stack`:
+
+{/* example: fragment */}
+
+```tsx
+return (
+	<ConsentProvider privacyPolicyURL="https://example.com/privacy">
+		<Stack />
+	</ConsentProvider>
+);
+```
+
+Replace the privacy-policy URL. Preserve your layout's loading, splash-screen
+and error handling. Adding `App.tsx` to an Expo Router app does not replace its
+root layout. Keep the provider mounted across route changes and a standing
+Privacy settings action reachable after the first prompt closes.
+
+## Run the same app on web
+
+A universal app can also run on web with `npx expo start --web`. The same
+import then uses the c15t browser engine instead of the native core and reads
+this plugin's configuration. Install `@c15t/core` for web and mount
+`ConsentBanner` there, since web has no native screens. See
+[Expo web](/docs/frameworks/react-native/web) for the setup and for which
+features stay native-only.
+
+## Build locally
+
+Run prebuild after adding or changing native plugin configuration, then build
+one platform at a time:
+
+```sh
+npx expo prebuild
+npx expo run:ios
+npx expo run:android
+```
+
+Use your project's existing signing and device settings. A development build
+contains the native module; opening the same project in Expo Go will report
+that it is unavailable.
+
+The first launch resolves your policy and shows the native prompt if a choice
+is required. Check Reject all, relaunch and Privacy settings using the
+[quickstart verification steps](/docs/frameworks/react-native/quickstart#check-that-it-works).
+
+## Make private artifacts available to EAS
+
+An EAS worker needs access to both the installed package and the Android
+artifacts:
+
+1. Make the tarball or authorized private package source available to the
+   remote build. A file that exists only on your computer cannot be installed
+   by the worker.
+2. Provide the Maven username and token through EAS build environment secrets,
+   using the names configured in `androidMavenRepository.credentials`.
+3. Keep your app's bundle identifier, Android package and signing credentials
+   configured as for any other EAS native build.
+4. Run a native development profile from your app directory:
+
+```sh
+npx eas-cli build --profile development --platform ios
+npx eas-cli build --profile development --platform android
+```
+
+The Android repository must be reachable by EAS over HTTPS. A local
+file-based Maven staging directory is suitable for a local build only.
+
+## Keep OTA updates compatible
+
+Set `runtimeVersion` whenever your app enables `updates.url`. The example uses
+the fingerprint policy to derive it from native inputs.
+
+An OTA update can change compatible JavaScript. Changes to native APIs,
+permissions, consent screens, themes, native assets, Codegen or an embedded
+policy file need a new binary. A JavaScript update cannot add native methods
+to an already installed app. See
+[compatibility and OTA](/docs/frameworks/react-native/platform-support).
+
+## Add tracking authorization only when needed
+
+For a feature that needs Apple's tracking authorization, set
+`enableAppTrackingTransparency` and supply app-specific
+`trackingUsageDescription`. The plugin also supports
+`trackingMarkdownUsageDescription`, its localization map,
+`skAdNetworkIdentifiers` and `privacyTrackingDomains`.
+
+Once ATT is enabled, `<ConsentProvider>` asks for it after the consent prompt
+closes, and only if the person granted marketing. Set `trackingRequest` to
+`beforeConsent` or `manual` to change that. A c15t consent grant does not
+replace Apple's answer. Read
+[ask for ATT after the consent prompt](/docs/frameworks/react-native/iab#ask-for-att-after-the-consent-prompt)
+for the order and the App Store reasoning, and
+[ATT and ads](/docs/frameworks/react-native/iab#keep-att-separate) before adding
+an advertising SDK.
+
+## IAB integrations
+
+Set the plugin's `iab` option to turn on IAB TCF. It takes your registered
+`cmpId`, your `cmpVersion`, the `publisherCountryCode` and an optional
+`consentScreen`. Prebuild fails with a clear message when a value is missing or
+out of range. [Turn on IAB TCF](/docs/frameworks/react-native/configuration#turn-on-iab-tcf)
+lists the ranges and native keys.
+
+`iab` does not work with an in-code `policy`, because the Global Vendor List
+comes from your project's `/init` response. Prebuild fails if you set both.
+
+`vendors` narrows the disclosed vendor list; it does not turn IAB on. For
+publisher restrictions or custom purposes, use the
+[app-owned native IAB path](/docs/guides/mobile-iab).
+
+For EAS services, see [Expo Observe](/docs/integrations/expo-observe) and [EAS PostHog](/docs/integrations/posthog#apps-set-up-with-the-eas-posthog-integration).

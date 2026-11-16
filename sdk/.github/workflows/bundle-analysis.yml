@@ -1,0 +1,54 @@
+name: Bundle Analysis
+
+on:
+  workflow_call:
+    inputs:
+      base_ref:
+        type: string
+        default: 'HEAD^'
+      built:
+        type: boolean
+        default: false
+  workflow_dispatch:
+    inputs:
+      base_ref:
+        description: Revision to compare with
+        default: 'HEAD^'
+
+permissions:
+  contents: read
+
+env:
+  NODE_OPTIONS: --max-old-space-size=6144
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+  TURBO_CACHE_POLICY: ${{ vars.TURBO_CACHE_POLICY }}
+
+jobs:
+  bundle:
+    permissions:
+      contents: read
+      id-token: write
+    name: Consumer bundle budgets
+    runs-on: ${{ github.event.pull_request.head.repo.fork && 'ubuntu-latest' || 'depot-ubuntu-24.04-4' }}
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+        with:
+          built: ${{ inputs.built || false }}
+      - name: Measure identical consumer fixtures against base and head
+        env:
+          BENCHMARK_BASE_REF: ${{ inputs.base_ref }}
+        run: bun scripts/benchmark-run.ts bundle
+      - name: Save measurements and comparison
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: consumer-bundles
+          path: .ci-reports/bundle/
+          retention-days: 14
+          include-hidden-files: true
+          if-no-files-found: error

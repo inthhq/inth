@@ -1,0 +1,188 @@
+---
+title: Braze
+description: Keep the Braze SDK disabled until c15t consent allows it and record Google's DMA consent attributes on the Braze user, in Swift, Kotlin, React Native and Expo.
+seoTitle: Braze consent for mobile apps with c15t
+seoDescription: Enable and disable the Braze SDK from c15t consent and set Google DMA consent attributes in Swift, Android, React Native and Expo apps.
+group: integrations
+---
+
+The Braze helper keeps the Braze SDK disabled until a category allows it.
+While Braze runs, it records Google's DMA consent in the
+`$google_ad_user_data` and `$google_ad_personalization` custom attributes,
+which Braze forwards to Google in
+[Audience Sync](https://braze.com/docs/partners/canvas_audience_sync/google_audience_sync).
+The category defaults to `marketing`, like the web's email and messaging
+helpers. The two attributes come from the shared
+[Consent Mode mapping](/docs/integrations/google-tag#how-categories-map-to-google-consent-types).
+
+The helper ships in `C15tApple`, `c15t-android` and
+`@c15t/react-native/integrations`. c15t adds no Braze dependency. The web has
+no Braze helper.
+
+## What the helper changes
+
+| Consent | Braze calls |
+| --- | --- |
+| Category denied or pending at startup | Disable the SDK |
+| Category granted | Enable the SDK, once per grant, then set both attributes |
+| Marketing changes while the category stays granted | Set both attributes |
+| Category withdrawn | Disable the SDK, and nothing else |
+
+[Disabling Braze](https://www.braze.com/docs/developer_guide/analytics/managing_data_collection)
+cancels its network requests and drops pending work. Android and Swift keep
+the disabled state across launches.
+
+### Braze keeps the last attributes after withdrawal
+
+When the category Braze runs under is withdrawn, the helper disables Braze
+straight away and does **not** write `false` to the two attributes first.
+Braze would drop that write: disabling cancels in-flight requests, and the
+data flush on Swift, Android and React Native (`requestImmediateDataFlush`)
+reports neither success nor failure. Stopping collection at once is the safe
+choice for the user, so c15t does not send a write it cannot confirm.
+
+So Braze's servers keep whatever the attributes last said, which can be
+`true`, and Audience Sync can go on treating the user as consented. To close
+that gap:
+
+- Run Braze under a category other than marketing, such as `functionality`
+  for push and in-app messages. Withdrawing marketing then leaves Braze
+  running, and the helper writes `false` through Braze's normal sync.
+- When the category Braze runs under is withdrawn, set
+  `$google_ad_user_data` and `$google_ad_personalization` to `false` from
+  your backend with Braze's [`/users/track` endpoint](https://www.braze.com/docs/api/endpoints/user_data/post_user_track),
+  and remove the user from synced audiences with an Audience Sync step, as
+  Braze's [Audience Sync guide](https://braze.com/docs/partners/canvas_audience_sync/google_audience_sync)
+  requires for withdrawn consent. c15t does not do this for you.
+
+## Before you start
+
+Complete the [Swift](/docs/frameworks/swift/quickstart),
+[Android](/docs/frameworks/android/quickstart) or
+[React Native](/docs/frameworks/react-native/quickstart) quickstart, with the
+category you choose in your Inth policy and native configuration. Install the
+Braze Swift SDK 7.6 or later, Android SDK, or `@braze/react-native-sdk`.
+
+Push notifications and in-app messages need Braze to run. If you treat them as
+part of the app's function rather than marketing, pass
+`functionality` as the category. The DMA attributes still follow marketing.
+
+## Connect a Swift app
+
+```swift title="BrazeConsentOwner.swift"
+import BrazeKit
+import C15tApple
+import C15tCore
+
+final class BrazeConsentOwner {
+    private let integration: BrazeIntegration
+
+    init(core: ConsentCore, braze: Braze) {
+        integration = BrazeIntegration(
+            core: core,
+            setEnabled: { braze.enabled = $0 },
+            setGoogleAdsConsent: { consent in
+                braze.user.setCustomAttribute(key: "$google_ad_user_data", value: consent.adUserData)
+                braze.user.setCustomAttribute(key: "$google_ad_personalization", value: consent.adPersonalization)
+            }
+        )
+    }
+
+    func stop() { integration.cancel() }
+    func syncAfterUserChange() { integration.sync() }
+}
+```
+
+## Connect an Android app
+
+```kotlin title="BrazeConsent.kt"
+import android.content.Context
+import com.braze.Braze
+import com.c15t.android.integrations.BrazeIntegration
+import com.c15t.core.C15t
+
+fun connectBrazeConsent(context: Context, onError: (Exception) -> Unit): BrazeIntegration {
+	val core = checkNotNull(C15t.current) { "Install c15t before connecting Braze" }
+	return BrazeIntegration(
+		core = core,
+		enableSdk = { Braze.enableSdk(context) },
+		disableSdk = { Braze.disableSdk(context) },
+		setGoogleAdsConsent = { consent ->
+			Braze.getInstance(context).getCurrentUser { user ->
+				user.setCustomUserAttribute("\$google_ad_user_data", consent.adUserData)
+				user.setCustomUserAttribute("\$google_ad_personalization", consent.adPersonalization)
+			}
+		},
+		onError = onError,
+	)
+}
+```
+
+Braze asks apps to get a fresh `Braze.getInstance` after disabling, which the
+snippet does on each call. `disableSdk` reads `SharedPreferences`; Braze
+suggests a background thread for it.
+
+## Connect React Native or Expo
+
+Copy the checked connection function into `braze-consent.ts`:
+
+<include src="../shared/examples/react-native-bare/rn-braze-integration.mdx" />
+
+Then supply `@braze/react-native-sdk`:
+
+{/* example: fragment */}
+
+```ts title="braze-vendor.ts"
+import Braze from '@braze/react-native-sdk';
+
+import { connectAppBraze } from './braze-consent';
+
+export const connectBrazeVendor = (onError: (error: unknown) => void) =>
+	connectAppBraze(
+		{
+			disableSDK: () => Braze.disableSDK(),
+			enableSDK: () => Braze.enableSDK(),
+			setGoogleAdsConsent: ({ adUserData, adPersonalization }) => {
+				Braze.setCustomUserAttribute('$google_ad_user_data', adUserData);
+				Braze.setCustomUserAttribute(
+					'$google_ad_personalization',
+					adPersonalization
+				);
+			},
+		},
+		onError
+	);
+```
+
+Braze notes that on iOS, `enableSDK` from React Native may only take effect
+on the next launch. Expo needs a development build with Braze's config
+plugin.
+
+## Handle user changes, reset and teardown
+
+The attributes belong to the current Braze user. After `changeUser`, call
+`syncAfterUserChange()`, `sync()` or `await consent.sync()` to record them on
+the new user. Teardown (`stop()`, `close()` or `disconnect()`) disables Braze
+without writing attributes. To clear data on the device, use Braze's
+`wipeData`.
+
+## Check the integration
+
+1. Launch with no saved choice. Confirm Braze sends no session.
+2. Grant marketing. Confirm a session, and both attributes as `true` on the
+   user's profile.
+3. Withdraw marketing. Confirm Braze stops sending at once, and that your
+   backend update sets both attributes to `false` on the profile.
+4. With `category` set to `functionality`, withdraw marketing only. Confirm
+   both attributes become `false` while Braze keeps running.
+5. Relaunch after withdrawal. Confirm Braze stays disabled.
+
+The helper tests cover order, withdrawal and category changes with recorded
+calls. They were not run against the Braze SDK. The snippets were written
+against these SDK majors and checked as shown:
+
+| Platform | Version | How |
+| --- | --- | --- |
+| React Native | `@braze/react-native-sdk` 24.0.1 | Type-checked against the package's published types |
+| Android | `android-sdk-base` 45.0.0 | Method signatures read from the published AAR |
+| iOS | Braze Swift SDK 19.2.0 | Checked against the SDK's published API reference |

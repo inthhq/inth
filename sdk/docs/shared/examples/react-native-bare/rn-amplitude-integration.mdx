@@ -1,0 +1,14 @@
+{/* Generated from internals/fixtures/react-native-bare/src/documentation/amplitude-integration.ts (docs:rn-amplitude-integration) by scripts/sync-example-docs.ts. Edit the source file. */}
+
+```ts title="amplitude-consent.ts"
+import { connectAmplitude } from '@c15t/react-native/integrations';
+import type {
+	AmplitudeClient,
+	ConsentIntegration,
+} from '@c15t/react-native/integrations';
+
+export const connectAppAmplitude = (
+	amplitude: AmplitudeClient,
+	onError: (error: unknown) => void
+): ConsentIntegration => connectAmplitude(amplitude, { onError });
+```

@@ -1,0 +1,129 @@
+---
+title: ConsentDialog
+description: Add the c15t preference dialog to an Angular app with c15t-consent-dialog, how it loads its code, its inputs, opening and closing, accessibility and styling.
+group: frameworks
+---
+
+## Render the dialog
+
+Import `ConsentDialog` and render `<c15t-consent-dialog>` once, in
+your root component, next to `<c15t-consent-banner>`:
+
+<include src="../../../shared/examples/angular/app-component.mdx" />
+
+The dialog stays closed until something opens it, so do not wrap it in
+`@if`. `<c15t-consent-root>` renders both in one tag; see
+[ConsentRoot](./consent-root).
+
+## How the dialog loads
+
+Import `ConsentDialog` from `@c15t/angular/consent-dialog`. It is a small
+host; the dialog's body, with the widget and primitives it renders, is a
+separate chunk it imports:
+
+- In browser idle time after the page's `load` event, while a button that
+  opens the dialog is rendered. Those buttons are the banner's Customize
+  button, `c15tConsentDialogLink`, `<c15t-consent-dialog-trigger>`, the
+  `<c15t-consent-gate>` placeholder and `ConsentButton` with
+  `action="customize"`.
+- When such a button is hovered or focused.
+- At the latest, when the dialog opens.
+
+Set `preloadDialog: 'intent'` in `provideC15t()` to skip the idle load and
+load only on hover, focus or open. Idle loading is also skipped when the
+browser asks to save data, on 2G connections and offline. Every
+`<c15t-consent-dialog>` on the page shares one import. If the import fails,
+the next open, hover or focus tries it again. If it fails while the dialog
+opens, the surface the dialog replaced, such as the banner, comes back, so
+the visitor can try again. A dialog whose `open` you set emits
+`openChange` with `false` instead, and your next open tries again.
+
+The dialog's CSS loads the same way, as a chunk of its own, and goes into
+`<head>` as a `<style>` element with the page's CSP nonce. The dialog stays
+transparent until its rules are in. With `styles: false`, they come from your
+imported `@c15t/angular/styles.css`.
+
+## Inputs
+
+| Input | Type | Default | Behavior |
+| --- | --- | --- | --- |
+| `open` | `boolean` | follows the consent state | Controls visibility yourself. While `open` is `true`, the dialog stays open, even after Escape. Bind `[(open)]` to close it on Escape. |
+| `showTrigger` | `boolean` or `ConsentDialogTriggerOptions` | `false` | Renders a floating `<c15t-consent-dialog-trigger>` with the dialog. Pass an object for `defaultPosition`, `persistPosition`, `showWhen`, `size`, `label`, `noStyle` and `rootClass`. |
+| `legalLinks` | array of `LegalLinks` keys, or `null` | every configured link | Which of the provider's `legalLinks` to show after the description. |
+| `hideBranding` | `boolean` | `false` | Hides the "Secured by" tag. |
+| `models` | `Model[]` | `['opt-in', 'opt-out', 'none']` | Policy models the dialog opens for. `none` is included so a policy with no prompt but a right to change preferences still opens it. IAB policies open `<c15t-iab-consent-dialog>` instead. |
+| `noStyle` | `boolean` | provider's `noStyle` | Drops c15t's classes. |
+| `disableAnimation` | `boolean` | provider's value | Opens and closes without a transition. |
+| `rootClass` | `string` | none | Extra class on the dialog element. |
+
+It has one output, `openChange`. In a dialog whose `open` you set, it emits
+`false` when the visitor presses Escape, after a save, accept or reject
+closes the dialog, and when the dialog's code fails to load.
+
+`<c15t-consent-dialog>` has no text inputs. Its title and description come
+from the `consentManagerDialog` translations; see
+[translations](../translations).
+
+With `showTrigger`, the dialog's code loads when it renders, because the
+trigger needs it at once. To keep a trigger in server HTML without that load,
+render `<c15t-consent-dialog-trigger>` next to the dialog instead.
+
+## What the dialog contains
+
+The dialog renders the heading, the description with legal links, and a
+[`<c15t-consent-widget>`](./consent-widget) with one switch per category and
+the save buttons the policy allows. Categories come from the provider's
+`consentCategories`, limited to the policy's scope. `necessary` is always on
+and cannot be switched off.
+
+Switches change an unsaved draft. The save button records the draft; the
+accept and reject buttons record every category at once. The dialog closes in
+the same task the choice is recorded. If the policy changes while the dialog
+is open, the widget shows an alert and asks the visitor to review before
+saving.
+
+## Open and close the dialog
+
+Anything that sets the active surface to `'dialog'` opens it: the banner's
+Customize button, `c15tConsentDialogLink`, `<c15t-consent-dialog-trigger>`,
+`ConsentManager.setActiveUI('dialog')` or `HeadlessConsent.openDialog()`.
+
+Escape closes the dialog. Clicks outside it do not, so a visitor cannot lose
+unsaved switches by accident. Closing without saving records nothing. If the
+policy still owes a choice, the banner comes back. When the dialog closes,
+focus returns to the button that opened it, or to the banner that replaced
+it.
+
+With the `open` input set, your component owns visibility. Escape, and a
+save, accept or reject, emit `openChange` with `false`. Escape also moves the
+active surface off `'dialog'`, to
+`'banner'` while a choice is still owed or `'none'` otherwise. The dialog
+stays until you set `open` to `false`, so bind it both ways to close it on
+those:
+
+```html
+<c15t-consent-dialog [(open)]="preferencesOpen" />
+```
+
+With a one-way `[open]`, handle `(openChange)` yourself, or read
+`ConsentManager.activeUI()` in a `computed()`.
+
+## Accessibility
+
+- The dialog content is labelled by its title (`aria-labelledby`) and
+  described by its description (`aria-describedby`).
+- While the dialog is blocking, which is the default, focus is trapped inside
+  it and the page behind does not scroll. The `presentation` option can turn
+  blocking off for the dialog.
+- Each category switch is a `switch` role labelled with the category title.
+- The root sets `dir` from the active language.
+
+## Style the dialog
+
+`<c15t-consent-dialog>` reads these theme slots: `consentDialog`,
+`consentDialogCard`, `consentDialogHeader`, `consentDialogTitle`,
+`consentDialogDescription`, `consentDialogContent`, `consentDialogTag` and
+`consentDialogOverlay`. The widget inside it reads the
+`<c15t-consent-widget>` slots. The content element carries
+`data-testid="consent-dialog-root"` and `data-blocking="true"` while
+blocking.

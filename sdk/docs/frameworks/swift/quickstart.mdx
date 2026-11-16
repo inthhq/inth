@@ -1,0 +1,171 @@
+---
+title: Quickstart
+description: Add native consent screens to a SwiftUI iOS app, keep privacy settings reachable and read consent before starting optional SDKs.
+group: frameworks
+---
+
+Add a consent prompt and a Privacy settings button to a SwiftUI app with one
+view modifier. c15t loads the app's policy from your Inth project, stores
+choices in Keychain and shows the native screens when a choice is needed. UIKit
+apps use the same engine and prompt through the
+[UIKit guide](/docs/frameworks/swift/uikit).
+
+## Before you start
+
+You need iOS 16.4 or later, Xcode with Swift 5.9 or later, and an
+[Inth project](https://inth.com). Configure the project's regional policies
+and the categories your app uses, then copy its project URL, such as
+`https://your-project.inth.app`. This example
+declares `measurement` and `marketing` alongside `necessary`. Your project
+must offer the categories you intend to request.
+
+Have your app's HTTPS privacy-policy URL ready. The project URL is public
+configuration, so no API key goes in the app. The Swift SDK works only with
+Inth hosted projects. [Offline startup](/docs/guides/mobile-offline) is an
+additional setup when the first prompt must work without a connection.
+
+The SDK is currently available as private source. Use your authorized checkout
+for these steps. [Mobile availability](/docs/guides/mobile-status) records
+distribution and release status.
+
+## Add the Swift package
+
+In Xcode, choose **File > Add Package Dependencies > Add Local**, then select
+the root of your c15t checkout. Its `Package.swift` declares the package as
+`c15t`. Add these products to your app target:
+
+| Product | What your app uses it for |
+| --- | --- |
+| `C15tCore` | Consent state, saved choices and synchronous SDK gates |
+| `C15tApple` | Keychain, HTTP transport and app lifecycle handling |
+| `C15tConsentUI` | The stock SwiftUI prompt and privacy settings |
+
+There is no separate Swift repository. Package naming and Swift imports are
+different: the package is `c15t`, while code imports the products listed above.
+Keep simulator signing enabled, because the installer checks Keychain access.
+
+## Add the consent prompt
+
+Replace the generated SwiftUI `App` entry point with this one, or add the
+`.c15tConsent` modifier to the root view of your existing entry point. Replace
+both URLs before running:
+
+<include src="../../shared/examples/native/core-swift/AppleInstallation/swift-quickstart-app.mdx" />
+
+The modifier installs the engine when the root first appears. Installation
+restores saved choices before it returns. A fresh app still has to fetch its
+policy, and optional permissions stay off until that finishes.
+
+Once the policy is ready, the modifier presents the prompt by itself, once per
+owed prompt. A stored choice that is still valid shows nothing. A new policy or
+an expired choice presents it again. Every scene shares one engine and one
+prompt, so a second window or a reconnected scene never opens a second copy.
+
+If Keychain is locked when the app launches, installation fails and optional
+SDKs stay off. The modifier retries after the device unlocks or the app becomes
+active. A configuration error needs a fix in the app; retrying will not repair
+it.
+
+`backendURL` must be your Inth project URL. A missing scheme means `https`,
+and a trailing slash is dropped. Any other host, a port, a path, a query or
+credentials make `C15tApple.install` throw
+`C15tAppleInstallationError.invalidBackendURL`. Its description quotes your
+value and names the rule it broke.
+
+### Run without sending records
+
+For development and CI, pass `dryRun: true` inside `#if DEBUG`:
+
+{/* example: fragment */}
+
+```swift
+var configuration = C15tAppleConfiguration(
+    backendURL: "https://your-project.inth.app",
+    consentCategories: [.necessary, .measurement, .marketing]
+)
+#if DEBUG
+configuration.dryRun = true
+#endif
+```
+
+The prompt, storage, gates and consent signals work as normal. The engine
+drops consent records instead of queueing or sending them. A release build
+throws `C15tAppleInstallationError.dryRunInReleaseBuild` and installs no
+engine. In a debug build `dryRun` also lets `backendURL` be any `https` URL,
+or `http` on `localhost`, `127.0.0.1` or `[::1]`.
+
+To present the prompt yourself, pass `autoPresent: false` and call
+`ConsentPrompt.current?.presentPrompt()` when you are ready.
+
+If your app has `NSUserTrackingUsageDescription` in `Info.plist`, the modifier
+also asks for App Tracking Transparency after the prompt closes, and only if
+the person granted marketing. Pass `trackingRequest: .beforeConsent` or
+`.manual` to change that. See
+[ask for ATT after the consent prompt](/docs/guides/mobile-iab#ask-for-att-after-the-consent-prompt).
+
+## Keep privacy settings reachable
+
+People must be able to change their choice after the first prompt closes.
+Create `ContentView.swift` with a Privacy settings button:
+
+<include src="../../shared/examples/native/core-swift/AppleInstallation/swift-privacy-status.mdx" />
+
+`ConsentPrompt.current` is the prompt for the installed engine. Move the button
+into your app's settings screen if you prefer.
+
+To show consent state in your own views, observe the installed core with
+`PublishedConsent`, or with `ObservableConsent` on iOS 17 and later. Both
+publish the core's `snapshot` and a `ConsentDecision` per category on the main
+actor. See [native gates and custom UI](/docs/frameworks/swift/headless).
+
+## Gate optional SDKs
+
+The example does not install analytics. If your app starts optional SDKs during
+launch, install the engine first in `App.init` with
+`try? C15tApple.install(configuration)`, using the same configuration you pass
+to the modifier. The modifier then reuses that engine. Before starting your
+analytics SDK, read the installed core's
+`decision(for: .measurement)` and start only on `.granted`. Retain a gate
+subscription so withdrawing permission stops collection too. The
+[native gates and custom UI guide](/docs/frameworks/swift/headless) shows the
+subscription and draft APIs.
+
+Disable the vendor's automatic startup path before adding that gate. A prompt
+on screen cannot stop a third-party initializer that already ran.
+
+## Check that it works
+
+Run the app under a policy that asks for a choice, such as your project's
+opt-in policy.
+
+1. On a fresh app, the prompt appears and measurement is off before a choice.
+2. Choose Reject all. The prompt closes and measurement remains off.
+3. Relaunch the app. The saved choice remains and the prompt stays closed.
+4. Open Privacy settings, enable measurement and save. Reopen settings and
+   measurement is on.
+5. Turn measurement off and save. It stays off after another relaunch.
+
+A successful local save means the choice is stored on this device. Backend
+delivery is separate and can be queued without a connection. Use
+[mobile verification](/docs/guides/mobile-verify) to check delivery and your
+actual optional SDKs.
+
+## Next steps
+
+- [Connect mobile SDKs](/docs/integrations/overview#mobile-sdks) with bundled Firebase
+  Analytics and PostHog helpers.
+
+- [UIKit](/docs/frameworks/swift/uikit) for a UIKit lifecycle and hosting setup.
+
+- [Customize](/docs/frameworks/swift/customize) for app identity, colors and copy.
+
+- [Native gates and custom UI](/docs/frameworks/swift/headless) for your own
+  controls and SDK subscriptions.
+
+- [IAB and advertising](/docs/guides/mobile-iab) for native CMP configuration,
+  purposes, partners and Additional Consent.
+
+- The complete starter files are in
+  `native/core-swift/Examples/AppleInstallation/Quickstart`. The runnable
+  `native/core-swift/Examples/swiftui-consent` app also demonstrates offline
+  errors, a custom form and delivery state.

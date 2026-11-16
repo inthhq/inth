@@ -1,0 +1,18 @@
+{/* Generated from internals/doc-snippets/vue/src/TenantAnalytics.vue (docs:script-loader) by scripts/sync-example-docs.ts. Edit the source file. */}
+
+```vue title="src/TenantAnalytics.vue"
+<script setup lang="ts">
+import { posthog } from '@c15t/integrations/posthog';
+import { useScriptLoader } from 'c15t/vue/vue-plugin';
+
+const props = defineProps<{ projectKey: string }>();
+
+// Registers with the app's one loader. The script loads while measurement
+// is allowed, follows the prop, and leaves when this component unmounts.
+useScriptLoader(() => [posthog({ id: props.projectKey })]);
+</script>
+
+<template>
+	<slot />
+</template>
+```

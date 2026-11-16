@@ -1,0 +1,50 @@
+{
+	"name": "@c15t/scripts",
+	"version": "3.0.2-canary.0",
+	"description": "Deprecated v3 compatibility package for @c15t/integrations. Migrate before v4.",
+	"homepage": "https://c15t.com/docs/cli/commands/codemods#rename-c15tscripts-imports",
+	"bugs": {
+		"url": "https://github.com/c15t/c15t/issues"
+	},
+	"license": "Apache-2.0",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/c15t/c15t.git",
+		"directory": "packages/scripts"
+	},
+	"files": [
+		"dist",
+		"dist-types",
+		"AGENTS.md",
+		"SKILL.md",
+		"docs"
+	],
+	"type": "module",
+	"sideEffects": false,
+	"exports": {
+		"./*": {
+			"types": "./dist-types/*.d.ts",
+			"import": "./dist/*.js",
+			"default": "./dist/*.js"
+		}
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"scripts": {
+		"build": "bun build-compat.ts",
+		"build:docs": "bun ../../scripts/generate-package-docs.ts @c15t/scripts",
+		"check-types": "tsc --noEmit",
+		"fmt": "bun oxfmt .",
+		"lint": "bun oxlint build-compat.ts __tests__",
+		"prepack": "bun run build:docs",
+		"test": "vitest run"
+	},
+	"dependencies": {
+		"@c15t/integrations": "workspace:*"
+	},
+	"devDependencies": {
+		"@c15t/typescript-config": "workspace:*",
+		"typescript": "7.0.2"
+	}
+}

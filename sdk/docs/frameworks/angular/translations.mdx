@@ -1,0 +1,109 @@
+---
+title: Translations
+description: Change c15t banner and dialog copy in an Angular app with component inputs, banner templates or the i18n option of provideC15t, and switch languages at runtime.
+group: frameworks
+---
+
+## Where the copy comes from
+
+The banner, dialog, widget, gate placeholder and IAB components read their
+text from one set of translations for the visitor's language. Which set
+depends on the `mode` you pass to `provideC15t()`:
+
+| Mode | Copy comes from | Languages |
+| --- | --- | --- |
+| `hosted()` | The backend's `/init` response, in the language the browser or server asked for, with your `i18n` messages for that language on top | Every language the backend bundles: ar, bg, bn, cs, cy, da, de, el, en, es, et, fi, fr, ga, gu, he, hi, hr, ht, hu, id, is, it, ja, kn, ko, lb, lt, lv, ml, mr, ms, mt, nb, nl, nn, pa, pl, pt, rm, ro, ru, sk, sl, sv, ta, te, th, tr, ur, vi, yi and zh |
+| `manifest()` | The manifest's translations over the base copy for the visitor's language, with your `i18n` messages on top | English base copy is bundled; another language's base copy loads the first time a visitor needs it |
+| `local()` | The `i18n` option, merged over bundled English | English, plus any language you supply in full |
+
+The browser bundle carries English only. Other languages arrive from the
+backend, or from messages you pass.
+
+## Change the copy for one banner
+
+`<c15t-consent-banner>` takes `heading`, `description`, `acceptButtonText`,
+`rejectButtonText`, `customizeButtonText` and `dismissButtonText` inputs. They
+win in every mode:
+
+{/* example: fragment */}
+
+```html
+<c15t-consent-banner
+	heading="Cookies on this site"
+	rejectButtonText="Reject optional"
+/>
+```
+
+The inputs replace the text in every language, so pass values in the page's
+language, for example from `$localize` or your own i18n library. For markup in
+the title or description, such as a link, use the `c15tConsentBannerTitle` and
+`c15tConsentBannerDescription` templates; see
+[ConsentBanner](./components/consent-banner#replace-the-title-description-or-buttons).
+
+## Change the copy site-wide
+
+Pass `i18n` to `provideC15t()`. `messages` holds partial translations per
+language; the keys you leave out keep c15t's copy:
+
+<include src="../../shared/examples/angular/consent-i18n.mdx" />
+
+`locale` selects the language the runtime starts in, `en` by default.
+`provideC15t()` reads `i18n` once, when the application starts.
+
+In `hosted()` mode, the backend's copy for the visitor's language is the base,
+and your `i18n` messages for that language replace it key by key. Keys you do
+not list keep the backend's copy, including copy edited in your Inth project.
+c15t picks the messages for the exact language first, then for its primary
+language, so a visitor resolved to `de-AT` gets your `de` messages when there
+is no `de-AT` entry. Messages for other languages are not applied.
+
+A key only overrides the backend when your text differs from c15t's built-in
+wording for that language. So passing the stock bundles from
+`@c15t/translations/all` to enable languages keeps backend edits visible,
+while a key you actually reworded stays pinned in code. Core bundles only
+English; for other languages, import `@c15t/translations/all` so c15t can
+recognize its stock wording. A self-hosted backend takes `customTranslations`
+and `i18n` in its [configuration](/docs/self-host/api/configuration).
+
+In `local()` mode, `i18n` is the only source of copy, and it applies from the
+first render.
+
+## Common message keys
+
+| Key | Where it shows |
+| --- | --- |
+| `cookieBanner.title`, `cookieBanner.description` | Choice banner heading and body. |
+| `cookieBanner.noticeTitle`, `cookieBanner.noticeDescription` | Notice banner heading and body. |
+| `common.acceptAll`, `common.rejectAll`, `common.customize`, `common.save` | Banner and dialog buttons. |
+| `common.acknowledge` | The notice's dismiss button. |
+| `common.securedBy` | The "Secured by" tag. |
+| `consentManagerDialog.title`, `consentManagerDialog.description` | Preference dialog heading and body. |
+| `consentTypes.<category>.title`, `consentTypes.<category>.description` | A category's name and description, such as `consentTypes.measurement.title`. |
+| `consentGate.title`, `consentGate.actionButton` | The `<c15t-consent-gate>` placeholder. `{category}` is replaced by the category title. |
+
+[Copy and translations](/docs/customization/translations) covers wording for
+each action and testing long labels.
+
+## Switch the language
+
+`ConsentManager.setLanguage(code)` switches the language and resolves the
+policy again, so a hosted backend returns copy in the new language and your
+`i18n` messages for that language apply on top. Call it from your language
+switcher:
+
+<include src="../../shared/examples/angular/language-switcher.mdx" />
+
+The visitor's language otherwise comes from the `Accept-Language` header, or
+from `overrides.language` in `provideC15t()`. An app built with Angular's
+`@angular/localize` serves one build per locale; pass that build's
+`LOCALE_ID` as `overrides: { language }` so the consent copy matches the page.
+
+The root of the banner, dialog and widget sets `dir` from the active
+language, so right-to-left languages such as Hebrew lay out correctly.
+
+## Verify the copy
+
+Open the page with the browser language set to each language you support.
+The banner, the dialog's category names and the gate placeholder all use that
+language. Then choose a narrow window and zoom to 200%: long labels wrap
+without cutting off.

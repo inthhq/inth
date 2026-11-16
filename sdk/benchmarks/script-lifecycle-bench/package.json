@@ -1,0 +1,27 @@
+{
+	"name": "@c15t/script-lifecycle-bench",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"bench": "BENCH_OUTPUT_DIR=../../.benchmarks/current/script-lifecycle bunx tsx scripts/run-bench.ts",
+		"bench:ci": "BENCH_OUTPUT_DIR=../../.benchmarks/head/script-lifecycle bunx tsx scripts/run-bench.ts",
+		"bench:gate": "BENCH_OUTPUT_DIR=../../.benchmarks/head/consent-gate bunx tsx scripts/run-gate.ts",
+		"bench:nightly": "BENCH_ITERATIONS=15 BENCH_OUTPUT_DIR=../../.benchmarks/nightly/script-lifecycle bunx tsx scripts/run-bench.ts",
+		"bench:script-count": "BENCH_OUTPUT_DIR=../../.benchmarks/current/script-count bunx tsx scripts/run-script-count-bench.ts",
+		"build": "next build",
+		"dev": "next dev",
+		"start": "next start"
+	},
+	"dependencies": {
+		"@c15t/benchmarking": "workspace:*",
+		"@c15t/core": "workspace:*",
+		"@c15t/react": "workspace:*",
+		"next": "16.2.10",
+		"react": "19.2.7",
+		"react-dom": "19.2.7"
+	},
+	"devDependencies": {
+		"playwright": "1.61.1",
+		"typescript": "6.0.3"
+	}
+}

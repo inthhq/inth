@@ -1,0 +1,26 @@
+// #region docs:expo-config title="app.config.ts"
+import type { C15tPluginProps } from '@c15t/react-native/expo-plugin';
+import type { ExpoConfig } from 'expo/config';
+
+const consent: C15tPluginProps = {
+	androidMavenRepository: {
+		credentials: {
+			passwordEnvironmentVariable: 'C15T_MAVEN_TOKEN',
+			usernameEnvironmentVariable: 'C15T_MAVEN_USERNAME',
+		},
+		url: 'https://maven.pkg.github.com/inthhq/c15t-private',
+	},
+	backendURL: 'https://example-inth.inth.app/',
+	consentCategories: ['necessary', 'measurement', 'marketing'],
+	policyResource: './c15t-policy.json',
+};
+
+const config: ExpoConfig = {
+	name: 'My app',
+	platforms: ['ios', 'android'],
+	plugins: [['@c15t/react-native', consent]],
+	runtimeVersion: { policy: 'fingerprint' },
+	slug: 'my-app',
+};
+export default config;
+// #endregion docs:expo-config
