@@ -9,9 +9,7 @@
 		"check-types": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
 	},
 	"dependencies": {
-		"@c15t/backend": "workspace:*",
 		"@c15t/integrations": "workspace:*",
-		"@c15t/node-sdk": "workspace:*",
 		"@c15t/ui": "workspace:*",
 		"c15t": "workspace:*"
 	},

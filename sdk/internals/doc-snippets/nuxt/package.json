@@ -6,7 +6,6 @@
 		"check-types": "nuxt typecheck"
 	},
 	"dependencies": {
-		"@c15t/backend": "workspace:*",
 		"@c15t/integrations": "workspace:*",
 		"c15t": "workspace:*",
 		"h3": "1.15.11",

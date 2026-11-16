@@ -282,7 +282,6 @@
 		"@types/google.maps": "3.65.3"
 	},
 	"devDependencies": {
-		"@c15t/backend": "workspace:*",
 		"@c15t/conformance": "workspace:*",
 		"@c15t/typescript-config": "workspace:*",
 		"@c15t/vitest-config": "workspace:*",

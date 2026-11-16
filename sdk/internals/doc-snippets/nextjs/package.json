@@ -6,7 +6,6 @@
 		"check-types": "tsc --noEmit"
 	},
 	"dependencies": {
-		"@c15t/backend": "workspace:*",
 		"@c15t/integrations": "workspace:*",
 		"c15t": "workspace:*",
 		"next": "16.2.10",
