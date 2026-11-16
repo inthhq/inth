@@ -94,13 +94,13 @@ test('packed runtime, declarations and consumer stay independent of web consent 
 		// subject to the repository's release-age policy too.
 		writeFileSync(
 			join(directory, 'bunfig.toml'),
-			readFileSync(resolve(packageDir, '../../bunfig.toml'))
+			'[install]\nminimumReleaseAge = 259200\n'
 		);
 		// Build first, as in the package CI lane. Pack the allowlist, never the checkout.
 		const archive = join(directory, 'mobile.tgz');
 		execFileSync(
-			'bun',
-			['pm', 'pack', '--ignore-scripts', '--filename', archive],
+			'pnpm',
+			['pack', '--config.ignore-scripts=true', '--out', archive],
 			{ cwd: packageDir, stdio: 'pipe' }
 		);
 		const development = JSON.parse(
@@ -355,8 +355,8 @@ test('the actual local mobile tarball contains useful generated docs and no web 
 	try {
 		const archive = join(directory, 'mobile.tgz');
 		execFileSync(
-			'bun',
-			['pm', 'pack', '--ignore-scripts', '--filename', archive],
+			'pnpm',
+			['pack', '--config.ignore-scripts=true', '--out', archive],
 			{ cwd: packageDir, stdio: 'pipe' }
 		);
 		const archiveFiles = execFileSync('tar', ['-tzf', archive], {

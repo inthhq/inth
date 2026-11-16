@@ -81,7 +81,7 @@ if cell is not None:
     config['c15tCompatibilityCell'] = cell
 manifest.write_text(json.dumps(config, indent=2) + '\n')
 # Same release-age gate as the checkout, so a cell resolves the same way here.
-shutil.copy(repo / 'bunfig.toml', output / 'bunfig.toml')
+(output / 'bunfig.toml').write_text('[install]\nminimumReleaseAge = 259200\n')
 # A packed install uses Expo's normal Metro resolver; workspace watch paths do not apply.
 (output / 'metro.config.js').write_text(
     "const { getDefaultConfig } = require('expo/metro-config');\n\n"

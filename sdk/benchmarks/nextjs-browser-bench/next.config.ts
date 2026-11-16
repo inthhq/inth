@@ -5,7 +5,7 @@ import { withConsentManifest } from '@c15t/nextjs/build';
 import type { NextConfig } from 'next';
 
 const projectDir = dirname(fileURLToPath(import.meta.url));
-const monorepoRoot = resolve(projectDir, '../..');
+const monorepoRoot = resolve(projectDir, '../../..');
 
 const transpilePackages = [
 	'@c15t/benchmarking',

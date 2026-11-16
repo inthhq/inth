@@ -1,8 +1,14 @@
 import { execFileSync } from 'node:child_process';
-import { appendFileSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import {
+	appendFileSync,
+	existsSync,
+	readFileSync,
+	writeFileSync,
+} from 'node:fs';
+import { basename, dirname, join, resolve } from 'node:path';
 
 import fg from 'fast-glob';
+import { parse } from 'yaml';
 
 import { selectReleaseChanges } from './ci-release-changes';
 
@@ -13,15 +19,42 @@ export interface Workspace {
 	scripts: Record<string, string>;
 }
 
+/**
+ * The workspace globs for a root directory: its `workspaces` list, or the
+ * `packages` of its `pnpm-workspace.yaml`. The SDK has neither. Its
+ * workspaces are the `sdk/` entries of the repository's
+ * `pnpm-workspace.yaml`, one directory up.
+ */
+const workspacePatterns = function workspacePatterns(
+	rootDirectory: string
+): string[] {
+	const root = JSON.parse(
+		readFileSync(join(rootDirectory, 'package.json'), 'utf8')
+	) as { workspaces?: string[] };
+	if (root.workspaces) {
+		return root.workspaces;
+	}
+	const directory = resolve(rootDirectory);
+	const readPackages = (path: string): string[] =>
+		(parse(readFileSync(path, 'utf8')) as { packages: string[] }).packages;
+	const own = join(directory, 'pnpm-workspace.yaml');
+	if (existsSync(own)) {
+		return readPackages(own).filter((pattern) => !pattern.startsWith('!'));
+	}
+	const prefix = `${basename(directory)}/`;
+	return readPackages(join(directory, '..', 'pnpm-workspace.yaml'))
+		.filter((pattern) => pattern.startsWith(prefix))
+		.map((pattern) => pattern.slice(prefix.length));
+};
+
 export const readWorkspaces = function readWorkspaces(
 	rootDirectory = '.'
 ): Workspace[] {
-	const root = JSON.parse(
-		readFileSync(join(rootDirectory, 'package.json'), 'utf8')
-	) as { workspaces: string[] };
 	return fg
 		.sync(
-			root.workspaces.map((pattern) => `${pattern}/package.json`),
+			workspacePatterns(rootDirectory).map(
+				(pattern) => `${pattern}/package.json`
+			),
 			{
 				cwd: rootDirectory,
 				ignore: [

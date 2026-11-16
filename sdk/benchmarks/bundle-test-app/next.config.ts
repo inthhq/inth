@@ -5,7 +5,9 @@ import { fileURLToPath } from 'node:url';
 import bundleAnalyzer from '@next/bundle-analyzer';
 
 const projectDir = dirname(fileURLToPath(import.meta.url));
-const monorepoRoot = resolve(projectDir, '../..');
+const sdkRoot = resolve(projectDir, '../..');
+// Turbopack reads node_modules at the repository root, one level above sdk/.
+const repositoryRoot = resolve(sdkRoot, '..');
 
 /**
  * The bundle benchmark builds this fixture against both the base and the
@@ -20,7 +22,7 @@ const selectConsentApi = function selectConsentApi(): void {
 	// Read the workspace package directly: `@c15t/nextjs` resolves to it on
 	// both revisions, and its `exports` map has no `./package.json` entry to
 	// resolve through. Turbo builds it before this fixture.
-	const types = join(monorepoRoot, 'packages/nextjs/dist-types/index.d.ts');
+	const types = join(sdkRoot, 'packages/nextjs/dist-types/index.d.ts');
 	const variant =
 		existsSync(types) && readFileSync(types, 'utf8').includes('ConsentRoot')
 			? 'current'
@@ -48,7 +50,7 @@ const transpilePackages = [
 const config = {
 	transpilePackages,
 	turbopack: {
-		root: monorepoRoot,
+		root: repositoryRoot,
 	},
 };
 

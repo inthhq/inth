@@ -78,15 +78,15 @@ We leverage several automated workflows to ensure code quality:
 2. Install dependencies:
 
    ```sh
-   bun install
+   pnpm install
    ```
 
 3. Make your changes and ensure the following pass:
 
    ```sh
-   bun run fmt         # Format code
-   bun run test        # Run tests
-   bun run build       # Build packages
+   pnpm sdk:fmt        # Format code
+   pnpm sdk:test       # Run tests
+   pnpm sdk:build      # Build packages
    ```
 
 ## Pull Request Process

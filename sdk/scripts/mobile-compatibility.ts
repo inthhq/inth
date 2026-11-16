@@ -201,7 +201,10 @@ const main = function main(): void {
 		['pm', 'pack', '--ignore-scripts', '--filename', archive],
 		PACKAGE
 	);
-	cpSync(join(ROOT, 'bunfig.toml'), join(consumer, 'bunfig.toml'));
+	writeFileSync(
+		join(consumer, 'bunfig.toml'),
+		'[install]\nminimumReleaseAge = 259200\n'
+	);
 	writeFileSync(
 		join(consumer, 'package.json'),
 		JSON.stringify(

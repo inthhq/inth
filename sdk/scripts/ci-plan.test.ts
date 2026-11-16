@@ -11,6 +11,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
+import { parse, stringify } from 'yaml';
 
 import { starterTargets } from '../internals/fixtures/acceptance/src/starter-targets';
 import { ciSchedulingOutputs, createCiPlan, readWorkspaces } from './ci-plan';
@@ -488,19 +489,30 @@ it('every selected artifact consumer has a package build in the real graph', () 
 it('keeps build output out of the workspaces Turbo and the CI plan read', () => {
 	const root = mkdtempSync(join(tmpdir(), 'c15t-workspaces-'));
 	try {
-		const { workspaces: globs } = JSON.parse(
-			readFileSync(join(repository, 'package.json'), 'utf8')
-		);
+		// The SDK's globs are the `sdk/` entries of the repository's
+		// pnpm-workspace.yaml, with its negations.
+		const { packages } = parse(
+			readFileSync(join(repository, '..', 'pnpm-workspace.yaml'), 'utf8')
+		) as { packages: string[] };
+		const globs = packages
+			.filter(
+				(pattern) => pattern.startsWith('sdk/') || pattern.startsWith('!')
+			)
+			.map((pattern) => pattern.replace(/^sdk\//u, ''));
 		const write = (path: string, manifest: Record<string, unknown>) => {
 			mkdirSync(dirname(join(root, path)), { recursive: true });
 			writeFileSync(join(root, path), JSON.stringify(manifest));
 		};
 		write('package.json', {
 			name: 'root',
-			packageManager: 'bun@1.3.11',
+			packageManager: 'pnpm@11.25.0',
 			private: true,
-			workspaces: globs,
 		});
+		writeFileSync(
+			join(root, 'pnpm-workspace.yaml'),
+			stringify({ packages: globs })
+		);
+		writeFileSync(join(root, 'pnpm-lock.yaml'), "lockfileVersion: '9.0'\n");
 		write('turbo.json', { tasks: {} });
 		write('internals/fixture/package.json', { name: 'fixture' });
 		write('benchmarks/bench/package.json', { name: 'bench' });
@@ -521,7 +533,7 @@ it('keeps build output out of the workspaces Turbo and the CI plan read', () => 
 
 		const turbo = JSON.parse(
 			execFileSync(
-				join(repository, 'node_modules/.bin/turbo'),
+				join(repository, '..', 'node_modules/.bin/turbo'),
 				['ls', '--output=json'],
 				{
 					cwd: root,

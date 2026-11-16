@@ -180,13 +180,17 @@ Watch the Next.js Conf 2025 talk: [Why Your Consent Banner Should Be in Your Bun
 
 ## Develop c15t
 
-This repo uses [Bun](https://bun.sh) and Turborepo. [AGENTS.md](./AGENTS.md) has the full command list.
+The SDK's packages are part of the repository's pnpm workspace. Run these from
+the repository root. Bun 1.3.11 must also be installed, because many of the
+SDK's scripts still run on it.
 
 ```bash
-bun install
-bun run dev          # the demo app in apps/playground
-bun run build        # every package
-bun run test         # packages affected by your changes
+pnpm install
+pnpm sdk:dev            # the demo app in sdk/apps/playground
+pnpm sdk:build          # every library package
+pnpm sdk:check-types
+pnpm sdk:test           # the library packages' tests
+pnpm sdk:lint && pnpm sdk:fmt:check
 ```
 
 ## Support
