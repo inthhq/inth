@@ -15,7 +15,10 @@ import {
 import { ɵresolveNoStyle as resolveNoStyle } from '@inth/angular';
 import { uniqueId } from '@inth/angular/primitives';
 import type { AdTechProvider, GlobalVendorList } from '@inth/sdk/engine';
-import { resolveIABVendorUrls } from '@inth/sdk/iab/headless';
+import {
+	resolveIABSafeUrl,
+	resolveIABVendorUrls,
+} from '@inth/sdk/iab/headless';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 import switchStyles from '@inth/sdk/ui/styles/components/switch';
 import { switchVariants } from '@inth/sdk/ui/styles/primitives';
@@ -252,15 +255,17 @@ const lookup = function lookup(
 								>
 									<ng-template c15tPreferenceItemBody>
 										<div [class]="cls(styles.vendorLinks)">
-											<ng-container
-												*ngTemplateOutlet="
-													vendorLink;
-													context: {
-														$implicit: row.vendor.policyUrl,
-														label: t.vendorList.privacyPolicy,
-													}
-												"
-											/>
+											@if (row.vendor.policyUrl) {
+												<ng-container
+													*ngTemplateOutlet="
+														vendorLink;
+														context: {
+															$implicit: row.vendor.policyUrl,
+															label: t.vendorList.privacyPolicy,
+														}
+													"
+												/>
+											}
 											@if (row.vendor.legitimateInterestUrl) {
 												<ng-container
 													*ngTemplateOutlet="
@@ -510,15 +515,17 @@ const lookup = function lookup(
 								>
 									<ng-template c15tPreferenceItemBody>
 										<div [class]="cls(styles.vendorLinks)">
-											<ng-container
-												*ngTemplateOutlet="
-													vendorLink;
-													context: {
-														$implicit: row.vendor.policyUrl,
-														label: t.vendorList.privacyPolicy,
-													}
-												"
-											/>
+											@if (row.vendor.policyUrl) {
+												<ng-container
+													*ngTemplateOutlet="
+														vendorLink;
+														context: {
+															$implicit: row.vendor.policyUrl,
+															label: t.vendorList.privacyPolicy,
+														}
+													"
+												/>
+											}
 										</div>
 
 										<div [class]="cls(styles.vendorBadges)">
@@ -872,7 +879,9 @@ export class IABVendorList {
 				(vendor as unknown as { dataDeclaration?: number[] }).dataDeclaration ||
 				[],
 			dataRetention: vendor.dataRetention,
-			deviceStorageDisclosureUrl: vendor.deviceStorageDisclosureUrl ?? null,
+			deviceStorageDisclosureUrl: resolveIABSafeUrl(
+				vendor.deviceStorageDisclosureUrl
+			),
 			features: vendor.features || [],
 			id: Number(id),
 			isCustom: false,
@@ -900,7 +909,7 @@ export class IABVendorList {
 			legIntPurposes: cv.legIntPurposes || [],
 			legitimateInterestUrl: null,
 			name: cv.name,
-			policyUrl: cv.privacyPolicyUrl,
+			policyUrl: resolveIABSafeUrl(cv.privacyPolicyUrl) ?? '',
 			purposes: cv.purposes || [],
 			specialFeatures: cv.specialFeatures || [],
 			specialPurposes: [],
