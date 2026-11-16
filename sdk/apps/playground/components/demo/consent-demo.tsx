@@ -26,7 +26,7 @@ import {
 	DEMO_ADDITIONAL_CONSENT,
 	DEMO_CUSTOM_VENDORS,
 	DEMO_IAB_VENDOR_IDS,
-	DEMO_SCENARIO_HEADER,
+	HOSTED_DEMO_BACKEND_URL,
 	demoI18nMessages,
 	demoScenarios,
 	getScenarioById,
@@ -48,8 +48,6 @@ import { LiveStatus } from './live-status';
 const DevelopmentDevTools =
 	process.env.NODE_ENV === 'development' ? ConsentDevTools : () => null;
 
-const HOSTED_BACKEND_URL = 'https://c15t-demo-consent-io.inth.app';
-
 const CONSENT_CATEGORIES = [
 	'necessary',
 	'functionality',
@@ -58,15 +56,6 @@ const CONSENT_CATEGORIES = [
 ] as const;
 
 type DemoMode = 'offline' | 'hosted';
-
-interface ConsentDemoProps {
-	/**
-	 * Which backend the hosted mode talks to.
-	 * - `hosted`: the shared inth.com demo instance (sales-facing default)
-	 * - `self-host`: this app's own /api/self-host route (development only)
-	 */
-	backend?: 'hosted' | 'self-host';
-}
 
 interface DemoParams {
 	scenarioId: string;
@@ -214,7 +203,7 @@ const ScenarioGroup = ({
 		</div>
 	);
 };
-export const ConsentDemo = ({ backend = 'hosted' }: ConsentDemoProps) => {
+export const ConsentDemo = () => {
 	const router = useRouter();
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
@@ -239,8 +228,6 @@ export const ConsentDemo = ({ backend = 'hosted' }: ConsentDemoProps) => {
 		() => demoExperiment({ arm, experiment: experimentEnabled }),
 		[experimentEnabled, arm]
 	);
-	const isSelfHost = backend === 'self-host';
-	const hostedLabel = isSelfHost ? 'Self-hosted' : 'Hosted';
 
 	const navigate = useCallback(
 		(next: Partial<DemoParams>) => {
@@ -266,7 +253,7 @@ export const ConsentDemo = ({ backend = 'hosted' }: ConsentDemoProps) => {
 		// oxlint-disable-next-line sort-keys -- Preserve declaration order, interface shape, and public compatibility.
 		const config: Omit<IABProviderProps, 'children'> = {
 			// Offline mode has no server to supply a CMP ID, so the client
-			// config must provide one. Matches the self-host backend.
+			// config must provide one.
 			cmpId: DEMO_CMP_ID,
 			vendors: DEMO_IAB_VENDOR_IDS,
 			customVendors: DEMO_CUSTOM_VENDORS,
@@ -293,7 +280,6 @@ export const ConsentDemo = ({ backend = 'hosted' }: ConsentDemoProps) => {
 	// Remount the provider whenever the simulated environment changes so the
 	// consent manager re-initializes from scratch.
 	const providerKey = [
-		backend,
 		params.mode,
 		params.scenarioId,
 		params.country,
@@ -344,12 +330,7 @@ export const ConsentDemo = ({ backend = 'hosted' }: ConsentDemoProps) => {
 		params.mode === 'hosted'
 			? {
 					...sharedOptions,
-					mode: hosted({
-						backendURL: isSelfHost ? '/api/self-host' : HOSTED_BACKEND_URL,
-						headers: isSelfHost
-							? { [DEMO_SCENARIO_HEADER]: params.scenarioId }
-							: undefined,
-					}),
+					mode: hosted({ backendURL: HOSTED_DEMO_BACKEND_URL }),
 				}
 			: {
 					mode: offline({
@@ -369,9 +350,7 @@ export const ConsentDemo = ({ backend = 'hosted' }: ConsentDemoProps) => {
 			<div className="relative mx-auto flex max-w-6xl flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8">
 				<header className="border-border/80 flex flex-wrap items-center justify-between gap-4 border-b pb-6">
 					<div className="space-y-1">
-						<h1 className="text-xl font-semibold tracking-tight">
-							c15t demo{isSelfHost ? ' — self-hosted backend' : ''}
-						</h1>
+						<h1 className="text-xl font-semibold tracking-tight">c15t demo</h1>
 						<p className="text-muted-foreground text-sm">
 							Pick a scenario to see which policy resolves and the banner it
 							produces.
@@ -401,32 +380,27 @@ export const ConsentDemo = ({ backend = 'hosted' }: ConsentDemoProps) => {
 							    (offline is the only mode that matters there), but still
 							    shown if a ?mode=hosted link brought you here so the
 							    state is never invisible. */}
-							{(isSelfHost || params.mode === 'hosted') && (
+							{params.mode === 'hosted' && (
 								<div className="space-y-3">
 									<p className="label-pixel text-muted-foreground">Mode</p>
 									<div className="flex flex-wrap gap-2">
 										<PillButton
-											active={params.mode === 'offline'}
+											active={false}
 											onClick={() => navigate({ mode: 'offline' })}
 										>
 											Offline
 										</PillButton>
 										<PillButton
-											active={params.mode === 'hosted'}
+											active
 											onClick={() => navigate({ mode: 'hosted' })}
 										>
-											{hostedLabel}
+											Hosted
 										</PillButton>
 									</div>
 									<p className="text-muted-foreground text-sm">
-										{
-											// oxlint-disable-next-line no-nested-ternary -- Preserve established branch order and control flow.
-											params.mode === 'offline'
-												? 'Offline mode simulates the selected scenario locally — no backend required.'
-												: isSelfHost
-													? 'Policies resolve through this app’s /api/self-host route using the selected scenario.'
-													: 'Connected to a hosted inth.com instance. Policies come from that instance’s configuration, so scenario packs below only apply in offline mode.'
-										}
+										Connected to a hosted inth.com instance. Policies come from
+										that instance’s configuration, so scenario packs below only
+										apply in offline mode.
 									</p>
 								</div>
 							)}

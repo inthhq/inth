@@ -1,7 +1,7 @@
 /**
  * The acceptance suite in `internals/fixtures/acceptance` points this app at a mock
- * backend through `VITE_C15T_BACKEND_URL`, and `bun run dev` points it at the
- * self-hosted route (see `vite.config.ts`).
+ * backend through `VITE_C15T_BACKEND_URL`. Set it to your Inth project URL to
+ * run the app by hand.
  */
 const testBackendURL = import.meta.env.VITE_C15T_BACKEND_URL;
 

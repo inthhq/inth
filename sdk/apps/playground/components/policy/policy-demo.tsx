@@ -34,6 +34,7 @@ import {
 	getScenarioPolicyRules,
 	DEMO_CMP_ID,
 	DEMO_IAB_VENDOR_IDS,
+	HOSTED_DEMO_BACKEND_URL,
 } from '../../lib/scenarios';
 import {
 	ThemeSwitcherButton,
@@ -722,10 +723,7 @@ export const PolicyDemo = () => {
 													?.messageProfile ?? 'default'
 											].translations,
 									},
-									mode: hosted({
-										backendURL: '/api/self-host',
-										headers: { 'x-c15t-demo-example': resolvedExample },
-									}),
+									mode: hosted({ backendURL: HOSTED_DEMO_BACKEND_URL }),
 									overrides,
 									presentation: getScenarioById(resolvedExample).presentation,
 									scripts: createDemoScripts('demo-analytics'),
@@ -782,7 +780,7 @@ export const PolicyDemo = () => {
 								</div>
 								<p className="text-muted-foreground text-sm">
 									{demoMode === 'hosted'
-										? 'Hosted mode resolves policies through the self-hosted backend route.'
+										? 'Hosted mode talks to a hosted inth.com instance. Policies come from that instance’s configuration, so the scenarios below only apply in offline mode.'
 										: 'Offline mode runs the same scenarios from the local policy pack config.'}
 								</p>
 							</div>

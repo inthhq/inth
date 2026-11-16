@@ -29,9 +29,8 @@ import type { ModuleOptions } from 'c15t/vue';
 
 const staticOutput = process.env.C15T_NUXT_OUTPUT === 'static';
 // The acceptance suite points the demo at a mock backend with this variable.
-// Otherwise it uses the @c15t/backend it self-hosts at `/api/self-host` (see
-// `server/api/self-host/[...all].ts`). Either value overrides the placeholder
-// URL in the layer config.
+// Without it the demo uses the placeholder project URL, so set the variable
+// to your Inth project URL to run it by hand.
 const testBackendURL = process.env.NUXT_PUBLIC_C15T_BACKEND_URL;
 const experimentArm = process.env.C15T_NUXT_EXPERIMENT_ARM;
 const experiment: ModuleOptions['experiment'] =
@@ -46,7 +45,7 @@ const experiment: ModuleOptions['experiment'] =
 		: undefined;
 
 const c15t: ModuleOptions = {
-	backendURL: testBackendURL ?? '/api/self-host',
+	backendURL: testBackendURL ?? 'https://your-project.inth.app',
 	// Follow the visitor's system setting, with a dark primary of our own.
 	colorScheme: 'system',
 	theme: { dark: { primary: '#7fd1a8' } },

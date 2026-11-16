@@ -5,7 +5,6 @@
  */
 import type { Route as rootRoute } from './rendering/streamed-root';
 import type { Route as consentRoute } from './routes/api/c15t/$';
-import type { Route as selfHostRoute } from './routes/api/self-host/$';
 
 declare module '@tanstack/react-router' {
 	interface FileRoutesByPath {
@@ -14,13 +13,6 @@ declare module '@tanstack/react-router' {
 			path: '/api/c15t/$';
 			fullPath: '/api/c15t/$';
 			preLoaderRoute: typeof consentRoute;
-			parentRoute: typeof rootRoute;
-		};
-		'/api/self-host/$': {
-			id: '/api/self-host/$';
-			path: '/api/self-host/$';
-			fullPath: '/api/self-host/$';
-			preLoaderRoute: typeof selfHostRoute;
 			parentRoute: typeof rootRoute;
 		};
 	}

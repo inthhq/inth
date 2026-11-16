@@ -5,8 +5,6 @@
  * how c15t resolves policies by geography. The same definitions drive:
  *
  * - The client demo in offline mode (`offline({ policyRules })`)
- * - The self-host backend route (`lib/demo-c15t-instance.ts`)
- * - The c15t CLI config (`c15t-backend.config.ts`)
  */
 
 import type { Translations } from '@c15t/translations';
@@ -21,11 +19,11 @@ export const DEMO_POLICY_SNAPSHOT_KEY =
 
 export const DEFAULT_SCENARIO_ID = 'preset-europe-opt-in';
 
-/** Header the self-host route reads to know which scenario to serve. */
-export const DEMO_SCENARIO_HEADER = 'x-c15t-demo-example';
+/** The shared inth.com demo project that hosted mode talks to. */
+export const HOSTED_DEMO_BACKEND_URL = 'https://c15t-demo-consent-io.inth.app';
 
 // ---------------------------------------------------------------------------
-// IAB TCF demo configuration (shared between client and self-host backend)
+// IAB TCF demo configuration
 // ---------------------------------------------------------------------------
 
 /**

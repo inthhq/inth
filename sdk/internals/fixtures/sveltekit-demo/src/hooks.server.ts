@@ -1,4 +1,4 @@
-import { c15tHandle, hosted, manifest } from '@c15t/svelte/kit';
+import { c15tHandle, hosted, local, manifest } from '@c15t/svelte/kit';
 import type { C15tHandle } from '@c15t/svelte/kit';
 
 import { testBackend } from '#lib/test-backend.js';
@@ -24,11 +24,10 @@ const manifestHandle = c15tHandle({
 	routePrefix: '/api/c15t',
 });
 
-// The showcase: `/api/showcase` is this app's own consent route. It resolves
-// `/init` from the self-hosted backend's manifest in-process and proxies
-// writes to it, so the browser only talks to this origin.
+// The showcase resolves its policy on this server with no backend. Consent
+// stays in the visitor's browser and no record of it is kept.
 const showcaseHandle = c15tHandle({
-	mode: hosted({ backendURL: '/api/showcase' }),
+	mode: local({ acknowledgeNoRecords: true }),
 });
 
 const areaHandles: readonly (readonly [prefix: string, handle: C15tHandle])[] =

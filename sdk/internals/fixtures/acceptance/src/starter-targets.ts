@@ -24,8 +24,6 @@ export interface StarterTarget {
 	 * requests to it go to the fixture instead.
 	 */
 	placeholderBackend?: boolean;
-	/** The starter mounts its own backend on PostgreSQL from `DATABASE_URL`. */
-	postgres?: boolean;
 	/** Host in the base URL, when the app trusts only a named host. */
 	host?: string;
 	/** `consentManifest()` adds the inline script that sends `/init` early. */
@@ -187,17 +185,6 @@ export const starterTargets: StarterTarget[] = [
 		routes: ['/'],
 		serverRendered: false,
 		start: () => ['run', 'start'],
-	},
-	{
-		// Its own backend at `/api/c15t`, which trusts only `localhost`
-		// origins. A production server refuses PGlite and needs PostgreSQL.
-		directory: 'examples/self-host',
-		host: 'localhost',
-		id: 'self-host',
-		postgres: true,
-		routes: ['/'],
-		serverRendered: false,
-		start: nextStart,
 	},
 ];
 

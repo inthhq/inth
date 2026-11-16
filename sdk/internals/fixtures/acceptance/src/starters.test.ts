@@ -12,7 +12,6 @@ import type {
 } from 'playwright';
 import { afterAll, afterEach, beforeAll, describe, expect, test } from 'vitest';
 
-import { runCommand } from '../../../../scripts/browser-process';
 import {
 	acceptButton,
 	holdAppScripts,
@@ -21,7 +20,6 @@ import {
 	waitForConsentRuntime,
 } from './browser';
 import type { Requests } from './browser';
-import { startPostgres } from './postgres';
 import { startApp } from './server';
 import {
 	hostedScriptURL,
@@ -52,49 +50,19 @@ const scriptPartURL = new RegExp(
 	'u'
 );
 
-// The same migration the starter runs on a development start, applied to
-// the PostgreSQL database a production server requires.
-const migrate = `
-import { createMigrator } from '@c15t/backend';
-const migrator = createMigrator({ dialect: 'postgres', url: process.env.DATABASE_URL });
-try { await migrator.apply(); } finally { await migrator.dispose(); }
-`;
-
-const startStarter = async function startStarter(target: StarterTarget) {
-	const cwd = join(repository, target.directory);
-	const database = target.postgres ? await startPostgres() : undefined;
-	try {
-		const databaseEnv = database ? { DATABASE_URL: database.url } : {};
-		if (database) {
-			await runCommand(['node', '--input-type=module', '--eval', migrate], {
-				cwd,
-				env: { ...process.env, ...databaseEnv },
-			});
-		}
-		const app = await startApp({
-			build: target.build ?? ['run', 'build'],
-			cwd,
-			env: (backendURL, port) => ({
-				...exampleEnvironment(backendURL, port),
-				...target.env?.(backendURL),
-				...databaseEnv,
-			}),
-			host: target.host,
-			id: target.id,
-			readyPath: target.routes[0] ?? '/',
-			start: target.start,
-		});
-		return {
-			...app,
-			async close() {
-				await app.close();
-				await database?.close();
-			},
-		};
-	} catch (error) {
-		await database?.close();
-		throw error;
-	}
+const startStarter = function startStarter(target: StarterTarget) {
+	return startApp({
+		build: target.build ?? ['run', 'build'],
+		cwd: join(repository, target.directory),
+		env: (backendURL, port) => ({
+			...exampleEnvironment(backendURL, port),
+			...target.env?.(backendURL),
+		}),
+		host: target.host,
+		id: target.id,
+		readyPath: target.routes[0] ?? '/',
+		start: target.start,
+	});
 };
 
 for (const target of selectedStarterTargets()) {

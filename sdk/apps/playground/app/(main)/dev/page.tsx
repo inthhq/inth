@@ -13,12 +13,6 @@ const devPages = [
 	},
 	{
 		description:
-			'The same demo, but hosted mode resolves policies through this app’s /api/self-host route (requires DATABASE_URL).',
-		href: '/self-host',
-		title: 'Self-hosted backend',
-	},
-	{
-		description:
 			'Compare how banner action layouts (order, grouping, direction, profiles) resolve across policies.',
 		href: '/policy-actions',
 		title: 'Policy actions',

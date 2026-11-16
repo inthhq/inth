@@ -6,8 +6,8 @@
  * on the virtual DOM and render inside them.
  *
  * The acceptance suite points the demo at a mock backend with
- * `NUXT_PUBLIC_C15T_BACKEND_URL`. Otherwise it uses the @c15t/backend it
- * self-hosts at `/api/self-host` (see `server/api/self-host/[...all].ts`).
+ * `NUXT_PUBLIC_C15T_BACKEND_URL`. Without it the demo uses the placeholder
+ * project URL, so set the variable to your Inth project URL to run it by hand.
  *
  * `C15T_NUXT_FUTURE=1` builds with the Nuxt 5 preview
  * (`future.compatibilityVersion: 5`) and the 4.6 opt-ins that touch
@@ -19,8 +19,10 @@ const future = process.env.C15T_NUXT_FUTURE === '1';
 
 export default defineNuxtConfig({
 	c15t: {
-		// The self-hosted backend, or the suite's mock backend.
-		backendURL: process.env.NUXT_PUBLIC_C15T_BACKEND_URL ?? '/api/self-host',
+		// The suite's mock backend, or the placeholder project URL.
+		backendURL:
+			process.env.NUXT_PUBLIC_C15T_BACKEND_URL ??
+			'https://your-project.inth.app',
 		// Read at runtime, so the acceptance suite's backend outage reaches
 		// the server render.
 		mode: manifest({ source: 'runtime' }),

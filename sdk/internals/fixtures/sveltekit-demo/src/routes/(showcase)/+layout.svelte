@@ -164,8 +164,8 @@
 {:else}
 	<!--
 		The server already resolved the policy in +layout.server.ts, so the
-		banner renders in the first HTML. The browser saves through
-		`/api/showcase`, this app's own consent endpoint (manifest mode).
+		banner renders in the first HTML. The local transport keeps saves in
+		the browser.
 	-->
 	<ConsentRoot
 		state={data.consent}

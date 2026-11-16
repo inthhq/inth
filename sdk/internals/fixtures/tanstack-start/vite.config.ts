@@ -68,16 +68,11 @@ const regionPreview = (): Plugin => ({
 	name: 'example-region-preview',
 });
 
-export default defineConfig(({ command }) => {
-	// Development uses the self-hosted backend in
-	// `src/routes/api/self-host/$.ts`, so `bun run dev` needs no setup.
+export default defineConfig(() =>
 	// `src/test-backend.ts` applies `VITE_C15T_BACKEND_URL` over the
-	// placeholder URL in the root routes; the acceptance suite sets it for
-	// production builds.
-	if (command === 'serve' && !process.env.VITE_C15T_BACKEND_URL) {
-		process.env.VITE_C15T_BACKEND_URL = '/api/self-host';
-	}
-	return {
+	// placeholder URL in the root routes. The acceptance suite sets it for
+	// production builds; set it to your Inth project URL to run by hand.
+	({
 		// Only the default `VITE_` prefix reaches `import.meta.env`. Server-only
 		// `C15T_*` secrets stay in `process.env` and never enter a bundle.
 		plugins: [
@@ -88,5 +83,5 @@ export default defineConfig(({ command }) => {
 			),
 			viteReact(),
 		],
-	};
-});
+	})
+);
