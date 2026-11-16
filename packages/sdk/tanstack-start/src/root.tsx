@@ -28,7 +28,7 @@ import {
 	iabProviderLoaded,
 	liveRootKey,
 	read,
-	record,
+	recordOnce,
 	rootNeedsEngine,
 	scriptsNeedEngine,
 	startsScriptsWithoutEngine,
@@ -51,8 +51,12 @@ export type { ConsentRootProps } from './root-options';
 type EngineModule = typeof RootEngine;
 
 let engineModule: Recorded<EngineModule> | undefined;
+// No learned preload, as the Next.js root has: Vite's native `import()`
+// adds no `<script>` elements, so the only scripts a recording would
+// catch are the consent-gated ones c15t starts meanwhile.
+const importEngine = recordOnce(() => import('./root-engine'));
 
-/** The engine's module, loading once. */
+/** The engine's module, loading once, or again after a failed import. */
 const loadEngine = (): Recorded<EngineModule> => {
 	if (engineNow) {
 		// Outside browser bundles the engine is already in: a server render
@@ -63,11 +67,7 @@ const loadEngine = (): Recorded<EngineModule> => {
 		});
 		return engineModule;
 	}
-	// No learned preload, as the Next.js root has: Vite's native `import()`
-	// adds no `<script>` elements, so the only scripts a recording would
-	// catch are the consent-gated ones c15t starts meanwhile.
-	engineModule ??= record(import('./root-engine'));
-	return engineModule;
+	return importEngine();
 };
 
 /**

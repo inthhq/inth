@@ -23,8 +23,7 @@ import type * as DialogModuleNamespace from '../aggregate-components';
 import type { ConsentDialogCompoundComponent } from '../components/panel';
 import type * as BannerModuleNamespace from '../components/prompt/index';
 import type { ConsentBannerCompoundComponent } from '../components/prompt/index';
-import { DeferredSessionContext, read, record } from './session';
-import type { Recorded } from './session';
+import { DeferredSessionContext, read, recordOnce } from './session';
 
 // oxlint-disable-next-line typescript/no-explicit-any -- Props pass through unchanged.
 type AnyComponent = ComponentType<any>;
@@ -47,12 +46,10 @@ const deferredSurface = function deferredSurface<Module>(
 ): AnyComponent {
 	// Started at module evaluation on the server, so a render finds it
 	// loaded rather than suspending the surface into a later chunk.
-	let direct: Recorded<Module> | undefined =
-		typeof window === 'undefined' ? record(load()) : undefined;
-	const loadDirect = (): Recorded<Module> => {
-		direct ??= record(load());
-		return direct;
-	};
+	const loadDirect = recordOnce(load);
+	if (typeof window === 'undefined') {
+		loadDirect();
+	}
 	const fromEngine = (engine: unknown) =>
 		pick(
 			(engine as EngineSurfaces)[engineKey] as unknown as Record<

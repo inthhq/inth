@@ -27,7 +27,7 @@ export { useConsentBootPlan } from './boot-plan';
 export type { DeferredEngine, DeferredKernelHandle } from './deferred-kernel';
 export { learnEngineChunks } from './engine-preload';
 export { isRunnableNow, scriptsNeedEngine } from './runnable';
-export { record, read } from './session';
+export { record, read, recordOnce } from './session';
 export type { Recorded } from './session';
 export type { DeferredConsentShellProps, DeferredShellOptions } from './shell';
 export { DeferredConsentShell } from './shell';
