@@ -2,7 +2,7 @@ import { fileURLToPath } from 'node:url';
 
 import { expect, test } from 'vitest';
 
-import { docsOriginForVersion } from '../packages/cli/src/generate/docs-origin';
+import { docsOriginForVersion } from './docs-origin';
 import {
 	packageDocLink,
 	packageIndexLinks,

@@ -158,11 +158,6 @@ export const createCiPlan = function createCiPlan(
 		const [owner] = workspaces
 			.filter((workspace) => path.startsWith(`${workspace.directory}/`))
 			.sort((left, right) => right.directory.length - left.directory.length);
-		if (isStarterPath(path)) {
-			// The CLI generates the starters' quickstart files, and its tests diff
-			// them against these files, so a starter edit runs those tests too.
-			owners.add('@c15t/cli');
-		}
 		if (owner) {
 			owners.add(owner.name);
 		} else {
@@ -352,7 +347,6 @@ export const createCiPlan = function createCiPlan(
 		.filter(
 			(workspace) =>
 				workspace.scripts.test &&
-				workspace.name !== '@c15t/backend' &&
 				workspace.directory !== 'internals/fixtures/acceptance'
 		)
 		.map((workspace) => workspace.name);

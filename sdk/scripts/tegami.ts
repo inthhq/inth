@@ -29,14 +29,11 @@ import { checkReactNativeMavenPublication } from './publish-mobile';
 /** Linked packages align only when selected by a change or dependency update. */
 export const linkedPackages = new Set([
 	'c15t',
-	'@c15t/backend',
-	'@c15t/cli',
 	'@c15t/core',
 	'@c15t/dev-tools',
 	'@c15t/iab',
 	'@c15t/integrations',
 	'@c15t/nextjs',
-	'@c15t/node-sdk',
 	'@c15t/react',
 	'@c15t/tanstack-start',
 	'@c15t/translations',

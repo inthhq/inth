@@ -55,14 +55,14 @@ describe('CI selection', () => {
 		expect(result.tests).toContain('@c15t/svelte');
 	});
 
-	it.each([
-		'docs/integrations/default-com.mdx',
-		'packages/node-sdk/src/index.ts',
-	])('does not install Chromium for %s', (file) => {
-		const result = plan([file]);
-		expect(result).toMatchObject({ full: false, testBrowsers: false });
-		expect(ciSchedulingOutputs(result).testBrowsers).toBe(false);
-	});
+	it.each(['docs/integrations/default-com.mdx'])(
+		'does not install Chromium for %s',
+		(file) => {
+			const result = plan([file]);
+			expect(result).toMatchObject({ full: false, testBrowsers: false });
+			expect(ciSchedulingOutputs(result).testBrowsers).toBe(false);
+		}
+	);
 
 	it('tests the compatibility package without requiring vendor-runtime coverage', () => {
 		const result = plan(['bun.lock']);
@@ -165,9 +165,8 @@ describe('CI selection', () => {
 		]);
 		expect(result.examples).toContain('nextjs');
 		expect(result.examples).toContain('vue');
-		expect(result.tests).not.toContain('@c15t/node-sdk');
 	});
-	it('keeps CSS consumers and backend databases covered', () => {
+	it('keeps CSS consumers covered', () => {
 		expect(plan(['packages/ui/src/styles.css']).styles).toBe(true);
 		// The Tailwind framework matrix covers adapters the Next.js fixtures
 		// never load.
@@ -187,8 +186,6 @@ describe('CI selection', () => {
 			plan(['benchmarks/tailwind-matrix/v4/next-15-turbopack/app/globals.css'])
 				.styles
 		).toBe(true);
-		expect(plan(['packages/backend/src/index.ts']).backend).toBe(true);
-		expect(plan(['packages/cli/src/index.ts']).backend).toBe(false);
 	});
 	it.each([
 		'bun.lock',
@@ -200,7 +197,6 @@ describe('CI selection', () => {
 	])('widens safely for %s', (file) => {
 		const result = plan([file]);
 		expect(result.full).toBe(true);
-		expect(result.backend).toBe(true);
 		expect(result.examples).toHaveLength(19);
 		expect(result.starters).toHaveLength(starterTargets.length);
 	});
@@ -221,20 +217,7 @@ describe('CI selection', () => {
 			targets: 'vue',
 		});
 	});
-	it('runs the CLI quickstart tests when a starter changes', () => {
-		// The CLI writes the starters' quickstart files and diffs them in tests.
-		expect(plan(['examples/react/src/consent.tsx']).tests).toContain(
-			'@c15t/cli'
-		);
-		expect(plan(['examples/nuxt/.env']).tests).toContain('@c15t/cli');
-		expect(
-			plan(['examples/showcase-analytics/src/main.tsx']).tests
-		).not.toContain('@c15t/cli');
-	});
 	it('follows package dependencies into the starters', () => {
-		expect(plan(['packages/backend/src/index.ts']).starters).toContain(
-			'self-host'
-		);
 		const browser = plan(['packages/browser/src/index.ts']);
 		expect(browser.starters).toContain('html');
 		expect(browser.starters).toContain('javascript');
@@ -331,13 +314,10 @@ describe('CI selection', () => {
 		expect(result.mobileBrowserOrDevice).toBe(true);
 	});
 	it('keeps packages that only share benchmark tooling off the mobile runners', () => {
-		// The mobile bench depends on @c15t/benchmarking, which the backend depends on
-		// too. Selecting the mobile group through that edge would put a macOS runner on
-		// every backend pull request.
-		for (const file of [
-			'packages/backend/src/index.ts',
-			'benchmarks/shared/src/budgets.ts',
-		]) {
+		// The mobile bench depends on @c15t/benchmarking. Selecting the mobile
+		// group through that edge would put a macOS runner on every pull request
+		// that touches the shared tooling.
+		for (const file of ['benchmarks/shared/src/budgets.ts']) {
 			expect(plan([file]).mobile, file).toBe(false);
 			expect(plan([file]).mobileBrowserOrDevice, file).toBe(false);
 		}
@@ -360,9 +340,6 @@ describe('CI selection', () => {
 		expect(
 			plan(['packages/react-native/src/index.ts']).mobileBrowserOrDevice
 		).toBe(false);
-		expect(plan(['packages/backend/src/index.ts']).mobileBrowserOrDevice).toBe(
-			false
-		);
 	});
 	it('runs no mobile work for mobile documentation', () => {
 		const result = plan([

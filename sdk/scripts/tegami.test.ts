@@ -155,7 +155,7 @@ describe('linked and independent versioning', () => {
 	it('aligns selected packages with the highest linked canary and bumps dependents', async () => {
 		const root = fixture([
 			{ name: '@c15t/core', version: '3.0.0-canary.1' },
-			{ name: '@c15t/backend', version: '3.0.0-canary.5' },
+			{ name: '@c15t/iab', version: '3.0.0-canary.5' },
 			{ name: '@c15t/translations', version: '3.0.0-canary.0' },
 			{ name: '@c15t/logger', version: '3.0.0-canary.0' },
 			{
@@ -174,7 +174,7 @@ describe('linked and independent versioning', () => {
 		await (await release(root).draft()).apply();
 		expect(readManifest(root, 'core').version).toBe('3.0.0-canary.6');
 		expect(readManifest(root, 'react').version).toBe('3.0.0-canary.6');
-		expect(readManifest(root, 'backend').version).toBe('3.0.0-canary.5');
+		expect(readManifest(root, 'iab').version).toBe('3.0.0-canary.5');
 		expect(readManifest(root, 'translations').version).toBe('3.0.0-canary.0');
 		expect(readManifest(root, 'logger').version).toBe('3.0.0-canary.1');
 		expect(readManifest(root, 'private').version).toBe('1.0.0');
@@ -206,13 +206,13 @@ describe('linked and independent versioning', () => {
 	it('uses the highest stable bump regardless of changelog order', async () => {
 		const root = fixture([
 			{ name: '@c15t/core', version: '3.1.0' },
-			{ name: '@c15t/backend', version: '3.2.0' },
+			{ name: '@c15t/iab', version: '3.2.0' },
 			{ name: '@c15t/translations', version: '3.0.0' },
 		]);
-		change(root, { '@c15t/backend': 'minor', '@c15t/core': 'patch' });
+		change(root, { '@c15t/core': 'patch', '@c15t/iab': 'minor' });
 		await (await release(root, 'main').draft()).apply();
 		expect(readManifest(root, 'core').version).toBe('3.3.0');
-		expect(readManifest(root, 'backend').version).toBe('3.3.0');
+		expect(readManifest(root, 'iab').version).toBe('3.3.0');
 		expect(readManifest(root, 'translations').version).toBe('3.0.0');
 	});
 

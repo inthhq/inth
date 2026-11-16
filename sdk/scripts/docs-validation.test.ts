@@ -259,23 +259,6 @@ test('vendor registration tabs survive package Markdown conversion', async () =>
 	expect(markdown).not.toMatch(/<(?:include|Tabs|Tab|CommandTabs)\b/u);
 });
 
-test('backend guides are discoverable in navigation', async () => {
-	const navigation = await resolveDocsNavigation({
-		groups: docsConfig.groups,
-		nav: docsConfig.navigation,
-		srcDir: resolve(docsRoot, '..'),
-	});
-	const backend = navigation.groups.find((group) => group.slug === 'self-host');
-	const files = await fg('self-host/**/*.mdx', { cwd: docsRoot });
-	const pages = [
-		...(backend?.pages ?? []),
-		...(backend?.children.flatMap((group) => group.pages) ?? []),
-	];
-	expect(pages.map((page) => page.urlPath).sort()).toEqual(
-		files.map((file) => `/docs/${file.slice(0, -4)}`).sort()
-	);
-});
-
 test('shared framework tabs match the selector and survive Markdown conversion', async () => {
 	const navigation = await resolveDocsNavigation({
 		groups: docsConfig.groups,

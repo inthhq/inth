@@ -27,10 +27,6 @@ export default defineDocsConfig({
 			title: 'CLI',
 		},
 		{
-			slug: 'self-host',
-			title: 'Backend',
-		},
-		{
 			slug: 'reference',
 			title: 'Reference',
 		},
@@ -72,10 +68,6 @@ export default defineDocsConfig({
 					{
 						title: 'Upgrade a JavaScript app from v2',
 						urlPath: '/docs/frameworks/javascript/upgrade-v3',
-					},
-					{
-						title: 'Upgrade a self-hosted backend from v2',
-						urlPath: '/docs/self-host/upgrade-v3',
 					},
 				],
 				type: 'links',
@@ -1170,47 +1162,15 @@ export default defineDocsConfig({
 			title: 'Integrations',
 		},
 		{
-			base: 'self-host',
-			children: [
-				{
-					pages: [
-						'guides/database-setup',
-						'guides/policy-packs',
-						'guides/caching',
-						'guides/edge-deployment',
-						'guides/iab-tcf',
-						'guides/legal-document-snapshot-integration',
-						'guides/observability',
-					],
-					slug: 'guides',
-					title: 'Guides',
-				},
-				{
-					pages: ['api/configuration', 'api/endpoints', 'api/node-sdk'],
-					slug: 'reference',
-					title: 'Reference',
-				},
-			],
-			pages: ['overview', 'quickstart', 'upgrade-v3'],
-			slug: 'self-host',
-			title: 'Backend',
-		},
-		{
 			base: 'cli',
 			children: [
 				{
-					pages: [
-						'commands/setup',
-						'commands/codemods',
-						'commands/self-host',
-						'commands/mobile-manifest',
-						'commands/mobile-setup',
-					],
+					pages: ['commands/mobile-manifest', 'commands/mobile-setup'],
 					slug: 'commands',
 					title: 'Commands',
 				},
 			],
-			pages: ['overview', 'quickstart'],
+			pages: [],
 			slug: 'cli',
 			title: 'CLI',
 		},

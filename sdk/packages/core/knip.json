@@ -24,11 +24,7 @@
 		"rslib.config.ts",
 		"vitest.config.ts"
 	],
-	"ignoreDependencies": [
-		"@c15t/typescript-config",
-		"@c15t/backend",
-		"happy-dom"
-	],
+	"ignoreDependencies": ["@c15t/typescript-config", "happy-dom"],
 	"rules": {
 		"exports": "warn",
 		"types": "warn",

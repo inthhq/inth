@@ -1,7 +1,6 @@
 import type { KnipConfig } from 'knip';
 
 import c15tConfig from './packages/c15t/knip.json';
-import cliConfig from './packages/cli/knip.json';
 import coreConfig from './packages/core/knip.json';
 import loggerConfig from './packages/logger/knip.json';
 import nextjsConfig from './packages/nextjs/knip.json';
@@ -60,24 +59,7 @@ const config: KnipConfig = {
 			ignore: ['src/**/__tests__/**'],
 			project: ['src/**/*.{ts,astro}'],
 		},
-		'packages/backend': {
-			entry: ['src/index.ts', 'src/sql/*.ts'],
-			ignore: ['src/**/*.test.ts', 'src/**/__tests__/**'],
-			// Peers that hono-openapi and standard-json load at runtime. Yarn
-			// does not install peers and pnpm skips optional ones, so the
-			// backend declares them; src/__tests__/peer-imports.test.ts keeps
-			// the list complete.
-			ignoreDependencies: [
-				'@hono/standard-validator',
-				'@standard-community/standard-json',
-				'@standard-community/standard-openapi',
-				'@valibot/to-json-schema',
-				'quansync',
-			],
-			project: ['src/**/*.ts'],
-		},
 		'packages/c15t': workspaceConfig(c15tConfig),
-		'packages/cli': workspaceConfig(cliConfig),
 		'packages/core': workspaceConfig(coreConfig),
 		'packages/logger': workspaceConfig(loggerConfig),
 		'packages/nextjs': workspaceConfig(nextjsConfig),

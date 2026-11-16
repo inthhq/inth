@@ -129,22 +129,6 @@
 			"outputs": ["dist/**", "dist-types/**", "src/version.ts"],
 			"env": ["WITH_RSDOCTOR"]
 		},
-		"@c15t/backend#build": {
-			"dependsOn": ["^build"],
-			"inputs": [
-				"$TURBO_DEFAULT$",
-				".env*",
-				"!docs/**",
-				"!AGENTS.md",
-				"!SKILL.md",
-				"!README.md",
-				"!readme.json",
-				"$TURBO_ROOT$/packages/shared/**",
-				"$TURBO_ROOT$/scripts/normalize-dist-types.mjs"
-			],
-			"outputs": ["dist/**", "dist-types/**", "src/version.ts"],
-			"env": ["WITH_RSDOCTOR"]
-		},
 		"@c15t/fixture-nuxt#build": {
 			"dependsOn": ["^build"],
 			"inputs": [
@@ -273,7 +257,6 @@
 			"dependsOn": ["c15t#build"],
 			"with": [
 				"@c15t/core#dev",
-				"@c15t/backend#dev",
 				"@c15t/iab#dev",
 				"@c15t/logger#dev",
 				"@c15t/nextjs#dev",
@@ -291,7 +274,6 @@
 			"dependsOn": ["c15t#build"],
 			"with": [
 				"@c15t/core#dev",
-				"@c15t/backend#dev",
 				"@c15t/logger#dev",
 				"@c15t/schema#dev",
 				"@c15t/translations#dev",
@@ -305,7 +287,6 @@
 			"dependsOn": ["c15t#build"],
 			"with": [
 				"@c15t/core#dev",
-				"@c15t/backend#dev",
 				"@c15t/logger#dev",
 				"@c15t/react#dev",
 				"@c15t/schema#dev",
@@ -337,7 +318,6 @@
 			"dependsOn": ["c15t#build"],
 			"with": [
 				"@c15t/core#dev",
-				"@c15t/backend#dev",
 				"@c15t/iab#dev",
 				"@c15t/logger#dev",
 				"@c15t/schema#dev",
@@ -648,26 +628,10 @@
 			"outputs": ["dist/**", "dist-types/**"],
 			"env": ["WITH_RSDOCTOR"]
 		},
-		"@c15t/cli#build": {
-			"dependsOn": ["^build"],
-			"inputs": [
-				"$TURBO_DEFAULT$",
-				".env*",
-				"!docs/**",
-				"!AGENTS.md",
-				"!SKILL.md",
-				"!README.md",
-				"!readme.json",
-				"$TURBO_ROOT$/packages/shared/**",
-				"$TURBO_ROOT$/scripts/normalize-dist-types.mjs"
-			],
-			"outputs": ["dist/**", "dist-types/**"],
-			"env": ["WITH_RSDOCTOR"]
-		},
 		"build:docs": {
 			"inputs": [
 				"$TURBO_ROOT$/docs/**",
-				"$TURBO_ROOT$/packages/cli/src/generate/docs-origin.ts",
+				"$TURBO_ROOT$/scripts/docs-origin.ts",
 				"$TURBO_ROOT$/scripts/generate-package-docs.ts",
 				"$TURBO_ROOT$/scripts/package-skill.ts",
 				"$TURBO_ROOT$/scripts/package-doc-entry-points.ts",
@@ -680,10 +644,6 @@
 			"dependsOn": ["build", "^build"]
 		},
 		"@c15t/next-bundle-bench#test": {
-			"dependsOn": ["^build"],
-			"outputs": []
-		},
-		"@c15t/backend-bench#build": {
 			"dependsOn": ["^build"],
 			"outputs": []
 		},
