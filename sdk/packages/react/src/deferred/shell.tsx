@@ -17,12 +17,22 @@
  */
 
 import type { SaveResult, SaveUISource } from '@c15t/core';
+import type { Script } from '@c15t/core/modules/script-loader';
 import type { RuntimePrefetch } from '@c15t/core/runtime';
+import {
+	changedPlainScripts,
+	obsoletePlainScripts,
+	plainDeclarations,
+	claimPlainScripts,
+	releasePlainScripts,
+	releaseServerStartedScripts,
+} from '@c15t/core/surface-actions/plain-scripts';
 import { applyThemeSlots } from '@c15t/ui/utils/theme-slots';
 import type { ReactNode } from 'react';
 import {
 	Suspense,
 	useEffect,
+	useInsertionEffect,
 	useMemo,
 	useState,
 	useSyncExternalStore,
@@ -37,6 +47,12 @@ import { useColorScheme } from '../hooks/use-color-scheme';
 import type { ConsentProviderOptions } from '../provider';
 import { V3ThemeProvider } from '../theme-provider';
 import type { V3UIConfigValue } from '../ui-config-context';
+import {
+	endPageRender,
+	pageRender,
+	storedChoiceCurrent,
+	watchStoredChoice,
+} from './boot';
 import type { ConsentBoot } from './boot';
 import type * as CommitModule from './commit';
 import type { CommitTapInput, CommitTapResult } from './commit';
@@ -97,6 +113,19 @@ export interface DeferredConsentShellProps<EngineModule> {
 	/** Wait for the page's priority images (or input) before loading. */
 	defer: boolean;
 	/**
+	 * The root's live options (`liveRootKey`): a change while the engine
+	 * waits loads it at once, since the plan the root made at mount, and
+	 * the commit path's scripts, no longer describe what it must do.
+	 */
+	live?: string;
+	/**
+	 * The visitor's stored choice already allows scripts: `useScriptLoader`
+	 * starts on the stand-in, and the plain scripts the snapshot grants
+	 * start without the engine (`startPlainScripts`), so the engine can
+	 * wait with `defer`.
+	 */
+	startScripts?: boolean;
+	/**
 	 * When a deferred engine starts. Defaults to `scheduleDeferredEngine`.
 	 * Gets the stand-in's handle, to replace its snapshot before the engine
 	 * attaches, and calls `onTap` for a banner tap the root routes. Returns
@@ -105,7 +134,8 @@ export interface DeferredConsentShellProps<EngineModule> {
 	schedule?: (
 		start: () => void,
 		handle: DeferredKernelHandle,
-		onTap?: (pressed?: string) => void
+		onTap?: (pressed?: string) => void,
+		renderId?: string
 	) => () => void;
 	/**
 	 * Lets a banner accept or reject tapped before the engine loaded be
@@ -248,6 +278,8 @@ const unhideWhenGone = function unhideWhenGone(
 
 /** A deferred session, with the root's commit path. */
 interface ShellSession extends DeferredSession {
+	/** The render whose boot data the session was created from. */
+	renderId: string | undefined;
 	/**
 	 * Routes the banner tap the early-tap script recorded. With `pressed`,
 	 * the `data-action` of a banner button a pointer went down on: fetch
@@ -261,7 +293,33 @@ interface ShellSession extends DeferredSession {
 	 * does not (`readAheadOfTap`).
 	 */
 	aheadOfTaps: () => void;
+	/**
+	 * For a returning visitor who chose (`startScripts`): starts what their
+	 * stored choice allows, or the engine when the browser's records no
+	 * longer agree with it.
+	 */
+	startStoredChoice: () => void;
+	/** Stops watching the stored choice, as the effect that started it ends. */
+	stopStoredChoice: () => void;
+	/**
+	 * Records the root's live options as this render reads them
+	 * (`liveRootKey`), before any effect of the render runs.
+	 */
+	setLive: (live: string | undefined) => void;
+	/**
+	 * Records the root's commit config as this render passes it, so a tap
+	 * records with the latest callbacks: an inline callback rebuilt each
+	 * render does not change the live key.
+	 */
+	setCommit: (config: DeferredCommitConfig | undefined) => void;
+	/**
+	 * Releases the root scripts the session started early that the root's
+	 * latest `scripts` dropped, unless a hook still passes them.
+	 */
+	releaseDropped: (config: DeferredCommitConfig | undefined) => void;
 	dispose: () => void;
+	/** Undoes a `dispose` the same mount follows at once (StrictMode). */
+	resume: () => void;
 }
 
 const createSession = function createSession<EngineModule>(
@@ -270,7 +328,9 @@ const createSession = function createSession<EngineModule>(
 	prefetch: unknown,
 	loadEngine: () => Promise<EngineModule>,
 	commitConfig: DeferredCommitConfig | undefined,
-	importCommit: () => Promise<typeof CommitModule> = () => import('./commit')
+	importCommit: () => Promise<typeof CommitModule> = () => import('./commit'),
+	startScripts = false,
+	live: string | undefined = undefined
 ): ShellSession {
 	let start: () => void = () => undefined;
 	/** Set once something asked for the engine. */
@@ -297,6 +357,143 @@ const createSession = function createSession<EngineModule>(
 				: undefined,
 		snapshot: boot.r ?? boot.s,
 	});
+	const scriptNonce = commitConfig?.nonce ?? options.nonce;
+	/**
+	 * The render whose boot data this session was created from. Its cleanup
+	 * acts on this render only, never on whichever the page names now: a
+	 * navigation may have replaced the boot element since the root read it.
+	 */
+	const renderId = boot.i;
+	/** What this render's server start marked, as last read. */
+	let serverStarted: Record<string, unknown> = {};
+	/**
+	 * The root's scripts as the server start saw them: a live change keeps
+	 * an element of one still declared this way for the loader to adopt.
+	 * Empty without a commit config, so every element goes then.
+	 */
+	const declaredAtMount = plainDeclarations(commitConfig?.scripts ?? []);
+	/**
+	 * This render's page object, while it is the page's. Each read keeps
+	 * what its server start marked, so the root can still release those
+	 * elements after the render ended.
+	 */
+	const thisRender = () => {
+		const render = pageRender(renderId);
+		if (render) {
+			serverStarted = { ...render.starts };
+		}
+		return render;
+	};
+	thisRender();
+	/** The root's live options as the latest render read them. */
+	let liveNow = live;
+	/** The pending end of the page's render, after a dispose. */
+	let ending: ReturnType<typeof setTimeout> | undefined;
+	/** The root's commit config as the latest render passed it. */
+	let commitNow = commitConfig;
+	/**
+	 * The early-started elements the root's own `scripts` name, which the
+	 * session holds until a loader adopts them (`claimPlainScripts`): they
+	 * leave with the root, or when it drops them, unless a hook still
+	 * holds them too.
+	 */
+	const rootOwned = new Map<string, string>();
+	const claimRoot = (): void => {
+		// One started for another declaration of the resource is not what the
+		// root runs, and is left to its owners: the engine loads the root's.
+		if (claimPlainScripts(commitNow?.scripts ?? [], rootOwned).length > 0) {
+			start();
+		}
+	};
+	const own = (keys: readonly string[]): readonly string[] => {
+		claimRoot();
+		return keys;
+	};
+	/** The config a tap records with: the latest, with this render's reservations. */
+	const tapConfig = (): DeferredCommitConfig =>
+		({
+			...(commitNow ?? commitConfig),
+			reserved: thisRender()?.starts,
+		}) as DeferredCommitConfig;
+	/**
+	 * Whether the root's live options are still the ones the session was
+	 * made with. A child's effect can run before the shell's, in the
+	 * render that changed them (a navigation to a denial that also mounts
+	 * a route's `useScriptLoader`), so every start asks here, and the
+	 * engine loads at once when they changed.
+	 */
+	const liveStillHolds = (): boolean => {
+		if (liveNow === live) {
+			return true;
+		}
+		start();
+		return false;
+	};
+	/**
+	 * The one gate for a returning visitor's stored choice while the engine
+	 * waits: every script the root inserts without the engine passes here,
+	 * and so does every wake-up of the watcher below. When the browser no
+	 * longer agrees with the stored choice, the engine loads at once and
+	 * applies what changed; nothing is inserted.
+	 */
+	const storedStillHolds = (): boolean => {
+		if (storedChoiceCurrent(renderId)) {
+			return true;
+		}
+		start();
+		return false;
+	};
+	/**
+	 * Inserts the plain scripts the stored choice allows. The script loader
+	 * never runs on the stand-in in this mode, so this is the only way a
+	 * script starts before the engine; the loader adopts what it inserted.
+	 */
+	const startStored = (scripts: readonly Script[]): readonly string[] => {
+		if (
+			handle.attached() ||
+			requested ||
+			!liveStillHolds() ||
+			!storedStillHolds()
+		) {
+			return [];
+		}
+		return own(
+			startPlainScripts(
+				scripts,
+				handle.kernel.getSnapshot(),
+				scriptNonce,
+				thisRender()?.starts
+			)
+		);
+	};
+	if (startScripts) {
+		setDeferredScriptStarter(handle.kernel, startStored);
+	}
+	let stopWatching: () => void = () => undefined;
+	/**
+	 * After hydration: starts the root's own plain `scripts`, then watches
+	 * the stored choice until the engine loads.
+	 */
+	const startStoredChoice = (): void => {
+		if (!startScripts || handle.attached() || requested) {
+			return;
+		}
+		startStored(commitConfig?.scripts ?? []);
+		if (!requested) {
+			// The effect that calls this runs again when its inputs change.
+			stopWatching();
+			stopWatching = watchStoredChoice(
+				() => {
+					if (!handle.attached() && !requested) {
+						storedStillHolds();
+					}
+				},
+				(boot.r ?? boot.s).nextDeadline
+			);
+			// oxlint-disable-next-line promise/prefer-await-to-then -- Stops once the engine is asked for.
+			void started.then(() => stopWatching());
+		}
+	};
 	const surfaces = new Map<string, Recorded<unknown>>();
 	// A commit in flight; the engine renders after it, from its records.
 	let commitSettled: Promise<void> = Promise.resolve();
@@ -483,7 +680,14 @@ const createSession = function createSession<EngineModule>(
 
 	/** Whether a choice can go through the commit path now. */
 	const canCommit = (): boolean =>
-		Boolean(commitConfig) && !routing && !engineRendering && !handle.attached();
+		Boolean(commitConfig) &&
+		!routing &&
+		!engineRendering &&
+		!handle.attached() &&
+		// A root whose live options changed commits through the engine: its
+		// mount-time config may no longer hold (persistence turned off, a
+		// consent source added). This also asks for the engine.
+		liveStillHolds();
 
 	/**
 	 * Records an accept, reject or selection without the engine, then loads
@@ -498,28 +702,29 @@ const createSession = function createSession<EngineModule>(
 		uiSource?: SaveUISource
 	): Promise<SaveResult | null> => {
 		routing = true;
+		// One config for the whole tap, so both paths record with the same.
+		const config = tapConfig();
 		const instant =
-			commitInstantly(
-				handle,
-				commitConfig as DeferredCommitConfig,
-				choice,
-				actionAt,
-				ahead
-			) ?? undefined;
+			commitInstantly(handle, config, choice, actionAt, ahead) ?? undefined;
 		if (instant) {
+			// It started the root's plain scripts in this task.
+			claimRoot();
 			// The banner is hidden; nothing replays the tap.
 			claimTaps(true);
 			// A loader that registers its scripts after this starts them
 			// from the choice too.
-			setDeferredScriptStarter(handle.kernel, (scripts) => {
-				if (!handle.attached()) {
-					startPlainScripts(
-						scripts,
-						handle.kernel.getSnapshot(),
-						commitConfig?.nonce
-					);
-				}
-			});
+			setDeferredScriptStarter(handle.kernel, (scripts) =>
+				!handle.attached() && liveStillHolds()
+					? own(
+							startPlainScripts(
+								scripts,
+								handle.kernel.getSnapshot(),
+								commitConfig?.nonce,
+								thisRender()?.starts
+							)
+						)
+					: []
+			);
 		} else {
 			prepare(choice === 'all' ? 'accept' : 'reject');
 		}
@@ -536,7 +741,7 @@ const createSession = function createSession<EngineModule>(
 				return await commitEarlyTap({
 					actionAt,
 					choice,
-					config: commitConfig as DeferredCommitConfig,
+					config,
 					handle,
 					instant,
 					uiSource,
@@ -679,14 +884,98 @@ const createSession = function createSession<EngineModule>(
 		},
 		committed: () => result?.committed,
 		dispose: () => {
+			stopWatching();
 			holdPresses(false);
+			// A server start still waiting for the page's priority images
+			// inserts nothing for a root that is gone; the engine's loader
+			// cancels those itself. After a task, so StrictMode's remount of
+			// the same root can take it back (`resume`).
+			if (!handle.attached()) {
+				ending = setTimeout(() => {
+					// What the server start already inserted has no loader to
+					// take it over either.
+					thisRender();
+					if (renderId !== undefined) {
+						releaseServerStartedScripts(Object.keys(serverStarted), renderId);
+					}
+					endPageRender(renderId);
+				}, 0);
+			}
+			// What a loader did not adopt leaves with the root, unless a hook
+			// still holds it.
+			claimRoot();
+			releasePlainScripts(rootOwned.keys());
+			// So a resumed session (StrictMode) holds them again.
+			rootOwned.clear();
 			// oxlint-disable-next-line promise/prefer-await-to-then -- Disposes once created.
 			void result?.loader?.then((loader) => loader.dispose());
 		},
 		engine,
 		handle,
+		releaseDropped: (config) => {
+			// A root script it started early that the root now declares
+			// otherwise (a new src, a denied category) is no longer what the
+			// page runs: release it, and leave it to the engine.
+			const changed = changedPlainScripts(config?.scripts ?? [], rootOwned);
+			if (changed.length > 0) {
+				releasePlainScripts(changed);
+				for (const key of changed) {
+					rootOwned.delete(key);
+				}
+				start();
+			}
+			// Holds what a commit started since, then lets go of what the
+			// root no longer passes.
+			claimRoot();
+			const next = new Set(
+				(config?.scripts ?? []).map((script) => script.resourceKey ?? script.id)
+			);
+			const dropped = [...rootOwned.keys()].filter((key) => !next.has(key));
+			releasePlainScripts(dropped);
+			for (const key of dropped) {
+				rootOwned.delete(key);
+			}
+		},
+		renderId,
+		resume: () => {
+			clearTimeout(ending);
+		},
 		routeTap,
+		setCommit: (next) => {
+			commitNow = next;
+			// After a live change, what the server start inserted for a script
+			// the root now drops or declares otherwise goes, and no loader
+			// adopted it: the engine that loads for the new options starts what
+			// they declare instead. A script they keep as it was stays for the
+			// loader to adopt, so it does not run twice.
+			if (liveNow !== live && !handle.attached() && renderId !== undefined) {
+				releaseServerStartedScripts(
+					obsoletePlainScripts(
+						next?.scripts ?? [],
+						declaredAtMount,
+						Object.keys(serverStarted)
+					),
+					renderId
+				);
+			}
+		},
+		setLive: (next) => {
+			// The plan made at mount no longer holds: a server start still
+			// waiting for the page's priority images inserts nothing, from
+			// this render on, before any effect runs. `setCommit` then
+			// releases what it inserted for a script the root changed.
+			if (next !== live && !handle.attached()) {
+				// Kept first, so the root can still release them.
+				thisRender();
+				endPageRender(renderId);
+			}
+			liveNow = next;
+		},
 		start,
+		startStoredChoice,
+		stopStoredChoice: () => {
+			stopWatching();
+		},
 		surface<Value>(key: string, pick: (loaded: unknown) => Value) {
 			let value = surfaces.get(key) as Recorded<Value> | undefined;
 			if (!value) {
@@ -710,7 +999,8 @@ const createSession = function createSession<EngineModule>(
 /** The default `schedule`: the engine starts on the page's trigger. */
 const scheduleOnTrigger: NonNullable<
 	DeferredConsentShellProps<unknown>['schedule']
-> = (start, _handle, onTap) => scheduleDeferredEngine(start, onTap);
+> = (start, _handle, onTap, renderId) =>
+	scheduleDeferredEngine(start, onTap, renderId);
 
 const EngineSlot = function EngineSlot<EngineModule>({
 	render,
@@ -761,12 +1051,14 @@ export const DeferredConsentShell = <EngineModule,>(
 		children,
 		commit,
 		defer,
+		live,
 		loadCommit,
 		loadEngine,
 		options,
 		prefetch,
 		renderEngine,
 		schedule = scheduleOnTrigger,
+		startScripts = false,
 		slotAfterMount = false,
 	} = props;
 	// oxlint-disable-next-line react/hook-use-state -- Created once, at mount.
@@ -777,7 +1069,9 @@ export const DeferredConsentShell = <EngineModule,>(
 			prefetch,
 			loadEngine,
 			commit,
-			loadCommit
+			loadCommit,
+			startScripts,
+			live
 		);
 		if (!defer) {
 			// Nothing to wait for: start during the first render.
@@ -792,13 +1086,46 @@ export const DeferredConsentShell = <EngineModule,>(
 		}
 		// After hydration, before the visitor can tap.
 		session.aheadOfTaps();
-		return schedule(
+		session.startStoredChoice();
+		const stopSchedule = schedule(
 			session.start,
 			session.handle,
-			routes ? session.routeTap : undefined
+			routes ? session.routeTap : undefined,
+			session.renderId
 		);
+		return () => {
+			stopSchedule();
+			session.stopStoredChoice();
+		};
 	}, [defer, routes, schedule, session]);
-	useEffect(() => session.dispose, [session]);
+	useEffect(() => {
+		session.resume();
+		return session.dispose;
+	}, [session]);
+	// Before any effect of this render, a child's included: the session's
+	// starters compare it with the live options it was made with. It runs
+	// as the render does, so a server start waiting on its own timer
+	// inserts nothing between this render and its commit; ending the page
+	// render only stops those inserts, so a render React discards costs a
+	// later start at most.
+	session.setLive(live);
+	// After every commit, before its layout and passive effects: a tap then
+	// records with this config, and after a live change a script it declares
+	// otherwise is released, which a render React discards must not do.
+	useInsertionEffect(() => {
+		session.setCommit(commit);
+	});
+	// After the render commits: a root script it no longer passes leaves.
+	useEffect(() => {
+		session.releaseDropped(commit);
+	}, [commit, session]);
+	// oxlint-disable-next-line react/hook-use-state -- The live options at mount.
+	const [liveAtMount] = useState(live);
+	useEffect(() => {
+		if (live !== liveAtMount) {
+			session.start();
+		}
+	}, [live, liveAtMount, session]);
 
 	useColorScheme(options.colorScheme);
 

@@ -7,7 +7,13 @@
  * in this window, so the tests hand it the iframe's early-tap queue.
  */
 import type { KernelConfig } from '@c15t/core';
-import { Suspense, act, useEffect, useState } from 'react';
+import {
+	Suspense,
+	act,
+	useEffect,
+	useState,
+	useSyncExternalStore,
+} from 'react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import type { MockInstance } from 'vitest';
 
@@ -193,9 +199,11 @@ const ClientPage = ({
 	prefetch,
 	scripts,
 	lateScripts = NO_SCRIPTS,
+	live,
 }: {
 	boot: ConsentBoot;
 	commit: DeferredCommitConfig;
+	live?: string;
 	loadCommit?: typeof loadCommit;
 	loadEngine: () => Promise<EngineModule>;
 	prefetch: unknown;
@@ -209,6 +217,7 @@ const ClientPage = ({
 				boot={boot}
 				commit={commit}
 				defer
+				live={live}
 				loadCommit={load}
 				loadEngine={loadEngine}
 				options={{ consentCategories }}
@@ -389,6 +398,72 @@ test('an accept before the engine is recorded without it; the engine takes it ov
 	await hydrated.unmount();
 });
 
+test('an accept before the engine calls the callback the latest render passed', async () => {
+	// An inline callback is rebuilt each render and keeps the live key, so
+	// the engine keeps waiting; the tap must still call the new one.
+	const state = config();
+	const { boot, page: streamed } = await serve(state);
+	const first = vi.fn();
+	const latest = vi.fn();
+	const store = {
+		callback: first,
+		listeners: new Set<() => void>(),
+	};
+	const LatestCallbackPage = (
+		props: Omit<Parameters<typeof ClientPage>[0], 'commit'>
+	) => {
+		const onChoiceRecorded = useSyncExternalStore(
+			(listener) => {
+				store.listeners.add(listener);
+				return () => {
+					store.listeners.delete(listener);
+				};
+			},
+			() => store.callback,
+			() => store.callback
+		);
+		return (
+			<ClientPage
+				{...props}
+				commit={{ callbacks: { onChoiceRecorded } }}
+			/>
+		);
+	};
+	const engine = heldEngine();
+	shareTapQueue(streamed);
+	const hydrated = await streamed.hydrate(
+		<LatestCallbackPage
+			boot={boot}
+			loadEngine={engine.loadEngine}
+			prefetch={fulfilledThenable(state)}
+			scripts={[]}
+		/>
+	);
+	await act(() => {
+		store.callback = latest;
+		for (const listener of store.listeners) {
+			listener();
+		}
+	});
+	expect(engine.loadEngine).not.toHaveBeenCalled();
+
+	// The page's own accept: a rerender before the engine drops the
+	// banner's server HTML in this harness, as it does on canary.
+	await act(() => {
+		(
+			streamed.doc.getElementById('accept-from-page') as HTMLButtonElement
+		).click();
+	});
+	await vi.waitFor(() => {
+		expect(latest).toHaveBeenCalledTimes(1);
+	});
+	expect(first).not.toHaveBeenCalled();
+	await act(() => {
+		engine.release();
+	});
+	await hydrated.unmount();
+});
+
 test('the commit starts plain page and root scripts; their loaders adopt them once', async () => {
 	const state = config();
 	const { boot, page: streamed } = await serve(state);
@@ -515,6 +590,65 @@ test('a page accept on the stand-in goes through the commit path too', async () 
 	await hydrated.unmount();
 });
 
+test('a tap after the live options changed waits for the engine and records nothing itself', async () => {
+	// Persistence turned off, say: the mount-time commit config no longer
+	// says how to record the choice.
+	const state = config();
+	const { boot, page: streamed } = await serve(state);
+	const engine = heldEngine();
+	shareTapQueue(streamed);
+	const store = { key: 'at-mount', listeners: new Set<() => void>() };
+	const LivePage = (props: Omit<Parameters<typeof ClientPage>[0], 'live'>) => {
+		const live = useSyncExternalStore(
+			(listener) => {
+				store.listeners.add(listener);
+				return () => {
+					store.listeners.delete(listener);
+				};
+			},
+			() => store.key,
+			() => store.key
+		);
+		return (
+			<ClientPage
+				{...props}
+				live={live}
+			/>
+		);
+	};
+	const hydrated = await streamed.hydrate(
+		<LivePage
+			boot={boot}
+			commit={{}}
+			loadEngine={engine.loadEngine}
+			prefetch={fulfilledThenable(state)}
+			scripts={[]}
+		/>
+	);
+	await act(() => {
+		store.key = 'persistence-off';
+		for (const listener of store.listeners) {
+			listener();
+		}
+	});
+	await act(() => {
+		(
+			streamed.doc.getElementById('accept-from-page') as HTMLButtonElement
+		).click();
+	});
+	await new Promise((resolve) => {
+		setTimeout(resolve, 50);
+	});
+	// Nothing recorded through the old config; the engine is asked for.
+	expect(localStorage.getItem('c15t')).toBeNull();
+	expect(queuedSaves()).toHaveLength(0);
+	expect(engine.loadEngine).toHaveBeenCalled();
+	await act(() => {
+		engine.release();
+	});
+	await hydrated.unmount();
+});
+
 test('customize hides the banner and opens the dialog without the engine; its save commits', async () => {
 	const state = config();
 	const { boot, page: streamed } = await serve(state);
@@ -613,6 +747,34 @@ const outsideAct = () => {
 		globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
 	).IS_REACT_ACT_ENVIRONMENT = false;
 };
+
+test("a hook's script an instant accept started leaves with the hook when it unmounts in the tap's task", async () => {
+	const state = config();
+	const { boot, page: streamed } = await serve(state);
+	const engine = heldEngine();
+	commitGate.hold();
+	shareTapQueue(streamed);
+	const hydrated = await streamed.hydrate(
+		<ClientPage
+			boot={boot}
+			commit={{}}
+			loadEngine={engine.loadEngine}
+			prefetch={fulfilledThenable(state)}
+			scripts={[counted('owned-by-hook')]}
+		/>
+	);
+	outsideAct();
+	tapBanner(streamed, 'accept');
+	expect(inserted('owned-by-hook')).toBe(1);
+	// The page goes in the same task, before the hook's own claim could run.
+	const gone = hydrated.unmount();
+	await gone;
+	commitGate.release();
+	await new Promise((resolve) => {
+		setTimeout(resolve, 50);
+	});
+	expect(inserted('owned-by-hook')).toBe(0);
+});
 
 test("an accept takes effect in the tap's task, with its scripts started; the commit chunk stores it and the engine adds nothing", async () => {
 	const state = config();

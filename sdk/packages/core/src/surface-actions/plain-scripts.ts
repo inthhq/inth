@@ -23,27 +23,37 @@ export { evaluateCategoryGate } from '../modules/category-gate';
 
 type Condition = HasCondition<string>;
 
+/**
+ * `has()`'s evaluator, small enough for a first-load chunk. It decides as
+ * `has()` does and throws where `has()` throws: on an empty AND or OR, a
+ * category the permissions do not name, and any other shape (a bare
+ * array, `{}`, `null`). Its caller treats a throw as "do not run", as the
+ * loader does. `plain-scripts-conditions.test.ts` runs every condition
+ * form through both, so keep the two in step.
+ */
 const allows = function allows(
-	condition: Condition | Condition[],
+	condition: Condition,
 	granted: Record<string, boolean | undefined>
 ): boolean {
-	if (Array.isArray(condition)) {
-		return condition.every((part) => allows(part, granted));
-	}
 	if (typeof condition === 'string') {
-		return granted[condition] === true;
+		if (condition in granted) {
+			return granted[condition] === true;
+		}
+	} else if (typeof condition === 'object' && condition !== null) {
+		const all = 'and' in condition;
+		if (all || 'or' in condition) {
+			const part = all ? condition.and : condition.or;
+			const parts = Array.isArray(part) ? part : [part];
+			if (parts.length > 0) {
+				return all
+					? parts.every((each) => allows(each, granted))
+					: parts.some((each) => allows(each, granted));
+			}
+		} else if ('not' in condition) {
+			return !allows(condition.not, granted);
+		}
 	}
-	if ('and' in condition) {
-		return allows(condition.and, granted);
-	}
-	if ('or' in condition) {
-		const parts = Array.isArray(condition.or) ? condition.or : [condition.or];
-		return parts.some((part) => allows(part, granted));
-	}
-	if ('not' in condition) {
-		return !allows(condition.not, granted);
-	}
-	return false;
+	throw new TypeError('condition');
 };
 
 /**
@@ -74,9 +84,19 @@ export const isRunnableNow = function isRunnableNow(
 	}
 };
 
-/** Fields that need the script loader to start a script. */
-const LOADER_FIELDS = [
+/**
+ * Fields that need the script loader to start a script. Every other
+ * `Script` field is one `startPlainScripts` applies as the loader would;
+ * `plain-script-fields.test.ts` fails when a field is in neither list.
+ *
+ * @internal
+ */
+export const LOADER_FIELDS = [
 	'alwaysLoad',
+	// The loader gives the element its id before appending it, which a
+	// script's code may read from `document.currentScript`; a page start
+	// sets none.
+	'anonymizeId',
 	'callbackOnly',
 	'iabLegIntPurposes',
 	'iabPurposes',
@@ -87,6 +107,11 @@ const LOADER_FIELDS = [
 	'onDispose',
 	'onError',
 	'onLoad',
+	// The loader keeps such an element after a revoke without a page mark,
+	// so only it can tell whether the element is already there.
+	'persistAfterConsentRevoked',
+	// Its element stays on dispose while its registry entry goes.
+	'persistAfterDispose',
 	'serverStart',
 	'textContent',
 	'validate',
@@ -107,16 +132,198 @@ const LOADER_FIELDS = [
  */
 export const isPlainScript = function isPlainScript(script: Script): boolean {
 	return (
+		// Not empty: an empty src resolves to the page's URL, and the loader
+		// rejects it.
 		typeof script.src === 'string' &&
+		script.src !== '' &&
 		LOADER_FIELDS.every((field) => script[field] === undefined)
 	);
 };
+
+/**
+ * Whether the loader reports consent to `script` before it loads it
+ * (`observeConsentBeforeLoad` with `onConsentChange`): it calls the
+ * callback with the first decision, a denial too, as soon as it mounts.
+ * Integrations use that call to switch a shared SDK off, so only the
+ * engine can serve such a script, whether it may run or not.
+ *
+ * @param script - A script passed to the loader.
+ * @returns `true` when the script observes consent before it loads.
+ * @internal
+ */
+export const observesConsent = function observesConsent(
+	script: Pick<Script, 'observeConsentBeforeLoad' | 'onConsentChange'>
+): boolean {
+	return (
+		script.observeConsentBeforeLoad === true &&
+		typeof script.onConsentChange === 'function'
+	);
+};
+
+/**
+ * Fields of a runnable script that need the engine at once even when the
+ * server started the script. Only the loader hears its element's `load`
+ * or `error`, so waiting would call `onLoad` and `onError` late, or not at
+ * all after a navigation. A root that goes before its engine removes what
+ * the server start inserted, so only the loader can keep an element
+ * (`persistAfterDispose`) or call `onDispose` when it removes one.
+ *
+ * The others can wait. `onBeforeLoad` is the setup the server start's
+ * `serverStart` code already ran before it inserted the element.
+ * `persistAfterConsentRevoked` only acts on a revoke, which loads the
+ * engine, and its loader adopts the element before it handles the revoke.
+ * Meta Pixel and TikTok Pixel set it, so most returning visitors' pages
+ * would otherwise load the engine at once.
+ * `onConsentChange` reports a change, which takes the engine anyway, and
+ * the grant the page started with once the loader adopts the element; a
+ * denial it would report before the script loads already loads the engine
+ * ({@link observesConsent}).
+ *
+ * @internal
+ */
+export const SERVER_STARTED_ENGINE_FIELDS = [
+	'onDispose',
+	'onError',
+	'onLoad',
+	'persistAfterDispose',
+] as const;
+
+/**
+ * Whether one of a root's `scripts` has to wait for the engine: a script
+ * that may run now which neither the server start emitted nor the root
+ * can start itself (a plain script, with `plainStart`), or a script the
+ * loader reports a denial to ({@link observesConsent}). The browser root
+ * and the server's stored-choice check both decide from this.
+ *
+ * @param scripts - The root's `scripts`.
+ * @param snapshot - The snapshot the page renders from.
+ * @param serverStart - Whether the root's server start is on.
+ * @param plainStart - Whether the root starts plain scripts without the
+ * engine (a returning visitor's stored choice, with a commit path).
+ * @param started - Whether the server start emitted a `serverStart` entry.
+ * @returns `true` when the engine has to load at once.
+ * @internal
+ */
+export const scriptsNeedEngine = function scriptsNeedEngine(
+	scripts: readonly Script[] | undefined,
+	snapshot: Pick<ConsentSnapshot, 'effectivePermissions'>,
+	serverStart: boolean,
+	plainStart: boolean,
+	started: (script: Script) => boolean
+): boolean {
+	// Some fields of a runnable script need the loader even when the server
+	// started it (SERVER_STARTED_ENGINE_FIELDS). One set to `false` does not.
+	return Boolean(
+		scripts?.some((script) =>
+			isRunnableNow(script, snapshot)
+				? SERVER_STARTED_ENGINE_FIELDS.some(
+						(field) => script[field] !== undefined && script[field] !== false
+					) ||
+					(!(
+						serverStart &&
+						script.serverStart &&
+						script.src &&
+						started(script)
+					) &&
+						!(plainStart && isPlainScript(script)))
+				: observesConsent(script)
+		)
+	);
+};
+
+/** The root options {@link rootNeedsEngine} reads. @internal */
+export interface RootEngineInputs {
+	clearOnRevocation?: unknown;
+	networkBlocker?: { enabled?: boolean } | false;
+	options?: { enabled?: boolean; experiment?: unknown };
+}
+
+/**
+ * Whether a root's own options need the engine from its first render,
+ * whatever the visitor's snapshot says: a root turned off, an experiment,
+ * an enabled network blocker, which has to be in place before the page's
+ * code sends a request, or `clearOnRevocation`, whose cleanup of a denied
+ * category's cookies and storage runs only in the engine.
+ *
+ * @param root - The root's `clearOnRevocation`, `networkBlocker` and
+ * `options`.
+ * @returns `true` when the engine cannot wait.
+ * @internal
+ */
+export const rootNeedsEngine = function rootNeedsEngine({
+	clearOnRevocation,
+	networkBlocker,
+	options,
+}: RootEngineInputs): boolean {
+	return Boolean(
+		clearOnRevocation ||
+		options?.experiment ||
+		options?.enabled === false ||
+		(networkBlocker && networkBlocker.enabled !== false)
+	);
+};
+
+const predicateIds = new WeakMap<WeakKey, number>();
+let lastPredicateId = 0;
+
+/**
+ * How a declaration writes a function under `key`: a callback by being
+ * there, and a `callbackOnly` predicate by which one it is, since the
+ * loader remounts a script given a new predicate.
+ */
+const declaredFunction = (key: string, value: WeakKey): string => {
+	if (key !== 'callbackOnly') {
+		return 'ƒ';
+	}
+	let id = predicateIds.get(value);
+	if (id === undefined) {
+		lastPredicateId += 1;
+		id = lastPredicateId;
+		predicateIds.set(value, id);
+	}
+	return `ƒ${id}`;
+};
+
+/**
+ * A script's declaration as an owner holds it: every field, the plain-safe
+ * ones and the loader-only ones, with functions as {@link declaredFunction}
+ * writes them, or, without `byIdentity`, every function by being there.
+ */
+const declarationOf = (script: Script, byIdentity = true): string =>
+	JSON.stringify(script, (key, value: unknown) => {
+		if (typeof value === 'function') {
+			return byIdentity ? declaredFunction(key, value) : 'ƒ';
+		}
+		if (value && typeof value === 'object' && !Array.isArray(value)) {
+			return Object.fromEntries(Object.entries(value).sort());
+		}
+		return value;
+	});
+
+/**
+ * What a script's element runs, the same for every owner that declares
+ * it: its declaration without the `id` and `resourceKey` that name it.
+ */
+const elementDeclarationOf = (script: Script): string =>
+	declarationOf({ ...script, id: '', resourceKey: undefined });
 
 /**
  * A script element the loader adopts when it mounts the script, as it
  * adopts one the server's inline start inserted.
  */
 type StartedElement = HTMLScriptElement & {
+	__c15tAdopted?: boolean;
+	/** Inserted by {@link startPlainScripts}, so its owners may release it. */
+	__c15tEarly?: boolean;
+	/** How many owners declare it ({@link claimPlainScripts}). */
+	__c15tOwners?: number;
+	/**
+	 * What {@link startPlainScripts} inserted it for: its script's
+	 * declaration without its identity ({@link elementDeclarationOf}).
+	 */
+	__c15tPlainDeclaration?: string;
+	/** The server render whose start inserted it, or took it over last. */
+	__c15tStartRender?: string;
 	__c15tScript?: string;
 	__c15tConsent?: boolean;
 	__c15tDone?: 'load' | 'error';
@@ -125,29 +332,37 @@ type StartedElement = HTMLScriptElement & {
 /**
  * Inserts the plain scripts `snapshot` grants, as the loader would, and
  * registers each for the loader to adopt once it mounts. A script already
- * started or in the document is left alone.
+ * started is left alone, and so is one whose resource `reserved` names:
+ * the render's server start runs its setup, or reports a failure that
+ * loads the engine.
  *
  * @param scripts - The scripts the page's loader would run.
  * @param snapshot - The snapshot that grants them.
  * @param nonce - The page's CSP nonce.
- * @returns How many scripts it inserted.
+ * @param reserved - The resources this render's server start marked
+ * (`starts`), read by the caller through the check that the page object
+ * belongs to this render (`pageRender` in `@c15t/react/deferred`).
+ * @returns The resource keys of the scripts it inserted, for their owner
+ * to release ({@link releasePlainScripts}) if it goes before its loader.
  * @internal
  */
 export const startPlainScripts = function startPlainScripts(
 	scripts: readonly Script[],
 	snapshot: Pick<ConsentSnapshot, 'effectivePermissions'>,
-	nonce: string | undefined
-): number {
+	nonce: string | undefined,
+	reserved: Readonly<Record<string, unknown>> = {}
+): string[] {
 	const host = window as unknown as {
 		__c15tStarted?: Record<string, StartedElement>;
 	};
 	host.__c15tStarted ??= {};
 	const started = host.__c15tStarted;
-	let inserted = 0;
+	const inserted: string[] = [];
 	for (const script of scripts) {
 		const key = script.resourceKey ?? script.id;
 		if (
 			started[key] ||
+			reserved[key] ||
 			!isPlainScript(script) ||
 			!isRunnableNow(script, snapshot)
 		) {
@@ -157,6 +372,8 @@ export const startPlainScripts = function startPlainScripts(
 		element.src = script.src as string;
 		element.__c15tScript = script.id;
 		element.__c15tConsent = true;
+		element.__c15tEarly = true;
+		element.__c15tPlainDeclaration = elementDeclarationOf(script);
 		if (script.async !== undefined) {
 			element.async = script.async;
 		}
@@ -183,7 +400,202 @@ export const startPlainScripts = function startPlainScripts(
 			? (document.body ?? document.head)
 			: document.head
 		).append(element);
-		inserted += 1;
+		inserted.push(key);
 	}
 	return inserted;
+};
+
+/** The registry the loader adopts started elements from. */
+const startedElements = (): Record<string, StartedElement> | undefined =>
+	(window as unknown as { __c15tStarted?: Record<string, StartedElement> })
+		.__c15tStarted;
+
+/**
+ * An owner's declarations, one per resource: the scripts that share a key
+ * as one sorted set, so their order does not count as a change and the
+ * owner holds the key once.
+ */
+const declarationsByKey = (scripts: readonly Script[]): Map<string, string> => {
+	const groups = new Map<string, string[]>();
+	for (const script of scripts) {
+		const key = script.resourceKey ?? script.id;
+		groups.set(key, [...(groups.get(key) ?? []), declarationOf(script)]);
+	}
+	return new Map(
+		[...groups].map(([key, declarations]) => [
+			key,
+			JSON.stringify(declarations.sort()),
+		])
+	);
+};
+
+/**
+ * Declares an owner of the early-started elements for `scripts`: each one
+ * {@link startPlainScripts} inserted, whoever inserted it, gains one owner,
+ * once per owner (`owned` maps each key it holds to the declaration it
+ * held it with). A hook or root that passes a script someone else started
+ * early holds it too, so the element stays until the last owner releases
+ * it. One it declares otherwise (a new `src`, a category) is not what it
+ * would run: it does not hold that one, and gets its key back, so it asks
+ * for the engine, and the element goes with the owners that declare it.
+ *
+ * @param scripts - The scripts the owner passes.
+ * @param owned - The keys this owner holds; updated.
+ * @returns The keys of elements started for another declaration.
+ * @internal
+ */
+export const claimPlainScripts = function claimPlainScripts(
+	scripts: readonly Script[],
+	owned: Map<string, string>
+): string[] {
+	const started = startedElements();
+	const declaredOtherwise: string[] = [];
+	for (const [key, declaration] of declarationsByKey(scripts)) {
+		const element = started?.[key];
+		if (!element?.__c15tEarly || owned.has(key)) {
+			continue;
+		}
+		const recorded = element.__c15tPlainDeclaration;
+		if (
+			recorded !== undefined &&
+			!scripts.some(
+				(script) =>
+					(script.resourceKey ?? script.id) === key &&
+					elementDeclarationOf(script) === recorded
+			)
+		) {
+			declaredOtherwise.push(key);
+			continue;
+		}
+		element.__c15tOwners = (element.__c15tOwners ?? 0) + 1;
+		owned.set(key, declaration);
+	}
+	return declaredOtherwise;
+};
+
+/**
+ * `script`'s declaration as any process writes it, for a value the page
+ * carries from one server render to the next (`startHash` in
+ * `../runtime/script-server-start`): every function counts by being
+ * there, since a function's identity holds only in the process that made
+ * it, and another request or server worker makes its own.
+ *
+ * @param script - A script the server starts.
+ * @returns Its declaration.
+ * @internal
+ */
+export const portableDeclaration = (script: Script): string =>
+	declarationOf(script, false);
+
+/**
+ * An owner's declarations by resource key, to compare later with
+ * {@link obsoletePlainScripts}.
+ *
+ * @param scripts - The scripts the owner passes.
+ * @returns Each key's declaration.
+ * @internal
+ */
+export const plainDeclarations = (
+	scripts: readonly Script[]
+): ReadonlyMap<string, string> => declarationsByKey(scripts);
+
+/**
+ * The keys of `keys` that `scripts` no longer declares as `declared`
+ * holds them: removed, declared otherwise, or never recorded. What runs for
+ * those is no longer what the page started.
+ *
+ * @param scripts - The scripts the owner passes now.
+ * @param declared - Their declarations when the page started them.
+ * @param keys - The keys to check.
+ * @returns The obsolete keys.
+ * @internal
+ */
+export const obsoletePlainScripts = function obsoletePlainScripts(
+	scripts: readonly Script[],
+	declared: ReadonlyMap<string, string>,
+	keys: Iterable<string>
+): string[] {
+	const now = declarationsByKey(scripts);
+	return [...keys].filter((key) => {
+		const before = declared.get(key);
+		return before === undefined || now.get(key) !== before;
+	});
+};
+
+/**
+ * The keys an owner holds whose script it now declares differently, by
+ * anything but its identity: a new `src`, a category, a callback added.
+ * What runs then is no longer what the page started, so the owner
+ * releases them and asks for the engine.
+ *
+ * @param scripts - The scripts the owner passes now.
+ * @param owned - The keys it holds, with their declarations.
+ * @returns The changed keys.
+ * @internal
+ */
+export const changedPlainScripts = function changedPlainScripts(
+	scripts: readonly Script[],
+	owned: ReadonlyMap<string, string>
+): string[] {
+	return [...declarationsByKey(scripts)].flatMap(([key, declaration]) => {
+		const held = owned.get(key);
+		return held !== undefined && held !== declaration ? [key] : [];
+	});
+};
+
+/**
+ * Drops an owner's hold on early-started elements ({@link
+ * claimPlainScripts}). The last owner to go removes the element and its
+ * registry entry, as a loader releasing it would, unless a loader already
+ * adopted it.
+ *
+ * @param keys - Keys the owner holds; each is released once.
+ * @internal
+ */
+export const releasePlainScripts = function releasePlainScripts(
+	keys: Iterable<string>
+): void {
+	const started = startedElements();
+	for (const key of keys) {
+		const element = started?.[key];
+		if (!(started && element?.__c15tEarly)) {
+			continue;
+		}
+		element.__c15tOwners = (element.__c15tOwners ?? 1) - 1;
+		if (element.__c15tOwners <= 0 && !element.__c15tAdopted) {
+			element.remove();
+			Reflect.deleteProperty(started, key);
+		}
+	}
+};
+
+/**
+ * Removes the elements render `renderId`'s server start inserted for
+ * `keys`, and their registry entries, unless a loader adopted them, an
+ * early start's owners hold them, or a later render's start took them
+ * over. For a deferred root that goes before its engine: no loader will
+ * take them over.
+ *
+ * @param keys - The resources the render's server start marked.
+ * @param renderId - The render whose root goes.
+ * @internal
+ */
+export const releaseServerStartedScripts = function releaseServerStartedScripts(
+	keys: Iterable<string>,
+	renderId: string
+): void {
+	const started = startedElements();
+	for (const key of keys) {
+		const element = started?.[key];
+		if (
+			started &&
+			element &&
+			element.__c15tStartRender === renderId &&
+			!element.__c15tEarly &&
+			!element.__c15tAdopted
+		) {
+			element.remove();
+			Reflect.deleteProperty(started, key);
+		}
+	}
 };

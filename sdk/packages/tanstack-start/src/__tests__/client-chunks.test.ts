@@ -190,7 +190,9 @@ describe('TanStack Start client chunks', () => {
 			false
 		);
 		// About 16 KB unminified; the engine's chunk group is several times that.
-		expect(brotli).toBeLessThanOrEqual(17_000);
+		// The shared deferred root's checks (the boot-data plan, the render's
+		// reservations) sit in the first load.
+		expect(brotli).toBeLessThanOrEqual(18_495);
 	}, 60_000);
 
 	test('a root route applies a streamed state with code its engine brings', async () => {

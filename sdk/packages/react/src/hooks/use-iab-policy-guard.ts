@@ -11,13 +11,25 @@ import { useKernelSelector } from '~/kernel-selector';
 const IAB_PROVIDER_LOADED = Symbol.for('c15t.react.iab-provider');
 
 /**
- * Record that `IABProvider` is part of the app. `@c15t/react/iab` calls
- * this when it loads.
+ * Callbacks waiting for `IABProvider` to load (`whenIABProviderLoads` in
+ * `../deferred/boot`), under a registry symbol for the same reason.
+ */
+const IAB_PROVIDER_WAITERS = Symbol.for('c15t.react.iab-provider-waiters');
+
+/**
+ * Record that `IABProvider` is part of the app, and run what waited for
+ * it. `@c15t/react/iab` calls this when it loads.
  *
  * @internal
  */
 export const markIABProviderLoaded = function markIABProviderLoaded(): void {
-	(globalThis as Record<symbol, unknown>)[IAB_PROVIDER_LOADED] = true;
+	const host = globalThis as Record<symbol, unknown>;
+	host[IAB_PROVIDER_LOADED] = true;
+	const waiters = host[IAB_PROVIDER_WAITERS] as (() => void)[] | undefined;
+	Reflect.deleteProperty(host, IAB_PROVIDER_WAITERS);
+	for (const waiter of waiters ?? []) {
+		waiter();
+	}
 };
 
 /**

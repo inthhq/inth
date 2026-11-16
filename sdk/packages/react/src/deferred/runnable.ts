@@ -8,12 +8,36 @@
 
 import type { ConsentSnapshot } from '@c15t/core';
 import type { Script } from '@c15t/core/modules/script-loader';
-import { isRunnableNow } from '@c15t/core/surface-actions/plain-scripts';
+import { scriptsNeedEngine as coreScriptsNeedEngine } from '@c15t/core/surface-actions/plain-scripts';
+
+import { pageRender, readConsentBoot } from './boot';
 
 export {
 	isPlainScript,
 	isRunnableNow,
+	observesConsent,
 } from '@c15t/core/surface-actions/plain-scripts';
+
+/**
+ * Whether this render's server start marked `script` as one it starts
+ * (`starts` in its page object, {@link pageRender}). A `serverStart` that
+ * returned nothing or threw, a resource two scripts share, or a newer
+ * decision in the browser leaves the entry unmarked, for the loader.
+ *
+ * @param script - One of the root's `scripts`.
+ * @returns `false` outside a browser, or when the page marked nothing.
+ * @internal
+ */
+export const serverStartedInPage = function serverStartedInPage(
+	script: Pick<Script, 'id' | 'resourceKey'>
+): boolean {
+	// Boot data without a render id comes from a root that does not name
+	// its renders: it counts a `serverStart` entry as started, as before.
+	if (readConsentBoot()?.i === undefined) {
+		return true;
+	}
+	return pageRender()?.starts?.[script.resourceKey ?? script.id] === 1;
+};
 
 /**
  * Whether one of a root's `scripts` may run now and has to wait for the
@@ -22,20 +46,26 @@ export {
  * @param scripts - The root's `scripts`.
  * @param snapshot - The snapshot the stand-in reads.
  * @param serverStart - Whether the root's server start is on.
+ * @param plainStart - Whether the root starts plain scripts without the
+ * engine (a returning visitor's stored choice).
+ * @param started - Whether the server started a `serverStart` entry.
+ * Defaults to the page's marks ({@link serverStartedInPage}).
  * @returns `true` when the engine should load at once.
  * @internal
  */
 export const scriptsNeedEngine = function scriptsNeedEngine(
 	scripts: readonly Script[] | undefined,
 	snapshot: ConsentSnapshot,
-	serverStart: boolean
+	serverStart: boolean,
+	plainStart = false,
+	started: (script: Script) => boolean = serverStartedInPage
 ): boolean {
-	return Boolean(
-		scripts?.some(
-			(script) =>
-				isRunnableNow(script, snapshot) &&
-				!(serverStart && script.serverStart && script.src)
-		)
+	return coreScriptsNeedEngine(
+		scripts,
+		snapshot,
+		serverStart,
+		plainStart,
+		started
 	);
 };
 

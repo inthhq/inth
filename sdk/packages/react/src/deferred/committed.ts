@@ -51,4 +51,10 @@ export interface DeferredCommitConfig {
 	nonce?: string;
 	/** The root's callbacks, which the engine would call for the save. */
 	callbacks?: ConsentProviderOptions['callbacks'];
+	/**
+	 * The resources this render's server start reserved, which a plain
+	 * script must leave to it: `pageRender()?.starts`, read by the shell
+	 * when the tap commits.
+	 */
+	reserved?: Readonly<Record<string, unknown>>;
 }

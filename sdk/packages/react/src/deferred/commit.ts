@@ -26,7 +26,11 @@ import type { InstantCommit } from '@c15t/core/surface-actions/instant-commit';
 import type { DeferredCommitConfig, DeferredCommitted } from './committed';
 import type { DeferredKernelHandle } from './deferred-kernel';
 import { pendingIsInert, startPlainScripts } from './instant';
-import { deferredScripts, loadDeferredScriptLoader } from './registry';
+import {
+	claimDeferredScripts,
+	deferredScripts,
+	loadDeferredScriptLoader,
+} from './registry';
 
 /** @internal */
 export interface CommitTapInput {
@@ -190,8 +194,11 @@ export const commitEarlyTap = async function commitEarlyTap(
 	startPlainScripts(
 		[...deferredScripts(handle.kernel), ...(config.scripts ?? [])],
 		plan.snapshot,
-		config.nonce
+		config.nonce,
+		config.reserved
 	);
+	// The hooks whose scripts it started hold them from this task on.
+	claimDeferredScripts(handle.kernel);
 	const stored = storeEarlyCommit(plan, {
 		storageConfig: config.storageConfig,
 	});

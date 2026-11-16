@@ -12,16 +12,25 @@ import {
 	EARLY_TAP_ROOT,
 	EARLY_TAPS_WINDOW_KEY,
 } from '../../../../core/src/surface-actions/early-tap-script';
+import {
+	DISPLAY_ONLY_OPTIONS,
+	liveRootKey,
+	rootNeedsEngine,
+	watchStoredChoice,
+} from '../boot';
 import { createDeferredKernel } from '../deferred-kernel';
 import type { DeferredEngine } from '../deferred-kernel';
 import { deferredModules, deferredScriptsReady } from '../registry';
+import { scriptsNeedEngine } from '../runnable';
 import {
 	BANNER_ROOT,
 	EARLY_TAP_HOLD_PRESSES,
 	EARLY_TAP_NOTIFY,
 	EARLY_TAPS_KEY,
 	scheduleDeferredEngine,
+	SERVER_START_FAILED,
 } from '../trigger';
+import { OPTIONS } from './live-key-fields.type-test';
 
 const snapshot = (activeUI: string, revision = 0) =>
 	({ activeUI, revision }) as unknown as ConsentSnapshot;
@@ -423,5 +432,289 @@ describe('scheduleDeferredEngine', () => {
 		Reflect.deleteProperty(host, EARLY_TAPS_KEY);
 		image.remove();
 		banner.remove();
+	});
+});
+
+describe('watchStoredChoice', () => {
+	test('checks again when the stored decision reaches its deadline', () => {
+		vi.useFakeTimers();
+		try {
+			const check = vi.fn();
+			const stop = watchStoredChoice(check, Date.now() + 60_000);
+			vi.advanceTimersByTime(59_999);
+			expect(check).not.toHaveBeenCalled();
+			vi.advanceTimersByTime(1);
+			expect(check).toHaveBeenCalledTimes(1);
+			stop();
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	test('checks at a deadline beyond the longest timer delay', () => {
+		// About 24.8 days: shorter than common consent lifetimes.
+		const longest = 2_147_483_647;
+		vi.useFakeTimers();
+		try {
+			const check = vi.fn();
+			const stop = watchStoredChoice(check, Date.now() + longest + 60_000);
+			vi.advanceTimersByTime(longest);
+			vi.advanceTimersByTime(59_999);
+			expect(check).not.toHaveBeenCalled();
+			vi.advanceTimersByTime(1);
+			expect(check).toHaveBeenCalledTimes(1);
+			stop();
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	test('stops checking once stopped', () => {
+		const check = vi.fn();
+		const stop = watchStoredChoice(check, null);
+		stop();
+		window.dispatchEvent(new Event('storage'));
+		window.dispatchEvent(new Event('focus'));
+		expect(check).not.toHaveBeenCalled();
+	});
+});
+
+/**
+ * Leaves what a server render with id `id` leaves in the test's document:
+ * boot data carrying the id, and the page object its inline scripts write.
+ * c15t's modules run in the test's window, so that is where they look.
+ */
+const leavePageRender = (
+	pageObject: Record<string, unknown>,
+	id = 'test-render'
+): (() => void) => {
+	const boot = document.createElement('script');
+	boot.type = 'application/json';
+	boot.setAttribute('data-c15t-boot', '');
+	boot.textContent = JSON.stringify({ i: id, s: {} });
+	document.head.prepend(boot);
+	(globalThis as Record<string, unknown>).__c15tRender = { id, ...pageObject };
+	return () => {
+		boot.remove();
+		Reflect.deleteProperty(globalThis, '__c15tRender');
+	};
+};
+
+describe('a server start that fails while the engine waits', () => {
+	/** A hero image still loading, so nothing else wakes the engine. */
+	const loadingHero = () => {
+		const image = document.createElement('img');
+		image.setAttribute('fetchpriority', 'high');
+		Object.defineProperty(image, 'complete', { value: false });
+		document.body.append(image);
+		return () => image.remove();
+	};
+
+	test('uses the name core sets', () => {
+		// `SERVER_START_FAILED_EVENT` in core's `runtime/script-server-start`,
+		// whose own test pins the same string.
+		expect(SERVER_START_FAILED).toBe('__c15tServerStartFailed');
+	});
+
+	test('loads the engine when the page reports it', () => {
+		const removeHero = loadingHero();
+		const start = vi.fn();
+		const dispose = scheduleDeferredEngine(start);
+		expect(start).not.toHaveBeenCalled();
+		window.dispatchEvent(new Event('__c15tServerStartFailed'));
+		expect(start).toHaveBeenCalledTimes(1);
+		dispose();
+		removeHero();
+	});
+
+	test('loads the engine at once when it failed before the root scheduled it', () => {
+		const removeHero = loadingHero();
+		const cleanup = leavePageRender({ failed: 1, starts: {} });
+		try {
+			const start = vi.fn();
+			const dispose = scheduleDeferredEngine(start);
+			expect(start).toHaveBeenCalledTimes(1);
+			dispose();
+		} finally {
+			cleanup();
+			removeHero();
+		}
+	});
+});
+
+test("a failure an earlier render's server start recorded does not wake this root", () => {
+	const image = document.createElement('img');
+	image.setAttribute('fetchpriority', 'high');
+	Object.defineProperty(image, 'complete', { value: false });
+	document.body.append(image);
+	const cleanup = leavePageRender({ starts: {} });
+	(globalThis as Record<string, unknown>).__c15tRender = {
+		failed: 1,
+		id: 'an-earlier-render',
+		starts: {},
+	};
+	try {
+		const start = vi.fn();
+		const dispose = scheduleDeferredEngine(start);
+		expect(start).not.toHaveBeenCalled();
+		dispose();
+	} finally {
+		cleanup();
+		image.remove();
+	}
+});
+
+describe('liveRootKey', () => {
+	const script = {
+		category: 'marketing',
+		id: 'pixel',
+		src: 'https://cdn.example.com/pixel.js',
+	};
+	const root = (extra: Record<string, unknown> = {}) => ({
+		options: { callbacks: { onPermissionsChanged: () => undefined } },
+		scripts: [{ ...script }],
+		...extra,
+	});
+	type Root = Parameters<typeof liveRootKey>[0];
+
+	test.each(Object.entries(OPTIONS))('options.%s is %s', (name, kind) => {
+		expect(DISPLAY_ONLY_OPTIONS.includes(name as never)).toBe(
+			kind === 'display'
+		);
+		const changed = root({ options: { ...root().options, [name]: { x: 1 } } });
+		expect(liveRootKey(changed as Root) !== liveRootKey(root() as Root)).toBe(
+			kind === 'key'
+		);
+	});
+
+	test('a root prop outside the display-only list changes the key', () => {
+		// Any prop, including one added later.
+		expect(liveRootKey(root({ somethingNew: 1 }) as Root)).not.toBe(
+			liveRootKey(root() as Root)
+		);
+		expect(liveRootKey(root({ children: 'page' }) as Root)).toBe(
+			liveRootKey(root() as Root)
+		);
+	});
+
+	test('changes when the consent overrides change', () => {
+		expect(
+			liveRootKey(
+				root({
+					options: { ...root().options, overrides: { gpc: true } },
+				}) as Root
+			)
+		).not.toBe(liveRootKey(root() as Root));
+	});
+
+	test('stays the same for an equal inline array and a fresh inline callback', () => {
+		expect(liveRootKey(root() as Root)).toBe(liveRootKey(root() as Root));
+	});
+	test.each([
+		['a root script added', { scripts: [script, { ...script, id: 'b' }] }],
+		['a network blocker enabled', { networkBlocker: {} }],
+		['the root turned off', { options: { enabled: false } }],
+		[
+			'onLoad added to a script',
+			{ scripts: [{ ...script, onLoad: () => undefined }] },
+		],
+		['a vendor set on a script', { scripts: [{ ...script, vendor: 'v' }] }],
+		[
+			'a script attribute added',
+			{ scripts: [{ ...script, attributes: { a: '1' } }] },
+		],
+		['a script nonce set', { scripts: [{ ...script, nonce: 'n' }] }],
+		[
+			'the persistence storage config changed',
+			{ persistence: { storageConfig: { storageKey: 'other' } } },
+		],
+		['the root nonce changed', { options: { nonce: 'n' } }],
+		['a callback removed', { options: {} }],
+		['server start turned off', { scriptLoader: { serverStart: false } }],
+	] as [string, Record<string, unknown>][])(
+		'changes with %s',
+		(_case, extra) => {
+			expect(liveRootKey(root(extra) as Root)).not.toBe(
+				liveRootKey(root() as Root)
+			);
+		}
+	);
+
+	test("changes when a script's callbackOnly predicate is replaced, not when it is kept", () => {
+		// The loader remounts a script given a new predicate.
+		const predicate = () => false;
+		const at = liveRootKey(
+			root({ scripts: [{ ...script, callbackOnly: predicate }] }) as Root
+		);
+		expect(
+			liveRootKey(
+				root({ scripts: [{ ...script, callbackOnly: predicate }] }) as Root
+			)
+		).toBe(at);
+		expect(
+			liveRootKey(
+				root({ scripts: [{ ...script, callbackOnly: () => true }] }) as Root
+			)
+		).not.toBe(at);
+	});
+
+	test('changes when the state is swapped or removed, not when it is kept', () => {
+		const state = { now: 1 };
+		const at = liveRootKey(root({ state }) as Root);
+		expect(liveRootKey(root({ state }) as Root)).toBe(at);
+		expect(liveRootKey(root({ state: { now: 1 } }) as Root)).not.toBe(at);
+		expect(liveRootKey(root() as Root)).not.toBe(at);
+	});
+
+	test('covers every root field the deferral rule reads', () => {
+		// Records the fields `rootNeedsEngine` and `scriptsNeedEngine` read
+		// from a root, through proxies, and checks the key changes with each.
+		const read = new Set<string>();
+		const watch = <Value extends object>(value: Value, prefix: string) =>
+			new Proxy(value, {
+				get(target, key) {
+					if (typeof key === 'string') {
+						read.add(`${prefix}${key}`);
+					}
+					return (target as Record<PropertyKey, unknown>)[key];
+				},
+			});
+		const scriptRead = watch({ ...script, alwaysLoad: true }, 'scripts.');
+		// The root itself is watched too, for the top-level fields it reads.
+		rootNeedsEngine(
+			watch(
+				{
+					networkBlocker: watch({ enabled: true }, 'networkBlocker.'),
+					options: watch({}, 'options.'),
+				},
+				'root.'
+			)
+		);
+		scriptsNeedEngine(
+			[scriptRead],
+			{ effectivePermissions: { marketing: true } } as never,
+			true,
+			true,
+			() => true
+		);
+		expect(read.size).toBeGreaterThan(0);
+		for (const field of read) {
+			const [scope, name] = field.split('.') as [string, string];
+			let changed: Record<string, unknown> = { [scope]: { [name]: 'changed' } };
+			if (scope === 'root') {
+				changed = { [name]: { changed: true } };
+			}
+			if (scope === 'scripts') {
+				changed = { scripts: [{ ...script, [name]: 'changed' }] };
+			}
+			if (scope === 'options') {
+				// Only this field differs: the callbacks stay.
+				changed = { options: { ...root().options, [name]: 'changed' } };
+			}
+			expect(
+				liveRootKey(root(changed) as Root),
+				`the key follows ${field}`
+			).not.toBe(liveRootKey(root() as Root));
+		}
 	});
 });

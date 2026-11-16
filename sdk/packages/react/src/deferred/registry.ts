@@ -10,6 +10,7 @@
 import type { ConsentKernel } from '@c15t/core';
 import type { Script } from '@c15t/core/modules/script-loader';
 import type * as ScriptLoaderModule from '@c15t/core/modules/script-loader';
+import { claimPlainScripts } from '@c15t/core/surface-actions/plain-scripts';
 
 /**
  * Loaders the engine's chunk offers. A module imported from there finds
@@ -40,9 +41,9 @@ interface DeferredEntry {
 	/** Resolves when a loader may run: a choice was committed, or attach. */
 	scripts: Promise<void>;
 	/** The scripts each waiting `useScriptLoader` currently passes. */
-	sources?: Set<() => readonly Script[]>;
+	sources?: Map<() => readonly Script[], Map<string, string> | undefined>;
 	/** Starts plain scripts a committed choice allows, before the loader. */
-	start?: (scripts: readonly Script[]) => void;
+	start?: (scripts: readonly Script[]) => readonly string[] | undefined;
 }
 
 const engines = new WeakMap<ConsentKernel, DeferredEntry>();
@@ -127,14 +128,15 @@ export const attachedKernel = function attachedKernel(
  */
 export const registerDeferredScripts = function registerDeferredScripts(
 	kernel: ConsentKernel,
-	scripts: () => readonly Script[]
+	scripts: () => readonly Script[],
+	owned?: Map<string, string>
 ): () => void {
 	const entry = engines.get(kernel);
 	if (!entry) {
 		return () => undefined;
 	}
-	entry.sources ??= new Set();
-	entry.sources.add(scripts);
+	entry.sources ??= new Map();
+	entry.sources.set(scripts, owned);
 	return () => {
 		entry.sources?.delete(scripts);
 	};
@@ -150,7 +152,31 @@ export const registerDeferredScripts = function registerDeferredScripts(
 export const deferredScripts = function deferredScripts(
 	kernel: ConsentKernel
 ): Script[] {
-	return [...(engines.get(kernel)?.sources ?? [])].flatMap((get) => get());
+	return [...(engines.get(kernel)?.sources?.keys() ?? [])].flatMap((get) =>
+		get()
+	);
+};
+
+/**
+ * Claims, for each waiting `useScriptLoader` that registered where it
+ * records what it holds, the early-started elements its scripts name. A
+ * commit that started them in the same task calls this, so a hook that
+ * goes before its own claim still releases them.
+ *
+ * @param kernel - A kernel from context.
+ * @internal
+ */
+export const claimDeferredScripts = function claimDeferredScripts(
+	kernel: ConsentKernel
+): void {
+	const entry = engines.get(kernel);
+	for (const [get, owned] of entry?.sources ?? []) {
+		// One started for another declaration of the resource is not what
+		// this hook runs, and is left to its owners: the engine loads it.
+		if (owned && claimPlainScripts(get(), owned).length > 0) {
+			entry?.request();
+		}
+	}
 };
 
 /**
@@ -163,12 +189,26 @@ export const deferredScripts = function deferredScripts(
  */
 export const setDeferredScriptStarter = function setDeferredScriptStarter(
 	kernel: ConsentKernel,
-	start: (scripts: readonly Script[]) => void
+	start: (scripts: readonly Script[]) => readonly string[] | undefined
 ): void {
 	const entry = engines.get(kernel);
 	if (entry) {
 		entry.start = start;
 	}
+};
+
+/**
+ * Whether a deferred root starts plain scripts without its engine: a
+ * choice was committed, or the stored one already allows them.
+ *
+ * @param kernel - A kernel from context.
+ * @returns `false` for any other kernel.
+ * @internal
+ */
+export const startsDeferredScripts = function startsDeferredScripts(
+	kernel: ConsentKernel
+): boolean {
+	return Boolean(engines.get(kernel)?.start);
 };
 
 /**
@@ -178,11 +218,13 @@ export const setDeferredScriptStarter = function setDeferredScriptStarter(
  *
  * @param kernel - A kernel from context.
  * @param scripts - A loader's scripts.
+ * @returns The resource keys it inserted, which the caller owns until its
+ * loader adopts them.
  * @internal
  */
 export const startDeferredScripts = function startDeferredScripts(
 	kernel: ConsentKernel,
 	scripts: readonly Script[]
-): void {
-	engines.get(kernel)?.start?.(scripts);
+): readonly string[] {
+	return engines.get(kernel)?.start?.(scripts) ?? [];
 };

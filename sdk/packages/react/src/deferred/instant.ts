@@ -24,7 +24,7 @@ import { startPlainScripts } from '@c15t/core/surface-actions/plain-scripts';
 
 import type { DeferredCommitConfig } from './committed';
 import type { DeferredKernelHandle } from './deferred-kernel';
-import { deferredScripts } from './registry';
+import { claimDeferredScripts, deferredScripts } from './registry';
 
 export { startPlainScripts } from '@c15t/core/surface-actions/plain-scripts';
 
@@ -141,7 +141,10 @@ export const commitInstantly = function commitInstantly(
 	startPlainScripts(
 		[...deferredScripts(handle.kernel), ...(config.scripts ?? [])],
 		plan.snapshot,
-		config.nonce
+		config.nonce,
+		config.reserved
 	);
+	// The hooks whose scripts it started hold them from this task on.
+	claimDeferredScripts(handle.kernel);
 	return handle.commit(plan.snapshot, []) ? plan : null;
 };

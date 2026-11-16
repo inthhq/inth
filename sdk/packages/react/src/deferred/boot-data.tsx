@@ -44,6 +44,12 @@ const useSettled = function useSettled<Value>(
 /** Props of {@link ConsentBootData}. @internal */
 export interface ConsentBootDataProps {
 	/**
+	 * The server render's id, which its inline scripts wrote their page
+	 * object under (`newRenderId` in `@c15t/core/runtime/script-server-start`).
+	 * The browser reads that object only for the boot data with this id.
+	 */
+	renderId?: string;
+	/**
 	 * The path every bundler chunk URL contains, such as Next.js's
 	 * `/_next/static/`, as the browser side gives to `learnEngineChunks`.
 	 * Without it the server leaves no engine preload: an adapter whose
@@ -58,6 +64,14 @@ export interface ConsentBootDataProps {
 	 */
 	preload?: boolean;
 }
+
+/** `boot`, with the render's id when the server gave one. */
+const withRenderId = (boot: ConsentBoot, renderId?: string): ConsentBoot => {
+	if (renderId !== undefined) {
+		boot.i = renderId;
+	}
+	return boot;
+};
 
 const BootJSON = ({
 	boot,
@@ -97,6 +111,7 @@ const BootJSON = ({
 const StreamedBootData = ({
 	chunks,
 	preload,
+	renderId,
 	server,
 	streamed,
 }: ConsentBootDataProps & {
@@ -107,7 +122,10 @@ const StreamedBootData = ({
 	const resolved = streamed.snapshotFor(config);
 	return (
 		<BootJSON
-			boot={resolved === server ? { s: server } : { r: resolved, s: server }}
+			boot={withRenderId(
+				resolved === server ? { s: server } : { r: resolved, s: server },
+				renderId
+			)}
 			chunks={chunks}
 			preload={preload}
 		/>
@@ -120,7 +138,11 @@ const StreamedBootData = ({
  *
  * @internal
  */
-export const ServerBootData = ({ chunks, preload }: ConsentBootDataProps) => {
+export const ServerBootData = ({
+	chunks,
+	preload,
+	renderId,
+}: ConsentBootDataProps) => {
 	const kernel = useKernel();
 	const streamed = useContext(StreamedPrefetchContext);
 	const server = kernel.getServerSnapshot();
@@ -128,12 +150,13 @@ export const ServerBootData = ({ chunks, preload }: ConsentBootDataProps) => {
 		<StreamedBootData
 			chunks={chunks}
 			preload={preload}
+			renderId={renderId}
 			server={server}
 			streamed={streamed}
 		/>
 	) : (
 		<BootJSON
-			boot={{ s: server }}
+			boot={withRenderId({ s: server }, renderId)}
 			chunks={chunks}
 			preload={preload}
 		/>
@@ -172,6 +195,7 @@ export const ConsentBootData = (props: ConsentBootDataProps) => {
 		<ServerBootData
 			chunks={props.chunks}
 			preload={props.preload}
+			renderId={props.renderId}
 		/>
 	);
 };

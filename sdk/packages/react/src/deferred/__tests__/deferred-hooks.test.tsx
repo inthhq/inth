@@ -17,7 +17,7 @@ import { markIABProviderLoaded } from '../../hooks/use-iab-policy-guard';
 import { offline } from '../../index';
 import { usePersistence } from '../../module-hooks/persistence';
 import { useScriptLoader } from '../../module-hooks/script-loader';
-import { iabProviderLoaded } from '../boot';
+import { iabProviderLoaded, whenIABProviderLoads } from '../boot';
 import { createDeferredKernel } from '../deferred-kernel';
 import type { DeferredKernelHandle } from '../deferred-kernel';
 import { DeferredEngineHost } from '../engine-host';
@@ -249,9 +249,17 @@ describe('useScriptLoader under a stand-in kernel', () => {
 });
 
 describe('iabProviderLoaded', () => {
-	test('reads the mark `@c15t/react/iab` sets', () => {
+	test('reads the mark `@c15t/react/iab` sets, and wakes a waiter when it loads later', () => {
+		const waiter = vi.fn();
 		expect(iabProviderLoaded()).toBe(false);
+		whenIABProviderLoads(waiter);
+		expect(waiter).not.toHaveBeenCalled();
 		markIABProviderLoaded();
 		expect(iabProviderLoaded()).toBe(true);
+		expect(waiter).toHaveBeenCalledTimes(1);
+		// Once loaded, a new waiter runs at once.
+		const late = vi.fn();
+		whenIABProviderLoads(late);
+		expect(late).toHaveBeenCalledTimes(1);
 	});
 });

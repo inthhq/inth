@@ -9,6 +9,7 @@
  * @internal
  */
 
+import { pageRender } from './boot';
 import type * as DialogModule from './dialog';
 
 /**
@@ -65,6 +66,13 @@ export const earlyTapQueue = function earlyTapQueue():
 		EARLY_TAPS_KEY
 	];
 };
+
+/**
+ * `SERVER_START_FAILED_EVENT` in core; a test keeps them equal. A failure
+ * before the root scheduled its engine is `failed` in the render's page
+ * object. @internal
+ */
+export const SERVER_START_FAILED = '__c15tServerStartFailed';
 
 /** Load anyway after this long. */
 export const DEFERRED_ENGINE_TIMEOUT_MS = 10_000;
@@ -161,12 +169,15 @@ export const whenPriorityImagesLoad = function whenPriorityImagesLoad(
  *
  * @param start - Loads the engine.
  * @param onTap - Routes a recorded banner tap, or a press on a button.
+ * @param renderId - The render whose failed server start loads the engine
+ * at once. Defaults to the one the document's boot data names.
  * @returns Removes the listeners.
  * @internal
  */
 export const scheduleDeferredEngine = function scheduleDeferredEngine(
 	start: () => void,
-	onTap?: (pressed?: string) => void
+	onTap?: (pressed?: string) => void,
+	renderId?: string
 ): () => void {
 	/** Wake-ups, removed once `start` ran. */
 	const cleanups: (() => void)[] = [];
@@ -234,7 +245,14 @@ export const scheduleDeferredEngine = function scheduleDeferredEngine(
 	if (onTap && queue?.taps?.length) {
 		onTap();
 	}
-	if (window.scrollY > 0 || (!onTap && queue?.taps?.length)) {
+	// A server start that failed in the browser left its script to the
+	// loader, before this ran or while the engine waits.
+	listen(window, SERVER_START_FAILED, fire);
+	if (
+		window.scrollY > 0 ||
+		pageRender(renderId)?.failed ||
+		(!onTap && queue?.taps?.length)
+	) {
 		fire();
 		return dispose;
 	}
