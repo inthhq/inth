@@ -25,6 +25,7 @@ import { ConsentProvider, custom } from '../../index';
 import { useScriptLoader } from '../../module-hooks/script-loader';
 import {
 	canDeferEngine,
+	canDeferEngineAfterChoice,
 	endPageRender,
 	engineNeededAtLoad,
 	readConsentBoot,
@@ -99,6 +100,8 @@ const ServerPage = ({ prefetch }: { prefetch: unknown }) => (
 					<ServerBootData
 						chunks="/_next/static/"
 						renderId="test-render"
+						storedChoice
+						storedChoiceCheck="/* the server's stored-choice check */"
 					/>
 				</Suspense>
 			</ConsentProvider>
@@ -235,7 +238,10 @@ const ClientPage = ({
 							scripts: commit?.scripts,
 						}}
 					>
-						<ConsentBootData chunks="/_next/static/" />
+						<ConsentBootData
+							chunks="/_next/static/"
+							storedChoice
+						/>
 					</engine.DeferredEngineHost>
 				)}
 				schedule={schedule}
@@ -425,11 +431,23 @@ test('the engine starts as the root chunk runs for an app that loaded IABProvide
 	}
 });
 
-test('a returning visitor with consent: the engine loads during hydration', async () => {
+test('a returning visitor with consent: a preload the check can skip, and the engine loads when asked', async () => {
 	const config = policyConfig({}, { marketing: true });
 	const { boot, page: streamed } = await serve(config);
 	expect(canDeferEngine(boot.r ?? boot.s)).toBe(false);
+	// No surface shows, so the engine can wait for the priority images:
+	// preloading it would share bandwidth with them. The preload stays in
+	// the page and runs only when the stored-choice check finds the choice
+	// stale, and the engine then loads at once.
+	expect(canDeferEngineAfterChoice(boot.r ?? boot.s)).toBe(true);
 	expect(hasEnginePreload(streamed.doc)).toBe(true);
+	expect(
+		Array.from(streamed.doc.querySelectorAll('script:not([type])')).some(
+			(script) =>
+				script.textContent?.includes(ENGINE_CHUNKS_KEY) &&
+				script.textContent.includes('__c15tRender')
+		)
+	).toBe(true);
 
 	const loadEngine = vi.fn(() => import('../engine'));
 	const hydrated = await streamed.hydrate(

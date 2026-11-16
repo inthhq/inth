@@ -157,7 +157,7 @@ for (const target of selectedTargets()) {
 			});
 
 			for (const route of ['/app-router', '/pages-router']) {
-				test(`${route}: a returning visitor preloads only the learned engine chunks, and no vendor after a change of mind`, async () => {
+				test(`${route}: a returning visitor who chose gets the engine preload for PostHog's onLoad, and no vendor after a change of mind`, async () => {
 					const chunkBase = new RegExp(`^${server.baseURL}/_next/static/`, 'u');
 					const learned = (): Promise<string[]> =>
 						page.evaluate(
@@ -191,6 +191,9 @@ for (const target of selectedTargets()) {
 						for (const url of [...saved, ...preloaded]) {
 							expect(url, `visit ${visitNumber}`).toMatch(chunkBase);
 						}
+						// PostHog's script has an onLoad, which only the loader can
+						// call, so the engine loads at once and the server keeps its
+						// learned chunks preloaded.
 						for (const url of saved) {
 							expect(preloaded, `visit ${visitNumber}`).toContain(url);
 						}

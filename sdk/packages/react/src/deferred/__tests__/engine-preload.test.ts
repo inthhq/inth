@@ -124,6 +124,36 @@ describe('enginePreloadScript', () => {
 		new Function(enginePreloadScript(CHUNKS))();
 	};
 
+	test.each([
+		['finds the choice stale', () => false, 1],
+		['finds the choice current', () => true, 0],
+		['did not run', undefined, 1],
+		['belongs to another render', 'another-render', 1],
+	] as [string, (() => boolean) | string | undefined, number][])(
+		'a preload that follows the stored-choice check runs when the check %s',
+		async (_case, verifier, expected) => {
+			addScript('/_next/static/chunks/shell.js', true);
+			await learnEngineChunks(() => {
+				addScript('/_next/static/chunks/engine-a.js', false);
+				return Promise.resolve();
+			}, CHUNKS);
+			const host = window as unknown as Record<string, unknown>;
+			host.__c15tRender =
+				typeof verifier === 'string'
+					? { current: () => true, id: verifier, starts: {} }
+					: { current: verifier, id: 'this-render', starts: {} };
+			try {
+				// oxlint-disable-next-line no-new-func -- Runs the inline script's source, as the parser would.
+				new Function(enginePreloadScript(CHUNKS, 'this-render'))();
+				expect(
+					document.head.querySelectorAll('link[rel="preload"]')
+				).toHaveLength(expected);
+			} finally {
+				Reflect.deleteProperty(host, '__c15tRender');
+			}
+		}
+	);
+
 	test('preloads the learned chunks for the same build', async () => {
 		addScript('/_next/static/chunks/shell.js', true);
 		await learnEngineChunks(() => {

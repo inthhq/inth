@@ -15,10 +15,15 @@ import { describe, expect, it } from 'vitest';
 
 const REPO_ROOT = fileURLToPath(new URL('..', import.meta.url));
 
-/** The one writer and the one reader. */
+/**
+ * The one writer and the one reader, and the engine preload: an inline
+ * script that runs before any module can, so it repeats `pageRender()`'s
+ * id check in its own source.
+ */
 const ALLOWED = new Set([
 	'packages/core/src/runtime/script-server-start.ts',
 	'packages/react/src/deferred/boot.ts',
+	'packages/react/src/deferred/engine-preload-script.ts',
 ]);
 
 const PAGE_OBJECT =

@@ -117,18 +117,23 @@ test('renders no inline script when the app turns the server start off', async (
 	const html = await new Response(stream).text();
 
 	expect(html).toContain('<main id="page">Page</main>');
-	// Only the boot data a deferred root reads, which never runs, and the
-	// engine preload a returning visitor gets.
+	// Only the boot data a deferred root reads, which never runs, the
+	// stored-choice check, the engine preload (the browser loads the engine
+	// at once for a script the server no longer starts), and empty slots
+	// the browser hydrates.
 	const scripts = [
-		...html.matchAll(/<script(?<attributes>[^>]*)>(?<body>[^<]*)<\/script>/gu),
+		...html.matchAll(/<script(?<attributes>[^>]*)>(?<body>.*?)<\/script>/gu),
 	];
 	expect(
 		scripts.filter(
 			({ groups }) =>
 				!groups?.attributes?.includes('type="application/json"') &&
+				groups?.body !== '' &&
+				!groups?.body?.includes('g.current=function') &&
 				!groups?.body?.includes('c15t-engine-chunks')
 		)
 	).toEqual([]);
+	expect(html).not.toContain(JSON.stringify(pixel.src));
 });
 
 test('renders the empty script the browser hydrates when the start module fails to load', async () => {
@@ -157,9 +162,59 @@ test('renders the empty script the browser hydrates when the start module fails 
 
 		expect(onError).not.toHaveBeenCalled();
 		expect(html).toMatch(
-			/<\/main><!--\$--><script data-c15t-boot[^>]*>[^<]*<\/script>(?<preload><script[^>]*>[^<]*c15t-engine-chunks[^<]*<\/script>)<script[^>]*><\/script>/u
+			/<\/main><!--\$--><script[^>]*><\/script><script data-c15t-boot[^>]*>[^<]*<\/script><script[^>]*>[^<]*c15t-engine-chunks[^<]*<\/script><!--\$--><script[^>]*><\/script><!--\/\$-->/u
 		);
 		expect(html).not.toContain(JSON.stringify(pixel.src));
+	} finally {
+		vi.doUnmock('@c15t/core/runtime/script-server-start');
+		vi.resetModules();
+	}
+});
+
+test('a render whose start module loads late names the start script’s render in its boot data', async () => {
+	// The boot data renders while the module loads, and the start script
+	// streams in once it has. A root that goes before that script runs ends
+	// the render its boot data names, so the script must write that render.
+	let release: () => void = () => undefined;
+	const gate = new Promise<void>((resolve) => {
+		release = resolve;
+	});
+	vi.resetModules();
+	// oxlint-disable-next-line anti-slop/no-module-mocking -- The property under test is a late load of this module; no interface stands in for a dynamic import.
+	vi.doMock(
+		'@c15t/core/runtime/script-server-start',
+		async (importOriginal) => {
+			await gate;
+			return importOriginal();
+		}
+	);
+	try {
+		const { ConsentRoot: FreshRoot } = await import('../root');
+		const stream = await renderToReadableStream(
+			<FreshRoot
+				options={{ mode: custom({ init: () => Promise.resolve({}) }) }}
+				scripts={[pixel]}
+				state={grantedState()}
+			>
+				<main id="page">Page</main>
+			</FreshRoot>
+		);
+		release();
+		await stream.allReady;
+		const html = await new Response(stream).text();
+
+		expect(html).toContain(JSON.stringify(pixel.src));
+		const boot = /<script data-c15t-boot[^>]*>(?<data>[^<]*)<\/script>/u.exec(
+			html
+		)?.groups?.data;
+		const parsed: unknown = JSON.parse(boot ?? '{}');
+		const bootId =
+			parsed && typeof parsed === 'object' && 'i' in parsed
+				? parsed.i
+				: undefined;
+		const startId = /g\.id!==(?<id>"[^"]*")/u.exec(html)?.groups?.id;
+		expect(bootId).toBeDefined();
+		expect(startId && JSON.parse(startId)).toBe(bootId);
 	} finally {
 		vi.doUnmock('@c15t/core/runtime/script-server-start');
 		vi.resetModules();
@@ -230,7 +285,7 @@ test('finishes the render on React 18 when the start module fails to load', asyn
 		const html = await new Response(stream).text();
 
 		expect(html).toMatch(
-			/<\/main><!--\$--><script data-c15t-boot[^>]*>[^<]*<\/script>(?<preload><script[^>]*>[^<]*c15t-engine-chunks[^<]*<\/script>)<script[^>]*><\/script>/u
+			/<\/main><!--\$--><script[^>]*><\/script><script data-c15t-boot[^>]*>[^<]*<\/script><script[^>]*>[^<]*c15t-engine-chunks[^<]*<\/script><!--\$--><script[^>]*><\/script><!--\/\$-->/u
 		);
 	} finally {
 		vi.doUnmock('@c15t/core/runtime/script-server-start');
@@ -281,7 +336,7 @@ test('finishes concurrent React 18 renders while a failed start module reloads',
 		expect(pages).toHaveLength(2);
 		for (const html of pages) {
 			expect(html).toMatch(
-				/<\/main><!--\$--><script data-c15t-boot[^>]*>[^<]*<\/script>(?<preload><script[^>]*>[^<]*c15t-engine-chunks[^<]*<\/script>)<script[^>]*><\/script>/u
+				/<\/main><!--\$--><script[^>]*><\/script><script data-c15t-boot[^>]*>[^<]*<\/script><script[^>]*>[^<]*c15t-engine-chunks[^<]*<\/script><!--\$--><script[^>]*><\/script><!--\/\$-->/u
 			);
 		}
 	} finally {
@@ -319,4 +374,24 @@ test('a deferred consent island keeps the server start script', async () => {
 	expect(html.indexOf(JSON.stringify(pixel.src))).toBeGreaterThan(
 		html.indexOf('</main>')
 	);
+});
+
+test('runs each serverStart once per render', async () => {
+	// The stored-choice check and the start script come from one plan, so
+	// a stateful serverStart neither runs twice nor gives them two answers.
+	await render();
+	const serverStart = vi.fn(() => ({ code: '' }));
+	const stream = await renderToReadableStream(
+		<ConsentRoot
+			options={{ mode: custom({ init: () => Promise.resolve({}) }) }}
+			scripts={[{ ...pixel, serverStart }]}
+			state={grantedState()}
+		>
+			<main id="page">Page</main>
+		</ConsentRoot>
+	);
+	await stream.allReady;
+	const html = await new Response(stream).text();
+	expect(html).toContain(JSON.stringify(pixel.src));
+	expect(serverStart).toHaveBeenCalledTimes(1);
 });

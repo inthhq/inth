@@ -280,24 +280,58 @@ When the engine loads depends on the visitor:
 | Visitor | Engine loads |
 | --- | --- |
 | The banner asks them to choose and no optional category is allowed | When the first of these happens: every `<img fetchpriority="high">` on the page has loaded, the visitor presses a pointer or key or scrolls anywhere outside the banner, a tap on the banner was recorded (see above), or 10 seconds pass. A page without a priority image waits for the `load` event instead. |
-| Any other visitor, such as a returning visitor with consent | As soon as the browser runs `ConsentRoot`'s first-load chunk, before hydration. |
+| A returning visitor who already chose and sees no banner or dialog | At the same moments as the row above. Until then `ConsentRoot` inserts the plain `scripts` and `useScriptLoader()` entries their choice allows itself, as hydration starts. |
+| Any other visitor, such as one under an IAB policy or one whose browser holds a newer choice than the server read | As soon as the browser runs `ConsentRoot`'s first-load chunk, before hydration. |
 
 On a slow connection the engine would otherwise share bandwidth with the
 page's largest image and delay Largest Contentful Paint. The browser stops
 measuring that paint at the first input or scroll, so loading the engine then
 costs it nothing.
 
+For a returning visitor, the server leaves a small inline script after the
+page that checks the browser's stored records against the state the server
+read. When the browser holds something the server did not see, such as a
+newer denial in `localStorage`, a Global Privacy Control signal or a decision
+that has expired, the engine loads at once instead: it applies the change,
+and `onPermissionsChanged` reports it, before the page's priority images
+finish. The root checks again before each script it starts, and whenever
+another tab writes storage, the page becomes visible or gets focus, or the
+decision reaches its expiry while the engine waits. When the stored choice
+is current, nothing changes at load, so
+`onChoiceRecorded`, `onPermissionsChanged` and `onSurfaceShown` fire as they
+would with the engine loaded at once, when the visitor next acts. A `scripts`
+entry with a vendor or IAB fields still loads the engine at once, and so do
+some entries with callbacks (see below).
+
 Some pages need the engine sooner. `ConsentRoot` loads it at once when:
 
 - a `scripts` entry, in `c15t.config.ts` or on `ConsentRoot`, may run for
   this visitor (`alwaysLoad`, or a category such as `necessary` that is
-  allowed) and the server did not start it from the HTML;
+  allowed) and nothing else starts it: the server did not start it from the
+  HTML, and it is not a plain `src` entry `ConsentRoot` starts itself for a
+  returning visitor (see the table above). An entry with callbacks, vendor
+  or IAB fields needs the engine, as does any entry under
+  `persistence: false` or `options.consentSource`;
+- an entry the server started has `onLoad`, `onError`, `onDispose` or
+  `persistAfterDispose`. Only the script
+  loader hears the element's `load` and `error` events, so those callbacks
+  would otherwise run late, or not at all if the visitor navigates away
+  first. A root that unmounts before its engine removes what the server
+  started, so only the script loader can keep the element or call
+  `onDispose`. The other fields let the engine wait. The server start
+  already ran the setup that `onBeforeLoad` does. `onConsentChange`
+  reports a later change, which loads the engine anyway, and the grant the
+  page started with once the script loader takes the script over.
+  `persistAfterConsentRevoked` only acts on a revoke, which loads the
+  engine too;
+- an entry the visitor denied sets `observeConsentBeforeLoad` and
+  `onConsentChange`, so it hears the denial straight away;
 - `useScriptLoader()` receives such a script, on mount or later.
 
 `ConsentRoot` renders the engine before the page hydrates, as a statically
 imported root would, when it has no `state`, when `options.enabled` is
-`false`, with an experiment, with a `networkBlocker` in its config, for an IAB
-policy, or when the app renders `IABProvider`.
+`false`, with an experiment, with a `networkBlocker` or `clearOnRevocation`
+in its config, for an IAB policy, or when the app renders `IABProvider`.
 
 `useNetworkBlocker()` and `useIframeBlocker()` work before the engine loads,
 from the server's state, and do not load it. `useEventDispatcher()` delivers
@@ -310,15 +344,17 @@ starts once the engine has loaded.
 whose `scripts` array is not empty. Pages without scripts never download it.
 By default the chunk loads once the page has hydrated.
 
-When the visitor's consent already lets one of those scripts run, `ConsentRoot`
-starts the download during its first render in the browser instead, so the
-chunk loads while React hydrates the rest of the page. It decides as the
-provider would once mounted: with the state from `resolveConsent()`, once a
-streamed state arrives, the current policy, Global Privacy Control, the
-visitor's vendor switches and any newer denial stored in the browser. A grant
-any of those restricts does not count. The visitors this covers:
+When `ConsentRoot` renders its engine at once and the visitor's consent
+already lets one of those scripts run, it starts the download during its
+first render in the browser instead, so the chunk loads while React hydrates
+the rest of the page. It decides as the provider would once mounted: with the
+state from `resolveConsent()`, once a streamed state arrives, the current
+policy, Global Privacy Control, the visitor's vendor switches and any newer
+denial stored in the browser. A grant any of those restricts does not count.
+The visitors this covers:
 
-- a returning visitor whose stored choice allows one of the scripts;
+- a returning visitor whose stored choice allows one of the scripts, when
+  the engine loads at once for them;
 - any visitor, when a script has `alwaysLoad`, since it runs whatever they
   chose;
 - every visitor, when `options.enabled` is `false`, since a disabled provider
@@ -329,6 +365,14 @@ any of those restricts does not count. The visitors this covers:
 With `options.consentSource` set, and the provider not disabled, the external
 source decides consent after the page mounts, so only `alwaysLoad` scripts
 start the download early.
+
+A returning visitor whose engine waits (see
+[Know when ConsentRoot loads its engine](#know-when-consentroot-loads-its-engine))
+downloads neither chunk at first. `ConsentRoot` inserts the plain `scripts`
+and `useScriptLoader()` entries their choice allows itself, as hydration
+starts. The script loader downloads with the engine, at the moments that
+section's table lists, and takes those scripts over without inserting them
+again.
 
 The larger the tree inside `ConsentRoot`, the more of that request hydration
 covers. There is nothing to configure. The code that decides ships with
@@ -342,7 +386,14 @@ loads the engine. It records only URLs under `/_next/static/`, never the
 consent-gated scripts that start while the engine loads. When the server
 renders a visitor the engine must serve at once, `ConsentRoot` adds a small
 inline script after the page that preloads those URLs at low priority while
-the HTML is still parsing. The record is
+the HTML is still parsing. For a returning visitor who already chose,
+the preload runs only when the stored-choice check before it finds the
+choice changed in the browser; otherwise their engine waits for the page's
+priority images and nothing is preloaded. A root that must load the engine
+at once anyway gets no check and the plain preload: a `scripts` entry on
+`ConsentRoot` or in `c15t.config.ts` that needs the script loader, a root
+with `persistence: false`, `options.consentSource`, `options.enabled:
+false`, an experiment or a `networkBlocker`. The record is
 tied to the page's build, so after a deploy nothing stale is fetched; the
 first visit after a deploy loads the engine without a preload and records the
 new URLs. With storage blocked, the engine loads when the first-load chunk

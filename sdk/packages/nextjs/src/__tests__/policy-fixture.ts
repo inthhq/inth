@@ -8,7 +8,8 @@ import type { PolicyRule, PolicyResolution } from '@c15t/schema/types';
 /** Prepared public policy and receipts for adapter tests. */
 export const policyFixture = (
 	values: Partial<ConsentState> = {},
-	rule: Partial<PolicyRule> = {}
+	rule: Partial<PolicyRule> = {},
+	at: number = Date.now()
 ): KernelConfig & {
 	initialPolicyResolution: Extract<PolicyResolution, { status: 'matched' }>;
 } => {
@@ -20,7 +21,7 @@ export const policyFixture = (
 		...rule,
 	});
 	const fingerprints = createPolicyRuleFingerprints(policy);
-	const now = Date.now();
+	const now = at;
 	const entries = Object.entries(values).filter(
 		([category]) => category !== 'necessary'
 	);

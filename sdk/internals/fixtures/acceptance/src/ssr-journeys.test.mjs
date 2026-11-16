@@ -592,10 +592,11 @@ for (const app of selected) {
 			);
 		}
 		if (app.probeName === '__c15tNextBench') {
-			// The learned engine preload relies on the bundler adding an
+			// The engine's chunk list is learned from the bundler adding an
 			// import's chunk scripts within the import() call; only a real
-			// build shows that it does.
-			test('a returning visitor preloads the learned engine chunks on every visit', async () => {
+			// build shows that it does. A returning visitor who chose gets no
+			// preload of those chunks: their engine waits for the hero.
+			test('a returning visitor who chose learns the engine chunks and gets no preload', async () => {
 				const base = `http://127.0.0.1:${app.port}`;
 				const { page } = await newPage(browser, app, {
 					'x-c15t-country': 'DE',
@@ -606,12 +607,10 @@ for (const app of selected) {
 							JSON.parse(localStorage.getItem('c15t-engine-chunks') ?? 'null')
 								?.u ?? []
 					);
-				// The page starts consent-gated vendor scripts from the server
-				// once the visitor has accepted.
 				await page.goto(`${base}/typical-install`);
 				await page.getByTestId('consent-banner-accept-button').click();
-				// The server serves the engine at once only once the choice is
-				// stored; a quick next visit could otherwise still be a new one.
+				// The server reads the choice only once it is stored; a quick
+				// next visit could otherwise still be a new one.
 				await page.waitForFunction(() => document.cookie.includes('c15t='));
 				await expect.poll(learned).not.toEqual([]);
 				for (const visit of [2, 3]) {
@@ -635,15 +634,18 @@ for (const app of selected) {
 						expect(url, `visit ${visit}: learned URL`).toMatch(
 							new RegExp(`^${base}/_next/static/`, 'u')
 						);
-						expect(preloaded, `visit ${visit}: preloaded`).toContain(url);
+						// Next.js preloads some of its own chunks; c15t adds none.
+						expect(preloaded, `visit ${visit}: preloaded`).not.toContain(url);
 					}
-					// Nothing outside the page's chunks, such as a gated vendor
-					// script, gets a low-priority preload.
-					for (const url of preloaded) {
-						expect(url, `visit ${visit}: preloaded URL`).toMatch(
-							new RegExp(`^${base}/_next/static/`, 'u')
-						);
-					}
+					// The server left the stored-choice check, and it still holds.
+					expect(
+						await page.evaluate(
+							() =>
+								typeof window.__c15tRender?.current === 'function' &&
+								window.__c15tRender.current()
+						),
+						`visit ${visit}: stored choice current`
+					).toBe(true);
 				}
 			});
 		}

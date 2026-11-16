@@ -16,7 +16,11 @@ import { useContext } from 'react';
 import { StreamedPrefetchContext } from '../context';
 import { useKernel } from '../kernel-selector';
 import { useUIConfig } from '../ui-config-context';
-import { CONSENT_BOOT_ATTRIBUTE, canDeferEngine } from './boot';
+import {
+	CONSENT_BOOT_ATTRIBUTE,
+	canDeferEngine,
+	canDeferEngineAfterChoice,
+} from './boot';
 import type { ConsentBoot } from './boot';
 import { enginePreloadScript } from './engine-preload-script';
 
@@ -63,6 +67,20 @@ export interface ConsentBootDataProps {
 	 * browser renders the root eagerly.
 	 */
 	preload?: boolean;
+	/**
+	 * The server's stored-choice check (`storedChoiceCheckScript`), which
+	 * core leaves out for a root that needs the engine at once. Placed
+	 * before the preload, which reads its result, for a visitor whose
+	 * engine may wait. Server only.
+	 */
+	storedChoiceCheck?: string;
+	/**
+	 * The root defers a returning visitor's engine on the stored-choice
+	 * check (`storedChoiceCheck`): renders the slot that check goes in.
+	 * Pass it on the server and in the browser alike. Without it the boot
+	 * data renders as it did before that mode.
+	 */
+	storedChoice?: boolean;
 }
 
 /** `boot`, with the render's id when the server gave one. */
@@ -77,10 +95,28 @@ const BootJSON = ({
 	boot,
 	chunks,
 	preload = false,
+	storedChoice = false,
+	storedChoiceCheck,
 }: ConsentBootDataProps & { boot: ConsentBoot }) => {
 	const { nonce } = useUIConfig();
+	const snapshot = boot.r ?? boot.s;
+	// A returning visitor whose engine this root lets wait: the check goes
+	// in, and the preload below runs only if the check fails in the browser.
+	const check =
+		!preload && canDeferEngineAfterChoice(snapshot)
+			? storedChoiceCheck
+			: undefined;
 	return (
 		<>
+			{/* Runs before the preload below, which reads its result. */}
+			{storedChoice ? (
+				<script
+					// oxlint-disable-next-line react/no-danger -- c15t's own code; values are escaped.
+					dangerouslySetInnerHTML={{ __html: check ?? '' }}
+					nonce={nonce}
+					suppressHydrationWarning
+				/>
+			) : null}
 			<script
 				{...{ [CONSENT_BOOT_ATTRIBUTE]: '' }}
 				// oxlint-disable-next-line react/no-danger -- Escaped JSON, read with JSON.parse.
@@ -96,10 +132,12 @@ const BootJSON = ({
 				// oxlint-disable-next-line react/no-danger -- c15t's own constant script.
 				dangerouslySetInnerHTML={{
 					__html:
-						chunks === undefined ||
-						(!preload && canDeferEngine(boot.r ?? boot.s))
+						chunks === undefined || (!preload && canDeferEngine(snapshot))
 							? ''
-							: enginePreloadScript(chunks),
+							: enginePreloadScript(
+									chunks,
+									check === undefined ? undefined : boot.i
+								),
 				}}
 				nonce={nonce}
 			/>
@@ -113,6 +151,8 @@ const StreamedBootData = ({
 	preload,
 	renderId,
 	server,
+	storedChoice,
+	storedChoiceCheck,
 	streamed,
 }: ConsentBootDataProps & {
 	server: ConsentSnapshot;
@@ -128,6 +168,8 @@ const StreamedBootData = ({
 			)}
 			chunks={chunks}
 			preload={preload}
+			storedChoice={storedChoice}
+			storedChoiceCheck={storedChoiceCheck}
 		/>
 	);
 };
@@ -142,6 +184,8 @@ export const ServerBootData = ({
 	chunks,
 	preload,
 	renderId,
+	storedChoice,
+	storedChoiceCheck,
 }: ConsentBootDataProps) => {
 	const kernel = useKernel();
 	const streamed = useContext(StreamedPrefetchContext);
@@ -152,6 +196,8 @@ export const ServerBootData = ({
 			preload={preload}
 			renderId={renderId}
 			server={server}
+			storedChoice={storedChoice}
+			storedChoiceCheck={storedChoiceCheck}
 			streamed={streamed}
 		/>
 	) : (
@@ -159,6 +205,8 @@ export const ServerBootData = ({
 			boot={withRenderId({ s: server }, renderId)}
 			chunks={chunks}
 			preload={preload}
+			storedChoice={storedChoice}
+			storedChoiceCheck={storedChoiceCheck}
 		/>
 	);
 };
@@ -176,6 +224,13 @@ export const ConsentBootData = (props: ConsentBootDataProps) => {
 	if (typeof document !== 'undefined') {
 		return (
 			<>
+				{props.storedChoice ? (
+					<script
+						// oxlint-disable-next-line react/no-danger -- Empty: keeps the server's script.
+						dangerouslySetInnerHTML={{ __html: '' }}
+						suppressHydrationWarning
+					/>
+				) : null}
 				<script
 					{...{ [CONSENT_BOOT_ATTRIBUTE]: '' }}
 					// oxlint-disable-next-line react/no-danger -- Empty: keeps the server's element.
@@ -196,6 +251,8 @@ export const ConsentBootData = (props: ConsentBootDataProps) => {
 			chunks={props.chunks}
 			preload={props.preload}
 			renderId={props.renderId}
+			storedChoice={props.storedChoice}
+			storedChoiceCheck={props.storedChoiceCheck}
 		/>
 	);
 };

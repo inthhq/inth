@@ -23,20 +23,23 @@ import userConfig from '@c15t/nextjs/user-config';
 import {
 	DeferredConsentShell,
 	canDeferEngine,
+	engineNeededAtLoad,
 	iabProviderLoaded,
+	liveRootKey,
 	learnEngineChunks,
 	read,
-	readConsentBoot,
 	record,
 	rootNeedsEngine,
 	scriptsNeedEngine,
+	startsScriptsWithoutEngine,
+	useConsentBootPlan,
+	whenIABProviderLoads,
 } from '@c15t/react/deferred';
 import type {
 	ConsentBoot,
 	DeferredCommitConfig,
 	Recorded,
 } from '@c15t/react/deferred';
-import { useState } from 'react';
 
 import { engineNow } from '#engine-now';
 
@@ -85,50 +88,18 @@ export const preloadConsentRoot = (): Promise<EngineModule> => loadEngine();
 if (typeof document === 'undefined') {
 	// A server render finds it loaded instead of suspending the page.
 	loadEngine();
+} else if (engineNeededAtLoad()) {
+	// A visitor the engine must serve at once, or an app that loaded
+	// `IABProvider`: start the download as soon as this chunk runs, ahead
+	// of hydration.
+	loadEngine();
 } else {
-	// A visitor the engine must serve at once: start the download as soon
-	// as this chunk runs, ahead of hydration.
-	const boot = readConsentBoot();
-	if (boot && !canDeferEngine(boot.r ?? boot.s)) {
+	// `IABProvider` loading after this chunk needs the engine too: the
+	// root renders it eagerly, so its download starts then.
+	whenIABProviderLoads(() => {
 		loadEngine();
-	}
+	});
 }
-
-type Plan =
-	| { kind: 'eager' }
-	| { kind: 'shell'; boot: ConsentBoot; defer: boolean };
-
-/** How the browser renders this root, decided at its first render. */
-const planRoot = function planRoot(
-	merged: ConsentRootProps & { options?: ConsentRootProps['options'] }
-): Plan {
-	const boot = readConsentBoot();
-	const { state } = merged;
-	const snapshot = boot && (boot.r ?? boot.s);
-	if (
-		!snapshot ||
-		state === undefined ||
-		rootNeedsEngine(merged) ||
-		// IAB state lives in `IABProvider`'s handle on the engine's kernel,
-		// which a stand-in cannot serve.
-		snapshot.model === 'iab' ||
-		iabProviderLoaded()
-	) {
-		return { kind: 'eager' };
-	}
-	return {
-		boot: boot as ConsentBoot,
-		// A script the loader may run now would wait for the trigger.
-		defer:
-			canDeferEngine(snapshot) &&
-			!scriptsNeedEngine(
-				merged.scripts,
-				snapshot,
-				merged.scriptLoader?.serverStart !== false
-			),
-		kind: 'shell',
-	};
-};
 
 /**
  * What a banner choice tapped before the engine loads is recorded with, so
@@ -154,6 +125,58 @@ const commitConfig = function commitConfig(
 	};
 };
 
+type Plan =
+	| { kind: 'eager' }
+	| {
+			kind: 'shell';
+			boot: ConsentBoot;
+			defer: boolean;
+			startScripts: boolean;
+	  };
+
+/** How the browser renders this root, decided at its first render. */
+const planRoot = function planRoot(
+	merged: ConsentRootProps & { options?: ConsentRootProps['options'] },
+	// `useConsentBootPlan` gives the boot data only to the mount that
+	// hydrates the server's HTML: a remount after a client-side navigation
+	// gets `null` and takes the eager engine.
+	boot: ConsentBoot | null
+): Plan {
+	const { state } = merged;
+	const snapshot = boot && (boot.r ?? boot.s);
+	if (
+		!snapshot ||
+		state === undefined ||
+		rootNeedsEngine(merged) ||
+		// IAB state lives in `IABProvider`'s handle on the engine's kernel,
+		// which a stand-in cannot serve.
+		snapshot.model === 'iab' ||
+		iabProviderLoaded()
+	) {
+		return { kind: 'eager' };
+	}
+	const serverStart = merged.scriptLoader?.serverStart !== false;
+	// A returning visitor who chose: the shell starts the plain scripts
+	// their choice allows, and the engine waits for the priority images.
+	const startScripts = startsScriptsWithoutEngine(snapshot);
+	return {
+		boot: boot as ConsentBoot,
+		// A script the loader may run now would wait for the trigger. The
+		// shell starts the root's plain `scripts` itself only with a commit
+		// path to read them from.
+		defer:
+			(canDeferEngine(snapshot) || startScripts) &&
+			!scriptsNeedEngine(
+				merged.scripts,
+				snapshot,
+				serverStart,
+				startScripts && commitConfig(merged) !== undefined
+			),
+		kind: 'shell',
+		startScripts,
+	};
+};
+
 const ClientConsentRoot = (props: ConsentRootProps) => {
 	const config = props.config ?? userConfig;
 	const merged = {
@@ -161,8 +184,7 @@ const ClientConsentRoot = (props: ConsentRootProps) => {
 		...props,
 		options: mergeOptions(config?.options, props.options),
 	};
-	// oxlint-disable-next-line react/hook-use-state -- Decided once, at mount.
-	const [plan] = useState(() => planRoot(merged));
+	const plan = useConsentBootPlan((boot) => planRoot(merged, boot));
 	if (plan.kind === 'eager') {
 		const { EagerConsentRoot } = read(loadEngine());
 		return <EagerConsentRoot {...props} />;
@@ -172,7 +194,9 @@ const ClientConsentRoot = (props: ConsentRootProps) => {
 			boot={plan.boot}
 			commit={commitConfig(merged)}
 			defer={plan.defer}
+			live={liveRootKey(merged)}
 			loadEngine={loadEngine}
+			startScripts={plan.startScripts}
 			options={merged.options ?? {}}
 			prefetch={merged.state}
 			renderEngine={(engine: EngineModule, attach, committed) => (

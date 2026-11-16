@@ -16,11 +16,23 @@ import { ENGINE_CHUNKS_KEY } from './engine-preload';
  *
  * @param chunks - The path every bundler chunk URL contains, as given to
  * `learnEngineChunks`.
+ * @param storedChoiceRenderId - The render whose stored-choice check runs
+ * before this script: the preload is skipped when that render's check
+ * (`current` in its page object, `PAGE_RENDER_KEY` in core) says the choice
+ * holds, as the engine then waits for the priority images. A stale choice,
+ * no check, or a page object from another render keeps the preload.
  * @returns The script's source.
  * @internal
  */
-export const enginePreloadScript = (chunks: string): string =>
-	`(function(){try{var d=JSON.parse(localStorage.getItem(${JSON.stringify(
+export const enginePreloadScript = (
+	chunks: string,
+	storedChoiceRenderId?: string
+): string =>
+	`(function(){try{${
+		storedChoiceRenderId === undefined
+			? ''
+			: `var v=window.__c15tRender;if(v&&v.id===${JSON.stringify(storedChoiceRenderId).replace(/</gu, '\\u003c')}&&typeof v.current==="function"&&v.current())return;`
+	}var d=JSON.parse(localStorage.getItem(${JSON.stringify(
 		ENGINE_CHUNKS_KEY
 	)})||"null");if(!d||!d.u)return;var c=${JSON.stringify(chunks).replace(
 		/</gu,
