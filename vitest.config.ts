@@ -9,6 +9,8 @@ export default defineConfig({
       "**/inrepo_modules/**",
       "**/.inrepo/**",
       "**/e2e/**",
+      // Imported c15t SDK. It keeps its own tooling until it joins this workspace.
+      "sdk/**",
     ],
   },
 });

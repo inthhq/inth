@@ -8,6 +8,8 @@ export default defineConfig({
     "tools/oxlint/anti-slop/**",
     "**/inrepo_modules/**",
     "**/.inrepo/**",
+    // Imported c15t SDK. It keeps its own tooling until it joins this workspace.
+    "sdk/**",
     // Unmodified upstream source; see packages/cli/vendor/c15t/UPSTREAM.md.
     "packages/cli/vendor/c15t/**",
   ],

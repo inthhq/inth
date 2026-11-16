@@ -1,0 +1,3 @@
+# Imported c15t SDK. It has its own oxfmt config, which oxfmt would load for
+# files under sdk/ even when the root config ignores them.
+sdk/
