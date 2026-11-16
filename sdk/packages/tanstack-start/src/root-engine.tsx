@@ -270,13 +270,64 @@ const read = function read<Value>(promise: Recorded<Value>): Value {
 };
 
 /**
+ * One id and one `serverScriptStartPlan` per render, shared by the boot
+ * data, the stored-choice check and the start script: each `serverStart`
+ * runs once, the check and the start describe the same script, and the
+ * page object their inline scripts write carries the id the boot data
+ * names. Keyed by the provider options all three receive from the render.
+ * The id needs no module: boot data that renders while the module loads
+ * names the render its later start script writes, so a root that goes
+ * before that script runs ends it (`endPageRender`).
+ */
+const renders = new WeakMap<
+	object,
+	{
+		id: string;
+		plan?: ScriptServerStart.ServerScriptStartPlan;
+		state: unknown;
+	}
+>();
+
+const renderFor = function renderFor(
+	options: ConsentProviderOptions,
+	state: ConsentState | undefined
+) {
+	let render = renders.get(options);
+	if (!render || render.state !== state) {
+		// As `newRenderId` in `@c15t/core/runtime/script-server-start`.
+		render = { id: Math.random().toString(36).slice(2, 10), state };
+		renders.set(options, render);
+	}
+	return render;
+};
+
+const renderPlan = function renderPlan(
+	module: ScriptServerStartModule,
+	options: ConsentProviderOptions,
+	state: ConsentState | undefined
+): ScriptServerStart.ServerScriptStartPlan {
+	const render = renderFor(options, state);
+	render.plan ??= module.serverScriptStartPlan(
+		{
+			...(options as unknown as Parameters<
+				ScriptServerStartModule['serverScriptStartPlan']
+			>[0]),
+			prefetch: state,
+		},
+		render.id
+	);
+	return render.plan;
+};
+
+/**
  * Starts the scripts the server's consent state already lets run. An
  * inline script runs the setup of each one with a `serverStart` and
  * inserts it after first paint, before hydration, and the loader adopts
  * it. In the browser it only hydrates the inline script.
  *
- * It suspends on a streamed state inside its own boundary, on the server and
- * in the browser, so the rest of the page streams and hydrates without it.
+ * It suspends on a streamed state, and on the server on its module, inside
+ * its own boundary, so the rest of the page, and the boot data, stream and
+ * hydrate without it.
  */
 const ServerScriptStart = ({
 	options,
@@ -302,14 +353,11 @@ const ServerScriptStart = ({
 			/>
 		);
 	}
+	// Suspends in its own boundary (`AfterPage`), so the boot data never
+	// waits for the module or falls back with it.
 	const module = read(importScriptServerStart());
 	// A failed import still renders the empty script the browser hydrates.
-	const code = module?.serverScriptStart({
-		...(options as unknown as Parameters<
-			ScriptServerStartModule['serverScriptStart']
-		>[0]),
-		prefetch: state,
-	});
+	const code = module ? renderPlan(module, options, state).code : undefined;
 	return (
 		// Runs a granted vendor's setup and inserts its tag before the page
 		// hydrates. The script loader adopts the tag.
@@ -318,6 +366,60 @@ const ServerScriptStart = ({
 			dangerouslySetInnerHTML={{ __html: code ?? '' }}
 			nonce={options.nonce}
 			suppressHydrationWarning
+		/>
+	);
+};
+
+if (typeof document === 'undefined') {
+	// Start loading as the server imports the engine, so a request's render
+	// finds the module in place.
+	importScriptServerStart();
+}
+
+/**
+ * The boot data a deferred root reads, with the stored-choice check
+ * (`storedChoiceCheckScript`). Core leaves the check out for a root that
+ * needs the engine at once, by the rule `./root` applies in the browser (a
+ * network blocker, an experiment, `enabled: false`, a script the root
+ * cannot start), so the browser starts the engine's download as its chunk
+ * runs. Never suspends on the start module: a synchronous first render in
+ * a process, before it loads, keeps the boot data and leaves no check.
+ */
+const CheckedBootData = ({
+	options,
+	serverStart,
+}: {
+	options: ConsentProviderOptions;
+	/** Whether the render emits the server start, and so has its plan. */
+	serverStart: boolean;
+}): ReactNode => {
+	if (typeof document !== 'undefined') {
+		return <ConsentBootData storedChoice />;
+	}
+	const { prefetch } = options;
+	const state = isPending(prefetch as ConsentState | Promise<ConsentState>)
+		? read(settledState(prefetch as Promise<ConsentState>))
+		: (prefetch as ConsentState | undefined);
+	const loaded = importScriptServerStart();
+	const module =
+		startsFromHTML(state) && loaded.status === 'fulfilled'
+			? loaded.value
+			: undefined;
+	const render = renderFor(options, state);
+	return (
+		<ConsentBootData
+			renderId={render.id}
+			storedChoice
+			storedChoiceCheck={module?.storedChoiceCheckScript(
+				{
+					...(options as unknown as Parameters<
+						ScriptServerStartModule['storedChoiceCheckScript']
+					>[0]),
+					prefetch: state,
+				},
+				serverStart ? renderPlan(module, options, state) : undefined,
+				render.id
+			)}
 		/>
 	);
 };
@@ -388,8 +490,19 @@ const AfterPage = ({
 }) => (
 	<>
 		{/* No engine preload: see `loadEngine` in `./root`. */}
-		{bootData ? <ConsentBootData /> : null}
-		{serverStart ? <ServerScriptStart options={options} /> : null}
+		{bootData ? (
+			<CheckedBootData
+				options={options}
+				serverStart={serverStart}
+			/>
+		) : null}
+		{/* Its own boundary: a synchronous first render in a process leaves
+		it to the browser while its module loads, and keeps the boot data. */}
+		{serverStart ? (
+			<Suspense fallback={null}>
+				<ServerScriptStart options={options} />
+			</Suspense>
+		) : null}
 	</>
 );
 

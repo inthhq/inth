@@ -221,22 +221,60 @@ When the engine loads depends on the visitor:
 | Visitor | Engine loads |
 | --- | --- |
 | The banner asks them to choose and no optional category is allowed | When the first of these happens: every `<img fetchpriority="high">` on the page has loaded, the visitor presses a pointer or key or scrolls anywhere outside the banner, a tap on the banner was recorded, or 10 seconds pass. A page without a priority image waits for the `load` event instead. |
-| Any other visitor, such as a returning visitor with consent | As soon as the browser runs `ConsentRoot`'s first-load chunk, before hydration. |
+| A returning visitor who already chose and sees no banner or dialog | At the same moments as the row above. Until then `ConsentRoot` inserts the plain `scripts` and `useScriptLoader()` entries their choice allows itself, as hydration starts. |
+| Any other visitor, such as one under an IAB policy or one whose browser holds a newer choice than the server read | As soon as the browser runs `ConsentRoot`'s first-load chunk, before hydration. |
 
 On a slow connection the engine would otherwise share bandwidth with the
 page's largest image and delay Largest Contentful Paint. The browser stops
 measuring that paint at the first input or scroll, so loading the engine then
-costs it nothing. `useScriptLoader()` loads the script loader once the engine
-is in or a banner choice was recorded, and at once for a script that may run
-now.
+costs it nothing.
+
+For a returning visitor, the server leaves a small inline script after the
+page that checks the browser's stored records against the state the server
+read. When the browser holds something the server did not see, such as a
+newer denial in `localStorage`, a Global Privacy Control signal or a decision
+that has expired, the engine loads at once instead: it applies the change,
+and `onPermissionsChanged` reports it, before the page's priority images
+finish. The root checks again before each script it starts, and whenever
+another tab writes storage, the page becomes visible or gets focus, or the
+decision reaches its expiry while the engine waits. When the stored choice
+is current, nothing changes at load, so
+`onChoiceRecorded`, `onPermissionsChanged` and `onSurfaceShown` fire as they
+would with the engine loaded at once, when the visitor next acts. A `scripts`
+entry with a vendor or IAB fields still loads the engine at once, and so do
+some entries with callbacks (see below).
+
+`useScriptLoader()` loads the script loader once the engine is in, a banner
+choice was recorded, or a returning visitor's stored choice allows its
+scripts, and at once for a script that may run now.
 
 `ConsentRoot` loads the engine at once when a `scripts` entry may run for this
-visitor (`alwaysLoad`, or a category that is allowed) and the server did not
-start it from the HTML. It renders the engine before the page hydrates, as a
-statically imported root would, when the state was not resolved for this
-request (a prerendered page, or the static root's `{}`), when
-`options.enabled` is `false`, with `options.experiment`, with a
-`networkBlocker`, for an IAB policy, or when the app renders `IABProvider`.
+visitor (`alwaysLoad`, or a category that is allowed) and nothing else starts
+it: the server did not start it from the HTML, and it is not a plain `src`
+entry the root starts itself for a returning visitor (see the table above).
+An entry with callbacks, vendor or IAB fields needs the engine, as does any
+entry under `persistence: false` or `options.consentSource`.
+
+For an entry the server started, only `onLoad`, `onError`, `onDispose` and
+`persistAfterDispose` load the engine at once. The script loader is the only
+thing that hears the element's `load` and `error` events, so those callbacks
+would otherwise run late, or not at all if the visitor navigates away first.
+A root that unmounts before its engine removes what the server started, so
+only the script loader can keep the element or call `onDispose`. The other
+fields let the engine wait. The server start already ran the setup that
+`onBeforeLoad` does. `onConsentChange` reports a later change, which loads
+the engine anyway, and the grant the page started with once the script
+loader takes the script over. `persistAfterConsentRevoked` only acts on a
+revoke, which loads the engine too. An entry the visitor denied that sets
+`observeConsentBeforeLoad` and `onConsentChange` loads the engine at once,
+so it hears the denial straight away.
+
+`ConsentRoot` renders the engine before the page hydrates, as a statically
+imported root would, when the state was not resolved for this request (a
+prerendered page, or the static root's `{}`), when `options.enabled` is
+`false`, with `options.experiment`, with a `networkBlocker` or
+`clearOnRevocation`, for an IAB policy, or when the app renders
+`IABProvider`.
 
 With `consentManifest()` in `vite.config.ts`, the browser bundle carries no
 second copy of the banner's styles: it uses the `<style>` the server put in

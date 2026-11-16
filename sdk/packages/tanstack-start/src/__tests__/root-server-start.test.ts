@@ -52,9 +52,13 @@ const render = async (
  * `html` without the boot data a deferred root reads: the snapshot and
  * the engine-preload script after it, which carry no start script.
  */
+/**
+ * The HTML without the boot data a deferred root reads, its empty preload
+ * slot, and the stored-choice check, which starts nothing itself.
+ */
 const withoutBootData = (html: string): string =>
 	html.replace(
-		/<script data-c15t-boot[^>]*>[^<]*<\/script><script[^>]*>[^<]*<\/script>/u,
+		/<script(?: nonce="[^"]*")?>(?:\(function\(\)\{var g=window\.__c15tRender;[^]*?\}\)\(\))?<\/script><script data-c15t-boot[^>]*>[^<]*<\/script><script[^>]*>[^<]*<\/script>/u,
 		''
 	);
 
@@ -267,4 +271,124 @@ test('leaves the boot data, and an empty script for the engine preload, for a vi
 		JSON.parse(boot?.groups?.json ?? '{}').s.effectivePermissions.marketing
 	).toBe(true);
 	expect(boot?.groups?.preload).toBe('<script></script>');
+});
+
+/** Server-renders `ConsentRoot` with `props`, after a first render. */
+const renderWith = async (
+	props: Partial<ConsentRootProps>
+): Promise<string> => {
+	await render(await optOutState());
+	const stream = await renderToReadableStream(
+		createElement(
+			ConsentRoot,
+			{ state: await optOutState(), ...props },
+			createElement('main', { id: 'page' }, 'Page')
+		)
+	);
+	await stream.allReady;
+	return new Response(stream).text();
+};
+
+const CHECK = 'g.current=function';
+
+test('a visitor whose root lets the engine wait gets the stored-choice check', async () => {
+	expect(await renderWith({ scripts: [pixel] })).toContain(CHECK);
+});
+
+test.each<[string, Partial<ConsentRootProps>]>([
+	['an enabled network blocker', { networkBlocker: { rules: [] } }],
+	[
+		'persistence: false, with a plain script',
+		{
+			persistence: false,
+			scripts: [{ ...pixel, id: 'plain', serverStart: undefined }],
+		},
+	],
+	[
+		'a script that needs the loader',
+		{
+			scripts: [
+				{
+					...pixel,
+					id: 'loader',
+					onLoad: () => undefined,
+					serverStart: undefined,
+				},
+			],
+		},
+	],
+])(
+	'a root that needs the engine at once (%s) gets no stored-choice check',
+	async (_case, props) => {
+		// Without the check the browser starts the engine's download as
+		// `ConsentRoot`'s chunk runs, before React reaches the root.
+		expect(await renderWith(props)).not.toContain(CHECK);
+	}
+);
+
+test('runs each serverStart once per render', async () => {
+	// The stored-choice check and the start script come from one plan, so
+	// a stateful serverStart neither runs twice nor gives them two answers.
+	await render(await optOutState());
+	const serverStart = vi.fn(() => ({ code: '' }));
+	const stream = await renderToReadableStream(
+		createElement(
+			ConsentRoot,
+			{ scripts: [{ ...pixel, serverStart }], state: await optOutState() },
+			createElement('main', { id: 'page' }, 'Page')
+		)
+	);
+	await stream.allReady;
+	const html = await new Response(stream).text();
+	expect(html).toContain(JSON.stringify(pixel.src));
+	expect(serverStart).toHaveBeenCalledTimes(1);
+});
+
+test('a render whose start module loads late names the start script’s render in its boot data', async () => {
+	// The boot data renders while the module loads, and the start script
+	// streams in once it has. A root that goes before that script runs ends
+	// the render its boot data names, so the script must write that render.
+	const state = await optOutState();
+	let release: () => void = () => undefined;
+	const gate = new Promise<void>((resolve) => {
+		release = resolve;
+	});
+	vi.resetModules();
+	// oxlint-disable-next-line anti-slop/no-module-mocking -- The property under test is a late load of this module; no interface stands in for a dynamic import.
+	vi.doMock(
+		'@c15t/core/runtime/script-server-start',
+		async (importOriginal) => {
+			await gate;
+			return importOriginal();
+		}
+	);
+	try {
+		const { ConsentRoot: FreshRoot } = await import('../root');
+		const stream = await renderToReadableStream(
+			createElement(
+				FreshRoot,
+				{ scripts: [pixel], state },
+				createElement('main', { id: 'page' }, 'Page')
+			)
+		);
+		release();
+		await stream.allReady;
+		const html = await new Response(stream).text();
+
+		expect(html).toContain(JSON.stringify(pixel.src));
+		const boot = /<script data-c15t-boot[^>]*>(?<data>[^<]*)<\/script>/u.exec(
+			html
+		)?.groups?.data;
+		const parsed: unknown = JSON.parse(boot ?? '{}');
+		const bootId =
+			parsed && typeof parsed === 'object' && 'i' in parsed
+				? parsed.i
+				: undefined;
+		const startId = /g\.id!==(?<id>"[^"]*")/u.exec(html)?.groups?.id;
+		expect(bootId).toBeDefined();
+		expect(startId && JSON.parse(startId)).toBe(bootId);
+	} finally {
+		vi.doUnmock('@c15t/core/runtime/script-server-start');
+		vi.resetModules();
+	}
 });
