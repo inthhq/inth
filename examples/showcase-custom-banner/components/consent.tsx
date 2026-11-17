@@ -1,6 +1,6 @@
 'use client';
 
-import { ConsentRoot, local } from 'c15t/next';
+import { ConsentRoot } from 'c15t/next';
 import type { ConsentPresentation } from 'c15t/next';
 import type { ReactNode } from 'react';
 
@@ -8,11 +8,8 @@ import { scripts } from '@/lib/scripts';
 
 import { ConsentDialog } from './consent-dialog';
 
-// Offline mode keeps the policy in this bundle and choices in the browser,
-// so the demo runs without an account. In production, point it at your
-// backend instead:
-// const mode = hosted({ backendURL: 'https://your-project.inth.app' });
-const mode = local();
+// The backend is your Inth project: set NEXT_PUBLIC_C15T_BACKEND_URL in
+// .env.local. The policy comes from its consent manifest.
 
 // A wall blocks the page until the visitor answers. c15t reports it as
 // `banner.blocking`, and refuses it for a notice, which must never block.
@@ -27,7 +24,7 @@ export const Consent = ({ children }: { children: ReactNode }) => (
 	<ConsentRoot
 		state={{}}
 		scripts={scripts}
-		options={{ mode, presentation }}
+		options={{ presentation }}
 	>
 		{children}
 		<ConsentDialog />

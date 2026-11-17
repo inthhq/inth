@@ -36,7 +36,7 @@ are drawn with CSS and nothing contacts an ad network.
   [`components/ad-slot.tsx`](components/ad-slot.tsx) reserves the space and
   renders the creative once it may.
 - [`public/vendor-list.json`](public/vendor-list.json) is a three-vendor
-  Global Vendor List, so the demo runs offline.
+  Global Vendor List, so the demo needs no vendor list download.
 
 ## Run it
 
@@ -52,12 +52,12 @@ Then open http://localhost:3114.
 
 ## Before you ship
 
-This demo runs in local mode, with a local vendor list and a demonstration
-CMP ID. A real site changes three things in `components/consent.tsx`:
+This demo talks to your Inth project: set `NEXT_PUBLIC_C15T_BACKEND_URL` in
+`.env.local`. Your backend resolves the visitor's region, so only visitors
+under an IAB policy see the TCF banner. The demo uses a local vendor list and
+a demonstration CMP ID. A real site changes two things in
+`components/consent.tsx`:
 
-- **Mode.** Swap `local()` for `hosted({ backendURL: 'https://your-project.inth.app' })`.
-  Your backend then resolves the visitor's region, so only visitors under an
-  IAB policy see the TCF banner, and sends the official vendor list with it.
 - **Vendor list.** Remove `gvlURL`. c15t loads the official Global Vendor
   List from your backend, or from its GVL endpoint without one. Use the
   `vendors` prop to list only the vendors you work with.

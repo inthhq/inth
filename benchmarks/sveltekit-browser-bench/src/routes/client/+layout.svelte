@@ -8,7 +8,7 @@
 
 <ConsentProvider
 	options={{
-		mode: hosted({ backendURL: '/api/bench-consent' }),
+		backendURL: '/api/bench-consent', mode: hosted(),
 		consentCategories: [...benchConsentCategories],
 		disableAnimation: true,
 		trapFocus: false,

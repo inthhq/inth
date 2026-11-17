@@ -184,12 +184,10 @@
 		</style>
 
 		<!-- The headless build: runtime, storage, gating, window.c15t, no
-		     UI and no CSS. Same offline geo setup as the main page. -->
+		     UI and no CSS. Set data-backend-url to your Inth project. -->
 		<script
 			src="/c15t.headless.js"
-			data-mode="offline"
-			data-acknowledge-no-records
-			data-policy-rules="europeOptIn,usPrivacyStatesOptOut,worldNone"
+			data-backend-url="https://your-project.inth.app"
 			data-country="DE"
 			defer
 		></script>

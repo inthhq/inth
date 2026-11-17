@@ -1,13 +1,7 @@
 'use client';
 
-import {
-	ConsentBanner,
-	ConsentDialog,
-	ConsentDialogTriggerToolbar,
-	ConsentProvider,
-	hosted,
-	offline,
-} from 'c15t/react';
+import { testing } from 'c15t/react/testing';
+import { ConsentBanner, ConsentDialog, ConsentDialogTriggerToolbar, ConsentProvider, hosted } from 'c15t/react';
 import { ConsentDevTools } from 'c15t/react/devtools';
 import {
 	IABConsentBanner,
@@ -330,11 +324,11 @@ export const ConsentDemo = () => {
 		params.mode === 'hosted'
 			? {
 					...sharedOptions,
-					mode: hosted({ backendURL: HOSTED_DEMO_BACKEND_URL }),
+					backendURL: HOSTED_DEMO_BACKEND_URL, mode: hosted(),
 				}
 			: {
-					mode: offline({
-						policyRules: getScenarioPolicyRules(params.scenarioId),
+					mode: testing({
+						policy: getScenarioPolicyRules(params.scenarioId),
 					}),
 					...sharedOptions,
 				};

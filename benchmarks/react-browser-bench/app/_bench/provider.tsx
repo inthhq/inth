@@ -63,7 +63,7 @@ export const ReactBenchmarkProvider = ({
 			},
 		},
 		consentCategories,
-		mode: hosted({ backendURL: '/api/bench-consent' }),
+		backendURL: '/api/bench-consent', mode: hosted(),
 		styles,
 		theme,
 	};

@@ -1,12 +1,10 @@
+import { testing } from '../../../packages/sdk/react/src/index/testing';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 
 import { mockGVL } from '../../../packages/sdk/react/src/components/iab/__tests__/fixtures/mock-consent-state';
 import { IABProvider } from '../../../packages/sdk/react/src/iab';
-import {
-	ConsentProvider,
-	offline,
-} from '../../../packages/sdk/react/src/index';
+import { ConsentProvider } from '../../../packages/sdk/react/src/index';
 import type { ConsentProviderOptions } from '../../../packages/sdk/react/src/index';
 import {
 	storybookPolicy,
@@ -57,14 +55,14 @@ export const seedTCString = function seedTCString(tcString: string | null) {
 };
 
 export const defaultConsentOptions: ConsentProviderOptions = {
-	mode: offline({ acknowledgeNoRecords: true, policyRules: [storybookPolicy] }),
+	mode: testing({ policy: [storybookPolicy] }),
 	presentation: storybookPresentation,
 };
 
 /**
  * The default policy, already resolved, for stories that keep the default
  * `mode`. Consent surfaces render only once a policy exists, so a story that
- * waits on the async `offline()` init paints without its link, trigger, and
+ * waits on the async `testing()` init paints without its link, trigger, and
  * widget for a tick, which a play function that tabs straight away notices.
  * Stories that bring their own `mode` (a notice rule, IAB) must not receive
  * it: it would override their rule with the default choice policy.
@@ -93,9 +91,8 @@ export const editableStoredConsent: ConsentRecord = {
 
 export const defaultIABOptions: ConsentProviderOptions = {
 	...defaultConsentOptions,
-	mode: offline({
-		acknowledgeNoRecords: true,
-		policyRules: [storybookIABPolicy],
+	mode: testing({
+		policy: [storybookIABPolicy],
 	}),
 	presentation: storybookIABPresentation,
 };

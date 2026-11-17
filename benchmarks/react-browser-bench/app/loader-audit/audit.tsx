@@ -1,18 +1,10 @@
 'use client';
 
+import { benchPolicy } from '@c15t/benchmarking/bench-policy';
 import { createConsentRuntime } from '@c15t/core/runtime';
 import type { ConsentRuntime, ConsentRuntimeOptions } from '@c15t/core/runtime';
 import { createIAB } from '@c15t/iab';
-import {
-	ConsentProvider,
-	ConsentBanner,
-	ConsentDialog,
-	ConsentWidget,
-	hosted,
-	offline,
-	useActiveUI,
-	useSetActiveUI,
-} from '@c15t/react';
+import { ConsentProvider, ConsentBanner, ConsentDialog, ConsentWidget, hosted, useActiveUI, useSetActiveUI } from '@c15t/react';
 import { useEffect, useRef, useState } from 'react';
 
 // Exercise the actual Astro island with the same React renderer as the other
@@ -21,7 +13,7 @@ import AstroDialog from '../../../../packages/sdk/astro/src/components/islands/p
 import { policyFixture } from '../../../../packages/sdk/react/src/__tests__/policy-fixture';
 import { mockGVL } from '../../../../packages/sdk/react/src/components/iab/__tests__/fixtures/mock-consent-state';
 
-const options = { mode: hosted({ backendURL: '/api/bench-consent' }) };
+const options = { backendURL: '/api/bench-consent', mode: hosted() };
 const Probe = () => {
 	useEffect(() => {
 		window.dispatchEvent(new CustomEvent('loader-probe-mounted'));
@@ -37,7 +29,7 @@ const Probe = () => {
 };
 const createRuntime = (iab: boolean) => {
 	const runtimeOptions: ConsentRuntimeOptions = {
-		mode: offline(),
+		mode: benchPolicy(),
 		persistence: false,
 		pkg: 'loader-audit',
 		prefetch: policyFixture(),

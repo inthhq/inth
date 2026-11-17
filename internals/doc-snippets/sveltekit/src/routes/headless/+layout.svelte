@@ -12,11 +12,11 @@
 
 	let { children } = $props();
 
-	const mode = hosted({ backendURL: 'https://your-project.inth.app' });
+	const backendURL = 'https://your-project.inth.app';
 </script>
 
 <ConsentProvider
-	{mode}
+	{backendURL}
 	{scripts}
 >
 	{@render children()}

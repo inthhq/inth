@@ -1,21 +1,13 @@
 'use client';
 
-import { ConsentBanner, ConsentDialog, ConsentRoot, offline } from 'c15t/next';
+import { ConsentBanner, ConsentDialog, ConsentRoot } from 'c15t/next';
 import type { ReactNode } from 'react';
 
-const mode = offline({
-	policyRules: [
-		{
-			id: 'tailwind-matrix',
-			match: { isDefault: true },
-			model: 'opt-in',
-			prompt: 'choice',
-		},
-	],
-});
+const backendURL = 'https://your-project.inth.app';
 
 export const Consent = ({ children }: { children: ReactNode }) => (
 	<ConsentRoot
+		config={{ backendURL }}
 		persistence={false}
 		state={{}}
 		// #region docs:slot
@@ -25,7 +17,6 @@ export const Consent = ({ children }: { children: ReactNode }) => (
 					root: { className: '!p-[7px] dark:!p-[11px]' },
 				},
 			},
-			mode,
 			// Tailwind 3 builds c15t's stylesheet from globals.css.
 			styles: false,
 		}}

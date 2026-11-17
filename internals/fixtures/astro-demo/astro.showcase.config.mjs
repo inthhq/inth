@@ -5,7 +5,8 @@ import react from '@astrojs/react';
 import svelte from '@astrojs/svelte';
 import vue from '@astrojs/vue';
 import { defineConfig } from 'astro/config';
-import c15t, { hosted, offline } from 'c15t/astro';
+import c15t, { hosted } from 'c15t/astro';
+import { testing } from 'c15t/astro/testing';
 
 import { demoGvl, demoIabPolicy } from './demo-gvl.mjs';
 import { testBackend } from './test-backend.mjs';
@@ -54,15 +55,13 @@ const { url: backendURL } = testBackend('url');
 const iabOptions = iab
 	? {
 			iab: { cmpId: 160, gvl: demoGvl },
-			mode: offline({
-				acknowledgeNoRecords: true,
-				policyRules: [demoIabPolicy],
+			mode: testing({
+				policy: [demoIabPolicy],
 			}),
 		}
 	: {
-			mode: offline({
-				acknowledgeNoRecords: true,
-				policyRules: [
+			mode: testing({
+				policy: [
 					{
 						id: 'default',
 						match: { fallback: true, isDefault: true },
@@ -114,13 +113,13 @@ export default defineConfig({
 				cookiePolicy: { href: '/cookies', label: 'Cookie Policy' },
 				privacyPolicy: { href: '/privacy', label: 'Privacy Policy' },
 			},
-			// `offline()` resolves policies locally, so the demo runs with no
+			// `testing()` resolves policies locally, so the demo runs with no
 			// backend. Swap in `hosted()` or `manifest()` and a `backendURL`
 			// to talk to a real one. With `C15T_IAB=1` it also carries the
 			// vendor list the server needs to render the IAB banner at all;
 			// hosted and manifest mode get theirs from `/init`.
 			...iabOptions,
-			mode: backendURL && !iab ? hosted({ backendURL }) : iabOptions.mode,
+			...(backendURL && !iab ? { backendURL, mode: hosted() } : {}),
 			scripts: [
 				{
 					category: 'measurement',

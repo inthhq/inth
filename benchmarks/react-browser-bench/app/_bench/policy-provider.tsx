@@ -198,7 +198,7 @@ export const PolicyBenchmarkProvider = ({
 			},
 		},
 		consentCategories,
-		mode: hosted({ backendURL }),
+		backendURL, mode: hosted(),
 		theme: {
 			motion: {
 				duration: {

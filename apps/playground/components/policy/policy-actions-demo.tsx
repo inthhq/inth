@@ -1,17 +1,10 @@
 'use client';
 
+import { testing } from 'c15t/react/testing';
 import type { PolicyRule } from '@c15t/schema/types';
 import { policyRulePresets } from 'c15t';
 import type { PresentationAction, PromptPosition, PromptVariant } from 'c15t';
-import {
-	ConsentBanner,
-	ConsentDialog,
-	ConsentProvider,
-	ConsentWidget,
-	offline,
-	useConsentDraft,
-	useSnapshot,
-} from 'c15t/react';
+import { ConsentBanner, ConsentDialog, ConsentProvider, ConsentWidget, useConsentDraft, useSnapshot } from 'c15t/react';
 import { useHeadlessConsentUI, useTranslations } from 'c15t/react/headless';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import * as React from 'react';
@@ -735,7 +728,7 @@ export const PolicyActionsDemo = () => {
 						href: '/legal/terms-of-service',
 					},
 				},
-				mode: offline({ policyRules: offlinePolicies }),
+				mode: testing({ policy: offlinePolicies }),
 				overrides: {
 					country,
 					region,

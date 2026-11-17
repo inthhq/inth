@@ -60,8 +60,8 @@ const bundles: Record<string, string> = Object.fromEntries(
 		'c15t.hosted.js',
 		'c15t.iab.js',
 		'c15t.js',
-		'c15t.offline.js',
 		'c15t.records.js',
+		'c15t.testing.js',
 	].map((file) => [
 		`/${file}`,
 		fileURLToPath(import.meta.resolve(`@c15t/browser/${file}`)),

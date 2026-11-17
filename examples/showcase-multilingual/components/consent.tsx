@@ -1,12 +1,6 @@
 'use client';
 
-import {
-	ConsentBanner,
-	ConsentDialog,
-	ConsentRoot,
-	local,
-	useSetLanguage,
-} from 'c15t/next';
+import { ConsentBanner, ConsentDialog, ConsentRoot, useSetLanguage } from 'c15t/next';
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
 
@@ -14,12 +8,8 @@ import { messages } from '@/lib/consent-i18n';
 import { brandTheme } from '@/lib/consent-theme';
 import type { Locale } from '@/lib/locales';
 
-// Offline mode resolves c15t's recommended policy rules in the browser, for
-// whatever location the app gives it, so the demo needs no account. A
-// backend reads the visitor's real location from the request instead. In
-// production, swap this line for your project's backend:
-// const mode = hosted({ backendURL: 'https://your-project.inth.app' });
-const mode = local();
+// The backend is your Inth project: set NEXT_PUBLIC_C15T_BACKEND_URL in
+// .env.local. The policy comes from its consent manifest.
 
 /**
  * Keeps c15t's language on the route's locale. `ConsentRoot` reads `i18n`
@@ -46,7 +36,6 @@ export const Consent = ({
 		options={{
 			consentCategories: ['necessary', 'measurement', 'marketing'],
 			i18n: { locale, messages },
-			mode,
 			overrides: { language: locale },
 			theme: brandTheme,
 		}}

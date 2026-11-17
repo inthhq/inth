@@ -33,7 +33,7 @@ const Controls = () => {
 
 const options: ConsentProviderOptions = {
 	consentCategories: ['necessary', 'measurement', 'marketing'],
-	mode: hosted({ backendURL: '/api/bench-consent' }),
+	backendURL: '/api/bench-consent', mode: hosted(),
 };
 
 const DialogFirstOpenPage = () => (

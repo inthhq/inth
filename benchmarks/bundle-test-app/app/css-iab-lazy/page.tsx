@@ -1,6 +1,7 @@
 'use client';
 
-import { offline } from '@c15t/react';
+
+import { benchPolicy } from '@c15t/benchmarking/bench-policy';
 import { ConsentProvider } from '@c15t/react/provider';
 import dynamic from 'next/dynamic';
 import { useState } from 'react';
@@ -19,8 +20,8 @@ const CssIabLazyPage = () => {
 	return (
 		<ConsentProvider
 			options={{
-				mode: offline({
-					policyRules: [
+				mode: benchPolicy({
+					policy: [
 						{
 							id: 'bench-iab',
 							match: { fallback: true, isDefault: true },

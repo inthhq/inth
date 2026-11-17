@@ -3,7 +3,7 @@ import { hosted, init } from '@c15t/browser';
 import { runtime } from './consent-runtime';
 
 const consent = init({
-	mode: hosted({ backendURL: 'https://your-project.inth.app' }),
+	backendURL: 'https://your-project.inth.app', mode: hosted(),
 });
 
 // #region docs:devtools title="src/main.ts"

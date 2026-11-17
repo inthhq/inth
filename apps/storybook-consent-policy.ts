@@ -29,7 +29,7 @@ export const storybookIABPolicy: PolicyRule = {
 /**
  * The storybook policy already resolved, for adapters whose provider can
  * take a prefetched resolution. Consent surfaces render only once a policy
- * is resolved, so a story that waits on an async `offline()` init paints
+ * is resolved, so a story that waits on an async `testing()` init paints
  * without its link, trigger, and widget for a tick; a prefetched resolution
  * makes the first paint authoritative, as server rendering does in an app.
  */

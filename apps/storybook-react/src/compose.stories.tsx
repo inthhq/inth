@@ -1,9 +1,10 @@
+import { testing } from 'c15t/react/testing';
 import {
 	recipeAccepts,
 	recipeRejects,
 } from '@c15t/conformance/play/docs-recipes';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { ConsentDialog, offline } from 'c15t/react';
+import { ConsentDialog } from 'c15t/react';
 import type { ConsentProviderOptions } from 'c15t/react';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 
@@ -71,9 +72,8 @@ const customizeOpensDialog: Story['play'] = async () => {
 
 const noticeOptions: Partial<ConsentProviderOptions> = {
 	...editableConsentOptions,
-	mode: offline({
-		acknowledgeNoRecords: true,
-		policyRules: [
+	mode: testing({
+		policy: [
 			{
 				...storybookPolicy,
 				id: 'storybook-notice',

@@ -1,20 +1,8 @@
 'use client';
 
+import { testing } from 'c15t/react/testing';
 import type { ConsentSnapshot, PromptPresentation } from 'c15t';
-import {
-	ConsentBanner,
-	ConsentDialog,
-	ConsentProvider,
-	hosted,
-	offline,
-	useInit,
-	useSetActiveUI,
-	useConsentDraft,
-	useSetLanguage,
-	useSetOverrides,
-	useSnapshot,
-	usePromptPresentation,
-} from 'c15t/react';
+import { ConsentBanner, ConsentDialog, ConsentProvider, hosted, useInit, useSetActiveUI, useConsentDraft, useSetLanguage, useSetOverrides, useSnapshot, usePromptPresentation } from 'c15t/react';
 import {
 	IABConsentBanner,
 	IABConsentDialog,
@@ -723,7 +711,7 @@ export const PolicyDemo = () => {
 													?.messageProfile ?? 'default'
 											].translations,
 									},
-									mode: hosted({ backendURL: HOSTED_DEMO_BACKEND_URL }),
+									backendURL: HOSTED_DEMO_BACKEND_URL, mode: hosted(),
 									overrides,
 									presentation: getScenarioById(resolvedExample).presentation,
 									scripts: createDemoScripts('demo-analytics'),
@@ -738,8 +726,8 @@ export const PolicyDemo = () => {
 													?.messageProfile ?? 'default'
 											].translations,
 									},
-									mode: offline({
-										policyRules: getScenarioPolicyRules(resolvedExample),
+									mode: testing({
+										policy: getScenarioPolicyRules(resolvedExample),
 									}),
 									overrides,
 									presentation: getScenarioById(resolvedExample).presentation,

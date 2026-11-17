@@ -272,7 +272,7 @@ export const playgroundPresets: PlaygroundPreset[] = [
 	},
 ];
 
-/** Preset ids that make up `recommendedPolicyRules()`, what a bare `offline()` resolves. */
+/** Preset ids that make up `recommendedPolicyRules()`, what a bare `testing()` resolves. */
 export const RECOMMENDED_PRESET_IDS: ReadonlySet<string> = new Set([
 	'europeOptIn',
 	'quebecOptIn',
@@ -699,7 +699,7 @@ export interface PlaygroundInspection {
 	resolved: ResolvedPolicyRule | null;
 	/** Null when the rule fails validation. */
 	fingerprints: PolicyFingerprints | null;
-	/** What `offline({ policyRules: [rule] })` would resolve for the simulated location. */
+	/** What `testing({ policy: [rule] })` would resolve for the simulated location. */
 	resolution: PolicyResolution;
 	/**
 	 * Prompt surface the stock banner would render under the host
@@ -818,12 +818,12 @@ export interface ProviderSnippetOptions {
 	toolbar?: boolean;
 	/**
 	 * The rule is part of the recommended pack, so the snippet calls
-	 * `offline()` with no `policyRules` and lets the defaults apply.
+	 * `testing()` with no `policyRules` and lets the defaults apply.
 	 */
 	recommended?: boolean;
 }
 
-const RECOMMENDED_PACK_COMMENT = `// offline() with no policyRules applies the recommended pack: EU/UK and
+const RECOMMENDED_PACK_COMMENT = `// testing() with no policyRules applies the recommended pack: EU/UK and
 // Quebec opt-in (Europe also covers an unknown location), US privacy states
 // opt-out, and none elsewhere. Pass policyRules to replace it.`;
 
@@ -859,7 +859,7 @@ const policyRules = [
   ${ruleSource},
 ];
 `;
-	const mode = recommended ? 'offline()' : 'offline({ policyRules })';
+	const mode = recommended ? 'testing()' : 'testing({ policyRules })';
 	return `${presetImport}import { ${componentImports} } from 'c15t/react';
 
 ${rulesBlock}
@@ -882,7 +882,7 @@ export const buildBackendSnippet = function buildBackendSnippet(
 		return `import { recommendedPolicyRules } from '@c15t/schema';
 import { defineConfig } from '@c15t/backend';
 
-// The same pack offline() applies by default, served from the backend.
+// The same pack testing() applies by default, served from the backend.
 export default defineConfig({
   database: { dialect: 'postgres', url: process.env.DATABASE_URL },
   manifest: {

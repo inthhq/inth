@@ -17,7 +17,7 @@ export const consent = init({
 			console.info('Permissions', previous, snapshot.effectivePermissions);
 		},
 	},
-	mode: hosted({ backendURL: 'https://your-project.inth.app' }),
+	backendURL: 'https://your-project.inth.app', mode: hosted(),
 	scripts,
 });
 

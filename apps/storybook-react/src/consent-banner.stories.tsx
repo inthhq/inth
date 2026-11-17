@@ -1,3 +1,4 @@
+import { testing } from '../../../packages/sdk/react/src/index/testing';
 import {
 	bannerAcceptViaKeyboard,
 	bannerContract,
@@ -6,11 +7,7 @@ import {
 } from '@c15t/conformance/play/consent-banner';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
-import {
-	ConsentBanner,
-	ConsentDialog,
-	offline,
-} from '../../../packages/sdk/react/src/index';
+import { ConsentBanner, ConsentDialog } from '../../../packages/sdk/react/src/index';
 import { storybookPolicy } from '../../storybook-consent-policy';
 import {
 	editableConsentOptions,
@@ -71,9 +68,8 @@ export const Notice: Story = {
 		<StorybookConsentProvider
 			options={{
 				...editableConsentOptions,
-				mode: offline({
-					acknowledgeNoRecords: true,
-					policyRules: [
+				mode: testing({
+					policy: [
 						{
 							...storybookPolicy,
 							id: 'storybook-notice',

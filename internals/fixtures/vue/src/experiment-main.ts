@@ -15,10 +15,8 @@ createApp(App)
 	.use(c15tVue, {
 		callbacks: experimentCallbacks,
 		experiment: experimentFromSearch(location.search),
-		mode: hosted({
-			backendURL: 'https://your-project.inth.app',
-			...testBackend('backendURL'),
-		}),
+		backendURL: 'https://your-project.inth.app',
+		...testBackend('backendURL'),
 		scripts,
 	})
 	.mount('#app');

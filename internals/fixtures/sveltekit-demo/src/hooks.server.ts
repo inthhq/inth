@@ -1,4 +1,5 @@
-import { c15tHandle, hosted, local, manifest } from '@c15t/svelte/kit';
+import { testing } from '@c15t/svelte/kit/testing';
+import { c15tHandle, hosted, manifest } from '@c15t/svelte/kit';
 import type { C15tHandle } from '@c15t/svelte/kit';
 
 import { testBackend } from '#lib/test-backend.js';
@@ -13,7 +14,7 @@ const { backendURL = 'https://your-project.inth.app' } =
 // `/consent-example` and `/experiment-example`: the server asks the
 // backend's `/init`. A prerendered page carries no visitor's consent, so the
 // browser asks the backend there.
-const hostedHandle = c15tHandle({ mode: hosted({ backendURL }) });
+const hostedHandle = c15tHandle({ backendURL, mode: hosted() });
 
 // `/manifest-example`: the server resolves from the backend's cached policy
 // manifest, and the browser re-inits through the route in
@@ -27,7 +28,7 @@ const manifestHandle = c15tHandle({
 // The showcase resolves its policy on this server with no backend. Consent
 // stays in the visitor's browser and no record of it is kept.
 const showcaseHandle = c15tHandle({
-	mode: local({ acknowledgeNoRecords: true }),
+	mode: testing(),
 });
 
 const areaHandles: readonly (readonly [prefix: string, handle: C15tHandle])[] =

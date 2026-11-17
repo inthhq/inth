@@ -212,7 +212,7 @@ export const ConsentManager = ({ children }: ConsentManagerProps) => {
 						href: '/legal/terms-of-service',
 					},
 				},
-				mode: hosted({ backendURL: DEFAULT_BACKEND_URL }),
+				backendURL: DEFAULT_BACKEND_URL, mode: hosted(),
 				overrides: geoOverrides,
 				scripts: createDemoScripts('internal-analytics'),
 				storageConfig: {

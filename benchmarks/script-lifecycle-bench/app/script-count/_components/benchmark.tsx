@@ -1,6 +1,7 @@
 'use client';
 
-import { offline } from '@c15t/react';
+
+import { benchPolicy } from '@c15t/benchmarking/bench-policy';
 import { ConsentDraftProvider } from '@c15t/react/draft';
 import { useSaveConsents } from '@c15t/react/hooks';
 import { useScriptLoader } from '@c15t/react/module-hooks/script-loader';
@@ -76,8 +77,8 @@ const ScriptCountProbe = ({ count }: { count: number }) => {
 export const ScriptCountBenchmark = ({ count }: { count: number }) => (
 	<ConsentProvider
 		options={{
-			mode: offline({
-				policyRules: [
+			mode: benchPolicy({
+				policy: [
 					{
 						id: 'bench-opt-in',
 						match: { fallback: true, isDefault: true },

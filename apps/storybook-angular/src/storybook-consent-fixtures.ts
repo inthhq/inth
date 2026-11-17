@@ -1,5 +1,6 @@
+import { testing } from '@c15t/angular/testing';
 import type { ApplicationConfig } from '@angular/core';
-import { local, provideC15t } from '@c15t/angular';
+import { provideC15t } from '@c15t/angular';
 import type { C15tOptions } from '@c15t/angular';
 
 import {
@@ -42,7 +43,7 @@ export const seedTCString = function seedTCString(tcString: string | null) {
 };
 
 export const defaultConsentOptions: C15tOptions = {
-	mode: local({ acknowledgeNoRecords: true, policyRules: [storybookPolicy] }),
+	mode: testing({ policy: [storybookPolicy] }),
 	presentation: storybookPresentation,
 };
 

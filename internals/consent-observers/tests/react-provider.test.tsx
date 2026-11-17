@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
+import { testing } from 'c15t/react/testing';
 import type { ConsentKernel } from 'c15t';
-import { ConsentProvider, offline, useConsent } from 'c15t/react';
+import { ConsentProvider, useConsent } from 'c15t/react';
 import { KernelContext } from 'c15t/react/context';
 import type { ConsentRuntime } from 'c15t/runtime';
 import { act, Component, StrictMode, useContext, useEffect } from 'react';
@@ -35,7 +36,7 @@ const restored = async function restored(
 const ownedOptions = async function ownedOptions(action: 'all' | 'none') {
 	return {
 		iframeBlocker: false as const,
-		mode: offline({ acknowledgeNoRecords: true, policyRules: [OBSERVED_RULE] }),
+		mode: testing({ policy: [OBSERVED_RULE] }),
 		persistence: false as const,
 		prefetch: {
 			initialPolicyResolution: observedPolicy(),

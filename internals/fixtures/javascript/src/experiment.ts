@@ -85,10 +85,8 @@ const consent = init({
 		},
 	},
 	experiment,
-	mode: hosted({
-		backendURL: 'https://your-project.inth.app',
-		...testBackend('backendURL'),
-	}),
+	backendURL: 'https://your-project.inth.app',
+	...testBackend('backendURL'),
 	scripts,
 });
 

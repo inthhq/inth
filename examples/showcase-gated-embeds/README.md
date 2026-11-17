@@ -46,11 +46,10 @@ bun run --cwd examples/showcase-gated-embeds dev
 
 Open <http://localhost:3112>.
 
-The app runs in local mode, so it needs no backend: c15t's bundled policy
-rules ask for opt-in consent and choices stay in the browser. For production,
-replace `local()` in `components/consent.tsx` with
-`hosted({ backendURL: 'https://your-project.inth.app' })` and add your site's origin
-to the project's trusted origins.
+Set `NEXT_PUBLIC_C15T_BACKEND_URL` in `.env.local` to your Inth project URL,
+such as `https://your-project.inth.app`. c15t reads the project's consent
+manifest and sends each choice there. Add your site's origin to the
+project's trusted origins.
 
 The chat loads Crisp with a placeholder website ID, so no chat window appears
 until you set your own:

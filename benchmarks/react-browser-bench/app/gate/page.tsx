@@ -39,7 +39,7 @@ const GatePage = () => (
 	<ConsentProvider
 		options={{
 			consentCategories: [...gateConsentCategories],
-			mode: hosted({ backendURL: '/api/bench-consent' }),
+			backendURL: '/api/bench-consent', mode: hosted(),
 		}}
 	>
 		<style dangerouslySetInnerHTML={{ __html: gatePageCSS }} />

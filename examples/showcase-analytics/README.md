@@ -82,10 +82,9 @@ bun run --cwd examples/showcase-analytics dev
 Open `http://localhost:3113`. The DevTools button sits in the bottom right
 corner and opens on the Scripts tab.
 
-The shop runs in local mode, so it needs no account: c15t's bundled policy
-rules show the opt-in banner, and choices stay in this browser. For
-production, replace `local()` in `components/consent.tsx` with
-`hosted({ backendURL: 'https://your-project.inth.app' })`.
+Set `NEXT_PUBLIC_C15T_BACKEND_URL` in `.env.local` to your Inth project URL,
+such as `https://your-project.inth.app`. c15t reads the project's consent
+manifest and sends each choice there.
 
 The placeholder IDs belong to no real account. GTM answers `gtm.js` with a
 404, which DevTools shows as an error, PostHog can't find the project's

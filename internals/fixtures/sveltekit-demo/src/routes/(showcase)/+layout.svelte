@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { dev } from '$app/env';
+	import { testing } from '@c15t/svelte/testing';
+import { dev } from '$app/env';
 	import {
 		PUBLIC_CLARITY_ID,
 		PUBLIC_DEVTOOLS_IAB,
@@ -8,16 +9,7 @@
 		PUBLIC_TIKTOK_PIXEL_ID,
 	} from '$app/env/public';
 	import { page } from '$app/state';
-	import {
-		ConsentBanner,
-		ConsentDialog,
-		ConsentDialogTrigger,
-		ConsentProvider,
-		ConsentRoot,
-		offline,
-		IABConsentBanner,
-		IABConsentDialog,
-	} from '@c15t/svelte';
+	import { ConsentBanner, ConsentDialog, ConsentDialogTrigger, ConsentProvider, ConsentRoot, IABConsentBanner, IABConsentDialog } from '@c15t/svelte';
 	import type { ConsentManagerOptions } from '@c15t/svelte';
 	import { baseTranslations } from '@c15t/translations/all';
 
@@ -140,9 +132,8 @@
 {#if isIabPlayground}
 	<!-- The IAB playground resolves in the browser and keeps saves in memory. -->
 	<ConsentProvider
-		mode={offline({
-			acknowledgeNoRecords: true,
-			policyRules: [
+		mode={testing({
+			policy: [
 				{
 					id: 'devtools-iab-playground',
 					match: { fallback: true, isDefault: true },

@@ -34,7 +34,7 @@ const CssBannerModulesPage = () => {
 			},
 		},
 		consentCategories,
-		mode: hosted({ backendURL: '/api/bench-consent' }),
+		backendURL: '/api/bench-consent', mode: hosted(),
 		theme: {
 			motion: {
 				duration: { fast: '1ms', normal: '1ms', slow: '1ms' },

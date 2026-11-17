@@ -1,6 +1,7 @@
 'use client';
 
-import { offline } from '@c15t/react';
+
+import { benchPolicy } from '@c15t/benchmarking/bench-policy';
 import { ConsentBanner } from '@c15t/react/consent-banner';
 import { useActiveUI } from '@c15t/react/hooks';
 import { ConsentProvider } from '@c15t/react/provider';
@@ -42,7 +43,7 @@ const Probe = () => {
 export const BannerVisibilityBenchmark = () => (
 	<ConsentProvider
 		options={{
-			mode: offline({ policyRules: [BENCHMARK_POLICY] }),
+			mode: benchPolicy({ policy: [BENCHMARK_POLICY] }),
 			persistence: false,
 			theme: {
 				motion: {

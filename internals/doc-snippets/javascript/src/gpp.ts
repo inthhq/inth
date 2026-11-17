@@ -3,7 +3,7 @@ import { hosted, init } from '@c15t/browser';
 import { mountGPP } from '@c15t/browser/gpp';
 
 const consent = init({
-	mode: hosted({ backendURL: 'https://your-project.inth.app' }),
+	backendURL: 'https://your-project.inth.app', mode: hosted(),
 });
 
 // Installs `window.__gpp` and keeps it in step with the visitor's choices.

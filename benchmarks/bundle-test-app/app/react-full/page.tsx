@@ -1,18 +1,8 @@
 'use client';
 
+import { benchPolicy } from '@c15t/benchmarking/bench-policy';
 import type { AllConsentNames } from '@c15t/core';
-import {
-	ConsentBanner,
-	ConsentDialog,
-	ConsentDraftProvider,
-	ConsentProvider,
-	offline,
-	ConsentWidget,
-	useConsentDraft,
-	useEffectivePermissions,
-	useExplicitChoice,
-	useSaveConsents,
-} from '@c15t/react';
+import { ConsentBanner, ConsentDialog, ConsentDraftProvider, ConsentProvider, ConsentWidget, useConsentDraft, useEffectivePermissions, useExplicitChoice, useSaveConsents } from '@c15t/react';
 
 const CATEGORIES: AllConsentNames[] = [
 	'necessary',
@@ -60,8 +50,8 @@ const TestComponent = () => {
 const ReactFullPage = () => (
 	<ConsentProvider
 		options={{
-			mode: offline({
-				policyRules: [
+			mode: benchPolicy({
+				policy: [
 					{
 						id: 'bench-opt-in',
 						match: { fallback: true, isDefault: true },

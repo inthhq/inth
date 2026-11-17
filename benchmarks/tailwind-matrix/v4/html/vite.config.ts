@@ -7,14 +7,14 @@ import type { Plugin } from 'vite';
 
 /**
  * Stands in for the CDN: emits `@c15t/browser`'s script-tag build as
- * `/c15t.local.js`. Vite only builds the page's Tailwind stylesheet here.
+ * `/c15t.js`. Vite only builds the page's Tailwind stylesheet here.
  */
 const c15tScript = (): Plugin => ({
 	generateBundle() {
 		this.emitFile({
-			fileName: 'c15t.local.js',
+			fileName: 'c15t.js',
 			source: readFileSync(
-				fileURLToPath(import.meta.resolve('@c15t/browser/c15t.local.js')),
+				fileURLToPath(import.meta.resolve('@c15t/browser/c15t.js')),
 				'utf8'
 			),
 			type: 'asset',

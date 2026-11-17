@@ -13,7 +13,7 @@ resolves its policy rules for it in the browser.
 ## The files that matter
 
 - [`components/consent.tsx`](./components/consent.tsx) sets up `ConsentRoot`
-  with the route's locale, the copy for each language and local mode. A
+  with the route's locale and the copy for each language. A
   small `FollowLocale` component calls `useSetLanguage` when the route's
   locale changes.
 - [`lib/consent-i18n.ts`](./lib/consent-i18n.ts) imports c15t's built-in
@@ -37,16 +37,14 @@ bun run build:libs
 bun run --cwd examples/showcase-multilingual dev
 ```
 
-Open http://localhost:3116. It needs no account: local mode resolves
-c15t's recommended policy rules in the browser and keeps choices in this
-browser.
+Open http://localhost:3116. Set `NEXT_PUBLIC_C15T_BACKEND_URL` in `.env.local` to your Inth project URL,
+such as `https://your-project.inth.app`. c15t reads the project's consent
+manifest and sends each choice there.
 
 ## Going to production
 
-In `components/consent.tsx`, replace `local()` with
-`hosted({ backendURL: 'https://your-project.inth.app' })`. The backend reads the
-visitor's location from the request and returns the policy for it, so the
-preview bar can go. Its copy for the visitor's language, including edits made
+The backend reads the visitor's location from the request and returns the
+policy for it, so the preview bar can go. Its copy for the visitor's language, including edits made
 in your project, becomes the base, and the messages in `lib/consent-i18n.ts`
 override it key by key.
 

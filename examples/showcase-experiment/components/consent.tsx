@@ -1,17 +1,14 @@
 'use client';
 
-import { ConsentBanner, ConsentDialog, ConsentRoot, local } from 'c15t/next';
+import { ConsentBanner, ConsentDialog, ConsentRoot } from 'c15t/next';
 import type { ReactNode } from 'react';
 
 import { callbacks } from '@/lib/consent-callbacks';
 import { brandTheme } from '@/lib/consent-theme';
 import { bannerArmFromFlag, bannerExperiment } from '@/lib/experiment';
 
-// Runs without a backend: the policy ships with c15t and choices stay in
-// this browser. In production, swap this line for your project's backend,
-// which also counts impressions and choices per arm for you:
-// const mode = hosted({ backendURL: 'https://your-project.inth.app' });
-const mode = local();
+// The backend is your Inth project: set NEXT_PUBLIC_C15T_BACKEND_URL in
+// .env.local. The policy comes from its consent manifest.
 
 export const Consent = ({ children }: { children: ReactNode }) => (
 	<ConsentRoot
@@ -24,7 +21,6 @@ export const Consent = ({ children }: { children: ReactNode }) => (
 			// The flag's arm, or none so c15t picks one by `split` and keeps
 			// it for this visitor.
 			experiment: { ...bannerExperiment, arm: bannerArmFromFlag() },
-			mode,
 			theme: brandTheme,
 		}}
 	>

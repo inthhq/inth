@@ -10,7 +10,7 @@ export const appConfig: ApplicationConfig = {
 		provideZonelessChangeDetection(),
 		provideC15t({
 			// Keep the mode and other options from your quickstart.
-			mode: hosted({ backendURL: 'https://your-project.inth.app' }),
+			backendURL: 'https://your-project.inth.app', mode: hosted(),
 			scripts,
 		}),
 	],
