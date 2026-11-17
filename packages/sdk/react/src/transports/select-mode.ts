@@ -2,51 +2,17 @@
  * The transport factory a provider's options select: the `testing`
  * value's, then `mode`, then the hosted backend at `backendURL`.
  *
- * A module of its own that imports the hosted transport only as a type,
- * so the deferred provider can pick the mode before the engine loads. The
- * hosted transport comes from the provider's module (`hosted-slot.ts`), or
- * loads on first use for a runtime built before it.
+ * The provider's module imports this with the hosted transport, which
+ * loads with the consent engine: a page that defers the engine does not
+ * download it with its first-load JavaScript.
  *
  * @packageDocumentation
  * @internal
  */
-import type {
-	HostedModeFactory,
-	KernelTransport,
-	ProviderTransportFactory,
-} from '@c15t/core';
+import type { HostedModeFactory, ProviderTransportFactory } from '@c15t/core';
 import type { ConsentTesting } from '@c15t/core/testing';
+import { createHostedTransport } from '@c15t/core/transports';
 import { createHostedModeFactory } from '@c15t/core/transports/hosted-factory';
-
-import { providedHostedTransport } from './hosted-slot';
-import type { BuildHostedTransport } from './hosted-slot';
-
-/**
- * A transport that loads the hosted one on first use, for a runtime built
- * before any provider module loaded.
- */
-const lazyHostedTransport: BuildHostedTransport = (options) => {
-	let loading: Promise<KernelTransport> | undefined;
-	const load = (): Promise<KernelTransport> => {
-		loading ??= (async () =>
-			(await import('@c15t/core/transports')).createHostedTransport(options))();
-		return loading;
-	};
-	return {
-		identify: async (user, subjectId) =>
-			(await load()).identify?.(user, subjectId),
-		init: async (context) =>
-			(await load()).init?.(context) as ReturnType<
-				NonNullable<KernelTransport['init']>
-			>,
-		loadSubjectRecord: async (subjectId) =>
-			(await (await load()).loadSubjectRecord?.(subjectId)) ?? null,
-		save: async (payload, context) =>
-			(await load()).save?.(payload, context) as ReturnType<
-				NonNullable<KernelTransport['save']>
-			>,
-	};
-};
 
 /** One factory per backend URL, so each render hands the provider the same. */
 const hostedByURL = new Map<string, HostedModeFactory>();
@@ -63,9 +29,7 @@ export const hostedFor = function hostedFor(
 ): HostedModeFactory {
 	let mode = hostedByURL.get(backendURL);
 	if (!mode) {
-		mode = createHostedModeFactory({ backendURL }, (transport) =>
-			(providedHostedTransport() ?? lazyHostedTransport)(transport)
-		);
+		mode = createHostedModeFactory({ backendURL }, createHostedTransport);
 		hostedByURL.set(backendURL, mode);
 	}
 	return mode;

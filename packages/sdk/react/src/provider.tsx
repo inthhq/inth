@@ -55,7 +55,6 @@ import type {
 	ResolveStreamedInit,
 } from '@c15t/core/runtime/provider';
 import type { ConsentTesting } from '@c15t/core/testing';
-import { createHostedTransport } from '@c15t/core/transports';
 import { applyThemeSlots } from '@c15t/ui/utils';
 import type { ReactNode } from 'react';
 import {
@@ -87,16 +86,10 @@ import { createIframeBlockerOnDemand } from './module-hooks/iframe-blocker';
 import type { UseIframeBlockerOptions } from './module-hooks/iframe-blocker';
 import { UNCOMMITTED_HOLD_MS } from './module-hooks/network-hold';
 import { V3ThemeProvider } from './theme-provider';
-import { provideHostedTransport } from './transports/hosted-slot';
 import { selectedMode } from './transports/select-mode';
 import type { ReactUIOptions } from './types/manager';
 import type { ReactComponentSlots } from './types/slots';
 import type { V3UIConfigValue } from './ui-config-context';
-
-// `hosted()` from this package builds its transport with this, so the
-// transport loads with the provider rather than with the page's first-load
-// JavaScript when the provider itself loads on demand.
-provideHostedTransport(createHostedTransport);
 
 /** Replaced by the app's bundler; see the development warnings below. */
 declare const process: { env: { NODE_ENV?: string } };

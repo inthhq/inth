@@ -124,6 +124,39 @@ export const findPrefetchedInit = function findPrefetchedInit(
 };
 
 /**
+ * {@link startPrefetchedInit} for a provider that set only `backendURL`,
+ * whose hosted transport the engine builds later. Needs no transport
+ * factory, so a deferred provider's first load carries none.
+ *
+ * @param backendURL - The provider's `backendURL`.
+ * @param overrides - The provider's `overrides`.
+ * @param request - The provider's `journey` setting and consent storage key.
+ * @returns The pending response, or `undefined` outside a browser or for an
+ * invalid backend URL.
+ * @internal
+ */
+export const startPrefetchedHostedInit = function startPrefetchedHostedInit(
+	backendURL: string,
+	overrides?: KernelOverrides,
+	request: Pick<PrefetchOptions, 'journey' | 'storageKey'> = {}
+): Promise<PrefetchedInitialData | undefined> | undefined {
+	if (typeof window === 'undefined' || !backendURL) {
+		return undefined;
+	}
+	const found = findPrefetchedInitFor(backendURL, overrides);
+	if (found) {
+		return found;
+	}
+	try {
+		primeInitRequest({ backendURL, ...request, overrides });
+	} catch {
+		// An invalid backend URL: the engine reports it.
+		return undefined;
+	}
+	return findPrefetchedInitFor(backendURL, overrides);
+};
+
+/**
  * Starts the `/init` request a `hosted()` mode's transport would send
  * first, as an inline prefetch script would have, unless one is already
  * on the page, and returns it as {@link findPrefetchedInit} reads it. The
@@ -161,17 +194,7 @@ export const startPrefetchedInit = function startPrefetchedInit(
 	) {
 		return found;
 	}
-	try {
-		primeInitRequest({
-			backendURL: hosted.backendURL,
-			...request,
-			overrides,
-		});
-	} catch {
-		// An invalid backend URL: the engine reports it.
-		return undefined;
-	}
-	return findPrefetchedInit(mode, overrides);
+	return startPrefetchedHostedInit(hosted.backendURL, overrides, request);
 };
 
 /**

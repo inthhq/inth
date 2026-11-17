@@ -27,6 +27,7 @@ import {
 	hasGlobalPrivacyControlSignal,
 	hasStoredConsent,
 	pendingBootSnapshot,
+	startPrefetchedHostedInit,
 	startPrefetchedInit,
 } from '@c15t/core/runtime/deferred-boot';
 import type { DeferredSnapshotOptions } from '@c15t/core/runtime/deferred-snapshot';
@@ -43,7 +44,6 @@ import type {
 	ConsentProviderProps,
 	OwnedRuntimeProviderProps,
 } from '../provider';
-import { selectedMode } from '../transports/select-mode';
 import { canDeferEngine, rootNeedsEngine } from './boot';
 import type * as ClientEngine from './client-engine';
 import type { DeferredCommitConfig } from './committed';
@@ -175,13 +175,23 @@ const plan = function plan(
 	// Without an inline prefetch in the page, the provider sends that
 	// request itself, so the banner waits for `/init` alone, not for the
 	// engine's chunk and then `/init`.
-	const mode = selectedMode(options);
-	const prefetched =
-		mode &&
-		startPrefetchedInit(mode, options.overrides, {
-			journey: options.journey,
-			storageKey: storageKeyOf(options),
-		});
+	// Picked as the engine will, without building the hosted transport's
+	// factory: the first load needs only the backend URL.
+	const mode = options.testing?.transport ?? options.mode;
+	const request = {
+		journey: options.journey,
+		storageKey: storageKeyOf(options),
+	};
+	let prefetched: ReturnType<typeof startPrefetchedInit>;
+	if (mode) {
+		prefetched = startPrefetchedInit(mode, options.overrides, request);
+	} else if (options.backendURL !== undefined) {
+		prefetched = startPrefetchedHostedInit(
+			options.backendURL,
+			options.overrides,
+			request
+		);
+	}
 	// Hydrating what the provider rendered on the server, with no prefetch
 	// to read: the stand-in renders the same pending state, and the engine
 	// loads at once.
