@@ -1,4 +1,5 @@
 import {
+  existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -52,14 +53,36 @@ import { telemetryCommand } from "../../src/telemetry.ts";
 
 const REPO = join(import.meta.dirname, "../../../..");
 const PRIVACY_URL = "https://app.example/privacy";
-const SWIFT_SNIPPETS =
-  "packages/swift/Tests/C15tAppleTests/CLISnippetTests.swift";
-const KOTLIN_SNIPPETS =
-  "packages/android/c15t-android/src/test/kotlin/com/c15t/android/CliSnippetTest.kt";
-const SWIFT_ENTRY_SNIPPETS =
-  "packages/swift/Tests/C15tConsentUITests/cli-entry-snippet-tests.swift";
-const KOTLIN_ENTRY_SNIPPETS =
-  "packages/android/c15t-consent-ui/src/test/kotlin/com/c15t/consentui/cli-entry-snippet-test.kt";
+
+/** An SDK file the tests compare against, at its Inth path and its c15t path. */
+interface SdkFile {
+  path: string;
+  c15tPath: string;
+}
+
+const SWIFT_SNIPPETS: SdkFile = {
+  c15tPath: "packages/swift/Tests/C15tAppleTests/CLISnippetTests.swift",
+  path: "packages/swift/Tests/InthAppleTests/CLISnippetTests.swift",
+};
+const KOTLIN_SNIPPETS: SdkFile = {
+  c15tPath:
+    "packages/android/c15t-android/src/test/kotlin/com/c15t/android/CliSnippetTest.kt",
+  path: "packages/android/inth-android/src/test/kotlin/com/inth/android/CliSnippetTest.kt",
+};
+const SWIFT_ENTRY_SNIPPETS: SdkFile = {
+  c15tPath:
+    "packages/swift/Tests/C15tConsentUITests/cli-entry-snippet-tests.swift",
+  path: "packages/swift/Tests/InthConsentUITests/cli-entry-snippet-tests.swift",
+};
+const KOTLIN_ENTRY_SNIPPETS: SdkFile = {
+  c15tPath:
+    "packages/android/c15t-consent-ui/src/test/kotlin/com/c15t/consentui/cli-entry-snippet-test.kt",
+  path: "packages/android/inth-consent-ui/src/test/kotlin/com/inth/consentui/cli-entry-snippet-test.kt",
+};
+const ANDROID_PROPERTIES: SdkFile = {
+  c15tPath: "packages/android/gradle.properties",
+  path: "packages/android/gradle.properties",
+};
 
 const roots: string[] = [];
 
@@ -86,6 +109,42 @@ const pkg = (dependencies: Record<string, string>): string =>
 
 const read = (root: string, file: string): string =>
   readFileSync(join(root, file), "utf-8");
+
+/**
+ * The renames that take the native SDKs from c15t to Inth names. The Swift
+ * `.c15tConsent` modifier keeps its name, and no rule here touches it.
+ */
+const INTH_NAMES: [string, string][] = [
+  ["com.c15t", "com.inth"],
+  ["C15t", "Inth"],
+  ["c15t-cli-snippet", "inth-cli-snippet"],
+  ["c15t.native.version", "inth.native.version"],
+];
+
+/** `text` with the SDK's c15t names replaced by its Inth names. */
+const inthNames = (text: string): string => {
+  let renamed = text;
+  for (const [from, to] of INTH_NAMES) {
+    renamed = renamed.replaceAll(from, to);
+  }
+  return renamed;
+};
+
+/**
+ * Whether the SDK on this branch has its Inth names. The rename is a separate
+ * change; until it lands, the SDK files are read from their c15t paths with
+ * INTH_NAMES applied, so the comparisons still hold. Once it lands, they are
+ * read as they are, and this fallback can go.
+ */
+const SDK_HAS_INTH_NAMES = existsSync(
+  join(REPO, "packages/swift/Sources/InthCore")
+);
+
+/** An SDK file's text, with its Inth names. */
+const sdkText = (file: SdkFile): string =>
+  SDK_HAS_INTH_NAMES
+    ? read(REPO, file.path)
+    : inthNames(read(REPO, file.c15tPath));
 
 /** The parsed `inth mobile setup` arguments, with a privacy policy unless given. */
 const parsed = (args: string[]): MobileSetupArguments => {
@@ -157,19 +216,33 @@ const expoPlugin = async (): Promise<ExpoPluginModules> => {
     load("constants.ts"),
   ]);
   // SAFETY: The two plugin modules export these names with these shapes.
-  return { ...params, ...constants } as ExpoPluginModules;
+  const plugin = { ...params, ...constants } as ExpoPluginModules;
+  if (SDK_HAS_INTH_NAMES) {
+    return plugin;
+  }
+  return {
+    ...plugin,
+    ANDROID_META: {
+      backendUrl: inthNames(plugin.ANDROID_META.backendUrl),
+      categories: inthNames(plugin.ANDROID_META.categories),
+    },
+    IOS_PLIST_KEY: {
+      backendURL: inthNames(plugin.IOS_PLIST_KEY.backendURL),
+      categories: inthNames(plugin.IOS_PLIST_KEY.categories),
+    },
+  };
 };
 
-/** The lines between the `c15t-cli-snippet:<name>` markers in a native test, dedented. */
-const nativeSnippet = (file: string, name: string): string => {
-  const lines = read(REPO, file).split("\n");
+/** The lines between the `inth-cli-snippet:<name>` markers in a native test, dedented. */
+const nativeSnippet = (file: SdkFile, name: string): string => {
+  const lines = sdkText(file).split("\n");
   const start = lines.findIndex((line) =>
-    line.includes(`c15t-cli-snippet:${name}:start`)
+    line.includes(`inth-cli-snippet:${name}:start`)
   );
   const end = lines.findIndex((line) =>
-    line.includes(`c15t-cli-snippet:${name}:end`)
+    line.includes(`inth-cli-snippet:${name}:end`)
   );
-  expect(start, `${name} markers in ${file}`).toBeGreaterThan(-1);
+  expect(start, `${name} markers in ${file.path}`).toBeGreaterThan(-1);
   expect(end).toBeGreaterThan(start);
   const block = lines.slice(start + 1, end);
   const indent = Math.min(
@@ -340,7 +413,7 @@ describe("the Expo plugin entry", () => {
       ],
     ]);
     expect(merged).toContain(
-      '      "expo-router",\n      [\n        "@c15t/react-native/expo-plugin",\n        {\n          "backendURL"'
+      '      "expo-router",\n      [\n        "@inth/react-native/expo-plugin",\n        {\n          "backendURL"'
     );
     expect(merged.endsWith('  "extra": [1,2]\n}\n')).toBe(true);
     expect(mergeExpoAppJson(merged, answers, false)).toBe("");
@@ -370,7 +443,7 @@ describe("the Expo plugin entry", () => {
       "a one-line plugins array",
       '{\n\t"expo": {\n\t\t"plugins": ["a", ["b", {}]]\n\t}\n}\n',
     ],
-    ["the bare package name", '{"expo":{"plugins":["@c15t/react-native"]}}'],
+    ["the bare package name", '{"expo":{"plugins":["@inth/react-native"]}}'],
   ])("merges into %s", (_name, raw) => {
     const merged = mergeExpoAppJson(raw, options("https://a.inth.app"), true);
     const { plugins } = appJson(merged).expo;
@@ -381,7 +454,7 @@ describe("the Expo plugin entry", () => {
         consentCategories: DEFAULT_CATEGORIES,
       },
     ]);
-    expect(plugins.filter((plugin) => plugin === "@c15t/react-native")).toEqual(
+    expect(plugins.filter((plugin) => plugin === "@inth/react-native")).toEqual(
       []
     );
   });
@@ -435,7 +508,7 @@ describe("inth mobile setup in a mobile project", () => {
       ],
       slug: "app",
     });
-    const provider = read(root, "c15t/privacy-app.tsx");
+    const provider = read(root, "inth/privacy-app.tsx");
     expect(provider).toContain(
       "<ConsentProvider privacyPolicyURL={privacyPolicyURL}>"
     );
@@ -444,25 +517,25 @@ describe("inth mobile setup in a mobile project", () => {
     expect(provider).toContain("Generated by `inth mobile setup`.");
     const steps = result.steps.join("\n");
     expect(steps).toContain(
-      `<PrivacyApp privacyPolicyURL="${PRIVACY_URL}">, once, in App.tsx: import { PrivacyApp } from './c15t/privacy-app';`
+      `<PrivacyApp privacyPolicyURL="${PRIVACY_URL}">, once, in App.tsx: import { PrivacyApp } from './inth/privacy-app';`
     );
     expect(steps).toContain("npm install /absolute/path/to/");
     expect(mobileSetupMessage(result)).toContain(
-      "Wrote app.json\nWrote c15t/privacy-app.tsx\n\nNext steps:\n1. Install"
+      "Wrote app.json\nWrote inth/privacy-app.tsx\n\nNext steps:\n1. Install"
     );
   });
 
   it("prints the entry for a dynamic app config instead of editing it", () => {
     const root = project({
       "app.config.ts": "export default {};\n",
-      "package.json": pkg({ "@c15t/react-native": "*", expo: "57.0.0" }),
+      "package.json": pkg({ "@inth/react-native": "*", expo: "57.0.0" }),
       "pnpm-lock.yaml": "",
     });
 
     const result = setup(root, ["--backend-url", "acme.inth.app"]);
 
     expect(result.files.map((file) => file.path)).toEqual([
-      "c15t/privacy-app.jsx",
+      "inth/privacy-app.jsx",
     ]);
     expect(result.steps[0]).toContain(
       'Add this entry to "plugins" in app.config.ts'
@@ -487,24 +560,24 @@ describe("inth mobile setup in a mobile project", () => {
 
   it("keeps an existing provider file without --overwrite", () => {
     const root = project({
-      "c15t/privacy-app.jsx": "mine",
+      "inth/privacy-app.jsx": "mine",
       "package.json": pkg({ expo: "57.0.0" }),
     });
 
     const result = setup(root, ["--backend-url", "https://a.inth.app"]);
 
     expect(result.skipped).toEqual([
-      "c15t/privacy-app.jsx exists; pass --overwrite to replace it.",
+      "inth/privacy-app.jsx exists; pass --overwrite to replace it.",
     ]);
-    expect(read(root, "c15t/privacy-app.jsx")).toBe("mine");
+    expect(read(root, "inth/privacy-app.jsx")).toBe("mine");
     expect(
       setup(root, [
         "--backend-url",
         "https://a.inth.app",
         "--overwrite",
       ]).files.map((file) => `${file.action} ${file.path}`)
-    ).toEqual(["update app.json", "update c15t/privacy-app.jsx"]);
-    expect(read(root, "c15t/privacy-app.jsx")).toContain("PrivacyApp");
+    ).toEqual(["update app.json", "update inth/privacy-app.jsx"]);
+    expect(read(root, "inth/privacy-app.jsx")).toContain("PrivacyApp");
   });
 
   it("gives bare React Native the native entries to add, and edits no native file", async () => {
@@ -522,7 +595,7 @@ describe("inth mobile setup in a mobile project", () => {
 
     expect(result.applied).toBe(false);
     expect(result.files.map((file) => file.path)).toEqual([
-      "src/c15t/privacy-app.jsx",
+      "src/inth/privacy-app.jsx",
     ]);
     const { ANDROID_META, IOS_PLIST_KEY } = await expoPlugin();
     const steps = result.steps.join("\n");
@@ -536,9 +609,9 @@ describe("inth mobile setup in a mobile project", () => {
       'android:value="necessary, measurement, marketing"'
     );
     expect(read(root, "ios/App/Info.plist")).toBe("<plist/>");
-    expect(() => read(root, "src/c15t/privacy-app.jsx")).toThrow();
+    expect(() => read(root, "src/inth/privacy-app.jsx")).toThrow();
     expect(mobileSetupMessage(result)).toContain(
-      "Would write src/c15t/privacy-app.jsx"
+      "Would write src/inth/privacy-app.jsx"
     );
   });
 
@@ -577,8 +650,8 @@ describe("inth mobile setup in a mobile project", () => {
       platforms: ["ios", "android"],
     });
     const steps = result.steps.join("\n");
-    expect(steps).toContain("C15tCore, C15tApple and C15tConsentUI");
-    expect(steps).toContain(`com.c15t:c15t-android:${ANDROID_SDK_VERSION}`);
+    expect(steps).toContain("InthCore, InthApple and InthConsentUI");
+    expect(steps).toContain(`com.inth:inth-android:${ANDROID_SDK_VERSION}`);
     expect(steps).toContain(
       "consentCategories = listOf(ConsentCategory.NECESSARY, ConsentCategory.MEASUREMENT, ConsentCategory.MARKETING)"
     );
@@ -600,11 +673,11 @@ describe("inth mobile setup in a mobile project", () => {
       "consentCategories = listOf(ConsentCategory.NECESSARY, ConsentCategory.MEASUREMENT),"
     );
     expect(steps).toContain(
-      `.c15tConsent(\n        C15tAppleConfiguration(\n            backendURL: "https://a.inth.app",`
+      `.c15tConsent(\n        InthAppleConfiguration(\n            backendURL: "https://a.inth.app",`
     );
     expect(steps).toContain(`privacyPolicyURL: URL(string: "${PRIVACY_URL}")!`);
     expect(steps).toContain("ConsentRootViewController(");
-    expect(steps).toContain(`C15tConsent(privacyPolicyUrl = "${PRIVACY_URL}")`);
+    expect(steps).toContain(`InthConsent(privacyPolicyUrl = "${PRIVACY_URL}")`);
     expect(steps).toContain(`attachConsent("${PRIVACY_URL}")`);
     expect(steps).toContain(`imports: ${KOTLIN_INSTALL_IMPORTS.join(", ")}`);
   });
@@ -655,23 +728,23 @@ describe("inth mobile setup in a mobile project", () => {
       ).message
     ).toContain("Unknown categories: ads");
     expect(read(root, "app.json")).toBe('{"expo":{}}');
-    expect(() => read(root, "c15t/privacy-app.jsx")).toThrow();
+    expect(() => read(root, "inth/privacy-app.jsx")).toThrow();
   });
 });
 
 describe("the provider import", () => {
   it("is relative to the root component", () => {
-    expect(providerImport("App.tsx", "c15t/privacy-app.tsx")).toBe(
-      "./c15t/privacy-app"
+    expect(providerImport("App.tsx", "inth/privacy-app.tsx")).toBe(
+      "./inth/privacy-app"
     );
-    expect(providerImport("app/_layout.tsx", "c15t/privacy-app.tsx")).toBe(
-      "../c15t/privacy-app"
+    expect(providerImport("app/_layout.tsx", "inth/privacy-app.tsx")).toBe(
+      "../inth/privacy-app"
     );
     expect(
-      providerImport("src/app/_layout.tsx", "src/c15t/privacy-app.tsx")
-    ).toBe("../c15t/privacy-app");
-    expect(providerImport("app/_layout.tsx", "src/c15t/privacy-app.tsx")).toBe(
-      "../src/c15t/privacy-app"
+      providerImport("src/app/_layout.tsx", "src/inth/privacy-app.tsx")
+    ).toBe("../inth/privacy-app");
+    expect(providerImport("app/_layout.tsx", "src/inth/privacy-app.tsx")).toBe(
+      "../src/inth/privacy-app"
     );
   });
 
@@ -691,16 +764,16 @@ describe("the provider import", () => {
     const inSrc = setup(nested, ["--backend-url", "https://a.inth.app"]);
 
     expect(top.files.map((file) => file.path)).toContain(
-      "c15t/privacy-app.tsx"
+      "inth/privacy-app.tsx"
     );
     expect(top.steps.join("\n")).toContain(
-      "in app/_layout.tsx: import { PrivacyApp } from '../c15t/privacy-app';"
+      "in app/_layout.tsx: import { PrivacyApp } from '../inth/privacy-app';"
     );
     expect(inSrc.files.map((file) => file.path)).toContain(
-      "src/c15t/privacy-app.tsx"
+      "src/inth/privacy-app.tsx"
     );
     expect(inSrc.steps.join("\n")).toContain(
-      "in src/app/_layout.tsx: import { PrivacyApp } from '../c15t/privacy-app';"
+      "in src/app/_layout.tsx: import { PrivacyApp } from '../inth/privacy-app';"
     );
   });
 });
@@ -732,10 +805,10 @@ describe("the Swift and Kotlin the steps print", () => {
     expect(KOTLIN_PRIVACY_SETTINGS).toBe(
       nativeSnippet(KOTLIN_ENTRY_SNIPPETS, "privacy-settings")
     );
-    const source = read(REPO, KOTLIN_SNIPPETS);
-    // The test sits in com.c15t.android, so C15tAndroid needs no import there.
+    const source = sdkText(KOTLIN_SNIPPETS);
+    // The test sits in com.inth.android, so InthAndroid needs no import there.
     for (const entry of KOTLIN_INSTALL_IMPORTS.filter(
-      (name) => name !== "com.c15t.android.C15tAndroid"
+      (name) => name !== "com.inth.android.InthAndroid"
     )) {
       expect(source).toContain(`import ${entry}\n`);
     }
@@ -760,7 +833,7 @@ describe("URLs in the printed Swift and Kotlin", () => {
       'privacyPolicyURL: URL(string: "https://app.example/a$b")!'
     );
     expect(steps).toContain(
-      'C15tConsent(privacyPolicyUrl = "https://app.example/a\\$b")'
+      'InthConsent(privacyPolicyUrl = "https://app.example/a\\$b")'
     );
     expect(steps).toContain('attachConsent("https://app.example/a\\$b")');
   });
@@ -796,7 +869,7 @@ describe("where setup looks for the project", () => {
 
     expect(result).toMatchObject({ platform: "expo", root });
     expect(result.files.map((file) => file.path)).toContain(
-      "src/c15t/privacy-app.jsx"
+      "src/inth/privacy-app.jsx"
     );
   });
 
@@ -1029,7 +1102,7 @@ describe("the doc paths the steps print", () => {
 
     const bundled = [
       ...steps.matchAll(
-        /node_modules\/@c15t\/react-native\/docs\/(?<page>[\w/-]+)\.md/gu
+        /node_modules\/@inth\/react-native\/docs\/(?<page>[\w/-]+)\.md/gu
       ),
     ].map((match) => match.groups?.page ?? "");
     const source = [
@@ -1048,8 +1121,8 @@ describe("the doc paths the steps print", () => {
 
 describe("the printed Android version", () => {
   it("matches the native release the steps point at", () => {
-    expect(read(REPO, "packages/android/gradle.properties")).toContain(
-      `c15t.native.version=${ANDROID_SDK_VERSION}\n`
+    expect(sdkText(ANDROID_PROPERTIES)).toContain(
+      `inth.native.version=${ANDROID_SDK_VERSION}\n`
     );
   });
 });

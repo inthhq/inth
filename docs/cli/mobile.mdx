@@ -10,7 +10,7 @@ inth mobile setup --backend-url https://your-project.inth.app \
   --privacy-policy-url https://your-app.example/privacy
 ```
 
-The mobile SDKs work only with Inth projects, so `--backend-url` is the project URL from your Inth dashboard. The SDKs are a private prerelease. Before you build, get the `@c15t/react-native` package tarball and access to the private Maven repository for Android.
+The mobile SDKs work only with Inth projects, so `--backend-url` is the project URL from your Inth dashboard. The SDKs are a private prerelease. Before you build, get the `@inth/react-native` package tarball and access to the private Maven repository for Android.
 
 ## Which apps does mobile setup support?
 
@@ -34,7 +34,7 @@ Setup adds the plugin entry, with the project URL and the categories your app of
   "expo": {
     "plugins": [
       [
-        "@c15t/react-native/expo-plugin",
+        "@inth/react-native/expo-plugin",
         {
           "backendURL": "https://your-project.inth.app",
           "consentCategories": ["necessary", "measurement", "marketing"]
@@ -47,7 +47,7 @@ Setup adds the plugin entry, with the project URL and the categories your app of
 
 When the app has an `app.config.ts`, `app.config.js`, `app.config.mjs` or `app.config.cjs`, setup prints the entry for you to add instead of editing either file. An existing entry for the plugin stays unless you pass `--overwrite`.
 
-The provider file is `c15t/privacy-app.tsx`, or `.jsx` without a `tsconfig.json`, and sits under `src/` when the app has one. It exports `PrivacyApp`, which mounts `ConsentProvider`, opens the native prompt when the policy asks for one, and keeps a Privacy settings button reachable. The next steps name the import to add to your root component, such as `app/_layout.tsx` or `App.tsx`. An existing provider file stays unless you pass `--overwrite`.
+The provider file is `inth/privacy-app.tsx`, or `.jsx` without a `tsconfig.json`, and sits under `src/` when the app has one. It exports `PrivacyApp`, which mounts `ConsentProvider`, opens the native prompt when the policy asks for one, and keeps a Privacy settings button reachable. The next steps name the import to add to your root component, such as `app/_layout.tsx` or `App.tsx`. An existing provider file stays unless you pass `--overwrite`.
 
 Then build a native app with `npx expo prebuild`, and `npx expo run:ios` or `npx expo run:android`. Expo Go cannot load the native module.
 

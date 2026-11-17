@@ -12,9 +12,9 @@ import type { MobileProject } from "./detect.ts";
 
 /**
  * The config plugin's specifier, as app.json names it. The React Native
- * package owns this name; change it here when that package is renamed.
+ * package owns this name; change it here when that package changes it.
  */
-export const EXPO_PLUGIN = "@c15t/react-native/expo-plugin";
+export const EXPO_PLUGIN = "@inth/react-native/expo-plugin";
 
 /**
  * The native artifact version the Android steps print.
@@ -310,9 +310,9 @@ const xml = (value: string): string =>
 /** The Info.plist entries a bare app adds. */
 export const infoPlistEntries = (options: MobileSetupOptions): string =>
   [
-    "<key>com.c15t.backend.url</key>",
+    "<key>com.inth.backend.url</key>",
     `<string>${xml(options.backendUrl)}</string>`,
-    "<key>com.c15t.categories</key>",
+    "<key>com.inth.categories</key>",
     "<array>",
     ...options.categories.map((category) => `\t<string>${category}</string>`),
     "</array>",
@@ -321,13 +321,13 @@ export const infoPlistEntries = (options: MobileSetupOptions): string =>
 /** The application meta-data a bare app adds to AndroidManifest.xml. */
 export const androidManifestEntries = (options: MobileSetupOptions): string =>
   [
-    `<meta-data android:name="com.c15t.BACKEND_URL" android:value="${xml(options.backendUrl)}" />`,
-    `<meta-data android:name="com.c15t.CATEGORIES" android:value="${options.categories.join(", ")}" />`,
+    `<meta-data android:name="com.inth.BACKEND_URL" android:value="${xml(options.backendUrl)}" />`,
+    `<meta-data android:name="com.inth.CATEGORIES" android:value="${options.categories.join(", ")}" />`,
   ].join("\n");
 
 /** The provider file's path, relative to the project root. */
 export const providerPath = (typescript: boolean, hasSrc: boolean): string =>
-  `${hasSrc ? "src/" : ""}c15t/privacy-app.${typescript ? "tsx" : "jsx"}`;
+  `${hasSrc ? "src/" : ""}inth/privacy-app.${typescript ? "tsx" : "jsx"}`;
 
 /** `target` relative to the directory `from`, both with forward slashes. */
 const relativePath = (from: string, target: string): string => {
@@ -348,7 +348,7 @@ const relativePath = (from: string, target: string): string => {
 /**
  * The specifier the root component imports the provider with, relative to
  * the root component's own directory: app/_layout.tsx imports
- * ../c15t/privacy-app.
+ * ../inth/privacy-app.
  * @param rootComponent The root component's path, or UNKNOWN_ROOT_COMPONENT.
  * @param providerFile The provider file's path.
  * @returns A relative module specifier without the extension.
@@ -421,7 +421,7 @@ export const planReactNativeSetup = (
   const plan: MobileSetupPlan = { files: [], skipped: [], steps: [] };
   if (!project.installed) {
     plan.steps.push(
-      `Install the ${REACT_NATIVE_PACKAGE} tarball you were given (the mobile SDK is a private prerelease): ${files.installCommand} /absolute/path/to/c15t-react-native.tgz`
+      `Install the ${REACT_NATIVE_PACKAGE} tarball you were given (the mobile SDK is a private prerelease): ${files.installCommand} /absolute/path/to/inth-react-native.tgz`
     );
   }
   const providerFile = providerPath(project.typescript, files.hasSrc);
@@ -495,11 +495,11 @@ const indentBlock = (text: string, prefix: string): string =>
 
 /**
  * The Swift configuration: the project URL and the categories the app offers.
- * packages/swift/Tests/C15tAppleTests/CLISnippetTests.swift compiles this text
+ * packages/swift/Tests/InthAppleTests/CLISnippetTests.swift compiles this text
  * with the default categories, and test/mobile/setup.test.ts compares the two.
  */
 export const swiftConfiguration = (options: MobileSetupOptions): string =>
-  `C15tAppleConfiguration(
+  `InthAppleConfiguration(
     backendURL: ${swiftString(options.backendUrl)},
     consentCategories: [${swiftCategories(options.categories)}]
 )`;
@@ -507,7 +507,7 @@ export const swiftConfiguration = (options: MobileSetupOptions): string =>
 /**
  * The SwiftUI entry point: the stock screens on the root view, which install
  * the engine from `configuration` and open the prompt when the policy asks
- * for one. packages/swift/Tests/C15tConsentUITests/cli-entry-snippet-tests.swift
+ * for one. packages/swift/Tests/InthConsentUITests/cli-entry-snippet-tests.swift
  * compiles this text.
  */
 export const swiftUIEntry = (
@@ -545,18 +545,18 @@ export const SWIFT_PRIVACY_SETTINGS =
 
 /**
  * The Kotlin install, for Application.onCreate.
- * packages/android/c15t-android/src/test/kotlin/com/c15t/android/CliSnippetTest.kt
+ * packages/android/inth-android/src/test/kotlin/com/inth/android/CliSnippetTest.kt
  * compiles this text with the default categories.
  */
 export const kotlinInstall = (options: MobileSetupOptions): string =>
-  `C15tAndroid.install(this, NativeConfig(
+  `InthAndroid.install(this, NativeConfig(
     backendUrl = ${kotlinString(options.backendUrl)},
     consentCategories = listOf(${kotlinCategories(options.categories)}),
 ))`;
 
 /** The Compose entry point, beside the app's content. */
 export const composeEntry = (privacyPolicyUrl: string): string =>
-  `C15tConsent(privacyPolicyUrl = ${kotlinString(privacyPolicyUrl)})`;
+  `InthConsent(privacyPolicyUrl = ${kotlinString(privacyPolicyUrl)})`;
 
 /** The entry point for an Activity with views, after setContentView. */
 export const activityEntry = (privacyPolicyUrl: string): string =>
@@ -569,22 +569,22 @@ export const KOTLIN_PRIVACY_SETTINGS =
 
 /** The Kotlin imports kotlinInstall needs. */
 export const KOTLIN_INSTALL_IMPORTS = [
-  "com.c15t.android.C15tAndroid",
-  "com.c15t.core.NativeConfig",
-  "com.c15t.core.model.ConsentCategory",
+  "com.inth.android.InthAndroid",
+  "com.inth.core.NativeConfig",
+  "com.inth.core.model.ConsentCategory",
 ];
 
 /** The Kotlin imports the consent screen entry points need. */
 export const KOTLIN_SCREEN_IMPORTS = [
-  "com.c15t.consentui.C15tConsent",
-  "com.c15t.consentui.ConsentPrompt",
-  "com.c15t.consentui.attachConsent",
+  "com.inth.consentui.InthConsent",
+  "com.inth.consentui.ConsentPrompt",
+  "com.inth.consentui.attachConsent",
 ];
 
 const swiftInstallStep = (options: MobileSetupOptions): string => {
   const url = options.privacyPolicyUrl;
   const configuration = swiftConfiguration(options);
-  return `iOS: attach the consent screens. They install the engine at launch and open the prompt when the policy asks for one. With import C15tApple and import C15tConsentUI. SwiftUI, on your root view:\n${swiftUIEntry(configuration, url)}\nUIKit, as the window's root view controller:\n${uiKitEntry(configuration, url)}\nOpen privacy settings from your own control with ${SWIFT_PRIVACY_SETTINGS}.`;
+  return `iOS: attach the consent screens. They install the engine at launch and open the prompt when the policy asks for one. With import InthApple and import InthConsentUI. SwiftUI, on your root view:\n${swiftUIEntry(configuration, url)}\nUIKit, as the window's root view controller:\n${uiKitEntry(configuration, url)}\nOpen privacy settings from your own control with ${SWIFT_PRIVACY_SETTINGS}.`;
 };
 
 const androidInstallStep = (options: MobileSetupOptions): string => {
@@ -606,14 +606,14 @@ export const planNativeSetup = (
   const steps: string[] = [];
   if (platforms.includes("ios")) {
     steps.push(
-      "iOS: the Swift SDK is private source. In Xcode, choose File > Add Package Dependencies > Add Local and select your checkout of the Inth SDK source. Add the C15tCore, C15tApple and C15tConsentUI products to your app target.",
+      "iOS: the Swift SDK is private source. In Xcode, choose File > Add Package Dependencies > Add Local and select your checkout of the Inth SDK source. Add the InthCore, InthApple and InthConsentUI products to your app target.",
       swiftInstallStep(options)
     );
   }
   if (platforms.includes("android")) {
     steps.push(
-      `Android: add the private Maven repository you were given to dependencyResolutionManagement.repositories in settings.gradle.kts, with includeGroup("com.c15t"), as ${SOURCE_DOCS}/frameworks/android/quickstart.mdx in the SDK source shows.`,
-      `Android: add to app/build.gradle.kts:\nimplementation("com.c15t:c15t-android:${ANDROID_SDK_VERSION}")\nimplementation("com.c15t:c15t-consent-ui:${ANDROID_SDK_VERSION}")`,
+      `Android: add the private Maven repository you were given to dependencyResolutionManagement.repositories in settings.gradle.kts, with includeGroup("com.inth"), as ${SOURCE_DOCS}/frameworks/android/quickstart.mdx in the SDK source shows.`,
+      `Android: add to app/build.gradle.kts:\nimplementation("com.inth:inth-android:${ANDROID_SDK_VERSION}")\nimplementation("com.inth:inth-consent-ui:${ANDROID_SDK_VERSION}")`,
       androidInstallStep(options)
     );
   }

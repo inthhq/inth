@@ -9,7 +9,7 @@ import { dependencyNames } from "../../c15t.ts";
 import type { PackageManifest } from "../../c15t.ts";
 
 /** The React Native package the setup installs and configures. */
-export const REACT_NATIVE_PACKAGE = "@c15t/react-native";
+export const REACT_NATIVE_PACKAGE = "@inth/react-native";
 
 /** An Expo or bare React Native app, or a Swift or Android app. */
 export interface MobileProject {
