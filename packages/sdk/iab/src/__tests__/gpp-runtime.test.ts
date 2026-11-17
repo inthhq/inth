@@ -1,7 +1,6 @@
 /** @vitest-environment jsdom */
 import { createConsentRuntime } from '@c15t/core/runtime';
-import { offline } from '@c15t/core/transports';
-import { policyRulePresets } from '@c15t/schema/types';
+import { withoutNetwork } from '@c15t/core/testing';
 import { afterEach, expect, test, vi } from 'vitest';
 
 import type { GPPPingData } from '../gpp';
@@ -22,14 +21,10 @@ test('the runtime gpp option mounts __gpp from @c15t/iab/gpp and removes it on d
 	const runtime = createConsentRuntime({
 		gpp: { usFallback: 'none' },
 		loadGPP: () => import('../gpp'),
-		mode: offline({
-			acknowledgeNoRecords: true,
-			policyRules: [
-				{ ...policyRulePresets.californiaOptOut(), match: { isDefault: true } },
-			],
-		}),
+		// The recommended pack's US privacy states rule answers California.
 		overrides: { country: 'US', region: 'CA' },
 		persistence: false,
+		testing: withoutNetwork(),
 	});
 	runtime.start();
 
