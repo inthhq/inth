@@ -3,6 +3,8 @@ import { c15tOptionTakesValue, parseC15tArguments } from "./c15t.ts";
 import type { C15tOptions } from "./c15t.ts";
 import { CliError } from "./cli-error.ts";
 import { COMMAND_METADATA, OPTION_METADATA } from "./command-metadata.ts";
+import { parseMobileArguments } from "./mobile.ts";
+import type { MobileSetupArguments } from "./mobile.ts";
 import type { CodemodOptions } from "./native/c15t-codemods/command.ts";
 import { terminalText } from "./organizations.ts";
 import {
@@ -36,6 +38,8 @@ export interface CliArguments {
   c15t?: C15tOptions;
   // Set for `inth c15t codemods`, which runs without sign-in or a project.
   c15tCodemods?: CodemodOptions;
+  // Set for `inth mobile setup`, which runs without sign-in.
+  mobile?: MobileSetupArguments;
 }
 
 const validateCommandOptions = (result: CliArguments): void => {
@@ -440,6 +444,18 @@ const SWITCHES = new Set([
   "--unassign",
 ]);
 
+// Options before a command with its own parser were already consumed; hand
+// them back so that parser applies or rejects them instead of dropping them.
+const leadingOptions = (result: CliArguments): string[] => {
+  const leading = result.values.map((entry) =>
+    SWITCHES.has(`--${entry.name}`)
+      ? `--${entry.name}`
+      : `--${entry.name}=${entry.value}`
+  );
+  result.values = [];
+  return leading;
+};
+
 // Commands that parse their own arguments. Returns whether `arg` was one.
 const parseSubcommand = (
   result: CliArguments,
@@ -451,17 +467,17 @@ const parseSubcommand = (
     parseSkillsArguments(result, rest);
     return true;
   }
+  if (arg === "mobile") {
+    result.command = "mobile";
+    result.mobile = parseMobileArguments(result, [
+      ...leadingOptions(result),
+      ...rest,
+    ]);
+    return true;
+  }
   if (arg === "c15t") {
-    // Options before `c15t` were already consumed; let the c15t parser apply
-    // or reject them instead of dropping them.
-    const leading = result.values.map((entry) =>
-      SWITCHES.has(`--${entry.name}`)
-        ? `--${entry.name}`
-        : `--${entry.name}=${entry.value}`
-    );
-    result.values = [];
     result.command = "c15t";
-    const args = [...leading, ...rest];
+    const args = [...leadingOptions(result), ...rest];
     // The first word that is not an option's value names the action.
     const action = args.findIndex(
       (entry, index) =>

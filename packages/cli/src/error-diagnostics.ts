@@ -23,6 +23,7 @@ const OPERATIONS = new Set([
   "config_write",
   "mcp_command",
   "skills_command",
+  "mobile_setup",
 ]);
 
 let operations: string[] = [];

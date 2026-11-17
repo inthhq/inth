@@ -20,7 +20,8 @@ const invalid: () => never = () => {
   );
 };
 // Retain source spans so edits preserve comments, whitespace, and unrelated data.
-class JsonDocument {
+// Parse errors throw invalid_config with an MCP message; other callers rethrow.
+export class JsonDocument {
   readonly nodes: JsonNode[] = [];
   readonly source: string;
   private offset = 0;

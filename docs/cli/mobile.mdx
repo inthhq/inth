@@ -1,0 +1,92 @@
+---
+title: Set up Inth consent in a mobile app
+description: Run inth mobile setup in an Expo, React Native, Swift or Android app to add the consent configuration and provider, or print the native steps.
+---
+
+Run `inth mobile setup` in an Expo, bare React Native, Swift or Android app. It finds the app, checks your Inth project URL, writes the Expo config plugin entry and a provider file, and prints the steps it leaves to you. It needs no sign-in and never prompts.
+
+```sh
+inth mobile setup --backend-url https://your-project.inth.app \
+  --privacy-policy-url https://your-app.example/privacy
+```
+
+The mobile SDKs work only with Inth projects, so `--backend-url` is the project URL from your Inth dashboard. The SDKs are a private prerelease. Before you build, get the `@c15t/react-native` package tarball and access to the private Maven repository for Android.
+
+## Which apps does mobile setup support?
+
+| App | Detected by | What setup does |
+| --- | --- | --- |
+| Expo | `expo` in `package.json` | Adds the config plugin entry to `app.json` and writes the provider file. |
+| Bare React Native | `react-native` in `package.json`, without `expo` | Writes the provider file and prints the `Info.plist` and `AndroidManifest.xml` entries to add. |
+| Swift | An Xcode project, a workspace or `Package.swift`, with no `package.json` | Prints the package products and the code that installs the engine and attaches the consent screens, for SwiftUI and UIKit. |
+| Android | A Gradle build, with no `package.json` | Prints the repository, the dependencies and the code that installs the engine and attaches the consent screens, for Compose and for an Activity with views. |
+
+Run setup in the app's directory or any directory inside it. The nearest `package.json` wins when it depends on `expo` or `react-native`, so `ios/` and `android/` inside a React Native app resolve to the app. Otherwise the nearest Xcode project, workspace, `Package.swift` or Gradle settings file names the app, even inside a website's folder. Outside a mobile app, setup fails with `usage_error`. For a website, run `inth c15t` instead.
+
+Setup never edits an Xcode project, a Gradle file, an `Info.plist`, an `AndroidManifest.xml` or a dynamic `app.config` file. It prints those changes for you to make.
+
+## What does setup write in an Expo app?
+
+Setup adds the plugin entry, with the project URL and the categories your app offers, to `expo.plugins` in `app.json`. It creates `app.json` when the app has none. Everything else in the file stays as written. For example:
+
+```json title="app.json"
+{
+  "expo": {
+    "plugins": [
+      [
+        "@c15t/react-native/expo-plugin",
+        {
+          "backendURL": "https://your-project.inth.app",
+          "consentCategories": ["necessary", "measurement", "marketing"]
+        }
+      ]
+    ]
+  }
+}
+```
+
+When the app has an `app.config.ts`, `app.config.js`, `app.config.mjs` or `app.config.cjs`, setup prints the entry for you to add instead of editing either file. An existing entry for the plugin stays unless you pass `--overwrite`.
+
+The provider file is `c15t/privacy-app.tsx`, or `.jsx` without a `tsconfig.json`, and sits under `src/` when the app has one. It exports `PrivacyApp`, which mounts `ConsentProvider`, opens the native prompt when the policy asks for one, and keeps a Privacy settings button reachable. The next steps name the import to add to your root component, such as `app/_layout.tsx` or `App.tsx`. An existing provider file stays unless you pass `--overwrite`.
+
+Then build a native app with `npx expo prebuild`, and `npx expo run:ios` or `npx expo run:android`. Expo Go cannot load the native module.
+
+## Which options does mobile setup take?
+
+| Option | Purpose |
+| --- | --- |
+| `--backend-url <url>` | Required. The project URL from your Inth dashboard, such as `https://your-project.inth.app`. |
+| `--privacy-policy-url <url>` | Required. Your privacy policy, which the consent screens link to on every platform. It must be https with a DNS name or IPv4 host, as the iOS and Android screens require, so plain http is refused even on a loopback host. |
+| `--categories <list>` | Comma-separated categories the app offers: `functionality`, `experience`, `measurement` or `marketing`. `necessary` is always included. Defaults to `measurement,marketing`. |
+| `--overwrite` | Replace an existing plugin entry and provider file. |
+| `--dry-run` | Show the files and steps without writing anything. It does not turn on the SDK's `dryRun` option. |
+| `--json` | Print the result as JSON. |
+
+## How does setup check the project URL?
+
+Setup checks `--backend-url` with the rule the Expo plugin and the native SDKs apply, and writes its normal form, `https://your-project.inth.app`:
+
+- A missing scheme means `https`, so `your-project.inth.app` works.
+- Trailing slashes and surrounding whitespace are dropped, and the scheme and host are lowercased.
+- Another host, `http`, a port, a path, a query, a fragment, or a username or password is refused with `usage_error`.
+
+The error quotes your value and names the rule it broke:
+
+```txt
+--backend-url must be the project URL from your Inth dashboard, such as https://your-project.inth.app. Got "https://consent.example.com": the host must be a project host under inth.app.
+```
+
+Setup checks every answer before it writes a file, so a refused value leaves the app unchanged.
+
+## How do I preview setup or read its result from a script?
+
+```sh
+inth mobile setup --backend-url https://your-project.inth.app \
+  --privacy-policy-url https://your-app.example/privacy --dry-run --json
+```
+
+`--dry-run` lists the files setup would write and the steps it would print. With `--json`, `data` holds `platform` (`expo`, `react-native` or `native`), `platforms` for a native app, the app's `root`, the checked `options`, `applied`, `files` with each `path`, `action` and `contents`, the `skipped` files with the reason, and the `steps` that remain.
+
+## Can setup bundle the policy for a first launch without network?
+
+Not yet. The Expo plugin's `bundleManifest` option fetches the hosted policy at prebuild with a manifest command that the Inth CLI does not have yet, so setup does not turn it on. To cover a first launch without network now, define the policy in code, as `docs/frameworks/react-native/offline.md` in the React Native package describes.

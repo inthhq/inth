@@ -24,6 +24,7 @@ import { diagnosticStep, startErrorDiagnostics } from "./error-diagnostics.ts";
 import { helpCommands } from "./help.ts";
 import { identitySummary } from "./identity.ts";
 import { runCodemods } from "./native/c15t-codemods/command.ts";
+import { mobileSetupMessage, runMobileSetup } from "./native/mobile/setup.ts";
 import { NativeApi, apiOutput } from "./native/native-api.ts";
 import {
   openBrowser,
@@ -255,6 +256,17 @@ const runLocalCommand = async (options: CliArguments): Promise<boolean> => {
       options.json
     );
     printResult(options.json, "", JSON.stringify(data));
+    return true;
+  }
+  // Mobile setup only writes files in the app, so it needs no sign-in either.
+  if (options.mobile) {
+    diagnosticStep("mobile_setup");
+    const result = runMobileSetup(options.mobile, process.cwd());
+    printResult(
+      options.json,
+      mobileSetupMessage(result),
+      JSON.stringify(result)
+    );
     return true;
   }
   return false;

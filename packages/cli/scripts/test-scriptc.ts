@@ -27,6 +27,7 @@ import {
 } from "./fixture-checks.ts";
 import { verifyJson, verifyUnavailableCredentialStore } from "./json-checks.ts";
 import { verifyMcp } from "./mcp-checks.ts";
+import { verifyMobile } from "./mobile-checks.ts";
 import { binary, fixture, root, target } from "./native-test-support.ts";
 import { verifyDevelopmentTelemetry, verifySentry } from "./sentry-checks.ts";
 import { verifySkills } from "./skills-checks.ts";
@@ -89,6 +90,7 @@ const steps: Step[] = [
   { name: "MCP setup", run: () => verifyMcp(binary) },
   { name: "Skills", run: () => verifySkills(binary) },
   { name: "c15t", run: () => verifyC15t(binary) },
+  { name: "Mobile setup", run: () => verifyMobile(binary) },
   {
     name: "Update check",
     run: () => verifyUpdateCheck(binary, [], "development", false),
