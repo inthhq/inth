@@ -27,8 +27,8 @@
         "!SKILL.md",
         "!README.md",
         "!readme.json",
-        "$TURBO_ROOT$/sdk/packages/shared/**",
-        "$TURBO_ROOT$/sdk/scripts/normalize-dist-types.mjs"
+        "$TURBO_ROOT$/packages/sdk/shared/**",
+        "$TURBO_ROOT$/scripts/normalize-dist-types.mjs"
       ],
       "outputs": [
         ".next/**",
@@ -52,8 +52,8 @@
         "!SKILL.md",
         "!README.md",
         "!readme.json",
-        "$TURBO_ROOT$/sdk/packages/shared/**",
-        "$TURBO_ROOT$/sdk/scripts/normalize-dist-types.mjs"
+        "$TURBO_ROOT$/packages/sdk/shared/**",
+        "$TURBO_ROOT$/scripts/normalize-dist-types.mjs"
       ],
       "outputs": ["dist/**"]
     },
@@ -62,17 +62,17 @@
       "inputs": [
         "$TURBO_DEFAULT$",
         ".env*",
-        "$TURBO_ROOT$/sdk/scripts/prune-dist-types.ts",
-        "$TURBO_ROOT$/sdk/scripts/manifest-utils.ts",
-        "$TURBO_ROOT$/sdk/packages/shared/rslib-modules.ts",
-        "$TURBO_ROOT$/sdk/packages/shared/rslib-utils.ts",
-        "$TURBO_ROOT$/sdk/scripts/normalize-dist-types.mjs",
+        "$TURBO_ROOT$/scripts/prune-dist-types.ts",
+        "$TURBO_ROOT$/scripts/manifest-utils.ts",
+        "$TURBO_ROOT$/packages/sdk/shared/rslib-modules.ts",
+        "$TURBO_ROOT$/packages/sdk/shared/rslib-utils.ts",
+        "$TURBO_ROOT$/scripts/normalize-dist-types.mjs",
         "!docs/**",
         "!AGENTS.md",
         "!SKILL.md",
         "!README.md",
         "!readme.json",
-        "$TURBO_ROOT$/sdk/packages/shared/**"
+        "$TURBO_ROOT$/packages/sdk/shared/**"
       ],
       "outputs": ["dist/**", "dist-types/**", "src/version.ts"],
       "env": ["WITH_RSDOCTOR"]
@@ -82,15 +82,15 @@
       "inputs": [
         "$TURBO_DEFAULT$",
         ".env*",
-        "$TURBO_ROOT$/sdk/packages/shared/rslib-modules.ts",
-        "$TURBO_ROOT$/sdk/packages/shared/rslib-utils.ts",
-        "$TURBO_ROOT$/sdk/scripts/normalize-dist-types.mjs",
+        "$TURBO_ROOT$/packages/sdk/shared/rslib-modules.ts",
+        "$TURBO_ROOT$/packages/sdk/shared/rslib-utils.ts",
+        "$TURBO_ROOT$/scripts/normalize-dist-types.mjs",
         "!docs/**",
         "!AGENTS.md",
         "!SKILL.md",
         "!README.md",
         "!readme.json",
-        "$TURBO_ROOT$/sdk/packages/shared/**"
+        "$TURBO_ROOT$/packages/sdk/shared/**"
       ],
       "outputs": ["dist/**", "dist-types/**"],
       "env": ["WITH_RSDOCTOR"]
@@ -105,8 +105,8 @@
         "!SKILL.md",
         "!README.md",
         "!readme.json",
-        "$TURBO_ROOT$/sdk/packages/shared/**",
-        "$TURBO_ROOT$/sdk/scripts/normalize-dist-types.mjs"
+        "$TURBO_ROOT$/packages/sdk/shared/**",
+        "$TURBO_ROOT$/scripts/normalize-dist-types.mjs"
       ],
       "outputs": ["dist/**", "dist-types/**", "src/version.ts"],
       "env": ["WITH_RSDOCTOR"]
@@ -121,8 +121,8 @@
         "!SKILL.md",
         "!README.md",
         "!readme.json",
-        "$TURBO_ROOT$/sdk/packages/shared/**",
-        "$TURBO_ROOT$/sdk/scripts/normalize-dist-types.mjs"
+        "$TURBO_ROOT$/packages/sdk/shared/**",
+        "$TURBO_ROOT$/scripts/normalize-dist-types.mjs"
       ],
       "outputs": ["dist/**", "dist-types/**", "src/version.ts"],
       "env": ["WITH_RSDOCTOR"]
@@ -137,8 +137,8 @@
         "!SKILL.md",
         "!README.md",
         "!readme.json",
-        "$TURBO_ROOT$/sdk/packages/shared/**",
-        "$TURBO_ROOT$/sdk/scripts/normalize-dist-types.mjs"
+        "$TURBO_ROOT$/packages/sdk/shared/**",
+        "$TURBO_ROOT$/scripts/normalize-dist-types.mjs"
       ],
       "outputs": ["dist/**", "dist-types/**", "src/version.ts"],
       "env": ["WITH_RSDOCTOR"]
@@ -213,8 +213,8 @@
         "!SKILL.md",
         "!README.md",
         "!readme.json",
-        "$TURBO_ROOT$/sdk/packages/shared/**",
-        "$TURBO_ROOT$/sdk/scripts/normalize-dist-types.mjs"
+        "$TURBO_ROOT$/packages/sdk/shared/**",
+        "$TURBO_ROOT$/scripts/normalize-dist-types.mjs"
       ],
       "outputs": []
     },
@@ -228,8 +228,8 @@
         "!SKILL.md",
         "!README.md",
         "!readme.json",
-        "$TURBO_ROOT$/sdk/packages/shared/**",
-        "$TURBO_ROOT$/sdk/scripts/normalize-dist-types.mjs"
+        "$TURBO_ROOT$/packages/sdk/shared/**",
+        "$TURBO_ROOT$/scripts/normalize-dist-types.mjs"
       ],
       "outputs": ["dist/**", "src/lib/version.ts"]
     },
@@ -243,17 +243,17 @@
         "!SKILL.md",
         "!README.md",
         "!readme.json",
-        "$TURBO_ROOT$/sdk/packages/shared/**",
-        "$TURBO_ROOT$/sdk/scripts/normalize-dist-types.mjs"
+        "$TURBO_ROOT$/packages/sdk/shared/**",
+        "$TURBO_ROOT$/scripts/normalize-dist-types.mjs"
       ],
       "outputs": ["dist/**"]
     },
     "fmt": {
-      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/sdk/oxfmt.config.ts"],
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/oxfmt.sdk.config.ts"],
       "outputs": []
     },
     "lint": {
-      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/sdk/oxlint.config.ts"],
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/oxlint.sdk.config.ts"],
       "dependsOn": ["transit"]
     },
     "check-types": {
@@ -607,7 +607,7 @@
       "dependsOn": ["build", "^build", "transit"],
       "inputs": [
         "$TURBO_DEFAULT$",
-        "$TURBO_ROOT$/sdk/internals/next-compat/shared/scripts/pack.ts"
+        "$TURBO_ROOT$/internals/next-compat/shared/scripts/pack.ts"
       ],
       "outputs": []
     },
@@ -636,20 +636,20 @@
         "!SKILL.md",
         "!README.md",
         "!readme.json",
-        "$TURBO_ROOT$/sdk/packages/shared/**",
-        "$TURBO_ROOT$/sdk/scripts/normalize-dist-types.mjs"
+        "$TURBO_ROOT$/packages/sdk/shared/**",
+        "$TURBO_ROOT$/scripts/normalize-dist-types.mjs"
       ],
       "outputs": ["dist/**", "dist-types/**"],
       "env": ["WITH_RSDOCTOR"]
     },
     "build:docs": {
       "inputs": [
-        "$TURBO_ROOT$/sdk/docs/**",
-        "$TURBO_ROOT$/sdk/scripts/docs-origin.ts",
-        "$TURBO_ROOT$/sdk/scripts/generate-package-docs.ts",
-        "$TURBO_ROOT$/sdk/scripts/package-skill.ts",
-        "$TURBO_ROOT$/sdk/scripts/package-doc-entry-points.ts",
-        "$TURBO_ROOT$/sdk/scripts/rewrite-package-doc-links.ts",
+        "$TURBO_ROOT$/packages/sdk/docs/**",
+        "$TURBO_ROOT$/scripts/docs-origin.ts",
+        "$TURBO_ROOT$/scripts/generate-package-docs.ts",
+        "$TURBO_ROOT$/scripts/package-skill.ts",
+        "$TURBO_ROOT$/scripts/package-doc-entry-points.ts",
+        "$TURBO_ROOT$/scripts/rewrite-package-doc-links.ts",
         "package.json"
       ],
       "outputs": ["docs/**", "skills/**", "AGENTS.md", "SKILL.md"]

@@ -2,14 +2,14 @@ packages:
   - apps/*
   - packages/*
   - npm/*
-  # The imported c15t SDK. sdk/ itself is a private package that holds the
-  # tools its scripts use.
-  - sdk
-  - sdk/benchmarks/**
-  - sdk/apps/*
-  - sdk/packages/*
-  - sdk/internals/**
-  - sdk/examples/*
+  # The SDK's web packages, kept as separate packages until they merge into
+  # @inth/sdk.
+  - packages/sdk/*
+  - benchmarks/**
+  - internals/**
+  - examples/*
+  # Repository tooling for the SDK, with the tools its scripts use.
+  - scripts
   - "!**/dist/**"
   - "!**/.next/**"
   - "!**/.nuxt/**"

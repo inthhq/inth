@@ -8,8 +8,22 @@ export default defineConfig({
     "tools/oxlint/anti-slop/**",
     "**/inrepo_modules/**",
     "**/.inrepo/**",
-    // Imported c15t SDK. It keeps its own tooling until it joins this workspace.
-    "sdk/**",
+    // The SDK keeps its own lint rules until it adopts the root ones. Lint it
+    // with `pnpm sdk:lint`, which reads oxlint.sdk.config.ts.
+    "apps/**",
+    "benchmarks/**",
+    "examples/**",
+    "internals/**",
+    "scripts/**",
+    "packages/sdk/**",
+    "packages/react-native/**",
+    "packages/swift/**",
+    "packages/android/**",
+    "packages/native-protocol/**",
+    "oxlint.sdk.config.ts",
+    "oxfmt.sdk.config.ts",
+    // c15t CLI mobile code, kept as imported until it is wired into the CLI.
+    "packages/cli/vendor/c15t-mobile/**",
     // Unmodified upstream source; see packages/cli/vendor/c15t/UPSTREAM.md.
     "packages/cli/vendor/c15t/**",
   ],

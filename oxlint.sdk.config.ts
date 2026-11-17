@@ -29,9 +29,9 @@ const nonReactFrameworkFiles = [
 	'benchmarks/nuxt-browser-bench/**/*.{js,jsx,ts,tsx}',
 	'internals/fixtures/nuxt/**/*.{js,jsx,ts,tsx}',
 	'internals/fixtures/nuxt-vapor/**/*.{js,jsx,ts,tsx}',
-	'packages/solid/**/*.{js,jsx,ts,tsx}',
-	'packages/svelte/**/*.{js,jsx,ts,tsx}',
-	'packages/vue/**/*.{js,jsx,ts,tsx}',
+	'packages/sdk/solid/**/*.{js,jsx,ts,tsx}',
+	'packages/sdk/svelte/**/*.{js,jsx,ts,tsx}',
+	'packages/sdk/vue/**/*.{js,jsx,ts,tsx}',
 ] as const;
 
 // These rules reported existing violations during the migration. Every
@@ -124,11 +124,11 @@ export default defineConfig({
 		'.repos/**',
 		'.tmp-bun/**',
 		'apps/shadcn-registry/vendor/**',
-		'packages/c15t/shims/**',
+		'packages/sdk/c15t/shims/**',
 		// Injected verbatim into WebView pages, where page script may have
 		// replaced built-ins first. They avoid iterators and destructuring on
-		// purpose; see "WebView consent" in native/CONTRACT.md.
-		'native/protocol/webview/*.js',
+		// purpose; see "WebView consent" in packages/native-protocol/CONTRACT.md.
+		'packages/native-protocol/webview/*.js',
 	],
 	overrides: [
 		{
@@ -194,7 +194,7 @@ export default defineConfig({
 			// A primitive's parts share one file, marker directives have no
 			// body, and methods bound from templates need not read `this`.
 			files: [
-				'packages/angular/**/*.ts',
+				'packages/sdk/angular/**/*.ts',
 				'internals/doc-snippets/angular/**/*.ts',
 				'internals/fixtures/angular/**/*.ts',
 				'benchmarks/angular-browser-bench/src/**/*.ts',
@@ -213,7 +213,7 @@ export default defineConfig({
 			// `@c15t/angular`. Core's deprecated `offline` alias must not reach
 			// Angular code, docs snippets, fixtures or benches.
 			files: [
-				'packages/angular/**/*.{ts,mts,js,mjs}',
+				'packages/sdk/angular/**/*.{ts,mts,js,mjs}',
 				'internals/doc-snippets/angular/**/*.{ts,mts,js,mjs}',
 				'internals/fixtures/angular/**/*.{ts,mts,js,mjs}',
 				'internals/angular-compat/**/*.{ts,mts,js,mjs}',

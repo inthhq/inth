@@ -1,3 +1,16 @@
-# Imported c15t SDK. It has its own oxfmt config, which oxfmt would load for
-# files under sdk/ even when the root config ignores them.
-sdk/
+# The SDK keeps its own formatting until it adopts the root style. Format it
+# with `pnpm sdk:fmt`, which reads oxfmt.sdk.config.ts.
+/apps/
+/benchmarks/
+/examples/
+/internals/
+/scripts/
+/packages/sdk/
+/packages/react-native/
+/packages/swift/
+/packages/android/
+/packages/native-protocol/
+/oxlint.sdk.config.ts
+/oxfmt.sdk.config.ts
+# c15t CLI mobile code, kept as imported until it is wired into the CLI.
+/packages/cli/vendor/c15t-mobile/

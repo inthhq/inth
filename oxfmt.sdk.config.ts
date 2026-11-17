@@ -13,8 +13,8 @@ export default defineConfig({
 		// Registry sources and vendored shadcn ui keep upstream shadcn formatting.
 		'apps/shadcn-registry/registry/**',
 		'apps/shadcn-registry/vendor/**',
-		'packages/c15t/shims/**',
-		'packages/ui/types/**',
+		'packages/sdk/c15t/shims/**',
+		'packages/sdk/ui/types/**',
 	],
 	jsxSingleQuote: false,
 	printWidth: 80,
