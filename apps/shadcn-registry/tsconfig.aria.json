@@ -10,5 +10,10 @@
 			"@/lib/utils": ["./vendor/aria/lib/utils"]
 		}
 	},
-	"include": ["registry/aria", "registry/setup", "vendor/aria"]
+	"include": [
+		"vendor/vite-env.d.ts",
+		"registry/aria",
+		"registry/setup",
+		"vendor/aria"
+	]
 }

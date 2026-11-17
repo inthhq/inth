@@ -10,5 +10,10 @@
 			"@/lib/utils": ["./vendor/radix/lib/utils"]
 		}
 	},
-	"include": ["registry/shared", "registry/setup", "vendor/radix"]
+	"include": [
+		"vendor/vite-env.d.ts",
+		"registry/shared",
+		"registry/setup",
+		"vendor/radix"
+	]
 }
