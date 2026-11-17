@@ -2,11 +2,11 @@ import { createHash } from 'node:crypto';
 import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 
-import { C15tPluginError } from './errors';
+import { InthPluginError } from './errors';
 import { gvlEntryProblem } from './gvl-fields';
 
 /** The native readers use a fixed filename inside the app's resources/assets. */
-export const POLICY_RESOURCE_NAME = 'c15t-policy.json';
+export const POLICY_RESOURCE_NAME = 'inth-policy.json';
 
 const PAYLOAD_KEYS = new Set([
 	'defaultLanguage',
@@ -148,7 +148,7 @@ export const embedPolicyResource = async (
 	const problem = policyResourceProblem(text, endpoint, now);
 	if (problem !== null) {
 		// An expired resource is usable; one a device would discard is not.
-		throw new C15tPluginError(
+		throw new InthPluginError(
 			`policyResource is invalid: ${problem}. Re-export it before prebuild.`
 		);
 	}
@@ -159,7 +159,7 @@ export const embedPolicyResource = async (
 		// An expired manifest still prompts and records choices; devices report
 		// policyStale until a live /init replaces it.
 		console.warn(
-			`c15t: ${source} expired on ${new Date(expiresAt).toISOString()}. ` +
+			`Inth: ${source} expired on ${new Date(expiresAt).toISOString()}. ` +
 				'Devices will report policyStale until they reach the backend. Re-export it.'
 		);
 	}
@@ -233,7 +233,7 @@ export const androidPolicyDestination = (root: string): string =>
 	join(root, 'android/app/src/main/assets', POLICY_RESOURCE_NAME);
 
 /** The in-code policy's fixed filename inside the app's resources/assets. */
-export const POLICY_RULES_NAME = 'c15t-policy-rules.json';
+export const POLICY_RULES_NAME = 'inth-policy-rules.json';
 
 /** Write the in-code policy as `{"rules": [...]}`, the shape both cores read. */
 export const writePolicyRules = async (

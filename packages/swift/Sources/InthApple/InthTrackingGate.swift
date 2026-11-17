@@ -1,8 +1,8 @@
-#if canImport(C15tCore)
+#if canImport(InthCore)
 // SwiftPM builds the consent kernel as its own module. CocoaPods compiles the vendored
 // copy into this module instead, where the import would fail, so it is conditional
 // rather than assumed.
-import C15tCore
+import InthCore
 #endif
 import Foundation
 
@@ -17,7 +17,7 @@ import Foundation
 ///
 /// Raw values are the wire values `src/protocol/tracking.ts` declares, so Swift, Kotlin,
 /// and JavaScript name one set of arms.
-public enum C15tTrackingAuthorization: String, CaseIterable, Sendable {
+public enum InthTrackingAuthorization: String, CaseIterable, Sendable {
     /// Apple said yes, or the platform asks nothing and consent decided alone.
     case authorized
     case denied
@@ -31,11 +31,11 @@ public enum C15tTrackingAuthorization: String, CaseIterable, Sendable {
 ///
 /// The raw values match `ATTrackingManager.AuthorizationStatus` so the reader can hand
 /// this enum across instead of a framework type. That import belongs to
-/// ``C15tTracking`` alone, for the same reason `C15tReachabilityGate` keeps
+/// ``InthTracking`` alone, for the same reason `InthReachabilityGate` keeps
 /// `Network` out of the decision: the mapping is the part that has to be wrong in a way
 /// anyone can see, and a test target on macOS cannot compile a framework that only
 /// exists on the device.
-public enum C15tTrackingPlatformStatus: Int, CaseIterable, Sendable {
+public enum InthTrackingPlatformStatus: Int, CaseIterable, Sendable {
     case notDetermined = 0
     case restricted
     case denied
@@ -43,7 +43,7 @@ public enum C15tTrackingPlatformStatus: Int, CaseIterable, Sendable {
 }
 
 /// Why the platform was not asked, in the two ways that happen.
-public enum C15tTrackingRefusal: Equatable, Sendable {
+public enum InthTrackingRefusal: Equatable, Sendable {
     /// Apple would suppress the dialog and record the answer as denied without a word,
     /// because `Info.plist` carries no `NSUserTrackingUsageDescription`.
     case noPromptString
@@ -62,7 +62,7 @@ public enum C15tTrackingRefusal: Equatable, Sendable {
 /// that reads it as proof of an EU presentation is reading a fact this line never
 /// supplied, and `docs/frameworks/react-native/native-behaviour.mdx` says so in those
 /// words.
-public enum C15tTrackingPresentation: String, CaseIterable, Sendable {
+public enum InthTrackingPresentation: String, CaseIterable, Sendable {
     /// The expanded EU request, available from iOS and iPadOS 27.2.
     case expanded
     /// `requestTrackingAuthorization(completionHandler:)`, which every supported system has.
@@ -75,7 +75,7 @@ public enum C15tTrackingPresentation: String, CaseIterable, Sendable {
 /// closes without recording an answer, this SDK's own closure runs, and Apple still calls
 /// its completion handler with `notDetermined`. A caller that read that as a final answer
 /// would report a refusal nobody made, so the pause is named instead.
-public enum C15tTrackingStage: String, CaseIterable, Sendable {
+public enum InthTrackingStage: String, CaseIterable, Sendable {
     /// The subject answered, or Apple declined to ask. Nothing further is owed.
     case final
     /// Additional Information was tapped. The subject is mid-decision and has to be asked
@@ -84,23 +84,23 @@ public enum C15tTrackingStage: String, CaseIterable, Sendable {
 }
 
 /// What a request hands back: the platform arm, and what to do with it.
-public struct C15tTrackingRequestResult: Equatable, Sendable {
+public struct InthTrackingRequestResult: Equatable, Sendable {
     /// Apple's arm, preserved as Apple gave it. Never widened, never invented.
-    public let status: C15tTrackingAuthorization
+    public let status: InthTrackingAuthorization
     /// Whether this settles the request.
-    public let stage: C15tTrackingStage
+    public let stage: InthTrackingStage
     /// Which call was made to get here, or `nil` when none was.
     ///
     /// Optional because a result can arrive without Apple being asked at all, which is what
     /// a restricted device does. Saying `standard` there would report a call this request
     /// never made, and the one thing worth keeping clean on this boundary is the difference
     /// between what Apple was told and what this SDK concluded.
-    public let presentation: C15tTrackingPresentation?
+    public let presentation: InthTrackingPresentation?
 
     public init(
-        status: C15tTrackingAuthorization,
-        stage: C15tTrackingStage,
-        presentation: C15tTrackingPresentation?
+        status: InthTrackingAuthorization,
+        stage: InthTrackingStage,
+        presentation: InthTrackingPresentation?
     ) {
         self.status = status
         self.stage = stage
@@ -109,16 +109,16 @@ public struct C15tTrackingRequestResult: Equatable, Sendable {
 }
 
 /// What a request should do, decided before anyone calls Apple.
-public enum C15tTrackingDecision: Equatable, Sendable {
+public enum InthTrackingDecision: Equatable, Sendable {
     /// Ask Apple, by way of this call.
-    case prompt(presentation: C15tTrackingPresentation)
+    case prompt(presentation: InthTrackingPresentation)
     /// Resolve with this arm without asking. Only a state Apple can never answer from
     /// lands here, which is `restricted`; everything else goes to Apple and lets Apple
     /// decide, because the European Union lets an answered request be asked again after a
     /// year and this SDK is not the thing that gets to say otherwise.
-    case answered(C15tTrackingAuthorization)
+    case answered(InthTrackingAuthorization)
     /// Reject, and say why. Nothing was asked.
-    case refused(C15tTrackingRefusal)
+    case refused(InthTrackingRefusal)
 }
 
 /// The mapping and the refusal, with no framework in either.
@@ -127,9 +127,9 @@ public enum C15tTrackingDecision: Equatable, Sendable {
 /// authorization is a gate and not consent, and no platform answer moves a category from
 /// `denied` or `pending` to `granted`. This type never sees a consent value, so it cannot
 /// be the place that rule breaks. It takes the two facts it needs as parameters and
-/// returns one arm, which is what lets ``C15tTrackingGateTests`` walk every state on a
+/// returns one arm, which is what lets ``InthTrackingGateTests`` walk every state on a
 /// Mac.
-public enum C15tTrackingGate {
+public enum InthTrackingGate {
     /// The arm a caller reads.
     ///
     /// A build with no prompt string reports `unsupported` even though Apple answers
@@ -143,9 +143,9 @@ public enum C15tTrackingGate {
     ///   - platform: Apple's answer, or `nil` where there is no ATT to read.
     ///   - promptStringPresent: Whether this binary carries `NSUserTrackingUsageDescription`.
     public static func authorization(
-        platform: C15tTrackingPlatformStatus?,
+        platform: InthTrackingPlatformStatus?,
         promptStringPresent: Bool
-    ) -> C15tTrackingAuthorization {
+    ) -> InthTrackingAuthorization {
         guard promptStringPresent, let platform else { return .unsupported }
         switch platform {
         case .authorized: return .authorized
@@ -163,7 +163,7 @@ public enum C15tTrackingGate {
     /// subject agreed to, which is why this is never the whole rule and callers want
     /// ``mayTrack(decision:authorization:)`` instead.
     public static func isPlatformSatisfied(
-        _ authorization: C15tTrackingAuthorization
+        _ authorization: InthTrackingAuthorization
     ) -> Bool {
         authorization == .authorized || authorization == .unsupported
     }
@@ -171,7 +171,7 @@ public enum C15tTrackingGate {
     /// Whether tracking behaviour may run, given both answers.
     ///
     /// This is the primitive an analytics or ad SDK gates on, and it is the shape of the
-    /// contract's sentence: the c15t decision and the platform authorization are both
+    /// contract's sentence: the Inth decision and the platform authorization are both
     /// required, and the platform never supplies the missing half. A granted category on
     /// a device where Apple says no stays off, and an unresolved one stays off whichever
     /// way the platform went, because a prompt does not resolve a policy.
@@ -181,12 +181,12 @@ public enum C15tTrackingGate {
     /// platform answer.
     ///
     /// - Parameters:
-    ///   - decision: The c15t answer for the category being gated.
+    ///   - decision: The Inth answer for the category being gated.
     ///   - authorization: The arm ``authorization(platform:promptStringPresent:)`` reported.
     /// - Returns: `true` only when consent is granted and the platform is satisfied.
     public static func mayTrack(
         decision: ConsentDecision,
-        authorization: C15tTrackingAuthorization
+        authorization: InthTrackingAuthorization
     ) -> Bool {
         decision == .granted && isPlatformSatisfied(authorization)
     }
@@ -221,16 +221,16 @@ public enum C15tTrackingGate {
     ///   - platform: Apple's answer, or `nil` where there is no ATT to read.
     ///   - promptStringPresent: Whether this binary carries `NSUserTrackingUsageDescription`.
     ///   - expandedInterfaceAvailable: Whether this runtime has the expanded EU request.
-    ///     ``C15tTracking/expandedInterfaceAvailable()`` answers it by looking for the
+    ///     ``InthTracking/expandedInterfaceAvailable()`` answers it by looking for the
     ///     method, which is the only check that works: it arrives with iOS and iPadOS 27.2,
     ///     newer than the SDK this package builds against, so an `#available` check would be
     ///     a guess about a symbol the build never saw.
     /// - Returns: Whether to ask, which call to use, or why the request is refused.
     public static func request(
-        platform: C15tTrackingPlatformStatus?,
+        platform: InthTrackingPlatformStatus?,
         promptStringPresent: Bool,
         expandedInterfaceAvailable: Bool
-    ) -> C15tTrackingDecision {
+    ) -> InthTrackingDecision {
         guard let platform else { return .refused(.unavailable) }
         guard promptStringPresent else { return .refused(.noPromptString) }
         guard platform != .restricted else { return .answered(.restricted) }
@@ -258,12 +258,12 @@ public enum C15tTrackingGate {
     ///   that lets tracking through without a yes, so a vanished ATT has to be a failure
     ///   rather than an answer.
     public static func requestResult(
-        platform: C15tTrackingPlatformStatus?,
-        presentation: C15tTrackingPresentation?,
+        platform: InthTrackingPlatformStatus?,
+        presentation: InthTrackingPresentation?,
         additionalInformationSelected: Bool
-    ) -> C15tTrackingRequestResult? {
+    ) -> InthTrackingRequestResult? {
         guard let platform else { return nil }
-        return C15tTrackingRequestResult(
+        return InthTrackingRequestResult(
             status: authorization(platform: platform, promptStringPresent: true),
             stage: additionalInformationSelected ? .additionalInformation : .final,
             presentation: presentation

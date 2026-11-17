@@ -1,13 +1,13 @@
-// Left out of a build with `c15t.nativeUI` false; see C15tReactNative.podspec.
-#if !C15T_NO_NATIVE_UI
-#if canImport(C15tCore)
-import C15tCore
+// Left out of a build with `inth.nativeUI` false; see InthReactNative.podspec.
+#if !INTH_NO_NATIVE_UI
+#if canImport(InthCore)
+import InthCore
 #endif
-#if canImport(C15tConsentUI)
-import C15tConsentUI
+#if canImport(InthConsentUI)
+import InthConsentUI
 #endif
-#if canImport(C15tReactNativeBridge)
-import C15tReactNativeBridge
+#if canImport(InthReactNativeBridge)
+import InthReactNativeBridge
 #endif
 import SwiftUI
 import UIKit
@@ -19,7 +19,7 @@ import UIKit
 /// prompt over the key window of the foreground scene, and maps what the driver reports onto the
 /// bridge's types.
 @MainActor
-final class C15tConsentHost {
+final class InthConsentHost {
     enum HostError: Error { case invalidPrivacyPolicy, noCore, noHost }
 
     private let driver: ConsentHostDriver
@@ -42,12 +42,12 @@ final class C15tConsentHost {
 
     private func wire() {
         driver.onPresented = { [weak self] id, shows, automatic in
-            self?.emit?(C15tPayload.eventPresenterPresented, C15tPayload.consentHostPresented(
+            self?.emit?(InthPayload.eventPresenterPresented, InthPayload.consentHostPresented(
                 sessionID: id, presentation: Self.presentation(shows), automatic: automatic))
         }
         driver.onUnavailable = { [weak self] message in
-            self?.emit?(C15tPayload.eventPresenterUnavailable, C15tPayload.presenterUnavailable(
-                code: "C15T_PRESENTER_UNAVAILABLE", message: message))
+            self?.emit?(InthPayload.eventPresenterUnavailable, InthPayload.presenterUnavailable(
+                code: "INTH_PRESENTER_UNAVAILABLE", message: message))
         }
         driver.onOutcome = { [weak self] id, ending, revision in
             let outcome: ConsentHostOutcome
@@ -57,7 +57,7 @@ final class C15tConsentHost {
             case .dismissed: outcome = .dismissed(sessionID: id, revision: revision)
             case .unavailable: outcome = .unavailable(sessionID: id, revision: revision)
             }
-            self?.emit?(C15tPayload.eventPresenterOutcome, C15tPayload.consentHostOutcome(outcome))
+            self?.emit?(InthPayload.eventPresenterOutcome, InthPayload.consentHostOutcome(outcome))
         }
     }
 
@@ -67,7 +67,7 @@ final class C15tConsentHost {
 
     /// Hand the prompt the provider's settings. The prompt decides when one is owed.
     func configure(autoPresent: Bool, privacyPolicyURL: String?) throws {
-        guard let core = C15t.current else { throw HostError.noCore }
+        guard let core = Inth.current else { throw HostError.noCore }
         do {
             try driver.configure(core: core, autoPresent: autoPresent, privacyPolicyURL: privacyPolicyURL)
         } catch ConsentHostDriver.Refusal.invalidPrivacyPolicy {
@@ -77,7 +77,7 @@ final class C15tConsentHost {
 
     /// Open a prompt or settings the app asked for.
     func present(preferences: Bool, privacyPolicyURL: String) throws -> ConsentHostSession {
-        guard let core = C15t.current else { throw HostError.noCore }
+        guard let core = Inth.current else { throw HostError.noCore }
         let answer: ConsentHostDriver.Answer
         do {
             answer = try driver.present(core: core, preferences: preferences, privacyPolicyURL: privacyPolicyURL)
@@ -95,7 +95,7 @@ final class C15tConsentHost {
 
     func close(sessionID: String) { driver.close(sessionID: sessionID) }
 
-    /// After `C15t` installed a new core, move the prompt to it.
+    /// After `Inth` installed a new core, move the prompt to it.
     func follow(_ core: ConsentCore) { driver.follow(core) }
 
     func detach() {

@@ -1,22 +1,22 @@
-package com.c15t.reactnative
+package com.inth.reactnative
 
 import android.content.Context
 import androidx.startup.Initializer
 
 /**
- * Starts c15t before the first Activity exists, and so before the React host.
+ * Starts Inth before the first Activity exists, and so before the React host.
  *
  * A `ContentProvider` is installed during `Application.onCreate`, which is earlier
  * than any JavaScript, and the core's hydration work is synchronous inside that
  * window. That ordering is what lets the first frame read a stored consent answer
  * rather than wait on a network round trip.
  *
- * An app that bootstraps c15t itself removes this with `tools:node="remove"` on the
- * provider entry, or sets `com.c15t.reactnative.AUTO_BOOTSTRAP` to `false`.
+ * An app that bootstraps Inth itself removes this with `tools:node="remove"` on the
+ * provider entry, or sets `com.inth.reactnative.AUTO_BOOTSTRAP` to `false`.
  */
-class C15tReactNativeInitializer : Initializer<Unit> {
+class InthReactNativeInitializer : Initializer<Unit> {
 	override fun create(context: Context) {
-		C15tReactNativeBootstrap.ensure(context.applicationContext)
+		InthReactNativeBootstrap.ensure(context.applicationContext)
 	}
 
 	/**

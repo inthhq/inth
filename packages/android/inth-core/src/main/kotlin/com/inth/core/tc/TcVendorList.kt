@@ -1,4 +1,4 @@
-package com.c15t.core.tc
+package com.inth.core.tc
 
 /**
  * What one vendor declares about itself in a vendor list.

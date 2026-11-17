@@ -1,8 +1,8 @@
-import C15tConsentUI
-import C15tCore
+import InthConsentUI
+import InthCore
 import SwiftUI
 
-// A consent UI drawn entirely by the app on the headless blocks in `C15tConsentUI`. Nothing
+// A consent UI drawn entirely by the app on the headless blocks in `InthConsentUI`. Nothing
 // here comes from the stock screens: the paper and ink palette, the serif and monospace type,
 // the ruled ledger rows, the square switch and the motion are in `ledger-parts.swift`. The
 // blocks supply when to show, the copy, the draft, the save and the accessibility.

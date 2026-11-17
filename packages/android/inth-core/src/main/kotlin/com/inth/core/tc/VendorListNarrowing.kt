@@ -1,4 +1,4 @@
-package com.c15t.core.tc
+package com.inth.core.tc
 
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -6,7 +6,7 @@ import kotlinx.serialization.json.JsonObject
 /**
  * The publisher's vendor scope, applied to a list that arrived whole.
  *
- * c15t sends the scope upstream rather than filtering after the fact: `gvlRequestUrl` in
+ * Inth sends the scope upstream rather than filtering after the fact: `gvlRequestUrl` in
  * `packages/backend/src/http/gvl.ts` puts `vendorIds` on the GVL request, `narrowToVendorIds` in that
  * file then runs the filter over the document that came back before it is cached, and
  * `narrowGVLToVendors` in `packages/sdk/iab/src/tcf/fetch-gvl.ts` runs it over a list that reached the

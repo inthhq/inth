@@ -1,20 +1,20 @@
 @file:Suppress("DEPRECATION")
 
-package com.c15t.android
+package com.inth.android
 
 import android.preference.PreferenceManager
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.c15t.core.ConsentCore
-import com.c15t.core.CommitIntent
-import com.c15t.core.NativeConfig
-import com.c15t.core.iab.IabConfiguration
-import com.c15t.core.model.ConsentSubject
-import com.c15t.core.model.KernelUser
-import com.c15t.core.model.QueuedSave
-import com.c15t.core.spi.Clock
-import com.c15t.core.spi.TaskExecutor
-import com.c15t.core.store.TcStorageBusKeys
-import com.c15t.core.transport.*
+import com.inth.core.ConsentCore
+import com.inth.core.CommitIntent
+import com.inth.core.NativeConfig
+import com.inth.core.iab.IabConfiguration
+import com.inth.core.model.ConsentSubject
+import com.inth.core.model.KernelUser
+import com.inth.core.model.QueuedSave
+import com.inth.core.spi.Clock
+import com.inth.core.spi.TaskExecutor
+import com.inth.core.store.TcStorageBusKeys
+import com.inth.core.transport.*
 import kotlinx.serialization.json.Json
 import org.junit.After
 import org.junit.Assert.*
@@ -28,7 +28,7 @@ class DeviceAdditionalConsentTest {
 	@Before fun prepare() { awaitLaunchSettled(); uninstallCore(); wipeDevice() }
 	@After fun cleanup() { uninstallCore(); wipeDevice() }
 
-	private fun wipeDevice() { C15tStores.create(appContext()).clearConsentState() }
+	private fun wipeDevice() { InthStores.create(appContext()).clearConsentState() }
 
 	@Test fun testNativeACColdRestoreWithdrawalAndResetInDefaultPreferences() {
 		val context = appContext()
@@ -36,7 +36,7 @@ class DeviceAdditionalConsentTest {
 		val config = NativeConfig("https://consent.instrumentation.invalid",
 			iab = IabConfiguration(53, 7, "GB"))
 		val backend = NativeIabDeviceBackend()
-		val first = ConsentCore(config, C15tStores.create(context), clock = Clock { DEVICE_IAB_NOW },
+		val first = ConsentCore(config, InthStores.create(context), clock = Clock { DEVICE_IAB_NOW },
 			transport = backend, executor = TaskExecutor.DIRECT)
 		first.bootstrap()
 		assertTrue(first.save(CommitIntent.All).ok)
@@ -45,7 +45,7 @@ class DeviceAdditionalConsentTest {
 		val before = first.iabConsent!!
 		assertEquals(before.tcString, defaults.getString(TcStorageBusKeys.TC_STRING, null))
 		defaults.edit().remove(TcStorageBusKeys.ADDTL_CONSENT).commit()
-		val cold = ConsentCore(config, C15tStores.create(context), clock = Clock { DEVICE_IAB_NOW },
+		val cold = ConsentCore(config, InthStores.create(context), clock = Clock { DEVICE_IAB_NOW },
 			transport = backend, executor = TaskExecutor { })
 		cold.bootstrap()
 		assertEquals(before, cold.iabConsent)
@@ -62,7 +62,7 @@ class DeviceAdditionalConsentTest {
 internal const val DEVICE_IAB_NOW = 1_758_100_000_000L
 
 /** Test-only explicit identity and scoped Google examples. Never production defaults. */
-internal class NativeIabDeviceBackend : C15tTransport {
+internal class NativeIabDeviceBackend : InthTransport {
 	override fun init(context: InitContext): TransportOutcome = TransportOutcome.Success(Json.parseToJsonElement(INIT), emptyMap())
 	override fun save(entry: QueuedSave): SaveOutcome = SaveOutcome.Unavailable("device test offline")
 	override fun identify(subject: ConsentSubject, user: KernelUser): TransportOutcome = TransportOutcome.NetworkFailure("offline")

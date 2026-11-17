@@ -1,4 +1,4 @@
-package com.c15t.consentui
+package com.inth.consentui
 
 import android.content.Context
 import androidx.compose.foundation.Image
@@ -63,20 +63,20 @@ internal data class HeaderIdentity(
         val tile = Modifier.size(56.dp).clip(shape)
         when {
             identity.markResId != null -> Image(painterResource(identity.markResId), contentDescription = null, contentScale = ContentScale.Crop,
-                modifier = tile.border(1.dp, Color.Black.copy(alpha = 0.08f), shape).testTag("c15t.first-layer.brand-logo.custom"))
+                modifier = tile.border(1.dp, Color.Black.copy(alpha = 0.08f), shape).testTag("inth.first-layer.brand-logo.custom"))
             // A bundled provider mark has no tile, so it starts at the text edge like the headline.
             identity.provider != null -> {
                 val isInth = identity.provider == ConsentTheme.Branding.Inth
                 Icon(if (isInth) ProviderMarks.inth else ProviderMarks.c15t, contentDescription = null, tint = theme.colors.text.color(),
-                    modifier = Modifier.size(40.dp).testTag("c15t.first-layer.brand-logo.${if (isInth) "inth" else "c15t"}"))
+                    modifier = Modifier.size(40.dp).testTag("inth.first-layer.brand-logo.${if (isInth) "inth" else "c15t"}"))
             }
-            else -> Box(tile.background(theme.colors.primary.color().copy(alpha = 0.12f)).testTag("c15t.first-layer.brand-logo.initial"), contentAlignment = Alignment.Center) {
+            else -> Box(tile.background(theme.colors.primary.color().copy(alpha = 0.12f)).testTag("inth.first-layer.brand-logo.initial"), contentAlignment = Alignment.Center) {
                 Text(HeaderIdentity.initial(identity.name), fontFamily = theme.typography.headlineFont.family, fontWeight = FontWeight.SemiBold,
                     fontSize = 28.sp, color = theme.colors.primary.color(), modifier = Modifier.clearAndSetSemantics {})
             }
         }
         Text(identity.name.uppercase(), style = MaterialTheme.typography.labelLarge, letterSpacing = 1.4.sp,
             color = theme.colors.primary.color(),
-            modifier = Modifier.semantics { contentDescription = identity.name }.testTag("c15t.first-layer.brand"))
+            modifier = Modifier.semantics { contentDescription = identity.name }.testTag("inth.first-layer.brand"))
     }
 }

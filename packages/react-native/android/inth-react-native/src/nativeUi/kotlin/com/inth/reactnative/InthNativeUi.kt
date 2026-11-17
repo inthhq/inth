@@ -1,18 +1,18 @@
-package com.c15t.reactnative
+package com.inth.reactnative
 
 import android.app.Activity
 import android.app.Application
-import com.c15t.consentui.ConsentHost
-import com.c15t.consentui.ConsentHostOutcome
-import com.c15t.consentui.ConsentHostPresentation
-import com.c15t.core.ConsentCore
+import com.inth.consentui.ConsentHost
+import com.inth.consentui.ConsentHostOutcome
+import com.inth.consentui.ConsentHostPresentation
+import com.inth.core.ConsentCore
 
 /**
  * The stock consent screens, in a build that links them. `library.gradle` compiles this
- * file unless the `c15t.nativeUI` Gradle property is `false`, and the
+ * file unless the `inth.nativeUI` Gradle property is `false`, and the
  * `src/withoutNativeUi` twin otherwise.
  */
-internal object C15tNativeUi {
+internal object InthNativeUi {
 	/** Whether this build links the stock consent screens. */
 	const val AVAILABLE = true
 
@@ -25,9 +25,9 @@ internal object C15tNativeUi {
 		outcome: (String) -> Unit,
 	): String {
 		val session = ConsentHost.present(activity, core, preferences, privacyPolicyUrl, owner = owner) {
-			outcome(C15tHostPayload.consentHostOutcome(it))
+			outcome(InthHostPayload.consentHostOutcome(it))
 		}
-		return C15tHostPayload.consentHostSession(session)
+		return InthHostPayload.consentHostSession(session)
 	}
 
 	/**
@@ -46,13 +46,13 @@ internal object C15tNativeUi {
 		emit: (event: String, payload: String) -> Unit,
 	) = ConsentHost.configure(application, activity, core, autoPresent, privacyPolicyUrl, owner, object : ConsentHost.Listener {
 		override fun presented(sessionId: String, presentation: ConsentHostPresentation, automatic: Boolean) =
-			emit(C15tPayload.EVENT_PRESENTER_PRESENTED, C15tHostPayload.consentHostPresented(sessionId, presentation, automatic))
+			emit(InthPayload.EVENT_PRESENTER_PRESENTED, InthHostPayload.consentHostPresented(sessionId, presentation, automatic))
 
 		override fun unavailable(code: String, message: String) =
-			emit(C15tPayload.EVENT_PRESENTER_UNAVAILABLE, C15tPayload.presenterUnavailable(code, message))
+			emit(InthPayload.EVENT_PRESENTER_UNAVAILABLE, InthPayload.presenterUnavailable(code, message))
 
 		override fun outcome(outcome: ConsentHostOutcome) =
-			emit(C15tPayload.EVENT_PRESENTER_OUTCOME, C15tHostPayload.consentHostOutcome(outcome))
+			emit(InthPayload.EVENT_PRESENTER_OUTCOME, InthHostPayload.consentHostOutcome(outcome))
 	})
 
 	/** Move to [core]'s prompt after an uninstall and a new install. */

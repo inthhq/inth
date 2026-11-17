@@ -1,5 +1,5 @@
 import Foundation
-@_spi(C15tInternal) import C15tCore
+@_spi(InthInternal) import InthCore
 
 // Measures the budgets in `packages/native-protocol/CONTRACT.md` and prints numbers. Nothing here is
 // a claim: every line is a measured distribution, and a budget that is not met
@@ -20,13 +20,13 @@ struct StubHTTP: HTTPTransport {
 }
 
 /// Fails every delivery, which is the case the 50 ms commit budget is about.
-struct DeadTransport: C15tTransport {
+struct DeadTransport: InthTransport {
     let domain: String = "consent.example.com"
-    func performInit(_ context: InitContext) async -> Result<InitResponse, C15tError> {
+    func performInit(_ context: InitContext) async -> Result<InitResponse, InthError> {
         .failure(.offline)
     }
 
-    func sendSave(_ body: Data) async -> Result<Void, C15tError> {
+    func sendSave(_ body: Data) async -> Result<Void, InthError> {
         .failure(.offline)
     }
 
@@ -34,7 +34,7 @@ struct DeadTransport: C15tTransport {
         subjectId: String,
         externalId: String,
         identityProvider: String?
-    ) async -> Result<Void, C15tError> {
+    ) async -> Result<Void, InthError> {
         .failure(.offline)
     }
 }
@@ -225,11 +225,11 @@ func wait(
     while !condition(), Date() < deadline {}
 }
 
-print("C15tCore benchmarks")
+print("InthCore benchmarks")
 print("reference: Apple silicon, in-process; budgets from packages/native-protocol/CONTRACT.md")
 
 let seedStore = makeStore()
-let seededEnvelopeBytes = seedStore.data(for: "com.c15t.snapshot").map { Double($0.count) } ?? 0
+let seededEnvelopeBytes = seedStore.data(for: "com.inth.snapshot").map { Double($0.count) } ?? 0
 print("stored envelope: \(Int(seededEnvelopeBytes)) bytes")
 
 // MARK: - hydrate-from-store
@@ -343,7 +343,7 @@ let memorySaveTiming = measure(iterations: 500, warmup: 25) { _ in
 report("save(.all), in-memory store", memorySaveTiming, unit: "µs", budget: 50_000)
 
 let directory = FileManager.default.temporaryDirectory
-    .appendingPathComponent("c15t-bench-\(UUID().uuidString)", isDirectory: true)
+    .appendingPathComponent("inth-bench-\(UUID().uuidString)", isDirectory: true)
 let fileStore = FileStore(directory: directory)
 seed(fileStore)
 let fileSaveCore = ConsentCore()

@@ -1,4 +1,4 @@
-package com.c15t.core.tc
+package com.inth.core.tc
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

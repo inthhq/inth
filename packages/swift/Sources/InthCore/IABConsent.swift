@@ -125,7 +125,7 @@ public struct IABCommittedConsent: Sendable, Codable, Equatable {
 enum IABAuthority {
     static func disclosureID(_ gvl: GlobalVendorList) throws -> String {
         // Older unprefixed hashes bound only the typed projection, which may have lost disclosure fields.
-        "gvl-v2:" + SHA256.hash(data: try C15tJSON.encode(gvl)).map { String(format: "%02x", $0) }.joined()
+        "gvl-v2:" + SHA256.hash(data: try InthJSON.encode(gvl)).map { String(format: "%02x", $0) }.joined()
     }
     static let neverLI: Set<Int> = [1, 3, 4, 5, 6]
     static func build(

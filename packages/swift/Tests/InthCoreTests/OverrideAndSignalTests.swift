@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 /// Pins the corrected overrides and privacy signals: what the core encodes, what
 /// it refuses to read back, and what a save body has to carry.
@@ -16,29 +16,29 @@ final class OverrideAndSignalTests: XCTestCase {
     private func mutableSnapshotFields(
         _ snapshot: ConsentSnapshot = ConsentSnapshot(revision: 4)
     ) throws -> [String: JSONValue] {
-        let data = try C15tJSON.encode(snapshot)
-        return try XCTUnwrap(C15tJSON.parse(data)?.objectValue)
+        let data = try InthJSON.encode(snapshot)
+        return try XCTUnwrap(InthJSON.parse(data)?.objectValue)
     }
 
     private func decodeSnapshot(_ fields: [String: JSONValue]) throws -> ConsentSnapshot {
-        try C15tJSON.decode(ConsentSnapshot.self, from: try XCTUnwrap(C15tJSON.encode(.object(fields))))
+        try InthJSON.decode(ConsentSnapshot.self, from: try XCTUnwrap(InthJSON.encode(.object(fields))))
     }
 
     // MARK: - Shape
 
     func testOverridesEncodeTheFourKernelFieldsAndNothingElse() throws {
-        let data = try C15tJSON.encode(
+        let data = try InthJSON.encode(
             ConsentOverrides(country: "DE", region: nil, language: "de", gpc: true)
         )
-        let object = try XCTUnwrap(C15tJSON.parse(data)?.objectValue)
+        let object = try XCTUnwrap(InthJSON.parse(data)?.objectValue)
         XCTAssertEqual(Set(object.keys), ["country", "region", "language", "gpc"])
         XCTAssertEqual(object["gpc"]?.boolValue, true)
         XCTAssertNil(object["test"], "publisher test mode is a client option, not an override")
     }
 
     func testPrivacySignalsEncodeTheDetectedOverrideActiveTriple() throws {
-        let data = try C15tJSON.encode(PrivacySignals.none)
-        let signals = try XCTUnwrap(C15tJSON.parse(data)?.objectValue)
+        let data = try InthJSON.encode(PrivacySignals.none)
+        let signals = try XCTUnwrap(InthJSON.parse(data)?.objectValue)
         XCTAssertNil(signals["msa"], "there is no msa signal anywhere in v3")
 
         let gpc = try XCTUnwrap(signals["gpc"]?.objectValue)
@@ -102,7 +102,7 @@ final class OverrideAndSignalTests: XCTestCase {
             for: StorageKey.subject
         )
         let envelope = try XCTUnwrap(
-            C15tJSON.encode(
+            InthJSON.encode(
                 .object([
                     "version": .integer(1),
                     "storedAt": .integer(1),
@@ -180,7 +180,7 @@ final class OverrideAndSignalTests: XCTestCase {
             "location": .object(["countryCode": .string("DE")]),
             "policyResolution": Fixture.matchedResolution(),
         ])
-        let data = try? XCTUnwrap(C15tJSON.encode(body))
+        let data = try? XCTUnwrap(InthJSON.encode(body))
         http.enqueueInit(
             .json(String(decoding: data ?? Data("{}".utf8), as: UTF8.self))
         )
@@ -204,7 +204,7 @@ final class OverrideAndSignalTests: XCTestCase {
         await core.waitUntilIdle()
 
         let request = try? XCTUnwrap(http.recordedSaveRequests.last)
-        let body = C15tJSON.parse(request?.body ?? Data())
+        let body = InthJSON.parse(request?.body ?? Data())
         XCTAssertNil(body?["policySnapshotToken"], "this init served no token")
         XCTAssertEqual(
             body?["gpc"]?.boolValue,
@@ -241,10 +241,10 @@ final class OverrideAndSignalTests: XCTestCase {
         )
         // A queued payload replays unchanged, so the claim it carries cannot depend on
         // whether the first attempt happened to have a token.
-        let encoded = C15tJSON.parse(try C15tJSON.encode(payload))
+        let encoded = InthJSON.parse(try InthJSON.encode(payload))
         XCTAssertEqual(encoded?["decisionInputs"]?["gpc"]?.boolValue, true)
         XCTAssertNil(
-            C15tJSON.parse(
+            InthJSON.parse(
                 try SubjectPostBodyBuilder.body(for: payload, domain: "app.example.com")
             )?["gpc"],
             "the token is the stronger claim, so the flat assertion stays off the wire"

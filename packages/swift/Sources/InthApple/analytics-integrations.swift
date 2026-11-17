@@ -1,5 +1,5 @@
-#if canImport(C15tCore)
-import C15tCore
+#if canImport(InthCore)
+import InthCore
 #endif
 import Foundation
 
@@ -8,7 +8,7 @@ import Foundation
 /// Measurement grants `analyticsStorage`; marketing grants `adStorage`, `adUserData`
 /// and `adPersonalization`. See ``GoogleConsentMode``. Map these values to
 /// Firebase's `ConsentType` and `ConsentStatus` in the app, where Firebase is
-/// installed. c15t does not link or configure Firebase for you.
+/// installed. Inth does not link or configure Firebase for you.
 public struct FirebaseAnalyticsConsent: Equatable, Sendable {
     public let analyticsStorage: Bool
     public let adStorage: Bool

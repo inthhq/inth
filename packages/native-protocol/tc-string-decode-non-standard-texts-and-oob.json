@@ -1,5 +1,5 @@
 {
-	"description": "The two remaining core-segment bits c15t leaves alone: non-standard texts set, and supportOOB on with the string addressed to vendors.",
+	"description": "The two remaining core-segment bits Inth leaves alone: non-standard texts set, and supportOOB on with the string addressed to vendors.",
 	"expected": {
 		"decode": {
 			"fields": {

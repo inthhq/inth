@@ -48,12 +48,12 @@ public struct BundledPolicyResource: Sendable {
     }
 
     func resolve(overrides: ConsentOverrides, now: Int64) -> Selection? {
-        guard let wrapper = C15tJSON.parse(data), let payload = wrapper["payload"]?.stringValue,
+        guard let wrapper = InthJSON.parse(data), let payload = wrapper["payload"]?.stringValue,
             wrapper.objectValue?.count == 2,
             wrapper["sha256"]?.stringValue
                 == SHA256.hash(data: Data(payload.utf8)).map({ String(format: "%02x", $0) })
                 .joined(),
-            let value = C15tJSON.parse(Data(payload.utf8)), value["schemaVersion"]?.intValue == 1,
+            let value = InthJSON.parse(Data(payload.utf8)), value["schemaVersion"]?.intValue == 1,
             let endpoint = value["endpoint"]?.stringValue, let issued = value["issuedAt"]?.intValue,
             let expiry = value["expiresAt"]?.intValue,
             let revision = value["manifestRevision"]?.stringValue,

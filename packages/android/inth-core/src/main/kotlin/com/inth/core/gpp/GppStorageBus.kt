@@ -1,9 +1,9 @@
-package com.c15t.core.gpp
+package com.inth.core.gpp
 
-import com.c15t.core.iab.IabCommittedConsent
-import com.c15t.core.store.TcBusValue
-import com.c15t.core.store.TcStorageBusKeys
-import com.c15t.core.store.TcStorageBusProjection
+import com.inth.core.iab.IabCommittedConsent
+import com.inth.core.store.TcBusValue
+import com.inth.core.store.TcStorageBusKeys
+import com.inth.core.store.TcStorageBusProjection
 
 /**
  * The `IABGPP_*` in-app keys, from the GPP CMP API specification ("In-App Key Names")

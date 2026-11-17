@@ -2,18 +2,18 @@
 // the application-default file. The production side takes the same trade.
 @file:Suppress("DEPRECATION")
 
-package com.c15t.android
+package com.inth.android
 
 import android.content.Context
 import android.content.SharedPreferences
 import android.preference.PreferenceManager
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.c15t.core.SubjectIdGenerator
-import com.c15t.core.model.ConsentSnapshot
-import com.c15t.core.model.ConsentSubject
-import com.c15t.core.store.SnapshotEnvelope
-import com.c15t.core.store.TcStorageBusKeys
-import com.c15t.core.tc.GlobalVendorList
+import com.inth.core.SubjectIdGenerator
+import com.inth.core.model.ConsentSnapshot
+import com.inth.core.model.ConsentSubject
+import com.inth.core.store.SnapshotEnvelope
+import com.inth.core.store.TcStorageBusKeys
+import com.inth.core.tc.GlobalVendorList
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -25,11 +25,11 @@ import org.junit.runner.RunWith
  * The one bus fact this module owns: the store an install builds carries a sink, and
  * that sink lands in the application-default `SharedPreferences`.
  *
- * `:c15t-core`'s `TcStorageBusTest` proves the projection fills the two rows a core
+ * `:inth-core`'s `TcStorageBusTest` proves the projection fills the two rows a core
  * can honestly fill and that the store hands them over at the right moments, against
  * a recording double. What it cannot prove is the thing a vendor SDK depends on: that
  * a real install points that double's replacement at the file the specification tells
- * a reader to open. A sink aimed at a c15t-named preferences file, or none at all,
+ * a reader to open. A sink aimed at a inth-named preferences file, or none at all,
  * keeps every JVM test green and ships a device that publishes nothing, which is how
  * this file exists.
  *
@@ -66,9 +66,9 @@ class DeviceStorageBusTest {
 		val defaults = defaultPreferences(context)
 
 		// A device that already holds a list `/init` served, written by the same store
-		// composition `C15tAndroid.install` opens. This commit is the assertion that the
+		// composition `InthAndroid.install` opens. This commit is the assertion that the
 		// installed store has somewhere to put the bus, before a kernel is in the room.
-		val store = C15tStores.create(context)
+		val store = InthStores.create(context)
 		// The envelope belongs to this installation. One keyed to any other subject id is an
 		// orphan, and bootstrap discards it, bus and all, before it could be re-published.
 		val subject = store.readSubject()
@@ -84,11 +84,11 @@ class DeviceStorageBusTest {
 		// A previous CMP's row, and a key outside the specification's table that belongs
 		// to a Google layer rather than to this bus.
 		defaults.edit()
-			.putString(TcStorageBusKeys.TC_STRING, "CMP-before-c15t")
+			.putString(TcStorageBusKeys.TC_STRING, "CMP-before-inth")
 			.putString(FOREIGN_KEY, "G-1")
 			.apply()
 
-		C15tAndroid.install(context, deviceConfig(), transport = DeviceBackend())
+		InthAndroid.install(context, deviceConfig(), transport = DeviceBackend())
 
 		assertEquals(
 			"the installed core re-publishes the stored list, as a Number, read the way a vendor reads it",
@@ -132,7 +132,7 @@ class DeviceStorageBusTest {
 
 	/** Back to nothing stored, so the next test class starts where this one did. */
 	private fun wipeDevice() {
-		C15tStores.create(appContext()).clearConsentState()
+		InthStores.create(appContext()).clearConsentState()
 		defaultPreferences(appContext()).edit().remove(FOREIGN_KEY).apply()
 	}
 

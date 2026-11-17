@@ -8,10 +8,10 @@ import { describe, expect, it } from 'vitest';
 
 import { applyAndroidManifest } from '../android';
 import { ANDROID_META, IOS_PLIST_KEY } from '../constants';
-import { C15tPluginError } from '../errors';
+import { InthPluginError } from '../errors';
 import { applyInfoPlist } from '../ios';
 import { resolveParams } from '../params';
-import type { C15tPolicyRule } from '../params';
+import type { InthPolicyRule } from '../params';
 import {
 	androidPolicyRulesDestination,
 	POLICY_RULES_NAME,
@@ -21,7 +21,7 @@ import { FIXTURE_DIR, WITH_POLICY, IN_CODE_POLICY } from './helpers';
 
 const BACKEND = 'https://acme.inth.app';
 
-const fallback: C15tPolicyRule = {
+const fallback: InthPolicyRule = {
 	id: 'everywhere',
 	match: { fallback: true, isDefault: true },
 	model: 'opt-in',
@@ -37,7 +37,7 @@ const parity = JSON.parse(
 		'utf8'
 	)
 ) as {
-	rules: C15tPolicyRule[];
+	rules: InthPolicyRule[];
 	invalid: { name: string; rules: unknown }[];
 	accepted: { name: string; rules: unknown[] }[];
 };
@@ -56,7 +56,7 @@ describe('prebuild refuses what the native cores refuse', () => {
 				resolveParams({ backendURL: BACKEND, policy: { rules } as never });
 				return true;
 			} catch (error) {
-				return !(error instanceof C15tPluginError);
+				return !(error instanceof InthPluginError);
 			}
 		});
 		expect(accepted.map(({ name }) => name)).toEqual([]);
@@ -124,7 +124,7 @@ describe('the in-code policy', () => {
 
 	it('refuses a bundled manifest and IAB, which come from /init', () => {
 		for (const [name, props] of [
-			['policyResource', { policyResource: 'c15t-policy.json' }],
+			['policyResource', { policyResource: 'inth-policy.json' }],
 			['bundleManifest', { bundleManifest: true }],
 			[
 				'iab',
@@ -183,7 +183,7 @@ describe('the in-code policy', () => {
 	});
 
 	it('writes the rules in the shape both cores read', async () => {
-		const root = await mkdtemp(join(tmpdir(), 'c15t-policy-rules-'));
+		const root = await mkdtemp(join(tmpdir(), 'inth-policy-rules-'));
 		try {
 			const destination = androidPolicyRulesDestination(root);
 			await writePolicyRules(destination, IN_CODE_POLICY.rules);

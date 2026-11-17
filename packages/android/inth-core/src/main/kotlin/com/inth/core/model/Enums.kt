@@ -1,4 +1,4 @@
-package com.c15t.core.model
+package com.inth.core.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -40,7 +40,7 @@ enum class ConsentModel(val wireName: String) {
 	 * matched IAB policy, so nothing about which rule matched is hidden.
 	 *
 	 * A report, not a permission. Every category decision still reads the real rule on
-	 * [com.c15t.core.policy.EvaluationPolicy.model].
+	 * [com.inth.core.policy.EvaluationPolicy.model].
 	 */
 	val runtimeModel: ConsentModel
 		get() = if (this == IAB) OPT_IN else this

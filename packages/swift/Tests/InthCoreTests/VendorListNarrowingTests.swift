@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 /// Cutting a served vendor list down to a publisher's declared scope.
 ///
@@ -173,7 +173,7 @@ final class VendorListNarrowingTests: XCTestCase {
     /// A scope id the served document does not carry stays absent from the result.
     ///
     /// This is the difference between pruning a document and rebuilding one from a scope: a
-    /// manufactured entry would carry a name the framework never assigned, making c15t the
+    /// manufactured entry would carry a name the framework never assigned, making Inth the
     /// source of a vendor no GVL revision stands behind. A scope that matches nothing prunes
     /// to an empty map, which is what a non-empty `allowed` against an unrelated set answers
     /// on the web, and it stays a declared scope rather than no scope, so unlike `[]` it

@@ -1,4 +1,4 @@
-package com.c15t.reactnative;
+package com.inth.reactnative;
 
 import androidx.annotation.Nullable;
 import com.facebook.react.bridge.Promise;
@@ -8,12 +8,12 @@ import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.turbomodule.core.interfaces.TurboModule;
 
 /**
- * Compile-time stand-in for the Codegen-generated {@code NativeC15tSpec}.
+ * Compile-time stand-in for the Codegen-generated {@code NativeInthSpec}.
  *
- * <p>Source of truth is {@code ../../src/specs/NativeC15t.ts}. The real class is
+ * <p>Source of truth is {@code ../../src/specs/NativeInth.ts}. The real class is
  * produced by React Native Codegen in the build that runs Codegen, which for an app
  * is the app build, and this file is the same shape so a library can compile without
- * one. It is packaged nowhere: {@code :c15t-spec} is a {@code compileOnly}
+ * one. It is packaged nowhere: {@code :inth-spec} is a {@code compileOnly}
  * dependency, so the app's generated class is the only one in a finished APK.
  *
  * <p>Signature rules follow Codegen, as observed from its output rather than guessed:
@@ -29,15 +29,15 @@ import com.facebook.react.turbomodule.core.interfaces.TurboModule;
  * {@code src/specs/__tests__/android-spec-surface.test.ts} generates the spec and
  * compares method names, argument types, return types, the blocking flag, and the
  * module name against what is written here;
- * {@code :c15t-react-native}'s {@code C15tModuleSurfaceTest} reflects over the compiled
+ * {@code :inth-react-native}'s {@code InthModuleSurfaceTest} reflects over the compiled
  * bridge. The generator itself runs in the build with
- * {@code ./gradlew -Pc15t.spec.source=codegen :c15t-spec:assembleRelease}.
+ * {@code ./gradlew -Pinth.spec.source=codegen :inth-spec:assembleRelease}.
  */
-public abstract class NativeC15tSpec extends ReactContextBaseJavaModule implements TurboModule {
+public abstract class NativeInthSpec extends ReactContextBaseJavaModule implements TurboModule {
 	/** Name the JavaScript side looks this module up by. */
-	public static final String NAME = "C15t";
+	public static final String NAME = "Inth";
 
-	protected NativeC15tSpec(@Nullable ReactApplicationContext reactContext) {
+	protected NativeInthSpec(@Nullable ReactApplicationContext reactContext) {
 		super(reactContext);
 	}
 

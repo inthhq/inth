@@ -1,5 +1,5 @@
-import C15tApple
-import C15tCore
+import InthApple
+import InthCore
 import UIKit
 
 @main
@@ -38,7 +38,7 @@ final class ConsentExampleAppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     private func retryInstallation() {
-        guard installationError as? C15tAppleInstallationError == .protectedStorageUnavailable else { return }
+        guard installationError as? InthAppleInstallationError == .protectedStorageUnavailable else { return }
         do {
             try InstallConsent.install()
             installationError = nil

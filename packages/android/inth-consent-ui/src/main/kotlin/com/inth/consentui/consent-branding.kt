@@ -1,4 +1,4 @@
-package com.c15t.consentui
+package com.inth.consentui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -41,14 +41,14 @@ internal object ProviderMarks {
     val provider = theme.branding
     val color = theme.colors.textMuted.color()
     Row(
-        modifier = Modifier.fillMaxWidth().testTag("c15t.first-layer.branding")
+        modifier = Modifier.fillMaxWidth().testTag("inth.first-layer.branding")
             .semantics(mergeDescendants = true) { contentDescription = "$securedBy ${provider.name}" },
         horizontalArrangement = Arrangement.spacedBy(5.dp, Alignment.End),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(securedBy, style = MaterialTheme.typography.labelMedium, color = color,
             modifier = Modifier.clearAndSetSemantics {})
-        val logo = Modifier.size(15.dp).testTag("c15t.first-layer.branding.logo")
+        val logo = Modifier.size(15.dp).testTag("inth.first-layer.branding.logo")
         when (provider) {
             ConsentTheme.Branding.C15t -> Icon(ProviderMarks.c15t, null, modifier = logo, tint = color)
             ConsentTheme.Branding.Inth -> Icon(ProviderMarks.inth, null, modifier = logo, tint = color)

@@ -15,7 +15,7 @@ import AppTrackingTransparency
 /// package builds against: the request arrives with iOS and iPadOS 27.2. A block parameter
 /// is an `id` to the caller, and App Tracking Transparency's own block types take and return
 /// exactly what is written here, which is what makes the cast honest rather than hopeful.
-private typealias C15tExpandedRequestFunction = @convention(c) (
+private typealias InthExpandedRequestFunction = @convention(c) (
     AnyObject,
     Selector,
     ObjCBool,
@@ -28,7 +28,7 @@ private typealias C15tExpandedRequestFunction = @convention(c) (
 ///
 /// Two facts come out of here: whether this binary is allowed to show Apple's dialog, and
 /// what Apple currently answers. Neither is a consent statement, and neither is derived
-/// from one. The decisions those facts lead to live in ``C15tTrackingGate``, which is why
+/// from one. The decisions those facts lead to live in ``InthTrackingGate``, which is why
 /// this file holds no `if` that a test cannot reach without a device.
 ///
 /// The availability guard is not for old iPhones. The pod's deployment floor is iOS 16.4,
@@ -37,12 +37,12 @@ private typealias C15tExpandedRequestFunction = @convention(c) (
 /// without an iPhone in sight: a macOS `swift test` run, and anything else where the
 /// framework is not in the SDK. Those reads answer `nil`, which the gate turns into
 /// `unsupported`, rather than failing to link.
-public enum C15tTracking {
+public enum InthTracking {
     /// The `Info.plist` key that makes the Apple dialog possible.
     ///
     /// This is the runtime half of the Expo plugin's `enableAppTrackingTransparency`, and
     /// the plugin writes the key only under that flag. Reading the key rather than a
-    /// c15t-namespaced setting is deliberate: it is the same check Apple performs, so a
+    /// inth-namespaced setting is deliberate: it is the same check Apple performs, so a
     /// host that wrote the string by hand without the plugin is not refused a prompt it
     /// can genuinely show.
     public static let promptStringKey = "NSUserTrackingUsageDescription"
@@ -58,7 +58,7 @@ public enum C15tTracking {
     }
 
     /// Apple's current answer, or `nil` where this platform has no ATT to ask.
-    public static func platformStatus() -> C15tTrackingPlatformStatus? {
+    public static func platformStatus() -> InthTrackingPlatformStatus? {
         #if canImport(AppTrackingTransparency) && os(iOS)
         if #available(iOS 14.0, *) {
             return platformStatus(ATTrackingManager.trackingAuthorizationStatus)
@@ -73,13 +73,13 @@ public enum C15tTracking {
     /// runs on the JavaScript thread, so the hop is not a courtesy: without it the
     /// dialog is what triggers the main-thread checker in a debug build.
     ///
-    /// Call it only when ``C15tTrackingGate/request(platform:promptStringPresent:)`` said
+    /// Call it only when ``InthTrackingGate/request(platform:promptStringPresent:)`` said
     /// `.prompt`. The handler enforces that, because calling this on a build without a
     /// prompt string is how an install spends its one dialog on nothing.
     ///
     /// - Parameter completion: runs wherever Apple delivers its answer.
     public static func requestPrompt(
-        completion: @escaping (C15tTrackingPlatformStatus?) -> Void
+        completion: @escaping (InthTrackingPlatformStatus?) -> Void
     ) {
         #if canImport(AppTrackingTransparency) && os(iOS)
         if #available(iOS 14.0, *) {
@@ -164,7 +164,7 @@ public enum C15tTracking {
     public static func requestExpandedPrompt(
         preferExpandedInterface: Bool,
         additionalInformationSelected: (() -> Void)?,
-        completion: @escaping (C15tTrackingPlatformStatus?) -> Void
+        completion: @escaping (InthTrackingPlatformStatus?) -> Void
     ) -> Bool {
         requestExpandedPrompt(on: trackingManagerClass(), preferExpandedInterface: preferExpandedInterface,
                               additionalInformationSelected: additionalInformationSelected, completion: completion)
@@ -176,7 +176,7 @@ public enum C15tTracking {
         on managerClass: AnyClass?,
         preferExpandedInterface: Bool,
         additionalInformationSelected: (() -> Void)?,
-        completion: @escaping (C15tTrackingPlatformStatus?) -> Void
+        completion: @escaping (InthTrackingPlatformStatus?) -> Void
     ) -> Bool {
         #if canImport(ObjectiveC)
         guard let managerClass else { return false }
@@ -195,7 +195,7 @@ public enum C15tTracking {
             return block
         }
         let implementation = method_getImplementation(method)
-        let request = unsafeBitCast(implementation, to: C15tExpandedRequestFunction.self)
+        let request = unsafeBitCast(implementation, to: InthExpandedRequestFunction.self)
 
         // The same main-thread hop `requestPrompt` makes, and for the same reason: Apple
         // presents from the main thread and a module method runs on the JavaScript thread.
@@ -205,7 +205,7 @@ public enum C15tTracking {
                 selector,
                 ObjCBool(preferExpandedInterface),
                 action,
-                { raw in completion(C15tTrackingPlatformStatus(rawValue: raw)) }
+                { raw in completion(InthTrackingPlatformStatus(rawValue: raw)) }
             )
         }
         return true
@@ -228,7 +228,7 @@ public enum C15tTracking {
     @available(iOS 14.0, *)
     private static func platformStatus(
         _ status: ATTrackingManager.AuthorizationStatus
-    ) -> C15tTrackingPlatformStatus {
+    ) -> InthTrackingPlatformStatus {
         switch status {
         case .authorized: return .authorized
         case .denied: return .denied

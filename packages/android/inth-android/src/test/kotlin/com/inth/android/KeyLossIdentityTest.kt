@@ -1,18 +1,18 @@
-package com.c15t.android
+package com.inth.android
 
-import com.c15t.core.ConsentCore
-import com.c15t.core.NativeConfig
-import com.c15t.core.crypto.AesGcmCodec
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentSubject
-import com.c15t.core.spi.KeyValueStore
-import com.c15t.core.spi.SymmetricKeyProvider
-import com.c15t.core.spi.TaskExecutor
-import com.c15t.core.store.C15tJson
-import com.c15t.core.store.C15tStore
-import com.c15t.core.store.C15tStoreKeys
-import com.c15t.core.store.ResilientKeyValueStore
-import com.c15t.core.store.SubjectPreservingStore
+import com.inth.core.ConsentCore
+import com.inth.core.NativeConfig
+import com.inth.core.crypto.AesGcmCodec
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentSubject
+import com.inth.core.spi.KeyValueStore
+import com.inth.core.spi.SymmetricKeyProvider
+import com.inth.core.spi.TaskExecutor
+import com.inth.core.store.InthJson
+import com.inth.core.store.InthStore
+import com.inth.core.store.InthStoreKeys
+import com.inth.core.store.ResilientKeyValueStore
+import com.inth.core.store.SubjectPreservingStore
 import java.io.File
 import java.nio.file.Files
 import java.security.KeyStoreException
@@ -27,7 +27,7 @@ import org.junit.Test
 /**
  * Subject identity across a dead keystore key, on the real file store.
  *
- * `:c15t-core` proves the routing and the migration against storage doubles. This
+ * `:inth-core` proves the routing and the migration against storage doubles. This
  * drives the same composition through [EncryptedFileStore] with a software key the
  * test revokes, because the failure that matters is physical: the blobs stay on disk
  * and refuse to decrypt, while the id has to be somewhere a key reset cannot reach.
@@ -47,22 +47,22 @@ class KeyLossIdentityTest {
 		)
 		val identity = PrefsStore()
 
-		val first = kernel(C15tStore(SubjectPreservingStore(records, identity)))
+		val first = kernel(InthStore(SubjectPreservingStore(records, identity)))
 		first.bootstrap()
 		val originalId = requireSubject(first.snapshot().subject).id
 		assertEquals("a fresh install mints exactly one id", 1, idsMinted)
 		assertTrue(
 			"consent records belong in the encrypted directory",
-			File(directory, C15tStoreKeys.SNAPSHOT).isFile,
+			File(directory, InthStoreKeys.SNAPSHOT).isFile,
 		)
 		assertFalse(
 			"identity must be out of reach of a key reset",
-			File(directory, C15tStoreKeys.SUBJECT).isFile,
+			File(directory, InthStoreKeys.SUBJECT).isFile,
 		)
 
 		// What a revoked AndroidKeyStore alias looks like from Java.
 		key.destroy()
-		val second = kernel(C15tStore(SubjectPreservingStore(records, identity)))
+		val second = kernel(InthStore(SubjectPreservingStore(records, identity)))
 		second.bootstrap()
 
 		assertEquals(
@@ -97,29 +97,29 @@ class KeyLossIdentityTest {
 		// different story -- the core refuses that id and the records under it, which is
 		// pinned in SubjectIdentityTest.
 		records.write(
-			C15tStoreKeys.SUBJECT,
-			C15tJson.storage.encodeToString(ConsentSubject.serializer(), ConsentSubject(id = CARRIED_ID)),
+			InthStoreKeys.SUBJECT,
+			InthJson.storage.encodeToString(ConsentSubject.serializer(), ConsentSubject(id = CARRIED_ID)),
 		)
 		assertTrue(
 			"the fixture must really be on the encrypted path",
-			File(directory, C15tStoreKeys.SUBJECT).isFile,
+			File(directory, InthStoreKeys.SUBJECT).isFile,
 		)
 		val identity = PrefsStore()
 
-		val upgraded = C15tStore(SubjectPreservingStore(records, identity))
+		val upgraded = InthStore(SubjectPreservingStore(records, identity))
 		assertEquals(CARRIED_ID, requireSubject(upgraded.readSubject()).id)
-		assertFalse("the encrypted copy is retired", File(directory, C15tStoreKeys.SUBJECT).isFile)
-		assertEquals("the id now lives in plain storage", listOf(C15tStoreKeys.SUBJECT), identity.storedKeys)
+		assertFalse("the encrypted copy is retired", File(directory, InthStoreKeys.SUBJECT).isFile)
+		assertEquals("the id now lives in plain storage", listOf(InthStoreKeys.SUBJECT), identity.storedKeys)
 
 		// A later launch must find the same answer and disturb nothing.
-		val nextLaunch = C15tStore(SubjectPreservingStore(records, identity))
+		val nextLaunch = InthStore(SubjectPreservingStore(records, identity))
 		assertEquals(CARRIED_ID, requireSubject(nextLaunch.readSubject()).id)
 		assertEquals("running the migration twice cannot change the id", CARRIED_ID, identity.subjectId())
-		assertFalse(File(directory, C15tStoreKeys.SUBJECT).isFile)
+		assertFalse(File(directory, InthStoreKeys.SUBJECT).isFile)
 		assertEquals(0, idsMinted)
 	}
 
-	private fun kernel(store: C15tStore): ConsentCore = ConsentCore(
+	private fun kernel(store: InthStore): ConsentCore = ConsentCore(
 		config = NativeConfig(backendUrl = "https://test.c15t.app"),
 		store = store,
 		// Inline execution keeps hydration inside bootstrap(), so one launch reads as
@@ -135,7 +135,7 @@ class KeyLossIdentityTest {
 		},
 	)
 
-	private fun newDirectory(): File = Files.createTempDirectory("c15t-identity").toFile().apply { deleteOnExit() }
+	private fun newDirectory(): File = Files.createTempDirectory("inth-identity").toFile().apply { deleteOnExit() }
 
 	private companion object {
 		/** An id written by an older build, already in the format the producer takes. */
@@ -149,7 +149,7 @@ class KeyLossIdentityTest {
 	private fun generateKey(): SecretKey = KeyGenerator.getInstance("AES").apply { init(256) }.generateKey()
 		.let { SecretKeySpec(it.encoded, "AES") }
 
-	private fun PrefsStore.subjectId(): String? = C15tStore(this).readSubject()?.id
+	private fun PrefsStore.subjectId(): String? = InthStore(this).readSubject()?.id
 
 	/** A key the test can revoke, standing in for a lost AndroidKeyStore alias. */
 	private class RotatingKey(initial: SecretKey?) : SymmetricKeyProvider {
@@ -159,7 +159,7 @@ class KeyLossIdentityTest {
 			current = null
 		}
 
-		override fun key(): SecretKey = current ?: throw KeyStoreException("No such key: c15t")
+		override fun key(): SecretKey = current ?: throw KeyStoreException("No such key: Inth")
 	}
 
 	/** Stands in for the `SharedPreferences` files, without a [android.content.Context]. */

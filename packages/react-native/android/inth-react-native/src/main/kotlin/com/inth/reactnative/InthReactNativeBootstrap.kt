@@ -1,13 +1,13 @@
-package com.c15t.reactnative
+package com.inth.reactnative
 
 import android.content.Context
 import android.content.pm.PackageManager
-import com.c15t.android.C15tAndroid
-import com.c15t.android.C15tManifestValue
-import com.c15t.core.C15t
-import com.c15t.core.NativeConfig
-import com.c15t.core.model.KernelOverrides
-import com.c15t.core.transport.C15tProtocol
+import com.inth.android.InthAndroid
+import com.inth.android.InthManifestValue
+import com.inth.core.Inth
+import com.inth.core.NativeConfig
+import com.inth.core.model.KernelOverrides
+import com.inth.core.transport.InthProtocol
 import java.util.Locale
 
 /**
@@ -19,14 +19,14 @@ import java.util.Locale
  * `getBootstrap()` and `getSnapshot()` against real stored consent instead of an
  * empty deny-all.
  *
- * An app that installs the core itself sets `com.c15t.reactnative.AUTO_BOOTSTRAP` to
+ * An app that installs the core itself sets `com.inth.reactnative.AUTO_BOOTSTRAP` to
  * `false`, and this then stays out of the way: the reads answer deny-all until that
- * app calls [C15tAndroid.install], and the module keeps working against whatever core is
+ * app calls [InthAndroid.install], and the module keeps working against whatever core is
  * installed.
  */
-object C15tReactNativeBootstrap {
+object InthReactNativeBootstrap {
 	/** Manifest switch for apps that own their own bootstrap. */
-	const val META_AUTO_BOOTSTRAP = "com.c15t.reactnative.AUTO_BOOTSTRAP"
+	const val META_AUTO_BOOTSTRAP = "com.inth.reactnative.AUTO_BOOTSTRAP"
 
 	private val lock = Any()
 
@@ -36,7 +36,7 @@ object C15tReactNativeBootstrap {
 	 * @return `true` when a core is installed after the call.
 	 */
 	fun ensure(context: Context): Boolean {
-		if (C15t.current != null) {
+		if (Inth.current != null) {
 			return true
 		}
 		if (!autoBootstrapEnabled(context)) {
@@ -44,17 +44,17 @@ object C15tReactNativeBootstrap {
 		}
 		// `configFrom` applies the start-time rules: a retired key, a URL that is not an Inth
 		// project URL, or dryRun in a release build is logged there and reads as nothing
-		// declared. JavaScript then hears `C15tPayload.MESSAGE_NOT_BOOTSTRAPPED`.
-		val config = C15tAndroid.configFrom(context)?.withDeviceLanguage()?.forReactNative() ?: return false
+		// declared. JavaScript then hears `InthPayload.MESSAGE_NOT_BOOTSTRAPPED`.
+		val config = InthAndroid.configFrom(context)?.withDeviceLanguage()?.forReactNative() ?: return false
 		synchronized(lock) {
-			if (C15t.current != null) {
+			if (Inth.current != null) {
 				return true
 			}
 			// Installs the encrypted store, the transport, and the foreground observer
 			// that replays the offline queue, then starts the core.
-			C15tAndroid.install(context, config)
+			InthAndroid.install(context, config)
 		}
-		return C15t.current != null
+		return Inth.current != null
 	}
 
 	/** Whether the launch hook should bootstrap, honouring the host's opt-out. */
@@ -64,8 +64,8 @@ object C15tReactNativeBootstrap {
 	// hand-edited manifest may write `"false"` or `0`, and an unreadable value must
 	// read as absent rather than as an opt-out nobody declared.
 	private fun readFlag(context: Context): Boolean? = try {
-		C15tManifestValue.boolean(
-			C15tManifestValue.raw(
+		InthManifestValue.boolean(
+			InthManifestValue.raw(
 				context.packageManager
 					.getApplicationInfo(context.packageName, PackageManager.GET_META_DATA)
 					.metaData,
@@ -86,7 +86,7 @@ object C15tReactNativeBootstrap {
 	 */
 	internal fun NativeConfig.withDeviceLanguage(deviceLanguage: String = Locale.getDefault().language): NativeConfig {
 		val language = overrides.language?.takeIf { it.isNotBlank() }
-			?: deviceLanguage.takeIf { it.isNotBlank() } ?: C15tPayload.DEFAULT_LANGUAGE
+			?: deviceLanguage.takeIf { it.isNotBlank() } ?: InthPayload.DEFAULT_LANGUAGE
 		return copy(
 			overrides = KernelOverrides(
 				country = overrides.country,
@@ -105,7 +105,7 @@ object C15tReactNativeBootstrap {
 	 * installs answers for a React Native app, so the backend attributes it to `rn`. An app
 	 * that turns `AUTO_BOOTSTRAP` off and installs its own core chooses its own platform.
 	 */
-	internal fun NativeConfig.forReactNative(): NativeConfig = copy(platform = C15tProtocol.PLATFORM_REACT_NATIVE)
+	internal fun NativeConfig.forReactNative(): NativeConfig = copy(platform = InthProtocol.PLATFORM_REACT_NATIVE)
 
 	/** A language tag as a TCF consent language: two uppercase letters, or null when it has none. */
 	internal fun iabConsentLanguage(tag: String): String? =

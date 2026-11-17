@@ -1,4 +1,4 @@
-package com.c15t.android
+package com.inth.android
 
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
@@ -17,7 +17,7 @@ class ForegroundObserverTest {
 	@Test
 	fun `the foreground leg hands the queue replay to its executor instead of running it inline`() {
 		val handed = mutableListOf<() -> Unit>()
-		val observer = C15tForegroundObserver { task -> handed.add(task) }
+		val observer = InthForegroundObserver { task -> handed.add(task) }
 
 		observer.onStart(noLifecycle)
 

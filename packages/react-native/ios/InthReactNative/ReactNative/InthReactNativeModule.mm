@@ -1,14 +1,14 @@
 /*
- * The Objective-C++ half of the `C15t` TurboModule.
+ * The Objective-C++ half of the `Inth` TurboModule.
  *
  * Codegen generates the protocol, the JSI glue, and the method metadata. The generated
- * `RCTModuleProviders` in the host app maps the JavaScript name `C15t` onto this class by
+ * `RCTModuleProviders` in the host app maps the JavaScript name `Inth` onto this class by
  * looking the class name up at runtime. Two things are left undone, and both have to be
  * done in this file rather than in Swift:
  *
  * 1. `RCTTurboModuleManager` only creates and sets up a module whose class conforms to
  *    `@protocol(RCTTurboModule)`. Without that conformance it never wires
- *    `callableJSModules`, so `sendEventWithName` has nowhere to go. `NativeC15tSpec`
+ *    `callableJSModules`, so `sendEventWithName` has nowhere to go. `NativeInthSpec`
  *    inherits from `RCTTurboModule`, and no Swift file can name it: the generated
  *    umbrella header refuses to compile as plain Objective-C.
  * 2. `RCTModuleProviders` instantiates the class and then requires
@@ -18,12 +18,12 @@
  *
  * The Swift class stays the implementation. Nothing here decides anything about consent,
  * and nothing here repeats a method signature: the JSI wrapper is the generated
- * `NativeC15tSpecJSI`, and it dispatches to the selectors the Swift class exposes.
+ * `NativeInthSpecJSI`, and it dispatches to the selectors the Swift class exposes.
  *
- * The import names the subdirectory. `codegenConfig.name` is `C15tSpec`, and the
+ * The import names the subdirectory. `codegenConfig.name` is `InthSpec`, and the
  * generated `ReactCodegen.podspec` keeps `header_mappings_dir` at `./`, so the protocol
- * is installed at `Pods/Headers/Public/ReactCodegen/C15tSpec/C15tSpec.h` rather than at
- * a flat `NativeC15tSpec.h`.
+ * is installed at `Pods/Headers/Public/ReactCodegen/InthSpec/InthSpec.h` rather than at
+ * a flat `NativeInthSpec.h`.
  */
 
 #import <objc/runtime.h>
@@ -34,36 +34,36 @@
 
 // Module-qualified, with the subdirectory: see the note above about
 // `header_mappings_dir`.
-#import <ReactCodegen/C15tSpec/C15tSpec.h>
+#import <ReactCodegen/InthSpec/InthSpec.h>
 
 // Last, because it declares a class whose superclass and block types come from the two
 // headers above.
 // Pods built as frameworks (`use_frameworks!`, which React Native Firebase and Expo's
 // useFrameworks require) expose the Swift interface under the module name; static
 // libraries expose it as a plain header.
-#if __has_include(<C15tReactNative/C15tReactNative-Swift.h>)
-#import <C15tReactNative/C15tReactNative-Swift.h>
+#if __has_include(<InthReactNative/InthReactNative-Swift.h>)
+#import <InthReactNative/InthReactNative-Swift.h>
 #else
-#import "C15tReactNative-Swift.h"
+#import "InthReactNative-Swift.h"
 #endif
 
 /*
  * The conformance and the JavaScript name, both of which have to live in ObjC++.
  *
- * `NativeC15tSpec` inherits `RCTTurboModule`, which is what makes
+ * `NativeInthSpec` inherits `RCTTurboModule`, which is what makes
  * `RCTTurboModuleManager` create this class, wire its `callableJSModules`, and call
  * `getTurboModule:`. The protocol list belongs on the category interface: an
  * `@implementation` cannot carry one. Declaring the conformance is also what makes the
  * compiler check every signature written below against the generated protocol.
  *
  * `RCT_EXTERN_REMAP_MODULE` is not usable here. It expands to a fresh
- * `@interface C15tReactNativeModule : RCTEventEmitter`, and the Swift generated header
+ * `@interface InthReactNativeModule : RCTEventEmitter`, and the Swift generated header
  * already defines that class, so the macro is a duplicate interface definition. All the
  * macro was needed for is the JavaScript name, and `+moduleName` answers that directly.
  * The generated `RCTModuleProviders` finds the class by name and the New Architecture
  * builds it through the provider, so no legacy bridge registration is needed.
  */
-@interface C15tReactNativeModule (C15tTurboModule) <NativeC15tSpec>
+@interface InthReactNativeModule (InthTurboModule) <NativeInthSpec>
 
 + (NSString *)moduleName;
 
@@ -72,7 +72,7 @@
 /// Strip the parts of an Objective-C type encoding that differ between a protocol
 /// declaration and an implementation for reasons that are not the signature: the class
 /// name written after an `@`, and the byte offset recorded after each argument.
-static NSString *C15tNormalizeTypeEncoding(const char *encoding) {
+static NSString *InthNormalizeTypeEncoding(const char *encoding) {
     if (encoding == NULL) {
         return nil;
     }
@@ -96,28 +96,28 @@ static NSString *C15tNormalizeTypeEncoding(const char *encoding) {
     return [normalized copy];
 }
 
-@implementation C15tReactNativeModule (C15tTurboModule)
+@implementation InthReactNativeModule (InthTurboModule)
 
 + (NSString *)moduleName {
-    return @"C15t";
+    return @"Inth";
 }
 
 
 // Compare this class against the generated protocol, once per process.
 //
-// The list comes from `@protocol(NativeC15tSpec)` itself rather than from a copy of it
+// The list comes from `@protocol(NativeInthSpec)` itself rather than from a copy of it
 // written here, so a method Codegen renames or retypes is reported by name the moment
 // the module is built. Left unchecked that drift arrives as an unrecognized selector
 // inside `invokeObjCMethod` on the JavaScript thread, which is the worst place in this
 // binding for a mistake to surface.
-- (void)c15tCheckAgainstGeneratedSpec {
+- (void)inthCheckAgainstGeneratedSpec {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         unsigned int methodCount = 0;
-        struct objc_method_description *methods = protocol_copyMethodDescriptionList(@protocol(NativeC15tSpec), YES, YES, &methodCount);
+        struct objc_method_description *methods = protocol_copyMethodDescriptionList(@protocol(NativeInthSpec), YES, YES, &methodCount);
 
         if (methods == NULL) {
-            RCTLogError(@"c15t: the generated NativeC15tSpec protocol reported no methods, so the TurboModule cannot be built.");
+            RCTLogError(@"Inth: the generated NativeInthSpec protocol reported no methods, so the TurboModule cannot be built.");
             return;
         }
 
@@ -129,18 +129,18 @@ static NSString *C15tNormalizeTypeEncoding(const char *encoding) {
 
             Method implemented = class_getInstanceMethod([self class], selector);
             if (implemented == NULL) {
-                RCTLogError(@"c15t: %@ does not respond to %@, so the generated JSI glue cannot call it.", NSStringFromClass([self class]), NSStringFromSelector(selector));
+                RCTLogError(@"Inth: %@ does not respond to %@, so the generated JSI glue cannot call it.", NSStringFromClass([self class]), NSStringFromSelector(selector));
                 continue;
             }
 
-            NSString *declared = C15tNormalizeTypeEncoding(methods[index].types);
+            NSString *declared = InthNormalizeTypeEncoding(methods[index].types);
             if (declared == nil) {
                 continue;
             }
 
-            NSString *actual = C15tNormalizeTypeEncoding(method_getTypeEncoding(implemented));
+            NSString *actual = InthNormalizeTypeEncoding(method_getTypeEncoding(implemented));
             if (![declared isEqualToString:actual]) {
-                RCTLogError(@"c15t: %@ implements %@ as %@ but the generated protocol declares %@.", NSStringFromClass([self class]), NSStringFromSelector(selector), actual, declared);
+                RCTLogError(@"Inth: %@ implements %@ as %@ but the generated protocol declares %@.", NSStringFromClass([self class]), NSStringFromSelector(selector), actual, declared);
             }
         }
 
@@ -149,12 +149,12 @@ static NSString *C15tNormalizeTypeEncoding(const char *encoding) {
 }
 
 - (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:(const facebook::react::ObjCTurboModule::InitParams &)params {
-    [self c15tCheckAgainstGeneratedSpec];
+    [self inthCheckAgainstGeneratedSpec];
 
     // The generated wrapper owns nothing but the reference in `params.instance`, which
     // is the same Swift object RN just created and set up, so the JSI method map calls
     // straight into it.
-    return std::make_shared<facebook::react::NativeC15tSpecJSI>(params);
+    return std::make_shared<facebook::react::NativeInthSpecJSI>(params);
 }
 
 @end

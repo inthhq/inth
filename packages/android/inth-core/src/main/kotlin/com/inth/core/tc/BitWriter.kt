@@ -1,4 +1,4 @@
-package com.c15t.core.tc
+package com.inth.core.tc
 
 /**
  * The bits of one TC String segment, in the order the segment writes them.

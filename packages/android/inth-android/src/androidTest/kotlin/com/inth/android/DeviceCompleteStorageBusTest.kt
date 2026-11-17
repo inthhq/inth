@@ -1,16 +1,16 @@
 @file:Suppress("DEPRECATION")
 
-package com.c15t.android
+package com.inth.android
 
 import android.content.SharedPreferences
 import android.preference.PreferenceManager
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.c15t.core.*
-import com.c15t.core.iab.*
-import com.c15t.core.spi.*
-import com.c15t.core.store.*
-import com.c15t.core.tc.TcStringDecoder
-import com.c15t.core.transport.*
+import com.inth.core.*
+import com.inth.core.iab.*
+import com.inth.core.spi.*
+import com.inth.core.store.*
+import com.inth.core.tc.TcStringDecoder
+import com.inth.core.transport.*
 import kotlinx.serialization.json.*
 import org.junit.After
 import org.junit.Assert.*
@@ -20,15 +20,15 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class DeviceCompleteStorageBusTest {
-	@Before fun prepare() { awaitLaunchSettled(); uninstallCore(); C15tStores.create(appContext()).clearConsentState() }
-	@After fun cleanup() { uninstallCore(); C15tStores.create(appContext()).clearConsentState() }
+	@Before fun prepare() { awaitLaunchSettled(); uninstallCore(); InthStores.create(appContext()).clearConsentState() }
+	@After fun cleanup() { uninstallCore(); InthStores.create(appContext()).clearConsentState() }
 
 	@Test fun allTypedRowsRestoreBeforeJSAndWithdrawalClearsGrants() {
 		val context = appContext()
 		val prefs = PreferenceManager.getDefaultSharedPreferences(context)
 		val config = NativeConfig("https://consent.instrumentation.invalid", iab = IabConfiguration(53, 7, "GB",
 			numCustomPurposes = 2, publisherRestrictions = listOf(IabPublisherRestriction(3, 0, listOf(1)))))
-		val first = ConsentCore(config, C15tStores.create(context), clock = Clock { DEVICE_IAB_NOW },
+		val first = ConsentCore(config, InthStores.create(context), clock = Clock { DEVICE_IAB_NOW },
 			transport = NativeIabDeviceBackend(), executor = TaskExecutor.DIRECT)
 		first.bootstrap()
 		assertEquals(53, prefs.getInt(TcStorageBusKeys.CMP_SDK_ID, -1))
@@ -58,7 +58,7 @@ class DeviceCompleteStorageBusTest {
 		assertEquals(saved.tcString, prefs.getString(TcStorageBusKeys.TC_STRING, null))
 		val before = prefs.all.filterKeys { it in TcStorageBusKeys.ALL_NAMES }
 		prefs.edit().remove(TcStorageBusKeys.PURPOSE_CONSENTS).putString(TcStorageBusKeys.PUBLISHER_RESTRICTIONS + "7", "2").commit()
-		val cold = ConsentCore(config, C15tStores.create(context), clock = Clock { DEVICE_IAB_NOW }, executor = TaskExecutor { })
+		val cold = ConsentCore(config, InthStores.create(context), clock = Clock { DEVICE_IAB_NOW }, executor = TaskExecutor { })
 		cold.bootstrap()
 		assertEquals(before, prefs.all.filterKeys { it in TcStorageBusKeys.ALL_NAMES })
 		assertTrue(cold.save(CommitIntent.Necessary).ok)
@@ -98,16 +98,16 @@ class DeviceCompleteStorageBusTest {
 		val backend = RejectingCoreStore()
 		val config = NativeConfig("https://consent.instrumentation.invalid", iab = IabConfiguration(53, 7, "GB"))
 		var now = DEVICE_IAB_NOW
-		fun store() = C15tStore(backend, tcStorageBus = DefaultPreferencesTcStorageBus(context))
+		fun store() = InthStore(backend, tcStorageBus = DefaultPreferencesTcStorageBus(context))
 		val core = ConsentCore(config, store(), clock = Clock { now }, transport = NativeIabDeviceBackend(), executor = TaskExecutor.DIRECT)
 		core.bootstrap()
 		assertTrue(core.save(CommitIntent.All).ok)
 		val before = prefs.all.filterKeys { it in TcStorageBusKeys.ALL_NAMES }
-		val record = backend.read(C15tStoreKeys.SNAPSHOT)
+		val record = backend.read(InthStoreKeys.SNAPSHOT)
 		backend.reject = true
 		assertFalse(core.save(CommitIntent.Necessary).ok)
 		assertEquals(before, prefs.all.filterKeys { it in TcStorageBusKeys.ALL_NAMES })
-		assertEquals(record, backend.read(C15tStoreKeys.SNAPSHOT))
+		assertEquals(record, backend.read(InthStoreKeys.SNAPSHOT))
 		now += 8 * 86_400_000L
 		val cold = ConsentCore(config, store(), clock = Clock { now }, executor = TaskExecutor { })
 		cold.bootstrap()

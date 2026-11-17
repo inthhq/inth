@@ -1,17 +1,17 @@
 import Foundation
 import XCTest
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 /// A backend nobody can reach: every call fails with `.offline`. It names no policy
 /// endpoint, so a bundled manifest keeps its own binding.
-struct UnreachableTransport: C15tTransport {
+struct UnreachableTransport: InthTransport {
     var domain = "offline"
 
-    func performInit(_ context: InitContext) async -> Result<InitResponse, C15tError> { .failure(.offline) }
-    func sendSave(_ body: Data) async -> Result<Void, C15tError> { .failure(.offline) }
+    func performInit(_ context: InitContext) async -> Result<InitResponse, InthError> { .failure(.offline) }
+    func sendSave(_ body: Data) async -> Result<Void, InthError> { .failure(.offline) }
     func patchIdentity(
         subjectId: String, externalId: String, identityProvider: String?
-    ) async -> Result<Void, C15tError> { .failure(.offline) }
+    ) async -> Result<Void, InthError> { .failure(.offline) }
 }
 
 /// A controllable clock, so expiry and `actionAt` are set rather than waited for.
@@ -221,7 +221,7 @@ extension HTTPResponse {
     static func json(_ body: String, status: Int = 200) -> HTTPResponse {
         HTTPResponse(
             status: status,
-            headers: ["x-c15t-policy-contract": String(c15tPolicyContractVersion)],
+            headers: ["x-c15t-policy-contract": String(inthPolicyContractVersion)],
             body: Data(body.utf8)
         )
     }
@@ -299,7 +299,7 @@ enum Fixture {
         policyFingerprint: String = String(repeating: "c", count: 64)
     ) -> JSONValue {
         .object([
-            "version": .integer(Int64(c15tPolicyContractVersion)),
+            "version": .integer(Int64(inthPolicyContractVersion)),
             "status": .string("matched"),
             "policyId": .string(id),
             "matchedBy": .string("country"),
@@ -314,7 +314,7 @@ enum Fixture {
 
     static func unconfiguredResolution() -> JSONValue {
         .object([
-            "version": .integer(Int64(c15tPolicyContractVersion)),
+            "version": .integer(Int64(inthPolicyContractVersion)),
             "status": .string("unconfigured"),
             "policy": .null,
         ])
@@ -335,7 +335,7 @@ enum Fixture {
         if let policyResolution {
             fields["policyResolution"] = policyResolution
         }
-        return C15tJSON.encode(.object(fields)) ?? Data("{}".utf8)
+        return InthJSON.encode(.object(fields)) ?? Data("{}".utf8)
     }
 
     static func initResponse(
@@ -462,7 +462,7 @@ enum Fixture {
             fields["gvl"] = gvl
         }
         return .json(
-            String(decoding: C15tJSON.encode(.object(fields)) ?? Data("{}".utf8), as: UTF8.self),
+            String(decoding: InthJSON.encode(.object(fields)) ?? Data("{}".utf8), as: UTF8.self),
             status: status
         )
     }
@@ -477,7 +477,7 @@ enum Fixture {
 
     static func configured(
         store: any ConsentStore,
-        transport: (any C15tTransport)?,
+        transport: (any InthTransport)?,
         clock: TestClock,
         overrides: ConsentOverrides = .default(language: "en"),
         gpc: Bool? = nil,

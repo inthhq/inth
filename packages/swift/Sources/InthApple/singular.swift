@@ -1,5 +1,5 @@
-#if canImport(C15tCore)
-import C15tCore
+#if canImport(InthCore)
+import InthCore
 #endif
 import Foundation
 
@@ -20,7 +20,7 @@ import Foundation
 ///
 /// `limitDataSharing` receives `true` unless `adUserData` and `adPersonalization` are
 /// both granted; Singular passes it to Google as the DMA consent signals. Marketing
-/// grants both and is the default category. c15t does not link Singular. Retain this
+/// grants both and is the default category. Inth does not link Singular. Retain this
 /// object for the SDK's lifetime. Calls run synchronously on the caller or native
 /// consent notification queue. It does not request ATT.
 public final class SingularIntegration: @unchecked Sendable {

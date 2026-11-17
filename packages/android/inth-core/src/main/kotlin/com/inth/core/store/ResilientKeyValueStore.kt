@@ -1,7 +1,7 @@
-package com.c15t.core.store
+package com.inth.core.store
 
-import com.c15t.core.crypto.KeyLoss
-import com.c15t.core.spi.KeyValueStore
+import com.inth.core.crypto.KeyLoss
+import com.inth.core.spi.KeyValueStore
 
 /**
  * A [KeyValueStore] that abandons [primary] the first time its key stops working,

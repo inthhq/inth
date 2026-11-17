@@ -1,7 +1,7 @@
 import CryptoKit
 import Foundation
 
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 /// What one surviving vendor claims about itself, as the web filter left it in the fixture.
 ///
@@ -129,7 +129,7 @@ enum VendorListScopeFixtures {
         guard digest == entry.sha256 else {
             throw LoadError.hashMismatch(file: entry.file, wanted: entry.sha256, got: digest)
         }
-        guard let root = C15tJSON.parse(data) else {
+        guard let root = InthJSON.parse(data) else {
             throw LoadError.malformed(file: entry.file, detail: "not JSON")
         }
         return try parse(root, entry: entry)

@@ -1,8 +1,8 @@
-#if canImport(C15tApple)
-import C15tApple
+#if canImport(InthApple)
+import InthApple
 #endif
-#if canImport(C15tCore)
-import C15tCore
+#if canImport(InthCore)
+import InthCore
 #endif
 import Combine
 import Foundation
@@ -46,7 +46,7 @@ public final class ConsentPrompt: ObservableObject {
     @Published private(set) var host: UUID?
     @Published private(set) var hostActive = false
 
-    private let tracking: C15tTrackingController
+    private let tracking: InthTrackingController
     private let isActive: @MainActor () -> Bool
     /// The drawing scene's `autoPresent`. The presenter's own setting also waits for
     /// `beforeConsent`.
@@ -64,12 +64,12 @@ public final class ConsentPrompt: ObservableObject {
     private var promptAfterAttach = false
     /// The yearly re-ask called the request this launch. It calls at most once per launch.
     private var repromptCalled = false
-    /// Apple paused on Additional Information and the person is in c15t's settings. Closing
+    /// Apple paused on Additional Information and the person is in Inth's settings. Closing
     /// them applies the after-consent rule in either order.
     private var afterInformation = false
     private var observers: [AnyCancellable] = []
 
-    init(core: ConsentCore, tracking: C15tTrackingController = C15tApple.tracking,
+    init(core: ConsentCore, tracking: InthTrackingController = InthApple.tracking,
          isActive: @escaping @MainActor () -> Bool = { ConsentPrompt.appIsActive() },
          becameActive: AnyPublisher<Void, Never>? = nil) {
         self.core = core
@@ -112,13 +112,13 @@ public final class ConsentPrompt: ObservableObject {
         } else {
             prompt = ConsentPrompt(core: core)
         }
-        PromptRegistry.shared.store(prompt, id: id, installed: C15t.current === core)
+        PromptRegistry.shared.store(prompt, id: id, installed: Inth.current === core)
         return prompt
     }
 
     /// The prompt for the installed core, or `nil` before the app installs one.
     public static var current: ConsentPrompt? {
-        guard let core = C15t.current else { return nil }
+        guard let core = Inth.current else { return nil }
         return shared(for: core)
     }
 
@@ -213,7 +213,7 @@ public final class ConsentPrompt: ObservableObject {
         var refused = snapshot.explicitChoice?.categories[.marketing]?.value == false
             || restrictions.contains(.gpc) || restrictions.contains(.explicitDenial)
         if snapshot.model == .iab {
-            let consented = C15tTrackingConsent.iabMarketingConsented(core)
+            let consented = InthTrackingConsent.iabMarketingConsented(core)
             if consented != true, marketing == .granted { marketing = .denied }
             if consented == false { refused = true }
         }
@@ -292,7 +292,7 @@ public final class ConsentPrompt: ObservableObject {
     }
 
     private func trackingAnswered(_ stage: ConsentTrackingStage,
-                                  _ result: Result<C15tTrackingRequestResult, C15tTrackingError>) {
+                                  _ result: Result<InthTrackingRequestResult, InthTrackingError>) {
         trackingInFlight = false
         trackingAsked = true
         // Additional Information on Apple's EU sheet asks the app to show its own controls.
@@ -339,7 +339,7 @@ private final class PromptRegistry: @unchecked Sendable {
     private var installed: (id: ObjectIdentifier, prompt: ConsentPrompt)?
 
     private init() {
-        C15t.onUninstall { core in PromptRegistry.shared.drop(ObjectIdentifier(core)) }
+        Inth.onUninstall { core in PromptRegistry.shared.drop(ObjectIdentifier(core)) }
     }
 
     func lookup(_ id: ObjectIdentifier) -> ConsentPrompt? {
@@ -394,7 +394,7 @@ final class NoticeTouchRegion {
 
 #if canImport(SwiftUI) && canImport(UIKit)
 public extension View {
-    /// Install c15t and add the stock consent prompt and settings to a SwiftUI root, in one call.
+    /// Install Inth and add the stock consent prompt and settings to a SwiftUI root, in one call.
     ///
     /// The core is installed when the view first appears, and again after the device unlocks or
     /// the app becomes active if protected storage was unavailable. Once the core is ready the
@@ -405,7 +405,7 @@ public extension View {
     /// ```swift
     /// WindowGroup {
     ///     ContentView().c15tConsent(
-    ///         C15tAppleConfiguration(backendURL: "https://your-project.inth.app"),
+    ///         InthAppleConfiguration(backendURL: "https://your-project.inth.app"),
     ///         privacyPolicyURL: URL(string: "https://example.com/privacy")!
     ///     )
     /// }
@@ -422,22 +422,22 @@ public extension View {
     ///   - trackingReprompt: `.yearly` asks again a year after the last answer, where Apple
     ///     allows it (the EU). See ``ConsentTrackingReprompt``.
     @MainActor
-    func c15tConsent(_ configuration: C15tAppleConfiguration, privacyPolicyURL: URL, theme: ConsentTheme? = nil,
+    func c15tConsent(_ configuration: InthAppleConfiguration, privacyPolicyURL: URL, theme: ConsentTheme? = nil,
                      autoPresent: Bool = true, trackingRequest: ConsentTrackingRequest = .afterConsent,
                      trackingReprompt: ConsentTrackingReprompt = .never) -> some View {
-        modifier(ConsentAttachment(resolve: { try? C15tApple.install(configuration) }, privacyPolicyURL: privacyPolicyURL,
+        modifier(ConsentAttachment(resolve: { try? InthApple.install(configuration) }, privacyPolicyURL: privacyPolicyURL,
                                    theme: theme, autoPresent: autoPresent, trackingRequest: trackingRequest,
                                    trackingReprompt: trackingReprompt, onNoticeFrameChange: nil))
     }
 
     /// Add the stock consent prompt and settings for a core the app installed itself, such as an
-    /// IAB core from `C15tApple.install(C15tAppleConfiguration(backendURL:iab:))`. Behaves like the configuration form and
+    /// IAB core from `InthApple.install(InthAppleConfiguration(backendURL:iab:))`. Behaves like the configuration form and
     /// attaches once a core is installed.
     @MainActor
     func c15tConsent(privacyPolicyURL: URL, theme: ConsentTheme? = nil, autoPresent: Bool = true,
                      trackingRequest: ConsentTrackingRequest = .afterConsent,
                      trackingReprompt: ConsentTrackingReprompt = .never) -> some View {
-        modifier(ConsentAttachment(resolve: { C15t.current }, privacyPolicyURL: privacyPolicyURL,
+        modifier(ConsentAttachment(resolve: { Inth.current }, privacyPolicyURL: privacyPolicyURL,
                                    theme: theme, autoPresent: autoPresent, trackingRequest: trackingRequest,
                                    trackingReprompt: trackingReprompt, onNoticeFrameChange: nil))
     }
@@ -539,7 +539,7 @@ private struct ConsentPromptHost: View {
 /// ```swift
 /// window.rootViewController = ConsentRootViewController(
 ///     root: MainViewController(),
-///     configuration: C15tAppleConfiguration(backendURL: "https://your-project.inth.app"),
+///     configuration: InthAppleConfiguration(backendURL: "https://your-project.inth.app"),
 ///     privacyPolicyURL: URL(string: "https://example.com/privacy")!
 /// )
 /// ```
@@ -561,7 +561,7 @@ public final class ConsentRootViewController: UIViewController {
     ///   - trackingRequest: When App Tracking Transparency is asked. See ``ConsentTrackingRequest``.
     ///   - trackingReprompt: Whether an answered request is made again a year later. See
     ///     ``ConsentTrackingReprompt``.
-    public init(root: UIViewController, configuration: C15tAppleConfiguration? = nil, privacyPolicyURL: URL,
+    public init(root: UIViewController, configuration: InthAppleConfiguration? = nil, privacyPolicyURL: URL,
                 theme: ConsentTheme? = nil, autoPresent: Bool = true,
                 trackingRequest: ConsentTrackingRequest = .afterConsent,
                 trackingReprompt: ConsentTrackingReprompt = .never) {
@@ -572,9 +572,9 @@ public final class ConsentRootViewController: UIViewController {
         self.passthrough = passthrough
         let resolve: @MainActor () -> ConsentCore?
         if let configuration {
-            resolve = { try? C15tApple.install(configuration) }
+            resolve = { try? InthApple.install(configuration) }
         } else {
-            resolve = { C15t.current }
+            resolve = { Inth.current }
         }
         overlay = UIHostingController(rootView: AnyView(Color.clear.modifier(ConsentAttachment(
             resolve: resolve, privacyPolicyURL: privacyPolicyURL, theme: theme, autoPresent: autoPresent,

@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 extension IABCommitTests {
     func testIdentityTransitionsPublishOneRevisionEach() async throws {
@@ -48,11 +48,11 @@ extension IABCommitTests {
         let clock = TestClock(vector.now)
         let store = InMemoryStore()
         let http = StubHTTP()
-        var fields = C15tJSON.parse(Fixture.initBody(
+        var fields = InthJSON.parse(Fixture.initBody(
             policyResolution: Fixture.matchedResolution(policy: Fixture.rule(model: "iab"))))!.objectValue!
-        fields["gvl"] = try C15tJSON.parse(C15tJSON.encode(vector.gvl))
+        fields["gvl"] = try InthJSON.parse(InthJSON.encode(vector.gvl))
         fields["translations"] = .object(["language": .string("en"), "translations": .object(["common": .object(["acceptAll": .string("Accept")])])])
-        http.initResponse = HTTPResponse(status: 200, body: try XCTUnwrap(C15tJSON.encode(.object(fields))))
+        http.initResponse = HTTPResponse(status: 200, body: try XCTUnwrap(InthJSON.encode(.object(fields))))
         http.setSavesFail(true)
         let core = ConsentCore()
         core.bootstrap(CoreConfig(store: store, transport: Fixture.transport(http),

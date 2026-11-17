@@ -1,6 +1,6 @@
 import Foundation
 import XCTest
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 /// `packages/native-protocol/gpp/cases.json`: the strings and in-app keys `core-android` and the
 /// web encoder produce for the same inputs. `GppTest.kt` runs the same cases.
@@ -9,7 +9,7 @@ final class GPPFixtureTests: XCTestCase {
         .appendingPathComponent("gpp/cases.json")
 
     private func fixture() throws -> [String: JSONValue] {
-        try XCTUnwrap(C15tJSON.parse(Data(contentsOf: Self.fixtureURL))?.objectValue)
+        try XCTUnwrap(InthJSON.parse(Data(contentsOf: Self.fixtureURL))?.objectValue)
     }
 
     private func fields(_ values: [String: JSONValue]) -> [String: [Int]] {
@@ -116,7 +116,7 @@ final class PolicyRightsFixtureTests: XCTestCase {
     func testEveryCaseReadsAsTheSchemaReadsIt() throws {
         let url = GPPFixtureTests.fixtureURL.deletingLastPathComponent()
             .appendingPathComponent("policy-rights-cases.json")
-        let cases = try XCTUnwrap(C15tJSON.parse(Data(contentsOf: url))?.objectValue?["cases"]?.arrayValue)
+        let cases = try XCTUnwrap(InthJSON.parse(Data(contentsOf: url))?.objectValue?["cases"]?.arrayValue)
         XCTAssertFalse(cases.isEmpty)
         for item in cases {
             let testCase = try XCTUnwrap(item.objectValue)
@@ -168,14 +168,14 @@ final class GPPCoreTests: XCTestCase {
         let http = StubHTTP()
         let body = Fixture.initBody(policyResolution: Fixture.matchedResolution(
             policy: Fixture.rule(model: "opt-out", rights: ["disclosure", "opt-out", "preferences"])))
-        var fields = C15tJSON.parse(body)?.objectValue ?? [:]
+        var fields = InthJSON.parse(body)?.objectValue ?? [:]
         fields["location"] = .object(["countryCode": .string(country), "regionCode": .null])
-        http.initResponse = .json(String(decoding: C15tJSON.encode(.object(fields)) ?? Data("{}".utf8), as: UTF8.self))
+        http.initResponse = .json(String(decoding: InthJSON.encode(.object(fields)) ?? Data("{}".utf8), as: UTF8.self))
         return http
     }
 
     func testUSOptOutVisitorGetsUSNationalAndARefusalOptsOut() async throws {
-        let suite = "c15t-gpp-" + UUID().uuidString
+        let suite = "inth-gpp-" + UUID().uuidString
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
         defer { defaults.removePersistentDomain(forName: suite) }
         let bus = UserDefaultsStorageBus(defaults: defaults)
@@ -202,7 +202,7 @@ final class GPPCoreTests: XCTestCase {
     }
 
     func testTheLocationTheBackendMatchedOnDecidesNotTheAppsEarlierOverride() async throws {
-        let suite = "c15t-gpp-served-" + UUID().uuidString
+        let suite = "inth-gpp-served-" + UUID().uuidString
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
         defer { defaults.removePersistentDomain(forName: suite) }
         let bus = UserDefaultsStorageBus(defaults: defaults)
@@ -214,7 +214,7 @@ final class GPPCoreTests: XCTestCase {
     }
 
     func testAnEmptyOptOutListDrivesNoOptOutWhenMarketingIsRefused() async throws {
-        let suite = "c15t-gpp-empty-" + UUID().uuidString
+        let suite = "inth-gpp-empty-" + UUID().uuidString
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
         defer { defaults.removePersistentDomain(forName: suite) }
         let bus = UserDefaultsStorageBus(defaults: defaults)
@@ -231,7 +231,7 @@ final class GPPCoreTests: XCTestCase {
     }
 
     func testGPPStaysOffUntilTheAppTurnsItOn() async throws {
-        let suite = "c15t-gpp-off-" + UUID().uuidString
+        let suite = "inth-gpp-off-" + UUID().uuidString
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
         defer { defaults.removePersistentDomain(forName: suite) }
         let bus = UserDefaultsStorageBus(defaults: defaults)

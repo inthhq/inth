@@ -1,4 +1,4 @@
-package com.c15t.core.tc
+package com.inth.core.tc
 
 /**
  * The served vendor list, as the thing the encoder already knows how to prune against.

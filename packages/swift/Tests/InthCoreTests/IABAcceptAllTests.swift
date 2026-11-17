@@ -1,6 +1,6 @@
 import Foundation
 import XCTest
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 /// Accept All grants only what the served list declares, as `applyBlanket` in
 /// `packages/sdk/iab/src/index.ts` does (TCF Policies 5(3), 5(6) and 5(8)).
@@ -23,12 +23,12 @@ final class IABAcceptAllTests: XCTestCase {
         .appendingPathComponent("accept-all-declared-signals.json")
 
     func boot(_ vector: Vector, restrictions: [IABPublisherRestriction]) async throws -> ConsentCore {
-        var fields = C15tJSON.parse(Fixture.initBody(
+        var fields = InthJSON.parse(Fixture.initBody(
             policyResolution: Fixture.matchedResolution(policy: Fixture.rule(model: "iab"))))!.objectValue!
         fields["gvl"] = vector.gvl
         fields["adTechProviders"] = vector.adTechProviders
         let http = StubHTTP()
-        http.initResponse = HTTPResponse(status: 200, body: try C15tJSON.encode(JSONValue.object(fields)))
+        http.initResponse = HTTPResponse(status: 200, body: try InthJSON.encode(JSONValue.object(fields)))
         http.setSavesFail(true)
         let core = ConsentCore()
         core.bootstrap(CoreConfig(
@@ -41,7 +41,7 @@ final class IABAcceptAllTests: XCTestCase {
     }
 
     func testAcceptAllGrantsOnlyWhatSomeVendorDeclares() async throws {
-        let vector = try C15tJSON.decode(Vector.self, from: Data(contentsOf: Self.fixtureURL))
+        let vector = try InthJSON.decode(Vector.self, from: Data(contentsOf: Self.fixtureURL))
         var checked: [String] = []
         for row in vector.cases {
             let core = try await boot(vector, restrictions: row.publisherRestrictions)

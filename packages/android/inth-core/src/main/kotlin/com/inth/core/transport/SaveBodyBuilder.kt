@@ -1,7 +1,7 @@
-package com.c15t.core.transport
+package com.inth.core.transport
 
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.SavePayload
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.SavePayload
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull

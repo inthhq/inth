@@ -1,7 +1,7 @@
-@_spi(C15tInternal) import C15tCore
+@_spi(InthInternal) import InthCore
 import Foundation
 import XCTest
-@testable import C15tConsentUI
+@testable import InthConsentUI
 
 /// Auto-present: what opens by itself, when, and never twice at once.
 @MainActor
@@ -129,13 +129,13 @@ final class AutoPresentTests: XCTestCase {
     /// The installed core keeps its prompt between scenes; a core the runtime dropped is released
     /// with it, because the registry cannot keep a core alive.
     func testAnUninstalledCoreIsReleasedWithItsPrompt() async throws {
-        C15t.resetForTests()
-        defer { C15t.resetForTests() }
+        Inth.resetForTests()
+        defer { Inth.resetForTests() }
         weak var core: ConsentCore?
         weak var prompt: ConsentPrompt?
         do {
             let (installed, _) = try await boot("category-init.json")
-            XCTAssertTrue(C15t.install(installed))
+            XCTAssertTrue(Inth.install(installed))
             let shared = ConsentPrompt.shared(for: installed)
             let scene = UUID()
             shared.attach(scene, active: true, autoPresent: true)
@@ -147,7 +147,7 @@ final class AutoPresentTests: XCTestCase {
         await Task.yield()
         XCTAssertNotNil(prompt, "the installed core keeps its prompt, and the dismissal in it, between scenes")
 
-        C15t.resetForTests()
+        Inth.resetForTests()
         for _ in 0..<50 where core != nil { try? await Task.sleep(for: .milliseconds(10)) }
         XCTAssertNil(core, "a dropped core is released")
         XCTAssertNil(prompt, "and so is its prompt")
@@ -303,7 +303,7 @@ final class AutoPresentTests: XCTestCase {
         apple.onAsk = {
             // ATT invariants, at the moment Apple is asked.
             if presenter.presentationID != nil || presenter.noticeVisible || presenter.covering {
-                trackingFailures.append("asked while a c15t screen is up")
+                trackingFailures.append("asked while an Inth screen is up")
             }
             if prompt.trackingRequest == .manual { trackingFailures.append("asked in manual") }
             let s = core.snapshot()

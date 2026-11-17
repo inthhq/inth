@@ -1,5 +1,5 @@
-#if canImport(C15tCore)
-import C15tCore
+#if canImport(InthCore)
+import InthCore
 #endif
 import Foundation
 

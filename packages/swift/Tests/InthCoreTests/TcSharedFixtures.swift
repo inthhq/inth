@@ -2,7 +2,7 @@ import CryptoKit
 import Foundation
 import XCTest
 
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 /// One shared `tc-string` fixture, parsed.
 ///
@@ -103,7 +103,7 @@ enum TcSharedFixtures {
         guard digest == entry.sha256 else {
             throw LoadError.hashMismatch(file: entry.file, wanted: entry.sha256, got: digest)
         }
-        guard let root = C15tJSON.parse(data) else {
+        guard let root = InthJSON.parse(data) else {
             throw LoadError.malformed(file: entry.file, detail: "not JSON")
         }
         return try parse(root, entry: entry)

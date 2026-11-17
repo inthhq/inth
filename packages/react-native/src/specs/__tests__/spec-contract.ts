@@ -1,9 +1,9 @@
 /**
- * The `C15t` module surface, read off the two places it is written down.
+ * The `Inth` module surface, read off the two places it is written down.
  *
- * `src/specs/NativeC15t.ts` is the source of truth, and both native halves are hand-written
- * against it: `android/c15t-spec/src/main/java/.../NativeC15tSpec.java` and
- * `ios/C15tReactNative/ReactNative/C15tReactNativeModule.{swift,mm}`. The per-platform test
+ * `src/specs/NativeInth.ts` is the source of truth, and both native halves are hand-written
+ * against it: `android/inth-spec/src/main/java/.../NativeInthSpec.java` and
+ * `ios/InthReactNative/ReactNative/InthReactNativeModule.{swift,mm}`. The per-platform test
  * files generate the real Codegen output and compare; this file holds what both of them
  * grade against, so one renamed method fails two checks rather than being fixed on the
  * platform someone happened to test.
@@ -73,14 +73,14 @@ export const [JAVA_PACKAGE = ''] = [
 export const SPEC_PATH = join(
 	PACKAGE_ROOT,
 	codegenConfig.jsSrcsDir ?? 'src/specs',
-	'NativeC15t.ts'
+	'NativeInth.ts'
 );
 
 export const JAVA_STUB_PATH = join(
 	PACKAGE_ROOT,
-	'android/c15t-spec/src/main/java',
+	'android/inth-spec/src/main/java',
 	JAVA_PACKAGE.replaceAll('.', '/'),
-	'NativeC15tSpec.java'
+	'NativeInthSpec.java'
 );
 
 export const SPEC_SOURCE = readFileSync(SPEC_PATH, 'utf8');
@@ -101,7 +101,7 @@ export const stripComments = function stripComments(source: string): string {
  * that file stops looking like that, because a member this reader skipped is a member
  * nobody compared.
  *
- * @param specSource The contents of `NativeC15t.ts`.
+ * @param specSource The contents of `NativeInth.ts`.
  * @throws {Error} When a declared member is not `name: (a: string) => Type;`.
  */
 export const parseSpecMethods = function parseSpecMethods(
@@ -112,7 +112,7 @@ export const parseSpecMethods = function parseSpecMethods(
 
 	if (opened === -1) {
 		throw new Error(
-			'NativeC15t.ts no longer declares `export interface Spec extends TurboModule`, so there is no surface to read.'
+			'NativeInth.ts no longer declares `export interface Spec extends TurboModule`, so there is no surface to read.'
 		);
 	}
 

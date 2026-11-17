@@ -5,21 +5,21 @@
 // this file can emit is the one it has to ignore.
 @file:Suppress("DEPRECATION")
 
-package com.c15t.android
+package com.inth.android
 
 import android.content.Context
 import android.content.SharedPreferences
 import android.preference.PreferenceManager
-import com.c15t.core.store.ResilientKeyValueStore
+import com.inth.core.store.ResilientKeyValueStore
 import android.util.Log
-import com.c15t.core.crypto.AesGcmCodec
-import com.c15t.core.spi.KeyValueStore
-import com.c15t.core.store.C15tStore
-import com.c15t.core.store.SubjectPreservingStore
-import com.c15t.core.store.TcBusValue
-import com.c15t.core.gpp.GppStorageBusKeys
-import com.c15t.core.store.TcStorageBusKeys
-import com.c15t.core.store.TcStorageBusSink
+import com.inth.core.crypto.AesGcmCodec
+import com.inth.core.spi.KeyValueStore
+import com.inth.core.store.InthStore
+import com.inth.core.store.SubjectPreservingStore
+import com.inth.core.store.TcBusValue
+import com.inth.core.gpp.GppStorageBusKeys
+import com.inth.core.store.TcStorageBusKeys
+import com.inth.core.store.TcStorageBusSink
 import java.io.File
 import java.io.IOException
 
@@ -39,12 +39,12 @@ import java.io.IOException
  * records and not the audit trail; [SubjectPreservingStore] does the routing and
  * carries over the id from installs that stored it encrypted.
  */
-object C15tStores {
-	private const val TAG = "c15t"
-	private const val PREFS_NAME = "c15t.consent.fallback"
+object InthStores {
+	private const val TAG = "inth"
+	private const val PREFS_NAME = "inth.consent.fallback"
 
 	/** Separate from the fallback file, which is where record data goes. */
-	private const val SUBJECT_PREFS_NAME = "c15t.subject"
+	private const val SUBJECT_PREFS_NAME = "inth.subject"
 
 	@Volatile
 	private var warnedAboutFallback = false
@@ -60,7 +60,7 @@ object C15tStores {
 	 * party code inside the host process that never asks permission first. See
 	 * [DefaultPreferencesTcStorageBus].
 	 */
-	fun create(context: Context): C15tStore {
+	fun create(context: Context): InthStore {
 		val appContext = context.applicationContext
 		val fallback = PreferencesStore(appContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE))
 		val identity = PreferencesStore(appContext.getSharedPreferences(SUBJECT_PREFS_NAME, Context.MODE_PRIVATE))
@@ -78,12 +78,12 @@ object C15tStores {
 			warnOnce(error)
 			fallback
 		}
-		return C15tStore(
+		return InthStore(
 			backend = SubjectPreservingStore(records = records, identity = identity),
 			onReadFailure = { key, error ->
-				// A blob this build cannot read is fail-closed inside C15tStore; say so
+				// A blob this build cannot read is fail-closed inside InthStore; say so
 				// once per key so the field report is not silent.
-				Log.w(TAG, "c15t could not read stored state for $key; serving deny-all", error)
+				Log.w(TAG, "Inth could not read stored state for $key; serving deny-all", error)
 			},
 			tcStorageBus = DefaultPreferencesTcStorageBus(appContext),
 		)
@@ -96,7 +96,7 @@ object C15tStores {
 	 * only if a field report can find it, so this is the one line that says so.
 	 */
 	private fun warnAboutDroppedWrite(error: Throwable) {
-		Log.e(TAG, "c15t could not write encrypted consent storage; this change will not survive a relaunch", error)
+		Log.e(TAG, "Inth could not write encrypted consent storage; this change will not survive a relaunch", error)
 	}
 
 	private fun warnOnce(error: Throwable) {
@@ -130,7 +130,7 @@ internal class EncryptedFileStore(
 		if (!file.isFile) {
 			return null
 		}
-		// A null here means tampering, a rotated key, or a truncated write. C15tStore
+		// A null here means tampering, a rotated key, or a truncated write. InthStore
 		// turns it into "nothing stored", which the core answers with deny-all.
 		return codec.decrypt(readBlob(file))?.let { String(it, Charsets.UTF_8) }
 	}
@@ -169,7 +169,7 @@ internal class EncryptedFileStore(
 	private fun readBlob(file: File): ByteArray = try {
 		file.readBytes()
 	} catch (error: IOException) {
-		Log.w(TAG, "unreadable c15t store file", error)
+		Log.w(TAG, "unreadable Inth store file", error)
 		ByteArray(0)
 	}
 
@@ -185,13 +185,13 @@ internal class EncryptedFileStore(
 			}
 			if (!temp.renameTo(file)) throw IOException("cannot replace consent item")
 		} catch (error: IOException) {
-			Log.e(TAG, "failed to persist c15t state", error)
+			Log.e(TAG, "failed to persist Inth state", error)
 			temp.delete()
 		}
 	}
 
 	private companion object {
-		const val TAG = "c15t"
+		const val TAG = "inth"
 	}
 }
 
@@ -206,7 +206,7 @@ internal class PreferencesStore(private val prefs: SharedPreferences) : KeyValue
 		prefs.getString(key, null)
 	} catch (error: Throwable) {
 		// A corrupted preferences file must not crash a launch hook.
-		Log.w(TAG, "unreadable c15t preference", error)
+		Log.w(TAG, "unreadable Inth preference", error)
 		null
 	}
 
@@ -223,7 +223,7 @@ internal class PreferencesStore(private val prefs: SharedPreferences) : KeyValue
 				}
 			}.apply()
 		} catch (error: Throwable) {
-			Log.e(TAG, "failed to persist c15t preference", error)
+			Log.e(TAG, "failed to persist Inth preference", error)
 		}
 	}
 
@@ -241,7 +241,7 @@ internal class PreferencesStore(private val prefs: SharedPreferences) : KeyValue
 			}
 			written
 		} catch (error: Exception) {
-			Log.e(TAG, "failed to persist c15t preference", error)
+			Log.e(TAG, "failed to persist Inth preference", error)
 			false
 		}
 
@@ -250,7 +250,7 @@ internal class PreferencesStore(private val prefs: SharedPreferences) : KeyValue
 	}
 
 	private companion object {
-		const val TAG = "c15t"
+		const val TAG = "inth"
 	}
 }
 
@@ -284,7 +284,7 @@ internal class DefaultPreferencesTcStorageBus(private val prefs: SharedPreferenc
 
 	override fun clear() = write(emptyMap())
 	private companion object {
-		const val TAG = "c15t"
+		const val TAG = "inth"
 
 		/** The `IABTCF_*` table and the `IABGPP_*` table, replaced together in one commit. */
 		val OWNED_NAMES = TcStorageBusKeys.ALL_NAMES + GppStorageBusKeys.ALL_NAMES

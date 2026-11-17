@@ -19,7 +19,7 @@ private struct WireProblem: Error {
 
 /// The policy contract version this build reads. Mirrors
 /// `POLICY_CONTRACT_VERSION` in `@c15t/schema`.
-public let c15tPolicyContractVersion = 1
+public let inthPolicyContractVersion = 1
 
 /// A persistent right the matched rule keeps reachable: `PolicyRight` in
 /// `packages/sdk/schema/src/shared/policy-rule.ts`.
@@ -260,7 +260,7 @@ enum PolicyWireReader {
             throw problem(.invalidPayload, "policyResolution.version is required")
         }
         guard case let .integer(version)? = raw["version"],
-              version == Int64(c15tPolicyContractVersion)
+              version == Int64(inthPolicyContractVersion)
         else {
             throw problem(
                 .unsupportedContract,

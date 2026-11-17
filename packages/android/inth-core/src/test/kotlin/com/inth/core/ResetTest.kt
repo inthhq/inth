@@ -1,15 +1,15 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.model.ActiveUI
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentDecision
-import com.c15t.core.model.ConsentSnapshot
-import com.c15t.core.model.KernelOverrides
-import com.c15t.core.model.PromptPurpose
-import com.c15t.core.store.C15tStore
-import com.c15t.core.spi.TaskExecutor
-import com.c15t.core.store.C15tStoreKeys
-import com.c15t.core.transport.SaveOutcome
+import com.inth.core.model.ActiveUI
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentDecision
+import com.inth.core.model.ConsentSnapshot
+import com.inth.core.model.KernelOverrides
+import com.inth.core.model.PromptPurpose
+import com.inth.core.store.InthStore
+import com.inth.core.spi.TaskExecutor
+import com.inth.core.store.InthStoreKeys
+import com.inth.core.transport.SaveOutcome
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -110,7 +110,7 @@ class ResetTest {
 
 	@Test
 	fun `the wipe keeps the subject id, the overrides, and the configured scope`() {
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val kernel = testKernel(
 			config = NativeConfig(
 				backendUrl = "https://test.c15t.app",
@@ -141,7 +141,7 @@ class ResetTest {
 	@Test
 	fun `the wipe deletes the envelope and the queue and leaves the identity`() {
 		val backend = InMemoryKeyValueStore()
-		val store = C15tStore(backend)
+		val store = InthStore(backend)
 		// The re-run init is held back so the wipe's own durable effect is observable. With
 		// the inline executor it would have cached the policy it re-resolved by the time the
 		// assertion ran, which is the envelope a first launch writes too.
@@ -168,11 +168,11 @@ class ResetTest {
 
 		assertNull(store.readEnvelope(), "an envelope that survives the wipe is consent the next launch serves")
 		assertFalse(
-			C15tStoreKeys.SNAPSHOT in backend.keys,
+			InthStoreKeys.SNAPSHOT in backend.keys,
 			"a key deleted and a key holding nothing are different answers to a launcher",
 		)
 		assertFalse(
-			C15tStoreKeys.PENDING in backend.keys,
+			InthStoreKeys.PENDING in backend.keys,
 			"an empty queue written as bytes is not the same answer as no queue, which is what a first launch has",
 		)
 		assertEquals(subjectId, assertNotNull(store.readSubject()).id)
@@ -194,7 +194,7 @@ class ResetTest {
 		// A reviewer's device: decided everything, then wiped, then re-resolved its policy.
 		val wipedBackend = InMemoryKeyValueStore()
 		val wiped = testKernel(
-			store = C15tStore(wipedBackend),
+			store = InthStore(wipedBackend),
 			clock = clock,
 			transport = RecordingTransport().respondInit(initSuccess()),
 		)
@@ -206,7 +206,7 @@ class ResetTest {
 		// A new install that got as far as its first init and decided nothing.
 		val freshBackend = InMemoryKeyValueStore()
 		testKernel(
-			store = C15tStore(freshBackend),
+			store = InthStore(freshBackend),
 			clock = clock,
 			transport = RecordingTransport().respondInit(initSuccess()),
 		).bootstrap()
@@ -215,12 +215,12 @@ class ResetTest {
 		// is left out because it counts the mutations the wiped device made and the new
 		// install never did, and promptOwedSince with it, because it is a revision.
 		val relaunchedWiped = testKernel(
-			store = C15tStore(wipedBackend),
+			store = InthStore(wipedBackend),
 			clock = clock,
 			transport = RecordingTransport(),
 		)
 		val relaunchedFresh = testKernel(
-			store = C15tStore(freshBackend),
+			store = InthStore(freshBackend),
 			clock = clock,
 			transport = RecordingTransport(),
 		)
@@ -240,7 +240,7 @@ class ResetTest {
 
 	@Test
 	fun `a wipe with no policy to re-resolve still answers the cold-start state`() {
-		val kernel = testKernel(store = C15tStore(InMemoryKeyValueStore()))
+		val kernel = testKernel(store = InthStore(InMemoryKeyValueStore()))
 		kernel.bootstrap()
 		val revision = kernel.snapshot().revision
 
@@ -266,7 +266,7 @@ class ResetTest {
 	fun `a wipe installs the state a first launch boots with`() {
 		val held = mutableListOf<() -> Unit>()
 		val decided = testKernel(
-			store = C15tStore(InMemoryKeyValueStore()),
+			store = InthStore(InMemoryKeyValueStore()),
 			transport = RecordingTransport().respondInit(initSuccess()),
 			executor = TaskExecutor { held += it },
 		)
@@ -286,7 +286,7 @@ class ResetTest {
 		// Held the same way, so the fresh device is read at the same point in its life:
 		// booted, nothing on disk, and nothing yet come back from the network.
 		val fresh = testKernel(
-			store = C15tStore(InMemoryKeyValueStore()),
+			store = InthStore(InMemoryKeyValueStore()),
 			transport = RecordingTransport().respondInit(initSuccess()),
 			executor = TaskExecutor { },
 		)
@@ -306,7 +306,7 @@ class ResetTest {
 	/** A kernel that bootstrapped against a resolved opt-in rule and then decided [intent]. */
 	private fun decidedKernel(intent: CommitIntent): ConsentCore {
 		val kernel = testKernel(
-			store = C15tStore(InMemoryKeyValueStore()),
+			store = InthStore(InMemoryKeyValueStore()),
 			transport = RecordingTransport().respondInit(initSuccess()),
 		)
 		kernel.bootstrap()

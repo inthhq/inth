@@ -1,4 +1,4 @@
-package com.c15t.consentui
+package com.inth.consentui
 
 import android.view.Gravity
 import android.view.ViewGroup
@@ -21,15 +21,15 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.currentStateAsState
-import com.c15t.core.C15t
-import com.c15t.core.ConsentCore
+import com.inth.core.Inth
+import com.inth.core.ConsentCore
 import java.lang.ref.WeakReference
 import java.util.WeakHashMap
 
 /**
  * The app's consent prompt for one core, shared by every screen that shows it.
  *
- * [C15tConsent] and [attachConsent] attach a screen to it. However many screens attach, the
+ * [InthConsent] and [attachConsent] attach a screen to it. However many screens attach, the
  * prompt has one [presenter], so it opens at most once at a time, keeps its draft across
  * rotation and Activity recreation, and is not shown again for a prompt the person already
  * answered or dismissed. Only one attached screen draws it: the one that attached first, or a
@@ -107,14 +107,14 @@ class ConsentPrompt private constructor(val core: ConsentCore) {
         private val byCore = WeakHashMap<ConsentCore, WeakReference<ConsentPrompt>>()
 
         /**
-         * The installed core's prompt, held as long as [C15t] holds that core, so its session and
+         * The installed core's prompt, held as long as [Inth] holds that core, so its session and
          * what the person dismissed survive a moment with no screen attached. Dropped on
-         * [C15t.uninstall].
+         * [Inth.uninstall].
          */
         private var installed: ConsentPrompt? = null
 
         init {
-            C15t.onUninstall { core ->
+            Inth.onUninstall { core ->
                 synchronized(byCore) {
                     byCore.remove(core)
                     if (installed?.core === core) installed = null
@@ -130,13 +130,13 @@ class ConsentPrompt private constructor(val core: ConsentCore) {
         @JvmStatic
         fun of(core: ConsentCore): ConsentPrompt = synchronized(byCore) {
             val prompt = byCore[core]?.get() ?: ConsentPrompt(core).also { byCore[core] = WeakReference(it) }
-            if (core === C15t.current) installed = prompt
+            if (core === Inth.current) installed = prompt
             prompt
         }
 
         /** The prompt for the installed core, or `null` before the app installs one. */
         @JvmStatic
-        val current: ConsentPrompt? get() = C15t.current?.let(::of)
+        val current: ConsentPrompt? get() = Inth.current?.let(::of)
     }
 }
 
@@ -151,7 +151,7 @@ class ConsentPrompt private constructor(val core: ConsentCore) {
  * ```kotlin
  * Box(Modifier.fillMaxSize()) {
  *     AppContent()
- *     C15tConsent(privacyPolicyUrl = "https://your-app.example/privacy")
+ *     InthConsent(privacyPolicyUrl = "https://your-app.example/privacy")
  * }
  * ```
  *
@@ -163,11 +163,11 @@ class ConsentPrompt private constructor(val core: ConsentCore) {
  * @throws IllegalArgumentException When no core is installed.
  */
 @Composable
-fun C15tConsent(
+fun InthConsent(
     privacyPolicyUrl: String,
     autoPresent: Boolean = true,
     theme: ConsentTheme? = null,
-    core: ConsentCore = requireNotNull(C15t.current) { "Install c15t before showing the consent prompt" },
+    core: ConsentCore = requireNotNull(Inth.current) { "Install Inth before showing the consent prompt" },
 ) = ConsentPromptHost(ConsentPrompt.of(core), privacyPolicyUrl, autoPresent, theme, Modifier.fillMaxSize())
 
 @Composable
@@ -176,14 +176,14 @@ internal fun ConsentPromptHost(prompt: ConsentPrompt, privacyPolicyUrl: String, 
     val started = LocalLifecycleOwner.current.lifecycle.currentStateAsState().value.isAtLeast(Lifecycle.State.STARTED)
     DisposableEffect(prompt) { onDispose { prompt.detach(token) } }
     LaunchedEffect(prompt, started, autoPresent, prompt.host, prompt.hostStarted) { prompt.attach(token, started, autoPresent) }
-    if (prompt.host === token) C15tConsent(prompt.presenter, privacyPolicyUrl, noticeModifier, theme)
+    if (prompt.host === token) InthConsent(prompt.presenter, privacyPolicyUrl, noticeModifier, theme)
 }
 
 /**
  * The stock consent UI for an Activity that does not use Compose for its content, in one call.
  *
  * Call it in `onCreate`, after `setContentView`, on every creation: the prompt and its draft
- * survive rotation and recreation. It behaves like [C15tConsent].
+ * survive rotation and recreation. It behaves like [InthConsent].
  *
  * ```kotlin
  * override fun onCreate(savedInstanceState: Bundle?) {
@@ -201,7 +201,7 @@ fun ComponentActivity.attachConsent(
     privacyPolicyUrl: String,
     autoPresent: Boolean = true,
     theme: ConsentTheme? = null,
-    core: ConsentCore = requireNotNull(C15t.current) { "Install c15t before showing the consent prompt" },
+    core: ConsentCore = requireNotNull(Inth.current) { "Install Inth before showing the consent prompt" },
 ): ConsentPrompt {
     val prompt = ConsentPrompt.of(core)
     val view = ComposeView(this)

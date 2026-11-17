@@ -1,10 +1,10 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.iab.*
-import com.c15t.core.model.*
-import com.c15t.core.spi.KeyValueStore
-import com.c15t.core.store.*
-import com.c15t.core.tc.*
+import com.inth.core.iab.*
+import com.inth.core.model.*
+import com.inth.core.spi.KeyValueStore
+import com.inth.core.store.*
+import com.inth.core.tc.*
 import java.io.File
 import kotlin.test.*
 
@@ -14,7 +14,7 @@ class NativePresentationTest {
         var refuse = false
         override fun read(key: String) = base.read(key)
         override fun write(key: String, value: String?) = base.write(key,value)
-        override fun writeDurably(key: String, value: String?) = if (refuse && key == C15tStoreKeys.SNAPSHOT) false else base.writeDurably(key,value)
+        override fun writeDurably(key: String, value: String?) = if (refuse && key == InthStoreKeys.SNAPSHOT) false else base.writeDurably(key,value)
     }
     private fun body(mode: String) = generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }
         .map { File(it,"examples/native/consent-demo/fixtures/$mode-init.json") }.first { it.exists() }.readText()
@@ -22,21 +22,21 @@ class NativePresentationTest {
     @Test fun `refused notice keeps obligation and retry persists without granting`() {
         val backend = RefusingStore()
         val transport = RecordingTransport().respondInit(initSuccess(body = body("notice")))
-        val core = testKernel(store = C15tStore(backend),transport = transport)
+        val core = testKernel(store = InthStore(backend),transport = transport)
         core.bootstrap()
         val before = core.snapshot()
         assertTrue(before.promptRequirement.notice)
-        val bytes = backend.read(C15tStoreKeys.SNAPSHOT)
+        val bytes = backend.read(InthStoreKeys.SNAPSHOT)
         backend.refuse = true
         core.dismissNotice()
         assertEquals(before,core.snapshot())
-        assertEquals(bytes,backend.read(C15tStoreKeys.SNAPSHOT))
+        assertEquals(bytes,backend.read(InthStoreKeys.SNAPSHOT))
         backend.refuse = false
         assertTrue(core.dismissNotice())
         assertFalse(core.snapshot().promptRequirement.notice)
         assertEquals(before.effectivePermissions,core.snapshot().effectivePermissions)
         assertNull(core.snapshot().explicitChoice)
-        val cold = testKernel(store = C15tStore(backend))
+        val cold = testKernel(store = InthStore(backend))
         cold.bootstrap()
         assertFalse(cold.snapshot().promptRequirement.notice)
     }
@@ -51,7 +51,7 @@ class NativePresentationTest {
     }
     @Test fun `presentation is detached from authority and starts with no LI`() {
         val c = TEST_CONFIG.copy(iab=IabConfiguration(cmpId=53,cmpVersion=7,publisherCountryCode="GB"))
-        val core = testKernel(config=c,store=C15tStore(InMemoryKeyValueStore()),transport=RecordingTransport().respondInit(initSuccess(body=body("iab"))))
+        val core = testKernel(config=c,store=InthStore(InMemoryKeyValueStore()),transport=RecordingTransport().respondInit(initSuccess(body=body("iab"))))
         core.bootstrap()
         val d = assertNotNull(core.iabPresentation())
         assertEquals(core.snapshot().revision,d.draft.revision)

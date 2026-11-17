@@ -6,10 +6,10 @@ import {
 	MIN_SUPPORTED_PROTOCOL_VERSION,
 	PROTOCOL_VERSION,
 } from '../protocol/version';
-import { C15tPluginError } from './errors';
+import { InthPluginError } from './errors';
 
 /** The protocol range this JavaScript package speaks, as embeddable data. */
-export interface C15tProtocolInfo {
+export interface InthProtocolInfo {
 	/** Protocol this package speaks. */
 	protocolVersion: number;
 	/** Oldest native build this package can talk to. */
@@ -27,7 +27,7 @@ export interface C15tProtocolInfo {
  * over-the-air update at all.
  */
 export const buildProtocolInfo =
-	function buildProtocolInfo(): C15tProtocolInfo {
+	function buildProtocolInfo(): InthProtocolInfo {
 		return {
 			maxSupportedProtocolVersion: MAX_SUPPORTED_PROTOCOL_VERSION,
 			minSupportedProtocolVersion: MIN_SUPPORTED_PROTOCOL_VERSION,
@@ -52,17 +52,17 @@ const isUpdatesEnabled = function isUpdatesEnabled(
  * makes the update server refuse the pairing instead.
  *
  * @param config - The Expo config as it stands.
- * @throws {C15tPluginError} When updates are enabled with nothing to match on.
+ * @throws {InthPluginError} When updates are enabled with nothing to match on.
  */
 export const assertUpdatesCannotOutrunTheBinary =
 	function assertUpdatesCannotOutrunTheBinary(config: ExportedConfig): void {
 		if (!isProtocolVersionSupported(PROTOCOL_VERSION)) {
-			throw new C15tPluginError(
+			throw new InthPluginError(
 				`the installed package speaks consent protocol ` +
 					`${String(PROTOCOL_VERSION)} and supports ` +
 					`${String(MIN_SUPPORTED_PROTOCOL_VERSION)} to ` +
 					`${String(MAX_SUPPORTED_PROTOCOL_VERSION)}, which contradicts ` +
-					`itself. This is a broken @c15t/react-native install, not an app ` +
+					`itself. This is a broken @inth/react-native install, not an app ` +
 					`misconfiguration: reinstall it.`
 			);
 		}
@@ -71,7 +71,7 @@ export const assertUpdatesCannotOutrunTheBinary =
 			return;
 		}
 
-		throw new C15tPluginError(
+		throw new InthPluginError(
 			'updates.url is set but runtimeVersion is not. An over-the-air ' +
 				'update swaps the JavaScript bundle and leaves the embedded consent ' +
 				'core behind, so without a runtime version one channel can serve a ' +

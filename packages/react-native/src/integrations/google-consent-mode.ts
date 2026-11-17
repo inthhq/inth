@@ -19,7 +19,7 @@ export const GOOGLE_CONSENT_TYPES = [
 export type GoogleConsentType = (typeof GOOGLE_CONSENT_TYPES)[number];
 
 /**
- * The c15t category that grants each Google Consent Mode v2 type.
+ * The Inth category that grants each Google Consent Mode v2 type.
  *
  * The same mapping the web's gtag.js and Google Tag Manager helpers use.
  * `src/integrations/__tests__/google-consent-mode.test.ts` checks it against
@@ -44,13 +44,13 @@ export type GoogleConsentModeState = Readonly<
 >;
 
 /**
- * Resolve every Google Consent Mode v2 type from c15t consent.
+ * Resolve every Google Consent Mode v2 type from Inth consent.
  *
  * A type is granted when the category that grants it is allowed. Pass
  * `client.isAllowed` to read the native core, so a pending policy denies every
  * optional type.
  *
- * @param isAllowed - Whether a c15t category is allowed.
+ * @param isAllowed - Whether an Inth category is allowed.
  * @returns `true` or `false` for each of the seven types.
  * @example
  * ```ts
@@ -82,9 +82,9 @@ export interface GoogleAdsConsent {
 }
 
 /**
- * Resolve the advertising types from c15t consent.
+ * Resolve the advertising types from Inth consent.
  *
- * @param isAllowed - Whether a c15t category is allowed.
+ * @param isAllowed - Whether an Inth category is allowed.
  * @returns The three advertising types, each granted (`true`) or denied.
  */
 export const resolveGoogleAdsConsent = (

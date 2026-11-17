@@ -1,4 +1,4 @@
-// The Global Vendor List that c15t's `/init` already serves.
+// The Global Vendor List that Inth's `/init` already serves.
 //
 // Three consumers want this document and they want different amounts of it. The
 // consent dialog reads names, descriptions and retention off it
@@ -543,7 +543,7 @@ extension GlobalVendorList {
 
     public func encode(to encoder: any Encoder) throws {
         guard let additionalFields else { return try encodeKnown(to: encoder) }
-        let normalized = try C15tJSON.decode(JSONValue.self, from: C15tJSON.encode(KnownFields(list: self)))
+        let normalized = try InthJSON.decode(JSONValue.self, from: InthJSON.encode(KnownFields(list: self)))
         try GVLDisclosureShape.document.merging(additionalFields, into: normalized).encode(to: encoder)
     }
 

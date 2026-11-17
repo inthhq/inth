@@ -1,6 +1,6 @@
 import Foundation
 import XCTest
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 /// Custom (non-IAB) vendors: read from `/init`, listed with their own choices, kept beside the TC
 /// String and never in it, and counted where the web counts them.
@@ -15,7 +15,7 @@ final class IABCustomVendorTests: XCTestCase {
     /// for 1 and 2, vendor 2 claims legitimate interest for 2 and 7; nobody declares special
     /// feature 1.
     func fixture() throws -> Vector {
-        try C15tJSON.decode(Vector.self, from: Data(contentsOf: IABCommitTests.fixtureURL.deletingLastPathComponent()
+        try InthJSON.decode(Vector.self, from: Data(contentsOf: IABCommitTests.fixtureURL.deletingLastPathComponent()
             .appendingPathComponent("additional-consent-cases.json")))
     }
 
@@ -40,10 +40,10 @@ final class IABCustomVendorTests: XCTestCase {
     ])
 
     func response(_ v: Vector, customVendors: JSONValue?) throws -> HTTPResponse {
-        var fields = C15tJSON.parse(Fixture.initBody(policyResolution: Fixture.matchedResolution(policy: Fixture.rule(model: "iab"))))!.objectValue!
-        fields["gvl"] = C15tJSON.parse(try C15tJSON.encode(v.gvl))!
+        var fields = InthJSON.parse(Fixture.initBody(policyResolution: Fixture.matchedResolution(policy: Fixture.rule(model: "iab"))))!.objectValue!
+        fields["gvl"] = InthJSON.parse(try InthJSON.encode(v.gvl))!
         if let customVendors { fields["customVendors"] = customVendors }
-        return HTTPResponse(status: 200, body: try C15tJSON.encode(JSONValue.object(fields)))
+        return HTTPResponse(status: 200, body: try InthJSON.encode(JSONValue.object(fields)))
     }
 
     func boot(_ v: Vector, store: any ConsentStore = InMemoryStore(), http: StubHTTP = StubHTTP(),
@@ -148,8 +148,8 @@ final class IABCustomVendorTests: XCTestCase {
         XCTAssertEqual(envelope.customVendors?.map(\.id), ["internal-ads", "1000482", "chat"])
         let body = try XCTUnwrap(envelope.pendingSaves?.first?.body)
         for _ in 0..<20 {
-            XCTAssertEqual(try C15tJSON.encode(envelope), bytes, "the envelope re-encodes to the bytes stored")
-            let again = try XCTUnwrap(StoredEnvelope.decode(try C15tJSON.encode(envelope)))
+            XCTAssertEqual(try InthJSON.encode(envelope), bytes, "the envelope re-encodes to the bytes stored")
+            let again = try XCTUnwrap(StoredEnvelope.decode(try InthJSON.encode(envelope)))
             XCTAssertEqual(again.pendingSaves?.first?.body, body)
         }
         // What a relaunch writes is stable too, and keeps the lists as they were.
@@ -157,7 +157,7 @@ final class IABCustomVendorTests: XCTestCase {
         cold.bootstrap(CoreConfig(store: store, iab: v.configuration, now: { v.now }, flushPendingOnBootstrap: false))
         let relaunched = try XCTUnwrap(store.data(for: StorageKey.snapshot))
         let restored = try XCTUnwrap(StoredEnvelope.decode(relaunched))
-        XCTAssertEqual(try C15tJSON.encode(restored), relaunched)
+        XCTAssertEqual(try InthJSON.encode(restored), relaunched)
         XCTAssertEqual(restored.customVendors, envelope.customVendors)
         XCTAssertEqual(restored.iabConsent?.choices, envelope.iabConsent?.choices)
     }

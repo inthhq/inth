@@ -1,4 +1,4 @@
-package com.c15t.consentui
+package com.inth.consentui
 
 import android.os.Bundle
 import android.os.Looper
@@ -11,16 +11,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
-import com.c15t.core.CommitIntent
-import com.c15t.core.ConsentCore
-import com.c15t.core.NativeConfig
-import com.c15t.core.spi.HttpClient
-import com.c15t.core.spi.HttpRequest
-import com.c15t.core.spi.HttpResponse
-import com.c15t.core.spi.KeyValueStore
-import com.c15t.core.spi.TaskExecutor
-import com.c15t.core.store.C15tStore
-import com.c15t.core.transport.HostedTransport
+import com.inth.core.CommitIntent
+import com.inth.core.ConsentCore
+import com.inth.core.NativeConfig
+import com.inth.core.spi.HttpClient
+import com.inth.core.spi.HttpRequest
+import com.inth.core.spi.HttpResponse
+import com.inth.core.spi.KeyValueStore
+import com.inth.core.spi.TaskExecutor
+import com.inth.core.store.InthStore
+import com.inth.core.transport.HostedTransport
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -41,14 +41,14 @@ class ConsentPromptTest {
 
     @Test fun owedChoicePresentsOnceTheCoreIsReady() {
         val (core, _) = boot(fixture("category-init.json"))
-        compose.setContent { C15tConsent(URL, core = core) }
+        compose.setContent { InthConsent(URL, core = core) }
         compose.waitForIdle()
         firstLayers().assertCountEquals(1)
     }
 
     @Test fun optOutShowsNothingUntilTheAppAsks() {
         val (core, _) = boot(fixture("category-init.json"))
-        compose.setContent { C15tConsent(URL, autoPresent = false, core = core) }
+        compose.setContent { InthConsent(URL, autoPresent = false, core = core) }
         compose.waitForIdle()
         firstLayers().assertCountEquals(0)
         compose.runOnIdle { ConsentPrompt.of(core).presentPrompt() }
@@ -58,26 +58,26 @@ class ConsentPromptTest {
 
     @Test fun optOutAlsoHoldsBackAnOwedNotice() {
         val (core, _) = boot(fixture("notice-init.json"))
-        compose.setContent { C15tConsent(URL, autoPresent = false, core = core) }
+        compose.setContent { InthConsent(URL, autoPresent = false, core = core) }
         compose.waitForIdle()
-        compose.onAllNodesWithTag("c15t.notice").assertCountEquals(0)
+        compose.onAllNodesWithTag("inth.notice").assertCountEquals(0)
         compose.runOnIdle { ConsentPrompt.of(core).presentPrompt() }
         compose.waitForIdle()
-        compose.onAllNodesWithTag("c15t.notice").assertCountEquals(1)
+        compose.onAllNodesWithTag("inth.notice").assertCountEquals(1)
     }
 
     @Test fun owedNoticeShowsByDefault() {
         val (core, _) = boot(fixture("notice-init.json"))
-        compose.setContent { C15tConsent(URL, core = core) }
+        compose.setContent { InthConsent(URL, core = core) }
         compose.waitForIdle()
-        compose.onAllNodesWithTag("c15t.notice").assertCountEquals(1)
+        compose.onAllNodesWithTag("inth.notice").assertCountEquals(1)
         firstLayers().assertCountEquals(0)
     }
 
     @Test fun validStoredChoiceStaysQuiet() {
         val (core, _) = boot(fixture("category-init.json"))
         assertTrue(core.save(CommitIntent.All).ok)
-        compose.setContent { C15tConsent(URL, core = core) }
+        compose.setContent { InthConsent(URL, core = core) }
         compose.waitForIdle()
         firstLayers().assertCountEquals(0)
         assertNull(ConsentPrompt.of(core).presenter.presentationID)
@@ -85,7 +85,7 @@ class ConsentPromptTest {
 
     @Test fun policyChangePromptsAgainAfterAnAnswer() {
         val (core, server) = boot(fixture("category-init.json"))
-        compose.setContent { C15tConsent(URL, core = core) }
+        compose.setContent { InthConsent(URL, core = core) }
         compose.waitForIdle()
         val presenter = ConsentPrompt.of(core).presenter
         compose.runOnIdle { presenter.commit(ConsentPresenter.Action.ACCEPT) }
@@ -102,8 +102,8 @@ class ConsentPromptTest {
     @Test fun twoScreensAndAManualCallOpenOnePrompt() {
         val (core, _) = boot(fixture("category-init.json"))
         compose.setContent {
-            C15tConsent(URL, core = core)
-            C15tConsent(URL, core = core)
+            InthConsent(URL, core = core)
+            InthConsent(URL, core = core)
         }
         compose.waitForIdle()
         firstLayers().assertCountEquals(1)
@@ -123,8 +123,8 @@ class ConsentPromptTest {
         var screen by mutableIntStateOf(0)
         compose.setContent {
             when (screen) {
-                0 -> C15tConsent(URL, core = core)
-                2 -> C15tConsent(URL, autoPresent = false, core = core)
+                0 -> InthConsent(URL, core = core)
+                2 -> InthConsent(URL, autoPresent = false, core = core)
             }
         }
         compose.waitForIdle()
@@ -146,7 +146,7 @@ class ConsentPromptTest {
     @Test fun dismissedPromptStaysClosedWhenAScreenComesBack() {
         val (core, _) = boot(fixture("category-init.json"))
         var generation by mutableIntStateOf(0)
-        compose.setContent { key(generation) { C15tConsent(URL, core = core) } }
+        compose.setContent { key(generation) { InthConsent(URL, core = core) } }
         compose.waitForIdle()
         val prompt = ConsentPrompt.of(core)
         val outcomes = mutableListOf<ConsentPresenterOutcome>()
@@ -230,7 +230,7 @@ class ConsentPromptTest {
         compose.waitForIdle()
     }
 
-    private fun firstLayers() = compose.onAllNodesWithTag("c15t.first-layer")
+    private fun firstLayers() = compose.onAllNodesWithTag("inth.first-layer")
 
     private class Server(@Volatile var body: String) : HttpClient {
         override fun send(request: HttpRequest) = if (request.method == HttpRequest.GET)
@@ -249,7 +249,7 @@ class ConsentPromptTest {
             override fun writeDurably(key: String, value: String?): Boolean { write(key, value); return true }
         }
         val server = Server(body)
-        val core = ConsentCore(config, C15tStore(store), transport = HostedTransport(server, config), executor = TaskExecutor.DIRECT)
+        val core = ConsentCore(config, InthStore(store), transport = HostedTransport(server, config), executor = TaskExecutor.DIRECT)
         core.bootstrap()
         return core to server
     }

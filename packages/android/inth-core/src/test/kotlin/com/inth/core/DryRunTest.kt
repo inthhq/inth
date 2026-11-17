@@ -1,18 +1,18 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.gpp.GppOptions
-import com.c15t.core.gpp.GppStorageBusKeys
-import com.c15t.core.iab.IabConfiguration
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.KernelOverrides
-import com.c15t.core.model.KernelUser
-import com.c15t.core.spi.TaskExecutor
-import com.c15t.core.store.C15tStore
-import com.c15t.core.store.TcBusValue
-import com.c15t.core.store.TcStorageBusKeys
-import com.c15t.core.tc.GlobalVendorList
-import com.c15t.core.tc.GlobalVendorListJson
-import com.c15t.core.transport.SaveOutcome
+import com.inth.core.gpp.GppOptions
+import com.inth.core.gpp.GppStorageBusKeys
+import com.inth.core.iab.IabConfiguration
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.KernelOverrides
+import com.inth.core.model.KernelUser
+import com.inth.core.spi.TaskExecutor
+import com.inth.core.store.InthStore
+import com.inth.core.store.TcBusValue
+import com.inth.core.store.TcStorageBusKeys
+import com.inth.core.tc.GlobalVendorList
+import com.inth.core.tc.GlobalVendorListJson
+import com.inth.core.transport.SaveOutcome
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -33,7 +33,7 @@ class DryRunTest {
 
 	@Test fun `a dry-run save changes the snapshot and persists while nothing is queued or sent`() {
 		val backend = InMemoryKeyValueStore()
-		val store = C15tStore(backend)
+		val store = InthStore(backend)
 		val transport = RecordingTransport().respondInit(initSuccess())
 		val logged = mutableListOf<String>()
 		val snapshots = mutableListOf<Long>()
@@ -57,14 +57,14 @@ class DryRunTest {
 		assertEquals(listOf("dry-run"), logged, "one line says dryRun is on, and no error follows")
 
 		// The decision is on disk: a cold start with no network still allows the category.
-		val cold = testKernel(dry, C15tStore(backend), transport = RecordingTransport(), executor = TaskExecutor { })
+		val cold = testKernel(dry, InthStore(backend), transport = RecordingTransport(), executor = TaskExecutor { })
 		cold.bootstrap()
 		assertTrue(cold.isAllowed(ConsentCategory.MEASUREMENT))
 	}
 
 	@Test fun `dry-run identity calls change local state and send nothing`() {
 		val transport = RecordingTransport().respondInit(initSuccess())
-		val core = testKernel(dry, C15tStore(InMemoryKeyValueStore()), transport = transport)
+		val core = testKernel(dry, InthStore(InMemoryKeyValueStore()), transport = transport)
 		core.bootstrap()
 
 		core.identify(KernelUser(externalId = "user-1"))
@@ -79,7 +79,7 @@ class DryRunTest {
 
 	@Test fun `the same identity calls reach the transport without dry-run`() {
 		val transport = RecordingTransport().respondInit(initSuccess())
-		val core = testKernel(TEST_CONFIG, C15tStore(InMemoryKeyValueStore()), transport = transport)
+		val core = testKernel(TEST_CONFIG, InthStore(InMemoryKeyValueStore()), transport = transport)
 		core.bootstrap()
 		core.identify(KernelUser(externalId = "user-1"))
 		core.logout()
@@ -90,15 +90,15 @@ class DryRunTest {
 	@Test fun `an earlier queue is never flushed and a dry-run save drops it`() {
 		val backend = InMemoryKeyValueStore()
 		val earlier = testKernel(
-			TEST_CONFIG, C15tStore(backend),
+			TEST_CONFIG, InthStore(backend),
 			transport = RecordingTransport().respondInit(initSuccess()).respondSave(SaveOutcome.Unavailable("offline")),
 		)
 		earlier.bootstrap()
 		assertTrue(earlier.save(CommitIntent.Necessary).queued)
-		val owed = C15tStore(backend).readPending()
+		val owed = InthStore(backend).readPending()
 		assertEquals(1, owed.size)
 
-		val store = C15tStore(backend)
+		val store = InthStore(backend)
 		val transport = RecordingTransport().respondInit(initSuccess()).respondSave(SaveOutcome.Delivered)
 		val core = testKernel(dry, store, transport = transport)
 		core.bootstrap()
@@ -120,7 +120,7 @@ class DryRunTest {
 				("location" to JsonObject(mapOf("countryCode" to JsonPrimitive("US"), "regionCode" to JsonNull))),
 		).toString()
 		val transport = RecordingTransport().respondInit(initSuccess(body = served))
-		val store = C15tStore(InMemoryKeyValueStore(), tcStorageBus = bus)
+		val store = InthStore(InMemoryKeyValueStore(), tcStorageBus = bus)
 		val core = testKernel(
 			NativeConfig(
 				"https://cmp.example.test",
@@ -155,7 +155,7 @@ class DryRunTest {
 		)
 		val now = (fixture.getValue("now") as JsonPrimitive).content.toLong()
 		val bus = RecordingTcStorageBus()
-		val store = C15tStore(InMemoryKeyValueStore(), tcStorageBus = bus)
+		val store = InthStore(InMemoryKeyValueStore(), tcStorageBus = bus)
 		val transport = RecordingTransport()
 			.respondInit(initSuccess(body = initBody(model = "\"iab\"", gvl = GlobalVendorListJson.toJson(gvl))))
 		val core = testKernel(

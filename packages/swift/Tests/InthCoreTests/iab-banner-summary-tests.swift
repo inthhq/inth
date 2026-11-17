@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 /// The first-layer summary against the web's `resolveIABBannerSummary`, through
 /// `packages/native-protocol/iab/banner-summary-*.json`. Regenerate the fixtures with
@@ -31,7 +31,7 @@ final class IABBannerSummaryTests: XCTestCase {
         let files = try FileManager.default.contentsOfDirectory(atPath: directory.path)
             .filter { $0.hasPrefix("banner-summary-") && $0.hasSuffix(".json") }
             .sorted()
-        return try files.map { try C15tJSON.decode(Fixture.self, from: Data(contentsOf: directory.appendingPathComponent($0))) }
+        return try files.map { try InthJSON.decode(Fixture.self, from: Data(contentsOf: directory.appendingPathComponent($0))) }
     }
 
     // TCF-CHECK: P7

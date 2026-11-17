@@ -1,14 +1,14 @@
-package com.c15t.android
+package com.inth.android
 
 import android.content.ComponentName
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.pm.PackageManager
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.c15t.core.C15t
-import com.c15t.core.CommitIntent
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentDecision
+import com.inth.core.Inth
+import com.inth.core.CommitIntent
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentDecision
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -24,7 +24,7 @@ import org.junit.runner.RunWith
  * The launch path, on a device, with no React Native and no JavaScript in the process.
  *
  * This is the native-before-JavaScript gate from issue 1010 stated as a test: an analytics or
- * ad SDK initialised inside `Application.onCreate` has to get a real answer out of c15t before
+ * ad SDK initialised inside `Application.onCreate` has to get a real answer out of Inth before
  * the bundle exists. Everything here reads the manifest the merger and the resource compiler
  * actually built into the instrumented APK, so the values reach the SDK through `PackageManager`
  * the way a host app's do.
@@ -49,12 +49,12 @@ class LaunchFromManifestTest {
 	/** `configFrom` reads the merged manifest, whichever type the manifest parser chose. */
 	@Test
 	fun testConfigFromReadsTheMergedManifest() {
-		val declared = C15tAndroid.configFrom(appContext())
+		val declared = InthAndroid.configFrom(appContext())
 
-		assertNotNull("the instrumented APK declares com.c15t.BACKEND_URL", declared)
+		assertNotNull("the instrumented APK declares com.inth.BACKEND_URL", declared)
 		val config = requireNotNull(declared)
 		assertEquals("https://consent.instrumentation.invalid", config.backendUrl)
-		assertTrue("the debuggable test APK declares com.c15t.DRY_RUN", config.dryRun)
+		assertTrue("the debuggable test APK declares com.inth.DRY_RUN", config.dryRun)
 		assertEquals("consent.instrumentation.invalid", config.domain)
 		// The manifest spells this one unquoted, so the parser hands over a Boolean. A reader
 		// built on `getString` plus `toBooleanStrictOrNull` would still see it, and would then
@@ -72,7 +72,7 @@ class LaunchFromManifestTest {
 		)
 	}
 
-	/** The built APK registers `C15tInitializer` with androidx.startup, so the launch hook runs. */
+	/** The built APK registers `InthInitializer` with androidx.startup, so the launch hook runs. */
 	@Test
 	fun testBuiltApkRegistersTheInitializerWithAndroidxStartup() {
 		val context = appContext()
@@ -84,9 +84,9 @@ class LaunchFromManifestTest {
 
 		assertFalse("the launch hook belongs to this process alone", provider.exported)
 		assertEquals(
-			"the merged manifest has to name C15tInitializer, or androidx.startup never calls it",
+			"the merged manifest has to name InthInitializer, or androidx.startup never calls it",
 			"androidx.startup",
-			C15tManifestValue.string(C15tManifestValue.raw(provider.metaData, C15tInitializer::class.java.name)),
+			InthManifestValue.string(InthManifestValue.raw(provider.metaData, InthInitializer::class.java.name)),
 		)
 	}
 
@@ -100,14 +100,14 @@ class LaunchFromManifestTest {
 	fun testInitializerAnswersNativeReadsWithoutAnyJavaScriptRuntime() {
 		val context = appContext()
 
-		C15tInitializer().create(context)
+		InthInitializer().create(context)
 
-		assertNotNull("the Initializer installs the core, which is the whole zero-code path", C15t.current)
-		assertTrue(ConsentCategory.NECESSARY.wireName, C15t.isAllowed(ConsentCategory.NECESSARY))
-		assertFalse("nothing has resolved, so an optional category stays off", C15t.isAllowed(ConsentCategory.MEASUREMENT))
-		assertEquals(ConsentDecision.PENDING, C15t.decision(ConsentCategory.MEASUREMENT))
-		assertFalse("an unresolved policy is not an answer", C15t.isReady())
-		assertTrue(C15t.snapshot().policyPending)
+		assertNotNull("the Initializer installs the core, which is the whole zero-code path", Inth.current)
+		assertTrue(ConsentCategory.NECESSARY.wireName, Inth.isAllowed(ConsentCategory.NECESSARY))
+		assertFalse("nothing has resolved, so an optional category stays off", Inth.isAllowed(ConsentCategory.MEASUREMENT))
+		assertEquals(ConsentDecision.PENDING, Inth.decision(ConsentCategory.MEASUREMENT))
+		assertFalse("an unresolved policy is not an answer", Inth.isReady())
+		assertTrue(Inth.snapshot().policyPending)
 		assertNull(
 			"the answer above came from a process with React Native absent from it",
 			classOrNull("com.facebook.react.bridge.ReactApplicationContext"),
@@ -119,23 +119,23 @@ class LaunchFromManifestTest {
 	fun testSecondInstallIsIgnoredRatherThanReplacingTheRunningCore() {
 		val context = appContext()
 		val running = DeviceBackend()
-		C15tAndroid.install(context, deviceConfig(), transport = running)
-		val installed = C15t.current
+		InthAndroid.install(context, deviceConfig(), transport = running)
+		val installed = Inth.current
 		assertNotNull("the first install must install", installed)
 
 		// A host that calls install from Application.onCreate while the Initializer already
 		// ran: the documented shape, and the one that would swap a live kernel if idempotence
 		// were the caller's rather than the core's.
 		val latecomer = DeviceBackend(initiallyOnline = true)
-		C15tAndroid.install(
+		InthAndroid.install(
 			context,
 			deviceConfig().copy(backendUrl = "https://elsewhere.instrumentation.invalid"),
 			transport = latecomer,
 		)
 
-		assertSame("a second install must not swap a running core", installed, C15t.current)
+		assertSame("a second install must not swap a running core", installed, Inth.current)
 		running.online = true
-		assertTrue(C15t.save(CommitIntent.All).ok)
+		assertTrue(Inth.save(CommitIntent.All).ok)
 		awaitSettled("the running core to keep serving writes") { running.accepted().isNotEmpty() }
 		assertEquals(
 			"the discarded core must never touch the backend it was built with",
@@ -150,7 +150,7 @@ class LaunchFromManifestTest {
 	 *
 	 * Two spellings of "declared nothing" go through the real package manager, because they are
 	 * the two ways out of `configFrom`: an application declaration that exists and names nothing
-	 * c15t, and a declaration the platform cannot find at all. Both have to end in the same
+	 * Inth, and a declaration the platform cannot find at all. Both have to end in the same
 	 * place, which is no core installed and the deny-all answer, rather than a throw in a launch
 	 * hook that runs before the first Activity exists.
 	 */
@@ -158,41 +158,41 @@ class LaunchFromManifestTest {
 	fun testUndeclaredBackendUrlLeavesTheCoreUninstalledAndReadsStillAnswer() {
 		val context = appContext()
 
-		for (host in listOf(declaresNothingC15t(context), declaresNothingAtAll(context))) {
-			assertNull("${host.packageName} declares nothing usable", C15tAndroid.configFrom(host))
-			C15tAndroid.bootstrap(host)
-			assertNull("${host.packageName} leaves the core uninstalled", C15t.current)
+		for (host in listOf(declaresNothingInth(context), declaresNothingAtAll(context))) {
+			assertNull("${host.packageName} declares nothing usable", InthAndroid.configFrom(host))
+			InthAndroid.bootstrap(host)
+			assertNull("${host.packageName} leaves the core uninstalled", Inth.current)
 		}
 
-		assertTrue(C15t.isAllowed(ConsentCategory.NECESSARY))
-		assertFalse(C15t.isAllowed(ConsentCategory.MEASUREMENT))
-		assertEquals(ConsentDecision.PENDING, C15t.decision(ConsentCategory.MEASUREMENT))
-		assertFalse(C15t.isReady())
-		assertFalse("an uninstalled core never hydrated", C15t.hasStoredSnapshot)
-		assertTrue(C15t.snapshot().policyPending)
+		assertTrue(Inth.isAllowed(ConsentCategory.NECESSARY))
+		assertFalse(Inth.isAllowed(ConsentCategory.MEASUREMENT))
+		assertEquals(ConsentDecision.PENDING, Inth.decision(ConsentCategory.MEASUREMENT))
+		assertFalse(Inth.isReady())
+		assertFalse("an uninstalled core never hydrated", Inth.hasStoredSnapshot)
+		assertTrue(Inth.snapshot().policyPending)
 
-		val refused = C15t.save(CommitIntent.All)
+		val refused = Inth.save(CommitIntent.All)
 		assertFalse("a write is a no-op rather than an exception", refused.ok)
 		assertEquals("not-bootstrapped", refused.error?.code)
 
 		// Registration against nothing is one answer, never silence, or a host that switched
 		// itself off would wait for a change that cannot come.
 		var seen: ConsentDecision? = null
-		val handle = C15t.gateDecision(ConsentCategory.MEASUREMENT) { decision -> seen = decision }
+		val handle = Inth.gateDecision(ConsentCategory.MEASUREMENT) { decision -> seen = decision }
 		assertEquals(ConsentDecision.PENDING, seen)
 		handle.close()
 	}
 
 	/**
-	 * A host whose application declaration exists and names nothing c15t.
+	 * A host whose application declaration exists and names nothing Inth.
 	 *
 	 * `configFrom` asks the package manager about `context.packageName`, and the framework
-	 * package is on every device with a declaration of its own that carries no c15t keys. The
+	 * package is on every device with a declaration of its own that carries no Inth keys. The
 	 * wrapper is how that second declaration reaches the SDK: `createPackageContext("android")`
 	 * hands back a context that still reports the caller's own package, which this suite found
 	 * out on the device rather than from the documentation.
 	 */
-	private fun declaresNothingC15t(context: Context): Context = hostReporting(context, FRAMEWORK_PACKAGE)
+	private fun declaresNothingInth(context: Context): Context = hostReporting(context, FRAMEWORK_PACKAGE)
 
 	/** A package the platform cannot resolve, which is the other way `configFrom` runs out. */
 	private fun declaresNothingAtAll(context: Context): Context = hostReporting(context, UNRESOLVABLE_PACKAGE)
@@ -213,6 +213,6 @@ class LaunchFromManifestTest {
 	private companion object {
 		const val INITIALIZATION_PROVIDER = "androidx.startup.InitializationProvider"
 		const val FRAMEWORK_PACKAGE = "android"
-		const val UNRESOLVABLE_PACKAGE = "com.c15t.no.such.app"
+		const val UNRESOLVABLE_PACKAGE = "com.inth.no.such.app"
 	}
 }

@@ -1,6 +1,6 @@
-package com.c15t.android.integrations
+package com.inth.android.integrations
 
-import com.c15t.core.model.ConsentCategory
+import com.inth.core.model.ConsentCategory
 import java.io.File
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject

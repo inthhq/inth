@@ -1,12 +1,12 @@
-package com.c15t.core.webview
+package com.inth.core.webview
 
-import com.c15t.core.store.C15tStore
-import com.c15t.core.InMemoryKeyValueStore
-import com.c15t.core.RecordingTransport
-import com.c15t.core.initSuccess
-import com.c15t.core.CommitIntent
-import com.c15t.core.model.KernelUser
-import com.c15t.core.testKernel
+import com.inth.core.store.InthStore
+import com.inth.core.InMemoryKeyValueStore
+import com.inth.core.RecordingTransport
+import com.inth.core.initSuccess
+import com.inth.core.CommitIntent
+import com.inth.core.model.KernelUser
+import com.inth.core.testKernel
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
@@ -45,12 +45,12 @@ class WebViewConsentSyncTest {
 		while (queue.isNotEmpty()) queue.removeFirst()()
 	}
 
-	private fun core() = testKernel(store = C15tStore(InMemoryKeyValueStore()), transport = RecordingTransport())
+	private fun core() = testKernel(store = InthStore(InMemoryKeyValueStore()), transport = RecordingTransport())
 		.also { it.bootstrap() }
 
 	/** A ready core whose visitor accepted everything, so a page holds real grants. */
 	private fun grantedCore() = testKernel(
-		store = C15tStore(InMemoryKeyValueStore()),
+		store = InthStore(InMemoryKeyValueStore()),
 		transport = RecordingTransport().respondInit(initSuccess()),
 	).also {
 		it.bootstrap()
@@ -78,12 +78,12 @@ class WebViewConsentSyncTest {
 	}
 
 	/** How many snapshot callbacks the core holds. */
-	private fun registrations(core: com.c15t.core.ConsentCore): Int =
-		(com.c15t.core.ConsentCore::class.java.getDeclaredField("snapshotObservers")
+	private fun registrations(core: com.inth.core.ConsentCore): Int =
+		(com.inth.core.ConsentCore::class.java.getDeclaredField("snapshotObservers")
 			.apply { isAccessible = true }.get(core) as Collection<*>).size
 
 	/** Start a sync and keep nothing of it but a weak reference. */
-	private fun abandonedSync(core: com.c15t.core.ConsentCore, target: RecordingTarget) =
+	private fun abandonedSync(core: com.inth.core.ConsentCore, target: RecordingTarget) =
 		java.lang.ref.WeakReference(WebViewConsentSync.start(core, listOf("https://app.example"), target, post = post))
 
 	@Test fun `a sync collected without close lets go of its core registration`() {

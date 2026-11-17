@@ -1,4 +1,4 @@
-package com.c15t.core.tc
+package com.inth.core.tc
 
 /**
  * A TC String this build cannot read.
@@ -9,7 +9,7 @@ package com.c15t.core.tc
  *
  * They extend [IllegalArgumentException] rather than [Exception] on purpose. This module's
  * convention is that a bad argument is an `IllegalArgumentException` (see
- * [com.c15t.core.store.RetiredWireFields] and [com.c15t.core.SubjectIdGenerator]), and a
+ * [com.inth.core.store.RetiredWireFields] and [com.inth.core.SubjectIdGenerator]), and a
  * TC string that reaches the kernel is an argument to it: a caller that already handles an
  * unusable stored value keeps handling it, and only code that cares which half of the codec
  * spoke has to import anything.

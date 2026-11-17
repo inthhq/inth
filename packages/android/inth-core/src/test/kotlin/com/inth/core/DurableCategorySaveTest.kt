@@ -1,14 +1,14 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentSnapshot
-import com.c15t.core.spi.KeyValueStore
-import com.c15t.core.store.C15tStore
-import com.c15t.core.store.C15tStoreKeys
-import com.c15t.core.store.C15tJson
-import com.c15t.core.store.PendingQueue
-import com.c15t.core.store.SnapshotEnvelope
-import com.c15t.core.transport.SaveOutcome
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentSnapshot
+import com.inth.core.spi.KeyValueStore
+import com.inth.core.store.InthStore
+import com.inth.core.store.InthStoreKeys
+import com.inth.core.store.InthJson
+import com.inth.core.store.PendingQueue
+import com.inth.core.store.SnapshotEnvelope
+import com.inth.core.transport.SaveOutcome
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -24,7 +24,7 @@ class DurableCategorySaveTest {
 		override fun read(key: String): String? = stored.read(key)
 		override fun write(key: String, value: String?) = stored.write(key, value)
 		override fun writeDurably(key: String, value: String?): Boolean {
-			if (key == C15tStoreKeys.SNAPSHOT) {
+			if (key == InthStoreKeys.SNAPSHOT) {
 				beforeSnapshotWrite?.invoke()
 				if (refuseSnapshot) {
 					if (throwOnRefusal) error("storage unavailable")
@@ -38,14 +38,14 @@ class DurableCategorySaveTest {
 	@Test fun `refused category snapshot preserves the prior decision and never replays the grant`() {
 		for (throws in listOf(false, true)) {
 			val backend = RefusingSnapshotStore()
-			val store = C15tStore(backend)
+			val store = InthStore(backend)
 			val transport = RecordingTransport().respondInit(initSuccess())
 				.respondSave(SaveOutcome.Unavailable("offline"))
 			val core = testKernel(store = store, transport = transport)
 			core.bootstrap()
 			assertTrue(core.save(CommitIntent.Necessary).ok)
 			val before = core.snapshot()
-			val beforeBytes = backend.read(C15tStoreKeys.SNAPSHOT)
+			val beforeBytes = backend.read(InthStoreKeys.SNAPSHOT)
 			val owed = store.readPending()
 			val observed = mutableListOf<ConsentSnapshot>()
 			val listener: (ConsentSnapshot) -> Unit = { observed += it }
@@ -66,13 +66,13 @@ class DurableCategorySaveTest {
 			assertEquals(before, core.snapshot())
 			assertTrue(duringWrite.all { it == before }, "a pending disk write must not expose the grant")
 			assertTrue(observed.isEmpty(), "a refused choice must not notify snapshot observers")
-			assertEquals(beforeBytes, backend.read(C15tStoreKeys.SNAPSHOT))
+			assertEquals(beforeBytes, backend.read(InthStoreKeys.SNAPSHOT))
 			assertEquals(owed, store.readPending())
 			assertTrue(transport.saveRequests.isEmpty())
 			backend.beforeSnapshotWrite = null
 			backend.refuseSnapshot = false
 			val replay = RecordingTransport().respondInit(initSuccess())
-			val cold = testKernel(store = C15tStore(backend), transport = replay)
+			val cold = testKernel(store = InthStore(backend), transport = replay)
 			cold.bootstrap()
 			cold.flushPending()
 			assertEquals(before.explicitChoice, cold.snapshot().explicitChoice)
@@ -88,7 +88,7 @@ class DurableCategorySaveTest {
 			override fun read(key: String): String? = cached.read(key)
 			override fun write(key: String, value: String?) = cached.write(key, value)
 		}
-		val store = C15tStore(backend)
+		val store = InthStore(backend)
 		val transport = RecordingTransport().respondInit(initSuccess())
 		val core = testKernel(store = store, transport = transport)
 		core.bootstrap()
@@ -105,7 +105,7 @@ class DurableCategorySaveTest {
 
 	@Test fun `refused category acknowledgement leaves the prompt unanswered`() {
 		val backend = RefusingSnapshotStore()
-		val store = C15tStore(backend)
+		val store = InthStore(backend)
 		val transport = RecordingTransport().respondInit(initSuccess())
 		val core = testKernel(config = TEST_CONFIG.copy(consentCategories = emptyList()),
 			store = store, transport = transport)
@@ -122,7 +122,7 @@ class DurableCategorySaveTest {
 		assertTrue(transport.saveRequests.isEmpty())
 		backend.refuseSnapshot = false
 		val cold = testKernel(config = TEST_CONFIG.copy(consentCategories = emptyList()),
-			store = C15tStore(backend), transport = RecordingTransport().respondInit(initSuccess()))
+			store = InthStore(backend), transport = RecordingTransport().respondInit(initSuccess()))
 		cold.bootstrap()
 		assertTrue(cold.snapshot().promptRequirement.acknowledge)
 		assertNotNull(store.readEnvelope())
@@ -130,7 +130,7 @@ class DurableCategorySaveTest {
 
 	@Test fun `category commit migrates legacy obligations and replays their frozen bodies unchanged`() {
 		val backend = RefusingSnapshotStore()
-		val store = C15tStore(backend)
+		val store = InthStore(backend)
 		val transport = RecordingTransport().respondInit(initSuccess())
 			.respondSave(SaveOutcome.Unavailable("offline"))
 		val core = testKernel(store = store, transport = transport)
@@ -138,10 +138,10 @@ class DurableCategorySaveTest {
 		assertTrue(core.save(CommitIntent.Custom(mapOf(ConsentCategory.MARKETING to true))).ok)
 		val prior = store.readPending().single()
 		val envelope = assertNotNull(store.readEnvelope())
-		backend.write(C15tStoreKeys.SNAPSHOT,
-			C15tJson.storage.encodeToString(SnapshotEnvelope.serializer(), envelope.copy(pendingSaves = null)))
-		val legacy = C15tJson.queue.encodeToString(PendingQueue.serializer(), PendingQueue(listOf(prior)))
-		backend.write(C15tStoreKeys.PENDING,
+		backend.write(InthStoreKeys.SNAPSHOT,
+			InthJson.storage.encodeToString(SnapshotEnvelope.serializer(), envelope.copy(pendingSaves = null)))
+		val legacy = InthJson.queue.encodeToString(PendingQueue.serializer(), PendingQueue(listOf(prior)))
+		backend.write(InthStoreKeys.PENDING,
 			legacy.replaceFirst("\"overrides\":{", "\"overrides\":{\"future\":true,"))
 		assertEquals(prior, store.readPending().single(), "legacy queue fields remain tolerated")
 		val before = core.snapshot()
@@ -156,23 +156,23 @@ class DurableCategorySaveTest {
 		assertEquals(2, owed.size)
 		assertEquals(prior, owed.first(), "migration preserves the original row, payload and body")
 		assertNotNull(store.readEnvelope()?.pendingSaves)
-		val raw = assertNotNull(backend.read(C15tStoreKeys.SNAPSHOT))
+		val raw = assertNotNull(backend.read(InthStoreKeys.SNAPSHOT))
 		val queuedAt = raw.indexOf("\"pendingSaves\":")
 		val changed = raw.take(queuedAt) + raw.substring(queuedAt)
 			.replaceFirst("\"overrides\":{", "\"overrides\":{\"future\":true,")
-		backend.write(C15tStoreKeys.SNAPSHOT, changed)
+		backend.write(InthStoreKeys.SNAPSHOT, changed)
 		assertEquals(owed, store.readPending(), "embedded queue fields have the legacy tolerance")
 		val replay = RecordingTransport().respondInit(initSuccess())
-		val cold = testKernel(store = C15tStore(backend), transport = replay)
+		val cold = testKernel(store = InthStore(backend), transport = replay)
 		cold.bootstrap()
 		cold.flushPending()
 		assertEquals(owed.map { it.body }, replay.saveRequests.map { it.body })
 		assertEquals(owed.map { it.payload }, replay.saveRequests.map { it.payload })
 		assertTrue(cold.isAllowed(ConsentCategory.MARKETING))
 		assertTrue(cold.isAllowed(ConsentCategory.MEASUREMENT))
-		backend.write(C15tStoreKeys.SNAPSHOT,
+		backend.write(InthStoreKeys.SNAPSHOT,
 			changed.replaceFirst("\"overrides\":{", "\"overrides\":{\"future\":true,"))
-		val invalidAuthority = testKernel(store = C15tStore(backend))
+		val invalidAuthority = testKernel(store = InthStore(backend))
 		invalidAuthority.bootstrap()
 		assertFalse(invalidAuthority.isAllowed(ConsentCategory.MARKETING),
 			"unknown snapshot authority must still fail closed")

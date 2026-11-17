@@ -1,22 +1,22 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.model.ActiveUI
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentModel
-import com.c15t.core.model.ConsentSnapshot
-import com.c15t.core.model.ConsentState
-import com.c15t.core.model.ConsentSubject
-import com.c15t.core.model.KernelOverrides
-import com.c15t.core.model.PolicyResolution
-import com.c15t.core.model.PrivacySignals
-import com.c15t.core.model.PromptReason
-import com.c15t.core.store.C15tJson
-import com.c15t.core.store.C15tStore
-import com.c15t.core.store.C15tStoreKeys
-import com.c15t.core.store.SnapshotEnvelope
-import com.c15t.core.wire.SnapshotWire
-import com.c15t.core.transport.SaveOutcome
-import com.c15t.core.transport.TransportOutcome
+import com.inth.core.model.ActiveUI
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentModel
+import com.inth.core.model.ConsentSnapshot
+import com.inth.core.model.ConsentState
+import com.inth.core.model.ConsentSubject
+import com.inth.core.model.KernelOverrides
+import com.inth.core.model.PolicyResolution
+import com.inth.core.model.PrivacySignals
+import com.inth.core.model.PromptReason
+import com.inth.core.store.InthJson
+import com.inth.core.store.InthStore
+import com.inth.core.store.InthStoreKeys
+import com.inth.core.store.SnapshotEnvelope
+import com.inth.core.wire.SnapshotWire
+import com.inth.core.transport.SaveOutcome
+import com.inth.core.transport.TransportOutcome
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -34,7 +34,7 @@ class KernelTest {
 	@Test
 	fun `cold start with an empty store is not ready and denies every optional category`() {
 		val backend = InMemoryKeyValueStore()
-		val kernel = testKernel(store = C15tStore(backend))
+		val kernel = testKernel(store = InthStore(backend))
 
 		kernel.bootstrap()
 		val snapshot = kernel.snapshot()
@@ -54,7 +54,7 @@ class KernelTest {
 
 	@Test
 	fun `a failed init keeps the cold-start answer deny-all`() {
-		val kernel = testKernel(store = C15tStore(InMemoryKeyValueStore()))
+		val kernel = testKernel(store = InthStore(InMemoryKeyValueStore()))
 
 		kernel.bootstrap()
 
@@ -68,7 +68,7 @@ class KernelTest {
 	@Test
 	fun `hydrate restores the stored snapshot with no network in the read path`() {
 		val clock = FixedClock()
-		val stored = C15tStore(InMemoryKeyValueStore())
+		val stored = InthStore(InMemoryKeyValueStore())
 		// Produce a realistic stored state first: init resolves, subject accepts.
 		val transport = RecordingTransport().respondInit(initSuccess())
 		val writer = testKernel(store = stored, clock = clock, transport = transport)
@@ -81,10 +81,10 @@ class KernelTest {
 
 		// A brand new core over the same bytes, with a transport that would fail.
 		val coldBackend = InMemoryKeyValueStore()
-		coldBackend.putSilently(C15tStoreKeys.SNAPSHOT, C15tJson.storage.encodeToString(storedEnvelope))
-		coldBackend.putSilently(C15tStoreKeys.SUBJECT, """{"id":"$subjectId"}""")
+		coldBackend.putSilently(InthStoreKeys.SNAPSHOT, InthJson.storage.encodeToString(storedEnvelope))
+		coldBackend.putSilently(InthStoreKeys.SUBJECT, """{"id":"$subjectId"}""")
 		val coldTransport = RecordingTransport()
-		val cold = testKernel(store = C15tStore(coldBackend), clock = clock, transport = coldTransport)
+		val cold = testKernel(store = InthStore(coldBackend), clock = clock, transport = coldTransport)
 
 		cold.bootstrap()
 		val snapshot = cold.snapshot()
@@ -100,7 +100,7 @@ class KernelTest {
 		// been consulted for it: the only request is the one bootstrap schedules
 		// afterwards, and it never blocks the snapshot.
 		assertEquals(1, coldTransport.initRequests.size)
-		assertTrue(coldBackend.events.none { it == "read:${C15tStoreKeys.PENDING}" },
+		assertTrue(coldBackend.events.none { it == "read:${InthStoreKeys.PENDING}" },
 			"the atomic envelope already holds its queue")
 	}
 
@@ -116,7 +116,7 @@ class KernelTest {
 		val transport = RecordingTransport().respondInit(
 			initSuccess(body = """{"policyResolution":{"version":1,"status":"no-match","policy":null}}"""),
 		)
-		val kernel = testKernel(store = C15tStore(InMemoryKeyValueStore()), transport = transport)
+		val kernel = testKernel(store = InthStore(InMemoryKeyValueStore()), transport = transport)
 		kernel.bootstrap()
 
 		val snapshot = kernel.snapshot()
@@ -145,7 +145,7 @@ class KernelTest {
 	@Test
 	fun `a notice dismissal survives a relaunch`() {
 		val clock = FixedClock()
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val transport = RecordingTransport().respondInit(initSuccess(body = initBody(prompt = "\"notice\"")))
 		val warm = testKernel(store = store, clock = clock, transport = transport)
 		warm.bootstrap()
@@ -158,12 +158,12 @@ class KernelTest {
 
 		val envelope = assertNotNull(store.readEnvelope(), "the dismissal has to survive the process")
 		val coldBackend = InMemoryKeyValueStore()
-		coldBackend.putSilently(C15tStoreKeys.SNAPSHOT, C15tJson.storage.encodeToString(envelope))
+		coldBackend.putSilently(InthStoreKeys.SNAPSHOT, InthJson.storage.encodeToString(envelope))
 		coldBackend.putSilently(
-			C15tStoreKeys.SUBJECT,
+			InthStoreKeys.SUBJECT,
 			"""{"id":"${assertNotNull(envelope.snapshot.subject).id}"}""",
 		)
-		val cold = testKernel(store = C15tStore(coldBackend), clock = clock, transport = RecordingTransport())
+		val cold = testKernel(store = InthStore(coldBackend), clock = clock, transport = RecordingTransport())
 		cold.bootstrap()
 
 		assertFalse(cold.snapshot().promptRequirement.notice, "a subject does not dismiss the same notice twice")
@@ -188,9 +188,9 @@ class KernelTest {
 			),
 		)
 		val backend = InMemoryKeyValueStore()
-		backend.putSilently(C15tStoreKeys.SNAPSHOT, envelopeJson)
-		backend.putSilently(C15tStoreKeys.SUBJECT, """{"id":"sub_4ZrjtiRsJnoW34Px8dAvhPTKJiWc"}""")
-		val kernel = testKernel(store = C15tStore(backend), clock = clock)
+		backend.putSilently(InthStoreKeys.SNAPSHOT, envelopeJson)
+		backend.putSilently(InthStoreKeys.SUBJECT, """{"id":"sub_4ZrjtiRsJnoW34Px8dAvhPTKJiWc"}""")
+		val kernel = testKernel(store = InthStore(backend), clock = clock)
 
 		kernel.bootstrap()
 
@@ -219,7 +219,7 @@ class KernelTest {
 				body = initBody(scope = """["experience","functionality","marketing","measurement"]"""),
 			),
 		)
-		val kernel = testKernel(store = C15tStore(InMemoryKeyValueStore()), clock = clock, transport = transport)
+		val kernel = testKernel(store = InthStore(InMemoryKeyValueStore()), clock = clock, transport = transport)
 		kernel.bootstrap()
 		assertTrue(kernel.snapshot().promptRequirement.acknowledge, "an undecided subject owes the choice prompt")
 		assertEquals(ActiveUI.BANNER, kernel.snapshot().activeUI)
@@ -283,7 +283,7 @@ class KernelTest {
 				),
 			),
 		)
-		val kernel = testKernel(store = C15tStore(InMemoryKeyValueStore()), clock = clock, transport = transport)
+		val kernel = testKernel(store = InthStore(InMemoryKeyValueStore()), clock = clock, transport = transport)
 		kernel.bootstrap()
 
 		val opened = kernel.snapshot()
@@ -319,7 +319,7 @@ class KernelTest {
 		)
 		val kernel = testKernel(
 			config = NativeConfig(backendUrl = "https://test.c15t.app", detectedGpc = true),
-			store = C15tStore(InMemoryKeyValueStore()),
+			store = InthStore(InMemoryKeyValueStore()),
 			transport = transport,
 		)
 		kernel.bootstrap()
@@ -336,7 +336,7 @@ class KernelTest {
 	fun `an expired choice stops granting under opt-in`() {
 		val clock = FixedClock()
 		val transport = RecordingTransport().respondInit(initSuccess(body = initBody(choiceMs = 1_000)))
-		val kernel = testKernel(store = C15tStore(InMemoryKeyValueStore()), clock = clock, transport = transport)
+		val kernel = testKernel(store = InthStore(InMemoryKeyValueStore()), clock = clock, transport = transport)
 		kernel.bootstrap()
 		kernel.save(CommitIntent.All)
 		assertTrue(kernel.isAllowed(ConsentCategory.MARKETING))
@@ -352,7 +352,7 @@ class KernelTest {
 	@Test
 	fun `a failed init after a good one keeps the cached grants`() {
 		val transport = RecordingTransport().respondInit(initSuccess())
-		val kernel = testKernel(store = C15tStore(InMemoryKeyValueStore()), transport = transport)
+		val kernel = testKernel(store = InthStore(InMemoryKeyValueStore()), transport = transport)
 		kernel.bootstrap()
 		kernel.save(CommitIntent.All)
 		assertTrue(kernel.isAllowed(ConsentCategory.MARKETING))
@@ -370,7 +370,7 @@ class KernelTest {
 	@Test
 	fun `gate fires immediately and again on change`() {
 		val transport = RecordingTransport().respondInit(initSuccess())
-		val kernel = testKernel(store = C15tStore(InMemoryKeyValueStore()), transport = transport)
+		val kernel = testKernel(store = InthStore(InMemoryKeyValueStore()), transport = transport)
 		kernel.bootstrap()
 
 		val seen = mutableListOf<Boolean>()
@@ -389,7 +389,7 @@ class KernelTest {
 	fun `setOverrides re-evaluates and re-runs init with the new context`() {
 		val transport = RecordingTransport().respondInit(initSuccess())
 		val backend = InMemoryKeyValueStore()
-		val kernel = testKernel(store = C15tStore(backend), clock = FixedClock(), transport = transport)
+		val kernel = testKernel(store = InthStore(backend), clock = FixedClock(), transport = transport)
 		kernel.bootstrap()
 
 		kernel.setOverrides(KernelOverrides(country = "DE", gpc = true))

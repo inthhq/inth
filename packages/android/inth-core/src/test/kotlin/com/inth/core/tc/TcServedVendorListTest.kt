@@ -1,4 +1,4 @@
-package com.c15t.core.tc
+package com.inth.core.tc
 
 import kotlinx.serialization.json.JsonObject
 import kotlin.test.Test

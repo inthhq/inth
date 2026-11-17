@@ -1,4 +1,4 @@
-@_spi(C15tInternal) import C15tCore
+@_spi(InthInternal) import InthCore
 import Foundation
 import XCTest
 

@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 /// The project URL rule, driven by the fixture the Kotlin and TypeScript SDKs also run.
 final class InthProjectURLTests: XCTestCase {
@@ -9,7 +9,7 @@ final class InthProjectURLTests: XCTestCase {
         let url = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
             .appendingPathComponent("native-protocol/project-url/cases.json")
-        return try XCTUnwrap(C15tJSON.parse(Data(contentsOf: url)))
+        return try XCTUnwrap(InthJSON.parse(Data(contentsOf: url)))
     }
 
     func testAllowedHostSuffixesMatchTheSharedFixture() throws {
@@ -41,8 +41,8 @@ final class InthProjectURLTests: XCTestCase {
                     + "the host must be a project host under *.inth.app.")
             XCTAssertEqual(refused?.message, error.localizedDescription)
         }
-        XCTAssertThrowsError(try InthProjectURL.normalize("", option: "com.c15t.backend.url")) { error in
-            XCTAssertTrue(String(describing: error).hasPrefix("com.c15t.backend.url must be the project URL"))
+        XCTAssertThrowsError(try InthProjectURL.normalize("", option: "com.inth.backend.url")) { error in
+            XCTAssertTrue(String(describing: error).hasPrefix("com.inth.backend.url must be the project URL"))
         }
     }
 

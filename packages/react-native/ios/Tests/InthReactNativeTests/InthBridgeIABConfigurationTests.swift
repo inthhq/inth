@@ -1,30 +1,30 @@
-@_spi(C15tInternal) import C15tCore
-@_spi(C15tInternal) import C15tReactNativeBridge
+@_spi(InthInternal) import InthCore
+@_spi(InthInternal) import InthReactNativeBridge
 import Foundation
 import XCTest
 
-/// The `com.c15t.iab.*` keys are how an RN or Expo app turns IAB TCF on without
+/// The `com.inth.iab.*` keys are how an RN or Expo app turns IAB TCF on without
 /// installing the core itself. These tests read the plist the way the launch hook does.
-final class C15tBridgeIABConfigurationTests: XCTestCase {
-    private typealias Key = C15tBridgeConfiguration.InfoPlistKey
+final class InthBridgeIABConfigurationTests: XCTestCase {
+    private typealias Key = InthBridgeConfiguration.InfoPlistKey
 
     override func setUp() {
         super.setUp()
-        C15t.resetForTests()
+        Inth.resetForTests()
         clearBus()
     }
 
     override func tearDown() {
-        C15t.resetForTests()
+        Inth.resetForTests()
         clearBus()
         super.tearDown()
     }
 
     func testAPlistWithoutIABKeysLeavesIABOff() {
         let plist: [String: Any] = [Key.storageMode: "memory", Key.backendURL: testProjectURL]
-        let configuration = C15tBridgeConfiguration.from(infoPlist: plist)
+        let configuration = InthBridgeConfiguration.from(infoPlist: plist)
         XCTAssertNil(configuration.iab)
-        XCTAssertNil(C15tBridgeConfiguration.iabIssue(in: plist))
+        XCTAssertNil(InthBridgeConfiguration.iabIssue(in: plist))
         let core = configuration.makeCoreConfiguration()
         XCTAssertNotNil(core)
         XCTAssertNil(core?.iab)
@@ -32,7 +32,7 @@ final class C15tBridgeIABConfigurationTests: XCTestCase {
 
     func testIABConsentLanguageFollowsTheResolvedLanguage() {
         func language(_ tag: String) -> String? {
-            C15tBridgeConfiguration.from(infoPlist: [
+            InthBridgeConfiguration.from(infoPlist: [
                 Key.storageMode: "memory", Key.language: tag,
                 Key.iabCmpId: NSNumber(value: 1234), Key.iabCmpVersion: NSNumber(value: 7),
                 Key.iabPublisherCountryCode: "DE",
@@ -46,7 +46,7 @@ final class C15tBridgeIABConfigurationTests: XCTestCase {
     }
 
     func testDeclaredIABSettingsReachTheCoreConfiguration() {
-        let configuration = C15tBridgeConfiguration.from(infoPlist: [
+        let configuration = InthBridgeConfiguration.from(infoPlist: [
             Key.storageMode: "memory",
             Key.backendURL: testProjectURL,
             Key.iabCmpId: NSNumber(value: 1234),
@@ -60,7 +60,7 @@ final class C15tBridgeIABConfigurationTests: XCTestCase {
     }
 
     func testTheConsentScreenDefaultsToTheCoreDefault() {
-        let configuration = C15tBridgeConfiguration.from(infoPlist: [
+        let configuration = InthBridgeConfiguration.from(infoPlist: [
             Key.iabCmpId: "1234", Key.iabCmpVersion: "0", Key.iabPublisherCountryCode: "GB",
         ])
         XCTAssertEqual(configuration.iab?.consentScreen, 1)
@@ -90,9 +90,9 @@ final class C15tBridgeIABConfigurationTests: XCTestCase {
             cases.append(invalid)
         }
         for plist in cases {
-            XCTAssertNil(C15tBridgeConfiguration.from(infoPlist: plist).iab, "\(plist)")
-            let issue = C15tBridgeConfiguration.iabIssue(in: plist)
-            XCTAssertEqual(issue?.code, "C15T_CONFIGURATION_IAB_INVALID", "\(plist)")
+            XCTAssertNil(InthBridgeConfiguration.from(infoPlist: plist).iab, "\(plist)")
+            let issue = InthBridgeConfiguration.iabIssue(in: plist)
+            XCTAssertEqual(issue?.code, "INTH_CONFIGURATION_IAB_INVALID", "\(plist)")
         }
     }
 
@@ -104,7 +104,7 @@ final class C15tBridgeIABConfigurationTests: XCTestCase {
             Key.iabCmpVersion: 7,
             Key.iabPublisherCountryCode: "DE",
         ]))
-        XCTAssertNotNil(C15t.current, "category consent still starts")
+        XCTAssertNotNil(Inth.current, "category consent still starts")
         XCTAssertNil(UserDefaults.standard.object(forKey: TcStorageBusKeys.cmpSdkID))
     }
 

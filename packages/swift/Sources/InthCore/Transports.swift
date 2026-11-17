@@ -5,8 +5,8 @@ import FoundationNetworking
 
 // MARK: - Version and header contract
 
-/// The values every c15t-bound request carries.
-extension C15t {
+/// The values every inth-bound request carries.
+extension Inth {
     /// Version of this native core.
     ///
     /// Source of truth for the native Swift package, including the Apple platform
@@ -86,7 +86,7 @@ extension C15t {
     public static var protocolHeaders: [String: String] {
         [
             versionHeader: versionHeaderValue,
-            policyContractHeader: String(c15tPolicyContractVersion),
+            policyContractHeader: String(inthPolicyContractVersion),
         ]
     }
 }
@@ -94,7 +94,7 @@ extension C15t {
 // MARK: - Errors
 
 /// A transport or configuration failure, with a stable machine code.
-public enum C15tError: Error, Sendable, Equatable {
+public enum InthError: Error, Sendable, Equatable {
     /// No connectivity.
     case offline
     /// The producer serves a policy contract this build cannot represent. The
@@ -125,10 +125,10 @@ public enum C15tError: Error, Sendable, Equatable {
         case let .unsupportedContract(declared, expected):
             return "Backend serves policy contract \(declared ?? "unknown"); this build reads version \(expected)."
         case let .httpStatus(status, message):
-            return "c15t backend responded \(status): \(message)"
+            return "Inth backend responded \(status): \(message)"
         case let .invalidPayload(detail): return "Invalid response payload: \(detail)"
         case let .transport(detail): return "Transport failed: \(detail)"
-        case .notConfigured: return "No c15t transport is configured."
+        case .notConfigured: return "No Inth transport is configured."
         }
     }
 
@@ -213,11 +213,11 @@ public struct HTTPResponse: Sendable, Equatable {
 /// ordering get asserted without a server.
 ///
 /// Internal API for tests and first-party fixtures. Apps configure a project URL.
-@_spi(C15tInternal) public protocol HTTPTransport: Sendable {
+@_spi(InthInternal) public protocol HTTPTransport: Sendable {
     func send(_ request: HTTPRequest) async throws -> HTTPResponse
 }
 
-@_spi(C15tInternal) extension URLSession: HTTPTransport {
+@_spi(InthInternal) extension URLSession: HTTPTransport {
     public func send(_ request: HTTPRequest) async throws -> HTTPResponse {
         var urlRequest = URLRequest(url: request.url)
         urlRequest.httpMethod = request.method.rawValue
@@ -228,7 +228,7 @@ public struct HTTPResponse: Sendable, Equatable {
 
         let (data, response) = try await data(for: urlRequest)
         guard let http = response as? HTTPURLResponse else {
-            throw C15tError.transport("Response was not HTTP")
+            throw InthError.transport("Response was not HTTP")
         }
         var headers: [String: String] = [:]
         for (key, value) in http.allHeaderFields {
@@ -369,8 +369,8 @@ public struct InitResponse: Sendable, Equatable {
 
     /// Read a response body. Anything that is not a JSON object is
     /// `invalidPayload`, because there is nothing safe to keep from it.
-    static func decode(_ response: HTTPResponse) -> Result<InitResponse, C15tError> {
-        guard let parsed = C15tJSON.parse(response.body), parsed.objectValue != nil else {
+    static func decode(_ response: HTTPResponse) -> Result<InitResponse, InthError> {
+        guard let parsed = InthJSON.parse(response.body), parsed.objectValue != nil else {
             return .failure(.invalidPayload("response body is not a JSON object"))
         }
         let contractError = producerContractError(in: response)
@@ -403,18 +403,18 @@ public struct InitResponse: Sendable, Equatable {
     ///
     /// A missing header means the producer predates the declaration, which is not
     /// an error; the body still gets read strictly.
-    static func producerContractError(in response: HTTPResponse) -> Result<Void, C15tError>? {
-        guard let declared = response.header(C15t.policyContractHeader) else { return nil }
+    static func producerContractError(in response: HTTPResponse) -> Result<Void, InthError>? {
+        guard let declared = response.header(Inth.policyContractHeader) else { return nil }
         guard let version = Int(declared.trimmingCharacters(in: .whitespaces)) else {
             return .failure(.unsupportedContract(
                 declared: declared,
-                expected: c15tPolicyContractVersion
+                expected: inthPolicyContractVersion
             ))
         }
-        guard version == c15tPolicyContractVersion else {
+        guard version == inthPolicyContractVersion else {
             return .failure(.unsupportedContract(
                 declared: declared,
-                expected: c15tPolicyContractVersion
+                expected: inthPolicyContractVersion
             ))
         }
         return nil
@@ -454,12 +454,12 @@ public struct InitResponse: Sendable, Equatable {
     private static func decodeRecords(_ value: JSONValue?) -> HydrationRecords? {
         guard let fields = value?.objectValue else { return nil }
         var choice: ExplicitChoice?
-        if let raw = fields["choice"], let data = C15tJSON.encode(raw) {
-            choice = try? C15tJSON.decode(ExplicitChoice.self, from: data)
+        if let raw = fields["choice"], let data = InthJSON.encode(raw) {
+            choice = try? InthJSON.decode(ExplicitChoice.self, from: data)
         }
         var dismissal: NoticeDismissal?
-        if let raw = fields["noticeDismissal"], let data = C15tJSON.encode(raw) {
-            dismissal = try? C15tJSON.decode(NoticeDismissal.self, from: data)
+        if let raw = fields["noticeDismissal"], let data = InthJSON.encode(raw) {
+            dismissal = try? InthJSON.decode(NoticeDismissal.self, from: data)
         }
         guard choice != nil || dismissal != nil else { return nil }
         return HydrationRecords(choice: choice, noticeDismissal: dismissal)
@@ -475,7 +475,7 @@ public struct InitResponse: Sendable, Equatable {
 /// permissions would be a second kernel.
 ///
 /// Internal API for tests and first-party fixtures. Apps configure a project URL.
-@_spi(C15tInternal) public protocol C15tTransport: Sendable {
+@_spi(InthInternal) public protocol InthTransport: Sendable {
     /// Backend that supplies consent policy, used to validate stored bundled authority.
     /// A test transport can provide this URL to retain authority without seed bytes.
     var policyEndpoint: URL? { get }
@@ -483,23 +483,23 @@ public struct InitResponse: Sendable, Equatable {
     /// The `domain` field sent on `POST /subjects`.
     var domain: String { get }
 
-    func performInit(_ context: InitContext) async -> Result<InitResponse, C15tError>
+    func performInit(_ context: InitContext) async -> Result<InitResponse, InthError>
 
     /// Deliver a save body that the core already persisted.
     ///
     /// Takes bytes, not a payload, because the bytes are the durable artifact. A
     /// re-encode at replay time would be free to drift from what the subject chose.
-    func sendSave(_ body: Data) async -> Result<Void, C15tError>
+    func sendSave(_ body: Data) async -> Result<Void, InthError>
 
     /// Attach an external id to the subject.
     func patchIdentity(
         subjectId: String,
         externalId: String,
         identityProvider: String?
-    ) async -> Result<Void, C15tError>
+    ) async -> Result<Void, InthError>
 }
 
-@_spi(C15tInternal) extension C15tTransport {
+@_spi(InthInternal) extension InthTransport {
     /// No endpoint is assumed for a test transport.
     public var policyEndpoint: URL? { nil }
 
@@ -519,11 +519,11 @@ public struct InitResponse: Sendable, Equatable {
     }
 }
 
-/// Talks to a c15t backend's `/init`, `/subjects`, and `/subjects/:id`.
+/// Talks to an Inth backend's `/init`, `/subjects`, and `/subjects/:id`.
 ///
 /// Internal API. This type does not check the host: the public install path
 /// normalises the project URL before it builds one.
-@_spi(C15tInternal) public struct HostedTransport: C15tTransport {
+@_spi(InthInternal) public struct HostedTransport: InthTransport {
     public let baseURL: URL
     public var policyEndpoint: URL? { baseURL }
     public let domain: String
@@ -543,7 +543,7 @@ public struct InitResponse: Sendable, Equatable {
         self.client = client
     }
 
-    public func performInit(_ context: InitContext) async -> Result<InitResponse, C15tError> {
+    public func performInit(_ context: InitContext) async -> Result<InitResponse, InthError> {
         var headers = jsonHeaders
         if let language = context.overrides.language, !language.isEmpty {
             headers["accept-language"] = language
@@ -551,8 +551,8 @@ public struct InitResponse: Sendable, Equatable {
         if let country = context.overrides.country { headers["x-c15t-country"] = country }
         if let region = context.overrides.region { headers["x-c15t-region"] = region }
         if context.overrides.gpc == true { headers["sec-gpc"] = "1" }
-        if let scope = C15t.vendorScopeHeaderValue(context.vendors) {
-            headers[C15t.vendorScopeHeader] = scope
+        if let scope = Inth.vendorScopeHeaderValue(context.vendors) {
+            headers[Inth.vendorScopeHeader] = scope
         }
 
         do {
@@ -569,14 +569,14 @@ public struct InitResponse: Sendable, Equatable {
                 ))
             }
             return InitResponse.decode(response)
-        } catch let error as C15tError {
+        } catch let error as InthError {
             return .failure(error)
         } catch {
             return .failure(.transport(String(describing: error)))
         }
     }
 
-    public func sendSave(_ body: Data) async -> Result<Void, C15tError> {
+    public func sendSave(_ body: Data) async -> Result<Void, InthError> {
         do {
             let response = try await client.send(HTTPRequest(
                 method: .post,
@@ -594,7 +594,7 @@ public struct InitResponse: Sendable, Equatable {
                 ))
             }
             return .success(())
-        } catch let error as C15tError {
+        } catch let error as InthError {
             return .failure(error)
         } catch {
             return .failure(.transport(String(describing: error)))
@@ -605,18 +605,18 @@ public struct InitResponse: Sendable, Equatable {
         subjectId: String,
         externalId: String,
         identityProvider: String?
-    ) async -> Result<Void, C15tError> {
+    ) async -> Result<Void, InthError> {
         var fields: [String: JSONValue] = ["externalId": .string(externalId)]
         if let identityProvider {
             fields["identityProvider"] = .string(identityProvider)
         }
-        guard let body = C15tJSON.encode(.object(fields)) else {
+        guard let body = InthJSON.encode(.object(fields)) else {
             return .failure(.invalidPayload("identity body could not be encoded"))
         }
         // Escaped defensively, because the id was read back from storage. The
         // punctuation both id formats use stays literal: `encodeURIComponent` on the
         // web leaves `-` and `_` alone, and encoding them here puts a path on the wire
-        // that no other c15t SDK sends.
+        // that no other Inth SDK sends.
         let encodedSubjectId = subjectId.addingPercentEncoding(
             withAllowedCharacters: .alphanumerics.union(CharacterSet(charactersIn: "-_"))
         ) ?? subjectId
@@ -634,7 +634,7 @@ public struct InitResponse: Sendable, Equatable {
                 ))
             }
             return .success(())
-        } catch let error as C15tError {
+        } catch let error as InthError {
             return .failure(error)
         } catch {
             return .failure(.transport(String(describing: error)))
@@ -646,7 +646,7 @@ public struct InitResponse: Sendable, Equatable {
             "accept": "application/json",
             "content-type": "application/json",
         ]
-        for (name, value) in C15t.protocolHeaders { headers[name] = value }
+        for (name, value) in Inth.protocolHeaders { headers[name] = value }
         for (name, value) in extraHeaders { headers[name] = value }
         return headers
     }

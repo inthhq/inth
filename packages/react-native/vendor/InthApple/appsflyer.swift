@@ -1,5 +1,5 @@
-#if canImport(C15tCore)
-import C15tCore
+#if canImport(InthCore)
+import InthCore
 #endif
 import Foundation
 
@@ -9,7 +9,7 @@ import Foundation
 /// Map ``GoogleAdsConsent`` to `AppsFlyerConsent` in `setConsentData`:
 /// `hasConsentForDataUsage` from `adUserData`, `hasConsentForAdsPersonalization` from
 /// `adPersonalization` and `hasConsentForAdStorage` from `adStorage`.
-/// `isUserSubjectToGDPR` is yours to supply: c15t's policy model is not a legal
+/// `isUserSubjectToGDPR` is yours to supply: Inth's policy model is not a legal
 /// jurisdiction flag. Marketing grants all three types, as on the web.
 ///
 /// Written against AppsFlyer iOS SDK 6. SDK 7 starts sessions only from its
@@ -18,7 +18,7 @@ import Foundation
 /// Do not call AppsFlyer's `start()` yourself. While the category is denied or
 /// pending, the helper sets `isStopped` to `true`. When it is granted, it sets
 /// `isStopped` to `false` and then calls `start`. A change that keeps the category
-/// granted sends the new consent data without starting again. c15t does not link
+/// granted sends the new consent data without starting again. Inth does not link
 /// AppsFlyer.
 ///
 /// Retain this object for the SDK's lifetime. Calls run synchronously on the caller

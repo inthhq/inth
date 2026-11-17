@@ -1,5 +1,5 @@
-@_spi(C15tInternal) @testable import C15tReactNativeBridge
-@_spi(C15tInternal) import C15tCore
+@_spi(InthInternal) @testable import InthReactNativeBridge
+@_spi(InthInternal) import InthCore
 import XCTest
 
 /// The mapping, the refusal, and the invariant, none of which need a device.
@@ -7,7 +7,7 @@ import XCTest
 /// Three things are pinned here and nowhere else in this target:
 ///
 /// 1. The four Apple states plus the arm for a build that cannot prompt, mapped without
-///    importing `AppTrackingTransparency`, which is the same reason `C15tReachabilityGate`
+///    importing `AppTrackingTransparency`, which is the same reason `InthReachabilityGate`
 ///    keeps `Network` out of the decision it makes.
 /// 2. That a request is refused before Apple is called. A prompt shown on a build with no
 ///    `NSUserTrackingUsageDescription` shows nothing and reports a `denied` no subject
@@ -15,14 +15,14 @@ import XCTest
 /// 3. That no arm moves a consent decision. `packages/native-protocol/CONTRACT.md` states it as a sentence
 ///    about a device with ATT granted and consent refused, and the case is checked against
 ///    the core's own `ConsentDecision` rather than against a copy of the rule.
-final class C15tTrackingGateTests: XCTestCase {
+final class InthTrackingGateTests: XCTestCase {
     /// Counts prompts, so "refused" can mean "and nothing was shown".
     private final class PromptRecorder: @unchecked Sendable {
         private let lock = NSLock()
         private var _calls = 0
-        private let answer: C15tTrackingPlatformStatus?
+        private let answer: InthTrackingPlatformStatus?
 
-        init(answer: C15tTrackingPlatformStatus?) { self.answer = answer }
+        init(answer: InthTrackingPlatformStatus?) { self.answer = answer }
 
         var calls: Int {
             lock.lock()
@@ -30,7 +30,7 @@ final class C15tTrackingGateTests: XCTestCase {
             return _calls
         }
 
-        func request(_ completion: @escaping (C15tTrackingPlatformStatus?) -> Void) {
+        func request(_ completion: @escaping (InthTrackingPlatformStatus?) -> Void) {
             lock.lock()
             _calls += 1
             lock.unlock()
@@ -48,7 +48,7 @@ final class C15tTrackingGateTests: XCTestCase {
     private final class PromptGate: @unchecked Sendable {
         private let lock = NSLock()
         private var _calls = 0
-        private var pending: [(C15tTrackingPlatformStatus?) -> Void] = []
+        private var pending: [(InthTrackingPlatformStatus?) -> Void] = []
 
         var calls: Int {
             lock.lock()
@@ -56,7 +56,7 @@ final class C15tTrackingGateTests: XCTestCase {
             return _calls
         }
 
-        func request(_ completion: @escaping (C15tTrackingPlatformStatus?) -> Void) {
+        func request(_ completion: @escaping (InthTrackingPlatformStatus?) -> Void) {
             lock.lock()
             _calls += 1
             pending.append(completion)
@@ -64,7 +64,7 @@ final class C15tTrackingGateTests: XCTestCase {
         }
 
         /// Answer every request the app is currently holding, in the order it asked.
-        func answer(_ status: C15tTrackingPlatformStatus?) {
+        func answer(_ status: InthTrackingPlatformStatus?) {
             lock.lock()
             let waiting = pending
             pending = []
@@ -86,12 +86,12 @@ final class C15tTrackingGateTests: XCTestCase {
         private let lock = NSLock()
         private var _calls = 0
         private var _preferExpanded: [Bool] = []
-        private let answer: C15tTrackingPlatformStatus?
+        private let answer: InthTrackingPlatformStatus?
         private let canAsk: Bool
         private let triggerAdditionalInformation: Bool
 
         init(
-            answer: C15tTrackingPlatformStatus?,
+            answer: InthTrackingPlatformStatus?,
             canAsk: Bool = true,
             triggerAdditionalInformation: Bool = false
         ) {
@@ -116,7 +116,7 @@ final class C15tTrackingGateTests: XCTestCase {
         func request(
             preferExpanded: Bool,
             additionalInformationSelected: (() -> Void)?,
-            completion: @escaping (C15tTrackingPlatformStatus?) -> Void
+            completion: @escaping (InthTrackingPlatformStatus?) -> Void
         ) -> Bool {
             lock.lock()
             _calls += 1
@@ -133,7 +133,7 @@ final class C15tTrackingGateTests: XCTestCase {
     // MARK: - Mapping
 
     func testEachAppleStateMapsToTheArmTheWireNames() {
-        let expected: [(C15tTrackingPlatformStatus, C15tTrackingAuthorization)] = [
+        let expected: [(InthTrackingPlatformStatus, InthTrackingAuthorization)] = [
             (.notDetermined, .notDetermined),
             (.restricted, .restricted),
             (.denied, .denied),
@@ -142,7 +142,7 @@ final class C15tTrackingGateTests: XCTestCase {
 
         for (platform, arm) in expected {
             XCTAssertEqual(
-                C15tTrackingGate.authorization(platform: platform, promptStringPresent: true),
+                InthTrackingGate.authorization(platform: platform, promptStringPresent: true),
                 arm
             )
         }
@@ -152,9 +152,9 @@ final class C15tTrackingGateTests: XCTestCase {
         // Apple answers `denied` when asked without a prompt string. Reporting that would
         // hold every optional category off on a device whose host never enabled Apple
         // tracking at all, so the build is read instead of the answer.
-        for platform in C15tTrackingPlatformStatus.allCases {
+        for platform in InthTrackingPlatformStatus.allCases {
             XCTAssertEqual(
-                C15tTrackingGate.authorization(platform: platform, promptStringPresent: false),
+                InthTrackingGate.authorization(platform: platform, promptStringPresent: false),
                 .unsupported,
                 "no prompt string means no platform gate to report, whatever Apple holds"
             )
@@ -163,7 +163,7 @@ final class C15tTrackingGateTests: XCTestCase {
 
     func testAPlatformWithNoTrackingApiIsUnsupportedEvenWithAPromptString() {
         XCTAssertEqual(
-            C15tTrackingGate.authorization(platform: nil, promptStringPresent: true),
+            InthTrackingGate.authorization(platform: nil, promptStringPresent: true),
             .unsupported,
             "a plist key on a platform with nothing to ask is still no gate"
         )
@@ -173,10 +173,10 @@ final class C15tTrackingGateTests: XCTestCase {
         // The two arms are opposite instructions to a caller: one says the platform asks
         // nothing of this build, the other says a subject has still to be asked.
         XCTAssertNotEqual(
-            C15tTrackingGate.authorization(platform: nil, promptStringPresent: false),
-            C15tTrackingGate.authorization(platform: .notDetermined, promptStringPresent: true)
+            InthTrackingGate.authorization(platform: nil, promptStringPresent: false),
+            InthTrackingGate.authorization(platform: .notDetermined, promptStringPresent: true)
         )
-        XCTAssertEqual(C15tTrackingAuthorization.allCases.count, 5)
+        XCTAssertEqual(InthTrackingAuthorization.allCases.count, 5)
     }
 
     // MARK: - The invariant
@@ -222,9 +222,9 @@ final class C15tTrackingGateTests: XCTestCase {
             let baseline = ConsentDecision(snapshot: snapshot, category: .marketing)
             XCTAssertEqual(baseline, expected)
 
-            for platform in C15tTrackingPlatformStatus.allCases + [nil] {
+            for platform in InthTrackingPlatformStatus.allCases + [nil] {
                 for promptStringPresent in [true, false] {
-                    let arm = C15tTrackingGate.authorization(
+                    let arm = InthTrackingGate.authorization(
                         platform: platform,
                         promptStringPresent: promptStringPresent
                     )
@@ -255,8 +255,8 @@ final class C15tTrackingGateTests: XCTestCase {
     /// Deliberately a call rather than a restatement. A copy of the rule in this file
     /// would keep passing when the production one is inverted, which is the only failure
     /// worth catching here.
-    private func mayTrack(marketing: ConsentSnapshot, arm: C15tTrackingAuthorization) -> Bool {
-        C15tTrackingGate.mayTrack(
+    private func mayTrack(marketing: ConsentSnapshot, arm: InthTrackingAuthorization) -> Bool {
+        InthTrackingGate.mayTrack(
             decision: ConsentDecision(snapshot: marketing, category: .marketing),
             authorization: arm
         )
@@ -297,24 +297,24 @@ final class C15tTrackingGateTests: XCTestCase {
         // A device with ATT authorized and consent refused is denied. The reverse pair is
         // the same gate read from the other side: Apple's yes buys nothing on its own.
         XCTAssertFalse(
-            C15tTrackingGate.mayTrack(decision: granted, authorization: .denied),
+            InthTrackingGate.mayTrack(decision: granted, authorization: .denied),
             "a denied platform let a granted category through"
         )
         XCTAssertFalse(
-            C15tTrackingGate.mayTrack(decision: granted, authorization: .notDetermined)
+            InthTrackingGate.mayTrack(decision: granted, authorization: .notDetermined)
         )
         XCTAssertFalse(
-            C15tTrackingGate.mayTrack(decision: granted, authorization: .restricted)
+            InthTrackingGate.mayTrack(decision: granted, authorization: .restricted)
         )
-        XCTAssertTrue(C15tTrackingGate.mayTrack(decision: granted, authorization: .authorized))
+        XCTAssertTrue(InthTrackingGate.mayTrack(decision: granted, authorization: .authorized))
         XCTAssertTrue(
-            C15tTrackingGate.mayTrack(decision: granted, authorization: .unsupported)
+            InthTrackingGate.mayTrack(decision: granted, authorization: .unsupported)
         )
 
         // And pending plus ATT authorized is pending: an OS prompt does not end a wait.
-        for arm in C15tTrackingAuthorization.allCases {
+        for arm in InthTrackingAuthorization.allCases {
             XCTAssertFalse(
-                C15tTrackingGate.mayTrack(decision: unresolved, authorization: arm),
+                InthTrackingGate.mayTrack(decision: unresolved, authorization: arm),
                 "arm \(arm.rawValue) resolved an unresolved policy"
             )
         }
@@ -324,7 +324,7 @@ final class C15tTrackingGateTests: XCTestCase {
 
     func testAnUnansweredSubjectIsAskedThroughTheStandardCallWhenExpandedIsAbsent() {
         XCTAssertEqual(
-            C15tTrackingGate.request(
+            InthTrackingGate.request(
                 platform: .notDetermined,
                 promptStringPresent: true,
                 expandedInterfaceAvailable: false
@@ -335,7 +335,7 @@ final class C15tTrackingGateTests: XCTestCase {
 
     func testAnUnansweredSubjectIsAskedThroughTheExpandedCallWhenTheRuntimeHasIt() {
         XCTAssertEqual(
-            C15tTrackingGate.request(
+            InthTrackingGate.request(
                 platform: .notDetermined,
                 promptStringPresent: true,
                 expandedInterfaceAvailable: true
@@ -350,9 +350,9 @@ final class C15tTrackingGateTests: XCTestCase {
         // install is inside that window. Answering from the device here would be this SDK
         // enforcing a one-prompt lifetime Apple no longer holds, and it would fail silently:
         // a host that wanted the annual re-prompt would find nothing to ask.
-        for platform in [C15tTrackingPlatformStatus.authorized, .denied] {
+        for platform in [InthTrackingPlatformStatus.authorized, .denied] {
             XCTAssertEqual(
-                C15tTrackingGate.request(
+                InthTrackingGate.request(
                     platform: platform,
                     promptStringPresent: true,
                     expandedInterfaceAvailable: false
@@ -367,7 +367,7 @@ final class C15tTrackingGateTests: XCTestCase {
         // Apple reports `restricted` whether or not the subject was ever shown the prompt, so
         // the device policy has answered already and a call buys nothing.
         XCTAssertEqual(
-            C15tTrackingGate.request(
+            InthTrackingGate.request(
                 platform: .restricted,
                 promptStringPresent: true,
                 expandedInterfaceAvailable: true
@@ -378,7 +378,7 @@ final class C15tTrackingGateTests: XCTestCase {
 
     func testRequestRefusesWhereThereIsNoTrackingApi() {
         XCTAssertEqual(
-            C15tTrackingGate.request(
+            InthTrackingGate.request(
                 platform: nil,
                 promptStringPresent: true,
                 expandedInterfaceAvailable: true
@@ -390,7 +390,7 @@ final class C15tTrackingGateTests: XCTestCase {
     func testRefusedRequestNamesTheMissingKeyAndNeverReachesApple() {
         let prompts = PromptRecorder(answer: .authorized)
         let expanded = ExpandedPromptRecorder(answer: .authorized)
-        let handler = C15tModuleHandler(
+        let handler = InthModuleHandler(
             trackingPlatformStatus: { .notDetermined },
             trackingPromptStringPresent: { false },
             trackingPrompt: prompts.request,
@@ -398,7 +398,7 @@ final class C15tTrackingGateTests: XCTestCase {
             trackingExpandedPrompt: expanded.request
         )
 
-        var outcome: Result<C15tTrackingRequestResult, C15tBridgeError>?
+        var outcome: Result<InthTrackingRequestResult, InthBridgeError>?
 
         handler.requestTrackingAuthorization { outcome = $0 }
 
@@ -406,20 +406,20 @@ final class C15tTrackingGateTests: XCTestCase {
         XCTAssertEqual(expanded.calls, 0, "and the expanded call is no more allowed than the plain one")
         XCTAssertEqual(
             failureCode(outcome),
-            C15tBridgeError.trackingNotConfigured.code,
+            InthBridgeError.trackingNotConfigured.code,
             "nothing was asked, and the rejection has to name the key that would have made it possible"
         )
     }
 
     func testPromptedRequestReportsTheAnswerAppleGave() {
         let prompts = PromptRecorder(answer: .authorized)
-        let handler = C15tModuleHandler(
+        let handler = InthModuleHandler(
             trackingPlatformStatus: { .notDetermined },
             trackingPromptStringPresent: { true },
             trackingPrompt: prompts.request
         )
 
-        var outcome: Result<C15tTrackingRequestResult, C15tBridgeError>?
+        var outcome: Result<InthTrackingRequestResult, InthBridgeError>?
 
         handler.requestTrackingAuthorization { outcome = $0 }
 
@@ -434,13 +434,13 @@ final class C15tTrackingGateTests: XCTestCase {
         // Apple returns the arm on file when it declines to show anything, so the fake that
         // stands in for the call has to agree with the fake that stands in for the device.
         let prompts = PromptRecorder(answer: .authorized)
-        let handler = C15tModuleHandler(
+        let handler = InthModuleHandler(
             trackingPlatformStatus: { .authorized },
             trackingPromptStringPresent: { true },
             trackingPrompt: prompts.request
         )
 
-        var outcome: Result<C15tTrackingRequestResult, C15tBridgeError>?
+        var outcome: Result<InthTrackingRequestResult, InthBridgeError>?
 
         handler.requestTrackingAuthorization { outcome = $0 }
 
@@ -460,7 +460,7 @@ final class C15tTrackingGateTests: XCTestCase {
             triggerAdditionalInformation: true
         )
         let prompts = PromptRecorder(answer: .authorized)
-        let handler = C15tModuleHandler(
+        let handler = InthModuleHandler(
             trackingPlatformStatus: { .notDetermined },
             trackingPromptStringPresent: { true },
             trackingPrompt: prompts.request,
@@ -468,7 +468,7 @@ final class C15tTrackingGateTests: XCTestCase {
             trackingExpandedPrompt: expanded.request
         )
 
-        var outcome: Result<C15tTrackingRequestResult, C15tBridgeError>?
+        var outcome: Result<InthTrackingRequestResult, InthBridgeError>?
 
         // A caller that handles the tap asks for the button; the plain request offers none.
         handler.requestTrackingAuthorization(additionalInformation: true) { outcome = $0 }
@@ -488,7 +488,7 @@ final class C15tTrackingGateTests: XCTestCase {
         // richly and a request nobody ever comes back to finish.
         let expanded = ExpandedPromptRecorder(answer: .authorized, canAsk: false)
         let prompts = PromptRecorder(answer: .authorized)
-        let handler = C15tModuleHandler(
+        let handler = InthModuleHandler(
             trackingPlatformStatus: { .notDetermined },
             trackingPromptStringPresent: { true },
             trackingPrompt: prompts.request,
@@ -496,7 +496,7 @@ final class C15tTrackingGateTests: XCTestCase {
             trackingExpandedPrompt: expanded.request
         )
 
-        var outcome: Result<C15tTrackingRequestResult, C15tBridgeError>?
+        var outcome: Result<InthTrackingRequestResult, InthBridgeError>?
 
         handler.requestTrackingAuthorization { outcome = $0 }
 
@@ -516,14 +516,14 @@ final class C15tTrackingGateTests: XCTestCase {
         // ordinary app. Two Apple calls would mean Apple's own pending-request rule decides
         // what the subject sees, and one of the two callers would wait forever.
         let prompts = PromptGate()
-        let handler = C15tModuleHandler(
+        let handler = InthModuleHandler(
             trackingPlatformStatus: { .notDetermined },
             trackingPromptStringPresent: { true },
             trackingPrompt: prompts.request
         )
 
-        var first: Result<C15tTrackingRequestResult, C15tBridgeError>?
-        var second: Result<C15tTrackingRequestResult, C15tBridgeError>?
+        var first: Result<InthTrackingRequestResult, InthBridgeError>?
+        var second: Result<InthTrackingRequestResult, InthBridgeError>?
 
         handler.requestTrackingAuthorization { first = $0 }
         handler.requestTrackingAuthorization { second = $0 }
@@ -544,7 +544,7 @@ final class C15tTrackingGateTests: XCTestCase {
         // busy at that instant would attach the retry to a call that had already been and
         // gone, and the subject would finish their choices with nothing ever asked again.
         let prompts = PromptGate()
-        let handler = C15tModuleHandler(
+        let handler = InthModuleHandler(
             trackingPlatformStatus: { .notDetermined },
             trackingPromptStringPresent: { true },
             trackingPrompt: prompts.request
@@ -564,28 +564,28 @@ final class C15tTrackingGateTests: XCTestCase {
     func testAPromptThatReportsNothingIsAFailureRatherThanUnsupported() {
         // `unsupported` tells a caller the platform adds no gate. Handing it back after a
         // dialog that produced no state would turn a broken read into permission to track.
-        let handler = C15tModuleHandler(
+        let handler = InthModuleHandler(
             trackingPlatformStatus: { .notDetermined },
             trackingPromptStringPresent: { true },
             trackingPrompt: PromptRecorder(answer: nil).request
         )
 
-        var outcome: Result<C15tTrackingRequestResult, C15tBridgeError>?
+        var outcome: Result<InthTrackingRequestResult, InthBridgeError>?
 
         handler.requestTrackingAuthorization { outcome = $0 }
 
         XCTAssertNil(try? outcome?.get())
-        XCTAssertEqual(failureCode(outcome), C15tBridgeError.trackingUnsupported.code)
+        XCTAssertEqual(failureCode(outcome), InthBridgeError.trackingUnsupported.code)
     }
 
     func testTheExpandedSelectorIsTheOneAppleShips() {
-        // Spelled by hand in `C15tTracking` because the declaration is newer than the SDK this
+        // Spelled by hand in `InthTracking` because the declaration is newer than the SDK this
         // package builds against, which means nothing else can catch it if Apple renames the
         // method before it leaves beta. A renamed selector fails here as a string mismatch;
         // nowhere else would it fail at all, because a missed `responds(to:)` just means the
         // expanded prompt quietly stops appearing on the devices that could have shown it.
         XCTAssertEqual(
-            C15tTracking.expandedRequestSelectorName,
+            InthTracking.expandedRequestSelectorName,
             "requestTrackingAuthorizationPreferringExpandedInterface:additionalInformationAction:completionHandler:"
         )
     }
@@ -594,7 +594,7 @@ final class C15tTrackingGateTests: XCTestCase {
         // The test machine has no App Tracking Transparency at all, which is the honest
         // negative case: a build that never linked the framework must report the capability
         // as absent rather than try the call and find out later.
-        XCTAssertFalse(C15tTracking.expandedInterfaceAvailable())
+        XCTAssertFalse(InthTracking.expandedInterfaceAvailable())
     }
 
     // MARK: - The wire and the read
@@ -604,7 +604,7 @@ final class C15tTrackingGateTests: XCTestCase {
         // renamed raw value fails against a string. `not-determined` is the one a
         // hand-written reader gets wrong: the JavaScript side compares against the
         // kebab-case spelling `src/protocol/tracking.ts` declares.
-        let expected: [(C15tTrackingAuthorization, String)] = [
+        let expected: [(InthTrackingAuthorization, String)] = [
             (.authorized, "authorized"),
             (.denied, "denied"),
             (.notDetermined, "not-determined"),
@@ -612,23 +612,23 @@ final class C15tTrackingGateTests: XCTestCase {
             (.unsupported, "unsupported"),
         ]
 
-        var seen: [C15tTrackingAuthorization] = []
+        var seen: [InthTrackingAuthorization] = []
 
         for (arm, wire) in expected {
-            let payload = jsonObject(C15tPayload.trackingAuthorization(arm))
+            let payload = jsonObject(InthPayload.trackingAuthorization(arm))
 
             XCTAssertEqual(payload.keys.count, 1, "no consent field may ride along")
             XCTAssertEqual(payload["status"] as? String, wire, "\(arm)")
             seen.append(arm)
         }
 
-        XCTAssertEqual(Set(seen), Set(C15tTrackingAuthorization.allCases), "every arm reached the wire")
+        XCTAssertEqual(Set(seen), Set(InthTrackingAuthorization.allCases), "every arm reached the wire")
     }
 
     func testRequestPayloadNamesTheStageAndTheCallThatRan() {
         let payload = jsonObject(
-            C15tPayload.trackingRequestResult(
-                C15tTrackingRequestResult(
+            InthPayload.trackingRequestResult(
+                InthTrackingRequestResult(
                     status: .notDetermined,
                     stage: .additionalInformation,
                     presentation: .expanded
@@ -648,8 +648,8 @@ final class C15tTrackingGateTests: XCTestCase {
 
     func testRequestPayloadStaysSilentAboutACallThatWasNeverMade() {
         let payload = jsonObject(
-            C15tPayload.trackingRequestResult(
-                C15tTrackingRequestResult(status: .restricted, stage: .final, presentation: nil)
+            InthPayload.trackingRequestResult(
+                InthTrackingRequestResult(status: .restricted, stage: .final, presentation: nil)
             )
         )
 
@@ -663,7 +663,7 @@ final class C15tTrackingGateTests: XCTestCase {
 
     func testReadingThePlatformAnswerStartsNoCore() {
         let prompts = PromptRecorder(answer: nil)
-        let handler = C15tModuleHandler(
+        let handler = InthModuleHandler(
             startCore: {
                 XCTFail("a tracking read must not start a consent core")
                 return false
@@ -682,7 +682,7 @@ final class C15tTrackingGateTests: XCTestCase {
     // MARK: - Helpers
 
     private func failureCode<Success>(
-        _ outcome: Result<Success, C15tBridgeError>?
+        _ outcome: Result<Success, InthBridgeError>?
     ) -> String? {
         guard case let .failure(error)? = outcome else { return nil }
         return error.code

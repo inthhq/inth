@@ -1,6 +1,6 @@
-package com.c15t.consentui
+package com.inth.consentui
 
-import com.c15t.consentui.generated.IabCopy
+import com.inth.consentui.generated.IabCopy
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue

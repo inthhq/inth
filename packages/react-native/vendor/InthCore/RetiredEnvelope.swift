@@ -25,7 +25,7 @@ enum RetiredEnvelope {
     /// Snapshot key an alpha build wrote for standing privacy directives.
     ///
     /// Unlike `test` and `msa`, this key is dropped rather than refused. A directive
-    /// only ever restricted categories, and c15t no longer stores one: GPC is a live
+    /// only ever restricted categories, and Inth no longer stores one: GPC is a live
     /// signal again, so its restriction lifts when the signal goes away. Hydration
     /// re-runs the evaluator with the signal as it is now, and a signal that is still
     /// live restores its `gpc` restriction on the spot. Refusing the envelope instead

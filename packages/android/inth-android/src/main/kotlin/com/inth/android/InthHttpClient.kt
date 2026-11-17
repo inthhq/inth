@@ -1,16 +1,16 @@
-package com.c15t.android
+package com.inth.android
 
 import android.util.Log
-import com.c15t.core.spi.HttpClient
-import com.c15t.core.spi.HttpRequest
-import com.c15t.core.spi.HttpResponse
+import com.inth.core.spi.HttpClient
+import com.inth.core.spi.HttpRequest
+import com.inth.core.spi.HttpResponse
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 import javax.net.ssl.HttpsURLConnection
 
 /**
- * Carries c15t traffic over the platform connection stack.
+ * Carries Inth traffic over the platform connection stack.
  *
  * Chosen over a bundled HTTP client to keep the dependency surface of a consent SDK
  * near zero: no new TLS stack, no new thread pool, and nothing extra for a host app
@@ -20,7 +20,7 @@ import javax.net.ssl.HttpsURLConnection
  * thread, so a short timeout is what keeps a queued write from holding the queue.
  * @param readTimeoutMs read budget for the response body.
  */
-class C15tHttpClient(
+class InthHttpClient(
 	private val connectTimeoutMs: Int = DEFAULT_CONNECT_TIMEOUT_MS,
 	private val readTimeoutMs: Int = DEFAULT_READ_TIMEOUT_MS,
 ) : HttpClient {
@@ -48,7 +48,7 @@ class C15tHttpClient(
 			val stream = if (status in 200..299) connection.inputStream else connection.errorStream
 			val text = stream?.use { it.readBytes().toString(Charsets.UTF_8) }.orEmpty()
 			if (status !in 200..299) {
-				Log.d(TAG, "c15t request ${request.method} ${request.url} responded $status")
+				Log.d(TAG, "Inth request ${request.method} ${request.url} responded $status")
 			}
 			return HttpResponse(
 				status = status,
@@ -58,7 +58,7 @@ class C15tHttpClient(
 		} catch (error: IOException) {
 			// Connectivity, DNS, and TLS all land here. The transport reports it as a
 			// network failure, which keeps the previous state and queues the write.
-			Log.d(TAG, "c15t request ${request.method} ${request.url} failed", error)
+			Log.d(TAG, "Inth request ${request.method} ${request.url} failed", error)
 			throw error
 		} finally {
 			connection.disconnect()
@@ -76,6 +76,6 @@ class C15tHttpClient(
 	private companion object {
 		const val DEFAULT_CONNECT_TIMEOUT_MS = 10_000
 		const val DEFAULT_READ_TIMEOUT_MS = 15_000
-		const val TAG = "c15t"
+		const val TAG = "inth"
 	}
 }

@@ -1,4 +1,4 @@
-package com.c15t.android
+package com.inth.android
 
 /**
  * Maps the shared contract's storage keys onto file names.
@@ -8,8 +8,8 @@ package com.c15t.android
  * directory would put encrypted consent in the wrong place.
  */
 internal object StorePaths {
-	/** Directory under `noBackupFilesDir` that holds the c15t blobs. */
-	const val DIRECTORY = "c15t"
+	/** Directory under `noBackupFilesDir` that holds the Inth blobs. */
+	const val DIRECTORY = "inth"
 
 	private const val MAX_NAME_LENGTH = 64
 	private val SAFE = Regex("^[a-z0-9._-]+$")

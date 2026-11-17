@@ -1,4 +1,4 @@
-package com.c15t.core.tc
+package com.inth.core.tc
 
 /**
  * The core segment of a TC String: who collected the consent, when, in what language, and for

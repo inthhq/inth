@@ -1,11 +1,11 @@
 /**
- * Codegen TurboModule spec for the c15t native consent cores.
+ * Codegen TurboModule spec for the Inth native consent cores.
  *
  * New Architecture only: no legacy bridge, no `NativeModules` lookup. The
  * build reads this file through the `codegenConfig` in `package.json` and
  * generates the Swift protocol and the Java/Kotlin interfaces, so the list
  * below is the whole surface for both platforms. The native side registers
- * the module under `C15t`, the string at the bottom of this file.
+ * the module under `Inth`, the string at the bottom of this file.
  *
  * Every structured payload crosses the bridge as a JSON string. Codegen
  * cannot express the unions in the snapshot or the commit intent, the
@@ -66,7 +66,7 @@ export interface Spec extends TurboModule {
 	 */
 	identify: (externalId: string) => Promise<void>;
 	/**
-	 * Detach the external id. The c15t subject id is kept, so consent does not
+	 * Detach the external id. The Inth subject id is kept, so consent does not
 	 * reset on sign-out.
 	 */
 	logout: () => Promise<void>;
@@ -74,7 +74,7 @@ export interface Spec extends TurboModule {
 	 * Wipe consent and return the device to the state a first launch is in.
 	 *
 	 * The choice prompt is owed again afterwards, so the banner or dialog comes
-	 * back: this is a withdrawal, not a recorded reject-everything. The c15t
+	 * back: this is a withdrawal, not a recorded reject-everything. The Inth
 	 * subject id is kept, because the backend holds an audit history keyed to it.
 	 * Overrides, privacy-signal overrides, and the configured category scope are
 	 * kept too, since those are configuration rather than consent.
@@ -127,8 +127,8 @@ export interface Spec extends TurboModule {
 	 * `NativeAutoPresentSettings`. The native `ConsentPrompt` decides when a
 	 * prompt is owed and presents it; JavaScript only hears
 	 * `onConsentPresenterPresented`, `onConsentPresenterUnavailable` and
-	 * `onConsentPresenterOutcome`. Rejects with `C15T_PRESENTER_INVALID_URL`
-	 * for a URL native refuses, and `C15T_NATIVE_UI_EXCLUDED` in a build
+	 * `onConsentPresenterOutcome`. Rejects with `INTH_PRESENTER_INVALID_URL`
+	 * for a URL native refuses, and `INTH_NATIVE_UI_EXCLUDED` in a build
 	 * without the stock screens. A binary that predates it has no such method.
 	 */
 	configureAutoPresent: (settings: string) => Promise<void>;
@@ -138,4 +138,4 @@ export interface Spec extends TurboModule {
 	removeListeners: (count: number) => void;
 }
 
-export default TurboModuleRegistry.getEnforcing<Spec>('C15t');
+export default TurboModuleRegistry.getEnforcing<Spec>('Inth');

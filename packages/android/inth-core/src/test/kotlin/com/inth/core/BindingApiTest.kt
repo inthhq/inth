@@ -1,7 +1,7 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.model.KernelOverrides
-import com.c15t.core.store.C15tStore
+import com.inth.core.model.KernelOverrides
+import com.inth.core.store.InthStore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -16,15 +16,15 @@ class BindingApiTest {
 	@Test
 	fun `hasStoredSnapshot reports hydration, not what was written afterwards`() {
 		val backend = InMemoryKeyValueStore()
-		val first = testKernel(store = C15tStore(backend))
+		val first = testKernel(store = InthStore(backend))
 		assertFalse(first.hasStoredSnapshot, "nothing is installed yet")
 
 		first.bootstrap()
 
 		assertFalse(first.hasStoredSnapshot, "a first launch found no envelope")
-		assertFalse(C15t.hasStoredSnapshot, "the process-wide facade has no kernel installed")
+		assertFalse(Inth.hasStoredSnapshot, "the process-wide facade has no kernel installed")
 
-		val relaunched = testKernel(store = C15tStore(backend))
+		val relaunched = testKernel(store = InthStore(backend))
 		relaunched.bootstrap()
 
 		assertTrue(relaunched.hasStoredSnapshot, "the first launch persisted an envelope to hydrate")
@@ -32,7 +32,7 @@ class BindingApiTest {
 
 	@Test
 	fun `setOverrides merges by default so one field can be pinned alone`() {
-		val kernel = testKernel(store = C15tStore(InMemoryKeyValueStore()))
+		val kernel = testKernel(store = InthStore(InMemoryKeyValueStore()))
 		kernel.bootstrap()
 		kernel.setOverrides(KernelOverrides(country = "DE", region = "BE", language = "de"))
 
@@ -46,7 +46,7 @@ class BindingApiTest {
 
 	@Test
 	fun `setOverrides with merge false replaces the record so a cleared field clears`() {
-		val kernel = testKernel(store = C15tStore(InMemoryKeyValueStore()))
+		val kernel = testKernel(store = InthStore(InMemoryKeyValueStore()))
 		kernel.bootstrap()
 		kernel.setOverrides(KernelOverrides(country = "DE", region = "BE", language = "de", gpc = true))
 

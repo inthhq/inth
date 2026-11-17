@@ -12,16 +12,16 @@ import { createRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';
 import { vi } from 'vitest';
 
-import type { NativeC15tTurboModule } from '../../native/module';
+import type { NativeInthTurboModule } from '../../native/module';
 import type { NativeAutoPresentSettings } from '../../native/presenter';
-import { NATIVE_C15T_MODULE_NAME } from '../../protocol';
+import { NATIVE_INTH_MODULE_NAME } from '../../protocol';
 import type { ConsentSnapshot, TrackingAuthorization } from '../../protocol';
 import {
 	buildFakeSnapshot,
-	createFakeNativeC15t,
+	createFakeNativeInth,
 	FAKE_BOOTSTRAP,
-} from '../../testing/fake-native-c15t';
-import type { FakeTrackingReply } from '../../testing/fake-native-c15t';
+} from '../../testing/fake-native-inth';
+import type { FakeTrackingReply } from '../../testing/fake-native-inth';
 import { emitNativeEvent, setNativeModule } from './react-native-stub';
 
 // React only permits `act` when the environment says a test drives it.
@@ -51,7 +51,7 @@ export const buildSnapshot = buildFakeSnapshot;
 /**
  * The TurboModule double, with the counters the tests read.
  */
-export interface FakeNativeModule extends NativeC15tTurboModule {
+export interface FakeNativeModule extends NativeInthTurboModule {
 	/** Times `getBootstrap()` was called. */
 	bootstrapCalls: number;
 	/** Times `getSnapshot()` was called. */
@@ -170,7 +170,7 @@ export const createFakeNativeModule = function createFakeNativeModule(
 	// The shared fake core, with the two behaviours these tests drive by hand turned
 	// off: a commit changes nothing until the test pushes a snapshot, and nothing
 	// presents until the test reports it.
-	const core = createFakeNativeC15t({
+	const core = createFakeNativeInth({
 		applyCommits: false,
 		autoPresents: false,
 		bootstrap: options.bootstrap,
@@ -300,7 +300,7 @@ export const createFakeNativeModule = function createFakeNativeModule(
 		trackingRequestPayloads: core.tracking.payloads,
 	};
 
-	setNativeModule(NATIVE_C15T_MODULE_NAME, fake);
+	setNativeModule(NATIVE_INTH_MODULE_NAME, fake);
 
 	return fake as unknown as FakeNativeModule;
 };

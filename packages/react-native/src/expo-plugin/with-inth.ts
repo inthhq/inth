@@ -31,9 +31,9 @@ import {
 	buildPrivacyManifestDeclarations,
 	withIosDeploymentTargetFloor,
 } from './ios';
-import { resolveNativeUI, withC15tNativeUI } from './native-ui';
+import { resolveNativeUI, withInthNativeUI } from './native-ui';
 import { resolveParams } from './params';
-import type { C15tPluginProps, ResolvedC15tParams } from './params';
+import type { InthPluginProps, ResolvedInthParams } from './params';
 import {
 	embedPolicyResource,
 	androidPolicyDestination,
@@ -43,7 +43,7 @@ import {
 	removeXcodeResource,
 	writePolicyRules,
 } from './policy-resource';
-import { resolveTheme, withC15tTheme } from './theme';
+import { resolveTheme, withInthTheme } from './theme';
 import {
 	assertUpdatesCannotOutrunTheBinary,
 	buildProtocolInfo,
@@ -56,8 +56,8 @@ import {
 } from './workflow';
 import type { WorkflowContext } from './workflow';
 
-/** What the plugin publishes under `extra.c15t`. */
-export interface C15tExtraConfig {
+/** What the plugin publishes under `extra.inth`. */
+export interface InthExtraConfig {
 	/** The Inth project URL, in its normal form. */
 	backendURL: string;
 	/** Categories the app declares, or `null` when it declares none. Read on web. */
@@ -75,8 +75,8 @@ export interface C15tExtraConfig {
 }
 
 const buildExtra = function buildExtra(
-	params: ResolvedC15tParams
-): C15tExtraConfig {
+	params: ResolvedInthParams
+): InthExtraConfig {
 	return {
 		backendURL: params.backendURL,
 		consentCategories:
@@ -103,8 +103,8 @@ const warnAboutDryRun = function warnAboutDryRun(): void {
 	}
 	warnedAboutDryRun = true;
 	console.warn(
-		'c15t: dryRun is on. Consent records are dropped, not sent, and a ' +
-			'release build will refuse to start c15t. Remove dryRun before you ' +
+		'Inth: dryRun is on. Consent records are dropped, not sent, and a ' +
+			'release build will refuse to start Inth. Remove dryRun before you ' +
 			'build a release.'
 	);
 };
@@ -121,14 +121,14 @@ const resolveProjectRoot = function resolveProjectRoot(
 };
 
 /**
- * Merge c15t's declarations into `ios.privacyManifests`.
+ * Merge Inth's declarations into `ios.privacyManifests`.
  *
  * A host may already declare domains for its own trackers, so the lists union
  * rather than replace.
  */
 const applyPrivacyDeclarations = function applyPrivacyDeclarations(
 	config: ExportedConfig,
-	params: ResolvedC15tParams
+	params: ResolvedInthParams
 ): ExportedConfig {
 	const declarations = buildPrivacyManifestDeclarations(params);
 	const ios = config.ios ?? {};
@@ -153,10 +153,10 @@ const applyPrivacyDeclarations = function applyPrivacyDeclarations(
 };
 
 /**
- * Apply every c15t modification to an Expo config.
+ * Apply every Inth modification to an Expo config.
  *
  * This is the whole plugin, and it is exported separately from
- * {@link withC15t} because it is the part worth testing: it resolves the
+ * {@link withInth} because it is the part worth testing: it resolves the
  * parameters, refuses the configurations that cannot work, publishes the values
  * JavaScript needs, and registers the mods. Each mod is then a one-line call
  * into a pure function over the file it edits.
@@ -170,14 +170,14 @@ const applyPrivacyDeclarations = function applyPrivacyDeclarations(
  * @param props - The parameters the host passed for this plugin.
  * @param context - Overrides for the workflow checks; tests use it to name the
  * command being run.
- * @returns A config with `extra.c15t`, the privacy declarations, and the mods.
- * @throws {C15tPluginError} When parameters are unusable, the project is heading
+ * @returns A config with `extra.inth`, the privacy declarations, and the mods.
+ * @throws {InthPluginError} When parameters are unusable, the project is heading
  * for Expo Go, the native module is registered by hand as well, or an
  * over-the-air configuration can outrun the binary.
  */
 export const applyParamsOnConfig = function applyParamsOnConfig(
 	config: ExportedConfig,
-	props: C15tPluginProps | undefined,
+	props: InthPluginProps | undefined,
 	context: Partial<WorkflowContext> = {}
 ): ExportedConfig {
 	const params = resolveParams(props);
@@ -200,7 +200,7 @@ export const applyParamsOnConfig = function applyParamsOnConfig(
 	};
 
 	next = applyPrivacyDeclarations(next, params);
-	next = withC15tNativeUI(next, nativeUI);
+	next = withInthNativeUI(next, nativeUI);
 	next = withIosDeploymentTargetFloor(next);
 
 	next = withInfoPlist(next, (configWithPlist) => ({
@@ -391,20 +391,20 @@ export const applyParamsOnConfig = function applyParamsOnConfig(
 		return configWithPodfile;
 	});
 
-	next = withC15tTheme(next, theme);
+	next = withInthTheme(next, theme);
 	next = withAndroidSdkFloor(next);
 
 	return next;
 };
 
 /**
- * Configure the native c15t core for an Expo app.
+ * Configure the native Inth core for an Expo app.
  *
  * Use it directly when composing configs by hand; the package default export
  * wraps this in `createRunOncePlugin` so a project that also pulls the plugin in
  * through another plugin does not apply it twice.
  */
-export const withC15t: ConfigPlugin<C15tPluginProps> = function withC15t(
+export const withInth: ConfigPlugin<InthPluginProps> = function withInth(
 	config,
 	props
 ) {

@@ -1,4 +1,4 @@
-package com.c15t.consentui
+package com.inth.consentui
 
 import androidx.activity.ComponentDialog
 import androidx.compose.foundation.layout.Column
@@ -42,18 +42,18 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import com.c15t.consentui.generated.IabCopy
-import com.c15t.core.ConsentCore
-import com.c15t.core.CommitIntent
-import com.c15t.core.NativeConfig
-import com.c15t.core.iab.IabBannerSummary
-import com.c15t.core.iab.IabChoices
-import com.c15t.core.iab.IabConfiguration
-import com.c15t.core.iab.IabLegalBasis
-import com.c15t.core.spi.*
-import com.c15t.core.store.C15tStore
-import com.c15t.core.tc.TcStringDecoder
-import com.c15t.core.transport.HostedTransport
+import com.inth.consentui.generated.IabCopy
+import com.inth.core.ConsentCore
+import com.inth.core.CommitIntent
+import com.inth.core.NativeConfig
+import com.inth.core.iab.IabBannerSummary
+import com.inth.core.iab.IabChoices
+import com.inth.core.iab.IabConfiguration
+import com.inth.core.iab.IabLegalBasis
+import com.inth.core.spi.*
+import com.inth.core.store.InthStore
+import com.inth.core.tc.TcStringDecoder
+import com.inth.core.transport.HostedTransport
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.resetMain
@@ -95,8 +95,8 @@ class IabPolicyTest {
     // TCF-CHECK: P1
     @Test fun firstLayerCoversTheWholeScreen() {
         show(boot())
-        compose.onNodeWithTag("c15t.first-layer").assertIsDisplayed()
-        val root = compose.onNode(isRoot() and hasAnyDescendant(hasTestTag("c15t.first-layer"))).fetchSemanticsNode()
+        compose.onNodeWithTag("inth.first-layer").assertIsDisplayed()
+        val root = compose.onNode(isRoot() and hasAnyDescendant(hasTestTag("inth.first-layer"))).fetchSemanticsNode()
         val display = RuntimeEnvironment.getApplication().resources.displayMetrics
         assertEquals(display.widthPixels, root.size.width)
         assertTrue("first layer is ${root.size.height}px of ${display.heightPixels}px", root.size.height >= display.heightPixels * 0.9)
@@ -108,15 +108,15 @@ class IabPolicyTest {
         compose.setContent {
             Column {
                 Text("Terms of service: by using this app you agree to them.", Modifier.testTag("host.terms"))
-                C15tConsent(remember { ConsentPresenter(core) }, POLICY)
+                InthConsent(remember { ConsentPresenter(core) }, POLICY)
             }
         }
-        compose.onNodeWithTag("c15t.first-layer").assertIsDisplayed()
+        compose.onNodeWithTag("inth.first-layer").assertIsDisplayed()
         // The host's own content is not part of the consent screen.
-        compose.onNode(hasTestTag("host.terms") and hasAnyAncestor(hasTestTag("c15t.first-layer"))).assertDoesNotExist()
-        assertTrue(compose.onAllNodes(hasAnyAncestor(hasTestTag("c15t.first-layer")) and hasText("Terms of service", substring = true)).fetchSemanticsNodes().isEmpty())
+        compose.onNode(hasTestTag("host.terms") and hasAnyAncestor(hasTestTag("inth.first-layer"))).assertDoesNotExist()
+        assertTrue(compose.onAllNodes(hasAnyAncestor(hasTestTag("inth.first-layer")) and hasText("Terms of service", substring = true)).fetchSemanticsNodes().isEmpty())
         // The privacy policy is a link out of the screen, never its text.
-        compose.onNode(hasTestTag("c15t.privacy-policy") and hasAnyAncestor(hasTestTag("c15t.first-layer"))).performScrollTo()
+        compose.onNode(hasTestTag("inth.privacy-policy") and hasAnyAncestor(hasTestTag("inth.first-layer"))).performScrollTo()
             .assertHasClickAction().assertTextEquals(en.preferenceCenterVendorListPrivacyPolicy)
     }
 
@@ -126,22 +126,22 @@ class IabPolicyTest {
         val summary = presenter.disclosure!!.bannerSummary
         // Three IAB vendors and two Google ad tech providers.
         assertEquals(5, summary.vendorCount)
-        val description = compose.onNodeWithTag("c15t.first-layer.description").performScrollTo().fetchSemanticsNode()
+        val description = compose.onNodeWithTag("inth.first-layer.description").performScrollTo().fetchSemanticsNode()
             .config[SemanticsProperties.Text].joinToString("") { it.text }
         assertEquals(en.format(en.appDescription, mapOf("partnerCount" to "5")), description)
         assertTrue(description, description.contains("store and/or access information on your device")) // P3
         assertTrue(description, description.contains("process personal data")) // P4
         assertTrue(description, description.contains("such as unique identifiers and browsing data")) // P5
         assertTrue(description, description.contains("5 partners")) // P12
-        compose.onNodeWithTag("c15t.first-layer.partner-count").assertContentDescriptionEquals("5 partners")
+        compose.onNodeWithTag("inth.first-layer.partner-count").assertContentDescriptionEquals("5 partners")
             .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button)).performClick() // P6
-        compose.waitUntil(5_000) { compose.onAllNodesWithTag("c15t.iab.vendors").fetchSemanticsNodes().isNotEmpty() }
-        compose.onNodeWithTag("c15t.iab.vendors.vendor.1").assertIsDisplayed()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("inth.iab.vendors").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("inth.iab.vendors.vendor.1").assertIsDisplayed()
         // The count includes the two ad tech providers, so the list it opens leads to them too.
-        compose.onNode(hasScrollToNodeAction() and hasAnyAncestor(hasTestTag("c15t.iab.vendors"))).performScrollToNode(hasTestTag("c15t.iab.vendors.other-partners"))
-        compose.onNodeWithTag("c15t.iab.vendors.other-partners").assertTextContains("2", substring = true).performClick()
-        compose.waitUntil(5_000) { compose.onAllNodesWithTag("c15t.ac").fetchSemanticsNodes().isNotEmpty() }
-        for (provider in presenter.disclosure!!.adTechProviders!!) compose.onNode(hasAnyAncestor(hasTestTag("c15t.ac")) and hasText(provider.name)).assertExists()
+        compose.onNode(hasScrollToNodeAction() and hasAnyAncestor(hasTestTag("inth.iab.vendors"))).performScrollToNode(hasTestTag("inth.iab.vendors.other-partners"))
+        compose.onNodeWithTag("inth.iab.vendors.other-partners").assertTextContains("2", substring = true).performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("inth.ac").fetchSemanticsNodes().isNotEmpty() }
+        for (provider in presenter.disclosure!!.adTechProviders!!) compose.onNode(hasAnyAncestor(hasTestTag("inth.ac")) and hasText(provider.name)).assertExists()
     }
 
     // TCF-CHECK: P6
@@ -174,9 +174,9 @@ class IabPolicyTest {
         assertEquals(IabBannerSummary.MAX_DISPLAY_ITEMS, summary.displayItems.size)
         assertTrue(summary.remainingCount > 0)
         summary.displayItems.forEachIndexed { index, name ->
-            compose.onNodeWithTag("c15t.first-layer.summary.item.$index").performScrollTo().assertTextEquals(name)
+            compose.onNodeWithTag("inth.first-layer.summary.item.$index").performScrollTo().assertTextEquals(name)
         }
-        compose.onNodeWithTag("c15t.first-layer.summary.more").performScrollTo()
+        compose.onNodeWithTag("inth.first-layer.summary.more").performScrollTo()
             .assertTextEquals(en.format(en.bannerAndMore, mapOf("count" to "${summary.remainingCount}")))
         // Purpose 2 is in the list but no partner declares it.
         assertTrue(compose.onAllNodes(hasText("Use limited data to select advertising")).fetchSemanticsNodes().isEmpty())
@@ -186,25 +186,25 @@ class IabPolicyTest {
     @Test fun legitimateInterestScopeAndWithdrawalAlwaysShowUnderHostCopy() {
         val host = ConsentTheme(copy = ConsentTheme.Copy(headline = "Before you shop.", introduction = "Pantry uses data to run the store."))
         show(boot(), host)
-        compose.onNodeWithTag("c15t.first-layer.title").assertTextEquals("Before you shop.")
-        compose.onNodeWithTag("c15t.first-layer.body").assertTextEquals("Pantry uses data to run the store.")
-        compose.onNodeWithTag("c15t.first-layer.legitimate-interest").performScrollTo().assertTextEquals(en.bannerLegitimateInterestNotice)
+        compose.onNodeWithTag("inth.first-layer.title").assertTextEquals("Before you shop.")
+        compose.onNodeWithTag("inth.first-layer.body").assertTextEquals("Pantry uses data to run the store.")
+        compose.onNodeWithTag("inth.first-layer.legitimate-interest").performScrollTo().assertTextEquals(en.bannerLegitimateInterestNotice)
             .assertTextContains("legitimate interest", substring = true) // P17
             .assertTextContains("right to object", substring = true) // P18
-        compose.onNodeWithTag("c15t.first-layer.scope").performScrollTo().assertTextEquals(en.appScopeServiceSpecific)
+        compose.onNodeWithTag("inth.first-layer.scope").performScrollTo().assertTextEquals(en.appScopeServiceSpecific)
             .assertTextContains("only to this app", substring = true) // P8
-        compose.onNodeWithTag("c15t.first-layer.withdraw").performScrollTo().assertTextEquals(en.appWithdraw)
+        compose.onNodeWithTag("inth.first-layer.withdraw").performScrollTo().assertTextEquals(en.appWithdraw)
             .assertTextContains("withdraw your consent at any time from Privacy settings", substring = true) // P9
     }
 
     // TCF-CHECK: P10
     @Test fun firstLayerOffersAcceptRejectAndCustomize() {
         val presenter = show(boot())
-        compose.onNodeWithTag("c15t.first-layer.accept-all").assertContentDescriptionEquals(en.commonAcceptAll).assertHasClickAction()
-        compose.onNodeWithTag("c15t.first-layer.reject-all").assertContentDescriptionEquals(en.commonRejectAll).assertHasClickAction()
-        compose.onNodeWithTag("c15t.first-layer.customize").assertContentDescriptionEquals(en.commonCustomize).performClick()
+        compose.onNodeWithTag("inth.first-layer.accept-all").assertContentDescriptionEquals(en.commonAcceptAll).assertHasClickAction()
+        compose.onNodeWithTag("inth.first-layer.reject-all").assertContentDescriptionEquals(en.commonRejectAll).assertHasClickAction()
+        compose.onNodeWithTag("inth.first-layer.customize").assertContentDescriptionEquals(en.commonCustomize).performClick()
         compose.waitUntil(5_000) { presenter.preferences }
-        compose.onNodeWithTag("c15t.iab").assertIsDisplayed()
+        compose.onNodeWithTag("inth.iab").assertIsDisplayed()
     }
 
     // TCF-CHECK: P11
@@ -212,8 +212,8 @@ class IabPolicyTest {
         // A host decision pair under 5:1 is replaced by the stock pair before anything draws.
         val unreadable = ConsentTheme(colors = ConsentTheme.Colors.c15t.copy(decision = ConsentThemeColor(0x8CA2FF), textOnDecision = ConsentThemeColor(0xFFFFFF)))
         show(boot(), unreadable)
-        val accept = buttonLabel("c15t.first-layer.accept-all", en.commonAcceptAll)
-        val reject = buttonLabel("c15t.first-layer.reject-all", en.commonRejectAll)
+        val accept = buttonLabel("inth.first-layer.accept-all", en.commonAcceptAll)
+        val reject = buttonLabel("inth.first-layer.reject-all", en.commonRejectAll)
         assertEquals(accept.fontSize, reject.fontSize)
         assertEquals(accept.fontWeight, reject.fontWeight)
         assertEquals(accept.fontFamily, reject.fontFamily)
@@ -223,8 +223,8 @@ class IabPolicyTest {
         val stock = ConsentTheme.Colors.c15t
         assertEquals(stock.textOnDecision.light, accept.color.toArgb() and 0xFFFFFF)
         assertTrue(ConsentTheme.contrastRatio(accept.color.toArgb() and 0xFFFFFF, stock.decision.light) >= 5.0)
-        val a = compose.onNodeWithTag("c15t.first-layer.accept-all").fetchSemanticsNode().size
-        val r = compose.onNodeWithTag("c15t.first-layer.reject-all").fetchSemanticsNode().size
+        val a = compose.onNodeWithTag("inth.first-layer.accept-all").fetchSemanticsNode().size
+        val r = compose.onNodeWithTag("inth.first-layer.reject-all").fetchSemanticsNode().size
         assertEquals(a, r)
     }
 
@@ -240,15 +240,15 @@ class IabPolicyTest {
         val presenter = show(core, ConsentTheme(copy = ConsentTheme.Copy(headline = "Hello", introduction = "Custom")))
         val list = presenter.disclosure!!.list
         presenter.disclosure!!.bannerSummary.displayItems.forEachIndexed { index, name ->
-            compose.onNodeWithTag("c15t.first-layer.summary.item.$index").performScrollTo().assertTextEquals(name)
+            compose.onNodeWithTag("inth.first-layer.summary.item.$index").performScrollTo().assertTextEquals(name)
         }
-        compose.onNodeWithTag("c15t.first-layer.customize").performClick()
-        compose.waitUntil(5_000) { compose.onAllNodesWithTag("c15t.iab").fetchSemanticsNodes().isNotEmpty() }
-        scroll("c15t.iab.purpose.1.details").performClick()
-        assertIllustrations("c15t.iab.purpose.1.illustrations", list.purposes.getValue(1).illustrations!!)
-        compose.onNodeWithTag("c15t.prefs.cancel").performClick()
+        compose.onNodeWithTag("inth.first-layer.customize").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("inth.iab").fetchSemanticsNodes().isNotEmpty() }
+        scroll("inth.iab.purpose.1.details").performClick()
+        assertIllustrations("inth.iab.purpose.1.illustrations", list.purposes.getValue(1).illustrations!!)
+        compose.onNodeWithTag("inth.prefs.cancel").performClick()
         compose.waitUntil(5_000) { !presenter.preferences }
-        compose.onNodeWithTag("c15t.first-layer.accept-all").performClick()
+        compose.onNodeWithTag("inth.first-layer.accept-all").performClick()
         compose.waitUntil(5_000) { presenter.presentationID == null }
         val tc = TcStringDecoder.decode(core.iabConsent!!.tcString)
         assertFalse(tc.core.useNonStandardTexts)
@@ -256,11 +256,11 @@ class IabPolicyTest {
 
     @Test fun firstLayerTextFallsBackToTheNumberWhenTheLinkWordsDiffer() {
         val summary = IabBannerSummary(vendorCount = 12, displayItems = listOf("A"), remainingCount = 0)
-        val english = com.c15t.consentui.headless.iabFirstLayer(en, summary)
+        val english = com.inth.consentui.headless.iabFirstLayer(en, summary)
         assertEquals("12 partners", english.partnersLabel)
         assertEquals(listOf("A"), english.summary)
         // Polish inflects "partners" differently in the sentence and the link, so only the number is tappable.
-        assertEquals("12", com.c15t.consentui.headless.iabFirstLayer(IabCopy.forLanguage("pl"), summary).partnersLabel)
+        assertEquals("12", com.inth.consentui.headless.iabFirstLayer(IabCopy.forLanguage("pl"), summary).partnersLabel)
     }
 
     @Test fun backKeepsTheIabFirstLayerUntilADecisionAndLeavesCustomizeForIt() {
@@ -271,13 +271,13 @@ class IabPolicyTest {
         val session = presenter.presentationID
         assertNotNull(session)
         pressBack()
-        compose.onNodeWithTag("c15t.first-layer.accept-all").assertIsDisplayed()
+        compose.onNodeWithTag("inth.first-layer.accept-all").assertIsDisplayed()
         assertEquals(session, presenter.presentationID)
-        compose.onNodeWithTag("c15t.first-layer.customize").performClick()
+        compose.onNodeWithTag("inth.first-layer.customize").performClick()
         compose.waitUntil(5_000) { presenter.preferences }
         pressBack()
         compose.waitUntil(5_000) { !presenter.preferences }
-        compose.onNodeWithTag("c15t.first-layer.accept-all").assertIsDisplayed()
+        compose.onNodeWithTag("inth.first-layer.accept-all").assertIsDisplayed()
         assertEquals(session, presenter.presentationID)
         assertEquals(0, outcomes)
         assertNull(core.snapshot().explicitChoice)
@@ -288,7 +288,7 @@ class IabPolicyTest {
         assertTrue(core.save(CommitIntent.All).ok)
         val presenter = show(core)
         compose.runOnIdle { presenter.presentPreferences() }
-        compose.waitUntil(5_000) { compose.onAllNodesWithTag("c15t.iab").fetchSemanticsNodes().isNotEmpty() }
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("inth.iab").fetchSemanticsNodes().isNotEmpty() }
         pressBack()
         compose.waitUntil(5_000) { presenter.presentationID == null }
     }
@@ -301,10 +301,10 @@ class IabPolicyTest {
         val d = presenter.disclosure!!
         assertEquals(listOf(1, 3, 4, 5, 6, 7, 8), d.declaredPurposeIds)
         assertEquals(listOf(1), d.declaredSpecialFeatureIds)
-        for (id in d.declaredPurposeIds) scroll("c15t.iab.purpose.$id.consent").assertTextContains(d.list.purposes.getValue(id).name!!, substring = true)
-        assertNoRow("c15t.iab.purpose.2.consent")
-        assertNoRow("c15t.iab.special-feature.2.switch")
-        val feature = scroll("c15t.iab.special-feature.1.switch").assertTextContains(d.list.specialFeatures!!.getValue(1).name!!, substring = true).assertIsOff()
+        for (id in d.declaredPurposeIds) scroll("inth.iab.purpose.$id.consent").assertTextContains(d.list.purposes.getValue(id).name!!, substring = true)
+        assertNoRow("inth.iab.purpose.2.consent")
+        assertNoRow("inth.iab.special-feature.2.switch")
+        val feature = scroll("inth.iab.special-feature.1.switch").assertTextContains(d.list.specialFeatures!!.getValue(1).name!!, substring = true).assertIsOff()
         feature.performClick().assertIsOn()
         assertEquals(listOf(1), presenter.choices.specialFeatureOptIns)
         feature.performClick().assertIsOff()
@@ -315,12 +315,12 @@ class IabPolicyTest {
     @Test fun purposesSpecialPurposesFeaturesAndSpecialFeaturesShowTheirStandardIllustrations() {
         val presenter = customize(boot())
         val list = presenter.disclosure!!.list
-        scroll("c15t.iab.purpose.7.details").performClick()
-        assertIllustrations("c15t.iab.purpose.7.illustrations", list.purposes.getValue(7).illustrations!!)
+        scroll("inth.iab.purpose.7.details").performClick()
+        assertIllustrations("inth.iab.purpose.7.illustrations", list.purposes.getValue(7).illustrations!!)
         val kinds = listOf(
-            "c15t.iab.special-feature.1" to list.specialFeatures!!.getValue(1),
-            "c15t.iab.special-purpose.1" to list.specialPurposes!!.getValue(1),
-            "c15t.iab.feature.1" to list.features!!.getValue(1),
+            "inth.iab.special-feature.1" to list.specialFeatures!!.getValue(1),
+            "inth.iab.special-purpose.1" to list.specialPurposes!!.getValue(1),
+            "inth.iab.feature.1" to list.features!!.getValue(1),
         )
         for ((id, item) in kinds) {
             scroll("$id.examples").assertTextEquals("${en.preferenceCenterPurposeItemExamples} (${item.illustrations!!.size})").performClick()
@@ -333,10 +333,10 @@ class IabPolicyTest {
         val presenter = customize(boot())
         val list = presenter.disclosure!!.list
         val standard = list.standardTexts!!.features
-        scroll("c15t.iab.features-standard-text").assertTextEquals(standard)
+        scroll("inth.iab.features-standard-text").assertTextEquals(standard)
         openVendor(1)
         val feature = list.features!!.getValue(1)
-        val row = "c15t.iab.vendor.1.feature.1"
+        val row = "inth.iab.vendor.1.feature.1"
         compose.onNodeWithTag(row).performScrollTo()
             .assert(hasAnyDescendant(hasText(feature.name!!)))
             .assert(hasAnyDescendant(hasText(feature.description!!)))
@@ -347,7 +347,7 @@ class IabPolicyTest {
         val shown = compose.onAllNodes(hasAnyAncestor(hasTestTag("$row.illustrations"))).fetchSemanticsNodes()
             .flatMap { it.config.getOrNull(SemanticsProperties.Text).orEmpty() }.map { it.text }
         assertEquals(feature.illustrations!!.map { "• $it" }, shown)
-        compose.onNodeWithTag("c15t.iab.vendor.1.features-standard-text").performScrollTo().assertTextEquals(standard)
+        compose.onNodeWithTag("inth.iab.vendor.1.features-standard-text").performScrollTo().assertTextEquals(standard)
     }
 
     @Test fun noFeaturesMeansNoFeaturesExplanation() {
@@ -355,27 +355,27 @@ class IabPolicyTest {
             val vendors = gvl.getValue("vendors").jsonObject.mapValues { (_, v) -> JsonObject(v.jsonObject + ("features" to JsonArray(emptyList()))) }
             JsonObject(gvl + ("vendors" to JsonObject(vendors)))
         })
-        scroll("c15t.iab.partners")
-        assertNoRow("c15t.iab.features-standard-text")
+        scroll("inth.iab.partners")
+        assertNoRow("inth.iab.features-standard-text")
     }
 
     @Test fun featuresFallBackToTheTranslatedStandardText() {
         val presenter = customize(boot { JsonObject(it - "standardTexts") })
         assertEquals(null, presenter.disclosure!!.list.standardTexts)
-        scroll("c15t.iab.features-standard-text").assertTextEquals(en.preferenceCenterFeaturesDescription)
+        scroll("inth.iab.features-standard-text").assertTextEquals(en.preferenceCenterFeaturesDescription)
         openVendor(1)
-        compose.onNodeWithTag("c15t.iab.vendor.1.features-standard-text").performScrollTo().assertTextEquals(en.preferenceCenterFeaturesDescription)
+        compose.onNodeWithTag("inth.iab.vendor.1.features-standard-text").performScrollTo().assertTextEquals(en.preferenceCenterFeaturesDescription)
     }
 
     // TCF-CHECK: P16, P25
     @Test fun adTechProviderPurposesLeadToTheProvidersFromTheirPartnerList() {
         customize(boot())
-        scroll("c15t.iab.purpose.1.details").performClick()
-        scroll("c15t.iab.purpose.1.view-partners").performClick()
-        compose.waitUntil(5_000) { compose.onAllNodesWithTag("c15t.iab.vendors").fetchSemanticsNodes().isNotEmpty() }
-        compose.onNode(hasScrollToNodeAction() and hasAnyAncestor(hasTestTag("c15t.iab.vendors"))).performScrollToNode(hasTestTag("c15t.iab.vendors.other-partners"))
-        compose.onNodeWithTag("c15t.iab.vendors.other-partners").assertTextContains("2", substring = true)
-        compose.onNode(hasAnyAncestor(hasTestTag("c15t.iab.vendors")) and hasText(en.preferenceCenterVendorListAdTechProvidersNotice)).assertExists()
+        scroll("inth.iab.purpose.1.details").performClick()
+        scroll("inth.iab.purpose.1.view-partners").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("inth.iab.vendors").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNode(hasScrollToNodeAction() and hasAnyAncestor(hasTestTag("inth.iab.vendors"))).performScrollToNode(hasTestTag("inth.iab.vendors.other-partners"))
+        compose.onNodeWithTag("inth.iab.vendors.other-partners").assertTextContains("2", substring = true)
+        compose.onNode(hasAnyAncestor(hasTestTag("inth.iab.vendors")) and hasText(en.preferenceCenterVendorListAdTechProvidersNotice)).assertExists()
     }
 
     // TCF-CHECK: P16, P21
@@ -384,16 +384,16 @@ class IabPolicyTest {
             "purposes":[1,3],"legIntPurposes":[7],"usesCookies":true,"cookieMaxAgeSeconds":3600}]""").jsonArray
         val core = bootIn("EN", customVendors = vendors)
         val presenter = customize(core)
-        scroll("c15t.iab.custom-partners").assertTextContains(en.preferenceCenterVendorListCustomVendorsHeading, substring = true)
+        scroll("inth.iab.custom-partners").assertTextContains(en.preferenceCenterVendorListCustomVendorsHeading, substring = true)
             .assertTextContains("1", substring = true).performClick()
-        compose.waitUntil(5_000) { compose.onAllNodesWithTag("c15t.iab.custom-vendors").fetchSemanticsNodes().isNotEmpty() }
-        compose.onNodeWithTag("c15t.iab.custom-vendors.intro").assertTextEquals(en.preferenceCenterVendorListCustomVendorsNotice)
-        compose.onNodeWithTag("c15t.iab.custom-vendors.vendor.internal-ads").performClick()
-        compose.waitUntil(5_000) { compose.onAllNodesWithTag("c15t.iab.custom-vendor.internal-ads").fetchSemanticsNodes().isNotEmpty() }
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("inth.iab.custom-vendors").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("inth.iab.custom-vendors.intro").assertTextEquals(en.preferenceCenterVendorListCustomVendorsNotice)
+        compose.onNodeWithTag("inth.iab.custom-vendors.vendor.internal-ads").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("inth.iab.custom-vendor.internal-ads").fetchSemanticsNodes().isNotEmpty() }
         // Labelled as not registered with IAB, in the web's words, and off for a first-time user.
-        compose.onNodeWithTag("c15t.iab.custom-vendor.internal-ads.note").assertTextEquals(en.commonCustomPartner)
-        compose.onNodeWithTag("c15t.iab.custom-vendor.internal-ads.li").assertIsOff()
-        compose.onNodeWithTag("c15t.iab.custom-vendor.internal-ads.consent").assertIsOff().performClick().assertIsOn()
+        compose.onNodeWithTag("inth.iab.custom-vendor.internal-ads.note").assertTextEquals(en.commonCustomPartner)
+        compose.onNodeWithTag("inth.iab.custom-vendor.internal-ads.li").assertIsOff()
+        compose.onNodeWithTag("inth.iab.custom-vendor.internal-ads.consent").assertIsOff().performClick().assertIsOn()
         assertEquals(listOf("internal-ads"), presenter.choices.customVendorConsents)
         assertEquals(emptyList<String>(), presenter.choices.customVendorLegitimateInterests)
         // Not among the IAB partners.
@@ -428,37 +428,37 @@ class IabPolicyTest {
         // user objects with its switch.
         assertEquals(listOf(7), choices.purposeLegitimateInterests)
         assertEquals(listOf(1, 2, 3), choices.vendorLegitimateInterests)
-        for (id in presenter.disclosure!!.declaredPurposeIds) scroll("c15t.iab.purpose.$id.consent").assertIsOff()
-        scroll("c15t.iab.special-feature.1.switch").assertIsOff()
-        scroll("c15t.iab.purpose.7.details").performClick()
-        scroll("c15t.iab.purpose.7.li").assertIsOn()
+        for (id in presenter.disclosure!!.declaredPurposeIds) scroll("inth.iab.purpose.$id.consent").assertIsOff()
+        scroll("inth.iab.special-feature.1.switch").assertIsOff()
+        scroll("inth.iab.purpose.7.details").performClick()
+        scroll("inth.iab.purpose.7.li").assertIsOn()
         openVendor(1)
-        compose.onNodeWithTag("c15t.iab.vendor.1.consent").assertIsOff()
-        compose.onNodeWithTag("c15t.iab.vendor.1.li").assertIsOn()
+        compose.onNodeWithTag("inth.iab.vendor.1.consent").assertIsOff()
+        compose.onNodeWithTag("inth.iab.vendor.1.li").assertIsOn()
     }
 
     // TCF-CHECK: P17, P18, P22, P23, P25
     @Test fun purposeRowsCountPartnersExplainLegitimateInterestAndAllowObjection() {
         val presenter = customize(boot())
         // The counts sit on the collapsed row, before Details.
-        scroll("c15t.iab.purpose.7.consent").assertTextContains("With Your Permission: 3 partners · Legitimate Interest: 3 partners", substring = true) // P25
+        scroll("inth.iab.purpose.7.consent").assertTextContains("With Your Permission: 3 partners · Legitimate Interest: 3 partners", substring = true) // P25
         // Purposes 1, 3 and 4 also count the 2 Google ad tech providers, as the web does.
         assertEquals(2, presenter.disclosure!!.adTechProviders!!.size)
-        scroll("c15t.iab.purpose.1.consent").assertTextContains("With Your Permission: 5 partners · Legitimate Interest: 0 partners", substring = true) // P25
-        compose.onNodeWithTag("c15t.iab.purpose.7.li").assertDoesNotExist()
-        scroll("c15t.iab.purpose.7.details").performClick()
-        scroll("c15t.iab.purpose.7.li-explanation").assertTextEquals(en.appLegitimateInterestExplanation) // P17, P22
+        scroll("inth.iab.purpose.1.consent").assertTextContains("With Your Permission: 5 partners · Legitimate Interest: 0 partners", substring = true) // P25
+        compose.onNodeWithTag("inth.iab.purpose.7.li").assertDoesNotExist()
+        scroll("inth.iab.purpose.7.details").performClick()
+        scroll("inth.iab.purpose.7.li-explanation").assertTextEquals(en.appLegitimateInterestExplanation) // P17, P22
             .assertTextContains("such as unique identifiers and browsing data", substring = true)
             .assertTextContains("only to this app", substring = true)
             .assertTextContains("right to object", substring = true) // P18
         // Objecting per purpose.
-        val li = scroll("c15t.iab.purpose.7.li").assertTextContains("Turn off to object.", substring = true)
+        val li = scroll("inth.iab.purpose.7.li").assertTextContains("Turn off to object.", substring = true)
         li.assertIsOn().performClick().assertIsOff()
         assertEquals(listOf(7), presenter.choices.purposeObjections) // P23
         // Objecting per partner.
         openVendor(1)
-        compose.onNodeWithTag("c15t.iab.vendor.1.li-explanation").performScrollTo().assertTextEquals(en.appLegitimateInterestExplanation)
-        val vendorLi = compose.onNodeWithTag("c15t.iab.vendor.1.li").performScrollTo()
+        compose.onNodeWithTag("inth.iab.vendor.1.li-explanation").performScrollTo().assertTextEquals(en.appLegitimateInterestExplanation)
+        val vendorLi = compose.onNodeWithTag("inth.iab.vendor.1.li").performScrollTo()
         vendorLi.assertIsOn().performClick().assertIsOff()
         assertEquals(listOf(1), presenter.choices.vendorObjections) // P23
     }
@@ -466,18 +466,18 @@ class IabPolicyTest {
     // TCF-CHECK: P19, P26, P27, P28
     @Test fun vendorPageShowsDeclarationsLegalBasesRetentionAndPerPartnerChoices() {
         val presenter = customize(boot(widerList))
-        scroll("c15t.iab.partners").performClick()
-        compose.waitUntil(5_000) { compose.onAllNodesWithTag("c15t.iab.vendors.vendor.2").fetchSemanticsNodes().isNotEmpty() }
-        for (id in presenter.disclosure!!.vendors.keys) compose.onNodeWithTag("c15t.iab.vendors.vendor.$id").assertExists()
-        compose.onNodeWithTag("c15t.iab.vendors.vendor.2").performClick()
-        compose.waitUntil(5_000) { compose.onAllNodesWithTag("c15t.iab.vendor.2.consent").fetchSemanticsNodes().isNotEmpty() }
+        scroll("inth.iab.partners").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("inth.iab.vendors.vendor.2").fetchSemanticsNodes().isNotEmpty() }
+        for (id in presenter.disclosure!!.vendors.keys) compose.onNodeWithTag("inth.iab.vendors.vendor.$id").assertExists()
+        compose.onNodeWithTag("inth.iab.vendors.vendor.2").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("inth.iab.vendor.2.consent").fetchSemanticsNodes().isNotEmpty() }
         val list = presenter.disclosure!!.list
-        compose.onNodeWithTag("c15t.iab.vendor.2.privacy-link").assertHasClickAction() // P19
-        compose.onNodeWithTag("c15t.iab.vendor.2.li-claim-link").assertHasClickAction().assertTextEquals("Legitimate interest statement") // P26
-        compose.onNodeWithTag("c15t.iab.vendor.2.consent").assertTextContains(list.purposes.getValue(1).name!!, substring = true)
+        compose.onNodeWithTag("inth.iab.vendor.2.privacy-link").assertHasClickAction() // P19
+        compose.onNodeWithTag("inth.iab.vendor.2.li-claim-link").assertHasClickAction().assertTextEquals("Legitimate interest statement") // P26
+        compose.onNodeWithTag("inth.iab.vendor.2.consent").assertTextContains(list.purposes.getValue(1).name!!, substring = true)
             .performClick().assertIsOn()
         assertEquals(listOf(2), presenter.choices.vendorConsents) // P19: a choice per partner
-        compose.onNodeWithTag("c15t.iab.vendor.2.li").assertTextContains(list.purposes.getValue(7).name!!, substring = true)
+        compose.onNodeWithTag("inth.iab.vendor.2.li").assertTextContains(list.purposes.getValue(7).name!!, substring = true)
         for (text in listOf(en.preferenceCenterVendorListSpecialPurposes, list.specialPurposes!!.getValue(1).name!!, en.preferenceCenterFeaturesTitle, list.features!!.getValue(1).name!!,
             en.preferenceCenterVendorListSpecialFeatures, list.specialFeatures!!.getValue(1).name!!)) onPage(2, text).performScrollTo().assertIsDisplayed() // P19
         onPage(2, en.appDataCollected).performScrollTo().assertIsDisplayed()
@@ -489,7 +489,7 @@ class IabPolicyTest {
         inRetention(2, "Standard retention").assertExists()
         inRetention(2, "365 days").assertExists()
         // An hour of device storage rounds up to a day.
-        compose.onNode(hasAnyAncestor(hasTestTag("c15t.iab.vendor.2.storage")) and hasText("1 day")).performScrollTo().assertIsDisplayed()
+        compose.onNode(hasAnyAncestor(hasTestTag("inth.iab.vendor.2.storage")) and hasText("1 day")).performScrollTo().assertIsDisplayed()
     }
 
     // TCF-CHECK: P28
@@ -501,13 +501,13 @@ class IabPolicyTest {
         assertEquals(10, expected.size)
         val presenter = customize(boot { fixture.getValue("gvl").jsonObject })
         assertEquals(listOf(1L, 2L, 3L, 4L, 5L, 6L, 8L, 9L, 10L, 11L), presenter.disclosure!!.list.vendors.getValue(21).dataCategories)
-        scroll("c15t.iab.partners").performClick()
-        compose.waitUntil(5_000) { compose.onAllNodesWithTag("c15t.iab.vendors").fetchSemanticsNodes().isNotEmpty() }
+        scroll("inth.iab.partners").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("inth.iab.vendors").fetchSemanticsNodes().isNotEmpty() }
         // The partner list composes lazily; scroll it to the row.
-        compose.onNode(hasScrollToNodeAction() and hasAnyAncestor(hasTestTag("c15t.iab.vendors")))
-            .performScrollToNode(hasTestTag("c15t.iab.vendors.vendor.21"))
-        compose.onNodeWithTag("c15t.iab.vendors.vendor.21").performClick()
-        compose.waitUntil(5_000) { compose.onAllNodesWithTag("c15t.iab.vendor.21.consent").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNode(hasScrollToNodeAction() and hasAnyAncestor(hasTestTag("inth.iab.vendors")))
+            .performScrollToNode(hasTestTag("inth.iab.vendors.vendor.21"))
+        compose.onNodeWithTag("inth.iab.vendors.vendor.21").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("inth.iab.vendor.21.consent").fetchSemanticsNodes().isNotEmpty() }
         onPage(21, en.appDataCollected).performScrollTo().assertIsDisplayed()
         for (name in expected) onPage(21, name).performScrollTo().assertIsDisplayed()
     }
@@ -517,24 +517,24 @@ class IabPolicyTest {
         val presenter = customize(boot())
         val providers = presenter.disclosure!!.adTechProviders!!.map { it.name }
         assertEquals(listOf("Harbour Ads", "Cedar Measurement"), providers)
-        scroll("c15t.iab.partners").performClick()
-        compose.waitUntil(5_000) { compose.onAllNodesWithTag("c15t.iab.vendors.vendor.1").fetchSemanticsNodes().isNotEmpty() }
-        for (name in providers) assertTrue(compose.onAllNodes(hasAnyAncestor(hasTestTag("c15t.iab.vendors")) and hasText(name)).fetchSemanticsNodes().isEmpty())
-        compose.onNodeWithTag("c15t.iab.vendors.back").performClick()
-        compose.waitUntil(5_000) { compose.onAllNodesWithTag("c15t.iab").fetchSemanticsNodes().isNotEmpty() }
+        scroll("inth.iab.partners").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("inth.iab.vendors.vendor.1").fetchSemanticsNodes().isNotEmpty() }
+        for (name in providers) assertTrue(compose.onAllNodes(hasAnyAncestor(hasTestTag("inth.iab.vendors")) and hasText(name)).fetchSemanticsNodes().isEmpty())
+        compose.onNodeWithTag("inth.iab.vendors.back").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("inth.iab").fetchSemanticsNodes().isNotEmpty() }
         // Labelled from the shared IAB copy, like the web.
-        scroll("c15t.iab.other-partners").assertTextContains(en.preferenceCenterVendorListAdTechProvidersHeading, substring = true)
+        scroll("inth.iab.other-partners").assertTextContains(en.preferenceCenterVendorListAdTechProvidersHeading, substring = true)
             .assertTextContains("2", substring = true).performClick()
-        compose.waitUntil(5_000) { compose.onAllNodesWithTag("c15t.ac").fetchSemanticsNodes().isNotEmpty() }
-        compose.onNodeWithTag("c15t.prefs.title").assertTextEquals(en.preferenceCenterVendorListAdTechProvidersHeading)
-        for (name in providers) compose.onNode(hasAnyAncestor(hasTestTag("c15t.ac")) and hasText(name)).assertExists()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("inth.ac").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("inth.prefs.title").assertTextEquals(en.preferenceCenterVendorListAdTechProvidersHeading)
+        for (name in providers) compose.onNode(hasAnyAncestor(hasTestTag("inth.ac")) and hasText(name)).assertExists()
     }
 
     // TCF-CHECK: P30
     @Test fun preferencesSayWhereTheChoiceIsStoredAndForHowLong() {
         val presenter = customize(boot())
         assertEquals(365, presenter.disclosure!!.consentStorageMaxDays)
-        scroll("c15t.iab.consent-storage").assertTextEquals(en.format(en.appConsentStorage, mapOf("days" to "365")))
+        scroll("inth.iab.consent-storage").assertTextEquals(en.format(en.appConsentStorage, mapOf("days" to "365")))
             .assertTextContains("IABTCF", substring = true).assertTextContains("up to 365 days", substring = true)
         assertEquals("1 day", storageDuration(1, en))
         assertEquals("1 day", storageDuration(3_600, en))
@@ -551,28 +551,28 @@ class IabPolicyTest {
         val method = ConsentPresenter::class.java.getMethod("presentPreferences")
         assertTrue(JavaModifier.isPublic(method.modifiers))
         val presenter = show(boot())
-        compose.onNodeWithTag("c15t.first-layer.accept-all").performClick()
+        compose.onNodeWithTag("inth.first-layer.accept-all").performClick()
         compose.waitUntil(5_000) { presenter.presentationID == null }
-        compose.onNodeWithTag("c15t.first-layer").assertDoesNotExist()
+        compose.onNodeWithTag("inth.first-layer").assertDoesNotExist()
         compose.runOnIdle { presenter.presentPreferences() }
-        compose.waitUntil(5_000) { compose.onAllNodesWithTag("c15t.iab").fetchSemanticsNodes().isNotEmpty() }
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("inth.iab").fetchSemanticsNodes().isNotEmpty() }
         assertTrue(presenter.preferences)
-        compose.onNodeWithTag("c15t.prefs.title").assertTextEquals(en.preferenceCenterTitle)
+        compose.onNodeWithTag("inth.prefs.title").assertTextEquals(en.preferenceCenterTitle)
     }
 
     // TCF-CHECK: P32
     @Test fun reopenedPreferencesWithdrawAsEasilyAsAcceptAll() {
         val core = boot()
         val presenter = show(core)
-        compose.onNodeWithTag("c15t.first-layer.accept-all").performClick()
+        compose.onNodeWithTag("inth.first-layer.accept-all").performClick()
         compose.waitUntil(5_000) { presenter.presentationID == null }
         assertTrue(core.isIabAllowed(1, 7, IabLegalBasis.CONSENT))
         compose.runOnIdle { presenter.presentPreferences() }
-        compose.waitUntil(5_000) { compose.onAllNodesWithTag("c15t.iab.reject-all").fetchSemanticsNodes().isNotEmpty() }
-        val reject = compose.onNodeWithTag("c15t.iab.reject-all").assertIsDisplayed().assertContentDescriptionEquals(en.commonRejectAll)
-        val accept = compose.onNodeWithTag("c15t.iab.accept-all").assertIsDisplayed().assertContentDescriptionEquals(en.commonAcceptAll)
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("inth.iab.reject-all").fetchSemanticsNodes().isNotEmpty() }
+        val reject = compose.onNodeWithTag("inth.iab.reject-all").assertIsDisplayed().assertContentDescriptionEquals(en.commonRejectAll)
+        val accept = compose.onNodeWithTag("inth.iab.accept-all").assertIsDisplayed().assertContentDescriptionEquals(en.commonAcceptAll)
         // Save takes the shared copy too, not an English literal.
-        compose.onNodeWithTag("c15t.iab.save").assertContentDescriptionEquals(en.commonSaveSettings)
+        compose.onNodeWithTag("inth.iab.save").assertContentDescriptionEquals(en.commonSaveSettings)
         val r = reject.fetchSemanticsNode().boundsInRoot
         val a = accept.fetchSemanticsNode().boundsInRoot
         // One tap, side by side, the same size.
@@ -603,22 +603,22 @@ class IabPolicyTest {
 
     /** Preferences compose rows lazily; scroll the page until the row exists. */
     private fun scroll(id: String): SemanticsNodeInteraction {
-        compose.onNodeWithTag("c15t.iab").performScrollToNode(hasTestTag(id))
+        compose.onNodeWithTag("inth.iab").performScrollToNode(hasTestTag(id))
         return compose.onNodeWithTag(id)
     }
 
     private fun assertNoRow(id: String) {
-        assertThrows(AssertionError::class.java) { compose.onNodeWithTag("c15t.iab").performScrollToNode(hasTestTag(id)) }
+        assertThrows(AssertionError::class.java) { compose.onNodeWithTag("inth.iab").performScrollToNode(hasTestTag(id)) }
     }
 
     private fun openVendor(id: Int) {
-        scroll("c15t.iab.partners").performClick()
-        compose.waitUntil(5_000) { compose.onAllNodesWithTag("c15t.iab.vendors.vendor.$id").fetchSemanticsNodes().isNotEmpty() }
-        compose.onNodeWithTag("c15t.iab.vendors.vendor.$id").performClick()
-        compose.waitUntil(5_000) { compose.onAllNodesWithTag("c15t.iab.vendor.$id.consent").fetchSemanticsNodes().isNotEmpty() }
+        scroll("inth.iab.partners").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("inth.iab.vendors.vendor.$id").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("inth.iab.vendors.vendor.$id").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("inth.iab.vendor.$id.consent").fetchSemanticsNodes().isNotEmpty() }
     }
 
-    private fun onPage(vendor: Int, text: String) = compose.onAllNodes(hasAnyAncestor(hasTestTag("c15t.iab.vendor.$vendor")) and hasText(text)).onFirst()
+    private fun onPage(vendor: Int, text: String) = compose.onAllNodes(hasAnyAncestor(hasTestTag("inth.iab.vendor.$vendor")) and hasText(text)).onFirst()
 
     /** Every illustration the list gives, verbatim and in order, under [id]. */
     private fun assertIllustrations(id: String, illustrations: List<String>) {
@@ -627,12 +627,12 @@ class IabPolicyTest {
             .flatMap { it.config.getOrNull(SemanticsProperties.Text).orEmpty() }.map { it.text }
         assertEquals(illustrations.map { "• $it" }, shown)
     }
-    private fun inRetention(vendor: Int, text: String) = compose.onNode(hasAnyAncestor(hasTestTag("c15t.iab.vendor.$vendor.retention")) and hasText(text))
+    private fun inRetention(vendor: Int, text: String) = compose.onNode(hasAnyAncestor(hasTestTag("inth.iab.vendor.$vendor.retention")) and hasText(text))
 
     private fun customize(core: ConsentCore): ConsentPresenter {
         val presenter = show(core)
-        compose.onNodeWithTag("c15t.first-layer.customize").performClick()
-        compose.waitUntil(5_000) { compose.onAllNodesWithTag("c15t.iab").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("inth.first-layer.customize").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("inth.iab").fetchSemanticsNodes().isNotEmpty() }
         return presenter
     }
 
@@ -640,7 +640,7 @@ class IabPolicyTest {
         lateinit var presenter: ConsentPresenter
         compose.setContent {
             presenter = remember { ConsentPresenter(core) }
-            C15tConsent(presenter, POLICY, theme = theme)
+            InthConsent(presenter, POLICY, theme = theme)
         }
         compose.waitForIdle()
         return presenter
@@ -659,7 +659,7 @@ class IabPolicyTest {
                 HttpResponse(200, mapOf("x-c15t-policy-contract" to "1"), body) else HttpResponse(503)
         }
         val config = NativeConfig("https://fixture.invalid", iab = IabConfiguration(cmpId = 53, cmpVersion = 7, publisherCountryCode = "GB", consentLanguage = language))
-        val core = ConsentCore(config, C15tStore(Memory()), transport = HostedTransport(client, config), executor = TaskExecutor.DIRECT)
+        val core = ConsentCore(config, InthStore(Memory()), transport = HostedTransport(client, config), executor = TaskExecutor.DIRECT)
         core.bootstrap()
         return core
     }

@@ -1,10 +1,10 @@
 import Foundation
 import XCTest
 
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 /// The ordering, replacement and release rules the iOS helper depends on.
-/// `ConsentWebView` in C15tApple only connects this logic to WebKit.
+/// `ConsentWebView` in InthApple only connects this logic to WebKit.
 final class WebViewConsentSyncTests: XCTestCase {
     /// What a web view received.
     final class RecordingTarget: WebViewConsentTarget {

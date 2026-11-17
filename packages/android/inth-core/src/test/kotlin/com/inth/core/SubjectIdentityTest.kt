@@ -1,16 +1,16 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentSubject
-import com.c15t.core.spi.KeyValueStore
-import com.c15t.core.spi.TaskExecutor
-import com.c15t.core.store.C15tJson
-import com.c15t.core.store.C15tStore
-import com.c15t.core.store.C15tStoreKeys
-import com.c15t.core.store.ResilientKeyValueStore
-import com.c15t.core.store.SubjectPreservingStore
-import com.c15t.core.transport.C15tTransport
-import com.c15t.core.transport.SaveOutcome
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentSubject
+import com.inth.core.spi.KeyValueStore
+import com.inth.core.spi.TaskExecutor
+import com.inth.core.store.InthJson
+import com.inth.core.store.InthStore
+import com.inth.core.store.InthStoreKeys
+import com.inth.core.store.ResilientKeyValueStore
+import com.inth.core.store.SubjectPreservingStore
+import com.inth.core.transport.InthTransport
+import com.inth.core.transport.SaveOutcome
 import java.security.KeyStoreException
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -48,19 +48,19 @@ class SubjectIdentityTest {
 		val records = ResilientKeyValueStore(protectedStore, fallback, onFallback = { warnings += 1 })
 		val transport = RecordingTransport(timeline).respondSave(SaveOutcome.Unavailable("offline"))
 
-		val first = kernel(C15tStore(SubjectPreservingStore(records, identity)), transport)
+		val first = kernel(InthStore(SubjectPreservingStore(records, identity)), transport)
 		first.bootstrap()
 		assertTrue(first.save(CommitIntent.All).queued, "the payload must be waiting in the queue")
 		val originalId = assertNotNull(first.snapshot().subject).id
 		assertTrue(
-			protectedStore.heldKeys.contains(C15tStoreKeys.SNAPSHOT),
+			protectedStore.heldKeys.contains(InthStoreKeys.SNAPSHOT),
 			"records live in protected storage while the key works, got ${protectedStore.heldKeys}",
 		)
 		val mintedFirstLaunch = subjectIdsMinted
 
 		protectedStore.destroyKey()
 
-		val second = kernel(C15tStore(SubjectPreservingStore(records, identity)), transport)
+		val second = kernel(InthStore(SubjectPreservingStore(records, identity)), transport)
 		second.bootstrap()
 
 		assertEquals(
@@ -83,7 +83,7 @@ class SubjectIdentityTest {
 		assertEquals(1, warnings, "the step-down is logged once, not on every read")
 		assertEquals(emptySet<String>(), protectedStore.heldKeys, "blobs the dead key cannot read are dropped")
 		assertEquals(
-			listOf(C15tStoreKeys.SUBJECT),
+			listOf(InthStoreKeys.SUBJECT),
 			identity.keys.toList(),
 			"identity is the only thing plain storage holds, and it survived",
 		)
@@ -98,7 +98,7 @@ class SubjectIdentityTest {
 	fun `a fresh install generates exactly one id and keeps it out of protected storage`() {
 		val protectedStore = DestroyableProtectedStore()
 		val identity = plainStore()
-		val store = C15tStore(
+		val store = InthStore(
 			SubjectPreservingStore(ResilientKeyValueStore(protectedStore, plainStore()), identity),
 		)
 
@@ -106,9 +106,9 @@ class SubjectIdentityTest {
 
 		assertEquals(1, subjectIdsMinted, "one id for the whole install")
 		assertEquals("sub_2", assertNotNull(store.readSubject()).id)
-		assertEquals(listOf(C15tStoreKeys.SUBJECT), identity.keys.toList(), "exactly one id, in plain storage")
+		assertEquals(listOf(InthStoreKeys.SUBJECT), identity.keys.toList(), "exactly one id, in plain storage")
 		assertFalse(
-			protectedStore.heldKeys.contains(C15tStoreKeys.SUBJECT),
+			protectedStore.heldKeys.contains(InthStoreKeys.SUBJECT),
 			"identity never rides in the store a key reset can invalidate",
 		)
 	}
@@ -116,9 +116,9 @@ class SubjectIdentityTest {
 	@Test
 	fun `a subject held only in protected storage is recovered before the first encrypted write`() {
 		val protectedStore = DestroyableProtectedStore()
-		protectedStore.seed(C15tStoreKeys.SUBJECT, subjectJson(UPGRADED_ID))
+		protectedStore.seed(InthStoreKeys.SUBJECT, subjectJson(UPGRADED_ID))
 		val identity = plainStore()
-		val store = C15tStore(
+		val store = InthStore(
 			SubjectPreservingStore(ResilientKeyValueStore(protectedStore, plainStore()), identity),
 		)
 
@@ -127,11 +127,11 @@ class SubjectIdentityTest {
 		assertEquals(0, subjectIdsMinted, "an upgrade adopts the id it found instead of replacing it")
 		assertEquals(UPGRADED_ID, assertNotNull(store.readSubject()).id)
 		assertEquals(UPGRADED_ID, assertNotNull(plainSubject(identity)).id)
-		assertFalse(protectedStore.heldKeys.contains(C15tStoreKeys.SUBJECT), "one copy of the id is left")
+		assertFalse(protectedStore.heldKeys.contains(InthStoreKeys.SUBJECT), "one copy of the id is left")
 
-		val recovery = timeline.indexOf("delete:${C15tStoreKeys.SUBJECT}")
+		val recovery = timeline.indexOf("delete:${InthStoreKeys.SUBJECT}")
 		val firstRecordWrite = timeline.indexOfFirst {
-			it == "write:${C15tStoreKeys.SNAPSHOT}" || it == "write:${C15tStoreKeys.PENDING}"
+			it == "write:${InthStoreKeys.SNAPSHOT}" || it == "write:${InthStoreKeys.PENDING}"
 		}
 		assertTrue(recovery >= 0, "the encrypted copy must be removed, got $timeline")
 		assertTrue(firstRecordWrite >= 0, "bootstrap must persist records, got $timeline")
@@ -144,11 +144,11 @@ class SubjectIdentityTest {
 	@Test
 	fun `recovery runs once and repeating it changes nothing`() {
 		val protectedStore = DestroyableProtectedStore()
-		protectedStore.seed(C15tStoreKeys.SUBJECT, subjectJson(UPGRADED_ID))
+		protectedStore.seed(InthStoreKeys.SUBJECT, subjectJson(UPGRADED_ID))
 		val identity = plainStore()
 		val records = ResilientKeyValueStore(protectedStore, plainStore())
-		val thisLaunch = C15tStore(SubjectPreservingStore(records, identity))
-		val nextLaunch = C15tStore(SubjectPreservingStore(records, identity))
+		val thisLaunch = InthStore(SubjectPreservingStore(records, identity))
+		val nextLaunch = InthStore(SubjectPreservingStore(records, identity))
 
 		assertEquals(UPGRADED_ID, assertNotNull(thisLaunch.readSubject()).id)
 		assertEquals(1, protectedStore.subjectReads, "protected storage is asked for the id once")
@@ -163,8 +163,8 @@ class SubjectIdentityTest {
 			assertNotNull(plainSubject(identity)).id,
 			"idempotent: running the recovery again cannot change the id",
 		)
-		assertEquals(listOf(C15tStoreKeys.SUBJECT), identity.keys.toList())
-		assertFalse(protectedStore.heldKeys.contains(C15tStoreKeys.SUBJECT))
+		assertEquals(listOf(InthStoreKeys.SUBJECT), identity.keys.toList())
+		assertFalse(protectedStore.heldKeys.contains(InthStoreKeys.SUBJECT))
 	}
 
 	@Test
@@ -173,7 +173,7 @@ class SubjectIdentityTest {
 		// both roles. Migrating there would move the id onto itself, which reads as a
 		// delete first, so the wrapper has to stay out of the way instead.
 		val single = plainStore()
-		val store = C15tStore(SubjectPreservingStore(single, single))
+		val store = InthStore(SubjectPreservingStore(single, single))
 
 		store.writeSubject(ConsentSubject(id = UPGRADED_ID))
 
@@ -192,7 +192,7 @@ class SubjectIdentityTest {
 		// answer with. The uuid stays recognisable -- see the case below -- as a diagnosis
 		// of which build wrote it, never as a reason to use it.
 		val legacy = LEGACY_UUID
-		val store = C15tStore(plainStore())
+		val store = InthStore(plainStore())
 		store.writeSubject(ConsentSubject(id = legacy))
 
 		val launch = kernel(store).apply { bootstrap() }
@@ -231,14 +231,14 @@ class SubjectIdentityTest {
 
 	private fun plainStore(): InMemoryKeyValueStore = InMemoryKeyValueStore(emptyMap(), timeline)
 
-	private fun plainSubject(store: KeyValueStore): ConsentSubject? = C15tStore(store).readSubject()
+	private fun plainSubject(store: KeyValueStore): ConsentSubject? = InthStore(store).readSubject()
 
 	private fun subjectJson(id: String): String =
-		C15tJson.storage.encodeToString(ConsentSubject.serializer(), ConsentSubject(id = id))
+		InthJson.storage.encodeToString(ConsentSubject.serializer(), ConsentSubject(id = id))
 
 	private fun kernel(
-		store: C15tStore,
-		transport: C15tTransport = C15tTransport.NONE,
+		store: InthStore,
+		transport: InthTransport = InthTransport.NONE,
 	): ConsentCore = ConsentCore(
 		config = NativeConfig(backendUrl = "https://test.c15t.app"),
 		store = store,
@@ -293,7 +293,7 @@ class SubjectIdentityTest {
 
 		override fun read(key: String): String? {
 			timeline += "read:$key"
-			if (key == C15tStoreKeys.SUBJECT) {
+			if (key == InthStoreKeys.SUBJECT) {
 				subjectReads += 1
 			}
 			requireKey()
@@ -317,7 +317,7 @@ class SubjectIdentityTest {
 
 		private fun requireKey() {
 			if (!keyAlive) {
-				throw KeyStoreException("No such key: com.c15t.consent.key.v1")
+				throw KeyStoreException("No such key: com.inth.consent.key.v1")
 			}
 		}
 	}

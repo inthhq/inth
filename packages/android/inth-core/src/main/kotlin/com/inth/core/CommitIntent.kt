@@ -1,7 +1,7 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.model.ConsentAction
-import com.c15t.core.model.ConsentCategory
+import com.inth.core.model.ConsentAction
+import com.inth.core.model.ConsentCategory
 
 /**
  * What the subject did.
@@ -12,7 +12,7 @@ import com.c15t.core.model.ConsentCategory
 sealed class CommitIntent {
 	/** Complete native IAB draft with category choices. */
 	data class Iab(
-		val choices: com.c15t.core.iab.IabChoices,
+		val choices: com.inth.core.iab.IabChoices,
 		val consents: Map<ConsentCategory, Boolean>,
 	) : CommitIntent()
 

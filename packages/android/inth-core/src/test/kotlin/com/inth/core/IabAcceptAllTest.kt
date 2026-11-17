@@ -1,10 +1,10 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.iab.*
-import com.c15t.core.model.*
-import com.c15t.core.store.*
-import com.c15t.core.tc.*
-import com.c15t.core.transport.*
+import com.inth.core.iab.*
+import com.inth.core.model.*
+import com.inth.core.store.*
+import com.inth.core.tc.*
+import com.inth.core.transport.*
 import java.io.File
 import kotlin.test.*
 import kotlinx.serialization.Serializable
@@ -52,7 +52,7 @@ class IabAcceptAllTest {
 			)
 		return testKernel(
 				config = NativeConfig("https://cmp.example.test", iab = configuration),
-				store = C15tStore(InMemoryKeyValueStore()),
+				store = InthStore(InMemoryKeyValueStore()),
 				transport = http,
 			)
 			.also { it.bootstrap() }

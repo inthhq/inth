@@ -6,7 +6,7 @@ import { IOSConfig } from 'expo/config-plugins';
 import type { XcodeProject } from 'expo/config-plugins';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { applyParamsOnConfig } from '../with-c15t';
+import { applyParamsOnConfig } from '../with-inth';
 import {
 	FIXTURE_DIR,
 	PREBUILD_ARGV,
@@ -19,9 +19,9 @@ const PROPS = { backendURL: 'https://acme.inth.app' };
 const scratchRoots: string[] = [];
 
 const projectFixture = (): XcodeProject => {
-	const root = mkdtempSync(join(tmpdir(), 'c15t-deployment-target-'));
+	const root = mkdtempSync(join(tmpdir(), 'inth-deployment-target-'));
 	scratchRoots.push(root);
-	const directory = join(root, 'ios', 'C15tBare.xcodeproj');
+	const directory = join(root, 'ios', 'InthBare.xcodeproj');
 	mkdirSync(directory, { recursive: true });
 	copyFileSync(
 		join(FIXTURE_DIR, 'project.pbxproj'),

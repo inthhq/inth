@@ -42,11 +42,11 @@ public struct CoreConfig: @unchecked Sendable {
         transport?.policyEndpoint?.absoluteString ?? bundledPolicy?.endpoint
     }
     /// `nil` makes the async commands no-ops. Internal API for tests and fixtures.
-    @_spi(C15tInternal) public let transport: (any C15tTransport)?
+    @_spi(InthInternal) public let transport: (any InthTransport)?
     /// Development and CI only. The prompt, storage, gating and consent signals work as
     /// normal, and consent records are dropped: not queued, not sent. Identity calls
     /// change local state and send nothing. A queue left by an earlier run is not
-    /// flushed, and a dry-run save drops it. Refused in a release build, see ``C15tBuild/isDebug``.
+    /// flushed, and a dry-run save drops it. Refused in a release build, see ``InthBuild/isDebug``.
     public let dryRun: Bool
     /// Categories to offer. `nil` or empty declares none: a strict policy offers
     /// its full scope and a permissive one offers `necessary` alone, with an
@@ -112,13 +112,13 @@ public struct CoreConfig: @unchecked Sendable {
     public let gpp: GPPOptions?
 
     /// Internal API for tests and first-party fixtures. Apps install through
-    /// `C15tApple.install(C15tAppleConfiguration(backendURL:))`.
-    @_spi(C15tInternal) public init(
+    /// `InthApple.install(InthAppleConfiguration(backendURL:))`.
+    @_spi(InthInternal) public init(
         store: any ConsentStore = InMemoryStore(),
         bundledPolicy: BundledPolicyResource? = nil,
         policy: ConsentPolicy? = nil,
         policyError: String? = nil,
-        transport: (any C15tTransport)? = nil,
+        transport: (any InthTransport)? = nil,
         dryRun: Bool = false,
         consentCategories: [ConsentCategory]? = nil,
         vendors: [Int]? = nil,
@@ -314,7 +314,7 @@ public final class ConsentCore: @unchecked Sendable {
         iabConsent()?.choices.customVendorConsents.contains(id) == true
     }
 
-    /// The c15t categories the committed TC String grants, by the web's derivation
+    /// The Inth categories the committed TC String grants, by the web's derivation
     /// (``IABPurposeCategories``), or `nil` when no decision is current. Registered vendors after
     /// publisher restrictions, custom vendors and listed ad tech providers decide which purposes
     /// count.
@@ -451,12 +451,12 @@ public final class ConsentCore: @unchecked Sendable {
     /// returns already reflects stored consent with no network. The init request is
     /// what happens afterwards.
     ///
-    /// Internal API. Apps install through `C15tApple.install(C15tAppleConfiguration(backendURL:))`.
+    /// Internal API. Apps install through `InthApple.install(InthAppleConfiguration(backendURL:))`.
     /// A `dryRun` configuration in a release build is refused: nothing starts and
     /// reads stay deny-all.
-    @_spi(C15tInternal) public func bootstrap(_ config: CoreConfig) {
-        if config.dryRun, !C15tBuild.isDebug {
-            NSLog("%@", "c15t: \(C15tBuild.dryRunRefusal()) The consent core was not started.")
+    @_spi(InthInternal) public func bootstrap(_ config: CoreConfig) {
+        if config.dryRun, !InthBuild.isDebug {
+            NSLog("%@", "Inth: \(InthBuild.dryRunRefusal()) The consent core was not started.")
             return
         }
         let mutation = mutationGate.acquire()
@@ -491,7 +491,7 @@ public final class ConsentCore: @unchecked Sendable {
         events.emit(.initialized)
 
         if config.dryRun {
-            NSLog("%@", "c15t: dryRun is on. Consent records are dropped, not queued or sent.")
+            NSLog("%@", "Inth: dryRun is on. Consent records are dropped, not queued or sent.")
         }
         if config.flushPendingOnBootstrap {
             schedule { await self.requestDeliveryPass(ownSend: nil) }
@@ -1225,7 +1225,7 @@ public final class ConsentCore: @unchecked Sendable {
     /// every branch here emits, and the two that release the entry name the reason
     /// it stopped being owed.
     private func settleFailedSend(
-        _ error: C15tError,
+        _ error: InthError,
         queue: PendingSaveQueue,
         entryID: String,
         subjectId: String
@@ -1260,7 +1260,7 @@ public final class ConsentCore: @unchecked Sendable {
     /// learn it.
     private static func undeliverableSave(
         subjectId: String,
-        error: C15tError,
+        error: InthError,
         outcome: FailedAttempt
     ) -> CoreErrorInfo {
         let reason: String
@@ -1343,7 +1343,7 @@ public final class ConsentCore: @unchecked Sendable {
         }
     }
 
-    /// Attach an identified user. The c15t subject id does not change: an external
+    /// Attach an identified user. The Inth subject id does not change: an external
     /// id is a second key on the same subject, not a new subject.
     public func identify(_ user: KernelUser) {
         let mutation = mutationGate.acquire()
@@ -1627,7 +1627,7 @@ public final class ConsentCore: @unchecked Sendable {
             if announce {
                 events.emit(.error(CoreErrorInfo(
                     code: "subject-id-\(reason)",
-                    message: "c15t: the stored subject identity is \(reason). Stored consent and queued saves were discarded; the app asks for consent again."
+                    message: "Inth: the stored subject identity is \(reason). Stored consent and queued saves were discarded; the app asks for consent again."
                 )))
             }
         }
@@ -1808,7 +1808,7 @@ public final class ConsentCore: @unchecked Sendable {
             : "it is a format this SDK never wrote"
         events.emit(.error(CoreErrorInfo(
             code: "subject-id-unusable",
-            message: "c15t: the stored subject id \(unusable.id) \(origin), and the c15t "
+            message: "Inth: the stored subject id \(unusable.id) \(origin), and the Inth "
                 + "backend only accepts ids matching ^sub_[1-9A-HJ-NP-Za-km-z]+$, so this "
                 + "build cannot use that identity. The consent saved under it was discarded "
                 + "with it, because the backend refused every save that carried it and holds "
@@ -1823,7 +1823,7 @@ public final class ConsentCore: @unchecked Sendable {
 
     /// Where records and identity writes go. `nil` under dryRun, which sends neither
     /// and leaves an existing queue alone.
-    private var transport: (any C15tTransport)? {
+    private var transport: (any InthTransport)? {
         lock.withLock { config?.dryRun == true ? nil : config?.transport }
     }
 
@@ -2467,7 +2467,7 @@ public final class ConsentCore: @unchecked Sendable {
     }
 
     private func reportInitFailure(
-        _ error: C15tError,
+        _ error: InthError,
         attempt: Int,
         retry: InitRetry?
     ) {
@@ -2511,7 +2511,7 @@ public final class ConsentCore: @unchecked Sendable {
             // other one, and ``publish(persist:)`` is the one path that announces it:
             // the revision event, the snapshot observers, and the envelope write
             // together. Emitting a `.snapshot` event alone announces a revision to a
-            // listener list the bridge is not on -- `C15tCoreSubscriber` feeds the
+            // listener list the bridge is not on -- `InthCoreSubscriber` feeds the
             // React Native pump from `onChange`, not from the event hub -- so the new
             // revision would never reach JavaScript, and a relaunch would forget a
             // misconfiguration that has not changed. The pair is the rule: see
@@ -2637,7 +2637,7 @@ public final class ConsentCore: @unchecked Sendable {
     /// second copy of the loop from reading the queue while a send from the first is
     /// still open.
     private func canDeliverIAB(_ body: Data) -> Bool {
-        let wire = C15tJSON.parse(body)
+        let wire = InthJSON.parse(body)
         if ConsentDelivery.isWithdrawal(body) { return true }
         guard wire?["subjectId"]?.stringValue == lock.withLock({ identity?.id }) else { return false }
         let tcString = wire?["tcString"]?.stringValue

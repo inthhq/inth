@@ -1,14 +1,14 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.iab.*
-import com.c15t.core.model.*
-import com.c15t.core.policy.*
-import com.c15t.core.store.*
+import com.inth.core.iab.*
+import com.inth.core.model.*
+import com.inth.core.policy.*
+import com.inth.core.store.*
 import kotlinx.serialization.json.*
 import java.io.File
 import java.util.concurrent.*
-import com.c15t.core.spi.TaskExecutor
-import com.c15t.core.transport.*
+import com.inth.core.spi.TaskExecutor
+import com.inth.core.transport.*
 import kotlin.test.*
 
 class FullStorageBusTest {
@@ -42,11 +42,11 @@ class StorageBusLifecycleTest {
 		val config = NativeConfig("https://cmp.example.test", iab = IabConfiguration(53, 7, "GB"))
 		val bus = RecordingTcStorageBus()
 		val backend = RejectingBusBackend()
-		val store = C15tStore(backend, tcStorageBus = bus)
+		val store = InthStore(backend, tcStorageBus = bus)
 		val clock = FixedClock()
 		val http = RecordingTransport().respondInit(initSuccess(body = initBody(model = "\"iab\"", gvl = iabGvl())))
-			.respondSave(com.c15t.core.transport.SaveOutcome.Unavailable("offline"))
-		val core = testKernel(config = config, store = store, clock = clock, transport = http, executor = com.c15t.core.spi.TaskExecutor { })
+			.respondSave(com.inth.core.transport.SaveOutcome.Unavailable("offline"))
+		val core = testKernel(config = config, store = store, clock = clock, transport = http, executor = com.inth.core.spi.TaskExecutor { })
 		core.bootstrap()
 		assertEquals(TcBusValue.NumberValue(53), bus.live[TcStorageBusKeys.CMP_SDK_ID])
 		assertNull(bus.live[TcStorageBusKeys.TC_STRING])
@@ -61,8 +61,8 @@ class StorageBusLifecycleTest {
 		assertEquals(before, bus.live)
 		backend.reject = false
 		bus.simulateWipedExternally()
-		val cold = testKernel(config = config, store = C15tStore(backend, tcStorageBus = bus), clock = clock,
-			executor = com.c15t.core.spi.TaskExecutor { })
+		val cold = testKernel(config = config, store = InthStore(backend, tcStorageBus = bus), clock = clock,
+			executor = com.inth.core.spi.TaskExecutor { })
 		cold.bootstrap()
 		assertEquals(before, bus.live)
 		bus.simulateWipedExternally()
@@ -75,8 +75,8 @@ class StorageBusLifecycleTest {
 		store.rebuildTcStorageBus()
 		assertNull(bus.live[TcStorageBusKeys.TC_STRING])
 		backend.reject = true
-		val expired = testKernel(config = config, store = C15tStore(backend, tcStorageBus = bus), clock = clock,
-			executor = com.c15t.core.spi.TaskExecutor { })
+		val expired = testKernel(config = config, store = InthStore(backend, tcStorageBus = bus), clock = clock,
+			executor = com.inth.core.spi.TaskExecutor { })
 		expired.bootstrap()
 		assertNull(bus.live[TcStorageBusKeys.TC_STRING])
 		assertNull(expired.iabConsent)
@@ -89,7 +89,7 @@ class StorageBusLifecycleTest {
 	private fun iabGvl() = """{"vendorListVersion":42,"tcfPolicyVersion":5,
 		"purposes":{"1":{"id":1,"name":"Storage","description":"Storage"}},
 		"vendors":{"1":{"id":1,"name":"V1","purposes":[1]}},"specialFeatures":{}}"""
-	private class RejectingBusBackend : com.c15t.core.spi.KeyValueStore {
+	private class RejectingBusBackend : com.inth.core.spi.KeyValueStore {
 		val memory = InMemoryKeyValueStore()
 		var reject = false
 		override fun read(key: String) = memory.read(key)
@@ -108,13 +108,13 @@ class StorageBusIntegrationTest {
 	private val vector = Json { ignoreUnknownKeys = true }.decodeFromString<AdditionalConsentTest.Vector>(file.readText())
 	private val config = NativeConfig("https://cmp.example.test", iab = vector.configuration)
 	private fun response(includeProviders: Boolean = true): TransportOutcome {
-		val base = Json.parseToJsonElement(initBody(model = "\"iab\"", gvl = com.c15t.core.tc.GlobalVendorListJson.toJson(vector.gvl))).jsonObject
+		val base = Json.parseToJsonElement(initBody(model = "\"iab\"", gvl = com.inth.core.tc.GlobalVendorListJson.toJson(vector.gvl))).jsonObject
 		return initSuccess(body = JsonObject(if (includeProviders) base + ("adTechProviders" to Json.encodeToJsonElement(vector.providers)) else base).toString())
 	}
 
 	@Test fun `blocked mirror repair keeps native reads available and orders a following save`() {
 		val bus = BlockingBus()
-		val store = C15tStore(InMemoryKeyValueStore(), tcStorageBus = bus)
+		val store = InthStore(InMemoryKeyValueStore(), tcStorageBus = bus)
 		val core = testKernel(config, store, FixedClock(vector.now),
 			RecordingTransport().respondInit(response()).respondSave(SaveOutcome.Unavailable("offline")))
 		core.bootstrap()
@@ -142,7 +142,7 @@ class StorageBusIntegrationTest {
 
 	@Test fun `withdrawal replay cannot resurrect expired current-owner TC or AC rows`() {
 		val bus = RecordingTcStorageBus()
-		val store = C15tStore(InMemoryKeyValueStore(), tcStorageBus = bus)
+		val store = InthStore(InMemoryKeyValueStore(), tcStorageBus = bus)
 		val clock = FixedClock(vector.now)
 		val http = RecordingTransport().respondInit(response()).respondSave(SaveOutcome.Unavailable("offline"))
 		val core = testKernel(config.copy(iabListMaxAgeMs = 60_000), store, clock, http)
@@ -167,7 +167,7 @@ class StorageBusIntegrationTest {
 
 	@Test fun `ATP-only expiry clears every decision row without a repair call`() {
 		val bus = RecordingTcStorageBus()
-		val store = C15tStore(InMemoryKeyValueStore(), tcStorageBus = bus)
+		val store = InthStore(InMemoryKeyValueStore(), tcStorageBus = bus)
 		val clock = FixedClock(vector.now)
 		val http = RecordingTransport().respondInit(response()).respondSave(SaveOutcome.Unavailable("offline"))
 		val core = testKernel(config.copy(iabListMaxAgeMs = 500), store, clock, http)
@@ -192,7 +192,7 @@ class StorageBusIntegrationTest {
 
 	@Test fun `cached offline retry leaves typed bus and durable envelope unchanged`() {
 		val bus = RecordingTcStorageBus()
-		val store = C15tStore(InMemoryKeyValueStore(), tcStorageBus = bus)
+		val store = InthStore(InMemoryKeyValueStore(), tcStorageBus = bus)
 		val clock = FixedClock(vector.now)
 		val http = RecordingTransport().respondInit(response()).respondSave(SaveOutcome.Unavailable("offline"))
 		val core = testKernel(config, store, clock, http)
@@ -222,7 +222,7 @@ class StorageBusIntegrationTest {
 	private fun assertSlowWriteExpiry(intent: CommitIntent?) {
 		val bus = RecordingTcStorageBus()
 		val backend = MutationSerializationTest.BlockingStore()
-		val store = C15tStore(backend, tcStorageBus = bus)
+		val store = InthStore(backend, tcStorageBus = bus)
 		val clock = FixedClock(vector.now)
 		val http = RecordingTransport().respondInit(response()).respondSave(SaveOutcome.Unavailable("offline"))
 		val core = testKernel(config.copy(iabListMaxAgeMs = 60_000), store, clock, http)

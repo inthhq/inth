@@ -22,11 +22,11 @@ dependencyResolutionManagement {
 	}
 }
 
-rootProject.name = "c15t-native-core-android"
+rootProject.name = "inth-native-core-android"
 
-include(":c15t-core")
-include(":c15t-android")
+include(":inth-core")
+include(":inth-android")
 
-include(":c15t-consent-ui")
+include(":inth-consent-ui")
 include(":consent-demo")
 project(":consent-demo").projectDir = file("../../examples/native/consent-demo/android")

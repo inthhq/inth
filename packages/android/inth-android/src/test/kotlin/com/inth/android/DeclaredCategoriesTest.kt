@@ -1,6 +1,6 @@
-package com.c15t.android
+package com.inth.android
 
-import com.c15t.core.model.ConsentCategory
+import com.inth.core.model.ConsentCategory
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -17,7 +17,7 @@ import org.junit.Test
  * policy's rows and one that shows rows the evaluator will never honour.
  *
  * The raw value, not a `Bundle`, is the unit under test: a `Bundle` on the JVM is
- * the stub `android.jar`, and `C15tManifestValue.string` already owns the
+ * the stub `android.jar`, and `InthManifestValue.string` already owns the
  * whatever-type-the-parser-chose half of the read.
  */
 class DeclaredCategoriesTest {
@@ -30,7 +30,7 @@ class DeclaredCategoriesTest {
 				ConsentCategory.MEASUREMENT,
 				ConsentCategory.MARKETING,
 			),
-			C15tAndroid.declaredCategories("necessary, functionality , measurement,marketing"),
+			InthAndroid.declaredCategories("necessary, functionality , measurement,marketing"),
 		)
 	}
 
@@ -40,7 +40,7 @@ class DeclaredCategoriesTest {
 		// category no snapshot can carry, dropping it shows the honest rows.
 		assertEquals(
 			listOf(ConsentCategory.NECESSARY, ConsentCategory.MEASUREMENT),
-			C15tAndroid.declaredCategories("necessary, experiance, measurement"),
+			InthAndroid.declaredCategories("necessary, experiance, measurement"),
 		)
 	}
 
@@ -48,7 +48,7 @@ class DeclaredCategoriesTest {
 	fun `a single name is a declaration and not a parse error`() {
 		assertEquals(
 			listOf(ConsentCategory.NECESSARY),
-			C15tAndroid.declaredCategories("necessary"),
+			InthAndroid.declaredCategories("necessary"),
 		)
 	}
 
@@ -57,10 +57,10 @@ class DeclaredCategoriesTest {
 		// Absent and "an empty list" answer the same question the same way at the
 		// core, but they arrive here differently, and each is its own way a host
 		// can mean "I did not declare a scope".
-		assertNull(C15tAndroid.declaredCategories(null))
-		assertNull(C15tAndroid.declaredCategories(""))
-		assertNull(C15tAndroid.declaredCategories("   "))
-		assertNull(C15tAndroid.declaredCategories(" , , "))
-		assertNull(C15tAndroid.declaredCategories("tracking, analytics"))
+		assertNull(InthAndroid.declaredCategories(null))
+		assertNull(InthAndroid.declaredCategories(""))
+		assertNull(InthAndroid.declaredCategories("   "))
+		assertNull(InthAndroid.declaredCategories(" , , "))
+		assertNull(InthAndroid.declaredCategories("tracking, analytics"))
 	}
 }

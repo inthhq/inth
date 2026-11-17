@@ -1,4 +1,4 @@
-package com.c15t.consentui
+package com.inth.consentui
 
 import android.app.Activity
 import android.app.Application
@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.ui.Modifier
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import com.c15t.core.ConsentCore
+import com.inth.core.ConsentCore
 import java.lang.ref.WeakReference
 import java.util.UUID
 
@@ -64,12 +64,12 @@ sealed interface ConsentHostOutcome {
  *
  * The prompt decides. [configure] attaches this host to it with the runtime's `autoPresent`, and
  * from then on the prompt opens an owed prompt by itself, once per owed prompt, exactly as it does
- * for [C15tConsent]. This host only puts what the prompt opened on screen, on the Activity in the
+ * for [InthConsent]. This host only puts what the prompt opened on screen, on the Activity in the
  * foreground, and reports it: [Listener.presented] once a session is on screen,
  * [Listener.unavailable] while an owed prompt has no Activity to show on yet, and one outcome per
  * session. An owed prompt that cannot show yet stays owed and shows once an Activity resumes, so it
  * is not lost across backgrounding, rotation, a host Activity that is not ready yet, or
- * [com.c15t.core.C15t.uninstall] followed by a new install. [present] opens a session the app
+ * [com.inth.core.Inth.uninstall] followed by a new install. [present] opens a session the app
  * asked for, through the same prompt, so what the person dismissed counts either way.
  *
  * Use it from the main thread.
@@ -122,9 +122,9 @@ object ConsentHost {
     /** The prompt this host follows: the installed core's, dropped when that core is uninstalled. */
     private var prompt: ConsentPrompt? = null
     /** Hears the followed core, so what its prompt opens by itself is shown. */
-    private var subscription: com.c15t.core.Subscription? = null
+    private var subscription: com.inth.core.Subscription? = null
     /** Owned here: the core holds the subscription's callback only through [subscription]. */
-    private var observer: ((com.c15t.core.model.ConsentSnapshot) -> Unit)? = null
+    private var observer: ((com.inth.core.model.ConsentSnapshot) -> Unit)? = null
     private val main by lazy { android.os.Handler(android.os.Looper.getMainLooper()) }
     private var autoPresent = false
     private var privacyPolicyUrl: String? = null
@@ -139,7 +139,7 @@ object ConsentHost {
     private var held: Session? = null
 
     init {
-        com.c15t.core.C15t.onUninstall { core -> if (prompt?.core === core) drop(core) }
+        com.inth.core.Inth.onUninstall { core -> if (prompt?.core === core) drop(core) }
     }
 
     /**
@@ -152,7 +152,7 @@ object ConsentHost {
         held?.takeIf { !it.showing }?.let { finish(it, ConsentPresenterOutcome.DISMISSED) }
         return held
     }
-    private const val NOTICE_SESSION_STATE = "com.c15t.consentui.notice.session"
+    private const val NOTICE_SESSION_STATE = "com.inth.consentui.notice.session"
 
     /**
      * Attach this host to [core]'s prompt with the runtime's settings. Call it again whenever they
@@ -246,7 +246,7 @@ object ConsentHost {
         val session = current()?.takeIf { it.id == id } ?: return false
         session.activity = WeakReference(activity)
         session.launching = false
-        activity.setContent { C15tConsent(session.presenter, session.privacyPolicyUrl) }
+        activity.setContent { InthConsent(session.presenter, session.privacyPolicyUrl) }
         return true
     }
 
@@ -275,7 +275,7 @@ object ConsentHost {
             // cleared outside a session ends it, so its outcome reaches the runtime, and what the
             // prompt opened by itself is shown. Not Compose state: an app with no Compose UI yet
             // never sends its apply notifications.
-            val listener: (com.c15t.core.model.ConsentSnapshot) -> Unit = { main.post { if (prompt === next) reconcile() } }
+            val listener: (com.inth.core.model.ConsentSnapshot) -> Unit = { main.post { if (prompt === next) reconcile() } }
             observer = listener
             subscription = core.onChange(listener)
         }
@@ -312,7 +312,7 @@ object ConsentHost {
             override fun onActivityResumed(activity: Activity) {
                 if (activity is ConsentHostActivity) return
                 foreground = WeakReference(activity)
-                com.c15t.core.C15t.current?.let(::follow) ?: reconcile()
+                com.inth.core.Inth.current?.let(::follow) ?: reconcile()
             }
             override fun onActivityPaused(activity: Activity) {
                 if (foreground.get() === activity) foreground.clear()
@@ -340,7 +340,7 @@ object ConsentHost {
         val key = presenter.presentationID ?: "notice"
         if (unavailableFor != key) {
             unavailableFor = key
-            listener?.unavailable("C15T_PRESENTER_UNAVAILABLE", failure)
+            listener?.unavailable("INTH_PRESENTER_UNAVAILABLE", failure)
         }
     }
 
@@ -373,7 +373,7 @@ object ConsentHost {
         if (session.launching || host != null && !host.isFinishing && !host.isDestroyed) return
         session.launching = true
         try {
-            activity.startActivity(Intent(activity, ConsentHostActivity::class.java).putExtra("c15t.session", session.id))
+            activity.startActivity(Intent(activity, ConsentHostActivity::class.java).putExtra("inth.session", session.id))
         } catch (error: Exception) {
             session.launching = false
             throw error
@@ -398,7 +398,7 @@ object ConsentHost {
         held = null
         release(session)
         // The prompt that follows, if one is owed, is reported before this outcome, so a step that
-        // waits for c15t's screens to close, such as Apple's tracking request, never runs between
+        // waits for Inth's screens to close, such as Apple's tracking request, never runs between
         // the two. On a device the app's Activity is still paused under the finishing host
         // Activity here, so the prompt that follows often shows only once it resumes: the outcome
         // waits for that, and for no longer than [replacementWaitMs].
@@ -441,7 +441,7 @@ object ConsentHost {
         observeNoticeLifecycle(activity.application, session)
         val content = activity.findViewById<ViewGroup>(android.R.id.content)
         val view = ComposeView(activity)
-        view.setContent { C15tConsent(session.presenter, session.privacyPolicyUrl, noticeModifier = Modifier.fillMaxWidth()) }
+        view.setContent { InthConsent(session.presenter, session.privacyPolicyUrl, noticeModifier = Modifier.fillMaxWidth()) }
         content.addView(view, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM))
         session.noticeView = WeakReference(view)
@@ -497,6 +497,6 @@ object ConsentHost {
 class ConsentHostActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (!ConsentHost.attach(this, intent.getStringExtra("c15t.session"))) finish()
+        if (!ConsentHost.attach(this, intent.getStringExtra("inth.session"))) finish()
     }
 }

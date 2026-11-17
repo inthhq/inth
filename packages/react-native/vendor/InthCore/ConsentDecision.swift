@@ -17,7 +17,7 @@ import Foundation
 ///
 /// See "Native SDK gating" in `packages/native-protocol/CONTRACT.md`.
 public enum ConsentDecision: String, Sendable, Equatable, Hashable, CaseIterable {
-    /// The resolved policy and the subject's c15t choice permit the category.
+    /// The resolved policy and the subject's Inth choice permit the category.
     case granted
     /// The subject, the policy, or a privacy signal refused the category.
     case denied
@@ -43,7 +43,7 @@ extension ConsentDecision {
     /// permission on Android are platform gates rather than consent, so a device with
     /// ATT granted and consent refused is `denied` here exactly as it is on a device
     /// that never asked: the answer is a function of the resolved policy and the
-    /// subject's c15t choice only.
+    /// subject's Inth choice only.
     ///
     /// - Parameters:
     ///   - snapshot: The state to answer from. A value type, so the derivation always

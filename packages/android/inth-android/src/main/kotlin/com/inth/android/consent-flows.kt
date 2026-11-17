@@ -1,15 +1,15 @@
 @file:JvmName("ConsentFlows")
 
-package com.c15t.android
+package com.inth.android
 
-import com.c15t.core.CommitIntent
-import com.c15t.core.CommitResult
-import com.c15t.core.ConsentCore
-import com.c15t.core.FlushResult
-import com.c15t.core.Subscription
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentDecision
-import com.c15t.core.model.ConsentSnapshot
+import com.inth.core.CommitIntent
+import com.inth.core.CommitResult
+import com.inth.core.ConsentCore
+import com.inth.core.FlushResult
+import com.inth.core.Subscription
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentDecision
+import com.inth.core.model.ConsentSnapshot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

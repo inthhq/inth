@@ -1,11 +1,11 @@
-#if canImport(C15tCore)
-import C15tCore
+#if canImport(InthCore)
+import InthCore
 #endif
 import Foundation
 
 /// What App Tracking Transparency sequencing reads from IAB TCF consent.
 ///
-/// Under an IAB TCF policy the c15t `marketing` category and the TC String are recorded side by
+/// Under an IAB TCF policy the Inth `marketing` category and the TC String are recorded side by
 /// side. Tracking needs both, so the sequence asks Apple only while the TC String grants
 /// `marketing` and someone could actually track. This decides only whether the SDK asks Apple.
 /// It does not decide whether a vendor may read the advertising identifier: purpose 1, that
@@ -17,7 +17,7 @@ import Foundation
 /// `packages/sdk/iab/src/index.ts` passes them: registered vendors, custom (non-IAB) vendors and listed
 /// ad tech providers (``IABPurposeCategories``). `packages/native-protocol/att/iab-marketing.json` runs the
 /// same cases against both.
-public enum C15tTrackingConsent {
+public enum InthTrackingConsent {
     /// The TCF purposes the `marketing` category stands for: 2, 3 and 4.
     public static let iabMarketingPurposes: Set<Int> = [2, 3, 4]
 
@@ -57,7 +57,7 @@ public enum C15tTrackingConsent {
         var consentBasis: Set<Int> {
             var basis = Set(vendorConsentPurposes.values.flatMap { $0 })
                 .union(customVendorConsentPurposes.values.flatMap { $0 })
-            if adTechProvidersListed { basis.formUnion(C15tTrackingConsent.adTechProviderPurposes) }
+            if adTechProvidersListed { basis.formUnion(InthTrackingConsent.adTechProviderPurposes) }
             return basis
         }
 

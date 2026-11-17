@@ -1,8 +1,8 @@
-@_spi(C15tInternal) import C15tCore
+@_spi(InthInternal) import InthCore
 import Combine
 import Foundation
 import XCTest
-@testable import C15tConsentUI
+@testable import InthConsentUI
 
 final class PresenterTests: XCTestCase {
     @MainActor func testClosingUnresolvedSettingsDoesNotRecordAChoice() {

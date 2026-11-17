@@ -1,20 +1,20 @@
 import Foundation
 import XCTest
 
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 /// Delivery obligations survive local-authority invalidation.
 final class IABDeliveryTests: XCTestCase {
     typealias Vector = IABCommitTests.Vector
 
     func initBody(_ vector: Vector, listVersion: Int? = nil) throws -> Data {
-        var gvl = try C15tJSON.parse(C15tJSON.encode(vector.gvl))!.objectValue!
+        var gvl = try InthJSON.parse(InthJSON.encode(vector.gvl))!.objectValue!
         if let listVersion { gvl["vendorListVersion"] = .number(Double(listVersion)) }
-        var fields = C15tJSON.parse(
+        var fields = InthJSON.parse(
             Fixture.initBody(policyResolution: Fixture.matchedResolution(policy: Fixture.rule(model: "iab")))
         )!.objectValue!
         fields["gvl"] = .object(gvl)
-        return try C15tJSON.encode(JSONValue.object(fields))
+        return try InthJSON.encode(JSONValue.object(fields))
     }
 
     func boot(_ vector: Vector, store: any ConsentStore, http: StubHTTP, user: KernelUser? = nil) async throws
@@ -69,7 +69,7 @@ final class IABDeliveryTests: XCTestCase {
         core.flushPending()
         await core.waitUntilIdle()
         let withdrawalSent = http.recordedSaveRequests.dropFirst(before).contains {
-            $0.body.flatMap { C15tJSON.parse($0) }?["tcString"]?.stringValue == vector.cases[1].tcString
+            $0.body.flatMap { InthJSON.parse($0) }?["tcString"]?.stringValue == vector.cases[1].tcString
         }
         XCTAssertTrue(withdrawalSent, "the committed withdrawal must still reach the backend")
     }
@@ -107,11 +107,11 @@ final class IABDeliveryTests: XCTestCase {
             case "expiry": now += 400 * 86_400_000
             case "clock": now -= 600_001
             case "config":
-                var object = C15tJSON.parse(try C15tJSON.encode(configuration))!.objectValue!
+                var object = InthJSON.parse(try InthJSON.encode(configuration))!.objectValue!
                 object["cmpVersion"] = .number(Double(configuration.cmpVersion + 1))
-                configuration = try C15tJSON.decode(IABConfiguration.self, from: C15tJSON.encode(JSONValue.object(object)))
+                configuration = try InthJSON.decode(IABConfiguration.self, from: InthJSON.encode(JSONValue.object(object)))
             case "model", "fingerprint":
-                var fields = C15tJSON.parse(try initBody(vector))!.objectValue!
+                var fields = InthJSON.parse(try initBody(vector))!.objectValue!
                 if change == "model" {
                     fields["policyResolution"] = Fixture.matchedResolution(policy: Fixture.rule(model: "opt-out"))
                 } else {
@@ -121,7 +121,7 @@ final class IABDeliveryTests: XCTestCase {
                     wire["fingerprints"] = .object(fingerprints)
                     fields["policyResolution"] = .object(wire)
                 }
-                http.initResponse = HTTPResponse(status: 200, body: try C15tJSON.encode(JSONValue.object(fields)))
+                http.initResponse = HTTPResponse(status: 200, body: try InthJSON.encode(JSONValue.object(fields)))
                 core.refresh()
             case "identify": core.identify(KernelUser(externalId: "u2")); user = KernelUser(externalId: "u2")
             case "logout": core.logout(); user = nil

@@ -1,8 +1,8 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.iab.*
-import com.c15t.core.store.*
-import com.c15t.core.transport.*
+import com.inth.core.iab.*
+import com.inth.core.store.*
+import com.inth.core.transport.*
 import java.io.File
 import kotlin.test.*
 import kotlinx.serialization.Serializable
@@ -84,7 +84,7 @@ class IabHeadlessDisclosureTest {
 				.respondSave(SaveOutcome.Unavailable("offline"))
 		return testKernel(
 			config = NativeConfig("https://cmp.example.test", iab = vector.configuration),
-			store = C15tStore(InMemoryKeyValueStore()),
+			store = InthStore(InMemoryKeyValueStore()),
 			clock = FixedClock(vector.now),
 			transport = http,
 		).also { it.bootstrap() }

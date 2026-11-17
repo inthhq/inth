@@ -1,7 +1,7 @@
-package com.c15t.core.webview
+package com.inth.core.webview
 
-import com.c15t.core.ConsentCore
-import com.c15t.core.Subscription
+import com.inth.core.ConsentCore
+import com.inth.core.Subscription
 import java.lang.ref.WeakReference
 import java.util.concurrent.atomic.AtomicReference
 

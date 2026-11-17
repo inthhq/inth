@@ -1,5 +1,5 @@
 // #region docs:swift-privacy-status title="ContentView.swift"
-import C15tConsentUI
+import InthConsentUI
 import SwiftUI
 
 struct ContentView: View {

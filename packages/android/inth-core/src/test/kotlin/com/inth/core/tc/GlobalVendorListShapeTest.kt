@@ -1,4 +1,4 @@
-package com.c15t.core.tc
+package com.inth.core.tc
 
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -168,7 +168,7 @@ class GlobalVendorListShapeTest {
 	 * build read only part of, which `TcSemanticPreEncoder` would then prune against -- emptying
 	 * an honest vendor's signals over a lost label. [GlobalVendorListJson] carries the argument.
 	 * 
-	 * Not reachable from a c15t backend: `packages/backend/src/http/gvl.ts` parses the upstream
+	 * Not reachable from an Inth backend: `packages/backend/src/http/gvl.ts` parses the upstream
 	 * document against `globalVendorListSchema` before `/init` embeds it. Graded because it decides
 	 * what a device ends up holding, not because a backend can serve it.
 	 */

@@ -7,26 +7,26 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0B8E75C55777139A1E7F9180 /* C15tReactNative.h in Headers */ = {isa = PBXBuildFile; fileRef = 02657EDE7566EC0C9C28820D /* C15tReactNative.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		0B8E75C55777139A1E7F9180 /* InthReactNative.h in Headers */ = {isa = PBXBuildFile; fileRef = 02657EDE7566EC0C9C28820D /* InthReactNative.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		1A8368B2EEF6EA6590F2478F /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7DE04AE370EA0EBC1C3C380B /* Foundation.framework */; };
-		1BB46FB9FCD909A39BBDA14B /* C15tBootstrap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56B42FB6BF9791EA4303AB09 /* C15tBootstrap.swift */; };
-		35750351FE89BAF3F1EB5C27 /* C15tModuleHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0BDE2D0586BDC9577A54A36 /* C15tModuleHandler.swift */; };
-		8A24547931CB7026C9B9AAF3 /* C15tPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66424A16F6E0E887FBD64064 /* C15tPayload.swift */; };
-		90705F34B15B0D3C1DD9D44D /* C15tAppleExports.swift in Sources */ = {isa = PBXBuildFile; fileRef = 102D9489C55AA6EFBB516E33 /* C15tAppleExports.swift */; };
+		1BB46FB9FCD909A39BBDA14B /* InthBootstrap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56B42FB6BF9791EA4303AB09 /* InthBootstrap.swift */; };
+		35750351FE89BAF3F1EB5C27 /* InthModuleHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0BDE2D0586BDC9577A54A36 /* InthModuleHandler.swift */; };
+		8A24547931CB7026C9B9AAF3 /* InthPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66424A16F6E0E887FBD64064 /* InthPayload.swift */; };
+		90705F34B15B0D3C1DD9D44D /* InthAppleExports.swift in Sources */ = {isa = PBXBuildFile; fileRef = 102D9489C55AA6EFBB516E33 /* InthAppleExports.swift */; };
 		E3538833DD7FDC45EF89EEDE /* Privacy.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 08621522B93E3C069865D1A6 /* Privacy.xcprivacy */; };
-		F2818F96AA986AA1E1F48638 /* C15tChangePump.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD852D8DE2D6C302D75FE2D2 /* C15tChangePump.swift */; };
+		F2818F96AA986AA1E1F48638 /* InthChangePump.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD852D8DE2D6C302D75FE2D2 /* InthChangePump.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		02657EDE7566EC0C9C28820D /* C15tReactNative.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = C15tReactNative.h; path = C15tReactNative/C15tReactNative.h; sourceTree = "<group>"; };
-		08621522B93E3C069865D1A6 /* Privacy.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = Privacy.xcprivacy; path = C15tReactNative/Resources/Privacy.xcprivacy; sourceTree = "<group>"; };
-		102D9489C55AA6EFBB516E33 /* C15tAppleExports.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = C15tAppleExports.swift; path = C15tReactNative/Bridge/C15tAppleExports.swift; sourceTree = "<group>"; };
-		34013A5A51F3B2F8A0DB8C9A /* C15tReactNative.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = C15tReactNative.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		56B42FB6BF9791EA4303AB09 /* C15tBootstrap.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = C15tBootstrap.swift; path = C15tReactNative/Bridge/C15tBootstrap.swift; sourceTree = "<group>"; };
-		66424A16F6E0E887FBD64064 /* C15tPayload.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = C15tPayload.swift; path = C15tReactNative/Bridge/C15tPayload.swift; sourceTree = "<group>"; };
+		02657EDE7566EC0C9C28820D /* InthReactNative.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = InthReactNative.h; path = InthReactNative/InthReactNative.h; sourceTree = "<group>"; };
+		08621522B93E3C069865D1A6 /* Privacy.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = Privacy.xcprivacy; path = InthReactNative/Resources/Privacy.xcprivacy; sourceTree = "<group>"; };
+		102D9489C55AA6EFBB516E33 /* InthAppleExports.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = InthAppleExports.swift; path = InthReactNative/Bridge/InthAppleExports.swift; sourceTree = "<group>"; };
+		34013A5A51F3B2F8A0DB8C9A /* InthReactNative.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = InthReactNative.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		56B42FB6BF9791EA4303AB09 /* InthBootstrap.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = InthBootstrap.swift; path = InthReactNative/Bridge/InthBootstrap.swift; sourceTree = "<group>"; };
+		66424A16F6E0E887FBD64064 /* InthPayload.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = InthPayload.swift; path = InthReactNative/Bridge/InthPayload.swift; sourceTree = "<group>"; };
 		7DE04AE370EA0EBC1C3C380B /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
-		B0BDE2D0586BDC9577A54A36 /* C15tModuleHandler.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = C15tModuleHandler.swift; path = C15tReactNative/Bridge/C15tModuleHandler.swift; sourceTree = "<group>"; };
-		FD852D8DE2D6C302D75FE2D2 /* C15tChangePump.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = C15tChangePump.swift; path = C15tReactNative/Bridge/C15tChangePump.swift; sourceTree = "<group>"; };
+		B0BDE2D0586BDC9577A54A36 /* InthModuleHandler.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = InthModuleHandler.swift; path = InthReactNative/Bridge/InthModuleHandler.swift; sourceTree = "<group>"; };
+		FD852D8DE2D6C302D75FE2D2 /* InthChangePump.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = InthChangePump.swift; path = InthReactNative/Bridge/InthChangePump.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -71,11 +71,11 @@
 		4C388E7B0A0BD8C824C2B98E /* Bridge */ = {
 			isa = PBXGroup;
 			children = (
-				56B42FB6BF9791EA4303AB09 /* C15tBootstrap.swift */,
-				FD852D8DE2D6C302D75FE2D2 /* C15tChangePump.swift */,
-				B0BDE2D0586BDC9577A54A36 /* C15tModuleHandler.swift */,
-				66424A16F6E0E887FBD64064 /* C15tPayload.swift */,
-				102D9489C55AA6EFBB516E33 /* C15tAppleExports.swift */,
+				56B42FB6BF9791EA4303AB09 /* InthBootstrap.swift */,
+				FD852D8DE2D6C302D75FE2D2 /* InthChangePump.swift */,
+				B0BDE2D0586BDC9577A54A36 /* InthModuleHandler.swift */,
+				66424A16F6E0E887FBD64064 /* InthPayload.swift */,
+				102D9489C55AA6EFBB516E33 /* InthAppleExports.swift */,
 			);
 			name = Bridge;
 			sourceTree = "<group>";
@@ -83,7 +83,7 @@
 		5F9724FD5F7FDC600E326DB1 /* SupportingFiles */ = {
 			isa = PBXGroup;
 			children = (
-				02657EDE7566EC0C9C28820D /* C15tReactNative.h */,
+				02657EDE7566EC0C9C28820D /* InthReactNative.h */,
 			);
 			name = SupportingFiles;
 			sourceTree = "<group>";
@@ -99,7 +99,7 @@
 		AC5B59478422C060A46A83AA /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				34013A5A51F3B2F8A0DB8C9A /* C15tReactNative.framework */,
+				34013A5A51F3B2F8A0DB8C9A /* InthReactNative.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -111,16 +111,16 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0B8E75C55777139A1E7F9180 /* C15tReactNative.h in Headers */,
+				0B8E75C55777139A1E7F9180 /* InthReactNative.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
-		FEA83A106A839DC838CF8F87 /* C15tReactNative */ = {
+		FEA83A106A839DC838CF8F87 /* InthReactNative */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 8FA2A2E7CA5A9E26813075F8 /* Build configuration list for PBXNativeTarget "C15tReactNative" */;
+			buildConfigurationList = 8FA2A2E7CA5A9E26813075F8 /* Build configuration list for PBXNativeTarget "InthReactNative" */;
 			buildPhases = (
 				585E10FAA5D6F72EA2249A51 /* Headers */,
 				05AE2196BBCF9286C1643983 /* Sources */,
@@ -131,13 +131,13 @@
 			);
 			dependencies = (
 			);
-			name = C15tReactNative;
+			name = InthReactNative;
 			packageProductDependencies = (
-				746A185CEF3F9CA4204EC581 /* C15tCore */,
-				06D5E96686401BBA048E78F1 /* C15tApple */,
+				746A185CEF3F9CA4204EC581 /* InthCore */,
+				06D5E96686401BBA048E78F1 /* InthApple */,
 			);
-			productName = C15tReactNative;
-			productReference = 34013A5A51F3B2F8A0DB8C9A /* C15tReactNative.framework */;
+			productName = InthReactNative;
+			productReference = 34013A5A51F3B2F8A0DB8C9A /* InthReactNative.framework */;
 			productType = "com.apple.product-type.framework";
 		};
 /* End PBXNativeTarget section */
@@ -149,7 +149,7 @@
 				LastSwiftUpdateCheck = 1600;
 				LastUpgradeCheck = 1600;
 			};
-			buildConfigurationList = 44707F3BAA4C137D4CEBDE6C /* Build configuration list for PBXProject "C15tReactNative" */;
+			buildConfigurationList = 44707F3BAA4C137D4CEBDE6C /* Build configuration list for PBXProject "InthReactNative" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -167,7 +167,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				FEA83A106A839DC838CF8F87 /* C15tReactNative */,
+				FEA83A106A839DC838CF8F87 /* InthReactNative */,
 			);
 		};
 /* End PBXProject section */
@@ -188,11 +188,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1BB46FB9FCD909A39BBDA14B /* C15tBootstrap.swift in Sources */,
-				F2818F96AA986AA1E1F48638 /* C15tChangePump.swift in Sources */,
-				35750351FE89BAF3F1EB5C27 /* C15tModuleHandler.swift in Sources */,
-				8A24547931CB7026C9B9AAF3 /* C15tPayload.swift in Sources */,
-				90705F34B15B0D3C1DD9D44D /* C15tAppleExports.swift in Sources */,
+				1BB46FB9FCD909A39BBDA14B /* InthBootstrap.swift in Sources */,
+				F2818F96AA986AA1E1F48638 /* InthChangePump.swift in Sources */,
+				35750351FE89BAF3F1EB5C27 /* InthModuleHandler.swift in Sources */,
+				8A24547931CB7026C9B9AAF3 /* InthPayload.swift in Sources */,
+				90705F34B15B0D3C1DD9D44D /* InthAppleExports.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -388,7 +388,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		44707F3BAA4C137D4CEBDE6C /* Build configuration list for PBXProject "C15tReactNative" */ = {
+		44707F3BAA4C137D4CEBDE6C /* Build configuration list for PBXProject "InthReactNative" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A0310E2EE93649A7D1B8F239 /* Debug */,
@@ -397,7 +397,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		8FA2A2E7CA5A9E26813075F8 /* Build configuration list for PBXNativeTarget "C15tReactNative" */ = {
+		8FA2A2E7CA5A9E26813075F8 /* Build configuration list for PBXNativeTarget "InthReactNative" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				F5F241ACB5B9BB2B6D175E57 /* Release */,
@@ -416,15 +416,15 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		06D5E96686401BBA048E78F1 /* C15tApple */ = {
+		06D5E96686401BBA048E78F1 /* InthApple */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = F8DF1D036C1E64196F553FA9 /* XCLocalSwiftPackageReference "core-swift" */;
-			productName = C15tApple;
+			productName = InthApple;
 		};
-		746A185CEF3F9CA4204EC581 /* C15tCore */ = {
+		746A185CEF3F9CA4204EC581 /* InthCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = F8DF1D036C1E64196F553FA9 /* XCLocalSwiftPackageReference "core-swift" */;
-			productName = C15tCore;
+			productName = InthCore;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

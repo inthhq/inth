@@ -129,7 +129,7 @@ const useConsentIabDrawer =
 
 		if (value === null) {
 			throw new Error(
-				'@c15t/react-native: this component has to be rendered inside ConsentIabDrawer.Root, so that it can read the disclosure it belongs to.'
+				'@inth/react-native: this component has to be rendered inside ConsentIabDrawer.Root, so that it can read the disclosure it belongs to.'
 			);
 		}
 

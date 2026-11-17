@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 extension IABCommitTests {
     func testKnownDisclosureNormalizationRetainsItsDigest() throws {
@@ -21,9 +21,9 @@ extension IABCommitTests {
         await first.waitUntilIdle()
         let oldBinding = "e11338afe79056b7eec405277d79991bb8a5cc4fd3aa90e531ffd568ea4fc03f"
         let raw = try XCTUnwrap(store.data(for: StorageKey.snapshot))
-        let envelope = try XCTUnwrap(C15tJSON.parse(raw))
+        let envelope = try XCTUnwrap(InthJSON.parse(raw))
         let legacy = disclosureReplacing(["iabConsent", "disclosureID"], in: envelope, value: .string(oldBinding))
-        store.set(try XCTUnwrap(C15tJSON.encode(legacy)), for: StorageKey.snapshot)
+        store.set(try XCTUnwrap(InthJSON.encode(legacy)), for: StorageKey.snapshot)
         let cold = ConsentCore()
         cold.bootstrap(CoreConfig(store: store, iab: source.cases[0].configuration,
                                   now: { source.now }, flushPendingOnBootstrap: false))
@@ -34,7 +34,7 @@ extension IABCommitTests {
 
     func testUnknownDisclosureChangesInvalidateGrantsAfterColdLaunch() async throws {
         let source = try fixture()
-        let document = try XCTUnwrap(C15tJSON.parse(C15tJSON.encode(source.gvl)))
+        let document = try XCTUnwrap(InthJSON.parse(InthJSON.encode(source.gvl)))
         for path in [["futureField"], ["vendors", "1", "futureField"], ["purposes", "1", "futureField"],
                      ["vendors", "1", "urls"], ["vendors", "1", "dataRetention"],
                      ["vendors", "1", "overflow"], ["standardTexts"]] {
@@ -54,7 +54,7 @@ extension IABCommitTests {
                                       now: { source.now }, flushPendingOnBootstrap: false))
             XCTAssertEqual(cold.iabConsent(), saved)
             let restored = try XCTUnwrap(cold.globalVendorList())
-            let wire = try XCTUnwrap(C15tJSON.parse(C15tJSON.encode(restored)))
+            let wire = try XCTUnwrap(InthJSON.parse(InthJSON.encode(restored)))
             if path.last == "dataRetention" {
                 XCTAssertEqual(disclosureAt(path, in: wire)?["futureField"], .string("before"))
             } else {
@@ -62,9 +62,9 @@ extension IABCommitTests {
             }
             XCTAssertEqual(try IABAuthority.disclosureID(restored), try IABAuthority.disclosureID(gvl))
 
-            var fields = C15tJSON.parse(http.initResponse.body)!.objectValue!
+            var fields = InthJSON.parse(http.initResponse.body)!.objectValue!
             fields["gvl"] = after
-            http.initResponse = HTTPResponse(status: 200, body: try C15tJSON.encode(JSONValue.object(fields)))
+            http.initResponse = HTTPResponse(status: 200, body: try InthJSON.encode(JSONValue.object(fields)))
             first.refresh()
             await first.waitUntilIdle()
             XCTAssertNil(first.iabConsent(), path.joined(separator: "."))
@@ -76,7 +76,7 @@ extension IABCommitTests {
     func testGVLToleranceDoesNotAdmitUnknownConsentAuthority() async throws {
         let source = try fixture()
         let store = InMemoryStore()
-        let document = try XCTUnwrap(C15tJSON.parse(C15tJSON.encode(source.gvl)))
+        let document = try XCTUnwrap(InthJSON.parse(InthJSON.encode(source.gvl)))
         let gvl = try XCTUnwrap(GlobalVendorList.read(from: disclosureReplacing(["futureField"], in: document, value: .string("legal"))))
         let vector = Vector(invalidChoices: [], invalidConfigurations: [], now: source.now, gvl: gvl, cases: source.cases)
         let core = try await boot(vector, configuration: source.cases[0].configuration, store: store)
@@ -84,14 +84,14 @@ extension IABCommitTests {
         await core.waitUntilIdle()
         let raw = try XCTUnwrap(store.data(for: StorageKey.snapshot))
         XCTAssertNotNil(StoredEnvelope.decode(raw))
-        let envelope = try XCTUnwrap(C15tJSON.parse(raw))
+        let envelope = try XCTUnwrap(InthJSON.parse(raw))
         let tampered = disclosureReplacing(["iabConsent", "futureAuthority"], in: envelope, value: .bool(true))
-        XCTAssertNil(StoredEnvelope.decode(try XCTUnwrap(C15tJSON.encode(tampered))))
+        XCTAssertNil(StoredEnvelope.decode(try XCTUnwrap(InthJSON.encode(tampered))))
     }
 
     func testUnknownDisclosureKeysAreOrderIndependentAndNarrowWithTheirVendor() throws {
         let source = try fixture()
-        var document = try XCTUnwrap(C15tJSON.parse(C15tJSON.encode(source.gvl)))
+        var document = try XCTUnwrap(InthJSON.parse(InthJSON.encode(source.gvl)))
         document = disclosureReplacing(["futureField"], in: document, value: .object(["z": .integer(1), "a": .string("legal")]))
         document = disclosureReplacing(["vendors", "1", "futureField"], in: document, value: .string("kept"))
         document = disclosureReplacing(["vendors", "2", "futureField"], in: document, value: .string("removed"))
@@ -99,7 +99,7 @@ extension IABCommitTests {
         let reordered = try XCTUnwrap(GlobalVendorList.read(from: disclosureReversed(document)))
         XCTAssertEqual(try IABAuthority.disclosureID(gvl), try IABAuthority.disclosureID(reordered))
         let narrowed = gvl.narrowed(toVendorIds: [1])
-        let wire = try XCTUnwrap(C15tJSON.parse(C15tJSON.encode(narrowed)))
+        let wire = try XCTUnwrap(InthJSON.parse(InthJSON.encode(narrowed)))
         XCTAssertEqual(wire["futureField"], document["futureField"])
         XCTAssertEqual(wire["vendors"]?["1"]?["futureField"], .string("kept"))
         XCTAssertNil(wire["vendors"]?["2"])

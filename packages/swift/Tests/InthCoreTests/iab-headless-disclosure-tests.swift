@@ -1,6 +1,6 @@
 import Foundation
 import XCTest
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 /// What a React Native screen drawing its own TCF UI is given and what its commit writes, under
 /// publisher restrictions and Google Additional Consent providers.
@@ -65,21 +65,21 @@ final class IABHeadlessDisclosureTests: XCTestCase {
     static let directory = IABCommitTests.fixtureURL.deletingLastPathComponent()
 
     func vector() throws -> (Vector, VendorList) {
-        let vector = try C15tJSON.decode(
+        let vector = try InthJSON.decode(
             Vector.self, from: Data(contentsOf: Self.directory.appendingPathComponent("headless-disclosure-cases.json")))
-        let list = try C15tJSON.decode(
+        let list = try InthJSON.decode(
             VendorList.self, from: Data(contentsOf: Self.directory.appendingPathComponent(vector.vendorList)))
         return (vector, list)
     }
 
     func boot(_ vector: Vector, _ list: VendorList) async throws -> ConsentCore {
-        var fields = C15tJSON.parse(Fixture.initBody(
+        var fields = InthJSON.parse(Fixture.initBody(
             policyResolution: Fixture.matchedResolution(policy: Fixture.rule(model: "iab"))))!.objectValue!
         fields["gvl"] = list.gvl
         fields["adTechProviders"] = list.adTechProviders
         fields["customVendors"] = vector.customVendors
         let http = StubHTTP()
-        http.initResponse = HTTPResponse(status: 200, body: try C15tJSON.encode(JSONValue.object(fields)))
+        http.initResponse = HTTPResponse(status: 200, body: try InthJSON.encode(JSONValue.object(fields)))
         http.setSavesFail(true)
         let core = ConsentCore()
         let now = vector.now

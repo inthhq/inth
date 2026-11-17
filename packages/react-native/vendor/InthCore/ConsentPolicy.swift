@@ -123,7 +123,7 @@ public struct ConsentPolicyError: Error, Equatable, CustomStringConvertible {
 
 /// A policy kept in source control. With one, the device never calls `/init`.
 ///
-/// Pass it as `C15tAppleConfiguration.policy`. The device resolves the rules itself and
+/// Pass it as `InthAppleConfiguration.policy`. The device resolves the rules itself and
 /// has no geolocation, so the `fallback` rule applies unless the app sets `overrides`
 /// country and region. Records are still delivered to the backend.
 ///
@@ -171,7 +171,7 @@ public struct ConsentPolicy: Sendable, Equatable {
     /// - Throws: ``ConsentPolicyError`` for anything the backend would refuse, and for
     ///   the fields no-backend mode does not support.
     public init(json: Data) throws {
-        guard let root = C15tJSON.parse(json) else { throw ConsentPolicyError("The policy file is not JSON") }
+        guard let root = InthJSON.parse(json) else { throw ConsentPolicyError("The policy file is not JSON") }
         let list: [JSONValue]
         if let array = root.arrayValue {
             list = array
@@ -401,7 +401,7 @@ public struct ConsentPolicy: Sendable, Equatable {
     private static func wire(_ rule: PolicyRule) -> JSONValue {
         let inputs = fingerprintInputs(rule)
         func hash(_ domain: String) -> String {
-            let data = inputs[domain].flatMap { C15tJSON.encode($0) } ?? Data()
+            let data = inputs[domain].flatMap { InthJSON.encode($0) } ?? Data()
             return SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
         }
         return .object([

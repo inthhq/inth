@@ -1,15 +1,15 @@
-package com.c15t.consentui
+package com.inth.consentui
 
-import com.c15t.core.C15t
-import com.c15t.core.ConsentCore
-import com.c15t.core.NativeConfig
-import com.c15t.core.spi.HttpClient
-import com.c15t.core.spi.HttpRequest
-import com.c15t.core.spi.HttpResponse
-import com.c15t.core.spi.KeyValueStore
-import com.c15t.core.spi.TaskExecutor
-import com.c15t.core.store.C15tStore
-import com.c15t.core.transport.HostedTransport
+import com.inth.core.Inth
+import com.inth.core.ConsentCore
+import com.inth.core.NativeConfig
+import com.inth.core.spi.HttpClient
+import com.inth.core.spi.HttpRequest
+import com.inth.core.spi.HttpResponse
+import com.inth.core.spi.KeyValueStore
+import com.inth.core.spi.TaskExecutor
+import com.inth.core.store.InthStore
+import com.inth.core.transport.HostedTransport
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.resetMain
@@ -25,15 +25,15 @@ import java.lang.ref.WeakReference
 /** The shared prompt lives as long as its core is installed, and never keeps a core alive. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ConsentPromptLifetimeTest {
-    @Before fun main() { Dispatchers.setMain(Dispatchers.Unconfined); C15t.uninstall() }
-    @After fun reset() { C15t.uninstall(); Dispatchers.resetMain() }
+    @Before fun main() { Dispatchers.setMain(Dispatchers.Unconfined); Inth.uninstall() }
+    @After fun reset() { Inth.uninstall(); Dispatchers.resetMain() }
 
     @Test fun anUninstalledCoreIsCollectedWithItsPrompt() {
         val (core, prompt) = installWithPrompt()
         collect { false }
         assertNotNull("the installed core keeps its prompt, and the dismissal in it, between screens", prompt.get())
 
-        C15t.uninstall()
+        Inth.uninstall()
         collect { core.get() == null }
         assertNull("an uninstalled core is collectable", core.get())
         assertNull("and so is its prompt", prompt.get())
@@ -41,7 +41,7 @@ class ConsentPromptLifetimeTest {
 
     @Test fun aCoreReplacedByANewInstallIsCollected() {
         val (first, _) = installWithPrompt()
-        C15t.uninstall()
+        Inth.uninstall()
         val (second, prompt) = installWithPrompt()
         collect { first.get() == null }
         assertNull("the core installed before is collectable", first.get())
@@ -63,7 +63,7 @@ class ConsentPromptLifetimeTest {
             override fun write(key: String, value: String?) { if (value == null) values.remove(key) else values[key] = value }
             override fun writeDurably(key: String, value: String?): Boolean { write(key, value); return true }
         }
-        val core = C15t.bootstrap(config, C15tStore(store), transport = HostedTransport(client, config), executor = TaskExecutor.DIRECT)
+        val core = Inth.bootstrap(config, InthStore(store), transport = HostedTransport(client, config), executor = TaskExecutor.DIRECT)
         val prompt = ConsentPrompt.of(core)
         val screen = Any()
         prompt.attach(screen, started = true, autoPresent = true)

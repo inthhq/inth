@@ -1,9 +1,9 @@
-package com.c15t.core.model
+package com.inth.core.model
 
 import kotlinx.serialization.Serializable
 
 /**
- * Every category the c15t runtime knows about, in stable display order.
+ * Every category the Inth runtime knows about, in stable display order.
  *
  * Mirrors `CONSENT_CATEGORIES` in `packages/sdk/core/src/consent-record/types.ts`.
  * `necessary` is never a subject choice; it is always granted.

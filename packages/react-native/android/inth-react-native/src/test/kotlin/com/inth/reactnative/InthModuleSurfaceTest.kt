@@ -1,4 +1,4 @@
-package com.c15t.reactnative
+package com.inth.reactnative
 
 import com.facebook.react.bridge.Promise
 import org.junit.Assert.assertEquals
@@ -9,15 +9,15 @@ import org.junit.Test
 import java.io.File
 
 /**
- * The bridge must match `src/specs/NativeC15t.ts`, which is the file Codegen reads in
+ * The bridge must match `src/specs/NativeInth.ts`, which is the file Codegen reads in
  * a host app. The Kotlin module is compiled here against a stand-in for the generated
  * spec, so this is the check that the stand-in and the module have not drifted from
  * the TypeScript: it reads the spec source and reflects over the compiled class.
  */
-class C15tModuleSurfaceTest {
+class InthModuleSurfaceTest {
 	@Test
 	fun `the module implements every method the codegen spec declares`() {
-		val specPath = System.getProperty("c15t.spec.file").orEmpty()
+		val specPath = System.getProperty("inth.spec.file").orEmpty()
 		assumeTrue("no spec file wired into this test run", File(specPath).isFile)
 		val spec = File(specPath).readText()
 
@@ -49,7 +49,7 @@ class C15tModuleSurfaceTest {
 			assertTrue("`$name` is declared in the TypeScript spec", spec.contains("$name:"))
 			// Kotlin adds a synthetic bridge when a boxed Java parameter is widened, so
 			// "at least one" is the honest assertion here rather than "exactly one".
-			val matches = C15tReactNativeModule::class.java.declaredMethods
+			val matches = InthReactNativeModule::class.java.declaredMethods
 				.filter { it.name == name && it.parameterCount == arity }
 			assertTrue("$name with $arity parameter(s) must exist on the module", matches.isNotEmpty())
 		}
@@ -64,7 +64,7 @@ class C15tModuleSurfaceTest {
 		// Codegen puts @ReactMethod on the generated spec, and the annotations are
 		// inherited by the implementation, so a method missing them here is a method
 		// the app would never be able to call.
-		val inherited = C15tReactNativeModule::class.java.methods
+		val inherited = InthReactNativeModule::class.java.methods
 			.filter { it.name in (SYNC_METHODS + PROMISE_METHODS + listOf("dismissNotice", "addListener", "removeListeners")) }
 		assertTrue("the spec surface must be reachable", inherited.isNotEmpty())
 		val names = inherited.map { it.name }.toSet()
@@ -75,16 +75,16 @@ class C15tModuleSurfaceTest {
 
 	@Test
 	fun `the module registers under the name JavaScript looks up`() {
-		val stub = File(System.getProperty("c15t.stub.spec.file").orEmpty())
+		val stub = File(System.getProperty("inth.stub.spec.file").orEmpty())
 		assumeTrue("no stand-in spec on this build", stub.isFile)
-		assertTrue("the lookup name must match NATIVE_C15T_MODULE_NAME", stub.readText().contains("NAME = \"C15t\""))
-		assertEquals("C15t", C15tReactNativePackage.MODULE_NAME)
+		assertTrue("the lookup name must match NATIVE_INTH_MODULE_NAME", stub.readText().contains("NAME = \"Inth\""))
+		assertEquals("Inth", InthReactNativePackage.MODULE_NAME)
 	}
 
 	@Test
 	fun `promise methods take a trailing promise`() {
 		for (name in PROMISE_METHODS) {
-			val method = C15tReactNativeModule::class.java.declaredMethods
+			val method = InthReactNativeModule::class.java.declaredMethods
 				.singleOrNull { it.name == name }
 			assertNotNull(name, method)
 			assertTrue("$name must end in a Promise", method!!.parameterTypes.last() == Promise::class.java)

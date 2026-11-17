@@ -1,6 +1,6 @@
 // #region docs:swift-firebase-analytics-binding title="FirebaseAnalyticsOwner.swift"
-import C15tApple
-import C15tCore
+import InthApple
+import InthCore
 
 final class FirebaseAnalyticsOwner {
     private let consent: FirebaseAnalyticsIntegration

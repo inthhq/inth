@@ -1,5 +1,5 @@
-#if canImport(C15tCore)
-import C15tCore
+#if canImport(InthCore)
+import InthCore
 #endif
 import Foundation
 
@@ -110,7 +110,7 @@ public final class ConsentHostDriver {
 
     public init(canvas: ConsentHostCanvas) {
         self.canvas = canvas
-        C15t.onUninstall { [weak self] core in
+        Inth.onUninstall { [weak self] core in
             Task { @MainActor [weak self] in self?.drop(core) }
         }
     }
@@ -322,7 +322,7 @@ public final class ConsentHostDriver {
         }
         held = nil
         // The prompt that follows, if one is owed, is reported before this outcome, so a step that
-        // waits for c15t's screens to close never runs between the two. With no window to show it
+        // waits for Inth's screens to close never runs between the two. With no window to show it
         // on yet, the outcome waits for it, and for no longer than ``replacementWait``.
         presenter.presentIfOwed()
         let report: () -> Void = { [weak self] in self?.onOutcome?(session.id, ending, snapshot.revision) }

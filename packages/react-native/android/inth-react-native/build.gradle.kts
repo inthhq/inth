@@ -19,7 +19,7 @@ plugins {
 // the accessor would put a deprecation warning naming this file in every host app's build log.
 // The implementation AGP registers under this name implements this interface in 8.x and 9.x.
 extensions.configure<com.android.build.api.dsl.LibraryExtension>("android") {
-	namespace = "com.c15t.reactnative"
+	namespace = "com.inth.reactnative"
 }
 
 apply(from = "library.gradle")

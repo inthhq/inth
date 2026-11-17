@@ -1,11 +1,11 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.iab.*
-import com.c15t.core.model.*
-import com.c15t.core.spi.*
-import com.c15t.core.store.*
-import com.c15t.core.tc.*
-import com.c15t.core.transport.*
+import com.inth.core.iab.*
+import com.inth.core.model.*
+import com.inth.core.spi.*
+import com.inth.core.store.*
+import com.inth.core.tc.*
+import com.inth.core.transport.*
 import java.io.File
 import kotlin.test.*
 import kotlinx.serialization.json.*
@@ -24,7 +24,7 @@ class IabDisclosureBindingTest {
 	@Test
 	fun `legacy projected disclosure binding cannot restore authority`() {
 		val document = GlobalVendorListJson.toJsonElement(vector.gvl.copy(additionalFields = null))
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val http = RecordingTransport().respondInit(initSuccess(body = initBody(model = "\"iab\"", gvl = document.toString())))
 			.respondSave(SaveOutcome.Unavailable("offline"))
 		val first = testKernel(config = config, store = store, transport = http, clock = FixedClock(vector.now))
@@ -46,7 +46,7 @@ class IabDisclosureBindingTest {
 		for (path in listOf(listOf("futureField"), listOf("vendors", "1", "futureField"))) {
 			val before = replace(document, path, value(path, "before"))
 			val after = replace(document, path, value(path, "after"))
-			val store = C15tStore(InMemoryKeyValueStore())
+			val store = InthStore(InMemoryKeyValueStore())
 			val http = RecordingTransport().respondInit(initSuccess(body = initBody(model = "\"iab\"", gvl = before.toString())))
 				.respondSave(SaveOutcome.Unavailable("offline"))
 			val core = testKernel(config = config, store = store, transport = http, clock = FixedClock(vector.now))
@@ -67,7 +67,7 @@ class IabDisclosureBindingTest {
 			listOf("vendors", "1", "overflow"), listOf("standardTexts"))) {
 			val before = replace(document, path, value(path, "before"))
 			val after = replace(document, path, value(path, "after"))
-			val store = C15tStore(InMemoryKeyValueStore())
+			val store = InthStore(InMemoryKeyValueStore())
 			val http = RecordingTransport().respondInit(initSuccess(body = initBody(model = "\"iab\"", gvl = before.toString())))
 				.respondSave(SaveOutcome.Unavailable("offline"))
 			val first = testKernel(config = config, store = store, transport = http, clock = FixedClock(vector.now))
@@ -94,10 +94,10 @@ class IabDisclosureBindingTest {
 		val gvl = assertNotNull(GlobalVendorListJson.read(document))
 		val consent = IabAuthority.build(vector.cases[0].configuration, IabChoices(), gvl, "subject", null, "fingerprint", vector.now, null)
 		val envelope = SnapshotEnvelope(snapshot = ConsentSnapshot(), gvl = gvl, iabConsent = consent)
-		val raw = C15tJson.storage.encodeToJsonElement(SnapshotEnvelope.serializer(), envelope).jsonObject
-		assertNotNull(C15tJson.storage.decodeFromJsonElement(SnapshotEnvelope.serializer(), raw).gvl)
+		val raw = InthJson.storage.encodeToJsonElement(SnapshotEnvelope.serializer(), envelope).jsonObject
+		assertNotNull(InthJson.storage.decodeFromJsonElement(SnapshotEnvelope.serializer(), raw).gvl)
 		val tampered = replace(raw, listOf("iabConsent", "futureAuthority"), JsonPrimitive(true))
-		assertFails { C15tJson.storage.decodeFromJsonElement(SnapshotEnvelope.serializer(), tampered) }
+		assertFails { InthJson.storage.decodeFromJsonElement(SnapshotEnvelope.serializer(), tampered) }
 	}
 
 	@Test

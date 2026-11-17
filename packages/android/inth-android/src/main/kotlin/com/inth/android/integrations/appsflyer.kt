@@ -1,7 +1,7 @@
-package com.c15t.android.integrations
+package com.inth.android.integrations
 
-import com.c15t.core.ConsentCore
-import com.c15t.core.model.ConsentCategory
+import com.inth.core.ConsentCore
+import com.inth.core.model.ConsentCategory
 
 /**
  * Keep AppsFlyer running only while one category allows it, and send Google's
@@ -10,7 +10,7 @@ import com.c15t.core.model.ConsentCategory
  * Map [GoogleAdsConsent] to AppsFlyer's `AppsFlyerConsent` in [setConsentData]:
  * `hasConsentForDataUsage` from `adUserData`, `hasConsentForAdsPersonalization`
  * from `adPersonalization` and `hasConsentForAdStorage` from `adStorage`.
- * `isUserSubjectToGDPR` is yours to supply: c15t's policy model is not a legal
+ * `isUserSubjectToGDPR` is yours to supply: Inth's policy model is not a legal
  * jurisdiction flag. Marketing grants all three types, as on the web.
  *
  * Written against AppsFlyer Android SDK 6. SDK 7 starts sessions only from its

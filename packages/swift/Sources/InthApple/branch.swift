@@ -1,5 +1,5 @@
-#if canImport(C15tCore)
-import C15tCore
+#if canImport(InthCore)
+import InthCore
 #endif
 import Foundation
 
@@ -20,8 +20,8 @@ public enum BranchAttribution: String, Sendable, Equatable {
 /// ``BranchAttribution/minimal``, Branch's analytics-only level. Anything else,
 /// including pending consent, sets ``BranchAttribution/none``, which keeps deep links
 /// working. In `setDMAParamsForEEA`, call Branch's method of the same name with your
-/// own EEA flag, since c15t's policy model is not a legal jurisdiction flag, then
-/// `adPersonalization` and `adUserData`. Marketing grants both, as on the web. c15t
+/// own EEA flag, since Inth's policy model is not a legal jurisdiction flag, then
+/// `adPersonalization` and `adUserData`. Marketing grants both, as on the web. Inth
 /// does not link Branch.
 ///
 /// Connect before Branch initializes its session so the first request carries the

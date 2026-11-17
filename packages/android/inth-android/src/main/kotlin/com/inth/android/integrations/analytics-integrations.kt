@@ -1,9 +1,9 @@
-package com.c15t.android.integrations
+package com.inth.android.integrations
 
 import android.util.Log
-import com.c15t.core.ConsentCore
-import com.c15t.core.Subscription
-import com.c15t.core.model.ConsentCategory
+import com.inth.core.ConsentCore
+import com.inth.core.Subscription
+import com.inth.core.model.ConsentCategory
 
 /**
  * The four Consent Mode v2 types Firebase Analytics takes, as sent by
@@ -336,7 +336,7 @@ internal class ConsentBinding<State>(
 		try {
 			onError(error)
 		} catch (reporterError: Exception) {
-			Log.e("c15t", "Analytics integration error reporter failed", reporterError)
+			Log.e("inth", "Analytics integration error reporter failed", reporterError)
 		}
 	}
 

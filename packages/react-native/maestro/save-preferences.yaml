@@ -1,13 +1,13 @@
-# Taps Save in c15t preferences, category or IAB, and waits for the
+# Taps Save in Inth preferences, category or IAB, and waits for the
 # preferences to close.
 #
-#   - runFlow: ../node_modules/@c15t/react-native/maestro/save-preferences.yaml
+#   - runFlow: ../node_modules/@inth/react-native/maestro/save-preferences.yaml
 # Maestro needs an appId in every flow file; the calling flow's appId is used.
 appId: ${APP_ID}
 ---
 - tapOn:
-    id: "c15t\\.(prefs|iab)\\.save"
+    id: "inth\\.(prefs|iab)\\.save"
 - extendedWaitUntil:
     notVisible:
-      id: "c15t\\.(prefs|iab)\\.save"
+      id: "inth\\.(prefs|iab)\\.save"
     timeout: ${C15T_TIMEOUT || 15000}

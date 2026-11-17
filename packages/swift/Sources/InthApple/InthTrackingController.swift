@@ -1,20 +1,20 @@
 import Foundation
 
 /// A platform failure. Neither arm changes consent.
-public enum C15tTrackingError: Error, Equatable, Sendable {
+public enum InthTrackingError: Error, Equatable, Sendable {
     case notConfigured
     case unsupported
 }
 
 /// Optional ATT orchestration shared by native hosts and RN. It never mutates consent.
-public struct C15tTrackingController: Sendable {
-    public let trackingPlatformStatus: @Sendable () -> C15tTrackingPlatformStatus?
+public struct InthTrackingController: Sendable {
+    public let trackingPlatformStatus: @Sendable () -> InthTrackingPlatformStatus?
 
     /// Whether this binary carries a prompt string.
     public let trackingPromptStringPresent: @Sendable () -> Bool
 
-    /// Shows Apple's dialog. Reached only when ``C15tTrackingGate`` chose `.standard`.
-    public let trackingPrompt: @Sendable (@escaping (C15tTrackingPlatformStatus?) -> Void) -> Void
+    /// Shows Apple's dialog. Reached only when ``InthTrackingGate`` chose `.standard`.
+    public let trackingPrompt: @Sendable (@escaping (InthTrackingPlatformStatus?) -> Void) -> Void
 
     /// Whether this runtime answers Apple's expanded European Union request.
     ///
@@ -24,7 +24,7 @@ public struct C15tTrackingController: Sendable {
     /// not a copy of it.
     public let trackingExpandedInterfaceAvailable: @Sendable () -> Bool
 
-    /// Shows Apple's expanded request. Reached only when ``C15tTrackingGate`` chose
+    /// Shows Apple's expanded request. Reached only when ``InthTrackingGate`` chose
     /// `.expanded`.
     ///
     /// Answers `false` when the call could not be made after all, which sends the request
@@ -38,34 +38,34 @@ public struct C15tTrackingController: Sendable {
     public let trackingExpandedPrompt: @Sendable (
         _ preferExpandedInterface: Bool,
         _ additionalInformationSelected: (() -> Void)?,
-        _ completion: @escaping (C15tTrackingPlatformStatus?) -> Void
+        _ completion: @escaping (InthTrackingPlatformStatus?) -> Void
     ) -> Bool
 
-    public let trackingWaiters = C15tTrackingWaiters()
+    public let trackingWaiters = InthTrackingWaiters()
 
-    /// When this SDK last saw an `authorized` or `denied` answer. See ``C15tTrackingAnswerLog``.
-    public let answerLog: C15tTrackingAnswerLog
+    /// When this SDK last saw an `authorized` or `denied` answer. See ``InthTrackingAnswerLog``.
+    public let answerLog: InthTrackingAnswerLog
 
     /// The clock the answer log is stamped with. Injectable so a test can move a year ahead.
     public let now: @Sendable () -> Date
 
     public init(
-        trackingPlatformStatus: @escaping @Sendable () -> C15tTrackingPlatformStatus? = { C15tTracking.platformStatus() },
-        trackingPromptStringPresent: @escaping @Sendable () -> Bool = { C15tTracking.promptStringPresent() },
-        trackingPrompt: @escaping @Sendable (@escaping (C15tTrackingPlatformStatus?) -> Void) -> Void = { completion in C15tTracking.requestPrompt(completion: completion) },
-        trackingExpandedInterfaceAvailable: @escaping @Sendable () -> Bool = { C15tTracking.expandedInterfaceAvailable() },
+        trackingPlatformStatus: @escaping @Sendable () -> InthTrackingPlatformStatus? = { InthTracking.platformStatus() },
+        trackingPromptStringPresent: @escaping @Sendable () -> Bool = { InthTracking.promptStringPresent() },
+        trackingPrompt: @escaping @Sendable (@escaping (InthTrackingPlatformStatus?) -> Void) -> Void = { completion in InthTracking.requestPrompt(completion: completion) },
+        trackingExpandedInterfaceAvailable: @escaping @Sendable () -> Bool = { InthTracking.expandedInterfaceAvailable() },
         trackingExpandedPrompt: @escaping @Sendable (
             _ preferExpandedInterface: Bool,
             _ additionalInformationSelected: (() -> Void)?,
-            _ completion: @escaping (C15tTrackingPlatformStatus?) -> Void
+            _ completion: @escaping (InthTrackingPlatformStatus?) -> Void
         ) -> Bool = { preferExpanded, additionalInformationSelected, completion in
-            C15tTracking.requestExpandedPrompt(
+            InthTracking.requestExpandedPrompt(
                 preferExpandedInterface: preferExpanded,
                 additionalInformationSelected: additionalInformationSelected,
                 completion: completion
             )
         },
-        answerLog: C15tTrackingAnswerLog = .userDefaults(),
+        answerLog: InthTrackingAnswerLog = .userDefaults(),
         now: @escaping @Sendable () -> Date = { Date() }
     ) {
         self.answerLog = answerLog
@@ -100,9 +100,9 @@ public struct C15tTrackingController: Sendable {
     ///     resolves with stage `additionalInformation` after a tap.
     ///   - completion: The outcome.
     public func request(onAdditionalInformation: (@Sendable () -> Void)? = nil,
-                        _ completion: @escaping (Result<C15tTrackingRequestResult, C15tTrackingError>) -> Void) {
+                        _ completion: @escaping (Result<InthTrackingRequestResult, InthTrackingError>) -> Void) {
         let before = trackingPlatformStatus()
-        switch C15tTrackingGate.request(
+        switch InthTrackingGate.request(
             platform: before,
             promptStringPresent: trackingPromptStringPresent(),
             expandedInterfaceAvailable: trackingExpandedInterfaceAvailable()
@@ -113,7 +113,7 @@ public struct C15tTrackingController: Sendable {
             // requested a sheet for should not carry one.
             completion(
                 .success(
-                    C15tTrackingRequestResult(
+                    InthTrackingRequestResult(
                         status: status,
                         stage: .final,
                         presentation: nil
@@ -138,9 +138,9 @@ public struct C15tTrackingController: Sendable {
     ///
     /// The flag, and not a captured `var`, carries the Additional Information tap because
     /// Apple runs that closure after this function has returned and on a thread it chooses.
-    private func askApple(presentation: C15tTrackingPresentation, before: C15tTrackingPlatformStatus?,
+    private func askApple(presentation: InthTrackingPresentation, before: InthTrackingPlatformStatus?,
                           onAdditionalInformation: (@Sendable () -> Void)?) {
-        let additionalInformationSelected = C15tTrackingFlag()
+        let additionalInformationSelected = InthTrackingFlag()
 
         // The call that ran arrives as an argument rather than being read off the gate's
         // choice, because the two can differ: an expanded request that the runtime declined
@@ -148,7 +148,7 @@ public struct C15tTrackingController: Sendable {
         // `expanded` would describe an attempt rather than what happened. The distinction is
         // the only thing a host has for telling "Apple had the expanded sheet and chose not
         // to use it" apart from "this binary never asked for it".
-        let deliver: (C15tTrackingPresentation, C15tTrackingPlatformStatus?) -> Void = { [trackingWaiters, answerLog, now] ran, answered in
+        let deliver: (InthTrackingPresentation, InthTrackingPlatformStatus?) -> Void = { [trackingWaiters, answerLog, now] ran, answered in
             // A final answer starts the year Apple counts before it may ask again in the EU. On a
             // re-ask (Apple had answered before) the stamp moves only when the status changed:
             // Apple returns the stored answer without showing anything until its own year is up,
@@ -160,7 +160,7 @@ public struct C15tTrackingController: Sendable {
                !reask || answered != before {
                 answerLog.record(now())
             }
-            let result = C15tTrackingGate.requestResult(
+            let result = InthTrackingGate.requestResult(
                 platform: answered,
                 presentation: ran,
                 additionalInformationSelected: additionalInformationSelected.isSet
@@ -168,7 +168,7 @@ public struct C15tTrackingController: Sendable {
             // ATT was there when the gate checked and has nothing to report now. That is not
             // an answer, and `unsupported` would read as permission, so it is a failure.
             trackingWaiters.deliver(
-                result.map { Result<C15tTrackingRequestResult, C15tTrackingError>.success($0) }
+                result.map { Result<InthTrackingRequestResult, InthTrackingError>.success($0) }
                     ?? .failure(.unsupported)
             )
         }

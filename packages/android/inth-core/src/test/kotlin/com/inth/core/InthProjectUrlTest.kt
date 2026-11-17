@@ -1,4 +1,4 @@
-package com.c15t.core
+package com.inth.core
 
 import java.io.File
 import kotlin.test.Test

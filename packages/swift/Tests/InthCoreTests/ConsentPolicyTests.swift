@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 final class ConsentPolicyTests: XCTestCase {
     private var fixture: JSONValue {
@@ -9,13 +9,13 @@ final class ConsentPolicyTests: XCTestCase {
             let url = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
                 .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
                 .appendingPathComponent("native-protocol/local-policy/parity.json")
-            return try XCTUnwrap(C15tJSON.parse(Data(contentsOf: url)))
+            return try XCTUnwrap(InthJSON.parse(Data(contentsOf: url)))
         }
     }
 
     private func policy() throws -> ConsentPolicy {
         let rules = try XCTUnwrap(fixture["rules"])
-        return try ConsentPolicy(json: XCTUnwrap(C15tJSON.encode(.object(["rules": rules]))))
+        return try ConsentPolicy(json: XCTUnwrap(InthJSON.encode(.object(["rules": rules]))))
     }
 
     private func boot(
@@ -51,7 +51,7 @@ final class ConsentPolicyTests: XCTestCase {
     func testEveryPolicyTheBackendOrNoBackendModeRefusesIsRefused() throws {
         var accepted: [String] = []
         for row in try XCTUnwrap(fixture["invalid"]?.arrayValue) {
-            let data = try XCTUnwrap(C15tJSON.encode(.object(["rules": row["rules"] ?? .null])))
+            let data = try XCTUnwrap(InthJSON.encode(.object(["rules": row["rules"] ?? .null])))
             if (try? ConsentPolicy(json: data)) != nil { accepted.append(row["name"]?.stringValue ?? "?") }
         }
         XCTAssertEqual(accepted, [], "accepted policies the backend refuses")
@@ -61,7 +61,7 @@ final class ConsentPolicyTests: XCTestCase {
         var problems: [String] = []
         for row in try XCTUnwrap(fixture["accepted"]?.arrayValue) {
             let name = row["name"]?.stringValue ?? "?"
-            let data = try XCTUnwrap(C15tJSON.encode(.object(["rules": row["rules"] ?? .null])))
+            let data = try XCTUnwrap(InthJSON.encode(.object(["rules": row["rules"] ?? .null])))
             do {
                 let policy = try ConsentPolicy(json: data)
                 if ConsentPolicy.normalize(policy.rules[1]) != row["resolved"] {
@@ -158,7 +158,7 @@ final class ConsentPolicyTests: XCTestCase {
     func testEveryLocationGetsTheOutcomeTheBackendMatcherGivesUnmatchedOnesIncluded() throws {
         var problems: [String] = []
         for row in try XCTUnwrap(fixture["outcomes"]?.arrayValue) {
-            let data = try XCTUnwrap(C15tJSON.encode(.object(["rules": row["rules"] ?? .null])))
+            let data = try XCTUnwrap(InthJSON.encode(.object(["rules": row["rules"] ?? .null])))
             let policy = try ConsentPolicy(json: data)
             let country = row["inputs"]?["country"]?.stringValue
             let region = row["inputs"]?["region"]?.stringValue
@@ -184,7 +184,7 @@ final class ConsentPolicyTests: XCTestCase {
 
     private func outcomePolicy(_ pack: String) throws -> ConsentPolicy {
         let row = try XCTUnwrap(fixture["outcomes"]?.arrayValue?.first { $0["pack"]?.stringValue == pack })
-        return try ConsentPolicy(json: XCTUnwrap(C15tJSON.encode(.object(["rules": row["rules"] ?? .null]))))
+        return try ConsentPolicy(json: XCTUnwrap(InthJSON.encode(.object(["rules": row["rules"] ?? .null]))))
     }
 
     func testAnUnmatchedKnownCountryRunsTheSafeFallbackAndDropsEarlierGrants() async throws {
@@ -207,7 +207,7 @@ final class ConsentPolicyTests: XCTestCase {
     func testALocationThePolicyCannotAnswerFailsClosedAndTheSavedChoiceReturns() async throws {
         for row in try XCTUnwrap(fixture["transitions"]?.arrayValue) {
             let name = row["name"]?.stringValue ?? ""
-            let policy = try ConsentPolicy(json: XCTUnwrap(C15tJSON.encode(.object(["rules": row["rules"] ?? .null]))))
+            let policy = try ConsentPolicy(json: XCTUnwrap(InthJSON.encode(.object(["rules": row["rules"] ?? .null]))))
             let steps = try XCTUnwrap(row["steps"]?.arrayValue)
             func location(_ step: JSONValue) -> ConsentOverrides {
                 ConsentOverrides(

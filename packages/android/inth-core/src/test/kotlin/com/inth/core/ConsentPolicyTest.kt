@@ -1,13 +1,13 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentModel
-import com.c15t.core.model.ConsentSnapshot
-import com.c15t.core.model.KernelOverrides
-import com.c15t.core.policy.PolicyPrompt
-import com.c15t.core.store.C15tStore
-import com.c15t.core.transport.C15tTransport
-import com.c15t.core.transport.SaveOutcome
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentModel
+import com.inth.core.model.ConsentSnapshot
+import com.inth.core.model.KernelOverrides
+import com.inth.core.policy.PolicyPrompt
+import com.inth.core.store.InthStore
+import com.inth.core.transport.InthTransport
+import com.inth.core.transport.SaveOutcome
 import java.io.File
 import kotlin.test.*
 import kotlinx.serialization.json.*
@@ -19,8 +19,8 @@ class ConsentPolicyTest {
 	).jsonObject
 	private val policy = ConsentPolicy.fromJson(buildJsonObject { put("rules", fixture.getValue("rules")) }.toString())
 
-	private fun boot(policy: ConsentPolicy = this.policy, store: C15tStore = C15tStore(InMemoryKeyValueStore()), overrides: KernelOverrides = KernelOverrides()) =
-		testKernel(NativeConfig("https://test.c15t.app", policy = policy, consentCategories = ConsentCategory.entries, overrides = overrides), store, FixedClock(), C15tTransport.NONE)
+	private fun boot(policy: ConsentPolicy = this.policy, store: InthStore = InthStore(InMemoryKeyValueStore()), overrides: KernelOverrides = KernelOverrides()) =
+		testKernel(NativeConfig("https://test.c15t.app", policy = policy, consentCategories = ConsentCategory.entries, overrides = overrides), store, FixedClock(), InthTransport.NONE)
 			.also { it.bootstrap() }
 
 	@Test fun `rules normalize exactly as the backend normalizer does`() {
@@ -60,7 +60,7 @@ class ConsentPolicyTest {
 	}
 
 	@Test fun `changing one validity keeps the other prompt's receipt`() {
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		assertTrue(boot(store = store).save(CommitIntent.All).ok)
 		fun revised(validity: PolicyValidity) =
 			ConsentPolicy(policy.rules.map { if (it.id == "everywhere_else") it.copy(validity = validity) else it })
@@ -75,7 +75,7 @@ class ConsentPolicyTest {
 		val transport = RecordingTransport().respondSave(SaveOutcome.Delivered)
 		val core = testKernel(
 			NativeConfig("https://test.c15t.app", policy = policy, consentCategories = ConsentCategory.entries),
-			C15tStore(InMemoryKeyValueStore()), FixedClock(), transport,
+			InthStore(InMemoryKeyValueStore()), FixedClock(), transport,
 		).also { it.bootstrap() }
 		assertFalse(core.snapshot().policyPending)
 		val result = core.save(CommitIntent.All)
@@ -89,7 +89,7 @@ class ConsentPolicyTest {
 		val errors = mutableListOf<String>()
 		val core = testKernel(
 			NativeConfig("https://test.c15t.app", policyError = "Policy 'x': a partial category scope needs a scopeMode"),
-			C15tStore(InMemoryKeyValueStore()), FixedClock(), C15tTransport.NONE, logger = { errors += it.code },
+			InthStore(InMemoryKeyValueStore()), FixedClock(), InthTransport.NONE, logger = { errors += it.code },
 		).also { it.bootstrap() }
 		assertTrue(core.snapshot().policyPending)
 		assertEquals("policy-invalid", core.snapshot().error?.code)
@@ -98,13 +98,13 @@ class ConsentPolicyTest {
 	}
 
 	@Test fun `a refused policy over a cached one fails closed and keeps the stored choice`() {
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val first = boot(store = store)
 		assertTrue(first.save(CommitIntent.All).ok)
 		assertTrue(first.isAllowed(ConsentCategory.MEASUREMENT))
 		val refused = testKernel(
 			NativeConfig("https://test.c15t.app", policyError = "Policy 'x': a partial category scope needs a scopeMode", consentCategories = ConsentCategory.entries),
-			store, FixedClock(), C15tTransport.NONE,
+			store, FixedClock(), InthTransport.NONE,
 		).also { it.bootstrap() }
 		assertTrue(refused.snapshot().policyPending)
 		assertEquals("policy-invalid", refused.snapshot().error?.code)
@@ -116,7 +116,7 @@ class ConsentPolicyTest {
 		val errors = mutableListOf<String>()
 		val core = testKernel(
 			NativeConfig("https://test.c15t.app", policyError = "Policy 'x': a partial category scope needs a scopeMode"),
-			C15tStore(InMemoryKeyValueStore()), FixedClock(), C15tTransport.NONE, logger = { errors += it.code },
+			InthStore(InMemoryKeyValueStore()), FixedClock(), InthTransport.NONE, logger = { errors += it.code },
 		).also { it.bootstrap() }
 		core.reset()
 		assertTrue(core.snapshot().policyPending)
@@ -238,7 +238,7 @@ class ConsentPolicyTest {
 	}
 
 	@Test fun `an in-code policy prompts before any network`() {
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val core = boot(store = store)
 		val snapshot = core.snapshot()
 		assertFalse(snapshot.policyPending)
@@ -262,7 +262,7 @@ class ConsentPolicyTest {
 	}
 
 	@Test fun `changing the copy revision asks again after an update`() {
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val first = boot(store = store)
 		assertTrue(first.save(CommitIntent.All).ok)
 		assertTrue(first.isAllowed(ConsentCategory.MEASUREMENT))
@@ -282,7 +282,7 @@ class ConsentPolicyTest {
 		assertFailsWith<IllegalArgumentException> { ConsentPolicy(listOf(fallback.copy(model = ConsentModel.OPT_IN, prompt = PolicyPrompt.NOTICE))) }
 		assertFailsWith<IllegalArgumentException> { ConsentPolicy(listOf(fallback.copy(categories = listOf(ConsentCategory.MEASUREMENT)))) }
 		assertFailsWith<IllegalArgumentException> {
-			ConsentPolicy(listOf(fallback.copy(categories = listOf(ConsentCategory.MEASUREMENT), scopeMode = com.c15t.core.policy.ScopeMode.STRICT, preselectedCategories = listOf(ConsentCategory.MARKETING))))
+			ConsentPolicy(listOf(fallback.copy(categories = listOf(ConsentCategory.MEASUREMENT), scopeMode = com.inth.core.policy.ScopeMode.STRICT, preselectedCategories = listOf(ConsentCategory.MARKETING))))
 		}
 		assertFailsWith<IllegalArgumentException> { ConsentPolicy(listOf(fallback.copy(validity = PolicyValidity(choiceDays = 0.0)))) }
 		assertFailsWith<IllegalArgumentException> { NativeConfig("https://consent.example.test", policy = ConsentPolicy(listOf(fallback)), bundledPolicy = "{}") }

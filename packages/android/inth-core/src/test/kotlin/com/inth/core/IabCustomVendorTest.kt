@@ -1,10 +1,10 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.iab.*
-import com.c15t.core.model.*
-import com.c15t.core.store.*
-import com.c15t.core.tc.*
-import com.c15t.core.transport.*
+import com.inth.core.iab.*
+import com.inth.core.model.*
+import com.inth.core.store.*
+import com.inth.core.tc.*
+import com.inth.core.transport.*
 import java.io.File
 import kotlin.test.*
 import kotlinx.serialization.Serializable
@@ -43,7 +43,7 @@ class IabCustomVendorTest {
 	}
 
 	private fun boot(
-		store: C15tStore = C15tStore(InMemoryKeyValueStore()),
+		store: InthStore = InthStore(InMemoryKeyValueStore()),
 		http: RecordingTransport = RecordingTransport(),
 		customVendors: JsonElement? = served,
 	): ConsentCore {
@@ -80,7 +80,7 @@ class IabCustomVendorTest {
 		assertEquals(emptyList(), plainConsent.choices.customVendorConsents)
 
 		val backend = InMemoryKeyValueStore()
-		val store = C15tStore(backend)
+		val store = InthStore(backend)
 		val core = boot(store)
 		assertEquals(listOf("internal-ads", "1000482", "chat"), core.iabCustomVendors().map { it.id })
 		val accepting = assertNotNull(core.iabAcceptAllChoices())
@@ -107,7 +107,7 @@ class IabCustomVendorTest {
 		assertFalse("customVendor" in body)
 
 		// Restored on the next launch with no network.
-		val cold = testKernel(config = config, store = C15tStore(backend), clock = FixedClock(v.now), executor = com.c15t.core.spi.TaskExecutor { })
+		val cold = testKernel(config = config, store = InthStore(backend), clock = FixedClock(v.now), executor = com.inth.core.spi.TaskExecutor { })
 		cold.bootstrap()
 		assertEquals(listOf("internal-ads", "1000482", "chat"), cold.iabCustomVendors().map { it.id })
 		assertEquals(listOf("chat", "internal-ads"), cold.iabConsent?.choices?.customVendorConsents)
@@ -124,7 +124,7 @@ class IabCustomVendorTest {
 	 */
 	@Test fun `the stored envelope and save body are the same bytes for the same state`() {
 		val backend = InMemoryKeyValueStore()
-		val store = C15tStore(backend)
+		val store = InthStore(backend)
 		val core = boot(store)
 		val draft = assertNotNull(core.openIabDraft())
 		// Out of order on purpose: the stored decision sorts them.
@@ -133,14 +133,14 @@ class IabCustomVendorTest {
 			customVendorLegitimateInterests = listOf("internal-ads", "1000482"),
 		)
 		assertTrue(core.saveIab(draft.copy(choices = choices), emptyMap()).ok)
-		val bytes = assertNotNull(backend.read(C15tStoreKeys.SNAPSHOT))
-		val envelope = C15tJson.storage.decodeFromString(SnapshotEnvelope.serializer(), bytes)
+		val bytes = assertNotNull(backend.read(InthStoreKeys.SNAPSHOT))
+		val envelope = InthJson.storage.decodeFromString(SnapshotEnvelope.serializer(), bytes)
 		assertEquals(listOf("chat", "internal-ads"), envelope.iabConsent?.choices?.customVendorConsents)
 		assertEquals(listOf("1000482", "internal-ads"), envelope.iabConsent?.choices?.customVendorLegitimateInterests)
 		assertEquals(listOf("internal-ads", "1000482", "chat"), envelope.customVendors?.map { it.id })
 		val body = assertNotNull(store.readPending().single().body)
 		repeat(20) {
-			assertEquals(bytes, C15tJson.storage.encodeToString(SnapshotEnvelope.serializer(), envelope))
+			assertEquals(bytes, InthJson.storage.encodeToString(SnapshotEnvelope.serializer(), envelope))
 			assertEquals(body, assertNotNull(store.readPending().single().body))
 		}
 	}
@@ -245,7 +245,7 @@ class IabCustomVendorTest {
 		val json = """{"purposeConsents":[1],"purposeLegitimateInterests":[],"purposeObjections":[],"vendorConsents":[],
 			"vendorLegitimateInterests":[],"vendorObjections":[],"specialFeatureOptIns":[],"publisherConsents":[],
 			"publisherLegitimateInterests":[],"publisherCustomConsents":[],"publisherCustomLegitimateInterests":[]}"""
-		val choices = C15tJson.storage.decodeFromString(IabChoices.serializer(), json)
+		val choices = InthJson.storage.decodeFromString(IabChoices.serializer(), json)
 		assertEquals(emptyList(), choices.customVendorConsents)
 		assertEquals(listOf(1), choices.purposeConsents)
 	}

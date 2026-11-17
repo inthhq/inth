@@ -1,6 +1,6 @@
 import Foundation
 import XCTest
-@testable import C15tConsentUI
+@testable import InthConsentUI
 
 final class SideBrandingFrameTests: XCTestCase {
     let canvas = CGRect(x: 0, y: 0, width: 466, height: 678)

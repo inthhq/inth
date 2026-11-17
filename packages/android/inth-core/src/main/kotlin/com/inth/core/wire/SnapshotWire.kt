@@ -1,12 +1,12 @@
-package com.c15t.core.wire
+package com.inth.core.wire
 
-import com.c15t.core.model.ConsentLocation
-import com.c15t.core.model.ConsentSnapshot
-import com.c15t.core.model.ConsentSubject
-import com.c15t.core.model.ExplicitChoice
-import com.c15t.core.model.PromptPurpose
-import com.c15t.core.model.PromptRequirement
-import com.c15t.core.store.C15tJson
+import com.inth.core.model.ConsentLocation
+import com.inth.core.model.ConsentSnapshot
+import com.inth.core.model.ConsentSubject
+import com.inth.core.model.ExplicitChoice
+import com.inth.core.model.PromptPurpose
+import com.inth.core.model.PromptRequirement
+import com.inth.core.store.InthJson
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
@@ -27,7 +27,7 @@ import kotlinx.serialization.json.jsonObject
  *
  * What it does not do:
  *
- * - Rename a stored field. [com.c15t.core.store.SnapshotEnvelope] is written with
+ * - Rename a stored field. [com.inth.core.store.SnapshotEnvelope] is written with
  *   [ConsentSnapshot]'s own serializer, so an installed app still reads the envelope a
  *   previous build wrote. The projection here runs on the way out, never on the way in,
  *   and nothing reads it back.
@@ -35,10 +35,10 @@ import kotlinx.serialization.json.jsonObject
  *   are re-spelled, never recomputed.
  *
  * The encoding rules -- every key present, nulls written explicitly -- are
- * [C15tJson.storage]'s, deliberately: the boundary and the envelope must disagree only
+ * [InthJson.storage]'s, deliberately: the boundary and the envelope must disagree only
  * about the four names this object owns, not about which keys exist.
  *
- * @see com.c15t.core.store.SnapshotEnvelope for the stored spelling, which stays the
+ * @see com.inth.core.store.SnapshotEnvelope for the stored spelling, which stays the
  * core's own business.
  */
 object SnapshotWire {
@@ -110,11 +110,11 @@ object SnapshotWire {
 	 * Every other key is carried through untouched, so an object the core owns keeps the
 	 * core's shape.
 	 *
-	 * @param snapshot the live snapshot, from [com.c15t.core.C15t.snapshot] or a kernel.
+	 * @param snapshot the live snapshot, from [com.inth.core.Inth.snapshot] or a kernel.
 	 * @returns a JSON object with all 22 snapshot keys, four of them re-spelled.
 	 */
 	fun toJsonElement(snapshot: ConsentSnapshot): JsonObject {
-		val encoded = C15tJson.storage
+		val encoded = InthJson.storage
 			.encodeToJsonElement(ConsentSnapshot.serializer(), snapshot)
 			.jsonObject
 		// A LinkedHashMap replacement keeps each key where the model put it, so the
@@ -148,7 +148,7 @@ object SnapshotWire {
 	 * @returns the JSON the JavaScript protocol parses.
 	 */
 	fun encodeToString(snapshot: ConsentSnapshot): String =
-		C15tJson.storage.encodeToString(JsonObject.serializer(), toJsonElement(snapshot))
+		InthJson.storage.encodeToString(JsonObject.serializer(), toJsonElement(snapshot))
 
 	/** `subjectId`, never `id`. An absent optional stays absent, as the kernel writes it. */
 	private fun subjectOf(subject: ConsentSubject?): JsonElement {

@@ -1,6 +1,6 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.model.KernelError
+import com.inth.core.model.KernelError
 
 /**
  * Outcome of [ConsentCore.save].
@@ -34,8 +34,8 @@ data class CommitResult(
 	 * The backend accepted this body, and the queue released it, before this call returned.
 	 *
 	 * A real claim, and a narrow one. The first send is not joined, so the only way it can
-	 * be observed from this thread is that the host's [com.c15t.core.spi.TaskExecutor] ran
-	 * it inline -- which is what [com.c15t.core.spi.TaskExecutor.DIRECT] does, and what a
+	 * be observed from this thread is that the host's [com.inth.core.spi.TaskExecutor] ran
+	 * it inline -- which is what [com.inth.core.spi.TaskExecutor.DIRECT] does, and what a
 	 * host that already owns a thread does. Behind a pool this is always `false`, and that
 	 * is not a failure: the obligation is [queued], and delivery arrives as the queue
 	 * drains or as an error event carrying `save-rejected`, `save-undeliverable`, or

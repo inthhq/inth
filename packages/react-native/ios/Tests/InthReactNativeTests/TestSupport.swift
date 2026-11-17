@@ -1,10 +1,10 @@
-@_spi(C15tInternal) import C15tCore
-@_spi(C15tInternal) import C15tReactNativeBridge
+@_spi(InthInternal) import InthCore
+@_spi(InthInternal) import InthReactNativeBridge
 import Foundation
 import XCTest
 
 /// A sink that records what the pump decided to send, in order.
-final class RecordingSink: C15tEventSink, @unchecked Sendable {
+final class RecordingSink: InthEventSink, @unchecked Sendable {
     private let lock = NSLock()
     private var received: [(event: String, payload: String)] = []
 
@@ -54,8 +54,8 @@ func assertJSONNull(_ payload: [String: Any], _ key: String, file: StaticString 
 /// `Result<Void, _>` is not `Equatable`, so comparing the failure by hand is the only
 /// way to check the reason rather than merely that something went wrong.
 func assertBridgeFailure<ResultType>(
-    _ result: Result<ResultType, C15tBridgeError>,
-    _ expected: C15tBridgeError,
+    _ result: Result<ResultType, InthBridgeError>,
+    _ expected: InthBridgeError,
     file: StaticString = #filePath,
     line: UInt = #line
 ) {
@@ -70,13 +70,13 @@ let testProjectURL = "https://your-project.inth.app"
 
 /// A memory-backed configuration, so no test touches the Keychain. Start it with
 /// ``startMemoryCore(_:)`` so it does not touch the network either.
-func memoryConfiguration() -> C15tBridgeConfiguration {
-    C15tBridgeConfiguration(
+func memoryConfiguration() -> InthBridgeConfiguration {
+    InthBridgeConfiguration(
         autoBootstrap: true,
         backendURL: testProjectURL,
         domain: nil,
         storageMode: .memory,
-        keychainService: C15tBridgeConfiguration.defaultKeychainService,
+        keychainService: InthBridgeConfiguration.defaultKeychainService,
         overrides: ConsentOverrides(country: nil, region: nil, language: "de", gpc: nil),
         consentCategories: nil,
         gpc: nil
@@ -86,14 +86,14 @@ func memoryConfiguration() -> C15tBridgeConfiguration {
 /// Start the bridge's core through its own start path, with no transport behind it,
 /// so the async commands are no-ops and no test opens a socket.
 @discardableResult
-func startMemoryCore(_ configuration: C15tBridgeConfiguration = memoryConfiguration()) -> Bool {
-    C15tReactNativeBootstrap.start(configuration: configuration, fileStoreDirectory: nil, transport: { _ in nil })
+func startMemoryCore(_ configuration: InthBridgeConfiguration = memoryConfiguration()) -> Bool {
+    InthReactNativeBootstrap.start(configuration: configuration, fileStoreDirectory: nil, transport: { _ in nil })
 }
 
 /// ``startMemoryCore(_:)`` for a launch that reads `Info.plist`.
 @discardableResult
 func startWithoutNetwork(infoPlist: [String: Any]) -> Bool {
-    C15tReactNativeBootstrap.start(infoPlist: infoPlist, fileStoreDirectory: nil, transport: { _ in nil })
+    InthReactNativeBootstrap.start(infoPlist: infoPlist, fileStoreDirectory: nil, transport: { _ in nil })
 }
 
 /// A transport that counts what the core asked it to send, and decides whether a save is
@@ -108,7 +108,7 @@ func startWithoutNetwork(infoPlist: [String: Any]) -> Bool {
 /// scope covers every optional category, so `ConsentCore/save(_:)` has a scope to be made
 /// against and the queue holds real bytes. Hand-building a matched rule here would copy
 /// `Fixture` from the core's own suite for no extra coverage.
-final class RecordingTransport: C15tTransport, @unchecked Sendable {
+final class RecordingTransport: InthTransport, @unchecked Sendable {
     let domain = "recording"
 
     private let lock = NSLock()
@@ -143,14 +143,14 @@ final class RecordingTransport: C15tTransport, @unchecked Sendable {
         return _saveCount
     }
 
-    func performInit(_ context: InitContext) async -> Result<InitResponse, C15tError> {
+    func performInit(_ context: InitContext) async -> Result<InitResponse, InthError> {
         lock.lock()
         _initCount += 1
         lock.unlock()
         return .success(InitResponse(policyResolution: Self.unconfiguredResolution))
     }
 
-    func sendSave(_ body: Data) async -> Result<Void, C15tError> {
+    func sendSave(_ body: Data) async -> Result<Void, InthError> {
         lock.lock()
         _saveCount += 1
         let failing = _savesFail
@@ -165,7 +165,7 @@ final class RecordingTransport: C15tTransport, @unchecked Sendable {
         subjectId: String,
         externalId: String,
         identityProvider: String?
-    ) async -> Result<Void, C15tError> {
+    ) async -> Result<Void, InthError> {
         .success(())
     }
 
@@ -173,7 +173,7 @@ final class RecordingTransport: C15tTransport, @unchecked Sendable {
     /// non-matched outcome, which evaluates against the safe fallback rather than leaving
     /// `policyPending` set.
     static let unconfiguredResolution: JSONValue = .object([
-        "version": .integer(Int64(c15tPolicyContractVersion)),
+        "version": .integer(Int64(inthPolicyContractVersion)),
         "status": .string("unconfigured"),
         "policy": .null,
     ])

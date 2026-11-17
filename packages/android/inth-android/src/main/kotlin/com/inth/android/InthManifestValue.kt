@@ -1,4 +1,4 @@
-package com.c15t.android
+package com.inth.android
 
 import android.os.Bundle
 
@@ -16,7 +16,7 @@ import android.os.Bundle
  * Absent stays absent, which is not the same answer as `false`: the core derives the
  * GPC signal when nothing declared one, and a wrong `false` would silence it.
  */
-object C15tManifestValue {
+object InthManifestValue {
 	/**
 	 * Read one entry without naming its type, so the type can be inspected.
 	 *

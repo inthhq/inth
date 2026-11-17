@@ -2,14 +2,14 @@
  * A fake of the native consent core, speaking the same JSON strings over the
  * same Codegen surface as the Swift and Kotlin modules.
  *
- * `@c15t/react-native/testing` builds its test client on this, and the
+ * `@inth/react-native/testing` builds its test client on this, and the
  * package's own tests build their counting double on it too, so there is one
  * fake and not two that drift apart. It holds no consent logic beyond what a
  * test has to see move: a commit changes the permissions it names, a reset
  * goes back to a first launch, and the presenter opens and closes sessions.
  */
 
-import type { NativeC15tTurboModule } from '../native/module';
+import type { NativeInthTurboModule } from '../native/module';
 import type { NativeAutoPresentSettings } from '../native/presenter';
 import type {
 	CommitIntent,
@@ -282,8 +282,8 @@ export interface FakeTrackingReply {
 	readonly status?: TrackingAuthorization;
 }
 
-/** Options for {@link createFakeNativeC15t}. */
-export interface FakeNativeC15tOptions {
+/** Options for {@link createFakeNativeInth}. */
+export interface FakeNativeInthOptions {
 	/** Deliver one native event, as the module's emitter would. */
 	readonly emit: (eventName: string, payload: string) => void;
 	/** The snapshot served first. */
@@ -310,9 +310,9 @@ export interface FakeNativeC15tOptions {
 }
 
 /** A fake native core: the module plus the controls a test drives it with. */
-export interface FakeNativeC15t {
+export interface FakeNativeInth {
 	/** The module, in the shape the TurboModule registry returns. */
-	readonly nativeModule: NativeC15tTurboModule;
+	readonly nativeModule: NativeInthTurboModule;
 	/** The snapshot served now, or the raw text when a test made it unreadable. */
 	readonly snapshot: () => ConsentSnapshot | string;
 	/**
@@ -374,9 +374,9 @@ const serialize = function serialize(value: ConsentSnapshot | string): string {
  * @param options - What to serve first, and where events go.
  * @returns The module and its controls.
  */
-export const createFakeNativeC15t = function createFakeNativeC15t(
-	options: FakeNativeC15tOptions
-): FakeNativeC15t {
+export const createFakeNativeInth = function createFakeNativeInth(
+	options: FakeNativeInthOptions
+): FakeNativeInth {
 	const { emit } = options;
 	const applyCommits = options.applyCommits ?? true;
 	const autoPresents = options.autoPresents ?? true;
@@ -391,7 +391,7 @@ export const createFakeNativeC15t = function createFakeNativeC15t(
 	let sessionCount = 0;
 	const commits: CommitIntent[] = [];
 	const autoPresentSettings: NativeAutoPresentSettings[] = [];
-	const tracking: FakeNativeC15t['tracking'] = {
+	const tracking: FakeNativeInth['tracking'] = {
 		fallback: { status: trackingStatus },
 		payloads: [],
 		queue: [],
@@ -421,7 +421,7 @@ export const createFakeNativeC15t = function createFakeNativeC15t(
 			: [];
 
 	/** The policy the last `reset()` cleared, until the next init restores it. */
-	let clearedPolicy: ReturnType<FakeNativeC15t['policyBeforeReset']> = null;
+	let clearedPolicy: ReturnType<FakeNativeInth['policyBeforeReset']> = null;
 
 	/** The categories answered since the owed prompt became owed. */
 	const answeredSinceOwed = new Set<OptionalConsentCategory>(
@@ -621,7 +621,7 @@ export const createFakeNativeC15t = function createFakeNativeC15t(
 		autoPresentIfOwed();
 	};
 
-	const closeSession: FakeNativeC15t['closeSession'] = (kind, intent) => {
+	const closeSession: FakeNativeInth['closeSession'] = (kind, intent) => {
 		const closing = session;
 		if (closing === null) {
 			throw new Error(
@@ -730,9 +730,9 @@ export const createFakeNativeC15t = function createFakeNativeC15t(
 			return Promise.reject(
 				Object.assign(
 					new Error(
-						'This build leaves out the stock consent screens (c15t.nativeUI is false). Render your own consent UI with the headless hooks.'
+						'This build leaves out the stock consent screens (inth.nativeUI is false). Render your own consent UI with the headless hooks.'
 					),
-					{ code: 'C15T_NATIVE_UI_EXCLUDED' }
+					{ code: 'INTH_NATIVE_UI_EXCLUDED' }
 				)
 			);
 		}
@@ -742,14 +742,14 @@ export const createFakeNativeC15t = function createFakeNativeC15t(
 					new Error(
 						'The privacy-policy URL is not an absolute HTTPS URL with a host.'
 					),
-					{ code: 'C15T_PRESENTER_INVALID_URL' }
+					{ code: 'INTH_PRESENTER_INVALID_URL' }
 				)
 			);
 		}
 		return Promise.resolve(presentSession(presentation));
 	};
 
-	const nativeModule: NativeC15tTurboModule = {
+	const nativeModule: NativeInthTurboModule = {
 		addListener: () => undefined,
 		closeConsentPresenter: (sessionId: string) => {
 			if (session?.sessionId === sessionId) {

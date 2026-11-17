@@ -1,7 +1,7 @@
-# c15t for Android: notes for coding agents
+# Inth for Android: notes for coding agents
 
-This file ships in the sources jar of `com.c15t:c15t-core`, `com.c15t:c15t-android`
-and `com.c15t:c15t-consent-ui`, and is the overview page of their API docs. It
+This file ships in the sources jar of `com.inth:inth-core`, `com.inth:inth-android`
+and `com.inth:inth-consent-ui`, and is the overview page of their API docs. It
 tells an agent working in an app that uses these artifacts where the guides are
 and which rules the integration must keep.
 
@@ -10,10 +10,10 @@ and which rules the integration must keep.
 The Android SDK is a private prerelease, and its guides are not published on
 c15t.com yet. Read them from either place:
 
-- The c15t source your maintainer supplied: `docs/frameworks/android/`
+- The Inth source your maintainer supplied: `docs/frameworks/android/`
   (`quickstart.mdx`, `configuration.mdx`, `headless.mdx`, `customize.mdx`) and
   `docs/guides/mobile-*.mdx` (IAB, offline startup, identity, verification).
-- The `@c15t/react-native` package, which bundles the same pages as Markdown
+- The `@inth/react-native` package, which bundles the same pages as Markdown
   under `docs/frameworks/android/` and `docs/guides/`.
 
 Once the mobile SDKs are public, the pages move to
@@ -22,8 +22,8 @@ Once the mobile SDKs are public, the pages move to
 ## Rules the integration keeps
 
 - Install one engine, once, in `Application.onCreate`, with
-  `C15tAndroid.install(context, NativeConfig(backendUrl = ...))`. Read it later
-  through `C15t.current`. Never install a second engine.
+  `InthAndroid.install(context, NativeConfig(backendUrl = ...))`. Read it later
+  through `Inth.current`. Never install a second engine.
 - `backendUrl` is the project URL from the Inth dashboard, such as
   `https://your-project.inth.app`. No other host is accepted, and there is no
   custom transport or offline mode.

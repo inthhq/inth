@@ -1,4 +1,4 @@
-package com.c15t.core.store
+package com.inth.core.store
 
 import kotlinx.serialization.json.Json
 
@@ -10,7 +10,7 @@ import kotlinx.serialization.json.Json
  * a value, and an invented permission is exactly what the contract forbids. Here
  * it throws, and every caller turns that throw into the deny-all snapshot.
  */
-object C15tJson {
+object InthJson {
 	/**
 	 * Encoder/decoder for the persisted envelope and queue.
 	 *

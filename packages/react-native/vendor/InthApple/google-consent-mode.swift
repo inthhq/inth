@@ -1,9 +1,9 @@
-#if canImport(C15tCore)
-import C15tCore
+#if canImport(InthCore)
+import InthCore
 #endif
 import Foundation
 
-/// A Google Consent Mode v2 consent type and the c15t category that grants it.
+/// A Google Consent Mode v2 consent type and the Inth category that grants it.
 ///
 /// The mapping is the web's (`@c15t/integrations`). `GoogleConsentModeTests` checks
 /// it against `packages/native-protocol/google-consent-mode/consent-mode-v2.json`, which is
@@ -18,7 +18,7 @@ public enum GoogleConsentType: String, CaseIterable, Sendable, Hashable {
     case personalizationStorage = "personalization_storage"
     case securityStorage = "security_storage"
 
-    /// The c15t category that grants this type.
+    /// The Inth category that grants this type.
     public var category: ConsentCategory {
         switch self {
         case .adStorage, .adUserData, .adPersonalization: return .marketing
@@ -30,19 +30,19 @@ public enum GoogleConsentType: String, CaseIterable, Sendable, Hashable {
     }
 }
 
-/// Google Consent Mode v2 state from c15t consent, for vendor helpers and app code.
+/// Google Consent Mode v2 state from Inth consent, for vendor helpers and app code.
 ///
 /// A type is granted when the category that grants it is granted. A pending policy
 /// denies every optional category, so it denies every type except `security_storage`.
 public enum GoogleConsentMode {
-    /// Each c15t category and the types it grants, in ``GoogleConsentType`` order.
+    /// Each Inth category and the types it grants, in ``GoogleConsentType`` order.
     public static var mapping: [ConsentCategory: [GoogleConsentType]] {
         Dictionary(grouping: GoogleConsentType.allCases, by: \.category)
     }
 
     /// Resolves every type from a category reader.
     ///
-    /// - Parameter isGranted: Whether a c15t category is granted.
+    /// - Parameter isGranted: Whether an Inth category is granted.
     /// - Returns: Every ``GoogleConsentType``, granted (`true`) or denied (`false`).
     public static func consent(_ isGranted: (ConsentCategory) -> Bool) -> [GoogleConsentType: Bool] {
         var result: [GoogleConsentType: Bool] = [:]

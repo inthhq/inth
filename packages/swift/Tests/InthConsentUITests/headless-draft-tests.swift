@@ -1,7 +1,7 @@
-@_spi(C15tInternal) import C15tCore
+@_spi(InthInternal) import InthCore
 import Foundation
 import XCTest
-@testable import C15tConsentUI
+@testable import InthConsentUI
 
 /// The headless draft's rules, with no view: what an app-owned screen relies on.
 @MainActor

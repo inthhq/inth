@@ -1,16 +1,16 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentDecision
-import com.c15t.core.model.ConsentSnapshot
-import com.c15t.core.model.KernelError
-import com.c15t.core.model.KernelOverrides
-import com.c15t.core.model.KernelUser
-import com.c15t.core.spi.Clock
-import com.c15t.core.spi.TaskExecutor
-import com.c15t.core.store.C15tStore
-import com.c15t.core.tc.GlobalVendorList
-import com.c15t.core.transport.C15tTransport
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentDecision
+import com.inth.core.model.ConsentSnapshot
+import com.inth.core.model.KernelError
+import com.inth.core.model.KernelOverrides
+import com.inth.core.model.KernelUser
+import com.inth.core.spi.Clock
+import com.inth.core.spi.TaskExecutor
+import com.inth.core.store.InthStore
+import com.inth.core.tc.GlobalVendorList
+import com.inth.core.transport.InthTransport
 import kotlinx.serialization.json.JsonObject
 import java.util.concurrent.atomic.AtomicReference
 
@@ -21,22 +21,22 @@ import java.util.concurrent.atomic.AtomicReference
  * Every name here is the contract's name, so a binding layer can forward call for
  * call. [bootstrap] is idempotent and safe from an app-launch hook; the read
  * paths work before it runs and simply answer deny-all, which is what keeps an
- * ad SDK that starts earlier than c15t from ever seeing a permissive answer.
+ * ad SDK that starts earlier than Inth from ever seeing a permissive answer.
  *
  * ```kotlin
- * C15tAndroid.install(context, NativeConfig(backendUrl = "https://your-project.inth.app"))
- * when (C15t.decision(ConsentCategory.MEASUREMENT)) {
+ * InthAndroid.install(context, NativeConfig(backendUrl = "https://your-project.inth.app"))
+ * when (Inth.decision(ConsentCategory.MEASUREMENT)) {
  *     ConsentDecision.GRANTED -> measurementSdk.init()
  *     ConsentDecision.DENIED -> Unit
  *     // Not answered yet: stay off, and switch on when the answer says so.
- *     ConsentDecision.PENDING -> C15t.gateDecision(ConsentCategory.MEASUREMENT) { decision ->
+ *     ConsentDecision.PENDING -> Inth.gateDecision(ConsentCategory.MEASUREMENT) { decision ->
  *         if (decision == ConsentDecision.GRANTED) measurementSdk.init()
  *     }
  * }
- * C15t.save(CommitIntent.All)
+ * Inth.save(CommitIntent.All)
  * ```
  */
-object C15t {
+object Inth {
 	private val kernel = AtomicReference<ConsentCore?>()
 	private val installLock = Any()
 	private val uninstallListeners = java.util.concurrent.CopyOnWriteArrayList<(ConsentCore) -> Unit>()
@@ -51,20 +51,20 @@ object C15t {
 	 * Repeated calls are ignored while a kernel is installed, which makes this safe
 	 * from both an `androidx.startup` initializer and an Application onCreate.
 	 *
-	 * @param store Persistence the host provides; see [C15tStore].
+	 * @param store Persistence the host provides; see [InthStore].
 	 * @param executor Where init and delivery run; `null` uses a daemon thread.
 	 * @return The installed core. A repeated call returns the core already
 	 * installed, with its original config.
 	 *
 	 * Internal, because it takes a store and a transport. Apps call
-	 * `C15tAndroid.install`.
+	 * `InthAndroid.install`.
 	 */
-	@C15tInternalApi
+	@InthInternalApi
 	fun bootstrap(
 		config: NativeConfig,
-		store: C15tStore,
+		store: InthStore,
 		clock: Clock = Clock.SYSTEM,
-		transport: C15tTransport = C15tTransport.NONE,
+		transport: InthTransport = InthTransport.NONE,
 		executor: TaskExecutor? = null,
 		logger: (KernelError) -> Unit = {},
 	): ConsentCore =
@@ -91,7 +91,7 @@ object C15t {
 	 * This clears no consent. Nothing is deleted from storage, no snapshot is
 	 * republished, and the next [bootstrap] hydrates exactly what this one left
 	 * behind. A host that means "forget what this device decided" wants
-	 * [current]'s own method instead: `C15t.current?.reset()`, which wipes consent,
+	 * [current]'s own method instead: `Inth.current?.reset()`, which wipes consent,
 	 * keeps the subject id, and re-resolves the policy.
 	 */
 	fun uninstall() {
@@ -143,7 +143,7 @@ object C15t {
 	 *
 	 * Before [bootstrap] this answers [ConsentDecision.PENDING] for an optional
 	 * category rather than [ConsentDecision.DENIED], which is the whole point of the
-	 * type: an ad SDK that starts ahead of c15t has not been refused, it has not been
+	 * type: an ad SDK that starts ahead of Inth has not been refused, it has not been
 	 * answered, and it has to keep listening. Only a resolved policy plus a subject
 	 * refusal produces `DENIED`.
 	 *
@@ -232,7 +232,7 @@ object C15t {
 			confirmed = emptyMap(),
 			queued = false,
 			delivered = false,
-			error = KernelError("not-bootstrapped", "c15t: no core is installed. Call C15tAndroid.install first"),
+			error = KernelError("not-bootstrapped", "Inth: no core is installed. Call InthAndroid.install first"),
 		)
 		return active.save(intent)
 	}

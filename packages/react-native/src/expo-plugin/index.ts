@@ -1,19 +1,19 @@
 /**
- * Entry point for `@c15t/react-native/expo-plugin`, which the package root's
+ * Entry point for `@inth/react-native/expo-plugin`, which the package root's
  * `app.plugin.js` also loads, so `app.json` can name either.
  *
  * Add it to `app.json` with an explicit Android artifact repository: the native core gets its
  * bootstrap config, the launch hook, the Android permission, and the iOS privacy
- * keys, and the same values reach JavaScript through `extra.c15t`.
+ * keys, and the same values reach JavaScript through `extra.inth`.
  *
  * ```json
  * {
  *   "plugins": [
  *     [
- *       "@c15t/react-native",
+ *       "@inth/react-native",
  *       {
  *         "backendURL": "https://your-project.inth.app",
- *         "androidMavenRepository": { "url": "https://maven.example.com/c15t" }
+ *         "androidMavenRepository": { "url": "https://maven.example.com/inth" }
  *       }
  *     ]
  *   ]
@@ -32,25 +32,25 @@
  */
 import { createRunOncePlugin } from './config-plugins';
 import { PLUGIN_NAME } from './constants';
-import { withC15t } from './with-c15t';
+import { withInth } from './with-inth';
 
 /** The plugin to name in an `app.json` `plugins` array. */
-const withC15tOnce = createRunOncePlugin(withC15t, PLUGIN_NAME);
+const withInthOnce = createRunOncePlugin(withInth, PLUGIN_NAME);
 
-export default withC15tOnce;
+export default withInthOnce;
 
-export { withC15t } from './with-c15t';
-export { applyParamsOnConfig, type C15tExtraConfig } from './with-c15t';
-export { C15tPluginError } from './errors';
+export { withInth } from './with-inth';
+export { applyParamsOnConfig, type InthExtraConfig } from './with-inth';
+export { InthPluginError } from './errors';
 export type {
-	C15tGppMspaMode,
-	C15tGppPluginProps,
-	C15tIabPluginProps,
-	C15tPluginProps,
-	C15tTrackingMarkdownLocalization,
-	ResolvedC15tGppParams,
-	ResolvedC15tIabParams,
-	ResolvedC15tParams,
+	InthGppMspaMode,
+	InthGppPluginProps,
+	InthIabPluginProps,
+	InthPluginProps,
+	InthTrackingMarkdownLocalization,
+	ResolvedInthGppParams,
+	ResolvedInthIabParams,
+	ResolvedInthParams,
 } from './params';
 export {
 	INTH_PROJECT_HOST_SUFFIXES,
@@ -60,9 +60,9 @@ export {
 export type { ProjectURLOptions, ProjectURLReason } from './project-url';
 export type { WorkflowContext } from './workflow';
 
-export type { C15tAndroidMavenRepository } from './maven';
+export type { InthAndroidMavenRepository } from './maven';
 export type {
-	C15tThemeColorName,
-	C15tThemeColors,
-	C15tThemePluginProps,
+	InthThemeColorName,
+	InthThemeColors,
+	InthThemePluginProps,
 } from './theme';

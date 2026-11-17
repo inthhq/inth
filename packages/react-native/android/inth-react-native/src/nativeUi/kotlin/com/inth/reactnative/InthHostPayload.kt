@@ -1,9 +1,9 @@
-package com.c15t.reactnative
+package com.inth.reactnative
 
-import com.c15t.consentui.ConsentHostOutcome
-import com.c15t.consentui.ConsentHostPresentation
-import com.c15t.consentui.ConsentHostSession
-import com.c15t.core.store.C15tJson
+import com.inth.consentui.ConsentHostOutcome
+import com.inth.consentui.ConsentHostPresentation
+import com.inth.consentui.ConsentHostSession
+import com.inth.core.store.InthJson
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -11,10 +11,10 @@ import kotlinx.serialization.json.put
 
 /**
  * The bridge encodings of the stock consent host's answers. They live beside
- * [C15tNativeUi] because they name `c15t-consent-ui` types, which a build without the
+ * [InthNativeUi] because they name `inth-consent-ui` types, which a build without the
  * stock screens does not link.
  */
-internal object C15tHostPayload {
+internal object InthHostPayload {
 	/**
 	 * The answer to `presentConsentPrompt` and `presentPreferences`, in the
 	 * `ConsentPresenterSession` shape `src/native/presenter.ts` reads.
@@ -71,5 +71,5 @@ internal object C15tHostPayload {
 		},
 	)
 
-	private fun encode(body: JsonObject): String = C15tJson.storage.encodeToString(JsonObject.serializer(), body)
+	private fun encode(body: JsonObject): String = InthJson.storage.encodeToString(JsonObject.serializer(), body)
 }

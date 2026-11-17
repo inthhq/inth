@@ -33,21 +33,21 @@ import Foundation
 /// No timer belongs anywhere near this. The contract forbids a core that wakes itself on
 /// a cadence, because whatever it decides at an arbitrary minute is an answer the policy
 /// never gave.
-public final class C15tForegroundObserver: @unchecked Sendable {
+public final class InthForegroundObserver: @unchecked Sendable {
     private let lock = NSLock()
     private let onForeground: @Sendable () -> Void
     private let notification: Notification.Name
     private var token: (any NSObjectProtocol)?
 
     /// - Parameters:
-    ///   - onForeground: what to do each time the app comes back. ``C15tApple``
+    ///   - onForeground: what to do each time the app comes back. ``InthApple``
     ///     passes the queue replay and the policy refresh; a test passes a recorder.
     ///   - notification: the name that means the app came back. Overridable so the
     ///     observer can be driven from ``Foundation/NotificationCenter`` in a test that has
     ///     no app to activate.
     public init(
         onForeground: @escaping @Sendable () -> Void,
-        notification: Notification.Name = C15tForegroundObserver.didBecomeActive
+        notification: Notification.Name = InthForegroundObserver.didBecomeActive
     ) {
         self.onForeground = onForeground
         self.notification = notification

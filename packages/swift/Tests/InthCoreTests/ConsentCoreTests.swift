@@ -1,6 +1,6 @@
 import Foundation
 import XCTest
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 /// The behaviours the mobile contract makes mandatory, plus the edges that make
 /// them mandatory under reuse: a relaunch, a dead backend, a policy that changes
@@ -150,7 +150,7 @@ final class ConsentCoreTests: XCTestCase {
     // MARK: 3. Fail closed
 
     func testUnparseablePolicyWireFailsClosed() async {
-        let contract = Int64(c15tPolicyContractVersion)
+        let contract = Int64(inthPolicyContractVersion)
         let unsupported = PolicyFailureReason.unsupportedContract.rawValue
         let invalid = PolicyFailureReason.invalidPayload.rawValue
         let cases: [(String, JSONValue, String)] = [
@@ -230,7 +230,7 @@ final class ConsentCoreTests: XCTestCase {
 
         // And pending because the answer was unreadable.
         http.initResponse = Fixture.initResponse(policyResolution: .object([
-            "version": .integer(Int64(c15tPolicyContractVersion)),
+            "version": .integer(Int64(inthPolicyContractVersion)),
             "status": .string("matched"),
             "policyId": .string("x"),
             "matchedBy": .string("telepathy"),
@@ -368,7 +368,7 @@ final class ConsentCoreTests: XCTestCase {
         XCTAssertEqual(firstAttempt, queued[0], "the queue holds exactly what was sent")
 
         // Everything the subject did is inside the body, not reconstructed later.
-        let body = try? XCTUnwrap(C15tJSON.parse(firstAttempt ?? Data())?.objectValue)
+        let body = try? XCTUnwrap(InthJSON.parse(firstAttempt ?? Data())?.objectValue)
         XCTAssertEqual(body?["givenAt"]?.intValue, actionAt)
         XCTAssertEqual(body?["consentAction"]?.stringValue, "custom")
         XCTAssertEqual(body?["domain"]?.stringValue, "app.example.com")
@@ -412,7 +412,7 @@ final class ConsentCoreTests: XCTestCase {
         await core.waitUntilIdle()
         let queuedBody = try? XCTUnwrap(core.pendingSaveBodies().first)
         XCTAssertNotNil(queuedBody)
-        let queuedJSON = C15tJSON.parse(queuedBody ?? Data())
+        let queuedJSON = InthJSON.parse(queuedBody ?? Data())
         let originalToken = queuedJSON?["policySnapshotToken"]?.stringValue
         let originalModel = queuedJSON?["model"]?.stringValue
         let originalGivenAt = queuedJSON?["givenAt"]?.intValue
@@ -458,7 +458,7 @@ final class ConsentCoreTests: XCTestCase {
         await core.waitUntilIdle()
 
         XCTAssertEqual(http.lastSaveBody, queuedBody, "a queued payload is replayed verbatim")
-        let replayedJSON = C15tJSON.parse(http.lastSaveBody ?? Data())
+        let replayedJSON = InthJSON.parse(http.lastSaveBody ?? Data())
         XCTAssertEqual(replayedJSON?["policySnapshotToken"]?.stringValue, originalToken)
         XCTAssertEqual(replayedJSON?["model"]?.stringValue, originalModel)
         XCTAssertEqual(replayedJSON?["givenAt"]?.intValue, originalGivenAt)
@@ -494,7 +494,7 @@ final class ConsentCoreTests: XCTestCase {
         XCTAssertEqual(core.pendingSaveCount(), 20, "oldest dropped first")
         let bodies = core.pendingSaveBodies()
         XCTAssertEqual(bodies.count, 20)
-        let givenAt = bodies.map { C15tJSON.parse($0)?["givenAt"]?.intValue ?? -1 }
+        let givenAt = bodies.map { InthJSON.parse($0)?["givenAt"]?.intValue ?? -1 }
         XCTAssertEqual(givenAt, Array(6...25).map { base + Int64($0) })
     }
 
@@ -509,7 +509,7 @@ final class ConsentCoreTests: XCTestCase {
         ))
         let generated = core.snapshot().subject?.id
 
-        // A stored value is only adopted when it is a c15t subject id. Anything else
+        // A stored value is only adopted when it is an Inth subject id. Anything else
         // is replaced, which is the check that keeps a device identifier from
         // becoming a consent key.
         let hardware = InMemoryStore()
@@ -548,10 +548,10 @@ final class ConsentCoreTests: XCTestCase {
             + http.recordedIdentityRequests
         XCTAssertGreaterThanOrEqual(requests.count, 3)
         for request in requests {
-            XCTAssertEqual(request.headers[C15t.versionHeader], C15t.version)
+            XCTAssertEqual(request.headers[Inth.versionHeader], Inth.version)
             XCTAssertEqual(
-                request.headers[C15t.policyContractHeader],
-                String(c15tPolicyContractVersion)
+                request.headers[Inth.policyContractHeader],
+                String(inthPolicyContractVersion)
             )
         }
         XCTAssertEqual(http.recordedInitRequests.first?.url.path, "/init")
@@ -757,7 +757,7 @@ final class ConsentCoreTests: XCTestCase {
         // the payload the backend stores keeps what the subject said.
         XCTAssertEqual(core.snapshot().explicitChoice?.categories[.marketing]?.value, true)
         let body = http.recordedSaveRequests.last?.body ?? Data()
-        XCTAssertEqual(C15tJSON.parse(body)?["preferences"]?["marketing"]?.boolValue, true)
+        XCTAssertEqual(InthJSON.parse(body)?["preferences"]?["marketing"]?.boolValue, true)
     }
 
     /// A notice rule belongs to an opt-out policy: `POLICY_MODEL_PROMPTS` in
@@ -909,8 +909,8 @@ final class ConsentCoreTests: XCTestCase {
     // MARK: Snapshot shape
 
     func testSnapshotReservesTheIABKeyAsNull() throws {
-        let data = try C15tJSON.encode(ConsentSnapshot.coldStart)
-        let wire = try? XCTUnwrap(C15tJSON.parse(data)?.objectValue)
+        let data = try InthJSON.encode(ConsentSnapshot.coldStart)
+        let wire = try? XCTUnwrap(InthJSON.parse(data)?.objectValue)
         XCTAssertNotNil(wire)
         XCTAssertTrue(wire?.keys.contains("iab") == true, "the key must exist for older readers")
         XCTAssertTrue(wire?["iab"]?.isNull == true)
@@ -945,7 +945,7 @@ final class ConsentCoreTests: XCTestCase {
             policyResolution: Fixture.unconfiguredResolution(),
             storedAt: 2
         )
-        let decoded = StoredEnvelope.decode(try C15tJSON.encode(envelope))
+        let decoded = StoredEnvelope.decode(try InthJSON.encode(envelope))
         XCTAssertEqual(decoded?.snapshot, original)
         XCTAssertEqual(decoded?.noticeDismissal?.fingerprint, "n")
 

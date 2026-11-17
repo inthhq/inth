@@ -1,4 +1,4 @@
-import C15tCore
+import InthCore
 import SwiftUI
 
 // #region docs:swiftui-draft title="Sources/headless-preferences.swift"

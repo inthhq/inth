@@ -1,7 +1,7 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.spi.KeyValueStore
-import com.c15t.core.store.ResilientKeyValueStore
+import com.inth.core.spi.KeyValueStore
+import com.inth.core.store.ResilientKeyValueStore
 import java.security.KeyStoreException
 import javax.crypto.AEADBadTagException
 import kotlin.test.Test
@@ -183,6 +183,6 @@ class ResilientStoreTest {
 	}
 
 	private companion object {
-		const val SNAPSHOT = "com.c15t.snapshot"
+		const val SNAPSHOT = "com.inth.snapshot"
 	}
 }

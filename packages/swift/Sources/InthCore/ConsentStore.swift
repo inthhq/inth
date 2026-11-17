@@ -2,13 +2,13 @@ import Foundation
 
 /// Keys of the two protected items the contract names, plus the write queue.
 public enum StorageKey {
-    /// The c15t subject id. Separate from the snapshot so an identity survives a
+    /// The Inth subject id. Separate from the snapshot so an identity survives a
     /// policy reset, and a reset never has to rewrite it.
-    public static let subject = "com.c15t.subject"
+    public static let subject = "com.inth.subject"
     /// The stored envelope: last known snapshot, records, and policy wire.
-    public static let snapshot = "com.c15t.snapshot"
+    public static let snapshot = "com.inth.snapshot"
     /// Consent saves persisted before they reached the backend.
-    public static let pendingSaves = "com.c15t.pending"
+    public static let pendingSaves = "com.inth.pending"
 }
 
 /// A store could not establish whether a key exists.
@@ -46,7 +46,7 @@ extension ConsentStore {
 
     func decode<T: Decodable>(_ type: T.Type, for key: String) -> T? {
         guard let raw = data(for: key) else { return nil }
-        return try? C15tJSON.decode(type, from: raw)
+        return try? InthJSON.decode(type, from: raw)
     }
 
     /// Write already-serialized bytes.
@@ -61,7 +61,7 @@ extension ConsentStore {
 
     @discardableResult
     public func encode<T: Encodable>(_ value: T, for key: String) -> Bool {
-        guard let raw = try? C15tJSON.encode(value) else { return false }
+        guard let raw = try? InthJSON.encode(value) else { return false }
         return set(raw, for: key)
     }
 }
@@ -131,14 +131,14 @@ public final class FileStore: ConsentStore, @unchecked Sendable {
     /// A store under the app's Application Support directory, namespaced by
     /// bundle id so two apps from the same developer cannot read each other's
     /// consent.
-    public convenience init(namespace: String = Bundle.main.bundleIdentifier ?? "com.c15t") throws {
+    public convenience init(namespace: String = Bundle.main.bundleIdentifier ?? "com.inth") throws {
         let base = try FileManager.default.url(
             for: .applicationSupportDirectory,
             in: .userDomainMask,
             appropriateFor: nil,
             create: true
         )
-        self.init(directory: base.appendingPathComponent("c15t/\(namespace)", isDirectory: true))
+        self.init(directory: base.appendingPathComponent("inth/\(namespace)", isDirectory: true))
     }
 
     public func data(for key: String) -> Data? {
@@ -213,7 +213,7 @@ public final class KeychainStore: ConsentStore, @unchecked Sendable {
 
     private let lock = Lock()
 
-    public init(service: String = "com.c15t.core") {
+    public init(service: String = "com.inth.core") {
         self.service = service
     }
 

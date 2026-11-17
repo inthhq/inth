@@ -28,7 +28,7 @@ struct PendingSaveEntry: Sendable, Codable, Equatable {
 enum ConsentDelivery {
     /// Compare frozen delivery ownership, never the currently signed-in account.
     static func sameOwner(_ left: Data, _ right: Data) -> Bool {
-        guard let a = C15tJSON.parse(left), let b = C15tJSON.parse(right),
+        guard let a = InthJSON.parse(left), let b = InthJSON.parse(right),
             a["subjectId"]?.stringValue != nil, a["domain"]?.stringValue != nil
         else { return false }
         return ["subjectId", "externalSubjectId", "domain"].allSatisfy {
@@ -37,7 +37,7 @@ enum ConsentDelivery {
     }
 
     static func isWithdrawal(_ body: Data) -> Bool {
-        guard let wire = C15tJSON.parse(body),
+        guard let wire = InthJSON.parse(body),
             let consents = wire["preferences"]?.objectValue, consents["necessary"]?.boolValue == true,
             ["functionality", "measurement", "experience", "marketing"].allSatisfy({ consents[$0]?.boolValue != true })
         else { return false }
@@ -291,18 +291,18 @@ final class PendingSaveQueue: @unchecked Sendable {
     ///     still waiting, which is exactly the wrong assumption to make about a
     ///     decision that has just stopped being owed.
     func replay(
-        using transport: any C15tTransport,
-        onResult: ((PendingSaveEntry, Result<Void, C15tError>) -> Void)? = nil,
-        onDrop: ((PendingSaveEntry, C15tError, FailedAttempt) -> Void)? = nil
+        using transport: any InthTransport,
+        onResult: ((PendingSaveEntry, Result<Void, InthError>) -> Void)? = nil,
+        onDrop: ((PendingSaveEntry, InthError, FailedAttempt) -> Void)? = nil
     ) async -> ReplayReport {
         await replay(using: transport, shouldDeliver: { _ in true }, onResult: onResult, onDrop: onDrop)
     }
 
     func replay(
-        using transport: any C15tTransport,
+        using transport: any InthTransport,
         shouldDeliver: (PendingSaveEntry) -> Bool,
-        onResult: ((PendingSaveEntry, Result<Void, C15tError>) -> Void)? = nil,
-        onDrop: ((PendingSaveEntry, C15tError, FailedAttempt) -> Void)? = nil
+        onResult: ((PendingSaveEntry, Result<Void, InthError>) -> Void)? = nil,
+        onDrop: ((PendingSaveEntry, InthError, FailedAttempt) -> Void)? = nil
     ) async -> ReplayReport {
         let pending = entries()
         guard !pending.isEmpty else { return .empty }
@@ -413,7 +413,7 @@ final class PendingSaveQueue: @unchecked Sendable {
             if let pending = envelope.pendingSaves { return pending }
         }
         guard let data = store.data(for: StorageKey.pendingSaves) else { return [] }
-        guard let entries = try? C15tJSON.decode([PendingSaveEntry].self, from: data) else {
+        guard let entries = try? InthJSON.decode([PendingSaveEntry].self, from: data) else {
             return []
         }
         return entries.sorted { left, right in

@@ -1,20 +1,20 @@
-package com.c15t.consentui
+package com.inth.consentui
 
 import android.os.Bundle
 import android.os.Looper
 import android.widget.FrameLayout
 import androidx.activity.ComponentActivity
-import com.c15t.core.C15t
-import com.c15t.core.CommitIntent
-import com.c15t.core.ConsentCore
-import com.c15t.core.NativeConfig
-import com.c15t.core.spi.HttpClient
-import com.c15t.core.spi.HttpRequest
-import com.c15t.core.spi.HttpResponse
-import com.c15t.core.spi.KeyValueStore
-import com.c15t.core.spi.TaskExecutor
-import com.c15t.core.store.C15tStore
-import com.c15t.core.transport.HostedTransport
+import com.inth.core.Inth
+import com.inth.core.CommitIntent
+import com.inth.core.ConsentCore
+import com.inth.core.NativeConfig
+import com.inth.core.spi.HttpClient
+import com.inth.core.spi.HttpRequest
+import com.inth.core.spi.HttpResponse
+import com.inth.core.spi.KeyValueStore
+import com.inth.core.spi.TaskExecutor
+import com.inth.core.store.InthStore
+import com.inth.core.transport.HostedTransport
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -62,7 +62,7 @@ class ConsentHostAutoPresentTest {
             presented += Triple(sessionId, presentation, automatic)
         }
         override fun unavailable(code: String, message: String) {
-            assertEquals("C15T_PRESENTER_UNAVAILABLE", code)
+            assertEquals("INTH_PRESENTER_UNAVAILABLE", code)
             log += "unavailable"
             unavailable += 1
         }
@@ -86,7 +86,7 @@ class ConsentHostAutoPresentTest {
         }
         hosts.asReversed().forEach { runCatching { it.pause().stop().destroy() } }
         idle()
-        C15t.uninstall()
+        Inth.uninstall()
     }
 
     @Test fun anOwedPromptPresentsByItselfOnce() {
@@ -226,7 +226,7 @@ class ConsentHostAutoPresentTest {
 
     /**
      * Settings close while a prompt is owed: the prompt opens, and it is reported before the
-     * settings' outcome, so a step waiting for c15t's screens to close never runs in between.
+     * settings' outcome, so a step waiting for Inth's screens to close never runs in between.
      */
     @Test fun aPromptThatOpensAsSettingsCloseIsReportedBeforeTheirOutcome() {
         val core = boot("category-init.json")
@@ -338,7 +338,7 @@ class ConsentHostAutoPresentTest {
         configure(first, host, autoPresent = true)
         val before = events.presented.single().first
 
-        C15t.uninstall()
+        Inth.uninstall()
         assertTrue("the session of the dropped core ends", events.outcomes.single() is ConsentHostOutcome.Unavailable)
         val second = install(store)
         // The binding follows the installed core on its next call; a resumed Activity does too.
@@ -353,7 +353,7 @@ class ConsentHostAutoPresentTest {
         val store = MemoryStore()
         val host = host()
         configure(install(store), host, autoPresent = true)
-        C15t.uninstall()
+        Inth.uninstall()
         install(store)
         host.pause().resume()
         idle()
@@ -453,13 +453,13 @@ class ConsentHostAutoPresentTest {
 
     private fun boot(name: String): ConsentCore {
         val config = NativeConfig("https://fixture.invalid")
-        return ConsentCore(config, C15tStore(MemoryStore()), transport = transport(config, fixture(name)), executor = TaskExecutor.DIRECT)
+        return ConsentCore(config, InthStore(MemoryStore()), transport = transport(config, fixture(name)), executor = TaskExecutor.DIRECT)
             .also { it.bootstrap() }
     }
 
     private fun install(store: KeyValueStore): ConsentCore {
         val config = NativeConfig("https://fixture.invalid")
-        return C15t.bootstrap(config, C15tStore(store), transport = transport(config, fixture("category-init.json")), executor = TaskExecutor.DIRECT)
+        return Inth.bootstrap(config, InthStore(store), transport = transport(config, fixture("category-init.json")), executor = TaskExecutor.DIRECT)
     }
 
     companion object { private const val PRIVACY_URL = "https://app.test/privacy" }

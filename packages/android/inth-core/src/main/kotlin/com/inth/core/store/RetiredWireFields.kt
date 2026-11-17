@@ -1,4 +1,4 @@
-package com.c15t.core.store
+package com.inth.core.store
 
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -21,7 +21,7 @@ import kotlinx.serialization.json.contentOrNull
  * unreadable on shape alone. [assertReadable] stays because the failure has to say
  * which build wrote the payload and why it is being dropped rather than name an
  * unexpected token, and because it catches the retired shape one step earlier, before
- * a decoder has decided which half of the object to keep. It throws, and [C15tStore]
+ * a decoder has decided which half of the object to keep. It throws, and [InthStore]
  * turns that into `null`, which the kernel answers with deny-all and `policyPending`
  * until the next `/init` resolves a real policy. The subject id lives in its own
  * preference key, so this does not cost the device its identity.
@@ -46,7 +46,7 @@ object RetiredWireFields {
 	 * [raw] unchanged when it holds none.
 	 *
 	 * These are dropped rather than refused. A directive only ever restricted
-	 * categories, and c15t no longer stores one: GPC is a live signal again, so its
+	 * categories, and Inth no longer stores one: GPC is a live signal again, so its
 	 * restriction lifts when the signal goes away. Hydration re-runs the evaluator with
 	 * the signal as it is now, and a signal that is still live puts its `gpc`
 	 * restriction back on the spot. Refusing the envelope instead would reset every

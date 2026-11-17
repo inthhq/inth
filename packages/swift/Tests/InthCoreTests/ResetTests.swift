@@ -1,6 +1,6 @@
 import Foundation
 import XCTest
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 /// `reset()` as `packages/native-protocol/CONTRACT.md` states it under "Wiping consent (reset)": a device
 /// that answered comes back looking like a device that never did.
@@ -312,7 +312,7 @@ final class ResetTests: XCTestCase {
     /// with is private to the identity reader on purpose.
     private func storedSubjectId(in store: any ConsentStore) -> String? {
         guard let raw = store.data(for: StorageKey.subject),
-              case let .object(stored)? = C15tJSON.parse(raw),
+              case let .object(stored)? = InthJSON.parse(raw),
               case let .string(id)? = stored["id"]
         else { return nil }
         return id
@@ -331,8 +331,8 @@ final class ResetTests: XCTestCase {
     /// passing the day someone widens the snapshot, which is exactly when the two devices
     /// need to be told apart.
     private func comparable(_ snapshot: ConsentSnapshot) throws -> String {
-        let encoded = try C15tJSON.encode(snapshot)
-        guard case var .object(fields)? = C15tJSON.parse(encoded) else {
+        let encoded = try InthJSON.encode(snapshot)
+        guard case var .object(fields)? = InthJSON.parse(encoded) else {
             throw WipeTestFailure("the snapshot is not a JSON object")
         }
         fields["revision"] = nil
@@ -345,7 +345,7 @@ final class ResetTests: XCTestCase {
             subject["subjectId"] = nil
             fields["subject"] = .object(subject)
         }
-        guard let bytes = C15tJSON.encode(JSONValue.object(fields)) else {
+        guard let bytes = InthJSON.encode(JSONValue.object(fields)) else {
             throw WipeTestFailure("the comparable snapshot could not be encoded")
         }
         return String(decoding: bytes, as: UTF8.self)

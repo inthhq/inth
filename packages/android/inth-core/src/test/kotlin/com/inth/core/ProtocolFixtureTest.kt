@@ -1,28 +1,28 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.model.ConsentAction
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentSnapshot
-import com.c15t.core.model.ConsentSubject
-import com.c15t.core.model.ExplicitChoice
-import com.c15t.core.model.KernelOverrides
-import com.c15t.core.model.PrivacySignals
-import com.c15t.core.policy.NoticeDismissal
-import com.c15t.core.spi.HttpRequest
-import com.c15t.core.spi.HttpResponse
-import com.c15t.core.spi.TaskExecutor
-import com.c15t.core.store.C15tJson
-import com.c15t.core.store.C15tStore
-import com.c15t.core.store.C15tStoreKeys
-import com.c15t.core.store.SnapshotEnvelope
-import com.c15t.core.transport.C15tProtocol
-import com.c15t.core.transport.C15tTransport
-import com.c15t.core.transport.HostedTransport
-import com.c15t.core.transport.SaveOutcome
-import com.c15t.core.transport.TransportOutcome
-import com.c15t.core.wire.SnapshotWire
-import com.c15t.core.tc.TcStringFixtures
-import com.c15t.core.tc.VendorListScopeFixtures
+import com.inth.core.model.ConsentAction
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentSnapshot
+import com.inth.core.model.ConsentSubject
+import com.inth.core.model.ExplicitChoice
+import com.inth.core.model.KernelOverrides
+import com.inth.core.model.PrivacySignals
+import com.inth.core.policy.NoticeDismissal
+import com.inth.core.spi.HttpRequest
+import com.inth.core.spi.HttpResponse
+import com.inth.core.spi.TaskExecutor
+import com.inth.core.store.InthJson
+import com.inth.core.store.InthStore
+import com.inth.core.store.InthStoreKeys
+import com.inth.core.store.SnapshotEnvelope
+import com.inth.core.transport.InthProtocol
+import com.inth.core.transport.InthTransport
+import com.inth.core.transport.HostedTransport
+import com.inth.core.transport.SaveOutcome
+import com.inth.core.transport.TransportOutcome
+import com.inth.core.wire.SnapshotWire
+import com.inth.core.tc.TcStringFixtures
+import com.inth.core.tc.VendorListScopeFixtures
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -153,11 +153,11 @@ class ProtocolFixtureTest {
 		// build must agree on one number, so it is pinned here until the core has one.
 		assertEquals(1L, indexProtocol, "index.json is protocol $indexProtocol and this build was written against 1")
 		val header = index["policyContractHeader"]!!.jsonObject
-		assertEquals(C15tProtocol.POLICY_CONTRACT_HEADER, header["name"]!!.jsonPrimitive.content, "the fixtures declare a different contract header than this build sends")
+		assertEquals(InthProtocol.POLICY_CONTRACT_HEADER, header["name"]!!.jsonPrimitive.content, "the fixtures declare a different contract header than this build sends")
 		assertEquals(
-			C15tProtocol.POLICY_CONTRACT_VERSION.toString(),
+			InthProtocol.POLICY_CONTRACT_VERSION.toString(),
 			header["value"]!!.jsonPrimitive.content,
-			"the fixtures pin policy contract ${header["value"]} and this build sends ${C15tProtocol.POLICY_CONTRACT_VERSION}",
+			"the fixtures pin policy contract ${header["value"]} and this build sends ${InthProtocol.POLICY_CONTRACT_VERSION}",
 		)
 		val listed = index.fixtures.map { it["file"]!!.jsonPrimitive.content }.toSet()
 		listed.forEach { file ->
@@ -398,9 +398,9 @@ class ProtocolFixtureTest {
 			// after the deletion and before the re-run init is scheduled.
 			if (disk.isEmpty()) {
 				disk += buildJsonObject {
-					put("envelope", C15tStoreKeys.SNAPSHOT in run.backend.keys)
-					put("pendingSaves", C15tStoreKeys.PENDING in run.backend.keys)
-					put("subject", C15tStoreKeys.SUBJECT in run.backend.keys)
+					put("envelope", InthStoreKeys.SNAPSHOT in run.backend.keys)
+					put("pendingSaves", InthStoreKeys.PENDING in run.backend.keys)
+					put("subject", InthStoreKeys.SUBJECT in run.backend.keys)
 				}
 			}
 		}
@@ -534,7 +534,7 @@ class ProtocolFixtureTest {
 		val initScript: ArrayDeque<HttpResponse>,
 		/** The slot the core persists to, so a fixture can read the bytes it wrote. */
 		val backend: InMemoryKeyValueStore,
-		val store: C15tStore,
+		val store: InthStore,
 	)
 
 	/**
@@ -551,7 +551,7 @@ class ProtocolFixtureTest {
 			?: fail("$fixtureId: storedRecords.subject.subjectId is missing. A fixture that lets the core invent an identity is not deterministic.")
 
 		val backend = InMemoryKeyValueStore()
-		backend.putSilently(C15tStoreKeys.SUBJECT, C15tJson.storage.encodeToString(ConsentSubject.serializer(), ConsentSubject(id = subjectId)))
+		backend.putSilently(InthStoreKeys.SUBJECT, InthJson.storage.encodeToString(ConsentSubject.serializer(), ConsentSubject(id = subjectId)))
 
 		val choice = stored["choice"]?.takeUnless { it is JsonNull }?.let { storedChoice(fixtureId, it) }
 		val dismissal = stored["noticeDismissal"]?.takeUnless { it is JsonNull }?.let {
@@ -578,8 +578,8 @@ class ProtocolFixtureTest {
 			// purpose: the fixture serves the policy from the transport, as a launch does.
 			val seeded = ConsentSnapshot(subject = ConsentSubject(id = subjectId), explicitChoice = choice)
 			backend.putSilently(
-				C15tStoreKeys.SNAPSHOT,
-				C15tJson.storage.encodeToString(
+				InthStoreKeys.SNAPSHOT,
+				InthJson.storage.encodeToString(
 					SnapshotEnvelope.serializer(),
 					SnapshotEnvelope(snapshot = seeded, evaluationPolicy = null, noticeDismissal = dismissal),
 				),
@@ -590,7 +590,7 @@ class ProtocolFixtureTest {
 			// test would never be asked to. Asserted rather than trusted, so a runner that
 			// starts seeding again fails loudly instead of passing empty.
 			assertTrue(
-				C15tStoreKeys.SNAPSHOT !in backend.keys,
+				InthStoreKeys.SNAPSHOT !in backend.keys,
 				"$fixtureId: hydrated is false but the snapshot slot holds bytes, so hydration and not the init would be what latches `ready`",
 			)
 		}
@@ -652,14 +652,14 @@ class ProtocolFixtureTest {
 			}
 		}
 		val clock = FixedClock(now)
-		val store = C15tStore(backend)
+		val store = InthStore(backend)
 		val kernel = ConsentCore(
 			config = config,
 			store = store,
 			clock = clock,
 			// The real transport, so the assertion covers headers and the built body
 			// and not a double's idea of them.
-			transport = if (offline) C15tTransport.NONE else HostedTransport(http = http, config = config, clock = clock),
+			transport = if (offline) InthTransport.NONE else HostedTransport(http = http, config = config, clock = clock),
 			executor = TaskExecutor.DIRECT,
 		)
 		return Run(kernel = kernel, http = http, initScript = initScript, backend = backend, store = store)
@@ -780,9 +780,9 @@ class ProtocolFixtureTest {
 			}
 		}
 
-		val written = run.backend.read(C15tStoreKeys.SNAPSHOT)
+		val written = run.backend.read(InthStoreKeys.SNAPSHOT)
 		if (written == null) {
-			record(fixtureId, "expected.write", "the core never wrote anything under ${C15tStoreKeys.SNAPSHOT}")
+			record(fixtureId, "expected.write", "the core never wrote anything under ${InthStoreKeys.SNAPSHOT}")
 			return
 		}
 
@@ -797,7 +797,7 @@ class ProtocolFixtureTest {
 			)
 			return
 		}
-		val rewritten = C15tJson.storage.encodeToString(SnapshotEnvelope.serializer(), decoded)
+		val rewritten = InthJson.storage.encodeToString(SnapshotEnvelope.serializer(), decoded)
 		if (rewritten != written) {
 			record(
 				fixtureId,
@@ -886,11 +886,11 @@ class ProtocolFixtureTest {
 	): Relaunch {
 		val backend = InMemoryKeyValueStore()
 		backend.putSilently(
-			C15tStoreKeys.SUBJECT,
-			C15tJson.storage.encodeToString(ConsentSubject.serializer(), ConsentSubject(id = subjectId)),
+			InthStoreKeys.SUBJECT,
+			InthJson.storage.encodeToString(ConsentSubject.serializer(), ConsentSubject(id = subjectId)),
 		)
 		if (bytes != null) {
-			backend.putSilently(C15tStoreKeys.SNAPSHOT, bytes)
+			backend.putSilently(InthStoreKeys.SNAPSHOT, bytes)
 		}
 		val run = wireRun(entry, input, backend, offline = true)
 		run.kernel.bootstrap()
@@ -914,7 +914,7 @@ class ProtocolFixtureTest {
 
 	/** Whether the core's own reader accepts [bytes] as an envelope. */
 	private fun decodes(bytes: String): Boolean =
-		C15tStore(InMemoryKeyValueStore(mapOf(C15tStoreKeys.SNAPSHOT to bytes))).readEnvelope() != null
+		InthStore(InMemoryKeyValueStore(mapOf(InthStoreKeys.SNAPSHOT to bytes))).readEnvelope() != null
 
 	/**
 	 * Check the stored field set against the field set the fixture declares.

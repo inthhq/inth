@@ -1,11 +1,11 @@
-package com.c15t.core.policy
+package com.inth.core.policy
 
 import kotlinx.serialization.Serializable
 
 /**
  * Local record that the current notice was dismissed.
  *
- * The shared contract keeps the mobile [com.c15t.core.model.ConsentSnapshot]
+ * The shared contract keeps the mobile [com.inth.core.model.ConsentSnapshot]
  * narrow, so this lives in the stored envelope next to the policy projection and
  * only reaches the snapshot through [PolicyEvaluator]'s prompt calculation.
  */

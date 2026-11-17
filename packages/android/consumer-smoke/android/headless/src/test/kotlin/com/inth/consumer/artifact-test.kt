@@ -1,23 +1,23 @@
-package com.c15t.consumer
+package com.inth.consumer
 
-import com.c15t.core.C15t
-import com.c15t.core.NativeConfig
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.transport.C15tProtocol
+import com.inth.core.Inth
+import com.inth.core.NativeConfig
+import com.inth.core.model.ConsentCategory
+import com.inth.core.transport.InthProtocol
 import org.junit.Assert.*
 import org.junit.Test
 import java.util.Properties
 
 class ArtifactTest {
     @Test fun artifactAndRequestVersionsAgreeBeforeBootstrap() {
-        val expected = System.getProperty("c15t.expectedVersion")
+        val expected = System.getProperty("inth.expectedVersion")
         val metadata = Properties().apply {
-            load(requireNotNull(ArtifactTest::class.java.getResourceAsStream("/META-INF/c15t/c15t-core.properties")))
+            load(requireNotNull(ArtifactTest::class.java.getResourceAsStream("/META-INF/inth/inth-core.properties")))
         }
         assertEquals(expected, metadata.getProperty("version"))
         assertEquals(expected, NativeConfig("https://your-project.inth.app").sdkVersion)
-        assertEquals(expected, C15tProtocol.protocolHeaders()[C15tProtocol.VERSION_HEADER])
-        assertEquals("android->$expected", C15tProtocol.protocolHeaders(platform = C15tProtocol.PLATFORM_ANDROID)[C15tProtocol.PLATFORM_HEADER])
-        assertFalse(C15t.isAllowed(ConsentCategory.MARKETING))
+        assertEquals(expected, InthProtocol.protocolHeaders()[InthProtocol.VERSION_HEADER])
+        assertEquals("android->$expected", InthProtocol.protocolHeaders(platform = InthProtocol.PLATFORM_ANDROID)[InthProtocol.PLATFORM_HEADER])
+        assertFalse(Inth.isAllowed(ConsentCategory.MARKETING))
     }
 }

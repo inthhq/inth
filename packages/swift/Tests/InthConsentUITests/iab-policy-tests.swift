@@ -1,7 +1,7 @@
-@_spi(C15tInternal) import C15tCore
+@_spi(InthInternal) import InthCore
 import Foundation
 import XCTest
-@testable import C15tConsentUI
+@testable import InthConsentUI
 
 /// IAB Europe's non-web CMP policy checks, proved on the content the IAB screens render.
 /// Each `TCF-CHECK` names the form question the test answers; `scripts/tcf-policy-checks.test.ts`

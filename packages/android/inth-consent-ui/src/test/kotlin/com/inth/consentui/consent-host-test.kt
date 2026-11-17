@@ -1,4 +1,4 @@
-package com.c15t.consentui
+package com.inth.consentui
 
 import android.os.Bundle
 import android.os.Looper
@@ -6,16 +6,16 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.platform.ComposeView
-import com.c15t.core.ConsentCore
-import com.c15t.core.NativeConfig
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.spi.HttpClient
-import com.c15t.core.spi.HttpRequest
-import com.c15t.core.spi.HttpResponse
-import com.c15t.core.spi.KeyValueStore
-import com.c15t.core.spi.TaskExecutor
-import com.c15t.core.store.C15tStore
-import com.c15t.core.transport.HostedTransport
+import com.inth.core.ConsentCore
+import com.inth.core.NativeConfig
+import com.inth.core.model.ConsentCategory
+import com.inth.core.spi.HttpClient
+import com.inth.core.spi.HttpRequest
+import com.inth.core.spi.HttpResponse
+import com.inth.core.spi.KeyValueStore
+import com.inth.core.spi.TaskExecutor
+import com.inth.core.store.InthStore
+import com.inth.core.transport.HostedTransport
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Test
@@ -243,7 +243,7 @@ class ConsentHostTest {
                 }
                 "dismiss-notice" -> core.dismissNotice()
                 "reset" -> core.reset()
-                "saved" -> core.save(com.c15t.core.CommitIntent.All)
+                "saved" -> core.save(com.inth.core.CommitIntent.All)
                 "close" -> sessionId?.let { ConsentHost.close(it) }
                 "acknowledge" -> presenter()?.takeIf { it.noticeVisible && !it.pending }?.let { it.commit(ConsentPresenter.Action.ACKNOWLEDGE); await { !it.pending } }
                 "accept" -> presenter()?.takeIf { it.presentationID != null && !it.pending }?.let { it.commit(ConsentPresenter.Action.ACCEPT); await { !it.pending } }
@@ -303,7 +303,7 @@ class ConsentHostTest {
             override fun send(request: HttpRequest) = if (request.method == HttpRequest.GET)
                 HttpResponse(200, mapOf("x-c15t-policy-contract" to "1"), body) else HttpResponse(503)
         }
-        return ConsentCore(config, C15tStore(store), transport = HostedTransport(client, config), executor = TaskExecutor.DIRECT).also { it.bootstrap() }
+        return ConsentCore(config, InthStore(store), transport = HostedTransport(client, config), executor = TaskExecutor.DIRECT).also { it.bootstrap() }
     }
 
     companion object { private const val PRIVACY_URL = "https://app.test/privacy" }

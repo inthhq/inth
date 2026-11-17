@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 /// The stored-id half of the subject identity rule, on this core's own bytes.
 ///
@@ -206,7 +206,7 @@ final class UnusableSubjectIdTests: XCTestCase {
         let entries = try XCTUnwrap(envelope.pendingSaves)
         XCTAssertFalse(entries.isEmpty, "the save has to owe delivery before the identity is poisoned")
         // Reproduce the separate queue format used by the legacy-id build.
-        let queued = try C15tJSON.encode(entries)
+        let queued = try InthJSON.encode(entries)
         envelope.pendingSaves = nil
         XCTAssertTrue(store.encode(envelope, for: StorageKey.snapshot))
         XCTAssertTrue(store.set(queued, for: StorageKey.pendingSaves))
@@ -220,8 +220,8 @@ final class UnusableSubjectIdTests: XCTestCase {
     }
 
     private func fields(of core: ConsentCore) throws -> [String: JSONValue] {
-        let data = try C15tJSON.encode(core.snapshot())
-        return try XCTUnwrap(C15tJSON.parse(data)?.objectValue)
+        let data = try InthJSON.encode(core.snapshot())
+        return try XCTUnwrap(InthJSON.parse(data)?.objectValue)
     }
 }
 

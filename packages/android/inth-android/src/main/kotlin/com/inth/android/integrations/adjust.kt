@@ -1,14 +1,14 @@
-package com.c15t.android.integrations
+package com.inth.android.integrations
 
-import com.c15t.core.ConsentCore
-import com.c15t.core.model.ConsentCategory
+import com.inth.core.ConsentCore
+import com.inth.core.model.ConsentCategory
 
 /**
  * Keep the Adjust SDK enabled only while one category allows it, and send
  * third-party sharing with Google's DMA options.
  *
  * In [trackThirdPartySharing], build `AdjustThirdPartySharing(adUserData)` and add
- * the `google_dma` granular options: `eea` (yours to supply, since c15t's policy
+ * the `google_dma` granular options: `eea` (yours to supply, since Inth's policy
  * model is not a legal jurisdiction flag), `ad_personalization` and
  * `ad_user_data`, each `"1"` or `"0"`. Then pass it to
  * `Adjust.trackThirdPartySharing`. Marketing grants both types, as on the web.

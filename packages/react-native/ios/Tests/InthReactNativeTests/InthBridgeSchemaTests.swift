@@ -1,5 +1,5 @@
-@_spi(C15tInternal) @testable import C15tReactNativeBridge
-@_spi(C15tInternal) import C15tCore
+@_spi(InthInternal) @testable import InthReactNativeBridge
+@_spi(InthInternal) import InthCore
 import Foundation
 import XCTest
 
@@ -11,11 +11,11 @@ import XCTest
 /// TypeScript protocol types to it. Renaming a key here without renaming it there fails
 /// this test, and the reverse fails the TypeScript one. Kotlin runs the same checks in
 /// `BridgeSchemaTest.kt`.
-final class C15tBridgeSchemaTests: XCTestCase {
+final class InthBridgeSchemaTests: XCTestCase {
     /// `packages/native-protocol/bridge/payloads.json`, resolved from this file because `swift test`
     /// may start anywhere.
     private static let schemaURL = URL(fileURLWithPath: #filePath)
-        .deletingLastPathComponent() // C15tReactNativeTests
+        .deletingLastPathComponent() // InthReactNativeTests
         .deletingLastPathComponent() // Tests
         .deletingLastPathComponent() // ios
         .deletingLastPathComponent() // react-native
@@ -36,7 +36,7 @@ final class C15tBridgeSchemaTests: XCTestCase {
 
     func testTheHeadlessIABSlotWritesTheKeysTheSchemaDeclares() async throws {
         let core = try await headlessIABCore()
-        let snapshot = try XCTUnwrap(jsonObject(C15tPayload.snapshot(core.snapshot(), iabConsent: core.iabConsent(),
+        let snapshot = try XCTUnwrap(jsonObject(InthPayload.snapshot(core.snapshot(), iabConsent: core.iabConsent(),
             iabAcceptAll: core.iabAcceptAllChoices(), iabPresentation: core.iabPresentation())) as [String: Any]?)
         XCTAssertNotNil((snapshot["iab"] as? [String: Any])?["disclosure"] as? [String: Any])
         XCTAssertEqual(describe(try fields("snapshot"), snapshot, path: "snapshot."), [])
@@ -66,41 +66,41 @@ final class C15tBridgeSchemaTests: XCTestCase {
         )
 
         let samples: [(String, String)] = [
-            ("bootstrap", C15tPayload.bootstrap(snapshot: ConsentSnapshot(subject: subject), hasStoredSnapshot: true)),
-            ("bootstrap", C15tPayload.bootstrap(snapshot: ConsentSnapshot(), hasStoredSnapshot: false)),
-            ("snapshot", C15tPayload.snapshot(.coldStart)),
-            ("snapshot", C15tPayload.snapshot(failed)),
-            ("commitResult", C15tPayload.commitResult(committed, snapshot: ConsentSnapshot(subject: subject))),
-            ("commitResult", C15tPayload.commitResult(rejected, snapshot: ConsentSnapshot())),
-            ("commitResult", C15tPayload.invalidIntent(raw: #"{"action":"maybe"}"#)),
-            ("commitResult", C15tPayload.notBootstrapped()),
-            ("trackingAuthorization", C15tPayload.trackingAuthorization(.notDetermined)),
+            ("bootstrap", InthPayload.bootstrap(snapshot: ConsentSnapshot(subject: subject), hasStoredSnapshot: true)),
+            ("bootstrap", InthPayload.bootstrap(snapshot: ConsentSnapshot(), hasStoredSnapshot: false)),
+            ("snapshot", InthPayload.snapshot(.coldStart)),
+            ("snapshot", InthPayload.snapshot(failed)),
+            ("commitResult", InthPayload.commitResult(committed, snapshot: ConsentSnapshot(subject: subject))),
+            ("commitResult", InthPayload.commitResult(rejected, snapshot: ConsentSnapshot())),
+            ("commitResult", InthPayload.invalidIntent(raw: #"{"action":"maybe"}"#)),
+            ("commitResult", InthPayload.notBootstrapped()),
+            ("trackingAuthorization", InthPayload.trackingAuthorization(.notDetermined)),
             (
                 "trackingAuthorization",
-                C15tPayload.trackingAuthorization(.authorized, answeredAt: Date(timeIntervalSince1970: 1_800_000_000.5))
+                InthPayload.trackingAuthorization(.authorized, answeredAt: Date(timeIntervalSince1970: 1_800_000_000.5))
             ),
             (
                 "trackingRequest",
-                C15tPayload.trackingRequestResult(
-                    C15tTrackingRequestResult(status: .notDetermined, stage: .additionalInformation, presentation: .expanded)
+                InthPayload.trackingRequestResult(
+                    InthTrackingRequestResult(status: .notDetermined, stage: .additionalInformation, presentation: .expanded)
                 )
             ),
             (
                 "trackingRequest",
-                C15tPayload.trackingRequestResult(
-                    C15tTrackingRequestResult(status: .restricted, stage: .final, presentation: nil)
+                InthPayload.trackingRequestResult(
+                    InthTrackingRequestResult(status: .restricted, stage: .final, presentation: nil)
                 )
             ),
-            ("snapshotEvent", C15tPayload.snapshotEvent(revision: 3)),
-            ("initializedEvent", C15tPayload.initializedEvent(revision: 3)),
-            ("errorEvent", C15tPayload.errorEvent(code: "transport-unavailable", message: "offline")),
-            ("presenterSession", C15tPayload.consentHostSession(.presented(sessionID: "one", presentation: .prompt))),
-            ("presenterSession", C15tPayload.consentHostSession(.alreadyPresented(sessionID: "one", presentation: .preferences))),
-            ("presenterSession", C15tPayload.consentHostSession(.notRequired)),
-            ("presenterOutcome", C15tPayload.consentHostOutcome(.committed(sessionID: "one", revision: 4))),
-            ("presenterOutcome", C15tPayload.consentHostOutcome(.unavailable(sessionID: "one", revision: 4))),
-            ("presenterPresented", C15tPayload.consentHostPresented(sessionID: "one", presentation: .prompt, automatic: true)),
-            ("presenterUnavailable", C15tPayload.presenterUnavailable(code: "C15T_PRESENTER_UNAVAILABLE", message: "no window yet")),
+            ("snapshotEvent", InthPayload.snapshotEvent(revision: 3)),
+            ("initializedEvent", InthPayload.initializedEvent(revision: 3)),
+            ("errorEvent", InthPayload.errorEvent(code: "transport-unavailable", message: "offline")),
+            ("presenterSession", InthPayload.consentHostSession(.presented(sessionID: "one", presentation: .prompt))),
+            ("presenterSession", InthPayload.consentHostSession(.alreadyPresented(sessionID: "one", presentation: .preferences))),
+            ("presenterSession", InthPayload.consentHostSession(.notRequired)),
+            ("presenterOutcome", InthPayload.consentHostOutcome(.committed(sessionID: "one", revision: 4))),
+            ("presenterOutcome", InthPayload.consentHostOutcome(.unavailable(sessionID: "one", revision: 4))),
+            ("presenterPresented", InthPayload.consentHostPresented(sessionID: "one", presentation: .prompt, automatic: true)),
+            ("presenterUnavailable", InthPayload.presenterUnavailable(code: "INTH_PRESENTER_UNAVAILABLE", message: "no window yet")),
         ]
 
         var problems: [String] = []
@@ -114,7 +114,7 @@ final class C15tBridgeSchemaTests: XCTestCase {
         // subject key the schema declares. A declared key no core models fails here.
         let snapshotFields = try fields("snapshot")
         let subjectFields = try XCTUnwrap((snapshotFields["subject"] as? [String: Any])?["fields"] as? [String: Any])
-        let encoded = try XCTUnwrap(jsonObject(C15tPayload.snapshot(failed))["subject"] as? [String: Any])
+        let encoded = try XCTUnwrap(jsonObject(InthPayload.snapshot(failed))["subject"] as? [String: Any])
         XCTAssertEqual(Set(encoded.keys), Set(subjectFields.keys))
 
         let all = try payloads()
@@ -148,10 +148,10 @@ final class C15tBridgeSchemaTests: XCTestCase {
         var explicit = sample("explicit")
         explicit["choices"] = nil
         XCTAssertEqual(
-            C15tPayload.parseCommitIntent(try encode(explicit)),
+            InthPayload.parseCommitIntent(try encode(explicit)),
             .custom([.measurement: true, .marketing: false])
         )
-        guard case .iab = C15tPayload.parseCommitIntent(try encode(sample("iab"))) else {
+        guard case .iab = InthPayload.parseCommitIntent(try encode(sample("iab"))) else {
             return XCTFail("an iab intent with every declared key must decode")
         }
 
@@ -159,7 +159,7 @@ final class C15tBridgeSchemaTests: XCTestCase {
         for value in try XCTUnwrap(action["values"] as? [String]) where value != "explicit" && value != "iab" {
             let raw = try encode(["action": value])
             XCTAssertNotNil(
-                C15tPayload.parseCommitIntent(raw),
+                InthPayload.parseCommitIntent(raw),
                 "action \"\(value)\" from the schema must decode"
             )
         }
@@ -173,8 +173,8 @@ final class C15tBridgeSchemaTests: XCTestCase {
             default: XCTFail("trackingRequestOptions.\(key) has no sample here; add one")
             }
         }
-        XCTAssertTrue(C15tPayload.trackingRequestOffersAdditionalInformation(try encode(document)))
-        XCTAssertFalse(C15tPayload.trackingRequestOffersAdditionalInformation("{}"))
+        XCTAssertTrue(InthPayload.trackingRequestOffersAdditionalInformation(try encode(document)))
+        XCTAssertFalse(InthPayload.trackingRequestOffersAdditionalInformation("{}"))
     }
 
     func testTheAutoPresentSettingsDecoderReadsTheKeysTheSchemaDeclares() throws {
@@ -186,14 +186,14 @@ final class C15tBridgeSchemaTests: XCTestCase {
             default: XCTFail("autoPresentSettings.\(key) has no sample here; add one")
             }
         }
-        let read = try XCTUnwrap(C15tPayload.autoPresentSettings(try encode(document)))
+        let read = try XCTUnwrap(InthPayload.autoPresentSettings(try encode(document)))
         XCTAssertTrue(read.autoPresent)
         XCTAssertEqual(read.privacyPolicyURL, "https://example.com/privacy")
         // The URL is nullable: a provider that turns auto-present off may have none.
-        let off = try XCTUnwrap(C15tPayload.autoPresentSettings(#"{"autoPresent":false,"privacyPolicyURL":null}"#))
+        let off = try XCTUnwrap(InthPayload.autoPresentSettings(#"{"autoPresent":false,"privacyPolicyURL":null}"#))
         XCTAssertFalse(off.autoPresent)
         XCTAssertNil(off.privacyPolicyURL)
-        XCTAssertNil(C15tPayload.autoPresentSettings(#"{"autoPresent":"yes"}"#))
+        XCTAssertNil(InthPayload.autoPresentSettings(#"{"autoPresent":"yes"}"#))
     }
 
     func testAnIntentThatNamesAScopeIsRefusedNotWidened() {
@@ -207,7 +207,7 @@ final class C15tBridgeSchemaTests: XCTestCase {
             #"{"action":"all","consents":{"marketing":false}}"#,
             #"{"action":"necessary","consents":{"marketing":true}}"#,
         ] {
-            XCTAssertNil(C15tPayload.parseCommitIntent(raw), raw)
+            XCTAssertNil(InthPayload.parseCommitIntent(raw), raw)
         }
     }
 
@@ -225,7 +225,7 @@ final class C15tBridgeSchemaTests: XCTestCase {
         let current = ConsentOverrides(country: nil, region: nil, language: "en", gpc: nil)
 
         let raw = try encode(document)
-        guard case let .success(read) = C15tPayload.parseOverrides(raw, current: current) else {
+        guard case let .success(read) = InthPayload.parseOverrides(raw, current: current) else {
             return XCTFail("a document naming every declared key must apply")
         }
         XCTAssertEqual(read, ConsentOverrides(country: "DE", region: "BY", language: "de", gpc: true))

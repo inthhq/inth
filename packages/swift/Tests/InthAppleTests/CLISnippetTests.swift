@@ -1,5 +1,5 @@
-import C15tApple
-import C15tCore
+import InthApple
+import InthCore
 import XCTest
 
 /// The configuration `c15t setup` prints for a Swift app.
@@ -10,14 +10,14 @@ import XCTest
 /// together.
 final class CLISnippetTests: XCTestCase {
     /// The configuration `c15t setup` prints, with the default categories.
-    private func cliHostedConfiguration() -> C15tAppleConfiguration {
+    private func cliHostedConfiguration() -> InthAppleConfiguration {
         let configuration =
-            // c15t-cli-snippet:hosted:start
-            C15tAppleConfiguration(
+            // inth-cli-snippet:hosted:start
+            InthAppleConfiguration(
                 backendURL: "https://your-project.inth.app",
                 consentCategories: [.necessary, .measurement, .marketing]
             )
-            // c15t-cli-snippet:hosted:end
+            // inth-cli-snippet:hosted:end
         return configuration
     }
 

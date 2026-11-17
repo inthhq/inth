@@ -1,7 +1,7 @@
-package com.c15t.android.integrations
+package com.inth.android.integrations
 
-import com.c15t.core.ConsentCore
-import com.c15t.core.model.ConsentCategory
+import com.inth.core.ConsentCore
+import com.inth.core.model.ConsentCategory
 
 /**
  * The Branch consumer protection attribution level [BranchIntegration] sets.
@@ -25,7 +25,7 @@ enum class BranchAttribution {
  * [BranchAttribution.MINIMAL], Branch's analytics-only level. Anything else,
  * including pending consent, sets [BranchAttribution.NONE], which keeps deep links
  * working. In [setDMAParamsForEEA], call Branch's method of the same name with
- * your own EEA flag, since c15t's policy model is not a legal jurisdiction flag,
+ * your own EEA flag, since Inth's policy model is not a legal jurisdiction flag,
  * then `adPersonalization` and `adUserData`. Marketing grants both, as on the web.
  * The helper adds no Branch dependency.
  *

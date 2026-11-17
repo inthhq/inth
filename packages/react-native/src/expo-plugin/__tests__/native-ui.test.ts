@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { C15tPluginError } from '../errors';
+import { InthPluginError } from '../errors';
 import {
 	NATIVE_UI_PROPERTY,
 	applyNativeUIGradleProperties,
@@ -16,7 +16,7 @@ describe('nativeUI prop', () => {
 		expect(resolveNativeUI(undefined, undefined)).toBe(true);
 		expect(
 			applyNativeUIPodfileProperties(
-				{ 'c15t.nativeUI': 'false', 'expo.jsEngine': 'hermes' },
+				{ 'expo.jsEngine': 'hermes', 'inth.nativeUI': 'false' },
 				true
 			)
 		).toStrictEqual({ 'expo.jsEngine': 'hermes' });
@@ -33,10 +33,10 @@ describe('nativeUI prop', () => {
 		]);
 	});
 
-	it('writes c15t.nativeUI=false for the pod and the Gradle build', () => {
+	it('writes inth.nativeUI=false for the pod and the Gradle build', () => {
 		expect(resolveNativeUI(false, undefined)).toBe(false);
 		expect(applyNativeUIPodfileProperties({}, false)).toStrictEqual({
-			'c15t.nativeUI': 'false',
+			'inth.nativeUI': 'false',
 		});
 		expect(
 			applyNativeUIGradleProperties(
@@ -63,7 +63,7 @@ describe('nativeUI prop', () => {
 		};
 		expect(() => applyToFixture(props as never)).toThrowError(message);
 		expect(() => resolveNativeUI(nativeUI, props.theme)).toThrowError(
-			C15tPluginError
+			InthPluginError
 		);
 	});
 });

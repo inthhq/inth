@@ -1,20 +1,20 @@
-package com.c15t.android
+package com.inth.android
 
-import com.c15t.core.CommitIntent
-import com.c15t.core.ConsentCore
-import com.c15t.core.NativeConfig
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentDecision
-import com.c15t.core.model.ConsentSubject
-import com.c15t.core.model.KernelUser
-import com.c15t.core.model.QueuedSave
-import com.c15t.core.spi.KeyValueStore
-import com.c15t.core.spi.TaskExecutor
-import com.c15t.core.store.C15tStore
-import com.c15t.core.transport.C15tTransport
-import com.c15t.core.transport.InitContext
-import com.c15t.core.transport.SaveOutcome
-import com.c15t.core.transport.TransportOutcome
+import com.inth.core.CommitIntent
+import com.inth.core.ConsentCore
+import com.inth.core.NativeConfig
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentDecision
+import com.inth.core.model.ConsentSubject
+import com.inth.core.model.KernelUser
+import com.inth.core.model.QueuedSave
+import com.inth.core.spi.KeyValueStore
+import com.inth.core.spi.TaskExecutor
+import com.inth.core.store.InthStore
+import com.inth.core.transport.InthTransport
+import com.inth.core.transport.InitContext
+import com.inth.core.transport.SaveOutcome
+import com.inth.core.transport.TransportOutcome
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -127,21 +127,21 @@ class ConsentFlowsTest {
 		core(SwitchableTransport(online = true)).also { it.bootstrap() }
 
 	private fun core(
-		transport: C15tTransport,
+		transport: InthTransport,
 		executor: TaskExecutor = TaskExecutor.DIRECT,
 	) = ConsentCore(
 		config = NativeConfig(
 			backendUrl = "https://example.test",
 			consentCategories = listOf(ConsentCategory.MEASUREMENT),
 		),
-		store = C15tStore(MemoryStore()),
+		store = InthStore(MemoryStore()),
 		transport = transport,
 		executor = executor,
 	)
 
 	private class SwitchableTransport(
 		@Volatile var online: Boolean = false,
-	) : C15tTransport {
+	) : InthTransport {
 		@Volatile var delivering = true
 
 		override fun init(context: InitContext): TransportOutcome =

@@ -1,17 +1,17 @@
-package com.c15t.consentui
+package com.inth.consentui
 
 import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.c15t.consentui.generated.ConsentCopy
-import com.c15t.consentui.generated.IabCopy
-import com.c15t.consentui.headless.ConsentWriteAction
-import com.c15t.consentui.headless.ConsentDraft
-import com.c15t.consentui.headless.IabDraftHandle
-import com.c15t.consentui.headless.initialIabChoices
-import com.c15t.core.*
-import com.c15t.core.iab.*
-import com.c15t.core.model.*
+import com.inth.consentui.generated.ConsentCopy
+import com.inth.consentui.generated.IabCopy
+import com.inth.consentui.headless.ConsentWriteAction
+import com.inth.consentui.headless.ConsentDraft
+import com.inth.consentui.headless.IabDraftHandle
+import com.inth.consentui.headless.initialIabChoices
+import com.inth.core.*
+import com.inth.core.iab.*
+import com.inth.core.model.*
 import kotlinx.coroutines.*
 import java.util.UUID
 
@@ -33,7 +33,7 @@ class ConsentPresenter(val core: ConsentCore, autoPresent: Boolean = true) : Vie
     private var autoPresentState by mutableStateOf(autoPresent)
     /**
      * The draft behind the session: staged choices, the save and its revision check. The stock
-     * screens and an app-owned screen built on `com.c15t.consentui.headless` run the same one.
+     * screens and an app-owned screen built on `com.inth.consentui.headless` run the same one.
      */
     internal val draft = ConsentDraft(core, viewModelScope, Dispatchers.IO, load = false)
     val snapshot get() = draft.snapshot

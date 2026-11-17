@@ -8,8 +8,8 @@
  * long before the bundle evaluates, so it is the one hook in a library that needs no
  * app wiring to be early enough.
  *
- * `C15tReactNativeBootstrap.start` is a no-op when the app set
- * `com.c15t.reactnative.AutoBootstrap` to `false`, and no-op when a core is already
+ * `InthReactNativeBootstrap.start` is a no-op when the app set
+ * `com.inth.reactnative.AutoBootstrap` to `false`, and no-op when a core is already
  * installed, which is what makes it safe to leave unconditional.
  *
  * The work hangs off an Objective-C class instead of a bare
@@ -43,24 +43,24 @@
 // Pods built as frameworks (`use_frameworks!`, which React Native Firebase and Expo's
 // useFrameworks require) expose the Swift interface under the module name; static
 // libraries expose it as a plain header.
-#if __has_include(<C15tReactNative/C15tReactNative-Swift.h>)
-#import <C15tReactNative/C15tReactNative-Swift.h>
+#if __has_include(<InthReactNative/InthReactNative-Swift.h>)
+#import <InthReactNative/InthReactNative-Swift.h>
 #else
-#import "C15tReactNative-Swift.h"
+#import "InthReactNative-Swift.h"
 #endif
 
-@interface C15tReactNativeEarlyStart : NSObject
+@interface InthReactNativeEarlyStart : NSObject
 @end
 
-@implementation C15tReactNativeEarlyStart
+@implementation InthReactNativeEarlyStart
 
 // The only reason this class exists is that it is a class: defining it is what makes the
 // linker keep the member this file compiles into, and `+load` is what makes the start
 // happen without any app calling it. Nothing sends this class a message, and a host that
-// would rather start the core itself sets `com.c15t.reactnative.AutoBootstrap` to false
+// would rather start the core itself sets `com.inth.reactnative.AutoBootstrap` to false
 // rather than deleting this.
 + (void)load {
-    [C15tReactNativeRuntime startCoreIfNeeded];
+    [InthReactNativeRuntime startCoreIfNeeded];
 }
 
 @end

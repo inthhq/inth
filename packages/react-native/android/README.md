@@ -1,6 +1,6 @@
-# c15t React Native Android
+# Inth React Native Android
 
-The Android bridge for `@c15t/react-native`: a Codegen TurboModule plus a launch hook, on top
+The Android bridge for `@inth/react-native`: a Codegen TurboModule plus a launch hook, on top
 of the Kotlin consent core in [`packages/android`](../../android). It decides
 nothing about consent. It reads state the core already holds, forwards the actions the user
 took, and reports results as the JSON in `../src/protocol`.
@@ -9,11 +9,11 @@ took, and reports results as the JSON in `../src/protocol`.
 
 | Path | What it is |
 | --- | --- |
-| `c15t-react-native/` | The bridge library: module, package, event pump, payload codec, bootstrap |
-| `c15t-spec/` | Where the bridge gets a `NativeC15tSpec` to compile against: the hand-written stand-in, or Codegen's own output when asked for it. Never shipped |
+| `inth-react-native/` | The bridge library: module, package, event pump, payload codec, bootstrap |
+| `inth-spec/` | Where the bridge gets a `NativeInthSpec` to compile against: the hand-written stand-in, or Codegen's own output when asked for it. Never shipped |
 | `codegen/generate-spec.mjs` | The one script that runs `@react-native/codegen` over `../src/specs`, shared by both Gradle builds and the drift check |
 
-The consent engine comes from versioned `com.c15t` artifacts. See the maintained
+The consent engine comes from versioned `com.inth` artifacts. See the maintained
 [artifact preparation and isolated consumer guide](../../sdk/docs/internal/android-artifacts.md)
 for repository credentials, staging and external resolution checks. Local staging does not
 prove that the coordinates can be resolved remotely.
@@ -25,7 +25,7 @@ directory in `../../react-native.config.js`, and it discovers the library's Java
 reading two files in that directory: a `package` attribute in `src/main/AndroidManifest.xml`,
 then a namespace in `build.gradle[.kts]`. AGP dropped the manifest attribute, so the namespace
 has to be readable in the build file at exactly that path. It is declared in
-`c15t-react-native/build.gradle.kts`, and `sourceDir` is `./android/c15t-react-native`: the
+`inth-react-native/build.gradle.kts`, and `sourceDir` is `./android/inth-react-native`: the
 library module, not this directory.
 
 Both halves matter together. Pointed at this directory, the CLI matches a build file with no
@@ -34,7 +34,7 @@ namespace, `react-native config` exits non-zero, and a host app fails while its
 invisible to the same lookup. `scripts/react-native-autolink.ts` runs the real command from
 `internals/fixtures/react-native-bare` and fails CI on both mistakes.
 
-`c15t-react-native/build.gradle.kts` is the only build script the library has, in a host app and
+`inth-react-native/build.gradle.kts` is the only build script the library has, in a host app and
 in this standalone build alike; the `build.gradle.kts` one level up configures nothing. What is left in
 `library.gradle` is Groovy because a script pulled in with `apply(from:)` compiles without AGP
 on its classpath, so a Kotlin one could not name `LibraryExtension`, and a host app cannot be
@@ -47,11 +47,11 @@ frame quietly never gets merged.
 
 ```sh
 ./gradlew build                                    # assemble + unit tests + lint
-./gradlew :c15t-react-native:test                  # unit tests only
-./gradlew :c15t-react-native:assembleRelease       # the AAR
+./gradlew :inth-react-native:test                  # unit tests only
+./gradlew :inth-react-native:assembleRelease       # the AAR
 
 # React Native's own generator, then compile the spec module against its output
-./gradlew -Pc15t.spec.source=codegen :c15t-spec:assembleRelease
+./gradlew -Pinth.spec.source=codegen :inth-spec:assembleRelease
 ```
 
 JDK 17 and an Android SDK are required. `local.properties` holds `sdk.dir` and is gitignored;
@@ -59,7 +59,7 @@ JDK 17 and an Android SDK are required. `local.properties` holds `sdk.dir` and i
 AGP/Kotlin versions; AGP 8 hosts apply their Kotlin Android plugin, while AGP 9
 uses built-in Kotlin unless the host opts out. Set `C15T_MAVEN_URL` and the
 repository credentials before running these commands. Its settings route
-`com.c15t` exclusively to that repository. Host apps must configure their own
+`com.inth` exclusively to that repository. Host apps must configure their own
 `exclusiveContent` block, as described in
 [`docs/internal/android-artifacts.md`](../../sdk/docs/internal/android-artifacts.md).
 A content filter on one repository does not stop earlier repositories from
@@ -72,25 +72,25 @@ repository.
 
 | Property | Default | Effect |
 | --- | --- | --- |
-| `c15t.core.version` | `3.0.0-alpha.1` | The version of those published artifacts |
-| `c15t.core.group` | `com.c15t` | Their Maven group |
-| `c15t.spec.source` | `auto` | Where `NativeC15tSpec` comes from. `auto` and `stub` compile the hand-written stand-in in `:c15t-spec`. `codegen` runs `@react-native/codegen` over `../src/specs` into `:c15t-spec/build/generated/c15t-spec` and swaps that module's source set to the result, so the build compiles against React Native's real generator output instead of a description of it. In a host app there is no `:c15t-spec` project, so `codegen` generates into the bridge module instead, and `auto` generates there rather than failing. An unrecognised value fails the build |
-| `c15t.reactNativeVersion` | unset | Only for the standalone build. A host app leaves it unset and React Native's root plugin supplies the version, having forced `com.facebook.react:react-android` onto every configuration |
-| `c15t.reactNativeDir`, `c15t.codegenProjectRoot`, `c15t.nodeExecutable` | probed | Point Codegen at an install Gradle cannot infer |
+| `inth.core.version` | `3.0.0-alpha.1` | The version of those published artifacts |
+| `inth.core.group` | `com.inth` | Their Maven group |
+| `inth.spec.source` | `auto` | Where `NativeInthSpec` comes from. `auto` and `stub` compile the hand-written stand-in in `:inth-spec`. `codegen` runs `@react-native/codegen` over `../src/specs` into `:inth-spec/build/generated/inth-spec` and swaps that module's source set to the result, so the build compiles against React Native's real generator output instead of a description of it. In a host app there is no `:inth-spec` project, so `codegen` generates into the bridge module instead, and `auto` generates there rather than failing. An unrecognised value fails the build |
+| `inth.reactNativeVersion` | unset | Only for the standalone build. A host app leaves it unset and React Native's root plugin supplies the version, having forced `com.facebook.react:react-android` onto every configuration |
+| `inth.reactNativeDir`, `inth.codegenProjectRoot`, `inth.nodeExecutable` | probed | Point Codegen at an install Gradle cannot infer |
 
 ### Generated, hand-written, and how the two stay honest
 
-Codegen owns one file here: `NativeC15tSpec`. Everything else in this directory is
+Codegen owns one file here: `NativeInthSpec`. Everything else in this directory is
 hand-written and compiles against that spec through a `compileOnly` edge, because the class is
 generated per app build and a second copy in one APK is a duplicate-class failure. `codegen`
-mode does not change that: generated output lands in `:c15t-spec/build/` and goes no further.
-The published bridge AAR contains no `NativeC15tSpec` entry in either mode, and CI asserts it
+mode does not change that: generated output lands in `:inth-spec/build/` and goes no further.
+The published bridge AAR contains no `NativeInthSpec` entry in either mode, and CI asserts it
 by unzipping `classes.jar`.
 
 Two checks hold the hand-written side to the generated one, and they grade different things:
 
-- `C15tModuleSurfaceTest` reflects over the compiled Kotlin module and reads
-  `../src/specs/NativeC15t.ts`, so the module implements the surface the TypeScript declares.
+- `InthModuleSurfaceTest` reflects over the compiled Kotlin module and reads
+  `../src/specs/NativeInth.ts`, so the module implements the surface the TypeScript declares.
 - `../src/specs/__tests__/android-spec-surface.test.ts` runs the same generator the Gradle
   command runs, then compares the emitted Java to the stand-in method by method: module name,
   argument types, return types, `@ReactMethod`, the synchronous flag, and the JSON-string
@@ -105,24 +105,24 @@ produces nothing, or if the spec reaches the AAR.
 ## Configuration
 
 The core reads its configuration from `AndroidManifest.xml` meta-data (see
-[`packages/android`](../../android)): `com.c15t.BACKEND_URL`,
-`com.c15t.DRY_RUN`, `com.c15t.BACKEND_DOMAIN`, `com.c15t.FORCE_GPC`. `com.c15t.BACKEND_URL` is the
+[`packages/android`](../../android)): `com.inth.BACKEND_URL`,
+`com.inth.DRY_RUN`, `com.inth.BACKEND_DOMAIN`, `com.inth.FORCE_GPC`. `com.inth.BACKEND_URL` is the
 project URL from the Inth dashboard, such as `https://your-project.inth.app`; the mobile SDKs
-work only with Inth. `com.c15t.DRY_RUN` is for development and CI: consent works on the device
+work only with Inth. `com.inth.DRY_RUN` is for development and CI: consent works on the device
 and no record is sent, and a build that is not debuggable refuses it. Without a backend URL, or
-with one that is refused, nothing installs, the reason is logged under the `c15t` tag, and the
+with one that is refused, nothing installs, the reason is logged under the `inth` tag, and the
 module answers with the deny-all snapshot. Each is read whichever type
 the manifest parser gave it, so a bare `true` and a quoted `"true"` mean the same thing;
 `true`, `TRUE`, and `1` all count, and anything else reads as absent.
 
-An app that calls `C15tAndroid.install` itself opts out of the launch hook:
+An app that calls `InthAndroid.install` itself opts out of the launch hook:
 
 ```xml
-<meta-data android:name="com.c15t.reactnative.AUTO_BOOTSTRAP" android:value="false" />
+<meta-data android:name="com.inth.reactnative.AUTO_BOOTSTRAP" android:value="false" />
 ```
 
 or removes the provider entry with `tools:node="remove"` on
-`com.c15t.reactnative.C15tReactNativeInitializer`.
+`com.inth.reactnative.InthReactNativeInitializer`.
 
 ## Behaviour worth knowing
 
@@ -141,5 +141,5 @@ or removes the provider entry with `tools:node="remove"` on
 ## Not here
 
 No IAB, TC string, or GVL handling; no Android UI; no old bridge. Prompts are JavaScript's
-business, and `c15t-core` has no `android.*` import, which is what lets all of this be tested
+business, and `inth-core` has no `android.*` import, which is what lets all of this be tested
 without an emulator.

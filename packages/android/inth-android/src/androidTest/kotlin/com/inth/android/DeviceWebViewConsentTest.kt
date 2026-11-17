@@ -1,10 +1,10 @@
-package com.c15t.android
+package com.inth.android
 
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.c15t.core.C15t
+import com.inth.core.Inth
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import org.junit.After
@@ -19,8 +19,8 @@ import org.junit.runner.RunWith
  * What only a real WebView can show: the document-start script reaches a listed origin's
  * main frame before the page's own script, and an unlisted origin gets nothing.
  *
- * The JVM tests in `:c15t-core` cover the payload; `@c15t/core` and `@c15t/browser` run
- * the same script in a browser against web c15t.
+ * The JVM tests in `:inth-core` cover the payload; `@c15t/core` and `@c15t/browser` run
+ * the same script in a browser against web Inth.
  */
 @RunWith(AndroidJUnit4::class)
 class DeviceWebViewConsentTest {
@@ -38,7 +38,7 @@ class DeviceWebViewConsentTest {
 	fun installAnOfflineCore() {
 		awaitLaunchSettled()
 		uninstallCore()
-		C15tAndroid.install(appContext(), deviceConfig(), transport = DeviceBackend())
+		InthAndroid.install(appContext(), deviceConfig(), transport = DeviceBackend())
 	}
 
 	@After
@@ -47,7 +47,7 @@ class DeviceWebViewConsentTest {
 	}
 
 	private fun load(baseUrl: String, origins: List<String>): String {
-		val core = C15t.current
+		val core = Inth.current
 		assertNotNull("the installed core", core)
 		val loaded = CountDownLatch(1)
 		val seen = CountDownLatch(1)
@@ -103,7 +103,7 @@ class DeviceWebViewConsentTest {
 	@Test
 	fun testHelpersOnTwoWebViewsKeepTheirOwnScopes() {
 		assumeTrue("WebView without document-start scripts", ConsentWebView.isSupported())
-		val core = C15t.current
+		val core = Inth.current
 		assertNotNull("the installed core", core)
 		lateinit var first: WebView
 		lateinit var second: WebView

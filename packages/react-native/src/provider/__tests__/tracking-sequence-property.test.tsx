@@ -5,7 +5,7 @@
  * After every step, and at the moment Apple is asked, it checks: ATT is asked
  * at most once per launch (more only after Apple's EU sheet paused on
  * Additional Information, which Apple asks apps to follow with a second
- * request); never while a c15t screen is open; never while the provider says
+ * request); never while an Inth screen is open; never while the provider says
  * `manual`; never after a stored choice refused marketing; with `afterConsent`,
  * only while marketing is granted; never while the app is not active; and
  * never in a build that did not enable ATT.
@@ -79,7 +79,7 @@ const violations = function violations(context: AskContext): string[] {
 		found.push('asked without ATT enabled');
 	}
 	if (context.open) {
-		found.push('asked while a c15t screen is open');
+		found.push('asked while an Inth screen is open');
 	}
 	if (context.mode === 'manual') {
 		found.push('asked in manual');

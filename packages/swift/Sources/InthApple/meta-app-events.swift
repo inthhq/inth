@@ -1,5 +1,5 @@
-#if canImport(C15tCore)
-import C15tCore
+#if canImport(InthCore)
+import InthCore
 #endif
 import Foundation
 
@@ -13,7 +13,7 @@ import Foundation
 /// `Settings.shared.isAdvertiserIDCollectionEnabled`. For `setLimitedDataUse`, call
 /// `Settings.shared.setDataProcessingOptions(["LDU"], country: 0, state: 0)` when it
 /// is `true`, so Meta applies it by location, and `setDataProcessingOptions([])`
-/// when it is `false`. Marketing is the default, as for the web's Meta Pixel. c15t
+/// when it is `false`. Marketing is the default, as for the web's Meta Pixel. Inth
 /// does not link the Meta SDK.
 ///
 /// Set `FacebookAutoLogAppEventsEnabled` and `FacebookAdvertiserIDCollectionEnabled`

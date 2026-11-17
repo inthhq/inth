@@ -1,6 +1,6 @@
 import Foundation
 import XCTest
-@_spi(C15tInternal) @testable import C15tApple
+@_spi(InthInternal) @testable import InthApple
 
 /// The IAB half of the ATT gate, from the fixture the web derivation also runs, and the
 /// controller's answer-log and Additional Information rules.
@@ -28,7 +28,7 @@ final class TrackingConsentTests: XCTestCase {
         let fixture = try JSONDecoder().decode(Fixture.self, from: data)
         XCTAssertFalse(fixture.cases.isEmpty)
         for item in fixture.cases {
-            let input = C15tTrackingConsent.IABInput(
+            let input = InthTrackingConsent.IABInput(
                 purposeConsents: Set(item.purposeConsents),
                 vendorConsentPurposes: Dictionary(uniqueKeysWithValues: item.vendors.map { (Int($0.key)!, Set($0.value)) }),
                 vendorConsents: Set(item.vendorConsents),
@@ -36,8 +36,8 @@ final class TrackingConsentTests: XCTestCase {
                 adTechProviderConsents: Set(item.adTechProviderConsents),
                 customVendorConsentPurposes: item.customVendors.mapValues { Set($0) },
                 customVendorConsents: Set(item.customVendorConsents))
-            XCTAssertEqual(C15tTrackingConsent.iabMarketingPurposesConsented(input), item.expected.purposes, item.name)
-            XCTAssertEqual(C15tTrackingConsent.iabMarketingConsented(input), item.expected.marketing, item.name)
+            XCTAssertEqual(InthTrackingConsent.iabMarketingPurposesConsented(input), item.expected.purposes, item.name)
+            XCTAssertEqual(InthTrackingConsent.iabMarketingConsented(input), item.expected.marketing, item.name)
         }
     }
 
@@ -45,15 +45,15 @@ final class TrackingConsentTests: XCTestCase {
 
     /// A controller over a settable Apple status, answering `answer`, with an in-memory log.
     private final class Apple: @unchecked Sendable {
-        var status: C15tTrackingPlatformStatus? = .notDetermined
-        var answer: C15tTrackingPlatformStatus = .authorized
+        var status: InthTrackingPlatformStatus? = .notDetermined
+        var answer: InthTrackingPlatformStatus = .authorized
         var clock = Date(timeIntervalSince1970: 1_800_000_000)
         var expanded = false
         var offeredButton: Bool?
-        let log = C15tTrackingAnswerLog.inMemory()
+        let log = InthTrackingAnswerLog.inMemory()
 
-        var controller: C15tTrackingController {
-            C15tTrackingController(
+        var controller: InthTrackingController {
+            InthTrackingController(
                 trackingPlatformStatus: { self.status },
                 trackingPromptStringPresent: { true },
                 trackingPrompt: { completion in

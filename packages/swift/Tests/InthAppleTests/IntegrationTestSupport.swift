@@ -1,5 +1,5 @@
-@_spi(C15tInternal) import C15tApple
-@_spi(C15tInternal) import C15tCore
+@_spi(InthInternal) import InthApple
+@_spi(InthInternal) import InthCore
 import Foundation
 import XCTest
 
@@ -18,7 +18,7 @@ extension XCTestCase {
         XCTAssertTrue(core.isReady())
     }
 
-    func config(store: InMemoryStore, transport: (any C15tTransport)? = nil) -> CoreConfig {
+    func config(store: InMemoryStore, transport: (any InthTransport)? = nil) -> CoreConfig {
         CoreConfig(
             store: store,
             transport: transport,

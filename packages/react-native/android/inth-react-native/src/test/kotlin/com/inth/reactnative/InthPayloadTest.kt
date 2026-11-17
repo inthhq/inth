@@ -1,34 +1,34 @@
-package com.c15t.reactnative
+package com.inth.reactnative
 
-import com.c15t.consentui.ConsentHostOutcome
-import com.c15t.consentui.ConsentHostPresentation
-import com.c15t.consentui.ConsentHostSession
-import com.c15t.core.CommitIntent
-import com.c15t.core.CommitResult
-import com.c15t.core.NativeConfig
-import com.c15t.core.iab.AdTechProvider
-import com.c15t.core.iab.IabChoices
-import com.c15t.core.iab.IabCommittedConsent
-import com.c15t.core.iab.IabConfiguration
-import com.c15t.core.iab.IabCustomVendor
-import com.c15t.core.iab.IabDraft
-import com.c15t.core.iab.IabPresentation
-import com.c15t.core.model.ConsentAction
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentLocation
-import com.c15t.core.model.ConsentSnapshot
-import com.c15t.core.model.ConsentSubject
-import com.c15t.core.model.ExplicitChoice
-import com.c15t.core.model.KernelOverrides
-import com.c15t.core.model.KernelError
-import com.c15t.core.model.KernelIabState
-import com.c15t.core.model.PromptPurpose
-import com.c15t.core.model.PromptRequirement
-import com.c15t.core.store.C15tStore
-import com.c15t.core.tc.GlobalVendorList
-import com.c15t.core.tc.GvlLocalizedEntry
-import com.c15t.core.tc.GvlVendorEntry
-import com.c15t.core.wire.SnapshotWire
+import com.inth.consentui.ConsentHostOutcome
+import com.inth.consentui.ConsentHostPresentation
+import com.inth.consentui.ConsentHostSession
+import com.inth.core.CommitIntent
+import com.inth.core.CommitResult
+import com.inth.core.NativeConfig
+import com.inth.core.iab.AdTechProvider
+import com.inth.core.iab.IabChoices
+import com.inth.core.iab.IabCommittedConsent
+import com.inth.core.iab.IabConfiguration
+import com.inth.core.iab.IabCustomVendor
+import com.inth.core.iab.IabDraft
+import com.inth.core.iab.IabPresentation
+import com.inth.core.model.ConsentAction
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentLocation
+import com.inth.core.model.ConsentSnapshot
+import com.inth.core.model.ConsentSubject
+import com.inth.core.model.ExplicitChoice
+import com.inth.core.model.KernelOverrides
+import com.inth.core.model.KernelError
+import com.inth.core.model.KernelIabState
+import com.inth.core.model.PromptPurpose
+import com.inth.core.model.PromptRequirement
+import com.inth.core.store.InthStore
+import com.inth.core.tc.GlobalVendorList
+import com.inth.core.tc.GvlLocalizedEntry
+import com.inth.core.tc.GvlVendorEntry
+import com.inth.core.wire.SnapshotWire
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
@@ -46,15 +46,15 @@ import org.junit.Test
  * The wire contract on the Android side, proven against the shapes in
  * `packages/react-native/src/protocol`.
  */
-class C15tPayloadTest {
+class InthPayloadTest {
 	private val json = Json { ignoreUnknownKeys = true }
 
 	@Test
 	fun `getBootstrap answers deny-all when the store is empty`() {
-		val kernel = bridgeKernel(C15tStore(MemoryStore()))
+		val kernel = bridgeKernel(InthStore(MemoryStore()))
 		kernel.bootstrap()
 
-		val payload = parse(C15tPayload.bootstrap(kernel.snapshot(), kernel.hasStoredSnapshot))
+		val payload = parse(InthPayload.bootstrap(kernel.snapshot(), kernel.hasStoredSnapshot))
 
 		assertEquals(1L, payload["protocolVersion"]!!.jsonPrimitive.content.toLong())
 		assertEquals(1L, payload["minSupportedProtocolVersion"]!!.jsonPrimitive.content.toLong())
@@ -66,7 +66,7 @@ class C15tPayloadTest {
 		assertTrue("this build links the stock screens", payload["nativeUI"]!!.jsonPrimitive.boolean)
 		assertFalse("the handshake carries the version, not the snapshot", payload.containsKey("effectivePermissions"))
 
-		val snapshot = parse(C15tPayload.snapshot(kernel.snapshot()))
+		val snapshot = parse(InthPayload.snapshot(kernel.snapshot()))
 		assertFalse(snapshot["ready"]!!.jsonPrimitive.boolean)
 		assertTrue(snapshot["policyPending"]!!.jsonPrimitive.boolean)
 		val permissions = snapshot["effectivePermissions"]!!.jsonObject
@@ -79,12 +79,12 @@ class C15tPayloadTest {
 	@Test
 	fun `getBootstrap reports a stored snapshot on the next launch`() {
 		val backend = MemoryStore()
-		bridgeKernel(C15tStore(backend)).bootstrap()
+		bridgeKernel(InthStore(backend)).bootstrap()
 
-		val relaunched = bridgeKernel(C15tStore(backend))
+		val relaunched = bridgeKernel(InthStore(backend))
 		relaunched.bootstrap()
 
-		val payload = parse(C15tPayload.bootstrap(relaunched.snapshot(), relaunched.hasStoredSnapshot))
+		val payload = parse(InthPayload.bootstrap(relaunched.snapshot(), relaunched.hasStoredSnapshot))
 		assertTrue(payload["hasStoredSnapshot"]!!.jsonPrimitive.boolean)
 		assertTrue("the generated subject must survive the relaunch", relaunched.snapshot().subject != null)
 		assertEquals(
@@ -95,10 +95,10 @@ class C15tPayloadTest {
 
 	@Test
 	fun `the snapshot wire form keeps every declared key and never a null language`() {
-		val kernel = bridgeKernel(C15tStore(MemoryStore()))
+		val kernel = bridgeKernel(InthStore(MemoryStore()))
 		kernel.bootstrap()
 
-		val snapshot = parse(C15tPayload.snapshot(kernel.snapshot(), fallbackLanguage = "de"))
+		val snapshot = parse(InthPayload.snapshot(kernel.snapshot(), fallbackLanguage = "de"))
 
 		assertTrue("the iab key stays present", snapshot.containsKey("iab"))
 		assertTrue(
@@ -136,7 +136,7 @@ class C15tPayloadTest {
 			tcfPolicyVersion = 5,
 		)
 
-		val iab = parse(C15tPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list))))
+		val iab = parse(InthPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list))))
 			.getValue("iab")
 			.jsonObject
 
@@ -171,7 +171,7 @@ class C15tPayloadTest {
 		// what the evaluator honored, and `override` says whether the app or the
 		// device caused it, so the payload answers the question on its own.
 		val kernel = bridgeKernel(
-			C15tStore(MemoryStore()),
+			InthStore(MemoryStore()),
 			config = NativeConfig(
 				backendUrl = "https://test.c15t.app",
 				overrides = KernelOverrides(gpc = true),
@@ -180,7 +180,7 @@ class C15tPayloadTest {
 		)
 		kernel.bootstrap()
 
-		val signals = parse(C15tPayload.snapshot(kernel.snapshot()))["privacySignals"]!!.jsonObject
+		val signals = parse(InthPayload.snapshot(kernel.snapshot()))["privacySignals"]!!.jsonObject
 		val gpc = signals["gpc"]!!.jsonObject
 
 		assertFalse("the device reported nothing", gpc["detected"]!!.jsonPrimitive.boolean)
@@ -191,10 +191,10 @@ class C15tPayloadTest {
 
 	@Test
 	fun `an un-overridden signal reports a null override rather than a false one`() {
-		val kernel = bridgeKernel(C15tStore(MemoryStore()))
+		val kernel = bridgeKernel(InthStore(MemoryStore()))
 		kernel.bootstrap()
 
-		val gpc = parse(C15tPayload.snapshot(kernel.snapshot()))["privacySignals"]!!.jsonObject["gpc"]!!.jsonObject
+		val gpc = parse(InthPayload.snapshot(kernel.snapshot()))["privacySignals"]!!.jsonObject["gpc"]!!.jsonObject
 
 		assertFalse(gpc["detected"]!!.jsonPrimitive.boolean)
 		assertEquals("no override is not the same answer as an override to false", JsonNull, gpc["override"])
@@ -203,11 +203,11 @@ class C15tPayloadTest {
 
 	@Test
 	fun `a commit result reports confirmed as the category names it recorded`() {
-		val kernel = bridgeKernel(C15tStore(MemoryStore()))
+		val kernel = bridgeKernel(InthStore(MemoryStore()))
 		kernel.bootstrap()
 
 		val result = kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MEASUREMENT to true, ConsentCategory.MARKETING to false)))
-		val payload = parse(C15tPayload.commitResult(result, kernel.snapshot()))
+		val payload = parse(InthPayload.commitResult(result, kernel.snapshot()))
 
 		assertTrue(payload["ok"]!!.jsonPrimitive.boolean)
 		assertEquals(result.revision, payload["revision"]!!.jsonPrimitive.content.toLong())
@@ -229,10 +229,10 @@ class C15tPayloadTest {
 			confirmed = emptyMap(),
 			queued = false,
 			delivered = false,
-			error = KernelError("not-bootstrapped", "C15t.bootstrap() has not run"),
+			error = KernelError("not-bootstrapped", "Inth.bootstrap() has not run"),
 		)
 
-		val payload = parse(C15tPayload.commitResult(result, ConsentSnapshot()))
+		val payload = parse(InthPayload.commitResult(result, ConsentSnapshot()))
 
 		assertFalse(payload["ok"]!!.jsonPrimitive.boolean)
 		assertTrue("a refused commit reports no revision", payload["revision"] is JsonNull)
@@ -241,16 +241,16 @@ class C15tPayloadTest {
 
 	@Test
 	fun `a commit built on an older revision is refused and changes nothing`() {
-		val kernel = bridgeKernel(C15tStore(MemoryStore()))
+		val kernel = bridgeKernel(InthStore(MemoryStore()))
 		kernel.bootstrap()
 		val current = kernel.snapshot().revision
 		val before = kernel.snapshot()
 
 		assertTrue(
 			"the binary says it checks a commit's revision",
-			parse(C15tPayload.bootstrap(kernel.snapshot(), kernel.hasStoredSnapshot))["commitRevision"]!!.jsonPrimitive.boolean,
+			parse(InthPayload.bootstrap(kernel.snapshot(), kernel.hasStoredSnapshot))["commitRevision"]!!.jsonPrimitive.boolean,
 		)
-		val stale = parse(C15tPayload.commit("""{"action":"explicit","consents":{"marketing":true},"revision":${current - 1}}""", kernel))
+		val stale = parse(InthPayload.commit("""{"action":"explicit","consents":{"marketing":true},"revision":${current - 1}}""", kernel))
 		assertFalse(stale["ok"]!!.jsonPrimitive.boolean)
 		assertEquals("concurrent-change", stale["reason"]!!.jsonPrimitive.content)
 		assertEquals("a refused draft must not touch the record", before, kernel.snapshot())
@@ -260,12 +260,12 @@ class C15tPayloadTest {
 			"""{"action":"explicit","consents":{"marketing":true},"revision":null}""",
 			"""{"action":"explicit","consents":{"marketing":true},"revision":1.5}""",
 		)) {
-			val refused = parse(C15tPayload.commit(raw, kernel))
+			val refused = parse(InthPayload.commit(raw, kernel))
 			assertEquals("a revision that is not a whole number is not ignored: $raw", "invalid-intent", refused["reason"]!!.jsonPrimitive.content)
 		}
 		assertEquals(before, kernel.snapshot())
 
-		val pinned = parse(C15tPayload.commit("""{"action":"explicit","consents":{"marketing":true},"revision":$current}""", kernel))
+		val pinned = parse(InthPayload.commit("""{"action":"explicit","consents":{"marketing":true},"revision":$current}""", kernel))
 		assertTrue(
 			"the current revision passes the check: ${pinned["reason"]}",
 			pinned["ok"]!!.jsonPrimitive.boolean || pinned["reason"]?.jsonPrimitive?.content != "concurrent-change",
@@ -282,7 +282,7 @@ class C15tPayloadTest {
 			delivered = false,
 		)
 
-		val payload = parse(C15tPayload.commitResult(result, ConsentSnapshot()))
+		val payload = parse(InthPayload.commitResult(result, ConsentSnapshot()))
 
 		assertTrue(payload["ok"]!!.jsonPrimitive.boolean)
 		assertEquals(4L, payload["revision"]!!.jsonPrimitive.content.toLong())
@@ -291,7 +291,7 @@ class C15tPayloadTest {
 
 	@Test
 	fun `the not-bootstrapped shape carries the reason the protocol names`() {
-		val payload = parse(C15tPayload.notBootstrapped())
+		val payload = parse(InthPayload.notBootstrapped())
 
 		assertFalse(payload["ok"]!!.jsonPrimitive.boolean)
 		assertTrue(payload["revision"] is JsonNull)
@@ -301,16 +301,16 @@ class C15tPayloadTest {
 
 	@Test
 	fun `an unreadable intent is refused rather than rounded to an action`() {
-		val kernel = bridgeKernel(C15tStore(MemoryStore()))
+		val kernel = bridgeKernel(InthStore(MemoryStore()))
 		kernel.bootstrap()
 		val before = kernel.snapshot().revision
 
 		for (raw in listOf("", "{", "{\"action\":\"explode\"}", "{\"action\":\"explicit\"}", "[1,2]", "null")) {
-			assertNull("must refuse: $raw", C15tPayload.parseCommitIntent(raw))
+			assertNull("must refuse: $raw", InthPayload.parseCommitIntent(raw))
 		}
 		assertNull(
 			"necessary is not a choice anyone can grant",
-			C15tPayload.parseCommitIntent("{\"action\":\"explicit\",\"consents\":{\"necessary\":true}}"),
+			InthPayload.parseCommitIntent("{\"action\":\"explicit\",\"consents\":{\"necessary\":true}}"),
 		)
 		assertEquals("a refused intent must not mutate the snapshot", before, kernel.snapshot().revision)
 	}
@@ -331,13 +331,13 @@ class C15tPayloadTest {
 			tcString = "CQ-test",
 		)
 		val list = GlobalVendorList(purposes = emptyMap(), vendors = emptyMap(), vendorListVersion = 177, tcfPolicyVersion = 5)
-		val committed = parse(C15tPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list)), iabConsent = consent))
+		val committed = parse(InthPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list)), iabConsent = consent))
 			.getValue("iab").jsonObject.getValue("committed").jsonObject
 
 		assertEquals("CQ-test", committed["tcString"]!!.jsonPrimitive.content)
 		assertEquals(JsonNull, committed["addtlConsent"])
 		val presentation = IabPresentation(IabDraft(1, IabChoices()), list, emptyMap(), null, canEdit = true)
-		val editable = parse(C15tPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list)),
+		val editable = parse(InthPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list)),
 			iabAcceptAll = IabChoices(vendorConsents = listOf(7)), iabPresentation = presentation)).getValue("iab").jsonObject
 		assertTrue("an accept-all answer with its disclosure means a draft can open", editable["editable"]!!.jsonPrimitive.boolean)
 		assertEquals(listOf("7"), editable.getValue("acceptAll").jsonObject.getValue("vendorConsents").jsonArray.map { it.jsonPrimitive.content })
@@ -352,7 +352,7 @@ class C15tPayloadTest {
 		// A commit lands between the first snapshot read and the additions.
 		val revisions = ArrayDeque(listOf(4L, 5L, 5L))
 		var reads = 0
-		val (snapshot, additions) = C15tPayload.consistently({ ConsentSnapshot(revision = revisions.removeFirst()) }) {
+		val (snapshot, additions) = InthPayload.consistently({ ConsentSnapshot(revision = revisions.removeFirst()) }) {
 			reads += 1
 			"decision $reads"
 		}
@@ -360,7 +360,7 @@ class C15tPayloadTest {
 		assertEquals("the additions are the ones read with revision 5", "decision 2", additions)
 
 		var steady = 0
-		val (_, once) = C15tPayload.consistently({ ConsentSnapshot(revision = 7L) }) { ++steady }
+		val (_, once) = InthPayload.consistently({ ConsentSnapshot(revision = 7L) }) { ++steady }
 		assertEquals("a quiet core is read once", 1, once)
 	}
 
@@ -374,13 +374,13 @@ class C15tPayloadTest {
 		)
 		val choices = IabChoices(vendorConsents = listOf(7))
 
-		val closed = parse(C15tPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list)), iabAcceptAll = choices))
+		val closed = parse(InthPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list)), iabAcceptAll = choices))
 			.getValue("iab").jsonObject
 		assertFalse("a draft that could open is not offered without the disclosure", closed["editable"]!!.jsonPrimitive.boolean)
 		assertEquals(JsonNull, closed["acceptAll"])
 		assertEquals(JsonNull, closed["disclosure"])
 
-		val open = parse(C15tPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list)), iabAcceptAll = choices,
+		val open = parse(InthPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list)), iabAcceptAll = choices,
 			iabPresentation = presentation)).getValue("iab").jsonObject
 		assertTrue(open["editable"]!!.jsonPrimitive.boolean)
 		assertEquals("this build names no gap, restrictions and providers included", 0, open.getValue("headlessUnsupported").jsonArray.size)
@@ -398,7 +398,7 @@ class C15tPayloadTest {
 			.readText()
 
 	/** A core that served the fixture's list and providers under an IAB policy, as a device would hold it. */
-	private fun headlessCore(): com.c15t.core.ConsentCore {
+	private fun headlessCore(): com.inth.core.ConsentCore {
 		val vendorList = json.parseToJsonElement(protocolFile("iab/${headless.getValue("vendorList").jsonPrimitive.content}")).jsonObject
 		// A served IAB policy, unchanged, from the kernel-generated evaluation fixture.
 		val served = json.parseToJsonElement(protocolFile("evaluation-narrow-iab-no-receipt.json")).jsonObject
@@ -408,32 +408,32 @@ class C15tPayloadTest {
 			"adTechProviders" to vendorList.getValue("adTechProviders"),
 			"customVendors" to headless.getValue("customVendors"),
 		))
-		val transport = object : com.c15t.core.transport.C15tTransport {
-			override fun init(context: com.c15t.core.transport.InitContext) =
-				com.c15t.core.transport.TransportOutcome.Success(body, mapOf("x-c15t-policy-contract" to "1"))
+		val transport = object : com.inth.core.transport.InthTransport {
+			override fun init(context: com.inth.core.transport.InitContext) =
+				com.inth.core.transport.TransportOutcome.Success(body, mapOf("x-c15t-policy-contract" to "1"))
 
-			override fun save(entry: com.c15t.core.model.QueuedSave) = com.c15t.core.transport.SaveOutcome.Unavailable("offline")
+			override fun save(entry: com.inth.core.model.QueuedSave) = com.inth.core.transport.SaveOutcome.Unavailable("offline")
 
-			override fun identify(subject: ConsentSubject, user: com.c15t.core.model.KernelUser) =
-				com.c15t.core.transport.TransportOutcome.Success(null, emptyMap())
+			override fun identify(subject: ConsentSubject, user: com.inth.core.model.KernelUser) =
+				com.inth.core.transport.TransportOutcome.Success(null, emptyMap())
 		}
 		val now = headless.getValue("now").jsonPrimitive.content.toLong()
 		val configuration = Json.decodeFromJsonElement(IabConfiguration.serializer(), headless.getValue("configuration"))
-		return com.c15t.core.ConsentCore(
+		return com.inth.core.ConsentCore(
 			config = NativeConfig(backendUrl = "https://test.c15t.app", iab = configuration),
-			store = C15tStore(MemoryStore()),
+			store = InthStore(MemoryStore()),
 			clock = { now },
 			transport = transport,
-			executor = com.c15t.core.spi.TaskExecutor.DIRECT,
+			executor = com.inth.core.spi.TaskExecutor.DIRECT,
 		).also { it.bootstrap() }
 	}
 
-	private fun headlessSnapshot(core: com.c15t.core.ConsentCore): JsonObject =
-		parse(C15tPayload.snapshot(core.snapshot(), iabConsent = core.iabConsent, iabAcceptAll = core.iabAcceptAllChoices(),
+	private fun headlessSnapshot(core: com.inth.core.ConsentCore): JsonObject =
+		parse(InthPayload.snapshot(core.snapshot(), iabConsent = core.iabConsent, iabAcceptAll = core.iabAcceptAllChoices(),
 			iabPresentation = core.iabPresentation(), iabCustomVendors = core.iabCustomVendors())).getValue("iab").jsonObject
 
-	private fun headlessCommit(core: com.c15t.core.ConsentCore, choices: JsonObject, revision: Long): JsonObject =
-		parse(C15tPayload.commit("""{"action":"iab","choices":$choices,"consents":{},"revision":$revision}""", core))
+	private fun headlessCommit(core: com.inth.core.ConsentCore, choices: JsonObject, revision: Long): JsonObject =
+		parse(InthPayload.commit("""{"action":"iab","choices":$choices,"consents":{},"revision":$revision}""", core))
 
 	@Test
 	fun `the snapshot carries the disclosure the stock screens draw`() {
@@ -481,29 +481,29 @@ class C15tPayloadTest {
 	fun `custom vendors cross inside the IAB slot and their choices as strings`() {
 		val list = GlobalVendorList(purposes = emptyMap(), vendors = emptyMap(), vendorListVersion = 177, tcfPolicyVersion = 5)
 		val vendor = IabCustomVendor("internal-ads", "Internal ads", "https://example.test/ads", listOf(1, 3))
-		val iab = parse(C15tPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list)), iabCustomVendors = listOf(vendor)))
+		val iab = parse(InthPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list)), iabCustomVendors = listOf(vendor)))
 			.getValue("iab").jsonObject
 		val listed = iab.getValue("customVendors").jsonArray.single().jsonObject
 		assertEquals("internal-ads", listed.getValue("id").jsonPrimitive.content)
 		assertEquals(listOf("1", "3"), listed.getValue("purposes").jsonArray.map { it.jsonPrimitive.content })
 		assertFalse("absent optionals stay out, as Swift writes them", "description" in listed)
-		assertEquals(0, parse(C15tPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list))))
+		assertEquals(0, parse(InthPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list))))
 			.getValue("iab").jsonObject.getValue("customVendors").jsonArray.size)
 		// The same state crosses as the same bytes, every time.
 		val accepted = IabChoices(customVendorConsents = listOf("chat", "internal-ads"), customVendorLegitimateInterests = listOf("internal-ads"))
-		val first = C15tPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list)), iabAcceptAll = accepted, iabCustomVendors = listOf(vendor, vendor))
+		val first = InthPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list)), iabAcceptAll = accepted, iabCustomVendors = listOf(vendor, vendor))
 		repeat(20) {
-			assertEquals(first, C15tPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list)), iabAcceptAll = accepted, iabCustomVendors = listOf(vendor, vendor)))
+			assertEquals(first, InthPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list)), iabAcceptAll = accepted, iabCustomVendors = listOf(vendor, vendor)))
 		}
 
 		val lists = """"purposeConsents":[],"purposeLegitimateInterests":[],"purposeObjections":[],"vendorConsents":[],""" +
 			""""vendorLegitimateInterests":[],"vendorObjections":[],"specialFeatureOptIns":[],"publisherConsents":[],""" +
 			""""publisherLegitimateInterests":[],"publisherCustomConsents":[],"publisherCustomLegitimateInterests":[]"""
 		val raw = """{"action":"iab","choices":{$lists,"customVendorConsents":["internal-ads"],"customVendorLegitimateInterests":[]},"consents":{}}"""
-		val intent = C15tPayload.parseCommitIntent(raw) as CommitIntent.Iab
+		val intent = InthPayload.parseCommitIntent(raw) as CommitIntent.Iab
 		assertEquals(listOf("internal-ads"), intent.choices.customVendorConsents)
-		assertNull("custom vendor ids are strings", C15tPayload.parseCommitIntent(raw.replace("[\"internal-ads\"]", "[1]")))
-		val without = C15tPayload.parseCommitIntent("""{"action":"iab","choices":{$lists},"consents":{}}""") as CommitIntent.Iab
+		assertNull("custom vendor ids are strings", InthPayload.parseCommitIntent(raw.replace("[\"internal-ads\"]", "[1]")))
+		val without = InthPayload.parseCommitIntent("""{"action":"iab","choices":{$lists},"consents":{}}""") as CommitIntent.Iab
 		assertEquals("a draft that names no custom vendor grants none", emptyList<String>(), without.choices.customVendorConsents)
 	}
 
@@ -513,7 +513,7 @@ class C15tPayloadTest {
 			""""purposeObjections":[],"vendorConsents":[755],"vendorLegitimateInterests":[],"vendorObjections":[],""" +
 			""""specialFeatureOptIns":[],"publisherConsents":[],"publisherLegitimateInterests":[],""" +
 			""""publisherCustomConsents":[],"publisherCustomLegitimateInterests":[]},"consents":{"marketing":true},"revision":12}"""
-		val intent = C15tPayload.parseCommitIntent(raw)
+		val intent = InthPayload.parseCommitIntent(raw)
 
 		assertTrue(intent is CommitIntent.Iab)
 		intent as CommitIntent.Iab
@@ -527,15 +527,15 @@ class C15tPayloadTest {
 			"""{"action":"iab","choices":{"vendorGrants":[1]},"consents":{}}""",
 			"""{"action":"iab","choices":{},"consents":{"necessary":true}}""",
 		)) {
-			assertNull("must refuse: $bad", C15tPayload.parseCommitIntent(bad))
+			assertNull("must refuse: $bad", InthPayload.parseCommitIntent(bad))
 		}
 	}
 
 	@Test
 	fun `the three intents parse to the kernel's own actions`() {
-		assertTrue(C15tPayload.parseCommitIntent("{\"action\":\"all\"}") is CommitIntent.All)
-		assertTrue(C15tPayload.parseCommitIntent("{\"action\":\"necessary\"}") is CommitIntent.Necessary)
-		val explicit = C15tPayload.parseCommitIntent("{\"action\":\"explicit\",\"consents\":{\"measurement\":false}}")
+		assertTrue(InthPayload.parseCommitIntent("{\"action\":\"all\"}") is CommitIntent.All)
+		assertTrue(InthPayload.parseCommitIntent("{\"action\":\"necessary\"}") is CommitIntent.Necessary)
+		val explicit = InthPayload.parseCommitIntent("{\"action\":\"explicit\",\"consents\":{\"measurement\":false}}")
 		assertTrue(explicit is CommitIntent.Custom && explicit.consents.values.toList() == listOf(false))
 	}
 
@@ -559,14 +559,14 @@ class C15tPayloadTest {
 	fun `a gpc that is neither a boolean nor null is refused`() {
 		// The override decides whether the GPC restriction applies, so a value this
 		// build cannot read must not become either answer.
-		val refused = C15tPayload.parseOverrides(
+		val refused = InthPayload.parseOverrides(
 			"""{"gpc":"yes"}""",
 			KernelOverrides(language = "de", gpc = null),
 		)
 
 		assertTrue("expected a refusal, got $refused", refused is OverridesRead.Refused)
 		refused as OverridesRead.Refused
-		assertEquals(C15tPayload.REJECT_OVERRIDES, refused.code)
+		assertEquals(InthPayload.REJECT_OVERRIDES, refused.code)
 		assertTrue(refused.message.contains("gpc"))
 	}
 
@@ -575,9 +575,9 @@ class C15tPayloadTest {
 		val current = KernelOverrides(language = "de")
 
 		for (raw in listOf("{}", """{"nonsense":1}""", "not json")) {
-			val refused = C15tPayload.parseOverrides(raw, current)
+			val refused = InthPayload.parseOverrides(raw, current)
 			assertTrue("expected a refusal for: $raw", refused is OverridesRead.Refused)
-			assertEquals(C15tPayload.REJECT_OVERRIDES, (refused as OverridesRead.Refused).code)
+			assertEquals(InthPayload.REJECT_OVERRIDES, (refused as OverridesRead.Refused).code)
 		}
 	}
 
@@ -587,11 +587,11 @@ class C15tPayloadTest {
 		// past either would leave the app believing a mode was on that nothing turned
 		// on, which is the silence this refusal exists to break.
 		for (raw in listOf("""{"test":true}""", """{"test":"gpc","language":"de"}""", """{"msa":false}""")) {
-			val refused = C15tPayload.parseOverrides(raw, KernelOverrides(language = "de"))
+			val refused = InthPayload.parseOverrides(raw, KernelOverrides(language = "de"))
 
 			assertTrue("expected a refusal for: $raw", refused is OverridesRead.Refused)
 			refused as OverridesRead.Refused
-			assertEquals(C15tPayload.REJECT_OVERRIDES_RETIRED, refused.code)
+			assertEquals(InthPayload.REJECT_OVERRIDES_RETIRED, refused.code)
 			assertTrue(
 				"the message must name the retired field so the host knows what to delete",
 				refused.message.contains("test") || refused.message.contains("msa"),
@@ -606,17 +606,17 @@ class C15tPayloadTest {
 	@Test
 	fun `a stored envelope carrying the retired override is not served`() {
 		val backend = MemoryStore()
-		bridgeKernel(C15tStore(backend)).bootstrap()
+		bridgeKernel(InthStore(backend)).bootstrap()
 		sealWithRetiredOverride(backend, key = "test", value = "gpc")
 
-		val relaunched = bridgeKernel(C15tStore(backend))
+		val relaunched = bridgeKernel(InthStore(backend))
 		relaunched.bootstrap()
 
 		assertFalse(
 			"the bridge must not report a snapshot it could not read",
 			relaunched.hasStoredSnapshot,
 		)
-		val snapshot = parse(C15tPayload.snapshot(relaunched.snapshot()))
+		val snapshot = parse(InthPayload.snapshot(relaunched.snapshot()))
 		assertFalse("a refused read fails closed", snapshot["ready"]!!.jsonPrimitive.boolean)
 		assertTrue(snapshot["policyPending"]!!.jsonPrimitive.boolean)
 		val overrides = snapshot["overrides"]!!.jsonObject
@@ -637,7 +637,7 @@ class C15tPayloadTest {
 	 */
 	@Test
 	fun `the snapshot payload spells the kernel's four objects the kernel's way`() {
-		val payload = parse(C15tPayload.snapshot(richSnapshot(), fallbackLanguage = "de"))
+		val payload = parse(InthPayload.snapshot(richSnapshot(), fallbackLanguage = "de"))
 
 		val subject = payload["subject"]!!.jsonObject
 		assertEquals("sub_01H", subject["subjectId"]!!.jsonPrimitive.content)
@@ -671,7 +671,7 @@ class C15tPayloadTest {
 
 	@Test
 	fun `no core spelling of those four objects survives the bridge`() {
-		val emitted = C15tPayload.snapshot(richSnapshot())
+		val emitted = InthPayload.snapshot(richSnapshot())
 
 		// Presence proves a rename landed; this is the half that would have failed the
 		// build when the four drifted, because a payload carrying both the old key and the
@@ -740,7 +740,7 @@ class C15tPayloadTest {
 		raw: String,
 		current: KernelOverrides,
 	): KernelOverrides {
-		val read = C15tPayload.parseOverrides(raw, current)
+		val read = InthPayload.parseOverrides(raw, current)
 		assertTrue("expected the document to apply: $raw", read is OverridesRead.Applied)
 		return (read as OverridesRead.Applied).overrides
 	}
@@ -749,15 +749,15 @@ class C15tPayloadTest {
 	fun `consent host answers encode as the presenter session JSON reads them`() {
 		assertEquals(
 			"{\"sessionId\":\"one\",\"status\":\"presented\",\"presentation\":\"prompt\"}",
-			C15tHostPayload.consentHostSession(ConsentHostSession.Presented("one", ConsentHostPresentation.PROMPT)),
+			InthHostPayload.consentHostSession(ConsentHostSession.Presented("one", ConsentHostPresentation.PROMPT)),
 		)
 		assertEquals(
 			"{\"sessionId\":\"one\",\"status\":\"already-presented\",\"presentation\":\"preferences\"}",
-			C15tHostPayload.consentHostSession(ConsentHostSession.AlreadyPresented("one", ConsentHostPresentation.PREFERENCES)),
+			InthHostPayload.consentHostSession(ConsentHostSession.AlreadyPresented("one", ConsentHostPresentation.PREFERENCES)),
 		)
 		assertEquals(
 			"{\"sessionId\":null,\"status\":\"not-required\"}",
-			C15tHostPayload.consentHostSession(ConsentHostSession.NotRequired),
+			InthHostPayload.consentHostSession(ConsentHostSession.NotRequired),
 		)
 	}
 
@@ -772,7 +772,7 @@ class C15tPayloadTest {
 		for ((kind, outcome) in kinds) {
 			assertEquals(
 				"{\"sessionId\":\"one\",\"kind\":\"$kind\",\"revision\":4}",
-				C15tHostPayload.consentHostOutcome(outcome),
+				InthHostPayload.consentHostOutcome(outcome),
 			)
 		}
 	}

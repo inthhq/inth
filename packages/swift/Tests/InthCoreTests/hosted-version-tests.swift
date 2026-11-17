@@ -1,4 +1,4 @@
-@_spi(C15tInternal) import C15tCore
+@_spi(InthInternal) import InthCore
 import Foundation
 import XCTest
 
@@ -28,12 +28,12 @@ final class HostedVersionTests: XCTestCase {
 private struct SemverOnlyGateway: HTTPTransport {
     func send(_ request: HTTPRequest) async throws -> HTTPResponse {
         // Hosted gateways accept the SDK version separately from platform attribution.
-        guard request.headers[C15t.versionHeader] == C15t.version else {
+        guard request.headers[Inth.versionHeader] == Inth.version else {
             return HTTPResponse(status: 400, body: Data("Version not supported".utf8))
         }
         return HTTPResponse(
             status: 200,
-            headers: [C15t.policyContractHeader: "1"],
+            headers: [Inth.policyContractHeader: "1"],
             body: Data("{}".utf8))
     }
 }

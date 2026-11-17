@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 extension IABCommitTests {
     func testStaleListKeepsDormantConsentAcrossRetryAndRestartUntilIdenticalRefresh() async throws {
@@ -51,10 +51,10 @@ extension IABCommitTests {
         await cold.waitUntilIdle()
         XCTAssertFalse(cold.isAllowed(.marketing))
         XCTAssertEqual(cold.pendingSaveBodies(), body)
-        var fields = C15tJSON.parse(Fixture.initBody(policyResolution:
+        var fields = InthJSON.parse(Fixture.initBody(policyResolution:
             Fixture.matchedResolution(policy: Fixture.rule(model: "iab"))))!.objectValue!
-        fields["gvl"] = try C15tJSON.parse(C15tJSON.encode(vector.gvl))
-        http.initResponse = HTTPResponse(status: 200, body: try C15tJSON.encode(JSONValue.object(fields)))
+        fields["gvl"] = try InthJSON.parse(InthJSON.encode(vector.gvl))
+        http.initResponse = HTTPResponse(status: 200, body: try InthJSON.encode(JSONValue.object(fields)))
         cold.refresh()
         await cold.waitUntilIdle()
         XCTAssertEqual(cold.iabConsent(), saved)

@@ -60,13 +60,13 @@ const MARKDOWN =
 const MARKDOWN_IN_TABLE = String.raw`"**Track your activity** for ads.\n\nRead our [policy](https://example.com/policy).";`;
 
 /** The app folder name the fixture project uses. */
-const PROJECT_NAME = 'C15tBare';
+const PROJECT_NAME = 'InthBare';
 
 const scratchRoots: string[] = [];
 
 /** A generated iOS project, as `expo prebuild` leaves one behind. */
 const scratchProject = function scratchProject(): string {
-	const root = mkdtempSync(join(tmpdir(), 'c15t-att-markdown-'));
+	const root = mkdtempSync(join(tmpdir(), 'inth-att-markdown-'));
 	const projectPackage = join(root, 'ios', `${PROJECT_NAME}.xcodeproj`);
 	mkdirSync(join(root, 'ios', PROJECT_NAME), { recursive: true });
 	mkdirSync(projectPackage, { recursive: true });
@@ -166,7 +166,7 @@ describe('the Markdown prompt in Info.plist', () => {
 			ITSAppUsesNonExemptEncryption: false,
 			[MARKDOWN_KEY]: MARKDOWN,
 			[PLAIN_KEY]: 'We use your activity to pick the ads you see.',
-			'com.c15t.backend.url': BACKEND,
+			'com.inth.backend.url': BACKEND,
 		});
 	});
 

@@ -3,7 +3,7 @@ import type { AndroidConfig, InfoPlist } from 'expo/config-plugins';
 /**
  * Google Analytics for Firebase's Consent Mode v2 default keys in `Info.plist`.
  *
- * Firebase reads these at launch, before c15t's helper sends the first
+ * Firebase reads these at launch, before Inth's helper sends the first
  * `setConsent`. Each one is `false`, so nothing is granted before consent is
  * read.
  */

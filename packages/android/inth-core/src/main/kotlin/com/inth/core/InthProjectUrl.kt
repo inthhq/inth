@@ -1,4 +1,4 @@
-package com.c15t.core
+package com.inth.core
 
 /**
  * A `backendUrl` that is not an Inth project URL.

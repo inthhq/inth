@@ -105,7 +105,7 @@ export const connectConsentState = <StateType>(
 			} catch (reporterError) {
 				// oxlint-disable-next-line no-console -- A failed error reporter needs an independent visible fallback.
 				console.error(
-					'[c15t] Analytics integration error reporter failed.',
+					'[Inth] Analytics integration error reporter failed.',
 					reporterError
 				);
 			}

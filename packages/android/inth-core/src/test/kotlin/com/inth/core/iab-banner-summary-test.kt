@@ -1,8 +1,8 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.iab.*
-import com.c15t.core.store.*
-import com.c15t.core.tc.*
+import com.inth.core.iab.*
+import com.inth.core.store.*
+import com.inth.core.tc.*
 import java.io.File
 import kotlin.test.*
 import kotlinx.serialization.Serializable
@@ -50,7 +50,7 @@ class IabBannerSummaryTest {
 	@Test fun `presentation carries the summary storage limit and language`() {
 		val config = TEST_CONFIG.copy(iab = IabConfiguration(cmpId = 53, cmpVersion = 7, publisherCountryCode = "GB"))
 		val body = root("examples/native/consent-demo/fixtures/iab-init.json").readText()
-		val core = testKernel(config = config, store = C15tStore(InMemoryKeyValueStore()),
+		val core = testKernel(config = config, store = InthStore(InMemoryKeyValueStore()),
 			transport = RecordingTransport().respondInit(initSuccess(body = body)))
 		core.bootstrap()
 		val presentation = assertNotNull(core.iabPresentation())

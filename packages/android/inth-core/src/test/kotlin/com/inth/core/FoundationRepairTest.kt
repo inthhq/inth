@@ -1,9 +1,9 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.model.*
-import com.c15t.core.spi.*
-import com.c15t.core.store.*
-import com.c15t.core.transport.*
+import com.inth.core.model.*
+import com.inth.core.spi.*
+import com.inth.core.store.*
+import com.inth.core.transport.*
 import java.io.File
 import kotlin.test.*
 import kotlinx.serialization.json.*
@@ -23,12 +23,12 @@ class FoundationRepairTest {
 	@Test
 	fun `relaunch then identify same id keeps consent`() {
 		val backend = InMemoryKeyValueStore()
-		val first = testKernel(config = config, store = C15tStore(backend), transport = RecordingTransport().respondInit(init()), clock = FixedClock(vector.now))
+		val first = testKernel(config = config, store = InthStore(backend), transport = RecordingTransport().respondInit(init()), clock = FixedClock(vector.now))
 		first.bootstrap()
 		first.identify(KernelUser("u1"))
 		assertTrue(first.save(CommitIntent.All).ok)
 		assertNotNull(first.iabConsent)
-		val relaunch = testKernel(config = config, store = C15tStore(backend), transport = RecordingTransport().respondInit(init()), clock = FixedClock(vector.now))
+		val relaunch = testKernel(config = config, store = InthStore(backend), transport = RecordingTransport().respondInit(init()), clock = FixedClock(vector.now))
 		relaunch.bootstrap()
 		val afterHydrate = relaunch.iabConsent
 		relaunch.identify(KernelUser("u1"))
@@ -39,7 +39,7 @@ class FoundationRepairTest {
 	@Test
 	fun `repeated refused withdrawals leave room for later actions`() {
 		val transport = RecordingTransport().respondInit(init()).respondSave(SaveOutcome.Rejected(400))
-		val store = C15tStore(InMemoryKeyValueStore()); val core = testKernel(config = config, store = store, transport = transport, clock = FixedClock(vector.now))
+		val store = InthStore(InMemoryKeyValueStore()); val core = testKernel(config = config, store = store, transport = transport, clock = FixedClock(vector.now))
 		core.bootstrap()
 		repeat(64) {
 			assertTrue(core.save(CommitIntent.Necessary).ok)
@@ -54,7 +54,7 @@ class FoundationRepairTest {
 
 	@Test
 	fun `category withdrawal survives switch to IAB`() {
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val transport = RecordingTransport().respondInit(initSuccess(body = initBody(model = "\"opt-in\""))).respondSave(SaveOutcome.Delivered)
 		val core = testKernel(config = config, store = store, transport = transport, clock = FixedClock(vector.now))
 		core.bootstrap()
@@ -77,27 +77,27 @@ class FoundationRepairTest {
 
 	@Test fun `offline repeated denials survive restart with newest exact frozen body`() {
 		val backend = InMemoryKeyValueStore()
-		val store = C15tStore(backend)
+		val store = InthStore(backend)
 		val transport = RecordingTransport().respondInit(init()).respondSave(SaveOutcome.Unavailable("offline"))
 		val core = testKernel(config = config, store = store, transport = transport, clock = FixedClock(vector.now))
 		core.bootstrap()
 		core.identify(KernelUser("u1"))
 		repeat(32) { assertTrue(core.save(CommitIntent.Necessary).ok) }
 		val newest = assertNotNull(store.readPending().single().body)
-		val cold = testKernel(config = config, store = C15tStore(backend), transport = transport, clock = FixedClock(vector.now))
+		val cold = testKernel(config = config, store = InthStore(backend), transport = transport, clock = FixedClock(vector.now))
 		cold.bootstrap()
 		assertEquals(listOf(newest), store.readPending().map { it.body })
 		cold.identify(KernelUser("u1"))
 		assertNotNull(cold.iabConsent)
 		cold.logout()
-		val loggedOut = testKernel(config = config, store = C15tStore(backend), clock = FixedClock(vector.now))
+		val loggedOut = testKernel(config = config, store = InthStore(backend), clock = FixedClock(vector.now))
 		loggedOut.bootstrap()
 		assertNull(loggedOut.snapshot().subject?.externalId)
 		assertNull(loggedOut.iabConsent)
 	}
 
 	@Test fun `frozen subject owner and domain remain separate at capacity`() {
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val transport = RecordingTransport().respondInit(init()).respondSave(SaveOutcome.Unavailable("offline"))
 		val core = testKernel(config = config, store = store, transport = transport, clock = FixedClock(vector.now))
 		core.bootstrap()
@@ -128,7 +128,7 @@ class FoundationRepairTest {
 
 	@Test fun `IAB configuration or owed withdrawals do not wipe category consent on identify`() {
 		for (configured in listOf(true, false)) {
-			val store = C15tStore(InMemoryKeyValueStore())
+			val store = InthStore(InMemoryKeyValueStore())
 			val transport = RecordingTransport().respondInit(initSuccess(body = initBody(model = "\"opt-in\"")))
 				.respondSave(SaveOutcome.Unavailable("offline"))
 			val core = testKernel(config = config.copy(iab = if (configured) config.iab else null, consentCategories = ConsentCategory.entries.toList()), store = store,
@@ -145,7 +145,7 @@ class FoundationRepairTest {
 	}
 
 	@Test fun `category grant is not protected when policy becomes IAB`() {
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val transport = RecordingTransport().respondInit(initSuccess(body = initBody(model = "\"opt-in\"")))
 			.respondSave(SaveOutcome.Unavailable("offline"))
 		val core = testKernel(config = config.copy(consentCategories = ConsentCategory.entries.toList()),

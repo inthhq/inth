@@ -1,8 +1,8 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.KernelOverrides
-import com.c15t.core.transport.C15tProtocol
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.KernelOverrides
+import com.inth.core.transport.InthProtocol
 
 /**
  * Everything the core needs that is not an injected capability.
@@ -12,10 +12,10 @@ import com.c15t.core.transport.C15tProtocol
  * the hosted transport in `@c15t/core` assumes, so there is no key in this type.
  *
  * @property backendUrl The project URL from the Inth dashboard, such as
- * `https://your-project.inth.app`. `C15tAndroid.install` checks it with [InthProjectUrl].
+ * `https://your-project.inth.app`. `InthAndroid.install` checks it with [InthProjectUrl].
  * @property dryRun For development and CI. Prompts, storage, gating and consent signals
  * work as normal, and consent records and identity calls are dropped instead of sent.
- * `C15tAndroid.install` refuses it in an app that is not debuggable.
+ * `InthAndroid.install` refuses it in an app that is not debuggable.
  * @property domain Value sent as the `domain` field of `POST /subjects`. Defaults
  * to the host of [backendUrl].
  * @property consentCategories Categories the host offers. `null` or empty declares
@@ -27,7 +27,7 @@ import com.c15t.core.transport.C15tProtocol
  * Web puts that option to three uses: filtering the GVL request, narrowing the list the
  * module holds through `narrowGVLToVendors`, and clearing a summary that had counted the
  * wider list. The first one reaches this core as the `x-c15t-vendors` request header, the
- * second is what [com.c15t.core.ConsentCore] does with this field on every path a list
+ * second is what [com.inth.core.ConsentCore] does with this field on every path a list
  * arrives by, and the third has no native equivalent yet because this build holds one
  * list and reports it whole.
  *
@@ -35,7 +35,7 @@ import com.c15t.core.transport.C15tProtocol
  * kept exactly as it arrived. Both web narrows read an empty list that way --
  * `narrowGVLToVendors` in `packages/sdk/iab/src/tcf/fetch-gvl.ts` hands the document back, and
  * `gvlRequestUrl` in `packages/backend/src/http/gvl.ts` does not put the scope on the
- * request line at all -- and [com.c15t.core.tc.narrowToVendorIds] says so on its own
+ * request line at all -- and [com.inth.core.tc.narrowToVendorIds] says so on its own
  * terms. A core that read `emptyList()` as "show nobody" would leave a publisher who never
  * scoped anything with an empty drawer under a consent the subject can still give, so a
  * host that means no vendors has to say so somewhere other than here.
@@ -54,22 +54,22 @@ import com.c15t.core.transport.C15tProtocol
  *   Native layer. `null` means "no signal", which is not the same answer as `false`. An app
  *   override on [overrides] wins over this.
  * @property platform The host that built this core, sent as `x-c15t-platform: <platform>-><sdkVersion>`.
- *   [C15tProtocol.PLATFORM_ANDROID] for a Kotlin or Java app, and the React Native binding sets
- *   [C15tProtocol.PLATFORM_REACT_NATIVE]. `null` sends no platform header.
+ *   [InthProtocol.PLATFORM_ANDROID] for a Kotlin or Java app, and the React Native binding sets
+ *   [InthProtocol.PLATFORM_REACT_NATIVE]. `null` sends no platform header.
  * @property extraHeaders Extra request headers, for a deployment that needs its own auth or tenant
  *   header.
  * @property maxPendingSaves Offline write queue depth; the contract maximum is 20.
- * @property gpp Turns on the IAB GPP string: [com.c15t.core.model.ConsentSnapshot.gppString] and the `IABGPP_*`
- *   storage keys. `null`, the default, writes no GPP signal. See [com.c15t.core.gpp.GppOptions].
+ * @property gpp Turns on the IAB GPP string: [com.inth.core.model.ConsentSnapshot.gppString] and the `IABGPP_*`
+ *   storage keys. `null`, the default, writes no GPP signal. See [com.inth.core.gpp.GppOptions].
  */
 data class NativeConfig(
 	val backendUrl: String,
 	val domain: String? = null,
-	val sdkVersion: String = C15tProtocol.DEFAULT_SDK_VERSION,
-	val platform: String? = C15tProtocol.PLATFORM_ANDROID,
+	val sdkVersion: String = InthProtocol.DEFAULT_SDK_VERSION,
+	val platform: String? = InthProtocol.PLATFORM_ANDROID,
 	val consentCategories: List<ConsentCategory>? = null,
 	val vendors: List<Int>? = null,
-	val iab: com.c15t.core.iab.IabConfiguration? = null,
+	val iab: com.inth.core.iab.IabConfiguration? = null,
 	val iabListMaxAgeMs: Long = 604_800_000,
 	val overrides: KernelOverrides = KernelOverrides(),
 	val detectedGpc: Boolean? = null,
@@ -91,7 +91,7 @@ data class NativeConfig(
 	 * error stream instead of starting as if no policy had been declared.
 	 */
 	val policyError: String? = null,
-	val gpp: com.c15t.core.gpp.GppOptions? = null,
+	val gpp: com.inth.core.gpp.GppOptions? = null,
 	val dryRun: Boolean = false,
 ) {
 	init {

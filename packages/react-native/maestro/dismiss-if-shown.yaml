@@ -1,4 +1,4 @@
-# Answers the c15t consent prompt if it appears, then carries on.
+# Answers the Inth consent prompt if it appears, then carries on.
 #
 # Waits up to C15T_TIMEOUT milliseconds (default 10000) for the first-layer
 # prompt or the notice. The prompt gets Reject all unless C15T_CHOICE is
@@ -6,7 +6,7 @@
 # so it is safe at the start of every test.
 #
 #   - runFlow:
-#       file: ../node_modules/@c15t/react-native/maestro/dismiss-if-shown.yaml
+#       file: ../node_modules/@inth/react-native/maestro/dismiss-if-shown.yaml
 #       env:
 #         C15T_CHOICE: accept-all
 # Maestro needs an appId in every flow file; the calling flow's appId is used.
@@ -17,36 +17,36 @@ appId: ${APP_ID}
 # does not see them.
 - extendedWaitUntil:
     visible:
-      id: "c15t\\.(first-layer\\.title|notice)"
+      id: "inth\\.(first-layer\\.title|notice)"
     timeout: ${C15T_TIMEOUT || 10000}
     optional: true
 - runFlow:
     when:
       visible:
-        id: 'c15t.first-layer.title'
+        id: 'inth.first-layer.title'
     commands:
       - scrollUntilVisible:
           element:
-            id: "c15t.first-layer.${C15T_CHOICE || 'reject-all'}"
+            id: "inth.first-layer.${C15T_CHOICE || 'reject-all'}"
           direction: DOWN
       - tapOn:
-          id: "c15t.first-layer.${C15T_CHOICE || 'reject-all'}"
+          id: "inth.first-layer.${C15T_CHOICE || 'reject-all'}"
       - extendedWaitUntil:
           notVisible:
-            id: 'c15t.first-layer'
+            id: 'inth.first-layer'
           timeout: ${C15T_TIMEOUT || 10000}
 - runFlow:
     when:
       visible:
-        id: 'c15t.notice'
+        id: 'inth.notice'
     commands:
       - scrollUntilVisible:
           element:
-            id: 'c15t.notice.acknowledge'
+            id: 'inth.notice.acknowledge'
           direction: DOWN
       - tapOn:
-          id: 'c15t.notice.acknowledge'
+          id: 'inth.notice.acknowledge'
       - extendedWaitUntil:
           notVisible:
-            id: 'c15t.notice'
+            id: 'inth.notice'
           timeout: ${C15T_TIMEOUT || 10000}

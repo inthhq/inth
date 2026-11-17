@@ -1,16 +1,16 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.store.C15tStoreKeys
-import com.c15t.core.store.TcStorageBusKeys
-import com.c15t.core.tc.TcStringDecoder
-import com.c15t.core.model.isWithdrawal
+import com.inth.core.store.InthStoreKeys
+import com.inth.core.store.TcStorageBusKeys
+import com.inth.core.tc.TcStringDecoder
+import com.inth.core.model.isWithdrawal
 
-import com.c15t.core.iab.*
-import com.c15t.core.model.*
-import com.c15t.core.spi.*
-import com.c15t.core.store.*
-import com.c15t.core.tc.*
-import com.c15t.core.transport.*
+import com.inth.core.iab.*
+import com.inth.core.model.*
+import com.inth.core.spi.*
+import com.inth.core.store.*
+import com.inth.core.tc.*
+import com.inth.core.transport.*
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
@@ -58,7 +58,7 @@ class IabCommitTest {
 			.respondSave(SaveOutcome.Unavailable("offline"))
 
 	private fun boot(
-		store: C15tStore,
+		store: InthStore,
 		config: NativeConfig = this.config,
 		transport: RecordingTransport = transport(),
 	): ConsentCore =
@@ -79,7 +79,7 @@ class IabCommitTest {
 	fun `shared disclosure lifecycle cases reject open drafts and obsolete replay`() {
 		val lifecycle = Json { ignoreUnknownKeys = true }.decodeFromString<LifecycleVector>(File(fixtureFile.parentFile, "lifecycle-cases.json").readText())
 		for (row in lifecycle.cases) {
-			val store = C15tStore(InMemoryKeyValueStore())
+			val store = InthStore(InMemoryKeyValueStore())
 			val http = RecordingTransport().respondInit(initSuccess(body = initBody(model = "\"iab\"", gvl = GlobalVendorListJson.toJson(lifecycle.gvl))))
 				.respondSave(SaveOutcome.Unavailable("offline"))
 			val core = boot(store, transport = http)
@@ -103,7 +103,7 @@ class IabCommitTest {
 	// TCF-CHECK: T7
 	@Test
 	fun `cached offline stale and missing lists cannot invent consent`() {
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val first = boot(store)
 		assertTrue(first.save(CommitIntent.All).ok)
 		val clock = FixedClock(vector.now)
@@ -128,20 +128,20 @@ class IabCommitTest {
 		assertEquals(0, store.readPending().size)
 		assertTrue(cold.save(CommitIntent.Necessary).ok)
 		assertEquals(1, store.readPending().size)
-		val missing = testKernel(config = config, store = C15tStore(InMemoryKeyValueStore()), executor = TaskExecutor { })
+		val missing = testKernel(config = config, store = InthStore(InMemoryKeyValueStore()), executor = TaskExecutor { })
 		missing.bootstrap()
 		assertEquals(IabListAvailability.MISSING, missing.iabStatus().availability)
 	}
 
 	@Test
 	fun `custom IAB save requires disclosure revision`() {
-		val core = boot(C15tStore(InMemoryKeyValueStore()))
+		val core = boot(InthStore(InMemoryKeyValueStore()))
 		assertEquals("iab-draft-required", core.save(CommitIntent.Iab(IabChoices(), emptyMap())).error?.code)
 	}
 
 	@Test
 	fun `category save cannot claim an IAB commit without CMP configuration`() {
-		val core = boot(C15tStore(InMemoryKeyValueStore()), config.copy(iab = null))
+		val core = boot(InthStore(InMemoryKeyValueStore()), config.copy(iab = null))
 		val result = core.save(CommitIntent.All)
 		assertFalse(result.ok)
 		assertEquals("iab-unavailable", result.error?.code)
@@ -151,7 +151,7 @@ class IabCommitTest {
 	@Test
 	fun `blank domains freeze the same backend host used by HostedTransport`() {
 		for (domain in listOf("", " \t")) {
-			val store = C15tStore(InMemoryKeyValueStore())
+			val store = InthStore(InMemoryKeyValueStore())
 			val core = boot(store, config.copy(domain = domain))
 			assertTrue(core.save(CommitIntent.All).ok)
 			val entry = store.readPending().single()
@@ -166,10 +166,10 @@ class IabCommitTest {
 	@Test
 	fun `IAB logout notifies transport only after the durable transition succeeds`() {
 		val backend = FailingBackend()
-		val store = C15tStore(backend)
+		val store = InthStore(backend)
 		val logouts = mutableListOf<ConsentSubject>()
 		val recorded = transport()
-		val http = object : C15tTransport by recorded {
+		val http = object : InthTransport by recorded {
 			override fun logout(subject: ConsentSubject): TransportOutcome {
 				assertNull(store.readEnvelope()?.snapshot?.subject?.externalId)
 				logouts += subject
@@ -195,10 +195,10 @@ class IabCommitTest {
 	fun `backward clock refuses an immediately invalid action without writing`() {
 		val clock = FixedClock(vector.now)
 		val backend = InMemoryKeyValueStore()
-		val core = testKernel(config, C15tStore(backend), clock, transport())
+		val core = testKernel(config, InthStore(backend), clock, transport())
 		core.bootstrap()
 		assertTrue(core.save(CommitIntent.All).ok)
-		val bytes = backend.read(C15tStoreKeys.SNAPSHOT)
+		val bytes = backend.read(InthStoreKeys.SNAPSHOT)
 		val revision = core.snapshot().revision
 		clock.advance(-600_001)
 		for (intent in listOf(CommitIntent.All, CommitIntent.Necessary)) {
@@ -206,13 +206,13 @@ class IabCommitTest {
 			assertFalse(result.ok)
 			assertEquals("invalid-action-time", result.error?.code)
 			assertEquals(revision, core.snapshot().revision)
-			assertEquals(bytes, backend.read(C15tStoreKeys.SNAPSHOT))
+			assertEquals(bytes, backend.read(InthStoreKeys.SNAPSHOT))
 		}
-		val cold = testKernel(config, C15tStore(backend), clock, transport())
+		val cold = testKernel(config, InthStore(backend), clock, transport())
 		cold.bootstrap()
-		val coldBytes = backend.read(C15tStoreKeys.SNAPSHOT)
+		val coldBytes = backend.read(InthStoreKeys.SNAPSHOT)
 		assertEquals("invalid-action-time", cold.save(CommitIntent.All).error?.code)
-		assertEquals(coldBytes, backend.read(C15tStoreKeys.SNAPSHOT))
+		assertEquals(coldBytes, backend.read(InthStoreKeys.SNAPSHOT))
 		clock.advance(600_001)
 		assertTrue(cold.save(CommitIntent.Necessary).ok)
 		assertNotNull(cold.iabConsent)
@@ -221,7 +221,7 @@ class IabCommitTest {
 	@Test
 	fun `atomic reset reports the retained envelope as stored state`() {
 		val tasks = mutableListOf<() -> Unit>()
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val core = testKernel(config, store, FixedClock(vector.now), transport(), TaskExecutor { tasks += it })
 		core.bootstrap()
 		while (tasks.isNotEmpty()) tasks.removeAt(0).invoke()
@@ -235,7 +235,7 @@ class IabCommitTest {
 	@Test
 	fun `shared choices generate reference strings and exact real HTTP bodies`() {
 		for (row in vector.cases) {
-			val store = C15tStore(InMemoryKeyValueStore())
+			val store = InthStore(InMemoryKeyValueStore())
 			val core = boot(store, config.copy(iab = row.configuration))
 			val result =
 				core.save(
@@ -273,10 +273,10 @@ class IabCommitTest {
 
 	@Test
 	fun `file restart restores authority before background work and preserves retry bytes`() {
-		val dir = Files.createTempDirectory("c15t-iab").toFile()
+		val dir = Files.createTempDirectory("inth-iab").toFile()
 		try {
 			val backend = FileBackend(dir)
-			val first = boot(C15tStore(backend))
+			val first = boot(InthStore(backend))
 			assertTrue(
 				first
 					.save(
@@ -286,10 +286,10 @@ class IabCommitTest {
 						), expectedRevision = first.snapshot().revision)
 					.ok
 			)
-			val before = C15tStore(backend).readPending().single().body
+			val before = InthStore(backend).readPending().single().body
 			val scheduled = mutableListOf<() -> Unit>()
 			val http = transport()
-			val coldStore = C15tStore(FileBackend(dir))
+			val coldStore = InthStore(FileBackend(dir))
 			val cold =
 				testKernel(
 					config = config,
@@ -312,16 +312,16 @@ class IabCommitTest {
 	@Test
 	fun `failed atomic write leaves snapshot authority and queue unchanged`() {
 		val backend = FailingBackend()
-		val store = C15tStore(backend)
+		val store = InthStore(backend)
 		val core = boot(store)
 		val before = core.snapshot()
-		val bytes = backend.read(C15tStoreKeys.SNAPSHOT)
+		val bytes = backend.read(InthStoreKeys.SNAPSHOT)
 		backend.fail = true
 		val result = core.save(CommitIntent.All)
 		assertFalse(result.ok)
 		assertEquals("queue-write-failed", result.error?.code)
 		assertEquals(before, core.snapshot())
-		assertEquals(bytes, backend.read(C15tStoreKeys.SNAPSHOT))
+		assertEquals(bytes, backend.read(InthStoreKeys.SNAPSHOT))
 		assertNull(core.iabConsent)
 		assertTrue(store.readPending().isEmpty())
 	}
@@ -330,19 +330,19 @@ class IabCommitTest {
 	@Test
 	fun `a stored TC String with unequal dates is dropped on launch`() {
 		val backend = InMemoryKeyValueStore()
-		val core = boot(C15tStore(backend))
+		val core = boot(InthStore(backend))
 		assertTrue(core.save(CommitIntent.All).ok)
 		val saved = core.iabConsent!!.tcString
 		// An earlier build wrote Created a day before LastUpdated.
 		val older = movingCreated(saved, days = -1)
 		assertEquals(TcStringDecoder.decode(saved).core.createdDeciseconds, TcStringDecoder.decode(saved).core.lastUpdatedDeciseconds)
 		assertTrue(TcStringDecoder.decode(older).core.createdDeciseconds != TcStringDecoder.decode(older).core.lastUpdatedDeciseconds)
-		val stored = backend.read(C15tStoreKeys.SNAPSHOT)!!
+		val stored = backend.read(InthStoreKeys.SNAPSHOT)!!
 		assertTrue(saved in stored)
-		backend.write(C15tStoreKeys.SNAPSHOT, stored.replace(saved, older))
+		backend.write(InthStoreKeys.SNAPSHOT, stored.replace(saved, older))
 
 		val bus = RecordingTcStorageBus()
-		val restored = boot(C15tStore(backend = backend, tcStorageBus = bus))
+		val restored = boot(InthStore(backend = backend, tcStorageBus = bus))
 		assertNull(restored.iabConsent, "a T10-invalid string must not survive launch")
 		assertNull(restored.snapshot().explicitChoice, "the person is asked again")
 		assertNull(bus.live[TcStorageBusKeys.TC_STRING])
@@ -369,7 +369,7 @@ class IabCommitTest {
 	// TCF-CHECK: T3
 	@Test
 	fun `withdrawal replaces queued grants and survives restart`() {
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val core = boot(store)
 		assertTrue(core.save(CommitIntent.All).ok)
 		val grantAt = core.iabConsent!!.actionAt
@@ -390,7 +390,7 @@ class IabCommitTest {
 
 	@Test
 	fun `invalid choices and overlapping objections change nothing`() {
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val core = boot(store)
 		val revision = core.snapshot().revision
 		for (choices in vector.invalidChoices) {
@@ -407,12 +407,12 @@ class IabCommitTest {
 	fun `identity logout reset and failed transitions cannot restore a grant`() {
 		for (operation in listOf("identify", "logout", "reset")) {
 			val backend = FailingBackend()
-			val store = C15tStore(backend)
+			val store = InthStore(backend)
 			val core = boot(store)
 			if (operation == "logout") core.identify(KernelUser("current"))
 			assertTrue(core.save(CommitIntent.All).ok)
 			val granted = core.iabConsent
-			val bytes = backend.read(C15tStoreKeys.SNAPSHOT)
+			val bytes = backend.read(InthStoreKeys.SNAPSHOT)
 			fun apply() {
 				when (operation) {
 					"identify" -> core.identify(KernelUser("next"))
@@ -423,7 +423,7 @@ class IabCommitTest {
 			backend.fail = true
 			apply()
 			assertEquals(granted, core.iabConsent)
-			assertEquals(bytes, backend.read(C15tStoreKeys.SNAPSHOT))
+			assertEquals(bytes, backend.read(InthStoreKeys.SNAPSHOT))
 			backend.fail = false
 			apply()
 			assertNull(core.iabConsent)
@@ -439,7 +439,7 @@ class IabCommitTest {
 
 	@Test
 	fun `concurrent commits keep only the latest durable decision and delivery`() {
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val core = boot(store)
 		val pool = Executors.newFixedThreadPool(4)
 		val outcomes =
@@ -460,7 +460,7 @@ class IabCommitTest {
 
 	@Test
 	fun `changed configuration tampering and stale drafts require a fresh choice`() {
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val core = boot(store)
 		val revision = core.snapshot().revision
 		assertTrue(core.save(CommitIntent.All).ok)
@@ -485,12 +485,12 @@ class IabCommitTest {
 	@Test
 	fun `invalid configuration cannot commit and expired state cannot replay`() {
 		for (configuration in vector.invalidConfigurations) {
-			val core = boot(C15tStore(InMemoryKeyValueStore()), config.copy(iab = configuration))
+			val core = boot(InthStore(InMemoryKeyValueStore()), config.copy(iab = configuration))
 			assertEquals("invalid-iab-choices", core.save(CommitIntent.All).error?.code)
 			assertNull(core.iabConsent)
 			assertFalse(core.isAllowed(ConsentCategory.MARKETING))
 		}
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val first = boot(store)
 		assertTrue(first.save(CommitIntent.All).ok)
 		val transport = transport()
@@ -513,7 +513,7 @@ class IabCommitTest {
 	fun `caller mutations cannot change committed native authority`() {
 		val purposes = mutableListOf(1, 2)
 		val choices = IabChoices(purposeConsents = purposes, vendorConsents = listOf(1))
-		val core = boot(C15tStore(InMemoryKeyValueStore()))
+		val core = boot(InthStore(InMemoryKeyValueStore()))
 		assertTrue(core.save(CommitIntent.Iab(choices, emptyMap()), expectedRevision = core.snapshot().revision).ok)
 		purposes.clear()
 		val returned = core.iabConsent!!
@@ -535,7 +535,7 @@ class IabCommitTest {
 			}
 		val core =
 			boot(
-				C15tStore(
+				InthStore(
 					SubjectPreservingStore(
 						ResilientKeyValueStore(backend, InMemoryKeyValueStore()),
 						InMemoryKeyValueStore(),
@@ -551,17 +551,17 @@ class IabCommitTest {
 	@Test
 	fun `failed withdrawal keeps the last durable grant and body`() {
 		val backend = FailingBackend()
-		val store = C15tStore(backend)
+		val store = InthStore(backend)
 		val core = boot(store)
 		assertTrue(core.save(CommitIntent.All).ok)
 		val before = core.snapshot()
 		val authority = core.iabConsent
-		val bytes = backend.read(C15tStoreKeys.SNAPSHOT)
+		val bytes = backend.read(InthStoreKeys.SNAPSHOT)
 		backend.fail = true
 		assertEquals("queue-write-failed", core.save(CommitIntent.Necessary).error?.code)
 		assertEquals(before, core.snapshot())
 		assertEquals(authority, core.iabConsent)
-		assertEquals(bytes, backend.read(C15tStoreKeys.SNAPSHOT))
+		assertEquals(bytes, backend.read(InthStoreKeys.SNAPSHOT))
 		assertEquals(1, store.readPending().size)
 	}
 
@@ -578,7 +578,7 @@ class IabCommitTest {
 		assertFalse(buffered.writeDurably("probe", "new-cache-value"))
 		assertEquals(prior, cache["probe"], "refusal must not mutate even the cache")
 		val transport = transport()
-		val core = boot(C15tStore(buffered), transport = transport)
+		val core = boot(InthStore(buffered), transport = transport)
 		assertFalse(core.save(CommitIntent.All).ok)
 		assertNull(core.iabConsent)
 		assertTrue(transport.saveRequests.isEmpty())
@@ -589,14 +589,14 @@ class IabCommitTest {
 		var fail = false
 
 		override fun writeDurably(key: String, value: String?): Boolean {
-			if (fail && key == C15tStoreKeys.SNAPSHOT) return false
+			if (fail && key == InthStoreKeys.SNAPSHOT) return false
 			return inner.writeDurably(key, value)
 		}
 
 		override fun read(key: String) = inner.read(key)
 
 		override fun write(key: String, value: String?) {
-			if (!fail || key != C15tStoreKeys.SNAPSHOT) inner.write(key, value)
+			if (!fail || key != InthStoreKeys.SNAPSHOT) inner.write(key, value)
 		}
 	}
 

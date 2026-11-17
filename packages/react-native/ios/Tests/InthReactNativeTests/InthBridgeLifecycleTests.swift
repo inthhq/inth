@@ -1,12 +1,12 @@
-@_spi(C15tInternal) @testable import C15tReactNativeBridge
-@_spi(C15tInternal) import C15tCore
+@_spi(InthInternal) @testable import InthReactNativeBridge
+@_spi(InthInternal) import InthCore
 import XCTest
 
 /// Event behaviour, and the rule that exactly one core is running.
-final class C15tChangePumpTests: XCTestCase {
+final class InthChangePumpTests: XCTestCase {
     func testOneSnapshotEventPerRevisionAndRepeatsAreDropped() {
         let sink = RecordingSink()
-        let pump = C15tChangePump(sink: sink)
+        let pump = InthChangePump(sink: sink)
 
         pump.onSnapshot(ConsentSnapshot(revision: 1, policyPending: false))
         pump.onSnapshot(ConsentSnapshot(revision: 1, policyPending: false))
@@ -18,7 +18,7 @@ final class C15tChangePumpTests: XCTestCase {
 
     func testInitializedFiresOnceAndNotWhilePolicyIsPending() {
         let sink = RecordingSink()
-        let pump = C15tChangePump(sink: sink)
+        let pump = InthChangePump(sink: sink)
 
         // A cold start publishes, but nothing has resolved, so the app must not be
         // told it is initialized.
@@ -32,7 +32,7 @@ final class C15tChangePumpTests: XCTestCase {
 
     func testErrorEventCarriesCodeAndMessage() {
         let sink = RecordingSink()
-        C15tChangePump(sink: sink).onError(code: "unsupported-contract", message: "backend refused the wire")
+        InthChangePump(sink: sink).onError(code: "unsupported-contract", message: "backend refused the wire")
 
         let payload = jsonObject(sink.payloads(for: "error").first ?? "{}")
         XCTAssertEqual(payload["code"] as? String, "unsupported-contract")
@@ -42,7 +42,7 @@ final class C15tChangePumpTests: XCTestCase {
         let core = ConsentCore()
         core.bootstrap(CoreConfig(store: InMemoryStore()))
         let sink = RecordingSink()
-        let subscriber = C15tCoreSubscriber(sink: sink)
+        let subscriber = InthCoreSubscriber(sink: sink)
 
         // Attaching after bootstrap must not lose the state the core already
         // published, so it reports the live snapshot once.
@@ -64,7 +64,7 @@ final class C15tChangePumpTests: XCTestCase {
         let core = ConsentCore()
         core.bootstrap(CoreConfig(store: InMemoryStore()))
         let sink = RecordingSink()
-        let subscriber = C15tCoreSubscriber(sink: sink)
+        let subscriber = InthCoreSubscriber(sink: sink)
         subscriber.attach(to: core)
         subscriber.detach()
         // Attaching reports the live snapshot once, so compare against what detach
@@ -83,20 +83,20 @@ final class C15tChangePumpTests: XCTestCase {
 }
 
 /// The launch configuration, and the one-core rule the bridge exists to enforce.
-final class C15tBootstrapTests: XCTestCase {
+final class InthBootstrapTests: XCTestCase {
     override func setUp() {
         super.setUp()
-        C15t.resetForTests()
+        Inth.resetForTests()
     }
 
     override func tearDown() {
-        C15tBuild.simulate(debug: nil)
-        C15t.resetForTests()
+        InthBuild.simulate(debug: nil)
+        Inth.resetForTests()
         super.tearDown()
     }
 
     func testEmptyPlistHasNoProjectURLAndDoesNotStart() {
-        let configuration = C15tBridgeConfiguration.from(infoPlist: [:])
+        let configuration = InthBridgeConfiguration.from(infoPlist: [:])
 
         XCTAssertTrue(configuration.autoBootstrap, "automatic startup is the default")
         XCTAssertNil(configuration.backendURL, "a made-up host would send consent somewhere nobody chose")
@@ -105,19 +105,19 @@ final class C15tBootstrapTests: XCTestCase {
         XCTAssertFalse(configuration.overrides.language.isEmpty, "translations need exactly one language")
 
         let issue = configuration.configurationIssue()
-        XCTAssertEqual(issue?.code, "C15T_CONFIGURATION_BACKEND_URL")
+        XCTAssertEqual(issue?.code, "INTH_CONFIGURATION_BACKEND_URL")
         XCTAssertTrue(
             issue?.message.hasPrefix(
-                "com.c15t.backend.url must be the project URL from your Inth dashboard, such as "
+                "com.inth.backend.url must be the project URL from your Inth dashboard, such as "
                     + "https://your-project.inth.app. Got \"\": the value is empty.") == true,
             issue?.message ?? "")
-        XCTAssertFalse(startWithoutNetwork(infoPlist: [C15tBridgeConfiguration.InfoPlistKey.storageMode: "memory"]))
-        XCTAssertNil(C15t.current, "no project URL leaves the core uninstalled")
+        XCTAssertFalse(startWithoutNetwork(infoPlist: [InthBridgeConfiguration.InfoPlistKey.storageMode: "memory"]))
+        XCTAssertNil(Inth.current, "no project URL leaves the core uninstalled")
     }
 
     func testAProjectURLBuildsTheHostedTransportOnItsNormalForm() throws {
-        var configuration = C15tBridgeConfiguration.from(infoPlist: [
-            C15tBridgeConfiguration.InfoPlistKey.backendURL: " Your-Project.Inth.App/ ",
+        var configuration = InthBridgeConfiguration.from(infoPlist: [
+            InthBridgeConfiguration.InfoPlistKey.backendURL: " Your-Project.Inth.App/ ",
         ])
         configuration.storageMode = .memory
         XCTAssertNil(configuration.configurationIssue())
@@ -127,7 +127,7 @@ final class C15tBootstrapTests: XCTestCase {
         XCTAssertEqual(transport.baseURL, URL(string: "https://your-project.inth.app"))
         XCTAssertEqual(transport.domain, "your-project.inth.app")
         // ENG-530: a React Native app reports `rn`, not the Swift app's `apple`.
-        XCTAssertEqual(transport.extraHeaders["x-c15t-platform"], "rn->\(C15t.version)")
+        XCTAssertEqual(transport.extraHeaders["x-c15t-platform"], "rn->\(Inth.version)")
         XCTAssertFalse(core.dryRun)
     }
 
@@ -135,17 +135,17 @@ final class C15tBootstrapTests: XCTestCase {
         for backend in ["https://consent.example.com", "http://localhost:8787", "https://your-project.inth.app/api"] {
             var configuration = memoryConfiguration()
             configuration.backendURL = backend
-            XCTAssertEqual(configuration.configurationIssue()?.code, "C15T_CONFIGURATION_BACKEND_URL", backend)
+            XCTAssertEqual(configuration.configurationIssue()?.code, "INTH_CONFIGURATION_BACKEND_URL", backend)
             XCTAssertNil(configuration.makeCoreConfiguration(), backend)
             XCTAssertFalse(startMemoryCore(configuration), backend)
-            XCTAssertNil(C15t.current, backend)
+            XCTAssertNil(Inth.current, backend)
         }
     }
 
     func testDryRunIsReadFromThePlistAndRelaxesTheHostInADebugBuild() throws {
-        var configuration = C15tBridgeConfiguration.from(infoPlist: [
-            C15tBridgeConfiguration.InfoPlistKey.backendURL: "http://localhost:8787",
-            C15tBridgeConfiguration.InfoPlistKey.dryRun: true,
+        var configuration = InthBridgeConfiguration.from(infoPlist: [
+            InthBridgeConfiguration.InfoPlistKey.backendURL: "http://localhost:8787",
+            InthBridgeConfiguration.InfoPlistKey.dryRun: true,
         ])
         configuration.storageMode = .memory
         XCTAssertTrue(configuration.dryRun)
@@ -153,25 +153,25 @@ final class C15tBootstrapTests: XCTestCase {
         XCTAssertTrue(try XCTUnwrap(configuration.makeCoreConfiguration()).dryRun)
 
         XCTAssertTrue(startMemoryCore(configuration))
-        XCTAssertNotNil(C15t.current)
+        XCTAssertNotNil(Inth.current)
     }
 
     func testDryRunInAReleaseBuildDoesNotStart() {
-        C15tBuild.simulate(debug: false)
-        defer { C15tBuild.simulate(debug: nil) }
+        InthBuild.simulate(debug: false)
+        defer { InthBuild.simulate(debug: nil) }
         var configuration = memoryConfiguration()
         configuration.dryRun = true
 
         let issue = configuration.configurationIssue()
-        XCTAssertEqual(issue?.code, "C15T_CONFIGURATION_DRY_RUN")
+        XCTAssertEqual(issue?.code, "INTH_CONFIGURATION_DRY_RUN")
         XCTAssertTrue(
             issue?.message.hasPrefix(
                 "dryRun is for development and CI and cannot run in a release build. Remove dryRun "
-                    + "(com.c15t.dryRun in Info.plist, or dryRun in the Expo plugin options).") == true,
+                    + "(com.inth.dryRun in Info.plist, or dryRun in the Expo plugin options).") == true,
             issue?.message ?? "")
         XCTAssertNil(configuration.makeCoreConfiguration())
         XCTAssertFalse(startMemoryCore(configuration))
-        XCTAssertNil(C15t.current, "a refused dryRun leaves the core uninstalled")
+        XCTAssertNil(Inth.current, "a refused dryRun leaves the core uninstalled")
 
         // The same build starts once dryRun is gone.
         configuration.dryRun = false
@@ -180,37 +180,37 @@ final class C15tBootstrapTests: XCTestCase {
 
     func testRetiredBackendKeysRefuseTheLaunchAndNameTheReplacement() {
         let expected: [(key: String, value: String, says: [String])] = [
-            ("com.c15t.backend.mode", "hosted", ["Hosted is the only mode", "com.c15t.backend.url"]),
-            ("com.c15t.backend.mode", "self-hosted", ["Mobile works only with Inth"]),
-            ("com.c15t.backend.mode", "offline", ["com.c15t.dryRun"]),
-            ("com.c15t.backend.mode", "none", ["com.c15t.reactnative.AutoBootstrap"]),
-            ("com.c15t.backend.initUrl", "https://app.example.com/init", ["Policy is fetched from com.c15t.backend.url"]),
+            ("com.inth.backend.mode", "hosted", ["Hosted is the only mode", "com.inth.backend.url"]),
+            ("com.inth.backend.mode", "self-hosted", ["Mobile works only with Inth"]),
+            ("com.inth.backend.mode", "offline", ["com.inth.dryRun"]),
+            ("com.inth.backend.mode", "none", ["com.inth.reactnative.AutoBootstrap"]),
+            ("com.inth.backend.initUrl", "https://app.example.com/init", ["Policy is fetched from com.inth.backend.url"]),
         ]
         for (key, value, says) in expected {
             let plist: [String: Any] = [
-                C15tBridgeConfiguration.InfoPlistKey.backendURL: testProjectURL,
-                C15tBridgeConfiguration.InfoPlistKey.storageMode: "memory",
+                InthBridgeConfiguration.InfoPlistKey.backendURL: testProjectURL,
+                InthBridgeConfiguration.InfoPlistKey.storageMode: "memory",
                 key: value,
             ]
-            XCTAssertEqual(C15tBridgeConfiguration.retiredKeys(in: plist).map(\.key), [key])
-            guard let issue = C15tBridgeConfiguration.retirementIssue(in: plist) else {
+            XCTAssertEqual(InthBridgeConfiguration.retiredKeys(in: plist).map(\.key), [key])
+            guard let issue = InthBridgeConfiguration.retirementIssue(in: plist) else {
                 XCTFail("\(key) must produce a readable refusal")
                 continue
             }
-            XCTAssertEqual(issue.code, "C15T_CONFIGURATION_RETIRED")
+            XCTAssertEqual(issue.code, "INTH_CONFIGURATION_RETIRED")
             XCTAssertTrue(issue.message.contains(key), "name the key: \(issue.message)")
             for phrase in says {
                 XCTAssertTrue(issue.message.contains(phrase), "\(key)=\(value) should say \"\(phrase)\": \(issue.message)")
             }
             XCTAssertFalse(startWithoutNetwork(infoPlist: plist), key)
-            XCTAssertNil(C15t.current, key)
+            XCTAssertNil(Inth.current, key)
         }
     }
 
     func testUnreadableValuesFallBackToTheSafeOption() {
-        let configuration = C15tBridgeConfiguration.from(infoPlist: [
-            C15tBridgeConfiguration.InfoPlistKey.storageMode: "nonsense",
-            C15tBridgeConfiguration.InfoPlistKey.categories: ["marketing", "telepathy"],
+        let configuration = InthBridgeConfiguration.from(infoPlist: [
+            InthBridgeConfiguration.InfoPlistKey.storageMode: "nonsense",
+            InthBridgeConfiguration.InfoPlistKey.categories: ["marketing", "telepathy"],
         ])
 
         XCTAssertEqual(configuration.storageMode, .keychain, "an unparseable store must not become plaintext")
@@ -229,9 +229,9 @@ final class C15tBootstrapTests: XCTestCase {
     /// is dropped rather than trusted, repeats collapse, and nothing usable is not a
     /// declaration at all.
     func testDeclaredVendorsParseFromEveryShapeAHostCanWrite() throws {
-        let keyed = C15tBridgeConfiguration.from(infoPlist: [
-            C15tBridgeConfiguration.InfoPlistKey.backendURL: testProjectURL,
-            C15tBridgeConfiguration.InfoPlistKey.vendors: "755, 42,8, 42",
+        let keyed = InthBridgeConfiguration.from(infoPlist: [
+            InthBridgeConfiguration.InfoPlistKey.backendURL: testProjectURL,
+            InthBridgeConfiguration.InfoPlistKey.vendors: "755, 42,8, 42",
         ])
         XCTAssertEqual(keyed.vendors, [755, 42, 8], "declaration order, spaces trimmed, repeats dropped")
         // `.memory` so the assertion does not depend on a Keychain being available on
@@ -246,13 +246,13 @@ final class C15tBootstrapTests: XCTestCase {
 
         // An unquoted plist number is the likeliest hand-written spelling for one
         // partner, and an array is what a host copying the categories key would expect.
-        XCTAssertEqual(C15tBridgeConfiguration.declaredVendors(42), [42])
-        XCTAssertEqual(C15tBridgeConfiguration.declaredVendors([42, 8]), [42, 8])
-        XCTAssertEqual(C15tBridgeConfiguration.declaredVendors(["42, 8", "755"]), [42, 8, 755])
+        XCTAssertEqual(InthBridgeConfiguration.declaredVendors(42), [42])
+        XCTAssertEqual(InthBridgeConfiguration.declaredVendors([42, 8]), [42, 8])
+        XCTAssertEqual(InthBridgeConfiguration.declaredVendors(["42, 8", "755"]), [42, 8, 755])
 
         // An id the served list does not carry stays in the declaration: pruning a served
         // document never adds an entry to satisfy a scope.
-        XCTAssertEqual(C15tBridgeConfiguration.declaredVendors("999999,42"), [999_999, 42])
+        XCTAssertEqual(InthBridgeConfiguration.declaredVendors("999999,42"), [999_999, 42])
     }
 
     func testAnUnusableVendorDeclarationIsNotAScope() throws {
@@ -260,12 +260,12 @@ final class C15tBootstrapTests: XCTestCase {
         // disclosure the framework never assigned, or none at all. Absent and empty both
         // read as no scope, which keeps every vendor the backend serves.
         for raw: Any? in ["", "   ", " , , ", "vendor-42", "0", "-3, 7.5", "vendor, google"] {
-            XCTAssertNil(C15tBridgeConfiguration.declaredVendors(raw), "\(String(describing: raw)) is not a scope")
+            XCTAssertNil(InthBridgeConfiguration.declaredVendors(raw), "\(String(describing: raw)) is not a scope")
         }
 
-        let configuration = C15tBridgeConfiguration.from(infoPlist: [
-            C15tBridgeConfiguration.InfoPlistKey.backendURL: testProjectURL,
-            C15tBridgeConfiguration.InfoPlistKey.vendors: "vendor-42",
+        let configuration = InthBridgeConfiguration.from(infoPlist: [
+            InthBridgeConfiguration.InfoPlistKey.backendURL: testProjectURL,
+            InthBridgeConfiguration.InfoPlistKey.vendors: "vendor-42",
         ])
         XCTAssertNil(configuration.vendors)
         var unusableIntoCore = configuration
@@ -274,23 +274,23 @@ final class C15tBootstrapTests: XCTestCase {
     }
 
     func testStartInstallsOneCoreAndLaterCallsAttachToIt() {
-        XCTAssertNil(C15t.current)
+        XCTAssertNil(Inth.current)
         XCTAssertTrue(startMemoryCore())
 
-        guard let first = C15t.current else { return XCTFail("expected a running core") }
+        guard let first = Inth.current else { return XCTFail("expected a running core") }
         XCTAssertTrue(startMemoryCore())
 
-        XCTAssertTrue(C15t.current === first, "a second start must attach, not install a second kernel")
-        XCTAssertTrue(C15tReactNativeBootstrap.isRunning)
+        XCTAssertTrue(Inth.current === first, "a second start must attach, not install a second kernel")
+        XCTAssertTrue(InthReactNativeBootstrap.isRunning)
     }
 
     func testAnAppOwnedCoreIsAdoptedInsteadOfStartingAnother() {
         let appCore = ConsentCore()
         appCore.bootstrap(CoreConfig(store: InMemoryStore()))
 
-        XCTAssertTrue(C15tReactNativeBootstrap.install(appCore))
+        XCTAssertTrue(InthReactNativeBootstrap.install(appCore))
         XCTAssertTrue(startMemoryCore())
-        XCTAssertTrue(C15t.current === appCore, "the bridge reads the core the app started")
+        XCTAssertTrue(Inth.current === appCore, "the bridge reads the core the app started")
     }
 
     func testAutoBootstrapOptOutLeavesReadsDenyAll() {
@@ -298,19 +298,19 @@ final class C15tBootstrapTests: XCTestCase {
         configuration.autoBootstrap = false
 
         XCTAssertFalse(startMemoryCore(configuration))
-        XCTAssertNil(C15t.current)
+        XCTAssertNil(Inth.current)
         // Failing closed rather than inventing a store is what the contract asks for.
-        let snapshot = C15t.snapshot()
+        let snapshot = Inth.snapshot()
         XCTAssertFalse(snapshot.ready)
         XCTAssertTrue(snapshot.policyPending)
         XCTAssertEqual(snapshot.effectivePermissions.marketing, false)
     }
 
     func testStartHonoursThePlistOptOutKey() {
-        XCTAssertFalse(C15tReactNativeBootstrap.start(infoPlist: [
-            C15tBridgeConfiguration.InfoPlistKey.autoBootstrap: false,
+        XCTAssertFalse(InthReactNativeBootstrap.start(infoPlist: [
+            InthBridgeConfiguration.InfoPlistKey.autoBootstrap: false,
         ]))
-        XCTAssertNil(C15t.current)
+        XCTAssertNil(Inth.current)
     }
 
     func testMemoryStoreIsUsedWhenConfigured() {
@@ -318,35 +318,35 @@ final class C15tBootstrapTests: XCTestCase {
         XCTAssertTrue(store is InMemoryStore)
     }
     func testARetiredTestModeKeyRefusesTheLaunch() {
-        // `com.c15t.test` set an override that does not exist. Starting anyway would
+        // `com.inth.test` set an override that does not exist. Starting anyway would
         // run a core whose configuration is a guess, and the host would keep believing
         // a mode was on. Deny-all plus one readable reason is the honest answer.
         let plist: [String: Any] = [
-            C15tBridgeConfiguration.InfoPlistKey.backendURL: "https://example.eu.c15t.app",
-            "com.c15t.test": "gpc",
+            InthBridgeConfiguration.InfoPlistKey.backendURL: "https://example.eu.c15t.app",
+            "com.inth.test": "gpc",
         ]
 
-        let retired = C15tBridgeConfiguration.retiredKeys(in: plist)
-        XCTAssertEqual(retired.map(\.key), ["com.c15t.test"])
+        let retired = InthBridgeConfiguration.retiredKeys(in: plist)
+        XCTAssertEqual(retired.map(\.key), ["com.inth.test"])
 
-        guard let issue = C15tBridgeConfiguration.retirementIssue(in: plist) else {
+        guard let issue = InthBridgeConfiguration.retirementIssue(in: plist) else {
             return XCTFail("a retired key must produce a readable refusal")
         }
-        XCTAssertEqual(issue.code, "C15T_CONFIGURATION_RETIRED")
-        XCTAssertTrue(issue.message.contains("com.c15t.test"), "name the key: \(issue.message)")
-        XCTAssertTrue(issue.message.contains("com.c15t.forceGPC"), "name the key to use instead: \(issue.message)")
+        XCTAssertEqual(issue.code, "INTH_CONFIGURATION_RETIRED")
+        XCTAssertTrue(issue.message.contains("com.inth.test"), "name the key: \(issue.message)")
+        XCTAssertTrue(issue.message.contains("com.inth.forceGPC"), "name the key to use instead: \(issue.message)")
         XCTAssertFalse(
-            C15tReactNativeBootstrap.start(infoPlist: plist),
+            InthReactNativeBootstrap.start(infoPlist: plist),
             "the core must not start from a configuration this build cannot read"
         )
-        XCTAssertNil(C15t.current, "and nothing may be installed behind the refusal")
+        XCTAssertNil(Inth.current, "and nothing may be installed behind the refusal")
     }
 
     func testAGPCKeyIsADetectedSignalAndNeverAnOverride() {
         // The two collapse into one field if the plist key feeds both, which is the
         // distinction the contract keeps apart and the evaluator depends on.
-        let configuration = C15tBridgeConfiguration.from(infoPlist: [
-            C15tBridgeConfiguration.InfoPlistKey.forceGPC: true,
+        let configuration = InthBridgeConfiguration.from(infoPlist: [
+            InthBridgeConfiguration.InfoPlistKey.forceGPC: true,
         ])
 
         XCTAssertEqual(configuration.gpc, true, "the host reported a signal")
@@ -355,13 +355,13 @@ final class C15tBootstrapTests: XCTestCase {
 
     func testAPlistWithoutRetiredKeysIsValid() {
         let plist: [String: Any] = [
-            C15tBridgeConfiguration.InfoPlistKey.backendURL: "https://example.eu.c15t.app",
-            C15tBridgeConfiguration.InfoPlistKey.forceGPC: true,
-            C15tBridgeConfiguration.InfoPlistKey.language: "de",
+            InthBridgeConfiguration.InfoPlistKey.backendURL: "https://example.eu.c15t.app",
+            InthBridgeConfiguration.InfoPlistKey.forceGPC: true,
+            InthBridgeConfiguration.InfoPlistKey.language: "de",
         ]
 
-        XCTAssertTrue(C15tBridgeConfiguration.retiredKeys(in: plist).isEmpty)
-        XCTAssertNil(C15tBridgeConfiguration.retirementIssue(in: plist))
+        XCTAssertTrue(InthBridgeConfiguration.retiredKeys(in: plist).isEmpty)
+        XCTAssertNil(InthBridgeConfiguration.retirementIssue(in: plist))
     }
 
 }

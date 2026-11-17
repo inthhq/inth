@@ -1,23 +1,23 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentModel
-import com.c15t.core.model.ConsentSnapshot
-import com.c15t.core.model.ConsentState
-import com.c15t.core.model.ConsentSubject
-import com.c15t.core.model.DecisionInputs
-import com.c15t.core.model.GpcSignal
-import com.c15t.core.model.KernelOverrides
-import com.c15t.core.model.PrivacySignals
-import com.c15t.core.policy.EvaluationPolicy
-import com.c15t.core.policy.PolicyPrompt
-import com.c15t.core.policy.ScopeMode
-import com.c15t.core.store.C15tStore
-import com.c15t.core.store.C15tStoreKeys
-import com.c15t.core.store.C15tJson
-import com.c15t.core.store.SnapshotEnvelope
-import com.c15t.core.transport.SaveBodyBuilder
-import com.c15t.core.transport.SaveOutcome
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentModel
+import com.inth.core.model.ConsentSnapshot
+import com.inth.core.model.ConsentState
+import com.inth.core.model.ConsentSubject
+import com.inth.core.model.DecisionInputs
+import com.inth.core.model.GpcSignal
+import com.inth.core.model.KernelOverrides
+import com.inth.core.model.PrivacySignals
+import com.inth.core.policy.EvaluationPolicy
+import com.inth.core.policy.PolicyPrompt
+import com.inth.core.policy.ScopeMode
+import com.inth.core.store.InthStore
+import com.inth.core.store.InthStoreKeys
+import com.inth.core.store.InthJson
+import com.inth.core.store.SnapshotEnvelope
+import com.inth.core.transport.SaveBodyBuilder
+import com.inth.core.transport.SaveOutcome
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
@@ -86,7 +86,7 @@ class OverrideAndSignalTest {
 		val backend = InMemoryKeyValueStore()
 		storeRetiredEnvelope(backend) { snapshot -> withExtraKey(snapshot, "overrides", "test", JsonPrimitive("run-7")) }
 
-		assertNull(C15tStore(backend).readEnvelope(), "the retired field has to fail the read, not be dropped quietly")
+		assertNull(InthStore(backend).readEnvelope(), "the retired field has to fail the read, not be dropped quietly")
 	}
 
 	@Test
@@ -96,7 +96,7 @@ class OverrideAndSignalTest {
 			snapshot["privacySignals"] = Json.parseToJsonElement("""{"gpc":true,"msa":false}""")
 		}
 
-		assertNull(C15tStore(backend).readEnvelope())
+		assertNull(InthStore(backend).readEnvelope())
 	}
 
 	// Every alpha snapshot wrote `optOutDirectives`, even as an empty list, and a
@@ -109,7 +109,7 @@ class OverrideAndSignalTest {
 		val backend = InMemoryKeyValueStore()
 		storeAlphaDirectiveEnvelope(backend)
 
-		val restored = assertNotNull(C15tStore(backend).readEnvelope(), "every alpha envelope carried the key")
+		val restored = assertNotNull(InthStore(backend).readEnvelope(), "every alpha envelope carried the key")
 		assertEquals(listOf("gpc"), restored.snapshot.restrictions["marketing"])
 		assertNull(
 			restored.snapshot.restrictions["measurement"],
@@ -122,7 +122,7 @@ class OverrideAndSignalTest {
 		val backend = InMemoryKeyValueStore()
 		storeAlphaDirectiveEnvelope(backend)
 
-		val kernel = testKernel(store = C15tStore(backend))
+		val kernel = testKernel(store = InthStore(backend))
 		kernel.bootstrap()
 		val snapshot = kernel.snapshot()
 
@@ -140,7 +140,7 @@ class OverrideAndSignalTest {
 
 		val kernel = testKernel(
 			config = NativeConfig(backendUrl = "https://test.c15t.app", detectedGpc = true),
-			store = C15tStore(backend),
+			store = InthStore(backend),
 		)
 		kernel.bootstrap()
 		val snapshot = kernel.snapshot()
@@ -158,7 +158,7 @@ class OverrideAndSignalTest {
 		val backend = InMemoryKeyValueStore()
 		storeRetiredEnvelope(backend) { snapshot -> withExtraKey(snapshot, "overrides", "test", JsonPrimitive("run-7")) }
 
-		val kernel = testKernel(store = C15tStore(backend))
+		val kernel = testKernel(store = InthStore(backend))
 		kernel.bootstrap()
 		val snapshot = kernel.snapshot()
 
@@ -178,7 +178,7 @@ class OverrideAndSignalTest {
 	@Test
 	fun `the offline write queue is not screened for retired field names`() {
 		val backend = InMemoryKeyValueStore()
-		val store = C15tStore(backend)
+		val store = InthStore(backend)
 		val transport = RecordingTransport()
 			.respondInit(initSuccess())
 			.respondSave(SaveOutcome.Unavailable("offline"))
@@ -186,12 +186,12 @@ class OverrideAndSignalTest {
 		kernel.bootstrap()
 		kernel.save(CommitIntent.All)
 
-		val raw = assertNotNull(backend.read(C15tStoreKeys.SNAPSHOT))
+		val raw = assertNotNull(backend.read(InthStoreKeys.SNAPSHOT))
 		val queuedAt = raw.indexOf("\"pendingSaves\":")
 		assertTrue(queuedAt >= 0)
 		val changedQueue = raw.substring(queuedAt)
 			.replaceFirst("\"overrides\":{", "\"overrides\":{\"test\":\"run-7\",")
-		backend.putSilently(C15tStoreKeys.SNAPSHOT, raw.take(queuedAt) + changedQueue)
+		backend.putSilently(InthStoreKeys.SNAPSHOT, raw.take(queuedAt) + changedQueue)
 
 		// A queued payload's retired `test` never reached the wire, and its
 		// `decisionInputs.gpc` is spelled the same in both shapes. Dropping a stored
@@ -208,17 +208,17 @@ class OverrideAndSignalTest {
 				policyPending = false,
 				ready = true,
 				subject = ConsentSubject(id = SUBJECT_ID),
-				privacySignals = C15tJson.storage.decodeFromJsonElement(
+				privacySignals = InthJson.storage.decodeFromJsonElement(
 					PrivacySignals.serializer(),
 					Json.parseToJsonElement("""{"gpc":{"detected":false,"override":null,"active":true}}"""),
 				),
 			),
 		)
-		backend.putSilently(C15tStoreKeys.SNAPSHOT, C15tJson.storage.encodeToString(SnapshotEnvelope.serializer(), envelope))
+		backend.putSilently(InthStoreKeys.SNAPSHOT, InthJson.storage.encodeToString(SnapshotEnvelope.serializer(), envelope))
 
-		backend.putSilently(C15tStoreKeys.SUBJECT, """{"id":"$SUBJECT_ID"}""")
+		backend.putSilently(InthStoreKeys.SUBJECT, """{"id":"$SUBJECT_ID"}""")
 
-		val kernel = testKernel(store = C15tStore(backend), transport = RecordingTransport().respondInit(initSuccess()))
+		val kernel = testKernel(store = InthStore(backend), transport = RecordingTransport().respondInit(initSuccess()))
 		kernel.bootstrap()
 		val signal = kernel.snapshot().privacySignals.gpc
 
@@ -233,7 +233,7 @@ class OverrideAndSignalTest {
 
 	@Test
 	fun `the gpc override survives a storage round trip`() {
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		store.writeEnvelope(
 			SnapshotEnvelope(snapshot = ConsentSnapshot(revision = 1, overrides = KernelOverrides(language = "en", gpc = true)))
 		)
@@ -260,7 +260,7 @@ class OverrideAndSignalTest {
 		)
 		val kernel = testKernel(
 			config = NativeConfig(backendUrl = "https://test.c15t.app", overrides = KernelOverrides(language = "en")),
-			store = C15tStore(InMemoryKeyValueStore()),
+			store = InthStore(InMemoryKeyValueStore()),
 			transport = transport,
 		)
 		kernel.bootstrap()
@@ -287,7 +287,7 @@ class OverrideAndSignalTest {
 				overrides = KernelOverrides(gpc = false),
 				detectedGpc = true,
 			),
-			store = C15tStore(InMemoryKeyValueStore()),
+			store = InthStore(InMemoryKeyValueStore()),
 			transport = transport,
 		)
 		kernel.bootstrap()
@@ -311,7 +311,7 @@ class OverrideAndSignalTest {
 				backendUrl = "https://test.c15t.app",
 				overrides = KernelOverrides(language = "en", gpc = true),
 			),
-			store = C15tStore(InMemoryKeyValueStore()),
+			store = InthStore(InMemoryKeyValueStore()),
 			transport = transport,
 		)
 		kernel.bootstrap()
@@ -335,7 +335,7 @@ class OverrideAndSignalTest {
 				backendUrl = "https://test.c15t.app",
 				overrides = KernelOverrides(language = "en", gpc = true),
 			),
-			store = C15tStore(InMemoryKeyValueStore()),
+			store = InthStore(InMemoryKeyValueStore()),
 			transport = transport,
 		)
 		kernel.bootstrap()
@@ -351,7 +351,7 @@ class OverrideAndSignalTest {
 
 	@Test
 	fun `an offline save keeps its gpc decision input through the queue`() {
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val transport = RecordingTransport()
 			.respondInit(initSuccess(body = initBody(policySnapshotToken = null)))
 			.respondSave(SaveOutcome.Unavailable("offline"))
@@ -392,7 +392,7 @@ class OverrideAndSignalTest {
 
 	@Test
 	fun `a stored gpc override is compared like any other`() {
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		store.writeEnvelope(
 			SnapshotEnvelope(snapshot = ConsentSnapshot(revision = 1, overrides = KernelOverrides(language = "en", gpc = true)))
 		)
@@ -425,7 +425,7 @@ class OverrideAndSignalTest {
 	// -- helpers ------------------------------------------------------------
 
 	private fun <T : Any> fieldsOf(serializer: KSerializer<T>, value: T): JsonObject =
-		Json.parseToJsonElement(C15tJson.storage.encodeToString(serializer, value)) as JsonObject
+		Json.parseToJsonElement(InthJson.storage.encodeToString(serializer, value)) as JsonObject
 
 	/** Splice [key] with [value] into the nested [parent] object of the snapshot. */
 	private fun withExtraKey(
@@ -462,14 +462,14 @@ class OverrideAndSignalTest {
 			),
 		)
 		val root = Json.parseToJsonElement(
-			C15tJson.storage.encodeToString(SnapshotEnvelope.serializer(), envelope)
+			InthJson.storage.encodeToString(SnapshotEnvelope.serializer(), envelope)
 		).jsonObject.toMutableMap()
 		val snapshot = assertNotNull(root["snapshot"] as? JsonObject).toMutableMap()
 		retire(snapshot)
 		root["snapshot"] = JsonObject(snapshot)
 
-		backend.putSilently(C15tStoreKeys.SNAPSHOT, Json.encodeToString(JsonElement.serializer(), JsonObject(root)))
-		backend.putSilently(C15tStoreKeys.SUBJECT, """{"id":"$SUBJECT_ID"}""")
+		backend.putSilently(InthStoreKeys.SNAPSHOT, Json.encodeToString(JsonElement.serializer(), JsonObject(root)))
+		backend.putSilently(InthStoreKeys.SUBJECT, """{"id":"$SUBJECT_ID"}""")
 	}
 
 	/**
@@ -501,7 +501,7 @@ class OverrideAndSignalTest {
 			),
 		)
 		val root = Json.parseToJsonElement(
-			C15tJson.storage.encodeToString(SnapshotEnvelope.serializer(), envelope)
+			InthJson.storage.encodeToString(SnapshotEnvelope.serializer(), envelope)
 		).jsonObject.toMutableMap()
 		val snapshot = assertNotNull(root["snapshot"] as? JsonObject).toMutableMap()
 		snapshot["optOutDirectives"] = Json.parseToJsonElement(
@@ -512,8 +512,8 @@ class OverrideAndSignalTest {
 		)
 		root["snapshot"] = JsonObject(snapshot)
 
-		backend.putSilently(C15tStoreKeys.SNAPSHOT, Json.encodeToString(JsonElement.serializer(), JsonObject(root)))
-		backend.putSilently(C15tStoreKeys.SUBJECT, """{"id":"$SUBJECT_ID"}""")
+		backend.putSilently(InthStoreKeys.SNAPSHOT, Json.encodeToString(JsonElement.serializer(), JsonObject(root)))
+		backend.putSilently(InthStoreKeys.SUBJECT, """{"id":"$SUBJECT_ID"}""")
 	}
 
 	/** Add top level [extra] fields, given as raw JSON, to an init body. */

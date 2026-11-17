@@ -15,7 +15,7 @@ import { useConsentClient } from '../provider/consent-context';
  * iOS, and `unsupported` on Android, where the advertising identifier sits behind
  * Google Play services' own consent surface rather than anything this package
  * reads. Gate behaviour on {@link useIsTrackingAllowed}, which combines this with
- * the c15t decision.
+ * the Inth decision.
  *
  * The value moves when {@link ConsentActions.requestTrackingAuthorization}
  * resolves, and when the app comes back to the foreground. The second is there

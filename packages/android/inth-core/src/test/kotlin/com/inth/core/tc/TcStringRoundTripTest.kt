@@ -1,4 +1,4 @@
-package com.c15t.core.tc
+package com.inth.core.tc
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -22,7 +22,7 @@ class TcStringRoundTripTest {
 	/**
 	 * The strings this build reads and declines to write, because two core fields carry more than
 	 * the encoder is willing to say: publisher restrictions are a GVL-semantic structure and
-	 * PurposeOneTreatment is a claim about the consent journey. c15t's web codec writes neither, so
+	 * PurposeOneTreatment is a claim about the consent journey. Inth's web codec writes neither, so
 	 * there is no web output to check a mobile version against.
 	 *
 	 * Asserted both ways: a string that stops needing a row fails, and a new one fails until it is

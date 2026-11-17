@@ -1,4 +1,4 @@
-package com.c15t.core.iab
+package com.inth.core.iab
 
 import java.net.URI
 import java.security.MessageDigest

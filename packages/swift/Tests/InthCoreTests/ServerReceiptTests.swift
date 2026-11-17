@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 final class ServerReceiptTests: XCTestCase {
     private let choiceFingerprint = String(repeating: "a", count: 64)
@@ -18,12 +18,12 @@ final class ServerReceiptTests: XCTestCase {
     private func response(
         policy: JSONValue?, choice: ExplicitChoice? = nil, dismissal: NoticeDismissal? = nil
     ) throws -> HTTPResponse {
-        var fields = try XCTUnwrap(C15tJSON.parse(Fixture.initBody(policyResolution: policy))?.objectValue)
+        var fields = try XCTUnwrap(InthJSON.parse(Fixture.initBody(policyResolution: policy))?.objectValue)
         var records: [String: JSONValue] = [:]
-        if let choice { records["choice"] = try C15tJSON.parse(C15tJSON.encode(choice)) }
-        if let dismissal { records["noticeDismissal"] = try C15tJSON.parse(C15tJSON.encode(dismissal)) }
+        if let choice { records["choice"] = try InthJSON.parse(InthJSON.encode(choice)) }
+        if let dismissal { records["noticeDismissal"] = try InthJSON.parse(InthJSON.encode(dismissal)) }
         fields["records"] = .object(records)
-        return HTTPResponse(status: 200, body: try XCTUnwrap(C15tJSON.encode(.object(fields))))
+        return HTTPResponse(status: 200, body: try XCTUnwrap(InthJSON.encode(.object(fields))))
     }
 
     func testConfiguredIABRestoresServerCategoryReceiptsUnderOptInPolicy() async throws {
@@ -138,9 +138,9 @@ final class ServerReceiptTests: XCTestCase {
         XCTAssertFalse(core.isAllowed(.marketing))
         XCTAssertEqual(core.snapshot().promptRequirement.kind, .choice)
 
-        var fields = try XCTUnwrap(C15tJSON.parse(http.initResponse.body)?.objectValue)
-        fields["gvl"] = try C15tJSON.parse(C15tJSON.encode(vector.gvl))
-        http.initResponse = HTTPResponse(status: 200, body: try XCTUnwrap(C15tJSON.encode(.object(fields))))
+        var fields = try XCTUnwrap(InthJSON.parse(http.initResponse.body)?.objectValue)
+        fields["gvl"] = try InthJSON.parse(InthJSON.encode(vector.gvl))
+        http.initResponse = HTTPResponse(status: 200, body: try XCTUnwrap(InthJSON.encode(.object(fields))))
         core.refresh()
         await core.waitUntilIdle()
         XCTAssertEqual(core.save(.necessary).status, .committed)

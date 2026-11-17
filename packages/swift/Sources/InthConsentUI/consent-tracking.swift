@@ -1,8 +1,8 @@
-#if canImport(C15tApple)
-import C15tApple
+#if canImport(InthApple)
+import InthApple
 #endif
-#if canImport(C15tCore)
-import C15tCore
+#if canImport(InthCore)
+import InthCore
 #endif
 import Foundation
 
@@ -21,7 +21,7 @@ public enum ConsentTrackingRequest: String, Sendable, CaseIterable {
     /// ``ConsentPrompt/presentPrompt()``. A launch that owes no prompt asks at launch. Settings
     /// the person opens are not delayed, and nothing is asked once marketing is refused.
     case beforeConsent
-    /// Nothing automatic. Call `C15tApple.tracking.request(_:)` yourself.
+    /// Nothing automatic. Call `InthApple.tracking.request(_:)` yourself.
     case manual
 }
 
@@ -50,11 +50,11 @@ enum ConsentTrackingStage: Equatable, Sendable {
 /// Everything the tracking rule reads, gathered at the moment it decides.
 struct ConsentTrackingInputs: Equatable, Sendable {
     /// Apple's current answer, `nil` where there is no App Tracking Transparency.
-    var platform: C15tTrackingPlatformStatus?
+    var platform: InthTrackingPlatformStatus?
     /// `Info.plist` carries `NSUserTrackingUsageDescription`.
     var promptStringPresent: Bool
     /// The marketing decision. Under an IAB TCF policy it is `granted` only while the TC
-    /// String also grants `marketing` (see `C15tTrackingConsent`).
+    /// String also grants `marketing` (see `InthTrackingConsent`).
     var marketing: ConsentDecision
     /// A stored choice refuses marketing, or a stored TC String does not consent to its
     /// purposes. Apple asks apps not to show its alert to people who opted out.
@@ -87,7 +87,7 @@ extension ConsentTrackingRequest {
     }
 
     /// The rule as it stood before ``ConsentTrackingInputs``, for the rule table.
-    func shouldAsk(at stage: ConsentTrackingStage, platform: C15tTrackingPlatformStatus?,
+    func shouldAsk(at stage: ConsentTrackingStage, platform: InthTrackingPlatformStatus?,
                    promptStringPresent: Bool, marketing: ConsentDecision, marketingRefused: Bool) -> Bool {
         shouldAsk(at: stage, ConsentTrackingInputs(platform: platform, promptStringPresent: promptStringPresent,
                                                    marketing: marketing, marketingRefused: marketingRefused))

@@ -1,9 +1,9 @@
-package com.c15t.core.store
+package com.inth.core.store
 
-import com.c15t.core.model.QueuedSave
-import com.c15t.core.model.SavePayload
-import com.c15t.core.model.isWithdrawal
-import com.c15t.core.model.sameOwner
+import com.inth.core.model.QueuedSave
+import com.inth.core.model.SavePayload
+import com.inth.core.model.isWithdrawal
+import com.inth.core.model.sameOwner
 import java.util.UUID
 
 /**
@@ -46,7 +46,7 @@ sealed class FailedAttempt {
  * mid-flush replay that one write again rather than lose it.
  */
 class PendingSaveQueue(
-	private val store: C15tStore,
+	private val store: InthStore,
 	private val limit: Int = DEFAULT_LIMIT,
 	/**
 	 * Row ids for [QueuedSave]. A UUID stays right here: an entry keys a local row
@@ -64,7 +64,7 @@ class PendingSaveQueue(
 	 * `null` means "do not send, and do not claim the decision". Sending bytes that are
 	 * not durable would break the exactly-once story the queue exists for, and answering
 	 * a caller that the commit stood when nothing has to deliver it is worse than a
-	 * refusal they can act on. [C15tStore.writePending] is what proves the write.
+	 * refusal they can act on. [InthStore.writePending] is what proves the write.
 	 */
 	fun enqueue(payload: SavePayload, queuedAt: Long, body: String? = null): QueuedSave? =
 		synchronized(store) {

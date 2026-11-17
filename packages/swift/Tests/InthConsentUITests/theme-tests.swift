@@ -1,6 +1,6 @@
 import Foundation
 import XCTest
-@testable import C15tConsentUI
+@testable import InthConsentUI
 
 final class ThemeTests: XCTestCase {
     func testHexParsingAcceptsOneOrTwoColours() {
@@ -69,7 +69,7 @@ final class ThemeTests: XCTestCase {
             .consentBannerTitle: .init(fontSize: 40),
         ])
         XCTAssertEqual(ConsentTheme.InfoPlistKey.slot(.buttonPrimary, "backgroundColor"),
-            "com.c15t.consent.buttonPrimary.backgroundColor")
+            "com.inth.consent.buttonPrimary.backgroundColor")
     }
 
     func testRadiusStepsFollowMdUntilSet() {

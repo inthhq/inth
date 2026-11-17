@@ -1,4 +1,4 @@
-package com.c15t.core.tc
+package com.inth.core.tc
 
 /**
  * A section that follows the core segment, after its own 3-bit SegmentType.

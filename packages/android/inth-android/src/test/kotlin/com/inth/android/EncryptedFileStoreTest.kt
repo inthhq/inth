@@ -1,9 +1,9 @@
-package com.c15t.android
+package com.inth.android
 
-import com.c15t.core.crypto.AesGcmCodec
-import com.c15t.core.spi.KeyValueStore
-import com.c15t.core.spi.SymmetricKeyProvider
-import com.c15t.core.store.ResilientKeyValueStore
+import com.inth.core.crypto.AesGcmCodec
+import com.inth.core.spi.KeyValueStore
+import com.inth.core.spi.SymmetricKeyProvider
+import com.inth.core.store.ResilientKeyValueStore
 import java.io.File
 import java.nio.file.Files
 import java.security.KeyStoreException
@@ -34,7 +34,7 @@ class EncryptedFileStoreTest {
 
 		assertEquals("stored-state", store.read(KEY))
 		assertTrue("a healthy key must stay on the encrypted path", store.isDegraded.not())
-		val file = File(directory, "com.c15t.snapshot")
+		val file = File(directory, "com.inth.snapshot")
 		assertTrue("the store must actually write", file.isFile)
 		assertFalse("the blob must not be plaintext", String(file.readBytes(), Charsets.UTF_8).contains("stored-state"))
 	}
@@ -68,7 +68,7 @@ class EncryptedFileStoreTest {
 		val fallback = MemoryStore()
 		val store = ResilientKeyValueStore(EncryptedFileStore(directory, AesGcmCodec(key)), fallback)
 		store.write(KEY, "stored-state")
-		val file = File(directory, "com.c15t.snapshot")
+		val file = File(directory, "com.inth.snapshot")
 		file.writeBytes(file.readBytes().also { it[it.size - 1] = (it[it.size - 1].toInt() xor 0x5C).toByte() })
 
 		assertNull(store.read(KEY))
@@ -102,7 +102,7 @@ class EncryptedFileStoreTest {
 	private fun encryptedStore(directory: File, key: SymmetricKeyProvider): ResilientKeyValueStore =
 		ResilientKeyValueStore(EncryptedFileStore(directory, AesGcmCodec(key)), MemoryStore())
 
-	private fun newDirectory(): File = Files.createTempDirectory("c15t-store").toFile().apply { deleteOnExit() }
+	private fun newDirectory(): File = Files.createTempDirectory("inth-store").toFile().apply { deleteOnExit() }
 
 	private fun generateKey(): SecretKey = KeyGenerator.getInstance("AES").apply { init(256) }.generateKey()
 		.let { SecretKeySpec(it.encoded, "AES") }
@@ -115,7 +115,7 @@ class EncryptedFileStoreTest {
 			current = null
 		}
 
-		override fun key(): SecretKey = current ?: throw KeyStoreException("No such key: c15t")
+		override fun key(): SecretKey = current ?: throw KeyStoreException("No such key: Inth")
 	}
 
 	private class MemoryStore : KeyValueStore {
@@ -138,7 +138,7 @@ class EncryptedFileStoreTest {
 	}
 
 	private companion object {
-		const val KEY = "com.c15t.snapshot"
+		const val KEY = "com.inth.snapshot"
 	}
 
 }

@@ -4,8 +4,8 @@
 
 	<application>
 		<!--
-			Starts c15t during Application.onCreate, which is before the React host
-			exists and so before the first JavaScript frame. A host that bootstraps c15t
+			Starts Inth during Application.onCreate, which is before the React host
+			exists and so before the first JavaScript frame. A host that bootstraps Inth
 			itself either sets the flag to false or removes the entry with
 			tools:node="remove" on this meta-data.
 		-->
@@ -15,21 +15,21 @@
 			android:exported="false"
 			tools:node="merge">
 			<meta-data
-				android:name="com.c15t.reactnative.C15tReactNativeInitializer"
+				android:name="com.inth.reactnative.InthReactNativeInitializer"
 				android:value="androidx.startup" />
 			<!--
 				Take the core's own initializer out of a React Native app. Without this both
-				entries merge, and com.c15t.android.C15tInitializer has no opt-out: it installs
-				a core from com.c15t.BACKEND_URL whenever that key is declared. C15t.bootstrap
-				is first-wins, so a host that set com.c15t.reactnative.AUTO_BOOTSTRAP to false
+				entries merge, and com.inth.android.InthInitializer has no opt-out: it installs
+				a core from com.inth.BACKEND_URL whenever that key is declared. Inth.bootstrap
+				is first-wins, so a host that set com.inth.reactnative.AUTO_BOOTSTRAP to false
 				in order to install its own configured core would find the manifest core
 				already running and its own install refused, which is the opposite of what the
 				flag documents. This library's initializer honours the flag and calls the same
-				C15tAndroid.install, so removing the other entry changes nothing for a host that
+				InthAndroid.install, so removing the other entry changes nothing for a host that
 				did not opt out and everything for one that did.
 			-->
 			<meta-data
-				android:name="com.c15t.android.C15tInitializer"
+				android:name="com.inth.android.InthInitializer"
 				tools:node="remove" />
 		</provider>
 	</application>

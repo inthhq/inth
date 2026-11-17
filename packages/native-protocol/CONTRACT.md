@@ -1,7 +1,7 @@
-c15t mobile contract
+Inth mobile contract
 ====================
 
-Authoritative reference for `@c15t/react-native`, the Swift core, and the Kotlin
+Authoritative reference for `@inth/react-native`, the Swift core, and the Kotlin
 core. Issue: https://github.com/c15t/c15t/issues/1010
 
 IAB TCF is partially in scope, at exactly the width of the state the cores
@@ -18,7 +18,7 @@ own:
                     SharedPreferences via PreferenceManager's
                     getDefaultSharedPreferences -- never a derived file
                     name. Both are wired by the platform's own install path --
-                    C15tStores.create on Android, the bridge's
+                    InthStores.create on Android, the bridge's
                     makeCoreConfiguration on iOS -- with no flag and no host
                     step, because the readers are somebody else's SDK inside the
                     host process and never ask first; a host that wants no bus
@@ -137,10 +137,10 @@ Layout
     native/
       CONTRACT.md              this file
       protocol/                protocol fixtures, generated and consumed by all three impls
-      core-swift/              SwiftPM package: C15tCore (no React Native, no UIKit), C15tApple
-                               (platform services), C15tConsentUI (optional SwiftUI screens)
-      core-android/            Gradle project: c15t-core (pure JVM), c15t-android (platform
-                               services), c15t-consent-ui (optional Compose screens)
+      core-swift/              SwiftPM package: InthCore (no React Native, no UIKit), InthApple
+                               (platform services), InthConsentUI (optional SwiftUI screens)
+      core-android/            Gradle project: inth-core (pure JVM), inth-android (platform
+                               services), inth-consent-ui (optional Compose screens)
       react-native/            (lives at packages/react-native, listed here for orientation)
 
 Rules that hold everywhere
@@ -149,10 +149,10 @@ Rules that hold everywhere
 1. Native owns consent state. There is no second consent kernel in JavaScript.
    The React Native layer renders native state and forwards user actions. It may
    import `@c15t/core` for types and pure selectors, never for state ownership.
-2. The consent cores (`C15tCore`, `C15tApple`, `c15t-core`, `c15t-android`) must not
+2. The consent cores (`InthCore`, `InthApple`, `inth-core`, `inth-android`) must not
    import React Native, Expo, UIKit, SwiftUI, or Android UI classes. Native screens
-   live in the optional `C15tConsentUI` and `c15t-consent-ui` modules, and React
-   Native bindings in the `C15tReactNative` and `com.c15t.reactnative` targets only.
+   live in the optional `InthConsentUI` and `inth-consent-ui` modules, and React
+   Native bindings in the `InthReactNative` and `com.inth.reactnative` targets only.
 3. The Kotlin core logic must run on a plain JVM with no Android dependency.
    Storage, clock, and HTTP go through interfaces the Android layer implements.
    Same rule for Swift: no UIKit, and no Keychain outside the store conformances.
@@ -163,7 +163,7 @@ Rules that hold everywhere
    resolution serves `policyPending: true` with every optional category denied,
    and never invents a permission.
 6. Never read or write IDFV, ADID, or any persistent device identifier for
-   identity. The subject id is a c15t-generated `sub_` identifier, described under
+   identity. The subject id is a inth-generated `sub_` identifier, described under
    Subject identity.
 
 State model
@@ -276,10 +276,10 @@ So no compiler sees a bridge key, and a test does instead. `BRIDGE_PAYLOADS` in
 `packages/react-native/src/protocol/bridge-schema.ts` names every key of every
 payload the TurboModule carries, and `packages/native-protocol/bridge/payloads.json` is
 generated from it (`generate:bridge-schema`). It ships behind the
-`@c15t/react-native/bridge-schema` subpath, not the main entry, and the client
+`@inth/react-native/bridge-schema` subpath, not the main entry, and the client
 loads it only in a `__DEV__` build, so a release app carries none of it. `bridge-schema.type-test.ts` holds the
 TypeScript types to the table, and `BridgeSchemaTest.kt` and
-`C15tBridgeSchemaTests.swift` hold every encoder and decoder to the JSON. A key
+`InthBridgeSchemaTests.swift` hold every encoder and decoder to the JSON. A key
 renamed on one side fails one of the three. Codegen object types would not do this
 job: a returned object reaches Kotlin as `WritableMap` and Swift as `NSDictionary`,
 and an object argument cannot tell an omitted key from `null`.
@@ -383,14 +383,14 @@ observer code of its own. It is built on the callbacks and adds no state: every
 value is the core's own snapshot, and every decision is the `decision` rule below
 applied to it.
 
-    Kotlin (c15t-android, package com.c15t.android)
+    Kotlin (inth-android, package com.inth.android)
     core.snapshotFlow: StateFlow<ConsentSnapshot>          // one instance per core
     core.decisionFlow(category): StateFlow<ConsentDecision> // emits on change only
     suspend core.awaitSave(intent, expectedRevision?)      // save on Dispatchers.IO
     suspend core.awaitRefresh()                            // returns once the init landed
     suspend core.awaitFlushPending()                       // flushPending on Dispatchers.IO
 
-    Swift (C15tCore)
+    Swift (InthCore)
     PublishedConsent(core:)    // ObservableObject, iOS 16.4+, @MainActor
     ObservableConsent(core:)   // @Observable, iOS 17+, @MainActor
       .snapshot                // the core's snapshot
@@ -409,8 +409,8 @@ Both platforms keep three rules:
   the `StateFlow` still sees later changes. Swift ties the subscription to the
   model: releasing the model ends it.
 
-The Kotlin flows live in `c15t-android` rather than `c15t-core`, which stays pure
-JVM with only kotlinx-serialization. `c15t-android` already reaches every host
+The Kotlin flows live in `inth-android` rather than `inth-core`, which stays pure
+JVM with only kotlinx-serialization. `inth-android` already reaches every host
 with kotlinx-coroutines through `androidx.lifecycle`, so the flows add no runtime
 dependency. `ConsentCore.refresh(onComplete)` is the core-side hook `awaitRefresh`
 suspends on.
@@ -425,7 +425,7 @@ platform, and each one offers the same opt-out:
     SwiftUI        view.c15tConsent(configuration, privacyPolicyURL:)  autoPresent: false
                    view.c15tConsent(privacyPolicyURL:)                 (core already installed)
     UIKit          ConsentRootViewController(root:configuration:privacyPolicyURL:)
-    Compose        C15tConsent(privacyPolicyUrl = "https://...")       autoPresent = false
+    Compose        InthConsent(privacyPolicyUrl = "https://...")       autoPresent = false
     Activity       activity.attachConsent("https://...")               autoPresent = false
 
 The rules, identical on all three:
@@ -460,8 +460,8 @@ The rules, identical on all three:
   on: when it takes over a session that opened by itself for another host, the
   session is withdrawn, with no outcome, and the owed prompt stays owed. The
   installed core keeps its `ConsentPrompt` until it is uninstalled
-  (`C15t.uninstall()` on Kotlin, `C15t.resetForTests()` on Swift, both reported
-  through `C15t.onUninstall`); the registry holds prompts weakly and never keeps
+  (`Inth.uninstall()` on Kotlin, `Inth.resetForTests()` on Swift, both reported
+  through `Inth.onUninstall`); the registry holds prompts weakly and never keeps
   a core alive. React Native attaches to the same `ConsentPrompt` through the
   native host (below), so a React Native app and any native scene in it share
   one session, and the host answers any racing call with `already-presented`.
@@ -514,8 +514,8 @@ has to clear them:
     close a notice the host asked for         drop that request; the notice stays owed
 
 **The React Native hosts** draw the shared `ConsentPrompt` over the app's own
-screens: `ConsentHost` in `c15t-consent-ui` on Android, and `ConsentHostDriver`
-in `C15tConsentUI` with a UIKit canvas in the binding on iOS. JavaScript drives
+screens: `ConsentHost` in `inth-consent-ui` on Android, and `ConsentHostDriver`
+in `InthConsentUI` with a UIKit canvas in the binding on iOS. JavaScript drives
 them with one call and hears three events:
 
     configureAutoPresent('{"autoPresent":true,"privacyPolicyURL":"https://..."}')
@@ -535,17 +535,17 @@ session that is already on screen stays for the person to finish.
 The host puts what the prompt opened on the foreground window (iOS) or the
 resumed Activity (Android) and reports `onConsentPresenterPresented`. With
 nowhere to show it yet it reports `onConsentPresenterUnavailable` once,
-`C15T_PRESENTER_UNAVAILABLE`, and keeps the session: it shows when a scene
+`INTH_PRESENTER_UNAVAILABLE`, and keeps the session: it shows when a scene
 becomes active or an Activity resumes, so an owed prompt is not lost across
 backgrounding, rotation or a host that is not ready yet. When the installed
-core is dropped (`C15t.uninstall()`, `C15t.resetForTests()`) the host ends its
+core is dropped (`Inth.uninstall()`, `Inth.resetForTests()`) the host ends its
 session with `unavailable` and lets the prompt go; the binding moves the host to
 the next installed core's prompt on its next call, and Android also on the next
 resumed Activity, so an owed prompt presents on the new core too.
 
 Before reporting a session's outcome, the host lets the prompt open what is
 owed next and reports that first: `presented` for the new session, then the
-outcome of the old one. A step that waits for c15t's screens to close, such as
+outcome of the old one. A step that waits for Inth's screens to close, such as
 the ATT request, never runs between the two. The new session often cannot show
 at once. On Android the app's Activity is still paused under the host Activity
 that is finishing, and resumes only after that Activity's `onPause`. On iOS the
@@ -574,14 +574,14 @@ ended with a `dismissed` outcome by every entry point that reads it, and as soon
 as the host notices, so no request is answered with a session that is not
 visible. A repeated prompt request re-asks the open session, so a notice owed
 again shows. A refused privacy-policy URL is rejected with
-`C15T_PRESENTER_INVALID_URL`, by `configureAutoPresent` and the presenter calls
+`INTH_PRESENTER_INVALID_URL`, by `configureAutoPresent` and the presenter calls
 alike; it is permanent, and `ConsentProvider` reports it with `console.error`.
 A binary built without the stock screens rejects every presenter call, and
-`configureAutoPresent` with `autoPresent: true`, with `C15T_NATIVE_UI_EXCLUDED`,
+`configureAutoPresent` with `autoPresent: true`, with `INTH_NATIVE_UI_EXCLUDED`,
 also permanent: the provider reports it once. When the bootstrap already says
 `nativeUI: false`, the provider sends `autoPresent: false` and does not check
 `privacyPolicyURL`, because the app draws its own consent UI. Every other
-presenter refusal is `C15T_PRESENTER_UNAVAILABLE`, which is transient.
+presenter refusal is `INTH_PRESENTER_UNAVAILABLE`, which is transient.
 
 **The notice card's touch area.** A UIKit root hit-tests against the card's
 bounds only while that scene draws the prompt and the notice is showing
@@ -599,7 +599,7 @@ default, `beforeConsent`, `manual`) on `<ConsentProvider>`, `.c15tConsent(...)`
 and `ConsentRootViewController`. It asks only when
 `NSUserTrackingUsageDescription` is present, marketing is not refused (a stored
 choice, or a `gpc` or `explicit-denial` restriction on marketing), the app is
-active, a c15t root is attached and no c15t screen is on screen, and while
+active, an Inth root is attached and no Inth screen is on screen, and while
 Apple's answer is `not-determined`. `afterConsent` asks after a closed session,
 or at launch when no prompt is owed, and only while marketing is `granted`.
 `beforeConsent` (not the recommended order) holds every prompt that would open
@@ -613,7 +613,7 @@ after-consent rule.
 `trackingReprompt` (`never` by default, `yearly`) also calls the request once per
 launch when Apple's answer is `authorized` or `denied`, marketing is `granted`,
 and 365 days have passed since the SDK last saw an answer. Apple decides whether
-anything shows. The SDK stores that time in `C15tTrackingAnswerLog`; an answer
+anything shows. The SDK stores that time in `InthTrackingAnswerLog`; an answer
 with no stored time is stamped when first read and waits a year from then. On a
 re-ask the time moves only when the answer changes. The iOS bridge sends it as
 `answeredAt` on `getTrackingAuthorization()`. It never asks for `restricted` or
@@ -621,12 +621,12 @@ with `manual`.
 
 The SDK asks Apple for the Additional Information button only when something
 handles the tap: the stock UI, `onTrackingAdditionalInformation`, or a handler
-passed to `C15tApple.tracking.request(onAdditionalInformation:)`. React Native
+passed to `InthApple.tracking.request(onAdditionalInformation:)`. React Native
 asks through `requestTrackingAuthorizationWithOptions('{"additionalInformation":true}')`;
 the plain `requestTrackingAuthorization()` shows no button.
 
 Under an IAB TCF policy, marketing is `granted` for this sequence only while the
-c15t category is granted and the committed TC String grants `marketing` by the
+Inth category is granted and the committed TC String grants `marketing` by the
 web derivation (`C15T_TO_IAB_PURPOSE_MAP.marketing`, decided by the purposes some
 registered or custom vendor asks consent for) to at least one consented
 registered or custom vendor that asks consent for a deciding purpose, or a
@@ -675,7 +675,7 @@ does not have to know what it missed.
 One launch hook per app, owned by the layer that documents the opt-out. Android's core
 library registers an `androidx.startup` initializer of its own and the React Native
 binding registers one too, so two entries merge unless the binding says otherwise. The
-core's takes no flag: it installs a core whenever `com.c15t.BACKEND_URL` is
+core's takes no flag: it installs a core whenever `com.inth.BACKEND_URL` is
 declared and passes the start-time checks, and
 installation is first-wins, so a host that set the binding's `AUTO_BOOTSTRAP` to install
 its own configured core would get the manifest core instead and have its own refused with
@@ -705,8 +705,8 @@ keeps the SDK switched off. A host that cannot wait that long bounds the wait it
 The core grows no timeout, because whatever number it picked would become a legally
 loadable answer the policy never gave.
 
-The bundled vendor helpers (`C15tApple`, `com.c15t.android.integrations`,
-`@c15t/react-native/integrations`) hold one withdrawal rule on all three platforms: on
+The bundled vendor helpers (`InthApple`, `com.inth.android.integrations`,
+`@inth/react-native/integrations`) hold one withdrawal rule on all three platforms: on
 withdrawal, every stop call for the helper runs, in order, whether or not earlier calls
 or in-flight grants fail or hang, and failures are reported through `onError` (Swift's
 vendor closures cannot throw, so Swift has no `onError`). A
@@ -724,7 +724,7 @@ ATT on iOS and the `AD_ID` runtime permission on Android are platform gates, not
 consent. A core may report their status so the host can act, and may request them
 where the host opts in, but no platform authorization moves a category from `DENIED`
 or `PENDING` to `GRANTED`: `decision` is a function of the resolved policy and the
-user's c15t choice only. A device with ATT granted and consent denied is denied, and
+user's Inth choice only. A device with ATT granted and consent denied is denied, and
 its advertising identifier stays unavailable.
 
 The two answers arrive on their own channel and a core answers them whether or not a
@@ -796,7 +796,7 @@ Persistence
 -----------
 
 iOS writes the snapshot envelope plus the consent records to the Keychain, using
-a generic password item keyed by `com.c15t.subject` and `com.c15t.snapshot`.
+a generic password item keyed by `com.inth.subject` and `com.inth.snapshot`.
 Android writes them to encrypted storage backed by an AndroidKeyStore key, and
 falls back to `SharedPreferences` when the keystore fails, logging once.
 
@@ -829,7 +829,7 @@ whose layout this file documents, which is Swift: a sorted-keys `JSONEncoder` ma
 its layout a plain function of the value. Where the two cores disagree about how a
 fact is spelled, that core is the reference and the other one moves.
 
-Both cores keep the envelope under `com.c15t.snapshot` and the subject id in its own
+Both cores keep the envelope under `com.inth.snapshot` and the subject id in its own
 slot, so refusing an envelope never costs a device its identity. What each writes:
 
 - Swift stores plain JSON under `StoredEnvelope`: `version` (this build reads `1` and
@@ -1026,24 +1026,24 @@ Configuration is the project URL plus an optional `dryRun` boolean:
     Expo plugin        backendURL             dryRun
     Swift              backendURL (String)    dryRun
     Kotlin             backendUrl             dryRun
-    iOS Info.plist     com.c15t.backend.url   com.c15t.dryRun
-    Android meta-data  com.c15t.BACKEND_URL   com.c15t.DRY_RUN
+    iOS Info.plist     com.inth.backend.url   com.inth.dryRun
+    Android meta-data  com.inth.BACKEND_URL   com.inth.DRY_RUN
 
-The transport types are not public API. Swift marks `C15tTransport`,
-`HostedTransport`, `HTTPTransport`, the `CoreConfig`-level `C15tApple.install` and
-`ConsentCore.bootstrap` `@_spi(C15tInternal)`. Kotlin puts `C15tTransport`,
-`HostedTransport`, `C15t.bootstrap`, the `ConsentCore` constructor and the
-`C15tAndroid.install` overload that takes a transport behind
-`@C15tInternalApi`, a `RequiresOptIn` at error level. Tests, examples, the device
+The transport types are not public API. Swift marks `InthTransport`,
+`HostedTransport`, `HTTPTransport`, the `CoreConfig`-level `InthApple.install` and
+`ConsentCore.bootstrap` `@_spi(InthInternal)`. Kotlin puts `InthTransport`,
+`HostedTransport`, `Inth.bootstrap`, the `ConsentCore` constructor and the
+`InthAndroid.install` overload that takes a transport behind
+`@InthInternalApi`, a `RequiresOptIn` at error level. Tests, examples, the device
 fixtures and the React Native bridge use that door. It does not check the project
 URL, which is how a Release fixture reaches a loopback backend. It still refuses
-`dryRun` in a release build, except Kotlin's `C15t.bootstrap` and `ConsentCore`
-constructor in `c15t-core`, which have no Android context to ask.
+`dryRun` in a release build, except Kotlin's `Inth.bootstrap` and `ConsentCore`
+constructor in `inth-core`, which have no Android context to ask.
 
 Every request carries these headers:
 
-    x-c15t-version:            <C15t.version> on Swift, <NativeConfig.sdkVersion> on Kotlin
-    x-c15t-platform:           apple-><C15tApple.version> for a Swift app, android-><sdkVersion>
+    x-c15t-version:            <Inth.version> on Swift, <NativeConfig.sdkVersion> on Kotlin
+    x-c15t-platform:           apple-><InthApple.version> for a Swift app, android-><sdkVersion>
                                for a Kotlin app, rn-><version> for a core either React Native
                                binding configures
     x-c15t-policy-contract:    <POLICY_CONTRACT_VERSION from @c15t/schema>
@@ -1053,7 +1053,7 @@ Each reports its host separately in `x-c15t-platform`. Hosted gateways can rejec
 unknown platform prefixes in `x-c15t-version`, so platform attribution must not be
 prepended to either version. Kotlin reads the tag from `NativeConfig.platform`,
 which defaults to `android`; `null` sends no platform header. Swift reads it from
-`C15tAppleConfiguration.platform`, which defaults to `apple`. Web clients send no
+`InthAppleConfiguration.platform`, which defaults to `apple`. Web clients send no
 platform header. `@c15t/backend` passes `x-c15t-platform` to `sessions.onReport`.
 The policy-contract header remains the capability declaration.
 
@@ -1115,8 +1115,8 @@ carries the fixture's reason code so tests assert the code:
     backendURL must be the project URL from your Inth dashboard, such as https://your-project.inth.app. Got "<input as given>": <what is wrong>.
 
 The rule runs where there is a build step (Expo prebuild, the CLI) and again at
-start in native code: `C15tApple.install(C15tAppleConfiguration)`,
-`C15tAndroid.install(context, NativeConfig)`, and the `Info.plist` and manifest
+start in native code: `InthApple.install(InthAppleConfiguration)`,
+`InthAndroid.install(context, NativeConfig)`, and the `Info.plist` and manifest
 launch hooks. The install calls throw. The launch hooks log and start no core.
 
 dryRun
@@ -1142,13 +1142,13 @@ A release build refuses `dryRun` and starts no core:
 Each platform tells a release build from a debug one differently:
 
 - Swift ships as source, through SwiftPM and vendored into the React Native pod,
-  so the app's configuration compiles it. `C15tBuild.isDebug` reads `#if DEBUG`
-  in one place. `C15tApple.install` throws `dryRunInReleaseBuild`; the React
-  Native launch hook reports `C15T_CONFIGURATION_DRY_RUN`.
+  so the app's configuration compiles it. `InthBuild.isDebug` reads `#if DEBUG`
+  in one place. `InthApple.install` throws `dryRunInReleaseBuild`; the React
+  Native launch hook reports `INTH_CONFIGURATION_DRY_RUN`.
 - Android ships as release AARs, so the SDK's own `BuildConfig.DEBUG` is always
-  false. `C15tAndroid` reads the host app's `ApplicationInfo.FLAG_DEBUGGABLE` at
+  false. `InthAndroid` reads the host app's `ApplicationInfo.FLAG_DEBUGGABLE` at
   runtime. `install` throws `IllegalStateException`; the manifest path logs an
-  error under the `c15t` tag.
+  error under the `inth` tag.
 - Expo prebuild and the CLI cannot see the build type. With `dryRun` on they
   apply the relaxed URL rule and write the flag, the plugin warns once, and
   native start enforces the rest.
@@ -1160,19 +1160,19 @@ No compatibility shims. Each retired option fails with an error that names its
 replacement:
 
     Retired                                              Replacement
-    mode: 'hosted', com.c15t.backend.mode                Remove it. Hosted is the only mode.
+    mode: 'hosted', com.inth.backend.mode                Remove it. Hosted is the only mode.
     mode: 'selfHosted'                                   None. Set the Inth project URL.
-    mode: 'offline', com.c15t.MODE=offline,              dryRun for development and CI. In production
+    mode: 'offline', com.inth.MODE=offline,              dryRun for development and CI. In production
       NativeConfig(backendUrl = null)                      keep the project URL; a bundled manifest or
                                                            in-code policy covers a launch without network.
     mode: 'custom'                                       autoBootstrap: false. Custom transports are gone.
-    initURL, com.c15t.backend.initUrl,                   None. Policy is fetched from the project URL.
-      com.c15t.BACKEND_INIT_URL, NativeConfig.initUrl
+    initURL, com.inth.backend.initUrl,                   None. Policy is fetched from the project URL.
+      com.inth.BACKEND_INIT_URL, NativeConfig.initUrl
 
 The Expo plugin throws on `mode` and `initURL`. The iOS launch hook refuses
-`com.c15t.backend.mode` and `com.c15t.backend.initUrl` with
-`C15T_CONFIGURATION_RETIRED`. Android refuses `com.c15t.MODE` and
-`com.c15t.BACKEND_INIT_URL` with a logged error and leaves the core uninstalled.
+`com.inth.backend.mode` and `com.inth.backend.initUrl` with
+`INTH_CONFIGURATION_RETIRED`. Android refuses `com.inth.MODE` and
+`com.inth.BACKEND_INIT_URL` with a logged error and leaves the core uninstalled.
 
 Platform lifecycle
 ------------------
@@ -1255,7 +1255,7 @@ The encoding is pinned by a table of eight vectors -- twelve random bytes, a wal
 clock reading, and the id -- asserted identically in three places:
 `packages/sdk/core/src/libs/__tests__/generate-subject-id.vectors.test.ts`,
 `packages/android/.../SubjectIdGeneratorTest.kt`, and
-`packages/swift/Tests/C15tCoreTests/SubjectIdTests.swift`. The clock column is
+`packages/swift/Tests/InthCoreTests/SubjectIdTests.swift`. The clock column is
 the reading the generator is pinned to, not the offset it encodes; the epoch is
 subtracted inside, as the web SDK subtracts it from `Date.now()`. Add a row to all
 three at once.
@@ -1363,7 +1363,7 @@ New Architecture only. TurboModule plus Codegen, no legacy bridge, no
     addListener(eventName): void              // RNEventEmitter spec
     removeListeners(count): void
 
-`packages/react-native/src/specs/NativeC15t.ts` is the authoritative list.
+`packages/react-native/src/specs/NativeInth.ts` is the authoritative list.
 
 A commit intent may carry `revision`, the snapshot revision a draft was built on.
 The bridge passes it to `save` as `expectedRevision`, so the core refuses the commit
@@ -1415,12 +1415,12 @@ headlessUnsupported: [], customVendors: []`, so JavaScript offers no edit it
 cannot commit. `BRIDGE_PAYLOADS` types the `iab` object with these keys, so both
 bridges' tests check them.
 
-`c15t.nativeUI` false (`Podfile.properties.json` or `C15T_NATIVE_UI=0` for the pod,
+`inth.nativeUI` false (`Podfile.properties.json` or `C15T_NATIVE_UI=0` for the pod,
 `gradle.properties` for Android) builds the bridge without the stock screens: the
-pod drops `vendor/C15tConsentUI` and `C15tConsentHost.swift` and compiles with
-`C15T_NO_NATIVE_UI`; Android compiles `src/withoutNativeUi` instead of
-`src/nativeUi` and drops `c15t-consent-ui`. `getBootstrap()` reports `nativeUI`,
-and the presenter methods reject with `C15T_NATIVE_UI_EXCLUDED`. `nativeUI` is
+pod drops `vendor/InthConsentUI` and `InthConsentHost.swift` and compiles with
+`INTH_NO_NATIVE_UI`; Android compiles `src/withoutNativeUi` instead of
+`src/nativeUi` and drops `inth-consent-ui`. `getBootstrap()` reports `nativeUI`,
+and the presenter methods reject with `INTH_NATIVE_UI_EXCLUDED`. `nativeUI` is
 additive without a protocol bump: `ADDITIVE_BOOTSTRAP_DEFAULTS` in `wire-shape.ts`
 reads an older binary, which sends no flag and always links the screens, as `true`.
 
@@ -1428,7 +1428,7 @@ Events: `snapshot`, `error`, `initialized`, and `onConsentPresenterOutcome` for 
 native presenter. The payload is a JSON string. The
 module never sends a snapshot the JavaScript side already holds: it emits the new
 `revision` and JavaScript pulls with `getSnapshot()` only when a mounted
-subscriber needs it. Selector subscriptions in `@c15t/react-native` compare the
+subscriber needs it. Selector subscriptions in `@inth/react-native` compare the
 selected value and rerender only on a change.
 
 That dedup is only safe because of "Revisions and error writes" above. The pump is
@@ -1441,7 +1441,7 @@ What Codegen owns, and what does not
 ------------------------------------
 
 Codegen generates one thing per platform: the abstract spec class on Android, the
-`NativeC15tSpec` protocol on iOS. Everything else on the boundary is hand-written -- the
+`NativeInthSpec` protocol on iOS. Everything else on the boundary is hand-written -- the
 Kotlin module, the Swift module, and the Objective-C++ category carrying the conformance,
 the JavaScript name, and `getTurboModule:`. The split is forced rather than chosen.
 Codegen's iOS header opens with a directive that refuses to compile as plain
@@ -1456,7 +1456,7 @@ checkable:
 - This repository runs React Native's generator against its own spec.
   `packages/react-native/android/codegen/generate-spec.mjs` calls `@react-native/codegen`
   with library semantics -- library name, `jsSrcsDir`, and `javaPackageName` all from
-  `codegenConfig` -- and `-Pc15t.spec.source=codegen` swaps the spec module's source set
+  `codegenConfig` -- and `-Pinth.spec.source=codegen` swaps the spec module's source set
   to what it writes. `react-native/scripts/generate-codegen-artifacts.js` is not that
   path: it treats the folder as an app and emits under its own default package,
   `com.facebook.fbreact.specs`, which is neither what `codegenConfig` declares nor what
@@ -1618,7 +1618,7 @@ Budgets, measured on the reference device profile agreed in the issue:
 - Hydrate from stored envelope: under 3 ms for a realistic payload.
 - Consent action to native commit acknowledged: under 50 ms without network.
 - React rerenders per consent change: at most one per subscribed component.
-- Cold-start overhead attributable to c15t: under 10 ms.
+- Cold-start overhead attributable to Inth: under 10 ms.
 
 Report them as numbers from the bench tasks, not as claims.
 
@@ -1630,11 +1630,11 @@ build against the same reality.
 
 - `packages/react-native/src/protocol/` is the TypeScript source of truth for the
   boundary types. `PROTOCOL_VERSION` and the supported range live in `version.ts`.
-- The Codegen spec is `packages/react-native/src/specs/NativeC15t.ts`. The
-  codegen config name is `C15tSpec` and the module name is `C15t`. Native targets
+- The Codegen spec is `packages/react-native/src/specs/NativeInth.ts`. The
+  codegen config name is `InthSpec` and the module name is `Inth`. Native targets
   must register exactly that module name.
 - The package expects iOS at `packages/react-native/ios/` with
-  `C15tReactNative.xcodeproj`, and Android at `packages/react-native/android/`.
+  `InthReactNative.xcodeproj`, and Android at `packages/react-native/android/`.
 - Fixtures live in `packages/native-protocol/*.json`, one file per case plus `index.json`.
   Each fixture carries `id`, `kind`, `description`, `notes`, `protocolVersion`,
   `input`, and `expected`. A native test reads `input`, computes, and asserts
@@ -1654,22 +1654,22 @@ Kotlin core, as built
 
 `packages/android/` is a Gradle 9.4.1 project with the wrapper checked in.
 
-- `c15t-core` is the pure-JVM consent engine. A test asserts that no source file
+- `inth-core` is the pure-JVM consent engine. A test asserts that no source file
   imports `android.*`, so keep it that way. Run it with
-  `./gradlew :c15t-core:test --console=plain`.
-- `c15t-android` implements the storage and lifecycle ports: AndroidKeyStore
+  `./gradlew :inth-core:test --console=plain`.
+- `inth-android` implements the storage and lifecycle ports: AndroidKeyStore
   encrypted storage with a `SharedPreferences` fallback, an `androidx.startup`
   `Initializer` that calls `bootstrap()`, a `ProcessLifecycleOwner` observer
   that calls `flushPending()` and `refresh()`, and a `ConnectivityManager`
   callback that calls `flushPending()` and `refresh()` on a gained network. The callback is the
   one port that can be declined: without `ACCESS_NETWORK_STATE` in the host's
-  manifest the registration is refused, and `C15tReachability.register` logs it
+  manifest the registration is refused, and `InthReachability.register` logs it
   and returns `null` rather than failing the install.
 - Measured on the development machine, release JVM: hydrate 25.4 us, policy
   evaluation 0.63 us, snapshot plus three `isAllowed` reads 0.04 us, save
-  acknowledged without network 102 us. `./gradlew :c15t-core:bench` reproduces them.
+  acknowledged without network 102 us. `./gradlew :inth-core:bench` reproduces them.
 - Losing the keystore key keeps the subject id. It lives in its own plain
-  `c15t.subject` preference file, outside the encrypted records, because it is a
+  `inth.subject` preference file, outside the encrypted records, because it is a
   random identifier the SDK owns and carries nothing sensitive. `SubjectPreservingStore` routes it
   there and migrates installs that had it encrypted, once and idempotently. When
   a key dies, `ResilientKeyValueStore` deletes the blobs it can no longer open,
@@ -1685,8 +1685,8 @@ Kotlin core, as built
 Swift core, as built
 --------------------
 
-`packages/swift/` is a standalone SwiftPM package, `C15tCore`, plus a
-`C15tCoreBench` executable. No UIKit, React Native, or Expo imports.
+`packages/swift/` is a standalone SwiftPM package, `InthCore`, plus a
+`InthCoreBench` executable. No UIKit, React Native, or Expo imports.
 
 - Verified with the toolchain `xcode-select` already resolves: `xcode-select -p`
   reports `/Applications/Xcode.app/Contents/Developer`, so `swift test` and
@@ -1701,10 +1701,10 @@ Swift core, as built
 - Measured: hydrate from store 212.67 us, policy evaluation 1.82 us mean, snapshot
   and isAllowed 0.09 us each over 500000 iterations, save acknowledged without
   network 205.74 us in memory and 1434.66 us on FileStore. `swift run -c release
-  C15tCoreBench` reproduces them.
+  InthCoreBench` reproduces them.
 - The iOS simulator slice builds with
   `xcodebuild -destination 'generic/platform=iOS Simulator' build`.
-- `Tests/C15tCoreTests/ProtocolFixtureTests.swift` runs the shared fixtures: it
+- `Tests/InthCoreTests/ProtocolFixtureTests.swift` runs the shared fixtures: it
   enumerates `index.json`, verifies every hash and `protocolVersion`, dispatches on
   `kind`, and diffs the produced snapshot against `expected` recursively, so a
   mismatch names the field and both values. It claims every entry in `index.json`;
@@ -1740,22 +1740,22 @@ Apple sources in the same compiled module:
 
     platform :ios, '16.4'
 
-    pod 'C15tReactNative',  :path => '../react-native'
+    pod 'InthReactNative',  :path => '../react-native'
 
-- Do not also link `C15tCore` or `C15tApple` separately in that RN process. Host
-  installation imports `C15tReactNative` and uses the types compiled into that
+- Do not also link `InthCore` or `InthApple` separately in that RN process. Host
+  installation imports `InthReactNative` and uses the types compiled into that
   module, so RN attaches to the same core and Keychain owner. See
   `docs/internal/apple-installation.md` for the source-consumer distinction.
-  `C15tCore.podspec` remains a local core-only spec, not a published dependency.
+  `InthCore.podspec` remains a local core-only spec, not a published dependency.
   The app must declare iOS 16.4, which is above RN 0.87's own 15.1 floor.
 - `packages/react-native/package.json` needs
-  `codegenConfig.ios.modules.C15t.className = "C15tReactNativeModule"`, because RN
+  `codegenConfig.ios.modules.Inth.className = "InthReactNativeModule"`, because RN
   0.87 resolves TurboModules through generated `RCTModuleProviders`. Verified by
   running RN's own generator against this package: it emits
-  `@"C15t": @"C15tReactNativeModule", // @c15t/react-native`.
-- `com.c15t.reactnative.AutoBootstrap = false` in `Info.plist` skips the launch hook
+  `@"Inth": @"InthReactNativeModule", // @inth/react-native`.
+- `com.inth.reactnative.AutoBootstrap = false` in `Info.plist` skips the launch hook
   that starts the core before React Native initializes. An app that does that must
-  call `C15tReactNativeRuntime.install(core:)` or `startCore()` itself, before the
+  call `InthReactNativeRuntime.install(core:)` or `startCore()` itself, before the
   React host starts, or the module reads an empty deny-all store.
 - iOS starts the core from a `+load` on a class defined in the same translation unit as
   the launch hook, and that is a link-time requirement the host build can verify.
@@ -1769,7 +1769,7 @@ Apple sources in the same compiled module:
   `otool -l` on the linked image for that section, not a unit test: nothing inside the pod
   can see whether the host linked the file in.
 - Resolution is proven, not parsed: `pod install` in a throwaway RN 0.87.1 app under
-  /tmp installed 85 pods including both c15t pods from those paths, under
+  /tmp installed 85 pods including both Inth pods from those paths, under
   CocoaPods 1.17.0 and `DEVELOPER_DIR` pointing at Xcode 27.
 - The binding's RN config file is `react-native.config.js`, written as ESM, and it must
   keep that name. It used to be `.cjs`, on the reasoning that a `"type": "module"`
@@ -1784,19 +1784,19 @@ Apple sources in the same compiled module:
   returns `null`, and the package is dropped from the generated `PackageList.java`
   silently. CI's `assembleDebug` was green the whole time because an empty package list
   still assembles. After the rename the same command reports
-  `sourceDir: .../android/c15t-react-native` with
-  `packageImportPath: import com.c15t.reactnative.C15tReactNativePackage;`.
+  `sourceDir: .../android/inth-react-native` with
+  `packageImportPath: import com.inth.reactnative.InthReactNativePackage;`.
   `@expo/require-utils`' `evalModule` accepts ESM and CommonJS bodies in a `.js`, and
   the community CLI's cosmiconfig search order is `.js`, `.cjs`, `.ts`, `.mjs`, with the
   async loader used by `react-native config`, so one ESM `.js` satisfies both linkers.
   `scripts/react-native-autolink.ts` now asserts both, because the bare fixture alone
   could never see this: Expo's `expoAutolinking.rnConfigCommand` never asks the
   community CLI anything.
-- `c15t.spec.source` is read by both build scripts. `auto` and `stub` compile the
-  hand-written stand-in in `:c15t-spec`; `codegen` runs `@react-native/codegen` over
+- `inth.spec.source` is read by both build scripts. `auto` and `stub` compile the
+  hand-written stand-in in `:inth-spec`; `codegen` runs `@react-native/codegen` over
   `src/specs` through `android/codegen/generate-spec.mjs` and swaps that module's source
   set to the result, so this repository does run RN's generator against its own spec, on
-  Linux, in CI. A host app has no `:c15t-spec` project, so there the bridge generates into
+  Linux, in CI. A host app has no `:inth-spec` project, so there the bridge generates into
   itself and `auto` resolves to generation rather than to a stand-in that is not linked.
   Either source reaches the bridge as `compileOnly`, so no copy of the class enters the
   AAR. An unrecognised value fails the build instead of quietly picking one.
@@ -1805,15 +1805,15 @@ Expo config plugin, as built
 ----------------------------
 
 `packages/react-native/src/expo-plugin/` is published as
-`@c15t/react-native/expo-plugin`, and the package root's `app.plugin.js` loads
-the same build, so `app.json` can name the plugin `@c15t/react-native`. It runs at `expo prebuild`, `expo run:*`, and
+`@inth/react-native/expo-plugin`, and the package root's `app.plugin.js` loads
+the same build, so `app.json` can name the plugin `@inth/react-native`. It runs at `expo prebuild`, `expo run:*`, and
 `eas build` time and ships nothing that executes in the app, so Continuous
 Native Generation needs no patch step and `prebuild --clean` loses nothing. Its
-default export is `withC15t` inside `createRunOncePlugin`, and
+default export is `withInth` inside `createRunOncePlugin`, and
 `applyParamsOnConfig` is exported next to it because that is the pure core the
 tests drive. A standard install adds one `plugins` entry and nothing else:
 
-    ["@c15t/react-native", {
+    ["@inth/react-native", {
       "backendURL": "https://your-project.inth.app"
     }]
 
@@ -1831,7 +1831,7 @@ backend and the same declaration list the same rows as a web app; an unknown id
 or an empty list fails the prebuild rather than quietly meaning something else.
 `autoBootstrap`
 defaults to `true`. `false` is the brownfield switch: the native app installs
-c15t itself before React Native starts, against the same Inth project URL.
+Inth itself before React Native starts, against the same Inth project URL.
 `skipNativeBuildCheck` waives the Expo Go check for a
 harness that drives `expo start` in a container without opening Expo Go.
 
@@ -1839,17 +1839,17 @@ Keys the plugin writes
 ----------------------
 
 Both platforms get the flat reverse-DNS names their readers already use, not a
-`C15t` dictionary. iOS reads them through `C15tBridgeConfiguration.InfoPlistKey`,
-Android through `C15tAndroid` and `C15tReactNativeBootstrap`:
+`Inth` dictionary. iOS reads them through `InthBridgeConfiguration.InfoPlistKey`,
+Android through `InthAndroid` and `InthReactNativeBootstrap`:
 
     iOS Info.plist                      Android <meta-data>
-    com.c15t.backend.url                com.c15t.BACKEND_URL
-    com.c15t.dryRun                     com.c15t.DRY_RUN
-    com.c15t.policy.rules               com.c15t.POLICY_RULES
-    com.c15t.backend.domain             com.c15t.BACKEND_DOMAIN
-    com.c15t.forceGPC                   com.c15t.FORCE_GPC
-    com.c15t.categories                 com.c15t.CATEGORIES
-    com.c15t.reactnative.AutoBootstrap  com.c15t.reactnative.AUTO_BOOTSTRAP
+    com.inth.backend.url                com.inth.BACKEND_URL
+    com.inth.dryRun                     com.inth.DRY_RUN
+    com.inth.policy.rules               com.inth.POLICY_RULES
+    com.inth.backend.domain             com.inth.BACKEND_DOMAIN
+    com.inth.forceGPC                   com.inth.FORCE_GPC
+    com.inth.categories                 com.inth.CATEGORIES
+    com.inth.reactnative.AutoBootstrap  com.inth.reactnative.AUTO_BOOTSTRAP
 
 Each key keeps its platform's casing, lowercase dotted on iOS and upper snake on
 Android, and both spell the same concept with the same words. Absent values stay absent: the
@@ -1857,8 +1857,8 @@ bridge treats a missing key as "not configured" and has to parse an empty
 string. `AutoBootstrap` is written only in the opt-out case, since on is the
 bridge's own default. The `dryRun` keys are written only when `dryRun` is on.
 
-Prebuild also deletes the retired keys `com.c15t.backend.mode`,
-`com.c15t.backend.initUrl`, `com.c15t.MODE` and `com.c15t.BACKEND_INIT_URL`. A
+Prebuild also deletes the retired keys `com.inth.backend.mode`,
+`com.inth.backend.initUrl`, `com.inth.MODE` and `com.inth.BACKEND_INIT_URL`. A
 prebuild without `--clean` keeps the old plist and manifest, and native start
 refuses a build that still declares one.
 
@@ -1873,35 +1873,35 @@ array and drops entries that are not category raw values; Android reads a
 comma-separated list, trims spaces around each name, and drops unknown names the
 same way, so a mistyped id narrows the rows rather than installing a category
 that cannot exist. A declaration that parses to nothing reads as absent. Neither key travels to JavaScript
-through `extra.c15t`: the snapshot already carries the decided list, and a
+through `extra.inth`: the snapshot already carries the decided list, and a
 second copy could only disagree with it.
 
 Android types the value, not the app: an unquoted `android:value="true"` reaches the
 meta-data bundle as a `Boolean` and an unquoted `1` as a `Long`, and only a quoted
-literal stays text. So every Android key here is read through `C15tManifestValue`,
+literal stays text. So every Android key here is read through `InthManifestValue`,
 which takes the raw entry and accepts the boolean, the number, and the text spellings
 of each, with `true`/`false` case-insensitive and `1`/`0` allowed. A value that means
 neither reads as absent, never as `false`. A reader that named one type would honour
 whichever spelling the app happened to use, which is how the plugin's
-`com.c15t.FORCE_GPC` and a hand-written manifest nearly disagreed about a staged build.
+`com.inth.FORCE_GPC` and a hand-written manifest nearly disagreed about a staged build.
 
 Every key in that table has a reader, and the rule is that it must. Both ends are
 greppable, so `native-key-readers.test.ts` in `packages/react-native` reads the
 reader sources and fails the build when the plugin writes a key no constant names.
 An unread key is not a spare knob: it is a wrong promise carried inside a shipped
 binary, and the app looks configured while one platform runs something else.
-`com.c15t.backend.publicKey` / `com.c15t.PUBLIC_KEY` were exactly that and are
+`com.inth.backend.publicKey` / `com.inth.PUBLIC_KEY` were exactly that and are
 gone. The init URL keys went with `initURL`: policy is fetched from the project
 URL.
 
-JavaScript reads the same values from `extra.c15t`: `backendURL` in its normal
+JavaScript reads the same values from `extra.inth`: `backendURL` in its normal
 form, `dryRun`, `domain`, `enableAppTrackingTransparency`, and the `protocol`
 range. There is no second config source.
 
 Theme keys
 ----------
 
-The `theme` prop writes the native theme keys, `com.c15t.consent.*`, that
+The `theme` prop writes the native theme keys, `com.inth.consent.*`, that
 `ConsentTheme.InfoPlistKey` in `consent-theme.swift` and `ConsentTheme.Meta` in
 `consent-theme.kt` read. Its field names follow the web `Theme` in `@c15t/ui`,
 and so do the native token names. The prop is the `ConsentThemeOptions` type
@@ -1978,9 +1978,9 @@ Rules the plugin enforces at build time
 - Android gets `android.permission.INTERNET` and an
   `androidx.startup.InitializationProvider` with authority
   `${applicationId}.androidx-startup` pointing at
-  `com.c15t.reactnative.C15tReactNativeInitializer`, so the core is hydrated
+  `com.inth.reactnative.InthReactNativeInitializer`, so the core is hydrated
   before the first Activity exists. Starting it twice is harmless, since
-  `C15t.bootstrap` ignores the second call. In an SDK 57 prebuild only the
+  `Inth.bootstrap` ignores the second call. In an SDK 57 prebuild only the
   provider is observable in a diff against the same app with no plugin: the
   bare template already asks for INTERNET, so the plugin's write lands on a
   permission that is already there.
@@ -1991,7 +1991,7 @@ Rules the plugin enforces at build time
 - The Android SDK floor, `minSdk` 24 and `compileSdk` 36 from
   `packages/android/gradle/libs.versions.toml`, is checked, not raised.
   Below it the manifest merger or the AAR compile fails with a message that
-  names neither c15t nor the number. An Expo 55 to 58 template writes no SDK
+  names neither Inth nor the number. An Expo 55 to 58 template writes no SDK
   number: `app/build.gradle` reads `rootProject.ext.*`, and the
   `expo-root-project` Gradle plugin fills that from a root `ext` block, then the
   `android.minSdkVersion` and `android.compileSdkVersion` keys in
@@ -2009,14 +2009,14 @@ Rules the plugin enforces at build time
   native one (`prebuild`, `run:`, `build`, `config`, `doctor`), or when an `ios/`
   or `android/` directory exists.
 - Registering the module by hand as well is an error, detected in
-  `MainApplication` (`C15tReactNativePackage`), in `ios/Podfile`
-  (`pod 'C15tReactNative'`), and in `android/app/build.gradle`
-  (`project(":c15t-react-native")`). Autolinking and the plugin are the only two
+  `MainApplication` (`InthReactNativePackage`), in `ios/Podfile`
+  (`pod 'InthReactNative'`), and in `android/app/build.gradle`
+  (`project(":inth-react-native")`). Autolinking and the plugin are the only two
   supported routes, and combining them yields two registrations.
 - An over-the-air bundle cannot outrun the binary. With `updates.url` set and no
   `runtimeVersion` the plugin throws, since that combination serves any JavaScript
   revision to any shipped binary. The supported range goes out in
-  `extra.c15t.protocol`, which is what `getBootstrap()`'s `protocolVersion` gets
+  `extra.inth.protocol`, which is what `getBootstrap()`'s `protocolVersion` gets
   checked against in the version handshake above.
 
 How Expo loads the plugin
@@ -2222,7 +2222,7 @@ they do not mix.
   build time. A bundled manifest replaces a cached one only when the cached one
   also came from a bundle and is stale, older, or bound to another endpoint.
 - An in-code policy is a `ConsentPolicy`, rules in the backend's `PolicyRule`
-  names (`C15tAppleConfiguration.policy`, `NativeConfig.policy`, Expo `policy`).
+  names (`InthAppleConfiguration.policy`, `NativeConfig.policy`, Expo `policy`).
   The device resolves the rules locally and never calls `/init`. Records go to
   the project through the hosted transport, or are dropped under `dryRun`. The
   backend recomputes each decision against the project's own policy and rejects
@@ -2230,9 +2230,9 @@ they do not mix.
   the in-code rules must match the project's policy. A bundled manifest is
   exported from the project and cannot drift that way. An in-code policy beside
   a bundled manifest is refused: Kotlin's `NativeConfig` throws, the Android
-  manifest path refuses `com.c15t.POLICY_RULES` beside
-  `com.c15t.POLICY_RESOURCE`, the Expo plugin refuses `policy` beside
-  `policyResource` or `bundleManifest`, and `C15tAppleConfiguration` lets the
+  manifest path refuses `com.inth.POLICY_RULES` beside
+  `com.inth.POLICY_RESOURCE`, the Expo plugin refuses `policy` beside
+  `policyResource` or `bundleManifest`, and `InthAppleConfiguration` lets the
   manifest win. Both cores normalize rules exactly as
   `normalizePolicyRule` does and match them as `resolvePolicyRules` does;
   `packages/native-protocol/local-policy/parity.json`, generated from `@c15t/schema`,
@@ -2255,7 +2255,7 @@ they do not mix.
   reason `invalid-configuration`, and fails closed: a policy cached by an earlier
   build stops applying and optional gates are denied, while stored choices stay
   for a later build with a usable policy. Bootstrap and `reset()` both report it. The `iab` model is refused in an in-code policy, because the vendor list comes from `/init`. iOS reads the
-  rules file from `com.c15t.policy.rules`, Android from `com.c15t.POLICY_RULES`.
+  rules file from `com.inth.policy.rules`, Android from `com.inth.POLICY_RULES`.
 
 Native bootstrap can resolve an endpoint-bound resource exported from hosted
 `/manifest` before JavaScript starts. See
@@ -2272,8 +2272,8 @@ supplies no policy and reports `bundled-policy-unusable`. Readable disclosure
 copy remains separate from authority to accept a new IAB grant. Hosted refresh
 and durable replay stay installed.
 
-The iOS bridge reads `com.c15t.policy.resource` from Info.plist. Android reads
-`com.c15t.POLICY_RESOURCE` as an app asset path. The Expo plugin writes both from
+The iOS bridge reads `com.inth.policy.resource` from Info.plist. Android reads
+`com.inth.POLICY_RESOURCE` as an app asset path. The Expo plugin writes both from
 `policyResource` and copies the exact resource bytes during prebuild.
 
 ## IAB GPP
@@ -2310,7 +2310,7 @@ opt-outs are 1 when any `optOutCategories` entry (default `marketing`) is not
 permitted in the snapshot's effective permissions, else 2. `Gpc` is
 `privacySignals.gpc.active`. MSPA fields follow `mspaMode`: unset reports
 `MspaCoveredTransaction` 2 and both modes 0; service provider mode reports the
-notices and opt-outs as 0. Every field c15t has no input for is 0 (not
+notices and opt-outs as 0. Every field Inth has no input for is 0 (not
 applicable): `SensitiveDataProcessingOptOutNotice`,
 `SensitiveDataLimitUseNotice`, all 16 `SensitiveDataProcessing` entries, all 3
 `KnownChildSensitiveDataConsents` entries and `PersonalDataConsents`.
@@ -2349,7 +2349,7 @@ string against the web encoder and decodes it with `@iabgpp/cmpapi`.
 ## WebView consent
 
 An app that opens its own site in a WebView passes the native decision to the
-page, so web c15t shows no second banner. Native stays the authority: the page
+page, so web Inth shows no second banner. Native stays the authority: the page
 gets a read-only copy, and nothing it does is recorded as a native choice.
 
 ### Scripts
@@ -2399,10 +2399,10 @@ of them, because it records nothing.
 ### Platform glue
 
 - Swift and Kotlin: `WebViewConsentScript` and `WebViewConsentState` build the
-  scripts, and `WebViewConsentSync` owns the rules below, in C15tCore and in
-  `com.c15t.core.webview`, with no WebKit or Android in them. `ConsentWebView`
-  connects a sync to a `WKWebView` (C15tApple: a main-frame-only `WKUserScript`
-  at document start) or an `android.webkit.WebView` (c15t-android:
+  scripts, and `WebViewConsentSync` owns the rules below, in InthCore and in
+  `com.inth.core.webview`, with no WebKit or Android in them. `ConsentWebView`
+  connects a sync to a `WKWebView` (InthApple: a main-frame-only `WKUserScript`
+  at document start) or an `android.webkit.WebView` (inth-android:
   `WebViewCompat.addDocumentStartJavaScript` with the origins as origin rules;
   `attach` returns `null`, and injects nothing, without `DOCUMENT_START_SCRIPT`).
 - React Native: the bridge method `getWebViewConsent()` returns
@@ -2428,7 +2428,7 @@ stops serving an origin it runs `update.js` for that origin alone, with the
 page's token and the revoked state (`ready: false`, every optional category
 denied): `close()` revokes every listed origin, and a replacement revokes the
 origins it drops. The page denies everything and follows the app no further;
-web c15t reloads it when a category it used is withdrawn, and the reload shows
+web Inth reloads it when a category it used is withdrawn, and the reload shows
 the site's own banner because nothing is injected any more. A Swift sync
 released without `close()` revokes nothing, because its web view is gone. React
 Native revokes dropped origins when `allowedOrigins` changes.
@@ -2448,7 +2448,7 @@ and allowlist share the controller: one message handler (WebKit raises
 with the first and removed with the last, which finds the helper through the
 message's web view; and one token and request key, so whichever script defines a
 page's object, every helper's updates and requests match it.
-`WebViewConsentGroup` in C15tCore keeps the count, the authority and the secrets.
+`WebViewConsentGroup` in InthCore keeps the count, the authority and the secrets.
 
 A web view that shares a helper's controller without a helper of its own is in
 that helper's scope too: it receives the state at document start but no live
@@ -2474,7 +2474,7 @@ checks that a GPP string in the snapshot appears in the injected payload.
 when it finds the injected object with its locks (non-writable,
 non-configurable, frozen, version 1), and `undefined` everywhere else. A site
 passes it as `consentSource`, so it opts in explicitly. Under a consent source
-web c15t shows no banner or dialog, stores nothing, sends no receipt and mounts
+web Inth shows no banner or dialog, stores nothing, sends no receipt and mounts
 no IAB CMP; permissions follow the injected state and are all denied until
 `ready`.
 
@@ -2514,8 +2514,8 @@ can prove that a person, rather than any script on the page, made the choice.
   lives only in the closure and in scripts the app evaluates.
 - The update script reads the origin before it touches the global, so a page
   that navigated off the list never receives the token.
-- In a normal browser, a script that runs before c15t could fake the object
-  with the same locks. That script could equally write c15t's own consent
+- In a normal browser, a script that runs before Inth could fake the object
+  with the same locks. That script could equally write Inth's own consent
   cookie, so this adds nothing it could not already do. Sites that do not pass
   `webViewConsentSource()` never read the global.
 - Residual: where React Native on Android injects late (react-native-webview

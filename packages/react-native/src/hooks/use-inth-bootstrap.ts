@@ -16,7 +16,7 @@ import { useConsentClient } from '../provider/consent-context';
  *
  * @returns The handshake payload for the running binary.
  */
-export const useC15tBootstrap = function useC15tBootstrap(): BootstrapPayload {
+export const useInthBootstrap = function useInthBootstrap(): BootstrapPayload {
 	const client = useConsentClient();
 
 	return useMemo(() => client.bootstrap, [client]);

@@ -1,11 +1,11 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.iab.*
-import com.c15t.core.model.*
-import com.c15t.core.spi.*
-import com.c15t.core.store.*
-import com.c15t.core.tc.*
-import com.c15t.core.transport.*
+import com.inth.core.iab.*
+import com.inth.core.model.*
+import com.inth.core.spi.*
+import com.inth.core.store.*
+import com.inth.core.tc.*
+import com.inth.core.transport.*
 import java.io.File
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -25,7 +25,7 @@ class AdditionalConsentTest {
 		val base = Json.parseToJsonElement(initBody(model = "\"iab\"", gvl = GlobalVendorListJson.toJson(v.gvl))).jsonObject
 		return initSuccess(body = JsonObject(base + ("adTechProviders" to providers)).toString())
 	}
-	private fun boot(store: C15tStore = C15tStore(InMemoryKeyValueStore()), http: RecordingTransport = RecordingTransport()): ConsentCore {
+	private fun boot(store: InthStore = InthStore(InMemoryKeyValueStore()), http: RecordingTransport = RecordingTransport()): ConsentCore {
 		http.respondInit(response()).respondSave(SaveOutcome.Unavailable("offline"))
 		return testKernel(config = config, store = store, transport = http, clock = FixedClock(v.now)).also { it.bootstrap() }
 	}
@@ -33,7 +33,7 @@ class AdditionalConsentTest {
 	@Test fun `Google conformance vectors reach actual native outgoing bodies`() {
 		for (row in v.cases) {
 			assertEquals(row.expected, AdditionalConsent.encode(row.consented, v.providers.map { it.id }, row.purposeConsents))
-			val store = C15tStore(InMemoryKeyValueStore())
+			val store = InthStore(InMemoryKeyValueStore())
 			val http = RecordingTransport()
 			val core = boot(store, http)
 			val draft = assertNotNull(core.openIabDraft())
@@ -56,17 +56,17 @@ class AdditionalConsentTest {
 
 	@Test fun `cold restoration withdrawal rejected write and identity keep AC atomic`() {
 		val backend = ACBackend()
-		val store = C15tStore(backend)
+		val store = InthStore(backend)
 		val first = boot(store)
 		assertTrue(first.save(CommitIntent.All).ok)
 		val saved = assertNotNull(first.iabConsent)
-		val bytes = backend.read(C15tStoreKeys.SNAPSHOT)
+		val bytes = backend.read(InthStoreKeys.SNAPSHOT)
 		backend.reject = true
 		assertFalse(first.save(CommitIntent.Necessary).ok)
 		assertEquals(saved, first.iabConsent)
-		assertEquals(bytes, backend.read(C15tStoreKeys.SNAPSHOT))
+		assertEquals(bytes, backend.read(InthStoreKeys.SNAPSHOT))
 		backend.reject = false
-		val cold = testKernel(config = config, store = C15tStore(backend), clock = FixedClock(v.now), executor = TaskExecutor { })
+		val cold = testKernel(config = config, store = InthStore(backend), clock = FixedClock(v.now), executor = TaskExecutor { })
 		cold.bootstrap()
 		assertEquals(saved, cold.iabConsent)
 		assertTrue(cold.save(CommitIntent.Necessary).ok)
@@ -81,7 +81,7 @@ class AdditionalConsentTest {
 
 	@Test fun `list changes invalidate grants drafts and pending bodies`() {
 		for (change in listOf("added", "removed", "empty", "invalid")) {
-			val store = C15tStore(InMemoryKeyValueStore())
+			val store = InthStore(InMemoryKeyValueStore())
 			val http = RecordingTransport()
 			val core = boot(store, http)
 			assertTrue(core.save(CommitIntent.All).ok)
@@ -105,7 +105,7 @@ class AdditionalConsentTest {
 	}
 
 	@Test fun `stale ATP list cannot restore or replay an AC grant`() {
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val first = boot(store)
 		assertTrue(first.save(CommitIntent.All).ok)
 		val cold = testKernel(config = config.copy(iabListMaxAgeMs = 1000), store = store, clock = FixedClock(v.now + 1000), executor = TaskExecutor { })
@@ -117,7 +117,7 @@ class AdditionalConsentTest {
 
 	@Test fun `ATP expiry denies hot reads before a refreshed GVL expires`() {
 		val clock = FixedClock(v.now)
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val http = RecordingTransport().respondInit(response()).respondSave(SaveOutcome.Unavailable("offline"))
 		val core = testKernel(config.copy(iabListMaxAgeMs = 60_000), store, clock, http)
 		core.bootstrap()
@@ -148,7 +148,7 @@ class AdditionalConsentTest {
 	@Test fun `ATP expiry notifies existing gates and only removes queued grants`() {
 		for (withdrawal in listOf(false, true)) {
 			val clock = FixedClock(v.now)
-			val store = C15tStore(InMemoryKeyValueStore())
+			val store = InthStore(InMemoryKeyValueStore())
 			val http = RecordingTransport().respondInit(response()).respondSave(SaveOutcome.Unavailable("offline"))
 			val core = testKernel(config.copy(iabListMaxAgeMs = 500), store, clock, http)
 			core.bootstrap()
@@ -179,7 +179,7 @@ class AdditionalConsentTest {
 
 	@Test fun `failed retry preserves AC snapshot envelope and draft`() {
 		val clock = FixedClock(v.now)
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val http = RecordingTransport().respondInit(response()).respondSave(SaveOutcome.Unavailable("offline"))
 		val core = testKernel(config, store, clock, http)
 		core.bootstrap()
@@ -206,7 +206,7 @@ class AdditionalConsentTest {
 
 	@Test fun `withdrawal keeps exact AC body across list identity reset and restart`() {
 		for (change in listOf("list", "identity", "reset", "expiry")) {
-			val store = C15tStore(InMemoryKeyValueStore())
+			val store = InthStore(InMemoryKeyValueStore())
 			val http = RecordingTransport()
 			val first = boot(store, http)
 			assertTrue(first.save(CommitIntent.All).ok)
@@ -234,7 +234,7 @@ class AdditionalConsentTest {
 		override fun read(key: String) = entries[key]
 		override fun write(key: String, value: String?) { if (value == null) entries.remove(key) else entries[key] = value }
 		override fun writeDurably(key: String, value: String?): Boolean {
-			if (reject && key == C15tStoreKeys.SNAPSHOT) return false
+			if (reject && key == InthStoreKeys.SNAPSHOT) return false
 			write(key, value); return true
 		}
 	}

@@ -1,12 +1,12 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.KernelError
-import com.c15t.core.store.C15tStore
-import com.c15t.core.store.C15tStoreKeys
-import com.c15t.core.tc.GlobalVendorListJson
-import com.c15t.core.transport.TransportOutcome
-import com.c15t.core.wire.SnapshotWire
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.KernelError
+import com.inth.core.store.InthStore
+import com.inth.core.store.InthStoreKeys
+import com.inth.core.tc.GlobalVendorListJson
+import com.inth.core.transport.TransportOutcome
+import com.inth.core.wire.SnapshotWire
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
@@ -51,7 +51,7 @@ class VendorListRetentionTest {
 	 * Three places, one document. A drawer that names partners reads `snapshot.iab.gvl`, which is the
 	 * key `packages/react-native/src/protocol/snapshot.ts` declares and the key `core-swift` fills, so
 	 * a body parked only behind a kernel accessor left that drawer empty on Android while the same
-	 * build worked on iOS. [com.c15t.core.ConsentCore.vendorList] is now that same field read a second
+	 * build worked on iOS. [com.inth.core.ConsentCore.vendorList] is now that same field read a second
 	 * way, which is what keeps a native disclosure and a JavaScript one naming the same vendors.
 	 *
 	 * The stored half is still the load-bearing half -- the envelope is what proves the list will be
@@ -62,7 +62,7 @@ class VendorListRetentionTest {
 	 */
 	@Test
 	fun `a served list reaches the snapshot and is stored once`() {
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val kernel = testKernel(store = store, transport = RecordingTransport().respondInit(initWithGvl(GVL)))
 		kernel.bootstrap()
 
@@ -113,7 +113,7 @@ class VendorListRetentionTest {
 	 *
 	 * Both directions ride on one property: for these two keys the bytes did not change shape. The
 	 * earlier build wrote a populated top-level `gvl` and an `iab` sitting at `null`, which is what
-	 * [com.c15t.core.ConsentCore.persist] writes today and what [com.c15t.core.ConsentCore.bootstrap]
+	 * [com.inth.core.ConsentCore.persist] writes today and what [com.inth.core.ConsentCore.bootstrap]
 	 * reads back onto the slot, so an installed device keeps the list it already paid for. The upgrade
 	 * read is run here. What the build *behind* this one would read cannot be run from this tree, so
 	 * that half is graded as the shape it depends on -- `iab` written null, `gvl` written under the
@@ -123,13 +123,13 @@ class VendorListRetentionTest {
 	fun `stored bytes agree with the build either side of this field`() {
 		val backend = InMemoryKeyValueStore()
 		val warm = testKernel(
-			store = C15tStore(backend),
+			store = InthStore(backend),
 			transport = RecordingTransport().respondInit(initWithGvl(GVL)),
 		)
 		warm.bootstrap()
 		val body = assertNotNull(warm.vendorListBody())
 
-		val raw = assertNotNull(backend.read(C15tStoreKeys.SNAPSHOT), "a resolved init has to have written bytes")
+		val raw = assertNotNull(backend.read(InthStoreKeys.SNAPSHOT), "a resolved init has to have written bytes")
 		val stored = json.parseToJsonElement(raw).jsonObject
 		assertEquals(
 			JsonNull,
@@ -145,7 +145,7 @@ class VendorListRetentionTest {
 		// The upgrade itself: those same bytes, a kernel that never saw the `/init` that served them,
 		// and a network that stays shut.
 		val cold = testKernel(
-			store = C15tStore(InMemoryKeyValueStore(mapOf(C15tStoreKeys.SNAPSHOT to raw, C15tStoreKeys.SUBJECT to assertNotNull(backend.read(C15tStoreKeys.SUBJECT))))),
+			store = InthStore(InMemoryKeyValueStore(mapOf(InthStoreKeys.SNAPSHOT to raw, InthStoreKeys.SUBJECT to assertNotNull(backend.read(InthStoreKeys.SUBJECT))))),
 			transport = RecordingTransport(),
 		)
 		cold.bootstrap()
@@ -164,7 +164,7 @@ class VendorListRetentionTest {
 	@Test
 	fun `a list stored inside the snapshot is read without the envelope key`() {
 		val kernel = testKernel(
-			store = C15tStore(InMemoryKeyValueStore(mapOf(C15tStoreKeys.SNAPSHOT to bytesWithListInsideTheSnapshot(), C15tStoreKeys.SUBJECT to """{"id":"${subjectIdForSequence(1)}"}"""))),
+			store = InthStore(InMemoryKeyValueStore(mapOf(InthStoreKeys.SNAPSHOT to bytesWithListInsideTheSnapshot(), InthStoreKeys.SUBJECT to """{"id":"${subjectIdForSequence(1)}"}"""))),
 			transport = RecordingTransport(),
 		)
 		kernel.bootstrap()
@@ -188,7 +188,7 @@ class VendorListRetentionTest {
 	fun `an iab object carrying a field this build does not model reads as nothing stored`() {
 		val tampered = bytesWithListInsideTheSnapshot(extraIabField = "tcString" to TC_STRING)
 
-		val store = C15tStore(InMemoryKeyValueStore(mapOf(C15tStoreKeys.SNAPSHOT to tampered)))
+		val store = InthStore(InMemoryKeyValueStore(mapOf(InthStoreKeys.SNAPSHOT to tampered)))
 		assertNull(store.readEnvelope(), "an unreadable iab is an unreadable envelope, not a partial one")
 
 		val kernel = testKernel(store = store, transport = RecordingTransport())
@@ -209,7 +209,7 @@ class VendorListRetentionTest {
 	@Test
 	fun `the body a bridge forwards is the served document`() {
 		val kernel = testKernel(
-			store = C15tStore(InMemoryKeyValueStore()),
+			store = InthStore(InMemoryKeyValueStore()),
 			transport = RecordingTransport().respondInit(initWithGvl(GVL)),
 		)
 		kernel.bootstrap()
@@ -246,7 +246,7 @@ class VendorListRetentionTest {
 	 */
 	@Test
 	fun `a device that was never served a list has no body to send`() {
-		val kernel = testKernel(store = C15tStore(InMemoryKeyValueStore()), transport = RecordingTransport())
+		val kernel = testKernel(store = InthStore(InMemoryKeyValueStore()), transport = RecordingTransport())
 		kernel.bootstrap()
 
 		assertNull(kernel.vendorList)
@@ -268,7 +268,7 @@ class VendorListRetentionTest {
 	 */
 	@Test
 	fun `a refresh with no gvl keeps the list the device already holds`() {
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val transport = RecordingTransport().respondInit(initWithGvl(GVL)).respondInit(initWithGvl(null))
 		val errors = mutableListOf<KernelError>()
 		val kernel = testKernel(store = store, transport = transport, logger = { errors += it })
@@ -302,7 +302,7 @@ class VendorListRetentionTest {
 		fun servedThen(gvl: String?): Pair<ConsentCore, List<KernelError>> {
 			val errors = mutableListOf<KernelError>()
 			val kernel = testKernel(
-				store = C15tStore(InMemoryKeyValueStore()),
+				store = InthStore(InMemoryKeyValueStore()),
 				transport = RecordingTransport().respondInit(initWithGvl(GVL)).respondInit(initWithGvl(gvl)),
 				logger = { errors += it },
 			)
@@ -333,10 +333,10 @@ class VendorListRetentionTest {
 	/**
 	 * A resolution this core cannot represent still fails closed, list or no list.
 	 *
-	 * A model name Kotlin's [com.c15t.core.model.ConsentModel] does not carry is an unreadable
+	 * A model name Kotlin's [com.inth.core.model.ConsentModel] does not carry is an unreadable
 	 * resolution here, which makes it the exact case contract rule 5 is about: pending, deny all,
 	 * and never an invented permission. `iab` is no longer that case -- the reader reads it and
-	 * [com.c15t.core.policy.PolicyEvaluator] has a rule for it -- so the guard is held by a model
+	 * [com.inth.core.policy.PolicyEvaluator] has a rule for it -- so the guard is held by a model
 	 * from a schema this build has not seen. Reading `gvl` off the same body may not soften that,
 	 * and it may not make the two devices differ. The list itself stays held -- it is disclosure
 	 * and encoding data rather than a permission, and the rule 5 argument is about the rule.
@@ -346,7 +346,7 @@ class VendorListRetentionTest {
 		fun run(gvl: String?): Pair<ConsentCore, List<KernelError>> {
 			val errors = mutableListOf<KernelError>()
 			val kernel = testKernel(
-				store = C15tStore(InMemoryKeyValueStore()),
+				store = InthStore(InMemoryKeyValueStore()),
 				transport = RecordingTransport().respondInit(
 					initSuccess(body = initBody(model = "\"quantum-leibler\"", gvl = gvl)),
 				),
@@ -389,12 +389,12 @@ class VendorListRetentionTest {
 	@Test
 	fun `the list comes back on the next launch through a failed init`() {
 		val backend = InMemoryKeyValueStore()
-		val warm = testKernel(store = C15tStore(backend), transport = RecordingTransport().respondInit(initWithGvl(GVL)))
+		val warm = testKernel(store = InthStore(backend), transport = RecordingTransport().respondInit(initWithGvl(GVL)))
 		warm.bootstrap()
 		val body = assertNotNull(warm.vendorListBody())
 
 		val coldBackend = RecordingTransport()
-		val cold = testKernel(store = C15tStore(backend), transport = coldBackend)
+		val cold = testKernel(store = InthStore(backend), transport = coldBackend)
 		cold.bootstrap()
 
 		assertEquals(177L, cold.vendorList?.vendorListVersion, "hydrated off the envelope")
@@ -409,13 +409,13 @@ class VendorListRetentionTest {
 	 * A wipe takes the list with the policy, because a wiped device is showing nobody a disclosure.
 	 *
 	 * This is the one place the latch releases, and it releases for the matched policy's own reason
-	 * rather than a new one: [com.c15t.core.ConsentCore.reset] deletes the rule the receipts were
+	 * rather than a new one: [com.inth.core.ConsentCore.reset] deletes the rule the receipts were
 	 * judged against, so the claim the latch protects has been withdrawn with it -- and a list left
 	 * in memory would be written straight back into the fresh envelope the next save builds.
 	 */
 	@Test
 	fun `a wipe takes the list with the policy it was stored beside`() {
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val transport = RecordingTransport().respondInit(initWithGvl(GVL)).respondInit(initWithGvl(null))
 		val kernel = testKernel(store = store, transport = transport)
 		kernel.bootstrap()
@@ -441,11 +441,11 @@ class VendorListRetentionTest {
 	private fun bytesWithListInsideTheSnapshot(extraIabField: Pair<String, String>? = null): String {
 		val backend = InMemoryKeyValueStore()
 		testKernel(
-			store = C15tStore(backend),
+			store = InthStore(backend),
 			transport = RecordingTransport().respondInit(initWithGvl(GVL)),
 		).bootstrap()
 
-		val stored = json.parseToJsonElement(assertNotNull(backend.read(C15tStoreKeys.SNAPSHOT))).jsonObject
+		val stored = json.parseToJsonElement(assertNotNull(backend.read(InthStoreKeys.SNAPSHOT))).jsonObject
 		val gvl = stored["gvl"]?.takeUnless { it is JsonNull }
 			?: throw AssertionError("the write these bytes start from carried no list")
 		return JsonObject(

@@ -1,15 +1,15 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.iab.IabConfiguration
-import com.c15t.core.iab.IabListAvailability
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentDecision
-import com.c15t.core.model.KernelError
-import com.c15t.core.spi.Clock
-import com.c15t.core.spi.TaskExecutor
-import com.c15t.core.store.C15tStore
-import com.c15t.core.transport.SaveOutcome
-import com.c15t.core.transport.TransportOutcome
+import com.inth.core.iab.IabConfiguration
+import com.inth.core.iab.IabListAvailability
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentDecision
+import com.inth.core.model.KernelError
+import com.inth.core.spi.Clock
+import com.inth.core.spi.TaskExecutor
+import com.inth.core.store.InthStore
+import com.inth.core.transport.SaveOutcome
+import com.inth.core.transport.TransportOutcome
 import java.io.File
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -34,7 +34,7 @@ class IabLifecycleTest {
 	@Test
 	fun `reset followed by listless init cannot open an IAB draft`() {
 		val transport = http()
-		val core = testKernel(config, C15tStore(InMemoryKeyValueStore()), FixedClock(now), transport)
+		val core = testKernel(config, InthStore(InMemoryKeyValueStore()), FixedClock(now), transport)
 		core.bootstrap()
 		assertNotNull(core.openIabDraft())
 		transport.respondInit(initSuccess(body = initBody(model = "\"iab\"")))
@@ -46,7 +46,7 @@ class IabLifecycleTest {
 	@Test
 	fun `expired list hot reads keep snapshot identity and every initial gate denies`() {
 		val clock = FixedClock(now)
-		val core = testKernel(config.copy(iabListMaxAgeMs = 60_000), C15tStore(InMemoryKeyValueStore()), clock, http())
+		val core = testKernel(config.copy(iabListMaxAgeMs = 60_000), InthStore(InMemoryKeyValueStore()), clock, http())
 		core.bootstrap()
 		assertTrue(core.save(CommitIntent.All).ok)
 		clock.advance(60_000)
@@ -67,7 +67,7 @@ class IabLifecycleTest {
 	@Test
 	fun `existing gates receive list expiry without a host mutation`() {
 		val clock = FixedClock(now)
-		val core = testKernel(config.copy(iabListMaxAgeMs = 500), C15tStore(InMemoryKeyValueStore()), clock, http())
+		val core = testKernel(config.copy(iabListMaxAgeMs = 500), InthStore(InMemoryKeyValueStore()), clock, http())
 		core.bootstrap()
 		assertTrue(core.save(CommitIntent.All).ok)
 		val denied = CountDownLatch(2)
@@ -82,7 +82,7 @@ class IabLifecycleTest {
 	@Test
 	fun `list expiry keeps consent dormant until an identical disclosure refreshes`() {
 		val clock = FixedClock(now)
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val transport = http()
 		val core = testKernel(config.copy(iabListMaxAgeMs = 100), store, clock, transport)
 		core.bootstrap()
@@ -124,7 +124,7 @@ class IabLifecycleTest {
 	fun `stale cold launch keeps source consent and resumes only after a matching refresh`() {
 		for (changed in listOf(false, true)) {
 			val clock = FixedClock(now)
-			val store = C15tStore(InMemoryKeyValueStore())
+			val store = InthStore(InMemoryKeyValueStore())
 			val first = testKernel(config, store, clock, http())
 			first.bootstrap()
 			assertTrue(first.save(CommitIntent.All).ok)
@@ -160,7 +160,7 @@ class IabLifecycleTest {
 	@Test
 	fun `choice expiry while the list is stale cannot be revived by an identical refresh`() {
 		val clock = FixedClock(now)
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val transport = RecordingTransport().respondInit(
 			initSuccess(body = initBody(model = "\"iab\"", choiceMs = 1_000, gvl = gvl)))
 			.respondSave(SaveOutcome.Unavailable("offline"))
@@ -182,12 +182,12 @@ class IabLifecycleTest {
 		val clock = object : Clock {
 			@Volatile var value = now
 			override fun nowMillis(): Long {
-				if (Thread.currentThread().name == "c15t-deadline") repeatedReads.countDown()
+				if (Thread.currentThread().name == "inth-deadline") repeatedReads.countDown()
 				return value
 			}
 		}
 		val transport = http()
-		val core = ConsentCore(config, C15tStore(InMemoryKeyValueStore()), clock, transport, TaskExecutor.DIRECT)
+		val core = ConsentCore(config, InthStore(InMemoryKeyValueStore()), clock, transport, TaskExecutor.DIRECT)
 		core.bootstrap()
 		assertTrue(core.save(CommitIntent.All).ok)
 		transport.respondInit(TransportOutcome.NetworkFailure("offline"))
@@ -206,14 +206,14 @@ class IabLifecycleTest {
 	fun `failed retry preserves snapshot and draft while reporting transport error`() {
 		val transport = http()
 		val clock = FixedClock(now)
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val core = testKernel(config, store, clock, transport)
 		core.bootstrap()
 		val draft = assertNotNull(core.openIabDraft())
 		val before = core.snapshot()
 		val stored = store.readEnvelope()
 		val snapshots = mutableListOf<Long>()
-		val snapshotObserver: (com.c15t.core.model.ConsentSnapshot) -> Unit = { snapshots += it.revision }
+		val snapshotObserver: (com.inth.core.model.ConsentSnapshot) -> Unit = { snapshots += it.revision }
 		val snapshotSubscription = core.onChange(snapshotObserver)
 		val failures = mutableListOf<KernelError>()
 		val errorObserver: (KernelError) -> Unit = { failures += it }

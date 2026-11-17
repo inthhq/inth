@@ -29,7 +29,7 @@ describe('mayAskPlatformAgain', () => {
 
 	test('stops when every named category was refused', () => {
 		// Sending someone to a tracking prompt whose answer their own choices have already
-		// overridden is worse than not asking, and Apple's sheet cannot see a c15t category.
+		// overridden is worse than not asking, and Apple's sheet cannot see an Inth category.
 		expect(
 			mayAskPlatformAgain(['marketing', 'measurement'], {
 				marketing: 'denied',

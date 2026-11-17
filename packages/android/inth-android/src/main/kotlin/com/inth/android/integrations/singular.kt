@@ -1,7 +1,7 @@
-package com.c15t.android.integrations
+package com.inth.android.integrations
 
-import com.c15t.core.ConsentCore
-import com.c15t.core.model.ConsentCategory
+import com.inth.core.ConsentCore
+import com.inth.core.model.ConsentCategory
 
 /**
  * Start Singular only once one category allows it, and keep its tracking and data

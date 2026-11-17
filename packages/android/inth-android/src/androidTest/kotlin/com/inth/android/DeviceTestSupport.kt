@@ -1,19 +1,19 @@
-package com.c15t.android
+package com.inth.android
 
 import android.content.Context
 import android.os.SystemClock
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.platform.app.InstrumentationRegistry
-import com.c15t.core.C15t
-import com.c15t.core.NativeConfig
-import com.c15t.core.model.ConsentSubject
-import com.c15t.core.model.KernelUser
-import com.c15t.core.model.PolicyResolution
-import com.c15t.core.model.QueuedSave
-import com.c15t.core.transport.C15tTransport
-import com.c15t.core.transport.InitContext
-import com.c15t.core.transport.SaveOutcome
-import com.c15t.core.transport.TransportOutcome
+import com.inth.core.Inth
+import com.inth.core.NativeConfig
+import com.inth.core.model.ConsentSubject
+import com.inth.core.model.KernelUser
+import com.inth.core.model.PolicyResolution
+import com.inth.core.model.QueuedSave
+import com.inth.core.transport.InthTransport
+import com.inth.core.transport.InitContext
+import com.inth.core.transport.SaveOutcome
+import com.inth.core.transport.TransportOutcome
 import java.io.File
 import org.junit.Assert.fail
 
@@ -40,7 +40,7 @@ internal fun deviceConfig(): NativeConfig = NativeConfig(backendUrl = "https://c
 /**
  * Tear the running core down between tests.
  *
- * [C15t] is process-wide and the runner reuses one process for the whole suite, so a kernel
+ * [Inth] is process-wide and the runner reuses one process for the whole suite, so a kernel
  * left installed would answer the next test's reads from the previous test's store.
  *
  * Dropping the kernel is not enough on its own. Its launch replay and init are still queued on
@@ -49,7 +49,7 @@ internal fun deviceConfig(): NativeConfig = NativeConfig(backendUrl = "https://c
  * race it for the same blob, so this waits for the worker as well as the main thread.
  */
 internal fun uninstallCore() {
-	C15t.uninstall()
+	Inth.uninstall()
 	awaitMainThread()
 	awaitCoreWorker()
 }
@@ -61,7 +61,7 @@ internal fun uninstallCore() {
  * has come back means every send queued before it has been answered.
  */
 internal fun awaitCoreWorker() {
-	C15tAndroid.awaitWorkerIdle()
+	InthAndroid.awaitWorkerIdle()
 }
 
 /**
@@ -73,7 +73,7 @@ internal fun awaitCoreWorker() {
  * on its own, so the published resolution moving past `unconfigured` is the honest end of it.
  */
 internal fun awaitLaunchSettled() {
-	val kernel = C15t.current ?: return
+	val kernel = Inth.current ?: return
 	awaitSettled("the launch init to be answered") {
 		kernel.snapshot().resolution.status != PolicyResolution.STATUS_UNCONFIGURED
 	}
@@ -82,7 +82,7 @@ internal fun awaitLaunchSettled() {
 /**
  * Run to the end of the main thread's queue.
  *
- * [C15tAndroid.install] posts the observer registrations to the main thread whenever it is
+ * [InthAndroid.install] posts the observer registrations to the main thread whenever it is
  * called from anywhere else, which is how an instrumentation test calls it. That queue is
  * FIFO, so a no-op that has come back means everything posted before it has already run.
  */
@@ -138,13 +138,13 @@ internal fun ByteArray.containsPlaintext(needle: String): Boolean = toString(Cha
  * every identity assertion in this suite, not one of its outcomes.
  */
 internal fun requireSubjectId(): String =
-	checkNotNull(C15t.snapshot().subject) { "the core must always resolve a subject id" }.id
+	checkNotNull(Inth.snapshot().subject) { "the core must always resolve a subject id" }.id
 
 /** The newest consent write [subjectId] has queued on the device, or `null` when none is waiting. */
 internal fun queuedSaveFor(
 	context: Context,
 	subjectId: String,
-): QueuedSave? = C15tStores.create(context).readPending().lastOrNull { it.payload.subjectId == subjectId }
+): QueuedSave? = InthStores.create(context).readPending().lastOrNull { it.payload.subjectId == subjectId }
 
 /**
  * The write as the backend receives it.
@@ -167,7 +167,7 @@ internal fun QueuedSave.asSent(): QueuedSave = copy(attempts = 0)
  */
 internal class DeviceBackend(
 	initiallyOnline: Boolean = false,
-) : C15tTransport {
+) : InthTransport {
 	/** Whether this fake answers at all, standing in for connectivity. */
 	@Volatile
 	var online: Boolean = initiallyOnline

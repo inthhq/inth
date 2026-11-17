@@ -1,4 +1,4 @@
-package com.c15t.core.spi
+package com.inth.core.spi
 
 /**
  * String-keyed persistence the host supplies.
@@ -6,8 +6,8 @@ package com.c15t.core.spi
  * The core never opens a file, a database, or a `SharedPreferences` handle. On
  * iOS the conformance is a Keychain generic password item, on Android an
  * AndroidKeyStore-backed file with a `SharedPreferences` fallback. Keys follow
- * the shared mobile contract: `com.c15t.snapshot`, `com.c15t.subject`,
- * `com.c15t.pending`.
+ * the shared mobile contract: `com.inth.snapshot`, `com.inth.subject`,
+ * `com.inth.pending`.
  */
 interface KeyValueStore {
 	/** Read a value, or `null` when the key has nothing stored. */
@@ -101,7 +101,7 @@ data class HttpResponse(
 }
 
 /**
- * Transport the host provides for c15t-backend-bound traffic.
+ * Transport the host provides for inth-backend-bound traffic.
  *
  * Implementations must be thread safe and must never throw for a non-2xx
  * status: report the status and let the core decide. They may throw for a

@@ -1,8 +1,8 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.spi.TaskExecutor
-import com.c15t.core.store.C15tStore
-import com.c15t.core.spi.KeyValueStore
+import com.inth.core.spi.TaskExecutor
+import com.inth.core.store.InthStore
+import com.inth.core.spi.KeyValueStore
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -28,24 +28,24 @@ private class BlockingKeyValueStore(
 class FacadeBootstrapTest {
 	@Test
 	fun `a concurrent bootstrap waits for the installing call to finish`() {
-		C15t.uninstall()
+		Inth.uninstall()
 		val entered = CountDownLatch(1)
 		val release = CountDownLatch(1)
 		val pool = Executors.newFixedThreadPool(2)
 		try {
 			val first = pool.submit<ConsentCore> {
-				C15t.bootstrap(
+				Inth.bootstrap(
 					config = TEST_CONFIG,
-					store = C15tStore(BlockingKeyValueStore(InMemoryKeyValueStore(), entered, release)),
+					store = InthStore(BlockingKeyValueStore(InMemoryKeyValueStore(), entered, release)),
 					executor = TaskExecutor.DIRECT,
 				)
 			}
 			assertTrue(entered.await(5, TimeUnit.SECONDS), "the first call must reach storage")
 
 			val second = pool.submit<ConsentCore> {
-				C15t.bootstrap(
+				Inth.bootstrap(
 					config = TEST_CONFIG,
-					store = C15tStore(InMemoryKeyValueStore()),
+					store = InthStore(InMemoryKeyValueStore()),
 					executor = TaskExecutor.DIRECT,
 				)
 			}
@@ -58,7 +58,7 @@ class FacadeBootstrapTest {
 		} finally {
 			release.countDown()
 			pool.shutdownNow()
-			C15t.uninstall()
+			Inth.uninstall()
 		}
 	}
 }

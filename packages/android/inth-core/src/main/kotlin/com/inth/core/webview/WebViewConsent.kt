@@ -1,7 +1,7 @@
-package com.c15t.core.webview
+package com.inth.core.webview
 
-import com.c15t.core.ConsentCore
-import com.c15t.core.model.ConsentSnapshot
+import com.inth.core.ConsentCore
+import com.inth.core.model.ConsentSnapshot
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive

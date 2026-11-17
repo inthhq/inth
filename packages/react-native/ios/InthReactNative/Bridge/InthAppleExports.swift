@@ -1,4 +1,4 @@
-#if canImport(C15tApple)
+#if canImport(InthApple)
 // SwiftPM keeps platform services separate. CocoaPods compiles their generated copy.
-@_exported import C15tApple
+@_exported import InthApple
 #endif

@@ -1,4 +1,4 @@
-package com.c15t.android
+package com.inth.android
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -7,10 +7,10 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.c15t.core.C15t
-import com.c15t.core.CommitIntent
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentDecision
+import com.inth.core.Inth
+import com.inth.core.CommitIntent
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentDecision
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -25,7 +25,7 @@ import org.junit.runner.RunWith
  * The lifecycle ports, on a device, where they are the only thing that can answer.
  *
  * [ReachabilityGateTest] already pins which connectivity callbacks earn a replay, and
- * `ConsentCore.bootstrap`'s launch retry is covered in `:c15t-core`. What a JVM cannot say is
+ * `ConsentCore.bootstrap`'s launch retry is covered in `:inth-core`. What a JVM cannot say is
  * whether the observer `install` registers is actually attached to the process, whether the
  * leg it fires on stays off the main thread, and what the platform answers when a host has
  * not asked for the permission the third leg needs.
@@ -54,9 +54,9 @@ class DeviceLifecycleTest {
 	fun testForegroundArrivalReplaysAWriteTheDeviceCouldNotDeliver() {
 		val context = appContext()
 		val backend = DeviceBackend()
-		C15tAndroid.install(context, deviceConfig(), transport = backend)
+		InthAndroid.install(context, deviceConfig(), transport = backend)
 		val subjectId = requireSubjectId()
-		assertTrue("the offline commit itself succeeds", C15t.save(CommitIntent.All).ok)
+		assertTrue("the offline commit itself succeeds", Inth.save(CommitIntent.All).ok)
 
 		val waiting = requireNotNull(queuedSaveFor(context, subjectId)) { "and it is waiting on the device" }
 
@@ -65,7 +65,7 @@ class DeviceLifecycleTest {
 		// up, and `install` itself already ran the launch retry while the queue was empty.
 		awaitBackground()
 		backend.online = true
-		val foreground = ActivityScenario.launch(C15tForegroundHostActivity::class.java)
+		val foreground = ActivityScenario.launch(InthForegroundHostActivity::class.java)
 		try {
 			awaitSettled("the foreground arrival to replay the queue") { backend.deliveriesOf(waiting) > 0 }
 			awaitSettled("the replayed write to leave the device queue") {
@@ -85,14 +85,14 @@ class DeviceLifecycleTest {
 	fun testForegroundReplayDoesNotOpenAConnectionOnTheMainThread() {
 		val context = appContext()
 		val backend = DeviceBackend()
-		C15tAndroid.install(context, deviceConfig(), transport = backend)
+		InthAndroid.install(context, deviceConfig(), transport = backend)
 		val subjectId = requireSubjectId()
-		assertTrue(C15t.save(CommitIntent.All).ok)
+		assertTrue(Inth.save(CommitIntent.All).ok)
 		assertNotNull("the write is queued", queuedSaveFor(context, subjectId))
 
 		awaitBackground()
 		backend.online = true
-		val foreground = ActivityScenario.launch(C15tForegroundHostActivity::class.java)
+		val foreground = ActivityScenario.launch(InthForegroundHostActivity::class.java)
 		try {
 			awaitSettled("the foreground arrival to replay the queue") { backend.accepted().isNotEmpty() }
 
@@ -133,17 +133,17 @@ class DeviceLifecycleTest {
 		)
 
 		var gains = 0
-		val handle = C15tReachability.register(context) { gains += 1 }
+		val handle = InthReachability.register(context) { gains += 1 }
 
 		assertNull("the platform refuses the callback this host never asked to make", handle)
 
 		// The refusal is a declined leg, not a failed launch: the two replays that need no
 		// permission are still wired, and reads still answer.
-		C15tAndroid.install(context, deviceConfig(), transport = DeviceBackend())
+		InthAndroid.install(context, deviceConfig(), transport = DeviceBackend())
 
-		assertNotNull("install completed despite the refusal", C15t.current)
-		assertTrue(C15t.isAllowed(ConsentCategory.NECESSARY))
-		assertEquals(ConsentDecision.PENDING, C15t.decision(ConsentCategory.MEASUREMENT))
+		assertNotNull("install completed despite the refusal", Inth.current)
+		assertTrue(Inth.isAllowed(ConsentCategory.NECESSARY))
+		assertEquals(ConsentDecision.PENDING, Inth.decision(ConsentCategory.MEASUREMENT))
 		assertEquals("a refused registration must not fire anything later either", 0, gains)
 	}
 

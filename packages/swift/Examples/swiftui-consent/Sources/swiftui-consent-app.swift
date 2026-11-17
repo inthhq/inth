@@ -1,7 +1,7 @@
 // #region docs:swiftui-app title="Sources/swiftui-consent-app.swift"
-import C15tApple
-import C15tConsentUI
-import C15tCore
+import InthApple
+import InthConsentUI
+import InthCore
 import SwiftUI
 import UIKit
 
@@ -86,7 +86,7 @@ private struct ConsentDashboard: View {
                 }
                 if let error = consent.installationError {
                     Section("Consent unavailable") {
-                        Text(error as? C15tAppleInstallationError == .protectedStorageUnavailable
+                        Text(error as? InthAppleInstallationError == .protectedStorageUnavailable
                             ? "Protected consent storage is unavailable. Unlock the device and retry."
                             : error.localizedDescription)
                             .accessibilityIdentifier("sample.installation-error")

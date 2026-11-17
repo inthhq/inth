@@ -1,6 +1,6 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.spi.Clock
+import com.inth.core.spi.Clock
 import java.math.BigInteger
 import java.security.SecureRandom
 
@@ -29,7 +29,7 @@ fun interface SubjectEntropy {
 }
 
 /**
- * Generates the c15t subject id.
+ * Generates the Inth subject id.
  *
  * Byte-for-byte the same as `generateSubjectId` in `@c15t/core`, so the backend sees
  * one id format no matter which SDK wrote it. The wire format is not cosmetic:
@@ -57,7 +57,7 @@ class SubjectIdGenerator(
 		// Shorter would silently leave zero bytes where entropy belongs, which reads
 		// as a valid id while weakening it.
 		require(random.size == RANDOM_BYTES) {
-			"c15t: subject entropy must return $RANDOM_BYTES bytes, got ${random.size}"
+			"Inth: subject entropy must return $RANDOM_BYTES bytes, got ${random.size}"
 		}
 		val buffer = ByteArray(TOTAL_BYTES)
 		writeTimestamp(clock.nowMillis() - EPOCH_MILLIS, buffer)

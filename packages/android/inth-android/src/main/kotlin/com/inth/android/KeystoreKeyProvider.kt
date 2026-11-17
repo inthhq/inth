@@ -1,10 +1,10 @@
-package com.c15t.android
+package com.inth.android
 
 import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Log
-import com.c15t.core.spi.SymmetricKeyProvider
+import com.inth.core.spi.SymmetricKeyProvider
 import java.security.KeyStore
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
@@ -80,8 +80,8 @@ class KeystoreKeyProvider(
 
 	private companion object {
 		const val ANDROID_KEY_STORE = "AndroidKeyStore"
-		const val DEFAULT_ALIAS = "com.c15t.consent.key.v1"
+		const val DEFAULT_ALIAS = "com.inth.consent.key.v1"
 		const val KEY_SIZE_BITS = 256
-		const val TAG = "c15t"
+		const val TAG = "inth"
 	}
 }

@@ -171,7 +171,7 @@ public struct GPPSection: Sendable, Equatable {
 /// `packages/sdk/iab/src/gpp/sections.ts`.
 ///
 /// Version 3 (November 2026) replaced every field. No IAB reference decoder reads it
-/// yet, and web c15t encodes version 2, so this build does too. See `packages/native-protocol/CONTRACT.md`.
+/// yet, and web Inth encodes version 2, so this build does too. See `packages/native-protocol/CONTRACT.md`.
 public enum GPPUSNational {
     public static let id = 7
     public static let version = 2

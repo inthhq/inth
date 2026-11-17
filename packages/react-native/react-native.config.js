@@ -1,4 +1,4 @@
-// Autolinking for @c15t/react-native.
+// Autolinking for @inth/react-native.
 //
 // This is a library's own configuration, so the entries go under `dependency.platforms`.
 // The shape a *consuming app* writes is different (its `dependencies` map keys each package
@@ -17,8 +17,8 @@
 // loads it asynchronously, so ESM suits it as well. `scripts/react-native-autolink.ts` now
 // asserts that both linkers resolve this package.
 //
-// The TurboModule bindings live in the `C15tReactNative` iOS target and the
-// `com.c15t.reactnative` Android module, both shipped inside this package. The pure consent
+// The TurboModule bindings live in the `InthReactNative` iOS target and the
+// `com.inth.reactnative` Android module, both shipped inside this package. The pure consent
 // cores (`packages/swift`, `packages/android` in the monorepo) are dependencies of
 // those targets, never autolinked directly.
 export default {
@@ -33,7 +33,7 @@ export default {
 				// `build.gradle.kts` here, so this has to be the directory that file is
 				// in. One level up, `react-native config` exits non-zero and the host
 				// app's `settings.gradle` fails before it configures a single project.
-				sourceDir: './android/c15t-react-native',
+				sourceDir: './android/inth-react-native',
 			},
 
 			// iOS deliberately has no entry. A dependency's iOS config carries only the

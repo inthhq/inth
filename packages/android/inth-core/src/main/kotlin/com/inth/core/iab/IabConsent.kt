@@ -1,6 +1,6 @@
-package com.c15t.core.iab
+package com.inth.core.iab
 
-import com.c15t.core.tc.*
+import com.inth.core.tc.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
 import java.security.MessageDigest

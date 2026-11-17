@@ -6,7 +6,7 @@ import { join, resolve } from 'node:path';
 import { expect, it } from 'vitest';
 
 it('reproduces independent IAB authority bytes with the pinned reference codec', () => {
-	const directory = mkdtempSync(join(tmpdir(), 'c15t-iab-oracle-'));
+	const directory = mkdtempSync(join(tmpdir(), 'inth-iab-oracle-'));
 	try {
 		const output = join(directory, 'oracle.json');
 		const generator = resolve(

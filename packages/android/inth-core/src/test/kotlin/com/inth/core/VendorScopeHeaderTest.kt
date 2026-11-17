@@ -1,9 +1,9 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.spi.HttpResponse
-import com.c15t.core.store.C15tStore
-import com.c15t.core.transport.C15tProtocol
-import com.c15t.core.transport.HostedTransport
+import com.inth.core.spi.HttpResponse
+import com.inth.core.store.InthStore
+import com.inth.core.transport.InthProtocol
+import com.inth.core.transport.HostedTransport
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -25,7 +25,7 @@ import kotlin.test.assertTrue
  * reaching a kernel but not a request.
  *
  * What is *not* claimed here, and must stay that way: the header is an optimisation about bytes and
- * never the disclosure guarantee. [com.c15t.core.DeclaredVendorScopeTest] keeps a scoped kernel
+ * never the disclosure guarantee. [com.inth.core.DeclaredVendorScopeTest] keeps a scoped kernel
  * narrowing a list that arrived wide, which is the answer a producer that ignores this header gets.
  */
 class VendorScopeHeaderTest {
@@ -33,15 +33,15 @@ class VendorScopeHeaderTest {
 	fun `a declared scope travels deduplicated and ascending`() {
 		assertEquals(
 			"8,42,755",
-			C15tProtocol.vendorScopeHeaderValue(listOf(755, 8, 42)),
+			InthProtocol.vendorScopeHeaderValue(listOf(755, 8, 42)),
 			"ascending, whatever order the host wrote the list in",
 		)
 		assertEquals(
 			"8,42,755",
-			C15tProtocol.vendorScopeHeaderValue(listOf(42, 8, 755, 8, 42)),
+			InthProtocol.vendorScopeHeaderValue(listOf(42, 8, 755, 8, 42)),
 			"a partner named twice is one partner",
 		)
-		assertEquals("7", C15tProtocol.vendorScopeHeaderValue(listOf(7)), "one id is still a scope")
+		assertEquals("7", InthProtocol.vendorScopeHeaderValue(listOf(7)), "one id is still a scope")
 	}
 
 	/**
@@ -54,8 +54,8 @@ class VendorScopeHeaderTest {
 	 */
 	@Test
 	fun `an undeclared or empty scope sends no header`() {
-		assertNull(C15tProtocol.vendorScopeHeaderValue(null), "no declaration")
-		assertNull(C15tProtocol.vendorScopeHeaderValue(emptyList()), "an empty list is the same no-declaration")
+		assertNull(InthProtocol.vendorScopeHeaderValue(null), "no declaration")
+		assertNull(InthProtocol.vendorScopeHeaderValue(emptyList()), "an empty list is the same no-declaration")
 	}
 
 	/**
@@ -72,18 +72,18 @@ class VendorScopeHeaderTest {
 	 */
 	@Test
 	fun `a scope above the request-line ceiling sends no header`() {
-		val atCap = (1..C15tProtocol.MAX_VENDOR_SCOPE_HEADER_IDS).toList()
-		val value = C15tProtocol.vendorScopeHeaderValue(atCap)
+		val atCap = (1..InthProtocol.MAX_VENDOR_SCOPE_HEADER_IDS).toList()
+		val value = InthProtocol.vendorScopeHeaderValue(atCap)
 		assertTrue(value != null, "exactly at the ceiling the scope still travels")
 		assertEquals(atCap.joinToString(","), value)
 		assertNull(
-			C15tProtocol.vendorScopeHeaderValue(atCap + 5_001),
+			InthProtocol.vendorScopeHeaderValue(atCap + 5_001),
 			"one id past the ceiling and nothing about the scope goes on the request line",
 		)
 
 		// The vectors lane's own over-cap publisher: 609 declared ids against a 54-vendor document.
 		val overCap = (1..609).toList()
-		assertNull(C15tProtocol.vendorScopeHeaderValue(overCap), "the 609-id vector sends no header")
+		assertNull(InthProtocol.vendorScopeHeaderValue(overCap), "the 609-id vector sends no header")
 	}
 
 	/**
@@ -103,12 +103,12 @@ class VendorScopeHeaderTest {
 		val transportConfig = NativeConfig(backendUrl = "https://test.c15t.app")
 		testKernel(
 			config = NativeConfig(backendUrl = "https://test.c15t.app", vendors = listOf(755, 8, 42, 8)),
-			store = C15tStore(InMemoryKeyValueStore()),
+			store = InthStore(InMemoryKeyValueStore()),
 			transport = HostedTransport(http, transportConfig),
 		).bootstrap()
 
 		val init = http.requests.first { it.url.endsWith("/init") }
-		assertEquals("8,42,755", init.headers[C15tProtocol.VENDOR_SCOPE_HEADER])
+		assertEquals("8,42,755", init.headers[InthProtocol.VENDOR_SCOPE_HEADER])
 	}
 
 	/**
@@ -124,13 +124,13 @@ class VendorScopeHeaderTest {
 			val http = RecordingHttpClient { HttpResponse(status = 200, body = initBody()) }
 			testKernel(
 				config = NativeConfig(backendUrl = "https://test.c15t.app", vendors = declared),
-				store = C15tStore(InMemoryKeyValueStore()),
+				store = InthStore(InMemoryKeyValueStore()),
 				transport = HostedTransport(http, NativeConfig(backendUrl = "https://test.c15t.app")),
 			).bootstrap()
 
 			val init = http.requests.first { it.url.endsWith("/init") }
 			assertNull(
-				init.headers[C15tProtocol.VENDOR_SCOPE_HEADER],
+				init.headers[InthProtocol.VENDOR_SCOPE_HEADER],
 				"a declaration of ${(declared?.size ?: "null")} ids must not appear on the request line",
 			)
 		}

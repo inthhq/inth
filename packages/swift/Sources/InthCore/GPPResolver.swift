@@ -10,7 +10,7 @@ public enum GPPMspaMode: String, Sendable, Codable, Equatable {
     case serviceProvider = "service-provider"
 }
 
-/// Turns GPP on, with the options web c15t's `gpp` option takes that apply on a device.
+/// Turns GPP on, with the options web Inth's `gpp` option takes that apply on a device.
 ///
 /// GPP is off while ``CoreConfig/gpp`` is `nil`, as it is on web until an app renders
 /// `ConsentGPP` or sets `gpp: true`. The notice fields a US section reports are the app's
@@ -101,7 +101,7 @@ package enum GPPResolver {
     }
 
     /// US National core values. Sensitive data, known-child and personal data consents
-    /// are `0` (not applicable): no c15t category describes them.
+    /// are `0` (not applicable): no Inth category describes them.
     package static func usNationalValues(
         _ snapshot: ConsentSnapshot,
         policy: EvaluationPolicy,

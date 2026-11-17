@@ -1,13 +1,13 @@
-package com.c15t.core.policy
+package com.inth.core.policy
 
-import com.c15t.core.model.ActiveUI
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentModel
-import com.c15t.core.model.ConsentSnapshot
-import com.c15t.core.model.ConsentState
-import com.c15t.core.model.PromptPurpose
-import com.c15t.core.model.PromptReason
-import com.c15t.core.model.PromptRequirement
+import com.inth.core.model.ActiveUI
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentModel
+import com.inth.core.model.ConsentSnapshot
+import com.inth.core.model.ConsentState
+import com.inth.core.model.PromptPurpose
+import com.inth.core.model.PromptReason
+import com.inth.core.model.PromptRequirement
 
 /**
  * Turns a stored choice plus a validated policy into effective permissions.
@@ -210,7 +210,7 @@ object PolicyEvaluator {
 	 * same answer either way.
 	 */
 	private fun authorityOf(
-		choice: com.c15t.core.model.ExplicitChoice?,
+		choice: com.inth.core.model.ExplicitChoice?,
 		category: ConsentCategory,
 		policy: EvaluationPolicy,
 		now: Long,
@@ -258,7 +258,7 @@ object PolicyEvaluator {
 	 * restriction above already silenced the prompt.
 	 */
 	private fun choiceReason(
-		choice: com.c15t.core.model.ExplicitChoice?,
+		choice: com.inth.core.model.ExplicitChoice?,
 		policy: EvaluationPolicy,
 		scope: List<ConsentCategory>,
 		restrictions: Map<String, List<String>>,
@@ -307,7 +307,7 @@ object PolicyEvaluator {
 	 * them, `now >= expiry`.
 	 */
 	private fun acknowledgedUntil(
-		choice: com.c15t.core.model.ExplicitChoice?,
+		choice: com.inth.core.model.ExplicitChoice?,
 		dismissal: NoticeDismissal?,
 		policy: EvaluationPolicy,
 		now: Long,
@@ -338,7 +338,7 @@ object PolicyEvaluator {
 	 * `missing`.
 	 */
 	private fun acknowledgementReason(
-		choice: com.c15t.core.model.ExplicitChoice?,
+		choice: com.inth.core.model.ExplicitChoice?,
 		dismissal: NoticeDismissal?,
 		policy: EvaluationPolicy,
 		now: Long,

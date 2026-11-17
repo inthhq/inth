@@ -1,12 +1,12 @@
-package com.c15t.reactnative
+package com.inth.reactnative
 
-import com.c15t.core.ConsentCore
-import com.c15t.core.NativeConfig
-import com.c15t.core.spi.KeyValueStore
-import com.c15t.core.spi.TaskExecutor
-import com.c15t.core.store.C15tJson
-import com.c15t.core.store.C15tStore
-import com.c15t.core.store.C15tStoreKeys
+import com.inth.core.ConsentCore
+import com.inth.core.NativeConfig
+import com.inth.core.spi.KeyValueStore
+import com.inth.core.spi.TaskExecutor
+import com.inth.core.store.InthJson
+import com.inth.core.store.InthStore
+import com.inth.core.store.InthStoreKeys
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
@@ -49,17 +49,17 @@ internal class MemoryStore(
  * GPC signal the way a host app's manifest would.
  */
 internal fun bridgeKernel(
-	store: C15tStore,
+	store: InthStore,
 	config: NativeConfig = NativeConfig(backendUrl = "https://test.c15t.app"),
 ): ConsentCore = ConsentCore(
 	config = config,
 	store = store,
-	transport = com.c15t.core.transport.C15tTransport.NONE,
+	transport = com.inth.core.transport.InthTransport.NONE,
 	executor = TaskExecutor.DIRECT,
 )
 
-/** Recorded `(event, payload)` pairs from a [C15tChangePump]. */
-internal class RecordingSink : C15tEventSink {
+/** Recorded `(event, payload)` pairs from a [InthChangePump]. */
+internal class RecordingSink : InthEventSink {
 	val events = mutableListOf<Pair<String, String>>()
 
 	override fun emit(
@@ -85,20 +85,20 @@ internal fun sealWithRetiredOverride(
 	key: String,
 	value: String,
 ) {
-	val raw = backend.data[C15tStoreKeys.SNAPSHOT]
+	val raw = backend.data[InthStoreKeys.SNAPSHOT]
 		requireNotNull(raw) { "the kernel persists an envelope once bootstrapped" }
 
 	// The stored root is the envelope, so the overrides live two levels down. Patching
 	// the wrong level would write a document that fails to decode for a different
 	// reason, and the test would pass for the wrong one too.
-	val envelope = C15tJson.storage.parseToJsonElement(raw).jsonObject.toMutableMap()
+	val envelope = InthJson.storage.parseToJsonElement(raw).jsonObject.toMutableMap()
 	val snapshot = (envelope["snapshot"] as JsonObject).toMutableMap()
 	val overrides = (snapshot["overrides"] as? JsonObject ?: JsonObject(emptyMap())).toMutableMap()
 	overrides[key] = JsonPrimitive(value)
 	snapshot["overrides"] = JsonObject(overrides)
 	envelope["snapshot"] = JsonObject(snapshot)
 
-	backend.data[C15tStoreKeys.SNAPSHOT] = C15tJson.storage.encodeToString(
+	backend.data[InthStoreKeys.SNAPSHOT] = InthJson.storage.encodeToString(
 		JsonObject.serializer(),
 		JsonObject(envelope),
 	)

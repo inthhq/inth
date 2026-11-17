@@ -1,4 +1,4 @@
-package com.c15t.android
+package com.inth.android
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -18,10 +18,10 @@ import org.junit.Test
  * should have been a list shows every vendor the backend served to a subject whose
  * app named three partners; a list that should have been a `null` empties a drawer
  * the subject is being asked to consent to. Both cores read this the same way on
- * purpose, so the cases below mirror `C15tBridgeLifecycleTests` on iOS id for id.
+ * purpose, so the cases below mirror `InthBridgeLifecycleTests` on iOS id for id.
  *
  * The raw value, not a `Bundle`, is the unit under test: a `Bundle` on the JVM is the
- * stub `android.jar`, and [C15tManifestValue.string] already owns the
+ * stub `android.jar`, and [InthManifestValue.string] already owns the
  * whatever-type-the-parser-chose half of the read.
  */
 class DeclaredVendorsTest {
@@ -29,7 +29,7 @@ class DeclaredVendorsTest {
 	fun `a comma list parses in declared order with the spaces trimmed`() {
 		assertEquals(
 			listOf(755, 42, 8),
-			C15tAndroid.declaredVendors("755, 42,8, 42"),
+			InthAndroid.declaredVendors("755, 42,8, 42"),
 		)
 	}
 
@@ -39,27 +39,27 @@ class DeclaredVendorsTest {
 		// disclosure the framework never assigned, or none at all.
 		assertEquals(
 			listOf(42, 8),
-			C15tAndroid.declaredVendors("42, vendor-42, 0, -3, 7.5, 8"),
+			InthAndroid.declaredVendors("42, vendor-42, 0, -3, 7.5, 8"),
 		)
 	}
 
 	@Test
 	fun `a single id is a declaration and not a parse error`() {
-		assertEquals(listOf(42), C15tAndroid.declaredVendors("42"))
+		assertEquals(listOf(42), InthAndroid.declaredVendors("42"))
 	}
 
 	@Test
 	fun `a bare number reaches the same list as its text spelling`() {
 		// An unquoted manifest `1` arrives as a Long, not a String, which is why every
-		// key here goes through C15tManifestValue rather than getString.
-		assertEquals(listOf(42), C15tAndroid.declaredVendors(42L))
+		// key here goes through InthManifestValue rather than getString.
+		assertEquals(listOf(42), InthAndroid.declaredVendors(42L))
 	}
 
 	@Test
 	fun `an id the served list does not carry stays in the declaration`() {
 		// Pruning a served document never adds an entry to satisfy a scope, so an
 		// out-of-range or publisher-custom id is simply an id nobody is ever shown.
-		assertEquals(listOf(999_999, 42), C15tAndroid.declaredVendors("999999,42"))
+		assertEquals(listOf(999_999, 42), InthAndroid.declaredVendors("999999,42"))
 	}
 
 	@Test
@@ -67,10 +67,10 @@ class DeclaredVendorsTest {
 		// Absent and "an empty list" answer the same question the same way at the core,
 		// but they arrive here differently, and each is its own way a host can mean "I
 		// did not declare a scope".
-		assertNull(C15tAndroid.declaredVendors(null))
-		assertNull(C15tAndroid.declaredVendors(""))
-		assertNull(C15tAndroid.declaredVendors("   "))
-		assertNull(C15tAndroid.declaredVendors(" , , "))
-		assertNull(C15tAndroid.declaredVendors("vendor, google"))
+		assertNull(InthAndroid.declaredVendors(null))
+		assertNull(InthAndroid.declaredVendors(""))
+		assertNull(InthAndroid.declaredVendors("   "))
+		assertNull(InthAndroid.declaredVendors(" , , "))
+		assertNull(InthAndroid.declaredVendors("vendor, google"))
 	}
 }

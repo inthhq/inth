@@ -4,8 +4,8 @@ import { fileURLToPath } from 'node:url';
 
 import type { ExportedConfig, Mod } from 'expo/config-plugins';
 
-import type { C15tPluginProps } from '../params';
-import { applyParamsOnConfig } from '../with-c15t';
+import type { InthPluginProps } from '../params';
+import { applyParamsOnConfig } from '../with-inth';
 import type { WorkflowContext } from '../workflow';
 import fixtureAppJson from './fixtures/app.json';
 
@@ -60,7 +60,7 @@ export const fixtureConfig = function fixtureConfig(): ExportedConfig {
  * file written yet. Every test starts here.
  */
 export const applyToFixture = function applyToFixture(
-	props: C15tPluginProps | undefined,
+	props: InthPluginProps | undefined,
 	context: Partial<WorkflowContext> = {}
 ): ExportedConfig {
 	return applyParamsOnConfig(fixtureConfig(), props, {

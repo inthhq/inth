@@ -1,5 +1,5 @@
 /**
- * `@c15t/react-native` — React Native bindings for the c15t native consent
+ * `@inth/react-native` — React Native bindings for the Inth native consent
  * cores.
  *
  * The consent kernel runs natively: Swift on iOS, Kotlin on Android. This
@@ -29,7 +29,7 @@
  *     ConsentGate,
  *     useConsent,
  *     useSaveConsents,
- * } from '@c15t/react-native';
+ * } from '@inth/react-native';
  *
  * function Analytics() {
  *     const allowed = useConsent('measurement');
@@ -106,7 +106,7 @@ export type {
 	ConsentReadyProps,
 	ConsentReadyState,
 } from './headless';
-export { useC15tBootstrap, useGPPString, useSnapshot } from './hooks';
+export { useInthBootstrap, useGPPString, useSnapshot } from './hooks';
 export { useWebViewConsent } from './webview/use-webview-consent';
 export type {
 	UseWebViewConsentOptions,
@@ -177,18 +177,18 @@ export {
 } from './lib/selectors';
 export type { ConsentDecision, ConsentStatus } from './lib/selectors';
 export {
-	C15tProtocolMismatchError,
+	InthProtocolMismatchError,
 	createConsentClient,
 	getConsentClient,
-	getNativeC15t,
-	getNativeC15tEvents,
-	hasNativeC15tSurface,
+	getNativeInth,
+	getNativeInthEvents,
+	hasNativeInthSurface,
 	NativeBridgeError,
-	NativeC15tUnavailableError,
+	NativeInthUnavailableError,
 } from './native';
 export type {
 	ConsentClient,
-	NativeC15tTurboModule,
+	NativeInthTurboModule,
 	NativeEventSubscription,
 	NativeEventsLike,
 	SnapshotEquality,
@@ -212,7 +212,7 @@ export type { ConsentSafeAreaInsets } from './provider';
 // The Codegen spec is exported as types only. Importing it for values would
 // resolve the TurboModule at import time, which only works inside a React
 // Native runtime with the New Architecture enabled.
-export type { Spec as NativeC15tSpec } from './specs/NativeC15t';
+export type { Spec as NativeInthSpec } from './specs/NativeInth';
 export {
 	closeConsentPresenter,
 	onConsentPresenterOutcome,

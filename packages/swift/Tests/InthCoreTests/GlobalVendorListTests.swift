@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 /// Receiving, validating, storing and serving the vendor list `/init` already sends.
 ///
@@ -141,7 +141,7 @@ final class GlobalVendorListTests: XCTestCase {
                 "gvl": document ?? .null,
             ]
             let response = HTTPResponse.json(
-                String(decoding: C15tJSON.encode(.object(body)) ?? Data("{}".utf8), as: UTF8.self)
+                String(decoding: InthJSON.encode(.object(body)) ?? Data("{}".utf8), as: UTF8.self)
             )
             switch InitResponse.decode(response) {
             case let .success(parsed):
@@ -351,14 +351,14 @@ final class GlobalVendorListTests: XCTestCase {
             policyResolution: readablePolicy,
             storedAt: clock.now
         )
-        let written = try C15tJSON.encode(envelope)
+        let written = try InthJSON.encode(envelope)
         let decoded = try XCTUnwrap(
             StoredEnvelope.decode(written),
             "the core wrote an envelope its own decoder refuses"
         )
         XCTAssertEqual(decoded.snapshot.iab?.gvl, readList(servedList))
         XCTAssertEqual(
-            try C15tJSON.encode(decoded),
+            try InthJSON.encode(decoded),
             written,
             "decode then write dropped a field, and the next launch would lose it"
         )
@@ -381,11 +381,11 @@ final class GlobalVendorListTests: XCTestCase {
             policyResolution: nil,
             storedAt: clock.now
         )
-        let written = try C15tJSON.encode(envelope)
+        let written = try InthJSON.encode(envelope)
         XCTAssertNotNil(StoredEnvelope.decode(written), "the untampered envelope has to read")
 
         // Add `snapshot.iab.tcString`, a key from the phase that owns TC strings.
-        guard var root = C15tJSON.parse(written)?.objectValue,
+        guard var root = InthJSON.parse(written)?.objectValue,
               var snapshot = root["snapshot"]?.objectValue,
               var iab = snapshot["iab"]?.objectValue
         else { return XCTFail("the envelope this build wrote is not the shape it claims") }
@@ -393,7 +393,7 @@ final class GlobalVendorListTests: XCTestCase {
         snapshot["iab"] = .object(iab)
         root["snapshot"] = .object(snapshot)
 
-        guard let tampered = C15tJSON.encode(.object(root)) else {
+        guard let tampered = InthJSON.encode(.object(root)) else {
             return XCTFail("could not write the tampered envelope")
         }
         XCTAssertNil(
@@ -409,7 +409,7 @@ final class GlobalVendorListTests: XCTestCase {
     func testTheServedJSONKeepsTheWireKeys() throws {
         let snapshot = ConsentSnapshot(iab: KernelIABState(gvl: readList(servedList)))
         let wire = try XCTUnwrap(
-            C15tJSON.parse(try C15tJSON.encode(snapshot)),
+            InthJSON.parse(try InthJSON.encode(snapshot)),
             "a snapshot this build cannot write its own JSON for"
         )
         let gvl = try XCTUnwrap(wire["iab"]?["gvl"])
@@ -426,7 +426,7 @@ final class GlobalVendorListTests: XCTestCase {
         XCTAssertEqual(gvl["vendors"]?["755"]?["id"]?.intValue, 755)
 
         let bare = try XCTUnwrap(
-            C15tJSON.parse(try C15tJSON.encode(ConsentSnapshot())),
+            InthJSON.parse(try InthJSON.encode(ConsentSnapshot())),
             "the cold-start snapshot has to be writable too"
         )
         XCTAssertTrue(bare["iab"]?.isNull == true, "the reserved key stays present and null")

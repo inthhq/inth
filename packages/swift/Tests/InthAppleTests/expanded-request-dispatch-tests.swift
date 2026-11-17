@@ -2,7 +2,7 @@
 import Foundation
 import ObjectiveC.runtime
 import XCTest
-@_spi(C15tInternal) @testable import C15tApple
+@_spi(InthInternal) @testable import InthApple
 
 /// The expanded request reaches a class method by the released selector, with its arguments in
 /// Apple's order. Each test registers a class under its own name, so no fake `ATTrackingManager`
@@ -20,14 +20,14 @@ final class ExpandedRequestDispatchTests: XCTestCase {
 
     /// A class answering the released class-method selector, as `ATTrackingManager` does on 27.2.
     private func makeManager(_ recorder: Recorder) throws -> AnyClass {
-        let name = "C15tTestTrackingManager\(UUID().uuidString.replacingOccurrences(of: "-", with: ""))"
+        let name = "InthTestTrackingManager\(UUID().uuidString.replacingOccurrences(of: "-", with: ""))"
         let manager: AnyClass = try XCTUnwrap(objc_allocateClassPair(NSObject.self, name, 0)) as AnyClass
         let request: Request = { _, prefer, additionalInformation, completion in
             recorder.preferExpandedInterface = prefer.boolValue
             additionalInformation()
-            completion(C15tTrackingPlatformStatus.notDetermined.rawValue)
+            completion(InthTrackingPlatformStatus.notDetermined.rawValue)
         }
-        let added = class_addMethod(try XCTUnwrap(object_getClass(manager)), C15tTracking.expandedRequestSelector,
+        let added = class_addMethod(try XCTUnwrap(object_getClass(manager)), InthTracking.expandedRequestSelector,
                                     imp_implementationWithBlock(request), "v@:B@?@?")
         XCTAssertTrue(added)
         objc_registerClassPair(manager)
@@ -36,10 +36,10 @@ final class ExpandedRequestDispatchTests: XCTestCase {
 
     /// A class answering the selector with the wrong number of arguments.
     private func makeWrongArityManager(_ recorder: Recorder) throws -> AnyClass {
-        let name = "C15tTestWrongArityManager\(UUID().uuidString.replacingOccurrences(of: "-", with: ""))"
+        let name = "InthTestWrongArityManager\(UUID().uuidString.replacingOccurrences(of: "-", with: ""))"
         let manager: AnyClass = try XCTUnwrap(objc_allocateClassPair(NSObject.self, name, 0))
         let request: @convention(block) (AnyObject, ObjCBool) -> Void = { _, _ in recorder.events.append("called") }
-        let added = class_addMethod(try XCTUnwrap(object_getClass(manager)), C15tTracking.expandedRequestSelector,
+        let added = class_addMethod(try XCTUnwrap(object_getClass(manager)), InthTracking.expandedRequestSelector,
                                     imp_implementationWithBlock(request), "v@:B")
         XCTAssertTrue(added)
         objc_registerClassPair(manager)
@@ -48,18 +48,18 @@ final class ExpandedRequestDispatchTests: XCTestCase {
 
     /// With no handler, the action reaches Apple as a nil block, so its sheet shows no button.
     func testNoHandlerPassesANilAction() throws {
-        let name = "C15tTestNilActionManager\(UUID().uuidString.replacingOccurrences(of: "-", with: ""))"
+        let name = "InthTestNilActionManager\(UUID().uuidString.replacingOccurrences(of: "-", with: ""))"
         let manager: AnyClass = try XCTUnwrap(objc_allocateClassPair(NSObject.self, name, 0)) as AnyClass
         let recorder = Recorder()
         let request: @convention(block) (AnyObject, ObjCBool, Action?, Completion) -> Void = { _, _, action, completion in
             recorder.events.append(action == nil ? "no-action" : "action")
-            completion(C15tTrackingPlatformStatus.denied.rawValue)
+            completion(InthTrackingPlatformStatus.denied.rawValue)
         }
-        XCTAssertTrue(class_addMethod(try XCTUnwrap(object_getClass(manager)), C15tTracking.expandedRequestSelector,
+        XCTAssertTrue(class_addMethod(try XCTUnwrap(object_getClass(manager)), InthTracking.expandedRequestSelector,
                                       imp_implementationWithBlock(request), "v@:B@?@?"))
         objc_registerClassPair(manager)
         let done = expectation(description: "completion")
-        XCTAssertTrue(C15tTracking.requestExpandedPrompt(
+        XCTAssertTrue(InthTracking.requestExpandedPrompt(
             on: manager, preferExpandedInterface: true, additionalInformationSelected: nil,
             completion: { _ in done.fulfill() }))
         wait(for: [done], timeout: 2)
@@ -69,7 +69,7 @@ final class ExpandedRequestDispatchTests: XCTestCase {
     func testAMethodWithTheWrongShapeIsNotCalled() throws {
         let recorder = Recorder()
         let manager = try makeWrongArityManager(recorder)
-        let made = C15tTracking.requestExpandedPrompt(
+        let made = InthTracking.requestExpandedPrompt(
             on: manager, preferExpandedInterface: true,
             additionalInformationSelected: { recorder.events.append("additional-information") },
             completion: { _ in recorder.events.append("completion") })
@@ -84,10 +84,10 @@ final class ExpandedRequestDispatchTests: XCTestCase {
         for prefer in [true, false] {
             let recorder = Recorder()
             let manager = try makeManager(recorder)
-            XCTAssertTrue(C15tTracking.expandedInterfaceAvailable(on: manager))
+            XCTAssertTrue(InthTracking.expandedInterfaceAvailable(on: manager))
 
             let done = expectation(description: "completion")
-            let made = C15tTracking.requestExpandedPrompt(
+            let made = InthTracking.requestExpandedPrompt(
                 on: manager,
                 preferExpandedInterface: prefer,
                 additionalInformationSelected: { recorder.events.append("additional-information") },

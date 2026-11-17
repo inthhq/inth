@@ -118,7 +118,7 @@ public struct IABCustomVendor: Sendable, Codable, Equatable {
     }
 }
 
-/// The c15t categories an IAB TCF decision grants, by the web's derivation:
+/// The Inth categories an IAB TCF decision grants, by the web's derivation:
 /// `iabPurposesToC15tConsents` and `C15T_TO_IAB_PURPOSE_MAP` in
 /// `packages/sdk/iab/src/tcf/purpose-mapping.ts`, with the purposes some vendor processes on consent
 /// deciding, as `consentBasisPurposes` in `packages/sdk/iab/src/index.ts` passes them. Registered

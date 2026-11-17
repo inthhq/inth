@@ -194,7 +194,7 @@ describe('what native reports on screen', () => {
 		const tree = renderTree(<App />);
 		await flushPromises();
 		const payload = JSON.stringify({
-			code: 'C15T_PRESENTER_UNAVAILABLE',
+			code: 'INTH_PRESENTER_UNAVAILABLE',
 			message: 'no window yet',
 		});
 		emitNativeEvent('onConsentPresenterUnavailable', payload);
@@ -209,7 +209,7 @@ describe('native refusals', () => {
 	test('a refused URL is reported once, in every build', async () => {
 		const fake = createFakeNativeModule({ snapshot: owed });
 		fake.configureAutoPresent = vi.fn(() =>
-			rejectWith('C15T_PRESENTER_INVALID_URL')
+			rejectWith('INTH_PRESENTER_INVALID_URL')
 		);
 		const error = vi
 			.spyOn(console, 'error')
@@ -229,7 +229,7 @@ describe('native refusals', () => {
 		const fake = createFakeNativeModule({ snapshot: owed });
 		fake.configureAutoPresent = vi.fn((settings: string) =>
 			(JSON.parse(settings) as { autoPresent: boolean }).autoPresent
-				? rejectWith('C15T_NATIVE_UI_EXCLUDED')
+				? rejectWith('INTH_NATIVE_UI_EXCLUDED')
 				: Promise.resolve()
 		);
 		const error = vi
@@ -298,7 +298,7 @@ describe('an older binary without configureAutoPresent', () => {
 });
 
 describe('a binary without the stock native screens', () => {
-	/** What a `c15t.nativeUI=false` build's handshake reports. */
+	/** What a `inth.nativeUI=false` build's handshake reports. */
 	const withoutNativeUI = function withoutNativeUI(): void {
 		Object.assign(getConsentClient().bootstrap, { nativeUI: false });
 	};

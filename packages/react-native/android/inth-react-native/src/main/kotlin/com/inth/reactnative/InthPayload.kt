@@ -1,19 +1,19 @@
-package com.c15t.reactnative
+package com.inth.reactnative
 
-import com.c15t.core.CommitIntent
-import com.c15t.core.CommitResult
-import com.c15t.core.ConsentCore
-import com.c15t.core.iab.IabChoices
-import com.c15t.core.iab.IabCommittedConsent
-import com.c15t.core.iab.IabCustomVendor
-import com.c15t.core.iab.IabPresentation
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentSnapshot
-import com.c15t.core.model.KernelError
-import com.c15t.core.model.KernelOverrides
-import com.c15t.core.store.C15tJson
-import com.c15t.core.transport.C15tProtocol
-import com.c15t.core.wire.SnapshotWire
+import com.inth.core.CommitIntent
+import com.inth.core.CommitResult
+import com.inth.core.ConsentCore
+import com.inth.core.iab.IabChoices
+import com.inth.core.iab.IabCommittedConsent
+import com.inth.core.iab.IabCustomVendor
+import com.inth.core.iab.IabPresentation
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentSnapshot
+import com.inth.core.model.KernelError
+import com.inth.core.model.KernelOverrides
+import com.inth.core.store.InthJson
+import com.inth.core.transport.InthProtocol
+import com.inth.core.wire.SnapshotWire
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -53,7 +53,7 @@ sealed interface OverridesRead {
  * what lets the whole boundary be unit tested on a plain JVM, and it keeps one
  * encoding shared by the module and the tests instead of two that can disagree.
  */
-object C15tPayload {
+object InthPayload {
 	/** Protocol this native build speaks. */
 	const val PROTOCOL_VERSION = 1L
 
@@ -73,7 +73,7 @@ object C15tPayload {
 	const val REASON_INVALID_INTENT = "invalid-intent"
 
 	/** Rejection code for a `setOverrides` document this build cannot read. */
-	const val REJECT_OVERRIDES = "C15T_OVERRIDES_REJECTED"
+	const val REJECT_OVERRIDES = "INTH_OVERRIDES_REJECTED"
 
 	/**
 	 * Rejection code for a `setOverrides` document that names a retired field.
@@ -82,14 +82,14 @@ object C15tPayload {
 	 * has one line to change, while the generic code means the document itself is
 	 * malformed.
 	 */
-	const val REJECT_OVERRIDES_RETIRED = "C15T_OVERRIDES_RETIRED"
+	const val REJECT_OVERRIDES_RETIRED = "INTH_OVERRIDES_RETIRED"
 
 	/** What a host hears when no core exists, naming both ways to fix it. */
 	const val MESSAGE_NOT_BOOTSTRAPPED =
-		"c15t has no usable configuration, so the consent core was not started. Declare " +
-			"com.c15t.BACKEND_URL in the manifest with your Inth project URL, such as " +
-			"https://your-project.inth.app, or call C15tAndroid.install yourself before " +
-			"React Native initializes. If the key is declared, logcat tag c15t says why it was refused."
+		"Inth has no usable configuration, so the consent core was not started. Declare " +
+			"com.inth.BACKEND_URL in the manifest with your Inth project URL, such as " +
+			"https://your-project.inth.app, or call InthAndroid.install yourself before " +
+			"React Native initializes. If the key is declared, logcat tag Inth says why it was refused."
 
 	/** The override keys `NativeOverridesInput` declares, in wire order. */
 	private val OVERRIDE_INPUT_KEYS = setOf("country", "region", "language", "gpc")
@@ -105,7 +105,7 @@ object C15tPayload {
 	 * that never reaches a save body, and v3 has no `msa` signal. `KernelOverrides`
 	 * has no member for either, so accepting the document would drop what the caller
 	 * asked for and leave the app believing a mode was on that nothing turned on.
-	 * [com.c15t.core.store.RetiredWireFields] refuses the same names in a stored
+	 * [com.inth.core.store.RetiredWireFields] refuses the same names in a stored
 	 * envelope; this refuses them on the way in, and says which one.
 	 */
 	private val RETIRED_OVERRIDE_NAMES = listOf("test", "msa")
@@ -131,7 +131,7 @@ object C15tPayload {
 	fun bootstrap(
 		snapshot: ConsentSnapshot,
 		hasStoredSnapshot: Boolean,
-		sdkVersion: String = C15tProtocol.DEFAULT_SDK_VERSION,
+		sdkVersion: String = InthProtocol.DEFAULT_SDK_VERSION,
 	): String = encode(
 		buildJsonObject {
 			put("protocolVersion", PROTOCOL_VERSION)
@@ -142,7 +142,7 @@ object C15tPayload {
 			put("hasStoredSnapshot", hasStoredSnapshot)
 			// This build passes a commit's `revision` to the core as `expectedRevision`.
 			put("commitRevision", true)
-			put("nativeUI", C15tNativeUi.AVAILABLE)
+			put("nativeUI", InthNativeUi.AVAILABLE)
 		},
 	)
 
@@ -152,9 +152,9 @@ object C15tPayload {
 	const val EVENT_PRESENTER_UNAVAILABLE = "onConsentPresenterUnavailable"
 
 	/** What a presenter call rejects with in a build without the stock consent screens. */
-	const val REJECT_NATIVE_UI_EXCLUDED = "C15T_NATIVE_UI_EXCLUDED"
+	const val REJECT_NATIVE_UI_EXCLUDED = "INTH_NATIVE_UI_EXCLUDED"
 	const val MESSAGE_NATIVE_UI_EXCLUDED =
-		"This build leaves out the stock consent screens (c15t.nativeUI is false). Render your own consent UI with the headless hooks."
+		"This build leaves out the stock consent screens (inth.nativeUI is false). Render your own consent UI with the headless hooks."
 
 	/**
 	 * The `ConsentSnapshot` wire form.
@@ -242,7 +242,7 @@ object C15tPayload {
 				iab + mapOf(
 					"committed" to (iabConsent?.let(::committedIab) ?: JsonNull),
 					"editable" to JsonPrimitive(acceptAll != null),
-					"acceptAll" to (acceptAll?.let { C15tJson.storage.encodeToJsonElement(IabChoices.serializer(), it) } ?: JsonNull),
+					"acceptAll" to (acceptAll?.let { InthJson.storage.encodeToJsonElement(IabChoices.serializer(), it) } ?: JsonNull),
 					"headlessUnsupported" to JsonArray(emptyList()),
 					"disclosure" to (iabPresentation?.let(::iabDisclosure) ?: JsonNull),
 					// The core's `iabCustomVendors()`: the non-IAB partners a screen lists and decides
@@ -352,7 +352,7 @@ object C15tPayload {
 	/** The committed IAB decision as JavaScript reads it. */
 	internal fun committedIab(consent: IabCommittedConsent): JsonObject = buildJsonObject {
 		putElement("addtlConsent", consent.addtlConsent)
-		put("choices", C15tJson.storage.encodeToJsonElement(IabChoices.serializer(), consent.choices))
+		put("choices", InthJson.storage.encodeToJsonElement(IabChoices.serializer(), consent.choices))
 		put("tcString", consent.tcString)
 	}
 
@@ -418,7 +418,7 @@ object C15tPayload {
 	 * there never will be: this carries what the platform said, and on Android what it
 	 * says is that it has no question.
 	 */
-	fun trackingAuthorization(status: C15tTrackingAuthorization): String = encode(
+	fun trackingAuthorization(status: InthTrackingAuthorization): String = encode(
 		buildJsonObject {
 			put("status", status.wireValue)
 		},
@@ -572,7 +572,7 @@ object C15tPayload {
 				// A complete draft, as Swift's decoder requires: every list is present.
 				if (!numeric || !named || !raw.keys.containsAll(IAB_CHOICE_LISTS)) return null
 				val choices = try {
-					C15tJson.storage.decodeFromJsonElement(IabChoices.serializer(), raw)
+					InthJson.storage.decodeFromJsonElement(IabChoices.serializer(), raw)
 				} catch (_: Exception) {
 					return null
 				}
@@ -683,14 +683,14 @@ object C15tPayload {
 		)
 	}
 
-	private fun encode(body: JsonObject): String = C15tJson.storage.encodeToString(JsonObject.serializer(), body)
+	private fun encode(body: JsonObject): String = InthJson.storage.encodeToString(JsonObject.serializer(), body)
 
 	private fun parseObject(raw: String?): JsonObject? {
 		if (raw.isNullOrBlank()) {
 			return null
 		}
 		return try {
-			C15tJson.wire.parseToJsonElement(raw).jsonObject
+			InthJson.wire.parseToJsonElement(raw).jsonObject
 		} catch (_: Exception) {
 			null
 		}

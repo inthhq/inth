@@ -1,6 +1,6 @@
-package com.c15t.consentui
+package com.inth.consentui
 
-import com.c15t.consentui.generated.IabCopy
+import com.inth.consentui.generated.IabCopy
 
 /**
  * A vendor's longest device-storage duration from the list's `cookieMaxAgeSeconds`, in whole days

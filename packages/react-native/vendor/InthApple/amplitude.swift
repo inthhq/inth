@@ -1,5 +1,5 @@
-#if canImport(C15tCore)
-import C15tCore
+#if canImport(InthCore)
+import InthCore
 #endif
 import Foundation
 
@@ -8,7 +8,7 @@ import Foundation
 /// Create Amplitude with `optOut: true` in its `Configuration`, then pass a closure
 /// that sets `optOut` on the same instance. Amplitude drops events while opted out
 /// and does not persist the setting, so connect this helper on every launch. Pending,
-/// denied and cancelled states opt out. c15t does not link Amplitude, and this helper
+/// denied and cancelled states opt out. Inth does not link Amplitude, and this helper
 /// does not configure session replay or other Amplitude products.
 ///
 /// Retain this object for the SDK's lifetime. Calls run synchronously on the caller

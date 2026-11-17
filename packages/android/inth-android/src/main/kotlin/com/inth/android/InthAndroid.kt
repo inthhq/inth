@@ -1,4 +1,4 @@
-package com.c15t.android
+package com.inth.android
 
 import android.content.Context
 import android.content.pm.ApplicationInfo
@@ -6,21 +6,21 @@ import android.content.pm.PackageManager
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import com.c15t.core.C15t
-import com.c15t.core.C15tInternalApi
-import com.c15t.core.ConsentCore
-import com.c15t.core.ConsentPolicy
-import com.c15t.core.InthProjectUrl
-import com.c15t.core.NativeConfig
-import com.c15t.core.gpp.GppMspaMode
-import com.c15t.core.gpp.GppOptions
-import com.c15t.core.iab.IabConfiguration
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.KernelError
-import com.c15t.core.spi.Clock
-import com.c15t.core.spi.TaskExecutor
-import com.c15t.core.transport.C15tTransport
-import com.c15t.core.transport.HostedTransport
+import com.inth.core.Inth
+import com.inth.core.InthInternalApi
+import com.inth.core.ConsentCore
+import com.inth.core.ConsentPolicy
+import com.inth.core.InthProjectUrl
+import com.inth.core.NativeConfig
+import com.inth.core.gpp.GppMspaMode
+import com.inth.core.gpp.GppOptions
+import com.inth.core.iab.IabConfiguration
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.KernelError
+import com.inth.core.spi.Clock
+import com.inth.core.spi.TaskExecutor
+import com.inth.core.transport.InthTransport
+import com.inth.core.transport.HostedTransport
 import java.util.Locale
 import java.util.concurrent.Executors
 
@@ -29,46 +29,46 @@ import java.util.concurrent.Executors
  * without a device.
  *
  * Everything a host has to do is either declare its Inth project URL in the manifest
- * and let [C15tInitializer] run, or call [install] itself from `Application.onCreate`.
+ * and let [InthInitializer] run, or call [install] itself from `Application.onCreate`.
  */
-object C15tAndroid {
-	private const val TAG = "c15t"
+object InthAndroid {
+	private const val TAG = "inth"
 
 	/** Manifest keys the Initializer reads; the app declares these. */
-	const val META_BACKEND_URL = "com.c15t.BACKEND_URL"
+	const val META_BACKEND_URL = "com.inth.BACKEND_URL"
 
-	const val META_BUNDLED_POLICY = "com.c15t.POLICY_RESOURCE"
+	const val META_BUNDLED_POLICY = "com.inth.POLICY_RESOURCE"
 
 	/**
 	 * `true` turns on `NativeConfig.dryRun`: consent works on the device and no record
 	 * is sent. For development and CI. A build that is not debuggable refuses it.
 	 */
-	const val META_DRY_RUN = "com.c15t.DRY_RUN"
+	const val META_DRY_RUN = "com.inth.DRY_RUN"
 
 	/**
 	 * Asset path of the in-code policy, `{"rules": [...]}` in the backend's `PolicyRule`
 	 * names. With it the device resolves the policy and never calls `/init`.
 	 */
-	const val META_POLICY_RULES = "com.c15t.POLICY_RULES"
+	const val META_POLICY_RULES = "com.inth.POLICY_RULES"
 
-	const val META_BACKEND_DOMAIN = "com.c15t.BACKEND_DOMAIN"
+	const val META_BACKEND_DOMAIN = "com.inth.BACKEND_DOMAIN"
 
 	/**
 	 * Comma-separated category ids the app offers, e.g.
 	 * `necessary, functionality, measurement, marketing`. This is the Android
 	 * spelling of the `consentCategories` a web host passes to its provider, and
-	 * iOS reads the same declaration from the `com.c15t.categories` plist array.
+	 * iOS reads the same declaration from the `com.inth.categories` plist array.
 	 */
-	const val META_CATEGORIES = "com.c15t.CATEGORIES"
+	const val META_CATEGORIES = "com.inth.CATEGORIES"
 
 	@Volatile
-	private var foregroundObserver: C15tForegroundObserver? = null
+	private var foregroundObserver: InthForegroundObserver? = null
 
 	@Volatile
-	private var reachability: C15tReachability? = null
+	private var reachability: InthReachability? = null
 
 	private val background = Executors.newSingleThreadExecutor { runnable ->
-		Thread(runnable, "c15t-io").apply { isDaemon = true }
+		Thread(runnable, "inth-io").apply { isDaemon = true }
 	}
 
 	/**
@@ -87,14 +87,14 @@ object C15tAndroid {
 	 * @param config `backendUrl` is the project URL from the Inth dashboard, such as
 	 * `https://your-project.inth.app`.
 	 * @param observeForeground register the process-foreground observer that replays
-	 * the offline queue. Turn it off only if the host drives [C15t.flushPending] and
-	 * [C15t.refresh] itself.
+	 * the offline queue. Turn it off only if the host drives [Inth.flushPending] and
+	 * [Inth.refresh] itself.
 	 * @param observeReachability replay the queue and refresh policy when connectivity returns.
 	 * This one needs `android.permission.ACCESS_NETWORK_STATE`, which belongs to the
-	 * host: without it the registration is refused and c15t carries on with the launch
+	 * host: without it the registration is refused and Inth carries on with the launch
 	 * and foreground replays, so declaring it buys a faster retry rather than correctness.
 	 * @return The installed core. A repeated call returns the core already installed.
-	 * @throws com.c15t.core.InthProjectUrlException when `backendUrl` is not an Inth
+	 * @throws com.inth.core.InthProjectUrlException when `backendUrl` is not an Inth
 	 * project URL.
 	 * @throws IllegalStateException when `dryRun` is set in an app that is not debuggable.
 	 */
@@ -107,27 +107,27 @@ object C15tAndroid {
 		logger: (KernelError) -> Unit = defaultLogger,
 	): ConsentCore {
 		// A repeated call returns the running core and never uses this config, so it is not checked.
-		if (C15t.current != null) return start(context, config, C15tTransport.NONE, clock, observeForeground, observeReachability, logger)
+		if (Inth.current != null) return start(context, config, InthTransport.NONE, clock, observeForeground, observeReachability, logger)
 		val checked = checkedConfig(config, isDebuggable(context), enforceProjectUrl = true)
-		return start(context, checked, HostedTransport(C15tHttpClient(), checked), clock, observeForeground, observeReachability, logger)
+		return start(context, checked, HostedTransport(InthHttpClient(), checked), clock, observeForeground, observeReachability, logger)
 	}
 
 	/**
-	 * [install] with a transport the caller supplies, for c15t's own tests and device
+	 * [install] with a transport the caller supplies, for Inth's own tests and device
 	 * fixtures. It skips the project URL rule, so a Release fixture can reach a loopback
 	 * backend. `dryRun` is still refused in an app that is not debuggable.
 	 */
-	@C15tInternalApi
+	@InthInternalApi
 	fun install(
 		context: Context,
 		config: NativeConfig,
-		transport: C15tTransport,
+		transport: InthTransport,
 		clock: Clock = Clock.SYSTEM,
 		observeForeground: Boolean = true,
 		observeReachability: Boolean = true,
 		logger: (KernelError) -> Unit = defaultLogger,
 	): ConsentCore {
-		if (C15t.current != null) return start(context, config, transport, clock, observeForeground, observeReachability, logger)
+		if (Inth.current != null) return start(context, config, transport, clock, observeForeground, observeReachability, logger)
 		val checked = checkedConfig(config, isDebuggable(context), enforceProjectUrl = false)
 		return start(context, checked, transport, clock, observeForeground, observeReachability, logger)
 	}
@@ -153,25 +153,25 @@ object C15tAndroid {
 
 	internal const val DRY_RUN_IN_RELEASE =
 		"dryRun is for development and CI and cannot run in a release build. " +
-			"Remove dryRun (NativeConfig.dryRun or the com.c15t.DRY_RUN meta-data) from release builds."
+			"Remove dryRun (NativeConfig.dryRun or the com.inth.DRY_RUN meta-data) from release builds."
 
 	private fun start(
 		context: Context,
 		config: NativeConfig,
-		transport: C15tTransport,
+		transport: InthTransport,
 		clock: Clock,
 		observeForeground: Boolean,
 		observeReachability: Boolean,
 		logger: (KernelError) -> Unit,
 	): ConsentCore {
 		val appContext = context.applicationContext
-		val store = C15tStores.create(appContext)
+		val store = InthStores.create(appContext)
 
 		// One executor for both the core and the observer registered below, so the launch
 		// replay and the foreground replay cannot deliver the same queued entry twice.
 		val executor = worker
 
-		val core = C15t.bootstrap(
+		val core = Inth.bootstrap(
 			config = config,
 			store = store,
 			clock = clock,
@@ -182,7 +182,7 @@ object C15tAndroid {
 
 		if (observeForeground && foregroundObserver == null) {
 			onMainThread {
-				val observer = C15tForegroundObserver(executor)
+				val observer = InthForegroundObserver(executor)
 				foregroundObserver = observer
 				androidx.lifecycle.ProcessLifecycleOwner.get().lifecycle.addObserver(observer)
 			}
@@ -191,7 +191,7 @@ object C15tAndroid {
 		if (observeReachability && reachability == null) {
 			onMainThread {
 				if (reachability == null) {
-					reachability = C15tReachability.register(appContext) { onNetworkGained(executor) }
+					reachability = InthReachability.register(appContext) { onNetworkGained(executor) }
 				}
 			}
 		}
@@ -201,7 +201,7 @@ object C15tAndroid {
 	/**
 	 * Block until every task already handed to the shared worker has run.
 	 *
-	 * [C15t.uninstall] drops a kernel without cancelling the init and replay it queued here, and
+	 * [Inth.uninstall] drops a kernel without cancelling the init and replay it queued here, and
 	 * that work still writes to the same files. A test that installs the next core straight
 	 * after a reset waits on this first, so the dropped core cannot land a write in the next
 	 * test's store.
@@ -211,15 +211,15 @@ object C15tAndroid {
 	}
 
 	internal fun onNetworkGained(executor: TaskExecutor) {
-		executor.execute { C15t.flushPending() }
-		C15t.refresh()
+		executor.execute { Inth.flushPending() }
+		Inth.refresh()
 	}
 
 	/**
-	 * Start c15t from manifest metadata, the zero-code path.
+	 * Start Inth from manifest metadata, the zero-code path.
 	 *
-	 * Without `com.c15t.BACKEND_URL` there is nothing to start. A declaration this build
-	 * refuses (a retired key, a URL that is not an Inth project URL, or `com.c15t.DRY_RUN`
+	 * Without `com.inth.BACKEND_URL` there is nothing to start. A declaration this build
+	 * refuses (a retired key, a URL that is not an Inth project URL, or `com.inth.DRY_RUN`
 	 * in an app that is not debuggable) is logged as one error. Either way the core stays
 	 * uninstalled and reads answer deny-all, which is the safe state for a misconfigured
 	 * build rather than a crash at startup.
@@ -227,10 +227,10 @@ object C15tAndroid {
 	fun bootstrap(context: Context) {
 		when (val declared = checkedDeclaration(context)) {
 			DeclaredConfig.None ->
-				Log.i(TAG, "no $META_BACKEND_URL meta-data declared; c15t stays inactive until C15tAndroid.install")
+				Log.i(TAG, "no $META_BACKEND_URL meta-data declared; Inth stays inactive until InthAndroid.install")
 			is DeclaredConfig.Refused -> Log.e(TAG, declared.reason)
 			is DeclaredConfig.Valid -> start(
-				context, declared.config, HostedTransport(C15tHttpClient(), declared.config),
+				context, declared.config, HostedTransport(InthHttpClient(), declared.config),
 				Clock.SYSTEM, observeForeground = true, observeReachability = true, logger = defaultLogger,
 			)
 		}
@@ -272,7 +272,7 @@ object C15tAndroid {
 		} ?: return DeclaredConfig.None
 
 		return checkedDeclaration(
-			read = { key -> C15tManifestValue.raw(bundle, key) },
+			read = { key -> InthManifestValue.raw(bundle, key) },
 			readAsset = { name ->
 				try { context.assets.open(name).bufferedReader().use { it.readText() } }
 				catch (error: java.io.IOException) { Log.w(TAG, "Cannot read bundled policy $name", error); null }
@@ -292,18 +292,18 @@ object C15tAndroid {
 		return try {
 			DeclaredConfig.Valid(checkedConfig(declared.config, debuggable, enforceProjectUrl = true))
 		} catch (error: IllegalStateException) {
-			DeclaredConfig.Refused("${error.message} c15t stays inactive.")
+			DeclaredConfig.Refused("${error.message} Inth stays inactive.")
 		} catch (error: IllegalArgumentException) {
-			DeclaredConfig.Refused("$META_BACKEND_URL refused: ${error.message} c15t stays inactive.")
+			DeclaredConfig.Refused("$META_BACKEND_URL refused: ${error.message} Inth stays inactive.")
 		}
 	}
 
 	/** Retired meta-data keys, each with the line that names its replacement. */
 	private val retiredKeys = mapOf(
-		"com.c15t.MODE" to "com.c15t.MODE is no longer read. For development and CI set $META_DRY_RUN to true. " +
+		"com.inth.MODE" to "com.inth.MODE is no longer read. For development and CI set $META_DRY_RUN to true. " +
 			"In production keep $META_BACKEND_URL; a bundled manifest ($META_BUNDLED_POLICY) or an in-code " +
 			"policy ($META_POLICY_RULES) covers a launch without network.",
-		"com.c15t.BACKEND_INIT_URL" to "com.c15t.BACKEND_INIT_URL is no longer read and has no replacement. " +
+		"com.inth.BACKEND_INIT_URL" to "com.inth.BACKEND_INIT_URL is no longer read and has no replacement. " +
 			"Policy is fetched from $META_BACKEND_URL.",
 	)
 
@@ -320,31 +320,31 @@ object C15tAndroid {
 	/** The manifest mapping, before the project URL and dryRun rules. */
 	internal fun declaredConfig(read: (String) -> Any?, readAsset: (String) -> String?): DeclaredConfig {
 		retiredKeys.entries.firstOrNull { read(it.key) != null }?.let { retired ->
-			return DeclaredConfig.Refused("${retired.value} Remove the key. c15t stays inactive.")
+			return DeclaredConfig.Refused("${retired.value} Remove the key. Inth stays inactive.")
 		}
-		// Every value goes through `C15tManifestValue`, which reads whichever type the
+		// Every value goes through `InthManifestValue`, which reads whichever type the
 		// manifest parser chose. A hand-edited manifest and an Expo-generated one do not
 		// arrive as the same Java type, and a reader that names one of them honours only
 		// the app that happened to spell it that way.
-		val backendUrl = C15tManifestValue.string(read(META_BACKEND_URL)) ?: return DeclaredConfig.None
-		val declaredPolicy = C15tManifestValue.string(read(META_POLICY_RULES))?.let { name ->
+		val backendUrl = InthManifestValue.string(read(META_BACKEND_URL)) ?: return DeclaredConfig.None
+		val declaredPolicy = InthManifestValue.string(read(META_POLICY_RULES))?.let { name ->
 			readAsset(name)?.let(::policyFrom) ?: Result.failure(IllegalArgumentException("$META_POLICY_RULES names $name, which cannot be read"))
 		}
-		val bundledPolicy = C15tManifestValue.string(read(META_BUNDLED_POLICY))
+		val bundledPolicy = InthManifestValue.string(read(META_BUNDLED_POLICY))
 		if (declaredPolicy != null && bundledPolicy != null) {
 			return DeclaredConfig.Refused(
-				"$META_POLICY_RULES and $META_BUNDLED_POLICY do not mix. Declare one of them. c15t stays inactive.",
+				"$META_POLICY_RULES and $META_BUNDLED_POLICY do not mix. Declare one of them. Inth stays inactive.",
 			)
 		}
 		// Absent stays absent. `false` is an answer and a missing key is not, and the
 		// core treats them differently when it derives the signal.
 		return DeclaredConfig.Valid(NativeConfig(
 			backendUrl = backendUrl,
-			dryRun = C15tManifestValue.boolean(read(META_DRY_RUN)) == true,
+			dryRun = InthManifestValue.boolean(read(META_DRY_RUN)) == true,
 			bundledPolicy = bundledPolicy?.let(readAsset),
 			policy = declaredPolicy?.getOrNull(),
 			policyError = declaredPolicy?.exceptionOrNull()?.let { it.message ?: it.toString() },
-			domain = C15tManifestValue.string(read(META_BACKEND_DOMAIN)),
+			domain = InthManifestValue.string(read(META_BACKEND_DOMAIN)),
 			consentCategories = declaredCategories(read(META_CATEGORIES)),
 			vendors = declaredVendors(read(META_VENDORS)),
 			iab = when (val declared = declaredIab(read)) {
@@ -352,13 +352,13 @@ object C15tAndroid {
 				is DeclaredIab.Invalid -> {
 					// Refuse IAB, not the whole core: category consent still works, and no
 					// CMP ID reaches IABTCF_* that the publisher did not declare correctly.
-					Log.e(TAG, "IAB meta-data refused: ${declared.reason} c15t starts without IAB TCF, " +
-						"so no IABTCF_CmpSdkID is written and IAB saves fail until the com.c15t.IAB_* keys are fixed.")
+					Log.e(TAG, "IAB meta-data refused: ${declared.reason} Inth starts without IAB TCF, " +
+						"so no IABTCF_CmpSdkID is written and IAB saves fail until the com.inth.IAB_* keys are fixed.")
 					null
 				}
 				DeclaredIab.None -> null
 			},
-			detectedGpc = C15tManifestValue.boolean(read(META_GPC)),
+			detectedGpc = InthManifestValue.boolean(read(META_GPC)),
 			gpp = declaredGpp(read),
 		))
 	}
@@ -369,25 +369,25 @@ object C15tAndroid {
 	 * snapshot and keeps every optional category denied rather than crashing at launch.
 	 */
 	private fun policyFrom(json: String): Result<ConsentPolicy> = runCatching { ConsentPolicy.fromJson(json) }
-		.onFailure { Log.e(TAG, "$META_POLICY_RULES refused: ${it.message}. c15t reports policy-invalid and denies optional categories.") }
+		.onFailure { Log.e(TAG, "$META_POLICY_RULES refused: ${it.message}. Inth reports policy-invalid and denies optional categories.") }
 
 	/**
-	 * The GPP options the manifest declares: `null` unless `com.c15t.GPP` is `true`.
+	 * The GPP options the manifest declares: `null` unless `com.inth.GPP` is `true`.
 	 *
 	 * An MSPA mode this build does not name reads as no mode, which reports the transaction as
 	 * not covered rather than claiming a coverage nobody configured.
 	 */
 	internal fun declaredGpp(read: (String) -> Any?): GppOptions? {
-		if (C15tManifestValue.boolean(read(META_GPP)) != true) return null
+		if (InthManifestValue.boolean(read(META_GPP)) != true) return null
 		return GppOptions(
-			mspaMode = GppMspaMode.fromWireName(C15tManifestValue.string(read(META_GPP_MSPA_MODE))?.trim()),
+			mspaMode = GppMspaMode.fromWireName(InthManifestValue.string(read(META_GPP_MSPA_MODE))?.trim()),
 			optOutCategories = declaredGppOptOutCategories(read(META_GPP_OPT_OUT_CATEGORIES)),
-			tcf = C15tManifestValue.boolean(read(META_GPP_TCF)) ?: true,
+			tcf = InthManifestValue.boolean(read(META_GPP_TCF)) ?: true,
 		)
 	}
 
 	/**
-	 * `com.c15t.GPP_OPT_OUT_CATEGORIES`, keeping "not set" apart from "set to empty".
+	 * `com.inth.GPP_OPT_OUT_CATEGORIES`, keeping "not set" apart from "set to empty".
 	 *
 	 * An absent key keeps the default, `marketing`. A present key is the app's list: `none`
 	 * or a blank value is the empty list, meaning no category drives the sale, sharing and
@@ -401,7 +401,7 @@ object C15tAndroid {
 		return text.split(',').mapNotNull { ConsentCategory.fromWireName(it.trim()) }.distinct()
 	}
 
-	/** The outcome of reading the `com.c15t.IAB_*` meta-data. */
+	/** The outcome of reading the `com.inth.IAB_*` meta-data. */
 	internal sealed interface DeclaredIab {
 		/** No IAB key is declared, so IAB TCF stays off. */
 		data object None : DeclaredIab
@@ -415,7 +415,7 @@ object C15tAndroid {
 	/**
 	 * Read the IAB settings a host declared.
 	 *
-	 * No `com.c15t.IAB_*` key means IAB stays off. Once any of them is present, CMP ID,
+	 * No `com.inth.IAB_*` key means IAB stays off. Once any of them is present, CMP ID,
 	 * CMP version and publisher country code are all required and must be in the ranges
 	 * the core enforces. A declaration that fails is refused whole, so the core never
 	 * writes a CMP ID the publisher did not register. There is no default CMP ID.
@@ -425,7 +425,7 @@ object C15tAndroid {
 	internal fun declaredIab(read: (String) -> Any?): DeclaredIab {
 		val keys = listOf(META_IAB_CMP_ID, META_IAB_CMP_VERSION, META_IAB_PUBLISHER_COUNTRY_CODE, META_IAB_CONSENT_SCREEN)
 		if (keys.all { read(it) == null }) return DeclaredIab.None
-		fun integer(key: String): Int? = C15tManifestValue.string(read(key))?.toIntOrNull()
+		fun integer(key: String): Int? = InthManifestValue.string(read(key))?.toIntOrNull()
 
 		val cmpId = integer(META_IAB_CMP_ID)
 		if (cmpId == null || cmpId !in 2..4095) {
@@ -435,7 +435,7 @@ object C15tAndroid {
 		if (cmpVersion == null || cmpVersion !in 0..4095) {
 			return DeclaredIab.Invalid("$META_IAB_CMP_VERSION must be a whole number from 0 to 4095.")
 		}
-		val country = C15tManifestValue.string(read(META_IAB_PUBLISHER_COUNTRY_CODE))?.uppercase(Locale.ROOT)
+		val country = InthManifestValue.string(read(META_IAB_PUBLISHER_COUNTRY_CODE))?.uppercase(Locale.ROOT)
 		if (country == null || country.length != 2 || !country.all { it in 'A'..'Z' }) {
 			return DeclaredIab.Invalid("$META_IAB_PUBLISHER_COUNTRY_CODE must be a two-letter country code.")
 		}
@@ -453,17 +453,17 @@ object C15tAndroid {
 		)
 	}
 
-	/** IAB Europe CMP ID, 2 to 4095. Required when any `com.c15t.IAB_*` key is present. */
-	const val META_IAB_CMP_ID = "com.c15t.IAB_CMP_ID"
+	/** IAB Europe CMP ID, 2 to 4095. Required when any `com.inth.IAB_*` key is present. */
+	const val META_IAB_CMP_ID = "com.inth.IAB_CMP_ID"
 
 	/** Your CMP version, 0 to 4095. Required with [META_IAB_CMP_ID]. */
-	const val META_IAB_CMP_VERSION = "com.c15t.IAB_CMP_VERSION"
+	const val META_IAB_CMP_VERSION = "com.inth.IAB_CMP_VERSION"
 
 	/** Two-letter publisher country code. Required with [META_IAB_CMP_ID]. */
-	const val META_IAB_PUBLISHER_COUNTRY_CODE = "com.c15t.IAB_PUBLISHER_COUNTRY_CODE"
+	const val META_IAB_PUBLISHER_COUNTRY_CODE = "com.inth.IAB_PUBLISHER_COUNTRY_CODE"
 
 	/** Optional consent screen number, 0 to 63. The core's default is 1. */
-	const val META_IAB_CONSENT_SCREEN = "com.c15t.IAB_CONSENT_SCREEN"
+	const val META_IAB_CONSENT_SCREEN = "com.inth.IAB_CONSENT_SCREEN"
 
 	/**
 	 * Parse a declared category scope from manifest text.
@@ -481,7 +481,7 @@ object C15tAndroid {
 	 *   policy scope.
 	 */
 	fun declaredCategories(raw: Any?): List<ConsentCategory>? =
-		C15tManifestValue.string(raw)
+		InthManifestValue.string(raw)
 			?.split(',')
 			?.mapNotNull { ConsentCategory.fromWireName(it.trim()) }
 			?.takeIf { it.isNotEmpty() }
@@ -505,37 +505,37 @@ object C15tAndroid {
 	 *   is declared, which tells the core to keep every vendor it is served.
 	 */
 	fun declaredVendors(raw: Any?): List<Int>? =
-		C15tManifestValue.string(raw)
+		InthManifestValue.string(raw)
 			?.split(',')
 			?.mapNotNull { entry -> entry.trim().toIntOrNull()?.takeIf { it > 0 } }
 			?.distinct()
 			?.takeIf { it.isNotEmpty() }
 
 	/** `true` turns on the IAB GPP string and the `IABGPP_*` keys. */
-	const val META_GPP = "com.c15t.GPP"
+	const val META_GPP = "com.inth.GPP"
 
 	/** `opt-out-option` or `service-provider`. Only for MSPA signatories. */
-	const val META_GPP_MSPA_MODE = "com.c15t.GPP_MSPA_MODE"
+	const val META_GPP_MSPA_MODE = "com.inth.GPP_MSPA_MODE"
 
 	/**
 	 * Comma-separated categories whose refusal reports a GPP opt-out. Absent means `marketing`;
 	 * `none` means no category drives the opt-outs.
 	 */
-	const val META_GPP_OPT_OUT_CATEGORIES = "com.c15t.GPP_OPT_OUT_CATEGORIES"
+	const val META_GPP_OPT_OUT_CATEGORIES = "com.inth.GPP_OPT_OUT_CATEGORIES"
 
 	/** The [META_GPP_OPT_OUT_CATEGORIES] value for an empty list. */
 	const val GPP_NO_OPT_OUT_CATEGORIES = "none"
 
 	/** `false` leaves the TCF EU section out of the GPP string. */
-	const val META_GPP_TCF = "com.c15t.GPP_TCF"
+	const val META_GPP_TCF = "com.inth.GPP_TCF"
 
 	/** Manifest key that forces GPC on for a staged build. */
-	const val META_GPC = "com.c15t.FORCE_GPC"
+	const val META_GPC = "com.inth.FORCE_GPC"
 
 	/**
 	 * Comma-separated IAB vendor ids the app declares, e.g. `42, 755, 8`. This is the Android
 	 * spelling of the `iab.vendors` array a web host passes to its provider, and iOS reads the same
-	 * declaration from the `com.c15t.vendors` plist string.
+	 * declaration from the `com.inth.vendors` plist string.
 	 *
 	 * The device half of the declaration -- prune the list the core holds -- is what carries the
 	 * disclosure promise, and it runs whatever this key says. The request half travels to the backend
@@ -546,7 +546,7 @@ object C15tAndroid {
 	 * Absent and empty both read as "declare nothing", which keeps every served vendor. A host that
 	 * means no vendors has to say so with a scope that names none, not by leaving this key out.
 	 */
-	const val META_VENDORS = "com.c15t.VENDORS"
+	const val META_VENDORS = "com.inth.VENDORS"
 
 	private fun onMainThread(block: () -> Unit) {
 		if (Looper.myLooper() == Looper.getMainLooper()) {

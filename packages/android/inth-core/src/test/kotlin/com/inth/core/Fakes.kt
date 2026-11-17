@@ -1,21 +1,21 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.KernelError
-import com.c15t.core.model.KernelUser
-import com.c15t.core.model.ConsentSubject
-import com.c15t.core.model.QueuedSave
-import com.c15t.core.spi.HttpClient
-import com.c15t.core.spi.HttpRequest
-import com.c15t.core.spi.Clock
-import com.c15t.core.spi.HttpResponse
-import com.c15t.core.spi.KeyValueStore
-import com.c15t.core.spi.TaskExecutor
-import com.c15t.core.store.C15tStore
-import com.c15t.core.transport.C15tTransport
-import com.c15t.core.transport.InitContext
-import com.c15t.core.transport.SaveOutcome
-import com.c15t.core.transport.TransportOutcome
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.KernelError
+import com.inth.core.model.KernelUser
+import com.inth.core.model.ConsentSubject
+import com.inth.core.model.QueuedSave
+import com.inth.core.spi.HttpClient
+import com.inth.core.spi.HttpRequest
+import com.inth.core.spi.Clock
+import com.inth.core.spi.HttpResponse
+import com.inth.core.spi.KeyValueStore
+import com.inth.core.spi.TaskExecutor
+import com.inth.core.store.InthStore
+import com.inth.core.transport.InthTransport
+import com.inth.core.transport.InitContext
+import com.inth.core.transport.SaveOutcome
+import com.inth.core.transport.TransportOutcome
 
 /**
  * Storage double that records the order of reads and writes, which is how the
@@ -80,7 +80,7 @@ class InMemoryKeyValueStore(
  */
 class RecordingTransport(
 	private val eventLog: MutableList<String>? = null,
-) : C15tTransport {
+) : InthTransport {
 	private val responses = mutableListOf<TransportOutcome>()
 	private val saveOutcomes = mutableListOf<SaveOutcome>()
 	private var lastInit: TransportOutcome? = null
@@ -151,7 +151,7 @@ class RecordingHttpClient(
 
 /**
  * A store that accepts writes to one key and keeps nothing, which is what a host store
- * does once it has given up on its key: [com.c15t.core.store.ResilientKeyValueStore]
+ * does once it has given up on its key: [com.inth.core.store.ResilientKeyValueStore]
  * reports the failure and returns rather than throwing out of a launch hook.
  *
  * The point is that the caller above gets no exception. Everything that believes the write
@@ -240,9 +240,9 @@ val TEST_CONFIG = NativeConfig(
 /** Build a kernel wired to in-memory doubles with inline task execution. */
 fun testKernel(
 	config: NativeConfig = TEST_CONFIG,
-	store: C15tStore,
+	store: InthStore,
 	clock: FixedClock = FixedClock(),
-	transport: C15tTransport = C15tTransport.NONE,
+	transport: InthTransport = InthTransport.NONE,
 	/**
 	 * Where init and delivery run. Left null it means inline, which is what makes ordering
 	 * observable; a test that needs a real hand-off -- a send whose answer this thread
@@ -350,8 +350,8 @@ fun initBody(
  * A model this build does not name gets an empty set; the reader refuses the model anyway.
  */
 fun requiredRightsJson(model: String): String {
-	val parsed = com.c15t.core.model.ConsentModel.fromWireName(model.trim().removeSurrounding("\""))
-	val rights = parsed?.let { com.c15t.core.policy.PolicyRight.requiredFor(it) } ?: emptyList()
+	val parsed = com.inth.core.model.ConsentModel.fromWireName(model.trim().removeSurrounding("\""))
+	val rights = parsed?.let { com.inth.core.policy.PolicyRight.requiredFor(it) } ?: emptyList()
 	return rights.joinToString(",", prefix = "[", postfix = "]") { "\"${it.wireName}\"" }
 }
 

@@ -1,6 +1,6 @@
 import Foundation
 import XCTest
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 /// The native SDK gate: what ``ConsentDecision`` means, and the two rules it is derived
 /// from. Half of these tests are the pure derivation over hand-built snapshots, because
@@ -179,13 +179,13 @@ final class ConsentDecisionTests: XCTestCase {
     }
 
     func testReadsWithNoInstalledCoreFailClosed() {
-        C15t.resetForTests()
-        defer { C15t.resetForTests() }
+        Inth.resetForTests()
+        defer { Inth.resetForTests() }
 
-        XCTAssertFalse(C15t.isReady())
-        XCTAssertEqual(C15t.decision(for: .necessary), .granted)
+        XCTAssertFalse(Inth.isReady())
+        XCTAssertEqual(Inth.decision(for: .necessary), .granted)
         XCTAssertEqual(
-            C15t.decision(for: .marketing),
+            Inth.decision(for: .marketing),
             .pending,
             "a missing core is not a refusal, and stays switched off either way"
         )

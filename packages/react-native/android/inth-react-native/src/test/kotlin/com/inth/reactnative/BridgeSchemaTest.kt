@@ -1,28 +1,28 @@
-package com.c15t.reactnative
+package com.inth.reactnative
 
-import com.c15t.consentui.ConsentHostOutcome
-import com.c15t.consentui.ConsentHostPresentation
-import com.c15t.consentui.ConsentHostSession
-import com.c15t.core.CommitIntent
-import com.c15t.core.CommitResult
-import com.c15t.core.iab.AdTechProvider
-import com.c15t.core.iab.IabChoices
-import com.c15t.core.iab.IabCommittedConsent
-import com.c15t.core.iab.IabConfiguration
-import com.c15t.core.iab.IabDraft
-import com.c15t.core.iab.IabPresentation
-import com.c15t.core.iab.IabVendorDisclosure
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentLocation
-import com.c15t.core.model.ConsentSnapshot
-import com.c15t.core.model.ConsentSubject
-import com.c15t.core.model.KernelError
-import com.c15t.core.model.KernelIabState
-import com.c15t.core.model.KernelOverrides
-import com.c15t.core.store.C15tStore
-import com.c15t.core.tc.GlobalVendorList
-import com.c15t.core.tc.GvlLocalizedEntry
-import com.c15t.core.tc.GvlVendorEntry
+import com.inth.consentui.ConsentHostOutcome
+import com.inth.consentui.ConsentHostPresentation
+import com.inth.consentui.ConsentHostSession
+import com.inth.core.CommitIntent
+import com.inth.core.CommitResult
+import com.inth.core.iab.AdTechProvider
+import com.inth.core.iab.IabChoices
+import com.inth.core.iab.IabCommittedConsent
+import com.inth.core.iab.IabConfiguration
+import com.inth.core.iab.IabDraft
+import com.inth.core.iab.IabPresentation
+import com.inth.core.iab.IabVendorDisclosure
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentLocation
+import com.inth.core.model.ConsentSnapshot
+import com.inth.core.model.ConsentSubject
+import com.inth.core.model.KernelError
+import com.inth.core.model.KernelIabState
+import com.inth.core.model.KernelOverrides
+import com.inth.core.store.InthStore
+import com.inth.core.tc.GlobalVendorList
+import com.inth.core.tc.GvlLocalizedEntry
+import com.inth.core.tc.GvlVendorEntry
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -77,13 +77,13 @@ class BridgeSchemaTest {
 			choices = choices, subjectId = "sub", externalId = null, fingerprint = "fp", vendorListVersion = 177,
 			policyVersion = 5, consentVersion = 1, createdAt = 1, actionAt = 1, tcString = "CQ-test",
 		)
-		return C15tPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list)), iabConsent = committed,
+		return InthPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list)), iabConsent = committed,
 			iabAcceptAll = choices, iabPresentation = presentation)
 	}
 
 	@Test
 	fun `every encoder writes the keys the schema declares`() {
-		val kernel = bridgeKernel(C15tStore(MemoryStore()))
+		val kernel = bridgeKernel(InthStore(MemoryStore()))
 		kernel.bootstrap()
 		val saved = kernel.save(CommitIntent.All)
 		val identified = ConsentSnapshot(
@@ -93,12 +93,12 @@ class BridgeSchemaTest {
 		)
 
 		val samples = listOf(
-			"bootstrap" to C15tPayload.bootstrap(kernel.snapshot(), kernel.hasStoredSnapshot),
-			"snapshot" to C15tPayload.snapshot(kernel.snapshot()),
-			"snapshot" to C15tPayload.snapshot(identified),
+			"bootstrap" to InthPayload.bootstrap(kernel.snapshot(), kernel.hasStoredSnapshot),
+			"snapshot" to InthPayload.snapshot(kernel.snapshot()),
+			"snapshot" to InthPayload.snapshot(identified),
 			"snapshot" to iabSnapshot(),
-			"commitResult" to C15tPayload.commitResult(saved, kernel.snapshot()),
-			"commitResult" to C15tPayload.commitResult(
+			"commitResult" to InthPayload.commitResult(saved, kernel.snapshot()),
+			"commitResult" to InthPayload.commitResult(
 				CommitResult(
 					ok = false,
 					revision = 4,
@@ -109,19 +109,19 @@ class BridgeSchemaTest {
 				),
 				ConsentSnapshot(),
 			),
-			"commitResult" to C15tPayload.invalidIntent("{\"action\":\"maybe\"}"),
-			"commitResult" to C15tPayload.notBootstrapped(),
-			"trackingAuthorization" to C15tPayload.trackingAuthorization(C15tTrackingAuthorization.UNSUPPORTED),
-			"snapshotEvent" to C15tPayload.snapshotEvent(3),
-			"initializedEvent" to C15tPayload.initializedEvent(3),
-			"errorEvent" to C15tPayload.errorEvent(KernelError("transport-unavailable", "offline")),
-			"presenterSession" to C15tHostPayload.consentHostSession(ConsentHostSession.Presented("one", ConsentHostPresentation.PROMPT)),
-			"presenterSession" to C15tHostPayload.consentHostSession(ConsentHostSession.AlreadyPresented("one", ConsentHostPresentation.PREFERENCES)),
-			"presenterSession" to C15tHostPayload.consentHostSession(ConsentHostSession.NotRequired),
-			"presenterOutcome" to C15tHostPayload.consentHostOutcome(ConsentHostOutcome.Committed("one", 4)),
-			"presenterOutcome" to C15tHostPayload.consentHostOutcome(ConsentHostOutcome.Unavailable("one", 4)),
-			"presenterPresented" to C15tHostPayload.consentHostPresented("one", ConsentHostPresentation.PROMPT, automatic = true),
-			"presenterUnavailable" to C15tPayload.presenterUnavailable("C15T_PRESENTER_UNAVAILABLE", "no Activity yet"),
+			"commitResult" to InthPayload.invalidIntent("{\"action\":\"maybe\"}"),
+			"commitResult" to InthPayload.notBootstrapped(),
+			"trackingAuthorization" to InthPayload.trackingAuthorization(InthTrackingAuthorization.UNSUPPORTED),
+			"snapshotEvent" to InthPayload.snapshotEvent(3),
+			"initializedEvent" to InthPayload.initializedEvent(3),
+			"errorEvent" to InthPayload.errorEvent(KernelError("transport-unavailable", "offline")),
+			"presenterSession" to InthHostPayload.consentHostSession(ConsentHostSession.Presented("one", ConsentHostPresentation.PROMPT)),
+			"presenterSession" to InthHostPayload.consentHostSession(ConsentHostSession.AlreadyPresented("one", ConsentHostPresentation.PREFERENCES)),
+			"presenterSession" to InthHostPayload.consentHostSession(ConsentHostSession.NotRequired),
+			"presenterOutcome" to InthHostPayload.consentHostOutcome(ConsentHostOutcome.Committed("one", 4)),
+			"presenterOutcome" to InthHostPayload.consentHostOutcome(ConsentHostOutcome.Unavailable("one", 4)),
+			"presenterPresented" to InthHostPayload.consentHostPresented("one", ConsentHostPresentation.PROMPT, automatic = true),
+			"presenterUnavailable" to InthPayload.presenterUnavailable("INTH_PRESENTER_UNAVAILABLE", "no Activity yet"),
 		)
 
 		val problems = samples.flatMap { (name, raw) ->
@@ -132,7 +132,7 @@ class BridgeSchemaTest {
 		// Optional keys are skipped when absent, so prove this binding can produce every
 		// subject key the schema declares. A declared key no core models fails here.
 		val subjectFields = fields("snapshot")["subject"]!!.jsonObject["fields"]!!.jsonObject
-		val subject = json.parseToJsonElement(C15tPayload.snapshot(identified)).jsonObject["subject"]!!.jsonObject
+		val subject = json.parseToJsonElement(InthPayload.snapshot(identified)).jsonObject["subject"]!!.jsonObject
 		assertEquals(subjectFields.keys, subject.keys)
 
 		// Android sends neither of these: its tracking request rejects, and the stage only
@@ -170,12 +170,12 @@ class BridgeSchemaTest {
 
 		assertEquals(
 			CommitIntent.Custom(mapOf(ConsentCategory.MEASUREMENT to true, ConsentCategory.MARKETING to false)),
-			C15tPayload.parseCommitIntent(explicit.toString()),
+			InthPayload.parseCommitIntent(explicit.toString()),
 		)
-		assertTrue("an iab intent with every declared key must decode", C15tPayload.parseCommitIntent(iab.toString()) is CommitIntent.Iab)
+		assertTrue("an iab intent with every declared key must decode", InthPayload.parseCommitIntent(iab.toString()) is CommitIntent.Iab)
 		val actions = intent["action"]!!.jsonObject["values"]!!.jsonArray.map { it.jsonPrimitive.content }
 		for (action in actions - "explicit" - "iab") {
-			val parsed = C15tPayload.parseCommitIntent(buildJsonObject { put("action", action) }.toString())
+			val parsed = InthPayload.parseCommitIntent(buildJsonObject { put("action", action) }.toString())
 			assertTrue("action \"$action\" from the schema must decode", parsed != null)
 		}
 	}
@@ -190,15 +190,15 @@ class BridgeSchemaTest {
 			}
 		}
 		assertEquals(
-			C15tPayload.AutoPresentSettings(true, "https://example.com/privacy"),
-			C15tPayload.parseAutoPresentSettings(document.toString()),
+			InthPayload.AutoPresentSettings(true, "https://example.com/privacy"),
+			InthPayload.parseAutoPresentSettings(document.toString()),
 		)
 		// The URL is nullable: a provider that turns auto-present off may have none.
 		assertEquals(
-			C15tPayload.AutoPresentSettings(false, null),
-			C15tPayload.parseAutoPresentSettings("{\"autoPresent\":false,\"privacyPolicyURL\":null}"),
+			InthPayload.AutoPresentSettings(false, null),
+			InthPayload.parseAutoPresentSettings("{\"autoPresent\":false,\"privacyPolicyURL\":null}"),
 		)
-		assertEquals(null, C15tPayload.parseAutoPresentSettings("{\"autoPresent\":\"yes\"}"))
+		assertEquals(null, InthPayload.parseAutoPresentSettings("{\"autoPresent\":\"yes\"}"))
 	}
 
 	@Test
@@ -213,7 +213,7 @@ class BridgeSchemaTest {
 			"{\"action\":\"all\",\"consents\":{\"marketing\":false}}",
 			"{\"action\":\"necessary\",\"consents\":{\"marketing\":true}}",
 		)) {
-			assertEquals(raw, null, C15tPayload.parseCommitIntent(raw))
+			assertEquals(raw, null, InthPayload.parseCommitIntent(raw))
 		}
 	}
 
@@ -229,13 +229,13 @@ class BridgeSchemaTest {
 			}
 		}
 
-		val read = C15tPayload.parseOverrides(document.toString(), KernelOverrides())
+		val read = InthPayload.parseOverrides(document.toString(), KernelOverrides())
 
 		assertEquals(OverridesRead.Applied(KernelOverrides("DE", "BY", "de", true)), read)
 		for (key in document.keys) {
 			assertTrue(
 				"overridesInput.$key alone must be read as an override",
-				C15tPayload.parseOverrides(buildJsonObject { put(key, document[key]!!) }.toString(), KernelOverrides()) is OverridesRead.Applied,
+				InthPayload.parseOverrides(buildJsonObject { put(key, document[key]!!) }.toString(), KernelOverrides()) is OverridesRead.Applied,
 			)
 		}
 	}

@@ -1,5 +1,5 @@
-#if canImport(C15tCore)
-import C15tCore
+#if canImport(InthCore)
+import InthCore
 #endif
 import Combine
 import Foundation
@@ -145,8 +145,8 @@ import UIKit
 
 /// The installed core, for blocks that are not handed one.
 private func installedCore() -> ConsentCore {
-    guard let core = C15t.current else {
-        preconditionFailure("Install c15t before using the headless consent blocks")
+    guard let core = Inth.current else {
+        preconditionFailure("Install Inth before using the headless consent blocks")
     }
     return core
 }
@@ -155,7 +155,7 @@ private func installedCore() -> ConsentCore {
 /// An unresolved policy counts as not allowed, so nothing gated starts on a cold launch. It
 /// reads the saved decision, never a draft, and follows every consent change.
 ///
-/// Install c15t before a gate is built, or pass `core`. A gate with neither stops the app.
+/// Install Inth before a gate is built, or pass `core`. A gate with neither stops the app.
 ///
 /// ```swift
 /// ConsentGate(.marketing) { AdBanner() } fallback: { AdPlaceholder() }

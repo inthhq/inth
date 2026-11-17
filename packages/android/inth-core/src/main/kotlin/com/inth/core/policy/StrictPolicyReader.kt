@@ -1,9 +1,9 @@
-package com.c15t.core.policy
+package com.inth.core.policy
 
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentModel
-import com.c15t.core.model.PolicyResolution
-import com.c15t.core.transport.ProducerContract
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentModel
+import com.inth.core.model.PolicyResolution
+import com.inth.core.transport.ProducerContract
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull

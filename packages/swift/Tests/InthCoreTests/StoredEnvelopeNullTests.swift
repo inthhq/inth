@@ -1,5 +1,5 @@
 import XCTest
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 /// The envelope guard has to tolerate the way another writer spells "absent".
 ///
@@ -16,14 +16,14 @@ final class StoredEnvelopeNullTests: XCTestCase {
             policyResolution: nil,
             storedAt: 1_700_000_000_000
         )
-        let clean = try C15tJSON.encode(envelope)
+        let clean = try InthJSON.encode(envelope)
         XCTAssertNotNil(StoredEnvelope.decode(clean), "an envelope this build wrote must read")
 
         // Add the absent fields the way the other two kernels write them rather than
         // editing Swift's own bytes, so the assertion holds whatever order the encoder
         // uses. The count check is what stops this from passing on a probe that injected
         // nothing, which is how the first version of this test lied.
-        guard case let .object(fields)? = C15tJSON.parse(clean) else {
+        guard case let .object(fields)? = InthJSON.parse(clean) else {
             return XCTFail("the envelope is not a JSON object")
         }
         var fromAnotherWriter = fields
@@ -34,7 +34,7 @@ final class StoredEnvelopeNullTests: XCTestCase {
             fields.count + 2,
             "Swift wrote the absent keys itself, so the probe tested nothing"
         )
-        guard let probed = C15tJSON.encode(.object(fromAnotherWriter)) else {
+        guard let probed = InthJSON.encode(.object(fromAnotherWriter)) else {
             return XCTFail("the probe bytes could not be encoded")
         }
         XCTAssertNotNil(

@@ -32,7 +32,7 @@ import {
 	readAndroidSdkFiles,
 	stripGradleComments,
 } from '../android-sdk-floor';
-import { C15tPluginError } from '../errors';
+import { InthPluginError } from '../errors';
 import { FIXTURE_DIR, applyToFixture, runMod } from './helpers';
 
 const TEMPLATES = ['sdk-55', 'sdk-57', 'sdk-58'] as const;
@@ -50,7 +50,7 @@ const templateProject = function templateProject(
 	template: (typeof TEMPLATES)[number],
 	gradleProperties = ''
 ): string {
-	const root = mkdtempSync(join(tmpdir(), 'c15t-sdk-floor-'));
+	const root = mkdtempSync(join(tmpdir(), 'inth-sdk-floor-'));
 	scratch.push(root);
 	cpSync(join(FIXTURE_DIR, 'expo-templates', template), join(root, 'android'), {
 		recursive: true,
@@ -115,14 +115,14 @@ describe.each(TEMPLATES)('the Expo %s template', (template) => {
 	it('fails prebuild on an expo-build-properties minSdk below 24', async () => {
 		const root = templateProject(template, 'android.minSdkVersion=23');
 		await expect(finalize(root)).rejects.toThrowError(
-			/minSdk is 23 in android\/gradle\.properties; c15t needs 24 or later \(raise or remove android\.minSdkVersion in the expo-build-properties plugin options\)/u
+			/minSdk is 23 in android\/gradle\.properties; Inth needs 24 or later \(raise or remove android\.minSdkVersion in the expo-build-properties plugin options\)/u
 		);
 	});
 
 	it('fails prebuild on an expo-build-properties compileSdk below 36', async () => {
 		const root = templateProject(template, 'android.compileSdkVersion=35');
 		await expect(finalize(root)).rejects.toThrowError(
-			/compileSdk is 35 in android\/gradle\.properties; c15t needs 36/u
+			/compileSdk is 35 in android\/gradle\.properties; Inth needs 36/u
 		);
 	});
 
@@ -428,7 +428,7 @@ describe('assertAndroidSdkFloor', () => {
 		});
 
 		it('fails a Kotlin DSL project at prebuild', async () => {
-			const root = mkdtempSync(join(tmpdir(), 'c15t-sdk-floor-kts-'));
+			const root = mkdtempSync(join(tmpdir(), 'inth-sdk-floor-kts-'));
 			scratch.push(root);
 			const android = join(root, 'android');
 			mkdirSync(join(android, 'app'), { recursive: true });
@@ -575,6 +575,6 @@ describe('assertAndroidSdkFloor', () => {
 	it('throws the plugin error type', () => {
 		expect(() =>
 			assertAndroidSdkFloor({ 'gradle.properties': 'android.minSdkVersion=21' })
-		).toThrowError(C15tPluginError);
+		).toThrowError(InthPluginError);
 	});
 });

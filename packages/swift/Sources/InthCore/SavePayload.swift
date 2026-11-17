@@ -251,7 +251,7 @@ enum SubjectPostBodyBuilder {
     /// Serialize a payload into request bytes. The result is deterministic, so the
     /// bytes queued before a request are comparable to the bytes sent after it.
     static func body(for payload: SavePayload, domain: String) throws -> Data {
-        try C15tJSON.encode(wire(for: payload, domain: domain))
+        try InthJSON.encode(wire(for: payload, domain: domain))
     }
 
     static func wire(for payload: SavePayload, domain: String) -> JSONValue {

@@ -1,5 +1,5 @@
-#if canImport(C15tCore)
-import C15tCore
+#if canImport(InthCore)
+import InthCore
 #endif
 import Foundation
 
@@ -7,7 +7,7 @@ import Foundation
 /// third-party sharing with Google's DMA options.
 ///
 /// In `trackThirdPartySharing`, build `ADJThirdPartySharing(isEnabled: adUserData)`
-/// and add the `google_dma` granular options: `eea` (yours to supply, since c15t's
+/// and add the `google_dma` granular options: `eea` (yours to supply, since Inth's
 /// policy model is not a legal jurisdiction flag), `ad_personalization` and
 /// `ad_user_data`, each `"1"` or `"0"`. Then pass it to `Adjust.trackThirdPartySharing`.
 /// Marketing grants both types, as on the web.
@@ -16,7 +16,7 @@ import Foundation
 /// nothing while disabled. When the category is granted, it calls `enable` once per
 /// grant and then sends third-party sharing, because Adjust ignores calls made while
 /// disabled. A consent change while Adjust runs sends third-party sharing again.
-/// Connect it before `Adjust.initSdk`. c15t does not link Adjust.
+/// Connect it before `Adjust.initSdk`. Inth does not link Adjust.
 ///
 /// Retain this object for the SDK's lifetime. Calls run synchronously on the caller
 /// or native consent notification queue. It does not request ATT.

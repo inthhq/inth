@@ -1,4 +1,4 @@
-package com.c15t.core.tc
+package com.inth.core.tc
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -129,7 +129,7 @@ class TcStringEncodeTest {
 	}
 
 	/**
-	 * Fails loudly if a fixture asks this codec to author something outside the field set c15t's web
+	 * Fails loudly if a fixture asks this codec to author something outside the field set Inth's web
 	 * codec writes. A skip would turn a real decision into a silent gap.
 	 */
 	private fun assertInsideAuthorableSubset(fixture: TcStringFixture) {

@@ -20,7 +20,7 @@ export interface AdjustClient {
  * third-party sharing with Google's DMA options.
  *
  * In `trackThirdPartySharing`, build `new AdjustThirdPartySharing(adUserData)`
- * and add the `google_dma` granular options `eea` (yours to supply, since c15t's
+ * and add the `google_dma` granular options `eea` (yours to supply, since Inth's
  * policy model is not a legal jurisdiction flag), `ad_personalization` and
  * `ad_user_data`, each `'1'` or `'0'`. Marketing grants both types and is the
  * default category.

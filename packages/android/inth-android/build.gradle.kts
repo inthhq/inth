@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-	namespace = "com.c15t.android"
+	namespace = "com.inth.android"
 	compileSdk = libs.versions.compileSdk.get().toInt()
 
 	defaultConfig {
@@ -17,7 +17,7 @@ android {
 		// Instrumented tests for the parts of this module that only exist on a device:
 		// AndroidKeyStore, the merged manifest read behind `configFrom`, the
 		// androidx.startup Initializer, and the lifecycle ports. Nothing in CI boots an
-		// emulator, so `:c15t-android:connectedDebugAndroidTest` is a local gate; see
+		// emulator, so `:inth-android:connectedDebugAndroidTest` is a local gate; see
 		// README.md.
 		testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 	}
@@ -43,8 +43,8 @@ android {
 			apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_1)
 			languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_1)
 			jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
-			// c15t's own modules and tests use the internal transport door.
-			optIn.add("com.c15t.core.C15tInternalApi")
+			// Inth's own modules and tests use the internal transport door.
+			optIn.add("com.inth.core.InthInternalApi")
 		}
 	}
 
@@ -66,14 +66,14 @@ android {
 	testOptions {
 		unitTests {
 			// The unit tests here cover the module's Android-free helpers only;
-			// the consent logic itself is tested in :c15t-core on a plain JVM.
+			// the consent logic itself is tested in :inth-core on a plain JVM.
 			isReturnDefaultValues = true
 		}
 	}
 }
 
 dependencies {
-	api(project(":c15t-core"))
+	api(project(":inth-core"))
 	// StateFlow and suspend functions are part of this module's public API. The
 	// coroutines runtime already reaches every host through androidx.lifecycle, so
 	// declaring it costs no new dependency; it pins the version this code is built on.

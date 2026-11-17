@@ -6,7 +6,7 @@ kotlin = "2.2.10"
 # 1.11 carries Kotlin 2.3 metadata, unreadable by Expo 57 / RN 0.86 Kotlin 2.1.
 # Keep the binary API readable by that consumer even though the producer uses AGP 9.
 kotlinxSerializationJson = "1.8.1"
-# Matches c15t-consent-ui and the demo. 1.10.x is built with Kotlin 2.1, so the
+# Matches inth-consent-ui and the demo. 1.10.x is built with Kotlin 2.1, so the
 # Kotlin 2.1 consumer above can still read its metadata.
 kotlinxCoroutines = "1.10.2"
 androidxStartup = "1.1.1"

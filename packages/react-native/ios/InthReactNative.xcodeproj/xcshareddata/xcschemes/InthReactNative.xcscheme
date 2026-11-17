@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "FEA83A106A839DC838CF8F87"
-               BuildableName = "C15tReactNative.framework"
-               BlueprintName = "C15tReactNative"
-               ReferencedContainer = "container:C15tReactNative.xcodeproj">
+               BuildableName = "InthReactNative.framework"
+               BlueprintName = "InthReactNative"
+               ReferencedContainer = "container:InthReactNative.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -31,9 +31,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "FEA83A106A839DC838CF8F87"
-            BuildableName = "C15tReactNative.framework"
-            BlueprintName = "C15tReactNative"
-            ReferencedContainer = "container:C15tReactNative.xcodeproj">
+            BuildableName = "InthReactNative.framework"
+            BlueprintName = "InthReactNative"
+            ReferencedContainer = "container:InthReactNative.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
       <Testables>
@@ -54,9 +54,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "FEA83A106A839DC838CF8F87"
-            BuildableName = "C15tReactNative.framework"
-            BlueprintName = "C15tReactNative"
-            ReferencedContainer = "container:C15tReactNative.xcodeproj">
+            BuildableName = "InthReactNative.framework"
+            BlueprintName = "InthReactNative"
+            ReferencedContainer = "container:InthReactNative.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -71,9 +71,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "FEA83A106A839DC838CF8F87"
-            BuildableName = "C15tReactNative.framework"
-            BlueprintName = "C15tReactNative"
-            ReferencedContainer = "container:C15tReactNative.xcodeproj">
+            BuildableName = "InthReactNative.framework"
+            BlueprintName = "InthReactNative"
+            ReferencedContainer = "container:InthReactNative.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

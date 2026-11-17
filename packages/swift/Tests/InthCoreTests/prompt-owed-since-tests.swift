@@ -1,6 +1,6 @@
 import Foundation
 import XCTest
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 /// `promptOwedSince` names each owed prompt, so a reader that skipped snapshots still sees a new one.
 final class PromptOwedSinceTests: XCTestCase {
@@ -29,7 +29,7 @@ final class PromptOwedSinceTests: XCTestCase {
     func testTheIdentifierStaysOutOfTheKernelWire() async throws {
         let core = try await boot()
         XCTAssertNotNil(core.snapshot().promptOwedSince)
-        guard case let .object(fields)? = C15tJSON.parse(try C15tJSON.encode(core.snapshot())) else {
+        guard case let .object(fields)? = InthJSON.parse(try InthJSON.encode(core.snapshot())) else {
             return XCTFail("the snapshot is not a JSON object")
         }
         XCTAssertNil(fields["promptOwedSince"])

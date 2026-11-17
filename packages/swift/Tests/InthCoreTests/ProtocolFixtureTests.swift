@@ -2,7 +2,7 @@ import CryptoKit
 import Foundation
 import XCTest
 
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 /// Runs every fixture in `packages/native-protocol/index.json` against `ConsentCore`.
 ///
@@ -82,18 +82,18 @@ final class ProtocolFixtureTests: XCTestCase {
         )
         XCTAssertEqual(
             index.protocolVersion,
-            C15t.protocolVersion,
-            "index.json is protocol \(index.protocolVersion); this build speaks \(C15t.protocolVersion). Rebuild or regenerate, do not compare across versions."
+            Inth.protocolVersion,
+            "index.json is protocol \(index.protocolVersion); this build speaks \(Inth.protocolVersion). Rebuild or regenerate, do not compare across versions."
         )
         XCTAssertEqual(
             index.policyContractHeader.name,
-            C15t.policyContractHeader,
+            Inth.policyContractHeader,
             "the fixture index declares a different contract header than this build sends"
         )
         XCTAssertEqual(
             index.policyContractHeader.value,
-            C15t.protocolHeaders[C15t.policyContractHeader],
-            "the fixture index pins policy contract \(index.policyContractHeader.value); this build sends \(C15t.protocolHeaders[C15t.policyContractHeader] ?? "nothing")"
+            Inth.protocolHeaders[Inth.policyContractHeader],
+            "the fixture index pins policy contract \(index.policyContractHeader.value); this build sends \(Inth.protocolHeaders[Inth.policyContractHeader] ?? "nothing")"
         )
         for entry in index.fixtures {
             XCTAssertEqual(
@@ -467,7 +467,7 @@ final class ProtocolFixtureTests: XCTestCase {
         let run = try makeRun(entry: entry, input: input)
         await run.core.bootstrapAndSettle(run.config)
         // Native IAB authority is stricter than the generic web category evaluator.
-        let nativeIABExpected = C15tJSON.parse(try Data(contentsOf:
+        let nativeIABExpected = InthJSON.parse(try Data(contentsOf:
             IABCommitTests.fixtureURL.deletingLastPathComponent().appendingPathComponent("missing-authority-expectations.json")))?["snapshots"]?[entry.id]
         record(
             for: entry,
@@ -505,7 +505,7 @@ final class ProtocolFixtureTests: XCTestCase {
             record(for: entry, path: "expected.request", detail: "the core sent no save request")
             return
         }
-        guard let bodyValue = request.body.flatMap({ C15tJSON.parse($0) }) else {
+        guard let bodyValue = request.body.flatMap({ InthJSON.parse($0) }) else {
             record(for: entry, path: "expected.request.body", detail: "no JSON body on the save request")
             return
         }
@@ -686,7 +686,7 @@ final class ProtocolFixtureTests: XCTestCase {
                 policyResolution: nil,
                 storedAt: now
             )
-            store.set(try C15tJSON.encode(envelope), for: StorageKey.snapshot)
+            store.set(try InthJSON.encode(envelope), for: StorageKey.snapshot)
         } else {
             // The claim has to hold in the store or the fixture proves nothing: a seeded
             // envelope would let `hydrate()` raise `ready` and the init whose latch is
@@ -846,7 +846,7 @@ final class ProtocolFixtureTests: XCTestCase {
             )
             return
         }
-        if let rewritten = try? C15tJSON.encode(decoded), rewritten != written {
+        if let rewritten = try? InthJSON.encode(decoded), rewritten != written {
             record(
                 for: entry,
                 path: "expected.write.decoded",
@@ -1096,21 +1096,21 @@ final class ProtocolFixtureTests: XCTestCase {
     }
 
     private static func jsonObject(_ data: Data, entry: Index.Entry) throws -> [String: JSONValue] {
-        guard let parsed = C15tJSON.parse(data), case let .object(fields) = parsed else {
+        guard let parsed = InthJSON.parse(data), case let .object(fields) = parsed else {
             throw Failure.unsupported(fixture: entry.id, detail: "the stored envelope is not a JSON object")
         }
         return fields
     }
 
     private static func encodeValue(_ value: JSONValue, entry: Index.Entry) throws -> Data {
-        guard let data = C15tJSON.encode(value) else {
+        guard let data = InthJSON.encode(value) else {
             throw Failure.unsupported(fixture: entry.id, detail: "the envelope would not encode")
         }
         return data
     }
 
     private func value(of snapshot: ConsentSnapshot, entry: Index.Entry) throws -> JSONValue {
-        guard let data = try? C15tJSON.encode(snapshot), let value = C15tJSON.parse(data) else {
+        guard let data = try? InthJSON.encode(snapshot), let value = InthJSON.parse(data) else {
             throw Failure.unsupported(fixture: entry.id, detail: "the stored snapshot did not serialize to JSON")
         }
         return value
@@ -1135,7 +1135,7 @@ final class ProtocolFixtureTests: XCTestCase {
     }
 
     private func snapshotJSON(_ snapshot: ConsentSnapshot) throws -> JSONValue {
-        guard let value = C15tJSON.parse(try C15tJSON.encode(snapshot)) else {
+        guard let value = InthJSON.parse(try InthJSON.encode(snapshot)) else {
             throw Failure.unsupported(fixture: "core", detail: "the snapshot did not serialize to JSON")
         }
         return value
@@ -1151,7 +1151,7 @@ final class ProtocolFixtureTests: XCTestCase {
         from transport: JSONValue,
         entry: Index.Entry
     ) throws -> HTTPResponse {
-        guard let body = transport["body"], let bodyData = C15tJSON.encode(body) else {
+        guard let body = transport["body"], let bodyData = InthJSON.encode(body) else {
             throw Failure.unsupported(fixture: entry.id, detail: "transport.body is missing")
         }
         var headers: [String: String] = [:]
@@ -1195,11 +1195,11 @@ final class ProtocolFixtureTests: XCTestCase {
     }
 
     private func decode<T: Decodable>(_ type: T.Type, _ value: JSONValue, _ entry: Index.Entry) throws -> T {
-        guard let data = C15tJSON.encode(value) else {
+        guard let data = InthJSON.encode(value) else {
             throw Failure.unsupported(fixture: entry.id, detail: "\(type) would not serialize")
         }
         do {
-            return try C15tJSON.decode(type, from: data)
+            return try InthJSON.decode(type, from: data)
         } catch {
             throw Failure.unsupported(fixture: entry.id, detail: "\(type) rejected the fixture: \(error)")
         }
@@ -1226,13 +1226,13 @@ final class ProtocolFixtureTests: XCTestCase {
             entry.sha256,
             "\(entry.file) is not the file index.json hashed. Run `bun run --cwd packages/react-native generate:fixtures`."
         )
-        guard let parsed = C15tJSON.parse(data) else {
+        guard let parsed = InthJSON.parse(data) else {
             throw Failure.unsupported(fixture: entry.id, detail: "\(entry.file) is not JSON")
         }
-        guard parsed["protocolVersion"]?.intValue == Int64(C15t.protocolVersion) else {
+        guard parsed["protocolVersion"]?.intValue == Int64(Inth.protocolVersion) else {
             throw Failure.unsupported(
                 fixture: entry.id,
-                detail: "fixture protocolVersion \(parsed["protocolVersion"]?.intValue ?? -1) is not this build's \(C15t.protocolVersion)"
+                detail: "fixture protocolVersion \(parsed["protocolVersion"]?.intValue ?? -1) is not this build's \(Inth.protocolVersion)"
             )
         }
         return parsed

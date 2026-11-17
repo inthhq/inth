@@ -6,7 +6,7 @@ final class SwiftUIJourneyTests: XCTestCase {
 
     func testStockChoicePersistsAndWithdrawalStopsWork() {
         launch(reset: true)
-        let accept = app.buttons["c15t.first-layer.accept-all"]
+        let accept = app.buttons["inth.first-layer.accept-all"]
         XCTAssertTrue(accept.waitForExistence(timeout: 10))
         capture("swiftui-stock-first-layer")
         accept.tap()
@@ -18,14 +18,14 @@ final class SwiftUIJourneyTests: XCTestCase {
         launch(unavailable: true)
         assertLabel("sample.choice", "Choice recorded on this device")
         assertLabel("sample.measurement", "Measurement: Granted")
-        XCTAssertFalse(app.buttons["c15t.first-layer.accept-all"].exists)
+        XCTAssertFalse(app.buttons["inth.first-layer.accept-all"].exists)
         app.buttons["sample.preferences"].tap()
-        let toggle = app.switches["c15t.prefs.category.measurement.switch"]
+        let toggle = app.switches["inth.prefs.category.measurement.switch"]
         XCTAssertTrue(toggle.waitForExistence(timeout: 5))
         XCTAssertEqual(toggle.value as? String, "1")
         capture("swiftui-stock-preferences")
         toggle.tap()
-        app.buttons["c15t.prefs.save"].tap()
+        app.buttons["inth.prefs.save"].tap()
         assertLabel("sample.measurement", "Measurement: Denied")
         reveal(app.buttons["sample.record"])
         XCTAssertFalse(app.buttons["sample.record"].isEnabled)
@@ -34,7 +34,7 @@ final class SwiftUIJourneyTests: XCTestCase {
     func testHeadlessDraftCancelSaveAndRelaunch() {
         launch(reset: true, headless: true)
         assertLabel("sample.readiness", "Consent ready")
-        XCTAssertFalse(app.buttons["c15t.first-layer.accept-all"].exists)
+        XCTAssertFalse(app.buttons["inth.first-layer.accept-all"].exists)
         app.buttons["sample.preferences"].tap()
         let toggle = app.switches["sample.custom.measurement"]
         XCTAssertTrue(toggle.waitForExistence(timeout: 5))

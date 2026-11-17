@@ -1,9 +1,9 @@
-@_spi(C15tInternal) @testable import C15tApple
-@_spi(C15tInternal) import C15tCore
+@_spi(InthInternal) @testable import InthApple
+@_spi(InthInternal) import InthCore
 import Combine
 import Foundation
 import XCTest
-@testable import C15tConsentUI
+@testable import InthConsentUI
 
 /// App Tracking Transparency in step with the consent prompt: after it by default and only
 /// with marketing granted, before it on request, and never by itself in manual mode.
@@ -11,8 +11,8 @@ import XCTest
 final class TrackingSequenceTests: XCTestCase {
     /// A stand-in for Apple: what it answers now, whether the app is active, and each ask.
     final class Apple: @unchecked Sendable {
-        var status: C15tTrackingPlatformStatus? = .notDetermined
-        var answer: C15tTrackingPlatformStatus = .authorized
+        var status: InthTrackingPlatformStatus? = .notDetermined
+        var answer: InthTrackingPlatformStatus = .authorized
         var promptString = true
         var active = true
         var additionalInformation = false
@@ -28,14 +28,14 @@ final class TrackingSequenceTests: XCTestCase {
         /// The clock the answer log reads, moved by tests.
         var clock = Date(timeIntervalSince1970: 1_800_000_000)
         /// When the SDK last saw an answer. In memory, so tests start from nothing.
-        let log = C15tTrackingAnswerLog.inMemory()
+        let log = InthTrackingAnswerLog.inMemory()
         /// How many more times the EU sheet pauses on Additional Information before it answers.
         var pausesLeft = Int.max
         /// Whether the last expanded request offered Apple's Additional Information button.
         var offeredButton: Bool?
 
-        var controller: C15tTrackingController {
-            C15tTrackingController(
+        var controller: InthTrackingController {
+            InthTrackingController(
                 trackingPlatformStatus: { self.status },
                 trackingPromptStringPresent: { self.promptString },
                 trackingPrompt: { completion in
@@ -81,7 +81,7 @@ final class TrackingSequenceTests: XCTestCase {
     }
 
     func testRuleTable() {
-        let cases: [(ConsentTrackingRequest, ConsentTrackingStage, C15tTrackingPlatformStatus?, Bool, ConsentDecision, Bool)] = [
+        let cases: [(ConsentTrackingRequest, ConsentTrackingStage, InthTrackingPlatformStatus?, Bool, ConsentDecision, Bool)] = [
             (.afterConsent, .afterPrompt, .notDetermined, true, .granted, true),
             (.afterConsent, .afterPrompt, .notDetermined, true, .denied, false),
             (.afterConsent, .afterPrompt, .notDetermined, true, .pending, false),
@@ -146,7 +146,7 @@ final class TrackingSequenceTests: XCTestCase {
     }
 
     func testAnsweredAppleAsksNothingOnAnyPath() async throws {
-        for status in [C15tTrackingPlatformStatus.authorized, .denied, .restricted] {
+        for status in [InthTrackingPlatformStatus.authorized, .denied, .restricted] {
             for order in ConsentTrackingRequest.allCases {
                 let apple = Apple()
                 apple.status = status
@@ -682,10 +682,10 @@ final class TrackingSequenceTests: XCTestCase {
     func testTheIABAnswerIsComputedOncePerRevision() async throws {
         let core = try await bootIAB()
         XCTAssertEqual(core.save(.all).status, .committed)
-        let before = C15tTrackingConsent.computations
-        for _ in 0..<5 { _ = C15tTrackingConsent.iabMarketingConsented(core) }
-        XCTAssertEqual(C15tTrackingConsent.computations - before, 1)
-        XCTAssertEqual(C15tTrackingConsent.iabMarketingConsented(core), true)
+        let before = InthTrackingConsent.computations
+        for _ in 0..<5 { _ = InthTrackingConsent.iabMarketingConsented(core) }
+        XCTAssertEqual(InthTrackingConsent.computations - before, 1)
+        XCTAssertEqual(InthTrackingConsent.iabMarketingConsented(core), true)
     }
 
     func testTheStockUIOffersTheAdditionalInformationButtonAndADirectRequestDoesNot() async throws {

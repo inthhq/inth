@@ -1,17 +1,17 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.KernelError
-import com.c15t.core.model.KernelUser
-import com.c15t.core.model.ConsentSubject
-import com.c15t.core.model.QueuedSave
-import com.c15t.core.spi.KeyValueStore
-import com.c15t.core.spi.TaskExecutor
-import com.c15t.core.store.C15tStore
-import com.c15t.core.transport.C15tTransport
-import com.c15t.core.transport.InitContext
-import com.c15t.core.transport.SaveOutcome
-import com.c15t.core.transport.TransportOutcome
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.KernelError
+import com.inth.core.model.KernelUser
+import com.inth.core.model.ConsentSubject
+import com.inth.core.model.QueuedSave
+import com.inth.core.spi.KeyValueStore
+import com.inth.core.spi.TaskExecutor
+import com.inth.core.store.InthStore
+import com.inth.core.transport.InthTransport
+import com.inth.core.transport.InitContext
+import com.inth.core.transport.SaveOutcome
+import com.inth.core.transport.TransportOutcome
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.CopyOnWriteArrayList
@@ -47,7 +47,7 @@ import kotlin.test.assertTrue
 class DeliveryPassExclusivityTest {
 	@Test
 	fun `a flush asked for during an open send does not resend the entry in flight`() {
-		val harness = Harness(pool = singleThreadExecutor("c15t-test-io"))
+		val harness = Harness(pool = singleThreadExecutor("inth-test-io"))
 		val kernel = harness.kernel()
 		harness.boot(kernel)
 
@@ -104,7 +104,7 @@ class DeliveryPassExclusivityTest {
 			harness.timeline.record("flush:pass-start")
 			passResult.set(kernel.flushPending())
 		}.apply {
-			name = "c15t-flush-a"
+			name = "inth-flush-a"
 			isDaemon = true
 			start()
 		}
@@ -146,7 +146,7 @@ class DeliveryPassExclusivityTest {
 		// send is still open. It must not become a pass of its own, and it must not be dropped
 		// either: a request answered by a running pass has to be seen by that pass, which
 		// means reading the queue again after a read that predates this entry.
-		val harness = Harness(pool = cachedExecutor("c15t-host-pool"))
+		val harness = Harness(pool = cachedExecutor("inth-host-pool"))
 		val kernel = harness.kernel()
 		harness.boot(kernel)
 
@@ -175,7 +175,7 @@ class DeliveryPassExclusivityTest {
 	@Test
 	fun `a send answered by a running pass is delivered by it and says nothing`() {
 		val errors = CopyOnWriteArrayList<KernelError>()
-		val harness = Harness(pool = cachedExecutor("c15t-host-pool"), logger = errors::add)
+		val harness = Harness(pool = cachedExecutor("inth-host-pool"), logger = errors::add)
 		val kernel = harness.kernel()
 		harness.boot(kernel)
 
@@ -264,7 +264,7 @@ class DeliveryPassExclusivityTest {
 		val timeline = Timeline()
 		val transport = GatedTransport(timeline)
 		private val backend = InMemoryKeyValueStore()
-		private val store = C15tStore(SharedKeyValueStore(backend))
+		private val store = InthStore(SharedKeyValueStore(backend))
 
 		/** Inline execution when no executor is given, which is what makes the saves answer. */
 		private val executor: TaskExecutor? = when {
@@ -419,7 +419,7 @@ class DeliveryPassExclusivityTest {
 	 * A transport that holds every save inside the backend until a test lets it go, which is
 	 * how these tests keep a send "in flight" for exactly as long as they need it.
 	 */
-	private class GatedTransport(private val timeline: Timeline) : C15tTransport {
+	private class GatedTransport(private val timeline: Timeline) : InthTransport {
 		/** What a send answers once the gate is open. */
 		@Volatile
 		var outcome: SaveOutcome = SaveOutcome.Delivered

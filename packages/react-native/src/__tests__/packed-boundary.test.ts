@@ -85,10 +85,10 @@ test('packed runtime, declarations and consumer stay independent of web consent 
 		!existsSync(join(packageDir, 'dist-types/index.d.ts'))
 	) {
 		throw new Error(
-			'Build @c15t/react-native and its dependencies before running the packed-boundary test: bun turbo run build --filter=@c15t/react-native'
+			'Build @inth/react-native and its dependencies before running the packed-boundary test: bun turbo run build --filter=@inth/react-native'
 		);
 	}
-	const directory = mkdtempSync(join(tmpdir(), 'c15t-packed-boundary-'));
+	const directory = mkdtempSync(join(tmpdir(), 'inth-packed-boundary-'));
 	try {
 		// This consumer lives outside the workspace. Keep its registry resolution
 		// subject to the repository's release-age policy too.
@@ -110,7 +110,7 @@ test('packed runtime, declarations and consumer stay independent of web consent 
 			join(directory, 'package.json'),
 			JSON.stringify({
 				dependencies: {
-					'@c15t/react-native': `file:${archive}`,
+					'@inth/react-native': `file:${archive}`,
 					'@types/react': '19.2.17',
 					// The config plugin runs against the app's own expo/config-plugins.
 					expo: development.devDependencies.expo,
@@ -125,22 +125,22 @@ test('packed runtime, declarations and consumer stay independent of web consent 
 			cwd: directory,
 			stdio: 'pipe',
 		});
-		const installed = join(directory, 'node_modules/@c15t/react-native');
+		const installed = join(directory, 'node_modules/@inth/react-native');
 		const manifest = JSON.parse(
 			readFileSync(join(installed, 'package.json'), 'utf8')
 		);
 		const shipped = files(installed);
 		expect(
-			shipped.some((file) => file.endsWith('vendor/C15tApple/C15tApple.swift'))
+			shipped.some((file) => file.endsWith('vendor/InthApple/InthApple.swift'))
 		).toBe(true);
 		expect(
 			shipped.some((file) =>
-				file.endsWith('vendor/C15tApple/analytics-integrations.swift')
+				file.endsWith('vendor/InthApple/analytics-integrations.swift')
 			)
 		).toBe(true);
 		expect(
 			shipped.some((file) =>
-				file.endsWith('vendor/C15tConsentUI/consent-views.swift')
+				file.endsWith('vendor/InthConsentUI/consent-views.swift')
 			)
 		).toBe(true);
 		expect(
@@ -251,8 +251,8 @@ test('packed runtime, declarations and consumer stay independent of web consent 
 				`
 				import assert from 'node:assert/strict';
 				import { createRequire } from 'node:module';
-				import * as imported from '@c15t/react-native/expo-plugin';
-				const required = createRequire(import.meta.url)('@c15t/react-native/expo-plugin');
+				import * as imported from '@inth/react-native/expo-plugin';
+				const required = createRequire(import.meta.url)('@inth/react-native/expo-plugin');
 				for (const plugin of [imported, required]) {
 					assert.equal(typeof plugin.default, 'function');
 					const config = plugin.applyParamsOnConfig(
@@ -260,9 +260,9 @@ test('packed runtime, declarations and consumer stay independent of web consent 
 						{ backendURL: 'https://your-project.inth.app', policy: { rules: [{ id: 'everywhere', match: { fallback: true, isDefault: true }, model: 'opt-in', prompt: 'choice' }] } },
 						{ argv: ['node', 'expo', 'config'], env: {}, projectRoot: process.cwd() }
 					);
-					assert.equal(config.extra.c15t.backendURL, 'https://your-project.inth.app');
-					assert.equal(config.extra.c15t.dryRun, false);
-					assert.equal('mode' in config.extra.c15t, false);
+					assert.equal(config.extra.inth.backendURL, 'https://your-project.inth.app');
+					assert.equal(config.extra.inth.dryRun, false);
+					assert.equal('mode' in config.extra.inth, false);
 				}
 				`,
 			],
@@ -271,14 +271,14 @@ test('packed runtime, declarations and consumer stay independent of web consent 
 		writeFileSync(
 			join(directory, 'consumer.ts'),
 			`
-			import { ConsentProvider, useConsent, type ConsentSnapshot } from '@c15t/react-native';
-			import withC15t, { type C15tPluginProps } from '@c15t/react-native/expo-plugin';
-			import { connectAmplitude, connectFirebaseAnalytics, connectMixpanel, connectPostHog, connectSentryReplay } from '@c15t/react-native/integrations';
+			import { ConsentProvider, useConsent, type ConsentSnapshot } from '@inth/react-native';
+			import withInth, { type InthPluginProps } from '@inth/react-native/expo-plugin';
+			import { connectAmplitude, connectFirebaseAnalytics, connectMixpanel, connectPostHog, connectSentryReplay } from '@inth/react-native/integrations';
 			export const provider: typeof ConsentProvider = ConsentProvider;
 			export const gate: typeof useConsent = useConsent;
 			export type Snapshot = ConsentSnapshot;
-			export const plugin: typeof withC15t = withC15t;
-			export const pluginProps: C15tPluginProps = { backendURL: 'https://your-project.inth.app', policy: { rules: [{ id: 'everywhere', match: { fallback: true, isDefault: true }, model: 'opt-in', prompt: 'choice' }] } };
+			export const plugin: typeof withInth = withInth;
+			export const pluginProps: InthPluginProps = { backendURL: 'https://your-project.inth.app', policy: { rules: [{ id: 'everywhere', match: { fallback: true, isDefault: true }, model: 'opt-in', prompt: 'choice' }] } };
 			export const firebase: typeof connectFirebaseAnalytics = connectFirebaseAnalytics;
 			export const posthog: typeof connectPostHog = connectPostHog;
 			export const amplitude: typeof connectAmplitude = connectAmplitude;
@@ -344,14 +344,14 @@ const topics = [
 test('the actual local mobile tarball contains useful generated docs and no web consent runtime imports', () => {
 	if (!existsSync(join(packageDir, 'dist/index.js'))) {
 		throw new Error(
-			'Build @c15t/react-native before checking the packed docs.'
+			'Build @inth/react-native before checking the packed docs.'
 		);
 	}
 	execFileSync('bun', ['run', 'build:docs'], {
 		cwd: packageDir,
 		stdio: 'pipe',
 	});
-	const directory = mkdtempSync(join(tmpdir(), 'c15t-mobile-docs-'));
+	const directory = mkdtempSync(join(tmpdir(), 'inth-mobile-docs-'));
 	try {
 		const archive = join(directory, 'mobile.tgz');
 		execFileSync(

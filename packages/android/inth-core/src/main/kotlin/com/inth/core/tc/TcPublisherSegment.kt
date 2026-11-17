@@ -1,4 +1,4 @@
-package com.c15t.core.tc
+package com.inth.core.tc
 
 /**
  * The Publisher TC segment: the publisher's own purposes, and its custom ones.

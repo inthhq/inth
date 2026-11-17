@@ -18,7 +18,7 @@ import {
 	FAKE_BOOTSTRAP,
 } from '../../__tests__/helpers/fake-native';
 import { createConsentClient } from '../../native/client';
-import { getNativeC15tEvents } from '../../native/module';
+import { getNativeInthEvents } from '../../native/module';
 import {
 	BRIDGE_PAYLOADS,
 	describeBridgePayloadDrift,
@@ -148,8 +148,8 @@ describe('describeBridgePayloadDrift', () => {
 	});
 
 	test('accepts the tracking answer time the iOS bridge sends', () => {
-		// What `C15tPayload.trackingAuthorization(.authorized, answeredAt:)`
-		// encodes in C15tPayloadTests.swift, keys sorted as the iOS encoder sorts them.
+		// What `InthPayload.trackingAuthorization(.authorized, answeredAt:)`
+		// encodes in InthPayloadTests.swift, keys sorted as the iOS encoder sorts them.
 		const raw = '{"answeredAt":1800000000500,"status":"authorized"}';
 
 		expect(
@@ -248,11 +248,11 @@ describe('commitResult.reason', () => {
 	test('declares every refusal code a native save can return', () => {
 		const kotlin = [
 			...read(
-				'packages/android/c15t-core/src/main/kotlin/com/c15t/core/ConsentCore.kt'
+				'packages/android/inth-core/src/main/kotlin/com/inth/core/ConsentCore.kt'
 			).matchAll(/refusedCommit\(\s*"(?<code>[a-z-]+)"/gu),
 		].map((match) => match.groups?.code);
 		const swiftSave = swiftFunction(
-			read('packages/swift/Sources/C15tCore/ConsentCore.swift'),
+			read('packages/swift/Sources/InthCore/ConsentCore.swift'),
 			'save'
 		);
 		// Rejections are `.failure(CoreErrorInfo(code: ...))` or the `let info`
@@ -267,11 +267,11 @@ describe('commitResult.reason', () => {
 		// (`catch let info as CoreErrorInfo { return .failure(info) }`), such as
 		// `invalid-additional-consent` from `AdditionalConsent.encode` under
 		// `IABAuthority.build`. Those codes are not written in `save` itself, so
-		// every literal code thrown in C15tCore counts while that catch exists.
+		// every literal code thrown in InthCore counts while that catch exists.
 		expect(swiftSave).toMatch(
 			/catch let info as CoreErrorInfo \{ return \.failure\(info\) \}/u
 		);
-		const coreDir = 'packages/swift/Sources/C15tCore';
+		const coreDir = 'packages/swift/Sources/InthCore';
 		const thrown = readdirSync(resolve(REPO, coreDir))
 			.filter((file) => file.endsWith('.swift'))
 			.flatMap((file) => [
@@ -336,11 +336,11 @@ describe('the consent client at the boundary', () => {
 
 		createConsentClient(
 			createFakeNativeModule({ bootstrap }),
-			getNativeC15tEvents()
+			getNativeInthEvents()
 		).dispose();
 		createConsentClient(
 			createFakeNativeModule({ bootstrap }),
-			getNativeC15tEvents()
+			getNativeInthEvents()
 		).dispose();
 
 		// The checker loads lazily, in development only, so the warning lands a tick later.
@@ -348,7 +348,7 @@ describe('the consent client at the boundary', () => {
 		await flushDriftChecks();
 		expect(warn).toHaveBeenCalledTimes(1);
 		expect(warn).toHaveBeenCalledWith(
-			'c15t ConsentClient: the native bootstrap payload does not match the declared wire shape.',
+			'Inth ConsentClient: the native bootstrap payload does not match the declared wire shape.',
 			['subjectId: required, absent from the payload']
 		);
 	});
@@ -356,7 +356,7 @@ describe('the consent client at the boundary', () => {
 	test('warns about a commit result with a renamed key', async () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 		const fake = createFakeNativeModule();
-		const client = createConsentClient(fake, getNativeC15tEvents());
+		const client = createConsentClient(fake, getNativeInthEvents());
 		fake.failCommitWith(
 			JSON.stringify({
 				confirmed: [],
@@ -373,7 +373,7 @@ describe('the consent client at the boundary', () => {
 
 		await vi.waitFor(() => expect(warn).toHaveBeenCalled());
 		expect(warn).toHaveBeenCalledWith(
-			'c15t ConsentClient: the native commitResult payload does not match the declared wire shape.',
+			'Inth ConsentClient: the native commitResult payload does not match the declared wire shape.',
 			['queued: required, absent from the payload']
 		);
 	});
@@ -387,7 +387,7 @@ describe('the consent client at the boundary', () => {
 			createFakeNativeModule({
 				bootstrap: { ...rest, stored: hasStoredSnapshot },
 			}),
-			getNativeC15tEvents()
+			getNativeInthEvents()
 		).dispose();
 		vi.unstubAllEnvs();
 

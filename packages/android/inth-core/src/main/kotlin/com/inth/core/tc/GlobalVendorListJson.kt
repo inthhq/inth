@@ -1,6 +1,6 @@
 @file:OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)
 
-package com.c15t.core.tc
+package com.inth.core.tc
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -43,7 +43,7 @@ import kotlinx.serialization.json.contentOrNull
  * wire value, and it never says the core must stop serving the policy it did read. A device on a
  * list-less `/init` therefore behaves exactly as a device whose backend has IAB switched off: the
  * categories, the prompt, and every save body still work, and nothing new can fail.
- * [com.c15t.core.transport.MappedInit.gvl] answers null for both the absent and the refused case,
+ * [com.inth.core.transport.MappedInit.gvl] answers null for both the absent and the refused case,
  * the kernel latches, and so a refused list cannot take back a list the device already had either.
  */
 object GlobalVendorListJson {
@@ -88,7 +88,7 @@ object GlobalVendorListJson {
 	 * Never throws. A `gvl` that is absent, not an object, missing a key the acceptance rules ask
 	 * for, or shaped so this model cannot name it all answer null, which is the same answer as "IAB
 	 * is off". A caller holding a list must not clear it on this null -- the latch that keeps that
-	 * promise is in [com.c15t.core.ConsentCore.runInit].
+	 * promise is in [com.inth.core.ConsentCore.runInit].
 	 */
 	fun fromInitBody(body: JsonObject?): GlobalVendorList? = read(body?.get(GVL_KEY))
 

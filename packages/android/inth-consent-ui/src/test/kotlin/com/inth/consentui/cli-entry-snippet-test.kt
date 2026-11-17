@@ -1,4 +1,4 @@
-package com.c15t.consentui
+package com.inth.consentui
 
 import android.view.View
 import androidx.activity.ComponentActivity
@@ -17,23 +17,23 @@ class CliEntrySnippetTest {
 	// Never called: showing the prompt needs an installed core.
 	@Composable
 	private fun CliComposeEntry() {
-		// c15t-cli-snippet:compose:start
-		C15tConsent(privacyPolicyUrl = "https://app.example/privacy")
-		// c15t-cli-snippet:compose:end
+		// inth-cli-snippet:compose:start
+		InthConsent(privacyPolicyUrl = "https://app.example/privacy")
+		// inth-cli-snippet:compose:end
 	}
 
 	// Never called. `this` is the Activity, after `setContentView`.
 	private fun ComponentActivity.cliActivityEntry(privacySettings: View) {
-		// c15t-cli-snippet:activity:start
+		// inth-cli-snippet:activity:start
 		val consent = attachConsent("https://app.example/privacy")
 		privacySettings.setOnClickListener { consent.presentPreferences() }
-		// c15t-cli-snippet:activity:end
+		// inth-cli-snippet:activity:end
 	}
 
 	// Never called, like [cliActivityEntry].
 	private fun cliPrivacySettings() {
-		// c15t-cli-snippet:privacy-settings:start
+		// inth-cli-snippet:privacy-settings:start
 		ConsentPrompt.current?.presentPreferences()
-		// c15t-cli-snippet:privacy-settings:end
+		// inth-cli-snippet:privacy-settings:end
 	}
 }

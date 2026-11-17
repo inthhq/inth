@@ -21,7 +21,7 @@ public struct AdditionalConsentList: Sendable, Codable, Equatable {
         fetchedAt >= 0 && now >= fetchedAt && now - fetchedAt < maxAge
     }
     var disclosureID: String? {
-        guard let bytes = try? C15tJSON.encode(providers) else { return nil }
+        guard let bytes = try? InthJSON.encode(providers) else { return nil }
         return SHA256.hash(data: bytes).map { String(format: "%02x", $0) }.joined()
     }
 }

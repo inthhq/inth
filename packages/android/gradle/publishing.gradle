@@ -1,12 +1,12 @@
 // Shared by the headless JVM and Android publications. Remote publication is opt-in.
-def nativeVersion = providers.gradleProperty('c15t.native.version').get()
+def nativeVersion = providers.gradleProperty('inth.native.version').get()
 def artifactName = project.name
 def centralPublication = providers.environmentVariable('C15T_MAVEN_CENTRAL').orNull == 'true'
 def privatePublication = providers.environmentVariable('C15T_MAVEN_PUBLISH').orNull == 'true'
 if (centralPublication && privatePublication) {
 	throw new GradleException('Choose Maven Central or the private pilot publication, not both.')
 }
-group = 'com.c15t'
+group = 'com.inth'
 version = nativeVersion
 
 publishing {
@@ -61,25 +61,25 @@ tasks.withType(AbstractArchiveTask).configureEach {
 	reproducibleFileOrder = true
 }
 tasks.withType(Jar).configureEach {
-	from(rootProject.file('../../LICENSE')) { into "META-INF/licenses/com.c15t/${artifactName}"; rename { 'LICENSE' } }
-	from(rootProject.file('../../NOTICE')) { into "META-INF/licenses/com.c15t/${artifactName}" }
+	from(rootProject.file('../../LICENSE')) { into "META-INF/licenses/com.inth/${artifactName}"; rename { 'LICENSE' } }
+	from(rootProject.file('../../NOTICE')) { into "META-INF/licenses/com.inth/${artifactName}" }
 	manifest.attributes('Implementation-Version': nativeVersion, 'Implementation-Vendor': 'c15t')
 }
 
 def metadata = tasks.register('generateNativeMetadata') {
-	def output = layout.buildDirectory.file("generated/native-metadata/META-INF/c15t/${artifactName}.properties")
+	def output = layout.buildDirectory.file("generated/native-metadata/META-INF/inth/${artifactName}.properties")
 	inputs.property('nativeVersion', nativeVersion)
 	inputs.property('artifact', artifactName)
 	outputs.file(output)
 	doLast {
 		output.get().asFile.with {
 			parentFile.mkdirs()
-			text = "group=com.c15t\nartifact=${artifactName}\nversion=${nativeVersion}\nprotocol=1\n"
+			text = "group=com.inth\nartifact=${artifactName}\nversion=${nativeVersion}\nprotocol=1\n"
 		}
 	}
 }
 
-if (project.name == 'c15t-core') {
+if (project.name == 'inth-core') {
 	sourceSets.main.resources.srcDir(layout.buildDirectory.dir('generated/native-metadata'))
 	tasks.named('processResources') { dependsOn metadata }
 	tasks.named('sourcesJar') { dependsOn metadata }
@@ -89,7 +89,7 @@ if (project.name == 'c15t-core') {
 	def license = tasks.register('copyNativeLicense', Copy) {
 		from(rootProject.file('../../LICENSE')) { rename { 'LICENSE' } }
 		from(rootProject.file('../../NOTICE'))
-		into layout.buildDirectory.dir("license-resources/META-INF/licenses/com.c15t/${artifactName}")
+		into layout.buildDirectory.dir("license-resources/META-INF/licenses/com.inth/${artifactName}")
 	}
 	tasks.named('preBuild') { dependsOn metadata, license }
 }
@@ -97,13 +97,13 @@ if (project.name == 'c15t-core') {
 afterEvaluate {
 	publishing.publications {
 		register('release', MavenPublication) {
-			from components.getByName(project.name == 'c15t-core' ? 'java' : 'release')
+			from components.getByName(project.name == 'inth-core' ? 'java' : 'release')
 			artifact apiDocs
 			pom {
 				name = project.name
-				description = project.name == 'c15t-core' ?
-					'Headless c15t consent and IAB engine for the JVM.' :
-					(project.name == 'c15t-consent-ui' ? 'Optional native Compose consent presenter for c15t.' : 'Android persistence, transport and lifecycle services for c15t. No UI dependency.')
+				description = project.name == 'inth-core' ?
+					'Headless Inth consent and IAB engine for the JVM.' :
+					(project.name == 'inth-consent-ui' ? 'Optional native Compose consent presenter for Inth.' : 'Android persistence, transport and lifecycle services for Inth. No UI dependency.')
 				url = 'https://c15t.com'
 				licenses {
 					license {

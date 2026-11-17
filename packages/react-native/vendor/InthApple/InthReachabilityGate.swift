@@ -9,7 +9,7 @@ import Foundation
 /// only records the state, and a later one counts as a gain only once a loss has
 /// separated it from that seed.
 ///
-/// Both directions matter, and both are pinned by `C15tReachabilityGateTests`. A gate
+/// Both directions matter, and both are pinned by `InthReachabilityGateTests`. A gate
 /// that replays the seed duplicates a pass already under way. A gate that replays only
 /// the first genuine gain leaves a subject's decision queued for the rest of a session
 /// spent online, which is the failure this leg exists to prevent.
@@ -18,7 +18,7 @@ import Foundation
 /// the wrong answer here is silent — a queued save that simply never goes out, with
 /// nothing in the snapshot to show why — and this is the half of the leg that can be
 /// tested without a device and a link to drop.
-public final class C15tReachabilityGate: @unchecked Sendable {
+public final class InthReachabilityGate: @unchecked Sendable {
     private let lock = NSLock()
     private let onGained: @Sendable () -> Void
     private var seeded = false

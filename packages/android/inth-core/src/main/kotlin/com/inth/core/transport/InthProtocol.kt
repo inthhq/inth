@@ -1,4 +1,4 @@
-package com.c15t.core.transport
+package com.inth.core.transport
 
 /**
  * Header contract shared with `@c15t/core`.
@@ -8,7 +8,7 @@ package com.c15t.core.transport
  * producer that speaks a different contract answers `unsupported-contract`
  * rather than a wire this build would misread.
  */
-object C15tProtocol {
+object InthProtocol {
 	const val VERSION_HEADER = "x-c15t-version"
 
 	const val POLICY_CONTRACT_HEADER = "x-c15t-policy-contract"
@@ -26,7 +26,7 @@ object C15tProtocol {
 	 *
 	 * A hint about bytes, never the answer about disclosure. A producer that honours it sends a list
 	 * that needs no pruning; one that ignores it sends the wide one, and
-	 * [com.c15t.core.NativeConfig.vendors] prunes it on the way into state. That is why an over-cap
+	 * [com.inth.core.NativeConfig.vendors] prunes it on the way into state. That is why an over-cap
 	 * declaration sends no header and still gets a narrow device.
 	 *
 	 * The name is shared wire vocabulary: a producer reads the same header from a device, and the
@@ -62,14 +62,14 @@ object C15tProtocol {
 	/** Platform tag for a Kotlin or Java app that installs the core itself. */
 	const val PLATFORM_ANDROID = "android"
 
-	/** Platform tag for the Android side of `@c15t/react-native`. */
+	/** Platform tag for the Android side of `@inth/react-native`. */
 	const val PLATFORM_REACT_NATIVE = "rn"
 
 	/** Default SDK version, kept in step with the `@c15t/core` alpha line. */
 	const val DEFAULT_SDK_VERSION = "3.0.0-alpha.1"
 
 	/**
-	 * Headers every c15t-bound request carries.
+	 * Headers every inth-bound request carries.
 	 *
 	 * `x-c15t-version` is the unprefixed native version, matching the web format and the
 	 * Swift core. [platform] adds [PLATFORM_HEADER]; `null` sends no platform header.
@@ -135,7 +135,7 @@ sealed class ProducerContract {
 	data class Declared(val version: Int) : ProducerContract()
 
 	companion object {
-		/** Read [C15tProtocol.POLICY_CONTRACT_HEADER] out of a response. */
+		/** Read [InthProtocol.POLICY_CONTRACT_HEADER] out of a response. */
 		fun fromHeader(headerValue: String?): ProducerContract {
 			val trimmed = headerValue?.trim() ?: return NotDeclared
 			if (trimmed.isEmpty()) {

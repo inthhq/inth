@@ -4,8 +4,8 @@ import { join } from 'node:path';
 
 import { describe, expect, it, beforeAll, afterAll } from 'vitest';
 
-import withC15tOnce from '../index';
-import { applyParamsOnConfig } from '../with-c15t';
+import withInthOnce from '../index';
+import { applyParamsOnConfig } from '../with-inth';
 import {
 	EAS_BUILD_ENV,
 	FIXTURE_DIR,
@@ -40,7 +40,7 @@ class MainApplication : Application(), ReactApplication {
 
 const MANUAL_MAIN_APPLICATION = CLEAN_MAIN_APPLICATION.replace(
 	'// add(MyReactNativePackage())',
-	'add(C15tReactNativePackage())'
+	'add(InthReactNativePackage())'
 );
 
 const CLEAN_PODFILE = `require File.join(File.dirname(\`node --print "require.resolve('expo/package.json')"\`), "scripts/autolinking")
@@ -64,8 +64,8 @@ let emptyProjectRoot = '';
 let generatedProjectRoot = '';
 
 beforeAll(() => {
-	emptyProjectRoot = mkdtempSync(join(tmpdir(), 'c15t-expo-bare-'));
-	generatedProjectRoot = mkdtempSync(join(tmpdir(), 'c15t-expo-cng-'));
+	emptyProjectRoot = mkdtempSync(join(tmpdir(), 'inth-expo-bare-'));
+	generatedProjectRoot = mkdtempSync(join(tmpdir(), 'inth-expo-cng-'));
 	mkdirSync(join(generatedProjectRoot, 'ios'));
 	mkdirSync(join(generatedProjectRoot, 'android'));
 });
@@ -254,7 +254,7 @@ describe('a bare workflow that already wired the module', () => {
 				language: 'kt',
 				path: 'android/app/src/main/java/com/example/consentdemo/MainApplication.kt',
 			})
-		).rejects.toThrowError(/already registers the c15t native module/u);
+		).rejects.toThrowError(/already registers the Inth native module/u);
 	});
 
 	it('leaves an autolinked MainApplication untouched', async () => {
@@ -277,7 +277,7 @@ describe('a bare workflow that already wired the module', () => {
 			runMod(applyToFixture(PROPS), 'ios', 'podfile', {
 				contents: CLEAN_PODFILE.replace(
 					'  use_expo_modules!',
-					"  use_expo_modules!\n  pod 'C15tReactNative', :path => '../node_modules/@c15t/react-native'"
+					"  use_expo_modules!\n  pod 'InthReactNative', :path => '../node_modules/@inth/react-native'"
 				),
 				language: 'rb',
 				path: 'ios/Podfile',
@@ -300,7 +300,7 @@ describe('a bare workflow that already wired the module', () => {
 			runMod(applyToFixture(PROPS), 'android', 'appBuildGradle', {
 				contents: gradleFile('app-build.gradle').contents.replace(
 					'implementation("com.facebook.react:react-android")',
-					'implementation("com.facebook.react:react-android")\n    implementation project(":c15t-react-native")'
+					'implementation("com.facebook.react:react-android")\n    implementation project(":inth-react-native")'
 				),
 				language: 'groovy',
 				path: 'android/app/build.gradle',
@@ -354,12 +354,12 @@ describe('over-the-air updates', () => {
 
 describe('package surface', () => {
 	it('exports the plugin the app.json string names', () => {
-		expect(typeof withC15tOnce).toBe('function');
+		expect(typeof withInthOnce).toBe('function');
 	});
 
 	it('applies once when another plugin pulls it in too', () => {
-		const applied = withC15tOnce(fixtureConfig(), PROPS as never);
-		const twice = withC15tOnce(applied, PROPS as never);
+		const applied = withInthOnce(fixtureConfig(), PROPS as never);
+		const twice = withInthOnce(applied, PROPS as never);
 
 		expect(twice).toBe(applied);
 	});

@@ -1,19 +1,19 @@
-package com.c15t.android
+package com.inth.android
 
-import com.c15t.core.C15t
-import com.c15t.core.CommitIntent
-import com.c15t.core.NativeConfig
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentSubject
-import com.c15t.core.model.KernelUser
-import com.c15t.core.model.QueuedSave
-import com.c15t.core.spi.KeyValueStore
-import com.c15t.core.spi.TaskExecutor
-import com.c15t.core.store.C15tStore
-import com.c15t.core.transport.C15tTransport
-import com.c15t.core.transport.InitContext
-import com.c15t.core.transport.SaveOutcome
-import com.c15t.core.transport.TransportOutcome
+import com.inth.core.Inth
+import com.inth.core.CommitIntent
+import com.inth.core.NativeConfig
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentSubject
+import com.inth.core.model.KernelUser
+import com.inth.core.model.QueuedSave
+import com.inth.core.spi.KeyValueStore
+import com.inth.core.spi.TaskExecutor
+import com.inth.core.store.InthStore
+import com.inth.core.transport.InthTransport
+import com.inth.core.transport.InitContext
+import com.inth.core.transport.SaveOutcome
+import com.inth.core.transport.TransportOutcome
 import kotlinx.serialization.json.Json
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -23,28 +23,28 @@ import org.junit.Test
 
 class ConnectivityRecoveryTest {
 	@Before
-	fun clearInstalledCore() = C15t.uninstall()
+	fun clearInstalledCore() = Inth.uninstall()
 
 	@After
-	fun leaveNoInstalledCore() = C15t.uninstall()
+	fun leaveNoInstalledCore() = Inth.uninstall()
 
 	@Test
 	fun `connectivity recovery replays the queue off callback thread and refreshes policy`() {
 		val transport = RecordingTransport()
-		C15t.bootstrap(
+		Inth.bootstrap(
 			NativeConfig(backendUrl = "https://example.test", consentCategories = listOf(ConsentCategory.MEASUREMENT)),
-			C15tStore(MemoryStore()),
+			InthStore(MemoryStore()),
 			transport = transport,
 			executor = TaskExecutor { it() },
 		)
-		val result = C15t.save(CommitIntent.All)
+		val result = Inth.save(CommitIntent.All)
 		assertTrue("${result.error}", result.ok)
 		val savesBefore = transport.saves
 		val initsBefore = transport.inits
 		transport.online = true
 		val handed = mutableListOf<() -> Unit>()
 		val gate = ReachabilityGate {
-			C15tAndroid.onNetworkGained(TaskExecutor { handed.add(it) })
+			InthAndroid.onNetworkGained(TaskExecutor { handed.add(it) })
 		}
 
 		gate.onLost()
@@ -57,7 +57,7 @@ class ConnectivityRecoveryTest {
 		assertEquals("online recovery must retry init without a foreground transition", initsBefore + 1, transport.inits)
 	}
 
-	private class RecordingTransport : C15tTransport {
+	private class RecordingTransport : InthTransport {
 		var inits = 0
 		var saves = 0
 		var online = false

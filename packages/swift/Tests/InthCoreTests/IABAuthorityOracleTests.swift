@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 /// Independent reference bytes from @iabtechlabtcf/core 1.5.22.
 final class IABAuthorityOracleTests: XCTestCase {
@@ -29,7 +29,7 @@ final class IABAuthorityOracleTests: XCTestCase {
     // TCF-CHECK: T11
     // TCF-CHECK: T13
     func testNativeMatchesReferenceOnGapsDeletedVendorsAndDays() throws {
-        let oracle = try C15tJSON.decode(
+        let oracle = try InthJSON.decode(
             Oracle.self,
             from: Data(contentsOf: IABCommitTests.fixtureURL.deletingLastPathComponent().appendingPathComponent("authority-oracle.json")))
         for row in oracle.cases {

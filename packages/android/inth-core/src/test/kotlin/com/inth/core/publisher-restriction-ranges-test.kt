@@ -1,7 +1,7 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.iab.*
-import com.c15t.core.tc.*
+import com.inth.core.iab.*
+import com.inth.core.tc.*
 import kotlin.test.*
 
 class PublisherRestrictionRangesTest {

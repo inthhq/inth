@@ -1,20 +1,20 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.model.ConsentAction
-import com.c15t.core.model.ConsentLocation
-import com.c15t.core.model.ConsentModel
-import com.c15t.core.model.ConsentSnapshot
-import com.c15t.core.model.ConsentState
-import com.c15t.core.model.ConsentSubject
-import com.c15t.core.model.ExplicitChoice
-import com.c15t.core.model.KernelError
-import com.c15t.core.model.KernelOverrides
-import com.c15t.core.model.PolicyResolution
-import com.c15t.core.model.PromptPurpose
-import com.c15t.core.model.PromptRequirement
-import com.c15t.core.store.C15tJson
-import com.c15t.core.store.SnapshotEnvelope
-import com.c15t.core.wire.SnapshotWire
+import com.inth.core.model.ConsentAction
+import com.inth.core.model.ConsentLocation
+import com.inth.core.model.ConsentModel
+import com.inth.core.model.ConsentSnapshot
+import com.inth.core.model.ConsentState
+import com.inth.core.model.ConsentSubject
+import com.inth.core.model.ExplicitChoice
+import com.inth.core.model.KernelError
+import com.inth.core.model.KernelOverrides
+import com.inth.core.model.PolicyResolution
+import com.inth.core.model.PromptPurpose
+import com.inth.core.model.PromptRequirement
+import com.inth.core.store.InthJson
+import com.inth.core.store.SnapshotEnvelope
+import com.inth.core.wire.SnapshotWire
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.boolean
@@ -106,7 +106,7 @@ class SnapshotWireTest {
 		val snapshot = choiceSnapshot()
 		val wire = SnapshotWire.toJsonElement(snapshot)
 		val stored = json.parseToJsonElement(
-			C15tJson.storage.encodeToString(ConsentSnapshot.serializer(), snapshot)
+			InthJson.storage.encodeToString(ConsentSnapshot.serializer(), snapshot)
 		).jsonObject
 
 		// `resolution` loses only a null `reason`; its own test below covers it.
@@ -211,7 +211,7 @@ class SnapshotWireTest {
 	fun `the stored envelope keeps the core's own names`() {
 		val snapshot = choiceSnapshot()
 		val envelope = SnapshotEnvelope(snapshot = snapshot)
-		val written = C15tJson.storage.encodeToString(SnapshotEnvelope.serializer(), envelope)
+		val written = InthJson.storage.encodeToString(SnapshotEnvelope.serializer(), envelope)
 
 		// Names inside a stored envelope are the core's business, and an installed app
 		// reads what the previous build wrote. `RetiredWireFields` shows what happens to
@@ -226,7 +226,7 @@ class SnapshotWireTest {
 
 		assertEquals(
 			snapshot,
-			C15tJson.storage.decodeFromString(SnapshotEnvelope.serializer(), written).snapshot,
+			InthJson.storage.decodeFromString(SnapshotEnvelope.serializer(), written).snapshot,
 			"the projection changed what a round trip through the store preserves",
 		)
 	}

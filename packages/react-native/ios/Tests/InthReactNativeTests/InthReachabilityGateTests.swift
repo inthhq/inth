@@ -1,14 +1,14 @@
 import Foundation
 import XCTest
 
-@_spi(C15tInternal) @testable import C15tReactNativeBridge
+@_spi(InthInternal) @testable import InthReactNativeBridge
 
 /// Which connectivity updates earn a queue replay.
 ///
 /// Both directions matter, and neither is reachable from a snapshot, so this is the only
 /// place the rule is checked without a device and a cable to unplug. The four cases below
 /// are the same four `ReachabilityGateTest` pins on Android.
-final class C15tReachabilityGateTests: XCTestCase {
+final class InthReachabilityGateTests: XCTestCase {
     /// Counts the replays the gate decided to start.
     private final class Recorder: @unchecked Sendable {
         private let lock = NSLock()
@@ -35,7 +35,7 @@ final class C15tReachabilityGateTests: XCTestCase {
 
     func testTheNetworkAlreadyUpAtRegistrationIsNotAGain() {
         let seen = Recorder()
-        let gate = C15tReachabilityGate(onGained: seen.onGained)
+        let gate = InthReachabilityGate(onGained: seen.onGained)
 
         // `NWPathMonitor` delivers the current path as its first update, and the launch
         // replay inside `bootstrap` is already running or already ran.
@@ -52,7 +52,7 @@ final class C15tReachabilityGateTests: XCTestCase {
     /// machine delivers is not the assertion, so this does not need a link to unplug.
     func testAMonitorNeverReplaysForThePathTheProcessStartedWith() {
         let seen = Recorder()
-        let monitor = C15tReachability.register(onGained: seen.onGained)
+        let monitor = InthReachability.register(onGained: seen.onGained)
 
         // Long enough for the initial delivery, which `NWPathMonitor` makes on its own
         // queue rather than inline with `start(queue:)`.
@@ -65,7 +65,7 @@ final class C15tReachabilityGateTests: XCTestCase {
 
     func testANetworkThatArrivesAfterALossIsAGain() {
         let seen = Recorder()
-        let gate = C15tReachabilityGate(onGained: seen.onGained)
+        let gate = InthReachabilityGate(onGained: seen.onGained)
 
         gate.onAvailable()
         gate.onLost()
@@ -76,7 +76,7 @@ final class C15tReachabilityGateTests: XCTestCase {
 
     func testALinkThatFlapsWithoutDroppingDoesNotReplayTwice() {
         let seen = Recorder()
-        let gate = C15tReachabilityGate(onGained: seen.onGained)
+        let gate = InthReachabilityGate(onGained: seen.onGained)
 
         // Wi-Fi to cellular, or a new address on the same link: repeated satisfied
         // updates with no loss between them, which is one event and not three.
@@ -89,7 +89,7 @@ final class C15tReachabilityGateTests: XCTestCase {
 
     func testEveryRealGainReplaysAndNotJustTheFirst() {
         let seen = Recorder()
-        let gate = C15tReachabilityGate(onGained: seen.onGained)
+        let gate = InthReachabilityGate(onGained: seen.onGained)
 
         for _ in 0..<3 {
             gate.onLost()
@@ -105,7 +105,7 @@ final class C15tReachabilityGateTests: XCTestCase {
 
     func testLosingANetworkReplaysNothing() {
         let seen = Recorder()
-        let gate = C15tReachabilityGate(onGained: seen.onGained)
+        let gate = InthReachabilityGate(onGained: seen.onGained)
 
         gate.onLost()
 
@@ -114,7 +114,7 @@ final class C15tReachabilityGateTests: XCTestCase {
 
     func testAMonitorThatStartsOfflineCountsTheFirstConnectionAsAGain() {
         let seen = Recorder()
-        let gate = C15tReachabilityGate(onGained: seen.onGained)
+        let gate = InthReachabilityGate(onGained: seen.onGained)
 
         // The app launched with the link already down, so the first update is a loss and
         // there is nothing to race. Coming online here is a real gain and has to be

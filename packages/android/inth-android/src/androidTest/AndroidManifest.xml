@@ -12,7 +12,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 	<application>
 		<meta-data
-			android:name="com.c15t.BACKEND_URL"
+			android:name="com.inth.BACKEND_URL"
 			android:value="https://consent.instrumentation.invalid" />
 		<!--
 			The instrumented APK is debuggable, so dryRun is allowed, and it is what lets
@@ -20,10 +20,10 @@
 			through the internal door with their own transport and do not read this.
 		-->
 		<meta-data
-			android:name="com.c15t.DRY_RUN"
+			android:name="com.inth.DRY_RUN"
 			android:value="true" />
 		<meta-data
-			android:name="com.c15t.BACKEND_DOMAIN"
+			android:name="com.inth.BACKEND_DOMAIN"
 			android:value="consent.instrumentation.invalid" />
 		<!--
 			The declared category scope, comma-separated, with a trailing name
@@ -32,7 +32,7 @@
 			reader drops an unknown raw value.
 		-->
 		<meta-data
-			android:name="com.c15t.CATEGORIES"
+			android:name="com.inth.CATEGORIES"
 			android:value="necessary, functionality, measurement, marketing, not-a-category" />
 		<!--
 			Unquoted on purpose. The parser hands an unquoted `true` over as a Boolean and
@@ -40,7 +40,7 @@
 			whichever spelling the app happened to type.
 		-->
 		<meta-data
-			android:name="com.c15t.FORCE_GPC"
+			android:name="com.inth.FORCE_GPC"
 			android:value="true" />
 
 		<!--
@@ -49,7 +49,7 @@
 			exists so a test can bring the process to the foreground and take it away again.
 		-->
 		<activity
-			android:name="com.c15t.android.C15tForegroundHostActivity"
+			android:name="com.inth.android.InthForegroundHostActivity"
 			android:exported="false"
 			android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 	</application>

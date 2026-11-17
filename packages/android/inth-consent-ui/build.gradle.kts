@@ -6,7 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 android {
-    namespace = "com.c15t.consentui"
+    namespace = "com.inth.consentui"
     compileSdk = 36
     defaultConfig { minSdk = 24 }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
@@ -16,8 +16,8 @@ android {
             apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_1)
             languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_1)
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
-            // c15t's own modules and tests use the internal transport door.
-            optIn.add("com.c15t.core.C15tInternalApi")
+            // Inth's own modules and tests use the internal transport door.
+            optIn.add("com.inth.core.InthInternalApi")
         }
     }
     buildFeatures { compose = true }
@@ -26,7 +26,7 @@ android {
     testOptions.unitTests.isIncludeAndroidResources = true
 }
 dependencies {
-    api(project(":c15t-core"))
+    api(project(":inth-core"))
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.robolectric:robolectric:4.16")
     testImplementation(libs.androidx.test.core)

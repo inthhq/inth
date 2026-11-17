@@ -1,6 +1,6 @@
 // #region docs:swift-mixpanel-binding title="MixpanelOwner.swift"
-import C15tApple
-import C15tCore
+import InthApple
+import InthCore
 
 final class MixpanelOwner {
     private let consent: MixpanelIntegration

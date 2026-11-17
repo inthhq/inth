@@ -183,7 +183,7 @@ public enum InthProjectURL {
 ///
 /// The SDK ships as source, so it is compiled with the app's own configuration and
 /// `DEBUG` here is the app's `DEBUG`.
-public enum C15tBuild {
+public enum InthBuild {
     private static let lock = Lock()
     private static var debugOverride: Bool?
 
@@ -205,7 +205,7 @@ public enum C15tBuild {
     }
 
     /// Tests only: pretend the build is a debug or a release build. `nil` restores the real answer.
-    @_spi(C15tInternal) public static func simulate(debug: Bool?) {
+    @_spi(InthInternal) public static func simulate(debug: Bool?) {
         lock.withLock { debugOverride = debug }
     }
 }

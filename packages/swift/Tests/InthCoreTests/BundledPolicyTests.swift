@@ -2,7 +2,7 @@ import CryptoKit
 import Foundation
 import XCTest
 
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 final class BundledPolicyTests: XCTestCase {
     private var vector: JSONValue {
@@ -10,7 +10,7 @@ final class BundledPolicyTests: XCTestCase {
             let url = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
                 .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
                 .appendingPathComponent("native-protocol/bundled-policy/parity.json")
-            return try XCTUnwrap(C15tJSON.parse(Data(contentsOf: url)))
+            return try XCTUnwrap(InthJSON.parse(Data(contentsOf: url)))
         }
     }
     private func resource(_ patch: (inout [String: JSONValue]) -> Void = { _ in }) throws
@@ -18,16 +18,16 @@ final class BundledPolicyTests: XCTestCase {
     {
         let v = try vector
         var body = try XCTUnwrap(
-            C15tJSON.parse(Data(v["resource"]!["payload"]!.stringValue!.utf8))?.objectValue)
+            InthJSON.parse(Data(v["resource"]!["payload"]!.stringValue!.utf8))?.objectValue)
         patch(&body)
-        let payload = String(data: try C15tJSON.encode(JSONValue.object(body)), encoding: .utf8)!
+        let payload = String(data: try InthJSON.encode(JSONValue.object(body)), encoding: .utf8)!
         let wrapper = JSONValue.object([
             "payload": .string(payload),
             "sha256": .string(
                 SHA256.hash(data: Data(payload.utf8)).map { String(format: "%02x", $0) }.joined()),
         ])
         return BundledPolicyResource(
-            data: try C15tJSON.encode(wrapper), endpoint: v["endpoint"]!.stringValue!)
+            data: try InthJSON.encode(wrapper), endpoint: v["endpoint"]!.stringValue!)
     }
     func testTypeScriptMatchingAndLocaleParity() throws {
         let v = try vector
@@ -54,11 +54,11 @@ final class BundledPolicyTests: XCTestCase {
         let url = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
             .appendingPathComponent("native-protocol/bundled-policy/invalid-resources.json")
-        let fixture = try XCTUnwrap(C15tJSON.parse(Data(contentsOf: url)))
+        let fixture = try XCTUnwrap(InthJSON.parse(Data(contentsOf: url)))
         var problems: [String] = []
         for row in try XCTUnwrap(fixture["cases"]?.arrayValue) {
             let name = row["name"]?.stringValue ?? "?"
-            let data = try XCTUnwrap(C15tJSON.encode(row["resource"] ?? .null))
+            let data = try XCTUnwrap(InthJSON.encode(row["resource"] ?? .null))
             let selection = BundledPolicyResource(data: data, endpoint: row["endpoint"]?.stringValue ?? "")
                 .resolve(overrides: .default(), now: row["now"]?.intValue ?? 0)
             if row["expect"]?.stringValue == "refused" {
@@ -195,18 +195,18 @@ final class BundledPolicyTests: XCTestCase {
         for (name, restartBeforeWithdrawal, country) in cases {
             let url = IABCommitTests.fixtureURL.deletingLastPathComponent().deletingLastPathComponent()
                 .appendingPathComponent("bundled-policy/\(name).json")
-            let source = try XCTUnwrap(C15tJSON.parse(Data(contentsOf: url)))
+            let source = try XCTUnwrap(InthJSON.parse(Data(contentsOf: url)))
             let startedAt = source["now"]!.intValue!
             let endpoint = source["endpoint"]!.stringValue!
-            var body = C15tJSON.parse(Data(source["resource"]!["payload"]!.stringValue!.utf8))!.objectValue!
+            var body = InthJSON.parse(Data(source["resource"]!["payload"]!.stringValue!.utf8))!.objectValue!
             body["expiresAt"] = .integer(startedAt + 60_000)
-            let payload = String(decoding: try XCTUnwrap(C15tJSON.encode(JSONValue.object(body))), as: UTF8.self)
-            let raw = try XCTUnwrap(C15tJSON.encode(JSONValue.object([
+            let payload = String(decoding: try XCTUnwrap(InthJSON.encode(JSONValue.object(body))), as: UTF8.self)
+            let raw = try XCTUnwrap(InthJSON.encode(JSONValue.object([
                 "payload": .string(payload),
                 "sha256": .string(SHA256.hash(data: Data(payload.utf8)).map { String(format: "%02x", $0) }.joined()),
             ])))
             let resource = BundledPolicyResource(data: raw, endpoint: endpoint)
-            let configuration = try source["configuration"].map { try C15tJSON.decode(IABConfiguration.self, from: XCTUnwrap(C15tJSON.encode($0))) }
+            let configuration = try source["configuration"].map { try InthJSON.decode(IABConfiguration.self, from: XCTUnwrap(InthJSON.encode($0))) }
             let overrides = ConsentOverrides(country: country, region: nil, language: "en")
             let selected = try XCTUnwrap(resource.resolve(overrides: overrides, now: startedAt))
             let store = InMemoryStore(), clock = TestClock(startedAt), http = StubHTTP()
@@ -237,7 +237,7 @@ final class BundledPolicyTests: XCTestCase {
             XCTAssertEqual(expired.save(.necessary, expectedRevision: revision).status, .committed, name)
             await expired.waitUntilIdle()
             let withdrawal = try XCTUnwrap(queue.entries().last)
-            let frozen = try XCTUnwrap(C15tJSON.parse(withdrawal.body))
+            let frozen = try XCTUnwrap(InthJSON.parse(withdrawal.body))
             XCTAssertEqual(frozen["preferences"]?["measurement"]?.boolValue, false, name)
             XCTAssertNotEqual(grant.body, withdrawal.body)
             XCTAssertEqual(withdrawal.actionAt, clock.now)
@@ -248,7 +248,7 @@ final class BundledPolicyTests: XCTestCase {
             var online: [String: JSONValue] = ["policyResolution": selected.response.policyResolution!]
             online["gvl"] = body["disclosures"]?["gvl"]?["data"]
             online["adTechProviders"] = body["disclosures"]?["atp"]?["providers"]
-            http.initResponse = HTTPResponse(status: 200, headers: ["x-c15t-policy-contract": "1"], body: try XCTUnwrap(C15tJSON.encode(JSONValue.object(online))))
+            http.initResponse = HTTPResponse(status: 200, headers: ["x-c15t-policy-contract": "1"], body: try XCTUnwrap(InthJSON.encode(JSONValue.object(online))))
             restored.refresh()
             await restored.waitUntilIdle()
             XCTAssertNil(restored.bundledPolicyInfo)
@@ -270,7 +270,7 @@ final class BundledPolicyTests: XCTestCase {
             XCTAssertEqual(first.save(.all).status, .committed)
             await first.waitUntilIdle()
             let next = ConsentCore()
-            let transport: (any C15tTransport)? = mode == "same" ? hosted : mode == "different"
+            let transport: (any InthTransport)? = mode == "same" ? hosted : mode == "different"
                 ? HostedTransport(baseURL: URL(string: "https://other.example.test")!, client: http) : nil
             await next.bootstrapAndSettle(CoreConfig(store: store, transport: transport,
                 now: clock.reading, initRetry: .disabled))
@@ -300,16 +300,16 @@ final class BundledPolicyTests: XCTestCase {
     func testOfflineIabDisclosuresUseOriginalDatesAndRefuseMissingOrStaleAuthority() async throws {
         let url = IABCommitTests.fixtureURL.deletingLastPathComponent().deletingLastPathComponent()
             .appendingPathComponent("bundled-policy/iab.json")
-        let v = try XCTUnwrap(C15tJSON.parse(Data(contentsOf: url)))
+        let v = try XCTUnwrap(InthJSON.parse(Data(contentsOf: url)))
         let now = v["now"]!.intValue!
-        let configuration = try C15tJSON.decode(
-            IABConfiguration.self, from: C15tJSON.encode(v["configuration"]!))
+        let configuration = try InthJSON.decode(
+            IABConfiguration.self, from: InthJSON.encode(v["configuration"]!))
         // An older CLI wrote no `customVendors`; an unreadable list still loads the bundle, with none.
         for fault in [
             "valid", "missing-gvl", "stale-gvl", "future-gvl", "missing-atp", "stale-atp",
             "future-atp", "no-custom-vendors", "invalid-custom-vendors",
         ] {
-            var body = C15tJSON.parse(Data(v["resource"]!["payload"]!.stringValue!.utf8))!
+            var body = InthJSON.parse(Data(v["resource"]!["payload"]!.stringValue!.utf8))!
                 .objectValue!
             var disclosures = body["disclosures"]!.objectValue!
             let key = fault.hasSuffix("gvl") ? "gvl" : "atp"
@@ -324,9 +324,9 @@ final class BundledPolicyTests: XCTestCase {
             }
             body["disclosures"] = .object(disclosures)
             let payload = String(
-                data: try C15tJSON.encode(JSONValue.object(body)), encoding: .utf8)!
+                data: try InthJSON.encode(JSONValue.object(body)), encoding: .utf8)!
             let raw = try XCTUnwrap(
-                C15tJSON.encode(
+                InthJSON.encode(
                     JSONValue.object([
                         "payload": .string(payload),
                         "sha256": .string(
@@ -380,18 +380,18 @@ final class BundledPolicyTests: XCTestCase {
     func testANewerBundleWithoutCustomVendorsKeepsTheHeldList() async throws {
         let url = IABCommitTests.fixtureURL.deletingLastPathComponent().deletingLastPathComponent()
             .appendingPathComponent("bundled-policy/iab.json")
-        let v = try XCTUnwrap(C15tJSON.parse(Data(contentsOf: url)))
+        let v = try XCTUnwrap(InthJSON.parse(Data(contentsOf: url)))
         let now = v["now"]!.intValue!
         let endpoint = v["endpoint"]!.stringValue!
-        let configuration = try C15tJSON.decode(
-            IABConfiguration.self, from: C15tJSON.encode(v["configuration"]!))
-        let original = C15tJSON.parse(Data(v["resource"]!["payload"]!.stringValue!.utf8))!
+        let configuration = try InthJSON.decode(
+            IABConfiguration.self, from: InthJSON.encode(v["configuration"]!))
+        let original = InthJSON.parse(Data(v["resource"]!["payload"]!.stringValue!.utf8))!
             .objectValue!
         func resource(_ body: [String: JSONValue]) throws -> BundledPolicyResource {
-            let payload = String(data: try C15tJSON.encode(JSONValue.object(body)), encoding: .utf8)!
+            let payload = String(data: try InthJSON.encode(JSONValue.object(body)), encoding: .utf8)!
             let digest = SHA256.hash(data: Data(payload.utf8)).map { String(format: "%02x", $0) }
                 .joined()
-            let data = try XCTUnwrap(C15tJSON.encode(
+            let data = try XCTUnwrap(InthJSON.encode(
                 JSONValue.object(["payload": .string(payload), "sha256": .string(digest)])))
             return BundledPolicyResource(data: data, endpoint: endpoint)
         }
@@ -428,19 +428,19 @@ final class BundledPolicyTests: XCTestCase {
     func testANewerBundleListingNoneWithdrawsThemAcrossARelaunch() async throws {
         let url = IABCommitTests.fixtureURL.deletingLastPathComponent().deletingLastPathComponent()
             .appendingPathComponent("bundled-policy/iab.json")
-        let v = try XCTUnwrap(C15tJSON.parse(Data(contentsOf: url)))
+        let v = try XCTUnwrap(InthJSON.parse(Data(contentsOf: url)))
         let now = v["now"]!.intValue!
         let endpoint = v["endpoint"]!.stringValue!
-        let configuration = try C15tJSON.decode(
-            IABConfiguration.self, from: C15tJSON.encode(v["configuration"]!))
-        let original = C15tJSON.parse(Data(v["resource"]!["payload"]!.stringValue!.utf8))!
+        let configuration = try InthJSON.decode(
+            IABConfiguration.self, from: InthJSON.encode(v["configuration"]!))
+        let original = InthJSON.parse(Data(v["resource"]!["payload"]!.stringValue!.utf8))!
             .objectValue!
         let store = InMemoryStore()
         func launch(_ body: [String: JSONValue], at: Int64) async throws -> ConsentCore {
-            let payload = String(data: try C15tJSON.encode(JSONValue.object(body)), encoding: .utf8)!
+            let payload = String(data: try InthJSON.encode(JSONValue.object(body)), encoding: .utf8)!
             let digest = SHA256.hash(data: Data(payload.utf8)).map { String(format: "%02x", $0) }
                 .joined()
-            let data = try XCTUnwrap(C15tJSON.encode(
+            let data = try XCTUnwrap(InthJSON.encode(
                 JSONValue.object(["payload": .string(payload), "sha256": .string(digest)])))
             let core = ConsentCore()
             core.bootstrap(

@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 /// A publisher's declared vendor scope, taken from ``CoreConfig/vendors`` through the kernel.
 ///
@@ -89,7 +89,7 @@ final class DeclaredVendorScopeTests: XCTestCase {
         let core = try await bootstrapped(vector, vendors: try declaredScope(of: vector))
 
         let document = try XCTUnwrap(
-            C15tJSON.parse(try C15tJSON.encode(core.snapshot()))?["iab"]?["gvl"],
+            InthJSON.parse(try InthJSON.encode(core.snapshot()))?["iab"]?["gvl"],
             "the wire lost the `iab` object holding the list"
         )
         let keys = try XCTUnwrap(document["vendors"]?.objectValue?.keys, "the forwarded list lost its `vendors` record")
@@ -240,7 +240,7 @@ final class DeclaredVendorScopeTests: XCTestCase {
 
     private func started(
         store: any ConsentStore,
-        transport: any C15tTransport,
+        transport: any InthTransport,
         vendors: [Int]?,
         bus: (any TcStorageBusWriting)? = nil
     ) async -> ConsentCore {

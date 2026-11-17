@@ -1,11 +1,11 @@
-#if canImport(C15tApple)
-import C15tApple
+#if canImport(InthApple)
+import InthApple
 #endif
-#if canImport(C15tCore)
+#if canImport(InthCore)
 // SwiftPM builds the consent kernel as its own module. CocoaPods compiles the vendored
 // copy into this module instead, where the import would fail, so it is conditional
 // rather than assumed.
-import C15tCore
+import InthCore
 #endif
 import Foundation
 
@@ -13,7 +13,7 @@ import Foundation
 ///
 /// `code` is what JavaScript sees in the rejection, so the set is small and each one
 /// names the fix.
-public struct C15tBridgeError: Error, Equatable, Sendable {
+public struct InthBridgeError: Error, Equatable, Sendable {
     public let code: String
     public let message: String
 
@@ -27,14 +27,14 @@ public struct C15tBridgeError: Error, Equatable, Sendable {
     /// The message names both ways to end up here, because the launch hook that
     /// refuses a retired `Info.plist` key reports through the same answer as one that
     /// found no backend at all.
-    public static let notBootstrapped = C15tBridgeError(
-        code: "C15T_NOT_BOOTSTRAPPED",
-        message: "c15t has no usable configuration, so the consent core was not started. Set com.c15t.backend.url in Info.plist to your Inth project URL, such as https://your-project.inth.app, or install the core yourself before React Native initializes. If the key is set, the console line starting with c15t: says why it was refused."
+    public static let notBootstrapped = InthBridgeError(
+        code: "INTH_NOT_BOOTSTRAPPED",
+        message: "Inth has no usable configuration, so the consent core was not started. Set com.inth.backend.url in Info.plist to your Inth project URL, such as https://your-project.inth.app, or install the core yourself before React Native initializes. If the key is set, the console line starting with Inth: says why it was refused."
     )
 
     /// The overrides document could not be read.
-    public static let unreadableOverrides = C15tBridgeError(
-        code: "C15T_OVERRIDES_REJECTED",
+    public static let unreadableOverrides = InthBridgeError(
+        code: "INTH_OVERRIDES_REJECTED",
         message: "The overrides document could not be read, so nothing was changed."
     )
 
@@ -42,8 +42,8 @@ public struct C15tBridgeError: Error, Equatable, Sendable {
     ///
     /// Shares the rejection code with ``unreadableOverrides`` and differs in the
     /// message, because the caller's fix is one field rather than the whole document.
-    public static let unreadableGpcOverride = C15tBridgeError(
-        code: "C15T_OVERRIDES_REJECTED",
+    public static let unreadableGpcOverride = InthBridgeError(
+        code: "INTH_OVERRIDES_REJECTED",
         message: "The overrides document carries a gpc that is neither true, false, nor null, so nothing was changed."
     )
 
@@ -53,9 +53,9 @@ public struct C15tBridgeError: Error, Equatable, Sendable {
     /// one line to delete, while the generic code means the document itself is
     /// malformed. The message names the field and the one that replaces it, so nobody
     /// has to guess whether an override they still believe is set actually applied.
-    public static func retiredOverrides(_ fields: [String]) -> C15tBridgeError {
-        C15tBridgeError(
-            code: "C15T_OVERRIDES_RETIRED",
+    public static func retiredOverrides(_ fields: [String]) -> InthBridgeError {
+        InthBridgeError(
+            code: "INTH_OVERRIDES_RETIRED",
             message: "The overrides document carries the retired field(s) \(fields.joined(separator: ", ")), which this build does not reinterpret: publisher test mode is a client option and not an override, and v3 has no msa privacy signal. Send country, region, language, and gpc instead; nothing was changed."
         )
     }
@@ -66,26 +66,26 @@ public struct C15tBridgeError: Error, Equatable, Sendable {
     /// The message names the plugin parameter that writes the key, because a host that
     /// hits this asked for a prompt on a build that cannot show one, and the failure it
     /// would have seen instead is a silent `denied`.
-    public static let trackingNotConfigured = C15tBridgeError(
-        code: "C15T_TRACKING_NOT_CONFIGURED",
-        message: "This build carries no NSUserTrackingUsageDescription, so the App Tracking Transparency prompt cannot be shown and nothing was asked. Set enableAppTrackingTransparency and trackingUsageDescription on the c15t Expo plugin (or write the key yourself) and rebuild; without the key Apple suppresses the dialog and records the answer as denied without telling you. Nothing about consent changed."
+    public static let trackingNotConfigured = InthBridgeError(
+        code: "INTH_TRACKING_NOT_CONFIGURED",
+        message: "This build carries no NSUserTrackingUsageDescription, so the App Tracking Transparency prompt cannot be shown and nothing was asked. Set enableAppTrackingTransparency and trackingUsageDescription on the Inth Expo plugin (or write the key yourself) and rebuild; without the key Apple suppresses the dialog and records the answer as denied without telling you. Nothing about consent changed."
     )
 
     /// This platform, or this OS, has no App Tracking Transparency to ask.
-    public static let trackingUnsupported = C15tBridgeError(
-        code: "C15T_TRACKING_UNSUPPORTED",
-        message: "This platform has no App Tracking Transparency, so there was nothing to ask. Tracking readiness reads as unsupported here, which means the platform adds no gate and the c15t decision alone decides; on Android that is permanent, because the advertising identifier sits behind Google Play services rather than a system prompt."
+    public static let trackingUnsupported = InthBridgeError(
+        code: "INTH_TRACKING_UNSUPPORTED",
+        message: "This platform has no App Tracking Transparency, so there was nothing to ask. Tracking readiness reads as unsupported here, which means the platform adds no gate and the Inth decision alone decides; on Android that is permanent, because the advertising identifier sits behind Google Play services rather than a system prompt."
     )
 
     /// The core refused to re-resolve policy.
-    public static let refreshFailed = C15tBridgeError(
-        code: "C15T_REFRESH_FAILED",
+    public static let refreshFailed = InthBridgeError(
+        code: "INTH_REFRESH_FAILED",
         message: "The consent core could not re-resolve the policy."
     )
 
     /// The external id could not be attached.
-    public static let identifyFailed = C15tBridgeError(
-        code: "C15T_IDENTIFY_FAILED",
+    public static let identifyFailed = InthBridgeError(
+        code: "INTH_IDENTIFY_FAILED",
         message: "The subject could not be identified."
     )
 }
@@ -98,7 +98,7 @@ public struct C15tBridgeError: Error, Equatable, Sendable {
 /// that here means it compiles and is tested outside an app build, and that the
 /// RN-facing file stays a mapping between two type systems rather than a place where
 /// consent behaviour can hide.
-public struct C15tModuleHandler {
+public struct InthModuleHandler {
     /// Starts the core if no launch hook did. Injectable so a test can watch the
     /// call count instead of touching `Info.plist`.
     public let startCore: @Sendable () -> Bool
@@ -108,13 +108,13 @@ public struct C15tModuleHandler {
     /// Injectable for the same reason as `startCore`: the four platform states cannot be
     /// produced on a test machine, and the mapping that turns them into arms is the part
     /// worth pinning.
-    public let trackingPlatformStatus: @Sendable () -> C15tTrackingPlatformStatus?
+    public let trackingPlatformStatus: @Sendable () -> InthTrackingPlatformStatus?
 
     /// Whether this binary carries a prompt string.
     public let trackingPromptStringPresent: @Sendable () -> Bool
 
-    /// Shows Apple's dialog. Reached only when ``C15tTrackingGate`` chose `.standard`.
-    public let trackingPrompt: @Sendable (@escaping (C15tTrackingPlatformStatus?) -> Void) -> Void
+    /// Shows Apple's dialog. Reached only when ``InthTrackingGate`` chose `.standard`.
+    public let trackingPrompt: @Sendable (@escaping (InthTrackingPlatformStatus?) -> Void) -> Void
 
     /// Whether this runtime answers Apple's expanded European Union request.
     ///
@@ -124,7 +124,7 @@ public struct C15tModuleHandler {
     /// not a copy of it.
     public let trackingExpandedInterfaceAvailable: @Sendable () -> Bool
 
-    /// Shows Apple's expanded request. Reached only when ``C15tTrackingGate`` chose
+    /// Shows Apple's expanded request. Reached only when ``InthTrackingGate`` chose
     /// `.expanded`.
     ///
     /// Answers `false` when the call could not be made after all, which sends the request
@@ -135,33 +135,33 @@ public struct C15tModuleHandler {
     public let trackingExpandedPrompt: @Sendable (
         _ preferExpandedInterface: Bool,
         _ additionalInformationSelected: (() -> Void)?,
-        _ completion: @escaping (C15tTrackingPlatformStatus?) -> Void
+        _ completion: @escaping (InthTrackingPlatformStatus?) -> Void
     ) -> Bool
 
     /// The requests waiting on the one Apple call in flight.
     ///
     /// A reference box because this handler is a struct, and the state has to outlive the
     /// copy that a second caller sees.
-    public let trackingController: C15tTrackingController
+    public let trackingController: InthTrackingController
 
     public init(
-        startCore: @escaping @Sendable () -> Bool = { C15tReactNativeBootstrap.start() },
-        trackingPlatformStatus: @escaping @Sendable () -> C15tTrackingPlatformStatus? = { C15tTracking.platformStatus() },
-        trackingPromptStringPresent: @escaping @Sendable () -> Bool = { C15tTracking.promptStringPresent() },
-        trackingPrompt: @escaping @Sendable (@escaping (C15tTrackingPlatformStatus?) -> Void) -> Void = { completion in C15tTracking.requestPrompt(completion: completion) },
-        trackingExpandedInterfaceAvailable: @escaping @Sendable () -> Bool = { C15tTracking.expandedInterfaceAvailable() },
+        startCore: @escaping @Sendable () -> Bool = { InthReactNativeBootstrap.start() },
+        trackingPlatformStatus: @escaping @Sendable () -> InthTrackingPlatformStatus? = { InthTracking.platformStatus() },
+        trackingPromptStringPresent: @escaping @Sendable () -> Bool = { InthTracking.promptStringPresent() },
+        trackingPrompt: @escaping @Sendable (@escaping (InthTrackingPlatformStatus?) -> Void) -> Void = { completion in InthTracking.requestPrompt(completion: completion) },
+        trackingExpandedInterfaceAvailable: @escaping @Sendable () -> Bool = { InthTracking.expandedInterfaceAvailable() },
         trackingExpandedPrompt: @escaping @Sendable (
             _ preferExpandedInterface: Bool,
             _ additionalInformationSelected: (() -> Void)?,
-            _ completion: @escaping (C15tTrackingPlatformStatus?) -> Void
+            _ completion: @escaping (InthTrackingPlatformStatus?) -> Void
         ) -> Bool = { preferExpanded, additionalInformationSelected, completion in
-            C15tTracking.requestExpandedPrompt(
+            InthTracking.requestExpandedPrompt(
                 preferExpandedInterface: preferExpanded,
                 additionalInformationSelected: additionalInformationSelected,
                 completion: completion
             )
         },
-        trackingController: C15tTrackingController? = nil
+        trackingController: InthTrackingController? = nil
     ) {
         self.startCore = startCore
         self.trackingPlatformStatus = trackingPlatformStatus
@@ -169,7 +169,7 @@ public struct C15tModuleHandler {
         self.trackingPrompt = trackingPrompt
         self.trackingExpandedInterfaceAvailable = trackingExpandedInterfaceAvailable
         self.trackingExpandedPrompt = trackingExpandedPrompt
-        self.trackingController = trackingController ?? C15tTrackingController(
+        self.trackingController = trackingController ?? InthTrackingController(
             trackingPlatformStatus: trackingPlatformStatus,
             trackingPromptStringPresent: trackingPromptStringPresent,
             trackingPrompt: trackingPrompt,
@@ -185,21 +185,21 @@ public struct C15tModuleHandler {
     /// resolved yet is already expressible as `policyPending`.
     public func bootstrapPayload() -> String {
         ensureCore()
-        return C15tPayload.bootstrap(
-            snapshot: C15t.snapshot(),
-            hasStoredSnapshot: C15t.hasStoredSnapshot
+        return InthPayload.bootstrap(
+            snapshot: Inth.snapshot(),
+            hasStoredSnapshot: Inth.hasStoredSnapshot
         )
     }
 
     /// The `getSnapshot()` payload.
     public func snapshotPayload() -> String {
         ensureCore()
-        let core = C15t.current
-        let (snapshot, additions) = C15tPayload.consistently(snapshot: { C15t.snapshot() }) {
+        let core = Inth.current
+        let (snapshot, additions) = InthPayload.consistently(snapshot: { Inth.snapshot() }) {
             (core?.iabConsent(), core?.iabAcceptAllChoices(), core?.iabPresentation(),
-             core.flatMap { C15tTrackingConsent.iabMarketingConsented($0) }, core?.iabCustomVendors() ?? [])
+             core.flatMap { InthTrackingConsent.iabMarketingConsented($0) }, core?.iabCustomVendors() ?? [])
         }
-        return C15tPayload.snapshot(snapshot, fallbackLanguage: deviceLanguage,
+        return InthPayload.snapshot(snapshot, fallbackLanguage: deviceLanguage,
             iabConsent: additions.0, iabAcceptAll: additions.1, iabPresentation: additions.2,
             iabMarketingPurposes: additions.3, iabCustomVendors: additions.4)
     }
@@ -207,8 +207,8 @@ public struct C15tModuleHandler {
     /// The `getWebViewConsent()` payload: `{ state, token, key }`.
     public func webViewConsentPayload() -> String {
         ensureCore()
-        let state = C15t.current.map { WebViewConsentState(core: $0) }
-            ?? WebViewConsentState(snapshot: C15t.snapshot(), tcString: nil)
+        let state = Inth.current.map { WebViewConsentState(core: $0) }
+            ?? WebViewConsentState(snapshot: Inth.snapshot(), tcString: nil)
         return "{\"state\":\(state.json()),\"token\":\"\(WebViewConsentScript.newToken())\","
             + "\"key\":\"\(WebViewConsentScript.newToken())\"}"
     }
@@ -220,8 +220,8 @@ public struct C15tModuleHandler {
     /// about a dialog would be a side effect nobody asked for, and a host running with no
     /// backend still deserves the honest platform answer.
     public func trackingAuthorizationPayload() -> String {
-        C15tPayload.trackingAuthorization(
-            C15tTrackingGate.authorization(
+        InthPayload.trackingAuthorization(
+            InthTrackingGate.authorization(
                 platform: trackingPlatformStatus(),
                 promptStringPresent: trackingPromptStringPresent()
             ),
@@ -244,14 +244,14 @@ public struct C15tModuleHandler {
     /// that will handle the tap. Without it Apple shows no button.
     public func requestTrackingAuthorization(
         additionalInformation: Bool = false,
-        _ completion: @escaping (Result<C15tTrackingRequestResult, C15tBridgeError>) -> Void
+        _ completion: @escaping (Result<InthTrackingRequestResult, InthBridgeError>) -> Void
     ) {
         // JavaScript shows its own controls when the request resolves paused, so the native
         // action has nothing to do beyond letting Apple show the button.
         var handled: (@Sendable () -> Void)?
         if additionalInformation { handled = {} }
-        trackingController.request(onAdditionalInformation: handled) { (result: Result<C15tTrackingRequestResult, C15tTrackingError>) in
-            completion(result.mapError { error -> C15tBridgeError in
+        trackingController.request(onAdditionalInformation: handled) { (result: Result<InthTrackingRequestResult, InthTrackingError>) in
+            completion(result.mapError { error -> InthBridgeError in
                 error == .notConfigured ? .trackingNotConfigured : .trackingUnsupported
             })
         }
@@ -263,13 +263,13 @@ public struct C15tModuleHandler {
     /// result type carries the reason, and JavaScript renders it.
     public func commitPayload(intent: String) -> String {
         // An unreadable intent is refused before a core is started for it.
-        guard C15tPayload.parseCommitIntent(intent) != nil else {
-            return C15tPayload.invalidIntent(raw: intent)
+        guard InthPayload.parseCommitIntent(intent) != nil else {
+            return InthPayload.invalidIntent(raw: intent)
         }
-        guard ensureCore(), let core = C15t.current else {
-            return C15tPayload.notBootstrapped()
+        guard ensureCore(), let core = Inth.current else {
+            return InthPayload.notBootstrapped()
         }
-        return C15tPayload.commit(intent, core: core)
+        return InthPayload.commit(intent, core: core)
     }
 
     /// Replace the geographic, language, and GPC overrides.
@@ -280,9 +280,9 @@ public struct C15tModuleHandler {
     ///
     /// A refused document leaves the live overrides exactly as they were, which is the
     /// only reason a refusal can be readable at all: the caller can still ask.
-    public func applyOverrides(_ json: String) -> Result<Void, C15tBridgeError> {
-        guard ensureCore(), let core = C15t.current else { return .failure(.notBootstrapped) }
-        switch C15tPayload.parseOverrides(json, current: core.currentOverrides) {
+    public func applyOverrides(_ json: String) -> Result<Void, InthBridgeError> {
+        guard ensureCore(), let core = Inth.current else { return .failure(.notBootstrapped) }
+        switch InthPayload.parseOverrides(json, current: core.currentOverrides) {
         case let .failure(error): return .failure(error)
         case let .success(overrides):
             core.setOverrides(overrides)
@@ -292,7 +292,7 @@ public struct C15tModuleHandler {
 
     /// Record that the notice was dismissed. Local only, so nothing to reject.
     public func dismissNotice() {
-        guard ensureCore(), let core = C15t.current else { return }
+        guard ensureCore(), let core = Inth.current else { return }
         core.dismissNotice()
     }
 
@@ -300,24 +300,24 @@ public struct C15tModuleHandler {
     ///
     /// The contract says the JS-facing `refresh` covers the queue too, and the core's
     /// own refresh only re-runs init, so both go out here.
-    public func refreshAll() -> Result<Void, C15tBridgeError> {
-        guard ensureCore(), let core = C15t.current else { return .failure(.notBootstrapped) }
+    public func refreshAll() -> Result<Void, InthBridgeError> {
+        guard ensureCore(), let core = Inth.current else { return .failure(.notBootstrapped) }
         core.refresh()
         core.flushPending()
         return .success(())
     }
 
     /// Attach an external id to the subject.
-    public func identify(externalId: String) -> Result<Void, C15tBridgeError> {
-        guard ensureCore(), let core = C15t.current else { return .failure(.notBootstrapped) }
+    public func identify(externalId: String) -> Result<Void, InthBridgeError> {
+        guard ensureCore(), let core = Inth.current else { return .failure(.notBootstrapped) }
         core.identify(KernelUser(externalId: externalId))
         return .success(())
     }
 
-    /// Detach the external id. The c15t subject id is kept, so consent survives
+    /// Detach the external id. The Inth subject id is kept, so consent survives
     /// sign-out.
-    public func logout() -> Result<Void, C15tBridgeError> {
-        guard ensureCore(), let core = C15t.current else { return .failure(.notBootstrapped) }
+    public func logout() -> Result<Void, InthBridgeError> {
+        guard ensureCore(), let core = Inth.current else { return .failure(.notBootstrapped) }
         core.logout()
         return .success(())
     }
@@ -325,11 +325,11 @@ public struct C15tModuleHandler {
     /// Wipe consent and return the device to the state a first launch boots with.
     ///
     /// The choice prompt is owed again afterwards, so the banner or dialog comes back.
-    /// The c15t subject id is kept, because the backend holds an audit history keyed
+    /// The Inth subject id is kept, because the backend holds an audit history keyed
     /// to it, and overrides plus the configured category scope are configuration
     /// rather than consent.
-    public func reset() -> Result<Void, C15tBridgeError> {
-        guard ensureCore(), let core = C15t.current else { return .failure(.notBootstrapped) }
+    public func reset() -> Result<Void, InthBridgeError> {
+        guard ensureCore(), let core = Inth.current else { return .failure(.notBootstrapped) }
         core.reset()
         return .success(())
     }
@@ -340,11 +340,11 @@ public struct C15tModuleHandler {
     ///   rather than pretend.
     @discardableResult
     public func ensureCore() -> Bool {
-        C15t.current != nil || startCore()
+        Inth.current != nil || startCore()
     }
 
     /// The device language, used when the snapshot has none.
     public var deviceLanguage: String {
-        Locale.preferredLanguages.first ?? C15tPayload.defaultLanguage
+        Locale.preferredLanguages.first ?? InthPayload.defaultLanguage
     }
 }

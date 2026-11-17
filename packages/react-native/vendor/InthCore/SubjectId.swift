@@ -7,7 +7,7 @@ import Security
 import CryptoKit
 #endif
 
-/// Generates c15t subject ids: `sub_` followed by base58 over 20 bytes.
+/// Generates Inth subject ids: `sub_` followed by base58 over 20 bytes.
 ///
 /// The output is byte-identical to the web SDK's `generateSubjectId()` in
 /// `packages/sdk/core/src/libs/generate-subject-id.ts`, and that is the only shape the

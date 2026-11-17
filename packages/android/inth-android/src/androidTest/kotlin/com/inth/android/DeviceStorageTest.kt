@@ -1,11 +1,11 @@
-package com.c15t.android
+package com.inth.android
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.c15t.core.C15t
-import com.c15t.core.CommitIntent
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentDecision
-import com.c15t.core.store.C15tStoreKeys
+import com.inth.core.Inth
+import com.inth.core.CommitIntent
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentDecision
+import com.inth.core.store.InthStoreKeys
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -19,7 +19,7 @@ import org.junit.runner.RunWith
 /**
  * The storage ports on the device they were written for.
  *
- * `:c15t-core` proves hydration and key loss against doubles, and [KeyLossIdentityTest] gets
+ * `:inth-core` proves hydration and key loss against doubles, and [KeyLossIdentityTest] gets
  * as close as a JVM allows by pulling a software key out from under the codec. What neither
  * can reach is the platform: an AndroidKeyStore entry that is really gone, files that really
  * sit under `noBackupFilesDir`, and a relaunch that means a second install over the same
@@ -46,20 +46,20 @@ class DeviceStorageTest {
 	fun testConsentActionWrittenOnTheDeviceComesBackOnTheNextLaunch() {
 		val context = appContext()
 		val offline = DeviceBackend()
-		C15tAndroid.install(context, deviceConfig(), transport = offline)
+		InthAndroid.install(context, deviceConfig(), transport = offline)
 
 		val subjectId = requireSubjectId()
-		val commit = C15t.save(CommitIntent.All)
+		val commit = Inth.save(CommitIntent.All)
 		assertTrue("the commit is local and synchronous", commit.ok)
 		assertTrue("the payload is persisted before anything goes on the wire", commit.queued)
 		assertFalse("and this device has no network", commit.delivered)
 
 		val queued = requireNotNull(queuedSaveFor(context, subjectId)) { "the write waits in the device's own queue" }
-		val recorded = C15t.snapshot().explicitChoice
+		val recorded = Inth.snapshot().explicitChoice
 		assertNotNull("the subject's choice is on the snapshot", recorded)
 		val choice = requireNotNull(recorded)
 
-		val envelope = deviceBlob(context, C15tStoreKeys.SNAPSHOT)
+		val envelope = deviceBlob(context, InthStoreKeys.SNAPSHOT)
 		assertTrue("consent lands under noBackupFilesDir", envelope.isFile)
 		assertFalse(
 			"a record that carries its own subject id in the clear is not encrypted",
@@ -67,17 +67,17 @@ class DeviceStorageTest {
 		)
 		assertFalse(
 			"identity sits off the encrypted path, out of reach of a key reset",
-			deviceBlob(context, C15tStoreKeys.SUBJECT).exists(),
+			deviceBlob(context, InthStoreKeys.SUBJECT).exists(),
 		)
 
 		// The relaunch: a new kernel over the same files, built the way a host builds one.
 		uninstallCore()
 		val relaunch = DeviceBackend()
-		C15tAndroid.install(context, deviceConfig(), transport = relaunch)
+		InthAndroid.install(context, deviceConfig(), transport = relaunch)
 
-		assertTrue("hydration found the stored envelope", C15t.hasStoredSnapshot)
+		assertTrue("hydration found the stored envelope", Inth.hasStoredSnapshot)
 		assertEquals("the installation keeps its identity", subjectId, requireSubjectId())
-		assertEquals("the choice comes back as it was committed", choice, C15t.snapshot().explicitChoice)
+		assertEquals("the choice comes back as it was committed", choice, Inth.snapshot().explicitChoice)
 
 		// Bootstrap queued a launch retry, and this device is still offline, so that retry is
 		// refused. Wait for it to be answered: a flush asked for while it is still sending is
@@ -92,7 +92,7 @@ class DeviceStorageTest {
 
 		// The retry leg on real storage: the same payload, delivered unchanged.
 		relaunch.online = true
-		val flush = C15t.flushPending()
+		val flush = Inth.flushPending()
 		assertEquals("the retry delivers the one queued write", 1, flush.delivered)
 		assertEquals("unchanged, and once", 1, relaunch.deliveriesOf(queued))
 		assertNull("a delivered write leaves the device queue", queuedSaveFor(context, subjectId))
@@ -102,12 +102,12 @@ class DeviceStorageTest {
 	@Test
 	fun testRevokedKeystoreKeyCostsTheRecordsAndNotTheSubjectId() {
 		val context = appContext()
-		C15tAndroid.install(context, deviceConfig(), transport = DeviceBackend())
+		InthAndroid.install(context, deviceConfig(), transport = DeviceBackend())
 		val subjectId = requireSubjectId()
-		assertTrue("the device takes the decision", C15t.save(CommitIntent.All).ok)
+		assertTrue("the device takes the decision", Inth.save(CommitIntent.All).ok)
 		assertTrue(
 			"the record has to be on disk before the key goes",
-			deviceBlob(context, C15tStoreKeys.SNAPSHOT).isFile,
+			deviceBlob(context, InthStoreKeys.SNAPSHOT).isFile,
 		)
 
 		// The real alias, destroyed through the real keystore. Every blob already on disk now
@@ -116,36 +116,36 @@ class DeviceStorageTest {
 		KeystoreKeyProvider(context).deleteKey()
 		uninstallCore()
 
-		val after = C15tStores.create(context)
+		val after = InthStores.create(context)
 		assertNull("blobs under a dead key read as nothing stored", after.readEnvelope())
 
 		// On the worker `install` uses, so the teardown that waits for it also waits for this core.
-		C15t.bootstrap(
+		Inth.bootstrap(
 			deviceConfig(),
 			after,
 			transport = DeviceBackend(initiallyOnline = true),
-			executor = C15tAndroid.worker,
+			executor = InthAndroid.worker,
 		)
 
 		assertEquals("identity lives where a key reset cannot reach it", subjectId, requireSubjectId())
-		assertFalse("and the relaunch mints nothing new", C15t.hasStoredSnapshot)
-		assertFalse("the choice went with the records", C15t.snapshot().ready)
-		assertNull("so there is no cached decision left to serve", C15t.snapshot().explicitChoice)
-		assertTrue("the device is deny-all with a pending policy", C15t.snapshot().policyPending)
+		assertFalse("and the relaunch mints nothing new", Inth.hasStoredSnapshot)
+		assertFalse("the choice went with the records", Inth.snapshot().ready)
+		assertNull("so there is no cached decision left to serve", Inth.snapshot().explicitChoice)
+		assertTrue("the device is deny-all with a pending policy", Inth.snapshot().policyPending)
 		for (category in ConsentCategory.OPTIONAL) {
-			assertFalse("$category stays denied until a policy resolves", C15t.isAllowed(category))
+			assertFalse("$category stays denied until a policy resolves", Inth.isAllowed(category))
 			assertEquals(
 				"$category is unanswered, which is not the subject's own refusal",
 				ConsentDecision.PENDING,
-				C15t.decision(category),
+				Inth.decision(category),
 			)
 		}
 
 		// A dead alias is not a dead install. The regenerated key encrypts again, so the next
 		// decision survives the next relaunch instead of the device being stranded deny-all.
-		assertTrue(C15t.save(CommitIntent.Necessary).ok)
+		assertTrue(Inth.save(CommitIntent.Necessary).ok)
 		awaitSettled("the regenerated key to write the next record") {
-			C15tStores.create(context).readEnvelope() != null
+			InthStores.create(context).readEnvelope() != null
 		}
 	}
 }

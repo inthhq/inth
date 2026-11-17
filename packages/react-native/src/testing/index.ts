@@ -1,5 +1,5 @@
 /**
- * `@c15t/react-native/testing`: test an app that uses `@c15t/react-native`
+ * `@inth/react-native/testing`: test an app that uses `@inth/react-native`
  * in Jest or Vitest, where no native module exists.
  *
  * {@link createTestConsentClient} builds the real consent client over a fake
@@ -9,8 +9,8 @@
  *
  * @example
  * ```tsx
- * import { ConsentProvider } from '@c15t/react-native';
- * import { createTestConsentClient } from '@c15t/react-native/testing';
+ * import { ConsentProvider } from '@inth/react-native';
+ * import { createTestConsentClient } from '@inth/react-native/testing';
  *
  * const consent = createTestConsentClient({ consent: 'granted' });
  *

@@ -1,5 +1,5 @@
-@_spi(C15tInternal) @testable import C15tReactNativeBridge
-@_spi(C15tInternal) import C15tCore
+@_spi(InthInternal) @testable import InthReactNativeBridge
+@_spi(InthInternal) import InthCore
 import Foundation
 import XCTest
 
@@ -53,7 +53,7 @@ func headlessIABCore() async throws -> ConsentCore {
 
 /// The `iab` slot the bridge sends for `core`.
 func headlessIABSlot(_ core: ConsentCore) -> [String: Any] {
-    (jsonObject(C15tPayload.snapshot(core.snapshot(), iabConsent: core.iabConsent(),
+    (jsonObject(InthPayload.snapshot(core.snapshot(), iabConsent: core.iabConsent(),
         iabAcceptAll: core.iabAcceptAllChoices(), iabPresentation: core.iabPresentation(),
         iabCustomVendors: core.iabCustomVendors()))["iab"]
         as? [String: Any]) ?? [:]
@@ -64,8 +64,8 @@ func headlessIABSlot(_ core: ConsentCore) -> [String: Any] {
 ///
 /// `packages/native-protocol/iab/headless-disclosure-cases.json` is generated from the web code
 /// (`packages/sdk/iab/src/__tests__/native-headless-disclosure.test.ts`). Kotlin's
-/// `C15tPayloadTest` runs the same cases through its bridge.
-final class C15tHeadlessIABTests: XCTestCase {
+/// `InthPayloadTest` runs the same cases through its bridge.
+final class InthHeadlessIABTests: XCTestCase {
     func fixture() throws -> [String: Any] { try headlessFixture() }
     func core() async throws -> ConsentCore { try await headlessIABCore() }
 
@@ -76,7 +76,7 @@ final class C15tHeadlessIABTests: XCTestCase {
             "action": "iab", "choices": choices, "consents": [String: Any](), "revision": core.snapshot().revision,
         ]
         let raw = String(decoding: try JSONSerialization.data(withJSONObject: intent), as: UTF8.self)
-        return jsonObject(C15tPayload.commit(raw, core: core))
+        return jsonObject(InthPayload.commit(raw, core: core))
     }
 
     func testTheSnapshotCarriesTheDisclosureTheStockScreensDraw() async throws {
@@ -121,7 +121,7 @@ final class C15tHeadlessIABTests: XCTestCase {
     func testEditingNeedsTheDisclosure() async throws {
         let core = try await core()
         let snapshot = core.snapshot()
-        let withoutDisclosure = (jsonObject(C15tPayload.snapshot(snapshot, iabAcceptAll: core.iabAcceptAllChoices()))["iab"]
+        let withoutDisclosure = (jsonObject(InthPayload.snapshot(snapshot, iabAcceptAll: core.iabAcceptAllChoices()))["iab"]
             as? [String: Any]) ?? [:]
         XCTAssertEqual(withoutDisclosure["editable"] as? Bool, false)
         XCTAssertTrue(withoutDisclosure["acceptAll"] is NSNull)

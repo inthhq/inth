@@ -1,4 +1,4 @@
-package com.c15t.core.tc
+package com.inth.core.tc
 
 /**
  * What a publisher's constraint does to a vendor's declared legal basis.

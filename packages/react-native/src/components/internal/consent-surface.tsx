@@ -127,7 +127,7 @@ export const useConsentSurfaceFrame =
 
 		if (frame === null) {
 			throw new Error(
-				'@c15t/react-native: this component has to be rendered inside ConsentBanner, ConsentDialog, or ConsentPreferences, so that it can read the theme in force.'
+				'@inth/react-native: this component has to be rendered inside ConsentBanner, ConsentDialog, or ConsentPreferences, so that it can read the theme in force.'
 			);
 		}
 

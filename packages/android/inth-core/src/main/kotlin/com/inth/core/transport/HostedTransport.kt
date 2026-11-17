@@ -1,14 +1,14 @@
-package com.c15t.core.transport
+package com.inth.core.transport
 
-import com.c15t.core.C15tInternalApi
-import com.c15t.core.NativeConfig
-import com.c15t.core.model.ConsentSubject
-import com.c15t.core.model.KernelUser
-import com.c15t.core.model.QueuedSave
-import com.c15t.core.spi.Clock
-import com.c15t.core.spi.HttpClient
-import com.c15t.core.spi.HttpRequest
-import com.c15t.core.spi.HttpResponse
+import com.inth.core.InthInternalApi
+import com.inth.core.NativeConfig
+import com.inth.core.model.ConsentSubject
+import com.inth.core.model.KernelUser
+import com.inth.core.model.QueuedSave
+import com.inth.core.spi.Clock
+import com.inth.core.spi.HttpClient
+import com.inth.core.spi.HttpRequest
+import com.inth.core.spi.HttpResponse
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
@@ -17,23 +17,23 @@ import kotlinx.serialization.json.put
 import java.net.URI
 
 /**
- * Talks to a c15t backend's `/init` and `/subjects`.
+ * Talks to an Inth backend's `/init` and `/subjects`.
  *
  * Same endpoints, same headers, and the same request bodies as the hosted
  * transport in `@c15t/core`. It holds no state: it turns a
- * [com.c15t.core.spi.HttpClient] into the three commands the core delegates, and
+ * [com.inth.core.spi.HttpClient] into the three commands the core delegates, and
  * leaves every decision to [InitMapper] and the kernel.
  *
- * Internal: `C15tAndroid.install` builds this one. Tests and first-party fixtures build
+ * Internal: `InthAndroid.install` builds this one. Tests and first-party fixtures build
  * their own to reach a loopback or test backend.
  */
-@C15tInternalApi
+@InthInternalApi
 class HostedTransport(
 	private val http: HttpClient,
 	private val config: NativeConfig,
 	private val clock: Clock = Clock.SYSTEM,
 	private val json: Json = Json { ignoreUnknownKeys = true },
-) : C15tTransport {
+) : InthTransport {
 	private val base: String = trimTrailingSlash(config.backendUrl)
 	private val initUrl: String = "$base/init"
 	private val domain: String = config.domain?.takeIf { it.isNotBlank() } ?: hostOf(base)
@@ -42,7 +42,7 @@ class HostedTransport(
 		val headers = linkedMapOf(
 			"accept" to "application/json",
 		)
-		headers.putAll(C15tProtocol.protocolHeaders(config.sdkVersion, config.platform))
+		headers.putAll(InthProtocol.protocolHeaders(config.sdkVersion, config.platform))
 		// The override travels on the adapter header the backend's shared
 		// extractor reads first, mirroring the web SDK.
 		// The override travels as the application header and wins on the backend;
@@ -58,8 +58,8 @@ class HostedTransport(
 		// kernel prunes whatever comes back regardless -- this header saves bytes, it is
 		// not the guarantee -- which is why a scope too wide to name here is simply not
 		// named and still produces a narrow device.
-		C15tProtocol.vendorScopeHeaderValue(context.vendors)?.let { scope ->
-			headers[C15tProtocol.VENDOR_SCOPE_HEADER] = scope
+		InthProtocol.vendorScopeHeaderValue(context.vendors)?.let { scope ->
+			headers[InthProtocol.VENDOR_SCOPE_HEADER] = scope
 		}
 
 		return send(HttpRequest(method = HttpRequest.GET, url = initUrl, headers = headers))
@@ -94,17 +94,17 @@ class HostedTransport(
 	 * of the body, and the status is the more specific answer.
 	 */
 	private fun deliveredOrWrongContract(outcome: TransportOutcome.Success): SaveOutcome {
-		val declaration = ProducerContract.fromHeader(outcome.header(C15tProtocol.POLICY_CONTRACT_HEADER))
-		if (declaration is ProducerContract.Declared && declaration.version != C15tProtocol.POLICY_CONTRACT_VERSION) {
+		val declaration = ProducerContract.fromHeader(outcome.header(InthProtocol.POLICY_CONTRACT_HEADER))
+		if (declaration is ProducerContract.Declared && declaration.version != InthProtocol.POLICY_CONTRACT_VERSION) {
 			return SaveOutcome.UnsupportedContract(
 				declared = declaration.version.toString(),
-				expected = C15tProtocol.POLICY_CONTRACT_VERSION,
+				expected = InthProtocol.POLICY_CONTRACT_VERSION,
 			)
 		}
 		if (declaration is ProducerContract.Unreadable) {
 			return SaveOutcome.UnsupportedContract(
-				declared = outcome.header(C15tProtocol.POLICY_CONTRACT_HEADER),
-				expected = C15tProtocol.POLICY_CONTRACT_VERSION,
+				declared = outcome.header(InthProtocol.POLICY_CONTRACT_HEADER),
+				expected = InthProtocol.POLICY_CONTRACT_VERSION,
 			)
 		}
 		return SaveOutcome.Delivered
@@ -146,7 +146,7 @@ class HostedTransport(
 	private fun jsonHeaders(): Map<String, String> = buildMap {
 		put("accept", "application/json")
 		put("content-type", "application/json")
-		putAll(C15tProtocol.protocolHeaders(config.sdkVersion, config.platform))
+		putAll(InthProtocol.protocolHeaders(config.sdkVersion, config.platform))
 	}
 
 	/**
@@ -161,7 +161,7 @@ class HostedTransport(
 			TransportOutcome.Success(parseBody(response), response.headers.lowerCased())
 		}
 	} catch (error: Exception) {
-		TransportOutcome.NetworkFailure("c15t transport: ${error.message ?: error.javaClass.simpleName}")
+		TransportOutcome.NetworkFailure("Inth transport: ${error.message ?: error.javaClass.simpleName}")
 	}
 
 	private fun parseBody(response: HttpResponse): JsonElement? {

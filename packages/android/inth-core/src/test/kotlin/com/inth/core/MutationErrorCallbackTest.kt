@@ -1,9 +1,9 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.model.*
-import com.c15t.core.spi.Clock
-import com.c15t.core.spi.TaskExecutor
-import com.c15t.core.store.C15tStore
+import com.inth.core.model.*
+import com.inth.core.spi.Clock
+import com.inth.core.spi.TaskExecutor
+import com.inth.core.store.InthStore
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -13,7 +13,7 @@ class MutationErrorCallbackTest {
 	@Test fun `throwing mutation releases the gate for the next action`() {
 		val fail = AtomicBoolean(false)
 		val failure = IllegalStateException("clock unavailable")
-		val core = ConsentCore(config = TEST_CONFIG, store = C15tStore(InMemoryKeyValueStore()),
+		val core = ConsentCore(config = TEST_CONFIG, store = InthStore(InMemoryKeyValueStore()),
 			transport = RecordingTransport().respondInit(initSuccess()),
 			executor = TaskExecutor.DIRECT,
 			clock = Clock {
@@ -31,7 +31,7 @@ class MutationErrorCallbackTest {
 	}
 
 	@Test fun `refusal error observer may change an override`() {
-		val core = testKernel(store = C15tStore(InMemoryKeyValueStore()), transport = RecordingTransport().respondInit(initSuccess()))
+		val core = testKernel(store = InthStore(InMemoryKeyValueStore()), transport = RecordingTransport().respondInit(initSuccess()))
 		core.bootstrap()
 		val entered = CountDownLatch(1)
 		val once = AtomicBoolean(false)
@@ -55,7 +55,7 @@ class MutationErrorCallbackTest {
 	@Test fun `refusal logger may change an override`() {
 		val once = AtomicBoolean(false)
 		lateinit var core: ConsentCore
-		core = testKernel(store = C15tStore(InMemoryKeyValueStore()),
+		core = testKernel(store = InthStore(InMemoryKeyValueStore()),
 			transport = RecordingTransport().respondInit(initSuccess()),
 			logger = { if (once.compareAndSet(false, true)) core.setOverrides(KernelOverrides(language = "de")) })
 		core.bootstrap()
@@ -68,9 +68,9 @@ class MutationErrorCallbackTest {
 
 	@Test fun `orphan identity diagnostic observer may change an override`() {
 		val backend = InMemoryKeyValueStore()
-		testKernel(store = C15tStore(backend), transport = RecordingTransport().respondInit(initSuccess())).bootstrap()
-		backend.write(com.c15t.core.store.C15tStoreKeys.SUBJECT, null)
-		val core = testKernel(store = C15tStore(backend), transport = RecordingTransport().respondInit(initSuccess()))
+		testKernel(store = InthStore(backend), transport = RecordingTransport().respondInit(initSuccess())).bootstrap()
+		backend.write(com.inth.core.store.InthStoreKeys.SUBJECT, null)
+		val core = testKernel(store = InthStore(backend), transport = RecordingTransport().respondInit(initSuccess()))
 		val once = AtomicBoolean(false)
 		val observer: (KernelError) -> Unit = { error ->
 			if (error.code == "subject-id-missing" && once.compareAndSet(false, true)) {

@@ -1,9 +1,9 @@
-package com.c15t.core.webview
+package com.inth.core.webview
 
-import com.c15t.core.model.ConsentModel
-import com.c15t.core.model.ConsentSnapshot
-import com.c15t.core.model.ConsentState
-import com.c15t.core.model.ConsentSubject
+import com.inth.core.model.ConsentModel
+import com.inth.core.model.ConsentSnapshot
+import com.inth.core.model.ConsentState
+import com.inth.core.model.ConsentSubject
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals

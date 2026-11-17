@@ -72,23 +72,23 @@ const readNative = function readNative(relativePath: string): string {
 
 /** The Swift core's whole vocabulary, in the one file that holds it. */
 const SWIFT_VOCABULARY = readNative(
-	'swift/Sources/C15tCore/ConsentCategory.swift'
+	'swift/Sources/InthCore/ConsentCategory.swift'
 );
 
 const KOTLIN_CATEGORIES = readNative(
-	'android/c15t-core/src/main/kotlin/com/c15t/core/model/ConsentCategory.kt'
+	'android/inth-core/src/main/kotlin/com/inth/core/model/ConsentCategory.kt'
 );
 
 const KOTLIN_ENUMS = readNative(
-	'android/c15t-core/src/main/kotlin/com/c15t/core/model/Enums.kt'
+	'android/inth-core/src/main/kotlin/com/inth/core/model/Enums.kt'
 );
 
 const KOTLIN_POLICY_EVALUATOR = readNative(
-	'android/c15t-core/src/main/kotlin/com/c15t/core/policy/PolicyEvaluator.kt'
+	'android/inth-core/src/main/kotlin/com/inth/core/policy/PolicyEvaluator.kt'
 );
 
 const KOTLIN_SNAPSHOT_WIRE = readNative(
-	'android/c15t-core/src/main/kotlin/com/c15t/core/wire/SnapshotWire.kt'
+	'android/inth-core/src/main/kotlin/com/inth/core/wire/SnapshotWire.kt'
 );
 
 /**

@@ -1,17 +1,17 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.model.ConsentAction
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentSnapshot
-import com.c15t.core.model.ConsentSubject
-import com.c15t.core.model.ConfirmedCoverage
-import com.c15t.core.model.SavePayload
-import com.c15t.core.store.C15tStore
-import com.c15t.core.store.C15tStoreKeys
-import com.c15t.core.store.PendingSaveQueue
-import com.c15t.core.transport.C15tProtocol
-import com.c15t.core.transport.HostedTransport
-import com.c15t.core.transport.SaveOutcome
+import com.inth.core.model.ConsentAction
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentSnapshot
+import com.inth.core.model.ConsentSubject
+import com.inth.core.model.ConfirmedCoverage
+import com.inth.core.model.SavePayload
+import com.inth.core.store.InthStore
+import com.inth.core.store.InthStoreKeys
+import com.inth.core.store.PendingSaveQueue
+import com.inth.core.transport.InthProtocol
+import com.inth.core.transport.HostedTransport
+import com.inth.core.transport.SaveOutcome
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -32,7 +32,7 @@ class PendingQueueTest {
 		val timeline = mutableListOf<String>()
 		val backend = InMemoryKeyValueStore(eventLog = timeline)
 		val transport = RecordingTransport(timeline).respondSave(SaveOutcome.Unavailable("offline"))
-		val kernel = testKernel(store = C15tStore(backend), transport = transport)
+		val kernel = testKernel(store = InthStore(backend), transport = transport)
 		kernel.bootstrap()
 		val writesBeforeSave = timeline.size
 
@@ -43,7 +43,7 @@ class PendingQueueTest {
 		assertTrue(result.queued)
 
 		val events = timeline.drop(writesBeforeSave)
-		val snapshotWrite = events.indexOf("write:${C15tStoreKeys.SNAPSHOT}")
+		val snapshotWrite = events.indexOf("write:${InthStoreKeys.SNAPSHOT}")
 		val networkCall = events.indexOf("network:save")
 		assertTrue(snapshotWrite >= 0, "the decision and payload must reach disk, got: $events")
 		assertTrue(networkCall >= 0, "the transport must be consulted")
@@ -58,7 +58,7 @@ class PendingQueueTest {
 	@Test
 	fun `a payload is replayed unchanged after a simulated failure`() {
 		val transport = RecordingTransport().respondSave(SaveOutcome.Unavailable("offline"))
-		val kernel = testKernel(store = C15tStore(InMemoryKeyValueStore()), transport = transport)
+		val kernel = testKernel(store = InthStore(InMemoryKeyValueStore()), transport = transport)
 		kernel.bootstrap()
 		kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MEASUREMENT to true)))
 
@@ -90,7 +90,7 @@ class PendingQueueTest {
 		// only the newest, or rebuilding a payload from the state of the moment, both
 		// leave the audit trail describing a choice nobody made.
 		val transport = RecordingTransport().respondSave(SaveOutcome.Unavailable("offline"))
-		val kernel = testKernel(store = C15tStore(InMemoryKeyValueStore()), transport = transport)
+		val kernel = testKernel(store = InthStore(InMemoryKeyValueStore()), transport = transport)
 		kernel.bootstrap()
 
 		kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MEASUREMENT to true)))
@@ -118,7 +118,7 @@ class PendingQueueTest {
 	@Test
 	fun `a newer init does not rewrite a queued payload`() {
 		val transport = RecordingTransport().respondSave(SaveOutcome.Unavailable("offline"))
-		val kernel = testKernel(store = C15tStore(InMemoryKeyValueStore()), transport = transport)
+		val kernel = testKernel(store = InthStore(InMemoryKeyValueStore()), transport = transport)
 
 		// The first policy resolves, the subject accepts, and the write cannot fly.
 		transport.respondInit(
@@ -174,7 +174,7 @@ class PendingQueueTest {
 
 	@Test
 	fun `the queue keeps the newest twenty payloads and drops the oldest`() {
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val queue = PendingSaveQueue(store, limit = 20, idGenerator = idsFrom(1))
 		repeat(25) { queue.enqueue(payloadFor(it), 1_700_000_000_000L + it) }
 
@@ -188,7 +188,7 @@ class PendingQueueTest {
 	fun `every backend-bound request carries the protocol headers`() {
 		val http = RecordingHttpClient { responseFor(it) }
 		val kernel = testKernel(
-			store = C15tStore(InMemoryKeyValueStore()),
+			store = InthStore(InMemoryKeyValueStore()),
 			transport = HostedTransport(http, NativeConfig(backendUrl = "https://test.c15t.app/")),
 		)
 		kernel.bootstrap()
@@ -196,13 +196,13 @@ class PendingQueueTest {
 
 		val init = http.requests.first { it.url == "https://test.c15t.app/init" }
 		// The version is unprefixed, as on web and Swift; the host platform has its own header.
-		assertEquals(C15tProtocol.DEFAULT_SDK_VERSION, init.headers[C15tProtocol.VERSION_HEADER])
-		assertEquals("android->${C15tProtocol.DEFAULT_SDK_VERSION}", init.headers[C15tProtocol.PLATFORM_HEADER])
-		assertEquals("1", init.headers[C15tProtocol.POLICY_CONTRACT_HEADER])
+		assertEquals(InthProtocol.DEFAULT_SDK_VERSION, init.headers[InthProtocol.VERSION_HEADER])
+		assertEquals("android->${InthProtocol.DEFAULT_SDK_VERSION}", init.headers[InthProtocol.PLATFORM_HEADER])
+		assertEquals("1", init.headers[InthProtocol.POLICY_CONTRACT_HEADER])
 
 		val save = http.requests.first { it.url == "https://test.c15t.app/subjects" }
-		assertEquals("1", save.headers[C15tProtocol.POLICY_CONTRACT_HEADER])
-		assertEquals("android->${C15tProtocol.DEFAULT_SDK_VERSION}", save.headers[C15tProtocol.PLATFORM_HEADER])
+		assertEquals("1", save.headers[InthProtocol.POLICY_CONTRACT_HEADER])
+		assertEquals("android->${InthProtocol.DEFAULT_SDK_VERSION}", save.headers[InthProtocol.PLATFORM_HEADER])
 		val body = json.parseToJsonElement(requireNotNull(save.body)).jsonObject
 		assertEquals("cookie_banner", body["type"]?.jsonPrimitive?.content)
 		assertEquals("test.c15t.app", body["domain"]?.jsonPrimitive?.content, "domain falls back to the host")
@@ -232,7 +232,7 @@ class PendingQueueTest {
 		fun platformHeaders(platform: String?): List<String?> {
 			val http = RecordingHttpClient { responseFor(it) }
 			val kernel = testKernel(
-				store = C15tStore(InMemoryKeyValueStore()),
+				store = InthStore(InMemoryKeyValueStore()),
 				transport = HostedTransport(
 					http,
 					NativeConfig(backendUrl = "https://test.c15t.app", sdkVersion = "9.9.9", platform = platform),
@@ -241,14 +241,14 @@ class PendingQueueTest {
 			kernel.bootstrap()
 			kernel.save(CommitIntent.All)
 			assertTrue(http.requests.size >= 2, "an init and a save were sent")
-			assertTrue(http.requests.all { it.headers[C15tProtocol.VERSION_HEADER] == "9.9.9" })
-			return http.requests.map { it.headers[C15tProtocol.PLATFORM_HEADER] }.distinct()
+			assertTrue(http.requests.all { it.headers[InthProtocol.VERSION_HEADER] == "9.9.9" })
+			return http.requests.map { it.headers[InthProtocol.PLATFORM_HEADER] }.distinct()
 		}
 
 		// ENG-530: a React Native host reports `rn`, a Kotlin host `android`, and the
 		// version header never carries a platform prefix.
-		assertEquals(listOf("rn->9.9.9"), platformHeaders(C15tProtocol.PLATFORM_REACT_NATIVE))
-		assertEquals(listOf("android->9.9.9"), platformHeaders(C15tProtocol.PLATFORM_ANDROID))
+		assertEquals(listOf("rn->9.9.9"), platformHeaders(InthProtocol.PLATFORM_REACT_NATIVE))
+		assertEquals(listOf("android->9.9.9"), platformHeaders(InthProtocol.PLATFORM_ANDROID))
 		assertEquals(listOf<String?>(null), platformHeaders(null))
 	}
 
@@ -275,13 +275,13 @@ class PendingQueueTest {
 		}
 	}
 
-	private fun responseFor(request: com.c15t.core.spi.HttpRequest) = when {
-		request.url.endsWith("/init") -> com.c15t.core.spi.HttpResponse(
+	private fun responseFor(request: com.inth.core.spi.HttpRequest) = when {
+		request.url.endsWith("/init") -> com.inth.core.spi.HttpResponse(
 			status = 200,
-			headers = mapOf(C15tProtocol.POLICY_CONTRACT_HEADER to "1"),
+			headers = mapOf(InthProtocol.POLICY_CONTRACT_HEADER to "1"),
 			body = initBody(),
 		)
 
-		else -> com.c15t.core.spi.HttpResponse(status = 200, body = "{}")
+		else -> com.inth.core.spi.HttpResponse(status = 200, body = "{}")
 	}
 }

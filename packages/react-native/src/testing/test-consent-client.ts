@@ -6,7 +6,7 @@ import {
 	setConsentClient,
 } from '../native/client';
 import type { ConsentClient } from '../native/client';
-import { installNativeC15t } from '../native/module';
+import { installNativeInth } from '../native/module';
 import type { NativeEventsLike } from '../native/module';
 import type {
 	CommitIntent,
@@ -18,11 +18,11 @@ import { OPTIONAL_CONSENT_CATEGORIES } from '../protocol/vocabulary';
 import { releaseConsentPresenter } from '../provider/auto-present';
 import {
 	buildFakeSnapshot,
-	createFakeNativeC15t,
+	createFakeNativeInth,
 	FAKE_BOOTSTRAP,
 	FAKE_EVALUATED_AT,
 	withExplicitChoice,
-} from './fake-native-c15t';
+} from './fake-native-inth';
 
 /**
  * The consent a test starts from, or moves to.
@@ -283,8 +283,8 @@ let active: TestConsentClient | null = null;
  * @example
  * ```tsx
  * import { fireEvent, render, screen } from '@testing-library/react-native';
- * import { ConsentProvider } from '@c15t/react-native';
- * import { createTestConsentClient } from '@c15t/react-native/testing';
+ * import { ConsentProvider } from '@inth/react-native';
+ * import { createTestConsentClient } from '@inth/react-native/testing';
  *
  * test('turns analytics on after accept all', async () => {
  *     const consent = createTestConsentClient({ consent: 'unset' });
@@ -314,13 +314,13 @@ export const createTestConsentClient = function createTestConsentClient(
 		ready,
 		...options.snapshot,
 	};
-	const fake = createFakeNativeC15t({
+	const fake = createFakeNativeInth({
 		bootstrap: { ...FAKE_BOOTSTRAP, nativeUI: options.nativeUI ?? true },
 		emit: hub.emit,
 		snapshot: initial,
 		trackingAuthorization: options.trackingAuthorization,
 	});
-	const uninstall = installNativeC15t(fake.nativeModule, hub.events);
+	const uninstall = installNativeInth(fake.nativeModule, hub.events);
 	const client = createConsentClient(fake.nativeModule, hub.events);
 	setConsentClient(client);
 

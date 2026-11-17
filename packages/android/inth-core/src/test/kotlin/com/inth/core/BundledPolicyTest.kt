@@ -1,8 +1,8 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.model.*
-import com.c15t.core.store.C15tStore
-import com.c15t.core.transport.*
+import com.inth.core.model.*
+import com.inth.core.store.InthStore
+import com.inth.core.transport.*
 import java.io.File
 import java.security.MessageDigest
 import java.util.concurrent.LinkedBlockingQueue
@@ -58,7 +58,7 @@ class BundledPolicyTest {
 		assertNull(BundledPolicy.resolve("corrupt", endpoint, KernelOverrides(), now))
 	}
 	@Test fun `reset publishes the cleared baseline before the bundled manifest`() {
-		val core = testKernel(NativeConfig(endpoint, bundledPolicy = resource(), consentCategories = ConsentCategory.entries), C15tStore(InMemoryKeyValueStore()), FixedClock(now), RecordingTransport()).also { it.bootstrap() }
+		val core = testKernel(NativeConfig(endpoint, bundledPolicy = resource(), consentCategories = ConsentCategory.entries), InthStore(InMemoryKeyValueStore()), FixedClock(now), RecordingTransport()).also { it.bootstrap() }
 		assertFalse(core.snapshot().policyPending)
 		core.save(CommitIntent.All)
 		val before = core.snapshot().revision
@@ -78,7 +78,7 @@ class BundledPolicyTest {
 	@Test fun `manifest expiring in use keeps prompting and emits policyStale once`() {
 		val clock = FixedClock(now)
 		val raw = resource { it["expiresAt"] = JsonPrimitive(now + 100) }
-		val core = testKernel(NativeConfig(endpoint, bundledPolicy = raw, consentCategories = ConsentCategory.entries), C15tStore(InMemoryKeyValueStore()), clock).also { it.bootstrap() }
+		val core = testKernel(NativeConfig(endpoint, bundledPolicy = raw, consentCategories = ConsentCategory.entries), InthStore(InMemoryKeyValueStore()), clock).also { it.bootstrap() }
 		val announced = LinkedBlockingQueue<BundledPolicyAuthority>()
 		val listener: (BundledPolicyAuthority) -> Unit = { announced.add(it) }
 		val subscription = core.onPolicyStale(listener)
@@ -106,7 +106,7 @@ class BundledPolicyTest {
 		val entered = java.util.concurrent.CountDownLatch(1)
 		val release = java.util.concurrent.CountDownLatch(1)
 		// Holds the deadline task between installing the stale snapshot and announcing it.
-		val blocking = object : com.c15t.core.spi.KeyValueStore by backing {
+		val blocking = object : com.inth.core.spi.KeyValueStore by backing {
 			override fun writeDurably(key: String, value: String?): Boolean {
 				if (armed.compareAndSet(true, false)) {
 					entered.countDown()
@@ -116,7 +116,7 @@ class BundledPolicyTest {
 			}
 		}
 		val core = testKernel(NativeConfig(endpoint, bundledPolicy = resource { it["expiresAt"] = JsonPrimitive(now + 100) }),
-			C15tStore(blocking), clock).also { it.bootstrap() }
+			InthStore(blocking), clock).also { it.bootstrap() }
 		armed.set(true)
 		clock.advance(100)
 		assertTrue(entered.await(3, TimeUnit.SECONDS))
@@ -131,7 +131,7 @@ class BundledPolicyTest {
 
 	@Test fun `first offline launch with an expired manifest prompts records choices and replays policyStale`() {
 		val clock = FixedClock(now + 604800000)
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val config = NativeConfig(endpoint, bundledPolicy = resource(), consentCategories = ConsentCategory.entries)
 		val transport = RecordingTransport()
 		val core = testKernel(config, store, clock, transport).also { it.bootstrap() }
@@ -152,7 +152,7 @@ class BundledPolicyTest {
 
 	@Test fun `rejecting after the manifest expires withdraws at once and replaces the queued grant`() {
 		val clock = FixedClock(now)
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val transport = RecordingTransport().respondSave(SaveOutcome.Unavailable("offline"))
 		val config = NativeConfig(endpoint, bundledPolicy = resource { it["expiresAt"] = JsonPrimitive(now + 100) },
 			consentCategories = ConsentCategory.entries)
@@ -174,7 +174,7 @@ class BundledPolicyTest {
 
 	@Test fun `a live no-match answer drops the earlier rule and its grants, as the web kernel does`() {
 		val transport = RecordingTransport().respondInit(liveResponse(resource()))
-		val core = testKernel(NativeConfig(endpoint, consentCategories = ConsentCategory.entries), C15tStore(InMemoryKeyValueStore()), FixedClock(now), transport)
+		val core = testKernel(NativeConfig(endpoint, consentCategories = ConsentCategory.entries), InthStore(InMemoryKeyValueStore()), FixedClock(now), transport)
 			.also { it.bootstrap() }
 		assertTrue(core.save(CommitIntent.All).ok)
 		assertTrue(core.isAllowed(ConsentCategory.MEASUREMENT))
@@ -192,10 +192,10 @@ class BundledPolicyTest {
 		val clock = FixedClock(now)
 		val raw = resource()
 		val config = NativeConfig(endpoint, bundledPolicy = raw)
-		val airplane = testKernel(config, C15tStore(InMemoryKeyValueStore()), clock, RecordingTransport()).also { it.bootstrap() }
+		val airplane = testKernel(config, InthStore(InMemoryKeyValueStore()), clock, RecordingTransport()).also { it.bootstrap() }
 		assertNotNull(airplane.bundledPolicyInfo)
 		assertFalse(airplane.snapshot().policyPending)
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val online = testKernel(config, store, clock, RecordingTransport().respondInit(liveResponse(raw))).also { it.bootstrap() }
 		assertNull(online.bundledPolicyInfo)
 		assertFalse(online.snapshot().policyPending)
@@ -220,7 +220,7 @@ class BundledPolicyTest {
 		return TransportOutcome.Success(buildJsonObject { put("policyResolution", wire) }, emptyMap())
 	}
 	@Test fun `cold offline decision survives launch cache preference withdrawal and expiry`() {
-		val store = C15tStore(InMemoryKeyValueStore()); val clock = FixedClock(now)
+		val store = InthStore(InMemoryKeyValueStore()); val clock = FixedClock(now)
 		fun boot(raw: String = resource()) = testKernel(NativeConfig(endpoint, bundledPolicy = raw, consentCategories = ConsentCategory.entries), store, clock, RecordingTransport()).also { it.bootstrap() }
 		val core = boot()
 		assertTrue(core.snapshot().ready); assertFalse(core.snapshot().policyPending)
@@ -261,7 +261,7 @@ class BundledPolicyTest {
 				}
 			})
 		}
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val config = NativeConfig(endpoint, bundledPolicy = raw, consentCategories = ConsentCategory.entries,
 			overrides = KernelOverrides(country = "US", language = "en"))
 		fun boot() = testKernel(config, store, clock, RecordingTransport()).also { it.bootstrap() }
@@ -289,11 +289,11 @@ class BundledPolicyTest {
 			body["expiresAt"] = JsonPrimitive(startedAt + 60_000)
 			val payload = JsonObject(body).toString()
 			val raw = buildJsonObject { put("payload", payload); put("sha256", MessageDigest.getInstance("SHA-256").digest(payload.toByteArray()).joinToString("") { "%02x".format(it) }) }.toString()
-			val configuration = source["configuration"]?.let { Json { ignoreUnknownKeys = true }.decodeFromJsonElement<com.c15t.core.iab.IabConfiguration>(it) }
+			val configuration = source["configuration"]?.let { Json { ignoreUnknownKeys = true }.decodeFromJsonElement<com.inth.core.iab.IabConfiguration>(it) }
 			val config = NativeConfig(endpoint, bundledPolicy = raw, iab = configuration, consentCategories = ConsentCategory.entries, overrides = KernelOverrides(country = country))
 			val selected = assertNotNull(BundledPolicy.resolve(raw, endpoint, config.overrides, startedAt))
 			val wire = body.getValue("policyPacks").jsonArray.first { it.jsonObject.getValue("policyResolution").jsonObject.getValue("policyId").jsonPrimitive.content == selected.mapped.resolution.policyId }.jsonObject.getValue("policyResolution")
-			val store = C15tStore(InMemoryKeyValueStore())
+			val store = InthStore(InMemoryKeyValueStore())
 			val clock = FixedClock(startedAt)
 			val transport = RecordingTransport().respondSave(SaveOutcome.Unavailable("offline"))
 			fun boot(categories: List<ConsentCategory>? = ConsentCategory.entries) = testKernel(config.copy(consentCategories = categories), store, clock, transport).also { it.bootstrap() }
@@ -333,7 +333,7 @@ class BundledPolicyTest {
 	}
 	@Test fun `offline IAB preserves source dates and refuses absent stale or future disclosures`() {
 		val v = Json.parseToJsonElement(generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }.map { File(it, "packages/native-protocol/bundled-policy/iab.json") }.first { it.exists() }.readText()).jsonObject
-		val configuration = Json { ignoreUnknownKeys = true }.decodeFromJsonElement<com.c15t.core.iab.IabConfiguration>(v.getValue("configuration"))
+		val configuration = Json { ignoreUnknownKeys = true }.decodeFromJsonElement<com.inth.core.iab.IabConfiguration>(v.getValue("configuration"))
 		// An older CLI wrote no `customVendors`; an unreadable list still loads the bundle, with none.
 		for (fault in listOf("valid", "missing-gvl", "stale-gvl", "future-gvl", "missing-atp", "stale-atp", "future-atp", "no-custom-vendors", "invalid-custom-vendors")) {
 			val body = Json.parseToJsonElement(v.getValue("resource").jsonObject.getValue("payload").jsonPrimitive.content).jsonObject.toMutableMap()
@@ -346,7 +346,7 @@ class BundledPolicyTest {
 			body["disclosures"] = JsonObject(disclosures)
 			val payload = JsonObject(body).toString()
 			val raw = buildJsonObject { put("payload", payload); put("sha256", MessageDigest.getInstance("SHA-256").digest(payload.toByteArray()).joinToString("") { "%02x".format(it) }) }.toString()
-			val store = C15tStore(InMemoryKeyValueStore())
+			val store = InthStore(InMemoryKeyValueStore())
 			val config = NativeConfig(endpoint, bundledPolicy = raw, iab = configuration)
 			val core = testKernel(config, store, FixedClock(now), RecordingTransport()).also { it.bootstrap() }
 			if (fault == "valid" || fault.endsWith("custom-vendors")) {
@@ -375,13 +375,13 @@ class BundledPolicyTest {
 	 */
 	@Test fun `a newer bundle without custom vendors keeps the held list`() {
 		val v = Json.parseToJsonElement(generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }.map { File(it, "packages/native-protocol/bundled-policy/iab.json") }.first { it.exists() }.readText()).jsonObject
-		val configuration = Json { ignoreUnknownKeys = true }.decodeFromJsonElement<com.c15t.core.iab.IabConfiguration>(v.getValue("configuration"))
+		val configuration = Json { ignoreUnknownKeys = true }.decodeFromJsonElement<com.inth.core.iab.IabConfiguration>(v.getValue("configuration"))
 		val original = Json.parseToJsonElement(v.getValue("resource").jsonObject.getValue("payload").jsonPrimitive.content).jsonObject
 		fun raw(body: JsonObject): String {
 			val payload = body.toString()
 			return buildJsonObject { put("payload", payload); put("sha256", MessageDigest.getInstance("SHA-256").digest(payload.toByteArray()).joinToString("") { "%02x".format(it) }) }.toString()
 		}
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val first = testKernel(NativeConfig(endpoint, bundledPolicy = raw(original), iab = configuration), store, FixedClock(now)).also { it.bootstrap() }
 		assertTrue(first.save(CommitIntent.All).ok)
 		assertEquals(listOf("internal-ads"), first.iabConsent?.choices?.customVendorConsents)
@@ -401,15 +401,15 @@ class BundledPolicyTest {
 	 */
 	@Test fun `a newer bundle listing none withdraws them across a relaunch`() {
 		val v = Json.parseToJsonElement(generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }.map { File(it, "packages/native-protocol/bundled-policy/iab.json") }.first { it.exists() }.readText()).jsonObject
-		val configuration = Json { ignoreUnknownKeys = true }.decodeFromJsonElement<com.c15t.core.iab.IabConfiguration>(v.getValue("configuration"))
+		val configuration = Json { ignoreUnknownKeys = true }.decodeFromJsonElement<com.inth.core.iab.IabConfiguration>(v.getValue("configuration"))
 		val original = Json.parseToJsonElement(v.getValue("resource").jsonObject.getValue("payload").jsonPrimitive.content).jsonObject
 		fun raw(body: JsonObject): String {
 			val payload = body.toString()
 			return buildJsonObject { put("payload", payload); put("sha256", MessageDigest.getInstance("SHA-256").digest(payload.toByteArray()).joinToString("") { "%02x".format(it) }) }.toString()
 		}
-		fun launch(store: C15tStore, body: JsonObject, at: Long) =
+		fun launch(store: InthStore, body: JsonObject, at: Long) =
 			testKernel(NativeConfig(endpoint, bundledPolicy = raw(body), iab = configuration), store, FixedClock(at)).also { it.bootstrap() }
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		assertTrue(launch(store, original, now).save(CommitIntent.All).ok)
 
 		val withdrawn = JsonObject(original + mapOf(
@@ -426,7 +426,7 @@ class BundledPolicyTest {
 	}
 
 	@Test fun `hosted same fingerprint preserves choice while changed fingerprint prompts again`() {
-		val store = C15tStore(InMemoryKeyValueStore()); val clock = FixedClock(now)
+		val store = InthStore(InMemoryKeyValueStore()); val clock = FixedClock(now)
 		val raw = resource(); val config = NativeConfig(endpoint, bundledPolicy = raw)
 		val offline = testKernel(config, store, clock).also { it.bootstrap() }
 		assertTrue(offline.save(CommitIntent.All).ok)
@@ -434,7 +434,7 @@ class BundledPolicyTest {
 		val selected = assertNotNull(BundledPolicy.resolve(raw, endpoint, KernelOverrides(), now))
 		val payload = Json.parseToJsonElement(Json.parseToJsonElement(raw).jsonObject.getValue("payload").jsonPrimitive.content).jsonObject
 		val wire = payload.getValue("policyPacks").jsonArray.first { it.jsonObject.getValue("policyResolution").jsonObject.getValue("policyId").jsonPrimitive.content == selected.mapped.resolution.policyId }.jsonObject.getValue("policyResolution")
-		fun response(w: JsonElement) = com.c15t.core.transport.TransportOutcome.Success(buildJsonObject { put("policyResolution", w) }, emptyMap())
+		fun response(w: JsonElement) = com.inth.core.transport.TransportOutcome.Success(buildJsonObject { put("policyResolution", w) }, emptyMap())
 		val transport = RecordingTransport().respondInit(response(wire))
 		val online = testKernel(config, store, clock, transport).also { it.bootstrap() }
 		assertNull(online.bundledPolicyInfo)
@@ -447,7 +447,7 @@ class BundledPolicyTest {
 	}
 
 	@Test fun `stale or older stored manifest gives way to a newer bundled one`() {
-		val store = C15tStore(InMemoryKeyValueStore()); val clock = FixedClock(now)
+		val store = InthStore(InMemoryKeyValueStore()); val clock = FixedClock(now)
 		val old = resource { it["expiresAt"] = JsonPrimitive(now + 100) }
 		val core = testKernel(NativeConfig(endpoint, bundledPolicy = old), store, clock).also { it.bootstrap() }
 		assertTrue(core.save(CommitIntent.All).ok)
@@ -470,7 +470,7 @@ class BundledPolicyTest {
 
 	@Test fun `permissive known policy cannot supply implicit grants from a bundle`() {
 		val config = NativeConfig(endpoint, bundledPolicy = resource(), overrides = KernelOverrides(country = "US", language = "fr-CA"))
-		val core = testKernel(config, C15tStore(InMemoryKeyValueStore()), FixedClock(now)).also { it.bootstrap() }
+		val core = testKernel(config, InthStore(InMemoryKeyValueStore()), FixedClock(now)).also { it.bootstrap() }
 		assertFalse(core.snapshot().policyPending)
 		assertEquals("us_permissive", core.snapshot().resolution.policyId)
 		assertNull(core.snapshot().explicitChoice)

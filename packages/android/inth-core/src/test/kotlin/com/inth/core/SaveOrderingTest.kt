@@ -1,13 +1,13 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.model.ConsentAction
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.KernelError
-import com.c15t.core.spi.TaskExecutor
-import com.c15t.core.store.C15tStore
-import com.c15t.core.store.C15tStoreKeys
-import com.c15t.core.store.PendingSaveQueue
-import com.c15t.core.transport.SaveOutcome
+import com.inth.core.model.ConsentAction
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.KernelError
+import com.inth.core.spi.TaskExecutor
+import com.inth.core.store.InthStore
+import com.inth.core.store.InthStoreKeys
+import com.inth.core.store.PendingSaveQueue
+import com.inth.core.transport.SaveOutcome
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -31,7 +31,7 @@ class SaveOrderingTest {
 		val timeline = mutableListOf<String>()
 		val backend = InMemoryKeyValueStore(eventLog = timeline)
 		val transport = RecordingTransport(timeline).respondSave(SaveOutcome.Delivered)
-		val kernel = testKernel(store = C15tStore(backend), transport = transport)
+		val kernel = testKernel(store = InthStore(backend), transport = transport)
 		// Script a policy so bootstrap() does not emit an init failure, which would land in
 		// the same error list this test asserts on.
 		transport.respondInit(initSuccess())
@@ -42,7 +42,7 @@ class SaveOrderingTest {
 
 		assertTrue(result.ok)
 		val events = timeline.drop(from)
-		val snapshotWrite = events.indexOf("write:${C15tStoreKeys.SNAPSHOT}")
+		val snapshotWrite = events.indexOf("write:${InthStoreKeys.SNAPSHOT}")
 		val network = events.indexOf("network:save")
 		assertTrue(snapshotWrite >= 0, "the atomic decision must be persisted, got: $events")
 		assertTrue(snapshotWrite < network, "the request must follow the write, got: $events")
@@ -50,8 +50,8 @@ class SaveOrderingTest {
 
 	@Test
 	fun `a store without durable acknowledgement cannot commit a decision`() {
-		val backend = VanishingKeyValueStore(C15tStoreKeys.PENDING)
-		val store = C15tStore(backend)
+		val backend = VanishingKeyValueStore(InthStoreKeys.PENDING)
+		val store = InthStore(backend)
 		val transport = RecordingTransport().respondSave(SaveOutcome.Delivered)
 		val errors = mutableListOf<KernelError>()
 		val kernel = testKernel(store = store, transport = transport, logger = { errors += it })
@@ -79,7 +79,7 @@ class SaveOrderingTest {
 		// snapshot write may follow the refused commit.
 		assertTrue(
 			backend.events.withIndex().none { (at, event) ->
-				at >= from && event == "write:${C15tStoreKeys.SNAPSHOT}"
+				at >= from && event == "write:${InthStoreKeys.SNAPSHOT}"
 			},
 			"a refusal must not rewrite the stored decision, got: ${backend.events.drop(from)}",
 		)
@@ -88,8 +88,8 @@ class SaveOrderingTest {
 	@Test
 	fun `a refusal writes no snapshot`() {
 		// This store implements only legacy writes, so no atomic decision is acknowledged.
-		val backend = VanishingKeyValueStore(C15tStoreKeys.PENDING)
-		val store = C15tStore(backend)
+		val backend = VanishingKeyValueStore(InthStoreKeys.PENDING)
+		val store = InthStore(backend)
 		val kernel = testKernel(store = store)
 		kernel.bootstrap()
 		kernel.save(CommitIntent.All)
@@ -101,7 +101,7 @@ class SaveOrderingTest {
 	@Test
 	fun `delivered stays false while the send is still in flight`() {
 		val inFlight = mutableListOf<() -> Unit>()
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val transport = RecordingTransport().respondSave(SaveOutcome.Delivered)
 		val kernel = testKernel(
 			store = store,
@@ -127,7 +127,7 @@ class SaveOrderingTest {
 
 	@Test
 	fun `delivered is true only when the executor ran the send inline`() {
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val transport = RecordingTransport().respondSave(SaveOutcome.Delivered)
 		val kernel = testKernel(store = store, transport = transport)
 		// Script a policy so bootstrap() does not emit an init failure, which would land in
@@ -143,7 +143,7 @@ class SaveOrderingTest {
 
 	@Test
 	fun `the first send failing spends an attempt against the entry`() {
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val transport = RecordingTransport().respondSave(SaveOutcome.Unavailable("offline"))
 		val errors = mutableListOf<KernelError>()
 		val kernel = testKernel(store = store, transport = transport, logger = { errors += it })
@@ -162,7 +162,7 @@ class SaveOrderingTest {
 
 	@Test
 	fun `a body the backend refuses on its own terms is dropped and the reason named`() {
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val transport = RecordingTransport().respondSave(SaveOutcome.Rejected(400))
 		val errors = mutableListOf<KernelError>()
 		val kernel = testKernel(store = store, transport = transport, logger = { errors += it })
@@ -185,7 +185,7 @@ class SaveOrderingTest {
 
 	@Test
 	fun `a rate limited send keeps the entry and spends one attempt`() {
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val transport = RecordingTransport().respondSave(SaveOutcome.Rejected(429))
 		val errors = mutableListOf<KernelError>()
 		val kernel = testKernel(store = store, transport = transport, logger = { errors += it })
@@ -201,7 +201,7 @@ class SaveOrderingTest {
 
 	@Test
 	fun `an unsupported contract is a verdict on the body`() {
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val transport = RecordingTransport().respondSave(SaveOutcome.UnsupportedContract("2", 1))
 		val errors = mutableListOf<KernelError>()
 		val kernel = testKernel(store = store, transport = transport, logger = { errors += it })
@@ -218,7 +218,7 @@ class SaveOrderingTest {
 
 	@Test
 	fun `a body runs out at the attempt ceiling and says which ceiling`() {
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val transport = RecordingTransport().respondSave(SaveOutcome.Rejected(503))
 		val errors = mutableListOf<KernelError>()
 		val kernel = testKernel(store = store, transport = transport, logger = { errors += it })
@@ -247,7 +247,7 @@ class SaveOrderingTest {
 	@Test
 	fun `an entry older than the retention window names that ceiling instead`() {
 		val clock = FixedClock()
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val transport = RecordingTransport()
 			.respondSave(SaveOutcome.Unavailable("offline"))
 			.respondSave(SaveOutcome.Rejected(503))
@@ -270,7 +270,7 @@ class SaveOrderingTest {
 
 	@Test
 	fun `a save with no reachable sender says the obligation is waiting`() {
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val transport = RecordingTransport().respondSave(SaveOutcome.Unavailable("airplane mode"))
 		val errors = mutableListOf<KernelError>()
 		val kernel = testKernel(store = store, transport = transport, logger = { errors += it })
@@ -289,7 +289,7 @@ class SaveOrderingTest {
 
 	@Test
 	fun `a committed save still reports the action it took`() {
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val kernel = testKernel(store = store)
 		kernel.bootstrap()
 

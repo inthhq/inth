@@ -1,10 +1,10 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.model.*
-import com.c15t.core.iab.IabLegalBasis
-import com.c15t.core.spi.*
-import com.c15t.core.store.*
-import com.c15t.core.transport.*
+import com.inth.core.model.*
+import com.inth.core.iab.IabLegalBasis
+import com.inth.core.spi.*
+import com.inth.core.store.*
+import com.inth.core.transport.*
 import java.io.File
 import java.util.concurrent.*
 import kotlin.test.*
@@ -29,7 +29,7 @@ class MutationSerializationTest {
 		override fun write(key: String, value: String?) = underlying.write(key, value)
 		override fun flush() = Unit
 		override fun writeDurably(key: String, value: String?): Boolean {
-			if (armed && key == C15tStoreKeys.SNAPSHOT) {
+			if (armed && key == InthStoreKeys.SNAPSHOT) {
 				armed = false
 				callback?.invoke()
 				entered.countDown()
@@ -43,7 +43,7 @@ class MutationSerializationTest {
 	@Test fun `blocked commit leaves hot reads available and orders all mutations`() {
 		for (operation in listOf("save", "identify", "logout", "reset", "overrides", "dismiss", "refresh")) {
 			val backend = BlockingStore()
-			val store = C15tStore(backend)
+			val store = InthStore(backend)
 			val transport = RecordingTransport().respondInit(init()).respondSave(SaveOutcome.Unavailable("offline"))
 			val core = testKernel(config = config, store = store, transport = transport, clock = FixedClock(vector.now))
 			core.bootstrap()
@@ -79,7 +79,7 @@ class MutationSerializationTest {
 				else second.get(5, TimeUnit.SECONDS)
 				assertEquals(core.snapshot().revision, store.readEnvelope()!!.snapshot.revision, operation)
 				if (operation == "save") assertEquals(1, store.readPending().size)
-				val cold = testKernel(config = config, store = C15tStore(backend), clock = FixedClock(vector.now))
+				val cold = testKernel(config = config, store = InthStore(backend), clock = FixedClock(vector.now))
 				cold.bootstrap()
 				assertEquals(core.snapshot().explicitChoice, cold.snapshot().explicitChoice, operation)
 			} finally {
@@ -91,11 +91,11 @@ class MutationSerializationTest {
 
 	@Test fun `storage callback reads and failed commit leave no ghost on restart`() {
 		val backend = BlockingStore()
-		val store = C15tStore(backend)
+		val store = InthStore(backend)
 		val core = testKernel(config = config, store = store,
 			transport = RecordingTransport().respondInit(init()), clock = FixedClock(vector.now))
 		core.bootstrap()
-		val before = backend.read(C15tStoreKeys.SNAPSHOT)
+		val before = backend.read(InthStoreKeys.SNAPSHOT)
 		val pool = Executors.newCachedThreadPool()
 		val callbackCompleted = java.util.concurrent.atomic.AtomicBoolean(false)
 		try {
@@ -111,9 +111,9 @@ class MutationSerializationTest {
 			backend.resume.countDown()
 			assertFalse(save.get(5, TimeUnit.SECONDS).ok)
 			assertTrue(callbackCompleted.get(), "store callback read deadlocked")
-			assertEquals(before, backend.read(C15tStoreKeys.SNAPSHOT))
+			assertEquals(before, backend.read(InthStoreKeys.SNAPSHOT))
 			assertTrue(store.readPending().isEmpty())
-			val cold = testKernel(config = config, store = C15tStore(backend), clock = FixedClock(vector.now))
+			val cold = testKernel(config = config, store = InthStore(backend), clock = FixedClock(vector.now))
 			cold.bootstrap()
 			assertNull(cold.iabConsent)
 			assertTrue(store.readPending().isEmpty())
@@ -123,7 +123,7 @@ class MutationSerializationTest {
 	@Test fun `replacement and grant cleanup keep state reads available`() {
 		for (operation in listOf("identify", "logout", "reset", "refresh")) {
 			val backend = BlockingStore()
-			val store = C15tStore(backend)
+			val store = InthStore(backend)
 			val transport = RecordingTransport().respondInit(init()).respondSave(SaveOutcome.Unavailable("offline"))
 			val core = testKernel(config = config, store = store, transport = transport, clock = FixedClock(vector.now))
 			core.bootstrap()
@@ -157,7 +157,7 @@ class MutationSerializationTest {
 
 	@Test fun `failed commit orders following action without rejected body on restart`() {
 		val backend = BlockingStore()
-		val store = C15tStore(backend)
+		val store = InthStore(backend)
 		val core = testKernel(config = config, store = store, clock = FixedClock(vector.now),
 			transport = RecordingTransport().respondInit(init()).respondSave(SaveOutcome.Unavailable("offline")))
 		core.bootstrap()
@@ -176,7 +176,7 @@ class MutationSerializationTest {
 			assertTrue(second.get(5, TimeUnit.SECONDS).ok)
 			assertEquals(1, store.readPending().size)
 			assertTrue(store.readPending().all { it.isWithdrawal() })
-			val cold = testKernel(config = config, store = C15tStore(backend), clock = FixedClock(vector.now))
+			val cold = testKernel(config = config, store = InthStore(backend), clock = FixedClock(vector.now))
 			cold.bootstrap()
 			assertEquals(core.iabConsent?.tcString, cold.iabConsent?.tcString)
 		} finally { backend.resume.countDown(); pool.shutdownNow() }

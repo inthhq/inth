@@ -1,15 +1,15 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.store.C15tStore
-import com.c15t.core.store.C15tStoreKeys
-import com.c15t.core.store.TcBusValue
-import com.c15t.core.store.TcStorageBusKeys
-import com.c15t.core.tc.GlobalVendorListJson
-import com.c15t.core.tc.VendorListScopeFixture
-import com.c15t.core.tc.VendorListScopeFixtures
-import com.c15t.core.tc.narrowToVendorIds
-import com.c15t.core.transport.TransportOutcome
-import com.c15t.core.wire.SnapshotWire
+import com.inth.core.store.InthStore
+import com.inth.core.store.InthStoreKeys
+import com.inth.core.store.TcBusValue
+import com.inth.core.store.TcStorageBusKeys
+import com.inth.core.tc.GlobalVendorListJson
+import com.inth.core.tc.VendorListScopeFixture
+import com.inth.core.tc.VendorListScopeFixtures
+import com.inth.core.tc.narrowToVendorIds
+import com.inth.core.transport.TransportOutcome
+import com.inth.core.wire.SnapshotWire
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonElement
@@ -24,7 +24,7 @@ import kotlin.test.assertTrue
 /**
  * A publisher's declared vendor scope, taken from [NativeConfig.vendors] through the kernel.
  *
- * [com.c15t.core.tc.narrowToVendorIds] has always been correct and has always been called only from
+ * [com.inth.core.tc.narrowToVendorIds] has always been correct and has always been called only from
  * a test, which is the gap this file closes: a device discloses exactly the scope the server chose
  * to embed, and a setting nobody reads is not a setting. Everything here therefore enters through
  * [ConsentCore.bootstrap] with a configured core and leaves through one of the three surfaces a host
@@ -32,7 +32,7 @@ import kotlin.test.assertTrue
  * because a prune that lives only inside the helper would still leave all three serving the wide list.
  *
  * The vectors are the shared `packages/native-protocol/vendor-list-scope-*` fixtures this core already claims
- * in [com.c15t.core.tc.VendorListScopeFixturesTest], graded here through the kernel rather than
+ * in [com.inth.core.tc.VendorListScopeFixturesTest], graded here through the kernel rather than
  * against the helper directly. Their oracle is `narrowGVLToVendors` in
  * `packages/sdk/iab/src/tcf/fetch-gvl.ts`, called by the generator, so what a scoped device ends up
  * holding is the browser build's answer and not Kotlin's opinion about it.
@@ -130,7 +130,7 @@ class DeclaredVendorScopeTest {
 		for (shape in listOf("scope-absent", "scope-empty")) {
 			val fixture = fixture(shape)
 			assertTrue(fixture.unchanged, "${fixture.id}: the fixture claims a rebuilt document for a scope nobody declared")
-			val store = C15tStore(InMemoryKeyValueStore())
+			val store = InthStore(InMemoryKeyValueStore())
 			// `null` for the vector with no scope at all, `emptyList()` for the one with an empty
 			// scope: the config field carries the shape the vector published, because the whole claim
 			// is that the two shapes stop differing once they reach a device.
@@ -176,7 +176,7 @@ class DeclaredVendorScopeTest {
 		val backend = InMemoryKeyValueStore()
 
 		// Release N: no declaration, so the envelope on disk is the served document whole.
-		val warm = serve(fixture, scope = null, store = C15tStore(backend))
+		val warm = serve(fixture, scope = null, store = InthStore(backend))
 		warm.bootstrap()
 		val wide = assertNotNull(warm.vendorListBody(), "the first release held the whole served list")
 		assertEquals(54, warm.vendorList?.vendors?.size, "the warm device holds what it was served")
@@ -184,7 +184,7 @@ class DeclaredVendorScopeTest {
 		// Release N+1: the host declares a scope, and this launch never hears from the backend, so no
 		// `/init` is on its way to correct anything the stored bytes got wrong.
 		val coldTransport = RecordingTransport()
-		val coldStore = C15tStore(backend)
+		val coldStore = InthStore(backend)
 		val cold = testKernel(
 			config = NativeConfig(backendUrl = "https://test.c15t.app", vendors = scope),
 			store = coldStore,
@@ -207,7 +207,7 @@ class DeclaredVendorScopeTest {
 		// document that already says what the device discloses.
 		val relaunched = testKernel(
 			config = NativeConfig(backendUrl = "https://test.c15t.app", vendors = scope),
-			store = C15tStore(backend),
+			store = InthStore(backend),
 			transport = RecordingTransport(),
 		)
 		relaunched.bootstrap()
@@ -218,7 +218,7 @@ class DeclaredVendorScopeTest {
 	/**
 	 * A stored list inside the snapshot's own `iab` object is pruned as honestly as the envelope key.
 	 *
-	 * [com.c15t.core.ConsentCore.bootstrap] reads two shapes -- the envelope's `gvl` key, which is what
+	 * [com.inth.core.ConsentCore.bootstrap] reads two shapes -- the envelope's `gvl` key, which is what
 	 * this build writes, and `snapshot.iab.gvl`, which is what a device holding the list that way must
 	 * not be stranded without. A scope applied to the preferred branch only would leave the fallback
 	 * disclosing the wide list, and a reader that never sees the fallback would call that green.
@@ -228,13 +228,13 @@ class DeclaredVendorScopeTest {
 		val fixture = fixture("scope-32-vendors")
 		val scope = fixture.declaredScope()
 		val backend = InMemoryKeyValueStore()
-		serve(fixture, scope = null, store = C15tStore(backend)).bootstrap()
+		serve(fixture, scope = null, store = InthStore(backend)).bootstrap()
 		val stored = kotlinx.serialization.json.Json.parseToJsonElement(
-			assertNotNull(backend.read(C15tStoreKeys.SNAPSHOT)),
+			assertNotNull(backend.read(InthStoreKeys.SNAPSHOT)),
 		).jsonObject
 		val gvl = stored["gvl"] ?: throw AssertionError("the warm write carried no list")
 		backend.write(
-			C15tStoreKeys.SNAPSHOT,
+			InthStoreKeys.SNAPSHOT,
 			buildJsonObject {
 				stored.forEach { (key, value) ->
 					if (key != "snapshot" && key != "gvl") {
@@ -247,7 +247,7 @@ class DeclaredVendorScopeTest {
 
 		val kernel = testKernel(
 			config = NativeConfig(backendUrl = "https://test.c15t.app", vendors = scope),
-			store = C15tStore(backend),
+			store = InthStore(backend),
 			transport = RecordingTransport(),
 		)
 		kernel.bootstrap()
@@ -269,7 +269,7 @@ class DeclaredVendorScopeTest {
 		val fixture = fixture("scope-versions-preserved")
 		val scope = fixture.declaredScope()
 		val bus = RecordingTcStorageBus()
-		val kernel = serve(fixture, scope = scope, store = C15tStore(InMemoryKeyValueStore(), tcStorageBus = bus))
+		val kernel = serve(fixture, scope = scope, store = InthStore(InMemoryKeyValueStore(), tcStorageBus = bus))
 		kernel.bootstrap()
 
 		val held = assertNotNull(kernel.vendorList)
@@ -290,7 +290,7 @@ class DeclaredVendorScopeTest {
 	private fun serve(
 		fixture: VendorListScopeFixture,
 		scope: List<Int>?,
-		store: C15tStore = C15tStore(InMemoryKeyValueStore()),
+		store: InthStore = InthStore(InMemoryKeyValueStore()),
 	): ConsentCore = testKernel(
 		config = NativeConfig(backendUrl = "https://test.c15t.app", vendors = scope),
 		store = store,

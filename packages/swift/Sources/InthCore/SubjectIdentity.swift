@@ -37,9 +37,9 @@ struct SubjectIdentityRead: Sendable, Equatable {
     var replacementReason: String? = nil
 }
 
-/// The c15t subject identifier.
+/// The Inth subject identifier.
 ///
-/// A `sub_` id minted by ``SubjectId``, owned by c15t, stored in the same protected
+/// A `sub_` id minted by ``SubjectId``, owned by Inth, stored in the same protected
 /// storage as the consent records. It is never derived from IDFV, ADID, or any other
 /// persistent hardware identifier, and it is never read from one: the whole point of a
 /// generated id is that a subject who clears storage starts fresh, which is what the
@@ -86,7 +86,7 @@ public struct SubjectIdentity: Sendable, Codable, Equatable, Hashable {
         key: String = StorageKey.subject
     ) -> SubjectIdentityRead {
         let raw = store.data(for: key)
-        guard let raw, let stored = try? C15tJSON.decode(StoredSubject.self, from: raw) else {
+        guard let raw, let stored = try? InthJSON.decode(StoredSubject.self, from: raw) else {
             return SubjectIdentityRead(
                 identity: mint(into: store, key: key), unusable: nil,
                 replacementReason: raw == nil ? "missing" : "corrupt"

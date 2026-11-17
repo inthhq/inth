@@ -1,4 +1,4 @@
-package com.c15t.consentui.headless
+package com.inth.consentui.headless
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -15,10 +15,10 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.activity.ComponentActivity
-import com.c15t.core.CommitIntent
-import com.c15t.core.ConsentCore
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.spi.KeyValueStore
+import com.inth.core.CommitIntent
+import com.inth.core.ConsentCore
+import com.inth.core.model.ConsentCategory
+import com.inth.core.spi.KeyValueStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.resetMain
@@ -120,7 +120,7 @@ class HeadlessComponentsTest {
         var saved = false
         // Registered first, so it runs before the composable's observer and saves again mid-delivery.
         val earlier = core.onChange { if (!saved) { saved = true; core.save(CommitIntent.Necessary) } }
-        lateinit var state: androidx.compose.runtime.State<com.c15t.core.model.ConsentSnapshot>
+        lateinit var state: androidx.compose.runtime.State<com.inth.core.model.ConsentSnapshot>
         compose.setContent { state = rememberConsentSnapshot(core) }
         compose.waitForIdle()
         assertTrue(core.save(CommitIntent.All).ok)
@@ -155,7 +155,7 @@ class HeadlessComponentsTest {
     /** The blocks carry no look: nothing under `headless` may reach for Material. */
     @Test fun theBlocksDoNotImportMaterial() {
         val directory = generateSequence(File(requireNotNull(System.getProperty("user.dir")))) { it.parentFile }
-            .map { File(it, "packages/android/c15t-consent-ui/src/main/kotlin/com/c15t/consentui/headless") }.first { it.exists() }
+            .map { File(it, "packages/android/inth-consent-ui/src/main/kotlin/com/inth/consentui/headless") }.first { it.exists() }
         val sources = directory.listFiles { file -> file.extension == "kt" }.orEmpty()
         assertTrue(sources.size >= 3)
         for (source in sources) assertFalse("${source.name} imports Material", source.readText().contains("androidx.compose.material"))

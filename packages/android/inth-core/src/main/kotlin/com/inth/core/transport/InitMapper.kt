@@ -1,17 +1,17 @@
-package com.c15t.core.transport
+package com.inth.core.transport
 
-import com.c15t.core.iab.*
+import com.inth.core.iab.*
 import kotlinx.serialization.json.JsonNull
-import com.c15t.core.model.ConsentLocation
-import com.c15t.core.model.KernelError
-import com.c15t.core.model.KernelOverrides
-import com.c15t.core.model.PolicyResolution
-import com.c15t.core.model.PrivacySignals
-import com.c15t.core.policy.EvaluationPolicy
-import com.c15t.core.policy.PolicyRead
-import com.c15t.core.policy.StrictPolicyReader
-import com.c15t.core.tc.GlobalVendorList
-import com.c15t.core.tc.GlobalVendorListJson
+import com.inth.core.model.ConsentLocation
+import com.inth.core.model.KernelError
+import com.inth.core.model.KernelOverrides
+import com.inth.core.model.PolicyResolution
+import com.inth.core.model.PrivacySignals
+import com.inth.core.policy.EvaluationPolicy
+import com.inth.core.policy.PolicyRead
+import com.inth.core.policy.StrictPolicyReader
+import com.inth.core.tc.GlobalVendorList
+import com.inth.core.tc.GlobalVendorListJson
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
@@ -69,7 +69,7 @@ data class MappedInit(
 	 *
 	 * It is null in the third case by construction, and that costs nothing: this field never takes
 	 * anything away. The kernel keeps the last list it accepted across a list-less or failed `/init`,
-	 * for the reason written at [com.c15t.core.ConsentCore.vendorList], so a device that has already
+	 * for the reason written at [com.inth.core.ConsentCore.vendorList], so a device that has already
 	 * drawn purpose names off a list keeps being able to say who they belong to. Reading this field
 	 * as "install it, or clear what you have" would be the bug that comment is there to prevent.
 	 *
@@ -81,7 +81,7 @@ data class MappedInit(
     val adTechProviders: List<AdTechProvider>? = null,
     val adTechProvidersInvalid: Boolean = false,
     /** `/init`'s `customVendors`, or null when the key is absent, which keeps the list held. */
-    val customVendors: List<com.c15t.core.iab.IabCustomVendor>? = null,
+    val customVendors: List<com.inth.core.iab.IabCustomVendor>? = null,
     /** A `customVendors` value that is not a readable list. The core then holds none. */
     val customVendorsInvalid: Boolean = false,
 	val error: KernelError? = null,
@@ -104,7 +104,7 @@ object InitMapper {
 			policyPending = true,
 			error = KernelError(
 				code = PolicyResolution.REASON_TRANSPORT,
-				message = "c15t: /init responded ${outcome.status}",
+				message = "Inth: /init responded ${outcome.status}",
 			),
 		)
 
@@ -119,7 +119,7 @@ object InitMapper {
 	}
 
 	private fun mapSuccess(outcome: TransportOutcome.Success): MappedInit {
-		val declaration = ProducerContract.fromHeader(outcome.header(C15tProtocol.POLICY_CONTRACT_HEADER))
+		val declaration = ProducerContract.fromHeader(outcome.header(InthProtocol.POLICY_CONTRACT_HEADER))
 		val body = (outcome.body as? JsonObject)
 
 		val rawResolution = body?.get("policyResolution")
@@ -185,8 +185,8 @@ object InitMapper {
             adTechProvidersInvalid = body?.get("adTechProviders")?.let {
                 it != JsonNull && AdditionalConsent.providers(it) == null
             } ?: false,
-            customVendors = com.c15t.core.iab.IabCustomVendor.list(body?.get("customVendors")),
-            customVendorsInvalid = body?.get("customVendors")?.let { com.c15t.core.iab.IabCustomVendor.list(it) == null } ?: false,
+            customVendors = com.inth.core.iab.IabCustomVendor.list(body?.get("customVendors")),
+            customVendorsInvalid = body?.get("customVendors")?.let { com.inth.core.iab.IabCustomVendor.list(it) == null } ?: false,
 			error = error,
 		)
 	}
@@ -200,14 +200,14 @@ object InitMapper {
 		outcome: TransportOutcome.Success,
 	): String = when (reason) {
 		PolicyResolution.REASON_UNSUPPORTED_CONTRACT -> {
-			val declared = outcome.header(C15tProtocol.POLICY_CONTRACT_HEADER) ?: "<absent>"
-			"c15t: backend declares policy contract $declared, this SDK reads " +
-				C15tProtocol.POLICY_CONTRACT_VERSION +
+			val declared = outcome.header(InthProtocol.POLICY_CONTRACT_HEADER) ?: "<absent>"
+			"Inth: backend declares policy contract $declared, this SDK reads " +
+				InthProtocol.POLICY_CONTRACT_VERSION +
 				". Consent stays deny-all until the backend or the SDK is updated."
 		}
 
-		PolicyResolution.REASON_INVALID_PAYLOAD -> "c15t: /init returned a policy resolution this SDK cannot represent; consent stays deny-all"
-		else -> "c15t: /init policy resolution failed ($reason); consent stays deny-all"
+		PolicyResolution.REASON_INVALID_PAYLOAD -> "Inth: /init returned a policy resolution this SDK cannot represent; consent stays deny-all"
+		else -> "Inth: /init policy resolution failed ($reason); consent stays deny-all"
 	}
 
 	private fun JsonObject?.stringOrNull(key: String): String? {

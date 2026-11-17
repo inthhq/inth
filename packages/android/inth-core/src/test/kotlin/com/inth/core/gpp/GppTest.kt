@@ -1,36 +1,36 @@
-package com.c15t.core.gpp
+package com.inth.core.gpp
 
-import com.c15t.core.CommitIntent
-import com.c15t.core.FixedClock
-import com.c15t.core.NativeConfig
-import com.c15t.core.RecordingTcStorageBus
-import com.c15t.core.RecordingTransport
-import com.c15t.core.iab.IabChoices
-import com.c15t.core.iab.IabCommittedConsent
-import com.c15t.core.iab.IabConfiguration
-import com.c15t.core.initBody
-import com.c15t.core.initSuccess
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentLocation
-import com.c15t.core.model.ConsentModel
-import com.c15t.core.model.ConsentSnapshot
-import com.c15t.core.model.ConsentState
-import com.c15t.core.model.GpcSignal
-import com.c15t.core.model.KernelOverrides
-import com.c15t.core.model.PolicyResolution
-import com.c15t.core.model.PrivacySignals
-import com.c15t.core.policy.EvaluationPolicy
-import com.c15t.core.policy.PolicyRead
-import com.c15t.core.policy.StrictPolicyReader
-import com.c15t.core.policy.PolicyPrompt
-import com.c15t.core.policy.PolicyRight
-import com.c15t.core.policy.ScopeMode
-import com.c15t.core.store.C15tStore
-import com.c15t.core.InMemoryKeyValueStore
-import com.c15t.core.store.TcBusValue
-import com.c15t.core.testKernel
-import com.c15t.core.transport.ProducerContract
-import com.c15t.core.wire.SnapshotWire
+import com.inth.core.CommitIntent
+import com.inth.core.FixedClock
+import com.inth.core.NativeConfig
+import com.inth.core.RecordingTcStorageBus
+import com.inth.core.RecordingTransport
+import com.inth.core.iab.IabChoices
+import com.inth.core.iab.IabCommittedConsent
+import com.inth.core.iab.IabConfiguration
+import com.inth.core.initBody
+import com.inth.core.initSuccess
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentLocation
+import com.inth.core.model.ConsentModel
+import com.inth.core.model.ConsentSnapshot
+import com.inth.core.model.ConsentState
+import com.inth.core.model.GpcSignal
+import com.inth.core.model.KernelOverrides
+import com.inth.core.model.PolicyResolution
+import com.inth.core.model.PrivacySignals
+import com.inth.core.policy.EvaluationPolicy
+import com.inth.core.policy.PolicyRead
+import com.inth.core.policy.StrictPolicyReader
+import com.inth.core.policy.PolicyPrompt
+import com.inth.core.policy.PolicyRight
+import com.inth.core.policy.ScopeMode
+import com.inth.core.store.InthStore
+import com.inth.core.InMemoryKeyValueStore
+import com.inth.core.store.TcBusValue
+import com.inth.core.testKernel
+import com.inth.core.transport.ProducerContract
+import com.inth.core.wire.SnapshotWire
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonNull
@@ -185,7 +185,7 @@ class PolicyRightsFixtureTest {
 		)).toString()
 		val core = testKernel(
 			NativeConfig("https://cmp.example.test", overrides = KernelOverrides(country = "US"), gpp = GppOptions()),
-			C15tStore(InMemoryKeyValueStore(), tcStorageBus = bus), FixedClock(),
+			InthStore(InMemoryKeyValueStore(), tcStorageBus = bus), FixedClock(),
 			RecordingTransport().respondInit(initSuccess(body = body)),
 		)
 		core.bootstrap()
@@ -228,7 +228,7 @@ class GppCoreTest {
 	@Test fun `a US opt-out visitor gets usnat on the snapshot and in storage, and a refusal opts out`() {
 		val bus = RecordingTcStorageBus()
 		val backend = InMemoryKeyValueStore()
-		val core = testKernel(config(GppOptions()), C15tStore(backend, tcStorageBus = bus), FixedClock(), transport())
+		val core = testKernel(config(GppOptions()), InthStore(backend, tcStorageBus = bus), FixedClock(), transport())
 		core.bootstrap()
 		assertEquals("US", core.snapshot().overrides.country, "the backend placed the visitor in the US")
 		assertEquals(noChoice, core.snapshot().gppString)
@@ -244,15 +244,15 @@ class GppCoreTest {
 		assertEquals(TcBusValue.TextValue(optedOut), bus.live[GppStorageBusKeys.HDR_GPP_STRING])
 
 		// The envelope keeps no copy; a cold start derives the same string again.
-		val cold = testKernel(config(GppOptions()), C15tStore(backend, tcStorageBus = bus), FixedClock(), RecordingTransport(),
-			executor = com.c15t.core.spi.TaskExecutor { })
+		val cold = testKernel(config(GppOptions()), InthStore(backend, tcStorageBus = bus), FixedClock(), RecordingTransport(),
+			executor = com.inth.core.spi.TaskExecutor { })
 		cold.bootstrap()
 		assertEquals(optedOut, cold.snapshot().gppString)
 	}
 
 	@Test fun `the location the backend matched on decides, not the app's earlier override`() {
 		val bus = RecordingTcStorageBus()
-		val core = testKernel(config(GppOptions()), C15tStore(InMemoryKeyValueStore(), tcStorageBus = bus), FixedClock(),
+		val core = testKernel(config(GppOptions()), InthStore(InMemoryKeyValueStore(), tcStorageBus = bus), FixedClock(),
 			transport(country = "DE"))
 		core.bootstrap()
 		assertEquals("DE", core.snapshot().overrides.country)
@@ -262,7 +262,7 @@ class GppCoreTest {
 
 	@Test fun `an empty opt-out list drives no opt-out when marketing is refused`() {
 		val bus = RecordingTcStorageBus()
-		val core = testKernel(config(GppOptions(optOutCategories = emptyList())), C15tStore(InMemoryKeyValueStore(), tcStorageBus = bus),
+		val core = testKernel(config(GppOptions(optOutCategories = emptyList())), InthStore(InMemoryKeyValueStore(), tcStorageBus = bus),
 			FixedClock(), transport())
 		core.bootstrap()
 		assertTrue(core.save(CommitIntent.Necessary).ok)
@@ -275,7 +275,7 @@ class GppCoreTest {
 
 	@Test fun `GPP stays off until the app turns it on`() {
 		val bus = RecordingTcStorageBus()
-		val core = testKernel(config(null), C15tStore(InMemoryKeyValueStore(), tcStorageBus = bus), FixedClock(), transport())
+		val core = testKernel(config(null), InthStore(InMemoryKeyValueStore(), tcStorageBus = bus), FixedClock(), transport())
 		core.bootstrap()
 		assertNull(core.snapshot().gppString)
 		assertTrue(bus.live.keys.none { it.startsWith("IABGPP_") })
@@ -285,9 +285,9 @@ class GppCoreTest {
 	@Test fun `turning GPP off drops a string an earlier launch published`() {
 		val bus = RecordingTcStorageBus()
 		val backend = InMemoryKeyValueStore()
-		testKernel(config(GppOptions()), C15tStore(backend, tcStorageBus = bus), FixedClock(), transport()).bootstrap()
+		testKernel(config(GppOptions()), InthStore(backend, tcStorageBus = bus), FixedClock(), transport()).bootstrap()
 		assertEquals(TcBusValue.TextValue(noChoice), bus.live[GppStorageBusKeys.HDR_GPP_STRING])
-		val off = testKernel(config(null), C15tStore(backend, tcStorageBus = bus), FixedClock(), transport())
+		val off = testKernel(config(null), InthStore(backend, tcStorageBus = bus), FixedClock(), transport())
 		off.bootstrap()
 		assertNull(off.snapshot().gppString)
 		assertTrue(bus.live.keys.none { it.startsWith("IABGPP_") })

@@ -1,4 +1,4 @@
-package com.c15t.consentui.headless
+package com.inth.consentui.headless
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.focusable
@@ -25,13 +25,13 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.c15t.core.C15t
-import com.c15t.core.ConsentCore
-import com.c15t.core.iab.IabLegalBasis
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentSnapshot
+import com.inth.core.Inth
+import com.inth.core.ConsentCore
+import com.inth.core.iab.IabLegalBasis
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentSnapshot
 
-private fun installedCore(): ConsentCore = requireNotNull(C15t.current) { "Install c15t before using the headless consent blocks" }
+private fun installedCore(): ConsentCore = requireNotNull(Inth.current) { "Install Inth before using the headless consent blocks" }
 
 /** The core's snapshot as Compose state. It recomposes its readers on every consent change. */
 @Composable

@@ -1,50 +1,50 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.model.isWithdrawal
-import com.c15t.core.model.ConsentState
+import com.inth.core.model.isWithdrawal
+import com.inth.core.model.ConsentState
 
-import com.c15t.core.gpp.GppResolver
-import com.c15t.core.gpp.GppStorageBusProjection
-import com.c15t.core.iab.*
-import com.c15t.core.model.ActiveUI
-import com.c15t.core.model.ConfirmedCoverage
-import com.c15t.core.model.ConsentAction
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentDecision
-import com.c15t.core.model.ConsentModel
-import com.c15t.core.model.ConsentSnapshot
-import com.c15t.core.model.ConsentSubject
-import com.c15t.core.model.DecisionInputs
-import com.c15t.core.model.ExplicitChoice
-import com.c15t.core.model.GpcSignal
-import com.c15t.core.model.KernelError
-import com.c15t.core.model.KernelIabState
-import com.c15t.core.model.KernelOverrides
-import com.c15t.core.model.KernelUser
-import com.c15t.core.model.PrivacySignals
-import com.c15t.core.model.QueuedSave
-import com.c15t.core.model.SavePayload
-import com.c15t.core.policy.EvaluationPolicy
-import com.c15t.core.policy.NoticeDismissal
-import com.c15t.core.policy.PolicyEvaluator
-import com.c15t.core.policy.PolicyPrompt
-import com.c15t.core.spi.Clock
-import com.c15t.core.spi.TaskExecutor
-import com.c15t.core.store.C15tStore
-import com.c15t.core.store.FailedAttempt
-import com.c15t.core.store.PendingSaveQueue
-import com.c15t.core.store.SnapshotEnvelope
-import com.c15t.core.store.UnusableSubjectId
-import com.c15t.core.tc.GlobalVendorList
-import com.c15t.core.tc.GlobalVendorListJson
-import com.c15t.core.tc.TcVendorList
-import com.c15t.core.tc.narrowToVendorIds
-import com.c15t.core.transport.C15tTransport
-import com.c15t.core.transport.InitContext
-import com.c15t.core.transport.InitMapper
-import com.c15t.core.transport.MappedInit
-import com.c15t.core.transport.SaveOutcome
-import com.c15t.core.transport.TransportOutcome
+import com.inth.core.gpp.GppResolver
+import com.inth.core.gpp.GppStorageBusProjection
+import com.inth.core.iab.*
+import com.inth.core.model.ActiveUI
+import com.inth.core.model.ConfirmedCoverage
+import com.inth.core.model.ConsentAction
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentDecision
+import com.inth.core.model.ConsentModel
+import com.inth.core.model.ConsentSnapshot
+import com.inth.core.model.ConsentSubject
+import com.inth.core.model.DecisionInputs
+import com.inth.core.model.ExplicitChoice
+import com.inth.core.model.GpcSignal
+import com.inth.core.model.KernelError
+import com.inth.core.model.KernelIabState
+import com.inth.core.model.KernelOverrides
+import com.inth.core.model.KernelUser
+import com.inth.core.model.PrivacySignals
+import com.inth.core.model.QueuedSave
+import com.inth.core.model.SavePayload
+import com.inth.core.policy.EvaluationPolicy
+import com.inth.core.policy.NoticeDismissal
+import com.inth.core.policy.PolicyEvaluator
+import com.inth.core.policy.PolicyPrompt
+import com.inth.core.spi.Clock
+import com.inth.core.spi.TaskExecutor
+import com.inth.core.store.InthStore
+import com.inth.core.store.FailedAttempt
+import com.inth.core.store.PendingSaveQueue
+import com.inth.core.store.SnapshotEnvelope
+import com.inth.core.store.UnusableSubjectId
+import com.inth.core.tc.GlobalVendorList
+import com.inth.core.tc.GlobalVendorListJson
+import com.inth.core.tc.TcVendorList
+import com.inth.core.tc.narrowToVendorIds
+import com.inth.core.transport.InthTransport
+import com.inth.core.transport.InitContext
+import com.inth.core.transport.InitMapper
+import com.inth.core.transport.MappedInit
+import com.inth.core.transport.SaveOutcome
+import com.inth.core.transport.TransportOutcome
 import java.lang.ref.WeakReference
 import java.util.UUID
 import java.util.concurrent.CopyOnWriteArrayList
@@ -110,7 +110,7 @@ private class PassReport(
  * run after releasing the gate; hot reads never acquire it.
  *
  * @param store Typed persistence over the host's storage.
- * @param transport Backend commands; [C15tTransport.NONE] keeps the core local-only.
+ * @param transport Backend commands; [InthTransport.NONE] keeps the core local-only.
  * @param executor Where init and write delivery run. [TaskExecutor.DIRECT] runs
  * them inline, which is what the tests use to make ordering observable. It does not have to
  * be serial: a delivery pass is guarded by [requestDeliveryPass] rather than by the shape of
@@ -118,11 +118,11 @@ private class PassReport(
  * one-pass-in-flight rule.
  * @param logger Receives every [KernelError] the core emits.
  */
-class ConsentCore @C15tInternalApi constructor(
+class ConsentCore @InthInternalApi constructor(
 	private val config: NativeConfig,
-	private val store: C15tStore,
+	private val store: InthStore,
 	private val clock: Clock = Clock.SYSTEM,
-	private val transport: C15tTransport = C15tTransport.NONE,
+	private val transport: InthTransport = InthTransport.NONE,
 	executor: TaskExecutor? = null,
 	subjectIdGenerator: (() -> String)? = null,
 	private val queueIdGenerator: () -> String = { UUID.randomUUID().toString() },
@@ -132,7 +132,7 @@ class ConsentCore @C15tInternalApi constructor(
 		?: TaskExecutor { task -> backgroundPool.execute(task) }
 
 	/**
-	 * Mints the c15t-owned subject id, in the `sub_` format the backend validates.
+	 * Mints the inth-owned subject id, in the `sub_` format the backend validates.
 	 *
 	 * Separate from [queueIdGenerator] on purpose: a subject id travels and has to
 	 * satisfy `subjectIdSchema` in `@c15t/schema`, while a queue entry id is a local
@@ -231,7 +231,7 @@ class ConsentCore @C15tInternalApi constructor(
 	fun isCustomVendorAllowed(id: String): Boolean = iabConsent?.choices?.customVendorConsents?.contains(id) == true
 
 	/**
-	 * The c15t categories the committed TC String grants, by the web's derivation
+	 * The Inth categories the committed TC String grants, by the web's derivation
 	 * ([IabPurposeCategories]), or null when no decision is current. Registered vendors after
 	 * publisher restrictions, custom vendors and listed ad tech providers decide which purposes count.
 	 */
@@ -481,7 +481,7 @@ class ConsentCore @C15tInternalApi constructor(
 				// would serve the wider list to the first drawer that opens before `/init` lands,
 				// and on a device whose network never comes back that drawer is the answer for the
 				// life of the app. Applying it costs nothing when the list is already inside the
-				// scope -- [com.c15t.core.tc.narrowToVendorIds] over an already-narrow list returns
+				// scope -- [com.inth.core.tc.narrowToVendorIds] over an already-narrow list returns
 				// an equal one -- so this is the whole rule and not a race against the network.
 				// [persist] then writes the pruned document back, so the device stops storing the
 				// scope it no longer discloses.
@@ -531,7 +531,7 @@ class ConsentCore @C15tInternalApi constructor(
 		announcePolicyStale()
 		// An in-code policy answers before the first read, once.
 		if (inCodePolicy) runInit()
-		if (config.dryRun) logger(KernelError(DRY_RUN, "c15t: dryRun is on. Consent records and identity calls are dropped. Policy is still fetched from /init unless an in-code policy is set."))
+		if (config.dryRun) logger(KernelError(DRY_RUN, "Inth: dryRun is on. Consent records and identity calls are dropped. Policy is still fetched from /init unless an in-code policy is set."))
 		background.execute { flushPending() }
 		if (!inCodePolicy) background.execute { runInit() }
 	}
@@ -848,7 +848,7 @@ class ConsentCore @C15tInternalApi constructor(
 	 *
 	 * @returns [CommitResult.ok] is true only for a committed decision; on a refusal
 	 * [CommitResult.failure] names which of `queue-write-failed` or `concurrent-change`
-	 * stopped it, and `not-bootstrapped` comes from the [C15t] facade in front of this
+	 * stopped it, and `not-bootstrapped` comes from the [Inth] facade in front of this
 	 * kernel.
 	 */
 	fun save(intent: CommitIntent, expectedRevision: Long? = null): CommitResult =
@@ -1018,7 +1018,7 @@ class ConsentCore @C15tInternalApi constructor(
 				.copy(tcString = nextIab?.tcString, addtlConsent = nextIab?.addtlConsent)
 
 		val isIab = policy?.model == ConsentModel.IAB
-		val frozen = com.c15t.core.transport.SaveBodyBuilder.build(payload,
+		val frozen = com.inth.core.transport.SaveBodyBuilder.build(payload,
 			config.domain?.takeIf { it.isNotBlank() } ?: java.net.URI(config.backendUrl).host.orEmpty()).toString()
 		val entry = QueuedSave(
 			if (isIab) UUID.randomUUID().toString() else queueIdGenerator(),
@@ -1155,7 +1155,7 @@ class ConsentCore @C15tInternalApi constructor(
 	 * snapshot. A failed init still completes; its error goes to [onError] as usual.
 	 * [onComplete] runs on the core's executor thread.
 	 *
-	 * This is what `awaitRefresh` in `c15t-android` suspends on.
+	 * This is what `awaitRefresh` in `inth-android` suspends on.
 	 */
 	fun refresh(onComplete: () -> Unit) {
 		background.execute {
@@ -1218,7 +1218,7 @@ class ConsentCore @C15tInternalApi constructor(
 	/**
 	 * Detach the external identity.
 	 *
-	 * The c15t subject id stays: it is the installation's identity, not the user's,
+	 * The Inth subject id stays: it is the installation's identity, not the user's,
 	 * and the records already attached to it stay attributable.
 	 */
 	fun logout() = mutate { mutation ->
@@ -1545,7 +1545,7 @@ class ConsentCore @C15tInternalApi constructor(
 	 * The subject this launch answers with: the stored one, or a fresh one.
 	 *
 	 * A stored id that the producer will not accept is not an identity, so it is not
-	 * adopted -- see [C15tStore.readSubject]. Replacing it is only honest together with the
+	 * adopted -- see [InthStore.readSubject]. Replacing it is only honest together with the
 	 * records written under it, so this path clears them: keep the envelope and the fresh
 	 * id inherits a decision nobody made under it, which splits one subject across two ids
 	 * and re-prompts nobody, so nobody ever notices that it happened.
@@ -1566,7 +1566,7 @@ class ConsentCore @C15tInternalApi constructor(
 		store.subjectReplacementReason?.let { reason ->
 			if (store.hasConsentRecords()) discardOrphanedIdentityRecords(reason)
 		}
-		// Owned by c15t and minted by SubjectIdGenerator. Never derived from a hardware
+		// Owned by Inth and minted by SubjectIdGenerator. Never derived from a hardware
 		// identifier. An id this build wrote is adopted untouched, because minting a
 		// fresh one over an accepted stored id would orphan every record the backend holds
 		// against the id in storage.
@@ -1580,7 +1580,7 @@ class ConsentCore @C15tInternalApi constructor(
 		if (identityRecoveryAnnouncements.add(reason)) {
 			emitError(KernelError(
 				code = "subject-id-$reason",
-				message = "c15t: the stored subject identity is $reason. Stored consent and queued saves were discarded; the app asks for consent again.",
+				message = "Inth: the stored subject identity is $reason. Stored consent and queued saves were discarded; the app asks for consent again.",
 			))
 		}
 	}
@@ -1606,7 +1606,7 @@ class ConsentCore @C15tInternalApi constructor(
 		emitError(
 			KernelError(
 				code = "subject-id-unusable",
-				message = "c15t: the stored subject id ${unusable.id} $origin, and the c15t " +
+				message = "Inth: the stored subject id ${unusable.id} $origin, and the Inth " +
 					"backend only accepts ids matching ^sub_[1-9A-HJ-NP-Za-km-z]+$, so this build " +
 					"cannot use that identity. The consent saved under it was discarded with it, " +
 					"because the backend refused every save that carried it and holds no decision " +
@@ -1625,8 +1625,8 @@ class ConsentCore @C15tInternalApi constructor(
 			val mapped = config.policy?.resolve(state.get().overrides) ?: config.policyError?.let { reason ->
 				// Fail closed: a policy this build refused cannot keep a cached one, or its
 				// grants, in force.
-				com.c15t.core.transport.MappedInit(
-					resolution = com.c15t.core.model.PolicyResolution.failed(com.c15t.core.model.PolicyResolution.REASON_INVALID_CONFIGURATION),
+				com.inth.core.transport.MappedInit(
+					resolution = com.inth.core.model.PolicyResolution.failed(com.inth.core.model.PolicyResolution.REASON_INVALID_CONFIGURATION),
 					evaluationPolicy = null,
 					policyPending = true,
 					policyUnreadable = true,
@@ -1656,7 +1656,7 @@ class ConsentCore @C15tInternalApi constructor(
 			)
 		} catch (error: Exception) {
 				TransportOutcome.NetworkFailure(
-					"c15t transport: ${error.message ?: error.javaClass.simpleName}"
+					"Inth transport: ${error.message ?: error.javaClass.simpleName}"
 				)
 			}
 		val mapped = InitMapper.map(outcome)
@@ -1665,7 +1665,7 @@ class ConsentCore @C15tInternalApi constructor(
 		if (changed) notifySnapshot()
 	}
 
-	private fun applyInit(mapped: com.c15t.core.transport.MappedInit, detection: Boolean?, online: Boolean, bundle: BundledPolicy.Selection? = null): Pair<Boolean, KernelError?> = mutate { mutation ->
+	private fun applyInit(mapped: com.inth.core.transport.MappedInit, detection: Boolean?, online: Boolean, bundle: BundledPolicy.Selection? = null): Pair<Boolean, KernelError?> = mutate { mutation ->
 		var detected = detection
 		var published: ConsentSnapshot
 		var emitted: KernelError?
@@ -1694,8 +1694,8 @@ class ConsentCore @C15tInternalApi constructor(
 				// An explicit `no-match` or `unconfigured` answer puts the safe fallback in force,
 				// as `resolveEffectivePolicy` in `@c15t/core` and core-swift's wire reader do. Only
 				// a failed init keeps the last policy.
-				mapped.resolution.status == com.c15t.core.model.PolicyResolution.STATUS_NO_MATCH ||
-					mapped.resolution.status == com.c15t.core.model.PolicyResolution.STATUS_UNCONFIGURED -> null
+				mapped.resolution.status == com.inth.core.model.PolicyResolution.STATUS_NO_MATCH ||
+					mapped.resolution.status == com.inth.core.model.PolicyResolution.STATUS_UNCONFIGURED -> null
 				else -> mapped.evaluationPolicy ?: evaluationPolicy
 			}
 			// Latched, exactly like the policy two lines above, and for the reason on
@@ -1869,7 +1869,7 @@ class ConsentCore @C15tInternalApi constructor(
 					// them, which beats forgetting a decision recorded nowhere else.
 					val error = KernelError(
 						code = "queue-write-failed",
-						message = "c15t: the backend accepted a queued consent save but the queue " +
+						message = "Inth: the backend accepted a queued consent save but the queue " +
 							"could not release it, so the same bytes will be sent again",
 					)
 					emitError(error)
@@ -1932,7 +1932,7 @@ class ConsentCore @C15tInternalApi constructor(
 		} else {
 			KernelError(
 				code = notice,
-				message = "c15t: a queued consent save did not reach the backend ($outcome), so " +
+				message = "Inth: a queued consent save did not reach the backend ($outcome), so " +
 					"it stays queued for a later attempt",
 			)
 		}
@@ -1955,7 +1955,7 @@ class ConsentCore @C15tInternalApi constructor(
 		}
 		return KernelError(
 			code = "save-rejected",
-			message = "c15t: the backend refused a queued consent save for " +
+			message = "Inth: the backend refused a queued consent save for " +
 				"${entry.payload.subjectId} ($why), so it was dropped and will not be retried",
 		)
 	}
@@ -1987,13 +1987,13 @@ class ConsentCore @C15tInternalApi constructor(
 		}
 		return KernelError(
 			code = "save-undeliverable",
-			message = "c15t: a queued consent save for ${entry.payload.subjectId} was dropped " +
+			message = "Inth: a queued consent save for ${entry.payload.subjectId} was dropped " +
 				"because $reason. Last backend answer: $outcome",
 		)
 	}
 
 	private fun validateIab(snapshot: ConsentSnapshot): ConsentSnapshot {
-		if (evaluationPolicy?.model != com.c15t.core.model.ConsentModel.IAB && committedIab == null)
+		if (evaluationPolicy?.model != com.inth.core.model.ConsentModel.IAB && committedIab == null)
 			return snapshot
 		val saved = committedIab
 		val c = iabConfiguration
@@ -2450,7 +2450,7 @@ class ConsentCore @C15tInternalApi constructor(
 		const val DRY_RUN = "dry-run"
 
 		val deadlineScheduler = ScheduledThreadPoolExecutor(1) { runnable ->
-			Thread(runnable, "c15t-deadline").apply { isDaemon = true }
+			Thread(runnable, "inth-deadline").apply { isDaemon = true }
 		}.apply { removeOnCancelPolicy = true }
 
 		/**
@@ -2468,7 +2468,7 @@ class ConsentCore @C15tInternalApi constructor(
 		 * someone swaps this pool for a busier one.
 		 */
 		val backgroundPool = Executors.newSingleThreadExecutor { runnable ->
-			Thread(runnable, "c15t-core").apply { isDaemon = true }
+			Thread(runnable, "inth-core").apply { isDaemon = true }
 		}
 	}
 }

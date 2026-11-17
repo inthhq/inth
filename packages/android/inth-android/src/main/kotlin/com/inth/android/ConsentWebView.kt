@@ -1,4 +1,4 @@
-package com.c15t.android
+package com.inth.android
 
 import android.os.Handler
 import android.os.Looper
@@ -7,15 +7,15 @@ import androidx.annotation.MainThread
 import androidx.webkit.ScriptHandler
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
-import com.c15t.core.ConsentCore
-import com.c15t.core.webview.WebViewConsentScript
-import com.c15t.core.webview.WebViewConsentSync
+import com.inth.core.ConsentCore
+import com.inth.core.webview.WebViewConsentScript
+import com.inth.core.webview.WebViewConsentSync
 import java.lang.ref.WeakReference
 import java.util.WeakHashMap
 
 /**
  * Keeps the pages a [WebView] loads in step with native consent, so a site that
- * runs web c15t with `consentSource: webViewConsentSource()` shows no second
+ * runs web Inth with `consentSource: webViewConsentSource()` shows no second
  * banner and follows the app's choice.
  *
  * Only pages whose origin is in the list receive anything, and only in the main

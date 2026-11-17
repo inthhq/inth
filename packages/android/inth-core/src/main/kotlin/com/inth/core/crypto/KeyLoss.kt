@@ -1,4 +1,4 @@
-package com.c15t.core.crypto
+package com.inth.core.crypto
 
 import java.security.InvalidKeyException
 import java.security.KeyStoreException

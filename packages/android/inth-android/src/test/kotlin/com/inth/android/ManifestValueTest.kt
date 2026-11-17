@@ -1,4 +1,4 @@
-package com.c15t.android
+package com.inth.android
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -24,17 +24,17 @@ class ManifestValueTest {
 
 	@Test
 	fun `a flag survives every type the parser can hand back`() {
-		assertEquals(true, C15tManifestValue.boolean(true))
-		assertEquals(false, C15tManifestValue.boolean(false))
-		assertEquals(true, C15tManifestValue.boolean("true"))
-		assertEquals(true, C15tManifestValue.boolean("TRUE"))
-		assertEquals(true, C15tManifestValue.boolean(" True "))
-		assertEquals(false, C15tManifestValue.boolean("false"))
-		assertEquals(true, C15tManifestValue.boolean(1L))
-		assertEquals(false, C15tManifestValue.boolean(0L))
-		assertEquals(true, C15tManifestValue.boolean(1))
-		assertEquals(true, C15tManifestValue.boolean("1"))
-		assertEquals(false, C15tManifestValue.boolean("0"))
+		assertEquals(true, InthManifestValue.boolean(true))
+		assertEquals(false, InthManifestValue.boolean(false))
+		assertEquals(true, InthManifestValue.boolean("true"))
+		assertEquals(true, InthManifestValue.boolean("TRUE"))
+		assertEquals(true, InthManifestValue.boolean(" True "))
+		assertEquals(false, InthManifestValue.boolean("false"))
+		assertEquals(true, InthManifestValue.boolean(1L))
+		assertEquals(false, InthManifestValue.boolean(0L))
+		assertEquals(true, InthManifestValue.boolean(1))
+		assertEquals(true, InthManifestValue.boolean("1"))
+		assertEquals(false, InthManifestValue.boolean("0"))
 	}
 
 	@Test
@@ -52,20 +52,20 @@ class ManifestValueTest {
 	fun `an absent or unreadable flag stays absent`() {
 		// `false` would be an answer, and the core treats a missing GPC report as
 		// "derive it" and a declared one as "this is the host's signal".
-		assertNull(C15tManifestValue.boolean(null))
-		assertNull(C15tManifestValue.boolean(""))
-		assertNull(C15tManifestValue.boolean("   "))
-		assertNull(C15tManifestValue.boolean("maybe"))
-		assertNull(C15tManifestValue.boolean("yes"))
+		assertNull(InthManifestValue.boolean(null))
+		assertNull(InthManifestValue.boolean(""))
+		assertNull(InthManifestValue.boolean("   "))
+		assertNull(InthManifestValue.boolean("maybe"))
+		assertNull(InthManifestValue.boolean("yes"))
 	}
 
 	@Test
 	fun `text keeps its value and drops a blank`() {
-		assertEquals("https://consent.example.com", C15tManifestValue.string(" https://consent.example.com "))
-		assertEquals("1234", C15tManifestValue.string(1234L))
-		assertEquals("true", C15tManifestValue.string(true))
-		assertNull(C15tManifestValue.string(null))
-		assertNull(C15tManifestValue.string(""))
-		assertNull(C15tManifestValue.string("   "))
+		assertEquals("https://consent.example.com", InthManifestValue.string(" https://consent.example.com "))
+		assertEquals("1234", InthManifestValue.string(1234L))
+		assertEquals("true", InthManifestValue.string(true))
+		assertNull(InthManifestValue.string(null))
+		assertNull(InthManifestValue.string(""))
+		assertNull(InthManifestValue.string("   "))
 	}
 }

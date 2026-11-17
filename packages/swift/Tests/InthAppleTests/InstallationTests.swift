@@ -1,19 +1,19 @@
-@_spi(C15tInternal) import C15tApple
-@_spi(C15tInternal) import C15tCore
+@_spi(InthInternal) import InthApple
+@_spi(InthInternal) import InthCore
 import Foundation
 import XCTest
 
 final class InstallationTests: XCTestCase {
     override func setUp() {
         super.setUp()
-        C15tApple.shutdown()
-        C15t.resetForTests()
+        InthApple.shutdown()
+        Inth.resetForTests()
     }
 
     override func tearDown() {
-        C15tBuild.simulate(debug: nil)
-        C15tApple.shutdown()
-        C15t.resetForTests()
+        InthBuild.simulate(debug: nil)
+        InthApple.shutdown()
+        Inth.resetForTests()
         super.tearDown()
     }
 
@@ -23,17 +23,17 @@ final class InstallationTests: XCTestCase {
         let store = CountingStore(FileStore(directory: directory))
         let first = try await grantedCore(store: store)
         let subject = first.snapshot().subject
-        C15tApple.shutdown()
-        C15t.resetForTests()
+        InthApple.shutdown()
+        Inth.resetForTests()
 
-        let cold = try C15tApple.install(configuration(store: store))
+        let cold = try InthApple.install(configuration(store: store))
         XCTAssertTrue(cold.isAllowed(.marketing), "hydrate before install returns")
         XCTAssertEqual(cold.snapshot().subject, subject)
         let reads = store.reads
         let writes = store.writes
         for _ in 0..<100 {
-            XCTAssertTrue(C15t.isAllowed(.marketing))
-            XCTAssertEqual(C15t.decision(for: .marketing), .granted)
+            XCTAssertTrue(Inth.isAllowed(.marketing))
+            XCTAssertEqual(Inth.decision(for: .marketing), .granted)
         }
         XCTAssertEqual(store.reads, reads)
         XCTAssertEqual(store.writes, writes)
@@ -42,15 +42,15 @@ final class InstallationTests: XCTestCase {
 
     func testRepeatedAndConcurrentInstallKeepOneEngineAndNeverTouchTheSecondStore() throws {
         let store = CountingStore(InMemoryStore())
-        let first = try C15tApple.install(configuration(store: store))
+        let first = try InthApple.install(configuration(store: store))
         let refused = CountingStore(InMemoryStore())
         refused.refuseWrites = true
         DispatchQueue.concurrentPerform(iterations: 20) { _ in
-            XCTAssertTrue((try? C15tApple.install(self.configuration(store: refused))) === first)
+            XCTAssertTrue((try? InthApple.install(self.configuration(store: refused))) === first)
         }
         XCTAssertEqual(refused.reads, 0)
         XCTAssertEqual(refused.writes, 0)
-        XCTAssertTrue(C15t.current === first)
+        XCTAssertTrue(Inth.current === first)
     }
 
     func testConcurrentColdInstallCreatesOneHydratedEngine() {
@@ -58,20 +58,20 @@ final class InstallationTests: XCTestCase {
         let instances = InstalledInstances()
         DispatchQueue.concurrentPerform(iterations: 20) { _ in
             do {
-                let core = try C15tApple.install(self.configuration(store: store))
+                let core = try InthApple.install(self.configuration(store: store))
                 XCTAssertTrue(core.isBootstrapped)
                 XCTAssertNotNil(core.snapshot().subject, "hydration finished before return")
                 instances.append(core)
             } catch { XCTFail("Concurrent install failed: \(error)") }
         }
         XCTAssertEqual(instances.values.count, 20)
-        for instance in instances.values { XCTAssertTrue(instance === C15t.current) }
+        for instance in instances.values { XCTAssertTrue(instance === Inth.current) }
     }
 
     func testTrackingReadsPermissionChangesWithoutChangingConsent() async throws {
-        let core = try C15tApple.install(configuration(store: InMemoryStore()))
+        let core = try InthApple.install(configuration(store: InMemoryStore()))
         let status = TrackingStatus()
-        let tracking = C15tTrackingController(
+        let tracking = InthTrackingController(
             trackingPlatformStatus: { status.current },
             trackingPromptStringPresent: { true },
             trackingPrompt: { completion in completion(status.current) },
@@ -94,15 +94,15 @@ final class InstallationTests: XCTestCase {
     }
 
     func testNativeSourcePackageSharesOneVersion() {
-        XCTAssertEqual(C15tApple.version, C15t.version)
+        XCTAssertEqual(InthApple.version, Inth.version)
     }
 
     func testDryRunInADebugBuildReachesLoopbackAndStagingHosts() async throws {
         for backend in ["http://localhost:8787", "http://127.0.0.1:8787", "http://[::1]:8787", "https://consent.example.com"] {
             let http = try FixtureHTTP()
-            let configured = C15tAppleConfiguration(backendURL: backend, dryRun: true, storage: .memory)
+            let configured = InthAppleConfiguration(backendURL: backend, dryRun: true, storage: .memory)
             let native = try configured.makeTransport(client: http)
-            let core = try C15tApple.install(configuration(store: InMemoryStore(), transport: native))
+            let core = try InthApple.install(configuration(store: InMemoryStore(), transport: native))
             XCTAssertTrue(core.isBootstrapped)
             await core.waitUntilIdle()
             let requestURL = try XCTUnwrap(http.requests.first?.url)
@@ -111,22 +111,22 @@ final class InstallationTests: XCTestCase {
             XCTAssertEqual(requestURL.host, expected.host)
             XCTAssertEqual(requestURL.port, expected.port)
             XCTAssertEqual(requestURL.path, expected.path)
-            C15tApple.shutdown()
-            C15t.resetForTests()
+            InthApple.shutdown()
+            Inth.resetForTests()
         }
     }
 
     func testNonLoopbackHTTPAndLookalikesRefuseInstallation() throws {
         for backend in ["http://invalid.example", "http://localhost.evil.example", "http://localhost.", "http://127.0.0.1.evil.example", "http://127.0.0.2", "http://[::2]", "http://localhost@evil.example", "https://user:password@consent.example.com", "ftp://localhost", "/relative"] {
             for dryRun in [false, true] {
-                let configured = C15tAppleConfiguration(backendURL: backend, dryRun: dryRun, storage: .memory)
-                XCTAssertThrowsError(try C15tApple.install(configured), backend) {
-                    guard case .invalidBackendURL = $0 as? C15tAppleInstallationError else {
+                let configured = InthAppleConfiguration(backendURL: backend, dryRun: dryRun, storage: .memory)
+                XCTAssertThrowsError(try InthApple.install(configured), backend) {
+                    guard case .invalidBackendURL = $0 as? InthAppleInstallationError else {
                         return XCTFail("\(backend): \($0)")
                     }
                 }
-                XCTAssertNil(C15t.current, backend)
-                XCTAssertFalse(C15t.isAllowed(.marketing))
+                XCTAssertNil(Inth.current, backend)
+                XCTAssertFalse(Inth.isAllowed(.marketing))
             }
         }
     }
@@ -139,9 +139,9 @@ final class InstallationTests: XCTestCase {
             ("", .empty),
         ] {
             XCTAssertThrowsError(
-                try C15tApple.install(C15tAppleConfiguration(backendURL: backend, storage: .memory)), backend
+                try InthApple.install(InthAppleConfiguration(backendURL: backend, storage: .memory)), backend
             ) { error in
-                guard case let .invalidBackendURL(refused) = error as? C15tAppleInstallationError else {
+                guard case let .invalidBackendURL(refused) = error as? InthAppleInstallationError else {
                     return XCTFail("\(backend): \(error)")
                 }
                 XCTAssertEqual(refused.reason, reason, backend)
@@ -152,12 +152,12 @@ final class InstallationTests: XCTestCase {
                             + "https://your-project.inth.app. Got \"\(backend)\": "),
                     error.localizedDescription)
             }
-            XCTAssertNil(C15t.current, backend)
+            XCTAssertNil(Inth.current, backend)
         }
     }
 
     func testTheNormalFormReachesTheTransportTheDomainAndTheBundledPolicy() throws {
-        let configured = C15tAppleConfiguration(
+        let configured = InthAppleConfiguration(
             backendURL: " Acme.Inth.App/ ", storage: .memory,
             bundledPolicy: BundledPolicyResource(data: Data(), endpoint: "https://Acme.Inth.App/"),
             policy: try ConsentPolicy(rules: [
@@ -174,30 +174,30 @@ final class InstallationTests: XCTestCase {
     }
 
     func testDryRunIsRefusedInAReleaseBuildOnBothDoors() throws {
-        C15tBuild.simulate(debug: false)
-        defer { C15tBuild.simulate(debug: nil) }
-        let configured = C15tAppleConfiguration(backendURL: "https://acme.inth.app", dryRun: true, storage: .memory)
-        XCTAssertThrowsError(try C15tApple.install(configured)) { error in
-            XCTAssertEqual(error as? C15tAppleInstallationError, .dryRunInReleaseBuild)
+        InthBuild.simulate(debug: false)
+        defer { InthBuild.simulate(debug: nil) }
+        let configured = InthAppleConfiguration(backendURL: "https://acme.inth.app", dryRun: true, storage: .memory)
+        XCTAssertThrowsError(try InthApple.install(configured)) { error in
+            XCTAssertEqual(error as? InthAppleInstallationError, .dryRunInReleaseBuild)
             XCTAssertEqual(
                 error.localizedDescription,
                 "dryRun is for development and CI and cannot run in a release build. "
                     + "Remove dryRun (pass it only inside #if DEBUG).")
         }
-        XCTAssertNil(C15t.current)
-        XCTAssertThrowsError(try C15tApple.install(CoreConfig(store: InMemoryStore(), dryRun: true))) {
-            XCTAssertEqual($0 as? C15tAppleInstallationError, .dryRunInReleaseBuild)
+        XCTAssertNil(Inth.current)
+        XCTAssertThrowsError(try InthApple.install(CoreConfig(store: InMemoryStore(), dryRun: true))) {
+            XCTAssertEqual($0 as? InthAppleInstallationError, .dryRunInReleaseBuild)
         }
-        XCTAssertNil(C15t.current)
+        XCTAssertNil(Inth.current)
         // dryRun does not relax the host rule in a release build either.
         XCTAssertThrowsError(
-            try C15tAppleConfiguration(backendURL: "http://localhost:8787", dryRun: true).normalizedBackendURL())
-        XCTAssertNoThrow(try C15tApple.install(
-            C15tAppleConfiguration(backendURL: "https://acme.inth.app", storage: .memory, policy: everywhere())))
+            try InthAppleConfiguration(backendURL: "http://localhost:8787", dryRun: true).normalizedBackendURL())
+        XCTAssertNoThrow(try InthApple.install(
+            InthAppleConfiguration(backendURL: "https://acme.inth.app", storage: .memory, policy: everywhere())))
     }
 
     func testDryRunInstallSavesLocallyAndQueuesNothing() async throws {
-        let core = try C15tApple.install(C15tAppleConfiguration(
+        let core = try InthApple.install(InthAppleConfiguration(
             backendURL: "http://localhost:8787", dryRun: true, storage: .memory,
             consentCategories: [.necessary, .marketing], policy: everywhere()))
         await core.waitUntilIdle()
@@ -211,13 +211,13 @@ final class InstallationTests: XCTestCase {
     func testUnavailableProtectedStorageDoesNotPublishAnEngineAndCanRetry() throws {
         let store = CountingStore(InMemoryStore())
         store.refuseWrites = true
-        XCTAssertThrowsError(try C15tApple.install(configuration(store: store))) {
-            XCTAssertEqual($0 as? C15tAppleInstallationError, .protectedStorageUnavailable)
+        XCTAssertThrowsError(try InthApple.install(configuration(store: store))) {
+            XCTAssertEqual($0 as? InthAppleInstallationError, .protectedStorageUnavailable)
         }
-        XCTAssertNil(C15t.current)
-        XCTAssertFalse(C15t.isAllowed(.marketing))
+        XCTAssertNil(Inth.current)
+        XCTAssertFalse(Inth.isAllowed(.marketing))
         store.refuseWrites = false
-        let core = try C15tApple.install(configuration(store: store))
+        let core = try InthApple.install(configuration(store: store))
         XCTAssertTrue(core.isBootstrapped)
         XCTAssertFalse(core.isAllowed(.marketing))
     }
@@ -227,8 +227,8 @@ final class InstallationTests: XCTestCase {
             let store = CountingStore(InMemoryStore())
             store.refuseReads = mode == "read"
             store.refuseDeletes = mode == "delete"
-            XCTAssertThrowsError(try C15tApple.install(configuration(store: store)))
-            XCTAssertNil(C15t.current)
+            XCTAssertThrowsError(try InthApple.install(configuration(store: store)))
+            XCTAssertNil(Inth.current)
         }
     }
 
@@ -240,9 +240,9 @@ final class InstallationTests: XCTestCase {
         XCTAssertNotNil(store.data(for: StorageKey.snapshot))
         // Model loss of the protected identity while other items survive.
         XCTAssertTrue(store.set(nil, for: StorageKey.subject))
-        C15tApple.shutdown()
-        C15t.resetForTests()
-        let cold = try C15tApple.install(configuration(store: store))
+        InthApple.shutdown()
+        Inth.resetForTests()
+        let cold = try InthApple.install(configuration(store: store))
         XCTAssertNotEqual(cold.snapshot().subject?.id, previousSubject)
         XCTAssertFalse(cold.isAllowed(.marketing))
         XCTAssertNil(cold.snapshot().explicitChoice)
@@ -256,17 +256,17 @@ final class InstallationTests: XCTestCase {
         let subject = first.snapshot().subject
         let keys = [StorageKey.subject, StorageKey.snapshot, StorageKey.pendingSaves]
         let original = keys.map { store.data(for: $0) }
-        C15tApple.shutdown()
-        C15t.resetForTests()
+        InthApple.shutdown()
+        Inth.resetForTests()
 
         store.failNextRead = StorageKey.subject
-        XCTAssertThrowsError(try C15tApple.install(configuration(store: store))) {
-            XCTAssertEqual($0 as? C15tAppleInstallationError, .protectedStorageUnavailable)
+        XCTAssertThrowsError(try InthApple.install(configuration(store: store))) {
+            XCTAssertEqual($0 as? InthAppleInstallationError, .protectedStorageUnavailable)
         }
-        XCTAssertNil(C15t.current)
+        XCTAssertNil(Inth.current)
         XCTAssertEqual(keys.map { store.data(for: $0) }, original)
 
-        let cold = try C15tApple.install(configuration(store: store))
+        let cold = try InthApple.install(configuration(store: store))
         XCTAssertEqual(cold.snapshot().subject, subject)
         XCTAssertTrue(cold.isAllowed(.marketing))
         XCTAssertEqual(cold.pendingSaveCount(), 1)
@@ -280,23 +280,23 @@ final class InstallationTests: XCTestCase {
             XCTAssertTrue(store.set(nil, for: StorageKey.subject))
             let keys = [StorageKey.snapshot, StorageKey.pendingSaves]
             let original = keys.map { store.data(for: $0) }
-            C15tApple.shutdown()
-            C15t.resetForTests()
+            InthApple.shutdown()
+            Inth.resetForTests()
 
             store.failNextRead = failingKey
-            XCTAssertThrowsError(try C15tApple.install(configuration(store: store))) {
-                XCTAssertEqual($0 as? C15tAppleInstallationError, .protectedStorageUnavailable)
+            XCTAssertThrowsError(try InthApple.install(configuration(store: store))) {
+                XCTAssertEqual($0 as? InthAppleInstallationError, .protectedStorageUnavailable)
             }
-            XCTAssertNil(C15t.current)
+            XCTAssertNil(Inth.current)
             XCTAssertEqual(keys.map { store.data(for: $0) }, original)
 
-            let cold = try C15tApple.install(configuration(store: store))
+            let cold = try InthApple.install(configuration(store: store))
             XCTAssertFalse(cold.isAllowed(.marketing))
             XCTAssertNil(cold.snapshot().explicitChoice)
             XCTAssertEqual(cold.pendingSaveCount(), 0)
             await cold.waitUntilIdle()
-            C15tApple.shutdown()
-            C15t.resetForTests()
+            InthApple.shutdown()
+            Inth.resetForTests()
         }
     }
 
@@ -304,9 +304,9 @@ final class InstallationTests: XCTestCase {
         let store = CountingStore(InMemoryStore())
         _ = try await grantedCore(store: store, keepQueued: true)
         store.set(Data("{truncated".utf8), for: StorageKey.subject)
-        C15tApple.shutdown()
-        C15t.resetForTests()
-        let cold = try C15tApple.install(configuration(store: store))
+        InthApple.shutdown()
+        Inth.resetForTests()
+        let cold = try InthApple.install(configuration(store: store))
         XCTAssertFalse(cold.isAllowed(.marketing))
         XCTAssertNil(cold.snapshot().explicitChoice)
         XCTAssertEqual(cold.pendingSaveCount(), 0)
@@ -318,37 +318,37 @@ final class InstallationTests: XCTestCase {
         _ = try await grantedCore(store: store)
         XCTAssertTrue(store.set(nil, for: StorageKey.subject))
         store.refuseDeletesExceptProbe = true
-        C15tApple.shutdown()
-        C15t.resetForTests()
-        XCTAssertThrowsError(try C15tApple.install(configuration(store: store)))
-        XCTAssertNil(C15t.current)
-        XCTAssertFalse(C15t.isAllowed(.marketing))
+        InthApple.shutdown()
+        Inth.resetForTests()
+        XCTAssertThrowsError(try InthApple.install(configuration(store: store)))
+        XCTAssertNil(Inth.current)
+        XCTAssertFalse(Inth.isAllowed(.marketing))
     }
 
     func testForegroundSubscriptionStopsAndReattachesOnce() async throws {
         let http = try FixtureHTTP()
-        let core = try C15tApple.install(configuration(store: InMemoryStore(), transport: transport(http)))
+        let core = try InthApple.install(configuration(store: InMemoryStore(), transport: transport(http)))
         await core.waitUntilIdle()
-        _ = try C15tApple.install(configuration(store: InMemoryStore()))
+        _ = try InthApple.install(configuration(store: InMemoryStore()))
         let initial = http.requests.count
-        NotificationCenter.default.post(name: C15tForegroundObserver.didBecomeActive, object: nil)
+        NotificationCenter.default.post(name: InthForegroundObserver.didBecomeActive, object: nil)
         await core.waitUntilIdle()
         XCTAssertEqual(http.requests.count, initial + 1)
-        C15tApple.shutdown()
-        C15tApple.shutdown()
-        NotificationCenter.default.post(name: C15tForegroundObserver.didBecomeActive, object: nil)
+        InthApple.shutdown()
+        InthApple.shutdown()
+        NotificationCenter.default.post(name: InthForegroundObserver.didBecomeActive, object: nil)
         await core.waitUntilIdle()
         XCTAssertEqual(http.requests.count, initial + 1)
-        XCTAssertTrue(C15tApple.attach(core))
-        XCTAssertTrue(C15tApple.attach(core))
-        NotificationCenter.default.post(name: C15tForegroundObserver.didBecomeActive, object: nil)
+        XCTAssertTrue(InthApple.attach(core))
+        XCTAssertTrue(InthApple.attach(core))
+        NotificationCenter.default.post(name: InthForegroundObserver.didBecomeActive, object: nil)
         await core.waitUntilIdle()
         XCTAssertEqual(http.requests.count, initial + 2)
     }
 
     func testHostedMetadataNamesNativeModulesOnEveryRequest() async throws {
         let http = try FixtureHTTP()
-        let configured = C15tAppleConfiguration(backendURL: "https://acme.inth.app")
+        let configured = InthAppleConfiguration(backendURL: "https://acme.inth.app")
         let native = try configured.makeTransport(client: http)
         _ = await native.performInit(InitContext(overrides: try JSONDecoder().decode(KernelOverridesWire.self, from: Data("{}".utf8)), user: nil, subjectId: "subject"))
         _ = await native.sendSave(Data("{}".utf8))
@@ -356,19 +356,19 @@ final class InstallationTests: XCTestCase {
         XCTAssertEqual(http.requests.count, 3)
         XCTAssertEqual(http.requests.first?.url, URL(string: "https://acme.inth.app/init"))
         for request in http.requests {
-            XCTAssertEqual(request.headers[C15t.versionHeader], C15t.version)
-            XCTAssertEqual(request.headers["x-c15t-platform"], "apple->\(C15tApple.version)")
+            XCTAssertEqual(request.headers[Inth.versionHeader], Inth.version)
+            XCTAssertEqual(request.headers["x-c15t-platform"], "apple->\(InthApple.version)")
             XCTAssertFalse(request.headers.values.contains { $0.hasPrefix("rn->") })
         }
     }
 
     func testInvalidProductionURLAndUnstartedAttachmentAreRefused() {
-        XCTAssertThrowsError(try C15tApple.install(C15tAppleConfiguration(backendURL: "http://example.com")))
-        XCTAssertFalse(C15tApple.attach(ConsentCore()))
-        XCTAssertNil(C15t.current)
+        XCTAssertThrowsError(try InthApple.install(InthAppleConfiguration(backendURL: "http://example.com")))
+        XCTAssertFalse(InthApple.attach(ConsentCore()))
+        XCTAssertNil(Inth.current)
     }
 
-    private func configuration(store: any ConsentStore, transport: (any C15tTransport)? = nil) -> CoreConfig {
+    private func configuration(store: any ConsentStore, transport: (any InthTransport)? = nil) -> CoreConfig {
         CoreConfig(store: store, transport: transport, consentCategories: [.necessary, .marketing, .measurement, .experience, .functionality], now: { 1_770_000_000_000 }, initRetry: .disabled, flushPendingOnBootstrap: false)
     }
 
@@ -384,7 +384,7 @@ final class InstallationTests: XCTestCase {
 
     private func grantedCore(store: any ConsentStore, keepQueued: Bool = false) async throws -> ConsentCore {
         let http = try FixtureHTTP(failSaves: keepQueued)
-        let core = try C15tApple.install(configuration(store: store, transport: transport(http)))
+        let core = try InthApple.install(configuration(store: store, transport: transport(http)))
         await core.waitUntilIdle()
         XCTAssertEqual(core.save(.all).status, .committed)
         await core.waitUntilIdle()
@@ -421,7 +421,7 @@ private final class CountingStore: ConsentStore, @unchecked Sendable {
     @discardableResult
     func set(_ data: Data?, for key: String) -> Bool {
         lock.lock(); counts.writes += 1; lock.unlock()
-        if refuseWrites || (data == nil && refuseDeletes) || (data == nil && refuseDeletesExceptProbe && key != "com.c15t.installation.probe") { return false }
+        if refuseWrites || (data == nil && refuseDeletes) || (data == nil && refuseDeletesExceptProbe && key != "com.inth.installation.probe") { return false }
         return underlying.set(data, for: key)
     }
 }
@@ -456,8 +456,8 @@ private final class InstalledInstances: @unchecked Sendable {
 
 private final class TrackingStatus: @unchecked Sendable {
     private let lock = NSLock()
-    private var value: C15tTrackingPlatformStatus = .denied
-    var current: C15tTrackingPlatformStatus {
+    private var value: InthTrackingPlatformStatus = .denied
+    var current: InthTrackingPlatformStatus {
         get { lock.lock(); defer { lock.unlock() }; return value }
         set { lock.lock(); defer { lock.unlock() }; value = newValue }
     }

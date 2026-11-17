@@ -1,8 +1,8 @@
-#if canImport(C15tCore)
+#if canImport(InthCore)
 // SwiftPM builds the consent kernel as its own module. CocoaPods compiles the vendored
 // copy into this module instead, where the import would fail, so it is conditional
 // rather than assumed.
-import C15tCore
+import InthCore
 #endif
 import Foundation
 
@@ -10,7 +10,7 @@ import Foundation
 ///
 /// Kept as a protocol so the pump can be tested against a recording double, and so
 /// nothing in this file has to know what React Native is.
-public protocol C15tEventSink: AnyObject {
+public protocol InthEventSink: AnyObject {
     /// Deliver `payload` for `event` to JavaScript.
     func emit(event: String, payload: String)
 }
@@ -32,15 +32,15 @@ public protocol C15tEventSink: AnyObject {
 /// ordinary snapshot state, so an error always arrives on a new revision. See
 /// "Revisions and error writes" in `packages/native-protocol/CONTRACT.md`. A core that bumps without
 /// publishing hands this pump nothing to announce.
-public final class C15tChangePump: @unchecked Sendable {
+public final class InthChangePump: @unchecked Sendable {
     private let lock = NSLock()
-    private let sink: any C15tEventSink
+    private let sink: any InthEventSink
 
-    private var lastRevision = C15tChangePump.unsetRevision
+    private var lastRevision = InthChangePump.unsetRevision
     private var initializedAnnounced = false
 
     /// - Parameter sink: Receiver for the events this pump decides to send.
-    public init(sink: any C15tEventSink) {
+    public init(sink: any InthEventSink) {
         self.sink = sink
     }
 
@@ -61,15 +61,15 @@ public final class C15tChangePump: @unchecked Sendable {
         }
         lock.unlock()
 
-        sink.emit(event: C15tPayload.eventSnapshot, payload: C15tPayload.snapshotEvent(revision: snapshot.revision))
+        sink.emit(event: InthPayload.eventSnapshot, payload: InthPayload.snapshotEvent(revision: snapshot.revision))
         if announceInitialized {
-            sink.emit(event: C15tPayload.eventInitialized, payload: C15tPayload.initializedEvent(revision: snapshot.revision))
+            sink.emit(event: InthPayload.eventInitialized, payload: InthPayload.initializedEvent(revision: snapshot.revision))
         }
     }
 
     /// Report an error the core emitted, in the `NativeSnapshotError` shape.
     public func onError(code: String, message: String) {
-        sink.emit(event: C15tPayload.eventError, payload: C15tPayload.errorEvent(code: code, message: message))
+        sink.emit(event: InthPayload.eventError, payload: InthPayload.errorEvent(code: code, message: message))
     }
 
     /// A revision no snapshot can have, so the first one always emits.
@@ -84,17 +84,17 @@ public final class C15tChangePump: @unchecked Sendable {
 ///
 /// Nothing here is React-specific, which is what makes the event behaviour testable
 /// without Pods installed.
-public final class C15tCoreSubscriber: @unchecked Sendable {
+public final class InthCoreSubscriber: @unchecked Sendable {
     private let lock = NSLock()
-    private let pump: C15tChangePump
+    private let pump: InthChangePump
 
     private var snapshotSubscription: ConsentSubscription?
     private var errorStreamTask: Task<Void, Never>?
     private var attachedCore: ConsentCore?
 
     /// - Parameter sink: Receiver for the events produced by the pump.
-    public init(sink: any C15tEventSink) {
-        self.pump = C15tChangePump(sink: sink)
+    public init(sink: any InthEventSink) {
+        self.pump = InthChangePump(sink: sink)
     }
 
     /// Start following `core`. Idempotent per core; attaching to a different core

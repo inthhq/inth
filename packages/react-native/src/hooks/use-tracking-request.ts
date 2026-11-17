@@ -101,7 +101,7 @@ export interface TrackingRequest {
  * where the runtime has it, the plain alert everywhere else, and the preference centre when
  * the subject taps Additional Information. Nothing here is Android-specific or
  * iOS-27-specific, because the platform question is answered by the same bridge on every
- * path: on Android the request rejects with `C15T_TRACKING_UNSUPPORTED`, and on an iOS
+ * path: on Android the request rejects with `INTH_TRACKING_UNSUPPORTED`, and on an iOS
  * binary without the expanded call Apple's standard prompt runs exactly as it does today.
  * A host that calls `request()` on all three devices needs no branch.
  *
@@ -115,12 +115,12 @@ export interface TrackingRequest {
  *
  * Apple's answer stays Apple's answer. Pressing Allow writes no consent, and this hook never
  * calls `useSaveConsents()` or saves a category on the strength of a platform
- * yes. Consent still comes from the c15t surfaces, and a category that is still unresolved
+ * yes. Consent still comes from the Inth surfaces, and a category that is still unresolved
  * after the journey is still unresolved: the tracking gate reads it as off, which is the
  * point of {@link useIsTrackingAllowed}.
  *
  * A host with no branch of its own still needs a `catch`: on Android the request rejects
- * with `C15T_TRACKING_UNSUPPORTED` because there is nothing to ask, which is a normal
+ * with `INTH_TRACKING_UNSUPPORTED` because there is nothing to ask, which is a normal
  * answer there rather than a failure. See the example.
  *
  * Mount one {@link ConsentPreferences} near the root and spread what this hands back onto
@@ -133,7 +133,7 @@ export interface TrackingRequest {
  *
  * @example
  * ```tsx
- * import { ConsentPreferences, useTrackingRequest } from '@c15t/react-native';
+ * import { ConsentPreferences, useTrackingRequest } from '@inth/react-native';
  *
  * function PersonalizeButton() {
  * 	const tracking = useTrackingRequest({ categories: ['marketing'] });
@@ -142,7 +142,7 @@ export interface TrackingRequest {
  * 		try {
  * 			await tracking.request();
  * 		} catch {
- * 			// Android always gets here: there is no Apple prompt to show. The c15t
+ * 			// Android always gets here: there is no Apple prompt to show. The Inth
  * 			// decision is the only gate, so carry on and let
  * 			// `useIsTrackingAllowed()` decide what may actually run.
  * 		}

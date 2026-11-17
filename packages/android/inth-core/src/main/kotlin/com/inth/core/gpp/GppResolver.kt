@@ -1,11 +1,11 @@
-package com.c15t.core.gpp
+package com.inth.core.gpp
 
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentModel
-import com.c15t.core.model.ConsentSnapshot
-import com.c15t.core.model.PolicyResolution
-import com.c15t.core.policy.EvaluationPolicy
-import com.c15t.core.policy.PolicyRight
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentModel
+import com.inth.core.model.ConsentSnapshot
+import com.inth.core.model.PolicyResolution
+import com.inth.core.policy.EvaluationPolicy
+import com.inth.core.policy.PolicyRight
 
 /**
  * MSPA mode for covered transactions: `GPPMspaMode` in `@c15t/iab/gpp`. Leave it unset
@@ -29,9 +29,9 @@ enum class GppMspaMode(val wireName: String) {
 }
 
 /**
- * Turns GPP on, with the options web c15t's `gpp` option takes that apply on a device.
+ * Turns GPP on, with the options web Inth's `gpp` option takes that apply on a device.
  *
- * GPP is off while [com.c15t.core.NativeConfig.gpp] is `null`, as it is on web until an
+ * GPP is off while [com.inth.core.NativeConfig.gpp] is `null`, as it is on web until an
  * app renders `ConsentGPP` or sets `gpp: true`. The notice fields a US section reports
  * are the app's attestation that it shows those notices, so the SDK does not make that
  * claim on its own.
@@ -107,7 +107,7 @@ object GppResolver {
 
 	/**
 	 * US National core values. Sensitive data, known-child and personal data consents
-	 * are `0` (not applicable): no c15t category describes them.
+	 * are `0` (not applicable): no Inth category describes them.
 	 */
 	fun usNationalValues(
 		snapshot: ConsentSnapshot,

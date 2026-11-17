@@ -1,4 +1,4 @@
-package com.c15t.consentui
+package com.inth.consentui
 
 import android.content.Context
 import android.content.pm.PackageManager
@@ -60,9 +60,9 @@ data class ConsentThemeColor(val light: Int, val dark: Int = light) {
 /**
  * Appearance of the native consent screens. Every value has a c15t default.
  *
- * Pass one to [C15tConsent], set [current] once in `Application.onCreate`, or declare the
+ * Pass one to [InthConsent], set [current] once in `Application.onCreate`, or declare the
  * same values as `<meta-data>` under the [Meta] names. Manifest values override [current];
- * an explicit theme passed to [C15tConsent] takes precedence over both.
+ * an explicit theme passed to [InthConsent] takes precedence over both.
  */
 data class ConsentTheme(
     val colors: Colors = Colors.c15t,
@@ -275,49 +275,49 @@ data class ConsentTheme(
      * resource. Radii and spacing are numbers of dp; font sizes are numbers of sp.
      */
     object Meta {
-        const val META_PRIMARY = "com.c15t.consent.PRIMARY"
-        const val META_TEXT_ON_PRIMARY = "com.c15t.consent.TEXT_ON_PRIMARY"
-        const val META_CANVAS = "com.c15t.consent.CANVAS"
-        const val META_SURFACE = "com.c15t.consent.SURFACE"
-        const val META_SURFACE_MUTED = "com.c15t.consent.SURFACE_MUTED"
-        const val META_TEXT = "com.c15t.consent.TEXT"
-        const val META_TEXT_MUTED = "com.c15t.consent.TEXT_MUTED"
-        const val META_DECISION = "com.c15t.consent.DECISION"
-        const val META_TEXT_ON_DECISION = "com.c15t.consent.TEXT_ON_DECISION"
-        const val META_RADIUS_SM = "com.c15t.consent.RADIUS_SM"
-        const val META_RADIUS_MD = "com.c15t.consent.RADIUS_MD"
-        const val META_RADIUS_LG = "com.c15t.consent.RADIUS_LG"
-        const val META_SPACE_XS = "com.c15t.consent.SPACE_XS"
-        const val META_SPACE_SM = "com.c15t.consent.SPACE_SM"
-        const val META_SPACE_MD = "com.c15t.consent.SPACE_MD"
-        const val META_SPACE_LG = "com.c15t.consent.SPACE_LG"
-        const val META_SPACE_XL = "com.c15t.consent.SPACE_XL"
+        const val META_PRIMARY = "com.inth.consent.PRIMARY"
+        const val META_TEXT_ON_PRIMARY = "com.inth.consent.TEXT_ON_PRIMARY"
+        const val META_CANVAS = "com.inth.consent.CANVAS"
+        const val META_SURFACE = "com.inth.consent.SURFACE"
+        const val META_SURFACE_MUTED = "com.inth.consent.SURFACE_MUTED"
+        const val META_TEXT = "com.inth.consent.TEXT"
+        const val META_TEXT_MUTED = "com.inth.consent.TEXT_MUTED"
+        const val META_DECISION = "com.inth.consent.DECISION"
+        const val META_TEXT_ON_DECISION = "com.inth.consent.TEXT_ON_DECISION"
+        const val META_RADIUS_SM = "com.inth.consent.RADIUS_SM"
+        const val META_RADIUS_MD = "com.inth.consent.RADIUS_MD"
+        const val META_RADIUS_LG = "com.inth.consent.RADIUS_LG"
+        const val META_SPACE_XS = "com.inth.consent.SPACE_XS"
+        const val META_SPACE_SM = "com.inth.consent.SPACE_SM"
+        const val META_SPACE_MD = "com.inth.consent.SPACE_MD"
+        const val META_SPACE_LG = "com.inth.consent.SPACE_LG"
+        const val META_SPACE_XL = "com.inth.consent.SPACE_XL"
         /** A font resource. */
-        const val META_FONT_FAMILY = "com.c15t.consent.FONT_FAMILY"
-        const val META_FONT_SIZE_SM = "com.c15t.consent.FONT_SIZE_SM"
-        const val META_FONT_SIZE_BASE = "com.c15t.consent.FONT_SIZE_BASE"
-        const val META_FONT_SIZE_LG = "com.c15t.consent.FONT_SIZE_LG"
+        const val META_FONT_FAMILY = "com.inth.consent.FONT_FAMILY"
+        const val META_FONT_SIZE_SM = "com.inth.consent.FONT_SIZE_SM"
+        const val META_FONT_SIZE_BASE = "com.inth.consent.FONT_SIZE_BASE"
+        const val META_FONT_SIZE_LG = "com.inth.consent.FONT_SIZE_LG"
         /** `serif`, `sans`, or a font resource. */
-        const val META_HEADLINE_FONT = "com.c15t.consent.HEADLINE_FONT"
+        const val META_HEADLINE_FONT = "com.inth.consent.HEADLINE_FONT"
         /**
-         * One slot field, such as `com.c15t.consent.BUTTON_PRIMARY_BACKGROUND_COLOR`. [field] is
+         * One slot field, such as `com.inth.consent.BUTTON_PRIMARY_BACKGROUND_COLOR`. [field] is
          * `COLOR`, `BACKGROUND_COLOR`, `BORDER_RADIUS` or `FONT_SIZE`.
          */
-        fun slot(slot: Slot, field: String): String = "com.c15t.consent.${slot.meta}_$field"
+        fun slot(slot: Slot, field: String): String = "com.inth.consent.${slot.meta}_$field"
         /** A Boolean. `false` hides the app mark and name above the headline. */
-        const val META_BRAND = "com.c15t.consent.BRAND"
-        const val META_BRAND_NAME = "com.c15t.consent.BRAND_NAME"
+        const val META_BRAND = "com.inth.consent.BRAND"
+        const val META_BRAND_NAME = "com.inth.consent.BRAND_NAME"
         /** A drawable resource. */
-        const val META_BRAND_MARK = "com.c15t.consent.BRAND_MARK"
-        const val META_HEADLINE = "com.c15t.consent.HEADLINE"
-        const val META_INTRODUCTION = "com.c15t.consent.INTRODUCTION"
+        const val META_BRAND_MARK = "com.inth.consent.BRAND_MARK"
+        const val META_HEADLINE = "com.inth.consent.HEADLINE"
+        const val META_INTRODUCTION = "com.inth.consent.INTRODUCTION"
         /** A Boolean. `false` hides the "Secured by c15t" line. */
-        const val META_BRANDING = "com.c15t.consent.BRANDING"
+        const val META_BRANDING = "com.inth.consent.BRANDING"
         /** `c15t`, `inth`, or the legacy `consent` spelling for Inth. */
-        const val META_BRANDING_PROVIDER = "com.c15t.consent.BRANDING_PROVIDER"
-        const val META_BRANDING_NAME = "com.c15t.consent.BRANDING_NAME"
+        const val META_BRANDING_PROVIDER = "com.inth.consent.BRANDING_PROVIDER"
+        const val META_BRANDING_NAME = "com.inth.consent.BRANDING_NAME"
         /** Drawable resource for a custom provider logo. */
-        const val META_BRANDING_MARK = "com.c15t.consent.BRANDING_MARK"
+        const val META_BRANDING_MARK = "com.inth.consent.BRANDING_MARK"
     }
 
     /**
@@ -514,7 +514,7 @@ data class ConsentTheme(
         internal const val HEADLINE_LINE_HEIGHT = 40f
         internal const val BODY_SIZE = 16f
         internal const val SUPPORTING_SIZE = 14f
-        internal const val LOG_TAG = "C15tConsent"
+        internal const val LOG_TAG = "InthConsent"
         /** Set after the first decision-colour fallback is logged; tests reset it. */
         internal val decisionContrastWarned = java.util.concurrent.atomic.AtomicBoolean(false)
 
@@ -549,5 +549,5 @@ data class ConsentTheme(
     }
 }
 
-/** The theme in scope. Set by [C15tConsent]; defaults to the stock appearance. */
+/** The theme in scope. Set by [InthConsent]; defaults to the stock appearance. */
 val LocalConsentTheme = staticCompositionLocalOf { ConsentTheme.c15t }

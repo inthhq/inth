@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 /// Cold-launch, queue liveness and policy-transition regressions.
 final class FoundationRepairTests: XCTestCase {
@@ -163,12 +163,12 @@ final class FoundationRepairTests: XCTestCase {
         let original = try XCTUnwrap(envelope.pendingSaves?.last?.body)
         let queue = PendingSaveQueue(store: store, now: { vector.now })
         func body(_ owner: Int, _ domain: Int, subject: String? = nil, marker: String = "") throws -> Data {
-            var fields = try XCTUnwrap(C15tJSON.parse(original)?.objectValue)
+            var fields = try XCTUnwrap(InthJSON.parse(original)?.objectValue)
             fields["externalSubjectId"] = .string("u\(owner)")
             fields["domain"] = .string("d\(domain).example.test")
             fields["givenAt"] = .number(Double(vector.now + Int64(marker.count)))
             if let subject { fields["subjectId"] = .string(subject) }
-            return try C15tJSON.encode(JSONValue.object(fields))
+            return try InthJSON.encode(JSONValue.object(fields))
         }
         // Replace initial anonymous body, then fill with distinct owner/domain pairs.
         queue.clear()

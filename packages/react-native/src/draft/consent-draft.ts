@@ -214,7 +214,7 @@ const warnUnpinned = function warnUnpinned(client: ConsentClient): void {
 	}
 	warnedUnpinned.add(client);
 	console.warn(
-		'c15t: this native build does not check a draft save against the snapshot it was built on (bootstrap.commitRevision is false), so a decision another surface records while the save is in flight can be overwritten. Rebuild the app with this version of @c15t/react-native.'
+		'Inth: this native build does not check a draft save against the snapshot it was built on (bootstrap.commitRevision is false), so a decision another surface records while the save is in flight can be overwritten. Rebuild the app with this version of @inth/react-native.'
 	);
 };
 

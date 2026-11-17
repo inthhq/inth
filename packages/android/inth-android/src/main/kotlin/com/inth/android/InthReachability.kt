@@ -1,11 +1,11 @@
-package com.c15t.android
+package com.inth.android
 
 import android.annotation.SuppressLint
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.Network
 import android.util.Log
-import com.c15t.core.C15t
+import com.inth.core.Inth
 
 /**
  * Decides which connectivity callbacks are worth a queue replay.
@@ -54,11 +54,11 @@ class ReachabilityGate(private val onGained: () -> Unit) {
  * wake-up. A refusal is therefore logged and the core keeps its launch and foreground
  * replays, which need no permission and are never optional.
  *
- * [C15tAndroid.install] hands queue replay to the core's worker executor and refreshes policy.
+ * [InthAndroid.install] hands queue replay to the core's worker executor and refreshes policy.
  * The callback never sends a pending body inline, so recovery does not open HTTP on the
  * main thread. Refresh schedules its own work through the core's executor.
  */
-class C15tReachability private constructor(
+class InthReachability private constructor(
 	private val manager: ConnectivityManager,
 	private val callback: ConnectivityManager.NetworkCallback,
 ) {
@@ -73,7 +73,7 @@ class C15tReachability private constructor(
 	}
 
 	companion object {
-		private const val TAG = "c15t"
+		private const val TAG = "inth"
 
 		/**
 		 * Start listening for network gains.
@@ -89,10 +89,10 @@ class C15tReachability private constructor(
 		// ACCESS_NETWORK_STATE gets a working SDK with one less wake-up, not a crash on
 		// the launch path.
 		@SuppressLint("MissingPermission")
-		fun register(context: Context, onGained: () -> Unit): C15tReachability? {
+		fun register(context: Context, onGained: () -> Unit): InthReachability? {
 			val manager = context.applicationContext.getSystemService(ConnectivityManager::class.java)
 			if (manager == null) {
-				Log.i(TAG, "no ConnectivityManager: c15t replays its queue on launch and foreground only")
+				Log.i(TAG, "no ConnectivityManager: Inth replays its queue on launch and foreground only")
 				return null
 			}
 
@@ -104,11 +104,11 @@ class C15tReachability private constructor(
 
 			return try {
 				manager.registerDefaultNetworkCallback(callback)
-				C15tReachability(manager, callback)
+				InthReachability(manager, callback)
 			} catch (error: SecurityException) {
 				Log.i(
 					TAG,
-					"android.permission.ACCESS_NETWORK_STATE is not declared, so c15t cannot replay its " +
+					"android.permission.ACCESS_NETWORK_STATE is not declared, so Inth cannot replay its " +
 						"queue the moment a connection returns; launch and foreground still do",
 				)
 				null

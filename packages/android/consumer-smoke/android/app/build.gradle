@@ -3,9 +3,9 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 android {
-    namespace 'com.c15t.consumer'
+    namespace 'com.inth.consumer'
     compileSdk providers.gradleProperty('compileSdkVersion').get().toInteger()
-    defaultConfig { applicationId 'com.c15t.consumer'; minSdk 24; targetSdk 36; versionCode 1; versionName '1' }
+    defaultConfig { applicationId 'com.inth.consumer'; minSdk 24; targetSdk 36; versionCode 1; versionName '1' }
     buildTypes {
         release {
             minifyEnabled true
@@ -17,9 +17,9 @@ android {
     kotlinOptions { jvmTarget = '17' }
 }
 dependencies {
-    implementation "com.c15t:c15t-android:${providers.gradleProperty('c15t.core.version').get()}"
-    if (findProject(':c15t-react-native') != null) {
-        implementation project(':c15t-react-native')
-        implementation "com.facebook.react:react-android:${providers.gradleProperty('c15t.reactNativeVersion').get()}"
+    implementation "com.inth:inth-android:${providers.gradleProperty('inth.core.version').get()}"
+    if (findProject(':inth-react-native') != null) {
+        implementation project(':inth-react-native')
+        implementation "com.facebook.react:react-android:${providers.gradleProperty('inth.reactNativeVersion').get()}"
     }
 }

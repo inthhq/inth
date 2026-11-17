@@ -216,7 +216,7 @@ const ConsentPreferencesContent = ({
 						disabled={busy}
 						kind="secondary"
 						label={copy.rejectAll}
-						testID="c15t.prefs.reject-all"
+						testID="inth.prefs.reject-all"
 						onPress={() => {
 							void decide('reject');
 						}}
@@ -227,7 +227,7 @@ const ConsentPreferencesContent = ({
 						disabled={busy}
 						kind="secondary"
 						label={copy.acceptAll}
-						testID="c15t.prefs.accept-all"
+						testID="inth.prefs.accept-all"
 						onPress={() => {
 							void decide('accept');
 						}}
@@ -238,7 +238,7 @@ const ConsentPreferencesContent = ({
 				<ConsentButton
 					disabled={busy}
 					label={copy.save}
-					testID="c15t.prefs.save"
+					testID="inth.prefs.save"
 					onPress={() => {
 						void save();
 					}}
@@ -293,7 +293,7 @@ export const ConsentPreferences = ({
 		<ConsentSurface
 			branding={branding}
 			dismissLabel={copy.dismiss}
-			dismissTestID="c15t.prefs.cancel"
+			dismissTestID="inth.prefs.cancel"
 			label={copy.preferences}
 			onRequestClose={onRequestClose}
 			open={open}

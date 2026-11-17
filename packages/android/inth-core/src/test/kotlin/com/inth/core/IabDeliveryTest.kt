@@ -1,10 +1,10 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.model.*
-import com.c15t.core.spi.*
-import com.c15t.core.store.*
-import com.c15t.core.tc.*
-import com.c15t.core.transport.*
+import com.inth.core.model.*
+import com.inth.core.spi.*
+import com.inth.core.store.*
+import com.inth.core.tc.*
+import com.inth.core.transport.*
 import java.io.File
 import kotlin.test.*
 import kotlinx.serialization.json.*
@@ -32,7 +32,7 @@ class IabDeliveryTest {
 	@Test
 	fun `repro A identify with the unchanged external id wipes IAB consent`() {
 		val transport = RecordingTransport().respondInit(init()).respondSave(SaveOutcome.Unavailable("offline"))
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val core =
 			testKernel(config = config, store = store, transport = transport, clock = FixedClock(vector.now))
 				.also { it.bootstrap() }
@@ -47,7 +47,7 @@ class IabDeliveryTest {
 
 	@Test
 	fun `repro B an undelivered withdrawal is deleted when the list version changes`() {
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val transport =
 			RecordingTransport()
 				.respondInit(init())
@@ -69,7 +69,7 @@ class IabDeliveryTest {
 	@Test fun `withdrawal survives invalidation restart and reconnect`() {
 		for (change in listOf("list", "expiry", "clock", "config", "model", "fingerprint", "identify", "logout", "reset")) {
 			val backend = InMemoryKeyValueStore()
-			val store = C15tStore(backend)
+			val store = InthStore(backend)
 			val transport = RecordingTransport().respondInit(init()).respondSave(SaveOutcome.Delivered)
 			val core = testKernel(config = config, store = store, transport = transport, clock = FixedClock(vector.now))
 			core.bootstrap()
@@ -93,7 +93,7 @@ class IabDeliveryTest {
 			}
 			assertTrue(store.readPending().any { it.body == frozen }, change)
 			val offline = RecordingTransport().respondSave(SaveOutcome.Unavailable("offline"))
-			val cold = testKernel(config = nextConfig, store = C15tStore(backend), transport = offline, clock = FixedClock(now))
+			val cold = testKernel(config = nextConfig, store = InthStore(backend), transport = offline, clock = FixedClock(now))
 			cold.bootstrap()
 			cold.flushPending()
 			assertEquals(1, store.readPending().size, change)
@@ -106,7 +106,7 @@ class IabDeliveryTest {
 	}
 
 	@Test fun `anonymous logout is idempotent`() {
-		val store = C15tStore(InMemoryKeyValueStore())
+		val store = InthStore(InMemoryKeyValueStore())
 		val core = testKernel(config = config, store = store, transport = RecordingTransport().respondInit(init()).respondSave(SaveOutcome.Unavailable("offline")), clock = FixedClock(vector.now))
 		core.bootstrap()
 		assertTrue(core.save(CommitIntent.All).ok)

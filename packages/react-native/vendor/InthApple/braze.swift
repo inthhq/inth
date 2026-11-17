@@ -1,5 +1,5 @@
-#if canImport(C15tCore)
-import C15tCore
+#if canImport(InthCore)
+import InthCore
 #endif
 import Foundation
 
@@ -12,7 +12,7 @@ import Foundation
 /// `$google_ad_personalization` custom attributes there, as Booleans, from
 /// `adUserData` and `adPersonalization`. Braze forwards them to Google in Audience
 /// Sync. Marketing grants both, and is the default category, as for the web's email
-/// and messaging helpers. c15t does not link Braze.
+/// and messaging helpers. Inth does not link Braze.
 ///
 /// When the category is withdrawn, the helper only disables Braze. It does not write
 /// denied attributes first: Braze cancels in-flight requests when disabled and offers

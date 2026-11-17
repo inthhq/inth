@@ -22,11 +22,11 @@ import {
 	resetNativeStub,
 	setNativeModule,
 } from '../../__tests__/helpers/react-native-stub';
-import { useC15tBootstrap } from '../../hooks/use-c15t-bootstrap';
+import { useInthBootstrap } from '../../hooks/use-inth-bootstrap';
 import { useSnapshot } from '../../hooks/use-snapshot';
 import { createConsentClient, resetConsentClient } from '../../native/client';
-import { NATIVE_C15T_MODULE_NAME } from '../../protocol';
-import { buildFakeSnapshot } from '../../testing/fake-native-c15t';
+import { NATIVE_INTH_MODULE_NAME } from '../../protocol';
+import { buildFakeSnapshot } from '../../testing/fake-native-inth';
 import { ConsentProvider } from '../consent-provider';
 
 /** Render the revision, so a test can see which consumers updated. */
@@ -38,7 +38,7 @@ const RevisionProbe = (): ReactNode => {
 
 /** Render the handshake payload the provider read once. */
 const BootstrapProbe = (): ReactNode => {
-	const bootstrap = useC15tBootstrap();
+	const bootstrap = useInthBootstrap();
 
 	return (
 		<span>{`${bootstrap.nativeSdkVersion}/${String(bootstrap.protocolVersion)}`}</span>
@@ -220,7 +220,7 @@ describe('client prop', () => {
 			addListener: () => ({ remove: () => undefined }),
 		});
 		// No module in the registry: a lookup now would throw.
-		setNativeModule(NATIVE_C15T_MODULE_NAME);
+		setNativeModule(NATIVE_INTH_MODULE_NAME);
 
 		const handle = renderTree(
 			<ConsentProvider

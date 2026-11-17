@@ -1,39 +1,39 @@
-package com.c15t.core.bench
+package com.inth.core.bench
 
-import com.c15t.core.ConsentCore
-import com.c15t.core.CommitIntent
-import com.c15t.core.NativeConfig
-import com.c15t.core.model.ActiveUI
-import com.c15t.core.model.ConsentAction
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentLocation
-import com.c15t.core.model.ConsentModel
-import com.c15t.core.model.ConsentSnapshot
-import com.c15t.core.model.ConsentState
-import com.c15t.core.model.ConsentSubject
-import com.c15t.core.model.ExplicitChoice
-import com.c15t.core.model.GpcSignal
-import com.c15t.core.model.KernelOverrides
-import com.c15t.core.model.KernelUser
-import com.c15t.core.model.PolicyResolution
-import com.c15t.core.model.PrivacySignals
-import com.c15t.core.model.QueuedSave
-import com.c15t.core.policy.EvaluationPolicy
-import com.c15t.core.policy.NoticeDismissal
-import com.c15t.core.policy.PolicyEvaluator
-import com.c15t.core.policy.PolicyPrompt
-import com.c15t.core.policy.ScopeMode
-import com.c15t.core.spi.Clock
-import com.c15t.core.spi.KeyValueStore
-import com.c15t.core.spi.TaskExecutor
-import com.c15t.core.store.C15tJson
-import com.c15t.core.store.C15tStore
-import com.c15t.core.store.C15tStoreKeys
-import com.c15t.core.store.SnapshotEnvelope
-import com.c15t.core.transport.C15tTransport
-import com.c15t.core.transport.InitContext
-import com.c15t.core.transport.SaveOutcome
-import com.c15t.core.transport.TransportOutcome
+import com.inth.core.ConsentCore
+import com.inth.core.CommitIntent
+import com.inth.core.NativeConfig
+import com.inth.core.model.ActiveUI
+import com.inth.core.model.ConsentAction
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentLocation
+import com.inth.core.model.ConsentModel
+import com.inth.core.model.ConsentSnapshot
+import com.inth.core.model.ConsentState
+import com.inth.core.model.ConsentSubject
+import com.inth.core.model.ExplicitChoice
+import com.inth.core.model.GpcSignal
+import com.inth.core.model.KernelOverrides
+import com.inth.core.model.KernelUser
+import com.inth.core.model.PolicyResolution
+import com.inth.core.model.PrivacySignals
+import com.inth.core.model.QueuedSave
+import com.inth.core.policy.EvaluationPolicy
+import com.inth.core.policy.NoticeDismissal
+import com.inth.core.policy.PolicyEvaluator
+import com.inth.core.policy.PolicyPrompt
+import com.inth.core.policy.ScopeMode
+import com.inth.core.spi.Clock
+import com.inth.core.spi.KeyValueStore
+import com.inth.core.spi.TaskExecutor
+import com.inth.core.store.InthJson
+import com.inth.core.store.InthStore
+import com.inth.core.store.InthStoreKeys
+import com.inth.core.store.SnapshotEnvelope
+import com.inth.core.transport.InthTransport
+import com.inth.core.transport.InitContext
+import com.inth.core.transport.SaveOutcome
+import com.inth.core.transport.TransportOutcome
 import java.io.File
 import java.io.IOException
 import java.util.concurrent.TimeUnit
@@ -46,7 +46,7 @@ import kotlinx.serialization.json.buildJsonObject
  * Measured numbers for the budgets in `packages/native-protocol/CONTRACT.md`, so the report is
  * figures rather than claims.
  *
- * Run with `./gradlew :c15t-core:bench`. Each line is a median over measured
+ * Run with `./gradlew :inth-core:bench`. Each line is a median over measured
  * iterations after a warmup, on the calling JVM, except the cold bootstrap, which takes
  * one sample per fresh JVM because no loop can show a cold one. Every budget the
  * contract names is asserted, so a regression fails the task instead of drifting
@@ -84,7 +84,7 @@ object Bench {
 		val iterations = if (quick) 200 else ITERATIONS
 		val fixture = Fixture()
 
-		println("c15t-core benchmarks")
+		println("inth-core benchmarks")
 		println("  jvm=" + System.getProperty("java.vm.version") + " cores=" + Runtime.getRuntime().availableProcessors())
 		println("  warmup=$warmup measured=$iterations  medians in microseconds")
 
@@ -253,7 +253,7 @@ object Bench {
 			evaluatedAt = now - 60_000L,
 		)
 
-		val envelopeJson: String = C15tJson.storage.encodeToString(
+		val envelopeJson: String = InthJson.storage.encodeToString(
 			SnapshotEnvelope.serializer(),
 			SnapshotEnvelope(snapshot = snapshot, evaluationPolicy = policy, noticeDismissal = dismissal),
 		)
@@ -267,11 +267,11 @@ object Bench {
 	 * UUID shape measured a cold install under a row named for a warm one, and took the
 	 * cold bootstrap sample with it.
 	 */
-		fun store(): C15tStore = C15tStore(
+		fun store(): InthStore = InthStore(
 			InMemoryStore(
 				mapOf(
-					C15tStoreKeys.SNAPSHOT to envelopeJson,
-					C15tStoreKeys.SUBJECT to """{"id":"sub_111CP17G2VuBxuByVqaokUtDVc"}""",
+					InthStoreKeys.SNAPSHOT to envelopeJson,
+					InthStoreKeys.SUBJECT to """{"id":"sub_111CP17G2VuBxuByVqaokUtDVc"}""",
 				),
 			),
 		)
@@ -330,7 +330,7 @@ object Bench {
 		}
 	}
 
-	private object UnreachableTransport : C15tTransport {
+	private object UnreachableTransport : InthTransport {
 		override fun init(context: InitContext): TransportOutcome = TransportOutcome.NetworkFailure("bench: no network")
 
 		override fun save(entry: QueuedSave): SaveOutcome = SaveOutcome.Unavailable("bench: no network")

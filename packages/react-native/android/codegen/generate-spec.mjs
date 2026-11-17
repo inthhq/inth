@@ -5,11 +5,11 @@
  *
  * The three consumers are the two Gradle builds and the drift check:
  *
- * - `:c15t-spec` with `-Pc15t.spec.source=codegen` swaps its source set to what this
+ * - `:inth-spec` with `-Pinth.spec.source=codegen` swaps its source set to what this
  *   writes, which is how the repository proves the hand-written stand-in still matches
  *   generated output. That module is a `compileOnly` dependency of the bridge, so what
  *   lands here reaches neither the AAR nor the pod.
- * - `c15t-react-native/library.gradle` writes the same output into the bridge module in a
+ * - `inth-react-native/library.gradle` writes the same output into the bridge module in a
  *   host app, where there is no stand-in project to lean on.
  * - `src/specs/__tests__/{android,ios}-spec-surface.test.ts` spawn this exact command and
  *   compare what it wrote against the hand-written side, so the check grades the command
@@ -19,7 +19,7 @@
  * the app entry point: given this package it scans for codegen-enabled libraries, treats
  * the folder as an app, and emits the spec under its own default package
  * `com.facebook.fbreact.specs`, which is not the package `codegenConfig` declares and not
- * the one `C15tReactNativeModule` compiles against. This script does what React Native's
+ * the one `InthReactNativeModule` compiles against. This script does what React Native's
  * own Gradle plugin does for a library instead: combine the library's own `jsSrcsDir` into
  * a schema, then generate with the library name and the `javaPackageName` from
  * `codegenConfig`. Those are the same two `@react-native/codegen` calls, and the same
@@ -40,7 +40,7 @@ import { fileURLToPath } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
-/** The `@c15t/react-native` package root, which owns `package.json` and `src/specs`. */
+/** The `@inth/react-native` package root, which owns `package.json` and `src/specs`. */
 const PACKAGE_ROOT = resolve(HERE, '..', '..');
 
 const PLATFORMS = new Set(['android', 'ios']);
@@ -324,7 +324,7 @@ const main = function main(argv) {
  * Whether this file is the process entry point, compared by realpath.
  *
  * Node resolves symlinks when it works out `import.meta.url`, and a build is free to name the
- * script through a link: a host app's `node_modules/@c15t/react-native` is a symlink into a
+ * script through a link: a host app's `node_modules/@inth/react-native` is a symlink into a
  * workspace, and its Gradle build invokes the script by that linked path. Comparing the two
  * as written makes the entry check false there, so the CLI parses its arguments, runs nothing,
  * and exits 0 with an empty output directory that Gradle then happily calls up-to-date.

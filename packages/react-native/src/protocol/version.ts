@@ -61,11 +61,11 @@ export const describeProtocolMismatch = function describeProtocolMismatch(
 	protocolVersion: number
 ): string {
 	return (
-		`@c15t/react-native cannot use this native build: it speaks consent ` +
+		`@inth/react-native cannot use this native build: it speaks consent ` +
 		`protocol ${String(protocolVersion)}, while the installed JavaScript ` +
 		`package supports ${String(MIN_SUPPORTED_PROTOCOL_VERSION)} to ${String(
 			MAX_SUPPORTED_PROTOCOL_VERSION
 		)}. Rebuild the app so the embedded native code matches this package, or ` +
-		`install the @c15t/react-native version that shipped with the binary.`
+		`install the @inth/react-native version that shipped with the binary.`
 	);
 };

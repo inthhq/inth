@@ -57,13 +57,13 @@ import {
 import { parseWebViewConsent } from '../webview/payload';
 import type { WebViewConsentPayload } from '../webview/payload';
 import { NativeBridgeError } from './bridge-error';
-import { getNativeC15t, getNativeC15tEvents } from './module';
+import { getNativeInth, getNativeInthEvents } from './module';
 import type {
-	NativeC15tTurboModule,
+	NativeInthTurboModule,
 	NativeEventSubscription,
 	NativeEventsLike,
 } from './module';
-import { C15tProtocolMismatchError } from './protocol-mismatch-error';
+import { InthProtocolMismatchError } from './protocol-mismatch-error';
 import { watchWithoutNativeUI } from './without-native-ui';
 
 /**
@@ -179,10 +179,10 @@ export interface ConsentClient {
 	 * Apple shows nothing and calls back with the arm on file. The provider asks
 	 * only while the answer is `not-determined`, so it never re-prompts by itself.
 	 *
-	 * It rejects with `C15T_TRACKING_NOT_CONFIGURED` on an iOS build that carries no
+	 * It rejects with `INTH_TRACKING_NOT_CONFIGURED` on an iOS build that carries no
 	 * `NSUserTrackingUsageDescription`, because Apple then suppresses the dialog and
 	 * records the answer as denied without telling the host why, and with
-	 * `C15T_TRACKING_UNSUPPORTED` on Android, where there is nothing to ask.
+	 * `INTH_TRACKING_UNSUPPORTED` on Android, where there is nothing to ask.
 	 *
 	 * @returns The arm the platform reported after the request settled. Use
 	 *   {@link requestTracking} when the answer might be a pause rather than a
@@ -228,7 +228,7 @@ export interface ConsentClient {
 	/**
 	 * Whether tracking behaviour may run for one category.
 	 *
-	 * Both halves have to say yes: the c15t decision for `category` must be
+	 * Both halves have to say yes: the Inth decision for `category` must be
 	 * `granted`, and the platform must not be holding tracking back. Neither half
 	 * moves the other. A device with ATT authorized and the category denied is
 	 * denied, and a policy that has not resolved stays `pending` no matter what
@@ -302,14 +302,14 @@ export interface ConsentClient {
 	 */
 	identify: (externalId: string) => Promise<void>;
 	/**
-	 * Detach the external id. Consent stays with the c15t subject id.
+	 * Detach the external id. Consent stays with the Inth subject id.
 	 */
 	logout: () => Promise<void>;
 	/**
 	 * Wipe consent and go back to the state a first launch boots with.
 	 *
 	 * The choice prompt is owed again afterwards, so the banner or dialog comes
-	 * back: this is a withdrawal, not a recorded reject-everything. The c15t
+	 * back: this is a withdrawal, not a recorded reject-everything. The Inth
 	 * subject id is kept.
 	 */
 	reset: () => Promise<void>;
@@ -409,7 +409,7 @@ const warnSnapshotDrift = function warnSnapshotDrift(
 
 	seen.value = signature;
 	console.warn(
-		'c15t ConsentClient: the native snapshot does not match the declared wire shape. Consent state may read as missing.',
+		'Inth ConsentClient: the native snapshot does not match the declared wire shape. Consent state may read as missing.',
 		problems
 	);
 };
@@ -453,7 +453,7 @@ export const reportBridgeDrift = async function reportBridgeDrift(
 		if (!message.includes('experimental-vm-modules') && !warnedDriftLoad) {
 			warnedDriftLoad = true;
 			console.warn(
-				'c15t ConsentClient: the bridge drift check could not load, so native payloads are not checked in this build.',
+				'Inth ConsentClient: the bridge drift check could not load, so native payloads are not checked in this build.',
 				error
 			);
 		}
@@ -469,7 +469,7 @@ export const reportBridgeDrift = async function reportBridgeDrift(
 	}
 	reportedBridgeDrift.add(signature);
 	console.warn(
-		`c15t ConsentClient: the native ${name} payload does not match the declared wire shape.`,
+		`Inth ConsentClient: the native ${name} payload does not match the declared wire shape.`,
 		problems
 	);
 };
@@ -559,14 +559,14 @@ const parseObject = function parseObject(raw: string): unknown {
  * @param raw - JSON string from `getBootstrap()`.
  * @returns The bootstrap payload.
  * @throws {NativeBridgeError} When the payload will not parse.
- * @throws {C15tProtocolMismatchError} When no protocol version is reported.
+ * @throws {InthProtocolMismatchError} When no protocol version is reported.
  */
 const parseBootstrap = function parseBootstrap(raw: string): BootstrapPayload {
 	const parsed = parseObject(raw);
 
 	if (parsed === null) {
 		throw new NativeBridgeError(
-			'@c15t/react-native could not read getBootstrap(): the native module returned text that is not a JSON object. The native build does not match this JavaScript package.'
+			'@inth/react-native could not read getBootstrap(): the native module returned text that is not a JSON object. The native build does not match this JavaScript package.'
 		);
 	}
 
@@ -585,7 +585,7 @@ const parseBootstrap = function parseBootstrap(raw: string): BootstrapPayload {
 	if (typeof protocolVersion !== 'number') {
 		// A native build that reports no version predates the handshake, which
 		// is a mismatch rather than a parse failure.
-		throw new C15tProtocolMismatchError(null);
+		throw new InthProtocolMismatchError(null);
 	}
 
 	return {
@@ -657,17 +657,17 @@ const readEventRevision = function readEventRevision(
  * @param nativeModule - The registered TurboModule.
  * @param events - Emitter for `snapshot`, `initialized`, and `error`.
  * @returns A client. Call {@link ConsentClient.dispose} to detach from events.
- * @throws {C15tProtocolMismatchError} When the native protocol is unsupported.
+ * @throws {InthProtocolMismatchError} When the native protocol is unsupported.
  * @throws {NativeBridgeError} When the bootstrap payload will not parse.
  */
 export const createConsentClient = function createConsentClient(
-	nativeModule: NativeC15tTurboModule,
+	nativeModule: NativeInthTurboModule,
 	events: NativeEventsLike
 ): ConsentClient {
 	const bootstrap = parseBootstrap(nativeModule.getBootstrap());
 
 	if (!isProtocolVersionSupported(bootstrap.protocolVersion)) {
-		throw new C15tProtocolMismatchError(bootstrap.protocolVersion);
+		throw new InthProtocolMismatchError(bootstrap.protocolVersion);
 	}
 
 	/** Raw text of the snapshot last decoded, so unchanged bytes skip the parse. */
@@ -858,7 +858,7 @@ export const createConsentClient = function createConsentClient(
 
 			missingTrackingSurface.value = true;
 			console.warn(
-				'c15t ConsentClient: this native build has no tracking authorization methods, so tracking is treated as denied. Rebuild the app: a JavaScript update cannot add a native method.',
+				'Inth ConsentClient: this native build has no tracking authorization methods, so tracking is treated as denied. Rebuild the app: a JavaScript update cannot add a native method.',
 				'Rebuilding is the fix. Until then `isTrackingAllowed` answers false and `requestTrackingAuthorization` rejects.'
 			);
 		};
@@ -905,7 +905,7 @@ export const createConsentClient = function createConsentClient(
 			warnTrackingSurfaceMissing();
 
 			throw new NativeBridgeError(
-				'@c15t/react-native cannot request tracking authorization: this native build has no requestTrackingAuthorization method. Rebuild the app so the binary matches this package; a JavaScript update cannot add it.'
+				'@inth/react-native cannot request tracking authorization: this native build has no requestTrackingAuthorization method. Rebuild the app so the binary matches this package; a JavaScript update cannot add it.'
 			);
 		}
 
@@ -989,7 +989,7 @@ export const createConsentClient = function createConsentClient(
 			typeof (parsed as Record<string, unknown>).ok !== 'boolean'
 		) {
 			throw new NativeBridgeError(
-				'@c15t/react-native could not read the commit result: the native module replied with text that is not a CommitResult JSON object.'
+				'@inth/react-native could not read the commit result: the native module replied with text that is not a CommitResult JSON object.'
 			);
 		}
 
@@ -1059,7 +1059,7 @@ export const createConsentClient = function createConsentClient(
 			// here, so this rejects and names the fix.
 			if (typeof nativeModule.reset !== 'function') {
 				throw new NativeBridgeError(
-					'@c15t/react-native cannot reset consent: this native build has no reset method. Rebuild the app so the binary matches this package; a JavaScript update cannot add it.'
+					'@inth/react-native cannot reset consent: this native build has no reset method. Rebuild the app so the binary matches this package; a JavaScript update cannot add it.'
 				);
 			}
 
@@ -1118,12 +1118,12 @@ let client: ConsentClient | null = null;
  * Get the app's consent client, creating it on first use.
  *
  * @returns The shared client, attached to the registered native module.
- * @throws {NativeC15tUnavailableError} When the native module is missing.
- * @throws {C15tProtocolMismatchError} When the native protocol is unsupported.
+ * @throws {NativeInthUnavailableError} When the native module is missing.
+ * @throws {InthProtocolMismatchError} When the native protocol is unsupported.
  */
 export const getConsentClient = function getConsentClient(): ConsentClient {
 	if (client === null) {
-		client = createConsentClient(getNativeC15t(), getNativeC15tEvents());
+		client = createConsentClient(getNativeInth(), getNativeInthEvents());
 	}
 
 	return client;
@@ -1132,7 +1132,7 @@ export const getConsentClient = function getConsentClient(): ConsentClient {
 /**
  * Make `next` the app's shared client, so {@link getConsentClient} returns it.
  *
- * Only `@c15t/react-native/testing` calls this, so an app's own
+ * Only `@inth/react-native/testing` calls this, so an app's own
  * `<ConsentProvider>` and its integrations reach the test client.
  *
  * @internal

@@ -1,9 +1,9 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.model.ConsentSnapshot
-import com.c15t.core.model.KernelUser
-import com.c15t.core.store.C15tStore
-import com.c15t.core.transport.TransportOutcome
+import com.inth.core.model.ConsentSnapshot
+import com.inth.core.model.KernelUser
+import com.inth.core.store.InthStore
+import com.inth.core.transport.TransportOutcome
 import java.lang.ref.WeakReference
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -17,7 +17,7 @@ import kotlin.test.assertTrue
 class ObserverLifetimeTest {
 	@Test
 	fun `an inline snapshot observer still fires after a forced collection`() {
-		val kernel = testKernel(store = C15tStore(InMemoryKeyValueStore()))
+		val kernel = testKernel(store = InthStore(InMemoryKeyValueStore()))
 		kernel.bootstrap()
 		val revisions = mutableListOf<Long>()
 		val subscription = kernel.onChange { revisions += it.revision.toLong() }
@@ -32,7 +32,7 @@ class ObserverLifetimeTest {
 	@Test
 	fun `an inline error observer still fires after a forced collection`() {
 		val transport = RecordingTransport()
-		val kernel = testKernel(store = C15tStore(InMemoryKeyValueStore()), transport = transport)
+		val kernel = testKernel(store = InthStore(InMemoryKeyValueStore()), transport = transport)
 		kernel.bootstrap()
 		val failures = mutableListOf<String>()
 		val subscription = kernel.onError { failures += it.message }
@@ -47,7 +47,7 @@ class ObserverLifetimeTest {
 
 	@Test
 	fun `closing the handle stops the callback, once per registration`() {
-		val kernel = testKernel(store = C15tStore(InMemoryKeyValueStore()))
+		val kernel = testKernel(store = InthStore(InMemoryKeyValueStore()))
 		kernel.bootstrap()
 		var calls = 0
 		val observer: (ConsentSnapshot) -> Unit = { calls += 1 }

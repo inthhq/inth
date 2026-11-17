@@ -1,6 +1,6 @@
-package com.c15t.core.crypto
+package com.inth.core.crypto
 
-import com.c15t.core.spi.SymmetricKeyProvider
+import com.inth.core.spi.SymmetricKeyProvider
 import javax.crypto.Cipher
 import javax.crypto.spec.GCMParameterSpec
 
@@ -85,6 +85,6 @@ class AesGcmCodec(
 		const val HEADER_LENGTH = 2
 		const val MAGIC: Byte = 'C'.code.toByte()
 		const val VERSION: Byte = 1
-		val AAD = "c15t-core-android-v1".toByteArray()
+		val AAD = "inth-core-android-v1".toByteArray()
 	}
 }

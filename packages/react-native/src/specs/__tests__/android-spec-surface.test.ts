@@ -1,7 +1,7 @@
 /**
  * The hand-written Android stand-in, checked against the spec Codegen actually generates.
  *
- * `android/c15t-spec/src/main/java/.../NativeC15tSpec.java` exists so the bridge has
+ * `android/inth-spec/src/main/java/.../NativeInthSpec.java` exists so the bridge has
  * something to compile against in this repository. The real class is generated per app
  * build, so the stand-in is load-bearing in exactly one way: the bridge's Kotlin overrides
  * must still typecheck against what Codegen emits, or the module compiles here and fails in
@@ -9,8 +9,8 @@
  * `removeListeners(double)` are two different overrides to a Kotlin subclass and both
  * compile against the stand-in, so "the build is green" is not the check.
  *
- * Ground truth is Codegen itself, run over `src/specs/NativeC15t.ts` through the same
- * command `-Pc15t.spec.source=codegen` runs in Gradle, so this file grades the command CI
+ * Ground truth is Codegen itself, run over `src/specs/NativeInth.ts` through the same
+ * command `-Pinth.spec.source=codegen` runs in Gradle, so this file grades the command CI
  * uses rather than a second implementation of generation. Expectations come from
  * `spec-contract.ts`, which reads the TypeScript, so a stand-in that matches generated
  * output while both moved away from the contract is still a failure here.
@@ -43,7 +43,7 @@ const PACKAGE_ROOT = resolve(
 	'../../..'
 );
 
-/** The generator `-Pc15t.spec.source=codegen` runs: same file, same argv shape. */
+/** The generator `-Pinth.spec.source=codegen` runs: same file, same argv shape. */
 const GENERATOR_PATH = join(PACKAGE_ROOT, 'android/codegen/generate-spec.mjs');
 
 /** Anything the type encoding can wear in a parameter or return position. */
@@ -115,7 +115,7 @@ const METHOD =
 	/(?<modifiers>\b(?:public|protected|private)\b(?:\s+\b(?:static|final|abstract|synchronized)\b)*)\s+(?<returnType>[A-Za-z_$][\w$.<>[\]]*)\s+(?<name>[A-Za-z_$]\w*)\s*\((?<parameters>[^)]*)\)\s*(?:throws[\w., ]+)?(?<terminator>[{;])/gu;
 
 /**
- * Read the parts of a `NativeC15tSpec.java` that matter, generated or hand-written.
+ * Read the parts of a `NativeInthSpec.java` that matter, generated or hand-written.
  *
  * One reader for both files is the point: the comparison cannot be skewed by two parsers
  * that disagree about Java. Narrow by design, and it throws when a file stops looking like
@@ -160,7 +160,7 @@ const parseJavaSpec = function parseJavaSpec(javaSource: string): JavaSpec {
 
 	if (classDeclaration === null || declarations.length === 0) {
 		throw new Error(
-			'NativeC15tSpec.java has no readable class declaration or no readable methods, so nothing below could be compared.'
+			'NativeInthSpec.java has no readable class declaration or no readable methods, so nothing below could be compared.'
 		);
 	}
 
@@ -210,7 +210,7 @@ const specMethodsOf = function specMethodsOf(spec: JavaSpec): JavaMethod[] {
 
 	if (inherited.length !== 1) {
 		throw new Error(
-			`Expected exactly one getName() in NativeC15tSpec.java and found ${inherited.length.toString()}, so the module has no readable name.`
+			`Expected exactly one getName() in NativeInthSpec.java and found ${inherited.length.toString()}, so the module has no readable name.`
 		);
 	}
 
@@ -232,8 +232,8 @@ let generatedSource = '';
 let outputDirectory = '';
 
 beforeAll(() => {
-	outputDirectory = mkdtempSync(join(tmpdir(), 'c15t-android-spec-'));
-	// The exact invocation `:c15t-spec` makes, so a generator that broke fails here as
+	outputDirectory = mkdtempSync(join(tmpdir(), 'inth-android-spec-'));
+	// The exact invocation `:inth-spec` makes, so a generator that broke fails here as
 	// well as in the Gradle build.
 	execFileSync(
 		process.execPath,
@@ -255,7 +255,7 @@ beforeAll(() => {
 			GENERATED_DIRECTORY,
 			'java',
 			JAVA_PACKAGE.replaceAll('.', '/'),
-			'NativeC15tSpec.java'
+			'NativeInthSpec.java'
 		),
 		'utf8'
 	);
@@ -282,7 +282,7 @@ describe('the generated Android spec', () => {
 		// the bridge's Kotlin is compiled in.
 		expect(generatedSource).toContain(LIBRARY_NAME);
 		expect(generated.packageName).toBe(JAVA_PACKAGE);
-		expect(generated.className).toBe('NativeC15tSpec');
+		expect(generated.className).toBe('NativeInthSpec');
 	});
 
 	test('extends the base module, implements TurboModule, and leaves the work abstract', () => {
@@ -304,7 +304,7 @@ describe('the generated Android spec', () => {
 	});
 
 	test('lowers every method the way the contract says', () => {
-		// Derived from NativeC15t.ts and not from either Java file, so generated output and
+		// Derived from NativeInth.ts and not from either Java file, so generated output and
 		// stand-in that drifted the same way still fail here.
 		expect(
 			specMethodsOf(generated).map((method) => ({
@@ -340,14 +340,14 @@ describe('the hand-written Android stand-in', () => {
 
 	test('is the file the bridge build compiles', () => {
 		expect(stub.packageName).toBe(JAVA_PACKAGE);
-		expect(stub.className).toBe('NativeC15tSpec');
+		expect(stub.className).toBe('NativeInthSpec');
 	});
 
 	test('agrees with the generated class about its shape', () => {
 		expect(stub.extendsType).toBe(generated.extendsType);
 		expect(stub.implementsTypes).toEqual(generated.implementsTypes);
 		expect(stub.moduleName).toBe(generated.moduleName);
-		// `C15tReactNativeModule(appContext)` calls this constructor. A different parameter
+		// `InthReactNativeModule(appContext)` calls this constructor. A different parameter
 		// list is a compile error in one build and not the other, which is the gap here.
 		expect(stub.constructorParameterTypes).toEqual(
 			generated.constructorParameterTypes

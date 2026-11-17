@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalSerializationApi::class)
 
-package com.c15t.core.tc
+package com.inth.core.tc
 
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -11,7 +11,7 @@ import kotlinx.serialization.Transient
 import kotlinx.serialization.json.JsonObject
 
 /**
- * The IAB Global Vendor List, in the shape c15t's backend embeds under `/init`'s `gvl` key.
+ * The IAB Global Vendor List, in the shape Inth's backend embeds under `/init`'s `gvl` key.
  *
  * Field-for-field this is `globalVendorListSchema` in `packages/sdk/schema/src/shared/gvl.ts`, and the
  * names are that schema's names rather than anything shorter: `/init`'s `gvl` carries the same
@@ -96,7 +96,7 @@ data class GlobalVendorList(
  * A purpose, special purpose, feature, special feature, or data category.
  *
  * The GVL gives all five the same five fields -- `gvlPurposeSchema` and its four siblings in
- * `packages/sdk/schema` -- and c15t's dialog reads all five the same way
+ * `packages/sdk/schema` -- and Inth's dialog reads all five the same way
  * (`processPurposes`/`processSpecialPurposes`/`processFeatures`/`processSpecialFeatures`), so one
  * type stands in for all five here rather than four identical declarations.
  */

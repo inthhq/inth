@@ -1,8 +1,8 @@
-package com.c15t.android.integrations
+package com.inth.android.integrations
 
-import com.c15t.core.ConsentCore
-import com.c15t.core.CommitIntent
-import com.c15t.core.model.ConsentCategory
+import com.inth.core.ConsentCore
+import com.inth.core.CommitIntent
+import com.inth.core.model.ConsentCategory
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference

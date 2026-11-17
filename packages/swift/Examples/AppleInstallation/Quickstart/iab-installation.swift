@@ -1,6 +1,6 @@
 // #region docs:swift-iab-config title="InstallIABConsent.swift"
-import C15tApple
-import C15tCore
+import InthApple
+import InthCore
 import Foundation
 
 func installIABConsent(
@@ -9,7 +9,7 @@ func installIABConsent(
     cmpVersion: Int,
     publisherCountryCode: String
 ) throws -> ConsentCore {
-    try C15tApple.install(C15tAppleConfiguration(
+    try InthApple.install(InthAppleConfiguration(
         backendURL: backendURL,
         iab: IABConfiguration(
             cmpId: cmpID,

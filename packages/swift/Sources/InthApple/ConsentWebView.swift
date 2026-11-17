@@ -1,15 +1,15 @@
 #if canImport(WebKit) && !os(tvOS) && !os(watchOS)
-#if canImport(C15tCore)
+#if canImport(InthCore)
 // SwiftPM builds the consent kernel as its own module. CocoaPods compiles the vendored
 // copy into this module instead, where the import would fail, so it is conditional
 // rather than assumed.
-import C15tCore
+import InthCore
 #endif
 import Foundation
 import WebKit
 
 /// Keeps the pages a `WKWebView` loads in step with native consent, so a site that
-/// runs web c15t with `consentSource: webViewConsentSource()` shows no second banner
+/// runs web Inth with `consentSource: webViewConsentSource()` shows no second banner
 /// and follows the app's choice.
 ///
 /// Only pages whose origin is in the list receive anything, and only in the main
@@ -42,7 +42,7 @@ import WebKit
 /// See ``WebViewConsentGroup``.
 ///
 /// The ordering, replacement and revocation rules live in ``WebViewConsentSync`` in
-/// C15tCore; this class only connects it to WebKit.
+/// InthCore; this class only connects it to WebKit.
 @MainActor
 public final class ConsentWebView {
     private weak var webView: WKWebView?

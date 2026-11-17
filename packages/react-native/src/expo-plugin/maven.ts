@@ -1,7 +1,7 @@
-import { C15tPluginError } from './errors';
+import { InthPluginError } from './errors';
 
 /** Explicit repository for the versioned Android core and platform binaries. */
-export interface C15tAndroidMavenRepository {
+export interface InthAndroidMavenRepository {
 	/** HTTPS repository URL, or an absolute file URL for local staging only. No credentials, query or fragment. */
 	readonly url: string;
 	/** Environment variable names, read by Gradle. Never supply credential values here. */
@@ -17,12 +17,12 @@ export interface C15tAndroidMavenRepository {
  * Validate build configuration without reading or reporting any credentials.
  * @param repository - Explicit repository configuration, if supplied.
  * @returns Validated configuration with a normalized URL, or null.
- * @throws {C15tPluginError} For unsafe URLs or credential values instead of variable names.
+ * @throws {InthPluginError} For unsafe URLs or credential values instead of variable names.
  */
 export const resolveAndroidMavenRepository =
 	function resolveAndroidMavenRepository(
-		repository: C15tAndroidMavenRepository | undefined
-	): C15tAndroidMavenRepository | null {
+		repository: InthAndroidMavenRepository | undefined
+	): InthAndroidMavenRepository | null {
 		if (repository === undefined) {
 			return null;
 		}
@@ -36,7 +36,7 @@ export const resolveAndroidMavenRepository =
 			}
 			url = new URL(repository.url);
 		} catch {
-			throw new C15tPluginError(
+			throw new InthPluginError(
 				'androidMavenRepository.url must be an HTTPS repository URL or an absolute file URL for local staging.'
 			);
 		}
@@ -49,7 +49,7 @@ export const resolveAndroidMavenRepository =
 			url.search !== '' ||
 			url.hash !== ''
 		) {
-			throw new C15tPluginError(
+			throw new InthPluginError(
 				'androidMavenRepository.url must use HTTPS, or a local file URL, without credentials, a query or a fragment.'
 			);
 		}
@@ -71,7 +71,7 @@ export const resolveAndroidMavenRepository =
 						typeof name === 'string' && /^[A-Za-z_][A-Za-z0-9_]*$/u.test(name)
 				)
 			) {
-				throw new C15tPluginError(
+				throw new InthPluginError(
 					'androidMavenRepository.credentials requires usernameEnvironmentVariable and passwordEnvironmentVariable environment variable names for an HTTPS repository. Credential literals are not accepted.'
 				);
 			}

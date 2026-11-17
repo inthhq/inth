@@ -1,6 +1,6 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.model.ConsentCategory
+import com.inth.core.model.ConsentCategory
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -10,7 +10,7 @@ import kotlin.test.assertTrue
  * The split only earns its keep if the pure module stays pure.
  *
  * A JVM unit test can prove that cheaply by reading the source tree, so the rule
- * "c15t-core has no android imports" fails the build here instead of surprising
+ * "inth-core has no android imports" fails the build here instead of surprising
  * someone at runtime.
  */
 class ModuleBoundaryTest {
@@ -35,7 +35,7 @@ class ModuleBoundaryTest {
 			}
 			.toList()
 
-		assertEquals(emptyList(), offenders, "c15t-core must stay free of Android imports")
+		assertEquals(emptyList(), offenders, "inth-core must stay free of Android imports")
 	}
 
 	@Test

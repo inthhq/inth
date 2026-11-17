@@ -1,4 +1,4 @@
-package com.c15t.core.transport
+package com.inth.core.transport
 
 import kotlinx.serialization.json.JsonElement
 
@@ -58,7 +58,7 @@ sealed class SaveOutcome {
 	 * nothing else, so a credential that comes back later cannot rescue bytes the producer
 	 * already refused on its own terms.
 	 *
-	 * The Swift core's `C15tError.isPermanentlyRejected` answers the same question over a
+	 * The Swift core's `InthError.isPermanentlyRejected` answers the same question over a
 	 * different type, and the two sets have to stay the same set: an entry must not expire
 	 * on one platform and queue forever on the other.
 	 */

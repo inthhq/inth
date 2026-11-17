@@ -68,7 +68,7 @@ extension ConsentDecision {
 ///
 /// ```swift
 /// struct PrivacyStatus: View {
-///     @StateObject private var consent = PublishedConsent(core: C15t.current!)
+///     @StateObject private var consent = PublishedConsent(core: Inth.current!)
 ///
 ///     var body: some View {
 ///         Text(consent.decision(for: .measurement) == .granted
@@ -143,7 +143,7 @@ public final class PublishedConsent: ObservableObject {
 ///
 /// ```swift
 /// struct PrivacyStatus: View {
-///     @State private var consent = ObservableConsent(core: C15t.current!)
+///     @State private var consent = ObservableConsent(core: Inth.current!)
 ///
 ///     var body: some View {
 ///         Text(consent.isReady ? "Privacy choices ready" : "Loading privacy choices")

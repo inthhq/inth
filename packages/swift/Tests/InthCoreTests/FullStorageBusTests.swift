@@ -1,14 +1,14 @@
 import Foundation
 import XCTest
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 final class FullStorageBusTests: XCTestCase {
     // TCF-CHECK: T3
     // TCF-CHECK: T4
     func testIndependentOracleRowsReachActualDefaultsWithNativeTypes() throws {
         let data = try Data(contentsOf: IABCommitTests.fixtureURL.deletingLastPathComponent().appendingPathComponent("storage-bus-cases.json"))
-        let rows = try XCTUnwrap(C15tJSON.parse(data)?["cases"]?.arrayValue)
-        let suite = "c15t-bus-oracle-" + UUID().uuidString
+        let rows = try XCTUnwrap(InthJSON.parse(data)?["cases"]?.arrayValue)
+        let suite = "inth-bus-oracle-" + UUID().uuidString
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
         defer { defaults.removePersistentDomain(forName: suite) }
         let bus = UserDefaultsStorageBus(defaults: defaults)
@@ -46,7 +46,7 @@ extension FullStorageBusTests {
     func testCoreInitializesRestoresRejectsAndExpiresBeforeAnyJS() async throws {
         let helper = AdditionalConsentTests()
         let v = try helper.fixture()
-        let suite = "c15t-full-core-bus-" + UUID().uuidString
+        let suite = "inth-full-core-bus-" + UUID().uuidString
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
         defer { defaults.removePersistentDomain(forName: suite) }
         let store = BusRejectingStore()
@@ -97,7 +97,7 @@ extension FullStorageBusTests {
     }
 
     func testMarkerOrderingRejectedPartialPublicationAndRecoveryInActualDefaults() throws {
-        let suite = "c15t-bus-fault-" + UUID().uuidString
+        let suite = "inth-bus-fault-" + UUID().uuidString
         let defaults = FaultingBusDefaults(suiteName: suite)
         defer { defaults.removePersistentDomain(forName: suite) }
         let bus = UserDefaultsStorageBus(defaults: defaults)
@@ -130,7 +130,7 @@ extension FullStorageBusTests {
     func testFailedInvalidationRemovesVendorGrantsWhileDiskRetainsTheOldEnvelope() async throws {
         let helper = AdditionalConsentTests()
         let v = try helper.fixture()
-        let suite = "c15t-bus-invalidation-" + UUID().uuidString
+        let suite = "inth-bus-invalidation-" + UUID().uuidString
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
         defer { defaults.removePersistentDomain(forName: suite) }
         let store = BusRejectingStore()
@@ -211,7 +211,7 @@ extension FullStorageBusTests {
 
 extension FullStorageBusTests {
     func testAnIdenticalTableIsWrittenOnceAndAChangedRowForcesARewrite() {
-        let suite = "c15t-bus-unchanged-" + UUID().uuidString
+        let suite = "inth-bus-unchanged-" + UUID().uuidString
         let defaults = FaultingBusDefaults(suiteName: suite)
         defer { defaults.removePersistentDomain(forName: suite) }
         let bus = UserDefaultsStorageBus(defaults: defaults)

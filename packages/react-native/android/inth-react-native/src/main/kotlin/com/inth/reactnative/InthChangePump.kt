@@ -1,10 +1,10 @@
-package com.c15t.reactnative
+package com.inth.reactnative
 
-import com.c15t.core.model.ConsentSnapshot
-import com.c15t.core.model.KernelError
+import com.inth.core.model.ConsentSnapshot
+import com.inth.core.model.KernelError
 
 /** Where the pump pushes an event. The module wires it to the JS emitter. */
-fun interface C15tEventSink {
+fun interface InthEventSink {
 	/** Deliver [payload] for [event] to JavaScript. */
 	fun emit(
 		event: String,
@@ -31,7 +31,7 @@ fun interface C15tEventSink {
  * error writes" in `packages/native-protocol/CONTRACT.md`. A core that bumps without publishing hands
  * this pump nothing to announce.
  */
-class C15tChangePump(private val sink: C15tEventSink) {
+class InthChangePump(private val sink: InthEventSink) {
 	private val lock = Any()
 
 	private var lastRevision = UNSET_REVISION
@@ -54,16 +54,16 @@ class C15tChangePump(private val sink: C15tEventSink) {
 			}
 		}
 		if (emitSnapshot) {
-			sink.emit(EVENT_SNAPSHOT, C15tPayload.snapshotEvent(snapshot.revision))
+			sink.emit(EVENT_SNAPSHOT, InthPayload.snapshotEvent(snapshot.revision))
 		}
 		if (emitInitialized) {
-			sink.emit(EVENT_INITIALIZED, C15tPayload.initializedEvent(snapshot.revision))
+			sink.emit(EVENT_INITIALIZED, InthPayload.initializedEvent(snapshot.revision))
 		}
 	}
 
 	/** Report an error the core emitted, in the `NativeSnapshotError` shape. */
 	fun onError(error: KernelError) {
-		sink.emit(EVENT_ERROR, C15tPayload.errorEvent(error))
+		sink.emit(EVENT_ERROR, InthPayload.errorEvent(error))
 	}
 
 	companion object {

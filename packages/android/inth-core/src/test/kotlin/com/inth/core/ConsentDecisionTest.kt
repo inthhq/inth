@@ -1,12 +1,12 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentDecision
-import com.c15t.core.model.ConsentSnapshot
-import com.c15t.core.model.ConsentState
-import com.c15t.core.model.KernelUser
-import com.c15t.core.store.C15tStore
-import com.c15t.core.transport.TransportOutcome
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentDecision
+import com.inth.core.model.ConsentSnapshot
+import com.inth.core.model.ConsentState
+import com.inth.core.model.KernelUser
+import com.inth.core.store.InthStore
+import com.inth.core.transport.TransportOutcome
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -105,7 +105,7 @@ class ConsentDecisionTest {
 	@Test
 	fun `a gate registered while pending fires again when the answer is granted`() {
 		val transport = RecordingTransport()
-		val kernel = testKernel(store = C15tStore(InMemoryKeyValueStore()), transport = transport)
+		val kernel = testKernel(store = InthStore(InMemoryKeyValueStore()), transport = transport)
 		// The init at bootstrap cannot be reached, so the state stays unanswered.
 		kernel.bootstrap()
 
@@ -125,7 +125,7 @@ class ConsentDecisionTest {
 	@Test
 	fun `a gate registered while pending fires again when the answer is denied`() {
 		val transport = RecordingTransport()
-		val kernel = testKernel(store = C15tStore(InMemoryKeyValueStore()), transport = transport)
+		val kernel = testKernel(store = InthStore(InMemoryKeyValueStore()), transport = transport)
 		kernel.bootstrap()
 
 		val seen = mutableListOf<ConsentDecision>()
@@ -144,7 +144,7 @@ class ConsentDecisionTest {
 	@Test
 	fun `a denial never degrades back to pending when the network drops`() {
 		val transport = RecordingTransport().respondInit(initSuccess())
-		val kernel = testKernel(store = C15tStore(InMemoryKeyValueStore()), transport = transport)
+		val kernel = testKernel(store = InthStore(InMemoryKeyValueStore()), transport = transport)
 		kernel.bootstrap()
 		kernel.save(CommitIntent.Necessary)
 
@@ -171,7 +171,7 @@ class ConsentDecisionTest {
 	@Test
 	fun `the decision gate delivers one answer until that answer moves`() {
 		val transport = RecordingTransport()
-		val kernel = testKernel(store = C15tStore(InMemoryKeyValueStore()), transport = transport)
+		val kernel = testKernel(store = InthStore(InMemoryKeyValueStore()), transport = transport)
 		// No init answer is scripted, so marketing stays unanswered for the whole run.
 		kernel.bootstrap()
 
@@ -221,7 +221,7 @@ class ConsentDecisionTest {
 	@Test
 	fun `an unreadable resolution returns a granted category to pending and a good one gives it back`() {
 		val transport = RecordingTransport().respondInit(initSuccess())
-		val kernel = testKernel(store = C15tStore(InMemoryKeyValueStore()), transport = transport)
+		val kernel = testKernel(store = InthStore(InMemoryKeyValueStore()), transport = transport)
 		kernel.bootstrap()
 		kernel.save(CommitIntent.All)
 
@@ -259,11 +259,11 @@ class ConsentDecisionTest {
 
 	@Test
 	fun `the boolean facade gate answers before it returns with no kernel installed`() {
-		C15t.uninstall()
+		Inth.uninstall()
 
 		val order = mutableListOf<String>()
 		val allowed = mutableListOf<Boolean>()
-		val optional = C15t.gate(ConsentCategory.MARKETING) {
+		val optional = Inth.gate(ConsentCategory.MARKETING) {
 			allowed += it
 			order += "callback"
 		}
@@ -277,7 +277,7 @@ class ConsentDecisionTest {
 		)
 
 		val necessary = mutableListOf<Boolean>()
-		val granted = C15t.gate(ConsentCategory.NECESSARY) { necessary += it }
+		val granted = Inth.gate(ConsentCategory.NECESSARY) { necessary += it }
 
 		assertEquals(listOf(true), necessary, "necessary is granted here too, not defaulted to false")
 
@@ -311,18 +311,18 @@ class ConsentDecisionTest {
 
 	@Test
 	fun `the process-wide facade answers PENDING rather than DENIED before bootstrap`() {
-		C15t.uninstall()
+		Inth.uninstall()
 
 		val seen = mutableListOf<ConsentDecision>()
-		val subscription = C15t.gateDecision(ConsentCategory.MARKETING) { decision -> seen += decision }
+		val subscription = Inth.gateDecision(ConsentCategory.MARKETING) { decision -> seen += decision }
 
-		assertEquals(ConsentDecision.GRANTED, C15t.decision(ConsentCategory.NECESSARY))
+		assertEquals(ConsentDecision.GRANTED, Inth.decision(ConsentCategory.NECESSARY))
 		assertEquals(
 			ConsentDecision.PENDING,
-			C15t.decision(ConsentCategory.MARKETING),
-			"an ad SDK that starts ahead of c15t has not been refused, so it must keep listening",
+			Inth.decision(ConsentCategory.MARKETING),
+			"an ad SDK that starts ahead of Inth has not been refused, so it must keep listening",
 		)
-		assertFalse(C15t.isReady())
+		assertFalse(Inth.isReady())
 		assertEquals(
 			listOf(ConsentDecision.PENDING),
 			seen,
@@ -332,12 +332,12 @@ class ConsentDecisionTest {
 	}
 
 	/** A core whose init cannot be reached, which is the unanswered device. */
-	private fun pendingKernel(): ConsentCore = testKernel(store = C15tStore(InMemoryKeyValueStore()))
+	private fun pendingKernel(): ConsentCore = testKernel(store = InthStore(InMemoryKeyValueStore()))
 
 	/** A core whose first init resolved an opt-in policy, with nothing chosen yet. */
 	private fun resolvedKernel(model: String = "\"opt-in\""): ConsentCore {
 		val kernel = testKernel(
-			store = C15tStore(InMemoryKeyValueStore()),
+			store = InthStore(InMemoryKeyValueStore()),
 			transport = RecordingTransport().respondInit(initSuccess(body = initBody(model = model))),
 		)
 		kernel.bootstrap()

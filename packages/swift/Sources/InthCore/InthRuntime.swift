@@ -8,13 +8,13 @@ import Foundation
 /// between them. This install point is what makes "attach to the running core"
 /// possible instead of "start another one".
 ///
-/// It mirrors the Kotlin `C15t` object, so a binding layer on either platform
+/// It mirrors the Kotlin `Inth` object, so a binding layer on either platform
 /// reads the same way: install once, then reach the core through `current`.
 ///
 /// Nothing here owns consent state. It holds a reference to the one ``ConsentCore``
 /// and forwards reads, which keeps it out of the contract's "one kernel" rule
 /// rather than making it a second one.
-public final class C15t: @unchecked Sendable {
+public final class Inth: @unchecked Sendable {
     private static let lock = Lock()
     private static var installed: ConsentCore?
     private static var uninstallListeners: [@Sendable (ConsentCore) -> Void] = []
@@ -55,11 +55,11 @@ public final class C15t: @unchecked Sendable {
     ///   refused: with no core running, the result is an unstarted core that was not
     ///   published.
     ///
-    /// Internal API. Apps install through `C15tApple.install(C15tAppleConfiguration(backendURL:))`.
+    /// Internal API. Apps install through `InthApple.install(InthAppleConfiguration(backendURL:))`.
     @discardableResult
-    @_spi(C15tInternal) public static func bootstrap(_ config: CoreConfig) -> ConsentCore {
+    @_spi(InthInternal) public static func bootstrap(_ config: CoreConfig) -> ConsentCore {
         let core = lock.withLock { () -> ConsentCore in
-            if installed == nil, config.dryRun, !C15tBuild.isDebug { return ConsentCore() }
+            if installed == nil, config.dryRun, !InthBuild.isDebug { return ConsentCore() }
             if let installed {
                 return installed
             }
@@ -137,7 +137,7 @@ public final class C15t: @unchecked Sendable {
     }
 
     /// Run `listener` with each core the runtime drops, so a layer that keeps something per core,
-    /// such as the stock consent UI, lets it go with the core. Mirrors the Kotlin `C15t.onUninstall`.
+    /// such as the stock consent UI, lets it go with the core. Mirrors the Kotlin `Inth.onUninstall`.
     public static func onUninstall(_ listener: @escaping @Sendable (ConsentCore) -> Void) {
         lock.withLock { uninstallListeners.append(listener) }
     }

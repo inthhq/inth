@@ -1,9 +1,9 @@
-name: C15tSwiftUI
+name: InthSwiftUI
 options:
   deploymentTarget:
     iOS: '16.4'
 packages:
-  C15tNative:
+  InthNative:
     path: ../..
 settings:
   base:
@@ -11,49 +11,49 @@ settings:
     GENERATE_INFOPLIST_FILE: YES
     CODE_SIGN_IDENTITY[sdk=iphonesimulator*]: '-'
 targets:
-  C15tSwiftUI:
+  InthSwiftUI:
     type: application
     platform: iOS
     sources: [Sources]
     dependencies:
-      - package: C15tNative
-        product: C15tCore
-      - package: C15tNative
-        product: C15tApple
-      - package: C15tNative
-        product: C15tConsentUI
+      - package: InthNative
+        product: InthCore
+      - package: InthNative
+        product: InthApple
+      - package: InthNative
+        product: InthConsentUI
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.c15t.examples.swiftui
+        PRODUCT_BUNDLE_IDENTIFIER: com.inth.examples.swiftui
         INFOPLIST_KEY_CFBundleDisplayName: SwiftUI consent
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
-        INFOPLIST_KEY_C15tBackendURL: $(C15T_BACKEND_URL)
-        INFOPLIST_KEY_C15tPrivacyPolicyURL: $(C15T_PRIVACY_POLICY_URL)
-  C15tSwiftUITests:
+        INFOPLIST_KEY_InthBackendURL: $(C15T_BACKEND_URL)
+        INFOPLIST_KEY_InthPrivacyPolicyURL: $(C15T_PRIVACY_POLICY_URL)
+  InthSwiftUITests:
     type: bundle.unit-test
     platform: iOS
     sources: [Tests]
     dependencies:
-      - target: C15tSwiftUI
+      - target: InthSwiftUI
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.c15t.examples.swiftui.tests
-  C15tSwiftUIUITests:
+        PRODUCT_BUNDLE_IDENTIFIER: com.inth.examples.swiftui.tests
+  InthSwiftUIUITests:
     type: bundle.ui-testing
     platform: iOS
     sources: [UITests]
     dependencies:
-      - target: C15tSwiftUI
+      - target: InthSwiftUI
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.c15t.examples.swiftui.uitests
+        PRODUCT_BUNDLE_IDENTIFIER: com.inth.examples.swiftui.uitests
 schemes:
-  C15tSwiftUI:
+  InthSwiftUI:
     build:
       targets:
-        C15tSwiftUI: all
-        C15tSwiftUITests: [test]
-        C15tSwiftUIUITests: [test]
+        InthSwiftUI: all
+        InthSwiftUITests: [test]
+        InthSwiftUIUITests: [test]
     test:
-      targets: [C15tSwiftUITests, C15tSwiftUIUITests]
+      targets: [InthSwiftUITests, InthSwiftUIUITests]
       parallelizable: false

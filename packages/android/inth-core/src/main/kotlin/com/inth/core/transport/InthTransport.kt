@@ -1,13 +1,13 @@
-package com.c15t.core.transport
+package com.inth.core.transport
 
-import com.c15t.core.C15tInternalApi
-import com.c15t.core.model.KernelOverrides
-import com.c15t.core.model.KernelUser
-import com.c15t.core.model.ConsentSubject
-import com.c15t.core.model.KernelError
-import com.c15t.core.model.PolicyResolution
-import com.c15t.core.model.QueuedSave
-import com.c15t.core.model.SavePayload
+import com.inth.core.InthInternalApi
+import com.inth.core.model.KernelOverrides
+import com.inth.core.model.KernelUser
+import com.inth.core.model.ConsentSubject
+import com.inth.core.model.KernelError
+import com.inth.core.model.PolicyResolution
+import com.inth.core.model.QueuedSave
+import com.inth.core.model.SavePayload
 
 /** Context the core passes to `init`. */
 data class InitContext(
@@ -19,7 +19,7 @@ data class InitContext(
 	 * The vendor scope `NativeConfig.vendors` declares, passed through unchanged.
 	 *
 	 * The core hands its declaration down rather than letting the transport read it off
-	 * the [com.c15t.core.NativeConfig] it is already handed, so that both cores put the
+	 * the [com.inth.core.NativeConfig] it is already handed, so that both cores put the
 	 * scope on the wire through one shape -- `core-swift`'s transport is constructed
 	 * without any consent configuration at all, and a Kotlin transport that kept its own
 	 * copy of one fact the kernel also holds is a second answer waiting to drift. It also
@@ -39,8 +39,8 @@ data class InitContext(
  *
  * Internal: apps do not supply a transport. Tests and first-party fixtures do.
  */
-@C15tInternalApi
-interface C15tTransport {
+@InthInternalApi
+interface InthTransport {
 	/** Fetch policy, location, translations, and any server-side subject id. */
 	fun init(context: InitContext): TransportOutcome
 
@@ -61,7 +61,7 @@ interface C15tTransport {
 		 * A transport that answers nothing. Commands become local-only, which is the
 		 * fail-closed path a test drives.
 		 */
-		val NONE: C15tTransport = object : C15tTransport {
+		val NONE: InthTransport = object : InthTransport {
 			override fun init(context: InitContext): TransportOutcome = TransportOutcome.NetworkFailure("no transport configured")
 
 			override fun save(entry: QueuedSave): SaveOutcome = SaveOutcome.Unavailable("no transport configured")
@@ -80,7 +80,7 @@ fun transportError(
 	detail: String?,
 ): KernelError = KernelError(
 	code = reason,
-	message = detail ?: "c15t transport: $reason",
+	message = detail ?: "Inth transport: $reason",
 )
 
 /** Whether a save outcome means "remove from the queue". */

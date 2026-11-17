@@ -11,14 +11,14 @@ import Network
 /// manifest entry, so there is nothing here for a device to refuse and no branch that
 /// carries on without the leg.
 ///
-/// The decision about which updates mean anything lives in ``C15tReachabilityGate``. This
+/// The decision about which updates mean anything lives in ``InthReachabilityGate``. This
 /// type only translates `NWPath` into the two words the gate understands.
 ///
 /// Updates arrive on this monitor's own serial queue rather than the main thread, and
-/// what ``C15tApple`` hands the callback is ``ConsentCore/flushPending()``,
+/// what ``InthApple`` hands the callback is ``ConsentCore/flushPending()``,
 /// which is itself a handoff to the core's scheduler. Coming back online therefore costs
 /// no frame, which is what the contract asks of every lifecycle leg.
-public final class C15tReachability: @unchecked Sendable {
+public final class InthReachability: @unchecked Sendable {
     private let lock = NSLock()
     private let monitor: NWPathMonitor
     private var unregistered = false
@@ -38,10 +38,10 @@ public final class C15tReachability: @unchecked Sendable {
     /// - Returns: the handle to keep. Dropping it stops the monitor. The
     ///   caller holds it for as long as the core is running and calls
     ///   ``unregister()`` when it wants the leg off.
-    public static func register(onGained: @escaping @Sendable () -> Void) -> C15tReachability {
+    public static func register(onGained: @escaping @Sendable () -> Void) -> InthReachability {
         let monitor = NWPathMonitor()
-        let gate = C15tReachabilityGate(onGained: onGained)
-        let queue = DispatchQueue(label: "com.c15t.reachability", qos: .utility)
+        let gate = InthReachabilityGate(onGained: onGained)
+        let queue = DispatchQueue(label: "com.inth.reachability", qos: .utility)
 
         // A path that changes interface without ever becoming unsatisfied — Wi-Fi to
         // cellular, or a new address on the same link — is one of these updates with the
@@ -55,7 +55,7 @@ public final class C15tReachability: @unchecked Sendable {
             }
         }
         monitor.start(queue: queue)
-        return C15tReachability(monitor: monitor)
+        return InthReachability(monitor: monitor)
     }
 
     deinit { unregister() }

@@ -1,10 +1,10 @@
-package com.c15t.android.integrations
+package com.inth.android.integrations
 
-import com.c15t.core.CommitIntent
-import com.c15t.core.ConsentCore
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentCategory.MARKETING
-import com.c15t.core.model.ConsentCategory.MEASUREMENT
+import com.inth.core.CommitIntent
+import com.inth.core.ConsentCore
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentCategory.MARKETING
+import com.inth.core.model.ConsentCategory.MEASUREMENT
 import java.util.Collections
 import java.util.Random
 import java.util.concurrent.ConcurrentHashMap

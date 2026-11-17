@@ -1,7 +1,7 @@
-package com.c15t.core.policy
+package com.inth.core.policy
 
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentModel
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentModel
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -72,7 +72,7 @@ enum class ScopeMode(val wireName: String) {
  * wildcards expanded and the fingerprints kept so a stored choice can be checked
  * against the policy it was made under.
  *
- * It lives in the stored envelope rather than on [com.c15t.core.model.ConsentSnapshot],
+ * It lives in the stored envelope rather than on [com.inth.core.model.ConsentSnapshot],
  * which keeps the snapshot JSON exactly the shape the shared contract specifies
  * for the React Native boundary.
  */
@@ -108,7 +108,7 @@ data class EvaluationPolicy(
 	val noticeFingerprint: String = choiceFingerprint,
 	/**
 	 * The rule's persistent rights, which decide whether a GPP US section applies and
-	 * which notices it reports. See [com.c15t.core.gpp.GppResolver].
+	 * which notices it reports. See [com.inth.core.gpp.GppResolver].
 	 *
 	 * An envelope stored before this key existed reads the rights the schema requires
 	 * for [model], which is every right such a rule can carry except ones a host added

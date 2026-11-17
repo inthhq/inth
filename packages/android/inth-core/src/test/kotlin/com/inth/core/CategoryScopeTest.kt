@@ -1,7 +1,7 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.store.C15tStore
+import com.inth.core.model.ConsentCategory
+import com.inth.core.store.InthStore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -97,7 +97,7 @@ class CategoryScopeTest {
 				backendUrl = "https://test.c15t.app",
 				consentCategories = listOf(ConsentCategory.FUNCTIONALITY),
 			),
-			store = C15tStore(InMemoryKeyValueStore()),
+			store = InthStore(InMemoryKeyValueStore()),
 		)
 		kernel.bootstrap()
 
@@ -117,7 +117,7 @@ class CategoryScopeTest {
 				backendUrl = "https://test.c15t.app",
 				consentCategories = declared,
 			),
-			store = C15tStore(InMemoryKeyValueStore()),
+			store = InthStore(InMemoryKeyValueStore()),
 			transport = RecordingTransport()
 				.respondInit(initSuccess(body = initBody(scope = scope, scopeMode = scopeMode))),
 		)

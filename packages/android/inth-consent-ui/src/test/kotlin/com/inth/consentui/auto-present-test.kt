@@ -1,18 +1,18 @@
-package com.c15t.consentui
+package com.inth.consentui
 
-import com.c15t.core.CommitIntent
-import com.c15t.core.ConsentCore
-import com.c15t.core.NativeConfig
-import com.c15t.core.model.ConsentSnapshot
-import com.c15t.core.model.PromptReason
-import com.c15t.core.spi.Clock
-import com.c15t.core.spi.HttpClient
-import com.c15t.core.spi.HttpRequest
-import com.c15t.core.spi.HttpResponse
-import com.c15t.core.spi.KeyValueStore
-import com.c15t.core.spi.TaskExecutor
-import com.c15t.core.store.C15tStore
-import com.c15t.core.transport.HostedTransport
+import com.inth.core.CommitIntent
+import com.inth.core.ConsentCore
+import com.inth.core.NativeConfig
+import com.inth.core.model.ConsentSnapshot
+import com.inth.core.model.PromptReason
+import com.inth.core.spi.Clock
+import com.inth.core.spi.HttpClient
+import com.inth.core.spi.HttpRequest
+import com.inth.core.spi.HttpResponse
+import com.inth.core.spi.KeyValueStore
+import com.inth.core.spi.TaskExecutor
+import com.inth.core.store.InthStore
+import com.inth.core.transport.HostedTransport
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -227,7 +227,7 @@ class AutoPresentTest {
                 "back" -> if (p.presentationID != null && !p.preferences && !p.pending) { dismissed = key(); p.backFromFirstLayer() }
                 "accept" -> if (p.presentationID != null) { p.commit(ConsentPresenter.Action.ACCEPT); settle() }
                 "save" -> if (p.presentationID != null) {
-                    p.setCategory(com.c15t.core.model.ConsentCategory.MEASUREMENT, random.nextBoolean())
+                    p.setCategory(com.inth.core.model.ConsentCategory.MEASUREMENT, random.nextBoolean())
                     p.commit(ConsentPresenter.Action.SAVE); settle()
                 }
                 "dismiss-notice" -> core.dismissNotice()
@@ -309,6 +309,6 @@ class AutoPresentTest {
             override fun writeDurably(key: String, value: String?): Boolean { write(key, value); return true }
         }
         val config = NativeConfig("https://fixture.invalid")
-        return ConsentCore(config, C15tStore(store), clock = clock, transport = HostedTransport(client, config), executor = TaskExecutor.DIRECT)
+        return ConsentCore(config, InthStore(store), clock = clock, transport = HostedTransport(client, config), executor = TaskExecutor.DIRECT)
     }
 }

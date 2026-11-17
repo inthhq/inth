@@ -1,8 +1,8 @@
-package com.c15t.core.iab
+package com.inth.core.iab
 
-import com.c15t.core.tc.GlobalVendorList
-import com.c15t.core.tc.GvlVendorEntry
-import com.c15t.core.tc.TcVendorList
+import com.inth.core.tc.GlobalVendorList
+import com.inth.core.tc.GvlVendorEntry
+import com.inth.core.tc.TcVendorList
 
 /** A read-only disclosure captured with the native draft's revision. */
 data class IabPresentation(
@@ -53,7 +53,7 @@ data class IabPresentation(
      * Purposes 1, 3 and 4: Google counts an ad tech provider's consent only while all three are
      * consented, and the core records every provider as off otherwise. Ascending.
      */
-    val adTechProviderPurposeIds: List<Int> get() = com.c15t.core.iab.adTechProviderPurposeIds.sorted()
+    val adTechProviderPurposeIds: List<Int> get() = com.inth.core.iab.adTechProviderPurposeIds.sorted()
 
     /**
      * How many partners ask for consent to [purposeId], and how many rely on legitimate interest

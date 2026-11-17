@@ -1,8 +1,8 @@
-# Waits for the c15t first-layer prompt and taps Accept all.
+# Waits for the Inth first-layer prompt and taps Accept all.
 # Fails if the prompt does not appear within C15T_TIMEOUT milliseconds
 # (default 15000). Use dismiss-if-shown.yaml when the prompt is optional.
 #
-#   - runFlow: ../node_modules/@c15t/react-native/maestro/accept-all.yaml
+#   - runFlow: ../node_modules/@inth/react-native/maestro/accept-all.yaml
 # Maestro needs an appId in every flow file; the calling flow's appId is used.
 appId: ${APP_ID}
 ---
@@ -11,15 +11,15 @@ appId: ${APP_ID}
 # whole page has gone, which scrolling cannot fake.
 - extendedWaitUntil:
     visible:
-      id: 'c15t.first-layer.title'
+      id: 'inth.first-layer.title'
     timeout: ${C15T_TIMEOUT || 15000}
 - scrollUntilVisible:
     element:
-      id: 'c15t.first-layer.accept-all'
+      id: 'inth.first-layer.accept-all'
     direction: DOWN
 - tapOn:
-    id: 'c15t.first-layer.accept-all'
+    id: 'inth.first-layer.accept-all'
 - extendedWaitUntil:
     notVisible:
-      id: 'c15t.first-layer'
+      id: 'inth.first-layer'
     timeout: ${C15T_TIMEOUT || 15000}

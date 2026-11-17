@@ -1,10 +1,10 @@
-package com.c15t.android.integrations
+package com.inth.android.integrations
 
-import com.c15t.core.ConsentCore
-import com.c15t.core.model.ConsentCategory
+import com.inth.core.ConsentCore
+import com.inth.core.model.ConsentCategory
 
 /**
- * A Google Consent Mode v2 consent type and the c15t category that grants it.
+ * A Google Consent Mode v2 consent type and the Inth category that grants it.
  *
  * The mapping is the web's (`@c15t/integrations`). `GoogleConsentModeTest` checks
  * it against `packages/native-protocol/google-consent-mode/consent-mode-v2.json`, which is
@@ -12,7 +12,7 @@ import com.c15t.core.model.ConsentCategory
  * copy follows.
  *
  * @property key The type's name in Google's APIs, such as `ad_storage`.
- * @property category The c15t category that grants this type.
+ * @property category The Inth category that grants this type.
  */
 enum class GoogleConsentType(val key: String, val category: ConsentCategory) {
 	AD_STORAGE("ad_storage", ConsentCategory.MARKETING),
@@ -25,20 +25,20 @@ enum class GoogleConsentType(val key: String, val category: ConsentCategory) {
 }
 
 /**
- * Google Consent Mode v2 state from c15t consent, for vendor helpers and app code.
+ * Google Consent Mode v2 state from Inth consent, for vendor helpers and app code.
  *
  * A type is granted when the category that grants it is allowed. A pending policy
  * denies every optional category, so it denies every type except `security_storage`.
  */
 object GoogleConsentMode {
-	/** Each c15t category and the types it grants. */
+	/** Each Inth category and the types it grants. */
 	val mapping: Map<ConsentCategory, List<GoogleConsentType>> =
 		GoogleConsentType.entries.groupBy { it.category }
 
 	/**
 	 * Resolve every type from a category reader.
 	 *
-	 * @param isAllowed Whether a c15t category is allowed.
+	 * @param isAllowed Whether an Inth category is allowed.
 	 * @return Every [GoogleConsentType], granted (`true`) or denied (`false`).
 	 */
 	fun consent(isAllowed: (ConsentCategory) -> Boolean): Map<GoogleConsentType, Boolean> =

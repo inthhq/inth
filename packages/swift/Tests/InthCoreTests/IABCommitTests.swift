@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 final class IABCommitTests: XCTestCase {
     struct Vector: Decodable {
@@ -21,7 +21,7 @@ final class IABCommitTests: XCTestCase {
         .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         .appendingPathComponent("native-protocol/iab/commit-cases.json")
     func fixture() throws -> Vector {
-        try C15tJSON.decode(Vector.self, from: Data(contentsOf: Self.fixtureURL))
+        try InthJSON.decode(Vector.self, from: Data(contentsOf: Self.fixtureURL))
     }
 
     func boot(
@@ -29,12 +29,12 @@ final class IABCommitTests: XCTestCase {
         http: StubHTTP = StubHTTP(), user: KernelUser? = nil, clock: TestClock? = nil,
         bus: (any TcStorageBusWriting)? = nil
     ) async throws -> ConsentCore {
-        let gvl = try C15tJSON.parse(C15tJSON.encode(vector.gvl))!
+        let gvl = try InthJSON.parse(InthJSON.encode(vector.gvl))!
         var body = Fixture.initBody(
             policyResolution: Fixture.matchedResolution(policy: Fixture.rule(model: "iab")))
-        var fields = C15tJSON.parse(body)!.objectValue!
+        var fields = InthJSON.parse(body)!.objectValue!
         fields["gvl"] = gvl
-        body = try C15tJSON.encode(JSONValue.object(fields))
+        body = try InthJSON.encode(JSONValue.object(fields))
         http.initResponse = HTTPResponse(status: 200, body: body)
         http.setSavesFail(true)
         let core = ConsentCore()
@@ -53,7 +53,7 @@ final class IABCommitTests: XCTestCase {
                                   store: InMemoryStore(), http: http)
         XCTAssertEqual(core.save(.all).status, .committed)
         await core.waitUntilIdle()
-        var fields = C15tJSON.parse(http.initResponse.body)!.objectValue!
+        var fields = InthJSON.parse(http.initResponse.body)!.objectValue!
         var gvl = fields["gvl"]!.objectValue!
         var vendors = gvl["vendors"]!.objectValue!
         var vendor = vendors["1"]!.objectValue!
@@ -61,7 +61,7 @@ final class IABCommitTests: XCTestCase {
         vendors["1"] = .object(vendor)
         gvl["vendors"] = .object(vendors)
         fields["gvl"] = .object(gvl)
-        http.initResponse = HTTPResponse(status: 200, body: try C15tJSON.encode(JSONValue.object(fields)))
+        http.initResponse = HTTPResponse(status: 200, body: try InthJSON.encode(JSONValue.object(fields)))
         core.refresh()
         await core.waitUntilIdle()
         XCTAssertNil(core.iabConsent())
@@ -79,7 +79,7 @@ final class IABCommitTests: XCTestCase {
     func testSharedDisclosureLifecycleCasesRejectOpenDraftAndObsoleteReplay() async throws {
         let source = try fixture()
         let data = try Data(contentsOf: Self.fixtureURL.deletingLastPathComponent().appendingPathComponent("lifecycle-cases.json"))
-        let lifecycle = try C15tJSON.decode(LifecycleVector.self, from: data)
+        let lifecycle = try InthJSON.decode(LifecycleVector.self, from: data)
         for row in lifecycle.cases {
             let vector = Vector(invalidChoices: [], invalidConfigurations: [], now: source.now,
                                 gvl: lifecycle.gvl, cases: source.cases)
@@ -91,9 +91,9 @@ final class IABCommitTests: XCTestCase {
             await core.waitUntilIdle()
             let saved = try XCTUnwrap(core.iabConsent())
             let draft = try XCTUnwrap(core.openIABDraft())
-            var fields = C15tJSON.parse(http.initResponse.body)!.objectValue!
-            fields["gvl"] = C15tJSON.parse(try C15tJSON.encode(row.gvl))!
-            http.initResponse = HTTPResponse(status: 200, body: try C15tJSON.encode(JSONValue.object(fields)))
+            var fields = InthJSON.parse(http.initResponse.body)!.objectValue!
+            fields["gvl"] = InthJSON.parse(try InthJSON.encode(row.gvl))!
+            http.initResponse = HTTPResponse(status: 200, body: try InthJSON.encode(JSONValue.object(fields)))
             core.refresh()
             await core.waitUntilIdle()
             XCTAssertEqual(core.iabConsent() == saved, row.retain, row.id)
@@ -251,10 +251,10 @@ final class IABCommitTests: XCTestCase {
         let clock = TestClock(vector.now)
         let core = try await boot(vector, configuration: vector.cases[0].configuration,
                                   store: InMemoryStore(), http: http, clock: clock)
-        var fields = C15tJSON.parse(http.initResponse.body)!.objectValue!
+        var fields = InthJSON.parse(http.initResponse.body)!.objectValue!
         fields["policyResolution"] = Fixture.matchedResolution(
             policy: Fixture.rule(model: "iab", choiceMs: 100))
-        http.initResponse = HTTPResponse(status: 200, body: try C15tJSON.encode(JSONValue.object(fields)))
+        http.initResponse = HTTPResponse(status: 200, body: try InthJSON.encode(JSONValue.object(fields)))
         core.refresh()
         await core.waitUntilIdle()
         XCTAssertEqual(core.save(.all).status, .committed)
@@ -319,7 +319,7 @@ final class IABCommitTests: XCTestCase {
             let envelope = try XCTUnwrap(store.data(for: StorageKey.snapshot).flatMap(StoredEnvelope.decode))
             XCTAssertEqual(envelope.iabConsent, committed)
             let entry = try XCTUnwrap(envelope.pendingSaves?.first)
-            XCTAssertEqual(C15tJSON.parse(entry.body)?["tcString"]?.stringValue, row.tcString)
+            XCTAssertEqual(InthJSON.parse(entry.body)?["tcString"]?.stringValue, row.tcString)
             await core.waitUntilIdle()
             XCTAssertEqual(http.recordedSaveRequests.first?.body, entry.body)
             XCTAssertEqual(core.pendingSaveCount(), 1)
@@ -487,7 +487,7 @@ final class IABCommitTests: XCTestCase {
         let entries = try XCTUnwrap(
             store.data(for: StorageKey.snapshot).flatMap(StoredEnvelope.decode)?.pendingSaves)
         XCTAssertEqual(entries.count, 1)
-        XCTAssertEqual(C15tJSON.parse(entries[0].body)?["tcString"]?.stringValue, core.iabConsent()?.tcString)
+        XCTAssertEqual(InthJSON.parse(entries[0].body)?["tcString"]?.stringValue, core.iabConsent()?.tcString)
         let restored = try await boot(vector, configuration: vector.cases[0].configuration, store: store)
         XCTAssertEqual(restored.iabConsent()?.choices, IABChoices())
         XCTAssertFalse(restored.isAllowed(.marketing))
@@ -519,7 +519,7 @@ final class IABCommitTests: XCTestCase {
         let envelope = try XCTUnwrap(store.data(for: StorageKey.snapshot).flatMap(StoredEnvelope.decode))
         XCTAssertEqual(saved, envelope.iabConsent)
         let pending = envelope.pendingSaves ?? []
-        XCTAssertEqual(pending.last.flatMap { C15tJSON.parse($0.body)?["tcString"]?.stringValue }, saved.tcString)
+        XCTAssertEqual(pending.last.flatMap { InthJSON.parse($0.body)?["tcString"]?.stringValue }, saved.tcString)
         XCTAssertTrue(pending.dropLast().allSatisfy { $0.isProtectedWithdrawal })
         XCTAssertEqual(core.save(.necessary, expectedRevision: revision).error?.code, "concurrent-change")
         XCTAssertEqual(saved, core.iabConsent())
@@ -540,11 +540,11 @@ final class IABCommitTests: XCTestCase {
         XCTAssertEqual(cold.save(.all).status, .committed)
         await cold.waitUntilIdle()
         let raw = try XCTUnwrap(store.data(for: StorageKey.snapshot))
-        var envelope = try XCTUnwrap(C15tJSON.parse(raw)?.objectValue)
+        var envelope = try XCTUnwrap(InthJSON.parse(raw)?.objectValue)
         var iab = try XCTUnwrap(envelope["iabConsent"]?.objectValue)
         iab["tcString"] = .string("invalid")
         envelope["iabConsent"] = .object(iab)
-        store.set(try C15tJSON.encode(JSONValue.object(envelope)), for: StorageKey.snapshot)
+        store.set(try InthJSON.encode(JSONValue.object(envelope)), for: StorageKey.snapshot)
         let tampered = try await boot(vector, configuration: configuration, store: store)
         XCTAssertNil(tampered.iabConsent())
         XCTAssertFalse(tampered.isAllowed(.marketing))

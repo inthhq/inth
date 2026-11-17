@@ -10,13 +10,13 @@
  * in a diff because the reader that should have appeared simply is not there.
  *
  * Ground truth is therefore the reader sources themselves, not a copy of them:
- * `C15tBridgeConfiguration.InfoPlistKey` on iOS, and the `META_*` constants in
- * `C15tAndroid` and `C15tReactNativeBootstrap` on Android. A committed list of
+ * `InthBridgeConfiguration.InfoPlistKey` on iOS, and the `META_*` constants in
+ * `InthAndroid` and `InthReactNativeBootstrap` on Android. A committed list of
  * supported keys would drift on its own schedule, which is the failure being
  * guarded against. This is the same trick `src/specs/__tests__/ios-spec-surface
  * .test.ts` uses for the Codegen protocol surface.
  *
- * Scope is c15t's own keys. The App Tracking Transparency and privacy-manifest
+ * Scope is Inth's own keys. The App Tracking Transparency and privacy-manifest
  * entries the plugin also writes are Apple's names, read by Apple.
  */
 
@@ -44,23 +44,23 @@ const PACKAGE_ROOT = resolve(
 /** The iOS reader: the bridge's own launch configuration. */
 const IOS_READER_PATH = join(
 	PACKAGE_ROOT,
-	'ios/C15tReactNative/Bridge/C15tBootstrap.swift'
+	'ios/InthReactNative/Bridge/InthBootstrap.swift'
 );
 
 /** The Android readers: the core's manifest read, and the bridge's opt-out. */
 const ANDROID_READER_PATHS = [
 	resolve(
 		PACKAGE_ROOT,
-		'../android/c15t-android/src/main/kotlin/com/c15t/android/C15tAndroid.kt'
+		'../android/inth-android/src/main/kotlin/com/inth/android/InthAndroid.kt'
 	),
 	join(
 		PACKAGE_ROOT,
-		'android/c15t-react-native/src/main/kotlin/com/c15t/reactnative/C15tReactNativeBootstrap.kt'
+		'android/inth-react-native/src/main/kotlin/com/inth/reactnative/InthReactNativeBootstrap.kt'
 	),
 ];
 
 /** The prefix every key in this contract carries. */
-const C15T_KEY_PREFIX = 'com.c15t.';
+const C15T_KEY_PREFIX = 'com.inth.';
 
 /**
  * The plugin parameters that make it write every key it owns.
@@ -87,7 +87,7 @@ const EVERY_KEY_PROPS = {
 		consentScreen: 3,
 		publisherCountryCode: 'DE',
 	},
-	policyResource: './c15t-policy.json',
+	policyResource: './inth-policy.json',
 	vendors: [8, 42, 755],
 } as const;
 
@@ -204,7 +204,7 @@ it('writes only iOS keys that the bridge declares a reader for', async () => {
 	expect(
 		ios.filter((key) => !readers.has(key)),
 		`these iOS keys reach a shipping Info.plist and nothing in ` +
-			`C15tBridgeConfiguration reads them: ${ios
+			`InthBridgeConfiguration reads them: ${ios
 				.filter((key) => !readers.has(key))
 				.join(', ')}. Add the reader next to the other InfoPlistKey ` +
 			`constants, or stop writing the key.`
@@ -218,7 +218,7 @@ it('writes only Android keys that the cores declare a reader for', async () => {
 	expect(
 		android.filter((key) => !readers.has(key)),
 		`these Android meta-data keys reach a shipping manifest and nothing in ` +
-			`C15tAndroid or C15tReactNativeBootstrap reads them: ${android
+			`InthAndroid or InthReactNativeBootstrap reads them: ${android
 				.filter((key) => !readers.has(key))
 				.join(', ')}. Add the META_ constant, or stop writing the key.`
 	).toStrictEqual([]);

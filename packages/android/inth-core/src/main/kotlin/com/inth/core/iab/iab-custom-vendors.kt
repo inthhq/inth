@@ -1,6 +1,6 @@
-package com.c15t.core.iab
+package com.inth.core.iab
 
-import com.c15t.core.model.ConsentCategory
+import com.inth.core.model.ConsentCategory
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -130,7 +130,7 @@ fun IabCustomVendor.selectionStatus(choices: IabChoices): IabVendorSelectionStat
 }
 
 /**
- * The c15t categories an IAB TCF decision grants, by the web's derivation:
+ * The Inth categories an IAB TCF decision grants, by the web's derivation:
  * `iabPurposesToC15tConsents` and `C15T_TO_IAB_PURPOSE_MAP` in
  * `packages/sdk/iab/src/tcf/purpose-mapping.ts`, with the purposes some vendor processes on consent
  * deciding, as `consentBasisPurposes` in `packages/sdk/iab/src/index.ts` passes them. Registered vendors

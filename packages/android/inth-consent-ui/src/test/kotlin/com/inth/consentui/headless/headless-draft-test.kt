@@ -1,17 +1,17 @@
-package com.c15t.consentui.headless
+package com.inth.consentui.headless
 
-import com.c15t.core.ConsentCore
-import com.c15t.core.NativeConfig
-import com.c15t.core.iab.IabConfiguration
-import com.c15t.core.iab.IabLegalBasis
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.spi.HttpClient
-import com.c15t.core.spi.HttpRequest
-import com.c15t.core.spi.HttpResponse
-import com.c15t.core.spi.KeyValueStore
-import com.c15t.core.spi.TaskExecutor
-import com.c15t.core.store.C15tStore
-import com.c15t.core.transport.HostedTransport
+import com.inth.core.ConsentCore
+import com.inth.core.NativeConfig
+import com.inth.core.iab.IabConfiguration
+import com.inth.core.iab.IabLegalBasis
+import com.inth.core.model.ConsentCategory
+import com.inth.core.spi.HttpClient
+import com.inth.core.spi.HttpRequest
+import com.inth.core.spi.HttpResponse
+import com.inth.core.spi.KeyValueStore
+import com.inth.core.spi.TaskExecutor
+import com.inth.core.store.InthStore
+import com.inth.core.transport.HostedTransport
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -249,7 +249,7 @@ class HeadlessDraftTest {
         override fun read(key: String) = values[key]
         override fun write(key: String, value: String?) { if (value == null) values.remove(key) else values[key] = value }
         override fun writeDurably(key: String, value: String?): Boolean {
-            if (key == "com.c15t.snapshot" && refuseNext) { refuseNext = false; return false }
+            if (key == "com.inth.snapshot" && refuseNext) { refuseNext = false; return false }
             write(key, value); return true
         }
     }
@@ -266,6 +266,6 @@ internal fun fixtureCore(fixture: String, store: KeyValueStore, iab: Boolean = f
     }
     val identity = if (iab) IabConfiguration(cmpId = 53, cmpVersion = 7, publisherCountryCode = "GB") else null
     val config = if (listMaxAgeMs != null) NativeConfig("https://fixture.invalid", iab = identity, iabListMaxAgeMs = listMaxAgeMs) else NativeConfig("https://fixture.invalid", iab = identity)
-    val time = com.c15t.core.spi.Clock { clock?.get() ?: System.currentTimeMillis() }
-    return ConsentCore(config, C15tStore(store), clock = time, transport = HostedTransport(client, config), executor = TaskExecutor.DIRECT).also { it.bootstrap() }
+    val time = com.inth.core.spi.Clock { clock?.get() ?: System.currentTimeMillis() }
+    return ConsentCore(config, InthStore(store), clock = time, transport = HostedTransport(client, config), executor = TaskExecutor.DIRECT).also { it.bootstrap() }
 }

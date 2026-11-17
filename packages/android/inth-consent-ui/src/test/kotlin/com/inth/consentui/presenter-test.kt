@@ -1,14 +1,14 @@
-package com.c15t.consentui
+package com.inth.consentui
 
-import com.c15t.core.*
-import com.c15t.core.iab.*
-import com.c15t.core.spi.*
-import com.c15t.core.store.C15tStore
-import com.c15t.core.transport.*
+import com.inth.core.*
+import com.inth.core.iab.*
+import com.inth.core.spi.*
+import com.inth.core.store.InthStore
+import com.inth.core.transport.*
 import kotlinx.coroutines.*
 import kotlinx.serialization.json.*
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.PromptReason
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.PromptReason
 import kotlinx.coroutines.test.*
 import org.junit.Assert.*
 import org.junit.Test
@@ -26,7 +26,7 @@ class PresenterTest {
         override fun read(key: String) = values[key]
         override fun write(key: String, value: String?) { if (value == null) values.remove(key) else values[key] = value }
         override fun writeDurably(key: String, value: String?): Boolean {
-            if (key == "com.c15t.snapshot") {
+            if (key == "com.inth.snapshot") {
                 holdNext?.let { holdNext = null; it.await(5, TimeUnit.SECONDS) }
                 if (refuseNext) { refuseNext = false; return false }
             }
@@ -42,7 +42,7 @@ class PresenterTest {
                 HttpResponse(200, mapOf("x-c15t-policy-contract" to "1"), body) else HttpResponse(503)
         }
         val config = NativeConfig("https://fixture.invalid", iab = IabConfiguration(cmpId = 53, cmpVersion = 7, publisherCountryCode = "GB"), iabListMaxAgeMs = 60_000)
-        val core = ConsentCore(config, C15tStore(store), clock = Clock { now.get() },
+        val core = ConsentCore(config, InthStore(store), clock = Clock { now.get() },
             transport = HostedTransport(client, config), executor = TaskExecutor.DIRECT)
         core.bootstrap()
         return core to now
@@ -150,7 +150,7 @@ class PresenterTest {
             val clock = AtomicLong(vector.getValue("now").jsonPrimitive.long)
             val config = NativeConfig(vector.getValue("endpoint").jsonPrimitive.content,
                 bundledPolicy = vector.getValue("resource").toString(), consentCategories = ConsentCategory.entries)
-            val core = ConsentCore(config, C15tStore(Memory()), clock = Clock { clock.get() }, executor = TaskExecutor.DIRECT)
+            val core = ConsentCore(config, InthStore(Memory()), clock = Clock { clock.get() }, executor = TaskExecutor.DIRECT)
             core.bootstrap()
             assertTrue(core.save(CommitIntent.All).ok)
             val p = ConsentPresenter(core, autoPresent = false)
@@ -226,7 +226,7 @@ class PresenterTest {
                     HttpResponse(200, mapOf("x-c15t-policy-contract" to "1"), body) else HttpResponse(503)
             }
             val config = NativeConfig("https://fixture.invalid")
-            val core = ConsentCore(config, C15tStore(Memory()), transport = HostedTransport(client, config), executor = TaskExecutor.DIRECT)
+            val core = ConsentCore(config, InthStore(Memory()), transport = HostedTransport(client, config), executor = TaskExecutor.DIRECT)
             core.bootstrap()
             val p = ConsentPresenter(core)
             val first = p.presentationID

@@ -123,7 +123,7 @@ extension JSONValue: Codable {
 }
 
 /// JSON helpers shared by the transports and the persistence layer.
-enum C15tJSON {
+enum InthJSON {
     /// Encoder used for every outbound body and stored envelope.
     ///
     /// `sortedKeys` makes the output a pure function of the value, which is what

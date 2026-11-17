@@ -1,5 +1,5 @@
-#if canImport(C15tCore)
-import C15tCore
+#if canImport(InthCore)
+import InthCore
 #endif
 import Foundation
 
@@ -11,7 +11,7 @@ import Foundation
 /// limited ads; remove the key when it is granted. When `adPersonalization` or
 /// `adUserData` is denied, set `MobileAds.shared.requestConfiguration
 /// .publisherPrivacyPersonalizationState` to `.disabled` and `gad_rdp` to `true`;
-/// set `.enabled` and remove the key when both are granted. c15t does not link
+/// set `.enabled` and remove the key when both are granted. Inth does not link
 /// Google Mobile Ads.
 ///
 /// In the EEA, UK and Switzerland, Google serves personalized or non-personalized ads

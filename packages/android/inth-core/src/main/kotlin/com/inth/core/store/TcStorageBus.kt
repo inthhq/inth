@@ -1,10 +1,10 @@
-package com.c15t.core.store
+package com.inth.core.store
 
-import com.c15t.core.iab.IabConfiguration
-import com.c15t.core.iab.IabCommittedConsent
-import com.c15t.core.model.ConsentModel
-import com.c15t.core.model.PolicyResolution
-import com.c15t.core.tc.TcStringDecoder
+import com.inth.core.iab.IabConfiguration
+import com.inth.core.iab.IabCommittedConsent
+import com.inth.core.model.ConsentModel
+import com.inth.core.model.PolicyResolution
+import com.inth.core.tc.TcStringDecoder
 
 /** Native types from the IAB CMP API in-app storage table. */
 public sealed interface TcBusValue {

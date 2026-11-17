@@ -1,14 +1,14 @@
-@_spi(C15tInternal) @testable import C15tReactNativeBridge
-@_spi(C15tInternal) import C15tCore
+@_spi(InthInternal) @testable import InthReactNativeBridge
+@_spi(InthInternal) import InthCore
 import XCTest
 
 /// The wire boundary is the part of the iOS bridge most likely to drift from the
 /// TypeScript protocol, and it is the part that must not. These assert on field
 /// names, null vs absent, and fail-closed reads rather than on internals.
-final class C15tPayloadTests: XCTestCase {
+final class InthPayloadTests: XCTestCase {
     func testBootstrapPayloadCarriesHandshakeFields() {
         let snapshot = ConsentSnapshot(subject: SubjectSnapshot(id: "sub-1", externalId: nil))
-        let payload = jsonObject(C15tPayload.bootstrap(snapshot: snapshot, hasStoredSnapshot: true))
+        let payload = jsonObject(InthPayload.bootstrap(snapshot: snapshot, hasStoredSnapshot: true))
 
         XCTAssertEqual(payload["protocolVersion"] as? Int, 1)
         XCTAssertEqual(payload["minSupportedProtocolVersion"] as? Int, 1)
@@ -20,13 +20,13 @@ final class C15tPayloadTests: XCTestCase {
     }
 
     func testBootstrapPayloadReportsNullSubjectBeforeFirstWrite() {
-        let payload = jsonObject(C15tPayload.bootstrap(snapshot: ConsentSnapshot(), hasStoredSnapshot: false))
+        let payload = jsonObject(InthPayload.bootstrap(snapshot: ConsentSnapshot(), hasStoredSnapshot: false))
 
         assertJSONNull(payload, "subjectId")
     }
 
     func testColdStartSnapshotServesDenyAllWithBothFlagsUnset() {
-        let payload = jsonObject(C15tPayload.snapshot(.coldStart))
+        let payload = jsonObject(InthPayload.snapshot(.coldStart))
 
         XCTAssertEqual(payload["policyPending"] as? Bool, true)
         XCTAssertEqual(payload["ready"] as? Bool, false)
@@ -40,22 +40,22 @@ final class C15tPayloadTests: XCTestCase {
     }
 
     func testSnapshotCarriesTheTCFMarketingAnswerForTheTrackingSequence() {
-        assertJSONNull(jsonObject(C15tPayload.snapshot(.coldStart)), "iabMarketingPurposes")
-        XCTAssertEqual(jsonObject(C15tPayload.snapshot(.coldStart, iabMarketingPurposes: true))["iabMarketingPurposes"] as? Bool, true)
-        XCTAssertEqual(jsonObject(C15tPayload.snapshot(.coldStart, iabMarketingPurposes: false))["iabMarketingPurposes"] as? Bool, false)
+        assertJSONNull(jsonObject(InthPayload.snapshot(.coldStart)), "iabMarketingPurposes")
+        XCTAssertEqual(jsonObject(InthPayload.snapshot(.coldStart, iabMarketingPurposes: true))["iabMarketingPurposes"] as? Bool, true)
+        XCTAssertEqual(jsonObject(InthPayload.snapshot(.coldStart, iabMarketingPurposes: false))["iabMarketingPurposes"] as? Bool, false)
     }
 
     func testTrackingAuthorizationCarriesWhenTheLastAnswerWasSeen() {
-        let payload = jsonObject(C15tPayload.trackingAuthorization(.authorized, answeredAt: Date(timeIntervalSince1970: 1_800_000_000.5)))
+        let payload = jsonObject(InthPayload.trackingAuthorization(.authorized, answeredAt: Date(timeIntervalSince1970: 1_800_000_000.5)))
         XCTAssertEqual(payload["status"] as? String, "authorized")
         XCTAssertEqual((payload["answeredAt"] as? NSNumber)?.int64Value, 1_800_000_000_500)
-        XCTAssertNil(jsonObject(C15tPayload.trackingAuthorization(.notDetermined))["answeredAt"])
+        XCTAssertNil(jsonObject(InthPayload.trackingAuthorization(.notDetermined))["answeredAt"])
     }
 
     func testSnapshotSendsEveryReservedKeyAsExplicitNull() {
         // The protocol declares these `T | null`, not optional. Omitting them would
         // hand JavaScript `undefined` where its types promise `null`.
-        let payload = jsonObject(C15tPayload.snapshot(.coldStart))
+        let payload = jsonObject(InthPayload.snapshot(.coldStart))
 
         for key in [
             "explicitChoice", "consentCategories", "policySnapshotToken", "subject",
@@ -85,7 +85,7 @@ final class C15tPayloadTests: XCTestCase {
         // wire is a bug the bridge covers for.
         let blank = ConsentSnapshot(overrides: ConsentOverrides(country: nil, region: nil, language: "", gpc: nil))
 
-        let payload = jsonObject(C15tPayload.snapshot(blank, fallbackLanguage: "fr"))
+        let payload = jsonObject(InthPayload.snapshot(blank, fallbackLanguage: "fr"))
         let overrides = payload["overrides"] as? [String: Any]
 
         XCTAssertEqual(overrides?["language"] as? String, "fr")
@@ -94,16 +94,16 @@ final class C15tPayloadTests: XCTestCase {
     func testSnapshotKeepsAResolvedLanguageAsIs() {
         let snapshot = ConsentSnapshot(overrides: ConsentOverrides(country: nil, region: nil, language: "de", gpc: nil))
 
-        let payload = jsonObject(C15tPayload.snapshot(snapshot, fallbackLanguage: "fr"))
+        let payload = jsonObject(InthPayload.snapshot(snapshot, fallbackLanguage: "fr"))
 
         XCTAssertEqual((payload["overrides"] as? [String: Any])?["language"] as? String, "de")
     }
 
     func testCommitIntentReadsTheThreeActions() {
-        XCTAssertEqual(C15tPayload.parseCommitIntent(#"{"action":"all"}"#), .all)
-        XCTAssertEqual(C15tPayload.parseCommitIntent(#"{"action":"necessary"}"#), .necessary)
+        XCTAssertEqual(InthPayload.parseCommitIntent(#"{"action":"all"}"#), .all)
+        XCTAssertEqual(InthPayload.parseCommitIntent(#"{"action":"necessary"}"#), .necessary)
         XCTAssertEqual(
-            C15tPayload.parseCommitIntent(#"{"action":"explicit","consents":{"marketing":true,"measurement":false}}"#),
+            InthPayload.parseCommitIntent(#"{"action":"explicit","consents":{"marketing":true,"measurement":false}}"#),
             .custom([.marketing: true, .measurement: false])
         )
     }
@@ -113,19 +113,19 @@ final class C15tPayloadTests: XCTestCase {
         var choices = IABChoices()
         choices.purposeConsents = [1, 2]
         choices.vendorConsents = [755]
-        XCTAssertEqual(C15tPayload.parseCommitIntent(raw), .iab(choices, categories: [.marketing: true]))
+        XCTAssertEqual(InthPayload.parseCommitIntent(raw), .iab(choices, categories: [.marketing: true]))
         for bad in [
             #"{"action":"iab","consents":{}}"#,
             raw.replacingOccurrences(of: "[1,2]", with: #"["1",2]"#),
             raw.replacingOccurrences(of: #""purposeObjections":[],"#, with: ""),
             raw.replacingOccurrences(of: #""consents":{"marketing":true}"#, with: #""consents":{"necessary":true}"#),
         ] {
-            XCTAssertNil(C15tPayload.parseCommitIntent(bad), "\(bad) must not become a commit")
+            XCTAssertNil(InthPayload.parseCommitIntent(bad), "\(bad) must not become a commit")
         }
     }
 
     func testACommittedIABDecisionCrossesInsideTheIABSlot() throws {
-        // The memberwise initializer is internal to C15tCore; the Codable form is public.
+        // The memberwise initializer is internal to InthCore; the Codable form is public.
         let choices = String(decoding: try JSONEncoder().encode(IABChoices()), as: UTF8.self)
         let configuration = String(decoding: try JSONEncoder().encode(
             IABConfiguration(cmpId: 9, cmpVersion: 1, publisherCountryCode: "DE")), as: UTF8.self)
@@ -133,7 +133,7 @@ final class C15tPayloadTests: XCTestCase {
             {"configuration":\(configuration),"choices":\(choices),"subjectId":"sub","fingerprint":"fp",
             "vendorListVersion":177,"policyVersion":5,"consentVersion":1,"createdAt":1,"actionAt":1,"tcString":"CQ-test"}
             """.utf8))
-        let committed = C15tPayload.committedIAB(consent).objectValue
+        let committed = InthPayload.committedIAB(consent).objectValue
         XCTAssertEqual(committed?["tcString"], .string("CQ-test"))
         XCTAssertEqual(committed?["addtlConsent"], .null)
         XCTAssertEqual(committed?["choices"]?.objectValue?["vendorConsents"], .array([]))
@@ -145,13 +145,13 @@ final class C15tPayloadTests: XCTestCase {
         wire["iab"] = ["gvl": NSNull()]
         let snapshot = try JSONDecoder().decode(ConsentSnapshot.self, from: JSONSerialization.data(withJSONObject: wire))
         func slot(_ acceptAll: IABChoices?) -> [String: Any] {
-            (jsonObject(C15tPayload.snapshot(snapshot, iabAcceptAll: acceptAll))["iab"] as? [String: Any]) ?? [:]
+            (jsonObject(InthPayload.snapshot(snapshot, iabAcceptAll: acceptAll))["iab"] as? [String: Any]) ?? [:]
         }
         XCTAssertEqual(slot(nil)["editable"] as? Bool, false)
         XCTAssertTrue(slot(nil)["acceptAll"] is NSNull)
         XCTAssertTrue(slot(nil)["disclosure"] is NSNull)
         XCTAssertEqual(slot(nil)["headlessUnsupported"] as? [String], [])
-        // With the disclosure, `C15tHeadlessIABTests` covers the editable slot on a real core.
+        // With the disclosure, `InthHeadlessIABTests` covers the editable slot on a real core.
         var choices = IABChoices()
         choices.vendorConsents = [7]
         XCTAssertEqual(slot(choices)["editable"] as? Bool, false, "no draft is offered without the disclosure")
@@ -163,27 +163,27 @@ final class C15tPayloadTests: XCTestCase {
         let snapshot = try JSONDecoder().decode(ConsentSnapshot.self, from: JSONSerialization.data(withJSONObject: wire))
         let vendor = IABCustomVendor(id: "internal-ads", name: "Internal ads",
             privacyPolicyUrl: "https://example.test/ads", purposes: [1, 3])
-        let slot = try XCTUnwrap(jsonObject(C15tPayload.snapshot(snapshot, iabCustomVendors: [vendor]))["iab"] as? [String: Any])
+        let slot = try XCTUnwrap(jsonObject(InthPayload.snapshot(snapshot, iabCustomVendors: [vendor]))["iab"] as? [String: Any])
         let listed = try XCTUnwrap(slot["customVendors"] as? [[String: Any]])
         XCTAssertEqual(listed.first?["id"] as? String, "internal-ads")
         XCTAssertEqual(listed.first?["purposes"] as? [Int], [1, 3])
         XCTAssertNil(listed.first?["description"], "absent optionals stay out, as Kotlin writes them")
-        XCTAssertEqual(((jsonObject(C15tPayload.snapshot(snapshot))["iab"] as? [String: Any])?["customVendors"] as? [Any])?.count, 0)
+        XCTAssertEqual(((jsonObject(InthPayload.snapshot(snapshot))["iab"] as? [String: Any])?["customVendors"] as? [Any])?.count, 0)
         // The same state crosses as the same bytes, every time.
         var accepted = IABChoices()
         accepted.customVendorConsents = ["chat", "internal-ads"]
         accepted.customVendorLegitimateInterests = ["internal-ads"]
-        let first = C15tPayload.snapshot(snapshot, iabAcceptAll: accepted, iabCustomVendors: [vendor, vendor])
+        let first = InthPayload.snapshot(snapshot, iabAcceptAll: accepted, iabCustomVendors: [vendor, vendor])
         for _ in 0..<20 {
-            XCTAssertEqual(C15tPayload.snapshot(snapshot, iabAcceptAll: accepted, iabCustomVendors: [vendor, vendor]), first)
+            XCTAssertEqual(InthPayload.snapshot(snapshot, iabAcceptAll: accepted, iabCustomVendors: [vendor, vendor]), first)
         }
 
         let lists = #""purposeConsents":[],"purposeLegitimateInterests":[],"purposeObjections":[],"vendorConsents":[],"vendorLegitimateInterests":[],"vendorObjections":[],"specialFeatureOptIns":[],"publisherConsents":[],"publisherLegitimateInterests":[],"publisherCustomConsents":[],"publisherCustomLegitimateInterests":[]"#
         let raw = #"{"action":"iab","choices":{"# + lists + #","customVendorConsents":["internal-ads"],"customVendorLegitimateInterests":[]},"consents":{}}"#
         var choices = IABChoices()
         choices.customVendorConsents = ["internal-ads"]
-        XCTAssertEqual(C15tPayload.parseCommitIntent(raw), .iab(choices, categories: [:]))
-        XCTAssertNil(C15tPayload.parseCommitIntent(raw.replacingOccurrences(of: #"["internal-ads"]"#, with: "[1]")),
+        XCTAssertEqual(InthPayload.parseCommitIntent(raw), .iab(choices, categories: [:]))
+        XCTAssertNil(InthPayload.parseCommitIntent(raw.replacingOccurrences(of: #"["internal-ads"]"#, with: "[1]")),
             "custom vendor ids are strings")
     }
 
@@ -196,7 +196,7 @@ final class C15tPayloadTests: XCTestCase {
         // A commit lands between the first snapshot read and the additions.
         var revisions = [try snapshot(revision: 4), try snapshot(revision: 5), try snapshot(revision: 5)]
         var reads = 0
-        let (read, additions) = C15tPayload.consistently(snapshot: { revisions.removeFirst() }) { () -> String in
+        let (read, additions) = InthPayload.consistently(snapshot: { revisions.removeFirst() }) { () -> String in
             reads += 1
             return "decision \(reads)"
         }
@@ -205,7 +205,7 @@ final class C15tPayloadTests: XCTestCase {
 
         let steadySnapshot = try snapshot(revision: 7)
         var steady = 0
-        let (_, once) = C15tPayload.consistently(snapshot: { steadySnapshot }) { () -> Int in
+        let (_, once) = InthPayload.consistently(snapshot: { steadySnapshot }) { () -> Int in
             steady += 1
             return steady
         }
@@ -222,7 +222,7 @@ final class C15tPayloadTests: XCTestCase {
             #"{"action":"explicit","consents":{"necessary":true}}"#,
             #"{"action":"explicit","consents":{"marketing":"yes"}}"#,
         ] {
-            XCTAssertNil(C15tPayload.parseCommitIntent(raw), "\(raw) must not become a commit")
+            XCTAssertNil(InthPayload.parseCommitIntent(raw), "\(raw) must not become a commit")
         }
     }
 
@@ -235,18 +235,18 @@ final class C15tPayloadTests: XCTestCase {
             privacySignals: PrivacySignals(detected: false, override: true)
         )
 
-        let gpc = gpcSignal(in: jsonObject(C15tPayload.snapshot(snapshot)))
+        let gpc = gpcSignal(in: jsonObject(InthPayload.snapshot(snapshot)))
 
         XCTAssertEqual(gpc["detected"] as? Bool, false, "the device reported nothing")
         XCTAssertEqual(gpc["override"] as? Bool, true, "the app overrode the signal")
         XCTAssertEqual(gpc["active"] as? Bool, true, "the override is what was honored")
 
-        let signals = jsonObject(C15tPayload.snapshot(snapshot))["privacySignals"] as? [String: Any]
+        let signals = jsonObject(InthPayload.snapshot(snapshot))["privacySignals"] as? [String: Any]
         XCTAssertNil(signals?["msa"], "msa is not a v3 signal")
     }
 
     func testAnUnOverriddenSignalReportsANullOverrideRatherThanAFalseOne() {
-        let payload = jsonObject(C15tPayload.snapshot(.coldStart))
+        let payload = jsonObject(InthPayload.snapshot(.coldStart))
 
         XCTAssertEqual(gpcSignal(in: payload)["detected"] as? Bool, false)
         XCTAssertEqual(gpcSignal(in: payload)["active"] as? Bool, false)
@@ -273,24 +273,24 @@ final class C15tPayloadTests: XCTestCase {
         // An unrelated document is refused rather than applied, so a bad call cannot
         // wipe the language the app is relying on.
         assertBridgeFailure(
-            C15tPayload.parseOverrides(#"{"policyId":"p-1"}"#, current: current),
-            C15tBridgeError.unreadableOverrides
+            InthPayload.parseOverrides(#"{"policyId":"p-1"}"#, current: current),
+            InthBridgeError.unreadableOverrides
         )
         assertBridgeFailure(
-            C15tPayload.parseOverrides("garbage", current: current),
-            C15tBridgeError.unreadableOverrides
+            InthPayload.parseOverrides("garbage", current: current),
+            InthBridgeError.unreadableOverrides
         )
     }
 
     func testAGpcThatIsNeitherABooleanNorNullIsRefused() {
         // The override decides whether the GPC restriction applies, so a value this
         // build cannot read must not become either answer.
-        let result = C15tPayload.parseOverrides(
+        let result = InthPayload.parseOverrides(
             #"{"gpc":"yes"}"#,
             current: ConsentOverrides(country: nil, region: nil, language: "de", gpc: nil)
         )
 
-        assertBridgeFailure(result, C15tBridgeError.unreadableGpcOverride)
+        assertBridgeFailure(result, InthBridgeError.unreadableGpcOverride)
     }
 
     func testARetiredOverrideArrivingOverTheBridgeIsRefusedByName() {
@@ -304,11 +304,11 @@ final class C15tPayloadTests: XCTestCase {
             #"{"test":"gpc","language":"de"}"#,
             #"{"msa":false}"#,
         ] {
-            guard case let .failure(error) = C15tPayload.parseOverrides(raw, current: current) else {
+            guard case let .failure(error) = InthPayload.parseOverrides(raw, current: current) else {
                 XCTFail("\(raw) must be refused outright")
                 continue
             }
-            XCTAssertEqual(error.code, "C15T_OVERRIDES_RETIRED", raw)
+            XCTAssertEqual(error.code, "INTH_OVERRIDES_RETIRED", raw)
             XCTAssertTrue(
                 error.message.contains("test") || error.message.contains("msa"),
                 "the message must name the retired field so the host knows what to delete: \(error.message)"
@@ -332,7 +332,7 @@ final class C15tPayloadTests: XCTestCase {
         _ raw: String,
         current: ConsentOverrides
     ) -> ConsentOverrides {
-        switch C15tPayload.parseOverrides(raw, current: current) {
+        switch InthPayload.parseOverrides(raw, current: current) {
         case let .success(overrides): return overrides
         case let .failure(error):
             XCTFail("\(raw) should apply, got \(error.code): \(error.message)")
@@ -353,9 +353,9 @@ final class C15tPayloadTests: XCTestCase {
         let stored = store.data(for: StorageKey.snapshot)
 
         XCTAssertEqual(
-            jsonObject(C15tPayload.bootstrap(snapshot: core.snapshot(), hasStoredSnapshot: false))["commitRevision"] as? Bool,
+            jsonObject(InthPayload.bootstrap(snapshot: core.snapshot(), hasStoredSnapshot: false))["commitRevision"] as? Bool,
             true, "the binary says it checks a commit's revision")
-        let stale = jsonObject(C15tPayload.commit(
+        let stale = jsonObject(InthPayload.commit(
             #"{"action":"explicit","consents":{"marketing":true},"revision":\#(current - 1)}"#, core: core))
         XCTAssertEqual(stale["ok"] as? Bool, false)
         XCTAssertEqual(stale["reason"] as? String, "concurrent-change")
@@ -367,13 +367,13 @@ final class C15tPayloadTests: XCTestCase {
             #"{"action":"explicit","consents":{"marketing":true},"revision":null}"#,
             #"{"action":"explicit","consents":{"marketing":true},"revision":1.5}"#,
         ] {
-            XCTAssertEqual(jsonObject(C15tPayload.commit(raw, core: core))["reason"] as? String, "invalid-intent",
+            XCTAssertEqual(jsonObject(InthPayload.commit(raw, core: core))["reason"] as? String, "invalid-intent",
                 "a revision that is not a whole number is not ignored: \(raw)")
         }
         XCTAssertEqual(try encoder.encode(core.snapshot()), before)
         XCTAssertEqual(store.data(for: StorageKey.snapshot), stored)
 
-        let pinned = jsonObject(C15tPayload.commit(
+        let pinned = jsonObject(InthPayload.commit(
             #"{"action":"explicit","consents":{"marketing":true},"revision":\#(current)}"#, core: core))
         XCTAssertNotEqual(pinned["reason"] as? String, "concurrent-change", "the current revision passes the check")
     }
@@ -388,7 +388,7 @@ final class C15tPayloadTests: XCTestCase {
             confirmed: [.marketing: true]
         )
 
-        let accepted = jsonObject(C15tPayload.commitResult(committed, snapshot: snapshot))
+        let accepted = jsonObject(InthPayload.commitResult(committed, snapshot: snapshot))
         XCTAssertEqual(accepted["ok"] as? Bool, true)
         XCTAssertEqual(accepted["revision"] as? Int, 7)
         XCTAssertEqual(accepted["confirmed"] as? [String], ["marketing"])
@@ -398,7 +398,7 @@ final class C15tPayloadTests: XCTestCase {
         // dryRun stores the decision and drops the record: success, and nothing queued.
         let dropped = CommitResult(
             status: .committed, revision: 7, permissions: .necessaryOnly, consentAction: .all, queued: false)
-        let dryRun = jsonObject(C15tPayload.commitResult(dropped, snapshot: snapshot))
+        let dryRun = jsonObject(InthPayload.commitResult(dropped, snapshot: snapshot))
         XCTAssertEqual(dryRun["ok"] as? Bool, true)
         XCTAssertEqual(dryRun["queued"] as? Bool, false)
 
@@ -409,7 +409,7 @@ final class C15tPayloadTests: XCTestCase {
             consentAction: .all,
             error: CoreErrorInfo(code: "policy-pending", message: "no policy yet")
         )
-        let refused = jsonObject(C15tPayload.commitResult(rejected, snapshot: snapshot))
+        let refused = jsonObject(InthPayload.commitResult(rejected, snapshot: snapshot))
         XCTAssertEqual(refused["ok"] as? Bool, false)
         XCTAssertEqual(refused["reason"] as? String, "policy-pending")
         XCTAssertEqual(refused["queued"] as? Bool, false)
@@ -420,31 +420,31 @@ final class C15tPayloadTests: XCTestCase {
 
     func testEventPayloadsAreSmallOnPurpose() {
         // A snapshot event is a hint to go and read, never a copy of the snapshot.
-        let snapshotEvent = jsonObject(C15tPayload.snapshotEvent(revision: 12))
+        let snapshotEvent = jsonObject(InthPayload.snapshotEvent(revision: 12))
         XCTAssertEqual(snapshotEvent["revision"] as? Int, 12)
         XCTAssertEqual(snapshotEvent["dirty"] as? Bool, true)
         XCTAssertEqual(snapshotEvent.count, 2)
 
-        let initialized = jsonObject(C15tPayload.initializedEvent(revision: 12))
+        let initialized = jsonObject(InthPayload.initializedEvent(revision: 12))
         XCTAssertEqual(initialized["ready"] as? Bool, true)
         XCTAssertEqual(initialized["policyPending"] as? Bool, false)
 
-        let error = jsonObject(C15tPayload.errorEvent(code: "unsupported-contract", message: "nope"))
+        let error = jsonObject(InthPayload.errorEvent(code: "unsupported-contract", message: "nope"))
         XCTAssertEqual(error["code"] as? String, "unsupported-contract")
         XCTAssertEqual(error["message"] as? String, "nope")
     }
 
     func testConsentHostSessionsEncodeAsThePresenterSessionReadsThem() {
         XCTAssertEqual(
-            C15tPayload.consentHostSession(.presented(sessionID: "one", presentation: .prompt)),
+            InthPayload.consentHostSession(.presented(sessionID: "one", presentation: .prompt)),
             #"{"presentation":"prompt","sessionId":"one","status":"presented"}"#
         )
         XCTAssertEqual(
-            C15tPayload.consentHostSession(.alreadyPresented(sessionID: "one", presentation: .preferences)),
+            InthPayload.consentHostSession(.alreadyPresented(sessionID: "one", presentation: .preferences)),
             #"{"presentation":"preferences","sessionId":"one","status":"already-presented"}"#
         )
         XCTAssertEqual(
-            C15tPayload.consentHostSession(.notRequired),
+            InthPayload.consentHostSession(.notRequired),
             #"{"sessionId":null,"status":"not-required"}"#
         )
     }
@@ -457,7 +457,7 @@ final class C15tPayloadTests: XCTestCase {
             ("unavailable", .unavailable(sessionID: "one", revision: 4)),
         ]
         for (kind, outcome) in outcomes {
-            let payload = jsonObject(C15tPayload.consentHostOutcome(outcome))
+            let payload = jsonObject(InthPayload.consentHostOutcome(outcome))
             XCTAssertEqual(payload["sessionId"] as? String, "one")
             XCTAssertEqual(payload["kind"] as? String, kind)
             XCTAssertEqual(payload["revision"] as? Int, 4)
@@ -466,7 +466,7 @@ final class C15tPayloadTests: XCTestCase {
     }
 
     func testInvalidIntentEchoesOnlyATruncatedSample() {
-        let payload = jsonObject(C15tPayload.invalidIntent(raw: String(repeating: "x", count: 900)))
+        let payload = jsonObject(InthPayload.invalidIntent(raw: String(repeating: "x", count: 900)))
 
         XCTAssertEqual(payload["reason"] as? String, "invalid-intent")
         XCTAssertEqual((payload["detail"] as? String)?.count, 200, "echo a sample, not the whole payload")

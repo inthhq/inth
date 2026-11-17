@@ -1,4 +1,4 @@
-package com.c15t.core.tc
+package com.inth.core.tc
 
 /**
  * The segment a TC String dot-segment is, from the 3-bit `SegmentType` that opens it.

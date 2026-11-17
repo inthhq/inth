@@ -1,7 +1,7 @@
-import C15tCore
+import InthCore
 import Foundation
 import XCTest
-@testable import C15tConsentUI
+@testable import InthConsentUI
 
 /// The blocks: when they show content, and what their scopes do. The scopes need no view, so
 /// these run wherever the draft does.
@@ -83,7 +83,7 @@ final class HeadlessComponentsTests: XCTestCase {
     /// The blocks carry no look: none of the three files may set a colour, font, shape or padding.
     func testTheBlocksDrawNothingOfTheirOwn() throws {
         let sources = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
-            .deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("Sources/C15tConsentUI")
+            .deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("Sources/InthConsentUI")
         let styling = try NSRegularExpression(pattern:
             #"\bColor\b|\bFont\b|\.font\(|\.padding\(|\.foregroundStyle\(|\.foregroundColor\(|\.background\(|\.tint\(|\.shadow\(|\.opacity\(|cornerRadius|RoundedRectangle|Capsule\(|Circle\(|\.clipShape\("#)
         for name in ["headless-draft.swift", "headless-iab.swift", "headless-components.swift"] {

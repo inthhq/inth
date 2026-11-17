@@ -43,7 +43,7 @@ const applicationOf = function applicationOf(
 	};
 };
 
-describe('withC15t standard install', () => {
+describe('withInth standard install', () => {
 	it('writes the exact Info.plist a hosted install needs', async () => {
 		const config = applyToFixture(STANDARD_PROPS);
 		const applied = await runInfoPlist(config);
@@ -51,7 +51,7 @@ describe('withC15t standard install', () => {
 		expect(applied.ios?.infoPlist).toStrictEqual({
 			...GOOGLE_CONSENT_PLIST_DEFAULTS,
 			ITSAppUsesNonExemptEncryption: false,
-			'com.c15t.backend.url': BACKEND,
+			'com.inth.backend.url': BACKEND,
 		});
 	});
 
@@ -59,7 +59,7 @@ describe('withC15t standard install', () => {
 		const config = applyToFixture(STANDARD_PROPS);
 
 		expect(config.extra).toStrictEqual({
-			c15t: {
+			inth: {
 				backendURL: BACKEND,
 				consentCategories: null,
 				domain: null,
@@ -112,7 +112,7 @@ describe('withC15t standard install', () => {
 			},
 			{
 				$: {
-					'android:name': 'com.c15t.BACKEND_URL',
+					'android:name': 'com.inth.BACKEND_URL',
 					'android:value': BACKEND,
 				},
 			},
@@ -122,7 +122,7 @@ describe('withC15t standard install', () => {
 
 	it('writes a declared vendor scope to both platforms', async () => {
 		// One comma-separated string on both platforms, which is the shape each
-		// reader parses: C15tAndroid.declaredVendors on Android, the bridge's
+		// reader parses: InthAndroid.declaredVendors on Android, the bridge's
 		// declaredVendors on iOS. Categories get a plist array because that reader
 		// takes names; ids do not need one.
 		const config = applyToFixture({
@@ -134,8 +134,8 @@ describe('withC15t standard install', () => {
 		expect(applied.ios?.infoPlist).toStrictEqual({
 			...GOOGLE_CONSENT_PLIST_DEFAULTS,
 			ITSAppUsesNonExemptEncryption: false,
-			'com.c15t.backend.url': BACKEND,
-			'com.c15t.vendors': '755,42,8',
+			'com.inth.backend.url': BACKEND,
+			'com.inth.vendors': '755,42,8',
 		});
 
 		const manifestApplied = await runMod(
@@ -148,7 +148,7 @@ describe('withC15t standard install', () => {
 			manifestApplied.modResults as AndroidConfig.Manifest.AndroidManifest;
 		expect(applicationOf(manifest)['meta-data']).toContainEqual({
 			$: {
-				'android:name': 'com.c15t.VENDORS',
+				'android:name': 'com.inth.VENDORS',
 				'android:value': '755,42,8',
 			},
 		});
@@ -170,11 +170,11 @@ describe('withC15t standard install', () => {
 		expect(applied.ios?.infoPlist).toStrictEqual({
 			...GOOGLE_CONSENT_PLIST_DEFAULTS,
 			ITSAppUsesNonExemptEncryption: false,
-			'com.c15t.backend.url': BACKEND,
-			'com.c15t.iab.cmpId': 1234,
-			'com.c15t.iab.cmpVersion': 7,
-			'com.c15t.iab.consentScreen': 3,
-			'com.c15t.iab.publisherCountryCode': 'DE',
+			'com.inth.backend.url': BACKEND,
+			'com.inth.iab.cmpId': 1234,
+			'com.inth.iab.cmpVersion': 7,
+			'com.inth.iab.consentScreen': 3,
+			'com.inth.iab.publisherCountryCode': 'DE',
 		});
 
 		const manifestApplied = await runMod(
@@ -187,10 +187,10 @@ describe('withC15t standard install', () => {
 			manifestApplied.modResults as AndroidConfig.Manifest.AndroidManifest
 		)['meta-data'];
 		for (const [name, value] of [
-			['com.c15t.IAB_CMP_ID', '1234'],
-			['com.c15t.IAB_CMP_VERSION', '7'],
-			['com.c15t.IAB_CONSENT_SCREEN', '3'],
-			['com.c15t.IAB_PUBLISHER_COUNTRY_CODE', 'DE'],
+			['com.inth.IAB_CMP_ID', '1234'],
+			['com.inth.IAB_CMP_VERSION', '7'],
+			['com.inth.IAB_CONSENT_SCREEN', '3'],
+			['com.inth.IAB_PUBLISHER_COUNTRY_CODE', 'DE'],
 		]) {
 			expect(metaData).toContainEqual({
 				$: { 'android:name': name, 'android:value': value },
@@ -204,8 +204,8 @@ describe('withC15t standard install', () => {
 			iab: { cmpId: 1234, cmpVersion: 7, publisherCountryCode: 'DE' },
 		});
 		const plist = (await runInfoPlist(config)).ios?.infoPlist ?? {};
-		expect(plist['com.c15t.iab.cmpId']).toBe(1234);
-		expect(plist).not.toHaveProperty('com.c15t.iab.consentScreen');
+		expect(plist['com.inth.iab.cmpId']).toBe(1234);
+		expect(plist).not.toHaveProperty('com.inth.iab.consentScreen');
 	});
 
 	it('writes a declared category scope to both platforms', async () => {
@@ -227,8 +227,8 @@ describe('withC15t standard install', () => {
 		expect(applied.ios?.infoPlist).toStrictEqual({
 			...GOOGLE_CONSENT_PLIST_DEFAULTS,
 			ITSAppUsesNonExemptEncryption: false,
-			'com.c15t.backend.url': BACKEND,
-			'com.c15t.categories': [
+			'com.inth.backend.url': BACKEND,
+			'com.inth.categories': [
 				'necessary',
 				'functionality',
 				'measurement',
@@ -253,13 +253,13 @@ describe('withC15t standard install', () => {
 			},
 			{
 				$: {
-					'android:name': 'com.c15t.BACKEND_URL',
+					'android:name': 'com.inth.BACKEND_URL',
 					'android:value': BACKEND,
 				},
 			},
 			{
 				$: {
-					'android:name': 'com.c15t.CATEGORIES',
+					'android:name': 'com.inth.CATEGORIES',
 					'android:value': 'necessary,functionality,measurement,marketing',
 				},
 			},
@@ -267,7 +267,7 @@ describe('withC15t standard install', () => {
 		]);
 	});
 
-	it('registers the c15t initializer through androidx.startup', async () => {
+	it('registers the Inth initializer through androidx.startup', async () => {
 		const config = applyToFixture(STANDARD_PROPS);
 		const applied = await runMod(
 			config,
@@ -289,7 +289,7 @@ describe('withC15t standard install', () => {
 				'meta-data': [
 					{
 						$: {
-							'android:name': 'com.c15t.reactnative.C15tReactNativeInitializer',
+							'android:name': 'com.inth.reactnative.InthReactNativeInitializer',
 							'android:value': 'androidx.startup',
 						},
 					},
@@ -311,7 +311,7 @@ describe('withC15t standard install', () => {
 		);
 
 		expect(xml).toContain(
-			'<meta-data android:name="com.c15t.BACKEND_URL" android:value="https://acme.inth.app"/>'
+			'<meta-data android:name="com.inth.BACKEND_URL" android:value="https://acme.inth.app"/>'
 		);
 		expect(xml).toContain(
 			'<uses-permission android:name="android.permission.INTERNET"/>'

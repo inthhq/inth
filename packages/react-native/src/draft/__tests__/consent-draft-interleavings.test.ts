@@ -24,7 +24,7 @@ import {
 } from '../../__tests__/helpers/react-native-stub';
 import { createConsentClient } from '../../native/client';
 import type { ConsentClient } from '../../native/client';
-import { getNativeC15tEvents } from '../../native/module';
+import { getNativeInthEvents } from '../../native/module';
 import type { CommitResult, ConsentSnapshot } from '../../protocol';
 import type { OptionalConsentCategory } from '../../protocol/vocabulary';
 import { createConsentDraft } from '../consent-draft';
@@ -150,7 +150,7 @@ const createCore = function createCore(bootstrap: Record<string, unknown>) {
 		});
 	};
 
-	const client = createConsentClient(fake, getNativeC15tEvents());
+	const client = createConsentClient(fake, getNativeInthEvents());
 
 	return {
 		/** Emit the change event for the latest revision, if one is owed. */

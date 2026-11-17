@@ -1,6 +1,6 @@
 import Foundation
 import XCTest
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 final class IABUpgradeTests: XCTestCase {
     func testPermissiveScopeNeverGrantsWithoutAuthorityAfterCommands() async throws {
@@ -56,7 +56,7 @@ final class IABUpgradeTests: XCTestCase {
         XCTAssertEqual(core.pendingSaveCount(), 1, "a refused withdrawal stays owed")
         XCTAssertEqual(core.save(.necessary).status, .committed)
         await core.waitUntilIdle()
-        let times = core.pendingSaveBodies().compactMap { C15tJSON.parse($0)?["givenAt"]?.intValue }
+        let times = core.pendingSaveBodies().compactMap { InthJSON.parse($0)?["givenAt"]?.intValue }
         XCTAssertEqual(times, [vector.now + 1])
         let frozen = core.pendingSaveBodies().first
         core.reset()

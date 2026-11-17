@@ -28,13 +28,13 @@ export type {
 } from './presenter';
 
 /** The code `presentConsentPrompt` and `presentPreferences` reject with on web. */
-const NATIVE_UI_EXCLUDED_CODE = 'C15T_NATIVE_UI_EXCLUDED';
+const NATIVE_UI_EXCLUDED_CODE = 'INTH_NATIVE_UI_EXCLUDED';
 
 /** An error carrying {@link NATIVE_UI_EXCLUDED_CODE}, as a native presenter rejects. */
 const noNativeScreens = function noNativeScreens(call: string): Error {
 	return Object.assign(
 		new Error(
-			`c15t: ${call}() opens the native consent screens, and a web build has none. Draw the consent UI in JavaScript: mount <ConsentBanner>, or your own components inside <ConsentPrompt>, and render <ConsentDialog open> where the app opens privacy settings.`
+			`Inth: ${call}() opens the native consent screens, and a web build has none. Draw the consent UI in JavaScript: mount <ConsentBanner>, or your own components inside <ConsentPrompt>, and render <ConsentDialog open> where the app opens privacy settings.`
 		),
 		{ code: NATIVE_UI_EXCLUDED_CODE }
 	);
@@ -128,7 +128,7 @@ export const setBeforeConsentPrompt = (
  *
  * @param privacyPolicyURL - Unused.
  * @returns Never resolves.
- * @throws {Error} With `code: 'C15T_NATIVE_UI_EXCLUDED'`.
+ * @throws {Error} With `code: 'INTH_NATIVE_UI_EXCLUDED'`.
  */
 export const presentConsentPrompt = (
 	privacyPolicyURL: string
@@ -142,7 +142,7 @@ export const presentConsentPrompt = (
  *
  * @param privacyPolicyURL - Unused.
  * @returns Never resolves.
- * @throws {Error} With `code: 'C15T_NATIVE_UI_EXCLUDED'`.
+ * @throws {Error} With `code: 'INTH_NATIVE_UI_EXCLUDED'`.
  */
 export const presentPreferences = (
 	privacyPolicyURL: string

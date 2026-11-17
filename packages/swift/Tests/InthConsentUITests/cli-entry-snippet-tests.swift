@@ -1,7 +1,7 @@
 #if canImport(UIKit)
-import C15tApple
-import C15tConsentUI
-import C15tCore
+import InthApple
+import InthConsentUI
+import InthCore
 import SwiftUI
 import UIKit
 import XCTest
@@ -21,37 +21,37 @@ final class CLIEntrySnippetTests: XCTestCase {
     /// Never called: the configuration would install an engine.
     private func cliSwiftUIEntry() -> some View {
         let view =
-            // c15t-cli-snippet:swiftui:start
+            // inth-cli-snippet:swiftui:start
             ContentView()
                 .c15tConsent(
-                    C15tAppleConfiguration(
+                    InthAppleConfiguration(
                         backendURL: "https://your-project.inth.app",
                         consentCategories: [.necessary, .measurement, .marketing]
                     ),
                     privacyPolicyURL: URL(string: "https://app.example/privacy")!
                 )
-            // c15t-cli-snippet:swiftui:end
+            // inth-cli-snippet:swiftui:end
         return view
     }
 
     /// Never called, like ``cliSwiftUIEntry()``.
     private func cliUIKitEntry(_ window: UIWindow) {
-        // c15t-cli-snippet:uikit:start
+        // inth-cli-snippet:uikit:start
         window.rootViewController = ConsentRootViewController(
             root: UIHostingController(rootView: ContentView()),
-            configuration: C15tAppleConfiguration(
+            configuration: InthAppleConfiguration(
                 backendURL: "https://your-project.inth.app",
                 consentCategories: [.necessary, .measurement, .marketing]
             ),
             privacyPolicyURL: URL(string: "https://app.example/privacy")!
         )
-        // c15t-cli-snippet:uikit:end
+        // inth-cli-snippet:uikit:end
     }
 
     func testThePrivacySettingsCallIsSafeWithNoPrompt() {
-        // c15t-cli-snippet:privacy-settings:start
+        // inth-cli-snippet:privacy-settings:start
         ConsentPrompt.current?.presentPreferences()
-        // c15t-cli-snippet:privacy-settings:end
+        // inth-cli-snippet:privacy-settings:end
     }
 }
 #endif

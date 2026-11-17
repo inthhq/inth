@@ -1,11 +1,11 @@
-#if canImport(C15tApple)
-import C15tApple
+#if canImport(InthApple)
+import InthApple
 #endif
-#if canImport(C15tCore)
+#if canImport(InthCore)
 // SwiftPM builds the consent kernel as its own module. CocoaPods compiles the vendored
 // copy into this module instead, where the import would fail, so it is conditional
 // rather than assumed.
-import C15tCore
+import InthCore
 #endif
 import Foundation
 
@@ -66,17 +66,17 @@ public enum ConsentHostOutcome: Equatable, Sendable {
 /// format. Keeping the encoders and decoders free of `React` imports is what lets
 /// the whole boundary compile and be tested without Pods, and it keeps one encoding
 /// shared by the module and its tests instead of two that can disagree with each
-/// other. It is also the iOS twin of `C15tPayload.kt`: same fields, same reasons,
+/// other. It is also the iOS twin of `InthPayload.kt`: same fields, same reasons,
 /// same fail-closed rules, so a JavaScript package cannot tell which core answered.
-public enum C15tPayload {
+public enum InthPayload {
     /// Protocol this native build speaks.
-    public static let protocolVersion = C15t.protocolVersion
+    public static let protocolVersion = Inth.protocolVersion
 
     /// Oldest protocol this native build accepts from a JavaScript package.
     public static let minSupportedProtocolVersion = 1
 
     /// Newest protocol this native build accepts from a JavaScript package.
-    public static let maxSupportedProtocolVersion = C15t.protocolVersion
+    public static let maxSupportedProtocolVersion = Inth.protocolVersion
 
     /// Language used when neither the app nor the backend resolved one.
     public static let defaultLanguage = "en"
@@ -149,7 +149,7 @@ public enum C15tPayload {
     public static func bootstrap(
         snapshot: ConsentSnapshot,
         hasStoredSnapshot: Bool,
-        sdkVersion: String = C15t.version
+        sdkVersion: String = Inth.version
     ) -> String {
         encode([
             "protocolVersion": .integer(Int64(protocolVersion)),
@@ -164,18 +164,18 @@ public enum C15tPayload {
         ])
     }
 
-    /// Whether this build links the stock consent screens. A build with `c15t.nativeUI`
-    /// false compiles with `C15T_NO_NATIVE_UI` and leaves them out.
-    #if C15T_NO_NATIVE_UI
+    /// Whether this build links the stock consent screens. A build with `inth.nativeUI`
+    /// false compiles with `INTH_NO_NATIVE_UI` and leaves them out.
+    #if INTH_NO_NATIVE_UI
     public static let nativeUI = false
     #else
     public static let nativeUI = true
     #endif
 
     /// What a presenter call rejects with in a build without the stock consent screens.
-    public static let nativeUIExcludedCode = "C15T_NATIVE_UI_EXCLUDED"
+    public static let nativeUIExcludedCode = "INTH_NATIVE_UI_EXCLUDED"
     public static let nativeUIExcludedMessage =
-        "This build leaves out the stock consent screens (c15t.nativeUI is false). Render your own consent UI with the headless hooks."
+        "This build leaves out the stock consent screens (inth.nativeUI is false). Render your own consent UI with the headless hooks."
 
     /// The `ConsentSnapshot` wire form.
     ///
@@ -407,13 +407,13 @@ public enum C15tPayload {
     ///
     /// One field, because the arm is the whole answer. There is no consent field here and
     /// there never will be: the payload describes what the platform said, and a host that
-    /// wants to know whether it may track has to ask c15t as well.
+    /// wants to know whether it may track has to ask Inth as well.
     ///
     /// `answeredAt` is when this SDK last saw an `authorized` or `denied` answer, in epoch
     /// milliseconds. It is platform bookkeeping for the yearly re-ask, not consent, and it is
     /// absent while Apple has no such answer on file.
     public static func trackingAuthorization(
-        _ status: C15tTrackingAuthorization,
+        _ status: InthTrackingAuthorization,
         answeredAt: Date? = nil
     ) -> String {
         var fields: [String: JSONValue] = ["status": .string(status.rawValue)]
@@ -444,7 +444,7 @@ public enum C15tPayload {
     /// Both fields are additions to a payload older Swift builds already send, so a reader
     /// that predates them still finds the one field it knows.
     public static func trackingRequestResult(
-        _ result: C15tTrackingRequestResult
+        _ result: InthTrackingRequestResult
     ) -> String {
         var fields: [String: JSONValue] = [
             "stage": .string(result.stage.rawValue),
@@ -663,7 +663,7 @@ public enum C15tPayload {
     public static func parseOverrides(
         _ raw: String?,
         current: ConsentOverrides
-    ) -> Result<ConsentOverrides, C15tBridgeError> {
+    ) -> Result<ConsentOverrides, InthBridgeError> {
         guard let body = parseObject(raw) else { return .failure(.unreadableOverrides) }
 
         let retired = retiredOverrideNames.filter { body.keys.contains($0) }

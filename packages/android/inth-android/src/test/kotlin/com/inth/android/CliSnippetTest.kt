@@ -1,13 +1,13 @@
-package com.c15t.android
+package com.inth.android
 
 import android.app.Application
-import com.c15t.core.ConsentPolicy
-import com.c15t.core.NativeConfig
-import com.c15t.core.PolicyMatch
-import com.c15t.core.PolicyRule
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentModel
-import com.c15t.core.policy.PolicyPrompt
+import com.inth.core.ConsentPolicy
+import com.inth.core.NativeConfig
+import com.inth.core.PolicyMatch
+import com.inth.core.PolicyRule
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentModel
+import com.inth.core.policy.PolicyPrompt
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -23,27 +23,27 @@ class CliSnippetTest {
 	// Never called. `this` is the Application, as in `Application.onCreate`.
 	@Suppress("unused")
 	private fun Application.cliOfflineInstall() {
-		// c15t-cli-snippet:offline:start
+		// inth-cli-snippet:offline:start
 		val policy = ConsentPolicy(listOf(
 		    PolicyRule("everywhere", PolicyMatch(fallback = true, isDefault = true), ConsentModel.OPT_IN, PolicyPrompt.CHOICE),
 		))
-		C15tAndroid.install(this, NativeConfig(
+		InthAndroid.install(this, NativeConfig(
 		    backendUrl = "https://your-project.inth.app",
 		    consentCategories = listOf(ConsentCategory.NECESSARY, ConsentCategory.MEASUREMENT, ConsentCategory.MARKETING),
 		    policy = policy,
 		))
-		// c15t-cli-snippet:offline:end
+		// inth-cli-snippet:offline:end
 	}
 
 	// Never called, like [cliOfflineInstall].
 	@Suppress("unused")
 	private fun Application.cliHostedInstall() {
-		// c15t-cli-snippet:hosted:start
-		C15tAndroid.install(this, NativeConfig(
+		// inth-cli-snippet:hosted:start
+		InthAndroid.install(this, NativeConfig(
 		    backendUrl = "https://your-project.inth.app",
 		    consentCategories = listOf(ConsentCategory.NECESSARY, ConsentCategory.MEASUREMENT, ConsentCategory.MARKETING),
 		))
-		// c15t-cli-snippet:hosted:end
+		// inth-cli-snippet:hosted:end
 	}
 
 	@Test

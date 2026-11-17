@@ -1,6 +1,6 @@
-package com.c15t.core.model
+package com.inth.core.model
 
-import com.c15t.core.tc.GlobalVendorList
+import com.inth.core.tc.GlobalVendorList
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -74,7 +74,7 @@ data class PolicyResolution(
 /**
  * Subject identifiers.
  *
- * [id] is the c15t-owned id minted at first launch by `SubjectIdGenerator`, in the
+ * [id] is the inth-owned id minted at first launch by `SubjectIdGenerator`, in the
  * `sub_` format the backend's `subjectIdSchema` accepts. A stored id is adopted
  * untouched when the producer would take it and refused when it would not: an id every
  * save gets `INPUT_VALIDATION_FAILED` over is not an identity, and the envelope written
@@ -106,7 +106,7 @@ data class ConsentLocation(
  *
  * Publisher test mode is a client option rather than an override and never
  * reaches a save body, so it has no member here. The first draft of
- * `packages/native-protocol/CONTRACT.md` invented a `test` field; [com.c15t.core.store.C15tStore]
+ * `packages/native-protocol/CONTRACT.md` invented a `test` field; [com.inth.core.store.InthStore]
  * refuses an envelope that still carries one rather than guessing at it.
  */
 @Serializable
@@ -254,7 +254,7 @@ data class DecisionInputs(
  * grades.
  *
  * The spellings inside the list are the served document's, not this core's: see
- * [GlobalVendorList] and [com.c15t.core.tc.GlobalVendorListJson].
+ * [GlobalVendorList] and [com.inth.core.tc.GlobalVendorListJson].
  */
 @Serializable
 data class KernelIabState(
@@ -309,7 +309,7 @@ data class ConsentSnapshot(
 	 *
 	 * Latched, and it travels with the snapshot rather than beside it: a `/init`
 	 * that serves no list leaves the list already there, and only
-	 * [com.c15t.core.ConsentCore.reset] takes it back. The reason is on that field --
+	 * [com.inth.core.ConsentCore.reset] takes it back. The reason is on that field --
 	 * once a purpose or vendor name has been on screen, replacing it with nothing
 	 * changes a claim the subject was already given, and the backend embeds a list
 	 * only while the matched model is `iab`.
@@ -318,7 +318,7 @@ data class ConsentSnapshot(
 	 * so a JavaScript layer that predates TCF does not branch on the SDK version.
 	 * Storage keeps the document once, under the envelope's own `gvl` key, and puts
 	 * it back here on hydration -- see
-	 * [com.c15t.core.store.SnapshotEnvelope.gvl].
+	 * [com.inth.core.store.SnapshotEnvelope.gvl].
 	 */
 	@SerialName("iab")
 	val iab: KernelIabState? = null,
@@ -328,7 +328,7 @@ data class ConsentSnapshot(
 	 * It changes every time a prompt becomes owed again, including the same requirement owed
 	 * again after an answer or a reset, so a reader that missed the snapshots in between still
 	 * knows it is a new prompt. The core sets it where it installs each state, which sees every
-	 * state in order. It is not kernel state: it stays out of [com.c15t.core.wire.SnapshotWire]
+	 * state in order. It is not kernel state: it stays out of [com.inth.core.wire.SnapshotWire]
 	 * and the stored envelope, and the React Native bridge adds it to its payload.
 	 */
 	@Transient
@@ -338,7 +338,7 @@ data class ConsentSnapshot(
 	 *
 	 * Derived, never decided: the core computes it from this snapshot, the matched rule and
 	 * the committed TC String each time it installs a state, with
-	 * [com.c15t.core.gpp.GppResolver]. It is `null` in the stored envelope, which keeps no
+	 * [com.inth.core.gpp.GppResolver]. It is `null` in the stored envelope, which keeps no
 	 * copy of a value it can recompute. The key is always present on the wire.
 	 */
 	val gppString: String? = null,

@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 /// The exclusivity rule in `packages/native-protocol/CONTRACT.md`, "The pending save queue": only one
 /// delivery pass may be in flight per core.
@@ -462,7 +462,7 @@ private final class GatedHTTP: HTTPTransport, @unchecked Sendable {
 
     /// Enough of a body to identify it in a failure: when the subject made the choice.
     private func descriptor(for body: Data) -> String {
-        let givenAt = C15tJSON.parse(body)?["givenAt"]?.intValue ?? -1
+        let givenAt = InthJSON.parse(body)?["givenAt"]?.intValue ?? -1
         return "givenAt=" + String(givenAt)
     }
 

@@ -1,6 +1,6 @@
 import Foundation
 import XCTest
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 final class NativePresentationTests: XCTestCase {
     final class RefusingStore: ConsentStore, @unchecked Sendable {

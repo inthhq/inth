@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 final class DurableCategorySaveTests: XCTestCase {
     private final class SnapshotFailStore: ConsentStore, @unchecked Sendable {
@@ -175,13 +175,13 @@ final class DurableCategorySaveTests: XCTestCase {
         await core.waitUntilIdle()
         let before = core.snapshot()
         let body = try XCTUnwrap(http.lastSaveBody)
-        var raw = try XCTUnwrap(store.data(for: StorageKey.snapshot).flatMap(C15tJSON.parse)?.objectValue)
+        var raw = try XCTUnwrap(store.data(for: StorageKey.snapshot).flatMap(InthJSON.parse)?.objectValue)
         var entries = try XCTUnwrap(raw["pendingSaves"]?.arrayValue)
         var entry = try XCTUnwrap(entries.first?.objectValue)
         entry["futureQueueMetadata"] = .object(["version": .integer(2)])
         entries[0] = .object(entry)
         raw["pendingSaves"] = .array(entries)
-        let extended = try XCTUnwrap(C15tJSON.encode(.object(raw)))
+        let extended = try XCTUnwrap(InthJSON.encode(.object(raw)))
         XCTAssertTrue(store.set(extended, for: StorageKey.snapshot))
 
         http.setSavesFail(false)
@@ -196,7 +196,7 @@ final class DurableCategorySaveTests: XCTestCase {
         var snapshot = try XCTUnwrap(raw["snapshot"]?.objectValue)
         snapshot["futureAuthority"] = .bool(true)
         raw["snapshot"] = .object(snapshot)
-        XCTAssertNil(StoredEnvelope.decode(try XCTUnwrap(C15tJSON.encode(.object(raw)))),
+        XCTAssertNil(StoredEnvelope.decode(try XCTUnwrap(InthJSON.encode(.object(raw)))),
             "tolerating queue metadata must not tolerate unknown consent authority")
     }
 }

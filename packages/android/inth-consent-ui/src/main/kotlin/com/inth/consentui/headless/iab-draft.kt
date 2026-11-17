@@ -1,21 +1,21 @@
-package com.c15t.consentui.headless
+package com.inth.consentui.headless
 
 import androidx.compose.runtime.Stable
-import com.c15t.core.iab.IabBannerSummary
-import com.c15t.consentui.dayCount
-import com.c15t.consentui.generated.IabCopy
-import com.c15t.consentui.storageDuration
-import com.c15t.core.iab.AdTechProvider
-import com.c15t.core.iab.IabChoices
-import com.c15t.core.iab.IabCustomVendor
-import com.c15t.core.iab.IabPresentation
-import com.c15t.core.iab.IabPublisherRestriction
-import com.c15t.core.iab.IabVendorDisclosure
-import com.c15t.core.iab.IabVendorSelectionStatus
-import com.c15t.core.iab.selectionStatus
-import com.c15t.core.tc.GvlLocalizedEntry
-import com.c15t.core.tc.GvlStack
-import com.c15t.core.tc.GvlVendorEntry
+import com.inth.core.iab.IabBannerSummary
+import com.inth.consentui.dayCount
+import com.inth.consentui.generated.IabCopy
+import com.inth.consentui.storageDuration
+import com.inth.core.iab.AdTechProvider
+import com.inth.core.iab.IabChoices
+import com.inth.core.iab.IabCustomVendor
+import com.inth.core.iab.IabPresentation
+import com.inth.core.iab.IabPublisherRestriction
+import com.inth.core.iab.IabVendorDisclosure
+import com.inth.core.iab.IabVendorSelectionStatus
+import com.inth.core.iab.selectionStatus
+import com.inth.core.tc.GvlLocalizedEntry
+import com.inth.core.tc.GvlStack
+import com.inth.core.tc.GvlVendorEntry
 import java.util.Locale
 
 /** Purposes TCF never lets anyone claim under legitimate interest. */

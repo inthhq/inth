@@ -1,26 +1,26 @@
-#if canImport(C15tCore)
+#if canImport(InthCore)
 // SwiftPM builds the consent kernel as its own module. CocoaPods compiles the vendored
 // copy into this module instead, where the import would fail, so it is conditional
 // rather than assumed.
-import C15tCore
+import InthCore
 #endif
-#if canImport(C15tReactNativeBridge)
+#if canImport(InthReactNativeBridge)
 // SwiftPM builds the wire layer as its own module. CocoaPods compiles it into this
 // module instead, where the import would fail, so it is conditional rather than
 // assumed.
-import C15tReactNativeBridge
+import InthReactNativeBridge
 #endif
 import Foundation
 import React
 
-/// The `C15t` TurboModule: the JavaScript surface in `src/specs/NativeC15t.ts`,
+/// The `Inth` TurboModule: the JavaScript surface in `src/specs/NativeInth.ts`,
 /// forwarded call for call to the Swift consent core.
 ///
 /// Nothing in here decides anything about consent. It reads state the core already
 /// holds, forwards the actions the user took, and reports the results as the JSON the
 /// JavaScript protocol expects. That is deliberate: there is one consent kernel, and a
 /// rule repeated here would be a second one to keep honest. The behaviour lives in
-/// `C15tModuleHandler`, which has no React Native in it.
+/// `InthModuleHandler`, which has no React Native in it.
 ///
 /// Threading. ``getBootstrap()`` and ``getSnapshot()`` are synchronous methods and do
 /// no disk or network work: the core keeps one immutable snapshot in memory, so a read
@@ -30,11 +30,11 @@ import React
 /// and those promises resolve as soon as the local commit is durable, with delivery
 /// left to the core's own scheduler.
 ///
-/// The class deliberately omits the `NativeC15tSpec` conformance that the TypeScript
+/// The class deliberately omits the `NativeInthSpec` conformance that the TypeScript
 /// spec implies. Codegen emits that protocol into an ObjC++ umbrella header whose first
 /// line is `#error This file must be compiled as Obj-C++`, so no Swift file can name it:
 /// the conformance, and the `getTurboModule:` factory `RCTModuleProviders` requires, live
-/// in `C15tReactNativeModule.mm`.
+/// in `InthReactNativeModule.mm`.
 ///
 /// That split leaves one sharp edge. The generated JSI glue reaches this class by
 /// `@selector`, and a selector that disagrees with the protocol still compiles, so every
@@ -42,19 +42,19 @@ import React
 /// `src/specs/__tests__/ios-spec-surface.test.ts` fails the moment those names and the
 /// protocol Codegen generates stop agreeing.
 ///
-@objc(C15tReactNativeModule)
-public final class C15tReactNativeModule: RCTEventEmitter {
-    private let handler = C15tModuleHandler(trackingController: C15tApple.tracking)
+@objc(InthReactNativeModule)
+public final class InthReactNativeModule: RCTEventEmitter {
+    private let handler = InthModuleHandler(trackingController: InthApple.tracking)
 
     /// Held as a property: its snapshot handle owns the callback, and detaching or
     /// releasing it is what stops the module hearing the core.
-    private lazy var subscriber = C15tCoreSubscriber(sink: C15tReactEmitterSink(module: self))
+    private lazy var subscriber = InthCoreSubscriber(sink: InthReactEmitterSink(module: self))
 
     /// Live JavaScript listeners. A snapshot event is only a hint to go and read, so
     /// with no subscriber it is dropped rather than queued.
     private var listenerCount = 0
-    #if !C15T_NO_NATIVE_UI
-    private var consentHost: C15tConsentHost?
+    #if !INTH_NO_NATIVE_UI
+    private var consentHost: InthConsentHost?
     /// The core the native prompt was last moved to, so a new install moves it once. Main thread.
     private var followed: ObjectIdentifier?
     /// The core `followCore()` last saw, from any thread, so an unchanged core costs no hop.
@@ -185,7 +185,7 @@ public final class C15tReactNativeModule: RCTEventEmitter {
         handler.requestTrackingAuthorization { result in
             switch result {
             case let .success(requestResult):
-                resolve(C15tPayload.trackingRequestResult(requestResult))
+                resolve(InthPayload.trackingRequestResult(requestResult))
             case let .failure(error):
                 reject(error.code, error.message, nil)
             }
@@ -199,11 +199,11 @@ public final class C15tReactNativeModule: RCTEventEmitter {
         reject: @escaping RCTPromiseRejectBlock
     ) {
         handler.requestTrackingAuthorization(
-            additionalInformation: C15tPayload.trackingRequestOffersAdditionalInformation(options)
+            additionalInformation: InthPayload.trackingRequestOffersAdditionalInformation(options)
         ) { result in
             switch result {
             case let .success(requestResult):
-                resolve(C15tPayload.trackingRequestResult(requestResult))
+                resolve(InthPayload.trackingRequestResult(requestResult))
             case let .failure(error):
                 reject(error.code, error.message, nil)
             }
@@ -247,28 +247,28 @@ public final class C15tReactNativeModule: RCTEventEmitter {
     }
 
     private func presentNative(preferences: Bool, privacyPolicyURL: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
-        #if C15T_NO_NATIVE_UI
-        reject(C15tPayload.nativeUIExcludedCode, C15tPayload.nativeUIExcludedMessage, nil)
+        #if INTH_NO_NATIVE_UI
+        reject(InthPayload.nativeUIExcludedCode, InthPayload.nativeUIExcludedMessage, nil)
         #else
         followCore()
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             do {
-                resolve(C15tPayload.consentHostSession(try self.host().present(preferences: preferences, privacyPolicyURL: privacyPolicyURL)))
-            } catch C15tConsentHost.HostError.invalidPrivacyPolicy {
+                resolve(InthPayload.consentHostSession(try self.host().present(preferences: preferences, privacyPolicyURL: privacyPolicyURL)))
+            } catch InthConsentHost.HostError.invalidPrivacyPolicy {
                 // Retrying the same URL cannot help, so JavaScript stops and reports it.
-                reject("C15T_PRESENTER_INVALID_URL", "The privacy-policy URL is not an absolute HTTPS URL with a host.", nil)
-            } catch { reject("C15T_PRESENTER_UNAVAILABLE", "Native presenter needs an active host and installed core. \(error)", error) }
+                reject("INTH_PRESENTER_INVALID_URL", "The privacy-policy URL is not an absolute HTTPS URL with a host.", nil)
+            } catch { reject("INTH_PRESENTER_UNAVAILABLE", "Native presenter needs an active host and installed core. \(error)", error) }
         }
         #endif
     }
 
-    #if !C15T_NO_NATIVE_UI
+    #if !INTH_NO_NATIVE_UI
     /// The host, created on first use, with every presenter event going to JavaScript.
     @MainActor
-    private func host() -> C15tConsentHost {
+    private func host() -> InthConsentHost {
         if let consentHost { return consentHost }
-        let created = C15tConsentHost()
+        let created = InthConsentHost()
         created.emit = { [weak self] event, payload in self?.publish(event: event, payload: payload) }
         consentHost = created
         return created
@@ -279,24 +279,24 @@ public final class C15tReactNativeModule: RCTEventEmitter {
     /// decides when a prompt is owed and presents it; this forwards what it shows as events.
     @objc(configureAutoPresent:resolve:reject:)
     public func configureAutoPresent(_ settings: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
-        guard let parsed = C15tPayload.autoPresentSettings(settings) else {
-            reject("C15T_INVALID_SETTINGS", #"configureAutoPresent needs {"autoPresent": boolean, "privacyPolicyURL": string | null}"#, nil)
+        guard let parsed = InthPayload.autoPresentSettings(settings) else {
+            reject("INTH_INVALID_SETTINGS", #"configureAutoPresent needs {"autoPresent": boolean, "privacyPolicyURL": string | null}"#, nil)
             return
         }
-        #if C15T_NO_NATIVE_UI
+        #if INTH_NO_NATIVE_UI
         // Nothing to present in this build, so turning it off is already true.
-        if parsed.autoPresent { reject(C15tPayload.nativeUIExcludedCode, C15tPayload.nativeUIExcludedMessage, nil) } else { resolve(nil) }
+        if parsed.autoPresent { reject(InthPayload.nativeUIExcludedCode, InthPayload.nativeUIExcludedMessage, nil) } else { resolve(nil) }
         #else
         followCore()
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             do {
                 try self.host().configure(autoPresent: parsed.autoPresent, privacyPolicyURL: parsed.privacyPolicyURL)
-                self.followed = C15t.current.map(ObjectIdentifier.init)
+                self.followed = Inth.current.map(ObjectIdentifier.init)
                 resolve(nil)
-            } catch C15tConsentHost.HostError.invalidPrivacyPolicy {
-                reject("C15T_PRESENTER_INVALID_URL", "The privacy-policy URL is not an absolute HTTPS URL with a host.", nil)
-            } catch { reject("C15T_NOT_BOOTSTRAPPED", "No consent core is installed. \(error)", error) }
+            } catch InthConsentHost.HostError.invalidPrivacyPolicy {
+                reject("INTH_PRESENTER_INVALID_URL", "The privacy-policy URL is not an absolute HTTPS URL with a host.", nil)
+            } catch { reject("INTH_NOT_BOOTSTRAPPED", "No consent core is installed. \(error)", error) }
         }
         #endif
     }
@@ -304,7 +304,7 @@ public final class C15tReactNativeModule: RCTEventEmitter {
     @objc(closeConsentPresenter:resolve:reject:)
     public func closeConsentPresenter(_ sessionId: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         DispatchQueue.main.async { [weak self] in
-            #if !C15T_NO_NATIVE_UI
+            #if !INTH_NO_NATIVE_UI
             self?.consentHost?.close(sessionID: sessionId)
             #endif
             _ = self
@@ -316,12 +316,12 @@ public final class C15tReactNativeModule: RCTEventEmitter {
 
     public override func supportedEvents() -> [String]! {
         [
-            C15tPayload.eventPresenterOutcome,
-            C15tPayload.eventPresenterPresented,
-            C15tPayload.eventPresenterUnavailable,
-            C15tPayload.eventSnapshot,
-            C15tPayload.eventError,
-            C15tPayload.eventInitialized,
+            InthPayload.eventPresenterOutcome,
+            InthPayload.eventPresenterPresented,
+            InthPayload.eventPresenterUnavailable,
+            InthPayload.eventSnapshot,
+            InthPayload.eventError,
+            InthPayload.eventInitialized,
         ]
     }
 
@@ -354,7 +354,7 @@ public final class C15tReactNativeModule: RCTEventEmitter {
     }
 
     public override func invalidate() {
-        #if !C15T_NO_NATIVE_UI
+        #if !INTH_NO_NATIVE_UI
         DispatchQueue.main.async { [self] in consentHost?.detach(); consentHost = nil }
         #endif
         subscriber.detach()
@@ -367,10 +367,10 @@ public final class C15tReactNativeModule: RCTEventEmitter {
     /// core keeps getting deny-all answers, which is the contract's answer for state
     /// that does not exist.
     private func followCore() {
-        guard handler.ensureCore(), let core = C15t.current else { return }
+        guard handler.ensureCore(), let core = Inth.current else { return }
         subscriber.attach(to: core)
-        #if !C15T_NO_NATIVE_UI
-        // After `C15t` dropped a core and installed another, move the native prompt to it, so an
+        #if !INTH_NO_NATIVE_UI
+        // After `Inth` dropped a core and installed another, move the native prompt to it, so an
         // owed prompt is presented there too. Only once auto-present was configured.
         let id = ObjectIdentifier(core)
         let changed = seenLock.withLock { () -> Bool in
@@ -389,10 +389,10 @@ public final class C15tReactNativeModule: RCTEventEmitter {
 
 /// Bridges the pump to `RCTEventEmitter`, holding the module weakly so the observer
 /// the core retains does not keep a torn-down module alive.
-private final class C15tReactEmitterSink: C15tEventSink, @unchecked Sendable {
-    private weak var module: C15tReactNativeModule?
+private final class InthReactEmitterSink: InthEventSink, @unchecked Sendable {
+    private weak var module: InthReactNativeModule?
 
-    init(module: C15tReactNativeModule) {
+    init(module: InthReactNativeModule) {
         self.module = module
     }
 

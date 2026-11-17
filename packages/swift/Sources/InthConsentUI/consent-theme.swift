@@ -393,48 +393,48 @@ public struct ConsentTheme: Equatable, Sendable {
     /// `Info.plist` keys. Each colour is `#RRGGBB` or `#RRGGBB,#RRGGBB` (light, dark). Each
     /// size is a number of points.
     public enum InfoPlistKey {
-        public static let primary = "com.c15t.consent.primary"
-        public static let textOnPrimary = "com.c15t.consent.textOnPrimary"
-        public static let canvas = "com.c15t.consent.canvas"
-        public static let surface = "com.c15t.consent.surface"
-        public static let surfaceMuted = "com.c15t.consent.surfaceMuted"
-        public static let text = "com.c15t.consent.text"
-        public static let textMuted = "com.c15t.consent.textMuted"
-        public static let decision = "com.c15t.consent.decision"
-        public static let textOnDecision = "com.c15t.consent.textOnDecision"
-        public static let radiusSm = "com.c15t.consent.radiusSm"
-        public static let radiusMd = "com.c15t.consent.radiusMd"
-        public static let radiusLg = "com.c15t.consent.radiusLg"
-        public static let spaceXs = "com.c15t.consent.spaceXs"
-        public static let spaceSm = "com.c15t.consent.spaceSm"
-        public static let spaceMd = "com.c15t.consent.spaceMd"
-        public static let spaceLg = "com.c15t.consent.spaceLg"
-        public static let spaceXl = "com.c15t.consent.spaceXl"
+        public static let primary = "com.inth.consent.primary"
+        public static let textOnPrimary = "com.inth.consent.textOnPrimary"
+        public static let canvas = "com.inth.consent.canvas"
+        public static let surface = "com.inth.consent.surface"
+        public static let surfaceMuted = "com.inth.consent.surfaceMuted"
+        public static let text = "com.inth.consent.text"
+        public static let textMuted = "com.inth.consent.textMuted"
+        public static let decision = "com.inth.consent.decision"
+        public static let textOnDecision = "com.inth.consent.textOnDecision"
+        public static let radiusSm = "com.inth.consent.radiusSm"
+        public static let radiusMd = "com.inth.consent.radiusMd"
+        public static let radiusLg = "com.inth.consent.radiusLg"
+        public static let spaceXs = "com.inth.consent.spaceXs"
+        public static let spaceSm = "com.inth.consent.spaceSm"
+        public static let spaceMd = "com.inth.consent.spaceMd"
+        public static let spaceLg = "com.inth.consent.spaceLg"
+        public static let spaceXl = "com.inth.consent.spaceXl"
         /// A bundled font's PostScript name.
-        public static let fontFamily = "com.c15t.consent.fontFamily"
-        public static let fontSizeSm = "com.c15t.consent.fontSizeSm"
-        public static let fontSizeBase = "com.c15t.consent.fontSizeBase"
-        public static let fontSizeLg = "com.c15t.consent.fontSizeLg"
+        public static let fontFamily = "com.inth.consent.fontFamily"
+        public static let fontSizeSm = "com.inth.consent.fontSizeSm"
+        public static let fontSizeBase = "com.inth.consent.fontSizeBase"
+        public static let fontSizeLg = "com.inth.consent.fontSizeLg"
         /// `serif`, `rounded`, `sans`, or a bundled font's PostScript name.
-        public static let headlineFont = "com.c15t.consent.headlineFont"
-        /// One slot field, such as `com.c15t.consent.buttonPrimary.backgroundColor`. `field` is
+        public static let headlineFont = "com.inth.consent.headlineFont"
+        /// One slot field, such as `com.inth.consent.buttonPrimary.backgroundColor`. `field` is
         /// `color`, `backgroundColor`, `borderRadius` or `fontSize`.
-        public static func slot(_ slot: Slot, _ field: String) -> String { "com.c15t.consent.\(slot.rawValue).\(field)" }
+        public static func slot(_ slot: Slot, _ field: String) -> String { "com.inth.consent.\(slot.rawValue).\(field)" }
         /// A Boolean. `false` hides the app mark and name above the headline.
-        public static let brand = "com.c15t.consent.brand"
-        public static let brandName = "com.c15t.consent.brandName"
+        public static let brand = "com.inth.consent.brand"
+        public static let brandName = "com.inth.consent.brandName"
         /// An asset-catalogue image name.
-        public static let brandMark = "com.c15t.consent.brandMark"
-        public static let headline = "com.c15t.consent.headline"
-        public static let introduction = "com.c15t.consent.introduction"
+        public static let brandMark = "com.inth.consent.brandMark"
+        public static let headline = "com.inth.consent.headline"
+        public static let introduction = "com.inth.consent.introduction"
         /// A Boolean. `false` hides the "Secured by c15t" line.
-        public static let branding = "com.c15t.consent.branding"
+        public static let branding = "com.inth.consent.branding"
         /// `c15t` or `inth`. `consent` is an alias for `inth`.
-        public static let brandingProvider = "com.c15t.consent.brandingProvider"
+        public static let brandingProvider = "com.inth.consent.brandingProvider"
         /// Custom provider name, independent from the app's `brandName`.
-        public static let brandingName = "com.c15t.consent.brandingName"
+        public static let brandingName = "com.inth.consent.brandingName"
         /// Custom provider asset-catalogue image name.
-        public static let brandingMark = "com.c15t.consent.brandingMark"
+        public static let brandingMark = "com.inth.consent.brandingMark"
     }
 
     /// Apply any ``InfoPlistKey`` values in `dictionary` over this theme.
@@ -566,7 +566,7 @@ public struct ConsentTheme: Equatable, Sendable {
         theme.colors.textOnDecision = Colors.c15t.textOnDecision
         theme.slots[.buttonPrimary]?.color = nil
         theme.slots[.buttonPrimary]?.backgroundColor = nil
-        report(String(format: "c15t: decision colours reach %.2f:1, under the 5:1 IAB TCF minimum. Using the stock decision colours.", ratio))
+        report(String(format: "Inth: decision colours reach %.2f:1, under the 5:1 IAB TCF minimum. Using the stock decision colours.", ratio))
         return theme
     }
 }

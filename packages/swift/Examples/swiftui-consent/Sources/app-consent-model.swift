@@ -1,6 +1,6 @@
-import C15tApple
-import C15tConsentUI
-import C15tCore
+import InthApple
+import InthConsentUI
+import InthCore
 import Combine
 import Foundation
 
@@ -32,7 +32,7 @@ final class AppConsentModel: ObservableObject {
     var decision: ConsentDecision { core?.decision(for: .measurement) ?? .pending }
 
     func retryProtectedStorage() {
-        guard installationError as? C15tAppleInstallationError == .protectedStorageUnavailable else { return }
+        guard installationError as? InthAppleInstallationError == .protectedStorageUnavailable else { return }
         install()
     }
 

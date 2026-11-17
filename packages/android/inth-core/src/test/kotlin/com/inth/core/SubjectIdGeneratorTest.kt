@@ -1,6 +1,6 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.spi.Clock
+import com.inth.core.spi.Clock
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith

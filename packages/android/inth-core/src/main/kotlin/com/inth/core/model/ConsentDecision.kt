@@ -1,4 +1,4 @@
-package com.c15t.core.model
+package com.inth.core.model
 
 /**
  * Why one category is or is not allowed, in the three states a host SDK has to tell

@@ -1,6 +1,6 @@
 import Foundation
 import XCTest
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 /// A bus endpoint that remembers what the core told it, in order.
 ///
@@ -217,7 +217,7 @@ final class TcStorageBusTests: XCTestCase {
 
     // TCF-CHECK: T4
     func testUserDefaultsBusWritesTheTypesTheSpecTableGives() throws {
-        let suiteName = "com.c15t.core.bus.tests-\(UUID().uuidString)"
+        let suiteName = "com.inth.core.bus.tests-\(UUID().uuidString)"
         guard let defaults = UserDefaults(suiteName: suiteName) else {
             return XCTFail("could not open a private defaults suite")
         }

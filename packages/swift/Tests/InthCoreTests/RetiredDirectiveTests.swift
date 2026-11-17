@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 /// Stored state from an alpha build that still recorded standing privacy directives.
 ///
@@ -18,8 +18,8 @@ final class RetiredDirectiveTests: XCTestCase {
     private func alphaSnapshotFields(
         _ snapshot: ConsentSnapshot = ConsentSnapshot(revision: 4)
     ) throws -> [String: JSONValue] {
-        let data = try C15tJSON.encode(snapshot)
-        var fields = try XCTUnwrap(C15tJSON.parse(data)?.objectValue)
+        let data = try InthJSON.encode(snapshot)
+        var fields = try XCTUnwrap(InthJSON.parse(data)?.objectValue)
         fields["optOutDirectives"] = .array([
             .object([
                 "source": .string("gpc"),
@@ -36,8 +36,8 @@ final class RetiredDirectiveTests: XCTestCase {
 
     func testASnapshotCarryingDirectivesDecodesWithoutThem() throws {
         let fields = try alphaSnapshotFields()
-        let data = try XCTUnwrap(C15tJSON.encode(.object(fields)))
-        let snapshot = try C15tJSON.decode(ConsentSnapshot.self, from: data)
+        let data = try XCTUnwrap(InthJSON.encode(.object(fields)))
+        let snapshot = try InthJSON.decode(ConsentSnapshot.self, from: data)
 
         XCTAssertEqual(snapshot.revision, 4)
         XCTAssertEqual(snapshot.restrictions[.marketing], [.gpc])
@@ -45,15 +45,15 @@ final class RetiredDirectiveTests: XCTestCase {
             snapshot.restrictions[.measurement],
             "a category restricted only by a directive has no restriction now"
         )
-        let reencoded = try XCTUnwrap(C15tJSON.parse(try C15tJSON.encode(snapshot))?.objectValue)
+        let reencoded = try XCTUnwrap(InthJSON.parse(try InthJSON.encode(snapshot))?.objectValue)
         XCTAssertNil(reencoded["optOutDirectives"])
     }
 
     func testAnUnknownRestrictionReasonStillFailsToDecode() throws {
         var fields = try alphaSnapshotFields()
         fields["restrictions"] = .object(["marketing": .array([.string("made-up")])])
-        let data = try XCTUnwrap(C15tJSON.encode(.object(fields)))
-        XCTAssertThrowsError(try C15tJSON.decode(ConsentSnapshot.self, from: data))
+        let data = try XCTUnwrap(InthJSON.encode(.object(fields)))
+        XCTAssertThrowsError(try InthJSON.decode(ConsentSnapshot.self, from: data))
     }
 
     func testAnAlphaEnvelopeIsReadNotRefused() throws {
@@ -110,7 +110,7 @@ final class RetiredDirectiveTests: XCTestCase {
             subject: SubjectSnapshot(id: Self.subjectId, externalId: nil)
         )
         return try XCTUnwrap(
-            C15tJSON.encode(
+            InthJSON.encode(
                 .object([
                     "version": .integer(1),
                     "storedAt": .integer(1),

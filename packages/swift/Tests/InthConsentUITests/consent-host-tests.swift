@@ -1,7 +1,7 @@
-@_spi(C15tInternal) import C15tCore
+@_spi(InthInternal) import InthCore
 import Foundation
 import XCTest
-@testable import C15tConsentUI
+@testable import InthConsentUI
 
 /// Auto-present for a runtime that draws the prompt through ``ConsentHostDriver``, such as React
 /// Native.
@@ -177,7 +177,7 @@ final class ConsentHostTests: XCTestCase {
     }
 
     /// Settings close while a prompt is owed: the prompt opens, and it is reported before the
-    /// settings' outcome, so a step waiting for c15t's screens to close never runs in between.
+    /// settings' outcome, so a step waiting for Inth's screens to close never runs in between.
     func testAPromptThatOpensAsSettingsCloseIsReportedBeforeTheirOutcome() async throws {
         let (core, _) = try await boot("category-init.json")
         XCTAssertEqual(core.save(.all).status, .committed)
@@ -295,19 +295,19 @@ final class ConsentHostTests: XCTestCase {
     }
 
     func testAnOwedPromptIsNotLostAcrossUninstall() async throws {
-        C15t.resetForTests()
-        defer { C15t.resetForTests() }
+        Inth.resetForTests()
+        defer { Inth.resetForTests() }
         let (config, _) = try fixtureConfig("category-init.json")
-        let first = C15t.bootstrap(config)
+        let first = Inth.bootstrap(config)
         await first.waitUntilIdle()
         let (driver, events, _) = driver()
         try driver.configure(core: first, autoPresent: true, privacyPolicyURL: url)
         XCTAssertEqual(events.presented.count, 1)
 
-        C15t.resetForTests()
+        Inth.resetForTests()
         await until { events.outcomes.count == 1 }
         XCTAssertEqual(events.outcomes.map(\.ending), [.unavailable], "the session of the dropped core ends")
-        let second = C15t.bootstrap(config)
+        let second = Inth.bootstrap(config)
         await second.waitUntilIdle()
         // The binding follows the installed core on its next call.
         driver.follow(second)

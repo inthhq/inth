@@ -14,7 +14,7 @@ kotlin {
 		apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_1)
 		languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_1)
 		// The transport door is internal API. This module and its tests own it.
-		optIn.add("com.c15t.core.C15tInternalApi")
+		optIn.add("com.inth.core.InthInternalApi")
 	}
 	jvmToolchain(17)
 }
@@ -56,7 +56,7 @@ tasks.register<JavaExec>("bench") {
 	group = "verification"
 	description = "Measures hydrate, policy evaluation, snapshot(), and offline save."
 	dependsOn("compileBenchKotlin")
-	mainClass.set("com.c15t.core.bench.Bench")
+	mainClass.set("com.inth.core.bench.Bench")
 	classpath = benchSource.output + configurations.named("benchRuntimeClasspath").get()
 	// One collector keeps the numbers comparable between runs.
 	jvmArgs = listOf("-XX:+UseSerialGC")
@@ -67,4 +67,4 @@ java { withSourcesJar() }
 apply(from = "../gradle/publishing.gradle")
 
 // Existing bundle tooling reads this stable build path; Maven still uses versioned filenames.
-tasks.named<Jar>("jar") { archiveFileName.set("c15t-core.jar") }
+tasks.named<Jar>("jar") { archiveFileName.set("inth-core.jar") }

@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 /// `dryRun`: everything on the device works, and no record leaves it.
 final class DryRunTests: XCTestCase {
@@ -15,12 +15,12 @@ final class DryRunTests: XCTestCase {
         store = InMemoryStore()
         http = StubHTTP()
         http.initResponse = Fixture.initResponse(policyResolution: Fixture.matchedResolution())
-        C15t.resetForTests()
+        Inth.resetForTests()
     }
 
     override func tearDown() {
-        C15tBuild.simulate(debug: nil)
-        C15t.resetForTests()
+        InthBuild.simulate(debug: nil)
+        Inth.resetForTests()
         super.tearDown()
     }
 
@@ -69,9 +69,9 @@ final class DryRunTests: XCTestCase {
     func testDryRunStillWritesTheConsentSignals() async throws {
         let body = Fixture.initBody(policyResolution: Fixture.matchedResolution(
             policy: Fixture.rule(model: "opt-out", rights: ["disclosure", "opt-out", "preferences"])))
-        var fields = C15tJSON.parse(body)?.objectValue ?? [:]
+        var fields = InthJSON.parse(body)?.objectValue ?? [:]
         fields["location"] = .object(["countryCode": .string("US"), "regionCode": .null])
-        http.initResponse = .json(String(decoding: C15tJSON.encode(.object(fields)) ?? Data("{}".utf8), as: UTF8.self))
+        http.initResponse = .json(String(decoding: InthJSON.encode(.object(fields)) ?? Data("{}".utf8), as: UTF8.self))
         let bus = RecordingBus()
         let core = ConsentCore()
         await core.bootstrapAndSettle(config(dryRun: true, bus: bus, gpp: GPPOptions()))
@@ -114,10 +114,10 @@ final class DryRunTests: XCTestCase {
     }
 
     func testDryRunIsRefusedInAReleaseBuild() {
-        C15tBuild.simulate(debug: false)
-        XCTAssertFalse(C15tBuild.isDebug)
+        InthBuild.simulate(debug: false)
+        XCTAssertFalse(InthBuild.isDebug)
         XCTAssertEqual(
-            C15tBuild.dryRunRefusal(),
+            InthBuild.dryRunRefusal(),
             "dryRun is for development and CI and cannot run in a release build. "
                 + "Remove dryRun (pass it only inside #if DEBUG).")
 
@@ -125,12 +125,12 @@ final class DryRunTests: XCTestCase {
         core.bootstrap(config(dryRun: true))
         XCTAssertFalse(core.isBootstrapped)
 
-        let returned = C15t.bootstrap(config(dryRun: true))
+        let returned = Inth.bootstrap(config(dryRun: true))
         XCTAssertFalse(returned.isBootstrapped)
-        XCTAssertNil(C15t.current, "no core is installed")
+        XCTAssertNil(Inth.current, "no core is installed")
         XCTAssertEqual(http.recordedInitRequests.count, 0)
 
-        C15tBuild.simulate(debug: true)
+        InthBuild.simulate(debug: true)
         core.bootstrap(config(dryRun: true))
         XCTAssertTrue(core.isBootstrapped)
     }
@@ -139,8 +139,8 @@ final class DryRunTests: XCTestCase {
         let url = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
             .appendingPathComponent("native-protocol/local-policy/parity.json")
-        let rules = try XCTUnwrap(C15tJSON.parse(Data(contentsOf: url))?["rules"])
-        let policy = try ConsentPolicy(json: XCTUnwrap(C15tJSON.encode(.object(["rules": rules]))))
+        let rules = try XCTUnwrap(InthJSON.parse(Data(contentsOf: url))?["rules"])
+        let policy = try ConsentPolicy(json: XCTUnwrap(InthJSON.encode(.object(["rules": rules]))))
         let core = ConsentCore()
         await core.bootstrapAndSettle(CoreConfig(
             store: store, policy: policy, transport: Fixture.transport(http),

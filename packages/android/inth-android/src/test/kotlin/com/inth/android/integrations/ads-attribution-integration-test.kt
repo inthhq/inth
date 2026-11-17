@@ -1,9 +1,9 @@
-package com.c15t.android.integrations
+package com.inth.android.integrations
 
-import com.c15t.core.CommitIntent
-import com.c15t.core.model.ConsentCategory.MARKETING
-import com.c15t.core.model.ConsentCategory.MEASUREMENT
-import com.c15t.core.model.ConsentCategory.NECESSARY
+import com.inth.core.CommitIntent
+import com.inth.core.model.ConsentCategory.MARKETING
+import com.inth.core.model.ConsentCategory.MEASUREMENT
+import com.inth.core.model.ConsentCategory.NECESSARY
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -43,7 +43,7 @@ class AdMobIntegrationTest {
 }
 
 class AppsFlyerIntegrationTest {
-	private fun appsFlyer(core: com.c15t.core.ConsentCore, calls: MutableList<String>, category: com.c15t.core.model.ConsentCategory = MARKETING, start: () -> Unit = {}) =
+	private fun appsFlyer(core: com.inth.core.ConsentCore, calls: MutableList<String>, category: com.inth.core.model.ConsentCategory = MARKETING, start: () -> Unit = {}) =
 		AppsFlyerIntegration(core, category,
 			setConsentData = { calls += "consent:${it.adUserData}" },
 			stop = { calls += "stop:$it" },
@@ -131,7 +131,7 @@ class AppsFlyerIntegrationTest {
 }
 
 class AdjustIntegrationTest {
-	private fun adjust(core: com.c15t.core.ConsentCore, calls: MutableList<String>, category: com.c15t.core.model.ConsentCategory = MARKETING, enable: () -> Unit = {}) =
+	private fun adjust(core: com.inth.core.ConsentCore, calls: MutableList<String>, category: com.inth.core.model.ConsentCategory = MARKETING, enable: () -> Unit = {}) =
 		AdjustIntegration(core, category,
 			enable = { calls += "enable"; enable() },
 			disable = { calls += "disable" },
@@ -190,7 +190,7 @@ class MetaAppEventsIntegrationTest {
 	private val denied = listOf("autoLog:false", "advertiserId:false", "ldu:true")
 	private val granted = listOf("ldu:false", "advertiserId:true", "autoLog:true")
 
-	private fun meta(core: com.c15t.core.ConsentCore, calls: MutableList<String>, category: com.c15t.core.model.ConsentCategory = MARKETING) =
+	private fun meta(core: com.inth.core.ConsentCore, calls: MutableList<String>, category: com.inth.core.model.ConsentCategory = MARKETING) =
 		MetaAppEventsIntegration(core, category,
 			setAutoLogAppEventsEnabled = { calls += "autoLog:$it" },
 			setAdvertiserIDCollectionEnabled = { calls += "advertiserId:$it" },

@@ -1,11 +1,11 @@
-package com.c15t.core.store
+package com.inth.core.store
 
-import com.c15t.core.spi.KeyValueStore
+import com.inth.core.spi.KeyValueStore
 
 /**
  * Keeps the subject id out of the storage that encryption protects.
  *
- * The subject id is a random `sub_` id that c15t generates itself: it is not
+ * The subject id is a random `sub_` id that Inth generates itself: it is not
  * sensitive and it is not a hardware identifier, so encrypting it buys nothing while
  * costing everything. As long as it sat in the same slot as the consent records, a
  * lost AndroidKeyStore key took the identity with it, and the next launch resolved a
@@ -39,7 +39,7 @@ class SubjectPreservingStore(
 
 	override fun read(key: String): String? {
 		recoverSubjectIfNeeded()
-		return if (key == C15tStoreKeys.SUBJECT) identity.read(key) else records.read(key)
+		return if (key == InthStoreKeys.SUBJECT) identity.read(key) else records.read(key)
 	}
 
 	override fun write(
@@ -47,7 +47,7 @@ class SubjectPreservingStore(
 		value: String?,
 	) {
 		recoverSubjectIfNeeded()
-		if (key == C15tStoreKeys.SUBJECT) {
+		if (key == InthStoreKeys.SUBJECT) {
 			identity.write(key, value)
 		} else {
 			records.write(key, value)
@@ -56,7 +56,7 @@ class SubjectPreservingStore(
 
 	override fun writeDurably(key: String, value: String?): Boolean {
 		recoverSubjectIfNeeded()
-		return if (key == C15tStoreKeys.SUBJECT) identity.writeDurably(key, value)
+		return if (key == InthStoreKeys.SUBJECT) identity.writeDurably(key, value)
 		else records.writeDurably(key, value)
 	}
 
@@ -99,7 +99,7 @@ class SubjectPreservingStore(
 		}
 		val legacy = readQuietly(records) ?: return
 		try {
-			identity.write(C15tStoreKeys.SUBJECT, legacy)
+			identity.write(InthStoreKeys.SUBJECT, legacy)
 		} catch (_: Exception) {
 			// Identity storage that will not take the id must not be answered by
 			// deleting the only copy that still exists.
@@ -110,14 +110,14 @@ class SubjectPreservingStore(
 
 	private fun dropEncryptedCopy() {
 		try {
-			records.write(C15tStoreKeys.SUBJECT, null)
+			records.write(InthStoreKeys.SUBJECT, null)
 		} catch (_: Exception) {
 			// Harmless: the encrypted copy loses to the plain one on every read.
 		}
 	}
 
 	private fun readQuietly(store: KeyValueStore): String? = try {
-		store.read(C15tStoreKeys.SUBJECT)
+		store.read(InthStoreKeys.SUBJECT)
 	} catch (_: Exception) {
 		// A subject that cannot be read is treated as absent, which is what every
 		// other read in this package does with an unreadable payload.

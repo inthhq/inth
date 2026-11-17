@@ -1,4 +1,4 @@
-package com.c15t.core.tc
+package com.inth.core.tc
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -8,7 +8,7 @@ import kotlin.test.assertTrue
 /**
  * The four reads and their writer, each against a bit position worked out in the comment.
  *
- * These are the primitives everything in `com.c15t.core.tc` is built from, so they are tested
+ * These are the primitives everything in `com.inth.core.tc` is built from, so they are tested
  * against arithmetic rather than against the reference: if a read is off by one here, every offset
  * table in this package is off by one, and the failure has to point at the primitive.
  */

@@ -1,26 +1,26 @@
-package com.c15t.core.store
+package com.inth.core.store
 
-import com.c15t.core.model.isWithdrawal
-import com.c15t.core.model.sameOwner
+import com.inth.core.model.isWithdrawal
+import com.inth.core.model.sameOwner
 
-import com.c15t.core.SubjectIdGenerator
-import com.c15t.core.model.ConsentSnapshot
-import com.c15t.core.model.ConsentSubject
-import com.c15t.core.model.QueuedSave
-import com.c15t.core.spi.KeyValueStore
+import com.inth.core.SubjectIdGenerator
+import com.inth.core.model.ConsentSnapshot
+import com.inth.core.model.ConsentSubject
+import com.inth.core.model.QueuedSave
+import com.inth.core.spi.KeyValueStore
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.json.Json
 
 /**
- * Storage keys shared by every c15t native core.
+ * Storage keys shared by every Inth native core.
  *
  * The names match the iOS Keychain item keys in `packages/native-protocol/CONTRACT.md` so a
  * cross-platform reader can address the same slots.
  */
-object C15tStoreKeys {
-	const val SNAPSHOT = "com.c15t.snapshot"
-	const val SUBJECT = "com.c15t.subject"
-	const val PENDING = "com.c15t.pending"
+object InthStoreKeys {
+	const val SNAPSHOT = "com.inth.snapshot"
+	const val SUBJECT = "com.inth.subject"
+	const val PENDING = "com.inth.pending"
 }
 
 /**
@@ -45,14 +45,14 @@ data class UnusableSubjectId(
  * written by a newer build, a truncated write, and a tampered or decrypted-to-
  * garbage blob from the encryption layer.
  */
-class C15tStore(
+class InthStore(
 	private val backend: KeyValueStore,
-	private val json: Json = C15tJson.storage,
+	private val json: Json = InthJson.storage,
 	/**
 	 * Codec for the offline queue alone. It tolerates unknown keys, which is the opposite
-	 * of [json]; see [C15tJson.queue] for why that asymmetry is on purpose.
+	 * of [json]; see [InthJson.queue] for why that asymmetry is on purpose.
 	 */
-	private val queueJson: Json = C15tJson.queue,
+	private val queueJson: Json = InthJson.queue,
 	private val onReadFailure: (String, Throwable) -> Unit = { _, _ -> },
 	/**
 	 * Where the `IABTCF_*` bus lands, or `null` to write no bus at all.
@@ -65,11 +65,11 @@ class C15tStore(
 	 */
 	private val tcStorageBus: TcStorageBusSink? = null,
 ) {
-	private var busConfiguration: com.c15t.core.iab.IabConfiguration? = null
+	private var busConfiguration: com.inth.core.iab.IabConfiguration? = null
 
 	/** Signal the explicitly configured CMP before reading records or starting network work. */
 	@Synchronized
-	fun initializeTcStorageBus(configuration: com.c15t.core.iab.IabConfiguration?) {
+	fun initializeTcStorageBus(configuration: com.inth.core.iab.IabConfiguration?) {
 		busConfiguration = configuration
 		publishTcStorageBus(null)
 	}
@@ -97,7 +97,7 @@ class C15tStore(
 		private set
 
 	fun hasConsentRecords(): Boolean =
-		listOf(C15tStoreKeys.SNAPSHOT, C15tStoreKeys.PENDING).any { key ->
+		listOf(InthStoreKeys.SNAPSHOT, InthStoreKeys.PENDING).any { key ->
 			readRaw(key).fold(onSuccess = { it != null }, onFailure = { true })
 		}
 
@@ -118,11 +118,11 @@ class C15tStore(
 	fun readSubject(): ConsentSubject? {
 		unusableSubject = null
 		subjectReplacementReason = null
-		val raw = readRaw(C15tStoreKeys.SUBJECT).getOrElse {
+		val raw = readRaw(InthStoreKeys.SUBJECT).getOrElse {
 			subjectReplacementReason = "corrupt"
 			return null
 		}
-		val stored = tryDecode(C15tStoreKeys.SUBJECT, ConsentSubject.serializer(), raw = raw)
+		val stored = tryDecode(InthStoreKeys.SUBJECT, ConsentSubject.serializer(), raw = raw)
 		if (stored == null) {
 			subjectReplacementReason = if (raw == null) "missing" else "corrupt"
 			return null
@@ -158,7 +158,7 @@ class C15tStore(
 
 	/** Persist [subject]. */
 	fun writeSubject(subject: ConsentSubject) {
-		backend.write(C15tStoreKeys.SUBJECT, json.encodeToString(ConsentSubject.serializer(), subject))
+		backend.write(InthStoreKeys.SUBJECT, json.encodeToString(ConsentSubject.serializer(), subject))
 	}
 
 	/**
@@ -182,7 +182,7 @@ class C15tStore(
 		if (hasUnusableSubject) {
 			return null
 		}
-		return tryDecode(C15tStoreKeys.SNAPSHOT, SnapshotEnvelope.serializer()) { raw ->
+		return tryDecode(InthStoreKeys.SNAPSHOT, SnapshotEnvelope.serializer()) { raw ->
 			RetiredWireFields.assertReadable(json, raw)
 			RetiredWireFields.withoutDroppedFields(json, raw)
 		}
@@ -238,7 +238,7 @@ class C15tStore(
 		val raw = json.encodeToString(SnapshotEnvelope.serializer(), envelope)
 		val written =
 			try {
-				backend.writeDurably(C15tStoreKeys.SNAPSHOT, raw)
+				backend.writeDurably(InthStoreKeys.SNAPSHOT, raw)
 			} catch (_: Exception) {
 				false
 			}
@@ -254,10 +254,10 @@ class C15tStore(
 	@Synchronized
 	fun readPending(): List<QueuedSave> {
 		val envelope = readEnvelope()
-		val snapshot = readRaw(C15tStoreKeys.SNAPSHOT).getOrElse { return emptyList() }
+		val snapshot = readRaw(InthStoreKeys.SNAPSHOT).getOrElse { return emptyList() }
 		if (snapshot != null && envelope == null) return emptyList()
 		return envelope?.pendingSaves
-			?: tryDecode(C15tStoreKeys.PENDING, PendingQueue.serializer(), queueJson)?.entries ?: emptyList()
+			?: tryDecode(InthStoreKeys.PENDING, PendingQueue.serializer(), queueJson)?.entries ?: emptyList()
 	}
 
 	/**
@@ -280,14 +280,14 @@ class C15tStore(
 		// or disclosure the live core may already have invalidated.
 		if (old?.pendingSaves != null) return writeAtomic(old.copy(pendingSaves = entries), publishBus = false)
 		val raw = queueJson.encodeToString(PendingQueue.serializer(), PendingQueue(entries))
-		backend.write(C15tStoreKeys.PENDING, raw)
-		return readRaw(C15tStoreKeys.PENDING).getOrNull() == raw
+		backend.write(InthStoreKeys.PENDING, raw)
+		return readRaw(InthStoreKeys.PENDING).getOrNull() == raw
 	}
 
 	/** Drop stored consent state, keeping the subject id so identity survives. */
 	fun clearConsentState() {
-		backend.write(C15tStoreKeys.SNAPSHOT, null)
-		backend.write(C15tStoreKeys.PENDING, null)
+		backend.write(InthStoreKeys.SNAPSHOT, null)
+		backend.write(InthStoreKeys.PENDING, null)
 		backend.flush()
 		// Same step, same rule as every other wipe: the keys this core put on
 		// the bus go with the envelope they projected. The wipe addresses the
@@ -295,7 +295,7 @@ class C15tStore(
 		publishTcStorageBus(null)
 	}
 
-	/** Repair metadata only. Use [com.c15t.core.ConsentCore.rebuildTcStorageBus] to restore
+	/** Repair metadata only. Use [com.inth.core.ConsentCore.rebuildTcStorageBus] to restore
 	 * consent rows after current clock, list, configuration and identity validation. */
 	@Synchronized
 	fun rebuildTcStorageBus() {

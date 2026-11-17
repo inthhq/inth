@@ -1,20 +1,20 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentModel
-import com.c15t.core.model.ConsentSnapshot
-import com.c15t.core.model.ConsentSubject
-import com.c15t.core.model.PolicyResolution
-import com.c15t.core.policy.EvaluationPolicy
-import com.c15t.core.policy.PolicyPrompt
-import com.c15t.core.policy.ScopeMode
-import com.c15t.core.store.SnapshotEnvelope
-import com.c15t.core.store.TcBusValue
-import com.c15t.core.store.TcStorageBusKeys
-import com.c15t.core.store.TcStorageBusProjection
-import com.c15t.core.store.TcStorageBusSink
-import com.c15t.core.store.C15tStore
-import com.c15t.core.store.C15tStoreKeys
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentModel
+import com.inth.core.model.ConsentSnapshot
+import com.inth.core.model.ConsentSubject
+import com.inth.core.model.PolicyResolution
+import com.inth.core.policy.EvaluationPolicy
+import com.inth.core.policy.PolicyPrompt
+import com.inth.core.policy.ScopeMode
+import com.inth.core.store.SnapshotEnvelope
+import com.inth.core.store.TcBusValue
+import com.inth.core.store.TcStorageBusKeys
+import com.inth.core.store.TcStorageBusProjection
+import com.inth.core.store.TcStorageBusSink
+import com.inth.core.store.InthStore
+import com.inth.core.store.InthStoreKeys
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -68,7 +68,7 @@ internal class RecordingTcStorageBus : TcStorageBusSink {
  * kernel steps that move it.
  */
 class TcStorageBusTest {
-	private fun gvl(tcfPolicyVersion: Long = 5) = com.c15t.core.tc.GlobalVendorList(
+	private fun gvl(tcfPolicyVersion: Long = 5) = com.inth.core.tc.GlobalVendorList(
 		purposes = emptyMap(),
 		vendors = emptyMap(),
 		vendorListVersion = 177L,
@@ -78,7 +78,7 @@ class TcStorageBusTest {
 	private fun envelope(
 		policyPending: Boolean = true,
 		status: String = PolicyResolution.STATUS_UNCONFIGURED,
-		list: com.c15t.core.tc.GlobalVendorList? = null,
+		list: com.inth.core.tc.GlobalVendorList? = null,
 		policy: EvaluationPolicy? = null,
 	) = SnapshotEnvelope(
 		snapshot = ConsentSnapshot.denyAll(ConsentSubject(id = "sub_bus1"), now = 0L).copy(
@@ -214,7 +214,7 @@ class TcStorageBusTest {
 	fun writeEnvelopePublishesTheProjectionOfTheCommittedBytes() {
 		val backend = InMemoryKeyValueStore()
 		val bus = RecordingTcStorageBus()
-		val store = C15tStore(backend = backend, tcStorageBus = bus)
+		val store = InthStore(backend = backend, tcStorageBus = bus)
 
 		store.writeEnvelope(envelope(policyPending = false, status = PolicyResolution.STATUS_MATCHED, list = gvl(5)))
 
@@ -230,13 +230,13 @@ class TcStorageBusTest {
 	fun clearConsentStateClearsTheBus() {
 		val backend = InMemoryKeyValueStore()
 		val bus = RecordingTcStorageBus()
-		val store = C15tStore(backend = backend, tcStorageBus = bus)
+		val store = InthStore(backend = backend, tcStorageBus = bus)
 		store.writeEnvelope(envelope(policyPending = false, status = PolicyResolution.STATUS_MATCHED, list = gvl()))
 		assertTrue(bus.live.isNotEmpty())
 
 		store.clearConsentState()
 
-		assertNull(backend.read(C15tStoreKeys.SNAPSHOT), "the authoritative wipe still happens")
+		assertNull(backend.read(InthStoreKeys.SNAPSHOT), "the authoritative wipe still happens")
 		assertEquals(emptyMap(), bus.live)
 		assertTrue(bus.clears >= 1, "an explicit clear, not a later projection")
 	}
@@ -245,7 +245,7 @@ class TcStorageBusTest {
 	fun rebuildRecreatesTheBusAfterSomebodyWipesIt() {
 		val backend = InMemoryKeyValueStore()
 		val bus = RecordingTcStorageBus()
-		val store = C15tStore(backend = backend, tcStorageBus = bus)
+		val store = InthStore(backend = backend, tcStorageBus = bus)
 		store.writeEnvelope(envelope(policyPending = false, status = PolicyResolution.STATUS_MATCHED, list = gvl()))
 		val committed = bus.live
 
@@ -262,7 +262,7 @@ class TcStorageBusTest {
 		// store, which means emptying it.
 		val shared = RecordingTcStorageBus()
 		shared.write(mapOf(TcStorageBusKeys.TC_STRING to TcBusValue.TextValue("stale")))
-		val store = C15tStore(backend = InMemoryKeyValueStore(), tcStorageBus = shared)
+		val store = InthStore(backend = InMemoryKeyValueStore(), tcStorageBus = shared)
 
 		store.rebuildTcStorageBus()
 		assertEquals(emptyMap(), shared.live, "nothing stored means nothing mirrored")
@@ -310,7 +310,7 @@ class TcStorageBusTest {
 	fun bootstrappingWithAServedListAndAMatchedPolicyPublishesBothRows() {
 		val backend = InMemoryKeyValueStore()
 		val bus = RecordingTcStorageBus()
-		val store = C15tStore(backend = backend, tcStorageBus = bus)
+		val store = InthStore(backend = backend, tcStorageBus = bus)
 		val transport = RecordingTransport().respondInit(
 			initSuccess(body = initBody(policyId = "de-1", gvl = servedGvlJson)),
 		)
@@ -324,7 +324,7 @@ class TcStorageBusTest {
 	fun resetClearsTheKeysWeWrote() {
 		val backend = InMemoryKeyValueStore()
 		val bus = RecordingTcStorageBus()
-		val store = C15tStore(backend = backend, tcStorageBus = bus)
+		val store = InthStore(backend = backend, tcStorageBus = bus)
 		// The second answer sticks as the transport's steady state: after the
 		// reset the re-init finds an unresolved policy, so whatever the bus
 		// holds then is the projection of the wiped state, not of the old hit.
@@ -348,7 +348,7 @@ class TcStorageBusTest {
 		val transport = RecordingTransport().respondInit(
 			initSuccess(body = initBody(policyId = "de-1", gvl = servedGvlJson)),
 		)
-		testKernel(store = C15tStore(backend = backend, tcStorageBus = busA), transport = transport).bootstrap()
+		testKernel(store = InthStore(backend = backend, tcStorageBus = busA), transport = transport).bootstrap()
 		val expected = busA.live
 		assertTrue(expected.isNotEmpty())
 
@@ -357,7 +357,7 @@ class TcStorageBusTest {
 		// Relaunching must republish the mirror from that envelope.
 		busA.simulateWipedExternally()
 		val busB = RecordingTcStorageBus()
-		testKernel(store = C15tStore(backend = backend, tcStorageBus = busB)).bootstrap()
+		testKernel(store = InthStore(backend = backend, tcStorageBus = busB)).bootstrap()
 
 		assertEquals(expected, busB.live, "launch republished the bus from the stored envelope")
 	}

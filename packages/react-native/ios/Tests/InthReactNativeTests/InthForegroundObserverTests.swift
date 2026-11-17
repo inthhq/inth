@@ -1,8 +1,8 @@
-@_spi(C15tInternal) import C15tCore
+@_spi(InthInternal) import InthCore
 import Foundation
 import XCTest
 
-@_spi(C15tInternal) @testable import C15tReactNativeBridge
+@_spi(InthInternal) @testable import InthReactNativeBridge
 
 /// The foreground leg, from the cheapest distance to each way it can be wrong.
 ///
@@ -10,22 +10,22 @@ import XCTest
 /// nothing running before it is asked to. The second group is the leg wired to a real
 /// ``ConsentCore`` through the bridge's own startup path, which is the half that catches a
 /// bridge that arms nothing at all — the exact gap this leg was written to close.
-final class C15tForegroundObserverTests: XCTestCase {
+final class InthForegroundObserverTests: XCTestCase {
     /// A name of our own, so the observer-only tests do not depend on a Mac deciding to
     /// activate an application.
-    private let activation = Notification.Name("c15t.tests.foreground")
+    private let activation = Notification.Name("inth.tests.foreground")
 
     override func setUp() {
         super.setUp()
         // These observers are process-wide, so a handle left behind by another test file
         // would answer this one's notifications.
-        C15tReactNativeBootstrap.shutdown()
-        C15t.resetForTests()
+        InthReactNativeBootstrap.shutdown()
+        Inth.resetForTests()
     }
 
     override func tearDown() {
-        C15tReactNativeBootstrap.shutdown()
-        C15t.resetForTests()
+        InthReactNativeBootstrap.shutdown()
+        Inth.resetForTests()
         super.tearDown()
     }
 
@@ -33,7 +33,7 @@ final class C15tForegroundObserverTests: XCTestCase {
 
     func testOneActivationRunsTheForegroundWorkOnce() {
         let seen = Recorder()
-        let observer = C15tForegroundObserver(onForeground: seen.onForeground, notification: activation)
+        let observer = InthForegroundObserver(onForeground: seen.onForeground, notification: activation)
         observer.install()
 
         NotificationCenter.default.post(name: activation, object: nil)
@@ -44,7 +44,7 @@ final class C15tForegroundObserverTests: XCTestCase {
 
     func testInstallingTwiceStillRunsTheWorkOncePerActivation() {
         let seen = Recorder()
-        let observer = C15tForegroundObserver(onForeground: seen.onForeground, notification: activation)
+        let observer = InthForegroundObserver(onForeground: seen.onForeground, notification: activation)
 
         // Every entry point that starts a core calls `install()`, and the launch hook plus
         // a host that starts the core itself means that can be several times.
@@ -60,7 +60,7 @@ final class C15tForegroundObserverTests: XCTestCase {
 
     func testNothingRunsBeforeInstallAndNothingAfterUninstall() {
         let seen = Recorder()
-        let observer = C15tForegroundObserver(onForeground: seen.onForeground, notification: activation)
+        let observer = InthForegroundObserver(onForeground: seen.onForeground, notification: activation)
 
         NotificationCenter.default.post(name: activation, object: nil)
         XCTAssertEqual(seen.calls, 0)
@@ -79,7 +79,7 @@ final class C15tForegroundObserverTests: XCTestCase {
 
     func testADroppedObserverStopsListening() {
         let seen = Recorder()
-        var observer: C15tForegroundObserver? = C15tForegroundObserver(
+        var observer: InthForegroundObserver? = InthForegroundObserver(
             onForeground: seen.onForeground,
             notification: activation
         )
@@ -110,7 +110,7 @@ final class C15tForegroundObserverTests: XCTestCase {
 
         // The production name, not the test one: this is the registration the launch hook
         // installs, so posting anything else would prove nothing about it.
-        NotificationCenter.default.post(name: C15tForegroundObserver.didBecomeActive, object: nil)
+        NotificationCenter.default.post(name: InthForegroundObserver.didBecomeActive, object: nil)
         await core.waitUntilIdle()
 
         XCTAssertEqual(core.pendingSaveCount(), 0, "coming back delivered what launch could not")
@@ -127,7 +127,7 @@ final class C15tForegroundObserverTests: XCTestCase {
 
         http.savesFail = false
         let initsBefore = http.initCount
-        let gate = C15tReachabilityGate(onGained: C15tReactNativeBootstrap.replayThenRefresh)
+        let gate = InthReachabilityGate(onGained: InthReactNativeBootstrap.replayThenRefresh)
         gate.onLost()
         gate.onAvailable()
         await core.waitUntilIdle()
@@ -138,12 +138,12 @@ final class C15tForegroundObserverTests: XCTestCase {
 
     func testForegroundRefreshWaitsForReplayCompletion() async {
         await assertRefreshWaitsForReplay(joinExistingPass: false) {
-            NotificationCenter.default.post(name: C15tForegroundObserver.didBecomeActive, object: nil)
+            NotificationCenter.default.post(name: InthForegroundObserver.didBecomeActive, object: nil)
         }
     }
 
     func testConnectivityRefreshWaitsForAnExistingReplay() async {
-        let gate = C15tReachabilityGate(onGained: C15tReactNativeBootstrap.replayThenRefresh)
+        let gate = InthReachabilityGate(onGained: InthReactNativeBootstrap.replayThenRefresh)
         gate.onLost()
         await assertRefreshWaitsForReplay(joinExistingPass: true) {
             gate.onAvailable()
@@ -158,7 +158,7 @@ final class C15tForegroundObserverTests: XCTestCase {
         XCTAssertTrue(startMemoryCore())
         let initsBefore = http.initCount
 
-        NotificationCenter.default.post(name: C15tForegroundObserver.didBecomeActive, object: nil)
+        NotificationCenter.default.post(name: InthForegroundObserver.didBecomeActive, object: nil)
         await core.waitUntilIdle()
 
         XCTAssertEqual(http.initCount, initsBefore + 1, "one registration asks once")
@@ -170,18 +170,18 @@ final class C15tForegroundObserverTests: XCTestCase {
         XCTAssertEqual(core.save(.all).status, .committed)
         await core.waitUntilIdle()
 
-        C15tReactNativeBootstrap.shutdown()
+        InthReactNativeBootstrap.shutdown()
         let initsBefore = http.initCount
 
-        NotificationCenter.default.post(name: C15tForegroundObserver.didBecomeActive, object: nil)
+        NotificationCenter.default.post(name: InthForegroundObserver.didBecomeActive, object: nil)
         await core.waitUntilIdle()
 
         XCTAssertEqual(http.initCount, initsBefore, "a host that opted out is not woken")
         XCTAssertEqual(core.pendingSaveCount(), 1, "and nothing was replayed behind its back")
 
         http.savesFail = false
-        XCTAssertTrue(C15tReactNativeBootstrap.install(core))
-        NotificationCenter.default.post(name: C15tForegroundObserver.didBecomeActive, object: nil)
+        XCTAssertTrue(InthReactNativeBootstrap.install(core))
+        NotificationCenter.default.post(name: InthForegroundObserver.didBecomeActive, object: nil)
         await core.waitUntilIdle()
 
         XCTAssertEqual(core.pendingSaveCount(), 0, "starting again re-arms both legs")
@@ -199,7 +199,7 @@ final class C15tForegroundObserverTests: XCTestCase {
         let core = ConsentCore()
         core.bootstrap(CoreConfig(store: InMemoryStore(), transport: http, initRetry: .disabled))
         await core.waitUntilIdle()
-        XCTAssertTrue(C15tReactNativeBootstrap.install(core), file: file, line: line)
+        XCTAssertTrue(InthReactNativeBootstrap.install(core), file: file, line: line)
         XCTAssertEqual(core.save(.all).status, .committed, file: file, line: line)
         await core.waitUntilIdle()
         XCTAssertEqual(core.pendingSaveCount(), 1, file: file, line: line)
@@ -236,7 +236,7 @@ final class C15tForegroundObserverTests: XCTestCase {
         XCTAssertEqual(core.pendingSaveCount(), 0, file: file, line: line)
     }
 
-    private final class HeldReplayTransport: C15tTransport, @unchecked Sendable {
+    private final class HeldReplayTransport: InthTransport, @unchecked Sendable {
         let domain = "held-replay"
         private let lock = NSLock()
         private var replayStarted: XCTestExpectation?
@@ -270,7 +270,7 @@ final class C15tForegroundObserverTests: XCTestCase {
             continuation?.resume()
         }
 
-        func performInit(_ context: InitContext) async -> Result<InitResponse, C15tError> {
+        func performInit(_ context: InitContext) async -> Result<InitResponse, InthError> {
             let premature = lock.withLock {
                 if recovering { calls.append("init") }
                 return refreshStarted
@@ -279,7 +279,7 @@ final class C15tForegroundObserverTests: XCTestCase {
             return .success(InitResponse(policyResolution: RecordingTransport.unconfiguredResolution))
         }
 
-        func sendSave(_ body: Data) async -> Result<Void, C15tError> {
+        func sendSave(_ body: Data) async -> Result<Void, InthError> {
             let recovering = lock.withLock {
                 if self.recovering { calls.append("save-start") }
                 return self.recovering
@@ -303,7 +303,7 @@ final class C15tForegroundObserverTests: XCTestCase {
             subjectId: String,
             externalId: String,
             identityProvider: String?
-        ) async -> Result<Void, C15tError> {
+        ) async -> Result<Void, InthError> {
             .success(())
         }
     }
@@ -322,7 +322,7 @@ final class C15tForegroundObserverTests: XCTestCase {
         ))
         await core.waitUntilIdle()
         XCTAssertFalse(core.snapshot().policyPending, "a save needs a scope to be made against")
-        XCTAssertTrue(C15tReactNativeBootstrap.install(core))
+        XCTAssertTrue(InthReactNativeBootstrap.install(core))
         return (core, http)
     }
 

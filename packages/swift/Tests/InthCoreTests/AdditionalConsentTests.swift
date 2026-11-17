@@ -1,6 +1,6 @@
 import Foundation
 import XCTest
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 final class AdditionalConsentTests: XCTestCase {
     struct Vector: Decodable {
@@ -12,14 +12,14 @@ final class AdditionalConsentTests: XCTestCase {
         let cases: [Case]
     }
     func fixture() throws -> Vector {
-        try C15tJSON.decode(Vector.self, from: Data(contentsOf: IABCommitTests.fixtureURL.deletingLastPathComponent()
+        try InthJSON.decode(Vector.self, from: Data(contentsOf: IABCommitTests.fixtureURL.deletingLastPathComponent()
             .appendingPathComponent("additional-consent-cases.json")))
     }
     func response(_ v: Vector, providers: JSONValue? = nil) throws -> HTTPResponse {
-        var fields = C15tJSON.parse(Fixture.initBody(policyResolution: Fixture.matchedResolution(policy: Fixture.rule(model: "iab"))))!.objectValue!
-        fields["gvl"] = C15tJSON.parse(try C15tJSON.encode(v.gvl))!
-        fields["adTechProviders"] = try providers ?? C15tJSON.parse(C15tJSON.encode(v.providers))!
-        return HTTPResponse(status: 200, body: try C15tJSON.encode(JSONValue.object(fields)))
+        var fields = InthJSON.parse(Fixture.initBody(policyResolution: Fixture.matchedResolution(policy: Fixture.rule(model: "iab"))))!.objectValue!
+        fields["gvl"] = InthJSON.parse(try InthJSON.encode(v.gvl))!
+        fields["adTechProviders"] = try providers ?? InthJSON.parse(InthJSON.encode(v.providers))!
+        return HTTPResponse(status: 200, body: try InthJSON.encode(JSONValue.object(fields)))
     }
     func boot(_ v: Vector, store: any ConsentStore = InMemoryStore(), bus: (any TcStorageBusWriting)? = nil,
               http: StubHTTP = StubHTTP(), clock: TestClock? = nil,
@@ -50,7 +50,7 @@ final class AdditionalConsentTests: XCTestCase {
             let saved = try XCTUnwrap(core.iabConsent())
             XCTAssertEqual(saved.addtlConsent, row.expected, row.id)
             let entry = try XCTUnwrap(store.data(for: StorageKey.snapshot).flatMap(StoredEnvelope.decode)?.pendingSaves?.first)
-            XCTAssertEqual(C15tJSON.parse(entry.body)?["addtlConsent"]?.stringValue, row.expected)
+            XCTAssertEqual(InthJSON.parse(entry.body)?["addtlConsent"]?.stringValue, row.expected)
             XCTAssertEqual(http.recordedSaveRequests.first?.body, entry.body)
             if let path = ProcessInfo.processInfo.environment["C15T_AC_SAVE_EVIDENCE_DIR"] {
                 try FileManager.default.createDirectory(atPath: path, withIntermediateDirectories: true)
@@ -64,7 +64,7 @@ final class AdditionalConsentTests: XCTestCase {
 
     func testActualDefaultsColdRestoreRejectedCommitWithdrawalIdentityAndReset() async throws {
         let v = try fixture()
-        let suite = "c15t-ac-" + UUID().uuidString
+        let suite = "inth-ac-" + UUID().uuidString
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
         defer { defaults.removePersistentDomain(forName: suite) }
         let store = ACRejectingStore()
@@ -110,7 +110,7 @@ final class AdditionalConsentTests: XCTestCase {
             if change == "added" { providers.append(AdTechProvider(id: 99, name: "New", policyUrl: "https://new.example/privacy")) }
             if change == "removed" { providers.removeFirst() }
             if change == "empty" { providers = [] }
-            let update: JSONValue = change == "invalid" ? .string("invalid") : C15tJSON.parse(try C15tJSON.encode(providers))!
+            let update: JSONValue = change == "invalid" ? .string("invalid") : InthJSON.parse(try InthJSON.encode(providers))!
             http.initResponse = try response(v, providers: update)
             core.refresh()
             await core.waitUntilIdle()
@@ -162,7 +162,7 @@ final class AdditionalConsentTests: XCTestCase {
         let clock = TestClock(v.now)
         let http = StubHTTP()
         let store = InMemoryStore()
-        let suite = "c15t-ac-expiry-" + UUID().uuidString
+        let suite = "inth-ac-expiry-" + UUID().uuidString
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
         defer { defaults.removePersistentDomain(forName: suite) }
         let core = try await boot(v, store: store, bus: UserDefaultsStorageBus(defaults: defaults),
@@ -173,9 +173,9 @@ final class AdditionalConsentTests: XCTestCase {
         XCTAssertNotNil(defaults.string(forKey: TcStorageBusKeys.addtlConsent))
 
         clock.advance(by: 250)
-        var fields = C15tJSON.parse(try response(v).body)!.objectValue!
+        var fields = InthJSON.parse(try response(v).body)!.objectValue!
         fields.removeValue(forKey: "adTechProviders")
-        http.initResponse = HTTPResponse(status: 200, body: try C15tJSON.encode(JSONValue.object(fields)))
+        http.initResponse = HTTPResponse(status: 200, body: try InthJSON.encode(JSONValue.object(fields)))
         core.refresh()
         await core.waitUntilIdle()
         let envelope = try XCTUnwrap(store.data(for: StorageKey.snapshot).flatMap(StoredEnvelope.decode))
@@ -246,7 +246,7 @@ final class AdditionalConsentTests: XCTestCase {
             XCTAssertEqual(first.save(.necessary).status, .committed)
             await first.waitUntilIdle()
             let frozen = try XCTUnwrap(first.pendingSaveBodies().first)
-            XCTAssertEqual(C15tJSON.parse(frozen)?["addtlConsent"]?.stringValue, "2~~dv.1.2.3.4.10")
+            XCTAssertEqual(InthJSON.parse(frozen)?["addtlConsent"]?.stringValue, "2~~dv.1.2.3.4.10")
             switch change {
             case "list":
                 http.initResponse = try response(v, providers: .array([]))

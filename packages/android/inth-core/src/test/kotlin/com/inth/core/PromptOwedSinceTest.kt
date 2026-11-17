@@ -1,12 +1,12 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.spi.HttpClient
-import com.c15t.core.spi.HttpRequest
-import com.c15t.core.spi.HttpResponse
-import com.c15t.core.spi.TaskExecutor
-import com.c15t.core.store.C15tStore
-import com.c15t.core.transport.HostedTransport
-import com.c15t.core.wire.SnapshotWire
+import com.inth.core.spi.HttpClient
+import com.inth.core.spi.HttpRequest
+import com.inth.core.spi.HttpResponse
+import com.inth.core.spi.TaskExecutor
+import com.inth.core.store.InthStore
+import com.inth.core.transport.HostedTransport
+import com.inth.core.wire.SnapshotWire
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -55,7 +55,7 @@ class PromptOwedSinceTest {
 				HttpResponse(200, mapOf("x-c15t-policy-contract" to "1"), body) else HttpResponse(503)
 		}
 		val config = NativeConfig("https://fixture.invalid")
-		return ConsentCore(config, C15tStore(InMemoryKeyValueStore()), transport = HostedTransport(client, config), executor = TaskExecutor.DIRECT)
+		return ConsentCore(config, InthStore(InMemoryKeyValueStore()), transport = HostedTransport(client, config), executor = TaskExecutor.DIRECT)
 			.also { it.bootstrap() }
 	}
 }

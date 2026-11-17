@@ -1,20 +1,20 @@
-package com.c15t.consumer
+package com.inth.consumer
 
 import android.app.Activity
 import android.os.Bundle
 import android.widget.TextView
-import com.c15t.android.C15tAndroid
-import com.c15t.core.C15t
-import com.c15t.core.NativeConfig
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.wire.SnapshotWire
+import com.inth.android.InthAndroid
+import com.inth.core.Inth
+import com.inth.core.NativeConfig
+import com.inth.core.model.ConsentCategory
+import com.inth.core.wire.SnapshotWire
 
 class MainActivity : Activity() {
     override fun onCreate(state: Bundle?) {
         super.onCreate(state)
-        C15tAndroid.install(this, NativeConfig("https://your-project.inth.app"))
+        InthAndroid.install(this, NativeConfig("https://your-project.inth.app"))
         setContentView(TextView(this).apply {
-            text = "${C15t.isAllowed(ConsentCategory.MARKETING)}: ${C15t.snapshot()?.let { SnapshotWire.encodeToString(it) }}"
+            text = "${Inth.isAllowed(ConsentCategory.MARKETING)}: ${Inth.snapshot()?.let { SnapshotWire.encodeToString(it) }}"
         })
     }
 }

@@ -519,7 +519,7 @@ export const resolveConsentTypeRoles = function resolveConsentTypeRoles(
  *
  * @example
  * ```tsx
- * import { ConsentDialog, createConsentTheme } from '@c15t/react-native';
+ * import { ConsentDialog, createConsentTheme } from '@inth/react-native';
  *
  * const theme = createConsentTheme({ colors: { primary: '#7C3AED' } });
  *

@@ -1,7 +1,7 @@
-package com.c15t.android.integrations
+package com.inth.android.integrations
 
-import com.c15t.core.ConsentCore
-import com.c15t.core.model.ConsentCategory
+import com.inth.core.ConsentCore
+import com.inth.core.model.ConsentCategory
 
 /**
  * Keep the Meta (Facebook) SDK's automatic App Events, advertiser ID collection

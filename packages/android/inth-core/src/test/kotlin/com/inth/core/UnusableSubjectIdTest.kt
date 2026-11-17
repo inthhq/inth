@@ -1,14 +1,14 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentSubject
-import com.c15t.core.model.KernelError
-import com.c15t.core.spi.KeyValueStore
-import com.c15t.core.store.C15tJson
-import com.c15t.core.store.C15tStore
-import com.c15t.core.store.C15tStoreKeys
-import com.c15t.core.transport.SaveOutcome
-import com.c15t.core.wire.SnapshotWire
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentSubject
+import com.inth.core.model.KernelError
+import com.inth.core.spi.KeyValueStore
+import com.inth.core.store.InthJson
+import com.inth.core.store.InthStore
+import com.inth.core.store.InthStoreKeys
+import com.inth.core.transport.SaveOutcome
+import com.inth.core.wire.SnapshotWire
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -40,7 +40,7 @@ class UnusableSubjectIdTest {
 	fun `a stored grant under a refused id reads as a first launch`() {
 		val install = poisonedInstall()
 		val backend = install.backend
-		val store = C15tStore(backend)
+		val store = InthStore(backend)
 		val errors = mutableListOf<KernelError>()
 		val relaunch = RecordingTransport()
 		val launch = testKernel(
@@ -73,7 +73,7 @@ class UnusableSubjectIdTest {
 			"hydration persists what it settled on, the same way a first launch does",
 		)
 		assertNull(persisted.snapshot.explicitChoice, "the grant must not be what comes back")
-		val persistedBytes = assertNotNull(backend.read(C15tStoreKeys.SNAPSHOT))
+		val persistedBytes = assertNotNull(backend.read(InthStoreKeys.SNAPSHOT))
 		assertFalse(
 			persistedBytes.contains(install.healthyId),
 			"the envelope on disk is still the one written under the refused id",
@@ -97,7 +97,7 @@ class UnusableSubjectIdTest {
 		// The refused id coming back cannot buy a second announcement. A host whose
 		// identity slot is unwritable re-reads the same bad id on every resolve, and a
 		// launch that reported each of them turns one re-prompt into a stream of errors.
-		backend.putSilently(C15tStoreKeys.SUBJECT, subjectJson(LEGACY_UUID))
+		backend.putSilently(InthStoreKeys.SUBJECT, subjectJson(LEGACY_UUID))
 		launch.reset()
 		assertEquals(1, errors.count { it.code == CODE }, "one launch, one announcement")
 		assertNotEquals(LEGACY_UUID, assertNotNull(launch.snapshot().subject).id)
@@ -107,11 +107,11 @@ class UnusableSubjectIdTest {
 	fun `missing and corrupt identities discard envelope and queue across restarts`() {
 		for (corrupt in listOf(false, true)) {
 			val install = poisonedInstall()
-			if (corrupt) install.backend.putSilently(C15tStoreKeys.SUBJECT, "not-json")
-			else install.backend.write(C15tStoreKeys.SUBJECT, null)
+			if (corrupt) install.backend.putSilently(InthStoreKeys.SUBJECT, "not-json")
+			else install.backend.write(InthStoreKeys.SUBJECT, null)
 			val errors = mutableListOf<KernelError>()
 			val transport = RecordingTransport()
-			val store = C15tStore(install.backend)
+			val store = InthStore(install.backend)
 			val core = testKernel(store = store, transport = transport, logger = { errors += it })
 			core.bootstrap()
 			assertNull(core.snapshot().explicitChoice)
@@ -122,7 +122,7 @@ class UnusableSubjectIdTest {
 			assertEquals(1, errors.count { it.code == code })
 			val identity = core.snapshot().subject?.id
 			core.bootstrap()
-			val restart = testKernel(store = C15tStore(install.backend), transport = RecordingTransport())
+			val restart = testKernel(store = InthStore(install.backend), transport = RecordingTransport())
 			restart.bootstrap()
 			assertEquals(identity, restart.snapshot().subject?.id)
 			assertNull(restart.snapshot().explicitChoice)
@@ -132,10 +132,10 @@ class UnusableSubjectIdTest {
 
 	@Test
 	fun `throwing identity recovery reads report failure and never inherit consent`() {
-		for (unreadable in listOf(C15tStoreKeys.SUBJECT, C15tStoreKeys.SNAPSHOT, C15tStoreKeys.PENDING)) {
+		for (unreadable in listOf(InthStoreKeys.SUBJECT, InthStoreKeys.SNAPSHOT, InthStoreKeys.PENDING)) {
 			val install = poisonedInstall()
-			if (unreadable != C15tStoreKeys.SUBJECT) install.backend.write(C15tStoreKeys.SUBJECT, null)
-			if (unreadable == C15tStoreKeys.PENDING) install.backend.write(C15tStoreKeys.SNAPSHOT, null)
+			if (unreadable != InthStoreKeys.SUBJECT) install.backend.write(InthStoreKeys.SUBJECT, null)
+			if (unreadable == InthStoreKeys.PENDING) install.backend.write(InthStoreKeys.SNAPSHOT, null)
 			val failures = mutableListOf<String>()
 			val backend = object : KeyValueStore by install.backend {
 				override fun read(key: String): String? {
@@ -143,7 +143,7 @@ class UnusableSubjectIdTest {
 					return install.backend.read(key)
 				}
 			}
-			val store = C15tStore(backend, onReadFailure = { key, _ -> failures += key })
+			val store = InthStore(backend, onReadFailure = { key, _ -> failures += key })
 			val transport = RecordingTransport()
 			val core = testKernel(store = store, transport = transport)
 			core.bootstrap()
@@ -163,15 +163,15 @@ class UnusableSubjectIdTest {
 		// its own slot: after the discard, the slots left are exactly the slots a first
 		// launch leaves, which is what stops the old decision coming back tomorrow.
 		val install = poisonedInstall()
-		val discarded = C15tStore(install.backend)
+		val discarded = InthStore(install.backend)
 		val launch = testKernel(store = discarded, transport = RecordingTransport())
 		launch.bootstrap()
 		val adopted = assertNotNull(launch.snapshot().subject).id
 
 		val firstLaunchBackend = InMemoryKeyValueStore()
-		firstLaunchBackend.putSilently(C15tStoreKeys.SUBJECT, subjectJson(adopted))
+		firstLaunchBackend.putSilently(InthStoreKeys.SUBJECT, subjectJson(adopted))
 		val comparison = testKernel(
-			store = C15tStore(firstLaunchBackend),
+			store = InthStore(firstLaunchBackend),
 			transport = RecordingTransport(),
 		)
 		comparison.bootstrap()
@@ -197,8 +197,8 @@ class UnusableSubjectIdTest {
 	 * the legacy id an older build wrote into the same slot. */
 	private fun poisonedInstall(): PoisonedInstall {
 		val backend = InMemoryKeyValueStore()
-		backend.putSilently(C15tStoreKeys.SUBJECT, subjectJson(HEALTHY_ID))
-		val store = C15tStore(backend)
+		backend.putSilently(InthStoreKeys.SUBJECT, subjectJson(HEALTHY_ID))
+		val store = InthStore(backend)
 		// A policy has to resolve or the commit is refused and there is no grant to lose.
 		val transport = RecordingTransport()
 			.respondInit(initSuccess())
@@ -226,7 +226,7 @@ class UnusableSubjectIdTest {
 			"the queued body is attributed to the healthy id",
 		)
 
-		backend.putSilently(C15tStoreKeys.SUBJECT, subjectJson(LEGACY_UUID))
+		backend.putSilently(InthStoreKeys.SUBJECT, subjectJson(LEGACY_UUID))
 		return PoisonedInstall(backend, healthyId)
 	}
 
@@ -243,6 +243,6 @@ class UnusableSubjectIdTest {
 		const val CODE = "subject-id-unusable"
 
 		fun subjectJson(id: String): String =
-			C15tJson.storage.encodeToString(ConsentSubject.serializer(), ConsentSubject(id = id))
+			InthJson.storage.encodeToString(ConsentSubject.serializer(), ConsentSubject(id = id))
 	}
 }

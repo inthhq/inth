@@ -1,6 +1,6 @@
 // #region docs:swift-sentry-replay-binding title="SentryReplayOwner.swift"
-import C15tApple
-import C15tCore
+import InthApple
+import InthCore
 
 final class SentryReplayOwner {
     private let consent: SentryReplayIntegration

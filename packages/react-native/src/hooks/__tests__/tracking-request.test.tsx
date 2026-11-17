@@ -359,7 +359,7 @@ describe('useTrackingRequest', () => {
 		);
 
 		fake.rejectTrackingRequestWith(
-			'C15T_TRACKING_UNSUPPORTED',
+			'INTH_TRACKING_UNSUPPORTED',
 			'no tracking question to ask'
 		);
 
@@ -496,7 +496,7 @@ describe('useTrackingRequest', () => {
 		await flushPromises();
 
 		// The requirement in one assertion. Apple's Allow is Apple's, and a journey that
-		// answered it by granting c15t categories would be buying consent with a system
+		// answered it by granting Inth categories would be buying consent with a system
 		// dialog. The categories stay exactly where the subject left them.
 		expect(fake.commitIntents).toEqual([]);
 

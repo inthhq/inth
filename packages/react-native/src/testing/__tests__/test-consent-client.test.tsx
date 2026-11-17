@@ -15,7 +15,7 @@ import { useSaveConsents } from '../../hooks/use-consent-actions';
 import type { SaveConsentsInput } from '../../hooks/use-consent-actions';
 import { useConsentDecision } from '../../hooks/use-consent-decision';
 import { getConsentClient, resetConsentClient } from '../../native/client';
-import { getNativeC15t, NativeC15tUnavailableError } from '../../native/module';
+import { getNativeInth, NativeInthUnavailableError } from '../../native/module';
 import {
 	onConsentPresenterOutcome,
 	presentConsentPrompt,
@@ -440,12 +440,12 @@ describe('installation', () => {
 
 		first.setConsent('granted');
 		expect(getConsentClient()).toBe(second.client);
-		expect(getNativeC15t()).not.toBeNull();
+		expect(getNativeInth()).not.toBeNull();
 
 		second.dispose();
 		second.dispose();
 
-		expect(() => getNativeC15t()).toThrow(NativeC15tUnavailableError);
+		expect(() => getNativeInth()).toThrow(NativeInthUnavailableError);
 	});
 });
 
@@ -925,10 +925,10 @@ describe('what the native cores refuse', () => {
 		createTestConsentClient({ consent: 'unset', nativeUI: false });
 
 		await expect(presentConsentPrompt(PRIVACY_URL)).rejects.toMatchObject({
-			code: 'C15T_NATIVE_UI_EXCLUDED',
+			code: 'INTH_NATIVE_UI_EXCLUDED',
 		});
 		await expect(presentPreferences(PRIVACY_URL)).rejects.toMatchObject({
-			code: 'C15T_NATIVE_UI_EXCLUDED',
+			code: 'INTH_NATIVE_UI_EXCLUDED',
 		});
 	});
 
@@ -942,7 +942,7 @@ describe('what the native cores refuse', () => {
 		createTestConsentClient({ consent: 'unset' });
 
 		await expect(presentPreferences(url)).rejects.toMatchObject({
-			code: 'C15T_PRESENTER_INVALID_URL',
+			code: 'INTH_PRESENTER_INVALID_URL',
 		});
 	});
 });

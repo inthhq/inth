@@ -3,7 +3,7 @@ import Foundation
 /// Interaction the active policy still owes.
 ///
 /// `{ kind, reason }`, which is what `@c15t/core` puts on its snapshot, what the
-/// `packages/native-protocol` fixtures carry, and what `@c15t/react-native` decodes. The
+/// `packages/native-protocol` fixtures carry, and what `@inth/react-native` decodes. The
 /// contract document sketches a `notice`/`acknowledge`/`purpose` triple instead;
 /// the kernel wins, because a native core that flattened it would hand the
 /// JavaScript layer a value its own types reject.
@@ -282,7 +282,7 @@ public struct PrivacySignals: Sendable, Codable, Equatable {
     }
 }
 
-/// Subject identifiers carried on the snapshot. `id` is the c15t-generated
+/// Subject identifiers carried on the snapshot. `id` is the inth-generated
 /// subject id; it is never derived from a hardware identifier.
 public struct SubjectSnapshot: Sendable, Codable, Equatable {
     public let id: String

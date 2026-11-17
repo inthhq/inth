@@ -1,4 +1,4 @@
-package com.c15t.core.model
+package com.inth.core.model
 
 import kotlinx.serialization.json.*
 
@@ -84,7 +84,7 @@ internal fun QueuedSave.isWithdrawal(): Boolean {
 	}
 	val encoded = payload.tcString ?: return payload.consentAction == ConsentAction.NECESSARY ||
 		payload.confirmed.categories.let { it.isNotEmpty() && it.values.none { granted -> granted } }
-	val tc = runCatching { com.c15t.core.tc.TcStringDecoder.decode(encoded) }.getOrNull() ?: return false
+	val tc = runCatching { com.inth.core.tc.TcStringDecoder.decode(encoded) }.getOrNull() ?: return false
 	val c = tc.core
 	val p = tc.publisher
 	return c.purposeConsents.isEmpty() && c.purposeLegitimateInterests.isEmpty() &&

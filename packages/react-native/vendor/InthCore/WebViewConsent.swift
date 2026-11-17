@@ -130,7 +130,7 @@ public struct WebViewConsentState: Sendable, Equatable {
 
 /// Builds the scripts a WebView helper injects, for one list of origins and one token.
 ///
-/// Platform glue (`ConsentWebView` in C15tApple, or a host's own) adds
+/// Platform glue (`ConsentWebView` in InthApple, or a host's own) adds
 /// ``documentStart(_:)`` as a document-start user script and runs ``update(_:)``
 /// in the main frame when consent changes. Both scripts check the page origin
 /// themselves, so a page outside ``origins`` gets nothing.

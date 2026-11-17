@@ -1,13 +1,13 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.model.ActiveUI
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentModel
-import com.c15t.core.model.PolicyResolution
-import com.c15t.core.store.C15tStore
-import com.c15t.core.store.C15tStoreKeys
-import com.c15t.core.transport.TransportOutcome
-import com.c15t.core.transport.C15tProtocol
+import com.inth.core.model.ActiveUI
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentModel
+import com.inth.core.model.PolicyResolution
+import com.inth.core.store.InthStore
+import com.inth.core.store.InthStoreKeys
+import com.inth.core.transport.TransportOutcome
+import com.inth.core.transport.InthProtocol
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -22,7 +22,7 @@ import kotlin.test.assertTrue
 class FailClosedTest {
 	private fun bootstrapWith(body: String): ConsentCore {
 		val transport = RecordingTransport().respondInit(initSuccess(body = body))
-		return testKernel(store = C15tStore(InMemoryKeyValueStore()), transport = transport).also { it.bootstrap() }
+		return testKernel(store = InthStore(InMemoryKeyValueStore()), transport = transport).also { it.bootstrap() }
 	}
 
 	private fun assertDenyAll(kernel: ConsentCore) {
@@ -84,9 +84,9 @@ class FailClosedTest {
 	@Test
 	fun `a producer on another policy contract is a configuration error`() {
 		val transport = RecordingTransport().respondInit(
-			initSuccess(C15tProtocol.POLICY_CONTRACT_HEADER to "2"),
+			initSuccess(InthProtocol.POLICY_CONTRACT_HEADER to "2"),
 		)
-		val kernel = testKernel(store = C15tStore(InMemoryKeyValueStore()), transport = transport)
+		val kernel = testKernel(store = InthStore(InMemoryKeyValueStore()), transport = transport)
 		kernel.bootstrap()
 
 		assertDenyAll(kernel)
@@ -102,9 +102,9 @@ class FailClosedTest {
 	@Test
 	fun `an unparseable contract header fails closed`() {
 		val transport = RecordingTransport().respondInit(
-			initSuccess(C15tProtocol.POLICY_CONTRACT_HEADER to "latest"),
+			initSuccess(InthProtocol.POLICY_CONTRACT_HEADER to "latest"),
 		)
-		val kernel = testKernel(store = C15tStore(InMemoryKeyValueStore()), transport = transport)
+		val kernel = testKernel(store = InthStore(InMemoryKeyValueStore()), transport = transport)
 		kernel.bootstrap()
 
 		assertDenyAll(kernel)
@@ -115,11 +115,11 @@ class FailClosedTest {
 	fun `a negotiated producer with no policyResolution fails as an invalid payload`() {
 		val transport = RecordingTransport().respondInit(
 			initSuccess(
-				C15tProtocol.POLICY_CONTRACT_HEADER to C15tProtocol.POLICY_CONTRACT_VERSION.toString(),
+				InthProtocol.POLICY_CONTRACT_HEADER to InthProtocol.POLICY_CONTRACT_VERSION.toString(),
 				body = """{"location":{"countryCode":"US"}}""",
 			)
 		)
-		val kernel = testKernel(store = C15tStore(InMemoryKeyValueStore()), transport = transport)
+		val kernel = testKernel(store = InthStore(InMemoryKeyValueStore()), transport = transport)
 		kernel.bootstrap()
 
 		assertDenyAll(kernel)
@@ -129,7 +129,7 @@ class FailClosedTest {
 	@Test
 	fun `a non-2xx init fails closed`() {
 		val kernel = testKernel(
-			store = C15tStore(InMemoryKeyValueStore()),
+			store = InthStore(InMemoryKeyValueStore()),
 			transport = RecordingTransport().respondInit(TransportOutcome.HttpFailure(503)),
 		).also { it.bootstrap() }
 
@@ -140,8 +140,8 @@ class FailClosedTest {
 	@Test
 	fun `a snapshot envelope that cannot be decoded reads as nothing stored`() {
 		val backend = InMemoryKeyValueStore()
-		backend.putSilently(C15tStoreKeys.SNAPSHOT, """{"revision":1,"policyPending":""")
-		val kernel = testKernel(store = C15tStore(backend), transport = RecordingTransport())
+		backend.putSilently(InthStoreKeys.SNAPSHOT, """{"revision":1,"policyPending":""")
+		val kernel = testKernel(store = InthStore(backend), transport = RecordingTransport())
 
 		kernel.bootstrap()
 

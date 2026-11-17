@@ -1,4 +1,4 @@
-package com.c15t.core.tc
+package com.inth.core.tc
 
 /**
  * The consent facts this build is willing to author a TC String from.
@@ -75,7 +75,7 @@ data class TcConsentInput(
  * them is how a reader ends up rewriting what it read.
  *
  * [encode] over a [TcConsentInput] authors a string from this build's own consent state and matches
- * what c15t's web codec writes for the same state: same fields, same defaults, same smaller-of-two
+ * what Inth's web codec writes for the same state: same fields, same defaults, same smaller-of-two
  * choice for the vendor sections, same segment sequence.
  *
  * [encode] over a [TcString] re-emits something that was decoded, and it is byte-exact by
@@ -87,7 +87,7 @@ object TcStringEncoder {
 	/**
 	 * Author a TC String for [input].
 	 *
-	 * The segment sequence follows `SegmentSequence.js` for the two scopes c15t can produce:
+	 * The segment sequence follows `SegmentSequence.js` for the two scopes Inth can produce:
 	 * service-specific is `[core].[vendorsDisclosed].[publisherTC]` and global is
 	 * `[core].[vendorsDisclosed]`, the Publisher TC segment riding along only in the former. It is
 	 * written all-zero because the web codec reaches it with no publisher purpose and no custom

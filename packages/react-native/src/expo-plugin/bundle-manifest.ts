@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 
-import { C15tPluginError } from './errors';
+import { InthPluginError } from './errors';
 
 /** Release builds fail when the manifest fetch fails; debug builds warn and continue. */
 export type ManifestBuild = 'release' | 'debug';
@@ -65,7 +65,7 @@ export const resolveCli = function resolveCli(projectRoot: string): string {
 			'@c15t/cli/package.json'
 		);
 	} catch {
-		throw new C15tPluginError(
+		throw new InthPluginError(
 			'bundleManifest runs `c15t mobile-manifest`, and @c15t/cli is not ' +
 				'installed in this project. Add @c15t/cli to devDependencies.'
 		);
@@ -75,7 +75,7 @@ export const resolveCli = function resolveCli(projectRoot: string): string {
 	};
 	const entry = typeof bin === 'string' ? bin : bin?.c15t;
 	if (entry === undefined) {
-		throw new C15tPluginError('@c15t/cli has no c15t binary to run.');
+		throw new InthPluginError('@c15t/cli has no c15t binary to run.');
 	}
 	return resolve(dirname(manifest), entry);
 };
@@ -145,7 +145,7 @@ export const fetchBundledManifest = function fetchBundledManifest(
 				_resolve();
 			} else {
 				_reject(
-					new C15tPluginError(
+					new InthPluginError(
 						`c15t mobile-manifest could not fetch the manifest for this ${build} build. ` +
 							'Connect the build to the network, set bundleManifest.allowStaleManifest ' +
 							'to reuse the last fetched copy, or set C15T_MANIFEST_BUILD=debug for a debug build.'

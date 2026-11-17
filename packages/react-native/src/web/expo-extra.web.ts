@@ -1,17 +1,17 @@
 /**
  * Read the web engine's configuration out of the Expo app config.
  *
- * The Expo config plugin writes `extra.c15t` from the same options it writes
- * into the native binary, so a universal app configures c15t once.
+ * The Expo config plugin writes `extra.inth` from the same options it writes
+ * into the native binary, so a universal app configures Inth once.
  */
 
 import type { AllConsentNames } from '../protocol/vocabulary';
 
 /**
  * The web engine's configuration: the values the Expo config plugin writes to
- * the binary for iOS and Android, and to `extra.c15t` for web.
+ * the binary for iOS and Android, and to `extra.inth` for web.
  *
- * The plugin writes it to `extra.c15t`; {@link webOptionsFromManifest} reads it.
+ * The plugin writes it to `extra.inth`; {@link webOptionsFromManifest} reads it.
  */
 export interface WebConsentOptions {
 	/**
@@ -43,7 +43,7 @@ export interface WebConsentOptions {
  *
  * @param manifest - The public app config, as an object or as the JSON text
  *   Expo's bundler inlines.
- * @returns The options `extra.c15t` carries.
+ * @returns The options `extra.inth` carries.
  */
 export const webOptionsFromManifest = function webOptionsFromManifest(
 	manifest: unknown
@@ -60,15 +60,15 @@ export const webOptionsFromManifest = function webOptionsFromManifest(
 		return null;
 	}
 	const { extra } = config as { readonly extra?: unknown };
-	const c15t =
+	const inth =
 		typeof extra === 'object' && extra !== null
-			? (extra as Record<string, unknown>).c15t
+			? (extra as Record<string, unknown>).inth
 			: undefined;
-	if (typeof c15t !== 'object' || c15t === null) {
+	if (typeof inth !== 'object' || inth === null) {
 		return null;
 	}
 	const { backendURL, consentCategories, domain, dryRun, forceGPC } =
-		c15t as Record<string, unknown>;
+		inth as Record<string, unknown>;
 	if (typeof backendURL !== 'string') {
 		return null;
 	}

@@ -6,9 +6,9 @@
 
 	<application>
 		<!--
-			Bootstraps c15t before the first Activity exists, which is what lets an
+			Bootstraps Inth before the first Activity exists, which is what lets an
 			ad SDK that starts earlier than the app still read a deny-all answer.
-			A host that configures c15t itself can remove this entry.
+			A host that configures Inth itself can remove this entry.
 		-->
 		<provider
 			android:name="androidx.startup.InitializationProvider"
@@ -16,7 +16,7 @@
 			android:exported="false"
 			tools:node="merge">
 			<meta-data
-				android:name="com.c15t.android.C15tInitializer"
+				android:name="com.inth.android.InthInitializer"
 				android:value="androidx.startup" />
 		</provider>
 	</application>

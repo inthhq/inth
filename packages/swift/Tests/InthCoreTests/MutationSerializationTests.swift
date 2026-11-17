@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-@_spi(C15tInternal) @testable import C15tCore
+@_spi(InthInternal) @testable import InthCore
 
 final class MutationSerializationTests: XCTestCase {
     final class BlockingStore: ConsentStore, @unchecked Sendable {
@@ -135,9 +135,9 @@ final class MutationSerializationTests: XCTestCase {
             await core.waitUntilIdle()
             http.initResponse = HTTPResponse(status: 200, body: try IABDeliveryTests().initBody(vector, listVersion: 43))
             if operation == "hydrate" {
-                var raw = try XCTUnwrap(C15tJSON.parse(store.data(for: StorageKey.snapshot)!)?.objectValue)
+                var raw = try XCTUnwrap(InthJSON.parse(store.data(for: StorageKey.snapshot)!)?.objectValue)
                 raw["iabConsent"] = .null
-                store.underlying.set(try C15tJSON.encode(JSONValue.object(raw)), for: StorageKey.snapshot)
+                store.underlying.set(try InthJSON.encode(JSONValue.object(raw)), for: StorageKey.snapshot)
             }
             store.arm()
             let work = Task.detached {

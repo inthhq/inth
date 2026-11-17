@@ -1,5 +1,5 @@
-@_spi(C15tInternal) import C15tCore
-@_spi(C15tInternal) import C15tReactNativeBridge
+@_spi(InthInternal) import InthCore
+@_spi(InthInternal) import InthReactNativeBridge
 import Foundation
 import XCTest
 
@@ -29,7 +29,7 @@ import XCTest
 /// would make the bus write optional -- the `file` storage mode takes exactly that hit
 /// here, because `Data.write` refuses the complete-file-protection option off iOS. The
 /// bus and the store are separate seams, and this is the bus's test.
-final class C15tBridgeStorageBusTests: XCTestCase {
+final class InthBridgeStorageBusTests: XCTestCase {
     /// Out of the specification's table on purpose: `TcStorageBus` names what a wipe may
     /// touch, and a bus that cleared somebody else's privacy key would be a worse bug
     /// than one that wrote nothing.
@@ -45,12 +45,12 @@ final class C15tBridgeStorageBusTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
-        C15t.resetForTests()
+        Inth.resetForTests()
         seedStaleRows()
     }
 
     override func tearDown() {
-        C15t.resetForTests()
+        Inth.resetForTests()
         for name in seededSpecKeys + [foreignKey] {
             UserDefaults.standard.removeObject(forKey: name)
         }
@@ -62,11 +62,11 @@ final class C15tBridgeStorageBusTests: XCTestCase {
             // No transport, so the bus writes this counts are the core's own rather
             // than whatever a launch that reached a backend decided to add.
             startWithoutNetwork(infoPlist: [
-                C15tBridgeConfiguration.InfoPlistKey.storageMode: "memory",
-                C15tBridgeConfiguration.InfoPlistKey.backendURL: testProjectURL,
+                InthBridgeConfiguration.InfoPlistKey.storageMode: "memory",
+                InthBridgeConfiguration.InfoPlistKey.backendURL: testProjectURL,
             ])
         )
-        guard let core = C15t.current else { return XCTFail("the bridge must install a core") }
+        guard let core = Inth.current else { return XCTFail("the bridge must install a core") }
 
         // The commit the bus is allowed to ride on. Without this the removals below could
         // only mean the defaults were never written to at all.
@@ -100,7 +100,7 @@ final class C15tBridgeStorageBusTests: XCTestCase {
         let defaults = UserDefaults.standard
         defaults.set(3, forKey: TcStorageBusKeys.policyVersion)
         defaults.set(1, forKey: TcStorageBusKeys.gdprApplies)
-        defaults.set("CMP-before-c15t", forKey: TcStorageBusKeys.tcString)
+        defaults.set("CMP-before-inth", forKey: TcStorageBusKeys.tcString)
         defaults.set("2~1~dv.", forKey: TcStorageBusKeys.addtlConsent)
         defaults.set("G-1", forKey: foreignKey)
     }

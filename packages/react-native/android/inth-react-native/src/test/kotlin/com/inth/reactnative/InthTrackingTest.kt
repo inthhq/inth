@@ -1,9 +1,9 @@
-package com.c15t.reactnative
+package com.inth.reactnative
 
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentDecision
-import com.c15t.core.model.ConsentSnapshot
-import com.c15t.core.model.ConsentState
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentDecision
+import com.inth.core.model.ConsentSnapshot
+import com.inth.core.model.ConsentState
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
@@ -23,35 +23,35 @@ import org.junit.Test
  * `packages/native-protocol/CONTRACT.md` read as a table, checked against the core's own
  * [ConsentSnapshot.decision] rather than against a copy of the rule.
  */
-class C15tTrackingTest {
+class InthTrackingTest {
 	private val json = Json { ignoreUnknownKeys = true }
 
 	@Test
 	fun `android reports the arm for a platform with no gate, never not-determined`() {
-		assertEquals(C15tTrackingAuthorization.UNSUPPORTED, C15tTracking.status)
+		assertEquals(InthTrackingAuthorization.UNSUPPORTED, InthTracking.status)
 		assertNotEquals(
 			"`unsupported` means the platform asks nothing; `not-determined` means a " +
 				"subject is still owed a question. The JavaScript combinator reads them " +
 				"oppositely, so they must stay two arms.",
-			C15tTrackingAuthorization.NOT_DETERMINED.wireValue,
-			C15tTracking.status.wireValue,
+			InthTrackingAuthorization.NOT_DETERMINED.wireValue,
+			InthTracking.status.wireValue,
 		)
 	}
 
 	@Test
 	fun `the arm spellings are the ones the JavaScript protocol compares against`() {
 		val expected = mapOf(
-			C15tTrackingAuthorization.AUTHORIZED to "authorized",
-			C15tTrackingAuthorization.DENIED to "denied",
-			C15tTrackingAuthorization.NOT_DETERMINED to "not-determined",
-			C15tTrackingAuthorization.RESTRICTED to "restricted",
-			C15tTrackingAuthorization.UNSUPPORTED to "unsupported",
+			InthTrackingAuthorization.AUTHORIZED to "authorized",
+			InthTrackingAuthorization.DENIED to "denied",
+			InthTrackingAuthorization.NOT_DETERMINED to "not-determined",
+			InthTrackingAuthorization.RESTRICTED to "restricted",
+			InthTrackingAuthorization.UNSUPPORTED to "unsupported",
 		)
 
 		assertEquals(
 			"every arm in the shared vocabulary reaches the wire",
 			expected.keys,
-			C15tTrackingAuthorization.entries.toSet(),
+			InthTrackingAuthorization.entries.toSet(),
 		)
 		for ((arm, wire) in expected) {
 			// Written against strings so a renamed `wireValue` fails rather than
@@ -63,7 +63,7 @@ class C15tTrackingTest {
 
 	@Test
 	fun `the tracking payload carries the arm and nothing else`() {
-		val payload = parse(C15tPayload.trackingAuthorization(C15tTracking.status))
+		val payload = parse(InthPayload.trackingAuthorization(InthTracking.status))
 
 		assertEquals(
 			"no consent field may ride along on a platform answer",
@@ -76,10 +76,10 @@ class C15tTrackingTest {
 	@Test
 	fun `a tracking request has a rejection code the host can branch on`() {
 		// The two codes the JavaScript contract names. Android only ever has one.
-		assertEquals("C15T_TRACKING_UNSUPPORTED", C15tTracking.REJECT_UNSUPPORTED)
+		assertEquals("INTH_TRACKING_UNSUPPORTED", InthTracking.REJECT_UNSUPPORTED)
 		assertTrue(
 			"the message has to answer the question the refusal raises",
-			C15tTracking.MESSAGE_UNSUPPORTED.contains("c15t decision alone"),
+			InthTracking.MESSAGE_UNSUPPORTED.contains("Inth decision alone"),
 		)
 	}
 
@@ -110,7 +110,7 @@ class C15tTrackingTest {
 			val baseline = snapshot.decision(ConsentCategory.MEASUREMENT)
 			assertEquals(expected, baseline)
 
-			for (arm in C15tTrackingAuthorization.entries) {
+			for (arm in InthTrackingAuthorization.entries) {
 				assertEquals(
 					"arm ${arm.wireValue} moved a ${baseline.name} decision",
 					baseline,
@@ -127,9 +127,9 @@ class C15tTrackingTest {
 	/** The combination rule, written from the contract's sentence, not from production code. */
 	private fun mayTrack(
 		decision: ConsentDecision,
-		arm: C15tTrackingAuthorization,
+		arm: InthTrackingAuthorization,
 	): Boolean = decision == ConsentDecision.GRANTED &&
-		(arm == C15tTrackingAuthorization.AUTHORIZED || arm == C15tTrackingAuthorization.UNSUPPORTED)
+		(arm == InthTrackingAuthorization.AUTHORIZED || arm == InthTrackingAuthorization.UNSUPPORTED)
 
 	private fun parse(raw: String): JsonObject = json.parseToJsonElement(raw).jsonObject
 }

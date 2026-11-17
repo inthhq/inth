@@ -1,9 +1,9 @@
-name: C15tCustomConsent
+name: InthCustomConsent
 options:
   deploymentTarget:
     iOS: '16.4'
 packages:
-  C15tNative:
+  InthNative:
     path: ../..
 settings:
   base:
@@ -11,7 +11,7 @@ settings:
     GENERATE_INFOPLIST_FILE: YES
     CODE_SIGN_IDENTITY[sdk=iphonesimulator*]: '-'
 targets:
-  C15tCustomConsent:
+  InthCustomConsent:
     type: application
     platform: iOS
     sources:
@@ -20,19 +20,19 @@ targets:
       - path: ../../../../examples/native/consent-demo/fixtures
         buildPhase: resources
     dependencies:
-      - package: C15tNative
-        product: C15tCore
-      - package: C15tNative
-        product: C15tApple
-      - package: C15tNative
-        product: C15tConsentUI
+      - package: InthNative
+        product: InthCore
+      - package: InthNative
+        product: InthApple
+      - package: InthNative
+        product: InthConsentUI
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.c15t.examples.customconsent
+        PRODUCT_BUNDLE_IDENTIFIER: com.inth.examples.customconsent
         INFOPLIST_KEY_CFBundleDisplayName: Custom consent
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
 schemes:
-  C15tCustomConsent:
+  InthCustomConsent:
     build:
       targets:
-        C15tCustomConsent: all
+        InthCustomConsent: all

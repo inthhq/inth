@@ -2,7 +2,7 @@
  * The hand-written iOS selector surface, checked against the protocol Codegen
  * actually generates.
  *
- * `C15tReactNativeModule.swift` cannot declare the conformance the TypeScript spec
+ * `InthReactNativeModule.swift` cannot declare the conformance the TypeScript spec
  * implies. Codegen emits that protocol into an ObjC++ umbrella header whose first
  * directive refuses to compile as plain Objective-C, so the protocol has no Swift
  * spelling and the hand-written side states every selector by name instead. Nothing
@@ -13,7 +13,7 @@
  * JavaScript thread. That is the class of bug this file stops, and it is the only
  * automated check for it that needs neither a simulator nor an app checkout.
  *
- * Ground truth is Codegen itself, run over `src/specs/NativeC15t.ts` with the same
+ * Ground truth is Codegen itself, run over `src/specs/NativeInth.ts` with the same
  * `@react-native/codegen` the host app resolves. A committed copy of the generated
  * header would have been cheaper, and would drift on its own schedule, which is the
  * failure being guarded against.
@@ -43,14 +43,14 @@ const PACKAGE_ROOT = resolve(
 	'../../..'
 );
 
-/** The generator `-Pc15t.spec.source=codegen` runs, and `android-spec-surface` spawns. */
+/** The generator `-Pinth.spec.source=codegen` runs, and `android-spec-surface` spawns. */
 const GENERATOR_PATH = join(PACKAGE_ROOT, 'android/codegen/generate-spec.mjs');
 
-const REACT_NATIVE_DIR = join(PACKAGE_ROOT, 'ios/C15tReactNative/ReactNative');
+const REACT_NATIVE_DIR = join(PACKAGE_ROOT, 'ios/InthReactNative/ReactNative');
 
-const SWIFT_MODULE_PATH = join(REACT_NATIVE_DIR, 'C15tReactNativeModule.swift');
+const SWIFT_MODULE_PATH = join(REACT_NATIVE_DIR, 'InthReactNativeModule.swift');
 
-const MODULE_PATH = join(REACT_NATIVE_DIR, 'C15tReactNativeModule.mm');
+const MODULE_PATH = join(REACT_NATIVE_DIR, 'InthReactNativeModule.mm');
 
 /** One method as the generated Objective-C protocol declares it. */
 interface GeneratedMethod {
@@ -67,11 +67,11 @@ type ImplementedMethod = GeneratedMethod;
 
 /** What a run of Codegen over this package produced. */
 interface GeneratedSpec {
-	/** The name Codegen gives the spec module, for example `NativeC15t`. */
+	/** The name Codegen gives the spec module, for example `NativeInth`. */
 	codegenModuleName: string;
 	/** The umbrella header, verbatim. */
 	header: string;
-	/** The protocol's Objective-C name, for example `NativeC15tSpec`. */
+	/** The protocol's Objective-C name, for example `NativeInthSpec`. */
 	protocolName: string;
 }
 
@@ -331,7 +331,7 @@ let generatedSpec: GeneratedSpec = {
 let outputDirectory = '';
 
 beforeAll(() => {
-	outputDirectory = mkdtempSync(join(tmpdir(), 'c15t-spec-surface-'));
+	outputDirectory = mkdtempSync(join(tmpdir(), 'inth-spec-surface-'));
 	// The same command the Android check spawns and the Gradle build runs, for the other
 	// platform: one generator in the repository, not one per test file.
 	execFileSync(
@@ -381,7 +381,7 @@ describe('the generated iOS protocol', () => {
 	test('is ObjC++ only, which is why Swift cannot conform to it', () => {
 		expect(generatedSpec.header).toMatch(/^#error/mu);
 		expect(swiftSource).not.toMatch(
-			/class\s+C15tReactNativeModule[^\n]*Native\w+Spec/u
+			/class\s+InthReactNativeModule[^\n]*Native\w+Spec/u
 		);
 	});
 
@@ -488,8 +488,8 @@ describe('the hand-written iOS module', () => {
 
 	test('states the module name in every place it is read from', () => {
 		expect(Object.keys(codegenConfig.ios?.modules ?? {})).toHaveLength(1);
-		expect(MODULE_NAME).toBe('C15t');
-		expect(MODULE_CLASS_NAME).toBe('C15tReactNativeModule');
+		expect(MODULE_NAME).toBe('Inth');
+		expect(MODULE_CLASS_NAME).toBe('InthReactNativeModule');
 		// The JavaScript spec asks for the name, `RCTModuleProviders` maps that
 		// name onto the class name, and `+moduleName` answers it at runtime. All
 		// three have to say the same thing or the lookup throws.

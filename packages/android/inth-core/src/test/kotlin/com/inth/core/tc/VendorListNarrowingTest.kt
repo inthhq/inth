@@ -1,4 +1,4 @@
-package com.c15t.core.tc
+package com.inth.core.tc
 
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -120,7 +120,7 @@ class VendorListNarrowingTest {
 	 * A custom vendor id is served data like any other and survives when it is declared; a made-up or
 	 * out-of-range one creates nothing, in either form of the prune.
 	 *
-	 * `1000482` is the shape c15t's own custom vendors take -- a number the IAB list never issued, which
+	 * `1000482` is the shape Inth's own custom vendors take -- a number the IAB list never issued, which
 	 * a port that scoped by `GVL.vendorIds` (the IAB's own id list, which does not know them) would
 	 * drop. The ends of `Int` are here because a wrapped id is a real vendor's disclosure.
 	 */

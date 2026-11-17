@@ -1,4 +1,4 @@
-package com.c15t.android
+package com.inth.android
 
 import android.content.SharedPreferences
 import java.lang.reflect.Proxy

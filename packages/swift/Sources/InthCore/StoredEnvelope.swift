@@ -67,7 +67,7 @@ struct StoredEnvelope: Sendable, Codable, Equatable {
     /// core down the same path as "nothing stored", which is deny-all plus a fresh
     /// policy fetch.
     static func decode(_ data: Data) -> StoredEnvelope? {
-        guard let envelope = try? C15tJSON.decode(StoredEnvelope.self, from: data) else {
+        guard let envelope = try? InthJSON.decode(StoredEnvelope.self, from: data) else {
             return nil
         }
         guard envelope.version == currentVersion else { return nil }
@@ -96,8 +96,8 @@ struct StoredEnvelope: Sendable, Codable, Equatable {
         _ data: Data,
         encodedAs envelope: StoredEnvelope
     ) -> Bool {
-        guard let stored = C15tJSON.parse(data),
-              let roundTripped = C15tJSON.parse((try? C15tJSON.encode(envelope)) ?? Data())
+        guard let stored = InthJSON.parse(data),
+              let roundTripped = InthJSON.parse((try? InthJSON.encode(envelope)) ?? Data())
         else { return false }
         var known = Set<String>()
         collectKeyPaths(of: roundTripped, at: "", into: &known)

@@ -1,13 +1,13 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.model.KernelOverrides
-import com.c15t.core.model.ConsentModel
-import com.c15t.core.policy.PolicyPrompt
-import com.c15t.core.policy.PolicyRead
-import com.c15t.core.policy.StrictPolicyReader
-import com.c15t.core.transport.InitMapper
-import com.c15t.core.transport.MappedInit
-import com.c15t.core.transport.TransportOutcome
+import com.inth.core.model.KernelOverrides
+import com.inth.core.model.ConsentModel
+import com.inth.core.policy.PolicyPrompt
+import com.inth.core.policy.PolicyRead
+import com.inth.core.policy.StrictPolicyReader
+import com.inth.core.transport.InitMapper
+import com.inth.core.transport.MappedInit
+import com.inth.core.transport.TransportOutcome
 import java.security.MessageDigest
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*

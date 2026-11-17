@@ -38,7 +38,7 @@ struct IdentityHeader: View {
             tile.accessibilityHidden(true)
             Text(identity.name.uppercased()).font(theme.font(.footnote, weight: .semibold)).tracking(1.4)
                 .foregroundStyle(theme.colors.primary.color)
-                .accessibilityLabel(identity.name).accessibilityIdentifier("c15t.first-layer.brand")
+                .accessibilityLabel(identity.name).accessibilityIdentifier("inth.first-layer.brand")
         }
     }
 

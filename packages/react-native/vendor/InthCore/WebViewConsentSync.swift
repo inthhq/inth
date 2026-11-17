@@ -13,7 +13,7 @@ public protocol WebViewConsentTarget: AnyObject {
 
 /// Keeps one web view in step with a ``ConsentCore``, with no WebKit in it.
 ///
-/// The platform glue (`ConsentWebView` in C15tApple, or a host's own) supplies a
+/// The platform glue (`ConsentWebView` in InthApple, or a host's own) supplies a
 /// ``WebViewConsentTarget`` and a `post` that runs work on the web view's thread.
 /// Every ordering rule lives here, so a plain `swift test` can check it:
 ///

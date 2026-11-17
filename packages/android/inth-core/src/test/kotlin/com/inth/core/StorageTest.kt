@@ -1,18 +1,18 @@
-package com.c15t.core
+package com.inth.core
 
-import com.c15t.core.crypto.AesGcmCodec
-import com.c15t.core.model.ConsentSnapshot
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentSubject
-import com.c15t.core.model.ConsentModel
-import com.c15t.core.policy.EvaluationPolicy
-import com.c15t.core.policy.NoticeDismissal
-import com.c15t.core.policy.PolicyPrompt
-import com.c15t.core.policy.ScopeMode
-import com.c15t.core.store.C15tJson
-import com.c15t.core.store.C15tStore
-import com.c15t.core.store.C15tStoreKeys
-import com.c15t.core.store.SnapshotEnvelope
+import com.inth.core.crypto.AesGcmCodec
+import com.inth.core.model.ConsentSnapshot
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentSubject
+import com.inth.core.model.ConsentModel
+import com.inth.core.policy.EvaluationPolicy
+import com.inth.core.policy.NoticeDismissal
+import com.inth.core.policy.PolicyPrompt
+import com.inth.core.policy.ScopeMode
+import com.inth.core.store.InthJson
+import com.inth.core.store.InthStore
+import com.inth.core.store.InthStoreKeys
+import com.inth.core.store.SnapshotEnvelope
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.SecretKeySpec
@@ -29,16 +29,16 @@ class StorageTest {
 	@Test
 	fun `the envelope round trips and keeps the reserved iab key`() {
 		val backend = InMemoryKeyValueStore()
-		val store = C15tStore(backend)
+		val store = InthStore(backend)
 		val envelope = SnapshotEnvelope(
 			snapshot = ConsentSnapshot(
 				revision = 12,
 				policyPending = false,
 				ready = true,
 				subject = ConsentSubject(id = "subject-1", externalId = "user-42"),
-				explicitChoice = com.c15t.core.model.ExplicitChoice(
+				explicitChoice = com.inth.core.model.ExplicitChoice(
 					consents = mapOf("measurement" to true),
-					action = com.c15t.core.model.ConsentAction.CUSTOM,
+					action = com.inth.core.model.ConsentAction.CUSTOM,
 					actionAt = 1_700_000_000_000L,
 					fingerprint = "choice-fp-1",
 				),
@@ -51,9 +51,9 @@ class StorageTest {
 		)
 
 		store.writeEnvelope(envelope)
-		val raw = assertNotNull(backend.read(C15tStoreKeys.SNAPSHOT), "the envelope must be stored under the contract key")
+		val raw = assertNotNull(backend.read(InthStoreKeys.SNAPSHOT), "the envelope must be stored under the contract key")
 
-		val decoded = C15tJson.storage.decodeFromString(SnapshotEnvelope.serializer(), raw)
+		val decoded = InthJson.storage.decodeFromString(SnapshotEnvelope.serializer(), raw)
 		assertEquals(envelope.snapshot, decoded.snapshot)
 		assertEquals(12L, decoded.snapshot.revision)
 		assertEquals("user-42", decoded.snapshot.subject?.externalId)
@@ -88,11 +88,11 @@ class StorageTest {
 			snapshot = ConsentSnapshot(revision = 3, policyPending = false, ready = true),
 			evaluationPolicy = policy,
 		)
-		val raw = C15tJson.storage.encodeToString(SnapshotEnvelope.serializer(), envelope)
+		val raw = InthJson.storage.encodeToString(SnapshotEnvelope.serializer(), envelope)
 		val retired = ""","noticeFingerprint":"notice-fp-1""""
 		assertTrue(retired in raw, "the current build is expected to write the key: $raw")
 
-		val decoded = C15tJson.storage.decodeFromString(SnapshotEnvelope.serializer(), raw.replace(retired, ""))
+		val decoded = InthJson.storage.decodeFromString(SnapshotEnvelope.serializer(), raw.replace(retired, ""))
 		assertEquals(
 			"choice-fp-1",
 			assertNotNull(decoded.evaluationPolicy).noticeFingerprint,
@@ -103,7 +103,7 @@ class StorageTest {
 	@Test
 	fun `a subject survives its own storage key`() {
 		val backend = InMemoryKeyValueStore()
-		val store = C15tStore(backend)
+		val store = InthStore(backend)
 
 		store.writeSubject(ConsentSubject(id = "sub_4ZrjtiRsJnoW34Px8dAvhPTKJiWc"))
 
@@ -112,7 +112,7 @@ class StorageTest {
 			assertNotNull(store.readSubject()).id,
 			"an id the producer accepts is the one that reads back",
 		)
-		assertEquals(setOf(C15tStoreKeys.SUBJECT), backend.keys, "identity lives in its own slot")
+		assertEquals(setOf(InthStoreKeys.SUBJECT), backend.keys, "identity lives in its own slot")
 	}
 
 	@Test
@@ -137,7 +137,7 @@ class StorageTest {
 
 		val other = AesGcmCodec(keyProviderOf(generateKey()))
 		assertNull(other.decrypt(blob), "a different key must not read the blob")
-		assertNull(codec.decrypt("plaintext, not a c15t blob".toByteArray()))
+		assertNull(codec.decrypt("plaintext, not an Inth blob".toByteArray()))
 		assertNull(codec.decrypt(ByteArray(0)))
 	}
 
@@ -145,7 +145,7 @@ class StorageTest {
 	fun `a revoked key is reported as key loss, not as a verdict on the blob`() {
 		var key: SecretKey? = generateKey()
 		val codec = AesGcmCodec(
-			object : com.c15t.core.spi.SymmetricKeyProvider {
+			object : com.inth.core.spi.SymmetricKeyProvider {
 				override fun key(): SecretKey = key ?: throw java.security.KeyStoreException("key revoked")
 			},
 		)
@@ -158,7 +158,7 @@ class StorageTest {
 		assertFailsWith<java.security.KeyStoreException> { codec.decrypt(blob) }
 	}
 
-	private fun keyProviderOf(secret: SecretKey) = object : com.c15t.core.spi.SymmetricKeyProvider {
+	private fun keyProviderOf(secret: SecretKey) = object : com.inth.core.spi.SymmetricKeyProvider {
 		override fun key(): SecretKey = secret
 	}
 

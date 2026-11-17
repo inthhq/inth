@@ -1,4 +1,4 @@
-package com.c15t.consentui
+package com.inth.consentui
 
 import android.os.Bundle
 import androidx.compose.ui.unit.dp
@@ -169,7 +169,7 @@ class ThemeTest {
             ConsentTheme.Slot.ButtonSecondary to ConsentTheme.SlotStyle(color = ConsentThemeColor(0x112233)),
             ConsentTheme.Slot.ConsentBannerTitle to ConsentTheme.SlotStyle(fontSize = 40.sp),
         ), theme.slots)
-        assertEquals("com.c15t.consent.BUTTON_PRIMARY_BACKGROUND_COLOR", ConsentTheme.Meta.slot(ConsentTheme.Slot.ButtonPrimary, "BACKGROUND_COLOR"))
+        assertEquals("com.inth.consent.BUTTON_PRIMARY_BACKGROUND_COLOR", ConsentTheme.Meta.slot(ConsentTheme.Slot.ButtonPrimary, "BACKGROUND_COLOR"))
     }
 
     @Test fun radiusStepsFollowMdUntilSet() {
@@ -304,6 +304,6 @@ class IdentityTest {
     }
 
     private companion object {
-        val PLACEHOLDER = com.c15t.consentui.generated.ConsentCopy.forLanguage("en").brandPlaceholder
+        val PLACEHOLDER = com.inth.consentui.generated.ConsentCopy.forLanguage("en").brandPlaceholder
     }
 }

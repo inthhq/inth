@@ -1,4 +1,4 @@
-import { getNativeC15t, getNativeC15tEvents } from './module';
+import { getNativeInth, getNativeInthEvents } from './module';
 
 /** What an open native session shows: the owed prompt or standing settings. */
 export type ConsentPresenterPresentation = 'prompt' | 'preferences';
@@ -150,7 +150,7 @@ const parseUnavailable = (payload: string): ConsentPresenterUnavailable => {
 			'code' in value &&
 			typeof value.code === 'string'
 				? value.code
-				: 'C15T_PRESENTER_UNAVAILABLE',
+				: 'INTH_PRESENTER_UNAVAILABLE',
 		message:
 			typeof value === 'object' &&
 			value !== null &&
@@ -261,7 +261,7 @@ const callNativePrompt = async (
 	privacyPolicyURL: string
 ): Promise<ConsentPresenterSession> =>
 	remember(
-		parseSession(await getNativeC15t().presentConsentPrompt(privacyPolicyURL)),
+		parseSession(await getNativeInth().presentConsentPrompt(privacyPolicyURL)),
 		privacyPolicyURL
 	);
 
@@ -289,7 +289,7 @@ export const presentPreferences = async (
 ): Promise<ConsentPresenterSession> =>
 	announce(
 		remember(
-			parseSession(await getNativeC15t().presentPreferences(privacyPolicyURL)),
+			parseSession(await getNativeInth().presentPreferences(privacyPolicyURL)),
 			privacyPolicyURL
 		),
 		'preferences'
@@ -300,7 +300,7 @@ export const presentPreferences = async (
  * @returns Once the request reaches the native host. Pending saves cannot be closed.
  */
 export const closeConsentPresenter = (sessionId: string): Promise<void> =>
-	getNativeC15t().closeConsentPresenter(sessionId);
+	getNativeInth().closeConsentPresenter(sessionId);
 
 /**
  * Hand native the provider's auto-present settings.
@@ -313,7 +313,7 @@ export const closeConsentPresenter = (sessionId: string): Promise<void> =>
 export const configureNativeAutoPresent = (
 	settings: NativeAutoPresentSettings
 ): Promise<void> | null => {
-	const nativeModule = getNativeC15t();
+	const nativeModule = getNativeInth();
 	return typeof nativeModule.configureAutoPresent === 'function'
 		? nativeModule.configureAutoPresent(JSON.stringify(settings))
 		: null;
@@ -330,7 +330,7 @@ export const configureNativeAutoPresent = (
 export const onConsentPresenterPresented = (
 	listener: (presented: ConsentPresenterPresented) => void
 ): (() => void) => {
-	const subscription = getNativeC15tEvents().addListener(
+	const subscription = getNativeInthEvents().addListener(
 		'onConsentPresenterPresented',
 		(payload) => listener(parsePresented(payload))
 	);
@@ -347,7 +347,7 @@ export const onConsentPresenterPresented = (
 export const onConsentPresenterUnavailable = (
 	listener: (unavailable: ConsentPresenterUnavailable) => void
 ): (() => void) => {
-	const subscription = getNativeC15tEvents().addListener(
+	const subscription = getNativeInthEvents().addListener(
 		'onConsentPresenterUnavailable',
 		(payload) => listener(parseUnavailable(payload))
 	);
@@ -361,7 +361,7 @@ export const onConsentPresenterUnavailable = (
 export const onConsentPresenterOutcome = (
 	listener: (outcome: ConsentPresenterOutcome) => void
 ): (() => void) => {
-	const subscription = getNativeC15tEvents().addListener(
+	const subscription = getNativeInthEvents().addListener(
 		'onConsentPresenterOutcome',
 		(payload) => listener(parseConsentPresenterOutcome(payload))
 	);

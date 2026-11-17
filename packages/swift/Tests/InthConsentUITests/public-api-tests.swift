@@ -1,5 +1,5 @@
-@_spi(C15tInternal) import C15tCore
-import C15tConsentUI
+@_spi(InthInternal) import InthCore
+import InthConsentUI
 import Foundation
 import XCTest
 

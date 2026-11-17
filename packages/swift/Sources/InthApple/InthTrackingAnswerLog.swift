@@ -8,7 +8,7 @@ import Foundation
 /// `authorized` or `denied` answer, which is never earlier than when the person answered.
 /// The yearly re-ask waits a year from here before it calls the request, and Apple then
 /// either prompts or returns the stored answer at once.
-public final class C15tTrackingAnswerLog: @unchecked Sendable {
+public final class InthTrackingAnswerLog: @unchecked Sendable {
     private let lock = NSLock()
     private let read: () -> Date?
     private let write: (Date) -> Void
@@ -21,19 +21,19 @@ public final class C15tTrackingAnswerLog: @unchecked Sendable {
         self.write = write
     }
 
-    /// The log in `UserDefaults`, under one c15t key.
+    /// The log in `UserDefaults`, under one Inth key.
     public static func userDefaults(_ defaults: UserDefaults = .standard,
-                                    key: String = "com.c15t.tracking.lastAnswerAt") -> C15tTrackingAnswerLog {
-        C15tTrackingAnswerLog(
+                                    key: String = "com.inth.tracking.lastAnswerAt") -> InthTrackingAnswerLog {
+        InthTrackingAnswerLog(
             read: { defaults.object(forKey: key) as? Date },
             write: { defaults.set($0, forKey: key) }
         )
     }
 
     /// A log that lives only as long as the process, for tests and previews.
-    public static func inMemory(_ initial: Date? = nil) -> C15tTrackingAnswerLog {
+    public static func inMemory(_ initial: Date? = nil) -> InthTrackingAnswerLog {
         let box = Box(initial)
-        return C15tTrackingAnswerLog(read: { box.value }, write: { box.value = $0 })
+        return InthTrackingAnswerLog(read: { box.value }, write: { box.value = $0 })
     }
 
     /// The stored time, or `nil`.

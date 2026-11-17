@@ -1,4 +1,4 @@
-package com.c15t.core.tc
+package com.inth.core.tc
 
 /**
  * The base64url alphabet TC Strings use, and the padding rule that goes with it.
