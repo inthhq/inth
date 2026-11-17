@@ -41,6 +41,18 @@ const nativeRelease: TegamiPlugin = {
   },
 };
 
+// Only the CLI and its native packages release from here. The SDK and
+// mobile packages are named @inth too, but have their own release lines and
+// must not publish from here. Tegami tests each pattern against the name and
+// against the id, which is the name behind a manager prefix such as "npm:".
+export const releaseIgnore = [
+  "inth",
+  new RegExp(
+    `^(?!(?:[a-z]+:)?@inth\\/(?:${["cli", ...nativePackages].join("|")})$)`,
+    "u"
+  ),
+];
+
 export const createRelease = (
   cwd = fileURLToPath(new URL("../../../", import.meta.url))
 ) =>
@@ -49,11 +61,7 @@ export const createRelease = (
     groups: {
       inth: { npm: { distTag: "latest" }, syncBump: true, syncGitTag: true },
     },
-    // Only the CLI and its native packages release from here. The SDK and
-    // mobile workspaces have their own release lines and must not publish.
-    // Tegami tests the pattern against the name and against the id, which
-    // is the name behind a manager prefix such as "npm:".
-    ignore: ["inth", /^(?!(?:[a-z]+:)?@inth\/cli(?:-[a-z0-9-]+)?$)/u],
+    ignore: releaseIgnore,
     npm: {
       client: "pnpm",
       trustedPublish: { provider: "github", workflow: "release.yml" },

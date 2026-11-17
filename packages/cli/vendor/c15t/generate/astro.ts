@@ -17,7 +17,7 @@ import {
 	ConsentDialog,
 	ConsentDialogLink,
 	ConsentScript,
-} from 'c15t/astro/components';
+} from '@inth/astro/components';
 
 interface Props {
 	title: string;
@@ -65,8 +65,8 @@ const astroConfig = (options: BoilerplateOptions, server: boolean): string => {
 		"import svelte from '@astrojs/svelte';",
 		"import { defineConfig } from 'astro/config';",
 		factory
-			? `import c15t, { ${factory} } from 'c15t/astro';`
-			: "import c15t from 'c15t/astro';",
+			? `import c15t, { ${factory} } from '@inth/astro';`
+			: "import c15t from '@inth/astro';",
 	])}
 
 export default defineConfig({
@@ -94,7 +94,7 @@ export const generateAstroBoilerplate = (
 	if (options.scripts.length) {
 		files['src/c15t.client.ts'] = `${sortImports([
 			...scriptImports(options.scripts),
-			"import type { C15tClientOptionsExtension } from 'c15t/astro';",
+			"import type { C15tClientOptionsExtension } from '@inth/astro';",
 		])}
 
 export default {
@@ -103,7 +103,7 @@ ${scriptsProperty(options.scripts, '\t')}} satisfies C15tClientOptionsExtension;
 	}
 	return {
 		dependencies: [
-			'c15t',
+			'@inth/astro',
 			...(server ? ['@astrojs/node'] : []),
 			'@astrojs/svelte',
 			'svelte',

@@ -155,7 +155,7 @@ const verifyExistingProject = async (
   );
   assert.equal(preview.status, 0, preview.stderr);
   const previewData = envelope.parse(JSON.parse(preview.stdout)).data;
-  assert.deepEqual(previewData.plan?.dependencies, ["c15t@3"]);
+  assert.deepEqual(previewData.plan?.dependencies, ["@inth/nextjs@3"]);
   assert.deepEqual(await readdir(directory), [
     "app",
     "package.json",
@@ -240,7 +240,7 @@ const verifyScaffold = async (
     path.join(directory, "app/layout.tsx"),
     "utf-8"
   );
-  assert.match(manager, /from 'c15t\/next'/u);
+  assert.match(manager, /from '@inth\/nextjs'/u);
   assert.equal(
     await readFile(path.join(directory, ".env"), "utf-8"),
     `NEXT_PUBLIC_C15T_BACKEND_URL=${BACKEND}\n`
@@ -250,7 +250,7 @@ const verifyScaffold = async (
     assert.deepEqual(installer.trim().split("\n"), [
       directory,
       "add",
-      "c15t@3",
+      "@inth/nextjs@3",
     ]);
   }
   // An interrupted apply leaves c15t's journal directory behind.
@@ -487,19 +487,19 @@ const verifyFrameworks = async (
     const { data } = envelope.parse(JSON.parse(result.stdout));
     assert.equal(data.framework, framework);
     const dependencies = {
-      astro: ["c15t@3", "@astrojs/node", "@astrojs/svelte", "svelte"],
-      "astro-static": ["c15t@3", "@astrojs/svelte", "svelte"],
+      astro: ["@inth/astro@3", "@astrojs/node", "@astrojs/svelte", "svelte"],
+      "astro-static": ["@inth/astro@3", "@astrojs/svelte", "svelte"],
       html: [],
-      javascript: ["@c15t/browser@latest", "c15t@3"],
-      "next-app": ["c15t@3"],
-      "next-pages": ["c15t@3"],
-      nuxt: ["c15t@3"],
-      react: ["c15t@3"],
-      solid: ["@c15t/core@3"],
-      svelte: ["@c15t/svelte@latest"],
-      sveltekit: ["@c15t/svelte@latest", "@sveltejs/adapter-auto"],
-      "tanstack-start": ["c15t@3"],
-      vue: ["c15t@3"],
+      javascript: ["@inth/sdk@3"],
+      "next-app": ["@inth/nextjs@3"],
+      "next-pages": ["@inth/nextjs@3"],
+      nuxt: ["@inth/nuxt@3"],
+      react: ["@inth/react@3"],
+      solid: ["@inth/sdk@3"],
+      svelte: ["@inth/svelte@3"],
+      sveltekit: ["@inth/svelte@3", "@sveltejs/adapter-auto"],
+      "tanstack-start": ["@inth/tanstack-start@3"],
+      vue: ["@inth/vue@3"],
     }[framework];
     assert.deepEqual(data.plan?.dependencies, dependencies, framework);
     assert.ok(data.created?.length);
@@ -549,7 +549,7 @@ const verifyNextSourceTrees = async (
       const contents =
         extension === "js"
           ? "module.exports = { basePath: '/existing', env: { KEY: 'private-config-value' } };\n"
-          : "import { withConsentManifest } from 'c15t/next/build';\nexport default { basePath: '/existing', env: { KEY: 'private-config-value' } };\n";
+          : "import { withConsentManifest } from '@inth/nextjs/build';\nexport default { basePath: '/existing', env: { KEY: 'private-config-value' } };\n";
       await writeFile(path.join(directory, config), contents);
       const args = [
         "c15t",
@@ -846,7 +846,7 @@ const verifyNextPageExtensions = async (
       } else {
         for (const name of names) {
           const content = await readFile(path.join(directory, name), "utf-8");
-          assert.match(content, /c15t\/next/u);
+          assert.match(content, /@inth\/nextjs/u);
           if (extension.endsWith("js")) {
             assert.doesNotMatch(content, /import type|: AppProps/u);
           }
@@ -1086,7 +1086,7 @@ const verifyNuxtLayouts = async (
         data.plan?.instructions.some(
           (instruction) =>
             instruction.includes("nuxt.config.js") &&
-            instruction.includes("c15t/vue")
+            instruction.includes("@inth/nuxt")
         )
       );
       assert.equal(

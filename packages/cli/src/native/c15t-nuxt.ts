@@ -122,7 +122,7 @@ export const adaptNuxtGeneration = (
       instruction.replaceAll("nuxt.config.ts", config)
     );
     generation.instructions.push(
-      `Update ${config}: add 'c15t/vue' to the modules list if it is not already present. Keep your existing modules and config options.`
+      `Update ${config}: add '@inth/nuxt' to the modules list if it is not already present. Keep your existing modules and config options.`
     );
   }
 };

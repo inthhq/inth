@@ -29,11 +29,11 @@ const root = (options: BoilerplateOptions): string => {
 	ConsentDialog,
 	ConsentDialogLink,
 	ConsentRoot,${offline ? '\n\toffline,' : ''}
-} from 'c15t/tanstack-start';`,
+} from '@inth/tanstack-start';`,
 		`import {
 	consentLoaderOptions,
 	createConsentStateHandler,
-} from 'c15t/tanstack-start/server';`,
+} from '@inth/tanstack-start/server';`,
 	])}
 
 // Start's compiler keeps the handler and the bundled policy on the server.
@@ -86,13 +86,13 @@ export const Route = createRootRoute({
 export const generateTanStackStartBoilerplate = (
 	options: BoilerplateOptions
 ): BoilerplateTemplate => ({
-	dependencies: ['c15t', ...integrationDependencies(options)],
+	dependencies: ['@inth/tanstack-start', ...integrationDependencies(options)],
 	files: {
 		...envFile(BACKEND_URL_ENV.vite, options),
 		'src/routes/__root.tsx': root(options),
 		'vite.config.ts': `import { tanstackStart } from '@tanstack/react-start/plugin/vite';
 import viteReact from '@vitejs/plugin-react';
-import { consentManifest } from 'c15t/tanstack-start/build';
+import { consentManifest } from '@inth/tanstack-start/build';
 import { defineConfig } from 'vite';
 
 export default defineConfig({

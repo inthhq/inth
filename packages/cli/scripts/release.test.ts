@@ -1,6 +1,15 @@
 /* eslint-disable no-await-in-loop -- Each fixture assembles four small native archives. */
 import { spawnSync } from "node:child_process";
-import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import {
+  cp,
+  mkdir,
+  mkdtemp,
+  readdir,
+  readFile,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -9,7 +18,7 @@ import { afterEach, expect, test } from "vitest";
 import { z } from "zod";
 
 import { nativePackages, prepareRelease } from "./prepare-release.ts";
-import { createRelease } from "./tegami.ts";
+import { createRelease, releaseIgnore } from "./tegami.ts";
 
 const repository = fileURLToPath(new URL("../../../", import.meta.url));
 const roots: string[] = [];
@@ -155,4 +164,33 @@ test("rejects platform versions that do not match the CLI", async () => {
   await expect(prepareRelease(root)).rejects.toThrow(
     "must match the CLI version"
   );
+});
+
+const workspaceManifest = z.object({ name: z.string() });
+
+const isReleaseIgnored = (name: string): boolean =>
+  releaseIgnore.some((pattern) =>
+    pattern instanceof RegExp ? pattern.test(name) : pattern === name
+  );
+
+test("releases only the CLI and its native packages, not the SDK", async () => {
+  const names: string[] = [];
+  for (const parent of ["packages", "packages/sdk", "npm"]) {
+    for (const entry of await readdir(path.join(repository, parent))) {
+      const manifest = path.join(repository, parent, entry, "package.json");
+      if (existsSync(manifest)) {
+        const { name } = workspaceManifest.parse(
+          JSON.parse(await readFile(manifest, "utf-8"))
+        );
+        names.push(name);
+      }
+    }
+  }
+  expect(names).toContain("@inth/sdk");
+  expect(names).toContain("@inth/react");
+  expect(names.filter((name) => !isReleaseIgnored(name)).toSorted()).toEqual(
+    ["cli", ...nativePackages].map((name) => `@inth/${name}`).toSorted()
+  );
+  expect(isReleaseIgnored("npm:@inth/sdk")).toBe(true);
+  expect(isReleaseIgnored("npm:@inth/cli")).toBe(false);
 });

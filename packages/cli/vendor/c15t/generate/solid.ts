@@ -15,13 +15,13 @@ export const generateSolidBoilerplate = (
 	}
 	return {
 		dependencies: [
-			'@c15t/core',
-			...(options.scripts.length ? ['@c15t/integrations'] : []),
+			'@inth/sdk',
+			...(options.scripts.length ? ['@inth/integrations'] : []),
 		],
 		files: {
 			'src/consent/Consent.tsx': `import { createContext, createSignal, For, onCleanup, onMount, Show, useContext } from 'solid-js';
 import type { Accessor, JSX } from 'solid-js';
-import type { ConsentSnapshot, ConsentState } from '@c15t/core';
+import type { ConsentSnapshot, ConsentState } from '@inth/sdk/engine';
 import { createSiteConsent } from './consent-runtime';
 import './consent.css';
 
@@ -112,8 +112,8 @@ function ConsentControls() {
 	);
 }
 `,
-			'src/consent/consent-runtime.ts': `import { ${hosted ? 'hosted' : 'offline'} } from '@c15t/core';
-import { createConsentRuntime } from '@c15t/core/runtime';
+			'src/consent/consent-runtime.ts': `import { ${hosted ? 'hosted' : 'offline'} } from '@inth/sdk/engine';
+import { createConsentRuntime } from '@inth/sdk/runtime';
 ${generateScriptsImport(options.scripts)}
 
 // Construction is pure; the Solid component starts this only after mounting.
@@ -136,7 +136,7 @@ export function createSiteConsent() {
 		instructions: [
 			'Import { Consent } from "src/consent/Consent" in the Solid application root and wrap its existing children with <Consent>. Keep it mounted above route changes. The runtime is created onMount and disposed with its Solid owner; server rendering does not initialize browser state.',
 			'Use useSiteConsent() inside the wrapper to read snapshot()?.effectivePermissions for consent gates. The snapshot is unavailable until browser mount, so treat missing optional permissions as denied.',
-			'This is a headless Solid integration with native inline controls. The local @c15t/solid package currently exports styling primitives only. Review the copy, privacy links, category descriptions, and policy presentation for your site. The generated UI does not implement IAB TCF or modal policy presentation.',
+			'This is a headless Solid integration with native inline controls. There is no Solid package; this code uses the framework-neutral engine from @inth/sdk. Review the copy, privacy links, category descriptions, and policy presentation for your site. The generated UI does not implement IAB TCF or modal policy presentation.',
 			...(options.scripts.length
 				? [
 						'Replace vendor placeholders in src/consent/consent-runtime.ts. The shared runtime owns consent-gated loading, persistence, and cleanup.',

@@ -22,7 +22,7 @@ const consent = (options: BoilerplateOptions): string => {
 	ConsentDialogLink,
 	ConsentProvider,
 	${mode},
-} from 'c15t/react';`,
+} from '@inth/react';`,
 		"import type { ReactNode } from 'react';",
 	])}
 
@@ -69,13 +69,13 @@ createRoot(root).render(
 export const generateReactBoilerplate = (
 	options: BoilerplateOptions
 ): BoilerplateTemplate => ({
-	dependencies: ['c15t', ...integrationDependencies(options)],
+	dependencies: ['@inth/react', ...integrationDependencies(options)],
 	files: {
 		...envFile(BACKEND_URL_ENV.vite, options),
 		'src/consent.tsx': consent(options),
 		'src/main.tsx': main,
 		'vite.config.ts': `import react from '@vitejs/plugin-react';
-import { consentManifest } from 'c15t/build';
+import { consentManifest } from '@inth/react/build';
 import { defineConfig } from 'vite';
 
 export default defineConfig({

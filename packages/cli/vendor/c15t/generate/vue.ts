@@ -23,9 +23,9 @@ const nuxtFiles = (options: BoilerplateOptions): Record<string, string> => {
 	</footer>
 </template>
 `,
-		'nuxt.config.ts': `${offline ? "import { offline } from 'c15t/vue';\n\n" : ''}export default defineNuxtConfig({
+		'nuxt.config.ts': `${offline ? "import { offline } from '@inth/nuxt';\n\n" : ''}export default defineNuxtConfig({
 ${offline ? '\tc15t: { mode: offline() },\n' : ''}	compatibilityDate: '2026-07-04',
-	modules: ['c15t/vue'],
+	modules: ['@inth/nuxt'],
 });
 `,
 	};
@@ -47,7 +47,7 @@ const vueFiles = (options: BoilerplateOptions): Record<string, string> => {
 	return {
 		...envFile(BACKEND_URL_ENV.vite, options),
 		'src/App.vue': `<script setup lang="ts">
-import { ConsentDialogLink, ConsentRoot } from 'c15t/vue/vue-plugin';
+import { ConsentDialogLink, ConsentRoot } from '@inth/vue/vue-plugin';
 </script>
 
 <template>
@@ -63,7 +63,7 @@ import { ConsentDialogLink, ConsentRoot } from 'c15t/vue/vue-plugin';
 `,
 		'src/main.ts': `${sortImports([
 			...scriptImports(options.scripts),
-			`import { c15tVue, ${mode} } from 'c15t/vue/vue-plugin';`,
+			`import { c15tVue, ${mode} } from '@inth/vue/vue-plugin';`,
 			"import { createApp } from 'vue';",
 		])}
 
@@ -76,7 +76,7 @@ ${scriptsProperty(options.scripts, '\t\t')}	})
 	.mount('#app');
 `,
 		'vite.config.ts': `import vue from '@vitejs/plugin-vue';
-import { consentManifest } from 'c15t/vue/vite';
+import { consentManifest } from '@inth/vue/vite';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
@@ -98,11 +98,14 @@ export const generateVueBoilerplate = (
 ): BoilerplateTemplate => {
 	const nuxt = options.framework === 'nuxt';
 	return {
-		dependencies: ['c15t', ...integrationDependencies(options)],
+		dependencies: [
+			nuxt ? '@inth/nuxt' : '@inth/vue',
+			...integrationDependencies(options),
+		],
 		files: nuxt ? nuxtFiles(options) : vueFiles(options),
 		instructions: [
 			nuxt
-				? 'The c15t/vue module registers ConsentRoot and ConsentDialogLink and adds a consent route at /api/c15t. Keep any other modules when you merge nuxt.config.ts.'
+				? 'The @inth/nuxt module registers ConsentRoot and ConsentDialogLink and adds a consent route at /api/c15t. Keep any other modules when you merge nuxt.config.ts.'
 				: 'src/App.vue shows where ConsentRoot and ConsentDialogLink go. Move them into your own root component if you keep it.',
 			...vendorInstruction(options, nuxt ? 'app/app.config.ts' : 'src/main.ts'),
 			...offlineInstruction(options),

@@ -125,7 +125,7 @@ const integrationGuidance = (
 
 1. **Read before editing.** Read the bundled integrations overview (\`node_modules/c15t/docs/integrations/overview.md\`, or \`${origin}/docs/integrations/overview.md\`), then the tool's full guide and the framework's scripts guide. The overview lists each helper's loading behavior; a search excerpt does not. Note the package version, the guide you read, the helper's import, its required options, and what it does before consent and on withdrawal. Never infer that no helper exists because the app does not use one.
 2. **Pick the mechanism against the site's requirement.**
-   - A \`@c15t/integrations\` helper exists and its loading behavior meets the site's requirement recorded in the inventory → use it through the provider's documented scripts option.
+   - An \`@inth/integrations\` helper exists and its loading behavior meets the site's requirement recorded in the inventory → use it through the provider's documented scripts option.
    - The helper loads before a choice (for example "Always loads; signals Google consent") and the site forbids requests before opt-in → do not use it silently. Use the documented gated alternative if the guide gives one; otherwise register a custom script with a c15t category that waits for consent, and tell the user which vendor features that loses (such as consent-mode modeling).
    - An embed or iframe → use the documented consent-gated component.
    - No helper → register a custom script or gate on the documented consent hook, with a category chosen by purpose.
@@ -136,7 +136,7 @@ const integrationGuidance = (
    | --- | --- |
    | \`GoogleAnalytics\` (\`@next/third-parties\`), \`useScriptGoogleAnalytics\` (\`@nuxt/scripts\`), the \`nuxt-gtag\` module | The \`gtag\` helper, or a custom c15t script when the site's requirement forbids requests before opt-in |
    | \`GoogleTagManager\`, \`useScriptGoogleTagManager\` | The \`googleTagManager\` helper, or a custom c15t script under the same rule |
-   | Other \`@nuxt/scripts\` registry scripts (\`useScriptMetaPixel\`, \`useScriptPlausibleAnalytics\`, …) | That vendor's \`@c15t/integrations\` helper, or a custom c15t script |
+   | Other \`@nuxt/scripts\` registry scripts (\`useScriptMetaPixel\`, \`useScriptPlausibleAnalytics\`, …) | That vendor's \`@inth/integrations\` helper, or a custom c15t script |
    | \`useScriptTriggerConsent\` and other consent triggers | Nothing: c15t decides when the script loads. A second consent trigger keeps a second source of truth. |
    | \`sendGAEvent\`, \`sendGTMEvent\`, \`useGtag().gtag\`, a registry script's \`proxy\` | Calls to the \`gtag\`, \`dataLayer\` or vendor global that c15t loads. \`sendGAEvent\` drops events with a console warning once \`GoogleAnalytics\` is gone. |
    | \`YouTubeEmbed\`, \`GoogleMapsEmbed\`, \`ScriptYouTubePlayer\`, \`ScriptGoogleMaps\` | The YouTube or Google Maps guide: your own iframe inside the framework's consent gate |
@@ -226,14 +226,15 @@ Do this before installing anything; the result decides which path you take when 
 2. Classify the existing consent setup. Walk this tree:
 
    \`\`\`
-   Does the target app's package.json, or what it resolves to in the lockfile, list c15t
+   Does the target app's package.json, or what it resolves to in the lockfile, list an
+   @inth SDK package (such as @inth/sdk, @inth/nextjs, @inth/react or @inth/svelte), c15t
    or a browser-side @c15t/* package (such as @c15t/nextjs, @c15t/react, @c15t/svelte,
    @c15t/browser or @c15t/scripts), or does a page load c15t.js with a script tag (from a
    CDN, an Inth project or a self-hosted backend)? Count a workspace package the app
    depends on or imports, such as a shared UI package that exports the provider; skip
    workspaces the app does not reach. Server and tooling packages (@c15t/backend,
-   @c15t/node-sdk, @c15t/cli) don't count.
-   ├── Yes, every c15t package and pinned script URL is 3.x → keep it; check its storage mode (Storage mode below).
+   @c15t/node-sdk, @c15t/cli, @inth/cli) don't count.
+   ├── Yes, it uses the @inth packages, or every c15t package and pinned script URL is 3.x → keep it; check its storage mode (Storage mode below).
    ├── Yes, any c15t package is below 3.0 → Upgrade path.
    └── No
        ├── Another consent manager or a homegrown banner exists → Replace path.
@@ -252,13 +253,13 @@ Show the inventory as a short checklist and continue.${askTogether}
 
 ## ${install}. Install or upgrade c15t
 
-Install only the packages the framework's quickstart installs (\`${origin}/docs/frameworks/<framework>/quickstart.md\`), and skip \`@c15t/integrations\` when no vendor helper is used. The list differs by framework: Svelte and SvelteKit use \`@c15t/svelte\` and do not install \`c15t\`, and a plain HTML site that loads c15t with a script tag installs nothing. Resolve the exact version of \`c15t\` and each \`@c15t/*\` package from the \`${distTag}\` dist-tag first. Use the command for the project's package manager; \`npm view\` also works anywhere npm is installed:
+Install only the packages the framework's quickstart installs (\`${origin}/docs/frameworks/<framework>/quickstart.md\`), and skip \`@inth/integrations\` when no vendor helper is used. The list differs by framework: each framework installs its own package, such as \`@inth/nextjs\` or \`@inth/svelte\`, and a plain HTML site that loads c15t with a script tag installs nothing. Resolve the exact version of each \`@inth/*\` package from the \`${distTag}\` dist-tag first. Use the command for the project's package manager; \`npm view\` also works anywhere npm is installed:
 
 ${versionLookup(distTag)}
 
-Install other packages the quickstart lists, such as \`svelte\` or \`@astrojs/svelte\`, with the quickstart's own specifiers; the c15t dist-tag does not apply to them. The c15t packages are numbered separately, so their versions can differ. Install each at its exact resolved version with the project's package manager. Never install by tag or without a version. An untagged install resolves npm's default tag, which can be a different major version. A tagged install can resolve to an older release per package when the package manager delays new releases (pnpm's \`minimumReleaseAge\`), and mixing releases installs two copies of the consent engine. After installing, check that exactly one version of \`@c15t/core\` is installed (\`pnpm why @c15t/core\`, \`npm ls @c15t/core\`, \`yarn why @c15t/core\`, \`bun why @c15t/core\`, or the lockfile). Two copies keep two separate consent states. Do not add overrides or resolutions to force it; install the versions the dist-tag resolves instead.
+Install other packages the quickstart lists, such as \`svelte\` or \`@astrojs/svelte\`, with the quickstart's own specifiers; the c15t dist-tag does not apply to them. The c15t packages are numbered separately, so their versions can differ. Install each at its exact resolved version with the project's package manager. Never install by tag or without a version. An untagged install resolves npm's default tag, which can be a different major version. A tagged install can resolve to an older release per package when the package manager delays new releases (pnpm's \`minimumReleaseAge\`), and mixing releases installs two copies of the consent engine. After installing, check that exactly one version of \`@inth/sdk\` is installed (\`pnpm why @inth/sdk\`, \`npm ls @inth/sdk\`, \`yarn why @inth/sdk\`, \`bun why @inth/sdk\`, or the lockfile). Two copies keep two separate consent states. Do not add overrides or resolutions to force it; install the versions the dist-tag resolves instead.
 
-After installing, read \`node_modules/c15t/SKILL.md\` and \`node_modules/c15t/AGENTS.md\` (for Svelte, the same files in \`node_modules/@c15t/svelte\`). They index the bundled docs for the installed version. Read the bundled choose-your-setup page and the full quickstart for this framework before writing code. If the bundled docs are missing, use \`${origin}/docs/concepts/choose-your-setup.md\` and \`${origin}/docs/frameworks/<framework>/quickstart.md\`. Check each API you use against the installed package's exports and types.
+After installing, read \`SKILL.md\` and \`AGENTS.md\` in the framework package's folder, such as \`node_modules/@inth/nextjs\` (for a script tag or plain JavaScript, \`node_modules/@inth/sdk\`). They index the bundled docs for the installed version. Read the bundled choose-your-setup page and the full quickstart for this framework before writing code. If the bundled docs are missing, use \`${origin}/docs/concepts/choose-your-setup.md\` and \`${origin}/docs/frameworks/<framework>/quickstart.md\`. Check each API you use against the installed package's exports and types.
 
 ### Storage mode
 

@@ -36,12 +36,12 @@ export const sortImports = (statements: string[]): string =>
 /**
  * One import statement per selected vendor integration.
  * @param scripts Integration subpaths, such as `posthog`.
- * @returns Import statements from `@c15t/integrations/<subpath>`.
+ * @returns Import statements from `@inth/integrations/<subpath>`.
  */
 export const scriptImports = (scripts: string[]): string[] =>
 	scripts.map(
 		(script) =>
-			`import { ${SCRIPT_SNIPPETS[script]?.importName ?? script} } from '@c15t/integrations/${script}';`
+			`import { ${SCRIPT_SNIPPETS[script]?.importName ?? script} } from '@inth/integrations/${script}';`
 	);
 
 /**
@@ -137,7 +137,7 @@ export const spaBuildOptions = (options: BoilerplateOptions): string =>
 /** Dependencies shared by every template that uses vendor integrations. */
 export const integrationDependencies = (
 	options: BoilerplateOptions
-): string[] => (options.scripts.length ? ['@c15t/integrations'] : []);
+): string[] => (options.scripts.length ? ['@inth/integrations'] : []);
 
 /** The instruction every template with vendor placeholders adds. */
 export const vendorInstruction = (
