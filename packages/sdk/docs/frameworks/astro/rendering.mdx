@@ -191,12 +191,10 @@ your server with no backend. It is for tests only and throws in production
 builds.
 
 ```js title="astro.config.mjs (partial)"
-import { testing } from 'c15t/astro/testing';
-
 c15t({ mode: testing() });
 ```
 
-Import `local` from `c15t/astro`. Choices persist in the visitor's cookie and
+Import `testing` from `c15t/astro/testing`. Choices persist in the visitor's cookie and
 localStorage only. There are no consent records, no hosted policies and no
 visitor counts. Pass `policy` to `testing()` to test a specific policy.
 

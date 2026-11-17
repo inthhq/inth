@@ -326,11 +326,11 @@ Use it when calling the `c15t/next/server` helper from a custom server or
 test harness where `next/headers` is unavailable:
 
 ```ts title="server/consent.ts"
-import { testing } from 'c15t/next/testing';
 import type { IncomingMessage } from 'node:http';
 
 import { createPagesRequestContext } from 'c15t/next/pages';
 import { resolveConsent } from 'c15t/next/server';
+import { testing } from 'c15t/next/testing';
 
 export function resolveRequestConsent(req: IncomingMessage) {
 	return resolveConsent({ request: createPagesRequestContext(req) });
