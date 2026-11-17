@@ -24,7 +24,7 @@ tests.
 | Nuxt, Vue | `components.<component>.<part>`, or `theme.slots` | `class` (`className` in `theme.slots`) | Yes | Anywhere on the page |
 | Svelte, SvelteKit | `theme.slots`, or `class` on a component | A string, or `className` in a slot object | Yes | A global stylesheet, or `:global()` |
 | Astro | `theme.slots` in the integration options, or `class` on `ConsentBanner` | A string, or `className` in a slot object | Yes | A global stylesheet |
-| HTML, JavaScript | `ui.theme.slots` | A string, or `className` in a slot object | Yes | Inside the shadow root through `ui.stylesheetURLs`, or anywhere with `shadow: false` |
+| HTML, JavaScript | `ui.theme.slots` | A string, or `className` in a slot object | Yes | Inside the shadow root through `ui.stylesheetUrls`, or anywhere with `shadow: false` |
 
 [Component parts](/docs/customization/slots) lists the parts and their keys in
 each framework.
@@ -69,7 +69,7 @@ c15t's layered rules without extra specificity.
 
 Emotion inserts its rules into the page, not into a shadow root. With the HTML
 script tag or `@c15t/browser`, set `ui: { shadow: false }` so the UI renders
-in the page where those rules reach it. `ui.stylesheetURLs` cannot carry them,
+in the page where those rules reach it. `ui.stylesheetUrls` cannot carry them,
 because they have no URL.
 
 ## Use other frameworks' part APIs
@@ -95,7 +95,7 @@ The script tag and `init()` from `@c15t/browser` render into a shadow root. A
 class from your page's stylesheet reaches a part only if the stylesheet reaches
 the shadow root. Pick one:
 
-- **`ui.stylesheetURLs`.** c15t links each URL inside the shadow root, after
+- **`ui.stylesheetUrls`.** c15t links each URL inside the shadow root, after
   its own stylesheet. Link the stylesheet that holds your classes, such as your
   CSS Modules or Tailwind build.
 - **`::part()`.** Every part with a slot key carries it in a `part` attribute.

@@ -228,12 +228,12 @@ the UI's CSS does not reach your page. To style it:
 | --- | --- |
 | `ui.theme` | Tokens, written after the stylesheet inside the shadow root |
 | `ui.css` | A string of CSS added after the stylesheet and the theme |
-| `ui.stylesheetURLs` | Stylesheets linked inside the shadow root, after c15t's, with the client's `nonce`. They load asynchronously, so the first frame can render without them |
+| `ui.stylesheetUrls` | Stylesheets linked inside the shadow root, after c15t's, with the client's `nonce`. They load asynchronously, so the first frame can render without them |
 | `::part()` | Page CSS that reaches a part by its slot key, as in `[data-c15t-ui]::part(consentBannerCard)` |
 | `ui.shadow: false`, or `data-shadow="false"` | Renders into the page, so your stylesheets apply. c15t still injects its stylesheet next to the UI |
 | `ui.styles: false` | Drops the injected stylesheet. With `shadow: false`, load `@c15t/browser/styles.css` from your bundle, or link `dist/c15t.css` from the same package version as the script |
 
-A stylesheet in `ui.stylesheetURLs` should also load on the page. Some CSS,
+A stylesheet in `ui.stylesheetUrls` should also load on the page. Some CSS,
 such as Tailwind 4's `@property` rules, only takes effect in the page's
 stylesheets. Of these options, the script tag has an attribute for `shadow`
 only. Set the others with `c15t.push(['config', { ui: { ... } }])`.

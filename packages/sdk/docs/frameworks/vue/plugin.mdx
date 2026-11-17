@@ -61,13 +61,13 @@ mode, not the plugin:
 
 | Mode | Options |
 | --- | --- |
-| `hosted()` | `backendURL`, by default the one `consentManifest()` read from `VITE_C15T_BACKEND_URL` or `VITE_INTH_PROJECT_URL`. `headers`, `fetch`, `domain`. |
-| `manifest()` | `backendURL` and the build snapshot default to what `consentManifest()` downloaded. `source: 'runtime'` fetches the manifest when the app starts; `manifestURL` fetches it from that URL instead of using the snapshot; `snapshot` takes one you supply. `geoURL`, `inputs`, `initFallback`, `headers`, `credentials`, `fetch`, `domain`. |
+| `hosted()` | `projectUrl`, by default the one `consentManifest()` read from `VITE_C15T_BACKEND_URL` or `VITE_INTH_PROJECT_URL`. `headers`, `fetch`, `domain`. |
+| `manifest()` | `projectUrl` and the build snapshot default to what `consentManifest()` downloaded. `source: 'runtime'` fetches the manifest when the app starts; `manifestUrl` fetches it from that URL instead of using the snapshot; `snapshot` takes one you supply. `geoUrl`, `inputs`, `initFallback`, `headers`, `credentials`, `fetch`, `domain`. |
 | `testing()` | From `c15t/vue/testing`, for tests. `policy`: the rules to resolve; omitted, c15t's recommended rules. Throws in production builds. |
 
 `hosted()` and `manifest()` throw when they have no backend URL: add
 `consentManifest()` to `vite.config.ts` and set `VITE_C15T_BACKEND_URL` (or
-`VITE_INTH_PROJECT_URL`), or pass `backendURL`.
+`VITE_INTH_PROJECT_URL`), or pass `projectUrl`.
 
 ### Scripts and blocking
 
@@ -112,5 +112,5 @@ mode, not the plugin:
 Open the app with the Network tab open. `hosted()` requests the backend's
 `/init`. `manifest()` with a bundled snapshot makes no policy request unless
 the policy needs a location the browser doesn't have, and
-`manifest({ source: 'runtime' })` requests `${backendURL}/manifest`. In
+`manifest({ source: 'runtime' })` requests `${projectUrl}/manifest`. In
 the Application panel, a `c15t` cookie appears after you accept or reject.

@@ -1,12 +1,12 @@
 ---
 title: Consent modes
-description: Reference for backendURL and the optional mode, manifest(), hosted() and testing(), in every c15t framework package, where each one resolves the visitor's policy, what it adds to first-load JavaScript, the build-time manifest fetch and its fallback, and the backend URL variable each framework reads.
+description: Reference for projectUrl and the optional mode, manifest(), hosted() and testing(), in every c15t framework package, where each one resolves the visitor's policy, what it adds to first-load JavaScript, the build-time manifest fetch and its fallback, and the backend URL variable each framework reads.
 group: concepts
 ---
 
 ## Set the backend, then choose a mode if you need to
 
-Every c15t provider needs `backendURL`: your Inth project URL, such as
+Every c15t provider needs `projectUrl`: your Inth project URL, such as
 `https://your-project.inth.app`. Consent choices are saved there. Most apps
 set nothing else; `mode` is optional.
 
@@ -24,9 +24,9 @@ every visitor, or `manifest()` to tune how the manifest is read.
 unavailable: the build could not download it, the backend has no
 `/manifest`, or reading it fails at runtime. c15t logs a warning and the
 visitor still gets a banner. A configuration error, such as an invalid
-`manifestURL`, stays an error.
+`manifestUrl`, stays an error.
 
-`backendURL` is required unless `mode` is `testing()` or `enabled` is
+`projectUrl` is required unless `mode` is `testing()` or `enabled` is
 `false`. TypeScript asks for it, and a provider without one throws one error
 that names the option. Server-rendered frameworks also read it from an
 environment variable; see [set the backend URL](#set-the-backend-url).
@@ -63,7 +63,7 @@ available from `c15t/modes` (or `@c15t/core/modes`) for shared code.
 **Transport factories** return the transport itself, with its options
 attached as properties. A single-page app has one environment, so the bundler
 keeps only the mode you import. `hosted()` is data everywhere: it takes no
-options and uses the provider's `backendURL`.
+options and uses the provider's `projectUrl`.
 
 ## manifest()
 
@@ -77,22 +77,22 @@ holds your policy rules and copy, and no visitor data.
 | `source` | `'build'` | `'build'` uses the snapshot the build integration downloaded. Without one, such as after a failed download, it fetches the manifest at runtime. `'runtime'` always fetches at runtime, so policy edits apply without a rebuild. |
 | `snapshot` | none | A manifest you supply. You can pass `snapshot` or `source`, not both. |
 | `resolve` | `'server'` | `'server'` resolves each visitor on the server and ships no resolver to the browser. `'browser'` resolves in the browser, for pages the server does not render per visitor. Server-rendered frameworks only. |
-| `manifestURL` | see below | Where to fetch the manifest at runtime. On the server, `${backendURL}/manifest`. In the browser, `${routePrefix}/manifest`, else `${backendURL}/manifest`. |
-| `geoURL` | none | A same-origin route that answers with the visitor's `{ country, region }`. Browser resolution only. |
+| `manifestUrl` | see below | Where to fetch the manifest at runtime. On the server, `${projectUrl}/manifest`. In the browser, `${routePrefix}/manifest`, else `${projectUrl}/manifest`. |
+| `geoUrl` | none | A same-origin route that answers with the visitor's `{ country, region }`. Browser resolution only. |
 | `inputs` | none | `{ country, region }` when the page already knows the visitor's location, for example from an edge worker. Browser resolution only. |
 
 The transport `manifest()` from `c15t/react`, `c15t/vue/vue-plugin`,
 `c15t/svelte`, `@c15t/angular` and `@c15t/browser` always resolves in the
-browser, so it has no `resolve` option. It also takes `backendURL`,
+browser, so it has no `resolve` option. It also takes `projectUrl`,
 `headers`, `credentials`, `domain`, `fetch` and `initFallback`. With no
 options it reads the snapshot and the backend URL your build integration
 downloaded.
 
 When the policy depends on where the visitor is, and the browser does not
-know the country or region, browser resolution asks `geoURL`, then the
+know the country or region, browser resolution asks `geoUrl`, then the
 backend's `/init`. Set `initFallback: false` to resolve for an unknown location
 instead. A policy with location rules therefore saves no request in a
-single-page app unless you pass `inputs` or `geoURL`. The `consentManifest()`
+single-page app unless you pass `inputs` or `geoUrl`. The `consentManifest()`
 plugins from `c15t/build`, `c15t/vue/vite` and `c15t/svelte/vite` warn
 about this when a single-page app build bundles such a policy.
 
@@ -113,7 +113,7 @@ logs one warning per manifest URL:
 ## hosted()
 
 `hosted()` asks the backend's `GET /init` for each visitor's policy and posts
-choices to `${backendURL}/subjects`. It takes no options. In React, Vue,
+choices to `${projectUrl}/subjects`. It takes no options. In React, Vue,
 Svelte, Angular and `@c15t/browser` it is the default, so you write it only to
 be explicit; in a server-rendered framework it replaces the manifest.
 
@@ -121,7 +121,7 @@ be explicit; in a server-rendered framework it replaces the manifest.
 
 `testing()` comes from a package's `/testing` entry and is for tests only. It
 resolves a policy in the browser with no backend and sends nothing. It needs
-no `backendURL`, and it throws when `NODE_ENV` is `production`, so a test
+no `projectUrl`, and it throws when `NODE_ENV` is `production`, so a test
 config that reaches a production build fails on load instead of showing
 visitors a banner whose choices nobody records. Its code is only in bundles
 that import the `/testing` entry.
@@ -174,7 +174,7 @@ runs:
 | Mode | First-load JavaScript | Loaded with `import()` when it runs |
 | --- | --- | --- |
 | `manifest()` | The code that saves choices and builds an init request | The hosted init path, if the browser has to resolve consent again |
-| `manifest({ resolve: 'browser' })` | The code that saves choices | The browser resolver, English copy and the fetch of `${routePrefix}/manifest` or `${backendURL}/manifest`, unless the server state already holds the policy. Other languages load per language. |
+| `manifest({ resolve: 'browser' })` | The code that saves choices | The browser resolver, English copy and the fetch of `${routePrefix}/manifest` or `${projectUrl}/manifest`, unless the server state already holds the policy. Other languages load per language. |
 | `hosted()` | The code that saves choices | The hosted init path |
 | `testing()` | Nothing mode-specific | The testing transport, the rule pack and its copy |
 
@@ -202,13 +202,13 @@ settings. The value is public configuration, not a secret.
 | Astro | `PUBLIC_C15T_BACKEND_URL` | `PUBLIC_INTH_PROJECT_URL` |
 | SvelteKit and Svelte | `PUBLIC_C15T_BACKEND_URL`, then `VITE_C15T_BACKEND_URL` | `PUBLIC_INTH_PROJECT_URL`, then `VITE_INTH_PROJECT_URL` |
 | TanStack Start, React, Vue and JavaScript with Vite | `VITE_C15T_BACKEND_URL` | `VITE_INTH_PROJECT_URL` |
-| Script tag | `data-backend-url` on the script element | – |
+| Script tag | `data-project-url` on the script element | – |
 
 Set either variable. The Inth one holds your Inth project URL, so other Inth
 SDKs in the same app can read it too. When both are set, the c15t variable
 wins.
 
-A backend URL resolves in this order: the framework's `backendURL` option,
+A backend URL resolves in this order: the framework's `projectUrl` option,
 then the c15t variable, then the Inth variable. The build reads each variable from the process environment,
 then from `.env.[mode].local`, `.env.[mode]`, `.env.local` and `.env` in the
 project root, so a c15t variable in `.env` still beats an Inth variable in
@@ -223,7 +223,7 @@ on a built app has no effect until you rebuild.
 ## Download the manifest at build time
 
 `manifest()` with the default `source: 'build'` resolves from a snapshot that a
-build integration downloads from `${backendURL}/manifest`:
+build integration downloads from `${projectUrl}/manifest`:
 
 | Framework | Build integration | Name in messages |
 | --- | --- | --- |
@@ -242,7 +242,7 @@ source tree. App code reads the result from `c15t/generated`:
 {/* example: fragment */}
 
 ```ts
-import { backendURL, snapshot } from 'c15t/generated';
+import { projectUrl, snapshot } from 'c15t/generated';
 ```
 
 Both exports are `undefined` when the build has no snapshot, so imports

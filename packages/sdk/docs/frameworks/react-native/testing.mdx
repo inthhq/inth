@@ -80,7 +80,7 @@ client.
 | --- | --- | --- |
 | `consent` | `'unset'` | `'unset'`: no choice yet, the prompt is owed and optional categories are denied. `'granted'` or `'denied'`: a stored choice for every optional category. An object such as `{ measurement: true }`: a stored choice where the categories you leave out are denied. |
 | `ready` | `true` | `false` keeps the core starting, so every optional category reads `pending` and `useConsent` returns `false`. Call `consent.setReady()` to finish. |
-| `nativeUI` | `true` | `false` tests a build without the stock native screens. The provider then presents nothing; render it with `autoPresent={false}` so it needs no `privacyPolicyURL`. |
+| `nativeUI` | `true` | `false` tests a build without the stock native screens. The provider then presents nothing; render it with `autoPresent={false}` so it needs no `privacyPolicyUrl`. |
 | `trackingAuthorization` | `'unsupported'` | The App Tracking Transparency answer. `'unsupported'` is Android's answer, so nothing asks Apple. |
 | `snapshot` | none | Raw snapshot fields set over the others, such as `{ model: 'opt-out' }`. |
 
@@ -114,7 +114,7 @@ turned on its act environment, so you do not wrap them yourself.
 
 The fake presenter behaves like the native one, but draws nothing:
 
-- A `ConsentProvider` that presents (the default, with a `privacyPolicyURL`)
+- A `ConsentProvider` that presents (the default, with a `privacyPolicyUrl`)
   opens the owed prompt by itself as soon as it mounts. `consent.prompt.current`
   then has `automatic: true`.
 - `presentConsentPrompt()` opens the prompt when one is owed, and answers

@@ -53,7 +53,7 @@ Replace these values before building:
 
 | Value | Use |
 | --- | --- |
-| `backendURL` | The project URL from your Inth dashboard, such as `https://your-project.inth.app`. The mobile SDKs work only with Inth, so prebuild refuses any other host. |
+| `projectUrl` | The project URL from your Inth dashboard, such as `https://your-project.inth.app`. The mobile SDKs work only with Inth, so prebuild refuses any other host. |
 | `consentCategories` | The categories your app uses, also configured in the project's policy. |
 | `androidMavenRepository.url` | The versioned repository supplied for your native artifacts. |
 | Maven environment variable names | Names available in your local and cloud build environments. Their values stay outside app configuration. |
@@ -166,7 +166,7 @@ fragment wraps an existing `Stack`:
 
 ```tsx
 return (
-	<ConsentProvider privacyPolicyURL="https://example.com/privacy">
+	<ConsentProvider privacyPolicyUrl="https://example.com/privacy">
 		<Stack />
 	</ConsentProvider>
 );

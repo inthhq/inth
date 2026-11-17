@@ -68,7 +68,7 @@ Check `useConsentStatus()` and the current snapshot:
 | `ready` is false | Native hydration has not completed. Inspect protected-storage and installation errors. |
 | `policyPending` is true | Check the backend URL, network result and embedded policy resource. |
 | `promptRequirement.kind` is `none` | No interaction is owed. A valid saved choice or a nonprompting policy can make this expected. Use Privacy settings to reopen preferences. |
-| A choice is owed but no screen opens | Check the console for a `c15t ConsentProvider` error or warning: a refused privacy-policy URL is an error, a binary built before native auto-present is an error that asks for a rebuild, and a missing window is a warning, after which native shows the prompt once the app is in the foreground. Confirm the outermost `ConsentProvider` has `privacyPolicyURL` and no `autoPresent={false}`. A dismissed prompt stays closed until the requirement changes; use Privacy settings to reopen it. With `autoPresent={false}`, inspect the error from your `presentConsentPrompt` call. |
+| A choice is owed but no screen opens | Check the console for a `c15t ConsentProvider` error or warning: a refused privacy-policy URL is an error, a binary built before native auto-present is an error that asks for a rebuild, and a missing window is a warning, after which native shows the prompt once the app is in the foreground. Confirm the outermost `ConsentProvider` has `privacyPolicyUrl` and no `autoPresent={false}`. A dismissed prompt stays closed until the requirement changes; use Privacy settings to reopen it. With `autoPresent={false}`, inspect the error from your `presentConsentPrompt` call. |
 
 A `not-bootstrapped` error usually means native installation was disabled,
 never configured or refused. Check launch metadata and `autoBootstrap` before
@@ -80,7 +80,7 @@ under the `inth` tag.
 
 | iOS code | Cause | Fix |
 | --- | --- | --- |
-| `INTH_CONFIGURATION_BACKEND_URL` | The project URL is missing or is not an Inth project URL. | Set `backendURL` to the URL from your Inth dashboard, such as `https://your-project.inth.app`. |
+| `INTH_CONFIGURATION_BACKEND_URL` | The project URL is missing or is not an Inth project URL. | Set `projectUrl` to the URL from your Inth dashboard, such as `https://your-project.inth.app`. |
 | `INTH_CONFIGURATION_DRY_RUN` | `dryRun` is on in a release build. | Remove `dryRun` from release builds. |
 | `INTH_CONFIGURATION_RETIRED` | `Info.plist` still has `com.inth.backend.mode`, `com.inth.backend.initUrl` or `com.inth.test`. | Remove the key. The message names its replacement. |
 

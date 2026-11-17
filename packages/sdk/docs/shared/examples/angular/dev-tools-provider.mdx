@@ -10,8 +10,8 @@ export const appConfig: ApplicationConfig = {
 	providers: [
 		provideZonelessChangeDetection(),
 		provideC15t({
-			backendURL: 'https://your-project.inth.app',
 			mode: hosted(),
+			projectUrl: 'https://your-project.inth.app',
 		}),
 		// After provideC15t(), and only in development builds.
 		isDevMode() ? provideC15tDevTools({ position: 'bottom-left' }) : [],

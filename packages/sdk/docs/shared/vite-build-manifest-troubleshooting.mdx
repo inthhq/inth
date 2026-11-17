@@ -12,7 +12,7 @@ going. The part in parentheses names the cause:
 | `fetch failed`, with `ENOTFOUND`, `ECONNREFUSED` or another network error | The build cannot reach the backend | Build where the backend is reachable |
 | `no response within 10 seconds` | The backend did not answer in time | Check the backend, or build where it is reachable |
 | `/manifest responded 404` | The URL is not your project's backend, such as the `https://your-project.inth.app` placeholder or a URL missing its path prefix | Copy the backend URL exactly as Inth shows it, or set `VITE_C15T_BACKEND_URL` |
-| `/manifest returned an invalid consent manifest.` | The URL answered with something other than a consent manifest, such as an HTML page | Point `backendURL` at the backend itself, not your site or a dashboard page |
+| `/manifest returned an invalid consent manifest.` | The URL answered with something other than a consent manifest, such as an HTML page | Point `projectUrl` at the backend itself, not your site or a dashboard page |
 
 A failed download never reuses an old snapshot. To deploy while the backend
 is down, run the build with `C15T_ON_BUILD_ERROR=runtime`. `snapshot` is then
@@ -23,7 +23,7 @@ fetches after Vite has dropped the code the app does not use, so a `hosted()`
 or `testing()` build never contacts the backend and never fails this way.
 
 An error or warning that says `no backend URL is set` means the plugin found
-no `backendURL` option and no variable. Set `VITE_C15T_BACKEND_URL` (or
+no `projectUrl` option and no variable. Set `VITE_C15T_BACKEND_URL` (or
 `VITE_INTH_PROJECT_URL`) in `.env` or the build environment, or pass the absolute backend URL from your Inth
 project. The [troubleshooting guide](/docs/guides/troubleshooting#why-does-the-build-fail-to-download-the-manifest)
 lists every message.
@@ -36,7 +36,7 @@ require an absolute upstream URL`.
 ## Why is snapshot undefined?
 
 **Check.** `snapshot` from `c15t/generated` is `undefined`, and the browser
-requests `${backendURL}/manifest` on page load.
+requests `${projectUrl}/manifest` on page load.
 
 **Fix.** `snapshot` is `undefined` when Vite has no policy to serve:
 

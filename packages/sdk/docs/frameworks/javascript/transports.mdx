@@ -1,6 +1,6 @@
 ---
 title: Transports
-description: Choose where a JavaScript app's c15t policy comes from and where choices go, with backendURL and the hosted, manifest and testing modes for @c15t/browser, createConsentRuntime and your own kernel.
+description: Choose where a JavaScript app's c15t policy comes from and where choices go, with projectUrl and the hosted, manifest and testing modes for @c15t/browser, createConsentRuntime and your own kernel.
 group: frameworks
 ---
 
@@ -16,7 +16,7 @@ to record their choice.
 | `manifest()` at runtime | The backend's public `/manifest`, resolved in the browser | The backend's `/subjects` | You want the banner to render without a per-visit `/init` request and cannot bundle the policy. |
 | `testing()` | A policy you pass, or the recommended rules, resolved in the browser | Nowhere; the browser only | Tests. It throws in production builds. |
 
-Every setup needs `backendURL`, your Inth project URL, unless the mode is
+Every setup needs `projectUrl`, your Inth project URL, unless the mode is
 `testing()`. With no `mode`, a JavaScript app asks the backend's `/init`.
 
 [Consent modes](/docs/concepts/modes) covers the same factories in every
@@ -29,10 +29,10 @@ Each setup takes the transport in a slightly different form:
 
 | Setup | Where it goes |
 | --- | --- |
-| `@c15t/browser` | `init({ backendURL, mode })`. `mode` is optional: `manifest()` or `hosted()` from `@c15t/browser`, or `testing()` from `@c15t/browser/testing`. |
-| `createConsentRuntime` | `backendURL`, and an optional `mode` from the same entries. |
-| Script tag | `data-backend-url`, and `data-mode="hosted"` or `"manifest"` on the headless and IAB scripts. Tests load `c15t.testing.js`. |
-| `createConsentKernel` | `transport`, the transport object itself, such as `createHostedTransport({ backendURL })`. |
+| `@c15t/browser` | `init({ projectUrl, mode })`. `mode` is optional: `manifest()` or `hosted()` from `@c15t/browser`, or `testing()` from `@c15t/browser/testing`. |
+| `createConsentRuntime` | `projectUrl`, and an optional `mode` from the same entries. |
+| Script tag | `data-project-url`, and `data-mode="hosted"` or `"manifest"` on the headless and IAB scripts. Tests load `c15t.testing.js`. |
+| `createConsentKernel` | `transport`, the transport object itself, such as `createHostedTransport({ projectUrl })`. |
 
 A factory is created once. To switch transports, dispose the client or
 runtime and create a new one.
@@ -44,31 +44,31 @@ and testing code only when you import them. Passing a mode name throws:
 @c15t/browser: `mode` must be hosted() or manifest() from @c15t/browser, or testing() from @c15t/browser/testing. Mode names like "hosted" work only in the script-tag builds.
 ```
 
-Leaving out `backendURL` throws:
+Leaving out `projectUrl` throws:
 
 ```txt
-@c15t/browser: `backendURL` is required. Set it to your Inth project URL, or use `mode: testing()` from @c15t/browser/testing in tests.
+@c15t/browser: `projectUrl` is required. Set it to your Inth project URL, or use `mode: testing()` from @c15t/browser/testing in tests.
 ```
 
 ## Hosted
 
-With `backendURL` and no mode, or with `mode: hosted()`, the runtime asks your
+With `projectUrl` and no mode, or with `mode: hosted()`, the runtime asks your
 Inth backend's `/init` for each visitor and saves to its `/subjects`:
 
 <include src="../../shared/examples/javascript/runtime.mdx" />
 
-`hosted()` takes no options; it uses the `backendURL` you pass. For a kernel you
-create yourself, `createHostedTransport({ backendURL })` from
+`hosted()` takes no options; it uses the `projectUrl` you pass. For a kernel you
+create yourself, `createHostedTransport({ projectUrl })` from
 `c15t/transports` takes these options:
 
 | Option | What it does |
 | --- | --- |
-| `backendURL` | The backend URL. Relative URLs such as `/api/c15t` work behind a proxy. |
+| `projectUrl` | The backend URL. Relative URLs such as `/api/c15t` work behind a proxy. |
 | `headers` | Request headers to forward on `/init`: `accept-language`, the geo headers and `sec-gpc`. Meant for server code forwarding a visitor's request. |
 | `fetch` | A `fetch` implementation, for tests or unusual runtimes. |
 | `domain` | The domain recorded with each save. Defaults to the page's host. |
-| `initURL` | Send `/init` somewhere else, such as a same-origin route, while saves still go to `backendURL`. Saves then assert the policy they were made against. |
-| `assertDecisionInputs` | Send the resolved policy inputs with each save, so the backend can reject a save made against a stale policy. Defaults to `true` when `initURL` is set. |
+| `initUrl` | Send `/init` somewhere else, such as a same-origin route, while saves still go to `projectUrl`. Saves then assert the policy they were made against. |
+| `assertDecisionInputs` | Send the resolved policy inputs with each save, so the backend can reject a save made against a stale policy. Defaults to `true` when `initUrl` is set. |
 
 Add your app's origin to the Inth project's trusted origins, or the browser
 blocks consent saves with a CORS error.
@@ -83,7 +83,7 @@ Saves still go out with cookies and still need the trusted origin.
 `manifest()` from `@c15t/browser` resolves the policy in the browser from the
 backend's public manifest. With no options it uses the snapshot and backend
 URL `consentManifest()` downloaded; without a snapshot it fetches
-`${backendURL}/manifest` once. When the manifest is unavailable, it asks the
+`${projectUrl}/manifest` once. When the manifest is unavailable, it asks the
 backend's `/init` and logs a warning. It works with `init()` and with
 `createConsentRuntime`:
 
@@ -91,17 +91,17 @@ backend's `/init` and logs a warning. It works with `init()` and with
 
 | Option | What it does |
 | --- | --- |
-| `manifestURL` | Where to fetch the manifest when the page loads. The build's snapshot is not used, but saves still go to the build's backend URL. Without one, a URL that ends in `/manifest` also gives the backend URL. |
-| `snapshot` | The manifest object itself, inlined into the page. No manifest request at all. Defaults to the build's snapshot unless you set `manifestURL`. |
+| `manifestUrl` | Where to fetch the manifest when the page loads. The build's snapshot is not used, but saves still go to the build's backend URL. Without one, a URL that ends in `/manifest` also gives the backend URL. |
+| `snapshot` | The manifest object itself, inlined into the page. No manifest request at all. Defaults to the build's snapshot unless you set `manifestUrl`. |
 | `source` | `'runtime'` ignores the build's snapshot and fetches the manifest. You can pass `snapshot` or `source`, not both. |
-| `backendURL` | Where saves go. Defaults to the build's backend URL. Required otherwise, unless `manifestURL` ends in `/manifest`. `''` means this origin. |
+| `projectUrl` | Where saves go. Defaults to the build's backend URL. Required otherwise, unless `manifestUrl` ends in `/manifest`. `''` means this origin. |
 | `inputs` | `{ country, region }` known ahead of time, such as a country your edge injected into the page. |
-| `geoURL` | A same-origin route that answers `{ country, region }`, asked when the policy needs a location the page doesn't have. |
+| `geoUrl` | A same-origin route that answers `{ country, region }`, asked when the policy needs a location the page doesn't have. |
 | `initFallback` | `false` resolves for an unknown location instead of asking the backend's `/init`. Defaults to `true`. |
 | `fetch` | A `fetch` implementation. |
 
 When some locations get a different banner than others, or no banner, and
-neither the page nor `geoURL` supplies a country, the transport asks the
+neither the page nor `geoUrl` supplies a country, the transport asks the
 backend's `/init` instead, so the answer stays correct. That visitor's banner
 waits for the round trip. Rules keyed by country or region that all give the
 same banner (same model, prompt, categories, copy and GPC handling, only the
@@ -139,7 +139,7 @@ The [quickstart](/docs/frameworks/javascript/quickstart) and
 ## Testing
 
 `testing()` from `@c15t/browser/testing` resolves a policy in the browser and
-sends nothing. It needs no `backendURL`, and it throws in production builds,
+sends nothing. It needs no `projectUrl`, and it throws in production builds,
 so a test configuration that reaches production fails on load.
 
 {/* example: fragment */}

@@ -3,11 +3,11 @@ or function goes in as the first argument, unchanged:
 
 <include src="../examples/nextjs/next-config.mdx" />
 
-`next build`, `next dev` and `next typegen` fetch `${backendURL}/manifest` and
+`next build`, `next dev` and `next typegen` fetch `${projectUrl}/manifest` and
 write the policy to `node_modules/.cache/c15t/`, outside your source tree, so
 there is nothing to keep out of Git. `next start` serves the built snapshot and
-fetches no policy. Without a `backendURL` option, the build reads the
-`backendURL` in `c15t.config.ts`, which defaults to
+fetches no policy. Without a `projectUrl` option, the build reads the
+`projectUrl` in `c15t.config.ts`, which defaults to
 `NEXT_PUBLIC_C15T_BACKEND_URL`, then `NEXT_PUBLIC_INTH_PROJECT_URL`, so saves
 and the snapshot point at the same
 project.

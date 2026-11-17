@@ -116,7 +116,7 @@ framework guides do.
 ## Why does the build fail to download the manifest?
 
 `manifest()` resolves from a policy snapshot that the build downloads from
-`${backendURL}/manifest`. A production build stops when the download fails,
+`${projectUrl}/manifest`. A production build stops when the download fails,
 and dev logs the same message as a warning. Every framework uses the same
 messages, prefixed with the integration's name, such as
 `@c15t/nextjs/build`, `@c15t/core/build` (for `c15t/build`),
@@ -130,7 +130,7 @@ messages, prefixed with the integration's name, such as
 | `... (/manifest responded 404 Not Found)`, or another status | The URL is not your project's backend, such as the `https://your-project.inth.app` placeholder or a URL missing its path prefix | Copy the backend URL exactly as Inth shows it |
 | `... (/manifest responded 402: <message> (<CODE>))`, or another status followed by a message | The backend refused the request and said why, such as an account out of its usage allowance | Follow the backend's message |
 | `... (/manifest returned an invalid consent manifest.)` | The URL answered with something other than a consent manifest, such as an HTML page | Point the backend URL at the backend itself, not your site or a dashboard page |
-| `no backend URL is set, so the build cannot fetch the consent manifest. Pass backendURL or set ...` | No `backendURL` option and no backend URL variable | Set the variable your framework reads; see [consent modes](/docs/concepts/modes#set-the-backend-url) |
+| `no backend URL is set, so the build cannot fetch the consent manifest. Pass projectUrl or set ...` | No `projectUrl` option and no backend URL variable | Set the variable your framework reads; see [consent modes](/docs/concepts/modes#set-the-backend-url) |
 | `skipped the consent manifest fetch because "/api/c15t" is not an absolute http(s) URL, so the server fetches the policy at runtime.` | A relative backend URL. A notice, not an error. | Pass the absolute backend URL. With `onBuildError: 'fail'`, this stops the build with `build-time manifests require an absolute upstream URL.` |
 | `C15T_ON_BUILD_ERROR must be 'runtime' or 'fail', received "..."` | The variable has another value | Set it to `runtime` or `fail`, or unset it |
 | `onBuildError must be 'runtime' or 'fail', received "..."` | The option has another value | Pass `'runtime'` or `'fail'` |
@@ -138,7 +138,7 @@ messages, prefixed with the integration's name, such as
 Each failure message ends with what to do next. In a production build:
 ``Set `C15T_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to deploy with runtime fetching.``
 The Vite plugins add one more fix. The plugin can't see a mode set in app
-code, so an app that uses `manifest({ manifestURL })` or
+code, so an app that uses `manifest({ manifestUrl })` or
 `manifest({ source: 'runtime' })` should pass `source: 'runtime'` to
 `consentManifest()`, and the build skips the download.
 A failed download never reuses an older snapshot. With
@@ -155,11 +155,11 @@ describes the policy and when the build skips the download.
 policy with location rules:
 
 ```txt
-@c15t/core/build: the consent policy depends on the visitor's location, which the browser doesn't know. Unless you pass `inputs` or `geoURL` to `manifest()`, every first visit still calls the backend's /init, so the bundled policy adds bytes without saving a request. Consider `mode: hosted()` instead.
+@c15t/core/build: the consent policy depends on the visitor's location, which the browser doesn't know. Unless you pass `inputs` or `geoUrl` to `manifest()`, every first visit still calls the backend's /init, so the bundled policy adds bytes without saving a request. Consider `mode: hosted()` instead.
 ```
 
 Pass the visitor's `{ country, region }` as `manifest({ inputs })` when your
-edge knows it, or a `geoURL` that answers with it. Otherwise switch the mode
+edge knows it, or a `geoUrl` that answers with it. Otherwise switch the mode
 to `hosted()`, which asks `/init` without bundling the policy.
 
 ## Why does the provider say a mode is required?
@@ -171,7 +171,7 @@ instead of a factory:
 | --- | --- |
 | ``@c15t/react ConsentProvider: `mode` is required. Use manifest() or hosted().`` | Pass `mode`, such as `manifest()` from the same package. The start of the message names the package and the API that got no mode, such as `@c15t/svelte ConsentProvider` or `@c15t/core createConsentRuntime()`. Production builds name the package only: ``@c15t/react: `mode` is required.`` |
 | ``@c15t/browser: `mode` must be a factory, such as manifest(), hosted() or testing() from @c15t/browser. Mode names like "hosted" work only in the script-tag builds.`` | Import the factory and call it: `init({ mode: hosted() })`. |
-| ``c15t: hosted() needs `backendURL`. Pass it, or add consentManifest() from c15t/build to your Vite config and set VITE_C15T_BACKEND_URL (or VITE_INTH_PROJECT_URL).`` | The React `hosted()` found no backend URL. `@c15t/browser` throws the same message prefixed `@c15t/browser:`. A production build prints only the first sentence. |
+| ``c15t: hosted() needs `projectUrl`. Pass it, or add consentManifest() from c15t/build to your Vite config and set VITE_C15T_BACKEND_URL (or VITE_INTH_PROJECT_URL).`` | The React `hosted()` found no backend URL. `@c15t/browser` throws the same message prefixed `@c15t/browser:`. A production build prints only the first sentence. |
 | ``c15t: `mode` is the hosted() transport itself, so its code ships in the client bundle. Pass the hosted() your framework package exports instead: it is plain data, and the root loads the code only when it runs.`` | A warning outside production. A server-rendered root got a transport from `c15t/react`. Import the mode from your framework package. Next.js has its own wording; see [Next.js troubleshooting](/docs/frameworks/next/troubleshooting). |
 
 ## Why does the static build fail when development works?

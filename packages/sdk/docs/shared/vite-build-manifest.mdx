@@ -5,6 +5,6 @@ types, so `tsc`, `vue-tsc` and `svelte-check` pass on a fresh checkout without
 a build first.
 
 The plugin can't see the options your app passes to `manifest()`. When the
-app passes `source: 'runtime'` or `manifestURL`, set
+app passes `source: 'runtime'` or `manifestUrl`, set
 `consentManifest({ source: 'runtime' })` too. The build then downloads no
 manifest, so it doesn't fail when the backend's `/manifest` is down.

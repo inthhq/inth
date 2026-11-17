@@ -171,13 +171,13 @@ inline code with a nonce instead.
 
 ## Allow the consent backend in `connect-src`
 
-The browser sends consent to `${backendURL}/subjects`, and requests `/init`
+The browser sends consent to `${projectUrl}/subjects`, and requests `/init`
 when the server did not resolve the policy. Allow those origins:
 
 | Mode | Browser requests go to |
 | --- | --- |
 | `manifest()`, the default | Your own origin for `/api/c15t/init`, and the backend origin for `/subjects` |
-| `manifest({ resolve: 'browser' })` | Your own origin for `/api/c15t/manifest`, the backend origin for `/subjects`, and `geoURL` if set |
+| `manifest({ resolve: 'browser' })` | Your own origin for `/api/c15t/manifest`, the backend origin for `/subjects`, and `geoUrl` if set |
 | `hosted()` | The backend origin, for `/init` and `/subjects` |
 | `testing()` | No consent backend |
 

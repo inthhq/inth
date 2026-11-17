@@ -106,8 +106,8 @@ If you pass a transport `hosted()` a `fetch`, match on the path: URLs now carry 
 
 ## What does regular `/init` do?
 
-`hosted()` uses `${backendURL}/init` for initialization and
-`${backendURL}/subjects` for consent submissions. The name `hosted` describes
+`hosted()` uses `${projectUrl}/init` for initialization and
+`${projectUrl}/subjects` for consent submissions. The name `hosted` describes
 the protocol; the URL can belong to Inth or your own c15t backend.
 
 {/* example: fragment */}
@@ -132,7 +132,7 @@ In the browser, an inline script in `<head>` can start `/init` while the
 app's JavaScript downloads, and `hosted()` uses that response. Vite apps get
 it from `consentManifest()` by default, Nuxt adds it to pages with
 `ssr: false`, and TanStack Start has `consentPrefetchHead`. Elsewhere, render
-`buildPrefetchScript({ backendURL })` from `c15t` yourself. If c15t assigns
+`buildPrefetchScript({ projectUrl })` from `c15t` yourself. If c15t assigns
 a banner experiment's arm, give the script the same `experiment`, or
 `hosted()` sends a second `/init` for visitors who have not chosen yet.
 
@@ -151,15 +151,15 @@ separate policy reads and record writes. With a backend rewrite mounted at
 import { hosted } from 'c15t';
 
 export const mode = hosted({
-	backendURL: '/api/c15t',
-	initURL: '/api/c15t/init',
+	projectUrl: '/api/c15t',
+	initUrl: '/api/c15t/init',
 });
 ```
 
 The route must return the c15t init response contract. c15t adds its inputs to
-`initURL` as query parameters, replacing any of your own with the same name.
+`initUrl` as query parameters, replacing any of your own with the same name.
 See [query parameters and CORS](/docs/self-host/api/endpoints#query-parameters-and-cors)
-for the names. Because `initURL` is set, `assertDecisionInputs` defaults to
+for the names. Because `initUrl` is set, `assertDecisionInputs` defaults to
 `true`: saves carry the policy decision they were made against when init
 returned no signed policy snapshot token, so the backend can reject a save
 made against a stale policy. Server-rendered frameworks do this for you when
@@ -191,7 +191,7 @@ host instead.
 
 Pass `testing()` from your framework package's `/testing` entry as `mode`.
 It resolves a policy in the browser, sends no request and needs no
-`backendURL`. It throws when `NODE_ENV` is `production`, and its code is only
+`projectUrl`. It throws when `NODE_ENV` is `production`, and its code is only
 in bundles that import the `/testing` entry.
 
 {/* example: fragment */}

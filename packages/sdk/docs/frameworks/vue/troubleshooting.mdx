@@ -19,11 +19,11 @@ next to `@vitejs/plugin-vue`, and set `VITE_C15T_BACKEND_URL` (or
 ## app.use() throws "pass `mode`"
 
 **Check.** The plugin options have no `mode`. Earlier v3 alphas took
-`backendURL`, `manifest`, `manifestURL` and `manifestSnapshot` on the plugin.
+`projectUrl`, `manifest`, `manifestUrl` and `manifestSnapshot` on the plugin.
 
 **Fix.** Pass `mode: hosted()`, `manifest()` or `testing()` from
-`c15t/vue/vue-plugin`. Move `backendURL` into the mode, such as
-`hosted({ backendURL })`, or let `consentManifest()` supply it.
+`c15t/vue/vue-plugin`. Move `projectUrl` into the mode, such as
+`hosted({ projectUrl })`, or let `consentManifest()` supply it.
 
 <include src="../../shared/vite-build-manifest-troubleshooting.mdx" />
 
@@ -55,7 +55,7 @@ with `manifest({ source: 'runtime' })`, the `/manifest` request.
    shows no banner, which is common in opt-out regions. See
    [why the banner may be absent](/docs/concepts/policies#why-the-banner-may-be-absent).
 2. **`manifest()` resolves the unknown-location policy.** With
-   `initFallback: false` and no `inputs` or `geoURL`, every visitor gets the
+   `initFallback: false` and no `inputs` or `geoUrl`, every visitor gets the
    policy your project assigns when the location is unknown. Switch to
    `hosted()`, or check that rule and rebuild.
 3. **`ConsentRoot` is inside a route that unmounts.** Put it in the root
@@ -125,12 +125,12 @@ a stable release, with no alias.
 
 | Removed | Use instead |
 | --- | --- |
-| Vue plugin options `backendURL`, `manifest`, `manifestSnapshot`, `manifestURL`, `customFetch`, `domain` | `mode`, a factory from `c15t/vue/vue-plugin` that takes them |
+| Vue plugin options `projectUrl`, `manifest`, `manifestSnapshot`, `manifestUrl`, `customFetch`, `domain` | `mode`, a factory from `c15t/vue/vue-plugin` that takes them |
 | The default `c15tVue` export of `c15t/vue/vite` | `consentManifest` from `c15t/vue/vite`. The Vue app plugin keeps the name `c15tVue`. |
 | `c15t/vue/consent-root`, `c15t/vue/consent-widget` | Named exports from `c15t/vue/vue-plugin` |
 | `ConsentPreferencesLink`, `runtime/components/consent-preferences-link.vue` | `ConsentDialogLink`, `consent-dialog-link.vue` |
 | `ConsentFrame` | `ConsentGate` |
-| `hosted({ url })` | `hosted({ backendURL })`, or `VITE_C15T_BACKEND_URL` |
+| `hosted({ url })` | `hosted({ projectUrl })`, or `VITE_C15T_BACKEND_URL` |
 
 ## More help
 

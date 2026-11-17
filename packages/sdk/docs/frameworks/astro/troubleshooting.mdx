@@ -47,7 +47,7 @@ load, so visitors do not download Svelte as well.
 
 **Check.** Look at `PUBLIC_C15T_BACKEND_URL` and `PUBLIC_INTH_PROJECT_URL` in
 `.env`, `.env.local` and the
-build environment, and at any `backendURL` in `astro.config.mjs`. One is still the placeholder
+build environment, and at any `projectUrl` in `astro.config.mjs`. One is still the placeholder
 `https://your-project.inth.app`, the demo project, or a URL from another
 project.
 
@@ -60,7 +60,7 @@ rebuild it.
 ## `astro build` or `astro dev` can't fetch the manifest
 
 **Check.** In `manifest()` mode the integration downloads
-`${backendURL}/manifest`, or your `manifestURL`, when `astro build` or
+`${projectUrl}/manifest`, or your `manifestUrl`, when `astro build` or
 `astro dev` starts, and waits at most 10 seconds. When the download fails,
 `astro build` stops with an error that starts with `@c15t/astro: could not
 fetch the consent manifest from <url> during the build`. `astro dev` logs the
@@ -82,7 +82,7 @@ A missing backend URL counts as a failed download: `astro build` stops with
 `no backend URL is set`, and `astro dev` warns.
 
 **Fix.** Set `PUBLIC_C15T_BACKEND_URL` (or `PUBLIC_INTH_PROJECT_URL`), or
-`backendURL` on `c15t()`, to your
+`projectUrl` on `c15t()`, to your
 Inth project's absolute backend URL, and make sure the machine that builds
 can reach it. To deploy while the backend is down, build with
 `C15T_ON_BUILD_ERROR=runtime`, or set `onBuildError: 'runtime'`. To never
@@ -111,8 +111,8 @@ report prints, use the
 [manifest-fetch error guidance](/docs/frameworks/astro/troubleshooting#astro-build-or-astro-dev-cant-fetch-the-manifest).
 
 **Fix.** If `astro:config:setup` takes a long time in `manifest()` mode, check
-how long the build machine takes to reach `${backendURL}/manifest`, or your
-`manifestURL`. The download can wait up to 10 seconds. See
+how long the build machine takes to reach `${projectUrl}/manifest`, or your
+`manifestUrl`. The download can wait up to 10 seconds. See
 [build-time manifests](/docs/frameworks/astro/rendering#bundle-the-manifest-during-builds)
 before choosing `manifest({ source: 'runtime' })`, which skips the build-time
 download and loads the policy at runtime instead. `onBuildError: 'runtime'`
@@ -179,13 +179,13 @@ reach it, so the policy ships with the build. Or raise the budget with
 
 ## The config fails with "manifest() needs a backend URL"
 
-**Check.** The server reads the policy from `${backendURL}/manifest`, and the
+**Check.** The server reads the policy from `${projectUrl}/manifest`, and the
 browser saves consent there, so `astro.config` refuses to load without one.
 `hosted()` fails the same way with `hosted() needs a backend URL`.
 
 **Fix.** Set `PUBLIC_C15T_BACKEND_URL` (or `PUBLIC_INTH_PROJECT_URL`) in
 `.env`, or pass
-`c15t({ backendURL: 'https://your-project.inth.app' })` with your project's
+`c15t({ projectUrl: 'https://your-project.inth.app' })` with your project's
 URL in place of the placeholder. A `manifest({ snapshot })` still needs one:
 the snapshot replaces the manifest download, but the consent route answers
 `GET` only, so saves go to the backend.
@@ -193,7 +193,7 @@ the snapshot replaces the manifest download, but the consent route answers
 ## Options from an earlier alpha have no effect
 
 **Check.** `astro.config.mjs` uses `hosted({ url })`,
-`manifest({ backendURL, manifest })`, `endpoints` or `buildManifest`. The
+`manifest({ projectUrl, manifest })`, `endpoints` or `buildManifest`. The
 integration no longer reads them, and TypeScript reports them as unknown. A
 layout that imports `consent-dialog-trigger.astro` fails to resolve it.
 
@@ -201,15 +201,15 @@ layout that imports `consent-dialog-trigger.astro` fails to resolve it.
 
 | Earlier | Now |
 | --- | --- |
-| `hosted({ url })` | `hosted()` with the top-level `backendURL` |
-| `manifest({ backendURL })` | `manifest()` with the top-level `backendURL` |
+| `hosted({ url })` | `hosted()` with the top-level `projectUrl` |
+| `manifest({ projectUrl })` | `manifest()` with the top-level `projectUrl` |
 | `manifest({ manifest })` | `manifest({ snapshot })` |
 | `endpoints: { initPath, manifestPath }` | `routePrefix`, one catch-all for both |
 | `endpoints: false` | `routePrefix: false` |
 | `buildManifest: false` | `manifest({ source: 'runtime' })` |
 | `buildManifest: true` | `onBuildError: 'fail'` |
 | `ConsentDialogTrigger` from `consent-dialog-trigger.astro` | `ConsentDialogLink` from `c15t/astro/components` |
-| `hosted({ domain })` | The top-level `backendURL` |
+| `hosted({ domain })` | The top-level `projectUrl` |
 | The `c15t/astro/api/init` and `c15t/astro/api/manifest` entries, and route handlers from `c15t/astro/api` | `routePrefix`, and `createConsentRouteHandlers` and the manifest cache helpers from `c15t/astro/server` |
 | `resolveTransportFactory`, `custom`, and the `C15tModeDescriptor`, `C15tHostedDescriptor`, `C15tManifestDescriptor`, `C15tOfflineDescriptor` and `C15tEndpointOptions` types | `ConsentMode` from `c15t/astro` |
 | `/// <reference types="c15t/astro/middleware" />` in `src/env.d.ts` | Nothing. The integration adds the `Astro.locals.c15t` type. |

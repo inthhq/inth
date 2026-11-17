@@ -44,8 +44,8 @@ Create `c15t.config.ts` at the project root with `mode: hosted()`:
 
 <include src="../../shared/examples/nextjs/client-side-config.mdx" />
 
-`hosted()` initializes through `${backendURL}/init` and posts choices to
-`${backendURL}/subjects`. Add your `scripts` to the same config, as the
+`hosted()` initializes through `${projectUrl}/init` and posts choices to
+`${projectUrl}/subjects`. Add your `scripts` to the same config, as the
 [quickstart](/docs/frameworks/next/quickstart#add-the-consent-config) shows.
 The file is bundled into the browser, so it must hold no secrets.
 
@@ -84,7 +84,7 @@ needs a Next.js server. See
 
 Open the production build in a fresh browser session with DevTools open.
 
-1. The browser calls `${backendURL}/init` once, then shows the banner. No
+1. The browser calls `${projectUrl}/init` once, then shows the banner. No
    PostHog request runs.
 2. Click **Reject All** and reload. The banner stays closed and PostHog does
    not load.

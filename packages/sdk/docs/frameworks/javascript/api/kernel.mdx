@@ -168,7 +168,7 @@ page after a save turns off something that was allowed. It returns a
 disposer.
 
 `createConsentKernel(config)` takes a `transport`, not a transport factory.
-Use `createHostedTransport({ backendURL })` or `createOfflineTransport()`
+Use `createHostedTransport({ projectUrl })` or `createOfflineTransport()`
 from `c15t`, or your own object with `init` and `save`. Other useful config
 fields:
 

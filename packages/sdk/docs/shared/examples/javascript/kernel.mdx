@@ -8,10 +8,10 @@ import { createScriptLoader } from 'c15t/modules/script-loader';
 import { scripts } from './scripts';
 
 export const startConsentKernel = async function startConsentKernel(
-	backendURL: string
+	projectUrl: string
 ) {
 	const kernel = createConsentKernel({
-		transport: createHostedTransport({ backendURL }),
+		transport: createHostedTransport({ projectUrl }),
 	});
 	// Each module is yours to create and dispose. This kernel has no iframe
 	// blocker, network blocker, data clearing or reload after revocation.

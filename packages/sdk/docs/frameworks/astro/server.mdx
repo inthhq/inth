@@ -153,7 +153,7 @@ it with `routePrefix` instead.
 The handlers the injected route uses are exported as
 `createConsentRouteHandlers({ options })` from `c15t/astro/server`. Mount
 them yourself for other clients, or for browser resolution: with
-`mode: manifest({ resolve: 'browser', manifestURL: '/api/c15t/manifest' })`,
+`mode: manifest({ resolve: 'browser', manifestUrl: '/api/c15t/manifest' })`,
 the browser fetches the manifest from your route. `GET(request, { locals })`
 dispatches by the last path segment.
 

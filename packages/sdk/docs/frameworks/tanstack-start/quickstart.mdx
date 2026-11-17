@@ -54,7 +54,7 @@ Add the `consentManifest` plugin to `vite.config.ts`, before `tanstackStart()`:
 <include src="../../shared/examples/tanstack-start/vite-config.mdx" />
 
 During `vite build`, or in `vite dev` when the server first loads it, the
-plugin downloads your project's public policy from `${backendURL}/manifest` and serves it to server code as
+plugin downloads your project's public policy from `${projectUrl}/manifest` and serves it to server code as
 `snapshot` from `c15t/generated`. In the browser bundle, `snapshot` is
 `undefined`, so the policy stays on the server. No file is written into your
 project.
@@ -71,7 +71,7 @@ too. When both are set, `VITE_C15T_BACKEND_URL` wins.
 
 The example app's `.env` points at `https://example-inth.inth.app`, a demo
 project. The server function and `ConsentRoot` read the URL from the plugin,
-so the app code never repeats it. If you pass `backendURL` to the plugin
+so the app code never repeats it. If you pass `projectUrl` to the plugin
 instead, the plugin sets the variable to that URL. Vite writes its value into
 the server and browser builds, so setting it when you start a built app has
 no effect.

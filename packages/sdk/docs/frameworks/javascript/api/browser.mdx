@@ -8,8 +8,8 @@ group: frameworks
 
 | Import | What it gives you |
 | --- | --- |
-| `@c15t/browser` | `init`, `createConsentClient` and `mountConsentUI`, with the stock banner, dialog and trigger. `backendURL` is required; `mode` is optional: `manifest()` or `hosted()`. |
-| `@c15t/browser/hosted` | The stock UI and client for hosted mode only. Requires `backendURL`. |
+| `@c15t/browser` | `init`, `createConsentClient` and `mountConsentUI`, with the stock banner, dialog and trigger. `projectUrl` is required; `mode` is optional: `manifest()` or `hosted()`. |
+| `@c15t/browser/hosted` | The stock UI and client for hosted mode only. Requires `projectUrl`. |
 | `@c15t/browser/testing` | `testing()`, the mode for tests. It throws in production builds. |
 | `@c15t/browser/headless` | The same client with no UI and no CSS. `mountUI()` throws. |
 | `@c15t/browser/iab` | The client with the IAB TCF CMP and the IAB banner and dialog. See [IAB TCF](/docs/frameworks/javascript/iab). |
@@ -42,11 +42,11 @@ excludes the manifest transport code, and its `init()` and
 
 | Entry | Accepted configuration | Configuration that throws |
 | --- | --- | --- |
-| `@c15t/browser` | `backendURL`, and optional `mode`: `hosted()`, `manifest()` or `testing()` from `@c15t/browser/testing`. | No `backendURL` unless `mode` is `testing()` or `enabled` is `false`; a mode name such as `'hosted'`. |
-| `@c15t/browser/hosted` | `backendURL`, optional `mode: 'hosted'` or `hosted()`. | Missing backend URL; a different mode; `manifest` or `manifestURL`. |
+| `@c15t/browser` | `projectUrl`, and optional `mode`: `hosted()`, `manifest()` or `testing()` from `@c15t/browser/testing`. | No `projectUrl` unless `mode` is `testing()` or `enabled` is `false`; a mode name such as `'hosted'`. |
+| `@c15t/browser/hosted` | `projectUrl`, optional `mode: 'hosted'` or `hosted()`. | Missing backend URL; a different mode; `manifest` or `manifestUrl`. |
 
 Use `@c15t/browser/iab` for IAB TCF. Mode names such as `'hosted'`,
-`manifest` and `manifestURL` are options of the script-tag builds.
+`manifest` and `manifestUrl` are options of the script-tag builds.
 
 ## Start the client
 

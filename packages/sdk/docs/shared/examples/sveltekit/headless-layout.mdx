@@ -14,10 +14,10 @@
 
 	let { children } = $props();
 
-	const backendURL = 'https://your-project.inth.app';
+	const projectUrl = 'https://your-project.inth.app';
 </script>
 
-<ConsentProvider {backendURL} {scripts}>
+<ConsentProvider {projectUrl} {scripts}>
 	{@render children()}
 	<footer>
 		<ConsentDialogLink>Privacy settings</ConsentDialogLink>

@@ -66,7 +66,7 @@ Measure your own deployment before you choose a layout for speed.
 
 ## Keep browser consent requests on your origin
 
-By default the browser saves consent to `${backendURL}/subjects`, a separate
+By default the browser saves consent to `${projectUrl}/subjects`, a separate
 origin. Sending those requests through your own app can avoid a separate
 browser DNS lookup and TLS connection to the consent backend, and lets a
 `connect-src 'self'` policy cover them. Manifests and server rendering work
@@ -77,7 +77,7 @@ hop through your server. Measure your deployment to check the effect on
 latency. Vendor scripts, pixels and iframes keep their own URLs; only c15t
 requests move. The same setup works with a self-hosted c15t backend.
 
-Set `routePrefix` and `proxy: true` in the config, and keep `backendURL`
+Set `routePrefix` and `proxy: true` in the config, and keep `projectUrl`
 absolute:
 
 {/* example: fragment */}
@@ -124,7 +124,7 @@ Keep these details right:
 
 - `proxy: true` in `c15t.config.ts` points the browser at `routePrefix` for
   init and saves. `resolveConsent`, `withConsentProps` and the consent route
-  keep the absolute `backendURL` from the config or
+  keep the absolute `projectUrl` from the config or
   `NEXT_PUBLIC_C15T_BACKEND_URL`, so the server never fetches its own route
   and `withConsentManifest` still downloads the manifest from the backend.
 - `proxy` needs `routePrefix`. Without it, `defineConsentConfig` throws

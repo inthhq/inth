@@ -49,17 +49,17 @@ at a time, and `options.callbacks` one callback at a time, so
 
 - `manifest()`: with `state`, the browser applies it and needs no request.
   Without `state`, or to re-init, it asks `${routePrefix}/init` when the
-  config sets `routePrefix`, else `${backendURL}/init`.
+  config sets `routePrefix`, else `${projectUrl}/init`.
 - `manifest({ resolve: 'browser' })`: the browser loads the resolver on first
-  use and fetches `${routePrefix}/manifest`, else `${backendURL}/manifest`.
-- `hosted()`: the browser calls `${backendURL}/init` when it needs a policy.
+  use and fetches `${routePrefix}/manifest`, else `${projectUrl}/manifest`.
+- `hosted()`: the browser calls `${projectUrl}/init` when it needs a policy.
 - `testing()`: the browser resolves bundled rules. Choices stay in the
   browser and nothing is recorded. Not recommended for production
   environments.
 
-Choices post to `${backendURL}/subjects` in every mode but `testing()`. With
+Choices post to `${projectUrl}/subjects` in every mode but `testing()`. With
 no backend URL anywhere, `ConsentRoot` throws
-``@c15t/nextjs: manifest() needs a backend URL. Set NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL), or `backendURL` in c15t.config.ts.``
+``@c15t/nextjs: manifest() needs a backend URL. Set NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL), or `projectUrl` in c15t.config.ts.``
 instead of running a mode you did not choose. See
 [testing configuration](/docs/frameworks/next/data-fetching-reference#testing-configuration)
 and [consent modes](/docs/concepts/modes).

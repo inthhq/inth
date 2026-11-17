@@ -103,7 +103,7 @@ once.
 
 `c15t.js` leaves the banner to the engine, which then loads at once, when the
 page sets options it cannot apply the way the engine would: a `theme`, `css`,
-`stylesheetURLs`, `i18n` messages, a `container`, `data-shadow="false"`, or
+`stylesheetUrls`, `i18n` messages, a `container`, `data-shadow="false"`, or
 `noStyle`. It does the same when the `/init` answer lacks any of the banner's
 copy, since `c15t.js` carries no bundled English to fill the gap. It leaves `/init` to the engine as well for an `experiment`,
 `storageConfig`, `persistence`, `consentSource`, `vendors`, `user`,
@@ -159,7 +159,7 @@ render the UI with `data-shadow="false"` and load the CSS themselves.
 ## Script tag attributes
 
 The tag reads attributes once, when the script runs. The default `c15t.js`
-bundle uses hosted mode and requires `data-backend-url` unless a queued
+bundle uses hosted mode and requires `data-project-url` unless a queued
 `config` supplies a backend URL or hosted factory.
 
 `c15t.js` rejects manifest mode and manifest options. `c15t.testing.js`
@@ -169,7 +169,7 @@ the call queue, `data-manual` and the page hooks described below.
 
 | Attribute | What it does |
 | --- | --- |
-| `data-backend-url` | Your Inth or self-hosted backend URL. Selects hosted mode. |
+| `data-project-url` | Your Inth or self-hosted backend URL. Selects hosted mode. |
 | `data-mode` | Optional `hosted`. Headless and IAB also accept `manifest`; without it, they pick `manifest` when a manifest URL is set and `hosted` otherwise. Headless and IAB ignore unknown values; `c15t.js` rejects them. |
 | `data-manifest-url` | Where headless or IAB fetches the policy manifest in manifest mode. See [choose a mode](#choose-a-mode). |
 | `data-policy` | `c15t.testing.js` only. Comma-separated policy presets, such as `europeOptIn,usPrivacyStatesOptOut,worldNone`. Any name exported by `policyRulePresets` works; an unknown name throws. Without it, the recommended rules. [Policies](/docs/concepts/policies) describes the presets. |
@@ -189,7 +189,7 @@ the call queue, `data-manual` and the page hooks described below.
 Flag attributes such as `data-trigger` are on when present, unless their value
 is `false`. `data-shadow` is the exception. Only `data-shadow="false"` changes
 anything. `data-backend` is accepted as an older spelling of
-`data-backend-url`.
+`data-project-url`.
 
 Everything the attributes set, and every option they cannot express, can also
 be passed in a queued `config` call. See
@@ -230,17 +230,17 @@ write them:
 
 | Mode | Set it with | What happens |
 | --- | --- | --- |
-| Hosted | `c15t.js` with `data-backend-url` | Each fresh visit asks the backend's `/init` endpoint for the visitor's policy. Choices are saved to the backend. |
+| Hosted | `c15t.js` with `data-project-url` | Each fresh visit asks the backend's `/init` endpoint for the visitor's policy. Choices are saved to the backend. |
 | Manifest | `c15t.headless.js` or `c15t.iab.js` with `data-manifest-url`, or `mode: 'manifest'` with an inline `manifest` in `config` | The browser resolves the policy from the backend's public, cacheable `/manifest`. Choices still go to the backend. |
 | Testing | `c15t.testing.js` on a test page | Policy rules come from `data-policy` or c15t's recommended rules. Choices stay in the browser. Never load it on a production page. |
 
 A tag loaded from a backend's `/c15t.js`, such as
 `https://your-project.inth.app/c15t.js`, starts in hosted mode with the
-backend URL already configured, so it needs no `data-backend-url`.
+backend URL already configured, so it needs no `data-project-url`.
 
 In manifest mode, c15t can take the backend URL from a manifest URL that ends
 in `/manifest`. A manifest on another host, or an inline manifest, also needs
-`data-backend-url` so saves have somewhere to go. When a policy depends on the
+`data-project-url` so saves have somewhere to go. When a policy depends on the
 visitor's location and the page does not supply it, c15t falls back to the
 backend's `/init`. [Data fetching](/docs/concepts/data-fetching) compares the
 modes.

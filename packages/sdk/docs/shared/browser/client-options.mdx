@@ -9,7 +9,7 @@ group: reference
 <section id="connection">
   ## Connection and policy
 
-  Every entry needs `backendURL`, your Inth project URL, unless `mode` is
+  Every entry needs `projectUrl`, your Inth project URL, unless `mode` is
   `testing()` or `enabled` is `false`. The ES modules take `mode` as
   `hosted()`, `manifest()` or `testing()`. The script-tag builds take a mode
   name and the manifest options below. `c15t.js` and `@c15t/browser/hosted`
@@ -18,10 +18,10 @@ group: reference
 
   | Option | Type | Default | What it does |
   | --- | --- | --- | --- |
-  | `backendURL` | `string` | none | Your Inth backend URL. Required unless `mode` is `testing()` or `enabled` is `false`. |
-  | `mode` | `hosted()`, `manifest()` or `testing()`. Script-tag builds also take `'hosted'` or `'manifest'`. | `hosted` | See [consent modes](/docs/concepts/modes). In the script-tag builds, `manifest` when `manifest` or `manifestURL` is set, otherwise `hosted`. |
+  | `projectUrl` | `string` | none | Your Inth backend URL. Required unless `mode` is `testing()` or `enabled` is `false`. |
+  | `mode` | `hosted()`, `manifest()` or `testing()`. Script-tag builds also take `'hosted'` or `'manifest'`. | `hosted` | See [consent modes](/docs/concepts/modes). In the script-tag builds, `manifest` when `manifest` or `manifestUrl` is set, otherwise `hosted`. |
   | `manifest` | `ConsentManifest` | none | Script-tag builds. The backend's policy manifest, inlined in the page, for manifest mode. In the ES modules, `manifest({ snapshot })`. |
-  | `manifestURL` | `string` | none | Script-tag builds. Where manifest mode fetches the manifest. A URL that ends in `/manifest` also gives the backend URL; any other URL needs `backendURL` too. In the ES modules, `manifest({ manifestURL })`. |
+  | `manifestUrl` | `string` | none | Script-tag builds. Where manifest mode fetches the manifest. A URL that ends in `/manifest` also gives the backend URL; any other URL needs `projectUrl` too. In the ES modules, `manifest({ manifestUrl })`. |
   | `policy` | array of policy rules or preset names | recommended rules | `c15t.testing.js` only. A preset name such as `'europeOptIn'` stands for that preset in `policyRulePresets`. An unknown name throws. The `data-policy` attribute sets it. In the ES modules, `testing({ policy })` with rule objects. |
   | `overrides` | `{ country?, region?, language?, gpc? }` | none | The visitor's location, language or GPC signal, when the page knows it. Policy matching uses these instead of detection. |
   | `prefetch` | kernel configuration | none | A server-resolved init answer. When it carries a resolved policy, the client renders from it and does not call `/init`. |

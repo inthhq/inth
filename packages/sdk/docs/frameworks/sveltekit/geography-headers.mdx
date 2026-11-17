@@ -36,7 +36,7 @@ In `hosted()` mode, it sends the resolved inputs to the backend's `/init` as
 with `user-agent`. It adds the visitor IP as `x-forwarded-for` only with
 `trustForwardedHeaders: true`. It never forwards `forwarded`,
 `x-forwarded-host` or `x-forwarded-proto`; with that option it reads them to
-resolve a relative `backendURL`. When the backend is a route in your own
+resolve a relative `projectUrl`. When the backend is a route in your own
 app, it passes the same headers through `event.fetch`, which forwards only
 cookies and authorization by itself.
 
@@ -64,10 +64,10 @@ before the request reaches SvelteKit.
 forged through it. Behind your own proxy, make sure it overwrites the country
 headers rather than passing a client's value through.
 
-The consent route fetches a relative `backendURL` through `event.fetch` and
+The consent route fetches a relative `projectUrl` through `event.fetch` and
 never resolves it against the request, so a forged `Host` or
 `x-forwarded-host` header cannot send its requests elsewhere. `loadConsent`
-resolves a relative `backendURL` against `event.url`. With its default
+resolves a relative `projectUrl` against `event.url`. With its default
 `event.fetch`, the call stays in-process. With your own `fetch`, it goes to the
 origin of `event.url`. `adapter-node` builds that origin from `paths.origin`
 in SvelteKit 3 (the `ORIGIN` variable in SvelteKit 2), or from its
