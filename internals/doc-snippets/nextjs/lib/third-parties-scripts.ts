@@ -1,7 +1,7 @@
 // #region docs:third-parties-scripts title="lib/scripts.ts"
 import { gtag } from '@inth/integrations/google-tag';
 import { googleTagManager } from '@inth/integrations/google-tag-manager';
-import type { Script } from '@inth/sdk/engine';
+import type { Script } from '@inth/nextjs';
 
 export const scripts: Script[] = [
 	// Replaces <GoogleAnalytics gaId="G-XXXXXXXXXX" />

@@ -2,7 +2,7 @@ import { gtag } from '@inth/integrations/google-tag';
 import { googleTagManager } from '@inth/integrations/google-tag-manager';
 import { metaPixel } from '@inth/integrations/meta-pixel';
 import { posthog } from '@inth/integrations/posthog';
-import type { Script, Vendor } from '@inth/sdk/engine';
+import type { Script, Vendor } from '@inth/nextjs';
 
 // Every ID below is a placeholder. Put your own in its place; the helpers
 // throw on an empty ID, so leave a vendor out until you have one.

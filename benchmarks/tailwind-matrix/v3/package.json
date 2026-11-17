@@ -8,6 +8,7 @@
 	"dependencies": {
 		"@inth/astro": "workspace:*",
 		"@inth/nextjs": "workspace:*",
+		"@inth/nuxt": "workspace:*",
 		"@inth/react": "workspace:*",
 		"@inth/sdk": "workspace:*",
 		"@inth/svelte": "workspace:*",

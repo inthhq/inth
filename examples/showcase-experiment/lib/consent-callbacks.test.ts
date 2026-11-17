@@ -1,5 +1,5 @@
-import { createConsentKernel } from '@inth/sdk/engine';
-import type { ConsentKernel, ExperimentAssignment } from '@inth/sdk/engine';
+import { createConsentKernel } from '@inth/nextjs';
+import type { ConsentKernel, ExperimentAssignment } from '@inth/nextjs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { callbacks } from './consent-callbacks';

@@ -1,5 +1,5 @@
-import { defineExperiment } from '@inth/sdk/engine';
-import type { ExperimentArmName } from '@inth/sdk/engine';
+import type { ExperimentArmName } from '@inth/nextjs';
+import { defineExperiment } from '@inth/nextjs/engine';
 
 /**
  * Does a full-width bar at the bottom of the page get as many opt-ins as

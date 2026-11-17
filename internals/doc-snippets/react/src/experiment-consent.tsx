@@ -6,7 +6,7 @@ import {
 	ConsentProvider,
 } from '@inth/react';
 import type { ConsentProviderCallbacks } from '@inth/react';
-import { defineExperiment } from '@inth/sdk/engine';
+import { defineExperiment } from '@inth/react/engine';
 import type { ReactNode } from 'react';
 
 import { scripts } from './scripts';

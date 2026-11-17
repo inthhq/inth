@@ -1,5 +1,5 @@
 // #region docs:vite-config
-import { consentManifest } from '@inth/sdk/build';
+import { consentManifest } from '@inth/react/build';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 

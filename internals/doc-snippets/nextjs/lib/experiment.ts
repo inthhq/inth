@@ -1,5 +1,5 @@
 import type { ConsentProviderCallbacks } from '@inth/nextjs';
-import { defineExperiment } from '@inth/sdk/engine';
+import { defineExperiment } from '@inth/nextjs/engine';
 
 /** `control` is the default banner; the `wall` arm blocks the page. */
 export const bannerExperiment = defineExperiment({

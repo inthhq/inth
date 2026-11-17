@@ -1,5 +1,5 @@
 import { posthog } from '@inth/integrations/posthog';
-import type { Script } from '@inth/sdk/engine';
+import type { Script } from '@inth/nextjs';
 
 export const scripts: Script[] = [
 	// PostHog sits in the `measurement` category. With `after-consent`, its

@@ -10,12 +10,12 @@ import {
 	useModel,
 	useTranslations,
 } from '@inth/nextjs';
-import { vendorsListedUnder } from '@inth/sdk/engine';
 import type {
 	AllConsentNames,
 	CategoryDecision,
 	ResolvedVendor,
-} from '@inth/sdk/engine';
+} from '@inth/nextjs';
+import { vendorsListedUnder } from '@inth/nextjs/engine';
 
 const formatTime = (epochMs: number) =>
 	new Intl.DateTimeFormat(undefined, {

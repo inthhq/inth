@@ -10,7 +10,6 @@
 	},
 	"dependencies": {
 		"@inth/integrations": "workspace:*",
-		"@inth/sdk": "workspace:*",
 		"@inth/svelte": "workspace:*"
 	},
 	"devDependencies": {

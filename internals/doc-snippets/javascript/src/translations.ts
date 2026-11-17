@@ -1,6 +1,6 @@
 import { init } from '@inth/sdk';
-import { policyRulePresets } from '@inth/sdk/engine';
 // #region docs:translations title="src/main.ts"
+import { policyRulePresets } from '@inth/sdk/engine';
 import { testing } from '@inth/sdk/testing';
 
 import { scripts } from './scripts';

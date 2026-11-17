@@ -1,7 +1,6 @@
 import { metaPixel } from '@inth/integrations/meta-pixel';
 import { posthog } from '@inth/integrations/posthog';
-import type { ConsentProviderOptions } from '@inth/nextjs';
-import type { Script, Vendor } from '@inth/sdk/engine';
+import type { ConsentProviderOptions, Script, Vendor } from '@inth/nextjs';
 
 // Replace the placeholder IDs with your own. Each helper waits for its
 // category: PostHog for measurement, Meta Pixel for marketing.

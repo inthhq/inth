@@ -1,5 +1,5 @@
 // #region docs:static-config
-import { manifest } from '@inth/vue';
+import { manifest } from '@inth/nuxt';
 
 export default defineNuxtConfig({
 	c15t: {
@@ -9,7 +9,7 @@ export default defineNuxtConfig({
 		routePrefix: false,
 	},
 	compatibilityDate: '2026-07-04',
-	modules: ['@inth/vue'],
+	modules: ['@inth/nuxt'],
 	ssr: false,
 });
 // #endregion docs:static-config
