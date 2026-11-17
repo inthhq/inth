@@ -18,7 +18,7 @@
 	onMount(() => {
 		kernel = createConsentKernel({
 			transport: createHostedTransport({
-				backendURL: '/api/bench-consent',
+				projectUrl: '/api/bench-consent',
 			}),
 		});
 

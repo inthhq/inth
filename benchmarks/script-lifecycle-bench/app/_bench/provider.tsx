@@ -279,7 +279,7 @@ export const ScriptLifecycleProvider = ({
 					'measurement',
 				],
 				transport: createHostedTransport({
-					backendURL: '/api/bench-consent',
+					projectUrl: '/api/bench-consent',
 				}),
 			});
 			kernelRef.current = kernel;

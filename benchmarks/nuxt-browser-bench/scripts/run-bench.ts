@@ -562,10 +562,10 @@ const run = async function run(baseline: boolean) {
 		const manifestBase =
 			process.env.C15T_BENCH_MANIFEST_URL ??
 			`${BASE_URL}/api/bench-consent/manifest`;
-		const manifestURL = env.C15T_BENCH_COLD_MANIFEST_TOKEN
+		const manifestUrl = env.C15T_BENCH_COLD_MANIFEST_TOKEN
 			? `${manifestBase}${manifestBase.includes('?') ? '&' : '?'}cold=${encodeURIComponent(env.C15T_BENCH_COLD_MANIFEST_TOKEN)}`
 			: manifestBase;
-		env.NUXT_PUBLIC_C15T_MODE_MANIFEST_URL = manifestURL;
+		env.NUXT_PUBLIC_C15T_MODE_MANIFEST_URL = manifestUrl;
 	}
 
 	const server = spawn('node', [serverEntry(baseline)], {

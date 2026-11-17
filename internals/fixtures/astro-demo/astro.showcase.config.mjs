@@ -49,10 +49,10 @@ const iab = process.env.C15T_IAB === '1';
 // showcase resolves its rules with `testing()` in `astro dev`. `testing()`
 // refuses a production build, so `astro build` without a backend asks a
 // placeholder backend instead and renders no server-side banner.
-const testBackendURL = testBackend('url').url;
+const testProjectUrl = testBackend('url').url;
 const production = process.env.NODE_ENV === 'production';
-const backendURL =
-	testBackendURL ?? (production ? 'https://your-project.inth.app' : undefined);
+const projectUrl =
+	testProjectUrl ?? (production ? 'https://your-project.inth.app' : undefined);
 
 // Built up rather than spread conditionally: the IAB options and the mode
 // travel together — a TCF policy pack with no vendor list resolves a
@@ -79,8 +79,8 @@ const iabOptions = iab
 
 // A real backend, when there is one, replaces `testing()` with hosted mode.
 const consentOptions = { ...iabOptions };
-if (backendURL && (!iab || production)) {
-	Object.assign(consentOptions, { backendURL, mode: hosted() });
+if (projectUrl && (!iab || production)) {
+	Object.assign(consentOptions, { mode: hosted(), projectUrl });
 }
 
 // Only the selected framework's Astro integration is listed. Loading all
@@ -125,7 +125,7 @@ export default defineConfig({
 				privacyPolicy: { href: '/privacy', label: 'Privacy Policy' },
 			},
 			// `testing()` resolves policies locally, so the demo runs with no
-			// backend. Swap in `hosted()` or `manifest()` and a `backendURL`
+			// backend. Swap in `hosted()` or `manifest()` and a `projectUrl`
 			// to talk to a real one. With `C15T_IAB=1` it also carries the
 			// vendor list the server needs to render the IAB banner at all;
 			// hosted and manifest mode get theirs from `/init`.

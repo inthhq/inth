@@ -4,16 +4,16 @@ import { createRoot } from 'react-dom/client';
 
 import './app.css';
 
-const backendURL = 'https://your-project.inth.app';
+const projectUrl = 'https://your-project.inth.app';
 
 // #region docs:slot
 const options = {
-	backendURL,
 	components: {
 		banner: {
 			root: { className: '!p-[7px] dark:!p-[11px]' },
 		},
 	},
+	projectUrl,
 	// Tailwind 3 builds c15t's stylesheet from app.css.
 	styles: false,
 };

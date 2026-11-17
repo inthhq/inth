@@ -7,10 +7,10 @@ import { defineConsentConfig, manifest } from '@c15t/nextjs';
  * `C15T_BENCH_BACKEND_LATENCY_MS` on every request.
  */
 export const typicalInstallConfig = defineConsentConfig({
-	backendURL: '/api/bench-consent',
 	// The server reads the backend's manifest; a browser re-init resolves
 	// from the app's cached manifest route.
-	mode: manifest({ manifestURL: '/api/c15t/manifest', resolve: 'browser' }),
+	mode: manifest({ manifestUrl: '/api/c15t/manifest', resolve: 'browser' }),
+	projectUrl: '/api/bench-consent',
 });
 
 /** Where the stand-in vendor scripts are served from (`public/`). */

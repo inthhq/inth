@@ -152,7 +152,7 @@ import { ConsentRoot } from '@c15t/nextjs/v3';
 export default async function RootLayout({ children }) {
   const state = await resolveConsent();
   return (
-    <ConsentRoot state={state} backendURL="/api/c15t">
+    <ConsentRoot state={state} projectUrl="/api/c15t">
       {children}
     </ConsentRoot>
   );
@@ -165,9 +165,9 @@ import { resolveConsent } from '@c15t/nextjs/v3/server';
 import { ConsentRoot } from '@c15t/nextjs/v3';
 
 export default async function RootLayout({ children }) {
-  const state = await resolveConsent({ backendURL: '/api/c15t' });
+  const state = await resolveConsent({ projectUrl: '/api/c15t' });
   return (
-    <ConsentRoot state={state} backendURL="/api/c15t">
+    <ConsentRoot state={state} projectUrl="/api/c15t">
       {children}
     </ConsentRoot>
   );
@@ -183,7 +183,7 @@ Both paths are Fluid Compute safe — every request gets its own kernel through 
 | SSR consent hydration from cookie | backend fetch + promise-through-prop | cookie read inline, returns plain `ConsentState` |
 | Geo override from request headers | via backend roundtrip | direct read of `x-vercel-ip-country` / `cf-ipcountry` / region |
 | Language from `accept-language` | via translations pipeline | parsed inline for initial override |
-| Server-side `/init` prefetch | via `fetchInitialData()` Promise-as-prop | `resolveConsent({ backendURL })` returns plain state |
+| Server-side `/init` prefetch | via `fetchInitialData()` Promise-as-prop | `resolveConsent({ projectUrl })` returns plain state |
 | Client-side `/init` refresh | implicit at provider mount | implicit at v3 provider mount |
 | First-paint flicker | possible (init race) | eliminated with server prefetch |
 | `unstable_cache` for SSR data | yes, keyed on normalized URL | opt-in at transport layer; not required |
@@ -193,7 +193,7 @@ Both paths are Fluid Compute safe — every request gets its own kernel through 
 
 - `packages/sdk/nextjs/src/v3/__tests__/server.test.ts` — **15/15 pass** (cookie parsing, malformed cookie rejection, custom cookie name, geo header precedence, region, language parsing, options overrides, concurrent-call isolation).
 - `packages/sdk/nextjs/src/v3/__tests__/boundary.test.tsx` — **3/3 pass** (initial consents honored, initial overrides honored, per-mount kernel isolation).
-- `packages/sdk/nextjs/src/v3/__tests__/end-to-end.test.tsx` — **4/4 pass** (backendURL auto-init, offline no-network, enabled=false no-init, prefetched first paint).
+- `packages/sdk/nextjs/src/v3/__tests__/end-to-end.test.tsx` — **4/4 pass** (projectUrl auto-init, offline no-network, enabled=false no-init, prefetched first paint).
 - `packages/sdk/nextjs/src/v3/__tests__/prefetch.test.ts` — **6/6 pass** (backend context forwarded, absolute URL bypass, silent degradation on network error, consent merge with cookie, resolvedOverrides merge, forwardHeaders).
 
 **Total Next.js v3 tests: 28/28 green.**

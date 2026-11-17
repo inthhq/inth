@@ -6,8 +6,8 @@ import { testBackend } from '../../../test-backend';
 export const Route = createFileRoute('/api/c15t/$')({
 	server: {
 		handlers: createConsentRoute({
-			backendURL: 'https://your-project.inth.app',
-			...testBackend('backendURL'),
+			projectUrl: 'https://your-project.inth.app',
+			...testBackend('projectUrl'),
 			proxy: true,
 		}),
 	},

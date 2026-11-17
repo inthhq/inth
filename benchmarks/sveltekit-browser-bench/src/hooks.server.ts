@@ -17,16 +17,16 @@ import { c15tHandle, hosted, manifest } from '@c15t/svelte/kit';
 import type { C15tHandle } from '@c15t/svelte/kit';
 
 const hostedHandle = c15tHandle({
-	backendURL: '/api/bench-consent',
 	mode: hosted(),
+	projectUrl: '/api/bench-consent',
 });
 
 const manifestHandle = c15tHandle({
-	backendURL: '/api/c15t',
 	mode: manifest({
-		manifestURL: '/api/bench-consent/manifest',
+		manifestUrl: '/api/bench-consent/manifest',
 		source: 'runtime',
 	}),
+	projectUrl: '/api/c15t',
 	routePrefix: '/api/c15t',
 });
 

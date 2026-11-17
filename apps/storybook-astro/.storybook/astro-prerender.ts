@@ -185,7 +185,6 @@ const renderVariants = async function renderVariants(
 			// oxlint-disable-next-line no-await-in-loop -- One shared container.
 			const component = await server.ssrLoadModule(path.join(astroSrc, file));
 			const astroOptions: Record<string, unknown> = {
-				backendURL: 'https://consent.example',
 				colorScheme: variant.options?.colorScheme ?? 'light',
 				consentCategories: variant.options?.consentCategories,
 				mode: mode.manifest({ snapshot: storySnapshot }),
@@ -196,6 +195,7 @@ const renderVariants = async function renderVariants(
 						...variant.options?.presentation?.prompt,
 					},
 				},
+				projectUrl: 'https://consent.example',
 				routePrefix: false,
 				ui: variant.ui ?? 'svelte',
 			};

@@ -107,7 +107,7 @@ for (const target of selectedTargets()) {
 			({ context, page, requests } = await openBrowserContext(
 				browser,
 				server.baseURL,
-				server.backendURL,
+				server.projectUrl,
 				failInit
 			));
 			await beforeLoad?.(page);
@@ -125,7 +125,7 @@ for (const target of selectedTargets()) {
 			test('manifest initialization reuses the cache without init requests', async () => {
 				const readRequests = async () => {
 					const response = await fetch(
-						`${server.backendURL}/__compat/requests`
+						`${server.projectUrl}/__compat/requests`
 					);
 					return (await response.json()) as {
 						initRequests: unknown[];
@@ -225,7 +225,7 @@ for (const target of selectedTargets()) {
 				({ context, page, requests } = await openBrowserContext(
 					browser,
 					server.baseURL,
-					server.backendURL
+					server.projectUrl
 				));
 				await page.addInitScript(() => {
 					const style = document.createElement('style');
@@ -249,7 +249,7 @@ for (const target of selectedTargets()) {
 			({ context, page, requests } = await openBrowserContext(
 				browser,
 				server.baseURL,
-				server.backendURL
+				server.projectUrl
 			));
 			await page.emulateMedia({ reducedMotion: 'reduce' });
 			await page.addInitScript(recordConsentMotion);
@@ -301,7 +301,7 @@ for (const target of selectedTargets()) {
 				({ context, page, requests } = await openBrowserContext(
 					browser,
 					server.baseURL,
-					server.backendURL
+					server.projectUrl
 				));
 				const blocked: string[] = [];
 				// Model URL blocking, including CSS requests and Vite's /@fs/
@@ -480,7 +480,7 @@ for (const target of selectedTargets()) {
 				({ context, page, requests } = await openBrowserContext(
 					browser,
 					server.baseURL,
-					server.backendURL
+					server.projectUrl
 				));
 				const scripts = await holdAppScripts(context, server.baseURL);
 				const banner = page.getByTestId('consent-banner-root');
@@ -707,7 +707,7 @@ for (const target of selectedTargets()) {
 				await rejectButton(page).click();
 				await expect.poll(() => saves.length).toBeGreaterThan(0);
 				const expected = new URL(
-					sameOrigin ? server.baseURL : server.backendURL
+					sameOrigin ? server.baseURL : server.projectUrl
 				).origin;
 				expect(saves.every((origin) => origin === expected)).toBe(true);
 			});
@@ -795,7 +795,7 @@ for (const target of selectedTargets()) {
 					for await (const chunk of request) {
 						chunks.push(chunk as Buffer);
 					}
-					const upstream = await fetch(`${server.backendURL}${request.url}`, {
+					const upstream = await fetch(`${server.projectUrl}${request.url}`, {
 						body: chunks.length > 0 ? Buffer.concat(chunks) : undefined,
 						headers: request.headers['content-type']
 							? { 'content-type': request.headers['content-type'] }
@@ -841,7 +841,7 @@ for (const target of selectedTargets()) {
 				({ context, page, requests } = await openBrowserContext(
 					browser,
 					server.baseURL,
-					server.backendURL
+					server.projectUrl
 				));
 				await page.emulateMedia({ colorScheme: 'dark' });
 				await page.goto('/consent-example');

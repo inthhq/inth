@@ -10,7 +10,7 @@ import { COMPAT_STATIC_BACKEND_URL } from '../../../lib/backend-url';
 const ClientLayout = ({ children }: { children: ReactNode }) => (
 	<ConsentShell
 		styles={false}
-		backendURL={COMPAT_STATIC_BACKEND_URL}
+		projectUrl={COMPAT_STATIC_BACKEND_URL}
 		scenario="client"
 	>
 		{children}

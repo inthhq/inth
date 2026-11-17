@@ -5,7 +5,7 @@ import { NextjsSSRProvider } from './provider';
 
 const NextjsSSRLayout = async ({ children }: { children: ReactNode }) => {
 	const state = await resolve({
-		backendURL: '/api/bench-consent',
+		projectUrl: '/api/bench-consent',
 	});
 
 	return <NextjsSSRProvider state={state}>{children}</NextjsSSRProvider>;

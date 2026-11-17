@@ -6,7 +6,7 @@ import { defineConsentConfig, manifest } from 'c15t/next';
  * and the client wrapper pass this config explicitly.
  */
 export default defineConsentConfig({
-	backendURL: '/mock-backend',
 	// The browser resolves from `/mock-backend/manifest` when it re-inits.
 	mode: manifest({ resolve: 'browser' }),
+	projectUrl: '/mock-backend',
 });

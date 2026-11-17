@@ -20,7 +20,7 @@ import { Button, Text, View } from 'react-native';
 import { useE2eVendorProbe } from '../../../react-native-bare/src/vendors/e2e-vendor-probe';
 import { config } from '../inth/config';
 
-const privacyPolicyURL = 'https://c15t.com/privacy';
+const privacyPolicyUrl = 'https://c15t.com/privacy';
 
 const present = async (
 	preferences: boolean,
@@ -28,8 +28,8 @@ const present = async (
 ): Promise<void> => {
 	try {
 		await (preferences
-			? presentPreferences(privacyPolicyURL)
-			: presentConsentPrompt(privacyPolicyURL));
+			? presentPreferences(privacyPolicyUrl)
+			: presentConsentPrompt(privacyPolicyUrl));
 	} catch (failure: unknown) {
 		onError(String(failure));
 	}

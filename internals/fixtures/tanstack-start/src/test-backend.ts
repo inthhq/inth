@@ -3,10 +3,10 @@
  * backend through `VITE_C15T_BACKEND_URL`. Set it to your Inth project URL to
  * run the app by hand.
  */
-const testBackendURL = import.meta.env.VITE_C15T_BACKEND_URL;
+const testProjectUrl = import.meta.env.VITE_C15T_BACKEND_URL;
 
 /** Overrides the placeholder backend URL when the environment sets one. */
 export const testBackend = <Key extends string>(key: Key) =>
-	(testBackendURL ? { [key]: testBackendURL } : {}) as Partial<
+	(testProjectUrl ? { [key]: testProjectUrl } : {}) as Partial<
 		Record<Key, string>
 	>;

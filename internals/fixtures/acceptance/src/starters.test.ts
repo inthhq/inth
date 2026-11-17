@@ -23,7 +23,7 @@ import type { Requests } from './browser';
 import { startApp } from './server';
 import {
 	hostedScriptURL,
-	placeholderBackendURL,
+	placeholderProjectUrl,
 	selectedStarterTargets,
 } from './starter-targets';
 import type { StarterTarget } from './starter-targets';
@@ -37,8 +37,8 @@ const browserDist = join(repository, 'packages/sdk/browser/dist');
 const hostedScript = async function hostedScript(): Promise<string> {
 	const bundle = await readFile(join(browserDist, 'c15t.js'), 'utf8');
 	const config = JSON.stringify({
-		backendURL: placeholderBackendURL,
 		mode: 'hosted',
+		projectUrl: placeholderProjectUrl,
 	});
 	return `(function(c){window.c15t=window.c15t||[];Array.isArray(window.c15t)?window.c15t.unshift(["config",c]):window.c15t.config(c)})(${config});\n${bundle}`;
 };
@@ -46,7 +46,7 @@ const hostedScript = async function hostedScript(): Promise<string> {
 // `c15t.hosted.js`, `c15t.commit.js`, `c15t.records.js` and
 // `c15t.dialog.js`, with or without the hash query the backend adds.
 const scriptPartURL = new RegExp(
-	`^${placeholderBackendURL.replaceAll('.', '\\.')}/c15t\\.(?:hosted|commit|records|dialog)\\.js(?:\\?.*)?$`,
+	`^${placeholderProjectUrl.replaceAll('.', '\\.')}/c15t\\.(?:hosted|commit|records|dialog)\\.js(?:\\?.*)?$`,
 	'u'
 );
 
@@ -54,9 +54,9 @@ const startStarter = function startStarter(target: StarterTarget) {
 	return startApp({
 		build: target.build ?? ['run', 'build'],
 		cwd: join(repository, target.directory),
-		env: (backendURL, port) => ({
-			...exampleEnvironment(backendURL, port),
-			...target.env?.(backendURL),
+		env: (projectUrl, port) => ({
+			...exampleEnvironment(projectUrl, port),
+			...target.env?.(projectUrl),
 		}),
 		host: target.host,
 		id: target.id,
@@ -107,16 +107,16 @@ for (const target of selectedStarterTargets()) {
 			({ context, page, requests } = await openBrowserContext(
 				browser,
 				server.baseURL,
-				server.backendURL,
+				server.projectUrl,
 				false,
 				options
 			));
 			if (target.placeholderBackend) {
 				const pageOrigin = new URL(server.baseURL).origin;
-				await context.route(`${placeholderBackendURL}/**`, async (route) => {
+				await context.route(`${placeholderProjectUrl}/**`, async (route) => {
 					const { pathname, search } = new URL(route.request().url());
 					const response = await route.fetch({
-						url: `${server.backendURL}${pathname}${search}`,
+						url: `${server.projectUrl}${pathname}${search}`,
 					});
 					await route.fulfill({
 						headers: {

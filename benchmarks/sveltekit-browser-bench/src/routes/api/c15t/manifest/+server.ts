@@ -6,5 +6,5 @@
 import { createConsentRoute } from '@c15t/svelte/kit';
 
 export const { GET } = createConsentRoute({
-	manifestURL: '/api/bench-consent/manifest',
+	manifestUrl: '/api/bench-consent/manifest',
 });

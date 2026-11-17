@@ -56,7 +56,7 @@ cp .env.example .env
 `.env` is ignored; `.env.example` is the committed template. The Expo CLI loads it
 before it evaluates `app.config.ts`, so one file feeds both halves:
 
-- `app.config.ts` passes `backendURL` to the config plugin, which writes
+- `app.config.ts` passes `projectUrl` to the config plugin, which writes
   `com.inth.backend.url` into `ios/Info.plist` and
   `com.inth.BACKEND_URL` into `AndroidManifest.xml` at prebuild time. With
   `C15T_DRY_RUN=1` it also writes `com.inth.dryRun` and `com.inth.DRY_RUN`.

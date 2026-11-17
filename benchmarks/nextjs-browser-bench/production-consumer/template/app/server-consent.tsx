@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
 
 import { ConsentManager } from './consent-manager';
 
-const backendURL = '/api/bench-consent';
+const projectUrl = '/api/bench-consent';
 
 /**
  * Resolve consent on the server from the manifest the same-origin proxy
@@ -17,12 +17,12 @@ const backendURL = '/api/bench-consent';
 export const ServerConsent = async ({ children }: { children: ReactNode }) => {
 	const requestHeaders = await headers();
 	const token = requestHeaders.get('x-c15t-bench-manifest-token');
-	const manifestURL = token
-		? `${backendURL}/manifest?cold=${encodeURIComponent(token)}`
-		: `${backendURL}/manifest`;
+	const manifestUrl = token
+		? `${projectUrl}/manifest?cold=${encodeURIComponent(token)}`
+		: `${projectUrl}/manifest`;
 	const state = await resolveConsent({
-		backendURL,
-		manifestURL,
+		manifestUrl,
+		projectUrl,
 		waitUntil: (task) => after(() => task),
 	});
 

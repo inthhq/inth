@@ -9,7 +9,7 @@ import type { PropsWithChildren } from 'react';
 import { benchmarkConfig } from './benchmark-config';
 
 export const ConsentBoundary = ({ children }: PropsWithChildren) => (
-	<ConsentProvider privacyPolicyURL={benchmarkConfig.c15t.privacyUrl}>
+	<ConsentProvider privacyPolicyUrl={benchmarkConfig.c15t.privacyUrl}>
 		{children}
 	</ConsentProvider>
 );

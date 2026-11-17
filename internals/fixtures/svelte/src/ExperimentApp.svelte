@@ -20,8 +20,8 @@
 	import { testBackend } from './test-backend';
 
 	const backend = {
-		backendURL: 'https://your-project.inth.app',
-		...testBackend('backendURL'),
+		projectUrl: 'https://your-project.inth.app',
+		...testBackend('projectUrl'),
 	};
 	// `&arm=wall` sets the arm the way a flag provider would; without it
 	// c15t picks one.

@@ -350,7 +350,7 @@ export const HomeScreen = ({
 				/>
 				<Row
 					label="Backend"
-					value={<Text>{config.backendURL}</Text>}
+					value={<Text>{config.projectUrl}</Text>}
 				/>
 			</Card>
 

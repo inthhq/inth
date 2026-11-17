@@ -34,10 +34,10 @@ describe('formatDocsCode', () => {
 		expect(
 			await formatDocsCode(
 				'ts',
-				"const mode = hosted({\n\tbackendURL: 'https://your-project.inth.app',\n});"
+				"const mode = hosted({\n\tprojectUrl: 'https://your-project.inth.app',\n});"
 			)
 		).toBe(
-			"const mode = hosted({ backendURL: 'https://your-project.inth.app' });"
+			"const mode = hosted({ projectUrl: 'https://your-project.inth.app' });"
 		);
 	});
 

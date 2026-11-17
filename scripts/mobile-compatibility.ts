@@ -90,10 +90,10 @@ function PrivacyStatus() {
   const saveConsents = useSaveConsents();
   return <View><Text onPress={() => { void saveConsents('none'); }}>{allowed ? 'Allowed' : 'Denied'}</Text></View>;
 }
-export const App = () => <ConsentProvider privacyPolicyURL="https://example.com/privacy"><PrivacyStatus /></ConsentProvider>;
+export const App = () => <ConsentProvider privacyPolicyUrl="https://example.com/privacy"><PrivacyStatus /></ConsentProvider>;
 export const plugin: typeof withInth = withInth;
 export const configuration: InthPluginProps = {
-	backendURL: 'https://your-project.inth.app',
+	projectUrl: 'https://your-project.inth.app',
 	policy: {
 		rules: [
 			{ id: 'fallback', match: { fallback: true }, model: 'opt-in', prompt: 'choice' },
@@ -309,7 +309,6 @@ const main = function main(): void {
 							[
 								'@inth/react-native',
 								{
-									backendURL: 'https://your-project.inth.app',
 									consentCategories: ['necessary', 'measurement'],
 									// The policy is in code, so the build needs no network.
 									policy: {
@@ -322,6 +321,7 @@ const main = function main(): void {
 											},
 										],
 									},
+									projectUrl: 'https://your-project.inth.app',
 								},
 							],
 						],

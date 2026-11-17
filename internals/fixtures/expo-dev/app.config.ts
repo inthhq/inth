@@ -26,7 +26,7 @@ const theme: InthPluginProps['theme'] = consentTheme;
  * Everything written here ends up in a public `.ipa` and `.apk`, so nothing secret may
  * appear. There is no key to configure either: a project is its backend URL.
  */
-const backendURL =
+const projectUrl =
 	process.env.EXPO_PUBLIC_C15T_BACKEND_URL ?? 'https://example-inth.inth.app/';
 
 /** Truthy spellings that mean "off"; anything else present means on. */
@@ -119,7 +119,6 @@ const inthPluginProps: InthPluginProps = {
 					process.env.C15T_MAVEN_URL ??
 					'https://maven.pkg.github.com/inthhq/c15t-private',
 			},
-	backendURL: appE2e ? 'https://example-inth.inth.app' : backendURL,
 	consentCategories,
 	// `C15T_DRY_RUN=1` drops consent records and lets a debug build use a staging
 	// or loopback URL. A release build refuses to start Inth with it on.
@@ -129,6 +128,7 @@ const inthPluginProps: InthPluginProps = {
 	// Inth may store, and the Apple sheet decides what the advertising identifier is
 	// worth. See the tracking card on the Consent tab for the request itself.
 	enableAppTrackingTransparency: true,
+	projectUrl: appE2e ? 'https://example-inth.inth.app' : projectUrl,
 	// An App E2E build installs the core itself, with its own policy resource.
 	...(appE2e
 		? { autoBootstrap: false }
@@ -195,9 +195,9 @@ const plugins: PluginEntry[] = [
 				[
 					'./plugins/with-inth-e2e-install',
 					{
-						backendURL,
 						consentCategories,
 						policy: process.env.C15T_E2E_POLICY,
+						projectUrl,
 					},
 				] satisfies PluginEntry,
 			]
@@ -237,7 +237,7 @@ const inthExpoConfig = ({ config }: ConfigContext): ExpoConfig => ({
 	plugins: plugins as ExpoConfig['plugins'],
 	extra: {
 		inth: {
-			backendURL,
+			projectUrl,
 			forceFakeNative: !isOff(process.env.EXPO_PUBLIC_C15T_FAKE_NATIVE),
 			sampleIntervalMs:
 				Number(process.env.EXPO_PUBLIC_C15T_SAMPLE_INTERVAL_MS) || 1000,

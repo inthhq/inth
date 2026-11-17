@@ -42,7 +42,7 @@ export interface AppLaunch {
 	/** Start command arguments for `bun`. */
 	start: (port: number) => string[];
 	/** Build and start environment for the fixture's backend URL. */
-	env: (backendURL: string, port: number) => NodeJS.ProcessEnv;
+	env: (projectUrl: string, port: number) => NodeJS.ProcessEnv;
 	/** Path polled until the server answers. */
 	readyPath: string;
 	/** Host in the base URL. Defaults to `127.0.0.1`. */
@@ -52,7 +52,7 @@ export interface AppLaunch {
 export const startApp = async function startApp(app: AppLaunch) {
 	const fixture = await startExampleFixture();
 	const port = await availablePort();
-	const env = app.env(fixture.backendURL, port);
+	const env = app.env(fixture.projectUrl, port);
 	const { cwd } = app;
 	const baseURL = `http://${app.host ?? '127.0.0.1'}:${port}`;
 	const waitUntilReady = (server: ReturnType<typeof launch>) =>
@@ -71,13 +71,13 @@ export const startApp = async function startApp(app: AppLaunch) {
 		await waitUntilReady(running);
 		let server = running;
 		return {
-			backendURL: fixture.backendURL,
 			baseURL,
 			async close() {
 				await stop(server.child);
 				await fixture.close();
 			},
 			logs: () => server.logs(),
+			projectUrl: fixture.projectUrl,
 			/**
 			 * Starts the same build again. `overrides` are added to the start
 			 * environment only, as a deployment sets runtime variables.
@@ -103,8 +103,8 @@ export const startExample = (target: ExampleTarget) =>
 	startApp({
 		build: target.build ?? ['run', 'build'],
 		cwd: join(examplesDirectory, target.directory),
-		env: (backendURL, port) => ({
-			...exampleEnvironment(backendURL, port),
+		env: (projectUrl, port) => ({
+			...exampleEnvironment(projectUrl, port),
 			...target.env,
 		}),
 		id: target.id,

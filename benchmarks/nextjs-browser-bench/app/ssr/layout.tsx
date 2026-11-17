@@ -9,7 +9,7 @@ const SSRLayout = async ({ children }: { children: ReactNode }) => {
 	// the same hosted mode its ConsentRoot uses. Without `mode`, the server
 	// would resolve from the manifest instead.
 	const state = await resolveConsent({
-		config: { backendURL: '/api/bench-consent', mode: hosted() },
+		config: { mode: hosted(), projectUrl: '/api/bench-consent' },
 	});
 
 	return (

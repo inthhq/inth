@@ -38,7 +38,7 @@ import { defineConfig } from 'astro/config';
  */
 const benchMode = process.env.C15T_BENCH_ASTRO_MODE ?? 'manifest';
 const origin = process.env.C15T_BENCH_ORIGIN ?? 'http://127.0.0.1:4353';
-const backendURL = `${origin}/api/bench-consent`;
+const projectUrl = `${origin}/api/bench-consent`;
 
 const consentCategories = [
 	'necessary',
@@ -52,7 +52,6 @@ const integrations = [svelte()];
 
 if (benchMode === 'manifest' || benchMode === 'scripts') {
 	const options = {
-		backendURL,
 		consentCategories,
 		// The fixture backend lives under `/api/bench-consent`, which the
 		// integration does not know about; the manifest route it does
@@ -61,9 +60,10 @@ if (benchMode === 'manifest' || benchMode === 'scripts') {
 		// The backend is this app, which isn't running during the build, and
 		// the benchmark measures the runtime manifest path.
 		mode: manifest({
-			manifestURL: `${backendURL}/manifest`,
+			manifestUrl: `${projectUrl}/manifest`,
 			source: 'runtime',
 		}),
+		projectUrl,
 	};
 	if (benchMode === 'scripts') {
 		options.networkBlocker = {
@@ -87,25 +87,25 @@ if (benchMode === 'manifest' || benchMode === 'scripts') {
 } else if (benchMode === 'gate') {
 	integrations.push(
 		c15t({
-			backendURL,
 			clientEntrypoint: fileURLToPath(
 				new URL('src/gate-client.ts', import.meta.url)
 			),
 			consentCategories: ['necessary', 'measurement', 'marketing'],
 			middleware: { skip: ['/api/bench-consent'] },
 			mode: manifest({
-				manifestURL: `${backendURL}/manifest`,
+				manifestUrl: `${projectUrl}/manifest`,
 				source: 'runtime',
 			}),
+			projectUrl,
 		})
 	);
 } else if (benchMode === 'hosted') {
 	integrations.push(
 		c15t({
-			backendURL,
 			consentCategories,
 			middleware: { skip: ['/api/bench-consent'] },
 			mode: hosted(),
+			projectUrl,
 		})
 	);
 }

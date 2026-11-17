@@ -29,8 +29,8 @@ const DocsPage = () => (
 			<code>{`import { resolveConsent } from 'c15t/next/server';
 
 const state = await resolveConsent({
-  backendURL: 'https://consent.example.com',
-  manifestURL: 'https://consent.example.com/manifest',
+  projectUrl: 'https://consent.example.com',
+  manifestUrl: 'https://consent.example.com/manifest',
 });`}</code>
 		</pre>
 		<p>

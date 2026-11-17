@@ -14,7 +14,7 @@ export interface StarterTarget {
 	/** Start command arguments for `bun`, serving on `port`. */
 	start: (port: number) => string[];
 	/** Extra build and start environment for the fixture's backend URL. */
-	env?: (backendURL: string) => Record<string, string>;
+	env?: (projectUrl: string) => Record<string, string>;
 	/** Routes that show the banner. The first one is polled for readiness. */
 	routes: string[];
 	/** The server puts the banner in the first HTML response. */
@@ -30,13 +30,13 @@ export interface StarterTarget {
 	earlyInit?: boolean;
 }
 
-export const placeholderBackendURL = 'https://your-project.inth.app';
+export const placeholderProjectUrl = 'https://your-project.inth.app';
 
 /**
  * The hosted script tag the plain HTML starter loads. A real backend serves
  * it from `@c15t/browser`; the fixture does not, so the test serves it.
  */
-export const hostedScriptURL = `${placeholderBackendURL}/c15t.js`;
+export const hostedScriptURL = `${placeholderProjectUrl}/c15t.js`;
 
 const nextStart = (port: number) => ['run', 'start', '--port', String(port)];
 const vitePreview = (port: number) => [

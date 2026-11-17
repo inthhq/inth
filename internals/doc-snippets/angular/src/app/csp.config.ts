@@ -19,8 +19,8 @@ export const appConfig: ApplicationConfig = {
 		provideZonelessChangeDetection(),
 		{ provide: CSP_NONCE, useValue: nonce },
 		provideC15t({
-			backendURL: 'https://your-project.inth.app',
 			mode: hosted(),
+			projectUrl: 'https://your-project.inth.app',
 			scripts,
 		}),
 	],

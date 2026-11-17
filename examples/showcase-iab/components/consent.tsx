@@ -14,7 +14,7 @@ import { brandTheme } from '@/lib/consent-theme';
 // The backend is your Inth project: set NEXT_PUBLIC_C15T_BACKEND_URL in
 // .env.local. The policy comes from its consent manifest.
 const config = {
-	backendURL:
+	projectUrl:
 		process.env.NEXT_PUBLIC_C15T_BACKEND_URL ?? 'https://your-project.inth.app',
 };
 
@@ -24,7 +24,7 @@ const config = {
 const CMP_ID = 160;
 
 // A three-vendor list served from public/vendor-list.json so the demo runs
-// offline. Its vendors are made up. In production, remove `gvlURL`: c15t then
+// offline. Its vendors are made up. In production, remove `gvlUrl`: c15t then
 // loads the official Global Vendor List, either through your backend with
 // `hosted()` or from c15t's GVL endpoint, filtered to the vendors you work
 // with through the `vendors` prop.
@@ -39,7 +39,7 @@ export const Consent = ({ children }: { children: ReactNode }) => (
 		{/* Before the page, so __tcfapi exists when the ad slots ask for it. */}
 		<IABProvider
 			cmpId={CMP_ID}
-			gvlURL={GVL_URL}
+			gvlUrl={GVL_URL}
 		>
 			<IABConsentBanner />
 			<IABConsentDialog />

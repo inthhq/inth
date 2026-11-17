@@ -17,7 +17,7 @@ import { useDemoActions } from './deep-links/use-demo-actions';
 import { useE2eObserver } from './e2e-observer';
 import { useE2eVendorProbe } from './vendors/e2e-vendor-probe';
 
-const privacyPolicyURL = 'https://c15t.com/privacy';
+const privacyPolicyUrl = 'https://c15t.com/privacy';
 const outcomes: ConsentPresenterOutcome[] = [];
 const presentations: ConsentPresenterSession[] = [];
 const endpoint = process.env.C15T_E2E_URL || 'http://localhost:3000';
@@ -39,8 +39,8 @@ const requestPresentation = async (
 ) => {
 	try {
 		const presentation = await (preferences
-			? presentPreferences(privacyPolicyURL)
-			: presentConsentPrompt(privacyPolicyURL));
+			? presentPreferences(privacyPolicyUrl)
+			: presentConsentPrompt(privacyPolicyUrl));
 		presentations.push(presentation);
 		if (process.env.C15T_APP_E2E === '1') {
 			await fetch(`${endpoint}/e2e/js-block`, {
@@ -110,8 +110,8 @@ export const NativePresenterApp = () => {
 		vendors.startupSettled,
 	]);
 	const checkSession = async () => {
-		const first = await presentPreferences(privacyPolicyURL);
-		const repeated = await presentPreferences(privacyPolicyURL);
+		const first = await presentPreferences(privacyPolicyUrl);
+		const repeated = await presentPreferences(privacyPolicyUrl);
 		await closeConsentPresenter('obsolete-session');
 		await fetch(`${endpoint}/e2e/js-block`, {
 			body: JSON.stringify({ sessionProbe: { first, repeated } }),
@@ -119,7 +119,7 @@ export const NativePresenterApp = () => {
 		});
 	};
 	const blockJS = async () => {
-		const presentation = await presentPreferences(privacyPolicyURL);
+		const presentation = await presentPreferences(privacyPolicyUrl);
 		await fetch(`${endpoint}/e2e/js-block`, {
 			body: JSON.stringify({
 				blocked: true,

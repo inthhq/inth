@@ -104,7 +104,6 @@ const storybookFetch = function storybookFetch(): typeof fetch {
 };
 
 export const storybookConsentConfig: ConsentConfig = {
-	backendURL: 'https://consent.example',
 	consentCategories: [
 		'necessary',
 		'functionality',
@@ -114,6 +113,7 @@ export const storybookConsentConfig: ConsentConfig = {
 	],
 	hideBranding: false,
 	presentation: storybookPresentation,
+	projectUrl: 'https://consent.example',
 
 	// Animations left ON to match the React/Svelte storybooks (their fixtures
 	// don't disable them) so the Vue stories showcase the real dialog +
@@ -134,9 +134,9 @@ export const storybookMode = (
 	fetch: typeof globalThis.fetch = storybookFetch()
 ) =>
 	hosted({
-		backendURL: 'https://consent.example',
 		domain: 'consent.example',
 		fetch,
+		projectUrl: 'https://consent.example',
 	});
 
 export const provideStorybookConsentContext =

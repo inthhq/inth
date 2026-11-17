@@ -133,7 +133,7 @@ const setupServer = async function setupServer(
 const STATIC_EXPORT_MARKER = join('.next', 'compat-static-export.json');
 
 interface StaticExportMarker {
-	backendURL: string;
+	projectUrl: string;
 }
 
 const readStaticExportMarker = function readStaticExportMarker(
@@ -188,20 +188,20 @@ const setupStaticExport = async function setupStaticExport(
 	appDir: string
 ) {
 	const marker = readStaticExportMarker(appDir);
-	const stub = await startStub(portOf(marker?.backendURL));
-	const { backendURL } = stub;
+	const stub = await startStub(portOf(marker?.projectUrl));
+	const { projectUrl } = stub;
 
 	try {
 		const built =
 			existsSync(join(appDir, 'out', 'index.html')) &&
-			marker?.backendURL === backendURL;
+			marker?.projectUrl === projectUrl;
 		const rebuilt = await prepareCompatCell(appDir, built, {
-			NEXT_PUBLIC_COMPAT_BACKEND_URL: backendURL,
+			NEXT_PUBLIC_COMPAT_BACKEND_URL: projectUrl,
 		});
 		if (rebuilt) {
 			writeFileSync(
 				join(appDir, STATIC_EXPORT_MARKER),
-				JSON.stringify({ backendURL } satisfies StaticExportMarker)
+				JSON.stringify({ projectUrl } satisfies StaticExportMarker)
 			);
 		}
 	} catch (error) {
@@ -213,7 +213,7 @@ const setupStaticExport = async function setupStaticExport(
 
 	project.provide('compatBaseURL', staticServer.url);
 	project.provide('compatAppDir', appDir);
-	project.provide('compatBackendURL', stub.url);
+	project.provide('compatProjectUrl', stub.url);
 
 	return async () => {
 		await staticServer.close();

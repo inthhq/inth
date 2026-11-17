@@ -11,7 +11,7 @@
  * `c15t.js` from a `https://your-project.inth.app` placeholder, exactly as a
  * reader copies it. A c15t backend serves that file with its own URL built
  * in. This server swaps the tag for the local build with `C15T_BACKEND_URL`
- * as `data-backend-url`, and any other placeholder or CDN prefix for the same,
+ * as `data-project-url`, and any other placeholder or CDN prefix for the same,
  * so the page runs the code the docs show against this checkout.
  *
  * `/consent-example/branded`, `/consent-example/tailwind` and
@@ -47,7 +47,7 @@ const published = (file: string, region: string): string => {
 };
 const cdnPrefix = 'https://cdn.jsdelivr.net/npm/@c15t/browser@alpha/dist/';
 const backendPlaceholder = 'https://your-project.inth.app';
-const backendURL = process.env.C15T_BACKEND_URL;
+const projectUrl = process.env.C15T_BACKEND_URL;
 
 // `c15t.js` loads `c15t.hosted.js`, `c15t.commit.js`, `c15t.records.js` and
 // `c15t.dialog.js` from next to itself, so the server carries them too.
@@ -96,7 +96,7 @@ const tailwindCSS = await buildTailwind();
 const renderConsentExample = function renderConsentExample(
 	design: 'default' | 'branded' | 'headless' | 'tailwind'
 ): Response {
-	if (!backendURL) {
+	if (!projectUrl) {
 		return new Response(
 			'Set C15T_BACKEND_URL to your Inth backend URL to open /consent-example.',
 			{ status: 500 }
@@ -132,10 +132,10 @@ const renderConsentExample = function renderConsentExample(
 				`src="${backendPlaceholder.replaceAll('.', '\\.')}/(c15t(?:\\.headless|\\.iab)?\\.js)"`,
 				'gu'
 			),
-			`src="/$1" data-backend-url="${backendURL}"`
+			`src="/$1" data-project-url="${projectUrl}"`
 		)
 		.replaceAll(cdnPrefix, '/')
-		.replaceAll(backendPlaceholder, backendURL);
+		.replaceAll(backendPlaceholder, projectUrl);
 	return new Response(html, {
 		headers: {
 			'cache-control': 'no-store',

@@ -8,7 +8,7 @@ import { NextjsManifestBenchmarkProvider } from '../_bench/provider';
  * The render reads the same source through the shared in-process cache: a
  * server render never fetches the app's own consent routes.
  */
-const getBenchManifestURL = function getBenchManifestURL() {
+const getBenchManifestUrl = function getBenchManifestUrl() {
 	const token = process.env.C15T_BENCH_COLD_MANIFEST_TOKEN;
 	return token
 		? `/api/bench-consent/manifest?cold=${encodeURIComponent(token)}`
@@ -17,8 +17,8 @@ const getBenchManifestURL = function getBenchManifestURL() {
 
 const ManifestSSRLayout = async ({ children }: { children: ReactNode }) => {
 	const state = await resolveConsent({
-		backendURL: '/api/bench-consent',
-		manifestURL: getBenchManifestURL(),
+		manifestUrl: getBenchManifestUrl(),
+		projectUrl: '/api/bench-consent',
 	});
 
 	return (

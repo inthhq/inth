@@ -100,7 +100,7 @@ const CoreCard = () => {
 			/>
 			<Row
 				label="Backend"
-				value={config.backendURL}
+				value={config.projectUrl}
 			/>
 		</Card>
 	);

@@ -5,7 +5,7 @@ import { createConsentRuntime } from '@c15t/core/runtime';
 import type {
 	ConsentRuntime,
 	ConsentRuntimeOptions,
-	WithBackendURL,
+	WithProjectUrl,
 } from '@c15t/core/runtime';
 import { createIAB } from '@c15t/iab';
 import {
@@ -25,7 +25,7 @@ import AstroDialog from '../../../../packages/sdk/astro/src/components/islands/p
 import { policyFixture } from '../../../../packages/sdk/react/src/__tests__/policy-fixture';
 import { mockGVL } from '../../../../packages/sdk/react/src/components/iab/__tests__/fixtures/mock-consent-state';
 
-const options = { backendURL: '/api/bench-consent', mode: hosted() };
+const options = { mode: hosted(), projectUrl: '/api/bench-consent' };
 const Probe = () => {
 	useEffect(() => {
 		window.dispatchEvent(new CustomEvent('loader-probe-mounted'));
@@ -56,7 +56,7 @@ const createRuntime = (iab: boolean) => {
 	}
 	// The options carry a transport factory.
 	return createConsentRuntime(
-		runtimeOptions as WithBackendURL<ConsentRuntimeOptions>
+		runtimeOptions as WithProjectUrl<ConsentRuntimeOptions>
 	);
 };
 const LoadedSurface = ({

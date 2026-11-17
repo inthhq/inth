@@ -16,9 +16,9 @@ export const appConfig: ApplicationConfig = {
 		provideZonelessChangeDetection(),
 		provideRouter(routes),
 		provideC15t({
-			// Replace with the backend URL of your Inth project.
-			backendURL: 'https://your-project.inth.app',
 			mode: hosted(),
+			// Replace with the backend URL of your Inth project.
+			projectUrl: 'https://your-project.inth.app',
 			scripts,
 		}),
 	],

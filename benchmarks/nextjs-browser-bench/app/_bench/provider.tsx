@@ -14,7 +14,7 @@ import {
 import type {
 	ConsentProviderOptions,
 	ConsentRootProps,
-	WithBackendURL,
+	WithProjectUrl,
 } from '@c15t/nextjs';
 import { useMemo } from 'react';
 import type { ReactNode } from 'react';
@@ -39,7 +39,7 @@ const consentCategories = [
 
 const createOptions = function createOptions(
 	scenario: NextjsBenchScenario
-): WithBackendURL<ConsentProviderOptions> {
+): WithProjectUrl<ConsentProviderOptions> {
 	return {
 		callbacks: {
 			onChoiceRecorded() {
@@ -56,7 +56,7 @@ const createOptions = function createOptions(
 			},
 		},
 		consentCategories,
-		mode: hostedTransport({ backendURL: '/api/bench-consent' }),
+		mode: hostedTransport({ projectUrl: '/api/bench-consent' }),
 		theme: {
 			motion: {
 				duration: {
@@ -114,8 +114,8 @@ export const NextjsManifestClientBenchmarkProvider = ({
 	const transport = useMemo(
 		() =>
 			createManifestTransport({
-				backendURL: '/api/bench-consent',
-				manifestURL: '/api/c15t/manifest',
+				manifestUrl: '/api/c15t/manifest',
+				projectUrl: '/api/bench-consent',
 			}),
 		[]
 	);
@@ -148,7 +148,7 @@ export const NextjsPrefetchedBenchmarkProvider = ({
 	// policy, which authoritative-only rendering correctly suppresses.
 	// The prefetched arm consumes server init without a second browser init.
 	<ConsentRoot
-		config={{ backendURL: '/api/bench-consent', mode: hosted() }}
+		config={{ mode: hosted(), projectUrl: '/api/bench-consent' }}
 		state={state}
 		options={createRootOptions(scenario)}
 	>
@@ -173,9 +173,9 @@ export const NextjsManifestBenchmarkProvider = ({
 }) => (
 	<ConsentRoot
 		config={{
-			backendURL: '/api/bench-consent',
 			// The browser resolves from the same-origin manifest route.
-			mode: manifest({ manifestURL: '/api/c15t/manifest', resolve: 'browser' }),
+			mode: manifest({ manifestUrl: '/api/c15t/manifest', resolve: 'browser' }),
+			projectUrl: '/api/bench-consent',
 		}}
 		state={state}
 		options={createRootOptions(scenario)}

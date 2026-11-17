@@ -3,10 +3,10 @@
 import { ConsentBanner, ConsentDialog, ConsentRoot } from 'c15t/next';
 import type { ReactNode } from 'react';
 
-const backendURL = 'https://your-project.inth.app';
+const projectUrl = 'https://your-project.inth.app';
 export const Consent = ({ children }: { children: ReactNode }) => (
 	<ConsentRoot
-		config={{ backendURL }}
+		config={{ projectUrl }}
 		persistence={false}
 		state={{}}
 		// #region docs:slot

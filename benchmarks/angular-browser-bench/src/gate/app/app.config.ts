@@ -22,10 +22,10 @@ export const appConfig: ApplicationConfig = {
 		provideRouter(routes),
 		provideClientHydration(withEventReplay()),
 		provideC15t({
-			// The consent route server.ts mounts.
-			backendURL: '/api/c15t',
 			consentCategories: [...gateConsentCategories],
 			mode: hosted(),
+			// The consent route server.ts mounts.
+			projectUrl: '/api/c15t',
 			scripts,
 		}),
 	],

@@ -6,7 +6,7 @@
 export default defineNuxtConfig({
 	// oxlint-disable-next-line sort-keys -- Each docs region stays contiguous.
 	c15t: {
-		backendURL: 'https://your-project.inth.app',
+		projectUrl: 'https://your-project.inth.app',
 		// #region docs:color-scheme title="nuxt.config.ts (c15t options)"
 		// Follow the visitor's system setting, with a dark primary of our own.
 		colorScheme: 'system',

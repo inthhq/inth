@@ -4,8 +4,8 @@ import { scripts } from './scripts';
 import { testBackend } from './test-backend';
 
 const consent = init({
-	backendURL: 'https://your-project.inth.app',
-	...testBackend('backendURL'),
+	projectUrl: 'https://your-project.inth.app',
+	...testBackend('projectUrl'),
 	scripts,
 });
 

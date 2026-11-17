@@ -36,7 +36,7 @@ const merge = (src, block) => mergeContents({ src, ...block }).contents;
 
 const kotlinSource = (
 	packageName,
-	backendURL,
+	projectUrl,
 	consentCategories
 ) => `package ${packageName}
 
@@ -56,7 +56,7 @@ object InthE2EInstall {
   fun install(application: Application) {
     val declared = listOf(${consentCategories.map(literal).join(', ')})
     val config = NativeConfig(
-      backendUrl = ${literal(backendURL)},
+      backendUrl = ${literal(projectUrl)},
       bundledPolicy = application.assets.open("${POLICY_FILE}").bufferedReader().use { it.readText() },
       consentCategories = declared.map { name -> ConsentCategory.entries.first { it.wireName == name } },
     )
@@ -66,12 +66,12 @@ object InthE2EInstall {
 `;
 
 const swiftHelper = (
-	backendURL,
+	projectUrl,
 	consentCategories
 ) => `// App E2E only. A Release build that talks to the loopback E2E backend installs
 // through Inth's internal door, before React Native starts.
 private func installInthForE2E() {
-  let endpoint = ${literal(backendURL)}
+  let endpoint = ${literal(projectUrl)}
   do {
     _ = try InthApple.install(CoreConfig(
       store: KeychainStore(service: InthBridgeConfiguration.defaultKeychainService),
@@ -94,14 +94,14 @@ private func installInthForE2E() {
  * fixture's AppDelegate and MainApplication do the same thing by hand.
  *
  * @param {import('expo/config').ExpoConfig} config Expo configuration.
- * @param {{ backendURL: string, consentCategories: string[], policy: string }} props
+ * @param {{ projectUrl: string, consentCategories: string[], policy: string }} props
  * The loopback backend URL, the categories to offer, and the policy resource
  * exported for that URL (absolute, or relative to the project).
  * @returns {import('expo/config').ExpoConfig} The configuration with the native install.
  */
 const withInthE2EInstall = (
 	config,
-	{ backendURL, consentCategories, policy }
+	{ projectUrl, consentCategories, policy }
 ) => {
 	if (!policy) {
 		throw new Error(
@@ -151,7 +151,7 @@ const withInthE2EInstall = (
 			fs.mkdirSync(sources, { recursive: true });
 			fs.writeFileSync(
 				path.join(sources, 'InthE2EInstall.kt'),
-				kotlinSource(packageName, backendURL, consentCategories)
+				kotlinSource(packageName, projectUrl, consentCategories)
 			);
 			fs.mkdirSync(path.join(main, 'assets'), { recursive: true });
 			fs.copyFileSync(
@@ -182,7 +182,7 @@ const withInthE2EInstall = (
 		contents = merge(contents, {
 			anchor: /^class ReactNativeDelegate\b/u,
 			comment: '//',
-			newSrc: swiftHelper(backendURL, consentCategories),
+			newSrc: swiftHelper(projectUrl, consentCategories),
 			offset: 0,
 			tag: 'inth-e2e-install-helper',
 		});

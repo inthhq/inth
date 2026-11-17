@@ -10,7 +10,7 @@ import type { ReactNode } from 'react';
 
 const options = {
 	// Your Inth project URL, from VITE_C15T_BACKEND_URL in .env.
-	backendURL: import.meta.env.VITE_C15T_BACKEND_URL as string,
+	projectUrl: import.meta.env.VITE_C15T_BACKEND_URL as string,
 	scripts: [
 		posthog({
 			id: 'phc_your_project_key',

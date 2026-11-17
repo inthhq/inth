@@ -11,7 +11,7 @@ import {
 } from '@c15t/tanstack-start';
 import type {
 	ConsentProviderOptions,
-	WithBackendURL,
+	WithProjectUrl,
 	ConsentRootProps,
 } from '@c15t/tanstack-start';
 import type { ConsentState } from '@c15t/tanstack-start/server';
@@ -38,9 +38,8 @@ const consentCategories = [
 
 const createOptions = function createOptions(
 	scenario: TanstackBenchScenario
-): WithBackendURL<ConsentProviderOptions> {
+): WithProjectUrl<ConsentProviderOptions> {
 	return {
-		backendURL: BENCH_BACKEND_URL,
 		callbacks: {
 			onChoiceRecorded() {
 				const state = getState(scenario);
@@ -57,6 +56,7 @@ const createOptions = function createOptions(
 		},
 		consentCategories,
 		mode: hosted(),
+		projectUrl: BENCH_BACKEND_URL,
 		theme: {
 			motion: {
 				duration: {
@@ -124,8 +124,8 @@ export const TanstackManifestClientBenchmarkProvider = ({
 	const transport = useMemo(
 		() =>
 			createManifestTransport({
-				backendURL: BENCH_BACKEND_URL,
-				manifestURL: '/api/c15t/manifest',
+				manifestUrl: '/api/c15t/manifest',
+				projectUrl: BENCH_BACKEND_URL,
 			}),
 		[]
 	);
@@ -168,24 +168,24 @@ export const TanstackPrefetchedBenchmarkProvider = ({
 /**
  * `manifest-ssr` and `manifest-ssr-proxy` arms: manifest-resolved
  * state plus the same-origin consent route under `routePrefix`, both
- * carried by the state. `backendURL` decides where the accept click posts:
+ * carried by the state. `projectUrl` decides where the accept click posts:
  * the fixture directly, or the proxy mount.
  */
 export const TanstackManifestBenchmarkProvider = ({
-	backendURL = BENCH_BACKEND_URL,
+	projectUrl = BENCH_BACKEND_URL,
 	children,
 	state,
 	routePrefix = '/api/c15t',
 	scenario,
 }: {
-	backendURL?: string;
+	projectUrl?: string;
 	children: ReactNode;
 	state: ConsentState;
 	routePrefix?: string;
 	scenario: TanstackBenchScenario;
 }) => (
 	<ConsentRoot
-		state={{ ...state, backendURL, routePrefix }}
+		state={{ ...state, projectUrl, routePrefix }}
 		options={createRootOptions(scenario)}
 	>
 		<BenchmarkContents scenario={scenario}>{children}</BenchmarkContents>

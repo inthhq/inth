@@ -1,7 +1,7 @@
 'use client';
 
 import { hosted } from '@c15t/react';
-import type { WithBackendURL } from '@c15t/react';
+import type { WithProjectUrl } from '@c15t/react';
 import { ConsentBanner } from '@c15t/react/consent-banner';
 import { ConsentProvider } from '@c15t/react/provider';
 import type { ConsentProviderOptions } from '@c15t/react/provider';
@@ -19,8 +19,7 @@ const consentCategories = [
 ] satisfies NonNullable<ConsentProviderOptions['consentCategories']>;
 
 const CssBannerModulesPage = () => {
-	const options: WithBackendURL<ConsentProviderOptions> = {
-		backendURL: '/api/bench-consent',
+	const options: WithProjectUrl<ConsentProviderOptions> = {
 		callbacks: {
 			onChoiceRecorded() {
 				const state = getBenchState(scenario);
@@ -37,6 +36,7 @@ const CssBannerModulesPage = () => {
 		},
 		consentCategories,
 		mode: hosted(),
+		projectUrl: '/api/bench-consent',
 		theme: {
 			motion: {
 				duration: { fast: '1ms', normal: '1ms', slow: '1ms' },

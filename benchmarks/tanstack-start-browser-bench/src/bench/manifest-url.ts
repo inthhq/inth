@@ -5,7 +5,7 @@
  */
 export const BENCH_BACKEND_URL = '/api/bench-consent';
 
-export const getBenchManifestURL = function getBenchManifestURL(): string {
+export const getBenchManifestUrl = function getBenchManifestUrl(): string {
 	const token = (globalThis as { process?: { env?: Record<string, string> } })
 		.process?.env?.C15T_BENCH_COLD_MANIFEST_TOKEN;
 	const base =

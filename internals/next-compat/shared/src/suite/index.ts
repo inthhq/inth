@@ -234,7 +234,7 @@ export const defineCompatSuite = function defineCompatSuite({
 		const appDir = inject('compatAppDir');
 		// The stub is mounted inside the app unless the cell runs it on its own
 		// port (static export), in which case the diagnostics live there.
-		const stubURL = inject('compatBackendURL') ?? baseURL;
+		const stubURL = inject('compatProjectUrl') ?? baseURL;
 		let browser: Browser;
 		let context: BrowserContext;
 		let page: Page;

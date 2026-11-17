@@ -7,11 +7,11 @@ const ResolvedConsent = async () => {
 	const state = await resolveConsent({
 		// Both the manifest and the `/init` fallback fail, so the render keeps
 		// the request-only state and reports the failure once.
-		backendURL: '/api/consent/unavailable',
-		manifestURL: '/api/consent/unavailable/manifest',
+		manifestUrl: '/api/consent/unavailable/manifest',
 		onError(error) {
 			errors.push(error);
 		},
+		projectUrl: '/api/consent/unavailable',
 		timeoutMs: false,
 	});
 

@@ -31,7 +31,7 @@ const staticOutput = process.env.C15T_NUXT_OUTPUT === 'static';
 // The acceptance suite points the demo at a mock backend with this variable.
 // Without it the demo uses the placeholder project URL, so set the variable
 // to your Inth project URL to run it by hand.
-const testBackendURL = process.env.NUXT_PUBLIC_C15T_BACKEND_URL;
+const testProjectUrl = process.env.NUXT_PUBLIC_C15T_BACKEND_URL;
 const experimentArm = process.env.C15T_NUXT_EXPERIMENT_ARM;
 const experiment: ModuleOptions['experiment'] =
 	process.env.C15T_NUXT_EXPERIMENT === '1'
@@ -45,9 +45,9 @@ const experiment: ModuleOptions['experiment'] =
 		: undefined;
 
 const c15t: ModuleOptions = {
-	backendURL: testBackendURL ?? 'https://your-project.inth.app',
 	// Follow the visitor's system setting, with a dark primary of our own.
 	colorScheme: 'system',
+	projectUrl: testProjectUrl ?? 'https://your-project.inth.app',
 	theme: { dark: { primary: '#7fd1a8' } },
 };
 if (experiment) {

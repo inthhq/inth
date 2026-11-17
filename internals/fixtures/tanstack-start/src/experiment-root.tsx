@@ -38,14 +38,14 @@ import type { ExperimentSearch } from './experiment';
 import { scripts } from './scripts';
 import { testBackend } from './test-backend';
 
-const backendURL = 'https://your-project.inth.app';
+const projectUrl = 'https://your-project.inth.app';
 
 const getConsentState = createServerFn({ method: 'GET' })
 	.validator((data: ExperimentSearch) => data)
 	.handler(({ data }) =>
 		resolveConsent({
-			backendURL,
-			...testBackend('backendURL'),
+			projectUrl,
+			...testBackend('projectUrl'),
 			experiment: data.arm ? { ...bannerExperiment, arm: data.arm } : undefined,
 		})
 	);

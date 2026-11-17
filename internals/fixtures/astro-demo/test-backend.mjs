@@ -1,6 +1,6 @@
 // The acceptance suite points this app at a mock backend. Astro evaluates the
 // config as plain JavaScript, so this reads the variable directly.
-const testBackendURL = process.env.C15T_BACKEND_URL;
+const testProjectUrl = process.env.C15T_BACKEND_URL;
 
 /**
  * Overrides the placeholder backend URL when the acceptance suite sets one.
@@ -9,4 +9,4 @@ const testBackendURL = process.env.C15T_BACKEND_URL;
  * @returns {Record<string, string>} The override, or an empty object.
  */
 export const testBackend = (key) =>
-	testBackendURL ? { [key]: testBackendURL } : {};
+	testProjectUrl ? { [key]: testProjectUrl } : {};

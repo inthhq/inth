@@ -2,7 +2,7 @@ import { fileURLToPath } from 'node:url';
 
 import { baselineServerOutputDir } from '@c15t/benchmarking/nuxt-baseline';
 
-const getBenchManifestURL = function getBenchManifestURL() {
+const getBenchManifestUrl = function getBenchManifestUrl() {
 	const token = process.env.C15T_BENCH_COLD_MANIFEST_TOKEN;
 	const base =
 		process.env.C15T_BENCH_MANIFEST_URL ??
@@ -83,7 +83,6 @@ if (baselineBuild) {
 } else {
 	Object.assign(config, {
 		c15t: {
-			backendURL: '/api/bench-consent',
 			consentCategories: [
 				'necessary',
 				'functionality',
@@ -96,10 +95,11 @@ if (baselineBuild) {
 			// build, so the server reads the manifest at runtime. The route
 			// plugin switches the other routes to `hosted()`.
 			mode: {
-				manifestURL: getBenchManifestURL(),
+				manifestUrl: getBenchManifestUrl(),
 				source: 'runtime',
 				type: 'manifest',
 			},
+			projectUrl: '/api/bench-consent',
 			trapFocus: false,
 		},
 	});

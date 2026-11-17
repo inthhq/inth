@@ -12,8 +12,8 @@ import { scripts } from './scripts';
 import { testBackend } from './test-backend';
 
 const backend = {
-	backendURL: 'https://your-project.inth.app',
-	...testBackend('backendURL'),
+	projectUrl: 'https://your-project.inth.app',
+	...testBackend('projectUrl'),
 };
 
 // `control` is the stock banner. `wall` blocks the page until the visitor

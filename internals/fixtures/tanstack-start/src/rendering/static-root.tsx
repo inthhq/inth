@@ -15,7 +15,7 @@ import {
 import { scripts } from '../scripts';
 import { testBackend } from '../test-backend';
 
-const backendURL = 'https://your-project.inth.app';
+const projectUrl = 'https://your-project.inth.app';
 
 // No loader: the HTML is built ahead of time, so the browser resolves
 // consent after it loads.
@@ -26,7 +26,7 @@ const RootComponent = () => (
 		</head>
 		<body>
 			<ConsentRoot
-				state={{ backendURL, ...testBackend('backendURL') }}
+				state={{ projectUrl, ...testBackend('projectUrl') }}
 				scripts={scripts}
 			>
 				<Outlet />
@@ -50,8 +50,8 @@ export const Route = createRootRoute({
 		],
 		// Optional: start the /init request while the browser parses <head>.
 		...consentPrefetchHead({
-			backendURL,
-			...testBackend('backendURL'),
+			projectUrl,
+			...testBackend('projectUrl'),
 		}),
 	}),
 });

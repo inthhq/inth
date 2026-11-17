@@ -8,7 +8,7 @@ import { ConsentBanner, ConsentDialog, ConsentRoot } from 'c15t/tanstack-start';
 
 import appCss from '../styles.css?url';
 
-const backendURL = 'https://your-project.inth.app';
+const projectUrl = 'https://your-project.inth.app';
 
 const RootComponent = () => (
 	<html lang="en">
@@ -18,7 +18,7 @@ const RootComponent = () => (
 		<body>
 			<ConsentRoot
 				persistence={false}
-				state={{ backendURL }}
+				state={{ projectUrl }}
 				// #region docs:slot
 				options={{
 					components: {

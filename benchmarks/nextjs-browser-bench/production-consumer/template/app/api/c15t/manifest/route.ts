@@ -12,7 +12,7 @@ export const GET = (request: Request) => {
 		? `/api/bench-consent/manifest?cold=${encodeURIComponent(token)}`
 		: '/api/bench-consent/manifest';
 	return createConsentRoute({
-		manifestURL: upstream,
+		manifestUrl: upstream,
 		onBackgroundRevalidate: (refresh) => after(() => refresh),
 	}).GET(request, { params: Promise.resolve({}) });
 };

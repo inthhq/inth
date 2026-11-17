@@ -715,7 +715,6 @@ export const PolicyDemo = () => {
 					options={
 						demoMode === 'hosted'
 							? {
-									backendURL: HOSTED_DEMO_BACKEND_URL,
 									consentCategories: categories,
 									i18n: {
 										messages:
@@ -727,6 +726,7 @@ export const PolicyDemo = () => {
 									mode: hosted(),
 									overrides,
 									presentation: getScenarioById(resolvedExample).presentation,
+									projectUrl: HOSTED_DEMO_BACKEND_URL,
 									scripts: createDemoScripts('demo-analytics'),
 									theme: presetTheme,
 								}

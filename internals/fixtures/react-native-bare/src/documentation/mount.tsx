@@ -5,7 +5,7 @@ import { Text, View } from 'react-native';
 import { PrivacySettingsButton } from './setup';
 
 const App = () => (
-	<ConsentProvider privacyPolicyURL="https://example.com/privacy">
+	<ConsentProvider privacyPolicyUrl="https://example.com/privacy">
 		<View>
 			<Text>My app</Text>
 			<PrivacySettingsButton />

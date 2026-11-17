@@ -2,7 +2,7 @@
  * A tiny Global Vendor List, for the demo only.
  *
  * A real site never ships one of these: hosted and manifest mode both get
- * the list from `/init`, and an offline site points `iab.gvlURL` at where
+ * the list from `/init`, and an offline site points `iab.gvlUrl` at where
  * the real one lives. This is here so `bun run --cwd internals/fixtures/astro-demo
  * dev` shows a working TCF banner with no backend and no network.
  */

@@ -16,7 +16,7 @@ import type { Locale } from '@/lib/locales';
 // The backend is your Inth project: set NEXT_PUBLIC_C15T_BACKEND_URL in
 // .env.local. The policy comes from its consent manifest.
 const config = {
-	backendURL:
+	projectUrl:
 		process.env.NEXT_PUBLIC_C15T_BACKEND_URL ?? 'https://your-project.inth.app',
 };
 
