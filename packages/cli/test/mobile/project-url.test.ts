@@ -50,7 +50,7 @@ const reasonOf = (input: string, relaxed: boolean): string => {
 };
 
 interface ExpoProjectUrl {
-  normalizeProjectURL: (
+  normalizeProjectUrl: (
     input: string,
     options: { relaxed: boolean; option: string }
   ) => string;
@@ -83,7 +83,7 @@ describe("the Inth project URL rule", () => {
 
   it("refuses with the same message as the Expo plugin, under the flag name", async () => {
     // Loaded at run time: the React Native package's source is not type-checked here.
-    // SAFETY: The plugin module exports normalizeProjectURL with this signature.
+    // SAFETY: The plugin module exports normalizeProjectUrl with this signature.
     const expo = (await import(
       pathToFileURL(
         join(REPO, "packages/react-native/src/expo-plugin/project-url.ts")
@@ -94,7 +94,7 @@ describe("the Inth project URL rule", () => {
       for (const { input } of cases.reject) {
         let plugin = "";
         try {
-          expo.normalizeProjectURL(input, { option: "--backend-url", relaxed });
+          expo.normalizeProjectUrl(input, { option: "--backend-url", relaxed });
         } catch (error) {
           plugin = error instanceof Error ? error.message : "";
         }

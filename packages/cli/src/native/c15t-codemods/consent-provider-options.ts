@@ -357,7 +357,7 @@ const planHosted = function planHosted(
   const headers = findProperty(object, "headers");
   const customFetch = findProperty(object, "customFetch");
   const args = [
-    `backendURL: ${(backend && propertyValueText(backend)) ?? V2_DEFAULT_BACKEND_URL}`,
+    `projectUrl: ${(backend && propertyValueText(backend)) ?? V2_DEFAULT_BACKEND_URL}`,
   ];
   const headersValue = headers && propertyValueText(headers);
   if (headersValue) {
@@ -391,7 +391,7 @@ const OFFLINE_TODO =
 const CUSTOM_TODO =
   "mode 'custom' and endpointHandlers were removed. Implement the v3 transport interface and pass mode: custom(transport). See https://c15t.com/docs/concepts/data-fetching";
 const MODE_TODO =
-  "mode now takes a transport: hosted({ backendURL }), manifest() with the consentManifest() build plugin, or offline(). Replace this value and remove backendURL, offlinePolicy and endpointHandlers.";
+  "mode now takes a transport: hosted({ projectUrl }), manifest() with the consentManifest() build plugin, or offline(). Replace this value and remove backendURL, offlinePolicy and endpointHandlers.";
 const RETRY_TODO = "retryConfig was removed. Delete it.";
 
 /** Queues a TODO and counts it once. */
