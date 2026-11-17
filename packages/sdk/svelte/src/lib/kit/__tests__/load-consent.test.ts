@@ -15,7 +15,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { testing } from '../../testing';
 import { c15tHandle } from '../handle';
-import { manifest } from '../index';
+import { hosted, manifest } from '../index';
 import { loadConsent } from '../load-consent';
 import { setBuilding } from './app-env';
 import { CONSENTED_COOKIE, createEvent } from './event';
@@ -245,7 +245,7 @@ describe('loadConsent', () => {
 				},
 				url: 'http://localhost:5173/',
 			}),
-			{ backendURL: '/api/self-host' }
+			{ backendURL: '/api/self-host', mode: hosted() }
 		);
 		const { consent } = await loadConsent(event);
 		expect(String(fetch.mock.calls[0]?.[0]).split('?')[0]).toBe(
@@ -262,6 +262,7 @@ describe('loadConsent', () => {
 		const eventFetch = answer();
 		const event = await withHandle(createEvent({ fetch: eventFetch }), {
 			backendURL: 'https://api.example.com',
+			mode: hosted(),
 		});
 		await loadConsent(event, { fetch });
 		expect(eventFetch).not.toHaveBeenCalled();
@@ -321,7 +322,7 @@ describe('loadConsent', () => {
 		expect(fetch).not.toHaveBeenCalled();
 		expect(consent).toEqual({
 			backendURL: BACKEND,
-			mode: { type: 'hosted' },
+			mode: { type: 'manifest' },
 			prefetch: {},
 			routePrefix: '/api/c15t',
 		});

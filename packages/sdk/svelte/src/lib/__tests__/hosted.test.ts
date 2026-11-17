@@ -2,6 +2,7 @@
  * The Svelte provider's transport: a backend URL alone is the hosted
  * backend, defaulting to the URL `consentManifest()` read, as Vue's does.
  */
+import { hosted } from '@c15t/core/modes';
 import { afterEach, describe, expect, test } from 'vitest';
 
 import { selectedMode } from '../select-mode';
@@ -28,11 +29,18 @@ describe('the transport a ConsentProvider selects', () => {
 		});
 	});
 
-	test('a testing value wins over the backend URL', () => {
-		const testing = testing();
-		expect(selectedMode({ backendURL: '/api/c15t', testing })).toBe(
-			testing.transport
+	test('testing() selects its own transport, with or without a backend URL', () => {
+		const mode = testing();
+		expect(selectedMode({ backendURL: '/api/c15t', mode })).toBe(
+			mode.transport
 		);
+		expect(selectedMode({ mode })).toBe(mode.transport);
+	});
+
+	test('hosted() selects the hosted backend', () => {
+		expect({
+			...selectedMode({ backendURL: '/api/c15t', mode: hosted() }),
+		}).toMatchObject({ backendURL: '/api/c15t' });
 	});
 
 	test('is none when no URL is known', () => {

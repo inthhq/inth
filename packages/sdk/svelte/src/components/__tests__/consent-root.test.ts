@@ -52,7 +52,7 @@ describe('ConsentRoot', () => {
 		const result = render(ConsentRoot, {
 			state: {
 				backendURL: 'https://consent.example.com',
-				mode: { backendURL: 'https://consent.example.com', type: 'hosted' },
+				mode: { type: 'hosted' },
 				prefetch: {},
 			},
 		});

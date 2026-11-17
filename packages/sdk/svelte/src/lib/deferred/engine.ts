@@ -104,10 +104,9 @@ export const createRootEngine = function createRootEngine(
 	input: RootEngineInput
 ): RootEngine {
 	const stateMode = input.state.mode;
-	// The hosted backend travels as `{ type: 'hosted' }`; `clientMode()`
-	// takes it as no mode.
+	// No mode at all is `manifest()`, as in `c15tHandle()`.
 	const transport = clientMode(
-		input.mode ?? (stateMode?.type === 'hosted' ? undefined : stateMode),
+		input.mode ?? stateMode,
 		input.state,
 		'@c15t/svelte/testing'
 	);

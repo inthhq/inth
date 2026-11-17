@@ -101,7 +101,7 @@ describe('TanStack Start manifest generation', () => {
 		});
 		await plugin.configResolved({ command: 'build', logger, root });
 		expect(await buildGenerated(plugin, 'server')).toContain(
-			'export const snapshot = undefined;'
+			'export const snapshot = void 0;'
 		);
 		expect(logger.warn).toHaveBeenCalledWith(
 			expect.stringContaining('during the build (backend unavailable)')

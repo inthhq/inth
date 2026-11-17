@@ -205,7 +205,7 @@ export const loadConsent = async function loadConsent(
 	options: LoadConsentOptions = {}
 ): Promise<{ consent: ConsentRootState }> {
 	const locals = readLocals(event);
-	const mode: KitMode = locals?.mode ?? { type: 'hosted' };
+	const mode: KitMode = locals?.mode ?? { type: 'manifest' };
 	const backendURL = locals?.backendURL ?? builtBackendURL;
 	// Per-call inputs beat the handle's: a route that passes `country` is
 	// naming the country for that page. The handle's cookie name is part of
