@@ -1,5 +1,4 @@
 import {
-  existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -54,35 +53,15 @@ import { telemetryCommand } from "../../src/telemetry.ts";
 const REPO = join(import.meta.dirname, "../../../..");
 const PRIVACY_URL = "https://app.example/privacy";
 
-/** An SDK file the tests compare against, at its Inth path and its c15t path. */
-interface SdkFile {
-  path: string;
-  c15tPath: string;
-}
-
-const SWIFT_SNIPPETS: SdkFile = {
-  c15tPath: "packages/swift/Tests/C15tAppleTests/CLISnippetTests.swift",
-  path: "packages/swift/Tests/InthAppleTests/CLISnippetTests.swift",
-};
-const KOTLIN_SNIPPETS: SdkFile = {
-  c15tPath:
-    "packages/android/c15t-android/src/test/kotlin/com/c15t/android/CliSnippetTest.kt",
-  path: "packages/android/inth-android/src/test/kotlin/com/inth/android/CliSnippetTest.kt",
-};
-const SWIFT_ENTRY_SNIPPETS: SdkFile = {
-  c15tPath:
-    "packages/swift/Tests/C15tConsentUITests/cli-entry-snippet-tests.swift",
-  path: "packages/swift/Tests/InthConsentUITests/cli-entry-snippet-tests.swift",
-};
-const KOTLIN_ENTRY_SNIPPETS: SdkFile = {
-  c15tPath:
-    "packages/android/c15t-consent-ui/src/test/kotlin/com/c15t/consentui/cli-entry-snippet-test.kt",
-  path: "packages/android/inth-consent-ui/src/test/kotlin/com/inth/consentui/cli-entry-snippet-test.kt",
-};
-const ANDROID_PROPERTIES: SdkFile = {
-  c15tPath: "packages/android/gradle.properties",
-  path: "packages/android/gradle.properties",
-};
+const SWIFT_SNIPPETS =
+  "packages/swift/Tests/InthAppleTests/CLISnippetTests.swift";
+const KOTLIN_SNIPPETS =
+  "packages/android/inth-android/src/test/kotlin/com/inth/android/CliSnippetTest.kt";
+const SWIFT_ENTRY_SNIPPETS =
+  "packages/swift/Tests/InthConsentUITests/cli-entry-snippet-tests.swift";
+const KOTLIN_ENTRY_SNIPPETS =
+  "packages/android/inth-consent-ui/src/test/kotlin/com/inth/consentui/cli-entry-snippet-test.kt";
+const ANDROID_PROPERTIES = "packages/android/gradle.properties";
 
 const roots: string[] = [];
 
@@ -109,42 +88,6 @@ const pkg = (dependencies: Record<string, string>): string =>
 
 const read = (root: string, file: string): string =>
   readFileSync(join(root, file), "utf-8");
-
-/**
- * The renames that take the native SDKs from c15t to Inth names. The Swift
- * `.c15tConsent` modifier keeps its name, and no rule here touches it.
- */
-const INTH_NAMES: [string, string][] = [
-  ["com.c15t", "com.inth"],
-  ["C15t", "Inth"],
-  ["c15t-cli-snippet", "inth-cli-snippet"],
-  ["c15t.native.version", "inth.native.version"],
-];
-
-/** `text` with the SDK's c15t names replaced by its Inth names. */
-const inthNames = (text: string): string => {
-  let renamed = text;
-  for (const [from, to] of INTH_NAMES) {
-    renamed = renamed.replaceAll(from, to);
-  }
-  return renamed;
-};
-
-/**
- * Whether the SDK on this branch has its Inth names. The rename is a separate
- * change; until it lands, the SDK files are read from their c15t paths with
- * INTH_NAMES applied, so the comparisons still hold. Once it lands, they are
- * read as they are, and this fallback can go.
- */
-const SDK_HAS_INTH_NAMES = existsSync(
-  join(REPO, "packages/swift/Sources/InthCore")
-);
-
-/** An SDK file's text, with its Inth names. */
-const sdkText = (file: SdkFile): string =>
-  SDK_HAS_INTH_NAMES
-    ? read(REPO, file.path)
-    : inthNames(read(REPO, file.c15tPath));
 
 /** The parsed `inth mobile setup` arguments, with a privacy policy unless given. */
 const parsed = (args: string[]): MobileSetupArguments => {
@@ -216,33 +159,19 @@ const expoPlugin = async (): Promise<ExpoPluginModules> => {
     load("constants.ts"),
   ]);
   // SAFETY: The two plugin modules export these names with these shapes.
-  const plugin = { ...params, ...constants } as ExpoPluginModules;
-  if (SDK_HAS_INTH_NAMES) {
-    return plugin;
-  }
-  return {
-    ...plugin,
-    ANDROID_META: {
-      backendUrl: inthNames(plugin.ANDROID_META.backendUrl),
-      categories: inthNames(plugin.ANDROID_META.categories),
-    },
-    IOS_PLIST_KEY: {
-      backendURL: inthNames(plugin.IOS_PLIST_KEY.backendURL),
-      categories: inthNames(plugin.IOS_PLIST_KEY.categories),
-    },
-  };
+  return { ...params, ...constants } as ExpoPluginModules;
 };
 
 /** The lines between the `inth-cli-snippet:<name>` markers in a native test, dedented. */
-const nativeSnippet = (file: SdkFile, name: string): string => {
-  const lines = sdkText(file).split("\n");
+const nativeSnippet = (file: string, name: string): string => {
+  const lines = read(REPO, file).split("\n");
   const start = lines.findIndex((line) =>
     line.includes(`inth-cli-snippet:${name}:start`)
   );
   const end = lines.findIndex((line) =>
     line.includes(`inth-cli-snippet:${name}:end`)
   );
-  expect(start, `${name} markers in ${file.path}`).toBeGreaterThan(-1);
+  expect(start, `${name} markers in ${file}`).toBeGreaterThan(-1);
   expect(end).toBeGreaterThan(start);
   const block = lines.slice(start + 1, end);
   const indent = Math.min(
@@ -805,7 +734,7 @@ describe("the Swift and Kotlin the steps print", () => {
     expect(KOTLIN_PRIVACY_SETTINGS).toBe(
       nativeSnippet(KOTLIN_ENTRY_SNIPPETS, "privacy-settings")
     );
-    const source = sdkText(KOTLIN_SNIPPETS);
+    const source = read(REPO, KOTLIN_SNIPPETS);
     // The test sits in com.inth.android, so InthAndroid needs no import there.
     for (const entry of KOTLIN_INSTALL_IMPORTS.filter(
       (name) => name !== "com.inth.android.InthAndroid"
@@ -1121,7 +1050,7 @@ describe("the doc paths the steps print", () => {
 
 describe("the printed Android version", () => {
   it("matches the native release the steps point at", () => {
-    expect(sdkText(ANDROID_PROPERTIES)).toContain(
+    expect(read(REPO, ANDROID_PROPERTIES)).toContain(
       `inth.native.version=${ANDROID_SDK_VERSION}\n`
     );
   });
