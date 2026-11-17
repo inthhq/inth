@@ -141,6 +141,11 @@ it('loses a grant when the app drops the page origin from its list', async () =>
 
 it('asks the app for its preferences instead of opening a web dialog', async () => {
 	const [tab, page] = await openPage();
+	// The native source connects after `ready`. Until it has, `openDialog()`
+	// has no app to ask, so wait for the app's permissions to arrive.
+	await expect
+		.poll(() => page.client.getSnapshot().effectivePermissions.measurement)
+		.toBe(true);
 	page.client.openDialog();
 	expect(page.posted).toEqual([
 		'{"type":"c15t:open-preferences","key":"0badc0de0badc0de0badc0de0badc0de"}',
