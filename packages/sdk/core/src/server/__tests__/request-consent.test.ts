@@ -438,14 +438,12 @@ describe('modes', () => {
 			fetch,
 			headers: { 'cf-ipcountry': 'DE' },
 			mode: 'manifest',
-			reportSessions: false,
 		});
 		const second = await render({
 			backendURL: BACKEND,
 			fetch,
 			headers: { 'cf-ipcountry': 'US' },
 			mode: 'manifest',
-			reportSessions: false,
 		});
 		expect(callsTo(fetch, '/manifest')).toHaveLength(1);
 		expect(callsTo(fetch, '/init')).toHaveLength(0);
@@ -594,7 +592,6 @@ describe('forwarding', () => {
 			fetch,
 			headers: visitor,
 			mode: 'manifest',
-			reportSessions: false,
 		});
 		const headers = sentHeaders(fetch, '/manifest');
 		expect(headers.has('cookie')).toBe(false);
@@ -611,7 +608,6 @@ describe('forwarding', () => {
 			forwardHeaders: ['x-tenant'],
 			headers: visitor,
 			mode: 'manifest',
-			reportSessions: false,
 		});
 		const headers = sentHeaders(fetch, '/manifest');
 		expect(headers.get('cookie')).toBe('session=secret');
@@ -625,7 +621,6 @@ describe('forwarding', () => {
 			forwardHeaders: ['x-tenant'],
 			headers: visitor,
 			mode: 'manifest',
-			reportSessions: false,
 		});
 		const plain = sentHeaders(cleartext, '/manifest');
 		expect(plain.has('cookie')).toBe(false);
@@ -651,7 +646,6 @@ describe('vendor list deferral', () => {
 		const toList = await render({
 			backendURL: BACKEND,
 			mode: 'manifest',
-			reportSessions: false,
 		});
 		expect(toList.initialIab?.gvl).toBeNull();
 		expect(toList.initialIab?.gvlReference?.url).toBe(GVL_URL);
@@ -660,7 +654,6 @@ describe('vendor list deferral', () => {
 			backendURL: BACKEND,
 			gvlRoute: '/api/c15t/init',
 			mode: 'manifest',
-			reportSessions: false,
 		});
 		expect(toRoute.initialIab?.gvlReference?.url).toMatch(
 			/^\/api\/c15t\/init\?c15t-gvl=42/u
@@ -695,7 +688,6 @@ describe('vendor list deferral', () => {
 			backendURL: BACKEND,
 			fetch,
 			mode: 'manifest',
-			reportSessions: false,
 		});
 		expect(state.initialIab?.adTechProviders).toEqual([
 			{ id: 89, name: 'Meta', policyUrl: 'https://meta.example/privacy' },
@@ -729,7 +721,6 @@ describe('vendor list deferral', () => {
 			backendURL: BACKEND,
 			fetch,
 			mode: 'manifest',
-			reportSessions: false,
 		});
 		expect(state.initialIab?.adTechProviders?.map(({ id }) => id)).toEqual([
 			89,
@@ -744,7 +735,6 @@ describe('vendor list deferral', () => {
 			backendURL: BACKEND,
 			fetch: upstream(IAB_MANIFEST),
 			mode: 'manifest',
-			reportSessions: false,
 		});
 		expect(state.initialIab?.gvl?.vendorListVersion).toBe(42);
 	});
@@ -846,7 +836,6 @@ describe('budget', () => {
 			backendURL: BACKEND,
 			fetch,
 			mode: 'manifest' as const,
-			reportSessions: false,
 			waitUntil,
 		};
 		const first = render(options);
@@ -855,7 +844,11 @@ describe('budget', () => {
 		expect(waitUntil).toHaveBeenCalled();
 		await vi.advanceTimersByTimeAsync(300);
 		const second = await render(options);
-		expect(fetch).toHaveBeenCalledTimes(1);
+		// One manifest request; the second render's session report is the
+		// only other call.
+		expect(
+			fetch.mock.calls.filter(([input]) => String(input).endsWith('/manifest'))
+		).toHaveLength(1);
 		expect(second.initialPolicyResolution?.status).toBe('matched');
 	});
 
@@ -953,18 +946,12 @@ describe('session reports', () => {
 		expect(waitUntil).toHaveBeenCalled();
 	});
 
-	test('a relative backend, reportSessions: false and hosted mode send none', async () => {
+	test('a relative backend and hosted mode send none', async () => {
 		const fetch = upstream();
 		await render({
 			backendURL: '/api/self-host',
 			fetch,
 			mode: 'manifest',
-		});
-		await render({
-			backendURL: BACKEND,
-			fetch,
-			mode: 'manifest',
-			reportSessions: false,
 		});
 		await render({ backendURL: BACKEND, fetch });
 		await new Promise((resolve) => {
@@ -1100,7 +1087,6 @@ describe('consent journey', () => {
 
 	test.each([
 		['journey: false', { journey: false }, {}],
-		['reportSessions: false', { reportSessions: false }, {}],
 		['a prefetch', {}, { 'sec-purpose': 'prefetch' }],
 		[
 			'a manifest render with no absolute backend to report to',

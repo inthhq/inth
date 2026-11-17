@@ -9,9 +9,9 @@ import { policyRulePresets, resolvePolicyRules } from '@c15t/schema/types';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { choiceRecords, NOW } from '../../__tests__/fixtures/kernel-fixtures';
+import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import { createNetworkBlocker } from '../../modules/network-blocker';
 import type { NetworkHold } from '../../modules/network-blocker/hold';
-import { custom } from '../../transports/mode';
 import type { ProviderTransportContext } from '../../transports/mode';
 import type { KernelTransport } from '../../types';
 import {
@@ -119,7 +119,7 @@ const create = function create(
 	modules: ConsentRuntimeModules = defaultRuntimeModules
 ) {
 	const runtime = createConsentProviderRuntime(
-		{ mode: custom(createTransport()), ...options },
+		{ mode: transportMode(createTransport()), ...options },
 		modules
 	);
 	runtimes.push(runtime);
@@ -167,7 +167,7 @@ describe('update()', () => {
 			const first = [{ category: 'marketing', domain: 'first.example' }];
 			const next = [{ category: 'marketing', domain: 'next.example' }];
 			const options: ConsentProviderRuntimeOptions = {
-				mode: custom(createTransport()),
+				mode: transportMode(createTransport()),
 				networkBlocker: { rules: first as never },
 			};
 			const runtime = create(options, fakes.modules);
@@ -201,7 +201,7 @@ describe('update()', () => {
 		window.fetch = network as unknown as typeof window.fetch;
 		try {
 			const options: ConsentProviderRuntimeOptions = {
-				mode: custom(createTransport()),
+				mode: transportMode(createTransport()),
 				persistence: false,
 				prefetch: RESOLVED_PREFETCH,
 			};
@@ -238,7 +238,7 @@ describe('update()', () => {
 	test('new rules for a blocker whose chunk failed to load answer matching requests as blocked', async () => {
 		const { network, restore } = stubNetwork();
 		const options: ConsentProviderRuntimeOptions = {
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 			networkBlocker: {
 				rules: [{ category: 'measurement', domain: 'first.example' }],
 			},
@@ -281,7 +281,7 @@ describe('update()', () => {
 	test('`enabled` and overrides apply at once; the rest once the returned promise settles', async () => {
 		const options: ConsentProviderRuntimeOptions = {
 			consentCategories: ['marketing'],
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 		};
 		const runtime = create(options);
 
@@ -309,7 +309,7 @@ describe('update()', () => {
 	test('the options it was created with change nothing', async () => {
 		const transport = createTransport();
 		const options: ConsentProviderRuntimeOptions = {
-			mode: custom(transport),
+			mode: transportMode(transport),
 			overrides: { country: 'DE' },
 			prefetch: RESOLVED_PREFETCH,
 			user: { externalId: 'user_1' },
@@ -334,7 +334,7 @@ describe('update()', () => {
 	test('a new user is identified once', async () => {
 		const identify = vi.fn().mockResolvedValue(undefined);
 		const options: ConsentProviderRuntimeOptions = {
-			mode: custom(createTransport({ identify })),
+			mode: transportMode(createTransport({ identify })),
 			prefetch: RESOLVED_PREFETCH,
 		};
 		const runtime = create(options);
@@ -350,7 +350,7 @@ describe('update()', () => {
 	test('new overrides are applied and init runs again, whatever the key order', async () => {
 		const transport = createTransport();
 		const options: ConsentProviderRuntimeOptions = {
-			mode: custom(transport),
+			mode: transportMode(transport),
 			overrides: { country: 'DE', region: 'BY' },
 			prefetch: RESOLVED_PREFETCH,
 		};
@@ -372,7 +372,7 @@ describe('update()', () => {
 		// Vue's `ConsentRoot` props can change the overrides before mount.
 		const transport = createTransport();
 		const options: ConsentProviderRuntimeOptions = {
-			mode: custom(transport),
+			mode: transportMode(transport),
 			prefetch: RESOLVED_PREFETCH,
 		};
 		const runtime = create(options);
@@ -390,7 +390,7 @@ describe('update()', () => {
 	test('removing `consentCategories` drops the configured list', async () => {
 		const options: ConsentProviderRuntimeOptions = {
 			consentCategories: ['necessary', 'marketing'],
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 		};
 		const runtime = create(options);
 		expect(runtime.consentCategories).toEqual(['necessary', 'marketing']);
@@ -400,13 +400,13 @@ describe('update()', () => {
 		// Svelte restored the snapshot's list from mount instead, which kept
 		// the removed configuration.
 		expect(runtime.consentCategories).toEqual(
-			create({ mode: custom(createTransport()) }).consentCategories
+			create({ mode: transportMode(createTransport()) }).consentCategories
 		);
 	});
 
 	test('a vendor list replaced after mount replaces the declared vendors', async () => {
 		const options: ConsentProviderRuntimeOptions = {
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 			vendors: [{ category: 'marketing', id: 'ads', name: 'Ads' }] as never,
 		};
 		const runtime = create(options);
@@ -434,7 +434,7 @@ describe('update()', () => {
 		const fakes = createFakeModules();
 		const first = [{ callbackOnly: true, category: 'measurement', id: 'a' }];
 		const options: ConsentProviderRuntimeOptions = {
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 			scripts: first as never,
 		};
 		const runtime = create(options, fakes.modules);
@@ -445,11 +445,14 @@ describe('update()', () => {
 		expect(fakes.loaders).toHaveLength(1);
 		expect(fakes.loaders[0]?.updates).toEqual([next]);
 
-		const late = create({ mode: custom(createTransport()) }, fakes.modules);
+		const late = create(
+			{ mode: transportMode(createTransport()) },
+			fakes.modules
+		);
 		late.start();
 		expect(fakes.loaders).toHaveLength(1);
 		await late.update({
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 			scripts: next as never,
 		});
 		expect(fakes.loaders).toHaveLength(2);
@@ -460,7 +463,7 @@ describe('update()', () => {
 		const fakes = createFakeModules();
 		const rules = [{ category: 'marketing', domain: 'ads.example' }];
 		const options: ConsentProviderRuntimeOptions = {
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 			networkBlocker: { rules } as never,
 		};
 		const runtime = create(options, fakes.modules);
@@ -491,7 +494,7 @@ describe('update()', () => {
 		const { network, restore } = stubNetwork();
 		const rules = [{ category: 'marketing', domain: 'ads.example' }];
 		const options: ConsentProviderRuntimeOptions = {
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 			networkBlocker: { enabled: false, rules } as never,
 			prefetch: RESOLVED_PREFETCH,
 		};
@@ -518,7 +521,7 @@ describe('update()', () => {
 		const { network, restore } = stubNetwork();
 		const blockerChunk = Promise.withResolvers<typeof createNetworkBlocker>();
 		const options: ConsentProviderRuntimeOptions = {
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 			networkBlocker: {
 				rules: [{ category: 'marketing', domain: 'first.example' }],
 			},
@@ -557,7 +560,7 @@ describe('update()', () => {
 	test('the iframe blocker is rebuilt when `disableAutomaticBlocking` changes and removed by `false`', async () => {
 		const fakes = createFakeModules();
 		const options: ConsentProviderRuntimeOptions = {
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 		};
 		const runtime = create(options, fakes.modules);
 		runtime.start();
@@ -578,7 +581,7 @@ describe('update()', () => {
 		const second = vi.fn();
 		const options: ConsentProviderRuntimeOptions = {
 			callbacks: { onChoiceRecorded: first },
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 			persistence: false,
 			prefetch: RESOLVED_PREFETCH,
 		};
@@ -600,7 +603,7 @@ describe('update()', () => {
 			// Asserted below.
 		});
 		const options: ConsentProviderRuntimeOptions = {
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 		};
 		const runtime = create(options);
 
@@ -615,7 +618,7 @@ describe('update()', () => {
 		});
 		const transport = createTransport();
 		const options: ConsentProviderRuntimeOptions = {
-			mode: custom(transport),
+			mode: transportMode(transport),
 			prefetch: RESOLVED_PREFETCH,
 			storageConfig: { storageKey: 'first-key' },
 		};
@@ -646,7 +649,7 @@ describe('update()', () => {
 describe('the enabled toggle', () => {
 	test('off swaps in a permissive kernel and keeps the records; on brings them back', async () => {
 		const options: ConsentProviderRuntimeOptions = {
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 			persistence: false,
 			prefetch: RESOLVED_PREFETCH,
 		};
@@ -681,7 +684,7 @@ describe('the enabled toggle', () => {
 		const fakes = createFakeModules();
 		const runtime = create(
 			{
-				mode: custom(createTransport()),
+				mode: transportMode(createTransport()),
 				networkBlocker: { rules: [] },
 				prefetch: RESOLVED_PREFETCH,
 				scripts: [
@@ -712,7 +715,7 @@ describe('the enabled toggle', () => {
 	test('turning it back on adopts the prefetch again without asking the backend', async () => {
 		const transport = createTransport();
 		const runtime = create({
-			mode: custom(transport),
+			mode: transportMode(transport),
 			prefetch: RESOLVED_PREFETCH,
 		});
 		runtime.start();
@@ -726,7 +729,7 @@ describe('the enabled toggle', () => {
 
 	test('a runtime created disabled asks the backend when it is enabled', async () => {
 		const transport = createTransport();
-		const runtime = create({ enabled: false, mode: custom(transport) });
+		const runtime = create({ enabled: false, mode: transportMode(transport) });
 		runtime.start();
 		expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
 			true
@@ -741,7 +744,7 @@ describe('the enabled toggle', () => {
 	test('`setLanguage()` while off asks the backend for that language once it is on', async () => {
 		const transport = createTransport();
 		const runtime = create({
-			mode: custom(transport),
+			mode: transportMode(transport),
 			prefetch: RESOLVED_PREFETCH,
 		});
 		runtime.start();
@@ -763,7 +766,7 @@ describe('the enabled toggle', () => {
 	test('overrides changed while off are asked for once it is on', async () => {
 		const transport = createTransport();
 		const options: ConsentProviderRuntimeOptions = {
-			mode: custom(transport),
+			mode: transportMode(transport),
 			prefetch: RESOLVED_PREFETCH,
 		};
 		const runtime = create(options);
@@ -792,7 +795,7 @@ describe('the enabled toggle', () => {
 		const runtime = create(
 			{
 				enabled: false,
-				mode: custom(createTransport()),
+				mode: transportMode(createTransport()),
 				networkBlocker: {
 					rules: [{ category: 'marketing', domain: 'ads.example' }],
 				},
@@ -834,7 +837,7 @@ describe('a streamed prefetch', () => {
 		const stream = Promise.withResolvers<RuntimePrefetch>();
 		const runtime = create(
 			{
-				mode: custom(transport),
+				mode: transportMode(transport),
 				prefetch: stream.promise,
 			},
 			streaming
@@ -877,7 +880,7 @@ describe('a streamed prefetch', () => {
 		const transport = createTransport();
 		const runtime = create(
 			{
-				mode: custom(transport),
+				mode: transportMode(transport),
 				overrides: { country: 'US' },
 				persistence: false,
 				prefetch: Promise.resolve({
@@ -902,7 +905,7 @@ describe('a streamed prefetch', () => {
 		const transport = createTransport();
 		const runtime = create(
 			{
-				mode: custom(transport),
+				mode: transportMode(transport),
 				prefetch: Promise.resolve({
 					initialOverrides: { country: 'DE' },
 					initialRecords: choiceRecords({ marketing: true }),
@@ -927,7 +930,7 @@ describe('a streamed prefetch', () => {
 		const transport = createTransport();
 		const runtime = create(
 			{
-				mode: custom(transport),
+				mode: transportMode(transport),
 				prefetch: Promise.reject(new Error('stream failed')),
 			},
 			streaming
@@ -942,7 +945,7 @@ describe('a streamed prefetch', () => {
 		const stream = Promise.withResolvers<RuntimePrefetch>();
 		const runtime = create(
 			{
-				mode: custom(transport),
+				mode: transportMode(transport),
 				persistence: false,
 				prefetch: stream.promise,
 			},
@@ -966,7 +969,7 @@ describe('a streamed prefetch', () => {
 		});
 		const transport = createTransport();
 		const runtime = create({
-			mode: custom(transport),
+			mode: transportMode(transport),
 			prefetch: Promise.resolve(RESOLVED_PREFETCH),
 		});
 		runtime.start();
@@ -1052,7 +1055,7 @@ describe('a streamed prefetch a host renders from', () => {
 		const transport = createTransport();
 		const runtime = create(
 			{
-				mode: custom(transport),
+				mode: transportMode(transport),
 				persistence: false,
 				prefetch: never(),
 			},
@@ -1076,7 +1079,7 @@ describe('a streamed prefetch a host renders from', () => {
 		const stream = Promise.withResolvers<RuntimePrefetch>();
 		const runtime = create(
 			{
-				mode: custom(transport),
+				mode: transportMode(transport),
 				persistence: false,
 				prefetch: stream.promise,
 			},
@@ -1111,7 +1114,7 @@ describe('a streamed prefetch a host renders from', () => {
 		const transport = createTransport();
 		const runtime = create(
 			{
-				mode: custom(transport),
+				mode: transportMode(transport),
 				persistence: false,
 				prefetch: Promise.resolve(RESOLVED_PREFETCH),
 			},
@@ -1321,7 +1324,7 @@ describe('lazyRuntimeModule', () => {
 		const loader = vi.fn(defaultRuntimeModules.createScriptLoader);
 		const runtime = create(
 			{
-				mode: custom(createTransport()),
+				mode: transportMode(createTransport()),
 				prefetch: RESOLVED_PREFETCH,
 				scripts: [
 					{ callbackOnly: true, category: 'necessary', id: 'a' },

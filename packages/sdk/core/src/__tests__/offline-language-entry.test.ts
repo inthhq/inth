@@ -6,14 +6,14 @@
 import { translations as italian } from '@c15t/translations/it';
 import { describe, expect, test } from 'vitest';
 
-import { offline } from '../index';
 import { createConsentRuntime } from '../runtime';
+import { withoutNetwork } from '../testing';
 
 describe('offline(): a language imported from its own entry', () => {
 	test('switches the copy to that language and no other', async () => {
 		const runtime = createConsentRuntime({
-			mode: offline({ acknowledgeNoRecords: true }),
 			persistence: false,
+			testing: withoutNetwork(),
 			windowDebug: false,
 		});
 		const { kernel } = runtime;

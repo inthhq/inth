@@ -13,9 +13,9 @@ import {
 	NOW,
 	optInRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import type { Script } from '../../libs/script-loader/types';
 import { encodeStoredConsentEnvelopeJson } from '../../modules/persistence/writer/encode';
-import { custom } from '../../transports/mode';
 import {
 	PAGE_RENDER_KEY,
 	serverScriptStartPlan,
@@ -23,7 +23,7 @@ import {
 } from '../script-server-start';
 import type { RuntimePrefetch } from '../types';
 
-const mode = custom({ init: () => Promise.resolve({}) });
+const mode = transportMode({ init: () => Promise.resolve({}) });
 
 const prefetchFor = function prefetchFor(
 	values?: Parameters<typeof choiceRecords>[0]

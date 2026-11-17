@@ -19,10 +19,11 @@ import {
 	noticeRule,
 	optInRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import { buildPrefetchScript } from '../../libs/prefetch/prefetch';
 import { JOURNEY_STORAGE_KEY } from '../../libs/storage-keys';
 import { clearStoredConsentRecords } from '../../modules/persistence/__tests__/record-writes';
-import { custom, hosted } from '../../transports/mode';
+import { hosted } from '../../transports/mode';
 import { c15tProtocolHeaders } from '../../transports/version-header';
 import type { KernelTransport } from '../../types';
 import {
@@ -357,7 +358,7 @@ describe("journey: 'tab'", () => {
 			{
 				consentCategories: ['necessary', 'measurement'],
 				journey: 'tab',
-				mode: custom({ init: () => Promise.resolve({}), save }),
+				mode: transportMode({ init: () => Promise.resolve({}), save }),
 				prefetch: stream.promise,
 			},
 			{ ...defaultRuntimeModules, streamPrefetch }
@@ -386,7 +387,7 @@ describe("journey: 'tab'", () => {
 		const runtime = createConsentProviderRuntime(
 			{
 				consentCategories: ['necessary', 'measurement'],
-				mode: custom({ init: () => Promise.resolve({}), save }),
+				mode: transportMode({ init: () => Promise.resolve({}), save }),
 				persistence: false,
 				// Still pending: only the synchronous adoption can hand it over.
 				prefetch: new Promise(() => {
@@ -467,7 +468,7 @@ describe('a journey a server render started', () => {
 		const runtime = createConsentProviderRuntime(
 			{
 				consentCategories: ['necessary', 'measurement'],
-				mode: custom({ init: () => Promise.resolve({}), save }),
+				mode: transportMode({ init: () => Promise.resolve({}), save }),
 				prefetch: stream.promise,
 			},
 			{ ...defaultRuntimeModules, streamPrefetch }
@@ -503,7 +504,7 @@ describe('a journey a server render started', () => {
 		const runtime = createConsentProviderRuntime(
 			{
 				consentCategories: ['necessary', 'measurement'],
-				mode: custom({ init: transportInit, save }),
+				mode: transportMode({ init: transportInit, save }),
 				prefetch: stream.promise,
 			},
 			{ ...defaultRuntimeModules, streamPrefetch }
@@ -531,7 +532,7 @@ describe('a journey a server render started', () => {
 			{
 				consentCategories: ['necessary', 'measurement'],
 				journey: 'tab',
-				mode: custom({
+				mode: transportMode({
 					init: () => Promise.resolve({}),
 					save: () => Promise.resolve({ ok: true }),
 				}),
@@ -563,7 +564,7 @@ describe('a journey a server render started', () => {
 		const runtime = createConsentProviderRuntime(
 			{
 				consentCategories: ['necessary', 'measurement'],
-				mode: custom({ init: () => Promise.resolve({}), save }),
+				mode: transportMode({ init: () => Promise.resolve({}), save }),
 				prefetch: stream.promise,
 			},
 			{ ...defaultRuntimeModules, streamPrefetch }
@@ -603,7 +604,7 @@ describe('a streamed prefetch the runtime cannot stream', () => {
 		const runtime = createConsentProviderRuntime(
 			{
 				consentCategories: ['necessary', 'measurement'],
-				mode: custom({ init: transportInit, save }),
+				mode: transportMode({ init: transportInit, save }),
 				prefetch: stream.promise,
 			},
 			defaultRuntimeModules

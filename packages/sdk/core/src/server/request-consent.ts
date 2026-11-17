@@ -308,15 +308,6 @@ export interface ResolveRequestConsentOptions {
 	 */
 	waitUntil?: (task: Promise<void>) => void;
 	/**
-	 * Manifest mode: report the resolved init to the backend's
-	 * `POST /sessions`, detached from the render. Needs an absolute
-	 * {@link backendURL}. Hosted mode never reports: the backend's own
-	 * `/init` already counted the visitor.
-	 *
-	 * @default true
-	 */
-	reportSessions?: boolean;
-	/**
 	 * The provider's `journey`. A render reports `'page'` either way; `false`
 	 * starts none, and the state's `journey` is then `null` so the browser
 	 * sends none either.
@@ -542,7 +533,7 @@ const startServerJourney = function startServerJourney(
 	const unreported =
 		mode === 'manifest' &&
 		!resolveSessionReportBackendURL({ backendURL: options.backendURL });
-	if (!enabled || options.reportSessions === false || unreported) {
+	if (!enabled || unreported) {
 		return null;
 	}
 	const { domain, speculative } = read();
@@ -939,22 +930,19 @@ export const resolveRequestConsent = async function resolveRequestConsent(
 				},
 				loadGvl: loadGvlFor(manifest),
 				manifest,
-				report:
-					options.reportSessions === false
-						? undefined
-						: {
-								abandoned: () => abandoned,
-								adapter: options.adapter,
-								// As configured, not request-resolved: a relative backend
-								// is this app's proxy, which means no report.
-								backendURL: options.backendURL,
-								experiment: arm,
-								fetch: options.fetch,
-								headers: readVisitorHeaders(),
-								journey: journey ?? undefined,
-								source: 'render',
-								waitUntil: options.waitUntil,
-							},
+				report: {
+					abandoned: () => abandoned,
+					adapter: options.adapter,
+					// As configured, not request-resolved: a relative backend
+					// is this app's proxy, which means no report.
+					backendURL: options.backendURL,
+					experiment: arm,
+					fetch: options.fetch,
+					headers: readVisitorHeaders(),
+					journey: journey ?? undefined,
+					source: 'render',
+					waitUntil: options.waitUntil,
+				},
 			});
 			// The list stays inline when the browser could not fetch it the same
 			// way: a caller's own fetch, or a manifest read with credentials.

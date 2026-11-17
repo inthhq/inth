@@ -15,6 +15,7 @@ import {
 	optInRule,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import type { Script } from '../../libs/script-loader/types';
 import { STORAGE_KEY } from '../../libs/storage-keys';
 import { validateStoredConsentEnvelope } from '../../modules/persistence/record-codec';
@@ -24,7 +25,6 @@ import {
 	encodeVendorChoice,
 } from '../../modules/persistence/writer/encode';
 import { releaseServerStartedScripts } from '../../surface-actions/plain-scripts';
-import { custom } from '../../transports/mode';
 import {
 	PAGE_RENDER_KEY,
 	SERVER_START_FAILED_EVENT,
@@ -57,7 +57,7 @@ const pixel: Script = {
 	src: 'https://cdn.example.com/pixel.js',
 };
 
-const mode = custom({ init: () => Promise.resolve({}) });
+const mode = transportMode({ init: () => Promise.resolve({}) });
 
 /** A prefetch under an opt-in policy, with the visitor's stored choice. */
 const prefetchFor = function prefetchFor(

@@ -3,12 +3,13 @@
  * What `clientMode()` puts in a page's first-load JavaScript.
  *
  * A server-framework root resolves the visitor's state on the server, so for
- * `manifest()` (resolved on the server) and `hosted()` the browser needs the
+ * `manifest()` (resolved on the server) and the hosted backend the browser needs the
  * record transport and the init-request builder, nothing more. These tests
  * bundle an entry for the browser with every `import()` left external, which
  * is exactly the code a page loads before any lazy chunk, and look for
  * marker strings in it: the manifest resolver, the recommended offline
- * policy pack, English and German base copy. Each lazy target is bundled
+ * policy pack, the testing entry's production check, English and German
+ * base copy. Each lazy target is bundled
  * the same way, recursively, and every marker must turn up there, so a
  * renamed string can't make a test pass vacuously.
  *
@@ -35,6 +36,8 @@ const MARKERS = {
 	offlinePolicy: 'quebec_opt_in',
 	// An error the manifest resolver throws (`@c15t/schema`).
 	resolver: 'Unsupported pack field',
+	// The production error of `withoutNetwork()`.
+	testingCheck: 'is for tests and does not run in production',
 } as const;
 
 type Marker = keyof typeof MARKERS;
@@ -123,7 +126,7 @@ const markersIn = (text: string): Marker[] =>
 const ALL_MARKERS = (Object.keys(MARKERS) as Marker[]).sort();
 
 const clientModeEntry = (mode: string): string => `
-import { hosted, manifest, offline } from './modes';
+import { manifest } from './modes';
 import { clientMode } from './runtime/client-mode';
 
 export const mode = clientMode(${mode}, {
@@ -136,8 +139,8 @@ describe('clientMode() first-load JavaScript', () => {
 	test.each([
 		['manifest()', 'manifest()'],
 		["manifest({ resolve: 'browser' })", "manifest({ resolve: 'browser' })"],
-		['hosted()', "hosted({ backendURL: 'https://other.example' })"],
-		['offline()', 'offline()'],
+		['the hosted backend', 'undefined'],
+		['withoutNetwork()', "{ type: 'without-network' }"],
 	])(
 		'%s ships no resolver, policy pack or copy',
 		async (_name, mode) => {
@@ -145,7 +148,7 @@ describe('clientMode() first-load JavaScript', () => {
 
 			expect(markersIn(firstLoad)).toEqual([]);
 			// Behind `import()`: the browser resolver, one chunk per language,
-			// and offline mode with its pack.
+			// and the testing transport with its pack and production check.
 			expect(markersIn(lazy)).toEqual(ALL_MARKERS);
 		},
 		60_000

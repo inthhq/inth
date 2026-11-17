@@ -6,7 +6,7 @@
  */
 import { describe, expect, test, vi } from 'vitest';
 
-import { custom } from '../../transports/mode';
+import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import type { KernelTransport } from '../../types';
 import { createConsentRuntime } from '../index';
 import type { ConsentRuntimeGPPFactory, ConsentRuntimeOptions } from '../types';
@@ -25,7 +25,7 @@ const setup = function setup(options: Partial<ConsentRuntimeOptions> = {}) {
 		callbacks: { onError },
 		gpp: true,
 		loadGPP,
-		mode: custom(transport),
+		mode: transportMode(transport),
 		...options,
 	});
 	return { createGPP, dispose, loadGPP, onError, runtime };

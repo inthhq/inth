@@ -5,10 +5,10 @@ import { policyRulePresets } from '@c15t/schema/types';
 import type { PolicyRule } from '@c15t/schema/types';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import type { ConsentExperiment } from '../../libs/experiment';
 import { EXPERIMENT_STORAGE_KEY } from '../../libs/storage-keys';
 import { clearStoredConsentRecords } from '../../modules/persistence/__tests__/record-writes';
-import { custom } from '../../transports/mode';
 import { createOfflineTransport } from '../../transports/offline';
 import type { KernelEvent, KernelTransport, SavePayload } from '../../types';
 import { createConsentRuntime } from '../index';
@@ -49,7 +49,7 @@ const createRuntime = function createRuntime(
 ) {
 	const runtime = createConsentRuntime({
 		experiment: { ...experiment, ...overrides },
-		mode: custom(transport),
+		mode: transportMode(transport),
 	});
 	return { runtime, transport };
 };
@@ -125,7 +125,7 @@ describe('runtime experiments', () => {
 		};
 		const runtime = createConsentRuntime({
 			experiment,
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 			prefetch: { initialExperiment: seeded },
 		});
 		expect(runtime.kernel.getServerSnapshot().experiment).toEqual(seeded);
@@ -144,7 +144,7 @@ describe('runtime experiments', () => {
 		};
 		const runtime = createConsentRuntime({
 			experiment: { ...experiment, arm: 'floating' },
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 			prefetch: { initialExperiment: seeded },
 		});
 		expect(runtime.kernel.getSnapshot().experiment?.arm).toBe('bar');
@@ -296,7 +296,7 @@ describe('runtime experiments', () => {
 		const runtime = createConsentRuntime({
 			callbacks: { onChoiceRecorded: recorded, onSurfaceShown: shown },
 			experiment: { ...experiment, arm: 'bar' },
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 		});
 		runtime.start();
 		await vi.waitFor(() => expect(shown).toHaveBeenCalledOnce());
@@ -380,7 +380,7 @@ describe('the host theme', () => {
 		});
 		const runtime = createConsentRuntime({
 			experiment: evening,
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 			theme: uneven,
 		});
 		runtime.start();

@@ -43,14 +43,12 @@ export type {
 	ProviderTransportFactory,
 	ProviderTransportKind,
 } from './mode';
-export { custom } from './custom';
 export { hosted } from './mode';
 export type {
 	OfflineKernelTransport,
 	OfflineTransportOptions,
 } from './offline';
-export { createOfflineTransport, local, offline } from './offline';
-export type { OfflineModeFactory, OfflineModeOptions } from './offline';
+export { createOfflineTransport } from './offline';
 export {
 	ConsentSaveRejectedError,
 	isConsentSaveRejection,

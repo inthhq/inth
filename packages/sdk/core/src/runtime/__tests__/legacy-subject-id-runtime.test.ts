@@ -3,7 +3,7 @@
  */
 import { afterEach, expect, test } from 'vitest';
 
-import { offline } from '../../index';
+import { withoutNetwork } from '../../testing';
 import { createConsentRuntime } from '../index';
 
 afterEach(() => {
@@ -23,7 +23,7 @@ test.each([
 	localStorage.setItem('c15t-sid', 'sub_legacy');
 	const runtime = createConsentRuntime({
 		...extra,
-		mode: offline({ acknowledgeNoRecords: true }),
+		testing: withoutNetwork(),
 	});
 	runtime.start();
 
@@ -40,8 +40,8 @@ test('a runtime with a consent source removes the copy under its nested storage 
 			openPreferences: () => undefined,
 			subscribe: () => () => undefined,
 		},
-		mode: offline({ acknowledgeNoRecords: true }),
 		persistence: { storageConfig: { storageKey: 'custom' } },
+		testing: withoutNetwork(),
 	});
 	runtime.start();
 

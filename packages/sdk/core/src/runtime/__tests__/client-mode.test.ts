@@ -9,8 +9,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { optInRule } from '../../__tests__/fixtures/kernel-fixtures';
 import { primePrefetchedInitialData } from '../../libs/prefetch/prefetch';
-import { hosted, manifest, offline } from '../../modes';
-import { custom } from '../../transports/custom';
+import { manifest } from '../../modes';
 import { createHostedTransport } from '../../transports/hosted';
 import { createBrowserManifestTransport } from '../../transports/manifest-browser';
 import type { ProviderTransportContext } from '../../transports/mode';
@@ -19,12 +18,12 @@ import {
 	clientMode,
 	lazyBrowserManifest,
 	lazyHosted,
-	lazyOffline,
+	lazyWithoutNetwork,
 } from '../client-mode';
 import type {
 	LoadHostedModule,
 	LoadManifestBrowserModule,
-	LoadOfflineModule,
+	LoadWithoutNetworkModule,
 } from '../client-mode';
 
 const context = {
@@ -76,24 +75,29 @@ afterEach(() => {
 });
 
 describe('clientMode()', () => {
-	test('defaults to manifest(), resolved on the server', () => {
-		const mode = clientMode(undefined, { backendURL: '/api/c15t' });
+	test('uses the hosted backend when only the backend URL is set', async () => {
+		const mode = clientMode(undefined, {
+			backendURL: 'https://backend.example',
+		});
 
-		expect(mode.kind).toBe('manifest');
-		expect({ ...mode }).toEqual({ kind: 'manifest', type: 'manifest' });
+		expect(mode.kind).toBe('hosted');
+		fetchSpy.mockImplementation(() => Promise.reject(new Error('offline')));
+		await mode(context)
+			.init?.(initContext())
+			.catch(() => undefined);
+		expect(pathOf(fetchSpy.mock.calls[0]?.[0])).toBe(
+			'https://backend.example/init'
+		);
 	});
 
 	test('carries the mode data', () => {
-		const rules = [optInRule({ id: 'everywhere' })];
-
-		expect({ ...clientMode(offline({ policyRules: rules })) }).toEqual({
-			kind: 'offline',
-			policyRules: rules,
-			type: 'offline',
+		expect({ ...clientMode(manifest(), { backendURL: '' }) }).toEqual({
+			kind: 'manifest',
+			type: 'manifest',
 		});
-		expect(clientMode(hosted({ backendURL: 'https://a.example' })).kind).toBe(
-			'hosted'
-		);
+		expect(
+			clientMode({ type: 'without-network' }, { backendURL: '/api/c15t' }).kind
+		).toBe('offline');
 		expect(
 			clientMode(manifest({ resolve: 'browser' }), { backendURL: '' }).kind
 		).toBe('manifest');
@@ -136,13 +140,13 @@ describe('clientMode()', () => {
 			clientMode(manifest({ snapshot: everywhereManifest }), {
 				routePrefix: '/api/c15t',
 			})
-		).toThrow('manifest() needs a backend URL');
+		).toThrow('`backendURL` is required');
 		expect(() =>
 			clientMode(
 				manifest({ resolve: 'browser', snapshot: everywhereManifest }),
 				{ routePrefix: '/api/c15t' }
 			)
-		).toThrow('manifest() needs a backend URL');
+		).toThrow('`backendURL` is required');
 	});
 
 	test('manifest() saves through a forwarding route passed as the backend', async () => {
@@ -162,43 +166,24 @@ describe('clientMode()', () => {
 		expect(pathOf(fetchSpy.mock.calls[0]?.[0])).toBe('/api/c15t/subjects');
 	});
 
-	test('offline() needs no backend URL', () => {
-		expect(clientMode(offline()).kind).toBe('offline');
-		expect(clientMode(offline(), { routePrefix: '/api/c15t' }).kind).toBe(
-			'offline'
-		);
+	test('a testing value needs no backend URL', () => {
+		expect(clientMode({ type: 'without-network' }).kind).toBe('offline');
+		expect(
+			clientMode({ type: 'without-network' }, { routePrefix: '/api/c15t' }).kind
+		).toBe('offline');
 	});
 
-	test("hosted() prefers the mode's own backend URL", async () => {
-		const transport = clientMode(
-			hosted({ backendURL: 'https://mode.example' }),
-			{ backendURL: 'https://config.example', routePrefix: '/api/c15t' }
-		)(context);
-
-		fetchSpy.mockImplementation(() => Promise.reject(new Error('offline')));
-		await transport.init?.(initContext()).catch(() => undefined);
-
-		expect(pathOf(fetchSpy.mock.calls[0]?.[0])).toBe(
-			'https://mode.example/init'
-		);
-	});
-
-	test('throws when a mode needs a backend and has none', () => {
-		expect(() => clientMode(hosted())).toThrow('hosted() needs a backend URL');
-		expect(() => clientMode(manifest())).toThrow(
-			'manifest() needs a backend URL'
-		);
+	test('throws when there is no backend URL', () => {
+		expect(() => clientMode(undefined)).toThrow('`backendURL` is required');
+		expect(() => clientMode(manifest())).toThrow('`backendURL` is required');
 	});
 
 	test('returns a transport factory unchanged, warning for an implementation', () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-		const own = custom({ init: () => Promise.resolve({}) });
 		const implementation = Object.assign(() => ({}), {
 			kind: 'hosted' as const,
 		});
 
-		expect(clientMode(own)).toBe(own);
-		expect(warn).not.toHaveBeenCalled();
 		expect(clientMode(implementation)).toBe(implementation);
 		expect(warn).toHaveBeenCalledWith(
 			expect.stringContaining('`mode` is the hosted() transport itself')
@@ -386,33 +371,38 @@ describe('lazyHosted()', () => {
 	});
 });
 
-describe('lazyOffline()', () => {
-	test("loads offline() on first init, with the provider's rules as fallback", async () => {
+describe('lazyWithoutNetwork()', () => {
+	test('loads its transport on first init, once', async () => {
 		const transportInit = vi.fn(() => Promise.resolve({}));
-		const offlineFactory = vi.fn(
+		const build = vi.fn(
 			() => () => ({ init: transportInit }) as KernelTransport
 		);
-		const load = vi.fn<LoadOfflineModule>(() =>
+		const load = vi.fn<LoadWithoutNetworkModule>(() =>
 			Promise.resolve({
-				offline: offlineFactory as unknown as Awaited<
-					ReturnType<LoadOfflineModule>
-				>['offline'],
+				withoutNetworkTransport: build as unknown as Awaited<
+					ReturnType<LoadWithoutNetworkModule>
+				>['withoutNetworkTransport'],
 			})
 		);
-		const providerRules = [optInRule({ id: 'provider' })];
-		const factory = lazyOffline({}, load);
-		const transport = factory({ ...context, policyRules: providerRules });
+		const transport = lazyWithoutNetwork('@c15t/nextjs/testing', load)(context);
 
 		expect(load).not.toHaveBeenCalled();
 		await transport.init?.(initContext());
 		await transport.init?.(initContext());
 
 		expect(load).toHaveBeenCalledTimes(1);
-		expect(offlineFactory).toHaveBeenCalledWith({
-			acknowledgeNoRecords: true,
-			policyRules: providerRules,
-		});
+		expect(build).toHaveBeenCalledWith('@c15t/nextjs/testing');
 		expect(transportInit).toHaveBeenCalledTimes(2);
+	});
+
+	test('the loaded transport throws in a production build', async () => {
+		vi.stubEnv('NODE_ENV', 'production');
+		const transport = lazyWithoutNetwork('@c15t/nextjs/testing')(context);
+
+		await expect(transport.init?.(initContext())).rejects.toThrow(
+			'withoutNetwork() from @c15t/nextjs/testing is for tests and does not run in production'
+		);
+		vi.unstubAllEnvs();
 	});
 });
 

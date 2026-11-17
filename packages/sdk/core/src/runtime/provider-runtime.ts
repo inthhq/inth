@@ -36,6 +36,7 @@ import {
 	createRuntimeKernel,
 	hasResolvedPrefetch,
 	normalizeKernelUser,
+	requireTransportFactory,
 } from './runtime-kernel';
 import type {
 	ConsentProviderRuntime,
@@ -223,7 +224,7 @@ const settle = function settle(
  * @param options - The provider's options at mount.
  * @param modules - The module factories to mount.
  * @returns The provider runtime.
- * @throws {Error} When `mode` is not a transport factory.
+ * @throws {Error} When the options select no transport factory.
  *
  * @example
  * ```ts
@@ -247,6 +248,8 @@ export const createConsentProviderRuntime =
 		modules: ConsentRuntimeModules
 	): ConsentProviderRuntime {
 		const initial = options;
+		// Read once, like every initial-only option.
+		const selectedMode = requireTransportFactory(initial, modules.hostedMode);
 		// The prefetch known now: none while a promise is still pending.
 		const knownPrefetch =
 			typeof (initial.prefetch as PromiseLike<unknown> | undefined)?.then ===
@@ -294,12 +297,12 @@ export const createConsentProviderRuntime =
 			const mode =
 				pending && streamPrefetch
 					? streamPrefetch(
-							initial.mode,
+							selectedMode,
 							initial.prefetch as PromiseLike<RuntimePrefetch>,
 							initial,
 							() => built.runtime?.kernel
 						)
-					: initial.mode;
+					: selectedMode;
 			const view = new Proxy({} as ConsentRuntimeOptions, {
 				get: (_target, key) => {
 					if (key === 'enabled') {
@@ -310,6 +313,11 @@ export const createConsentProviderRuntime =
 					}
 					if (key === 'mode') {
 						return mode;
+					}
+					// `mode` is the factory `testing` selected, so the runtime
+					// that reads this view picks it, not the testing value.
+					if (key === 'testing') {
+						return undefined;
 					}
 					if (key === 'prefetch') {
 						if (on && adoptedPrefetch) {
@@ -476,7 +484,7 @@ export const createConsentProviderRuntime =
 										...initial,
 										// A kernel built to render from never inits.
 										mode: Object.assign(() => ({}), {
-											kind: initial.mode.kind,
+											kind: selectedMode.kind,
 										}),
 										prefetch: config,
 									}).getServerSnapshot(),
@@ -679,7 +687,7 @@ export const createConsentProviderRuntime =
 					return Promise.resolve();
 				}
 				const previous = current;
-				current = { ...next, mode: next.mode ?? initial.mode };
+				current = next;
 				// Overrides decide what `start()` does with the prefetch, and the
 				// toggle swaps the kernel the host renders, so both apply now.
 				if (

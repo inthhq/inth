@@ -8,7 +8,7 @@
  */
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { custom } from '../../transports/mode';
+import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import type {
 	ConsentProviderRuntime,
 	ConsentProviderRuntimeOptions,
@@ -31,7 +31,7 @@ const startProvider = async function startProvider(
 };
 
 const transport = () =>
-	custom({
+	transportMode({
 		init: vi.fn().mockResolvedValue({}),
 		save: vi.fn().mockResolvedValue({ ok: true }),
 	});

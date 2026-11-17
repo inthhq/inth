@@ -15,6 +15,7 @@ import {
 	optInRule,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import type { InternalKernel } from '../../kernel/internals';
 import {
 	clearStoredConsentRecords,
@@ -31,7 +32,6 @@ import {
 	readStoredVendorChoice,
 } from '../../modules/persistence/record-storage';
 import { encodeStoredConsentEnvelopeCompact } from '../../modules/persistence/writer/encode';
-import { custom } from '../../transports/mode';
 import type { KernelTransport } from '../../types';
 import { createConsentRuntime } from '../index';
 import type { ConsentRuntime, ConsentRuntimeOptions } from '../types';
@@ -73,7 +73,7 @@ const start = (
 	const runtime = createConsentRuntime({
 		consentCategories: ['necessary', 'measurement'],
 		iframeBlocker: false,
-		mode: custom(transport),
+		mode: transportMode(transport),
 		prefetch: { initialPolicyResolution: resolution },
 		...options,
 	});

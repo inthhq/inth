@@ -35,6 +35,7 @@ import {
 	createRuntimeKernel,
 	hasResolvedPrefetch,
 	normalizeKernelUser,
+	requireTransportFactory,
 } from './runtime-kernel';
 import { storageFor } from './storage-for';
 import type {
@@ -90,7 +91,7 @@ export { storageFor } from './storage-for';
  * @param options - The runtime configuration, read when used.
  * @param modules - The module factories to mount.
  * @returns The runtime and its `stop()`.
- * @throws {Error} When `mode` is not a transport factory.
+ * @throws {Error} When the options select no transport factory.
  * @internal
  */
 // oxlint-disable-next-line max-lines-per-function -- One cohesive lifecycle: construct, start, stop, dispose.
@@ -106,8 +107,11 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 		option: options.prefetch?.journey === null ? false : options.journey,
 		serverId: options.prefetch?.journey?.id,
 	});
-	const kernel = createRuntimeKernel(options, (transport) =>
-		withJourney(transport, journey)
+	const mode = requireTransportFactory(options, modules.hostedMode);
+	const kernel = createRuntimeKernel(
+		options,
+		(transport) => withJourney(transport, journey),
+		mode
 	);
 	// `start()` installs the blocker, often after the host rendered its
 	// children. Hold matching requests until then; the blocker takes over this
@@ -258,7 +262,7 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 			if (options.windowDebug !== false) {
 				const windowDebug = modules.createWindowDebug({
 					getHosting: () => kernel.getSnapshot().hosting,
-					mode: resolveWindowDebugMode(options.mode),
+					mode: resolveWindowDebugMode(mode),
 					pkg: options.pkg ?? '@c15t/core',
 				});
 				disposers.push(() => windowDebug.dispose());

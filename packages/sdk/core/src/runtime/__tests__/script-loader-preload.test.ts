@@ -18,10 +18,10 @@ import {
 	optInRule,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import type { Script } from '../../libs/script-loader/types';
 import { encodeStoredConsentEnvelopeJson } from '../../modules/persistence/writer/encode';
 import type { ScriptLoaderHandle } from '../../modules/script-loader/types';
-import { custom } from '../../transports/mode';
 import type { ConsentKernel } from '../../types';
 import {
 	createConsentProviderRuntime,
@@ -81,7 +81,7 @@ const create = function create(
 	const runtime = createConsentProviderRuntime(
 		{
 			iframeBlocker: false,
-			mode: custom({
+			mode: transportMode({
 				init: vi.fn().mockResolvedValue({}),
 				save: vi.fn().mockResolvedValue({ ok: true }),
 			}),
@@ -568,7 +568,7 @@ describe('the kernel the decision builds', () => {
 			createConsentProviderRuntime(
 				{
 					iframeBlocker: false,
-					mode: custom({
+					mode: transportMode({
 						init: vi.fn().mockResolvedValue({}),
 						save: vi.fn().mockResolvedValue({ ok: true }),
 					}),

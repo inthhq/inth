@@ -26,10 +26,9 @@ import type {
  * @example
  * ```ts
  * import { createConsentRuntime } from '@c15t/core/runtime';
- * import { hosted } from '@c15t/core';
  *
  * const runtime = createConsentRuntime({
- *   mode: hosted({ backendURL: '/api/c15t' }),
+ *   backendURL: '/api/c15t',
  *   pkg: '@c15t/astro',
  * });
  * runtime.start();
@@ -44,6 +43,7 @@ import { createPersistence } from '../modules/persistence';
 import { watchRevocationReload } from '../modules/revocation-reload';
 import { createScriptLoader } from '../modules/script-loader';
 import { createWindowDebug } from '../modules/window-debug';
+import { hosted } from '../transports/mode';
 import { assembleConsentRuntime } from './assemble';
 import { connectConsentSource } from './controls';
 import { mountRuntimeIAB } from './iab-mount';
@@ -138,6 +138,7 @@ export const defaultRuntimeModules: ConsentRuntimeModules = {
 	createPersistence,
 	createScriptLoader,
 	createWindowDebug,
+	hostedMode: (backendURL) => hosted({ backendURL }),
 	mountIAB: mountRuntimeIAB,
 	watchRevocationReload,
 };
@@ -158,14 +159,14 @@ export const defaultRuntimeModules: ConsentRuntimeModules = {
  *
  * @param options - The runtime configuration.
  * @returns The runtime handle.
- * @throws {Error} When `mode` is not a transport factory.
+ * @throws {Error} When the options select no transport factory.
  *
  * @example
  * ```ts
  * const runtime = createConsentRuntime({
  *   createIAB,
+ *   backendURL: '/api/c15t',
  *   iab: { cmpId: 123 },
- *   mode: hosted({ backendURL: '/api/c15t' }),
  *   scripts: [{ category: 'measurement', id: 'ga', src: '...' }],
  * });
  * runtime.start();

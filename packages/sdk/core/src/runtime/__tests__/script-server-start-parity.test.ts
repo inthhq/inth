@@ -14,8 +14,8 @@ import {
 	NOW,
 	optInRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import type { Script } from '../../libs/script-loader/types';
-import { custom } from '../../transports/mode';
 import { createConsentRuntime } from '../index';
 import { serverScriptStart } from '../script-server-start';
 import type { ConsentRuntimeOptions, RuntimePrefetch } from '../types';
@@ -28,7 +28,7 @@ type SignalWindow = Window & {
 
 const SRC = 'https://cdn.example.com/pixel.js';
 const CONFIRMED_AT = NOW - 1000;
-const mode = custom({ init: () => Promise.resolve({}) });
+const mode = transportMode({ init: () => Promise.resolve({}) });
 
 /** Tells the vendor its consent from setup and on every change. */
 const signal = (hasConsent: boolean): void => {

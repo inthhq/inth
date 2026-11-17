@@ -10,7 +10,7 @@ import { createContext, runInContext } from 'node:vm';
 
 import { afterEach, expect, test, vi } from 'vitest';
 
-import { custom } from '../../transports/mode';
+import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import { createOfflineTransport } from '../../transports/offline';
 import { createConsentRuntime } from '../index';
 import { webViewConsentSource } from '../webview-consent-source';
@@ -288,7 +288,7 @@ test('the runtime follows the app and shows no banner', () => {
 	const runtime = createConsentRuntime({
 		consentSource,
 		iframeBlocker: false,
-		mode: custom(createOfflineTransport({ acknowledgeNoRecords: true })),
+		mode: transportMode(createOfflineTransport({ acknowledgeNoRecords: true })),
 		windowDebug: false,
 	});
 	runtime.start();

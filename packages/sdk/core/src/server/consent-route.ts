@@ -177,13 +177,6 @@ export interface ConsentRouteHandlerOptions {
 	 */
 	trustForwardedHeaders?: boolean;
 	/**
-	 * Report each init the route resolves to the backend's `POST /sessions`.
-	 * Needs an absolute `backendURL`.
-	 *
-	 * @default true
-	 */
-	reportSessions?: boolean;
-	/**
 	 * Forward consent writes and other allowlisted paths to `backendURL`.
 	 * With it on, the manifest request also carries the cookies
 	 * `cookieNames` names and the extra `forwardHeaders`, and a manifest
@@ -1084,22 +1077,19 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 			loadAdTechProviders: createAdTechProviderLoader(request, budget, context),
 			loadGvl,
 			manifest,
-			report:
-				options.reportSessions === false
-					? undefined
-					: {
-							// A request that went away is a render that stopped
-							// waiting; the browser inits again and reports the view.
-							abandoned: () => request.signal.aborted,
-							adapter,
-							backendURL: options.backendURL,
-							fetch: options.fetch as typeof globalThis.fetch | undefined,
-							headers: request.headers,
-							method: request.method,
-							source: 'route',
-							url: request.url,
-							waitUntil: context.waitUntil,
-						},
+			report: {
+				// A request that went away is a render that stopped
+				// waiting; the browser inits again and reports the view.
+				abandoned: () => request.signal.aborted,
+				adapter,
+				backendURL: options.backendURL,
+				fetch: options.fetch as typeof globalThis.fetch | undefined,
+				headers: request.headers,
+				method: request.method,
+				source: 'route',
+				url: request.url,
+				waitUntil: context.waitUntil,
+			},
 		});
 		return Response.json(deferInitGvlToRoute(payload, url.pathname), {
 			headers: initHeaders,

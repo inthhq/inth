@@ -12,12 +12,15 @@
  * This module has no runtime imports, so importing it adds only these
  * functions to a bundle.
  *
- * Single-page apps use the implementation factories instead (`hosted()` and
- * `local()` from `@c15t/core`, `manifest()` from
- * `@c15t/core/transports/manifest-browser`). They carry the same `type` and
- * options, so a value of either kind satisfies {@link ConsentMode}.
+ * A provider with only `backendURL` talks to the hosted backend, so there
+ * is no mode to build for it. Tests pass `withoutNetwork()` from a
+ * package's `/testing` entry as the `testing` option instead.
+ *
+ * Single-page apps use the implementation factory instead (`manifest()`
+ * from `@c15t/core/transports/manifest-browser`). It carries the same
+ * `type` and options, so either kind satisfies {@link ConsentMode}.
  */
-import type { ConsentManifest, PolicyRule } from '@c15t/schema/types';
+import type { ConsentManifest } from '@c15t/schema/types';
 
 /** A visitor location known before init, such as one an edge worker injected. */
 export interface ManifestModeInputs {
@@ -84,55 +87,17 @@ export type ManifestModeOptions = ManifestModeBaseOptions &
 /** Resolve init from the backend's consent manifest. */
 export type ManifestMode = { type: 'manifest' } & ManifestModeOptions;
 
-/** Options for the data `hosted()` from `@c15t/core/modes`. */
-export interface HostedModeOptions {
-	/**
-	 * Backend URL. Can be relative (`/api/c15t`) or absolute. Defaults to the
-	 * framework's top-level `backendURL`, then the value the build
-	 * integration read from the framework's public env var.
-	 */
-	backendURL?: string;
-	/** Headers forwarded to the backend's `GET /init`. */
-	headers?: Record<string, string>;
-}
-
-/** Ask the backend's `/init` for every visitor's policy. */
-export interface HostedMode extends HostedModeOptions {
-	type: 'hosted';
-}
-
-/** Options for the data `local()` from `@c15t/core/modes`. */
-export interface OfflineModeOptions {
-	/**
-	 * Rules to resolve locally. Omit them to use `recommendedPolicyRules()`.
-	 * Passing rules replaces that pack entirely.
-	 */
-	policyRules?: PolicyRule[];
-	/**
-	 * Hide the development warning that local mode keeps no consent records.
-	 *
-	 * Local mode keeps consent only in the visitor's browser. c15t keeps no
-	 * server-side record of it, and with no geolocation every visitor gets
-	 * the same policy. Set this to `true` once you have decided that is
-	 * enough, such as in tests or on a site that records consent another
-	 * way. It changes nothing else. c15t v4 will require it.
-	 *
-	 * @defaultValue false
-	 * @see https://c15t.com/docs/concepts/modes
-	 */
-	acknowledgeNoRecords?: boolean;
-}
-
 /**
- * Resolve policy rules locally, with no backend. Its `type` stays
- * `'offline'` until c15t v4.
+ * The data form of a `testing` value, as server-framework packages pass it
+ * between the server and the browser. `withoutNetwork()` from a package's
+ * `/testing` entry builds it.
  */
-export interface OfflineMode extends OfflineModeOptions {
-	type: 'offline';
+export interface WithoutNetworkTestingData {
+	type: 'without-network';
 }
 
 /** Every consent mode, as data. */
-export type ConsentMode = ManifestMode | HostedMode | OfflineMode;
+export type ConsentMode = ManifestMode;
 
 /** The `type` of a {@link ConsentMode}. */
 export type ConsentModeType = ConsentMode['type'];
@@ -156,50 +121,3 @@ export const manifest = function manifest(
 ): ManifestMode {
 	return { ...options, type: 'manifest' };
 };
-
-/**
- * Ask the backend's `/init` for every visitor's policy.
- *
- * @param options - Backend URL and init headers.
- * @returns A serializable hosted mode.
- * @example
- * ```ts
- * import { hosted } from '@c15t/core/modes';
- *
- * const mode = hosted({ backendURL: 'https://your-project.inth.app' });
- * ```
- */
-export const hosted = function hosted(
-	options: HostedModeOptions = {}
-): HostedMode {
-	return { ...options, type: 'hosted' };
-};
-
-/**
- * Resolve policy rules locally, with no backend. Consent stays in the
- * visitor's browser, and c15t keeps no server-side record of it. Use it for
- * development and tests. In development builds it warns once per page until
- * you set `acknowledgeNoRecords: true`.
- *
- * @param options - Rules to resolve, omitted for the recommended pack, and
- *   `acknowledgeNoRecords`.
- * @returns A serializable local mode.
- * @example
- * ```ts
- * import { local } from '@c15t/core/modes';
- *
- * const mode = local({ acknowledgeNoRecords: true });
- * ```
- */
-export const local = function local(
-	options: OfflineModeOptions = {}
-): OfflineMode {
-	return { ...options, type: 'offline' };
-};
-
-/**
- * The old name for {@link local}.
- *
- * @deprecated Use `local()`. c15t v4 removes `offline()`.
- */
-export const offline = local;

@@ -6,9 +6,9 @@ import {
 	optInRule,
 	NOW,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import { createConsentKernel } from '../../kernel';
 import { evaluateConsent } from '../../modules/has';
-import { custom } from '../../transports/mode';
 import { createOfflineTransport } from '../../transports/offline';
 import type { ConsentState } from '../../types';
 import { createConsentRuntime } from '../index';
@@ -30,7 +30,7 @@ test('external decisions change gates without creating receipts, persistence or 
 		callbacks: { onChoiceRecorded: recorded },
 		consentSource: source,
 		iframeBlocker: false,
-		mode: custom(createOfflineTransport({ acknowledgeNoRecords: true })),
+		mode: transportMode(createOfflineTransport({ acknowledgeNoRecords: true })),
 	});
 	localStorage.clear();
 	runtime.start();
@@ -75,7 +75,7 @@ test('external decisions change gates without creating receipts, persistence or 
 
 test('ordinary kernels cannot be switched to external authority after creation', () => {
 	const runtime = createConsentRuntime({
-		mode: custom(createOfflineTransport({ acknowledgeNoRecords: true })),
+		mode: transportMode(createOfflineTransport({ acknowledgeNoRecords: true })),
 	});
 	expect(() =>
 		runtime.kernel.set.externalPermissions({ measurement: true })
@@ -99,7 +99,7 @@ test('a failed external subscription reports the error without aborting startup 
 			},
 		},
 		iframeBlocker: false,
-		mode: custom(createOfflineTransport({ acknowledgeNoRecords: true })),
+		mode: transportMode(createOfflineTransport({ acknowledgeNoRecords: true })),
 	});
 	runtime.kernel.events.on('init:applied', initialized);
 	try {
@@ -147,7 +147,7 @@ const withdrawExternally = async function withdrawExternally(
 			},
 		},
 		iframeBlocker: false,
-		mode: custom(createOfflineTransport({ acknowledgeNoRecords: true })),
+		mode: transportMode(createOfflineTransport({ acknowledgeNoRecords: true })),
 		reloadOnConsentRevoked: options.reloadOnConsentRevoked,
 		scripts: [
 			{ callbackOnly: true, category: 'measurement', id: 'tracker', onLoad },
@@ -208,7 +208,7 @@ test('all framework preference setters delegate without opening c15t UI, and err
 			subscribe: () => () => {},
 		},
 		iframeBlocker: false,
-		mode: custom({ identify, init }),
+		mode: transportMode({ identify, init }),
 	});
 	runtime.start();
 	runtime.kernel.set.activeUI('dialog');
@@ -244,7 +244,7 @@ test('disabled runtimes ignore external denials and load optional scripts', asyn
 		consentSource: source,
 		enabled: false,
 		iframeBlocker: false,
-		mode: custom(createOfflineTransport({ acknowledgeNoRecords: true })),
+		mode: transportMode(createOfflineTransport({ acknowledgeNoRecords: true })),
 		scripts: [
 			{
 				callbackOnly: true,

@@ -19,11 +19,11 @@ const SOURCE_DIR = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 // A script names a vendor that nothing declares, which warns in development.
 const ENTRY = `
-import { offline } from './index';
 import { createConsentRuntime } from './runtime/index';
 
 createConsentRuntime({
-	mode: offline(),
+	// A transport that answers nothing: the warning comes from the scripts.
+	mode: Object.assign(() => ({}), { kind: 'hosted' }),
 	scripts: [
 		{
 			category: 'functionality',

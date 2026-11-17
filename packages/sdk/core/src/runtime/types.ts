@@ -7,7 +7,7 @@
  * lifecycle handle. Framework packages extend {@link ConsentRuntimeOptions}
  * with their own UI-only fields rather than restating the shared ones.
  */
-import type { PolicyRule, Vendor } from '@c15t/schema/types';
+import type { Vendor } from '@c15t/schema/types';
 import type { I18nConfig } from '@c15t/translations';
 
 import type { AllConsentNames } from '../consent/consent-types';
@@ -53,6 +53,7 @@ import type { Callbacks } from '../options/callbacks';
 import type { IABConfig } from '../options/iab';
 import type { User } from '../options/user';
 import type { ProviderTransportFactory } from '../transports/mode';
+import type { ConsentTesting } from '../transports/without-network';
 import type {
 	ConsentKernel,
 	ConsentSnapshot,
@@ -342,6 +343,14 @@ export interface ConsentRuntimeModules {
 	 */
 	mountIAB?: (options: RuntimeIABMountOptions) => () => void;
 	/**
+	 * Builds the transport factory for the options' `backendURL`. Pass
+	 * `hosted()`'s builder from `@c15t/core/transports`
+	 * (`defaultRuntimeModules` does). A host that builds its own transport
+	 * for `backendURL` passes that instead, or passes `mode` and leaves this
+	 * out.
+	 */
+	hostedMode?: (backendURL: string) => ProviderTransportFactory;
+	/**
 	 * Lets the provider runtime accept a `prefetch` that is still a promise.
 	 * Pass `streamPrefetch` from `@c15t/core/runtime`. Without it a pending
 	 * prefetch is ignored (with a warning outside production) and the runtime
@@ -392,14 +401,28 @@ export interface ConsentRuntimeOptions {
 	 */
 	enabled?: boolean;
 	/**
-	 * Transport factory the runtime builds its kernel with. Required.
-	 *
-	 * Pass `hosted()` to talk to a c15t backend, `local()` to resolve
-	 * policies locally with no network, or `custom()` to supply your own
-	 * kernel transport or v2 endpoint handlers. This is an initial-only
-	 * option: create a new runtime to change it.
+	 * Backend URL, relative (`/api/c15t`) or absolute. Setting it is how a
+	 * runtime talks to the hosted backend: each init asks `${backendURL}/init`
+	 * and saves go to `${backendURL}/subjects`. Initial-only.
 	 */
-	mode: ProviderTransportFactory;
+	backendURL?: string;
+	/**
+	 * Resolve the policy from the backend's consent manifest instead of
+	 * asking `/init`: pass `manifest()` from
+	 * `@c15t/core/transports/manifest-browser`. Omit it to use the hosted
+	 * backend at `backendURL`. Initial-only.
+	 */
+	mode?: ProviderTransportFactory;
+	/**
+	 * Replace the backend in a test. Pass `withoutNetwork()` from
+	 * `@c15t/core/testing`, which resolves the recommended policy pack in
+	 * the browser and throws in production builds. Wins over `backendURL`
+	 * and `mode`. Initial-only.
+	 *
+	 * To keep consent out of the way in an app's own tests instead, set
+	 * `enabled: false`.
+	 */
+	testing?: ConsentTesting;
 	/** Cookie/localStorage naming and lifetime for stored consent. */
 	storageConfig?: StorageConfig;
 	/**
@@ -516,8 +539,6 @@ export interface ConsentRuntimeOptions {
 	 * only through {@link ConsentRuntime.reconcileStorage}.
 	 */
 	persistence?: boolean | RuntimePersistenceOptions;
-	/** Ordered policy rules evaluated by local transports. */
-	policyRules?: PolicyRule[];
 	/** Locale and message overrides merged over the bundled translations. */
 	i18n?: Partial<I18nConfig>;
 	/** Categories to offer alongside discovered integration categories, within policy scope. */
@@ -572,10 +593,9 @@ export interface ConsentProviderRuntimeOptions extends Omit<
 /**
  * The option set {@link ConsentProviderRuntime.update} takes: the whole
  * current options, the way a component re-renders with all of its props.
- * `mode` may be left out; it is read once.
+ * `backendURL`, `mode` and `testing` are read once.
  */
-export type ConsentRuntimeUpdate = Omit<ConsentProviderRuntimeOptions, 'mode'> &
-	Partial<Pick<ConsentProviderRuntimeOptions, 'mode'>>;
+export type ConsentRuntimeUpdate = ConsentProviderRuntimeOptions;
 
 /**
  * A started or startable consent runtime.
@@ -707,7 +727,7 @@ export interface ConsentRuntime {
 	 * ```ts
 	 * const runtime = createConsentRuntime({
 	 *   iframeBlocker: { disableAutomaticBlocking: true },
-	 *   mode: local(),
+	 *   testing: withoutNetwork(),
 	 * });
 	 * runtime.start();
 	 * container.append(embed);

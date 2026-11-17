@@ -7,8 +7,8 @@ import {
 	optInRule,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import type { InternalKernel } from '../../kernel/internals';
-import { custom } from '../../transports/mode';
 import type { InitResponse } from '../../types';
 import { createConsentRuntime } from '../index';
 import type { ConsentRuntime, ConsentRuntimeOptions } from '../types';
@@ -42,7 +42,7 @@ const createRuntime = (options: Partial<ConsentRuntimeOptions> = {}) => {
 	const runtime = createConsentRuntime({
 		clearOnRevocation: config,
 		consentCategories: ['measurement'],
-		mode: custom({
+		mode: transportMode({
 			init: () =>
 				Promise.resolve({
 					policyResolution: writePolicyResolutionWire(resolution),
@@ -126,7 +126,7 @@ test('waits for hosted policy resolution instead of sweeping the provisional fal
 	seed();
 	const pending = Promise.withResolvers<InitResponse>();
 	const runtime = createRuntime({
-		mode: custom({ init: () => pending.promise }),
+		mode: transportMode({ init: () => pending.promise }),
 		prefetch: undefined,
 	});
 	const applied = Promise.withResolvers<undefined>();
