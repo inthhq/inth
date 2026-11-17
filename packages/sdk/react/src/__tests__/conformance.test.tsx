@@ -36,9 +36,11 @@ import { ConsentDialog } from '~/components/panel';
 import { ConsentWidget } from '~/components/preferences';
 import { KernelContext } from '~/context';
 import { IABProvider, IABConsentBanner, IABConsentDialog } from '~/iab';
-import { ConsentBanner, ConsentProvider, custom, offline } from '~/index';
+import { ConsentBanner, ConsentProvider } from '~/index';
 import type { ConsentProviderOptions } from '~/index';
 
+import { withoutNetwork } from '../testing';
+import { transportMode } from './fixtures/transport-mode';
 import { createPolicySession, probePolicyContract } from './policy-driver';
 import { policyFixture } from './policy-fixture';
 
@@ -222,7 +224,6 @@ const buildProviderOptions = (opts: MountOptions): ConsentProviderOptions => {
 	return {
 		...provided,
 		disableAnimation: true,
-		mode: offline({ acknowledgeNoRecords: true }),
 		persistence: opts.persistence ?? false,
 		prefetch: {
 			...prepared,
@@ -244,6 +245,7 @@ const buildProviderOptions = (opts: MountOptions): ConsentProviderOptions => {
 			initialPrivacySignals: { gpc: opts.gpc },
 			initialTranslations: resolveTranslations(provided, opts.locale),
 		},
+		testing: withoutNetwork(),
 		trapFocus: provided.trapFocus ?? false,
 	};
 };
@@ -448,7 +450,9 @@ const driver: TestDriver = {
 		const lifecycle = lifecycleTransportFor(opts);
 		const options = buildProviderOptions(opts);
 		if (lifecycle.transport) {
-			options.mode = custom(lifecycle.transport);
+			options.mode = transportMode(lifecycle.transport);
+			// The lifecycle transport replaces the testing one.
+			options.testing = undefined;
 		}
 		let mountedKernel: ConsentKernel | null = null;
 		let resolveSettled: () => void = () => {};

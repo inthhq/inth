@@ -5,11 +5,11 @@ import { render } from 'vitest-browser-react';
 
 import {
 	ConsentProvider,
-	offline,
 	useConsent,
 	useEventDispatcher,
 	useSaveConsents,
 } from '../index';
+import { withoutNetwork } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 const posthog: Script = {
@@ -62,10 +62,10 @@ test('useEventDispatcher keeps one dispatcher and pageview history through conse
 			options={{
 				consentCategories: ['measurement'],
 				enabled,
-				mode: offline({ acknowledgeNoRecords: true }),
 				persistence: false,
 				prefetch: policyFixture(),
 				scripts: [posthog],
+				testing: withoutNetwork(),
 			}}
 		>
 			<Page path={path} />

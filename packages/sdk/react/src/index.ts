@@ -2,16 +2,11 @@
  * `@c15t/react` — React adapter for the c15t consent kernel.
  *
  * Pattern:
- *   import {
- *     ConsentProvider,
- *     hosted,
- *     useConsent,
- *     useSaveConsents,
- *   } from '@c15t/react';
+ *   import { ConsentProvider, useConsent, useSaveConsents } from '@c15t/react';
  *
  *   function App({ children }) {
  *     return (
- *       <ConsentProvider options={{ mode: hosted({ backendURL: '/api/c15t' }) }}>
+ *       <ConsentProvider options={{ backendURL: '/api/c15t' }}>
  *         {children}
  *       </ConsentProvider>
  *     );
@@ -58,7 +53,7 @@ export type {
 	SaveResult,
 	Unsubscribe,
 } from '@c15t/core';
-export type { OfflineModeOptions } from './transports/offline';
+export type { ConsentTesting } from '@c15t/core/testing';
 export type {
 	ConsentBannerButton,
 	ConsentBannerLayout,
@@ -129,8 +124,6 @@ export type {
 // Values, one group per file; see `index-parts/core.ts` for why.
 // oxlint-disable oxc/no-barrel-file -- The package entry; star exports keep unused groups out of esbuild's first chunk.
 export * from './index-parts/core';
-export * from './index-parts/hosted';
-export * from './index-parts/offline';
 export * from './index-parts/presets';
 export * from './index-parts/consent-dialog';
 export * from './index-parts/consent-banner';

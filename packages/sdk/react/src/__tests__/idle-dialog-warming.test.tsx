@@ -11,14 +11,14 @@ import { ConsentDialogLink } from '~/components/panel-link';
 import { ConsentBanner } from '~/components/prompt';
 import { ConsentProvider } from '~/provider';
 import type { ConsentProviderOptions } from '~/provider';
-import { offline } from '~/transports/offline';
 
+import { withoutNetwork } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 const fresh = {
-	mode: offline({ acknowledgeNoRecords: true }),
 	persistence: false,
 	prefetch: policyFixture(),
+	testing: withoutNetwork(),
 } satisfies ConsentProviderOptions;
 const saved = {
 	...fresh,

@@ -17,8 +17,8 @@ import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/compone
 import type { ComponentFixtureOptions as ConsentProviderOptions } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { mockGVL } from '~/components/iab/__tests__/fixtures/mock-consent-state';
-import { offline } from '~/transports/offline';
 
+import { withoutNetwork } from '../../../testing';
 import { IABConsentDialog } from '../iab-panel';
 
 const FALLBACK_TEXT =
@@ -28,7 +28,6 @@ const CONTROLS =
 
 const optionsFor = (gvl: GlobalVendorList): ConsentProviderOptions => ({
 	iab: { cmpId: 160, cmpVersion: 1, gvl },
-	mode: offline({ acknowledgeNoRecords: true }),
 	prefetch: policyFixture(undefined, {
 		categories: undefined,
 		id: 'iab_features_test',
@@ -36,6 +35,7 @@ const optionsFor = (gvl: GlobalVendorList): ConsentProviderOptions => ({
 		prompt: 'choice',
 		scopeMode: 'strict',
 	}),
+	testing: withoutNetwork(),
 });
 
 const renderDialog = async (options = optionsFor(mockGVL)) => {

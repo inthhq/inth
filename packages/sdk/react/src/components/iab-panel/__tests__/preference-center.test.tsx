@@ -10,8 +10,8 @@ import { render } from 'vitest-browser-react';
 import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
 import type { ComponentFixtureOptions as ConsentProviderOptions } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
-import { offline } from '~/transports/offline';
 
+import { withoutNetwork } from '../../../testing';
 import { IABConsentDialog } from '../iab-panel';
 
 // Mock localStorage
@@ -212,7 +212,6 @@ const defaultIABOptions: ConsentProviderOptions = {
 		cmpVersion: 1,
 		gvl: mockGVL,
 	},
-	mode: offline({ acknowledgeNoRecords: true }),
 	prefetch: policyFixture(undefined, {
 		categories: undefined,
 		id: 'iab_test',
@@ -220,6 +219,7 @@ const defaultIABOptions: ConsentProviderOptions = {
 		prompt: 'choice',
 		scopeMode: 'strict',
 	}),
+	testing: withoutNetwork(),
 };
 
 describe('IAB Consent Dialog Unit Tests', () => {

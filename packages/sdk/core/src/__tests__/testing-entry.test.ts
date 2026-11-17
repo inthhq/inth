@@ -69,6 +69,25 @@ describe('withoutNetwork()', () => {
 		).toBe('iab');
 	});
 
+	test('resolves an EEA country to IAB TCF with iab, even when the runtime cannot tell', async () => {
+		const transport = withoutNetwork({ iab: true }).transport({
+			prefetch: {},
+			translations: { language: 'en', translations: {} as never },
+		});
+
+		const response = await transport.init?.({
+			overrides: { country: 'DE' },
+		} as never);
+
+		expect(
+			(
+				response?.policyResolution as
+					| { policy?: { model?: string } }
+					| undefined
+			)?.policy?.model
+		).toBe('iab');
+	});
+
 	test('throws when the transport is built in a production build', () => {
 		vi.stubEnv('NODE_ENV', 'production');
 

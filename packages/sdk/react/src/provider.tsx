@@ -54,6 +54,7 @@ import type {
 	EarlyInitMode,
 	ResolveStreamedInit,
 } from '@c15t/core/runtime/provider';
+import type { ConsentTesting } from '@c15t/core/testing';
 import { createHostedTransport } from '@c15t/core/transports';
 import { applyThemeSlots } from '@c15t/ui/utils';
 import type { ReactNode } from 'react';
@@ -87,6 +88,7 @@ import type { UseIframeBlockerOptions } from './module-hooks/iframe-blocker';
 import { UNCOMMITTED_HOLD_MS } from './module-hooks/network-hold';
 import { V3ThemeProvider } from './theme-provider';
 import { provideHostedTransport } from './transports/hosted-slot';
+import { selectedMode } from './transports/select-mode';
 import type { ReactUIOptions } from './types/manager';
 import type { ReactComponentSlots } from './types/slots';
 import type { V3UIConfigValue } from './ui-config-context';
@@ -179,25 +181,46 @@ export interface ConsentProviderOptions
 	 */
 	styles?: boolean;
 	/**
-	 * Transport factory the provider builds its kernel with. Required.
-	 *
-	 * Pass `hosted()` to talk to a c15t backend, `local()` to resolve
-	 * policies locally with no network, or `custom()` to supply your own
-	 * kernel transport. This is an initial-only
-	 * option: remount the provider to change it.
+	 * Backend URL, relative (`/api/c15t`) or absolute. Setting it is how the
+	 * provider talks to the hosted backend. Initial-only: remount the
+	 * provider to change it.
 	 *
 	 * @example
 	 * ```tsx
-	 * import { ConsentProvider, hosted, local } from '@c15t/react';
-	 *
-	 * <ConsentProvider options={{ mode: hosted({ backendURL: '/api/c15t' }) }}>
+	 * <ConsentProvider options={{ backendURL: '/api/c15t' }}>
 	 *   {children}
 	 * </ConsentProvider>
-	 *
-	 * <ConsentProvider options={{ mode: local() }}>{children}</ConsentProvider>
 	 * ```
 	 */
-	mode: ProviderTransportFactory;
+	backendURL?: string;
+	/**
+	 * Resolve the policy from the backend's consent manifest instead of
+	 * asking `/init`: pass `manifest()` from `c15t/react`. Omit it to use the
+	 * hosted backend at `backendURL`. Initial-only.
+	 */
+	mode?: ProviderTransportFactory;
+	/**
+	 * Replace the backend in a test: pass `withoutNetwork()` from
+	 * `@c15t/react/testing`. It resolves the recommended policy pack in the
+	 * browser, sends nothing, and throws in production builds. Wins over
+	 * `backendURL` and `mode`. Initial-only.
+	 *
+	 * To keep consent out of the way in an app's own tests instead, set
+	 * `enabled: false`: it grants every category, shows no UI and sends
+	 * nothing.
+	 *
+	 * @example
+	 * ```tsx
+	 * import { withoutNetwork } from '@c15t/react/testing';
+	 *
+	 * <ConsentProvider
+	 *   options={{ overrides: { country: 'DE' }, testing: withoutNetwork() }}
+	 * >
+	 *   {children}
+	 * </ConsentProvider>
+	 * ```
+	 */
+	testing?: ConsentTesting;
 	/**
 	 * Where the visitor's choice is stored. Read once, like `persistence`:
 	 * the stored records and the data clearing that protects them stay at
@@ -234,7 +257,7 @@ export interface ConsentProviderOptions
 	 * // app/layout.tsx — stays synchronous, so the shell prerenders.
 	 * const config = resolveConsent({ backendURL });
 	 * return (
-	 *   <ConsentProvider options={{ mode: hosted({ backendURL }), prefetch: config }}>
+	 *   <ConsentProvider options={{ backendURL, prefetch: config }}>
 	 *     {children}
 	 *   </ConsentProvider>
 	 * );
@@ -344,7 +367,8 @@ export interface ConsentProviderOptions
 /**
  * Options accepted when an external runtime supplies the kernel.
  *
- * `mode` belongs to whoever created the runtime, so it is optional here.
+ * `backendURL`, `mode` and `testing` belong to whoever created the
+ * runtime; the provider ignores them.
  * Everything the component tree still owns — theme, slots, legal links —
  * is unchanged.
  */
@@ -553,10 +577,13 @@ const withTreeIAB = function withTreeIAB(
 const toRuntimeOptions = function toRuntimeOptions(
 	options: ConsentProviderOptions
 ): ConsentProviderRuntimeOptions {
+	const mode = selectedMode(options);
 	return {
 		...options,
-		mode: withTreeIAB(options.mode),
+		mode: mode && withTreeIAB(mode),
 		pkg: options.__debugPkg ?? '@c15t/react',
+		// `mode` is the transport `testing` selected.
+		testing: undefined,
 	};
 };
 
@@ -621,7 +648,11 @@ const earlySend = function earlySend(
 	) {
 		return undefined;
 	}
-	const hostedMode = readHostedMode(options.mode);
+	const mode = selectedMode(options);
+	if (!mode) {
+		return undefined;
+	}
+	const hostedMode = readHostedMode(mode);
 	if (hostedMode) {
 		return {
 			source: {
@@ -630,7 +661,7 @@ const earlySend = function earlySend(
 			storedChoice: hasStoredChoice(options),
 		};
 	}
-	const earlyMode = earlyInitModes.get(options.mode);
+	const earlyMode = earlyInitModes.get(mode);
 	// A registered mode sends only when its first `init()` would ask the
 	// backend, and not for a returning visitor: their stored choice keeps
 	// the banner hidden, so nothing waits on it.
@@ -977,7 +1008,7 @@ const isPromiseLike = function isPromiseLike(
  * ```tsx
  * import { createConsentRuntime } from '@c15t/core/runtime';
  *
- * const runtime = createConsentRuntime({ mode: hosted({ backendURL: '/api/c15t' }) });
+ * const runtime = createConsentRuntime({ backendURL: '/api/c15t' });
  * runtime.start();
  *
  * <ConsentProvider runtime={runtime} options={{ theme }}>

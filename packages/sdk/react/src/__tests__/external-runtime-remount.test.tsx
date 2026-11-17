@@ -3,14 +3,14 @@ import { createRoot } from 'react-dom/client';
 import { expect, test, vi } from 'vitest';
 
 import { ConsentProvider } from '../provider';
-import { offline } from '../transports/offline';
+import { withoutNetwork } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 test('retains an external-runtime child and its draft after the IAB bridge loads', async () => {
 	const runtime = createConsentRuntime({
-		mode: offline({ acknowledgeNoRecords: true }),
 		persistence: false,
 		prefetch: policyFixture(),
+		testing: withoutNetwork(),
 	});
 	const container = document.createElement('div');
 	document.body.append(container);

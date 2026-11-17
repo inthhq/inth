@@ -92,8 +92,19 @@ export type ManifestMode = { type: 'manifest' } & ManifestModeOptions;
  * between the server and the browser. `withoutNetwork()` from a package's
  * `/testing` entry builds it.
  */
-export interface WithoutNetworkTestingData {
+export interface WithoutNetworkTestingData extends WithoutNetworkOptions {
 	type: 'without-network';
+}
+
+/** Options for `withoutNetwork()`. */
+export interface WithoutNetworkOptions {
+	/**
+	 * Resolve the IAB TCF variant of the recommended pack, so Europe gets
+	 * the IAB banner. Set it where the runtime cannot tell that IAB is on,
+	 * such as a React tree that renders `IABProvider`. Defaults to whether
+	 * the provider configures `iab`.
+	 */
+	iab?: boolean;
 }
 
 /** Every consent mode, as data. */

@@ -10,8 +10,9 @@ import type { PolicyRule } from '@c15t/schema/types';
 import { StrictMode, act } from 'react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
-import { ConsentBanner, ConsentProvider, custom } from '../index';
+import { ConsentBanner, ConsentProvider } from '../index';
 import type { ConsentProviderOptions } from '../index';
+import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 import {
 	BANNER,
@@ -62,7 +63,7 @@ const Page = ({
 		<body>
 			<ConsentProvider
 				options={{
-					mode: custom({ init: transportInit, save: transportSave }),
+					mode: transportMode({ init: transportInit, save: transportSave }),
 					persistence: false,
 					prefetch,
 					...options,

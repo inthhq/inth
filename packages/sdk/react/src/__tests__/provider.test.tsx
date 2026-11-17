@@ -7,9 +7,10 @@ import { render } from 'vitest-browser-react';
 
 import { ConsentBanner } from '../components/prompt';
 import { KernelContext } from '../context';
-import { custom, offline } from '../index';
 import { ConsentProvider } from '../provider';
+import { withoutNetwork } from '../testing';
 import { useUIConfig } from '../ui-config-context';
+import { offlineMode, transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 
 let kernel: ConsentKernel;
@@ -28,17 +29,14 @@ test('offline rules resolve after mount and expose canonical state', async () =>
 	const screen = await render(
 		<ConsentProvider
 			options={{
-				mode: offline({
-					acknowledgeNoRecords: true,
-					policyRules: [
-						{
-							id: 'local',
-							match: { fallback: true },
-							model: 'opt-in',
-							prompt: 'choice',
-						},
-					],
-				}),
+				mode: offlineMode([
+					{
+						id: 'local',
+						match: { fallback: true },
+						model: 'opt-in',
+						prompt: 'choice',
+					},
+				]),
 				persistence: false,
 			}}
 		>
@@ -59,8 +57,8 @@ test('offline mode without rules resolves the recommended pack: strict opt-in fo
 	await render(
 		<ConsentProvider
 			options={{
-				mode: offline({ acknowledgeNoRecords: true }),
 				persistence: false,
+				testing: withoutNetwork(),
 			}}
 		>
 			<Capture />
@@ -77,8 +75,8 @@ test('exposes only the window.c15t debug object, not the kernel', async () => {
 	const screen = await render(
 		<ConsentProvider
 			options={{
-				mode: offline({ acknowledgeNoRecords: true }),
 				persistence: false,
+				testing: withoutNetwork(),
 			}}
 		>
 			<ConsentBanner />
@@ -100,7 +98,9 @@ test('failed initialization keeps the first layer hidden and reports the error',
 		<ConsentProvider
 			options={{
 				callbacks: { onError },
-				mode: custom({ init: () => Promise.reject(new Error('offline')) }),
+				mode: transportMode({
+					init: () => Promise.reject(new Error('offline')),
+				}),
 				persistence: false,
 			}}
 		>
@@ -127,7 +127,7 @@ test('keeps the kernel across rerenders and synchronizes identity and geographic
 			),
 		})
 	);
-	const mode = custom({ init });
+	const mode = transportMode({ init });
 	const screen = await render(
 		<ConsentProvider
 			options={{
@@ -175,7 +175,7 @@ test('a prefetch still marked pending is not adopted: the provider asks /init', 
 	await render(
 		<ConsentProvider
 			options={{
-				mode: custom({ init }),
+				mode: transportMode({ init }),
 				persistence: false,
 				prefetch: { ...policyFixture(), initialPolicyPending: true },
 			}}
@@ -190,19 +190,12 @@ test('a prefetch still marked pending is not adopted: the provider asks /init', 
 });
 
 test('an offline IAB policy resolves: IAB renders in the tree, so the transport does not reject it', async () => {
-	const iabPolicy = {
-		categories: ['measurement' as const, 'marketing' as const],
-		id: 'iab',
-		match: { fallback: true },
-		model: 'iab' as const,
-		prompt: 'choice' as const,
-		scopeMode: 'permissive' as const,
-	};
 	await render(
 		<ConsentProvider
 			options={{
-				mode: offline({ acknowledgeNoRecords: true, policyRules: [iabPolicy] }),
+				overrides: { country: 'DE' },
 				persistence: false,
+				testing: withoutNetwork({ iab: true }),
 			}}
 		>
 			<Capture />
@@ -218,9 +211,9 @@ test('disposes the kernel on unmount', async () => {
 	const screen = await render(
 		<ConsentProvider
 			options={{
-				mode: offline({ acknowledgeNoRecords: true }),
 				persistence: false,
 				prefetch: policyFixture(),
+				testing: withoutNetwork(),
 			}}
 		>
 			<Capture />
@@ -238,7 +231,7 @@ test('disabled mode loads scripts without initializing or recording choice', asy
 		<ConsentProvider
 			options={{
 				enabled: false,
-				mode: custom({ init }),
+				mode: transportMode({ init }),
 				persistence: false,
 				scripts: [
 					{
@@ -270,7 +263,7 @@ test.each([false, true])(
 		const initialize = vi.fn();
 		const consent = vi.fn();
 		window.addEventListener('c15t-test-vendor-executed', executed);
-		const mode = custom({ init: vi.fn() });
+		const mode = transportMode({ init: vi.fn() });
 		const prefetch = policyFixture({ marketing: true });
 		const provider = () => (
 			<ConsentProvider
@@ -315,7 +308,7 @@ test('toggling disabled mode grants scripts and restores the existing choice', a
 	const onBeforeLoad = vi.fn();
 	const init = vi.fn();
 	const options = {
-		mode: custom({ init }),
+		mode: transportMode({ init }),
 		persistence: false as const,
 		prefetch: policyFixture({ marketing: false }),
 		scripts: [
@@ -361,7 +354,7 @@ test('late initialization cannot revoke disabled permissions', async () => {
 				resolveInit = resolve;
 			})
 	);
-	const mode = custom({ init });
+	const mode = transportMode({ init });
 	const provider = (enabled: boolean) => (
 		<ConsentProvider options={{ enabled, mode, persistence: false }}>
 			<Capture />
@@ -384,9 +377,9 @@ test('prepared receipts remain authoritative when persistence is disabled', asyn
 	await render(
 		<ConsentProvider
 			options={{
-				mode: offline({ acknowledgeNoRecords: true }),
 				persistence: false,
 				prefetch: policyFixture({ marketing: true }),
+				testing: withoutNetwork(),
 			}}
 		>
 			<Capture />
@@ -406,7 +399,7 @@ test('separates explicit actions from effective permission changes', async () =>
 		<ConsentProvider
 			options={{
 				callbacks: { onChoiceRecorded, onPermissionsChanged },
-				mode: custom({ save }),
+				mode: transportMode({ save }),
 				persistence: false,
 				prefetch: policyFixture(),
 			}}
@@ -431,7 +424,7 @@ test('onSurfaceShown fires for a prefetched banner without init and for an opene
 		<ConsentProvider
 			options={{
 				callbacks: { onSurfaceShown },
-				mode: custom({ init }),
+				mode: transportMode({ init }),
 				persistence: false,
 				prefetch: policyFixture(),
 			}}
@@ -470,7 +463,7 @@ test('onSurfaceShown fires once init resolves the policy', async () => {
 		<ConsentProvider
 			options={{
 				callbacks: { onSurfaceShown },
-				mode: custom({ init }),
+				mode: transportMode({ init }),
 				persistence: false,
 			}}
 		>
@@ -488,16 +481,16 @@ test('onSurfaceShown fires once init resolves the policy', async () => {
 test('uses current callback props without replacing the kernel', async () => {
 	const first = vi.fn();
 	const second = vi.fn();
-	const mode = offline({ acknowledgeNoRecords: true });
+	const testing = withoutNetwork();
 	const prefetch = policyFixture();
 	const screen = await render(
 		<ConsentProvider
 			options={{
 				callbacks: { onChoiceRecorded: first },
 				consentCategories: ['marketing'],
-				mode,
 				persistence: false,
 				prefetch,
+				testing,
 			}}
 		>
 			<Capture />
@@ -508,9 +501,9 @@ test('uses current callback props without replacing the kernel', async () => {
 			options={{
 				callbacks: { onChoiceRecorded: second },
 				consentCategories: ['marketing'],
-				mode,
 				persistence: false,
 				prefetch,
+				testing,
 			}}
 		>
 			<Capture />
@@ -530,10 +523,10 @@ test('passes host presentation through UI context', async () => {
 	const screen = await render(
 		<ConsentProvider
 			options={{
-				mode: offline({ acknowledgeNoRecords: true }),
 				persistence: false,
 				prefetch: policyFixture(),
 				presentation: { prompt: { direction: 'column' } },
+				testing: withoutNetwork(),
 			}}
 		>
 			<Probe />
@@ -552,9 +545,9 @@ test('merges selected i18n messages with English defaults', async () => {
 					locale: 'en',
 					messages: { en: { cookieBanner: { title: 'Your privacy' } } },
 				},
-				mode: offline({ acknowledgeNoRecords: true }),
 				persistence: false,
 				prefetch: policyFixture(),
+				testing: withoutNetwork(),
 			}}
 		>
 			<Capture />
@@ -587,7 +580,7 @@ test('an app i18n override survives hosted init translations for the same langua
 		<ConsentProvider
 			options={{
 				i18n: { messages: { en: { cookieBanner: { title: 'App title' } } } },
-				mode: custom({ init }),
+				mode: transportMode({ init }),
 				persistence: false,
 			}}
 		>
@@ -611,9 +604,9 @@ test('StrictMode remount keeps persistence subscriptions active', async () => {
 		<StrictMode>
 			<ConsentProvider
 				options={{
-					mode: offline({ acknowledgeNoRecords: true }),
 					prefetch: policyFixture(),
 					storageConfig: { storageKey: key },
+					testing: withoutNetwork(),
 				}}
 			>
 				<Capture />
@@ -660,7 +653,7 @@ test.each(['header', 'browser'] as const)(
 					<ConsentProvider
 						options={{
 							callbacks: { onChoiceRecorded },
-							mode: custom({ init, save }),
+							mode: transportMode({ init, save }),
 							prefetch: prepared,
 							storageConfig: { storageKey: key },
 						}}
@@ -702,7 +695,9 @@ test('an empty provider can prerender without reading the clock', async () => {
 	try {
 		expect(
 			renderToString(
-				<ConsentProvider options={{ mode: custom({}), persistence: false }}>
+				<ConsentProvider
+					options={{ mode: transportMode({}), persistence: false }}
+				>
 					<span>Static shell</span>
 					<ConsentBanner />
 				</ConsentProvider>
@@ -728,7 +723,6 @@ test('clears configured storage on revocation after stopping scripts', async () 
 					marketing: { localStorage: ['cleanup:ready'] },
 					measurement: { localStorage: ['analytics:visitor'] },
 				},
-				mode: offline({ acknowledgeNoRecords: true }),
 				persistence: false,
 				prefetch: policyFixture({ measurement: true }),
 				scripts: [
@@ -740,6 +734,7 @@ test('clears configured storage on revocation after stopping scripts', async () 
 						onConsentChange,
 					},
 				],
+				testing: withoutNetwork(),
 			}}
 		>
 			<Capture />
@@ -770,8 +765,8 @@ test('disabled providers leave configured browser data alone', async () => {
 					measurement: { localStorage: ['analytics:visitor'] },
 				},
 				enabled: false,
-				mode: offline({ acknowledgeNoRecords: true }),
 				persistence: false,
+				testing: withoutNetwork(),
 			}}
 		>
 			<Capture />
@@ -786,7 +781,7 @@ test('storage is read once: a new storage key warns and records stay where they 
 	const firstKey = 'cleanup-first';
 	const nextKey = 'cleanup-next';
 	const prefetch = policyFixture({ measurement: true });
-	const mode = offline({ acknowledgeNoRecords: true });
+	const testing = withoutNetwork();
 	const clearOnRevocation = {
 		measurement: { localStorage: ['cleanup-*'] },
 	};
@@ -796,9 +791,9 @@ test('storage is read once: a new storage key warns and records stay where they 
 			options={{
 				clearOnRevocation,
 				consentCategories: ['measurement'],
-				mode,
 				persistence: { skipHydration: true, storageConfig: { storageKey } },
 				prefetch,
+				testing,
 			}}
 		>
 			<Capture />
@@ -842,7 +837,6 @@ test('starts cleanup when an initially disabled provider with scripts is enabled
 			marketing: { localStorage: ['cleanup:ready'] },
 			measurement: { localStorage: ['analytics:visitor'] },
 		},
-		mode: offline({ acknowledgeNoRecords: true }),
 		persistence: false as const,
 		prefetch: policyFixture({ measurement: true }),
 		scripts: [
@@ -853,6 +847,7 @@ test('starts cleanup when an initially disabled provider with scripts is enabled
 				onBeforeLoad,
 			},
 		],
+		testing: withoutNetwork(),
 	};
 	const provider = (enabled: boolean) => (
 		<ConsentProvider options={{ ...options, enabled }}>

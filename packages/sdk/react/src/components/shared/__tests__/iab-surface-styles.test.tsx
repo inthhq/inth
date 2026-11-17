@@ -8,13 +8,13 @@ import { policyFixture } from '~/__tests__/policy-fixture';
 import { IABConsentDialog } from '~/components/iab-panel';
 import { IABConsentBanner } from '~/components/iab-prompt';
 import { mockGVL } from '~/components/iab/__tests__/fixtures/mock-consent-state';
-import { offline } from '~/transports/offline';
+
+import { withoutNetwork } from '../../../testing';
 
 const fixture = (
 	options: Partial<ComponentFixtureOptions> = {}
 ): ComponentFixtureOptions => ({
 	iab: { cmpId: 160, gvl: mockGVL },
-	mode: offline({ acknowledgeNoRecords: true }),
 	nonce: 'iab-style-nonce',
 	prefetch: {
 		...policyFixture(undefined, {
@@ -24,6 +24,7 @@ const fixture = (
 		}),
 		initialIab: { cmpId: 160, enabled: true, gvl: mockGVL },
 	},
+	testing: withoutNetwork(),
 	...options,
 });
 

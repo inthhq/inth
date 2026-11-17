@@ -1,5 +1,4 @@
 import type { ConsentKernel, ConsentState } from '@c15t/core';
-import { custom } from '@c15t/core';
 import { useContext, useEffect, StrictMode } from 'react';
 import { expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
@@ -8,6 +7,7 @@ import { KernelContext } from '../context';
 import { useHasConsentUI, useSetActiveUI } from '../hooks';
 import { IABProvider, useIAB } from '../iab-context';
 import { ConsentProvider } from '../provider';
+import { transportMode } from './fixtures/transport-mode';
 
 let kernel: ConsentKernel;
 const Controls = () => {
@@ -62,7 +62,7 @@ test('standard React options share external authority, scripts and preferences u
 					callbacks: { onChoiceRecorded: recorded },
 					consentSource: source,
 					iframeBlocker: false,
-					mode: custom({ init }),
+					mode: transportMode({ init }),
 					scripts: [script],
 				}}
 			>
@@ -126,7 +126,7 @@ test('external IAB saves reject instead of waiting for a handle that cannot moun
 					subscribe: () => () => {},
 				},
 				iframeBlocker: false,
-				mode: custom({ init: vi.fn() }),
+				mode: transportMode({ init: vi.fn() }),
 				prefetch: { initialIab: { cmpId: 42, enabled: true } },
 			}}
 		>

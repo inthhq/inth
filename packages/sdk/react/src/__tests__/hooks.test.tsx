@@ -13,7 +13,6 @@ import { render } from 'vitest-browser-react';
 
 import {
 	ConsentProvider,
-	offline,
 	useConsent,
 	useConsents,
 	useExplicitChoice,
@@ -21,6 +20,7 @@ import {
 	useSaveConsents,
 	useSetOverrides,
 } from '../index';
+import { withoutNetwork } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 const withProvider = function withProvider(options = {}) {
@@ -34,9 +34,9 @@ const withProvider = function withProvider(options = {}) {
 					'measurement',
 					'marketing',
 				],
-				mode: offline({ acknowledgeNoRecords: true }),
 				persistence: false,
 				prefetch: policyFixture(),
+				testing: withoutNetwork(),
 				...options,
 			}}
 		>
@@ -390,12 +390,12 @@ describe('v3 react: network blocker lifecycle', () => {
 				<StrictMode>
 					<ConsentProvider
 						options={{
-							mode: offline({ acknowledgeNoRecords: true }),
 							networkBlocker: {
 								logBlockedRequests: false,
 								rules: [{ category: 'marketing', domain: 'example.com' }],
 							},
 							persistence: false,
+							testing: withoutNetwork(),
 						}}
 					>
 						<div>mounted</div>
@@ -427,12 +427,12 @@ describe('v3 react: network blocker lifecycle', () => {
 			const { rerender } = await render(
 				<ConsentProvider
 					options={{
-						mode: offline({ acknowledgeNoRecords: true }),
 						networkBlocker: {
 							logBlockedRequests: false,
 							rules: [{ category: 'marketing', domain: 'first.example.com' }],
 						},
 						persistence: false,
+						testing: withoutNetwork(),
 					}}
 				>
 					<div>mounted</div>
@@ -452,12 +452,12 @@ describe('v3 react: network blocker lifecycle', () => {
 			await rerender(
 				<ConsentProvider
 					options={{
-						mode: offline({ acknowledgeNoRecords: true }),
 						networkBlocker: {
 							logBlockedRequests: false,
 							rules: [{ category: 'marketing', domain: 'second.example.com' }],
 						},
 						persistence: false,
+						testing: withoutNetwork(),
 					}}
 				>
 					<div>mounted</div>
@@ -483,13 +483,13 @@ describe('v3 react: network blocker lifecycle', () => {
 			await render(
 				<ConsentProvider
 					options={{
-						mode: offline({ acknowledgeNoRecords: true }),
 						networkBlocker: {
 							enabled: false,
 							logBlockedRequests: false,
 							rules: [{ category: 'marketing', domain: 'example.com' }],
 						},
 						persistence: false,
+						testing: withoutNetwork(),
 					}}
 				>
 					<div>mounted</div>

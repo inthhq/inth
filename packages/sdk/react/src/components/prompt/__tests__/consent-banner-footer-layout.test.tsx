@@ -12,15 +12,16 @@ import { page } from 'vitest/browser';
 import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentBanner } from '~/components/prompt';
-import { offline } from '~/transports/offline';
+
+import { withoutNetwork } from '../../../testing';
 
 const renderBanner = async function renderBanner() {
 	await render(
 		<ConsentProvider
 			options={{
-				mode: offline({ acknowledgeNoRecords: true }),
 				persistence: false,
 				prefetch: policyFixture(undefined, { id: 'banner-footer-layout' }),
+				testing: withoutNetwork(),
 			}}
 		>
 			<ConsentBanner disableAnimation />

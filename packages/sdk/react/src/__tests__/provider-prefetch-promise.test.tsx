@@ -8,12 +8,14 @@
  * is the runtime's `streamPrefetch` module, tested in core.
  */
 import type { ConsentKernel, KernelConfig } from '@c15t/core';
+import { hosted } from '@c15t/core/transports';
 import { useContext, useEffect } from 'react';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { KernelContext } from '../context';
-import { ConsentProvider, custom, hosted, useSnapshot } from '../index';
+import { ConsentProvider, useSnapshot } from '../index';
+import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 
 const policyConfig = function policyConfig(): KernelConfig {
@@ -120,7 +122,7 @@ describe('ConsentProvider prefetch promise', () => {
 		const { getByTestId } = await render(
 			<ConsentProvider
 				options={{
-					mode: custom({
+					mode: transportMode({
 						init: vi.fn(() => Promise.resolve({})),
 						save: vi.fn(),
 					}),

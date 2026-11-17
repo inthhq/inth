@@ -22,7 +22,8 @@ import { ConsentDialogHeaderTitle } from '~/components/panel/atoms/card';
 import { ConsentWidgetAccordion } from '~/components/preferences/atoms/accordion';
 import { ConsentBannerTitle } from '~/components/prompt/components';
 import * as Switch from '~/components/shared/ui/switch';
-import { offline } from '~/transports/offline';
+
+import { withoutNetwork } from '../../testing';
 
 describe('Theme regressions', () => {
 	test('styles trigger toolbar atoms through component slots and direct overrides', async () => {
@@ -39,7 +40,7 @@ describe('Theme regressions', () => {
 							toolbarItem: { className: 'themed-trigger-item' },
 						},
 					},
-					mode: offline({ acknowledgeNoRecords: true }),
+					testing: withoutNetwork(),
 				}}
 			>
 				<ConsentDialogTriggerToolbar
@@ -190,8 +191,8 @@ describe('Theme regressions', () => {
 		await render(
 			<ConsentProvider
 				options={{
-					mode: offline({ acknowledgeNoRecords: true }),
 					noStyle: true,
+					testing: withoutNetwork(),
 				}}
 			>
 				<ConsentBannerTitle data-testid="nostyle-banner-title">
@@ -272,7 +273,7 @@ describe('Theme regressions', () => {
 							},
 						},
 					},
-					mode: offline({ acknowledgeNoRecords: true }),
+					testing: withoutNetwork(),
 				}}
 			>
 				<AdTechProviderSection
@@ -306,8 +307,8 @@ describe('Theme regressions', () => {
 		await render(
 			<ConsentProvider
 				options={{
-					mode: offline({ acknowledgeNoRecords: true }),
 					noStyle: true,
+					testing: withoutNetwork(),
 				}}
 			>
 				<div data-testid="nostyle-ad-tech-providers">

@@ -15,7 +15,8 @@ import { policyFixture } from '~/__tests__/policy-fixture';
 import { KernelContext, ProviderServicesContext } from '~/context';
 import { useDeclaredVendors, useVendorAllowed } from '~/hooks';
 import { useScriptLoader } from '~/module-hooks/script-loader';
-import { offline } from '~/transports/offline';
+
+import { withoutNetwork } from '../testing';
 
 const META: Vendor = {
 	category: 'marketing',
@@ -60,12 +61,12 @@ describe('provider vendor options', () => {
 				<ConsentProvider
 					options={{
 						consentCategories: ['necessary', 'marketing'],
-						mode: offline({ acknowledgeNoRecords: true }),
 						persistence: false,
 						prefetch: policyFixture(
 							{ marketing: true },
 							{ categories: ['marketing'], id: 'late-vendors' }
 						),
+						testing: withoutNetwork(),
 						vendors,
 					}}
 				>
@@ -97,12 +98,12 @@ describe('provider vendor options', () => {
 				<ConsentProvider
 					options={{
 						consentCategories: ['necessary', 'marketing'],
-						mode: offline({ acknowledgeNoRecords: true }),
 						persistence: false,
 						prefetch: policyFixture(
 							{ marketing: true },
 							{ categories: ['marketing'], id: 'removed-vendors' }
 						),
+						testing: withoutNetwork(),
 						vendors,
 					}}
 				>
@@ -134,7 +135,6 @@ describe('provider vendor options', () => {
 				<ConsentProvider
 					options={{
 						consentCategories: ['necessary', 'marketing'],
-						mode: offline({ acknowledgeNoRecords: true }),
 						persistence: false,
 						prefetch: policyFixture(
 							{ marketing: true },
@@ -148,6 +148,7 @@ describe('provider vendor options', () => {
 								vendor: 'meta-pixel',
 							},
 						],
+						testing: withoutNetwork(),
 						vendors,
 					}}
 				>
@@ -181,13 +182,13 @@ describe('provider vendor options', () => {
 				<ConsentProvider
 					options={{
 						consentCategories: ['necessary', 'marketing'],
-						mode: offline({ acknowledgeNoRecords: true }),
 						persistence: false,
 						prefetch: policyFixture(
 							{ marketing: true },
 							{ categories: ['marketing'], id: 'late-scripts' }
 						),
 						scripts,
+						testing: withoutNetwork(),
 					}}
 				>
 					<button
@@ -233,13 +234,13 @@ describe('provider vendor options', () => {
 				<ConsentProvider
 					options={{
 						consentCategories: ['necessary', 'marketing'],
-						mode: offline({ acknowledgeNoRecords: true }),
 						persistence: false,
 						prefetch: policyFixture(
 							{ marketing: true },
 							{ categories: ['marketing'], id: 'removed-scripts' }
 						),
 						scripts,
+						testing: withoutNetwork(),
 					}}
 				>
 					<button
@@ -277,7 +278,6 @@ describe('provider vendor options', () => {
 				<ConsentProvider
 					options={{
 						consentCategories: ['necessary', 'marketing'],
-						mode: offline({ acknowledgeNoRecords: true }),
 						persistence: false,
 						prefetch: {
 							...fixture,
@@ -294,6 +294,7 @@ describe('provider vendor options', () => {
 								listVersion: '1',
 							},
 						},
+						testing: withoutNetwork(),
 						vendors,
 					}}
 				>
@@ -330,7 +331,6 @@ describe('provider vendor options', () => {
 				<ConsentProvider
 					options={{
 						consentCategories: ['necessary', 'marketing'],
-						mode: offline({ acknowledgeNoRecords: true }),
 						persistence: false,
 						prefetch: {
 							...fixture,
@@ -340,6 +340,7 @@ describe('provider vendor options', () => {
 							},
 						},
 						scripts,
+						testing: withoutNetwork(),
 					}}
 				>
 					<button
@@ -391,7 +392,6 @@ describe('provider vendor options', () => {
 				<ConsentProvider
 					options={{
 						consentCategories: ['necessary', 'marketing'],
-						mode: offline({ acknowledgeNoRecords: true }),
 						persistence: false,
 						prefetch: {
 							...fixture,
@@ -401,6 +401,7 @@ describe('provider vendor options', () => {
 							},
 						},
 						scripts,
+						testing: withoutNetwork(),
 					}}
 				>
 					<button
@@ -447,7 +448,6 @@ describe('provider vendor options', () => {
 				<ConsentProvider
 					options={{
 						consentCategories: ['necessary', 'marketing'],
-						mode: offline({ acknowledgeNoRecords: true }),
 						persistence: false,
 						prefetch: {
 							...fixture,
@@ -464,6 +464,7 @@ describe('provider vendor options', () => {
 							},
 						},
 						scripts,
+						testing: withoutNetwork(),
 						vendors,
 					}}
 				>
@@ -523,9 +524,9 @@ describe('provider vendor options', () => {
 				<ConsentProvider
 					options={{
 						consentCategories: ['necessary', 'marketing'],
-						mode: offline({ acknowledgeNoRecords: true }),
 						persistence: false,
 						prefetch: fixture,
+						testing: withoutNetwork(),
 						vendors,
 					}}
 				>
@@ -574,9 +575,9 @@ describe('provider vendor options', () => {
 				<ConsentProvider
 					options={{
 						consentCategories: ['necessary', 'marketing'],
-						mode: offline({ acknowledgeNoRecords: true }),
 						persistence: false,
 						prefetch: fixture,
+						testing: withoutNetwork(),
 						vendors,
 					}}
 				>
@@ -640,7 +641,6 @@ describe('provider vendor options', () => {
 			<ConsentProvider
 				options={{
 					consentCategories: ['necessary', 'marketing'],
-					mode: offline({ acknowledgeNoRecords: true }),
 					persistence: false,
 					prefetch: {
 						...fixture,
@@ -653,6 +653,7 @@ describe('provider vendor options', () => {
 							},
 						},
 					},
+					testing: withoutNetwork(),
 					vendors: [META],
 				}}
 			>
@@ -708,7 +709,6 @@ describe('provider vendor options', () => {
 				<ConsentProvider
 					options={{
 						consentCategories: ['necessary', 'marketing', 'measurement'],
-						mode: offline({ acknowledgeNoRecords: true }),
 						persistence: false,
 						prefetch: fixture,
 						// The provider names the same slug under marketing, denied.
@@ -720,6 +720,7 @@ describe('provider vendor options', () => {
 								vendor: 'ga',
 							},
 						],
+						testing: withoutNetwork(),
 						vendors,
 					}}
 				>
@@ -764,7 +765,6 @@ describe('provider vendor options', () => {
 				<ConsentProvider
 					options={{
 						consentCategories: ['necessary', 'marketing'],
-						mode: offline({ acknowledgeNoRecords: true }),
 						persistence: false,
 						prefetch: {
 							...fixture,
@@ -777,6 +777,7 @@ describe('provider vendor options', () => {
 								},
 							},
 						},
+						testing: withoutNetwork(),
 						vendors,
 					}}
 				>
@@ -817,9 +818,9 @@ describe('provider vendor options', () => {
 			<ConsentProvider
 				options={{
 					consentCategories: ['necessary', 'marketing'],
-					mode: offline({ acknowledgeNoRecords: true }),
 					persistence: false,
 					prefetch: fixture,
+					testing: withoutNetwork(),
 					vendors: [META],
 				}}
 			>
@@ -848,7 +849,6 @@ describe('provider vendor options', () => {
 			<ConsentProvider
 				options={{
 					consentCategories: ['necessary', 'marketing'],
-					mode: offline({ acknowledgeNoRecords: true }),
 					persistence: false,
 					prefetch: {
 						...fixture,
@@ -861,6 +861,7 @@ describe('provider vendor options', () => {
 							},
 						},
 					},
+					testing: withoutNetwork(),
 					vendors: [{ ...META, disabled: true }],
 				}}
 			>

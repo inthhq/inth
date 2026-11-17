@@ -43,6 +43,7 @@ import type {
 	ConsentProviderProps,
 	OwnedRuntimeProviderProps,
 } from '../provider';
+import { selectedMode } from '../transports/select-mode';
 import { canDeferEngine, rootNeedsEngine } from './boot';
 import type * as ClientEngine from './client-engine';
 import type { DeferredCommitConfig } from './committed';
@@ -174,10 +175,13 @@ const plan = function plan(
 	// Without an inline prefetch in the page, the provider sends that
 	// request itself, so the banner waits for `/init` alone, not for the
 	// engine's chunk and then `/init`.
-	const prefetched = startPrefetchedInit(options.mode, options.overrides, {
-		journey: options.journey,
-		storageKey: storageKeyOf(options),
-	});
+	const mode = selectedMode(options);
+	const prefetched =
+		mode &&
+		startPrefetchedInit(mode, options.overrides, {
+			journey: options.journey,
+			storageKey: storageKeyOf(options),
+		});
 	// Hydrating what the provider rendered on the server, with no prefetch
 	// to read: the stand-in renders the same pending state, and the engine
 	// loads at once.

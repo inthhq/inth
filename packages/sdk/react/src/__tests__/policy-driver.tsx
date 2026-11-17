@@ -14,7 +14,7 @@ import type {
 	ConsentPresentation,
 	InitResponse,
 } from '@c15t/core';
-import { custom, createConsentKernel, evaluateConsent } from '@c15t/core';
+import { createConsentKernel, evaluateConsent } from '@c15t/core';
 import { createNetworkBlocker } from '@c15t/core/modules/network-blocker';
 import {
 	createPersistence,
@@ -56,6 +56,7 @@ import { ConsentBanner } from '../components/prompt';
 import { KernelContext } from '../context';
 import { ConsentProvider } from '../provider';
 import { consentMarkup } from './consent-markup';
+import { transportMode } from './fixtures/transport-mode';
 
 // oxlint-disable-next-line promise/avoid-new -- Browser effects must settle between scenario operations.
 const settle = () =>
@@ -418,7 +419,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 						'marketing',
 					],
 					disableAnimation: true,
-					mode: custom({
+					mode: transportMode({
 						init: () => {
 							requests.push({ kind: 'init', payload: null });
 							return failTransport

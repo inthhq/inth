@@ -15,7 +15,6 @@ import { ConsentBanner } from '../../components/prompt';
 import { STATIC_BANNER_ATTR } from '../../components/prompt/static-banner-shell';
 import { useSnapshot } from '../../hooks';
 import { renderStaticBanner, STATIC_BANNER_SHEETS } from '../../static-banner';
-import { hosted } from '../../transports/hosted';
 import { ConsentProvider } from '../client-provider';
 
 const BACKEND = 'https://consent.test';
@@ -100,9 +99,9 @@ const renderPage = () =>
 	render(
 		<ConsentProvider
 			options={{
+				backendURL: BACKEND,
 				consentCategories: ['necessary', 'measurement', 'marketing'],
 				journey: false,
-				mode: hosted({ backendURL: BACKEND }),
 			}}
 		>
 			<Probe />

@@ -22,13 +22,7 @@ import type {
 	KernelActiveUI,
 	TranslationsResponse,
 } from '@c15t/core';
-import {
-	ConsentDialog,
-	ConsentWidget,
-	ConsentBanner,
-	custom,
-	offline,
-} from '@c15t/react';
+import { ConsentDialog, ConsentWidget, ConsentBanner } from '@c15t/react';
 import type { ConsentProviderOptions } from '@c15t/react';
 import { KernelContext } from '@c15t/react/context';
 import {
@@ -45,6 +39,8 @@ import type { Root } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
 import { describe, expect, test, vi } from 'vitest';
 
+import { withoutNetwork } from '../testing';
+import { transportMode } from './fixtures/transport-mode';
 import type { FrameworkRoot } from './framework-root';
 import type { policyFixture as PolicyFixture } from './policy-fixture';
 
@@ -245,7 +241,6 @@ export const runFrameworkConformance = ({
 			reloadOnConsentRevoked: false,
 			...provided,
 			disableAnimation: true,
-			mode: offline({ acknowledgeNoRecords: true }),
 			persistence: opts.persistence ?? false,
 			prefetch: {
 				...prepared,
@@ -267,6 +262,7 @@ export const runFrameworkConformance = ({
 				initialPrivacySignals: { gpc: opts.gpc },
 				initialTranslations: resolveTranslations(provided, opts.locale),
 			},
+			testing: withoutNetwork(),
 			trapFocus: provided.trapFocus ?? false,
 		};
 	};
@@ -475,7 +471,9 @@ export const runFrameworkConformance = ({
 			const lifecycle = lifecycleTransportFor(opts);
 			const options = buildProviderOptions(opts);
 			if (lifecycle.transport) {
-				options.mode = custom(lifecycle.transport);
+				options.mode = transportMode(lifecycle.transport);
+				// The lifecycle transport replaces the testing one.
+				options.testing = undefined;
 			}
 			let mountedKernel: ConsentKernel | null = null;
 			let resolveSettled: () => void = () => {};

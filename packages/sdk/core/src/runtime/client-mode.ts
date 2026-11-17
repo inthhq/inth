@@ -23,7 +23,11 @@ import { isProductionBuild } from '../libs/is-production';
  * snapshot or any translation.
  */
 import { hasPrefetchedInitialData } from '../libs/prefetch/window-key';
-import type { ConsentMode, WithoutNetworkTestingData } from '../modes';
+import type {
+	ConsentMode,
+	WithoutNetworkOptions,
+	WithoutNetworkTestingData,
+} from '../modes';
 import type { SSRInitialData } from '../options/ssr';
 import type * as HostedModule from '../transports/hosted';
 import { createHostedInitRequest } from '../transports/hosted-init-request';
@@ -339,11 +343,13 @@ export const lazyHosted = function lazyHosted(
  * apps that pass a testing value.
  *
  * @param entry - The testing entry named in the production error.
+ * @param options - `iab` picks the pack's IAB TCF variant.
  * @param load - Loads the transport's module.
  * @returns A provider transport factory reporting `kind: 'offline'`.
  */
 export const lazyWithoutNetwork = function lazyWithoutNetwork(
 	entry: string,
+	options: WithoutNetworkOptions = {},
 	load: LoadWithoutNetworkModule = loadWithoutNetworkModule
 ): ProviderTransportFactory {
 	return Object.assign(
@@ -353,7 +359,7 @@ export const lazyWithoutNetwork = function lazyWithoutNetwork(
 				transportPromise ??= (async () => {
 					try {
 						const { withoutNetworkTransport } = await load();
-						return withoutNetworkTransport(entry)(context);
+						return withoutNetworkTransport(entry, options)(context);
 					} catch (error) {
 						// Let the kernel's retry make a fresh import attempt.
 						transportPromise = undefined;
@@ -550,7 +556,10 @@ export const clientMode = function clientMode(
 			? undefined
 			: trimSlash(options.routePrefix);
 	if (mode?.type === 'without-network') {
-		return lazyWithoutNetwork(testingEntry);
+		return lazyWithoutNetwork(
+			testingEntry,
+			mode.iab === undefined ? {} : { iab: mode.iab }
+		);
 	}
 	// Saves never fall back to `routePrefix`: a consent route only forwards
 	// writes when the caller says so by passing it as `backendURL`.

@@ -5,8 +5,8 @@ import { render } from 'vitest-browser-react';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { useSaveConsents } from '~/hooks';
 import { ConsentProvider } from '~/provider';
-import { offline } from '~/transports/offline';
 
+import { withoutNetwork } from '../../../testing';
 import { ConsentGate } from '../consent-gate';
 
 const settle = () =>
@@ -34,9 +34,9 @@ test('a ConsentGate re-renders only when its own category changes', async () => 
 	const { getByTestId } = await render(
 		<ConsentProvider
 			options={{
-				mode: offline({ acknowledgeNoRecords: true }),
 				persistence: false,
 				prefetch: policyFixture(),
+				testing: withoutNetwork(),
 			}}
 		>
 			<Profiler

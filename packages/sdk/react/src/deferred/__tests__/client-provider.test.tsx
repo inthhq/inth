@@ -12,7 +12,6 @@ import { PREFETCH_WINDOW_KEY } from '../../../../core/src/libs/prefetch/window-k
 import init from '../../../../core/src/runtime/__tests__/fixtures/hosted-init-gb.json' with { type: 'json' };
 import { ConsentBanner } from '../../components/prompt';
 import { useSnapshot } from '../../hooks';
-import { hosted } from '../../transports/hosted';
 import { createConsentProvider } from '../client-provider';
 
 /** Holds the engine's module until a test releases it. */
@@ -117,10 +116,10 @@ const renderPage = (
 	render(
 		<ConsentProvider
 			options={{
+				backendURL: BACKEND,
 				callbacks,
 				consentCategories: [...consentCategories],
 				journey: false,
-				mode: hosted({ backendURL: BACKEND }),
 			}}
 		>
 			<Probe />
@@ -206,9 +205,9 @@ test('a network blocker turned off leaves the engine deferred', async () => {
 	const screen = await render(
 		<ConsentProvider
 			options={{
+				backendURL: BACKEND,
 				consentCategories: [...consentCategories],
 				journey: false,
-				mode: hosted({ backendURL: BACKEND }),
 				networkBlocker: { enabled: false, rules: [] },
 			}}
 		>

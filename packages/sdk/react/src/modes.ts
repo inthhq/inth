@@ -1,15 +1,17 @@
 /**
- * `@c15t/react/modes` — the single-page app modes, defaulting to what the
- * build integration downloaded.
+ * `@c15t/react/modes` — `manifest()` for single-page apps, defaulting to
+ * what the build integration downloaded.
  *
- * `manifest()` and `hosted()` here read `@c15t/core/generated`, which
+ * `manifest()` here reads `@c15t/core/generated`, which
  * `consentManifest()` from `c15t/build` fills with the policy snapshot and
- * the backend URL. `c15t/react` exports these in place of the plain
- * `hosted()` from `@c15t/react`.
+ * the backend URL. `c15t/react` exports it.
  *
  * The package index does not import this module. Server-framework packages
  * re-export the index, and their browser bundles must not import
  * `@c15t/core/generated`: Next.js fails the build when they do.
+ *
+ * A provider that talks to the hosted backend needs no mode: it sets
+ * `backendURL`.
  *
  * @example
  * ```tsx
@@ -18,12 +20,8 @@
  * <ConsentProvider options={{ mode: manifest() }}>{children}</ConsentProvider>;
  * ```
  */
-export { hosted } from './transports/hosted';
-export type { HostedOptions } from './transports/hosted';
 export { manifest } from './transports/manifest';
 export type {
 	BrowserManifestModeFactory,
 	ManifestModeOptions,
 } from './transports/manifest';
-export { local, offline } from './transports/offline';
-export type { OfflineModeOptions } from './transports/offline';

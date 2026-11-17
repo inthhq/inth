@@ -15,12 +15,8 @@ import { Profiler } from 'react';
 import { describe, expect, test } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import {
-	ConsentProvider,
-	offline,
-	useConsent,
-	useSaveConsents,
-} from '../index';
+import { ConsentProvider, useConsent, useSaveConsents } from '../index';
+import { withoutNetwork } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 type Category =
@@ -84,9 +80,9 @@ const runBench = async function runBench(): Promise<Run> {
 	const { getByTestId } = await render(
 		<ConsentProvider
 			options={{
-				mode: offline({ acknowledgeNoRecords: true }),
 				persistence: false,
 				prefetch: policyFixture(),
+				testing: withoutNetwork(),
 			}}
 		>
 			{Array.from({ length: CHILDREN }, (_, i) => (

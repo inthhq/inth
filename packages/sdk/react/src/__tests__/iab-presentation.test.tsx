@@ -1,6 +1,5 @@
 import { MINIMAL_GVL } from '@c15t/conformance';
 import {
-	custom,
 	deferInitGvl,
 	createConsentKernel,
 	resolveIABBannerSummary,
@@ -21,12 +20,13 @@ import { useHeadlessIABConsentUI as usePublicHeadlessIABConsentUI } from '../hoo
 import { IABProvider, useIAB } from '../iab-context';
 import { ComponentFixtureProvider } from './component-fixture-provider';
 import type { ComponentFixtureOptions } from './component-fixture-provider';
+import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 
 const options = (blocking: boolean): ComponentFixtureOptions => ({
 	disableAnimation: true,
 	iab: { cmpId: 123, gvl: MINIMAL_GVL as unknown as GlobalVendorList },
-	mode: custom({}),
+	mode: transportMode({}),
 	persistence: false,
 	prefetch: policyFixture({}, { model: 'iab' }),
 	presentation: { preferences: { blocking }, prompt: { blocking } },
@@ -312,7 +312,7 @@ it.each(['banner', 'dialog'] as const)(
 				options={{
 					...options(false),
 					initialUI: surface,
-					mode: custom({ save }),
+					mode: transportMode({ save }),
 				}}
 			>
 				<Probe />
@@ -367,7 +367,7 @@ it.each(
 				options={{
 					...options(false),
 					initialUI: surface,
-					mode: custom({ save }),
+					mode: transportMode({ save }),
 				}}
 			>
 				<Probe />
@@ -424,7 +424,7 @@ it.each(['acceptAll', 'rejectAll', 'savePreferences'] as const)(
 				options={{
 					...options(false),
 					initialUI: 'dialog',
-					mode: custom({ save }),
+					mode: transportMode({ save }),
 				}}
 			>
 				<Probe />

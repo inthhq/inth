@@ -384,14 +384,18 @@ describe('lazyWithoutNetwork()', () => {
 				>['withoutNetworkTransport'],
 			})
 		);
-		const transport = lazyWithoutNetwork('@c15t/nextjs/testing', load)(context);
+		const transport = lazyWithoutNetwork(
+			'@c15t/nextjs/testing',
+			{},
+			load
+		)(context);
 
 		expect(load).not.toHaveBeenCalled();
 		await transport.init?.(initContext());
 		await transport.init?.(initContext());
 
 		expect(load).toHaveBeenCalledTimes(1);
-		expect(build).toHaveBeenCalledWith('@c15t/nextjs/testing');
+		expect(build).toHaveBeenCalledWith('@c15t/nextjs/testing', {});
 		expect(transportInit).toHaveBeenCalledTimes(2);
 	});
 

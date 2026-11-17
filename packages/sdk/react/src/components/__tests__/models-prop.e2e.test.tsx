@@ -21,7 +21,8 @@ import {
 } from '~/components/iab/__tests__/e2e-setup';
 import { ConsentDialog } from '~/components/panel';
 import { ConsentBanner } from '~/components/prompt';
-import { offline } from '~/transports/offline';
+
+import { withoutNetwork } from '../../testing';
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -52,7 +53,6 @@ const optInOptions: ConsentProviderOptions = {
 		'marketing',
 		'measurement',
 	],
-	mode: offline({ acknowledgeNoRecords: true }),
 	prefetch: policyFixture(undefined, {
 		categories: [
 			'necessary',
@@ -66,6 +66,7 @@ const optInOptions: ConsentProviderOptions = {
 		prompt: 'choice',
 		scopeMode: 'permissive',
 	}),
+	testing: withoutNetwork(),
 };
 
 describe('models Prop E2E Tests', () => {

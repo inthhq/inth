@@ -6,7 +6,8 @@ import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { KernelContext } from '../context';
-import { ConsentProvider, offline, useConsent } from '../index';
+import { ConsentProvider, useConsent } from '../index';
+import { withoutNetwork } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 const createRuntime = function createRuntime(
@@ -20,9 +21,9 @@ const createRuntime = function createRuntime(
 			'measurement',
 			'marketing',
 		],
-		mode: offline({ acknowledgeNoRecords: true }),
 		pkg: '@c15t/react-external-test',
 		prefetch: policyFixture({ measurement: false }),
+		testing: withoutNetwork(),
 	});
 };
 
@@ -198,9 +199,7 @@ describe('ConsentProvider with an external runtime', () => {
 	test('still owns the kernel when no runtime is passed', async () => {
 		const seen = vi.fn();
 		const { unmount } = await render(
-			<ConsentProvider
-				options={{ mode: offline({ acknowledgeNoRecords: true }) }}
-			>
+			<ConsentProvider options={{ testing: withoutNetwork() }}>
 				<KernelProbe onKernel={seen} />
 			</ConsentProvider>
 		);

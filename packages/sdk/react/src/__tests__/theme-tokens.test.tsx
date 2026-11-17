@@ -8,7 +8,8 @@
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { ConsentProvider, ConsentTheme, offline } from '../index';
+import { ConsentProvider, ConsentTheme } from '../index';
+import { withoutNetwork } from '../testing';
 
 // Raw source text, inlined by Vite so the scan works in browser-mode vitest.
 const rawSources = import.meta.glob(
@@ -41,8 +42,8 @@ describe('ConsentProvider theme tokens', () => {
 		const { unmount } = await render(
 			<ConsentProvider
 				options={{
-					mode: offline({ acknowledgeNoRecords: true }),
 					persistence: false,
+					testing: withoutNetwork(),
 				}}
 			>
 				<div data-testid="themed-child" />
@@ -59,7 +60,6 @@ describe('ConsentProvider theme tokens', () => {
 				<ConsentProvider
 					options={{
 						enabled: false,
-						mode: offline({ acknowledgeNoRecords: true }),
 						nonce: 'csp-nonce',
 						persistence: false,
 						scripts: [
@@ -69,6 +69,7 @@ describe('ConsentProvider theme tokens', () => {
 								src: 'https://example.com/nonce.js',
 							},
 						],
+						testing: withoutNetwork(),
 					}}
 				>
 					<div />
@@ -93,8 +94,8 @@ describe('ConsentProvider theme tokens', () => {
 				<ConsentTheme theme={theme} />
 				<ConsentProvider
 					options={{
-						mode: offline({ acknowledgeNoRecords: true }),
 						persistence: false,
+						testing: withoutNetwork(),
 						theme,
 					}}
 				>
@@ -118,8 +119,8 @@ describe('ConsentProvider theme tokens', () => {
 			const { unmount } = await render(
 				<ConsentProvider
 					options={{
-						mode: offline({ acknowledgeNoRecords: true }),
 						persistence: false,
+						testing: withoutNetwork(),
 						theme: { colors: { surface: 'rgb(1, 2, 3)' } },
 					}}
 				>

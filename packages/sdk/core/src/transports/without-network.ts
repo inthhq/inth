@@ -15,7 +15,10 @@ import {
 	writePolicyResolutionWire,
 } from '@c15t/schema/types';
 
-import type { WithoutNetworkTestingData } from '../modes';
+import type {
+	WithoutNetworkOptions,
+	WithoutNetworkTestingData,
+} from '../modes';
 import type { InitContext, KernelTransport } from '../types';
 import type { ProviderTransportFactory } from './mode';
 import { createOfflineTranslationSelector } from './offline';
@@ -64,20 +67,24 @@ export const assertNotProduction = function assertNotProduction(
  *
  * Each init resolves the recommended policy pack for the location in the
  * kernel's overrides (`overrides.country`, `overrides.region`), with IAB
- * TCF when the provider configures it. Saves are not sent anywhere: the
+ * TCF when the provider configures it or `options.iab` is set. Saves are not sent anywhere: the
  * provider's persistence stores them in the browser.
  *
  * @param entry - The testing entry named in the production error.
+ * @param options - `iab` picks the pack's IAB TCF variant.
  * @returns A provider transport factory reporting `kind: 'offline'`.
  * @internal
  */
 export const withoutNetworkTransport = function withoutNetworkTransport(
-	entry: string
+	entry: string,
+	options: WithoutNetworkOptions = {}
 ): ProviderTransportFactory {
 	return Object.assign(
 		(context: Parameters<ProviderTransportFactory>[0]): KernelTransport => {
 			assertNotProduction(entry);
-			const rules = recommendedPolicyRules({ iab: context.iabEnabled });
+			const rules = recommendedPolicyRules({
+				iab: options.iab ?? context.iabEnabled,
+			});
 			// Read at each init: a pending prefetch fills `context.prefetch`
 			// after this transport is built.
 			const selectTranslations = createOfflineTranslationSelector(
@@ -114,14 +121,17 @@ export const withoutNetworkTransport = function withoutNetworkTransport(
  * Builds the `withoutNetwork()` a testing entry exports.
  *
  * @param entry - The testing entry, named in the production error.
+ * @param options - `iab` picks the pack's IAB TCF variant.
  * @returns The value for the provider's `testing` option.
  * @internal
  */
 export const createWithoutNetwork = function createWithoutNetwork(
-	entry: string
+	entry: string,
+	options: WithoutNetworkOptions = {}
 ): ConsentTesting {
 	return {
-		transport: withoutNetworkTransport(entry),
+		...options,
+		transport: withoutNetworkTransport(entry, options),
 		type: 'without-network',
 	};
 };

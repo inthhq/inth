@@ -5,8 +5,8 @@ import { render } from 'vitest-browser-react';
 import { ComponentFixtureProvider } from '~/__tests__/component-fixture-provider';
 import { KernelContext } from '~/context';
 import { publishDevToolsLauncher } from '~/devtools-launcher';
-import { offline } from '~/transports/offline';
 
+import { withoutNetwork } from '../../../testing';
 import { ConsentDialogTrigger } from '../index';
 
 // This file never imports `~/devtools`, so nothing registers the toolbar
@@ -30,9 +30,7 @@ const PublishLauncher = () => {
 describe('ConsentDialogTrigger toolbar loading', () => {
 	test('keeps the single button until a launcher is published', async () => {
 		await render(
-			<ComponentFixtureProvider
-				options={{ mode: offline({ acknowledgeNoRecords: true }) }}
-			>
+			<ComponentFixtureProvider options={{ testing: withoutNetwork() }}>
 				<ConsentDialogTrigger showWhen="always" />
 			</ComponentFixtureProvider>
 		);
@@ -46,9 +44,7 @@ describe('ConsentDialogTrigger toolbar loading', () => {
 
 	test('loads the toolbar when a launcher appears without the DevTools adapter', async () => {
 		await render(
-			<ComponentFixtureProvider
-				options={{ mode: offline({ acknowledgeNoRecords: true }) }}
-			>
+			<ComponentFixtureProvider options={{ testing: withoutNetwork() }}>
 				<PublishLauncher />
 				<ConsentDialogTrigger showWhen="always" />
 			</ComponentFixtureProvider>

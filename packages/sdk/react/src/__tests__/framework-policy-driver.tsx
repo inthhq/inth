@@ -15,7 +15,7 @@ import type {
 	ConsentPresentation,
 	InitResponse,
 } from '@c15t/core';
-import { custom, createConsentKernel, evaluateConsent } from '@c15t/core';
+import { createConsentKernel, evaluateConsent } from '@c15t/core';
 import { createNetworkBlocker } from '@c15t/core/modules/network-blocker';
 import {
 	createPersistence,
@@ -57,6 +57,7 @@ import { gpcFromHeaders } from '../../../core/src/transports/decision-inputs';
 import { createIAB } from '../../../iab/src/index';
 import type { IABHandle } from '../../../iab/src/index';
 import { gtag } from '../../../integrations/src/vendors/analytics/google-tag';
+import { transportMode } from './fixtures/transport-mode';
 import type { FrameworkRoot } from './framework-root';
 
 // Theme styles load after mount; compare the consent markup and track hydration warnings separately.
@@ -465,7 +466,7 @@ export const createFrameworkPolicyDriver = ({
 							'marketing',
 						],
 						disableAnimation: true,
-						mode: custom({
+						mode: transportMode({
 							init: () => {
 								requests.push({ kind: 'init', payload: null });
 								return failTransport

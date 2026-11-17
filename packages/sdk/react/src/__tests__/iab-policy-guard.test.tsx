@@ -10,7 +10,7 @@
  */
 import { MINIMAL_GVL } from '@c15t/conformance';
 import type { GlobalVendorList } from '@c15t/core';
-import { custom, deferInitGvl, IAB_UNAVAILABLE_ERROR_CODE } from '@c15t/core';
+import { deferInitGvl, IAB_UNAVAILABLE_ERROR_CODE } from '@c15t/core';
 import { writePolicyResolutionWire } from '@c15t/schema/types';
 import { Component } from 'react';
 import type { ReactNode } from 'react';
@@ -21,8 +21,9 @@ import { render } from 'vitest-browser-react';
 import { ConsentDialog } from '../components/panel';
 import { ConsentBanner } from '../components/prompt';
 import { missingIABProviderError } from '../hooks/use-iab-policy-guard';
-import { offline } from '../index';
 import { ConsentProvider } from '../provider';
+import { withoutNetwork } from '../testing';
+import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 
 const GVL = MINIMAL_GVL as unknown as GlobalVendorList;
@@ -92,7 +93,7 @@ describe('an `iab` policy without <IABProvider>', () => {
 			vi.spyOn(console, 'error').mockImplementation(() => undefined);
 			const { errors } = await mount(
 				{
-					mode: custom({}),
+					mode: transportMode({}),
 					prefetch: {
 						...iabPolicy(),
 						initialIab: { cmpId: 28, enabled: true, gvl: GVL },
@@ -113,7 +114,7 @@ describe('an `iab` policy without <IABProvider>', () => {
 			renderToString(
 				<ConsentProvider
 					options={{
-						mode: custom({}),
+						mode: transportMode({}),
 						persistence: false,
 						prefetch: {
 							...iabPolicy(),
@@ -133,7 +134,7 @@ describe('an `iab` policy without <IABProvider>', () => {
 			vi.spyOn(console, 'error').mockImplementation(() => undefined);
 			const init = initWith(gvl);
 			const { errors } = await mount({
-				mode: custom({ init }),
+				mode: transportMode({ init }),
 				prefetch: { ...iabPolicy(), initialPolicyPending: true },
 			});
 
@@ -149,7 +150,7 @@ describe('an `iab` policy without <IABProvider>', () => {
 	it('shows the standard banner when the backend turns IAB off with `gvl: null`', async () => {
 		const init = initWith('null');
 		const { errors } = await mount({
-			mode: custom({ init }),
+			mode: transportMode({ init }),
 			prefetch: { ...iabPolicy(), initialPolicyPending: true },
 		});
 
@@ -163,19 +164,8 @@ describe('an `iab` policy without <IABProvider>', () => {
 
 	it('shows the standard banner for an offline `iab` rule, which has no vendor list', async () => {
 		const { errors } = await mount({
-			mode: offline({
-				acknowledgeNoRecords: true,
-				policyRules: [
-					{
-						categories: ['marketing'],
-						id: 'offline-iab',
-						match: { fallback: true },
-						model: 'iab',
-						prompt: 'choice',
-						scopeMode: 'permissive',
-					},
-				],
-			}),
+			overrides: { country: 'DE' },
+			testing: withoutNetwork({ iab: true }),
 		});
 
 		await vi.waitFor(() => {
@@ -188,7 +178,7 @@ describe('an `iab` policy without <IABProvider>', () => {
 
 	it('shows the standard banner for a policy that is not IAB', async () => {
 		const { errors } = await mount({
-			mode: custom({}),
+			mode: transportMode({}),
 			prefetch: {
 				...policyFixture(),
 				initialIab: { cmpId: 28, enabled: true, gvl: GVL },

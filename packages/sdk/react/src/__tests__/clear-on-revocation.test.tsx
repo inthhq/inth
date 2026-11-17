@@ -1,4 +1,3 @@
-import { policyRulePresets } from '@c15t/schema/types';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
@@ -7,18 +6,16 @@ import {
 	ConsentDialog,
 	ConsentDialogLink,
 	ConsentProvider,
-	offline,
 	useConsent,
 } from '../index';
+import { withoutNetwork } from '../testing';
 
 const consentKey = 'cleanup-browser-consent';
 const exactKey = 'cleanup-browser-id';
 const prefixKeys = ['cleanup-browser-event-1', 'cleanup-browser-event-2'];
 const unrelatedKey = 'application-setting';
-const mode = offline({
-	acknowledgeNoRecords: true,
-	policyRules: [policyRulePresets.europeOptIn()],
-});
+// An unknown location resolves the recommended pack's Europe opt-in rule.
+const testing = withoutNetwork();
 
 const writeIntegrationData = () => {
 	for (const key of [exactKey, ...prefixKeys, unrelatedKey]) {
@@ -67,7 +64,6 @@ const App = ({ onLoad }: { onLoad: () => void }) => (
 					sessionStorage: [exactKey, 'cleanup-browser-event-*'],
 				},
 			},
-			mode,
 			scripts: [
 				{
 					callbackOnly: true,
@@ -77,6 +73,7 @@ const App = ({ onLoad }: { onLoad: () => void }) => (
 				},
 			],
 			storageConfig: { storageKey: consentKey },
+			testing,
 		}}
 	>
 		<Permission />

@@ -15,7 +15,7 @@ import { ExternalIABProvider } from '../external-iab-context';
 import { useIAB } from '../iab-context';
 import type { ReactIABState } from '../iab-context';
 import { ConsentProvider } from '../provider';
-import { offline } from '../transports/offline';
+import { withoutNetwork } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 const Probe = ({ onReady }: { onReady: (iab: ReactIABState) => void }) => {
@@ -57,12 +57,12 @@ const fixture = () => {
 	const runtime = createConsentRuntime({
 		createIAB: () => handle,
 		iab: { cmpId: 42 },
-		mode: offline({ acknowledgeNoRecords: true }),
 		persistence: false,
 		prefetch: {
 			...policyFixture({}, { model: 'iab' }),
 			initialIab: { cmpId: 42, enabled: true },
 		},
+		testing: withoutNetwork(),
 	});
 	return { handle, runtime };
 };

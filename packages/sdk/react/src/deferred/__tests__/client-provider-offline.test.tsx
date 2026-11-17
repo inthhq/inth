@@ -8,10 +8,10 @@ import { policyRulePresets } from '@c15t/schema/types';
 import { afterEach, expect, test } from 'vitest';
 import { render } from 'vitest-browser-react';
 
+import { offlineMode } from '../../__tests__/fixtures/transport-mode';
 import { policyFixture } from '../../__tests__/policy-fixture';
 import { ConsentDialog } from '../../aggregate-components';
 import { ConsentDialogTrigger } from '../../components/panel-trigger';
-import { offline } from '../../transports/offline';
 import { createConsentProvider } from '../client-provider';
 
 const ConsentProvider = createConsentProvider();
@@ -26,7 +26,7 @@ const renderTrigger = (prefetch?: ReturnType<typeof policyFixture>) =>
 	render(
 		<ConsentProvider
 			options={{
-				mode: offline({ acknowledgeNoRecords: true, policyRules: [rule] }),
+				mode: offlineMode([rule]),
 				prefetch,
 			}}
 		>

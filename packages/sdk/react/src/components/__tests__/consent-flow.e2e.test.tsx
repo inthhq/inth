@@ -20,7 +20,8 @@ import { ConsentDialog } from '~/components/panel';
 import { ConsentDialogTrigger } from '~/components/panel-trigger';
 import { ConsentWidget } from '~/components/preferences';
 import { ConsentBanner } from '~/components/prompt';
-import { offline } from '~/transports/offline';
+
+import { withoutNetwork } from '../../testing';
 
 const getDefined = <Value,>(
 	value: Value,
@@ -61,7 +62,6 @@ const defaultOptions: ConsentProviderOptions = {
 		'marketing',
 		'measurement',
 	],
-	mode: offline({ acknowledgeNoRecords: true }),
 	prefetch: policyFixture(undefined, {
 		categories: [
 			'necessary',
@@ -77,6 +77,7 @@ const defaultOptions: ConsentProviderOptions = {
 	}),
 	// These tests seed or read records under the default key.
 	storageConfig: DEFAULT_KEY_STORAGE,
+	testing: withoutNetwork(),
 };
 
 const storedAcceptAllConsent = () => ({

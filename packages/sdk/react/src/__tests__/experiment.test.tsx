@@ -1,10 +1,7 @@
-import {
-	createOfflineTransport,
-	custom,
-	EXPERIMENT_STORAGE_KEY,
-} from '@c15t/core';
+import { EXPERIMENT_STORAGE_KEY } from '@c15t/core';
 import type { ExperimentArmTheme, SavePayload } from '@c15t/core';
 import { createConsentRuntime } from '@c15t/core/runtime';
+import { createOfflineTransport } from '@c15t/core/transports';
 import { resolvePolicyRules } from '@c15t/schema/types';
 import type { Theme } from '@c15t/ui/theme';
 import { createRoot } from 'react-dom/client';
@@ -21,6 +18,7 @@ import {
 } from '../hooks';
 import { ConsentProvider } from '../provider';
 import type { ConsentProviderOptions } from '../provider';
+import { transportMode } from './fixtures/transport-mode';
 
 const resolution = resolvePolicyRules({
 	countryCode: null,
@@ -363,7 +361,7 @@ test('an arm theme reaches useResolvedTheme() and a ConsentTheme rendered from i
 const mountDraftWithLateArm = function mountDraftWithLateArm() {
 	const runtime = createConsentRuntime({
 		consentCategories: ['marketing', 'measurement'],
-		mode: custom({ save: vi.fn().mockResolvedValue({ ok: true }) }),
+		mode: transportMode({ save: vi.fn().mockResolvedValue({ ok: true }) }),
 		prefetch: { initialPolicyResolution: resolution },
 	});
 	const container = document.createElement('div');

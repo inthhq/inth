@@ -5,8 +5,8 @@ import { expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { KernelContext } from '../context';
-import { custom } from '../index';
 import { ConsentProvider } from '../provider';
+import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 
 const reload = vi.hoisted(() => vi.fn());
@@ -38,7 +38,7 @@ const grantThenRevoke = async (reloadOnConsentRevoked?: boolean) => {
 		<ConsentProvider
 			options={{
 				callbacks: { onBeforeConsentRevocationReload },
-				mode: custom({ save: () => Promise.resolve({ ok: true }) }),
+				mode: transportMode({ save: () => Promise.resolve({ ok: true }) }),
 				persistence: false,
 				prefetch: policyFixture(),
 				reloadOnConsentRevoked,

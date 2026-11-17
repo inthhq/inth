@@ -1,5 +1,4 @@
 import { MINIMAL_GVL } from '@c15t/conformance';
-import { custom } from '@c15t/core';
 import type { GlobalVendorList } from '@c15t/schema/types';
 import { createRef } from 'react';
 import { hydrateRoot } from 'react-dom/client';
@@ -9,6 +8,7 @@ import { render } from 'vitest-browser-react';
 
 import { ComponentFixtureProvider } from './component-fixture-provider';
 import type { ComponentFixtureOptions } from './component-fixture-provider';
+import { transportMode } from './fixtures/transport-mode';
 import { moduleRequested } from './module-requests';
 import { policyFixture } from './policy-fixture';
 
@@ -22,7 +22,7 @@ const iabOptions = (
 	extra: Partial<ComponentFixtureOptions> = {}
 ): ComponentFixtureOptions => ({
 	iab: { cmpId: 123, gvl: MINIMAL_GVL as unknown as GlobalVendorList },
-	mode: custom({}),
+	mode: transportMode({}),
 	persistence: false,
 	prefetch: policyFixture({}, { model: 'iab' }),
 	...extra,

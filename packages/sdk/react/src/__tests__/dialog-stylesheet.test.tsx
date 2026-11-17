@@ -12,7 +12,7 @@ import { expect, test, vi } from 'vitest';
 
 import { ConsentDialog } from '../aggregate-components';
 import { ConsentProvider } from '../provider';
-import { offline } from '../transports/offline';
+import { withoutNetwork } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 interface CardStyle {
@@ -60,9 +60,9 @@ test('the lazy dialog renders styled from its first frame', async () => {
 		root.render(
 			<ConsentProvider
 				options={{
-					mode: offline({ acknowledgeNoRecords: true }),
 					persistence: false,
 					prefetch: policyFixture(),
+					testing: withoutNetwork(),
 				}}
 			>
 				<ConsentDialog

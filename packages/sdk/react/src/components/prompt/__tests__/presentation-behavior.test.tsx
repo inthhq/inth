@@ -7,7 +7,8 @@ import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/compone
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentDialog } from '~/components/panel';
 import { ConsentBanner } from '~/components/prompt';
-import { offline } from '~/transports/offline';
+
+import { withoutNetwork } from '../../../testing';
 
 const mount = (
 	presentation: ConsentPresentation,
@@ -17,10 +18,10 @@ const mount = (
 	render(
 		<ConsentProvider
 			options={{
-				mode: offline({ acknowledgeNoRecords: true }),
 				persistence: false,
 				prefetch: policyFixture(),
 				presentation,
+				testing: withoutNetwork(),
 			}}
 		>
 			<button type="button">Page action</button>

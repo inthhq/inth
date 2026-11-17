@@ -7,7 +7,6 @@
  * The write code is held back for the whole file, so it holds one test:
  * the page loads the code once.
  */
-import { policyRulePresets } from '@c15t/schema/types';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
@@ -17,9 +16,9 @@ import {
 	ConsentDialog,
 	ConsentDialogLink,
 	ConsentProvider,
-	offline,
 	useConsent,
 } from '../index';
+import { withoutNetwork } from '../testing';
 
 // Hold back the write code's chunk, as a slow network would, so the
 // remount happens before it loads.
@@ -34,10 +33,8 @@ pageWriterLoader.load = async () => {
 };
 
 const consentKey = 'remount-revocation-consent';
-const mode = offline({
-	acknowledgeNoRecords: true,
-	policyRules: [policyRulePresets.europeOptIn()],
-});
+// An unknown location resolves the recommended pack's Europe opt-in rule.
+const testing = withoutNetwork();
 
 const Permission = () => {
 	const allowed = useConsent('measurement');
@@ -50,7 +47,6 @@ const App = ({ onLoad }: { onLoad: () => void }) => (
 			clearOnRevocation: {
 				measurement: { cookies: [consentKey], localStorage: [consentKey] },
 			},
-			mode,
 			scripts: [
 				{
 					callbackOnly: true,
@@ -60,6 +56,7 @@ const App = ({ onLoad }: { onLoad: () => void }) => (
 				},
 			],
 			storageConfig: { storageKey: consentKey },
+			testing,
 		}}
 	>
 		<Permission />

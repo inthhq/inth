@@ -11,7 +11,6 @@ import { render } from 'vitest-browser-react';
 import { PREFETCH_WINDOW_KEY } from '../../../../core/src/libs/prefetch/window-key';
 import init from '../../../../core/src/runtime/__tests__/fixtures/hosted-init-gb.json' with { type: 'json' };
 import { ConsentBanner } from '../../components/prompt';
-import { hosted } from '../../transports/hosted';
 import { createConsentProvider } from '../client-provider';
 
 let releaseEngine: () => void = () => undefined;
@@ -56,9 +55,9 @@ test('sends /init itself and shows the banner before the engine; the engine reus
 	const screen = await render(
 		<ConsentProvider
 			options={{
+				backendURL: 'https://consent.test',
 				consentCategories: ['necessary', 'measurement', 'marketing'],
 				journey: false,
-				mode: hosted({ backendURL: 'https://consent.test' }),
 			}}
 		>
 			<ConsentBanner />

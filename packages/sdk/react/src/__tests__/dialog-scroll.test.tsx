@@ -13,7 +13,7 @@ import { page } from 'vitest/browser';
 
 import { ConsentDialog } from '../aggregate-components';
 import { ConsentProvider } from '../provider';
-import { offline } from '../transports/offline';
+import { withoutNetwork } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 const VENDORS: Vendor[] = Array.from({ length: 8 }, (_, index) => ({
@@ -51,7 +51,6 @@ test.each([
 		<ConsentProvider
 			options={{
 				consentCategories: ['necessary', 'measurement', 'marketing'],
-				mode: offline({ acknowledgeNoRecords: true }),
 				persistence: false,
 				prefetch: policyFixture(
 					{ marketing: true },
@@ -62,6 +61,7 @@ test.each([
 						prompt: 'choice',
 					}
 				),
+				testing: withoutNetwork(),
 				vendors: VENDORS,
 			}}
 		>

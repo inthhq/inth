@@ -7,7 +7,8 @@ import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/compone
 import type { ConsentStateFixture } from '~/__tests__/consent-state-fixture';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentWidget } from '~/components/preferences';
-import { offline } from '~/transports/offline';
+
+import { withoutNetwork } from '../../../testing';
 
 type ConsentManagerState = ConsentStateFixture;
 
@@ -77,7 +78,6 @@ const PolicyTestProvider = ({
 		options={{
 			components: providerOverrides?.components,
 			initialUI: 'dialog',
-			mode: offline({ acknowledgeNoRecords: true }),
 			persistence: false,
 			prefetch: {
 				...policyFixture(undefined, {
@@ -97,6 +97,7 @@ const PolicyTestProvider = ({
 				preferences: state.policyDialog,
 				prompt: state.policyBanner,
 			},
+			testing: withoutNetwork(),
 			theme: providerOverrides?.theme,
 		}}
 	>

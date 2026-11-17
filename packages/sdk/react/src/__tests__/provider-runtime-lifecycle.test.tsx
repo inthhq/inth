@@ -13,9 +13,9 @@ import { StrictMode, Suspense } from 'react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { custom } from '../index';
 import { UNCOMMITTED_HOLD_MS } from '../module-hooks/network-hold';
 import { ConsentProvider } from '../provider';
+import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 
 const TRACKER = 'https://tracker.example/collect';
@@ -52,7 +52,7 @@ const countingMode = () => {
 			),
 		})
 	);
-	return { init, mode: custom({ init }) };
+	return { init, mode: transportMode({ init }) };
 };
 
 test('StrictMode starts one runtime: one /init, one hold, nothing left holding', async () => {

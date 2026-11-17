@@ -13,9 +13,10 @@ import {
 } from '~/components/panel-trigger';
 import { ConsentWidget } from '~/components/preferences';
 import { ConsentBanner } from '~/components/prompt';
-import { custom } from '~/index';
 import { ConsentProvider } from '~/provider';
-import { offline } from '~/transports/offline';
+
+import { transportMode } from '../../__tests__/fixtures/transport-mode';
+import { withoutNetwork } from '../../testing';
 
 /**
  * Without a resolved policy rule there is nothing to consent to, so no
@@ -78,9 +79,9 @@ describe('consent surfaces without a resolved policy', () => {
 			<ComponentFixtureProvider
 				options={{
 					initialUI: 'dialog',
-					mode: offline({ acknowledgeNoRecords: true }),
 					persistence: false,
 					prefetch: { initialPolicyResolution: UNCONFIGURED, now: Date.now() },
+					testing: withoutNetwork(),
 				}}
 			>
 				<Surfaces />
@@ -111,7 +112,7 @@ describe('consent surfaces without a resolved policy', () => {
 		render(
 			<ConsentProvider
 				options={{
-					mode: custom({ init: () => pending }),
+					mode: transportMode({ init: () => pending }),
 					persistence: false,
 				}}
 			>
@@ -142,9 +143,9 @@ describe('consent surfaces without a resolved policy', () => {
 			<ComponentFixtureProvider
 				options={{
 					initialUI: 'dialog',
-					mode: offline({ acknowledgeNoRecords: true }),
 					persistence: false,
 					prefetch: { initialPolicyResolution: UNCONFIGURED, now: Date.now() },
+					testing: withoutNetwork(),
 				}}
 			>
 				<ConsentDialog />

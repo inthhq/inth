@@ -10,8 +10,8 @@ import { render } from 'vitest-browser-react';
 import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
 import type { ComponentFixtureOptions as ConsentProviderOptions } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
-import { offline } from '~/transports/offline';
 
+import { withoutNetwork } from '../../../testing';
 import { IABConsentBanner } from '../iab-prompt';
 
 // Mock localStorage
@@ -117,7 +117,6 @@ const defaultIABOptions: ConsentProviderOptions = {
 		cmpVersion: 1,
 		gvl: mockGVL,
 	},
-	mode: offline({ acknowledgeNoRecords: true }),
 	prefetch: policyFixture(undefined, {
 		categories: undefined,
 		id: 'iab_test',
@@ -125,6 +124,7 @@ const defaultIABOptions: ConsentProviderOptions = {
 		prompt: 'choice',
 		scopeMode: 'strict',
 	}),
+	testing: withoutNetwork(),
 };
 
 describe('IAB Consent Banner Unit Tests', () => {
@@ -373,7 +373,6 @@ describe('IAB Consent Banner Unit Tests', () => {
 			// but no `IABProvider` effect has run, so there is no handle yet.
 			const options: ConsentProviderOptions = {
 				iab: { cmpId: 160, cmpVersion: 1 },
-				mode: offline({ acknowledgeNoRecords: true }),
 				prefetch: {
 					...defaultIABOptions.prefetch,
 					initialIab: {
@@ -382,6 +381,7 @@ describe('IAB Consent Banner Unit Tests', () => {
 						gvl: mockGVL as never,
 					},
 				},
+				testing: withoutNetwork(),
 			};
 
 			const html = renderToString(

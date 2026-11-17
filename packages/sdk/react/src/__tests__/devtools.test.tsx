@@ -18,14 +18,14 @@ import {
 	DevTools,
 } from '../devtools';
 import { ConsentProvider } from '../provider';
-import { offline } from '../transports/offline';
+import { withoutNetwork } from '../testing';
 
 const Provider = ({ children }: { children: ReactNode }) => (
 	<ConsentProvider
 		options={{
 			enabled: false,
-			mode: offline({ acknowledgeNoRecords: true }),
 			persistence: false,
+			testing: withoutNetwork(),
 		}}
 	>
 		{children}
@@ -63,11 +63,11 @@ describe('v3 React DevTools adapter', () => {
 							'necessary',
 							measurement ? 'measurement' : 'marketing',
 						],
-						mode: offline({ acknowledgeNoRecords: true }),
 						presentation: measurement
 							? { preferences: { primaryActions: ['accept'] } }
 							: undefined,
 						storageConfig: { storageKey },
+						testing: withoutNetwork(),
 					}}
 				>
 					{embedded ? (
@@ -184,9 +184,9 @@ describe('v3 React DevTools adapter', () => {
 				<ConsentProvider
 					options={{
 						consentCategories: ['measurement', 'marketing'],
-						mode: offline({ acknowledgeNoRecords: true }),
 						presentation: { preferences: { primaryActions: ['accept'] } },
 						storageConfig: { storageKey },
+						testing: withoutNetwork(),
 					}}
 				>
 					{embedded ? (

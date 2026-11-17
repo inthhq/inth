@@ -13,7 +13,8 @@ import { render } from 'vitest-browser-react';
 import { ConsentGate, Frame } from '~/components/consent-gate';
 import * as reactEntry from '~/index';
 import { ConsentProvider } from '~/provider';
-import { offline } from '~/transports/offline';
+
+import { withoutNetwork } from '../../../testing';
 
 const gateApp = function gateApp(
 	ui: ReactElement,
@@ -33,7 +34,6 @@ const gateApp = function gateApp(
 	return (
 		<ConsentProvider
 			options={{
-				mode: offline({ acknowledgeNoRecords: true }),
 				persistence: false,
 				prefetch: {
 					initialPolicyResolution: {
@@ -67,6 +67,7 @@ const gateApp = function gateApp(
 						translations: defaultTranslationConfig.translations.en,
 					},
 				},
+				testing: withoutNetwork(),
 			}}
 		>
 			{ui}

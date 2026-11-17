@@ -22,6 +22,7 @@ import {
 	EARLY_TAP_STYLE_ID,
 	EARLY_TAPS_WINDOW_KEY,
 } from '../../../../core/src/surface-actions/early-tap-script';
+import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import { policyFixture } from '../../__tests__/policy-fixture';
 import {
 	BANNER,
@@ -31,7 +32,7 @@ import {
 } from '../../__tests__/streamed-ssr-harness';
 import type { StreamedPage } from '../../__tests__/streamed-ssr-harness';
 import { useSaveConsents, useSnapshot } from '../../hooks';
-import { ConsentProvider, custom } from '../../index';
+import { ConsentProvider } from '../../index';
 import { useScriptLoader } from '../../module-hooks/script-loader';
 import type { Script } from '../../module-hooks/script-loader';
 import { readConsentBoot } from '../boot';
@@ -76,7 +77,7 @@ const config = (): KernelConfig => ({
 const consentCategories = ['necessary', 'marketing'] as const;
 const transportInit = vi.fn(() => Promise.resolve({}));
 const transportSave = vi.fn(() => Promise.resolve({ ok: true as const }));
-const mode = custom({ init: transportInit, save: transportSave });
+const mode = transportMode({ init: transportInit, save: transportSave });
 
 /** Counts executions in this window, where the root inserts scripts. */
 const counted = (id: string): Script => ({

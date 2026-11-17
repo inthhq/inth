@@ -5,7 +5,7 @@ import { expect, test, vi } from 'vitest';
 
 import AstroDialog from '../../../astro/src/components/islands/panel-surface';
 import { mockGVL } from '../components/iab/__tests__/fixtures/mock-consent-state';
-import { offline } from '../transports/offline';
+import { withoutNetwork } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 const gate = vi.hoisted(() => {
@@ -36,12 +36,12 @@ test('reveals the cold Astro IAB island when its module is ready', async () => {
 	const runtime = createConsentRuntime({
 		createIAB,
 		iab: { cmpId: 42, gvl: mockGVL },
-		mode: offline({ acknowledgeNoRecords: true }),
 		persistence: false,
 		prefetch: {
 			...policyFixture({}, { model: 'iab' }),
 			initialIab: { cmpId: 42, enabled: true, gvl: mockGVL },
 		},
+		testing: withoutNetwork(),
 	});
 	runtime.start();
 	runtime.kernel.set.activeUI('dialog');

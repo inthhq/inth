@@ -10,15 +10,12 @@ import { afterEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { ConsentGPP } from '../gpp';
-import { offline } from '../index';
 import { ConsentProvider } from '../provider';
+import { offlineMode } from './fixtures/transport-mode';
 
-const mode = offline({
-	acknowledgeNoRecords: true,
-	policyRules: [
-		{ ...policyRulePresets.californiaOptOut(), match: { isDefault: true } },
-	],
-});
+const mode = offlineMode([
+	{ ...policyRulePresets.californiaOptOut(), match: { isDefault: true } },
+]);
 const overrides = { country: 'US', region: 'CA' };
 
 const ping = (): GPPPingData | undefined => {
