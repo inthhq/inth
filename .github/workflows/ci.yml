@@ -1,58 +1,136 @@
 name: CI
 
+# One workflow for every product, so one job can report the whole result.
+# tools/ci/plan.ts reads the change and the workspace graph and selects the
+# jobs; .github/CI.md has the routing table.
 on:
   pull_request:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      products:
+        description: Comma-separated products to check (cli, sdk, mobile). Empty checks everything.
+        type: string
+        default: ""
   workflow_call:
+    inputs:
+      products:
+        description: Comma-separated products to check (cli, sdk, mobile). Empty routes by the change.
+        type: string
+        default: ""
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  docs:
-    name: Documentation
-    runs-on: blacksmith-4vcpu-ubuntu-2404
-    timeout-minutes: 10
+  plan:
+    name: Select checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      android: ${{ steps.plan.outputs.android }}
+      cli: ${{ steps.plan.outputs.cli }}
+      reactNative: ${{ steps.plan.outputs.reactNative }}
+      sdk: ${{ steps.plan.outputs.sdk }}
+      sdkPackageTests: ${{ steps.plan.outputs.sdkPackageTests }}
+      sdkPackages: ${{ steps.plan.outputs.sdkPackages }}
+      sdkTypes: ${{ steps.plan.outputs.sdkTypes }}
+      sdkWorkspaceTests: ${{ steps.plan.outputs.sdkWorkspaceTests }}
+      swift: ${{ steps.plan.outputs.swift }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          # The planner diffs names only, so history without file contents is enough.
+          fetch-depth: 0
+          filter: blob:none
           persist-credentials: false
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version-file: .node-version
       - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
+      - name: Select checks
+        id: plan
+        env:
+          # Pull requests compare with their base branch, pushes with the previous
+          # tip, and manual runs check everything.
+          CI_DIFF_BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || (github.event_name == 'push' && github.event.before) || '' }}
+          CI_PRODUCTS: ${{ inputs.products }}
+        run: node tools/ci/plan.ts
+
+  # The six CLI jobs below are required checks on main under these exact names.
+  # They always run and report success when the change has no CLI work, so a
+  # required check is never left pending.
+  docs:
+    name: Documentation
+    needs: plan
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    env:
+      RUN: ${{ needs.plan.outputs.cli }}
+    steps:
+      - if: env.RUN != 'true'
+        run: echo "No CLI changes; nothing to check."
+      - if: env.RUN == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - if: env.RUN == 'true'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version-file: .node-version
+      - if: env.RUN == 'true'
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
         with:
           cache: true
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm docs:lint --format github
-      - run: pnpm docs:bundle
-      - run: node packages/cli/scripts/verify-docs.ts
+      - if: env.RUN == 'true'
+        run: pnpm install --frozen-lockfile
+      - if: env.RUN == 'true'
+        run: pnpm docs:lint --format github
+      - if: env.RUN == 'true'
+        run: pnpm docs:bundle
+      - if: env.RUN == 'true'
+        run: node packages/cli/scripts/verify-docs.ts
 
   check:
     name: Lint, types, and unit tests
+    needs: plan
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 15
+    permissions:
+      contents: read
+    env:
+      RUN: ${{ needs.plan.outputs.cli }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - if: env.RUN != 'true'
+        run: echo "No CLI changes; nothing to check."
+      - if: env.RUN == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+      - if: env.RUN == 'true'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version-file: .node-version
-      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
+      - if: env.RUN == 'true'
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
         with:
           cache: true
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm lint && pnpm typecheck && pnpm test:unit
+      - if: env.RUN == 'true'
+        run: pnpm install --frozen-lockfile
+      - if: env.RUN == 'true'
+        run: pnpm lint && pnpm typecheck && pnpm test:unit
 
   native:
     name: Native CLI on ${{ matrix.platform }}
+    needs: plan
     strategy:
       fail-fast: false
       matrix:
@@ -70,43 +148,350 @@ jobs:
             target: x86_64-windows-gnu
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
+    permissions:
+      contents: read
     env:
+      RUN: ${{ needs.plan.outputs.cli }}
       # Pin the Linux ABI instead of inheriting the runner's newer glibc.
       SCRIPTC_CC: ${{ matrix.target && 'zigcc' || '' }}
       SCRIPTC_TARGET: ${{ matrix.target || '' }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - if: env.RUN != 'true'
+        shell: bash
+        run: echo "No CLI changes; nothing to check."
+      - if: env.RUN == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+      - if: env.RUN == 'true'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version-file: .node-version
-      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
+      - if: env.RUN == 'true'
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
         with:
           cache: true
       - name: Install Linux and Windows toolchain
-        if: runner.os != 'macOS'
+        if: env.RUN == 'true' && runner.os != 'macOS'
         uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2
         with:
           version: 0.15.2
       - name: Install Linux credential service
-        if: runner.os == 'Linux'
+        if: env.RUN == 'true' && runner.os == 'Linux'
         run: sudo apt-get update -qq && sudo apt-get install -y clang cmake zlib1g-dev libsecret-1-0 gnome-keyring dbus-x11
-      - run: pnpm install --frozen-lockfile
+      - if: env.RUN == 'true'
+        run: pnpm install --frozen-lockfile
       - name: Native and package tests on Linux
-        if: runner.os == 'Linux'
+        if: env.RUN == 'true' && runner.os == 'Linux'
         run: |
           dbus-run-session -- sh -c 'printf "test-only\n" | gnome-keyring-daemon --unlock --components=secrets >/dev/null; pnpm --filter @inth/cli test && pnpm --filter @inth/cli test:package'
       - name: Native and package tests on macOS and Windows
-        if: runner.os != 'Linux'
+        if: env.RUN == 'true' && runner.os != 'Linux'
         run: pnpm --filter @inth/cli test && pnpm --filter @inth/cli test:package
       - name: Test Linux package on the oldest supported glibc
-        if: runner.os == 'Linux'
+        if: env.RUN == 'true' && runner.os == 'Linux'
         run: sh packages/cli/scripts/test-linux-baseline.sh packages/cli/artifacts/inth-cli-linux-*.tgz packages/cli/build/native-linux-*
       - name: Upload native npm package
+        if: env.RUN == 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           # Release signs the macOS package in its own job before publishing it as inth-macOS-ARM64.
           name: ${{ runner.os == 'macOS' && 'unsigned' || 'inth' }}-${{ runner.os }}-${{ runner.arch }}
           path: packages/cli/artifacts/*.tgz
           if-no-files-found: error
+
+  # SDK web packages: packages/sdk/* and the apps, examples, benchmarks and
+  # internals around them. Mobile sources are linted here too, because the SDK
+  # lint and format configs cover them.
+  sdk-lint:
+    name: SDK lint and format
+    needs: plan
+    if: needs.plan.outputs.sdk == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-sdk
+      - name: Lint
+        run: pnpm sdk:lint
+      - name: Check formatting
+        if: ${{ !cancelled() }}
+        run: pnpm sdk:fmt:check
+
+  sdk-scripts:
+    name: SDK repository tooling tests
+    needs: plan
+    if: needs.plan.outputs.sdk == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-sdk
+      - run: pnpm sdk:test:scripts
+
+  sdk-build:
+    name: SDK build and types
+    needs: plan
+    if: needs.plan.outputs.sdkTypes != '[]' || needs.plan.outputs.sdkPackages != '[]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    env:
+      NODE_OPTIONS: --max-old-space-size=6144
+      PACKAGES: ${{ needs.plan.outputs.sdkPackages }}
+      TYPES: ${{ needs.plan.outputs.sdkTypes }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-sdk
+      - name: Build packages and their docs
+        if: env.PACKAGES != '[]'
+        run: |
+          mapfile -t filters < <(jq -r '.[] | "--filter=./" + .' <<< "$PACKAGES")
+          pnpm turbo run build build:docs --concurrency=4 "${filters[@]}"
+      - name: Check types
+        if: ${{ !cancelled() && env.TYPES != '[]' }}
+        run: |
+          mapfile -t filters < <(jq -r '.[] | "--filter=./" + .' <<< "$TYPES")
+          pnpm turbo run check-types check-types:test --concurrency=4 "${filters[@]}"
+
+  sdk-tests:
+    name: SDK package tests
+    needs: plan
+    if: needs.plan.outputs.sdkPackageTests != '[]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    env:
+      NODE_OPTIONS: --max-old-space-size=6144
+      TESTS: ${{ needs.plan.outputs.sdkPackageTests }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-sdk
+        with:
+          browsers: "true"
+      # Two at a time: the browser suites each start Chromium, and more at once
+      # starve a four-core runner.
+      - name: Run tests
+        run: |
+          mapfile -t filters < <(jq -r '.[] | "--filter=./" + .' <<< "$TESTS")
+          pnpm turbo run test --concurrency=2 --continue "${filters[@]}"
+      - name: Save coverage
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: sdk-package-coverage
+          path: packages/sdk/*/coverage/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  sdk-workspace-tests:
+    name: SDK workspace tests
+    needs: plan
+    if: needs.plan.outputs.sdkWorkspaceTests != '[]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    env:
+      NODE_OPTIONS: --max-old-space-size=6144
+      TESTS: ${{ needs.plan.outputs.sdkWorkspaceTests }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-sdk
+        with:
+          browsers: "true"
+      - name: Run tests
+        run: |
+          mapfile -t filters < <(jq -r '.[] | "--filter=./" + .' <<< "$TESTS")
+          pnpm turbo run test --concurrency=2 --continue "${filters[@]}"
+
+  # Mobile: React Native's JavaScript, Swift on macOS, Android with Gradle.
+  react-native:
+    name: React Native
+    needs: plan
+    if: needs.plan.outputs.reactNative == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-sdk
+      - name: Build, check types and test
+        run: >-
+          pnpm turbo run build check-types test --concurrency=2 --continue
+          --filter=./packages/react-native
+          --filter=./benchmarks/mobile
+          --filter=./internals/doc-snippets/expo
+          --filter=./internals/fixtures/expo-dev
+          --filter=./internals/fixtures/react-native-bare
+      # Assembling the Android library proves Gradle compiles it, not that a host
+      # app can find it. This asks the React Native CLI and Expo's resolver, from
+      # the checkout and from the packed tarball.
+      - name: Resolve the binding the way a host app autolinks it
+        if: ${{ !cancelled() }}
+        run: bun scripts/react-native-autolink.ts
+
+  swift:
+    name: Swift
+    needs: plan
+    if: needs.plan.outputs.swift == 'true'
+    runs-on: macos-26
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    env:
+      # Xcode versions this job accepts, most preferred first. DEVELOPER_DIR is set
+      # per run instead of switched with xcode-select.
+      C15T_XCODE_VERSIONS: "27 26"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Select Xcode
+        run: |
+          target=""
+          for version in ${C15T_XCODE_VERSIONS}; do
+            for candidate in /Applications/Xcode_${version}*.app /Applications/Xcode-${version}*.app; do
+              if [ -d "${candidate}/Contents/Developer" ]; then
+                target="${candidate}"
+              fi
+            done
+            if [ -n "${target}" ]; then
+              break
+            fi
+          done
+          if [ -z "${target}" ]; then
+            echo "No Xcode ${C15T_XCODE_VERSIONS} in /Applications. This runner has:" >&2
+            ls /Applications >&2
+            exit 1
+          fi
+          echo "DEVELOPER_DIR=${target}/Contents/Developer" >> "${GITHUB_ENV}"
+          DEVELOPER_DIR="${target}/Contents/Developer" xcodebuild -version
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            .build
+            packages/swift/.build
+            packages/react-native/.build
+          key: swiftpm-${{ runner.os }}-${{ hashFiles('Package.swift', 'packages/swift/Package.swift', 'packages/react-native/Package.swift') }}
+      - name: Build and test the Swift core
+        run: |
+          set -euxo pipefail
+          swift build --package-path .
+          swift test --package-path .
+      - name: Build and test the React Native binding's wire layer
+        if: ${{ !cancelled() }}
+        run: |
+          set -euxo pipefail
+          swift build --package-path packages/react-native
+          swift test --package-path packages/react-native
+
+  android:
+    name: Android
+    needs: plan
+    if: needs.plan.outputs.android == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Use JDK 17
+        run: |
+          if [ -z "${JAVA_HOME_17_X64:-}" ]; then
+            echo "No JDK 17 on this runner, and packages/android pins jvmToolchain(17)." >&2
+            exit 1
+          fi
+          echo "JAVA_HOME=${JAVA_HOME_17_X64}" >> "${GITHUB_ENV}"
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('packages/android/gradle/wrapper/gradle-wrapper.properties', 'packages/android/gradle/libs.versions.toml', 'packages/react-native/android/gradle.properties') }}
+      - name: Test the Kotlin core and stage the Android libraries
+        working-directory: packages/android
+        run: >-
+          ./gradlew
+          :c15t-core:test
+          :c15t-android:testDebugUnitTest
+          :c15t-consent-ui:testDebugUnitTest
+          :c15t-core:publishAllPublicationsToStagingRepository
+          :c15t-android:publishAllPublicationsToStagingRepository
+          :c15t-consent-ui:publishAllPublicationsToStagingRepository
+          --no-configuration-cache --console=plain
+      - name: Resolve the staged libraries in an isolated consumer app
+        run: |
+          native_version="$(sed -n 's/^c15t.native.version=//p' packages/android/gradle.properties)"
+          python3 packages/android/consumer-smoke/verify.py \
+            --staging-repository packages/android/build/maven-staging \
+            --version "${native_version}" --output "${RUNNER_TEMP}/c15t-android-consumer"
+      - uses: ./.github/actions/setup-sdk
+      - name: Test and assemble the React Native Android binding
+        env:
+          C15T_MAVEN_URL: file://${{ github.workspace }}/packages/android/build/maven-staging
+        working-directory: packages/react-native/android
+        run: ./gradlew :c15t-react-native:testDebugUnitTest :c15t-react-native:assembleRelease --console=plain
+      - name: Save Android reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: android-reports
+          path: |
+            packages/android/**/build/reports/
+            packages/android/**/build/test-results/
+            packages/react-native/android/c15t-react-native/build/reports/
+            ${{ runner.temp }}/c15t-android-consumer/result.json
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # The one check that covers every product. It passes only when each job the
+  # plan selected passed; a job the plan skipped counts as passing. Branch rules
+  # can require this check alone instead of each job by name.
+  result:
+    name: CI result
+    if: always()
+    needs:
+      - plan
+      - docs
+      - check
+      - native
+      - sdk-lint
+      - sdk-scripts
+      - sdk-build
+      - sdk-tests
+      - sdk-workspace-tests
+      - react-native
+      - swift
+      - android
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Check selected jobs
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          echo "$RESULTS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+          echo "$RESULTS" | jq -e '.plan.result == "success" and all(.[]; .result == "success" or .result == "skipped")' >/dev/null

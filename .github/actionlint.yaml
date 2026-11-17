@@ -1,0 +1,11 @@
+# Runner labels actionlint does not know: Blacksmith runs the CLI jobs, Depot
+# runs the Android emulator jobs once the owner enables it, and macos-26 is
+# newer than some actionlint releases.
+self-hosted-runner:
+  labels:
+    - blacksmith-4vcpu-ubuntu-2404
+    - blacksmith-4vcpu-ubuntu-2404-arm
+    - blacksmith-4vcpu-windows-2025
+    - blacksmith-6vcpu-macos-15
+    - depot-ubuntu-24.04-4
+    - macos-26
