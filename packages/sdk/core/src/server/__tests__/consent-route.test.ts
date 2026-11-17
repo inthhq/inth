@@ -598,6 +598,24 @@ describe('init route', () => {
 		});
 	});
 
+	test('reads query inputs from a proxied request, as the App Router passes it', async () => {
+		// Next.js wraps the request in a Proxy that reads every property from
+		// the real request. Node 24's Request constructor rejects the Proxy
+		// itself as an input.
+		const real = request('/api/c15t/init?country=DE&gpc=1', {
+			headers: { 'x-c15t-country': 'US' },
+		});
+		const proxied = new Proxy(real, {
+			get: (target, property) => target[property as keyof Request],
+		});
+		const response = await route({ fetch: upstream() })(proxied);
+		expect(response.status).toBe(200);
+		expect(await response.json()).toMatchObject({
+			location: { countryCode: 'DE' },
+			resolvedPrivacySignals: { gpc: true },
+		});
+	});
+
 	test('fails a client that declares an unknown contract in the query', async () => {
 		const response = await route({ fetch: upstream() })(
 			request('/api/c15t/init?contract=99&country=DE')

@@ -1032,11 +1032,17 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 		// as query parameters, so a cross-origin `/init` needs no preflight.
 		// Folded onto their header names, every reader below, the backend
 		// fallback and the session report see one set of inputs.
+		// Copy the fields instead of passing `incoming` as the input: the App
+		// Router hands route handlers a Proxy of the request, and Node 24's
+		// `Request` constructor reads the input's private fields, which a
+		// Proxy does not forward. `/init` is GET or HEAD, so it has no body.
 		const request = INIT_PARAM_HEADERS.some(([param]) =>
 			url.searchParams.has(param)
 		)
-			? new Request(incoming, {
+			? new Request(incoming.url, {
 					headers: applyInitParamsToHeaders(url, incoming.headers),
+					method: incoming.method,
+					signal: incoming.signal,
 				})
 			: incoming;
 		const budget = createBudget(
