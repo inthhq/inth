@@ -365,6 +365,8 @@ jobs:
         env:
           CI_INTEGRATION: ${{ matrix.kind }}
           CI_TARGETS: ${{ matrix.targets }}
+          # Next.js server output for the compatibility cells, for diagnosing failures.
+          COMPAT_PRINT_SERVER_LOGS: ${{ matrix.kind == 'compat' && '1' || '' }}
         run: bun scripts/ci-browser.ts
       - name: Save browser evidence
         if: ${{ !cancelled() }}
