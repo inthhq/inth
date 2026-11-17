@@ -94,7 +94,7 @@ const page = (query: URLSearchParams): string => {
 		}
 		return ` data-${name}-src="${src}"`;
 	};
-	const tag = `${queue}<script src="/__c15t-dist__/c15t.js" data-backend-url="/__c15t-init__/backend" data-hosted-src="/__c15t-dist__/c15t.hosted.js?delay=${Number(query.get('hosted-delay') ?? 0)}"${part('commit')}${part('records')}${part('dialog')}${query.has('manual') ? ' data-manual' : ''}></script>`;
+	const tag = `${queue}<script src="/__c15t-dist__/c15t.js" data-project-url="/__c15t-init__/backend" data-hosted-src="/__c15t-dist__/c15t.hosted.js?delay=${Number(query.get('hosted-delay') ?? 0)}"${part('commit')}${part('records')}${part('dialog')}${query.has('manual') ? ' data-manual' : ''}></script>`;
 	const head = query.has('head') ? tag : '';
 	const body = query.has('head') ? '' : tag;
 	return `<!doctype html><html><head><meta charset="utf-8">${head}</head><body>

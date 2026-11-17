@@ -2,7 +2,7 @@
  * `dist/c15t.devtools.js` — the DevTools panel as a second script tag.
  *
  * ```html
- * <script src=".../c15t.js" data-backend-url="..." defer></script>
+ * <script src=".../c15t.js" data-project-url="..." defer></script>
  * <script src=".../c15t.devtools.js" data-open data-tab="location" defer></script>
  * ```
  *

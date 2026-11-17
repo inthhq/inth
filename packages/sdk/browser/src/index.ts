@@ -13,12 +13,12 @@
  * import { init } from '@c15t/browser';
  * import '@c15t/browser/styles.css'; // only with `ui: { shadow: false }`
  *
- * const c15t = init({ backendURL: 'https://your-project.inth.app' });
+ * const c15t = init({ projectUrl: 'https://your-project.inth.app' });
  * c15t.on('consent', (snapshot) => console.log(snapshot.effectivePermissions));
  * ```
  */
 
-import type { WithBackendURL } from '@c15t/core/runtime';
+import type { WithProjectUrl } from '@c15t/core/runtime';
 
 import { createConsentClient as createClient } from './client';
 import type { ConsentClient, ConsentClientOptions } from './types';
@@ -33,7 +33,7 @@ const PKG = '@c15t/browser';
  * @returns The client. Call `start()` to resolve the policy and mount.
  */
 export const createConsentClient = function createConsentClient(
-	options: WithBackendURL<ConsentClientOptions>
+	options: WithProjectUrl<ConsentClientOptions>
 ): ConsentClient {
 	return createClient(options, { mountUI: mountConsentUI, pkg: PKG });
 };
@@ -45,7 +45,7 @@ export const createConsentClient = function createConsentClient(
  * @returns The started client.
  */
 export const init = function init(
-	options: WithBackendURL<ConsentClientOptions>
+	options: WithProjectUrl<ConsentClientOptions>
 ): ConsentClient {
 	const client = createConsentClient(options);
 	client.start();

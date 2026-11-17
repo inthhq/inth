@@ -54,7 +54,7 @@ const buildStyleText = function buildStyleText(
 };
 
 /**
- * Add the `stylesheetURLs` links to the UI root.
+ * Add the `stylesheetUrls` links to the UI root.
  *
  * A nonce-based `style-src` blocks an unnonced `<link>`, even in a shadow
  * root, so each link carries the client's nonce. Call it after the stock
@@ -66,7 +66,7 @@ const appendStylesheetLinks = function appendStylesheetLinks(
 	options: ConsentUIOptions,
 	nonce: string | undefined
 ): void {
-	for (const href of options.stylesheetURLs ?? []) {
+	for (const href of options.stylesheetUrls ?? []) {
 		const link = h('link', { href, rel: 'stylesheet' });
 		if (nonce) {
 			link.nonce = nonce;
@@ -110,7 +110,7 @@ const mountRoot = function mountRoot(
 		options.container === undefined &&
 			(options.shadow ?? true) &&
 			!extended &&
-			!options.stylesheetURLs?.length
+			!options.stylesheetUrls?.length
 	);
 	if (!adopted) {
 		return {
@@ -166,7 +166,7 @@ const mountRoot = function mountRoot(
  * Every part named in `theme.slots` carries its slot key as a CSS part, so
  * page CSS reaches it through `[data-c15t-ui]::part(consentBannerCard)`
  * even inside the shadow root. A slot's classes need their rules in the
- * same root: in the page with `shadow: false`, or through `stylesheetURLs`
+ * same root: in the page with `shadow: false`, or through `stylesheetUrls`
  * or `css` in shadow mode.
  *
  * @param client - The client to render.
@@ -177,7 +177,7 @@ const mountRoot = function mountRoot(
  * @example
  * ```ts
  * const client = createConsentClient({
- *   mode: hosted({ backendURL: 'https://x.c15t.dev' }),
+ *   mode: hosted({ projectUrl: 'https://x.c15t.dev' }),
  * });
  * client.start();
  * mountConsentUI(client, { colorScheme: 'dark', trigger: true });

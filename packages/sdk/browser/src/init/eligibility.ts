@@ -22,7 +22,7 @@ const isPlainHostedMode = function isPlainHostedMode(
 	const hostedOptions = readHostedMarker(mode);
 	return Boolean(
 		hostedOptions &&
-		!hostedOptions.initURL &&
+		!hostedOptions.initUrl &&
 		!hostedOptions.fetch &&
 		!hostedOptions.initialData &&
 		!Object.keys(hostedOptions.headers ?? {}).length
@@ -35,10 +35,10 @@ const isPlainHostedMode = function isPlainHostedMode(
  */
 export const supportsEarlyStart = function supportsEarlyStart(
 	options: ScriptTagClientOptions,
-	backendURL: string | undefined
-): backendURL is string {
+	projectUrl: string | undefined
+): projectUrl is string {
 	return Boolean(
-		backendURL &&
+		projectUrl &&
 		options.enabled !== false &&
 		isPlainHostedMode(options.mode) &&
 		!(
@@ -51,7 +51,7 @@ export const supportsEarlyStart = function supportsEarlyStart(
 			options.persistence !== undefined ||
 			options.consentSource ||
 			options.manifest ||
-			options.manifestURL ||
+			options.manifestUrl ||
 			options.vendors ||
 			options.user ||
 			options.iab

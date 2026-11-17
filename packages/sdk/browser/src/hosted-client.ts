@@ -11,14 +11,14 @@ import type {
 } from './types';
 
 const defaultHostedFactory = function defaultHostedFactory(
-	backendURL: string | undefined
+	projectUrl: string | undefined
 ): ProviderTransportFactory {
-	if (!backendURL) {
+	if (!projectUrl) {
 		throw new Error(
-			'@c15t/browser/hosted: `backendURL` is required (data-backend-url on the script tag).'
+			'@c15t/browser/hosted: `projectUrl` is required (data-project-url on the script tag).'
 		);
 	}
-	return hosted({ backendURL });
+	return hosted({ projectUrl });
 };
 
 /**
@@ -34,7 +34,7 @@ export const createHostedConsentClient = function createHostedConsentClient(
 	options: ScriptTagClientOptions | HostedConsentClientOptions = {},
 	context: CreateConsentClientContext = {}
 ): ConsentClient {
-	if (options.manifest !== undefined || options.manifestURL !== undefined) {
+	if (options.manifest !== undefined || options.manifestUrl !== undefined) {
 		throw new Error(
 			'@c15t/browser/hosted: manifest inputs need manifest mode.'
 		);
@@ -62,7 +62,7 @@ export const createHostedConsentClient = function createHostedConsentClient(
 	} else if (typeof mode === 'function') {
 		factory = mode;
 	} else {
-		factory = defaultHostedFactory(options.backendURL);
+		factory = defaultHostedFactory(options.projectUrl);
 	}
 	return createConsentClientWith(options, { factory, name: 'hosted' }, context);
 };

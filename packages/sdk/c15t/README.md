@@ -93,7 +93,7 @@ import type { ReactNode } from 'react'
 import 'c15t/react/styles.css'
 
 const options = {
-  mode: hosted({ backendURL: 'https://your-project.inth.app' }),
+  mode: hosted({ projectUrl: 'https://your-project.inth.app' }),
   scripts: [posthog({ id: 'phc_your_project_key', loadMode: 'after-consent' })],
 }
 

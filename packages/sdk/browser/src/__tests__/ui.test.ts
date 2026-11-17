@@ -1023,9 +1023,9 @@ describe('mountConsentUI', () => {
 			).toBe(true);
 		});
 
-		it('links stylesheetURLs inside the UI root with the configured nonce', async () => {
+		it('links stylesheetUrls inside the UI root with the configured nonce', async () => {
 			const { root } = await mount(
-				{ stylesheetURLs: ['/brand.css', 'https://cdn.example/brand.css'] },
+				{ stylesheetUrls: ['/brand.css', 'https://cdn.example/brand.css'] },
 				{ nonce: 'page-nonce' }
 			);
 

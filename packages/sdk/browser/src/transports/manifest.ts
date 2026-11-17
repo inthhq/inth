@@ -4,7 +4,7 @@
  * resolves a manifest in the browser; this wrapper adds the policy and
  * backend URL the build integration downloaded as defaults.
  */
-import { backendURL as builtBackendURL, snapshot } from '@c15t/core/generated';
+import { projectUrl as builtProjectUrl, snapshot } from '@c15t/core/generated';
 import { manifest as browserManifest } from '@c15t/core/transports/manifest-browser';
 import type {
 	BrowserManifestModeFactory,
@@ -14,14 +14,14 @@ import type { ConsentManifest } from '@c15t/schema/types';
 
 /** What a build integration downloaded, as `@c15t/core/generated` exports it. */
 export interface BuildOutput {
-	backendURL?: string;
+	projectUrl?: string;
 	snapshot?: ConsentManifest;
 }
 
 /**
  * Fill the options the page left out from the build: the backend URL that
  * saves go to, and the snapshot unless the page passed one, a
- * `manifestURL`, or `source: 'runtime'`.
+ * `manifestUrl`, or `source: 'runtime'`.
  *
  * @param options - The page's options.
  * @param build - What the build downloaded.
@@ -33,12 +33,12 @@ export const withBuildDefaults = function withBuildDefaults(
 	build: BuildOutput
 ): BrowserManifestOptions {
 	const settings: BrowserManifestOptions = { ...options };
-	// Saves go to the build's backend even when `manifestURL` names where
+	// Saves go to the build's backend even when `manifestUrl` names where
 	// the policy comes from, such as a CDN.
-	if (build.backendURL !== undefined && settings.backendURL === undefined) {
-		settings.backendURL = build.backendURL;
+	if (build.projectUrl !== undefined && settings.projectUrl === undefined) {
+		settings.projectUrl = build.projectUrl;
 	}
-	if (settings.manifestURL !== undefined) {
+	if (settings.manifestUrl !== undefined) {
 		return settings;
 	}
 	if (
@@ -59,12 +59,12 @@ export const withBuildDefaults = function withBuildDefaults(
  * `VITE_C15T_BACKEND_URL` or `VITE_INTH_PROJECT_URL`, both served as
  * `c15t/generated`. Without a
  * snapshot, such as in dev after a failed fetch, it fetches
- * `${backendURL}/manifest` at runtime. Saves go to the backend either way.
- * With `manifestURL` or `source: 'runtime'`, also pass `source: 'runtime'`
+ * `${projectUrl}/manifest` at runtime. Saves go to the backend either way.
+ * With `manifestUrl` or `source: 'runtime'`, also pass `source: 'runtime'`
  * to `consentManifest()`, so the build downloads no snapshot.
  *
  * @param options - Overrides: your own `snapshot`, `source: 'runtime'`, a
- * `manifestURL`, a `backendURL`, or the visitor's location as `inputs`.
+ * `manifestUrl`, a `projectUrl`, or the visitor's location as `inputs`.
  * @returns A transport factory for `mode`, carrying its options.
  * @throws {Error} When no snapshot, manifest URL or backend URL is known.
  * @example
@@ -78,7 +78,7 @@ export const manifest = function manifest(
 	options: BrowserManifestOptions = {}
 ): BrowserManifestModeFactory {
 	return browserManifest(
-		withBuildDefaults(options, { backendURL: builtBackendURL, snapshot })
+		withBuildDefaults(options, { projectUrl: builtProjectUrl, snapshot })
 	);
 };
 

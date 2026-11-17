@@ -44,9 +44,9 @@ export const createTestingConsentClient = function createTestingConsentClient(
 ): ConsentClient {
 	const testOptions = options as TestingScriptTagOptions;
 	if (
-		testOptions.backendURL !== undefined ||
+		testOptions.projectUrl !== undefined ||
 		testOptions.manifest !== undefined ||
-		testOptions.manifestURL !== undefined
+		testOptions.manifestUrl !== undefined
 	) {
 		throw new Error(
 			`${ENTRY}: c15t.testing.js needs no backend. Load c15t.js for a page that talks to one.`

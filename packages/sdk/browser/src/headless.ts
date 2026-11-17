@@ -9,12 +9,12 @@
  * ```ts
  * import { init } from '@c15t/browser/headless';
  *
- * const c15t = init({ backendURL: 'https://your-project.inth.app' });
+ * const c15t = init({ projectUrl: 'https://your-project.inth.app' });
  * c15t.on('ui', (surface) => banner.hidden = surface !== 'banner');
  * ```
  */
 
-import type { WithBackendURL } from '@c15t/core/runtime';
+import type { WithProjectUrl } from '@c15t/core/runtime';
 
 import { createConsentClient as createClient } from './client';
 import type { ConsentClient, ConsentClientOptions } from './types';
@@ -28,7 +28,7 @@ const PKG = '@c15t/browser/headless';
  * @returns The client.
  */
 export const createConsentClient = function createConsentClient(
-	options: WithBackendURL<ConsentClientOptions>
+	options: WithProjectUrl<ConsentClientOptions>
 ): ConsentClient {
 	return createClient({ ...options, ui: false }, { pkg: PKG });
 };
@@ -40,7 +40,7 @@ export const createConsentClient = function createConsentClient(
  * @returns The started client.
  */
 export const init = function init(
-	options: WithBackendURL<ConsentClientOptions>
+	options: WithProjectUrl<ConsentClientOptions>
 ): ConsentClient {
 	const client = createConsentClient(options);
 	client.start();

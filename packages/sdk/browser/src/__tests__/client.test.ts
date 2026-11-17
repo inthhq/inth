@@ -336,16 +336,16 @@ describe('createConsentClient', () => {
 		expect(second.getSnapshot().activeUI).toBe('none');
 	});
 
-	it('picks hosted mode from a backendURL and requires one for hosted', () => {
+	it('picks hosted mode from a projectUrl and requires one for hosted', () => {
 		expect(() =>
 			createScriptTagConsentClient({ mode: 'hosted' }, { pkg: 'test' })
-		).toThrow(/backendURL/u);
+		).toThrow(/projectUrl/u);
 		expect(() => createScriptTagConsentClient({}, { pkg: 'test' })).toThrow(
-			/backendURL/u
+			/projectUrl/u
 		);
 
 		const client = createScriptTagConsentClient(
-			{ backendURL: 'https://example.test' },
+			{ projectUrl: 'https://example.test' },
 			{ pkg: 'test' }
 		);
 		clients.push(client);

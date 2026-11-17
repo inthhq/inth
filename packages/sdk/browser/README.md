@@ -44,7 +44,7 @@ Paste before `</head>`, with the backend URL from your Inth project:
 ```html
 <script
   src="https://cdn.jsdelivr.net/npm/@c15t/browser/dist/c15t.js"
-  data-backend-url="YOUR_INTH_BACKEND_URL"
+  data-project-url="YOUR_INTH_BACKEND_URL"
   defer
 ></script>
 ```
@@ -91,7 +91,7 @@ See the [documentation](https://c15t.com/docs/frameworks/html/quickstart) for gu
 
 | File | Use it for |
 | --- | --- |
-| `c15t.js` | Inth or a self-hosted backend. Set `data-backend-url`. A self-hosted backend also serves a preconfigured script at `/c15t.js` |
+| `c15t.js` | Inth or a self-hosted backend. Set `data-project-url`. A self-hosted backend also serves a preconfigured script at `/c15t.js` |
 | `c15t.local.js` | Local mode, for development and tests: choices stay in the browser, with local policy rules, and c15t keeps no server-side record of consent. Before 3.2.0 this file was `c15t.offline.js` |
 | `c15t.headless.js` | The runtime without UI, for your own banner. Can inline or fetch the backend's cacheable `/manifest` |
 | `c15t.iab.js` | IAB TCF 2.4. Configure `iab` with your registered CMP ID and vendor list. See the [IAB example](https://c15t.com/docs/frameworks/html/iab) |

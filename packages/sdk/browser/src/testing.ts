@@ -3,7 +3,7 @@
  *
  * Pass `testing()` as the `mode` of `init()` from `@c15t/browser`,
  * `@c15t/browser/headless` or `@c15t/browser/iab`. It needs no
- * `backendURL`. It resolves the recommended policy pack in the browser and
+ * `projectUrl`. It resolves the recommended policy pack in the browser and
  * sends nothing; set `overrides.country` (and `overrides.region`) to pick
  * the policy:
  *

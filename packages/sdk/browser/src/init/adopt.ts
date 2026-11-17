@@ -109,11 +109,11 @@ export const withInitPrefetch = function withInitPrefetch(
 	if (!handed || adopted?.version !== version) {
 		return options;
 	}
-	const backendURL =
-		options.backendURL ?? readHostedMarker(options.mode)?.backendURL;
+	const projectUrl =
+		options.projectUrl ?? readHostedMarker(options.mode)?.projectUrl;
 	if (
-		backendURL !== handed.backendURL ||
-		!supportsEarlyStart(options, backendURL) ||
+		projectUrl !== handed.projectUrl ||
+		!supportsEarlyStart(options, projectUrl) ||
 		JSON.stringify(options.overrides ?? {}) !==
 			JSON.stringify(handed.overrides ?? {})
 	) {

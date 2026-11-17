@@ -18,7 +18,7 @@ import type {
 const defaultModeName = function defaultModeName(
 	options: ScriptTagClientOptions
 ): ConsentModeName {
-	return options.manifest || options.manifestURL ? 'manifest' : 'hosted';
+	return options.manifest || options.manifestUrl ? 'manifest' : 'hosted';
 };
 
 const resolveMode = function resolveMode(
@@ -33,21 +33,21 @@ const resolveMode = function resolveMode(
 	}
 	const name = options.mode ?? defaultModeName(options);
 	if (name === 'hosted') {
-		if (!options.backendURL) {
+		if (!options.projectUrl) {
 			throw new Error(
-				'@c15t/browser: `backendURL` is required (data-backend-url on the script tag). Tests load c15t.testing.js instead.'
+				'@c15t/browser: `projectUrl` is required (data-project-url on the script tag). Tests load c15t.testing.js instead.'
 			);
 		}
-		return { factory: hosted({ backendURL: options.backendURL }), name };
+		return { factory: hosted({ projectUrl: options.projectUrl }), name };
 	}
 	return {
 		factory: manifest({
-			backendURL: options.backendURL,
 			inputs: {
 				country: options.overrides?.country,
 				region: options.overrides?.region,
 			},
-			manifestURL: options.manifestURL,
+			manifestUrl: options.manifestUrl,
+			projectUrl: options.projectUrl,
 			snapshot: options.manifest,
 		}),
 		name,

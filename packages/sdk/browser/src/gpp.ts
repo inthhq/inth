@@ -9,7 +9,7 @@
  * import { mountGPP } from '@c15t/browser/gpp';
  *
  * const client = init({
- *   mode: hosted({ backendURL: 'https://your-instance.c15t.dev' }),
+ *   mode: hosted({ projectUrl: 'https://your-instance.c15t.dev' }),
  * });
  * const gpp = mountGPP(client, { usFallback: 'none' });
  * ```

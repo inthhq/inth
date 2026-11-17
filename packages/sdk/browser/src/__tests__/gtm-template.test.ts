@@ -336,8 +336,8 @@ const loadC15t = function loadC15t(
 
 const inthUrl = 'https://acme.inth.app/c15t.js';
 const tagData = {
-	backendUrl: '',
 	loadScript: true,
+	projectUrl: '',
 	scriptUrl: inthUrl,
 	waitForUpdate: '500',
 };
@@ -477,7 +477,7 @@ describe('GTM template', () => {
 		const page = createPage();
 		const result = page.run({
 			...tagData,
-			backendUrl: 'https://acme.inth.app',
+			projectUrl: 'https://acme.inth.app',
 		});
 
 		expect(page.recorded.injected).toEqual([]);
@@ -524,14 +524,14 @@ describe('GTM template', () => {
 		});
 		page.run({
 			...tagData,
-			backendUrl: 'https://acme.inth.app',
+			projectUrl: 'https://acme.inth.app',
 			scriptUrl:
 				'https://cdn.jsdelivr.net/npm/@c15t/browser@3.1.0/dist/c15t.js',
 		});
 
 		expect(queued[0]).toEqual([
 			'config',
-			{ backendURL: 'https://acme.inth.app' },
+			{ projectUrl: 'https://acme.inth.app' },
 		]);
 		expect(queued.slice(1).map((call) => (call as unknown[])[1])).toEqual([
 			'ready',
@@ -659,10 +659,10 @@ describe('GTM template', () => {
 	])('treats %s as allowed: %s', (scriptUrl, allowed) => {
 		const page = createPage();
 		// jsDelivr's hosted c15t.js needs a backend; see the cases below.
-		const backendUrl = scriptUrl.endsWith('/dist/c15t.js')
+		const projectUrl = scriptUrl.endsWith('/dist/c15t.js')
 			? 'https://acme.inth.app'
 			: '';
-		const result = page.run({ ...tagData, backendUrl, scriptUrl });
+		const result = page.run({ ...tagData, projectUrl, scriptUrl });
 
 		expect(page.recorded.injected).toEqual(allowed ? [scriptUrl] : []);
 		expect(result.failure).toHaveBeenCalledTimes(allowed ? 0 : 1);
@@ -672,7 +672,7 @@ describe('GTM template', () => {
 		[
 			'https://cdn.jsdelivr.net/npm/@c15t/browser@3.1.0/dist/c15t.js',
 			'',
-			'needs a "Backend URL"',
+			'needs a "Project URL"',
 		],
 		[
 			'https://cdn.jsdelivr.net/npm/@c15t/browser@3.1.0/dist/c15t.offline.js',
@@ -684,9 +684,9 @@ describe('GTM template', () => {
 			'https://acme.inth.app',
 			'uses no backend',
 		],
-	])('fails %s with Backend URL "%s"', (scriptUrl, backendUrl, message) => {
+	])('fails %s with Project URL "%s"', (scriptUrl, projectUrl, message) => {
 		const page = createPage();
-		const result = page.run({ ...tagData, backendUrl, scriptUrl });
+		const result = page.run({ ...tagData, projectUrl, scriptUrl });
 
 		expect(result.failure).toHaveBeenCalledOnce();
 		expect(page.recorded.injected).toEqual([]);
@@ -702,9 +702,9 @@ describe('GTM template', () => {
 			'',
 		],
 		['https://cdn.jsdelivr.net/npm/@c15t/browser@3.1.0/dist/c15t.iab.js', ''],
-	])('loads %s with Backend URL "%s"', (scriptUrl, backendUrl) => {
+	])('loads %s with Project URL "%s"', (scriptUrl, projectUrl) => {
 		const page = createPage();
-		const result = page.run({ ...tagData, backendUrl, scriptUrl });
+		const result = page.run({ ...tagData, projectUrl, scriptUrl });
 
 		expect(result.success).toHaveBeenCalledOnce();
 		expect(page.recorded.injected).toEqual([scriptUrl]);

@@ -142,7 +142,7 @@ export interface InitBoot {
 	 * `/init` again when its own options send the same request.
 	 */
 	prefetch: {
-		backendURL: string;
+		projectUrl: string;
 		overrides: KernelOverrides | undefined;
 		config: KernelConfig;
 	} | null;
