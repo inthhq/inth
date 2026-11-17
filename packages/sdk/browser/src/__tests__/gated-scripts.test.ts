@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { activateGatedScripts } from '../gated-scripts';
-import { createScriptTagConsentClient } from '../script-tag-client';
+import { createTestingConsentClient as createScriptTagConsentClient } from '../testing-global';
 import type { ConsentClient } from '../types';
 
 const clients: ConsentClient[] = [];
@@ -12,7 +12,7 @@ const createConsentClient: typeof createScriptTagConsentClient = (
 	context
 ) =>
 	createScriptTagConsentClient(
-		{ acknowledgeNoRecords: true, ...options },
+		{ ...options },
 		context
 	);
 

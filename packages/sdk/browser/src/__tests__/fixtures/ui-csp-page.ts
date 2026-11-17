@@ -4,7 +4,7 @@
  * `?nonce=off` drops the nonce so the test can see the policy block it.
  */
 import { readScriptOptions } from '../../auto-init';
-import { createScriptTagConsentClient as createConsentClient } from '../../script-tag-client';
+import { createTestingConsentClient as createConsentClient } from '../../testing-global';
 import type { ConsentClient } from '../../types';
 import { mountConsentUI } from '../../ui/mount';
 
@@ -31,7 +31,6 @@ const nonce =
 const client = createConsentClient(
 	{
 		...options,
-		mode: 'offline',
 		nonce,
 		overrides: { country: 'DE' },
 		ui: { disableAnimation: true },

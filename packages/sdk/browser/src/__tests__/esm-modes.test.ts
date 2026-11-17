@@ -1,9 +1,9 @@
 // @vitest-environment node
 /// <reference types="node" />
 /**
- * `init()` from the ES module entries: the mode is a factory, the factories
- * read what the build integration downloaded, and a page bundles only the
- * mode it imports.
+ * `init()` from the ES module entries: `backendURL` with an optional mode,
+ * `manifest()` reads what the build integration downloaded, and a page
+ * bundles only the mode it imports.
  */
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -14,7 +14,7 @@ import { build } from 'esbuild';
 import { describe, expect, it } from 'vitest';
 
 import { createConsentClient, hosted, manifest } from '../index';
-import { hostedWithBuild } from '../transports/hosted';
+import { testing } from '../testing';
 import { withBuildDefaults } from '../transports/manifest';
 
 const builtManifest: ConsentManifest = {
@@ -28,23 +28,47 @@ const buildOutput = {
 };
 
 describe('init() from @c15t/browser', () => {
+	it('throws for a mode name', () => {
+		expect(() =>
+			createConsentClient({
+				backendURL: 'https://backend.example',
+				mode: 'hosted',
+			} as unknown as Parameters<typeof createConsentClient>[0])
+		).toThrow('Mode names like "hosted" work only in the script-tag builds');
+	});
+
 	it.each([
-		['a mode name', { mode: 'hosted' }],
 		['no mode', {}],
-	])('throws for %s', (_name, options) => {
+		['hosted()', { mode: hosted() }],
+	])('needs a backend URL with %s', (_name, options) => {
 		expect(() =>
 			createConsentClient(
 				options as unknown as Parameters<typeof createConsentClient>[0]
 			)
-		).toThrow('`mode` must be a factory');
+		).toThrow(
+			'@c15t/browser: `backendURL` is required. Set it to your Inth project URL, or use `mode: testing()` from @c15t/browser/testing in tests.'
+		);
 	});
 
-	it('reports the factory kind as the mode', () => {
+	it.each([
+		['no mode', {}],
+		['hosted()', { mode: hosted() }],
+	])('asks the hosted backend with %s', (_name, options) => {
 		const client = createConsentClient({
-			mode: hosted({ backendURL: 'https://backend.example' }),
+			backendURL: 'https://backend.example',
+			...options,
 			ui: false,
 		});
 		expect(client.mode).toBe('hosted');
+	});
+
+	it('needs no backend URL for testing() or a disabled client', () => {
+		expect(createConsentClient({ mode: testing(), ui: false }).mode).toBe(
+			'testing'
+		);
+		expect(createConsentClient({ enabled: false, ui: false }).mode).toBe(
+			'hosted'
+		);
 	});
 });
 
@@ -92,23 +116,6 @@ describe('manifest() from @c15t/browser', () => {
 	});
 });
 
-describe('hosted() from @c15t/browser', () => {
-	it('defaults to the backend URL the build read', () => {
-		expect(hostedWithBuild({}, 'https://built.example').backendURL).toBe(
-			'https://built.example'
-		);
-		expect(
-			hostedWithBuild({ backendURL: '/api/c15t' }, 'https://built.example')
-				.backendURL
-		).toBe('/api/c15t');
-	});
-
-	it('needs a backend URL when the build set none', () => {
-		expect(() => hosted()).toThrow(
-			'@c15t/browser: hosted() needs `backendURL`. Pass it, or add consentManifest() from c15t/build to your Vite config and set VITE_C15T_BACKEND_URL (or VITE_INTH_PROJECT_URL).'
-		);
-	});
-});
 
 const SOURCE_DIR = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -125,32 +132,40 @@ const bundle = async function bundle(contents: string): Promise<string> {
 	return result.outputFiles.map((file) => file.text).join('\n');
 };
 
-/** A rule id in `recommendedPolicyRules()`, the offline default pack. */
-const OFFLINE_POLICY = 'quebec_opt_in';
+/** A rule id in `recommendedPolicyRules()`, the testing default pack. */
+const TESTING_POLICY = 'quebec_opt_in';
+/** The error `testing()` throws in a production build. */
+const TESTING_ERROR = 'is for tests and does not run in production';
 /** An error the manifest resolver throws (`@c15t/schema`). */
 const RESOLVER = 'Unsupported pack field';
 
 describe('first-load JavaScript of @c15t/browser', () => {
-	it('bundles neither offline mode nor the resolver for hosted()', async () => {
-		const code = await bundle(
-			"import { hosted, init } from './index';\ninit({ mode: hosted() });"
-		);
-		expect(code).not.toContain(OFFLINE_POLICY);
+	it.each([
+		['no mode', "import { init } from './index';\ninit({ backendURL: '/c' });"],
+		[
+			'hosted()',
+			"import { hosted, init } from './index';\ninit({ backendURL: '/c', mode: hosted() });",
+		],
+	])('bundles neither testing() nor the resolver with %s', async (_, entry) => {
+		const code = await bundle(entry);
+		expect(code).not.toContain(TESTING_POLICY);
+		expect(code).not.toContain(TESTING_ERROR);
 		expect(code).not.toContain(RESOLVER);
 	}, 60_000);
 
-	it('bundles the resolver but not offline mode for manifest()', async () => {
+	it('bundles the resolver but not testing() for manifest()', async () => {
 		const code = await bundle(
-			"import { init, manifest } from './index';\ninit({ mode: manifest() });"
+			"import { init, manifest } from './index';\ninit({ backendURL: '/c', mode: manifest() });"
 		);
-		expect(code).not.toContain(OFFLINE_POLICY);
+		expect(code).not.toContain(TESTING_POLICY);
 		expect(code).toContain(RESOLVER);
 	}, 60_000);
 
-	it('bundles the offline pack for offline()', async () => {
+	it('bundles the pack and the production check for testing()', async () => {
 		const code = await bundle(
-			"import { init, offline } from './index';\ninit({ mode: offline() });"
+			"import { init } from './index';\nimport { testing } from './testing';\ninit({ mode: testing() });"
 		);
-		expect(code).toContain(OFFLINE_POLICY);
+		expect(code).toContain(TESTING_POLICY);
+		expect(code).toContain(TESTING_ERROR);
 	}, 60_000);
 });

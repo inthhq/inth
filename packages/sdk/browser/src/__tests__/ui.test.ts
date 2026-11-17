@@ -2,7 +2,7 @@ import { policyRulePresets } from '@c15t/core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { classes } from '../generated/styles';
-import { createScriptTagConsentClient as createConsentClient } from '../script-tag-client';
+import { createTestingConsentClient as createConsentClient } from '../testing-global';
 import type {
 	ConsentClient,
 	ConsentUIHandle,
@@ -31,10 +31,9 @@ const mount = async function mount(
 }> {
 	const client = createConsentClient(
 		{
-			acknowledgeNoRecords: true,
 			consentCategories: ['measurement', 'marketing'],
 			legalLinks: { privacyPolicy: { href: '/privacy' } },
-			policyRules: [
+			policy: [
 				{
 					...policyRulePresets.europeOptIn(),
 					categories: ['measurement', 'marketing'],
@@ -222,7 +221,7 @@ describe('mountConsentUI', () => {
 			{},
 			{
 				overrides: { country: 'US', region: 'CA' },
-				policyRules: [
+				policy: [
 					{ ...policyRulePresets.usPrivacyStatesOptOut(), prompt: 'notice' },
 				],
 			}
@@ -243,7 +242,7 @@ describe('mountConsentUI', () => {
 			{},
 			{
 				overrides: { country: 'US', region: 'CA' },
-				policyRules: [
+				policy: [
 					{ ...policyRulePresets.usPrivacyStatesOptOut(), prompt: 'notice' },
 				],
 			}
@@ -547,7 +546,7 @@ describe('mountConsentUI', () => {
 				{ trigger: { showWhen: 'after-consent' } },
 				{
 					consentCategories: undefined,
-					policyRules: [
+					policy: [
 						{ ...policyRulePresets.europeOptIn(), match: { isDefault: true } },
 					],
 				}
@@ -644,7 +643,7 @@ describe('mountConsentUI', () => {
 					'measurement',
 					'functionality',
 				],
-				policyRules: [
+				policy: [
 					{
 						...policyRulePresets.europeOptIn(),
 						categories: [

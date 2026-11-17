@@ -10,22 +10,36 @@ const COMMON_EXCLUSIONS = [
 	/\/(?:packages\/(?:sdk\/)?browser|@c15t\/browser)\/(?:src|dist)\/(?:client|global|transports\/manifest)\.[jt]s(?:$|[?|])/u,
 	/\/(?:packages\/(?:sdk\/)?core|@c15t\/core)\/(?:src|dist)\/transports\/manifest[^/]*\.[jt]s(?:$|[?|])/u,
 ];
+/** The testing transport, its policy pack and the offline resolver. */
+const TESTING_ONLY = [
+	/\/(?:packages\/(?:sdk\/)?core|@c15t\/core)\/(?:src|dist)\/(?:transports\/(?:offline|testing)|testing)\.[jt]s(?:$|[?|])/u,
+	/\/(?:packages\/(?:sdk\/)?browser|@c15t\/browser)\/(?:src|dist)\/(?:policy-rules|testing-global)\.[jt]s(?:$|[?|])/u,
+	/\/(?:packages\/(?:sdk\/)?schema|@c15t\/schema)\/(?:src|dist)\/shared\/policy-rule-presets\.[jt]s(?:$|[?|])/u,
+];
 const HOSTED_EXCLUSIONS = [
 	...COMMON_EXCLUSIONS,
-	/\/(?:packages\/(?:sdk\/)?core|@c15t\/core)\/(?:src|dist)\/transports\/offline\.[jt]s(?:$|[?|])/u,
+	...TESTING_ONLY,
 	/\/(?:packages\/(?:sdk\/)?browser|@c15t\/browser)\/(?:src|dist)\/policy-rules\.[jt]s(?:$|[?|])/u,
 	/\/(?:packages\/(?:sdk\/)?schema|@c15t\/schema)\/(?:src|dist)\/shared\/(?:policy-rule-presets|policy-resolution|policy-rule|policy-rule-fingerprint)\.[jt]s(?:$|[?|])/u,
 ];
-const OFFLINE_EXCLUSIONS = [
+const TESTING_EXCLUSIONS = [
 	...COMMON_EXCLUSIONS,
 	/\/(?:packages\/(?:sdk\/)?core|@c15t\/core)\/(?:src|dist)\/transports\/(?:hosted[^/]*|mode)\.[jt]s(?:$|[?|])/u,
 ];
 
+type BoundaryMode = 'hosted' | 'production' | 'testing';
+
+const EXCLUSIONS: Record<BoundaryMode, RegExp[]> = {
+	hosted: HOSTED_EXCLUSIONS,
+	production: TESTING_ONLY,
+	testing: TESTING_EXCLUSIONS,
+};
+
 const assertModules = function assertModules(
-	mode: 'hosted' | 'offline',
+	mode: BoundaryMode,
 	modules: readonly BundledModule[]
 ): void {
-	const exclusions = mode === 'hosted' ? HOSTED_EXCLUSIONS : OFFLINE_EXCLUSIONS;
+	const exclusions = EXCLUSIONS[mode];
 	for (const module of modules) {
 		const id = (module.nameForCondition ?? module.identifier ?? '').replaceAll(
 			'\\',
@@ -50,7 +64,7 @@ const assertModules = function assertModules(
  * @returns A build plugin that fails if another mode enters the output.
  */
 export const modeBundleBoundary = (
-	mode: 'hosted' | 'offline'
+	mode: BoundaryMode
 ): Rspack.RspackPluginInstance => ({
 	apply(compiler) {
 		compiler.hooks.done.tap('BrowserModeBundleBoundary', (stats) => {

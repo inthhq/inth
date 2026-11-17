@@ -37,7 +37,6 @@ describe('UI host under page CSS that hides empty elements', () => {
 	])('keeps the banner visible with `%s`', async (rule) => {
 		addPageCSS(rule);
 		client = init({
-			mode: 'offline',
 			overrides: { country: 'DE' },
 			ui: { disableAnimation: true },
 		});

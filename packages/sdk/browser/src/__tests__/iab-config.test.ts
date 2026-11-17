@@ -11,7 +11,6 @@ const start = async (
 ): Promise<ConsentClient> => {
 	const client = init({
 		iab: { cmpId: 28, gvl: completeGVL },
-		mode: 'offline',
 		overrides: { country: 'DE' },
 		...options,
 		ui: { styles: false, ...(options.ui || {}) },

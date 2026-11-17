@@ -23,7 +23,6 @@ const openDialog = async function openDialog(
 	disableAnimation: boolean
 ): Promise<HTMLElement[]> {
 	client = init({
-		mode: 'offline',
 		overrides: { country: 'DE' },
 		ui: { colorScheme: 'light', disableAnimation },
 	});

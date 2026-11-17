@@ -1,5 +1,10 @@
-import { custom, policyRulePresets } from '@c15t/core';
-import type { PolicyRule } from '@c15t/core';
+import { policyRulePresets } from '@c15t/core';
+import type {
+	KernelTransport,
+	PolicyRule,
+	ProviderTransportFactory,
+} from '@c15t/core';
+import { hosted as hostedTransport } from '@c15t/core/transports';
 import {
 	POLICY_CONTRACT_HEADER,
 	POLICY_CONTRACT_VERSION,
@@ -9,19 +14,23 @@ import {
 import { translations } from '@c15t/translations/en';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createConsentClient as createHostedClient, hosted } from '../hosted';
+import { createConsentClient as createHostedClient } from '../hosted';
 import { createHostedConsentClient } from '../hosted-client';
-import {
-	createConsentClient as createOfflineEntryClient,
-	getEventDispatcher,
-	offline,
-} from '../offline';
-import { createOfflineConsentClient } from '../offline-client';
+import { createConsentClient, getEventDispatcher } from '../index';
+import { resolveRules } from '../policy-rules';
+import { testing } from '../testing';
+import { createTestingConsentClient } from '../testing-global';
 import type {
 	ConsentClient,
 	ConsentClientOptions,
 	ConsentUIOptions,
+	ScriptTagClientOptions,
+	TestingScriptTagOptions,
 } from '../types';
+
+/** A transport factory that hands the client `transport`. */
+const custom = (transport: Partial<KernelTransport>): ProviderTransportFactory =>
+	Object.assign(() => transport as KernelTransport, { kind: 'custom' as const });
 
 /** A query pair c15t adds to `/init`. */
 const INIT_PAIR =
@@ -44,9 +53,19 @@ const pathOf = (url: unknown): string => {
 
 const clients: ConsentClient[] = [];
 
-/** The offline entry's client, without the no-records warning. */
-const createOfflineClient: typeof createOfflineEntryClient = (options) =>
-	createOfflineEntryClient({ acknowledgeNoRecords: true, ...options });
+/** `@c15t/browser` with `testing()`, resolving `policy`. */
+const createTestingClient = ({
+	mode,
+	policy,
+	...options
+}: Omit<ConsentClientOptions, 'mode'> & {
+	mode?: ConsentClientOptions['mode'];
+	policy?: TestingScriptTagOptions['policy'];
+}): ConsentClient =>
+	createConsentClient({
+		...options,
+		mode: mode ?? testing({ policy: resolveRules(policy) }),
+	});
 const backendURL = 'https://consent.example.test';
 const authoredRule: PolicyRule = {
 	...policyRulePresets.europeOptIn(),
@@ -111,14 +130,14 @@ afterEach(() => {
 	document.body.replaceChildren();
 });
 
-describe.each(['hosted', 'offline'] as const)('%s browser entry', (mode) => {
+describe.each(['hosted', 'testing'] as const)('%s browser entry', (mode) => {
 	it('waits for start before requests, persistence and UI mounting', async () => {
 		const fetchSpy = vi.fn<typeof fetch>(() => Promise.resolve(initResponse()));
 		vi.stubGlobal('fetch', fetchSpy);
 		const client = track(
 			mode === 'hosted'
 				? createHostedClient({ backendURL, ui: uiOptions })
-				: createOfflineClient({ policyRules: [authoredRule], ui: uiOptions })
+				: createTestingClient({ policy: [authoredRule], ui: uiOptions })
 		);
 
 		expect(client.started).toBe(false);
@@ -160,8 +179,8 @@ describe.each(['hosted', 'offline'] as const)('%s browser entry', (mode) => {
 						reloadOnConsentRevoked: false,
 						ui: uiOptions,
 					})
-				: createOfflineClient({
-						policyRules: [authoredRule],
+				: createTestingClient({
+						policy: [authoredRule],
 						reloadOnConsentRevoked: false,
 						ui: uiOptions,
 					})
@@ -230,7 +249,7 @@ describe('hosted browser entry', () => {
 		const client = track(
 			createHostedClient({
 				backendURL,
-				policyRules: [policyRulePresets.worldNone()],
+				policy: [policyRulePresets.worldNone()],
 				ui: false,
 			})
 		);
@@ -257,7 +276,7 @@ describe('hosted browser entry', () => {
 		);
 		const client = track(
 			createHostedClient({
-				mode: hosted({
+				mode: hostedTransport({
 					backendURL: `${backendURL}/api/`,
 					fetch: fetchSpy,
 					headers: {
@@ -359,7 +378,7 @@ describe('hosted browser entry', () => {
 	);
 });
 
-describe('offline browser entry', () => {
+describe('testing browser entry', () => {
 	it.each([
 		['DE', undefined, 'opt-in', false],
 		['US', 'CA', 'opt-out', true],
@@ -370,10 +389,10 @@ describe('offline browser entry', () => {
 			const fetchSpy = vi.fn<typeof fetch>();
 			vi.stubGlobal('fetch', fetchSpy);
 			const client = track(
-				createOfflineClient({
+				createTestingClient({
 					consentCategories: ['measurement'],
 					overrides: { country, region },
-					policyRules: ['europeOptIn', 'usPrivacyStatesOptOut', 'worldNone'],
+					policy: ['europeOptIn', 'usPrivacyStatesOptOut', 'worldNone'],
 					ui: false,
 				})
 			);
@@ -388,14 +407,13 @@ describe('offline browser entry', () => {
 		const fetchSpy = vi.fn<typeof fetch>();
 		vi.stubGlobal('fetch', fetchSpy);
 		const client = track(
-			createOfflineClient({
+			createTestingClient({
 				consentCategories: ['measurement', 'experience'],
 				i18n: {
 					messages: { de: { cookieBanner: { title: 'Ihre Privatsphäre' } } },
 				},
-				mode: offline({
-					acknowledgeNoRecords: true,
-					policyRules: [
+				mode: testing({
+					policy: [
 						{
 							...authoredRule,
 							categories: ['experience'],
@@ -425,7 +443,7 @@ describe('offline browser entry', () => {
 		const fetchSpy = vi.fn<typeof fetch>();
 		vi.stubGlobal('fetch', fetchSpy);
 		const client = track(
-			createOfflineClient({ policyRules: [authoredRule], ui: false })
+			createTestingClient({ policy: [authoredRule], ui: false })
 		);
 		client.start();
 		await client.ready();
@@ -435,7 +453,7 @@ describe('offline browser entry', () => {
 		client.dispose();
 
 		const next = track(
-			createOfflineClient({ policyRules: [authoredRule], ui: false })
+			createTestingClient({ policy: [authoredRule], ui: false })
 		);
 		next.start();
 		await next.ready();
@@ -450,8 +468,8 @@ describe('offline browser entry', () => {
 		vi.stubGlobal('fetch', vi.fn<typeof fetch>());
 		const capture = vi.fn();
 		const client = track(
-			createOfflineClient({
-				policyRules: [authoredRule],
+			createTestingClient({
+				policy: [authoredRule],
 				scripts: [
 					{
 						callbackOnly: true,
@@ -480,24 +498,20 @@ const manifest = {
 	revision: '1',
 	schemaVersion: 2 as const,
 };
-const hostedInvalidCases: [string, ConsentClientOptions][] = [
+const hostedInvalidCases: [string, ScriptTagClientOptions][] = [
 	['missing backend', {}],
-	['preset names', { backendURL, policyRules: ['europeOptIn'] }],
 	['inline manifest', { backendURL, manifest }],
 	['manifest URL', { backendURL, manifestURL: '/manifest' }],
-	['offline mode', { backendURL, mode: 'offline' }],
 	['manifest mode', { backendURL, mode: 'manifest' }],
-	['offline factory', { mode: offline() }],
+	['testing()', { mode: testing() as never }],
 	['custom factory', { mode: custom({}) }],
 ];
-const offlineInvalidCases: [string, ConsentClientOptions][] = [
-	['backend URL', { backendURL }],
-	['inline manifest', { manifest }],
-	['manifest URL', { manifestURL: '/manifest' }],
-	['hosted mode', { mode: 'hosted' }],
-	['manifest mode', { mode: 'manifest' }],
-	['hosted factory', { mode: hosted({ backendURL }) }],
-	['custom factory', { mode: custom({}) }],
+const testingInvalidCases: [string, TestingScriptTagOptions][] = [
+	['backend URL', { backendURL } as never],
+	['inline manifest', { manifest } as never],
+	['manifest URL', { manifestURL: '/manifest' } as never],
+	['hosted mode', { mode: 'hosted' } as never],
+	['manifest mode', { mode: 'manifest' } as never],
 ];
 
 describe('mode-specific JavaScript configuration', () => {
@@ -514,13 +528,13 @@ describe('mode-specific JavaScript configuration', () => {
 		}
 	);
 
-	it.each(offlineInvalidCases)(
-		'rejects %s in the offline entry before startup',
+	it.each(testingInvalidCases)(
+		'rejects %s in the testing script before startup',
 		(_name, options) => {
 			const fetchSpy = vi.fn<typeof fetch>();
 			vi.stubGlobal('fetch', fetchSpy);
-			expect(() => createOfflineConsentClient(options)).toThrow(
-				/@c15t\/browser\/offline/u
+			expect(() => createTestingConsentClient(options, {})).toThrow(
+				/@c15t\/browser\/testing/u
 			);
 			expect(fetchSpy).not.toHaveBeenCalled();
 			expect(document.querySelector('[data-c15t-ui]')).toBeNull();

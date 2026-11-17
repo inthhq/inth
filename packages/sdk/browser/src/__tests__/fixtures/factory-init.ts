@@ -1,56 +1,43 @@
 /**
- * `init()` from the ES module entries takes a mode factory. These wrappers
- * turn the script-tag options many tests share (`mode: 'offline'`, preset
- * names in `policyRules`) into that factory, so a test describes its
- * policy once.
+ * `init()` from the ES module entries with `testing()`, for tests that
+ * describe their policy with rules or preset names and need no backend.
  */
-import { offline } from '@c15t/core';
-
 import { init as initIABEntry } from '../../iab';
 import { init as initEntry } from '../../index';
 import { resolveRules } from '../../policy-rules';
+import { testing } from '../../testing';
 import type {
 	ConsentClient,
 	ConsentClientOptions,
-	ScriptTagClientOptions,
+	TestingScriptTagOptions,
 } from '../../types';
 
 /**
- * Turns script-tag options into ES module options with an offline factory.
+ * Turns test options into ES module options with `testing({ policy })`.
  *
- * @param options - Options with an optional mode name and policy rules.
- * @returns The same options with `mode` as a factory.
+ * @param options - Options with an optional policy, as rules or preset
+ *   names.
+ * @returns The same options with `mode: testing()`.
  */
 export const toFactoryOptions = function toFactoryOptions(
-	options: ScriptTagClientOptions = {}
+	options: TestingScriptTagOptions = {}
 ): ConsentClientOptions {
-	const {
-		backendURL: _backendURL,
-		manifest: _manifest,
-		manifestURL: _manifestURL,
-		mode,
-		policyRules,
-		...rest
-	} = options;
-	if (typeof mode === 'function') {
+	const { mode, policy, ...rest } = options;
+	if (mode !== undefined) {
 		return { ...rest, mode };
-	}
-	if (mode !== undefined && mode !== 'offline') {
-		throw new Error(`factory-init only translates offline mode, not ${mode}.`);
 	}
 	return {
 		...rest,
-		mode: offline({
-			acknowledgeNoRecords: true,
-			policyRules: resolveRules(policyRules),
-		}),
+		mode: testing(
+			policy === undefined ? {} : { policy: resolveRules(policy) }
+		),
 	};
 };
 
-/** `init()` from `@c15t/browser`, with script-tag options. */
-export const init = (options?: ScriptTagClientOptions): ConsentClient =>
+/** `init()` from `@c15t/browser`, with `testing()`. */
+export const init = (options?: TestingScriptTagOptions): ConsentClient =>
 	initEntry(toFactoryOptions(options));
 
-/** `init()` from `@c15t/browser/iab`, with script-tag options. */
-export const initIAB = (options?: ScriptTagClientOptions): ConsentClient =>
+/** `init()` from `@c15t/browser/iab`, with `testing()`. */
+export const initIAB = (options?: TestingScriptTagOptions): ConsentClient =>
 	initIABEntry(toFactoryOptions(options));

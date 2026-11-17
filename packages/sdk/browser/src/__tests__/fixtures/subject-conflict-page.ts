@@ -12,7 +12,7 @@ import { ConsentSaveRejectedError } from '@c15t/core';
 import type { ProviderTransportFactory, SavePayload } from '@c15t/core';
 
 import { createScriptTagConsentClient as createConsentClient } from '../../script-tag-client';
-import { offline } from '../../transports/offline';
+import { testing } from '../../testing';
 import type { ConsentClient } from '../../types';
 
 /** Subject ids the fake backend refuses, as a JSON array. */
@@ -72,7 +72,7 @@ const save = async (payload: SavePayload) => {
 	return { ok: true as const, subjectId: payload.subjectId };
 };
 
-const local = offline({ acknowledgeNoRecords: true });
+const local = testing().transport;
 const mode: ProviderTransportFactory = Object.assign(
 	(context: Parameters<ProviderTransportFactory>[0]) => ({
 		...local(context),

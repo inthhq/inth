@@ -58,7 +58,6 @@ it('lists Google ad tech providers with their privacy policy and a consent switc
 			cmpId: 28,
 			gvl: completeGVL,
 		},
-		mode: 'offline',
 		overrides: { country: 'DE' },
 		ui: { styles: false },
 	});
@@ -104,7 +103,6 @@ it('lists Google ad tech providers with their privacy policy and a consent switc
 it('shows a provider list that lands after the dialog rendered', async () => {
 	const client = init({
 		iab: { cmpId: 28, gvl: completeGVL },
-		mode: 'offline',
 		overrides: { country: 'DE' },
 		ui: { styles: false },
 	});
@@ -177,7 +175,6 @@ it('offers the purposes a provider needs when its list lands after the dialog re
 	};
 	const client = init({
 		iab: { cmpId: 28, gvl },
-		mode: 'offline',
 		overrides: { country: 'DE' },
 		ui: { styles: false },
 	});

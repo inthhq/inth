@@ -15,7 +15,6 @@ import type {
 	KernelActiveUI,
 	KernelOverrides,
 	KernelUser,
-	PolicyRule,
 	SaveResult,
 	SaveInput,
 	ProviderTransportFactory,
@@ -100,7 +99,7 @@ export interface CreateConsentClientContext {
 /** Transport already selected by an entry point. */
 export interface ResolvedMode {
 	factory: ProviderTransportFactory;
-	name: ConsentModeName | 'custom';
+	name: ConsentModeName | 'testing' | 'custom';
 }
 
 const dispatchDocumentEvent = function dispatchDocumentEvent(
@@ -159,16 +158,14 @@ const resolvePageAction = function resolvePageAction(
  *
  * @param options - Client options.
  * @param mode - The selected transport.
- * @param policyRules - Authored rules after preset expansion, if any.
  * @param context - Entry-point wiring.
  * @returns The client.
  * @throws {Error} When the mode cannot be resolved from the options.
  */
 // oxlint-disable-next-line max-lines-per-function -- One cohesive lifecycle: construct, start, dispose.
 export const createConsentClientWith = function createConsentClientWith(
-	options: ScriptTagClientOptions,
+	options: Omit<ScriptTagClientOptions, 'mode'>,
 	mode: ResolvedMode,
-	policyRules: PolicyRule[] | undefined,
 	context: CreateConsentClientContext = {}
 ): ConsentClient {
 	if (options.iab && options.iab.enabled !== false && !context.createIAB) {
@@ -193,7 +190,6 @@ export const createConsentClientWith = function createConsentClientWith(
 		overrides: options.overrides,
 		persistence: options.persistence,
 		pkg: options.pkg ?? context.pkg ?? '@c15t/browser',
-		policyRules,
 		prefetch: options.prefetch,
 		presentation: options.presentation,
 		reloadOnConsentRevoked: options.reloadOnConsentRevoked,

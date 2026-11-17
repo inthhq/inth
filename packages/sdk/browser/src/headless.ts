@@ -7,12 +7,14 @@
  *
  * @example
  * ```ts
- * import { hosted, init } from '@c15t/browser/headless';
+ * import { init } from '@c15t/browser/headless';
  *
- * const c15t = init({ mode: hosted({ backendURL: 'https://your-instance.c15t.dev' }) });
+ * const c15t = init({ backendURL: 'https://your-project.inth.app' });
  * c15t.on('ui', (surface) => banner.hidden = surface !== 'banner');
  * ```
  */
+
+import type { WithBackendURL } from '@c15t/core/runtime';
 
 import { createConsentClient as createClient } from './client';
 import type { ConsentClient, ConsentClientOptions } from './types';
@@ -26,7 +28,7 @@ const PKG = '@c15t/browser/headless';
  * @returns The client.
  */
 export const createConsentClient = function createConsentClient(
-	options: ConsentClientOptions
+	options: WithBackendURL<ConsentClientOptions>
 ): ConsentClient {
 	return createClient({ ...options, ui: false }, { pkg: PKG });
 };
@@ -38,7 +40,7 @@ export const createConsentClient = function createConsentClient(
  * @returns The started client.
  */
 export const init = function init(
-	options: ConsentClientOptions
+	options: WithBackendURL<ConsentClientOptions>
 ): ConsentClient {
 	const client = createConsentClient(options);
 	client.start();
@@ -46,7 +48,6 @@ export const init = function init(
 };
 
 export {
-	custom,
 	resolveActionLabels,
 	resolveConsentPresentation,
 	resolvePreferenceControlLabels,
@@ -54,15 +55,14 @@ export {
 } from '@c15t/core';
 export { ACTION_ATTRIBUTE, PREFERENCES_HASH } from './client';
 export type { PageAction } from './client';
-export { resolveRules } from './policy-rules';
 export { getEventDispatcher } from '@c15t/core/events';
 export type {
 	EventDispatcher,
 	EventProperties,
 	RuntimeEventDispatcherOptions as GetEventDispatcherOptions,
 } from '@c15t/core/events';
-export { hosted } from './transports/hosted';
-export type { HostedOptions } from './transports/hosted';
+export { hosted } from '@c15t/core/modes';
+export type { HostedMode } from '@c15t/core/modes';
 export {
 	ACTIVATED_ATTRIBUTE,
 	activateGatedScripts,
@@ -73,8 +73,6 @@ export type {
 	BrowserManifestModeFactory,
 	ManifestModeOptions,
 } from './transports/manifest';
-export { local, offline } from './transports/offline';
-export type { OfflineModeOptions } from './transports/offline';
 export type {
 	ConsentClient,
 	ConsentClientEventMap,
@@ -83,7 +81,6 @@ export type {
 	ConsentModeName,
 	ScriptTagClientOptions,
 	ConsentSaveInput,
-	PolicyPresetName,
 } from './types';
 export { version } from './version';
 export type {

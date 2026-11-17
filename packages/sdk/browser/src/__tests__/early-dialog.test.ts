@@ -13,7 +13,7 @@ import type { InitUI } from '../init/boot';
 import { DIALOG_KEY, loadDialogFile } from '../init/dialog-file';
 import { openEarlyDialog } from '../init/early-dialog';
 import type { EarlyDialogHost } from '../init/early-dialog';
-import { createScriptTagConsentClient } from '../script-tag-client';
+import { createTestingConsentClient as createScriptTagConsentClient } from '../testing-global';
 import type { ConsentClient } from '../types';
 import { createDialog } from '../ui/dialog';
 import { importDialog } from '../ui/dialog-import-script';
@@ -40,9 +40,8 @@ const resolvedSnapshot =
 	async function resolvedSnapshot(): Promise<ConsentSnapshot> {
 		const client = createScriptTagConsentClient(
 			{
-				acknowledgeNoRecords: true,
 				consentCategories: ['measurement', 'marketing'],
-				policyRules: [
+				policy: [
 					{
 						...policyRulePresets.europeOptIn(),
 						categories: ['measurement', 'marketing'],

@@ -31,20 +31,24 @@ import type {
 	ConsentRuntimeOptions,
 	RuntimeNetworkBlockerOptions,
 } from '@c15t/core/runtime';
+import type { HostedMode } from '@c15t/core/modes';
+import type { ConsentTesting } from '@c15t/core/testing';
 import type { ConsentManifest } from '@c15t/schema/types';
 import type { Theme } from '@c15t/ui/theme';
 
 /**
  * The transports a script-tag site can name without importing anything.
- * `init()` from `@c15t/browser` takes a factory instead.
+ * `init()` from `@c15t/browser` takes `hosted()` or a factory instead.
  *
  * - `hosted` — `GET /init` and `POST /subjects` against `backendURL`.
- * - `offline` — no backend; policy resolved from `policies` (or a default
- *   opt-in banner) and consent kept in the browser only.
  * - `manifest` — the backend's cacheable `/manifest` inlined or fetched,
  *   resolved locally so the banner can render without waiting on `/init`.
+ *   Falls back to `/init` with a warning when the manifest is unavailable.
+ *
+ * Tests load `c15t.testing.js` instead, which resolves a policy with no
+ * backend.
  */
-export type ConsentModeName = 'hosted' | 'offline' | 'manifest';
+export type ConsentModeName = 'hosted' | 'manifest';
 
 /** A built-in policy pack, by the name `policyRulePresets` exports it under. */
 export type PolicyPresetName = keyof typeof policyRulePresets;
@@ -306,19 +310,29 @@ export interface ConsentClientBaseOptions extends Pick<
  *
  * @example
  * ```ts
- * import { init, manifest } from '@c15t/browser';
+ * import { init } from '@c15t/browser';
  *
- * init({ mode: manifest() });
+ * init({ backendURL: 'https://your-project.inth.app' });
  * ```
  */
 export interface ConsentClientOptions extends ConsentClientBaseOptions {
 	/**
-	 * Transport: a factory from `manifest()`, `hosted()`, `local()` or
-	 * `custom()`. Import only the one you use, so the bundler leaves the
-	 * others out. Mode names such as `'hosted'` work only in the
-	 * script-tag builds.
+	 * Backend URL: your Inth project URL. Required unless `mode` is
+	 * `testing()` or `enabled` is `false`.
 	 */
-	mode: ProviderTransportFactory;
+	backendURL?: string;
+	/**
+	 * How the visitor's policy is resolved.
+	 *
+	 * - Omitted, or `hosted()`: ask `${backendURL}/init`.
+	 * - `manifest()`: resolve from the backend's consent manifest in the
+	 *   browser, falling back to `/init` with a warning when it is
+	 *   unavailable. Import it only if you use it, so the bundler leaves
+	 *   it out otherwise.
+	 * - `testing()` from `@c15t/browser/testing`: resolve a policy with no
+	 *   backend, for tests. It throws in production builds.
+	 */
+	mode?: ProviderTransportFactory | HostedMode | ConsentTesting;
 }
 
 /**
@@ -330,12 +344,14 @@ export interface ConsentClientOptions extends ConsentClientBaseOptions {
 export interface ScriptTagClientOptions extends ConsentClientBaseOptions {
 	/**
 	 * Transport. A name picks one of the built-in modes; a factory from
-	 * `c15t.hosted()`, `c15t.local()`, `c15t.manifest()` or
-	 * `c15t.custom()` is used as is. Defaults to `manifest` when a manifest
-	 * is given, `hosted` when a `backendURL` is given, otherwise `offline`.
+	 * `c15t.manifest()` is used as is. Defaults to `manifest` when a
+	 * manifest is given, otherwise `hosted`.
 	 */
 	mode?: ProviderTransportFactory | ConsentModeName;
-	/** Backend origin for `hosted` and `manifest` modes. */
+	/**
+	 * Backend origin: your Inth project URL. Required, except in
+	 * `c15t.testing.js`.
+	 */
 	backendURL?: string;
 	/** Inline consent manifest for `manifest` mode. */
 	manifest?: ConsentManifest;
@@ -344,47 +360,43 @@ export interface ScriptTagClientOptions extends ConsentClientBaseOptions {
 	 * `/manifest` endpoint require an explicit `backendURL`.
 	 */
 	manifestURL?: string;
-	/**
-	 * Policy rules for `offline` mode. A preset name such as
-	 * `'europeOptIn'` stands in for `policyRulePresets.europeOptIn()`, so a
-	 * JSON config or a `data-policy-rules` attribute can name them.
-	 */
-	policyRules?: (PolicyRule | PolicyPresetName)[];
-	/**
-	 * Hide the warning that `offline` mode keeps no consent records. The
-	 * script-tag files show it once per page on development hosts such as
-	 * `localhost`. `data-acknowledge-no-records` on the tag sets it.
-	 */
-	acknowledgeNoRecords?: boolean;
 }
 
 /** Options for `@c15t/browser/hosted` and the default `c15t.js` bundle. */
 export interface HostedConsentClientOptions extends Omit<
 	ScriptTagClientOptions,
-	'acknowledgeNoRecords' | 'mode' | 'manifest' | 'manifestURL' | 'policyRules'
+	'mode' | 'manifest' | 'manifestURL'
 > {
 	/** Defaults to hosted. Factories must have `kind: 'hosted'`. */
-	mode?: 'hosted' | ProviderTransportFactory;
+	mode?: 'hosted' | HostedMode | ProviderTransportFactory;
 	/** Hosted bundles do not resolve manifests in the browser. */
 	manifest?: never;
 	/** Hosted bundles do not fetch manifests in the browser. */
 	manifestURL?: never;
-	/** Authored rules passed to the hosted factory. Preset names are excluded. */
-	policyRules?: PolicyRule[];
 }
 
-/** Options for `@c15t/browser/offline` and `c15t.local.js`. */
-export interface OfflineConsentClientOptions extends Omit<
+/** Options for `c15t.testing.js`. */
+export interface TestingScriptTagOptions extends Omit<
 	ScriptTagClientOptions,
 	'mode' | 'backendURL' | 'manifest' | 'manifestURL'
 > {
-	/** Defaults to offline. Factories must have `kind: 'offline'`. */
-	mode?: 'offline' | ProviderTransportFactory;
-	/** Offline bundles persist locally without a consent backend. */
+	/**
+	 * Always `testing()`: a value from `c15t.testing()`, or a transport
+	 * factory a test stands in for the backend with, is used as is.
+	 */
+	mode?: ConsentTesting | ProviderTransportFactory;
+	/**
+	 * Policy rules to resolve instead of the recommended pack. A preset name
+	 * such as `'europeOptIn'` stands in for
+	 * `policyRulePresets.europeOptIn()`, so a JSON config or a
+	 * `data-policy` attribute can name them.
+	 */
+	policy?: (PolicyRule | PolicyPresetName)[];
+	/** The testing file needs no backend. */
 	backendURL?: never;
-	/** Offline bundles resolve authored rules or presets, not manifests. */
+	/** The testing file resolves rules, not manifests. */
 	manifest?: never;
-	/** Offline bundles do not fetch manifests. */
+	/** The testing file does not fetch manifests. */
 	manifestURL?: never;
 }
 
@@ -441,7 +453,7 @@ export interface ConsentClient {
 	 */
 	readonly theme: Theme | undefined;
 	/** Which transport is in use. */
-	readonly mode: ConsentModeName | 'custom';
+	readonly mode: ConsentModeName | 'testing' | 'custom';
 	/** Categories the UI should offer, after policy filtering. */
 	readonly consentCategories: AllConsentNames[];
 	/** The mounted UI, if any. */

@@ -45,9 +45,8 @@ const driver = (shadow: boolean): TestDriver => ({
 						) as GlobalVendorList,
 					}
 				: undefined,
-			mode: 'offline',
 			overrides: { country: 'DE' },
-			policyRules: [iab ? 'europeIab' : 'europeOptIn'],
+			policy: [iab ? 'europeIab' : 'europeOptIn'],
 			presentation: provided?.presentation,
 			ui: {
 				banner: { trapFocus: provided?.trapFocus },

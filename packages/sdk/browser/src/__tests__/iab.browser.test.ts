@@ -16,7 +16,6 @@ const start = async (shadow: boolean) => {
 	document.body.append(opener);
 	client = init({
 		iab: { cmpId: 28, gvl: completeGVL },
-		mode: 'offline',
 		overrides: { country: 'DE' },
 		ui: { disableAnimation: true, shadow },
 	});

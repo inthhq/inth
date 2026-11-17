@@ -63,7 +63,6 @@ const render = async (
 				...gvlOverrides,
 			},
 		},
-		mode: 'offline',
 		overrides: { country: 'DE' },
 		ui: false,
 	});

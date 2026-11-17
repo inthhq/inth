@@ -35,8 +35,10 @@ import { modeBundleBoundary } from './scripts/mode-bundle-boundary';
  *   and trigger, the stylesheet, and auto-init from the `<script>` tag's
  *   `data-*` attributes. It also works as a tag of its own, with
  *   `dist/c15t.dialog.js` next to it.
- * - `dist/c15t.local.js` — the stock UI with local policy resolution.
- *   `dist/c15t.offline.js` is its deprecated old name.
+ * - `dist/c15t.testing.js` — the stock UI with `testing()`, for test
+ *   pages: it resolves a policy in the browser with no backend. Built
+ *   without `NODE_ENV=production`, so `testing()` runs; no other file
+ *   contains its transport or the policy pack.
  * - `dist/c15t.headless.js` — the same without any UI or CSS, for sites
  *   that render their own banner against `window.c15t`.
  * - `dist/c15t.iab.js` — an optional replacement with the CMP and IAB UI.
@@ -60,8 +62,8 @@ const HOSTED_BUNDLES = new Set([
 	'c15t.records',
 ]);
 
-/** Script builds that run local mode only. */
-const LOCAL_BUNDLES = new Set(['c15t.local', 'c15t.offline']);
+/** Script builds that run hosted or manifest mode: no testing transport. */
+const PRODUCTION_BUNDLES = new Set(['c15t.headless', 'c15t.iab', 'c15t.gpp']);
 
 /**
  * The ESM build loads the preference centre on demand
@@ -97,6 +99,10 @@ const scriptTagLib = function scriptTagLib(name: string, entry: string) {
 			},
 		},
 		source: {
+			// The testing file must let `testing()` run: it is for test pages.
+			...(name === 'c15t.testing'
+				? { define: { 'process.env.NODE_ENV': JSON.stringify('test') } }
+				: {}),
 			entry: { [name]: entry },
 		},
 		// A fixed target keeps the CDN file readable by every browser that
@@ -170,7 +176,10 @@ const scriptTagLib = function scriptTagLib(name: string, entry: string) {
 								),
 							]
 						: []),
-					...(LOCAL_BUNDLES.has(name) ? [modeBundleBoundary('offline')] : []),
+					...(PRODUCTION_BUNDLES.has(name)
+						? [modeBundleBoundary('production')]
+						: []),
+					...(name === 'c15t.testing' ? [modeBundleBoundary('testing')] : []),
 				],
 			},
 		},
@@ -193,7 +202,7 @@ export default defineConfig({
 					hosted: './src/hosted.ts',
 					iab: './src/iab.ts',
 					index: './src/index.ts',
-					offline: './src/offline.ts',
+					testing: './src/testing.ts',
 					'postcss-tailwind3': './src/postcss-tailwind3.ts',
 					prefetch: './src/prefetch.ts',
 				},
@@ -204,8 +213,7 @@ export default defineConfig({
 		scriptTagLib('c15t.commit', './src/entries/cdn-commit.ts'),
 		scriptTagLib('c15t.records', './src/entries/cdn-records.ts'),
 		scriptTagLib('c15t.dialog', './src/entries/cdn-dialog.ts'),
-		scriptTagLib('c15t.local', './src/entries/cdn-local.ts'),
-		scriptTagLib('c15t.offline', './src/entries/cdn-offline.ts'),
+		scriptTagLib('c15t.testing', './src/entries/cdn-testing.ts'),
 		scriptTagLib('c15t.headless', './src/entries/cdn-headless.ts'),
 		scriptTagLib('c15t.iab', './src/entries/cdn-iab.ts'),
 		scriptTagLib('c15t.devtools', './src/entries/cdn-devtools.ts'),

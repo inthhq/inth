@@ -1,6 +1,8 @@
 /**
  * `@c15t/browser/hosted`: the hosted client and stock UI.
  */
+import type { WithBackendURL } from '@c15t/core/runtime';
+
 import { createHostedConsentClient } from './hosted-client';
 import type { ConsentClient, HostedConsentClientOptions } from './types';
 import { mountConsentUI } from './ui/mount';
@@ -13,7 +15,7 @@ import { mountConsentUI } from './ui/mount';
  * @throws {Error} When options require another bundle.
  */
 export const createConsentClient = function createConsentClient(
-	options: HostedConsentClientOptions = {}
+	options: WithBackendURL<HostedConsentClientOptions>
 ): ConsentClient {
 	return createHostedConsentClient(options, {
 		mountUI: mountConsentUI,
@@ -29,7 +31,7 @@ export const createConsentClient = function createConsentClient(
  * @throws {Error} When options require another bundle.
  */
 export const init = function init(
-	options: HostedConsentClientOptions = {}
+	options: WithBackendURL<HostedConsentClientOptions>
 ): ConsentClient {
 	const client = createConsentClient(options);
 	client.start();
@@ -43,9 +45,8 @@ export {
 	activateGatedScripts,
 	CATEGORY_ATTRIBUTE,
 } from './gated-scripts';
-export { hosted } from './transports/hosted';
-export type { HostedOptions } from './transports/hosted';
-export type { HostedModeOptions } from '@c15t/core';
+export { hosted } from '@c15t/core/modes';
+export type { HostedMode } from '@c15t/core/modes';
 export type {
 	ConsentBannerOptions,
 	ConsentClient,

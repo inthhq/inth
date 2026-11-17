@@ -1,9 +1,16 @@
-import { custom } from '@c15t/core';
+import type { KernelTransport, ProviderTransportFactory } from '@c15t/core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { readPageOptions, readScriptOptions } from '../auto-init';
-import { autoInit, createGlobal, installGlobal } from '../global';
-import type { C15tGlobal } from '../global';
+import { autoInit, installGlobal } from '../global';
+import {
+	createTestingGlobal as createGlobal,
+} from '../testing-global';
+import type { TestingC15tGlobal as C15tGlobal } from '../testing-global';
+
+/** A transport factory that hands the client `transport`. */
+const custom = (transport: Partial<KernelTransport>): ProviderTransportFactory =>
+	Object.assign(() => transport as KernelTransport, { kind: 'custom' as const });
 
 type TestWindow = Window & {
 	c15t?: unknown;
@@ -47,7 +54,6 @@ describe('readScriptOptions', () => {
 				'data-color-scheme': 'dark',
 				'data-country': 'DE',
 				'data-hide-branding': '',
-				'data-policy-rules': 'europeOptIn,worldNone',
 				'data-privacy-policy-url': '/privacy',
 				'data-trigger': 'true',
 			})
@@ -58,7 +64,6 @@ describe('readScriptOptions', () => {
 			consentCategories: ['measurement', 'marketing'],
 			legalLinks: { privacyPolicy: { href: '/privacy' } },
 			overrides: { country: 'DE' },
-			policyRules: ['europeOptIn', 'worldNone'],
 			ui: {
 				banner: { hideBranding: true, legalLinks: ['privacyPolicy'] },
 				colorScheme: 'dark',
@@ -242,7 +247,7 @@ describe('readPageOptions', () => {
 describe('window.c15t', () => {
 	it('reuses the installed client when the script tag loads twice', async () => {
 		const first = installGlobal(createGlobal({ pkg: '@c15t/browser' }));
-		first.init({ acknowledgeNoRecords: true, ui: false });
+		first.init({ ui: false });
 		await first.ready();
 		const second = installGlobal(createGlobal({ pkg: '@c15t/browser' }));
 		expect(second).toBe(first);
@@ -256,7 +261,6 @@ describe('window.c15t', () => {
 		const api = createGlobal({ pkg: 'test' });
 		installGlobal(api);
 		api.config({
-			acknowledgeNoRecords: true,
 			consentCategories: ['measurement'],
 			ui: false,
 		});
@@ -277,7 +281,6 @@ describe('window.c15t', () => {
 		expect(() => api.getSnapshot()).toThrow(/init/u);
 
 		api.init({
-			acknowledgeNoRecords: true,
 			consentCategories: ['measurement'],
 			ui: false,
 		});
@@ -286,7 +289,7 @@ describe('window.c15t', () => {
 		await vi.waitFor(() => {
 			expect(onReady).toHaveBeenCalledOnce();
 		});
-		expect(api.mode).toBe('offline');
+		expect(api.mode).toBe('testing');
 		expect(testWindow.c15t).toBe(api);
 		expect(api.version).toBeTypeOf('string');
 	});
@@ -297,7 +300,6 @@ describe('window.c15t', () => {
 			[
 				'config',
 				{
-					acknowledgeNoRecords: true,
 					consentCategories: ['measurement'],
 					ui: false,
 				},
@@ -324,7 +326,6 @@ describe('window.c15t', () => {
 		api.config({ consentCategories: ['marketing'], ui: false });
 
 		const client = api.init({
-			acknowledgeNoRecords: true,
 			consentCategories: ['measurement'],
 		});
 		api.config({ consentCategories: ['functionality'] });
@@ -339,7 +340,6 @@ describe('window.c15t', () => {
 		const api = createGlobal({ pkg: '@c15t/browser/test' });
 		installGlobal(api);
 		const first = api.init({
-			acknowledgeNoRecords: true,
 			consentCategories: ['measurement'],
 			ui: false,
 		});
@@ -350,7 +350,6 @@ describe('window.c15t', () => {
 		api.on('ready', onReady);
 		const ready = api.ready();
 		const second = api.init({
-			acknowledgeNoRecords: true,
 			consentCategories: ['marketing'],
 			ui: false,
 		});
@@ -367,7 +366,7 @@ describe('window.c15t', () => {
 		const api = createGlobal({ pkg: '@c15t/browser/test' });
 		installGlobal(api);
 
-		api.init({ acknowledgeNoRecords: true, ui: false });
+		api.init({ ui: false });
 
 		// `@c15t/core` writes its own frozen debug object there on start.
 		expect(testWindow.c15t).toBe(api);

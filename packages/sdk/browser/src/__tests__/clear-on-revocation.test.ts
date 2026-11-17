@@ -1,7 +1,8 @@
 import { afterEach, expect, it, vi } from 'vitest';
 
-import { createGlobal, installGlobal } from '../global';
-import type { C15tGlobal } from '../global';
+import { installGlobal } from '../global';
+import { createTestingGlobal as createGlobal } from '../testing-global';
+import type { TestingC15tGlobal as C15tGlobal } from '../testing-global';
 import type { ConsentClientOptions } from '../types';
 
 const testWindow = window as Window & { c15t?: unknown };
@@ -37,7 +38,6 @@ it.each(['direct init', 'queued config'])(
 	'clears denied browser data through %s and preserves granted categories',
 	async (configuration) => {
 		const options: ConsentClientOptions = {
-			acknowledgeNoRecords: true,
 			clearOnRevocation: {
 				marketing: { localStorage: ['marketing:visitor'] },
 				measurement: {
@@ -46,8 +46,7 @@ it.each(['direct init', 'queued config'])(
 					sessionStorage: ['analytics:session'],
 				},
 			},
-			mode: 'offline',
-			policyRules: [
+			policy: [
 				{
 					categories: ['measurement', 'marketing'],
 					id: 'cleanup-test',

@@ -1,3 +1,4 @@
+import type { ProviderTransportFactory } from '@c15t/core';
 import {
 	POLICY_CHOICE,
 	POLICY_MAX_AGE,
@@ -10,7 +11,7 @@ import type { PolicyRule } from '@c15t/schema/types';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
-import { offline } from '../transports/offline';
+import { testing } from '../testing';
 import type { ConsentClient, ScriptTagClientOptions } from '../types';
 import { initIAB as init } from './fixtures/factory-init';
 
@@ -28,7 +29,7 @@ const start = async (
 ): Promise<ConsentClient> => {
 	const client = init({
 		iab: { cmpId: 28, gvl: completeGVL },
-		mode: offline({ acknowledgeNoRecords: true, policyRules: [iabRule] }),
+		mode: testing({ policy: [iabRule] }),
 		overrides: { country: 'DE' },
 		ui: { styles: false },
 		...options,
@@ -45,11 +46,10 @@ const query = (client: ConsentClient, id: string): Element | null | undefined =>
 const pendingTransport = () => {
 	const response = Promise.withResolvers<{ ok: boolean }>();
 	const started = Promise.withResolvers<undefined>();
-	const factory = offline({
-		acknowledgeNoRecords: true,
-		policyRules: [iabRule],
-	});
-	const mode: typeof factory = Object.assign(
+	const factory = testing({
+		policy: [iabRule],
+	}).transport;
+	const mode: ProviderTransportFactory = Object.assign(
 		(context: Parameters<typeof factory>[0]) => ({
 			...factory(context),
 			save: () => {
@@ -79,9 +79,8 @@ afterEach(() => {
 describe('browser IAB policy and pending confirmations', () => {
 	it('confirms IAB preferences with a strict partial-category policy scope', async () => {
 		const client = await start({
-			mode: offline({
-				acknowledgeNoRecords: true,
-				policyRules: [{ ...iabRule, categories: [...POLICY_CHOICE.scope] }],
+			mode: testing({
+				policy: [{ ...iabRule, categories: [...POLICY_CHOICE.scope] }],
 			}),
 		});
 		expect((await client.acceptAll()).ok).toBe(true);
@@ -100,9 +99,8 @@ describe('browser IAB policy and pending confirmations', () => {
 			throw new Error('Missing shared IAB GPC policy scenario');
 		}
 		const client = await start({
-			mode: offline({
-				acknowledgeNoRecords: true,
-				policyRules: [
+			mode: testing({
+				policy: [
 					{
 						...iabRule,
 						privacySignals: {
@@ -154,7 +152,8 @@ describe('browser IAB policy and pending confirmations', () => {
 
 	it('replaces ordinary preferences with IAB choices when the region changes', async () => {
 		const client = await start({
-			mode: 'offline',
+			// The recommended pack: opt-in in California, IAB in Germany.
+			mode: testing(),
 			overrides: { country: 'US', region: 'CA' },
 		});
 		client.openDialog();

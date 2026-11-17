@@ -36,7 +36,6 @@ const mountCard = async function mountCard(
 	ui: ConsentUIOptions
 ): Promise<HTMLElement> {
 	client = init({
-		mode: 'offline',
 		overrides: { country: 'DE' },
 		ui: { colorScheme: 'light', disableAnimation: true, ...ui },
 	});

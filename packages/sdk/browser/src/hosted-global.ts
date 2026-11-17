@@ -1,4 +1,4 @@
-import { hosted } from '@c15t/core';
+import { hosted } from '@c15t/core/transports';
 
 import type { CreateConsentClientContext } from './client-base';
 import { createGlobalWith } from './global-base';
