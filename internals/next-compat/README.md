@@ -93,4 +93,4 @@ That is the shape an npm install has, and it matters three times over: both bund
 
 `bun install` restores the workspace links; the next cell build replaces them again. The pack step also drops the cell's `.next/cache`: webpack's persistent cache treats `node_modules` as immutable unless a package version changes, so a re-packed package would otherwise be served stale. The suite's global setup runs the cell's `build` script when `.next/BUILD_ID` is missing, so a plain `vitest run` in a cell does the same.
 
-The pack step exports `installPackedPackages({ targetDir, roots })` for other fixtures that must run against published artifacts. `internals/consent-observers` uses it to install the `c15t` closure before its tests.
+The pack step exports `installPackedPackages({ targetDir, roots })` for other fixtures that must run against published artifacts. `internals/consent-observers` uses it to install the closure of its `@inth` dependencies before its tests.
