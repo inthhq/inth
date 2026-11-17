@@ -13,8 +13,8 @@ import {
 	symbolKernelContext,
 	symbolSnapshot,
 } from '../runtime/utils/symbols';
-import { createVueConsentKernelContext } from './test-kernel';
 import { withoutNetwork } from '../testing';
+import { createVueConsentKernelContext } from './test-kernel';
 
 /** An opt-in policy for measurement and marketing, already resolved. */
 const resolution = resolvePolicyRules({

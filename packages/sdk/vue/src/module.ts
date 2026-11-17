@@ -325,9 +325,7 @@ const warnStaticServerResolution = function warnStaticServerResolution(
 };
 
 /** The mode as the browser and the server read it: without its snapshot. */
-const withoutSnapshot = function withoutSnapshot(
-	mode: NuxtMode
-): NuxtMode {
+const withoutSnapshot = function withoutSnapshot(mode: NuxtMode): NuxtMode {
 	if (mode.type !== 'manifest' || !mode.snapshot) {
 		return mode;
 	}

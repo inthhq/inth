@@ -3,10 +3,7 @@
  * server and in the browser. Both come from `nuxt.config.ts` only, so the
  * build and every runtime agree on them.
  */
-import type {
-	ConsentMode,
-	WithoutNetworkTestingData,
-} from '@c15t/core/modes';
+import type { ConsentMode, WithoutNetworkTestingData } from '@c15t/core/modes';
 
 /** Where the module serves its consent route unless `routePrefix` says otherwise. */
 export const DEFAULT_NUXT_ROUTE_PREFIX = '/api/c15t';

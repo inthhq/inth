@@ -1,3 +1,4 @@
+import { hosted } from '@c15t/core/transports';
 /**
  * The `c15tVue` plugin for tests whose subject is not the mode. Their
  * options name a backend the way older tests did, with `backendURL`; this
@@ -9,7 +10,6 @@ import type { App, Plugin } from 'vue';
 import { c15tVue as plugin } from '../index';
 import type { C15tVuePluginOptions as PluginOptions } from '../index';
 import type { RuntimeConsentConfig } from '../runtime/kernel';
-import { hosted } from '@c15t/core/transports';
 
 // oxlint-disable-next-line oxc/no-barrel-file -- A test stand-in for the plugin entry.
 export { generateTokensCSS } from '../index';

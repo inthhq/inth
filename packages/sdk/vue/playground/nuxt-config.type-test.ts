@@ -6,8 +6,8 @@ import type { NitroRouteConfig } from 'nitropack/types';
 import { expectTypeOf } from 'vitest';
 
 import type { manifest } from '../src/module';
-import type { withoutNetwork } from '../src/testing';
 import type { ModuleOptions } from '../src/nuxt-options';
+import type { withoutNetwork } from '../src/testing';
 
 // Module options accept every runtime option that survives JSON.
 expectTypeOf<{

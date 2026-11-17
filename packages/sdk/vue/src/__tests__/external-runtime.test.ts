@@ -9,8 +9,8 @@ import { createIAB } from '../../../iab/src';
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import { c15tVue } from '../index';
 import { createVueConsentKernelContext } from '../runtime/kernel';
-import { symbolKernel } from '../runtime/utils/symbols';
 import { selectedMode } from '../runtime/modes';
+import { symbolKernel } from '../runtime/utils/symbols';
 
 const createRuntime = function createRuntime(): ConsentRuntime {
 	return createConsentRuntime({

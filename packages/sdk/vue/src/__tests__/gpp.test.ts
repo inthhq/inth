@@ -6,9 +6,9 @@ import { createConsentRuntime } from '@c15t/core/runtime';
 import { afterEach, beforeAll, expect, test, vi } from 'vitest';
 import { createApp, defineComponent, h } from 'vue';
 
+import { withoutNetwork } from '../testing';
 import { c15tVue } from './test-plugin';
 import type { C15tVuePluginOptions } from './test-plugin';
-import { withoutNetwork } from '../testing';
 
 type GPPWindow = Window & {
 	__gpp?: (command: string, callback: (data: unknown) => void) => void;

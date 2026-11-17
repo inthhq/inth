@@ -300,10 +300,13 @@ describe('Nuxt modes', () => {
 
 		const context = createVueConsentKernelContext({
 			config: {},
-			mode: clientMode({ type: 'manifest' }, {
-				backendURL: 'https://backend.example',
-				routePrefix: '/internal/consent',
-			}),
+			mode: clientMode(
+				{ type: 'manifest' },
+				{
+					backendURL: 'https://backend.example',
+					routePrefix: '/internal/consent',
+				}
+			),
 		});
 
 		await context.kernel.commands.init();

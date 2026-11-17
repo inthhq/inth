@@ -74,11 +74,11 @@ export default mergeConfig(
 						'./src/__tests__/generated.ts'
 					),
 					'@c15t/core/modes': resolve(__dirname, '../core/src/modes.ts'),
-					'@c15t/core/testing': resolve(__dirname, '../core/src/testing.ts'),
 					'@c15t/core/runtime/client-mode': resolve(
 						__dirname,
 						'../core/src/runtime/client-mode.ts'
 					),
+					'@c15t/core/testing': resolve(__dirname, '../core/src/testing.ts'),
 				},
 				{
 					'@c15t/core/modules/clear-on-revocation': resolve(

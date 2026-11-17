@@ -9,12 +9,12 @@
  * fills in during the build.
  */
 import type { HostedModeFactory, ProviderTransportFactory } from '@c15t/core';
-import type { ConsentTesting } from '@c15t/core/testing';
-import { hosted as coreHosted } from '@c15t/core/transports';
 import {
 	backendURL as builtBackendURL,
 	snapshot as builtSnapshot,
 } from '@c15t/core/generated';
+import type { ConsentTesting } from '@c15t/core/testing';
+import { hosted as coreHosted } from '@c15t/core/transports';
 import { manifest as browserManifest } from '@c15t/core/transports/manifest-browser';
 import type {
 	BrowserManifestModeFactory,

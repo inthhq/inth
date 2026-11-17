@@ -30,15 +30,9 @@
  * @packageDocumentation
  */
 import { createWithoutNetwork } from '@c15t/core/testing';
-import type {
-	ConsentTesting,
-	WithoutNetworkOptions,
-} from '@c15t/core/testing';
+import type { ConsentTesting, WithoutNetworkOptions } from '@c15t/core/testing';
 
-export type {
-	ConsentTesting,
-	WithoutNetworkOptions,
-} from '@c15t/core/testing';
+export type { ConsentTesting, WithoutNetworkOptions } from '@c15t/core/testing';
 
 /**
  * A `testing` value that resolves the recommended policy pack in the

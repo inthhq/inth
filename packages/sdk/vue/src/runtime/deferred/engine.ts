@@ -12,15 +12,14 @@ import type {
 	IABUnavailableError,
 	KernelConfig,
 } from '@c15t/core';
-
 import { readStoredRecordsFromCookieHeader } from '@c15t/core/modules/persistence';
 import { clientMode, lazyHosted } from '@c15t/core/runtime/client-mode';
 
 import { withClientData } from '../client-data';
-import type { NuxtMode } from '../nuxt-mode';
 import type { ConsentConfig } from '../config';
 import { createVueConsentKernelContext } from '../kernel';
 import type { RuntimeConsentConfig, VueConsentKernelContext } from '../kernel';
+import type { NuxtMode } from '../nuxt-mode';
 import type { DeferredCommitted } from './commit';
 
 /** What the plugin read before it loaded the engine. @internal */

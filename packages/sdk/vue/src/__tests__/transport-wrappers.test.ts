@@ -1,5 +1,6 @@
 import type { HydrationRecords, HydrationResult } from '@c15t/core';
 import { clientMode } from '@c15t/core/runtime/client-mode';
+import { hosted } from '@c15t/core/transports';
 import {
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,
@@ -11,7 +12,6 @@ import { afterEach, expect, test, vi } from 'vitest';
 import { createVueConsentKernelContext } from '../runtime/kernel';
 import { manifest } from '../runtime/modes';
 import type { ProviderTransportFactory } from '../runtime/modes';
-import { hosted } from '@c15t/core/transports';
 
 /**
  * `hydrate` applies stored records the way persistence does. It is a verb

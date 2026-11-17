@@ -5,13 +5,14 @@
  * `customFetch`, `domain`), and this wrapper turns them into `hosted()`.
  */
 
+import { hosted } from '@c15t/core/transports';
+
 import { createVueConsentKernelContext as createContext } from '../runtime/kernel';
 import type {
 	RuntimeConsentConfig as KernelConsentConfig,
 	VueConsentContextOptions,
 	VueConsentKernelContext,
 } from '../runtime/kernel';
-import { hosted } from '@c15t/core/transports';
 
 // oxlint-disable-next-line oxc/no-barrel-file -- A test stand-in for the kernel module.
 export * from '../runtime/kernel';

@@ -1,6 +1,6 @@
-import type { NuxtMode } from './nuxt-mode';
-
 import clientManifestSnapshot from '#c15t/client-manifest-snapshot';
+
+import type { NuxtMode } from './nuxt-mode';
 
 /**
  * The mode the browser runs: browser resolution gets the snapshot the

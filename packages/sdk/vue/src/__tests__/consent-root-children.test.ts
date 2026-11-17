@@ -1,3 +1,4 @@
+import { hosted } from '@c15t/core/transports';
 /**
  * Wrapping the app in `ConsentRoot`, the way a React provider wraps it,
  * keeps the app: the root renders its default slot next to the consent
@@ -31,7 +32,6 @@ import {
 	symbolKernelContext,
 	symbolSnapshot,
 } from '../runtime/utils/symbols';
-import { hosted } from '@c15t/core/transports';
 
 const initFixture: InitOutput = {
 	branding: 'c15t',

@@ -259,7 +259,7 @@ const resolveTransportFactory = function resolveTransportFactory(
 	}
 	if (!mode) {
 		throw new Error(
-			'c15t: pass `backendURL`, such as `app.use(c15tVue, { backendURL: \'/api/c15t\' })`, or `mode: manifest()` with `manifest` from `c15t/vue/vue-plugin`.'
+			"c15t: pass `backendURL`, such as `app.use(c15tVue, { backendURL: '/api/c15t' })`, or `mode: manifest()` with `manifest` from `c15t/vue/vue-plugin`."
 		);
 	}
 	return mode;

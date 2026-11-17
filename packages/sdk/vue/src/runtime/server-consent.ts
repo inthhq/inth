@@ -18,7 +18,6 @@ import type {
 import snapshot from '#c15t/server-manifest-snapshot';
 
 import type { RuntimeConsentConfig } from './kernel';
-
 import { readNuxtMode, readNuxtRoutePrefix } from './nuxt-mode';
 import type { NuxtResolvedModeConfig } from './nuxt-mode';
 

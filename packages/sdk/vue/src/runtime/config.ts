@@ -31,7 +31,6 @@ export interface ConsentServerConfig {
 	 * @default 500
 	 */
 	timeoutMs?: number | false;
-
 }
 
 export interface ConsentConfig
