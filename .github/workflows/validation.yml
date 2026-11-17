@@ -1,0 +1,17 @@
+name: Full validation
+
+# Every CI job for every product, nightly and on demand, so a problem a
+# pull request's routing skipped still shows up within a day.
+on:
+  schedule:
+    - cron: "17 2 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  checks:
+    if: github.repository == 'inthhq/inth'
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
