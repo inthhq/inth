@@ -412,7 +412,8 @@ export const createWebConsentClient = function createWebConsentClient(
 		);
 	}
 
-	const runtimeOptions: ConsentRuntimeOptions = {
+	const runtimeOptions: ConsentRuntimeOptions & { backendURL: string } = {
+		backendURL,
 		consentCategories:
 			options.consentCategories === null ||
 			options.consentCategories === undefined
