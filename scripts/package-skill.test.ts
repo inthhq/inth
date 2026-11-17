@@ -34,11 +34,12 @@ test.each(PACKAGE_DOCS_CONFIGS)(
 	}
 );
 
-test('the umbrella bundle covers every web framework directory', () => {
-	const umbrella = PACKAGE_DOCS_CONFIGS.find(
-		(config) => config.name === 'c15t'
+test('the package bundles cover every web framework quickstart', () => {
+	const files = new Set(
+		PACKAGE_DOCS_CONFIGS.flatMap((config) =>
+			fg.sync(config.include, { cwd: docsRoot })
+		)
 	);
-	const files = new Set(fg.sync(umbrella?.include ?? [], { cwd: docsRoot }));
 	const quickstarts = fg.sync('frameworks/*/quickstart.mdx', {
 		cwd: docsRoot,
 		ignore: [
@@ -81,25 +82,6 @@ test('skills fit the package they ship in', () => {
 	expect(browser).toContain(
 		'[HTML script tag customization](./docs/frameworks/html/customize.md)'
 	);
-	expect(browser).not.toContain('New apps install `c15t`');
-
-	const next = renderPackageSkill(
-		'@c15t/nextjs',
-		{ install: '`npm install c15t`', topic: 'Next.js', umbrella: true },
-		new Set()
-	);
-	expect(next).toContain('New apps install `c15t`');
-});
-
-test('the umbrella skill names the package instead of repeating c15t', () => {
-	const skill = renderPackageSkill(
-		'c15t',
-		{ install: '`npm install c15t`', topic: 'the project uses c15t' },
-		new Set()
-	);
-	expect(skill).toContain('\n# c15t (umbrella package)\n');
-	expect(skill).toContain('with the c15t umbrella package.');
-	expect(skill).not.toContain('c15t with c15t');
 });
 
 test('mobile skills describe native authority and link only bundled mobile guides', () => {

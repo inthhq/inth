@@ -345,7 +345,6 @@ const requiredPackedFilesByPackage: Record<string, string[]> = {
 		'src/styles.tw3.css',
 		'src/iab/styles.tw3.css',
 	],
-	'@c15t/scripts': ['AGENTS.md', 'docs/README.md'],
 	'@c15t/ui': [
 		'styles.css',
 		'styles.tw3.css',

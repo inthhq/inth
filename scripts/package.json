@@ -24,7 +24,6 @@
 		"generate:native-iab-copy": "cd .. && bun scripts/generate-native-iab-copy.ts",
 		"generate:package-docs": "cd .. && bun scripts/generate-package-docs.ts",
 		"generate:readmes": "cd .. && tsx scripts/generate-readme.ts",
-		"generate:umbrella": "cd .. && bun scripts/generate-umbrella-exports.ts",
 		"generate:webview-consent-scripts": "cd .. && bun scripts/generate-webview-consent-scripts.ts",
 		"knip": "cd .. && knip",
 		"lint:docs": "cd .. && remark ./packages/sdk/docs --ext mdx --output --use remark-mdx --use remark-frontmatter --use remark-preset-lint-recommended --use remark-preset-lint-consistent --use ./scripts/remark-lint-canonical-integrations.mjs",

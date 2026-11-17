@@ -113,7 +113,6 @@ const main = async function main(): Promise<void> {
 		'packages/sdk/react',
 		'packages/sdk/svelte',
 		'packages/sdk/vue',
-		'packages/sdk/solid',
 		'packages/sdk/ui',
 	];
 	const violations = await runTestIdLint(roots);

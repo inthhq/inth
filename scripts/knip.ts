@@ -1,8 +1,6 @@
 import type { KnipConfig } from 'knip';
 
-import c15tConfig from './packages/sdk/c15t/knip.json';
 import coreConfig from './packages/sdk/core/knip.json';
-import loggerConfig from './packages/sdk/logger/knip.json';
 import nextjsConfig from './packages/sdk/nextjs/knip.json';
 import reactConfig from './packages/sdk/react/knip.json';
 import svelteConfig from './packages/sdk/svelte/knip.json';
@@ -59,9 +57,7 @@ const config: KnipConfig = {
 			ignore: ['src/**/__tests__/**'],
 			project: ['src/**/*.{ts,astro}'],
 		},
-		'packages/sdk/c15t': workspaceConfig(c15tConfig),
 		'packages/sdk/core': workspaceConfig(coreConfig),
-		'packages/sdk/logger': workspaceConfig(loggerConfig),
 		'packages/sdk/nextjs': workspaceConfig(nextjsConfig),
 		'packages/sdk/react': workspaceConfig(reactConfig),
 		'packages/sdk/svelte': workspaceConfig(svelteConfig),

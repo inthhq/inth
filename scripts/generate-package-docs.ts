@@ -54,21 +54,6 @@ export interface PackageDocsConfig {
 	skillDirectory?: boolean;
 }
 
-/** Every framework directory under `docs/frameworks`. */
-const umbrellaFrameworks = [
-	'next',
-	'tanstack-start',
-	'react',
-	'nuxt',
-	'vue',
-	'astro',
-	'svelte',
-	'sveltekit',
-	'angular',
-	'html',
-	'javascript',
-].map((framework) => `frameworks/${framework}/**/*.mdx`);
-
 export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 	{
 		include: [
@@ -116,7 +101,6 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			install: '`npm install c15t`',
 			topic:
 				'the project uses the headless c15t engine, `createConsentRuntime` or custom consent UI',
-			umbrella: true,
 		},
 		summary:
 			'Headless v3 consent, Inth setup, runtime ownership and script loading.',
@@ -134,7 +118,6 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 		skill: {
 			install: '`npm install c15t` and import `c15t/react`',
 			topic: 'the project is a React app, such as Vite or React Router',
-			umbrella: true,
 		},
 		summary:
 			'React v3 consent components, hooks, Inth setup and customization.',
@@ -153,7 +136,6 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			install: '`npm install c15t` and import `c15t/next`',
 			topic:
 				'the project is a Next.js app with the App Router, Pages Router or static export',
-			umbrella: true,
 		},
 		summary:
 			'Next.js v3 App Router, Pages Router, static export and hydration with Inth.',
@@ -172,7 +154,6 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 		skill: {
 			install: '`npm install c15t` and import `c15t/vue`',
 			topic: 'the project is a Vue or Nuxt app',
-			umbrella: true,
 		},
 		summary:
 			'Vue and Nuxt v3 integration, Vite setup, SSR and static hosting with Inth.',
@@ -191,7 +172,6 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 		skill: {
 			install: '`npm install c15t` and import `c15t/svelte`',
 			topic: 'the project is a Svelte or SvelteKit app',
-			umbrella: true,
 		},
 		summary:
 			'Svelte and SvelteKit v3 providers, request loading and static hosting with Inth.',
@@ -227,7 +207,6 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 		skill: {
 			install: '`npm install c15t` and import `c15t/astro`',
 			topic: 'the project is an Astro site',
-			umbrella: true,
 		},
 		summary:
 			'Astro v3 static and server integration, dialog adapters and runtime ownership.',
@@ -245,30 +224,9 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 		skill: {
 			install: '`npm install c15t` and import `c15t/tanstack-start`',
 			topic: 'the project is a TanStack Start app',
-			umbrella: true,
 		},
 		summary:
 			'TanStack Start v3 server functions, request middleware and consent boundaries.',
-	},
-	{
-		include: [
-			'concepts/**/*.mdx',
-			'guides/**/!(mobile-*).mdx',
-			'frameworks/index.mdx',
-			...umbrellaFrameworks,
-			'customization/**/*.mdx',
-			'integrations/**/*.mdx',
-		],
-		name: 'c15t',
-		outDir: 'packages/sdk/c15t',
-		skill: {
-			install:
-				'`npm install c15t` and import the framework subpath, such as `c15t/next`',
-			topic:
-				'the project uses c15t with Next.js, React, TanStack Start, Vue, Nuxt, Astro or plain JavaScript',
-		},
-		summary:
-			'c15t v3 framework integration and consent management. Install c15t and use its framework subpaths; adapters and add-ons absent from its exports use separate packages.',
 	},
 	{
 		include: [
@@ -290,30 +248,6 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 		},
 		summary:
 			'Consent-aware vendor integrations and Consent Mode loading contracts.',
-	},
-	{
-		include: [
-			'frameworks/*/upgrade-v3.mdx',
-			'concepts/**/*.mdx',
-			'guides/**/!(mobile-*).mdx',
-			'frameworks/*/scripts.mdx',
-			'frameworks/*/embeds.mdx',
-			'frameworks/*/network-blocker.mdx',
-			'customization/**/*.mdx',
-			'integrations/**/*.mdx',
-		],
-		name: '@c15t/scripts',
-		outDir: 'packages/sdk/scripts',
-		skill: {
-			// The compatibility package re-exports @c15t/integrations; new code
-			// installs the canonical package.
-			install:
-				'`npm install @c15t/integrations` alongside `c15t`, replacing the deprecated `@c15t/scripts`',
-			topic:
-				'the project imports the deprecated `@c15t/scripts` vendor helpers, or loads analytics, pixels, tag managers or embeds that must wait for consent',
-		},
-		summary:
-			'Deprecated v3 compatibility package for @c15t/integrations. Migrate before v4.',
 	},
 	{
 		include: [

@@ -23,13 +23,11 @@ const nextAppFiles = nextAppDirectories.map(
 );
 
 const nonReactFrameworkFiles = [
-	'apps/storybook-solid/**/*.{js,jsx,ts,tsx}',
 	'apps/storybook-svelte/**/*.{js,jsx,ts,tsx}',
 	'apps/storybook-vue/**/*.{js,jsx,ts,tsx}',
 	'benchmarks/nuxt-browser-bench/**/*.{js,jsx,ts,tsx}',
 	'internals/fixtures/nuxt/**/*.{js,jsx,ts,tsx}',
 	'internals/fixtures/nuxt-vapor/**/*.{js,jsx,ts,tsx}',
-	'packages/sdk/solid/**/*.{js,jsx,ts,tsx}',
 	'packages/sdk/svelte/**/*.{js,jsx,ts,tsx}',
 	'packages/sdk/vue/**/*.{js,jsx,ts,tsx}',
 ] as const;
@@ -124,7 +122,6 @@ export default defineConfig({
 		'.repos/**',
 		'.tmp-bun/**',
 		'apps/shadcn-registry/vendor/**',
-		'packages/sdk/c15t/shims/**',
 		// Injected verbatim into WebView pages, where page script may have
 		// replaced built-ins first. They avoid iterators and destructuring on
 		// purpose; see "WebView consent" in packages/native-protocol/CONTRACT.md.
