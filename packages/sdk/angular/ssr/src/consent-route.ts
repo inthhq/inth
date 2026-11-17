@@ -48,13 +48,6 @@ export interface ConsentRouteOptions {
 	/** Fetches the Global Vendor List when the resolved policy is IAB. */
 	fetchGvl?: ConsentRouteFetchGvl;
 	/**
-	 * Report each init the route resolves to the backend's `POST /sessions`.
-	 * Needs an absolute `backendURL`.
-	 *
-	 * @default true
-	 */
-	reportSessions?: boolean;
-	/**
 	 * Resolve a relative `backendURL` against the request's forwarding
 	 * headers and believe the client IP chain. Only behind a proxy that sets
 	 * those headers and drops incoming ones.
@@ -290,7 +283,6 @@ export const createConsentRoute = function createConsentRoute(
 		manifest: options.snapshot,
 		manifestURL: options.manifestURL,
 		proxy: options.proxy,
-		reportSessions: options.reportSessions,
 		trustForwardedHeaders: options.trustForwardedHeaders,
 	});
 

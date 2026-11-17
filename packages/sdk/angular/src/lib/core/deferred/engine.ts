@@ -14,7 +14,7 @@ import type {
 	ConsentProviderRuntime,
 	ConsentProviderRuntimeOptions,
 } from '@c15t/core/runtime/provider';
-import { createHostedTransport, local } from '@c15t/core/transports';
+import { createHostedTransport } from '@c15t/core/transports';
 
 import { provideModeTransports } from '../modes';
 import { createOwnedRuntime } from '../owned-runtime';
@@ -88,7 +88,7 @@ export const createEngine = function createEngine(
 ): ConsentProviderRuntime {
 	// The mode factories build their transports with the code this chunk
 	// carries.
-	provideModeTransports({ hosted: createHostedTransport, local });
+	provideModeTransports({ hosted: createHostedTransport });
 	return createOwnedRuntime(
 		committed ? committedOptions(options, committed) : options
 	);

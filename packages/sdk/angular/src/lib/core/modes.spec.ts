@@ -1,16 +1,16 @@
 import { describe, expect, test, vi } from 'vitest';
 
+import { withoutNetwork } from '../../../testing/src/without-network';
 import {
-	custom,
-	hosted,
-	local,
+	hostedFor,
 	manifest,
 	provideModeTransports,
+	selectedMode,
 } from './modes';
 
-describe('mode factories', () => {
-	test('returns the factory core recognizes, carrying its options', () => {
-		const mode = hosted({ backendURL: '/api/c15t' }) as unknown as {
+describe('the transports provideC15t() selects', () => {
+	test('a backend URL alone is the hosted backend, with its options as data', () => {
+		const mode = selectedMode({ backendURL: '/api/c15t' }) as unknown as {
 			backendURL?: string;
 			kind?: string;
 			type?: string;
@@ -18,60 +18,51 @@ describe('mode factories', () => {
 		expect(mode.type).toBe('hosted');
 		expect(mode.kind).toBe('hosted');
 		expect(mode.backendURL).toBe('/api/c15t');
+		expect(selectedMode({ backendURL: '/api/c15t' })).toBe(mode);
 	});
 
-	test('builds its transport with the builder the engine hands over', () => {
+	test('a testing value wins over the backend URL and mode', () => {
+		const testing = withoutNetwork();
+		expect(
+			selectedMode({
+				backendURL: '/api/c15t',
+				mode: manifest({ manifestURL: '/m' }),
+				testing,
+			})
+		).toBe(testing.transport);
+	});
+
+	test('nothing is selected without a backend URL, mode or testing value', () => {
+		expect(selectedMode({})).toBeUndefined();
+	});
+
+	test('the hosted backend builds with the builder the engine hands over', () => {
 		const transport = { init: vi.fn() };
 		const build = vi.fn(() => transport);
-		provideModeTransports({ hosted: build, local: vi.fn() });
-		const mode = hosted({ backendURL: '/api/c15t' });
+		provideModeTransports({ hosted: build });
+		const mode = hostedFor('/api/handed-over');
 		expect(mode({} as never)).toBe(transport);
 		expect(build).toHaveBeenCalledWith(
-			expect.objectContaining({ backendURL: '/api/c15t' })
+			expect.objectContaining({ backendURL: '/api/handed-over' })
 		);
 	});
 
-	test('local, manifest and custom carry the kind and options core reads', () => {
-		const rules = local({ policyRules: [] }) as unknown as {
-			kind: string;
-			policyRules: unknown[];
-			type: string;
-		};
-		expect([rules.kind, rules.type, rules.policyRules]).toEqual([
-			'offline',
-			'offline',
-			[],
-		]);
+	test('manifest() carries the kind and options core reads', () => {
 		const fromManifest = manifest({
 			manifestURL: '/api/c15t/manifest',
 		}) as unknown as { kind: string; manifestURL: string };
 		expect(fromManifest.kind).toBe('manifest');
 		expect(fromManifest.manifestURL).toBe('/api/c15t/manifest');
-		const transport = { init: vi.fn(), save: vi.fn() };
-		expect(custom(transport)({} as never)).toBe(transport);
 	});
 
-	test('local builds with the code the engine hands over', () => {
-		const transport = { init: vi.fn() };
-		const factory = Object.assign(
-			vi.fn(() => transport),
-			{ kind: 'offline' as const }
-		);
-		const build = vi.fn(() => factory);
-		provideModeTransports({ hosted: vi.fn(), local: build });
-		const mode = local({ acknowledgeNoRecords: true });
-		expect(mode({} as never)).toBe(transport);
-		expect(build).toHaveBeenCalledWith({ acknowledgeNoRecords: true });
-	});
-
-	// Every mode loads its transport code on first use. A failed chunk
-	// request must not stick: the next call loads it again.
+	// Every transport loads its code on first use. A failed chunk request
+	// must not stick: the next call loads it again.
 	test.each([
 		[
 			'hosted',
 			'@c15t/core/transports',
 			(init: () => unknown) => ({ createHostedTransport: () => ({ init }) }),
-			() => hosted({ backendURL: '/api/c15t' }),
+			() => hostedFor('/api/chunk'),
 		],
 		[
 			'manifest',

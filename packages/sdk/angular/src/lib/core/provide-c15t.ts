@@ -30,7 +30,8 @@ import type { C15tProviderOptions } from './options';
  * Works with zoneless change detection and with zone.js. It provides no
  * change detection itself: the application chooses.
  *
- * @param options - The transport (`mode`) and the provider options, or an
+ * @param options - The backend (`backendURL`, `mode` or `testing`) and the
+ *   provider options, or an
  * external `runtime` its owner starts and disposes.
  * @returns Providers for `bootstrapApplication`'s `providers`, an
  * `ApplicationConfig`, or a route's `providers`.
@@ -43,7 +44,7 @@ import type { C15tProviderOptions } from './options';
  * export const appConfig: ApplicationConfig = {
  *   providers: [
  *     provideZonelessChangeDetection(),
- *     provideC15t({ mode: hosted({ backendURL: '/api/c15t' }) }),
+ *     provideC15t({ backendURL: '/api/c15t' }),
  *   ],
  * };
  * ```

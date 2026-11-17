@@ -14,7 +14,7 @@ import type {
 	ConsentPresentation,
 	InitResponse,
 } from '@c15t/core';
-import { custom, createConsentKernel, evaluateConsent } from '@c15t/core';
+import { createConsentKernel, evaluateConsent } from '@c15t/core';
 import { createNetworkBlocker } from '@c15t/core/modules/network-blocker';
 import {
 	createPersistence,
@@ -49,6 +49,7 @@ import { bootClient, renderServer } from './conformance-app';
 import type { ClientApp, FixtureContent } from './conformance-app';
 import { POLICY_SURFACES } from './conformance-registry';
 import type { ConformanceEntry } from './conformance-registry';
+import { transportMode } from './fixtures/transport-mode';
 import { serializeConsentDom, isConsentElementVisible } from './ssr-dom';
 // oxlint-disable-next-line promise/avoid-new -- Browser effects must settle between scenario operations.
 const settle = () =>
@@ -392,7 +393,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 				disableAnimation: true,
 				// IAB is opt-in: without it an IAB policy throws.
 				iab: setup.policy.model === 'iab' ? {} : undefined,
-				mode: custom({
+				mode: transportMode({
 					init: () => {
 						requests.push({ kind: 'init', payload: null });
 						return failTransport

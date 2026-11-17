@@ -83,8 +83,8 @@ const run = async (
 const root = 'projects/app/src';
 
 describe('ng-add', () => {
-	it('declares hosted mode and components as the defaults', () => {
-		expect(schemaDefaults).toEqual({ components: true, mode: 'hosted' });
+	it('declares components as the default', () => {
+		expect(schemaDefaults).toEqual({ components: true });
 	});
 
 	it('names options so their command-line flags reach the schematic', () => {
@@ -102,11 +102,9 @@ describe('ng-add', () => {
 		});
 
 		const config = tree.readText(`${root}/app/app.config.ts`);
-		expect(config).toContain(
-			"import { hosted, provideC15t } from '@c15t/angular';"
-		);
+		expect(config).toContain("import { provideC15t } from '@c15t/angular';");
 		expect(config).toMatch(
-			/provideRouter\(routes\),\n {4}provideC15t\(\{\n {6}mode: hosted\(\{ backendURL: 'https:\/\/acme\.inth\.app' \}\),\n {4}\}\)\n/u
+			/provideRouter\(routes\),\n {4}provideC15t\(\{\n {6}backendURL: 'https:\/\/acme\.inth\.app',\n {4}\}\)\n/u
 		);
 		expect(config).not.toContain('Replace with');
 
@@ -128,7 +126,7 @@ describe('ng-add', () => {
 
 		const config = tree.readText(`${root}/app/app.config.ts`);
 		expect(config).toContain(
-			"// Replace with the backend URL of your Inth project.\n      mode: hosted({ backendURL: 'https://your-project.inth.app' }),"
+			"// Replace with the backend URL of your Inth project.\n      backendURL: 'https://your-project.inth.app',"
 		);
 		expect(warnings).toEqual([
 			expect.stringContaining('Replace https://your-project.inth.app'),
@@ -170,11 +168,9 @@ describe('ng-add', () => {
 		const { tree } = await run(app);
 
 		const main = tree.readText(`${root}/main.ts`);
+		expect(main).toContain("import { provideC15t } from '@c15t/angular';");
 		expect(main).toContain(
-			"import { hosted, provideC15t } from '@c15t/angular';"
-		);
-		expect(main).toContain(
-			"  providers: [provideC15t({\n    // Replace with the backend URL of your Inth project.\n    mode: hosted({ backendURL: 'https://your-project.inth.app' }),\n  })]"
+			"  providers: [provideC15t({\n    // Replace with the backend URL of your Inth project.\n    backendURL: 'https://your-project.inth.app',\n  })]"
 		);
 		expect(tree.readText(`${root}/app/app.ts`)).toContain(
 			'ConsentBanner, ConsentDialog]'
@@ -248,7 +244,7 @@ describe('ng-add', () => {
 		const { tree } = await run(app);
 
 		expect(tree.readText(config)).toContain(
-			"import { hosted, provideC15t } from '@c15t/angular';"
+			"import { provideC15t } from '@c15t/angular';"
 		);
 		expect(tree.readText(config)).toMatch(/\n {4}provideC15t\(\{\n/u);
 	});
@@ -911,7 +907,7 @@ describe('ng-add', () => {
 				expect(tree.readText(config)).toBe(before);
 				expect(warnings).toEqual([
 					expect.stringContaining(
-						"provideC15t({ mode: hosted({ backendURL: 'https://acme.inth.app' }) })"
+						"provideC15t({ backendURL: 'https://acme.inth.app' })"
 					),
 				]);
 			}
@@ -963,21 +959,6 @@ describe('ng-add', () => {
 		expect(tree.readText(`${root}/app/app.html`)).toBe(
 			'<c15t-consent-banner />\n<router-outlet />\n<c15t-consent-dialog />\n'
 		);
-	});
-
-	it('generates local mode', async () => {
-		const { tree, warnings } = await run(await createApp(), {
-			backendUrl: 'https://ignored.example',
-			mode: 'local',
-		});
-
-		const config = tree.readText(`${root}/app/app.config.ts`);
-		expect(config).toContain(
-			"import { local, provideC15t } from '@c15t/angular';"
-		);
-		expect(config).toContain('provideC15t({\n      mode: local(),\n    })');
-		expect(config).not.toContain('hosted');
-		expect(warnings).toEqual([expect.stringContaining('local mode')]);
 	});
 
 	it('leaves the root component alone without components', async () => {

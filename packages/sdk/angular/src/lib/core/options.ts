@@ -12,11 +12,13 @@ import type {
 	RuntimePersistenceOptions,
 	RuntimeScriptLoaderOptions,
 } from '@c15t/core/runtime';
+import type { ConsentTesting } from '@c15t/core/testing';
 import type { CreateIABOptions } from '@c15t/iab';
 import type { Theme, UIOptions } from '@c15t/ui/theme';
 
 import type { DialogPreload } from './dialog-warming';
 import { isIABConfigured, lazyCreateIAB, loadGPP } from './iab-loader';
+import { selectedMode } from './modes';
 
 /** IAB options the provider accepts, or `false` to leave IAB unmounted. */
 export type ProviderIABOptions =
@@ -43,14 +45,20 @@ export type C15tCallbacks = NonNullable<ConsentRuntimeOptions['callbacks']>;
  * Everything not declared here is the framework-agnostic
  * `ConsentRuntimeOptions` contract from `@c15t/core/runtime`, forwarded
  * untouched to the runtime. `createIAB` and `loadGPP` are supplied by this
- * package and `pkg` is fixed to `'@c15t/angular'`. Policy rules are not a
- * provider option: pass them to the transport as `local({ policyRules })`.
+ * package and `pkg` is fixed to `'@c15t/angular'`.
  */
 export interface C15tSharedOptions
 	extends
 		Omit<
 			ConsentRuntimeOptions,
-			'createIAB' | 'gpp' | 'iab' | 'loadGPP' | 'mode' | 'pkg' | 'policyRules'
+			| 'backendURL'
+			| 'createIAB'
+			| 'gpp'
+			| 'iab'
+			| 'loadGPP'
+			| 'mode'
+			| 'pkg'
+			| 'testing'
 		>,
 		Pick<
 			UIOptions,
@@ -117,23 +125,32 @@ export interface C15tSharedOptions
  *
  * @example
  * ```ts
- * import { hosted, provideC15t } from '@c15t/angular';
+ * import { provideC15t } from '@c15t/angular';
  *
  * export const appConfig: ApplicationConfig = {
- *   providers: [provideC15t({ mode: hosted({ backendURL: '/api/c15t' }) })],
+ *   providers: [provideC15t({ backendURL: '/api/c15t' })],
  * };
  * ```
  */
 export interface C15tOptions extends C15tSharedOptions {
 	/**
-	 * Transport factory the runtime is built with. Required.
-	 *
-	 * Pass `hosted()` to talk to a c15t backend, `local()` to
-	 * resolve policies with no network, `manifest()` to resolve from a consent
-	 * manifest, or `custom()` to supply your own transport. Read once.
+	 * Backend URL, relative (`/api/c15t`) or absolute. Setting it is how the
+	 * app talks to the hosted backend. Read once.
 	 */
-	mode: ProviderTransportFactory;
-	/** Not allowed together with `mode`; see {@link C15tRuntimeOptions}. */
+	backendURL?: string;
+	/**
+	 * Resolve the policy from the backend's consent manifest instead:
+	 * `manifest()` from `@c15t/angular`. Read once.
+	 */
+	mode?: ProviderTransportFactory;
+	/**
+	 * Replace the backend in a test: `withoutNetwork()` from
+	 * `@c15t/angular/testing`. It throws in production builds. To keep
+	 * consent out of the way in an app's own tests instead, set
+	 * `enabled: false`. Read once.
+	 */
+	testing?: ConsentTesting;
+	/** Not allowed together with these; see {@link C15tRuntimeOptions}. */
 	runtime?: undefined;
 }
 
@@ -147,7 +164,9 @@ export interface C15tRuntimeOptions extends C15tSharedOptions {
 	/** The runtime to render. Its owner starts and disposes it. */
 	runtime: ConsentRuntime;
 	/** The external runtime brings its own transport. */
+	backendURL?: undefined;
 	mode?: undefined;
+	testing?: undefined;
 }
 
 /** Either way of configuring {@link provideC15t}. */
@@ -165,7 +184,9 @@ export const C15T_OPTIONS = new InjectionToken<C15tProviderOptions>(
 
 /** Options without the runtime, as `ConsentManager.options()` holds them. */
 export type C15tResolvedOptions = Omit<C15tSharedOptions, never> & {
+	backendURL?: string;
 	mode?: ProviderTransportFactory;
+	testing?: ConsentTesting;
 };
 
 /**
@@ -186,7 +207,9 @@ export const runtimeOptionsFor = function runtimeOptionsFor(
 		createIAB: isIABConfigured(options.iab) ? lazyCreateIAB : undefined,
 		// Called only when `gpp` is set, so other apps never fetch the chunk.
 		loadGPP,
-		mode: options.mode as ProviderTransportFactory,
+		mode: selectedMode(options),
 		pkg: '@c15t/angular',
+		// `mode` is the transport the testing value selected.
+		testing: undefined,
 	};
 };

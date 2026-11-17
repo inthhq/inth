@@ -1,5 +1,6 @@
-import { local } from '@c15t/core';
 import type { PolicyRule } from '@c15t/schema/types';
+
+import { offlineMode } from './fixtures/transport-mode';
 
 /**
  * Opt-in choice rule matching every visitor. Tests use it so a policy is
@@ -13,8 +14,7 @@ export const TEST_OPT_IN_RULE: PolicyRule = {
 };
 
 /** Local mode with the shared opt-in rule. */
-export const testLocal = () =>
-	local({ acknowledgeNoRecords: true, policyRules: [TEST_OPT_IN_RULE] });
+export const testLocal = () => offlineMode([TEST_OPT_IN_RULE]);
 
 /** Wait for the runtime's init and the scheduler to settle. */
 export const settle = async (ms = 0) => {

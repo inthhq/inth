@@ -5,9 +5,9 @@ import {
 	runInInjectionContext,
 } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { local } from '@c15t/core';
 import { afterEach, expect, test, vi } from 'vitest';
 
+import { offlineMode } from '../../src/__tests__/fixtures/transport-mode';
 import { TEST_OPT_IN_RULE } from '../../src/__tests__/test-local';
 import { ConsentManager } from '../../src/lib/core/consent-manager';
 import { provideC15t } from '../../src/lib/core/provide-c15t';
@@ -38,16 +38,13 @@ test('follows the provider scripts, live consent and one pageview history', asyn
 		providers: [
 			provideC15t({
 				iframeBlocker: false,
-				mode: local({
-					acknowledgeNoRecords: true,
-					policyRules: [
-						{
-							...TEST_OPT_IN_RULE,
-							categories: ['measurement'],
-							scopeMode: 'permissive',
-						},
-					],
-				}),
+				mode: offlineMode([
+					{
+						...TEST_OPT_IN_RULE,
+						categories: ['measurement'],
+						scopeMode: 'permissive',
+					},
+				]),
 				persistence: false,
 				scripts: [
 					{

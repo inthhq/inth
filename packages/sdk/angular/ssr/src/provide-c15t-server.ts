@@ -20,13 +20,16 @@ import {
 	ɵServerStateGate,
 } from '@c15t/angular';
 import type { C15tProviderOptions } from '@c15t/angular';
-import type { PolicyRule, ProviderTransportFactory } from '@c15t/core';
+import type { ProviderTransportFactory } from '@c15t/core';
+import { isIABConfigured } from '@c15t/core/runtime';
 import type { RuntimePrefetch } from '@c15t/core/runtime';
 import { resolveRequestConsent } from '@c15t/core/server';
 import type {
 	ManifestFetch,
 	ResolveRequestConsentOptions,
 } from '@c15t/core/server';
+import { assertNotProduction } from '@c15t/core/testing';
+import { recommendedPolicyRules } from '@c15t/schema/types';
 import type { ConsentManifest } from '@c15t/schema/types';
 
 import type { ConsentRoute } from './consent-route';
@@ -81,18 +84,11 @@ export interface C15tServerOptions {
 	 * @default 500
 	 */
 	timeoutMs?: number | false;
-	/**
-	 * Manifest mode: report the resolved init to the backend's
-	 * `POST /sessions`. Needs an absolute backend URL.
-	 *
-	 * @default true
-	 */
-	reportSessions?: boolean;
 	/** Keeps session reports and late upstream work alive past the response. */
 	waitUntil?: (task: Promise<void>) => void;
 	/**
 	 * The HTML is served to more than one visitor, as with a cached route:
-	 * no cookie, geo header or clock is read, and only local mode
+	 * no cookie, geo header or clock is read, and only a testing value
 	 * resolves. A render without a request (prerendering) is always shared.
 	 *
 	 * @default false
@@ -100,29 +96,43 @@ export interface C15tServerOptions {
 	shared?: boolean;
 }
 
-type ModeData = ProviderTransportFactory & {
+type ModeData = Partial<ProviderTransportFactory> & {
 	type?: string;
 	backendURL?: string;
 	headers?: Record<string, string>;
 	initURL?: string;
 	manifestURL?: string;
-	policyRules?: PolicyRule[];
 	resolve?: 'server' | 'browser';
 	snapshot?: ConsentManifest;
 };
 
-/** How the server resolves the provider's `mode`, read from its data. */
+/**
+ * How the server resolves the provider's options: a testing value, then
+ * `mode` read from its data, then the hosted backend at `backendURL`.
+ */
 const serverResolution = function serverResolution(
-	mode: ProviderTransportFactory | undefined,
+	provider: C15tProviderOptions,
 	route: ConsentRoute | undefined
 ): Partial<ResolveRequestConsentOptions> {
-	const data = mode as ModeData | undefined;
+	if (provider.testing) {
+		// The recommended pack, resolved here so the banner renders on the
+		// server, and never in production.
+		assertNotProduction('@c15t/angular/testing');
+		const iab = provider.testing.iab ?? isIABConfigured(provider.iab);
+		return {
+			mode: 'offline',
+			offline: {
+				iabEnabled: isIABConfigured(provider.iab),
+				policyRules: recommendedPolicyRules({ iab }),
+			},
+		};
+	}
+	const data: ModeData | undefined =
+		(provider.mode as ModeData | undefined) ??
+		(provider.backendURL === undefined
+			? undefined
+			: { backendURL: provider.backendURL, type: 'hosted' });
 	switch (data?.type) {
-		case 'offline':
-			return {
-				mode: 'offline',
-				offline: { policyRules: data.policyRules },
-			};
 		case 'hosted':
 			return {
 				backendURL: data.backendURL,
@@ -143,8 +153,8 @@ const serverResolution = function serverResolution(
 				mode: 'manifest',
 			};
 		default:
-			// `custom()`: nothing the server can call. The cookie still seeds
-			// the state.
+			// A transport of its own: nothing the server can call. The cookie
+			// still seeds the state.
 			return {};
 	}
 };
@@ -163,7 +173,7 @@ const resolveServerState = function resolveServerState(
 		options.route?.localFetchFor(request);
 	return resolveRequestConsent({
 		adapter: ADAPTER,
-		...serverResolution(provider.mode, options.route),
+		...serverResolution(provider, options.route),
 		fetch: options.fetch,
 		forwardHeaders: options.forwardHeaders,
 		journey: provider.journey,
@@ -174,7 +184,6 @@ const resolveServerState = function resolveServerState(
 			region: options.region,
 		},
 		ownRoutes: options.route ? [options.route.routePrefix] : undefined,
-		reportSessions: options.reportSessions,
 		request: request ? { headers: request.headers, url: request.url } : {},
 		shared: options.shared === true || request === null,
 		storage: options.cookieName

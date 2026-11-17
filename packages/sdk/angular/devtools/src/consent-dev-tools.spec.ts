@@ -2,11 +2,11 @@ import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ConsentManager, provideC15t } from '@c15t/angular';
 import type { AllConsentNames } from '@c15t/core';
-import { local } from '@c15t/core';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { CONSENT_ENGINE_MODULE } from '../../src/lib/core/consent-manager';
 import type { DeferredRuntime } from '../../src/lib/core/deferred/deferred-runtime';
+import { withoutNetwork } from '../../testing/src/without-network';
 import { ConsentDevTools, provideC15tDevTools } from './public-api';
 import type { ConsentDevToolsOptions } from './public-api';
 
@@ -70,8 +70,8 @@ const configure = (
 		providers: [
 			provideC15t({
 				consentCategories: categories,
-				mode: local({ acknowledgeNoRecords: true }),
 				persistence: false,
+				testing: withoutNetwork(),
 			}),
 		],
 	});
@@ -172,8 +172,8 @@ describe('@c15t/angular/devtools', () => {
 		TestBed.configureTestingModule({
 			providers: [
 				provideC15t({
-					mode: local({ acknowledgeNoRecords: true }),
 					persistence: false,
+					testing: withoutNetwork(),
 				}),
 				provideC15tDevTools({ position: 'bottom-right' }),
 			],
@@ -192,7 +192,6 @@ describe('@c15t/angular/devtools', () => {
 			providers: [
 				provideC15t({
 					consentCategories: ['measurement'],
-					mode: local({ acknowledgeNoRecords: true }),
 					persistence: false,
 					scripts: [
 						{
@@ -201,6 +200,7 @@ describe('@c15t/angular/devtools', () => {
 							src: 'data:text/javascript,void%200',
 						},
 					],
+					testing: withoutNetwork(),
 				}),
 			],
 		});
@@ -224,7 +224,6 @@ describe('@c15t/angular/devtools', () => {
 			providers: [
 				provideC15t({
 					consentCategories: ['measurement'],
-					mode: local({ acknowledgeNoRecords: true }),
 					persistence: false,
 					scripts: [
 						{
@@ -233,6 +232,7 @@ describe('@c15t/angular/devtools', () => {
 							src: 'data:text/javascript,void%200',
 						},
 					],
+					testing: withoutNetwork(),
 				}),
 				{
 					provide: CONSENT_ENGINE_MODULE,

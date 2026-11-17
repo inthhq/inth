@@ -1,5 +1,6 @@
 /**
- * `@c15t/angular/testing`: Angular CDK component harnesses for the c15t
+ * `@c15t/angular/testing`: `withoutNetwork()`, which runs the consent flow
+ * with no backend, and Angular CDK component harnesses for the c15t
  * consent surfaces, for your own TestBed tests.
  *
  * The banner, dialog, trigger and IAB surfaces render into `<body>`: find
@@ -31,3 +32,5 @@ export type {
 } from './iab-consent-dialog-harness';
 export { SwitchHarness } from './switch-harness';
 export type { SwitchHarnessFilters } from './switch-harness';
+export { withoutNetwork } from './without-network';
+export type { ConsentTesting, WithoutNetworkOptions } from './without-network';

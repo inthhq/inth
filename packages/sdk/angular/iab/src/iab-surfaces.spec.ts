@@ -2,7 +2,7 @@
  * The IAB banner and dialog in a real application: saving, failure and
  * retry, Google Additional Consent, and the blanket actions.
  */
-import { createConsentKernel, custom, deferInitGvl } from '@c15t/core';
+import { createConsentKernel, deferInitGvl } from '@c15t/core';
 import type { ConsentKernel } from '@c15t/core';
 import { createIAB } from '@c15t/iab';
 import { resolvePolicyRules } from '@c15t/schema/types';
@@ -11,6 +11,7 @@ import { afterEach, describe, expect, onTestFinished, test, vi } from 'vitest';
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import { decodeTCString } from '../../../iab/src/tcf/tc-string';
 import { bootClient } from '../../src/__tests__/conformance-app';
+import { transportMode } from '../../src/__tests__/fixtures/transport-mode';
 import { settle } from '../../src/__tests__/test-local';
 import type { C15tProviderOptions } from '../../src/lib/core/options';
 import { IABConsentBanner } from './iab-consent-banner';
@@ -88,7 +89,7 @@ describe('deferred vendor list', () => {
 			vi.stubGlobal('fetch', fetch);
 			const { kernel } = await boot(surface, {
 				iab: { cmpId: 28 },
-				mode: custom({}),
+				mode: transportMode({}),
 				prefetch: {
 					initialIab: {
 						cmpId: 28,
@@ -140,7 +141,7 @@ describe('deferred vendor list', () => {
 			});
 			const { kernel } = await boot(surface, {
 				iab: { cmpId: 28, gvl: completeGVL },
-				mode: custom({ save }),
+				mode: transportMode({ save }),
 				prefetch: { initialPolicyResolution: iabPolicy() },
 			});
 			await vi.waitFor(() =>
@@ -168,7 +169,7 @@ describe('deferred vendor list', () => {
 		vi.stubGlobal('fetch', fetch);
 		const { kernel } = await boot('iab-consent-dialog', {
 			iab: { cmpId: 28 },
-			mode: custom({}),
+			mode: transportMode({}),
 			prefetch: {
 				initialIab: {
 					cmpId: 28,
@@ -234,7 +235,7 @@ describe('Google Additional Consent', () => {
 				cmpId: 28,
 				gvl: completeGVL,
 			},
-			mode: custom({}),
+			mode: transportMode({}),
 			prefetch: { initialPolicyResolution: iabPolicy() },
 		});
 		const providerSwitch = (id: number) =>
@@ -317,7 +318,7 @@ describe('blanket actions', () => {
 	) => {
 		const { kernel } = await boot(surface, {
 			iab: { cmpId: 28, gvl: completeGVL },
-			mode: custom({}),
+			mode: transportMode({}),
 			prefetch: { initialPolicyResolution: iabPolicy() },
 		});
 		await vi.waitFor(() =>
@@ -401,7 +402,7 @@ describe('banner to dialog', () => {
 			{
 				disableAnimation: true,
 				iab: { cmpId: 28, gvl: completeGVL },
-				mode: custom({}),
+				mode: transportMode({}),
 				persistence: false,
 				prefetch: { initialPolicyResolution: iabPolicy() },
 			},

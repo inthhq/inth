@@ -35,9 +35,7 @@ import ts from 'typescript';
 export interface NgAddOptions {
 	/** The application project to change. */
 	project?: string;
-	/** `hosted` uses a backend; `local` resolves policies in the browser. */
-	mode?: 'hosted' | 'local';
-	/** The hosted backend URL. Empty means the docs' placeholder. */
+	/** The backend URL. Empty means the docs' placeholder. */
 	backendUrl?: string;
 	/** Whether to add the banner and dialog to the root component. */
 	components?: boolean;
@@ -301,24 +299,13 @@ const formatProvider = (
 	}
 };
 
-/** The `mode` helper and its arguments the options ask for. */
-const modeOf = (
-	options: NgAddOptions
-): { helper: 'hosted' | 'local'; args: string } => {
-	const hosted = options.mode !== 'local';
-	return {
-		args: hosted
-			? `{ backendURL: ${quote(options.backendUrl?.trim() || PLACEHOLDER_URL)} }`
-			: '',
-		helper: hosted ? 'hosted' : 'local',
-	};
-};
+/** The `backendURL` the options ask for, quoted. */
+const backendOf = (options: NgAddOptions): string =>
+	quote(options.backendUrl?.trim() || PLACEHOLDER_URL);
 
 /** The provider call to add by hand, on one line. */
-const providerExpression = (options: NgAddOptions): string => {
-	const { args, helper } = modeOf(options);
-	return `provideC15t({ mode: ${helper}(${args}) })`;
-};
+const providerExpression = (options: NgAddOptions): string =>
+	`provideC15t({ backendURL: ${backendOf(options)} })`;
 
 /** What the provider rules leave for the rules after them. */
 interface ProviderOutcome {
@@ -370,12 +357,10 @@ const providerRules = (
 	resolverFor: ResolverFor,
 	outcome: ProviderOutcome
 ): Rule[] => {
-	const hosted = options.mode !== 'local';
 	const answer = options.backendUrl?.trim();
-	const { args: modeArguments, helper: modeHelper } = modeOf(options);
 	const bodyLines = [
-		...(hosted && !answer ? [PLACEHOLDER_COMMENT] : []),
-		`mode: ${modeHelper}(${modeArguments}),`,
+		...(answer ? [] : [PLACEHOLDER_COMMENT]),
+		`backendURL: ${backendOf(options)},`,
 	];
 	const expression = (base: string, unit: string): string =>
 		[
@@ -386,12 +371,8 @@ const providerRules = (
 	const inserted = expression(DEFAULT_BASE_INDENT, DEFAULT_INDENT_UNIT);
 
 	const addProvider = addRootProvider(project, ({ code, external }) => {
-		// Registered first so the import reads `{ hosted, provideC15t }`.
-		const mode = external(modeHelper, PACKAGE_NAME);
 		const provide = external('provideC15t', PACKAGE_NAME);
-		const text = inserted
-			.replace('provideC15t(', `${provide}(`)
-			.replace(`${modeHelper}(`, `${mode}(`);
+		const text = inserted.replace('provideC15t(', `${provide}(`);
 		return code`${text}`;
 	});
 
@@ -417,11 +398,7 @@ const providerRules = (
 			}
 		},
 		() => {
-			if (!hosted) {
-				context.logger.warn(
-					'Added local mode: policies resolve in the browser and nothing records consent. Use a hosted backend in production.'
-				);
-			} else if (!answer) {
+			if (!answer) {
 				context.logger.warn(
 					`Replace ${PLACEHOLDER_URL} in provideC15t() with the backend URL of your Inth project.`
 				);

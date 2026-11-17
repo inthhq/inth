@@ -37,7 +37,6 @@ describe('createConsentRoute', () => {
 		const route = createConsentRoute({
 			backendURL: BACKEND,
 			fetch,
-			reportSessions: false,
 			snapshot: MANIFEST_FIXTURE,
 		});
 		const manifest = await route.fetch(
@@ -56,7 +55,10 @@ describe('createConsentRoute', () => {
 
 		expect(await route.fetch(new Request(`${SITE}/`))).toBeNull();
 		expect(await route.fetch(new Request(`${SITE}/api/c15tx/init`))).toBeNull();
-		expect(fetch).not.toHaveBeenCalled();
+		// No policy request; only the session report.
+		expect(
+			fetch.mock.calls.filter(([url]) => !String(url).endsWith('/sessions'))
+		).toEqual([]);
 	});
 
 	test('answers writes with 405 unless proxy is on', async () => {
@@ -90,7 +92,6 @@ describe('createConsentRoute', () => {
 		const global = vi.spyOn(globalThis, 'fetch');
 		try {
 			const route = createConsentRoute({
-				reportSessions: false,
 				snapshot: MANIFEST_FIXTURE,
 			});
 			const response = await route.localFetch('/api/c15t/manifest');
@@ -232,7 +233,6 @@ describe('createConsentRoute', () => {
 			backendURL: BACKEND,
 			fetch,
 			proxy: true,
-			reportSessions: false,
 			snapshot: MANIFEST_FIXTURE,
 		});
 		const server = createServer((request, response) => {
@@ -279,7 +279,6 @@ describe('createConsentRoute', () => {
 				backendURL,
 				fetch,
 				proxy: true,
-				reportSessions: false,
 				trustForwardedHeaders: true,
 			});
 			return createServer((request, response) => {

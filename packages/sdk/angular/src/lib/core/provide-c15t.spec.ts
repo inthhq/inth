@@ -6,9 +6,9 @@
  */
 import { ChangeDetectionStrategy, Component, CSP_NONCE } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { local } from '@c15t/core';
 import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest';
 
+import { offlineMode } from '../../__tests__/fixtures/transport-mode';
 import { TEST_OPT_IN_RULE, testOptions } from '../../__tests__/test-local';
 import { ConsentManager } from './consent-manager';
 import type { C15tOptions } from './options';
@@ -226,12 +226,9 @@ describe('callbacks', () => {
 		const onSurfaceShown = vi.fn();
 		const { consent } = await boot({
 			callbacks: { onChoiceRecorded, onPermissionsChanged, onSurfaceShown },
-			mode: local({
-				acknowledgeNoRecords: true,
-				policyRules: [
-					{ ...TEST_OPT_IN_RULE, model: 'opt-out', prompt: 'notice' },
-				],
-			}),
+			mode: offlineMode([
+				{ ...TEST_OPT_IN_RULE, model: 'opt-out', prompt: 'notice' },
+			]),
 		});
 		await vi.waitFor(() =>
 			expect(onSurfaceShown).toHaveBeenCalledWith(

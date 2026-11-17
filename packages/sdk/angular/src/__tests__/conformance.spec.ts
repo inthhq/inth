@@ -28,7 +28,7 @@ import type {
 	SuiteApi,
 	TestDriver,
 } from '@c15t/conformance';
-import { custom, deferInitGvl, local } from '@c15t/core';
+import { deferInitGvl } from '@c15t/core';
 import type {
 	AllConsentNames,
 	ConsentKernel,
@@ -44,11 +44,13 @@ import {
 import type { GlobalVendorList } from '@c15t/schema/types';
 import { describe, expect, test } from 'vitest';
 
+import { withoutNetwork } from '../../testing/src/without-network';
 import { whenIABReady } from '../lib/core/iab-loader';
 import type { C15tOptions } from '../lib/core/options';
 import { bootClient, renderServer } from './conformance-app';
 import type { ClientApp } from './conformance-app';
 import { CONFORMANCE_COMPONENTS } from './conformance-registry';
+import { transportMode } from './fixtures/transport-mode';
 import { createPolicySession, probePolicyContract } from './policy-driver';
 
 type StoreState = Record<string, unknown> & {
@@ -149,7 +151,9 @@ const buildProviderOptions = function buildProviderOptions(
 		...provided,
 		consentCategories: consentCategoriesFor(provided),
 		disableAnimation: provided.disableAnimation ?? true,
-		mode: provided.mode ?? local({ acknowledgeNoRecords: true }),
+		...(provided.mode
+			? { mode: provided.mode }
+			: { testing: withoutNetwork() }),
 		persistence: opts.persistence ?? provided.persistence ?? false,
 		prefetch,
 		trapFocus: provided.trapFocus ?? false,
@@ -236,11 +240,13 @@ const driver: TestDriver = {
 						),
 					});
 			});
-			options.mode = custom({ init: () => promise });
+			options.mode = transportMode({ init: () => promise });
+			options.testing = undefined;
 		} else if (opts.initMode === 'failing') {
-			options.mode = custom({
+			options.mode = transportMode({
 				init: () => Promise.reject(new Error('Init failed')),
 			});
+			options.testing = undefined;
 		}
 
 		const container = document.createElement('div');
