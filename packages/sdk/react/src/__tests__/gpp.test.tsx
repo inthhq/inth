@@ -99,7 +99,7 @@ test('installs __gpp within a microtask of the first init()', async () => {
 	const seen: { atInit?: boolean; afterMicrotask?: boolean } = {};
 	const watching: ProviderTransportFactory = Object.assign(
 		(context: Parameters<ProviderTransportFactory>[0]) => {
-			const transport = mode(context);
+			const transport = mode.transport(context);
 			return {
 				...transport,
 				init: (ctx: Parameters<typeof transport.init>[0]) => {
