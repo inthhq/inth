@@ -13,11 +13,11 @@ packages:
   # The c15t CLI's mobile code, parked under the CLI. scripts/export-mobile-policy.ts
   # imports its exporter, which needs @c15t/schema. @inth/cli does not use it.
   - packages/cli/vendor/c15t-mobile
-  - '!**/dist/**'
-  - '!**/.next/**'
-  - '!**/.nuxt/**'
-  - '!**/.output/**'
-  - '!**/storybook-static/**'
+  - "!**/dist/**"
+  - "!**/.next/**"
+  - "!**/.nuxt/**"
+  - "!**/.output/**"
+  - "!**/storybook-static/**"
 # Turbopack and the React Native tools only read files inside the repository.
 # pnpm 11 links packages from a store in the home folder by default, except in
 # CI, so local installs keep packages under node_modules/.pnpm like CI does.
@@ -28,11 +28,11 @@ extendNodePath: false
 allowBuilds:
   # SDK dependencies with install scripts. None is needed: each ships a
   # prebuilt binary or only prints a notice.
-  '@firebase/util': false
-  '@openrouter/sdk': false
-  '@parcel/watcher': false
-  '@sentry/cli': false
-  '@swc/core': false
+  "@firebase/util": false
+  "@openrouter/sdk": false
+  "@parcel/watcher": false
+  "@sentry/cli": false
+  "@swc/core": false
   core-js: false
   esbuild: true
   lmdb: false
@@ -46,62 +46,62 @@ minimumReleaseAge: 4320
 minimumReleaseAgeExclude:
   - leadtype
   - ultracite@7.10.8
-  - '@scriptc/compiler@0.3.6'
-  - '@scriptc/llvm-darwin-arm64@0.3.6'
-  - '@scriptc/llvm-darwin-x64@0.3.6'
-  - '@scriptc/llvm-linux-arm64-gnu@0.3.6'
-  - '@scriptc/llvm-linux-arm64-musl@0.3.6'
-  - '@scriptc/llvm-linux-x64-gnu@0.3.6'
-  - '@scriptc/llvm-linux-x64-musl@0.3.6'
-  - '@scriptc/llvm-win32-x64-msvc@0.3.6'
-  - '@scriptc/runtime-android-arm64@0.3.6'
-  - '@scriptc/runtime-darwin-arm64@0.3.6'
-  - '@scriptc/runtime-darwin-x64@0.3.6'
-  - '@scriptc/runtime-ios-arm64@0.3.6'
-  - '@scriptc/runtime-ios-simulator-arm64@0.3.6'
-  - '@scriptc/runtime-linux-arm64-gnu@0.3.6'
-  - '@scriptc/runtime-linux-arm64-musl@0.3.6'
-  - '@scriptc/runtime-linux-x64-gnu@0.3.6'
-  - '@scriptc/runtime-linux-x64-musl@0.3.6'
-  - '@scriptc/runtime-wasm32-wasi@0.3.6'
-  - '@scriptc/runtime-win32-x64-msvc@0.3.6'
-  - '@scriptc/runtime@0.3.6'
+  - "@scriptc/compiler@0.3.6"
+  - "@scriptc/llvm-darwin-arm64@0.3.6"
+  - "@scriptc/llvm-darwin-x64@0.3.6"
+  - "@scriptc/llvm-linux-arm64-gnu@0.3.6"
+  - "@scriptc/llvm-linux-arm64-musl@0.3.6"
+  - "@scriptc/llvm-linux-x64-gnu@0.3.6"
+  - "@scriptc/llvm-linux-x64-musl@0.3.6"
+  - "@scriptc/llvm-win32-x64-msvc@0.3.6"
+  - "@scriptc/runtime-android-arm64@0.3.6"
+  - "@scriptc/runtime-darwin-arm64@0.3.6"
+  - "@scriptc/runtime-darwin-x64@0.3.6"
+  - "@scriptc/runtime-ios-arm64@0.3.6"
+  - "@scriptc/runtime-ios-simulator-arm64@0.3.6"
+  - "@scriptc/runtime-linux-arm64-gnu@0.3.6"
+  - "@scriptc/runtime-linux-arm64-musl@0.3.6"
+  - "@scriptc/runtime-linux-x64-gnu@0.3.6"
+  - "@scriptc/runtime-linux-x64-musl@0.3.6"
+  - "@scriptc/runtime-wasm32-wasi@0.3.6"
+  - "@scriptc/runtime-win32-x64-msvc@0.3.6"
+  - "@scriptc/runtime@0.3.6"
 patchedDependencies:
-  '@scriptc/compiler@0.3.6': patches/@scriptc__compiler@0.3.6.patch
+  "@scriptc/compiler@0.3.6": patches/@scriptc__compiler@0.3.6.patch
 # Carried over from the SDK. Its range-keyed entries for next and vite are not
 # here: pnpm applies those to every range that overlaps, which forced vitest
 # onto vite 7. The lockfile already resolves above those floors.
 overrides:
-  '@grpc/grpc-js': '>=1.14.4'
-  '@hono/node-server': 1.19.17
+  "@grpc/grpc-js": ">=1.14.4"
+  "@hono/node-server": 1.19.17
   defu: 6.1.7
   fast-uri: 3.1.5
   kysely: 0.28.17
   postcss: 8.5.16
   protobufjs: 7.6.5
-  shell-quote: '>=1.9.0'
-  typeorm: '>=0.3.26'
+  shell-quote: ">=1.9.0"
+  typeorm: ">=0.3.26"
 # These tools import typescript without declaring it. pnpm then gives them
 # whichever copy it hoisted, which was TypeScript 7 and has no compiler API.
 # Declaring the peer makes each one use its consumer's TypeScript.
 packageExtensions:
-  '@analogjs/vite-plugin-angular':
+  "@analogjs/vite-plugin-angular":
     peerDependencies:
-      typescript: '*'
-  '@sveltejs/package':
+      typescript: "*"
+  "@sveltejs/package":
     peerDependencies:
-      typescript: '*'
+      typescript: "*"
   # @nuxt/schema's types import vite and vue. Without the peers it reads a
   # second copy of each, and Nuxt module code fails to type-check against it.
-  '@nuxt/schema':
+  "@nuxt/schema":
     peerDependencies:
-      vite: '*'
-      vue: '*'
+      vite: "*"
+      vue: "*"
   # Its vitest entry imports vitest without declaring it, and reached the
   # root's vitest 5 while the SDK runs vitest 4.
-  '@testing-library/jest-dom':
+  "@testing-library/jest-dom":
     peerDependencies:
-      vitest: '*'
+      vitest: "*"
     peerDependenciesMeta:
       vitest:
         optional: true
