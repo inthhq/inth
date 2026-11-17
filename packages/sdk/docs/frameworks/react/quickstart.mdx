@@ -53,9 +53,8 @@ VITE_C15T_BACKEND_URL=https://your-project.inth.app
 If your app already sets `VITE_INTH_PROJECT_URL` for other Inth SDKs, that works
 too. When both are set, `VITE_C15T_BACKEND_URL` wins.
 
-`consentManifest` hands the backend URL to `hosted()` through
-`c15t/generated`. No file is written into your project. Without the plugin,
-pass the URL as `hosted({ backendURL })`.
+`ConsentProvider` needs the URL as its `backendURL` option, read from
+`import.meta.env.VITE_C15T_BACKEND_URL` in the next step.
 
 The plugin also adds a small script to `index.html` that sends `/init` while
 your JavaScript downloads, so the banner shows sooner.

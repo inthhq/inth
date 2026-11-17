@@ -25,8 +25,8 @@ explains the difference in general terms.
 
 The [quickstart](/docs/frameworks/react/quickstart) and `examples/react` in
 the c15t repository use `hosted()` from `c15t/react`. It reads the backend URL
-`consentManifest` read from `VITE_C15T_BACKEND_URL` or
-`VITE_INTH_PROJECT_URL`; without the plugin, pass `hosted({ backendURL })`.
+from the provider's `backendURL` option, which the quickstart reads from
+`VITE_C15T_BACKEND_URL`.
 Policy edits apply on the next page load, without a rebuild. The page loads
 like this:
 
@@ -122,7 +122,8 @@ a `<script>` in the root `<head>` instead, unless your loader supplies
 This is optional. `fetchSSRData` from `c15t/react/server` calls the backend's
 `/init` from your server loader, forwarding the visitor's location and
 language headers. Pass the result to the browser, wrap it in a promise and give
-it to `hosted({ backendURL, initialData })`. The provider's first init then uses that
+it to `hosted({ backendURL, initialData })` from `c15t/transports`, passed as
+the provider's `mode`. The provider's first init then uses that
 response instead of a network request.
 
 Know its limits before you add it:

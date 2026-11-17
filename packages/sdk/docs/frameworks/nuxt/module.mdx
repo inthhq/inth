@@ -115,7 +115,7 @@ picks up a new URL only when you generate it again.
 | `manifest({ source: 'runtime' })` | The server fetches the manifest at runtime, caches it and refreshes it in the background. Policy edits apply without a rebuild. |
 | `manifest({ snapshot })` | A manifest you supply, for example imported from a JSON file in `nuxt.config.ts`. The build downloads nothing. Consent saves still go to `backendURL`, so it needs one. |
 | `manifest({ resolve: 'browser' })` | The browser resolves the policy from the manifest, for `nuxt generate` and static hosting. Only this mode adds the snapshot to the browser bundle. Takes `geoURL` and `inputs` for the visitor's location. Pair it with `routePrefix: false` on a static host. |
-| `hosted()` | Every server render, and the browser on pages the server did not resolve, asks the backend's `/init`. `hosted({ backendURL, headers })` overrides the backend URL and adds headers to `/init`. |
+| `hosted()` | Every server render, and the browser on pages the server did not resolve, asks the backend's `/init`. |
 | `testing()` | The browser resolves policy rules with no backend. `testing({ policy })` replaces c15t's recommended rules. Tests only; throws in production builds. |
 
 `manifest()` also takes `manifestURL`, the URL the build and the server

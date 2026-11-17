@@ -105,7 +105,7 @@ it unset so the route uses `PUBLIC_C15T_BACKEND_URL` or
 
 **Check.** Look at `PUBLIC_C15T_BACKEND_URL` and `PUBLIC_INTH_PROJECT_URL` in
 `.env`, `.env.local` and the build environment, and at any `backendURL` in `vite.config.ts`,
-`src/hooks.server.ts` and a `hosted({ backendURL })` mode. One still has the
+`src/hooks.server.ts` and the provider's `backendURL` prop. One still has the
 demo project, the placeholder `https://your-project.inth.app`, or a URL from
 another project. The build reads the variable, so the URL for the policy and
 for saves is fixed when you build, and setting it when the built app starts

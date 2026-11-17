@@ -133,8 +133,8 @@ Keep these details right:
   route that answers them with 404 or 405. To send only init through the route
   and keep saves going straight to the backend, drop `proxy` from both and keep
   `routePrefix`.
-- `options.mode` on `ConsentRoot`, or a `hosted({ backendURL })` with its own
-  URL, keeps talking to that URL.
+- `options.mode` on `ConsentRoot` with a transport of its own keeps talking
+  to that transport's URL.
 - The proxy forwards the visitor's user agent, language, origin and location
   headers, so the backend's firewall sees a normal visitor. Set
   `trustForwardedHeaders: true` on the route only when your host overwrites
