@@ -62,6 +62,7 @@ import type {
 	ManifestCache,
 	ManifestFetch,
 } from '../libs/manifest-cache-runtime';
+import { warnManifestFallback } from '../libs/manifest-fallback';
 import { reportConsentSession } from '../libs/session-report';
 import {
 	fetchCachedAdTechProviders,
@@ -92,7 +93,6 @@ import type {
 	ConsentProxyForwarding,
 	ConsentProxyOptions,
 } from './consent-proxy';
-import { warnManifestFallback } from '../libs/manifest-fallback';
 import { fetchCachedGvl } from './gvl-cache';
 import {
 	resolveRequestBackendURL,

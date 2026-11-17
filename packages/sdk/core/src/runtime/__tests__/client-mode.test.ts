@@ -75,7 +75,7 @@ afterEach(() => {
 });
 
 describe('clientMode()', () => {
-	test('defaults to manifest mode, the server frameworks\' default', () => {
+	test("defaults to manifest mode, the server frameworks' default", () => {
 		expect({
 			...clientMode(undefined, {
 				backendURL: 'https://backend.example',
@@ -394,11 +394,7 @@ describe('lazyTesting()', () => {
 				>['testingTransport'],
 			})
 		);
-		const transport = lazyTesting(
-			'@c15t/nextjs/testing',
-			{},
-			load
-		)(context);
+		const transport = lazyTesting('@c15t/nextjs/testing', {}, load)(context);
 
 		expect(load).not.toHaveBeenCalled();
 		await transport.init?.(initContext());

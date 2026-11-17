@@ -23,9 +23,9 @@ const runtimeFor = function runtimeFor(overrides: {
 	region?: string;
 }) {
 	return createConsentRuntime({
+		mode: testing(),
 		overrides,
 		persistence: false,
-		mode: testing(),
 		windowDebug: false,
 	});
 };
@@ -101,9 +101,9 @@ describe('testing()', () => {
 		const fetchSpy = vi.fn();
 		vi.stubGlobal('fetch', fetchSpy);
 		const runtime = createConsentRuntime({
+			mode: testing({ policy: [NOTICE_RULE] }),
 			overrides: { country: 'DE' },
 			persistence: false,
-			mode: testing({ policy: [NOTICE_RULE] }),
 			windowDebug: false,
 		});
 
@@ -118,8 +118,6 @@ describe('testing()', () => {
 
 	test('picks the rule matching the location overrides from the policy', async () => {
 		const runtime = createConsentRuntime({
-			overrides: { country: 'JP' },
-			persistence: false,
 			mode: testing({
 				policy: [
 					{ ...NOTICE_RULE, id: 'us', match: { countries: ['US'] } },
@@ -131,6 +129,8 @@ describe('testing()', () => {
 					},
 				],
 			}),
+			overrides: { country: 'JP' },
+			persistence: false,
 			windowDebug: false,
 		});
 
@@ -141,9 +141,9 @@ describe('testing()', () => {
 	});
 
 	test('carries its policy as data, so a config can serialize it', () => {
-		expect(JSON.parse(JSON.stringify(testing({ policy: NOTICE_RULE })))).toEqual(
-			{ policy: NOTICE_RULE, type: 'testing' }
-		);
+		expect(
+			JSON.parse(JSON.stringify(testing({ policy: NOTICE_RULE })))
+		).toEqual({ policy: NOTICE_RULE, type: 'testing' });
 	});
 
 	test('throws when the transport is built in a production build', () => {
@@ -159,8 +159,8 @@ describe('testing()', () => {
 		vi.stubGlobal('fetch', fetchSpy);
 		const runtime = createConsentRuntime({
 			backendURL: 'https://backend.example',
-			persistence: false,
 			mode: testing(),
+			persistence: false,
 			windowDebug: false,
 		});
 
@@ -224,7 +224,10 @@ describe('backendURL', () => {
 	});
 
 	test('a disabled runtime needs no backend URL until it inits', async () => {
-		const runtime = createConsentRuntime({ enabled: false, persistence: false });
+		const runtime = createConsentRuntime({
+			enabled: false,
+			persistence: false,
+		});
 
 		const result = await runtime.kernel.commands.init();
 

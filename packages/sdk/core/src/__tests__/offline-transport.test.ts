@@ -250,8 +250,8 @@ describe('offline transports: language changes', () => {
 	test('a language set through the kernel switches the copy', async () => {
 		const runtime = createConsentRuntime({
 			i18n: { messages } as never,
-			persistence: false,
 			mode: testing(),
+			persistence: false,
 			windowDebug: false,
 		});
 		const { kernel } = runtime;
@@ -300,9 +300,9 @@ describe('offline transports: language changes', () => {
 	test('the detected language switches the copy once the app chose another', async () => {
 		const runtime = createConsentRuntime({
 			i18n: { locale: 'en', messages } as never,
+			mode: testing(),
 			persistence: false,
 			prefetch: { initialOverrides: { language: 'de' } },
-			mode: testing(),
 			windowDebug: false,
 		});
 		const { kernel } = runtime;
@@ -343,9 +343,9 @@ describe('offline transports: language changes', () => {
 	test('a language a server prefetch detected does not switch the copy', async () => {
 		const runtime = createConsentRuntime({
 			i18n: { locale: 'en', messages } as never,
+			mode: testing(),
 			persistence: false,
 			prefetch: { initialOverrides: { language: 'de' } },
-			mode: testing(),
 			windowDebug: false,
 		});
 		const { kernel } = runtime;

@@ -1172,7 +1172,10 @@ describe('build-time manifest policy', () => {
 	test.each(['build', 'dev'] as const)(
 		'%s warns without a backend URL',
 		async (command) => {
-			const { logger, source } = await write({ backendURL: undefined }, command);
+			const { logger, source } = await write(
+				{ backendURL: undefined },
+				command
+			);
 			expect(source).toContain(STUB);
 			expect(logger.warn).toHaveBeenCalledWith(
 				`no backend URL is set, so ${command === 'build' ? 'the build' : 'dev'} cannot fetch the consent manifest. Pass backendURL or set VITE_C15T_BACKEND_URL (or VITE_INTH_PROJECT_URL). The server fetches it at runtime, or asks the backend's /init.`

@@ -40,8 +40,8 @@ test('a runtime with a consent source removes the copy under its nested storage 
 			openPreferences: () => undefined,
 			subscribe: () => () => undefined,
 		},
-		persistence: { storageConfig: { storageKey: 'custom' } },
 		mode: testing(),
+		persistence: { storageConfig: { storageKey: 'custom' } },
 	});
 	runtime.start();
 

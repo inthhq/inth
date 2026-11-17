@@ -221,7 +221,10 @@ const missingBackendError = function missingBackendError(
  * @internal
  */
 export const requireTransportFactory = function requireTransportFactory(
-	options: Pick<ConsentRuntimeOptions, 'backendURL' | 'enabled' | 'mode' | 'pkg'>,
+	options: Pick<
+		ConsentRuntimeOptions,
+		'backendURL' | 'enabled' | 'mode' | 'pkg'
+	>,
 	hostedMode?: (backendURL: string) => ProviderTransportFactory
 ): ProviderTransportFactory {
 	const factory = selectTransportFactory(options, hostedMode);

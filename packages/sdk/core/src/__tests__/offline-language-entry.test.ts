@@ -12,8 +12,8 @@ import { testing } from '../testing';
 describe('offline(): a language imported from its own entry', () => {
 	test('switches the copy to that language and no other', async () => {
 		const runtime = createConsentRuntime({
-			persistence: false,
 			mode: testing(),
+			persistence: false,
 			windowDebug: false,
 		});
 		const { kernel } = runtime;

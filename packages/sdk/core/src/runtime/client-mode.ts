@@ -90,8 +90,7 @@ export type LoadManifestBrowserModule = () => Promise<
 
 // Every chunk here is built self-contained; see `lazy-hosted.ts`.
 const loadHostedModule: LoadHostedModule = () => import('./lazy-hosted');
-const loadTestingModule: LoadTestingModule = () =>
-	import('./lazy-offline');
+const loadTestingModule: LoadTestingModule = () => import('./lazy-offline');
 const loadManifestBrowserModule: LoadManifestBrowserModule = () =>
 	import('./lazy-manifest-browser');
 

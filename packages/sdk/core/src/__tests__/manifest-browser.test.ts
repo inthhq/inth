@@ -332,9 +332,12 @@ describe('createBrowserManifestTransport()', () => {
 
 		await transport.init?.(initContext({ language: 'en' }));
 
-		expect(fetchSpy.mock.calls.map(([url]) => String(url).split('?')[0])).toEqual(
-			['https://fallback.example/manifest', 'https://fallback.example/init']
-		);
+		expect(
+			fetchSpy.mock.calls.map(([url]) => String(url).split('?')[0])
+		).toEqual([
+			'https://fallback.example/manifest',
+			'https://fallback.example/init',
+		]);
 		expect(warn).toHaveBeenCalledWith(
 			expect.stringContaining(
 				'could not read the consent manifest from https://fallback.example/manifest'

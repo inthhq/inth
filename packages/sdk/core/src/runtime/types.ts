@@ -19,6 +19,7 @@ import type {
 } from '../libs/experiment';
 import type { ConsentJourneyOption, JourneyState } from '../libs/journey';
 import type { ConsentPresentation } from '../libs/policy-actions';
+import type { HostedMode } from '../modes';
 import type {
 	ClearOnRevocationConfig,
 	ClearOnRevocationHandle,
@@ -53,7 +54,6 @@ import type { Callbacks } from '../options/callbacks';
 import type { IABConfig } from '../options/iab';
 import type { User } from '../options/user';
 import type { ProviderTransportFactory } from '../transports/mode';
-import type { HostedMode } from '../modes';
 import type { ConsentTesting } from '../transports/testing';
 import type {
 	ConsentKernel,

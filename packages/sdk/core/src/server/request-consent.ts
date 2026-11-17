@@ -70,6 +70,7 @@ import type {
 	ManifestCache,
 	ManifestFetch,
 } from '../libs/manifest-cache-runtime';
+import { warnManifestFallback } from '../libs/manifest-fallback';
 import { resolveSessionReportBackendURL } from '../libs/session-report';
 import { readStoredRecordsFromCookieHeader } from '../modules/persistence/hydrate';
 import { resolveStorageKeys } from '../modules/persistence/record-storage';
@@ -79,7 +80,6 @@ import {
 	mapInitOutputToInitResponse,
 	mergeInitResponseIntoKernelConfig,
 } from '../transports/init-output';
-import { warnManifestFallback } from '../libs/manifest-fallback';
 import { createOfflineTransport } from '../transports/offline';
 import type { OfflineTransportOptions } from '../transports/offline';
 import {
@@ -1124,7 +1124,7 @@ export const resolveRequestConsent = async function resolveRequestConsent(
 			try {
 				return await resolveFromManifest();
 			} catch (error) {
-				const cause = (error as { cause?: unknown }).cause;
+				const { cause } = error as { cause?: unknown };
 				if (
 					unavailableManifest === undefined ||
 					!(options.initURL || options.backendURL) ||

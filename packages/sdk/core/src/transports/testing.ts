@@ -16,10 +16,7 @@ import {
 } from '@c15t/schema/types';
 import type { PolicyRule } from '@c15t/schema/types';
 
-import type {
-	TestingModeOptions,
-	TestingMode,
-} from '../modes';
+import type { TestingModeOptions, TestingMode } from '../modes';
 import type { InitContext, KernelTransport } from '../types';
 import type { ProviderTransportFactory } from './mode';
 import { createOfflineTranslationSelector } from './offline';
@@ -83,7 +80,12 @@ export const testingTransport = function testingTransport(
 ): ProviderTransportFactory {
 	return Object.assign(
 		(context: Parameters<ProviderTransportFactory>[0]): KernelTransport => {
-			assertNotProduction(entry);
+			// In the browser, where it would show visitors a banner whose
+			// choices nobody records. A server render builds the transport
+			// without running it; server-side resolution checks on its own.
+			if (typeof window !== 'undefined') {
+				assertNotProduction(entry);
+			}
 			const rules: PolicyRule[] =
 				options.policy === undefined
 					? recommendedPolicyRules({ iab: options.iab ?? context.iabEnabled })

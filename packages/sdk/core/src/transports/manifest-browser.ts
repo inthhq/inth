@@ -306,7 +306,6 @@ const createManifestSource = function createManifestSource(
 	return {
 		backendURL,
 		getFetch,
-		manifestURL,
 		/** The visitor's location from `geoURL`, asked once per page. */
 		loadGeo(geoURL) {
 			// Without a location the `/init` fallback still answers.
@@ -341,6 +340,7 @@ const createManifestSource = function createManifestSource(
 			}
 		},
 		loadResolver,
+		manifestURL,
 	};
 };
 
@@ -413,7 +413,7 @@ const transportFrom = function transportFrom(
 	};
 	return {
 		identify: hosted.identify,
-		init(ctx: InitContext): Promise<TransportInitResponse> {
+		async init(ctx: InitContext): Promise<TransportInitResponse> {
 			const { snapshot } = options;
 			// A snapshot decides synchronously, so an `/init` it needs leaves
 			// within this call: a provider that calls it during render gets
@@ -429,15 +429,16 @@ const transportFrom = function transportFrom(
 			) {
 				return ask(ctx);
 			}
-			return source.loadManifest().then(
-				(resolved) => initFrom(resolved, ctx),
-				(error: unknown) => {
-					// The backend's `/init` still answers when the manifest is
-					// unavailable; the next init tries the manifest again.
-					warnManifestFallback(source.manifestURL ?? 'the snapshot', error);
-					return ask(ctx);
-				}
-			);
+			let resolved: Awaited<ReturnType<typeof source.loadManifest>>;
+			try {
+				resolved = await source.loadManifest();
+			} catch (error) {
+				// The backend's `/init` still answers when the manifest is
+				// unavailable; the next init tries the manifest again.
+				warnManifestFallback(source.manifestURL ?? 'the snapshot', error);
+				return ask(ctx);
+			}
+			return initFrom(resolved, ctx);
 		},
 		loadSubjectRecord: hosted.loadSubjectRecord,
 		save: (payload) => hosted.save(unreported.strip(payload)),

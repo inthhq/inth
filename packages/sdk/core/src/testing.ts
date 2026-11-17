@@ -47,10 +47,7 @@ export type { ConsentTesting } from './transports/testing';
  *
  * @internal
  */
-export {
-	assertNotProduction,
-	createTestingMode,
-} from './transports/testing';
+export { assertNotProduction, createTestingMode } from './transports/testing';
 
 /**
  * A `mode` for tests: it resolves `policy`, or the recommended policy
