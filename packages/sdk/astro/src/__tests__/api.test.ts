@@ -16,7 +16,7 @@ import {
 	clearManifestCache,
 	createConsentRouteHandlers,
 	resolveConsentContext,
-	resolveManifestSourceURL,
+	resolveManifestSourceUrl,
 	waitUntilFromLocals,
 } from '../server';
 import type { C15tAstroOptions } from '../types';
@@ -36,8 +36,8 @@ const request = (path: string, headers: Record<string, string> = {}) =>
 
 const options = (
 	astroOptions: C15tAstroOptions = {
-		backendURL: BACKEND,
 		mode: manifestMode(),
+		projectUrl: BACKEND,
 	}
 ) => resolveOptions(astroOptions);
 
@@ -55,11 +55,11 @@ afterEach(() => {
 });
 
 describe('createConsentRouteHandlers', () => {
-	it('reads the manifest from the mode: manifestURL or backendURL', async () => {
+	it('reads the manifest from the mode: manifestUrl or projectUrl', async () => {
 		for (const [mode, expected] of [
 			[manifestMode(), `${BACKEND}/manifest`],
 			[
-				manifestMode({ manifestURL: 'https://cdn.example.com/m.json' }),
+				manifestMode({ manifestUrl: 'https://cdn.example.com/m.json' }),
 				'https://cdn.example.com/m.json',
 			],
 		] as const) {
@@ -68,11 +68,11 @@ describe('createConsentRouteHandlers', () => {
 			// oxlint-disable-next-line no-await-in-loop -- one mode at a time keeps the failing case readable.
 			await createConsentRouteHandlers({
 				fetch,
-				options: options({ backendURL: BACKEND, mode }),
+				options: options({ mode, projectUrl: BACKEND }),
 			}).manifest(request('/api/c15t/manifest'));
 			expect(fetch.mock.calls[0]?.[0]).toBe(expected);
 		}
-		expect(resolveManifestSourceURL(request('/api/c15t/init'), options())).toBe(
+		expect(resolveManifestSourceUrl(request('/api/c15t/init'), options())).toBe(
 			`${BACKEND}/manifest`
 		);
 	});
@@ -82,8 +82,8 @@ describe('createConsentRouteHandlers', () => {
 		const handlers = createConsentRouteHandlers({
 			fetch,
 			options: options({
-				backendURL: BACKEND,
 				mode: manifestMode({ snapshot: MANIFEST }),
+				projectUrl: BACKEND,
 			}),
 		});
 		const response = await handlers.init(
@@ -99,9 +99,9 @@ describe('createConsentRouteHandlers', () => {
 		const handlers = createConsentRouteHandlers({
 			fetch: upstream(),
 			options: options({
-				backendURL: BACKEND,
 				i18n: { locale: 'de' },
 				mode: manifestMode(),
+				projectUrl: BACKEND,
 			}),
 		});
 		const payload = await (
@@ -180,10 +180,10 @@ it('serves Astro manifest SSR references through the same-origin init route', as
 	const gvlUpstream = vi.fn(() => Promise.resolve(Response.json(completeGVL)));
 	vi.stubGlobal('fetch', gvlUpstream);
 	const resolved = options({
-		backendURL: BACKEND,
 		// IAB is opt-in: without `iab` an IAB policy throws.
 		iab: { cmpId: 28 },
 		mode: manifestMode({ snapshot: manifest }),
+		projectUrl: BACKEND,
 		routePrefix: '/privacy',
 	});
 	const context = await resolveConsentContext({

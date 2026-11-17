@@ -33,8 +33,8 @@ const manifestResponse = function manifestResponse(): Response {
 
 const options = function options(
 	astroOptions: C15tAstroOptions = {
-		backendURL: 'https://consent.example.com',
 		mode: manifestMode(),
+		projectUrl: 'https://consent.example.com',
 	}
 ) {
 	return resolveOptions(astroOptions);
@@ -138,9 +138,9 @@ describe('manifest-mode server prefetch', () => {
 		const fetchImpl = vi.fn(() => Promise.resolve(manifestResponse()));
 		const { c15t } = await render({
 			astroOptions: {
-				// Relative: no session report, so no request at all.
-				backendURL: '/api/self-host',
 				mode: manifestMode({ snapshot: MANIFEST }),
+				// Relative: no session report, so no request at all.
+				projectUrl: '/api/self-host',
 			},
 			fetch: fetchImpl as never,
 			headers: { 'x-c15t-country': 'DE' },
@@ -172,8 +172,8 @@ describe('middleware skip list', () => {
 	it('honours a custom routePrefix', async () => {
 		const fetchImpl = vi.fn(() => Promise.resolve(manifestResponse()));
 		const astroOptions: C15tAstroOptions = {
-			backendURL: 'https://consent.example.com',
 			mode: manifestMode(),
+			projectUrl: 'https://consent.example.com',
 			routePrefix: '/consent',
 		};
 		expect(
@@ -199,9 +199,9 @@ describe('middleware skip list', () => {
 	it('skips the paths the site listed', async () => {
 		const fetchImpl = vi.fn(() => Promise.resolve(manifestResponse()));
 		const astroOptions: C15tAstroOptions = {
-			backendURL: 'https://consent.example.com',
 			middleware: { skip: ['/healthz', '/api/webhooks/'] },
 			mode: manifestMode(),
+			projectUrl: 'https://consent.example.com',
 		};
 		const skipped = await Promise.all(
 			['/healthz', '/api/webhooks', '/api/webhooks/stripe'].map((path) =>
@@ -242,9 +242,9 @@ it.each(['public', 'custom'] as const)(
 			const result = await render({
 				// IAB is opt-in: without `iab` an IAB policy throws.
 				astroOptions: {
-					backendURL: 'https://consent.example.com',
 					iab: { cmpId: 28 },
 					mode: manifestMode({ snapshot: manifest }),
+					projectUrl: 'https://consent.example.com',
 				},
 				fetch: loader === 'custom' ? fetch : undefined,
 				headers: { 'x-c15t-country': 'DE' },

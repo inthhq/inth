@@ -35,8 +35,8 @@ describe('createConsentRoute', () => {
 	test('serves and resolves a snapshot below its prefix only', async () => {
 		const fetch = vi.fn<typeof globalThis.fetch>();
 		const route = createConsentRoute({
-			backendURL: BACKEND,
 			fetch,
+			projectUrl: BACKEND,
 			snapshot: MANIFEST_FIXTURE,
 		});
 		const manifest = await route.fetch(
@@ -62,7 +62,7 @@ describe('createConsentRoute', () => {
 	});
 
 	test('answers writes with 405 unless proxy is on', async () => {
-		const route = createConsentRoute({ backendURL: BACKEND });
+		const route = createConsentRoute({ projectUrl: BACKEND });
 		const response = await route.fetch(
 			new Request(`${SITE}/api/c15t/subjects`, { body: '{}', method: 'POST' })
 		);
@@ -73,8 +73,8 @@ describe('createConsentRoute', () => {
 	test('forwards writes to the backend with proxy on', async () => {
 		const fetch = upstream();
 		const route = createConsentRoute({
-			backendURL: BACKEND,
 			fetch,
+			projectUrl: BACKEND,
 			proxy: true,
 			routePrefix: '/consent/',
 		});
@@ -103,17 +103,17 @@ describe('createConsentRoute', () => {
 	});
 
 	test('rejects a backend URL that names the route itself', () => {
-		expect(() => createConsentRoute({ backendURL: '/api/c15t/' })).toThrow(
+		expect(() => createConsentRoute({ projectUrl: '/api/c15t/' })).toThrow(
 			TypeError
 		);
 		expect(() => createConsentRoute({ routePrefix: '/' })).toThrow(TypeError);
 	});
 
 	test.each([
-		['backendURL', '/api/c15t/v1'],
-		['backendURL', '/api/c15t/../c15t/v1'],
-		['backendURL', '/api/c15t?region=eu'],
-		['manifestURL', '/api/c15t/manifest'],
+		['projectUrl', '/api/c15t/v1'],
+		['projectUrl', '/api/c15t/../c15t/v1'],
+		['projectUrl', '/api/c15t?region=eu'],
+		['manifestUrl', '/api/c15t/manifest'],
 	] as const)(
 		'rejects a %s of %s on or below the route at setup',
 		(option, url) => {
@@ -126,8 +126,8 @@ describe('createConsentRoute', () => {
 	test("allows an upstream path that only starts with the route's name", () => {
 		expect(() =>
 			createConsentRoute({
-				backendURL: '/api/c15t-other',
-				manifestURL: '/api/c15tx/manifest',
+				manifestUrl: '/api/c15tx/manifest',
+				projectUrl: '/api/c15t-other',
 			})
 		).not.toThrow();
 	});
@@ -135,8 +135,8 @@ describe('createConsentRoute', () => {
 	test('fails a request when an absolute upstream URL loops back to the route', async () => {
 		const fetch = upstream();
 		const route = createConsentRoute({
-			backendURL: `${SITE}/api/c15t/upstream`,
 			fetch,
+			projectUrl: `${SITE}/api/c15t/upstream`,
 			proxy: true,
 		});
 
@@ -151,8 +151,8 @@ describe('createConsentRoute', () => {
 	test('compares the forwarded public origin when it trusts forwarded headers', async () => {
 		const fetch = upstream();
 		const route = createConsentRoute({
-			backendURL: `${SITE}/api/c15t/upstream`,
 			fetch,
+			projectUrl: `${SITE}/api/c15t/upstream`,
 			proxy: true,
 			trustForwardedHeaders: true,
 		});
@@ -188,8 +188,8 @@ describe('createConsentRoute', () => {
 		async (_form, headers) => {
 			const fetch = upstream();
 			const route = createConsentRoute({
-				backendURL: `${SITE}/api/c15t/upstream`,
 				fetch,
+				projectUrl: `${SITE}/api/c15t/upstream`,
 				proxy: true,
 				trustForwardedHeaders: true,
 			});
@@ -211,8 +211,8 @@ describe('createConsentRoute', () => {
 		async (scheme) => {
 			const fetch = upstream();
 			const route = createConsentRoute({
-				backendURL: '//shop.example/api/c15t/upstream',
 				fetch,
+				projectUrl: '//shop.example/api/c15t/upstream',
 				proxy: true,
 			});
 
@@ -230,8 +230,8 @@ describe('createConsentRoute', () => {
 	test('the Node middleware answers consent paths and passes the rest on', async () => {
 		const fetch = upstream();
 		const route = createConsentRoute({
-			backendURL: BACKEND,
 			fetch,
+			projectUrl: BACKEND,
 			proxy: true,
 			snapshot: MANIFEST_FIXTURE,
 		});
@@ -274,10 +274,10 @@ describe('createConsentRoute', () => {
 
 	test('the Node middleware believes trusted forwarding headers', async () => {
 		const fetch = upstream();
-		const serve = (backendURL: string) => {
+		const serve = (projectUrl: string) => {
 			const route = createConsentRoute({
-				backendURL,
 				fetch,
+				projectUrl,
 				proxy: true,
 				trustForwardedHeaders: true,
 			});
@@ -294,8 +294,8 @@ describe('createConsentRoute', () => {
 			'x-forwarded-host': new URL(SITE).host,
 			'x-forwarded-proto': 'https',
 		};
-		const post = async (backendURL: string): Promise<Response> => {
-			const server = serve(backendURL);
+		const post = async (projectUrl: string): Promise<Response> => {
+			const server = serve(projectUrl);
 			await new Promise<void>((resolve) => {
 				server.listen(0, '127.0.0.1', resolve);
 			});

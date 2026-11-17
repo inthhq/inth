@@ -50,7 +50,7 @@ const tracedEvent = (
 };
 
 const proxyRoute = (fetch: typeof globalThis.fetch) =>
-	createConsentRoute({ backendURL: BACKEND, fetch, proxy: true });
+	createConsentRoute({ fetch, projectUrl: BACKEND, proxy: true });
 
 describe('SvelteKit consent tracing recipe', () => {
 	test.each([
@@ -198,8 +198,8 @@ describe('SvelteKit consent tracing recipe', () => {
 				.fn<typeof globalThis.fetch>()
 				.mockResolvedValue(Response.json({ saved: true }, { status: 201 }));
 			const { GET, POST } = createConsentRoute({
-				backendURL: BACKEND,
 				fetch,
+				projectUrl: BACKEND,
 				proxy: true,
 				snapshot: MANIFEST_FIXTURE,
 			});

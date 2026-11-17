@@ -2,7 +2,7 @@ import { createTestingMode } from '@c15t/core/testing';
 import type { ConsentTesting, TestingModeOptions } from '@c15t/core/testing';
 
 /**
- * A `mode` for `provideC15t()` in tests. It needs no `backendURL`. It
+ * A `mode` for `provideC15t()` in tests. It needs no `projectUrl`. It
  * resolves `policy`, or the recommended policy pack, in the browser, and
  * on the server with `provideC15tServer()`, and makes no network
  * requests. Set `overrides.country` (and `overrides.region`) to pick the

@@ -229,7 +229,7 @@ export class ConsentDevTools {
  *
  * export const appConfig: ApplicationConfig = {
  *   providers: [
- *     provideC15t({ mode: hosted({ backendURL: '/api/c15t' }) }),
+ *     provideC15t({ mode: hosted({ projectUrl: '/api/c15t' }) }),
  *     provideC15tDevTools({ position: 'bottom-left' }),
  *   ],
  * };

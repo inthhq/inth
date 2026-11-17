@@ -32,7 +32,7 @@ export interface C15tHandleOptions extends ConsentRequestOptions {
 	 * `PUBLIC_C15T_BACKEND_URL` or `PUBLIC_INTH_PROJECT_URL`. Required
 	 * unless `mode` is `testing()`.
 	 */
-	backendURL?: string;
+	projectUrl?: string;
 	/**
 	 * How the visitor is resolved. Plain data; `ConsentRoot` loads the code
 	 * it needs in the browser only when it runs.
@@ -221,8 +221,8 @@ export const c15tHandle = function c15tHandle(
 		}
 
 		const locals: C15tLocals = { config, inputs, mode };
-		if (options.backendURL !== undefined) {
-			locals.backendURL = options.backendURL;
+		if (options.projectUrl !== undefined) {
+			locals.projectUrl = options.projectUrl;
 		}
 		if (routePrefix !== undefined) {
 			locals.routePrefix = routePrefix;

@@ -32,9 +32,9 @@ describe('ConsentRoot', () => {
 	test('re-inits a manifest() page through the consent route', async () => {
 		const result = render(ConsentRoot, {
 			state: {
-				backendURL: 'https://consent.example.com',
 				mode: { type: 'manifest' },
 				prefetch: {},
+				projectUrl: 'https://consent.example.com',
 				routePrefix: '/api/c15t',
 			},
 		});
@@ -51,9 +51,9 @@ describe('ConsentRoot', () => {
 	test("asks the backend's /init for a hosted() page", async () => {
 		const result = render(ConsentRoot, {
 			state: {
-				backendURL: 'https://consent.example.com',
 				mode: { type: 'hosted' },
 				prefetch: {},
+				projectUrl: 'https://consent.example.com',
 			},
 		});
 

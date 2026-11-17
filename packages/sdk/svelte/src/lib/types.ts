@@ -66,7 +66,7 @@ export interface ConsentManagerOptions
 	extends
 		Omit<
 			ConsentRuntimeOptions,
-			| 'backendURL'
+			| 'projectUrl'
 			| 'createIAB'
 			| 'gpp'
 			| 'iab'
@@ -92,17 +92,17 @@ export interface ConsentManagerOptions
 	 *
 	 * @example
 	 * ```svelte
-	 * <ConsentProvider backendURL="/api/c15t">
+	 * <ConsentProvider projectUrl="/api/c15t">
 	 *   {@render children()}
 	 * </ConsentProvider>
 	 * ```
 	 */
-	backendURL?: string;
+	projectUrl?: string;
 	/**
 	 * How the visitor's policy is resolved. Initial-only.
 	 *
 	 * - Omitted, or `hosted()` from `@c15t/svelte`: ask
-	 *   `${backendURL}/init`.
+	 *   `${projectUrl}/init`.
 	 * - `manifest()` from `@c15t/svelte`: resolve from the backend's
 	 *   consent manifest in the browser, falling back to `/init` with a
 	 *   warning when it is unavailable.
@@ -129,7 +129,7 @@ export interface ConsentManagerOptions
 	 *
 	 * @example
 	 * ```svelte
-	 * <ConsentProvider backendURL="/api/c15t" gpp={{ usApproach: 'national' }}>
+	 * <ConsentProvider projectUrl="/api/c15t" gpp={{ usApproach: 'national' }}>
 	 *   {@render children()}
 	 * </ConsentProvider>
 	 * ```
@@ -196,7 +196,7 @@ export interface ConsentRootState {
 	/** The visitor's consent state the server resolved. */
 	prefetch: Omit<KernelConfig, 'transport'> & ExperimentState;
 	/** The c15t backend. Saves go here. */
-	backendURL?: string;
+	projectUrl?: string;
 	/**
 	 * Prefix of the app's consent route, such as `/api/c15t`, when
 	 * `c15tHandle()` was given one. The browser re-inits and fetches the

@@ -36,7 +36,7 @@ export interface NgAddOptions {
 	/** The application project to change. */
 	project?: string;
 	/** The backend URL. Empty means the docs' placeholder. */
-	backendUrl?: string;
+	projectUrl?: string;
 	/** Whether to add the banner and dialog to the root component. */
 	components?: boolean;
 }
@@ -299,13 +299,13 @@ const formatProvider = (
 	}
 };
 
-/** The `backendURL` the options ask for, quoted. */
+/** The `projectUrl` the options ask for, quoted. */
 const backendOf = (options: NgAddOptions): string =>
-	quote(options.backendUrl?.trim() || PLACEHOLDER_URL);
+	quote(options.projectUrl?.trim() || PLACEHOLDER_URL);
 
 /** The provider call to add by hand, on one line. */
 const providerExpression = (options: NgAddOptions): string =>
-	`provideC15t({ backendURL: ${backendOf(options)} })`;
+	`provideC15t({ projectUrl: ${backendOf(options)} })`;
 
 /** What the provider rules leave for the rules after them. */
 interface ProviderOutcome {
@@ -357,10 +357,10 @@ const providerRules = (
 	resolverFor: ResolverFor,
 	outcome: ProviderOutcome
 ): Rule[] => {
-	const answer = options.backendUrl?.trim();
+	const answer = options.projectUrl?.trim();
 	const bodyLines = [
 		...(answer ? [] : [PLACEHOLDER_COMMENT]),
-		`backendURL: ${backendOf(options)},`,
+		`projectUrl: ${backendOf(options)},`,
 	];
 	const expression = (base: string, unit: string): string =>
 		[

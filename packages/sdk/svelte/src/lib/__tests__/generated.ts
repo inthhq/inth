@@ -6,14 +6,14 @@
 import type { ConsentManifest } from '@c15t/schema/types';
 
 // oxlint-disable-next-line import/no-mutable-exports -- Live bindings stand in for a build's values.
-export let backendURL: string | undefined;
+export let projectUrl: string | undefined;
 // oxlint-disable-next-line import/no-mutable-exports -- See above.
 export let snapshot: ConsentManifest | undefined;
 
 /** Sets what the build appears to have fetched. */
 export const setGenerated = (module: {
-	backendURL?: string;
+	projectUrl?: string;
 	snapshot?: ConsentManifest;
 }): void => {
-	({ backendURL, snapshot } = module);
+	({ projectUrl, snapshot } = module);
 };

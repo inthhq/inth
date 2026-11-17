@@ -11,7 +11,7 @@
  */
 import { building } from '$app/env';
 import {
-	backendURL as builtBackendURL,
+	projectUrl as builtProjectUrl,
 	snapshot as builtSnapshot,
 } from '@c15t/core/generated';
 import { readWaitUntil, resolveRequestConsent } from '@c15t/core/server';
@@ -40,7 +40,7 @@ export interface LoadConsentOptions extends ConsentRequestOptions {
 	forwardHeaders?: string[];
 
 	/**
-	 * Hosted mode: resolve a relative `backendURL` against the request's
+	 * Hosted mode: resolve a relative `projectUrl` against the request's
 	 * `forwarded`, `x-forwarded-host` and `x-forwarded-proto` headers instead
 	 * of `event.url`. Any client can send those headers, and `loadConsent`
 	 * forwards the consent cookie to the resolved backend, so set this
@@ -103,14 +103,14 @@ const backgroundWorkFor = (
 const serverResolution = function serverResolution(
 	mode: KitMode,
 	locals: C15tLocals | undefined,
-	backendURL: string | undefined
+	projectUrl: string | undefined
 ): Pick<
 	ResolveRequestConsentOptions,
-	| 'backendURL'
+	| 'projectUrl'
 	| 'gvlRoute'
 	| 'initHeaders'
 	| 'manifest'
-	| 'manifestURL'
+	| 'manifestUrl'
 	| 'mode'
 > {
 	if (mode.type === 'testing') {
@@ -119,14 +119,13 @@ const serverResolution = function serverResolution(
 		return {};
 	}
 	if (mode.type === 'hosted') {
-		return { backendURL, mode: 'hosted' };
+		return { mode: 'hosted', projectUrl };
 	}
 	if (mode.resolve === 'browser') {
 		// The browser resolves; the server reads the cookie only.
 		return {};
 	}
 	return {
-		backendURL,
 		// The catch-all serves deferred vendor lists only on its init path.
 		gvlRoute:
 			locals?.routePrefix === undefined
@@ -137,8 +136,9 @@ const serverResolution = function serverResolution(
 			(mode.source === 'runtime'
 				? undefined
 				: (locals?.snapshot ?? builtSnapshot)),
-		manifestURL: mode.manifestURL,
+		manifestUrl: mode.manifestUrl,
 		mode: 'manifest',
+		projectUrl,
 	};
 };
 
@@ -206,7 +206,7 @@ export const loadConsent = async function loadConsent(
 ): Promise<{ consent: ConsentRootState }> {
 	const locals = readLocals(event);
 	const mode: KitMode = locals?.mode ?? { type: 'manifest' };
-	const backendURL = locals?.backendURL ?? builtBackendURL;
+	const projectUrl = locals?.projectUrl ?? builtProjectUrl;
 	// Per-call inputs beat the handle's: a route that passes `country` is
 	// naming the country for that page. The handle's cookie name is part of
 	// the request context, so a per-call `country` keeps it.
@@ -218,7 +218,7 @@ export const loadConsent = async function loadConsent(
 	const shared = building || locals?.shared === true;
 	const state = await resolveRequestConsent({
 		adapter: '@c15t/svelte',
-		...serverResolution(mode, locals, backendURL),
+		...serverResolution(mode, locals, projectUrl),
 		fetch: options.fetch,
 		forwardHeaders: options.forwardHeaders,
 		// SvelteKit answers this app's own routes in-process, so the consent
@@ -242,8 +242,8 @@ export const loadConsent = async function loadConsent(
 		mode: browserMode(mode),
 		prefetch: state,
 	};
-	if (backendURL !== undefined) {
-		consent.backendURL = backendURL;
+	if (projectUrl !== undefined) {
+		consent.projectUrl = projectUrl;
 	}
 	if (locals?.routePrefix !== undefined) {
 		consent.routePrefix = locals.routePrefix;

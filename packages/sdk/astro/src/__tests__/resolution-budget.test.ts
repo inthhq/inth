@@ -66,7 +66,7 @@ describe('server resolution budget', () => {
 		const backend = heldFetch(initResponse);
 		let settled = false;
 		const pending = resolveContext(
-			{ backendURL: BACKEND, mode: hostedMode() },
+			{ mode: hostedMode(), projectUrl: BACKEND },
 			{ fetch: backend.fetch }
 		).then((value) => {
 			settled = true;
@@ -89,9 +89,9 @@ describe('server resolution budget', () => {
 		const started = Date.now();
 		const c15t = await resolveContext(
 			{
-				backendURL: BACKEND,
 				middleware: { timeoutMs: false },
 				mode: hostedMode(),
+				projectUrl: BACKEND,
 			},
 			{ fetch: backend.fetch, timeoutMs: 30 }
 		);

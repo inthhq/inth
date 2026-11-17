@@ -2,7 +2,7 @@
  * `@c15t/astro/testing` — run the consent flow in tests with no backend.
  *
  * Pass `mode: testing()` to the `c15t()` integration. It needs no
- * `backendURL`. The server and the browser resolve the recommended policy
+ * `projectUrl`. The server and the browser resolve the recommended policy
  * pack with no network; set `overrides.country` (and `overrides.region`)
  * to pick the policy:
  *

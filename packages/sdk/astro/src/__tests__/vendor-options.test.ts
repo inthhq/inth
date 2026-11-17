@@ -51,8 +51,8 @@ describe('vendors from the backend manifest', () => {
 		const c15t = await resolveConsentContext({
 			headers: new Headers({ 'x-vercel-ip-country': 'DE' }),
 			options: resolveOptions({
-				backendURL: 'https://consent.example.com',
 				mode: manifestMode({ snapshot: manifest }),
+				projectUrl: 'https://consent.example.com',
 				vendors: [
 					{
 						category: 'measurement',

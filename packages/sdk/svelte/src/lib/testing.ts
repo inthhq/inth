@@ -3,7 +3,7 @@
  * with no backend.
  *
  * Pass `testing()` as `<ConsentProvider mode>`, or as
- * `c15tHandle({ mode })` in SvelteKit. It needs no `backendURL`. It
+ * `c15tHandle({ mode })` in SvelteKit. It needs no `projectUrl`. It
  * resolves the recommended policy pack in the browser and sends nothing;
  * set `overrides.country` (and `overrides.region`) to pick the policy:
  *

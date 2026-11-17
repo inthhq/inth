@@ -78,14 +78,14 @@ export interface ConsentRouteHandlerOptions {
 /**
  * Work out where `GET /manifest` lives for this request.
  *
- * `manifestURL` when set, otherwise `${backendURL}/manifest`.
+ * `manifestUrl` when set, otherwise `${projectUrl}/manifest`.
  *
  * @param request - The incoming request, used to resolve relative URLs.
  * @param options - The resolved integration options.
  * @returns An absolute manifest URL.
  * @throws {Error} When neither a manifest URL nor a backend URL is configured.
  */
-export const resolveManifestSourceURL = function resolveManifestSourceURL(
+export const resolveManifestSourceUrl = function resolveManifestSourceUrl(
 	request: Request,
 	options: C15tResolvedOptions
 ): string {
@@ -103,7 +103,7 @@ export const resolveManifestSourceURL = function resolveManifestSourceURL(
  * these: a page the server resolved inits again through the backend's
  * `/init`. Mount them for other clients, or let browser resolution fetch
  * the manifest from them with
- * `manifest({ resolve: 'browser', manifestURL: '/api/c15t/manifest' })`.
+ * `manifest({ resolve: 'browser', manifestUrl: '/api/c15t/manifest' })`.
  * To have the browser use the route for `/init`, keep the injected route
  * and change its path with `routePrefix`.
  *
@@ -113,7 +113,7 @@ export const resolveManifestSourceURL = function resolveManifestSourceURL(
  * @example
  * ```ts
  * // src/pages/api/c15t/[...path].ts, with routePrefix: false and
- * // mode: manifest({ resolve: 'browser', manifestURL: '/api/c15t/manifest' })
+ * // mode: manifest({ resolve: 'browser', manifestUrl: '/api/c15t/manifest' })
  * import options from 'virtual:c15t/options';
  * import { createConsentRouteHandlers } from 'c15t/astro/server';
  *
@@ -127,11 +127,11 @@ export const createConsentRouteHandlers = function createConsentRouteHandlers(
 	const { mode, i18n } = handlerOptions.options;
 	const handle = createConsentRouteHandler({
 		adapter: '@c15t/astro',
-		backendURL: handlerOptions.options.backendURL,
 		fetch: handlerOptions.fetch,
 		fetchGvl: handlerOptions.fetchGvl,
 		manifest: mode.type === 'manifest' ? mode.snapshot : undefined,
-		manifestURL: mode.type === 'manifest' ? mode.manifestURL : undefined,
+		manifestUrl: mode.type === 'manifest' ? mode.manifestUrl : undefined,
+		projectUrl: handlerOptions.options.projectUrl,
 	});
 	const locale = i18n?.locale;
 

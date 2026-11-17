@@ -34,21 +34,21 @@ export interface ConsentRouteOptions {
 	 */
 	routePrefix?: string;
 	/**
-	 * The c15t backend. The manifest is read from `${backendURL}/manifest`
-	 * unless `manifestURL` or `snapshot` is set; session reports and the
+	 * The c15t backend. The manifest is read from `${projectUrl}/manifest`
+	 * unless `manifestUrl` or `snapshot` is set; session reports and the
 	 * proxy go here. Must not name this route.
 	 */
-	backendURL?: string;
-	/** Full manifest URL. Takes precedence over `${backendURL}/manifest`. */
-	manifestURL?: string;
+	projectUrl?: string;
+	/** Full manifest URL. Takes precedence over `${projectUrl}/manifest`. */
+	manifestUrl?: string;
 	/** A manifest to resolve with. No manifest is fetched. */
 	snapshot?: ConsentManifest;
-	/** Fetch for an absolute `backendURL` or `manifestURL`. */
+	/** Fetch for an absolute `projectUrl` or `manifestUrl`. */
 	fetch?: ManifestFetch;
 	/** Fetches the Global Vendor List when the resolved policy is IAB. */
 	fetchGvl?: ConsentRouteFetchGvl;
 	/**
-	 * Resolve a relative `backendURL` against the request's forwarding
+	 * Resolve a relative `projectUrl` against the request's forwarding
 	 * headers and believe the client IP chain. Only behind a proxy that sets
 	 * those headers and drops incoming ones.
 	 *
@@ -56,7 +56,7 @@ export interface ConsentRouteOptions {
 	 */
 	trustForwardedHeaders?: boolean;
 	/**
-	 * Forward consent writes to `backendURL` through this route, so the
+	 * Forward consent writes to `projectUrl` through this route, so the
 	 * browser only talks to this origin. Without it the route answers `GET`
 	 * only and anything else gets `405`. Only an allowlist of paths is
 	 * forwarded, so the route is never an open proxy.
@@ -200,7 +200,7 @@ const RELATIVE_BASE = 'http://c15t.invalid';
  * protocol-relative one (`//host/…`) comes back as `//host`, which takes
  * each request's own scheme.
  *
- * @throws {TypeError} When a relative `backendURL` or `manifestURL` is the
+ * @throws {TypeError} When a relative `projectUrl` or `manifestUrl` is the
  * route or beneath it.
  */
 const upstreamLoops = function upstreamLoops(
@@ -209,8 +209,8 @@ const upstreamLoops = function upstreamLoops(
 ): string[] {
 	const origins: string[] = [];
 	for (const [name, url] of [
-		['backendURL', options.backendURL],
-		['manifestURL', options.manifestURL],
+		['projectUrl', options.projectUrl],
+		['manifestUrl', options.manifestUrl],
 	] as const) {
 		if (!url) {
 			continue;
@@ -248,7 +248,7 @@ const upstreamLoops = function upstreamLoops(
  * import { createConsentRoute } from '@c15t/angular/ssr';
  *
  * export const consentRoute = createConsentRoute({
- *   backendURL: process.env['C15T_BACKEND_URL'],
+ *   projectUrl: process.env['C15T_BACKEND_URL'],
  *   proxy: true,
  * });
  *
@@ -265,7 +265,7 @@ const upstreamLoops = function upstreamLoops(
  * @returns The route, as a fetch handler, an in-process fetch, and Node
  * middleware.
  * @throws {TypeError} When `routePrefix` is `/` or not a path, or a
- * relative `backendURL` or `manifestURL` is the route or beneath it.
+ * relative `projectUrl` or `manifestUrl` is the route or beneath it.
  */
 export const createConsentRoute = function createConsentRoute(
 	options: ConsentRouteOptions = {}
@@ -277,11 +277,11 @@ export const createConsentRoute = function createConsentRoute(
 	const loops = upstreamLoops(options, routePrefix);
 	const handler = createConsentRouteHandler({
 		adapter: ADAPTER,
-		backendURL: options.backendURL,
 		fetch: options.fetch,
 		fetchGvl: options.fetchGvl,
 		manifest: options.snapshot,
-		manifestURL: options.manifestURL,
+		manifestUrl: options.manifestUrl,
+		projectUrl: options.projectUrl,
 		proxy: options.proxy,
 		trustForwardedHeaders: options.trustForwardedHeaders,
 	});
@@ -307,7 +307,7 @@ export const createConsentRoute = function createConsentRoute(
 			// An absolute upstream URL on this site, beneath this route: the
 			// request would come back here.
 			return new Response(
-				`${ADAPTER}: \`backendURL\` or \`manifestURL\` points beneath the consent route on this site (${routePrefix}). Pass the c15t backend's URL.`,
+				`${ADAPTER}: \`projectUrl\` or \`manifestUrl\` points beneath the consent route on this site (${routePrefix}). Pass the c15t backend's URL.`,
 				{ status: 500 }
 			);
 		}
@@ -363,7 +363,7 @@ export const createConsentRoute = function createConsentRoute(
 		const origin =
 			resolveRequestOrigin({
 				headers: request.headers,
-				requestURL: request.url,
+				requestUrl: request.url,
 				trustForwardedHeaders: trust,
 			}) ?? IN_PROCESS_ORIGIN;
 		const forwarded = new Headers();

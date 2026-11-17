@@ -32,15 +32,15 @@ describe('modes', () => {
 
 describe('the page transports', () => {
 	it('reports the transport kind for window.c15t', () => {
-		expect(lazyTransport({ backendURL: '/x', mode: hostedMode() }).kind).toBe(
+		expect(lazyTransport({ mode: hostedMode(), projectUrl: '/x' }).kind).toBe(
 			'hosted'
 		);
-		expect(hostedTransport({ backendURL: '/x', mode: hostedMode() }).kind).toBe(
+		expect(hostedTransport({ mode: hostedMode(), projectUrl: '/x' }).kind).toBe(
 			'hosted'
 		);
 		expect(testingTransport({ mode: testingMode() }).kind).toBe('offline');
 		expect(
-			lazyTransport({ backendURL: BACKEND, mode: manifestMode() }).kind
+			lazyTransport({ mode: manifestMode(), projectUrl: BACKEND }).kind
 		).toBe('manifest');
 	});
 
@@ -79,8 +79,8 @@ describe('the page transports', () => {
 			globalThis.fetch = fetchImpl as unknown as typeof globalThis.fetch;
 			try {
 				const transport = lazyTransport({
-					backendURL: BACKEND,
 					mode: manifestMode(),
+					projectUrl: BACKEND,
 					routePrefix,
 				})(context);
 				await transport.init?.({ overrides: {}, user: null });
@@ -95,10 +95,10 @@ describe('the page transports', () => {
 
 	it('needs a backend URL for hosted mode', () => {
 		expect(() => lazyTransport({ mode: hostedMode() })).toThrowError(
-			/`backendURL` is required/u
+			/`projectUrl` is required/u
 		);
 		expect(
-			lazyTransport({ backendURL: BACKEND, mode: hostedMode() }).kind
+			lazyTransport({ mode: hostedMode(), projectUrl: BACKEND }).kind
 		).toBe('hosted');
 	});
 });

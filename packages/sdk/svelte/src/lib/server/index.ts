@@ -10,12 +10,12 @@ import type {
  * Resolves the visitor's consent state from a SvelteKit request.
  *
  * 1. Reads the consent cookie, the CDN geo headers, `accept-language`, and
- *    the GPC signal. Without a snapshot or `backendURL` this is the whole
+ *    the GPC signal. Without a snapshot or `projectUrl` this is the whole
  *    result, and no network call is made.
  * 2. With a snapshot, resolves locally using this visitor's inputs. An
- *    absolute `backendURL` receives a session report. IAB vendor lists can
+ *    absolute `projectUrl` receives a session report. IAB vendor lists can
  *    still require a fetch.
- * 3. With only a `backendURL`, calls `${backendURL}/init` with the request
+ * 3. With only a `projectUrl`, calls `${projectUrl}/init` with the request
  *    context and folds the response into the state, so first paint is
  *    correct without waiting for a client roundtrip.
  *
@@ -33,7 +33,7 @@ import type {
  * import { resolveConsent } from '@c15t/svelte/server';
  *
  * const state = await resolveConsent({
- *   backendURL: 'https://consent.example.com',
+ *   projectUrl: 'https://consent.example.com',
  *   headers: request.headers,
  * });
  * ```
@@ -43,7 +43,6 @@ export const resolveConsent = function resolveConsent(
 ): Promise<ConsentState> {
 	return resolveRequestConsent({
 		adapter: '@c15t/svelte',
-		backendURL: options.backendURL,
 		experiment: options.experiment,
 		fetch: options.fetch,
 		forwardHeaders: options.forwardHeaders,
@@ -55,10 +54,11 @@ export const resolveConsent = function resolveConsent(
 			language: options.language,
 			region: options.region,
 		},
+		projectUrl: options.projectUrl,
 		request: {
 			cookie: options.cookieHeader,
 			headers: options.headers,
-			url: options.requestURL,
+			url: options.requestUrl,
 		},
 		storage: options.cookieName
 			? { storageKey: options.cookieName }

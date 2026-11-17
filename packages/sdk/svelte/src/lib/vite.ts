@@ -388,9 +388,9 @@ export const createFirstLoadChunkPlugin =
  * In a SvelteKit app (the `sveltekit()` plugin is present), the snapshot
  * stays on the server: in the client environment, `snapshot` is
  * `undefined`. A Svelte single-page app receives it in the browser.
- * `backendURL` is public and reaches both.
+ * `projectUrl` is public and reaches both.
  *
- * `backendURL` defaults to `PUBLIC_C15T_BACKEND_URL` (SvelteKit), then
+ * `projectUrl` defaults to `PUBLIC_C15T_BACKEND_URL` (SvelteKit), then
  * `VITE_C15T_BACKEND_URL`, then the Inth variables `PUBLIC_INTH_PROJECT_URL`
  * and `VITE_INTH_PROJECT_URL`, including `.env` files. When
  * `VITE_C15T_BACKEND_URL` is unset, the plugin sets
@@ -401,7 +401,7 @@ export const createFirstLoadChunkPlugin =
  * `onBuildError: 'fail'` or `C15T_ON_BUILD_ERROR=fail` to stop the build
  * instead. In a Svelte
  * single-page app whose policy depends on the visitor's location, the
- * build warns and suggests `hosted()`. With `manifest({ manifestURL })` or
+ * build warns and suggests `hosted()`. With `manifest({ manifestUrl })` or
  * `manifest({ source: 'runtime' })`, pass `source: 'runtime'` here too, so
  * the build never fetches a snapshot the app would discard.
  *

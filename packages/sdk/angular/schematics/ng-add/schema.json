@@ -11,10 +11,10 @@
 				"$source": "projectName"
 			}
 		},
-		"backendUrl": {
+		"projectUrl": {
 			"type": "string",
-			"description": "The backend URL, such as your Inth project's URL. Leave it empty to add a placeholder you replace later.",
-			"x-prompt": "Backend URL (leave empty for a placeholder):"
+			"description": "Your Inth project URL. Leave it empty to add a placeholder you replace later.",
+			"x-prompt": "Project URL (leave empty for a placeholder):"
 		},
 		"components": {
 			"type": "boolean",

@@ -505,8 +505,8 @@ describe('<ConsentBanner /> without a resolved policy', () => {
 			) as never,
 			headers: new Headers(),
 			options: resolveOptions({
-				backendURL: 'https://consent.example.com',
 				mode: hostedMode(),
+				projectUrl: 'https://consent.example.com',
 			}),
 			url: 'https://example.com/',
 		});

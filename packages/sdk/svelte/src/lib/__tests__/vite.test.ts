@@ -66,7 +66,6 @@ describe('Svelte manifest module', () => {
 			const root = await mkdtemp(path.join(tmpdir(), 'c15t-svelte-manifest-'));
 			directories.push(root);
 			const [plugin] = consentManifest({
-				backendURL: 'https://consent.example.com',
 				fetch: () =>
 					Promise.resolve(
 						Response.json({
@@ -75,6 +74,7 @@ describe('Svelte manifest module', () => {
 							schemaVersion: 2,
 						})
 					),
+				projectUrl: 'https://consent.example.com',
 			});
 			await plugin.configResolved({ command: 'serve', plugins, root });
 			const load = (consumer: 'client' | 'server') =>
@@ -119,8 +119,8 @@ describe('location advice', () => {
 		async ({ plugins, warns }) => {
 			const warn = vi.fn();
 			const [plugin] = consentManifest({
-				backendURL: 'https://consent.example.com',
 				fetch: regional,
+				projectUrl: 'https://consent.example.com',
 			});
 			plugin.configResolved({
 				command: 'build',
@@ -135,7 +135,7 @@ describe('location advice', () => {
 			await plugin.renderChunk(source as string);
 			expect(
 				warn.mock.calls.some(([message]) =>
-					/^@c15t\/svelte\/vite: .*location.*backendURL/u.test(String(message))
+					/^@c15t\/svelte\/vite: .*location.*projectUrl/u.test(String(message))
 				)
 			).toBe(warns);
 		}
@@ -272,10 +272,10 @@ describe('consentManifest module preload', () => {
 });
 
 describe('Svelte backend URL variables', () => {
-	/** The `backendURL` the generated module exports, for the given env. */
-	const resolveBackendURL = async (
+	/** The `projectUrl` the generated module exports, for the given env. */
+	const resolveProjectUrl = async (
 		env: Record<string, unknown>,
-		options: { backendURL?: string } = {}
+		options: { projectUrl?: string } = {}
 	) => {
 		const root = await mkdtemp(path.join(tmpdir(), 'c15t-inth-env-'));
 		try {
@@ -299,9 +299,9 @@ describe('Svelte backend URL variables', () => {
 				)
 			);
 			return {
-				backendURL: /export const backendURL = "(?<url>[^"]*)";/u.exec(source)
-					?.groups?.url,
 				env,
+				projectUrl: /export const projectUrl = "(?<url>[^"]*)";/u.exec(source)
+					?.groups?.url,
 			};
 		} finally {
 			await rm(root, { force: true, recursive: true });
@@ -311,48 +311,48 @@ describe('Svelte backend URL variables', () => {
 	const C15T = 'https://c15t.example.com';
 
 	test('PUBLIC_INTH_PROJECT_URL alone gives the backend URL', async () => {
-		const { backendURL } = await resolveBackendURL({
+		const { projectUrl } = await resolveProjectUrl({
 			PUBLIC_INTH_PROJECT_URL: INTH,
 		});
-		expect(backendURL).toBe(INTH);
+		expect(projectUrl).toBe(INTH);
 	});
 
 	test('either c15t variable beats either Inth variable', async () => {
-		const { backendURL } = await resolveBackendURL({
+		const { projectUrl } = await resolveProjectUrl({
 			PUBLIC_C15T_BACKEND_URL: C15T,
 			PUBLIC_INTH_PROJECT_URL: INTH,
 			VITE_INTH_PROJECT_URL: INTH,
 		});
-		expect(backendURL).toBe(C15T);
-		const vite = await resolveBackendURL({
+		expect(projectUrl).toBe(C15T);
+		const vite = await resolveProjectUrl({
 			PUBLIC_INTH_PROJECT_URL: INTH,
 			VITE_C15T_BACKEND_URL: C15T,
 		});
-		expect(vite.backendURL).toBe(C15T);
+		expect(vite.projectUrl).toBe(C15T);
 	});
 
 	test('VITE_INTH_PROJECT_URL alone gives the backend URL', async () => {
-		const { backendURL, env } = await resolveBackendURL({
+		const { projectUrl, env } = await resolveProjectUrl({
 			VITE_INTH_PROJECT_URL: INTH,
 		});
-		expect(backendURL).toBe(INTH);
+		expect(projectUrl).toBe(INTH);
 		expect(env.VITE_C15T_BACKEND_URL).toBe(INTH);
 	});
 
 	test('VITE_C15T_BACKEND_URL wins when both are set', async () => {
-		const { backendURL } = await resolveBackendURL({
+		const { projectUrl } = await resolveProjectUrl({
 			VITE_C15T_BACKEND_URL: C15T,
 			VITE_INTH_PROJECT_URL: INTH,
 		});
-		expect(backendURL).toBe(C15T);
+		expect(projectUrl).toBe(C15T);
 	});
 
-	test('an explicit backendURL beats both variables', async () => {
-		const { backendURL } = await resolveBackendURL(
+	test('an explicit projectUrl beats both variables', async () => {
+		const { projectUrl } = await resolveProjectUrl(
 			{ VITE_C15T_BACKEND_URL: C15T, VITE_INTH_PROJECT_URL: INTH },
-			{ backendURL: 'https://option.example.com' }
+			{ projectUrl: 'https://option.example.com' }
 		);
-		expect(backendURL).toBe('https://option.example.com');
+		expect(projectUrl).toBe('https://option.example.com');
 	});
 });
 

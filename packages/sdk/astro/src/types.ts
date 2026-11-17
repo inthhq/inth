@@ -107,14 +107,14 @@ export interface C15tMiddlewareOptions {
 export interface C15tAstroOptions {
 	/**
 	 * Your Inth backend: the browser saves consent there with
-	 * `POST /subjects`, `manifest()` reads `${backendURL}/manifest`, and
+	 * `POST /subjects`, `manifest()` reads `${projectUrl}/manifest`, and
 	 * `hosted()` asks its `/init`. Required unless `mode` is `testing()`.
 	 *
 	 * Defaults to `PUBLIC_C15T_BACKEND_URL`, then `PUBLIC_INTH_PROJECT_URL`,
 	 * read from the environment or a `.env` file in the project root when
 	 * `astro.config.mjs` loads.
 	 */
-	backendURL?: string;
+	projectUrl?: string;
 	/**
 	 * Where the visitor's policy comes from: `manifest()` or `hosted()`
 	 * from `c15t/astro`, or `testing()` from `c15t/astro/testing`.
@@ -419,7 +419,7 @@ export interface C15tIABOptions {
 	 * concurrent renders collapse onto one download. Ignored when
 	 * {@link C15tIABOptions.gvl} is set.
 	 */
-	gvlURL?: string;
+	gvlUrl?: string;
 }
 
 /** Locale configuration accepted by the integration. */
