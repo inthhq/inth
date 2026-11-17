@@ -38,7 +38,7 @@ export interface StaticConsentResolverOptions {
 	 * Endpoint returning {@link StaticGeoResult} JSON. Fetched once when `geo`
 	 * is not set; `resolved` then carries the regional policy.
 	 */
-	geoURL?: string;
+	geoUrl?: string;
 
 	/** Language for translations. Defaults to the browser language, then `en`. */
 	language?: string;
@@ -46,7 +46,7 @@ export interface StaticConsentResolverOptions {
 	/** Global Privacy Control signal. Defaults to the browser's value. */
 	gpc?: boolean;
 
-	/** Fetch implementation for `geoURL`. Defaults to `globalThis.fetch`. */
+	/** Fetch implementation for `geoUrl`. Defaults to `globalThis.fetch`. */
 	fetch?: typeof globalThis.fetch;
 }
 
@@ -60,7 +60,7 @@ export interface StaticConsentResolution {
 	initial: InitOutput;
 
 	/**
-	 * Resolves to the regional result once `geo` or `geoURL` supplies a
+	 * Resolves to the regional result once `geo` or `geoUrl` supplies a
 	 * location. Resolves to `initial` when neither does or the fetch fails.
 	 */
 	resolved: Promise<InitOutput>;
@@ -107,10 +107,10 @@ const normalizeGeo = function normalizeGeo(
 };
 
 const fetchStaticGeo = async function fetchStaticGeo(
-	geoURL: string,
+	geoUrl: string,
 	fetchImpl: typeof globalThis.fetch
 ): Promise<StaticGeoResult | null> {
-	const response = await fetchImpl(geoURL, {
+	const response = await fetchImpl(geoUrl, {
 		headers: { accept: 'application/json' },
 		method: 'GET',
 	});
@@ -155,7 +155,7 @@ export const resolveUnknownLocationInit = function resolveUnknownLocationInit(
 /**
  * Resolves consent for a statically rendered page from a bundled manifest.
  *
- * `initial` is available synchronously for first paint. With a `geoURL`,
+ * `initial` is available synchronously for first paint. With a `geoUrl`,
  * `resolved` fetches the visitor's location once and resolves the regional
  * policy; a failed or empty geo response keeps `initial`.
  *
@@ -169,7 +169,7 @@ export const resolveUnknownLocationInit = function resolveUnknownLocationInit(
  *
  * const { initial, resolved } = createStaticConsentResolver({
  * 	manifest: consentManifest,
- * 	geoURL: '/api/geo',
+ * 	geoUrl: '/api/geo',
  * });
  * ```
  */
@@ -192,14 +192,14 @@ export const createStaticConsentResolver = function createStaticConsentResolver(
 	return {
 		initial,
 		resolved: (async () => {
-			if (hasGeo || !options.geoURL) {
+			if (hasGeo || !options.geoUrl) {
 				return initial;
 			}
 			const fetchImpl = options.fetch ?? globalThis.fetch?.bind(globalThis);
 			if (!fetchImpl) {
 				return initial;
 			}
-			const geo = await fetchStaticGeo(options.geoURL, fetchImpl).catch(
+			const geo = await fetchStaticGeo(options.geoUrl, fetchImpl).catch(
 				() => null
 			);
 			const resolvedGeo = normalizeGeo(geo);

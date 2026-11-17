@@ -98,7 +98,6 @@ const createRuntime = () => {
 	const runtime = createConsentRuntime({
 		consentCategories: ['necessary', 'measurement', 'marketing'],
 		mode: hosted({
-			backendURL: '/api/c15t',
 			fetch: (input, init) => {
 				const path = String(input).split('?')[0] ?? '';
 				if (unavailable) {
@@ -121,6 +120,7 @@ const createRuntime = () => {
 					)
 				);
 			},
+			projectUrl: '/api/c15t',
 		}),
 		prefetch: { initRetry: false },
 	});

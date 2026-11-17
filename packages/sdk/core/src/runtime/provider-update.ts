@@ -144,7 +144,7 @@ const initialOnlyKey = function initialOnlyKey(
 	const { persistence, prefetch } = options;
 	return JSON.stringify([
 		typeof options.mode === 'function' ? options.mode.kind : options.mode?.type,
-		options.backendURL,
+		options.projectUrl,
 		options.i18n,
 		// The server's experiment wins over the configured one.
 		(isPromiseLike(prefetch) ? undefined : prefetch)?.experiment ??

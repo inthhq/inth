@@ -15,7 +15,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import {
 	clearManifestCache,
 	createManifestCache,
-	createManifestRequestURL,
+	createManifestRequestUrl,
 	fetchCachedManifest,
 	getManifestAge,
 	getManifestSMaxAge,
@@ -28,7 +28,7 @@ import {
 	ManifestUnavailableError,
 	readFillFailures,
 	readRevalidationFloors,
-	resolveManifestSourceURL,
+	resolveManifestSourceUrl,
 } from '../libs/manifest-cache-runtime';
 import type {
 	CachedManifestResponse,
@@ -150,12 +150,12 @@ describe('fetchCachedManifest', () => {
 		const first = await fetchCachedManifest({
 			fetch: fetchMock,
 			now: 1000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		const second = await fetchCachedManifest({
 			fetch: fetchMock,
 			now: 59_000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 
 		expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -199,17 +199,17 @@ describe('fetchCachedManifest', () => {
 		const first = await fetchCachedManifest({
 			fetch: fetchMock,
 			now: 1000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		const refreshed = await fetchCachedManifest({
 			fetch: fetchMock,
 			now: 62_000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		const served = await fetchCachedManifest({
 			fetch: fetchMock,
 			now: 90_000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 
 		expect(fetchMock).toHaveBeenCalledTimes(2);
@@ -248,14 +248,14 @@ describe('fetchCachedManifest', () => {
 		const first = await fetchCachedManifest({
 			fetch: fetchMock,
 			now: 1000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		expect(first).toMatchObject({ expiresAt: 2000, upstreamAge: 119 });
 
 		const refreshed = await fetchCachedManifest({
 			fetch: fetchMock,
 			now: 3000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		expect(refreshed).toMatchObject({ expiresAt: 123_000, upstreamAge: 0 });
 		expect(refreshed.headers.age).toBeUndefined();
@@ -263,7 +263,7 @@ describe('fetchCachedManifest', () => {
 		await fetchCachedManifest({
 			fetch: fetchMock,
 			now: 60_000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		expect(fetchMock).toHaveBeenCalledTimes(2);
 	});
@@ -276,12 +276,12 @@ describe('fetchCachedManifest', () => {
 		const first = await fetchCachedManifest({
 			fetch: fetchMock,
 			now: 1000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		await fetchCachedManifest({
 			fetch: fetchMock,
 			now: 1001,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 
 		expect(fetchMock).toHaveBeenCalledTimes(2);
@@ -298,17 +298,17 @@ describe('fetchCachedManifest', () => {
 		const first = await fetchCachedManifest({
 			fetch: fetchMock,
 			now: 1000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		await fetchCachedManifest({
 			fetch: fetchMock,
 			now: 1000 + floorMs - 1,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		await fetchCachedManifest({
 			fetch: fetchMock,
 			now: 1000 + floorMs + 1,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 
 		expect(first).toMatchObject({ expiresAt: 1000 + floorMs, sMaxAge: 0 });
@@ -326,18 +326,18 @@ describe('fetchCachedManifest', () => {
 			fetch: fetchMock,
 			now: 1000,
 			query: 'preview=1',
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		await fetchCachedManifest({
 			cache,
 			fetch: fetchMock,
 			now: 1000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		await fetchCachedManifest({
 			fetch: fetchMock,
 			now: 1000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 
 		expect(fetchMock.mock.calls.map(([url]) => String(url))).toEqual([
@@ -357,7 +357,7 @@ describe('fetchCachedManifest', () => {
 		);
 
 		await expect(
-			fetchCachedManifest({ fetch: fetchMock, sourceURL: SOURCE_URL })
+			fetchCachedManifest({ fetch: fetchMock, sourceUrl: SOURCE_URL })
 		).rejects.toThrow('c15t manifest cache: backend /manifest responded 503');
 	});
 
@@ -373,7 +373,7 @@ describe('fetchCachedManifest', () => {
 		);
 
 		await expect(
-			fetchCachedManifest({ fetch: fetchMock, sourceURL: SOURCE_URL })
+			fetchCachedManifest({ fetch: fetchMock, sourceUrl: SOURCE_URL })
 		).rejects.toMatchObject({
 			code: 'CONSENT_SESSIONS_EXHAUSTED',
 			message:
@@ -384,32 +384,32 @@ describe('fetchCachedManifest', () => {
 });
 
 describe('manifest source URLs', () => {
-	test('prefers manifestURL and otherwise appends /manifest to backendURL', () => {
+	test('prefers manifestUrl and otherwise appends /manifest to projectUrl', () => {
 		expect(
-			resolveManifestSourceURL({
-				backendURL: 'https://backend.example',
-				manifestURL: 'https://cdn.example/manifest.json',
+			resolveManifestSourceUrl({
+				manifestUrl: 'https://cdn.example/manifest.json',
+				projectUrl: 'https://backend.example',
 			})
 		).toBe('https://cdn.example/manifest.json');
-		expect(resolveManifestSourceURL({ backendURL: '/api/c15t/' })).toBe(
+		expect(resolveManifestSourceUrl({ projectUrl: '/api/c15t/' })).toBe(
 			'/api/c15t/manifest'
 		);
-		expect(() => resolveManifestSourceURL({})).toThrow(
-			'c15t manifest cache: `backendURL` or `manifestURL` is required.'
+		expect(() => resolveManifestSourceUrl({})).toThrow(
+			'c15t manifest cache: `projectUrl` or `manifestUrl` is required.'
 		);
 	});
 
 	test('appends a query and sorts every parameter by name', () => {
-		expect(createManifestRequestURL({ sourceURL: SOURCE_URL })).toBe(
+		expect(createManifestRequestUrl({ sourceUrl: SOURCE_URL })).toBe(
 			SOURCE_URL
 		);
 		expect(
-			createManifestRequestURL({ query: 'a=1', sourceURL: SOURCE_URL })
+			createManifestRequestUrl({ query: 'a=1', sourceUrl: SOURCE_URL })
 		).toBe(`${SOURCE_URL}?a=1`);
 		expect(
-			createManifestRequestURL({
+			createManifestRequestUrl({
 				query: 'a=1',
-				sourceURL: `${SOURCE_URL}?x=y`,
+				sourceUrl: `${SOURCE_URL}?x=y`,
 			})
 		).toBe(`${SOURCE_URL}?a=1&x=y`);
 	});
@@ -417,29 +417,29 @@ describe('manifest source URLs', () => {
 	test('normalises the URL part of the cache key', () => {
 		const sorted = `${SOURCE_URL}?a=1&b=2`;
 		for (const query of ['b=2&a=1', 'a=1&b=2', '?b=2&a=1']) {
-			expect(createManifestRequestURL({ query, sourceURL: SOURCE_URL })).toBe(
+			expect(createManifestRequestUrl({ query, sourceUrl: SOURCE_URL })).toBe(
 				sorted
 			);
 		}
 		expect(
-			createManifestRequestURL({
+			createManifestRequestUrl({
 				query: 'b=2',
-				sourceURL: `${SOURCE_URL}?a=1#x`,
+				sourceUrl: `${SOURCE_URL}?a=1#x`,
 			})
 		).toBe(sorted);
 		expect(
-			createManifestRequestURL({ query: '', sourceURL: `${SOURCE_URL}?` })
+			createManifestRequestUrl({ query: '', sourceUrl: `${SOURCE_URL}?` })
 		).toBe(SOURCE_URL);
 		// Repeated names keep their order; encodings converge.
 		expect(
-			createManifestRequestURL({
+			createManifestRequestUrl({
 				query: 'v=2&lang=de%20x&v=1',
-				sourceURL: SOURCE_URL,
+				sourceUrl: SOURCE_URL,
 			})
 		).toBe(`${SOURCE_URL}?lang=de+x&v=2&v=1`);
 		// A relative source follows the same rule.
 		expect(
-			createManifestRequestURL({ query: 'b=2&a=1', sourceURL: '/manifest' })
+			createManifestRequestUrl({ query: 'b=2&a=1', sourceUrl: '/manifest' })
 		).toBe('/manifest?a=1&b=2');
 	});
 
@@ -454,7 +454,7 @@ describe('manifest source URLs', () => {
 			fetch: fetchMock,
 			now: 0,
 			query: 'language=de%20x',
-			sourceURL: `${SOURCE_URL}?v=2&sig=a%2Fb~c#fragment`,
+			sourceUrl: `${SOURCE_URL}?v=2&sig=a%2Fb~c#fragment`,
 		});
 		// A URL signed over its exact query still verifies upstream.
 		expect(fetchMock.mock.calls[0]?.[0]).toBe(
@@ -467,7 +467,7 @@ describe('manifest source URLs', () => {
 			fetch: fetchMock,
 			now: 1,
 			query: 'language=de+x',
-			sourceURL: `${SOURCE_URL}?sig=a%2Fb%7Ec&v=2`,
+			sourceUrl: `${SOURCE_URL}?sig=a%2Fb%7Ec&v=2`,
 		});
 		expect(fetchMock).toHaveBeenCalledTimes(1);
 	});
@@ -582,13 +582,13 @@ describe('fetchCachedManifest: concurrency, explicit directives, headers', () =>
 			cache,
 			fetch: fetchMock,
 			now: 1000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		const second = fetchCachedManifest({
 			cache,
 			fetch: fetchMock,
 			now: 1000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		gate.resolve(undefined);
 		const [a, b] = await Promise.all([first, second]);
@@ -600,7 +600,7 @@ describe('fetchCachedManifest: concurrency, explicit directives, headers', () =>
 			cache,
 			fetch: fetchMock,
 			now: 100_000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		expect(fetchMock).toHaveBeenCalledTimes(2);
 	});
@@ -615,13 +615,13 @@ describe('fetchCachedManifest: concurrency, explicit directives, headers', () =>
 			cache,
 			fetch: fetchMock,
 			now: 1000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		await fetchCachedManifest({
 			cache,
 			fetch: fetchMock,
 			now: 1500,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 
 		expect(fetchMock).toHaveBeenCalledTimes(2);
@@ -637,7 +637,7 @@ describe('fetchCachedManifest: concurrency, explicit directives, headers', () =>
 			fetch: fetchMock,
 			headers: { authorization: 'Bearer token', cookie: 'c15t=abc' },
 			now: 1000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 
 		expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
@@ -676,13 +676,13 @@ describe('fetchCachedManifest: restrictive directives and credential scope', () 
 				cache,
 				fetch: fetchMock,
 				now: 1000,
-				sourceURL: SOURCE_URL,
+				sourceUrl: SOURCE_URL,
 			});
 			await fetchCachedManifest({
 				cache,
 				fetch: fetchMock,
 				now: 1500,
-				sourceURL: SOURCE_URL,
+				sourceUrl: SOURCE_URL,
 			});
 			expect(fetchMock).toHaveBeenCalledTimes(2);
 		}
@@ -700,14 +700,14 @@ describe('fetchCachedManifest: restrictive directives and credential scope', () 
 				fetch: fetchMock,
 				headers: tenantA,
 				now: 1000,
-				sourceURL: SOURCE_URL,
+				sourceUrl: SOURCE_URL,
 			}),
 			fetchCachedManifest({
 				cache,
 				fetch: fetchMock,
 				headers: tenantB,
 				now: 1000,
-				sourceURL: SOURCE_URL,
+				sourceUrl: SOURCE_URL,
 			}),
 		]);
 		expect(fetchMock).toHaveBeenCalledTimes(2);
@@ -717,7 +717,7 @@ describe('fetchCachedManifest: restrictive directives and credential scope', () 
 			fetch: fetchMock,
 			headers: tenantA,
 			now: 2000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		expect(fetchMock).toHaveBeenCalledTimes(2);
 
@@ -726,7 +726,7 @@ describe('fetchCachedManifest: restrictive directives and credential scope', () 
 			cache,
 			fetch: fetchMock,
 			now: 2000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		expect(fetchMock).toHaveBeenCalledTimes(3);
 	});
@@ -738,7 +738,7 @@ describe('fetchCachedManifest: restrictive directives and credential scope', () 
 				cache: createManifestCache(),
 				fetch: fetchMock,
 				headers: { cookie: 'c15t=abc' },
-				sourceURL: 'http://backend.example/manifest',
+				sourceUrl: 'http://backend.example/manifest',
 			})
 		).rejects.toThrow(/refusing to send credentials over http/u);
 		expect(fetchMock).not.toHaveBeenCalled();
@@ -747,7 +747,7 @@ describe('fetchCachedManifest: restrictive directives and credential scope', () 
 			cache: createManifestCache(),
 			fetch: fetchMock,
 			headers: { cookie: 'c15t=abc' },
-			sourceURL: 'http://localhost:3010/manifest',
+			sourceUrl: 'http://localhost:3010/manifest',
 		});
 		expect(fetchMock).toHaveBeenCalledTimes(1);
 	});
@@ -776,7 +776,7 @@ describe('clearManifestCache during an in-flight fill', () => {
 			cache,
 			fetch: fetchMock,
 			now: 1000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
 		clearManifestCache(cache);
@@ -785,7 +785,7 @@ describe('clearManifestCache during an in-flight fill', () => {
 			cache,
 			fetch: fetchMock,
 			now: 1000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
 
@@ -811,7 +811,7 @@ describe('fetchCachedManifest: upstream Age', () => {
 			cache,
 			fetch: fetchMock,
 			now: 10_000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 
 		expect(entry.expiresAt).toBe(11_000);
@@ -822,7 +822,7 @@ describe('fetchCachedManifest: upstream Age', () => {
 			cache,
 			fetch: fetchMock,
 			now: 12_000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		expect(fetchMock).toHaveBeenCalledTimes(2);
 	});
@@ -841,7 +841,7 @@ describe('fetchCachedManifest: upstream Age', () => {
 			cache,
 			fetch: fetchMock,
 			now: 10_000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		expect(cache.get(SOURCE_URL)).toBeUndefined();
 	});
@@ -867,7 +867,7 @@ describe('clearManifestCache during cache-key construction', () => {
 			fetch: fetchMock,
 			headers,
 			now: 1000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		clearManifestCache(cache);
 		await early;
@@ -876,7 +876,7 @@ describe('clearManifestCache during cache-key construction', () => {
 			fetch: fetchMock,
 			headers,
 			now: 1000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 
 		// The early fill restarted after the clear and stored under the new
@@ -919,7 +919,7 @@ describe('credential-scoped keys without WebCrypto', () => {
 				fetch: fetchMock,
 				headers: { authorization: 'Bearer top-secret' },
 				now: 1000,
-				sourceURL: SOURCE_URL,
+				sourceUrl: SOURCE_URL,
 			});
 			expect(seen.length).toBeGreaterThan(0);
 			for (const key of seen) {
@@ -945,7 +945,7 @@ describe('fetchCachedManifest: custom identity headers over cleartext', () => {
 				cache: createManifestCache(),
 				fetch: fetchMock,
 				headers: { 'x-api-key': 'tenant-a' },
-				sourceURL: 'http://backend.example/manifest',
+				sourceUrl: 'http://backend.example/manifest',
 			})
 		).rejects.toThrow(/refusing to send credentials over http .*x-api-key/u);
 		expect(fetchMock).not.toHaveBeenCalled();
@@ -954,7 +954,7 @@ describe('fetchCachedManifest: custom identity headers over cleartext', () => {
 			cache: createManifestCache(),
 			fetch: fetchMock,
 			headers: { 'accept-language': 'de', 'x-api-key': 'tenant-a' },
-			sourceURL: 'https://backend.example/manifest',
+			sourceUrl: 'https://backend.example/manifest',
 		});
 		expect(fetchMock).toHaveBeenCalledTimes(1);
 	});
@@ -980,14 +980,14 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 			cache,
 			fetch: fetchMock,
 			now: 0,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		// Stale at 1.5 s: one background fill, answered fresh (expires 2.5 s).
 		await fetchCachedManifest({
 			cache,
 			fetch: fetchMock,
 			now: 1500,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
 		await vi.waitFor(() => expect(cache.get(SOURCE_URL)?.expiresAt).toBe(2500));
@@ -997,7 +997,7 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 			cache,
 			fetch: fetchMock,
 			now: 3000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
 	});
@@ -1033,7 +1033,7 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 			cache: cloning,
 			fetch: fetchMock,
 			now: 1000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		for (const now of [70_000, 70_100, 70_200]) {
 			// oxlint-disable-next-line no-await-in-loop -- Sequential by design.
@@ -1041,7 +1041,7 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 				cache: cloning,
 				fetch: fetchMock,
 				now,
-				sourceURL: SOURCE_URL,
+				sourceUrl: SOURCE_URL,
 			});
 		}
 		expect(fetchMock).toHaveBeenCalledTimes(2);
@@ -1053,14 +1053,14 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 			cache: cloning,
 			fetch: fetchMock,
 			now: 74_000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		expect(fetchMock).toHaveBeenCalledTimes(2);
 		await fetchCachedManifest({
 			cache: cloning,
 			fetch: fetchMock,
 			now: 76_000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
 	});
@@ -1080,7 +1080,7 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 			cache,
 			fetch: fetchMock,
 			now: 1000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		expect(entry.expiresAt).toBe(1000 + MANIFEST_DEDUPE_TTL_SECONDS * 1000);
 		expect(entry.staleUntil).toBe(entry.expiresAt);
@@ -1088,7 +1088,7 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 			cache,
 			fetch: fetchMock,
 			now: 7000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		// Past the floor the call blocked on a fresh fetch, as before.
 		expect(fetchMock).toHaveBeenCalledTimes(2);
@@ -1109,7 +1109,7 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 			cache,
 			fetch: fetchMock,
 			now: 1000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		expect(first).toMatchObject({ expiresAt: 1000, staleUntil: 121_000 });
 		expect(cache.get(SOURCE_URL)).toBe(first);
@@ -1120,7 +1120,7 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 			cache,
 			fetch: fetchMock,
 			now: 2000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		expect(served).toBe(first);
 		await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
@@ -1137,7 +1137,7 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 			cache: noStore,
 			fetch: noStoreFetch,
 			now: 1000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		expect(noStore.get(SOURCE_URL)).toBeUndefined();
 	});
@@ -1167,13 +1167,13 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 			cache,
 			fetch: fetchMock,
 			now: 0,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		await fetchCachedManifest({
 			cache,
 			fetch: fetchMock,
 			now: 61_000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		await vi.waitFor(() => expect(cache.get(SOURCE_URL)).toBeUndefined());
 	});
@@ -1215,14 +1215,14 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 			cache,
 			fetch: fetchMock,
 			now: 0,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		const stale = await fetchCachedManifest({
 			cache,
 			fetch: fetchMock,
 			init: { signal: controller.signal },
 			now: 61_000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		// The request that triggered the refresh is over and cancelled.
 		controller.abort(new Error('request finished'));
@@ -1264,13 +1264,13 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 				cache,
 				fetch: fetchMock,
 				now: 0,
-				sourceURL: SOURCE_URL,
+				sourceUrl: SOURCE_URL,
 			});
 			await fetchCachedManifest({
 				cache,
 				fetch: fetchMock,
 				now: 61_000,
-				sourceURL: SOURCE_URL,
+				sourceUrl: SOURCE_URL,
 			});
 			expect(fetchMock).toHaveBeenCalledTimes(2);
 			await vi.advanceTimersByTimeAsync(8000);
@@ -1281,14 +1281,14 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 				cache,
 				fetch: fetchMock,
 				now: 70_000,
-				sourceURL: SOURCE_URL,
+				sourceUrl: SOURCE_URL,
 			});
 			expect(fetchMock).toHaveBeenCalledTimes(2);
 			await fetchCachedManifest({
 				cache,
 				fetch: fetchMock,
 				now: 74_500,
-				sourceURL: SOURCE_URL,
+				sourceUrl: SOURCE_URL,
 			});
 			expect(fetchMock).toHaveBeenCalledTimes(3);
 		} finally {
@@ -1327,14 +1327,14 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 			cache,
 			fetch: fetchMock,
 			now: 0,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		// Stale: one background revalidation, answered already stale.
 		await fetchCachedManifest({
 			cache,
 			fetch: fetchMock,
 			now: 61_000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
 		const replaced = cache.get(SOURCE_URL);
@@ -1345,13 +1345,13 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 			cache,
 			fetch: fetchMock,
 			now: 62_000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		await fetchCachedManifest({
 			cache,
 			fetch: fetchMock,
 			now: 65_000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		expect(fetchMock).toHaveBeenCalledTimes(2);
 
@@ -1361,7 +1361,7 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 			cache,
 			fetch: fetchMock,
 			now: 67_000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
 	});
@@ -1389,7 +1389,7 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 			cache,
 			fetch: fetchMock,
 			now: 1000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		expect(first).toMatchObject({ expiresAt: 61_000, staleUntil: 181_000 });
 
@@ -1398,7 +1398,7 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 			cache,
 			fetch: fetchMock,
 			now: staleNow,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 
 		expect(served).toBe(first);
@@ -1416,7 +1416,7 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 			cache,
 			fetch: fetchMock,
 			now: staleNow + 1000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		expect(next).toMatchObject({ expiresAt: staleNow + 60_000 });
 		expect(fetchMock).toHaveBeenCalledTimes(2);
@@ -1445,7 +1445,7 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 			cache,
 			fetch: fetchMock,
 			now: 1000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 
 		const staleNow = 70_000;
@@ -1455,7 +1455,7 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 					cache,
 					fetch: fetchMock,
 					now: staleNow,
-					sourceURL: SOURCE_URL,
+					sourceUrl: SOURCE_URL,
 				})
 			)
 		);
@@ -1488,7 +1488,7 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 			cache,
 			fetch: fetchMock,
 			now: 1000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 
 		const staleNow = 70_000;
@@ -1496,7 +1496,7 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 			cache,
 			fetch: fetchMock,
 			now: staleNow,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		expect(served).toBe(first);
 		await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
@@ -1511,7 +1511,7 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 			cache,
 			fetch: fetchMock,
 			now: staleNow + 4000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		expect(stillThrottled).toBe(first);
 		expect(fetchMock).toHaveBeenCalledTimes(2);
@@ -1522,7 +1522,7 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 			cache,
 			fetch: fetchMock,
 			now: staleNow + 6000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		expect(retried).toBe(first);
 		await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
@@ -1545,7 +1545,7 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 			cache,
 			fetch: fetchMock,
 			now: 1000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 
 		const staleNow = 70_000;
@@ -1553,7 +1553,7 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 			cache,
 			fetch: fetchMock,
 			now: staleNow,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		expect(served).toBe(first);
 		await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
@@ -1567,7 +1567,7 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 			cache,
 			fetch: fetchMock,
 			now: staleNow + 4000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		expect(stillThrottled).toBe(first);
 		expect(fetchMock).toHaveBeenCalledTimes(2);
@@ -1578,7 +1578,7 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 			cache,
 			fetch: fetchMock,
 			now: staleNow + 6000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		expect(retried).toBe(first);
 		await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
@@ -1609,7 +1609,7 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 			cache,
 			fetch: fetchMock,
 			now: 1000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		expect(first.staleUntil).toBe(181_000);
 
@@ -1617,7 +1617,7 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 			cache,
 			fetch: fetchMock,
 			now: 181_000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 
 		expect(fetchMock).toHaveBeenCalledTimes(2);
@@ -1650,7 +1650,7 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 			cache,
 			fetch: fetchMock,
 			now: 1000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		expect(first.staleUntil).toBe(first.expiresAt);
 		expect(first.staleUntil).toBe(61_000);
@@ -1659,7 +1659,7 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 			cache,
 			fetch: fetchMock,
 			now: 61_000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 
 		expect(fetchMock).toHaveBeenCalledTimes(2);
@@ -1681,7 +1681,7 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 			cache,
 			fetch: fetchMock,
 			now,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 
 		expect(first.expiresAt).toBe(now);
@@ -1692,7 +1692,7 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 			cache,
 			fetch: fetchMock,
 			now: now + 1,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		expect(second).toBe(first);
 		await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
@@ -1711,7 +1711,7 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 			cache,
 			fetch: fetchMock,
 			now: 10_000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 
 		expect(cache.get(SOURCE_URL)).toBeUndefined();
@@ -1742,7 +1742,7 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 			cache,
 			fetch: fetchMock,
 			now: 1000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		expect(first.manifest.revision).toBe('manifest-rev-1');
 
@@ -1751,7 +1751,7 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 			cache,
 			fetch: fetchMock,
 			now: staleNow,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		expect(served.manifest.revision).toBe('manifest-rev-1');
 
@@ -1763,7 +1763,7 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 			cache,
 			fetch: fetchMock,
 			now: staleNow + 1000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		expect(next.manifest.revision).toBe('manifest-rev-2');
 		expect(fetchMock).toHaveBeenCalledTimes(2);
@@ -1789,7 +1789,7 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 			cache,
 			fetch: fetchMock,
 			now: 1000,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 
 		const staleNow = 70_000;
@@ -1797,7 +1797,7 @@ describe('fetchCachedManifest: stale-while-revalidate', () => {
 			cache,
 			fetch: fetchMock,
 			now: staleNow,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		expect(served).toBe(first);
 		await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
@@ -1825,12 +1825,12 @@ describe('fetchCachedManifest: per-framework fetch hint', () => {
 			fetch: fetchSpy,
 			init: { next: { revalidate: 1 } } as RequestInit,
 			now: 0,
-			sourceURL: URL_UNDER_TEST,
+			sourceUrl: URL_UNDER_TEST,
 		});
 		await fetchCachedManifest({
 			fetch: fetchSpy,
 			now: 1,
-			sourceURL: URL_UNDER_TEST,
+			sourceUrl: URL_UNDER_TEST,
 		});
 
 		expect(fetchSpy).toHaveBeenCalledTimes(1);
@@ -1867,7 +1867,7 @@ describe('background revalidation lifetime', () => {
 			fetch: fetchSpy,
 			now: 0,
 			onBackgroundRevalidate,
-			sourceURL: URL_UNDER_TEST,
+			sourceUrl: URL_UNDER_TEST,
 		});
 		// Fresh read: nothing to keep alive.
 		expect(registered).toHaveLength(0);
@@ -1877,7 +1877,7 @@ describe('background revalidation lifetime', () => {
 			fetch: fetchSpy,
 			now: 61_000,
 			onBackgroundRevalidate,
-			sourceURL: URL_UNDER_TEST,
+			sourceUrl: URL_UNDER_TEST,
 		});
 		expect(registered).toHaveLength(1);
 		await expect(registered[0]).resolves.toBeUndefined();
@@ -1900,7 +1900,7 @@ describe('background revalidation lifetime: registration failures', () => {
 			cache,
 			fetch: fetchSpy,
 			now: 0,
-			sourceURL: URL_UNDER_TEST,
+			sourceUrl: URL_UNDER_TEST,
 		});
 		const served = await fetchCachedManifest({
 			cache,
@@ -1909,7 +1909,7 @@ describe('background revalidation lifetime: registration failures', () => {
 			onBackgroundRevalidate: () => {
 				throw new Error('after() called outside a request scope');
 			},
-			sourceURL: URL_UNDER_TEST,
+			sourceUrl: URL_UNDER_TEST,
 		});
 		expect(served).toBe(first);
 		// The refresh itself still ran.
@@ -1946,14 +1946,14 @@ describe('revalidation floor bookkeeping', () => {
 				cache,
 				fetch: fetchSpy,
 				now,
-				sourceURL: junk(index),
+				sourceUrl: junk(index),
 			});
 			// oxlint-disable-next-line no-await-in-loop -- Sequential by design.
 			await fetchCachedManifest({
 				cache,
 				fetch: fetchSpy,
 				now: now + 1,
-				sourceURL: junk(index),
+				sourceUrl: junk(index),
 			});
 		}
 		await flush();
@@ -1976,14 +1976,14 @@ describe('revalidation floor bookkeeping', () => {
 				cache,
 				fetch: fetchSpy,
 				now,
-				sourceURL: key(index),
+				sourceUrl: key(index),
 			});
 			// oxlint-disable-next-line no-await-in-loop -- Sequential by design.
 			await fetchCachedManifest({
 				cache,
 				fetch: fetchSpy,
 				now: now + 1,
-				sourceURL: key(index),
+				sourceUrl: key(index),
 			});
 		}
 		await flush();
@@ -1999,7 +1999,7 @@ describe('revalidation floor bookkeeping', () => {
 				cache,
 				fetch: fetchSpy,
 				now: 2000 + index,
-				sourceURL: key(index),
+				sourceUrl: key(index),
 			});
 		}
 		expect(fetchSpy.mock.calls.length).toBe(before);
@@ -2029,14 +2029,14 @@ describe('revalidation floor bookkeeping', () => {
 			cache,
 			fetch: fetchSpy,
 			now: 0,
-			sourceURL: URL_UNDER_TEST,
+			sourceUrl: URL_UNDER_TEST,
 		});
 		// Stale at 1.5 s: background refresh fails, floor set to about 6.5 s.
 		await fetchCachedManifest({
 			cache,
 			fetch: fetchSpy,
 			now: 1500,
-			sourceURL: URL_UNDER_TEST,
+			sourceUrl: URL_UNDER_TEST,
 		});
 		await flush();
 		expect(readRevalidationFloors(cache).has(URL_UNDER_TEST)).toBe(true);
@@ -2046,7 +2046,7 @@ describe('revalidation floor bookkeeping', () => {
 			cache,
 			fetch: fetchSpy,
 			now: 3000,
-			sourceURL: URL_UNDER_TEST,
+			sourceUrl: URL_UNDER_TEST,
 		});
 		expect(fresh.expiresAt).toBe(4000);
 		expect(readRevalidationFloors(cache).has(URL_UNDER_TEST)).toBe(false);
@@ -2057,7 +2057,7 @@ describe('revalidation floor bookkeeping', () => {
 			cache,
 			fetch: fetchSpy,
 			now: 4500,
-			sourceURL: URL_UNDER_TEST,
+			sourceUrl: URL_UNDER_TEST,
 		});
 		await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(4));
 	});
@@ -2082,13 +2082,13 @@ describe('revalidation floor bookkeeping', () => {
 			cache,
 			fetch: fetchSpy,
 			now: 0,
-			sourceURL: URL_UNDER_TEST,
+			sourceUrl: URL_UNDER_TEST,
 		});
 		await fetchCachedManifest({
 			cache,
 			fetch: fetchSpy,
 			now: 61_000,
-			sourceURL: URL_UNDER_TEST,
+			sourceUrl: URL_UNDER_TEST,
 		});
 		await flush();
 		expect(readRevalidationFloors(cache).has(URL_UNDER_TEST)).toBe(false);
@@ -2097,7 +2097,7 @@ describe('revalidation floor bookkeeping', () => {
 			cache,
 			fetch: fetchSpy,
 			now: 122_000,
-			sourceURL: URL_UNDER_TEST,
+			sourceUrl: URL_UNDER_TEST,
 		});
 		await flush();
 		const floor = readRevalidationFloors(cache).get(URL_UNDER_TEST);
@@ -2126,7 +2126,7 @@ describe('failures on a cold cache', () => {
 				cache,
 				fetch: fetchSpy,
 				now,
-				sourceURL: URL_UNDER_TEST,
+				sourceUrl: URL_UNDER_TEST,
 			});
 
 		await expect(read(0)).rejects.toThrow('responded 503');
@@ -2173,7 +2173,7 @@ describe('failures on a cold cache', () => {
 				cache,
 				fetch: fetchSpy,
 				now,
-				sourceURL: URL_UNDER_TEST,
+				sourceUrl: URL_UNDER_TEST,
 			});
 
 		await expect(read(0)).rejects.toThrow('responded 503');
@@ -2195,7 +2195,7 @@ describe('failures on a cold cache', () => {
 				cache,
 				fetch: fetchSpy,
 				now: 0,
-				sourceURL: URL_UNDER_TEST,
+				sourceUrl: URL_UNDER_TEST,
 			})
 		);
 		gate.resolve(undefined);
@@ -2220,7 +2220,7 @@ describe('failures on a cold cache', () => {
 				cache,
 				fetch: fetchSpy,
 				now,
-				sourceURL: URL_UNDER_TEST,
+				sourceUrl: URL_UNDER_TEST,
 			});
 
 		await read(0);
@@ -2255,7 +2255,7 @@ describe('failures on a cold cache', () => {
 			fetch: fetchSpy,
 			init: { signal: controller.signal },
 			now: 0,
-			sourceURL: URL_UNDER_TEST,
+			sourceUrl: URL_UNDER_TEST,
 		});
 		await vi.waitFor(() => {
 			expect(fetchSpy).toHaveBeenCalledTimes(1);
@@ -2289,7 +2289,7 @@ describe('timeoutMs', () => {
 			onBackgroundRevalidate: (task) => {
 				background.push(task);
 			},
-			sourceURL: URL_UNDER_TEST,
+			sourceUrl: URL_UNDER_TEST,
 			timeoutMs: 300,
 		});
 		const rejected = expect(pending).rejects.toMatchObject({
@@ -2306,7 +2306,7 @@ describe('timeoutMs', () => {
 			fetchCachedManifest({
 				cache,
 				fetch: fetchSpy,
-				sourceURL: URL_UNDER_TEST,
+				sourceUrl: URL_UNDER_TEST,
 				timeoutMs: 0,
 			})
 		).resolves.toMatchObject({ manifest: minimalManifest });
@@ -2325,7 +2325,7 @@ describe('timeoutMs', () => {
 		const first = fetchCachedManifest({
 			cache,
 			fetch: fetchSpy,
-			sourceURL: URL_UNDER_TEST,
+			sourceUrl: URL_UNDER_TEST,
 			timeoutMs: 300,
 		});
 		const firstRejected = expect(first).rejects.toMatchObject({
@@ -2339,7 +2339,7 @@ describe('timeoutMs', () => {
 			fetchCachedManifest({
 				cache,
 				fetch: fetchSpy,
-				sourceURL: URL_UNDER_TEST,
+				sourceUrl: URL_UNDER_TEST,
 				timeoutMs: 300,
 			})
 		).rejects.toMatchObject({ reason: 'timeout' });
@@ -2356,7 +2356,7 @@ describe('timeoutMs', () => {
 				fetchCachedManifest({
 					cache: createManifestCache(),
 					fetch: () => gate.promise,
-					sourceURL: URL_UNDER_TEST,
+					sourceUrl: URL_UNDER_TEST,
 					timeoutMs: 0,
 				})
 			).rejects.toMatchObject({ reason: 'timeout' });
@@ -2379,14 +2379,14 @@ describe('timeoutMs', () => {
 			cache,
 			fetch: fetchSpy,
 			now: 0,
-			sourceURL: URL_UNDER_TEST,
+			sourceUrl: URL_UNDER_TEST,
 		});
 		await expect(
 			fetchCachedManifest({
 				cache,
 				fetch: fetchSpy,
 				now: 1000,
-				sourceURL: URL_UNDER_TEST,
+				sourceUrl: URL_UNDER_TEST,
 				timeoutMs: 0,
 			})
 		).resolves.toMatchObject({ manifest: minimalManifest });
@@ -2436,7 +2436,7 @@ describe('withResolutionBudget', () => {
 							// Never answers.
 						})
 				),
-				sourceURL: URL_UNDER_TEST,
+				sourceUrl: URL_UNDER_TEST,
 				timeoutMs: -5,
 			})
 		).rejects.toThrow('no manifest within 0 ms;');
@@ -2458,7 +2458,7 @@ describe('manifest fetch protection', () => {
 				fetch,
 				headers: { [header]: 'secret' },
 				init: { redirect: 'follow' },
-				sourceURL: PROTECTED_URL,
+				sourceUrl: PROTECTED_URL,
 			});
 			expect(fetch.mock.calls[0]?.[1]).toMatchObject({ redirect: 'error' });
 		}
@@ -2472,7 +2472,7 @@ describe('manifest fetch protection', () => {
 			fetch,
 			headers: { 'accept-language': 'en' },
 			init: { redirect: 'follow' },
-			sourceURL: PROTECTED_URL,
+			sourceUrl: PROTECTED_URL,
 		});
 		expect(fetch.mock.calls[0]?.[1]).toMatchObject({ redirect: 'follow' });
 	});
@@ -2492,8 +2492,8 @@ describe('manifest fetch protection', () => {
 					})
 			)
 			.mockResolvedValue(revisionResponse({}));
-		const first = fetchCachedManifest({ fetch, sourceURL: PROTECTED_URL });
-		const second = fetchCachedManifest({ fetch, sourceURL: PROTECTED_URL });
+		const first = fetchCachedManifest({ fetch, sourceUrl: PROTECTED_URL });
+		const second = fetchCachedManifest({ fetch, sourceUrl: PROTECTED_URL });
 		const rejected = Promise.all([
 			expect(first).rejects.toThrow('timed out after 5000 ms'),
 			expect(second).rejects.toThrow('timed out after 5000 ms'),
@@ -2502,12 +2502,12 @@ describe('manifest fetch protection', () => {
 		await rejected;
 		expect(fetch).toHaveBeenCalledTimes(1);
 		await expect(
-			fetchCachedManifest({ fetch, sourceURL: PROTECTED_URL })
+			fetchCachedManifest({ fetch, sourceUrl: PROTECTED_URL })
 		).rejects.toMatchObject({ reason: 'backoff' });
 		expect(fetch).toHaveBeenCalledTimes(1);
 		await vi.advanceTimersByTimeAsync(MANIFEST_FAILURE_RETRY_MIN_MS);
 		await expect(
-			fetchCachedManifest({ fetch, sourceURL: PROTECTED_URL })
+			fetchCachedManifest({ fetch, sourceUrl: PROTECTED_URL })
 		).resolves.toMatchObject({ manifest: { revision: 1 } });
 		expect(fetch).toHaveBeenCalledTimes(2);
 	});
@@ -2528,7 +2528,7 @@ describe('manifest fetch protection', () => {
 		const pending = fetchCachedManifest({
 			fetch,
 			init: { signal: controller.signal },
-			sourceURL: PROTECTED_URL,
+			sourceUrl: PROTECTED_URL,
 		});
 		await vi.advanceTimersByTimeAsync(10_001);
 		expect(fetch.mock.calls[0]?.[1]?.signal).toBe(controller.signal);
@@ -2631,18 +2631,18 @@ describe('one cache key rule', () => {
 			fetch: fetchMock,
 			now: 0,
 			query: 'preview=1&language=de',
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		await fetchCachedManifest({
 			fetch: fetchMock,
 			now: 1,
 			query: 'language=de&preview=1',
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		await fetchCachedManifest({
 			fetch: fetchMock,
 			now: 2,
-			sourceURL: `${SOURCE_URL}?language=de&preview=1#ignored`,
+			sourceUrl: `${SOURCE_URL}?language=de&preview=1#ignored`,
 		});
 
 		expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -2661,18 +2661,18 @@ describe('one cache key rule', () => {
 			fetch: fetchMock,
 			headers: { Accept: 'application/json' },
 			now: 0,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		await fetchCachedManifest({
 			fetch: fetchMock,
 			now: 1,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		await fetchCachedManifest({
 			fetch: fetchMock,
 			headers: { accept: 'application/manifest+json' },
 			now: 2,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 
 		expect(fetchMock).toHaveBeenCalledTimes(2);
@@ -2688,12 +2688,12 @@ describe('one process cache', () => {
 		await server.fetchCachedManifest({
 			fetch: fetchMock,
 			now: 0,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		await fetchCachedManifest({
 			fetch: fetchMock,
 			now: 1,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		expect(fetchMock).toHaveBeenCalledTimes(1);
 
@@ -2701,7 +2701,7 @@ describe('one process cache', () => {
 		await fetchCachedManifest({
 			fetch: fetchMock,
 			now: 2,
-			sourceURL: SOURCE_URL,
+			sourceUrl: SOURCE_URL,
 		});
 		expect(fetchMock).toHaveBeenCalledTimes(2);
 	});

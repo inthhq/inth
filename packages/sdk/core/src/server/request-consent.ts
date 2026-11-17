@@ -71,7 +71,7 @@ import type {
 	ManifestFetch,
 } from '../libs/manifest-cache-runtime';
 import { warnManifestFallback } from '../libs/manifest-fallback';
-import { resolveSessionReportBackendURL } from '../libs/session-report';
+import { resolveSessionReportProjectUrl } from '../libs/session-report';
 import { readStoredRecordsFromCookieHeader } from '../modules/persistence/hydrate';
 import { resolveStorageKeys } from '../modules/persistence/record-storage';
 import { fetchCachedAdTechProviders } from '../transports/ad-tech-provider-cache';
@@ -100,7 +100,7 @@ import {
 import type { ConsentRouteFetchGvl } from './consent-route';
 import { fetchCachedGvl } from './gvl-cache';
 import {
-	resolveRequestBackendURL,
+	resolveRequestProjectUrl,
 	resolveRequestOrigin,
 } from './request-origin';
 import type { RequestHeaderSource } from './request-origin';
@@ -196,27 +196,27 @@ export interface ResolveRequestConsentOptions {
 	/**
 	 * How to resolve the policy. Defaults to `offline` with
 	 * {@link offline}, `manifest` with {@link manifest} or
-	 * {@link manifestURL}, `hosted` with {@link initURL} or
-	 * {@link backendURL}, and the request-only state otherwise.
+	 * {@link manifestUrl}, `hosted` with {@link initUrl} or
+	 * {@link projectUrl}, and the request-only state otherwise.
 	 */
 	mode?: RequestConsentMode;
 	/**
 	 * Backend base URL, absolute or `/`-relative. Manifest mode reads
-	 * `${backendURL}/manifest` without a {@link manifestURL}; hosted mode
-	 * asks `${backendURL}/init` without an {@link initURL}. Session reports
+	 * `${projectUrl}/manifest` without a {@link manifestUrl}; hosted mode
+	 * asks `${projectUrl}/init` without an {@link initUrl}. Session reports
 	 * go here only when it is absolute.
 	 */
-	backendURL?: string;
-	/** Full manifest URL. Takes precedence over `${backendURL}/manifest`. */
-	manifestURL?: string;
+	projectUrl?: string;
+	/** Full manifest URL. Takes precedence over `${projectUrl}/manifest`. */
+	manifestUrl?: string;
 	/** An inline manifest: no manifest is fetched. */
 	manifest?: ConsentManifest;
 	/**
 	 * Hosted mode: the `/init` endpoint to ask. Defaults to
-	 * `${backendURL}/init`. Pass the app's own init route together with
+	 * `${projectUrl}/init`. Pass the app's own init route together with
 	 * {@link localFetch} to resolve through it in-process.
 	 */
-	initURL?: string;
+	initUrl?: string;
 	/** Offline mode: the policy rules and copy to resolve with. */
 	offline?: OfflineTransportOptions;
 	/**
@@ -497,10 +497,10 @@ const resolveMode = function resolveMode(
 	if (options.offline) {
 		return 'offline';
 	}
-	if (options.manifest || options.manifestURL) {
+	if (options.manifest || options.manifestUrl) {
 		return 'manifest';
 	}
-	if (options.initURL || options.backendURL) {
+	if (options.initUrl || options.projectUrl) {
 		return 'hosted';
 	}
 	return undefined;
@@ -533,7 +533,7 @@ const startServerJourney = function startServerJourney(
 	// report would carry the id, and a save carrying it would link to nothing.
 	const unreported =
 		mode === 'manifest' &&
-		!resolveSessionReportBackendURL({ backendURL: options.backendURL });
+		!resolveSessionReportProjectUrl({ projectUrl: options.projectUrl });
 	if (!enabled || unreported) {
 		return null;
 	}
@@ -635,7 +635,7 @@ interface Target {
  * ```ts
  * const state = await resolveRequestConsent({
  *   adapter: '@c15t/example',
- *   backendURL: 'https://consent.example.com',
+ *   projectUrl: 'https://consent.example.com',
  *   mode: 'manifest',
  *   request: { headers: request.headers, url: request.url },
  * });
@@ -655,7 +655,7 @@ export const resolveRequestConsent = async function resolveRequestConsent(
 	const requestOrigin = (): string | null =>
 		resolveRequestOrigin({
 			headers: options.request.headers,
-			requestURL: options.request.url,
+			requestUrl: options.request.url,
 			trustForwardedHeaders: trust,
 		});
 	const journey = startServerJourney(options, mode, base, () => ({
@@ -732,9 +732,9 @@ export const resolveRequestConsent = async function resolveRequestConsent(
 				url,
 			};
 		}
-		const absolute = resolveRequestBackendURL(url, {
+		const absolute = resolveRequestProjectUrl(url, {
 			headers: options.request.headers,
-			requestURL: options.request.url,
+			requestUrl: options.request.url,
 			trustForwardedHeaders: trust,
 		});
 		if (absolute && options.localFetch) {
@@ -856,18 +856,18 @@ export const resolveRequestConsent = async function resolveRequestConsent(
 		if (options.manifest) {
 			return { credentials: undefined, manifest: options.manifest };
 		}
-		const sourceURL =
-			options.manifestURL ??
-			(options.backendURL
-				? `${trimSlash(options.backendURL)}/manifest`
+		const sourceUrl =
+			options.manifestUrl ??
+			(options.projectUrl
+				? `${trimSlash(options.projectUrl)}/manifest`
 				: undefined);
-		if (!sourceURL) {
+		if (!sourceUrl) {
 			throw new RequestConsentError(
-				`${options.adapter}: pass backendURL or manifestURL.`,
+				`${options.adapter}: pass projectUrl or manifestUrl.`,
 				undefined
 			);
 		}
-		const source = resolveTarget(sourceURL);
+		const source = resolveTarget(sourceUrl);
 		const credentials = manifestCredentials(source);
 		manifestSource = source.url;
 		try {
@@ -877,7 +877,7 @@ export const resolveRequestConsent = async function resolveRequestConsent(
 				headers: credentials,
 				init: options.manifestFetchInit,
 				onBackgroundRevalidate: options.waitUntil,
-				sourceURL: source.inProcess
+				sourceUrl: source.inProcess
 					? `${IN_PROCESS_ORIGIN}${source.url}`
 					: source.url,
 				timeoutMs: remaining(),
@@ -940,13 +940,13 @@ export const resolveRequestConsent = async function resolveRequestConsent(
 				report: {
 					abandoned: () => abandoned,
 					adapter: options.adapter,
-					// As configured, not request-resolved: a relative backend
-					// is this app's proxy, which means no report.
-					backendURL: options.backendURL,
 					experiment: arm,
 					fetch: options.fetch,
 					headers: readVisitorHeaders(),
 					journey: journey ?? undefined,
+					// As configured, not request-resolved: a relative backend
+					// is this app's proxy, which means no report.
+					projectUrl: options.projectUrl,
 					source: 'render',
 					waitUntil: options.waitUntil,
 				},
@@ -1021,10 +1021,10 @@ export const resolveRequestConsent = async function resolveRequestConsent(
 
 	const resolveFromHosted =
 		async function resolveFromHosted(): Promise<RequestConsentState> {
-			const initURL =
-				options.initURL ??
-				(options.backendURL ? `${trimSlash(options.backendURL)}/init` : '');
-			const target = resolveTarget(initURL);
+			const initUrl =
+				options.initUrl ??
+				(options.projectUrl ? `${trimSlash(options.projectUrl)}/init` : '');
+			const target = resolveTarget(initUrl);
 			const headers: Record<string, string> = { accept: 'application/json' };
 			const userAgent = readHeader(options.request.headers, 'user-agent');
 			if (userAgent) {
@@ -1127,7 +1127,7 @@ export const resolveRequestConsent = async function resolveRequestConsent(
 				const { cause } = error as { cause?: unknown };
 				if (
 					unavailableManifest === undefined ||
-					!(options.initURL || options.backendURL) ||
+					!(options.initUrl || options.projectUrl) ||
 					remaining() === 0 ||
 					(cause instanceof ManifestUnavailableError &&
 						cause.reason === 'timeout')

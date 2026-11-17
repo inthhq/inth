@@ -41,16 +41,16 @@ export interface ManifestModeInputs {
 export interface ManifestModeBaseOptions {
 	/**
 	 * Where to fetch the manifest at runtime. On the server it defaults to
-	 * `${backendURL}/manifest`. In the browser it defaults to
-	 * `${routePrefix}/manifest`, else `${backendURL}/manifest`.
+	 * `${projectUrl}/manifest`. In the browser it defaults to
+	 * `${routePrefix}/manifest`, else `${projectUrl}/manifest`.
 	 */
-	manifestURL?: string;
+	manifestUrl?: string;
 	/**
 	 * A same-origin route that answers with the visitor's
 	 * `{ country, region }`. Browser resolution only: asked when the
 	 * manifest's policy depends on a location the browser doesn't know yet.
 	 */
-	geoURL?: string;
+	geoUrl?: string;
 	/**
 	 * The visitor's location, when the page already knows it. Browser
 	 * resolution only. Kernel overrides win over these.
@@ -153,7 +153,7 @@ export type ConsentModeType = ConsentMode['type'];
 
 /**
  * Ask the hosted backend's `/init` for every visitor, at the provider's
- * `backendURL`. The default in client-only packages; a server-framework
+ * `projectUrl`. The default in client-only packages; a server-framework
  * package uses it instead of its default, the manifest.
  *
  * @returns A serializable hosted mode.

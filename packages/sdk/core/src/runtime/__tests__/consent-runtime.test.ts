@@ -131,7 +131,7 @@ describe('createRuntimeKernel', () => {
 
 	test('throws when the options select no transport', () => {
 		expect(() => createRuntimeKernel({})).toThrowError(
-			/`backendURL` is required/u
+			/`projectUrl` is required/u
 		);
 	});
 
@@ -146,7 +146,7 @@ describe('createRuntimeKernel', () => {
 		['@c15t/tanstack-start', '@c15t/tanstack-start ConsentRoot'],
 	])('the missing-backend error from %s names %s', (pkg, owner) => {
 		expect(() => createRuntimeKernel({ pkg })).toThrowError(
-			`${owner}: \`backendURL\` is required.`
+			`${owner}: \`projectUrl\` is required.`
 		);
 		expect(() => createRuntimeKernel({ pkg })).not.toThrowError(
 			/ConsentManagerProvider/u
@@ -157,7 +157,7 @@ describe('createRuntimeKernel', () => {
 		vi.stubEnv('NODE_ENV', 'production');
 		try {
 			expect(() => createRuntimeKernel({ pkg: '@c15t/react' })).toThrowError(
-				'@c15t/react: `backendURL` is required.'
+				'@c15t/react: `projectUrl` is required.'
 			);
 		} finally {
 			vi.unstubAllEnvs();

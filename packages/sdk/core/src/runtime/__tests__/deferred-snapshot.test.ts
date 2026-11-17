@@ -115,17 +115,17 @@ describe('findPrefetchedInit', () => {
 		vi.unstubAllGlobals();
 	});
 
-	const store = (backendURL: string) => {
+	const store = (projectUrl: string) => {
 		const promise = Promise.resolve(prefetched());
 		view[PREFETCH_WINDOW_KEY] = {
 			key: {
 				promise,
 				requestContext: {
-					backendURL,
 					country: null,
 					credentials: 'same-origin',
 					gpc: false,
 					language: null,
+					projectUrl,
 					region: null,
 				},
 			},
@@ -135,18 +135,18 @@ describe('findPrefetchedInit', () => {
 
 	test('finds the request the hosted transport will take, without taking it', () => {
 		const promise = store('https://consent.example.com');
-		const mode = hosted({ backendURL: 'https://consent.example.com/' });
+		const mode = hosted({ projectUrl: 'https://consent.example.com/' });
 		expect(findPrefetchedInit(mode)).toBe(promise);
 		expect(findPrefetchedInit(mode)).toBe(promise);
 	});
 
 	test('takes the request sent under the GPC signal the transport reads', () => {
 		const context = (gpc: boolean) => ({
-			backendURL: 'https://consent.example.com',
 			country: null,
 			credentials: 'same-origin',
 			gpc,
 			language: null,
+			projectUrl: 'https://consent.example.com',
 			region: null,
 		});
 		const withoutSignal = Promise.resolve(prefetched());
@@ -155,7 +155,7 @@ describe('findPrefetchedInit', () => {
 			off: { promise: withoutSignal, requestContext: context(false) },
 			on: { promise: withSignal, requestContext: context(true) },
 		};
-		const mode = hosted({ backendURL: 'https://consent.example.com' });
+		const mode = hosted({ projectUrl: 'https://consent.example.com' });
 		// No signal in the browser: the request sent without one.
 		expect(findPrefetchedInit(mode)).toBe(withoutSignal);
 		// An override picks the request sent under it.
@@ -174,11 +174,11 @@ describe('findPrefetchedInit', () => {
 	test('ignores another backend, another location, and custom init URLs', () => {
 		store('https://consent.example.com');
 		expect(
-			findPrefetchedInit(hosted({ backendURL: 'https://other.example.com' }))
+			findPrefetchedInit(hosted({ projectUrl: 'https://other.example.com' }))
 		).toBeUndefined();
 		expect(
 			findPrefetchedInit(
-				hosted({ backendURL: 'https://consent.example.com' }),
+				hosted({ projectUrl: 'https://consent.example.com' }),
 				{
 					country: 'US',
 				}
@@ -187,14 +187,14 @@ describe('findPrefetchedInit', () => {
 		expect(
 			findPrefetchedInit(
 				hosted({
-					backendURL: 'https://consent.example.com',
-					initURL: '/api/init',
+					initUrl: '/api/init',
+					projectUrl: 'https://consent.example.com',
 				})
 			)
 		).toBeUndefined();
 		expect(
 			findPrefetchedInit(
-				hosted({ backendURL: 'https://consent.example.com', fetch })
+				hosted({ fetch, projectUrl: 'https://consent.example.com' })
 			)
 		).toBeUndefined();
 	});
@@ -271,11 +271,11 @@ describe('findPrefetchedInitFor and primeInitRequest', () => {
 			key: {
 				promise,
 				requestContext: {
-					backendURL: 'https://app.example.com/api/c15t',
 					country: null,
 					credentials: 'same-origin',
 					gpc: false,
 					language: null,
+					projectUrl: 'https://app.example.com/api/c15t',
 					region: null,
 				},
 			},
@@ -292,8 +292,8 @@ describe('findPrefetchedInitFor and primeInitRequest', () => {
 		vi.stubGlobal('fetch', fetchSpy);
 		expect(
 			primeInitRequest({
-				backendURL: 'https://consent.example.com',
 				experiment: { arms: ['a', 'b'], id: 'test' } as never,
+				projectUrl: 'https://consent.example.com',
 			})
 		).toBeUndefined();
 		expect(fetchSpy).not.toHaveBeenCalled();

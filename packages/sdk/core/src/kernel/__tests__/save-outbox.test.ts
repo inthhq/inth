@@ -727,8 +727,8 @@ describe('save outbox: online retry', () => {
 			initialPolicyResolution: matchedResolution(optInRule()),
 			initialRecords: { subject: { subjectId: 'sub_fixed' } },
 			transport: createHostedTransport({
-				backendURL: 'https://backend.test',
 				fetch: fetchSpy,
+				projectUrl: 'https://backend.test',
 			}),
 		});
 

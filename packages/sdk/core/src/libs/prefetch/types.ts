@@ -7,7 +7,7 @@ export interface PrefetchOptions {
 	 * Backend URL used for fetching `/init`.
 	 * Accepts absolute URLs or same-origin paths like `/api/c15t`.
 	 */
-	backendURL: string;
+	projectUrl: string;
 
 	/**
 	 * Optional request-level overrides for prefetching init data.

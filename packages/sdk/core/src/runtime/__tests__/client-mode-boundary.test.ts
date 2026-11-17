@@ -130,7 +130,7 @@ import { manifest } from './modes';
 import { clientMode } from './runtime/client-mode';
 
 export const mode = clientMode(${mode}, {
-	backendURL: 'https://your-project.inth.app',
+	projectUrl: 'https://your-project.inth.app',
 	routePrefix: '/api/c15t',
 });
 `;
@@ -160,7 +160,7 @@ describe('manifest-browser first-load JavaScript', () => {
 		const { firstLoad, lazy } = await bundleWithLazy(`
 import { manifest } from './transports/manifest-browser';
 
-export const mode = manifest({ backendURL: '' });
+export const mode = manifest({ projectUrl: '' });
 `);
 
 		// The transport resolves locally only when it knows the location the

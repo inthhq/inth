@@ -83,20 +83,20 @@ export const deferInitGvl = <
 
 /**
  * Builds a versioned list URL on an existing init route.
- * @param initURL - Absolute or root-relative init route.
+ * @param initUrl - Absolute or root-relative init route.
  * @param gvl - List whose version the route must serve.
  * @param language - Language of the public list.
  * @returns The init URL with version and language query parameters.
  */
-export const createGvlReferenceURL = (
-	initURL: string,
+export const createGvlReferenceUrl = (
+	initUrl: string,
 	gvl: GlobalVendorList,
 	language: string
 ): string => {
-	const url = new URL(initURL, 'http://c15t.local');
+	const url = new URL(initUrl, 'http://c15t.local');
 	url.searchParams.set('c15t-gvl', String(gvl.vendorListVersion));
 	url.searchParams.set('language', normalizeLanguage(language));
-	return initURL.startsWith('/') ? `${url.pathname}${url.search}` : url.href;
+	return initUrl.startsWith('/') ? `${url.pathname}${url.search}` : url.href;
 };
 
 /**
@@ -144,7 +144,7 @@ export const deferInitGvlToRoute = (
 	payload.gvl
 		? deferInitGvl(
 				payload,
-				createGvlReferenceURL(
+				createGvlReferenceUrl(
 					route,
 					payload.gvl,
 					normalizeLanguage(payload.translations?.language)

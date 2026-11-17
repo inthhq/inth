@@ -83,12 +83,12 @@ const ABSOLUTE_URL = /^https?:\/\//iu;
  * @param source - The backend URL as configured, not resolved against the request.
  * @returns The backend base URL without a trailing slash.
  */
-export const resolveSessionReportBackendURL =
-	function resolveSessionReportBackendURL(source: {
-		backendURL?: string | null;
+export const resolveSessionReportProjectUrl =
+	function resolveSessionReportProjectUrl(source: {
+		projectUrl?: string | null;
 	}): string | undefined {
-		return source.backendURL && ABSOLUTE_URL.test(source.backendURL)
-			? trimSlash(source.backendURL)
+		return source.projectUrl && ABSOLUTE_URL.test(source.projectUrl)
+			? trimSlash(source.projectUrl)
 			: undefined;
 	};
 
@@ -178,9 +178,9 @@ export const forwardSessionReportHeaders = function forwardSessionReportHeaders(
 export interface ReportConsentSessionOptions extends BuildConsentSessionReportOptions {
 	/**
 	 * Backend base URL as configured. Relative or absent means no report is
-	 * sent; see {@link resolveSessionReportBackendURL}.
+	 * sent; see {@link resolveSessionReportProjectUrl}.
 	 */
-	backendURL?: string | null;
+	projectUrl?: string | null;
 	/** Fetch implementation. Defaults to `globalThis.fetch`. */
 	fetch?: typeof globalThis.fetch;
 	/**
@@ -229,7 +229,7 @@ export interface ReportConsentSessionOptions extends BuildConsentSessionReportOp
  * ```ts
  * reportConsentSession({
  *   adapter: '@c15t/nextjs',
- *   backendURL: 'https://consent.example.com',
+ *   projectUrl: 'https://consent.example.com',
  *   headers: request.headers,
  *   init: payload,
  *   inputs,
@@ -242,10 +242,10 @@ export interface ReportConsentSessionOptions extends BuildConsentSessionReportOp
 export const reportConsentSession = function reportConsentSession(
 	options: ReportConsentSessionOptions
 ): Promise<void> {
-	const backendURL = resolveSessionReportBackendURL(options);
+	const projectUrl = resolveSessionReportProjectUrl(options);
 	const fetchImpl = options.fetch ?? globalThis.fetch?.bind(globalThis);
 	if (
-		!backendURL ||
+		!projectUrl ||
 		!fetchImpl ||
 		isSpeculativeRequest(options.headers) ||
 		(options.method !== undefined && options.method.toUpperCase() !== 'GET')
@@ -272,7 +272,7 @@ export const reportConsentSession = function reportConsentSession(
 						readHeader(options.headers, 'origin') ?? options.url
 					),
 			});
-			const response = await fetchImpl(`${backendURL}/sessions`, {
+			const response = await fetchImpl(`${projectUrl}/sessions`, {
 				body: JSON.stringify(body),
 				headers: {
 					'content-type': 'application/json',

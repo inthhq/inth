@@ -24,22 +24,22 @@ const normalizeAbsoluteURL = function normalizeAbsoluteURL(url: URL): string {
 	return normalized.endsWith('/') ? normalized.slice(0, -1) : normalized;
 };
 
-export const canonicalizeBrowserBackendURL =
-	function canonicalizeBrowserBackendURL(
-		backendURL: string
+export const canonicalizeBrowserProjectUrl =
+	function canonicalizeBrowserProjectUrl(
+		projectUrl: string
 	): string | undefined {
 		try {
-			const normalizedBackendURL = trimTrailingSlash(backendURL);
-			if (ABSOLUTE_URL_REGEX.test(normalizedBackendURL)) {
-				return normalizeAbsoluteURL(new URL(normalizedBackendURL));
+			const normalizedProjectUrl = trimTrailingSlash(projectUrl);
+			if (ABSOLUTE_URL_REGEX.test(normalizedProjectUrl)) {
+				return normalizeAbsoluteURL(new URL(normalizedProjectUrl));
 			}
 
-			if (!normalizedBackendURL.startsWith('/')) {
+			if (!normalizedProjectUrl.startsWith('/')) {
 				return undefined;
 			}
 
 			return normalizeAbsoluteURL(
-				new URL(normalizedBackendURL, window.location.origin)
+				new URL(normalizedProjectUrl, window.location.origin)
 			);
 		} catch {
 			return undefined;
@@ -47,7 +47,7 @@ export const canonicalizeBrowserBackendURL =
 	};
 
 export interface RuntimeRequestContextMatcher {
-	backendURL: string;
+	projectUrl: string;
 	country?: string;
 	region?: string;
 	language?: string;
@@ -57,52 +57,52 @@ export interface RuntimeRequestContextMatcher {
 
 export const createBrowserRequestContext =
 	function createBrowserRequestContext(options: {
-		backendURL: string;
+		projectUrl: string;
 		overrides?: Pick<Overrides, 'country' | 'region' | 'language'>;
 		credentials?: RequestCredentials;
 		gpc?: boolean;
 	}): SSRInitRequestContext | undefined {
-		const normalizedBackendURL = canonicalizeBrowserBackendURL(
-			options.backendURL
+		const normalizedProjectUrl = canonicalizeBrowserProjectUrl(
+			options.projectUrl
 		);
-		if (!normalizedBackendURL) {
+		if (!normalizedProjectUrl) {
 			return undefined;
 		}
 		const detectedGpc = hasGlobalPrivacyControlSignal();
 
 		return {
-			backendURL: normalizedBackendURL,
 			country: options.overrides?.country ?? null,
 			credentials: options.credentials ?? DEFAULT_INIT_CREDENTIALS,
 			gpc:
 				options.gpc ?? (typeof detectedGpc === 'boolean' ? detectedGpc : false),
 			language: options.overrides?.language ?? null,
+			projectUrl: normalizedProjectUrl,
 			region: options.overrides?.region ?? null,
 		};
 	};
 
 export const createRuntimeRequestContextMatcher =
 	function createRuntimeRequestContextMatcher(options: {
-		backendURL: string;
+		projectUrl: string;
 		overrides?: Overrides;
 		credentials?: RequestCredentials;
 	}): RuntimeRequestContextMatcher | undefined {
-		const normalizedBackendURL = canonicalizeBrowserBackendURL(
-			options.backendURL
+		const normalizedProjectUrl = canonicalizeBrowserProjectUrl(
+			options.projectUrl
 		);
-		if (!normalizedBackendURL) {
+		if (!normalizedProjectUrl) {
 			return undefined;
 		}
 		const detectedGpc = hasGlobalPrivacyControlSignal();
 
 		return {
-			backendURL: normalizedBackendURL,
 			country: options.overrides?.country,
 			credentials: options.credentials ?? DEFAULT_INIT_CREDENTIALS,
 			gpc:
 				options.overrides?.gpc ??
 				(typeof detectedGpc === 'boolean' ? detectedGpc : false),
 			language: options.overrides?.language,
+			projectUrl: normalizedProjectUrl,
 			region: options.overrides?.region,
 		};
 	};
@@ -111,7 +111,7 @@ export const matchesStoredRequestContext = function matchesStoredRequestContext(
 	stored: SSRInitRequestContext,
 	matcher: RuntimeRequestContextMatcher
 ): boolean {
-	if (stored.backendURL !== matcher.backendURL) {
+	if (stored.projectUrl !== matcher.projectUrl) {
 		return false;
 	}
 

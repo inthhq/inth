@@ -51,14 +51,14 @@ export const findPrefetchedInitFor = function findPrefetchedInitFor(
 	if (typeof window === 'undefined') {
 		return undefined;
 	}
-	let backendURL: string;
+	let projectUrl: string;
 	try {
-		backendURL = new URL(url, window.location.origin).href;
+		projectUrl = new URL(url, window.location.origin).href;
 	} catch {
 		return undefined;
 	}
-	if (backendURL.endsWith('/')) {
-		backendURL = backendURL.slice(0, -1);
+	if (projectUrl.endsWith('/')) {
+		projectUrl = projectUrl.slice(0, -1);
 	}
 	const entries = (
 		window as unknown as Record<
@@ -80,7 +80,7 @@ export const findPrefetchedInitFor = function findPrefetchedInitFor(
 	const matches = Object.values(entries ?? {}).filter(({ requestContext }) =>
 		Boolean(
 			requestContext &&
-			requestContext.backendURL === backendURL &&
+			requestContext.projectUrl === projectUrl &&
 			(requestContext.credentials ?? DEFAULT_INIT_CREDENTIALS) ===
 				DEFAULT_INIT_CREDENTIALS &&
 			requestContext.gpc === gpc &&
@@ -112,23 +112,23 @@ export const findPrefetchedInit = function findPrefetchedInit(
 	// is nothing to read.
 	if (
 		typeof window === 'undefined' ||
-		!hosted?.backendURL ||
+		!hosted?.projectUrl ||
 		hosted.initialData ||
-		hosted.initURL ||
+		hosted.initUrl ||
 		hosted.fetch ||
 		Object.keys(hosted.headers ?? {}).length > 0
 	) {
 		return undefined;
 	}
-	return findPrefetchedInitFor(hosted.backendURL, overrides);
+	return findPrefetchedInitFor(hosted.projectUrl, overrides);
 };
 
 /**
- * {@link startPrefetchedInit} for a provider that set only `backendURL`,
+ * {@link startPrefetchedInit} for a provider that set only `projectUrl`,
  * whose hosted transport the engine builds later. Needs no transport
  * factory, so a deferred provider's first load carries none.
  *
- * @param backendURL - The provider's `backendURL`.
+ * @param projectUrl - The provider's `projectUrl`.
  * @param overrides - The provider's `overrides`.
  * @param request - The provider's `journey` setting and consent storage key.
  * @returns The pending response, or `undefined` outside a browser or for an
@@ -136,24 +136,24 @@ export const findPrefetchedInit = function findPrefetchedInit(
  * @internal
  */
 export const startPrefetchedHostedInit = function startPrefetchedHostedInit(
-	backendURL: string,
+	projectUrl: string,
 	overrides?: KernelOverrides,
 	request: Pick<PrefetchOptions, 'journey' | 'storageKey'> = {}
 ): Promise<PrefetchedInitialData | undefined> | undefined {
-	if (typeof window === 'undefined' || !backendURL) {
+	if (typeof window === 'undefined' || !projectUrl) {
 		return undefined;
 	}
-	const found = findPrefetchedInitFor(backendURL, overrides);
+	const found = findPrefetchedInitFor(projectUrl, overrides);
 	if (found) {
 		return found;
 	}
 	try {
-		primeInitRequest({ backendURL, ...request, overrides });
+		primeInitRequest({ projectUrl, ...request, overrides });
 	} catch {
 		// An invalid backend URL: the engine reports it.
 		return undefined;
 	}
-	return findPrefetchedInitFor(backendURL, overrides);
+	return findPrefetchedInitFor(projectUrl, overrides);
 };
 
 /**
@@ -186,15 +186,15 @@ export const startPrefetchedInit = function startPrefetchedInit(
 	if (
 		found ||
 		typeof window === 'undefined' ||
-		!hosted?.backendURL ||
+		!hosted?.projectUrl ||
 		hosted.initialData ||
-		hosted.initURL ||
+		hosted.initUrl ||
 		hosted.fetch ||
 		Object.keys(hosted.headers ?? {}).length > 0
 	) {
 		return found;
 	}
-	return startPrefetchedHostedInit(hosted.backendURL, overrides, request);
+	return startPrefetchedHostedInit(hosted.projectUrl, overrides, request);
 };
 
 /**

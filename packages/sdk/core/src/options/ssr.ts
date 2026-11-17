@@ -7,7 +7,7 @@ import type { GlobalVendorList, InitContext, KernelJourney } from '../types';
  * client can decide whether the payload still matches the live request.
  */
 export interface SSRInitRequestContext {
-	backendURL: string;
+	projectUrl: string;
 	country: string | null;
 	region: string | null;
 	language: string | null;

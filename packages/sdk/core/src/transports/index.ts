@@ -78,6 +78,6 @@ export {
 } from './version-header';
 export {
 	deferInitGvl,
-	createGvlReferenceURL,
+	createGvlReferenceUrl,
 	serveGvlReference,
 } from './gvl-reference';

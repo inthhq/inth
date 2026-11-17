@@ -51,7 +51,6 @@ afterEach(() => {
 const start = async (options: RuntimeOverrides = {}) => {
 	const runtime = createConsentRuntime({
 		mode: hosted({
-			backendURL: '/api/c15t',
 			fetch: (input, init) => {
 				// The path alone: the runtime adds its consent journey as a query.
 				const url = String(input).split('?')[0] ?? '';
@@ -72,6 +71,7 @@ const start = async (options: RuntimeOverrides = {}) => {
 					)
 				);
 			},
+			projectUrl: '/api/c15t',
 		}),
 		prefetch: { initRetry: false },
 		...options,

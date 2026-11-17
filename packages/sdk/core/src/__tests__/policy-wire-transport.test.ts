@@ -131,8 +131,8 @@ describe('policy contract header', () => {
 	test('every hosted request declares the contract next to the version', async () => {
 		const fetchSpy = vi.fn().mockResolvedValue(respond({ ok: true }));
 		const transport = createHostedTransport({
-			backendURL: '/api/c15t',
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
+			projectUrl: '/api/c15t',
 		});
 		await transport.save(PAYLOAD);
 		await transport.identify({ externalId: 'u' }, 'sub_test');
@@ -245,8 +245,8 @@ describe('hosted init negotiation', () => {
 			)
 			.mockResolvedValueOnce(respond({ ...BASE_INIT, policy: LEGACY_POLICY }));
 		const transport = createHostedTransport({
-			backendURL: '/api/c15t',
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
+			projectUrl: '/api/c15t',
 		});
 
 		// Declared contract, no wire: failed, so no stale policy can stand in.
@@ -284,8 +284,8 @@ describe('unsupported producer contract', () => {
 				respond(permissiveBody, { [POLICY_CONTRACT_HEADER]: '99' })
 			);
 		const transport = createHostedTransport({
-			backendURL: '/api/c15t',
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
+			projectUrl: '/api/c15t',
 		});
 		const response = await transport.init({ overrides: {}, user: null });
 		// An unknown contract makes the body no evidence at all: the kernel
@@ -420,8 +420,8 @@ describe('hosted save result', () => {
 			})
 		);
 		const transport = createHostedTransport({
-			backendURL: '/api/c15t',
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
+			projectUrl: '/api/c15t',
 		});
 		// Without this, every real save was read as `ok: undefined` and queued
 		// for replay forever.
@@ -476,9 +476,9 @@ describe('hosted subject record boundary', () => {
 	test('loadSubjectRecord maps the backend record and ignores alpha privacy directives', async () => {
 		const fetchSpy = vi.fn().mockResolvedValue(respond(subjectRead));
 		const transport = createHostedTransport({
-			backendURL: '/api/c15t',
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
 			now: () => 1_700_000_200_000,
+			projectUrl: '/api/c15t',
 		});
 		const records = await transport.loadSubjectRecord('sub_test');
 		expect(fetchSpy.mock.calls[0]?.[0]).toBe('/api/c15t/subjects/sub_test');
@@ -498,9 +498,9 @@ describe('hosted subject record boundary', () => {
 		} = subjectRead;
 		const fetchSpy = vi.fn().mockResolvedValue(respond(legacyRead));
 		const transport = createHostedTransport({
-			backendURL: '/api/c15t',
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
 			now: () => 1_700_000_200_000,
+			projectUrl: '/api/c15t',
 		});
 		const records = await transport.loadSubjectRecord('sub_test');
 		expect(records?.choice).toEqual({
@@ -529,9 +529,9 @@ describe('hosted subject record boundary', () => {
 			})
 		);
 		const transport = createHostedTransport({
-			backendURL: '/api/c15t',
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
 			now: () => 1_700_000_200_000,
+			projectUrl: '/api/c15t',
 		});
 		const records = await transport.loadSubjectRecord('sub_test');
 		expect(records?.choice).toBeNull();
@@ -549,9 +549,9 @@ describe('hosted subject record boundary', () => {
 			})
 		);
 		const transport = createHostedTransport({
-			backendURL: '/api/c15t',
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
 			now: () => 1_700_000_200_000,
+			projectUrl: '/api/c15t',
 		});
 		const records = await transport.loadSubjectRecord('sub_test');
 		expect(records?.subject).toEqual({
@@ -579,9 +579,9 @@ describe('hosted subject record boundary', () => {
 			})
 		);
 		const transport = createHostedTransport({
-			backendURL: '/api/c15t',
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
 			now: () => 1_700_000_200_000,
+			projectUrl: '/api/c15t',
 		});
 		const records = await transport.loadSubjectRecord('sub_test');
 		expect(records?.choice).toBeNull();
@@ -592,8 +592,8 @@ describe('hosted subject record boundary', () => {
 			.fn()
 			.mockResolvedValue(new Response('{"message":"nope"}', { status: 404 }));
 		const transport = createHostedTransport({
-			backendURL: '/api/c15t',
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
+			projectUrl: '/api/c15t',
 		});
 		await expect(transport.loadSubjectRecord('sub_nobody')).resolves.toBeNull();
 	});
@@ -759,16 +759,16 @@ describe('identity without a server subject', () => {
 		{
 			build: (fetch: typeof globalThis.fetch) =>
 				createHostedTransport({
-					backendURL: 'https://api.example.com/c15t',
 					fetch,
+					projectUrl: 'https://api.example.com/c15t',
 				}),
 			label: 'hosted',
 		},
 		{
 			build: (fetch: typeof globalThis.fetch) =>
 				createManifestTransport({
-					backendURL: 'https://api.example.com/c15t',
 					fetch,
+					projectUrl: 'https://api.example.com/c15t',
 					snapshot: manifest,
 				}),
 			label: 'manifest',
@@ -824,7 +824,7 @@ describe('manifest transport', () => {
 		});
 		const transport = createManifestTransport({
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
-			manifestURL: 'https://api.example.com/c15t/manifest',
+			manifestUrl: 'https://api.example.com/c15t/manifest',
 		});
 		await expect(transport.init({ overrides: {}, user: null })).rejects.toThrow(
 			/\/manifest responded 503/u
@@ -849,8 +849,8 @@ describe('manifest transport', () => {
 				respond({ consentId: 'cns_1', subjectId: 'sub_test' })
 			);
 		const transport = createManifestTransport({
-			backendURL: 'https://api.example.com/c15t',
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
+			projectUrl: 'https://api.example.com/c15t',
 			snapshot: {
 				branding: 'c15t',
 				policyPacks: [],

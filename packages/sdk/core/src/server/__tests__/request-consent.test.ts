@@ -278,9 +278,9 @@ describe('target resolution', () => {
 	test('a relative backend resolves against the request URL, never a forged forwarded host', async () => {
 		const fetch = upstream();
 		await render({
-			backendURL: '/consent',
 			fetch,
 			headers: { 'x-forwarded-host': 'evil.example' },
+			projectUrl: '/consent',
 		});
 		expect(target(fetch.mock.calls[0]?.[0])).toBe(`${APP}/consent/init`);
 	});
@@ -288,9 +288,9 @@ describe('target resolution', () => {
 	test('forwarded headers decide the origin only when trusted', async () => {
 		const fetch = upstream();
 		await render({
-			backendURL: '/consent',
 			fetch,
 			headers: { 'x-forwarded-host': 'edge.example' },
+			projectUrl: '/consent',
 			trustForwardedHeaders: true,
 		});
 		expect(target(fetch.mock.calls[0]?.[0])).toBe(
@@ -303,9 +303,9 @@ describe('target resolution', () => {
 		const onError = vi.fn();
 		const state = await resolveRequestConsent({
 			adapter: '@c15t/test',
-			backendURL: '/consent',
 			fetch,
 			onError,
+			projectUrl: '/consent',
 			request: { headers: new Headers() },
 		});
 		expect(fetch).not.toHaveBeenCalled();
@@ -316,9 +316,9 @@ describe('target resolution', () => {
 
 	describe('self-route guard', () => {
 		test.each([
-			['hosted', { backendURL: '/api/c15t' }],
-			['manifest', { manifestURL: '/api/c15t/manifest' }],
-			['an absolute same-origin URL', { backendURL: `${APP}/api/c15t` }],
+			['hosted', { projectUrl: '/api/c15t' }],
+			['manifest', { manifestUrl: '/api/c15t/manifest' }],
+			['an absolute same-origin URL', { projectUrl: `${APP}/api/c15t` }],
 		])('never fetches the app’s own consent route (%s)', async (_, source) => {
 			const fetch = upstream();
 			const onError = vi.fn();
@@ -331,31 +331,31 @@ describe('target resolution', () => {
 		test('honours the routes the adapter declares, segment by segment', async () => {
 			const fetch = upstream();
 			await render({
-				backendURL: '/api/consent',
 				fetch,
 				ownRoutes: ['/api/consent'],
+				projectUrl: '/api/consent',
 			});
 			expect(fetch).not.toHaveBeenCalled();
 			await render({
-				backendURL: '/api/consentx',
 				fetch,
 				ownRoutes: ['/api/consent'],
+				projectUrl: '/api/consentx',
 			});
 			expect(target(fetch.mock.calls[0]?.[0])).toBe(`${APP}/api/consentx/init`);
 		});
 
 		test('a same-origin backend outside the consent routes is fetched', async () => {
 			const fetch = upstream();
-			await render({ backendURL: '/api/self-host', fetch });
+			await render({ fetch, projectUrl: '/api/self-host' });
 			expect(fetch).toHaveBeenCalledTimes(1);
 		});
 
 		test('an adapter with no own routes fetches a same-origin /api/c15t backend', async () => {
 			const fetch = upstream();
 			const state = await render({
-				backendURL: '/api/c15t',
 				fetch,
 				ownRoutes: [],
+				projectUrl: '/api/c15t',
 			});
 			expect(target(fetch.mock.calls[0]?.[0])).toBe(`${APP}/api/c15t/init`);
 			expect(state.initialPolicyResolution?.status).toBe('matched');
@@ -363,29 +363,29 @@ describe('target resolution', () => {
 
 		test('a render reached by its own origin’s render request stops there', async () => {
 			const fetch = upstream();
-			await render({ backendURL: '/api/self-host', fetch });
+			await render({ fetch, projectUrl: '/api/self-host' });
 			const marked = Object.fromEntries(sentHeaders(fetch, '/init'));
 			// A page answered that request (an unmounted backend prefix) and its
 			// render resolves again with the headers it received.
 			const onError = vi.fn();
 			const nested = await render({
-				backendURL: '/api/self-host',
 				fetch,
 				headers: marked,
 				onError,
+				projectUrl: '/api/self-host',
 			});
 			expect(fetch).toHaveBeenCalledTimes(1);
 			expect(nested.initialPolicyResolution).toBeUndefined();
 			expect(onError.mock.calls[0]?.[1]).toBe(`${APP}/api/self-host/init`);
 			// A backend on another origin is still asked.
-			await render({ backendURL: BACKEND, fetch, headers: marked });
+			await render({ fetch, headers: marked, projectUrl: BACKEND });
 			expect(callsTo(fetch, BACKEND)).toHaveLength(1);
 		});
 
 		test('only same-origin requests carry the render marker', async () => {
 			const fetch = upstream();
-			await render({ backendURL: BACKEND, fetch });
-			await render({ backendURL: '/api/self-host', fetch });
+			await render({ fetch, projectUrl: BACKEND });
+			await render({ fetch, projectUrl: '/api/self-host' });
 			const remote = new Headers(fetch.mock.calls[0]?.[1]?.headers);
 			const own = new Headers(fetch.mock.calls[1]?.[1]?.headers);
 			const added = [...own.keys()].filter((name) => !remote.has(name));
@@ -400,7 +400,7 @@ describe('target resolution', () => {
 			const state = await render({
 				fetch,
 				headers: { cookie: CONSENTED },
-				initURL: '/api/c15t/init',
+				initUrl: '/api/c15t/init',
 				localFetch,
 			});
 			expect(fetch).not.toHaveBeenCalled();
@@ -418,9 +418,9 @@ describe('target resolution', () => {
 				Promise.resolve(json(INIT))
 			);
 			await render({
-				backendURL: `${APP}/api/bench-consent`,
 				fetch,
 				localFetch,
+				projectUrl: `${APP}/api/bench-consent`,
 			});
 			expect(fetch).not.toHaveBeenCalled();
 			expect(target(localFetch.mock.calls[0]?.[0])).toBe(
@@ -434,16 +434,16 @@ describe('modes', () => {
 	test('manifest mode resolves locally and reads the manifest once across renders', async () => {
 		const fetch = upstream();
 		const first = await render({
-			backendURL: BACKEND,
 			fetch,
 			headers: { 'cf-ipcountry': 'DE' },
 			mode: 'manifest',
+			projectUrl: BACKEND,
 		});
 		const second = await render({
-			backendURL: BACKEND,
 			fetch,
 			headers: { 'cf-ipcountry': 'US' },
 			mode: 'manifest',
+			projectUrl: BACKEND,
 		});
 		expect(callsTo(fetch, '/manifest')).toHaveLength(1);
 		expect(callsTo(fetch, '/init')).toHaveLength(0);
@@ -468,10 +468,10 @@ describe('modes', () => {
 		);
 		const onError = vi.fn();
 		const state = await render({
-			backendURL: `${BACKEND}/fallback`,
 			fetch,
 			mode: 'manifest',
 			onError,
+			projectUrl: `${BACKEND}/fallback`,
 		});
 		expect(callsTo(fetch, '/manifest')).toHaveLength(1);
 		expect(callsTo(fetch, '/init')).toHaveLength(1);
@@ -493,7 +493,7 @@ describe('modes', () => {
 		expect(state.initialPolicyResolution).toBeUndefined();
 		expect(onError).toHaveBeenCalledWith(
 			expect.objectContaining({
-				message: expect.stringContaining('pass backendURL or manifestURL'),
+				message: expect.stringContaining('pass projectUrl or manifestUrl'),
 			}),
 			undefined
 		);
@@ -509,9 +509,9 @@ describe('modes', () => {
 	test('hosted mode folds the backend /init into the request-only state', async () => {
 		const fetch = upstream(MANIFEST, { ...INIT, subjectId: 'sub_1' });
 		const state = await render({
-			backendURL: BACKEND,
 			fetch,
 			headers: { cookie: CONSENTED },
+			projectUrl: BACKEND,
 		});
 		expect(state.initialPolicyResolution?.status).toBe('matched');
 		expect(state.initialRecords?.choice).toBeDefined();
@@ -524,7 +524,7 @@ describe('modes', () => {
 		const fetch = vi.fn<typeof globalThis.fetch>(() =>
 			Promise.resolve(new Response(JSON.stringify(legacy)))
 		);
-		const state = await render({ backendURL: BACKEND, fetch });
+		const state = await render({ fetch, projectUrl: BACKEND });
 		expect(state.initialPolicyResolution?.status).toBe('failed');
 	});
 
@@ -556,7 +556,7 @@ describe('forwarding', () => {
 
 	test('hosted /init gets the consent cookie, inputs and user agent, never the jar', async () => {
 		const fetch = upstream();
-		await render({ backendURL: BACKEND, fetch, headers: visitor });
+		await render({ fetch, headers: visitor, projectUrl: BACKEND });
 		const headers = sentHeaders(fetch, '/init');
 		expect(Object.fromEntries(headers)).toMatchObject({
 			'accept-language': 'de',
@@ -576,10 +576,10 @@ describe('forwarding', () => {
 	test('named headers travel; cookies and hop-chain headers cannot be named', async () => {
 		const fetch = upstream();
 		await render({
-			backendURL: BACKEND,
 			fetch,
 			forwardHeaders: ['X-Tenant', 'cookie', 'x-forwarded-host'],
 			headers: visitor,
+			projectUrl: BACKEND,
 		});
 		const headers = sentHeaders(fetch, '/init');
 		expect(headers.get('x-tenant')).toBe('acme');
@@ -590,9 +590,9 @@ describe('forwarding', () => {
 	test('the visitor IP travels only under trusted forwarding headers', async () => {
 		const fetch = upstream();
 		await render({
-			backendURL: BACKEND,
 			fetch,
 			headers: visitor,
+			projectUrl: BACKEND,
 			trustForwardedHeaders: true,
 		});
 		expect(sentHeaders(fetch, '/init').get('x-forwarded-for')).toBe(
@@ -603,10 +603,10 @@ describe('forwarding', () => {
 	test('nothing identifying crosses cleartext to a remote host', async () => {
 		const fetch = upstream();
 		await render({
-			backendURL: 'http://consent.internal',
 			fetch,
 			forwardHeaders: ['x-tenant'],
 			headers: visitor,
+			projectUrl: 'http://consent.internal',
 			trustForwardedHeaders: true,
 		});
 		const headers = sentHeaders(fetch, '/init');
@@ -619,9 +619,9 @@ describe('forwarding', () => {
 	test('a loopback backend counts as local', async () => {
 		const fetch = upstream();
 		await render({
-			backendURL: 'http://localhost:8787',
 			fetch,
 			headers: visitor,
+			projectUrl: 'http://localhost:8787',
 		});
 		expect(sentHeaders(fetch, '/init').get('cookie')).toBe(CONSENTED);
 	});
@@ -629,10 +629,10 @@ describe('forwarding', () => {
 	test('the manifest request carries nothing about the visitor by default', async () => {
 		const fetch = upstream();
 		await render({
-			backendURL: BACKEND,
 			fetch,
 			headers: visitor,
 			mode: 'manifest',
+			projectUrl: BACKEND,
 		});
 		const headers = sentHeaders(fetch, '/manifest');
 		expect(headers.has('cookie')).toBe(false);
@@ -643,12 +643,12 @@ describe('forwarding', () => {
 	test('the manifest request carries named headers and scoped cookies, not over cleartext', async () => {
 		const fetch = upstream();
 		await render({
-			backendURL: BACKEND,
 			cookieNames: ['session'],
 			fetch,
 			forwardHeaders: ['x-tenant'],
 			headers: visitor,
 			mode: 'manifest',
+			projectUrl: BACKEND,
 		});
 		const headers = sentHeaders(fetch, '/manifest');
 		expect(headers.get('cookie')).toBe('session=secret');
@@ -656,12 +656,12 @@ describe('forwarding', () => {
 
 		const cleartext = upstream();
 		await render({
-			backendURL: 'http://consent.internal',
 			cookieNames: ['session'],
 			fetch: cleartext,
 			forwardHeaders: ['x-tenant'],
 			headers: visitor,
 			mode: 'manifest',
+			projectUrl: 'http://consent.internal',
 		});
 		const plain = sentHeaders(cleartext, '/manifest');
 		expect(plain.has('cookie')).toBe(false);
@@ -671,9 +671,9 @@ describe('forwarding', () => {
 	test('configured consent headers reach the hosted /init; others do not', async () => {
 		const fetch = upstream();
 		await render({
-			backendURL: BACKEND,
 			fetch,
 			initHeaders: { 'X-C15T-Country': 'FR', 'x-private': 'no' },
+			projectUrl: BACKEND,
 		});
 		const headers = sentHeaders(fetch, '/init');
 		expect(headers.get('x-c15t-country')).toBe('FR');
@@ -685,16 +685,16 @@ describe('vendor list deferral', () => {
 	test('manifest mode defers the list to the public URL, or the gvl route', async () => {
 		vi.stubGlobal('fetch', upstream(IAB_MANIFEST));
 		const toList = await render({
-			backendURL: BACKEND,
 			mode: 'manifest',
+			projectUrl: BACKEND,
 		});
 		expect(toList.initialIab?.gvl).toBeNull();
 		expect(toList.initialIab?.gvlReference?.url).toBe(GVL_URL);
 
 		const toRoute = await render({
-			backendURL: BACKEND,
 			gvlRoute: '/api/c15t/init',
 			mode: 'manifest',
+			projectUrl: BACKEND,
 		});
 		expect(toRoute.initialIab?.gvlReference?.url).toMatch(
 			/^\/api\/c15t\/init\?c15t-gvl=42/u
@@ -726,9 +726,9 @@ describe('vendor list deferral', () => {
 				: base(input, init)
 		);
 		const state = await render({
-			backendURL: BACKEND,
 			fetch,
 			mode: 'manifest',
+			projectUrl: BACKEND,
 		});
 		expect(state.initialIab?.adTechProviders).toEqual([
 			{ id: 89, name: 'Meta', policyUrl: 'https://meta.example/privacy' },
@@ -759,9 +759,9 @@ describe('vendor list deferral', () => {
 				: base(input, init)
 		);
 		const state = await render({
-			backendURL: BACKEND,
 			fetch,
 			mode: 'manifest',
+			projectUrl: BACKEND,
 		});
 		expect(state.initialIab?.adTechProviders?.map(({ id }) => id)).toEqual([
 			89,
@@ -773,9 +773,9 @@ describe('vendor list deferral', () => {
 
 	test('a caller fetch keeps the list inline', async () => {
 		const state = await render({
-			backendURL: BACKEND,
 			fetch: upstream(IAB_MANIFEST),
 			mode: 'manifest',
+			projectUrl: BACKEND,
 		});
 		expect(state.initialIab?.gvl?.vendorListVersion).toBe(42);
 	});
@@ -801,11 +801,11 @@ describe('vendor list deferral', () => {
 			),
 		};
 		vi.stubGlobal('fetch', upstream(MANIFEST, iabInit));
-		const anonymous = await render({ backendURL: BACKEND });
+		const anonymous = await render({ projectUrl: BACKEND });
 		expect(anonymous.initialIab?.gvlReference?.url).toBe(`${BACKEND}/init`);
 		const returning = await render({
-			backendURL: BACKEND,
 			headers: { cookie: CONSENTED },
+			projectUrl: BACKEND,
 		});
 		expect(returning.initialIab?.gvl?.vendorListVersion).toBe(42);
 	});
@@ -829,7 +829,7 @@ describe('budget', () => {
 	])('%s budget is 500 ms', async (_, timeoutMs) => {
 		vi.useFakeTimers();
 		const fetch = hanging();
-		const pending = render({ backendURL: BACKEND, fetch, timeoutMs });
+		const pending = render({ fetch, projectUrl: BACKEND, timeoutMs });
 		await vi.advanceTimersByTimeAsync(499);
 		let settled = false;
 		void pending.then(() => {
@@ -853,7 +853,7 @@ describe('budget', () => {
 					setTimeout(() => resolve(json(INIT)), 2000);
 				})
 		);
-		const pending = render({ backendURL: BACKEND, fetch, timeoutMs });
+		const pending = render({ fetch, projectUrl: BACKEND, timeoutMs });
 		await vi.advanceTimersByTimeAsync(2000);
 		expect((await pending).initialPolicyResolution?.status).toBe('matched');
 	});
@@ -874,9 +874,9 @@ describe('budget', () => {
 				})
 		);
 		const options = {
-			backendURL: BACKEND,
 			fetch,
 			mode: 'manifest' as const,
+			projectUrl: BACKEND,
 			waitUntil,
 		};
 		const first = render(options);
@@ -908,9 +908,9 @@ describe('budget', () => {
 			return Promise.resolve(json(IAB_MANIFEST));
 		});
 		const pending = render({
-			backendURL: BACKEND,
 			fetch,
 			mode: 'manifest',
+			projectUrl: BACKEND,
 			waitUntil: () => undefined,
 		});
 		await vi.advanceTimersByTimeAsync(500);
@@ -929,7 +929,7 @@ describe('experiment', () => {
 
 	test('an undecided visitor’s arm goes with hosted /init; the state carries the experiment', async () => {
 		const fetch = upstream();
-		const state = await render({ backendURL: BACKEND, experiment, fetch });
+		const state = await render({ experiment, fetch, projectUrl: BACKEND });
 		expect(sentHeaders(fetch, '/init').get('x-c15t-experiment')).toBe(
 			'banner-test=b'
 		);
@@ -939,10 +939,10 @@ describe('experiment', () => {
 	test('a visitor who already chose is not counted, but keeps the experiment', async () => {
 		const fetch = upstream();
 		const state = await render({
-			backendURL: BACKEND,
 			experiment,
 			fetch,
 			headers: { cookie: CONSENTED },
+			projectUrl: BACKEND,
 		});
 		expect(sentHeaders(fetch, '/init').has('x-c15t-experiment')).toBe(false);
 		expect(state.experiment).toBe(experiment);
@@ -951,10 +951,10 @@ describe('experiment', () => {
 	test('manifest mode reports the arm; a failed upstream still carries the experiment', async () => {
 		const fetch = upstream();
 		await render({
-			backendURL: BACKEND,
 			experiment,
 			fetch,
 			mode: 'manifest',
+			projectUrl: BACKEND,
 		});
 		await vi.waitFor(() => expect(callsTo(fetch, '/sessions')).toHaveLength(1));
 		const body = JSON.parse(String(callsTo(fetch, '/sessions')[0]?.[1]?.body));
@@ -964,9 +964,9 @@ describe('experiment', () => {
 			Promise.reject(new Error('down'))
 		);
 		const state = await render({
-			backendURL: BACKEND,
 			experiment,
 			fetch: failing,
+			projectUrl: BACKEND,
 		});
 		expect(state.experiment).toBe(experiment);
 	});
@@ -977,10 +977,10 @@ describe('session reports', () => {
 		const fetch = upstream();
 		const waitUntil = vi.fn();
 		await render({
-			backendURL: BACKEND,
 			fetch,
 			headers: { 'user-agent': 'Visitor/1.0' },
 			mode: 'manifest',
+			projectUrl: BACKEND,
 			waitUntil,
 		});
 		await vi.waitFor(() => expect(callsTo(fetch, '/sessions')).toHaveLength(1));
@@ -990,11 +990,11 @@ describe('session reports', () => {
 	test('a relative backend and hosted mode send none', async () => {
 		const fetch = upstream();
 		await render({
-			backendURL: '/api/self-host',
 			fetch,
 			mode: 'manifest',
+			projectUrl: '/api/self-host',
 		});
-		await render({ backendURL: BACKEND, fetch });
+		await render({ fetch, projectUrl: BACKEND });
 		await new Promise((resolve) => {
 			setTimeout(resolve, 0);
 		});
@@ -1008,9 +1008,9 @@ describe('consent journey', () => {
 	test('hosted mode sends the journey on /init and hands its id to the browser', async () => {
 		const fetch = upstream();
 		const state = await render({
-			backendURL: BACKEND,
 			fetch,
 			headers: { cookie: CONSENTED },
+			projectUrl: BACKEND,
 		});
 		expect(state.journey?.id).toMatch(UUID);
 		const sent = new URL(String(callsTo(fetch, '/init')[0]?.[0]));
@@ -1024,9 +1024,9 @@ describe('consent journey', () => {
 	test('a stored notice dismissal is a stored answer', async () => {
 		const fetch = upstream();
 		const state = await render({
-			backendURL: BACKEND,
 			fetch,
 			headers: { cookie: DISMISSED },
+			projectUrl: BACKEND,
 		});
 		// The cookie decoded into a dismissal the browser will hydrate.
 		expect(state.initialRecords?.noticeDismissal).toBeTruthy();
@@ -1058,7 +1058,7 @@ describe('consent journey', () => {
 			),
 		});
 		vi.stubGlobal('fetch', fetch);
-		const state = await render({ backendURL: BACKEND });
+		const state = await render({ projectUrl: BACKEND });
 		expect(String(callsTo(fetch, '/init')[0]?.[0])).toContain(
 			`journey=${state.journey?.id}`
 		);
@@ -1067,17 +1067,17 @@ describe('consent journey', () => {
 
 	test('a network /init names the page origin so the backend report gets a domain', async () => {
 		const fetch = upstream();
-		await render({ backendURL: BACKEND, fetch });
+		await render({ fetch, projectUrl: BACKEND });
 		expect(sentHeaders(fetch, '/init').get('origin')).toBe(APP);
 	});
 
 	test('an Origin the request already sets is kept', async () => {
 		const fetch = upstream();
 		await render({
-			backendURL: BACKEND,
 			fetch,
 			forwardHeaders: ['origin'],
 			headers: { origin: 'https://shop.example.net' },
+			projectUrl: BACKEND,
 		});
 		expect(sentHeaders(fetch, '/init').get('origin')).toBe(
 			'https://shop.example.net'
@@ -1087,7 +1087,7 @@ describe('consent journey', () => {
 	test('an in-process init route gets no Origin added', async () => {
 		const localFetch = upstream();
 		await render({
-			initURL: '/api/c15t/init',
+			initUrl: '/api/c15t/init',
 			localFetch: localFetch as unknown as ManifestFetch,
 			mode: 'hosted',
 		});
@@ -1099,11 +1099,11 @@ describe('consent journey', () => {
 		const fetch = upstream();
 		// Germany matches the opt-in policy, so the prompt is owed.
 		const state = await render({
-			backendURL: BACKEND,
 			fetch,
 			headers: { 'cf-ipcountry': 'DE' },
 			journey: 'tab',
 			mode: 'manifest',
+			projectUrl: BACKEND,
 		});
 		await vi.waitFor(() => expect(callsTo(fetch, '/sessions')).toHaveLength(1));
 		const body = JSON.parse(String(callsTo(fetch, '/sessions')[0]?.[1]?.body));
@@ -1121,7 +1121,7 @@ describe('consent journey', () => {
 		const failing = vi.fn<typeof globalThis.fetch>(() =>
 			Promise.reject(new Error('down'))
 		);
-		const state = await render({ backendURL: BACKEND, fetch: failing });
+		const state = await render({ fetch: failing, projectUrl: BACKEND });
 		expect(state.initialPolicyResolution).toBeUndefined();
 		expect(state.journey?.id).toMatch(UUID);
 	});
@@ -1131,7 +1131,7 @@ describe('consent journey', () => {
 		['a prefetch', {}, { 'sec-purpose': 'prefetch' }],
 		[
 			'a manifest render with no absolute backend to report to',
-			{ backendURL: '/api/self-host', mode: 'manifest' },
+			{ mode: 'manifest', projectUrl: '/api/self-host' },
 			{},
 		],
 	] as const)(
@@ -1139,9 +1139,9 @@ describe('consent journey', () => {
 		async (_label, options, headers) => {
 			const fetch = upstream();
 			const state = await render({
-				backendURL: BACKEND,
 				fetch,
 				headers,
+				projectUrl: BACKEND,
 				...options,
 			});
 			expect(state.journey).toBeNull();
@@ -1153,13 +1153,13 @@ describe('consent journey', () => {
 
 	test('a shared render leaves the journey to the browser', async () => {
 		const fetch = upstream();
-		const state = await render({ backendURL: BACKEND, fetch, shared: true });
+		const state = await render({ fetch, projectUrl: BACKEND, shared: true });
 		expect(state).not.toHaveProperty('journey');
 	});
 
 	test('a tab journey goes on the hosted /init as a page journey', async () => {
 		const fetch = upstream();
-		await render({ backendURL: BACKEND, fetch, journey: 'tab' });
+		await render({ fetch, journey: 'tab', projectUrl: BACKEND });
 		const sent = new URL(String(callsTo(fetch, '/init')[0]?.[0]));
 		expect(sent.searchParams.get('journeyScope')).toBe('page');
 	});
@@ -1183,7 +1183,6 @@ describe('shared renders', () => {
 		const states = await Promise.all(
 			(['hosted', 'manifest'] as const).map((mode) =>
 				render({
-					backendURL: BACKEND,
 					experiment: {
 						arm: 'a',
 						arms: [{ id: 'a' }],
@@ -1194,6 +1193,7 @@ describe('shared renders', () => {
 					fetch,
 					headers: visitor,
 					mode,
+					projectUrl: BACKEND,
 					shared: true,
 				})
 			)

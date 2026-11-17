@@ -1,7 +1,7 @@
 /**
  * The network half of the browser manifest resolver: fetching the manifest
- * when the build bundled none, and asking `geoURL` for the visitor's
- * location. A page with a bundled snapshot and no `geoURL` never runs
+ * when the build bundled none, and asking `geoUrl` for the visitor's
+ * location. A page with a bundled snapshot and no `geoUrl` never runs
  * either, so the resolver loads this module only when it needs one.
  *
  * @internal
@@ -15,7 +15,7 @@ import { createManifestRequestInit } from './manifest-request';
 /**
  * Fetch the backend's consent manifest.
  *
- * @param manifestURL - Where the manifest lives.
+ * @param manifestUrl - Where the manifest lives.
  * @param fetchImpl - Fetch implementation.
  * @param options - Request headers and credentials mode.
  * @returns The manifest.
@@ -23,7 +23,7 @@ import { createManifestRequestInit } from './manifest-request';
  * @internal
  */
 export const fetchManifest = async function fetchManifest(
-	manifestURL: string,
+	manifestUrl: string,
 	fetchImpl: typeof globalThis.fetch,
 	options: {
 		credentials?: RequestCredentials;
@@ -31,7 +31,7 @@ export const fetchManifest = async function fetchManifest(
 	}
 ): Promise<ConsentManifest> {
 	const response = await fetchImpl(
-		manifestURL,
+		manifestUrl,
 		createManifestRequestInit(options)
 	);
 	if (!response.ok) {
@@ -54,18 +54,18 @@ const normalizeGeoValue = function normalizeGeoValue(
 /**
  * Ask a same-origin route for the visitor's `{ country, region }`.
  *
- * @param geoURL - The route.
+ * @param geoUrl - The route.
  * @param fetchImpl - Fetch implementation.
  * @returns The location, or `undefined` when the route fails; the `/init`
  * fallback still answers then.
  * @internal
  */
 export const fetchGeoInputs = async function fetchGeoInputs(
-	geoURL: string,
+	geoUrl: string,
 	fetchImpl: typeof globalThis.fetch
 ): Promise<ManifestModeInputs | undefined> {
 	try {
-		const response = await fetchImpl(geoURL, {
+		const response = await fetchImpl(geoUrl, {
 			credentials: 'same-origin',
 			headers: { accept: 'application/json' },
 			method: 'GET',

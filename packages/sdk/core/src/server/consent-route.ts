@@ -95,7 +95,7 @@ import type {
 } from './consent-proxy';
 import { fetchCachedGvl } from './gvl-cache';
 import {
-	resolveRequestBackendURL,
+	resolveRequestProjectUrl,
 	resolveRequestOrigin,
 } from './request-origin';
 
@@ -148,12 +148,12 @@ export interface ConsentRouteHandlerOptions {
 	adapter: string;
 	/**
 	 * Backend base URL, absolute or `/`-relative. The manifest is read from
-	 * `${backendURL}/manifest` unless `manifestURL` is set; session reports,
+	 * `${projectUrl}/manifest` unless `manifestUrl` is set; session reports,
 	 * the `/init` fallback and the proxy go here.
 	 */
-	backendURL?: string;
-	/** Full upstream manifest URL. Takes precedence over `backendURL`. */
-	manifestURL?: string;
+	projectUrl?: string;
+	/** Full upstream manifest URL. Takes precedence over `projectUrl`. */
+	manifestUrl?: string;
 	/**
 	 * An inline manifest. When set, no manifest is fetched and the backend
 	 * is used only for reports and the proxy.
@@ -169,7 +169,7 @@ export interface ConsentRouteHandlerOptions {
 	/** Replaces the default Global Vendor List loader. */
 	fetchGvl?: ConsentRouteFetchGvl;
 	/**
-	 * Resolve a relative `backendURL` or `manifestURL` against the request's
+	 * Resolve a relative `projectUrl` or `manifestUrl` against the request's
 	 * forwarding headers instead of `request.url`, and believe the client IP
 	 * chain when proxying. Only behind a proxy that sets those headers and
 	 * drops incoming ones.
@@ -178,7 +178,7 @@ export interface ConsentRouteHandlerOptions {
 	 */
 	trustForwardedHeaders?: boolean;
 	/**
-	 * Forward consent writes and other allowlisted paths to `backendURL`.
+	 * Forward consent writes and other allowlisted paths to `projectUrl`.
 	 * With it on, the manifest request also carries the cookies
 	 * `cookieNames` names and the extra `forwardHeaders`, and a manifest
 	 * read with them is answered `private, no-store`.
@@ -217,7 +217,7 @@ export interface ConsentRouteRequestContext {
 	/**
 	 * Fetch that answers this app's own routes in-process when given a path,
 	 * such as SvelteKit `event.fetch` or Nitro `localFetch`. When set, a
-	 * `/`-relative `backendURL` or `manifestURL` is fetched through it and
+	 * `/`-relative `projectUrl` or `manifestUrl` is fetched through it and
 	 * the request's host never decides the target.
 	 */
 	localFetch?: ManifestFetch;
@@ -246,7 +246,7 @@ export interface ConsentInitReport {
 	/** Package name of the adapter. */
 	adapter: string;
 	/** Absolute backend URL as configured; anything else sends no report. */
-	backendURL: string | undefined;
+	projectUrl: string | undefined;
 	/** Where the resolution happened. */
 	source: ConsentSessionSource;
 	/** The visitor's request headers; only IP and user agent travel. */
@@ -408,7 +408,6 @@ export const resolveConsentInit = async function resolveConsentInit(
 	if (report && !report.abandoned?.()) {
 		reportConsentSession({
 			adapter: report.adapter,
-			backendURL: report.backendURL,
 			experiment: report.experiment,
 			fetch: report.fetch,
 			headers: report.headers,
@@ -417,6 +416,7 @@ export const resolveConsentInit = async function resolveConsentInit(
 			journey: report.journey,
 			manifest,
 			method: report.method,
+			projectUrl: report.projectUrl,
 			source: report.source,
 			url: report.url,
 			waitUntil: report.waitUntil,
@@ -590,7 +590,7 @@ export const readRequestForwarding = function readRequestForwarding(
 	const origin = new URL(
 		resolveRequestOrigin({
 			headers: request.headers,
-			requestURL: request.url,
+			requestUrl: request.url,
 			trustForwardedHeaders,
 		}) ?? request.url
 	);
@@ -648,15 +648,15 @@ const queryOverrides = function queryOverrides(
  * @param options - Upstream location, fetch seams, reporting and proxy.
  * @returns One handler for every consent route. Upstream failures reject:
  * a manifest that cannot be read (after the `/init` fallback, when a
- * `backendURL` allows one), a vendor list that cannot be loaded, or a
+ * `projectUrl` allows one), a vendor list that cannot be loaded, or a
  * request budget that runs out.
- * @throws {Error} From the handler, when neither `backendURL` nor
- * `manifestURL` is set, or one cannot be resolved.
+ * @throws {Error} From the handler, when neither `projectUrl` nor
+ * `manifestUrl` is set, or one cannot be resolved.
  * @example
  * ```ts
  * const handle = createConsentRouteHandler({
  *   adapter: '@c15t/example',
- *   backendURL: 'https://consent.example.com',
+ *   projectUrl: 'https://consent.example.com',
  * });
  * export const GET = (request: Request) => handle(request, { route: 'init' });
  * ```
@@ -682,8 +682,8 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 		context: ConsentRouteRequestContext
 	): ResolvedTarget | null {
 		if (context.localFetch && url.startsWith('/') && !url.startsWith('//')) {
-			const resolved = resolveRequestBackendURL(url, {
-				requestURL: IN_PROCESS_ORIGIN,
+			const resolved = resolveRequestProjectUrl(url, {
+				requestUrl: IN_PROCESS_ORIGIN,
 			});
 			return resolved
 				? {
@@ -693,9 +693,9 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 					}
 				: null;
 		}
-		const resolved = resolveRequestBackendURL(url, {
+		const resolved = resolveRequestProjectUrl(url, {
 			headers: request.headers,
-			requestURL: request.url,
+			requestUrl: request.url,
 			trustForwardedHeaders,
 		});
 		return resolved ? { fetch: options.fetch, url: resolved } : null;
@@ -704,11 +704,11 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 	const resolveBackend = function resolveBackend(
 		request: Request,
 		context: ConsentRouteRequestContext,
-		backendURL: string
+		projectUrl: string
 	): ResolvedTarget {
-		const backend = resolveTarget(backendURL, request, context);
+		const backend = resolveTarget(projectUrl, request, context);
 		if (!backend) {
-			throw new Error(`${adapter}: invalid backendURL.`);
+			throw new Error(`${adapter}: invalid projectUrl.`);
 		}
 		return backend;
 	};
@@ -717,17 +717,17 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 		request: Request,
 		context: ConsentRouteRequestContext
 	): ResolvedTarget {
-		if (options.manifestURL) {
-			const source = resolveTarget(options.manifestURL, request, context);
+		if (options.manifestUrl) {
+			const source = resolveTarget(options.manifestUrl, request, context);
 			if (!source) {
-				throw new Error(`${adapter}: invalid manifestURL.`);
+				throw new Error(`${adapter}: invalid manifestUrl.`);
 			}
 			return source;
 		}
-		if (!options.backendURL) {
-			throw new Error(`${adapter}: pass backendURL or manifestURL.`);
+		if (!options.projectUrl) {
+			throw new Error(`${adapter}: pass projectUrl or manifestUrl.`);
 		}
-		const backend = resolveBackend(request, context, options.backendURL);
+		const backend = resolveBackend(request, context, options.projectUrl);
 		return { ...backend, url: `${backend.url}/manifest` };
 	};
 
@@ -739,7 +739,7 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 	 */
 	const manifestCredentials = function manifestCredentials(
 		request: Request,
-		sourceURL: string
+		sourceUrl: string
 	): Record<string, string> | undefined {
 		if (!proxy) {
 			return undefined;
@@ -764,7 +764,7 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 		}
 		return stripIdentityForCleartext(
 			Object.keys(headers).length > 0 ? headers : undefined,
-			sourceURL
+			sourceUrl
 		);
 	};
 
@@ -786,7 +786,7 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 			init: options.manifestFetchInit,
 			onBackgroundRevalidate: context.waitUntil,
 			query,
-			sourceURL: source.url,
+			sourceUrl: source.url,
 			timeoutMs: budget?.remaining(),
 		});
 		return { cached, credentials };
@@ -920,10 +920,10 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 		context: ConsentRouteRequestContext,
 		budget: Budget,
 		cause: unknown,
-		manifestURL: string
+		manifestUrl: string
 	): Promise<Response> {
 		// A timeout means the budget ran out: there is no time left to ask.
-		if (!options.backendURL || options.manifest || isBudgetTimeout(cause)) {
+		if (!options.projectUrl || options.manifest || isBudgetTimeout(cause)) {
 			throw cause;
 		}
 		if (budget.expired()) {
@@ -933,8 +933,8 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 				{ cause }
 			);
 		}
-		warnManifestFallback(manifestURL, cause);
-		const backend = resolveBackend(request, context, options.backendURL);
+		warnManifestFallback(manifestUrl, cause);
+		const backend = resolveBackend(request, context, options.projectUrl);
 		const forward: Record<string, string> = { ...c15tProtocolHeaders };
 		for (const name of CONSENT_REQUEST_HEADER_NAMES) {
 			const value = request.headers.get(name);
@@ -1076,10 +1076,10 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 				// waiting; the browser inits again and reports the view.
 				abandoned: () => request.signal.aborted,
 				adapter,
-				backendURL: options.backendURL,
 				fetch: options.fetch as typeof globalThis.fetch | undefined,
 				headers: request.headers,
 				method: request.method,
+				projectUrl: options.projectUrl,
 				source: 'route',
 				url: request.url,
 				waitUntil: context.waitUntil,
@@ -1098,19 +1098,19 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 		if (!proxy) {
 			return Promise.resolve(notFound());
 		}
-		if (!options.backendURL) {
-			throw new Error(`${adapter}: pass backendURL to use proxy.`);
+		if (!options.projectUrl) {
+			throw new Error(`${adapter}: pass projectUrl to use proxy.`);
 		}
-		const backend = resolveBackend(request, context, options.backendURL);
+		const backend = resolveBackend(request, context, options.projectUrl);
 		return forwardConsentRequest({
 			adapter,
-			backendURL: backend.url,
 			fetch: backend.fetch as typeof globalThis.fetch | undefined,
 			forwarding: context.forwarding
 				? context.forwarding()
 				: readRequestForwarding(request, trustForwardedHeaders),
 			options: proxy,
 			path,
+			projectUrl: backend.url,
 			request,
 		});
 	};
