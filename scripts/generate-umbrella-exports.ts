@@ -189,19 +189,15 @@ export const UMBRELLA_SOURCES: UmbrellaSource[] = [
 	{
 		directory: 'react',
 		exclude: [TAILWIND3_PLUGIN],
-		// `c15t/react` offers the single-page app modes, which default to the
+		// `c15t/react` offers the single-page app `manifest()`, which defaults to the
 		// build integration's `@c15t/core/generated`. `@c15t/react` keeps them
 		// out of its index, which the Next.js and TanStack Start entries
 		// re-export into browser bundles that must not import that module.
 		overrides: {
 			'.': {
 				from: './modes',
-				types: [
-					'BrowserManifestModeFactory',
-					'HostedOptions',
-					'ManifestModeOptions',
-				],
-				values: ['hosted', 'local', 'manifest', 'offline'],
+				types: ['BrowserManifestModeFactory', 'ManifestModeOptions'],
+				values: ['manifest'],
 			},
 		},
 		packageName: '@c15t/react',
