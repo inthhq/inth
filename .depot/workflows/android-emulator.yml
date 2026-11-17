@@ -2,8 +2,7 @@
 # sandboxes expose /dev/kvm; Depot's GitHub Actions runners do not, so these
 # jobs cannot live in .github/workflows next to the rest of CI.
 #
-# These run only once the owner connects this repository to Depot CI; until
-# then GitHub ignores this directory. `uses: ./.github/actions/setup-sdk`
+# Depot CI runs these for this repository. `uses: ./.github/actions/setup-sdk`
 # resolves to .depot/actions/setup-sdk, a symlink back to the shared action.
 name: Android emulator
 

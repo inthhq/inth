@@ -36,7 +36,7 @@ The six CLI jobs are required checks on `main` under their exact names. They alw
 
 ## Runners
 
-The CLI jobs keep the Blacksmith runners they used before. The SDK and mobile jobs use GitHub-hosted runners: `ubuntu-24.04`, and `macos-26` for Swift. The Android emulator suites in `.depot/workflows` need KVM. c15t ran them on Depot CI sandboxes, and they run there once this repository is connected to Depot CI. Until then GitHub ignores that directory.
+The CLI jobs keep the Blacksmith runners they used before. The SDK and mobile jobs use GitHub-hosted runners: `ubuntu-24.04`, and `macos-26` for Swift. The Android emulator suites in `.depot/workflows` need KVM and run on Depot CI, which this repository is connected to. They report as `Android emulator / …` checks. **CI result** does not cover them, because they are not jobs in `ci.yml`.
 
 ## Releases
 
@@ -63,6 +63,5 @@ The four disabled workflows run by hand only. Each verifies its product, then `t
 | npm trusted publishers for the SDK and React Native packages | npm settings | `release-sdk.yml`, `release-react-native.yml` | Not wired yet |
 | Maven Central user token and a GPG signing key and password | Secrets | `release-android.yml` | Not wired yet |
 | `POSTHOG_E2E_PROJECT_KEY` | Depot CI secret | `.depot/workflows/android-posthog-live.yml` | The job prints a notice and skips |
-| Depot CI connection | Depot organization setting | `.depot/workflows/*` | The emulator suites do not run |
 
 No CI job needs Apple signing. The Swift job builds and tests SwiftPM targets only.
