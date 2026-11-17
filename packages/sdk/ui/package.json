@@ -1,6 +1,7 @@
 {
 	"name": "@inth/sdk-ui",
 	"version": "3.0.2-canary.0",
+	"private": true,
 	"description": "Framework-agnostic UI primitives, CSS and theme tokens behind the c15t React, Vue, Svelte and Astro components.",
 	"keywords": [
 		"c15t",
@@ -270,9 +271,6 @@
 		"./styles/components/frame.node.js": "./dist/styles/components/consent-gate.node.js",
 		"./styles/components/frame.d.ts": "./dist/styles/components/consent-gate.d.ts",
 		"./styles/components/animations/iab-consent-banner.css": "./dist/styles/components/animations/iab-prompt.css"
-	},
-	"publishConfig": {
-		"access": "public"
 	},
 	"scripts": {
 		"build": "rslib build && node ../../../scripts/normalize-dist-types.mjs && tcm src/styles/components -p \"*.module.css\" -o types/styles/components --camelCase && bun scripts/generate-style-artifacts.ts && bun scripts/generate-css-entrypoints.ts",

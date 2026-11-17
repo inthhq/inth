@@ -1,6 +1,7 @@
 {
 	"name": "@inth/sdk-dev-tools",
 	"version": "3.2.0-canary.0",
+	"private": true,
 	"description": "Developer tools for debugging c15t. Inspect consent state, resolved policy, location, IAB TCF state and kernel events.",
 	"keywords": [
 		"c15t",
@@ -36,9 +37,6 @@
 			"import": "./dist/index.js",
 			"default": "./dist/index.js"
 		}
-	},
-	"publishConfig": {
-		"access": "public"
 	},
 	"scripts": {
 		"build": "pnpm run prebuild && rslib build && node ../../../scripts/normalize-dist-types.mjs",

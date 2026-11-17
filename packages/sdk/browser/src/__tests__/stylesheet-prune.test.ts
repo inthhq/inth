@@ -26,7 +26,7 @@ import { classes, stylesheet } from '../generated/styles';
 const require = createRequire(import.meta.url);
 const uiStylesheet = (specifier: string) =>
 	readFileSync(require.resolve(specifier), 'utf8');
-const uiMainStylesheet = () => uiStylesheet('@inth/sdk/ui/styles.css');
+const uiMainStylesheet = () => uiStylesheet('@inth/sdk-ui/styles.css');
 
 const rendered = collectClassNames([classes, iabClasses]);
 
@@ -57,7 +57,7 @@ describe('inlined stylesheet', () => {
 		);
 		expect(iabStylesheet).toBe(
 			compactStylesheet(
-				pruneStylesheet(uiStylesheet('@inth/sdk/ui/iab/styles.css'), rendered)
+				pruneStylesheet(uiStylesheet('@inth/sdk-ui/iab/styles.css'), rendered)
 			)
 		);
 		expect(stylesheet).not.toContain('/*');

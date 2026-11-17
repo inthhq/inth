@@ -42,6 +42,19 @@
       ],
       "env": ["WITH_RSDOCTOR"]
     },
+    "@inth/sdk#build": {
+      "dependsOn": [
+        "@inth/sdk-browser#build",
+        "@inth/sdk-core#build",
+        "@inth/sdk-dev-tools#build",
+        "@inth/sdk-iab#build",
+        "@inth/sdk-schema#build",
+        "@inth/sdk-translations#build",
+        "@inth/sdk-ui#build"
+      ],
+      "inputs": ["$TURBO_DEFAULT$", "!README.md"],
+      "outputs": ["lib/**"]
+    },
     "@inth/sdk-core#build": {
       "dependsOn": ["^build"],
       "inputs": [
@@ -218,6 +231,21 @@
       ],
       "outputs": ["dist/**"]
     },
+    "@inth/nuxt#build": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".env*",
+        "!docs/**",
+        "!AGENTS.md",
+        "!SKILL.md",
+        "!README.md",
+        "!readme.json",
+        "$TURBO_ROOT$/packages/sdk/shared/**",
+        "$TURBO_ROOT$/scripts/normalize-dist-types.mjs"
+      ],
+      "outputs": ["dist/**"]
+    },
     "fmt": {
       "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/oxfmt.sdk.config.ts"],
       "outputs": []
@@ -240,6 +268,7 @@
       "interruptible": true,
       "dependsOn": ["^build"],
       "with": [
+        "@inth/sdk#dev",
         "@inth/sdk-core#dev",
         "@inth/sdk-iab#dev",
         "@inth/nextjs#dev",
@@ -256,6 +285,7 @@
       "interruptible": true,
       "dependsOn": ["^build"],
       "with": [
+        "@inth/sdk#dev",
         "@inth/sdk-core#dev",
         "@inth/sdk-schema#dev",
         "@inth/sdk-translations#dev",
@@ -268,6 +298,7 @@
       "interruptible": true,
       "dependsOn": ["^build"],
       "with": [
+        "@inth/sdk#dev",
         "@inth/sdk-core#dev",
         "@inth/react#dev",
         "@inth/sdk-schema#dev",
@@ -282,6 +313,7 @@
       "interruptible": true,
       "dependsOn": ["^build"],
       "with": [
+        "@inth/sdk#dev",
         "@inth/astro#dev",
         "@inth/sdk-core#dev",
         "@inth/sdk-iab#dev",
@@ -297,6 +329,7 @@
       "interruptible": true,
       "dependsOn": ["^build"],
       "with": [
+        "@inth/sdk#dev",
         "@inth/sdk-core#dev",
         "@inth/sdk-iab#dev",
         "@inth/sdk-schema#dev",
@@ -310,6 +343,7 @@
       "persistent": true,
       "interruptible": true,
       "with": [
+        "@inth/sdk#dev",
         "@inth/sdk-core#dev",
         "@inth/nextjs#dev",
         "@inth/react#dev",
@@ -323,6 +357,7 @@
       "persistent": true,
       "interruptible": true,
       "with": [
+        "@inth/sdk#dev",
         "@inth/sdk-core#dev",
         "@inth/react#dev",
         "@inth/sdk-schema#dev",
@@ -354,6 +389,7 @@
       "interruptible": true,
       "persistent": true,
       "with": [
+        "@inth/sdk#dev",
         "@inth/astro#dev",
         "@inth/sdk-core#dev",
         "@inth/sdk-schema#dev",
@@ -366,10 +402,11 @@
       "persistent": true,
       "interruptible": true,
       "with": [
+        "@inth/sdk#dev",
         "@inth/sdk-core#dev",
         "@inth/sdk-schema#dev",
         "@inth/sdk-translations#dev",
-        "@inth/vue#dev"
+        "@inth/nuxt#dev"
       ]
     },
     "@c15t/sveltekit-browser-bench#build": {
@@ -390,6 +427,7 @@
       "interruptible": true,
       "persistent": true,
       "with": [
+        "@inth/sdk#dev",
         "@inth/sdk-core#dev",
         "@inth/sdk-schema#dev",
         "@inth/svelte#dev",
@@ -401,6 +439,7 @@
       "persistent": true,
       "interruptible": true,
       "with": [
+        "@inth/sdk#dev",
         "@inth/sdk-core#dev",
         "@inth/nextjs#dev",
         "@inth/react#dev",
@@ -414,6 +453,7 @@
       "persistent": true,
       "interruptible": true,
       "with": [
+        "@inth/sdk#dev",
         "@inth/sdk-core#dev",
         "@inth/nextjs#dev",
         "@inth/react#dev",
@@ -427,6 +467,7 @@
       "persistent": true,
       "interruptible": true,
       "with": [
+        "@inth/sdk#dev",
         "@inth/sdk-core#dev",
         "@inth/nextjs#dev",
         "@inth/react#dev",
@@ -440,6 +481,7 @@
       "persistent": true,
       "interruptible": true,
       "with": [
+        "@inth/sdk#dev",
         "@inth/sdk-core#dev",
         "@inth/nextjs#dev",
         "@inth/react#dev",

@@ -5,6 +5,8 @@ import react from '@vitejs/plugin-react';
 import { playwright } from '@vitest/browser-playwright';
 import { defineConfig, mergeConfig } from 'vitest/config';
 
+import { privateSdkNames } from '../shared/private-sdk-names';
+
 /** `vitest run` is run mode; a bare `vitest` or `--watch` is watch mode. */
 const isVitestWatchMode = function isVitestWatchMode(): boolean {
 	const args = process.argv.slice(2);
@@ -32,7 +34,7 @@ export default mergeConfig(
 				'@rspack/resolver-binding-wasm32-wasi',
 			],
 		},
-		plugins: [react()],
+		plugins: [react(), privateSdkNames(import.meta.dirname)],
 		resolve: {
 			alias: Object.fromEntries([
 				['~', resolve(__dirname, './src')],

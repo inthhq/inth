@@ -53,7 +53,7 @@ const resolvePath = function resolvePath(specifier: string): string {
 
 // `import.meta.url` is not a file URL under the test runner, so anchor the
 // package root on a resolved dist asset instead.
-const PACKAGE_ROOT = dirname(dirname(resolvePath('@inth/sdk/ui/styles.css')));
+const PACKAGE_ROOT = dirname(dirname(resolvePath('@inth/sdk-ui/styles.css')));
 
 type ExportTarget = string | { [condition: string]: ExportTarget };
 
@@ -157,13 +157,13 @@ const NODE_CONDITIONS = ['node', 'import'] as const;
  * Every component style ships as a flat triple under dist/styles/components:
  * `<name>.js` (class map), `<name>.css` (plain CSS), `<name>.d.ts`.
  */
-describe('package exports: @inth/sdk/ui/styles/components/<name> triple', () => {
+describe('package exports: @inth/sdk-ui/styles/components/<name> triple', () => {
 	for (const name of COMPONENT_STYLE_MODULES) {
 		const filename = name
 			.replace('consent-banner', 'prompt')
 			.replace('consent-dialog', 'panel')
 			.replace('consent-manager', 'manager');
-		test(`@inth/sdk/ui/styles/components/${name} → dist JS class map`, () => {
+		test(`@inth/sdk-ui/styles/components/${name} → dist JS class map`, () => {
 			const resolvedPath = resolveExport(
 				`./styles/components/${name}`,
 				BUNDLER_CONDITIONS
@@ -175,9 +175,9 @@ describe('package exports: @inth/sdk/ui/styles/components/<name> triple', () => 
 			expect(existsSync(resolvedPath)).toBe(true);
 		});
 
-		test(`@inth/sdk/ui/styles/components/${name}.css → dist CSS asset`, () => {
+		test(`@inth/sdk-ui/styles/components/${name}.css → dist CSS asset`, () => {
 			const resolvedPath = resolvePath(
-				`@inth/sdk/ui/styles/components/${name}.css`
+				`@inth/sdk-ui/styles/components/${name}.css`
 			);
 
 			expect(resolvedPath).toContain('/dist/styles/components/');
@@ -185,7 +185,7 @@ describe('package exports: @inth/sdk/ui/styles/components/<name> triple', () => 
 			expect(readFileSync(resolvedPath, 'utf-8')).toContain('c15t-ui-');
 		});
 
-		test(`@inth/sdk/ui/styles/components/${name}.module.css → dist JS class map`, () => {
+		test(`@inth/sdk-ui/styles/components/${name}.module.css → dist JS class map`, () => {
 			const resolvedPath = resolveExport(
 				`./styles/components/${name}.module.css`,
 				BUNDLER_CONDITIONS
@@ -245,7 +245,7 @@ describe('package exports: node condition serves class maps without CSS imports'
 			.replace('consent-banner', 'prompt')
 			.replace('consent-dialog', 'panel')
 			.replace('consent-manager', 'manager');
-		test(`@inth/sdk/ui/styles/components/${name} → ${name}.node.js`, () => {
+		test(`@inth/sdk-ui/styles/components/${name} → ${name}.node.js`, () => {
 			for (const subpath of [
 				`./styles/components/${name}`,
 				`./styles/components/${name}.module.css`,
@@ -292,7 +292,7 @@ describe('package exports: node condition serves class maps without CSS imports'
 	test('plain Node imports the class map instead of failing on the CSS', async () => {
 		const nodeBinary = process.versions.bun ? 'node' : process.execPath;
 		const script = [
-			"import('@inth/sdk/ui/styles/components/button')",
+			"import('@inth/sdk-ui/styles/components/button')",
 			'.then((m) => console.log(JSON.stringify(m.default)))',
 		].join('');
 		const result = spawnSync(
@@ -313,7 +313,7 @@ describe('package exports: node condition serves class maps without CSS imports'
 });
 
 /**
- * `styles.css` holds the dialog's rules. `@inth/sdk/ui/styles/dialog` and
+ * `styles.css` holds the dialog's rules. `@inth/sdk-ui/styles/dialog` and
  * `styles/dialog.css` once loaded them separately and stay, empty, so
  * existing imports keep resolving.
  */
@@ -333,7 +333,7 @@ describe('package exports: deprecated dialog stylesheet entries', () => {
 			[
 				'--input-type=module',
 				'-e',
-				"import('@inth/sdk/ui/styles/dialog').then(() => console.log('ok'))",
+				"import('@inth/sdk-ui/styles/dialog').then(() => console.log('ok'))",
 			],
 			{ cwd: PACKAGE_ROOT, encoding: 'utf-8' }
 		);
@@ -346,9 +346,9 @@ describe('package exports: deprecated dialog stylesheet entries', () => {
 
 describe('package exports: .module.js resolves to JS class maps in dist/', () => {
 	for (const name of PRIMITIVE_CSS_MODULES) {
-		test(`@inth/sdk/ui/styles/primitives/${name}.module.js → dist JS class map`, () => {
+		test(`@inth/sdk-ui/styles/primitives/${name}.module.js → dist JS class map`, () => {
 			const resolvedPath = resolvePath(
-				`@inth/sdk/ui/styles/primitives/${name}.module.js`
+				`@inth/sdk-ui/styles/primitives/${name}.module.js`
 			);
 
 			expect(resolvedPath).toContain('/dist/');
@@ -359,7 +359,7 @@ describe('package exports: .module.js resolves to JS class maps in dist/', () =>
 
 		test(`primitives/${name}.module.js has no style-injection runtime`, () => {
 			const contents = readFileSync(
-				resolvePath(`@inth/sdk/ui/styles/primitives/${name}.module.js`),
+				resolvePath(`@inth/sdk-ui/styles/primitives/${name}.module.js`),
 				'utf-8'
 			);
 
@@ -377,8 +377,8 @@ describe('package exports: aggregated stylesheets', () => {
 		'iab/styles.css',
 		'iab/styles.tw3.css',
 	]) {
-		test(`@inth/sdk/ui/${entry} aggregates component rules`, () => {
-			const resolvedPath = resolvePath(`@inth/sdk/ui/${entry}`);
+		test(`@inth/sdk-ui/${entry} aggregates component rules`, () => {
+			const resolvedPath = resolvePath(`@inth/sdk-ui/${entry}`);
 			const contents = readFileSync(resolvedPath, 'utf-8');
 
 			expect(resolvedPath).toContain('/dist/');

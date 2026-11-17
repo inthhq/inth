@@ -8,6 +8,8 @@ import vue from '@vitejs/plugin-vue';
 import { getViteConfig } from 'astro/config';
 import { mergeConfig } from 'vitest/config';
 
+import { privateSdkNames } from '../shared/private-sdk-names';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -38,7 +40,11 @@ const virtualOptionsPlugin = {
 
 export default getViteConfig(
 	mergeConfig(baseConfig, {
-		plugins: [virtualOptionsPlugin, vue()],
+		plugins: [
+			virtualOptionsPlugin,
+			vue(),
+			privateSdkNames(import.meta.dirname),
+		],
 		resolve: {
 			alias: {
 				'@inth/astro/server': resolve(__dirname, './src/server.ts'),

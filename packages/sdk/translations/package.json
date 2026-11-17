@@ -1,6 +1,7 @@
 {
 	"name": "@inth/sdk-translations",
 	"version": "3.2.0-canary.0",
+	"private": true,
 	"description": "Translations for c15t in 53 languages. Typed i18n strings for c15t banners, dialogs and preference centers.",
 	"keywords": [
 		"c15t",
@@ -306,9 +307,6 @@
 			"import": "./dist/languages/zh.js",
 			"default": "./dist/languages/zh.js"
 		}
-	},
-	"publishConfig": {
-		"access": "public"
 	},
 	"scripts": {
 		"build": "rslib build && node ../../../scripts/normalize-dist-types.mjs",

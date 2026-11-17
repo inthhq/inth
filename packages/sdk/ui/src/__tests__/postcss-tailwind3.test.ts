@@ -60,6 +60,14 @@ describe('@inth/sdk/ui/postcss-tailwind3', () => {
 		expect(css).not.toMatch(/@layer\b/u);
 	});
 
+	test('unwraps @layer blocks for the UI stylesheets @inth/sdk assembles in the monorepo', async () => {
+		const css = await processCss(
+			join(PACKAGES_DIR, 'sdk', 'lib', 'ui', 'dist', 'styles.css')
+		);
+
+		expect(css).not.toMatch(/@layer\b/u);
+	});
+
 	test('leaves app stylesheets untouched', async () => {
 		const css = await processCss('/app/src/app/globals.css');
 
@@ -225,11 +233,11 @@ describe('@inth/sdk/ui/postcss-tailwind3', () => {
 	test('matches realistic package paths only', () => {
 		for (const path of [
 			'/app/node_modules/@inth/sdk/lib/ui/dist/styles.css',
-			'/app/node_modules/.pnpm/@c15t+ui@3.0.0/node_modules/@inth/sdk/lib/ui/dist/styles/dialog.css',
+			'/app/node_modules/.pnpm/@inth+sdk@3.0.0/node_modules/@inth/sdk/lib/ui/dist/styles/dialog.css',
 			'/app/node_modules/@inth/svelte/dist/styles.css',
 			'/app/node_modules/@inth/astro/dist/styles.css',
 			'/app/node_modules/@inth/sdk/lib/browser/dist/c15t.css',
-			'/app/node_modules/c15t/dist/react/styles.css',
+			'/app/node_modules/@inth/react/dist/styles.css',
 			join(PACKAGES_DIR, 'svelte', 'dist', 'styles.css'),
 			// Astro's Vite pipeline processes the dialog sheet with a query.
 			'/app/node_modules/@inth/sdk/lib/ui/dist/styles/dialog.css?transform-only',
@@ -239,6 +247,7 @@ describe('@inth/sdk/ui/postcss-tailwind3', () => {
 		for (const path of [
 			'/app/node_modules/@other/ui/dist/styles.css',
 			'/app/node_modules/c15t-theme/dist/styles.css',
+			'/app/node_modules/@inth/cli/dist/styles.css',
 			'/repo/packages/web/dist/styles.css',
 			// Another monorepo's workspace package with a c15t-like name.
 			'/home/dev/app/packages/sdk/react/dist/styles.css',

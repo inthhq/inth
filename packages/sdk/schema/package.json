@@ -1,6 +1,7 @@
 {
 	"name": "@inth/sdk-schema",
 	"version": "3.1.1-canary.0",
+	"private": true,
 	"description": "Valibot schemas and TypeScript types for the c15t consent API, shared by the backend, frontends and Node.js SDK.",
 	"keywords": [
 		"ccpa",
@@ -56,9 +57,6 @@
 			"import": "./dist/canonical-order.js",
 			"default": "./dist/canonical-order.js"
 		}
-	},
-	"publishConfig": {
-		"access": "public"
 	},
 	"scripts": {
 		"build": "rslib build && node ../../../scripts/normalize-dist-types.mjs",

@@ -1,30 +1,32 @@
 /**
- * A built stylesheet under `dist/` of `c15t` or an `@c15t/*` package in
- * `node_modules` (pnpm and Bun store paths included). Vite may append a
- * query such as `?transform-only` to the file name.
+ * A built stylesheet under `dist/` of an `@inth/*` SDK package in
+ * `node_modules` (pnpm and Bun store paths included), including the parts
+ * `@inth/sdk` ships under `lib/<part>/dist/`. Vite may append a query such as
+ * `?transform-only` to the file name.
  */
 const C15T_INSTALLED_STYLESHEET_PATH =
-	/(?:^|[\\/])node_modules[\\/](?:@c15t[\\/][^\\/]+|c15t)[\\/]dist[\\/](?:[^\\/]+[\\/])*[^\\/]+\.css(?:\?[^\\/]*)?$/u;
+	/(?:^|[\\/])node_modules[\\/]@inth[\\/](?!cli[\\/])[^\\/]+(?:[\\/]lib[\\/][^\\/]+)?[\\/]dist[\\/](?:[^\\/]+[\\/])*[^\\/]+\.css(?:\?[^\\/]*)?$/u;
 
 /**
  * A built stylesheet under `packages/<name>/dist/` or
- * `packages/<group>/<name>/dist/` of a workspace, with the package directory
- * captured. Any monorepo has these paths, so a match only counts once that
- * directory's `package.json` names a c15t package.
+ * `packages/<group>/<name>/dist/` of a workspace, or under `lib/<part>/dist/`
+ * of such a package, with the package directory captured. Any monorepo has
+ * these paths, so a match only counts once that directory's `package.json`
+ * names an SDK package.
  */
 const WORKSPACE_STYLESHEET_PATH =
-	/^(?<directory>.*[\\/]packages[\\/][^\\/]+(?:[\\/][^\\/]+)?)[\\/]dist[\\/](?:[^\\/]+[\\/])*[^\\/]+\.css(?:\?[^\\/]*)?$/u;
+	/^(?<directory>.*[\\/]packages[\\/][^\\/]+(?:[\\/][^\\/]+)?)(?:[\\/]lib[\\/][^\\/]+)?[\\/]dist[\\/](?:[^\\/]+[\\/])*[^\\/]+\.css(?:\?[^\\/]*)?$/u;
 
 interface FileSystem {
 	readFileSync: (path: string, encoding: 'utf8') => string;
 }
 
-/** Whether each workspace package directory holds a c15t package. */
+/** Whether each workspace package directory holds an SDK package. */
 const workspacePackageCache = new Map<string, boolean>();
 
 /**
- * Whether a workspace package directory holds `c15t` or an `@c15t/*`
- * package, by the `name` in its `package.json`.
+ * Whether a workspace package directory holds an `@inth/*` SDK package, by
+ * the `name` in its `package.json`.
  *
  * `node:fs` comes from `process.getBuiltinModule` rather than an import, so
  * the module stays importable by bundlers that target the browser. Where
@@ -55,9 +57,10 @@ const isC15tWorkspacePackage = function isC15tWorkspacePackage(
 					: undefined;
 			matches =
 				typeof name === 'string' &&
-				(name === 'c15t' || name.startsWith('@c15t/'));
+				name.startsWith('@inth/') &&
+				name !== '@inth/cli';
 		} catch {
-			// No readable `package.json`: not a c15t package.
+			// No readable `package.json`: not an SDK package.
 		}
 	}
 	workspacePackageCache.set(directory, matches);
@@ -98,11 +101,11 @@ export interface PostcssTailwind3PluginCreator {
  *
  * Installed packages match by path. A workspace path such as
  * `packages/sdk/react/dist/styles.css` matches only when the package's own
- * `package.json` is named `c15t` or `@c15t/*`, so another monorepo's
+ * `package.json` is named `@inth/*`, so another monorepo's
  * `packages/sdk/react` keeps its layers.
  *
  * @param filePath - Absolute path of a CSS file.
- * @returns `true` for `dist/` stylesheets of `c15t` and `@c15t/*` packages.
+ * @returns `true` for `dist/` stylesheets of the `@inth/*` SDK packages.
  */
 export const isC15tUiStylesheetPath = function isC15tUiStylesheetPath(
 	filePath: string

@@ -76,15 +76,18 @@ const createApp = async (): Promise<string> => {
 			'',
 		].join('\n')
 	);
-	const ui = join(react, 'node_modules/@inth/sdk/ui');
+	const sdk = join(react, 'node_modules/@inth/sdk');
 	await write(
-		join(ui, 'package.json'),
+		join(sdk, 'package.json'),
 		JSON.stringify({
-			exports: { './styles/sheets/*': './dist/styles/sheets/*.js' },
-			name: '@inth/sdk/ui',
+			exports: {
+				'./ui/styles/sheets/*': './lib/ui/dist/styles/sheets/*.js',
+			},
+			name: '@inth/sdk',
 			type: 'module',
 		})
 	);
+	const ui = join(sdk, 'lib/ui');
 	await write(
 		join(ui, 'dist/styles/sheets/banner.js'),
 		`export const id = 'c15t-banner';\nexport const css = ${JSON.stringify(EAGER_CSS)};\n`

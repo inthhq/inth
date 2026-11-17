@@ -309,7 +309,7 @@ describe('@inth/sdk/generated in Vite', () => {
 		const { optimizeDeps, ssr } = consentManifest().config();
 		expect(optimizeDeps.exclude).toEqual([...GENERATED_MODULE_IDS]);
 		expect(ssr.noExternal).toEqual(
-			expect.arrayContaining(['c15t', '@inth/sdk/engine', '@inth/react'])
+			expect.arrayContaining(['@inth/sdk', '@inth/react'])
 		);
 	});
 
@@ -327,7 +327,7 @@ describe('@inth/sdk/generated in Vite', () => {
 		).toBe(true);
 		expect(
 			group?.test.test(
-				'/app/node_modules/.pnpm/c15t@3/node_modules/c15t/shims/react.js'
+				'/app/node_modules/.pnpm/@inth+sdk@3/node_modules/@inth/sdk/lib/core/dist/runtime.js'
 			)
 		).toBe(true);
 		expect(group?.test.test('/app/node_modules/react/index.js')).toBe(false);
@@ -903,13 +903,10 @@ describe('@inth/sdk/generated typings', () => {
 		);
 	});
 
-	test('@inth/sdk/generated re-exports them', () => {
-		const umbrella = resolve(packageRoot, '../c15t');
-		const { exports } = readJSON(join(umbrella, 'package.json'));
-		const types = exports['./generated']?.types;
-		expect(types).toBeDefined();
-		expect(readFileSync(join(umbrella, types as string), 'utf8')).toContain(
-			"export * from '@inth/sdk/generated';"
+	test('@inth/sdk/generated points at them', () => {
+		const { exports } = readJSON(resolve(packageRoot, '../sdk/package.json'));
+		expect(exports['./generated']?.types).toBe(
+			'./lib/core/dist-types/generated.d.ts'
 		);
 	});
 

@@ -5,7 +5,9 @@ import {
 	createDialogChunkPlugin,
 } from '../build-dialog-chunk';
 
-const C15T = '/app/node_modules/@c15t/';
+const C15T = '/app/node_modules/@inth/';
+/** Where `@inth/sdk` installs its parts. */
+const SDK = `${C15T}sdk/lib/`;
 const ENTRY = '/app/src/entry.js';
 const ROUTE = '/app/src/routes/gate.js';
 
@@ -24,14 +26,14 @@ const graph: Record<
 		dynamic: [ROUTE],
 		imports: [
 			`${C15T}react/dist/index.js`,
-			`${C15T}core/dist/index.js`,
+			`${SDK}core/dist/index.js`,
 			`${C15T}react/dist/components/prompt.js`,
 		],
 	},
 	// An app route: loads with the page it renders.
 	[ROUTE]: {
 		code: `import { storageKeys } from '@inth/sdk/engine';`,
-		imports: [`${C15T}core/dist/index.js`],
+		imports: [`${SDK}core/dist/index.js`],
 	},
 	[`${C15T}react/dist/index.js`]: {
 		code: `export { useConsent } from './hooks.js'; export { importDialog, importEngine, importLoader } from './shell.js';`,
@@ -45,35 +47,35 @@ const graph: Record<
 		dynamic: [
 			`${C15T}react/dist/deferred/dialog.js`,
 			`${C15T}react/dist/deferred/client-engine.js`,
-			`${C15T}core/dist/modules/script-loader/index.js`,
+			`${SDK}core/dist/modules/script-loader/index.js`,
 		],
 	},
 	[`${C15T}react/dist/components/prompt.js`]: {
 		code: `import '@inth/sdk/ui/styles/components/button.module.css';`,
-		imports: [`${C15T}ui/dist/styles/components/button.module.css`],
+		imports: [`${SDK}ui/dist/styles/components/button.module.css`],
 	},
 	// Re-exports only: a module counts when something asks for its names.
-	[`${C15T}core/dist/index.js`]: {
+	[`${SDK}core/dist/index.js`]: {
 		code: `export{has}from"./libs/has.js";export{evaluate}from"./libs/evaluate.js";export{policyActions}from"./libs/policy-actions.js";export{vendors}from"./libs/vendors.js";export{consentTypes}from"./libs/consent-types.js";export{storageKeys}from"./libs/storage-keys.js";`,
 		imports: [
-			`${C15T}core/dist/libs/has.js`,
-			`${C15T}core/dist/libs/evaluate.js`,
-			`${C15T}core/dist/libs/policy-actions.js`,
-			`${C15T}core/dist/libs/vendors.js`,
-			`${C15T}core/dist/libs/consent-types.js`,
-			`${C15T}core/dist/libs/storage-keys.js`,
+			`${SDK}core/dist/libs/has.js`,
+			`${SDK}core/dist/libs/evaluate.js`,
+			`${SDK}core/dist/libs/policy-actions.js`,
+			`${SDK}core/dist/libs/vendors.js`,
+			`${SDK}core/dist/libs/consent-types.js`,
+			`${SDK}core/dist/libs/storage-keys.js`,
 		],
 	},
-	[`${C15T}core/dist/libs/has.js`]: { code: 'export const has = 1;' },
-	[`${C15T}core/dist/libs/evaluate.js`]: { code: 'export const evaluate = 1;' },
-	[`${C15T}core/dist/libs/policy-actions.js`]: {
+	[`${SDK}core/dist/libs/has.js`]: { code: 'export const has = 1;' },
+	[`${SDK}core/dist/libs/evaluate.js`]: { code: 'export const evaluate = 1;' },
+	[`${SDK}core/dist/libs/policy-actions.js`]: {
 		code: 'export const policyActions = 1;',
 	},
-	[`${C15T}core/dist/libs/vendors.js`]: { code: 'export const vendors = 1;' },
-	[`${C15T}core/dist/libs/consent-types.js`]: {
+	[`${SDK}core/dist/libs/vendors.js`]: { code: 'export const vendors = 1;' },
+	[`${SDK}core/dist/libs/consent-types.js`]: {
 		code: 'export const consentTypes = 1;',
 	},
-	[`${C15T}core/dist/libs/storage-keys.js`]: {
+	[`${SDK}core/dist/libs/storage-keys.js`]: {
 		code: 'export const storageKeys = 1;',
 	},
 	[`${C15T}react/dist/deferred/dialog.js`]: {
@@ -84,33 +86,33 @@ const graph: Record<
 		code: `import { has, policyActions, vendors, evaluate, consentTypes, storageKeys } from '@inth/sdk/engine'; import { dom } from '@inth/sdk/ui/utils/dom'; import '@inth/sdk/ui/styles/components/panel.module.css'; import '@inth/sdk/ui/styles/components/button.module.css'; export const Panel = () => import('../panel-trigger/index.js');`,
 		dynamic: [`${C15T}react/dist/components/panel-trigger/index.js`],
 		imports: [
-			`${C15T}core/dist/index.js`,
-			`${C15T}ui/dist/utils/dom.js`,
-			`${C15T}ui/dist/styles/components/panel.module.css`,
-			`${C15T}ui/dist/styles/components/button.module.css`,
+			`${SDK}core/dist/index.js`,
+			`${SDK}ui/dist/utils/dom.js`,
+			`${SDK}ui/dist/styles/components/panel.module.css`,
+			`${SDK}ui/dist/styles/components/button.module.css`,
 		],
 	},
 	// A lazy part of the dialog: loads after it.
 	[`${C15T}react/dist/components/panel-trigger/index.js`]: {
 		code: `import { dom } from '@inth/sdk/ui/utils/dom'; import { drag } from './drag.js';`,
 		imports: [
-			`${C15T}ui/dist/utils/dom.js`,
+			`${SDK}ui/dist/utils/dom.js`,
 			`${C15T}react/dist/components/panel-trigger/drag.js`,
 		],
 	},
 	[`${C15T}react/dist/components/panel-trigger/drag.js`]: {
 		code: 'export const drag = 1;',
 	},
-	[`${C15T}ui/dist/utils/dom.js`]: { code: 'export const dom = 1;' },
-	[`${C15T}ui/dist/styles/components/panel.module.css`]: { code: '' },
-	[`${C15T}ui/dist/styles/components/button.module.css`]: { code: '' },
+	[`${SDK}ui/dist/utils/dom.js`]: { code: 'export const dom = 1;' },
+	[`${SDK}ui/dist/styles/components/panel.module.css`]: { code: '' },
+	[`${SDK}ui/dist/styles/components/button.module.css`]: { code: '' },
 	[`${C15T}react/dist/deferred/client-engine.js`]: {
 		code: `import { evaluate, vendors } from '@inth/sdk/engine';`,
-		imports: [`${C15T}core/dist/index.js`],
+		imports: [`${SDK}core/dist/index.js`],
 	},
-	[`${C15T}core/dist/modules/script-loader/index.js`]: {
+	[`${SDK}core/dist/modules/script-loader/index.js`]: {
 		code: `import { vendors, consentTypes } from '../../index.js';`,
-		imports: [`${C15T}core/dist/index.js`],
+		imports: [`${SDK}core/dist/index.js`],
 	},
 };
 
@@ -143,7 +145,13 @@ describe('createDialogChunkGroup', () => {
 	const group = createDialogChunkGroup();
 	const named = Object.fromEntries(
 		Object.keys(graph)
-			.map((id) => [id.replace(C15T, ''), group.name(id, context)] as const)
+			.map(
+				(id) =>
+					[
+						id.replace(SDK, '').replace(C15T, ''),
+						group.name(id, context),
+					] as const
+			)
 			.filter(([, name]) => name !== null)
 	);
 

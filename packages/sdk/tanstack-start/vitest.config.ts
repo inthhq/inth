@@ -5,6 +5,8 @@ import react from '@vitejs/plugin-react';
 import { playwright } from '@vitest/browser-playwright';
 import { defineConfig, mergeConfig } from 'vitest/config';
 
+import { privateSdkNames } from '../shared/private-sdk-names';
+
 // oxlint-disable-next-line sort-keys -- Vite resolves aliases in declaration order, so subpaths must precede package roots.
 const alias = {
 	'~': resolve(__dirname, './src'),
@@ -138,6 +140,7 @@ const alias = {
 	),
 	'@inth/react/server': resolve(__dirname, '../react/dist/server/index.js'),
 	'@inth/react/headless': resolve(__dirname, '../react/dist/headless.js'),
+	'@inth/react/devtools': resolve(__dirname, '../react/dist/devtools.js'),
 	'@inth/react/components/consent-dialog-link': resolve(
 		__dirname,
 		'../react/dist/components/panel-link/index.js'
@@ -202,7 +205,7 @@ export default mergeConfig(
 				'@tanstack/start-server-core',
 			],
 		},
-		plugins: [react()],
+		plugins: [react(), privateSdkNames(import.meta.dirname)],
 		resolve: { alias },
 		server: {
 			// Sibling packages regenerate `src/version.ts` in their own prebuild

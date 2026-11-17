@@ -18,6 +18,8 @@ import angular from '@analogjs/vite-plugin-angular';
 import { baseConfig } from '@c15t/vitest-config/base';
 import { defineConfig, mergeConfig } from 'vitest/config';
 
+import { privateSdkNames } from '../shared/private-sdk-names';
+
 // Vite resolves a `@inth/sdk/ui` style subpath through its `style` condition to
 // the CSS file, which tests load as an empty string, so every stock class
 // would read `undefined`. Each subpath's `import` build holds the class
@@ -264,7 +266,10 @@ const workspaceAliases = [
 export default mergeConfig(
 	baseConfig,
 	defineConfig({
-		plugins: [angular({ tsconfig: resolve(__dirname, 'tsconfig.spec.json') })],
+		plugins: [
+			angular({ tsconfig: resolve(__dirname, 'tsconfig.spec.json') }),
+			privateSdkNames(import.meta.dirname),
+		],
 		resolve: {
 			alias: workspaceAliases,
 			conditions: ['browser'],

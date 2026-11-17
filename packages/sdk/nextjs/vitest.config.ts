@@ -6,6 +6,8 @@ import react from '@vitejs/plugin-react';
 import { playwright } from '@vitest/browser-playwright';
 import { defineConfig, mergeConfig } from 'vitest/config';
 
+import { privateSdkNames } from '../shared/private-sdk-names';
+
 /**
  * `@inth/sdk/translations/<lang>` for every language module, ahead of the
  * package-root alias, which would otherwise swallow them.
@@ -32,7 +34,7 @@ export default mergeConfig(
 				'vitest-browser-react',
 			],
 		},
-		plugins: [react()],
+		plugins: [react(), privateSdkNames(import.meta.dirname)],
 		resolve: {
 			// oxlint-disable-next-line sort-keys -- Vite resolves aliases in declaration order, so subpaths must precede package roots.
 			alias: {

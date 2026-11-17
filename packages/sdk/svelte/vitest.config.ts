@@ -19,6 +19,8 @@ import { playwright } from '@vitest/browser-playwright';
 import { transformWithEsbuild } from 'vite';
 import { defineConfig, mergeConfig } from 'vitest/config';
 
+import { privateSdkNames } from '../shared/private-sdk-names';
+
 const tracingRecipePath = resolve(
 	__dirname,
 	'../../../internals/doc-snippets/sveltekit/src/lib/server/trace-consent.ts'
@@ -235,6 +237,7 @@ export default mergeConfig(
 					oxc: { exclude: [tracingRecipePath] },
 					plugins: [
 						svelte(),
+						privateSdkNames(import.meta.dirname),
 						{
 							enforce: 'pre',
 							name: 'tracing-recipe-without-sveltekit-sync',
@@ -274,7 +277,7 @@ export default mergeConfig(
 					},
 				},
 				{
-					plugins: [svelte()],
+					plugins: [svelte(), privateSdkNames(import.meta.dirname)],
 					resolve: {
 						alias: [
 							{
@@ -302,7 +305,7 @@ export default mergeConfig(
 						// two Svelte runtimes; a cold CI cache hits this every run.
 						include: ['base-x', 'esm-env', 'valibot'],
 					},
-					plugins: [svelte()],
+					plugins: [svelte(), privateSdkNames(import.meta.dirname)],
 					resolve: {
 						alias: [
 							{

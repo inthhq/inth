@@ -56,7 +56,7 @@ const DEFERRED_SHEETS = new Set([
 const SHEETS_PREFIX = '@inth/sdk/ui/styles/sheets/';
 
 /** A module of the installed `@inth/react`, whatever the package manager. */
-const REACT_PACKAGE = /[\\/]node_modules[\\/]@c15t[\\/]react[\\/]/u;
+const REACT_PACKAGE = /[\\/]node_modules[\\/]@inth[\\/]react[\\/]/u;
 
 /**
  * The stock banner's root component in `@inth/react`'s build, or the
@@ -64,7 +64,7 @@ const REACT_PACKAGE = /[\\/]node_modules[\\/]@c15t[\\/]react[\\/]/u;
  * which loads that component in a chunk of its own.
  */
 const BANNER_MODULE =
-	/[\\/]@c15t[\\/]react[\\/]dist[\\/](?:components[\\/]prompt[\\/]atoms[\\/]root|deferred[\\/]client-banner)\.js$/u;
+	/[\\/]@inth[\\/]react[\\/]dist[\\/](?:components[\\/]prompt[\\/]atoms[\\/]root|deferred[\\/]client-banner)\.js$/u;
 
 /**
  * The `-deferred` twin of a sheet `@inth/react` imports, or `undefined` for

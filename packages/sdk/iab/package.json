@@ -1,6 +1,7 @@
 {
 	"name": "@inth/sdk-iab",
 	"version": "3.2.0-canary.0",
+	"private": true,
 	"description": "IAB TCF CMP addon for c15t (TCF 2.4). Generates TC Strings and GPP strings, loads the Global Vendor List (GVL) and collects consent for programmatic advertising.",
 	"keywords": [
 		"cmp",
@@ -53,9 +54,6 @@
 			"import": "./dist/gpp.js",
 			"default": "./dist/gpp.js"
 		}
-	},
-	"publishConfig": {
-		"access": "public"
 	},
 	"scripts": {
 		"build": "pnpm run prebuild && rslib build && node ../../../scripts/normalize-dist-types.mjs",

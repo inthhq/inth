@@ -47,6 +47,7 @@ export const mountDevTools = function mountDevTools(
 	return createBrowserDevTools(client, options, publishDevToolsLauncher);
 };
 
+export { createDevTools } from '@inth/sdk-dev-tools';
 export type {
 	DevToolsActions,
 	DevToolsInstance,
