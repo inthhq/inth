@@ -36,7 +36,7 @@ The six CLI jobs are required checks on `main` under their exact names. They alw
 
 ## Runners
 
-The CLI jobs keep the Blacksmith runners they used before. The SDK and mobile jobs use GitHub-hosted runners: `ubuntu-24.04`, and `macos-26` for Swift. The Android emulator suites in `.depot/workflows` need KVM, which GitHub-hosted runners do not offer, so they run on Depot CI once the repository is connected to it. Until then GitHub ignores that directory.
+The CLI jobs keep the Blacksmith runners they used before. The SDK and mobile jobs use GitHub-hosted runners: `ubuntu-24.04`, and `macos-26` for Swift. The Android emulator suites in `.depot/workflows` need KVM. c15t ran them on Depot CI sandboxes, and they run there once this repository is connected to Depot CI. Until then GitHub ignores that directory.
 
 ## Releases
 
