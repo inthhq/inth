@@ -1,7 +1,7 @@
-import { testing } from '@c15t/angular/testing';
 import type { Meta, StoryObj } from '@analogjs/storybook-angular';
 import { ConsentBanner } from '@c15t/angular';
 import { ConsentDialog } from '@c15t/angular/consent-dialog';
+import { testing } from '@c15t/angular/testing';
 import {
 	bannerAcceptViaKeyboard,
 	bannerContract,

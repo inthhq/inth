@@ -1,6 +1,6 @@
+import { init } from '@c15t/browser';
 // #region docs:translations title="src/main.ts"
 import { testing } from '@c15t/browser/testing';
-import { init } from '@c15t/browser';
 import { policyRulePresets } from 'c15t';
 
 import { scripts } from './scripts';

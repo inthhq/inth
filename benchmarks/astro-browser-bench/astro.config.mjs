@@ -104,7 +104,8 @@ if (benchMode === 'manifest' || benchMode === 'scripts') {
 		c15t({
 			consentCategories,
 			middleware: { skip: ['/api/bench-consent'] },
-			backendURL, mode: hosted(),
+			backendURL,
+			mode: hosted(),
 		})
 	);
 }

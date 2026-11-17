@@ -1,6 +1,5 @@
 'use client';
 
-import { testing } from 'c15t/react/testing';
 import type {
 	PolicyOptionalCategory,
 	PolicyPrompt,
@@ -16,7 +15,13 @@ import type {
 } from 'c15t';
 import { readStoredRecords } from 'c15t/modules/persistence';
 import type { StoredRecords } from 'c15t/modules/persistence';
-import { ConsentBanner, ConsentDialog, ConsentDialogTriggerToolbar, ConsentProvider, useSnapshot } from 'c15t/react';
+import {
+	ConsentBanner,
+	ConsentDialog,
+	ConsentDialogTriggerToolbar,
+	ConsentProvider,
+	useSnapshot,
+} from 'c15t/react';
 import { KernelContext, ProviderServicesContext } from 'c15t/react/context';
 import { useHeadlessConsentUI } from 'c15t/react/headless';
 import {
@@ -24,6 +29,7 @@ import {
 	IABConsentDialog,
 	IABProvider,
 } from 'c15t/react/iab';
+import { testing } from 'c15t/react/testing';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import * as React from 'react';

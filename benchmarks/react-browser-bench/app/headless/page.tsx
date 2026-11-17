@@ -102,7 +102,8 @@ const HeadlessPage = () => (
 				},
 			},
 			consentCategories,
-			backendURL: '/api/bench-consent', mode: hosted(),
+			backendURL: '/api/bench-consent',
+			mode: hosted(),
 		}}
 	>
 		<HeadlessBenchmarkUI />

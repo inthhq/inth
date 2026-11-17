@@ -1,6 +1,13 @@
 <script lang="ts">
+	import {
+		ConsentBanner,
+		ConsentDialog,
+		ConsentDialogTrigger,
+		ConsentProvider,
+		IABConsentBanner,
+		IABConsentDialog,
+	} from '@c15t/svelte';
 	import { testing } from '@c15t/svelte/testing';
-import { ConsentBanner, ConsentDialog, ConsentDialogTrigger, ConsentProvider, IABConsentBanner, IABConsentDialog } from '@c15t/svelte';
 	import { baseTranslations } from '@c15t/translations/all';
 	import { policyRulePresets, resolvePolicyRules } from 'c15t';
 

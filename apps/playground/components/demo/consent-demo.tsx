@@ -1,7 +1,12 @@
 'use client';
 
-import { testing } from 'c15t/react/testing';
-import { ConsentBanner, ConsentDialog, ConsentDialogTriggerToolbar, ConsentProvider, hosted } from 'c15t/react';
+import {
+	ConsentBanner,
+	ConsentDialog,
+	ConsentDialogTriggerToolbar,
+	ConsentProvider,
+	hosted,
+} from 'c15t/react';
 import { ConsentDevTools } from 'c15t/react/devtools';
 import {
 	IABConsentBanner,
@@ -9,6 +14,7 @@ import {
 	IABProvider,
 } from 'c15t/react/iab';
 import type { IABProviderProps } from 'c15t/react/iab';
+import { testing } from 'c15t/react/testing';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useMemo } from 'react';
 
@@ -324,7 +330,8 @@ export const ConsentDemo = () => {
 		params.mode === 'hosted'
 			? {
 					...sharedOptions,
-					backendURL: HOSTED_DEMO_BACKEND_URL, mode: hosted(),
+					backendURL: HOSTED_DEMO_BACKEND_URL,
+					mode: hosted(),
 				}
 			: {
 					mode: testing({

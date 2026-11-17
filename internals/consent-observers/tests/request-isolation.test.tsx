@@ -8,7 +8,6 @@
 import { createConsentManifestPolicyPack } from '@c15t/schema/types';
 import type { ConsentManifest } from '@c15t/schema/types';
 import type { ConsentSnapshot } from 'c15t';
-import { createOfflineTransport } from 'c15t/transports';
 import { ConsentRoot as NextConsentRoot } from 'c15t/next';
 import type { ConsentState as NextConsentState } from 'c15t/next';
 import { resolveConsent as resolveNextConsent } from 'c15t/next/server';
@@ -17,6 +16,7 @@ import { clearManifestCache } from 'c15t/server';
 import { ConsentRoot as TanStackConsentRoot } from 'c15t/tanstack-start';
 import { resolveConsent as resolveTanStackConsent } from 'c15t/tanstack-start/server';
 import type { ConsentState as TanStackConsentState } from 'c15t/tanstack-start/server';
+import { createOfflineTransport } from 'c15t/transports';
 import { act } from 'react';
 import type { ReactNode } from 'react';
 import { renderToString } from 'react-dom/server';

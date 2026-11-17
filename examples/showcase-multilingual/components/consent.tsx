@@ -1,6 +1,11 @@
 'use client';
 
-import { ConsentBanner, ConsentDialog, ConsentRoot, useSetLanguage } from 'c15t/next';
+import {
+	ConsentBanner,
+	ConsentDialog,
+	ConsentRoot,
+	useSetLanguage,
+} from 'c15t/next';
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
 
@@ -10,6 +15,10 @@ import type { Locale } from '@/lib/locales';
 
 // The backend is your Inth project: set NEXT_PUBLIC_C15T_BACKEND_URL in
 // .env.local. The policy comes from its consent manifest.
+const config = {
+	backendURL:
+		process.env.NEXT_PUBLIC_C15T_BACKEND_URL ?? 'https://your-project.inth.app',
+};
 
 /**
  * Keeps c15t's language on the route's locale. `ConsentRoot` reads `i18n`
@@ -32,6 +41,7 @@ export const Consent = ({
 	locale: Locale;
 }) => (
 	<ConsentRoot
+		config={config}
 		state={{}}
 		options={{
 			consentCategories: ['necessary', 'measurement', 'marketing'],

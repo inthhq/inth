@@ -16,7 +16,13 @@
  */
 import { benchPolicy } from '@c15t/benchmarking/bench-policy';
 import type { Script } from '@c15t/core/modules/script-loader';
-import { ConsentBanner, ConsentDialog, ConsentDraftProvider, ConsentProvider, ConsentWidget } from '@c15t/react';
+import {
+	ConsentBanner,
+	ConsentDialog,
+	ConsentDraftProvider,
+	ConsentProvider,
+	ConsentWidget,
+} from '@c15t/react';
 import { lazy, Suspense } from 'react';
 
 const Diagnostics = lazy(() => import('./diagnostics'));

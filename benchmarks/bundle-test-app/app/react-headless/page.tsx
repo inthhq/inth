@@ -1,6 +1,5 @@
 'use client';
 
-
 import { benchPolicy } from '@c15t/benchmarking/bench-policy';
 import {
 	useConsent,

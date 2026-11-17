@@ -130,13 +130,25 @@ const renderVariants = async function renderVariants(
 			server: { hmr: false, middlewareMode: true },
 		});
 
-		const [serverModule, integration, mode, storybook] = await Promise.all([
-			server.ssrLoadModule(path.join(astroSrc, 'server.ts')),
-			server.ssrLoadModule(path.join(astroSrc, 'integration.ts')),
-			server.ssrLoadModule(path.join(astroSrc, 'mode.ts')),
-			server.ssrLoadModule(
-				path.resolve(astroSrc, '../../../../apps/storybook-consent-policy.ts')
-			),
+		const [serverModule, integration, mode, storybook, schema] =
+			await Promise.all([
+				server.ssrLoadModule(path.join(astroSrc, 'server.ts')),
+				server.ssrLoadModule(path.join(astroSrc, 'integration.ts')),
+				server.ssrLoadModule(path.join(astroSrc, 'mode.ts')),
+				server.ssrLoadModule(
+					path.resolve(astroSrc, '../../../../apps/storybook-consent-policy.ts')
+				),
+				server.ssrLoadModule(
+					path.resolve(astroSrc, '../../schema/src/types.ts')
+				),
+			]);
+		// The stories' policy as a manifest the server resolves: a static
+		// build renders the banner with no backend and no testing mode.
+		const snapshotOf = (policyRules: unknown[]) =>
+			schema.buildConsentManifestFromConfig({ branding: 'c15t', policyRules });
+		const [storySnapshot, storyIABSnapshot] = await Promise.all([
+			snapshotOf([storybook.storybookPolicy]),
+			snapshotOf([storybook.storybookIABPolicy]),
 		]);
 		const container = await experimental_AstroContainer.create();
 
@@ -151,10 +163,9 @@ const renderVariants = async function renderVariants(
 			const astroOptions: Record<string, unknown> = {
 				colorScheme: variant.options?.colorScheme ?? 'light',
 				consentCategories: variant.options?.consentCategories,
-				mode: mode.offline({
-					acknowledgeNoRecords: true,
-					policyRules: [storybook.storybookPolicy],
-				}),
+				backendURL: 'https://consent.example',
+				mode: mode.manifest({ snapshot: storySnapshot }),
+				routePrefix: false,
 				presentation: {
 					...storybook.storybookPresentation,
 					prompt: {
@@ -170,10 +181,7 @@ const renderVariants = async function renderVariants(
 				// the policy pack is what makes the runtime's model `iab`.
 				astroOptions.iab = { cmpId: 160, gvl: mockGVL };
 				astroOptions.consentCategories = ['necessary', 'marketing'];
-				astroOptions.mode = mode.offline({
-					acknowledgeNoRecords: true,
-					policyRules: [storybook.storybookIABPolicy],
-				});
+				astroOptions.mode = mode.manifest({ snapshot: storyIABSnapshot });
 			}
 			const resolved = integration.resolveOptions(astroOptions);
 			// oxlint-disable-next-line no-await-in-loop -- See above.

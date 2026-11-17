@@ -4,7 +4,8 @@ import { scripts } from './scripts';
 
 // #region docs:theme title="src/main.ts"
 const consent = init({
-	backendURL: 'https://your-project.inth.app', mode: hosted(),
+	backendURL: 'https://your-project.inth.app',
+	mode: hosted(),
 	scripts,
 	ui: {
 		theme: {

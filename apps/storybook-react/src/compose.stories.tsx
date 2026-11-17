@@ -1,4 +1,3 @@
-import { testing } from 'c15t/react/testing';
 import {
 	recipeAccepts,
 	recipeRejects,
@@ -8,6 +7,7 @@ import { ConsentDialog } from 'c15t/react';
 import type { ConsentProviderOptions } from 'c15t/react';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 
+import { testing } from '../../../packages/sdk/react/src/testing';
 import { storybookPolicy } from '../../storybook-consent-policy';
 import { RecipePage } from './docs-recipe-page';
 import { CookieBanner } from './docs-recipes/compose-banner';

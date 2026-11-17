@@ -8,7 +8,6 @@ import {
 } from '@c15t/nextjs';
 // The provider takes a transport; `offline` from `@c15t/nextjs` is data.
 
-
 const BasicState = () => {
 	const consents = useEffectivePermissions();
 	return <pre>{JSON.stringify(consents, null, 2)}</pre>;

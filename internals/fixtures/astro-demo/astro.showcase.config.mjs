@@ -46,8 +46,13 @@ const experiment = process.env.C15T_EXPERIMENT === '1';
 const iab = process.env.C15T_IAB === '1';
 
 // The acceptance suite's mock backend, when it sets one. Without it the
-// showcase runs offline.
-const { url: backendURL } = testBackend('url');
+// showcase resolves its rules with `testing()` in `astro dev`. `testing()`
+// refuses a production build, so `astro build` without a backend asks a
+// placeholder backend instead and renders no server-side banner.
+const testBackendURL = testBackend('url').url;
+const production = process.env.NODE_ENV === 'production';
+const backendURL =
+	testBackendURL ?? (production ? 'https://your-project.inth.app' : undefined);
 
 // Built up rather than spread conditionally: the IAB options and the mode
 // travel together — a TCF policy pack with no vendor list resolves a
@@ -119,7 +124,9 @@ export default defineConfig({
 			// vendor list the server needs to render the IAB banner at all;
 			// hosted and manifest mode get theirs from `/init`.
 			...iabOptions,
-			...(backendURL && !iab ? { backendURL, mode: hosted() } : {}),
+			...(backendURL && (!iab || production)
+				? { backendURL, mode: hosted() }
+				: {}),
 			scripts: [
 				{
 					category: 'measurement',

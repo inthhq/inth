@@ -1,4 +1,3 @@
-import { testing } from '../../../packages/sdk/react/src/index/testing';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 
@@ -6,6 +5,7 @@ import { mockGVL } from '../../../packages/sdk/react/src/components/iab/__tests_
 import { IABProvider } from '../../../packages/sdk/react/src/iab';
 import { ConsentProvider } from '../../../packages/sdk/react/src/index';
 import type { ConsentProviderOptions } from '../../../packages/sdk/react/src/index';
+import { testing } from '../../../packages/sdk/react/src/testing';
 import {
 	storybookPolicy,
 	storybookPolicyResolution,

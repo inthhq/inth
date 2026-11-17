@@ -55,7 +55,8 @@ const createOptions = function createOptions(
 			},
 		},
 		consentCategories,
-		backendURL: BENCH_BACKEND_URL, mode: hosted(),
+		backendURL: BENCH_BACKEND_URL,
+		mode: hosted(),
 		theme: {
 			motion: {
 				duration: {

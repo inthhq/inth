@@ -4,7 +4,8 @@ import { getEventDispatcher, hosted, init } from '@c15t/browser';
 import { scripts } from './scripts';
 
 const consent = init({
-	backendURL: 'https://your-project.inth.app', mode: hosted(),
+	backendURL: 'https://your-project.inth.app',
+	mode: hosted(),
 	scripts,
 });
 

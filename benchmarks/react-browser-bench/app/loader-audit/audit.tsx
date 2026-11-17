@@ -8,7 +8,15 @@ import type {
 	WithBackendURL,
 } from '@c15t/core/runtime';
 import { createIAB } from '@c15t/iab';
-import { ConsentProvider, ConsentBanner, ConsentDialog, ConsentWidget, hosted, useActiveUI, useSetActiveUI } from '@c15t/react';
+import {
+	ConsentProvider,
+	ConsentBanner,
+	ConsentDialog,
+	ConsentWidget,
+	hosted,
+	useActiveUI,
+	useSetActiveUI,
+} from '@c15t/react';
 import { useEffect, useRef, useState } from 'react';
 
 // Exercise the actual Astro island with the same React renderer as the other

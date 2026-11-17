@@ -4,9 +4,9 @@
  */
 import type { ExplicitChoice, KernelConfig, PolicyRule } from 'c15t';
 import { resolvePolicyRules } from 'c15t';
-import { createOfflineTransport } from 'c15t/transports';
 import { createConsentRuntime } from 'c15t/runtime';
 import type { ConsentRuntime } from 'c15t/runtime';
+import { createOfflineTransport } from 'c15t/transports';
 
 /** A transport factory that hands the provider `transport`. */
 const customMode = <Transport>(transport: Transport) =>

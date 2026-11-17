@@ -1,5 +1,10 @@
 import { benchPolicy } from '@c15t/benchmarking/bench-policy';
-import { ConsentBanner, ConsentDialog, ConsentDialogTrigger, ConsentProvider } from '@c15t/react';
+import {
+	ConsentBanner,
+	ConsentDialog,
+	ConsentDialogTrigger,
+	ConsentProvider,
+} from '@c15t/react';
 
 export const App = () => (
 	<ConsentProvider

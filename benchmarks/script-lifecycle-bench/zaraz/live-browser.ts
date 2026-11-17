@@ -1,5 +1,5 @@
-import { testing } from '../../../packages/sdk/browser/src/testing';
 import { createConsentClient } from '../../../packages/sdk/browser/src/index';
+import { testing } from '../../../packages/sdk/browser/src/testing';
 import { policyRulePresets } from '../../../packages/sdk/core/src/index';
 import { createScriptLoader } from '../../../packages/sdk/core/src/modules/script-loader/index';
 import { cloudflareZaraz } from '../../../packages/sdk/integrations/src/vendors/tag-managers/cloudflare-zaraz';

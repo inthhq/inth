@@ -1,13 +1,25 @@
 'use client';
 
-import { testing } from 'c15t/react/testing';
 import type { ConsentSnapshot, PromptPresentation } from 'c15t';
-import { ConsentBanner, ConsentDialog, ConsentProvider, hosted, useInit, useSetActiveUI, useConsentDraft, useSetLanguage, useSetOverrides, useSnapshot, usePromptPresentation } from 'c15t/react';
+import {
+	ConsentBanner,
+	ConsentDialog,
+	ConsentProvider,
+	hosted,
+	useInit,
+	useSetActiveUI,
+	useConsentDraft,
+	useSetLanguage,
+	useSetOverrides,
+	useSnapshot,
+	usePromptPresentation,
+} from 'c15t/react';
 import {
 	IABConsentBanner,
 	IABConsentDialog,
 	IABProvider,
 } from 'c15t/react/iab';
+import { testing } from 'c15t/react/testing';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
@@ -711,7 +723,8 @@ export const PolicyDemo = () => {
 													?.messageProfile ?? 'default'
 											].translations,
 									},
-									backendURL: HOSTED_DEMO_BACKEND_URL, mode: hosted(),
+									backendURL: HOSTED_DEMO_BACKEND_URL,
+									mode: hosted(),
 									overrides,
 									presentation: getScenarioById(resolvedExample).presentation,
 									scripts: createDemoScripts('demo-analytics'),

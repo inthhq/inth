@@ -1,6 +1,5 @@
 'use client';
 
-import { benchPolicy } from './bench-policy';
 import { ConsentTheme } from '@c15t/react';
 import { ConsentDialog } from '@c15t/react/components/consent-dialog';
 import { ConsentWidget } from '@c15t/react/components/consent-widget';
@@ -11,6 +10,7 @@ import { ConsentProvider } from '@c15t/react/provider';
 import buttonStyles from '@c15t/ui/styles/components/button';
 import { useEffect } from 'react';
 
+import { benchPolicy } from './bench-policy';
 import type { CssLayerEnvironmentId, CssLayerSurface } from './css-layer-types';
 
 export type { CssLayerSurface } from './css-layer-types';

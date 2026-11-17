@@ -2,7 +2,6 @@
 
 import { benchPolicy } from '@c15t/benchmarking/bench-policy';
 import type { AllConsentNames } from '@c15t/core';
-
 import { ConsentBanner } from '@c15t/react/consent-banner';
 import { ConsentDialog } from '@c15t/react/consent-dialog';
 import { ConsentWidget } from '@c15t/react/consent-widget';

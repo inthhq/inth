@@ -1,7 +1,7 @@
-import { testing } from '@c15t/angular/testing';
 import type { ApplicationConfig } from '@angular/core';
 import { provideC15t } from '@c15t/angular';
 import type { C15tOptions, C15tProviderOptions } from '@c15t/angular';
+import { testing } from '@c15t/angular/testing';
 
 import {
 	seedStorybookChoice,

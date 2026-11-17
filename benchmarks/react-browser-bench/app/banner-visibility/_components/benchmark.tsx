@@ -1,6 +1,5 @@
 'use client';
 
-
 import { benchPolicy } from '@c15t/benchmarking/bench-policy';
 import { ConsentBanner } from '@c15t/react/consent-banner';
 import { useActiveUI } from '@c15t/react/hooks';

@@ -16,7 +16,8 @@ export const appConfig: ApplicationConfig = {
 		provideC15t({
 			// The CMP ID IAB Europe assigned to your company.
 			iab: { cmpId: registeredCmpId },
-			backendURL: 'https://your-project.inth.app', mode: hosted(),
+			backendURL: 'https://your-project.inth.app',
+			mode: hosted(),
 			scripts,
 		}),
 	],

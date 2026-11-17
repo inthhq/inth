@@ -1,7 +1,11 @@
-import { testing } from '../../../packages/sdk/react/src/index/testing';
 import { createElement } from 'react';
 
-import { ConsentBanner, ConsentDialog, ConsentProvider } from '../../../packages/sdk/react/src/index';
+import {
+	ConsentBanner,
+	ConsentDialog,
+	ConsentProvider,
+} from '../../../packages/sdk/react/src/index';
+import { testing } from '../../../packages/sdk/react/src/testing';
 import { benchmarkConsentOptions } from './fixtures';
 
 export const CurrentConsentSurfaces = () => (

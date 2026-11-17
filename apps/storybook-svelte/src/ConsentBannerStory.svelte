@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { testing } from '@c15t/svelte/testing';
-import type { PromptPosition, PromptVariant } from '@c15t/core';
+	import type { PromptPosition, PromptVariant } from '@c15t/core';
 	import { ConsentBanner, ConsentDialog } from '@c15t/svelte';
+	import { testing } from '@c15t/svelte/testing';
 
 	import { storybookPolicy } from '../../storybook-consent-policy';
 	import { editableConsentOptions } from './storybook-consent-fixtures';

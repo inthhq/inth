@@ -1,6 +1,5 @@
 'use client';
 
-
 import { benchPolicy } from '@c15t/benchmarking/bench-policy';
 import { ConsentDraftProvider } from '@c15t/react/draft';
 import { useSaveConsents } from '@c15t/react/hooks';

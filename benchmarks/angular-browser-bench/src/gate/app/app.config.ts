@@ -24,7 +24,8 @@ export const appConfig: ApplicationConfig = {
 		provideC15t({
 			consentCategories: [...gateConsentCategories],
 			// The consent route server.ts mounts.
-			backendURL: '/api/c15t', mode: hosted(),
+			backendURL: '/api/c15t',
+			mode: hosted(),
 			scripts,
 		}),
 	],

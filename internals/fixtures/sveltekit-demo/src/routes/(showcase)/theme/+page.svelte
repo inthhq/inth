@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { testing } from '@c15t/svelte/testing';
-import { ConsentBanner, ConsentProvider } from '@c15t/svelte';
+	import { ConsentBanner, ConsentProvider } from '@c15t/svelte';
 	import type { Theme } from '@c15t/svelte';
+	import { testing } from '@c15t/svelte/testing';
 
 	import ForceBannerShow from '#lib/components/ForceBannerShow.svelte';
 	import {

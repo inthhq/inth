@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { testing } from '@c15t/svelte/testing';
-import { dev } from '$app/env';
+	import { dev } from '$app/env';
 	import {
 		PUBLIC_CLARITY_ID,
 		PUBLIC_DEVTOOLS_IAB,
@@ -9,8 +8,17 @@ import { dev } from '$app/env';
 		PUBLIC_TIKTOK_PIXEL_ID,
 	} from '$app/env/public';
 	import { page } from '$app/state';
-	import { ConsentBanner, ConsentDialog, ConsentDialogTrigger, ConsentProvider, ConsentRoot, IABConsentBanner, IABConsentDialog } from '@c15t/svelte';
+	import {
+		ConsentBanner,
+		ConsentDialog,
+		ConsentDialogTrigger,
+		ConsentProvider,
+		ConsentRoot,
+		IABConsentBanner,
+		IABConsentDialog,
+	} from '@c15t/svelte';
 	import type { ConsentManagerOptions } from '@c15t/svelte';
+	import { testing } from '@c15t/svelte/testing';
 	import { baseTranslations } from '@c15t/translations/all';
 
 	import { createDemoScripts } from '#lib/consent-manager/demo-scripts.js';

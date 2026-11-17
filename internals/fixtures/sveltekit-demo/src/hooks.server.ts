@@ -1,6 +1,6 @@
-import { testing } from '@c15t/svelte/kit/testing';
 import { c15tHandle, hosted, manifest } from '@c15t/svelte/kit';
 import type { C15tHandle } from '@c15t/svelte/kit';
+import { testing } from '@c15t/svelte/testing';
 
 import { testBackend } from '#lib/test-backend.js';
 
