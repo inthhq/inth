@@ -5,12 +5,19 @@ import SwiftUI
 /// Compiled geometry keeps both SwiftPM and CocoaPods independent of resource bundles.
 struct ConsentProviderMark: Shape {
     let branding: ConsentTheme.Branding
+    /// The provider's horizontal wordmark where it has one, for the provider tag. Inth has
+    /// one, 292 by 100; the square mark stays for the identity above the headline.
+    var wordmark = false
+
+    /// Width over height of what ``path(in:)`` draws.
+    var aspectRatio: CGFloat { wordmark && branding == .inth ? 2.92 : 1 }
 
     func path(in rect: CGRect) -> Path {
         let size: CGSize
         let path: Path
         switch branding {
         case .c15t: size = CGSize(width: 446, height: 445); path = Self.c15t
+        case .inth where wordmark: size = CGSize(width: 292, height: 100); path = Self.inthWordmark
         case .inth: size = CGSize(width: 88, height: 90); path = Self.inth
         case .custom: return Path()
         }
@@ -78,6 +85,64 @@ struct ConsentProviderMark: Shape {
         path.addCurve(to: CGPoint(x: 253.492, y: 71.045), control1: CGPoint(x: 239.92, y: 101.358), control2: CGPoint(x: 253.491, y: 87.786))
         path.addCurve(to: CGPoint(x: 223.178, y: 40.73), control1: CGPoint(x: 253.492, y: 54.303), control2: CGPoint(x: 239.92, y: 40.731))
         path.addLine(to: CGPoint(x: 223.178, y: 40.73))
+        path.closeSubpath()
+        return path
+    }()
+
+    /// From `inth-wordmark.svg`, view box 292 by 100.
+    private static let inthWordmark: Path = {
+        var path = Path()
+        path.move(to: CGPoint(x: 291.667, y: 83.333))
+        path.addLine(to: CGPoint(x: 156.076, y: 83.333))
+        path.addLine(to: CGPoint(x: 138.889, y: 100.000))
+        path.addLine(to: CGPoint(x: 138.889, y: 0.000))
+        path.addLine(to: CGPoint(x: 291.667, y: 0.000))
+        path.closeSubpath()
+        path.move(to: CGPoint(x: 149.576, y: 11.266))
+        path.addLine(to: CGPoint(x: 149.576, y: 25.700))
+        path.addLine(to: CGPoint(x: 172.185, y: 25.700))
+        path.addLine(to: CGPoint(x: 172.185, y: 72.222))
+        path.addLine(to: CGPoint(x: 186.533, y: 72.222))
+        path.addLine(to: CGPoint(x: 186.533, y: 25.700))
+        path.addLine(to: CGPoint(x: 209.315, y: 25.700))
+        path.addLine(to: CGPoint(x: 209.315, y: 11.266))
+        path.closeSubpath()
+        path.move(to: CGPoint(x: 220.591, y: 11.352))
+        path.addLine(to: CGPoint(x: 220.591, y: 72.222))
+        path.addLine(to: CGPoint(x: 234.939, y: 72.222))
+        path.addLine(to: CGPoint(x: 234.939, y: 49.730))
+        path.addLine(to: CGPoint(x: 263.460, y: 49.730))
+        path.addLine(to: CGPoint(x: 263.460, y: 72.223))
+        path.addLine(to: CGPoint(x: 277.895, y: 72.223))
+        path.addLine(to: CGPoint(x: 277.895, y: 11.353))
+        path.addLine(to: CGPoint(x: 263.460, y: 11.353))
+        path.addLine(to: CGPoint(x: 263.460, y: 35.383))
+        path.addLine(to: CGPoint(x: 234.939, y: 35.383))
+        path.addLine(to: CGPoint(x: 234.939, y: 11.353))
+        path.closeSubpath()
+        path.move(to: CGPoint(x: 60.348, y: 11.111))
+        path.addLine(to: CGPoint(x: 60.348, y: 25.460))
+        path.addLine(to: CGPoint(x: 37.391, y: 25.460))
+        path.addLine(to: CGPoint(x: 37.391, y: 57.634))
+        path.addLine(to: CGPoint(x: 60.348, y: 57.634))
+        path.addLine(to: CGPoint(x: 60.348, y: 71.980))
+        path.addLine(to: CGPoint(x: 0.000, y: 71.980))
+        path.addLine(to: CGPoint(x: 0.000, y: 57.633))
+        path.addLine(to: CGPoint(x: 22.956, y: 57.633))
+        path.addLine(to: CGPoint(x: 22.956, y: 25.459))
+        path.addLine(to: CGPoint(x: 0.000, y: 25.459))
+        path.addLine(to: CGPoint(x: 0.000, y: 11.111))
+        path.closeSubpath()
+        path.move(to: CGPoint(x: 114.512, y: 46.053))
+        path.addLine(to: CGPoint(x: 114.512, y: 11.110))
+        path.addLine(to: CGPoint(x: 128.261, y: 11.110))
+        path.addLine(to: CGPoint(x: 128.261, y: 71.980))
+        path.addLine(to: CGPoint(x: 118.262, y: 71.980))
+        path.addLine(to: CGPoint(x: 84.764, y: 36.839))
+        path.addLine(to: CGPoint(x: 84.764, y: 71.981))
+        path.addLine(to: CGPoint(x: 71.014, y: 71.981))
+        path.addLine(to: CGPoint(x: 71.014, y: 11.110))
+        path.addLine(to: CGPoint(x: 81.264, y: 11.110))
         path.closeSubpath()
         return path
     }()

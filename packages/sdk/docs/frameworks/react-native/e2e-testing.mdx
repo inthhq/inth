@@ -171,8 +171,11 @@ missing from either platform, so a rename cannot slip into a release unnoticed.
 The list is also in `node_modules/@inth/react-native/maestro/selectors.json`.
 Other identifiers on these screens can change in any release.
 
-Below the accessibility text sizes, the decision buttons are pinned to the
-bottom of the screen. At the largest sizes they move into the scrolling page.
+Below the accessibility text sizes, Reject All and Accept All are pinned to the
+bottom of the screen. In Privacy Settings, Save is in the navigation bar by
+default, under the same `save` selector; with `savePlacement: bottom` it is
+pinned under the other two. At the largest sizes Reject All and Accept All
+move into the scrolling page, and Save stays pinned at the bottom.
 The shipped flows scroll to them first. In your own flows, use
 `scrollUntilVisible` before `tapOn` if you test large text.
 

@@ -11,6 +11,13 @@ is the existing `:consent-demo` Gradle app. Debug builds offer Category, Notice,
 and IAB TCF and Additional Consent modes on the setup screen. Release builds
 require hosted setup and exclude the fixture picker.
 
+Android Debug builds also read three string extras from the launch intent, in any
+mode: `C15T_DEMO_FIRST_LAYER` (`page`, `sheet` or `prompt`),
+`C15T_DEMO_APPEARANCE` (`c15t` or `system`) and
+`C15T_DEMO_SAVE_PLACEMENT` (`bottom` or `top`). For example, add
+`--es C15T_DEMO_FIRST_LAYER sheet --es C15T_DEMO_APPEARANCE system` to
+`adb shell am start`.
+
 Keep simulator code signing enabled. The project uses ad-hoc simulator signing
 without a developer account. Hosted setup checks Keychain access during
 installation; the local file-backed fixtures do not exercise that check.

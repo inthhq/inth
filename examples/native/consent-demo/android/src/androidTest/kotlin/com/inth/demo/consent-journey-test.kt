@@ -155,7 +155,7 @@ class ConsentJourneyTest {
         val r = reject.fetchSemanticsNode().boundsInRoot; val a = accept.fetchSemanticsNode().boundsInRoot
         Assert.assertEquals(r.width,a.width,1f); Assert.assertEquals(r.height,a.height,1f)
         waitFor("inth.first-layer.brand").assertContentDescriptionEquals("Your brand here")
-        compose.onNodeWithTag("inth.first-layer.brand-logo.c15t", useUnmergedTree = true).assertIsDisplayed()
+        compose.onNodeWithTag("inth.first-layer.brand-logo.inth", useUnmergedTree = true).assertIsDisplayed()
         capture("android-first-layer")
         device.pressBack()
         waitFor("fixture.open-preferences").assertIsDisplayed()
@@ -443,6 +443,22 @@ class ConsentJourneyTest {
         capture("android-identity-hidden")
         compose.onNodeWithTag("inth.first-layer.reject-all").performClick(); awaitClosed()
     }
+    /** The theme an app gets with nothing set: the system page, and Save in the top app bar. */
+    @Test fun stockThemeSavesFromTheTopBar() {
+        launch("fresh-online-iab", theme = "stock")
+        waitFor("inth.first-layer.partner-count").performScrollTo().assertIsDisplayed()
+        waitFor("inth.first-layer.customize").performClick()
+        val save = waitFor("inth.iab.save").assertIsDisplayed()
+        // One Save, above the list; Reject All and Accept All stay equal in the footer.
+        val reject = compose.onNodeWithTag("inth.iab.reject-all").fetchSemanticsNode().boundsInRoot
+        val accept = compose.onNodeWithTag("inth.iab.accept-all").fetchSemanticsNode().boundsInRoot
+        org.junit.Assert.assertTrue(save.fetchSemanticsNode().boundsInRoot.bottom <= reject.top)
+        org.junit.Assert.assertEquals(reject.width, accept.width, 1f)
+        scrollPage("inth.iab", "inth.iab.purpose.1.consent").performClick()
+        save.performClick()
+        waitFor("fixture.open-preferences")
+        state("fixture.state.iab", "purposes=[1]")
+    }
     @Test fun unavailableAndDurableNoticeRefusal() {
         launch("fresh-offline-none")
         waitFor("fixture.open-preferences").performClick()
@@ -465,7 +481,7 @@ class ConsentJourneyTest {
         }
         // The brand is announced once; the mark beside it is decorative.
         compose.onAllNodes(hasContentDescription("Your brand here") or hasText("Your brand here")).assertCountEquals(1)
-        waitFor("inth.first-layer.branding").assertContentDescriptionEquals("Secured by c15t")
+        waitFor("inth.first-layer.branding").assertContentDescriptionEquals("Secured by Inth")
         capture("android-ax-first-layer")
         compose.onNodeWithTag("inth.first-layer.customize").performClick()
         waitFor("inth.prefs.title").assert(heading()).assertTextEquals("Privacy Settings")

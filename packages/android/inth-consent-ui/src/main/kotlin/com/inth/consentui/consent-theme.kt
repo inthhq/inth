@@ -2,6 +2,7 @@ package com.inth.consentui
 
 import android.content.Context
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.os.Bundle
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
@@ -73,10 +74,16 @@ data class ConsentTheme(
     val slots: Map<Slot, SlotStyle> = emptyMap(),
     val brand: Brand = Brand(),
     val copy: Copy = Copy.c15t,
-    /** Whether the small "Secured by c15t" line appears under the first-layer actions. */
+    /** Whether the small provider attribution line appears under the first-layer actions. */
     val showsBranding: Boolean = true,
     /** Provider identity in the attribution tag, independent of the app [brand]. */
-    val branding: Branding = Branding.C15t,
+    val branding: Branding = Branding.Inth,
+    /** Container of the first choice. */
+    val firstLayer: FirstLayer = FirstLayer.Page,
+    /** Source of the stock colours. */
+    val appearance: Appearance = Appearance.System,
+    /** Position of Save Settings in Privacy Settings. */
+    val savePlacement: SavePlacement = SavePlacement.Top,
 ) {
     /** The overrides for [slot], or an empty style. */
     fun slot(slot: Slot): SlotStyle = slots[slot] ?: SlotStyle()
@@ -254,6 +261,46 @@ data class ConsentTheme(
     }
 
     /**
+     * How the first choice is presented. Every layout shows the same text, the same partner link
+     * and the same equal Accept all and Reject all; only the container changes. Settings opened
+     * from it always take the full screen. At font scale 1.5 and above every layout is [Page].
+     */
+    enum class FirstLayer {
+        /** A full-screen page. */
+        Page,
+        /** A floating sheet at the bottom, with the app dimmed behind it. */
+        Sheet,
+        /** A centred card in the manner of a system permission dialog, with the app dimmed behind it. */
+        Prompt,
+    }
+
+    /**
+     * Where Save Settings sits in Privacy Settings. Reject All and Accept All stay together at the
+     * bottom either way. At font scale 1.5 and above Save is always at the bottom.
+     */
+    enum class SavePlacement {
+        /** A full-width button under Reject All and Accept All. */
+        Bottom,
+        /** A text button at the end of the top app bar. */
+        Top,
+    }
+
+    /**
+     * Where the stock colours come from. A theme whose [colors] a host has set keeps them. The
+     * [FirstLayer.Sheet] and [FirstLayer.Prompt] layouts sit over the app, so they always take
+     * the [System] colours.
+     */
+    enum class Appearance {
+        /** Warm paper and ink. */
+        C15t,
+        /**
+         * The platform's own backgrounds and text colours with the app's accent colour, and a
+         * centred first-layer page.
+         */
+        System,
+    }
+
+    /**
      * First-layer copy a host may replace. Decision labels are not here on purpose. A `null` field
      * shows the stock copy from `@c15t/translations` in the policy's language; a host string is
      * shown as given in every language.
@@ -311,7 +358,13 @@ data class ConsentTheme(
         const val META_BRAND_MARK = "com.inth.consent.BRAND_MARK"
         const val META_HEADLINE = "com.inth.consent.HEADLINE"
         const val META_INTRODUCTION = "com.inth.consent.INTRODUCTION"
-        /** A Boolean. `false` hides the "Secured by c15t" line. */
+        /** `page`, `sheet` or `prompt`. */
+        const val META_FIRST_LAYER = "com.inth.consent.FIRST_LAYER"
+        /** `c15t` or `system`. */
+        const val META_APPEARANCE = "com.inth.consent.APPEARANCE"
+        /** `bottom` or `top`. */
+        const val META_SAVE_PLACEMENT = "com.inth.consent.SAVE_PLACEMENT"
+        /** A Boolean. `false` hides the provider attribution line. */
         const val META_BRANDING = "com.inth.consent.BRANDING"
         /** `c15t`, `inth`, or the legacy `consent` spelling for Inth. */
         const val META_BRANDING_PROVIDER = "com.inth.consent.BRANDING_PROVIDER"
@@ -414,6 +467,9 @@ data class ConsentTheme(
             copy = Copy(headline = text(Meta.META_HEADLINE) ?: copy.headline, introduction = text(Meta.META_INTRODUCTION) ?: copy.introduction),
             showsBranding = visible,
             branding = provider,
+            firstLayer = text(Meta.META_FIRST_LAYER)?.let { value -> FirstLayer.entries.firstOrNull { it.name.equals(value, ignoreCase = true) } } ?: firstLayer,
+            appearance = text(Meta.META_APPEARANCE)?.let { value -> Appearance.entries.firstOrNull { it.name.equals(value, ignoreCase = true) } } ?: appearance,
+            savePlacement = text(Meta.META_SAVE_PLACEMENT)?.let { value -> SavePlacement.entries.firstOrNull { it.name.equals(value, ignoreCase = true) } } ?: savePlacement,
         )
     }
 
@@ -433,6 +489,37 @@ data class ConsentTheme(
             error = Color(if (dark) 0xFFFF9C8F else 0xFFB42318), errorContainer = Color(if (dark) 0xFF3A1D1A else 0xFFFBEAE7),
             onErrorContainer = Color(if (dark) 0xFFFF9C8F else 0xFFB42318),
         )
+    }
+
+    /**
+     * The label of Reject all and Accept all on a sheet or a prompt. There the two are tonal: the
+     * text colour on a tint of the surface. A host palette whose text colour falls under 5:1 on
+     * that tint in an appearance gets black or white there, whichever reads better.
+     */
+    internal fun cardDecisionLabel(prompt: Boolean): ConsentThemeColor {
+        val tint = cardTint(prompt)
+        return ConsentThemeColor(cardDecision(colors.text.light, tint.light).first, cardDecision(colors.text.dark, tint.dark).first)
+    }
+
+    /**
+     * The fill the card actions draw, as an opaque colour: the tint over the card's surface, moved
+     * toward white or black where a mid-grey tint would leave neither black nor white at 5:1.
+     */
+    internal fun cardDecisionFill(prompt: Boolean): ConsentThemeColor {
+        val tint = cardTint(prompt)
+        return ConsentThemeColor(cardDecision(colors.text.light, tint.light).second, cardDecision(colors.text.dark, tint.dark).second)
+    }
+
+    private fun cardTint(prompt: Boolean): ConsentThemeColor =
+        if (prompt) colors.surface.blended(colors.text, 0.1f)
+        else ConsentThemeColor(colors.surface.blended(colors.primary, 0.16f).light, colors.surface.blended(colors.primary, 0.28f).dark)
+
+    /** A label and fill at 5:1 or more in one appearance. */
+    private fun cardDecision(text: Int, tint: Int): Pair<Int, Int> {
+        if (contrastRatio(text, tint) >= DECISION_CONTRAST_FLOOR) return text to tint
+        val black = contrastRatio(0x000000, tint) >= contrastRatio(0xFFFFFF, tint)
+        val label = if (black) 0x000000 else 0xFFFFFF
+        return label to adjusted(tint, label, DECISION_CONTRAST_FLOOR, lighten = black)
     }
 
     /**
@@ -460,6 +547,52 @@ data class ConsentTheme(
             colors = colors.copy(decision = pick(fill, stock.decision), textOnDecision = pick(label, stock.textOnDecision)),
             slots = if (primarySlot == null) slots else slots + (Slot.ButtonPrimary to primarySlot.copy(color = null, backgroundColor = null)),
         )
+    }
+
+    /**
+     * This theme with [Appearance.System] applied: the platform's grouped backgrounds and label
+     * colours, links and switches in [tint], and decisions filled with [tint] darkened until
+     * white text on it reaches the 5:1 IAB TCF minimum. A sheet or prompt first layer takes it
+     * whatever its [appearance]. A `C15t` page, or a theme whose colours a host has set, is
+     * returned unchanged.
+     *
+     * @param tint The app's accent colour as light and dark sRGB values.
+     */
+    internal fun withSystemAppearance(tint: ConsentThemeColor): ConsentTheme {
+        if (!usesSystemColours) return this
+        return copy(colors = Colors(
+            canvas = ConsentThemeColor(0xF2F2F7, 0x000000),
+            surface = ConsentThemeColor(0xFFFFFF, 0x1C1C1E),
+            surfaceMuted = ConsentThemeColor(0xFFFFFF, 0x1C1C1E),
+            text = ConsentThemeColor(0x000000, 0xFFFFFF),
+            textMuted = ConsentThemeColor(0x6C6C70, 0xAEAEB2),
+            primary = ConsentThemeColor(
+                adjusted(tint.light, against = 0xF2F2F7, ratio = 4.5, lighten = false),
+                adjusted(tint.dark, against = 0x1C1C1E, ratio = 4.5, lighten = true)),
+            textOnPrimary = ConsentThemeColor(0xFFFFFF, 0x000000),
+            decision = ConsentThemeColor(
+                adjusted(tint.light, against = 0xFFFFFF, ratio = DECISION_CONTRAST_FLOOR, lighten = false),
+                adjusted(tint.dark, against = 0xFFFFFF, ratio = DECISION_CONTRAST_FLOOR, lighten = false)),
+            textOnDecision = ConsentThemeColor(0xFFFFFF),
+        ))
+    }
+
+    /** Whether [withSystemAppearance] replaces the colours: a system appearance or a card, on stock colours. */
+    internal val usesSystemColours: Boolean
+        get() = (appearance == Appearance.System || firstLayer != FirstLayer.Page) && colors == Colors.c15t
+
+    /**
+     * The first layer's container. Large text always gets a page, where the decisions follow the
+     * text in one scroll. So does an IAB TCF choice in a wide window: a card there would cover a
+     * fraction of the screen, and the framework wants the choice to cover most of it.
+     *
+     * @param largeText Whether the font scale is at the "actions in page" threshold, 1.5.
+     * @param iabInWideWindow Whether this is an IAB TCF choice in a window 600dp wide or more.
+     */
+    internal fun firstLayerChrome(largeText: Boolean, iabInWideWindow: Boolean = false): FirstLayerChrome = when {
+        largeText || iabInWideWindow || firstLayer == FirstLayer.Page -> if (appearance == Appearance.System) FirstLayerChrome.System else FirstLayerChrome.Standard
+        firstLayer == FirstLayer.Sheet -> FirstLayerChrome.Sheet
+        else -> FirstLayerChrome.Prompt
     }
 
     /** The fill the decision buttons draw: the [Slot.ButtonPrimary] colour over [Colors.decision]. */
@@ -532,6 +665,53 @@ data class ConsentTheme(
             return (max(a, b) + 0.05) / (min(a, b) + 0.05)
         }
 
+        /**
+         * [colour] moved toward black, or toward white when [lighten], until it reaches [ratio]
+         * against [against]. A colour that already reaches it is returned unchanged.
+         */
+        internal fun adjusted(colour: Int, against: Int, ratio: Double, lighten: Boolean): Int {
+            var result = colour
+            var step = 0.0
+            while (contrastRatio(result, against) < ratio && step < 1) {
+                step += 0.04
+                fun channel(shift: Int): Int {
+                    val start = ((colour shr shift) and 255).toDouble()
+                    return Math.round(start + ((if (lighten) 255 else 0) - start) * step).toInt().coerceIn(0, 255) shl shift
+                }
+                result = channel(16) or channel(8) or channel(0)
+            }
+            return result
+        }
+
+        /**
+         * The app's accent colour for [Appearance.System]: `colorPrimary` of the application's
+         * theme where the app has that attribute, as AppCompat and Material themes do, otherwise
+         * the platform `colorAccent`, otherwise `0x007AFF`. Read in the light and the dark
+         * configuration. An application with no theme of its own gets [context]'s theme for both.
+         */
+        internal fun appAccent(context: Context): ConsentThemeColor {
+            val application = context.applicationContext ?: context
+            val attributes = intArrayOf(application.resources.getIdentifier("colorPrimary", "attr", application.packageName), android.R.attr.colorAccent)
+            fun read(themed: Context): Int {
+                for (attribute in attributes) {
+                    if (attribute == 0) continue
+                    val values = themed.obtainStyledAttributes(intArrayOf(attribute))
+                    try {
+                        if (values.hasValue(0)) runCatching { values.getColor(0, 0) }.getOrNull()?.let { return it and 0xFFFFFF }
+                    } finally { values.recycle() }
+                }
+                return 0x007AFF
+            }
+            val theme = application.applicationInfo.theme
+            if (theme == 0) return ConsentThemeColor(read(context))
+            fun appearance(night: Int): Int {
+                val configuration = Configuration(application.resources.configuration)
+                configuration.uiMode = (configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK.inv()) or night
+                return read(application.createConfigurationContext(configuration).apply { setTheme(theme) })
+            }
+            return ConsentThemeColor(appearance(Configuration.UI_MODE_NIGHT_NO), appearance(Configuration.UI_MODE_NIGHT_YES))
+        }
+
         /** The stock c15t appearance. */
         val c15t = ConsentTheme()
 
@@ -551,3 +731,11 @@ data class ConsentTheme(
 
 /** The theme in scope. Set by [InthConsent]; defaults to the stock appearance. */
 val LocalConsentTheme = staticCompositionLocalOf { ConsentTheme.c15t }
+
+/** What the first layer is drawn on. Only the first layer sets it; every other screen is [Standard]. */
+internal enum class FirstLayerChrome {
+    Standard, System, Sheet, Prompt;
+
+    /** A card over the app, not a page. */
+    val card: Boolean get() = this == Sheet || this == Prompt
+}

@@ -116,10 +116,111 @@ final class ThemeTests: XCTestCase {
         XCTAssertEqual(base.applying(infoDictionary: [ConsentTheme.InfoPlistKey.branding: "maybe"]), base)
     }
 
+    func testSavePlacementComesFromInfoPlist() {
+        XCTAssertEqual(ConsentTheme.c15t.savePlacement, .top)
+        let theme = ConsentTheme.c15t.applying(infoDictionary: [ConsentTheme.InfoPlistKey.savePlacement: " Bottom "])
+        XCTAssertEqual(theme.savePlacement, .bottom)
+        // An unreadable value keeps what the theme had.
+        XCTAssertEqual(theme.applying(infoDictionary: [ConsentTheme.InfoPlistKey.savePlacement: "left"]), theme)
+    }
+
+    func testFirstLayerAndAppearanceComeFromInfoPlist() {
+        XCTAssertEqual(ConsentTheme.c15t.firstLayer, .page)
+        XCTAssertEqual(ConsentTheme.c15t.appearance, .system)
+        let theme = ConsentTheme.c15t.applying(infoDictionary: [
+            ConsentTheme.InfoPlistKey.firstLayer: " Sheet ",
+            ConsentTheme.InfoPlistKey.appearance: "C15T",
+        ])
+        XCTAssertEqual(theme.firstLayer, .sheet)
+        XCTAssertEqual(theme.appearance, .c15t)
+        // An unreadable value keeps what the theme had.
+        let kept = theme.applying(infoDictionary: [
+            ConsentTheme.InfoPlistKey.firstLayer: "drawer",
+            ConsentTheme.InfoPlistKey.appearance: 3,
+        ])
+        XCTAssertEqual(kept, theme)
+    }
+
+    // TCF-CHECK: P11
+    func testSystemAppearanceKeepsDecisionsAtFiveToOneForAnyAccent() {
+        // System blue, a pale yellow and white: none reaches 5:1 under white text as given.
+        for accent: UInt32 in [0x007AFF, 0xFFE066, 0xFFFFFF, 0x118C5C] {
+            let theme = ConsentTheme(appearance: .system).withSystemAppearance(tint: ConsentThemeColor(light: accent))
+            XCTAssertGreaterThanOrEqual(theme.decisionContrast, ConsentTheme.minimumDecisionContrast, String(accent, radix: 16))
+            XCTAssertGreaterThanOrEqual(ConsentTheme.contrastRatio(theme.colors.primary.light, theme.colors.canvas.light), 4.5)
+            XCTAssertGreaterThanOrEqual(ConsentTheme.contrastRatio(theme.colors.primary.dark, theme.colors.surface.dark), 4.5)
+            XCTAssertEqual(theme.withReadableDecisions(report: { _ in XCTFail("no fallback expected") }), theme)
+        }
+    }
+
+    // TCF-CHECK: P11
+    func testCardDecisionsKeepFiveToOneOnAHostPalette() {
+        // Mid-grey text passes on a page's solid decision fill but not on a card's tint of the surface.
+        var colours = ConsentTheme.Colors.c15t
+        colours.text = ConsentThemeColor(light: 0x6B6B6B, dark: 0x8A8A8A)
+        colours.surface = ConsentThemeColor(light: 0xFFFFFF, dark: 0x1C1C1E)
+        for prompt in [true, false] {
+            let theme = ConsentTheme(colors: colours, firstLayer: prompt ? .prompt : .sheet)
+            let label = theme.cardDecisionLabel(prompt: prompt), fill = theme.cardDecisionFill(prompt: prompt)
+            XCTAssertGreaterThanOrEqual(ConsentTheme.contrastRatio(label.light, fill.light), 5)
+            XCTAssertGreaterThanOrEqual(ConsentTheme.contrastRatio(label.dark, fill.dark), 5)
+            XCTAssertNotEqual(label, colours.text)
+            // The stock card palette keeps its own text colour.
+            let stock = ConsentTheme(firstLayer: prompt ? .prompt : .sheet).withSystemAppearance(tint: ConsentThemeColor(light: 0x007AFF))
+            XCTAssertEqual(stock.cardDecisionLabel(prompt: prompt), stock.colors.text)
+            // A mid-grey tint leaves neither black nor white at 5:1, so the fill moves too.
+            var grey = ConsentTheme.Colors.c15t
+            grey.surface = ConsentThemeColor(light: 0x848484); grey.text = ConsentThemeColor(light: 0x000000); grey.primary = ConsentThemeColor(light: 0x333333)
+            let mid = ConsentTheme(colors: grey, firstLayer: prompt ? .prompt : .sheet)
+            let midLabel = mid.cardDecisionLabel(prompt: prompt), midFill = mid.cardDecisionFill(prompt: prompt)
+            XCTAssertGreaterThanOrEqual(ConsentTheme.contrastRatio(midLabel.light, midFill.light), 5)
+            XCTAssertGreaterThanOrEqual(ConsentTheme.contrastRatio(midLabel.dark, midFill.dark), 5)
+        }
+    }
+
+    func testSystemAppearanceLeavesHostColoursAndOtherAppearancesAlone() {
+        let accent = ConsentThemeColor(light: 0x007AFF)
+        let paper = ConsentTheme(appearance: .c15t)
+        XCTAssertEqual(paper.withSystemAppearance(tint: accent), paper)
+        // A sheet or a prompt sits over the app, so it takes the system colours whatever the appearance.
+        for layout in [ConsentTheme.FirstLayer.sheet, .prompt] {
+            let card = ConsentTheme(firstLayer: layout).withSystemAppearance(tint: accent)
+            XCTAssertEqual(card.colors.surface, ConsentThemeColor(light: 0xFFFFFF, dark: 0x1C1C1E))
+            XCTAssertGreaterThanOrEqual(ConsentTheme.contrastRatio(card.colors.primary.light, card.colors.surface.light), 4.5)
+        }
+        var colours = ConsentTheme.Colors.c15t
+        colours.primary = ConsentThemeColor(light: 0x00796B)
+        let host = ConsentTheme(colors: colours, appearance: .system)
+        XCTAssertEqual(host.withSystemAppearance(tint: accent), host)
+    }
+
+    #if canImport(SwiftUI) && canImport(UIKit)
+    // TCF-CHECK: P1
+    func testAccessibilityTextSizesAlwaysGetTheFullPage() {
+        for layout in ConsentTheme.FirstLayer.allCases {
+            let theme = ConsentTheme(firstLayer: layout)
+            XCTAssertFalse(theme.firstLayerChrome(accessibilitySize: true).card)
+            XCTAssertEqual(theme.firstLayerChrome(accessibilitySize: false).card, layout != .page)
+        }
+        XCTAssertEqual(ConsentTheme(appearance: .system).firstLayerChrome(accessibilitySize: false), .system)
+        XCTAssertEqual(ConsentTheme(firstLayer: .prompt, appearance: .system).firstLayerChrome(accessibilitySize: false), .prompt)
+    }
+
+    // TCF-CHECK: P1
+    func testAnIABChoiceInAWideWindowGetsTheFullPage() {
+        for layout in [ConsentTheme.FirstLayer.sheet, .prompt] {
+            let theme = ConsentTheme(firstLayer: layout)
+            XCTAssertFalse(theme.firstLayerChrome(accessibilitySize: false, iabInWideWindow: true).card)
+            XCTAssertTrue(theme.firstLayerChrome(accessibilitySize: false, iabInWideWindow: false).card)
+        }
+    }
+    #endif
+
     func testProviderBrandingIsSeparateFromAppIdentity() {
         let base = ConsentTheme(brand: .init(name: "Pantry", markImageName: "PantryMark"))
-        XCTAssertEqual(base.branding, .c15t)
-        XCTAssertEqual(base.branding.name, "c15t")
+        XCTAssertEqual(base.branding, .inth)
+        XCTAssertEqual(base.branding.name, "Inth")
+        XCTAssertEqual(base.applying(infoDictionary: [ConsentTheme.InfoPlistKey.brandingProvider: "c15t"]).branding, .c15t)
         for value in ["inth", "consent", " INTH "] {
             let theme = base.applying(infoDictionary: [ConsentTheme.InfoPlistKey.brandingProvider: value])
             XCTAssertEqual(theme.branding, .inth)
@@ -351,9 +452,9 @@ final class TypeScaleTests: XCTestCase {
 
     /// The failure row lays its text out in UIKit, so it needs the theme's size too.
     func testUIKitFontsFollowTheTypeScale() {
-        let traits = UITraitCollection(preferredContentSizeCategory: .large)
+        // The font comes back already scaled for the current text size; scaling it again throws.
         let themed = ConsentTheme(typography: .init(fontSize: .init(sm: 20))).uiFont(.subheadline)
-        XCTAssertEqual(UIFontMetrics(forTextStyle: .subheadline).scaledFont(for: themed, compatibleWith: traits).pointSize, 20, accuracy: 0.5)
+        XCTAssertEqual(themed.pointSize, UIFontMetrics(forTextStyle: .subheadline).scaledValue(for: 20), accuracy: 0.5)
         let stock = ConsentTheme.c15t.uiFont(.subheadline)
         XCTAssertEqual(stock.pointSize, UIFont.preferredFont(forTextStyle: .subheadline).pointSize, accuracy: 0.5)
         // A family the app does not bundle falls back to the system face rather than nothing.

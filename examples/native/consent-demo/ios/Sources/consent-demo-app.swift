@@ -370,14 +370,22 @@ struct IABReviewDiagnosticsView: View {
 }
 
 extension DemoRoot {
-    /// Debug fixtures can opt into the sample brand theme. Other launches use the stock c15t
-    /// appearance with the demo's own name above the headline, as a real app would set.
+    /// Debug fixtures can opt into the sample brand theme. Other launches use the stock theme
+    /// with the demo's own name above the headline, as a real app would set.
     var consentTheme: ConsentTheme? {
         #if DEBUG
         let env = ProcessInfo.processInfo.environment
         if env["C15T_FIXTURE_SCENARIO"] != nil {
             var theme = env["C15T_FIXTURE_THEME"] == "brand" ? PantryBrand.theme : ConsentTheme.c15t
+            // The journeys check the paper page and its footer Save. `stock` runs one on the theme
+            // a normal launch gets.
+            if env["C15T_FIXTURE_THEME"] != "stock" {
+                theme.appearance = .c15t
+                theme.savePlacement = .bottom
+            }
+            if let layout = env["C15T_FIXTURE_FIRST_LAYER"].flatMap(ConsentTheme.FirstLayer.init(rawValue:)) { theme.firstLayer = layout }
             switch env["C15T_FIXTURE_BRANDING"] {
+            case "c15t": theme.branding = .c15t
             case "inth": theme.branding = .inth
             case "custom": theme.branding = .custom(name: "Pantry", markImageName: "ConsentDemoMark")
             case "wide-custom": theme.branding = .custom(name: "Example Privacy Platform")
@@ -394,7 +402,15 @@ extension DemoRoot {
         }
         #endif
         var theme = ConsentTheme.resolved()
-        theme.brand.name = "c15t Demo"
+        theme.brand.name = "Inth Demo"
+        #if DEBUG
+        // Debug builds can try each first-layer layout and appearance without a rebuild:
+        // `defaults write com.inth.prototype.consent inth.demo.firstLayer sheet`, then relaunch.
+        let defaults = UserDefaults.standard
+        if let layout = defaults.string(forKey: "inth.demo.firstLayer").flatMap(ConsentTheme.FirstLayer.init(rawValue:)) { theme.firstLayer = layout }
+        if let appearance = defaults.string(forKey: "inth.demo.appearance").flatMap(ConsentTheme.Appearance.init(rawValue:)) { theme.appearance = appearance }
+        if let placement = defaults.string(forKey: "inth.demo.savePlacement").flatMap(ConsentTheme.SavePlacement.init(rawValue:)) { theme.savePlacement = placement }
+        #endif
         return theme
     }
 }

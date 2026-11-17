@@ -172,11 +172,61 @@ resources. Set the `brand` or `BRAND` boolean to false to hide the app identity.
 App identity and provider attribution are separate. Hiding the app identity
 does not select a different consent provider.
 
-## Use Inth attribution
+## Place Save Settings
 
-Set `com.inth.consent.brandingProvider` to `inth` in iOS `Info.plist`, or
-`com.inth.consent.BRANDING_PROVIDER` to `inth` in Android application metadata.
-Use `c15t` for the other built-in provider. Both names use bundled marks.
+Privacy Settings keeps Reject All and Accept All together at the bottom. Save
+is a short button at the end of the navigation bar by default. Set
+`com.inth.consent.savePlacement` in iOS `Info.plist` and
+`com.inth.consent.SAVE_PLACEMENT` in Android application metadata to `bottom`,
+or `savePlacement: 'bottom'` in the Expo plugin's `theme`, to make it a
+full-width Save Settings button under the other two. At accessibility text
+sizes it is always at the bottom.
+
+## Choose a first-layer layout
+
+Set `com.inth.consent.firstLayer` in iOS `Info.plist` and
+`com.inth.consent.FIRST_LAYER` in Android application metadata, or `firstLayer`
+in the Expo plugin's `theme`.
+
+Every layout shows the same text, the same partner link and the same equal
+Accept all and Reject all. Only the container changes.
+
+| Layout | What it is |
+| --- | --- |
+| `page` | A full-screen page. The default. |
+| `sheet` | A floating sheet at the bottom, with your app dimmed behind it. |
+| `prompt` | A centred card like a system permission alert, with your app dimmed behind it. |
+
+Settings opened from Customize always take the full screen. At accessibility
+text sizes every layout becomes `page`, so the decisions follow the text in one
+scroll.
+
+`appearance` chooses the stock colours. `system`, the default, uses the
+platform's backgrounds and text colours with your app's accent colour, and
+centres the page. `c15t` is warm paper and ink. The sheet and the prompt always use the system colours,
+because they sit over your app. Colours you set yourself win in every case.
+
+With the system colours, your app's own name stands in for a brand name you
+have not set, and its icon for a brand mark you have not set. Each falls back
+on its own, so a brand name without a mark is shown with the app icon. Accept all and Reject all take your accent colour, darkened until
+white text on it reaches the 5:1 contrast IAB TCF asks for.
+
+The accent colour is the `AccentColor` asset on iOS and your application
+theme's `colorPrimary` on Android. Both platforms draw each layout the same
+way, except that the prompt's card is translucent glass on iOS and a nearly
+opaque surface on Android. Reject all and Accept all on a sheet or prompt are a
+tint of the surface with the text colour; they do not take the `buttonPrimary`
+slot's colours.
+
+In an IAB TCF policy, a sheet or prompt is shown as the page in a wide window,
+such as a tablet, so the choice covers the screen.
+
+## Choose the provider attribution
+
+The attribution shows the Inth wordmark by default. Set
+`com.inth.consent.brandingProvider` to `c15t` in iOS `Info.plist`, or
+`com.inth.consent.BRANDING_PROVIDER` to `c15t` in Android application metadata,
+for the other built-in provider. Both use bundled marks.
 
 For custom attribution, set `brandingName` and optionally `brandingMark` on
 iOS, or `BRANDING_NAME` and `BRANDING_MARK` on Android. The mark uses a bundled
@@ -208,6 +258,9 @@ the config plugin's `theme` option.
 | App name and mark | `brandName`, `brandMark` | `BRAND_NAME`, `BRAND_MARK` | `brand.name`, `brand.mark` |
 | Show app identity | `brand` | `BRAND` | `brand.hidden` (inverted) |
 | First-layer copy | `headline`, `introduction` | `HEADLINE`, `INTRODUCTION` | None |
+| First-layer layout | `firstLayer` | `FIRST_LAYER` | `firstLayer` |
+| Stock colours | `appearance` | `APPEARANCE` | `appearance` |
+| Save Settings position | `savePlacement` | `SAVE_PLACEMENT` | `savePlacement` |
 | Show provider attribution | `branding` | `BRANDING` | `branding.hidden` (inverted) |
 | Built-in provider | `brandingProvider` | `BRANDING_PROVIDER` | `branding.provider` |
 | Custom provider name and mark | `brandingName`, `brandingMark` | `BRANDING_NAME`, `BRANDING_MARK` | `branding.name`, `branding.mark` |

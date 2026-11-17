@@ -202,8 +202,7 @@ final class ConsentJourneyTests: XCTestCase {
         XCTAssertEqual(button("inth.first-layer.accept-all").label, "Accept All")
         capture("ios-iab-first-layer-disclosures")
         button("inth.first-layer.customize").tap()
-        let explanation = app.staticTexts["inth.iab.legitimate-interest-explanation"]
-        XCTAssertTrue(explanation.waitForExistence(timeout: 5)); XCTAssertTrue(explanation.label.contains("right to object"))
+        XCTAssertTrue(app.switches["inth.prefs.category.experience.switch"].waitForExistence(timeout: 5))
         // One purpose consent on, so a partner consent later shows as Partly on rather than Off.
         let storage = app.switches["inth.iab.purpose.1.consent"]
         reveal(storage); storage.tap(); XCTAssertEqual(storage.value as? String, "1")
@@ -218,6 +217,9 @@ final class ConsentJourneyTests: XCTestCase {
         reveal(li); XCTAssertEqual(li.value as? String, "1") // Starts not objected to; one tap objects.
         li.tap(); XCTAssertEqual(li.value as? String, "0")
         XCTAssertFalse(app.switches["inth.iab.purpose.1.li"].exists)
+        // The explanation of legitimate interest sits under the purposes it applies to.
+        let explanation = app.staticTexts["inth.iab.legitimate-interest-explanation"]
+        reveal(explanation); XCTAssertTrue(explanation.label.contains("right to object"))
         let partners = button("inth.iab.partners"); reveal(partners); partners.tap()
         let search = app.textFields["inth.iab.vendors.search"]
         XCTAssertTrue(search.waitForExistence(timeout: 3)); capture("ios-partner-list")
@@ -262,6 +264,58 @@ final class ConsentJourneyTests: XCTestCase {
         openStandingPreferences(); button("inth.iab.reject-all").tap()
         XCTAssertTrue(button("fixture.open-preferences").waitForExistence(timeout: 5))
         XCTAssertEqual(app.staticTexts["fixture.state.permission.marketing"].label, "marketing: false")
+    }
+    /// The theme an app gets with nothing set: the system page, and Save in the navigation bar.
+    func test32StockThemeSavesFromTheNavigationBar() {
+        launch("fresh-online-iab", theme: "stock")
+        let customize = button("inth.first-layer.customize")
+        XCTAssertTrue(customize.waitForExistence(timeout: 10))
+        // The system page ends its summary in the partners row.
+        XCTAssertTrue(button("inth.first-layer.partner-count").exists)
+        XCTAssertEqual(button("inth.first-layer.reject-all").frame.width, button("inth.first-layer.accept-all").frame.width, accuracy: 1)
+        customize.tap()
+        let save = button("inth.iab.save")
+        XCTAssertTrue(save.waitForExistence(timeout: 5))
+        // One Save, above the list; Reject All and Accept All stay equal in the footer.
+        XCTAssertLessThan(save.frame.maxY, footer.frame.minY)
+        XCTAssertEqual(button("inth.iab.reject-all").frame.width, button("inth.iab.accept-all").frame.width, accuracy: 1)
+        XCTAssertTrue(footer.frame.contains(button("inth.iab.reject-all").frame))
+        let storage = app.switches["inth.iab.purpose.1.consent"]
+        reveal(storage); XCTAssertEqual(storage.value as? String, "0"); storage.tap()
+        save.tap()
+        XCTAssertTrue(button("fixture.open-preferences").waitForExistence(timeout: 5))
+        let summary = app.staticTexts["fixture.state.iab"].label
+        XCTAssertTrue(summary.contains("purposes=[1]"), summary)
+    }
+    /// The sheet and the prompt: equal decisions, a full-size route to the partners, and the card
+    /// again after Back from settings.
+    func test33SheetAndPromptKeepTheirCardAndThePartnersRoute() {
+        for layout in ["sheet", "prompt"] {
+            app = XCUIApplication()
+            app.launchEnvironment = ["C15T_FIXTURE_SCENARIO": "fresh-online-iab", "C15T_FIXTURE_RESET": "1", "C15T_FIXTURE_THEME": "stock", "C15T_FIXTURE_FIRST_LAYER": layout]
+            app.launch()
+            let reject = button("inth.first-layer.reject-all"), accept = button("inth.first-layer.accept-all")
+            XCTAssertTrue(reject.waitForExistence(timeout: 10), layout)
+            XCTAssertEqual(reject.frame.width, accept.frame.width, accuracy: 1, layout)
+            XCTAssertEqual(reject.frame.height, accept.frame.height, accuracy: 1, layout)
+            // The card's own container, which a page does not have, leaves the app visible above it.
+            let container = app.descendants(matching: .any)["inth.first-layer.\(layout)"].firstMatch
+            XCTAssertTrue(container.exists, layout)
+            XCTAssertGreaterThan(container.frame.minY, app.frame.minY + 40, layout)
+            let card = reject.frame.width
+            button("inth.first-layer.customize").tap()
+            XCTAssertTrue(button("inth.prefs.cancel").waitForExistence(timeout: 5), layout)
+            button("inth.prefs.cancel").tap()
+            XCTAssertTrue(reject.waitForExistence(timeout: 5), layout)
+            XCTAssertEqual(reject.frame.width, card, accuracy: 1, "\(layout) came back as a page")
+            XCTAssertTrue(container.exists, "\(layout) came back as a page")
+            let partners = button("inth.first-layer.partner-count")
+            XCTAssertTrue(partners.exists, layout)
+            XCTAssertGreaterThanOrEqual(partners.frame.height, 44, layout)
+            partners.tap()
+            XCTAssertTrue(button("inth.iab.vendors.vendor.1").waitForExistence(timeout: 5), layout)
+            app.terminate()
+        }
     }
     func test05UnavailableAndNotice() {
         launch("fresh-offline-none")
@@ -503,7 +557,7 @@ final class ConsentJourneyTests: XCTestCase {
         button("inth.iab.vendors.back").tap()
         // The special-feature title scales with the rest of the page; test15 tolerates the audit's Dynamic
         // Type finding on this row on that basis. It is about 20pt tall at the default size.
-        let feature = app.switches["inth.iab.special-feature.1.switch"]; reveal(feature)
+        let feature = button("inth.iab.special-feature.1.details"); reveal(feature)
         XCTAssertGreaterThan(feature.staticTexts.firstMatch.frame.height, 60, "special-feature title does not scale")
         let ac = button("inth.iab.other-partners"); reveal(ac); ac.tap()
         XCTAssertTrue(app.textFields["inth.ac.search"].waitForExistence(timeout: 3))
@@ -579,7 +633,7 @@ final class ConsentJourneyTests: XCTestCase {
     }
     /// Findings of the iOS 27 audit that the accessibility review checked against the product and traced to
     /// the OS:
-    /// - one hit-region finding on a first layer with the provider attribution showing: "Secured by c15t" is
+    /// - one hit-region finding on a first layer or Privacy Settings with the provider attribution showing: "Secured by Inth" is
     ///   a labelled, static attribution with no action that the audit treats as a control. Reported with no
     ///   element, so matched by screen and category and counted once
     ///   (`test17FirstLayerHitRegionAuditIsolation` isolates it: hidden attribution, clean audit);
@@ -604,9 +658,11 @@ final class ConsentJourneyTests: XCTestCase {
     func documentedAuditFalsePositive(_ issue: XCUIAccessibilityAuditIssue, screen: String) -> Bool {
         switch issue.auditType {
         case .hitRegion:
-            guard issue.element == nil, screen.hasSuffix("first-layer") else { return false }
+            // Privacy Settings carries the same attribution under its actions.
+            let tag = screen.hasSuffix("first-layer") ? "inth.first-layer.branding" : "inth.prefs.branding"
+            guard issue.element == nil else { return false }
             auditTolerated[screen, default: 0] += 1
-            return auditTolerated[screen]! <= 1 && app.descendants(matching: .any)["inth.first-layer.branding"].firstMatch.exists
+            return auditTolerated[screen]! <= 1 && app.descendants(matching: .any)[tag].firstMatch.exists
         case .contrast:
             guard let element = issue.element else {
                 guard screen == "ax-ax5-save-error" else { return false }
@@ -667,7 +723,7 @@ final class ConsentJourneyTests: XCTestCase {
         for id in ["inth.first-layer.reject-all", "inth.first-layer.accept-all", "inth.first-layer.customize"] { assertNamed(button(id), id) }
         XCTAssertEqual(button("inth.first-layer.reject-all").label, "Reject All")
         XCTAssertEqual(button("inth.first-layer.accept-all").label, "Accept All")
-        XCTAssertEqual(app.descendants(matching: .any)["inth.first-layer.branding"].firstMatch.label, "Secured by c15t")
+        XCTAssertEqual(app.descendants(matching: .any)["inth.first-layer.branding"].firstMatch.label, "Secured by Inth")
         // The brand mark is decorative: the brand name is announced once, not once per image.
         let brandLabels = labelled().filter { $0.label == "Your brand here" }
         XCTAssertEqual(brandLabels.count, 1, "brand announced \(brandLabels.count) times: \(brandLabels)")

@@ -17,6 +17,7 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertContentDescriptionContains
 import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
@@ -102,6 +103,51 @@ class IabPolicyTest {
         assertTrue("first layer is ${root.size.height}px of ${display.heightPixels}px", root.size.height >= display.heightPixels * 0.9)
     }
 
+    // TCF-CHECK: P1
+    @Test fun sheetKeepsItsDecisionsUnderTheScrollingText() = assertCardFooterBelowText(ConsentTheme.FirstLayer.Sheet, "inth.first-layer.sheet")
+
+    // TCF-CHECK: P1
+    @Test fun promptKeepsItsDecisionsUnderTheScrollingText() = assertCardFooterBelowText(ConsentTheme.FirstLayer.Prompt, "inth.first-layer.prompt")
+
+    /** The prompt is translucent, so text that scrolled behind its buttons would show through them. */
+    private fun assertCardFooterBelowText(layout: ConsentTheme.FirstLayer, tag: String) {
+        show(boot(), ConsentTheme(firstLayer = layout))
+        val card = compose.onNodeWithTag(tag).assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+        val text = compose.onNodeWithTag("inth.first-layer").fetchSemanticsNode().boundsInRoot
+        val footer = compose.onNodeWithTag("inth.footer").fetchSemanticsNode().boundsInRoot
+        assertTrue("text $text, footer $footer", footer.top >= text.bottom)
+        assertTrue("card $card, footer $footer", text.top >= card.top && footer.bottom <= card.bottom)
+        // The disclosure is longer than the card, so it scrolls above the decisions and every part stays reachable.
+        for (id in listOf("description", "summary.item.0", "legitimate-interest", "scope", "withdraw")) compose.onNodeWithTag("inth.first-layer.$id").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("inth.first-layer.accept-all").assertIsDisplayed()
+        compose.onNodeWithTag("inth.first-layer.partner-count").performScrollTo().performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("inth.iab.vendors").fetchSemanticsNodes().isNotEmpty() }
+    }
+
+    // TCF-CHECK: P6, P12
+    @Test fun systemPageListsThePurposesAndEndsInThePartnersRow() {
+        val presenter = show(boot(), ConsentTheme(appearance = ConsentTheme.Appearance.System))
+        // The mark stands alone and carries the name.
+        compose.onNodeWithTag("inth.first-layer.brand").assertContentDescriptionEquals(presenter.copy.brandPlaceholder)
+        compose.onNodeWithTag("inth.first-layer.summary.item.0", useUnmergedTree = true).performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("inth.first-layer.partner-count").performScrollTo().assertContentDescriptionEquals("5 partners")
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button)).performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("inth.iab.vendors").fetchSemanticsNodes().isNotEmpty() }
+    }
+
+    @Test fun summaryIconsFollowTheListsStandardNames() {
+        // The demo list defines no stacks; one is added under a name of its own.
+        val list = show(boot()).disclosure!!.list.copy(stacks = mapOf(2 to com.inth.core.tc.GvlStack(name = "Advertising based on limited data")))
+        val icons = SummaryIcons(list)
+        assertSame(SummaryIcons.PURPOSES.getValue(1), icons.icon(list.purposes.getValue(1).name!!))
+        assertSame(SummaryIcons.SPECIAL_FEATURES.getValue(1), icons.icon(list.specialFeatures!!.getValue(1).name!!))
+        assertSame(SummaryIcons.STACK, icons.icon(list.stacks!!.values.first().name!!))
+        assertNotSame(SummaryIcons.STACK, SummaryIcons.PURPOSES.getValue(1))
+        // A name the list does not have, and a missing list, get the stack icon.
+        assertSame(SummaryIcons.STACK, icons.icon("and 3 more"))
+        assertSame(SummaryIcons.STACK, SummaryIcons(null).icon(list.purposes.getValue(1).name!!))
+    }
+
     // TCF-CHECK: P2
     @Test fun firstLayerIsItsOwnScreenWithThePrivacyPolicyOnlyAsALink() {
         val core = boot()
@@ -133,7 +179,7 @@ class IabPolicyTest {
         assertTrue(description, description.contains("process personal data")) // P4
         assertTrue(description, description.contains("such as unique identifiers and browsing data")) // P5
         assertTrue(description, description.contains("5 partners")) // P12
-        compose.onNodeWithTag("inth.first-layer.partner-count").assertContentDescriptionEquals("5 partners")
+        compose.onNodeWithTag("inth.first-layer.partner-count").performScrollTo().assertContentDescriptionEquals("5 partners")
             .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button)).performClick() // P6
         compose.waitUntil(5_000) { compose.onAllNodesWithTag("inth.iab.vendors").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithTag("inth.iab.vendors.vendor.1").assertIsDisplayed()
@@ -301,10 +347,12 @@ class IabPolicyTest {
         val d = presenter.disclosure!!
         assertEquals(listOf(1, 3, 4, 5, 6, 7, 8), d.declaredPurposeIds)
         assertEquals(listOf(1), d.declaredSpecialFeatureIds)
-        for (id in d.declaredPurposeIds) scroll("inth.iab.purpose.$id.consent").assertTextContains(d.list.purposes.getValue(id).name!!, substring = true)
+        for (id in d.declaredPurposeIds) scroll("inth.iab.purpose.$id.consent").assertContentDescriptionEquals(d.list.purposes.getValue(id).name!!)
         assertNoRow("inth.iab.purpose.2.consent")
         assertNoRow("inth.iab.special-feature.2.switch")
-        val feature = scroll("inth.iab.special-feature.1.switch").assertTextContains(d.list.specialFeatures!!.getValue(1).name!!, substring = true).assertIsOff()
+        val feature = scroll("inth.iab.special-feature.1.switch").assertContentDescriptionEquals(d.list.specialFeatures!!.getValue(1).name!!).assertIsOff()
+        // The opt-in note sits on the collapsed row.
+        scroll("inth.iab.special-feature.1.details").assertContentDescriptionEquals("${d.list.specialFeatures!!.getValue(1).name}, ${en.appSpecialFeatureOptIn}, ${en.appDetails}")
         feature.performClick().assertIsOn()
         assertEquals(listOf(1), presenter.choices.specialFeatureOptIns)
         feature.performClick().assertIsOff()
@@ -323,8 +371,10 @@ class IabPolicyTest {
             "inth.iab.feature.1" to list.features!!.getValue(1),
         )
         for ((id, item) in kinds) {
-            scroll("$id.examples").assertTextEquals("${en.preferenceCenterPurposeItemExamples} (${item.illustrations!!.size})").performClick()
+            scroll("$id.details").performClick()
             assertIllustrations("$id.illustrations", item.illustrations!!)
+            // The user-friendly text opens with them.
+            compose.onNode(hasAnyAncestor(hasTestTag(id)) and hasText(item.description!!)).assertExists()
         }
     }
 
@@ -337,13 +387,12 @@ class IabPolicyTest {
         openVendor(1)
         val feature = list.features!!.getValue(1)
         val row = "inth.iab.vendor.1.feature.1"
-        compose.onNodeWithTag(row).performScrollTo()
-            .assert(hasAnyDescendant(hasText(feature.name!!)))
-            .assert(hasAnyDescendant(hasText(feature.description!!)))
-        // Read-only: no switch, only "No choice".
+        compose.onNodeWithTag("$row.details").performScrollTo().assertContentDescriptionEquals("${feature.name}, ${en.appDetails}")
+        // Read-only: no switch, only the status.
         compose.onNodeWithTag("$row.status").assertTextEquals(en.appNoChoice)
         compose.onAllNodes(isToggleable() and hasAnyAncestor(hasTestTag(row))).assertCountEquals(0)
-        compose.onNodeWithTag("$row.examples").performScrollTo().performClick()
+        compose.onNodeWithTag("$row.details").performClick().assertContentDescriptionEquals("${feature.name}, ${en.appHideDetails}")
+        compose.onNodeWithTag(row).assert(hasAnyDescendant(hasText(feature.description!!)))
         val shown = compose.onAllNodes(hasAnyAncestor(hasTestTag("$row.illustrations"))).fetchSemanticsNodes()
             .flatMap { it.config.getOrNull(SemanticsProperties.Text).orEmpty() }.map { it.text }
         assertEquals(feature.illustrations!!.map { "• $it" }, shown)
@@ -440,17 +489,19 @@ class IabPolicyTest {
     // TCF-CHECK: P17, P18, P22, P23, P25
     @Test fun purposeRowsCountPartnersExplainLegitimateInterestAndAllowObjection() {
         val presenter = customize(boot())
-        // The counts sit on the collapsed row, before Details.
-        scroll("inth.iab.purpose.7.consent").assertTextContains("With Your Permission: 3 partners · Legitimate Interest: 3 partners", substring = true) // P25
+        // The counts sit on the collapsed row, before it is opened.
+        val name = presenter.disclosure!!.list.purposes.getValue(7).name!!
+        scroll("inth.iab.purpose.7.details").assertContentDescriptionEquals("$name, With Your Permission: 3 partners · Legitimate Interest: 3 partners, ${en.appDetails}") // P25
         // Purposes 1, 3 and 4 also count the 2 Google ad tech providers, as the web does.
         assertEquals(2, presenter.disclosure!!.adTechProviders!!.size)
-        scroll("inth.iab.purpose.1.consent").assertTextContains("With Your Permission: 5 partners · Legitimate Interest: 0 partners", substring = true) // P25
+        scroll("inth.iab.purpose.1.details").assertContentDescriptionContains("With Your Permission: 5 partners · Legitimate Interest: 0 partners", substring = true) // P25
         compose.onNodeWithTag("inth.iab.purpose.7.li").assertDoesNotExist()
-        scroll("inth.iab.purpose.7.details").performClick()
-        scroll("inth.iab.purpose.7.li-explanation").assertTextEquals(en.appLegitimateInterestExplanation) // P17, P22
+        // The explanation stands under the purposes, beside the switches it explains.
+        scroll("inth.iab.legitimate-interest-explanation").assertTextEquals(en.appLegitimateInterestExplanation) // P17, P22
             .assertTextContains("such as unique identifiers and browsing data", substring = true)
             .assertTextContains("only to this app", substring = true)
             .assertTextContains("right to object", substring = true) // P18
+        scroll("inth.iab.purpose.7.details").performClick()
         // Objecting per purpose.
         val li = scroll("inth.iab.purpose.7.li").assertTextContains("Turn off to object.", substring = true)
         li.assertIsOn().performClick().assertIsOff()
@@ -478,8 +529,11 @@ class IabPolicyTest {
             .performClick().assertIsOn()
         assertEquals(listOf(2), presenter.choices.vendorConsents) // P19: a choice per partner
         compose.onNodeWithTag("inth.iab.vendor.2.li").assertTextContains(list.purposes.getValue(7).name!!, substring = true)
-        for (text in listOf(en.preferenceCenterVendorListSpecialPurposes, list.specialPurposes!!.getValue(1).name!!, en.preferenceCenterFeaturesTitle, list.features!!.getValue(1).name!!,
+        for (text in listOf(en.preferenceCenterVendorListSpecialPurposes, list.specialPurposes!!.getValue(1).name!!, en.preferenceCenterFeaturesTitle,
             en.preferenceCenterVendorListSpecialFeatures, list.specialFeatures!!.getValue(1).name!!)) onPage(2, text).performScrollTo().assertIsDisplayed() // P19
+        // A feature is a row that opens in place, so its name is the row's description.
+        compose.onNodeWithTag("inth.iab.vendor.2.feature.1.details").performScrollTo().assertIsDisplayed()
+            .assertContentDescriptionContains(list.features!!.getValue(1).name!!, substring = true) // P19
         onPage(2, en.appDataCollected).performScrollTo().assertIsDisplayed()
         onPage(2, list.dataCategories!!.getValue(1).name!!).performScrollTo().assertIsDisplayed() // P28
         // Retention for a purpose, a special purpose and the standard period.
@@ -572,7 +626,7 @@ class IabPolicyTest {
         val reject = compose.onNodeWithTag("inth.iab.reject-all").assertIsDisplayed().assertContentDescriptionEquals(en.commonRejectAll)
         val accept = compose.onNodeWithTag("inth.iab.accept-all").assertIsDisplayed().assertContentDescriptionEquals(en.commonAcceptAll)
         // Save takes the shared copy too, not an English literal.
-        compose.onNodeWithTag("inth.iab.save").assertContentDescriptionEquals(en.commonSaveSettings)
+        compose.onNodeWithTag("inth.iab.save").assertContentDescriptionEquals(en.appSave)
         val r = reject.fetchSemanticsNode().boundsInRoot
         val a = accept.fetchSemanticsNode().boundsInRoot
         // One tap, side by side, the same size.
@@ -582,6 +636,44 @@ class IabPolicyTest {
         assertFalse(core.isIabAllowed(1, 7, IabLegalBasis.CONSENT))
         assertFalse(core.isIabAllowed(1, 7, IabLegalBasis.LEGITIMATE_INTEREST))
         assertTrue(TcStringDecoder.decode(core.iabConsent!!.tcString).core.purposeConsents.isEmpty())
+    }
+
+    // TCF-CHECK: P32
+    @Test fun saveAtTheTopLeavesTheTwinsInTheFooter() {
+        val core = boot()
+        val presenter = show(core, ConsentTheme(savePlacement = ConsentTheme.SavePlacement.Top))
+        compose.onNodeWithTag("inth.first-layer.customize").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("inth.iab").fetchSemanticsNodes().isNotEmpty() }
+        val footer = compose.onNodeWithTag("inth.footer").fetchSemanticsNode().boundsInRoot
+        val r = compose.onNodeWithTag("inth.iab.reject-all").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+        val a = compose.onNodeWithTag("inth.iab.accept-all").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+        assertEquals(r.top, a.top, 1f); assertEquals(r.width, a.width, 1f); assertEquals(r.height, a.height, 1f)
+        compose.onNodeWithTag("inth.prefs.branding").assertIsDisplayed().assertContentDescriptionEquals("${presenter.copy.securedBy} Inth")
+        // One Save, with the footer button's tag, above the list.
+        val save = compose.onNodeWithTag("inth.iab.save").assertIsDisplayed().assertContentDescriptionEquals(en.appSave).assertHasClickAction()
+        assertTrue(save.fetchSemanticsNode().boundsInRoot.bottom <= footer.top)
+        scroll("inth.iab.purpose.1.consent").performClick()
+        save.performClick()
+        compose.waitUntil(5_000) { presenter.presentationID == null }
+        assertTrue(1 in TcStringDecoder.decode(core.iabConsent!!.tcString).core.purposeConsents)
+    }
+
+    // TCF-CHECK: P1
+    @Test fun aSheetThemeShowsTheFullPageInAWideWindow() {
+        org.robolectric.RuntimeEnvironment.setQualifiers("w800dp-h1200dp")
+        show(boot(), ConsentTheme(firstLayer = ConsentTheme.FirstLayer.Sheet))
+        compose.onNodeWithTag("inth.first-layer.accept-all").assertExists()
+        compose.onNodeWithTag("inth.first-layer.sheet").assertDoesNotExist()
+    }
+
+    @Test fun saveAtTheBottomStaysUnderTheTwins() {
+        show(boot(), ConsentTheme(showsBranding = false, savePlacement = ConsentTheme.SavePlacement.Bottom))
+        compose.onNodeWithTag("inth.first-layer.customize").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("inth.iab").fetchSemanticsNodes().isNotEmpty() }
+        val reject = compose.onNodeWithTag("inth.iab.reject-all").fetchSemanticsNode().boundsInRoot
+        val save = compose.onNodeWithTag("inth.iab.save").assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+        assertTrue("reject $reject, save $save", save.top >= reject.bottom && save.height > reject.height)
+        compose.onNodeWithTag("inth.prefs.branding").assertDoesNotExist()
     }
 
     // MARK: Helpers

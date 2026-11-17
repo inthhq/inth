@@ -48,8 +48,60 @@ all keep the same `decision` fill and `textOnDecision` label treatment.
 | `typography.fontFamily` | A bundled font for every role except the headline |
 | `typography.headlineFont` | System sans, serif, rounded or a bundled custom headline font |
 | `slots` | One part: `.consentBannerTitle`, `.consentBannerDescription`, `.buttonPrimary` or `.buttonSecondary` |
-| `branding` | `.inth`, `.inth` or `.custom(name:markImageName:)` provider attribution |
+| `branding` | `.inth`, `.c15t` or `.custom(name:markImageName:)` provider attribution. `.inth` is the default |
 | `showsBranding` | Visibility of the provider attribution |
+| `firstLayer` | `.page`, `.sheet` or `.prompt`: how the first choice is presented |
+| `appearance` | `.system` (default) or `.c15t`: where the stock colours come from |
+| `savePlacement` | `.top` (default) or `.bottom`: where Save sits in Privacy Settings |
+
+## Place Save Settings
+
+```swift
+ConsentTheme.current = ConsentTheme(savePlacement: .bottom)
+```
+
+Privacy Settings keeps Reject All and Accept All together at the bottom. Save
+is a short button at the trailing end of the navigation bar by default, which
+leaves more room for the list. `.bottom` makes it a full-width Save Settings
+button under the other two. At accessibility text sizes it is always at the
+bottom.
+
+## Choose a first-layer layout
+
+```swift
+ConsentTheme.current = ConsentTheme(firstLayer: .sheet)
+```
+
+Every layout shows the same text, the same partner link and the same equal
+Accept all and Reject all. Only the container changes.
+
+| Layout | What it is |
+| --- | --- |
+| `page` | A full-screen page. The default. |
+| `sheet` | A floating sheet at the bottom, with your app dimmed behind it. |
+| `prompt` | A centred card like a system permission alert, with your app dimmed behind it. |
+
+Settings opened from Customize always take the full screen. At accessibility
+text sizes every layout becomes `page`, so the decisions follow the text in one
+scroll.
+
+`appearance` chooses the stock colours. `system`, the default, uses the
+platform's backgrounds and text colours with your app's accent colour, and
+centres the page. `c15t` is warm paper and ink. The sheet and the prompt always use the system colours,
+because they sit over your app. Colours you set yourself win in every case.
+
+In an IAB TCF policy, a sheet or prompt is shown as the page in a wide window,
+such as a tablet, so the choice covers the screen. Reject all and Accept all on
+a sheet or prompt are a tint of the surface with the text colour; they do not
+take the primary button slot's colours.
+
+With the system colours, your app's own name stands in for a brand name you
+have not set, and its icon for a brand mark you have not set. Each falls back
+on its own, so a brand name without a mark is shown with the app icon. Accept all and Reject all take your accent colour, darkened until
+white text on it reaches the 5:1 contrast IAB TCF asks for.
+
+The accent colour is the `AccentColor` asset in your app's bundle, or the system
+blue when there is none.
 
 Names that have a web token match it: `primary` is `--c15t-primary`, and
 `radius.md` is `--c15t-radius-md`. A font size groups text styles: `sm` sizes
@@ -85,7 +137,10 @@ priority over both.
 | `com.inth.consent.buttonPrimary.borderRadius` | One slot field, as `<slot>.<field>` |
 | `com.inth.consent.headline` | First-layer headline |
 | `com.inth.consent.introduction` | First-layer introduction |
-| `com.inth.consent.brandingProvider` | `c15t` or `inth` |
+| `com.inth.consent.firstLayer` | `page`, `sheet` or `prompt` |
+| `com.inth.consent.appearance` | `system` or `c15t` |
+| `com.inth.consent.savePlacement` | `top` or `bottom` |
+| `com.inth.consent.brandingProvider` | `inth` or `c15t` |
 | `com.inth.consent.branding` | Boolean controlling provider attribution |
 
 Use a native Boolean for `branding`, rather than the string `"false"`.

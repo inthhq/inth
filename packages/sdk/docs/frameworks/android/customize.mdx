@@ -21,6 +21,9 @@ screens can be reopened from app settings.
 | Type sizes and faces | `typography` |
 | One part, such as the decision buttons | `slots` |
 | Provider name in the attribution | `branding` |
+| A page, a sheet or a prompt for the first choice | `firstLayer` |
+| c15t colours or the system's, with your accent | `appearance` |
+| Save Settings at the bottom or in the top bar | `savePlacement` |
 | Entirely app-owned controls | [Headless integration](/docs/frameworks/android/headless) |
 
 ## Add your brand
@@ -88,11 +91,58 @@ it until you set them.
 `ButtonPrimary` and `ButtonSecondary`, each with `color`, `backgroundColor`,
 `borderRadius` and `fontSize`.
 
+## Place Save Settings
+
+```kotlin
+ConsentTheme.current = ConsentTheme(savePlacement = ConsentTheme.SavePlacement.Bottom)
+```
+
+Privacy Settings keeps Reject All and Accept All together at the bottom. Save
+is a short button at the end of the top app bar by default, which leaves more
+room for the list. `Bottom` makes it a full-width Save Settings button under
+the other two. At large font scales it is always at the bottom.
+
+## Choose a first-layer layout
+
+```kotlin
+ConsentTheme.current = ConsentTheme(firstLayer = ConsentTheme.FirstLayer.Sheet)
+```
+
+Every layout shows the same text, the same partner link and the same equal
+Accept all and Reject all. Only the container changes.
+
+| Layout | What it is |
+| --- | --- |
+| `page` | A full-screen page. The default. |
+| `sheet` | A floating sheet at the bottom, with your app dimmed behind it. |
+| `prompt` | A centred card like a system permission alert, with your app dimmed behind it. |
+
+Settings opened from Customize always take the full screen. At accessibility
+text sizes every layout becomes `page`, so the decisions follow the text in one
+scroll.
+
+`appearance` chooses the stock colours. `system`, the default, uses the
+platform's backgrounds and text colours with your app's accent colour, and
+centres the page. `c15t` is warm paper and ink. The sheet and the prompt always use the system colours,
+because they sit over your app. Colours you set yourself win in every case.
+
+In an IAB TCF policy, a sheet or prompt is shown as the page in a wide window,
+such as a tablet, so the choice covers the screen. Reject all and Accept all on
+a sheet or prompt are a tint of the surface with the text colour; they do not
+take the primary button slot's colours.
+
+With the system colours, your app's own name stands in for a brand name you
+have not set, and its icon for a brand mark you have not set. Each falls back
+on its own, so a brand name without a mark is shown with the app icon. Accept all and Reject all take your accent colour, darkened until
+white text on it reaches the 5:1 contrast IAB TCF asks for.
+
+The accent colour is your application theme's `colorPrimary`.
+
 ## Separate app identity from attribution
 
 `brand` identifies the app. `branding` identifies the consent provider in the
 attribution beneath the actions. The built-in providers are
-`ConsentTheme.Branding.C15t` and `.Inth`. A custom provider uses
+`ConsentTheme.Branding.Inth`, the default, and `.C15t`. A custom provider uses
 `Branding.Custom(name, markResId)`; its mark is optional. `showsBranding = false`
 hides that attribution.
 
@@ -120,7 +170,10 @@ same native presenter is opened through a wrapper.
 | `com.inth.consent.BRAND_NAME`, `BRAND_MARK` | App name and drawable resource. |
 | `com.inth.consent.BRAND` | `false` hides app identity. |
 | `com.inth.consent.HEADLINE`, `INTRODUCTION` | First-layer copy. |
-| `com.inth.consent.BRANDING_PROVIDER` | `c15t` or `inth`. |
+| `com.inth.consent.FIRST_LAYER` | `page`, `sheet` or `prompt`. |
+| `com.inth.consent.APPEARANCE` | `system` or `c15t`. |
+| `com.inth.consent.SAVE_PLACEMENT` | `top` or `bottom`. |
+| `com.inth.consent.BRANDING_PROVIDER` | `inth` or `c15t`. |
 | `com.inth.consent.BRANDING_NAME`, `BRANDING_MARK` | Custom provider name and drawable. |
 | `com.inth.consent.BRANDING` | `false` hides provider attribution. |
 

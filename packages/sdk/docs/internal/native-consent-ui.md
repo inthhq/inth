@@ -83,7 +83,42 @@ Additional Consent partner search and choices, required privacy-policy links,
 notice acknowledgement and standing withdrawal. Accept and Reject share the
 same style and dimensions. Stock copy is English in this prototype.
 
+## Privacy Settings rows
+
+Every row of Privacy Settings is one pattern: a symbol, the standard name and a
+note, with the control at the trailing edge. Tapping the name opens the rest in
+place. A purpose's note is its partner counts, one per line, so they are on the
+collapsed row and not behind the details. Its details hold the user-friendly
+text, the legal text, the standard illustrations, the link to its partners and
+the legitimate-interest switch. Special purposes and features use the same row
+with no control. The legitimate-interest explanation sits under the purposes
+it applies to. Symbols are chosen by vendor-list id and only label a row; at
+accessibility text sizes they are dropped.
+
+The footer holds Reject All and Accept All as equal tonal buttons, Save
+Settings as the one filled button, and the provider tag.
+By default Save is a short button in the navigation bar and only the twins
+are in the footer; `ConsentTheme.savePlacement = bottom` puts the filled Save
+Settings button under them. Accessibility text sizes keep Save at the bottom.
+
 ## Appearance
+
+`ConsentTheme.firstLayer` chooses the first choice's container: `page` (the
+default), `sheet` (a floating sheet over the dimmed app) or `prompt` (a centred,
+translucent card like a system permission alert). All three draw the same first
+layer: the same sentences, partner link, summary lines and equal decisions, with
+the decisions in a row of their own under the text so nothing scrolls behind
+them. From the first accessibility text size every layout is the page, and so is an
+IAB TCF choice in a wide window (regular width or a phone in landscape on iOS, 600dp on Android), where
+a card would cover a fraction of the screen. On a card, Reject all and Accept
+all are an opaque tint of the surface with the text colour, or black or white
+where the text colour would fall under 5:1; they ignore the `buttonPrimary` slot.
+`ConsentTheme.appearance` chooses the stock colours: `system`, the default, for
+the platform's backgrounds and labels with the app's accent, or `c15t`. The sheet and prompt
+always take the system colours. With them the app's own name and icon each stand in for a
+brand name or mark the theme does not set, the system page shows a symbol beside each summary
+line, and the decision fill is the accent darkened until white text on it reaches
+5:1. The rest of this section describes the `c15t` page.
 
 The first choice is a full-screen page, not a sheet. It cannot be swiped away,
 so it does not look like something that can be. Customize pushes category and
@@ -92,7 +127,7 @@ recording anything. Standing settings opened later from the host's own Privacy
 entry are a large sheet on iOS and a full-screen window with Close on Android,
 because by then the app behind them belongs to the user.
 
-The stock appearance is warm paper (`#F8F4EE` light, `#171411` dark), ink text,
+The `c15t` appearance is warm paper (`#F8F4EE` light, `#171411` dark), ink text,
 the platform system typeface, and Inth blue only for links, switches and Save.
 Headlines use San Francisco on iOS and the system sans serif on Android; a host
 can still opt into a different headline face.
@@ -176,7 +211,7 @@ slots (`consentBannerTitle`, `consentBannerDescription`, `buttonPrimary`,
 `buttonSecondary`) with `color`, `backgroundColor`, `borderRadius` and
 `fontSize`, a brand name and
 mark, the headline and introduction copy, and the provider name and logo in the
-"Secured by" tag. The tag uses the bundled c15t logo by default. Decision labels, category copy and every partner disclosure stay native
+"Secured by" tag. The tag shows the bundled Inth wordmark by default, centred under the actions. Decision labels, category copy and every partner disclosure stay native
 and are not themeable: the theme cannot make Accept louder than Reject, hide a
 decision, or change what a choice means.
 
@@ -255,7 +290,7 @@ ConsentTheme.current = ConsentTheme(branding = ConsentTheme.Branding.Inth)
 ConsentTheme.current = ConsentTheme(branding = ConsentTheme.Branding.Custom(name = "Example", markResId = R.drawable.example_logo))
 ```
 
-For binary configuration, set `brandingProvider` / `BRANDING_PROVIDER` to `inth`.
+For binary configuration, set `brandingProvider` / `BRANDING_PROVIDER` to `c15t` for the previous mark; `inth` is the default.
 For a custom provider, set `brandingName` / `BRANDING_NAME` and optionally
 `brandingMark` / `BRANDING_MARK`. A custom name without a logo renders text only;
 it never keeps an unrelated c15t or Inth logo. A custom name takes precedence
