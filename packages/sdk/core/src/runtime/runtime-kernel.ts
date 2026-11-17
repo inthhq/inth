@@ -160,8 +160,8 @@ const runtimeOwner = function runtimeOwner(pkg: string): string {
 };
 
 /**
- * The transport factory the runtime's options select: the `testing`
- * value's, then `mode`, then the hosted backend at `backendURL`.
+ * The transport factory the runtime's options select: `mode` when it is a
+ * factory or a `testing()` value, else the hosted backend at `backendURL`.
  *
  * @param options - The runtime options.
  * @param hostedMode - Builds the factory for `backendURL`.
@@ -169,16 +169,18 @@ const runtimeOwner = function runtimeOwner(pkg: string): string {
  * @internal
  */
 export const selectTransportFactory = function selectTransportFactory(
-	options: Pick<ConsentRuntimeOptions, 'backendURL' | 'mode' | 'testing'>,
+	options: Pick<ConsentRuntimeOptions, 'backendURL' | 'mode'>,
 	hostedMode?: (backendURL: string) => ProviderTransportFactory
 ): ProviderTransportFactory | undefined {
-	// A testing value that crossed a serialization boundary is data only;
-	// the browser side builds its transport.
-	if (options.testing?.transport) {
-		return options.testing.transport;
+	const { mode } = options;
+	if (typeof mode === 'function') {
+		return mode;
 	}
-	if (typeof options.mode === 'function') {
-		return options.mode;
+	// A `testing()` value carries its transport, not enumerable. One that
+	// crossed a serialization boundary is data only; the browser side
+	// builds its transport.
+	if (mode && 'transport' in mode && mode.transport) {
+		return mode.transport;
 	}
 	if (options.backendURL !== undefined && hostedMode) {
 		return hostedMode(options.backendURL);
@@ -187,24 +189,14 @@ export const selectTransportFactory = function selectTransportFactory(
 };
 
 /**
- * The runtime's transport factory, or an error naming the package and,
- * outside production, the API that got no backend. `process.env.NODE_ENV`
- * is read inline, so bundlers drop the API names from production builds.
- *
- * @internal
+ * The error for a runtime with no backend, naming the package and, outside
+ * production, the API that got no backend. `process.env.NODE_ENV` is read
+ * inline, so bundlers drop the API names from production builds.
  */
-export const requireTransportFactory = function requireTransportFactory(
-	options: Pick<
-		ConsentRuntimeOptions,
-		'backendURL' | 'mode' | 'pkg' | 'testing'
-	>,
-	hostedMode?: (backendURL: string) => ProviderTransportFactory
-): ProviderTransportFactory {
-	const factory = selectTransportFactory(options, hostedMode);
-	if (factory) {
-		return factory;
-	}
-	let caller = options.pkg ?? '@c15t/core';
+const missingBackendError = function missingBackendError(
+	pkg: string | undefined
+): Error {
+	let caller = pkg ?? '@c15t/core';
 	try {
 		if (process.env.NODE_ENV !== 'production') {
 			caller = `${caller} ${runtimeOwner(caller)}`;
@@ -212,7 +204,39 @@ export const requireTransportFactory = function requireTransportFactory(
 	} catch {
 		// No bundler and no `process`: the package name has to do.
 	}
-	throw new Error(`${caller}: \`backendURL\` is required.`);
+	return new Error(
+		`${caller}: \`backendURL\` is required. Set it to your Inth project URL, or use \`mode: testing()\` from a /testing entry in tests.`
+	);
+};
+
+/**
+ * The runtime's transport factory, or an error naming the package and the
+ * API that got no backend.
+ *
+ * A runtime created with `enabled: false` needs no backend while it stays
+ * disabled: it gets a transport whose init rejects with the same error,
+ * which only runs if the runtime is enabled later.
+ *
+ * @internal
+ */
+export const requireTransportFactory = function requireTransportFactory(
+	options: Pick<ConsentRuntimeOptions, 'backendURL' | 'enabled' | 'mode' | 'pkg'>,
+	hostedMode?: (backendURL: string) => ProviderTransportFactory
+): ProviderTransportFactory {
+	const factory = selectTransportFactory(options, hostedMode);
+	if (factory) {
+		return factory;
+	}
+	const error = missingBackendError(options.pkg);
+	if (options.enabled === false) {
+		return Object.assign(
+			(): KernelTransport => ({
+				init: () => Promise.reject(error),
+			}),
+			{ kind: 'hosted' as const }
+		);
+	}
+	throw error;
 };
 
 /**
@@ -251,7 +275,7 @@ export const inferConsentCategories = function inferConsentCategories(
  * @param wrapTransport - Wraps the transport `mode` builds before the kernel
  *   gets it. The browser runtime adds its consent journey this way.
  * @param mode - The transport factory. Defaults to the one the options
- *   select without a hosted builder: `testing`, then `mode`.
+ *   select without a hosted builder: a factory or `testing()` in `mode`.
  * @returns A fresh, unstarted consent kernel.
  * @throws {Error} When the options select no transport factory.
  */

@@ -14,7 +14,7 @@ import { createNetworkBlocker } from '../../modules/network-blocker';
 import { holdNetworkRequests } from '../../modules/network-blocker/hold';
 import { createPersistence } from '../../modules/persistence';
 import { createScriptLoader } from '../../modules/script-loader';
-import { withoutNetwork } from '../../testing';
+import { testing } from '../../testing';
 import { resolveLocalTranslations } from '../../translations';
 import type { KernelTransport } from '../../types';
 import {
@@ -459,7 +459,7 @@ describe('offline copy with every bundled language loaded', () => {
 
 	test('a language set through the kernel switches to the bundled copy', async () => {
 		const kernel = createRuntimeKernel({
-			testing: withoutNetwork(),
+			mode: testing(),
 		});
 		await kernel.commands.init();
 

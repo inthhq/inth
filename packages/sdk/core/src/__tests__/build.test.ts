@@ -136,12 +136,29 @@ describe('@c15t/core/generated in Vite', () => {
 		expect(withoutURL).toContain('const backendURL = void 0;');
 	});
 
-	test('a build that reads the snapshot fails when the fetch fails', async () => {
+	test('a build that reads the snapshot bundles an undefined snapshot when the fetch fails', async () => {
+		const root = await createRoot();
+		const options = optionsFor(root);
+		options.fetch.mockRejectedValue(new Error('backend unavailable'));
+		const code = await buildEntry(
+			root,
+			consentManifest(options),
+			"import { snapshot } from '@c15t/core/generated';\nexport const policy = snapshot ?? 'no snapshot';\n"
+		);
+		expect(code).toContain('no snapshot');
+		expect(options.fetch).toHaveBeenCalledTimes(1);
+	});
+
+	test("onBuildError: 'fail' stops a build that reads the snapshot when the fetch fails", async () => {
 		const root = await createRoot();
 		const options = optionsFor(root);
 		options.fetch.mockRejectedValue(new Error('backend unavailable'));
 		await expect(
-			buildEntry(root, consentManifest(options), GENERATED_ENTRY)
+			buildEntry(
+				root,
+				consentManifest({ ...options, onBuildError: 'fail' }),
+				GENERATED_ENTRY
+			)
 		).rejects.toThrow('during the build (backend unavailable)');
 		expect(options.fetch).toHaveBeenCalledTimes(1);
 	});
@@ -151,7 +168,11 @@ describe('@c15t/core/generated in Vite', () => {
 		const options = optionsFor(root);
 		options.fetch.mockRejectedValue(new Error('backend unavailable'));
 		await expect(
-			buildEntry(root, consentManifest(options), GENERATED_ENTRY)
+			buildEntry(
+				root,
+				consentManifest({ ...options, onBuildError: 'fail' }),
+				GENERATED_ENTRY
+			)
 		).rejects.toThrow(
 			"pass `source: 'runtime'` to this plugin so the build skips this download."
 		);
@@ -1042,9 +1063,18 @@ describe('build-time manifest policy', () => {
 			}),
 		});
 
-	test('stops a production build by default and leaves no file', async () => {
+	test('warns in a production build by default and writes an undefined snapshot', async () => {
 		const fetch = vi.fn<typeof globalThis.fetch>().mockRejectedValue(refused());
-		const { error, root } = await write({ fetch });
+		const { logger, source } = await write({ fetch });
+		expect(source).toContain(STUB);
+		expect(logger.warn).toHaveBeenCalledWith(
+			"could not fetch the consent manifest from https://consent.example.com/manifest during the build (fetch failed: connect ECONNREFUSED 127.0.0.1:9). The server fetches it at runtime instead, and asks the backend's /init while it is unavailable. Set `C15T_ON_BUILD_ERROR=fail` (or `onBuildError: 'fail'`) to stop the build on this error."
+		);
+	});
+
+	test("onBuildError: 'fail' stops a production build and leaves no file", async () => {
+		const fetch = vi.fn<typeof globalThis.fetch>().mockRejectedValue(refused());
+		const { error, root } = await write({ fetch, onBuildError: 'fail' });
 		expect(error?.message).toBe(
 			"test/build: could not fetch the consent manifest from https://consent.example.com/manifest during the build (fetch failed: connect ECONNREFUSED 127.0.0.1:9). Set `C15T_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to deploy with runtime fetching."
 		);
@@ -1058,7 +1088,7 @@ describe('build-time manifest policy', () => {
 		const { logger, source } = await write({ fetch }, 'dev');
 		expect(source).toContain(STUB);
 		expect(logger.warn).toHaveBeenCalledWith(
-			'could not fetch the consent manifest from https://consent.example.com/manifest during dev (fetch failed: connect ECONNREFUSED 127.0.0.1:9). The server fetches it at runtime instead. A production build stops on this error.'
+			"could not fetch the consent manifest from https://consent.example.com/manifest during dev (fetch failed: connect ECONNREFUSED 127.0.0.1:9). The server fetches it at runtime instead, and asks the backend's /init while it is unavailable. Set `C15T_ON_BUILD_ERROR=fail` (or `onBuildError: 'fail'`) to stop the build on this error."
 		);
 	});
 
@@ -1126,9 +1156,12 @@ describe('build-time manifest policy', () => {
 	);
 
 	test.each([undefined, ''])(
-		'a production build fails without a backend URL (%j)',
+		"onBuildError: 'fail' stops a production build without a backend URL (%j)",
 		async (backendURL) => {
-			const { error, options } = await write({ backendURL });
+			const { error, options } = await write({
+				backendURL,
+				onBuildError: 'fail',
+			});
 			expect(error?.message).toBe(
 				"test/build: no backend URL is set, so the build cannot fetch the consent manifest. Pass backendURL or set VITE_C15T_BACKEND_URL (or VITE_INTH_PROJECT_URL). Set `C15T_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to build without a snapshot."
 			);
@@ -1136,13 +1169,16 @@ describe('build-time manifest policy', () => {
 		}
 	);
 
-	test('dev warns without a backend URL', async () => {
-		const { logger, source } = await write({ backendURL: undefined }, 'dev');
-		expect(source).toContain(STUB);
-		expect(logger.warn).toHaveBeenCalledWith(
-			'no backend URL is set, so dev cannot fetch the consent manifest. Pass backendURL or set VITE_C15T_BACKEND_URL (or VITE_INTH_PROJECT_URL). A production build stops on this error.'
-		);
-	});
+	test.each(['build', 'dev'] as const)(
+		'%s warns without a backend URL',
+		async (command) => {
+			const { logger, source } = await write({ backendURL: undefined }, command);
+			expect(source).toContain(STUB);
+			expect(logger.warn).toHaveBeenCalledWith(
+				`no backend URL is set, so ${command === 'build' ? 'the build' : 'dev'} cannot fetch the consent manifest. Pass backendURL or set VITE_C15T_BACKEND_URL (or VITE_INTH_PROJECT_URL). The server fetches it at runtime, or asks the backend's /init.`
+			);
+		}
+	);
 
 	test("onBuildError: 'runtime' skips a build without a backend URL with a notice", async () => {
 		const { logger, source } = await write({
@@ -1271,7 +1307,7 @@ describe('build snapshot validation', () => {
 			);
 			await expect(
 				writeManifestCacheModule(
-					options,
+					{ ...options, onBuildError: 'fail' },
 					{
 						command: 'build',
 						importSource: 'c15t/build',

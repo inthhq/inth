@@ -13,7 +13,7 @@
  *
  * Use cases:
  * - Pure static sites with no backend.
- * - Server-side resolution of a `withoutNetwork()` test page.
+ * - Server-side resolution of a `testing()` test page.
  * - Apps that deliberately choose a bundled policy instead of a backend.
  */
 import type {
@@ -252,7 +252,7 @@ export interface OfflineModeOptions {
 /**
  * A transport factory that resolves `policyRules` in the browser, kept on
  * `@c15t/core/transports` only for `@c15t/react-native`'s web tests.
- * Providers take `testing: withoutNetwork()` from a `/testing` entry.
+ * Providers take `mode: testing()` from a `/testing` entry.
  *
  * @deprecated Remove once `@c15t/react-native` no longer imports it.
  * @param options - The rules to resolve and `acknowledgeNoRecords`.

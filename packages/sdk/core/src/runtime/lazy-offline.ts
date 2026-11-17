@@ -1,5 +1,5 @@
 /**
- * The `withoutNetwork()` transport, as the chunk `clientMode()` loads on
+ * The `testing()` transport, as the chunk `clientMode()` loads on
  * first init.
  *
  * Bundled with everything it imports, for the reason `lazy-hosted.ts`
@@ -8,4 +8,4 @@
  *
  * @internal
  */
-export { withoutNetworkTransport } from '../transports/without-network';
+export { testingTransport } from '../transports/testing';

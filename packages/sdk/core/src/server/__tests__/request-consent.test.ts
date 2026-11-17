@@ -458,6 +458,47 @@ describe('modes', () => {
 		).toContain('notice-default');
 	});
 
+	test('manifest mode answers from the backend /init, with a warning, when the manifest is unavailable', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+		const answers = upstream(MANIFEST, INIT);
+		const fetch = vi.fn<typeof globalThis.fetch>((input, init) =>
+			target(input).endsWith('/manifest')
+				? Promise.resolve(new Response('missing', { status: 404 }))
+				: answers(input, init)
+		);
+		const onError = vi.fn();
+		const state = await render({
+			backendURL: `${BACKEND}/fallback`,
+			fetch,
+			mode: 'manifest',
+			onError,
+		});
+		expect(callsTo(fetch, '/manifest')).toHaveLength(1);
+		expect(callsTo(fetch, '/init')).toHaveLength(1);
+		expect(state.initialPolicyResolution?.status).toBe('matched');
+		expect(onError).not.toHaveBeenCalled();
+		expect(warn).toHaveBeenCalledWith(
+			expect.stringContaining(
+				`could not read the consent manifest from ${BACKEND}/fallback/manifest`
+			)
+		);
+		warn.mockRestore();
+	});
+
+	test('manifest mode keeps a misconfigured source an error instead of asking /init', async () => {
+		const fetch = upstream();
+		const onError = vi.fn();
+		const state = await render({ fetch, mode: 'manifest', onError });
+		expect(fetch).not.toHaveBeenCalled();
+		expect(state.initialPolicyResolution).toBeUndefined();
+		expect(onError).toHaveBeenCalledWith(
+			expect.objectContaining({
+				message: expect.stringContaining('pass backendURL or manifestURL'),
+			}),
+			undefined
+		);
+	});
+
 	test('an inline manifest needs no network', async () => {
 		const fetch = upstream();
 		const state = await render({ fetch, manifest: MANIFEST });

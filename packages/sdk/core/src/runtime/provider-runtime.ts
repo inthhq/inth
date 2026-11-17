@@ -314,11 +314,6 @@ export const createConsentProviderRuntime =
 					if (key === 'mode') {
 						return mode;
 					}
-					// `mode` is the factory `testing` selected, so the runtime
-					// that reads this view picks it, not the testing value.
-					if (key === 'testing') {
-						return undefined;
-					}
 					if (key === 'prefetch') {
 						if (on && adoptedPrefetch) {
 							return adoptedPrefetch;

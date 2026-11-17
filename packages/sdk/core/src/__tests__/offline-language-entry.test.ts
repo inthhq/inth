@@ -7,13 +7,13 @@ import { translations as italian } from '@c15t/translations/it';
 import { describe, expect, test } from 'vitest';
 
 import { createConsentRuntime } from '../runtime';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 
 describe('offline(): a language imported from its own entry', () => {
 	test('switches the copy to that language and no other', async () => {
 		const runtime = createConsentRuntime({
 			persistence: false,
-			testing: withoutNetwork(),
+			mode: testing(),
 			windowDebug: false,
 		});
 		const { kernel } = runtime;

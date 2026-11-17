@@ -53,7 +53,8 @@ import type { Callbacks } from '../options/callbacks';
 import type { IABConfig } from '../options/iab';
 import type { User } from '../options/user';
 import type { ProviderTransportFactory } from '../transports/mode';
-import type { ConsentTesting } from '../transports/without-network';
+import type { HostedMode } from '../modes';
+import type { ConsentTesting } from '../transports/testing';
 import type {
 	ConsentKernel,
 	ConsentSnapshot,
@@ -401,28 +402,27 @@ export interface ConsentRuntimeOptions {
 	 */
 	enabled?: boolean;
 	/**
-	 * Backend URL, relative (`/api/c15t`) or absolute. Setting it is how a
-	 * runtime talks to the hosted backend: each init asks `${backendURL}/init`
-	 * and saves go to `${backendURL}/subjects`. Initial-only.
+	 * Backend URL, relative (`/api/c15t`) or absolute. Each init asks
+	 * `${backendURL}/init` (or reads its consent manifest with
+	 * `mode: manifest()`), and saves go to `${backendURL}/subjects`.
+	 * Required unless `mode` is `testing()` or `enabled` is `false`; a
+	 * runtime without one throws. Initial-only.
 	 */
 	backendURL?: string;
 	/**
-	 * Resolve the policy from the backend's consent manifest instead of
-	 * asking `/init`: pass `manifest()` from
-	 * `@c15t/core/transports/manifest-browser`. Omit it to use the hosted
-	 * backend at `backendURL`. Initial-only.
-	 */
-	mode?: ProviderTransportFactory;
-	/**
-	 * Replace the backend in a test. Pass `withoutNetwork()` from
-	 * `@c15t/core/testing`, which resolves the recommended policy pack in
-	 * the browser and throws in production builds. Wins over `backendURL`
-	 * and `mode`. Initial-only.
+	 * How the visitor's policy is resolved. Initial-only.
+	 *
+	 * - Omitted, or `hosted()` from `@c15t/core`: ask `${backendURL}/init`.
+	 * - `manifest()` from `@c15t/core/transports/manifest-browser`: resolve
+	 *   from the backend's consent manifest in the browser, falling back to
+	 *   `/init` with a warning when the manifest is unavailable.
+	 * - `testing()` from `@c15t/core/testing`: resolve a policy with no
+	 *   backend, for tests. It throws in production builds.
 	 *
 	 * To keep consent out of the way in an app's own tests instead, set
 	 * `enabled: false`.
 	 */
-	testing?: ConsentTesting;
+	mode?: ProviderTransportFactory | HostedMode | ConsentTesting;
 	/** Cookie/localStorage naming and lifetime for stored consent. */
 	storageConfig?: StorageConfig;
 	/**
@@ -591,9 +591,25 @@ export interface ConsentProviderRuntimeOptions extends Omit<
 }
 
 /**
+ * What makes a provider's options complete: a `backendURL`, a `testing()`
+ * mode, or `enabled: false`. Entry points take their options as
+ * `WithBackendURL<Options>`, so TypeScript asks for `backendURL` unless
+ * the options are for a test or turned off.
+ *
+ * @typeParam T - The entry point's options.
+ * @typeParam TTesting - What that entry point's `testing()` returns.
+ */
+export type WithBackendURL<T, TTesting = ConsentTesting> = T &
+	(
+		| { backendURL: string }
+		| { mode: TTesting }
+		| { enabled: false }
+	);
+
+/**
  * The option set {@link ConsentProviderRuntime.update} takes: the whole
  * current options, the way a component re-renders with all of its props.
- * `backendURL`, `mode` and `testing` are read once.
+ * `backendURL` and `mode` are read once.
  */
 export type ConsentRuntimeUpdate = ConsentProviderRuntimeOptions;
 
@@ -727,7 +743,7 @@ export interface ConsentRuntime {
 	 * ```ts
 	 * const runtime = createConsentRuntime({
 	 *   iframeBlocker: { disableAutomaticBlocking: true },
-	 *   testing: withoutNetwork(),
+	 *   mode: testing(),
 	 * });
 	 * runtime.start();
 	 * container.append(embed);

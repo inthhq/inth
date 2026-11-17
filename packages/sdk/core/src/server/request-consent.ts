@@ -79,6 +79,7 @@ import {
 	mapInitOutputToInitResponse,
 	mergeInitResponseIntoKernelConfig,
 } from '../transports/init-output';
+import { warnManifestFallback } from '../libs/manifest-fallback';
 import { createOfflineTransport } from '../transports/offline';
 import type { OfflineTransportOptions } from '../transports/offline';
 import {
@@ -844,6 +845,10 @@ export const resolveRequestConsent = async function resolveRequestConsent(
 	};
 
 	/** The manifest through the process cache, and what was sent for it. */
+	// The manifest URL the last read failed on: only that failure falls
+	// back to `/init`, not a missing or misconfigured source.
+	let manifestSource: string | undefined;
+	let unavailableManifest: string | undefined;
 	const loadManifest = async function loadManifest(): Promise<{
 		manifest: ConsentManifest;
 		credentials: Record<string, string> | undefined;
@@ -864,6 +869,7 @@ export const resolveRequestConsent = async function resolveRequestConsent(
 		}
 		const source = resolveTarget(sourceURL);
 		const credentials = manifestCredentials(source);
+		manifestSource = source.url;
 		try {
 			const { manifest } = await fetchCachedManifest({
 				cache: options.cache,
@@ -878,6 +884,7 @@ export const resolveRequestConsent = async function resolveRequestConsent(
 			});
 			return { credentials, manifest };
 		} catch (error) {
+			unavailableManifest = manifestSource;
 			throw new RequestConsentError(
 				`${options.adapter}: the manifest at ${source.url} could not be read.`,
 				source.url,
@@ -1107,10 +1114,35 @@ export const resolveRequestConsent = async function resolveRequestConsent(
 			return mergeInitResponseIntoKernelConfig(base, response ?? undefined);
 		};
 
+	/**
+	 * Manifest mode, falling back to the backend's `/init` with a warning
+	 * when the manifest could not be read and time is left. A missing or
+	 * misconfigured source stays an error.
+	 */
+	const resolveFromManifestOrInit =
+		async function resolveFromManifestOrInit(): Promise<RequestConsentState> {
+			try {
+				return await resolveFromManifest();
+			} catch (error) {
+				const cause = (error as { cause?: unknown }).cause;
+				if (
+					unavailableManifest === undefined ||
+					!(options.initURL || options.backendURL) ||
+					remaining() === 0 ||
+					(cause instanceof ManifestUnavailableError &&
+						cause.reason === 'timeout')
+				) {
+					throw error;
+				}
+				warnManifestFallback(unavailableManifest, cause ?? error);
+				return await resolveFromHosted();
+			}
+		};
+
 	const run = (): Promise<RequestConsentState> => {
 		switch (mode) {
 			case 'manifest':
-				return resolveFromManifest();
+				return resolveFromManifestOrInit();
 			case 'offline':
 				return resolveOffline();
 			default:

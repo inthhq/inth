@@ -1393,15 +1393,40 @@ describe('/init fallback for a backend without /manifest', () => {
 		}
 	);
 
-	test('does not send every request to /init while the manifest backs off', async () => {
+	test('falls back to /init while the manifest backs off, without asking the manifest again', async () => {
 		const fetch = vi.fn<ManifestFetch>(() =>
 			Promise.resolve(new Response('unavailable', { status: 503 }))
 		);
 		const handle = route({ fetch });
 		await expect(handle(request('/api/c15t/init'))).rejects.toThrow(/503/u);
 		await expect(handle(request('/api/c15t/init'))).rejects.toThrow();
-		// The first request tried the manifest and fell back to /init once.
-		expect(fetch).toHaveBeenCalledTimes(2);
+		expect(calledURLs(fetch)).toEqual([
+			`${BACKEND}/manifest`,
+			`${BACKEND}/init`,
+			`${BACKEND}/init`,
+		]);
+	});
+
+	test('answers from /init with a warning when the manifest fails', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+		const answer = backendInit({
+			location: { countryCode: 'DE', regionCode: null },
+			policyResolution: matchedIab(),
+			translations: { language: 'en', translations: {} },
+		});
+		const fetch = vi.fn<ManifestFetch>((url, init) =>
+			String(url).endsWith('/manifest')
+				? Promise.resolve(new Response('unavailable', { status: 500 }))
+				: answer(url, init)
+		);
+		const handle = route({ backendURL: `${BACKEND}/warn`, fetch });
+		expect((await handle(request('/api/c15t/init'))).ok).toBe(true);
+		expect(warn).toHaveBeenCalledWith(
+			expect.stringContaining(
+				`could not read the consent manifest from ${BACKEND}/warn/manifest`
+			)
+		);
+		warn.mockRestore();
 	});
 
 	test('keeps falling back for a backend that has no /manifest', async () => {

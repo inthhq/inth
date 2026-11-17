@@ -9,7 +9,7 @@ import { describe, expect, test } from 'vitest';
 
 import { createConsentKernel, resolveLocalTranslations } from '../index';
 import { createConsentRuntime } from '../runtime';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 import { createOfflineTransport } from '../transports/offline';
 
 describe('createOfflineTransport: basic behavior', () => {
@@ -251,7 +251,7 @@ describe('offline transports: language changes', () => {
 		const runtime = createConsentRuntime({
 			i18n: { messages } as never,
 			persistence: false,
-			testing: withoutNetwork(),
+			mode: testing(),
 			windowDebug: false,
 		});
 		const { kernel } = runtime;
@@ -302,7 +302,7 @@ describe('offline transports: language changes', () => {
 			i18n: { locale: 'en', messages } as never,
 			persistence: false,
 			prefetch: { initialOverrides: { language: 'de' } },
-			testing: withoutNetwork(),
+			mode: testing(),
 			windowDebug: false,
 		});
 		const { kernel } = runtime;
@@ -322,7 +322,7 @@ describe('offline transports: language changes', () => {
 
 	test('a prefetch that resolves after the transport is built still counts as detected', async () => {
 		let prefetch: { initialOverrides?: { language?: string } } = {};
-		const transport = withoutNetwork().transport({
+		const transport = testing().transport({
 			get prefetch() {
 				return prefetch;
 			},
@@ -345,7 +345,7 @@ describe('offline transports: language changes', () => {
 			i18n: { locale: 'en', messages } as never,
 			persistence: false,
 			prefetch: { initialOverrides: { language: 'de' } },
-			testing: withoutNetwork(),
+			mode: testing(),
 			windowDebug: false,
 		});
 		const { kernel } = runtime;

@@ -21,6 +21,7 @@ import type {
 } from '@c15t/schema/types';
 
 import { createUnreportedJourneys } from '../libs/journey';
+import { warnManifestFallback } from '../libs/manifest-fallback';
 import type {
 	ManifestModeBaseOptions,
 	ManifestModeInputs,
@@ -223,6 +224,8 @@ interface ManifestSource {
 	loadGeo: (geoURL: string) => Promise<ManifestModeInputs | undefined>;
 	loadManifest: () => Promise<ConsentManifest>;
 	loadResolver: () => Promise<typeof ResolveModule>;
+	/** Where the manifest is fetched, unless a snapshot is passed. */
+	manifestURL: string | undefined;
 }
 
 /**
@@ -303,6 +306,7 @@ const createManifestSource = function createManifestSource(
 	return {
 		backendURL,
 		getFetch,
+		manifestURL,
 		/** The visitor's location from `geoURL`, asked once per page. */
 		loadGeo(geoURL) {
 			// Without a location the `/init` fallback still answers.
@@ -425,7 +429,15 @@ const transportFrom = function transportFrom(
 			) {
 				return ask(ctx);
 			}
-			return source.loadManifest().then((resolved) => initFrom(resolved, ctx));
+			return source.loadManifest().then(
+				(resolved) => initFrom(resolved, ctx),
+				(error: unknown) => {
+					// The backend's `/init` still answers when the manifest is
+					// unavailable; the next init tries the manifest again.
+					warnManifestFallback(source.manifestURL ?? 'the snapshot', error);
+					return ask(ctx);
+				}
+			);
 		},
 		loadSubjectRecord: hosted.loadSubjectRecord,
 		save: (payload) => hosted.save(unreported.strip(payload)),

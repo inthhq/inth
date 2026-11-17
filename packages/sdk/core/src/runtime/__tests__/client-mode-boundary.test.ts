@@ -36,7 +36,7 @@ const MARKERS = {
 	offlinePolicy: 'quebec_opt_in',
 	// An error the manifest resolver throws (`@c15t/schema`).
 	resolver: 'Unsupported pack field',
-	// The production error of `withoutNetwork()`.
+	// The production error of `testing()`.
 	testingCheck: 'is for tests and does not run in production',
 } as const;
 
@@ -140,7 +140,7 @@ describe('clientMode() first-load JavaScript', () => {
 		['manifest()', 'manifest()'],
 		["manifest({ resolve: 'browser' })", "manifest({ resolve: 'browser' })"],
 		['the hosted backend', 'undefined'],
-		['withoutNetwork()', "{ type: 'without-network' }"],
+		['testing()', "{ type: 'testing' }"],
 	])(
 		'%s ships no resolver, policy pack or copy',
 		async (_name, mode) => {

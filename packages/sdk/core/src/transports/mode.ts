@@ -53,8 +53,8 @@ export type ProviderTransportKind =
 /**
  * Creates a kernel transport from provider runtime context.
  *
- * A provider builds one from its options: `hosted()` for `backendURL`,
- * `manifest()` for `mode`, and the testing value's own for `testing`.
+ * A provider builds one from its options: the hosted transport for
+ * `backendURL`, or the one its `mode` carries (`manifest()`, `testing()`).
  * `kind` lets adapters report the selected transport through
  * `window.c15t.mode` without importing every transport implementation.
  *

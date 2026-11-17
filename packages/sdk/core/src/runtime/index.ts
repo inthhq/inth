@@ -52,6 +52,7 @@ import type {
 	ConsentRuntime,
 	ConsentRuntimeModules,
 	ConsentRuntimeOptions,
+	WithBackendURL,
 } from './types';
 
 export { createConsentProviderRuntime } from './provider-runtime';
@@ -82,6 +83,7 @@ export type {
 	RuntimePrefetch,
 	StreamedPrefetch,
 	RuntimeScriptLoaderOptions,
+	WithBackendURL,
 } from './types';
 export type { WireRuntimeCallbacksOptions } from './callbacks';
 export { wireRuntimeCallbacks } from './callbacks';
@@ -175,7 +177,7 @@ export const defaultRuntimeModules: ConsentRuntimeModules = {
  * ```
  */
 export const createConsentRuntime = function createConsentRuntime(
-	options: ConsentRuntimeOptions
+	options: WithBackendURL<ConsentRuntimeOptions>
 ): ConsentRuntime {
 	return assembleConsentRuntime(options, defaultRuntimeModules).runtime;
 };

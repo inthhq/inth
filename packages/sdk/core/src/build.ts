@@ -104,9 +104,10 @@ export const hasBuildManifestSource = (options: {
 };
 
 /**
- * What happens when the build-time manifest fetch fails. `'fail'` stops the
- * command with an error. `'runtime'` logs a warning, and the server fetches
- * the policy at runtime.
+ * What happens when the build-time manifest fetch fails. `'runtime'` (the
+ * default) logs a warning, and the server fetches the policy at runtime,
+ * falling back to the backend's `/init` when the manifest is still
+ * unavailable. `'fail'` stops the command with an error.
  */
 export type ManifestBuildErrorMode = 'runtime' | 'fail';
 
@@ -121,8 +122,8 @@ const isBuildErrorMode = (value: unknown): value is ManifestBuildErrorMode =>
 
 /**
  * Decides what a failed manifest fetch does. `C15T_ON_BUILD_ERROR` wins over
- * `onBuildError`. Without either, a production build fails and dev falls
- * back to runtime fetching.
+ * `onBuildError`. Without either, the build and dev fall back to runtime
+ * fetching with a warning.
  * @param onBuildError - The configured option, if any.
  * @param command - Whether this is a production build or dev.
  * @param label - Framework name for errors.
@@ -154,7 +155,7 @@ export const resolveManifestBuildErrorMode = (
 		}
 		return { explicit: true, mode: onBuildError };
 	}
-	return { explicit: false, mode: command === 'build' ? 'fail' : 'runtime' };
+	return { explicit: false, mode: 'runtime' };
 };
 
 /** Values in a `.env` file. Handles `export`, quotes and comments. */
@@ -301,7 +302,7 @@ export const labelledBuildLogger = (
 
 /** How a framework integration loads the build-time manifest. */
 export interface ManifestBuildPolicy {
-	/** Production build or dev. Decides the default for `onBuildError`. */
+	/** Production build or dev, named in messages. */
 	command: ManifestBuildCommand;
 	/** Variables that can carry the backend URL, named in messages. */
 	envNames?: readonly string[];
@@ -360,7 +361,9 @@ const reportMissingSource = (
 		);
 		return;
 	}
-	logger.warn(`${missing} A production build stops on this error.`);
+	logger.warn(
+		`${missing} The server fetches it at runtime, or asks the backend's /init.`
+	);
 };
 
 /**
@@ -368,12 +371,12 @@ const reportMissingSource = (
  * in every framework:
  *
  * - The fetch waits at most 10 seconds.
- * - When it fails, `onBuildError` decides: `'fail'` throws, `'runtime'`
+ * - When it fails, `onBuildError` decides: `'runtime'` (the default)
  *   warns and returns `undefined` so the server fetches the policy at
- *   runtime. `C15T_ON_BUILD_ERROR` overrides the option. Without either, a
- *   production build fails and dev warns.
- * - A missing backend URL counts as a failed fetch: a production build
- *   fails, dev warns, and an explicit `'runtime'` skips with a notice.
+ *   runtime, and asks the backend's `/init` when that fails too. `'fail'`
+ *   throws. `C15T_ON_BUILD_ERROR` overrides the option.
+ * - A missing backend URL counts as a failed fetch: `'fail'` throws, the
+ *   default warns, and an explicit `'runtime'` skips with a notice.
  * - A framework `skipReason` skips the fetch. So does a relative or
  *   non-http(s) URL, unless `onBuildError` is explicitly `'fail'`, which
  *   then throws.
@@ -454,8 +457,10 @@ export const loadManifestForBuild = async (
 			);
 		}
 		logger.warn(
-			`${failure} The server fetches it at runtime instead.${
-				explicit ? '' : ' A production build stops on this error.'
+			`${failure} The server fetches it at runtime instead, and asks the backend's /init while it is unavailable.${
+				explicit
+					? ''
+					: ` Set \`${MANIFEST_BUILD_ERROR_ENV}=fail\` (or \`onBuildError: 'fail'\`) to stop the build on this error.`
 			}`
 		);
 		return undefined;
@@ -470,10 +475,11 @@ export interface ManifestBuildOptions {
 	 */
 	backendURL?: string;
 	/**
-	 * What a failed manifest fetch does. `'fail'` stops the command.
-	 * `'runtime'` logs a warning, and the server fetches the policy at
-	 * runtime. Unset, a production build fails and dev warns. The
-	 * `C15T_ON_BUILD_ERROR` environment variable overrides this option.
+	 * What a failed manifest fetch does. `'runtime'` (the default) logs a
+	 * warning, and the server fetches the policy at runtime, asking the
+	 * backend's `/init` while the manifest is unavailable. `'fail'` stops
+	 * the command. The `C15T_ON_BUILD_ERROR` environment variable
+	 * overrides this option.
 	 */
 	onBuildError?: ManifestBuildErrorMode;
 	/**

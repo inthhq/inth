@@ -1,21 +1,22 @@
-import type { WithoutNetworkOptions } from './modes';
+import type { TestingModeOptions } from './modes';
 /**
  * `@c15t/core/testing` — run the consent flow in tests with no backend.
  *
- * Pass `withoutNetwork()` as the runtime's `testing` option. It resolves
- * the recommended policy pack locally, so a test picks the policy by
- * setting `overrides.country` (and `overrides.region`):
+ * Pass `testing()` as the runtime's `mode`. It needs no `backendURL`. It
+ * resolves the recommended policy pack locally, so a test picks the
+ * policy by setting `overrides.country` (and `overrides.region`):
  *
  * - `DE`, any other EEA country, `GB`, or no country: the opt-in banner.
- * - `DE` with `iab` configured, or with `withoutNetwork({ iab: true })`:
+ * - `DE` with `iab` configured, or with `testing({ iab: true })`:
  *   the IAB TCF banner.
  * - `US` with region `CA`, or another US privacy state: opt-out, with no
  *   automatic banner. The dialog still opens from a link.
  * - `JP`, or another country with no privacy rule: no banner.
  *
- * The pack has no rule that shows the opt-out notice banner. A test that
- * needs one passes its own transport as `mode`, such as one built with
- * `createOfflineTransport({ policyRules })` from `@c15t/core/transports`.
+ * To test another policy, such as the opt-out notice banner that no
+ * recommended rule shows, pass your own rules as `policy`:
+ * `testing({ policy: [noticeRule] })`. They use the same
+ * `PolicyRule` shape as the backend's policies.
  *
  * It throws when `process.env.NODE_ENV` is `'production'`. Production
  * apps set `backendURL`. To keep consent out of the way in an app's own
@@ -24,43 +25,44 @@ import type { WithoutNetworkOptions } from './modes';
  *
  * @example
  * ```ts
- * import { createConsentRuntime } from '@c15t/core';
- * import { withoutNetwork } from '@c15t/core/testing';
+ * import { createConsentRuntime } from '@c15t/core/runtime';
+ * import { testing } from '@c15t/core/testing';
  *
  * const runtime = createConsentRuntime({
  *   overrides: { country: 'DE' },
- *   testing: withoutNetwork(),
+ *   mode: testing(),
  * });
  * ```
  *
  * @packageDocumentation
  */
-import { createWithoutNetwork } from './transports/without-network';
-import type { ConsentTesting } from './transports/without-network';
+import { createTestingMode } from './transports/testing';
+import type { ConsentTesting } from './transports/testing';
 
-export type { WithoutNetworkOptions } from './modes';
-export type { ConsentTesting } from './transports/without-network';
+export type { TestingModeOptions } from './modes';
+export type { ConsentTesting } from './transports/testing';
 /**
- * Builds the `withoutNetwork()` an adapter's testing entry exports, with
+ * Builds the `testing()` an adapter's testing entry exports, with
  * that entry's name in the production error.
  *
  * @internal
  */
 export {
 	assertNotProduction,
-	createWithoutNetwork,
-} from './transports/without-network';
+	createTestingMode,
+} from './transports/testing';
 
 /**
- * A `testing` value that resolves the recommended policy pack in the
- * browser and makes no network requests.
+ * A `mode` for tests: it resolves `policy`, or the recommended policy
+ * pack, in the browser and makes no network requests.
  *
- * @param options - `iab: true` resolves the pack's IAB TCF variant.
- * @returns The value for the runtime's `testing` option.
+ * @param options - `policy` resolves your own rules instead of the
+ *   recommended pack; `iab: true` resolves the pack's IAB TCF variant.
+ * @returns The value for the runtime's `mode`.
  * @throws {Error} When the transport is built in a production build.
  */
-export const withoutNetwork = function withoutNetwork(
-	options: WithoutNetworkOptions = {}
+export const testing = function testing(
+	options: TestingModeOptions = {}
 ): ConsentTesting {
-	return createWithoutNetwork('@c15t/core/testing', options);
+	return createTestingMode('@c15t/core/testing', options);
 };

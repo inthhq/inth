@@ -48,4 +48,5 @@ export type {
 	ConsentRuntimeUpdate,
 	RuntimePrefetch,
 	StreamedPrefetch,
+	WithBackendURL,
 } from './types';

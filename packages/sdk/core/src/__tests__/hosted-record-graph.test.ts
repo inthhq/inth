@@ -108,7 +108,7 @@ describe('hosted record transport graph', () => {
 		(entry) => {
 			const { files } = staticGraph(entry);
 
-			expect(files).not.toContain('transports/without-network.ts');
+			expect(files).not.toContain('transports/testing.ts');
 			expect(files).not.toContain('transports/offline.ts');
 		}
 	);

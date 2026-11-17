@@ -9,7 +9,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { optInRule } from '../../__tests__/fixtures/kernel-fixtures';
 import { primePrefetchedInitialData } from '../../libs/prefetch/prefetch';
-import { manifest } from '../../modes';
+import { hosted, manifest } from '../../modes';
 import { createHostedTransport } from '../../transports/hosted';
 import { createBrowserManifestTransport } from '../../transports/manifest-browser';
 import type { ProviderTransportContext } from '../../transports/mode';
@@ -18,12 +18,12 @@ import {
 	clientMode,
 	lazyBrowserManifest,
 	lazyHosted,
-	lazyWithoutNetwork,
+	lazyTesting,
 } from '../client-mode';
 import type {
 	LoadHostedModule,
 	LoadManifestBrowserModule,
-	LoadWithoutNetworkModule,
+	LoadTestingModule,
 } from '../client-mode';
 
 const context = {
@@ -75,8 +75,17 @@ afterEach(() => {
 });
 
 describe('clientMode()', () => {
-	test('uses the hosted backend when only the backend URL is set', async () => {
-		const mode = clientMode(undefined, {
+	test('defaults to manifest mode, the server frameworks\' default', () => {
+		expect({
+			...clientMode(undefined, {
+				backendURL: 'https://backend.example',
+				routePrefix: '/api/c15t',
+			}),
+		}).toEqual({ kind: 'manifest', type: 'manifest' });
+	});
+
+	test('hosted() asks the backend /init', async () => {
+		const mode = clientMode(hosted(), {
 			backendURL: 'https://backend.example',
 		});
 
@@ -96,7 +105,7 @@ describe('clientMode()', () => {
 			type: 'manifest',
 		});
 		expect(
-			clientMode({ type: 'without-network' }, { backendURL: '/api/c15t' }).kind
+			clientMode({ type: 'testing' }, { backendURL: '/api/c15t' }).kind
 		).toBe('offline');
 		expect(
 			clientMode(manifest({ resolve: 'browser' }), { backendURL: '' }).kind
@@ -167,14 +176,15 @@ describe('clientMode()', () => {
 	});
 
 	test('a testing value needs no backend URL', () => {
-		expect(clientMode({ type: 'without-network' }).kind).toBe('offline');
+		expect(clientMode({ type: 'testing' }).kind).toBe('offline');
 		expect(
-			clientMode({ type: 'without-network' }, { routePrefix: '/api/c15t' }).kind
+			clientMode({ type: 'testing' }, { routePrefix: '/api/c15t' }).kind
 		).toBe('offline');
 	});
 
 	test('throws when there is no backend URL', () => {
 		expect(() => clientMode(undefined)).toThrow('`backendURL` is required');
+		expect(() => clientMode(hosted())).toThrow('`backendURL` is required');
 		expect(() => clientMode(manifest())).toThrow('`backendURL` is required');
 	});
 
@@ -371,20 +381,20 @@ describe('lazyHosted()', () => {
 	});
 });
 
-describe('lazyWithoutNetwork()', () => {
+describe('lazyTesting()', () => {
 	test('loads its transport on first init, once', async () => {
 		const transportInit = vi.fn(() => Promise.resolve({}));
 		const build = vi.fn(
 			() => () => ({ init: transportInit }) as KernelTransport
 		);
-		const load = vi.fn<LoadWithoutNetworkModule>(() =>
+		const load = vi.fn<LoadTestingModule>(() =>
 			Promise.resolve({
-				withoutNetworkTransport: build as unknown as Awaited<
-					ReturnType<LoadWithoutNetworkModule>
-				>['withoutNetworkTransport'],
+				testingTransport: build as unknown as Awaited<
+					ReturnType<LoadTestingModule>
+				>['testingTransport'],
 			})
 		);
-		const transport = lazyWithoutNetwork(
+		const transport = lazyTesting(
 			'@c15t/nextjs/testing',
 			{},
 			load
@@ -401,10 +411,10 @@ describe('lazyWithoutNetwork()', () => {
 
 	test('the loaded transport throws in a production build', async () => {
 		vi.stubEnv('NODE_ENV', 'production');
-		const transport = lazyWithoutNetwork('@c15t/nextjs/testing')(context);
+		const transport = lazyTesting('@c15t/nextjs/testing')(context);
 
 		await expect(transport.init?.(initContext())).rejects.toThrow(
-			'withoutNetwork() from @c15t/nextjs/testing is for tests and does not run in production'
+			'testing() from @c15t/nextjs/testing is for tests and does not run in production'
 		);
 		vi.unstubAllEnvs();
 	});

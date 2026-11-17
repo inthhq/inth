@@ -102,11 +102,14 @@ export type { EarlyInitMode } from './transports/early-init-modes';
 export type {
 	ConsentMode,
 	ConsentModeType,
+	HostedMode,
 	ManifestMode,
 	ManifestModeInputs,
-	WithoutNetworkTestingData,
+	TestingMode,
+	TestingModeOptions,
 } from './modes';
-export type { ConsentTesting } from './transports/without-network';
+export { hosted } from './modes';
+export type { ConsentTesting } from './transports/testing';
 export {
 	NO_RECORDS_WARNING,
 	warnNoConsentRecords,

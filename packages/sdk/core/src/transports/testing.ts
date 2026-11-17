@@ -1,5 +1,5 @@
 /**
- * The transport behind `withoutNetwork()`: it resolves the recommended
+ * The transport behind `testing()`: it resolves the recommended
  * policy pack locally and sends nothing.
  *
  * Only testing entries import this module, such as `@c15t/core/testing`
@@ -14,10 +14,11 @@ import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
 } from '@c15t/schema/types';
+import type { PolicyRule } from '@c15t/schema/types';
 
 import type {
-	WithoutNetworkOptions,
-	WithoutNetworkTestingData,
+	TestingModeOptions,
+	TestingMode,
 } from '../modes';
 import type { InitContext, KernelTransport } from '../types';
 import type { ProviderTransportFactory } from './mode';
@@ -27,11 +28,10 @@ import { createOfflineTranslationSelector } from './offline';
 declare const process: { env: { NODE_ENV?: string } };
 
 /**
- * What a provider's `testing` option takes: the transport that replaces the
- * backend for a test. Build it with `withoutNetwork()` from a package's
- * `/testing` entry.
+ * What `testing()` from a package's `/testing` entry returns, for a
+ * provider's `mode`: the transport that replaces the backend for a test.
  */
-export interface ConsentTesting extends WithoutNetworkTestingData {
+export interface ConsentTesting extends TestingMode {
 	/** Builds the transport the provider uses in place of the backend. */
 	readonly transport: ProviderTransportFactory;
 }
@@ -57,34 +57,37 @@ export const assertNotProduction = function assertNotProduction(
 	}
 	if (production) {
 		throw new Error(
-			`c15t: withoutNetwork() from ${entry} is for tests and does not run in production. Set \`backendURL\` on the provider instead.`
+			`c15t: testing() from ${entry} is for tests and does not run in production. Set \`backendURL\` on the provider and remove \`mode: testing()\`.`
 		);
 	}
 };
 
 /**
- * The transport factory `withoutNetwork()` hands the provider.
+ * The transport factory `testing()` hands the provider.
  *
- * Each init resolves the recommended policy pack for the location in the
- * kernel's overrides (`overrides.country`, `overrides.region`), with IAB
- * TCF when the provider configures it or `options.iab` is set. Saves are not sent anywhere: the
- * provider's persistence stores them in the browser.
+ * Each init resolves `options.policy`, or else the recommended policy
+ * pack, for the location in the kernel's overrides (`overrides.country`,
+ * `overrides.region`), with IAB TCF when the provider configures it or
+ * `options.iab` is set. Saves are not sent anywhere: the provider's
+ * persistence stores them in the browser.
  *
  * @param entry - The testing entry named in the production error.
- * @param options - `iab` picks the pack's IAB TCF variant.
+ * @param options - `policy` replaces the pack; `iab` picks the pack's IAB
+ *   TCF variant.
  * @returns A provider transport factory reporting `kind: 'offline'`.
  * @internal
  */
-export const withoutNetworkTransport = function withoutNetworkTransport(
+export const testingTransport = function testingTransport(
 	entry: string,
-	options: WithoutNetworkOptions = {}
+	options: TestingModeOptions = {}
 ): ProviderTransportFactory {
 	return Object.assign(
 		(context: Parameters<ProviderTransportFactory>[0]): KernelTransport => {
 			assertNotProduction(entry);
-			const rules = recommendedPolicyRules({
-				iab: options.iab ?? context.iabEnabled,
-			});
+			const rules: PolicyRule[] =
+				options.policy === undefined
+					? recommendedPolicyRules({ iab: options.iab ?? context.iabEnabled })
+					: ([] as PolicyRule[]).concat(options.policy);
 			// Read at each init: a pending prefetch fills `context.prefetch`
 			// after this transport is built.
 			const selectTranslations = createOfflineTranslationSelector(
@@ -118,22 +121,23 @@ export const withoutNetworkTransport = function withoutNetworkTransport(
 };
 
 /**
- * Builds the `withoutNetwork()` a testing entry exports.
+ * Builds the `testing()` a testing entry exports.
  *
  * @param entry - The testing entry, named in the production error.
- * @param options - `iab` picks the pack's IAB TCF variant.
- * @returns The value for the provider's `testing` option.
+ * @param options - `policy` replaces the recommended pack; `iab` picks the
+ *   pack's IAB TCF variant.
+ * @returns The value for the provider's `mode`.
  * @internal
  */
-export const createWithoutNetwork = function createWithoutNetwork(
+export const createTestingMode = function createTestingMode(
 	entry: string,
-	options: WithoutNetworkOptions = {}
+	options: TestingModeOptions = {}
 ): ConsentTesting {
 	// `transport` is not enumerable, so the value spreads and serializes as
 	// its data: a Nuxt or Astro config carries it to the browser as such.
 	return Object.defineProperty(
-		{ ...options, type: 'without-network' as const },
+		{ ...options, type: 'testing' as const },
 		'transport',
-		{ value: withoutNetworkTransport(entry, options) }
+		{ value: testingTransport(entry, options) }
 	) as ConsentTesting;
 };
