@@ -4183,6 +4183,15 @@ importers:
         specifier: workspace:*
         version: link:../../npm/cli-win32-x64
 
+  packages/cli/vendor/c15t-mobile:
+    dependencies:
+      '@c15t/schema':
+        specifier: workspace:*
+        version: link:../../../sdk/schema
+      '@c15t/translations':
+        specifier: workspace:*
+        version: link:../../../sdk/translations
+
   packages/react-native:
     devDependencies:
       '@babel/core':
