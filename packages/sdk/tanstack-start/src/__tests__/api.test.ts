@@ -32,7 +32,6 @@ describe('createConsentRoute', () => {
 		const { GET } = createConsentRoute({
 			backendURL: BACKEND,
 			fetch,
-			reportSessions: false,
 			snapshot: MANIFEST_FIXTURE,
 		});
 		expect(
@@ -55,7 +54,10 @@ describe('createConsentRoute', () => {
 		).toMatchObject({
 			policyResolution: { policyId: 'eu-opt-in', status: 'matched' },
 		});
-		expect(fetch).not.toHaveBeenCalled();
+		// No policy request; only the session report.
+		expect(
+			fetch.mock.calls.filter(([url]) => !String(url).endsWith('/sessions'))
+		).toEqual([]);
 	});
 
 	test('returns GET, and the write methods with proxy on', () => {
@@ -81,9 +83,8 @@ describe('createConsentRoute', () => {
 			backendURL: BACKEND,
 			cache: createManifestCache(),
 			fetch,
-			reportSessions: false,
 		});
-		const manifest = await GET({
+		const served = await GET({
 			params: { _splat: 'manifest' },
 			request: request('ignored'),
 		});
@@ -92,10 +93,13 @@ describe('createConsentRoute', () => {
 			params: { _splat: 'subjects' },
 			request: request('subjects'),
 		});
-		expect(manifest.headers.get('cache-control')).toBe('public, s-maxage=120');
+		expect(served.headers.get('cache-control')).toBe('public, s-maxage=120');
 		expect(init.headers.get('cache-control')).toBe('private, no-store');
 		expect(unknown.status).toBe(404);
-		expect(fetch).toHaveBeenCalledTimes(1);
+		// One manifest request; init also reports the session.
+		expect(
+			fetch.mock.calls.filter(([url]) => !String(url).endsWith('/sessions'))
+		).toHaveLength(1);
 	});
 
 	test('init resolves with the inputs the request middleware remembered', async () => {
@@ -103,7 +107,6 @@ describe('createConsentRoute', () => {
 			backendURL: BACKEND,
 			cache: createManifestCache(),
 			fetch: upstream(),
-			reportSessions: false,
 		});
 		const incoming = request('init', { headers: { 'x-c15t-country': 'US' } });
 		rememberConsentInputs(incoming, { country: 'DE', language: 'de' });

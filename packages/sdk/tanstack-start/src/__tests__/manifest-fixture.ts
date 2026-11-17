@@ -59,3 +59,19 @@ export const MANIFEST_FIXTURE = {
 		},
 	},
 } satisfies ConsentManifest;
+
+/**
+ * A manifest whose packs are `rules`, for tests that need the server to
+ * resolve a policy the recommended pack has no rule for.
+ *
+ * @param rules - The rules, in match order.
+ * @returns A snapshot for `resolveConsent({ mode: manifest(), snapshot })`.
+ */
+export const manifestOf = function manifestOf(
+	rules: Parameters<typeof createConsentManifestPolicyPack>[0][]
+): ConsentManifest {
+	return {
+		...MANIFEST_FIXTURE,
+		policyPacks: rules.map((rule) => createConsentManifestPolicyPack(rule)),
+	};
+};

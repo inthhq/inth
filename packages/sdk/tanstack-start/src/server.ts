@@ -69,7 +69,7 @@ import {
 	backendURL as generatedBackendURL,
 	snapshot as generatedSnapshot,
 } from '@c15t/core/generated';
-import type { ConsentMode } from '@c15t/core/modes';
+import type { ConsentMode, WithoutNetworkTestingData } from '@c15t/core/modes';
 import {
 	DEFAULT_CONSENT_ROUTE_PREFIX,
 	normalizeRoutePrefix,
@@ -173,8 +173,10 @@ export interface ConsentClientConfig {
 	 * route proxies saves.
 	 */
 	backendURL?: string;
-	/** The mode, as data. `undefined` means `manifest()`. */
+	/** `manifest()`, as data. `undefined` means the hosted backend. */
 	mode?: ConsentMode;
+	/** A testing value, as data. Wins over `mode`. */
+	testing?: WithoutNetworkTestingData;
 	/** Where the consent route is mounted, such as `/api/c15t`. */
 	routePrefix?: string;
 }
@@ -199,13 +201,22 @@ export type ConsentState = Omit<KernelConfig, 'transport'> &
 /** Options for {@link resolveConsent}. */
 export interface ResolveConsentOptions extends ConsentRequestOptions {
 	/**
-	 * How the visitor's policy is resolved, as data from
-	 * `@c15t/tanstack-start`: `manifest()` (the default) resolves it here
-	 * from the policy snapshot, `manifest({ resolve: 'browser' })` leaves it
-	 * to the browser, `hosted()` asks the backend's `/init`, and `local()`
-	 * resolves bundled rules. The state carries the mode to `ConsentRoot`.
+	 * Resolve the visitor's policy from the backend's consent manifest:
+	 * `manifest()` from `@c15t/tanstack-start` resolves it here from the
+	 * policy snapshot, and `manifest({ resolve: 'browser' })` leaves it to
+	 * the browser. Omit it to ask the hosted backend's `/init` at
+	 * `backendURL`. The state carries the mode to `ConsentRoot`.
 	 */
 	mode?: ConsentMode;
+
+	/**
+	 * Replace the backend in a test: `withoutNetwork()` from
+	 * `@c15t/tanstack-start/testing`. The server resolves nothing and the
+	 * browser resolves the recommended policy pack with no network; its
+	 * transport throws in production builds. The state carries it to
+	 * `ConsentRoot`.
+	 */
+	testing?: WithoutNetworkTestingData;
 
 	/**
 	 * Backend base URL of your c15t instance, for example
@@ -300,17 +311,6 @@ export interface ResolveConsentOptions extends ConsentRequestOptions {
 	timeoutMs?: number | false;
 
 	/**
-	 * Report the init this render resolved from the manifest to the
-	 * backend's `POST /sessions`, server-to-server and detached from the
-	 * render, so the backend still counts visitors it never served `/init`
-	 * to. The report is handed to `onBackgroundRevalidate` like a manifest
-	 * refresh. Set `false` to send none.
-	 *
-	 * @default true
-	 */
-	reportSessions?: boolean;
-
-	/**
 	 * The consent journey scope this render reports. Pass `ConsentRoot` the
 	 * same `journey`.
 	 */
@@ -370,21 +370,19 @@ const serverModeOptions = function serverModeOptions(
 	backendURL: string | undefined
 ): Pick<
 	ResolveRequestConsentOptions,
-	'backendURL' | 'initHeaders' | 'manifest' | 'manifestURL' | 'mode' | 'offline'
+	'backendURL' | 'manifest' | 'manifestURL' | 'mode'
 > {
 	const { mode } = options;
-	if (mode?.type === 'offline') {
+	if (options.testing) {
+		// The browser resolves it, with the transport that refuses to run in
+		// production.
+		return {};
+	}
+	// A snapshot passed in is a manifest to resolve from, as in Next.js.
+	if (!mode && options.snapshot === undefined) {
 		return {
 			backendURL,
-			mode: 'offline',
-			offline: { policyRules: mode.policyRules },
-		};
-	}
-	if (mode?.type === 'hosted') {
-		return {
-			backendURL: mode.backendURL ?? backendURL,
-			initHeaders: mode.headers,
-			mode: 'hosted',
+			mode: backendURL ? 'hosted' : undefined,
 		};
 	}
 	if (mode?.resolve === 'browser') {
@@ -425,14 +423,11 @@ const clientConfigFor = function clientConfigFor(
 		config.backendURL = clientBackendURL;
 	}
 	const { mode } = options;
-	if (mode?.type === 'manifest' && mode.resolve !== 'browser') {
+	if (options.testing) {
+		config.testing = options.testing;
+	}
+	if (mode?.resolve !== 'browser' && mode !== undefined) {
 		const { snapshot: _snapshot, ...data } = mode;
-		config.mode = data;
-	} else if (mode?.type === 'hosted' && options.proxy) {
-		// The browser's init and saves go through the route, which
-		// `clientMode()` uses only when the mode names no URL of its own.
-		// The server keeps the hosted backend URL.
-		const { backendURL: _backendURL, ...data } = mode;
 		config.mode = data;
 	} else if (mode !== undefined) {
 		config.mode = mode;
@@ -483,7 +478,6 @@ const resolveConsentState = async function resolveConsentState(
 		// on this origin, are fetched. Without a prefix, the conventional
 		// mount is guarded.
 		ownRoutes: [routePrefix ?? DEFAULT_CONSENT_ROUTE_PREFIX],
-		reportSessions: options.reportSessions,
 		request: {
 			headers: request.headers,
 			// What `consentRequestMiddleware` normalized for this request, so

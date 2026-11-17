@@ -43,7 +43,7 @@ describe('resolveConsent wiring', () => {
 		const handler = createConsentStateHandler({
 			backendURL: 'https://consent.example.com',
 			fetch,
-			reportSessions: false,
+			mode: { type: 'manifest' },
 			request: requestOf({
 				'accept-language': 'de-DE',
 				'sec-gpc': '1',
@@ -59,7 +59,10 @@ describe('resolveConsent wiring', () => {
 		expect(state.initialTranslations?.language).toBe('de');
 		expect(state.initialPrivacySignals?.gpc).toBe(true);
 		expect(state).not.toHaveProperty('transport');
-		expect(fetch).not.toHaveBeenCalled();
+		// No policy request; only the session report.
+		expect(
+			fetch.mock.calls.filter(([url]) => !String(url).endsWith('/sessions'))
+		).toEqual([]);
 	});
 
 	test('resolves the backend manifest for the request', async () => {
@@ -68,7 +71,7 @@ describe('resolveConsent wiring', () => {
 			backendURL: 'https://consent.example.com',
 			cache: createManifestCache(),
 			fetch,
-			reportSessions: false,
+			mode: { type: 'manifest' },
 			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
 		});
 		expect(String(fetch.mock.calls[0]?.[0])).toBe(
@@ -100,10 +103,7 @@ describe('resolveConsent wiring', () => {
 			scope: 'page',
 		});
 
-		for (const off of [
-			{ journey: false as const },
-			{ reportSessions: false },
-		]) {
+		for (const off of [{ journey: false as const }]) {
 			// oxlint-disable-next-line no-await-in-loop -- One render at a time.
 			const state = await resolveConsent({
 				backendURL: 'https://consent.example.com',
@@ -121,7 +121,6 @@ describe('resolveConsent wiring', () => {
 		rememberConsentInputs(request, { country: 'DE' });
 		const state = await resolveConsent({
 			backendURL: 'https://consent.example.com',
-			reportSessions: false,
 			request,
 			snapshot: MANIFEST_FIXTURE,
 		});
@@ -157,7 +156,7 @@ describe('resolveConsent wiring', () => {
 			backendURL: '/api/backend',
 			cache: createManifestCache(),
 			fetch,
-			reportSessions: false,
+			mode: { type: 'manifest' },
 			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
 			routePrefix: '/api/c15t',
 			snapshot: undefined,
@@ -222,7 +221,6 @@ describe('resolveConsent wiring', () => {
 		);
 		const state = await resolveConsent({
 			backendURL: 'https://consent.example.com',
-			reportSessions: false,
 			request: requestOf(),
 			routePrefix: '/api/consent/',
 			snapshot: {

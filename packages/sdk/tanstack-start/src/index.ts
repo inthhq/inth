@@ -58,17 +58,14 @@ export { buildPrefetchScript, type PrefetchOptions } from '@c15t/core';
 export type {
 	ConsentMode,
 	ConsentModeType,
-	HostedMode,
-	HostedModeOptions,
 	ManifestMode,
 	ManifestModeInputs,
 	ManifestModeOptions,
-	OfflineMode,
-	OfflineModeOptions,
+	WithoutNetworkTestingData,
 } from '@c15t/core/modes';
-// These data factories replace the transport implementations of the same
-// names that the re-export of `@c15t/react` below would otherwise provide.
-export { hosted, local, manifest, offline } from '@c15t/core/modes';
+// The data `manifest()` replaces the transport implementation of the same
+// name that the re-export of `@c15t/react` below would otherwise provide.
+export { manifest } from '@c15t/core/modes';
 // oxlint-disable-next-line oxc/no-barrel-file -- Preserve declaration order, interface shape, and public compatibility.
 export * from '@c15t/react';
 // Their code loads with the deferred root's engine; see `./root`.

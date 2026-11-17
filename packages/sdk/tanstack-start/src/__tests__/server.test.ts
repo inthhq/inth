@@ -234,18 +234,4 @@ describe('resolveConsent with an inline manifest: session reports', () => {
 			id: 'banner-shape',
 		});
 	});
-
-	test('sends nothing when reportSessions is false', async () => {
-		const fetchSpy = vi.fn();
-		await resolveConsent(
-			{},
-			{
-				backendURL: 'https://consent.example.com',
-				fetch: fetchSpy,
-				reportSessions: false,
-				snapshot: MANIFEST_FIXTURE,
-			}
-		);
-		expect(fetchSpy).not.toHaveBeenCalled();
-	});
 });

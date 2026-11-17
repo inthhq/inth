@@ -29,7 +29,7 @@ import type {
 	ProviderTransportFactory,
 } from '@c15t/core';
 import { backendURL as generatedBackendURL } from '@c15t/core/generated';
-import type { ConsentMode } from '@c15t/core/modes';
+import type { ConsentMode, WithoutNetworkTestingData } from '@c15t/core/modes';
 import { clientMode } from '@c15t/core/runtime/client-mode';
 import { preloadScriptLoaderWith } from '@c15t/core/runtime/script-loader-preload';
 import type * as ScriptServerStart from '@c15t/core/runtime/script-server-start';
@@ -59,25 +59,46 @@ type RecordedState = PromiseLike<ConsentState> & {
 	value?: ConsentState;
 };
 
+/** What the root picks a transport from, before the state's own. */
+type ChosenMode =
+	| ConsentMode
+	| WithoutNetworkTestingData
+	| ProviderTransportFactory
+	| undefined;
+
 const transportFor = function transportFor(
 	state: ConsentState | undefined,
-	mode: ConsentMode | ProviderTransportFactory | undefined,
+	mode: ChosenMode,
 	overrides: KernelOverrides | undefined
 ): ProviderTransportFactory {
 	const backendURL = state?.backendURL ?? generatedBackendURL;
 	const routePrefix = state?.routePrefix;
-	return clientMode(mode ?? state?.mode, {
-		backendURL,
-		// A `consentPrefetchHead()` script may have started the init request
-		// before hydration. The transport consumes that promise on its first
-		// init, so the first save stays bound to the decision it resolved.
-		initialData: readPrefetchedInitialData({
+	return clientMode(
+		mode ?? state?.testing ?? state?.mode,
+		{
 			backendURL,
-			overrides,
+			// A `consentPrefetchHead()` script may have started the init request
+			// before hydration. The transport consumes that promise on its first
+			// init, so the first save stays bound to the decision it resolved.
+			initialData: readPrefetchedInitialData({
+				backendURL,
+				overrides,
+				routePrefix,
+			}),
 			routePrefix,
-		}),
-		routePrefix,
-	});
+		},
+		'@c15t/tanstack-start/testing'
+	);
+};
+
+/** The kind a mode or testing value reports through `window.c15t.mode`. */
+const kindOf = function kindOf(
+	mode: ConsentMode | WithoutNetworkTestingData | undefined
+): ProviderTransportFactory['kind'] {
+	if (mode === undefined) {
+		return 'hosted';
+	}
+	return mode.type === 'manifest' ? 'manifest' : 'offline';
 };
 
 /**
@@ -88,7 +109,7 @@ const transportFor = function transportFor(
  */
 const deferredTransport = function deferredTransport(
 	state: PromiseLike<ConsentState>,
-	mode: ConsentMode | undefined,
+	mode: ConsentMode | WithoutNetworkTestingData | undefined,
 	overrides: KernelOverrides | undefined
 ): ProviderTransportFactory {
 	return Object.assign(
@@ -126,13 +147,13 @@ const deferredTransport = function deferredTransport(
 				},
 			};
 		},
-		{ kind: mode?.type ?? ('manifest' as const) }
+		{ kind: kindOf(mode) }
 	);
 };
 
 const resolveMode = function resolveMode(
 	state: ConsentState | Promise<ConsentState>,
-	mode: ConsentMode | ProviderTransportFactory | undefined,
+	mode: ChosenMode,
 	overrides: KernelOverrides | undefined
 ): ProviderTransportFactory {
 	if (typeof mode === 'function') {
@@ -437,7 +458,7 @@ const useRootOptions = function useRootOptions({
 }: ConsentRootProps) {
 	// Initial-only, like the provider's own `mode`.
 	const [mode, setMode] = useState(() =>
-		resolveMode(state, options?.mode, options?.overrides)
+		resolveMode(state, options?.testing ?? options?.mode, options?.overrides)
 	);
 	void setMode;
 
@@ -457,8 +478,10 @@ const useRootOptions = function useRootOptions({
 		networkBlocker,
 		persistence,
 		prefetch: state,
+		// `mode` is the transport the testing value selected.
 		scriptLoader,
 		scripts,
+		testing: undefined,
 		vendors,
 	};
 	const serverStart = Boolean(

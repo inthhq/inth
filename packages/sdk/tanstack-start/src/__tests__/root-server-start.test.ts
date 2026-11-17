@@ -5,7 +5,7 @@
  * one.
  */
 import type { Script } from '@c15t/core';
-import { offline } from '@c15t/core/modes';
+import { manifest } from '@c15t/core/modes';
 import { createElement } from 'react';
 import { renderToReadableStream } from 'react-dom/server';
 import { afterEach, expect, test, vi } from 'vitest';
@@ -14,6 +14,7 @@ import { optOutRule } from '../../../core/src/__tests__/fixtures/kernel-fixtures
 import { ConsentRoot } from '../root';
 import type { ConsentRootProps } from '../root';
 import { resolveConsent } from '../server';
+import { manifestOf } from './manifest-fixture';
 
 const pixel: Script = {
 	category: 'marketing',
@@ -25,11 +26,11 @@ const pixel: Script = {
 /** A US-style policy: marketing runs until the visitor opts out. */
 const optOutState = () =>
 	resolveConsent({
-		mode: offline({
-			acknowledgeNoRecords: true,
-			policyRules: [optOutRule({ prompt: 'none' })],
-		}),
+		// A relative backend is the app's own route: no session report.
+		backendURL: '/api/c15t',
+		mode: manifest(),
 		request: new Request('https://app.example.com/'),
+		snapshot: manifestOf([optOutRule({ prompt: 'none' })]),
 	});
 
 const render = async (

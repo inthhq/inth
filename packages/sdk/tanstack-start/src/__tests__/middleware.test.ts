@@ -431,7 +431,6 @@ describe('consentRequestMiddleware: consent route at any mount', () => {
 	const serve = async function serve(path: string, splat: string) {
 		const { GET } = createConsentRoute({
 			backendURL: 'https://consent.example.com',
-			reportSessions: false,
 			snapshot: MANIFEST_FIXTURE,
 		});
 		const request = new Request(`https://app.example.com${path}`, {
@@ -475,7 +474,6 @@ describe('consentRequestMiddleware: consent route at any mount', () => {
 		const { createServerEntry } = await import('@tanstack/react-start/server');
 		const { GET } = createConsentRoute({
 			backendURL: 'https://consent.example.com',
-			reportSessions: false,
 			snapshot: MANIFEST_FIXTURE,
 		});
 		const entry = createServerEntry({

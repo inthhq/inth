@@ -9,7 +9,6 @@
  *   goes to the backend unless `routePrefix` names the same-origin consent
  *   route.
  */
-import { offline } from '@c15t/core/modes';
 import {
 	useConsent,
 	useDeclaredVendors,
@@ -26,6 +25,7 @@ import { render } from 'vitest-browser-react';
 import '@c15t/core/modules/clear-on-revocation';
 
 import { ConsentRoot } from '../root';
+import { withoutNetwork } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 describe('ConsentRoot: state is honored', () => {
@@ -63,7 +63,7 @@ describe('ConsentRoot: state is honored', () => {
 			<ConsentRoot
 				state={{
 					initialOverrides: { country: 'DE', language: 'de' },
-					mode: offline({ acknowledgeNoRecords: true }),
+					testing: withoutNetwork(),
 				}}
 				persistence={false}
 			>
@@ -153,6 +153,7 @@ describe('ConsentRoot: transport selection', () => {
 				<ConsentRoot
 					state={{
 						backendURL: 'https://consent.example.com',
+						mode: { type: 'manifest' },
 						routePrefix: '/api/c15t/',
 					}}
 					persistence={false}

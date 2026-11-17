@@ -99,17 +99,6 @@ export interface ConsentRouteOptions {
 	onBackgroundRevalidate?: (revalidation: Promise<void>) => void;
 
 	/**
-	 * Report each init the route resolves to the backend's `POST /sessions`,
-	 * server-to-server and detached from the response, so the backend still
-	 * counts visitors it never served `/init` to. The report is handed to
-	 * `onBackgroundRevalidate` like a manifest refresh. Set `false` to send
-	 * none.
-	 *
-	 * @default true
-	 */
-	reportSessions?: boolean;
-
-	/**
 	 * Resolve a relative `backendURL` or `manifestURL` against the
 	 * request's `x-forwarded-host` and `x-forwarded-proto` instead of
 	 * `request.url`. Off by default: those headers are client-controlled
@@ -243,7 +232,6 @@ export const createConsentRoute = function createConsentRoute<
 		manifest: 'snapshot' in resolved ? resolved.snapshot : generatedSnapshot,
 		manifestURL: resolved.manifestURL,
 		proxy: resolved.proxy,
-		reportSessions: resolved.reportSessions,
 		trustForwardedHeaders: resolved.trustForwardedHeaders,
 	});
 

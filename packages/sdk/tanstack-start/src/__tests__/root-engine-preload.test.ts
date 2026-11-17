@@ -5,7 +5,7 @@
  * scripts c15t started meanwhile, which a preload then fetched on later
  * visits, even after the visitor rejected them.
  */
-import { offline } from '@c15t/core/modes';
+import { manifest } from '@c15t/core/modes';
 import { createElement } from 'react';
 import { renderToReadableStream } from 'react-dom/server';
 import { expect, test } from 'vitest';
@@ -17,14 +17,18 @@ import {
 import { ConsentRoot } from '../root';
 import type { ConsentRootProps } from '../root';
 import { resolveConsent } from '../server';
+import { manifestOf } from './manifest-fixture';
 
 const render = async (
 	rule: ReturnType<typeof optInRule>,
 	props: Partial<ConsentRootProps> = {}
 ): Promise<string> => {
 	const state = await resolveConsent({
-		mode: offline({ acknowledgeNoRecords: true, policyRules: [rule] }),
+		// A relative backend is the app's own route: no session report.
+		backendURL: '/api/c15t',
+		mode: manifest(),
 		request: new Request('https://app.example.com/'),
+		snapshot: manifestOf([rule]),
 	});
 	const stream = await renderToReadableStream(
 		createElement(
