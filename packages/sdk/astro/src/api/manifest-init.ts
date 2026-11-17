@@ -56,9 +56,7 @@ export const resolveManifestSourceFrom = function resolveManifestSourceFrom(
 		return resolved;
 	}
 
-	const backendURL =
-		(mode.type === 'hosted' ? mode.backendURL : undefined) ??
-		options.backendURL;
+	const { backendURL } = options;
 	if (!backendURL) {
 		throw new Error('@c15t/astro: pass backendURL or manifestURL.');
 	}

@@ -9,7 +9,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { boot } from '../client';
 import { resolveOptions } from '../integration';
-import { offline as offlineMode } from '../mode';
+import { testing as testingMode } from '../testing';
 import { registerDialogAdapter, registerDialogSurface } from '../ui/adapter';
 import { reactDialogAdapter } from '../ui/react';
 import { vueDialogAdapter } from '../ui/vue';
@@ -83,9 +83,8 @@ describe.each(['react', 'vue'] as const)('the %s dialog island', (ui) => {
 						'measurement',
 						'functionality',
 					],
-					mode: offlineMode({
-						acknowledgeNoRecords: true,
-						policyRules: [
+					mode: testingMode({
+						policy: [
 							{
 								...testRule,
 								categories: [

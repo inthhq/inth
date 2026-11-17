@@ -66,7 +66,7 @@ describe('server resolution budget', () => {
 		const backend = heldFetch(initResponse);
 		let settled = false;
 		const pending = resolveContext(
-			{ mode: hostedMode({ backendURL: BACKEND }) },
+			{ backendURL: BACKEND, mode: hostedMode() },
 			{ fetch: backend.fetch }
 		).then((value) => {
 			settled = true;
@@ -90,7 +90,7 @@ describe('server resolution budget', () => {
 		const c15t = await resolveContext(
 			{
 				middleware: { timeoutMs: false },
-				mode: hostedMode({ backendURL: BACKEND }),
+				backendURL: BACKEND, mode: hostedMode(),
 			},
 			{ fetch: backend.fetch, timeoutMs: 30 }
 		);
@@ -102,7 +102,7 @@ describe('server resolution budget', () => {
 	it('does not delay offline mode', async () => {
 		const c15t = await resolveContext({
 			middleware: { timeoutMs: 0 },
-			mode: { type: 'offline' },
+			mode: { type: 'testing' },
 		});
 
 		expect(c15t.hasPolicy).toBe(true);

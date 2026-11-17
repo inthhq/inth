@@ -5,7 +5,8 @@ import {
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { resolveOptions } from '../integration';
-import { manifest as manifestMode, offline as offlineMode } from '../mode';
+import { manifest as manifestMode } from '../mode';
+import { testing as testingMode } from '../testing';
 import { clearManifestCache, resolveConsentContext } from '../server';
 import { testRule } from './policy-fixture';
 
@@ -18,7 +19,7 @@ describe('the vendors option on the server', () => {
 		const c15t = await resolveConsentContext({
 			headers: new Headers(),
 			options: resolveOptions({
-				mode: offlineMode({ policyRules: [testRule] }),
+				mode: testingMode({ policy: [testRule] }),
 				vendors: [
 					{
 						category: 'measurement',

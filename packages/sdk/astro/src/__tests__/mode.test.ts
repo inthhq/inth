@@ -4,9 +4,9 @@ import { describe, expect, it, vi } from 'vitest';
 import {
 	hosted as hostedMode,
 	manifest as manifestMode,
-	offline as offlineMode,
 } from '../mode';
-import { hostedTransport, lazyTransport, offlineTransport } from '../transport';
+import { testing as testingMode } from '../testing';
+import { hostedTransport, lazyTransport, testingTransport } from '../transport';
 import { testRule } from './policy-fixture';
 
 const context: ProviderTransportContext = {
@@ -19,10 +19,13 @@ const BACKEND = 'https://consent.example.com';
 
 describe('modes', () => {
 	it('are plain serializable objects', () => {
+		expect(JSON.parse(JSON.stringify(hostedMode()))).toEqual({
+			type: 'hosted',
+		});
 		expect(
-			JSON.parse(JSON.stringify(hostedMode({ backendURL: '/api/c15t' })))
-		).toEqual({ backendURL: '/api/c15t', type: 'hosted' });
-		expect(offlineMode()).toEqual({ type: 'offline' });
+			JSON.parse(JSON.stringify(testingMode({ policy: [testRule] })))
+		).toEqual({ policy: [testRule], type: 'testing' });
+		expect(testingMode()).toEqual({ type: 'testing' });
 		expect(manifestMode({ source: 'runtime' })).toEqual({
 			source: 'runtime',
 			type: 'manifest',
@@ -32,13 +35,13 @@ describe('modes', () => {
 
 describe('the page transports', () => {
 	it('reports the transport kind for window.c15t', () => {
-		expect(lazyTransport({ mode: hostedMode({ backendURL: '/x' }) }).kind).toBe(
+		expect(lazyTransport({ backendURL: '/x', mode: hostedMode() }).kind).toBe(
 			'hosted'
 		);
 		expect(
-			hostedTransport({ mode: hostedMode({ backendURL: '/x' }) }).kind
+			hostedTransport({ backendURL: '/x', mode: hostedMode() }).kind
 		).toBe('hosted');
-		expect(offlineTransport({ mode: offlineMode() }).kind).toBe('offline');
+		expect(testingTransport({ mode: testingMode() }).kind).toBe('offline');
 		expect(
 			lazyTransport({ backendURL: BACKEND, mode: manifestMode() }).kind
 		).toBe('manifest');
@@ -46,8 +49,8 @@ describe('the page transports', () => {
 
 	it('resolves an offline policy with no network at all', async () => {
 		const fetchSpy = vi.spyOn(globalThis, 'fetch');
-		const transport = offlineTransport({
-			mode: offlineMode({ policyRules: [testRule] }),
+		const transport = testingTransport({
+			mode: testingMode({ policy: [testRule] }),
 		})(context);
 		const response = await transport.init?.({ overrides: {}, user: null });
 		expect(response?.policyResolution).toMatchObject({
@@ -93,9 +96,9 @@ describe('the page transports', () => {
 		}
 	);
 
-	it('asks hosted mode for its own backend URL first', () => {
+	it('needs a backend URL for hosted mode', () => {
 		expect(() => lazyTransport({ mode: hostedMode() })).toThrowError(
-			/hosted\(\) needs a backend URL/u
+			/`backendURL` is required/u
 		);
 		expect(
 			lazyTransport({ backendURL: BACKEND, mode: hostedMode() }).kind

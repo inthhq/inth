@@ -18,7 +18,7 @@ import type { AstroConsentClient } from '../client';
 import * as reactPanelSurface from '../components/islands/panel-surface';
 import * as vuePanelSurface from '../components/islands/panel-surface.vue';
 import { resolveOptions } from '../integration';
-import { offline as offlineMode } from '../mode';
+import { testing as testingMode } from '../testing';
 import { registerDialogAdapter, registerDialogSurface } from '../ui/adapter';
 import { reactDialogAdapter } from '../ui/react';
 import { vueDialogAdapter } from '../ui/vue';
@@ -81,9 +81,8 @@ const openReactDialog = async function openReactDialog(): Promise<void> {
 				cookiePolicy: { href: '/cookies' },
 				privacyPolicy: { href: '/privacy', label: 'Privacy' },
 			},
-			mode: offlineMode({
-				acknowledgeNoRecords: true,
-				policyRules: [testRule],
+			mode: testingMode({
+				policy: [testRule],
 			}),
 			ui: 'react',
 		})
@@ -137,9 +136,8 @@ describe('the Vue preferences dialog', () => {
 					cookiePolicy: { href: '/cookies' },
 					privacyPolicy: { href: '/privacy', label: 'Privacy' },
 				},
-				mode: offlineMode({
-					acknowledgeNoRecords: true,
-					policyRules: [testRule],
+				mode: testingMode({
+					policy: [testRule],
 				}),
 				ui: 'vue',
 			})

@@ -1,11 +1,11 @@
 /**
  * The page script loads every init path on demand.
  *
- * `offline()` carries the recommended policy-rule pack, and the hosted
+ * `testing()` carries the recommended policy-rule pack, and the hosted
  * transport's init path is only needed when a page inits again. A page the
  * server resolved runs neither, so the browser client must not import them
  * statically. `@c15t/core/runtime/client-mode` loads the hosted init path
- * with `import()`, and its own tests pin that; an offline init must still
+ * with `import()`, and its own tests pin that; a test page's init must still
  * resolve its rules.
  *
  * The load-count tests share one module registry and run in order.
@@ -17,15 +17,16 @@ import { fileURLToPath } from 'node:url';
 import type { ProviderTransportContext } from '@c15t/core';
 import { describe, expect, it, vi } from 'vitest';
 
-import { hosted as hostedMode, offline as offlineMode } from '../mode';
-import { lazyTransport, offlineTransport } from '../transport';
+import { hosted as hostedMode } from '../mode';
+import { testing as testingMode } from '../testing';
+import { lazyTransport, testingTransport } from '../transport';
 import { testRule } from './policy-fixture';
 
-const offlineModule = vi.hoisted(() => ({ loads: 0 }));
+const testingModule = vi.hoisted(() => ({ loads: 0 }));
 
 // oxlint-disable-next-line anti-slop/no-module-mocking -- The property under test is whether the client evaluates this module at all. The factory only counts loads and returns the real module.
-vi.mock('../offline-mode', async (importOriginal) => {
-	offlineModule.loads += 1;
+vi.mock('../testing-transport', async (importOriginal) => {
+	testingModule.loads += 1;
 	return await importOriginal();
 });
 
@@ -38,12 +39,13 @@ const context: ProviderTransportContext = {
 const SRC = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 /**
- * Names that pull the offline transport, a rule pack or the hosted init
+ * Names that pull the testing transport, a rule pack or the hosted init
  * path into a bundle.
  */
 const INIT_ONLY = new Set([
 	'createHostedTransport',
 	'createOfflineTransport',
+	'createTestingMode',
 	'hosted',
 	'offline',
 	'policyRulePresets',
@@ -102,7 +104,7 @@ describe('browser client graph', () => {
 		const transport = resolve(SRC, 'transport.ts');
 		const { edges, files } = walk(resolve(SRC, 'client.ts'), [transport]);
 
-		expect(files.has(resolve(SRC, 'offline-mode.ts'))).toBe(false);
+		expect(files.has(resolve(SRC, 'testing-transport.ts'))).toBe(false);
 		const offenders = edges.filter(
 			(edge) =>
 				!edge.specifier.startsWith('.') &&
@@ -111,43 +113,43 @@ describe('browser client graph', () => {
 		expect(offenders).toEqual([]);
 	});
 
-	it('loads offline mode only with import()', () => {
+	it('loads testing mode only with import()', () => {
 		const { files } = walk(resolve(SRC, 'transport.ts'));
-		expect(files.has(resolve(SRC, 'offline-mode.ts'))).toBe(false);
+		expect(files.has(resolve(SRC, 'testing-transport.ts'))).toBe(false);
 	});
 });
 
-describe('offline mode on demand', () => {
+describe('testing mode on demand', () => {
 	it('hosted mode never loads it', () => {
 		const transport = lazyTransport({
-			mode: hostedMode({ backendURL: '/x' }),
+			backendURL: '/x', mode: hostedMode(),
 		})(context);
 		expect(transport).toBeDefined();
-		expect(offlineModule.loads).toBe(0);
+		expect(testingModule.loads).toBe(0);
 	});
 
-	it('an offline transport loads nothing until it inits, and saves without it', async () => {
-		const transport = offlineTransport({
-			mode: offlineMode({ policyRules: [testRule] }),
+	it('a testing transport loads nothing until it inits, and saves without it', async () => {
+		const transport = testingTransport({
+			mode: testingMode({ policy: [testRule] }),
 		})(context);
 		const saved = await transport.save?.({
 			subjectId: 'sub_1',
 		} as never);
 
 		expect(saved).toEqual({ ok: true, subjectId: 'sub_1' });
-		expect(offlineModule.loads).toBe(0);
+		expect(testingModule.loads).toBe(0);
 	});
 
-	it('an offline init loads it once and resolves the rules', async () => {
-		const transport = offlineTransport({
-			mode: offlineMode({ policyRules: [testRule] }),
+	it('a testing init loads it once and resolves the rules', async () => {
+		const transport = testingTransport({
+			mode: testingMode({ policy: [testRule] }),
 		})(context);
 		const [first, second] = await Promise.all([
 			transport.init?.({ overrides: {}, user: null }),
 			transport.init?.({ overrides: { country: 'DE' }, user: null }),
 		]);
 
-		expect(offlineModule.loads).toBe(1);
+		expect(testingModule.loads).toBe(1);
 		expect(first?.policyResolution).toMatchObject({
 			policy: { id: 'test', prompt: 'choice' },
 			status: 'matched',

@@ -15,10 +15,8 @@ import type {
 	ProviderTransportContext,
 	ProviderTransportFactory,
 } from '@c15t/core';
-import {
-	createHostedTransport,
-	warnNoConsentRecordsInDevelopment,
-} from '@c15t/core';
+import { createHostedTransport } from '@c15t/core';
+import { testingOptionsOf } from '@c15t/core/modes';
 import { clientMode } from '@c15t/core/runtime/client-mode';
 
 import type { C15tResolvedOptions } from './types';
@@ -40,36 +38,30 @@ export type ResolveTransport = (
 ) => ProviderTransportFactory;
 
 /**
- * `local()`: resolve policy rules in the browser.
+ * `testing()`: resolve the test's policy, or the recommended pack, in the
+ * browser with no network.
  *
- * The transport and the recommended rule pack load on the first init, so a
- * page the server already resolved never loads them. Saves need nothing
- * from the chunk: offline mode has no server to acknowledge them.
+ * The transport and the policy pack load on the first init, so a page the
+ * server already resolved never loads them. The loaded transport throws in
+ * production builds. Saves go nowhere: there is no server to acknowledge
+ * them.
  *
- * @param options - The resolved integration options, in offline mode.
+ * @param options - The resolved integration options, in testing mode.
  * @returns A transport factory for `createConsentKernel`.
  * @internal
  */
-export const offlineTransport: ResolveTransport = ({ mode }) =>
+export const testingTransport: ResolveTransport = ({ mode }) =>
 	Object.assign(
 		(context: ProviderTransportContext): KernelTransport => {
-			const acknowledgeNoRecords =
-				mode.type === 'offline' ? mode.acknowledgeNoRecords : undefined;
-			// Here, not in the chunk: a page the server resolved never loads it.
-			warnNoConsentRecordsInDevelopment(acknowledgeNoRecords);
 			let loading: Promise<KernelTransport> | undefined;
 			const load = function load(): Promise<KernelTransport> {
 				loading ??= (async () => {
 					try {
-						const { createOfflineTransport } = await import('./offline-mode');
-						return createOfflineTransport({
-							acknowledgeNoRecords: true,
-							iabEnabled: context.iabEnabled,
-							policyRules:
-								(mode.type === 'offline' ? mode.policyRules : undefined) ??
-								context.policyRules,
-							translations: context.translations,
-						});
+						const { createTestingMode } = await import('./testing-transport');
+						return createTestingMode(
+							'@c15t/astro/testing',
+							mode.type === 'testing' ? testingOptionsOf(mode) : {}
+						).transport(context);
 					} catch (error) {
 						// Let the kernel's retry make a fresh import attempt.
 						loading = undefined;
@@ -121,12 +113,8 @@ export const lazyTransport: ResolveTransport = (options) =>
  * @returns A transport factory for `createConsentKernel`.
  * @internal
  */
-export const hostedTransport: ResolveTransport = ({ backendURL, mode }) => {
-	const own = mode.type === 'hosted' ? mode : undefined;
-	const options = {
-		backendURL: own?.backendURL ?? backendURL ?? '',
-		headers: own?.headers,
-	};
+export const hostedTransport: ResolveTransport = ({ backendURL }) => {
+	const options = { backendURL: backendURL ?? '' };
 	return Object.assign(() => createHostedTransport(options), {
 		kind: 'hosted' as const,
 	});

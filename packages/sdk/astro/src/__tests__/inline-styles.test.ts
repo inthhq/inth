@@ -11,7 +11,7 @@ import ConsentDialogLink from '../components/panel-link.astro';
 import ConsentBanner from '../components/prompt.astro';
 import { INLINE_IAB_STYLES_CSS, INLINE_STYLES_CSS } from '../inline-styles';
 import { resolveOptions } from '../integration';
-import { offline as offlineMode } from '../mode';
+import { testing as testingMode } from '../testing';
 import { resolveConsentContext } from '../server';
 import type { C15tAstroOptions, C15tLocals } from '../types';
 import { testRule } from './policy-fixture';
@@ -33,7 +33,7 @@ const buildLocals = async function buildLocals(
 	return await resolveConsentContext({
 		headers: new Headers(),
 		options: resolveOptions({
-			mode: offlineMode({ policyRules: [testRule] }),
+			mode: testingMode({ policy: [testRule] }),
 			...options,
 		}),
 	});
@@ -46,8 +46,8 @@ const INLINED_IAB =
 const IAB_OPTIONS: C15tAstroOptions = {
 	consentCategories: ['necessary', 'marketing'],
 	iab: { cmpId: 160, gvl: MINIMAL_GVL as never },
-	mode: offlineMode({
-		policyRules: [
+	mode: testingMode({
+		policy: [
 			{
 				categories: ['marketing'],
 				id: 'iab',

@@ -659,8 +659,6 @@ const createClient = function createClient(
 			networkBlocker: extension.networkBlocker ?? options.networkBlocker,
 			nonce: pageNonce,
 			pkg: '@c15t/astro',
-			policyRules:
-				options.mode.type === 'offline' ? options.mode.policyRules : undefined,
 			prefetch: config,
 			presentation: options.presentation,
 			reloadOnConsentRevoked: options.reloadOnConsentRevoked,

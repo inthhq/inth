@@ -1,7 +1,7 @@
 /**
- * Offline mode's transport, in its own module so the browser client loads it
- * with a dynamic import only when an offline init runs.
+ * The `testing()` transport, in its own module so the browser client loads
+ * it with a dynamic import only when a test page inits.
  *
  * @internal
  */
-export { createOfflineTransport } from '@c15t/core';
+export { createTestingMode } from '@c15t/core/testing';

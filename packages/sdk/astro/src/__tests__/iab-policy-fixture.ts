@@ -35,7 +35,7 @@ export const iabInitResponse = function iabInitResponse(
 /** A hosted site that never set `iab`, with one marketing script. */
 export const SITE_WITHOUT_IAB: C15tAstroOptions = {
 	consentCategories: ['necessary', 'marketing'],
-	mode: hostedMode({ backendURL: 'https://consent.example.com' }),
+	backendURL: 'https://consent.example.com', mode: hostedMode(),
 	scripts: [
 		{ category: 'marketing', id: 'pixel', src: 'https://example.com/pixel.js' },
 	],

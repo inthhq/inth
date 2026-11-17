@@ -138,9 +138,9 @@ describe('manifest-mode server prefetch', () => {
 		const fetchImpl = vi.fn(() => Promise.resolve(manifestResponse()));
 		const { c15t } = await render({
 			astroOptions: {
-				backendURL: 'https://consent.example.com',
+				// Relative: no session report, so no request at all.
+				backendURL: '/api/self-host',
 				mode: manifestMode({ snapshot: MANIFEST }),
-				reportSessions: false,
 			},
 			fetch: fetchImpl as never,
 			headers: { 'x-c15t-country': 'DE' },
@@ -245,12 +245,14 @@ it.each(['public', 'custom'] as const)(
 					backendURL: 'https://consent.example.com',
 					iab: { cmpId: 28 },
 					mode: manifestMode({ snapshot: manifest }),
-					reportSessions: false,
 				},
 				fetch: loader === 'custom' ? fetch : undefined,
 				headers: { 'x-c15t-country': 'DE' },
 			});
-			expect(fetch).toHaveBeenCalledOnce();
+			// The list, besides the render's session report.
+			expect(
+				fetch.mock.calls.filter(([url]) => !String(url).endsWith('/sessions'))
+			).toHaveLength(1);
 			expect(result.c15t?.config.initialIab?.gvl).toEqual(
 				loader === 'public' ? null : completeGVL
 			);

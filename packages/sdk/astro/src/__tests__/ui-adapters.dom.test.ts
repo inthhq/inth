@@ -7,7 +7,6 @@
  * the kernel rather than the DOM, and leaves nothing behind on destroy.
  */
 
-import { hosted } from '@c15t/core';
 import { createConsentRuntime } from '@c15t/core/runtime';
 import type { ConsentRuntime } from '@c15t/core/runtime';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -34,7 +33,7 @@ const hosts: HTMLElement[] = [];
 
 const createRuntime = function createRuntime(): ConsentRuntime {
 	const runtime = createConsentRuntime({
-		mode: hosted({ backendURL: 'https://consent.example.test' }),
+		backendURL: 'https://consent.example.test',
 		pkg: '@c15t/astro-test',
 	});
 	runtimes.push(runtime);

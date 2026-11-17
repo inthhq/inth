@@ -24,7 +24,7 @@ import ConsentBanner from '../components/prompt.astro';
 import { buildAstroCsp, buildInlineCodeHashes } from '../csp';
 import { INLINE_IAB_STYLES_CSS } from '../inline-styles';
 import { resolveOptions } from '../integration';
-import { offline as offlineMode } from '../mode';
+import { testing as testingMode } from '../testing';
 import { resolveConsentContext } from '../server';
 import type { C15tAstroOptions, C15tLocals } from '../types';
 import { testRule } from './policy-fixture';
@@ -74,12 +74,12 @@ const surfaces = [
 	[
 		'<ConsentScript />',
 		ConsentScript,
-		{ mode: offlineMode({ policyRules: [testRule] }) },
+		{ mode: testingMode({ policy: [testRule] }) },
 	],
 	[
 		'<ConsentBanner />',
 		ConsentBanner,
-		{ mode: offlineMode({ policyRules: [testRule] }) },
+		{ mode: testingMode({ policy: [testRule] }) },
 	],
 	[
 		'<IABConsentBanner />',
@@ -87,7 +87,7 @@ const surfaces = [
 		{
 			consentCategories: ['necessary', 'marketing'],
 			iab: { cmpId: 160, gvl: MINIMAL_GVL as never },
-			mode: offlineMode({ policyRules: [IAB_POLICY as never] }),
+			mode: testingMode({ policy: [IAB_POLICY as never] }),
 		},
 	],
 ] as const;
@@ -129,7 +129,7 @@ describe('<ConsentBanner /> rendered as a server island', () => {
 		const html = await container.renderToString(ConsentBanner, {
 			locals: {
 				c15t: await buildLocals(
-					{ mode: offlineMode({ policyRules: [testRule] }) },
+					{ mode: testingMode({ policy: [testRule] }) },
 					'island-request-nonce'
 				),
 			},
@@ -153,7 +153,7 @@ describe("Astro's own CSP", () => {
 	it('allows the IAB first-paint sheet only when automatic inline styles are active', async () => {
 		const options = resolveOptions({
 			iab: { cmpId: 160 },
-			mode: offlineMode(),
+			mode: testingMode(),
 		});
 		const hash = sha256(INLINE_IAB_STYLES_CSS);
 		expect((await buildInlineCodeHashes(options)).styles).toContain(hash);
@@ -161,10 +161,10 @@ describe("Astro's own CSP", () => {
 			{ ...options, inlineStyles: false },
 			resolveOptions({
 				iab: { cmpId: 160 },
-				mode: offlineMode(),
+				mode: testingMode(),
 				styles: false,
 			}),
-			resolveOptions({ mode: offlineMode() }),
+			resolveOptions({ mode: testingMode() }),
 		];
 		const hashes = await Promise.all(
 			external.map((resolved) => buildInlineCodeHashes(resolved))
@@ -228,7 +228,7 @@ describe("Astro's own CSP", () => {
 			resolveOptions({
 				...shared,
 				experiment: { ...experiment, arm: 'control' },
-				mode: offlineMode({ policyRules: [testRule] }),
+				mode: testingMode({ policy: [testRule] }),
 			})
 		);
 
@@ -237,7 +237,7 @@ describe("Astro's own CSP", () => {
 				const locals = await buildLocals(
 					{
 						experiment: { ...experiment, arm },
-						mode: offlineMode({ policyRules: [testRule] }),
+						mode: testingMode({ policy: [testRule] }),
 					},
 					undefined
 				);
@@ -261,7 +261,7 @@ describe("Astro's own CSP", () => {
 	it('adds the hashes where the site turned CSP on', async () => {
 		const options = resolveOptions({
 			...shared,
-			mode: offlineMode({ policyRules: [testRule] }),
+			mode: testingMode({ policy: [testRule] }),
 		});
 		const hashes = await buildInlineCodeHashes(options);
 
@@ -304,7 +304,7 @@ describe("Astro's own CSP", () => {
 		const textContent = 'window.__analytics = true;';
 		const hashes = await buildInlineCodeHashes(
 			resolveOptions({
-				mode: offlineMode({ policyRules: [testRule] }),
+				mode: testingMode({ policy: [testRule] }),
 				scripts: [{ category: 'measurement', id: 'analytics', textContent }],
 			})
 		);
@@ -317,7 +317,7 @@ describe("Astro's own CSP", () => {
 		const options = resolveOptions({
 			...shared,
 			clientEntrypoint: './src/c15t.client.ts',
-			mode: offlineMode({ policyRules: [testRule] }),
+			mode: testingMode({ policy: [testRule] }),
 		});
 		const csp = await buildAstroCsp(
 			{ security: { csp: { scriptDirective: { hashes: [siteHash] } } } },
@@ -334,7 +334,7 @@ describe("Astro's own CSP", () => {
 			(
 				await buildAstroCsp(
 					{ security: { csp: true } },
-					resolveOptions({ mode: offlineMode({ policyRules: [testRule] }) })
+					resolveOptions({ mode: testingMode({ policy: [testRule] }) })
 				)
 			)?.browser
 		).toBeUndefined();

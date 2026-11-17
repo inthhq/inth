@@ -12,10 +12,10 @@
  * // astro.config.mjs, with PUBLIC_C15T_BACKEND_URL in .env
  * import svelte from '@astrojs/svelte';
  * import { defineConfig } from 'astro/config';
- * import c15t, { hosted } from 'c15t/astro';
+ * import c15t from 'c15t/astro';
  *
  * export default defineConfig({
- *   integrations: [svelte(), c15t({ mode: hosted() })],
+ *   integrations: [svelte(), c15t()],
  * });
  * ```
  */
@@ -23,15 +23,13 @@
 export { c15t, c15t as default, resolveOptions } from './integration';
 export { createConsentMiddleware } from './middleware-handler';
 export type { ConsentMiddlewareOptions } from './middleware-handler';
-export { hosted, local, manifest, offline } from './mode';
+export { hosted, manifest } from './mode';
 export type {
 	ConsentMode,
 	HostedMode,
-	HostedModeOptions,
 	ManifestMode,
 	ManifestModeOptions,
-	OfflineMode,
-	OfflineModeOptions,
+	TestingMode,
 } from '@c15t/core/modes';
 export type {
 	C15tAstroOptions,

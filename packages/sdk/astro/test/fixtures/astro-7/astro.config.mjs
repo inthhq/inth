@@ -2,7 +2,8 @@
 // ends up with. `src/__tests__/astro-build.test.ts` builds it once per `ui`.
 import react from '@astrojs/react';
 import svelte from '@astrojs/svelte';
-import c15t, { offline } from '@c15t/astro';
+import c15t from '@c15t/astro';
+import { testing } from '@c15t/astro/testing';
 import { MINIMAL_GVL } from '@c15t/conformance/fixtures/gvl';
 import { defineConfig } from 'astro/config';
 
@@ -54,9 +55,8 @@ export default defineConfig({
 			consentCategories: ['necessary', 'marketing'],
 			endpoints: false,
 			iab: iab ? { cmpId: 160, gvl: MINIMAL_GVL } : undefined,
-			mode: offline({
-				acknowledgeNoRecords: true,
-				policyRules: [
+			mode: testing({
+				policy: [
 					{
 						categories: ['marketing'],
 						id: 'default',

@@ -127,17 +127,11 @@ export const createConsentRouteHandlers = function createConsentRouteHandlers(
 	const { mode, i18n } = handlerOptions.options;
 	const handle = createConsentRouteHandler({
 		adapter: '@c15t/astro',
-		backendURL:
-			(mode.type === 'hosted' ? mode.backendURL : undefined) ??
-			handlerOptions.options.backendURL,
+		backendURL: handlerOptions.options.backendURL,
 		fetch: handlerOptions.fetch,
 		fetchGvl: handlerOptions.fetchGvl,
 		manifest: mode.type === 'manifest' ? mode.snapshot : undefined,
 		manifestURL: mode.type === 'manifest' ? mode.manifestURL : undefined,
-		// Hosted mode counts its visitors through the backend's own `/init`.
-		reportSessions:
-			mode.type === 'manifest' &&
-			handlerOptions.options.reportSessions !== false,
 	});
 	const locale = i18n?.locale;
 

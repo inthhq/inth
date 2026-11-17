@@ -55,16 +55,12 @@ afterEach(() => {
 });
 
 describe('createConsentRouteHandlers', () => {
-	it('reads the manifest from the mode: manifestURL, backendURL or the hosted URL', async () => {
+	it('reads the manifest from the mode: manifestURL or backendURL', async () => {
 		for (const [mode, expected] of [
 			[manifestMode(), `${BACKEND}/manifest`],
 			[
 				manifestMode({ manifestURL: 'https://cdn.example.com/m.json' }),
 				'https://cdn.example.com/m.json',
-			],
-			[
-				hostedMode({ backendURL: '/api/self-host' }),
-				'https://site.example.com/api/self-host/manifest',
 			],
 		] as const) {
 			clearManifestCache();
@@ -106,7 +102,6 @@ describe('createConsentRouteHandlers', () => {
 				backendURL: BACKEND,
 				i18n: { locale: 'de' },
 				mode: manifestMode(),
-				reportSessions: false,
 			}),
 		});
 		const payload = await (
@@ -119,29 +114,6 @@ describe('createConsentRouteHandlers', () => {
 		).json();
 		expect(payload.translations.language).toBe('de');
 	});
-
-	it.each([
-		[
-			'reportSessions: false',
-			{ backendURL: BACKEND, mode: manifestMode(), reportSessions: false },
-		],
-		['hosted mode', { mode: hostedMode({ backendURL: BACKEND }) }],
-	] satisfies [string, C15tAstroOptions][])(
-		'sends no session report for %s',
-		async (_, astroOptions) => {
-			const fetch = upstream();
-			await createConsentRouteHandlers({
-				fetch,
-				options: options(astroOptions),
-			}).init(request('/api/c15t/init'));
-			await new Promise((resolve) => {
-				setTimeout(resolve, 0);
-			});
-			expect(
-				fetch.mock.calls.some(([url]) => String(url).endsWith('/sessions'))
-			).toBe(false);
-		}
-	);
 
 	it('GET dispatches the catch-all route by its last segment', async () => {
 		const handlers = createConsentRouteHandlers({
@@ -212,7 +184,6 @@ it('serves Astro manifest SSR references through the same-origin init route', as
 		// IAB is opt-in: without `iab` an IAB policy throws.
 		iab: { cmpId: 28 },
 		mode: manifestMode({ snapshot: manifest }),
-		reportSessions: false,
 		routePrefix: '/privacy',
 	});
 	const context = await resolveConsentContext({
@@ -234,5 +205,9 @@ it('serves Astro manifest SSR references through the same-origin init route', as
 	expect(list.status).toBe(200);
 	expect(await list.json()).toEqual(completeGVL);
 	// The render, the init route and the list request share one download.
-	expect(gvlUpstream).toHaveBeenCalledTimes(1);
+	expect(
+		gvlUpstream.mock.calls.filter(
+			([url]) => !String(url).endsWith('/sessions')
+		)
+	).toHaveLength(1);
 });

@@ -4,7 +4,6 @@
  * runtime, as it does on an Astro page with `ui: 'react'`.
  */
 
-import { custom } from '@c15t/core';
 import { createConsentRuntime } from '@c15t/core/runtime';
 import type { ConsentRuntime } from '@c15t/core/runtime';
 import { afterEach, beforeAll, expect, it, vi } from 'vitest';
@@ -23,7 +22,7 @@ import { ISLAND_RENDER_TIMEOUT } from './react-dialog-island';
 const OPTIONS = {
 	consentCategories: ['necessary', 'marketing', 'measurement'],
 	endpoints: { enabled: false, initPath: '/i', manifestPath: '/m' },
-	mode: { type: 'offline' },
+	mode: { type: 'testing' },
 	ui: 'react',
 } as unknown as C15tResolvedOptions;
 
@@ -59,7 +58,8 @@ it('closes the React island on save before a failed request settles', async () =
 	const save = vi.fn(() => Promise.reject(new Error('offline')));
 	const runtime: ConsentRuntime = createConsentRuntime({
 		consentCategories: ['necessary', 'marketing', 'measurement'],
-		mode: custom({ save }),
+		// A backend whose saves fail.
+		mode: Object.assign(() => ({ save }), { kind: 'hosted' as const }),
 		persistence: false,
 		pkg: '@c15t/astro-test',
 		prefetch: { initialPolicyResolution: testResolution() },

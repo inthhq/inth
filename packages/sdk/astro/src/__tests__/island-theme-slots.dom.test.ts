@@ -16,7 +16,7 @@ import type { AstroConsentClient } from '../client';
 import * as reactPanelSurface from '../components/islands/panel-surface';
 import * as vuePanelSurface from '../components/islands/panel-surface.vue';
 import { resolveOptions } from '../integration';
-import { offline as offlineMode } from '../mode';
+import { testing as testingMode } from '../testing';
 import type { C15tUIAdapterName } from '../types';
 import { registerDialogAdapter, registerDialogSurface } from '../ui/adapter';
 import { buildProviderProps } from '../ui/provider-props';
@@ -84,9 +84,8 @@ const openDialog = async function openDialog(
 	const client: AstroConsentClient = boot(
 		resolveOptions({
 			consentCategories: ['necessary', 'marketing'],
-			mode: offlineMode({
-				acknowledgeNoRecords: true,
-				policyRules: [testRule],
+			mode: testingMode({
+				policy: [testRule],
 			}),
 			theme: THEME,
 			ui,
@@ -133,9 +132,8 @@ describe.each(['react', 'vue'] as const)('the %s dialog island', (ui) => {
 describe('the svelte dialog island', () => {
 	it('receives theme.slots on the provider theme', () => {
 		const options = resolveOptions({
-			mode: offlineMode({
-				acknowledgeNoRecords: true,
-				policyRules: [testRule],
+			mode: testingMode({
+				policy: [testRule],
 			}),
 			theme: THEME,
 			ui: 'svelte' satisfies C15tUIAdapterName,

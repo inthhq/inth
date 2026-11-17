@@ -28,8 +28,8 @@ import {
 import {
 	hosted as hostedMode,
 	manifest as manifestMode,
-	offline as offlineMode,
 } from '../mode';
+import { testing as testingMode } from '../testing';
 import type { C15tAstroOptions } from '../types';
 
 interface SetupCalls {
@@ -278,7 +278,23 @@ describe('resolveOptions', () => {
 		expect(serverOptionsSource(calls)).not.toContain('"schemaVersion"');
 	});
 
-	it('astro build stops when the default fetch fails', async () => {
+	it('astro build warns and fetches at runtime when the default fetch fails', async () => {
+		vi.stubEnv('C15T_ON_BUILD_ERROR', '');
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(() => Promise.resolve(new Response(null, { status: 503 })))
+		);
+		const { calls } = await runSetup({
+			backendURL: 'https://consent.example.com',
+			mode: manifestMode(),
+		});
+		expect(calls.logger.warn).toHaveBeenCalledWith(
+			expect.stringContaining('during the build (/manifest responded 503')
+		);
+		expect(serverOptionsSource(calls)).not.toContain('"schemaVersion"');
+	});
+
+	it("astro build stops when the fetch fails with onBuildError: 'fail'", async () => {
 		vi.stubEnv('C15T_ON_BUILD_ERROR', '');
 		vi.stubGlobal(
 			'fetch',
@@ -288,6 +304,7 @@ describe('resolveOptions', () => {
 			runSetup({
 				backendURL: 'https://consent.example.com',
 				mode: manifestMode(),
+				onBuildError: 'fail',
 			})
 		).rejects.toThrow(
 			"@c15t/astro: could not fetch the consent manifest from https://consent.example.com/manifest during the build (/manifest responded 503 ). Set `C15T_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to deploy with runtime fetching."
@@ -400,9 +417,9 @@ describe('resolveOptions', () => {
 	it.each([
 		[
 			'hosted()',
-			{ mode: hostedMode({ backendURL: 'https://consent.example.com' }) },
+			{ backendURL: 'https://consent.example.com', mode: hostedMode() },
 		],
-		['offline()', { mode: offlineMode() }],
+		['offline()', { mode: testingMode() }],
 		[
 			'a relative manifest URL',
 			{ backendURL: '', mode: manifestMode({ manifestURL: '/m.json' }) },
@@ -444,7 +461,7 @@ describe('resolveOptions', () => {
 	});
 
 	it('defaults the ui adapter to svelte', () => {
-		expect(resolveOptions({ mode: offlineMode() }).ui).toBe('svelte');
+		expect(resolveOptions({ mode: testingMode() }).ui).toBe('svelte');
 	});
 
 	it('defaults to manifest() and the /api/c15t route prefix', () => {
@@ -457,19 +474,19 @@ describe('resolveOptions', () => {
 
 	it('trims a routePrefix and drops it for false', () => {
 		expect(
-			resolveOptions({ mode: offlineMode(), routePrefix: '/consent/' })
+			resolveOptions({ mode: testingMode(), routePrefix: '/consent/' })
 				.routePrefix
 		).toBe('/consent');
 		expect(
-			resolveOptions({ mode: offlineMode(), routePrefix: false })
+			resolveOptions({ mode: testingMode(), routePrefix: false })
 		).not.toHaveProperty('routePrefix');
 		expect(() =>
-			resolveOptions({ mode: offlineMode(), routePrefix: 'api/c15t' })
+			resolveOptions({ mode: testingMode(), routePrefix: 'api/c15t' })
 		).toThrowError(/must be a path that starts with "\/"/u);
 	});
 
 	it.each(['/', '//'])('rejects a routePrefix of %s', (routePrefix) => {
-		expect(() => resolveOptions({ mode: offlineMode(), routePrefix })).toThrow(
+		expect(() => resolveOptions({ mode: testingMode(), routePrefix })).toThrow(
 			"@c15t/astro: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'."
 		);
 	});
@@ -506,7 +523,7 @@ describe('resolveOptions', () => {
 		// lose its callbacks without a word.
 		expect(() =>
 			resolveOptions({
-				mode: offlineMode(),
+				mode: testingMode(),
 				scripts: [
 					{ category: 'measurement', id: 'a', onLoad: () => undefined },
 				],
@@ -516,7 +533,7 @@ describe('resolveOptions', () => {
 		);
 		expect(() =>
 			c15t({
-				mode: offlineMode(),
+				mode: testingMode(),
 				networkBlocker: {
 					onRequestBlocked: () => undefined,
 				} as unknown as C15tAstroOptions['networkBlocker'],
@@ -528,7 +545,9 @@ describe('resolveOptions', () => {
 		const transport = Object.assign(() => ({}), { kind: 'custom' });
 		expect(() =>
 			resolveOptions({ mode: transport as unknown as C15tAstroOptions['mode'] })
-		).toThrowError(/`mode` must be manifest\(\), hosted\(\) or local\(\)/u);
+		).toThrowError(
+			/`mode` must be manifest\(\) or hosted\(\) from c15t\/astro, or testing\(\)/u
+		);
 	});
 
 	it.each(['solid', 'constructor', '__proto__'])(
@@ -536,12 +555,12 @@ describe('resolveOptions', () => {
 		(ui) => {
 			// A JavaScript astro.config.mjs has no type checking, so this used to
 			// surface as a TypeError on an undefined adapter entry.
-			const options = { mode: offlineMode() };
+			const options = { mode: testingMode() };
 			Reflect.set(options, 'ui', ui);
 			expect(() => resolveOptions(options)).toThrowError(
 				/unknown `ui`.*Supported adapters: /u
 			);
-			expect(resolveOptions({ mode: offlineMode(), ui: 'vue' }).ui).toBe('vue');
+			expect(resolveOptions({ mode: testingMode(), ui: 'vue' }).ui).toBe('vue');
 		}
 	);
 
@@ -639,7 +658,7 @@ describe('resolveOptions', () => {
 		expect(() =>
 			resolveOptions({
 				experiment: { arms: variants, id: 'banner-shape' },
-				mode: offlineMode(),
+				mode: testingMode(),
 			})
 		).toThrowError(/consentMiddleware\(\{ experimentArm \}\)/u);
 		// A site that composes the middleware resolves the arm per request.
@@ -647,13 +666,13 @@ describe('resolveOptions', () => {
 			resolveOptions({
 				experiment: { arms: variants, id: 'banner-shape' },
 				middleware: false,
-				mode: offlineMode(),
+				mode: testingMode(),
 			}).experiment
 		).toMatchObject({ id: 'banner-shape' });
 		expect(
 			resolveOptions({
 				experiment: { arm: 'bar', arms: variants, id: 'banner-shape' },
-				mode: offlineMode(),
+				mode: testingMode(),
 			}).experiment
 		).toMatchObject({ arm: 'bar' });
 	});
@@ -661,39 +680,39 @@ describe('resolveOptions', () => {
 	it('drops build-only options from the serialized shape', () => {
 		const resolved = resolveOptions({
 			middleware: false,
-			mode: offlineMode(),
+			mode: testingMode(),
 			requireUIIntegration: false,
 		});
 		expect(resolved).not.toHaveProperty('requireUIIntegration');
 	});
 
 	it('normalizes the middleware option', () => {
-		expect(resolveOptions({ mode: offlineMode() }).middleware).toEqual({
+		expect(resolveOptions({ mode: testingMode() }).middleware).toEqual({
 			enabled: true,
 			skip: [],
 		});
 		expect(
-			resolveOptions({ middleware: false, mode: offlineMode() }).middleware
+			resolveOptions({ middleware: false, mode: testingMode() }).middleware
 		).toEqual({ enabled: false, skip: [] });
 		expect(
 			resolveOptions({
 				middleware: { skip: ['/healthz'] },
-				mode: offlineMode(),
+				mode: testingMode(),
 			}).middleware
 		).toEqual({ enabled: true, skip: ['/healthz'] });
 	});
 
 	it('keeps an explicit ui adapter', () => {
-		expect(resolveOptions({ mode: offlineMode(), ui: 'react' }).ui).toBe(
+		expect(resolveOptions({ mode: testingMode(), ui: 'react' }).ui).toBe(
 			'react'
 		);
-		expect(resolveOptions({ mode: offlineMode(), ui: 'vue' }).ui).toBe('vue');
+		expect(resolveOptions({ mode: testingMode(), ui: 'vue' }).ui).toBe('vue');
 	});
 });
 
 describe('astro:config:setup', () => {
 	it("hands c15t's inline hashes to Astro's CSP when the site turned it on", async () => {
-		const options: C15tAstroOptions = { mode: offlineMode() };
+		const options: C15tAstroOptions = { mode: testingMode() };
 		const { calls } = await runSetup(options, { security: { csp: true } });
 		const hashes = await buildInlineCodeHashes(resolveOptions(options));
 		expect(calls.updateConfig).toHaveBeenCalledWith({
@@ -718,7 +737,7 @@ describe('astro:config:setup', () => {
 	it('hands the browser the policy hashes when a clientEntrypoint can add inline scripts', async () => {
 		const options: C15tAstroOptions = {
 			clientEntrypoint: 'site/c15t.client',
-			mode: offlineMode(),
+			mode: testingMode(),
 		};
 		const { calls } = await runSetup(options, {
 			security: { csp: { scriptDirective: { hashes: ['sha256-site'] } } },
@@ -746,7 +765,7 @@ describe('astro:config:setup', () => {
 
 	it('registers the middleware before user middleware', async () => {
 		const { calls } = await runSetup({
-			mode: hostedMode({ backendURL: '/api/c15t' }),
+			backendURL: '/api/c15t', mode: hostedMode(),
 		});
 		expect(calls.addMiddleware).toHaveBeenCalledWith({
 			entrypoint: resolveOwnEntry('@c15t/astro/middleware'),
@@ -757,7 +776,7 @@ describe('astro:config:setup', () => {
 	it('skips the middleware when disabled', async () => {
 		const { calls } = await runSetup({
 			middleware: false,
-			mode: offlineMode(),
+			mode: testingMode(),
 		});
 		expect(calls.addMiddleware).not.toHaveBeenCalled();
 	});
@@ -777,7 +796,7 @@ describe('astro:config:setup', () => {
 	it('defers the IAB panel stylesheet and links no CSS on IAB pages', async () => {
 		const { calls } = await runSetup({
 			iab: { cmpId: 160 },
-			mode: offlineMode(),
+			mode: testingMode(),
 		});
 		expect(
 			calls.injectScript.mock.calls.some(([stage]) => stage === 'page-ssr')
@@ -795,7 +814,7 @@ describe('astro:config:setup', () => {
 			// The components inline the first-paint rules, and the client
 			// links the dialog's when it opens: a stylesheet in `<head>`
 			// would hold back the first paint.
-			const { calls } = await runSetup({ mode: offlineMode(), ui });
+			const { calls } = await runSetup({ mode: testingMode(), ui });
 			expect(
 				calls.injectScript.mock.calls.some(([stage]) => stage === 'page-ssr')
 			).toBe(false);
@@ -812,7 +831,7 @@ describe('astro:config:setup', () => {
 	] as const)(
 		'registers the %s dialog stylesheets for the client to link',
 		async (ui, stylesheets) => {
-			const { calls } = await runSetup({ mode: offlineMode(), ui });
+			const { calls } = await runSetup({ mode: testingMode(), ui });
 			const [, code] = calls.injectScript.mock.calls[0] as [string, string];
 
 			stylesheets.forEach((stylesheet, index) => {
@@ -845,7 +864,7 @@ describe('astro:config:setup', () => {
 			// Tailwind 3 unwraps c15t's layer in the stylesheets it builds;
 			// inlined rules would stay layered and lose to its preflight.
 			const { calls } = await runSetup(
-				{ mode: offlineMode(), ui: 'svelte' },
+				{ mode: testingMode(), ui: 'svelte' },
 				{ root: projectWithTailwind('3.4.17') }
 			);
 			const [, boot] = calls.injectScript.mock.calls[0] as [string, string];
@@ -860,7 +879,7 @@ describe('astro:config:setup', () => {
 
 		it('inlines on Tailwind CSS 4', async () => {
 			const { calls } = await runSetup(
-				{ mode: offlineMode() },
+				{ mode: testingMode() },
 				{ root: projectWithTailwind('4.1.0') }
 			);
 			expect(
@@ -870,7 +889,7 @@ describe('astro:config:setup', () => {
 
 		it('links both full stylesheets for Tailwind 3 with IAB enabled', async () => {
 			const { calls } = await runSetup(
-				{ iab: { cmpId: 160 }, mode: offlineMode() },
+				{ iab: { cmpId: 160 }, mode: testingMode() },
 				{ root: projectWithTailwind('3.4.17') }
 			);
 			expect(calls.injectScript).toHaveBeenCalledWith(
@@ -888,7 +907,7 @@ describe('astro:config:setup', () => {
 	it('registers no dialog stylesheets with `styles: false`', async () => {
 		const { calls } = await runSetup({
 			iab: { cmpId: 160 },
-			mode: offlineMode(),
+			mode: testingMode(),
 			styles: false,
 		});
 		const [, code] = calls.injectScript.mock.calls[0] as [string, string];
@@ -897,14 +916,14 @@ describe('astro:config:setup', () => {
 	});
 
 	it('leaves styles to the site with `styles: false`', async () => {
-		const { calls } = await runSetup({ mode: offlineMode(), styles: false });
+		const { calls } = await runSetup({ mode: testingMode(), styles: false });
 		expect(
 			calls.injectScript.mock.calls.some(([stage]) => stage === 'page-ssr')
 		).toBe(false);
 	});
 
 	it('injects a page-level boot script', async () => {
-		const { calls } = await runSetup({ mode: offlineMode() });
+		const { calls } = await runSetup({ mode: testingMode() });
 		const [stage, code] = calls.injectScript.mock.calls[0] as [string, string];
 		expect(stage).toBe('page');
 		expect(code).toContain("import options from 'virtual:c15t/options'");
@@ -918,7 +937,7 @@ describe('astro:config:setup', () => {
 	});
 
 	it('serves the engine as virtual:c15t/engine', async () => {
-		const { calls } = await runSetup({ mode: offlineMode() });
+		const { calls } = await runSetup({ mode: testingMode() });
 		const engine = engineSource(calls);
 		expect(engine).toContain(`from ${specifier('@c15t/astro/client')};`);
 		expect(engine).toContain('export { boot };');
@@ -931,7 +950,7 @@ describe('astro:config:setup', () => {
 	] as const)(
 		'registers only the %s adapter and island',
 		async (ui, adapterModule, surfaceFile) => {
-			const { calls } = await runSetup({ mode: offlineMode(), ui });
+			const { calls } = await runSetup({ mode: testingMode(), ui });
 			const [, code] = calls.injectScript.mock.calls[0] as [string, string];
 
 			expect(code).toContain(`registerDialogAdapter(${JSON.stringify(ui)}`);
@@ -951,16 +970,16 @@ describe('astro:config:setup', () => {
 	);
 
 	it.each([
-		['offline()', { mode: offlineMode() }, {}, 'offlineTransport'],
+		['offline()', { mode: testingMode() }, {}, 'testingTransport'],
 		[
 			'hosted() with no adapter',
-			{ mode: hostedMode({ backendURL: 'https://consent.example.com' }) },
+			{ backendURL: 'https://consent.example.com', mode: hostedMode() },
 			{},
 			'hostedTransport',
 		],
 		[
 			'hosted() with an adapter',
-			{ mode: hostedMode({ backendURL: 'https://consent.example.com' }) },
+			{ backendURL: 'https://consent.example.com', mode: hostedMode() },
 			{ adapter: { name: '@astrojs/node' } },
 			'lazyTransport',
 		],
@@ -988,13 +1007,13 @@ describe('astro:config:setup', () => {
 	);
 
 	it('keeps both island specifiers behind import()', async () => {
-		const { calls } = await runSetup({ mode: offlineMode(), ui: 'react' });
+		const { calls } = await runSetup({ mode: testingMode(), ui: 'react' });
 		const [, code] = calls.injectScript.mock.calls[0] as [string, string];
 		expect(code).not.toMatch(/^import\s[^;]*@c15t\/astro\/(?:ui|islands)\//mu);
 	});
 
 	it('loads the script loader on demand for a site without scripts', async () => {
-		const { calls } = await runSetup({ mode: offlineMode() });
+		const { calls } = await runSetup({ mode: testingMode() });
 		const code = engineSource(calls);
 		expect(code).not.toContain('@c15t/core/modules/script-loader');
 		expect(code).not.toContain('@c15t/core/modules/network-blocker');
@@ -1003,7 +1022,7 @@ describe('astro:config:setup', () => {
 
 	it('ships the script loader and blocker with the engine when configured', async () => {
 		const { calls } = await runSetup({
-			mode: offlineMode(),
+			mode: testingMode(),
 			networkBlocker: {
 				rules: [{ category: 'measurement', domain: 'example.com', id: 'ga' }],
 			},
@@ -1034,7 +1053,7 @@ describe('astro:config:setup', () => {
 		// The Nuxt module once mounted the CMP for a site that never set `iab`.
 		// Here a site without it must not even reach the mount or the
 		// `import()` that fetches `@c15t/iab`.
-		const { calls } = await runSetup({ mode: offlineMode(), ...iabOptions });
+		const { calls } = await runSetup({ mode: testingMode(), ...iabOptions });
 		const [, page] = calls.injectScript.mock.calls[0] as [string, string];
 		const code = `${page}\n${engineSource(calls)}`;
 		expect(code).not.toContain('registerIAB(');
@@ -1045,7 +1064,7 @@ describe('astro:config:setup', () => {
 	it('registers the IAB wiring with the engine when `iab` is set', async () => {
 		const { calls } = await runSetup({
 			iab: { cmpId: 160 },
-			mode: offlineMode(),
+			mode: testingMode(),
 		});
 		const code = engineSource(calls);
 		expect(code).toContain(
@@ -1066,7 +1085,7 @@ describe('astro:config:setup', () => {
 	it('keeps what a client entrypoint may configure in the engine', async () => {
 		const { calls } = await runSetup({
 			clientEntrypoint: 'site/c15t.client',
-			mode: offlineMode(),
+			mode: testingMode(),
 		});
 		const code = engineSource(calls);
 		expect(code).toContain(
@@ -1083,7 +1102,7 @@ describe('astro:config:setup', () => {
 	it('threads a client entrypoint into the boot script', async () => {
 		const { calls } = await runSetup({
 			clientEntrypoint: 'site/c15t.client',
-			mode: offlineMode(),
+			mode: testingMode(),
 		});
 		const [, code] = calls.injectScript.mock.calls[0] as [string, string];
 		expect(code).toContain('import clientOptions from "site/c15t.client"');
@@ -1097,7 +1116,7 @@ describe('astro:config:setup', () => {
 		mkdirSync(join(root, 'src'));
 		writeFileSync(join(root, 'src', 'consent.ts'), 'export default {};');
 		const { calls } = await runSetup(
-			{ clientEntrypoint: './src/consent.ts', mode: offlineMode() },
+			{ clientEntrypoint: './src/consent.ts', mode: testingMode() },
 			{ root: pathToFileURL(`${root}/`) }
 		);
 		const [, code] = calls.injectScript.mock.calls[0] as [string, string];
@@ -1106,7 +1125,7 @@ describe('astro:config:setup', () => {
 		);
 		await expect(
 			runSetup(
-				{ clientEntrypoint: './src/missing.ts', mode: offlineMode() },
+				{ clientEntrypoint: './src/missing.ts', mode: testingMode() },
 				{ root: pathToFileURL(`${root}/`) }
 			)
 		).rejects.toThrow(
@@ -1131,7 +1150,7 @@ describe('astro:config:setup', () => {
 	it('keeps the client entrypoint path out of the browser options', async () => {
 		const { calls } = await runSetup({
 			clientEntrypoint: 'site/c15t.client',
-			mode: offlineMode(),
+			mode: testingMode(),
 		});
 		const [update] = calls.updateConfig.mock.calls[0] ?? [];
 		const [plugin] = update.vite.plugins;
@@ -1151,7 +1170,7 @@ describe('astro:config:setup', () => {
 		const clientEntrypoint = "client'\\file.ts';globalThis.injected=true;//";
 		const { calls } = await runSetup({
 			clientEntrypoint,
-			mode: offlineMode(),
+			mode: testingMode(),
 		});
 		const [, code] = calls.injectScript.mock.calls[0] as [string, string];
 		const module = parse(code, { sourceType: 'module' });
@@ -1172,7 +1191,7 @@ describe('astro:config:setup', () => {
 		const { calls } = await runSetup({
 			consentCategories: ['necessary', 'measurement'],
 			gpp: { usApproach: 'national', usFallback: 'none' },
-			mode: hostedMode({ backendURL: 'https://consent.example.com' }),
+			backendURL: 'https://consent.example.com', mode: hostedMode(),
 		});
 		const [config] = calls.updateConfig.mock.calls[0] as [
 			{
@@ -1192,16 +1211,14 @@ describe('astro:config:setup', () => {
 		const parsed = JSON.parse(
 			loaded.replace(/^export default /u, '').replace(/;$/u, '')
 		);
-		expect(parsed.mode).toEqual({
-			backendURL: 'https://consent.example.com',
-			type: 'hosted',
-		});
+		expect(parsed.mode).toEqual({ type: 'hosted' });
+		expect(parsed.backendURL).toBe('https://consent.example.com');
 		expect(parsed.consentCategories).toEqual(['necessary', 'measurement']);
 		expect(parsed.gpp).toEqual({ usApproach: 'national', usFallback: 'none' });
 	});
 
 	it("shims Nuxt's #imports for the vue adapter only", async () => {
-		const withVue = await runSetup({ mode: offlineMode(), ui: 'vue' });
+		const withVue = await runSetup({ mode: testingMode(), ui: 'vue' });
 		const [vueConfig] = withVue.calls.updateConfig.mock.calls[0] as [
 			{ vite: { plugins: { name: string }[] } },
 		];
@@ -1212,7 +1229,7 @@ describe('astro:config:setup', () => {
 			'@c15t/vue',
 		]);
 
-		const withSvelte = await runSetup({ mode: offlineMode() });
+		const withSvelte = await runSetup({ mode: testingMode() });
 		const [svelteConfig] = withSvelte.calls.updateConfig.mock.calls[0] as [
 			{ vite: { plugins: { name: string }[] } },
 		];
@@ -1258,8 +1275,8 @@ describe('astro:config:setup', () => {
 	});
 
 	it.each([
-		['hosted mode', { mode: hostedMode({ backendURL: '/api/c15t' }) }],
-		['offline mode', { mode: offlineMode() }],
+		['hosted mode', { backendURL: '/api/c15t', mode: hostedMode() }],
+		['offline mode', { mode: testingMode() }],
 		[
 			'routePrefix: false',
 			{
@@ -1292,7 +1309,7 @@ describe('astro:config:done', () => {
 	it('names the injected route when a build has no adapter', async () => {
 		const done = await runForCommand(MANIFEST, 'build');
 		await expect(done()).rejects.toThrowError(
-			/on-demand route at \/api\/c15t\/\[\.\.\.path\], which needs a server adapter.*hosted\(\), local\(\) or manifest\(\{ resolve: 'browser' \}\)/u
+			/on-demand route at \/api\/c15t\/\[\.\.\.path\], which needs a server adapter.*hosted\(\) or manifest\(\{ resolve: 'browser' \}\)/u
 		);
 	});
 
@@ -1347,7 +1364,7 @@ describe('astro:config:done', () => {
 	] as const)(
 		'fails clearly when %s is selected without %s',
 		async (ui, astroIntegration) => {
-			const run = await runDone({ mode: offlineMode(), ui }, []);
+			const run = await runDone({ mode: testingMode(), ui }, []);
 			await expect(run()).rejects.toThrowError(
 				new RegExp(`ui: "${ui}" needs ${astroIntegration}`, 'u')
 			);
@@ -1355,7 +1372,7 @@ describe('astro:config:done', () => {
 	);
 
 	it('names every package to install in the error log', async () => {
-		const run = await runDone({ mode: offlineMode(), ui: 'react' }, []);
+		const run = await runDone({ mode: testingMode(), ui: 'react' }, []);
 		await expect(run()).rejects.toThrow();
 		expect(run.logger.error).toHaveBeenCalledWith(
 			expect.stringContaining('@astrojs/react, @c15t/react, react, react-dom')
@@ -1369,7 +1386,7 @@ describe('astro:config:done', () => {
 	] as const)(
 		'passes when %s has %s installed',
 		async (ui, astroIntegration) => {
-			const run = await runDone({ mode: offlineMode(), ui }, [
+			const run = await runDone({ mode: testingMode(), ui }, [
 				astroIntegration,
 			]);
 			await expect(run()).resolves.toBeUndefined();
@@ -1378,7 +1395,7 @@ describe('astro:config:done', () => {
 
 	it('passes for a banner-only site', async () => {
 		const run = await runDone(
-			{ mode: offlineMode(), requireUIIntegration: false },
+			{ mode: testingMode(), requireUIIntegration: false },
 			[]
 		);
 		await expect(run()).resolves.toBeUndefined();
@@ -1397,7 +1414,7 @@ describe('astro:config:done', () => {
 
 	it('renders the dialog with the one UI integration the site registers', async () => {
 		const { calls } = await runSetup(
-			{ mode: offlineMode() },
+			{ mode: testingMode() },
 			{ integrations: [{ name: '@astrojs/react' }] }
 		);
 		const [, code] = calls.injectScript.mock.calls[0] as [string, string];
@@ -1405,7 +1422,7 @@ describe('astro:config:done', () => {
 		expect(code).not.toContain(resolveOwnEntry('@c15t/astro/ui/svelte'));
 
 		const explicit = await runSetup(
-			{ mode: offlineMode(), ui: 'svelte' },
+			{ mode: testingMode(), ui: 'svelte' },
 			{ integrations: [{ name: '@astrojs/react' }] }
 		);
 		const [, explicitCode] = explicit.calls.injectScript.mock.calls[0] as [

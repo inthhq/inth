@@ -204,7 +204,7 @@ export type { ConsentDialogKind } from './ui/adapter';
 export { registerDialogAdapter, registerDialogSurface } from './ui/adapter';
 export { registerDialogStyles } from './browser/dialog-styles';
 // The engine chunk registers one of these with `registerTransport()`.
-export { hostedTransport, lazyTransport, offlineTransport } from './transport';
+export { hostedTransport, lazyTransport, testingTransport } from './transport';
 export type {
 	ConsentDialogAdapter,
 	ConsentDialogContext,

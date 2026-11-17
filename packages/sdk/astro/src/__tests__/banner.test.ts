@@ -10,7 +10,8 @@ import ConsentDialogLink from '../components/panel-link.astro';
 import ConsentDialog from '../components/panel.astro';
 import ConsentBanner from '../components/prompt.astro';
 import { resolveOptions } from '../integration';
-import { hosted as hostedMode, offline as offlineMode } from '../mode';
+import { hosted as hostedMode } from '../mode';
+import { testing as testingMode } from '../testing';
 import { resolveConsentContext } from '../server';
 import type { C15tAstroOptions, C15tLocals } from '../types';
 import { testRule, testWire } from './policy-fixture';
@@ -25,7 +26,7 @@ beforeAll(async () => {
 // fixture configures one the way a deployment would.
 const buildLocals = async function buildLocals(
 	options: C15tAstroOptions = {
-		mode: offlineMode({ policyRules: [testRule] }),
+		mode: testingMode({ policy: [testRule] }),
 	},
 	headers: Record<string, string> = {}
 ): Promise<C15tLocals> {
@@ -125,7 +126,7 @@ describe('<ConsentBanner />', () => {
 				arms: { bar: { prompt: { variant: 'bar' } } },
 				id: 'banner-shape',
 			},
-			mode: offlineMode({ policyRules: [testRule] }),
+			mode: testingMode({ policy: [testRule] }),
 		});
 		expect(locals.snapshot.experiment).toEqual({
 			acknowledgedDiagnostics: false,
@@ -152,7 +153,7 @@ describe('<ConsentBanner />', () => {
 		const english = await render(await buildLocals());
 		const german = await render(
 			await buildLocals(
-				{ mode: offlineMode({ policyRules: [testRule] }) },
+				{ mode: testingMode({ policy: [testRule] }) },
 				{ 'accept-language': 'de' }
 			)
 		);
@@ -182,7 +183,7 @@ describe('<ConsentBanner />', () => {
 		it('is skipped with the integration option, unless the prop is false', async () => {
 			const locals = await buildLocals({
 				disableAnimation: true,
-				mode: offlineMode({ policyRules: [testRule] }),
+				mode: testingMode({ policy: [testRule] }),
 			});
 			expect(rootClass(await render(locals))).not.toContain(entering);
 			expect(
@@ -193,7 +194,7 @@ describe('<ConsentBanner />', () => {
 		it('is skipped with `theme.slots` applied to the same parts', async () => {
 			const html = await render(
 				await buildLocals({
-					mode: offlineMode({ policyRules: [testRule] }),
+					mode: testingMode({ policy: [testRule] }),
 					presentation: { prompt: { blocking: true } },
 					theme: {
 						slots: {
@@ -234,7 +235,7 @@ describe('<ConsentBanner />', () => {
 	it('drops the themed button styles with `noStyle`', async () => {
 		const html = await render(
 			await buildLocals({
-				mode: offlineMode({ policyRules: [testRule] }),
+				mode: testingMode({ policy: [testRule] }),
 				theme: { consentActions: { default: { mode: 'ghost' } } },
 			}),
 			{ noStyle: true }
@@ -251,7 +252,7 @@ describe('<ConsentBanner />', () => {
 	it('styles the buttons from `theme.consentActions`', async () => {
 		const html = await render(
 			await buildLocals({
-				mode: offlineMode({ policyRules: [testRule] }),
+				mode: testingMode({ policy: [testRule] }),
 				presentation: { prompt: { primaryActions: ['accept'] } },
 				theme: {
 					consentActions: {
@@ -281,7 +282,7 @@ describe('<ConsentBanner />', () => {
 	it('adds `theme.slots` classes and styles to the parts they name', async () => {
 		const html = await render(
 			await buildLocals({
-				mode: offlineMode({ policyRules: [testRule] }),
+				mode: testingMode({ policy: [testRule] }),
 				presentation: { prompt: { primaryActions: ['accept'] } },
 				theme: {
 					slots: {
@@ -338,7 +339,7 @@ describe('<ConsentBanner />', () => {
 					},
 					id: 'card-class',
 				},
-				mode: offlineMode({ policyRules: [testRule] }),
+				mode: testingMode({ policy: [testRule] }),
 				theme: { slots: { consentBannerTitle: 'brand-title' } },
 			})
 		);
@@ -352,7 +353,7 @@ describe('<ConsentBanner />', () => {
 	it('adds px to numeric slot lengths and leaves unitless numbers alone', async () => {
 		const html = await render(
 			await buildLocals({
-				mode: offlineMode({ policyRules: [testRule] }),
+				mode: testingMode({ policy: [testRule] }),
 				theme: {
 					slots: {
 						consentBannerCard: { style: { opacity: 0.5, padding: 8 } },
@@ -369,7 +370,7 @@ describe('<ConsentBanner />', () => {
 	it('keeps `theme.slots` classes with `noStyle`', async () => {
 		const html = await render(
 			await buildLocals({
-				mode: offlineMode({ policyRules: [testRule] }),
+				mode: testingMode({ policy: [testRule] }),
 				theme: { slots: { consentBannerCard: 'brand-card' } },
 			}),
 			{ noStyle: true }
@@ -405,7 +406,7 @@ describe('<ConsentBanner />', () => {
 				cookiePolicy: { href: '/cookies', label: 'Our cookies' },
 				privacyPolicy: { href: '/privacy' },
 			},
-			mode: offlineMode({ policyRules: [testRule] }),
+			mode: testingMode({ policy: [testRule] }),
 		};
 		const english = await render(await buildLocals(options), {
 			legalLinks: ['privacyPolicy', 'cookiePolicy'],
@@ -427,7 +428,7 @@ describe('<ConsentBanner />', () => {
 				cookiePolicy: { href: '/cookies', label: 'Cookies' },
 				privacyPolicy: { href: '/privacy', label: 'Privacy' },
 			},
-			mode: offlineMode({ policyRules: [testRule] }),
+			mode: testingMode({ policy: [testRule] }),
 		};
 		const description = (html: string) => {
 			const found = new JSDOM(html).window.document.querySelector(
@@ -463,7 +464,7 @@ describe('<ConsentBanner />', () => {
 		const { legalLinks: _omitted, ...olderClassNames } = promptClassNames;
 		const locals = await buildLocals({
 			legalLinks: { privacyPolicy: { href: '/privacy' } },
-			mode: offlineMode({ policyRules: [testRule] }),
+			mode: testingMode({ policy: [testRule] }),
 		});
 		const model = resolvePromptModel({
 			classNames: olderClassNames,
@@ -504,7 +505,7 @@ describe('<ConsentBanner /> without a resolved policy', () => {
 			) as never,
 			headers: new Headers(),
 			options: resolveOptions({
-				mode: hostedMode({ backendURL: 'https://consent.example.com' }),
+				backendURL: 'https://consent.example.com', mode: hostedMode(),
 			}),
 			url: 'https://example.com/',
 		});
@@ -517,7 +518,7 @@ describe('<ConsentBanner /> without a resolved policy', () => {
 
 	it('resolves the recommended pack when no rules are configured', async () => {
 		// An unknown location is strict by default: an opt-in choice prompt.
-		const locals = await buildLocals({ mode: offlineMode() });
+		const locals = await buildLocals({ mode: testingMode() });
 		expect(locals.decision.status).toBe('matched');
 		expect(locals.snapshot.policyRule.model).toBe('opt-in');
 		expect(locals.snapshot.policyRule.prompt).toBe('choice');
@@ -557,8 +558,8 @@ describe('<ConsentBanner /> without a resolved policy', () => {
 describe('<ConsentBanner /> under a notice prompt', () => {
 	const noticeLocals = () =>
 		buildLocals({
-			mode: offlineMode({
-				policyRules: [
+			mode: testingMode({
+				policy: [
 					{
 						...testRule,
 						id: 'notice',
@@ -629,8 +630,8 @@ describe('<ConsentBanner /> under a notice prompt', () => {
 		const html = await render(
 			await buildLocals(
 				{
-					mode: offlineMode({
-						policyRules: [
+					mode: testingMode({
+						policy: [
 							{ ...testRule, id: 'notice', model: 'opt-out', prompt: 'notice' },
 						],
 					}),
@@ -680,7 +681,7 @@ describe('<ConsentBanner /> surface shape', () => {
 
 	it('renders a notice as a non-blocking floating card', async () => {
 		const html = await render(
-			await buildLocals({ mode: offlineMode({ policyRules: [noticeRule] }) })
+			await buildLocals({ mode: testingMode({ policy: [noticeRule] }) })
 		);
 		const root = readRoot(html);
 		expect(root).toContain('data-variant="floating"');
@@ -706,7 +707,7 @@ describe('<ConsentBanner /> surface shape', () => {
 	it('renders a choice as a region when the host turns the focus trap off', async () => {
 		const html = await render(
 			await buildLocals({
-				mode: offlineMode({ policyRules: [testRule] }),
+				mode: testingMode({ policy: [testRule] }),
 				presentation: { prompt: { trapFocus: false } },
 			})
 		);
@@ -717,7 +718,7 @@ describe('<ConsentBanner /> surface shape', () => {
 	it('renders a blocking choice as a modal dialog', async () => {
 		const html = await render(
 			await buildLocals({
-				mode: offlineMode({ policyRules: [testRule] }),
+				mode: testingMode({ policy: [testRule] }),
 				presentation: { prompt: { blocking: true } },
 			})
 		);
@@ -729,7 +730,7 @@ describe('<ConsentBanner /> surface shape', () => {
 	it('keeps the default and host corners for right-to-left text', async () => {
 		const defaulted = await render(
 			await buildLocals(
-				{ mode: offlineMode({ policyRules: [testRule] }) },
+				{ mode: testingMode({ policy: [testRule] }) },
 				{ 'accept-language': 'he' }
 			)
 		);
@@ -739,7 +740,7 @@ describe('<ConsentBanner /> surface shape', () => {
 		const kept = await render(
 			await buildLocals(
 				{
-					mode: offlineMode({ policyRules: [testRule] }),
+					mode: testingMode({ policy: [testRule] }),
 					presentation: { prompt: { position: 'top-left' } },
 				},
 				{ 'accept-language': 'he' }
@@ -751,7 +752,7 @@ describe('<ConsentBanner /> surface shape', () => {
 	it('renders a notice as a bottom bar when the host asks for one', async () => {
 		const html = await render(
 			await buildLocals({
-				mode: offlineMode({ policyRules: [noticeRule] }),
+				mode: testingMode({ policy: [noticeRule] }),
 				presentation: { prompt: { variant: 'bar' } },
 			})
 		);
@@ -764,7 +765,7 @@ describe('<ConsentBanner /> surface shape', () => {
 	it('renders a wall as a blocking modal with an overlay', async () => {
 		const html = await render(
 			await buildLocals({
-				mode: offlineMode({ policyRules: [testRule] }),
+				mode: testingMode({ policy: [testRule] }),
 				presentation: { prompt: { variant: 'wall' } },
 			})
 		);
@@ -783,7 +784,7 @@ describe('<ConsentBanner /> surface shape', () => {
 	it('never blocks a notice, even when the host asks', async () => {
 		const html = await render(
 			await buildLocals({
-				mode: offlineMode({ policyRules: [noticeRule] }),
+				mode: testingMode({ policy: [noticeRule] }),
 				presentation: { prompt: { blocking: true } },
 			})
 		);
@@ -803,8 +804,8 @@ describe('<ConsentBanner /> under a none rule', () => {
 	const noneLocals = (rights?: ('preferences' | 'disclosure')[]) =>
 		buildLocals(
 			{
-				mode: offlineMode({
-					policyRules: [rights ? { ...noneRule, rights } : noneRule],
+				mode: testingMode({
+					policy: [rights ? { ...noneRule, rights } : noneRule],
 				}),
 			},
 			{ 'x-vercel-ip-country': 'US', 'x-vercel-ip-country-region': 'SD' }

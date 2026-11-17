@@ -18,7 +18,7 @@
  */
 
 import { registerTransport } from '../client';
-import { lazyTransport, offlineTransport } from '../transport';
+import { lazyTransport, testingTransport } from '../transport';
 
 class MemoryStorage implements Storage {
 	private readonly entries = new Map<string, string>();
@@ -63,7 +63,7 @@ install('localStorage');
 install('sessionStorage');
 
 registerTransport((options) =>
-	options.mode.type === 'offline'
-		? offlineTransport(options)
+	options.mode.type === 'testing'
+		? testingTransport(options)
 		: lazyTransport(options)
 );

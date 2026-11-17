@@ -13,7 +13,7 @@ import { boot } from '../client';
 import type { AstroConsentClient } from '../client';
 import type { AstroEngineClient } from '../client-types';
 import { resolveOptions } from '../integration';
-import { offline as offlineMode } from '../mode';
+import { testing as testingMode } from '../testing';
 import type { C15tAstroOptions } from '../types';
 import { registerDialogAdapter, registerDialogSurface } from '../ui/adapter';
 import { reactDialogAdapter } from '../ui/react';
@@ -37,7 +37,7 @@ const VENDORS: Vendor[] = [
 
 const OPTIONS: C15tAstroOptions = {
 	consentCategories: ['necessary', 'measurement'],
-	mode: offlineMode({ acknowledgeNoRecords: true, policyRules: [testRule] }),
+	mode: testingMode({ policy: [testRule] }),
 	reloadOnConsentRevoked: false,
 	vendors: VENDORS,
 };

@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { boot } from '../client';
 import type { AstroConsentClient } from '../client';
 import { resolveOptions } from '../integration';
-import { offline as offlineMode } from '../mode';
+import { testing as testingMode } from '../testing';
 import type { C15tAstroOptions } from '../types';
 
 interface PingData {
@@ -65,7 +65,7 @@ const start = function start(
 	client = boot(
 		resolveOptions({
 			consentCategories: ['necessary', 'marketing'],
-			mode: offlineMode({ acknowledgeNoRecords: true, policyRules: [RULE] }),
+			mode: testingMode({ policy: [RULE] }),
 			...options,
 		})
 	);

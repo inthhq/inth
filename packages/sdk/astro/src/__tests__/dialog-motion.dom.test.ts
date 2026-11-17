@@ -16,7 +16,7 @@ import type { AstroConsentClient } from '../client';
 // loads, so no test timeout covers the compile.
 import * as vuePanelSurface from '../components/islands/panel-surface.vue';
 import { resolveOptions } from '../integration';
-import { offline as offlineMode } from '../mode';
+import { testing as testingMode } from '../testing';
 import type { C15tAstroOptions } from '../types';
 import {
 	registerDialogAdapter,
@@ -83,9 +83,8 @@ const bootClient = function bootClient(
 ): AstroConsentClient {
 	const client = boot(
 		resolveOptions({
-			mode: offlineMode({
-				acknowledgeNoRecords: true,
-				policyRules: [testRule],
+			mode: testingMode({
+				policy: [testRule],
 			}),
 			...options,
 		})
