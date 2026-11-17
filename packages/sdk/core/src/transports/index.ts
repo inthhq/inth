@@ -49,7 +49,7 @@ export type {
 	OfflineTransportOptions,
 } from './offline';
 export { createOfflineTransport } from './offline';
-// Deprecated, kept for `@c15t/react-native` only.
+// Deprecated, kept for `@inth/react-native` only.
 export { offline } from './offline';
 export type { OfflineModeOptions } from './offline';
 export { custom } from './custom';

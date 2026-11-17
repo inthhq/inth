@@ -1,10 +1,10 @@
 /**
  * `custom()`, kept on `@c15t/core/transports` only for
- * `@c15t/react-native`'s web client, which builds its own transports.
+ * `@inth/react-native`'s web client, which builds its own transports.
  * Providers no longer take it: tests pass a transport factory as `mode`,
  * and apps set `backendURL`.
  *
- * @deprecated Remove once `@c15t/react-native` no longer imports it.
+ * @deprecated Remove once `@inth/react-native` no longer imports it.
  */
 import type { KernelTransport } from '../types';
 import type { ProviderTransportFactory } from './mode';
@@ -12,7 +12,7 @@ import type { ProviderTransportFactory } from './mode';
 /**
  * Wraps a caller-supplied transport as a provider transport factory.
  *
- * @deprecated For `@c15t/react-native` only; see the module comment.
+ * @deprecated For `@inth/react-native` only; see the module comment.
  * @param transport - Canonical kernel transport.
  * @returns A custom provider transport factory.
  * @example

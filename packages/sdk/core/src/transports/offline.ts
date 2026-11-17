@@ -251,10 +251,10 @@ export interface OfflineModeOptions {
 
 /**
  * A transport factory that resolves `policyRules` in the browser, kept on
- * `@c15t/core/transports` only for `@c15t/react-native`'s web tests.
+ * `@c15t/core/transports` only for `@inth/react-native`'s web tests.
  * Providers take `mode: testing()` from a `/testing` entry.
  *
- * @deprecated Remove once `@c15t/react-native` no longer imports it.
+ * @deprecated Remove once `@inth/react-native` no longer imports it.
  * @param options - The rules to resolve and `acknowledgeNoRecords`.
  * @returns A provider transport factory reporting `kind: 'offline'`.
  */

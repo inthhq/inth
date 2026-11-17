@@ -47,7 +47,7 @@ export type ProviderTransportKind =
 	| 'hosted'
 	| 'manifest'
 	| 'offline'
-	// The deprecated `custom()` that `@c15t/react-native` still uses.
+	// The deprecated `custom()` that `@inth/react-native` still uses.
 	| 'custom';
 
 /**
