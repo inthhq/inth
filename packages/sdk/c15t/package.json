@@ -724,6 +724,11 @@
 			"import": "./shims/astro/api.js",
 			"default": "./shims/astro/api.js"
 		},
+		"./astro/testing": {
+			"types": "./shims/astro/testing.d.ts",
+			"import": "./shims/astro/testing.js",
+			"default": "./shims/astro/testing.js"
+		},
 		"./astro/ui/svelte": {
 			"types": "./shims/astro/ui/svelte.d.ts",
 			"import": "./shims/astro/ui/svelte.js",
