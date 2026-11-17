@@ -9,7 +9,7 @@ import {
 	useEventDispatcher,
 	useSaveConsents,
 } from '../index';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 const posthog: Script = {
@@ -65,7 +65,7 @@ test('useEventDispatcher keeps one dispatcher and pageview history through conse
 				persistence: false,
 				prefetch: policyFixture(),
 				scripts: [posthog],
-				testing: withoutNetwork(),
+				mode: testing(),
 			}}
 		>
 			<Page path={path} />

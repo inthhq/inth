@@ -5,7 +5,7 @@
 import { afterEach, describe, expect, test } from 'vitest';
 
 import { selectedMode } from '../select-mode';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 import { setGenerated } from './generated';
 
 afterEach(() => {
@@ -29,7 +29,7 @@ describe('the transport a ConsentProvider selects', () => {
 	});
 
 	test('a testing value wins over the backend URL', () => {
-		const testing = withoutNetwork();
+		const testing = testing();
 		expect(selectedMode({ backendURL: '/api/c15t', testing })).toBe(
 			testing.transport
 		);

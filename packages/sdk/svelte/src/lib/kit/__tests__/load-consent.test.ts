@@ -13,7 +13,7 @@ import {
 } from '@c15t/schema/types';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { withoutNetwork } from '../../testing';
+import { testing } from '../../testing';
 import { c15tHandle } from '../handle';
 import { manifest } from '../index';
 import { loadConsent } from '../load-consent';
@@ -180,7 +180,7 @@ describe('loadConsent', () => {
 			createEvent({
 				headers: { cookie: CONSENTED_COOKIE, 'x-c15t-country': 'CA' },
 			}),
-			{ testing: withoutNetwork() }
+			{ mode: testing() }
 		);
 		const fromHandle = await loadConsent(event);
 		expect(fromHandle.consent.prefetch.initialOverrides?.country).toBe('CA');
@@ -193,7 +193,7 @@ describe('loadConsent', () => {
 	test('keeps the handle cookie name when a per-call input overrides', async () => {
 		const event = await withHandle(
 			createEvent({ headers: { cookie: CUSTOM_COOKIE } }),
-			{ cookieName: 'my-consent', testing: withoutNetwork() }
+			{ cookieName: 'my-consent', mode: testing() }
 		);
 		const { consent } = await loadConsent(event, { country: 'DE' });
 		expect(consent.prefetch.initialRecords?.choice).not.toBeNull();
@@ -207,7 +207,7 @@ describe('loadConsent', () => {
 				setCookie,
 				url: 'https://app.example.com/',
 			}),
-			{ storage: { crossSubdomain: true }, testing: withoutNetwork() }
+			{ storage: { crossSubdomain: true }, mode: testing() }
 		);
 		const first = await loadConsent(event);
 		const custom = await loadConsent(event, { cookieName: 'my-consent' });
@@ -226,11 +226,11 @@ describe('loadConsent', () => {
 		const fetch = answer();
 		const event = await withHandle(
 			createEvent({ fetch, headers: { 'x-c15t-country': 'DE' } }),
-			{ testing: withoutNetwork() }
+			{ mode: testing() }
 		);
 		const { consent } = await loadConsent(event, { fetch });
 		expect(consent.prefetch.initialPolicyResolution).toBeUndefined();
-		expect(consent.mode).toEqual({ type: 'without-network' });
+		expect(consent.mode).toEqual({ type: 'testing' });
 		expect(fetch).not.toHaveBeenCalled();
 	});
 

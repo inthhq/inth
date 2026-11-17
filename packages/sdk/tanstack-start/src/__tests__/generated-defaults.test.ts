@@ -4,12 +4,13 @@
  * `@c15t/core/generated`, which `consentManifest()` serves, and the state
  * hands the browser everything `ConsentRoot` needs.
  */
+import { hosted } from '@c15t/core/modes';
 import { createManifestCache } from '@c15t/core/server';
 import { describe, expect, test, vi } from 'vitest';
 
 import { createConsentRoute } from '../api';
 import { createConsentStateHandler, resolveConsent } from '../server';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 import { MANIFEST_FIXTURE } from './manifest-fixture';
 
 // oxlint-disable-next-line anti-slop/no-module-mocking -- Stands in for the virtual module the Vite plugin serves.
@@ -101,13 +102,14 @@ describe('the client half of the state', () => {
 		const state = await resolveConsent({
 			backendURL: 'https://backend.example',
 			fetch,
+			mode: hosted(),
 			proxy: true,
 			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
 			routePrefix: '/api/c15t',
 		});
 		// The browser's init and saves go through the route.
 		expect(state).toMatchObject({ backendURL: '/api/c15t' });
-		expect(state.mode).toBeUndefined();
+		expect(state.mode).toEqual({ type: 'hosted' });
 		// The server still asks the hosted backend.
 		expect(String(fetch.mock.calls[0]?.[0])).toMatch(
 			/^https:\/\/backend\.example\/init/u
@@ -127,15 +129,31 @@ describe('the client half of the state', () => {
 		expect(fetch).not.toHaveBeenCalled();
 	});
 
-	test('a testing value resolves nothing on the server and reaches the browser', async () => {
+	test('with no mode, resolves from the build snapshot as manifest() does', async () => {
 		const fetch = offlineFetch();
 		const state = await resolveConsent({
 			fetch,
 			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
-			testing: withoutNetwork(),
+		});
+		expect(state.initialPolicyResolution).toMatchObject({
+			policyId: 'eu-opt-in',
+			status: 'matched',
+		});
+		expect(state.mode).toBeUndefined();
+		expect(
+			fetch.mock.calls.filter(([url]) => !String(url).endsWith('/sessions'))
+		).toEqual([]);
+	});
+
+	test('testing() resolves nothing on the server and reaches the browser', async () => {
+		const fetch = offlineFetch();
+		const state = await resolveConsent({
+			fetch,
+			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
+			mode: testing(),
 		});
 		expect(state.initialPolicyResolution).toBeUndefined();
-		expect(state.testing).toEqual({ type: 'without-network' });
+		expect(state.mode).toEqual({ type: 'testing' });
 		expect(fetch).not.toHaveBeenCalled();
 	});
 });

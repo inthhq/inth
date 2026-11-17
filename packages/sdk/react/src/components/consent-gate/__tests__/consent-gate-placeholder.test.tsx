@@ -14,7 +14,7 @@ import { ConsentGate, Frame } from '~/components/consent-gate';
 import * as reactEntry from '~/index';
 import { ConsentProvider } from '~/provider';
 
-import { withoutNetwork } from '../../../testing';
+import { testing } from '../../../testing';
 
 const gateApp = function gateApp(
 	ui: ReactElement,
@@ -67,7 +67,7 @@ const gateApp = function gateApp(
 						translations: defaultTranslationConfig.translations.en,
 					},
 				},
-				testing: withoutNetwork(),
+				mode: testing(),
 			}}
 		>
 			{ui}

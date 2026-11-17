@@ -9,10 +9,10 @@ import {
 	useConsent,
 	useExplicitChoice,
 } from '../index';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 
 // An unknown location resolves the recommended pack's Europe opt-in rule.
-const testing = withoutNetwork();
+const testing = testing();
 const ChoiceProbe = () => {
 	const allowed = useConsent('marketing');
 	const choice = useExplicitChoice();

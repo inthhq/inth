@@ -246,9 +246,9 @@ describe('Next.js build-time manifest', () => {
 		]);
 	});
 
-	test('next build stops when the fetch fails and leaves the earlier snapshot alone', async () => {
+	test("with onBuildError: 'fail', next build stops when the fetch fails and leaves the earlier snapshot alone", async () => {
 		const root = await createRoot();
-		const options = optionsFor();
+		const options = { ...optionsFor(), onBuildError: 'fail' as const };
 		const wrapped = withConsentManifest({}, options);
 		await wrapped('phase-production-build', { defaultConfig: {} });
 		const before = await readServerModule(root);
@@ -412,19 +412,15 @@ describe('Next.js build-time manifest', () => {
 			vi.stubEnv('NEXT_PUBLIC_INTH_PROJECT_URL', undefined);
 			await createRoot();
 			const { fetch } = optionsFor();
-			await expect(build({ fetch })).rejects.toThrow(
+			await expect(build({ fetch, onBuildError: 'fail' })).rejects.toThrow(
 				'Pass backendURL or set NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL).'
 			);
 		});
 	});
 
 	test.each([
-		['no mode', '{}', 'sets no mode'],
-		[
-			'withoutNetwork()',
-			"{ testing: { type: 'without-network' } }",
-			'sets testing',
-		],
+		['hosted()', "{ mode: { type: 'hosted' } }", 'sets hosted()'],
+		['testing()', "{ mode: { type: 'testing' } }", 'sets testing()'],
 		[
 			'manifest({ snapshot })',
 			"{ mode: { type: 'manifest', snapshot: { revision: 'own' } } }",

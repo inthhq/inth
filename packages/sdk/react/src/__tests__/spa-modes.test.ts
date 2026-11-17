@@ -10,7 +10,7 @@ import type { ConsentManifest } from '@c15t/schema/types';
 import { describe, expect, test } from 'vitest';
 
 import { manifest } from '../modes';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 import { withBuildDefaults } from '../transports/manifest';
 import { selectedMode } from '../transports/select-mode';
 
@@ -81,7 +81,7 @@ describe('the mode a provider selects', () => {
 	});
 
 	test('is the testing transport over backendURL and mode', () => {
-		const testing = withoutNetwork();
+		const testing = testing();
 
 		expect(
 			selectedMode({

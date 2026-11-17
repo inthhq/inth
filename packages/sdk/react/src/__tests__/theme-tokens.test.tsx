@@ -9,7 +9,7 @@ import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { ConsentProvider, ConsentTheme } from '../index';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 
 // Raw source text, inlined by Vite so the scan works in browser-mode vitest.
 const rawSources = import.meta.glob(
@@ -43,7 +43,7 @@ describe('ConsentProvider theme tokens', () => {
 			<ConsentProvider
 				options={{
 					persistence: false,
-					testing: withoutNetwork(),
+					mode: testing(),
 				}}
 			>
 				<div data-testid="themed-child" />
@@ -69,7 +69,7 @@ describe('ConsentProvider theme tokens', () => {
 								src: 'https://example.com/nonce.js',
 							},
 						],
-						testing: withoutNetwork(),
+						mode: testing(),
 					}}
 				>
 					<div />
@@ -95,7 +95,7 @@ describe('ConsentProvider theme tokens', () => {
 				<ConsentProvider
 					options={{
 						persistence: false,
-						testing: withoutNetwork(),
+						mode: testing(),
 						theme,
 					}}
 				>
@@ -120,7 +120,7 @@ describe('ConsentProvider theme tokens', () => {
 				<ConsentProvider
 					options={{
 						persistence: false,
-						testing: withoutNetwork(),
+						mode: testing(),
 						theme: { colors: { surface: 'rgb(1, 2, 3)' } },
 					}}
 				>

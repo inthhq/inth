@@ -94,14 +94,14 @@ describe('Vue production builds', () => {
 		expect(fetch).not.toHaveBeenCalled();
 	});
 
-	it('stops a manifest() build while the backend is down', async () => {
+	it('builds a manifest() app with no snapshot while the backend is down', async () => {
 		const fetch = unreachable();
 		await expect(
 			buildApp(
 				"import { manifest } from 'MODES';\nexport const mode = manifest();\n",
 				fetch
 			)
-		).rejects.toThrow('could not fetch the consent manifest');
+		).resolves.toBeDefined();
 		expect(fetch).toHaveBeenCalledTimes(1);
 	});
 });

@@ -11,7 +11,7 @@ import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest';
 import { offlineMode } from '../../__tests__/fixtures/transport-mode';
 import { TEST_OPT_IN_RULE, testOptions } from '../../__tests__/test-local';
 import { ConsentManager } from './consent-manager';
-import type { C15tOptions } from './options';
+import type { C15tOptions, C15tProviderOptions } from './options';
 import { provideC15t } from './provide-c15t';
 
 @Component({
@@ -30,7 +30,7 @@ const boot = async function boot(options: Partial<C15tOptions> = {}) {
 				// jsdom cannot reload the page a revocation would reload.
 				reloadOnConsentRevoked: false,
 				...options,
-			} as C15tOptions),
+			} as C15tProviderOptions),
 		],
 	});
 	const fixture = TestBed.createComponent(TestApp);

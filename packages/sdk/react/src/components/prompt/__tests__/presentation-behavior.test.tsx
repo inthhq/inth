@@ -8,7 +8,7 @@ import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentDialog } from '~/components/panel';
 import { ConsentBanner } from '~/components/prompt';
 
-import { withoutNetwork } from '../../../testing';
+import { testing } from '../../../testing';
 
 const mount = (
 	presentation: ConsentPresentation,
@@ -21,7 +21,7 @@ const mount = (
 				persistence: false,
 				prefetch: policyFixture(),
 				presentation,
-				testing: withoutNetwork(),
+				mode: testing(),
 			}}
 		>
 			<button type="button">Page action</button>

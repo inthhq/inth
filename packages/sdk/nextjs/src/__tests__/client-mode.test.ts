@@ -2,15 +2,23 @@
  * The transport `ConsentRoot` builds for each mode. Behaviour of the lazy
  * transports themselves is pinned in core's client-mode suite.
  */
-import { manifest } from '@c15t/core/modes';
+import { hosted, manifest } from '@c15t/core/modes';
 import { describe, expect, test, vi } from 'vitest';
 
 import { createClientMode } from '../client-mode';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 
 describe('createClientMode', () => {
-	test('the hosted backend when only the backend URL is set', () => {
+	test('manifest() when no mode is set', () => {
 		const mode = createClientMode(undefined, {
+			backendURL: 'https://consent.example.com',
+		});
+
+		expect(mode.kind).toBe('manifest');
+	});
+
+	test('hosted() asks the backend', () => {
+		const mode = createClientMode(hosted(), {
 			backendURL: 'https://consent.example.com',
 		});
 
@@ -28,7 +36,7 @@ describe('createClientMode', () => {
 	});
 
 	test('a testing value runs the testing transport', () => {
-		expect(createClientMode(withoutNetwork(), {}).kind).toBe('offline');
+		expect(createClientMode(testing(), {}).kind).toBe('offline');
 	});
 
 	test('throws without a backend URL instead of running offline', () => {
@@ -39,7 +47,7 @@ describe('createClientMode', () => {
 			'`backendURL` is required'
 		);
 		// A testing value is the one that needs no backend.
-		expect(createClientMode(withoutNetwork(), {}).kind).toBe('offline');
+		expect(createClientMode(testing(), {}).kind).toBe('offline');
 	});
 
 	test('never saves to a route prefix that was not passed as the backend', () => {

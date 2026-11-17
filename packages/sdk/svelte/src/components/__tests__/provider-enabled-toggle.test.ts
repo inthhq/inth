@@ -9,7 +9,7 @@ import { tick } from 'svelte';
 import { beforeEach, expect, test, vi } from 'vitest';
 
 import EnabledToggleFixture from '../../__tests__/fixtures/enabled-toggle-fixture.svelte';
-import { withoutNetwork } from '../../lib/testing';
+import { testing } from '../../lib/testing';
 
 // Sequential by design: each `tick()` has to resolve before the next round
 // of effects is queued.
@@ -27,7 +27,7 @@ beforeEach(() => {
 
 test('turning `enabled` off grants every category and hides the UI; on restores the policy', async () => {
 	// The fixture takes a transport factory as `mode`.
-	const mode = withoutNetwork().transport;
+	const mode = testing().transport;
 	const { rerender } = render(EnabledToggleFixture, { enabled: true, mode });
 	await vi.waitFor(() =>
 		expect(screen.getByTestId('active-ui').textContent).toBe('banner')

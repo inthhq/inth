@@ -13,7 +13,7 @@ import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { ConsentRoot } from '../root';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 const offlineModule = vi.hoisted(() => ({ loads: 0 }));
@@ -52,10 +52,10 @@ describe('ConsentRoot offline mode', () => {
 		expect(offlineModule.loads).toBe(0);
 	});
 
-	test('a withoutNetwork() root resolves the recommended rules', async () => {
+	test('a testing() root resolves the recommended rules', async () => {
 		const { getByTestId } = await render(
 			<ConsentRoot
-				config={{ testing: withoutNetwork() }}
+				config={{ mode: testing() }}
 				persistence={false}
 				state={{ initialOverrides: { country: 'DE' } }}
 			>

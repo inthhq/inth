@@ -145,7 +145,7 @@ test('holds tracker requests from child mount hooks until the blocker decides th
 	).toBe(false);
 });
 
-test('manifest() with a manifestURL resolves in the browser, with no init route', async () => {
+test('manifest() with a manifestURL asks the backend /init when the manifest is unavailable', async () => {
 	const requests: string[] = [];
 	const network = vi.fn((input: RequestInfo | URL) => {
 		requests.push(String(input));
@@ -168,5 +168,9 @@ test('manifest() with a manifestURL resolves in the browser, with no init route'
 	await expect
 		.poll(() => requests)
 		.toContain('https://cdn.example.test/manifest');
-	expect(requests.some((url) => url.includes('/init'))).toBe(false);
+	// No Nuxt route: the fallback goes to the backend the manifest URL names.
+	await expect
+		.poll(() => requests.map((url) => url.split('?')[0]))
+		.toContain('https://cdn.example.test/init');
+	expect(requests.some((url) => url.includes('/api/c15t'))).toBe(false);
 });

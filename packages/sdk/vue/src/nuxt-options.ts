@@ -29,9 +29,10 @@ export interface C15tNuxtConfig
 export interface ConsentModuleOptions {
 	/**
 	 * What a failed build-time manifest download does in `manifest()` mode.
-	 * `'fail'` stops `nuxt build` and `nuxt dev`. `'runtime'` logs a
-	 * warning, and the policy is read at runtime instead. Unset, `nuxt build`
-	 * fails and `nuxt dev` warns. A missing backend URL counts as a failed
+	 * `'runtime'` (the default) logs a warning, and the policy is read at
+	 * runtime instead, from the backend's `/init` while the manifest is
+	 * unavailable. `'fail'` stops `nuxt build` and `nuxt dev`. A missing
+	 * backend URL counts as a failed
 	 * download. The `C15T_ON_BUILD_ERROR` environment variable overrides this
 	 * option. The download waits at most 10 seconds; `nuxt prepare` never
 	 * downloads.

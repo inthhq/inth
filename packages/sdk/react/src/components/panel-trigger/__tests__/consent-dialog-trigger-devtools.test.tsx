@@ -6,12 +6,12 @@ import { userEvent } from 'vitest/browser';
 import { ComponentFixtureProvider } from '~/__tests__/component-fixture-provider';
 import { ConsentDevTools } from '~/devtools';
 
-import { withoutNetwork } from '../../../testing';
+import { testing } from '../../../testing';
 import { ConsentDialogTrigger, ConsentDialogTriggerToolbar } from '../index';
 
 const renderWithDevTools = function renderWithDevTools(trigger: ReactNode) {
 	return render(
-		<ComponentFixtureProvider options={{ testing: withoutNetwork() }}>
+		<ComponentFixtureProvider options={{ mode: testing() }}>
 			<ConsentDevTools />
 			{trigger}
 		</ComponentFixtureProvider>
@@ -132,7 +132,7 @@ describe('DevTools launcher in the consent trigger', () => {
 		});
 
 		await screen.rerender(
-			<ComponentFixtureProvider options={{ testing: withoutNetwork() }}>
+			<ComponentFixtureProvider options={{ mode: testing() }}>
 				<ConsentDevTools />
 			</ComponentFixtureProvider>
 		);

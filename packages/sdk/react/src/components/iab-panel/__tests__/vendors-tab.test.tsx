@@ -16,7 +16,7 @@ import type { ComponentFixtureOptions as ConsentProviderOptions } from '~/__test
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { KernelContext } from '~/context';
 
-import { withoutNetwork } from '../../../testing';
+import { testing } from '../../../testing';
 import { StackItem } from '../atoms/stack-item';
 import { IABConsentDialog } from '../iab-panel';
 
@@ -178,7 +178,7 @@ const defaultIABOptions: ConsentProviderOptions = {
 		prompt: 'choice',
 		scopeMode: 'strict',
 	}),
-	testing: withoutNetwork(),
+	mode: testing(),
 };
 
 describe('IAB preference item interactions', () => {

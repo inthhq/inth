@@ -13,7 +13,7 @@ import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentDialog } from '~/components/panel';
 import { ConsentBanner } from '~/components/prompt';
 
-import { withoutNetwork } from '../../../testing';
+import { testing } from '../../../testing';
 
 const renderComposed = function renderComposed(
 	children: ReactNode,
@@ -25,7 +25,7 @@ const renderComposed = function renderComposed(
 				components,
 				persistence: false,
 				prefetch: policyFixture(undefined, { id: 'banner-compose-test' }),
-				testing: withoutNetwork(),
+				mode: testing(),
 			}}
 		>
 			{children}
@@ -253,7 +253,7 @@ describe('composed ConsentDialog', () => {
 					initialUI: 'dialog',
 					persistence: false,
 					prefetch: policyFixture(undefined, { id: 'dialog-compose-test' }),
-					testing: withoutNetwork(),
+					mode: testing(),
 				}}
 			>
 				<ConsentDialog.Root>

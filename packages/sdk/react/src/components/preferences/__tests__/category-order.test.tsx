@@ -12,7 +12,7 @@ import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentWidget } from '~/components/preferences';
 import { useConsentDraft } from '~/draft';
 
-import { withoutNetwork } from '../../../testing';
+import { testing } from '../../../testing';
 
 const ITEM_PREFIX = 'consent-widget-accordion-item-';
 
@@ -45,7 +45,7 @@ test('the widget lists categories in the draft order, not the policy or configur
 						],
 					}
 				),
-				testing: withoutNetwork(),
+				mode: testing(),
 			}}
 		>
 			<ConsentWidget />

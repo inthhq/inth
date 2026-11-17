@@ -5,7 +5,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { ConsentProvider } from '../provider';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 const TRACKER = 'https://tracker.example/collect';
@@ -66,7 +66,7 @@ const renderWithBeacons = (
 						networkBlocker: { logBlockedRequests: false, rules },
 						persistence: false,
 						prefetch,
-						testing: withoutNetwork(),
+						mode: testing(),
 					}}
 				>
 					<Beacon

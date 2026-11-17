@@ -18,7 +18,7 @@ import { mount, unmount } from 'svelte';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { isIABConfigured } from '../lib/iab-loader';
-import { withoutNetwork } from '../lib/testing';
+import { testing } from '../lib/testing';
 import type { ConsentManagerOptions } from '../lib/types';
 import ProviderOnlyFixture from './fixtures/provider-only-fixture.svelte';
 
@@ -46,7 +46,7 @@ const mountProvider = function mountProvider(
 		props: {
 			options: {
 				persistence: false,
-				testing: withoutNetwork(),
+				mode: testing(),
 				...options,
 			} as ConsentManagerOptions,
 		},

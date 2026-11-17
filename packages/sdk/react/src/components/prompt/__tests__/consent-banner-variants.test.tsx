@@ -8,7 +8,7 @@ import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentBanner } from '~/components/prompt';
 import { defaultTranslationConfig } from '~/utils/default-translation-config';
 
-import { withoutNetwork } from '../../../testing';
+import { testing } from '../../../testing';
 
 const renderBanner = function renderBanner(
 	rule: Partial<PolicyRule>,
@@ -38,7 +38,7 @@ const renderBanner = function renderBanner(
 						}
 					: prefetch,
 				presentation: options.presentation,
-				testing: withoutNetwork(),
+				mode: testing(),
 			}}
 		>
 			<ConsentBanner

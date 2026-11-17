@@ -20,7 +20,7 @@ import {
 	useSaveConsents,
 	useSetOverrides,
 } from '../index';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 const withProvider = function withProvider(options = {}) {
@@ -36,7 +36,7 @@ const withProvider = function withProvider(options = {}) {
 				],
 				persistence: false,
 				prefetch: policyFixture(),
-				testing: withoutNetwork(),
+				mode: testing(),
 				...options,
 			}}
 		>
@@ -395,7 +395,7 @@ describe('v3 react: network blocker lifecycle', () => {
 								rules: [{ category: 'marketing', domain: 'example.com' }],
 							},
 							persistence: false,
-							testing: withoutNetwork(),
+							mode: testing(),
 						}}
 					>
 						<div>mounted</div>
@@ -432,7 +432,7 @@ describe('v3 react: network blocker lifecycle', () => {
 							rules: [{ category: 'marketing', domain: 'first.example.com' }],
 						},
 						persistence: false,
-						testing: withoutNetwork(),
+						mode: testing(),
 					}}
 				>
 					<div>mounted</div>
@@ -457,7 +457,7 @@ describe('v3 react: network blocker lifecycle', () => {
 							rules: [{ category: 'marketing', domain: 'second.example.com' }],
 						},
 						persistence: false,
-						testing: withoutNetwork(),
+						mode: testing(),
 					}}
 				>
 					<div>mounted</div>
@@ -489,7 +489,7 @@ describe('v3 react: network blocker lifecycle', () => {
 							rules: [{ category: 'marketing', domain: 'example.com' }],
 						},
 						persistence: false,
-						testing: withoutNetwork(),
+						mode: testing(),
 					}}
 				>
 					<div>mounted</div>

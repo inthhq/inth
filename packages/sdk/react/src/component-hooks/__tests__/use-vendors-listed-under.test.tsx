@@ -6,7 +6,7 @@ import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/compone
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { useKernel } from '~/kernel-selector';
 
-import { withoutNetwork } from '../../testing';
+import { testing } from '../../testing';
 import { useVendorsListedUnder } from '../use-vendors-listed-under';
 
 // What an `@c15t/integrations` helper puts on its script: a vendor slug and
@@ -41,7 +41,7 @@ const createWrapper = function createWrapper(vendors?: Vendor[]) {
 						{ categories: ['marketing', 'measurement'], model: 'opt-in' }
 					),
 					scripts: [helperScript],
-					testing: withoutNetwork(),
+					mode: testing(),
 					vendors,
 				}}
 			>

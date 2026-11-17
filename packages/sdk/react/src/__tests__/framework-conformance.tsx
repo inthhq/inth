@@ -39,7 +39,7 @@ import type { Root } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
 import { describe, expect, test, vi } from 'vitest';
 
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 import { transportMode } from './fixtures/transport-mode';
 import type { FrameworkRoot } from './framework-root';
 import type { policyFixture as PolicyFixture } from './policy-fixture';
@@ -262,7 +262,7 @@ export const runFrameworkConformance = ({
 				initialPrivacySignals: { gpc: opts.gpc },
 				initialTranslations: resolveTranslations(provided, opts.locale),
 			},
-			testing: withoutNetwork(),
+			mode: testing(),
 			trapFocus: provided.trapFocus ?? false,
 		};
 	};
@@ -472,8 +472,6 @@ export const runFrameworkConformance = ({
 			const options = buildProviderOptions(opts);
 			if (lifecycle.transport) {
 				options.mode = transportMode(lifecycle.transport);
-				// The lifecycle transport replaces the testing one.
-				options.testing = undefined;
 			}
 			let mountedKernel: ConsentKernel | null = null;
 			let resolveSettled: () => void = () => {};

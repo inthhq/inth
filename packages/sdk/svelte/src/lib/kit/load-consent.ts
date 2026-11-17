@@ -113,7 +113,7 @@ const serverResolution = function serverResolution(
 	| 'manifestURL'
 	| 'mode'
 > {
-	if (mode.type === 'without-network') {
+	if (mode.type === 'testing') {
 		// The browser resolves it, with the transport that refuses to run
 		// in production.
 		return {};

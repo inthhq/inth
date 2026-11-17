@@ -39,7 +39,7 @@ import { IABProvider, IABConsentBanner, IABConsentDialog } from '~/iab';
 import { ConsentBanner, ConsentProvider } from '~/index';
 import type { ConsentProviderOptions } from '~/index';
 
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 import { transportMode } from './fixtures/transport-mode';
 import { createPolicySession, probePolicyContract } from './policy-driver';
 import { policyFixture } from './policy-fixture';
@@ -245,7 +245,7 @@ const buildProviderOptions = (opts: MountOptions): ConsentProviderOptions => {
 			initialPrivacySignals: { gpc: opts.gpc },
 			initialTranslations: resolveTranslations(provided, opts.locale),
 		},
-		testing: withoutNetwork(),
+		mode: testing(),
 		trapFocus: provided.trapFocus ?? false,
 	};
 };
@@ -451,8 +451,6 @@ const driver: TestDriver = {
 		const options = buildProviderOptions(opts);
 		if (lifecycle.transport) {
 			options.mode = transportMode(lifecycle.transport);
-			// The lifecycle transport replaces the testing one.
-			options.testing = undefined;
 		}
 		let mountedKernel: ConsentKernel | null = null;
 		let resolveSettled: () => void = () => {};

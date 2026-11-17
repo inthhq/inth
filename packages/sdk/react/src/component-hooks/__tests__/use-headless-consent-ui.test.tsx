@@ -11,7 +11,7 @@ import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/compone
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { KernelContext } from '~/context';
 
-import { withoutNetwork } from '../../testing';
+import { testing } from '../../testing';
 import { useHeadlessConsentUI } from '../use-headless-consent-ui';
 
 const createWrapper = function createWrapper(ui: {
@@ -35,7 +35,7 @@ const createWrapper = function createWrapper(ui: {
 						}),
 					},
 					presentation: { preferences: ui?.dialog, prompt: ui?.banner },
-					testing: withoutNetwork(),
+					mode: testing(),
 				}}
 			>
 				{children}

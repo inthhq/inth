@@ -13,7 +13,7 @@ import { render } from 'vitest-browser-react';
 import { KernelContext } from '../context';
 import { ConsentProvider, useSetLanguage } from '../index';
 import type { ConsentProviderOptions } from '../provider';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 
@@ -138,7 +138,7 @@ describe('offline() language', () => {
 	test('useSetLanguage switches to the copy for that language', async () => {
 		await renderProvider({
 			i18n: { messages },
-			testing: withoutNetwork(),
+			mode: testing(),
 		});
 		expect(title()).toBe('Privacy');
 
@@ -151,7 +151,7 @@ describe('offline() language', () => {
 	test('a language with no copy keeps the default copy', async () => {
 		await renderProvider({
 			i18n: { messages },
-			testing: withoutNetwork(),
+			mode: testing(),
 		});
 		setLanguage('de');
 		await vi.waitFor(() => expect(title()).toBe('Datenschutz'));
@@ -166,7 +166,7 @@ describe('offline() language', () => {
 		await renderProvider({
 			i18n: { messages },
 			overrides: { language: 'de' },
-			testing: withoutNetwork(),
+			mode: testing(),
 		});
 
 		await vi.waitFor(() => expect(title()).toBe('Datenschutz'));
@@ -180,7 +180,7 @@ describe('offline() language', () => {
 		await renderProvider({
 			i18n: { messages },
 			prefetch: acceptLanguagePrefetch(),
-			testing: withoutNetwork(),
+			mode: testing(),
 		});
 
 		expect(kernel.getSnapshot().overrides.language).toBe('de');
@@ -191,7 +191,7 @@ describe('offline() language', () => {
 		await renderProvider({
 			i18n: { messages },
 			prefetch: Promise.resolve(acceptLanguagePrefetch()),
-			testing: withoutNetwork(),
+			mode: testing(),
 		});
 
 		expect(kernel.getSnapshot().overrides.language).toBe('de');
@@ -212,7 +212,7 @@ describe('offline() language', () => {
 				},
 			},
 			prefetch: acceptLanguagePrefetch(),
-			testing: withoutNetwork(),
+			mode: testing(),
 		});
 
 		setLanguage('fr');

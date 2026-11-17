@@ -8,7 +8,7 @@ import { cdp } from 'vitest/browser';
 
 import { ConsentBanner } from '../components/prompt';
 import { ConsentProvider, ConsentTheme } from '../index';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 beforeEach(() => {
@@ -24,7 +24,7 @@ test('the provider renders no theme stylesheet of its own', () => {
 		<ConsentProvider
 			options={{
 				persistence: false,
-				testing: withoutNetwork(),
+				mode: testing(),
 				theme: { colors: { primary: '#008080' } },
 			}}
 		>
@@ -42,7 +42,7 @@ test('renders custom theme CSS before the banner and preserves it through hydrat
 		nonce: 'ssr-theme-nonce',
 		persistence: false as const,
 		prefetch: policyFixture(),
-		testing: withoutNetwork(),
+		mode: testing(),
 		theme: {
 			colors: { primary: '#008080', surface: '#f0fafa' },
 			dark: { primary: '#40e0d0' },
@@ -142,7 +142,7 @@ test.each([
 			disableAnimation: true,
 			persistence: false as const,
 			prefetch: policyFixture(),
-			testing: withoutNetwork(),
+			mode: testing(),
 			theme: {
 				colors: { primary: '#008080' },
 				dark: { primary: '#40e0d0' },
@@ -239,7 +239,7 @@ test.each(['</style>', '</StYlE>', '</style >'])(
 					options={{
 						persistence: false,
 						prefetch: policyFixture(),
-						testing: withoutNetwork(),
+						mode: testing(),
 					}}
 				>
 					<div data-testid="themed-child" />

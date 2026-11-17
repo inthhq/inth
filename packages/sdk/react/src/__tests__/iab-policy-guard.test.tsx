@@ -22,7 +22,7 @@ import { ConsentDialog } from '../components/panel';
 import { ConsentBanner } from '../components/prompt';
 import { missingIABProviderError } from '../hooks/use-iab-policy-guard';
 import { ConsentProvider } from '../provider';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 
@@ -165,7 +165,7 @@ describe('an `iab` policy without <IABProvider>', () => {
 	it('shows the standard banner for an offline `iab` rule, which has no vendor list', async () => {
 		const { errors } = await mount({
 			overrides: { country: 'DE' },
-			testing: withoutNetwork({ iab: true }),
+			mode: testing({ iab: true }),
 		});
 
 		await vi.waitFor(() => {

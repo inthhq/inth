@@ -8,7 +8,7 @@ import { render, screen, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, test } from 'vitest';
 
 import ContextConsumerFixture from '../../__tests__/fixtures/context-consumer-fixture.svelte';
-import { withoutNetwork } from '../../lib/testing';
+import { testing } from '../../lib/testing';
 
 describe('ConsentProvider Context Values', () => {
 	beforeEach(() => {
@@ -25,7 +25,7 @@ describe('ConsentProvider Context Values', () => {
 	test('should provide correct context values to children', async () => {
 		render(ContextConsumerFixture, {
 			options: {
-				testing: withoutNetwork(),
+				mode: testing(),
 			},
 		});
 
@@ -37,7 +37,7 @@ describe('ConsentProvider Context Values', () => {
 	test('should provide activeUI state', async () => {
 		render(ContextConsumerFixture, {
 			options: {
-				testing: withoutNetwork(),
+				mode: testing(),
 			},
 		});
 
@@ -49,7 +49,7 @@ describe('ConsentProvider Context Values', () => {
 	test('should provide model state', async () => {
 		render(ContextConsumerFixture, {
 			options: {
-				testing: withoutNetwork(),
+				mode: testing(),
 			},
 		});
 

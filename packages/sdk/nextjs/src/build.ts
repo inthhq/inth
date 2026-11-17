@@ -230,22 +230,20 @@ const loadUserConfig = async function loadUserConfig(
 
 /**
  * Why the config's mode needs no build-time manifest, as Nuxt and Astro
- * decide: the hosted backend (no mode) and a `testing` value have none to
- * fetch, a `snapshot` is
+ * decide: `hosted()` and `testing()` have none to fetch, a `snapshot` is
  * already one, and `manifest({ source: 'runtime' })` always fetches at
- * runtime. `undefined` when the build should fetch it.
+ * runtime. `undefined` when the build should fetch it, as for the default
+ * `manifest()`.
  */
 const modeSkipReason = function modeSkipReason(
 	config: ConsentConfig | undefined
 ): string | undefined {
-	if (config?.testing) {
-		return 'c15t.config.ts sets testing, which needs no backend';
-	}
 	const mode = config?.mode;
-	// Without a config the build cannot tell, so it fetches as for
-	// manifest(): an unused snapshot costs less than a missing one.
-	if (config && !mode) {
-		return 'c15t.config.ts sets no mode, so it asks the hosted backend for each visitor';
+	if (mode?.type === 'testing') {
+		return 'c15t.config.ts sets testing(), which needs no backend';
+	}
+	if (mode?.type === 'hosted') {
+		return 'c15t.config.ts sets hosted(), which asks the backend for each visitor';
 	}
 	if (mode?.snapshot) {
 		return 'c15t.config.ts passes manifest({ snapshot })';
@@ -395,15 +393,15 @@ const withConsentAliases = function withConsentAliases(
  * at a module that imports `server-only`, so a client component that
  * imports `@c15t/core/generated` fails the build instead of shipping it.
  *
- * The fetch waits at most 10 seconds. When it fails, `next build` stops with
- * an error, and `next dev` logs a warning and writes a module whose
- * `snapshot` is `undefined`, so the server fetches the policy at runtime. A
- * missing backend URL counts as a failed fetch. Set
- * `onBuildError: 'runtime'` or `'fail'`, or the `C15T_ON_BUILD_ERROR`
- * environment variable, to use one behaviour in both. The fetch is skipped
+ * The fetch waits at most 10 seconds. When it fails, `next build` and
+ * `next dev` log a warning and write a module whose `snapshot` is
+ * `undefined`, so the server fetches the policy at runtime and asks the
+ * backend's `/init` while the manifest is unavailable. A missing backend
+ * URL counts as a failed fetch. Set `onBuildError: 'fail'`, or
+ * `C15T_ON_BUILD_ERROR=fail`, to stop the build instead. The fetch is skipped
  * for a `backendURL` that is not absolute http(s), for `output: 'export'`,
  * which has no server, and when `c15t.config.ts` sets a mode that reads no
- * build-time manifest: `hosted()`, `local()`, `manifest({ snapshot })` or
+ * build-time manifest: `hosted()`, `testing()`, `manifest({ snapshot })` or
  * `manifest({ source: 'runtime' })`. The wrapper evaluates the file with the
  * loader Next.js uses for `next.config.ts` to read its `mode` and
  * `backendURL`.

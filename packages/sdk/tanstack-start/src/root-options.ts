@@ -5,7 +5,7 @@
  * @internal
  */
 import type { ProviderTransportFactory, Vendor } from '@c15t/core';
-import type { ConsentMode, WithoutNetworkTestingData } from '@c15t/core/modes';
+import type { ConsentMode } from '@c15t/core/modes';
 import type { Script } from '@c15t/core/modules/script-loader';
 import type {
 	UseNetworkBlockerOptions,
@@ -80,7 +80,6 @@ export interface ConsentRootProps {
 		ConsentProviderOptions,
 		| 'backendURL'
 		| 'mode'
-		| 'testing'
 		| 'clearOnRevocation'
 		| 'networkBlocker'
 		| 'persistence'
@@ -93,15 +92,11 @@ export interface ConsentRootProps {
 		| '__resolveStreamedInit'
 	> & {
 		/**
-		 * Replaces the mode the state carries. Takes `manifest()` from
-		 * `@c15t/tanstack-start`, or a transport factory.
+		 * Replaces the mode the state carries: `manifest()` or `hosted()`
+		 * from `@c15t/tanstack-start`, `testing()` from
+		 * `@c15t/tanstack-start/testing`, or a transport factory.
 		 */
 		mode?: ConsentMode | ProviderTransportFactory;
-		/**
-		 * Replaces the testing value the state carries: `withoutNetwork()`
-		 * from `@c15t/tanstack-start/testing`.
-		 */
-		testing?: WithoutNetworkTestingData;
 	};
 
 	children: ReactNode;

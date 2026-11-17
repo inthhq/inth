@@ -6,7 +6,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { CONSENT_ENGINE_MODULE } from '../../src/lib/core/consent-manager';
 import type { DeferredRuntime } from '../../src/lib/core/deferred/deferred-runtime';
-import { withoutNetwork } from '../../testing/src/without-network';
+import { testing } from '../../testing/src/testing-mode';
 import { ConsentDevTools, provideC15tDevTools } from './public-api';
 import type { ConsentDevToolsOptions } from './public-api';
 
@@ -71,7 +71,7 @@ const configure = (
 			provideC15t({
 				consentCategories: categories,
 				persistence: false,
-				testing: withoutNetwork(),
+				mode: testing(),
 			}),
 		],
 	});
@@ -173,7 +173,7 @@ describe('@c15t/angular/devtools', () => {
 			providers: [
 				provideC15t({
 					persistence: false,
-					testing: withoutNetwork(),
+					mode: testing(),
 				}),
 				provideC15tDevTools({ position: 'bottom-right' }),
 			],
@@ -200,7 +200,7 @@ describe('@c15t/angular/devtools', () => {
 							src: 'data:text/javascript,void%200',
 						},
 					],
-					testing: withoutNetwork(),
+					mode: testing(),
 				}),
 			],
 		});
@@ -232,7 +232,7 @@ describe('@c15t/angular/devtools', () => {
 							src: 'data:text/javascript,void%200',
 						},
 					],
-					testing: withoutNetwork(),
+					mode: testing(),
 				}),
 				{
 					provide: CONSENT_ENGINE_MODULE,

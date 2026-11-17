@@ -12,6 +12,7 @@ import type {
 	RuntimePersistenceOptions,
 	RuntimeScriptLoaderOptions,
 } from '@c15t/core/runtime';
+import type { HostedMode } from '@c15t/core/modes';
 import type { ConsentTesting } from '@c15t/core/testing';
 import type { CreateIABOptions } from '@c15t/iab';
 import type { Theme, UIOptions } from '@c15t/ui/theme';
@@ -98,17 +99,18 @@ export interface ConsentManagerOptions
 	 */
 	backendURL?: string;
 	/**
-	 * Resolve the policy from the backend's consent manifest instead of
-	 * asking `/init`: pass `manifest()` from `@c15t/svelte`. Initial-only.
+	 * How the visitor's policy is resolved. Initial-only.
+	 *
+	 * - Omitted, or `hosted()` from `@c15t/svelte`: ask
+	 *   `${backendURL}/init`.
+	 * - `manifest()` from `@c15t/svelte`: resolve from the backend's
+	 *   consent manifest in the browser, falling back to `/init` with a
+	 *   warning when it is unavailable.
+	 * - `testing()` from `@c15t/svelte/testing`: resolve a policy with no
+	 *   backend, for tests. It throws in production builds. To keep consent
+	 *   out of the way in an app's own tests instead, set `enabled: false`.
 	 */
-	mode?: ProviderTransportFactory;
-	/**
-	 * Replace the backend in a test: pass `withoutNetwork()` from
-	 * `@c15t/svelte/testing`. It throws in production builds. To keep
-	 * consent out of the way in an app's own tests instead, set
-	 * `enabled: false`.
-	 */
-	testing?: ConsentTesting;
+	mode?: ProviderTransportFactory | HostedMode | ConsentTesting;
 	/** IAB TCF configuration. Pass `false` to disable the TCF addon. */
 	iab?: ProviderIABOptions;
 	/**
@@ -187,8 +189,8 @@ export type ConsentProviderCallbacks = NonNullable<
  */
 export interface ConsentRootState {
 	/**
-	 * How `c15tHandle()` resolves the visitor, as data: `manifest()`, the
-	 * hosted backend, or a testing value.
+	 * How `c15tHandle()` resolves the visitor, as data: `manifest()`,
+	 * `hosted()` or `testing()`.
 	 */
 	mode: KitMode;
 	/** The visitor's consent state the server resolved. */

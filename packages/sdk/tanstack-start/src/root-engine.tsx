@@ -29,7 +29,7 @@ import type {
 	ProviderTransportFactory,
 } from '@c15t/core';
 import { backendURL as generatedBackendURL } from '@c15t/core/generated';
-import type { ConsentMode, WithoutNetworkTestingData } from '@c15t/core/modes';
+import type { ConsentMode } from '@c15t/core/modes';
 import { clientMode } from '@c15t/core/runtime/client-mode';
 import { preloadScriptLoaderWith } from '@c15t/core/runtime/script-loader-preload';
 import type * as ScriptServerStart from '@c15t/core/runtime/script-server-start';
@@ -40,6 +40,7 @@ import {
 	DeferredEngineHost,
 } from '@c15t/react/deferred/engine';
 import { ConsentProvider } from '@c15t/react/provider';
+import type { WithBackendURL } from '@c15t/core/runtime/provider';
 import type { ConsentProviderOptions } from '@c15t/react/provider';
 import * as React from 'react';
 import { Suspense, useState } from 'react';
@@ -60,11 +61,7 @@ type RecordedState = PromiseLike<ConsentState> & {
 };
 
 /** What the root picks a transport from, before the state's own. */
-type ChosenMode =
-	| ConsentMode
-	| WithoutNetworkTestingData
-	| ProviderTransportFactory
-	| undefined;
+type ChosenMode = ConsentMode | ProviderTransportFactory | undefined;
 
 const transportFor = function transportFor(
 	state: ConsentState | undefined,
@@ -74,7 +71,7 @@ const transportFor = function transportFor(
 	const backendURL = state?.backendURL ?? generatedBackendURL;
 	const routePrefix = state?.routePrefix;
 	return clientMode(
-		mode ?? state?.testing ?? state?.mode,
+		mode ?? state?.mode,
 		{
 			backendURL,
 			// A `consentPrefetchHead()` script may have started the init request
@@ -91,14 +88,14 @@ const transportFor = function transportFor(
 	);
 };
 
-/** The kind a mode or testing value reports through `window.c15t.mode`. */
+/** The kind a mode reports through `window.c15t.mode`. */
 const kindOf = function kindOf(
-	mode: ConsentMode | WithoutNetworkTestingData | undefined
+	mode: ConsentMode | undefined
 ): ProviderTransportFactory['kind'] {
-	if (mode === undefined) {
-		return 'hosted';
+	if (mode === undefined || mode.type === 'manifest') {
+		return 'manifest';
 	}
-	return mode.type === 'manifest' ? 'manifest' : 'offline';
+	return mode.type === 'hosted' ? 'hosted' : 'offline';
 };
 
 /**
@@ -109,7 +106,7 @@ const kindOf = function kindOf(
  */
 const deferredTransport = function deferredTransport(
 	state: PromiseLike<ConsentState>,
-	mode: ConsentMode | WithoutNetworkTestingData | undefined,
+	mode: ConsentMode | undefined,
 	overrides: KernelOverrides | undefined
 ): ProviderTransportFactory {
 	return Object.assign(
@@ -458,7 +455,7 @@ const useRootOptions = function useRootOptions({
 }: ConsentRootProps) {
 	// Initial-only, like the provider's own `mode`.
 	const [mode, setMode] = useState(() =>
-		resolveMode(state, options?.testing ?? options?.mode, options?.overrides)
+		resolveMode(state, options?.mode, options?.overrides)
 	);
 	void setMode;
 
@@ -478,10 +475,8 @@ const useRootOptions = function useRootOptions({
 		networkBlocker,
 		persistence,
 		prefetch: state,
-		// `mode` is the transport the testing value selected.
 		scriptLoader,
 		scripts,
-		testing: undefined,
 		vendors,
 	};
 	const serverStart = Boolean(
@@ -538,7 +533,10 @@ const AfterPage = ({
 export const EagerConsentRoot = (props: ConsentRootProps) => {
 	const { bootData, providerOptions, serverStart } = useRootOptions(props);
 	return (
-		<ConsentProvider options={providerOptions}>
+		// `resolveMode` threw already when there is no backend.
+		<ConsentProvider
+			options={providerOptions as WithBackendURL<ConsentProviderOptions>}
+		>
 			{props.children}
 			<Suspense fallback={null}>
 				<AfterPage

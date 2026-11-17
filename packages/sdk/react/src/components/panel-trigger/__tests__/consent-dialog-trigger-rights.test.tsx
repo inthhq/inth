@@ -9,7 +9,7 @@ import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentDialog } from '~/components/panel';
 import { ConsentBanner } from '~/components/prompt';
 
-import { withoutNetwork } from '../../../testing';
+import { testing } from '../../../testing';
 import { ConsentDialogTrigger, ConsentDialogTriggerToolbar } from '../index';
 
 const OPT_OUT_NOTICE: Partial<PolicyRule> = {
@@ -34,7 +34,7 @@ const renderWithRule = function renderWithRule(
 					id: 'trigger-rights-test',
 					...rule,
 				}),
-				testing: withoutNetwork(),
+				mode: testing(),
 			}}
 		>
 			<ConsentBanner />

@@ -44,7 +44,11 @@ import { validateStoredConsentEnvelope } from '../../../core/src/modules/persist
 import { encodeStoredConsentEnvelopeJson } from '../../../core/src/modules/persistence/writer/encode';
 import { gpcFromHeaders } from '../../../core/src/transports/decision-inputs';
 import { gtag } from '../../../integrations/src/vendors/analytics/google-tag';
-import type { C15tCallbacks, C15tOptions } from '../lib/core/options';
+import type {
+	C15tCallbacks,
+	C15tOptions,
+	C15tProviderOptions,
+} from '../lib/core/options';
 import { bootClient, renderServer } from './conformance-app';
 import type { ClientApp, FixtureContent } from './conformance-app';
 import { POLICY_SURFACES } from './conformance-registry';
@@ -430,7 +434,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 	const boot = async (hydrate: boolean, options: C15tOptions) => {
 		root = await bootClient(
 			container as HTMLDivElement,
-			options,
+			options as C15tProviderOptions,
 			policyContent(setup.probeGates),
 			hydrate
 		);
@@ -449,7 +453,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 		if (hydrate) {
 			const app = tree(true);
 			const rendered = await renderServer(
-				{ ...app.options, callbacks: undefined },
+				{ ...app.options, callbacks: undefined } as C15tProviderOptions,
 				policyContent(setup.probeGates)
 			);
 			container.innerHTML = rendered.body;

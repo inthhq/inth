@@ -10,11 +10,12 @@
  *
  * @internal
  */
-import type { ConsentMode, WithoutNetworkTestingData } from '@c15t/core/modes';
+import type { ConsentMode } from '@c15t/core/modes';
+import { testingOptionsOf } from '@c15t/core/modes';
 import {
 	lazyBrowserManifest,
 	lazyHosted,
-	lazyWithoutNetwork,
+	lazyTesting,
 } from '@c15t/core/runtime/client-mode';
 import type { LazyBrowserManifestOptions } from '@c15t/core/runtime/client-mode';
 import type { ProviderTransportFactory } from '@c15t/react';
@@ -51,13 +52,13 @@ export interface NextClientModeOptions {
  * - `manifest({ resolve: 'browser' })`: the browser resolver, loaded on
  *   first init, reading `${routePrefix}/manifest`, else
  *   `${backendURL}/manifest`.
- * - No mode: the hosted backend's transport, loaded on first init.
- * - `withoutNetwork()` from `c15t/next/testing`: the transport that
+ * - `hosted()`: the hosted backend's transport, loaded on first init.
+ * - `testing()` from `c15t/next/testing`: the transport that
  *   resolves the recommended pack in the browser, loaded on first init.
  *   The loaded chunk throws in production builds.
  *
- * @param mode - The mode or testing value as data, a transport factory,
- *   used as is, or `undefined` for the hosted backend.
+ * @param selected - The mode as data, a transport factory, used as is, or
+ *   `undefined` for `manifest()`.
  * @param options - Backend URL, route prefix and `proxy`.
  * @returns A provider transport factory.
  * @throws {Error} When the hosted backend or `manifest()` has no backend
@@ -65,13 +66,10 @@ export interface NextClientModeOptions {
  * @internal
  */
 export const createClientMode = function createClientMode(
-	mode:
-		| ConsentMode
-		| WithoutNetworkTestingData
-		| ProviderTransportFactory
-		| undefined,
+	selected: ConsentMode | ProviderTransportFactory | undefined,
 	options: NextClientModeOptions
 ): ProviderTransportFactory {
+	const mode = selected ?? { type: 'manifest' as const };
 	if (typeof mode === 'function') {
 		if (process.env.NODE_ENV !== 'production' && !warnedImplementation) {
 			warnedImplementation = true;
@@ -85,11 +83,8 @@ export const createClientMode = function createClientMode(
 	// has a backend URL. Without a config there may be none: say so rather
 	// than run a mode the app never chose.
 	const { routePrefix } = options;
-	if (mode?.type === 'without-network') {
-		return lazyWithoutNetwork(
-			'@c15t/nextjs/testing',
-			mode.iab === undefined ? {} : { iab: mode.iab }
-		);
+	if (mode?.type === 'testing') {
+		return lazyTesting('@c15t/nextjs/testing', testingOptionsOf(mode));
 	}
 	// Saves never fall back to `routePrefix`: the route takes writes only
 	// with `proxy`.
@@ -104,7 +99,7 @@ export const createClientMode = function createClientMode(
 			}`
 		);
 	}
-	if (mode === undefined) {
+	if (mode.type === 'hosted') {
 		return lazyHosted({ backendURL });
 	}
 	const data = mode;

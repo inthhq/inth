@@ -5,7 +5,7 @@ import { ConsentDialog } from '../aggregate-components';
 import { ConsentBanner } from '../components/prompt';
 import { useSetActiveUI } from '../hooks';
 import { ConsentProvider } from '../provider';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 const Controls = () => {
@@ -34,7 +34,7 @@ test('reveals a cold aggregate dialog as soon as its module is ready', async () 
 				options={{
 					persistence: false,
 					prefetch: policyFixture(),
-					testing: withoutNetwork(),
+					mode: testing(),
 				}}
 			>
 				<ConsentBanner disableAnimation />

@@ -1,5 +1,5 @@
 import type { StorageConfig } from '@c15t/core';
-import type { ConsentMode, WithoutNetworkTestingData } from '@c15t/core/modes';
+import type { ConsentMode } from '@c15t/core/modes';
 import type {
 	ConsentManifest,
 	ConsentRequestHeaderInputs,
@@ -10,13 +10,10 @@ import type { ConsentState } from '../server/types';
 export type { ConsentRequestOptions, ConsentState } from '../server/types';
 
 /**
- * How a visitor is resolved: `manifest()`, the hosted backend (a handle
- * with no mode), or a testing value. @internal
+ * How a visitor is resolved: `manifest()` (a handle with no mode),
+ * `hosted()` or `testing()`. @internal
  */
-export type KitMode =
-	| ConsentMode
-	| { type: 'hosted' }
-	| WithoutNetworkTestingData;
+export type KitMode = ConsentMode;
 
 /**
  * What {@link c15tHandle} stores on `event.locals.c15t`.

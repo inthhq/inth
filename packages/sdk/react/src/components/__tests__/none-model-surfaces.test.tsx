@@ -16,7 +16,7 @@ import { ConsentBanner } from '~/components/prompt';
 import { KernelContext } from '~/context';
 import { useHasConsentUI, useModel } from '~/hooks';
 
-import { withoutNetwork } from '../../testing';
+import { testing } from '../../testing';
 
 /**
  * A `none` rule grants everything in scope and owes nothing: no prompt, no
@@ -102,7 +102,7 @@ describe('consent surfaces under a none rule', () => {
 					initialUI: 'dialog',
 					persistence: false,
 					prefetch: noneRule(),
-					testing: withoutNetwork(),
+					mode: testing(),
 				}}
 			>
 				<Surfaces />
@@ -137,7 +137,7 @@ describe('consent surfaces under a none rule', () => {
 				options={{
 					persistence: false,
 					prefetch: noneRule(['preferences']),
-					testing: withoutNetwork(),
+					mode: testing(),
 				}}
 			>
 				<Surfaces />

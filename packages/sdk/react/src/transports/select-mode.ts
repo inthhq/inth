@@ -1,6 +1,6 @@
 /**
- * The transport factory a provider's options select: the `testing`
- * value's, then `mode`, then the hosted backend at `backendURL`.
+ * The transport factory a provider's options select: `mode` when it is a
+ * factory or a `testing()` value, else the hosted backend at `backendURL`.
  *
  * The provider's module imports this with the hosted transport, which
  * loads with the consent engine: a page that defers the engine does not
@@ -9,7 +9,11 @@
  * @packageDocumentation
  * @internal
  */
-import type { HostedModeFactory, ProviderTransportFactory } from '@c15t/core';
+import type {
+	HostedMode,
+	HostedModeFactory,
+	ProviderTransportFactory,
+} from '@c15t/core';
 import type { ConsentTesting } from '@c15t/core/testing';
 import { createHostedTransport } from '@c15t/core/transports';
 import { createHostedModeFactory } from '@c15t/core/transports/hosted-factory';
@@ -38,8 +42,7 @@ export const hostedFor = function hostedFor(
 /** The options that pick a provider's transport. */
 export interface ModeOptions {
 	backendURL?: string;
-	mode?: ProviderTransportFactory;
-	testing?: ConsentTesting;
+	mode?: ProviderTransportFactory | HostedMode | ConsentTesting;
 }
 
 /**
@@ -52,13 +55,15 @@ export interface ModeOptions {
 export const selectedMode = function selectedMode(
 	options: ModeOptions
 ): ProviderTransportFactory | undefined {
-	// A testing value that crossed a serialization boundary is data only;
-	// the browser side builds its transport.
-	if (options.testing?.transport) {
-		return options.testing.transport;
+	const { mode } = options;
+	if (typeof mode === 'function') {
+		return mode;
 	}
-	if (options.mode) {
-		return options.mode;
+	// A `testing()` value carries its transport, not enumerable. One that
+	// crossed a serialization boundary is data only; the browser side
+	// builds its transport.
+	if (mode && 'transport' in mode && mode.transport) {
+		return mode.transport;
 	}
 	return options.backendURL === undefined
 		? undefined

@@ -48,8 +48,9 @@ export { defineConsentConfig } from './config';
 // The data factories, in place of `@c15t/react`'s transports.
 export type {
 	ConsentMode,
+	HostedMode,
 	ManifestMode,
 	ManifestModeOptions,
-	WithoutNetworkTestingData,
+	TestingMode,
 } from '@c15t/core/modes';
-export { manifest } from '@c15t/core/modes';
+export { hosted, manifest } from '@c15t/core/modes';

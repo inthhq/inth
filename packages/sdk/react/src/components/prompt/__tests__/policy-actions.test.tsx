@@ -8,7 +8,7 @@ import type { ConsentStateFixture } from '~/__tests__/consent-state-fixture';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentBanner } from '~/components/prompt';
 
-import { withoutNetwork } from '../../../testing';
+import { testing } from '../../../testing';
 
 type ConsentManagerState = ConsentStateFixture;
 
@@ -96,7 +96,7 @@ const PolicyTestProvider = ({
 				preferences: state.policyDialog,
 				prompt: state.policyBanner,
 			},
-			testing: withoutNetwork(),
+			mode: testing(),
 			theme: providerOverrides?.theme,
 		}}
 	>

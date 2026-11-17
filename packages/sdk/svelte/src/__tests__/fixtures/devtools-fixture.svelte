@@ -3,7 +3,7 @@
 
 	import ConsentProvider from '../../lib/components/consent-provider.svelte';
 	import ConsentDevToolsComponent from '../../lib/devtools';
-	import { withoutNetwork } from '../../lib/testing';
+	import { testing } from '../../lib/testing';
 
 	let {
 		categories,
@@ -55,7 +55,7 @@
 
 <ConsentProvider
 	options={{
-		testing: withoutNetwork(),
+		mode: testing(),
 		consentCategories: categories,
 		presentation,
 		storageConfig: storageKey ? { storageKey } : undefined,
@@ -73,7 +73,7 @@
 </ConsentProvider>
 
 {#if multiple}
-	<ConsentProvider options={{ testing: withoutNetwork() }}>
+	<ConsentProvider options={{ mode: testing() }}>
 		<ConsentDevToolsComponent position="bottom-right" />
 	</ConsentProvider>
 {/if}

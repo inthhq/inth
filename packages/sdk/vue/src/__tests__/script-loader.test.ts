@@ -13,7 +13,7 @@ import {
 	symbolKernelContext,
 	symbolSnapshot,
 } from '../runtime/utils/symbols';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 import { createVueConsentKernelContext } from './test-kernel';
 
 /** An opt-in policy for measurement and marketing, already resolved. */
@@ -65,7 +65,7 @@ const borrowedRuntime = (options: { enabled?: boolean } = {}) =>
 	createConsentRuntime({
 		...options,
 		prefetch: { initialPolicyResolution: resolution },
-		testing: withoutNetwork(),
+		mode: testing(),
 	});
 
 const inserted = (src: string) =>

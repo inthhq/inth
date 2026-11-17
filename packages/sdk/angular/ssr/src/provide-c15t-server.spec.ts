@@ -28,7 +28,7 @@ import { EARLY_CONSENT_TAP_SCRIPT } from '@c15t/core/surface-actions';
 import { hosted } from '@c15t/core/transports';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { withoutNetwork } from '../../testing/src/without-network';
+import { testing } from '../../testing/src/testing-mode';
 import { MANIFEST_FIXTURE } from './__tests__/manifest-fixture';
 import { createConsentRoute } from './consent-route';
 import { provideC15tServer } from './provide-c15t-server';
@@ -107,7 +107,7 @@ afterEach(() => {
 
 describe('provideC15tServer', () => {
 	test('renders the banner for a new visitor and hands the state over', async () => {
-		const html = await render({ testing: withoutNetwork() });
+		const html = await render({ mode: testing() });
 		expect(html).toContain('data-testid="ui">banner</p>');
 		const state = transferred(html);
 		expect(state?.initialPolicyResolution?.status).toBe('matched');
@@ -128,7 +128,7 @@ describe('provideC15tServer', () => {
 							provideAppInitializer(() => {
 								inject(ConsentManager);
 							}),
-							provideC15t({ testing: withoutNetwork() }),
+							provideC15t({ mode: testing() }),
 							provideC15tServer(),
 						],
 					},
@@ -159,7 +159,7 @@ describe('provideC15tServer', () => {
 
 	test('reads the consent cookie, so a returning visitor gets no banner', async () => {
 		const html = await render(
-			{ testing: withoutNetwork() },
+			{ mode: testing() },
 			{},
 			new Request(`${SITE}/`, { headers: { cookie: CONSENTED } })
 		);
@@ -176,7 +176,11 @@ describe('provideC15tServer', () => {
 			new Request(`${SITE}/`, { headers: { 'x-vercel-ip-country': 'DE' } });
 		const mode = hosted({ backendURL: '/api/c15t' });
 
-		const html = await render({ mode }, { route }, request());
+		const html = await render(
+			{ backendURL: '/api/c15t', mode },
+			{ route },
+			request()
+		);
 		expect(html).toContain('data-testid="ui">banner</p>');
 		expect(transferred(html)?.initialPolicyResolution).toMatchObject({
 			policyId: 'eu-opt-in',
@@ -185,7 +189,11 @@ describe('provideC15tServer', () => {
 
 		// Without the route the render never fetches its own origin: the
 		// browser resolves the policy after hydration.
-		const alone = await render({ mode }, {}, request());
+		const alone = await render(
+			{ backendURL: '/api/c15t', mode },
+			{},
+			request()
+		);
 		expect(alone).toContain('data-testid="ui">none</p>');
 		expect(transferred(alone)?.initialPolicyResolution).toBeUndefined();
 		expect(network).not.toHaveBeenCalled();
@@ -258,7 +266,7 @@ describe('provideC15tServer', () => {
 	});
 
 	test('a render without a request is shared: no visitor clock', async () => {
-		const html = await render({ testing: withoutNetwork() }, {}, null);
+		const html = await render({ mode: testing() }, {}, null);
 		expect(html).toContain('data-testid="ui">banner</p>');
 		expect(transferred(html)?.now).toBeUndefined();
 	});
@@ -266,7 +274,7 @@ describe('provideC15tServer', () => {
 	test('leaves an explicit prefetch alone', async () => {
 		const html = await render({
 			prefetch: {},
-			testing: withoutNetwork(),
+			mode: testing(),
 		});
 		expect(transferred(html)).toBeUndefined();
 	});
@@ -281,7 +289,7 @@ describe('provideC15tServer', () => {
 			},
 		];
 		const returning = await render(
-			{ nonce: 'n0nce', scripts, testing: withoutNetwork() },
+			{ nonce: 'n0nce', scripts, mode: testing() },
 			{},
 			new Request(`${SITE}/`, { headers: { cookie: CONSENTED } })
 		);
@@ -292,7 +300,7 @@ describe('provideC15tServer', () => {
 		expect(start?.getAttribute('nonce')).toBe('n0nce');
 
 		// A visitor who still owes a choice starts nothing.
-		const fresh = await render({ scripts, testing: withoutNetwork() });
+		const fresh = await render({ scripts, mode: testing() });
 		expect(fresh).not.toContain('pixel.js');
 	});
 });
@@ -305,7 +313,7 @@ describe('the early-tap script', () => {
 
 	test('goes into <head> with the nonce when the banner renders', async () => {
 		const html = await render(
-			{ nonce: 'n0nce', testing: withoutNetwork() },
+			{ nonce: 'n0nce', mode: testing() },
 			{},
 			undefined,
 			BannerApp
@@ -318,7 +326,7 @@ describe('the early-tap script', () => {
 
 	test('is left out when no banner renders', async () => {
 		const returning = await render(
-			{ testing: withoutNetwork() },
+			{ mode: testing() },
 			{},
 			new Request(`${SITE}/`, { headers: { cookie: CONSENTED } }),
 			BannerApp
@@ -328,7 +336,7 @@ describe('the early-tap script', () => {
 
 		// A page without the stock banner holds nothing.
 		expect(
-			earlyTapScript(await render({ testing: withoutNetwork() }))
+			earlyTapScript(await render({ mode: testing() }))
 		).toBeNull();
 	});
 });
@@ -339,7 +347,7 @@ describe('the browser side', () => {
 	});
 
 	test('ConsentManager starts from the state the server rendered with', async () => {
-		const html = await render({ testing: withoutNetwork() });
+		const html = await render({ mode: testing() });
 		const page = new DOMParser().parseFromString(html, 'text/html');
 		const script = page.querySelector('script#ng-state');
 		expect(script).not.toBeNull();
@@ -350,7 +358,7 @@ describe('the browser side', () => {
 			providers: [
 				// The id the server render wrote the state under.
 				{ provide: APP_ID, useValue: 'ng' },
-				provideC15t({ persistence: false, testing: withoutNetwork() }),
+				provideC15t({ persistence: false, mode: testing() }),
 			],
 		});
 		const consent = TestBed.inject(ConsentManager);

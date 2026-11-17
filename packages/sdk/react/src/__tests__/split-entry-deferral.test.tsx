@@ -1,7 +1,7 @@
 import { createRoot } from 'react-dom/client';
 import { expect, test, vi } from 'vitest';
 
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 // Vitest's browser mode serves each source module as its own request, so the
@@ -45,7 +45,7 @@ test('the split dialog and widget entries load nothing until they are needed', a
 				options={{
 					persistence: false,
 					prefetch: policyFixture(),
-					testing: withoutNetwork(),
+					mode: testing(),
 				}}
 			>
 				<ConsentBanner disableAnimation />

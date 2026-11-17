@@ -11,7 +11,7 @@ import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { ConsentRoot } from '../root';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 
 const PolicyStatus = () => {
 	const model = useModel();
@@ -32,7 +32,7 @@ describe('ConsentRoot offline mode', () => {
 					persistence={false}
 					state={{
 						initialOverrides: { country: 'DE' },
-						testing: withoutNetwork(),
+						mode: testing(),
 					}}
 				>
 					<PolicyStatus />

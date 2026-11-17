@@ -18,7 +18,7 @@ import {
 	useConsent,
 	useExplicitChoice,
 } from '../index';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 
 // Hold back the write code's chunk, as a slow network would, so the
 // remount happens before it loads.
@@ -33,7 +33,7 @@ pageWriterLoader.load = async () => {
 };
 
 // An unknown location resolves the recommended pack's Europe opt-in rule.
-const testing = withoutNetwork();
+const testing = testing();
 const ChoiceProbe = () => {
 	const allowed = useConsent('marketing');
 	const choice = useExplicitChoice();

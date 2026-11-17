@@ -21,7 +21,7 @@ import { render } from 'vitest-browser-react';
 
 import { defineConsentConfig } from '../config';
 import { ConsentRoot } from '../root';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 import { MANIFEST_FIXTURE } from './manifest-fixture';
 import { policyFixture } from './policy-fixture';
 
@@ -75,9 +75,9 @@ describe('ConsentRoot: backendURL triggers auto-init', () => {
 			);
 
 			await vi.waitFor(() => {
-				// The default mode, manifest(), re-inits through the backend.
+				// The default mode is manifest().
 				expect((window as WindowWithC15t).c15t).toMatchObject({
-					mode: 'hosted',
+					mode: 'manifest',
 					pkg: '@c15t/nextjs',
 				});
 			});
@@ -135,7 +135,7 @@ describe('ConsentRoot: backendURL triggers auto-init', () => {
 		}
 	});
 
-	test('a withoutNetwork() root fires no network call', async () => {
+	test('a testing() root fires no network call', async () => {
 		const fetchSpy = vi.fn().mockResolvedValue(new Response());
 		const originalFetch = globalThis.fetch;
 		globalThis.fetch = fetchSpy as unknown as typeof globalThis.fetch;
@@ -148,7 +148,7 @@ describe('ConsentRoot: backendURL triggers auto-init', () => {
 		try {
 			const { getByTestId } = await render(
 				<ConsentRoot
-					config={{ testing: withoutNetwork() }}
+					config={{ mode: testing() }}
 					state={{}}
 					persistence={false}
 				>
@@ -157,7 +157,7 @@ describe('ConsentRoot: backendURL triggers auto-init', () => {
 			);
 
 			await expect.element(getByTestId('probe')).toHaveTextContent('false');
-			// withoutNetwork() resolves in the browser and saves nowhere.
+			// testing() resolves in the browser and saves nowhere.
 			expect(fetchSpy).not.toHaveBeenCalled();
 		} finally {
 			globalThis.fetch = originalFetch;

@@ -44,9 +44,9 @@ import {
 import type { GlobalVendorList } from '@c15t/schema/types';
 import { describe, expect, test } from 'vitest';
 
-import { withoutNetwork } from '../../testing/src/without-network';
+import { testing } from '../../testing/src/testing-mode';
 import { whenIABReady } from '../lib/core/iab-loader';
-import type { C15tOptions } from '../lib/core/options';
+import type { C15tOptions, C15tProviderOptions } from '../lib/core/options';
 import { bootClient, renderServer } from './conformance-app';
 import type { ClientApp } from './conformance-app';
 import { CONFORMANCE_COMPONENTS } from './conformance-registry';
@@ -153,7 +153,7 @@ const buildProviderOptions = function buildProviderOptions(
 		disableAnimation: provided.disableAnimation ?? true,
 		...(provided.mode
 			? { mode: provided.mode }
-			: { testing: withoutNetwork() }),
+			: { mode: testing() }),
 		persistence: opts.persistence ?? provided.persistence ?? false,
 		prefetch,
 		trapFocus: provided.trapFocus ?? false,
@@ -241,17 +241,17 @@ const driver: TestDriver = {
 					});
 			});
 			options.mode = transportMode({ init: () => promise });
-			options.testing = undefined;
 		} else if (opts.initMode === 'failing') {
 			options.mode = transportMode({
 				init: () => Promise.reject(new Error('Init failed')),
 			});
-			options.testing = undefined;
 		}
 
 		const container = document.createElement('div');
 		document.body.append(container);
-		const app = await bootClient(container, options, { entries });
+		const app = await bootClient(container, options as C15tProviderOptions, {
+			entries,
+		});
 		lastApp = app;
 
 		if (isIabComponent(opts.component)) {
@@ -294,7 +294,9 @@ const driver: TestDriver = {
 				deferInitGvl({ gvl: options.prefetch.initialIab.gvl }, '/test-gvl')
 			);
 		}
-		const rendered = await renderServer(options, { entries });
+		const rendered = await renderServer(options as C15tProviderOptions, {
+			entries,
+		});
 		return rendered.html;
 	},
 };

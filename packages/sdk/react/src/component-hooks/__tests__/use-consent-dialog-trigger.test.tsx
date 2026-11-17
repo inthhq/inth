@@ -7,7 +7,7 @@ import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/compone
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { KernelContext } from '~/context';
 
-import { withoutNetwork } from '../../testing';
+import { testing } from '../../testing';
 import { useConsentDialogTrigger } from '../use-panel-trigger';
 
 interface WrapperOptions {
@@ -44,7 +44,7 @@ const createWrapper = function createWrapper({
 							}
 						),
 					},
-					testing: withoutNetwork(),
+					mode: testing(),
 				}}
 			>
 				{children}

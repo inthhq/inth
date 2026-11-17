@@ -245,10 +245,10 @@ describe('plain Vue modes', () => {
 });
 
 describe('Nuxt modes', () => {
-	test('the hosted backend is the default; manifest() gets the consent route', () => {
+	test('manifest() is the default and gets the consent route', () => {
 		const manifestMode = { type: 'manifest' as const };
-		expect(readNuxtMode({})).toEqual({ type: 'hosted' });
-		expect(readNuxtRoutePrefix({})).toBeUndefined();
+		expect(readNuxtMode({})).toEqual({ type: 'manifest' });
+		expect(readNuxtRoutePrefix({})).toBe('/api/c15t');
 		expect(readNuxtRoutePrefix({ mode: manifestMode })).toBe('/api/c15t');
 		expect(
 			readNuxtRoutePrefix({ mode: manifestMode, routePrefix: '/consent/' })
@@ -268,7 +268,7 @@ describe('Nuxt modes', () => {
 		expect(resolvesOnServer({ resolve: 'browser', type: 'manifest' })).toBe(
 			false
 		);
-		expect(resolvesOnServer({ type: 'without-network' })).toBe(false);
+		expect(resolvesOnServer({ type: 'testing' })).toBe(false);
 	});
 
 	test('a server-resolved manifest re-inits through the consent route and saves to the backend', async () => {

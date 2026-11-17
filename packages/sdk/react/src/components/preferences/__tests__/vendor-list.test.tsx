@@ -19,7 +19,7 @@ import { ConsentWidget } from '~/components/preferences';
 import { useConsent, useVendorAllowed, useVendorChoice } from '~/hooks';
 import { useKernel } from '~/kernel-selector';
 
-import { withoutNetwork } from '../../../testing';
+import { testing } from '../../../testing';
 
 const CATEGORIES = ['necessary', 'marketing', 'measurement'] as const;
 
@@ -102,7 +102,7 @@ const renderWidget = (
 					model: 'opt-in',
 					prompt: 'choice',
 				}),
-				testing: withoutNetwork(),
+				mode: testing(),
 				vendors: VENDORS,
 			}}
 		>
@@ -401,7 +401,7 @@ describe('vendor switches are opt-in', () => {
 						}
 					),
 					scripts: [helperScript],
-					testing: withoutNetwork(),
+					mode: testing(),
 					vendors,
 				}}
 			>

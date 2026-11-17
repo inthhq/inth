@@ -8,7 +8,7 @@ import { ConsentDialog } from '~/components/panel';
 import { ConsentDialogLink } from '~/components/panel-link';
 import { ConsentDialogTrigger } from '~/components/panel-trigger';
 
-import { withoutNetwork } from '../../../testing';
+import { testing } from '../../../testing';
 
 describe('ConsentDialogLink', () => {
 	beforeEach(() => {
@@ -23,7 +23,7 @@ describe('ConsentDialogLink', () => {
 				<ConsentProvider
 					options={{
 						prefetch: policyFixture({}, { model }),
-						testing: withoutNetwork(),
+						mode: testing(),
 					}}
 				>
 					<ConsentDialogLink>Preferences</ConsentDialogLink>
@@ -50,7 +50,7 @@ describe('ConsentDialogLink', () => {
 
 	test('renders custom text and opens the dialog when clicked', async () => {
 		render(
-			<ConsentProvider options={{ testing: withoutNetwork() }}>
+			<ConsentProvider options={{ mode: testing() }}>
 				<ConsentDialog />
 				<ConsentDialogLink>Your privacy settings</ConsentDialogLink>
 			</ConsentProvider>
@@ -86,7 +86,7 @@ describe('ConsentDialogLink', () => {
 
 	test('supports asChild for anchor-based footer links', async () => {
 		render(
-			<ConsentProvider options={{ testing: withoutNetwork() }}>
+			<ConsentProvider options={{ mode: testing() }}>
 				<ConsentDialog />
 				<ConsentDialogLink asChild>
 					<a

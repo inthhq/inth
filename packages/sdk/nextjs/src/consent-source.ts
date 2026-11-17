@@ -4,7 +4,7 @@
  *
  * @internal
  */
-import type { ConsentMode } from '@c15t/core/modes';
+import type { ManifestMode } from '@c15t/core/modes';
 import {
 	backendURL as generatedBackendURL,
 	snapshot as generatedSnapshot,
@@ -94,7 +94,7 @@ const resolveBackendURL = function resolveBackendURL(
 /** Where `manifest()` (or an explicit manifest source) resolves from. */
 const resolveManifestSource = function resolveManifestSource(
 	options: ConsentSourceOptions,
-	mode: ConsentMode | undefined,
+	mode: ManifestMode | undefined,
 	backendURL: string | undefined
 ): Pick<ConsentSource, 'manifestURL' | 'mode' | 'snapshot'> {
 	const manifestMode = mode;
@@ -127,8 +127,9 @@ const resolveManifestSource = function resolveManifestSource(
  *   server then fetches. A `/`-relative `manifestURL` is the browser's,
  *   usually the app's own route, so the server reads
  *   `${backendURL}/manifest` instead.
- * - No mode asks the hosted backend's `${backendURL}/init`.
- * - A `testing` value resolves nothing on the server; the browser does.
+ * - No mode means `manifest()`.
+ * - `hosted()` asks the hosted backend's `${backendURL}/init`.
+ * - `testing()` resolves nothing on the server; the browser does.
  *
  * @param options - Explicit overrides of the config.
  * @returns Where to resolve from.
@@ -150,10 +151,10 @@ export const resolveConsentSource = function resolveConsentSource(
 		routePrefix,
 		snapshot: undefined,
 	};
-	if (config?.testing && !forcedManifest) {
+	if (mode?.type === 'testing' && !forcedManifest) {
 		return { ...none, backendURL: undefined, mode: undefined };
 	}
-	if (!mode && !forcedManifest) {
+	if (mode?.type === 'hosted' && !forcedManifest) {
 		return {
 			...none,
 			backendURL,
@@ -162,7 +163,11 @@ export const resolveConsentSource = function resolveConsentSource(
 	}
 	return {
 		...none,
-		...resolveManifestSource(options, mode, backendURL),
+		...resolveManifestSource(
+			options,
+			mode?.type === 'manifest' ? mode : undefined,
+			backendURL
+		),
 		backendURL,
 	};
 };

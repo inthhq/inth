@@ -16,7 +16,7 @@ import { describe, expect, test } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { ConsentProvider, useConsent, useSaveConsents } from '../index';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 type Category =
@@ -82,7 +82,7 @@ const runBench = async function runBench(): Promise<Run> {
 			options={{
 				persistence: false,
 				prefetch: policyFixture(),
-				testing: withoutNetwork(),
+				mode: testing(),
 			}}
 		>
 			{Array.from({ length: CHILDREN }, (_, i) => (

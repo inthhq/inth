@@ -1,4 +1,4 @@
-import { manifest } from '@c15t/core/modes';
+import { hosted, manifest } from '@c15t/core/modes';
 /**
  * Tests for `defineConsentConfig`: validation, defaults and freezing. The
  * checks run where Next.js first evaluates the config, on the server, so
@@ -7,7 +7,7 @@ import { manifest } from '@c15t/core/modes';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { defineConsentConfig } from '../config';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 
 afterEach(() => {
 	vi.restoreAllMocks();
@@ -50,12 +50,15 @@ describe('defineConsentConfig', () => {
 		);
 	});
 
-	test('needs no backend URL for a testing value', () => {
+	test('needs no backend URL for testing()', () => {
 		vi.stubEnv('NEXT_PUBLIC_C15T_BACKEND_URL', '');
 
-		expect(defineConsentConfig({ testing: withoutNetwork() })).toEqual({
-			testing: { type: 'without-network' },
+		expect(defineConsentConfig({ mode: testing() })).toEqual({
+			mode: { type: 'testing' },
 		});
+		expect(() => defineConsentConfig({ mode: hosted() })).toThrow(
+			/NEXT_PUBLIC_C15T_BACKEND_URL/u
+		);
 		expect(() => defineConsentConfig({})).toThrow(
 			/NEXT_PUBLIC_C15T_BACKEND_URL/u
 		);
@@ -125,8 +128,8 @@ describe('defineConsentConfig', () => {
 			{ backendURL: '/api/c15t', mode: manifest({ manifestURL: 'manifest' }) },
 		],
 		[
-			'non-string hosted backendURL',
-			{ mode: { backendURL: 42, type: 'hosted' } },
+			'removed testing option shape',
+			{ mode: { type: 'without-network' } },
 		],
 		['unknown mode', { backendURL: '/api/c15t', mode: { type: 'custom' } }],
 		['unknown journey', { backendURL: '/api/c15t', journey: 'session' }],

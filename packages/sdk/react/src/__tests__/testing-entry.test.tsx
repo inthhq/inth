@@ -1,5 +1,5 @@
 /**
- * `withoutNetwork()` from `@c15t/react/testing` in a provider: the banner
+ * `testing()` from `@c15t/react/testing` in a provider: the banner
  * and the choice work with no backend, and the location override picks the
  * policy.
  */
@@ -7,7 +7,7 @@ import { afterEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { ConsentBanner, ConsentProvider, useConsent } from '../index';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 
 const Marketing = () => (
 	<output data-testid="marketing">{String(useConsent('marketing'))}</output>
@@ -26,7 +26,7 @@ test('shows the opt-in banner for an EEA country and records the choice without 
 				consentCategories: ['marketing'],
 				overrides: { country: 'DE' },
 				persistence: false,
-				testing: withoutNetwork(),
+				mode: testing(),
 			}}
 		>
 			<Marketing />
@@ -48,7 +48,7 @@ test('shows no banner for a country without a privacy rule', async () => {
 			options={{
 				overrides: { country: 'JP' },
 				persistence: false,
-				testing: withoutNetwork(),
+				mode: testing(),
 			}}
 		>
 			<Marketing />

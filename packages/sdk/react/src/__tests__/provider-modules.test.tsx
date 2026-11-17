@@ -6,7 +6,7 @@ import { render } from 'vitest-browser-react';
 
 import { KernelContext } from '../context';
 import { ConsentProvider } from '../provider';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 const scriptModuleRequests = () =>
@@ -48,7 +48,7 @@ test('loads scripts only when added and preserves cleanup ordering and initial c
 	const replacementCleanup: ClearOnRevocationConfig = {
 		measurement: { localStorage: ['analytics:replacement'] },
 	};
-	const testing = withoutNetwork();
+	const testing = testing();
 	const prefetch = policyFixture({ measurement: true });
 	const provider = (scripts: Script[], clearOnRevocation = initialCleanup) => (
 		<ConsentProvider

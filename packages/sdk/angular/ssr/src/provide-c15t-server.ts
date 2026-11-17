@@ -29,8 +29,9 @@ import type {
 	ResolveRequestConsentOptions,
 } from '@c15t/core/server';
 import { assertNotProduction } from '@c15t/core/testing';
+import type { TestingModeOptions } from '@c15t/core/testing';
 import { recommendedPolicyRules } from '@c15t/schema/types';
-import type { ConsentManifest } from '@c15t/schema/types';
+import type { ConsentManifest, PolicyRule } from '@c15t/schema/types';
 
 import type { ConsentRoute } from './consent-route';
 import { addEarlyTapScript } from './early-tap-script';
@@ -88,7 +89,7 @@ export interface C15tServerOptions {
 	waitUntil?: (task: Promise<void>) => void;
 	/**
 	 * The HTML is served to more than one visitor, as with a cached route:
-	 * no cookie, geo header or clock is read, and only a testing value
+	 * no cookie, geo header or clock is read, and only `testing()`
 	 * resolves. A render without a request (prerendering) is always shared.
 	 *
 	 * @default false
@@ -107,35 +108,38 @@ type ModeData = Partial<ProviderTransportFactory> & {
 };
 
 /**
- * How the server resolves the provider's options: a testing value, then
- * `mode` read from its data, then the hosted backend at `backendURL`.
+ * How the server resolves the provider's options: `mode` read from its
+ * data, else the backend's manifest at `backendURL`, which falls back to
+ * its `/init` with a warning when the manifest is unavailable.
  */
 const serverResolution = function serverResolution(
 	provider: C15tProviderOptions,
 	route: ConsentRoute | undefined
 ): Partial<ResolveRequestConsentOptions> {
-	if (provider.testing) {
-		// The recommended pack, resolved here so the banner renders on the
-		// server, and never in production.
+	const mode = provider.mode as (ModeData & TestingModeOptions) | undefined;
+	if (mode?.type === 'testing') {
+		// The test's policy or the recommended pack, resolved here so the
+		// banner renders on the server, and never in production.
 		assertNotProduction('@c15t/angular/testing');
-		const iab = provider.testing.iab ?? isIABConfigured(provider.iab);
+		const iab = mode.iab ?? isIABConfigured(provider.iab);
 		return {
 			mode: 'offline',
 			offline: {
 				iabEnabled: isIABConfigured(provider.iab),
-				policyRules: recommendedPolicyRules({ iab }),
+				policyRules:
+					mode.policy === undefined
+						? recommendedPolicyRules({ iab })
+						: ([] as PolicyRule[]).concat(mode.policy),
 			},
 		};
 	}
 	const data: ModeData | undefined =
-		(provider.mode as ModeData | undefined) ??
-		(provider.backendURL === undefined
-			? undefined
-			: { backendURL: provider.backendURL, type: 'hosted' });
+		mode ??
+		(provider.backendURL === undefined ? undefined : { type: 'manifest' });
 	switch (data?.type) {
 		case 'hosted':
 			return {
-				backendURL: data.backendURL,
+				backendURL: data.backendURL ?? provider.backendURL,
 				initHeaders: data.headers,
 				initURL: data.initURL,
 				mode: 'hosted',
@@ -146,7 +150,7 @@ const serverResolution = function serverResolution(
 				return {};
 			}
 			return {
-				backendURL: data.backendURL,
+				backendURL: data.backendURL ?? provider.backendURL,
 				gvlRoute: route ? `${route.routePrefix}/init` : undefined,
 				manifest: data.snapshot,
 				manifestURL: data.manifestURL,

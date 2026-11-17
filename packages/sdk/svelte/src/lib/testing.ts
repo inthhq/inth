@@ -2,16 +2,19 @@
  * `@c15t/svelte/testing` — render the banner and the consent flow in tests
  * with no backend.
  *
- * Pass `withoutNetwork()` as `<ConsentProvider testing>`, or as
- * `c15tHandle({ testing })` in SvelteKit. It resolves the recommended
- * policy pack in the browser and sends nothing; set `overrides.country`
- * (and `overrides.region`) to pick the policy:
+ * Pass `testing()` as `<ConsentProvider mode>`, or as
+ * `c15tHandle({ mode })` in SvelteKit. It needs no `backendURL`. It
+ * resolves the recommended policy pack in the browser and sends nothing;
+ * set `overrides.country` (and `overrides.region`) to pick the policy:
  *
  * - `DE`, any other EEA country, `GB`, or no country: the opt-in banner.
- * - `DE` with `iab` configured, or `withoutNetwork({ iab: true })`: the
+ * - `DE` with `iab` configured, or `testing({ iab: true })`: the
  *   IAB TCF banner.
  * - `US` with region `CA`: opt-out, with no automatic banner.
  * - `JP`: no banner.
+ *
+ * `testing({ policy })` resolves your own `PolicyRule`s instead, such as
+ * a rule with a `notice` prompt for the opt-out notice banner.
  *
  * It throws in production builds. To keep consent out of the way in an
  * app's own tests instead, set `enabled: false`.
@@ -20,32 +23,32 @@
  * ```svelte
  * <script lang="ts">
  *   import { ConsentBanner, ConsentProvider } from '@c15t/svelte';
- *   import { withoutNetwork } from '@c15t/svelte/testing';
+ *   import { testing } from '@c15t/svelte/testing';
  * </script>
  *
- * <ConsentProvider overrides={{ country: 'DE' }} testing={withoutNetwork()}>
+ * <ConsentProvider overrides={{ country: 'DE' }} mode={testing()}>
  *   <ConsentBanner />
  * </ConsentProvider>
  * ```
  *
  * @packageDocumentation
  */
-import { createWithoutNetwork } from '@c15t/core/testing';
-import type { ConsentTesting, WithoutNetworkOptions } from '@c15t/core/testing';
+import { createTestingMode } from '@c15t/core/testing';
+import type { ConsentTesting, TestingModeOptions } from '@c15t/core/testing';
 
-export type { ConsentTesting, WithoutNetworkOptions } from '@c15t/core/testing';
+export type { ConsentTesting, TestingModeOptions } from '@c15t/core/testing';
 
 /**
- * A `testing` value that resolves the recommended policy pack in the
- * browser and makes no network requests. It serializes as plain data, so
+ * A `mode` for tests that resolves `policy`, or the recommended policy
+ * pack, in the browser and makes no network requests. It serializes as plain data, so
  * `c15tHandle()` can carry it to the browser.
  *
- * @param options - `iab: true` resolves the pack's IAB TCF variant.
- * @returns The value for the `testing` option.
+ * @param options - `policy` replaces the recommended pack; `iab: true` picks its IAB TCF variant.
+ * @returns The value for `mode`.
  * @throws {Error} When the transport is built in a production build.
  */
-export const withoutNetwork = function withoutNetwork(
-	options: WithoutNetworkOptions = {}
+export const testing = function testing(
+	options: TestingModeOptions = {}
 ): ConsentTesting {
-	return createWithoutNetwork('@c15t/svelte/testing', options);
+	return createTestingMode('@c15t/svelte/testing', options);
 };

@@ -12,13 +12,13 @@ import { ConsentBanner } from '~/components/prompt';
 import { ConsentProvider } from '~/provider';
 import type { ConsentProviderOptions } from '~/provider';
 
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 const fresh = {
 	persistence: false,
 	prefetch: policyFixture(),
-	testing: withoutNetwork(),
+	mode: testing(),
 } satisfies ConsentProviderOptions;
 const saved = {
 	...fresh,

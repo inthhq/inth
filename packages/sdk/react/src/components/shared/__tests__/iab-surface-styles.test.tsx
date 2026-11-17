@@ -9,7 +9,7 @@ import { IABConsentDialog } from '~/components/iab-panel';
 import { IABConsentBanner } from '~/components/iab-prompt';
 import { mockGVL } from '~/components/iab/__tests__/fixtures/mock-consent-state';
 
-import { withoutNetwork } from '../../../testing';
+import { testing } from '../../../testing';
 
 const fixture = (
 	options: Partial<ComponentFixtureOptions> = {}
@@ -24,7 +24,7 @@ const fixture = (
 		}),
 		initialIab: { cmpId: 160, enabled: true, gvl: mockGVL },
 	},
-	testing: withoutNetwork(),
+	mode: testing(),
 	...options,
 });
 

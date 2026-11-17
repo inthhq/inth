@@ -13,7 +13,7 @@ import { page } from 'vitest/browser';
 
 import { ConsentDialog } from '../aggregate-components';
 import { ConsentProvider } from '../provider';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 const VENDORS: Vendor[] = Array.from({ length: 8 }, (_, index) => ({
@@ -61,7 +61,7 @@ test.each([
 						prompt: 'choice',
 					}
 				),
-				testing: withoutNetwork(),
+				mode: testing(),
 				vendors: VENDORS,
 			}}
 		>

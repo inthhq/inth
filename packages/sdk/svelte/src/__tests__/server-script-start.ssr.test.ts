@@ -20,7 +20,7 @@ import {
 	createServerStartInjector,
 	loadServerScriptStart,
 } from '../lib/kit/server-script-start';
-import { withoutNetwork } from '../lib/testing';
+import { testing } from '../lib/testing';
 import type { ConsentManagerOptions } from '../lib/types';
 
 const pixel: Script = {
@@ -65,7 +65,7 @@ const renderPage = function renderPage({
 					now: shared ? undefined : Date.now(),
 				},
 				scripts: [pixel],
-				testing: withoutNetwork(),
+				mode: testing(),
 				...options,
 			} as ConsentManagerOptions,
 		},

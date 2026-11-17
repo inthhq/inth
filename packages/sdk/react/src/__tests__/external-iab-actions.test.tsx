@@ -15,7 +15,7 @@ import { ExternalIABProvider } from '../external-iab-context';
 import { useIAB } from '../iab-context';
 import type { ReactIABState } from '../iab-context';
 import { ConsentProvider } from '../provider';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 const Probe = ({ onReady }: { onReady: (iab: ReactIABState) => void }) => {
@@ -62,7 +62,7 @@ const fixture = () => {
 			...policyFixture({}, { model: 'iab' }),
 			initialIab: { cmpId: 42, enabled: true },
 		},
-		testing: withoutNetwork(),
+		mode: testing(),
 	});
 	return { handle, runtime };
 };

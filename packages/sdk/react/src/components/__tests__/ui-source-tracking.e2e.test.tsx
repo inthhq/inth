@@ -21,7 +21,7 @@ import { ConsentDialog } from '~/components/panel';
 import { ConsentWidget } from '~/components/preferences';
 import { ConsentBanner } from '~/components/prompt';
 
-import { withoutNetwork } from '../../testing';
+import { testing } from '../../testing';
 
 const getDefined = <Value,>(
 	value: Value,
@@ -77,7 +77,7 @@ const defaultOptions: ConsentProviderOptions = {
 	}),
 	// These tests seed or read records under the default key.
 	storageConfig: DEFAULT_KEY_STORAGE,
-	testing: withoutNetwork(),
+	mode: testing(),
 };
 
 describe('UI Source Tracking E2E Tests', () => {

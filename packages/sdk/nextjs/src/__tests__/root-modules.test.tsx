@@ -10,11 +10,11 @@ import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { ConsentRoot } from '../root';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
-/** These tests are not about the backend; withoutNetwork() needs none. */
-const OFFLINE_CONFIG = { testing: withoutNetwork() };
+/** These tests are not about the backend; testing() needs none. */
+const OFFLINE_CONFIG = { mode: testing() };
 
 describe('ConsentRoot module props', () => {
 	test('scripts prop mounts <script> tags for eligible categories', async () => {

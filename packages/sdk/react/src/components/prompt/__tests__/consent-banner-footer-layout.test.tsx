@@ -13,7 +13,7 @@ import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/compone
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentBanner } from '~/components/prompt';
 
-import { withoutNetwork } from '../../../testing';
+import { testing } from '../../../testing';
 
 const renderBanner = async function renderBanner() {
 	await render(
@@ -21,7 +21,7 @@ const renderBanner = async function renderBanner() {
 			options={{
 				persistence: false,
 				prefetch: policyFixture(undefined, { id: 'banner-footer-layout' }),
-				testing: withoutNetwork(),
+				mode: testing(),
 			}}
 		>
 			<ConsentBanner disableAnimation />

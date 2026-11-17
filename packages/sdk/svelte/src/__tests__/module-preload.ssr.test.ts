@@ -10,7 +10,7 @@ import { describe, expect, test } from 'vitest';
 
 import ConsentProvider from '../lib/components/consent-provider.svelte';
 import { injectModulePreloads } from '../lib/kit/module-preload';
-import { withoutNetwork } from '../lib/testing';
+import { testing } from '../lib/testing';
 import type { ConsentManagerOptions } from '../lib/types';
 
 const HREFS = {
@@ -37,7 +37,7 @@ const renderPage = function renderPage(
 		props: {
 			options: {
 				persistence: false,
-				testing: withoutNetwork(),
+				mode: testing(),
 				...options,
 			} as ConsentManagerOptions,
 		},

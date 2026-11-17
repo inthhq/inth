@@ -25,7 +25,7 @@ import { render } from 'vitest-browser-react';
 import '@c15t/core/modules/clear-on-revocation';
 
 import { ConsentRoot } from '../root';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 describe('ConsentRoot: state is honored', () => {
@@ -63,7 +63,7 @@ describe('ConsentRoot: state is honored', () => {
 			<ConsentRoot
 				state={{
 					initialOverrides: { country: 'DE', language: 'de' },
-					testing: withoutNetwork(),
+					mode: testing(),
 				}}
 				persistence={false}
 			>

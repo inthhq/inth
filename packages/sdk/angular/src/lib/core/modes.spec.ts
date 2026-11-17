@@ -1,6 +1,7 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import { withoutNetwork } from '../../../testing/src/without-network';
+import { hosted } from '@c15t/core/modes';
+import { testing } from '../../../testing/src/testing-mode';
 import {
 	hostedFor,
 	manifest,
@@ -21,19 +22,23 @@ describe('the transports provideC15t() selects', () => {
 		expect(selectedMode({ backendURL: '/api/c15t' })).toBe(mode);
 	});
 
-	test('a testing value wins over the backend URL and mode', () => {
-		const testing = withoutNetwork();
-		expect(
-			selectedMode({
-				backendURL: '/api/c15t',
-				mode: manifest({ manifestURL: '/m' }),
-				testing,
-			})
-		).toBe(testing.transport);
+	test('testing() selects its own transport, with or without a backend URL', () => {
+		const mode = testing();
+		expect(selectedMode({ backendURL: '/api/c15t', mode })).toBe(
+			mode.transport
+		);
+		expect(selectedMode({ mode })).toBe(mode.transport);
 	});
 
-	test('nothing is selected without a backend URL, mode or testing value', () => {
+	test('hosted() selects the hosted backend, as no mode does', () => {
+		expect(selectedMode({ backendURL: '/api/c15t', mode: hosted() })).toBe(
+			selectedMode({ backendURL: '/api/c15t' })
+		);
+	});
+
+	test('nothing is selected without a backend URL or testing()', () => {
 		expect(selectedMode({})).toBeUndefined();
+		expect(selectedMode({ mode: hosted() })).toBeUndefined();
 	});
 
 	test('the hosted backend builds with the builder the engine hands over', () => {

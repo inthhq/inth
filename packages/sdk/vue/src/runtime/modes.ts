@@ -13,6 +13,7 @@ import {
 	backendURL as builtBackendURL,
 	snapshot as builtSnapshot,
 } from '@c15t/core/generated';
+import type { HostedMode } from '@c15t/core/modes';
 import type { ConsentTesting } from '@c15t/core/testing';
 import { hosted as coreHosted } from '@c15t/core/transports';
 import { manifest as browserManifest } from '@c15t/core/transports/manifest-browser';
@@ -105,28 +106,27 @@ export const manifest = function manifest(
 };
 
 /**
- * The transport the plugin's options select: the `testing` value's, then
- * `mode`, then the hosted backend at `backendURL`, which defaults to the
- * URL `consentManifest()` read from `VITE_C15T_BACKEND_URL` or
- * `VITE_INTH_PROJECT_URL`.
+ * The transport the plugin's options select: `mode` when it is a factory
+ * or a `testing()` value, else the hosted backend at `backendURL`, which
+ * defaults to the URL `consentManifest()` read from
+ * `VITE_C15T_BACKEND_URL` or `VITE_INTH_PROJECT_URL`.
  *
- * @param options - The plugin's `backendURL`, `mode` and `testing`.
+ * @param options - The plugin's `backendURL` and `mode`.
  * @returns A transport factory for the runtime's `mode`.
  * @throws {Error} When none of them is set and the build set no URL.
  * @internal
  */
 export const selectedMode = function selectedMode(options: {
 	backendURL?: string;
-	mode?: ProviderTransportFactory;
-	testing?: ConsentTesting;
+	mode?: ProviderTransportFactory | HostedMode | ConsentTesting;
 }): ProviderTransportFactory {
-	// A testing value that crossed a serialization boundary is data only;
-	// the browser side builds its transport.
-	if (options.testing?.transport) {
-		return options.testing.transport;
+	const { mode } = options;
+	if (typeof mode === 'function') {
+		return mode;
 	}
-	if (options.mode) {
-		return options.mode;
+	// A `testing()` value carries its transport, not enumerable.
+	if (mode && 'transport' in mode && mode.transport) {
+		return mode.transport;
 	}
 	const backendURL = options.backendURL ?? builtBackendURL;
 	if (backendURL === undefined) {

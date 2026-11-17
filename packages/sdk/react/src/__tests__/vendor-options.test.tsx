@@ -16,7 +16,7 @@ import { KernelContext, ProviderServicesContext } from '~/context';
 import { useDeclaredVendors, useVendorAllowed } from '~/hooks';
 import { useScriptLoader } from '~/module-hooks/script-loader';
 
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 
 const META: Vendor = {
 	category: 'marketing',
@@ -66,7 +66,7 @@ describe('provider vendor options', () => {
 							{ marketing: true },
 							{ categories: ['marketing'], id: 'late-vendors' }
 						),
-						testing: withoutNetwork(),
+						mode: testing(),
 						vendors,
 					}}
 				>
@@ -103,7 +103,7 @@ describe('provider vendor options', () => {
 							{ marketing: true },
 							{ categories: ['marketing'], id: 'removed-vendors' }
 						),
-						testing: withoutNetwork(),
+						mode: testing(),
 						vendors,
 					}}
 				>
@@ -148,7 +148,7 @@ describe('provider vendor options', () => {
 								vendor: 'meta-pixel',
 							},
 						],
-						testing: withoutNetwork(),
+						mode: testing(),
 						vendors,
 					}}
 				>
@@ -188,7 +188,7 @@ describe('provider vendor options', () => {
 							{ categories: ['marketing'], id: 'late-scripts' }
 						),
 						scripts,
-						testing: withoutNetwork(),
+						mode: testing(),
 					}}
 				>
 					<button
@@ -240,7 +240,7 @@ describe('provider vendor options', () => {
 							{ categories: ['marketing'], id: 'removed-scripts' }
 						),
 						scripts,
-						testing: withoutNetwork(),
+						mode: testing(),
 					}}
 				>
 					<button
@@ -294,7 +294,7 @@ describe('provider vendor options', () => {
 								listVersion: '1',
 							},
 						},
-						testing: withoutNetwork(),
+						mode: testing(),
 						vendors,
 					}}
 				>
@@ -340,7 +340,7 @@ describe('provider vendor options', () => {
 							},
 						},
 						scripts,
-						testing: withoutNetwork(),
+						mode: testing(),
 					}}
 				>
 					<button
@@ -401,7 +401,7 @@ describe('provider vendor options', () => {
 							},
 						},
 						scripts,
-						testing: withoutNetwork(),
+						mode: testing(),
 					}}
 				>
 					<button
@@ -464,7 +464,7 @@ describe('provider vendor options', () => {
 							},
 						},
 						scripts,
-						testing: withoutNetwork(),
+						mode: testing(),
 						vendors,
 					}}
 				>
@@ -526,7 +526,7 @@ describe('provider vendor options', () => {
 						consentCategories: ['necessary', 'marketing'],
 						persistence: false,
 						prefetch: fixture,
-						testing: withoutNetwork(),
+						mode: testing(),
 						vendors,
 					}}
 				>
@@ -577,7 +577,7 @@ describe('provider vendor options', () => {
 						consentCategories: ['necessary', 'marketing'],
 						persistence: false,
 						prefetch: fixture,
-						testing: withoutNetwork(),
+						mode: testing(),
 						vendors,
 					}}
 				>
@@ -653,7 +653,7 @@ describe('provider vendor options', () => {
 							},
 						},
 					},
-					testing: withoutNetwork(),
+					mode: testing(),
 					vendors: [META],
 				}}
 			>
@@ -720,7 +720,7 @@ describe('provider vendor options', () => {
 								vendor: 'ga',
 							},
 						],
-						testing: withoutNetwork(),
+						mode: testing(),
 						vendors,
 					}}
 				>
@@ -777,7 +777,7 @@ describe('provider vendor options', () => {
 								},
 							},
 						},
-						testing: withoutNetwork(),
+						mode: testing(),
 						vendors,
 					}}
 				>
@@ -820,7 +820,7 @@ describe('provider vendor options', () => {
 					consentCategories: ['necessary', 'marketing'],
 					persistence: false,
 					prefetch: fixture,
-					testing: withoutNetwork(),
+					mode: testing(),
 					vendors: [META],
 				}}
 			>
@@ -861,7 +861,7 @@ describe('provider vendor options', () => {
 							},
 						},
 					},
-					testing: withoutNetwork(),
+					mode: testing(),
 					vendors: [{ ...META, disabled: true }],
 				}}
 			>

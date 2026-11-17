@@ -16,7 +16,7 @@ import { ComponentFixtureProvider } from '~/__tests__/component-fixture-provider
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { KernelContext } from '~/context';
 
-import { withoutNetwork } from '../../testing';
+import { testing } from '../../testing';
 import { useConsentGate } from '../use-consent-gate';
 
 interface FixtureOptions {
@@ -44,7 +44,7 @@ const createWrapper = function createWrapper({
 				options={{
 					persistence: false,
 					prefetch,
-					testing: withoutNetwork(),
+					mode: testing(),
 				}}
 			>
 				{children}

@@ -22,7 +22,7 @@ import {
 import { ConsentDialog } from '~/components/panel';
 import { ConsentBanner } from '~/components/prompt';
 
-import { withoutNetwork } from '../../testing';
+import { testing } from '../../testing';
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -66,7 +66,7 @@ const optInOptions: ConsentProviderOptions = {
 		prompt: 'choice',
 		scopeMode: 'permissive',
 	}),
-	testing: withoutNetwork(),
+	mode: testing(),
 };
 
 describe('models Prop E2E Tests', () => {

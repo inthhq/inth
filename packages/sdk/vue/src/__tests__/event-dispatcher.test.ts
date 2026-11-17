@@ -8,7 +8,7 @@ import { defineComponent, h } from 'vue';
 import { c15tVue } from '../index';
 import type { EventDispatcher } from '../runtime/composables';
 import { useEventDispatcher } from '../runtime/composables';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 
 const posthog: Script = {
 	callbackOnly: true,
@@ -35,7 +35,7 @@ test('useEventDispatcher follows the runtime scripts, live consent and one pagev
 			}),
 		},
 		scripts: [posthog],
-		testing: withoutNetwork(),
+		mode: testing(),
 	});
 	const capture = vi.fn();
 	const globals = { posthog: { capture } };

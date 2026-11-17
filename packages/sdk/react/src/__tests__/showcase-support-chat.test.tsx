@@ -5,7 +5,7 @@ import { page } from 'vitest/browser';
 import { SupportChat } from '../../../../../examples/showcase-gated-embeds/components/support-chat';
 import { useVendorAllowed } from '../hooks';
 import { useKernel } from '../kernel-selector';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 import { ComponentFixtureProvider } from './component-fixture-provider';
 import { policyFixture } from './policy-fixture';
 
@@ -58,7 +58,7 @@ describe('showcase support chat', () => {
 							},
 						},
 					],
-					testing: withoutNetwork(),
+					mode: testing(),
 				}}
 			>
 				<SupportChat />

@@ -6,7 +6,7 @@ import { policyFixture } from '~/__tests__/policy-fixture';
 import { useSaveConsents } from '~/hooks';
 import { ConsentProvider } from '~/provider';
 
-import { withoutNetwork } from '../../../testing';
+import { testing } from '../../../testing';
 import { ConsentGate } from '../consent-gate';
 
 const settle = () =>
@@ -36,7 +36,7 @@ test('a ConsentGate re-renders only when its own category changes', async () => 
 			options={{
 				persistence: false,
 				prefetch: policyFixture(),
-				testing: withoutNetwork(),
+				mode: testing(),
 			}}
 		>
 			<Profiler

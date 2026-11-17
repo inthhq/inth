@@ -1,4 +1,5 @@
 import type { ProviderTransportFactory } from '@c15t/core';
+import type { HostedMode } from '@c15t/core/modes';
 import type { ConsentRuntime } from '@c15t/core/runtime';
 import type { ConsentTesting } from '@c15t/core/testing';
 // oxlint-disable oxc/no-barrel-file -- Public framework entry point intentionally re-exports the supported API.
@@ -45,6 +46,7 @@ export {
 	type ProviderTransportFactory,
 } from './runtime/modes';
 export type { ConsentTesting } from '@c15t/core/testing';
+export { hosted, type HostedMode } from '@c15t/core/modes';
 export {
 	generateTokensCSS,
 	type TokensCSSOptions,
@@ -81,8 +83,16 @@ export type C15tVuePluginOptions = C15tVuePluginConfig &
 				 */
 				backendURL?: string;
 				/**
-				 * Resolve the policy from the backend's consent manifest
-				 * instead: `manifest()` from `c15t/vue/vue-plugin`.
+				 * How the visitor's policy is resolved.
+				 *
+				 * - Omitted, or `hosted()`: ask `${backendURL}/init`.
+				 * - `manifest()` from `c15t/vue/vue-plugin`: resolve from the
+				 *   backend's consent manifest in the browser, falling back to
+				 *   `/init` with a warning when it is unavailable.
+				 * - `testing()` from `c15t/vue/testing`: resolve a policy with
+				 *   no backend, for tests. It throws in production builds. To
+				 *   keep consent out of the way in an app's own tests instead,
+				 *   set `enabled: false`.
 				 *
 				 * @example
 				 * ```ts
@@ -91,20 +101,12 @@ export type C15tVuePluginOptions = C15tVuePluginConfig &
 				 * app.use(c15tVue, { mode: manifest() });
 				 * ```
 				 */
-				mode?: ProviderTransportFactory;
-				/**
-				 * Replace the backend in a test: `withoutNetwork()` from
-				 * `c15t/vue/testing`. It throws in production builds. To keep
-				 * consent out of the way in an app's own tests instead, set
-				 * `enabled: false`.
-				 */
-				testing?: ConsentTesting;
+				mode?: ProviderTransportFactory | HostedMode | ConsentTesting;
 				runtime?: undefined;
 		  }
 		| {
 				backendURL?: undefined;
 				mode?: undefined;
-				testing?: undefined;
 				/**
 				 * A runtime this app should render instead of building its own
 				 * kernel.
@@ -143,11 +145,11 @@ export const c15tVue: Plugin<[C15tVuePluginOptions]> = {
 	install(app: App, options: C15tVuePluginOptions) {
 		app.provide(consentConfigKey, options);
 
-		const { backendURL, mode: chosen, runtime, testing, ...rest } = options;
+		const { backendURL, mode: chosen, runtime, ...rest } = options;
 		const config = rest as RuntimeConsentConfig;
 		const mode = runtime
 			? undefined
-			: selectedMode({ backendURL, mode: chosen, testing });
+			: selectedMode({ backendURL, mode: chosen });
 		// One runtime per app, shared through `provide`/`inject`.
 		const context = createVueConsentKernelContext({ config, mode, runtime });
 		provideVueConsentContext(app, context);

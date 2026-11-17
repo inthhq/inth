@@ -11,7 +11,10 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { offlineMode } from '../../src/__tests__/fixtures/transport-mode';
 import { TEST_OPT_IN_RULE, testOptions } from '../../src/__tests__/test-local';
 import { ConsentManager } from '../../src/lib/core/consent-manager';
-import type { C15tOptions } from '../../src/lib/core/options';
+import type {
+	C15tOptions,
+	C15tProviderOptions,
+} from '../../src/lib/core/options';
 import { provideC15t } from '../../src/lib/core/provide-c15t';
 import {
 	ConsentGate,
@@ -97,7 +100,7 @@ const boot = async <ComponentType>(
 	options: Partial<C15tOptions> = {}
 ) => {
 	TestBed.configureTestingModule({
-		providers: [provideC15t({ ...testOptions(), ...options } as C15tOptions)],
+		providers: [provideC15t({ ...testOptions(), ...options } as C15tProviderOptions)],
 	});
 	const fixture = TestBed.createComponent(component);
 	const consent = TestBed.inject(ConsentManager);

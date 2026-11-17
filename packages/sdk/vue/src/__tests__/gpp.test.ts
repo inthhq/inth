@@ -6,7 +6,7 @@ import { createConsentRuntime } from '@c15t/core/runtime';
 import { afterEach, beforeAll, expect, test, vi } from 'vitest';
 import { createApp, defineComponent, h } from 'vue';
 
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 import { c15tVue } from './test-plugin';
 import type { C15tVuePluginOptions } from './test-plugin';
 
@@ -105,7 +105,7 @@ test('without gpp the plugin installs no __gpp', async () => {
 test('a borrowed runtime keeps GPP to itself', async () => {
 	const runtime = createConsentRuntime({
 		persistence: false,
-		testing: withoutNetwork(),
+		mode: testing(),
 	});
 	runtime.start();
 	cleanups.push(() => runtime.dispose());

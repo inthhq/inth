@@ -5,9 +5,9 @@ import type { BlockedRequestInfo } from '@c15t/core/modules/network-blocker';
 import type { NitroRouteConfig } from 'nitropack/types';
 import { expectTypeOf } from 'vitest';
 
-import type { manifest } from '../src/module';
+import type { hosted, manifest } from '../src/module';
 import type { ModuleOptions } from '../src/nuxt-options';
-import type { withoutNetwork } from '../src/testing';
+import type { testing } from '../src/testing';
 
 // Module options accept every runtime option that survives JSON.
 expectTypeOf<{
@@ -66,7 +66,10 @@ expectTypeOf<{
 	routePrefix: false;
 }>().toExtend<ModuleOptions>();
 expectTypeOf<{
-	testing: ReturnType<typeof withoutNetwork>;
+	mode: ReturnType<typeof testing>;
+}>().toExtend<ModuleOptions>();
+expectTypeOf<{
+	mode: ReturnType<typeof hosted>;
 }>().toExtend<ModuleOptions>();
 export const wrongRoutePrefix: ModuleOptions = {
 	// @ts-expect-error A route prefix is a path or `false`.

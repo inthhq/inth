@@ -11,7 +11,7 @@ import { render } from 'vitest-browser-react';
 import { useNetworkBlocker } from '../index';
 import { UNCOMMITTED_HOLD_MS } from '../module-hooks/network-hold';
 import { ConsentProvider } from '../provider';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 const TRACKER = 'https://tracker.example/collect';
@@ -80,7 +80,7 @@ const renderWithBeacons = (
 				options={{
 					persistence: false,
 					prefetch,
-					testing: withoutNetwork(),
+					mode: testing(),
 				}}
 			>
 				<Beacon
@@ -162,7 +162,7 @@ test('a retry after suspending does not leave the first render holding', async (
 			options={{
 				persistence: false,
 				prefetch: policyFixture({ measurement: true }),
-				testing: withoutNetwork(),
+				mode: testing(),
 			}}
 		>
 			<Suspense fallback={null}>
@@ -206,7 +206,7 @@ test('a render React discards ends its hold on its own', async () => {
 			<ConsentProvider
 				options={{
 					persistence: false,
-					testing: withoutNetwork(),
+					mode: testing(),
 				}}
 			>
 				<ThrowsAfterHook />
@@ -250,7 +250,7 @@ test('a disabled provider blocker leaves the hook holding its requests', async (
 				networkBlocker: { enabled: false, rules },
 				persistence: false,
 				prefetch: policyFixture(),
-				testing: withoutNetwork(),
+				mode: testing(),
 			}}
 		>
 			<HookBlocker>
@@ -282,7 +282,7 @@ test('unmounting the hook before its blocker loads fails its held requests close
 			options={{
 				persistence: false,
 				prefetch: policyFixture({ measurement: true }),
-				testing: withoutNetwork(),
+				mode: testing(),
 			}}
 		>
 			<HookBlocker>

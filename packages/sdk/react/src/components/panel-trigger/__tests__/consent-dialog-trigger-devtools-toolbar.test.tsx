@@ -6,7 +6,7 @@ import { ComponentFixtureProvider } from '~/__tests__/component-fixture-provider
 import { ConsentDevTools } from '~/devtools';
 import { useDevToolsLauncherAvailable } from '~/devtools-launcher';
 
-import { withoutNetwork } from '../../../testing';
+import { testing } from '../../../testing';
 import { ConsentDialogTrigger } from '../index';
 
 /**
@@ -40,7 +40,7 @@ describe('ConsentDialogTrigger with ConsentDevTools', () => {
 		async () => {
 			const seen: boolean[] = [];
 			await render(
-				<ComponentFixtureProvider options={{ testing: withoutNetwork() }}>
+				<ComponentFixtureProvider options={{ mode: testing() }}>
 					<ConsentDevTools />
 					<ConsentDialogTrigger showWhen="always" />
 					<LauncherProbe seen={seen} />

@@ -17,6 +17,7 @@ import type {
 	ConsentSnapshot,
 	ExperimentState,
 	JourneyState,
+	HostedMode,
 	HostedModeOptions,
 	I18nConfig,
 	InitContext,
@@ -53,6 +54,7 @@ import type {
 	ConsentRuntimeModules,
 	EarlyInitMode,
 	ResolveStreamedInit,
+	WithBackendURL,
 } from '@c15t/core/runtime/provider';
 import type { ConsentTesting } from '@c15t/core/testing';
 import { applyThemeSlots } from '@c15t/ui/utils';
@@ -174,8 +176,9 @@ export interface ConsentProviderOptions
 	 */
 	styles?: boolean;
 	/**
-	 * Backend URL, relative (`/api/c15t`) or absolute. Setting it is how the
-	 * provider talks to the hosted backend. Initial-only: remount the
+	 * Backend URL, relative (`/api/c15t`) or absolute: your Inth project
+	 * URL, or the route that proxies it. Required unless `mode` is
+	 * `testing()` or `enabled` is `false`. Initial-only: remount the
 	 * provider to change it.
 	 *
 	 * @example
@@ -187,16 +190,15 @@ export interface ConsentProviderOptions
 	 */
 	backendURL?: string;
 	/**
-	 * Resolve the policy from the backend's consent manifest instead of
-	 * asking `/init`: pass `manifest()` from `c15t/react`. Omit it to use the
-	 * hosted backend at `backendURL`. Initial-only.
-	 */
-	mode?: ProviderTransportFactory;
-	/**
-	 * Replace the backend in a test: pass `withoutNetwork()` from
-	 * `@c15t/react/testing`. It resolves the recommended policy pack in the
-	 * browser, sends nothing, and throws in production builds. Wins over
-	 * `backendURL` and `mode`. Initial-only.
+	 * How the visitor's policy is resolved. Initial-only.
+	 *
+	 * - Omitted, or `hosted()`: ask `${backendURL}/init`.
+	 * - `manifest()` from `c15t/react`: resolve from the backend's consent
+	 *   manifest in the browser, falling back to `/init` with a warning
+	 *   when the manifest is unavailable.
+	 * - `testing()` from `@c15t/react/testing`: resolve a policy with no
+	 *   backend, for tests. It sends nothing and throws in production
+	 *   builds.
 	 *
 	 * To keep consent out of the way in an app's own tests instead, set
 	 * `enabled: false`: it grants every category, shows no UI and sends
@@ -204,16 +206,16 @@ export interface ConsentProviderOptions
 	 *
 	 * @example
 	 * ```tsx
-	 * import { withoutNetwork } from '@c15t/react/testing';
+	 * import { testing } from '@c15t/react/testing';
 	 *
 	 * <ConsentProvider
-	 *   options={{ overrides: { country: 'DE' }, testing: withoutNetwork() }}
+	 *   options={{ overrides: { country: 'DE' }, mode: testing() }}
 	 * >
 	 *   {children}
 	 * </ConsentProvider>
 	 * ```
 	 */
-	testing?: ConsentTesting;
+	mode?: ProviderTransportFactory | HostedMode | ConsentTesting;
 	/**
 	 * Where the visitor's choice is stored. Read once, like `persistence`:
 	 * the stored records and the data clearing that protects them stay at
@@ -360,7 +362,7 @@ export interface ConsentProviderOptions
 /**
  * Options accepted when an external runtime supplies the kernel.
  *
- * `backendURL`, `mode` and `testing` belong to whoever created the
+ * `backendURL` and `mode` belong to whoever created the
  * runtime; the provider ignores them.
  * Everything the component tree still owns — theme, slots, legal links —
  * is unchanged.
@@ -385,7 +387,8 @@ export type ExternalRuntimeProviderOptions = Omit<
 
 /** The provider builds and owns its own kernel. */
 export interface OwnedRuntimeProviderProps {
-	options: ConsentProviderOptions;
+	/** Requires `backendURL` unless `mode` is `testing()` or `enabled` is `false`. */
+	options: WithBackendURL<ConsentProviderOptions>;
 	children: ReactNode;
 	runtime?: undefined;
 }
@@ -575,8 +578,6 @@ const toRuntimeOptions = function toRuntimeOptions(
 		...options,
 		mode: mode && withTreeIAB(mode),
 		pkg: options.__debugPkg ?? '@c15t/react',
-		// `mode` is the transport `testing` selected.
-		testing: undefined,
 	};
 };
 

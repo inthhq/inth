@@ -9,7 +9,7 @@ import type { ConsentStateFixture } from '~/__tests__/consent-state-fixture';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentDialogFooter } from '~/components/panel/atoms/card';
 
-import { withoutNetwork } from '../../../../testing';
+import { testing } from '../../../../testing';
 import { BrandingCompactLogo, BrandingLink } from '../branding';
 
 type ConsentManagerState = ConsentStateFixture;
@@ -97,7 +97,7 @@ const createConsentTree = function createConsentTree(
 					preferences: state.policyDialog,
 					prompt: state.policyBanner,
 				},
-				testing: withoutNetwork(),
+				mode: testing(),
 				theme: providerOverrides.theme,
 			}}
 		>

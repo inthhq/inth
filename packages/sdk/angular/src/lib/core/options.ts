@@ -12,6 +12,8 @@ import type {
 	RuntimePersistenceOptions,
 	RuntimeScriptLoaderOptions,
 } from '@c15t/core/runtime';
+import type { HostedMode } from '@c15t/core/modes';
+import type { WithBackendURL } from '@c15t/core/runtime';
 import type { ConsentTesting } from '@c15t/core/testing';
 import type { CreateIABOptions } from '@c15t/iab';
 import type { Theme, UIOptions } from '@c15t/ui/theme';
@@ -134,22 +136,27 @@ export interface C15tSharedOptions
  */
 export interface C15tOptions extends C15tSharedOptions {
 	/**
-	 * Backend URL, relative (`/api/c15t`) or absolute. Setting it is how the
-	 * app talks to the hosted backend. Read once.
+	 * Backend URL, relative (`/api/c15t`) or absolute: your Inth project
+	 * URL. Required unless `mode` is `testing()` or `enabled` is `false`.
+	 * Read once.
 	 */
 	backendURL?: string;
 	/**
-	 * Resolve the policy from the backend's consent manifest instead:
-	 * `manifest()` from `@c15t/angular`. Read once.
+	 * How the visitor's policy is resolved. Read once.
+	 *
+	 * - Omitted: the browser asks `${backendURL}/init`. With
+	 *   `provideC15tServer()`, the server render resolves from the
+	 *   backend's consent manifest, falling back to `/init` with a warning
+	 *   when it is unavailable.
+	 * - `hosted()` from `@c15t/angular`: ask `${backendURL}/init`, on the
+	 *   server too.
+	 * - `manifest()` from `@c15t/angular`: resolve from the manifest in the
+	 *   browser too.
+	 * - `testing()` from `@c15t/angular/testing`: resolve a policy with no
+	 *   backend, for tests. It throws in production builds. To keep consent
+	 *   out of the way in an app's own tests instead, set `enabled: false`.
 	 */
-	mode?: ProviderTransportFactory;
-	/**
-	 * Replace the backend in a test: `withoutNetwork()` from
-	 * `@c15t/angular/testing`. It throws in production builds. To keep
-	 * consent out of the way in an app's own tests instead, set
-	 * `enabled: false`. Read once.
-	 */
-	testing?: ConsentTesting;
+	mode?: ProviderTransportFactory | HostedMode | ConsentTesting;
 	/** Not allowed together with these; see {@link C15tRuntimeOptions}. */
 	runtime?: undefined;
 }
@@ -166,11 +173,15 @@ export interface C15tRuntimeOptions extends C15tSharedOptions {
 	/** The external runtime brings its own transport. */
 	backendURL?: undefined;
 	mode?: undefined;
-	testing?: undefined;
 }
 
-/** Either way of configuring {@link provideC15t}. */
-export type C15tProviderOptions = C15tOptions | C15tRuntimeOptions;
+/**
+ * Either way of configuring {@link provideC15t}. The first needs
+ * `backendURL` unless `mode` is `testing()` or `enabled` is `false`.
+ */
+export type C15tProviderOptions =
+	| WithBackendURL<C15tOptions>
+	| C15tRuntimeOptions;
 
 /**
  * The options handed to `provideC15t()`, as given.
@@ -185,8 +196,7 @@ export const C15T_OPTIONS = new InjectionToken<C15tProviderOptions>(
 /** Options without the runtime, as `ConsentManager.options()` holds them. */
 export type C15tResolvedOptions = Omit<C15tSharedOptions, never> & {
 	backendURL?: string;
-	mode?: ProviderTransportFactory;
-	testing?: ConsentTesting;
+	mode?: ProviderTransportFactory | HostedMode | ConsentTesting;
 };
 
 /**
@@ -209,7 +219,5 @@ export const runtimeOptionsFor = function runtimeOptionsFor(
 		loadGPP,
 		mode: selectedMode(options),
 		pkg: '@c15t/angular',
-		// `mode` is the transport the testing value selected.
-		testing: undefined,
 	};
 };

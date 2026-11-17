@@ -3,7 +3,7 @@ import { render, fireEvent } from '@testing-library/svelte';
 import { expect, test, vi } from 'vitest';
 
 import type { ConsentContextValue } from '../lib/context.svelte';
-import { withoutNetwork } from '../lib/testing';
+import { testing } from '../lib/testing';
 import Fixture from './fixtures/policy-state-fixture.svelte';
 
 test('Svelte provider options share external gates and preference controls', async () => {
@@ -38,7 +38,7 @@ test('Svelte provider options share external gates and preference controls', asy
 			consentSource: source,
 			iframeBlocker: false,
 			scripts: [script],
-			testing: withoutNetwork(),
+			mode: testing(),
 		},
 	});
 	try {

@@ -1,5 +1,5 @@
 /**
- * `@c15t/angular/testing`: `withoutNetwork()`, which runs the consent flow
+ * `@c15t/angular/testing`: `testing()`, which runs the consent flow
  * with no backend, and Angular CDK component harnesses for the c15t
  * consent surfaces, for your own TestBed tests.
  *
@@ -32,5 +32,5 @@ export type {
 } from './iab-consent-dialog-harness';
 export { SwitchHarness } from './switch-harness';
 export type { SwitchHarnessFilters } from './switch-harness';
-export { withoutNetwork } from './without-network';
-export type { ConsentTesting, WithoutNetworkOptions } from './without-network';
+export { testing } from './testing-mode';
+export type { ConsentTesting, TestingModeOptions } from './testing-mode';

@@ -12,7 +12,7 @@ import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/compone
 import type { ComponentFixtureOptions as ConsentProviderOptions } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
 
-import { withoutNetwork } from '../../../testing';
+import { testing } from '../../../testing';
 import { IABConsentDialog } from '../iab-panel';
 
 const getDefined = <Value,>(
@@ -240,7 +240,7 @@ const defaultIABOptions: ConsentProviderOptions = {
 		prompt: 'choice',
 		scopeMode: 'strict',
 	}),
-	testing: withoutNetwork(),
+	mode: testing(),
 };
 
 describe('IAB preference item interactions', () => {

@@ -9,7 +9,7 @@ import { userEvent } from 'vitest/browser';
 
 import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
 
-import { withoutNetwork } from '../../../testing';
+import { testing } from '../../../testing';
 import { PurposeItem } from '../atoms/purpose-item';
 
 const providerOnlyPurpose = {
@@ -31,7 +31,7 @@ describe('PurposeItem with Google ad tech providers', () => {
 			<ConsentProvider
 				options={{
 					noStyle: true,
-					testing: withoutNetwork(),
+					mode: testing(),
 				}}
 			>
 				<PurposeItem
@@ -64,7 +64,7 @@ describe('PurposeItem with Google ad tech providers', () => {
 
 	test('counts and lists providers as partners of a purpose no vendor declares', async () => {
 		const screen = await render(
-			<ConsentProvider options={{ testing: withoutNetwork() }}>
+			<ConsentProvider options={{ mode: testing() }}>
 				<PurposeItem
 					purpose={providerOnlyPurpose}
 					isEnabled={false}

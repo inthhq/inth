@@ -1,10 +1,12 @@
+import type { ConsentTesting } from '@c15t/core/testing';
 import type {
 	KernelTransport,
 	PolicyRule,
 	ProviderTransportFactory,
 	ProviderTransportKind,
 } from '@c15t/core';
-import { createOfflineTransport } from '@c15t/core/transports';
+
+import { testing } from '../../../testing/src/testing-mode';
 
 /**
  * A transport factory that hands the provider `transport`, for tests that
@@ -22,25 +24,14 @@ export const transportMode = function transportMode(
 };
 
 /**
- * A transport factory that resolves `policyRules` in the browser, for
- * tests that need a policy the recommended pack has no rule for, such as
- * the opt-out notice. `withoutNetwork()` covers the others.
+ * `testing()` resolving `policyRules`, for tests that need a policy the
+ * recommended pack has no rule for, such as the opt-out notice.
  *
  * @param policyRules - The rules to resolve.
- * @returns A factory for the provider's `mode`.
+ * @returns A `testing()` mode.
  */
 export const offlineMode = function offlineMode(
 	policyRules: PolicyRule[]
-): ProviderTransportFactory {
-	return Object.assign(
-		(context: Parameters<ProviderTransportFactory>[0]) =>
-			createOfflineTransport({
-				acknowledgeNoRecords: true,
-				iabEnabled: context.iabEnabled,
-				policyRules,
-				translations: context.translations,
-				translationsFor: context.translationsFor,
-			}),
-		{ kind: 'offline' as const }
-	);
+): ConsentTesting {
+	return testing({ policy: policyRules });
 };

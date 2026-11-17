@@ -18,7 +18,7 @@ import {
 import { useConsentSaveAction } from '../draft-context';
 import { useConsent, useSnapshot } from '../hooks';
 import { ConsentProvider } from '../provider';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 const Provider = ({
@@ -34,7 +34,7 @@ const Provider = ({
 			consentCategories: ['measurement', 'marketing'],
 			persistence: false,
 			prefetch: policyFixture(),
-			testing: withoutNetwork(),
+			mode: testing(),
 			...options,
 		}}
 	>

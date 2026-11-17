@@ -87,16 +87,33 @@ describe('TanStack Start manifest generation', () => {
 		);
 		expect(logger.warn).toHaveBeenCalledWith(
 			expect.stringContaining(
-				'@c15t/tanstack-start/build: could not fetch the consent manifest from https://consent.example.com/manifest during dev (backend unavailable). The server fetches it at runtime instead.'
+				'@c15t/tanstack-start/build: could not fetch the consent manifest from https://consent.example.com/manifest during dev (backend unavailable). The server fetches it at runtime instead'
 			)
 		);
 	});
 
-	test('vite build stops when the fetch fails', async () => {
+	test('vite build warns and bundles an undefined snapshot when the fetch fails', async () => {
+		const root = await createRoot();
+		const logger = { info: vi.fn(), warn: vi.fn() };
+		const plugin = consentManifest({
+			backendURL: 'https://consent.example.com',
+			fetch: failingFetch(),
+		});
+		await plugin.configResolved({ command: 'build', logger, root });
+		expect(await buildGenerated(plugin, 'server')).toContain(
+			'export const snapshot = undefined;'
+		);
+		expect(logger.warn).toHaveBeenCalledWith(
+			expect.stringContaining('during the build (backend unavailable)')
+		);
+	});
+
+	test("with onBuildError: 'fail', vite build stops when the fetch fails", async () => {
 		const root = await createRoot();
 		const plugin = consentManifest({
 			backendURL: 'https://consent.example.com',
 			fetch: failingFetch(),
+			onBuildError: 'fail',
 		});
 		plugin.configResolved({ command: 'build', root });
 		await expect(buildGenerated(plugin, 'server')).rejects.toThrow(
@@ -189,8 +206,8 @@ describe('TanStack Start manifest backend URL', () => {
 		expect(env.VITE_C15T_BACKEND_URL).toBe('/api/c15t');
 	});
 
-	test('vite build fails without a backend URL', async () => {
-		const plugin = consentManifest();
+	test("with onBuildError: 'fail', vite build fails without a backend URL", async () => {
+		const plugin = consentManifest({ onBuildError: 'fail' });
 		plugin.configResolved({
 			command: 'build',
 			env: {},

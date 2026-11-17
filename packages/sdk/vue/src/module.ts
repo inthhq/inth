@@ -57,11 +57,13 @@ import {
 import type { StyleSourceIndex } from './stylesheets';
 
 export {
+	hosted,
 	manifest,
 	type ConsentMode,
+	type HostedMode,
 	type ManifestMode,
 	type ManifestModeOptions,
-	type WithoutNetworkTestingData,
+	type TestingMode,
 } from '@c15t/core/modes';
 export { defineTheme, type Theme } from '@c15t/ui/theme';
 
@@ -176,15 +178,16 @@ const fillBackendURLFromEnv = (
 
 /**
  * The `mode` option, checked. It reaches the browser as JSON through the
- * public runtime config, so it must be the data `manifest()`, `hosted()` or
- * `local()` from `c15t/vue` return, not a transport.
+ * public runtime config, so it must be the data `manifest()` or `hosted()`
+ * from `c15t/vue`, or `testing()` from `c15t/vue/testing`, not a
+ * transport.
  */
 const readModuleMode = function readModuleMode(
 	options: ModuleOptions
 ): NuxtMode {
 	if (typeof options.mode === 'function') {
 		throw new TypeError(
-			"@c15t/vue: `c15t.mode` in nuxt.config.ts is a transport. Import `manifest` from 'c15t/vue' (the module entry), which returns plain data, or omit `mode` to use the hosted backend."
+			"@c15t/vue: `c15t.mode` in nuxt.config.ts is a transport. Import `manifest` or `hosted` from 'c15t/vue' (the module entry), which return plain data, or omit `mode` to read the manifest."
 		);
 	}
 	return readNuxtMode(options);

@@ -20,7 +20,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { ConsentProvider } from '../provider';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 const chunk = vi.hoisted(() => {
@@ -85,7 +85,7 @@ test('unmounting before the blocker loads fails held requests closed', async () 
 				persistence: false,
 				// Stored consent allows it: still unchecked, so still blocked.
 				prefetch: policyFixture({ measurement: true }),
-				testing: withoutNetwork(),
+				mode: testing(),
 			}}
 		>
 			<Beacon requests={requests} />

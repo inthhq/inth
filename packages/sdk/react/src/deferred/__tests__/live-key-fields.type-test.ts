@@ -45,7 +45,6 @@ export const OPTIONS: Record<keyof ConsentProviderOptions, 'display' | 'key'> =
 		storageConfig: 'key',
 		streamBanner: 'key',
 		styles: 'display',
-		testing: 'key',
 		theme: 'display',
 		trapFocus: 'display',
 		user: 'key',

@@ -3,7 +3,7 @@ import { createConsentKernel, vendorsListedUnder } from '@c15t/core';
 import type { AllConsentNames, HasCondition, Script } from '@c15t/core';
 import { createScriptLoader } from '@c15t/core/modules/script-loader';
 import { createConsentRuntime } from '@c15t/core/runtime';
-import { withoutNetwork } from '@c15t/core/testing';
+import { testing } from '@c15t/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { scripts as sentryExampleScripts } from '../../../../internals/doc-snippets/javascript/src/sentry';
@@ -367,7 +367,7 @@ describe('Sentry adapter through the kernel and script loader', () => {
 		const { client } = createClient();
 		const runtime = createConsentRuntime({
 			scripts: [sentry({ getClient: () => client })],
-			testing: withoutNetwork(),
+			mode: testing(),
 		});
 		disposers.push(() => runtime.dispose());
 		expect(runtime.kernel.getSnapshot().vendors?.declared).toEqual([
@@ -388,7 +388,7 @@ describe('Sentry adapter through the kernel and script loader', () => {
 		const { client } = createClient();
 		const runtime = createConsentRuntime({
 			scripts: [sentry({ getClient: () => client })],
-			testing: withoutNetwork(),
+			mode: testing(),
 			vendors: [
 				{
 					category: 'necessary',

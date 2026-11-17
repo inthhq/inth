@@ -24,6 +24,7 @@ import {
 	DeferredEngineHost,
 } from '@c15t/react/deferred/engine';
 import { ConsentProvider } from '@c15t/react/provider';
+import type { WithBackendURL } from '@c15t/core/runtime/provider';
 import type { ConsentProviderOptions } from '@c15t/react/provider';
 import * as React from 'react';
 import { Suspense, useState } from 'react';
@@ -72,7 +73,7 @@ const createMode = function createMode(
 ) {
 	// The config carries the backend URL, route prefix and `proxy`.
 	return createClientMode(
-		options?.testing ?? config?.testing ?? options?.mode ?? config?.mode,
+		options?.mode ?? config?.mode,
 		config ?? { backendURL: readBackendURLFromEnv() }
 	);
 };
@@ -385,8 +386,7 @@ const useRootOptions = function useRootOptions(props: ConsentRootProps) {
 	if (
 		process.env.NODE_ENV !== 'production' &&
 		!config &&
-		!props.options?.mode &&
-		!props.options?.testing
+		!props.options?.mode
 	) {
 		warnMissingConfig();
 	}
@@ -427,10 +427,8 @@ const useRootOptions = function useRootOptions(props: ConsentRootProps) {
 		networkBlocker,
 		persistence,
 		prefetch: state,
-		// `mode` is the transport the testing value selected.
 		scriptLoader,
 		scripts,
-		testing: undefined,
 		vendors,
 	};
 	// Without `state` there is nothing to start, and a static page keeps
@@ -486,7 +484,10 @@ const AfterPage = ({
 export const EagerConsentRoot = (props: ConsentRootProps) => {
 	const { children, providerOptions, serverStart } = useRootOptions(props);
 	return (
-		<ConsentProvider options={providerOptions}>
+		// `createMode` threw already when there is no backend.
+		<ConsentProvider
+			options={providerOptions as WithBackendURL<ConsentProviderOptions>}
+		>
 			{children}
 			<Suspense fallback={null}>
 				<AfterPage

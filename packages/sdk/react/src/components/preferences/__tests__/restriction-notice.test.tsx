@@ -11,7 +11,7 @@ import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/compone
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentWidget } from '~/components/preferences';
 
-import { withoutNetwork } from '../../../testing';
+import { testing } from '../../../testing';
 
 const CATEGORIES = [
 	'necessary',
@@ -36,7 +36,7 @@ describe('consent widget restriction notice', () => {
 						model: 'opt-in',
 						prompt: 'choice',
 					}),
-					testing: withoutNetwork(),
+					mode: testing(),
 				}}
 			>
 				<ConsentWidget />
@@ -72,7 +72,7 @@ describe('consent widget restriction notice', () => {
 							prompt: 'choice',
 						}
 					),
-					testing: withoutNetwork(),
+					mode: testing(),
 				}}
 			>
 				<ConsentWidget />

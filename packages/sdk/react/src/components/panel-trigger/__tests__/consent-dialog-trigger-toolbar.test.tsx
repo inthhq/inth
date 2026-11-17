@@ -7,7 +7,7 @@ import { userEvent } from 'vitest/browser';
 import { ComponentFixtureProvider } from '~/__tests__/component-fixture-provider';
 import { ConsentDialog } from '~/components/panel';
 
-import { withoutNetwork } from '../../../testing';
+import { testing } from '../../../testing';
 import { ConsentDialogTrigger, ConsentDialogTriggerToolbar } from '../index';
 
 /**
@@ -19,7 +19,7 @@ const renderWithConsent = function renderWithConsent(
 	{ noStyle = false }: { noStyle?: boolean } = {}
 ): void {
 	render(
-		<ComponentFixtureProvider options={{ noStyle, testing: withoutNetwork() }}>
+		<ComponentFixtureProvider options={{ noStyle, mode: testing() }}>
 			<ConsentDialog />
 			{children}
 		</ComponentFixtureProvider>

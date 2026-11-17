@@ -9,7 +9,7 @@
  */
 import { building } from '$app/env';
 import type { StorageConfig } from '@c15t/core';
-import type { ConsentMode, WithoutNetworkTestingData } from '@c15t/core/modes';
+import type { ConsentMode } from '@c15t/core/modes';
 import { normalizeRoutePrefix, readRequestConsent } from '@c15t/core/server';
 import type {
 	ConsentManifest,
@@ -29,24 +29,26 @@ import type { C15tLocals, ConsentRequestOptions, KitMode } from './types';
 export interface C15tHandleOptions extends ConsentRequestOptions {
 	/**
 	 * The c15t backend. Defaults to the URL `consentManifest()` read from
-	 * `PUBLIC_C15T_BACKEND_URL` or `PUBLIC_INTH_PROJECT_URL`. With no
-	 * `mode`, `loadConsent` asks its `/init` for each visitor.
+	 * `PUBLIC_C15T_BACKEND_URL` or `PUBLIC_INTH_PROJECT_URL`. Required
+	 * unless `mode` is `testing()`.
 	 */
 	backendURL?: string;
 	/**
-	 * Resolve the visitor from the backend's consent manifest instead:
-	 * `manifest()` from `@c15t/svelte/kit`. Plain data; `ConsentRoot` loads
-	 * the code it needs in the browser only when it runs. Omit it to use
-	 * the hosted backend.
+	 * How the visitor is resolved. Plain data; `ConsentRoot` loads the code
+	 * it needs in the browser only when it runs.
+	 *
+	 * - Omitted, or `manifest()` from `@c15t/svelte/kit`: resolve from the
+	 *   backend's consent manifest, which the build downloads. When it is
+	 *   unavailable, ask the backend's `/init` and log a warning.
+	 * - `hosted()` from `@c15t/svelte/kit`: ask the backend's `/init` for
+	 *   every visitor.
+	 * - `testing()` from `@c15t/svelte/testing`: the server resolves
+	 *   nothing, and the browser resolves a policy with no network; its
+	 *   transport throws in production builds.
+	 *
+	 * @default manifest()
 	 */
 	mode?: ConsentMode;
-	/**
-	 * Replace the backend in a test: `withoutNetwork()` from
-	 * `@c15t/svelte/testing`. The server resolves nothing, and the browser
-	 * resolves the recommended policy pack with no network; its transport
-	 * throws in production builds. Wins over `mode`.
-	 */
-	testing?: WithoutNetworkTestingData;
 	/**
 	 * Where `createConsentRoute()` is mounted, such as `/api/c15t` for
 	 * `src/routes/api/c15t/[...path]/+server.ts`. The browser then resolves
@@ -145,20 +147,16 @@ const normalizeRequestHeaders = function normalizeRequestHeaders(
  * as data too; only that data reaches the browser.
  */
 const modeData = function modeData(options: C15tHandleOptions): KitMode {
-	if (options.testing) {
-		return { ...options.testing, type: 'without-network' };
-	}
 	const { mode } = options;
 	if (mode === undefined) {
-		// A snapshot passed in is a manifest to resolve from, as in Next.js.
-		return options.snapshot ? { type: 'manifest' } : { type: 'hosted' };
+		return { type: 'manifest' };
 	}
 	if (typeof mode !== 'function') {
 		return mode;
 	}
 	if (!(mode as Partial<ConsentMode>).type) {
 		throw new TypeError(
-			'c15t: c15tHandle() takes manifest() from c15t/svelte/kit, or no mode for the hosted backend. Pass a transport to <ConsentRoot mode> instead.'
+			'c15t: c15tHandle() takes manifest() or hosted() from c15t/svelte/kit, or testing() from c15t/svelte/testing. Pass a transport to <ConsentRoot mode> instead.'
 		);
 	}
 	const { kind: _kind, ...data } = mode as ConsentMode & { kind?: string };

@@ -9,7 +9,7 @@ import { expect, test, vi } from 'vitest';
 
 import { policyFixture } from '../../__tests__/policy-fixture';
 import { ConsentProvider as EngineProvider } from '../../provider';
-import { withoutNetwork } from '../../testing';
+import { testing } from '../../testing';
 import { ConsentBanner } from '../client-banner';
 
 const ACCEPT = '[data-testid="consent-banner-accept-button"]';
@@ -35,7 +35,7 @@ test('renders the stock banner, and its accept records the choice, under the eng
 				options={{
 					persistence: false,
 					prefetch: policyFixture(),
-					testing: withoutNetwork(),
+					mode: testing(),
 				}}
 			>
 				<ConsentBanner disableAnimation />
@@ -59,7 +59,7 @@ test('compound parts render through the same chunk', async () => {
 				options={{
 					persistence: false,
 					prefetch: policyFixture(),
-					testing: withoutNetwork(),
+					mode: testing(),
 				}}
 			>
 				<ConsentBanner.Root disableAnimation>

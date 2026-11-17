@@ -9,7 +9,7 @@ import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentBanner } from '~/components/prompt';
 import { useActiveUI } from '~/hooks';
 
-import { withoutNetwork } from '../../../testing';
+import { testing } from '../../../testing';
 
 const ActiveUIProbe = () => (
 	<output data-testid="active-ui">{useActiveUI()}</output>
@@ -28,7 +28,7 @@ const renderBanner = function renderBanner(
 					id: 'banner-notice-test',
 					...rule,
 				}),
-				testing: withoutNetwork(),
+				mode: testing(),
 				...themeOptions,
 			}}
 		>

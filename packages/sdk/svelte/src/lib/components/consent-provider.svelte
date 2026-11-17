@@ -40,8 +40,6 @@
 						runtimeOptionsFor({
 							...options,
 							mode: selectedMode(options),
-							// `mode` is the transport the testing value selected.
-							testing: undefined,
 						})
 					)
 				)

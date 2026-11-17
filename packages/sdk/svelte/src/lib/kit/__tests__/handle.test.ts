@@ -161,23 +161,23 @@ describe('c15tHandle', () => {
 });
 
 describe('c15tHandle mode', () => {
-	test('stores the hosted backend by default, with the route prefix and backend', async () => {
+	test('stores manifest() by default, with the route prefix and backend', async () => {
 		const { locals } = await runHandle(createEvent(), {
 			backendURL: 'https://consent.example.com',
 			routePrefix: '/api/c15t',
 		});
 		expect(locals).toMatchObject({
 			backendURL: 'https://consent.example.com',
-			mode: { type: 'hosted' },
+			mode: { type: 'manifest' },
 			routePrefix: '/api/c15t',
 		});
 	});
 
-	test('stores a testing value as data', async () => {
+	test('stores testing() as data', async () => {
 		const { locals } = await runHandle(createEvent(), {
-			testing: { type: 'without-network' },
+			mode: { type: 'testing' },
 		});
-		expect(locals.mode).toEqual({ type: 'without-network' });
+		expect(locals.mode).toEqual({ type: 'testing' });
 	});
 
 	test('keeps only the data of a transport factory', async () => {

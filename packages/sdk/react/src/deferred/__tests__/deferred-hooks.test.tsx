@@ -16,7 +16,7 @@ import { useEventDispatcher } from '../../event-dispatcher';
 import { markIABProviderLoaded } from '../../hooks/use-iab-policy-guard';
 import { usePersistence } from '../../module-hooks/persistence';
 import { useScriptLoader } from '../../module-hooks/script-loader';
-import { withoutNetwork } from '../../testing';
+import { testing } from '../../testing';
 import { iabProviderLoaded, whenIABProviderLoads } from '../boot';
 import { createDeferredKernel } from '../deferred-kernel';
 import type { DeferredKernelHandle } from '../deferred-kernel';
@@ -71,7 +71,7 @@ const engineOptions = (values: Parameters<typeof policyFixture>[0] = {}) => ({
 	persistence: false as const,
 	prefetch: policyFixture(values),
 	scripts: [posthog],
-	testing: withoutNetwork(),
+	mode: testing(),
 });
 
 /** The engine a deferred root loads, attached to the stand-in. */

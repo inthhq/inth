@@ -177,7 +177,14 @@ const plan = function plan(
 	// engine's chunk and then `/init`.
 	// Picked as the engine will, without building the hosted transport's
 	// factory: the first load needs only the backend URL.
-	const mode = options.testing?.transport ?? options.mode;
+	const selected = options.mode;
+	// `hosted()` is data; a `testing()` value carries its transport.
+	const mode =
+		typeof selected === 'function'
+			? selected
+			: selected && 'transport' in selected
+				? selected.transport
+				: undefined;
 	const request = {
 		journey: options.journey,
 		storageKey: storageKeyOf(options),

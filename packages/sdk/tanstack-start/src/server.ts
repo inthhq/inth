@@ -69,7 +69,7 @@ import {
 	backendURL as generatedBackendURL,
 	snapshot as generatedSnapshot,
 } from '@c15t/core/generated';
-import type { ConsentMode, WithoutNetworkTestingData } from '@c15t/core/modes';
+import type { ConsentMode } from '@c15t/core/modes';
 import {
 	DEFAULT_CONSENT_ROUTE_PREFIX,
 	normalizeRoutePrefix,
@@ -173,10 +173,8 @@ export interface ConsentClientConfig {
 	 * route proxies saves.
 	 */
 	backendURL?: string;
-	/** `manifest()`, as data. `undefined` means the hosted backend. */
+	/** The mode, as data. `undefined` means `manifest()`. */
 	mode?: ConsentMode;
-	/** A testing value, as data. Wins over `mode`. */
-	testing?: WithoutNetworkTestingData;
 	/** Where the consent route is mounted, such as `/api/c15t`. */
 	routePrefix?: string;
 }
@@ -201,22 +199,22 @@ export type ConsentState = Omit<KernelConfig, 'transport'> &
 /** Options for {@link resolveConsent}. */
 export interface ResolveConsentOptions extends ConsentRequestOptions {
 	/**
-	 * Resolve the visitor's policy from the backend's consent manifest:
-	 * `manifest()` from `@c15t/tanstack-start` resolves it here from the
-	 * policy snapshot, and `manifest({ resolve: 'browser' })` leaves it to
-	 * the browser. Omit it to ask the hosted backend's `/init` at
-	 * `backendURL`. The state carries the mode to `ConsentRoot`.
+	 * How the visitor's policy is resolved. The state carries it to
+	 * `ConsentRoot`.
+	 *
+	 * - Omitted, or `manifest()` from `@c15t/tanstack-start`: resolve here
+	 *   from the policy snapshot the build downloaded, or the backend's
+	 *   manifest. When it is unavailable, ask the backend's `/init` and log
+	 *   a warning. `manifest({ resolve: 'browser' })` leaves it to the
+	 *   browser.
+	 * - `hosted()`: ask the hosted backend's `/init` at `backendURL`.
+	 * - `testing()` from `@c15t/tanstack-start/testing`: the server
+	 *   resolves nothing and the browser resolves a policy with no
+	 *   network; its transport throws in production builds.
+	 *
+	 * @default manifest()
 	 */
 	mode?: ConsentMode;
-
-	/**
-	 * Replace the backend in a test: `withoutNetwork()` from
-	 * `@c15t/tanstack-start/testing`. The server resolves nothing and the
-	 * browser resolves the recommended policy pack with no network; its
-	 * transport throws in production builds. The state carries it to
-	 * `ConsentRoot`.
-	 */
-	testing?: WithoutNetworkTestingData;
 
 	/**
 	 * Backend base URL of your c15t instance, for example
@@ -372,22 +370,23 @@ const serverModeOptions = function serverModeOptions(
 	ResolveRequestConsentOptions,
 	'backendURL' | 'manifest' | 'manifestURL' | 'mode'
 > {
-	const { mode } = options;
-	if (options.testing) {
+	const { mode: selected } = options;
+	if (selected?.type === 'testing') {
 		// The browser resolves it, with the transport that refuses to run in
 		// production.
 		return {};
 	}
 	// A snapshot passed in is a manifest to resolve from, as in Next.js.
-	if (!mode && options.snapshot === undefined) {
+	if (selected?.type === 'hosted' && options.snapshot === undefined) {
 		return {
 			backendURL,
 			mode: backendURL ? 'hosted' : undefined,
 		};
 	}
+	const mode = selected?.type === 'manifest' ? selected : undefined;
 	if (mode?.resolve === 'browser') {
 		// The browser resolves the visitor; the render reads cookies and
-		// headers only. Without a mode, a backend URL would mean hosted.
+		// headers only.
 		return {};
 	}
 	let snapshot = mode?.snapshot;
@@ -423,10 +422,7 @@ const clientConfigFor = function clientConfigFor(
 		config.backendURL = clientBackendURL;
 	}
 	const { mode } = options;
-	if (options.testing) {
-		config.testing = options.testing;
-	}
-	if (mode?.resolve !== 'browser' && mode !== undefined) {
+	if (mode?.type === 'manifest' && mode.resolve !== 'browser') {
 		const { snapshot: _snapshot, ...data } = mode;
 		config.mode = data;
 	} else if (mode !== undefined) {

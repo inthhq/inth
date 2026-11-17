@@ -4,7 +4,7 @@ import { render } from 'vitest-browser-react';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentProvider } from '~/provider';
 
-import { withoutNetwork } from '../../../testing';
+import { testing } from '../../../testing';
 import { Frame } from '../frame';
 import { ConsentGate } from '../index';
 
@@ -17,7 +17,7 @@ test('Frame renders the ConsentGate and warns once that it is deprecated', async
 	const options = {
 		persistence: false,
 		prefetch: policyFixture(),
-		testing: withoutNetwork(),
+		mode: testing(),
 	};
 	const screen = await render(
 		<ConsentProvider options={options}>

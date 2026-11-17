@@ -16,7 +16,7 @@ import { ConsentBanner } from '~/components/prompt';
 import { ConsentProvider } from '~/provider';
 
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
-import { withoutNetwork } from '../../testing';
+import { testing } from '../../testing';
 
 /**
  * Without a resolved policy rule there is nothing to consent to, so no
@@ -81,7 +81,7 @@ describe('consent surfaces without a resolved policy', () => {
 					initialUI: 'dialog',
 					persistence: false,
 					prefetch: { initialPolicyResolution: UNCONFIGURED, now: Date.now() },
-					testing: withoutNetwork(),
+					mode: testing(),
 				}}
 			>
 				<Surfaces />
@@ -145,7 +145,7 @@ describe('consent surfaces without a resolved policy', () => {
 					initialUI: 'dialog',
 					persistence: false,
 					prefetch: { initialPolicyResolution: UNCONFIGURED, now: Date.now() },
-					testing: withoutNetwork(),
+					mode: testing(),
 				}}
 			>
 				<ConsentDialog />

@@ -9,6 +9,7 @@
 
 import { createConsentKernel } from '@c15t/core';
 import type { KernelConfig } from '@c15t/core';
+import { hosted } from '@c15t/core/modes';
 import { clearManifestCache } from '@c15t/core/server';
 import { writePolicyResolutionWire } from '@c15t/schema/types';
 import type { PolicyRule } from '@c15t/schema/types';
@@ -259,6 +260,7 @@ describe('resolveConsent: fluid-compute safety', () => {
 			baseResolveConsent({
 				config: defineConsentConfig({
 					backendURL: 'https://consent.example.com',
+					mode: hosted(),
 				}),
 				fetch,
 				request: visitorRequest(visitorCookie(prepared)),

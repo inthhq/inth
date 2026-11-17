@@ -9,7 +9,7 @@ import { ConsentDialogLink } from '~/components/panel-link';
 import { ConsentDialogTrigger } from '~/components/panel-trigger';
 import { ConsentBanner } from '~/components/prompt';
 
-import { withoutNetwork } from '../../../testing';
+import { testing } from '../../../testing';
 
 // Intent only: idle warming would otherwise call the warmer on its own
 // schedule while the banner is shown.
@@ -17,7 +17,7 @@ const options = {
 	persistence: false,
 	prefetch: policyFixture(),
 	preloadDialog: 'intent',
-	testing: withoutNetwork(),
+	mode: testing(),
 } as const;
 
 const button = (testId: string) => {

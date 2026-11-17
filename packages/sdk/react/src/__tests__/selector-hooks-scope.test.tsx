@@ -12,7 +12,7 @@ import {
 	useSubscribeToConsentChanges,
 } from '~/hooks';
 
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 
 const createWrapper = function createWrapper(
 	options: Partial<ConsentProviderOptions> = {}
@@ -22,7 +22,7 @@ const createWrapper = function createWrapper(
 			<ConsentProvider
 				options={{
 					persistence: false,
-					testing: withoutNetwork(),
+					mode: testing(),
 					...options,
 				}}
 			>

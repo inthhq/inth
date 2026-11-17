@@ -347,8 +347,8 @@ describe('pages whose request the server cannot know get no script', () => {
 			{ ...HOSTED_BACKEND, mode: { resolve: 'browser', type: 'manifest' } },
 		],
 		[
-			'withoutNetwork(), which sends no request',
-			{ testing: { type: 'without-network' as const } },
+			'testing(), which sends no request',
+			{ mode: { type: 'testing' as const } },
 		],
 		[
 			'hosted() with init headers the script cannot send',
@@ -383,13 +383,16 @@ describe('pages whose request the server cannot know get no script', () => {
 	test('the hosted backend with an absolute or a same-origin URL gets one', () => {
 		expect(
 			buildInitPrefetchTag({
-				config: { backendURL: 'https://consent.example/' },
+				config: {
+					backendURL: 'https://consent.example/',
+					mode: { type: 'hosted' },
+				},
 				shell: true,
 			})
 		).toContain('"backendURL":"https://consent.example/"');
-		expect(
-			buildInitPrefetchTag({ config: { backendURL: '/api/c15t' }, shell: true })
-		).toContain('"backendURL":"/api/c15t"');
+		expect(buildInitPrefetchTag({ config: HOSTED, shell: true })).toContain(
+			'"backendURL":"/api/c15t"'
+		);
 	});
 
 	test('a nonce cannot close its attribute', () => {

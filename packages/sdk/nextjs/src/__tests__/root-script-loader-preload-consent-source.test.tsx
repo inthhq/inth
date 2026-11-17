@@ -15,11 +15,11 @@ import type { Root } from 'react-dom/client';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { ConsentRoot } from '../root';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
-/** These tests are not about the backend; withoutNetwork() needs none. */
-const OFFLINE_CONFIG = { testing: withoutNetwork() };
+/** These tests are not about the backend; testing() needs none. */
+const OFFLINE_CONFIG = { mode: testing() };
 
 const loads = vi.hoisted(() => ({ evaluated: 0, loaded: 0 }));
 

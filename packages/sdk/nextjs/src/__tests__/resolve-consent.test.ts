@@ -6,7 +6,7 @@
  * request adapter's headers and cookies, the config's mode and route
  * prefix, and the development warning.
  */
-import { manifest } from '@c15t/core/modes';
+import { hosted, manifest } from '@c15t/core/modes';
 import { clearManifestCache } from '@c15t/core/server';
 import {
 	resolvePolicyRules,
@@ -71,7 +71,7 @@ const requestOf = (
 
 /** A config that asks the backend's `/init` for every render. */
 const hostedAt = (backendURL: string, config: ConsentConfig = {}) =>
-	defineConsentConfig({ ...config, backendURL });
+	defineConsentConfig({ mode: hosted(), ...config, backendURL });
 
 beforeEach(() => {
 	clearManifestCache();

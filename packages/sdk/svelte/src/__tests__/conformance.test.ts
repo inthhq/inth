@@ -44,7 +44,7 @@ import { mount, unmount } from 'svelte';
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 
 import { whenIABReady } from '../lib/iab-loader';
-import { withoutNetwork } from '../lib/testing';
+import { testing } from '../lib/testing';
 import type { ConsentManagerOptions } from '../lib/types';
 import ConformanceFixture from './fixtures/conformance-fixture.svelte';
 import { transportMode } from './fixtures/transport-mode';
@@ -140,7 +140,7 @@ const buildProviderOptions = function buildProviderOptions(
 		disableAnimation: provided.disableAnimation ?? true,
 		...(provided.mode
 			? { mode: provided.mode }
-			: { testing: withoutNetwork() }),
+			: { mode: testing() }),
 		persistence: opts.persistence ?? provided.persistence ?? false,
 		prefetch,
 		trapFocus: provided.trapFocus ?? false,
@@ -219,12 +219,10 @@ const driver: TestDriver = {
 					});
 			});
 			options.mode = transportMode({ init: () => promise });
-			options.testing = undefined;
 		} else if (opts.initMode === 'failing') {
 			options.mode = transportMode({
 				init: () => Promise.reject(new Error('Init failed')),
 			});
-			options.testing = undefined;
 		}
 
 		let mountedKernel: ConsentKernel | null = null;

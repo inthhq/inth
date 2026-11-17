@@ -3,7 +3,7 @@
  * `getServerSideProps` and `pages/api` routes use the server helpers and
  * route handlers built for the App Router.
  */
-import { manifest as manifestMode } from '@c15t/core/modes';
+import { hosted, manifest as manifestMode } from '@c15t/core/modes';
 import { clearManifestCache } from '@c15t/core/server';
 import { writePolicyResolutionWire } from '@c15t/schema/types';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
@@ -253,6 +253,7 @@ describe('@c15t/nextjs/pages: resolveConsent with a backend', () => {
 		const config = await resolveConsent({
 			config: defineConsentConfig({
 				backendURL: '/api/self-host',
+				mode: hosted(),
 			}),
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
 			req: {
@@ -325,7 +326,7 @@ describe('@c15t/nextjs/pages: resolveConsent with a backend', () => {
 		);
 
 		const config = await resolveConsent({
-			config: defineConsentConfig({ backendURL: '/api/c15t' }),
+			config: defineConsentConfig({ backendURL: '/api/c15t', mode: hosted() }),
 			fetch: fetchSpy,
 			req: {
 				headers: {

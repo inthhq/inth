@@ -2,7 +2,7 @@ import type { ConsentKernel } from '@c15t/core';
 import { mount, unmount } from 'svelte';
 import { afterEach, expect, onTestFinished, test, vi } from 'vitest';
 
-import { withoutNetwork } from '../lib/testing';
+import { testing } from '../lib/testing';
 import ConformanceFixture from './fixtures/conformance-fixture.svelte';
 import { policyFixture } from './policy-fixture';
 
@@ -37,7 +37,7 @@ const mountBanner = async function mountBanner(disableAnimation: boolean) {
 			options: {
 				disableAnimation,
 				prefetch: policyFixture({}),
-				testing: withoutNetwork(),
+				mode: testing(),
 			},
 		},
 		target,

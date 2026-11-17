@@ -19,7 +19,7 @@ import { IABContext } from '../context/iab-context-value';
 import type { IABContextValue } from '../context/iab-context-value';
 import { IABProvider, useIAB } from '../iab-context';
 import type { ReactIABState } from '../iab-context';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 const iab = vi.hoisted(() => ({
@@ -68,7 +68,7 @@ const createKernel = function createKernel(): ConsentKernel {
 			...policyFixture({}, { model: 'iab' }),
 			initialIab: { cmpId: 42, enabled: true },
 		},
-		testing: withoutNetwork(),
+		mode: testing(),
 	});
 	runtimes.push(runtime);
 	return runtime.kernel;

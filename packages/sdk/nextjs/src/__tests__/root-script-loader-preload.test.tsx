@@ -16,12 +16,12 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { encodeStoredConsentEnvelopeJson } from '../../../core/src/modules/persistence/writer/encode';
 import { ConsentRoot } from '../root';
 import type { ConsentRootProps } from '../root';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 import type { ConsentState } from '../types';
 import { policyFixture } from './policy-fixture';
 
-/** These tests are not about the backend; withoutNetwork() needs none. */
-const OFFLINE_CONFIG = { testing: withoutNetwork() };
+/** These tests are not about the backend; testing() needs none. */
+const OFFLINE_CONFIG = { mode: testing() };
 
 const loads = vi.hoisted(() => ({ created: 0, evaluated: 0 }));
 

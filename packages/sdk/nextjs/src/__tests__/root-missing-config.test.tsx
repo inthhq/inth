@@ -9,7 +9,7 @@ import { afterEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { ConsentRoot } from '../root';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 afterEach(() => {
@@ -68,10 +68,10 @@ test('throws with no config and no NEXT_PUBLIC_C15T_BACKEND_URL', () => {
 	);
 });
 
-test('renders withoutNetwork() without a backend URL', () => {
+test('renders testing() without a backend URL', () => {
 	const html = renderToString(
 		<ConsentRoot
-			config={{ testing: withoutNetwork() }}
+			config={{ mode: testing() }}
 			state={policyFixture()}
 		>
 			<div>offline root</div>

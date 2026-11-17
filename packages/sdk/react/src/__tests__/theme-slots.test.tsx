@@ -12,7 +12,7 @@ import { render } from 'vitest-browser-react';
 import { ConsentGate } from '../components/consent-gate';
 import { ConsentBanner } from '../components/prompt';
 import { ConsentProvider } from '../provider';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 const part = (testId: string) =>
@@ -44,7 +44,7 @@ describe('theme.slots in React', () => {
 					},
 					persistence: false,
 					prefetch: policyFixture(),
-					testing: withoutNetwork(),
+					mode: testing(),
 					theme: {
 						slots: {
 							consentBannerCard: {
@@ -85,7 +85,7 @@ describe('theme.slots in React', () => {
 					},
 					persistence: false,
 					prefetch: policyFixture(),
-					testing: withoutNetwork(),
+					mode: testing(),
 					theme: {
 						slots: {
 							consentBannerCard: { className: 'theme-card', noStyle: true },
@@ -124,7 +124,7 @@ describe('theme.slots in React', () => {
 					},
 					persistence: false,
 					prefetch: policyFixture(),
-					testing: withoutNetwork(),
+					mode: testing(),
 					theme: {
 						slots: {
 							consentGate: {

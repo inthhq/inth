@@ -12,11 +12,11 @@ import { describe, expect, test } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { ConsentRoot } from '../root';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
-/** These tests are not about the backend; withoutNetwork() needs none. */
-const OFFLINE_CONFIG = { testing: withoutNetwork() };
+/** These tests are not about the backend; testing() needs none. */
+const OFFLINE_CONFIG = { mode: testing() };
 
 describe('ConsentRoot: state is honored', () => {
 	test('initial consents from state reach useConsent', async () => {

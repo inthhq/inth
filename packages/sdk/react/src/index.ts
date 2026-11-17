@@ -44,6 +44,7 @@ export type {
 	KernelTransport,
 	KernelUser,
 	Listener,
+	HostedMode,
 	HostedModeOptions,
 	PolicyRule,
 	ProviderTransportContext,
@@ -54,6 +55,7 @@ export type {
 	Unsubscribe,
 } from '@c15t/core';
 export type { ConsentTesting } from '@c15t/core/testing';
+export { hosted } from '@c15t/core/modes';
 export type {
 	ConsentBannerButton,
 	ConsentBannerLayout,

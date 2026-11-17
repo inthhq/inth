@@ -24,7 +24,7 @@ import {
 } from '~/components/panel-trigger';
 import { ConsentBanner } from '~/components/prompt';
 
-import { withoutNetwork } from '../../testing';
+import { testing } from '../../testing';
 
 const getDefined = <Value,>(
 	value: Value,
@@ -80,7 +80,7 @@ const defaultOptions: ConsentProviderOptions = {
 	}),
 	// These tests seed or read records under the default key.
 	storageConfig: DEFAULT_KEY_STORAGE,
-	testing: withoutNetwork(),
+	mode: testing(),
 };
 
 const storedAcceptAllConsent = () => ({

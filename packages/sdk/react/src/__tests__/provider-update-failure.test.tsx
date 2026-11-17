@@ -8,7 +8,7 @@ import { expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { ConsentProvider } from '../provider';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 // oxlint-disable-next-line anti-slop/no-module-mocking -- The property under test is what the provider does with a rejected update(); the real runtime rejects only when a chunk fails to load, which a test cannot cause without mocking.
@@ -34,7 +34,7 @@ test('an update that rejects is not an unhandled rejection', async () => {
 	};
 	window.addEventListener('unhandledrejection', onRejection);
 	try {
-		const testing = withoutNetwork();
+		const testing = testing();
 		const prefetch = policyFixture();
 		const provider = (externalId: string) => (
 			<ConsentProvider

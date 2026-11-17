@@ -15,7 +15,7 @@ import { render } from 'svelte/server';
 import { describe, expect, test } from 'vitest';
 
 import ConsentProvider from '../lib/components/consent-provider.svelte';
-import { withoutNetwork } from '../lib/testing';
+import { testing } from '../lib/testing';
 import type { ConsentManagerOptions } from '../lib/types';
 import BannerFixture from './fixtures/banner-fixture.svelte';
 
@@ -53,7 +53,7 @@ const buildOptions = function buildOptions(
 		persistence: false,
 		prefetch,
 		presentation,
-		testing: withoutNetwork(),
+		mode: testing(),
 	} as ConsentManagerOptions;
 };
 

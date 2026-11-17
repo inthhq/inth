@@ -12,7 +12,7 @@ import {
 	ConsentProvider,
 	useConsentDraft,
 } from '../index';
-import { withoutNetwork } from '../testing';
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 const createRuntime = function createRuntime(): ConsentRuntime {
@@ -26,7 +26,7 @@ const createRuntime = function createRuntime(): ConsentRuntime {
 		persistence: false,
 		pkg: '@c15t/react-external-draft-test',
 		prefetch: policyFixture({ experience: false, measurement: false }),
-		testing: withoutNetwork(),
+		mode: testing(),
 	});
 };
 

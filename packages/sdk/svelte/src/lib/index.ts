@@ -113,6 +113,7 @@ export type { DialogPreload } from './dialog-warming';
 export type { ConsentTesting } from '@c15t/core/testing';
 export type { ManifestModeOptions } from './transports/manifest';
 export { manifest } from './transports/manifest';
+export { hosted, type HostedMode } from '@c15t/core/modes';
 export type { BrowserManifestModeFactory } from '@c15t/core/transports/manifest-browser';
 
 export type { ConsentManagerState, ConsentDraftState } from './context.svelte';
