@@ -80,7 +80,7 @@ ___TEMPLATE_PARAMETERS___
         "type": "EQUALS"
       }
     ],
-    "help": "Required for jsDelivr's c15t.js, c15t.headless.js and c15t.iab.js. Inth serves its /c15t.js with the backend URL already set. Leave it blank only for c15t.local.js, which releases before 3.3.0 ship."
+    "help": "Required for jsDelivr's c15t.js, c15t.headless.js and c15t.iab.js. Inth serves its /c15t.js with the backend URL already set. Leave it blank only for c15t.local.js from an older release."
   },
   {
     "type": "GROUP",
