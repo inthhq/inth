@@ -211,21 +211,37 @@ const sdkWorkspaces = (workspaces: Workspace[]) =>
       workspaceProduct(workspace.directory) === "sdk"
   );
 
+/** What a release or a manual run can ask for. `mobile` means all three. */
+export type ProductOption = Product | "android" | "react-native" | "swift";
+
+const productOptions = new Set<string>([
+  "android",
+  "cli",
+  "mobile",
+  "react-native",
+  "sdk",
+  "swift",
+]);
+
 /** Every job for the given products, as a release or a manual run needs. */
 export const fullPlan = (
   workspaces: Workspace[],
-  products: Product[] = ["cli", "sdk", "mobile"]
+  products: ProductOption[] = ["cli", "sdk", "mobile"]
 ): Plan => {
-  const mobile = products.includes("mobile");
+  const wants = (option: ProductOption) =>
+    products.includes(option) || products.includes("mobile");
+  const android = wants("android");
+  const reactNative = wants("react-native");
+  const swift = wants("swift");
   return buildPlan(
     products.includes("sdk") ? sdkWorkspaces(workspaces) : [],
     {
-      android: mobile,
+      android,
       cli: products.includes("cli"),
       full: true,
-      reactNative: mobile,
-      sdk: products.includes("sdk") || mobile,
-      swift: mobile,
+      reactNative,
+      sdk: products.includes("sdk") || android || reactNative || swift,
+      swift,
     },
     []
   );
@@ -362,16 +378,21 @@ const changedFiles = (base: string) =>
     .split("\0")
     .filter(Boolean);
 
-const parseProducts = (value: string): Product[] =>
+const isProductOption = (value: string): value is ProductOption =>
+  productOptions.has(value);
+
+const parseProducts = (value: string): ProductOption[] =>
   value
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean)
     .map((item) => {
-      if (item === "cli" || item === "sdk" || item === "mobile") {
+      if (isProductOption(item)) {
         return item;
       }
-      throw new Error(`Unknown product "${item}". Use cli, sdk or mobile.`);
+      throw new Error(
+        `Unknown product "${item}". Use ${[...productOptions].join(", ")}.`
+      );
     });
 
 if (import.meta.main) {

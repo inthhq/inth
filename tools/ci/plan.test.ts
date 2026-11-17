@@ -182,3 +182,34 @@ describe("full plans", () => {
     }
   });
 });
+
+describe("release plans", () => {
+  test("each mobile release checks its own toolchain", () => {
+    expect(fullPlan(workspaces, ["swift"])).toMatchObject({
+      android: false,
+      cli: false,
+      reactNative: false,
+      sdkPackageTests: [],
+      swift: true,
+    });
+    expect(fullPlan(workspaces, ["android"])).toMatchObject({
+      android: true,
+      reactNative: false,
+      swift: false,
+    });
+    expect(fullPlan(workspaces, ["react-native"])).toMatchObject({
+      android: false,
+      reactNative: true,
+      swift: false,
+    });
+  });
+
+  test("an SDK release checks no mobile toolchain", () => {
+    expect(fullPlan(workspaces, ["sdk"])).toMatchObject({
+      android: false,
+      cli: false,
+      reactNative: false,
+      swift: false,
+    });
+  });
+});
