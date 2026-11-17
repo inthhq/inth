@@ -10,11 +10,11 @@
  *
  * @internal
  */
-import type { ConsentMode, HostedMode } from '@c15t/core/modes';
+import type { ConsentMode, WithoutNetworkTestingData } from '@c15t/core/modes';
 import {
 	lazyBrowserManifest,
 	lazyHosted,
-	lazyOffline,
+	lazyWithoutNetwork,
 } from '@c15t/core/runtime/client-mode';
 import type { LazyBrowserManifestOptions } from '@c15t/core/runtime/client-mode';
 import type { ProviderTransportFactory } from '@c15t/react';
@@ -51,25 +51,29 @@ export interface NextClientModeOptions {
  * - `manifest({ resolve: 'browser' })`: the browser resolver, loaded on
  *   first init, reading `${routePrefix}/manifest`, else
  *   `${backendURL}/manifest`.
- * - `hosted()`: the hosted transport, loaded on first init.
- * - `local()`: the offline transport, loaded on first init.
+ * - No mode: the hosted backend's transport, loaded on first init.
+ * - `withoutNetwork()` from `c15t/next/testing`: the transport that
+ *   resolves the recommended pack in the browser, loaded on first init.
+ *   The loaded chunk throws in production builds.
  *
- * @param mode - The mode as data, or a transport factory, used as is.
+ * @param mode - The mode or testing value as data, a transport factory,
+ *   used as is, or `undefined` for the hosted backend.
  * @param options - Backend URL, route prefix and `proxy`.
  * @returns A provider transport factory.
- * @throws {Error} When `manifest()` or `hosted()` has no backend URL.
+ * @throws {Error} When the hosted backend or `manifest()` has no backend
+ *   URL.
  * @internal
  */
 export const createClientMode = function createClientMode(
-	mode: ConsentMode | ProviderTransportFactory | undefined,
+	mode:
+		| ConsentMode
+		| WithoutNetworkTestingData
+		| ProviderTransportFactory
+		| undefined,
 	options: NextClientModeOptions
 ): ProviderTransportFactory {
 	if (typeof mode === 'function') {
-		if (
-			process.env.NODE_ENV !== 'production' &&
-			mode.kind !== 'custom' &&
-			!warnedImplementation
-		) {
+		if (process.env.NODE_ENV !== 'production' && !warnedImplementation) {
 			warnedImplementation = true;
 			console.warn(
 				`[c15t] ConsentRoot \`mode\` is the ${mode.kind}() transport itself, so its code ships in the first-load bundle. Use ${mode.kind}() from c15t/next instead: it is plain data, and the root loads the code only when it runs.`
@@ -81,37 +85,29 @@ export const createClientMode = function createClientMode(
 	// has a backend URL. Without a config there may be none: say so rather
 	// than run a mode the app never chose.
 	const { routePrefix } = options;
-	const data: ConsentMode = mode ?? { type: 'manifest' };
-	if (data.type === 'offline') {
-		return Object.assign(
-			lazyOffline({
-				acknowledgeNoRecords: data.acknowledgeNoRecords,
-				policyRules: data.policyRules,
-			}),
-			data
+	if (mode?.type === 'without-network') {
+		return lazyWithoutNetwork(
+			'@c15t/nextjs/testing',
+			mode.iab === undefined ? {} : { iab: mode.iab }
 		);
 	}
 	// Saves never fall back to `routePrefix`: the route takes writes only
-	// with `proxy`. Of the modes left, only `hosted()` has a `backendURL`.
-	const backendURL = options.proxy
-		? routePrefix
-		: ((data as HostedMode).backendURL ?? options.backendURL);
+	// with `proxy`.
+	const backendURL = options.proxy ? routePrefix : options.backendURL;
 	if (!backendURL) {
 		// Production builds drop the setup hint and its variable names.
 		throw new Error(
-			`@c15t/nextjs: ${data.type}() needs a backend URL.${
+			`@c15t/nextjs: \`backendURL\` is required.${
 				process.env.NODE_ENV === 'production'
 					? ''
 					: ' Set NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL), or `backendURL` in c15t.config.ts.'
 			}`
 		);
 	}
-	if (data.type === 'hosted') {
-		return Object.assign(
-			lazyHosted({ backendURL, headers: data.headers }),
-			data
-		);
+	if (mode === undefined) {
+		return lazyHosted({ backendURL });
 	}
+	const data = mode;
 	if (data.resolve === 'browser') {
 		const {
 			resolve: _resolve,

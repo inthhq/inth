@@ -20,14 +20,11 @@ export type { ConsentConfig } from './config';
 export { defineConsentConfig } from './config';
 export type {
 	ConsentMode,
-	HostedMode,
-	HostedModeOptions,
 	ManifestMode,
 	ManifestModeOptions,
-	OfflineMode,
-	OfflineModeOptions,
+	WithoutNetworkTestingData,
 } from '@c15t/core/modes';
-export { hosted, local, manifest, offline } from '@c15t/core/modes';
+export { manifest } from '@c15t/core/modes';
 // More components, each its own client module, and the theme helpers,
 // which render on the server.
 export {

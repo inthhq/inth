@@ -78,15 +78,13 @@ export const readConfigRoutePrefix = function readConfigRoutePrefix(
 	return checkRoutePrefix(routePrefix);
 };
 
-/** The backend URL: explicit, then the mode's, the config's, the env's, the build's. */
+/** The backend URL: explicit, then the config's, the env's, the build's. */
 const resolveBackendURL = function resolveBackendURL(
 	options: ConsentSourceOptions,
-	config: ConsentConfig | undefined,
-	mode: ConsentMode
+	config: ConsentConfig | undefined
 ): string | undefined {
 	return (
 		options.backendURL ??
-		(mode.type === 'hosted' ? mode.backendURL : undefined) ??
 		config?.backendURL ??
 		readBackendURLFromEnv() ??
 		generatedBackendURL
@@ -96,10 +94,10 @@ const resolveBackendURL = function resolveBackendURL(
 /** Where `manifest()` (or an explicit manifest source) resolves from. */
 const resolveManifestSource = function resolveManifestSource(
 	options: ConsentSourceOptions,
-	mode: ConsentMode,
+	mode: ConsentMode | undefined,
 	backendURL: string | undefined
 ): Pick<ConsentSource, 'manifestURL' | 'mode' | 'snapshot'> {
-	const manifestMode = mode.type === 'manifest' ? mode : undefined;
+	const manifestMode = mode;
 	// A `/`-relative manifestURL is the browser's, usually the app's route.
 	const modeURL = isPath(manifestMode?.manifestURL)
 		? undefined
@@ -124,13 +122,13 @@ const resolveManifestSource = function resolveManifestSource(
 /**
  * The config, mode and manifest source for a server helper call.
  *
- * - `manifest()` (the default) resolves from the snapshot, unless the mode
+ * - `manifest()` resolves from the snapshot, unless the mode
  *   says `source: 'runtime'` or names an absolute `manifestURL`, which the
  *   server then fetches. A `/`-relative `manifestURL` is the browser's,
  *   usually the app's own route, so the server reads
  *   `${backendURL}/manifest` instead.
- * - `hosted()` asks `${backendURL}/init` with the mode's headers.
- * - `local()` resolves nothing on the server; the browser does.
+ * - No mode asks the hosted backend's `${backendURL}/init`.
+ * - A `testing` value resolves nothing on the server; the browser does.
  *
  * @param options - Explicit overrides of the config.
  * @returns Where to resolve from.
@@ -140,9 +138,9 @@ export const resolveConsentSource = function resolveConsentSource(
 	options: ConsentSourceOptions = {}
 ): ConsentSource {
 	const config = options.config ?? userConfig;
-	const mode: ConsentMode = config?.mode ?? { type: 'manifest' };
+	const mode = config?.mode;
 	const routePrefix = readConfigRoutePrefix(config);
-	const backendURL = resolveBackendURL(options, config, mode);
+	const backendURL = resolveBackendURL(options, config);
 	const forcedManifest =
 		options.manifestURL !== undefined || options.snapshot !== undefined;
 	const none = {
@@ -152,14 +150,13 @@ export const resolveConsentSource = function resolveConsentSource(
 		routePrefix,
 		snapshot: undefined,
 	};
-	if (mode.type === 'offline' && !forcedManifest) {
+	if (config?.testing && !forcedManifest) {
 		return { ...none, backendURL: undefined, mode: undefined };
 	}
-	if (mode.type === 'hosted' && !forcedManifest) {
+	if (!mode && !forcedManifest) {
 		return {
 			...none,
 			backendURL,
-			initHeaders: mode.headers,
 			mode: backendURL === undefined ? undefined : 'hosted',
 		};
 	}

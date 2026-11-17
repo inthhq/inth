@@ -6,7 +6,6 @@
  * browser renders it eagerly and the blocker must be in place before the
  * page's code sends a request.
  */
-import { custom } from '@c15t/react';
 import { renderToReadableStream } from 'react-dom/server';
 import { beforeAll, expect, test } from 'vitest';
 
@@ -18,6 +17,7 @@ import {
 } from '../../../core/src/__tests__/fixtures/kernel-fixtures';
 import { ConsentRoot } from '../root';
 import type { ConsentRootProps } from '../root';
+import { transportMode } from './fixtures/transport-mode';
 
 // A server process renders with the start module loaded; the first render
 // in a process, before it loads, is `root-sync-render.test.tsx`'s case.
@@ -39,7 +39,7 @@ const render = async (
 ): Promise<string> => {
 	const stream = await renderToReadableStream(
 		<ConsentRoot
-			options={{ mode: custom({ init: () => Promise.resolve({}) }) }}
+			options={{ mode: transportMode({ init: () => Promise.resolve({}) }) }}
 			state={choiceState()}
 			{...props}
 		>
@@ -217,7 +217,7 @@ test.each([
 		{
 			options: {
 				enabled: false,
-				mode: custom({ init: () => Promise.resolve({}) }),
+				mode: transportMode({ init: () => Promise.resolve({}) }),
 			},
 		},
 	],

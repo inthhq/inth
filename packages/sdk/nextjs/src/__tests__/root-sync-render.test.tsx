@@ -4,7 +4,6 @@
  * Browser bundles resolve `#engine-now` to a stub and load the engine with
  * `import()` instead.
  */
-import { custom } from '@c15t/react';
 import { renderToString } from 'react-dom/server';
 import { expect, test } from 'vitest';
 
@@ -15,12 +14,13 @@ import {
 	optInRule,
 } from '../../../core/src/__tests__/fixtures/kernel-fixtures';
 import { ConsentRoot } from '../root';
+import { transportMode } from './fixtures/transport-mode';
 
 test('renderToString of ConsentRoot right after its import does not suspend', () => {
 	const resolution = matchedResolution(optInRule());
 	const html = renderToString(
 		<ConsentRoot
-			options={{ mode: custom({ init: () => Promise.resolve({}) }) }}
+			options={{ mode: transportMode({ init: () => Promise.resolve({}) }) }}
 			// A root script with a server start, whose code is in the module
 			// that is still loading.
 			scripts={[

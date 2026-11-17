@@ -4,7 +4,6 @@ import type { Script } from '@c15t/core';
  * Rendered ahead of the page it holds the parser back and delays first
  * paint, so it must follow the page content.
  */
-import { custom } from '@c15t/react';
 import { renderToReadableStream } from 'react-dom/server';
 import { expect, test, vi } from 'vitest';
 
@@ -17,6 +16,7 @@ import {
 import { deferConsent } from '../defer';
 import { ConsentRoot } from '../root';
 import type { ConsentRootProps } from '../root';
+import { transportMode } from './fixtures/transport-mode';
 
 const pixel: Script = {
 	category: 'marketing',
@@ -46,7 +46,7 @@ const render = async (
 ): Promise<string> => {
 	const stream = await renderToReadableStream(
 		<ConsentRoot
-			options={{ mode: custom({ init: () => Promise.resolve({}) }) }}
+			options={{ mode: transportMode({ init: () => Promise.resolve({}) }) }}
 			scripts={[pixel]}
 			state={state}
 		>
@@ -88,7 +88,7 @@ test('renders no inline script without a state', async () => {
 	// would still need a CSP nonce.
 	const stream = await renderToReadableStream(
 		<ConsentRoot
-			options={{ mode: custom({ init: () => Promise.resolve({}) }) }}
+			options={{ mode: transportMode({ init: () => Promise.resolve({}) }) }}
 			scripts={[pixel]}
 		>
 			<main id="page">Page</main>
@@ -105,7 +105,7 @@ test('renders no inline script when the app turns the server start off', async (
 	await render();
 	const stream = await renderToReadableStream(
 		<ConsentRoot
-			options={{ mode: custom({ init: () => Promise.resolve({}) }) }}
+			options={{ mode: transportMode({ init: () => Promise.resolve({}) }) }}
 			scriptLoader={{ serverStart: false }}
 			scripts={[pixel]}
 			state={grantedState()}
@@ -149,7 +149,7 @@ test('renders the empty script the browser hydrates when the start module fails 
 		const onError = vi.fn();
 		const stream = await renderToReadableStream(
 			<FreshRoot
-				options={{ mode: custom({ init: () => Promise.resolve({}) }) }}
+				options={{ mode: transportMode({ init: () => Promise.resolve({}) }) }}
 				scripts={[pixel]}
 				state={grantedState()}
 			>
@@ -192,7 +192,7 @@ test('a render whose start module loads late names the start script’s render i
 		const { ConsentRoot: FreshRoot } = await import('../root');
 		const stream = await renderToReadableStream(
 			<FreshRoot
-				options={{ mode: custom({ init: () => Promise.resolve({}) }) }}
+				options={{ mode: transportMode({ init: () => Promise.resolve({}) }) }}
 				scripts={[pixel]}
 				state={grantedState()}
 			>
@@ -243,7 +243,7 @@ test('renders the server start on React 18, which has no `use`', async () => {
 		const onError = vi.fn();
 		const stream = await renderToReadableStream(
 			<Root
-				options={{ mode: custom({ init: () => Promise.resolve({}) }) }}
+				options={{ mode: transportMode({ init: () => Promise.resolve({}) }) }}
 				scripts={[pixel]}
 				state={Promise.resolve(grantedState())}
 			>
@@ -274,7 +274,7 @@ test('finishes the render on React 18 when the start module fails to load', asyn
 		const Root = await importRootWithoutUse();
 		const stream = await renderToReadableStream(
 			<Root
-				options={{ mode: custom({ init: () => Promise.resolve({}) }) }}
+				options={{ mode: transportMode({ init: () => Promise.resolve({}) }) }}
 				scripts={[pixel]}
 				state={grantedState()}
 			>
@@ -315,7 +315,7 @@ test('finishes concurrent React 18 renders while a failed start module reloads',
 		const renderPage = async () => {
 			const stream = await renderToReadableStream(
 				<Root
-					options={{ mode: custom({ init: () => Promise.resolve({}) }) }}
+					options={{ mode: transportMode({ init: () => Promise.resolve({}) }) }}
 					scripts={[pixel]}
 					state={grantedState()}
 				>
@@ -355,7 +355,7 @@ test('a deferred consent island keeps the server start script', async () => {
 		Promise.resolve({
 			default: ({ state }: { state: ConsentRootProps['state'] }) => (
 				<ConsentRoot
-					options={{ mode: custom({ init: () => Promise.resolve({}) }) }}
+					options={{ mode: transportMode({ init: () => Promise.resolve({}) }) }}
 					scripts={[pixel]}
 					state={state}
 				/>
@@ -383,7 +383,7 @@ test('runs each serverStart once per render', async () => {
 	const serverStart = vi.fn(() => ({ code: '' }));
 	const stream = await renderToReadableStream(
 		<ConsentRoot
-			options={{ mode: custom({ init: () => Promise.resolve({}) }) }}
+			options={{ mode: transportMode({ init: () => Promise.resolve({}) }) }}
 			scripts={[{ ...pixel, serverStart }]}
 			state={grantedState()}
 		>

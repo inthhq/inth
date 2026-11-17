@@ -1,4 +1,4 @@
-import { hosted, manifest, offline } from '@c15t/core/modes';
+import { manifest } from '@c15t/core/modes';
 /**
  * Tests for `defineConsentConfig`: validation, defaults and freezing. The
  * checks run where Next.js first evaluates the config, on the server, so
@@ -7,6 +7,7 @@ import { hosted, manifest, offline } from '@c15t/core/modes';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { defineConsentConfig } from '../config';
+import { withoutNetwork } from '../testing';
 
 afterEach(() => {
 	vi.restoreAllMocks();
@@ -49,18 +50,13 @@ describe('defineConsentConfig', () => {
 		);
 	});
 
-	test('needs no backend URL for offline() or a hosted() that has one', () => {
+	test('needs no backend URL for a testing value', () => {
 		vi.stubEnv('NEXT_PUBLIC_C15T_BACKEND_URL', '');
 
-		expect(defineConsentConfig({ mode: offline() })).toEqual({
-			mode: { type: 'offline' },
+		expect(defineConsentConfig({ testing: withoutNetwork() })).toEqual({
+			testing: { type: 'without-network' },
 		});
-		expect(() =>
-			defineConsentConfig({
-				mode: hosted({ backendURL: 'https://consent.example.com' }),
-			})
-		).not.toThrow();
-		expect(() => defineConsentConfig({ mode: hosted() })).toThrow(
+		expect(() => defineConsentConfig({})).toThrow(
 			/NEXT_PUBLIC_C15T_BACKEND_URL/u
 		);
 		expect(() => defineConsentConfig()).toThrow(

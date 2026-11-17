@@ -4,7 +4,7 @@
  * only the callbacks it names. Passing `options={{ nonce }}` must not drop
  * the config's callbacks, translations or mode.
  */
-import { ConsentBanner, custom } from '@c15t/react';
+import { ConsentBanner } from '@c15t/react';
 import { afterEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
@@ -31,7 +31,11 @@ vi.mock('@c15t/nextjs/user-config', () => ({
 			i18n: {
 				messages: { en: { cookieBanner: { title: 'Title from config' } } },
 			},
-			mode: custom({ init: () => Promise.resolve({}), save: configured.save }),
+			// A fake backend, built here: the mock runs before other imports.
+			mode: Object.assign(
+				() => ({ init: () => Promise.resolve({}), save: configured.save }),
+				{ kind: 'hosted' as const }
+			),
 		},
 	},
 }));

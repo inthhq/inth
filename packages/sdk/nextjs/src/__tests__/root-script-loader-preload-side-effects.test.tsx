@@ -6,18 +6,18 @@
  * Each render suspends forever, so nothing commits and no effect runs:
  * anything written or loaded came from the render.
  */
-import { offline } from '@c15t/core/modes';
 import { createRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { encodeStoredConsentEnvelopeJson } from '../../../core/src/modules/persistence/writer/encode';
 import { ConsentRoot } from '../root';
+import { withoutNetwork } from '../testing';
 import type { ConsentState } from '../types';
 import { policyFixture } from './policy-fixture';
 
-/** These tests are not about the backend; an explicit offline({ acknowledgeNoRecords: true }) needs none. */
-const OFFLINE_CONFIG = { mode: offline({ acknowledgeNoRecords: true }) };
+/** These tests are not about the backend; withoutNetwork() needs none. */
+const OFFLINE_CONFIG = { testing: withoutNetwork() };
 
 const writer = vi.hoisted(() => ({ loads: 0 }));
 

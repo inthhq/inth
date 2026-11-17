@@ -1,5 +1,5 @@
 import type { Vendor } from '@c15t/core';
-import type { ConsentMode } from '@c15t/core/modes';
+import type { ConsentMode, WithoutNetworkTestingData } from '@c15t/core/modes';
 import type { Script } from '@c15t/core/modules/script-loader';
 import type { ProviderTransportFactory } from '@c15t/react';
 import type {
@@ -62,12 +62,14 @@ export interface ConsentClientOptions {
 
 	/**
 	 * Additional React provider options. `options.mode` replaces the
-	 * config's `mode`: `manifest()`, `hosted()` or `local()` from
-	 * `c15t/next`, or a transport such as `custom(transport)`.
+	 * config's `mode`: `manifest()` from `c15t/next`, or a transport
+	 * factory. `options.testing` replaces the config's `testing`.
 	 */
 	options?: Omit<
 		ConsentProviderOptions,
+		| 'backendURL'
 		| 'mode'
+		| 'testing'
 		| 'clearOnRevocation'
 		| 'networkBlocker'
 		| 'persistence'
@@ -80,5 +82,6 @@ export interface ConsentClientOptions {
 		| '__resolveStreamedInit'
 	> & {
 		mode?: ConsentMode | ProviderTransportFactory;
+		testing?: WithoutNetworkTestingData;
 	};
 }

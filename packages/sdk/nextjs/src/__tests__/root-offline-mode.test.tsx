@@ -8,12 +8,12 @@
  * The tests share one module registry and run in order: the first checks
  * that nothing loaded, the second that offline init loads it.
  */
-import { offline } from '@c15t/core/modes';
 import { useActiveUI, useModel } from '@c15t/react';
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { ConsentRoot } from '../root';
+import { withoutNetwork } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 const offlineModule = vi.hoisted(() => ({ loads: 0 }));
@@ -52,10 +52,10 @@ describe('ConsentRoot offline mode', () => {
 		expect(offlineModule.loads).toBe(0);
 	});
 
-	test('an offline() root resolves the recommended rules', async () => {
+	test('a withoutNetwork() root resolves the recommended rules', async () => {
 		const { getByTestId } = await render(
 			<ConsentRoot
-				config={{ mode: offline({ acknowledgeNoRecords: true }) }}
+				config={{ testing: withoutNetwork() }}
 				persistence={false}
 				state={{ initialOverrides: { country: 'DE' } }}
 			>

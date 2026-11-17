@@ -72,7 +72,7 @@ const createMode = function createMode(
 ) {
 	// The config carries the backend URL, route prefix and `proxy`.
 	return createClientMode(
-		options?.mode ?? config?.mode,
+		options?.testing ?? config?.testing ?? options?.mode ?? config?.mode,
 		config ?? { backendURL: readBackendURLFromEnv() }
 	);
 };
@@ -385,7 +385,8 @@ const useRootOptions = function useRootOptions(props: ConsentRootProps) {
 	if (
 		process.env.NODE_ENV !== 'production' &&
 		!config &&
-		!props.options?.mode
+		!props.options?.mode &&
+		!props.options?.testing
 	) {
 		warnMissingConfig();
 	}
@@ -426,8 +427,10 @@ const useRootOptions = function useRootOptions(props: ConsentRootProps) {
 		networkBlocker,
 		persistence,
 		prefetch: state,
+		// `mode` is the transport the testing value selected.
 		scriptLoader,
 		scripts,
+		testing: undefined,
 		vendors,
 	};
 	// Without `state` there is nothing to start, and a static page keeps

@@ -386,7 +386,7 @@ describe('Next.js build-time manifest', () => {
 			const root = await createRoot();
 			await writeFile(
 				join(root, 'c15t.config.ts'),
-				"export default { backendURL: 'https://config.example.com' };\n"
+				"export default { backendURL: 'https://config.example.com', mode: { type: 'manifest' } };\n"
 			);
 			const { fetch } = optionsFor();
 			await build({ fetch });
@@ -419,8 +419,12 @@ describe('Next.js build-time manifest', () => {
 	});
 
 	test.each([
-		['hosted()', "{ mode: { type: 'hosted' } }", 'uses hosted()'],
-		['offline()', "{ mode: { type: 'offline' } }", 'uses local()'],
+		['no mode', '{}', 'sets no mode'],
+		[
+			'withoutNetwork()',
+			"{ testing: { type: 'without-network' } }",
+			'sets testing',
+		],
 		[
 			'manifest({ snapshot })',
 			"{ mode: { type: 'manifest', snapshot: { revision: 'own' } } }",
@@ -486,7 +490,7 @@ describe('Next.js build-time manifest', () => {
 		const root = await createRoot();
 		await writeFile(
 			join(root, 'c15t.config.ts'),
-			"export default { backendURL: 'https://config.example.com' };\n"
+			"export default { backendURL: 'https://config.example.com', mode: { type: 'manifest' } };\n"
 		);
 		const { fetch } = optionsFor();
 		await withConsentManifest({}, { fetch })('phase-production-build', {

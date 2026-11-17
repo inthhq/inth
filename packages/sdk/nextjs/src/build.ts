@@ -230,19 +230,22 @@ const loadUserConfig = async function loadUserConfig(
 
 /**
  * Why the config's mode needs no build-time manifest, as Nuxt and Astro
- * decide: `hosted()` and `local()` have none to fetch, a `snapshot` is
+ * decide: the hosted backend (no mode) and a `testing` value have none to
+ * fetch, a `snapshot` is
  * already one, and `manifest({ source: 'runtime' })` always fetches at
  * runtime. `undefined` when the build should fetch it.
  */
 const modeSkipReason = function modeSkipReason(
 	config: ConsentConfig | undefined
 ): string | undefined {
-	const mode = config?.mode;
-	if (mode?.type === 'hosted') {
-		return 'c15t.config.ts uses hosted(), which asks the backend for each visitor';
+	if (config?.testing) {
+		return 'c15t.config.ts sets testing, which needs no backend';
 	}
-	if (mode?.type === 'offline') {
-		return 'c15t.config.ts uses local(), which needs no backend';
+	const mode = config?.mode;
+	// Without a config the build cannot tell, so it fetches as for
+	// manifest(): an unused snapshot costs less than a missing one.
+	if (config && !mode) {
+		return 'c15t.config.ts sets no mode, so it asks the hosted backend for each visitor';
 	}
 	if (mode?.snapshot) {
 		return 'c15t.config.ts passes manifest({ snapshot })';
