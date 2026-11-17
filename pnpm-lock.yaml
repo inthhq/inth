@@ -1055,12 +1055,12 @@ importers:
       '@c15t/benchmarking':
         specifier: workspace:*
         version: link:../shared
+      '@inth/nuxt':
+        specifier: workspace:*
+        version: link:../../packages/sdk/nuxt
       '@inth/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk/sdk
-      '@inth/vue':
-        specifier: workspace:*
-        version: link:../../packages/sdk/vue
       nuxt:
         specifier: 4.6.0
         version: 4.6.0(a3aaa0616e07a1827883be40cc3d483c)
@@ -1246,6 +1246,9 @@ importers:
       '@inth/nextjs':
         specifier: workspace:*
         version: link:../../../packages/sdk/nextjs
+      '@inth/nuxt':
+        specifier: workspace:*
+        version: link:../../../packages/sdk/nuxt
       '@inth/react':
         specifier: workspace:*
         version: link:../../../packages/sdk/react
@@ -1417,6 +1420,9 @@ importers:
       '@inth/nextjs':
         specifier: workspace:*
         version: link:../../../packages/sdk/nextjs
+      '@inth/nuxt':
+        specifier: workspace:*
+        version: link:../../../packages/sdk/nuxt
       '@inth/react':
         specifier: workspace:*
         version: link:../../../packages/sdk/react
@@ -1910,9 +1916,9 @@ importers:
       '@inth/integrations':
         specifier: workspace:*
         version: link:../../packages/sdk/integrations
-      '@inth/vue':
+      '@inth/nuxt':
         specifier: workspace:*
-        version: link:../../packages/sdk/vue
+        version: link:../../packages/sdk/nuxt
       nuxt:
         specifier: ^4.5.1
         version: 4.6.0(a3aaa0616e07a1827883be40cc3d483c)
@@ -1929,9 +1935,9 @@ importers:
       '@inth/integrations':
         specifier: workspace:*
         version: link:../../packages/sdk/integrations
-      '@inth/vue':
+      '@inth/nuxt':
         specifier: workspace:*
-        version: link:../../packages/sdk/vue
+        version: link:../../packages/sdk/nuxt
       nuxt:
         specifier: ^4.5.1
         version: 4.6.0(dbe513efaf19feeb17bec0a562e95b4c)
@@ -1954,9 +1960,6 @@ importers:
       '@inth/react':
         specifier: workspace:*
         version: link:../../packages/sdk/react
-      '@inth/sdk':
-        specifier: workspace:*
-        version: link:../../packages/sdk/sdk
       react:
         specifier: 19.2.7
         version: 19.2.7
@@ -2025,9 +2028,6 @@ importers:
       '@inth/nextjs':
         specifier: workspace:*
         version: link:../../packages/sdk/nextjs
-      '@inth/sdk':
-        specifier: workspace:*
-        version: link:../../packages/sdk/sdk
       next:
         specifier: 16.2.10
         version: 16.2.10(@babel/core@8.0.5)(@opentelemetry/api@1.9.0)(@playwright/test@1.63.0)(babel-plugin-macros@3.1.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(sass@1.104.1)
@@ -2071,9 +2071,6 @@ importers:
       '@inth/nextjs':
         specifier: workspace:*
         version: link:../../packages/sdk/nextjs
-      '@inth/sdk':
-        specifier: workspace:*
-        version: link:../../packages/sdk/sdk
       next:
         specifier: 16.2.10
         version: 16.2.10(@babel/core@8.0.5)(@opentelemetry/api@1.9.0)(@playwright/test@1.63.0)(babel-plugin-macros@3.1.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(sass@1.104.1)
@@ -2105,9 +2102,6 @@ importers:
       '@inth/nextjs':
         specifier: workspace:*
         version: link:../../packages/sdk/nextjs
-      '@inth/sdk':
-        specifier: workspace:*
-        version: link:../../packages/sdk/sdk
       next:
         specifier: 16.2.10
         version: 16.2.10(@babel/core@8.0.5)(@opentelemetry/api@1.9.0)(@playwright/test@1.63.0)(babel-plugin-macros@3.1.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(sass@1.104.1)
@@ -2151,9 +2145,6 @@ importers:
       '@inth/nextjs':
         specifier: workspace:*
         version: link:../../packages/sdk/nextjs
-      '@inth/sdk':
-        specifier: workspace:*
-        version: link:../../packages/sdk/sdk
       next:
         specifier: 16.2.10
         version: 16.2.10(@babel/core@8.0.5)(@opentelemetry/api@1.9.0)(@playwright/test@1.63.0)(babel-plugin-macros@3.1.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(sass@1.104.1)
@@ -2188,9 +2179,6 @@ importers:
       '@inth/react':
         specifier: workspace:*
         version: link:../../packages/sdk/react
-      '@inth/sdk':
-        specifier: workspace:*
-        version: link:../../packages/sdk/sdk
       next:
         specifier: 16.2.10
         version: 16.2.10(@babel/core@8.0.5)(@opentelemetry/api@1.9.0)(@playwright/test@1.63.0)(babel-plugin-macros@3.1.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(sass@1.104.1)
@@ -2234,9 +2222,6 @@ importers:
       '@inth/nextjs':
         specifier: workspace:*
         version: link:../../packages/sdk/nextjs
-      '@inth/sdk':
-        specifier: workspace:*
-        version: link:../../packages/sdk/sdk
       next:
         specifier: 16.2.10
         version: 16.2.10(@babel/core@8.0.5)(@opentelemetry/api@1.9.0)(@playwright/test@1.63.0)(babel-plugin-macros@3.1.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(sass@1.104.1)
@@ -2274,9 +2259,9 @@ importers:
 
   examples/showcase-nuxt-theme:
     dependencies:
-      '@inth/vue':
+      '@inth/nuxt':
         specifier: workspace:*
-        version: link:../../packages/sdk/vue
+        version: link:../../packages/sdk/nuxt
       nuxt:
         specifier: ^4.5.1
         version: 4.6.0(a3aaa0616e07a1827883be40cc3d483c)
@@ -2296,9 +2281,6 @@ importers:
       '@inth/nextjs':
         specifier: workspace:*
         version: link:../../packages/sdk/nextjs
-      '@inth/sdk':
-        specifier: workspace:*
-        version: link:../../packages/sdk/sdk
       next:
         specifier: 16.2.10
         version: 16.2.10(@babel/core@8.0.5)(@opentelemetry/api@1.9.0)(@playwright/test@1.63.0)(babel-plugin-macros@3.1.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(sass@1.104.1)
@@ -2760,9 +2742,6 @@ importers:
       '@inth/react':
         specifier: workspace:*
         version: link:../../../packages/sdk/react
-      '@inth/sdk':
-        specifier: workspace:*
-        version: link:../../../packages/sdk/sdk
       next:
         specifier: 16.2.10
         version: 16.2.10(@babel/core@8.0.5)(@opentelemetry/api@1.9.0)(@playwright/test@1.63.0)(babel-plugin-macros@3.1.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(sass@1.104.1)
@@ -2791,9 +2770,9 @@ importers:
       '@inth/integrations':
         specifier: workspace:*
         version: link:../../../packages/sdk/integrations
-      '@inth/vue':
+      '@inth/nuxt':
         specifier: workspace:*
-        version: link:../../../packages/sdk/vue
+        version: link:../../../packages/sdk/nuxt
       h3:
         specifier: 1.15.11
         version: 1.15.11
@@ -2816,9 +2795,6 @@ importers:
       '@inth/react':
         specifier: workspace:*
         version: link:../../../packages/sdk/react
-      '@inth/sdk':
-        specifier: workspace:*
-        version: link:../../../packages/sdk/sdk
       react:
         specifier: 19.2.7
         version: 19.2.7
@@ -2860,9 +2836,6 @@ importers:
       '@inth/integrations':
         specifier: workspace:*
         version: link:../../../packages/sdk/integrations
-      '@inth/sdk':
-        specifier: workspace:*
-        version: link:../../../packages/sdk/sdk
       '@inth/svelte':
         specifier: workspace:*
         version: link:../../../packages/sdk/svelte
@@ -3228,9 +3201,9 @@ importers:
       '@inth/integrations':
         specifier: workspace:*
         version: link:../../../packages/sdk/integrations
-      '@inth/vue':
+      '@inth/nuxt':
         specifier: workspace:*
-        version: link:../../../packages/sdk/vue
+        version: link:../../../packages/sdk/nuxt
       h3:
         specifier: 1.15.11
         version: 1.15.11
@@ -3253,9 +3226,9 @@ importers:
       '@inth/integrations':
         specifier: workspace:*
         version: link:../../../packages/sdk/integrations
-      '@inth/vue':
+      '@inth/nuxt':
         specifier: workspace:*
-        version: link:../../../packages/sdk/vue
+        version: link:../../../packages/sdk/nuxt
       nuxt:
         specifier: 4.6.0
         version: 4.6.0(a3aaa0616e07a1827883be40cc3d483c)
