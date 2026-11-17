@@ -12,24 +12,24 @@ import { EARLY_CONSENT_TAP_SCRIPT } from '@inth/sdk/surface-actions';
 import { translations } from '@inth/sdk/translations/en';
 import { describe, expect, test } from 'vitest';
 
-import {
-	DEFERRED_ENGINE_MANIFEST_KEY as BUILD_KEY,
-	preloadDeferredEngine,
-} from '../prefetch';
-import type { ClientManifestChunk } from '../prefetch';
+import { createVueConsentKernelContext } from '../../../vue/src/__tests__/test-kernel';
 import {
 	canDeferEngine,
 	DEFERRED_ENGINE_MANIFEST_KEY,
-} from '../runtime/deferred/boot';
-import { isDeferredBannerModule } from '../runtime/deferred/lazy-modules';
+} from '../../../vue/src/runtime/deferred/boot';
+import { isDeferredBannerModule } from '../../../vue/src/runtime/deferred/lazy-modules';
 import {
 	BANNER_ROOT,
 	EARLY_TAP_NOTIFY,
 	EARLY_TAP_STYLE_ID as STYLE_ID,
 	EARLY_TAPS_KEY,
-} from '../runtime/deferred/trigger';
-import type { RuntimeConsentConfig } from '../runtime/kernel';
-import { createVueConsentKernelContext } from './test-kernel';
+} from '../../../vue/src/runtime/deferred/trigger';
+import type { RuntimeConsentConfig } from '../../../vue/src/runtime/kernel';
+import {
+	DEFERRED_ENGINE_MANIFEST_KEY as BUILD_KEY,
+	preloadDeferredEngine,
+} from '../prefetch';
+import type { ClientManifestChunk } from '../prefetch';
 
 const initFor = (rule: Partial<PolicyRule>): InitOutput => ({
 	branding: 'c15t',

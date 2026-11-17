@@ -296,7 +296,7 @@ describe('the build snapshot in manifest() mode', () => {
 				unreachable()
 			)
 		).rejects.toThrow(
-			"@inth/vue: could not fetch the consent manifest from https://consent.example.com/manifest during the build (getaddrinfo ENOTFOUND). Set `C15T_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to deploy with runtime fetching."
+			"@inth/nuxt: could not fetch the consent manifest from https://consent.example.com/manifest during the build (getaddrinfo ENOTFOUND). Set `C15T_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to deploy with runtime fetching."
 		);
 	});
 
@@ -592,7 +592,7 @@ describe('mode and routePrefix', () => {
 		await expect(
 			setUpModule({ projectUrl: '/api/self-host', routePrefix: '/' })
 		).rejects.toThrow(
-			"@inth/vue: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'."
+			"@inth/nuxt: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'."
 		);
 	});
 
@@ -677,7 +677,7 @@ describe('mode and routePrefix', () => {
 		const transport = Object.assign(() => ({}), { kind: 'hosted' });
 		await expect(
 			setUpModule({ mode: transport, projectUrl: '/api/self-host' })
-		).rejects.toThrow("Import `manifest` or `hosted` from '@inth/vue'");
+		).rejects.toThrow("Import `manifest` or `hosted` from '@inth/nuxt'");
 	});
 
 	test('nuxt generate warns that the server cannot resolve the policy', async () => {

@@ -5,9 +5,9 @@ import type { BlockedRequestInfo } from '@inth/sdk/modules/network-blocker';
 import type { NitroRouteConfig } from 'nitropack/types';
 import { expectTypeOf } from 'vitest';
 
+import type { testing } from '../../vue/src/testing';
 import type { hosted, manifest } from '../src/module';
 import type { ModuleOptions } from '../src/nuxt-options';
-import type { testing } from '../src/testing';
 
 // Module options accept every runtime option that survives JSON.
 expectTypeOf<{

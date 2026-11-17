@@ -28,6 +28,7 @@ const nonReactFrameworkFiles = [
 	'benchmarks/nuxt-browser-bench/**/*.{js,jsx,ts,tsx}',
 	'internals/fixtures/nuxt/**/*.{js,jsx,ts,tsx}',
 	'internals/fixtures/nuxt-vapor/**/*.{js,jsx,ts,tsx}',
+	'packages/sdk/nuxt/**/*.{js,jsx,ts,tsx}',
 	'packages/sdk/svelte/**/*.{js,jsx,ts,tsx}',
 	'packages/sdk/vue/**/*.{js,jsx,ts,tsx}',
 ] as const;

@@ -15,5 +15,5 @@
 		"src/env.d.ts",
 		"src/c15t-aliases.d.ts"
 	],
-	"exclude": ["src/**/*.nuxt.ts", "src/runtime/plugin.nuxt.ts", "src/module.ts"]
+	"exclude": ["src/**/*.nuxt.ts", "src/runtime/plugin.nuxt.ts"]
 }

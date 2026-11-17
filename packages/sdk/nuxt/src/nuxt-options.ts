@@ -1,9 +1,9 @@
-import type { ConsentConfig } from './runtime/config';
+import type { ConsentConfig } from '@inth/vue/runtime/config.js';
 import type {
 	RuntimeConsentConfig,
 	UseNetworkBlockerOptions,
-} from './runtime/kernel';
-import type { NuxtConsentModeConfig } from './runtime/nuxt-mode';
+} from '@inth/vue/runtime/kernel.js';
+import type { NuxtConsentModeConfig } from '@inth/vue/runtime/nuxt-mode.js';
 
 /** The Nuxt module's configuration under the `c15t` key. */
 export interface C15tNuxtConfig

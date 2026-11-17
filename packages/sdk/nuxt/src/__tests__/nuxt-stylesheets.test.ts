@@ -21,7 +21,7 @@ const ui = (file: string) =>
 const vue = (file: string) =>
 	`/repo/node_modules/@inth/vue/dist/runtime/${file}`;
 
-const isConsentFile = (file: string) => file.includes('/@c15t/');
+const isConsentFile = (file: string) => file.includes('/@inth/');
 const inlineVueStyles = (id?: string) => !!id && id.includes('.vue');
 
 const createIndex = (): StyleSourceIndex =>

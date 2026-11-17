@@ -8,8 +8,8 @@ import { join } from 'node:path';
 
 import { expect, test } from 'vitest';
 
+import * as composables from '../../../vue/src/runtime/composables';
 import { readComposableExports } from '../composable-exports';
-import * as composables from '../runtime/composables';
 
 test('finds every composable the index exports', () => {
 	const exported = Object.keys(composables)
@@ -17,7 +17,9 @@ test('finds every composable the index exports', () => {
 		.sort();
 
 	expect(
-		readComposableExports(join(__dirname, '../runtime/composables/index.ts'))
+		readComposableExports(
+			join(__dirname, '../../../vue/src/runtime/composables/index.ts')
+		)
 	).toEqual(exported);
 	expect(exported).toEqual(
 		expect.arrayContaining([

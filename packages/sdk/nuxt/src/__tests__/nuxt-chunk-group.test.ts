@@ -62,9 +62,11 @@ describe('nuxtConsentConfigChunkGroup', () => {
 	});
 });
 
-test('consentPackageDirs finds the c15t packages next to @inth/vue', () => {
+test('consentPackageDirs finds @inth/sdk and @inth/vue from the module', () => {
 	const dirs = consentPackageDirs(join(import.meta.dirname, '..', 'module.ts'));
-	expect(dirs).toContain(realpathSync(join(import.meta.dirname, '..', '..')));
+	expect(dirs).toContain(
+		realpathSync(join(import.meta.dirname, '..', '..', '..', 'vue'))
+	);
 	expect(dirs.length).toBeGreaterThan(1);
 	// Nothing to find from a directory without them.
 	const empty = mkdtempSync(join(tmpdir(), 'c15t-chunk-group-'));

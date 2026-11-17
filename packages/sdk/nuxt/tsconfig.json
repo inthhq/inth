@@ -1,0 +1,11 @@
+{
+	"extends": "@c15t/typescript-config/base.json",
+	"compilerOptions": {
+		"moduleResolution": "bundler",
+		"paths": {
+			"#imports": ["../vue/src/runtime/vue/stubs.ts"],
+			"#c15t/composables": ["../vue/src/runtime/composables/index.ts"]
+		}
+	},
+	"include": ["src/**/*.ts", "src/**/*.d.ts"]
+}

@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { dirname, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 
 import {
 	CONSENT_CHUNK_GROUP,
@@ -19,12 +19,7 @@ import type { Plugin, UserConfig } from 'vite';
  * specifier that resolves (none exports its `package.json`).
  */
 const CONSENT_PACKAGES = [
-	['@inth/sdk/engine', '@inth/sdk/engine'],
-	['@inth/sdk/devtools', '@inth/sdk/devtools'],
-	['@inth/sdk/iab', '@inth/sdk/iab'],
-	['@inth/sdk/schema', '@inth/sdk/schema'],
-	['@inth/sdk/translations', '@inth/sdk/translations'],
-	['@inth/sdk/ui', '@inth/sdk/ui/styles.css'],
+	['@inth/sdk', '@inth/sdk/engine'],
 	['@inth/vue', '@inth/vue'],
 ] as const;
 
@@ -133,13 +128,15 @@ const CONFIG_MODULES =
 export const nuxtConsentConfigChunkGroup = function nuxtConsentConfigChunkGroup(
 	dirs: readonly string[]
 ): ConsentChunkGroup {
-	// Each directory ends in the package name, which `CONFIG_MODULES`
-	// starts with: match from the directory's parent.
-	const parents = dirs.map(
-		(dir) => `${escapeRegExp(dirname(dir.replaceAll('\\', '/')))}/`
-	);
+	// `CONFIG_MODULES` starts with the folder name: `vue/…` for @inth/vue,
+	// matched from the directory's parent, and `ui/…`, `core/…` for the
+	// parts @inth/sdk ships under its `lib/`.
+	const parents = dirs.map((dir) => {
+		const posix = dir.replaceAll('\\', '/');
+		return `${escapeRegExp(basename(posix) === 'sdk' ? `${posix}/lib` : dirname(posix))}/`;
+	});
 	const roots = [
-		'[\\\\/]node_modules[\\\\/]@c15t/',
+		'[\\\\/]node_modules[\\\\/]@inth[\\\\/](?:sdk[\\\\/]lib[\\\\/])?',
 		...parents.map((parent) => `^${parent}`),
 	].join('|');
 	return {
@@ -185,6 +182,6 @@ export const groupConsentChunks = function groupConsentChunks(
 				nuxtConsentConfigChunkGroup(dirs),
 			]) as unknown as UserConfig;
 		},
-		name: '@inth/vue:chunk-group',
+		name: '@inth/nuxt:chunk-group',
 	};
 };

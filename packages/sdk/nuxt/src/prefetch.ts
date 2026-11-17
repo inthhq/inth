@@ -62,7 +62,7 @@ export interface ConsentPrefetchOptions {
 }
 
 /**
- * Whether a file belongs to a c15t package (`c15t` or `@c15t/*`), read from
+ * Whether a file belongs to an SDK package (`@inth/*` other than the CLI), read from
  * the nearest `package.json` that names a package.
  *
  * @returns A check that caches each directory it reads.
@@ -91,7 +91,7 @@ export const createPackageCheck = function createPackageCheck(): (
 			}
 		}
 		if (typeof name === 'string') {
-			result = name === 'c15t' || name.startsWith('@c15t/');
+			result = name.startsWith('@inth/') && name !== '@inth/cli';
 		} else if (parent !== directory) {
 			result = check(parent);
 		}

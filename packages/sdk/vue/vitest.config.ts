@@ -5,6 +5,8 @@ import { baseConfig } from '@c15t/vitest-config/base';
 import vue from '@vitejs/plugin-vue';
 import { defineConfig, mergeConfig } from 'vitest/config';
 
+import { privateSdkNames } from '../shared/private-sdk-names';
+
 const assignInOrder = Object.assign;
 
 /**
@@ -23,7 +25,7 @@ const translationLanguages = Object.fromEntries(
 export default mergeConfig(
 	baseConfig,
 	defineConfig({
-		plugins: [vue()],
+		plugins: [vue(), privateSdkNames(import.meta.dirname)],
 		resolve: {
 			alias: assignInOrder(
 				{},
@@ -55,15 +57,15 @@ export default mergeConfig(
 					),
 				},
 				{
+					'#@inth/sdk/server-manifest-snapshot': resolve(
+						__dirname,
+						'./src/__tests__/manifest-snapshot.ts'
+					),
 					'#c15t/client-manifest-snapshot': resolve(
 						__dirname,
 						'./src/__tests__/manifest-snapshot.ts'
 					),
 					'#c15t/manifest-snapshot': resolve(
-						__dirname,
-						'./src/__tests__/manifest-snapshot.ts'
-					),
-					'#@inth/sdk/server-manifest-snapshot': resolve(
 						__dirname,
 						'./src/__tests__/manifest-snapshot.ts'
 					),
@@ -187,7 +189,9 @@ export default mergeConfig(
 						'../core/src/runtime/script-server-start.ts'
 					),
 				},
-				{ '@inth/sdk/events': resolve(__dirname, '../core/src/events.ts') },
+				{
+					'@inth/sdk/events': resolve(__dirname, '../core/src/events.ts'),
+				},
 				{
 					'@inth/sdk/preference-draft': resolve(
 						__dirname,

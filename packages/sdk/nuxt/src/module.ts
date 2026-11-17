@@ -1,4 +1,6 @@
 import { existsSync, realpathSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { dirname } from 'node:path';
 
 import {
 	createDialogChunkPlugin,
@@ -9,6 +11,18 @@ import { isIABConfigured } from '@inth/sdk/runtime';
 import { defaultConsentConfig } from '@inth/sdk/schema/config';
 import type { ConsentManifest } from '@inth/sdk/schema/types';
 import { normalizeRoutePrefix } from '@inth/sdk/server';
+import {
+	DEVTOOLS_ICON_ROUTE,
+	DEVTOOLS_PAGE_ROUTE,
+} from '@inth/vue/runtime/devtools/constants.js';
+import {
+	DEFAULT_NUXT_ROUTE_PREFIX,
+	readNuxtMode,
+	readNuxtRoutePrefix,
+} from '@inth/vue/runtime/nuxt-mode.js';
+import type { NuxtMode } from '@inth/vue/runtime/nuxt-mode.js';
+import { PROJECT_URL_RUNTIME_KEY } from '@inth/vue/runtime/runtime-config.js';
+import type { BuiltOptions } from '@inth/vue/runtime/server/build-options.js';
 import {
 	addComponent,
 	addImports,
@@ -40,18 +54,6 @@ import {
 	stopPrefetchingConsentChunks,
 } from './prefetch';
 import {
-	DEVTOOLS_ICON_ROUTE,
-	DEVTOOLS_PAGE_ROUTE,
-} from './runtime/devtools/constants';
-import {
-	DEFAULT_NUXT_ROUTE_PREFIX,
-	readNuxtMode,
-	readNuxtRoutePrefix,
-} from './runtime/nuxt-mode';
-import type { NuxtMode } from './runtime/nuxt-mode';
-import { PROJECT_URL_RUNTIME_KEY } from './runtime/runtime-config';
-import type { BuiltOptions } from './runtime/server/build-options';
-import {
 	collectStyleSources,
 	preloadInlinedConsentStyles,
 } from './stylesheets';
@@ -67,6 +69,10 @@ export {
 	type TestingMode,
 } from '@inth/sdk/modes';
 export { defineTheme, type Theme } from '@inth/sdk/ui/theme';
+// The types of the components and composables the module registers, so a
+// Nuxt app needs only this package.
+// oxlint-disable-next-line oxc/no-barrel-file -- Type-only: nothing loads at runtime.
+export type * from '@inth/vue';
 
 export type {
 	C15tNuxtAppConfig,
@@ -180,7 +186,7 @@ const fillProjectUrlFromEnv = (
 /**
  * The `mode` option, checked. It reaches the browser as JSON through the
  * public runtime config, so it must be the data `manifest()` or `hosted()`
- * from `@inth/vue`, or `testing()` from `@inth/vue/testing`, not a
+ * from `@inth/nuxt`, or `testing()` from `@inth/nuxt/testing`, not a
  * transport.
  */
 const readModuleMode = function readModuleMode(
@@ -188,7 +194,7 @@ const readModuleMode = function readModuleMode(
 ): NuxtMode {
 	if (typeof options.mode === 'function') {
 		throw new TypeError(
-			"@inth/vue: `c15t.mode` in nuxt.config.ts is a transport. Import `manifest` or `hosted` from '@inth/vue' (the module entry), which return plain data, or omit `mode` to read the manifest."
+			"@inth/nuxt: `c15t.mode` in nuxt.config.ts is a transport. Import `manifest` or `hosted` from '@inth/nuxt', which return plain data, or omit `mode` to read the manifest."
 		);
 	}
 	return readNuxtMode(options);
@@ -207,7 +213,7 @@ const checkRoutePrefix = function checkRoutePrefix(
 		return false;
 	}
 	return normalizeRoutePrefix(
-		'@inth/vue',
+		'@inth/nuxt',
 		options.routePrefix ?? DEFAULT_NUXT_ROUTE_PREFIX
 	);
 };
@@ -237,7 +243,7 @@ const assertManifestBackend = function assertManifestBackend(
 		? `manifest({ snapshot }) still needs a backend URL: the snapshot replaces the manifest download, but the browser saves consent with POST \${projectUrl}/subjects`
 		: `manifest() needs a backend URL: the browser saves consent with POST \${projectUrl}/subjects`;
 	throw new Error(
-		`@inth/vue: ${reason}, and the consent route only answers GET. Set ${BACKEND_URL_ENV} (or ${INTH_URL_ENV}), or \`c15t.projectUrl\` in nuxt.config.ts.`
+		`@inth/nuxt: ${reason}, and the consent route only answers GET. Set ${BACKEND_URL_ENV} (or ${INTH_URL_ENV}), or \`c15t.projectUrl\` in nuxt.config.ts.`
 	);
 };
 
@@ -262,13 +268,13 @@ const loadNuxtBuildManifest = function loadNuxtBuildManifest(
 	) {
 		return undefined;
 	}
-	const logger = useLogger('@inth/vue');
+	const logger = useLogger('@inth/nuxt');
 	return loadManifestForBuild(
 		{ manifestUrl: mode.manifestUrl, projectUrl },
 		{
 			command: nuxt.options.dev ? 'dev' : 'build',
 			envNames: [BACKEND_URL_ENV, INTH_URL_ENV],
-			label: '@inth/vue',
+			label: '@inth/nuxt',
 			logger: {
 				info: (message) => logger.info(message),
 				warn: (message) => logger.warn(message),
@@ -322,7 +328,7 @@ const warnStaticServerResolution = function warnStaticServerResolution(
 		mode.type === 'manifest' &&
 		mode.resolve !== 'browser'
 	) {
-		useLogger('@inth/vue').warn(
+		useLogger('@inth/nuxt').warn(
 			"`nuxt generate` deploys no server, so `manifest()` cannot resolve the policy there. Set `c15t: { mode: manifest({ resolve: 'browser' }), routePrefix: false }`, or omit `mode` to use the hosted backend."
 		);
 	}
@@ -362,7 +368,7 @@ const publishOptions = function publishOptions(
 			existing?.[name] !== undefined &&
 			JSON.stringify(existing[name]) !== JSON.stringify(built[name])
 		) {
-			useLogger('@inth/vue').warn(
+			useLogger('@inth/nuxt').warn(
 				`\`runtimeConfig.public.c15t.${name}\` is ignored: the build uses \`c15t.${name}\` (${JSON.stringify(built[name])}). Set it there.`
 			);
 		}
@@ -406,7 +412,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 	}),
 	meta: {
 		configKey: 'c15t',
-		name: '@inth/vue',
+		name: '@inth/nuxt',
 	},
 	async setup({ devtools, initPrefetch, onBuildError, ...options }, nuxt) {
 		const projectUrlSource = fillProjectUrlFromEnv(options, nuxt);
@@ -420,6 +426,11 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 			options.colorScheme = null;
 		}
 		const resolver = createResolver(import.meta.url);
+		// The runtime (plugins, server handlers, components and composables)
+		// ships in @inth/vue, under its dist/runtime/.
+		const runtime = createResolver(
+			dirname(createRequire(import.meta.url).resolve('@inth/vue/vite'))
+		);
 		const mode = readModuleMode(options);
 		options.routePrefix = checkRoutePrefix(options);
 		const routePrefix = readNuxtRoutePrefix(options);
@@ -435,7 +446,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 		// Source builds ship .ts, dist builds ship .js — alias whichever exists
 		// (hardcoding .ts broke every consumer of the published package).
 		nuxt.options.alias['#c15t/composables'] = ['index.ts', 'index.js']
-			.map((file) => resolver.resolve(`./runtime/composables/${file}`))
+			.map((file) => runtime.resolve(`./runtime/composables/${file}`))
 			.find((path) => existsSync(path)) as string;
 
 		nuxt.options.runtimeConfig.c15t = defu(
@@ -483,7 +494,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 		// reached (the official module template's `transpile.push(runtimeDir)`
 		// pattern, hardened for symlinked installs).
 		nuxt.options.build.transpile.push('@inth/vue');
-		const runtimeDir = resolver.resolve('./runtime');
+		const runtimeDir = runtime.resolve('./runtime');
 		nuxt.options.build.transpile.push(runtimeDir);
 		try {
 			const realRuntimeDir = realpathSync(runtimeDir);
@@ -500,7 +511,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 		// `${routePrefix}/manifest` in `manifest()` mode.
 		if (routePrefix !== undefined) {
 			addServerHandler({
-				handler: resolver.resolve('./runtime/server/consent-route'),
+				handler: runtime.resolve('./runtime/server/consent-route'),
 				route: `${routePrefix}/**`,
 			});
 		}
@@ -591,7 +602,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 			{ nitro: true, node: true, nuxt: true }
 		);
 
-		addPlugin(resolver.resolve('./runtime/plugin.nuxt'));
+		addPlugin(runtime.resolve('./runtime/plugin.nuxt'));
 		// The build chose the route, the snapshots and the browser code from
 		// `mode` and `routePrefix`; a runtime override such as
 		// `NUXT_PUBLIC_C15T_ROUTE_PREFIX` would make the browser disagree.
@@ -601,7 +612,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 		};
 		nuxt.options.nitro.virtual['#@inth/sdk/build-options'] = () =>
 			`export default ${JSON.stringify(built)};\n`;
-		addServerPlugin(resolver.resolve('./runtime/server/build-options.nuxt'));
+		addServerPlugin(runtime.resolve('./runtime/server/build-options.nuxt'));
 		// The stock banner's own files, from the client manifest
 		// (`build:manifest` below runs before Nitro builds). The plugin
 		// preloads them at low priority.
@@ -609,20 +620,20 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 		nuxt.options.nitro.virtual['#c15t/banner-preload-files'] = () =>
 			`export default ${JSON.stringify(bannerFiles)};\n`;
 		addServerPlugin(
-			resolver.resolve('./runtime/server/banner-preload-priority.nuxt')
+			runtime.resolve('./runtime/server/banner-preload-priority.nuxt')
 		);
 		// Nuxt applies `NUXT_PUBLIC_C15T_BACKEND_URL` on a running server by
 		// itself. The Inth variable needs a plugin, and only while neither the
 		// option nor the c15t variable gave the build its URL.
 		if (projectUrlSource === 'inth-env' || projectUrlSource === 'none') {
 			addServerPlugin(
-				resolver.resolve('./runtime/server/inth-project-url.nuxt')
+				runtime.resolve('./runtime/server/inth-project-url.nuxt')
 			);
 		}
 		if (initPrefetch !== false) {
 			// Starts `/init` from the HTML of `ssr: false` pages, before the
 			// app's JavaScript loads.
-			addServerPlugin(resolver.resolve('./runtime/server/init-prefetch.nuxt'));
+			addServerPlugin(runtime.resolve('./runtime/server/init-prefetch.nuxt'));
 			// The plugin reads `app.config.ts` through this virtual, not
 			// `#imports`, which Nuxt 5 stops providing to server code. Nuxt 4
 			// builds the merged config as `#internal/nuxt/app-config`; Nuxt 3
@@ -721,12 +732,12 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 		});
 
 		if (nuxt.options.dev && devtools && isNuxtDevToolsEnabled(nuxt)) {
-			addDevToolsTab(nuxt, (path) => resolver.resolve(path));
+			addDevToolsTab(nuxt, (path) => runtime.resolve(path));
 		}
 
 		for (const [name, file] of GLOBAL_COMPONENTS) {
 			addComponent({
-				filePath: resolver.resolve(`./runtime/components/${file}.vue`),
+				filePath: runtime.resolve(`./runtime/components/${file}.vue`),
 				global: true,
 				name,
 			});
@@ -738,7 +749,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 		// internals/fixtures/nuxt regression: useHasConsent undefined at
 		// runtime).
 		const composablesEntry = ['index.ts', 'index.js']
-			.map((file) => resolver.resolve(`./runtime/composables/${file}`))
+			.map((file) => runtime.resolve(`./runtime/composables/${file}`))
 			.find((path) => existsSync(path)) as string;
 		addImports(
 			readComposableExports(composablesEntry).map((name) => ({

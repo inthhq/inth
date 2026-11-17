@@ -16,7 +16,12 @@ import {
 } from '../prefetch';
 import type { ClientManifestChunk } from '../prefetch';
 
-const c15t = (path: string) => `../node_modules/@c15t/${path}`;
+/** The shared parts @inth/sdk installs under its `lib/`. */
+const SDK_PARTS = new Set(['core', 'iab', 'schema', 'translations', 'ui']);
+const c15t = (path: string) =>
+	SDK_PARTS.has(path.split('/')[0] ?? '')
+		? `../node_modules/@inth/sdk/lib/${path}`
+		: `../node_modules/@inth/${path}`;
 
 const createManifest = (): Record<string, ClientManifestChunk> => ({
 	'_dialog-shared.js': { css: ['dialog.css'], prefetch: true },
@@ -77,12 +82,12 @@ const createManifest = (): Record<string, ClientManifestChunk> => ({
 	},
 });
 
-const isConsentFile = (file: string) => file.includes('/@c15t/');
+const isConsentFile = (file: string) => file.includes('/@inth/');
 
 const prefetched = (manifest: Record<string, ClientManifestChunk>) =>
 	Object.entries(manifest)
 		.filter(([, chunk]) => chunk.prefetch)
-		.map(([key]) => key.replace('../node_modules/@c15t/', '@c15t/'))
+		.map(([key]) => key.replace('../node_modules/@inth/', '@inth/'))
 		.sort();
 
 describe('stopPrefetchingConsentChunks', () => {

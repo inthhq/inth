@@ -7,13 +7,13 @@
  */
 import { describe, expect, test } from 'vitest';
 
+import { lowerBannerPreloads } from '../../../vue/src/runtime/server/banner-preload-priority';
 import { GLOBAL_COMPONENTS } from '../global-components';
 import { bannerOnlyFiles, preloadDeferredEngine } from '../prefetch';
 import type { ClientManifestChunk } from '../prefetch';
-import { lowerBannerPreloads } from '../runtime/server/banner-preload-priority';
 
 const SRC = '/app';
-const isConsentFile = (file: string) => file.includes('/@c15t/');
+const isConsentFile = (file: string) => file.includes('/@inth/');
 const ENGINE = 'node_modules/@inth/vue/dist/runtime/deferred/engine.js';
 const BANNER = 'node_modules/@inth/vue/dist/runtime/components/prompt.vue';
 

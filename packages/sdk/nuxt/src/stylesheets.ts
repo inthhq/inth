@@ -58,7 +58,7 @@ export const collectStyleSources = function collectStyleSources(
 				}
 			}
 		},
-		name: '@inth/vue:style-sources',
+		name: '@inth/nuxt:style-sources',
 	};
 };
 

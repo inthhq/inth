@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/vue-playground",
+	"name": "@c15t/nuxt-playground",
 	"private": true,
 	"type": "module",
 	"scripts": {
