@@ -5,7 +5,8 @@ import type { BlockedRequestInfo } from '@c15t/core/modules/network-blocker';
 import type { NitroRouteConfig } from 'nitropack/types';
 import { expectTypeOf } from 'vitest';
 
-import type { hosted, manifest } from '../src/module';
+import type { manifest } from '../src/module';
+import type { withoutNetwork } from '../src/testing';
 import type { ModuleOptions } from '../src/nuxt-options';
 
 // Module options accept every runtime option that survives JSON.
@@ -64,7 +65,9 @@ expectTypeOf<{
 	mode: ReturnType<typeof manifest>;
 	routePrefix: false;
 }>().toExtend<ModuleOptions>();
-expectTypeOf<{ mode: ReturnType<typeof hosted> }>().toExtend<ModuleOptions>();
+expectTypeOf<{
+	testing: ReturnType<typeof withoutNetwork>;
+}>().toExtend<ModuleOptions>();
 export const wrongRoutePrefix: ModuleOptions = {
 	// @ts-expect-error A route prefix is a path or `false`.
 	routePrefix: true,
@@ -72,7 +75,7 @@ export const wrongRoutePrefix: ModuleOptions = {
 export const modeInAppConfig = defineAppConfig({
 	c15t: {
 		// @ts-expect-error The build reads `mode` from nuxt.config.ts only.
-		mode: { type: 'hosted' },
+		mode: { type: 'manifest' },
 	},
 });
 

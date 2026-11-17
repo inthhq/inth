@@ -1,4 +1,3 @@
-import { offline } from '@c15t/core';
 import { createConsentRuntime } from '@c15t/core/runtime';
 import { resolvePolicyRules } from '@c15t/schema/types';
 import { mount } from '@vue/test-utils';
@@ -15,6 +14,7 @@ import {
 	symbolSnapshot,
 } from '../runtime/utils/symbols';
 import { createVueConsentKernelContext } from './test-kernel';
+import { withoutNetwork } from '../testing';
 
 /** An opt-in policy for measurement and marketing, already resolved. */
 const resolution = resolvePolicyRules({
@@ -64,8 +64,8 @@ const provide = (context: VueConsentKernelContext) => ({
 const borrowedRuntime = (options: { enabled?: boolean } = {}) =>
 	createConsentRuntime({
 		...options,
-		mode: offline({ acknowledgeNoRecords: true }),
 		prefetch: { initialPolicyResolution: resolution },
+		testing: withoutNetwork(),
 	});
 
 const inserted = (src: string) =>

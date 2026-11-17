@@ -32,15 +32,6 @@ export interface ConsentServerConfig {
 	 */
 	timeoutMs?: number | false;
 
-	/**
-	 * Report each init the server resolves from the manifest to the
-	 * backend's `POST /sessions`, server-to-server and detached from the
-	 * response, so the backend still counts visitors it never served
-	 * `/init` to. Needs an absolute `backendURL`. Set `false` to send none.
-	 *
-	 * @default true
-	 */
-	reportSessions?: boolean;
 }
 
 export interface ConsentConfig

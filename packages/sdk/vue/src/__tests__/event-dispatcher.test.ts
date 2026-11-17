@@ -1,4 +1,3 @@
-import { offline } from '@c15t/core';
 import type { Script } from '@c15t/core';
 import { createConsentRuntime } from '@c15t/core/runtime';
 import { resolvePolicyRules } from '@c15t/schema/types';
@@ -9,6 +8,7 @@ import { defineComponent, h } from 'vue';
 import { c15tVue } from '../index';
 import type { EventDispatcher } from '../runtime/composables';
 import { useEventDispatcher } from '../runtime/composables';
+import { withoutNetwork } from '../testing';
 
 const posthog: Script = {
 	callbackOnly: true,
@@ -19,7 +19,6 @@ const posthog: Script = {
 
 test('useEventDispatcher follows the runtime scripts, live consent and one pageview history', async () => {
 	const runtime = createConsentRuntime({
-		mode: offline({ acknowledgeNoRecords: true }),
 		prefetch: {
 			initialPolicyResolution: resolvePolicyRules({
 				countryCode: null,
@@ -36,6 +35,7 @@ test('useEventDispatcher follows the runtime scripts, live consent and one pagev
 			}),
 		},
 		scripts: [posthog],
+		testing: withoutNetwork(),
 	});
 	const capture = vi.fn();
 	const globals = { posthog: { capture } };

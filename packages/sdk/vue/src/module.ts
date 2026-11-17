@@ -5,7 +5,6 @@ import {
 	loadManifestForBuild,
 	readBuildEnv,
 } from '@c15t/core/build';
-import type { ConsentMode } from '@c15t/core/modes';
 import { isIABConfigured } from '@c15t/core/runtime';
 import { normalizeRoutePrefix } from '@c15t/core/server';
 import { defaultConsentConfig } from '@c15t/schema/config';
@@ -49,6 +48,7 @@ import {
 	readNuxtMode,
 	readNuxtRoutePrefix,
 } from './runtime/nuxt-mode';
+import type { NuxtMode } from './runtime/nuxt-mode';
 import type { BuiltOptions } from './runtime/server/build-options';
 import {
 	collectStyleSources,
@@ -57,17 +57,11 @@ import {
 import type { StyleSourceIndex } from './stylesheets';
 
 export {
-	hosted,
-	local,
 	manifest,
-	offline,
 	type ConsentMode,
-	type HostedMode,
-	type HostedModeOptions,
 	type ManifestMode,
 	type ManifestModeOptions,
-	type OfflineMode,
-	type OfflineModeOptions,
+	type WithoutNetworkTestingData,
 } from '@c15t/core/modes';
 export { defineTheme, type Theme } from '@c15t/ui/theme';
 
@@ -187,10 +181,10 @@ const fillBackendURLFromEnv = (
  */
 const readModuleMode = function readModuleMode(
 	options: ModuleOptions
-): ConsentMode {
+): NuxtMode {
 	if (typeof options.mode === 'function') {
 		throw new TypeError(
-			"@c15t/vue: `c15t.mode` in nuxt.config.ts is a transport. Import `manifest`, `hosted` or `local` from 'c15t/vue' (the module entry), which return plain data."
+			"@c15t/vue: `c15t.mode` in nuxt.config.ts is a transport. Import `manifest` from 'c15t/vue' (the module entry), which returns plain data, or omit `mode` to use the hosted backend."
 		);
 	}
 	return readNuxtMode(options);
@@ -224,7 +218,7 @@ const checkRoutePrefix = function checkRoutePrefix(
  * @throws {Error} When `manifest()` has no backend URL.
  */
 const assertManifestBackend = function assertManifestBackend(
-	mode: ConsentMode,
+	mode: NuxtMode,
 	backendURL: string | undefined,
 	nuxt: Nuxt
 ): void {
@@ -251,7 +245,7 @@ const assertManifestBackend = function assertManifestBackend(
  * downloads.
  */
 const loadNuxtBuildManifest = function loadNuxtBuildManifest(
-	mode: ConsentMode,
+	mode: NuxtMode,
 	backendURL: string | undefined,
 	onBuildError: ModuleOptions['onBuildError'],
 	nuxt: Nuxt
@@ -288,7 +282,7 @@ const loadNuxtBuildManifest = function loadNuxtBuildManifest(
  * browser: every other mode resolves on the server or asks the backend.
  */
 const resolveSnapshots = async function resolveSnapshots(
-	mode: ConsentMode,
+	mode: NuxtMode,
 	backendURL: string | undefined,
 	onBuildError: ModuleOptions['onBuildError'],
 	nuxt: Nuxt
@@ -314,7 +308,7 @@ const resolveSnapshots = async function resolveSnapshots(
  * resolves.
  */
 const warnStaticServerResolution = function warnStaticServerResolution(
-	mode: ConsentMode,
+	mode: NuxtMode,
 	nuxt: Nuxt
 ): void {
 	const { _generate: generate } = nuxt.options as { _generate?: boolean };
@@ -325,15 +319,15 @@ const warnStaticServerResolution = function warnStaticServerResolution(
 		mode.resolve !== 'browser'
 	) {
 		useLogger('@c15t/vue').warn(
-			"`nuxt generate` deploys no server, so `manifest()` cannot resolve the policy there. Set `c15t: { mode: manifest({ resolve: 'browser' }), routePrefix: false }`, or `mode: hosted()`."
+			"`nuxt generate` deploys no server, so `manifest()` cannot resolve the policy there. Set `c15t: { mode: manifest({ resolve: 'browser' }), routePrefix: false }`, or omit `mode` to use the hosted backend."
 		);
 	}
 };
 
 /** The mode as the browser and the server read it: without its snapshot. */
 const withoutSnapshot = function withoutSnapshot(
-	mode: ConsentMode
-): ConsentMode {
+	mode: NuxtMode
+): NuxtMode {
 	if (mode.type !== 'manifest' || !mode.snapshot) {
 		return mode;
 	}
@@ -351,7 +345,7 @@ const withoutSnapshot = function withoutSnapshot(
  */
 const publishOptions = function publishOptions(
 	options: Omit<ModuleOptions, 'devtools' | 'initPrefetch' | 'onBuildError'>,
-	mode: ConsentMode,
+	mode: NuxtMode,
 	nuxt: Nuxt
 ): void {
 	const existing = nuxt.options.runtimeConfig.public.c15t as

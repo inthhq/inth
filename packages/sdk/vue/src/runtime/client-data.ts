@@ -1,10 +1,10 @@
-import type { ConsentMode } from '@c15t/core/modes';
+import type { NuxtMode } from './nuxt-mode';
 
 import clientManifestSnapshot from '#c15t/client-manifest-snapshot';
 
 /**
  * The mode the browser runs: browser resolution gets the snapshot the
- * build bundled for it, and `hosted()` forwards the consent headers the
+ * build bundled for it, and the hosted backend gets the consent headers the
  * server read from the request (a CDN's country, for example) to `/init`.
  *
  * As in every single-page app, a policy that depends on a location that
@@ -18,9 +18,9 @@ import clientManifestSnapshot from '#c15t/client-manifest-snapshot';
  * @internal
  */
 export const withClientData = function withClientData(
-	mode: ConsentMode,
+	mode: NuxtMode,
 	headers: Record<string, string>
-): ConsentMode {
+): NuxtMode {
 	if (mode.type === 'manifest' && mode.resolve === 'browser') {
 		return clientManifestSnapshot && !mode.snapshot
 			? { ...mode, snapshot: clientManifestSnapshot, source: undefined }

@@ -496,7 +496,7 @@ describe('@c15t/core/generated in Vite', () => {
 		});
 	});
 
-	test('suggests hosted() when the policy depends on location', async () => {
+	test('suggests the hosted backend when the policy depends on location', async () => {
 		const root = await createRoot();
 		const regional = {
 			...MANIFEST_FIXTURE,
@@ -540,7 +540,7 @@ describe('@c15t/core/generated in Vite', () => {
 		);
 		expect(logger.warn).toHaveBeenCalledWith(
 			expect.stringMatching(
-				/^@c15t\/core\/build: the consent policy depends on the visitor's location.*hosted\(\)/u
+				/^@c15t\/core\/build: the consent policy depends on the visitor's location.*backendURL/u
 			)
 		);
 
@@ -630,7 +630,7 @@ describe('@c15t/core/generated in Vite', () => {
 		});
 		expect(warn).toHaveBeenCalledWith(
 			expect.stringContaining(
-				'no backend URL is set. `hosted()` and `manifest()`'
+				'no backend URL is set. A provider without `backendURL`'
 			)
 		);
 	});

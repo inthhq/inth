@@ -974,7 +974,7 @@ export interface ManifestHtmlContext {
  * backend's `/init` anyway unless the page supplies a location.
  */
 const LOCATION_ADVICE =
-	"the consent policy depends on the visitor's location, which the browser doesn't know. Unless you pass `inputs` or `geoURL` to `manifest()`, every first visit still calls the backend's /init, so the bundled policy adds bytes without saving a request. Consider `mode: hosted()` instead.";
+	"the consent policy depends on the visitor's location, which the browser doesn't know. Unless you pass `inputs` or `geoURL` to `manifest()`, every first visit still calls the backend's /init, so the bundled policy adds bytes without saving a request. Consider leaving out `mode` and setting only `backendURL`, which asks the hosted backend instead.";
 
 /** Id of the inline script `initPrefetch` adds to `index.html`. */
 const PREFETCH_SCRIPT_ID = 'c15t-initial-data-prefetch';
@@ -1040,7 +1040,7 @@ const GENERATED_IMPORTERS = [
  * value. The c15t variables come before the Inth ones.
  *
  * The manifest is fetched only for a bundle that reads `snapshot`, which
- * `hosted()` and `local()` never do. The mode is chosen in app code, so
+ * the hosted backend and a testing value never do. The mode is chosen in app code, so
  * the plugin cannot know it from the Vite config:
  *
  * - `vite build` gives the exports stand-ins and fills them in after
@@ -1048,7 +1048,7 @@ const GENERATED_IMPORTERS = [
  *   snapshot triggers the fetch, under the build policy. A chunk that
  *   reads `backendURL` when none is set gets the missing-URL policy.
  * - `vite dev` fetches when the module is first loaded, under the dev
- *   policy. Dev has no tree-shaking, so this also happens for a `hosted()`
+ *   policy. Dev has no tree-shaking, so this also happens for a hosted
  *   app; dev only warns.
  *
  * A failed fetch can be retried.
@@ -1133,7 +1133,7 @@ export const createConsentManifestPlugin = (
 		return generation;
 	};
 	/**
-	 * A bundle reads `backendURL` but none is set: `hosted()` or
+	 * A bundle reads `backendURL` but none is set: the hosted backend or
 	 * `manifest()` without their own URL. Warns once rather than failing,
 	 * because a mode that passes its own `backendURL` still reads the
 	 * build's as its default; one that does not throws when the app starts.
@@ -1146,7 +1146,7 @@ export const createConsentManifestPlugin = (
 		}
 		missingURLReported = true;
 		logger().warn(
-			`no backend URL is set. \`hosted()\` and \`manifest()\` without their own \`backendURL\` throw when the app starts. Pass backendURL to the plugin or set ${formatEnvNames(defaults.envNames)}.`
+			`no backend URL is set. A provider without \`backendURL\`, and \`manifest()\` without its own, throw when the app starts. Pass backendURL to the plugin or set ${formatEnvNames(defaults.envNames)}.`
 		);
 	};
 	/** Warns once, for a multi-page app, why no page got the script. */
@@ -1157,7 +1157,7 @@ export const createConsentManifestPlugin = (
 		}
 		prefetchSkipReported = true;
 		logger().warn(
-			`initPrefetch: ${reason}, so index.html gets no \`/init\` script. It speeds up \`hosted()\` only.`
+			`initPrefetch: ${reason}, so index.html gets no \`/init\` script. It speeds up the hosted backend only.`
 		);
 	};
 	/**
@@ -1501,13 +1501,13 @@ export const createConsentManifestPlugin = (
  * Serves the deployment's consent manifest as `@c15t/core/generated`, for
  * single-page apps (React, Solid, plain JavaScript). Import `snapshot` from
  * there; no file is written into the app. The manifest is fetched only when
- * the bundle reads `snapshot`, as `manifest()` does, so `hosted()` and
- * `local()` builds never depend on the backend.
+ * the bundle reads `snapshot`, as `manifest()` does, so hosted and
+ * testing builds never depend on the backend.
  *
  * A failed fetch stops `vite build` and warns in `vite dev`, where
  * `snapshot` is `undefined`. Set `onBuildError` or `C15T_ON_BUILD_ERROR` to
  * change that. When the policy depends on the visitor's location, it warns
- * and suggests `hosted()`, since the browser's `manifest()` then still asks
+ * and suggests the hosted backend, since the browser's `manifest()` then still asks
  * the backend's `/init` unless the page passes `inputs` or `geoURL`. With
  * `manifest({ manifestURL })` or `manifest({ source: 'runtime' })`, pass
  * `source: 'runtime'` here too, so the build never fetches a snapshot the

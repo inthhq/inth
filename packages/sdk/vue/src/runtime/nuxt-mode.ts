@@ -3,7 +3,10 @@
  * server and in the browser. Both come from `nuxt.config.ts` only, so the
  * build and every runtime agree on them.
  */
-import type { ConsentMode } from '@c15t/core/modes';
+import type {
+	ConsentMode,
+	WithoutNetworkTestingData,
+} from '@c15t/core/modes';
 
 /** Where the module serves its consent route unless `routePrefix` says otherwise. */
 export const DEFAULT_NUXT_ROUTE_PREFIX = '/api/c15t';
@@ -17,13 +20,18 @@ export interface NuxtConsentModeConfig {
 	 */
 	backendURL?: string;
 	/**
-	 * Where the visitor's policy comes from: `manifest()`, `hosted()` or
-	 * `local()` from `c15t/vue`. Plain data, read from `nuxt.config.ts`
-	 * only.
-	 *
-	 * @default manifest()
+	 * Resolve the visitor's policy from the backend's consent manifest:
+	 * `manifest()` from `c15t/vue`. Plain data, read from `nuxt.config.ts`
+	 * only. Omit it to ask the hosted backend's `/init` at `backendURL`.
 	 */
 	mode?: ConsentMode;
+	/**
+	 * Replace the backend in a test: `withoutNetwork()` from
+	 * `c15t/vue/testing`. The browser resolves the recommended policy pack
+	 * with no network, and its transport throws in production builds. Wins
+	 * over `mode` and needs no `backendURL`.
+	 */
+	testing?: WithoutNetworkTestingData;
 	/**
 	 * Path of the one consent route the module adds in `manifest()` mode. It
 	 * answers `${routePrefix}/init` and `${routePrefix}/manifest`. `false`
@@ -40,17 +48,36 @@ const trimTrailingSlashes = function trimTrailingSlashes(path: string): string {
 	return path.replace(/\/+$/u, '');
 };
 
+/** The hosted backend, which a config with no `mode` uses. @internal */
+export interface NuxtHostedMode {
+	type: 'hosted';
+	/** Consent headers forwarded to `/init`. */
+	headers?: Record<string, string>;
+}
+
+/** What a config resolves to: `manifest()`, hosted, or a testing value. @internal */
+export type NuxtMode = ConsentMode | NuxtHostedMode | WithoutNetworkTestingData;
+
+/** A mode config holding the mode the build resolved. @internal */
+export type NuxtResolvedModeConfig = Omit<NuxtConsentModeConfig, 'mode'> & {
+	mode?: NuxtMode;
+};
+
 /**
- * The mode a config names, `manifest()` when it names none.
+ * The mode a config names: its testing value, then its `mode`, then the
+ * hosted backend.
  *
  * @param config - The module options or the public runtime config.
  * @returns The mode as data.
  * @internal
  */
 export const readNuxtMode = function readNuxtMode(
-	config: Pick<NuxtConsentModeConfig, 'mode'>
-): ConsentMode {
-	return config.mode ?? { type: 'manifest' };
+	config: Pick<NuxtResolvedModeConfig, 'mode' | 'testing'>
+): NuxtMode {
+	if (config.testing) {
+		return { ...config.testing, type: 'without-network' };
+	}
+	return config.mode ?? { type: 'hosted' };
 };
 
 /**
@@ -64,7 +91,7 @@ export const readNuxtMode = function readNuxtMode(
  * @internal
  */
 export const readNuxtRoutePrefix = function readNuxtRoutePrefix(
-	config: NuxtConsentModeConfig
+	config: NuxtResolvedModeConfig
 ): string | undefined {
 	if (
 		config.routePrefix === false ||
@@ -86,7 +113,7 @@ export const readNuxtRoutePrefix = function readNuxtRoutePrefix(
  * @internal
  */
 export const resolvesOnServer = function resolvesOnServer(
-	mode: ConsentMode
+	mode: NuxtMode
 ): boolean {
 	if (mode.type === 'manifest') {
 		return mode.resolve !== 'browser';

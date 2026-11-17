@@ -74,6 +74,7 @@ export default mergeConfig(
 						'./src/__tests__/generated.ts'
 					),
 					'@c15t/core/modes': resolve(__dirname, '../core/src/modes.ts'),
+					'@c15t/core/testing': resolve(__dirname, '../core/src/testing.ts'),
 					'@c15t/core/runtime/client-mode': resolve(
 						__dirname,
 						'../core/src/runtime/client-mode.ts'
@@ -200,6 +201,12 @@ export default mergeConfig(
 					'@c15t/core/runtime': resolve(
 						__dirname,
 						'../core/src/runtime/index.ts'
+					),
+				},
+				{
+					'@c15t/core/transports': resolve(
+						__dirname,
+						'../core/src/transports/index.ts'
 					),
 				},
 				{ '@c15t/core': resolve(__dirname, '../core/src/index.ts') },

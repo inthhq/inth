@@ -1,5 +1,6 @@
 import type { ProviderTransportFactory } from '@c15t/core';
 import type { ConsentRuntime } from '@c15t/core/runtime';
+import type { ConsentTesting } from '@c15t/core/testing';
 // oxlint-disable oxc/no-barrel-file -- Public framework entry point intentionally re-exports the supported API.
 import { getCurrentInstance } from 'vue';
 import type { App, Plugin } from 'vue';
@@ -11,6 +12,7 @@ import {
 	provideVueConsentContext,
 } from './runtime/kernel';
 import type { RuntimeConsentConfig } from './runtime/kernel';
+import { selectedMode } from './runtime/modes';
 import { mountTokensStyle } from './runtime/theme-tokens';
 
 export type { AllConsentNames, ClearOnRevocationConfig } from '@c15t/core';
@@ -37,16 +39,12 @@ export type {
 	UseNetworkBlockerOptions,
 } from './runtime/kernel';
 export {
-	custom,
-	hosted,
-	local,
 	manifest,
-	offline,
 	type BrowserManifestModeFactory,
 	type HostedModeFactory,
-	type OfflineModeFactory,
 	type ProviderTransportFactory,
 } from './runtime/modes';
+export type { ConsentTesting } from '@c15t/core/testing';
 export {
 	generateTokensCSS,
 	type TokensCSSOptions,
@@ -60,7 +58,7 @@ export {
  */
 export type C15tVuePluginConfig = Omit<
 	Partial<RuntimeConsentConfig>,
-	'backendURL' | 'reportSessions' | 'timeoutMs'
+	'backendURL' | 'timeoutMs'
 >;
 
 /**
@@ -71,8 +69,20 @@ export type C15tVuePluginOptions = C15tVuePluginConfig &
 	(
 		| {
 				/**
-				 * Where the visitor's policy comes from: `manifest()`, `hosted()`,
-				 * `local()` or `custom()` from `c15t/vue/vue-plugin`.
+				 * Backend URL. Setting it is how the app talks to the hosted
+				 * backend. Defaults to the URL `consentManifest()` from
+				 * `c15t/vue/vite` read from `VITE_C15T_BACKEND_URL` or
+				 * `VITE_INTH_PROJECT_URL`.
+				 *
+				 * @example
+				 * ```ts
+				 * app.use(c15tVue, { backendURL: '/api/c15t' });
+				 * ```
+				 */
+				backendURL?: string;
+				/**
+				 * Resolve the policy from the backend's consent manifest
+				 * instead: `manifest()` from `c15t/vue/vue-plugin`.
 				 *
 				 * @example
 				 * ```ts
@@ -81,11 +91,20 @@ export type C15tVuePluginOptions = C15tVuePluginConfig &
 				 * app.use(c15tVue, { mode: manifest() });
 				 * ```
 				 */
-				mode: ProviderTransportFactory;
+				mode?: ProviderTransportFactory;
+				/**
+				 * Replace the backend in a test: `withoutNetwork()` from
+				 * `c15t/vue/testing`. It throws in production builds. To keep
+				 * consent out of the way in an app's own tests instead, set
+				 * `enabled: false`.
+				 */
+				testing?: ConsentTesting;
 				runtime?: undefined;
 		  }
 		| {
+				backendURL?: undefined;
 				mode?: undefined;
+				testing?: undefined;
 				/**
 				 * A runtime this app should render instead of building its own
 				 * kernel.
@@ -117,15 +136,18 @@ export type C15tVuePluginOptions = C15tVuePluginConfig &
  * import { c15tVue, manifest } from 'c15t/vue/vue-plugin';
  * import { createApp } from 'vue';
  *
- * createApp(App).use(c15tVue, { mode: manifest() }).mount('#app');
+ * createApp(App).use(c15tVue, { backendURL: '/api/c15t' }).mount('#app');
  * ```
  */
 export const c15tVue: Plugin<[C15tVuePluginOptions]> = {
 	install(app: App, options: C15tVuePluginOptions) {
 		app.provide(consentConfigKey, options);
 
-		const { mode, runtime, ...rest } = options;
+		const { backendURL, mode: chosen, runtime, testing, ...rest } = options;
 		const config = rest as RuntimeConsentConfig;
+		const mode = runtime
+			? undefined
+			: selectedMode({ backendURL, mode: chosen, testing });
 		// One runtime per app, shared through `provide`/`inject`.
 		const context = createVueConsentKernelContext({ config, mode, runtime });
 		provideVueConsentContext(app, context);

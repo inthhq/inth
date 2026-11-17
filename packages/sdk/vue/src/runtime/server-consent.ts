@@ -18,8 +18,9 @@ import type {
 import snapshot from '#c15t/server-manifest-snapshot';
 
 import type { RuntimeConsentConfig } from './kernel';
+
 import { readNuxtMode, readNuxtRoutePrefix } from './nuxt-mode';
-import type { NuxtConsentModeConfig } from './nuxt-mode';
+import type { NuxtResolvedModeConfig } from './nuxt-mode';
 
 /** What the plugin read about the request with Nuxt's own composables. */
 export interface NuxtConsentRequest {
@@ -43,15 +44,15 @@ type ModeOptions = Pick<
  * Where the render asks for the policy. `manifest()` with a consent route
  * resolves through that route in-process, which keeps its fallback to the
  * backend's `/init`. Without the route it resolves from the snapshot, or
- * the manifest read at runtime. `hosted()` asks the backend's `/init`.
+ * the manifest read at runtime. With no mode it asks the backend's `/init`.
  */
 const readModeOptions = function readModeOptions(
-	config: Partial<RuntimeConsentConfig> & NuxtConsentModeConfig
+	config: Partial<RuntimeConsentConfig> & NuxtResolvedModeConfig
 ): ModeOptions {
 	const mode = readNuxtMode(config);
 	if (mode.type === 'hosted') {
 		return {
-			backendURL: mode.backendURL ?? config.backendURL,
+			backendURL: config.backendURL,
 			initHeaders: mode.headers,
 			mode: 'hosted',
 		};
@@ -76,7 +77,7 @@ const readModeOptions = function readModeOptions(
  * @returns The serializable state the client hydrates from.
  */
 export const resolveNuxtConsent = async function resolveNuxtConsent(
-	config: Partial<RuntimeConsentConfig> & NuxtConsentModeConfig,
+	config: Partial<RuntimeConsentConfig> & NuxtResolvedModeConfig,
 	request: NuxtConsentRequest
 ): Promise<RequestConsentState> {
 	const experiment =
@@ -96,7 +97,6 @@ export const resolveNuxtConsent = async function resolveNuxtConsent(
 		localFetch,
 		// Off here means the page has no journey: the state says so and the
 		// browser sends none.
-		reportSessions: config.reportSessions,
 		request: { headers: request.headers, url: request.url },
 		storage: config.storageConfig,
 		timeoutMs: config.timeoutMs,

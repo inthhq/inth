@@ -14,7 +14,7 @@ import { createConsentManifestPolicyPack } from '@c15t/schema/types';
 import { createApp, createRouter, toWebHandler } from 'h3';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { readNuxtMode, readNuxtRoutePrefix } from '../runtime/nuxt-mode';
+import { readNuxtRoutePrefix } from '../runtime/nuxt-mode';
 import { createConsentRoute } from '../runtime/server/route-factories';
 import { createServerFetch } from '../runtime/server/server-fetch';
 
@@ -116,7 +116,6 @@ describe('manifest route background revalidation', () => {
 			public: {
 				c15t: {
 					backendURL: 'https://consent.example.com',
-					reportSessions: false,
 				},
 			},
 		});
@@ -137,7 +136,12 @@ describe('manifest route background revalidation', () => {
 		).toMatchObject({
 			policyResolution: { policyId: 'eu-opt-in', status: 'matched' },
 		});
-		expect(mocks.serverFetch).not.toHaveBeenCalled();
+		// No policy request; only the session report.
+		expect(
+			mocks.serverFetch.mock.calls.filter(
+				([url]: unknown[]) => !String(url).endsWith('/sessions')
+			)
+		).toEqual([]);
 	});
 
 	test("hands a stale read's refresh and the event to onBackgroundRevalidate", async () => {
@@ -366,7 +370,6 @@ describe('init route', () => {
 						manifestURL: 'https://cdn.example.com/manifest.json',
 						type: 'manifest',
 					},
-					reportSessions: false,
 				},
 			},
 		});
@@ -450,9 +453,9 @@ describe('saves', () => {
 			mode: { snapshot: MANIFEST, type: 'manifest' as const },
 		};
 		expect(() =>
-			clientMode(readNuxtMode(config), {
+			clientMode(config.mode, {
 				routePrefix: readNuxtRoutePrefix(config),
 			})
-		).toThrow('manifest() needs a backend URL');
+		).toThrow('`backendURL` is required');
 	});
 });

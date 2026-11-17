@@ -3,7 +3,6 @@
  * keeps the app: the root renders its default slot next to the consent
  * surfaces, in the browser and in the server HTML, and hydrates it.
  */
-import { hosted } from '@c15t/core';
 import type { InitOutput } from '@c15t/schema/types';
 import {
 	resolvePolicyRules,
@@ -32,6 +31,7 @@ import {
 	symbolKernelContext,
 	symbolSnapshot,
 } from '../runtime/utils/symbols';
+import { hosted } from '@c15t/core/transports';
 
 const initFixture: InitOutput = {
 	branding: 'c15t',

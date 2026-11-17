@@ -152,7 +152,6 @@ export const createConsentRoute = function createConsentRoute(
 				mode.type === 'manifest' && mode.resolve !== 'browser'
 					? mode.manifestURL
 					: undefined,
-			reportSessions: config.reportSessions,
 		});
 		const next = { handle, prefix: readNuxtRoutePrefix(config), runtimeConfig };
 		built.current = next;

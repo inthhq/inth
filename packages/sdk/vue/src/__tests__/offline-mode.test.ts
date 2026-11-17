@@ -6,9 +6,10 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { afterEach, expect, test, vi } from 'vitest';
 
-import { c15tVue, offline } from '../index';
+import { c15tVue } from '../index';
 import ConsentManager from '../runtime/components/manager.vue';
 import { useConsentKernelContext } from '../runtime/composables';
+import { withoutNetwork } from '../testing';
 
 afterEach(() => {
 	document.body.replaceChildren();
@@ -35,7 +36,7 @@ test('offline() gives the dialog its English title without a request', async () 
 						c15tVue,
 						{
 							disableAnimation: true,
-							mode: offline({ acknowledgeNoRecords: true }),
+							testing: withoutNetwork(),
 						},
 					],
 				],

@@ -1,4 +1,3 @@
-import { hosted } from '@c15t/core';
 import { createConsentRuntime } from '@c15t/core/runtime';
 import type { ConsentRuntime } from '@c15t/core/runtime';
 import { resolvePolicyRules } from '@c15t/schema/types';
@@ -11,10 +10,11 @@ import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import { c15tVue } from '../index';
 import { createVueConsentKernelContext } from '../runtime/kernel';
 import { symbolKernel } from '../runtime/utils/symbols';
+import { selectedMode } from '../runtime/modes';
 
 const createRuntime = function createRuntime(): ConsentRuntime {
 	return createConsentRuntime({
-		mode: hosted({ backendURL: 'https://consent.example.test' }),
+		backendURL: 'https://consent.example.test',
 		pkg: '@c15t/vue-test',
 		prefetch: {
 			initialPolicyResolution: resolvePolicyRules({
@@ -65,7 +65,7 @@ describe('createVueConsentKernelContext with an external runtime', () => {
 	test('still owns the kernel when no runtime is passed', () => {
 		const context = createVueConsentKernelContext({
 			config: {},
-			mode: hosted({ backendURL: '/api/c15t' }),
+			mode: selectedMode({ backendURL: '/api/c15t' }),
 		});
 		const dispose = vi.spyOn(context.kernel, 'dispose');
 

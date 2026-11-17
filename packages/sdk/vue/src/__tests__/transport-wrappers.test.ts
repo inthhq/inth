@@ -9,8 +9,9 @@ import { translations } from '@c15t/translations/en';
 import { afterEach, expect, test, vi } from 'vitest';
 
 import { createVueConsentKernelContext } from '../runtime/kernel';
-import { hosted, manifest } from '../runtime/modes';
+import { manifest } from '../runtime/modes';
 import type { ProviderTransportFactory } from '../runtime/modes';
+import { hosted } from '@c15t/core/transports';
 
 /**
  * `hydrate` applies stored records the way persistence does. It is a verb

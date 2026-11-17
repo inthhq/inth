@@ -1,14 +1,16 @@
 /**
- * The modes a plain Vue app passes to `app.use(c15tVue, { mode })`.
+ * The transports a plain Vue app's `app.use(c15tVue, …)` selects:
+ * `manifest()` for `mode`, and the hosted backend for `backendURL`.
  *
  * Each is the transport itself, imported statically: a single-page app has
- * one environment, so a bundler drops the modes the app does not import.
- * `manifest()` and `hosted()` read the backend URL, and `manifest()` the
- * snapshot, from `@c15t/core/generated`, which `consentManifest()` from
- * `c15t/vue/vite` fills in during the build.
+ * one environment, so a bundler drops the code the app does not use. Both
+ * read the backend URL, and `manifest()` the snapshot, from
+ * `@c15t/core/generated`, which `consentManifest()` from `c15t/vue/vite`
+ * fills in during the build.
  */
-import { hosted as coreHosted } from '@c15t/core';
-import type { HostedModeFactory, HostedModeOptions } from '@c15t/core';
+import type { HostedModeFactory, ProviderTransportFactory } from '@c15t/core';
+import type { ConsentTesting } from '@c15t/core/testing';
+import { hosted as coreHosted } from '@c15t/core/transports';
 import {
 	backendURL as builtBackendURL,
 	snapshot as builtSnapshot,
@@ -19,12 +21,7 @@ import type {
 	BrowserManifestOptions,
 } from '@c15t/core/transports/manifest-browser';
 
-export { custom, local, offline } from '@c15t/core';
-export type {
-	HostedModeFactory,
-	OfflineModeFactory,
-	ProviderTransportFactory,
-} from '@c15t/core';
+export type { HostedModeFactory, ProviderTransportFactory } from '@c15t/core';
 export type { BrowserManifestModeFactory } from '@c15t/core/transports/manifest-browser';
 
 /**
@@ -46,7 +43,11 @@ const missingBackendURL = function missingBackendURL(
 	} catch {
 		// No bundler and no `process`: the short message has to do.
 	}
-	return new Error(`c15t: ${mode}() has no backend URL.${hint}`);
+	return new Error(
+		mode === 'hosted'
+			? `c15t: \`backendURL\` is required.${hint}`
+			: `c15t: ${mode}() has no backend URL.${hint}`
+	);
 };
 
 /**
@@ -104,26 +105,30 @@ export const manifest = function manifest(
 };
 
 /**
- * Ask the backend's `/init` for every visitor's policy.
- *
- * @param options - Hosted options. `backendURL` defaults to the URL
- * `consentManifest()` read from `VITE_C15T_BACKEND_URL` or
+ * The transport the plugin's options select: the `testing` value's, then
+ * `mode`, then the hosted backend at `backendURL`, which defaults to the
+ * URL `consentManifest()` read from `VITE_C15T_BACKEND_URL` or
  * `VITE_INTH_PROJECT_URL`.
- * @returns A transport factory for `mode`.
- * @throws {Error} When no backend URL is set.
- * @example
- * ```ts
- * import { c15tVue, hosted } from 'c15t/vue/vue-plugin';
  *
- * app.use(c15tVue, { mode: hosted() });
- * ```
+ * @param options - The plugin's `backendURL`, `mode` and `testing`.
+ * @returns A transport factory for the runtime's `mode`.
+ * @throws {Error} When none of them is set and the build set no URL.
+ * @internal
  */
-export const hosted = function hosted(
-	options: Partial<HostedModeOptions> = {}
-): HostedModeFactory {
+export const selectedMode = function selectedMode(options: {
+	backendURL?: string;
+	mode?: ProviderTransportFactory;
+	testing?: ConsentTesting;
+}): ProviderTransportFactory {
+	if (options.testing) {
+		return options.testing.transport;
+	}
+	if (options.mode) {
+		return options.mode;
+	}
 	const backendURL = options.backendURL ?? builtBackendURL;
 	if (backendURL === undefined) {
 		throw missingBackendURL('hosted');
 	}
-	return coreHosted({ ...options, backendURL });
+	return coreHosted({ backendURL }) as HostedModeFactory;
 };

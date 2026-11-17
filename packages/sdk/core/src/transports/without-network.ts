@@ -129,9 +129,11 @@ export const createWithoutNetwork = function createWithoutNetwork(
 	entry: string,
 	options: WithoutNetworkOptions = {}
 ): ConsentTesting {
-	return {
-		...options,
-		transport: withoutNetworkTransport(entry, options),
-		type: 'without-network',
-	};
+	// `transport` is not enumerable, so the value spreads and serializes as
+	// its data: a Nuxt or Astro config carries it to the browser as such.
+	return Object.defineProperty(
+		{ ...options, type: 'without-network' as const },
+		'transport',
+		{ value: withoutNetworkTransport(entry, options) }
+	) as ConsentTesting;
 };

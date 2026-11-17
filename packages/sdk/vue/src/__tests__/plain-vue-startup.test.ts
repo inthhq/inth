@@ -1,7 +1,7 @@
 import { afterEach, expect, test, vi } from 'vitest';
 import { createApp, defineComponent, h, inject, onMounted } from 'vue';
 
-import { c15tVue, hosted, manifest } from '../index';
+import { c15tVue, manifest } from '../index';
 import type { RuntimeConsentConfig } from '../runtime/kernel';
 import { symbolKernel } from '../runtime/utils/symbols';
 
@@ -54,7 +54,7 @@ test.each([false, true])(
 		document.body.append(container);
 		const app = createApp(root);
 		app.use(c15tVue, {
-			mode: hosted({ backendURL: 'https://consent.example.test' }),
+			backendURL: 'https://consent.example.test',
 		});
 		let mounted = false;
 		cleanups.push(() => {
@@ -129,7 +129,7 @@ test('holds tracker requests from child mount hooks until the blocker decides th
 	};
 	app.use(c15tVue, {
 		...config,
-		mode: hosted({ backendURL: 'https://consent.example.test' }),
+		backendURL: 'https://consent.example.test',
 	});
 	cleanups.push(() => {
 		app.unmount();

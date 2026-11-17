@@ -4,12 +4,12 @@
  * wrapper turns it into `hosted()` and installs the real plugin. A test
  * that passes `mode` or `runtime` gets the plugin unchanged.
  */
-import { hosted } from '@c15t/core';
 import type { App, Plugin } from 'vue';
 
 import { c15tVue as plugin } from '../index';
 import type { C15tVuePluginOptions as PluginOptions } from '../index';
 import type { RuntimeConsentConfig } from '../runtime/kernel';
+import { hosted } from '@c15t/core/transports';
 
 // oxlint-disable-next-line oxc/no-barrel-file -- A test stand-in for the plugin entry.
 export { generateTokensCSS } from '../index';

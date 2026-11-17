@@ -88,6 +88,11 @@
 			"import": "./dist/module.mjs",
 			"default": "./dist/module.mjs"
 		},
+		"./testing": {
+			"types": "./dist/testing.d.mts",
+			"import": "./dist/testing.mjs",
+			"default": "./dist/testing.mjs"
+		},
 		"./vite": {
 			"types": "./dist/vite.d.mts",
 			"import": "./dist/vite.mjs",

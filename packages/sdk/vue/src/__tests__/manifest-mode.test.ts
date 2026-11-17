@@ -9,7 +9,7 @@ import { createConsentManifestPolicyPack } from '@c15t/schema/types';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { createVueConsentKernelContext } from '../runtime/kernel';
-import { hosted, manifest } from '../runtime/modes';
+import { manifest, selectedMode } from '../runtime/modes';
 import {
 	readNuxtMode,
 	readNuxtRoutePrefix,
@@ -224,41 +224,51 @@ describe('plain Vue modes', () => {
 		}
 	});
 
-	test('manifest() and hosted() name the plugin when no backend URL is set', () => {
+	test('manifest() and the hosted backend name the plugin when no backend URL is set', () => {
 		// No `consentManifest()` plugin in this test, so the build supplied
 		// no backend URL.
 		expect(() => manifest()).toThrow('consentManifest() from c15t/vue/vite');
-		expect(() => hosted()).toThrow(
-			'c15t: hosted() has no backend URL. Add consentManifest() from c15t/vue/vite to vite.config.ts and set VITE_C15T_BACKEND_URL (or VITE_INTH_PROJECT_URL), or pass `backendURL`.'
+		expect(() => selectedMode({})).toThrow(
+			'c15t: `backendURL` is required. Add consentManifest() from c15t/vue/vite to vite.config.ts and set VITE_C15T_BACKEND_URL (or VITE_INTH_PROJECT_URL), or pass `backendURL`.'
 		);
 	});
 
-	test('the plugin rejects a config without a mode', () => {
+	test('the plugin picks the hosted backend for a backend URL alone', () => {
+		expect(selectedMode({ backendURL: '/api/c15t' }).kind).toBe('hosted');
+	});
+
+	test('the plugin rejects a config without a backend', () => {
 		expect(() => createVueConsentKernelContext({ config: {} })).toThrow(
-			'pass `mode`'
+			'pass `backendURL`'
 		);
 	});
 });
 
 describe('Nuxt modes', () => {
-	test('manifest() with the default consent route is the default', () => {
-		expect(readNuxtMode({})).toEqual({ type: 'manifest' });
-		expect(readNuxtRoutePrefix({})).toBe('/api/c15t');
-		expect(readNuxtRoutePrefix({ routePrefix: '/consent/' })).toBe('/consent');
-		expect(readNuxtRoutePrefix({ routePrefix: false })).toBeUndefined();
+	test('the hosted backend is the default; manifest() gets the consent route', () => {
+		const manifestMode = { type: 'manifest' as const };
+		expect(readNuxtMode({})).toEqual({ type: 'hosted' });
+		expect(readNuxtRoutePrefix({})).toBeUndefined();
+		expect(readNuxtRoutePrefix({ mode: manifestMode })).toBe('/api/c15t');
+		expect(
+			readNuxtRoutePrefix({ mode: manifestMode, routePrefix: '/consent/' })
+		).toBe('/consent');
+		expect(
+			readNuxtRoutePrefix({ mode: manifestMode, routePrefix: false })
+		).toBeUndefined();
 		// Only manifest mode has a consent route.
 		expect(
 			readNuxtRoutePrefix({ mode: { type: 'hosted' }, routePrefix: '/c' })
 		).toBeUndefined();
 	});
 
-	test('the server resolves hosted() and manifest(), the browser the rest', () => {
+	test('the server resolves the hosted backend and manifest(), the browser the rest', () => {
 		expect(resolvesOnServer({ type: 'manifest' })).toBe(true);
 		expect(resolvesOnServer({ type: 'hosted' })).toBe(true);
 		expect(resolvesOnServer({ resolve: 'browser', type: 'manifest' })).toBe(
 			false
 		);
-		expect(resolvesOnServer({ type: 'offline' })).toBe(false);
+		expect(resolvesOnServer({ type: 'without-network' })).toBe(false);
 	});
 
 	test('a server-resolved manifest re-inits through the consent route and saves to the backend', async () => {
@@ -290,7 +300,7 @@ describe('Nuxt modes', () => {
 
 		const context = createVueConsentKernelContext({
 			config: {},
-			mode: clientMode(readNuxtMode({}), {
+			mode: clientMode({ type: 'manifest' }, {
 				backendURL: 'https://backend.example',
 				routePrefix: '/internal/consent',
 			}),
