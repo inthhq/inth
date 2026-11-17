@@ -15,14 +15,18 @@ CI_PRODUCTS=cli node tools/ci/plan.ts            # one product, as a release doe
 | Change | Jobs that run |
 | --- | --- |
 | `packages/cli/**`, `npm/**`, `docs/**`, `.tegami/**`, `install.sh`, root lint and test configs | CLI: Documentation; Lint, types, and unit tests; Native CLI on four platforms |
-| `packages/sdk/**` | SDK lint and format, SDK repository tooling tests, SDK build and types, SDK package tests, SDK workspace tests. Only the changed packages and their dependents build and test. |
+| `packages/sdk/**` | SDK lint and format, SDK repository tooling tests, SDK build and types, SDK package tests, SDK workspace tests, and the browser integration groups. Only the changed packages and their dependents build and test. |
 | `apps/**`, `examples/**`, `benchmarks/**`, `internals/**`, `scripts/**` | The same SDK jobs, for the changed workspaces and their dependents |
-| `packages/react-native/**` and the React Native fixtures | React Native, plus the SDK lint and format jobs. Its `ios/` half also runs Swift, its `android/` half also runs Android, and its Codegen specs and manifest run both. |
+| `packages/react-native/**` and the React Native fixtures | React Native and the React Native compatibility matrix, plus the SDK lint and format jobs. Its `ios/` half also runs Swift, its `android/` half also runs Android, and its Codegen specs and manifest run both. |
 | `packages/swift/**`, root `Package.swift` | Swift, plus SDK lint and format |
 | `packages/android/**` | Android, plus SDK lint and format |
 | `packages/native-protocol/**`, `examples/native/**` | React Native, Swift and Android, and all SDK package tests, because the web packages read the shared fixtures |
 | Markdown in the SDK or mobile trees | SDK lint and format only |
 | `pnpm-lock.yaml`, `package.json`, `turbo.json`, `pnpm-workspace.yaml`, `.github/workflows/**`, `.github/actions/**`, `tools/ci/**`, `patches/**`, any file the planner does not know | Everything |
+
+The browser integration groups come from c15t's planner (`tools/ci/browser-groups.ts`) and run through `scripts/ci-browser.ts`: example acceptance, starter smoke tests, Next.js compatibility cells, framework parity across the Storybooks, SSR journeys and CSS compatibility. A group runs when a fixture, starter, Storybook or bench it covers is selected.
+
+The React Native compatibility matrix packs `@c15t/react-native` and installs it in a fresh app for each React Native and Expo release in `scripts/mobile-compatibility.json`, then checks types, Codegen and Expo prebuild.
 
 A web SDK change never runs the mobile jobs, even when it reaches `@c15t/react-native` through `@c15t/core` or `@c15t/iab`. The planner lists those workspaces as `mobileReached` in the job summary. The React Native release runs their checks before it publishes.
 
