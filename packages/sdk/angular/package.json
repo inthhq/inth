@@ -51,11 +51,25 @@
 	],
 	"type": "module",
 	"sideEffects": [
-		"**/*.css"
+		"**/*.css",
+		"./dist/translations/*.js"
 	],
 	"module": "./dist/fesm2022/inth-angular.mjs",
 	"types": "./dist/types/inth-angular.d.ts",
 	"exports": {
+		"./gpp": {
+			"types": "./dist/types/inth-angular-gpp.d.ts",
+			"default": "./dist/fesm2022/inth-angular-gpp.mjs"
+		},
+		"./engine": {
+			"types": "./dist/types/inth-angular-engine.d.ts",
+			"default": "./dist/fesm2022/inth-angular-engine.mjs"
+		},
+		"./translations/*": {
+			"types": "./dist/translations/*.d.ts",
+			"import": "./dist/translations/*.js",
+			"default": "./dist/translations/*.js"
+		},
 		"./package.json": "./package.json",
 		"./styles.css": "./dist/styles.css",
 		"./iab/styles.css": "./dist/iab/styles.css",
@@ -112,7 +126,7 @@
 		"access": "public"
 	},
 	"scripts": {
-		"build": "ng-packagr -p ng-package.json -c tsconfig.lib.json && pnpm run build:schematics",
+		"build": "ng-packagr -p ng-package.json -c tsconfig.lib.json && pnpm run build:schematics && node ../shared/write-translation-entries.mjs dist",
 		"build:docs": "bun ../../../scripts/generate-package-docs.ts @inth/angular",
 		"build:schematics": "tsc -p schematics/tsconfig.json && node schematics/copy-assets.mjs",
 		"check-types": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.spec.json",

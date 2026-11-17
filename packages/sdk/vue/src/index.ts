@@ -187,3 +187,17 @@ export const c15tVue: Plugin<[C15tVuePluginOptions]> = {
 		}
 	},
 };
+
+// Engine types the guides use; the helpers are in the `engine` entry.
+export type {
+	CategoryDecision,
+	ExperimentArmName,
+	ExperimentAssignment,
+	PrefetchOptions,
+	ResolvedVendor,
+	Script,
+	ScriptCallbackInfo,
+	TCData,
+	TCDataOutsideTCF,
+	Vendor,
+} from '@inth/sdk/engine';

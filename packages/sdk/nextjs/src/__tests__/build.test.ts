@@ -135,7 +135,10 @@ describe('Next.js build-time manifest', () => {
 		const specifiers = [
 			'@inth/nextjs/generated-manifest',
 			'@inth/sdk/generated',
-			'@inth/sdk/generated',
+			'@inth/nextjs/generated',
+			'@inth/react/generated',
+			'@inth/svelte/generated',
+			'@inth/tanstack-start/generated',
 		];
 
 		const turbopackAlias = config.turbopack?.resolveAlias ?? {};
@@ -232,7 +235,7 @@ describe('Next.js build-time manifest', () => {
 		await createRoot();
 		const config = await withConsentManifest(
 			{
-				serverExternalPackages: ['@inth/sdk/engine'],
+				serverExternalPackages: ['@inth/sdk'],
 				transpilePackages: ['ui-kit', 'c15t'],
 			},
 			optionsFor()

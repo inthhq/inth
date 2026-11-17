@@ -30,6 +30,7 @@
 // Re-export kernel types so consumers need only one import.
 export type {
 	AllConsentNames,
+	CategoryDecision,
 	ClearOnRevocationConfig,
 	ConsentKernel,
 	ConsentSnapshot,
@@ -53,6 +54,18 @@ export type {
 	SavePayload,
 	SaveResult,
 	Unsubscribe,
+} from '@inth/sdk/engine';
+// Engine types the guides use, so an app needs no `@inth/sdk` import.
+export type {
+	ExperimentArmName,
+	ExperimentAssignment,
+	PrefetchOptions,
+	ResolvedVendor,
+	Script,
+	ScriptCallbackInfo,
+	TCData,
+	TCDataOutsideTCF,
+	Vendor,
 } from '@inth/sdk/engine';
 export type { ConsentTesting } from '@inth/sdk/testing';
 export type { WithProjectUrl } from '@inth/sdk/runtime';

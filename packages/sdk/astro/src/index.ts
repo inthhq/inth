@@ -69,3 +69,15 @@ export type {
 } from '@inth/sdk/engine';
 export { policyRulePresets } from '@inth/sdk/engine';
 export type { Theme } from '@inth/sdk/ui/theme';
+
+// Engine types the guides use; the helpers are in the `engine` entry.
+export type {
+	CategoryDecision,
+	ExperimentArmName,
+	ExperimentAssignment,
+	PrefetchOptions,
+	ScriptCallbackInfo,
+	TCData,
+	TCDataOutsideTCF,
+} from '@inth/sdk/engine';
+export { defineTheme } from '@inth/sdk/ui/theme';

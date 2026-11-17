@@ -8,6 +8,8 @@ import {
 } from 'node:fs';
 import { dirname, join } from 'node:path';
 
+import { toPublicSpecifier } from '../sdk/scripts/assemble';
+
 /** Writes framework stylesheet entrypoints using the shared UI CSS assets. */
 export const generateDistributionCss = (packageRoot: string): void => {
 	const { name: packageName } = JSON.parse(
@@ -114,7 +116,8 @@ export const generateDistributionCss = (packageRoot: string): void => {
 			' */',
 			'',
 		].join('\n');
-		writeFileSync(targetPath, `${header}${sourceCss}`);
+		// The UI package's own CSS names it by its private workspace name.
+		writeFileSync(targetPath, `${header}${toPublicSpecifier(sourceCss)}`);
 	}
 
 	console.log(

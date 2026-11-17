@@ -52,7 +52,8 @@
 	],
 	"type": "module",
 	"sideEffects": [
-		"**/*.css"
+		"**/*.css",
+		"./dist/translations/*.js"
 	],
 	"main": "./dist/index.js",
 	"types": "./dist-types/index.d.ts",
@@ -66,6 +67,11 @@
 			"types": "./dist-types/client.d.ts",
 			"import": "./dist/client.js",
 			"default": "./dist/client.js"
+		},
+		"./devtools": {
+			"types": "./dist-types/devtools.d.ts",
+			"import": "./dist/devtools.js",
+			"default": "./dist/devtools.js"
 		},
 		"./middleware": {
 			"types": "./dist-types/middleware.d.ts",
@@ -121,6 +127,16 @@
 			"import": "./dist/postcss-tailwind3.js",
 			"default": "./dist/postcss-tailwind3.js"
 		},
+		"./engine": {
+			"types": "./dist-types/engine.d.ts",
+			"import": "./dist/engine.js",
+			"default": "./dist/engine.js"
+		},
+		"./translations/*": {
+			"types": "./dist-types/translations/*.d.ts",
+			"import": "./dist/translations/*.js",
+			"default": "./dist/translations/*.js"
+		},
 		"./package.json": "./package.json",
 		"./components/consent-script.astro": "./src/components/consent-script.astro",
 		"./components/consent-banner-deferred.astro": "./src/components/prompt-deferred.astro",
@@ -140,7 +156,7 @@
 		"access": "public"
 	},
 	"scripts": {
-		"build": "rslib build && node ../../../scripts/normalize-dist-types.mjs",
+		"build": "rslib build && node ../../../scripts/normalize-dist-types.mjs && node ../shared/write-translation-entries.mjs dist dist-types",
 		"build:docs": "bun ../../../scripts/generate-package-docs.ts @inth/astro",
 		"check-types": "tsc --noEmit",
 		"dev": "sh -c 'rslib build --no-dts --no-clean && rslib build --watch --no-dts --no-clean'",

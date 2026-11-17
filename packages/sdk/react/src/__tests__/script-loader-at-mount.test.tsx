@@ -56,6 +56,10 @@ const CORE_ENTRY_ALIASES: Record<string, string> = {
 	'modules/network-hold': 'modules/network-blocker/hold.ts',
 };
 
+/** `@inth/sdk` entries that are not the engine's: UI, schema, IAB and the rest. */
+const NON_ENGINE_ENTRY =
+	/^@inth\/sdk\/(?:ui|schema|translations|iab|iab-client|devtools|gpp|headless|hosted)(?:\/|$)/u;
+
 /** Value imports and re-exports; `import type` and `export type` erase. */
 const STATIC_IMPORT =
 	/^\s*(?:import|export)\s+(?!type\s)(?:[^'";]*?\s+from\s+)?['"](?<specifier>[^'"]+)['"]/gmu;
@@ -98,7 +102,7 @@ const resolveImport = function resolveImport(
 	if (specifier === '@inth/sdk/engine') {
 		return `${CORE_SOURCE}index.ts`;
 	}
-	if (specifier.startsWith('@inth/sdk/')) {
+	if (specifier.startsWith('@inth/sdk/') && !NON_ENGINE_ENTRY.test(specifier)) {
 		const subpath = specifier.slice('@inth/sdk/'.length);
 		const alias = CORE_ENTRY_ALIASES[subpath];
 		const file = alias

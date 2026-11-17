@@ -25,7 +25,7 @@ const SERVER_RENDERED_SHEETS = new Set([
 const SHEETS_PREFIX = '@inth/sdk/ui/styles/sheets/';
 
 /** A module of the installed `@inth/react`, whatever the package manager. */
-const REACT_PACKAGE = /[\\/]node_modules[\\/]@c15t[\\/]react[\\/]/u;
+const REACT_PACKAGE = /[\\/]node_modules[\\/]@inth[\\/]react[\\/]/u;
 
 /** The `-deferred` twin of a sheet `@inth/react` imports, else `undefined`. */
 const deferredSheet = function deferredSheet(

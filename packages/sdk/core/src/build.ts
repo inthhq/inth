@@ -566,10 +566,17 @@ export interface GeneratedManifestModule {
 
 /**
  * Specifiers the build integrations answer with the fetched snapshot:
- * `@inth/sdk/generated`.
+ * `@inth/sdk/generated` and the framework packages' `generated` entries,
+ * which apps import so they need no direct `@inth/sdk` dependency.
  * @internal
  */
-export const GENERATED_MODULE_IDS = ['@inth/sdk/generated'] as const;
+export const GENERATED_MODULE_IDS = [
+	'@inth/sdk/generated',
+	'@inth/nextjs/generated',
+	'@inth/react/generated',
+	'@inth/svelte/generated',
+	'@inth/tanstack-start/generated',
+] as const;
 
 /** Where non-Vite builds write the snapshot, relative to the app root. */
 export const MANIFEST_CACHE_DIR = 'node_modules/.cache/c15t';
@@ -794,8 +801,11 @@ export interface ConsentChunkGroup {
 	includeDependenciesRecursively: boolean;
 }
 
-/** Every c15t package under `node_modules`, whatever the package manager. */
-const C15T_MODULE = /[\\/]node_modules[\\/](?:@c15t|c15t)[\\/]/u;
+/**
+ * Every SDK package under `node_modules`, whatever the package manager:
+ * `@inth/sdk` and the framework packages, not the CLI.
+ */
+const C15T_MODULE = /[\\/]node_modules[\\/]@inth[\\/](?!cli[\\/])/u;
 
 /**
  * Puts the c15t modules a page's entry imports statically into one chunk.

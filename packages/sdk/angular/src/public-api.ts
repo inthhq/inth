@@ -203,3 +203,18 @@ export {
 	shouldShowBranding as ɵshouldShowBranding,
 } from './lib/shared';
 export type { LegalLinkSelection as ɵLegalLinkSelection } from './lib/shared';
+
+// Engine types the guides use; the helpers are in the `engine` entry.
+export type {
+	CategoryDecision,
+	ExperimentArmName,
+	ExperimentAssignment,
+	PrefetchOptions,
+	ResolvedVendor,
+	Script,
+	ScriptCallbackInfo,
+	TCData,
+	TCDataOutsideTCF,
+	Vendor,
+} from '@inth/sdk/engine';
+export { defineTheme, generateThemeCSS } from '@inth/sdk/ui/theme';

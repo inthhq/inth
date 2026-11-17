@@ -1,4 +1,4 @@
-# @c15t/nextjs
+# @inth/nextjs
 
 > Next.js v3 App Router, Pages Router, static export and hydration with Inth.
 
@@ -30,7 +30,7 @@ These docs describe c15t v3. Find your app's row in Choose your setup, then foll
 - [Callbacks](./docs/frameworks/next/callbacks.md): Run code in a Next.js app when a visitor records a consent choice, when permissions change, when a request fails and before the revocation reload, from c15t.config.ts.
 - [Clear on revocation](./docs/frameworks/next/clear-on-revocation.md): Delete the first-party cookies and Web Storage keys a consent category owns in a Next.js app when that category is denied, with clearOnRevocation in c15t.config.ts.
 - [Client-side initialization](./docs/frameworks/next/client-side.md): Initialize c15t in the browser in a Next.js app with hosted() mode, without server prefetch, a consent route or API handlers.
-- [Components](./docs/frameworks/next/components.md): Every c15t component a Next.js app imports from c15t/next, what each renders, which ones are Client Components, and where to start.
+- [Components](./docs/frameworks/next/components.md): Every c15t component a Next.js app imports from @inth/nextjs, what each renders, which ones are Client Components, and where to start.
 - [ConsentBanner](./docs/frameworks/next/components/consent-banner.md): Render the pre-built ConsentBanner inside a Next.js ConsentRoot and configure its variants, per-policy buttons and compound parts.
 - [ConsentDialog](./docs/frameworks/next/components/consent-dialog.md): Mount ConsentDialog as a Client Component inside a Next.js ConsentRoot to open the preference center from the banner, links and triggers.
 - [ConsentDialogLink](./docs/frameworks/next/components/consent-dialog-link.md): Open the preference center from a Next.js footer with ConsentDialogLink, a Client Component that renders an unstyled button inside ConsentRoot.
@@ -39,15 +39,15 @@ These docs describe c15t v3. Find your app's row in Choose your setup, then foll
 - [ConsentRoot](./docs/frameworks/next/components/consent-root.md): Render the Next.js ConsentRoot once from a Server Component layout, pass it the server-resolved state, and see how it reads c15t.config.ts and picks the consent mode.
 - [ConsentWidget](./docs/frameworks/next/components/consent-widget.md): Render ConsentWidget on a Next.js privacy page inside ConsentRoot as an inline preference center, server-rendered when the route resolves consent.
 - [DevTools](./docs/frameworks/next/components/dev-tools.md): Load the c15t DevTools panel only in Next.js development builds to inspect consent state, scripts, policy and events inside ConsentRoot.
-- [Compose your own banner](./docs/frameworks/next/compose.md): Build a Next.js consent banner as a Client Component from the ConsentBanner parts in c15t/next, with your own markup and buttons, rendered inside ConsentRoot.
+- [Compose your own banner](./docs/frameworks/next/compose.md): Build a Next.js consent banner as a Client Component from the ConsentBanner parts in @inth/nextjs, with your own markup and buttons, rendered inside ConsentRoot.
 - [Content Security Policy](./docs/frameworks/next/content-security-policy.md): Pass a per-request CSP nonce to ConsentRoot in Next.js and allow the consent backend in connect-src.
 - [Customize](./docs/frameworks/next/customize.md): Load the c15t stylesheet yourself in Next.js when you need to, and change colors, radius, button roles, component parts, dark mode and banner shape with ConsentTheme and ConsentRoot options.
 - [Data fetching reference](./docs/frameworks/next/data-fetching-reference.md): Reference for the Next.js c15t.config.ts options, modes, resolveConsent, withConsentProps, the consent route, manifest resolution, request geography and local configuration.
 - [Embeds](./docs/frameworks/next/embeds.md): Keep YouTube videos, maps and other iframes out of a Next.js page until their consent category is allowed, with ConsentGate or the iframe blocker in ConsentRoot.
 - [Geography headers](./docs/frameworks/next/geography-headers.md): Use c15tProxy in Next.js proxy.ts or middleware.ts so Server Components and Route Handlers receive the visitor's country and region.
-- [IAB GPP](./docs/frameworks/next/gpp.md): Add the IAB Global Privacy Platform API (__gpp) to a Next.js app with ConsentGPP from c15t/react/gpp, so ad tech can read US state opt-outs and the TCF EU consent string.
-- [Headless](./docs/frameworks/next/headless.md): Build a custom consent banner or embed gate in Next.js with the c15t/next/headless hooks inside your existing ConsentRoot.
-- [Hooks](./docs/frameworks/next/hooks.md): Gate features and save consent choices in Next.js Client Components with the focused hooks exported from c15t/next.
+- [IAB GPP](./docs/frameworks/next/gpp.md): Add the IAB Global Privacy Platform API (__gpp) to a Next.js app with ConsentGPP from @inth/react/gpp, so ad tech can read US state opt-outs and the TCF EU consent string.
+- [Headless](./docs/frameworks/next/headless.md): Build a custom consent banner or embed gate in Next.js with the @inth/nextjs/headless hooks inside your existing ConsentRoot.
+- [Hooks](./docs/frameworks/next/hooks.md): Gate features and save consent choices in Next.js Client Components with the focused hooks exported from @inth/nextjs.
 - [IAB TCF](./docs/frameworks/next/iab.md): Mount the IAB TCF banner and dialog inside a Next.js ConsentRoot and configure the CMP ID, policy and vendor data.
 - [Network blocker](./docs/frameworks/next/network-blocker.md): Hold fetch and XMLHttpRequest calls in a Next.js app until their consent category is allowed, with networkBlocker rules in c15t.config.ts.
 - [Performance](./docs/frameworks/next/optimization.md): Bundle policy at build time to avoid manifest fetch latency, use runtime caching when policies must refresh without a rebuild, and optionally keep browser consent requests on your origin.
@@ -107,7 +107,7 @@ These docs describe c15t v3. Find your app's row in Choose your setup, then foll
 - [Attentive](./docs/integrations/attentive.md): Load the Attentive tag only after marketing consent with the c15t attentiveTag helper, and check its requests and storage in DevTools.
 - [Branch](./docs/integrations/branch.md): Set Branch's consumer protection attribution level and Google DMA parameters from c15t consent in Swift, Kotlin, React Native and Expo, while deep links keep working.
 - [Braze](./docs/integrations/braze.md): Keep the Braze SDK disabled until c15t consent allows it and record Google's DMA consent attributes on the Braze user, in Swift, Kotlin, React Native and Expo.
-- [Custom integrations](./docs/integrations/building-integrations.md): Gate a vendor that has no @c15t/integrations helper, or sync consent with an SDK your app already loads, using a c15t script configuration.
+- [Custom integrations](./docs/integrations/building-integrations.md): Gate a vendor that has no @inth/integrations helper, or sync consent with an SDK your app already loads, using a c15t script configuration.
 - [Clay](./docs/integrations/clay.md): Load Clay web intent only after marketing consent and understand its storage and revocation limits.
 - [Clearbit](./docs/integrations/clearbit.md): Load the Clearbit enrichment tag only after marketing consent with the c15t clearbit helper, and check it in DevTools.
 - [Cloudflare Web Analytics](./docs/integrations/cloudflare-web-analytics.md): Load the Cloudflare Web Analytics beacon only after measurement consent with the c15t cloudflareWebAnalytics helper, and check it in DevTools.

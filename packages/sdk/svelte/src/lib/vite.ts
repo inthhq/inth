@@ -79,9 +79,9 @@ export const createServerGeneratedPlugin =
 /** The module each on-demand chunk starts from. */
 const CHUNK_MODULES: Readonly<Record<PreloadChunkName, RegExp>> = {
 	engine:
-		/[\\/](?:@c15t[\\/]svelte|packages[\\/](?:sdk[\\/])?svelte)[\\/](?:dist|src[\\/]lib)[\\/]deferred[\\/]engine\.[cm]?[jt]s$/u,
+		/[\\/](?:@inth[\\/]svelte|packages[\\/](?:sdk[\\/])?svelte)[\\/](?:dist|src[\\/]lib)[\\/]deferred[\\/]engine\.[cm]?[jt]s$/u,
 	'loader-and-blocker':
-		/[\\/](?:@c15t[\\/]core|packages[\\/](?:sdk[\\/])?core)[\\/](?:dist|src)[\\/]modules[\\/]loader-and-blocker\.[cm]?[jt]s$/u,
+		/[\\/](?:@inth[\\/]sdk[\\/]lib[\\/]core|packages[\\/]sdk[\\/]sdk[\\/]lib[\\/]core|packages[\\/](?:sdk[\\/])?core)[\\/](?:dist|src)[\\/]modules[\\/]loader-and-blocker\.[cm]?[jt]s$/u,
 };
 
 const CHUNK_NAMES = Object.keys(CHUNK_MODULES) as PreloadChunkName[];
@@ -281,7 +281,7 @@ export const createModulePreloadPlugin =
  * it costs the page one more request.
  */
 const FIRST_LOAD_SHARED =
-	/^\0vite[\\/]preload-helper\.js$|[\\/]node_modules[\\/]@c15t[\\/](?:core[\\/]dist[\\/](?:libs[\\/](?:has|experiment-presentation|vendor-listing|policy-actions|is-production|storage-keys|generate-subject-id)|consent[\\/]consent-types|modules[\\/]vendor-(?:allowed|denial)|consent-record[\\/]types|surface-actions[\\/]instant-commit|derive-surface)|ui[\\/]dist[\\/]utils[\\/]text-direction)\.js$/u;
+	/^\0vite[\\/]preload-helper\.js$|[\\/]node_modules[\\/]@inth[\\/]sdk[\\/]lib[\\/](?:core[\\/]dist[\\/](?:libs[\\/](?:has|experiment-presentation|vendor-listing|policy-actions|is-production|storage-keys|generate-subject-id)|consent[\\/]consent-types|modules[\\/]vendor-(?:allowed|denial)|consent-record[\\/]types|surface-actions[\\/]instant-commit|derive-surface)|ui[\\/]dist[\\/]utils[\\/]text-direction)\.js$/u;
 
 /** The slice of Rolldown's output options {@link FirstLoadChunkPlugin} edits. */
 interface OutputOptionsLike {

@@ -193,8 +193,14 @@ describe('TanStack Start client chunks', () => {
 		// The returning-visitor path (the stored-choice gate and watcher, the
 		// wake-up on a failed server start, the render's page object and the
 		// live-option wake-up, and the plain-script checks that keep the early
-		// start to what it can verify) sits in the first load.
-		expect(brotli).toBeLessThanOrEqual(19_247);
+		// start to what it can verify) sits in the first load. The build is
+		// unminified, so it keeps Rolldown's `//#region <path>` comments: the
+		// engine's modules sit under `../sdk/lib/core/dist/` since @inth/sdk,
+		// which adds 18 bytes over 19,245 here. With the old paths the same
+		// output is 19,228 bytes. The flat entry names (`@inth/sdk/engine` in
+		// strings where `@inth/sdk/core` was) and the minifier's new local
+		// names add 7 more, though the files' raw bytes went down.
+		expect(brotli).toBeLessThanOrEqual(19_270);
 	}, 60_000);
 
 	test('a root route applies a streamed state with code its engine brings', async () => {

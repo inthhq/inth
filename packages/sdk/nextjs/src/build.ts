@@ -41,7 +41,8 @@ export type ConsentNextConfig =
 
 /**
  * The specifiers aliased to the written snapshot: the one the server
- * helpers import, and `@inth/sdk/generated` for app code. The
+ * helpers import, and `@inth/nextjs/generated` (or `@inth/sdk/generated`)
+ * for app code. The
  * packages' own modules there export `undefined`.
  */
 const GENERATED_SPECIFIERS = [

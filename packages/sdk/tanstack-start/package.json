@@ -63,7 +63,8 @@
 	],
 	"type": "module",
 	"sideEffects": [
-		"**/*.css"
+		"**/*.css",
+		"./dist/translations/*.js"
 	],
 	"main": "./dist/index.js",
 	"types": "./dist-types/index.d.ts",
@@ -77,6 +78,11 @@
 		}
 	},
 	"exports": {
+		"./devtools": {
+			"types": "./dist-types/devtools.d.ts",
+			"import": "./dist/devtools.js",
+			"default": "./dist/devtools.js"
+		},
 		"./styles.css": "./dist/styles.css",
 		"./styles.tw3.css": "./dist/styles.tw3.css",
 		"./iab/styles.css": "./dist/iab/styles.css",
@@ -131,13 +137,28 @@
 			"types": "./dist-types/build.d.ts",
 			"import": "./dist/build.js",
 			"default": "./dist/build.js"
+		},
+		"./generated": {
+			"types": "./dist-types/generated.d.ts",
+			"import": "./dist/generated.js",
+			"default": "./dist/generated.js"
+		},
+		"./engine": {
+			"types": "./dist-types/engine.d.ts",
+			"import": "./dist/engine.js",
+			"default": "./dist/engine.js"
+		},
+		"./translations/*": {
+			"types": "./dist-types/translations/*.d.ts",
+			"import": "./dist/translations/*.js",
+			"default": "./dist/translations/*.js"
 		}
 	},
 	"publishConfig": {
 		"access": "public"
 	},
 	"scripts": {
-		"build": "pnpm run prebuild && rslib build && node ../../../scripts/normalize-dist-types.mjs && bun scripts/generate-distribution-css.ts && node ../shared/restore-client-directives.mjs src dist",
+		"build": "pnpm run prebuild && rslib build && node ../../../scripts/normalize-dist-types.mjs && bun scripts/generate-distribution-css.ts && node ../shared/restore-client-directives.mjs src dist && node ../shared/write-translation-entries.mjs dist dist-types",
 		"build:docs": "bun ../../../scripts/generate-package-docs.ts @inth/tanstack-start",
 		"check-types": "pnpm run prebuild && tsc --noEmit && tsc -p tsconfig.type-tests.json",
 		"dev": "sh -c 'pnpm run prebuild && rslib build --no-dts --no-clean && bun scripts/generate-distribution-css.ts && rslib build --watch --no-dts --no-clean'",
