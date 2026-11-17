@@ -52,7 +52,7 @@ jobs:
             exit 0
           fi
           echo "available=true" >> "${GITHUB_OUTPUT}"
-          run_id="c15t-android-$(date -u +%Y%m%dT%H%M%SZ)-$(head -c 4 /dev/urandom | od -An -tx1 | tr -d ' \n')"
+          run_id="inth-android-$(date -u +%Y%m%dT%H%M%SZ)-$(head -c 4 /dev/urandom | od -An -tx1 | tr -d ' \n')"
           echo "id=${run_id}" >> "${GITHUB_OUTPUT}"
           echo "PostHog run_id: ${run_id} (event: ${GITHUB_EVENT_NAME})"
       - name: Prepare the Android toolchain
@@ -72,10 +72,10 @@ jobs:
           adb logcat -G 8M
           adb logcat -c
           sh packages/android/gradlew -p packages/android --no-build-cache :consent-demo:connectedDebugAndroidTest \
-            -Pandroid.testInstrumentationRunnerArguments.class=com.c15t.demo.RealVendorSdkTest#posthogLiveFollowsConsent \
-            "-Pandroid.testInstrumentationRunnerArguments.c15tPostHogLiveHost=${POSTHOG_E2E_HOST}" \
-            "-Pandroid.testInstrumentationRunnerArguments.c15tPostHogLiveKey=${POSTHOG_E2E_PROJECT_KEY}" \
-            "-Pandroid.testInstrumentationRunnerArguments.c15tPostHogLiveRunId=${RUN_ID}"
+            -Pandroid.testInstrumentationRunnerArguments.class=com.inth.demo.RealVendorSdkTest#posthogLiveFollowsConsent \
+            "-Pandroid.testInstrumentationRunnerArguments.inthPostHogLiveHost=${POSTHOG_E2E_HOST}" \
+            "-Pandroid.testInstrumentationRunnerArguments.inthPostHogLiveKey=${POSTHOG_E2E_PROJECT_KEY}" \
+            "-Pandroid.testInstrumentationRunnerArguments.inthPostHogLiveRunId=${RUN_ID}"
       - name: Collect the evidence
         if: ${{ always() && steps.boot.outcome != 'skipped' }}
         env:
@@ -83,7 +83,7 @@ jobs:
         run: |
           out="${RUNNER_TEMP}/posthog-live"
           mkdir -p "${out}"
-          adb logcat -d -s c15t-vendor-evidence:I > "${out}/evidence.log" || true
+          adb logcat -d -s inth-vendor-evidence:I > "${out}/evidence.log" || true
           grep -o 'posthog-live evidence .*' "${out}/evidence.log" | sed 's/^posthog-live evidence //' | tail -1 > "${out}/evidence.json" || true
           {
             echo "## Live PostHog consent check"
@@ -91,11 +91,11 @@ jobs:
             echo "- run_id: \`${RUN_ID}\`"
             echo "- host: ${POSTHOG_E2E_HOST} (project 305107)"
             echo
-            echo "Expected: one \`c15t_probe\` event with \`step=granted\`, and none with \`fresh\`, \`rejected\`, \`withdrawn\` or \`relaunched\`."
+            echo "Expected: one \`inth_probe\` event with \`step=granted\`, and none with \`fresh\`, \`rejected\`, \`withdrawn\` or \`relaunched\`."
             echo "Check it with the query in examples/native/consent-demo/README.md."
             echo
             echo '```'
-            grep 'posthog-live' "${out}/evidence.log" | sed 's/^.*c15t-vendor-evidence: //' || echo "no evidence logged"
+            grep 'posthog-live' "${out}/evidence.log" | sed 's/^.*inth-vendor-evidence: //' || echo "no evidence logged"
             echo '```'
           } >> "${GITHUB_STEP_SUMMARY}"
       - name: Stop the emulator

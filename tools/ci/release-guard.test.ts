@@ -11,15 +11,20 @@ const products: ReleaseProduct[] = ["android", "react-native", "sdk", "swift"];
 test("each product finds what it would publish", () => {
   expect(releaseNames(root, "sdk")).toContain("@c15t/core");
   expect(releaseNames(root, "sdk")).not.toContain("@c15t/build-shared");
-  expect(releaseNames(root, "react-native")).toEqual(["@c15t/react-native"]);
-  expect(releaseNames(root, "android")).toEqual(["com.c15t"]);
-  expect(releaseNames(root, "swift")).toContain("C15tCore");
+  expect(releaseNames(root, "react-native")).toEqual(["@inth/react-native"]);
+  expect(releaseNames(root, "android")).toEqual(["com.inth"]);
+  expect(releaseNames(root, "swift")).toContain("InthCore");
 });
 
-test("no product can release c15t artifacts, even when enabled", () => {
-  for (const product of products) {
+test("the SDK cannot release its c15t packages, even when enabled", () => {
+  const refusals = releaseRefusals(root, "sdk", "true");
+  expect(refusals.join("\n")).toMatch(/c15t names/u);
+});
+
+test("the mobile products carry Inth names", () => {
+  for (const product of ["android", "react-native", "swift"] as const) {
     const refusals = releaseRefusals(root, product, "true");
-    expect(refusals.join("\n"), product).toMatch(/c15t names/u);
+    expect(refusals.join("\n"), product).not.toMatch(/c15t names/u);
   }
 });
 

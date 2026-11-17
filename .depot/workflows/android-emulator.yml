@@ -62,7 +62,7 @@ jobs:
       - name: Boot the emulator
         run: bash scripts/ci-android-emulator.sh start
       - name: Android kernel instrumented suite
-        run: sh packages/android/gradlew -p packages/android --no-build-cache :c15t-android:connectedDebugAndroidTest
+        run: sh packages/android/gradlew -p packages/android --no-build-cache :inth-android:connectedDebugAndroidTest
       # RealVendorSdkTest points PostHog, Mixpanel and Sentry at this server.
       # The app reaches it as localhost through adb reverse, and Mixpanel, which
       # refuses loopback hosts, as 10.0.2.2, the emulator's alias for this machine.
@@ -77,7 +77,7 @@ jobs:
           adb reverse tcp:39874 tcp:39874
       - name: Consent demo journeys
         if: ${{ !cancelled() }}
-        run: sh packages/android/gradlew -p packages/android --no-build-cache :consent-demo:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.c15tVendorCapture=http://localhost:39874
+        run: sh packages/android/gradlew -p packages/android --no-build-cache :consent-demo:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.inthVendorCapture=http://localhost:39874
       - name: Stop the emulator
         if: always()
         run: bash scripts/ci-android-emulator.sh stop
@@ -87,8 +87,8 @@ jobs:
         with:
           name: android-native-instrumented
           path: |
-            packages/android/c15t-android/build/reports/androidTests/**
-            packages/android/c15t-android/build/outputs/androidTest-results/**
+            packages/android/inth-android/build/reports/androidTests/**
+            packages/android/inth-android/build/outputs/androidTest-results/**
             examples/native/consent-demo/android/build/reports/androidTests/**
             examples/native/consent-demo/android/build/outputs/androidTest-results/**
             ${{ runner.temp }}/android-emulator/*.log
@@ -114,10 +114,10 @@ jobs:
       - name: Boot the emulator
         run: bash scripts/ci-android-emulator.sh start
       - name: Capture every screen in light and dark
-        run: sh packages/android/gradlew -p packages/android --no-build-cache :consent-demo:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.c15t.demo.ConsentScreenshotTest
+        run: sh packages/android/gradlew -p packages/android --no-build-cache :consent-demo:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.inth.demo.ConsentScreenshotTest
       - name: Pull the screenshots
         run: |
-          adb pull /sdcard/Download/c15t-consent-screenshots "${RUNNER_TEMP}/consent-screenshots"
+          adb pull /sdcard/Download/inth-consent-screenshots "${RUNNER_TEMP}/consent-screenshots"
           test "$(find "${RUNNER_TEMP}/consent-screenshots" -name '*.png' | wc -l)" -eq 12
       - name: Stop the emulator
         if: always()
