@@ -55,6 +55,7 @@ export type {
 	Unsubscribe,
 } from '@c15t/core';
 export type { ConsentTesting } from '@c15t/core/testing';
+export type { WithBackendURL } from '@c15t/core/runtime';
 export { hosted } from '@c15t/core/modes';
 export type {
 	ConsentBannerButton,

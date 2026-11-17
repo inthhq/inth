@@ -197,16 +197,17 @@ const missingBackendError = function missingBackendError(
 	pkg: string | undefined
 ): Error {
 	let caller = pkg ?? '@c15t/core';
+	let hint = '';
 	try {
 		if (process.env.NODE_ENV !== 'production') {
 			caller = `${caller} ${runtimeOwner(caller)}`;
+			hint =
+				' Set it to your Inth project URL, or use `mode: testing()` from a /testing entry in tests.';
 		}
 	} catch {
 		// No bundler and no `process`: the package name has to do.
 	}
-	return new Error(
-		`${caller}: \`backendURL\` is required. Set it to your Inth project URL, or use \`mode: testing()\` from a /testing entry in tests.`
-	);
+	return new Error(`${caller}: \`backendURL\` is required.${hint}`);
 };
 
 /**

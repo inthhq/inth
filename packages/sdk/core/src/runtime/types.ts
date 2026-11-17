@@ -592,9 +592,11 @@ export interface ConsentProviderRuntimeOptions extends Omit<
 
 /**
  * What makes a provider's options complete: a `backendURL`, a `testing()`
- * mode, or `enabled: false`. Entry points take their options as
- * `WithBackendURL<Options>`, so TypeScript asks for `backendURL` unless
- * the options are for a test or turned off.
+ * mode, a transport factory that carries its own backend (such as a
+ * single-page app's `manifest()`, which reads the build's backend URL), or
+ * `enabled: false`. Entry points take their options as
+ * `WithBackendURL<Options>`, so TypeScript asks for `backendURL` with no
+ * mode and with `hosted()`.
  *
  * @typeParam T - The entry point's options.
  * @typeParam TTesting - What that entry point's `testing()` returns.
@@ -602,7 +604,7 @@ export interface ConsentProviderRuntimeOptions extends Omit<
 export type WithBackendURL<T, TTesting = ConsentTesting> = T &
 	(
 		| { backendURL: string }
-		| { mode: TTesting }
+		| { mode: TTesting | ProviderTransportFactory }
 		| { enabled: false }
 	);
 
