@@ -17,9 +17,9 @@ import { useEffect, useRef, useState } from 'react';
 
 // Exercise the actual Astro island with the same React renderer as the other
 // cases. Shared test fixtures keep policy and GVL data deterministic.
-import AstroDialog from '../../../../packages/astro/src/components/islands/panel-surface';
-import { policyFixture } from '../../../../packages/react/src/__tests__/policy-fixture';
-import { mockGVL } from '../../../../packages/react/src/components/iab/__tests__/fixtures/mock-consent-state';
+import AstroDialog from '../../../../packages/sdk/astro/src/components/islands/panel-surface';
+import { policyFixture } from '../../../../packages/sdk/react/src/__tests__/policy-fixture';
+import { mockGVL } from '../../../../packages/sdk/react/src/components/iab/__tests__/fixtures/mock-consent-state';
 
 const options = { mode: hosted({ backendURL: '/api/bench-consent' }) };
 const Probe = () => {

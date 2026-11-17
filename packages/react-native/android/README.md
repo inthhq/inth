@@ -1,7 +1,7 @@
 # c15t React Native Android
 
 The Android bridge for `@c15t/react-native`: a Codegen TurboModule plus a launch hook, on top
-of the Kotlin consent core in [`native/core-android`](../../../native/core-android). It decides
+of the Kotlin consent core in [`packages/android`](../../android). It decides
 nothing about consent. It reads state the core already holds, forwards the actions the user
 took, and reports results as the JSON in `../src/protocol`.
 
@@ -14,7 +14,7 @@ took, and reports results as the JSON in `../src/protocol`.
 | `codegen/generate-spec.mjs` | The one script that runs `@react-native/codegen` over `../src/specs`, shared by both Gradle builds and the drift check |
 
 The consent engine comes from versioned `com.c15t` artifacts. See the maintained
-[artifact preparation and isolated consumer guide](../../../docs/internal/android-artifacts.md)
+[artifact preparation and isolated consumer guide](../../sdk/docs/internal/android-artifacts.md)
 for repository credentials, staging and external resolution checks. Local staging does not
 prove that the coordinates can be resolved remotely.
 
@@ -61,7 +61,7 @@ uses built-in Kotlin unless the host opts out. Set `C15T_MAVEN_URL` and the
 repository credentials before running these commands. Its settings route
 `com.c15t` exclusively to that repository. Host apps must configure their own
 `exclusiveContent` block, as described in
-[`docs/internal/android-artifacts.md`](../../../docs/internal/android-artifacts.md).
+[`docs/internal/android-artifacts.md`](../../sdk/docs/internal/android-artifacts.md).
 A content filter on one repository does not stop earlier repositories from
 supplying the same coordinates.
 `codegen` mode needs `node` on `PATH` and a `react-native` install to resolve
@@ -105,7 +105,7 @@ produces nothing, or if the spec reaches the AAR.
 ## Configuration
 
 The core reads its configuration from `AndroidManifest.xml` meta-data (see
-[`native/core-android`](../../../native/core-android)): `com.c15t.BACKEND_URL`,
+[`packages/android`](../../android)): `com.c15t.BACKEND_URL`,
 `com.c15t.DRY_RUN`, `com.c15t.BACKEND_DOMAIN`, `com.c15t.FORCE_GPC`. `com.c15t.BACKEND_URL` is the
 project URL from the Inth dashboard, such as `https://your-project.inth.app`; the mobile SDKs
 work only with Inth. `com.c15t.DRY_RUN` is for development and CI: consent works on the device

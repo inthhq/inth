@@ -19,7 +19,7 @@
 //
 // The TurboModule bindings live in the `C15tReactNative` iOS target and the
 // `com.c15t.reactnative` Android module, both shipped inside this package. The pure consent
-// cores (`native/core-swift`, `native/core-android` in the monorepo) are dependencies of
+// cores (`packages/swift`, `packages/android` in the monorepo) are dependencies of
 // those targets, never autolinked directly.
 export default {
 	dependency: {

@@ -2,8 +2,8 @@ import { controlledToggle, toggleOnOff } from '@c15t/conformance/play/switch';
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 import { ref } from 'vue';
 
-import { enTranslations } from '../../../packages/translations/src';
-import ConsentSwitch from '../../../packages/vue/src/runtime/components/switch.vue';
+import { enTranslations } from '../../../packages/sdk/translations/src';
+import ConsentSwitch from '../../../packages/sdk/vue/src/runtime/components/switch.vue';
 
 const { consentTypes } = enTranslations;
 

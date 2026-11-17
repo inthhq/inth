@@ -9,7 +9,7 @@
  * silently dropped on the other.
  *
  * So the three spellings are read off the three sources and compared here, with
- * the JavaScript kernel as the oracle, which is what `native/CONTRACT.md` rule 4
+ * the JavaScript kernel as the oracle, which is what `packages/native-protocol/CONTRACT.md` rule 4
  * says decides a disagreement. `@c15t/core` is a devDependency for exactly this:
  * the kernel is the reference, never a runtime dependency of a phone app.
  *
@@ -42,10 +42,10 @@ import {
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
-const FIXTURE_DIR = resolve(HERE, '../../../../../native/protocol');
+const FIXTURE_DIR = resolve(HERE, '../../../../native-protocol');
 
 /** Where the two native cores keep their own copy of this vocabulary. */
-const NATIVE_DIR = resolve(HERE, '../../../../../native');
+const NATIVE_DIR = resolve(HERE, '../../../..');
 
 interface IndexEntry {
 	file: string;
@@ -56,7 +56,7 @@ interface FixtureFile {
 	id: string;
 }
 
-/** Read a native source, named the way `native/CONTRACT.md` names it. */
+/** Read a native source, named the way `packages/native-protocol/CONTRACT.md` names it. */
 const readNative = function readNative(relativePath: string): string {
 	const path = join(NATIVE_DIR, relativePath);
 
@@ -72,23 +72,23 @@ const readNative = function readNative(relativePath: string): string {
 
 /** The Swift core's whole vocabulary, in the one file that holds it. */
 const SWIFT_VOCABULARY = readNative(
-	'core-swift/Sources/C15tCore/ConsentCategory.swift'
+	'swift/Sources/C15tCore/ConsentCategory.swift'
 );
 
 const KOTLIN_CATEGORIES = readNative(
-	'core-android/c15t-core/src/main/kotlin/com/c15t/core/model/ConsentCategory.kt'
+	'android/c15t-core/src/main/kotlin/com/c15t/core/model/ConsentCategory.kt'
 );
 
 const KOTLIN_ENUMS = readNative(
-	'core-android/c15t-core/src/main/kotlin/com/c15t/core/model/Enums.kt'
+	'android/c15t-core/src/main/kotlin/com/c15t/core/model/Enums.kt'
 );
 
 const KOTLIN_POLICY_EVALUATOR = readNative(
-	'core-android/c15t-core/src/main/kotlin/com/c15t/core/policy/PolicyEvaluator.kt'
+	'android/c15t-core/src/main/kotlin/com/c15t/core/policy/PolicyEvaluator.kt'
 );
 
 const KOTLIN_SNAPSHOT_WIRE = readNative(
-	'core-android/c15t-core/src/main/kotlin/com/c15t/core/wire/SnapshotWire.kt'
+	'android/c15t-core/src/main/kotlin/com/c15t/core/wire/SnapshotWire.kt'
 );
 
 /**

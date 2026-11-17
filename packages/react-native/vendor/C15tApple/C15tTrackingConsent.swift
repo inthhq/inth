@@ -12,10 +12,10 @@ import Foundation
 /// vendor's consent and the ATT answer do.
 ///
 /// The purpose half is the web derivation, not a second one: `C15T_TO_IAB_PURPOSE_MAP.marketing`
-/// and `iabPurposesToC15tConsents` in `packages/iab/src/tcf/purpose-mapping.ts`, with the purposes
+/// and `iabPurposesToC15tConsents` in `packages/sdk/iab/src/tcf/purpose-mapping.ts`, with the purposes
 /// some vendor processes on consent deciding, as `consentBasisPurposes` in
-/// `packages/iab/src/index.ts` passes them: registered vendors, custom (non-IAB) vendors and listed
-/// ad tech providers (``IABPurposeCategories``). `native/protocol/att/iab-marketing.json` runs the
+/// `packages/sdk/iab/src/index.ts` passes them: registered vendors, custom (non-IAB) vendors and listed
+/// ad tech providers (``IABPurposeCategories``). `packages/native-protocol/att/iab-marketing.json` runs the
 /// same cases against both.
 public enum C15tTrackingConsent {
     /// The TCF purposes the `marketing` category stands for: 2, 3 and 4.

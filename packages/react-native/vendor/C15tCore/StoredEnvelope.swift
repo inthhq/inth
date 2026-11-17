@@ -88,7 +88,7 @@ struct StoredEnvelope: Sendable, Codable, Equatable {
     /// current: every authority key path has to come back out of the typed value,
     /// and a path that does not is a name this build does not have. Refusing the whole
     /// envelope is then the same decision the retired fields already make, and
-    /// `native/CONTRACT.md` says why guessing is the wrong half.
+    /// `packages/native-protocol/CONTRACT.md` says why guessing is the wrong half.
     ///
     /// Arrays contribute one path rather than a path per index, so a difference in
     /// length cannot report itself as an unknown field.

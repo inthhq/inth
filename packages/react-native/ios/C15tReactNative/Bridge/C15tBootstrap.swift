@@ -189,7 +189,7 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
     /// The retired keys this build looks for, and the key a host should write instead.
     ///
     /// `com.c15t.test` set the publisher test mode the first draft of
-    /// `native/CONTRACT.md` described as an override. It never was one: test mode is a
+    /// `packages/native-protocol/CONTRACT.md` described as an override. It never was one: test mode is a
     /// client option that never reaches a save body, and ``ConsentOverrides`` has no
     /// property for it. ``RetiredEnvelope`` refuses a stored envelope that carries
     /// `overrides.test`; refusing the plist key here is the same rule on the way in.

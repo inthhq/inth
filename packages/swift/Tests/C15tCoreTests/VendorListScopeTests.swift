@@ -4,9 +4,9 @@ import XCTest
 
 /// The publisher's vendor scope, applied to a served list, graded against the shared vectors.
 ///
-/// The oracle is `narrowGVLToVendors` in `packages/iab/src/tcf/fetch-gvl.ts`: the generator calls
+/// The oracle is `narrowGVLToVendors` in `packages/sdk/iab/src/tcf/fetch-gvl.ts`: the generator calls
 /// that function and writes down what came back, so a difference here is Swift and the browser
-/// build reading the same document differently, and `native/CONTRACT.md` settles that argument in
+/// build reading the same document differently, and `packages/native-protocol/CONTRACT.md` settles that argument in
 /// the web's favour. The claims are the ones the disclosure promise rests on: a publisher that
 /// declared 32 partners has to end up with 32 vendors on the device, an absent or empty scope has
 /// to leave the whole drawer alone, and an id with no entry in the served list has to buy nothing.
@@ -202,7 +202,7 @@ final class VendorListScopeTests: XCTestCase {
     ///
     /// `purposes`, `specialPurposes`, `features`, `specialFeatures`, `stacks`, `dataCategories` and
     /// `lastUpdated` name what a consent row says: `processPurposes` in
-    /// `packages/iab/src/headless/dialog-data.ts` walks the served `purposes` record and never asks
+    /// `packages/sdk/iab/src/headless/dialog-data.ts` walks the served `purposes` record and never asks
     /// a vendor scope's permission. The two versions are the expensive pair -- a TC String writes
     /// both -- so the versions vector numbers the list 431 under policy 4 and expects to still read
     /// 431 and 4 back after a scope of two ids.

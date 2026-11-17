@@ -68,7 +68,7 @@ export const countInDocument = (content: string): number => {
 export const countHandWrittenExamples = (
 	root: string
 ): Record<string, number> => {
-	const files = fg.sync('docs/**/*.mdx', {
+	const files = fg.sync('packages/sdk/docs/**/*.mdx', {
 		cwd: root,
 		ignore: [`${generatedExamplesDir}/**`],
 	});

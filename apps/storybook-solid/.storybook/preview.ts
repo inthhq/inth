@@ -1,13 +1,13 @@
 import type { Preview } from 'storybook-solidjs-vite';
 
-import '../../../packages/ui/dist/styles.css';
+import '../../../packages/sdk/ui/dist/styles.css';
 // The stories render the primitive class maps, whose rules are not in
 // styles.css.
-import '../../../packages/ui/dist/styles/primitives.css';
+import '../../../packages/sdk/ui/dist/styles/primitives.css';
 import {
 	defaultTheme,
 	generateThemeCSS,
-} from '../../../packages/ui/src/theme/utils';
+} from '../../../packages/sdk/ui/src/theme/utils';
 
 const storybookThemeStyleId = 'c15t-storybook-theme';
 const storybookCanvasStyleId = 'c15t-storybook-canvas';

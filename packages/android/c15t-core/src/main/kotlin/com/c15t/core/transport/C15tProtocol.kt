@@ -3,7 +3,7 @@ package com.c15t.core.transport
 /**
  * Header contract shared with `@c15t/core`.
  *
- * See `packages/core/src/transports/version-header.ts`. `x-c15t-version` is
+ * See `packages/sdk/core/src/transports/version-header.ts`. `x-c15t-version` is
  * telemetry only. `x-c15t-policy-contract` is the capability declaration: a
  * producer that speaks a different contract answers `unsupported-contract`
  * rather than a wire this build would misread.
@@ -38,7 +38,7 @@ object C15tProtocol {
 	/**
 	 * How many declared ids this build will still put on one request line.
 	 *
-	 * The same ceiling as `MAX_GVL_QUERY_VENDOR_IDS` in `packages/iab/src/tcf/fetch-gvl.ts` and in
+	 * The same ceiling as `MAX_GVL_QUERY_VENDOR_IDS` in `packages/sdk/iab/src/tcf/fetch-gvl.ts` and in
 	 * `packages/backend/src/http/gvl.ts`, for the same reason: past it the scope stops fitting
 	 * comfortably in a request line, the producer is expected to fetch the list whole, and every
 	 * consumer narrows locally. Both web functions keep that local prune above the cap, so the web

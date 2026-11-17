@@ -111,9 +111,9 @@
 		}
 	},
 	"sourceSha256": {
-		"packages/core/src/modules/script-loader/index.ts": "6764f56cfeb118bd90ae59a9d8126d6d42c06233597a7b9520ccab5c413a9280",
-		"packages/core/src/modules/script-loader/mount.ts": "689d94fa563dd178142d4d7afae33cb0968ea6b1675c54c99ae1e9b422bd1c40",
-		"packages/core/src/modules/script-loader/callbacks.ts": "a8bcd7422ef9de723782279a716a8ef20caf41d486bf37549a326a8a62b4b94e",
-		"packages/scripts/src/vendors/tag-managers/cloudflare-zaraz.ts": "c4e5ee8c5d275571e41ecdede24d43cdf75435743bcf527c4c8d6579bc046478"
+		"packages/sdk/core/src/modules/script-loader/index.ts": "6764f56cfeb118bd90ae59a9d8126d6d42c06233597a7b9520ccab5c413a9280",
+		"packages/sdk/core/src/modules/script-loader/mount.ts": "689d94fa563dd178142d4d7afae33cb0968ea6b1675c54c99ae1e9b422bd1c40",
+		"packages/sdk/core/src/modules/script-loader/callbacks.ts": "a8bcd7422ef9de723782279a716a8ef20caf41d486bf37549a326a8a62b4b94e",
+		"packages/sdk/scripts/src/vendors/tag-managers/cloudflare-zaraz.ts": "c4e5ee8c5d275571e41ecdede24d43cdf75435743bcf527c4c8d6579bc046478"
 	}
 }

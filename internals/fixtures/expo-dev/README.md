@@ -1,6 +1,6 @@
 # c15t React Native fixture (Expo development build)
 
-See the [mobile demo index](../../../docs/frameworks/react-native/examples.mdx) for
+See the [mobile demo index](../../../packages/sdk/docs/frameworks/react-native/examples.mdx) for
 current native modes, setup commands and the limits of IAB and hosted coverage.
 
 An Expo SDK 58 custom native build for `@c15t/react-native`. Normal native mode
@@ -45,7 +45,7 @@ The default backend is the public Inth demo, `https://example-inth.inth.app/`.
 Use your Inth project URL for your app. The plugin embeds `c15t-policy.json` before
 JavaScript starts; the demo resource expires on 5 November 2026. Regenerate it
 before prebuild when changing the endpoint or renewing its authority.
-See [mobile policy resources](../../../native/docs/mobile-policy-resources.md).
+See [mobile policy resources](../../../packages/native-protocol/docs/mobile-policy-resources.md).
 No hosted save has been verified against the public demo.
 
 ```sh
@@ -104,7 +104,7 @@ shipped plugin. The fixture selects `https://maven.pkg.github.com/inthhq/c15t-pr
 unless `C15T_MAVEN_URL` supplies a staging URL at prebuild time. HTTPS credentials
 come from `C15T_MAVEN_USERNAME` and `C15T_MAVEN_TOKEN` when Gradle runs. No fixture
 plugin adds a Maven repository. See the maintained
-[packed consumer guide](../../../docs/internal/expo-packed-consumer.md) for the
+[packed consumer guide](../../../packages/sdk/docs/internal/expo-packed-consumer.md) for the
 options, exclusive routing and clean external-consumer checks.
 
 ## Real vendor SDKs

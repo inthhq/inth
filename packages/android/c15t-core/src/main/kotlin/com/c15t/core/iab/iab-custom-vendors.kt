@@ -13,7 +13,7 @@ import java.net.URI
 
 /**
  * A custom vendor: a partner the publisher declares under IAB TCF that is not on the Global Vendor
- * List. `NonIABVendor` in `@c15t/schema` (`packages/schema/src/shared/non-iab-vendor.ts`), served by
+ * List. `NonIABVendor` in `@c15t/schema` (`packages/sdk/schema/src/shared/non-iab-vendor.ts`), served by
  * `/init` as `customVendors`.
  *
  * The stock screens list it beside the registered vendors and it gets its own consent and
@@ -132,10 +132,10 @@ fun IabCustomVendor.selectionStatus(choices: IabChoices): IabVendorSelectionStat
 /**
  * The c15t categories an IAB TCF decision grants, by the web's derivation:
  * `iabPurposesToC15tConsents` and `C15T_TO_IAB_PURPOSE_MAP` in
- * `packages/iab/src/tcf/purpose-mapping.ts`, with the purposes some vendor processes on consent
- * deciding, as `consentBasisPurposes` in `packages/iab/src/index.ts` passes them. Registered vendors
+ * `packages/sdk/iab/src/tcf/purpose-mapping.ts`, with the purposes some vendor processes on consent
+ * deciding, as `consentBasisPurposes` in `packages/sdk/iab/src/index.ts` passes them. Registered vendors
  * after publisher restrictions, custom vendors and listed ad tech providers all count toward that
- * basis. `native/protocol/iab/purpose-categories.json` runs the same cases on web, Swift and Kotlin.
+ * basis. `packages/native-protocol/iab/purpose-categories.json` runs the same cases on web, Swift and Kotlin.
  */
 object IabPurposeCategories {
 	/** `C15T_TO_IAB_PURPOSE_MAP` without `necessary`, which is always granted. */

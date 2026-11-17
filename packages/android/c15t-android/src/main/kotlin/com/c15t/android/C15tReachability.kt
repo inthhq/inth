@@ -10,7 +10,7 @@ import com.c15t.core.C15t
 /**
  * Decides which connectivity callbacks are worth a queue replay.
  *
- * `native/CONTRACT.md` asks for a replay when the process *gains* a network it did not
+ * `packages/native-protocol/CONTRACT.md` asks for a replay when the process *gains* a network it did not
  * have, and that is a transition rather than an event. [ConnectivityManager] reports the
  * already-connected network the instant a callback registers, and replaying there would
  * race the launch replay `ConsentCore.bootstrap` already performs. So the first delivery

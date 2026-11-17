@@ -6,8 +6,8 @@ import {
 } from '@c15t/conformance/play/consent-banner';
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 
-import ConsentManager from '../../../packages/vue/src/runtime/components/manager.vue';
-import ConsentBanner from '../../../packages/vue/src/runtime/components/prompt.vue';
+import ConsentManager from '../../../packages/sdk/vue/src/runtime/components/manager.vue';
+import ConsentBanner from '../../../packages/sdk/vue/src/runtime/components/prompt.vue';
 import {
 	storybookNoticeInit,
 	useStorybookConsent as setupStorybookConsent,

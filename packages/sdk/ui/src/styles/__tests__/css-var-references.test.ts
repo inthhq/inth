@@ -11,7 +11,7 @@
  * every build and type check stays green.
  *
  * Both have happened. These read the built stylesheets, so
- * `bun run --cwd packages/ui build` (which `test` depends on) must have run.
+ * `bun run --cwd packages/sdk/ui build` (which `test` depends on) must have run.
  */
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -26,7 +26,7 @@ const ENTRYPOINTS = ['styles.css', join('iab', 'styles.css')];
 const read = function read(path: string): string {
 	if (!existsSync(path)) {
 		throw new Error(
-			`Missing ${path}. Build @c15t/ui first: bun run --cwd packages/ui build`
+			`Missing ${path}. Build @c15t/ui first: bun run --cwd packages/sdk/ui build`
 		);
 	}
 

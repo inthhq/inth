@@ -24,10 +24,10 @@ import type {
  * `Uint8Array` and `TextEncoder` returns Node's. Swapping in Node's
  * `TextEncoder` does not fix it; the mismatch is the realm, not the class.
  * So the container render only works in the `node` project and the client
- * boot only in the `jsdom` one, which is why `packages/astro` splits its
+ * boot only in the `jsdom` one, which is why `packages/sdk/astro` splits its
  * suites into `*.test.ts` and `*.dom.test.ts` in the first place.
  *
- * The Astro surfaces are covered instead by `packages/astro`'s own two
+ * The Astro surfaces are covered instead by `packages/sdk/astro`'s own two
  * suites, by the cross-framework parity gate — which runs a real browser
  * against the built Astro Storybook — and by that Storybook's interaction
  * tests, one per dialog adapter.

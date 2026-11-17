@@ -14,7 +14,7 @@ package com.c15t.core.tc
  * string the framework calls invalid on exactly the path where a real vendor list is involved.
  *
  * The web's equivalent of this function is `new GVL(gvlData)` in `generateTCString`
- * (`packages/iab/src/tcf/tc-string.ts`), which is the only way the reference gets a vendor list into
+ * (`packages/sdk/iab/src/tcf/tc-string.ts`), which is the only way the reference gets a vendor list into
  * `TCModel` at all.
  */
 fun GlobalVendorList.toTcVendorList(): TcVendorList = TcVendorList(

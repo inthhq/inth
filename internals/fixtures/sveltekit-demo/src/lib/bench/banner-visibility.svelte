@@ -4,11 +4,11 @@
 	import {
 		createConsentKernel,
 		createHostedTransport,
-	} from '../../../../../../packages/core/src';
+	} from '../../../../../../packages/sdk/core/src';
 	import type {
 		ConsentKernel,
 		ConsentSnapshot,
-	} from '../../../../../../packages/core/src';
+	} from '../../../../../../packages/sdk/core/src';
 	import { observeBannerVisibility, getBenchState } from './banner-state';
 	import BenchmarkBanner from './benchmark-banner.svelte';
 

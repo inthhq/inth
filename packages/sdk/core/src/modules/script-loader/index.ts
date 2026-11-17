@@ -19,7 +19,7 @@ import { createScriptLoaderWith } from './loader';
  *   tools `index.ts` passes in, so it can load on demand as one chunk.
  * - `index.ts`        — this file: the public entry.
  *
- * v2 parity: `packages/core/src/libs/script-loader/{core,utils,store,types}.ts`.
+ * v2 parity: `packages/sdk/core/src/libs/script-loader/{core,utils,store,types}.ts`.
  *
  * Invariants:
  * - Idempotent by resolved element ID: calling `createScriptLoader` twice

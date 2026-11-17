@@ -318,7 +318,7 @@ banner in place; the script tag keeps its class flip for them.
 
 The plugin also recognizes c15t stylesheets whose path carries a query, such as the `?transform-only` Astro adds to the dialog stylesheet.
 
-A stylesheet under `packages/<name>/dist/` of a workspace only counts as c15t's when that package's `package.json` is named `c15t` or `@c15t/*`. Before, any `packages/ui/dist` or `packages/browser/dist` stylesheet matched, so another monorepo's own packages could lose their `@layer` blocks.
+A stylesheet under `packages/<name>/dist/` of a workspace only counts as c15t's when that package's `package.json` is named `c15t` or `@c15t/*`. Before, any `packages/sdk/ui/dist` or `packages/sdk/browser/dist` stylesheet matched, so another monorepo's own packages could lose their `@layer` blocks.
 
 ### Keep the Astro color scheme when a dialog opens
 

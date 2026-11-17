@@ -29,7 +29,7 @@ enum class ConsentModel(val wireName: String) {
 	/**
 	 * The model this device reports while a rule of this kind is in force.
 	 *
-	 * Port of `deriveModel` in `packages/core/src/policy.ts`, with the web's `iabEnabled`
+	 * Port of `deriveModel` in `packages/sdk/core/src/policy.ts`, with the web's `iabEnabled`
 	 * argument answered for good: an IAB rule runs as `iab` on the web only once
 	 * `@c15t/iab` is installed, and a device has nothing to install in that place. It has no
 	 * registered CMP ID to put in a TC String, no per-vendor vector to assert, and no
@@ -94,7 +94,7 @@ enum class ConsentAction(val wireName: String) {
  *
  * `PromptPurpose` cannot carry this: it says only whether a record exists, so a
  * receipt that lapsed and a fingerprint that moved collapse into one answer.
- * `deriveChoiceRequirement` in `packages/core/src/consent-record/evaluate.ts`
+ * `deriveChoiceRequirement` in `packages/sdk/core/src/consent-record/evaluate.ts`
  * keeps all three apart, and `evaluation-opt-in-grant-expired` is the fixture
  * that decides it, so the collapse is now a visible failure rather than a free
  * choice the wire projection could make quietly.

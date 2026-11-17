@@ -7,7 +7,7 @@ import com.c15t.core.model.ConsentCategory
  * A Google Consent Mode v2 consent type and the c15t category that grants it.
  *
  * The mapping is the web's (`@c15t/integrations`). `GoogleConsentModeTest` checks
- * it against `native/protocol/google-consent-mode/consent-mode-v2.json`, which is
+ * it against `packages/native-protocol/google-consent-mode/consent-mode-v2.json`, which is
  * generated from the web module, so a change on the web fails here until this
  * copy follows.
  *

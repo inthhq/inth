@@ -21,7 +21,10 @@ import type { RuntimeOptions } from './__tests__/default-com-runtime-page';
 
 vi.setConfig({ testTimeout: 20_000 });
 
-const repository = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
+const repository = resolve(
+	dirname(fileURLToPath(import.meta.url)),
+	'../../../..'
+);
 const sourceRoot = process.env.C15T_DEFAULT_RUNTIME_SOURCE_ROOT ?? repository;
 const artifacts = process.env.C15T_DEFAULT_RUNTIME_ARTIFACTS;
 const fixtures = new URL('./__tests__/fixtures/default-com/', import.meta.url);
@@ -93,12 +96,12 @@ beforeAll(async () => {
 		alias: {
 			'#inline-start': resolve(
 				sourceRoot,
-				'packages/integrations/src/engine/inline-start-browser.ts'
+				'packages/sdk/integrations/src/engine/inline-start-browser.ts'
 			),
-			'@c15t/core': resolve(sourceRoot, 'packages/core/src/index.ts'),
+			'@c15t/core': resolve(sourceRoot, 'packages/sdk/core/src/index.ts'),
 			'@c15t/core/modules/script-loader': resolve(
 				sourceRoot,
-				'packages/core/src/modules/script-loader/index.ts'
+				'packages/sdk/core/src/modules/script-loader/index.ts'
 			),
 		},
 		bundle: true,
@@ -106,14 +109,14 @@ beforeAll(async () => {
 		entryPoints: [
 			resolve(
 				sourceRoot,
-				'packages/integrations/src/__tests__/default-com-runtime-page.ts'
+				'packages/sdk/integrations/src/__tests__/default-com-runtime-page.ts'
 			),
 		],
 		format: 'iife',
 		metafile: true,
 		nodePaths: [
-			resolve(repository, 'packages/core/node_modules'),
-			resolve(repository, 'packages/integrations/node_modules'),
+			resolve(repository, 'packages/sdk/core/node_modules'),
+			resolve(repository, 'packages/sdk/integrations/node_modules'),
 			resolve(repository, 'node_modules'),
 		],
 		platform: 'browser',

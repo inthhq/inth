@@ -8,7 +8,7 @@
  * `var(--c15t-radius-lg)` and friends against nothing, and an app that imports
  * the stylesheet without passing a `theme` renders the banner unstyled.
  *
- * These read the built artifacts, so `bun run --cwd packages/ui build` (or
+ * These read the built artifacts, so `bun run --cwd packages/sdk/ui build` (or
  * `turbo run build --filter=@c15t/ui`, which `test` depends on) must have run.
  */
 import { existsSync, readFileSync } from 'node:fs';
@@ -34,7 +34,7 @@ const readEntrypoint = function readEntrypoint(relativePath: string): string {
 
 	if (!existsSync(path)) {
 		throw new Error(
-			`Missing ${path}. Build @c15t/ui first: bun run --cwd packages/ui build`
+			`Missing ${path}. Build @c15t/ui first: bun run --cwd packages/sdk/ui build`
 		);
 	}
 

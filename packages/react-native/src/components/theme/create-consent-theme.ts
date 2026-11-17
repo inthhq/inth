@@ -7,7 +7,7 @@
  * because the same object has to be comparable in a test and stable across a
  * re-render.
  *
- * The values mirror the web tokens in the `packages/ui` theme so a subject who
+ * The values mirror the web tokens in the `packages/sdk/ui` theme so a subject who
  * sees the web banner and then the app banner recognises one design: the same
  * accent, the same neutral steps, the same radii, and the same spacing scale.
  */

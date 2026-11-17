@@ -31,8 +31,8 @@ import {
 } from './benchmark-rounds';
 import type { BenchmarkArm } from './benchmark-rounds';
 import { runCommand } from './browser-process';
-import { readWorkspaces } from './ci-plan';
 import { installBrowsers } from './install-browsers';
+import { readWorkspaces } from './workspaces';
 
 const mode = process.argv[2] ?? 'quick';
 const readFlag = function readFlag(name: string): string | undefined {

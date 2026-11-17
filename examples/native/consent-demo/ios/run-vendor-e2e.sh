@@ -4,7 +4,7 @@
 # XcodeGen project, runs VendorSDKTests per scheme on a dedicated simulator, and checks
 # Firebase's own debug log. Evidence lands in $C15T_VENDOR_E2E_OUT (or .artifacts/).
 #
-#   bash native/examples/consent-demo/ios/run-vendor-e2e.sh
+#   bash examples/native/consent-demo/ios/run-vendor-e2e.sh
 #
 # C15T_VENDOR_SCHEMES      schemes to run (default: "C15tConsentDemo C15tUIKitDemo")
 # C15T_IOS_VENDOR_DEVICE   simulator name, created when missing (default: c15t-ios-vendors)

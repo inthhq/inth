@@ -51,7 +51,7 @@ class ConsentPromptLifetimeTest {
     /** Kept out of the test bodies, so no local variable holds the core or the prompt. */
     private fun installWithPrompt(): Pair<WeakReference<ConsentCore>, WeakReference<ConsentPrompt>> {
         val body = generateSequence(File(requireNotNull(System.getProperty("user.dir")))) { it.parentFile }
-            .map { File(it, "native/examples/consent-demo/fixtures/category-init.json") }.first { it.exists() }.readText()
+            .map { File(it, "examples/native/consent-demo/fixtures/category-init.json") }.first { it.exists() }.readText()
         val config = NativeConfig("https://fixture.invalid")
         val client = object : HttpClient {
             override fun send(request: HttpRequest) = if (request.method == HttpRequest.GET)

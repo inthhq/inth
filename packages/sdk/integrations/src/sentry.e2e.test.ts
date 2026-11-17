@@ -5,7 +5,7 @@ import { createScriptLoader } from '@c15t/core/modules/script-loader';
 import { createConsentRuntime } from '@c15t/core/runtime';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { scripts as sentryExampleScripts } from '../../../internals/doc-snippets/javascript/src/sentry';
+import { scripts as sentryExampleScripts } from '../../../../internals/doc-snippets/javascript/src/sentry';
 import { deniedConsents, grantedMeasurementConsents } from './e2e-test-utils';
 import { sentry, sentryManifest } from './vendors/analytics/sentry';
 import type {

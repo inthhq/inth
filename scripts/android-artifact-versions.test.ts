@@ -4,7 +4,7 @@ import { expect, test } from 'vitest';
 
 test('the packed bridge requests the produced native artifact version by default', () => {
 	const producer = readFileSync(
-		new URL('../native/core-android/gradle.properties', import.meta.url),
+		new URL('../packages/android/gradle.properties', import.meta.url),
 		'utf8'
 	)
 		.match(/^c15t\.native\.version=(?<version>.+)$/mu)

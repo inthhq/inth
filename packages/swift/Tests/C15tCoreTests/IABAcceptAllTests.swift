@@ -3,9 +3,9 @@ import XCTest
 @_spi(C15tInternal) @testable import C15tCore
 
 /// Accept All grants only what the served list declares, as `applyBlanket` in
-/// `packages/iab/src/index.ts` does (TCF Policies 5(3), 5(6) and 5(8)).
+/// `packages/sdk/iab/src/index.ts` does (TCF Policies 5(3), 5(6) and 5(8)).
 ///
-/// `native/protocol/iab/accept-all-declared-signals.json` holds a real served GVL (v183,
+/// `packages/native-protocol/iab/accept-all-declared-signals.json` holds a real served GVL (v183,
 /// vendors 10, 21, 52, 91 and 755) and, per case, what the web's `acceptAll()` encodes for it.
 final class IABAcceptAllTests: XCTestCase {
     struct Vector: Decodable {

@@ -30,7 +30,7 @@ import {
 } from '../tc-string-fixtures';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const FIXTURE_DIR = resolve(HERE, '../../../../native/protocol');
+const FIXTURE_DIR = resolve(HERE, '../../../native-protocol');
 
 interface FixtureVendor {
 	deletedDate?: string;

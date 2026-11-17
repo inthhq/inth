@@ -4,7 +4,7 @@
 	"type": "module",
 	"scripts": {
 		"build": "storybook build",
-		"prestorybook": "pnpm --dir ../../packages/core run prebuild && pnpm --dir ../../packages/svelte run prebuild && pnpm --dir ../../packages/iab run prebuild",
+		"prestorybook": "pnpm --dir ../../packages/sdk/core run prebuild && pnpm --dir ../../packages/sdk/svelte run prebuild && pnpm --dir ../../packages/sdk/iab run prebuild",
 		"storybook": "pnpm run prestorybook && portless run --name storybook-svelte sh -c 'storybook dev --port \"$PORT\" --host \"$HOST\"'",
 		"test-storybook": "test-storybook --url ${STORYBOOK_URL:-http://127.0.0.1:6006}"
 	},
@@ -21,6 +21,7 @@
 		"@storybook/svelte-vite": "10.4.6",
 		"@storybook/test-runner": "^0.24.4",
 		"@sveltejs/vite-plugin-svelte": "^6.2.4",
+		"@types/node": "25.5.0",
 		"@types/react": "19.2.17",
 		"react": "19.2.7",
 		"storybook": "10.4.6",

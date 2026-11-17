@@ -11,7 +11,7 @@
  * It boots one Vite server in middleware mode with Astro's own plugins (via
  * `getViteConfig`), which is what makes `.astro` files loadable, then
  * renders every variant in the catalogue through
- * `experimental_AstroContainer` exactly the way `packages/astro`'s unit
+ * `experimental_AstroContainer` exactly the way `packages/sdk/astro`'s unit
  * tests do — same `resolveOptions`, same `resolveConsentContext`. The
  * results are exposed as one virtual module the stories import.
  *
@@ -30,13 +30,13 @@ import type { Plugin, ViteDevServer } from 'vite';
 // The same vendor list the React, Svelte and Vue IAB stories mount. The
 // parity gate compares the rendered rows, so a different fixture would
 // compare different content and tell us nothing.
-import { mockGVL } from '../../../packages/react/src/components/iab/__tests__/fixtures/mock-consent-state.ts';
+import { mockGVL } from '../../../packages/sdk/react/src/components/iab/__tests__/fixtures/mock-consent-state.ts';
 import { recipePageHtml } from '../src/docs-recipe-page.ts';
 import type { AstroStoryVariant } from '../src/story-variants.ts';
 
 const storybookDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(storybookDir, '../../..');
-const astroPackage = path.resolve(repoRoot, 'packages/astro');
+const astroPackage = path.resolve(repoRoot, 'packages/sdk/astro');
 const astroSrc = path.resolve(astroPackage, 'src');
 
 /**
@@ -108,14 +108,14 @@ const renderVariants = async function renderVariants(
 			import('astro/container'),
 		]);
 
-	// Rooted at `packages/astro`, not the repo root: Vite externalises
+	// Rooted at `packages/sdk/astro`, not the repo root: Vite externalises
 	// Astro's own runtime (`astro/compiler-runtime`) and resolves it from
 	// the server root, and `astro` is a dependency of that package alone.
 	const configFn = getViteConfig({}, { root: astroPackage });
 	// `serve` rather than `build`: under `build` Vite externalises Astro's
 	// runtime and then resolves it from the server root instead of the
 	// importing `.astro` file, which fails in a workspace where `astro` is a
-	// dependency of `packages/astro` alone.
+	// dependency of `packages/sdk/astro` alone.
 	const viteConfig = await configFn({ command: 'serve', mode: 'development' });
 	// `getViteConfig` is shaped for Vitest; the test block means nothing to a
 	// plain dev server and Vite rejects unknown top-level keys.
@@ -135,7 +135,7 @@ const renderVariants = async function renderVariants(
 			server.ssrLoadModule(path.join(astroSrc, 'integration.ts')),
 			server.ssrLoadModule(path.join(astroSrc, 'mode.ts')),
 			server.ssrLoadModule(
-				path.resolve(astroSrc, '../../../apps/storybook-consent-policy.ts')
+				path.resolve(astroSrc, '../../../../apps/storybook-consent-policy.ts')
 			),
 		]);
 		const container = await experimental_AstroContainer.create();

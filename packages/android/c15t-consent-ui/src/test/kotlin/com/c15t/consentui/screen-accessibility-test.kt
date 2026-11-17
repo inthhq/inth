@@ -158,7 +158,7 @@ class ScreenAccessibilityTest {
         try {
             RuntimeEnvironment.setFontScale(2f)
             val source = Json.parseToJsonElement(generateSequence(File(requireNotNull(System.getProperty("user.dir")))) { it.parentFile }
-                .map { File(it, "native/protocol/bundled-policy/$name.json") }.first { it.exists() }.readText()).jsonObject
+                .map { File(it, "packages/native-protocol/bundled-policy/$name.json") }.first { it.exists() }.readText()).jsonObject
             val clock = AtomicLong(source.getValue("now").jsonPrimitive.long)
             val configuration = source["configuration"]?.let { Json { ignoreUnknownKeys = true }.decodeFromJsonElement<IabConfiguration>(it) }
             val config = NativeConfig(source.getValue("endpoint").jsonPrimitive.content,
@@ -255,7 +255,7 @@ class ScreenAccessibilityTest {
 
     private fun show(store: DecisionStore, theme: ConsentTheme = ConsentTheme.c15t, language: String? = null): ConsentPresenter {
         val fixture = generateSequence(File(requireNotNull(System.getProperty("user.dir")))) { it.parentFile }
-            .map { File(it, "native/examples/consent-demo/fixtures/category-init.json") }.first { it.exists() }.readText()
+            .map { File(it, "examples/native/consent-demo/fixtures/category-init.json") }.first { it.exists() }.readText()
         val config = NativeConfig("https://fixture.invalid", overrides = KernelOverrides(language = language))
         val client = object : HttpClient {
             override fun send(request: HttpRequest) = if (request.method == HttpRequest.GET)

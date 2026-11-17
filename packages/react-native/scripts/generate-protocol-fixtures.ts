@@ -1,5 +1,5 @@
 /**
- * Generates the conformance fixtures in `native/protocol/`.
+ * Generates the conformance fixtures in `packages/native-protocol/`.
  *
  * Every expectation comes from the real `@c15t/core` kernel, so the Swift and
  * Kotlin cores are tested against the JavaScript implementation rather than
@@ -16,7 +16,7 @@
  * matches the pack and answers with a resolved `policyResolution` wire value,
  * which is the only thing a client ever reads.
  *
- * What lands in `native/protocol/`:
+ * What lands in `packages/native-protocol/`:
  *
  * - `evaluation-*.json` — init response plus stored records in, snapshot out.
  * - `save-body-*.json` — the same plus a commit, and the exact `POST /subjects`
@@ -145,13 +145,13 @@ const DOMAIN = 'app.example.com';
 /**
  * The subject ids fixtures replay, every one in the format the producer accepts.
  *
- * `subjectIdSchema` in `packages/schema/src/api/subject/post.ts` requires
+ * `subjectIdSchema` in `packages/sdk/schema/src/api/subject/post.ts` requires
  * `^sub_[1-9A-HJ-NP-Za-km-z]+$` and answers anything else with
  * `INPUT_VALIDATION_FAILED`, so a UUID-shaped id in a fixture pins a `POST /subjects`
  * body that no c15t backend would ever accept, and both native cores would faithfully
  * implement a save that can only fail. These are minted by `generateSubjectId` at the
  * pinned `NOW` with the twelve random bytes noted on each, which is the encoding
- * `native/CONTRACT.md` pins: eight big-endian bytes of `now - 1_700_000_000_000`, then
+ * `packages/native-protocol/CONTRACT.md` pins: eight big-endian bytes of `now - 1_700_000_000_000`, then
  * the tail, base58 over all twenty bytes with the Bitcoin alphabet. `assertSubjectIds`
  * below refuses any id here that the schema would refuse, so the shape cannot drift back.
  *
@@ -275,7 +275,7 @@ const DAY_MS = 86_400_000;
  *
  * `marketing` is outside the scope of every rule built here, which is the cell
  * divergence 1 in `docs/internal/evaluator-parity.md` is about: out of scope,
- * `defaultPermission` in `packages/core/src/consent-record/evaluate.ts` answers
+ * `defaultPermission` in `packages/sdk/core/src/consent-record/evaluate.ts` answers
  * from `scopeMode` alone and never reads the model, so permissive allows and
  * strict refuses for all four models at once. Both scope modes and two models
  * are swept because the native cores read a model in that branch today and they
@@ -285,7 +285,7 @@ const DAY_MS = 86_400_000;
  * One country each, so no pack ever holds two matching rules, and a 30-day
  * validity so `ageChoice` can take a receipt past its life. A rule cannot say a
  * zero-length validity (`validity.choiceDays` is finite and greater than zero in
- * `packages/schema/src/shared/policy-rule.ts`), which is why the expiry axis
+ * `packages/sdk/schema/src/shared/policy-rule.ts`), which is why the expiry axis
  * ages the record rather than the policy.
  */
 const narrowRule = function narrowRule(
@@ -343,7 +343,7 @@ const NARROW_IAB_RULE = narrowRule(
  * No shipped preset configures `privacySignals`, so nothing on the table today
  * can grade the reason a device reports for a category the model had already
  * denied. `collectRestrictions` in
- * `packages/core/src/consent-record/evaluate.ts` gathers reasons independently
+ * `packages/sdk/core/src/consent-record/evaluate.ts` gathers reasons independently
  * of the answer, so the web answer here is `marketing: ['gpc']` on a category
  * that was denied before the signal was read. A core that only records a reason
  * when it is the reason that flipped the answer publishes nothing, which is a
@@ -543,7 +543,7 @@ interface FixtureResolution {
  * two lifecycle flags the kernel does not model (`ready`, `error`) and the
  * reserved `iab` slot held as `null`. `overrides` and `privacySignals` are the
  * kernel's own shapes, which is what "Corrections to this contract" in
- * `native/CONTRACT.md` settles: there is no `test` override and no `msa` signal,
+ * `packages/native-protocol/CONTRACT.md` settles: there is no `test` override and no `msa` signal,
  * and GPC is a `detected` / `override` / `active` triple rather than one boolean.
  */
 interface FixtureSnapshot {
@@ -555,7 +555,7 @@ interface FixtureSnapshot {
 	readonly explicitChoice: ExplicitChoice | null;
 	/**
 	 * `null` in every fixture: GPP is off unless the app turns it on, and no fixture
-	 * does. `native/protocol/gpp/cases.json` covers the string itself.
+	 * does. `packages/native-protocol/gpp/cases.json` covers the string itself.
 	 */
 	readonly gppString: null;
 	readonly iab: null;
@@ -658,7 +658,7 @@ interface SaveBodyFixture {
 	};
 }
 
-/** The two native cores, named the way `native/CONTRACT.md` names them. */
+/** The two native cores, named the way `packages/native-protocol/CONTRACT.md` names them. */
 const NATIVE_CORES = ['swift', 'kotlin'] as const;
 
 /** One of the native cores that owns a stored envelope. */
@@ -673,7 +673,7 @@ type NativeCore = (typeof NATIVE_CORES)[number];
  * `evaluationPolicy`, and only Swift records a format version and a write time.
  * So a field is named by what it is for (`key`, a label neither core writes), and
  * `carriers` gives each core its own name for it. A core whose name is absent does
- * not carry the fact at all, which `native/CONTRACT.md` records as a difference
+ * not carry the fact at all, which `packages/native-protocol/CONTRACT.md` records as a difference
  * rather than a defect.
  */
 interface NativeEnvelopeField {
@@ -691,7 +691,7 @@ interface NativeEnvelopeField {
 	readonly role: string;
 }
 
-/** The implementation whose envelope layout `native/CONTRACT.md` documents. */
+/** The implementation whose envelope layout `packages/native-protocol/CONTRACT.md` documents. */
 interface NativeEnvelopeReference {
 	readonly core: NativeCore;
 	/** How that core orders keys, which is the only byte-level claim made here. */
@@ -816,10 +816,10 @@ interface TraceObservation {
  * A mutation sequence with the revision trace the kernel produced for it.
  *
  * This is the one fixture kind that pins a number the three implementations
- * cannot share absolutely: `native/CONTRACT.md` says hydration and bootstrap are
+ * cannot share absolutely: `packages/native-protocol/CONTRACT.md` says hydration and bootstrap are
  * mutations in some cores and not in others, so a core's absolute revision is its
  * own. What all three must agree on is what each step costs, which is what this
- * fixture measures. See "Revisions and error writes" in `native/CONTRACT.md`.
+ * fixture measures. See "Revisions and error writes" in `packages/native-protocol/CONTRACT.md`.
  */
 interface RevisionTraceFixture {
 	protocolVersion: number;
@@ -845,7 +845,7 @@ interface RevisionTraceFixture {
  * is the snapshot the device settles on once the init the wipe re-ran has landed, which
  * is the same snapshot a device that never decided settles on. The two fixtures of this
  * kind differ only in `input.intent`, and their `expected` halves are identical, which
- * is the claim "Wiping consent (reset)" in `native/CONTRACT.md` makes: a wipe leaves no
+ * is the claim "Wiping consent (reset)" in `packages/native-protocol/CONTRACT.md` makes: a wipe leaves no
  * trace of which decision it deleted.
  */
 interface ResetConsentFixture {
@@ -1009,7 +1009,7 @@ const initResponseFor = function initResponseFor(
 /**
  * Whether an `/init` response is the definitive answer the ready latch waits for.
  *
- * `native/CONTRACT.md` counts two ways to be told: an envelope at hydrate, and the
+ * `packages/native-protocol/CONTRACT.md` counts two ways to be told: an envelope at hydrate, and the
  * first init that lands a definitive answer. Only a negotiated declaration over a
  * readable body is that answer. The refused-declaration variant is a body the client
  * has already been told is not evidence, so it tells the core nothing and leaves the
@@ -1028,7 +1028,7 @@ const isDefinitiveInit = function isDefinitiveInit(
  * Derive `ready` instead of copying `hydrated`.
  *
  * Copying it reads the flag as "a stored envelope exists", which is the mistake
- * `native/CONTRACT.md` calls out: a fresh install with nothing stored is stranded on
+ * `packages/native-protocol/CONTRACT.md` calls out: a fresh install with nothing stored is stranded on
  * `false` for its whole first session, so `GRANTED` is unreachable on the one launch
  * a prompt is actually on screen and a listener waiting on readiness never resumes.
  */
@@ -1292,7 +1292,7 @@ const NOTES = [
 	'transport is the /init response to serve, headers included. Answer it once, before any save.',
 	'storedRecords is what protected storage holds before the core starts. A null member means nothing is stored for it. The subject id is always supplied, never generated, so no fixture depends on a random uuid.',
 	'input.overrides and input.privacySignals are what the device reports. expected.overrides and expected.privacySignals are what the kernel settled: init.location sets country and region, init.translations sets language, and privacySignals.gpc.active is the override when set, otherwise the detection.',
-	'there is no test override and no msa signal. Overrides are country, region, language, and gpc; gpc is a detected / override / active triple. See "Corrections to this contract" in native/CONTRACT.md.',
+	'there is no test override and no msa signal. Overrides are country, region, language, and gpc; gpc is a detected / override / active triple. See "Corrections to this contract" in packages/native-protocol/CONTRACT.md.',
 	'revision is a monotonic counter that starts at 0 and bumps once per committed mutation. It is not a count of the steps a runner took. Compare it as a number, and read the pinned value rather than deriving it.',
 	'GPC is a live signal only. Nothing records it: the gpc restriction applies while privacySignals.gpc.active is true and lifts when it is not, and no snapshot carries a stored directive for it.',
 	'evaluatedAt equals input.now. Both it and ready are native lifecycle facts, not kernel output: ready is latched by a hydrate() that found a stored envelope and by the first /init that lands a definitive answer, which is a negotiated contract header over a 200 body. Nothing stored plus a resolved init is therefore ready true, and only an init that was refused or never arrived leaves it false.',
@@ -2021,7 +2021,7 @@ const buildEvaluationFixtures =
 		// that reads the flag as "a stored envelope exists" answers both `false` and
 		// strands the device in PENDING for the whole of its first session, which is the
 		// one session a prompt is on screen. The pinned subject id is not storage: the
-		// identity has its own slot, and native/CONTRACT.md keeps an envelope refusal from
+		// identity has its own slot, and packages/native-protocol/CONTRACT.md keeps an envelope refusal from
 		// costing a device its identity. It is a `sub_` id, so nothing here reads as the
 		// refused-id case the Subject identity ruling sends to a first launch -- these two
 		// are a first launch because the envelope slot is empty, and for no other reason.
@@ -2214,7 +2214,7 @@ const encodeEnvelope = function encodeEnvelope(
  * The envelope format version the reference core stamps.
  *
  * Swift declares a number and Kotlin carries none, so this is pinned against the
- * reference core and carried as a gap in `native/CONTRACT.md` rather than demanded
+ * reference core and carried as a gap in `packages/native-protocol/CONTRACT.md` rather than demanded
  * of both. It gates readability, not a decision: an envelope at any other number is
  * unreadable, and an unreadable envelope is nothing stored.
  */
@@ -2226,7 +2226,7 @@ const UNRECOGNISED_ENVELOPE_FIELD = 'com.c15t.experiment';
 /**
  * What a core that reaches no backend answers with.
  *
- * `native/CONTRACT.md` states this under "The stored envelope" rather than leaving it
+ * `packages/native-protocol/CONTRACT.md` states this under "The stored envelope" rather than leaving it
  * to each core: nothing resolved, every optional category denied, and `ready` false so a
  * host can tell a cold install apart from a denied one. It is not kernel output,
  * because the kernel in this harness always gets a transport answer; an offline
@@ -2245,13 +2245,13 @@ const OFFLINE_DENY_ALL: Record<AllConsentNames, boolean> = {
 const ENVELOPE_REFERENCE: NativeEnvelopeReference = {
 	core: 'swift',
 	keyOrder: 'alphabetical',
-	why: 'Swift writes its envelope with a sorted-keys JSON encoder, so its layout is a plain function of the value and the one native/CONTRACT.md documents field by field. Kotlin encrypts its blob and keys two of these facts differently. Where the two disagree about how a fact is spelled, this core is the reference and the other moves.',
+	why: 'Swift writes its envelope with a sorted-keys JSON encoder, so its layout is a plain function of the value and the one packages/native-protocol/CONTRACT.md documents field by field. Kotlin encrypts its blob and keys two of these facts differently. Where the two disagree about how a fact is spelled, this core is the reference and the other moves.',
 };
 
 const ENVELOPE_NOTES = [
 	...NOTES,
 	'this kind pins what a stored consent snapshot looks like on a device. The kernel has no such format: Swift writes a StoredEnvelope as plain JSON and Kotlin writes a SnapshotEnvelope into an encrypted blob, so expected.snapshot is the only kernel-derived half of this file.',
-	'reference.core names the implementation whose layout native/CONTRACT.md documents. A disagreement about how a fact is spelled is settled by that core and the other one moves, which is why nothing here pins a byte layout: the other core could only fail rather than disagree.',
+	'reference.core names the implementation whose layout packages/native-protocol/CONTRACT.md documents. A disagreement about how a fact is spelled is settled by that core and the other one moves, which is why nothing here pins a byte layout: the other core could only fail rather than disagree.',
 	'fields is the stored field set. fields[].key is a neutral label and never a name either core writes; carriers holds each core name for the fact, and a core with no entry there does not carry it at all. requiredBy lists the cores that must write it.',
 	'fields[].loadBearing is true where a consent decision changes if the field is lost or wrong. expect is present (a non-null value), empty (null or absent), or a literal the decoded value must equal. Compare the decoded value and not the serialized key, because Kotlin writes every key every time and key presence alone proves nothing.',
 	'relaunch.offline means start a second core over the bytes the first one wrote, with no backend to answer. That is the case a phone in a tunnel is in, and it is the only case that proves the envelope carries enough to answer on its own.',
@@ -2265,7 +2265,7 @@ const ENVELOPE_NOTES = [
  *
  * This is a description of a format rather than kernel output, and it belongs here
  * rather than in either runner so the two cannot each grow their own idea of what an
- * envelope holds. A change to it is a change to `native/CONTRACT.md`, which records
+ * envelope holds. A change to it is a change to `packages/native-protocol/CONTRACT.md`, which records
  * the same field set in prose.
  */
 const envelopeFieldsFor = function envelopeFieldsFor(
@@ -2313,7 +2313,7 @@ const envelopeFieldsFor = function envelopeFieldsFor(
 			key: 'storedAt',
 			loadBearing: false,
 			requiredBy: ['swift'],
-			role: 'epoch milliseconds of the write, for diagnostics and the newest-writer-wins check. Kotlin records no write time at all, which native/CONTRACT.md carries as a known gap',
+			role: 'epoch milliseconds of the write, for diagnostics and the newest-writer-wins check. Kotlin records no write time at all, which packages/native-protocol/CONTRACT.md carries as a known gap',
 		},
 	];
 };
@@ -2460,7 +2460,7 @@ const buildNativeEnvelopeFixtures =
 			{
 				after: grants.after,
 				description:
-					'A valid envelope whose snapshot has been rewritten into the shape the first draft of native/CONTRACT.md described: overrides.test, a boolean privacySignals.gpc, and privacySignals.msa. Those names model nothing this build has, so the grant sitting next to them is not evidence.',
+					'A valid envelope whose snapshot has been rewritten into the shape the first draft of packages/native-protocol/CONTRACT.md described: overrides.test, a boolean privacySignals.gpc, and privacySignals.msa. Those names model nothing this build has, so the grant sitting next to them is not evidence.',
 				id: 'native-envelope-pre-correction-shape',
 				input: { ...grantedInput(), defect: { kind: 'pre-correction' } },
 				noticeDismissal: 'empty',
@@ -2535,7 +2535,7 @@ const buildNativeEnvelopeFixtures =
 const TRACE_NOTES = [
 	...NOTES,
 	'the trace starts after bootstrap has settled: hydration and bootstrap are mutations in some cores and not in others, so the anchor is the settled snapshot and the absolute revision a core reports is its own business. What every core must reproduce is what each step costs.',
-	'revisionDelta is the change in snapshot.revision across the step, and publications counts the snapshot listeners it woke. A committed change bumps the revision exactly once and publishes exactly once; a write that changes the committed value nowhere bumps nothing and publishes nothing. See "Revisions and error writes" in native/CONTRACT.md.',
+	'revisionDelta is the change in snapshot.revision across the step, and publications counts the snapshot listeners it woke. A committed change bumps the revision exactly once and publishes exactly once; a write that changes the committed value nowhere bumps nothing and publishes nothing. See "Revisions and error writes" in packages/native-protocol/CONTRACT.md.',
 	'two of these steps are the same answer twice on purpose. Re-serving an init that changed nothing, and re-reporting an error the snapshot already carries, are not new changes: a bridge that dedups by revision has to be able to treat them as noise.',
 	'an unsupported-contract response is refused from its header, before the body is read. The body here is the ordinary Europe one, which is the point: a core that reached into it would be reading a wire it has already been told is not evidence.',
 	'expected.trace is not about which fields the error write touches. Swift, Kotlin, and the kernel write different fields for a refused contract; what they must not disagree about is whether the write was a change at all.',
@@ -2594,7 +2594,7 @@ const buildRevisionTraceFixtures =
  * Written down rather than run, for the reason the file header gives: every kernel
  * harness in this script serves a transport answer, so no run of it ends with a device
  * that has dropped its policy claim and not yet acquired a new one. The values are the
- * table in "Wiping consent (reset)" in `native/CONTRACT.md`, and they are the same ones
+ * table in "Wiping consent (reset)" in `packages/native-protocol/CONTRACT.md`, and they are the same ones
  * a core installs on a first launch that has not heard from the network.
  *
  * `revision` is absent rather than pinned. A wipe is a committed mutation, so the number
@@ -2652,8 +2652,8 @@ const RESET_NOTES = [
 	...NOTES,
 	'a wipe is judged against one yardstick: the state a device that has never been used boots into. expected.baseline is that state, and every field of it is either installed by the wipe or kept by it, never carried over from whatever the device was doing.',
 	'installed: policyPending true, ready false, promptRequirement none, activeUI none, effectivePermissions necessary-only, evaluatedAt equal to input.now, and no explicitChoice, notice dismissal, policy claim, resolution, snapshot token, location, translations, deadline, or error. A device that stops at a recorded denial instead would keep promptRequirement at none and no surface would ever come back, which is the one state a subject cannot get out of.',
-	'kept: the subject id, because native/CONTRACT.md refuses to orphan the audit history the backend holds against it; overrides and privacySignals, because a country pinned for QA and a GPC switch are configuration rather than consent; and the configured category scope, which a wipe recomputes from configuration rather than consent. No fixture configures a narrower scope, so the baseline lists `necessary` plus every optional category: the rows the safe fallback rule covers until a policy resolves.',
-	'revision is not pinned. A wipe is a committed mutation, so it publishes the revision the device was on plus one, and native/CONTRACT.md refuses to compare the absolute numbering the three implementations start from. A core that restarts the numbering at the cold-start baseline fails anyway, because the revision it announces goes backwards.',
+	'kept: the subject id, because packages/native-protocol/CONTRACT.md refuses to orphan the audit history the backend holds against it; overrides and privacySignals, because a country pinned for QA and a GPC switch are configuration rather than consent; and the configured category scope, which a wipe recomputes from configuration rather than consent. No fixture configures a narrower scope, so the baseline lists `necessary` plus every optional category: the rows the safe fallback rule covers until a policy resolves.',
+	'revision is not pinned. A wipe is a committed mutation, so it publishes the revision the device was on plus one, and packages/native-protocol/CONTRACT.md refuses to compare the absolute numbering the three implementations start from. A core that restarts the numbering at the cold-start baseline fails anyway, because the revision it announces goes backwards.',
 	'revisionDelta is the one revision claim this kind can make. A wipe is a committed mutation, so it publishes current + 1, and a core that installs the baseline silently or restarts the numbering fails here.',
 	'baseline.disk is read at the baseline publication, before the init the wipe schedules has had a chance to write. That is the only moment the deletion is observable: the re-run init caches the policy it resolves, exactly as a first launch init does, so an envelope existing later is not by itself a failure. What must never exist again is the bytes the wipe started from.',
 	'baseline.snapshot.effectivePermissions is the deny-everything-optional reading, spelled the same way OFFLINE_DENY_ALL spells it. It is the half a recorded denial shares with a wipe, which is why nothing here stops at it: promptRequirement is the field that tells the two apart.',
@@ -2847,7 +2847,7 @@ const assertProtocolVersions = function assertProtocolVersions(
 		previous.protocolVersion !== PROTOCOL_VERSION
 	) {
 		throw new Error(
-			`native/protocol/${INDEX_FILE} was written for protocol ${String(previous.protocolVersion)}, and this package speaks ${String(PROTOCOL_VERSION)}. Every expectation has to be re-derived before the fixtures can be relabelled, so a native core does not pass against expectations from the old handshake. Rerun with --allow-protocol-change if the protocol really moved.`
+			`packages/native-protocol/${INDEX_FILE} was written for protocol ${String(previous.protocolVersion)}, and this package speaks ${String(PROTOCOL_VERSION)}. Every expectation has to be re-derived before the fixtures can be relabelled, so a native core does not pass against expectations from the old handshake. Rerun with --allow-protocol-change if the protocol really moved.`
 		);
 	}
 };
@@ -2959,7 +2959,7 @@ interface IndexEntry {
  * exists to keep visible; and a fixture that says nothing was found while it stores a
  * choice or a dismissal describes a record with no envelope to live in.
  *
- * A pinned subject id is neither. Identity has its own slot, and `native/CONTRACT.md`
+ * A pinned subject id is neither. Identity has its own slot, and `packages/native-protocol/CONTRACT.md`
  * keeps an envelope refusal from costing a device its identity, which is exactly what
  * lets a first launch carry an id and still hydrate into nothing.
  */
@@ -3170,13 +3170,20 @@ const assertNoStaleFixtures = function assertNoStaleFixtures(
 		.sort();
 	if (stale.length > 0) {
 		throw new Error(
-			`native/protocol holds fixtures no longer generated: ${stale.join(', ')}. Delete them so no runner reads a fixture the index has forgotten.`
+			`packages/native-protocol holds fixtures no longer generated: ${stale.join(', ')}. Delete them so no runner reads a fixture the index has forgotten.`
 		);
 	}
 };
 
 const formatWith = function formatWith(paths: string[], cwd: string): void {
-	const format = spawnSync('bunx', ['oxfmt', ...paths], {
+	// `cwd` is the repository root, whose own formatter config ignores SDK files.
+	const sdkFormatArgs = [
+		'-c',
+		resolve(cwd, 'oxfmt.sdk.config.ts'),
+		'--ignore-path',
+		resolve(cwd, '.gitignore'),
+	];
+	const format = spawnSync('bunx', ['oxfmt', ...sdkFormatArgs, ...paths], {
 		cwd,
 		stdio: 'ignore',
 	});
@@ -3190,7 +3197,7 @@ export const writeFixtures = async function writeFixtures(
 ): Promise<void> {
 	const here = dirname(fileURLToPath(import.meta.url));
 	const repoRoot = resolve(here, '..', '..', '..');
-	const target = outDir ?? resolve(repoRoot, 'native', 'protocol');
+	const target = outDir ?? resolve(repoRoot, 'packages', 'native-protocol');
 	mkdirSync(target, { recursive: true });
 	// Kernel commands read Date.now() directly, so the whole generation runs against
 	// a pinned clock. Without this a notice dismissal recorded by the real command

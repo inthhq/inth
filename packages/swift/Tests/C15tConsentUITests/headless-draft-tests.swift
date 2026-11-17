@@ -239,7 +239,7 @@ func headlessFixtureCore(_ fixture: String, store: any ConsentStore = InMemorySt
     }
     let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
         .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-    let body = try Data(contentsOf: root.appendingPathComponent("examples/consent-demo/fixtures/\(fixture)"))
+    let body = try Data(contentsOf: root.appendingPathComponent("../examples/native/consent-demo/fixtures/\(fixture)"))
     let core = ConsentCore()
     core.bootstrap(CoreConfig(store: store,
         transport: HostedTransport(baseURL: URL(string: "https://fixture.invalid")!, client: Peer(body: body)),

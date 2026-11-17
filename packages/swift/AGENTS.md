@@ -15,7 +15,7 @@ c15t.com yet. Read them from either place:
 - The `@c15t/react-native` package, which bundles the same pages as Markdown
   under `docs/frameworks/swift/` and `docs/guides/`.
 
-`native/core-swift/README.md` beside this file lists the products. Once the
+`packages/swift/README.md` beside this file lists the products. Once the
 mobile SDKs are public, the pages move to `https://c15t.com/docs/frameworks/swift`.
 
 ## Rules the integration keeps

@@ -13,7 +13,7 @@ import kotlinx.serialization.json.JsonObject
 /**
  * The IAB Global Vendor List, in the shape c15t's backend embeds under `/init`'s `gvl` key.
  *
- * Field-for-field this is `globalVendorListSchema` in `packages/schema/src/shared/gvl.ts`, and the
+ * Field-for-field this is `globalVendorListSchema` in `packages/sdk/schema/src/shared/gvl.ts`, and the
  * names are that schema's names rather than anything shorter: `/init`'s `gvl` carries the same
  * document the web reads from the upstream GVL endpoint, so a mobile reader that renamed a field
  * would have published a second vendor-list shape that nothing else can read.
@@ -30,7 +30,7 @@ import kotlinx.serialization.json.JsonObject
  *     the first gap. They are keyed maps here for that reason, in the ascending id order the served
  *     document arrives in, which is also the order `Object.entries` hands the web.
  *   * The id inside an entry duplicates its key, and both web readers trust the key:
- *     `processPurposes` in `packages/iab/src/headless/dialog-data.ts` sets `id: Number(id)` from the
+ *     `processPurposes` in `packages/sdk/iab/src/headless/dialog-data.ts` sets `id: Number(id)` from the
  *     key it is holding, and `@iabtechlabtcf/core`'s `GVL` overwrites `vendor.id` with the key the
  *     same way before the encoder ever asks. [toTcVendorList] does the same, so an entry whose body
  *     disagrees with its key cannot rename itself into a signal about somebody else.
@@ -96,7 +96,7 @@ data class GlobalVendorList(
  * A purpose, special purpose, feature, special feature, or data category.
  *
  * The GVL gives all five the same five fields -- `gvlPurposeSchema` and its four siblings in
- * `packages/schema` -- and c15t's dialog reads all five the same way
+ * `packages/sdk/schema` -- and c15t's dialog reads all five the same way
  * (`processPurposes`/`processSpecialPurposes`/`processFeatures`/`processSpecialFeatures`), so one
  * type stands in for all five here rather than four identical declarations.
  */
@@ -134,7 +134,7 @@ data class GvlStack(
  *
  * The four purpose lists are what a TC String is written against and so the only fields
  * [TcSemanticPreEncoder] consults. The rest is disclosure, which the bridge still forwards because
- * the dialog renders it: `mapGvlVendor` in `packages/iab/src/headless/dialog-data.ts` reads names,
+ * the dialog renders it: `mapGvlVendor` in `packages/sdk/iab/src/headless/dialog-data.ts` reads names,
  * retention, the policy link, and the cookie claims off this same record.
  *
  * @property deletedDate Present means withdrawn, and the encoder drops a positive signal for a

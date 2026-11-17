@@ -6,7 +6,7 @@
  * layer has to be able to read it without a web schema in its bundle.
  *
  * The names are the served document's, one for one, from `globalVendorListSchema`
- * in `packages/schema/src/shared/gvl.ts`, with no mobile-side renaming. Both
+ * in `packages/sdk/schema/src/shared/gvl.ts`, with no mobile-side renaming. Both
  * native cores argue for it the same way. Swift's `GlobalVendorList.swift`:
  * "The key names are the wire's, one for one, from `globalVendorListSchema` ...
  * with no mobile-side renaming", because the JSON it encodes is what this
@@ -181,7 +181,7 @@ export interface GVLVendor {
 	 * Duplicates the key of this entry in {@link GlobalVendorList.vendors}.
 	 *
 	 * Both web readers trust the key over this field: `processPurposes` in
-	 * `packages/iab/src/headless/dialog-data.ts` takes the id from the key it is
+	 * `packages/sdk/iab/src/headless/dialog-data.ts` takes the id from the key it is
 	 * holding, and `@iabtechlabtcf/core`'s `GVL` overwrites `vendor.id` with the
 	 * key before the encoder asks. Read the key.
 	 */
@@ -222,13 +222,13 @@ export interface GVLVendor {
  *
  * Both cores gate a list on the same four fields before they hold one --
  * `vendorListVersion`, `tcfPolicyVersion`, `purposes`, `vendors`, from
- * `packages/iab/src/tcf/fetch-gvl.ts` -- and both refuse silently, reading a
+ * `packages/sdk/iab/src/tcf/fetch-gvl.ts` -- and both refuse silently, reading a
  * refused list as "no list today". Those four are the only members here a reader
  * can treat as settled. Everything below them belongs to a third-party
  * document, where any field may be absent: one partner missing a `name` is a
  * detail, not a reason to leave a device with no vendor list at all. A field of
  * the wrong type is not: both cores refuse that list whole, with the entry rules
- * in `packages/cli/src/mobile/gvl-fields.ts`. Inside a vendor, the names the encoder reads are `purposes`,
+ * in `packages/cli/vendor/c15t-mobile/src/mobile/gvl-fields.ts`. Inside a vendor, the names the encoder reads are `purposes`,
  * `legIntPurposes`, `specialPurposes`, `flexiblePurposes`, and `deletedDate` --
  * Kotlin's `READING_CONSENT_KEYS` writes that list down next to the code that
  * needs it.

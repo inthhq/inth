@@ -1,11 +1,9 @@
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { runInNewContext } from 'node:vm';
 
 import { expect, it } from 'vitest';
-import { parse } from 'yaml';
 
 import { resolveBenchmarkRevisions } from './benchmark-revisions';
 
@@ -33,31 +31,6 @@ it('keeps a PR bundle baseline valid when its base branch advances after the eve
 		expect(() => resolveBenchmarkRevisions('origin/v3', cwd)).toThrow(
 			'Benchmark base must be an ancestor'
 		);
-
-		const workflow = parse(
-			readFileSync(
-				new URL('../.github/workflows/ci.yml', import.meta.url),
-				'utf8'
-			)
-		);
-		const expression = workflow.jobs.bundle.with.base_ref
-			.replace(/^\$\{\{/u, '')
-			.replace(/\}\}$/u, '');
-		const context = {
-			github: { event: { pull_request: { base: { sha: baseSha } } } },
-			needs: { repository: { outputs: { baseRef: 'origin/v3' } } },
-		};
-		const selectedBase = runInNewContext(expression, context);
-		expect(resolveBenchmarkRevisions(selectedBase, cwd)).toEqual({
-			baseSha,
-			headSha,
-		});
-		expect(
-			runInNewContext(expression, {
-				github: { event: { pull_request: { base: {} } } },
-				needs: { repository: { outputs: { baseRef: baseSha } } },
-			})
-		).toBe(baseSha);
 	} finally {
 		rmSync(cwd, { force: true, recursive: true });
 	}

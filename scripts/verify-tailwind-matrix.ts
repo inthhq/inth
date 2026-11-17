@@ -55,9 +55,9 @@ import { startStaticServer } from '../internals/next-compat/shared/src/suite/sta
 import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-} from '../packages/schema/src/types';
-import type { InitOutput } from '../packages/schema/src/types';
-import { translations as enTranslations } from '../packages/translations/src/translations/en';
+} from '../packages/sdk/schema/src/types';
+import type { InitOutput } from '../packages/sdk/schema/src/types';
+import { translations as enTranslations } from '../packages/sdk/translations/src/translations/en';
 
 const MATRIX_ROOT = resolve(
 	import.meta.dirname,

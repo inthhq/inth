@@ -6,8 +6,8 @@ import {
 	resolvePolicyResolutionFromManifest,
 	writePolicyResolutionWire,
 	resolveInitFromManifest,
-} from '../packages/schema/dist/index.js';
-import { enTranslations } from '../packages/translations/dist/index.js';
+} from '../packages/sdk/schema/dist/index.js';
+import { enTranslations } from '../packages/sdk/translations/dist/index.js';
 import { exportMobilePolicy } from './export-mobile-policy';
 
 const now = Date.parse('2026-10-29T00:00:00Z');
@@ -69,16 +69,19 @@ const cases = [
 	}).translations.language,
 	inputs,
 }));
-await mkdir('native/protocol/bundled-policy', { recursive: true });
+await mkdir('packages/native-protocol/bundled-policy', { recursive: true });
 await writeFile(
-	'native/protocol/bundled-policy/parity.json',
+	'packages/native-protocol/bundled-policy/parity.json',
 	`${JSON.stringify({ cases, endpoint, now, resource }, null, 2)}\n`
 );
 
 // Disclosure fixtures use authored source dates. Native launch must retain these dates.
 const { readFile } = await import('node:fs/promises');
 const source = JSON.parse(
-	await readFile('native/protocol/iab/additional-consent-cases.json', 'utf8')
+	await readFile(
+		'packages/native-protocol/iab/additional-consent-cases.json',
+		'utf8'
+	)
 );
 const gvl = { ...source.gvl, lastUpdated: new Date(now - 1000).toISOString() };
 const iabManifest = await buildConsentManifestFromConfig({
@@ -122,7 +125,7 @@ const iabResource = JSON.parse(
 	})
 );
 await writeFile(
-	'native/protocol/bundled-policy/iab.json',
+	'packages/native-protocol/bundled-policy/iab.json',
 	`${JSON.stringify(
 		{
 			configuration: source.configuration,

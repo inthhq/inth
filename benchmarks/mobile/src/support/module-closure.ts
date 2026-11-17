@@ -181,7 +181,7 @@ export const resolveWorkspaceEntry = function resolveWorkspaceEntry(
 	workspaceRoot: string
 ): string | undefined {
 	const shortName = packageName.split('/').at(-1) ?? packageName;
-	const packageDir = resolve(workspaceRoot, 'packages', shortName);
+	const packageDir = resolve(workspaceRoot, 'packages', 'sdk', shortName);
 	const manifestPath = resolve(packageDir, 'package.json');
 
 	if (!existsSync(manifestPath)) {

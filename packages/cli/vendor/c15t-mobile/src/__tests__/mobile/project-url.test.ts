@@ -11,7 +11,7 @@ import {
 } from '../../mobile/project-url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const REPO = path.resolve(HERE, '../../../../..');
+const REPO = path.resolve(HERE, '../../../../../../..');
 
 interface Cases {
 	readonly accept: readonly { input: string; normalized: string }[];
@@ -21,7 +21,7 @@ interface Cases {
 /** The fixture Swift, Kotlin and TypeScript all run. */
 const fixture = JSON.parse(
 	readFileSync(
-		path.join(REPO, 'native/protocol/project-url/cases.json'),
+		path.join(REPO, 'packages/native-protocol/project-url/cases.json'),
 		'utf8'
 	)
 ) as { allowedHostSuffixes: string[]; relaxed: Cases; strict: Cases };

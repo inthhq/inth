@@ -1,7 +1,7 @@
 import type { HydrationRecords, HydrationResult } from '@c15t/core';
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 
-import ConsentGate from '../../../packages/vue/src/runtime/components/consent-gate.vue';
+import ConsentGate from '../../../packages/sdk/vue/src/runtime/components/consent-gate.vue';
 import { useStorybookConsent as setupStorybookConsent } from './storybook-consent-fixtures';
 
 /**

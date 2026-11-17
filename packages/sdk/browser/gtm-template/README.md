@@ -14,7 +14,7 @@ This directory is not in the package's `files`, so it is not published to npm.
 ## Test
 
 ```bash
-bun run --cwd packages/browser test src/__tests__/gtm-template.test.ts \
+bun run --cwd packages/sdk/browser test src/__tests__/gtm-template.test.ts \
 	--coverage.enabled=false
 ```
 

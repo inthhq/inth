@@ -3,7 +3,7 @@ import { Switch } from '@c15t/react/primitives';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 
-import { enTranslations } from '../../../packages/translations/src';
+import { enTranslations } from '../../../packages/sdk/translations/src';
 
 const { consentTypes } = enTranslations;
 

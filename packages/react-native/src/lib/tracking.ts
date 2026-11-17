@@ -1,7 +1,7 @@
 /**
  * The one place a consent answer and a platform answer are read together.
  *
- * `native/CONTRACT.md` states the rule this file enforces: ATT on iOS and the
+ * `packages/native-protocol/CONTRACT.md` states the rule this file enforces: ATT on iOS and the
  * advertising-identifier permission on Android are platform gates, not consent,
  * and no platform authorization moves a category from `denied` or `pending` to
  * `granted`. The two answers are combined here and nowhere else, so the

@@ -2,8 +2,8 @@ import type { Preview } from '@storybook/react-vite';
 
 // The stylesheets ship the `defaultTheme` tokens themselves, so the canvas
 // only has to opt into them — no `generateThemeCSS(defaultTheme)` injection.
-import '../../../packages/react/src/styles.css';
-import '../../../packages/react/src/iab/styles.css';
+import '../../../packages/sdk/react/src/styles.css';
+import '../../../packages/sdk/react/src/iab/styles.css';
 
 const storybookCanvasStyleId = 'c15t-storybook-canvas';
 

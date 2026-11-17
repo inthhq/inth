@@ -20,7 +20,7 @@ it('reproduces typed in-app rows with the pinned reference codec', () => {
 				readFileSync(
 					resolve(
 						import.meta.dirname,
-						'../../../../native/protocol/iab/storage-bus-cases.json'
+						'../../../native-protocol/iab/storage-bus-cases.json'
 					),
 					'utf8'
 				)

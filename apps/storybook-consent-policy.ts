@@ -1,15 +1,15 @@
-import type { ConsentPresentation } from '../packages/core/src/libs/policy-actions';
-import type { HydrationRecords } from '../packages/core/src/types';
+import type { ConsentPresentation } from '../packages/sdk/core/src/libs/policy-actions';
+import type { HydrationRecords } from '../packages/sdk/core/src/types';
 import {
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,
 	resolvePolicyRules,
-} from '../packages/schema/src/types';
+} from '../packages/sdk/schema/src/types';
 import type {
 	PolicyRule,
 	PolicyResolution,
 	Vendor,
-} from '../packages/schema/src/types';
+} from '../packages/sdk/schema/src/types';
 
 export const storybookPolicy: PolicyRule = {
 	categories: ['functionality', 'measurement', 'experience', 'marketing'],

@@ -15,7 +15,7 @@ import kotlinx.serialization.json.*
 class ConsentPolicyTest {
 	private val fixture = Json.parseToJsonElement(
 		generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }
-			.map { File(it, "native/protocol/local-policy/parity.json") }.first { it.exists() }.readText(),
+			.map { File(it, "packages/native-protocol/local-policy/parity.json") }.first { it.exists() }.readText(),
 	).jsonObject
 	private val policy = ConsentPolicy.fromJson(buildJsonObject { put("rules", fixture.getValue("rules")) }.toString())
 

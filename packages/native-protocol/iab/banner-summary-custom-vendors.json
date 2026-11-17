@@ -487,5 +487,5 @@
 		},
 		"vendorIds": null
 	},
-	"oracle": "packages/core/src/libs/iab-banner-summary.ts"
+	"oracle": "packages/sdk/core/src/libs/iab-banner-summary.ts"
 }

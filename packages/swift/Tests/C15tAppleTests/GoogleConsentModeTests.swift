@@ -4,7 +4,7 @@ import Foundation
 import XCTest
 
 /// The web's Consent Mode v2 mapping, through
-/// `native/protocol/google-consent-mode/consent-mode-v2.json`. Regenerate it with
+/// `packages/native-protocol/google-consent-mode/consent-mode-v2.json`. Regenerate it with
 /// `bun scripts/generate-google-consent-mode-fixture.ts`.
 final class GoogleConsentModeTests: XCTestCase {
     struct Fixture: Decodable {
@@ -24,7 +24,7 @@ final class GoogleConsentModeTests: XCTestCase {
 
     static let fixtureURL = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
         .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-        .appendingPathComponent("protocol/google-consent-mode/consent-mode-v2.json")
+        .appendingPathComponent("native-protocol/google-consent-mode/consent-mode-v2.json")
 
     private func fixture() throws -> Fixture {
         try JSONDecoder().decode(Fixture.self, from: Data(contentsOf: Self.fixtureURL))

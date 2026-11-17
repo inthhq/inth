@@ -50,10 +50,10 @@ import kotlin.test.assertTrue
 import kotlin.test.fail
 
 /**
- * Runs every fixture in `native/protocol/index.json` against [ConsentCore].
+ * Runs every fixture in `packages/native-protocol/index.json` against [ConsentCore].
  *
  * The TypeScript kernel produced these files, so a difference here is Kotlin and
- * JavaScript reading the same input differently, and `native/CONTRACT.md` rule 4
+ * JavaScript reading the same input differently, and `packages/native-protocol/CONTRACT.md` rule 4
  * settles that in the kernel's favour. Two rules keep the suite honest:
  *
  * - Nothing is enumerated by name. `index.json` decides what runs, and a fixture
@@ -75,7 +75,7 @@ class ProtocolFixtureTest {
 	private val recorded = LinkedHashMap<String, MutableList<Diff>>()
 
 	/**
-	 * The rule `native/CONTRACT.md` states, enforced on the excuse list itself.
+	 * The rule `packages/native-protocol/CONTRACT.md` states, enforced on the excuse list itself.
 	 *
 	 * A wire key name is not something a build may differ about. The snapshot crosses to
 	 * JavaScript as a JSON string, so a renamed key fails no type check, no compile, and
@@ -171,7 +171,7 @@ class ProtocolFixtureTest {
 			.sorted()
 		assertTrue(
 			unlisted.isEmpty(),
-			"native/protocol holds ${unlisted}, which index.json does not list. A runner that globs would skip them silently: regenerate.",
+			"packages/native-protocol holds ${unlisted}, which index.json does not list. A runner that globs would skip them silently: regenerate.",
 		)
 	}
 
@@ -348,7 +348,7 @@ class ProtocolFixtureTest {
 	 * second is the half a revision cannot prove. A core that bumps the counter and
 	 * never tells the observers has produced exactly the trace the kernel produced
 	 * while the React Native pump -- which reads `onChange`, not the event hub --
-	 * never hears that anything changed. `native/CONTRACT.md` calls that pair
+	 * never hears that anything changed. `packages/native-protocol/CONTRACT.md` calls that pair
 	 * "Revisions and error writes", and this fixture is what enforces it on both
 	 * cores, which is why it lives here rather than in a per-core unit test.
 	 *
@@ -922,7 +922,7 @@ class ProtocolFixtureTest {
 	 * The names come from the fixture's `carriers` map rather than from literals here, so
 	 * the shared file owns the field set and this runner contributes only the spelling
 	 * this core happens to use. A field with no entry for this core is one it does not
-	 * carry at all, which `native/CONTRACT.md` records as a difference between the two
+	 * carry at all, which `packages/native-protocol/CONTRACT.md` records as a difference between the two
 	 * implementations rather than a defect.
 	 *
 	 * Values, not key presence: this core writes every key every time, so a key sitting
@@ -994,7 +994,7 @@ class ProtocolFixtureTest {
 				written.substring(0, cut)
 			}
 
-			// The same facts in the shape the first draft of `native/CONTRACT.md`
+			// The same facts in the shape the first draft of `packages/native-protocol/CONTRACT.md`
 			// described: `test` as an override, and `gpc`/`msa` as a boolean pair.
 			"pre-correction" -> {
 				val root = json.parseToJsonElement(written).jsonObject
@@ -1064,17 +1064,17 @@ class ProtocolFixtureTest {
 
 	private fun id(entry: JsonObject): String = entry["id"]!!.jsonPrimitive.content
 
-	/** Find `native/protocol` by walking up, because Gradle may start anywhere in the module. */
+	/** Find `packages/native-protocol` by walking up, because Gradle may start anywhere in the module. */
 	private fun fixtureDirectory(): File {
 		var cursor: File? = File(System.getProperty("user.dir")).absoluteFile
 		while (cursor != null) {
-			val candidate = File(cursor, "native/protocol/$INDEX_FILE")
+			val candidate = File(cursor, "packages/native-protocol/$INDEX_FILE")
 			if (candidate.isFile) {
 				return candidate.parentFile
 			}
 			cursor = cursor.parentFile
 		}
-		fail("no native/protocol/$INDEX_FILE above ${File(System.getProperty("user.dir")).absolutePath}. Run generate:fixtures.")
+		fail("no packages/native-protocol/$INDEX_FILE above ${File(System.getProperty("user.dir")).absolutePath}. Run generate:fixtures.")
 	}
 
 	private fun readIndex(directory: File): JsonObject =
@@ -1316,7 +1316,7 @@ class ProtocolFixtureTest {
 		 *
 		 * The rows that used to go on every snapshot -- `location*`, `promptRequirement*`,
 		 * `subject*`, and the `explicitChoice*` rows scattered below -- were accepted
-		 * differences for key names, which `native/CONTRACT.md` forbids. The bridge hands
+		 * differences for key names, which `packages/native-protocol/CONTRACT.md` forbids. The bridge hands
 		 * JavaScript a JSON string, so a renamed key fails nothing on the JavaScript side,
 		 * which is how four of them drifted here. [SnapshotWire] owns the objects it
 		 * re-spells, so a difference under one of them is a failure, and the guard in
@@ -1376,7 +1376,7 @@ class ProtocolFixtureTest {
 
 		// A wipe is a committed mutation, so it publishes current + 1, and the delta the
 		// fixture pins is asserted above. What it cannot pin is where the device's counting
-		// started: `native/CONTRACT.md` says hydration and bootstrap are mutations in some
+		// started: `packages/native-protocol/CONTRACT.md` says hydration and bootstrap are mutations in some
 		// cores and not in others, so the absolute the wipe lands on runs ahead here for the
 		// same reason every other fixture's does.
 		listOf(

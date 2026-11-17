@@ -2,7 +2,7 @@ import Foundation
 
 /// Decides which connectivity updates are worth a queue replay.
 ///
-/// `native/CONTRACT.md` asks for a replay when the process *gains* a network it did not
+/// `packages/native-protocol/CONTRACT.md` asks for a replay when the process *gains* a network it did not
 /// already have, and that is a transition rather than an event. `NWPathMonitor` reports
 /// the path the process started with as soon as it starts, and replaying there races the
 /// launch replay ``ConsentCore/bootstrap(_:)`` already performs. So the first delivery

@@ -198,7 +198,7 @@ describe('the vendored core in this repository', () => {
 		}
 	});
 
-	it('is byte-for-byte what native/core-swift contains', () => {
+	it('is byte-for-byte what packages/swift contains', () => {
 		// Fails the pull request rather than the release: the copy is generated, so any
 		// difference means someone edited it by hand or changed the core without syncing.
 		expect(

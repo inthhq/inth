@@ -109,8 +109,8 @@ it.each([
 			const base = join(root, 'base');
 			if (automatic) {
 				for (const path of [
-					'packages/react/src/components/shared/surface-styles.tsx',
-					'packages/svelte/src/lib/surface-styles.ts',
+					'packages/sdk/react/src/components/shared/surface-styles.tsx',
+					'packages/sdk/svelte/src/lib/surface-styles.ts',
 				]) {
 					mkdirSync(dirname(join(base, path)), { recursive: true });
 					writeFileSync(join(base, path), 'export {};');
@@ -119,7 +119,7 @@ it.each([
 			if (iabAutomatic) {
 				const path = join(
 					base,
-					'packages/react/src/components/shared/iab-first-paint-sheets.ts'
+					'packages/sdk/react/src/components/shared/iab-first-paint-sheets.ts'
 				);
 				mkdirSync(dirname(path), { recursive: true });
 				writeFileSync(path, 'export {};');
@@ -189,7 +189,8 @@ it('gives the base copy of a fixture the older form of an API the head introduce
 			execFileSync('git', ['add', '.'], { cwd });
 		}
 		const head = join(root, 'head');
-		const composable = 'packages/vue/src/runtime/composables/script-loader.ts';
+		const composable =
+			'packages/sdk/vue/src/runtime/composables/script-loader.ts';
 		mkdirSync(dirname(join(head, composable)), { recursive: true });
 		writeFileSync(join(head, composable), 'export const useScriptLoader = 1;');
 

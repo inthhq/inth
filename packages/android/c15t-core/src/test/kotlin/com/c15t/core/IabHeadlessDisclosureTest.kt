@@ -12,8 +12,8 @@ import kotlinx.serialization.json.*
  * What a React Native screen drawing its own TCF UI is given and what its commit writes, under
  * publisher restrictions and Google Additional Consent providers.
  *
- * `native/protocol/iab/headless-disclosure-cases.json` is generated from the web code
- * (`packages/iab/src/__tests__/native-headless-disclosure.test.ts`). Swift's
+ * `packages/native-protocol/iab/headless-disclosure-cases.json` is generated from the web code
+ * (`packages/sdk/iab/src/__tests__/native-headless-disclosure.test.ts`). Swift's
  * `IABHeadlessDisclosureTests` asserts the same values.
  */
 class IabHeadlessDisclosureTest {
@@ -68,7 +68,7 @@ class IabHeadlessDisclosureTest {
 	private val json = Json { ignoreUnknownKeys = true }
 	private val directory =
 		generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }
-			.map { File(it, "native/protocol/iab") }
+			.map { File(it, "packages/native-protocol/iab") }
 			.first { File(it, "headless-disclosure-cases.json").exists() }
 	private val vector = json.decodeFromString<Vector>(File(directory, "headless-disclosure-cases.json").readText())
 	private val list = json.decodeFromString<VendorList>(File(directory, vector.vendorList).readText())

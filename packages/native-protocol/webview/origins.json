@@ -1,5 +1,5 @@
 {
-	"description": "Allowed-origin normalization for the WebView consent helpers. Every platform must map each input to the same output; null means the helper rejects the entry. See 'WebView consent' in native/CONTRACT.md.",
+	"description": "Allowed-origin normalization for the WebView consent helpers. Every platform must map each input to the same output; null means the helper rejects the entry. See 'WebView consent' in packages/native-protocol/CONTRACT.md.",
 	"cases": [
 		{ "input": "https://example.com", "origin": "https://example.com" },
 		{ "input": "https://Example.COM/", "origin": "https://example.com" },

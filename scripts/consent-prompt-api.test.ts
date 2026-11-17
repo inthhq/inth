@@ -65,10 +65,7 @@ const swiftName = (line: string): string =>
 describe('ConsentPrompt public surface', () => {
 	test('Swift: only the coordinator opens the prompt', () => {
 		const source = readFileSync(
-			join(
-				root,
-				'native/core-swift/Sources/C15tConsentUI/consent-prompt.swift'
-			),
+			join(root, 'packages/swift/Sources/C15tConsentUI/consent-prompt.swift'),
 			'utf8'
 		);
 		const members = topLevelLines(
@@ -96,7 +93,7 @@ describe('ConsentPrompt public surface', () => {
 		const source = readFileSync(
 			join(
 				root,
-				'native/core-android/c15t-consent-ui/src/main/kotlin/com/c15t/consentui/consent-prompt.kt'
+				'packages/android/c15t-consent-ui/src/main/kotlin/com/c15t/consentui/consent-prompt.kt'
 			),
 			'utf8'
 		);

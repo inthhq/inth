@@ -59,7 +59,7 @@ set; explain what the cookies will do; and obtain consent from individuals to
 store a cookie on their device", with only the communication and strictly
 necessary exemptions. The `GI` code also falls to the world default.
 
-**Location.** `packages/schema/src/shared/policy-runtime.ts` (`EU_COUNTRY_CODES`,
+**Location.** `packages/sdk/schema/src/shared/policy-runtime.ts` (`EU_COUNTRY_CODES`,
 `EEA_COUNTRY_CODES`, `UK_COUNTRY_CODES`); `docs/frameworks/*/concepts/policy-presets.mdx`
 "No banner and unknown locations".
 
@@ -100,7 +100,7 @@ banners" goal, and it is not a legal requirement anywhere in the US. Country
 rules are bypassed entirely on the missing-region path, so an author cannot
 write a `US` country rule meaning "any US state I have not listed".
 
-**Location.** `packages/schema/src/shared/policy-resolution.ts` (`matchPolicyRules`,
+**Location.** `packages/sdk/schema/src/shared/policy-resolution.ts` (`matchPolicyRules`,
 `safeFallbackPolicyRule`); guide section "No banner and unknown locations".
 
 **Correction.** Two options, both simpler than a per-law model. (a) Let a
@@ -133,7 +133,7 @@ with
 says a receipt lifetime "alone does not prevent policy-change reprompts", so
 the limitation is acknowledged, but the opt-in presets ship it as a default.
 
-**Location.** `packages/core/src/consent-record/evaluate.ts`
+**Location.** `packages/sdk/core/src/consent-record/evaluate.ts`
 (`deriveChoiceRequirement`); `policy-rule-presets.ts` (`californiaRule('opt-in')`,
 `usPrivacyStatesRule('opt-in')`).
 

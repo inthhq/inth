@@ -53,11 +53,11 @@ internal data class VendorListScopeFixture(
 )
 
 /**
- * The shared `vendor-list-scope` fixtures in `native/protocol`, loaded through one door.
+ * The shared `vendor-list-scope` fixtures in `packages/native-protocol`, loaded through one door.
  *
  * The vectors lane owns that directory and publishes through its `index.json`; this build reads
  * it and writes nothing to it. The oracle behind these files is `narrowGVLToVendors` in
- * `packages/iab/src/tcf/fetch-gvl.ts`, called by the generator rather than restated, so an
+ * `packages/sdk/iab/src/tcf/fetch-gvl.ts`, called by the generator rather than restated, so an
  * expectation here is the browser build's answer and not Kotlin's opinion about it.
  *
  * [load] enumerates through the index rather than globbing, and proves the bytes are the ones
@@ -109,7 +109,7 @@ internal object VendorListScopeFixtures {
 	fun ids(): List<String> = load().map { it.id }.sorted()
 
 	/**
-	 * Walk up from the Gradle module until `native/protocol/index.json` appears.
+	 * Walk up from the Gradle module until `packages/native-protocol/index.json` appears.
 	 *
 	 * The same walk ProtocolFixtureTest makes: `user.dir` is the module directory under the
 	 * Gradle test JVM, and the protocol directory is a sibling of the whole native tree.
@@ -117,14 +117,14 @@ internal object VendorListScopeFixtures {
 	private fun fixtureDirectory(): File {
 		var cursor: File? = File(System.getProperty("user.dir")).absoluteFile
 		while (cursor != null) {
-			val candidate = File(cursor, "native/protocol/$INDEX_FILE")
+			val candidate = File(cursor, "packages/native-protocol/$INDEX_FILE")
 			if (candidate.isFile) {
 				return candidate.parentFile
 			}
 			cursor = cursor.parentFile
 		}
 		fail(
-			"no native/protocol/$INDEX_FILE above ${File(System.getProperty("user.dir")).absolutePath}. " +
+			"no packages/native-protocol/$INDEX_FILE above ${File(System.getProperty("user.dir")).absolutePath}. " +
 				"Run `bun run --cwd packages/react-native generate:fixtures`."
 		)
 	}

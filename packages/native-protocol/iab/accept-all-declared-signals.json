@@ -1,5 +1,5 @@
 {
-	"description": "Accept All against a real served GVL. Native must grant only what some vendor declares once publisher restrictions apply, as applyBlanket in packages/iab/src/index.ts does (TCF Policies 5(3), 5(6) and 5(8)), and a vendor page must list the categories in the vendor's dataDeclaration. Each case's acceptAll is what the web's createIAB acceptAll() encodes for the same list, restrictions and ad tech providers.",
+	"description": "Accept All against a real served GVL. Native must grant only what some vendor declares once publisher restrictions apply, as applyBlanket in packages/sdk/iab/src/index.ts does (TCF Policies 5(3), 5(6) and 5(8)), and a vendor page must list the categories in the vendor's dataDeclaration. Each case's acceptAll is what the web's createIAB acceptAll() encodes for the same list, restrictions and ad tech providers.",
 	"source": "https://c15t-iab-mobile-review-inth.inth.app/init: gvl (GVL v183 scoped to vendors 10, 21, 52, 91 and 755) and adTechProviders, unchanged.",
 	"fetchedAt": "2026-11-06",
 	"gvl": {

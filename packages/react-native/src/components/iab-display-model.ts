@@ -2,7 +2,7 @@
  * The row model an IAB disclosure surface draws, in the shape the web draws it.
  *
  * `@c15t/iab` publishes one display model -- `resolveIABDialogDisplayModel` in
- * `packages/iab/src/headless/display-model.ts` -- and every web adapter reads
+ * `packages/sdk/iab/src/headless/display-model.ts` -- and every web adapter reads
  * its rows from there rather than deriving its own. That is what keeps four
  * preference centres listing the same purposes the same number of times. A
  * phone cannot run that derivation: it carries no consent kernel and, by this

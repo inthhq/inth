@@ -79,7 +79,7 @@ export interface ConsentSwitchProps {
 	/**
 	 * The box the control was built at, when it is not the small one.
 	 *
-	 * `packages/ui` ships two switches and the consent surfaces ask for different
+	 * `packages/sdk/ui` ships two switches and the consent surfaces ask for different
 	 * ones: a category row takes `size="small"` and the IAB disclosure takes the
 	 * default. The track's own numbers already come from the `switch` part, which
 	 * `useConsentStyles` builds from whichever geometry the presentation uses; this

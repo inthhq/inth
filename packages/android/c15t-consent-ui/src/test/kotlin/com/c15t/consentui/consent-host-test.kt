@@ -289,7 +289,7 @@ class ConsentHostTest {
     }
 
     private fun fixture(name: String) = generateSequence(File(requireNotNull(System.getProperty("user.dir")))) { it.parentFile }
-        .map { File(it, "native/examples/consent-demo/fixtures/$name") }.first { it.exists() }.readText()
+        .map { File(it, "examples/native/consent-demo/fixtures/$name") }.first { it.exists() }.readText()
 
     private fun boot(body: String): ConsentCore {
         val config = NativeConfig("https://fixture.invalid")

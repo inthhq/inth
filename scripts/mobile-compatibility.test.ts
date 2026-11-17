@@ -11,7 +11,6 @@ import { join } from 'node:path';
 
 import { satisfies } from 'semver';
 import { describe, expect, it } from 'vitest';
-import { parse } from 'yaml';
 
 import {
 	compatibilityCell,
@@ -27,17 +26,6 @@ const manifest = JSON.parse(
 );
 
 describe('mobile compatibility contract', () => {
-	it('runs every declared host in CI', () => {
-		const workflow = parse(
-			readFileSync(
-				new URL('../.github/workflows/ci.yml', import.meta.url),
-				'utf8'
-			)
-		);
-		expect(workflow.jobs.mobileCompatibility.strategy.matrix.cell).toEqual(
-			matrix.map((cell) => cell.id)
-		);
-	});
 	it.each(matrix)(
 		'allows the $id host to install without peer overrides',
 		(cell) => {

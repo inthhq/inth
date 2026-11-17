@@ -155,7 +155,7 @@ export interface C15tPolicy {
  * Everything here is published inside the app binary, so nothing here may be a
  * secret. There is no credential parameter: the embedded cores identify a
  * project by backend URL and send no key, so nothing here has anywhere to put
- * one. See `native/CONTRACT.md`.
+ * one. See `packages/native-protocol/CONTRACT.md`.
  */
 export interface C15tPluginProps {
 	/** Explicit binary repository. Omit only when the host configures Maven itself. There is no default repository. */
@@ -1354,7 +1354,7 @@ const reviewProblem = function reviewProblem(
 /**
  * Check one rule with the rules both native cores apply at launch: the backend's
  * authoring rules (`inspectPolicyRules` in `@c15t/schema`) plus the in-code
- * limits. `native/protocol/local-policy/parity.json` lists the cases all three
+ * limits. `packages/native-protocol/local-policy/parity.json` lists the cases all three
  * refuse, and the tests of each read it.
  *
  * @returns The first problem, or `null` for a usable rule.

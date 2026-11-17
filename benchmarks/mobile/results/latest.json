@@ -224,7 +224,7 @@
 		}
 	},
 	"commitSha": "bea070a5adac7bf3619f22e2a821451b69353ee1",
-	"contract": "native/CONTRACT.md",
+	"contract": "packages/native-protocol/CONTRACT.md",
 	"environment": {
 		"arch": "arm64",
 		"ci": false,
@@ -1034,7 +1034,7 @@
 		{
 			"budget": 100,
 			"budgetSource": "allowance",
-			"detail": "8 rule sets from native/protocol, worst 31.105 us, span is init plus first read",
+			"detail": "8 rule sets from packages/native-protocol, worst 31.105 us, span is init plus first read",
 			"id": "policy_apply_per_rule_set_us",
 			"label": "apply a rule set (init to snapshot), median over the fixture corpus",
 			"samples": 2400,

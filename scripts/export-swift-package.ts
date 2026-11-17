@@ -13,7 +13,7 @@ import { parseArgs } from 'node:util';
 
 import { valid } from 'semver';
 
-const nativeRoot = 'native/core-swift';
+const nativeRoot = 'packages/swift';
 const manifestPath = `${nativeRoot}/Package.swift`;
 const versionPath = `${nativeRoot}/Sources/C15tCore/Transports.swift`;
 const metadataPath = 'swift-package-source.json';
@@ -21,11 +21,11 @@ const sourceRoots = [
 	`${nativeRoot}/Sources/`,
 	`${nativeRoot}/Tests/`,
 	`${nativeRoot}/Resources/`,
-	'native/protocol/',
-	'native/examples/consent-demo/fixtures/',
+	'packages/native-protocol/',
+	'examples/native/consent-demo/fixtures/',
 ];
 const sourceFiles = new Set([
-	'LICENSE.md',
+	'LICENSE',
 	'NOTICE',
 	manifestPath,
 	`${nativeRoot}/README.md`,
@@ -151,7 +151,7 @@ const prefixedTargetPath = (path: string) => {
 		normalized === '..' ||
 		normalized.startsWith('../')
 	) {
-		throw new Error('Swift target path must stay inside native/core-swift.');
+		throw new Error('Swift target path must stay inside packages/swift.');
 	}
 	return `"${posix.join(nativeRoot, normalized)}"`;
 };
@@ -286,9 +286,11 @@ export const exportSwiftPackage = (options: {
 		sourceCommit,
 		'--',
 		...(options.manifest === 'root' ? ['Package.swift'] : []),
-		'LICENSE.md',
+		'LICENSE',
 		'NOTICE',
-		'native'
+		'packages/swift',
+		'packages/native-protocol',
+		'examples/native'
 	)
 		.toString()
 		.split('\0')
@@ -321,7 +323,7 @@ export const exportSwiftPackage = (options: {
 		}
 		return file.content.toString();
 	};
-	required('LICENSE.md');
+	required('LICENSE');
 	required('NOTICE');
 	const versions = [
 		...required(versionPath).matchAll(

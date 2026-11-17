@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import {
 	IABConsentBanner,
 	IABConsentDialog,
-} from '../../../packages/react/src/iab';
+} from '../../../packages/sdk/react/src/iab';
 import { StorybookIABProvider } from './storybook-consent-fixtures';
 
 const meta = {

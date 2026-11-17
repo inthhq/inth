@@ -9,7 +9,7 @@ import XCTest
 /// the bit widths in ``TcBitWidth`` so a case says which field it breaks, and a
 /// reader can check the offset arithmetic without running anything. The shared
 /// fixtures are all well-formed strings, so this is the only place the refusals
-/// live; the vectors lane owns `native/protocol` and has not put malformed cases in
+/// live; the vectors lane owns `packages/native-protocol` and has not put malformed cases in
 /// it, and inventing a second fixture format here would be worse than the gap.
 final class TcDecoderTests: XCTestCase {
     // MARK: - Assembling a core segment

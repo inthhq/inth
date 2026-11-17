@@ -2868,13 +2868,13 @@
 	},
 	"kind": "vendor-list-scope",
 	"notes": [
-		"expected.document is what narrowGVLToVendors in packages/iab/src/tcf/fetch-gvl.ts returned for this input: called, not restated.",
+		"expected.document is what narrowGVLToVendors in packages/sdk/iab/src/tcf/fetch-gvl.ts returned for this input: called, not restated.",
 		"vendorKeys is the surviving vendors keys in the order the web returned them, which is served order and not the order a host typed the scope in.",
 		"No scope is declared here, so the whole document is expected back. A core that reads this as show-nobody has emptied a drawer nobody asked it to empty."
 	],
 	"oracle": {
 		"function": "narrowGVLToVendors",
-		"module": "packages/iab/src/tcf/fetch-gvl.ts",
+		"module": "packages/sdk/iab/src/tcf/fetch-gvl.ts",
 		"package": "@c15t/iab"
 	},
 	"protocolVersion": 1,

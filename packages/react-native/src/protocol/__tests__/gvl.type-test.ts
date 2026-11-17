@@ -8,7 +8,7 @@
  * nullability, a key one side grew, the pair of them, which is how a vendor list
  * ends up rendering a blank row over a bridge that reported nothing.
  *
- * `@c15t/core` is the oracle here, exactly as `native/CONTRACT.md` rule 4 makes
+ * `@c15t/core` is the oracle here, exactly as `packages/native-protocol/CONTRACT.md` rule 4 makes
  * it the oracle for both native cores, and exactly as
  * `vocabulary.type-test.ts` already uses it. Vitest does not check types, so
  * this file runs through `tsc -p tsconfig.type-tests.json`, which the package's

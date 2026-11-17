@@ -39,7 +39,7 @@ const fixture = function fixture() {
 	symlinkSync(parserDirectory, join(root, 'node_modules/@babel/parser'), 'dir');
 	for (const name of ['core', 'shared']) {
 		write(
-			`packages/${name}/package.json`,
+			`packages/sdk/${name}/package.json`,
 			JSON.stringify({
 				exports: {
 					'.': { types: './dist-types/index.d.ts' },
@@ -51,13 +51,13 @@ const fixture = function fixture() {
 		);
 		mkdirSync(join(root, 'node_modules/@fixture'), { recursive: true });
 		symlinkSync(
-			join(root, 'packages', name),
+			join(root, 'packages', 'sdk', name),
 			join(root, 'node_modules/@fixture', name),
 			'dir'
 		);
 	}
 	write(
-		'packages/core/dist-types/index.d.ts',
+		'packages/sdk/core/dist-types/index.d.ts',
 		[
 			"import './ambient';",
 			"export * from './client';",
@@ -69,23 +69,23 @@ const fixture = function fixture() {
 		].join('\n')
 	);
 	write(
-		'packages/core/dist-types/client/index.d.ts',
+		'packages/sdk/core/dist-types/client/index.d.ts',
 		"import type { Options } from './types';\nexport declare function configure(options: Options): { value: string };"
 	);
 	write(
-		'packages/core/dist-types/client/types.d.ts',
+		'packages/sdk/core/dist-types/client/types.d.ts',
 		'export interface Options { value: string }'
 	);
 	write(
-		'packages/core/dist-types/ambient.d.ts',
+		'packages/sdk/core/dist-types/ambient.d.ts',
 		'export {}; declare global { interface FixtureAmbient { enabled: boolean } }'
 	);
 	write(
-		'packages/shared/dist-types/index.d.ts',
+		'packages/sdk/shared/dist-types/index.d.ts',
 		'export interface Shared { value: string }'
 	);
 	write(
-		'packages/shared/dist-types/extra.d.ts',
+		'packages/sdk/shared/dist-types/extra.d.ts',
 		'export interface Extra { extra: boolean }'
 	);
 	write(
@@ -109,7 +109,7 @@ const fixture = function fixture() {
 	return {
 		normalize() {
 			execFileSync(process.execPath, [script], {
-				cwd: join(root, 'packages/core'),
+				cwd: join(root, 'packages/sdk/core'),
 			});
 		},
 		root,
@@ -166,7 +166,7 @@ test.each([
 test('normalizing explicit specifiers again leaves declarations unchanged', () => {
 	const project = fixture();
 	project.normalize();
-	const entry = join(project.root, 'packages/core/dist-types/index.d.ts');
+	const entry = join(project.root, 'packages/sdk/core/dist-types/index.d.ts');
 	const normalized = readFileSync(entry, 'utf8');
 	project.normalize();
 	expect(readFileSync(entry, 'utf8')).toBe(normalized);
@@ -183,7 +183,7 @@ test('preserves import-like literals and comments when rewriting module syntax',
 		"export type Template = `import './ambient'`;",
 	];
 	project.write(
-		'packages/core/dist-types/literals.d.ts',
+		'packages/sdk/core/dist-types/literals.d.ts',
 		[
 			...preserved,
 			`import /* module */ './ambient';`,
@@ -194,7 +194,7 @@ test('preserves import-like literals and comments when rewriting module syntax',
 	project.normalize();
 	expect(
 		readFileSync(
-			join(project.root, 'packages/core/dist-types/literals.d.ts'),
+			join(project.root, 'packages/sdk/core/dist-types/literals.d.ts'),
 			'utf8'
 		)
 	).toBe(

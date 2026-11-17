@@ -1,7 +1,7 @@
 /**
  * Each bridge payload type against `BRIDGE_PAYLOADS`, key by key.
  *
- * The native tests hold Swift and Kotlin to `native/protocol/bridge/payloads.json`,
+ * The native tests hold Swift and Kotlin to `packages/native-protocol/bridge/payloads.json`,
  * which is generated from that table. This file holds the TypeScript types to the
  * same table, so a key renamed in a protocol type alone is a compile error here,
  * and a key renamed in the table alone fails the native tests. Vitest does not

@@ -27,7 +27,7 @@ const SHEETS_DIR = join(DIST_DIR, 'styles', 'sheets');
 const readDist = function readDist(path: string): string {
 	if (!existsSync(path)) {
 		throw new Error(
-			`Missing ${path}. Build @c15t/ui first: bun run --cwd packages/ui build`
+			`Missing ${path}. Build @c15t/ui first: bun run --cwd packages/sdk/ui build`
 		);
 	}
 	return readFileSync(path, 'utf8');

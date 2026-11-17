@@ -1,0 +1,18 @@
+{/* Generated from examples/native/consent-demo/android/src/main/kotlin/com/c15t/demo/custom-consent-ui.kt (docs:android-headless-prompt) by scripts/sync-example-docs.ts. Edit the source file. */}
+
+```kotlin title="custom-consent-ui.kt"
+@Composable
+fun LedgerConsent(core: ConsentCore, privacyPolicyUrl: String, state: LedgerConsentState) {
+    val draft = rememberConsentDraft(core)
+    CompositionLocalProvider(LocalLedger provides ledger()) {
+        // The block decides when a prompt is owed. The sheet below is the app's own.
+        HeadlessConsentPrompt(draft, onOpenPreferences = { state.preferencesOpen = true }) {
+            // The partner count in the IAB text opens the partner list itself, not the first tab.
+            if (!state.preferencesOpen) PromptSheet(this, privacyPolicyUrl, openPartners = { state.tab = 2; openPreferences() })
+        }
+        if (state.preferencesOpen) HeadlessConsentPreferences(draft, onClose = { state.preferencesOpen = false; state.tab = 0 }) {
+            PreferencesPage(this, privacyPolicyUrl, state)
+        }
+    }
+}
+```

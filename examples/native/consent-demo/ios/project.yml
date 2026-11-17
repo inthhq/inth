@@ -4,7 +4,7 @@ options:
     iOS: '16.4'
 packages:
   C15tNative:
-    path: ../../../core-swift
+    path: ../../../../packages/swift
   # Real vendor SDKs for the vendor journey (run-vendor-e2e.sh). The demo app links
   # them; the c15t Swift packages never do. They stay idle unless a Debug launch
   # passes C15T_VENDOR_BASE. Pinned exactly so a vendor release cannot change the proof.

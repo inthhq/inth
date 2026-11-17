@@ -25,9 +25,9 @@ from vendor_capture import VendorCapture, read_body  # noqa: E402
 # Real vendor SDKs in the app send here; the journeys read /captured.
 capture = VendorCapture(args.out)
 vendor_probes = []
-transport = json.loads((root / 'native/protocol/evaluation-eu-fresh-install.json').read_text())['input']['transport']
+transport = json.loads((root / 'packages/native-protocol/evaluation-eu-fresh-install.json').read_text())['input']['transport']
 if args.scenario == 'iab':
-    transport = {'status': 200, 'body': json.loads((root / 'native/examples/consent-demo/fixtures/iab-init.json').read_text())}
+    transport = {'status': 200, 'body': json.loads((root / 'examples/native/consent-demo/fixtures/iab-init.json').read_text())}
 online = False
 # Explicitly authored fixture fallback. No /init identity, receipt or token is exported.
 policy = transport['body']['policyResolution']
@@ -116,7 +116,7 @@ class Handler(BaseHTTPRequestHandler):
                 self.reply(200, control)
             elif self.path == '/e2e/scenario':
                 fixture = 'notice-init.json' if body.get('kind') == 'notice' else 'iab-init.json'
-                transport = {'status': 200, 'body': json.loads((root / 'native/examples/consent-demo/fixtures' / fixture).read_text())}
+                transport = {'status': 200, 'body': json.loads((root / 'examples/native/consent-demo/fixtures' / fixture).read_text())}
                 if body.get('kind') == 'fallback':
                     transport = {'status': 200, 'body': {'policyResolution': {'version': 1, 'status': 'no-match', 'policy': None}}}
                 self.reply(200, {})

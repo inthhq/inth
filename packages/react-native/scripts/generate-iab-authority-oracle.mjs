@@ -67,7 +67,7 @@ const make = async (opts) => {
 		publisherCountryCode: 'GB',
 	});
 	// TCF requires Created == LastUpdated, both the confirmation day, as
-	// `packages/iab/src/tcf/tc-string.ts` writes. `createdDaysAgo` only tells
+	// `packages/sdk/iab/src/tcf/tc-string.ts` writes. `createdDaysAgo` only tells
 	// the native tests to save an earlier decision first; it never moves Created.
 	m.lastUpdated = new Date(Math.floor(now / day) * day);
 	m.created = m.lastUpdated;
@@ -115,7 +115,7 @@ const largerGvl = {
 const officialGvl = JSON.parse(
 	readFileSync(
 		new URL(
-			'../../../native/protocol/iab/official-gvl-excerpt.json',
+			'../../native-protocol/iab/official-gvl-excerpt.json',
 			import.meta.url
 		),
 		'utf8'
@@ -170,9 +170,6 @@ const output = {
 };
 writeFileSync(
 	process.argv[2] ??
-		new URL(
-			'../../../native/protocol/iab/authority-oracle.json',
-			import.meta.url
-		),
+		new URL('../../native-protocol/iab/authority-oracle.json', import.meta.url),
 	`${JSON.stringify(output, null, '\t')}\n`
 );

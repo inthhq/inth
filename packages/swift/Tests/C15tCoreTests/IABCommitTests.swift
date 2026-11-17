@@ -19,7 +19,7 @@ final class IABCommitTests: XCTestCase {
     }
     static let fixtureURL = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
         .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-        .appendingPathComponent("protocol/iab/commit-cases.json")
+        .appendingPathComponent("native-protocol/iab/commit-cases.json")
     func fixture() throws -> Vector {
         try C15tJSON.decode(Vector.self, from: Data(contentsOf: Self.fixtureURL))
     }

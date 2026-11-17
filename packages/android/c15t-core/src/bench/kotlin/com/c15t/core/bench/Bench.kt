@@ -43,7 +43,7 @@ import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 
 /**
- * Measured numbers for the budgets in `native/CONTRACT.md`, so the report is
+ * Measured numbers for the budgets in `packages/native-protocol/CONTRACT.md`, so the report is
  * figures rather than claims.
  *
  * Run with `./gradlew :c15t-core:bench`. Each line is a median over measured

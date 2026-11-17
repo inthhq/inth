@@ -51,7 +51,7 @@ const IOS_READER_PATH = join(
 const ANDROID_READER_PATHS = [
 	resolve(
 		PACKAGE_ROOT,
-		'../../native/core-android/c15t-android/src/main/kotlin/com/c15t/android/C15tAndroid.kt'
+		'../android/c15t-android/src/main/kotlin/com/c15t/android/C15tAndroid.kt'
 	),
 	join(
 		PACKAGE_ROOT,
@@ -227,7 +227,7 @@ it('writes only Android keys that the cores declare a reader for', async () => {
 it('keeps the key tables equal to what the plugin actually writes', async () => {
 	const { android, ios } = await writtenKeys();
 
-	// The tables are the documented surface and native/CONTRACT.md transcribes
+	// The tables are the documented surface and packages/native-protocol/CONTRACT.md transcribes
 	// them, so an entry nobody writes is a key documented as configured that
 	// never is, and a write outside them is a key no document names.
 	expect(ios).toStrictEqual([...Object.values(IOS_PLIST_KEY)].sort());

@@ -225,7 +225,7 @@ export default mergeConfig(
 				{
 					'@c15t/conformance': resolve(
 						__dirname,
-						'../../internals/conformance/src/index.ts'
+						'../../../internals/conformance/src/index.ts'
 					),
 				},
 				{ '@c15t/schema/types': resolve(__dirname, '../schema/src/types.ts') },

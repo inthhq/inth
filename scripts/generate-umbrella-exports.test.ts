@@ -27,7 +27,7 @@ import {
 } from './generate-umbrella-exports';
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const UMBRELLA_DIR = join(REPO_ROOT, 'packages', 'c15t');
+const UMBRELLA_DIR = join(REPO_ROOT, 'packages', 'sdk', 'c15t');
 
 const PLAIN_ENTRY: EntryModuleInfo = {
 	hasDefaultExport: false,
@@ -730,7 +730,7 @@ const listFiles = function listFiles(
  */
 describe('committed umbrella package', () => {
 	const artifacts = deriveUmbrellaArtifacts(
-		createSourcePackages(join(REPO_ROOT, 'packages'), UMBRELLA_SOURCES)
+		createSourcePackages(join(REPO_ROOT, 'packages', 'sdk'), UMBRELLA_SOURCES)
 	);
 	const manifest = JSON.parse(
 		readFileSync(join(UMBRELLA_DIR, 'package.json'), 'utf8')

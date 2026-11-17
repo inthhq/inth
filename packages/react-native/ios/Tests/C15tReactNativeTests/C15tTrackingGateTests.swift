@@ -12,7 +12,7 @@ import XCTest
 /// 2. That a request is refused before Apple is called. A prompt shown on a build with no
 ///    `NSUserTrackingUsageDescription` shows nothing and reports a `denied` no subject
 ///    chose, which is the one mistake here that a host cannot undo.
-/// 3. That no arm moves a consent decision. `native/CONTRACT.md` states it as a sentence
+/// 3. That no arm moves a consent decision. `packages/native-protocol/CONTRACT.md` states it as a sentence
 ///    about a device with ATT granted and consent refused, and the case is checked against
 ///    the core's own `ConsentDecision` rather than against a copy of the rule.
 final class C15tTrackingGateTests: XCTestCase {

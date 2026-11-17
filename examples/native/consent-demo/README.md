@@ -1,6 +1,6 @@
 # Native consent demo
 
-Start with the [mobile demo index](../../../docs/frameworks/react-native/examples.mdx).
+Start with the [mobile demo index](../../../packages/sdk/docs/frameworks/react-native/examples.mdx).
 It lists setup and run commands for UIKit, the Swift native harness, Android,
 bare React Native and Expo, and separates local fixture coverage from hosted
 acceptance.
@@ -21,13 +21,13 @@ identity. They are not production policy or live hosted acceptance.
 For IAB mobile validation, use the hosted IAB review mode with the identity
 authorized for the review and a real IAB policy. Its diagnostics read the actual
 platform `IABTCF_*` values separately from core authority. See the
-[mobile TCF validation guide](../../../docs/internal/mobile-tcf-validation.md)
+[mobile TCF validation guide](../../../packages/sdk/docs/internal/mobile-tcf-validation.md)
 for setup, evidence journeys and submission questions. Neither the fixtures nor
 the review app establish certification.
 
 For Google publisher App certification, the same hosts export diagnostic JSON
 with actual platform storage, loaded Google vendor 755 and Additional Consent
-disclosures. Follow the [Google mobile certification guide](../../../docs/internal/mobile-google-certification.md)
+disclosures. Follow the [Google mobile certification guide](../../../packages/sdk/docs/internal/mobile-google-certification.md)
 for exports, local checks and submission preparation. The shared web-demo
 project currently serves category policies and needs an IAB policy before it
 can supply hosted certification evidence.
@@ -42,7 +42,7 @@ off, binds it to the measurement category through the c15t Swift helpers, and
 adds Probe vendors and Flush buttons above the consent screens.
 
 ```sh
-bash native/examples/consent-demo/ios/run-vendor-e2e.sh
+bash examples/native/consent-demo/ios/run-vendor-e2e.sh
 ```
 
 The runner starts `scripts/vendor_capture.py`, points PostHog, Mixpanel and

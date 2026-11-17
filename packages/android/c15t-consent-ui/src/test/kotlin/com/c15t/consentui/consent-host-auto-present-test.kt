@@ -444,7 +444,7 @@ class ConsentHostAutoPresentTest {
     }
 
     private fun fixture(name: String) = generateSequence(File(requireNotNull(System.getProperty("user.dir")))) { it.parentFile }
-        .map { File(it, "native/examples/consent-demo/fixtures/$name") }.first { it.exists() }.readText()
+        .map { File(it, "examples/native/consent-demo/fixtures/$name") }.first { it.exists() }.readText()
 
     private fun transport(config: NativeConfig, body: String) = HostedTransport(object : HttpClient {
         override fun send(request: HttpRequest) = if (request.method == HttpRequest.GET)

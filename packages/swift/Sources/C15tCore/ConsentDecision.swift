@@ -15,7 +15,7 @@ import Foundation
 /// it picked would become a legally loadable answer the policy never gave; a host that
 /// cannot wait that long bounds the wait itself.
 ///
-/// See "Native SDK gating" in `native/CONTRACT.md`.
+/// See "Native SDK gating" in `packages/native-protocol/CONTRACT.md`.
 public enum ConsentDecision: String, Sendable, Equatable, Hashable, CaseIterable {
     /// The resolved policy and the subject's c15t choice permit the category.
     case granted

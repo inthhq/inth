@@ -7,7 +7,7 @@ import XCTest
 ///
 /// The web dialog derives that list from the resolved policy crossed with the
 /// categories the app registered -- `choiceScope ?? scope` in `use-manager.ts`,
-/// projected in `packages/core/src/policy.ts` -- and never from the category
+/// projected in `packages/sdk/core/src/policy.ts` -- and never from the category
 /// vocabulary. A native core that listed the vocabulary instead would show a
 /// subject categories the resolved rule does not govern, and the same backend
 /// would answer two different dialogs by platform. These tests pin the core's

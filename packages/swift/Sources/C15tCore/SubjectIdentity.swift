@@ -16,7 +16,7 @@ struct UnusableSubjectId: Sendable, Equatable {
     /// The stored value, verbatim. It is echoed in diagnostics and never adopted.
     let id: String
     /// Whether `id` is the lowercase UUID v4 shape this SDK minted before ``SubjectId``
-    /// existed. That shape is the prerelease population `native/CONTRACT.md` names;
+    /// existed. That shape is the prerelease population `packages/native-protocol/CONTRACT.md` names;
     /// anything else is not a format this SDK ever wrote.
     let legacyShape: Bool
 }
@@ -70,7 +70,7 @@ public struct SubjectIdentity: Sendable, Codable, Equatable, Hashable {
 
     /// Read the subject id, generating and persisting one when nothing usable is stored.
     ///
-    /// The read is the other half of the format rule. `native/CONTRACT.md` says an id the
+    /// The read is the other half of the format rule. `packages/native-protocol/CONTRACT.md` says an id the
     /// producer will not accept is an identity this build cannot use, and says what such
     /// an identity is worth: nothing, indistinguishable from a fresh launch. So a stored
     /// id that fails the producer's pattern is dropped and reported in

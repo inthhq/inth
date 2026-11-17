@@ -1,6 +1,6 @@
 # c15t React Native fixture (bare)
 
-See the [mobile demo index](../../../docs/frameworks/react-native/examples.mdx) for
+See the [mobile demo index](../../../packages/sdk/docs/frameworks/react-native/examples.mdx) for
 current native modes, setup commands and the limits of IAB and hosted coverage.
 
 A bare React Native 0.87.1 app on the New Architecture. Normal native mode runs
@@ -65,7 +65,7 @@ so `C15T_FAKE_NATIVE=true bun run android` overrides the file.
 The app defaults to the public Inth demo, `https://example-inth.inth.app/`.
 It embeds a native policy resource for fresh offline startup. The checked-in demo
 resource expires on 5 November 2026. Re-export it before testing after that date.
-See [mobile policy resources](../../../native/docs/mobile-policy-resources.md)
+See [mobile policy resources](../../../packages/native-protocol/docs/mobile-policy-resources.md)
 for the export command, expiry semantics and native resource configuration.
 No hosted save has been verified against the public demo.
 
@@ -506,7 +506,7 @@ Queued save replayed on relaunch:
    nothing that commits, and the preference centre needs the policy only a reachable
    backend can serve. The same assertion runs natively as
    `two payloads queued back to back fly oldest first, unchanged` in
-   `native/core-android`, which is where a queue that sends only the newest, or rebuilds a
+   `packages/android`, which is where a queue that sends only the newest, or rebuilds a
    payload on the way out, gets caught.
 
 Reinstall:
@@ -576,7 +576,7 @@ Android's test APK runs in a separate process so it can force-stop the real app.
 
 The test backend binds loopback port 39873 by default. Set
 `C15T_APP_E2E_PORT` to an unused port for concurrent runs. It exports an authored conservative
-manifest and serves the existing `native/protocol/evaluation-eu-fresh-install.json`
+manifest and serves the existing `packages/native-protocol/evaluation-eu-fresh-install.json`
 response after reconnection. Only the E2E build artifact uses that endpoint and
 resource. The checked-in reference defaults remain the public Inth demo.
 

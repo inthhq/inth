@@ -1,7 +1,7 @@
 /**
  * Policy evaluation cost, per rule set.
  *
- * `native/protocol/evaluation-*.json` is the rule-set corpus every implementation
+ * `packages/native-protocol/evaluation-*.json` is the rule-set corpus every implementation
  * is held to, and the contract names the TypeScript kernel as the reference when
  * two implementations disagree. Running that reference across the whole corpus
  * answers "what does a rule set cost" with one number per rule set, rather than
@@ -73,7 +73,7 @@ export interface PolicySweepResult {
 	unavailable?: string;
 }
 
-const FIXTURE_DIR = resolve(REPO_ROOT, 'native', 'protocol');
+const FIXTURE_DIR = resolve(REPO_ROOT, 'packages', 'native-protocol');
 
 /** The contract declaration the kernel needs to trust a policy body. */
 const CONTRACT_HEADER = 'x-c15t-policy-contract';

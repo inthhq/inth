@@ -1,7 +1,7 @@
 # C15tReactNative (iOS)
 
 The iOS half of `@c15t/react-native`: a Codegen TurboModule in Swift over the pure
-Swift consent core at [`native/core-swift`](../../native/core-swift). New Architecture
+Swift consent core at [`packages/swift`](../swift). New Architecture
 only. Shared native SwiftUI presentation remains future work; see the maintained
 private support contract in `docs/internal/mobile-support.md`.
 
@@ -81,7 +81,7 @@ holding only a constructor is neither. An app that owns its own setup sets
 
 ## Platform lifecycle
 
-`native/CONTRACT.md` names three moments when a stored answer can have gone stale with
+`packages/native-protocol/CONTRACT.md` names three moments when a stored answer can have gone stale with
 nothing asking about it. The core sees only the first, inside `bootstrap`. The other two
 need a hook on the process, which a consent kernel is not allowed to hold, so
 `C15tReactNativeBootstrap` arms them as soon as a core is in place, whichever call put it
@@ -141,7 +141,7 @@ declares one, and the console names the key and what to do instead:
 ## Integrating
 
 The pod carries the consent kernel. `C15tReactNative.podspec` compiles it from
-`vendor/C15tCore`, a generated copy of `native/core-swift/Sources/C15tCore`, so an app
+`vendor/C15tCore`, a generated copy of `packages/swift/Sources/C15tCore`, so an app
 that installs `@c15t/react-native` from npm resolves everything it needs from the package
 and names no second pod. It used to declare `s.dependency "C15tCore"`, which only resolved
 inside this repository, because the example Podfiles point that pod at a directory next to
@@ -167,7 +167,7 @@ package containing both products is published.
 
 ```sh
 # SPM: private source checkout when the default repo-relative path differs
-C15T_CORE_PATH=/absolute/path/to/native/core-swift swift build --package-path packages/react-native
+C15T_CORE_PATH=/absolute/path/to/packages/swift swift build --package-path packages/react-native
 # Also build the React-linked target (needs a host app vending React's headers)
 C15T_SPM_INCLUDE_RN=1 swift build --package-path packages/react-native
 ```

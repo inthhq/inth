@@ -12,7 +12,7 @@ import kotlinx.serialization.json.*
 
 class MutationSerializationTest {
 	private val file = generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }
-		.map { File(it, "native/protocol/iab/commit-cases.json") }.first { it.exists() }
+		.map { File(it, "packages/native-protocol/iab/commit-cases.json") }.first { it.exists() }
 	private val vector = Json { ignoreUnknownKeys = true }.decodeFromString<IabCommitTest.Vector>(file.readText())
 	private val config = NativeConfig("https://cmp.example.test", iab = vector.cases[0].configuration)
 	private fun init() = initSuccess(body = initBody(model = "\"iab\"",

@@ -9,7 +9,7 @@ final class BundledPolicyTests: XCTestCase {
         get throws {
             let url = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
                 .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-                .appendingPathComponent("protocol/bundled-policy/parity.json")
+                .appendingPathComponent("native-protocol/bundled-policy/parity.json")
             return try XCTUnwrap(C15tJSON.parse(Data(contentsOf: url)))
         }
     }
@@ -53,7 +53,7 @@ final class BundledPolicyTests: XCTestCase {
     func testEveryMalformedSharedResourceIsRefusedOrCarriesNoUsableVendorList() throws {
         let url = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-            .appendingPathComponent("protocol/bundled-policy/invalid-resources.json")
+            .appendingPathComponent("native-protocol/bundled-policy/invalid-resources.json")
         let fixture = try XCTUnwrap(C15tJSON.parse(Data(contentsOf: url)))
         var problems: [String] = []
         for row in try XCTUnwrap(fixture["cases"]?.arrayValue) {

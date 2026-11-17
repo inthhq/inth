@@ -6,7 +6,7 @@ import XCTest
 
 /// One shared `tc-string` fixture, parsed.
 ///
-/// The contract, per `native/protocol`: `input.model` plus `input.encodingOptions`
+/// The contract, per `packages/native-protocol`: `input.model` plus `input.encodingOptions`
 /// plus `input.vendorList` is the encoder's whole input, `expected.encode.tcString`
 /// is the byte target, `expected.decode.fields` is what a decoder must report, and
 /// `expects.decode` / `expects.encode` say which halves may be asserted at all.
@@ -28,19 +28,19 @@ struct TcFixtureVector {
 
 /// The only place this test target opens a tc-string fixture.
 ///
-/// `native/protocol` is the corpus and the merge gate; the vectors lane owns it and
+/// `packages/native-protocol` is the corpus and the merge gate; the vectors lane owns it and
 /// this target reads it and never writes it. Everything that needs a TC string comes
 /// through here, so there is exactly one reader, one hash check and one parser, and no
 /// TC string literal anywhere else in this target to drift out of date.
 enum TcSharedFixtures {
-    /// `native/protocol`, resolved from this file's path because `swift test` makes
+    /// `packages/native-protocol`, resolved from this file's path because `swift test` makes
     /// no promise about the working directory.
     static let directory: URL = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent()
         .deletingLastPathComponent()
         .deletingLastPathComponent()
         .deletingLastPathComponent()
-        .appendingPathComponent("protocol")
+        .appendingPathComponent("native-protocol")
 
     enum LoadError: Error, CustomStringConvertible {
         case notIndexed(file: String)

@@ -122,8 +122,8 @@ data class IabPurposePartnerCounts(val consent: Int, val legitimateInterest: Int
 
 /**
  * The first layer's summary of what partners do. Same algorithm as the web's
- * `resolveIABBannerSummary` (`packages/core/src/libs/iab-banner-summary.ts`); the shared fixtures
- * `native/protocol/iab-banner-summary-*.json` hold both to it.
+ * `resolveIABBannerSummary` (`packages/sdk/core/src/libs/iab-banner-summary.ts`); the shared fixtures
+ * `packages/native-protocol/iab-banner-summary-*.json` hold both to it.
  *
  * @property vendorCount Active registered vendors, custom vendors and Google ad tech providers.
  * @property displayItems Purpose 1, then stacks that cover two or more declared purposes, then

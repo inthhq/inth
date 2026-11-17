@@ -182,7 +182,7 @@ describe('prebuild refuses the resources devices discard', () => {
 		readFileSync(
 			resolve(
 				import.meta.dirname,
-				'../../../../../native/protocol/bundled-policy/invalid-resources.json'
+				'../../../../native-protocol/bundled-policy/invalid-resources.json'
 			),
 			'utf8'
 		)
@@ -214,7 +214,7 @@ describe('prebuild refuses the resources devices discard', () => {
 		const copy = (path: string) =>
 			readFileSync(resolve(import.meta.dirname, path), 'utf8');
 		expect(copy('../gvl-fields.ts')).toBe(
-			copy('../../../../cli/src/mobile/gvl-fields.ts')
+			copy('../../../../cli/vendor/c15t-mobile/src/mobile/gvl-fields.ts')
 		);
 	});
 
@@ -224,7 +224,7 @@ describe('prebuild refuses the resources devices discard', () => {
 				readFileSync(
 					resolve(
 						import.meta.dirname,
-						`../../../../../native/protocol/bundled-policy/${name}.json`
+						`../../../../native-protocol/bundled-policy/${name}.json`
 					),
 					'utf8'
 				)

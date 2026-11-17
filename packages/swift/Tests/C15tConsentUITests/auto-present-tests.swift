@@ -509,7 +509,7 @@ final class AutoPresentTests: XCTestCase {
     private func fixtureConfig(_ fixture: String, now: (@Sendable () -> Int64)? = nil) throws -> (CoreConfig, Peer) {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-        let body = try String(contentsOf: root.appendingPathComponent("examples/consent-demo/fixtures/\(fixture)"), encoding: .utf8)
+        let body = try String(contentsOf: root.appendingPathComponent("../examples/native/consent-demo/fixtures/\(fixture)"), encoding: .utf8)
         let peer = Peer(body)
         let transport = HostedTransport(baseURL: URL(string: "https://fixture.invalid")!, client: peer)
         if let now {

@@ -1,7 +1,7 @@
 /**
  * Numbers out of the two native benches.
  *
- * `native/CONTRACT.md` budgets the native kernels, and both already ship a bench
+ * `packages/native-protocol/CONTRACT.md` budgets the native kernels, and both already ship a bench
  * program: `swift run -c release C15tCoreBench` and
  * `./gradlew :c15t-core:bench`. This module runs them and lifts the medians out
  * of their output. It deliberately does not patch either bench: the harness reads
@@ -227,7 +227,7 @@ export const parseKotlinBench = function parseKotlinBench(
 export const runSwiftBench = function runSwiftBench(
 	timeoutMs: number
 ): NativeBenchResult {
-	const packagePath = resolve(REPO_ROOT, 'native', 'core-swift');
+	const packagePath = resolve(REPO_ROOT, 'packages', 'swift');
 	const base: NativeBenchResult = {
 		metrics: {},
 		notes: [],
@@ -280,7 +280,7 @@ export const runSwiftBench = function runSwiftBench(
 export const runKotlinBench = function runKotlinBench(
 	timeoutMs: number
 ): NativeBenchResult {
-	const projectPath = resolve(REPO_ROOT, 'native', 'core-android');
+	const projectPath = resolve(REPO_ROOT, 'packages', 'android');
 	const wrapper = resolve(projectPath, 'gradlew');
 	const base: NativeBenchResult = {
 		metrics: {},

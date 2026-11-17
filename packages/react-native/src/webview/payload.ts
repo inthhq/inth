@@ -1,6 +1,6 @@
 /**
  * The WebView consent payload the native cores build, and the origin rules
- * every platform shares. See "WebView consent" in `native/CONTRACT.md`.
+ * every platform shares. See "WebView consent" in `packages/native-protocol/CONTRACT.md`.
  */
 
 /** What `getWebViewConsent()` returns once parsed. */

@@ -1,7 +1,7 @@
 /**
  * Tests for utility functions.
  *
- * Mirrors: packages/react/src/hooks/__tests__/use-styles.test.tsx
+ * Mirrors: packages/sdk/react/src/hooks/__tests__/use-styles.test.tsx
  */
 
 import type { AllThemeKeys, Theme } from '@c15t/ui/theme';

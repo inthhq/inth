@@ -5,7 +5,10 @@ import { join, resolve } from 'node:path';
 
 import { expect, it } from 'vitest';
 
-const committed = resolve(import.meta.dirname, '../native/protocol/iab');
+const committed = resolve(
+	import.meta.dirname,
+	'../packages/native-protocol/iab'
+);
 const fixtureFiles = (directory: string) =>
 	readdirSync(directory)
 		.filter((file) => file.startsWith('banner-summary-'))

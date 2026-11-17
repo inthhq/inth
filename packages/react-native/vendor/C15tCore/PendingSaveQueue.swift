@@ -209,7 +209,7 @@ final class PendingSaveQueue: @unchecked Sendable {
     /// be older than this moment: a pass reads the queue once and delivers entry by
     /// entry, while the save that queued a body carries that one entry in hand, so
     /// either can still be holding a body the other has already landed. Re-sending it
-    /// is the resend the contract in `native/CONTRACT.md` describes -- identical frozen
+    /// is the resend the contract in `packages/native-protocol/CONTRACT.md` describes -- identical frozen
     /// bytes, same consent id, nothing in stored state moved -- and this queue is the
     /// only record of what is owed.
     func isPending(id: String) -> Bool {

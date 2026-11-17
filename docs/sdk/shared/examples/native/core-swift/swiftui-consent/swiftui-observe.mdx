@@ -1,8 +1,0 @@
-{/* Generated from native/core-swift/Examples/swiftui-consent/Sources/app-consent-model.swift (docs:swiftui-observe) by scripts/sync-example-docs.ts. Edit the source file. */}
-
-```swift title="Sources/app-consent-model.swift"
-measurementGate = installed.gate(ConsentCategory.measurement) { [measurement] decision in
-    // The callback can run on any queue. This service synchronizes its own state.
-    measurement.apply(decision)
-}
-```

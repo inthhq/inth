@@ -1,7 +1,7 @@
 /**
  * Tests for translation resolution through the consent context.
  *
- * Mirrors: packages/react/src/hooks/__tests__/use-translations.test.tsx
+ * Mirrors: packages/sdk/react/src/hooks/__tests__/use-translations.test.tsx
  */
 
 import { custom } from '@c15t/core';

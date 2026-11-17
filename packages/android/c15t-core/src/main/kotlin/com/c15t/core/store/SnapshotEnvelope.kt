@@ -15,7 +15,7 @@ import kotlinx.serialization.json.JsonDecoder
 /**
  * What gets persisted under `com.c15t.snapshot`.
  *
- * `native/CONTRACT.md` calls the stored object a snapshot envelope, and this is
+ * `packages/native-protocol/CONTRACT.md` calls the stored object a snapshot envelope, and this is
  * why: the [snapshot] keeps exactly the shape the React Native boundary reads,
  * while the inputs the mobile snapshot deliberately leaves out ride alongside it.
  * Without them a restart would forget the policy scope, the notice dismissal, and

@@ -7,7 +7,7 @@ import { expect, it } from 'vitest';
 
 const committed = resolve(
 	import.meta.dirname,
-	'../native/protocol/local-policy/parity.json'
+	'../packages/native-protocol/local-policy/parity.json'
 );
 
 it('keeps the native in-code policy fixture in step with the backend normalizer', () => {

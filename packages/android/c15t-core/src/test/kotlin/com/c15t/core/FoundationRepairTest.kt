@@ -12,7 +12,7 @@ import kotlinx.serialization.json.*
 class FoundationRepairTest {
 	private val fixture =
 		generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }
-			.map { File(it, "native/protocol/iab/commit-cases.json") }
+			.map { File(it, "packages/native-protocol/iab/commit-cases.json") }
 			.first { it.exists() }
 	private val raw = Json.parseToJsonElement(fixture.readText()).jsonObject
 	private val vector =

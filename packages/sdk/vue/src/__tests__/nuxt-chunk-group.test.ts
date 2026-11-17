@@ -17,7 +17,7 @@ import {
 } from '../chunk-group';
 
 describe('nuxtConsentChunkGroup', () => {
-	const workspace = '/repo/packages/core';
+	const workspace = '/repo/packages/sdk/core';
 	const group = nuxtConsentChunkGroup([workspace]);
 
 	test('matches an installed c15t package', () => {
@@ -34,7 +34,7 @@ describe('nuxtConsentChunkGroup', () => {
 
 	test("leaves the app's own packages alone", () => {
 		expect(group.test.test('/repo/packages/core-ui/dist/index.js')).toBe(false);
-		expect(group.test.test('/app/packages/ui/dist/index.js')).toBe(false);
+		expect(group.test.test('/app/packages/sdk/ui/dist/index.js')).toBe(false);
 	});
 
 	test('groups only what the first load imports', () => {
@@ -43,12 +43,12 @@ describe('nuxtConsentChunkGroup', () => {
 });
 
 describe('nuxtConsentConfigChunkGroup', () => {
-	const group = nuxtConsentConfigChunkGroup(['/repo/packages/schema']);
+	const group = nuxtConsentConfigChunkGroup(['/repo/packages/sdk/schema']);
 
 	test.each([
 		'/app/node_modules/@c15t/vue/dist/runtime/composables/config.js',
 		'/app/node_modules/.pnpm/@c15t+ui@3/node_modules/@c15t/ui/dist/utils/theme-slots.js',
-		'/repo/packages/schema/dist/config/defaults.js',
+		'/repo/packages/sdk/schema/dist/config/defaults.js',
 	])('matches %s', (id) => {
 		expect(group.test.test(id)).toBe(true);
 	});
@@ -56,7 +56,7 @@ describe('nuxtConsentConfigChunkGroup', () => {
 	test.each([
 		'/app/node_modules/@c15t/vue/dist/runtime/composables/consent.js',
 		'/app/src/composables/config.js',
-		'/other/packages/schema/dist/config/defaults.js',
+		'/other/packages/sdk/schema/dist/config/defaults.js',
 	])('leaves %s alone', (id) => {
 		expect(group.test.test(id)).toBe(false);
 	});
@@ -72,7 +72,7 @@ test('consentPackageDirs finds the c15t packages next to @c15t/vue', () => {
 });
 
 describe('groupConsentChunks', () => {
-	const plugin = groupConsentChunks(['/repo/packages/core']);
+	const plugin = groupConsentChunks(['/repo/packages/sdk/core']);
 	const rolldown = { meta: { rolldownVersion: '1.2.11' } };
 	interface GroupsBuild {
 		rolldownOptions: { output: { codeSplitting: { groups: unknown[] } } };

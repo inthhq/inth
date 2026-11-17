@@ -4,7 +4,7 @@
  * An exports target cannot point into another package, so the umbrella's CSS
  * subpaths (`c15t/react/styles.css`, `c15t/next/iab/styles.css`, …) must
  * be real files. This copies them from the scoped packages' built `dist/`
- * into `packages/c15t/dist/`, mirroring the copy list the generator derives
+ * into `packages/sdk/c15t/dist/`, mirroring the copy list the generator derives
  * from the scoped exports maps — so the copied set always matches the
  * committed exports map (the drift test in
  * scripts/generate-umbrella-exports.test.ts keeps both in sync).
@@ -26,7 +26,7 @@ import { dirname, join } from 'node:path';
 import {
 	createSourcePackages,
 	deriveUmbrellaArtifacts,
-} from '../../../scripts/generate-umbrella-exports';
+} from '../../../../scripts/generate-umbrella-exports';
 
 const packageRoot = join(import.meta.dirname, '..');
 const packagesRoot = join(packageRoot, '..');
@@ -51,5 +51,5 @@ for (const { target, sourceDirectory, sourcePath } of cssCopies) {
 }
 
 console.log(
-	`Copied ${cssCopies.length} CSS entrypoints from scoped package dist/ into packages/c15t/dist/.`
+	`Copied ${cssCopies.length} CSS entrypoints from scoped package dist/ into packages/sdk/c15t/dist/.`
 );

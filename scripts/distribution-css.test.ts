@@ -10,7 +10,7 @@ import { join } from 'node:path';
 
 import { afterEach, expect, test } from 'vitest';
 
-import { generateDistributionCss } from '../packages/shared/generate-distribution-css';
+import { generateDistributionCss } from '../packages/sdk/shared/generate-distribution-css';
 
 const directories: string[] = [];
 afterEach(() => {

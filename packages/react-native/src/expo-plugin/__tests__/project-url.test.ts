@@ -28,7 +28,7 @@ const fixture = JSON.parse(
 	readFileSync(
 		resolve(
 			dirname(fileURLToPath(import.meta.url)),
-			'../../../../../native/protocol/project-url/cases.json'
+			'../../../../native-protocol/project-url/cases.json'
 		),
 		'utf8'
 	)

@@ -13,7 +13,7 @@ import { bundleMobileManifest } from '~/mobile/bundle-manifest';
 import { exportMobilePolicy } from '~/mobile/export-manifest';
 import { resourceProblem } from '~/mobile/resource-check';
 
-const protocol = resolve(import.meta.dirname, '../../../../../native/protocol');
+const protocol = resolve(import.meta.dirname, '../../../../../../native-protocol');
 const read = (path: string) =>
 	JSON.parse(readFileSync(join(protocol, path), 'utf8'));
 const malformed = read('bundled-policy/invalid-resources.json') as {

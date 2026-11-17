@@ -14,6 +14,6 @@ STARTER_TARGET=angular-20 bun run --cwd internals/fixtures/acceptance test:start
 
 The app renders on the server with `provideC15tServer()` from `@c15t/angular/ssr` and serves the consent route from `server.ts`, so the banner is in the first HTML response. It reads the backend URL from `C15T_BACKEND_URL` at runtime.
 
-`prebuild` runs `install-package.mjs`, which copies the built `package.json` and `dist/` of `@c15t/angular` over the workspace link, as an install from npm would. Through the link, the package's imports would resolve the Angular 22 in `packages/angular/node_modules` instead of this app's Angular 20.
+`prebuild` runs `install-package.mjs`, which copies the built `package.json` and `dist/` of `@c15t/angular` over the workspace link, as an install from npm would. Through the link, the package's imports would resolve the Angular 22 in `packages/sdk/angular/node_modules` instead of this app's Angular 20.
 
-Raising the Angular peer range in `packages/angular/package.json` means raising the pin here, and the other way round. Using an Angular API added in 21 or later moves the floor for every user, so weigh it against the share of installs still below it.
+Raising the Angular peer range in `packages/sdk/angular/package.json` means raising the pin here, and the other way round. Using an Angular API added in 21 or later moves the floor for every user, so weigh it against the share of installs still below it.

@@ -10,7 +10,7 @@
  * - `reconcile.ts`    — pure per-iframe + bulk reconciliation.
  * - `index.ts`        — this file: MutationObserver wiring + lifecycle.
  *
- * v2 parity: `packages/core/src/libs/iframe-blocker/core.ts`.
+ * v2 parity: `packages/sdk/core/src/libs/iframe-blocker/core.ts`.
  *
  * Semantics:
  * - iframes WITHOUT `data-category` or `data-vendor` are untouched.

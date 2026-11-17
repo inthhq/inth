@@ -3,7 +3,7 @@ import XCTest
 
 @_spi(C15tInternal) @testable import C15tCore
 
-/// The exclusivity rule in `native/CONTRACT.md`, "The pending save queue": only one
+/// The exclusivity rule in `packages/native-protocol/CONTRACT.md`, "The pending save queue": only one
 /// delivery pass may be in flight per core.
 ///
 /// A pass reads the queue once and then sends entry by entry, so every entry it read

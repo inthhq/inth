@@ -12,7 +12,7 @@ require 'fileutils'
 # One framework target. The consent core is *not* a sibling target here: a hand-built
 # framework pair cannot import across targets, because a framework only vends a Swift
 # module once it is a resolved package artifact. So the core comes in the same way an
-# app gets it, as a local SwiftPM package reference at native/core-swift.
+# app gets it, as a local SwiftPM package reference at packages/swift.
 #
 # The React-linked sources under ReactNative/ are deliberately absent. They import
 # React and the `NativeC15tSpec` protocol that Codegen generates into the host app's
@@ -27,7 +27,7 @@ BRIDGE_DIR = 'C15tReactNative/Bridge'
 PRIVACY = 'C15tReactNative/Resources/Privacy.xcprivacy'
 UMBRELLA = 'C15tReactNative/C15tReactNative.h'
 # Relative to this project directory (packages/react-native/ios).
-CORE_PACKAGE = '../../../native/core-swift'
+CORE_PACKAGE = '../../swift'
 CORE_PRODUCTS = %w[C15tCore C15tApple].freeze
 
 target = project.new_target(:framework, 'C15tReactNative', :ios, '16.4')

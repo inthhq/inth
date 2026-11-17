@@ -116,8 +116,8 @@ public struct IABPurposePartnerCounts: Sendable, Equatable {
 }
 
 /// The first layer's summary of what partners do. Same algorithm as the web's
-/// `resolveIABBannerSummary` (`packages/core/src/libs/iab-banner-summary.ts`); the shared
-/// fixtures `native/protocol/iab-banner-summary-*.json` hold both to it.
+/// `resolveIABBannerSummary` (`packages/sdk/core/src/libs/iab-banner-summary.ts`); the shared
+/// fixtures `packages/native-protocol/iab-banner-summary-*.json` hold both to it.
 public struct IABBannerSummary: Sendable, Equatable {
     /// Active registered vendors, custom vendors and Google ad tech providers.
     public let vendorCount: Int

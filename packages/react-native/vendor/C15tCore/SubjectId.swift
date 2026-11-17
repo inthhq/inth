@@ -10,8 +10,8 @@ import CryptoKit
 /// Generates c15t subject ids: `sub_` followed by base58 over 20 bytes.
 ///
 /// The output is byte-identical to the web SDK's `generateSubjectId()` in
-/// `packages/core/src/libs/generate-subject-id.ts`, and that is the only shape the
-/// backend accepts (`packages/schema/src/api/subject/post.ts`:
+/// `packages/sdk/core/src/libs/generate-subject-id.ts`, and that is the only shape the
+/// backend accepts (`packages/sdk/schema/src/api/subject/post.ts`:
 /// `^sub_[1-9A-HJ-NP-Za-km-z]+$`). A core that mints its own format has every save
 /// answered with `INPUT_VALIDATION_FAILED`, so web and both native cores have to
 /// produce ids a server cannot tell apart.

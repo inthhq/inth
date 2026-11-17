@@ -36,7 +36,7 @@ const baseline = new Map(
 			'--name-only',
 			baseRef,
 			'--',
-			'packages/core/src/modules/script-loader',
+			'packages/sdk/core/src/modules/script-loader',
 		],
 		{
 			cwd: root,
@@ -61,7 +61,7 @@ const baselinePlugin = {
 			{
 				filter:
 					// oxlint-disable-next-line require-unicode-regexp -- esbuild uses Go regular expressions.
-					/packages\/core\/src\/modules\/script-loader\/.*\.ts$/,
+					/packages\/(?:sdk\/)?core\/src\/modules\/script-loader\/.*\.ts$/,
 			},
 			(args) => {
 				const contents = baseline.get(args.path);
@@ -109,8 +109,8 @@ for (const name of ['loader-base', 'loader-head', 'bridge']) {
 			resolve(
 				root,
 				name === 'bridge'
-					? 'packages/integrations/src/vendors/tag-managers/cloudflare-zaraz.ts'
-					: 'packages/core/src/modules/script-loader/index.ts'
+					? 'packages/sdk/integrations/src/vendors/tag-managers/cloudflare-zaraz.ts'
+					: 'packages/sdk/core/src/modules/script-loader/index.ts'
 			),
 		],
 		format: 'esm',

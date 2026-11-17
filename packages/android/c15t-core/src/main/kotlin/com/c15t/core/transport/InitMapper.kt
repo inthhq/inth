@@ -89,7 +89,7 @@ data class MappedInit(
 
 /**
  * Reads an `/init` response the way `mapInitOutputToInitResponse` in
- * `packages/core/src/transports/init-output.ts` does.
+ * `packages/sdk/core/src/transports/init-output.ts` does.
  *
  * The order matters. A producer that declares a contract this build does not
  * speak, or declares one it cannot parse, fails before the body is read at all:

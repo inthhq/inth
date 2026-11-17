@@ -7,8 +7,8 @@
 	"scripts": {
 		"build": "bun ../shared/scripts/pack.ts && next build",
 		"dev": "next dev",
-		"fmt": "oxfmt --write .",
-		"lint": "oxlint .",
+		"fmt": "oxfmt -c ../../../oxfmt.sdk.config.ts --write .",
+		"lint": "oxlint -c ../../../oxlint.sdk.config.ts .",
 		"start": "next start",
 		"test:compat": "vitest run"
 	},
@@ -23,6 +23,7 @@
 		"@types/node": "25.5.0",
 		"@types/react": "19.2.17",
 		"@types/react-dom": "19.2.3",
+		"@vitest/coverage-istanbul": "4.1.10",
 		"jsdom": "25.0.1",
 		"oxfmt": "0.65.0",
 		"oxlint": "1.80.0",

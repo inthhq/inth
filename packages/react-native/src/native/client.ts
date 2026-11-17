@@ -478,7 +478,7 @@ export const reportBridgeDrift = async function reportBridgeDrift(
  * Name the keys a native payload got wrong, once per distinct set of problems,
  * in a development build.
  *
- * Checked against `BRIDGE_PAYLOADS`, the table `native/protocol/bridge/payloads.json`
+ * Checked against `BRIDGE_PAYLOADS`, the table `packages/native-protocol/bridge/payloads.json`
  * is generated from, so a key one native build renamed shows up here by name
  * instead of as an `undefined` read. Keys a newer native build added stay quiet.
  *

@@ -268,7 +268,9 @@ test.each([
 ])(
 	'the source docs register %s on the canonical %s page',
 	(alias, canonical) => {
-		const sourceDocs = fileURLToPath(new URL('../docs', import.meta.url));
+		const sourceDocs = fileURLToPath(
+			new URL('../packages/sdk/docs', import.meta.url)
+		);
 		const check = createCanonicalIntegrationCheck(sourceDocs);
 		expect(
 			check(

@@ -13,7 +13,7 @@
  *
  * The web model wins every argument here. If this file fails, the mirror or the
  * fixture is wrong; the assertion is the thing that was checked against
- * `packages/iab`, and weakening it to get green throws away the only signal the
+ * `packages/sdk/iab`, and weakening it to get green throws away the only signal the
  * file exists to give.
  *
  * Two things are deliberate:
@@ -35,7 +35,7 @@ import {
 import { describe, expect, test } from 'vitest';
 
 import { IAB_DEMO_DISPLAY_MODEL } from '../../../../../internals/fixtures/react-native-bare/src/fixtures/iab-display-model';
-import { completeGVL } from '../../../../iab/src/__tests__/fixtures/gvl-sample';
+import { completeGVL } from '../../../../sdk/iab/src/__tests__/fixtures/gvl-sample';
 
 /** The disclosure the web builds from the same GVL the fixture was written from. */
 const webModel = resolveIABDialogDisplayModel({ gvl: completeGVL });

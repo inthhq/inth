@@ -723,7 +723,7 @@ final class TrackingSequenceTests: XCTestCase {
     private func bootIAB() async throws -> ConsentCore {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-        let body = try String(contentsOf: root.appendingPathComponent("examples/consent-demo/fixtures/iab-init.json"), encoding: .utf8)
+        let body = try String(contentsOf: root.appendingPathComponent("../examples/native/consent-demo/fixtures/iab-init.json"), encoding: .utf8)
         let core = ConsentCore()
         core.bootstrap(CoreConfig(store: InMemoryStore(),
             transport: HostedTransport(baseURL: URL(string: "https://fixture.invalid")!, client: AutoPresentTests.Peer(body)),
@@ -749,7 +749,7 @@ final class TrackingSequenceTests: XCTestCase {
     private func boot(_ fixture: String = "category-init.json") async throws -> ConsentCore {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-        let body = try String(contentsOf: root.appendingPathComponent("examples/consent-demo/fixtures/\(fixture)"), encoding: .utf8)
+        let body = try String(contentsOf: root.appendingPathComponent("../examples/native/consent-demo/fixtures/\(fixture)"), encoding: .utf8)
         let core = ConsentCore()
         core.bootstrap(CoreConfig(store: InMemoryStore(), transport: HostedTransport(baseURL: URL(string: "https://fixture.invalid")!,
                                                                                      client: AutoPresentTests.Peer(body)), initRetry: .disabled))

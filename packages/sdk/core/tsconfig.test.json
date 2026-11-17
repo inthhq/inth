@@ -1,7 +1,7 @@
 {
 	"extends": "./tsconfig.json",
 	"compilerOptions": {
-		"rootDir": "../..",
+		"rootDir": "../../..",
 		"target": "ES2022",
 		"noImplicitAny": false,
 		"strictNullChecks": true,

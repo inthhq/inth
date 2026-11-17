@@ -1,7 +1,7 @@
 /**
  * The bridge payload table, its generated JSON and its runtime check.
  *
- * `native/protocol/bridge/payloads.json` is what the Kotlin and Swift binding
+ * `packages/native-protocol/bridge/payloads.json` is what the Kotlin and Swift binding
  * tests read, so a stale copy would let a native rename pass. The validator
  * cases prove each kind of drift is named, and the fixture case proves the
  * snapshot entry agrees with what the TypeScript kernel produces.
@@ -30,10 +30,10 @@ import { withAdditiveSnapshotDefaults } from '../wire-shape';
 
 const PROTOCOL_DIR = resolve(
 	dirname(fileURLToPath(import.meta.url)),
-	'../../../../../native/protocol'
+	'../../../../native-protocol'
 );
 
-describe('native/protocol/bridge/payloads.json', () => {
+describe('packages/native-protocol/bridge/payloads.json', () => {
 	test('matches the table it is generated from', () => {
 		const onDisk: unknown = JSON.parse(
 			readFileSync(resolve(PROTOCOL_DIR, 'bridge/payloads.json'), 'utf8')
@@ -248,11 +248,11 @@ describe('commitResult.reason', () => {
 	test('declares every refusal code a native save can return', () => {
 		const kotlin = [
 			...read(
-				'native/core-android/c15t-core/src/main/kotlin/com/c15t/core/ConsentCore.kt'
+				'packages/android/c15t-core/src/main/kotlin/com/c15t/core/ConsentCore.kt'
 			).matchAll(/refusedCommit\(\s*"(?<code>[a-z-]+)"/gu),
 		].map((match) => match.groups?.code);
 		const swiftSave = swiftFunction(
-			read('native/core-swift/Sources/C15tCore/ConsentCore.swift'),
+			read('packages/swift/Sources/C15tCore/ConsentCore.swift'),
 			'save'
 		);
 		// Rejections are `.failure(CoreErrorInfo(code: ...))` or the `let info`
@@ -271,7 +271,7 @@ describe('commitResult.reason', () => {
 		expect(swiftSave).toMatch(
 			/catch let info as CoreErrorInfo \{ return \.failure\(info\) \}/u
 		);
-		const coreDir = 'native/core-swift/Sources/C15tCore';
+		const coreDir = 'packages/swift/Sources/C15tCore';
 		const thrown = readdirSync(resolve(REPO, coreDir))
 			.filter((file) => file.endsWith('.swift'))
 			.flatMap((file) => [

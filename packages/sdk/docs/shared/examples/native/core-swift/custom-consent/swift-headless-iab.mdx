@@ -1,0 +1,214 @@
+{/* Generated from packages/swift/Examples/custom-consent/Sources/ledger-consent.swift (docs:swift-headless-iab) by scripts/sync-example-docs.ts. Edit the source file. */}
+
+```swift title="Sources/ledger-consent.swift"
+private struct IABPurposes: View {
+    let iab: IABDraftHandle
+    @Environment(\.ledger) private var l
+
+    var body: some View {
+        let copy = iab.draft.iabCopy
+        ForEach(iab.purposes) { purpose in
+            Expandable { toggle in
+                LedgerRow(index: String(format: "%02d", purpose.id), title: purpose.name, description: purpose.description, note: purpose.partnersNote,
+                    isOn: purpose.consent, isEnabled: purpose.isEnabled, id: "ledger.purpose.\(purpose.id).consent", onChange: { purpose.setConsent($0) })
+                TextAction(text: "+", id: "ledger.purpose.\(purpose.id).more", action: toggle).padding(.leading, 40)
+            } detail: {
+                DefinitionText(definition: purpose.definition)
+                // Turning the legitimate-interest switch off is the objection.
+                if let interest = purpose.legitimateInterest {
+                    if let explanation = iab.legitimateInterestExplanation { Text(explanation).font(l.small).foregroundColor(l.faint) }
+                    LedgerRow(index: "LI", title: copy.preferenceCenterPurposeItemLegitimateInterest, description: purpose.rightToObject,
+                        isOn: interest, isEnabled: purpose.isEnabled, id: "ledger.purpose.\(purpose.id).li", onChange: { purpose.setLegitimateInterest($0) })
+                }
+            }
+        }
+        if !iab.specialFeatures.isEmpty { LedgerSection(title: copy.preferenceCenterVendorListSpecialFeatures) }
+        ForEach(iab.specialFeatures) { feature in
+            LedgerRow(index: "SF", title: feature.name, description: feature.description, note: copy.appSpecialFeatureOptIn,
+                isOn: feature.optIn, isEnabled: feature.isEnabled, id: "ledger.special-feature.\(feature.id)", onChange: { feature.setOptIn($0) })
+            DefinitionText(definition: feature.definition)
+        }
+        // Special purposes and features take no choice: their standard text and no switch.
+        if !iab.specialPurposes.isEmpty { LedgerSection(title: copy.preferenceCenterVendorListSpecialPurposes) }
+        ForEach(iab.specialPurposes) { item in
+            LedgerRow(index: "SP", title: item.name, description: item.description, state: copy.appNoChoice, id: "ledger.special-purpose.\(item.id)")
+            DefinitionText(definition: item)
+        }
+        if let explanation = iab.specialPurposesExplanation, !iab.specialPurposes.isEmpty {
+            Text(explanation).font(l.small).foregroundColor(l.faint)
+        }
+        if !iab.features.isEmpty { LedgerSection(title: copy.preferenceCenterFeaturesTitle) }
+        ForEach(iab.features) { item in
+            LedgerRow(index: "F", title: item.name, description: item.description, state: copy.appNoChoice, id: "ledger.feature.\(item.id)")
+            DefinitionText(definition: item)
+        }
+        if !iab.features.isEmpty { Text(iab.featuresExplanation).font(l.small).foregroundColor(l.faint) }
+        if let storage = iab.consentStorage { Text(storage).font(l.small).foregroundColor(l.faint).padding(.top, 16) }
+    }
+}
+
+private struct IABPartners: View {
+    let iab: IABDraftHandle
+    @Environment(\.ledger) private var l
+
+    var body: some View {
+        ForEach(iab.vendors) { vendor in
+            Partner(id: "ledger.vendor.\(vendor.id)", name: vendor.name, summary: vendor.summary, status: vendor.statusLabel,
+                consent: vendor.consent, interest: vendor.legitimateInterest, isEnabled: vendor.isEnabled,
+                setConsent: { vendor.setConsent($0) }, setInterest: { vendor.setLegitimateInterest($0) }, iab: iab,
+                page: { PartnerPage(vendor.details, iab: iab) })
+        }
+        // Providers and custom partners are not IAB vendors, so each gets its own section and notice.
+        if !iab.adTechProviders.isEmpty {
+            LedgerSection(title: iab.adTechProvidersHeading)
+            Text(iab.adTechProvidersNotice).font(l.small).foregroundColor(l.faint)
+        }
+        ForEach(iab.adTechProviders) { provider in
+            LedgerRow(index: "AC", title: provider.name, isOn: provider.consent, isEnabled: provider.isEnabled,
+                id: "ledger.provider.\(provider.id)", onChange: { provider.setConsent($0) })
+            LedgerLink(text: iab.draft.iabCopy.preferenceCenterVendorListPrivacyPolicy, url: provider.policyURL)
+        }
+        if !iab.customVendors.isEmpty {
+            LedgerSection(title: iab.customVendorsHeading)
+            Text(iab.customVendorsNotice).font(l.small).foregroundColor(l.faint)
+        }
+        ForEach(iab.customVendors) { vendor in
+            Partner(id: "ledger.custom-vendor.\(vendor.id)", name: vendor.name, summary: vendor.summary, status: vendor.statusLabel,
+                consent: vendor.consent, interest: vendor.legitimateInterest, isEnabled: vendor.isEnabled,
+                setConsent: { vendor.setConsent($0) }, setInterest: { vendor.setLegitimateInterest($0) }, iab: iab,
+                page: { PartnerPage(vendor.details, iab: iab) })
+        }
+    }
+}
+
+/// One partner: a line in the ledger that opens in place to its switches and everything it discloses.
+private struct Partner: View {
+    let id: String
+    let name: String
+    let summary: String
+    let status: String
+    let consent: Bool?
+    let interest: Bool?
+    let isEnabled: Bool
+    let setConsent: (Bool) -> Void
+    let setInterest: (Bool) -> Void
+    let iab: IABDraftHandle
+    let page: () -> PartnerPage
+    @Environment(\.ledger) private var l
+
+    var body: some View {
+        let copy = iab.draft.iabCopy
+        Expandable { toggle in
+            LedgerRow(index: "→", title: name, description: summary, state: status, id: id + ".row", more: toggle)
+        } detail: {
+            // Built only when the line is open.
+            let page = self.page()
+            if let note = page.note { Text(note).font(l.small.italic()).foregroundColor(l.faint) }
+            LedgerLink(text: copy.preferenceCenterVendorListPrivacyPolicy, url: page.privacyPolicy)
+            LedgerLink(text: copy.appLegitimateInterestStatement, url: page.legitimateInterestClaim)
+            if let consent {
+                LedgerRow(index: "C", title: copy.appConsent, description: page.consentPurposes.joined(separator: ", "),
+                    isOn: consent, isEnabled: isEnabled, id: id + ".consent", onChange: setConsent)
+            }
+            if let interest {
+                LedgerRow(index: "LI", title: copy.preferenceCenterPurposeItemLegitimateInterest, description: page.legitimateInterestPurposes.joined(separator: ", "),
+                    note: copy.appTurnOffToObject, isOn: interest, isEnabled: isEnabled, id: id + ".li", onChange: setInterest)
+                if let explanation = iab.legitimateInterestExplanation { Text(explanation).font(l.small).foregroundColor(l.faint) }
+            }
+            if !page.notAllowedPurposes.isEmpty {
+                Text(copy.format(copy.appNotAllowedPurposes, ["purposes": page.notAllowedPurposes.joined(separator: ", ")]))
+                    .font(l.small).foregroundColor(l.faint)
+            }
+            Group {
+                Facts(title: copy.preferenceCenterVendorListSpecialPurposes, facts: PartnerPage.facts(page.specialPurposes, value: copy.appNoChoice))
+                // Wherever features appear they carry their standard text and illustrations, and no switch.
+                if !page.features.isEmpty { LedgerLabel(text: copy.preferenceCenterFeaturesTitle).padding(.top, 10) }
+                ForEach(page.features) { feature in
+                    LedgerRow(index: "F", title: feature.name, description: feature.description, state: copy.appNoChoice, id: id + ".feature.\(feature.id)")
+                    ForEach(feature.illustrations, id: \.self) { Text("\u{2014} " + $0).font(l.small).foregroundColor(l.faint) }
+                }
+                if !page.features.isEmpty { Text(iab.featuresExplanation).font(l.small).foregroundColor(l.faint) }
+                Facts(title: copy.preferenceCenterVendorListSpecialFeatures, facts: page.specialFeatures)
+                Facts(title: copy.appDataCollected, facts: PartnerPage.facts(page.dataCategories, value: nil))
+                Facts(title: copy.appRetentionTitle, facts: page.retention)
+                Facts(title: copy.appDeviceStorage, facts: page.storage)
+                LedgerLink(text: copy.appDeviceStorageDetails, url: page.storageDisclosure)
+            }
+        }
+        .accessibilityIdentifier(id)
+    }
+}
+
+/// What a partner's opened line shows, from a registered partner's page or a custom partner's.
+private struct PartnerPage {
+    var note: String? = nil
+    let privacyPolicy: URL?
+    var legitimateInterestClaim: URL? = nil
+    let consentPurposes: [String]
+    let legitimateInterestPurposes: [String]
+    var notAllowedPurposes: [String] = []
+    var specialPurposes: [String] = []
+    let features: [IABDefinitionContent]
+    let specialFeatures: [(label: String, value: String?)]
+    let dataCategories: [String]
+    let retention: [(label: String, value: String?)]
+    let storage: [(label: String, value: String?)]
+    var storageDisclosure: URL? = nil
+
+    @MainActor init(_ vendor: IABVendorContent, iab: IABDraftHandle) {
+        let copy = iab.draft.iabCopy
+        privacyPolicy = vendor.privacyPolicy
+        legitimateInterestClaim = vendor.legitimateInterestClaim
+        consentPurposes = vendor.consentPurposes
+        legitimateInterestPurposes = vendor.legitimateInterestPurposes
+        notAllowedPurposes = vendor.notAllowedPurposes
+        specialPurposes = vendor.specialPurposes
+        features = vendor.features
+        specialFeatures = Self.optIns(ids: vendor.specialFeatureIds, names: vendor.specialFeatures, iab: iab)
+        dataCategories = vendor.dataCategories
+        // No retention row means the partner gave none. No storage row means it stores nothing.
+        retention = Self.facts(vendor.retention, empty: copy.appRetentionNotProvided)
+        storage = Self.facts(vendor.storesOnDevice ? vendor.storage : [], empty: copy.appNoDeviceStorage)
+        storageDisclosure = vendor.storageDisclosure
+    }
+
+    @MainActor init(_ vendor: IABCustomVendorContent, iab: IABDraftHandle) {
+        let copy = iab.draft.iabCopy
+        note = vendor.note
+        privacyPolicy = vendor.privacyPolicy
+        consentPurposes = vendor.consentPurposes
+        legitimateInterestPurposes = vendor.legitimateInterestPurposes
+        features = vendor.features
+        specialFeatures = Self.optIns(ids: vendor.specialFeatureIds, names: vendor.specialFeatures, iab: iab)
+        dataCategories = vendor.dataCategories
+        retention = Self.facts(vendor.retention, empty: copy.appRetentionNotProvided)
+        storage = Self.facts(vendor.storesOnDevice ? vendor.storage : [], empty: copy.appNoDeviceStorage)
+    }
+
+    /// Each special feature the partner uses, with the person's opt-in for it in the draft.
+    @MainActor private static func optIns(ids: [Int], names: [String], iab: IABDraftHandle) -> [(label: String, value: String?)] {
+        let copy = iab.draft.iabCopy
+        let selected = iab.choices.specialFeatureOptIns
+        var result: [(label: String, value: String?)] = []
+        for (id, name) in zip(ids, names) {
+            result.append((label: name, value: selected.contains(id) ? copy.appOn : copy.appOff))
+        }
+        return result
+    }
+
+    /// The partner's own rows, or one line saying it gave none.
+    private static func facts(_ rows: [IABVendorContent.Row], empty: String) -> [(label: String, value: String?)] {
+        var result: [(label: String, value: String?)] = []
+        for row in rows { result.append((label: row.label, value: row.value)) }
+        if result.isEmpty { result.append((label: empty, value: nil)) }
+        return result
+    }
+
+    /// Plain names as lines that share one value, such as "No choice".
+    static func facts(_ names: [String], value: String?) -> [(label: String, value: String?)] {
+        var result: [(label: String, value: String?)] = []
+        for name in names { result.append((label: name, value: value)) }
+        return result
+    }
+}
+```

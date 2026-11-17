@@ -11,7 +11,7 @@
  * jsdom cannot compute these properties (it rejects `@layer` and does not
  * substitute `var()`), so this substitutes the tag variables in the shipped
  * declarations by hand. These read the built artifacts, so
- * `bun run --cwd packages/ui build` (which `test` depends on) must have run.
+ * `bun run --cwd packages/sdk/ui build` (which `test` depends on) must have run.
  */
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -26,7 +26,7 @@ const readDist = function readDist(relativePath: string): string {
 
 	if (!existsSync(path)) {
 		throw new Error(
-			`Missing ${path}. Build @c15t/ui first: bun run --cwd packages/ui build`
+			`Missing ${path}. Build @c15t/ui first: bun run --cwd packages/sdk/ui build`
 		);
 	}
 

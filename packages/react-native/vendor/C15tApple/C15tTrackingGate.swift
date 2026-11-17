@@ -123,7 +123,7 @@ public enum C15tTrackingDecision: Equatable, Sendable {
 
 /// The mapping and the refusal, with no framework in either.
 ///
-/// `native/CONTRACT.md` gives the rule this file exists to keep testable: platform
+/// `packages/native-protocol/CONTRACT.md` gives the rule this file exists to keep testable: platform
 /// authorization is a gate and not consent, and no platform answer moves a category from
 /// `denied` or `pending` to `granted`. This type never sees a consent value, so it cannot
 /// be the place that rule breaks. It takes the two facts it needs as parameters and

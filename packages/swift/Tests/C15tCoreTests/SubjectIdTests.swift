@@ -7,7 +7,7 @@ import XCTest
 /// share, and to the regex the backend actually applies.
 final class SubjectIdTests: XCTestCase {
     /// The backend's own check, `subjectIdSchema` in
-    /// `packages/schema/src/api/subject/post.ts`.
+    /// `packages/sdk/schema/src/api/subject/post.ts`.
     private static let backendPattern = "^sub_[1-9A-HJ-NP-Za-km-z]+$"
 
     /// One vector: the 12 random bytes, the wall clock in epoch milliseconds, and the

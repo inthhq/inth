@@ -2,10 +2,10 @@
  * The vendor-list entry types both native cores accept: the Android core's typed
  * GVL model and `GVLFieldType` in core-swift's `GlobalVendorList.swift`.
  *
- * The CLI (`packages/cli/src/mobile/gvl-fields.ts`) and the Expo plugin
+ * The CLI (`packages/cli/vendor/c15t-mobile/src/mobile/gvl-fields.ts`) and the Expo plugin
  * (`packages/react-native/src/expo-plugin/gvl-fields.ts`) each carry this file,
  * byte for byte; a test fails when the copies differ. Cases live in
- * `native/protocol/bundled-policy/invalid-resources.json`.
+ * `packages/native-protocol/bundled-policy/invalid-resources.json`.
  */
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>

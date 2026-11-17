@@ -40,7 +40,7 @@ final class PromptOwedSinceTests: XCTestCase {
     func testObserversGetTheIdentifierWhenTheReadableViewIsRebuilt() throws {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-        let vector = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf: root.appendingPathComponent("protocol/bundled-policy/parity.json"))) as? [String: Any])
+        let vector = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf: root.appendingPathComponent("native-protocol/bundled-policy/parity.json"))) as? [String: Any])
         let resource = try JSONSerialization.data(withJSONObject: XCTUnwrap(vector["resource"]))
         let now = try XCTUnwrap(vector["now"] as? Int64)
         let core = ConsentCore()
@@ -68,7 +68,7 @@ final class PromptOwedSinceTests: XCTestCase {
     private func boot() async throws -> ConsentCore {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-        let body = try Data(contentsOf: root.appendingPathComponent("examples/consent-demo/fixtures/category-init.json"))
+        let body = try Data(contentsOf: root.appendingPathComponent("../examples/native/consent-demo/fixtures/category-init.json"))
         let core = ConsentCore()
         core.bootstrap(CoreConfig(store: InMemoryStore(),
             transport: HostedTransport(baseURL: URL(string: "https://fixture.invalid")!, client: Peer(body)),

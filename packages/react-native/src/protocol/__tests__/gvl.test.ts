@@ -26,12 +26,11 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = resolve(HERE, '../../../../..');
 
 /** Where each producer keeps its own copy of these names. */
-const SCHEMA_FILE = 'packages/schema/src/shared/gvl.ts';
-const SWIFT_LIST = 'native/core-swift/Sources/C15tCore/GlobalVendorList.swift';
-const SWIFT_SNAPSHOT =
-	'native/core-swift/Sources/C15tCore/ConsentSnapshot.swift';
+const SCHEMA_FILE = 'packages/sdk/schema/src/shared/gvl.ts';
+const SWIFT_LIST = 'packages/swift/Sources/C15tCore/GlobalVendorList.swift';
+const SWIFT_SNAPSHOT = 'packages/swift/Sources/C15tCore/ConsentSnapshot.swift';
 const KOTLIN_PACKAGE =
-	'native/core-android/c15t-core/src/main/kotlin/com/c15t/core';
+	'packages/android/c15t-core/src/main/kotlin/com/c15t/core';
 const KOTLIN_LIST = `${KOTLIN_PACKAGE}/tc/GlobalVendorList.kt`;
 const KOTLIN_JSON = `${KOTLIN_PACKAGE}/tc/GlobalVendorListJson.kt`;
 const KOTLIN_SNAPSHOT = `${KOTLIN_PACKAGE}/model/Snapshot.kt`;

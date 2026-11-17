@@ -34,7 +34,7 @@ const FALLBACK_PREFERENCES = 'Manage preferences';
 /**
  * What the web shows for its partner-count link.
  *
- * Copied from `packages/translations/src/translations/en.ts` at
+ * Copied from `packages/sdk/translations/src/translations/en.ts` at
  * `iab.banner.partnersLink`. The kernel bundle this app is handed carries cookie
  * banner, preference, and rights copy only -- no `iab` group -- so there is
  * nothing served to read here, and the web's own English is the closest thing to

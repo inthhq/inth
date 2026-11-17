@@ -29,7 +29,7 @@ export const formatDocsFiles = async (
 	root: string,
 	write: boolean
 ): Promise<string[]> => {
-	const files = globSync('docs/**/*.mdx', { cwd: root })
+	const files = globSync('packages/sdk/docs/**/*.mdx', { cwd: root })
 		.filter((file) => !isGenerated(file))
 		.sort();
 	const results = await Promise.all(

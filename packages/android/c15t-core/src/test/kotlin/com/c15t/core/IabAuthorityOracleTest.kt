@@ -21,7 +21,7 @@ class IabAuthorityOracleTest {
 	// TCF-CHECK: T13
 	@Test fun `actual native bytes match the independent reference on every vector`() {
 		val file = generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }
-			.map { File(it, "native/protocol/iab/authority-oracle.json") }.first { it.exists() }
+			.map { File(it, "packages/native-protocol/iab/authority-oracle.json") }.first { it.exists() }
 		val oracle = Json { ignoreUnknownKeys = true }.decodeFromString<Oracle>(file.readText())
 		for (row in oracle.cases) {
 			val gvl = row.gvl ?: oracle.gvl

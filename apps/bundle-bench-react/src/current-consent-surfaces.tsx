@@ -5,7 +5,7 @@ import {
 	ConsentDialog,
 	ConsentProvider,
 	offline,
-} from '../../../packages/react/src/index';
+} from '../../../packages/sdk/react/src/index';
 import { benchmarkConsentOptions } from './fixtures';
 
 export const CurrentConsentSurfaces = () => (

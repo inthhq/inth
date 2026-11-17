@@ -26,7 +26,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * The behaviours `native/CONTRACT.md` makes load-bearing for every native core.
+ * The behaviours `packages/native-protocol/CONTRACT.md` makes load-bearing for every native core.
  */
 class KernelTest {
 	private val json = Json { ignoreUnknownKeys = true }
@@ -209,7 +209,7 @@ class KernelTest {
 		// The scope has to name the categories this test is about. `initBody` omits
 		// `scope`, which leaves every optional category ungoverned, and an ungoverned
 		// category under a permissive scope is permitted whatever the model says --
-		// `defaultPermission` in `packages/core/src/consent-record/evaluate.ts` reads
+		// `defaultPermission` in `packages/sdk/core/src/consent-record/evaluate.ts` reads
 		// `scopeMode` alone out of scope and never the model. With the scope empty this
 		// test passed by watching a policy that asked nothing of the subject, and its
 		// assertion was really divergence 1 in `docs/internal/evaluator-parity.md`.
@@ -230,7 +230,7 @@ class KernelTest {
 		assertTrue(kernel.isAllowed(ConsentCategory.MEASUREMENT))
 		assertFalse(kernel.isAllowed(ConsentCategory.MARKETING), "opt-in denies what the action did not confirm")
 		// A receipt for one category does not settle a prompt that asked for four.
-		// `deriveChoiceRequirement` in `packages/core/src/consent-record/evaluate.ts`
+		// `deriveChoiceRequirement` in `packages/sdk/core/src/consent-record/evaluate.ts`
 		// walks the scope and reports `missing` while any category in it is unanswered,
 		// so the first layer stays open: this is where the core stops treating one
 		// boolean for the whole receipt as if it were an answer per category.
@@ -256,8 +256,8 @@ class KernelTest {
 	/**
 	 * An IAB rule is read and evaluated, and it grants nothing on its own.
 	 *
-	 * `defaultPermission` in `packages/core/src/consent-record/evaluate.ts` answers `iab`
-	 * exactly as it answers `opt-in`, and `deriveModel` in `packages/core/src/policy.ts`
+	 * `defaultPermission` in `packages/sdk/core/src/consent-record/evaluate.ts` answers `iab`
+	 * exactly as it answers `opt-in`, and `deriveModel` in `packages/sdk/core/src/policy.ts`
 	 * keeps the runtime name `opt-in` until the IAB module is installed -- which on device it
 	 * never is, because there is no CMP ID to sign a TC String with and no vendor vector to
 	 * fill.

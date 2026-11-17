@@ -1,0 +1,20 @@
+{/* Generated from examples/native/consent-demo/android/src/main/kotlin/com/c15t/demo/save-measurement-choice.kt (docs:android-category-save) by scripts/sync-example-docs.ts. Edit the source file. */}
+
+```kotlin title="save-measurement-choice.kt"
+package com.c15t.demo
+
+import com.c15t.android.awaitSave
+import com.c15t.core.ConsentCore
+import com.c15t.core.CommitIntent
+import com.c15t.core.CommitResult
+import com.c15t.core.model.ConsentCategory
+
+suspend fun saveMeasurementChoice(
+    core: ConsentCore,
+    enabled: Boolean,
+    expectedRevision: Long,
+): CommitResult = core.awaitSave(
+    CommitIntent.Custom(mapOf(ConsentCategory.MEASUREMENT to enabled)),
+    expectedRevision = expectedRevision,
+)
+```

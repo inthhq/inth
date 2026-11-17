@@ -2,14 +2,14 @@
  * A site page inside a c15t mobile app's WebView, in real Chromium.
  *
  * The fixture server puts the canonical native document-start script
- * (`native/protocol/webview/document-start.js`) first in `<head>`, which is
+ * (`packages/native-protocol/webview/document-start.js`) first in `<head>`, which is
  * where `WKUserScript` and `addDocumentStartJavaScript` run it. The page then
  * starts web c15t with its stock banner and `webViewConsentSource()`.
  */
 import { clearBrowserConsentStorage } from '@c15t/conformance/suite';
 import { afterEach, expect, it, vi } from 'vitest';
 
-import UPDATE_SCRIPT from '../../../../native/protocol/webview/update.js?raw';
+import UPDATE_SCRIPT from '../../../../native-protocol/webview/update.js?raw';
 // The fixture page imports the client. Importing it here makes Vite
 // transform its graph while it collects this file, not inside the first
 // test's timeout. See csp-nonce.browser.test.ts.

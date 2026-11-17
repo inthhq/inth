@@ -24,12 +24,12 @@ export const exampleRoots = [
 	'internals/next-compat',
 	'apps',
 	'benchmarks/tailwind-matrix',
-	'native/core-swift/Examples',
-	'native/examples',
+	'packages/swift/Examples',
+	'examples/native',
 ] as const;
 
 /** Where generated snippets are written, relative to the repository root. */
-export const generatedExamplesDir = 'docs/shared/examples';
+export const generatedExamplesDir = 'packages/sdk/docs/shared/examples';
 
 /**
  * A marked region of a runnable file that is published in the docs.
@@ -149,7 +149,7 @@ export const languageFor = (source: string): string => {
 /** Returns the example app directory that owns a source file. */
 export const appFor = (source: string): string => {
 	const native = source.match(
-		/^native\/(?:core-swift\/Examples|examples)\/[^/]+\//u
+		/^(?:packages\/swift\/Examples|examples\/native)\/[^/]+\//u
 	)?.[0];
 	if (native) {
 		return native.slice(0, -1);
@@ -183,7 +183,13 @@ export const appFor = (source: string): string => {
 
 const destinationFor = (app: string, name: string): string => {
 	let prefix = `next-compat/${app.slice('internals/next-compat/'.length)}`;
-	if (app.startsWith('examples/')) {
+	// The native examples keep the docs folders they had before the sources
+	// moved, so the pages that include them stay as they are.
+	if (app.startsWith('packages/swift/Examples/')) {
+		prefix = `native/core-swift/${app.slice('packages/swift/Examples/'.length)}`;
+	} else if (app.startsWith('examples/native/')) {
+		prefix = `native/examples/${app.slice('examples/native/'.length)}`;
+	} else if (app.startsWith('examples/')) {
 		prefix = app.slice('examples/'.length);
 	} else if (app.startsWith('internals/fixtures/')) {
 		prefix = app.slice('internals/fixtures/'.length);
@@ -191,8 +197,6 @@ const destinationFor = (app: string, name: string): string => {
 		prefix = app.slice('internals/doc-snippets/'.length);
 	} else if (app.startsWith('apps/')) {
 		prefix = app.slice('apps/'.length);
-	} else if (app.startsWith('native/')) {
-		prefix = app.replace('/Examples/', '/');
 	} else if (app.startsWith('benchmarks/tailwind-matrix/')) {
 		const [version, framework] = app
 			.slice('benchmarks/tailwind-matrix/'.length)

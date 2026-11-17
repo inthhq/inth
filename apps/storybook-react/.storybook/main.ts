@@ -9,7 +9,8 @@ import { mergeConfig } from 'vite';
 const storybookDir = path.dirname(fileURLToPath(import.meta.url));
 const workspace = (...segments: string[]) =>
 	path.resolve(storybookDir, '../../..', ...segments);
-const ui = (...segments: string[]) => workspace('packages/ui/src', ...segments);
+const ui = (...segments: string[]) =>
+	workspace('packages/sdk/ui/src', ...segments);
 
 const config: StorybookConfig = {
 	addons: ['@storybook/addon-a11y'],
@@ -51,11 +52,11 @@ const config: StorybookConfig = {
 					},
 					{
 						find: '@c15t/react/primitives',
-						replacement: workspace('packages/react/src/primitives.ts'),
+						replacement: workspace('packages/sdk/react/src/primitives.ts'),
 					},
 					{
 						find: /^@c15t\/react$/u,
-						replacement: workspace('packages/react/src/index.ts'),
+						replacement: workspace('packages/sdk/react/src/index.ts'),
 					},
 					// `@c15t/react`'s index reaches its provider and banner through the
 					// package's `imports` map, which Vite resolves to `dist`: a second
@@ -63,48 +64,48 @@ const config: StorybookConfig = {
 					// would then find no kernel in context.
 					{
 						find: /^#consent-provider$/u,
-						replacement: workspace('packages/react/src/provider.tsx'),
+						replacement: workspace('packages/sdk/react/src/provider.tsx'),
 					},
 					{
 						find: /^#consent-banner$/u,
 						replacement: workspace(
-							'packages/react/src/components/prompt/index.ts'
+							'packages/sdk/react/src/components/prompt/index.ts'
 						),
 					},
 					{
 						find: /^@c15t\/iab$/u,
-						replacement: workspace('packages/iab/src/index.ts'),
+						replacement: workspace('packages/sdk/iab/src/index.ts'),
 					},
 					{
 						find: /^@c15t\/schema\/types$/u,
-						replacement: workspace('packages/schema/src/types.ts'),
+						replacement: workspace('packages/sdk/schema/src/types.ts'),
 					},
 					{
 						find: /^@c15t\/schema$/u,
-						replacement: workspace('packages/schema/src/index.ts'),
+						replacement: workspace('packages/sdk/schema/src/index.ts'),
 					},
 					// Docs recipes import the umbrella paths readers install.
 					{
 						find: /^c15t\/react\/headless$/u,
-						replacement: workspace('packages/react/src/headless.ts'),
+						replacement: workspace('packages/sdk/react/src/headless.ts'),
 					},
 					{
 						find: /^c15t\/react$/u,
-						replacement: workspace('packages/react/src/index.ts'),
+						replacement: workspace('packages/sdk/react/src/index.ts'),
 					},
 					{
 						find: /^c15t$/u,
-						replacement: workspace('packages/core/src/index.ts'),
+						replacement: workspace('packages/sdk/core/src/index.ts'),
 					},
 					{
 						find: /^@iabtechlabtcf\/core$/u,
 						replacement: workspace(
-							'packages/iab/node_modules/@iabtechlabtcf/core'
+							'packages/sdk/iab/node_modules/@iabtechlabtcf/core'
 						),
 					},
 					{
 						find: /^~\/(?<capture1>.*)$/u,
-						replacement: workspace('packages/react/src/$1'),
+						replacement: workspace('packages/sdk/react/src/$1'),
 					},
 					// @c15t/ui — resolve all subpath imports to source
 					{
@@ -149,11 +150,11 @@ const config: StorybookConfig = {
 					},
 					{
 						find: '@c15t/translations/all',
-						replacement: workspace('packages/translations/src/all.ts'),
+						replacement: workspace('packages/sdk/translations/src/all.ts'),
 					},
 					{
 						find: /^@c15t\/translations$/u,
-						replacement: workspace('packages/translations/src/index.ts'),
+						replacement: workspace('packages/sdk/translations/src/index.ts'),
 					},
 				],
 			},

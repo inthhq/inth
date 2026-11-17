@@ -9,11 +9,11 @@ const storybookDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(storybookDir, '../../..');
 const require = createRequire(import.meta.url);
 const vuePackage = (...segments: string[]) =>
-	path.resolve(repoRoot, 'packages/vue/src', ...segments);
+	path.resolve(repoRoot, 'packages/sdk/vue/src', ...segments);
 const core = (...segments: string[]) =>
-	path.resolve(repoRoot, 'packages/core/src', ...segments);
+	path.resolve(repoRoot, 'packages/sdk/core/src', ...segments);
 const ui = (...segments: string[]) =>
-	path.resolve(repoRoot, 'packages/ui/src', ...segments);
+	path.resolve(repoRoot, 'packages/sdk/ui/src', ...segments);
 
 const config: StorybookConfig = {
 	addons: ['@storybook/addon-a11y'],
@@ -21,7 +21,7 @@ const config: StorybookConfig = {
 	stories: ['../src/**/*.stories.@(ts|tsx)'],
 	viteFinal: async (configLocal) => {
 		const vuePluginPath = require.resolve('@vitejs/plugin-vue', {
-			paths: [path.resolve(repoRoot, 'packages/vue')],
+			paths: [path.resolve(repoRoot, 'packages/sdk/vue')],
 		});
 		const { default: vue } = await import(pathToFileURL(vuePluginPath).href);
 
@@ -118,23 +118,29 @@ const config: StorybookConfig = {
 						find: /^@c15t\/translations$/u,
 						replacement: path.resolve(
 							repoRoot,
-							'packages/translations/src/index.ts'
+							'packages/sdk/translations/src/index.ts'
 						),
 					},
 					{
 						find: /^@c15t\/schema\/types$/u,
-						replacement: path.resolve(repoRoot, 'packages/schema/src/types.ts'),
+						replacement: path.resolve(
+							repoRoot,
+							'packages/sdk/schema/src/types.ts'
+						),
 					},
 					{
 						find: /^@c15t\/schema\/config$/u,
 						replacement: path.resolve(
 							repoRoot,
-							'packages/schema/src/config/index.ts'
+							'packages/sdk/schema/src/config/index.ts'
 						),
 					},
 					{
 						find: /^@c15t\/schema$/u,
-						replacement: path.resolve(repoRoot, 'packages/schema/src/index.ts'),
+						replacement: path.resolve(
+							repoRoot,
+							'packages/sdk/schema/src/index.ts'
+						),
 					},
 				],
 			},

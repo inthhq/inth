@@ -332,9 +332,9 @@ const main = async function main() {
 			writeJson(join(outputDir, `${result.scenario}.json`), result);
 		}
 
-		const coreTarball = runTarballSize('../../packages/core');
-		const reactTarball = runTarballSize('../../packages/react');
-		const nextjsTarball = runTarballSize('../../packages/nextjs');
+		const coreTarball = runTarballSize('../../packages/sdk/core');
+		const reactTarball = runTarballSize('../../packages/sdk/react');
+		const nextjsTarball = runTarballSize('../../packages/sdk/nextjs');
 
 		const artifactResult: BenchmarkResult = {
 			baseSha: safeBaseSha(),
@@ -355,7 +355,7 @@ const main = async function main() {
 				nextjsIncludesDialogRules: nextjsTarball.includesDialogRules,
 			},
 			metrics: [
-				// packages/core is @c15t/core; the c15t umbrella is a separate package.
+				// packages/sdk/core is @c15t/core; the c15t umbrella is a separate package.
 				summarizeMetric('@c15t/core', 'bytes', [coreTarball.size]),
 				summarizeMetric('@c15t/react', 'bytes', [reactTarball.size]),
 				summarizeMetric('@c15t/nextjs', 'bytes', [nextjsTarball.size]),

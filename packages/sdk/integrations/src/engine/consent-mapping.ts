@@ -5,7 +5,7 @@ import type { ConsentState } from '@c15t/core';
  *
  * A type is `granted` when the c15t category that lists it is granted, and
  * `denied` otherwise. The Google Consent Mode v2 fixture under
- * `native/protocol/google-consent-mode/` is generated from this function, so
+ * `packages/native-protocol/google-consent-mode/` is generated from this function, so
  * the Swift, Kotlin and React Native helpers are graded against what the web
  * sends.
  *

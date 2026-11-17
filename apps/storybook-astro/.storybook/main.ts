@@ -44,42 +44,44 @@ const config: StorybookConfig = {
 					// island a real site loads.
 					{
 						find: /^@c15t\/svelte$/u,
-						replacement: workspace('packages/svelte/src/lib/index.ts'),
+						replacement: workspace('packages/sdk/svelte/src/lib/index.ts'),
 					},
 					// The Svelte island imports the dialog from this subpath. It has
 					// to come from the same sources as the root, or the dialog reads
 					// another copy of the consent context.
 					{
 						find: /^@c15t\/svelte\/dialog-panel$/u,
-						replacement: workspace('packages/svelte/src/lib/dialog-panel.ts'),
+						replacement: workspace(
+							'packages/sdk/svelte/src/lib/dialog-panel.ts'
+						),
 					},
 					// The Vue island reaches the Nuxt auto-import shims through
 					// the same stubs the Vue Storybook uses; nothing here runs
 					// under Nuxt.
 					{
 						find: /^#imports$/u,
-						replacement: workspace('packages/vue/src/runtime/vue/stubs.ts'),
+						replacement: workspace('packages/sdk/vue/src/runtime/vue/stubs.ts'),
 					},
 					{
 						find: /^#c15t\/composables$/u,
 						replacement: workspace(
-							'packages/vue/src/runtime/composables/index.ts'
+							'packages/sdk/vue/src/runtime/composables/index.ts'
 						),
 					},
 					{
 						find: /^@c15t\/vue\/vue-plugin$/u,
-						replacement: workspace('packages/vue/src/index.ts'),
+						replacement: workspace('packages/sdk/vue/src/index.ts'),
 					},
 					// Vue runtime imports use the published export map, including
 					// compatibility paths whose filenames differ from the subpath.
 					// `@c15t/react` imports its own sources through `~/`.
 					{
 						find: /^~\/(?<capture1>.*)$/u,
-						replacement: workspace('packages/react/src/$1'),
+						replacement: workspace('packages/sdk/react/src/$1'),
 					},
 					{
 						find: /^@c15t\/react$/u,
-						replacement: workspace('packages/react/src/index.ts'),
+						replacement: workspace('packages/sdk/react/src/index.ts'),
 					},
 					// `@c15t/react`'s index reaches its provider and banner through the
 					// package's `imports` map, which Vite resolves to `dist`: a second
@@ -87,17 +89,17 @@ const config: StorybookConfig = {
 					// would then find no kernel in context.
 					{
 						find: /^#consent-provider$/u,
-						replacement: workspace('packages/react/src/provider.tsx'),
+						replacement: workspace('packages/sdk/react/src/provider.tsx'),
 					},
 					{
 						find: /^#consent-banner$/u,
 						replacement: workspace(
-							'packages/react/src/components/prompt/index.ts'
+							'packages/sdk/react/src/components/prompt/index.ts'
 						),
 					},
 					{
 						find: /^@c15t\/react\/iab$/u,
-						replacement: workspace('packages/react/src/iab.ts'),
+						replacement: workspace('packages/sdk/react/src/iab.ts'),
 					},
 					// Docs recipes import the umbrella package the way a reader's
 					// site does.
@@ -107,15 +109,15 @@ const config: StorybookConfig = {
 					},
 					{
 						find: /^c15t\/react$/u,
-						replacement: workspace('packages/react/src/index.ts'),
+						replacement: workspace('packages/sdk/react/src/index.ts'),
 					},
 					{
 						find: /^c15t$/u,
-						replacement: workspace('packages/core/src/index.ts'),
+						replacement: workspace('packages/sdk/core/src/index.ts'),
 					},
 					{
 						find: /^@c15t\/translations$/u,
-						replacement: workspace('packages/translations/src/index.ts'),
+						replacement: workspace('packages/sdk/translations/src/index.ts'),
 					},
 				],
 			},

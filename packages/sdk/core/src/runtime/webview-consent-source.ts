@@ -7,7 +7,7 @@
  * object before any page script runs. This module reads that object and
  * returns it as an {@link ExternalConsentSource}, so the native app stays the
  * consent authority while the page runs inside the app. The contract is
- * "WebView consent" in `native/CONTRACT.md`.
+ * "WebView consent" in `packages/native-protocol/CONTRACT.md`.
  */
 import type { ConsentState, Unsubscribe } from '../types';
 import type { ExternalConsentSource } from './types';

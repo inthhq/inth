@@ -16,7 +16,7 @@ import { resolveIABDialogDisplayModel } from '@c15t/iab/headless';
 import { afterEach, describe, expect, test } from 'vitest';
 
 import { IAB_DEMO_DISPLAY_MODEL } from '../../../../../internals/fixtures/react-native-bare/src/fixtures/iab-display-model';
-import { completeGVL } from '../../../../iab/src/__tests__/fixtures/gvl-sample';
+import { completeGVL } from '../../../../sdk/iab/src/__tests__/fixtures/gvl-sample';
 import { flushPromises } from '../../__tests__/helpers/fake-native';
 import {
 	animationState,

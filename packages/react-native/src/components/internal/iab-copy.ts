@@ -2,7 +2,7 @@
  * The words an IAB disclosure is allowed to use, and nothing else.
  *
  * The strings are `iab.preferenceCenter`, `iab.common`, and `iab.banner.title`
- * in `packages/translations/src/translations/en.ts`, copied rather than
+ * in `packages/sdk/translations/src/translations/en.ts`, copied rather than
  * imported: that bundle is a runtime dependency of the web surfaces and this
  * package ships without one, so a phone carries the English the product ships
  * and a host passes {@link ConsentIabDrawerProps.copy} to say anything else.

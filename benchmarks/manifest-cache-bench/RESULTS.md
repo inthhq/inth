@@ -2,7 +2,7 @@
 
 Captured 2026-09-14 on an Apple M5 Pro laptop, Node 24.19, against commit
 `cc7dd2051` plus the stale-while-revalidate change to
-`packages/core/src/libs/manifest-cache-runtime.ts`. Simulated Vercel CDN:
+`packages/sdk/core/src/libs/manifest-cache-runtime.ts`. Simulated Vercel CDN:
 25 ms edge round trip, 150 ms origin round trip, origin sends
 `Cache-Control: public, s-maxage=300, stale-while-revalidate=86400`.
 

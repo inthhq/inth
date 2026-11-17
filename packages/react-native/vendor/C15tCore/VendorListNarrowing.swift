@@ -1,12 +1,12 @@
 // A publisher's vendor scope, applied to a list that arrived whole.
 //
 // Two web functions do this job, and both are the oracle here: `narrowGVLToVendors` in
-// `packages/iab/src/tcf/fetch-gvl.ts`, and `narrowToVendorIds` in
+// `packages/sdk/iab/src/tcf/fetch-gvl.ts`, and `narrowToVendorIds` in
 // `packages/backend/src/http/gvl.ts`. Both exist because the scope cannot always travel
 // with the document. The GVL endpoint applies `vendorIds` as a filter, which is what keeps
 // a scoped publisher off the full list, but the filter only travels so far: the backend
 // caps what it will put in a request line at `MAX_GVL_QUERY_VENDOR_IDS` and fetches the
-// list whole above that, `createIAB` in `packages/iab` asks the endpoint for its scope and
+// list whole above that, `createIAB` in `packages/sdk/iab` asks the endpoint for its scope and
 // prunes whatever comes back in case the endpoint ignored the parameter, and neither path
 // lets an unpruned document reach the surface a subject reads. Serving every GVL vendor to a
 // visitor who was only ever shown a publisher's own partners is a disclosure failure, not

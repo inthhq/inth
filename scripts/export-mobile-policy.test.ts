@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import {
 	buildConsentManifestFromConfig,
 	policyRulePresets,
-} from '../packages/schema/dist/index.js';
+} from '../packages/sdk/schema/dist/index.js';
 import { exportMobilePolicy } from './export-mobile-policy';
 
 const now = Date.parse('2026-10-29T00:00:00Z');
@@ -75,7 +75,7 @@ describe('native build policy export', () => {
 		const source = JSON.parse(
 			readFileSync(
 				new URL(
-					'../native/protocol/iab/additional-consent-cases.json',
+					'../packages/native-protocol/iab/additional-consent-cases.json',
 					import.meta.url
 				),
 				'utf8'

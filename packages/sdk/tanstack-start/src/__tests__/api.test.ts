@@ -1,7 +1,7 @@
 /**
  * Wiring of `@c15t/tanstack-start/api` onto the core consent route handler.
  * The route behaviour itself is pinned once, in
- * `packages/core/src/server/__tests__/consent-route.test.ts`.
+ * `packages/sdk/core/src/server/__tests__/consent-route.test.ts`.
  */
 import { createManifestCache } from '@c15t/core/server';
 import { describe, expect, test, vi } from 'vitest';

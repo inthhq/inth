@@ -5,7 +5,7 @@ import XCTest
 /// The configuration `c15t setup` prints for a Swift app.
 ///
 /// Compiling it is the check that the printed code matches this package's API.
-/// `packages/cli/src/__tests__/mobile/mobile-setup.test.ts` reads the lines between
+/// `packages/cli/vendor/c15t-mobile/src/__tests__/mobile/mobile-setup.test.ts` reads the lines between
 /// the markers and fails when the CLI prints anything else, so change both
 /// together.
 final class CLISnippetTests: XCTestCase {

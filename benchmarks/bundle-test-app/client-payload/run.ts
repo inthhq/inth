@@ -185,7 +185,7 @@ const packWorkspace = function packWorkspace(destination: string): string {
 		run(
 			'bun',
 			['pm', 'pack', '--ignore-scripts', '--destination', destination],
-			join(repoRoot, 'packages', pkg)
+			join(repoRoot, 'packages', 'sdk', pkg)
 		);
 	}
 	for (const file of readdirSync(destination)) {

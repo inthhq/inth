@@ -9,7 +9,7 @@ import androidx.compose.runtime.Composable
  * Activity with views, and the privacy-settings call.
  *
  * Compiling these is the check that the printed code matches this module's API.
- * `packages/cli/src/__tests__/mobile/mobile-setup.test.ts` reads the lines between each
+ * `packages/cli/vendor/c15t-mobile/src/__tests__/mobile/mobile-setup.test.ts` reads the lines between each
  * pair of markers and fails when the CLI prints anything else, so change both together.
  */
 @Suppress("unused")

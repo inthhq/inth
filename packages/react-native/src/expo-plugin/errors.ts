@@ -10,7 +10,7 @@ import type { ProjectURLReason } from './project-url';
 export class C15tPluginError extends Error {
 	/**
 	 * Why `backendURL` was refused, in the reason codes of
-	 * `native/protocol/project-url/cases.json`. Unset for every other error.
+	 * `packages/native-protocol/project-url/cases.json`. Unset for every other error.
 	 */
 	readonly reason?: ProjectURLReason;
 

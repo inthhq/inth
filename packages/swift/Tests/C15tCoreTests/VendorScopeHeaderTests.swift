@@ -57,7 +57,7 @@ final class VendorScopeHeaderTests: XCTestCase {
 
     /// Past the request-line ceiling the scope is not named at all, and the cap is the one web uses.
     ///
-    /// 500 is `MAX_GVL_QUERY_VENDOR_IDS`, in `packages/iab/src/tcf/fetch-gvl.ts` and in
+    /// 500 is `MAX_GVL_QUERY_VENDOR_IDS`, in `packages/sdk/iab/src/tcf/fetch-gvl.ts` and in
     /// `packages/backend/src/http/gvl.ts` alike, and both of those keep pruning locally above it: the
     /// web answer for a 609-id publisher is "fetch the list whole, show your own partners".
     /// Truncating a header to what fits would describe a different scope than the one the host

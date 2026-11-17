@@ -14,14 +14,14 @@
  * `packages/<name>/dist/…` from a workspace or linked install.
  */
 const DIALOG_ROOT =
-	/[\\/](?:@c15t|packages)[\\/](?:react[\\/]dist[\\/]deferred[\\/]dialog\.js|vue[\\/]dist[\\/]runtime[\\/]components[\\/]manager\.vue)$/u;
+	/[\\/](?:@c15t|packages(?:[\\/]sdk)?)[\\/](?:react[\\/]dist[\\/]deferred[\\/]dialog\.js|vue[\\/]dist[\\/]runtime[\\/]components[\\/]manager\.vue)$/u;
 
 /**
  * What an accept or reject before the engine loads: the commit chunk of
  * React's and Vue's deferred roots and core's script loader.
  */
 const TAP_ROOT =
-	/[\\/](?:@c15t|packages)[\\/](?:react[\\/]dist[\\/]deferred[\\/]commit|vue[\\/]dist[\\/]runtime[\\/]deferred[\\/]commit|core[\\/]dist[\\/]modules[\\/]script-loader[\\/]index)\.js$/u;
+	/[\\/](?:@c15t|packages(?:[\\/]sdk)?)[\\/](?:react[\\/]dist[\\/]deferred[\\/]commit|vue[\\/]dist[\\/]runtime[\\/]deferred[\\/]commit|core[\\/]dist[\\/]modules[\\/]script-loader[\\/]index)\.js$/u;
 
 /**
  * The consent engine each deferred root loads after the page: React's
@@ -29,7 +29,7 @@ const TAP_ROOT =
  * Start's (`root-engine`) and Vue's (`runtime/deferred/engine`).
  */
 const ENGINE_ROOT =
-	/[\\/](?:@c15t|packages)[\\/](?:react[\\/]dist[\\/]deferred[\\/](?:client-)?engine|(?:nextjs|tanstack-start)[\\/]dist[\\/]root-engine|vue[\\/]dist[\\/]runtime[\\/]deferred[\\/]engine)\.js$/u;
+	/[\\/](?:@c15t|packages(?:[\\/]sdk)?)[\\/](?:react[\\/]dist[\\/]deferred[\\/](?:client-)?engine|(?:nextjs|tanstack-start)[\\/]dist[\\/]root-engine|vue[\\/]dist[\\/]runtime[\\/]deferred[\\/]engine)\.js$/u;
 
 /**
  * The stock banner a deferred root's engine renders, which loads with the
@@ -37,7 +37,7 @@ const ENGINE_ROOT =
  * (`components/prompt.vue`). It counts as the engine's.
  */
 const ENGINE_BANNER =
-	/[\\/](?:@c15t|packages)[\\/](?:react[\\/]dist[\\/]components[\\/]prompt[\\/]index\.js|vue[\\/]dist[\\/]runtime[\\/]components[\\/]prompt\.vue)$/u;
+	/[\\/](?:@c15t|packages(?:[\\/]sdk)?)[\\/](?:react[\\/]dist[\\/]components[\\/]prompt[\\/]index\.js|vue[\\/]dist[\\/]runtime[\\/]components[\\/]prompt\.vue)$/u;
 
 /**
  * c15t's chunks that load only when a visitor asks for them: the standalone
@@ -47,7 +47,7 @@ const ENGINE_BANNER =
  * loaders counts as loaded with the page.
  */
 const ON_DEMAND =
-	/[\\/](?:@c15t|packages)[\\/](?:react[\\/]dist[\\/](?:components[\\/](?:preferences|iab-panel)[\\/]index\.js|aggregate-components\.js)|vue[\\/]dist[\\/]runtime[\\/]components[\\/](?:preferences|iab-panel)\.vue|core[\\/]dist[\\/]preference-draft\.js)$/u;
+	/[\\/](?:@c15t|packages(?:[\\/]sdk)?)[\\/](?:react[\\/]dist[\\/](?:components[\\/](?:preferences|iab-panel)[\\/]index\.js|aggregate-components\.js)|vue[\\/]dist[\\/]runtime[\\/]components[\\/](?:preferences|iab-panel)\.vue|core[\\/]dist[\\/]preference-draft\.js)$/u;
 
 /** Stylesheets, and the style blocks of Vue and Svelte components. */
 const STYLE_MODULE =
@@ -239,7 +239,7 @@ const resolveSpecifier = function resolveSpecifier(
 		: [undefined, name];
 	const roots = [`/node_modules/${name}/`];
 	if (scope === '@c15t') {
-		roots.push(`/packages/${unscoped}/`);
+		roots.push(`/packages/${unscoped}/`, `/packages/sdk/${unscoped}/`);
 	}
 	const inPackage = candidates.filter((candidate) => {
 		const plain = bare(candidate).replace(/\\/gu, '/');

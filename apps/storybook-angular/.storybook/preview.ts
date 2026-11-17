@@ -4,8 +4,8 @@ import type { Preview } from '@analogjs/storybook-angular';
 // compares computed CSS custom properties per element, so the IAB sheet is
 // loaded even for non-IAB stories. The stock surfaces also insert the rules
 // they use themselves; those are the same `@c15t/ui` rules.
-import '../../../packages/angular/src/styles.css';
-import '../../../packages/angular/src/iab/styles.css';
+import '../../../packages/sdk/angular/src/styles.css';
+import '../../../packages/sdk/angular/src/iab/styles.css';
 
 const storybookCanvasStyleId = 'c15t-storybook-canvas';
 

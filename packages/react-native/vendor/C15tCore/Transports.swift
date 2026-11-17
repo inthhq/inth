@@ -42,10 +42,10 @@ extension C15t {
     /// How many declared ids this build will still put on one request line.
     ///
     /// The same ceiling as `MAX_GVL_QUERY_VENDOR_IDS` in
-    /// `packages/iab/src/tcf/fetch-gvl.ts` and `packages/backend/src/http/gvl.ts`,
+    /// `packages/sdk/iab/src/tcf/fetch-gvl.ts` and `packages/backend/src/http/gvl.ts`,
     /// for the same reason: past it the scope stops fitting comfortably in a
     /// request line, the producer is expected to fetch the list whole, and every
-    /// consumer narrows locally. `packages/backend` and `packages/iab` both keep the
+    /// consumer narrows locally. `packages/backend` and `packages/sdk/iab` both keep the
     /// local prune above the cap, so the web answer for a 609-id publisher is "ask
     /// for everything, show your own partners", and this must not be the build that
     /// silently truncates a header into a different scope.

@@ -13,7 +13,7 @@ import java.security.SecureRandom
  * What a page inside a WebView reads as `window.__c15tNativeConsent.getState()`.
  *
  * Consent state only: no subject id, no policy token, no location. The shape is
- * "WebView consent" in `native/CONTRACT.md`, and `webViewConsentSource()` in
+ * "WebView consent" in `packages/native-protocol/CONTRACT.md`, and `webViewConsentSource()` in
  * `@c15t/core` reads it.
  */
 data class WebViewConsentState(

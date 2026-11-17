@@ -7,18 +7,18 @@ interface BundledModule {
 }
 
 const COMMON_EXCLUSIONS = [
-	/\/(?:packages\/browser|@c15t\/browser)\/(?:src|dist)\/(?:client|global|transports\/manifest)\.[jt]s(?:$|[?|])/u,
-	/\/(?:packages\/core|@c15t\/core)\/(?:src|dist)\/transports\/manifest[^/]*\.[jt]s(?:$|[?|])/u,
+	/\/(?:packages\/(?:sdk\/)?browser|@c15t\/browser)\/(?:src|dist)\/(?:client|global|transports\/manifest)\.[jt]s(?:$|[?|])/u,
+	/\/(?:packages\/(?:sdk\/)?core|@c15t\/core)\/(?:src|dist)\/transports\/manifest[^/]*\.[jt]s(?:$|[?|])/u,
 ];
 const HOSTED_EXCLUSIONS = [
 	...COMMON_EXCLUSIONS,
-	/\/(?:packages\/core|@c15t\/core)\/(?:src|dist)\/transports\/offline\.[jt]s(?:$|[?|])/u,
-	/\/(?:packages\/browser|@c15t\/browser)\/(?:src|dist)\/policy-rules\.[jt]s(?:$|[?|])/u,
-	/\/(?:packages\/schema|@c15t\/schema)\/(?:src|dist)\/shared\/(?:policy-rule-presets|policy-resolution|policy-rule|policy-rule-fingerprint)\.[jt]s(?:$|[?|])/u,
+	/\/(?:packages\/(?:sdk\/)?core|@c15t\/core)\/(?:src|dist)\/transports\/offline\.[jt]s(?:$|[?|])/u,
+	/\/(?:packages\/(?:sdk\/)?browser|@c15t\/browser)\/(?:src|dist)\/policy-rules\.[jt]s(?:$|[?|])/u,
+	/\/(?:packages\/(?:sdk\/)?schema|@c15t\/schema)\/(?:src|dist)\/shared\/(?:policy-rule-presets|policy-resolution|policy-rule|policy-rule-fingerprint)\.[jt]s(?:$|[?|])/u,
 ];
 const OFFLINE_EXCLUSIONS = [
 	...COMMON_EXCLUSIONS,
-	/\/(?:packages\/core|@c15t\/core)\/(?:src|dist)\/transports\/(?:hosted[^/]*|mode)\.[jt]s(?:$|[?|])/u,
+	/\/(?:packages\/(?:sdk\/)?core|@c15t\/core)\/(?:src|dist)\/transports\/(?:hosted[^/]*|mode)\.[jt]s(?:$|[?|])/u,
 ];
 
 const assertModules = function assertModules(

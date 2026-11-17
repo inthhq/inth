@@ -2,7 +2,7 @@ import Foundation
 
 /// Guard against stored envelopes written before the protocol was corrected.
 ///
-/// `native/CONTRACT.md` first described overrides with a `test` field and privacy
+/// `packages/native-protocol/CONTRACT.md` first described overrides with a `test` field and privacy
 /// signals as a `gpc`/`msa` boolean pair. Neither exists in the kernel, so a device
 /// holding an envelope in that shape has stored something this build cannot name.
 /// The honest options are reinterpret or discard, and reinterpreting is the wrong
@@ -64,7 +64,7 @@ enum RetiredEnvelope {
     ///
     /// The synthesized `encode(to:)` omits nils, which would hand the JavaScript
     /// layer `{country, language}` where the protocol declares four keys, while the
-    /// Kotlin core writes all four. `native/CONTRACT.md` keeps an empty `iab` written
+    /// Kotlin core writes all four. `packages/native-protocol/CONTRACT.md` keeps an empty `iab` written
     /// as an explicit null for the same reason: a reader never branches on presence.
     static func write<Value: Encodable, Key: CodingKey>(
         _ value: Value?,

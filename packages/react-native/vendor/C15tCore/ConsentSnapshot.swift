@@ -3,7 +3,7 @@ import Foundation
 /// Interaction the active policy still owes.
 ///
 /// `{ kind, reason }`, which is what `@c15t/core` puts on its snapshot, what the
-/// `native/protocol` fixtures carry, and what `@c15t/react-native` decodes. The
+/// `packages/native-protocol` fixtures carry, and what `@c15t/react-native` decodes. The
 /// contract document sketches a `notice`/`acknowledge`/`purpose` triple instead;
 /// the kernel wins, because a native core that flattened it would hand the
 /// JavaScript layer a value its own types reject.
@@ -133,7 +133,7 @@ public struct LocationContext: Sendable, Codable, Equatable {
 ///
 /// Publisher test mode is a client option rather than an override, and never
 /// reaches a save body, so it has no place here. The first draft of
-/// `native/CONTRACT.md` invented a `test` field, and ``CodingKeys/test`` exists
+/// `packages/native-protocol/CONTRACT.md` invented a `test` field, and ``CodingKeys/test`` exists
 /// only to refuse an envelope that still carries one.
 public struct ConsentOverrides: Sendable, Codable, Equatable {
     public let country: String?
@@ -234,7 +234,7 @@ public struct GpcSignal: Sendable, Codable, Equatable {
 /// Privacy signals the core honors, mirroring `KernelPrivacySignals`.
 ///
 /// There is no `msa` signal anywhere in v3. The first draft of
-/// `native/CONTRACT.md` carried one as a boolean alongside a boolean `gpc`; both
+/// `packages/native-protocol/CONTRACT.md` carried one as a boolean alongside a boolean `gpc`; both
 /// are refused on decode rather than guessed at.
 public struct PrivacySignals: Sendable, Codable, Equatable {
     /// `msa` is declared only so ``init(from:)`` can refuse it.
@@ -325,7 +325,7 @@ public struct CoreErrorInfo: Sendable, Codable, Equatable, Error {
 
 /// The IAB half of a snapshot: everything this build learned from `/init` about IAB.
 ///
-/// The key names are `KernelIABState`'s, from `packages/core/src/types.ts`, because
+/// The key names are `KernelIABState`'s, from `packages/sdk/core/src/types.ts`, because
 /// the React Native boundary hands JavaScript a JSON string and a renamed key shows up
 /// as `undefined` on a device rather than as a type error. Only `gvl` is carried:
 /// `authority`, `tcString`, the per-vendor vectors and `cmpId` are IAB runtime state this

@@ -155,7 +155,7 @@ class HeadlessComponentsTest {
     /** The blocks carry no look: nothing under `headless` may reach for Material. */
     @Test fun theBlocksDoNotImportMaterial() {
         val directory = generateSequence(File(requireNotNull(System.getProperty("user.dir")))) { it.parentFile }
-            .map { File(it, "native/core-android/c15t-consent-ui/src/main/kotlin/com/c15t/consentui/headless") }.first { it.exists() }
+            .map { File(it, "packages/android/c15t-consent-ui/src/main/kotlin/com/c15t/consentui/headless") }.first { it.exists() }
         val sources = directory.listFiles { file -> file.extension == "kt" }.orEmpty()
         assertTrue(sources.size >= 3)
         for (source in sources) assertFalse("${source.name} imports Material", source.readText().contains("androidx.compose.material"))

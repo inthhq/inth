@@ -138,7 +138,7 @@ final class DryRunTests: XCTestCase {
     func testInCodePolicyDeliversRecordsThroughTheHostedTransport() async throws {
         let url = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-            .appendingPathComponent("protocol/local-policy/parity.json")
+            .appendingPathComponent("native-protocol/local-policy/parity.json")
         let rules = try XCTUnwrap(C15tJSON.parse(Data(contentsOf: url))?["rules"])
         let policy = try ConsentPolicy(json: XCTUnwrap(C15tJSON.encode(.object(["rules": rules]))))
         let core = ConsentCore()

@@ -49,7 +49,7 @@ const importSheet = async function importSheet(name: string): Promise<Sheet> {
 	const path = join(SHEETS_DIR, `${name}.js`);
 	if (!existsSync(path)) {
 		throw new Error(
-			`Missing ${path}. Build @c15t/ui first: bun run --cwd packages/ui build`
+			`Missing ${path}. Build @c15t/ui first: bun run --cwd packages/sdk/ui build`
 		);
 	}
 	return (await import(pathToFileURL(path).href)) as Sheet;

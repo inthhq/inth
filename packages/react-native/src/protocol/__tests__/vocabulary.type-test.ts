@@ -6,7 +6,7 @@
  * still a copy, and a consent category that quietly disappears from one side is a
  * subject's decision going unrecorded, not a type error.
  *
- * `@c15t/core` is the oracle here, exactly as `native/CONTRACT.md` rule 4 makes it
+ * `@c15t/core` is the oracle here, exactly as `packages/native-protocol/CONTRACT.md` rule 4 makes it
  * the oracle for the Swift and Kotlin cores. Vitest does not check types, so this
  * file runs through `tsc -p tsconfig.type-tests.json`, which the package's
  * `check-types` script calls, and a drift is a compile error naming the pair.

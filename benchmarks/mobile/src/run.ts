@@ -1,7 +1,7 @@
 /**
  * `bun run bench:mobile`.
  *
- * Measures every budget in `native/CONTRACT.md` that this machine can measure,
+ * Measures every budget in `packages/native-protocol/CONTRACT.md` that this machine can measure,
  * prints one table, stores the run as JSON, and with `--check` exits non-zero when
  * a number misses a ceiling.
  *
@@ -199,7 +199,7 @@ const sweepRows = function sweepRows(
 
 	return [
 		makeRow(ROWS.policySweep, budgets, {
-			detail: `${sweep.ruleSets} rule sets from native/protocol, worst ${sweep.worstRuleSetUs} us, span is init plus first read`,
+			detail: `${sweep.ruleSets} rule sets from packages/native-protocol, worst ${sweep.worstRuleSetUs} us, span is init plus first read`,
 			samples: sweep.samplesPerRuleSet * Math.max(sweep.ruleSets, 1),
 			value: sweep.evaluationUs,
 		}),

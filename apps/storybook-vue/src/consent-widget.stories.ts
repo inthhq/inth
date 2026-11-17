@@ -4,7 +4,7 @@ import {
 } from '@c15t/conformance/play/consent-widget';
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 
-import ConsentWidget from '../../../packages/vue/src/runtime/components/preferences.vue';
+import ConsentWidget from '../../../packages/sdk/vue/src/runtime/components/preferences.vue';
 import {
 	storybookVendors,
 	storybookVendorStoredConsent,

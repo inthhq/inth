@@ -1,7 +1,7 @@
 /**
  * Tests for ConsentProvider basic request behavior.
  *
- * Mirrors: packages/react/src/providers/__tests__/provider-basic.test.tsx
+ * Mirrors: packages/sdk/react/src/providers/__tests__/provider-basic.test.tsx
  */
 
 import { IAB_FIXTURE_CMP_ID, MINIMAL_GVL } from '@c15t/conformance';

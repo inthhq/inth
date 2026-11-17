@@ -1,7 +1,7 @@
 #if canImport(SwiftUI) && canImport(UIKit)
 import SwiftUI
 
-/// Bundled vectors from the branding tag paths in `packages/browser/src/ui/branding.ts`.
+/// Bundled vectors from the branding tag paths in `packages/sdk/browser/src/ui/branding.ts`.
 /// Compiled geometry keeps both SwiftPM and CocoaPods independent of resource bundles.
 struct ConsentProviderMark: Shape {
     let branding: ConsentTheme.Branding

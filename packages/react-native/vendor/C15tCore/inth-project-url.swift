@@ -1,7 +1,7 @@
 import Foundation
 
 /// Why a project URL was refused. `reason` is the code shared with the Kotlin and
-/// TypeScript SDKs in `native/protocol/project-url/cases.json`.
+/// TypeScript SDKs in `packages/native-protocol/project-url/cases.json`.
 public struct InthProjectURLError: Error, Equatable, Sendable, LocalizedError, CustomStringConvertible {
     public enum Reason: String, Sendable, Equatable, CaseIterable {
         case empty, malformed, scheme, credentials, host, port, path, query
@@ -47,7 +47,7 @@ public struct InthProjectURLError: Error, Equatable, Sendable, LocalizedError, C
 /// The one rule for the project URL the mobile SDKs accept.
 ///
 /// Parsed by hand so Darwin and Linux Foundation, and the Kotlin and TypeScript
-/// SDKs, agree on every case in `native/protocol/project-url/cases.json`.
+/// SDKs, agree on every case in `packages/native-protocol/project-url/cases.json`.
 public enum InthProjectURL {
     /// A project host is at least one label in front of one of these.
     public static let allowedHostSuffixes = ["inth.app"]

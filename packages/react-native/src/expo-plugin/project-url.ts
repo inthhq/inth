@@ -2,12 +2,12 @@
  * The project URL rule for the mobile SDKs, which work only with the Inth
  * hosted service.
  *
- * `native/protocol/project-url/cases.json` is the shared fixture. Swift and
+ * `packages/native-protocol/project-url/cases.json` is the shared fixture. Swift and
  * Kotlin apply the same steps in the same order.
  *
  * This file exists twice, byte for byte: in
  * `packages/react-native/src/expo-plugin/project-url.ts` and in
- * `packages/cli/src/mobile/project-url.ts`. The Expo plugin ships without
+ * `packages/cli/vendor/c15t-mobile/src/mobile/project-url.ts`. The Expo plugin ships without
  * runtime dependencies on other c15t packages and the CLI cannot depend on the
  * React Native package, so neither can import the other. The CLI test
  * `src/__tests__/mobile/project-url.test.ts` fails when the copies differ.
@@ -75,7 +75,7 @@ const RELAXED_SCHEME_DETAIL =
 
 /** A `backendURL` that is not an Inth project URL. */
 export class ProjectURLError extends Error {
-	/** The code from `native/protocol/project-url/cases.json`. */
+	/** The code from `packages/native-protocol/project-url/cases.json`. */
 	readonly reason: ProjectURLReason;
 	/** The value as it was given. */
 	readonly input: string;

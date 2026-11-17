@@ -133,7 +133,7 @@ class TcStorageBusTest {
 
 	@Test
 	fun gdprAppliesAnswersOnlyForAResolvedPolicy() {
-		// Mirrors `policyRule.model === "iab"` from `packages/iab`: every model but
+		// Mirrors `policyRule.model === "iab"` from `packages/sdk/iab`: every model but
 		// `iab` answers false there, so a matched policy that names no IAB rule owes
 		// 0 and nothing more. The IAB answer is the next test.
 		assertEquals(
@@ -159,7 +159,7 @@ class TcStorageBusTest {
 
 	/**
 	 * The one bus row this core's IAB support moves: an IAB rule reads 1, which is the
-	 * question `packages/iab` asks (`policyRule.model === "iab"`).
+	 * question `packages/sdk/iab` asks (`policyRule.model === "iab"`).
 	 *
 	 * It is read off the envelope's own rule and not off `snapshot.model`, because this
 	 * core reports `opt-in` while an IAB rule runs -- the report is about what the device

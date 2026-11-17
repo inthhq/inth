@@ -17,7 +17,7 @@ import kotlinx.serialization.json.jsonObject
 /**
  * The snapshot as the React Native boundary reads it: the kernel's key names.
  *
- * `native/CONTRACT.md` says four objects on the snapshot belong to `@c15t/core` down
+ * `packages/native-protocol/CONTRACT.md` says four objects on the snapshot belong to `@c15t/core` down
  * to their spelling, because the snapshot crosses to JavaScript as a JSON string and a
  * renamed key is invisible to a type declaration. Kotlin names those four its own way
  * -- `subject.id`, `location.country`/`region`, the notice/acknowledge/purpose triple,
@@ -134,7 +134,7 @@ object SnapshotWire {
 	 *
 	 * `@c15t/core` puts `reason` on a failed resolution and on no other, and Swift encodes an
 	 * absent reason as no key. The model serialises it as an explicit `null`, which the
-	 * bridge schema in `native/protocol/bridge/payloads.json` does not allow.
+	 * bridge schema in `packages/native-protocol/bridge/payloads.json` does not allow.
 	 */
 	private fun resolutionOf(encoded: JsonElement): JsonElement {
 		val resolution = encoded as? JsonObject ?: return encoded

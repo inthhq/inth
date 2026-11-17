@@ -141,7 +141,7 @@ export const ANDROID_INTERNET_PERMISSION = 'android.permission.INTERNET';
 /**
  * `minSdk` the shipped AARs compile against.
  *
- * From `native/core-android/gradle/libs.versions.toml`. An app below this
+ * From `packages/android/gradle/libs.versions.toml`. An app below this
  * fails in the manifest merger with a message that names neither c15t nor this
  * number, so the plugin raises it instead.
  */

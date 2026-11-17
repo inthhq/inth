@@ -1,10 +1,10 @@
 import {
 	createConsentClient,
 	offline,
-} from '../../../packages/browser/src/index';
-import { policyRulePresets } from '../../../packages/core/src/index';
-import { createScriptLoader } from '../../../packages/core/src/modules/script-loader/index';
-import { cloudflareZaraz } from '../../../packages/integrations/src/vendors/tag-managers/cloudflare-zaraz';
+} from '../../../packages/sdk/browser/src/index';
+import { policyRulePresets } from '../../../packages/sdk/core/src/index';
+import { createScriptLoader } from '../../../packages/sdk/core/src/modules/script-loader/index';
+import { cloudflareZaraz } from '../../../packages/sdk/integrations/src/vendors/tag-managers/cloudflare-zaraz';
 
 const lifecycle = new AbortController();
 const { signal } = lifecycle;

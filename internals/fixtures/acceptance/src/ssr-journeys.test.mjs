@@ -286,7 +286,7 @@ const verifyNoZombie = async function verifyNoZombie(browser, app) {
 const readC15tVersion = function readC15tVersion() {
 	const packageJson = JSON.parse(
 		readFileSync(
-			new URL('../../../../packages/core/package.json', import.meta.url)
+			new URL('../../../../packages/sdk/core/package.json', import.meta.url)
 		)
 	);
 	return packageJson.version;
@@ -320,7 +320,7 @@ const hasMarketingCategory = function hasMarketingCategory(init) {
 
 /**
  * Direct HTTP assertions against the Nitro server routes the @c15t/vue
- * Nuxt module registers (packages/vue/src/module.ts →
+ * Nuxt module registers (packages/sdk/vue/src/module.ts →
  * runtime/server/{init,manifest}.get.ts). Runs against the already-booted
  * Nuxt server — no browser involved.
  */

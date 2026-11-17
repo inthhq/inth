@@ -40,7 +40,7 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/c15t/c15t.git",
-		"directory": "packages/astro"
+		"directory": "packages/sdk/astro"
 	},
 	"files": [
 		"dist",
@@ -135,13 +135,13 @@
 		"access": "public"
 	},
 	"scripts": {
-		"build": "rslib build && node ../../scripts/normalize-dist-types.mjs",
-		"build:docs": "bun ../../scripts/generate-package-docs.ts @c15t/astro",
+		"build": "rslib build && node ../../../scripts/normalize-dist-types.mjs",
+		"build:docs": "bun ../../../scripts/generate-package-docs.ts @c15t/astro",
 		"check-types": "tsc --noEmit",
 		"dev": "sh -c 'rslib build --no-dts --no-clean && rslib build --watch --no-dts --no-clean'",
-		"fmt": "oxfmt .",
-		"lint": "oxlint ./src",
-		"prepack": "pnpm run build:docs && bun ../../scripts/verify-package-artifacts.ts",
+		"fmt": "oxfmt -c ../../../oxfmt.sdk.config.ts .",
+		"lint": "oxlint -c ../../../oxlint.sdk.config.ts ./src",
+		"prepack": "pnpm run build:docs && bun ../../../scripts/verify-package-artifacts.ts",
 		"test": "vitest run",
 		"test:watch": "vitest"
 	},
@@ -156,12 +156,16 @@
 	"devDependencies": {
 		"@astrojs/react": "^6.0.6",
 		"@astrojs/svelte": "^9.0.1",
+		"@babel/parser": "7.28.5",
 		"@c15t/conformance": "workspace:*",
 		"@c15t/typescript-config": "workspace:*",
 		"@c15t/vitest-config": "workspace:*",
 		"@rslib/core": "0.23.2",
+		"@types/node": "25.5.0",
 		"@types/react": "19.2.17",
+		"@types/react-dom": "19.2.3",
 		"@vitejs/plugin-vue": "6.0.7",
+		"@vitest/coverage-istanbul": "4.1.10",
 		"astro": "^7.3.0",
 		"jsdom": "^25.0.0",
 		"oxfmt": "0.65.0",

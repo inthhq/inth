@@ -8,9 +8,9 @@ const ROOT = process.argv[2]
 	: join(import.meta.dirname, '..');
 
 const stylePackages = [
-	{ dir: 'packages/ui', name: '@c15t/ui' },
-	{ dir: 'packages/react', name: '@c15t/react' },
-	{ dir: 'packages/nextjs', name: '@c15t/nextjs' },
+	{ dir: 'packages/sdk/ui', name: '@c15t/ui' },
+	{ dir: 'packages/sdk/react', name: '@c15t/react' },
+	{ dir: 'packages/sdk/nextjs', name: '@c15t/nextjs' },
 ];
 
 const entries = ['styles.tw3.css', 'iab/styles.tw3.css'];

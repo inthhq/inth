@@ -1,5 +1,5 @@
 {
-	"description": "IAB GPP strings and in-app IABGPP_* keys both native cores must produce. Expected values come from the web encoder in packages/iab/src/gpp and decode with @iabgpp/cmpapi; packages/iab/src/__tests__/native-gpp-fixtures.test.ts checks both on every run. US National is MSPA version 2, the version the IAB reference libraries decode.",
+	"description": "IAB GPP strings and in-app IABGPP_* keys both native cores must produce. Expected values come from the web encoder in packages/sdk/iab/src/gpp and decode with @iabgpp/cmpapi; packages/sdk/iab/src/__tests__/native-gpp-fixtures.test.ts checks both on every run. US National is MSPA version 2, the version the IAB reference libraries decode.",
 	"spec": {
 		"repository": "https://github.com/InteractiveAdvertisingBureau/Global-Privacy-Platform",
 		"usNationalVersion": 2,

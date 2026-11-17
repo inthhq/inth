@@ -8,7 +8,7 @@ import { expect, it } from 'vitest';
 const FILE = 'consent-mode-v2.json';
 const committed = resolve(
 	import.meta.dirname,
-	'../native/protocol/google-consent-mode',
+	'../packages/native-protocol/google-consent-mode',
 	FILE
 );
 

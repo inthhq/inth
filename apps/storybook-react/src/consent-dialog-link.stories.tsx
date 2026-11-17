@@ -4,7 +4,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import {
 	ConsentDialog,
 	ConsentDialogLink,
-} from '../../../packages/react/src/index';
+} from '../../../packages/sdk/react/src/index';
 import {
 	editableConsentOptions,
 	editableStoredConsent,

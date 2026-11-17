@@ -142,7 +142,7 @@ package enum PolicyEvaluator {
 
     /// The categories the choice prompt asks about.
     ///
-    /// `projectChoiceScope` in `packages/core/src/policy.ts`. A declaration narrows the
+    /// `projectChoiceScope` in `packages/sdk/core/src/policy.ts`. A declaration narrows the
     /// policy scope. With nothing declared, a permissive rule asks about none of them,
     /// since categories outside the choice scope stay allowed there, and a strict rule
     /// asks about its whole scope, since nothing outside it may run. An IAB rule also
@@ -195,7 +195,7 @@ package enum PolicyEvaluator {
     ///
     /// `opt-in` and `iab` deny until the subject says yes. `opt-out` and `none` permit
     /// until the subject says no. That pair is `defaultPermission` in
-    /// `packages/core/src/consent-record/evaluate.ts`, which grants an in-scope category
+    /// `packages/sdk/core/src/consent-record/evaluate.ts`, which grants an in-scope category
     /// only for `model === 'opt-out' || model === 'none'`: an IAB rule therefore opens
     /// nothing by default here either, because a purpose no one consented to is not a
     /// purpose a TC String could vouch for. There is no unreachable case: an unreadable

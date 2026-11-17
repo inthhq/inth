@@ -3,7 +3,7 @@ pluginManagement {
 		// The bridge module applies com.android.library by id, without a version: a host app
 		// already has AGP on its buildscript classpath and a version there would fight it.
 		// This is the standalone build's pin, kept equal to the AGP React Native 0.87's own
-		// Gradle plugin is built against, and to native/core-android.
+		// Gradle plugin is built against, and to packages/android.
 		id("com.android.library") version "9.2.1"
 	}
 

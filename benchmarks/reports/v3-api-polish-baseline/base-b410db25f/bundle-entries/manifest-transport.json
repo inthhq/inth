@@ -36,21 +36,21 @@
 	},
 	"framework": "core",
 	"metadata": {
-		"allLocalesInputs": ["../../packages/translations/dist/all.js"],
+		"allLocalesInputs": ["../../packages/sdk/translations/dist/all.js"],
 		"devtoolsInputs": [],
 		"gitDirty": false,
 		"iabInputs": [],
 		"topInputsByBytesInOutput": [
-			"../../packages/translations/dist/5655.js:23517",
-			"../../packages/translations/dist/9941.js:22527",
-			"../../packages/translations/dist/6453.js:19920",
-			"../../packages/translations/dist/9476.js:18857",
-			"../../packages/translations/dist/3353.js:14622",
-			"../../packages/schema/dist/shared/policy-rule.js:9805",
-			"../../packages/translations/dist/5346.js:7503",
-			"../../packages/translations/dist/2114.js:7214",
-			"../../packages/translations/dist/5870.js:7138",
-			"../../packages/translations/dist/1561.js:7034"
+			"../../packages/sdk/translations/dist/5655.js:23517",
+			"../../packages/sdk/translations/dist/9941.js:22527",
+			"../../packages/sdk/translations/dist/6453.js:19920",
+			"../../packages/sdk/translations/dist/9476.js:18857",
+			"../../packages/sdk/translations/dist/3353.js:14622",
+			"../../packages/sdk/schema/dist/shared/policy-rule.js:9805",
+			"../../packages/sdk/translations/dist/5346.js:7503",
+			"../../packages/sdk/translations/dist/2114.js:7214",
+			"../../packages/sdk/translations/dist/5870.js:7138",
+			"../../packages/sdk/translations/dist/1561.js:7034"
 		]
 	},
 	"metrics": [

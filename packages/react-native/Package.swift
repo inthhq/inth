@@ -17,7 +17,7 @@ import PackageDescription
 // Two facts shape the layout:
 //
 // 1. The consent core is a pure Swift package with no React Native in it, per
-//    native/CONTRACT.md. It is a path dependency at ../../native/core-swift, and this
+//    packages/native-protocol/CONTRACT.md. It is a path dependency at ../swift, and this
 //    package adds nothing to it beyond the `C15t` install point the bridge needs.
 // 2. The TurboModule cannot compile without React Native's headers and the Codegen
 //    artifacts that `pod install` (or SPM sync) generates for the host app. Those
@@ -29,13 +29,13 @@ import PackageDescription
 //   C15T_SPM_INCLUDE_RN=1   Also build the React-linked target. Needs a host app that
 //                           vends React's headers and the generated `NativeC15tSpec`
 //                           protocol. Without it the product is the bridge layer only.
-//   C15T_CORE_PATH=<path>   Where native/core-swift lives, when the checkout layout
-//                           differs. Defaults to ../../native/core-swift.
+//   C15T_CORE_PATH=<path>   Where packages/swift lives, when the checkout layout
+//                           differs. Defaults to ../swift.
 // Remote version/URL resolution is not supported until the native source package
 // publishes both C15tCore and C15tApple. Use C15T_CORE_PATH for private source builds.
 let env = ProcessInfo.processInfo.environment
 
-let corePath = env["C15T_CORE_PATH"] ?? "../../native/core-swift"
+let corePath = env["C15T_CORE_PATH"] ?? "../swift"
 let includeReact = env["C15T_SPM_INCLUDE_RN"] == "1"
 
 if env["C15T_CORE_VERSION"] != nil || env["C15T_CORE_URL"] != nil {

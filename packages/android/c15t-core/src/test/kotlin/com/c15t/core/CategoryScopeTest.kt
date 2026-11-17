@@ -11,7 +11,7 @@ import kotlin.test.assertEquals
  *
  * The web dialog derives that list from the resolved policy crossed with the
  * categories the app registered -- `choiceScope ?? scope` in `use-manager.ts`,
- * projected in `packages/core/src/policy.ts` -- and never from the category
+ * projected in `packages/sdk/core/src/policy.ts` -- and never from the category
  * vocabulary. A native core that listed the vocabulary instead would show a
  * subject categories the resolved rule does not govern, and the same backend
  * would answer two different dialogs by platform. These tests pin the kernel's
@@ -37,7 +37,7 @@ class CategoryScopeTest {
 	fun `a permissive rule and no declaration offer necessary alone`() {
 		// Categories outside a permissive choice scope stay allowed, so with nothing
 		// declared there is no category to ask about: `projectChoiceScope` in
-		// `packages/core/src/policy.ts` answers an empty scope, and the prompt asks for
+		// `packages/sdk/core/src/policy.ts` answers an empty scope, and the prompt asks for
 		// an acknowledgement instead.
 		val kernel = kernelWithPolicy(
 			scope = """["measurement"]""",

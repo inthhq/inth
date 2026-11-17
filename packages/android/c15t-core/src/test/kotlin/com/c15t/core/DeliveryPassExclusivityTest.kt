@@ -27,7 +27,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * The exclusivity rule in `native/CONTRACT.md`, "The pending save queue": only one delivery
+ * The exclusivity rule in `packages/native-protocol/CONTRACT.md`, "The pending save queue": only one delivery
  * pass may be in flight per core.
  *
  * A pass reads the queue once and then delivers entry by entry, so every entry it read stays

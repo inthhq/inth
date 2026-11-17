@@ -1,5 +1,5 @@
 /**
- * Writes `native/protocol/local-policy/parity.json`: author policy rules in the
+ * Writes `packages/native-protocol/local-policy/parity.json`: author policy rules in the
  * backend's `PolicyRule` vocabulary, the canonical rule `normalizePolicyRule`
  * makes from each, and the rule `resolvePolicyRules` picks for each location.
  *
@@ -21,18 +21,18 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { resolvePolicyRules } from '../packages/schema/src/shared/policy-resolution';
-import { writePolicyResolutionWire } from '../packages/schema/src/shared/policy-resolution-wire';
+import { resolvePolicyRules } from '../packages/sdk/schema/src/shared/policy-resolution';
+import { writePolicyResolutionWire } from '../packages/sdk/schema/src/shared/policy-resolution-wire';
 import {
 	inspectPolicyRules,
 	normalizePolicyRule,
-} from '../packages/schema/src/shared/policy-rule';
-import type { PolicyRule } from '../packages/schema/src/shared/policy-rule';
+} from '../packages/sdk/schema/src/shared/policy-rule';
+import type { PolicyRule } from '../packages/sdk/schema/src/shared/policy-rule';
 import {
 	choicePromptFingerprintInput,
 	noticePromptFingerprintInput,
 	policyFingerprintInput,
-} from '../packages/schema/src/shared/policy-rule-fingerprint';
+} from '../packages/sdk/schema/src/shared/policy-rule-fingerprint';
 
 const rules: PolicyRule[] = [
 	{
@@ -713,7 +713,9 @@ const fixture = {
 
 const output =
 	process.argv[2] ??
-	fileURLToPath(new URL('../native/protocol/local-policy', import.meta.url));
+	fileURLToPath(
+		new URL('../packages/native-protocol/local-policy', import.meta.url)
+	);
 mkdirSync(output, { recursive: true });
 writeFileSync(
 	join(output, 'parity.json'),

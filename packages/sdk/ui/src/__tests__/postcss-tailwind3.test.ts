@@ -239,7 +239,7 @@ describe('@c15t/ui/postcss-tailwind3', () => {
 			'/app/node_modules/c15t-theme/dist/styles.css',
 			'/repo/packages/web/dist/styles.css',
 			// Another monorepo's workspace package with a c15t-like name.
-			'/home/dev/app/packages/react/dist/styles.css',
+			'/home/dev/app/packages/sdk/react/dist/styles.css',
 			'/app/src/styles.css',
 		]) {
 			expect(isC15tUiStylesheetPath(path)).toBe(false);

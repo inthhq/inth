@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ConsentDialogLink from '../../../packages/vue/src/runtime/components/consent-dialog-link.vue';
+import ConsentDialogLink from '../../../packages/sdk/vue/src/runtime/components/consent-dialog-link.vue';
 
 import '../../docs-recipe-page.css';
 </script>

@@ -3,12 +3,12 @@ import XCTest
 
 @_spi(C15tInternal) @testable import C15tCore
 
-/// The Swift half of "WebView consent" in `native/CONTRACT.md`. The scripts
+/// The Swift half of "WebView consent" in `packages/native-protocol/CONTRACT.md`. The scripts
 /// themselves run in a browser in the `@c15t/core` and `@c15t/browser` tests.
 final class WebViewConsentTests: XCTestCase {
     static let protocolDirectory = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
         .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-        .appendingPathComponent("protocol/webview")
+        .appendingPathComponent("native-protocol/webview")
 
     struct OriginCases: Decodable {
         struct Case: Decodable {

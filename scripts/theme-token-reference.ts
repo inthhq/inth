@@ -2,10 +2,11 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 /** Source of truth for documented `--c15t-*` variables. */
-export const themeTokenSource = 'packages/ui/src/theme/types.ts';
+export const themeTokenSource = 'packages/sdk/ui/src/theme/types.ts';
 
 /** Generated token table included by the customization docs. */
-export const themeTokenDestination = 'docs/shared/reference/theme-tokens.mdx';
+export const themeTokenDestination =
+	'packages/sdk/docs/shared/reference/theme-tokens.mdx';
 
 interface ThemeToken {
 	variable: string;

@@ -9,7 +9,7 @@ import { expect, waitFor, within } from 'storybook/test';
 import {
 	ConsentBanner,
 	ConsentDialog,
-} from '../../../packages/react/src/index';
+} from '../../../packages/sdk/react/src/index';
 import {
 	editableConsentOptions,
 	StorybookConsentProvider,

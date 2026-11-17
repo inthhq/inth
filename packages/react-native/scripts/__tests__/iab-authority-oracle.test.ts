@@ -20,7 +20,7 @@ it('reproduces independent IAB authority bytes with the pinned reference codec',
 				readFileSync(
 					resolve(
 						import.meta.dirname,
-						'../../../../native/protocol/iab/authority-oracle.json'
+						'../../../native-protocol/iab/authority-oracle.json'
 					),
 					'utf8'
 				)

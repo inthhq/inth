@@ -31,10 +31,10 @@ import kotlin.test.assertTrue
  * actually reads -- the published snapshot, the body a bridge forwards, and the `IABTCF_*` mirror --
  * because a prune that lives only inside the helper would still leave all three serving the wide list.
  *
- * The vectors are the shared `native/protocol/vendor-list-scope-*` fixtures this core already claims
+ * The vectors are the shared `packages/native-protocol/vendor-list-scope-*` fixtures this core already claims
  * in [com.c15t.core.tc.VendorListScopeFixturesTest], graded here through the kernel rather than
  * against the helper directly. Their oracle is `narrowGVLToVendors` in
- * `packages/iab/src/tcf/fetch-gvl.ts`, called by the generator, so what a scoped device ends up
+ * `packages/sdk/iab/src/tcf/fetch-gvl.ts`, called by the generator, so what a scoped device ends up
  * holding is the browser build's answer and not Kotlin's opinion about it.
  *
  * Two axes are deliberately absent here, because they belong to the file that grades the prune and

@@ -2,7 +2,7 @@ import { buttonRenders } from '@c15t/conformance/play/button';
 import { buttonVariants } from '@c15t/ui/styles/primitives';
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 
-import { enTranslations } from '../../../packages/translations/src';
+import { enTranslations } from '../../../packages/sdk/translations/src';
 
 const meta = {
 	parameters: {

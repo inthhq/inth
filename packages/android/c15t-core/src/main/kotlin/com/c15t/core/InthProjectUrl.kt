@@ -3,7 +3,7 @@ package com.c15t.core
 /**
  * A `backendUrl` that is not an Inth project URL.
  *
- * @property reason The code from `native/protocol/project-url/cases.json`: `empty`,
+ * @property reason The code from `packages/native-protocol/project-url/cases.json`: `empty`,
  * `malformed`, `scheme`, `credentials`, `host`, `port`, `path` or `query`.
  */
 class InthProjectUrlException(
@@ -14,7 +14,7 @@ class InthProjectUrlException(
 /**
  * The project URL rule for the mobile SDKs, which work only with the Inth hosted service.
  *
- * `native/protocol/project-url/cases.json` is the shared fixture. Swift and TypeScript
+ * `packages/native-protocol/project-url/cases.json` is the shared fixture. Swift and TypeScript
  * apply the same steps in the same order.
  */
 object InthProjectUrl {

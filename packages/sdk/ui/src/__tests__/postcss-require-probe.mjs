@@ -6,7 +6,7 @@ import { createRequire } from 'node:module';
 
 const requireFromProbe = createRequire(import.meta.url);
 const postcss = requireFromProbe('postcss');
-// Self-reference resolution: `require()` walks up to packages/ui/package.json
+// Self-reference resolution: `require()` walks up to packages/sdk/ui/package.json
 // and maps `@c15t/ui/postcss-tailwind3` through its exports map onto the
 // built dist entry — the same lookup a consumer's require() performs.
 const pluginNamespace = requireFromProbe('@c15t/ui/postcss-tailwind3');

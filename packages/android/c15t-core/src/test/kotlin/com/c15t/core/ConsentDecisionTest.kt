@@ -14,7 +14,7 @@ import kotlin.test.assertTrue
 
 /**
  * The decision surface a host app's own Kotlin code reads, per
- * `native/CONTRACT.md` section "Native SDK gating".
+ * `packages/native-protocol/CONTRACT.md` section "Native SDK gating".
  *
  * `isAllowed` answers `false` for a refusal and for an unresolved policy alike, and
  * those need opposite handling. These tests pin the three-state answer, and the rule a

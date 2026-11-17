@@ -22,25 +22,28 @@ export default defineConfig({
 				// name. Repository tests run before package builds, so exercise their
 				// real sources here.
 				if (
-					source === '../packages/schema/dist/index.js' ||
+					source === '../packages/sdk/schema/dist/index.js' ||
 					source === '@c15t/schema'
 				) {
 					return fileURLToPath(
-						new URL('../packages/schema/src/index.ts', import.meta.url)
+						new URL('../packages/sdk/schema/src/index.ts', import.meta.url)
 					);
 				}
 				if (
-					source === '../packages/translations/dist/index.js' ||
+					source === '../packages/sdk/translations/dist/index.js' ||
 					source === '@c15t/translations'
 				) {
 					return fileURLToPath(
-						new URL('../packages/translations/src/index.ts', import.meta.url)
+						new URL(
+							'../packages/sdk/translations/src/index.ts',
+							import.meta.url
+						)
 					);
 				}
 				if (source === '@c15t/translations/en') {
 					return fileURLToPath(
 						new URL(
-							'../packages/translations/src/translations/en.ts',
+							'../packages/sdk/translations/src/translations/en.ts',
 							import.meta.url
 						)
 					);
@@ -49,11 +52,11 @@ export default defineConfig({
 				// Resolve that real implementation without requiring a core build.
 				if (
 					source === '@c15t/core' &&
-					importer?.endsWith('/packages/integrations/src/engine/runtime.ts')
+					importer?.endsWith('/packages/sdk/integrations/src/engine/runtime.ts')
 				) {
 					return fileURLToPath(
 						new URL(
-							'../packages/core/src/libs/script-loader/debug.ts',
+							'../packages/sdk/core/src/libs/script-loader/debug.ts',
 							import.meta.url
 						)
 					);
@@ -62,11 +65,11 @@ export default defineConfig({
 				// source instead.
 				if (
 					source === '#inline-start' &&
-					importer?.endsWith('/packages/integrations/src/engine/runtime.ts')
+					importer?.endsWith('/packages/sdk/integrations/src/engine/runtime.ts')
 				) {
 					return fileURLToPath(
 						new URL(
-							'../packages/integrations/src/engine/inline-start.ts',
+							'../packages/sdk/integrations/src/engine/inline-start.ts',
 							import.meta.url
 						)
 					);
@@ -90,7 +93,7 @@ export default defineConfig({
 				`@c15t/integrations/${entry}`,
 				fileURLToPath(
 					new URL(
-						`../packages/integrations/src/vendors/${source}.ts`,
+						`../packages/sdk/integrations/src/vendors/${source}.ts`,
 						import.meta.url
 					)
 				),

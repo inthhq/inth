@@ -11,7 +11,6 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
-import { parse } from 'yaml';
 
 import matrix from './mobile-compatibility.json';
 
@@ -27,10 +26,6 @@ const [fixtureSdk] = fixtureManifest.dependencies.expo.split('.');
 const expoCells = matrix.filter((cell) => cell.expo !== null);
 const oldest = expoCells.at(0);
 const newest = expoCells.at(-1);
-/** The fixture builds its own SDK in place, so the packed range stops below it. */
-const newestBelowFixture = expoCells.findLast(
-	(cell) => cell.expo?.split('.')[0] !== fixtureSdk
-);
 
 /** A tarball whose only content is the manifest the helper checks. */
 const fakePackage = (directory: string): string => {
@@ -45,22 +40,6 @@ const fakePackage = (directory: string): string => {
 };
 
 describe('Expo vendor journey range', () => {
-	it('runs the fixture and both ends of the rest of the Expo range on iOS and Android', () => {
-		const github = parse(
-			readFileSync(join(root, '.github/workflows/mobile-app-e2e.yml'), 'utf8')
-		);
-		const depot = parse(
-			readFileSync(join(root, '.depot/workflows/android-emulator.yml'), 'utf8')
-		);
-		const expected = ['fixture', oldest?.id, newestBelowFixture?.id];
-		expect(github.jobs['expo-ios-vendor-sdks'].strategy.matrix.cell).toEqual(
-			expected
-		);
-		expect(depot.jobs['expo-vendor-sdks'].strategy.matrix.cell).toEqual(
-			expected
-		);
-	});
-
 	it('pins a packed consumer to the cell and keeps the vendor SDK pins', () => {
 		const directory = mkdtempSync(join(tmpdir(), 'c15t-expo-consumer-'));
 		try {

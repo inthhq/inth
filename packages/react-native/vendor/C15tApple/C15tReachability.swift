@@ -3,7 +3,7 @@ import Network
 
 /// Replays the pending consent queue when the process gains a network it did not have.
 ///
-/// This is the narrowest of the three lifecycle legs in `native/CONTRACT.md`, and on iOS
+/// This is the narrowest of the three lifecycle legs in `packages/native-protocol/CONTRACT.md`, and on iOS
 /// the unconditional one. The contract's permission-decline clause is Android-only, and
 /// the reason is literal: `ACCESS_NETWORK_STATE` belongs to the application, so an SDK
 /// that wrote it into every host's manifest would spend the maintainer's privacy surface

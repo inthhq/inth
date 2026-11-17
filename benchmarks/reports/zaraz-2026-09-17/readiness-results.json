@@ -108,12 +108,12 @@
 	},
 	"sourceCommit": "77018cc5d5afc936144271ecda1c15b1ed8bdbb0",
 	"sourceSha256": {
-		"packages/core/src/modules/script-loader/index.ts": "395baca57ea309ac5c76fd884df348e58030b8c6a3ab6ca8f8b5c1a525b9a0b9",
-		"packages/core/src/modules/script-loader/mount.ts": "fbd1c0d9c98449855c73064090c22b47b3c6439166b3d7a7b808ce9bc9879a1b",
-		"packages/core/src/modules/script-loader/normalize.ts": "5c92f2d134491f2dbb476286dc7a5eeb6487f607481c6fd9dfe1d7f2eed6f8f7",
-		"packages/core/src/modules/script-loader/types.ts": "f0670d117869da81cff905439cbc810d8bdb818f01be965378d6e918126da872",
-		"packages/core/src/modules/script-loader/callbacks.ts": "a8bcd7422ef9de723782279a716a8ef20caf41d486bf37549a326a8a62b4b94e",
-		"packages/scripts/src/vendors/tag-managers/cloudflare-zaraz.ts": "689a16d90ca90adf0ed1cba7f84daf47c0306ada29204b64ad75a899073c42e5",
+		"packages/sdk/core/src/modules/script-loader/index.ts": "395baca57ea309ac5c76fd884df348e58030b8c6a3ab6ca8f8b5c1a525b9a0b9",
+		"packages/sdk/core/src/modules/script-loader/mount.ts": "fbd1c0d9c98449855c73064090c22b47b3c6439166b3d7a7b808ce9bc9879a1b",
+		"packages/sdk/core/src/modules/script-loader/normalize.ts": "5c92f2d134491f2dbb476286dc7a5eeb6487f607481c6fd9dfe1d7f2eed6f8f7",
+		"packages/sdk/core/src/modules/script-loader/types.ts": "f0670d117869da81cff905439cbc810d8bdb818f01be965378d6e918126da872",
+		"packages/sdk/core/src/modules/script-loader/callbacks.ts": "a8bcd7422ef9de723782279a716a8ef20caf41d486bf37549a326a8a62b4b94e",
+		"packages/sdk/scripts/src/vendors/tag-managers/cloudflare-zaraz.ts": "689a16d90ca90adf0ed1cba7f84daf47c0306ada29204b64ad75a899073c42e5",
 		"benchmarks/script-lifecycle-bench/zaraz/run.ts": "d2d80e65b9d08141806c09669cba5be33b18e1fcbbd5f0a13981fe585085958d"
 	}
 }

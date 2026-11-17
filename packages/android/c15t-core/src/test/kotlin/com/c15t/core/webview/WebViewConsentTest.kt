@@ -21,7 +21,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
 /**
- * The Kotlin half of "WebView consent" in `native/CONTRACT.md`. The scripts
+ * The Kotlin half of "WebView consent" in `packages/native-protocol/CONTRACT.md`. The scripts
  * themselves run in a browser in `@c15t/core` and `@c15t/browser` tests.
  */
 class WebViewConsentTest {
@@ -38,7 +38,7 @@ class WebViewConsentTest {
 	)
 
 	@Test fun `origins normalize like every other platform`() {
-		val cases = Json.parseToJsonElement(root("native/protocol/webview/origins.json").readText())
+		val cases = Json.parseToJsonElement(root("packages/native-protocol/webview/origins.json").readText())
 			.jsonObject.getValue("cases").jsonArray
 		assertTrue(cases.size > 20)
 		for (case in cases) {
@@ -49,8 +49,8 @@ class WebViewConsentTest {
 	}
 
 	@Test fun `the generated scripts are the protocol files`() {
-		assertEquals(root("native/protocol/webview/document-start.js").readText().trim().removeSuffix(";"), WebViewConsentScripts.DOCUMENT_START)
-		assertEquals(root("native/protocol/webview/update.js").readText().trim().removeSuffix(";"), WebViewConsentScripts.UPDATE)
+		assertEquals(root("packages/native-protocol/webview/document-start.js").readText().trim().removeSuffix(";"), WebViewConsentScripts.DOCUMENT_START)
+		assertEquals(root("packages/native-protocol/webview/update.js").readText().trim().removeSuffix(";"), WebViewConsentScripts.UPDATE)
 	}
 
 	@Test fun `a helper refuses an empty or unsafe origin list`() {

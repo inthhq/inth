@@ -2,15 +2,15 @@
 /**
  * Copy the Swift consent core into the React Native package.
  *
- * `native/core-swift` is the core's only home, and the binding's pod used to reach it through
+ * `packages/swift` is the core's only home, and the binding's pod used to reach it through
  * `s.dependency "C15tCore"`. That dependency resolves inside this repository only because the
- * example Podfiles write `pod "C15tCore", :path => "../native/core-swift"`. An app that
+ * example Podfiles write `pod "C15tCore", :path => "../packages/swift"`. An app that
  * installs `@c15t/react-native` from npm has no such path and no published pod to fall back
  * to, so `pod install` fails there while every job in this repository stays green. CocoaPods
  * has no way to point a `s.dependency` at a path, so the only shape that resolves for a
  * consumer is the core's sources travelling inside the package.
  *
- * Vendoring is a packaging step, not a fork. `native/core-swift` stays the source of truth and
+ * Vendoring is a packaging step, not a fork. `packages/swift` stays the source of truth and
  * `packages/react-native/Package.swift` stays two-module, so a later Swift Package Manager
  * release of the core is unaffected; only the CocoaPods path compiles the copy, into the
  * binding's own module. The bridge's `import C15tCore` sites are wrapped in
@@ -22,7 +22,7 @@
  * synced would all ship silently. `--check` compares the two trees byte for byte and names
  * every difference, and `scripts/check-publish-artifacts.ts` runs it as part of the release
  * gate, so a stale copy cannot be published. Run this script without `--check` after changing
- * anything under `native/core-swift/Sources/C15tCore`.
+ * anything under `packages/swift/Sources/C15tCore`.
  */
 
 import {
@@ -41,8 +41,8 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
 /** The core's source of truth. */
 export const coreSourceDir = join(
 	ROOT,
-	'native',
-	'core-swift',
+	'packages',
+	'swift',
 	'Sources',
 	'C15tCore'
 );
@@ -60,7 +60,7 @@ export const vendoredCoreDir = join(
 export interface VendoredCoreFile {
 	/** Path relative to `coreSourceDir`, POSIX-style. Also its path inside the copy. */
 	relativePath: string;
-	/** The file in `native/core-swift`. */
+	/** The file in `packages/swift`. */
 	sourcePath: string;
 	/** The generated file under `packages/react-native/vendor`. */
 	vendoredPath: string;
@@ -192,10 +192,10 @@ export const describeDrift = function describeDrift(
 	}
 
 	if (drift.kind === 'orphan') {
-		return `vendor/C15tCore/${drift.relativePath} has no file in native/core-swift. Run bun scripts/sync-vendored-core.ts.`;
+		return `vendor/C15tCore/${drift.relativePath} has no file in packages/swift. Run bun scripts/sync-vendored-core.ts.`;
 	}
 
-	return `vendor/C15tCore/${drift.relativePath} differs from native/core-swift/Sources/C15tCore/${drift.relativePath}. Run bun scripts/sync-vendored-core.ts.`;
+	return `vendor/C15tCore/${drift.relativePath} differs from packages/swift/Sources/C15tCore/${drift.relativePath}. Run bun scripts/sync-vendored-core.ts.`;
 };
 
 /**
@@ -253,7 +253,7 @@ const main = function main(): void {
 
 	if (drift.length > 0) {
 		console.error(
-			`The vendored Swift core is stale (${drift.length} file(s) out of step with native/core-swift):`
+			`The vendored Swift core is stale (${drift.length} file(s) out of step with packages/swift):`
 		);
 		for (const entry of drift) {
 			console.error(`  - ${describeDrift(entry)}`);
@@ -265,7 +265,7 @@ const main = function main(): void {
 
 	console.log(
 		check
-			? `Vendored Swift core matches native/core-swift: ${fileCount} file(s).`
+			? `Vendored Swift core matches packages/swift: ${fileCount} file(s).`
 			: `Vendored ${fileCount} file(s) into packages/react-native/vendor/C15tCore.`
 	);
 };

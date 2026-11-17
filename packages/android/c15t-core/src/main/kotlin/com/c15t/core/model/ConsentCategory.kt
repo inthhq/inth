@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 /**
  * Every category the c15t runtime knows about, in stable display order.
  *
- * Mirrors `CONSENT_CATEGORIES` in `packages/core/src/consent-record/types.ts`.
+ * Mirrors `CONSENT_CATEGORIES` in `packages/sdk/core/src/consent-record/types.ts`.
  * `necessary` is never a subject choice; it is always granted.
  */
 enum class ConsentCategory(val wireName: String) {

@@ -23,13 +23,13 @@ import kotlin.test.assertTrue
  * The shape under test is an install written by a build that minted the legacy UUID
  * subject id. Every save that install made was refused by the producer, so the device
  * holds a decision attributed to an id no query returns while the core keeps reporting a
- * committed write and the backend holds nothing. `native/CONTRACT.md` prices that
+ * committed write and the backend holds nothing. `packages/native-protocol/CONTRACT.md` prices that
  * identity at nothing, which means the whole stored envelope goes with it, and this is
  * the one fixture for this core that holds the line: a well-formed grant under a refused
  * id has to read exactly like a first launch, records and all, and must not put the old
  * bytes back on the wire.
  *
- * A core test rather than a shared `native/protocol` fixture on purpose: the JavaScript
+ * A core test rather than a shared `packages/native-protocol` fixture on purpose: the JavaScript
  * kernel accepts a UUID subject id without looking at it, so it cannot produce an
  * expectation for a refusal, and a stored envelope is device output no kernel writes.
  */
@@ -239,7 +239,7 @@ class UnusableSubjectIdTest {
 		/** A usable id the install starts on, taken from the vector table the three SDKs share. */
 		const val HEALTHY_ID = "sub_4ZrjtiRsJnoW34Px8dAvhPTKJiWc"
 
-		/** The code both cores emit on this path, per `native/CONTRACT.md`. */
+		/** The code both cores emit on this path, per `packages/native-protocol/CONTRACT.md`. */
 		const val CODE = "subject-id-unusable"
 
 		fun subjectJson(id: String): String =

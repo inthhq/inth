@@ -46,9 +46,9 @@ type BoundaryFamily = 'iab' | 'devtools' | 'allLocales';
  */
 const BOUNDARY_MATCHERS: Record<BoundaryFamily, RegExp> = {
 	allLocales:
-		/packages\/translations\/dist\/(?:all\.js|translations\/(?!en\.js)[^/]+\.js)$/u,
-	devtools: /packages\/dev-tools\//u,
-	iab: /packages\/iab\/|@iabtechlabtcf\//u,
+		/packages\/(?:sdk\/)?translations\/dist\/(?:all\.js|translations\/(?!en\.js)[^/]+\.js)$/u,
+	devtools: /packages\/(?:sdk\/)?dev-tools\//u,
+	iab: /packages\/(?:sdk\/)?iab\/|@iabtechlabtcf\//u,
 };
 
 const classifyBoundaries = function classifyBoundaries(

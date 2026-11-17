@@ -15,7 +15,10 @@ const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
  */
 describe('c15t umbrella dependencies', () => {
 	const manifest = JSON.parse(
-		readFileSync(join(REPO_ROOT, 'packages', 'c15t', 'package.json'), 'utf8')
+		readFileSync(
+			join(REPO_ROOT, 'packages', 'sdk', 'c15t', 'package.json'),
+			'utf8'
+		)
 	) as { dependencies?: Record<string, string>; peerDependencies?: unknown };
 
 	it.each([

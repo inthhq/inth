@@ -1,5 +1,5 @@
 /**
- * Writes `native/protocol/bundled-policy/invalid-resources.json`: variants of the
+ * Writes `packages/native-protocol/bundled-policy/invalid-resources.json`: variants of the
  * shared bundled-policy resources that a native core cannot use.
  *
  * Each case is refused outright (`refused`) or loads without a usable IAB vendor
@@ -17,7 +17,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const directory = fileURLToPath(
-	new URL('../native/protocol/bundled-policy', import.meta.url)
+	new URL('../packages/native-protocol/bundled-policy', import.meta.url)
 );
 type Payload = Record<string, unknown>;
 type Base = 'iab' | 'parity';

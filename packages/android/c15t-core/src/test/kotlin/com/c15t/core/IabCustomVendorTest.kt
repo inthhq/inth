@@ -22,7 +22,7 @@ class IabCustomVendorTest {
 	 * and 2, vendor 2 claims legitimate interest for 2 and 7; nobody declares special feature 1.
 	 */
 	private fun protocol(name: String) = generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }
-		.map { File(it, "native/protocol/iab/$name") }.first { it.exists() }
+		.map { File(it, "packages/native-protocol/iab/$name") }.first { it.exists() }
 	private val v = Json { ignoreUnknownKeys = true }.decodeFromString<Vector>(protocol("additional-consent-cases.json").readText())
 	private val config = NativeConfig("https://cmp.example.test", iab = v.configuration)
 

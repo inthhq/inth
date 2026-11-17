@@ -8,8 +8,8 @@ import { describe, expect, it } from 'vitest';
 import {
 	nativeAppLabels,
 	nativeConsentLabels,
-} from '../packages/translations/src/native-app-labels';
-import en from '../packages/translations/src/translations/en';
+} from '../packages/sdk/translations/src/native-app-labels';
+import en from '../packages/sdk/translations/src/translations/en';
 import {
 	CONSENT_TABLE,
 	collectNativeIabCopy,
@@ -25,8 +25,8 @@ import {
 const REPO_ROOT = fileURLToPath(new URL('..', import.meta.url));
 
 const UI_SOURCE_ROOTS = [
-	'native/core-swift/Sources/C15tConsentUI',
-	'native/core-android/c15t-consent-ui/src/main',
+	'packages/swift/Sources/C15tConsentUI',
+	'packages/android/c15t-consent-ui/src/main',
 ];
 
 /** Every English value of the category-mode table, web keys included. */

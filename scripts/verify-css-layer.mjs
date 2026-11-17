@@ -5,7 +5,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 
 import { chromium } from 'playwright';
 
-const C15T_UI_STYLESHEET = 'packages/ui/dist/styles.css';
+const C15T_UI_STYLESHEET = 'packages/sdk/ui/dist/styles.css';
 
 /**
  * The v3 Tailwind override contract:

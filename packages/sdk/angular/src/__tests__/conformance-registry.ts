@@ -44,7 +44,7 @@ export const CONFORMANCE_COMPONENTS: Partial<
 
 // ---------------------------------------------------------------------------
 // Policy-scenario fixture: the surfaces every policy session renders, in
-// this order, like `packages/svelte/src/__tests__/fixtures/policy-fixture.svelte`.
+// this order, like `packages/sdk/svelte/src/__tests__/fixtures/policy-fixture.svelte`.
 // The `[c15tConsentDialogLink]` button is always rendered after them.
 // ---------------------------------------------------------------------------
 export const POLICY_SURFACES: {

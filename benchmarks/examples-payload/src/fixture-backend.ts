@@ -103,7 +103,7 @@ export const startFixtureBackend = async function startFixtureBackend(
 	)) as PolicyFixturesModule;
 	const manifest = await fixtures.buildBrowserBenchManifest();
 	const init = await fixtures.resolveBrowserBenchInit(manifest as never);
-	const browserDist = join(options.root, 'packages/browser/dist');
+	const browserDist = join(options.root, 'packages/sdk/browser/dist');
 	let counts: Record<string, number> = {};
 
 	const json = function json(

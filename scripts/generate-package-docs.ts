@@ -33,6 +33,9 @@ import {
 } from './rewrite-package-doc-links';
 
 const ROOT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+/** leadtype reads `docs/` under this folder. */
+const DOCS_SOURCE_ROOT = join(ROOT_DIR, 'packages/sdk');
+const DOCS_DIR = 'packages/sdk/docs';
 
 export interface PackageDocsConfig {
 	name: string;
@@ -108,7 +111,7 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			'integrations/**/*.mdx',
 		],
 		name: '@c15t/core',
-		outDir: 'packages/core',
+		outDir: 'packages/sdk/core',
 		skill: {
 			install: '`npm install c15t`',
 			topic:
@@ -127,7 +130,7 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			'integrations/**/*.mdx',
 		],
 		name: '@c15t/react',
-		outDir: 'packages/react',
+		outDir: 'packages/sdk/react',
 		skill: {
 			install: '`npm install c15t` and import `c15t/react`',
 			topic: 'the project is a React app, such as Vite or React Router',
@@ -145,7 +148,7 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			'integrations/**/*.mdx',
 		],
 		name: '@c15t/nextjs',
-		outDir: 'packages/nextjs',
+		outDir: 'packages/sdk/nextjs',
 		skill: {
 			install: '`npm install c15t` and import `c15t/next`',
 			topic:
@@ -165,7 +168,7 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			'integrations/**/*.mdx',
 		],
 		name: '@c15t/vue',
-		outDir: 'packages/vue',
+		outDir: 'packages/sdk/vue',
 		skill: {
 			install: '`npm install c15t` and import `c15t/vue`',
 			topic: 'the project is a Vue or Nuxt app',
@@ -184,7 +187,7 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			'integrations/**/*.mdx',
 		],
 		name: '@c15t/svelte',
-		outDir: 'packages/svelte',
+		outDir: 'packages/sdk/svelte',
 		skill: {
 			install: '`npm install c15t` and import `c15t/svelte`',
 			topic: 'the project is a Svelte or SvelteKit app',
@@ -202,7 +205,7 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			'integrations/**/*.mdx',
 		],
 		name: '@c15t/angular',
-		outDir: 'packages/angular',
+		outDir: 'packages/sdk/angular',
 		skill: {
 			install: '`npm install @c15t/angular`',
 			topic:
@@ -220,7 +223,7 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			'integrations/**/*.mdx',
 		],
 		name: '@c15t/astro',
-		outDir: 'packages/astro',
+		outDir: 'packages/sdk/astro',
 		skill: {
 			install: '`npm install c15t` and import `c15t/astro`',
 			topic: 'the project is an Astro site',
@@ -238,7 +241,7 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			'integrations/**/*.mdx',
 		],
 		name: '@c15t/tanstack-start',
-		outDir: 'packages/tanstack-start',
+		outDir: 'packages/sdk/tanstack-start',
 		skill: {
 			install: '`npm install c15t` and import `c15t/tanstack-start`',
 			topic: 'the project is a TanStack Start app',
@@ -257,7 +260,7 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			'integrations/**/*.mdx',
 		],
 		name: 'c15t',
-		outDir: 'packages/c15t',
+		outDir: 'packages/sdk/c15t',
 		skill: {
 			install:
 				'`npm install c15t` and import the framework subpath, such as `c15t/next`',
@@ -279,7 +282,7 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			'integrations/**/*.mdx',
 		],
 		name: '@c15t/integrations',
-		outDir: 'packages/integrations',
+		outDir: 'packages/sdk/integrations',
 		skill: {
 			install: '`npm install @c15t/integrations` alongside `c15t`',
 			topic:
@@ -300,7 +303,7 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			'integrations/**/*.mdx',
 		],
 		name: '@c15t/scripts',
-		outDir: 'packages/scripts',
+		outDir: 'packages/sdk/scripts',
 		skill: {
 			// The compatibility package re-exports @c15t/integrations; new code
 			// installs the canonical package.
@@ -321,7 +324,7 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			'integrations/**/*.mdx',
 		],
 		name: '@c15t/browser',
-		outDir: 'packages/browser',
+		outDir: 'packages/sdk/browser',
 		skill: {
 			install:
 				'a `<script>` tag for `@c15t/browser` from jsDelivr, or `npm install @c15t/browser`',
@@ -366,7 +369,7 @@ const runLeadtype = async function runLeadtype(config: PackageDocsConfig) {
 		'generate',
 		'--bundle',
 		'--src',
-		ROOT_DIR,
+		DOCS_SOURCE_ROOT,
 		'--out',
 		outDir,
 		'--name',
@@ -436,14 +439,14 @@ const runLeadtype = async function runLeadtype(config: PackageDocsConfig) {
 			const path = join(docsDir, file);
 			const content = await restorePackageDocIncludes(
 				readFileSync(path, 'utf8'),
-				join(ROOT_DIR, 'docs', file.replace(/\.md$/u, '.mdx'))
+				join(ROOT_DIR, DOCS_DIR, file.replace(/\.md$/u, '.mdx'))
 			);
 			writeFileSync(path, String(await processor.process(content)));
 		})
 	);
 	// Recipes retain their real screenshots when read from an installed package.
 	if (existsSync(join(docsDir, 'customization/recipes.md'))) {
-		cpSync(join(ROOT_DIR, 'docs/assets/v3'), join(docsDir, 'assets/v3'), {
+		cpSync(join(ROOT_DIR, DOCS_DIR, 'assets/v3'), join(docsDir, 'assets/v3'), {
 			recursive: true,
 		});
 	}

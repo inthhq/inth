@@ -14,7 +14,7 @@ import kotlinx.serialization.json.Json
 /**
  * Storage keys shared by every c15t native core.
  *
- * The names match the iOS Keychain item keys in `native/CONTRACT.md` so a
+ * The names match the iOS Keychain item keys in `packages/native-protocol/CONTRACT.md` so a
  * cross-platform reader can address the same slots.
  */
 object C15tStoreKeys {

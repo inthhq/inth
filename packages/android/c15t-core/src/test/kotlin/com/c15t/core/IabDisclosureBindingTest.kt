@@ -12,7 +12,7 @@ import kotlinx.serialization.json.*
 
 class IabDisclosureBindingTest {
 	private val fixture = generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }
-		.map { File(it, "native/protocol/iab/commit-cases.json") }.first { it.exists() }
+		.map { File(it, "packages/native-protocol/iab/commit-cases.json") }.first { it.exists() }
 	private val vector = Json { ignoreUnknownKeys = true }.decodeFromString<IabCommitTest.Vector>(fixture.readText())
 	private val config = NativeConfig("https://cmp.example.test", iab = vector.cases[0].configuration)
 

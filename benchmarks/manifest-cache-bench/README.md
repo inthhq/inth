@@ -1,7 +1,7 @@
 # manifest-cache-bench
 
 Benchmarks the in-process manifest cache in
-`packages/core/src/libs/manifest-cache-runtime.ts` (public entry
+`packages/sdk/core/src/libs/manifest-cache-runtime.ts` (public entry
 `@c15t/core/transports/manifest-cache`, `createManifestCache` /
 `fetchCachedManifest`) against a simulated Vercel CDN fronting an Inth
 `/manifest` origin. No real sockets: `src/vercel-cdn.ts` is an in-process

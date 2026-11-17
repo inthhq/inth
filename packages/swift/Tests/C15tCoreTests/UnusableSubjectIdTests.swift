@@ -8,12 +8,12 @@ import XCTest
 /// The shape under test is an install written by a build that minted the legacy UUID
 /// subject id. Every save it made was refused by the producer, so the device holds a
 /// decision attributed to an id no query returns while answering `committed` and the
-/// backend holds nothing. `native/CONTRACT.md` prices that identity at nothing, which
+/// backend holds nothing. `packages/native-protocol/CONTRACT.md` prices that identity at nothing, which
 /// means the whole stored envelope goes with it, and this is the one fixture per core
 /// that holds the line: a well-formed grant under a refused id has to read exactly like
 /// a first launch, records and all, and must not put the old bytes back on the wire.
 ///
-/// This is a core test rather than a shared `native/protocol` fixture on purpose. The
+/// This is a core test rather than a shared `packages/native-protocol` fixture on purpose. The
 /// JavaScript kernel accepts a UUID subject id without looking at it, so it cannot
 /// produce an expectation for a refusal, and a stored envelope is device output no kernel
 /// writes.

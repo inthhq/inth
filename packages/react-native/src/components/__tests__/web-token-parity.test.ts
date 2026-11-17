@@ -5,7 +5,7 @@
  *
  * Every number is read out of the web package at test time. The palette, radii,
  * spacing and type scale come from the `defaultTheme` literal in
- * `packages/ui/src/theme/utils.ts`, and the rules that pick which token paints
+ * `packages/sdk/ui/src/theme/utils.ts`, and the rules that pick which token paints
  * which part come from the CSS modules that actually draw a banner, a dialog, a
  * button and a switch. The link between the two is `themeCSSVariableResolvers`,
  * the table that turns a `var(--c15t-space-md)` in a stylesheet into a theme
@@ -44,9 +44,9 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 /** Repository root, five levels above `src/components/__tests__`. */
 const ROOT = resolve(HERE, '../../../../..');
 
-/** One file under `packages/ui`. */
+/** One file under `packages/sdk/ui`. */
 const ui = function ui(path: string): string {
-	return join(ROOT, 'packages/ui', path);
+	return join(ROOT, 'packages/sdk/ui', path);
 };
 
 const THEME_SOURCE = ui('src/theme/utils.ts');
@@ -373,7 +373,7 @@ const HSL =
 	/^hsla?\((?<h>[\d.]+),\s*(?<s>[\d.]+)%,\s*(?<l>[\d.]+)%(?:,\s*(?<a>[\d.]+))?\)$/u;
 
 /**
- * A CSS colour in the shape `packages/ui` writes it, as the shape this package
+ * A CSS colour in the shape `packages/sdk/ui` writes it, as the shape this package
  * writes it: hex for an opaque colour, `rgba()` when there is an alpha.
  *
  * @param value - An `hsl()` or `hsla()` literal.

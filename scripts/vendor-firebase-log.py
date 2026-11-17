@@ -2,7 +2,7 @@
 """Check Firebase Analytics against the c15t decision from its own debug log.
 
 Firebase cannot be pointed at the capture server, so the iOS vendor journey
-(``native/examples/consent-demo/ios/run-vendor-e2e.sh``) streams the simulator's
+(``examples/native/consent-demo/ios/run-vendor-e2e.sh``) streams the simulator's
 unified log as ndjson while ``VendorSDKTests`` runs. The test writes one marker
 per step (``c15t-vendor-step <step> seq=<n>``) from its runner process, and the
 app runs with ``-FIRDebugEnabled -FIRAnalyticsDebugEnabled

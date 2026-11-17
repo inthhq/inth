@@ -18,7 +18,7 @@ import {
 import { compareTrees } from './sync-vendored-core';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
-const source = join(root, 'native/core-swift/Sources/C15tApple');
+const source = join(root, 'packages/swift/Sources/C15tApple');
 const vendored = join(root, 'packages/react-native/vendor/C15tApple');
 
 test('the CocoaPods Apple module matches the standalone module', () => {

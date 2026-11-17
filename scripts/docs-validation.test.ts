@@ -9,13 +9,15 @@ import { resolveDocsNavigation } from 'leadtype/llm';
 import { defaultRemarkPlugins, remarkInclude } from 'leadtype/remark';
 import { expect, test } from 'vitest';
 
-import docsConfig from '../docs/docs.config';
-import umbrellaPackage from '../packages/c15t/package.json';
-import scriptsPackage from '../packages/integrations/package.json';
-import { builtInScriptIntegrations } from '../packages/integrations/src/registry';
+import umbrellaPackage from '../packages/sdk/c15t/package.json';
+import docsConfig from '../packages/sdk/docs/docs.config';
+import scriptsPackage from '../packages/sdk/integrations/package.json';
+import { builtInScriptIntegrations } from '../packages/sdk/integrations/src/registry';
 import { createCanonicalIntegrationCheck } from './remark-lint-canonical-integrations.mjs';
 
-const docsRoot = fileURLToPath(new URL('../docs', import.meta.url));
+const docsRoot = fileURLToPath(
+	new URL('../packages/sdk/docs', import.meta.url)
+);
 
 test('vendor setup stays on one canonical integration page across platforms', async () => {
 	const check = createCanonicalIntegrationCheck(docsRoot);

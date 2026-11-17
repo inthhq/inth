@@ -17,7 +17,7 @@ targets:
     sources:
       - path: Sources
       # The local /init responses the app serves itself. No backend is contacted.
-      - path: ../../../examples/consent-demo/fixtures
+      - path: ../../../../examples/native/consent-demo/fixtures
         buildPhase: resources
     dependencies:
       - package: C15tNative

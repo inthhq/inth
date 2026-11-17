@@ -21,7 +21,7 @@ enum class PolicyPrompt(val wireName: String) {
 
 /**
  * A persistent right the matched rule keeps reachable: `PolicyRight` in
- * `packages/schema/src/shared/policy-rule.ts`.
+ * `packages/sdk/schema/src/shared/policy-rule.ts`.
  */
 @Serializable
 enum class PolicyRight(val wireName: String) {
@@ -41,7 +41,7 @@ enum class PolicyRight(val wireName: String) {
 
 		/**
 		 * The rights every rule of [model] carries: `requiredPolicyRights` in
-		 * `packages/schema/src/shared/policy-rule-invariants.ts`. A `none` rule owes nothing.
+		 * `packages/sdk/schema/src/shared/policy-rule-invariants.ts`. A `none` rule owes nothing.
 		 */
 		fun requiredFor(model: ConsentModel): List<PolicyRight> = when (model) {
 			ConsentModel.NONE -> emptyList()
@@ -68,7 +68,7 @@ enum class ScopeMode(val wireName: String) {
  * The validated policy projection the evaluator consumes.
  *
  * This is the mobile counterpart of `EvaluationPolicy` in
- * `packages/core/src/consent-record/types.ts`: the rule already normalized, with
+ * `packages/sdk/core/src/consent-record/types.ts`: the rule already normalized, with
  * wildcards expanded and the fingerprints kept so a stored choice can be checked
  * against the policy it was made under.
  *
@@ -119,7 +119,7 @@ data class EvaluationPolicy(
 	/**
 	 * The categories the choice prompt asks about, in canonical order.
 	 *
-	 * `projectChoiceScope` in `packages/core/src/policy.ts`. A declaration narrows
+	 * `projectChoiceScope` in `packages/sdk/core/src/policy.ts`. A declaration narrows
 	 * [scope]. With nothing declared, a permissive rule asks about none of them,
 	 * since categories outside the choice scope stay allowed there, and a strict
 	 * rule asks about its whole scope, since nothing outside it may run. An IAB

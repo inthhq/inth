@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { render } from 'vitest-browser-react';
 import { page } from 'vitest/browser';
 
-import { SupportChat } from '../../../../examples/showcase-gated-embeds/components/support-chat';
+import { SupportChat } from '../../../../../examples/showcase-gated-embeds/components/support-chat';
 import { useVendorAllowed } from '../hooks';
 import { useKernel } from '../kernel-selector';
 import { offline } from '../transports/offline';

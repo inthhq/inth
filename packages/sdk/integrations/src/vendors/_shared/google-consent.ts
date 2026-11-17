@@ -25,7 +25,7 @@ export type GoogleConsentType = (typeof GOOGLE_CONSENT_TYPES)[number];
  * same Google storage consent defaults unless a caller provides an override.
  *
  * This is the one source of the mapping. The Swift, Kotlin and React Native
- * helpers are tested against `native/protocol/google-consent-mode/`, which
+ * helpers are tested against `packages/native-protocol/google-consent-mode/`, which
  * `scripts/generate-google-consent-mode-fixture.ts` writes from this object.
  * After a change here, regenerate the fixture and update the mobile copies,
  * or their tests fail.

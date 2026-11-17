@@ -7,7 +7,7 @@ import { mergeConfig } from 'vite';
 
 const storybookDir = path.dirname(fileURLToPath(import.meta.url));
 const ui = (...segments: string[]) =>
-	path.resolve(storybookDir, '../../../packages/ui/src', ...segments);
+	path.resolve(storybookDir, '../../../packages/sdk/ui/src', ...segments);
 
 const config: StorybookConfig = {
 	addons: ['@storybook/addon-a11y'],
@@ -34,21 +34,21 @@ const config: StorybookConfig = {
 						find: /^c15t$/u,
 						replacement: path.resolve(
 							storybookDir,
-							'../../../packages/core/src/index.ts'
+							'../../../packages/sdk/core/src/index.ts'
 						),
 					},
 					{
 						find: /^~\/(?<capture1>.+)$/u,
 						replacement: path.resolve(
 							storybookDir,
-							'../../../packages/core/src/$1'
+							'../../../packages/sdk/core/src/$1'
 						),
 					},
 					{
 						find: /^@c15t\/svelte$/u,
 						replacement: path.resolve(
 							storybookDir,
-							'../../../packages/svelte/src/lib/index.ts'
+							'../../../packages/sdk/svelte/src/lib/index.ts'
 						),
 					},
 					{
@@ -87,7 +87,7 @@ const config: StorybookConfig = {
 						find: /^@c15t\/translations$/u,
 						replacement: path.resolve(
 							storybookDir,
-							'../../../packages/translations/src/index.ts'
+							'../../../packages/sdk/translations/src/index.ts'
 						),
 					},
 				],

@@ -29,7 +29,7 @@ import { REPO_ROOT } from './native';
 
 const PACKAGE_DIR = resolve(REPO_ROOT, 'packages', 'react-native');
 const DIST_DIR = join(PACKAGE_DIR, 'dist');
-const SWIFT_PACKAGE = resolve(REPO_ROOT, 'native', 'core-swift');
+const SWIFT_PACKAGE = resolve(REPO_ROOT, 'packages', 'swift');
 const XCODE_DEVELOPER_DIR = '/Applications/Xcode.app/Contents/Developer';
 const SCRATCH = resolve(REPO_ROOT, '.benchmarks', 'mobile-native');
 
@@ -301,7 +301,7 @@ const measureIosBindingBytes = function measureIosBindingBytes(): BundleMetric {
 export const measureAndroidBytes = function measureAndroidBytes(
 	repoRoot = REPO_ROOT
 ): BundleMetric {
-	const androidCore = resolve(repoRoot, 'native', 'core-android');
+	const androidCore = resolve(repoRoot, 'packages', 'android');
 	const androidBridge = resolve(
 		repoRoot,
 		'packages',

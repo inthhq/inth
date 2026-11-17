@@ -81,7 +81,7 @@ class DeviceStorageTest {
 
 		// Bootstrap queued a launch retry, and this device is still offline, so that retry is
 		// refused. Wait for it to be answered: a flush asked for while it is still sending is
-		// answered by that pass (native/CONTRACT.md, "The pending save queue"), and a refused
+		// answered by that pass (packages/native-protocol/CONTRACT.md, "The pending save queue"), and a refused
 		// pass does not read the queue again, so asking early would test the guard instead.
 		awaitCoreWorker()
 		assertEquals(

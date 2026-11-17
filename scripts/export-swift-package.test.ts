@@ -20,7 +20,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { exportSwiftPackage } from './export-swift-package';
 
-const nativeRoot = 'native/core-swift';
+const nativeRoot = 'packages/swift';
 const sourcePath = `${nativeRoot}/Sources/C15tCore/Transports.swift`;
 const core = 'extension C15t { public static let version = "3.0.0-alpha.1" }\n';
 const manifest = `// swift-tools-version:5.9
@@ -74,7 +74,7 @@ const fixture = (packageManifest = manifest) => {
 		);
 		return git('rev-parse', 'HEAD');
 	};
-	write('LICENSE.md', 'Apache License\nVersion 2.0, January 2004\n');
+	write('LICENSE', 'Apache License\nVersion 2.0, January 2004\n');
 	write('NOTICE', 'c15t attribution\n');
 	write(`${nativeRoot}/Package.swift`, packageManifest);
 	write(sourcePath, core);
@@ -86,10 +86,10 @@ const fixture = (packageManifest = manifest) => {
 		`${nativeRoot}/Resources/Privacy.xcprivacy`,
 		'<plist>native privacy</plist>\n'
 	);
-	write('native/protocol/index.json', '{"fixtures":[]}\n');
-	write('native/protocol/nested/fixture.json', '{"native":true}\n');
+	write('packages/native-protocol/index.json', '{"fixtures":[]}\n');
+	write('packages/native-protocol/nested/fixture.json', '{"native":true}\n');
 	write(
-		'native/examples/consent-demo/fixtures/iab-init.json',
+		'examples/native/consent-demo/fixtures/iab-init.json',
 		'{"iab":true}\n'
 	);
 	return {
@@ -127,7 +127,7 @@ describe('Swift source distribution', () => {
 			.replace('name: "C15tCore",\n', 'name: "c15t",\n')
 			.replace(
 				'.target(name: "C15tCore")',
-				'.target(name: "C15tCore", path: "native/core-swift/Sources/C15tCore")'
+				'.target(name: "C15tCore", path: "packages/swift/Sources/C15tCore")'
 			);
 		repo.write('Package.swift', rootManifest);
 		const sourceCommit = repo.commit();
@@ -166,7 +166,7 @@ describe('Swift source distribution', () => {
 			`${nativeRoot}/CHANGELOG.md`,
 			`${nativeRoot}/Sources/C15tCore/.build/stale.swift`,
 			'packages/private/secret.txt',
-			'native/core-android/private.kt',
+			'packages/android/private.kt',
 		]) {
 			repo.write(path, 'must not ship');
 		}
@@ -189,8 +189,8 @@ describe('Swift source distribution', () => {
 		expect(
 			readFileSync(join(repo.output, `${nativeRoot}/Resources/binary.dat`))
 		).toEqual(Buffer.from([0, 255, 10]));
-		expect(readFileSync(join(repo.output, 'LICENSE.md'))).toEqual(
-			repo.read('LICENSE.md')
+		expect(readFileSync(join(repo.output, 'LICENSE'))).toEqual(
+			repo.read('LICENSE')
 		);
 		expect(readFileSync(join(repo.output, 'NOTICE'))).toEqual(
 			repo.read('NOTICE')
@@ -218,7 +218,7 @@ describe('Swift source distribution', () => {
 
 	it('retains the canonical products, target dependencies and fixture-relative layout', () => {
 		const canonical = readFileSync(
-			new URL('../native/core-swift/Package.swift', import.meta.url),
+			new URL('../packages/swift/Package.swift', import.meta.url),
 			'utf8'
 		);
 		const repo = fixture(canonical);
@@ -247,7 +247,7 @@ describe('Swift source distribution', () => {
 		);
 		expect(
 			readFileSync(
-				resolve(testDirectory, '../../../protocol/index.json'),
+				resolve(testDirectory, '../../../native-protocol/index.json'),
 				'utf8'
 			)
 		).toBe('{"fixtures":[]}\n');
@@ -255,7 +255,7 @@ describe('Swift source distribution', () => {
 			readFileSync(
 				resolve(
 					testDirectory,
-					'../../../examples/consent-demo/fixtures/iab-init.json'
+					'../../../../examples/native/consent-demo/fixtures/iab-init.json'
 				),
 				'utf8'
 			)
@@ -383,7 +383,7 @@ describe('Swift source distribution', () => {
 				'.target(name: "C15tCore")',
 				'.target(name: "C15tCore", path: "../private")'
 			),
-			reason: 'inside native/core-swift',
+			reason: 'inside packages/swift',
 		},
 		{
 			manifest: manifest.replace(
@@ -431,7 +431,7 @@ describe('Swift source distribution', () => {
 		expect(existsSync(repo.output)).toBe(false);
 	});
 
-	it.each(['LICENSE.md', 'NOTICE', sourcePath])(
+	it.each(['LICENSE', 'NOTICE', sourcePath])(
 		'refuses a release missing %s',
 		(path) => {
 			const repo = fixture();

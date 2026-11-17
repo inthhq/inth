@@ -434,7 +434,7 @@ private final class FixtureHTTP: HTTPTransport, @unchecked Sendable {
     var requests: [HTTPRequest] { lock.lock(); defer { lock.unlock() }; return recorded }
     init(failSaves: Bool = false) throws {
         self.failSaves = failSaves
-        let url = URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("../../../protocol/native-envelope-opt-in-grants.json")
+        let url = URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("../../../native-protocol/native-envelope-opt-in-grants.json")
         let fixture = try JSONDecoder().decode(JSONValue.self, from: Data(contentsOf: url))
         body = try JSONEncoder().encode(XCTUnwrap(fixture["input"]?["transport"]?["body"]))
     }

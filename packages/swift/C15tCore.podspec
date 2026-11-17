@@ -1,7 +1,7 @@
 # The consent kernel as a pod, so a CocoaPods app can depend on the same Swift sources
 # the SwiftPM package vends:
 #
-#   pod "C15tCore", :path => "../native/core-swift"
+#   pod "C15tCore", :path => "../packages/swift"
 #
 # This spec vends only C15tCore. Package.swift also vends the Apple platform library
 # and a benchmark executable; neither belongs in this core-only pod.
@@ -27,7 +27,7 @@ Pod::Spec.new do |s|
     Command Line Tools build, and an app extension.
   DESC
   s.homepage     = "https://c15t.com"
-  s.license      = { :type => "Apache-2.0", :file => "../../LICENSE.md" }
+  s.license      = { :type => "Apache-2.0", :file => "../../LICENSE" }
   s.authors      = { "c15t" => "https://c15t.com" }
   s.source       = { :git => "https://github.com/c15t/c15t.git", :tag => "core-swift@#{s.version}" }
 

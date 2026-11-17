@@ -67,7 +67,7 @@ export const isCategoryAllowed = function isCategoryAllowed(
  * A boolean answers `false` for both a subject who refused and a policy that has not
  * resolved. Those need opposite handling: a refused category stays off, an unresolved
  * one stays off *and keeps listening*. `pending` is the state that distinction needs,
- * and it is the same three states `native/CONTRACT.md` makes the native gates report,
+ * and it is the same three states `packages/native-protocol/CONTRACT.md` makes the native gates report,
  * so a JavaScript host and a Kotlin or Swift host reading one category agree.
  */
 export type ConsentDecision = 'granted' | 'denied' | 'pending';

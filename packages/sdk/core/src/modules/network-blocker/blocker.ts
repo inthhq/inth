@@ -18,7 +18,7 @@
  * - `blocker.ts`       — this file: wiring + lifecycle.
  * - `index.ts`         — the public entry.
  *
- * v2 parity: `packages/core/src/libs/network-blocker/{core,store,types}.ts`.
+ * v2 parity: `packages/sdk/core/src/libs/network-blocker/{core,store,types}.ts`.
  *
  * Invariants:
  * - Idempotent init: safe to call twice; the second instance shares the

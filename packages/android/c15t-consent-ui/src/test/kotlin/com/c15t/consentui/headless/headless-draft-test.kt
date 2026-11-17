@@ -259,7 +259,7 @@ class HeadlessDraftTest {
 
 internal fun fixtureCore(fixture: String, store: KeyValueStore, iab: Boolean = false, clock: java.util.concurrent.atomic.AtomicLong? = null, listMaxAgeMs: Long? = null): ConsentCore {
     val body = generateSequence(File(requireNotNull(System.getProperty("user.dir")))) { it.parentFile }
-        .map { File(it, "native/examples/consent-demo/fixtures/$fixture") }.first { it.exists() }.readText()
+        .map { File(it, "examples/native/consent-demo/fixtures/$fixture") }.first { it.exists() }.readText()
     val client = object : HttpClient {
         override fun send(request: HttpRequest) = if (request.method == HttpRequest.GET)
             HttpResponse(200, mapOf("x-c15t-policy-contract" to "1"), body) else HttpResponse(503)

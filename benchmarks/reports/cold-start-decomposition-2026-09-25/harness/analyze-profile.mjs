@@ -25,7 +25,7 @@ const endHrUs = endHrUsArg ? Number(endHrUsArg) : Number.POSITIVE_INFINITY;
 /** Next.js server output, including a custom distDir such as `.next-860`. */
 const SERVER_OUTPUT = /\/\.next[^/]*\/server\//u;
 const C15T_PACKAGE = /node_modules\/(?<pkg>@c15t\/[^/]+|c15t)\//u;
-const SITE_C15T_WRAPPER = /packages\/c15t(?:-v3)?\//u;
+const SITE_C15T_WRAPPER = /packages\/(?:sdk\/)?c15t(?:-v3)?\//u;
 const PACKAGE_NAME = /^(?<pkg>(?:@[^/]+\/)?[^/]+)/u;
 const TURBOPACK_RUNTIME = /^turbopack:|\[turbopack\]/u;
 

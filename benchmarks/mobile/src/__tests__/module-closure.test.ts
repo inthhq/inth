@@ -74,7 +74,9 @@ describe('walking the built entry', () => {
 		// now, so there is no permitted file left in `@c15t/core`: whatever the walk
 		// reaches here is an edge somebody put back.
 		const core = closure.files
-			.filter((file) => file.startsWith(join(REPO_ROOT, 'packages', 'core')))
+			.filter((file) =>
+				file.startsWith(join(REPO_ROOT, 'packages', 'sdk', 'core'))
+			)
 			.map((file) => relative(REPO_ROOT, file))
 			.sort();
 
@@ -139,6 +141,6 @@ describe('walking the built entry', () => {
 			(file) => relative(REPO_ROOT, file)
 		);
 
-		expect(behind).toContain('packages/core/dist/consent-record/types.js');
+		expect(behind).toContain('packages/sdk/core/dist/consent-record/types.js');
 	});
 });

@@ -2,13 +2,13 @@
 	"_comment": [
 		"Single source of truth for every mobile budget `bun run bench:mobile` gates on.",
 		"Edit the numbers here; nothing in src/ carries a threshold of its own.",
-		"source: 'contract' means native/CONTRACT.md states the number.",
+		"source: 'contract' means packages/native-protocol/CONTRACT.md states the number.",
 		"source: 'allowance' means this harness declares the ceiling because the contract",
 		"names the behaviour without a number. An allowance is a promise, so keep the",
 		"reason in `note` and raise it only with a measured justification.",
 		"'omit' on a row means measure and report but never gate."
 	],
-	"contract": "native/CONTRACT.md",
+	"contract": "packages/native-protocol/CONTRACT.md",
 	"sampling": {
 		"warmupIterations": 50,
 		"measuredIterations": 300,

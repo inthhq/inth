@@ -246,7 +246,10 @@ const workspaceAliases = [
 	},
 	{
 		find: '@c15t/conformance',
-		replacement: resolve(__dirname, '../../internals/conformance/src/index.ts'),
+		replacement: resolve(
+			__dirname,
+			'../../../internals/conformance/src/index.ts'
+		),
 	},
 	{
 		find: '~',

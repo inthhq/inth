@@ -61,7 +61,7 @@ tasks.withType(AbstractArchiveTask).configureEach {
 	reproducibleFileOrder = true
 }
 tasks.withType(Jar).configureEach {
-	from(rootProject.file('../../LICENSE.md')) { into "META-INF/licenses/com.c15t/${artifactName}"; rename { 'LICENSE' } }
+	from(rootProject.file('../../LICENSE')) { into "META-INF/licenses/com.c15t/${artifactName}"; rename { 'LICENSE' } }
 	from(rootProject.file('../../NOTICE')) { into "META-INF/licenses/com.c15t/${artifactName}" }
 	manifest.attributes('Implementation-Version': nativeVersion, 'Implementation-Vendor': 'c15t')
 }
@@ -87,7 +87,7 @@ if (project.name == 'c15t-core') {
 	android.sourceSets.main.resources.srcDir(layout.buildDirectory.dir('generated/native-metadata').get().asFile)
 	android.sourceSets.main.resources.srcDir(layout.buildDirectory.dir('license-resources').get().asFile)
 	def license = tasks.register('copyNativeLicense', Copy) {
-		from(rootProject.file('../../LICENSE.md')) { rename { 'LICENSE' } }
+		from(rootProject.file('../../LICENSE')) { rename { 'LICENSE' } }
 		from(rootProject.file('../../NOTICE'))
 		into layout.buildDirectory.dir("license-resources/META-INF/licenses/com.c15t/${artifactName}")
 	}

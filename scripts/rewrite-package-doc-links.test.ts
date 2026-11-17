@@ -12,7 +12,7 @@ import {
 
 test('filtered bundles retain the actual theme source', async () => {
 	const source = fileURLToPath(
-		new URL('../docs/customization/recipes.mdx', import.meta.url)
+		new URL('../packages/sdk/docs/customization/recipes.mdx', import.meta.url)
 	);
 	const markdown = await restorePackageDocIncludes(
 		'[Error: Could not include file ../shared/examples/storybook-react/brand-theme.mdx]',

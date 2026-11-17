@@ -7,8 +7,8 @@ or later. It does not use React Native, Expo, CocoaPods or JavaScript.
 From the repository root:
 
 ```sh
-xcodegen generate --spec native/core-swift/Examples/swiftui-consent/project.yml
-open native/core-swift/Examples/swiftui-consent/C15tSwiftUI.xcodeproj
+xcodegen generate --spec packages/swift/Examples/swiftui-consent/project.yml
+open packages/swift/Examples/swiftui-consent/C15tSwiftUI.xcodeproj
 ```
 
 Select the `C15tSwiftUI` scheme and an iOS simulator, then Run. The generated
@@ -18,7 +18,7 @@ developer account. To compile without launching:
 
 ```sh
 xcodebuild build \
-  -project native/core-swift/Examples/swiftui-consent/C15tSwiftUI.xcodeproj \
+  -project packages/swift/Examples/swiftui-consent/C15tSwiftUI.xcodeproj \
   -scheme C15tSwiftUI -destination 'generic/platform=iOS Simulator' \
   -derivedDataPath /tmp/c15t-swiftui-derived
 ```
@@ -65,7 +65,7 @@ To run the tests on a simulator you own, replace `SIMULATOR_UDID` with its ID:
 
 ```sh
 xcodebuild test \
-  -project native/core-swift/Examples/swiftui-consent/C15tSwiftUI.xcodeproj \
+  -project packages/swift/Examples/swiftui-consent/C15tSwiftUI.xcodeproj \
   -scheme C15tSwiftUI -destination 'id=SIMULATOR_UDID' \
   -derivedDataPath /tmp/c15t-swiftui-tests \
   -resultBundlePath /tmp/c15t-swiftui-tests.xcresult \
@@ -79,4 +79,4 @@ teardown. They do not establish physical-device, VoiceOver, certification or
 performance results.
 
 The developer walkthrough lives in the canonical
-[SwiftUI guide](../../../../docs/frameworks/react-native/swiftui.mdx).
+[SwiftUI guide](../../../sdk/docs/frameworks/react-native/swiftui.mdx).

@@ -2,7 +2,7 @@
  * Subject ids pinned byte for byte.
  *
  * These cases are the shared contract between this function and the two native
- * cores: `native/core-android` and `native/core-swift` assert the same inputs and
+ * cores: `packages/android` and `packages/swift` assert the same inputs and
  * the same strings in their own suites. The backend decides with `subjectIdSchema`
  * in `@c15t/schema`, so an encoder change that moves these outputs would have to be
  * made in all three places at once, and this test is what makes changing only one of

@@ -17,7 +17,7 @@
  *
  *   bun scripts/fixtures.ts
  *   bun scripts/fixtures.ts --framework next --base aria
- *   bun scripts/fixtures.ts --c15t ../../../other-checkout/packages/c15t
+ *   bun scripts/fixtures.ts --c15t ../../../other-checkout/packages/sdk/c15t
  *
  * Pass --browser to also build each project for production and click
  * through it in Chromium. See fixture-browser.ts. Pass --fresh to scaffold
@@ -533,7 +533,7 @@ const { values: args } = parseArgs({
 });
 
 const c15tDir = path.resolve(
-	args.c15t ?? path.join(appDir, '../../packages/c15t')
+	args.c15t ?? path.join(appDir, '../../packages/sdk/c15t')
 );
 const fixtures = pick(frameworks, args.framework, '--framework').flatMap(
 	(framework) =>

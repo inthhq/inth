@@ -4,8 +4,8 @@ package com.c15t.core.gpp
  * GPP string encoding: the header, Fibonacci ranges, compressed base64url and the
  * fixed-width US National section.
  *
- * A port of `packages/iab/src/gpp/encoder.ts`, so a device and a web page given the
- * same inputs write the same bytes. `native/protocol/gpp/cases.json` holds the
+ * A port of `packages/sdk/iab/src/gpp/encoder.ts`, so a device and a web page given the
+ * same inputs write the same bytes. `packages/native-protocol/gpp/cases.json` holds the
  * strings both cores and the web encoder must produce, and the `@c15t/iab` test
  * `native-gpp-fixtures.test.ts` decodes every one with the IAB reference library.
  *
@@ -162,10 +162,10 @@ data class GppSection(val id: Int, val encoded: String)
 
 /**
  * The MSPA US National section, version 2: `US_NATIONAL_SECTION` in
- * `packages/iab/src/gpp/sections.ts`.
+ * `packages/sdk/iab/src/gpp/sections.ts`.
  *
  * Version 3 (November 2026) replaced every field. No IAB reference decoder reads it
- * yet, and web c15t encodes version 2, so this build does too. See `native/CONTRACT.md`.
+ * yet, and web c15t encodes version 2, so this build does too. See `packages/native-protocol/CONTRACT.md`.
  */
 object GppUsNational {
 	const val ID: Int = 7

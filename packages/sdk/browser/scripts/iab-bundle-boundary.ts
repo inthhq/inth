@@ -8,7 +8,7 @@ export const iabBundleBoundary = (): Rspack.RspackPluginInstance => ({
 				for (const module of modules) {
 					const id = module.identifier().replaceAll('\\', '/');
 					if (
-						/\/packages\/iab\/|\/@c15t\/iab\/|\/@iabtechlabtcf\/|\/generated\/iab-styles/u.test(
+						/\/packages\/(?:sdk\/)?iab\/|\/@c15t\/iab\/|\/@iabtechlabtcf\/|\/generated\/iab-styles/u.test(
 							id
 						)
 					) {

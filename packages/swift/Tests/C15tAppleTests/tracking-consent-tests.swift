@@ -24,7 +24,7 @@ final class TrackingConsentTests: XCTestCase {
     func testTheSharedFixture() throws {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-        let data = try Data(contentsOf: root.appendingPathComponent("protocol/att/iab-marketing.json"))
+        let data = try Data(contentsOf: root.appendingPathComponent("native-protocol/att/iab-marketing.json"))
         let fixture = try JSONDecoder().decode(Fixture.self, from: data)
         XCTAssertFalse(fixture.cases.isEmpty)
         for item in fixture.cases {

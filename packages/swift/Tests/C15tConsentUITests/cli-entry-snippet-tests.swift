@@ -10,7 +10,7 @@ import XCTest
 /// the privacy-settings call.
 ///
 /// Compiling these is the check that the printed code matches this package's API.
-/// `packages/cli/src/__tests__/mobile/mobile-setup.test.ts` reads the lines between each
+/// `packages/cli/vendor/c15t-mobile/src/__tests__/mobile/mobile-setup.test.ts` reads the lines between each
 /// pair of markers and fails when the CLI prints anything else, so change both together.
 @MainActor
 final class CLIEntrySnippetTests: XCTestCase {

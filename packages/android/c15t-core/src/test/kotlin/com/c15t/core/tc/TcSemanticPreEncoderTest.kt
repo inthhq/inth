@@ -16,7 +16,7 @@ import kotlin.test.assertTrue
  * vendor list this test writes itself.
  *
  * No TC String literal appears in this file. Every string is produced by [write] and read back by
- * the decoder, so the corpus in `native/protocol` stays the only place a string is stored -- see
+ * the decoder, so the corpus in `packages/native-protocol` stays the only place a string is stored -- see
  * [TcStringFixtures].
  *
  * Most assertions are byte equality against the same encode given the already-pruned state, rather

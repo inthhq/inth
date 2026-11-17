@@ -581,7 +581,7 @@ final class ConsentCoreTests: XCTestCase {
         XCTAssertTrue(optIn.isAllowed(.marketing))
         // The rule governs four categories and the subject answered one, so the
         // choice is still owed. `deriveChoiceRequirement` in
-        // `packages/core/src/consent-record/evaluate.ts` walks the scope and reports
+        // `packages/sdk/core/src/consent-record/evaluate.ts` walks the scope and reports
         // `missing` while any category in it is unanswered; the core used to answer
         // this from one boolean for the whole receipt, which settled a prompt the
         // kernel keeps open.
@@ -617,8 +617,8 @@ final class ConsentCoreTests: XCTestCase {
 
     /// An IAB rule is read and evaluated, and it grants nothing on its own.
     ///
-    /// `defaultPermission` in `packages/core/src/consent-record/evaluate.ts` treats `iab`
-    /// exactly as it treats `opt-in`, and `deriveModel` in `packages/core/src/policy.ts`
+    /// `defaultPermission` in `packages/sdk/core/src/consent-record/evaluate.ts` treats `iab`
+    /// exactly as it treats `opt-in`, and `deriveModel` in `packages/sdk/core/src/policy.ts`
     /// keeps the runtime name `opt-in` until the IAB module is installed -- which on device
     /// it never is, because there is no CMP ID to sign a TC String with and no vendor vector
     /// to fill. So the device denies without a receipt, prompt is owed, `necessary` is

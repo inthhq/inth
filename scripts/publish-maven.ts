@@ -260,7 +260,7 @@ export const stageMavenRelease = function stageMavenRelease({
 	version: string;
 }) {
 	assertVersion(version);
-	const project = join(cwd, 'native/core-android');
+	const project = join(cwd, 'packages/android');
 	const declared = readFileSync(
 		join(project, 'gradle.properties'),
 		'utf8'

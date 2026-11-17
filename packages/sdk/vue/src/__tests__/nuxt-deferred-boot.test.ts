@@ -210,8 +210,8 @@ describe('isDeferredBannerModule', () => {
 		for (const id of [
 			'../node_modules/.pnpm/@c15t+vue@3.3.0/node_modules/@c15t/vue/dist/runtime/components/prompt.vue',
 			// A workspace or linked install: Vite names the real path.
-			'../../../packages/vue/dist/runtime/components/prompt.vue',
-			'/repo/packages/vue/src/runtime/components/button.vue',
+			'../../../packages/sdk/vue/dist/runtime/components/prompt.vue',
+			'/repo/packages/sdk/vue/src/runtime/components/button.vue',
 		]) {
 			expect(isDeferredBannerModule(id)).toBe(true);
 		}
@@ -219,9 +219,9 @@ describe('isDeferredBannerModule', () => {
 
 	test('leaves the global components and other packages alone', () => {
 		for (const id of [
-			'../../../packages/vue/dist/runtime/components/nuxt-root.vue',
+			'../../../packages/sdk/vue/dist/runtime/components/nuxt-root.vue',
 			'../node_modules/@c15t/vue/dist/runtime/components/consent-gate.vue',
-			'../../../packages/react/dist/components/prompt.js',
+			'../../../packages/sdk/react/dist/components/prompt.js',
 			'app/components/prompt.vue',
 		]) {
 			expect(isDeferredBannerModule(id)).toBe(false);

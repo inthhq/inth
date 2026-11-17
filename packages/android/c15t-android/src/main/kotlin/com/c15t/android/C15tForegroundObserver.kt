@@ -22,7 +22,7 @@ import java.util.concurrent.Executors
  * costs no frame. [C15tAndroid.install] passes the core's own executor, so the launch replay
  * and this one queue behind each other instead of both starting. That hand-off is a courtesy
  * on the way to the network, not the rule against delivering one entry twice: `flushPending`
- * is a public synchronous call that other threads reach directly, and `native/CONTRACT.md`
+ * is a public synchronous call that other threads reach directly, and `packages/native-protocol/CONTRACT.md`
  * makes one pass per core in flight the core's own obligation, which the core guards itself.
  *
  * @param replayExecutor where the queue replay runs. The default is a daemon worker for

@@ -32,7 +32,7 @@ const parity = JSON.parse(
 	readFileSync(
 		resolve(
 			import.meta.dirname,
-			'../../../../../native/protocol/local-policy/parity.json'
+			'../../../../native-protocol/local-policy/parity.json'
 		),
 		'utf8'
 	)

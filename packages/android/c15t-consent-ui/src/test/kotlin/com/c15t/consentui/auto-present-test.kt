@@ -178,7 +178,7 @@ class AutoPresentTest {
     private fun runSequence(seed: Int, fixture: String) {
         val random = java.util.Random(seed.toLong())
         val text = generateSequence(File(requireNotNull(System.getProperty("user.dir")))) { it.parentFile }
-            .map { File(it, "native/examples/consent-demo/fixtures/$fixture") }.first { it.exists() }.readText()
+            .map { File(it, "examples/native/consent-demo/fixtures/$fixture") }.first { it.exists() }.readText()
         var body = text
         var policies = 0
         val core = core(fixture, body = { body }).also { it.bootstrap() }
@@ -297,7 +297,7 @@ class AutoPresentTest {
 
     private fun core(fixture: String, clock: Clock = Clock.SYSTEM, body: (() -> String)? = null): ConsentCore {
         val fixed = if (body != null) "" else generateSequence(File(requireNotNull(System.getProperty("user.dir")))) { it.parentFile }
-            .map { File(it, "native/examples/consent-demo/fixtures/$fixture") }.first { it.exists() }.readText()
+            .map { File(it, "examples/native/consent-demo/fixtures/$fixture") }.first { it.exists() }.readText()
         val client = object : HttpClient {
             override fun send(request: HttpRequest) = if (request.method == HttpRequest.GET)
                 HttpResponse(200, mapOf("x-c15t-policy-contract" to "1"), body?.invoke() ?: fixed) else HttpResponse(503)

@@ -1,7 +1,7 @@
 import { format } from 'oxfmt';
 import type { FormatConfig } from 'oxfmt';
 
-import repoConfig from '../oxfmt.config';
+import repoConfig from '../oxfmt.sdk.config';
 
 const { ignorePatterns: _ignorePatterns, ...repoOptions } = repoConfig;
 

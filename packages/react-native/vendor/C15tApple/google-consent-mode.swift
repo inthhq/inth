@@ -6,7 +6,7 @@ import Foundation
 /// A Google Consent Mode v2 consent type and the c15t category that grants it.
 ///
 /// The mapping is the web's (`@c15t/integrations`). `GoogleConsentModeTests` checks
-/// it against `native/protocol/google-consent-mode/consent-mode-v2.json`, which is
+/// it against `packages/native-protocol/google-consent-mode/consent-mode-v2.json`, which is
 /// generated from the web module, so a change on the web fails here until this copy
 /// follows. The raw value is the type's name in Google's APIs, such as `ad_storage`.
 public enum GoogleConsentType: String, CaseIterable, Sendable, Hashable {

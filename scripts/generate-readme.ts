@@ -252,8 +252,8 @@ ${[
 			: `<p align="center">
   <a href="https://c15t.com?utm_source=npm&utm_medium=readme&utm_campaign=oss_readme&utm_content=${npmBadgeName}" target="_blank" rel="noopener noreferrer">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="../../docs/assets/c15t-banner-readme-dark.png">
-      <img src="../../docs/assets/c15t-banner-readme-light.png" alt="c15t: the open standard for cookie banners">
+      <source media="(prefers-color-scheme: dark)" srcset="../docs/assets/c15t-banner-readme-dark.png">
+      <img src="../docs/assets/c15t-banner-readme-light.png" alt="c15t: the open standard for cookie banners">
     </picture>
   </a>
 </p>`;
@@ -444,7 +444,8 @@ On the web, every page of the [c15t docs](https://c15t.com/docs) has a Markdown 
  * @throws {Error} If file write operations fail
  */
 const generateReadmes = async function generateReadmes() {
-	const packagesDir = path.resolve(__dirname, '../packages');
+	// The web packages sit in packages/sdk. React Native sits beside that folder.
+	const packagesDir = path.resolve(__dirname, '../packages/sdk');
 
 	if (!fssync.existsSync(packagesDir)) {
 		console.error(`Packages directory not found at ${packagesDir}`);
@@ -452,26 +453,19 @@ const generateReadmes = async function generateReadmes() {
 	}
 
 	const entries = await fs.readdir(packagesDir, { withFileTypes: true });
-	const packageDirs = entries
-		.filter((d) => d.isDirectory())
-		.map((d) => d.name)
-		.filter((dir) =>
-			fssync.existsSync(path.join(packagesDir, dir, 'readme.json'))
-		);
+	const packageDirs = [
+		...entries
+			.filter((d) => d.isDirectory())
+			.map((d) => path.join(packagesDir, d.name)),
+		path.resolve(__dirname, '../packages/react-native'),
+	].filter((dir) => fssync.existsSync(path.join(dir, 'readme.json')));
 
-	await packageDirs.reduce<Promise<void>>(async (previous, packageName) => {
+	await packageDirs.reduce<Promise<void>>(async (previous, packageDir) => {
 		await previous;
+		const packageName = path.basename(packageDir);
 		try {
-			const readmeConfigPath = path.join(
-				packagesDir,
-				packageName,
-				'readme.json'
-			);
-			const packageJsonPath = path.join(
-				packagesDir,
-				packageName,
-				'package.json'
-			);
+			const readmeConfigPath = path.join(packageDir, 'readme.json');
+			const packageJsonPath = path.join(packageDir, 'package.json');
 
 			const raw = await fs.readFile(readmeConfigPath, 'utf8');
 			const readmeConfig = JSON.parse(raw) as PackageReadmeConfig;
@@ -495,7 +489,7 @@ const generateReadmes = async function generateReadmes() {
 			}
 
 			const content = baseReadmeTemplate(readmeConfig);
-			const readmePath = path.join(packagesDir, packageName, 'README.md');
+			const readmePath = path.join(packageDir, 'README.md');
 
 			await fs.writeFile(readmePath, content, 'utf8');
 			console.log(`Generated README for ${packageName}`);

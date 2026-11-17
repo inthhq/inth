@@ -121,7 +121,7 @@ export default mergeConfig(
 						const nativeScript = `${readFileSync(
 							resolve(
 								__dirname,
-								'../../native/protocol/webview/document-start.js'
+								'../../native-protocol/webview/document-start.js'
 							),
 							'utf8'
 						)

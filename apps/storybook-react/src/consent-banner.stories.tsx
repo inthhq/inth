@@ -10,7 +10,7 @@ import {
 	ConsentBanner,
 	ConsentDialog,
 	offline,
-} from '../../../packages/react/src/index';
+} from '../../../packages/sdk/react/src/index';
 import { storybookPolicy } from '../../storybook-consent-policy';
 import {
 	editableConsentOptions,

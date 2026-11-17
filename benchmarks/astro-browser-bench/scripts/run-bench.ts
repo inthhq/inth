@@ -383,7 +383,7 @@ const readWorkspacePackages = function readWorkspacePackages(): Map<
 		string,
 		{ dependencies: string[]; directory: string }
 	>();
-	for (const parent of ['packages', 'benchmarks', 'internals']) {
+	for (const parent of ['packages/sdk', 'benchmarks', 'internals']) {
 		const parentDir = join(repoRoot, parent);
 		if (!existsSync(parentDir)) {
 			continue;

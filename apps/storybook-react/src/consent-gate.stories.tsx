@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
-import { ConsentGate } from '../../../packages/react/src/index';
+import { ConsentGate } from '../../../packages/sdk/react/src/index';
 import {
 	editableConsentOptions,
 	StorybookConsentProvider,

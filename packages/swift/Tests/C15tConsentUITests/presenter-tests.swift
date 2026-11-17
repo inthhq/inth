@@ -104,7 +104,7 @@ final class PresenterTests: XCTestCase {
     @MainActor func testExpiredDisclosureReloadsAfterRetryCompletes() async throws {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-        let body = try Data(contentsOf: root.appendingPathComponent("examples/consent-demo/fixtures/iab-init.json"))
+        let body = try Data(contentsOf: root.appendingPathComponent("../examples/native/consent-demo/fixtures/iab-init.json"))
         let clock = AdvancingClock()
         let core = ConsentCore()
         core.bootstrap(CoreConfig(store: InMemoryStore(),
@@ -196,7 +196,7 @@ final class PresenterTests: XCTestCase {
     private func bootIAB() async throws -> (ConsentCore, AdvancingClock) {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-        let body = try Data(contentsOf: root.appendingPathComponent("examples/consent-demo/fixtures/iab-init.json"))
+        let body = try Data(contentsOf: root.appendingPathComponent("../examples/native/consent-demo/fixtures/iab-init.json"))
         let clock = AdvancingClock()
         let core = ConsentCore()
         core.bootstrap(CoreConfig(store: InMemoryStore(),
@@ -264,7 +264,7 @@ final class PresenterTests: XCTestCase {
     @MainActor func testOpenSettingsCanWithdrawAfterBundledPolicyExpires() async throws {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-        let vector = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf: root.appendingPathComponent("protocol/bundled-policy/parity.json"))) as? [String: Any])
+        let vector = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf: root.appendingPathComponent("native-protocol/bundled-policy/parity.json"))) as? [String: Any])
         let resource = try JSONSerialization.data(withJSONObject: XCTUnwrap(vector["resource"]))
         let clock = AdvancingClock(vector["now"] as! Int64)
         let core = ConsentCore()
@@ -334,7 +334,7 @@ final class PresenterTests: XCTestCase {
     private func boot(_ store: any ConsentStore, language: String = "en") async throws -> ConsentCore {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-        let body = try Data(contentsOf: root.appendingPathComponent("examples/consent-demo/fixtures/category-init.json"))
+        let body = try Data(contentsOf: root.appendingPathComponent("../examples/native/consent-demo/fixtures/category-init.json"))
         let core = ConsentCore()
         core.bootstrap(CoreConfig(store: store, transport: HostedTransport(baseURL: URL(string: "https://fixture.invalid")!, client: Peer(body)),
             overrides: .default(language: language), initRetry: .disabled))

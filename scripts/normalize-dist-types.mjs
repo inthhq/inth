@@ -4,7 +4,12 @@ import path from 'node:path';
 import { parse } from '@babel/parser';
 
 const REPO_ROOT = path.resolve(import.meta.dirname, '..');
-const PACKAGES_ROOT = path.join(REPO_ROOT, 'packages');
+// The web packages sit in packages/sdk. React Native sits beside that folder,
+// with packages that are not part of the SDK.
+const PACKAGE_ROOTS = [
+	path.join(REPO_ROOT, 'packages', 'sdk'),
+	path.join(REPO_ROOT, 'packages'),
+];
 /** Collect actual module literals without matching examples or literal types. */
 const collectModuleSpecifiers = function collectModuleSpecifiers(source) {
 	const ast = parse(source, {
@@ -42,14 +47,14 @@ const collectModuleSpecifiers = function collectModuleSpecifiers(source) {
 	return specifiers.sort((left, right) => right.start - left.start);
 };
 
-const discoverPackageTargets = async function discoverPackageTargets() {
+const discoverTargetsIn = async function discoverTargetsIn(packagesRoot) {
 	try {
-		const entries = await fs.readdir(PACKAGES_ROOT, { withFileTypes: true });
+		const entries = await fs.readdir(packagesRoot, { withFileTypes: true });
 		const packageTargets = await Promise.all(
 			entries
 				.filter((entry) => entry.isDirectory())
 				.map(async (entry) => {
-					const packageRoot = path.join(PACKAGES_ROOT, entry.name);
+					const packageRoot = path.join(packagesRoot, entry.name);
 					const packageJsonPath = path.join(packageRoot, 'package.json');
 
 					try {
@@ -94,6 +99,11 @@ const discoverPackageTargets = async function discoverPackageTargets() {
 
 		throw error;
 	}
+};
+
+const discoverPackageTargets = async function discoverPackageTargets() {
+	const targets = await Promise.all(PACKAGE_ROOTS.map(discoverTargetsIn));
+	return targets.flat();
 };
 
 const PACKAGE_TARGETS = await discoverPackageTargets();

@@ -6,7 +6,7 @@ import XCTest
 /// Pins the corrected overrides and privacy signals: what the core encodes, what
 /// it refuses to read back, and what a save body has to carry.
 ///
-/// `native/CONTRACT.md` first described a `test` override and an `msa` signal, and
+/// `packages/native-protocol/CONTRACT.md` first described a `test` override and an `msa` signal, and
 /// its Corrections section retires both. The expectations here come from
 /// `KernelOverrides` and `KernelPrivacySignals` in `@c15t/core`, which is the
 /// authority, not from a local opinion about what looked reasonable.

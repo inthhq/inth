@@ -411,7 +411,7 @@
 /* Begin XCLocalSwiftPackageReference section */
 		F8DF1D036C1E64196F553FA9 /* XCLocalSwiftPackageReference "core-swift" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = "../../../native/core-swift";
+			relativePath = "../../swift";
 		};
 /* End XCLocalSwiftPackageReference section */
 

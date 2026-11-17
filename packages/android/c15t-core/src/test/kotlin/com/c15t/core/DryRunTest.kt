@@ -146,7 +146,7 @@ class DryRunTest {
 	@Test fun `a dry-run IAB save still writes the TC string`() {
 		val fixture = Json.parseToJsonElement(
 			generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }
-				.map { File(it, "native/protocol/iab/commit-cases.json") }.first { it.exists() }.readText(),
+				.map { File(it, "packages/native-protocol/iab/commit-cases.json") }.first { it.exists() }.readText(),
 		).jsonObject
 		val reader = Json { ignoreUnknownKeys = true }
 		val gvl = reader.decodeFromJsonElement<GlobalVendorList>(fixture.getValue("gvl"))

@@ -56,7 +56,7 @@ test('advertised mobile README guides have public source pages', () => {
 		fg.sync(
 			['frameworks/**/*.mdx', 'guides/**/*.mdx', 'integrations/**/*.mdx'],
 			{
-				cwd: resolve(root, 'docs'),
+				cwd: resolve(root, 'packages/sdk/docs'),
 			}
 		)
 	);
@@ -71,7 +71,7 @@ test('the mobile bundle covers every public mobile guide and advertises native s
 	);
 	expect(config).toBeDefined();
 	const included = fg.sync(config?.include ?? [], {
-		cwd: resolve(root, 'docs'),
+		cwd: resolve(root, 'packages/sdk/docs'),
 	});
 	for (const topic of topics) {
 		expect(included).toContain(`frameworks/react-native/${topic}.mdx`);
@@ -112,16 +112,18 @@ test('the mobile bundle includes every integration guide for a mobile helper', (
 		(entry) => entry.name === '@c15t/react-native'
 	);
 	const included = new Set(
-		fg.sync(config?.include ?? [], { cwd: resolve(root, 'docs') })
+		fg.sync(config?.include ?? [], { cwd: resolve(root, 'packages/sdk/docs') })
 	);
 	// A guide that names a mobile helper package documents an export of the
 	// tarball, so it must ship with it.
 	const mobileHelper =
 		/@c15t\/react-native\/integrations|`C15tApple`|com\.c15t\.android\.integrations/u;
 	const guides = fg
-		.sync('integrations/*.mdx', { cwd: resolve(root, 'docs') })
+		.sync('integrations/*.mdx', { cwd: resolve(root, 'packages/sdk/docs') })
 		.filter((file) =>
-			mobileHelper.test(readFileSync(resolve(root, 'docs', file), 'utf8'))
+			mobileHelper.test(
+				readFileSync(resolve(root, 'packages/sdk/docs', file), 'utf8')
+			)
 		);
 	expect(guides.length).toBeGreaterThan(5);
 	expect(guides.filter((file) => !included.has(file))).toEqual([]);
@@ -134,7 +136,7 @@ test('mobile setup examples come from checked source and survive Markdown conver
 			async (topic) => {
 				const filename = resolve(
 					root,
-					`docs/frameworks/react-native/${topic}.mdx`
+					`packages/sdk/docs/frameworks/react-native/${topic}.mdx`
 				);
 				const content = readFileSync(filename, 'utf8');
 				const includes = [
@@ -160,10 +162,10 @@ test('mobile setup examples come from checked source and survive Markdown conver
 
 test('mobile comparison claims say what ships today, not what is coming', () => {
 	const pages = [
-		'docs/shared/comparisons/mobile-c15t.mdx',
-		'docs/comparisons/didomi.mdx',
-		'docs/comparisons/onetrust.mdx',
-		'docs/comparisons/usercentrics.mdx',
+		'packages/sdk/docs/shared/comparisons/mobile-c15t.mdx',
+		'packages/sdk/docs/comparisons/didomi.mdx',
+		'packages/sdk/docs/comparisons/onetrust.mdx',
+		'packages/sdk/docs/comparisons/usercentrics.mdx',
 	];
 	for (const page of pages) {
 		const source = readFileSync(resolve(root, page), 'utf8');

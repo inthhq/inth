@@ -38,7 +38,7 @@ export interface Spec extends TurboModule {
 	/**
 	 * WebView consent as JSON `{ state, token, key }`: the state a page reads,
 	 * and a fresh 128-bit update token and preferences request key for one
-	 * WebView. See "WebView consent" in `native/CONTRACT.md`. Synchronous and
+	 * WebView. See "WebView consent" in `packages/native-protocol/CONTRACT.md`. Synchronous and
 	 * non-blocking.
 	 */
 	getWebViewConsent: () => string;

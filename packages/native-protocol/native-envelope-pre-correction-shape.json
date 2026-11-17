@@ -1,5 +1,5 @@
 {
-	"description": "A valid envelope whose snapshot has been rewritten into the shape the first draft of native/CONTRACT.md described: overrides.test, a boolean privacySignals.gpc, and privacySignals.msa. Those names model nothing this build has, so the grant sitting next to them is not evidence.",
+	"description": "A valid envelope whose snapshot has been rewritten into the shape the first draft of packages/native-protocol/CONTRACT.md described: overrides.test, a boolean privacySignals.gpc, and privacySignals.msa. Those names model nothing this build has, so the grant sitting next to them is not evidence.",
 	"expected": {
 		"read": {
 			"decoded": false,
@@ -73,7 +73,7 @@
 			"key": "storedAt",
 			"loadBearing": false,
 			"requiredBy": ["swift"],
-			"role": "epoch milliseconds of the write, for diagnostics and the newest-writer-wins check. Kotlin records no write time at all, which native/CONTRACT.md carries as a known gap"
+			"role": "epoch milliseconds of the write, for diagnostics and the newest-writer-wins check. Kotlin records no write time at all, which packages/native-protocol/CONTRACT.md carries as a known gap"
 		}
 	],
 	"id": "native-envelope-pre-correction-shape",
@@ -188,14 +188,14 @@
 		"transport is the /init response to serve, headers included. Answer it once, before any save.",
 		"storedRecords is what protected storage holds before the core starts. A null member means nothing is stored for it. The subject id is always supplied, never generated, so no fixture depends on a random uuid.",
 		"input.overrides and input.privacySignals are what the device reports. expected.overrides and expected.privacySignals are what the kernel settled: init.location sets country and region, init.translations sets language, and privacySignals.gpc.active is the override when set, otherwise the detection.",
-		"there is no test override and no msa signal. Overrides are country, region, language, and gpc; gpc is a detected / override / active triple. See \"Corrections to this contract\" in native/CONTRACT.md.",
+		"there is no test override and no msa signal. Overrides are country, region, language, and gpc; gpc is a detected / override / active triple. See \"Corrections to this contract\" in packages/native-protocol/CONTRACT.md.",
 		"revision is a monotonic counter that starts at 0 and bumps once per committed mutation. It is not a count of the steps a runner took. Compare it as a number, and read the pinned value rather than deriving it.",
 		"GPC is a live signal only. Nothing records it: the gpc restriction applies while privacySignals.gpc.active is true and lifts when it is not, and no snapshot carries a stored directive for it.",
 		"evaluatedAt equals input.now. Both it and ready are native lifecycle facts, not kernel output: ready is latched by a hydrate() that found a stored envelope and by the first /init that lands a definitive answer, which is a negotiated contract header over a 200 body. Nothing stored plus a resolved init is therefore ready true, and only an init that was refused or never arrived leaves it false.",
 		"error is null in every fixture: no fixture exercises a transport failure or an unreadable wire.",
 		"Any field this file does not mention must not be invented. Unknown wire values fail closed.",
 		"this kind pins what a stored consent snapshot looks like on a device. The kernel has no such format: Swift writes a StoredEnvelope as plain JSON and Kotlin writes a SnapshotEnvelope into an encrypted blob, so expected.snapshot is the only kernel-derived half of this file.",
-		"reference.core names the implementation whose layout native/CONTRACT.md documents. A disagreement about how a fact is spelled is settled by that core and the other one moves, which is why nothing here pins a byte layout: the other core could only fail rather than disagree.",
+		"reference.core names the implementation whose layout packages/native-protocol/CONTRACT.md documents. A disagreement about how a fact is spelled is settled by that core and the other one moves, which is why nothing here pins a byte layout: the other core could only fail rather than disagree.",
 		"fields is the stored field set. fields[].key is a neutral label and never a name either core writes; carriers holds each core name for the fact, and a core with no entry there does not carry it at all. requiredBy lists the cores that must write it.",
 		"fields[].loadBearing is true where a consent decision changes if the field is lost or wrong. expect is present (a non-null value), empty (null or absent), or a literal the decoded value must equal. Compare the decoded value and not the serialized key, because Kotlin writes every key every time and key presence alone proves nothing.",
 		"relaunch.offline means start a second core over the bytes the first one wrote, with no backend to answer. That is the case a phone in a tunnel is in, and it is the only case that proves the envelope carries enough to answer on its own.",
@@ -207,6 +207,6 @@
 	"reference": {
 		"core": "swift",
 		"keyOrder": "alphabetical",
-		"why": "Swift writes its envelope with a sorted-keys JSON encoder, so its layout is a plain function of the value and the one native/CONTRACT.md documents field by field. Kotlin encrypts its blob and keys two of these facts differently. Where the two disagree about how a fact is spelled, this core is the reference and the other moves."
+		"why": "Swift writes its envelope with a sorted-keys JSON encoder, so its layout is a plain function of the value and the one packages/native-protocol/CONTRACT.md documents field by field. Kotlin encrypts its blob and keys two of these facts differently. Where the two disagree about how a fact is spelled, this core is the reference and the other moves."
 	}
 }

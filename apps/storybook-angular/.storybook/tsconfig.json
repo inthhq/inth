@@ -2,12 +2,12 @@
 	"extends": "../tsconfig.json",
 	"include": [
 		"../src/**/*.ts",
-		"../../../packages/angular/src/**/*.ts",
+		"../../../packages/sdk/angular/src/**/*.ts",
 		"./*.ts"
 	],
 	"exclude": [
-		"../../../packages/angular/src/**/__tests__/**",
-		"../../../packages/angular/src/**/*.test.ts",
-		"../../../packages/angular/src/test-setup.ts"
+		"../../../packages/sdk/angular/src/**/__tests__/**",
+		"../../../packages/sdk/angular/src/**/*.test.ts",
+		"../../../packages/sdk/angular/src/test-setup.ts"
 	]
 }

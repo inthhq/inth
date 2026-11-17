@@ -171,8 +171,8 @@ mixed model: outside-scope positive saves are rejected, though denials can
 persist. Do not advertise this as a reversible preference flow for exempt
 statistics plus advertising.
 
-Code evidence: `packages/core/src/consent-record/evaluate.ts` and
-`packages/core/src/kernel/__tests__/consent-model.test.ts`.
+Code evidence: `packages/sdk/core/src/consent-record/evaluate.ts` and
+`packages/sdk/core/src/kernel/__tests__/consent-model.test.ts`.
 
 An analytics-only preset can use opt-out, no prompt and strict category
 scope, with the host verifying every included script. Broad category names

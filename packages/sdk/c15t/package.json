@@ -24,7 +24,7 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/c15t/c15t.git",
-		"directory": "packages/c15t"
+		"directory": "packages/sdk/c15t"
 	},
 	"files": [
 		"dist",
@@ -809,10 +809,10 @@
 	},
 	"scripts": {
 		"build": "bun scripts/copy-distribution-css.ts",
-		"build:docs": "bun ../../scripts/generate-package-docs.ts c15t",
-		"fmt": "oxfmt .",
-		"lint": "oxlint ./scripts",
-		"prepack": "pnpm run build:docs && bun ../../scripts/verify-package-artifacts.ts",
+		"build:docs": "bun ../../../scripts/generate-package-docs.ts c15t",
+		"fmt": "oxfmt -c ../../../oxfmt.sdk.config.ts .",
+		"lint": "oxlint -c ../../../oxlint.sdk.config.ts ./scripts",
+		"prepack": "pnpm run build:docs && bun ../../../scripts/verify-package-artifacts.ts",
 		"test": "vitest run",
 		"test:watch": "vitest"
 	},
@@ -827,6 +827,8 @@
 		"@c15t/vue": "workspace:*"
 	},
 	"devDependencies": {
+		"@types/node": "25.5.0",
+		"@vitest/coverage-istanbul": "4.1.10",
 		"jsdom": "25.0.1",
 		"oxfmt": "0.65.0",
 		"oxlint": "1.80.0",

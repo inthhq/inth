@@ -233,14 +233,17 @@ export const iabCommitFixtures = async function iabCommitFixtures() {
 };
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-	mkdirSync(resolve(import.meta.dirname, '../../..', 'native/protocol/iab'), {
-		recursive: true,
-	});
+	mkdirSync(
+		resolve(import.meta.dirname, '../../..', 'packages/native-protocol/iab'),
+		{
+			recursive: true,
+		}
+	);
 	writeFileSync(
 		resolve(
 			import.meta.dirname,
 			'../../..',
-			'native/protocol/iab/commit-cases.json'
+			'packages/native-protocol/iab/commit-cases.json'
 		),
 		`${JSON.stringify(await iabCommitFixtures(), null, 2)}\n`
 	);

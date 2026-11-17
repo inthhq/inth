@@ -2,17 +2,17 @@ import type { InitOutput, PolicyRule } from '@c15t/schema/types';
 import type { App } from 'vue';
 import { onUnmounted, provide } from 'vue';
 
-import { mockGVL } from '../../../packages/react/src/components/iab/__tests__/fixtures/mock-consent-state';
+import { mockGVL } from '../../../packages/sdk/react/src/components/iab/__tests__/fixtures/mock-consent-state';
 import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-} from '../../../packages/schema/src/types';
-import { enTranslations } from '../../../packages/translations/src';
-import { consentConfigKey } from '../../../packages/vue/src/runtime/composables/config';
-import type { ConsentConfig } from '../../../packages/vue/src/runtime/config';
-import { createVueConsentKernelContext } from '../../../packages/vue/src/runtime/kernel';
-import type { VueConsentKernelContext } from '../../../packages/vue/src/runtime/kernel';
-import { hosted } from '../../../packages/vue/src/runtime/modes';
+} from '../../../packages/sdk/schema/src/types';
+import { enTranslations } from '../../../packages/sdk/translations/src';
+import { consentConfigKey } from '../../../packages/sdk/vue/src/runtime/composables/config';
+import type { ConsentConfig } from '../../../packages/sdk/vue/src/runtime/config';
+import { createVueConsentKernelContext } from '../../../packages/sdk/vue/src/runtime/kernel';
+import type { VueConsentKernelContext } from '../../../packages/sdk/vue/src/runtime/kernel';
+import { hosted } from '../../../packages/sdk/vue/src/runtime/modes';
 import {
 	symbolActiveUI,
 	symbolConsent,
@@ -20,7 +20,7 @@ import {
 	symbolKernel,
 	symbolKernelContext,
 	symbolSnapshot,
-} from '../../../packages/vue/src/runtime/utils/symbols';
+} from '../../../packages/sdk/vue/src/runtime/utils/symbols';
 import {
 	storybookChoiceRecord,
 	storybookIABPolicy,

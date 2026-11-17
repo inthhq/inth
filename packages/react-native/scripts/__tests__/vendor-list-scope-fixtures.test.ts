@@ -24,8 +24,8 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, test } from 'vitest';
 
-import { narrowGVLToVendors } from '../../../iab/src/tcf/fetch-gvl';
-import type { GlobalVendorList } from '../../../iab/src/tcf/iab-tcf-types';
+import { narrowGVLToVendors } from '../../../sdk/iab/src/tcf/fetch-gvl';
+import type { GlobalVendorList } from '../../../sdk/iab/src/tcf/iab-tcf-types';
 import {
 	VENDOR_LIST_SCOPE_FIXTURE_IDS,
 	VENDOR_LIST_SCOPE_ORACLE,
@@ -33,7 +33,7 @@ import {
 } from '../vendor-list-scope-fixtures';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const FIXTURE_DIR = resolve(HERE, '../../../../native/protocol');
+const FIXTURE_DIR = resolve(HERE, '../../../native-protocol');
 const INDEX_FILE = 'index.json';
 const KIND = 'vendor-list-scope';
 

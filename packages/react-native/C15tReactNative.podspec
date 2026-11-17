@@ -3,10 +3,10 @@ require "json"
 package = JSON.parse(File.read(File.join(__dir__, "package.json")))
 
 # The native core and Apple services compile from generated source copies under
-# vendor/C15tCore and vendor/C15tApple. Their sync scripts keep native/core-swift authoritative.
+# vendor/C15tCore and vendor/C15tApple. Their sync scripts keep packages/swift authoritative.
 #
 # This spec used to declare `s.dependency "C15tCore"`. That resolved here only because the
-# example Podfiles write `pod "C15tCore", :path => "../native/core-swift"`; CocoaPods cannot
+# example Podfiles write `pod "C15tCore", :path => "../packages/swift"`; CocoaPods cannot
 # attach a path to a `s.dependency`, and nothing publishes the pod, so an app installed from
 # npm had no source for the kernel and `pod install` failed there. `C15T_CORE_POD_VERSION`
 # left with it: there is no published version to pin.
@@ -61,7 +61,7 @@ Pod::Spec.new do |s|
   s.public_header_files = "ios/C15tReactNative/C15tReactNative.h"
   s.resource_bundle = { "C15tReactNative" => "ios/C15tReactNative/Resources/Privacy.xcprivacy" }
   # `Package.swift` is not in here because it is not in the package: the SPM manifest
-  # resolves the core at `../../native/core-swift`, a path no installed tarball has.
+  # resolves the core at `../swift`, a path no installed tarball has.
   s.preserve_paths = "ios", "package.json", "react-native.config.js"
 
   s.platforms = { :ios => "16.4" }
@@ -132,7 +132,7 @@ Pod::Spec.new do |s|
     "CLANG_CXX_LANGUAGE_STANDARD" => "c++20",
     # The vendored kernel marks a few types `package`, and the compiler accepts that access
     # level only once it is told which package it is building. SwiftPM passes the flag itself;
-    # CocoaPods does not, which is why ../native/core-swift/C15tCore.podspec passes it too. The
+    # CocoaPods does not, which is why ../packages/swift/C15tCore.podspec passes it too. The
     # copy is part of this module now, so it names this pod and not the kernel.
     "OTHER_SWIFT_FLAGS" => '$(inherited) -package-name "C15tReactNative"',
     "SWIFT_ACTIVE_COMPILATION_CONDITIONS" => native_ui ? "$(inherited)" : "$(inherited) C15T_NO_NATIVE_UI",

@@ -15,14 +15,14 @@ square switch. Requires Xcode, XcodeGen and iOS 16.4 or later.
 | `Sources/ledger-parts.swift` | Every colour, font and control the screens draw |
 
 No backend is contacted. The app serves the consent demo's local `/init`
-fixtures from `native/examples/consent-demo/fixtures`, and keeps choices in
+fixtures from `examples/native/consent-demo/fixtures`, and keeps choices in
 memory, so every launch starts with no saved choice.
 
 From the repository root:
 
 ```sh
-xcodegen generate --spec native/core-swift/Examples/custom-consent/project.yml
-open native/core-swift/Examples/custom-consent/C15tCustomConsent.xcodeproj
+xcodegen generate --spec packages/swift/Examples/custom-consent/project.yml
+open packages/swift/Examples/custom-consent/C15tCustomConsent.xcodeproj
 ```
 
 Select the `C15tCustomConsent` scheme and an iOS simulator, then Run. The
@@ -51,7 +51,7 @@ xcrun simctl launch SIMULATOR_UDID com.c15t.examples.customconsent --iab --scree
 the stock and the custom screens in light and dark:
 
 ```sh
-bash native/core-swift/Examples/custom-consent/capture-screenshots.sh /tmp/c15t-consent-screens
+bash packages/swift/Examples/custom-consent/capture-screenshots.sh /tmp/c15t-consent-screens
 ```
 
 It writes 12 files named

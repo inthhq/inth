@@ -355,16 +355,16 @@ const main = function main(): void {
 	}
 	if (values.android) {
 		const version = readFileSync(
-			join(ROOT, 'native/core-android/gradle.properties'),
+			join(ROOT, 'packages/android/gradle.properties'),
 			'utf8'
 		).match(/^c15t.native.version=(?<version>.+)$/mu)?.groups?.version;
 		if (!version) {
 			throw new Error('Missing staged native version.');
 		}
 		run('python3', [
-			join(ROOT, 'native/core-android/consumer-smoke/verify.py'),
+			join(ROOT, 'packages/android/consumer-smoke/verify.py'),
 			'--staging-repository',
-			join(ROOT, 'native/core-android/build/maven-staging'),
+			join(ROOT, 'packages/android/build/maven-staging'),
 			'--version',
 			version,
 			'--rn-package',

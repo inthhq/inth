@@ -131,7 +131,9 @@ export const renderAstroStory = function renderAstroStory(
 	registerAdapters(variant.ui ?? 'svelte');
 	if (variant.options?.iab) {
 		registerIAB({
-			...createLazyIABFactory(() => import('../../../packages/iab/src/index')),
+			...createLazyIABFactory(
+				() => import('../../../packages/sdk/iab/src/index')
+			),
 			mount: mountRuntimeIAB,
 		});
 	}

@@ -5,7 +5,7 @@ import XCTest
 
 /// Cutting a served vendor list down to a publisher's declared scope.
 ///
-/// The oracle is `narrowGVLToVendors` in `packages/iab/src/tcf/fetch-gvl.ts` and its
+/// The oracle is `narrowGVLToVendors` in `packages/sdk/iab/src/tcf/fetch-gvl.ts` and its
 /// server-side twin `narrowToVendorIds` in `packages/backend/src/http/gvl.ts`: both prune
 /// the `vendors` map and nothing else, both return the list untouched when no scope was
 /// declared, and both carry the surviving entries over rather than rebuild them. What

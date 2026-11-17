@@ -5,7 +5,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * Every `tc-string` fixture in `native/protocol` through the decoder, against
+ * Every `tc-string` fixture in `packages/native-protocol` through the decoder, against
  * `expected.decode.fields`.
  *
  * All 27 fixtures are graded here, including the ten whose `expects.encode` is false. Those ten

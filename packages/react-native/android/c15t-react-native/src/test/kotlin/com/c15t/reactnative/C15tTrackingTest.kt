@@ -20,7 +20,7 @@ import org.junit.Test
  * branch coverage: it is that the arm it reports means "no platform gate here" and can
  * never be read as "not determined yet", and that no arm, including the one Android
  * actually sends, moves a consent decision. The last block is
- * `native/CONTRACT.md` read as a table, checked against the core's own
+ * `packages/native-protocol/CONTRACT.md` read as a table, checked against the core's own
  * [ConsentSnapshot.decision] rather than against a copy of the rule.
  */
 class C15tTrackingTest {

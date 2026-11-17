@@ -17,7 +17,7 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/c15t/c15t.git",
-		"directory": "packages/translations"
+		"directory": "packages/sdk/translations"
 	},
 	"files": [
 		"dist",
@@ -311,12 +311,12 @@
 		"access": "public"
 	},
 	"scripts": {
-		"build": "rslib build && node ../../scripts/normalize-dist-types.mjs",
+		"build": "rslib build && node ../../../scripts/normalize-dist-types.mjs",
 		"check-types": "tsc --noEmit",
 		"dev": "sh -c 'rslib build --no-dts --no-clean && rslib build --watch --no-dts --no-clean'",
-		"fmt": "oxfmt .",
+		"fmt": "oxfmt -c ../../../oxfmt.sdk.config.ts .",
 		"generate:i18n": "lingo.dev i18n",
-		"lint": "oxlint ./src",
+		"lint": "oxlint -c ../../../oxlint.sdk.config.ts ./src",
 		"test": "vitest run",
 		"test:watch": "vitest"
 	},
@@ -324,7 +324,10 @@
 		"@c15t/typescript-config": "workspace:*",
 		"@c15t/vitest-config": "workspace:*",
 		"@rslib/core": "0.23.2",
+		"@types/node": "25.5.0",
 		"@types/react": "19.2.17",
+		"@vitest/browser": "4.1.10",
+		"@vitest/coverage-istanbul": "4.1.10",
 		"jsdom": "25.0.1",
 		"lingo.dev": "^0.137.8",
 		"oxfmt": "0.65.0",

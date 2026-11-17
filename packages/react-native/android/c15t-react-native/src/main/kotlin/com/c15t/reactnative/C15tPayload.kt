@@ -100,7 +100,7 @@ object C15tPayload {
 	/**
 	 * Field names a host app may still send that this build does not model.
 	 *
-	 * `native/CONTRACT.md` first described a `test` override and an `msa` privacy
+	 * `packages/native-protocol/CONTRACT.md` first described a `test` override and an `msa` privacy
 	 * signal. Neither exists in the kernel: publisher test mode is a client option
 	 * that never reaches a save body, and v3 has no `msa` signal. `KernelOverrides`
 	 * has no member for either, so accepting the document would drop what the caller

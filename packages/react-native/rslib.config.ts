@@ -4,12 +4,12 @@ import { pluginReact } from '@rsbuild/plugin-react';
 import { defineConfig } from '@rslib/core';
 import type { RsbuildPlugin } from '@rslib/core';
 
-import { compactModuleMinify } from '../shared/rslib-modules';
+import { compactModuleMinify } from '../sdk/shared/rslib-modules';
 import {
 	getRsdoctorPlugins,
 	standardExcludePatterns,
 	standardSourceEntries,
-} from '../shared/rslib-utils';
+} from '../sdk/shared/rslib-utils';
 
 /** A relative module specifier with the `.js` extension, quoted. */
 const RELATIVE_JS_SPECIFIER =

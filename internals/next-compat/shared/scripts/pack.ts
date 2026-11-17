@@ -8,13 +8,13 @@
  * Why: both bundlers decide "installed dependency or first-party code" by the
  * real path, and the Pages Router `require`s installed packages at runtime,
  * so peers such as `next` must resolve upward from the package to the cell's
- * own copy. A workspace symlink into `packages/react/dist` fails both tests:
+ * own copy. A workspace symlink into `packages/sdk/react/dist` fails both tests:
  * webpack runs its React Server Components checks on it, and `next` resolves
  * to whatever the monorepo hoisted. Extracting under `<cell>/node_modules` gives the packages
  * a real install path, and proves `files` and `exports` publish what the
  * cells consume.
  *
- * Usage: `bun ../shared/scripts/pack.ts` from a cell directory (its `build`
+ * Usage: `bun ./scripts/pack.ts` from a cell directory (its `build`
  * script), or with the cell directory as the first argument. Other fixtures
  * that must consume published artifacts import {@link installPackedPackages}
  * with their own root packages.
@@ -37,7 +37,7 @@ import { fileURLToPath } from 'node:url';
 
 const sharedDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const repoRoot = resolve(sharedDir, '../../..');
-const packagesDir = join(repoRoot, 'packages');
+const packagesDir = join(repoRoot, 'packages', 'sdk');
 const ROOT_PACKAGE = '@c15t/nextjs';
 const SHARED_PACKAGE = '@c15t/next-compat-shared';
 

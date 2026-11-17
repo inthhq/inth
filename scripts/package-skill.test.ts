@@ -7,7 +7,9 @@ import { expect, test } from 'vitest';
 import { PACKAGE_DOCS_CONFIGS } from './generate-package-docs';
 import { packageSkillName, renderPackageSkill } from './package-skill';
 
-const docsRoot = fileURLToPath(new URL('../docs', import.meta.url));
+const docsRoot = fileURLToPath(
+	new URL('../packages/sdk/docs', import.meta.url)
+);
 const repoRoot = fileURLToPath(new URL('..', import.meta.url));
 
 test.each(PACKAGE_DOCS_CONFIGS)(

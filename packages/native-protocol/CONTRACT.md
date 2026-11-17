@@ -29,7 +29,7 @@ own:
                     IABTCF_AddtlConsent. IABTCF_CmpSdkID and CmpSdkVersion need
                     IAB configuration; IABTCF_gdprApplies is 1 under an IAB
                     rule and 0 under every other model, mirroring
-                    packages/iab. The bus is never read back; the Keychain and
+                    packages/sdk/iab. The bus is never read back; the Keychain and
                     the encrypted noBackupFilesDir store stay authoritative.
                     reset() and every envelope discard clear the table, and
                     the projection rebuilds from stored bytes alone.
@@ -47,7 +47,7 @@ own:
                     are never production defaults. Created and LastUpdated are
                     always the same day. GVL lifecycle, TCF 2.4 disclosures and
                     AC v2 remain separate required release work.
-    TCF checks      native/protocol/iab/tcf-policy-checks.json lists IAB
+    TCF checks      packages/native-protocol/iab/tcf-policy-checks.json lists IAB
                     Europe's non-web CMP checks. Every check needs a Swift and a
                     Kotlin test marked `// TCF-CHECK: <id>`;
                     scripts/tcf-policy-checks.test.ts fails otherwise. IAB UI
@@ -58,9 +58,9 @@ own:
                     (`bun run generate:native-iab-copy`).
     Consent Mode    Google Consent Mode v2 maps categories to signals
                     exactly as the web does. The mapping lives in
-                    packages/integrations/src/vendors/_shared/google-consent.ts;
+                    packages/sdk/integrations/src/vendors/_shared/google-consent.ts;
                     `bun scripts/generate-google-consent-mode-fixture.ts`
-                    writes native/protocol/google-consent-mode/, and
+                    writes packages/native-protocol/google-consent-mode/, and
                     scripts/generate-google-consent-mode-fixture.test.ts fails
                     when the file is stale. GoogleConsentType in Swift and
                     Kotlin and resolveGoogleConsentMode in React Native are
@@ -85,7 +85,7 @@ An IAB rule is evaluated by copying the web kernel rather than by inventing a
 device rule, and the rules below are worth naming because each one is a place a
 core could quietly grant more than the web does. An in-scope category is denied
 until a current explicit choice grants it: `defaultPermission` in
-`packages/core/src/consent-record/evaluate.ts` permits an in-scope category only
+`packages/sdk/core/src/consent-record/evaluate.ts` permits an in-scope category only
 for `model === 'opt-out' || model === 'none'`, so `iab` and `opt-in` answer the
 same way, and `docs/internal/evaluator-parity.md` measured that identity cell by
 cell. `necessary` is granted and is not the rule's to take: the web evaluator
@@ -157,7 +157,7 @@ Rules that hold everywhere
    Storage, clock, and HTTP go through interfaces the Android layer implements.
    Same rule for Swift: no UIKit, and no Keychain outside the store conformances.
 4. Both native cores must produce the same request bodies as `@c15t/core` for
-   the same inputs. The fixtures in `native/protocol/` decide this. If a fixture
+   the same inputs. The fixtures in `packages/native-protocol/` decide this. If a fixture
    disagrees, the TypeScript kernel is right until the contract says otherwise.
 5. Unknown wire values fail closed. A native core that cannot parse a policy
    resolution serves `policyPending: true` with every optional category denied,
@@ -170,7 +170,7 @@ State model
 -----------
 
 Native holds one immutable `ConsentSnapshot`, versioned by `revision`. It mirrors
-the fields of `ConsentSnapshot` in `packages/core/src/types.ts` that matter on
+the fields of `ConsentSnapshot` in `packages/sdk/core/src/types.ts` that matter on
 mobile:
 
     revision: number                  // monotonic, bumps on every mutation
@@ -195,7 +195,7 @@ mobile:
 
 `consentCategories` is the subject-facing list a consent surface draws: `necessary`
 first, then the choice scope, all optional names in canonical sorted order. The choice
-scope is `projectChoiceScope` in `packages/core/src/policy.ts`: the resolved policy
+scope is `projectChoiceScope` in `packages/sdk/core/src/policy.ts`: the resolved policy
 scope narrowed by the host's declared categories, or, when the host declares nothing,
 none of a `permissive` rule's scope and all of a `strict` one's. That is the same set
 the web dialog derives, so the same backend and the same declaration list the same rows
@@ -274,7 +274,7 @@ core's own business; the JSON a bridge emits is not.
 
 So no compiler sees a bridge key, and a test does instead. `BRIDGE_PAYLOADS` in
 `packages/react-native/src/protocol/bridge-schema.ts` names every key of every
-payload the TurboModule carries, and `native/protocol/bridge/payloads.json` is
+payload the TurboModule carries, and `packages/native-protocol/bridge/payloads.json` is
 generated from it (`generate:bridge-schema`). It ships behind the
 `@c15t/react-native/bridge-schema` subpath, not the main entry, and the client
 loads it only in a `__DEV__` build, so a release app carries none of it. `bridge-schema.type-test.ts` holds the
@@ -631,7 +631,7 @@ web derivation (`C15T_TO_IAB_PURPOSE_MAP.marketing`, decided by the purposes som
 registered or custom vendor asks consent for) to at least one consented
 registered or custom vendor that asks consent for a deciding purpose, or a
 consented ad tech provider. Otherwise it is a refusal.
-`native/protocol/att/iab-marketing.json` holds the cases both sides run. The iOS
+`packages/native-protocol/att/iab-marketing.json` holds the cases both sides run. The iOS
 bridge sends the answer, cached per snapshot revision, as the snapshot key
 `iabMarketingPurposes`. This decides only whether the SDK asks Apple, not
 whether a vendor may read the advertising identifier. The ATT answer never
@@ -783,7 +783,7 @@ The filter belongs to one layer. The deployment narrows by its own publisher ids
 it puts them in a query only while the id count is small enough to travel safely.
 Above that cap the whole document is fetched and narrowed before it is served, so a
 publisher who scoped wide pays more bytes and never a wider disclosure. The same rule
-lives twice on web, in `packages/iab` when it fetches for itself and in
+lives twice on web, in `packages/sdk/iab` when it fetches for itself and in
 `packages/backend` when it serves `/init`. The mobile helpers must return exactly what
 `narrowGVLToVendors` returns for the same document and the same ids. That equal answer
 is owed by a fixture whose expected value came from the web function itself.
@@ -1078,7 +1078,7 @@ a fresh decision because their stored lists may have discarded unknown fields.
 Project URL
 -----------
 
-`native/protocol/project-url/cases.json` is the shared fixture. Each platform keeps
+`packages/native-protocol/project-url/cases.json` is the shared fixture. Each platform keeps
 one constant equal to its `allowedHostSuffixes` (`inth.app`) and a test
 that checks the constant and runs every `strict` and `relaxed` case. The
 implementations are `inth-project-url.swift`, `InthProjectUrl.kt`, and
@@ -1212,9 +1212,9 @@ identifier. If the app is reinstalled, the store is gone and the subject starts
 fresh, which matches the web SDK when storage is cleared.
 
 The format is the one the backend validates, so a core that invents its own gets
-every save rejected: `packages/schema/src/api/subject/post.ts` requires
+every save rejected: `packages/sdk/schema/src/api/subject/post.ts` requires
 `^sub_[1-9A-HJ-NP-Za-km-z]+$`. Build it as
-`packages/core/src/libs/generate-subject-id.ts` does, byte for byte, because the
+`packages/sdk/core/src/libs/generate-subject-id.ts` does, byte for byte, because the
 web SDK and both native cores have to produce ids a server cannot tell apart:
 
 - 20 bytes: the big-endian signed 64-bit count of milliseconds since
@@ -1253,9 +1253,9 @@ the producer refuses must read exactly like a first launch, records and all.
 
 The encoding is pinned by a table of eight vectors -- twelve random bytes, a wall
 clock reading, and the id -- asserted identically in three places:
-`packages/core/src/libs/__tests__/generate-subject-id.vectors.test.ts`,
-`native/core-android/.../SubjectIdGeneratorTest.kt`, and
-`native/core-swift/Tests/C15tCoreTests/SubjectIdTests.swift`. The clock column is
+`packages/sdk/core/src/libs/__tests__/generate-subject-id.vectors.test.ts`,
+`packages/android/.../SubjectIdGeneratorTest.kt`, and
+`packages/swift/Tests/C15tCoreTests/SubjectIdTests.swift`. The clock column is
 the reading the generator is pinned to, not the offset it encodes; the epoch is
 subtracted inside, as the web SDK subtracts it from `Date.now()`. Add a row to all
 three at once.
@@ -1403,8 +1403,8 @@ declared on that basis (`IABPresentation.restrictionConflicts`), is refused by
 the bridge as `invalid-iab-choices` before it reaches the core. The stock
 screens offer no such switch. Purpose signals are the subject's answer per
 purpose and are not refused, as on the stock screens.
-`native/protocol/iab/headless-disclosure-cases.json`, generated from
-`packages/iab`, holds the disclosure, the TC and AC strings both the stock save
+`packages/native-protocol/iab/headless-disclosure-cases.json`, generated from
+`packages/sdk/iab`, holds the disclosure, the TC and AC strings both the stock save
 and the headless commit write, and the refused selections. The web encoder
 writes restriction vendors that are adjacent in the narrowed list as one range,
 which also covers the IDs between them; both native encoders write each vendor,
@@ -1547,7 +1547,7 @@ second copy of the native rule. The bridge's payloads, new ones included, are in
 Conformance fixtures
 --------------------
 
-`native/protocol/*.json`, generated by `packages/react-native/scripts/` from the
+`packages/native-protocol/*.json`, generated by `packages/react-native/scripts/` from the
 TypeScript kernel. Seven kinds:
 
 - `evaluation-*.json`  transport response plus stored records in, snapshot out.
@@ -1635,24 +1635,24 @@ build against the same reality.
   must register exactly that module name.
 - The package expects iOS at `packages/react-native/ios/` with
   `C15tReactNative.xcodeproj`, and Android at `packages/react-native/android/`.
-- Fixtures live in `native/protocol/*.json`, one file per case plus `index.json`.
+- Fixtures live in `packages/native-protocol/*.json`, one file per case plus `index.json`.
   Each fixture carries `id`, `kind`, `description`, `notes`, `protocolVersion`,
   `input`, and `expected`. A native test reads `input`, computes, and asserts
   against `expected` field by field. Regenerate with
   `bun run --cwd packages/react-native generate:fixtures`, which is byte-stable:
-  two runs produce the same bytes, so a diff in `native/protocol/` is always a
+  two runs produce the same bytes, so a diff in `packages/native-protocol/` is always a
   real change and never a timestamp.
 - All seven kinds are generated, and both native cores claim and run all seven. Each
   runner keeps a set of the kinds it has a function for, derives its unclaimed count
   from that set, and fails when the count is not zero, so a kind goes unrun only by a
   branch nobody wrote. The web v3 record envelope that used to be reported unclaimed
   here is not a format either native core speaks; its codec stays covered in
-  `packages/core`, where it lives.
+  `packages/sdk/core`, where it lives.
 
 Kotlin core, as built
 ---------------------
 
-`native/core-android/` is a Gradle 9.4.1 project with the wrapper checked in.
+`packages/android/` is a Gradle 9.4.1 project with the wrapper checked in.
 
 - `c15t-core` is the pure-JVM consent engine. A test asserts that no source file
   imports `android.*`, so keep it that way. Run it with
@@ -1685,7 +1685,7 @@ Kotlin core, as built
 Swift core, as built
 --------------------
 
-`native/core-swift/` is a standalone SwiftPM package, `C15tCore`, plus a
+`packages/swift/` is a standalone SwiftPM package, `C15tCore`, plus a
 `C15tCoreBench` executable. No UIKit, React Native, or Expo imports.
 
 - Verified with the toolchain `xcode-select` already resolves: `xcode-select -p`
@@ -1740,7 +1740,7 @@ Apple sources in the same compiled module:
 
     platform :ios, '16.4'
 
-    pod 'C15tReactNative',  :path => '../packages/react-native'
+    pod 'C15tReactNative',  :path => '../react-native'
 
 - Do not also link `C15tCore` or `C15tApple` separately in that RN process. Host
   installation imports `C15tReactNative` and uses the types compiled into that
@@ -1989,7 +1989,7 @@ Rules the plugin enforces at build time
   wants the shorter retry declares it itself; the plugin writing it would trade
   every host's manifest for one wake-up nobody asked for.
 - The Android SDK floor, `minSdk` 24 and `compileSdk` 36 from
-  `native/core-android/gradle/libs.versions.toml`, is checked, not raised.
+  `packages/android/gradle/libs.versions.toml`, is checked, not raised.
   Below it the manifest merger or the AAR compile fails with a message that
   names neither c15t nor the number. An Expo 55 to 58 template writes no SDK
   number: `app/build.gradle` reads `rootProject.ext.*`, and the
@@ -2113,7 +2113,7 @@ Rule 4 says the native cores must produce what `@c15t/core` produces. Where the
 TS evaluator has a rule the kernels have never been run against, that gap is now
 written down with its measurement: the web answer table and the three kernel
 divergences it found live in
-[`docs/internal/evaluator-parity.md`](../docs/internal/evaluator-parity.md).
+[`docs/internal/evaluator-parity.md`](../sdk/docs/internal/evaluator-parity.md).
 Read it before changing either `PolicyEvaluator`, or the evaluation scenarios in
 `packages/react-native/scripts/generate-protocol-fixtures.ts`. Permissions and
 `restrictions` are bridge and storage surface: a kernel may not change them to
@@ -2197,8 +2197,8 @@ centre does.
 Their purposes count toward the consent basis that decides a category, as
 `consentBasisPurposes` passes them to `iabPurposesToC15tConsents`:
 `IABPurposeCategories` and `iabPurposeCategories()` on both cores, and the ATT
-gate above. `native/protocol/iab/purpose-categories.json` and
-`native/protocol/att/iab-marketing.json` hold the shared cases; the web's
+gate above. `packages/native-protocol/iab/purpose-categories.json` and
+`packages/native-protocol/att/iab-marketing.json` hold the shared cases; the web's
 expected values come from its own function.
 
 The complete IABTCF bus is an egress projection of validated native authority.
@@ -2235,7 +2235,7 @@ they do not mix.
   `policyResource` or `bundleManifest`, and `C15tAppleConfiguration` lets the
   manifest win. Both cores normalize rules exactly as
   `normalizePolicyRule` does and match them as `resolvePolicyRules` does;
-  `native/protocol/local-policy/parity.json`, generated from `@c15t/schema`,
+  `packages/native-protocol/local-policy/parity.json`, generated from `@c15t/schema`,
   holds the shared cases: a matrix of every `PolicyRule` field against every
   kind of value, sorted by the backend's own `inspectPolicyRules` into
   policies all three validators (Expo prebuild and both cores) must refuse and
@@ -2280,9 +2280,9 @@ The iOS bridge reads `com.c15t.policy.resource` from Info.plist. Android reads
 
 Both cores encode the IAB Global Privacy Platform string with the same rules as
 `@c15t/iab/gpp` on the web. `GppEncoder.kt` and `GPPEncoder.swift` port
-`packages/iab/src/gpp/encoder.ts`; `GppResolver.kt` and `GPPResolver.swift` port
+`packages/sdk/iab/src/gpp/encoder.ts`; `GppResolver.kt` and `GPPResolver.swift` port
 `resolveUSSectionDefinition` and `resolveUSSectionValues` from
-`packages/iab/src/gpp/us-section.ts`, restricted to the two sections a device
+`packages/sdk/iab/src/gpp/us-section.ts`, restricted to the two sections a device
 encodes. State sections (`usca`, `usva` and the rest) are not encoded on mobile.
 
 **GPP is off by default.** A US section reports notices as given, and that is
@@ -2340,10 +2340,10 @@ No document defines per-field keys for US National, so none are written. The row
 share the IABTCF_* sink: Android replaces both tables in one preferences commit,
 Apple treats `IABGPP_HDR_GppString` as a marker it removes first and writes last.
 
-**Conformance.** `native/protocol/gpp/cases.json` holds encoder and resolver
+**Conformance.** `packages/native-protocol/gpp/cases.json` holds encoder and resolver
 cases with the expected string and in-app rows. `GppTest.kt` and
 `GPPTests.swift` assert every case, and
-`packages/iab/src/__tests__/native-gpp-fixtures.test.ts` checks each expected
+`packages/sdk/iab/src/__tests__/native-gpp-fixtures.test.ts` checks each expected
 string against the web encoder and decodes it with `@iabgpp/cmpapi`.
 
 ## WebView consent
@@ -2354,7 +2354,7 @@ gets a read-only copy, and nothing it does is recorded as a native choice.
 
 ### Scripts
 
-`native/protocol/webview/` holds the two scripts every platform injects, byte
+`packages/native-protocol/webview/` holds the two scripts every platform injects, byte
 for byte. `bun run generate:webview-consent-scripts` copies them into
 `WebViewConsentScripts` (Swift and Kotlin) and `scripts.generated.ts` (React
 Native); `scripts/generate-webview-consent-scripts.test.ts` fails on drift. Each

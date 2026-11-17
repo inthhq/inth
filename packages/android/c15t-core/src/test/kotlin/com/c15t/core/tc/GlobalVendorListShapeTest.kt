@@ -20,7 +20,7 @@ import kotlin.test.assertTrue
  * The shape a bridge hands JavaScript, and the acceptance rules that decide whether a device holds a
  * list at all.
  *
- * The shape requirement is stated plainly in the task and by `native/CONTRACT.md`: a JSON string that
+ * The shape requirement is stated plainly in the task and by `packages/native-protocol/CONTRACT.md`: a JSON string that
  * renamed a key fails no compile and no type check, and the JavaScript side reads `undefined` in
  * silence -- the contract wrote that rule after one core carried four renamed keys behind fixture
  * tolerations. So the strongest check available runs here: [served body round trips key for key]

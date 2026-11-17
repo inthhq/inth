@@ -141,7 +141,7 @@ describe('bannerOnlyFiles', () => {
 	);
 
 	test('finds the banner when the module is loaded from source', () => {
-		const source = 'packages/vue/src/runtime/components/prompt.vue';
+		const source = 'packages/sdk/vue/src/runtime/components/prompt.vue';
 		const fromSource = built();
 		const { [BANNER]: banner, ...rest } = fromSource;
 		const linked = { ...rest, [source]: { ...banner, src: source } };
@@ -152,7 +152,7 @@ describe('bannerOnlyFiles', () => {
 	});
 
 	test('keeps what the experiment controller imports when loaded from source', () => {
-		const controller = 'packages/core/src/libs/experiment-assignment.ts';
+		const controller = 'packages/sdk/core/src/libs/experiment-assignment.ts';
 		const linked = built();
 		linked[controller] = {
 			file: 'Experiment.js',

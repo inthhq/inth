@@ -6,11 +6,11 @@ import { describe, expect, test } from 'vitest';
 const rawSources: Record<string, string> = {
 	...import.meta.glob(
 		[
-			'../../components/**/*.{ts,tsx}',
-			'!../../components/**/__tests__/**',
-			'!../../components/**/__screenshots__/**',
-			'!../../components/**/*.test.*',
-			'!../../components/**/*.spec.*',
+			'../**/*.{ts,tsx}',
+			'!../**/__tests__/**',
+			'!../**/__screenshots__/**',
+			'!../**/*.test.*',
+			'!../**/*.spec.*',
 		],
 		{ eager: true, import: 'default', query: '?raw' }
 	),

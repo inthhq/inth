@@ -1,10 +1,10 @@
 /**
  * Native derives c15t categories from an IAB TCF decision with the web's
- * function, not a second one. `native/protocol/iab/purpose-categories.json`
+ * function, not a second one. `packages/native-protocol/iab/purpose-categories.json`
  * holds the shared cases, custom (non-IAB) vendors included; this runs them
  * against `iabPurposesToC15tConsents`. `IABPurposeCategoriesTests` in
- * `native/core-swift/Tests/C15tCoreTests` and `IabPurposeCategoriesTest` in
- * `native/core-android/c15t-core` run the same cases against Swift and Kotlin.
+ * `packages/swift/Tests/C15tCoreTests` and `IabPurposeCategoriesTest` in
+ * `packages/android/c15t-core` run the same cases against Swift and Kotlin.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, test } from 'vitest';
 
-import { iabPurposesToC15tConsents } from '../packages/iab/src/tcf/purpose-mapping';
+import { iabPurposesToC15tConsents } from '../packages/sdk/iab/src/tcf/purpose-mapping';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 
@@ -27,13 +27,13 @@ interface FixtureCase {
 
 const fixture = JSON.parse(
 	readFileSync(
-		join(root, 'native/protocol/iab/purpose-categories.json'),
+		join(root, 'packages/native-protocol/iab/purpose-categories.json'),
 		'utf8'
 	)
 ) as { readonly cases: readonly FixtureCase[] };
 
 /**
- * `consentBasisPurposes` in `packages/iab/src/index.ts`: registered vendors'
+ * `consentBasisPurposes` in `packages/sdk/iab/src/index.ts`: registered vendors'
  * consent purposes, custom vendors' purposes, and 1, 3 and 4 when ad tech
  * providers are listed.
  */

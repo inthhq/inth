@@ -8,7 +8,7 @@ final class InthProjectURLTests: XCTestCase {
     private func fixture() throws -> JSONValue {
         let url = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-            .appendingPathComponent("protocol/project-url/cases.json")
+            .appendingPathComponent("native-protocol/project-url/cases.json")
         return try XCTUnwrap(C15tJSON.parse(Data(contentsOf: url)))
     }
 

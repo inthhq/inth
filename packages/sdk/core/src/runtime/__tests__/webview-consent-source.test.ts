@@ -16,7 +16,7 @@ import { createConsentRuntime } from '../index';
 import { webViewConsentSource } from '../webview-consent-source';
 
 const scriptPath = (name: string) =>
-	resolve(__dirname, '../../../../../native/protocol/webview', name);
+	resolve(__dirname, '../../../../../native-protocol/webview', name);
 const DOCUMENT_START = readFileSync(scriptPath('document-start.js'), 'utf8');
 const UPDATE = readFileSync(scriptPath('update.js'), 'utf8');
 

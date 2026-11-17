@@ -4,7 +4,7 @@ import Foundation
 import XCTest
 
 /// Every bridge payload this binding writes or reads, against
-/// `native/protocol/bridge/payloads.json`.
+/// `packages/native-protocol/bridge/payloads.json`.
 ///
 /// The bridge carries JSON strings, so no compiler sees a key renamed on one side. That
 /// file is generated from `src/protocol/bridge-schema.ts`, whose own type test holds the
@@ -12,7 +12,7 @@ import XCTest
 /// this test, and the reverse fails the TypeScript one. Kotlin runs the same checks in
 /// `BridgeSchemaTest.kt`.
 final class C15tBridgeSchemaTests: XCTestCase {
-    /// `native/protocol/bridge/payloads.json`, resolved from this file because `swift test`
+    /// `packages/native-protocol/bridge/payloads.json`, resolved from this file because `swift test`
     /// may start anywhere.
     private static let schemaURL = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent() // C15tReactNativeTests
@@ -21,7 +21,7 @@ final class C15tBridgeSchemaTests: XCTestCase {
         .deletingLastPathComponent() // react-native
         .deletingLastPathComponent() // packages
         .deletingLastPathComponent() // repository root
-        .appendingPathComponent("native/protocol/bridge/payloads.json")
+        .appendingPathComponent("packages/native-protocol/bridge/payloads.json")
 
     private func payloads() throws -> [String: Any] {
         let data = try Data(contentsOf: Self.schemaURL)
@@ -108,7 +108,7 @@ final class C15tBridgeSchemaTests: XCTestCase {
             let declared = try fields(name)
             problems += describe(declared, jsonObject(raw), path: "\(name).")
         }
-        XCTAssertEqual(problems, [], "payloads that drifted from native/protocol/bridge/payloads.json")
+        XCTAssertEqual(problems, [], "payloads that drifted from packages/native-protocol/bridge/payloads.json")
 
         // Optional keys are skipped when absent, so prove this binding can produce every
         // subject key the schema declares. A declared key no core models fails here.

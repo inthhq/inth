@@ -19,7 +19,7 @@ import kotlinx.serialization.json.*
 class IabLifecycleTest {
 	private val vector = Json.parseToJsonElement(
 		generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }
-			.map { File(it, "native/protocol/iab/commit-cases.json") }
+			.map { File(it, "packages/native-protocol/iab/commit-cases.json") }
 			.first { it.exists() }.readText()
 	).jsonObject
 	private val now = vector.getValue("now").jsonPrimitive.long

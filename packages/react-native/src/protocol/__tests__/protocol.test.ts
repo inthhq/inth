@@ -38,7 +38,7 @@ import {
 
 const FIXTURE_DIR = resolve(
 	dirname(fileURLToPath(import.meta.url)),
-	'../../../../../native/protocol'
+	'../../../../native-protocol'
 );
 
 /**
@@ -55,7 +55,7 @@ const PERMISSION_KEYS = [
 	'necessary',
 ].sort();
 
-/** Field set of `NativeOverrides`, as `native/CONTRACT.md` lists it. */
+/** Field set of `NativeOverrides`, as `packages/native-protocol/CONTRACT.md` lists it. */
 const OVERRIDE_KEYS = ['country', 'gpc', 'language', 'region'].sort();
 
 /** Field set of the `gpc` member of `NativePrivacySignals`. */
@@ -153,7 +153,7 @@ const snapshotsIn = function snapshotsIn(
 ): Record<string, Record<string, unknown>> {
 	if (fixture.kind === 'revision-trace') {
 		// The trace fixture asserts a revision trace, not a snapshot. Its snapshot is
-		// the one each core starts from, which `native/CONTRACT.md` refuses to compare
+		// the one each core starts from, which `packages/native-protocol/CONTRACT.md` refuses to compare
 		// across implementations.
 		return {};
 	}
@@ -408,7 +408,7 @@ describe('protocol fixtures', () => {
 	 * forever.
 	 *
 	 * The scope bounds the claim. `defaultPermission` in
-	 * `packages/core/src/consent-record/evaluate.ts` reads `scopeMode` alone for a
+	 * `packages/sdk/core/src/consent-record/evaluate.ts` reads `scopeMode` alone for a
 	 * category the rule does not govern and never reads the model, so a permissive
 	 * policy permits an ungoverned category with nothing on record -- under `opt-in`
 	 * and `iab` alike. `evaluation-narrow-permissive-*-no-receipt` is that cell, which
@@ -475,7 +475,7 @@ describe('protocol fixtures', () => {
 			};
 
 			// The counter is deliberately absent: a wipe publishes the revision the
-			// device was on plus one, and `native/CONTRACT.md` refuses to compare the
+			// device was on plus one, and `packages/native-protocol/CONTRACT.md` refuses to compare the
 			// absolute numbering the implementations start from. Absent by rule, not by
 			// drift -- and the delta below is the half that is stateable.
 			expect(expected.baseline.snapshot.revision).toBeUndefined();

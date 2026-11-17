@@ -9,7 +9,7 @@ const root = fileURLToPath(new URL('..', import.meta.url));
 const drift = ['C15tApple', 'C15tConsentUI'].flatMap((module) =>
 	syncVendoredCore({
 		check: process.argv.includes('--check'),
-		sourceDir: join(root, 'native/core-swift/Sources', module),
+		sourceDir: join(root, 'packages/swift/Sources', module),
 		targetDir: join(root, 'packages/react-native/vendor', module),
 	})
 );

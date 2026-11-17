@@ -1,0 +1,23 @@
+{/* Generated from packages/swift/Examples/swiftui-consent/Sources/headless-preferences.swift (docs:swiftui-save) by scripts/sync-example-docs.ts. Edit the source file. */}
+
+```swift title="Sources/headless-preferences.swift"
+private func save() {
+    guard !pending, canEdit else { return }
+    pending = true
+    let capturedDraft = draft
+    Task { @MainActor in
+        let result = await Task.detached(priority: .userInitiated) {
+            capturedDraft.commit(to: core)
+        }.value
+        pending = false
+        if result.status == .committed {
+            dismiss()
+        } else {
+            // Keep the draft. A refused or failed write does not become a grant.
+            error = result.error?.code == "concurrent-change"
+                ? "Settings changed while you were editing. Reload current choices before saving."
+                : "Couldn't save your choices. Nothing changed. Try again."
+        }
+    }
+}
+```

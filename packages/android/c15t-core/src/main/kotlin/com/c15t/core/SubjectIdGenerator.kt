@@ -111,10 +111,10 @@ class SubjectIdGenerator(
 		/**
 		 * Whether [candidate] is an id this generator writes, and therefore an id the
 		 * producer accepts: `^sub_[1-9A-HJ-NP-Za-km-z]+$`, the pattern in
-		 * `subjectIdSchema` in `packages/schema/src/api/subject/post.ts`.
+		 * `subjectIdSchema` in `packages/sdk/schema/src/api/subject/post.ts`.
 		 *
 		 * This is the gate for adopting a *stored* id too, not just for minting a new
-		 * one. `native/CONTRACT.md` puts the read side of the format rule the same way
+		 * one. `packages/native-protocol/CONTRACT.md` puts the read side of the format rule the same way
 		 * the write side: an id the producer will not accept is an identity this build
 		 * cannot use, and it is worth nothing. The legacy UUID shape is not an exception
 		 * -- see [isLegacyUuidShape] for the one thing it is good for.

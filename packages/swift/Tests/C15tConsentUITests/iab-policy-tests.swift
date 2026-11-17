@@ -541,7 +541,7 @@ final class IABPolicyTests: XCTestCase {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         let fixture = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf: root
-            .appendingPathComponent("protocol/iab/accept-all-declared-signals.json"))) as? [String: Any])
+            .appendingPathComponent("native-protocol/iab/accept-all-declared-signals.json"))) as? [String: Any])
         let served = try XCTUnwrap(fixture["gvl"] as? [String: Any])
         let expected = try XCTUnwrap((fixture["vendorDataCategories"] as? [String: [String]])?["21"])
         let core = try await bootIAB { gvl in gvl = served }
@@ -622,7 +622,7 @@ final class IABPolicyTests: XCTestCase {
                          _ edit: ((inout [String: Any]) -> Void)? = nil) async throws -> ConsentCore {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-        var body = try Data(contentsOf: root.appendingPathComponent("examples/consent-demo/fixtures/iab-init.json"))
+        var body = try Data(contentsOf: root.appendingPathComponent("../examples/native/consent-demo/fixtures/iab-init.json"))
         if edit != nil || customVendors != nil {
             var json = try XCTUnwrap(JSONSerialization.jsonObject(with: body) as? [String: Any])
             if let edit {

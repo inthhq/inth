@@ -342,8 +342,8 @@ else
   AVDMANAGER="${ANDROID_HOME}/cmdline-tools/latest/bin/avdmanager"
   IMAGE="${C15T_ANDROID_IMAGE:-system-images;android-36;google_apis;arm64-v8a}"
   ARCH="${C15T_ANDROID_ARCH:-arm64-v8a}"
-  export C15T_MAVEN_URL="file://${REPO_ROOT}/native/core-android/build/maven-staging"
-  sh "${REPO_ROOT}/native/core-android/gradlew" -p "${REPO_ROOT}/native/core-android" --max-workers=4 \
+  export C15T_MAVEN_URL="file://${REPO_ROOT}/packages/android/build/maven-staging"
+  sh "${REPO_ROOT}/packages/android/gradlew" -p "${REPO_ROOT}/packages/android" --max-workers=4 \
     :c15t-core:publishAllPublicationsToStagingRepository :c15t-android:publishAllPublicationsToStagingRepository :c15t-consent-ui:publishAllPublicationsToStagingRepository > "${OUT}/native-artifacts.log" 2>&1
   (cd "${APP}" && bun x expo prebuild --platform android --clean --no-install) > "${OUT}/prebuild.log" 2>&1
   sh "${APP}/android/gradlew" -p "${APP}/android" --refresh-dependencies :app:assembleRelease \

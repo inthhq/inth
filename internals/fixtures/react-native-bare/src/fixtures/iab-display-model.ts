@@ -5,7 +5,7 @@
  * kernel, so a screen showing it has to be handed a whole display model. This
  * is that hand-over, written out: the rows the web resolver builds from the
  * sample GVL in
- * `packages/iab/src/__tests__/fixtures/gvl-sample`, field for field, in the
+ * `packages/sdk/iab/src/__tests__/fixtures/gvl-sample`, field for field, in the
  * web's own order, with the web's own `testId` on every row.
  *
  * It is data and nothing but data. The nine partner constants below are the

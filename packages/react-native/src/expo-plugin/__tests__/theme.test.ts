@@ -22,7 +22,7 @@ import { FIXTURE_DIR, applyToFixture, runInfoPlist, runMod } from './helpers';
 
 const NATIVE_ROOT = resolve(
 	dirname(fileURLToPath(import.meta.url)),
-	'../../../../../native'
+	'../../../..'
 );
 
 const BACKEND = 'https://acme.inth.app';
@@ -457,7 +457,7 @@ describe('theme prop', () => {
 /** `static let name = "key"` constants inside one Swift enum body. */
 const swiftKeys = function swiftKeys(): Set<string> {
 	const source = readFileSync(
-		join(NATIVE_ROOT, 'core-swift/Sources/C15tConsentUI/consent-theme.swift'),
+		join(NATIVE_ROOT, 'swift/Sources/C15tConsentUI/consent-theme.swift'),
 		'utf8'
 	);
 	const body = /enum InfoPlistKey\s*\{(?<body>[\S\s]*?)\n {4}\}/u.exec(source)
@@ -474,7 +474,7 @@ const kotlinKeys = function kotlinKeys(): Set<string> {
 	const source = readFileSync(
 		join(
 			NATIVE_ROOT,
-			'core-android/c15t-consent-ui/src/main/kotlin/com/c15t/consentui/consent-theme.kt'
+			'android/c15t-consent-ui/src/main/kotlin/com/c15t/consentui/consent-theme.kt'
 		),
 		'utf8'
 	);
@@ -503,13 +503,13 @@ describe('theme keys', () => {
 
 	it('name the slots and slot fields the native theme sources read', () => {
 		const swift = readFileSync(
-			join(NATIVE_ROOT, 'core-swift/Sources/C15tConsentUI/consent-theme.swift'),
+			join(NATIVE_ROOT, 'swift/Sources/C15tConsentUI/consent-theme.swift'),
 			'utf8'
 		);
 		const kotlin = readFileSync(
 			join(
 				NATIVE_ROOT,
-				'core-android/c15t-consent-ui/src/main/kotlin/com/c15t/consentui/consent-theme.kt'
+				'android/c15t-consent-ui/src/main/kotlin/com/c15t/consentui/consent-theme.kt'
 			),
 			'utf8'
 		);

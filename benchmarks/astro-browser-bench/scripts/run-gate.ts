@@ -66,7 +66,7 @@ const listFiles = function listFiles(path: string): string[] {
  */
 const computeInputHash = function computeInputHash(): string {
 	const workspace = new Map<string, { deps: string[]; dir: string }>();
-	for (const parent of ['packages', 'benchmarks', 'internals']) {
+	for (const parent of ['packages/sdk', 'benchmarks', 'internals']) {
 		const parentDir = join(repoRoot, parent);
 		for (const entry of existsSync(parentDir) ? readdirSync(parentDir) : []) {
 			const manifestPath = join(parentDir, entry, 'package.json');

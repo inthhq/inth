@@ -164,7 +164,7 @@ final class TcStorageBusTests: XCTestCase {
     }
 
     /// The one row this build's IAB support moves on the bus: an IAB rule reads
-    /// `1`, the same question `packages/iab` asks (`policyRule.model === "iab"`).
+    /// `1`, the same question `packages/sdk/iab` asks (`policyRule.model === "iab"`).
     ///
     /// The rule's model comes from the envelope's copy of the wire, so the row
     /// survives a bus wipe: what a rebuild recomputes has to be what the commit

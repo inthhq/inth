@@ -44,7 +44,7 @@ class IabUpgradeTest {
 
 	@Test fun `exact legacy base bytes fail closed and allow pure withdrawal without config`() {
 		val file = generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }
-			.map { File(it, "native/protocol/iab/legacy-category-store.json") }.first { it.exists() }
+			.map { File(it, "packages/native-protocol/iab/legacy-category-store.json") }.first { it.exists() }
 		val bytes = Json.parseToJsonElement(file.readText()).jsonObject
 		val backend = InMemoryKeyValueStore()
 		for ((key, value) in bytes) backend.write(key, String(Base64.getDecoder().decode(value.jsonPrimitive.content)))

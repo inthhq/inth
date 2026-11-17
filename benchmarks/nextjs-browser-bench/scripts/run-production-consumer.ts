@@ -215,7 +215,7 @@ const run = function run(
 const readWorkspacePackages = function readWorkspacePackages(
 	root: string
 ): Map<string, WorkspacePackageInfo> {
-	const packagesDir = join(root, 'packages');
+	const packagesDir = join(root, 'packages', 'sdk');
 	const packages = new Map<string, WorkspacePackageInfo>();
 	for (const entry of readdirSync(packagesDir)) {
 		const manifestPath = join(packagesDir, entry, 'package.json');

@@ -8,7 +8,7 @@ final class ConsentPolicyTests: XCTestCase {
         get throws {
             let url = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
                 .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-                .appendingPathComponent("protocol/local-policy/parity.json")
+                .appendingPathComponent("native-protocol/local-policy/parity.json")
             return try XCTUnwrap(C15tJSON.parse(Data(contentsOf: url)))
         }
     }

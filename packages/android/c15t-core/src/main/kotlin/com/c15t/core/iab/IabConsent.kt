@@ -174,7 +174,7 @@ internal object IabAuthority {
 		if (previous != null) require(previous.consentVersion in 1 until Int.MAX_VALUE)
 		// `createdAt` keeps the first decision's time for the record. It never reaches the string:
 		// TCF requires Created and LastUpdated to hold the same day, and the web build sets both to
-		// the confirmation day (`packages/iab/src/tcf/tc-string.ts`).
+		// the confirmation day (`packages/sdk/iab/src/tcf/tc-string.ts`).
 		val createdAt = previous?.createdAt ?: actionAt
 		require(createdAt >= 0 && actionAt >= createdAt)
 		val restrictions =
@@ -247,7 +247,7 @@ internal object IabAuthority {
 	}
 
 	/**
-	 * Accept All, as `applyBlanket` in `packages/iab/src/index.ts`: a signal is positive only for
+	 * Accept All, as `applyBlanket` in `packages/sdk/iab/src/index.ts`: a signal is positive only for
 	 * what some vendor declares on that legal basis once publisher restrictions apply (TCF Policies
 	 * 5(3), 5(6) and 5(8)). Listed ad tech providers add purposes 1, 3 and 4. Publisher purposes are
 	 * never shown, so they stay unset, as on the web.

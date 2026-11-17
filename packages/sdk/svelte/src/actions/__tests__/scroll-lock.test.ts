@@ -1,7 +1,7 @@
 /**
  * Tests for the scrollLock Svelte action.
  *
- * Mirrors: packages/react/src/hooks/__tests__/use-scroll-lock.test.tsx
+ * Mirrors: packages/sdk/react/src/hooks/__tests__/use-scroll-lock.test.tsx
  */
 
 import { describe, expect, test } from 'vitest';

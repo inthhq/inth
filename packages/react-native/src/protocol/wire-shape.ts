@@ -35,7 +35,7 @@ interface KernelOwnedKeys {
  * Every key `ConsentSnapshot` declares.
  *
  * `iab` belongs on the list whether it holds a vendor list or `null`: a payload that
- * drops the key is a wire change either way, and `native/CONTRACT.md` asks for a
+ * drops the key is a wire change either way, and `packages/native-protocol/CONTRACT.md` asks for a
  * serialised `null` rather than an absent key where there is no state.
  */
 export const SNAPSHOT_KEYS = [
@@ -140,7 +140,7 @@ export const ADDITIVE_BOOTSTRAP_DEFAULTS = {
  * Keys the bridge adds inside the snapshot's `iab` object after protocol version 1
  * shipped, with the value an older native build means by leaving them out.
  *
- * The same rule as the top-level additive keys in `native/CONTRACT.md` ("Version
+ * The same rule as the top-level additive keys in `packages/native-protocol/CONTRACT.md` ("Version
  * handshake"): a JavaScript-only update can run this package over an older binary,
  * and the protocol version does not move for an additive key, so each absence must
  * mean "this build has no such state". An older bridge cannot commit a headless TCF
@@ -185,7 +185,7 @@ export const withAdditiveIABDefaults = function withAdditiveIABDefaults(
  * stay the core's own business.
  *
  * `gvl` is a required key with a nullable value inside `iab`, which is what
- * `KernelIABState` declares in `packages/core/src/types.ts`: Swift encodes it
+ * `KernelIABState` declares in `packages/sdk/core/src/types.ts`: Swift encodes it
  * unconditionally and refuses any other name inside the object. Kotlin's
  * `KernelIabState` types the field non-null, so it refuses `{"gvl":null}` where Swift
  * reads an object carrying no list. Neither core publishes those bytes -- both build
@@ -236,7 +236,7 @@ export interface WireDriftOptions {
 	/**
 	 * Accept keys the declared types do not name.
 	 *
-	 * `native/CONTRACT.md` lets a native build send a field the JavaScript side has
+	 * `packages/native-protocol/CONTRACT.md` lets a native build send a field the JavaScript side has
 	 * not caught up with, so a payload from a newer core is not drift, and a warning
 	 * about it would be a false alarm on every app that upgraded its native half. The
 	 * keys a kernel owns are still checked for the ones that must be there, and when

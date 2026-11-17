@@ -5,7 +5,7 @@ project's policy, stores choices on the device, presents consent screens and
 provides synchronous gates for optional SDKs. It also powers the Apple side of
 `@c15t/react-native`.
 
-Start with the [Swift quickstart](../../docs/frameworks/swift/quickstart.mdx).
+Start with the [Swift quickstart](../sdk/docs/frameworks/swift/quickstart.mdx).
 It names the files to add to your app, shows the stock consent presenter and
 keeps a Privacy settings action available after the first choice.
 
@@ -25,18 +25,18 @@ their own UI can omit `C15tConsentUI`.
 
 These are currently private source artifacts. In Xcode, add the authorized
 checkout's root as a local Swift package. A separate Swift repository is not
-required. See [mobile availability](../../docs/guides/mobile-status.mdx) for
+required. See [mobile availability](../sdk/docs/guides/mobile-status.mdx) for
 distribution and release status.
 
 ## Guides and examples
 
-- [SwiftUI quickstart](../../docs/frameworks/swift/quickstart.mdx)
-- [UIKit integration](../../docs/frameworks/swift/uikit.mdx)
-- [Native gates and custom UI](../../docs/frameworks/swift/headless.mdx)
-- [Colors, identity and copy](../../docs/frameworks/swift/customize.mdx)
-- [IAB and advertising](../../docs/guides/mobile-iab.mdx)
-- [Offline startup and persistence](../../docs/guides/mobile-offline.mdx)
-- [App verification](../../docs/guides/mobile-verify.mdx)
+- [SwiftUI quickstart](../sdk/docs/frameworks/swift/quickstart.mdx)
+- [UIKit integration](../sdk/docs/frameworks/swift/uikit.mdx)
+- [Native gates and custom UI](../sdk/docs/frameworks/swift/headless.mdx)
+- [Colors, identity and copy](../sdk/docs/frameworks/swift/customize.mdx)
+- [IAB and advertising](../sdk/docs/guides/mobile-iab.mdx)
+- [Offline startup and persistence](../sdk/docs/guides/mobile-offline.mdx)
+- [App verification](../sdk/docs/guides/mobile-verify.mdx)
 
 `Examples/AppleInstallation/Quickstart` contains the quickstart's checked source
 files. Select either the SwiftUI or UIKit entry point, not both. The
@@ -44,7 +44,7 @@ files. Select either the SwiftUI or UIKit entry point, not both. The
 category form, unavailable-policy mode and delivery status. The
 [custom consent example](Examples/custom-consent/README.md) draws its own
 prompt, preferences and IAB TCF screens on the headless blocks. The maintained
-[native consent demo](../examples/consent-demo/README.md) includes SwiftUI,
+[native consent demo](../../examples/native/consent-demo/README.md) includes SwiftUI,
 UIKit and IAB review modes.
 
 ## Headless blocks
@@ -144,10 +144,10 @@ swift test
 The nested package also exposes the benchmark executable:
 
 ```sh
-swift run --package-path native/core-swift C15tCoreBench
+swift run --package-path packages/swift C15tCoreBench
 ```
 
-The shared fixtures in `native/protocol` check wire behavior across Swift,
+The shared fixtures in `packages/native-protocol` check wire behavior across Swift,
 Kotlin and TypeScript. Package tests do not replace the iOS app journeys in the
 verification guide.
 

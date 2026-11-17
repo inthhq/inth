@@ -12,7 +12,7 @@
  * - TypeScript: `__tests__/bridge-schema.type-test.ts` fails `check-types` when
  *   a protocol type and this table disagree about a key, its optionality, its
  *   nullability or its enum values.
- * - Kotlin and Swift: `native/protocol/bridge/payloads.json` is generated from
+ * - Kotlin and Swift: `packages/native-protocol/bridge/payloads.json` is generated from
  *   this table (`bun run --cwd packages/react-native generate:bridge-schema`),
  *   and each binding's tests check every encoder's output and every decoder's
  *   input against it.
@@ -345,7 +345,7 @@ const normalizeFields = function normalizeFields(
 };
 
 /**
- * The document written to `native/protocol/bridge/payloads.json`.
+ * The document written to `packages/native-protocol/bridge/payloads.json`.
  *
  * @returns Every payload with its direction and explicit fields, keys sorted.
  */

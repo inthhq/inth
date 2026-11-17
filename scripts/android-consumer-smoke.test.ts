@@ -12,7 +12,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const verifier = new URL(
-	'../native/core-android/consumer-smoke/verify.py',
+	'../packages/android/consumer-smoke/verify.py',
 	import.meta.url
 ).pathname;
 

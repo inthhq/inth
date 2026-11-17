@@ -203,7 +203,7 @@ object PolicyEvaluator {
 	/**
 	 * How far a stored decision still stands as an authority.
 	 *
-	 * This is `decisionAuthority` in `packages/core/src/consent-record/evaluate.ts`.
+	 * This is `decisionAuthority` in `packages/sdk/core/src/consent-record/evaluate.ts`.
 	 * The kernel judges it per category and this core stores one fingerprint and one
 	 * action time for a whole commit, so the two that vary by category are presence
 	 * and value; the basis and the age apply to the commit as a whole, which is the

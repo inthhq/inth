@@ -133,7 +133,7 @@ const flatten = function flatten(
  * The web switch geometry: the small consent switch, a 28x16 fully rounded
  * track padded by 2 around a 10-point thumb.
  *
- * `packages/ui` ships a 32x20 switch too, and the consent surfaces ask the
+ * `packages/sdk/ui` ships a 32x20 switch too, and the consent surfaces ask the
  * primitive for `size="small"`, so the smaller box is the one a subject sees
  * next to a category row. Exported because the control has to draw the thumb
  * from the numbers the track was sized with, and a thumb that disagrees with its
@@ -166,7 +166,7 @@ export interface ConsentSwitchGeometry {
 }
 
 /**
- * The larger of the two switches `packages/ui` ships: a 32x20 fully rounded
+ * The larger of the two switches `packages/sdk/ui` ships: a 32x20 fully rounded
  * track, padded by 2 around a 12-point thumb.
  *
  * The IAB disclosure asks the primitive for its default size and the consent

@@ -37,7 +37,7 @@ v3-only metrics (no v2 equivalent): `subscribe` 0.54 µs, `identify` 1.00 µs.
 
 `tiny` p95 is dominated by JIT warmup on the first iteration — median is sub-µs across all fixtures.
 
-### Bundle (gzip, ESM, at build time of `packages/core`)
+### Bundle (gzip, ESM, at build time of `packages/sdk/core`)
 
 | Entry | v2 | v3 | Δ | Target |
 |---|---:|---:|---:|---:|
@@ -61,7 +61,7 @@ Both paths fire a single fetch returning a fixed banner payload. The numbers mea
 
 ### Invariants (Track 2)
 
-- `createConsentKernel()` performs zero window writes, zero network calls, zero `MutationObserver` installations. Verified in `packages/core/src/v3/__tests__/kernel.test.ts`.
+- `createConsentKernel()` performs zero window writes, zero network calls, zero `MutationObserver` installations. Verified in `packages/sdk/core/src/v3/__tests__/kernel.test.ts`.
 - Snapshot is deeply frozen and reference-stable when no mutation occurs — adapters can `===` compare safely.
 - No-op `set.consent({ necessary: true })` (no actual change) produces zero listener notifications and does not bump `revision`.
 
@@ -79,7 +79,7 @@ Adapter: `@c15t/react/v3`. Kernel creation is owned by `<ConsentProvider options
 
 ### React re-render counts — 10 children reading 5 different categories, flip `marketing`
 
-Harness: `packages/react/src/v3/__tests__/render-count-bench.test.tsx`. React 19.2 + StrictMode (double-invocation). Counts are raw Profiler `onRender` calls across all children.
+Harness: `packages/sdk/react/src/v3/__tests__/render-count-bench.test.tsx`. React 19.2 + StrictMode (double-invocation). Counts are raw Profiler `onRender` calls across all children.
 
 | | Mount | Mutation (flip marketing) |
 |---|---:|---:|
@@ -191,10 +191,10 @@ Both paths are Fluid Compute safe — every request gets its own kernel through 
 
 ### Tests
 
-- `packages/nextjs/src/v3/__tests__/server.test.ts` — **15/15 pass** (cookie parsing, malformed cookie rejection, custom cookie name, geo header precedence, region, language parsing, options overrides, concurrent-call isolation).
-- `packages/nextjs/src/v3/__tests__/boundary.test.tsx` — **3/3 pass** (initial consents honored, initial overrides honored, per-mount kernel isolation).
-- `packages/nextjs/src/v3/__tests__/end-to-end.test.tsx` — **4/4 pass** (backendURL auto-init, offline no-network, enabled=false no-init, prefetched first paint).
-- `packages/nextjs/src/v3/__tests__/prefetch.test.ts` — **6/6 pass** (backend context forwarded, absolute URL bypass, silent degradation on network error, consent merge with cookie, resolvedOverrides merge, forwardHeaders).
+- `packages/sdk/nextjs/src/v3/__tests__/server.test.ts` — **15/15 pass** (cookie parsing, malformed cookie rejection, custom cookie name, geo header precedence, region, language parsing, options overrides, concurrent-call isolation).
+- `packages/sdk/nextjs/src/v3/__tests__/boundary.test.tsx` — **3/3 pass** (initial consents honored, initial overrides honored, per-mount kernel isolation).
+- `packages/sdk/nextjs/src/v3/__tests__/end-to-end.test.tsx` — **4/4 pass** (backendURL auto-init, offline no-network, enabled=false no-init, prefetched first paint).
+- `packages/sdk/nextjs/src/v3/__tests__/prefetch.test.ts` — **6/6 pass** (backend context forwarded, absolute URL bypass, silent degradation on network error, consent merge with cookie, resolvedOverrides merge, forwardHeaders).
 
 **Total Next.js v3 tests: 28/28 green.**
 
@@ -339,7 +339,7 @@ All invariants that hold for React also hold for Vue, with zero adapter-side wor
 
 ### Tests
 
-- `packages/vue/src/v3/__tests__/composables.test.ts` — **10/10 pass** (5 selector basics, 2 re-render invariants, 1 missing-provider error, 2 action-composable flows).
+- `packages/sdk/vue/src/v3/__tests__/composables.test.ts` — **10/10 pass** (5 selector basics, 2 re-render invariants, 1 missing-provider error, 2 action-composable flows).
 
 ### What this proves for `c15t/v3`
 
@@ -406,7 +406,7 @@ Already sub-microsecond on warm fixtures. v3 must not regress.
 | large | 35.46 µs | ≤ 10 µs |
 | xlarge | 43.71 µs | ≤ 10 µs |
 
-v2 median is ~30–40 µs because construction runs iframe blocker init, network blocker init, `window[namespace]` write, callback replay, user identify, and banner fetch (`packages/core/src/store/index.ts:608-645`). v3 `createConsentKernel()` is pure — allocation only, expected sub-µs.
+v2 median is ~30–40 µs because construction runs iframe blocker init, network blocker init, `window[namespace]` write, callback replay, user identify, and banner fetch (`packages/sdk/core/src/store/index.ts:608-645`). v3 `createConsentKernel()` is pure — allocation only, expected sub-µs.
 
 ### `initConsentManager` — first-run boot
 
@@ -489,9 +489,9 @@ These metrics do not exist in `benchmarks/core-benchmarks` today. They are requi
 
 These three are captured as failing-test repros in the v3 suite (Tasks #3–#5). The v3 kernel must make them pass.
 
-1. **Silent runtime-cache reuse**: `packages/core/src/runtime/index.ts:65-92` keys on 8 fields, ignores 15 more (callbacks, overrides, scripts, iab, user, namespace, networkBlocker, consentCategories, offlinePolicy, ...). React adapter patches this at `packages/react/src/providers/consent-manager-provider.tsx:137-198`. On Vercel Fluid Compute this leaks consent across concurrent requests.
-2. **Stale-closure `has()` under React Compiler**: `packages/react/src/hooks/use-consent-manager.ts:52-84` rebuilds `has()`/`hasConsented()`/`getDisplayedConsents()` manually. Links to c15t issue #604.
-3. **Lifecycle coupling in store construction**: `packages/core/src/store/index.ts:608-645` writes `window[namespace]`, initializes iframe + network blockers, replays `onConsentSet`, calls `identifyUser`, calls `initConsentManager` — all at store construction. No way to get a store without these effects.
+1. **Silent runtime-cache reuse**: `packages/sdk/core/src/runtime/index.ts:65-92` keys on 8 fields, ignores 15 more (callbacks, overrides, scripts, iab, user, namespace, networkBlocker, consentCategories, offlinePolicy, ...). React adapter patches this at `packages/sdk/react/src/providers/consent-manager-provider.tsx:137-198`. On Vercel Fluid Compute this leaks consent across concurrent requests.
+2. **Stale-closure `has()` under React Compiler**: `packages/sdk/react/src/hooks/use-consent-manager.ts:52-84` rebuilds `has()`/`hasConsented()`/`getDisplayedConsents()` manually. Links to c15t issue #604.
+3. **Lifecycle coupling in store construction**: `packages/sdk/core/src/store/index.ts:608-645` writes `window[namespace]`, initializes iframe + network blockers, replays `onConsentSet`, calls `identifyUser`, calls `initConsentManager` — all at store construction. No way to get a store without these effects.
 
 ---
 

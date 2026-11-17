@@ -10,7 +10,7 @@ import { describe, expect, it } from 'vitest';
 import { parseKotlinBench, parseSwiftBench } from '../measure/native';
 
 const SWIFT_OUTPUT = `C15tCore benchmarks
-reference: Apple silicon, in-process; budgets from native/CONTRACT.md
+reference: Apple silicon, in-process; budgets from packages/native-protocol/CONTRACT.md
 stored envelope: 1898 bytes
 
 hydrate-from-store  (budget 3 ms for a realistic payload)

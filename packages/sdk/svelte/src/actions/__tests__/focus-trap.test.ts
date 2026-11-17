@@ -1,7 +1,7 @@
 /**
  * Tests for the focusTrap Svelte action.
  *
- * Mirrors: packages/react/src/hooks/__tests__/use-focus-trap.test.tsx
+ * Mirrors: packages/sdk/react/src/hooks/__tests__/use-focus-trap.test.tsx
  */
 
 import { assert, describe, expect, test } from 'vitest';

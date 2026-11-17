@@ -1,7 +1,7 @@
 import type { RequestEvent, RequestHandler } from '@sveltejs/kit';
 import { describe, expect, test, vi } from 'vitest';
 
-import { traceConsent } from '../../../../../../internals/doc-snippets/sveltekit/src/lib/server/trace-consent';
+import { traceConsent } from '../../../../../../../internals/doc-snippets/sveltekit/src/lib/server/trace-consent';
 import { createConsentRoute } from '../routes';
 import { createEvent } from './event';
 import { MANIFEST_FIXTURE } from './manifest-fixture';

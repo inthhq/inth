@@ -1,5 +1,5 @@
 /**
- * Writes `native/protocol/iab/banner-summary-*.json`: the web's first-layer IAB
+ * Writes `packages/native-protocol/iab/banner-summary-*.json`: the web's first-layer IAB
  * summary, computed by the real `resolveIABBannerSummary`, for the Swift and
  * Kotlin cores to match.
  *
@@ -8,8 +8,8 @@
  * the scope and leaves deleted vendors out before it summarizes, so this
  * script does the same before it calls the web function.
  *
- * The fixtures live under `native/protocol/iab/` rather than the top level,
- * because every top-level fixture must be listed in `native/protocol/index.json`.
+ * The fixtures live under `packages/native-protocol/iab/` rather than the top level,
+ * because every top-level fixture must be listed in `packages/native-protocol/index.json`.
  *
  * Usage: `bun scripts/generate-iab-banner-summary-fixtures.ts [output-dir]`
  */
@@ -18,13 +18,13 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import type { resolveIABBannerSummary as ResolveIABBannerSummary } from '../packages/core/src/libs/iab-banner-summary';
+import type { resolveIABBannerSummary as ResolveIABBannerSummary } from '../packages/sdk/core/src/libs/iab-banner-summary';
 
-// `packages/core` maps workspace imports to type declarations through its
+// `packages/sdk/core` maps workspace imports to type declarations through its
 // tsconfig paths, so Bun cannot run the source as is. Bundle the one module
 // with those imports pointed at their sources, then load the bundle.
 const source = (path: string) =>
-	fileURLToPath(new URL(`../packages/${path}`, import.meta.url));
+	fileURLToPath(new URL(`../packages/sdk/${path}`, import.meta.url));
 const bundle = await Bun.build({
 	entrypoints: [source('core/src/libs/iab-banner-summary.ts')],
 	format: 'esm',
@@ -87,7 +87,7 @@ interface Gvl {
 const official = JSON.parse(
 	readFileSync(
 		new URL(
-			'../native/protocol/iab/official-gvl-excerpt.json',
+			'../packages/native-protocol/iab/official-gvl-excerpt.json',
 			import.meta.url
 		),
 		'utf8'
@@ -319,7 +319,7 @@ const declaredIds = (gvl: Gvl, adTechProviders: unknown[]) => {
 
 const outputDirectory =
 	process.argv[2] ??
-	fileURLToPath(new URL('../native/protocol/iab', import.meta.url));
+	fileURLToPath(new URL('../packages/native-protocol/iab', import.meta.url));
 mkdirSync(outputDirectory, { recursive: true });
 
 for (const entry of cases) {
@@ -346,7 +346,7 @@ for (const entry of cases) {
 			gvl: entry.gvl,
 			vendorIds: entry.vendorIds,
 		},
-		oracle: 'packages/core/src/libs/iab-banner-summary.ts',
+		oracle: 'packages/sdk/core/src/libs/iab-banner-summary.ts',
 	};
 	writeFileSync(
 		join(outputDirectory, `banner-summary-${entry.id}.json`),

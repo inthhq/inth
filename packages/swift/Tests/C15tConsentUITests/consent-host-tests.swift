@@ -390,7 +390,7 @@ final class ConsentHostTests: XCTestCase {
     private func fixtureConfig(_ fixture: String) throws -> (CoreConfig, AutoPresentTests.Peer) {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-        let body = try String(contentsOf: root.appendingPathComponent("examples/consent-demo/fixtures/\(fixture)"), encoding: .utf8)
+        let body = try String(contentsOf: root.appendingPathComponent("../examples/native/consent-demo/fixtures/\(fixture)"), encoding: .utf8)
         let peer = AutoPresentTests.Peer(body)
         let transport = HostedTransport(baseURL: URL(string: "https://fixture.invalid")!, client: peer)
         return (CoreConfig(store: InMemoryStore(), transport: transport, initRetry: .disabled), peer)

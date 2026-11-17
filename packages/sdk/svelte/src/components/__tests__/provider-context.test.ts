@@ -1,7 +1,7 @@
 /**
  * Tests for ConsentProvider context values.
  *
- * Mirrors: packages/react/src/providers/__tests__/provider-context.test.tsx
+ * Mirrors: packages/sdk/react/src/providers/__tests__/provider-context.test.tsx
  */
 
 import { offline } from '@c15t/core';

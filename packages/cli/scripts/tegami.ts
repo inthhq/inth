@@ -49,8 +49,8 @@ export const createRelease = (
     groups: {
       inth: { npm: { distTag: "latest" }, syncBump: true, syncGitTag: true },
     },
-    // Only @inth packages release from here. The c15t SDK workspaces under
-    // sdk/ keep their own names and versions and must not publish.
+    // Only @inth packages release from here. The SDK workspaces keep their
+    // c15t names and versions for now and must not publish.
     // Tegami tests the pattern against the name and against the id, which
     // is the name behind a manager prefix such as "npm:".
     ignore: ["inth", /^(?!(?:[a-z]+:)?@inth\/)/u],

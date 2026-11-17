@@ -307,7 +307,7 @@ test('packed runtime, declarations and consumer stay independent of web consent 
 		);
 		try {
 			execFileSync(
-				resolve(packageDir, '../../node_modules/.bin/tsc'),
+				resolve(packageDir, 'node_modules/.bin/tsc'),
 				['-p', directory],
 				{ cwd: directory, stdio: 'pipe' }
 			);

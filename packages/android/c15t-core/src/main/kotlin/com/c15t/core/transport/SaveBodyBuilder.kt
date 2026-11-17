@@ -14,7 +14,7 @@ import kotlinx.serialization.json.putJsonObject
  * Builds the `POST /subjects` body.
  *
  * Port of `buildSubjectPostBody` in
- * `packages/core/src/transports/subject-body.ts`. Two representations of the same
+ * `packages/sdk/core/src/transports/subject-body.ts`. Two representations of the same
  * act travel together on purpose:
  *
  * - `preferences` is the complete explicit map after the act, `necessary` plus
@@ -26,7 +26,7 @@ import kotlinx.serialization.json.putJsonObject
  * resubmits identical receipts.
  *
  * Member order matches the TypeScript source exactly, so a body this build emits
- * is byte-comparable against the shared `native/protocol` fixtures.
+ * is byte-comparable against the shared `packages/native-protocol` fixtures.
  */
 object SaveBodyBuilder {
 	/**

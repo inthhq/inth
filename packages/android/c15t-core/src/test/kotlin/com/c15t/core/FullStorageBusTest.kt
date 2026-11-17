@@ -16,7 +16,7 @@ class FullStorageBusTest {
 	// TCF-CHECK: T4
 	@Test fun `independent oracle matches every typed projection row`() {
 		val file = generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }
-			.map { File(it, "native/protocol/iab/storage-bus-cases.json") }.first { it.exists() }
+			.map { File(it, "packages/native-protocol/iab/storage-bus-cases.json") }.first { it.exists() }
 		for (row in Json.parseToJsonElement(file.readText()).jsonObject["cases"]!!.jsonArray) {
 			val r = row.jsonObject
 			val saved = IabCommittedConsent(IabConfiguration(53, 7, "GB"), IabChoices(), "sub_test", null,
@@ -104,7 +104,7 @@ class StorageBusLifecycleTest {
 
 class StorageBusIntegrationTest {
 	private val file = generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }
-		.map { File(it, "native/protocol/iab/additional-consent-cases.json") }.first { it.exists() }
+		.map { File(it, "packages/native-protocol/iab/additional-consent-cases.json") }.first { it.exists() }
 	private val vector = Json { ignoreUnknownKeys = true }.decodeFromString<AdditionalConsentTest.Vector>(file.readText())
 	private val config = NativeConfig("https://cmp.example.test", iab = vector.configuration)
 	private fun response(includeProviders: Boolean = true): TransportOutcome {

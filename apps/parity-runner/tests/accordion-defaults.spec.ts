@@ -21,7 +21,7 @@ test.beforeAll(async () => {
 		['primitives', 'components'].map(async (kind) => {
 			const filename = fileURLToPath(
 				new URL(
-					`../../../packages/ui/src/styles/${kind}/accordion.module.css`,
+					`../../../packages/sdk/ui/src/styles/${kind}/accordion.module.css`,
 					import.meta.url
 				)
 			);

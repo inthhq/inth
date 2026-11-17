@@ -1,5 +1,5 @@
 /**
- * Writes `native/protocol/bridge/payloads.json` from `src/protocol/bridge-schema.ts`.
+ * Writes `packages/native-protocol/bridge/payloads.json` from `src/protocol/bridge-schema.ts`.
  *
  * The Kotlin and Swift binding tests read that file to check every bridge
  * encoder and decoder against the key names TypeScript declares.
@@ -21,8 +21,8 @@ const repoRoot = resolve(
 );
 const target = resolve(
 	repoRoot,
-	'native',
-	'protocol',
+	'packages',
+	'native-protocol',
 	'bridge',
 	'payloads.json'
 );
@@ -30,10 +30,21 @@ const target = resolve(
 mkdirSync(dirname(target), { recursive: true });
 writeFileSync(target, `${JSON.stringify(renderBridgeSchema(), null, '\t')}\n`);
 
-const format = spawnSync('bunx', ['oxfmt', target], {
-	cwd: repoRoot,
-	stdio: 'inherit',
-});
+const format = spawnSync(
+	'bunx',
+	[
+		'oxfmt',
+		'-c',
+		resolve(repoRoot, 'oxfmt.sdk.config.ts'),
+		'--ignore-path',
+		resolve(repoRoot, '.gitignore'),
+		target,
+	],
+	{
+		cwd: repoRoot,
+		stdio: 'inherit',
+	}
+);
 if (format.status !== 0) {
 	throw new Error(`Oxfmt failed on ${target}`);
 }

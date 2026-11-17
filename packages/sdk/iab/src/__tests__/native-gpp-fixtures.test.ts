@@ -1,6 +1,6 @@
 /**
  * Checks the GPP strings the native cores must produce
- * (`native/protocol/gpp/cases.json`) against two independent sources: this
+ * (`packages/native-protocol/gpp/cases.json`) against two independent sources: this
  * package's web encoder, given the same inputs, and the IAB reference decoder
  * (`@iabgpp/cmpapi`, a dev dependency only). Kotlin's `GppTest.kt` and Swift's
  * `GPPTests.swift` assert the same strings, so web, Android and iOS cannot drift
@@ -22,7 +22,7 @@ import {
 	resolveUSSectionValues,
 } from '../gpp/us-section';
 
-const PROTOCOL = resolve(import.meta.dirname, '../../../../native/protocol');
+const PROTOCOL = resolve(import.meta.dirname, '../../../../native-protocol');
 
 interface ResolverInput {
 	options: {

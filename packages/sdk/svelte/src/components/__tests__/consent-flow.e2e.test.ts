@@ -4,7 +4,7 @@ import { readStoredRecords } from '@c15t/core/modules/persistence';
  *
  * Tests the full user journey from first visit through consent management.
  *
- * Mirrors: packages/react/src/components/__tests__/consent-flow.e2e.test.tsx
+ * Mirrors: packages/sdk/react/src/components/__tests__/consent-flow.e2e.test.tsx
  */
 import { fireEvent, render, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, test, vi } from 'vitest';

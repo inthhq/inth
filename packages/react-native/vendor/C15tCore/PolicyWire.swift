@@ -22,7 +22,7 @@ private struct WireProblem: Error {
 public let c15tPolicyContractVersion = 1
 
 /// A persistent right the matched rule keeps reachable: `PolicyRight` in
-/// `packages/schema/src/shared/policy-rule.ts`.
+/// `packages/sdk/schema/src/shared/policy-rule.ts`.
 public enum PolicyRight: String, Sendable, Codable, CaseIterable, Comparable {
     case disclosure
     case preferences
@@ -31,7 +31,7 @@ public enum PolicyRight: String, Sendable, Codable, CaseIterable, Comparable {
     public static func < (lhs: PolicyRight, rhs: PolicyRight) -> Bool { lhs.rawValue < rhs.rawValue }
 
     /// The rights every rule of `model` carries: `requiredPolicyRights` in
-    /// `packages/schema/src/shared/policy-rule-invariants.ts`. A `none` rule owes nothing.
+    /// `packages/sdk/schema/src/shared/policy-rule-invariants.ts`. A `none` rule owes nothing.
     static func required(for model: ConsentModel) -> [PolicyRight] {
         switch model {
         case .none: return []

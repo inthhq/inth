@@ -28,7 +28,7 @@ fun interface C15tEventSink {
  * The dedup is safe only because of the rule this pump depends on: one committed
  * mutation is one revision bump and one publication, together, and `error` is ordinary
  * snapshot state, so an error always arrives on a new revision. See "Revisions and
- * error writes" in `native/CONTRACT.md`. A core that bumps without publishing hands
+ * error writes" in `packages/native-protocol/CONTRACT.md`. A core that bumps without publishing hands
  * this pump nothing to announce.
  */
 class C15tChangePump(private val sink: C15tEventSink) {

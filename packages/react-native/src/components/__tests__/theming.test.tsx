@@ -243,7 +243,7 @@ describe('theme', () => {
 	});
 
 	test('the built-in palettes carry the web tokens', () => {
-		// The values are the ones `packages/ui` ships, so the banner a subject saw
+		// The values are the ones `packages/sdk/ui` ships, so the banner a subject saw
 		// in a browser and the banner they see in the app are one design. The
 		// accent is the point of the exercise: it used to be near-black.
 		expect(defaultConsentTheme.colors.primary).toBe('#335CFF');

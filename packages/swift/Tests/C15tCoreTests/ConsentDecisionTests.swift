@@ -6,7 +6,7 @@ import XCTest
 /// from. Half of these tests are the pure derivation over hand-built snapshots, because
 /// the interesting cases are flag combinations a running core takes a launch to reach.
 ///
-/// See "Native SDK gating" and "Platform privacy" in `native/CONTRACT.md`.
+/// See "Native SDK gating" and "Platform privacy" in `packages/native-protocol/CONTRACT.md`.
 final class ConsentDecisionTests: XCTestCase {
     private var clock: TestClock!
     private var store: InMemoryStore!

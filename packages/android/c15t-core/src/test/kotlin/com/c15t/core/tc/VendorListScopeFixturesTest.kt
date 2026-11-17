@@ -11,9 +11,9 @@ import kotlin.test.assertTrue
 /**
  * The publisher's vendor scope, applied to a served list, graded against the shared vectors.
  *
- * The oracle is `narrowGVLToVendors` in `packages/iab/src/tcf/fetch-gvl.ts`: the generator calls
+ * The oracle is `narrowGVLToVendors` in `packages/sdk/iab/src/tcf/fetch-gvl.ts`: the generator calls
  * that function and writes down what came back, so a difference here is Kotlin and the browser
- * build reading the same document differently, and `native/CONTRACT.md` settles that argument in
+ * build reading the same document differently, and `packages/native-protocol/CONTRACT.md` settles that argument in
  * the web's favour. Three surfaces of this core get the same nine vectors, because the core owns
  * two narrowing paths and only one of them is on the happy path:
  *
@@ -248,7 +248,7 @@ class VendorListScopeFixturesTest {
 	 *
 	 * `purposes`, `specialPurposes`, `features`, `specialFeatures`, `stacks`, `dataCategories` and
 	 * `lastUpdated` describe the framework rather than the audience, and `processPurposes` in
-	 * `packages/iab/src/headless/dialog-data.ts` walks the served `purposes` record to draw a
+	 * `packages/sdk/iab/src/headless/dialog-data.ts` walks the served `purposes` record to draw a
 	 * dialog: pruning an unreferenced purpose for tidiness changes what that dialog claims
 	 * independently of the scope anybody configured. The two versions are the expensive pair --
 	 * `toTcVendorList` reads them straight into a TC String's VendorListVersion and

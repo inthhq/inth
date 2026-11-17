@@ -97,21 +97,21 @@
 			"../../node_modules/.bun/@iabtechlabtcf+core@1.5.22/node_modules/@iabtechlabtcf/core/lib/mjs/TCModel.js",
 			"../../node_modules/.bun/@iabtechlabtcf+core@1.5.22/node_modules/@iabtechlabtcf/core/lib/mjs/TCString.js",
 			"../../node_modules/.bun/@iabtechlabtcf+core@1.5.22/node_modules/@iabtechlabtcf/core/lib/mjs/index.js",
-			"../../packages/iab/dist/327.js",
-			"../../packages/iab/dist/headless.js",
-			"../../packages/iab/dist/index.js"
+			"../../packages/sdk/iab/dist/327.js",
+			"../../packages/sdk/iab/dist/headless.js",
+			"../../packages/sdk/iab/dist/index.js"
 		],
 		"topInputsByBytesInOutput": [
-			"../../packages/ui/dist/styles/sheets/first-paint.js:68810",
-			"../../packages/ui/dist/styles/sheets/dialog.js:36093",
-			"../../packages/iab/dist/index.js:31983",
-			"../../packages/ui/dist/styles/sheets/iab-dialog.js:28579",
-			"../../packages/react/dist/components/iab-panel/atoms/vendor-list.js:13374",
-			"../../packages/react/dist/components/iab-panel/iab-panel.js:10849",
+			"../../packages/sdk/ui/dist/styles/sheets/first-paint.js:68810",
+			"../../packages/sdk/ui/dist/styles/sheets/dialog.js:36093",
+			"../../packages/sdk/iab/dist/index.js:31983",
+			"../../packages/sdk/ui/dist/styles/sheets/iab-dialog.js:28579",
+			"../../packages/sdk/react/dist/components/iab-panel/atoms/vendor-list.js:13374",
+			"../../packages/sdk/react/dist/components/iab-panel/iab-panel.js:10849",
 			"../../node_modules/.bun/@iabtechlabtcf+core@1.5.22/node_modules/@iabtechlabtcf/core/lib/mjs/GVL.js:9566",
-			"../../packages/ui/dist/styles/sheets/iab-first-paint.js:9403",
-			"../../packages/core/dist/kernel/choice.js:8792",
-			"../../packages/react/dist/components/iab-panel/atoms/purpose-item.js:8070"
+			"../../packages/sdk/ui/dist/styles/sheets/iab-first-paint.js:9403",
+			"../../packages/sdk/core/dist/kernel/choice.js:8792",
+			"../../packages/sdk/react/dist/components/iab-panel/atoms/purpose-item.js:8070"
 		]
 	},
 	"metrics": [

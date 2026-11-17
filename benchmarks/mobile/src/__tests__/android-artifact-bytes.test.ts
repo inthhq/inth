@@ -46,7 +46,7 @@ const fixture = function fixture(
 ) {
 	const root = mkdtempSync(join(tmpdir(), 'c15t-android-bytes-'));
 	roots.push(root);
-	const core = join(root, 'native', 'core-android');
+	const core = join(root, 'packages', 'android');
 	const bridge = join(root, 'packages', 'react-native', 'android');
 	mkdirSync(core, { recursive: true });
 	mkdirSync(bridge, { recursive: true });

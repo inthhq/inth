@@ -1,7 +1,7 @@
 /**
  * Platform tracking authorization, as the native cores report it.
  *
- * This is a platform gate and not a consent state. `native/CONTRACT.md` says it
+ * This is a platform gate and not a consent state. `packages/native-protocol/CONTRACT.md` says it
  * in one line: no platform authorization moves a category from `denied` or
  * `pending` to `granted`. The value here exists so a host can combine the two
  * answers, never so one can be mistaken for the other.

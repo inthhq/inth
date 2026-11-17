@@ -36,7 +36,7 @@ class PresenterTest {
     private fun boot(store: Memory = Memory()): Pair<ConsentCore, AtomicLong> {
         val now = AtomicLong(System.currentTimeMillis())
         val body = generateSequence(File(requireNotNull(System.getProperty("user.dir")))) { it.parentFile }
-            .map { File(it, "native/examples/consent-demo/fixtures/iab-init.json") }.first { it.exists() }.readText()
+            .map { File(it, "examples/native/consent-demo/fixtures/iab-init.json") }.first { it.exists() }.readText()
         val client = object : HttpClient {
             override fun send(request: HttpRequest) = if (request.method == HttpRequest.GET)
                 HttpResponse(200, mapOf("x-c15t-policy-contract" to "1"), body) else HttpResponse(503)
@@ -146,7 +146,7 @@ class PresenterTest {
         Dispatchers.setMain(main)
         try {
             val vector = Json.parseToJsonElement(generateSequence(File(requireNotNull(System.getProperty("user.dir")))) { it.parentFile }
-                .map { File(it, "native/protocol/bundled-policy/parity.json") }.first { it.exists() }.readText()).jsonObject
+                .map { File(it, "packages/native-protocol/bundled-policy/parity.json") }.first { it.exists() }.readText()).jsonObject
             val clock = AtomicLong(vector.getValue("now").jsonPrimitive.long)
             val config = NativeConfig(vector.getValue("endpoint").jsonPrimitive.content,
                 bundledPolicy = vector.getValue("resource").toString(), consentCategories = ConsentCategory.entries)
@@ -219,7 +219,7 @@ class PresenterTest {
         Dispatchers.setMain(mainDispatcher)
         try {
             val fixture = generateSequence(File(requireNotNull(System.getProperty("user.dir")))) { it.parentFile }
-                .map { File(it, "native/examples/consent-demo/fixtures/category-init.json") }.first { it.exists() }.readText()
+                .map { File(it, "examples/native/consent-demo/fixtures/category-init.json") }.first { it.exists() }.readText()
             var body = fixture
             val client = object : HttpClient {
                 override fun send(request: HttpRequest) = if (request.method == HttpRequest.GET)

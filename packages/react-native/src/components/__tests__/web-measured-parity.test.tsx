@@ -2,7 +2,7 @@
  * The measured geometry of the consent surfaces, asserted against the numbers
  * taken off the running web demo rather than off the mobile components.
  *
- * `web-token-parity.test.ts` covers everything `packages/ui` publishes as a
+ * `web-token-parity.test.ts` covers everything `packages/sdk/ui` publishes as a
  * token: it reads the shipped CSS and resolves the `var()` hops, so colours,
  * radii, spacing and the type scale cannot drift. This file is the other half,
  * the facts that are not tokens anywhere and therefore have nothing to be
@@ -15,7 +15,7 @@
  * stale `/tmp/web-ref` captures:
  *
  * - The accent action is `Customize` on the banner and `Save Settings` in the
- *   dialog. `packages/core` picks that default so "reject and accept stay
+ *   dialog. `packages/sdk/core` picks that default so "reject and accept stay
  *   neutral together", and nothing is ever filled.
  * - A web action is 35.5 tall. The 44pt target is a touch requirement, not a
  *   drawing requirement, so it lives on the hit area.
@@ -52,7 +52,7 @@ import {
 const lightRoles = resolveConsentTypeRoles(defaultConsentTheme.typography);
 
 /**
- * The web's own neutrals, computed from the tokens in `packages/ui`:
+ * The web's own neutrals, computed from the tokens in `packages/sdk/ui`:
  * `hsl(0, 0%, 90%)` border, `hsl(0, 0%, 98%)` surface-hover, `hsl(0, 0%, 10%)`
  * text, `hsl(0, 0%, 40%)` muted.
  */

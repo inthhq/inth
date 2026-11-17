@@ -79,9 +79,9 @@ export const createServerGeneratedPlugin =
 /** The module each on-demand chunk starts from. */
 const CHUNK_MODULES: Readonly<Record<PreloadChunkName, RegExp>> = {
 	engine:
-		/[\\/](?:@c15t[\\/]svelte|packages[\\/]svelte)[\\/](?:dist|src[\\/]lib)[\\/]deferred[\\/]engine\.[cm]?[jt]s$/u,
+		/[\\/](?:@c15t[\\/]svelte|packages[\\/](?:sdk[\\/])?svelte)[\\/](?:dist|src[\\/]lib)[\\/]deferred[\\/]engine\.[cm]?[jt]s$/u,
 	'loader-and-blocker':
-		/[\\/](?:@c15t[\\/]core|packages[\\/]core)[\\/](?:dist|src)[\\/]modules[\\/]loader-and-blocker\.[cm]?[jt]s$/u,
+		/[\\/](?:@c15t[\\/]core|packages[\\/](?:sdk[\\/])?core)[\\/](?:dist|src)[\\/]modules[\\/]loader-and-blocker\.[cm]?[jt]s$/u,
 };
 
 const CHUNK_NAMES = Object.keys(CHUNK_MODULES) as PreloadChunkName[];

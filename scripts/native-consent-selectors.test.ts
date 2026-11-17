@@ -18,12 +18,12 @@ const REPO_ROOT = fileURLToPath(new URL('..', import.meta.url));
 const MAESTRO_DIR = join(REPO_ROOT, 'packages/react-native/maestro');
 const DOCS_PAGE = join(
 	REPO_ROOT,
-	'docs/frameworks/react-native/e2e-testing.mdx'
+	'packages/sdk/docs/frameworks/react-native/e2e-testing.mdx'
 );
 
 const PLATFORM_SOURCES = {
-	android: 'native/core-android/c15t-consent-ui/src/main',
-	ios: 'native/core-swift/Sources/C15tConsentUI',
+	android: 'packages/android/c15t-consent-ui/src/main',
+	ios: 'packages/swift/Sources/C15tConsentUI',
 } as const;
 
 interface Selector {

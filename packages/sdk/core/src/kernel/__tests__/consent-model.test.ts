@@ -21,8 +21,8 @@ import {
 	POLICY_RECENT,
 	POLICY_RECORDS,
 	POLICY_SCOPE,
-} from '../../../../../internals/conformance/src/fixtures/policy-records';
-import type { PolicyRecordId } from '../../../../../internals/conformance/src/fixtures/policy-records';
+} from '../../../../../../internals/conformance/src/fixtures/policy-records';
+import type { PolicyRecordId } from '../../../../../../internals/conformance/src/fixtures/policy-records';
 import {
 	choiceRecords,
 	DAY,

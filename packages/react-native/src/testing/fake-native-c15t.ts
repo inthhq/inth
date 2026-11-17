@@ -873,7 +873,7 @@ export const createFakeNativeC15t = function createFakeNativeC15t(
 		requestTrackingAuthorizationWithOptions: answerTracking,
 		reset: () => {
 			// The cold-start baseline both cores publish after a wipe, as in
-			// native/protocol/reset-consent-opt-in-grants.json: consent and the
+			// packages/native-protocol/reset-consent-opt-in-grants.json: consent and the
 			// resolved policy are gone, and only the subject, overrides, privacy
 			// signals and category scope carry over until the next init.
 			const value = current();

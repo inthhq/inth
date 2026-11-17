@@ -1,6 +1,6 @@
 # Mobile benchmarks
 
-`bun run bench:mobile` measures the budgets in [`native/CONTRACT.md`](../../native/CONTRACT.md)
+`bun run bench:mobile` measures the budgets in [`packages/native-protocol/CONTRACT.md`](../../packages/native-protocol/CONTRACT.md)
 against the Swift core, the Kotlin core, and the JavaScript boundary of
 `@c15t/react-native`, prints one table, and stores the run.
 
@@ -69,7 +69,7 @@ Every row is `measured` or `not-measured`. Nothing is ever dropped.
   number for it.
 
 The `Source` column separates `contract` ceilings, which quote
-`native/CONTRACT.md`, from `allowance` ceilings, which this harness declares
+`packages/native-protocol/CONTRACT.md`, from `allowance` ceilings, which this harness declares
 because the contract names a behaviour without a number. Every allowance carries
 its justification in `budgets.json`, including what it measured when the number
 was set.
@@ -101,8 +101,8 @@ contract makes, and a `Source` of `allowance` in the table says so.
 
 | Surface | How |
 | --- | --- |
-| `swift-core` | Runs `xcrun swift run -c release C15tCoreBench` in `native/core-swift` and reads its p50s. Requires Xcode, not just Command Line Tools. |
-| `kotlin-core` | Runs `./gradlew :c15t-core:bench` in `native/core-android` and reads its medians. Plain JVM; no emulator needed. |
+| `swift-core` | Runs `xcrun swift run -c release C15tCoreBench` in `packages/swift` and reads its p50s. Requires Xcode, not just Command Line Tools. |
+| `kotlin-core` | Runs `./gradlew :c15t-core:bench` in `packages/android` and reads its medians. Plain JVM; no emulator needed. |
 | `react-native-js` | Loads the built `dist/` of `@c15t/react-native` under Node with `react-native` replaced by [`src/support/react-native-stub.ts`](./src/support/react-native-stub.ts) and a TurboModule fake that answers with no network. |
 | `bundle` | JavaScript bytes from `dist/`, iOS bytes from the linked arm64 slice of `C15tCore`, Android bytes from the compiled class bytes of the release artifacts. |
 

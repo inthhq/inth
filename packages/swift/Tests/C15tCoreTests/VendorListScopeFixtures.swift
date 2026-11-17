@@ -46,9 +46,9 @@ struct VendorListScopeVector {
 
 /// The only place this test target opens a `vendor-list-scope` fixture.
 ///
-/// The vectors lane owns `native/protocol` and publishes through its `index.json`; this target
+/// The vectors lane owns `packages/native-protocol` and publishes through its `index.json`; this target
 /// reads that directory and writes nothing to it. The oracle behind these files is
-/// `narrowGVLToVendors` in `packages/iab/src/tcf/fetch-gvl.ts`, called by the generator rather
+/// `narrowGVLToVendors` in `packages/sdk/iab/src/tcf/fetch-gvl.ts`, called by the generator rather
 /// than restated, so an expectation here is the browser build's answer and not Swift's opinion
 /// about it.
 ///
@@ -59,14 +59,14 @@ enum VendorListScopeFixtures {
     /// The kind these fixtures carry, and the only kind ``all()`` returns.
     static let kind = "vendor-list-scope"
 
-    /// `native/protocol`, resolved from this file's path because `swift test` makes no promise
+    /// `packages/native-protocol`, resolved from this file's path because `swift test` makes no promise
     /// about the working directory.
     static let directory: URL = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent()
         .deletingLastPathComponent()
         .deletingLastPathComponent()
         .deletingLastPathComponent()
-        .appendingPathComponent("protocol")
+        .appendingPathComponent("native-protocol")
 
     enum LoadError: Error, CustomStringConvertible {
         case missingField(file: String, detail: String)

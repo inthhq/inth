@@ -2,7 +2,7 @@ import Foundation
 import XCTest
 @_spi(C15tInternal) @testable import C15tCore
 
-/// `native/protocol/gpp/cases.json`: the strings and in-app keys `core-android` and the
+/// `packages/native-protocol/gpp/cases.json`: the strings and in-app keys `core-android` and the
 /// web encoder produce for the same inputs. `GppTest.kt` runs the same cases.
 final class GPPFixtureTests: XCTestCase {
     static let fixtureURL = IABCommitTests.fixtureURL.deletingLastPathComponent().deletingLastPathComponent()
@@ -108,7 +108,7 @@ final class GPPFixtureTests: XCTestCase {
     }
 }
 
-/// `native/protocol/gpp/policy-rights-cases.json`: how a matched rule's `rights` read.
+/// `packages/native-protocol/gpp/policy-rights-cases.json`: how a matched rule's `rights` read.
 /// The expected answers are `readPolicyResolutionWire`'s in `@c15t/schema`, and
 /// `GppTest.kt` runs the same cases through `StrictPolicyReader`, so both cores hand the
 /// GPP resolver the same rights for the same `/init` body, or both refuse it.

@@ -10,7 +10,7 @@ import kotlinx.serialization.json.*
 
 /**
  * The first-layer summary against the web's `resolveIABBannerSummary`, through
- * `native/protocol/iab/banner-summary-*.json`. Regenerate the fixtures with
+ * `packages/native-protocol/iab/banner-summary-*.json`. Regenerate the fixtures with
  * `bun scripts/generate-iab-banner-summary-fixtures.ts`.
  */
 class IabBannerSummaryTest {
@@ -25,7 +25,7 @@ class IabBannerSummaryTest {
 
 	private fun fixtures(): List<Fixture> {
 		val json = Json { ignoreUnknownKeys = true }
-		return root("native/protocol/iab").listFiles { file -> file.name.startsWith("banner-summary-") && file.name.endsWith(".json") }!!
+		return root("packages/native-protocol/iab").listFiles { file -> file.name.startsWith("banner-summary-") && file.name.endsWith(".json") }!!
 			.sortedBy { it.name }.map { json.decodeFromString<Fixture>(it.readText()) }
 	}
 
@@ -49,7 +49,7 @@ class IabBannerSummaryTest {
 	// TCF-CHECK: P12
 	@Test fun `presentation carries the summary storage limit and language`() {
 		val config = TEST_CONFIG.copy(iab = IabConfiguration(cmpId = 53, cmpVersion = 7, publisherCountryCode = "GB"))
-		val body = root("native/examples/consent-demo/fixtures/iab-init.json").readText()
+		val body = root("examples/native/consent-demo/fixtures/iab-init.json").readText()
 		val core = testKernel(config = config, store = C15tStore(InMemoryKeyValueStore()),
 			transport = RecordingTransport().respondInit(initSuccess(body = body)))
 		core.bootstrap()

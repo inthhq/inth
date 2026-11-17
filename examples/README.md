@@ -16,7 +16,7 @@ Test apps live in `internals/fixtures`, and type-checked docs snippets live in
 `internals/doc-snippets`. Nothing in `examples/` exists only for a test.
 
 For UIKit, native Swift, Android, bare RN and Expo, use the
-[mobile demo index](../docs/frameworks/react-native/examples.mdx). It separates
+[mobile demo index](../packages/sdk/docs/frameworks/react-native/examples.mdx). It separates
 runnable native apps, test fixtures and installation snippets.
 
 ## Rules

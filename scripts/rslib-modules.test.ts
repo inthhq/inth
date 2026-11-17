@@ -15,12 +15,12 @@ import type { BuildResult, RslibConfig, RsbuildPlugin } from '@rslib/core';
 import { createRslib } from '@rslib/core';
 import { afterEach, expect, test } from 'vitest';
 
-import coreConfig from '../packages/core/rslib.config';
-import schemaConfig from '../packages/schema/rslib.config';
+import coreConfig from '../packages/sdk/core/rslib.config';
+import schemaConfig from '../packages/sdk/schema/rslib.config';
 import {
 	compactModuleMinify,
 	publicEntryAliases,
-} from '../packages/shared/rslib-modules';
+} from '../packages/sdk/shared/rslib-modules';
 
 const repository = fileURLToPath(new URL('..', import.meta.url));
 const directories: string[] = [];
@@ -61,7 +61,7 @@ for (const [name, config] of [
 ] satisfies [string, RslibConfig][]) {
 	test(`${name} emits every public alias on repeated production builds`, async () => {
 		const output = join(temporaryDirectory(), 'output');
-		const cwd = join(repository, 'packages', name);
+		const cwd = join(repository, 'packages', 'sdk', name);
 		const manifest = JSON.parse(
 			readFileSync(join(cwd, 'package.json'), 'utf8')
 		);

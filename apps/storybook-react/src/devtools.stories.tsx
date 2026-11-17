@@ -5,8 +5,8 @@ import {
 import { devToolsFlow, devToolsReady } from '@c15t/conformance/play/devtools';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
-import { DevTools } from '../../../packages/react/src/devtools';
-import { ConsentProvider } from '../../../packages/react/src/index';
+import { DevTools } from '../../../packages/sdk/react/src/devtools';
+import { ConsentProvider } from '../../../packages/sdk/react/src/index';
 
 const meta = {
 	component: DevTools,

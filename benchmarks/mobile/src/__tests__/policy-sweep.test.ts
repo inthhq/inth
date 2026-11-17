@@ -18,8 +18,8 @@ const PROTOCOL_DIR = resolve(
 	'..',
 	'..',
 	'..',
-	'native',
-	'protocol'
+	'packages',
+	'native-protocol'
 );
 
 const result = await measurePolicySweep(2, 3);

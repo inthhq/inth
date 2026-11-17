@@ -13,10 +13,10 @@ import java.io.File
 import kotlin.test.fail
 
 /**
- * The shared `tc-string` fixtures in `native/protocol`, loaded through one door.
+ * The shared `tc-string` fixtures in `packages/native-protocol`, loaded through one door.
  *
  * This replaced a provisional in-test array of hand-collected strings. The vectors lane owns
- * `native/protocol` and publishes through its `index.json`; this build reads that directory and
+ * `packages/native-protocol` and publishes through its `index.json`; this build reads that directory and
  * writes nothing to it, so the strings under test are the same bytes the web oracle's fixtures
  * carry. Nothing else in this test target holds a TC String literal.
  *
@@ -123,17 +123,17 @@ object TcStringFixtures {
 		},
 	)
 
-	/** Find `native/protocol` by walking up, because Gradle may start anywhere in the module. */
+	/** Find `packages/native-protocol` by walking up, because Gradle may start anywhere in the module. */
 	private fun fixtureDirectory(): File {
 		var cursor: File? = File(System.getProperty("user.dir")).absoluteFile
 		while (cursor != null) {
-			val candidate = File(cursor, "native/protocol/$INDEX_FILE")
+			val candidate = File(cursor, "packages/native-protocol/$INDEX_FILE")
 			if (candidate.isFile) {
 				return candidate.parentFile
 			}
 			cursor = cursor.parentFile
 		}
-		fail("no native/protocol/$INDEX_FILE above ${File(System.getProperty("user.dir")).absolutePath}")
+		fail("no packages/native-protocol/$INDEX_FILE above ${File(System.getProperty("user.dir")).absolutePath}")
 	}
 
 	private const val INDEX_FILE = "index.json"

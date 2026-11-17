@@ -15,7 +15,7 @@ import org.junit.Test
  * The installs `c15t setup` prints for an Android app: with an in-code policy, and hosted.
  *
  * Compiling [cliOfflineInstall] and [cliHostedInstall] is the check that the printed code
- * matches this module's API. `packages/cli/src/__tests__/mobile/mobile-setup.test.ts` reads
+ * matches this module's API. `packages/cli/vendor/c15t-mobile/src/__tests__/mobile/mobile-setup.test.ts` reads
  * the lines between each pair of markers and fails when the CLI prints anything else, so
  * change both together.
  */

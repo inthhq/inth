@@ -90,7 +90,7 @@ stay with the apps in `internals/fixtures`.
 how it reaches the fixture. Server-rendered starters read their public backend
 URL variable. Client-only starters hardcode `https://your-project.inth.app`,
 so the test routes those browser requests to the fixture, and serves the HTML
-starter's jsDelivr script from `packages/browser/dist`. `self-host` needs
+starter's jsDelivr script from `packages/sdk/browser/dist`. `self-host` needs
 PostgreSQL in production, so the test starts a throwaway container with
 Docker. To cover a showcase, add a target and let `scripts/ci-plan.ts` select
 its directory.

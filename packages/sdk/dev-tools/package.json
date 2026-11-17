@@ -21,7 +21,7 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/c15t/c15t.git",
-		"directory": "packages/dev-tools"
+		"directory": "packages/sdk/dev-tools"
 	},
 	"files": [
 		"dist",
@@ -41,11 +41,11 @@
 		"access": "public"
 	},
 	"scripts": {
-		"build": "pnpm run prebuild && rslib build && node ../../scripts/normalize-dist-types.mjs",
+		"build": "pnpm run prebuild && rslib build && node ../../../scripts/normalize-dist-types.mjs",
 		"check-types": "pnpm run prebuild && tsc --noEmit",
 		"dev": "sh -c 'pnpm run prebuild && rslib build --no-dts --no-clean && rslib build --watch --no-dts --no-clean'",
-		"fmt": "oxfmt .",
-		"lint": "oxlint ./src",
+		"fmt": "oxfmt -c ../../../oxfmt.sdk.config.ts .",
+		"lint": "oxlint -c ../../../oxlint.sdk.config.ts ./src",
 		"prebuild": "genversion --esm --semi src/version.ts",
 		"test": "pnpm run prebuild && vitest run"
 	},
@@ -55,6 +55,8 @@
 	"devDependencies": {
 		"@c15t/typescript-config": "workspace:*",
 		"@rslib/core": "0.23.2",
+		"@types/node": "25.5.0",
+		"@vitest/coverage-istanbul": "4.1.10",
 		"genversion": "3.2.0",
 		"jsdom": "^25.0.0",
 		"oxfmt": "0.65.0",

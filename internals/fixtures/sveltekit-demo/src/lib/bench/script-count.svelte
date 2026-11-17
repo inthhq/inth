@@ -4,13 +4,13 @@
 	import {
 		createConsentKernel,
 		createHostedTransport,
-	} from '../../../../../../packages/core/src';
+	} from '../../../../../../packages/sdk/core/src';
 	import type {
 		ConsentKernel,
 		ConsentSnapshot,
-	} from '../../../../../../packages/core/src';
-	import { createScriptLoader } from '../../../../../../packages/core/src/modules/script-loader';
-	import type { ScriptLoaderHandle } from '../../../../../../packages/core/src/modules/script-loader';
+	} from '../../../../../../packages/sdk/core/src';
+	import { createScriptLoader } from '../../../../../../packages/sdk/core/src/modules/script-loader';
+	import type { ScriptLoaderHandle } from '../../../../../../packages/sdk/core/src/modules/script-loader';
 	import {
 		createInitialBenchState,
 		listDomIds,

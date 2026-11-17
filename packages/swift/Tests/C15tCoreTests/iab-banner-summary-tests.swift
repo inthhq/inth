@@ -4,7 +4,7 @@ import XCTest
 @_spi(C15tInternal) @testable import C15tCore
 
 /// The first-layer summary against the web's `resolveIABBannerSummary`, through
-/// `native/protocol/iab/banner-summary-*.json`. Regenerate the fixtures with
+/// `packages/native-protocol/iab/banner-summary-*.json`. Regenerate the fixtures with
 /// `bun scripts/generate-iab-banner-summary-fixtures.ts`.
 final class IABBannerSummaryTests: XCTestCase {
     struct Fixture: Decodable {

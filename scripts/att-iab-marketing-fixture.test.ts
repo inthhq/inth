@@ -1,8 +1,8 @@
 /**
  * The ATT sequence reads IAB TCF consent through the web's category derivation,
- * not a second one. `native/protocol/att/iab-marketing.json` holds the shared
+ * not a second one. `packages/native-protocol/att/iab-marketing.json` holds the shared
  * cases; this runs their purpose half against `iabPurposesToC15tConsents`, and
- * `IABMarketingFixtureTests` in `native/core-swift/Tests/C15tAppleTests` runs all
+ * `IABMarketingFixtureTests` in `packages/swift/Tests/C15tAppleTests` runs all
  * of them against Swift.
  */
 import { readFileSync } from 'node:fs';
@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, test } from 'vitest';
 
-import { iabPurposesToC15tConsents } from '../packages/iab/src/tcf/purpose-mapping';
+import { iabPurposesToC15tConsents } from '../packages/sdk/iab/src/tcf/purpose-mapping';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 
@@ -31,7 +31,10 @@ interface FixtureCase {
 }
 
 const fixture = JSON.parse(
-	readFileSync(join(root, 'native/protocol/att/iab-marketing.json'), 'utf8')
+	readFileSync(
+		join(root, 'packages/native-protocol/att/iab-marketing.json'),
+		'utf8'
+	)
 ) as { readonly cases: readonly FixtureCase[] };
 
 /**

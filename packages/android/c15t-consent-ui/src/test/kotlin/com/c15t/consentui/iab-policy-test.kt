@@ -76,7 +76,7 @@ import java.lang.reflect.Modifier as JavaModifier
 
 /**
  * IAB Europe's policy checks for non-web CMPs, asserted on the rendered Compose screens. Each
- * `TCF-CHECK` marker names the form questions (native/protocol/iab/tcf-policy-checks.json) that
+ * `TCF-CHECK` marker names the form questions (packages/native-protocol/iab/tcf-policy-checks.json) that
  * the test below it proves.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -496,7 +496,7 @@ class IabPolicyTest {
     @Test fun vendorPageListsTheDataCategoriesARealListDeclares() {
         // A served GVL v3 vendor names its categories in `dataDeclaration`.
         val fixture = Json.parseToJsonElement(generateSequence(File(requireNotNull(System.getProperty("user.dir")))) { it.parentFile }
-            .map { File(it, "native/protocol/iab/accept-all-declared-signals.json") }.first { it.exists() }.readText()).jsonObject
+            .map { File(it, "packages/native-protocol/iab/accept-all-declared-signals.json") }.first { it.exists() }.readText()).jsonObject
         val expected = fixture.getValue("vendorDataCategories").jsonObject.getValue("21").jsonArray.map { it.jsonPrimitive.content }
         assertEquals(10, expected.size)
         val presenter = customize(boot { fixture.getValue("gvl").jsonObject })
@@ -651,7 +651,7 @@ class IabPolicyTest {
 
     private fun bootIn(language: String, edit: (JsonObject) -> JsonObject = { it }, customVendors: JsonArray? = null): ConsentCore {
         val source = Json.parseToJsonElement(generateSequence(File(requireNotNull(System.getProperty("user.dir")))) { it.parentFile }
-            .map { File(it, "native/examples/consent-demo/fixtures/iab-init.json") }.first { it.exists() }.readText()).jsonObject
+            .map { File(it, "examples/native/consent-demo/fixtures/iab-init.json") }.first { it.exists() }.readText()).jsonObject
         val served = source + ("gvl" to edit(source.getValue("gvl").jsonObject))
         val body = JsonObject(if (customVendors == null) served else served + ("customVendors" to customVendors)).toString()
         val client = object : HttpClient {

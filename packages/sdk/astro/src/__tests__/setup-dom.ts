@@ -8,7 +8,7 @@
  * silently exercising no persistence at all.
  *
  * Installing an in-memory implementation here — the approach
- * `packages/core/vitest.setup.ts` already takes for its node suite — keeps
+ * `packages/sdk/core/vitest.setup.ts` already takes for its node suite — keeps
  * the suite correct whatever flags vitest was launched with. Running with
  * `NODE_OPTIONS=--no-experimental-webstorage` also works, but only for
  * whoever remembers to set it.

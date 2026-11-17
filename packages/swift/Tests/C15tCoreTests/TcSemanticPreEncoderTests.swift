@@ -381,7 +381,7 @@ final class TcSemanticPreEncoderTests: XCTestCase {
     /// The list answers for the two versions and the language, and the model's own values
     /// are overwritten. `consentLanguage` says EN rather than the model's DE because that
     /// is what `new GVL(json)` holds until someone calls `changeLanguage`, which
-    /// `packages/iab/src/tcf/tc-string.ts` never does.
+    /// `packages/sdk/iab/src/tcf/tc-string.ts` never does.
     func testTheServedListSuppliesTheVersionsAndTheLanguage() throws {
         let shaped = try shape(model(consents: [10]))
         XCTAssertEqual(shaped.vendorListVersion, 177)

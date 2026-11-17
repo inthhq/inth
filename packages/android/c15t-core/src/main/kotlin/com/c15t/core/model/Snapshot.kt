@@ -79,7 +79,7 @@ data class PolicyResolution(
  * untouched when the producer would take it and refused when it would not: an id every
  * save gets `INPUT_VALIDATION_FAILED` over is not an identity, and the envelope written
  * under it is worth the same nothing. See `SubjectIdGenerator.isValid` and
- * `native/CONTRACT.md`, Subject identity. Never derived from IDFV, ADID, or any other
+ * `packages/native-protocol/CONTRACT.md`, Subject identity. Never derived from IDFV, ADID, or any other
  * hardware identifier.
  */
 @Serializable
@@ -106,7 +106,7 @@ data class ConsentLocation(
  *
  * Publisher test mode is a client option rather than an override and never
  * reaches a save body, so it has no member here. The first draft of
- * `native/CONTRACT.md` invented a `test` field; [com.c15t.core.store.C15tStore]
+ * `packages/native-protocol/CONTRACT.md` invented a `test` field; [com.c15t.core.store.C15tStore]
  * refuses an envelope that still carries one rather than guessing at it.
  */
 @Serializable
@@ -159,7 +159,7 @@ data class GpcSignal(
  * Privacy signals the core honors, mirroring `KernelPrivacySignals`.
  *
  * There is no `msa` signal anywhere in v3. The first draft of
- * `native/CONTRACT.md` carried one beside a boolean `gpc`; both are refused when
+ * `packages/native-protocol/CONTRACT.md` carried one beside a boolean `gpc`; both are refused when
  * a stored envelope is read.
  */
 @Serializable
@@ -235,7 +235,7 @@ data class DecisionInputs(
 /**
  * The IAB half of a [ConsentSnapshot]: the vendor list this device was served.
  *
- * The key name is `KernelIABState`'s, from `packages/core/src/types.ts`, because
+ * The key name is `KernelIABState`'s, from `packages/sdk/core/src/types.ts`, because
  * a renamed key is invisible across the bridge: the snapshot crosses into
  * JavaScript as text, so the declared type can say `iab.gvl` while the device
  * sends `iab.list`, and every app on that platform reads `undefined` with nothing
@@ -265,8 +265,8 @@ data class KernelIabState(
  * The one immutable consent state the native core holds, versioned by
  * [revision].
  *
- * Field set and semantics follow `native/CONTRACT.md`, which is the mobile
- * projection of `ConsentSnapshot` in `packages/core/src/types.ts`. The IAB half
+ * Field set and semantics follow `packages/native-protocol/CONTRACT.md`, which is the mobile
+ * projection of `ConsentSnapshot` in `packages/sdk/core/src/types.ts`. The IAB half
  * is the served vendor list on [iab], the same seam `KernelIABState` is on the
  * web and in `core-swift`.
  * Every mutation produces a new instance and bumps [revision]; readers never see

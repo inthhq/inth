@@ -9,7 +9,7 @@ import kotlinx.serialization.json.JsonObject
  * c15t sends the scope upstream rather than filtering after the fact: `gvlRequestUrl` in
  * `packages/backend/src/http/gvl.ts` puts `vendorIds` on the GVL request, `narrowToVendorIds` in that
  * file then runs the filter over the document that came back before it is cached, and
- * `narrowGVLToVendors` in `packages/iab/src/tcf/fetch-gvl.ts` runs it over a list that reached the
+ * `narrowGVLToVendors` in `packages/sdk/iab/src/tcf/fetch-gvl.ts` runs it over a list that reached the
  * browser by another route so server-resolved state and a client fetch disclose the same partners.
  * The filter has to run somewhere, and a device holding the complete list is one careless render away
  * from disclosing every GVL vendor to a subject who was only ever shown a publisher's own partners.
@@ -20,7 +20,7 @@ import kotlinx.serialization.json.JsonObject
  * narrowed to three vendors still has to be able to say what purpose 7 means and which
  * `tcfPolicyVersion` its TC String is graded against. Thinning the unreferenced ones for tidiness
  * would also install a second, silent reading rule -- `processPurposes` in
- * `packages/iab/src/headless/dialog-data.ts` walks the served `purposes` record to draw the purposes
+ * `packages/sdk/iab/src/headless/dialog-data.ts` walks the served `purposes` record to draw the purposes
  * leg of a dialog, and a copy of it pruned here would change what that dialog claims independently of
  * the scope anybody configured.
  *

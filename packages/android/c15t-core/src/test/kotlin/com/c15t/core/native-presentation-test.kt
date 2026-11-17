@@ -17,7 +17,7 @@ class NativePresentationTest {
         override fun writeDurably(key: String, value: String?) = if (refuse && key == C15tStoreKeys.SNAPSHOT) false else base.writeDurably(key,value)
     }
     private fun body(mode: String) = generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }
-        .map { File(it,"native/examples/consent-demo/fixtures/$mode-init.json") }.first { it.exists() }.readText()
+        .map { File(it,"examples/native/consent-demo/fixtures/$mode-init.json") }.first { it.exists() }.readText()
 
     @Test fun `refused notice keeps obligation and retry persists without granting`() {
         val backend = RefusingStore()

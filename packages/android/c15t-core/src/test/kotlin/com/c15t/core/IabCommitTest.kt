@@ -40,7 +40,7 @@ class IabCommitTest {
 
 	private val fixtureFile =
 		generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }
-			.map { File(it, "native/protocol/iab/commit-cases.json") }
+			.map { File(it, "packages/native-protocol/iab/commit-cases.json") }
 			.first { it.exists() }
 	private val vector =
 		Json { ignoreUnknownKeys = true }.decodeFromString<Vector>(fixtureFile.readText())

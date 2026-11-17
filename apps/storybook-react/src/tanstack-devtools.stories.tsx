@@ -8,8 +8,8 @@ import { TanStackDevtools } from '@tanstack/react-devtools';
 import { useState } from 'react';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 
-import { c15tDevtools } from '../../../packages/react/src/devtools';
-import { ConsentProvider } from '../../../packages/react/src/index';
+import { c15tDevtools } from '../../../packages/sdk/react/src/devtools';
+import { ConsentProvider } from '../../../packages/sdk/react/src/index';
 
 const plugins = [
 	c15tDevtools({

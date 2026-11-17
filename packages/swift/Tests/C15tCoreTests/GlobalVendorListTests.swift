@@ -7,8 +7,8 @@ import XCTest
 ///
 /// The web side is the oracle for every expectation here: `buildInitResponse` in
 /// `packages/backend/src/http/init.ts` decides when the field is there at all,
-/// `packages/iab/src/tcf/fetch-gvl.ts` decides when a document is a list worth keeping,
-/// and `packages/iab/src/headless/dialog-data.ts` is what a list has to be readable
+/// `packages/sdk/iab/src/tcf/fetch-gvl.ts` decides when a document is a list worth keeping,
+/// and `packages/sdk/iab/src/headless/dialog-data.ts` is what a list has to be readable
 /// as once the app has it. Nothing here tests a permission: a vendor list carries
 /// metadata, and the interesting failures are a dialog that lost its rows and a stored
 /// envelope that came back short.
@@ -365,7 +365,7 @@ final class GlobalVendorListTests: XCTestCase {
     }
 
     /// IAB state this build cannot reproduce makes the whole envelope unreadable, which
-    /// is the direction `native/CONTRACT.md` picks for bytes it cannot honour. A writer
+    /// is the direction `packages/native-protocol/CONTRACT.md` picks for bytes it cannot honour. A writer
     /// from the TC-string phase would otherwise find its state quietly rewritten away on
     /// the first publish, with a snapshot that still looks healthy.
     func testTheEnvelopeRefusesIABStateItCannotGiveBack() throws {

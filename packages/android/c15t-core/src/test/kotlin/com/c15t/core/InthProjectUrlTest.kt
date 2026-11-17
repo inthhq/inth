@@ -11,11 +11,11 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
-/** The project URL rule, held to `native/protocol/project-url/cases.json`. */
+/** The project URL rule, held to `packages/native-protocol/project-url/cases.json`. */
 class InthProjectUrlTest {
 	private val fixture = Json.parseToJsonElement(
 		generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }
-			.map { File(it, "native/protocol/project-url/cases.json") }.first { it.exists() }.readText(),
+			.map { File(it, "packages/native-protocol/project-url/cases.json") }.first { it.exists() }.readText(),
 	).jsonObject
 
 	private fun cases(mode: String, kind: String): List<JsonObject> =

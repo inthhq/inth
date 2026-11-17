@@ -77,7 +77,7 @@ describe('release artifact selection', () => {
 
 	it('only reuses standard docs and verification preparation after successful builds', () => {
 		const prepack =
-			'bun run build:docs && bun ../../scripts/verify-package-artifacts.ts';
+			'pnpm run build:docs && bun ../../../scripts/verify-package-artifacts.ts';
 		expect(canReusePackPreparation({ scripts: { prepack } })).toBe(true);
 		expect(
 			canReusePackPreparation({ scripts: { prepack: 'bun sync-native.ts' } })
@@ -97,19 +97,19 @@ describe('release artifact selection', () => {
 		try {
 			for (const name of ['selected', 'unrelated']) {
 				makeTree(root, {
-					[`packages/${name}/package.json`]: JSON.stringify({
+					[`packages/sdk/${name}/package.json`]: JSON.stringify({
 						exports: './dist/index.js',
 						files: ['dist'],
 						name: `c15t-ci-${name}`,
 						scripts: {
 							// This hook cannot run in the fixture. The guard must reuse its build.
-							prepack: 'bun ../../scripts/verify-package-artifacts.ts',
+							prepack: 'bun ../../../scripts/verify-package-artifacts.ts',
 						},
 						version: '1.0.0',
 					}),
 				});
 			}
-			makeTree(root, { 'packages/selected/dist/index.js': 'export {};' });
+			makeTree(root, { 'packages/sdk/selected/dist/index.js': 'export {};' });
 			const guard = (name: string) =>
 				spawnSync(
 					'bun',
@@ -125,7 +125,7 @@ describe('release artifact selection', () => {
 				'manifest target missing from packed files'
 			);
 			makeTree(root, {
-				'packages/selected/dist/leaked.test.js': 'export {};',
+				'packages/sdk/selected/dist/leaked.test.js': 'export {};',
 			});
 			const leaked = guard('c15t-ci-selected');
 			expect(leaked.status).toBe(1);
@@ -401,7 +401,7 @@ describe('published license copies', () => {
 	it('flags a copy that drifted from the repository license', () => {
 		const packageDir = packageHolding(
 			'drifted',
-			`${readFileSync(join(ROOT, 'LICENSE.md'), 'utf8')}\nAmended by hand.\n`
+			`${readFileSync(join(ROOT, 'LICENSE'), 'utf8')}\nAmended by hand.\n`
 		);
 
 		expect(scanPublishedLicenses(packageDir, new Set(['LICENSE.md']))).toEqual([
@@ -491,7 +491,7 @@ describe('vendored native sources', () => {
 
 	/**
 	 * A package directory whose copy of the core is built straight from
-	 * `native/core-swift`, not from the package's own copy, so the fixture cannot agree with
+	 * `packages/swift`, not from the package's own copy, so the fixture cannot agree with
 	 * the thing it is judging.
 	 */
 	const vendoredPackage = function vendoredPackage(name: string): string {
@@ -526,7 +526,7 @@ describe('vendored native sources', () => {
 			});
 			for (const sourceModule of ['C15tApple', 'C15tConsentUI']) {
 				cpSync(
-					join(ROOT, 'native/core-swift/Sources', sourceModule),
+					join(ROOT, 'packages/swift/Sources', sourceModule),
 					join(packageDir, 'vendor', sourceModule),
 					{ recursive: true }
 				);
@@ -549,7 +549,7 @@ describe('vendored native sources', () => {
 		}
 	);
 
-	it('accepts a copy that matches native/core-swift', () => {
+	it('accepts a copy that matches packages/swift', () => {
 		expect(scanVendoredNativeSources(vendoredPackage('clean'))).toStrictEqual(
 			[]
 		);

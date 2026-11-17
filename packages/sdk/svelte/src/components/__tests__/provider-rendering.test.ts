@@ -1,7 +1,7 @@
 /**
  * Tests for ConsentProvider rendering/hydration behavior.
  *
- * Mirrors: packages/react/src/providers/__tests__/provider-hydration.test.tsx
+ * Mirrors: packages/sdk/react/src/providers/__tests__/provider-hydration.test.tsx
  */
 
 import { render, screen, waitFor } from '@testing-library/svelte';

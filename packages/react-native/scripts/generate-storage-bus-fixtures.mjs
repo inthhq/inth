@@ -9,7 +9,7 @@ export const storageBusCases = () => {
 	for (const file of ['commit-cases', 'authority-oracle']) {
 		const source = JSON.parse(
 			readFileSync(
-				new URL(`../../../native/protocol/iab/${file}.json`, import.meta.url),
+				new URL(`../../native-protocol/iab/${file}.json`, import.meta.url),
 				'utf8'
 			)
 		);
@@ -92,7 +92,7 @@ if (process.argv[1]?.endsWith('generate-storage-bus-fixtures.mjs')) {
 	writeFileSync(
 		process.argv[2] ??
 			new URL(
-				'../../../native/protocol/iab/storage-bus-cases.json',
+				'../../native-protocol/iab/storage-bus-cases.json',
 				import.meta.url
 			),
 		`${JSON.stringify(storageBusCases(), null, '\t')}\n`

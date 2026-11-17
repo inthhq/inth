@@ -58,7 +58,7 @@ data class GppSignal(val sections: List<GppSection>) {
 
 /**
  * Decides which GPP sections apply and fills them: `resolveUSSectionDefinition` and
- * `resolveUSSectionValues` in `packages/iab/src/gpp/us-section.ts`, restricted to the
+ * `resolveUSSectionValues` in `packages/sdk/iab/src/gpp/us-section.ts`, restricted to the
  * sections a device encodes (US National and TCF EU).
  *
  * The policy decides first. Nothing applies until a matched policy is resolved and the

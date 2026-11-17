@@ -30,7 +30,7 @@ import type { StarterTarget } from './starter-targets';
 import { exampleEnvironment } from './targets';
 
 const repository = fileURLToPath(new URL('../../../..', import.meta.url));
-const browserDist = join(repository, 'packages/browser/dist');
+const browserDist = join(repository, 'packages/sdk/browser/dist');
 
 // What `@c15t/backend` serves on `/c15t.js`: this checkout's full bundle
 // behind the queued hosted config its script route prepends.

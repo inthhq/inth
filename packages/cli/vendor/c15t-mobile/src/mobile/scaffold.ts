@@ -18,7 +18,7 @@ export const EXPO_PLUGIN = '@c15t/react-native/expo-plugin';
  * The native artifact version the Android steps print.
  *
  * `src/__tests__/mobile/scaffold.test.ts` compares it with
- * `native/core-android/gradle.properties`, so a native release that forgets
+ * `packages/android/gradle.properties`, so a native release that forgets
  * this line fails the CLI tests.
  */
 export const C15T_ANDROID_VERSION = '3.0.0-alpha.1';
@@ -381,7 +381,7 @@ export const swiftConfiguration = (options: MobileSetupOptions): string =>
  * With no configuration, they attach to the engine the app already installed.
  *
  * This is the auto-present API (`.c15tConsent(_:privacyPolicyURL:)`).
- * `native/core-swift/Tests/C15tConsentUITests/cli-entry-snippet-tests.swift` compiles
+ * `packages/swift/Tests/C15tConsentUITests/cli-entry-snippet-tests.swift` compiles
  * this text with the printed configuration, and the CLI tests compare the two.
  */
 export const swiftUIEntry = (

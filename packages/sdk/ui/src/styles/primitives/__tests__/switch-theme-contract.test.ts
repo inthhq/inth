@@ -7,7 +7,7 @@ const packageRoot = existsSync(
 	resolve(process.cwd(), 'src/styles/primitives/switch.module.css')
 )
 	? process.cwd()
-	: resolve(process.cwd(), 'packages/ui');
+	: resolve(process.cwd(), 'packages/sdk/ui');
 
 const switchCss = readFileSync(
 	resolve(packageRoot, 'src/styles/primitives/switch.module.css'),

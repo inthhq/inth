@@ -41,16 +41,16 @@
 		"gitDirty": false,
 		"iabInputs": [],
 		"topInputsByBytesInOutput": [
-			"../../packages/schema/dist/shared/policy-rule-presets.js:24852",
-			"../../packages/schema/dist/shared/policy-rule.js:10992",
-			"../../packages/browser/dist/127.js:8882",
-			"../../packages/core/dist/kernel/choice.js:8790",
-			"../../packages/core/dist/modules/persistence/record-codec.js:7476",
-			"../../packages/core/dist/kernel/save-outbox/queue.js:7148",
-			"../../packages/schema/dist/shared/policy-resolution-wire.js:6495",
-			"../../packages/core/dist/modules/script-loader/mount.js:6428",
-			"../../packages/core/dist/kernel/init-lifecycle.js:6002",
-			"../../packages/core/dist/modules/persistence/record-storage.js:5444"
+			"../../packages/sdk/schema/dist/shared/policy-rule-presets.js:24852",
+			"../../packages/sdk/schema/dist/shared/policy-rule.js:10992",
+			"../../packages/sdk/browser/dist/127.js:8882",
+			"../../packages/sdk/core/dist/kernel/choice.js:8790",
+			"../../packages/sdk/core/dist/modules/persistence/record-codec.js:7476",
+			"../../packages/sdk/core/dist/kernel/save-outbox/queue.js:7148",
+			"../../packages/sdk/schema/dist/shared/policy-resolution-wire.js:6495",
+			"../../packages/sdk/core/dist/modules/script-loader/mount.js:6428",
+			"../../packages/sdk/core/dist/kernel/init-lifecycle.js:6002",
+			"../../packages/sdk/core/dist/modules/persistence/record-storage.js:5444"
 		]
 	},
 	"metrics": [

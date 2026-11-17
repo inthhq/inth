@@ -675,7 +675,7 @@ class ConsentCore @C15tInternalApi constructor(
 	 * every published snapshot.
 	 *
 	 * This one fires per publication rather than per change, which is what
-	 * `native/CONTRACT.md` leaves it: "the boolean `gate` predates this one and keeps
+	 * `packages/native-protocol/CONTRACT.md` leaves it: "the boolean `gate` predates this one and keeps
 	 * its per-snapshot fan-out; narrowing that is a separate decision from adding
 	 * this API." A host that acts on the transition keeps its own last value and
 	 * compares. A host that wants the dedupe uses [gateDecision].
@@ -1311,7 +1311,7 @@ class ConsentCore @C15tInternalApi constructor(
 	 * Each entry settles by the same rules as the first send of a save, including which
 	 * refusals are permanent and which releases get announced.
 	 *
-	 * Only one pass may be in flight per core. That is the rule `native/CONTRACT.md` sets in
+	 * Only one pass may be in flight per core. That is the rule `packages/native-protocol/CONTRACT.md` sets in
 	 * "The pending save queue", and [requestDeliveryPass] is where this core holds it, because a
 	 * flush is not a pass of its own and this method is a public synchronous entry point that
 	 * reaches it from several threads at once: bootstrap and a resolved init on [background], a
@@ -1352,7 +1352,7 @@ class ConsentCore @C15tInternalApi constructor(
 	/**
 	 * Ask for a delivery pass, and run it when no other pass holds the core.
 	 *
-	 * Contract: `native/CONTRACT.md`, "The pending save queue" -- only one pass may be in flight
+	 * Contract: `packages/native-protocol/CONTRACT.md`, "The pending save queue" -- only one pass may be in flight
 	 * per core, and this is the only place that answers that question. Two threads running
 	 * [runDeliveryPass] at once is the defect the contract describes: each reads the whole queue,
 	 * so each sends what the other is still sending, and because the bytes are frozen and carry
@@ -1454,7 +1454,7 @@ class ConsentCore @C15tInternalApi constructor(
 	 * [ExplicitChoice] that says the subject answered, so the evaluator finds a current
 	 * receipt, owes nothing, and no prompt ever returns. This installs no receipt at all,
 	 * so [PolicyEvaluator] sees `choice == null`, owes the choice again, and the banner
-	 * comes back once the init below lands. `native/CONTRACT.md` states this under
+	 * comes back once the init below lands. `packages/native-protocol/CONTRACT.md` states this under
 	 * "Wiping consent (reset)".
 	 *
 	 * Three things this has to do that "clear the store" does not cover:
@@ -1591,7 +1591,7 @@ class ConsentCore @C15tInternalApi constructor(
 	 * The message is written for a host that has to explain a re-prompt to a person: which
 	 * id was refused, which build could have written it, what the core gave up, and the
 	 * fact that the backend holds nothing to lose. `subject-id-unusable` is the code both
-	 * cores use, per `native/CONTRACT.md`.
+	 * cores use, per `packages/native-protocol/CONTRACT.md`.
 	 */
 	private fun discardRecordsOfUnusableSubject(unusable: UnusableSubjectId) {
 		store.clearConsentState()
@@ -1708,7 +1708,7 @@ class ConsentCore @C15tInternalApi constructor(
 			// who vendor 755 is.
 			//
 			// The declared scope narrows what arrives, before the latch. Web does the same on both
-			// of its routes: `createIAB` in `packages/iab` asks the GVL endpoint for its scope and
+			// of its routes: `createIAB` in `packages/sdk/iab` asks the GVL endpoint for its scope and
 			// then prunes whatever comes back, in case the endpoint ignored the parameter. The prune
 			// is the part that carries the disclosure promise and the `x-c15t-vendors` header is the
 			// bytes-saving optimisation in front of it, so a producer that embeds the whole list
@@ -2204,7 +2204,7 @@ class ConsentCore @C15tInternalApi constructor(
 	 * The acknowledgement a save records when the choice prompt has no category to
 	 * decide, or `null` when it has one.
 	 *
-	 * `choiceAcknowledgement` in `packages/core/src/kernel/commands.ts`. It is a notice
+	 * `choiceAcknowledgement` in `packages/sdk/core/src/kernel/commands.ts`. It is a notice
 	 * dismissal bound to the choice fingerprint, so the envelope carries it the way it
 	 * carries a notice dismissal, and the evaluator never mistakes it for one. A stored
 	 * acknowledgement at least as new is kept. Called with [mutationLock] held, because
@@ -2461,7 +2461,7 @@ class ConsentCore @C15tInternalApi constructor(
 		 * wiring calls from the main thread on a reachability change, from the lifecycle
 		 * observer's worker, and from the React Native module's thread, while [save] hands its
 		 * first send to this pool with any of those already running, so a second pass can always
-		 * arrive on a thread this pool never sees. `native/CONTRACT.md` allows one pass per core
+		 * arrive on a thread this pool never sees. `packages/native-protocol/CONTRACT.md` allows one pass per core
 		 * in flight, and [requestDeliveryPass] is what holds it: the guard is the guarantee, not
 		 * the thread count. Deliberately, because a host may hand this core a [TaskExecutor] with
 		 * two threads in it, and consent delivery must not begin resending bodies the moment

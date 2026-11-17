@@ -22,7 +22,7 @@ import {
 
 const FIXTURE_DIR = resolve(
 	dirname(fileURLToPath(import.meta.url)),
-	'../../../../../native/protocol'
+	'../../../../native-protocol'
 );
 
 interface IndexEntry {

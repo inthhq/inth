@@ -18,7 +18,7 @@ class AdditionalConsentTest {
 	@Serializable data class Vector(val now: Long, val configuration: IabConfiguration, val gvl: GlobalVendorList,
 		val providers: List<AdTechProvider>, val cases: List<Case>)
 	private val file = generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }
-		.map { File(it, "native/protocol/iab/additional-consent-cases.json") }.first { it.exists() }
+		.map { File(it, "packages/native-protocol/iab/additional-consent-cases.json") }.first { it.exists() }
 	private val v = Json { ignoreUnknownKeys = true }.decodeFromString<Vector>(file.readText())
 	private val config = NativeConfig("https://cmp.example.test", iab = v.configuration)
 	private fun response(providers: JsonElement = Json.encodeToJsonElement(v.providers)): TransportOutcome {

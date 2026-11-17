@@ -25,7 +25,9 @@ interface PackResult {
 }
 
 const ROOT = process.cwd();
-const PACKAGES_DIR = join(ROOT, 'packages');
+/** The web packages. React Native sits beside this folder. */
+const PACKAGES_DIR = join(ROOT, 'packages', 'sdk');
+const REACT_NATIVE_DIR = join(ROOT, 'packages', 'react-native');
 
 /**
  * Path shapes that are wrong anywhere in a tarball, not just under `dist/`.
@@ -109,7 +111,7 @@ const KERNEL_PACKAGE = '@c15t/core';
  *
  * The value says why and lands in the failure line, because the answer is not
  * obvious from a package that imports nothing: this one has to *not* depend on a
- * package most of the workspace does, and that is a rule in `native/CONTRACT.md`
+ * package most of the workspace does, and that is a rule in `packages/native-protocol/CONTRACT.md`
  * rather than a missing import somebody forgot to delete.
  */
 export const kernelFreePackages: Record<string, string> = {
@@ -400,7 +402,7 @@ const rootTw3ProxyContents: Record<string, string> = {
  * Refuse a published license copy that is not the repository's license.
  *
  * A podspec has to point its `s.license` file inside the package, so `@c15t/react-native`
- * carries a copy of the root `LICENSE.md`. A copy is a copy: it goes stale the moment the
+ * carries a copy of the root `LICENSE`. A copy is a copy: it goes stale the moment the
  * repository one is edited, and nothing but this check would notice, which is the same failure
  * that had the podspec naming `../../LICENSE.md` in the first place.
  *
@@ -413,7 +415,7 @@ export const scanPublishedLicenses = function scanPublishedLicenses(
 	packedFilePaths: Set<string>
 ): { path: string; size: number; reason: string }[] {
 	const issues: { path: string; size: number; reason: string }[] = [];
-	const rootLicensePath = join(ROOT, 'LICENSE.md');
+	const rootLicensePath = join(ROOT, 'LICENSE');
 
 	if (!existsSync(rootLicensePath)) {
 		return issues;
@@ -450,7 +452,7 @@ export const scanPublishedLicenses = function scanPublishedLicenses(
  *
  * The React Native pod compiles the Swift consent kernel from `vendor/C15tCore`, because a pod
  * cannot point `s.dependency` at a path and no `C15tCore` pod is published, so an app installed
- * from npm gets a kernel only if this package carries one. `native/core-swift` stays the source
+ * from npm gets a kernel only if this package carries one. `packages/swift` stays the source
  * of truth and the copy is generated, so any difference between the two is a defect: a pod built
  * from the copy is not a pod built from the core, and a reader of the checkout cannot
  * tell them apart. The comparison is the one the sync script uses, so the copy is judged by the
@@ -472,7 +474,7 @@ export const scanVendoredNativeSources = function scanVendoredNativeSources(
 		if (!requiresNativeSources && !existsSync(vendoredDir)) {
 			return [];
 		}
-		const sourceDir = join(ROOT, 'native/core-swift/Sources', module);
+		const sourceDir = join(ROOT, 'packages/swift/Sources', module);
 		return compareTrees(sourceDir, vendoredDir).map((drift) => ({
 			path: `${directory}/${drift.relativePath}`,
 			reason: `stale vendored native source: ${module === 'C15tCore' ? describeDrift(drift) : 'Run bun scripts/sync-vendored-apple.ts.'}`,
@@ -824,12 +826,17 @@ export const scanUiComponentStyleArtifacts =
 /** Require every requested public package; an unknown name must not skip the guard. */
 export const selectPublishDirectories = function selectPublishDirectories(
 	names: string[],
-	packagesDirectory = PACKAGES_DIR
+	packagesDirectory?: string
 ): string[] {
 	const requested = new Set(names);
-	const packageDirs = readdirSync(packagesDirectory, { withFileTypes: true })
-		.filter((entry) => entry.isDirectory())
-		.map((entry) => join(packagesDirectory, entry.name))
+	const directory = packagesDirectory ?? PACKAGES_DIR;
+	const packageDirs = [
+		...readdirSync(directory, { withFileTypes: true })
+			.filter((entry) => entry.isDirectory())
+			.map((entry) => join(directory, entry.name)),
+		// Only this repository's own layout has a package outside the folder.
+		...(packagesDirectory === undefined ? [REACT_NATIVE_DIR] : []),
+	]
 		.filter((packageDir) => existsSync(join(packageDir, 'package.json')))
 		.filter((packageDir) => {
 			const manifest = readManifest(packageDir);
@@ -855,8 +862,8 @@ export const canReusePackPreparation = (manifest: PackageManifest): boolean => {
 		!scripts?.prepare &&
 		!scripts?.postpack &&
 		[
-			'bun run build:docs && bun ../../scripts/verify-package-artifacts.ts',
-			'bun ../../scripts/verify-package-artifacts.ts',
+			'pnpm run build:docs && bun ../../../scripts/verify-package-artifacts.ts',
+			'bun ../../../scripts/verify-package-artifacts.ts',
 		].includes(scripts?.prepack ?? '')
 	);
 };

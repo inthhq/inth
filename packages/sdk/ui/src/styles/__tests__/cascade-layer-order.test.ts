@@ -9,7 +9,7 @@
  * keeps `components` between `base` and `utilities` whichever sheet loads
  * first.
  *
- * These read the built artifacts, so `bun run --cwd packages/ui build` (or
+ * These read the built artifacts, so `bun run --cwd packages/sdk/ui build` (or
  * `turbo run build --filter=@c15t/ui`, which `test` depends on) must have run.
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
@@ -42,7 +42,7 @@ const readEntrypoint = function readEntrypoint(relativePath: string): string {
 	const path = join(DIST_DIR, relativePath);
 	if (!existsSync(path)) {
 		throw new Error(
-			`Missing ${path}. Build @c15t/ui first: bun run --cwd packages/ui build`
+			`Missing ${path}. Build @c15t/ui first: bun run --cwd packages/sdk/ui build`
 		);
 	}
 	return readFileSync(path, 'utf8');

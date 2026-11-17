@@ -1,4 +1,4 @@
-import type { Script } from '../../../../../../packages/core/src/modules/script-loader';
+import type { Script } from '../../../../../../packages/sdk/core/src/modules/script-loader';
 
 export interface ScriptCountBenchState {
 	version: 'current';

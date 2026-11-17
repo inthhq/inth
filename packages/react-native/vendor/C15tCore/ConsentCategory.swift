@@ -170,7 +170,7 @@ public enum ConsentModel: String, Sendable, Codable, CaseIterable {
 
     /// The model this device reports while a rule of this kind is in force.
     ///
-    /// Port of `deriveModel` in `packages/core/src/policy.ts`, with the web's `iabEnabled`
+    /// Port of `deriveModel` in `packages/sdk/core/src/policy.ts`, with the web's `iabEnabled`
     /// argument answered for good: an IAB rule runs as `iab` on the web only once
     /// `@c15t/iab` is installed, and a device has nothing to install in that place. It has
     /// no registered CMP ID to put in a TC String, no per-vendor vector to assert, and no

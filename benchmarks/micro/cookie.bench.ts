@@ -4,12 +4,12 @@ import {
 	getCookie,
 	getRootDomain,
 	setCookie,
-} from '../../packages/core/src/libs/cookie';
-import type { StoredConsentEnvelope } from '../../packages/core/src/modules/persistence/record-codec';
+} from '../../packages/sdk/core/src/libs/cookie';
+import type { StoredConsentEnvelope } from '../../packages/sdk/core/src/modules/persistence/record-codec';
 import {
 	readStoredConsentRecord,
 	writeStoredConsentEnvelope,
-} from '../../packages/core/src/modules/persistence/record-storage';
+} from '../../packages/sdk/core/src/modules/persistence/record-storage';
 import { bench, runMicroBenchmarkSuite } from './wrapper';
 
 // In-memory browser stores preserve separate cookie keys and deletion semantics.

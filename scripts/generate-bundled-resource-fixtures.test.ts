@@ -7,7 +7,7 @@ import { expect, it } from 'vitest';
 
 const committed = resolve(
 	import.meta.dirname,
-	'../native/protocol/bundled-policy/invalid-resources.json'
+	'../packages/native-protocol/bundled-policy/invalid-resources.json'
 );
 
 it('keeps the malformed bundled-resource fixture in step with its generator', () => {

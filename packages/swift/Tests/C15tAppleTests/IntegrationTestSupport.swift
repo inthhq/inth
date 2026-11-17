@@ -33,7 +33,7 @@ extension XCTestCase {
 final class AnalyticsFixtureHTTP: HTTPTransport, @unchecked Sendable {
     private let body: Data
     init() throws {
-        let url = URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("../../../protocol/native-envelope-opt-in-grants.json")
+        let url = URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("../../../native-protocol/native-envelope-opt-in-grants.json")
         let fixture = try JSONDecoder().decode(JSONValue.self, from: Data(contentsOf: url))
         body = try JSONEncoder().encode(XCTUnwrap(fixture["input"]?["transport"]?["body"]))
     }

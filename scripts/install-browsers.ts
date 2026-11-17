@@ -3,7 +3,7 @@ import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 
 import { runCommand } from './browser-process';
-import { readWorkspaces } from './ci-plan';
+import { readWorkspaces } from './workspaces';
 
 /** Resolve installed versions from each consumer, including nested Bun installs. */
 export const browserInstallations = function browserInstallations(root = '.') {

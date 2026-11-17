@@ -1,5 +1,5 @@
 /**
- * The invariant `native/CONTRACT.md` states in prose, written as a table.
+ * The invariant `packages/native-protocol/CONTRACT.md` states in prose, written as a table.
  *
  * "No platform authorization moves a category from DENIED or PENDING to GRANTED.
  * A device with ATT granted and consent denied is denied." Every row below is

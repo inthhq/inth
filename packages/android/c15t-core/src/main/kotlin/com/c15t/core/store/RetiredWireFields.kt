@@ -10,7 +10,7 @@ import kotlinx.serialization.json.contentOrNull
 /**
  * Guard against stored envelopes written before the protocol was corrected.
  *
- * `native/CONTRACT.md` first described overrides with a `test` field and privacy
+ * `packages/native-protocol/CONTRACT.md` first described overrides with a `test` field and privacy
  * signals as a `gpc`/`msa` boolean pair. Neither exists in the kernel, so a device
  * holding an envelope in that shape has stored something this build cannot name.
  * Reinterpreting is the wrong answer: `test` was never a GPC override, and a

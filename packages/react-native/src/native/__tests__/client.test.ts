@@ -604,9 +604,9 @@ describe('subscriptions', () => {
 	});
 
 	/**
-	 * `native/CONTRACT.md` "Revisions and error writes": an error is snapshot state,
+	 * `packages/native-protocol/CONTRACT.md` "Revisions and error writes": an error is snapshot state,
 	 * so a core that records one has committed a change and must announce it on a new
-	 * revision. `native/protocol/revision-trace-error-writes.json` pins that both
+	 * revision. `packages/native-protocol/revision-trace-error-writes.json` pins that both
 	 * native cores publish the refused-contract write; this pins the other half, that
 	 * a revision-bearing snapshot event is enough for JavaScript to learn it. The
 	 * paired `error` event is deliberately absent here: it is a convenience, and the
@@ -787,7 +787,7 @@ describe('reset', () => {
 
 		// A recorded denial would keep the receipt and stop asking. A wipe drops it
 		// and publishes the cold-start baseline in
-		// native/protocol/reset-consent-opt-in-grants.json: nothing granted, and no
+		// packages/native-protocol/reset-consent-opt-in-grants.json: nothing granted, and no
 		// prompt until the policy comes back and the next init asks again.
 		expect(after.explicitChoice).toBeNull();
 		expect(after.promptRequirement).toEqual({ kind: 'none' });

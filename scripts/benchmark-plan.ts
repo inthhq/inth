@@ -129,7 +129,7 @@ export const createBenchmarkShards = function createBenchmarkShards(
 /**
  * Resolve the gate targets a run measures: `all`, `none`, or a comma list
  * of target names such as `react,nuxt`. CI passes the targets
- * `scripts/ci-plan.ts` selected; unknown names fail.
+ * the caller selected; unknown names fail.
  *
  * @returns The selected hosting packages, in profile order.
  */

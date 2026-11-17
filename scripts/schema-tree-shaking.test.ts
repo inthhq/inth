@@ -6,7 +6,7 @@ import { build } from 'esbuild';
 import { describe, expect, it } from 'vitest';
 
 const schemaDirectory = fileURLToPath(
-	new URL('../packages/schema/', import.meta.url)
+	new URL('../packages/sdk/schema/', import.meta.url)
 );
 const external = ['@c15t/translations', '@c15t/translations/en'];
 

@@ -19,7 +19,7 @@ export type MobileSurface =
 /** Units the mobile harness emits. A superset of the shared metric units. */
 export type MobileUnit = 'ms' | 'us' | 'bytes' | 'count' | 'percent';
 
-/** Where a ceiling came from. Only `contract` rows quote `native/CONTRACT.md`. */
+/** Where a ceiling came from. Only `contract` rows quote `packages/native-protocol/CONTRACT.md`. */
 export type BudgetSource = 'contract' | 'allowance';
 
 /**

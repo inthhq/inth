@@ -49,12 +49,12 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * `native/protocol/gpp/cases.json`: the strings and in-app keys `core-swift` and the web
+ * `packages/native-protocol/gpp/cases.json`: the strings and in-app keys `core-swift` and the web
  * encoder produce for the same inputs. `GPPTests.swift` runs the same cases.
  */
 class GppFixtureTest {
 	private val fixture = generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }
-		.map { File(it, "native/protocol/gpp/cases.json") }.first { it.exists() }
+		.map { File(it, "packages/native-protocol/gpp/cases.json") }.first { it.exists() }
 		.let { Json.parseToJsonElement(it.readText()).jsonObject }
 
 	@Test fun `encoder cases match the shared strings`() {
@@ -147,14 +147,14 @@ class GppFixtureTest {
 }
 
 /**
- * `native/protocol/gpp/policy-rights-cases.json`: how a matched rule's `rights` read. The
+ * `packages/native-protocol/gpp/policy-rights-cases.json`: how a matched rule's `rights` read. The
  * expected answers are `readPolicyResolutionWire`'s in `@c15t/schema`, and `GPPTests.swift`
  * runs the same cases through `PolicyWireReader`, so both cores hand `GppResolver` the same
  * rights for the same `/init` body, or both refuse it.
  */
 class PolicyRightsFixtureTest {
 	private val cases = generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }
-		.map { File(it, "native/protocol/gpp/policy-rights-cases.json") }.first { it.exists() }
+		.map { File(it, "packages/native-protocol/gpp/policy-rights-cases.json") }.first { it.exists() }
 		.let { Json.parseToJsonElement(it.readText()).jsonObject.getValue("cases").jsonArray.map { case -> case.jsonObject } }
 
 	@Test fun `every case reads as the schema reads it`() {

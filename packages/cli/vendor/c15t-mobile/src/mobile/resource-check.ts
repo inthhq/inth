@@ -8,7 +8,7 @@ import { gvlEntryProblem } from './gvl-fields';
  * The checks both native cores apply to a bundled resource before they use it,
  * so the CLI never writes or reuses one a device would discard.
  *
- * `native/protocol/bundled-policy/invalid-resources.json` lists resources the
+ * `packages/native-protocol/bundled-policy/invalid-resources.json` lists resources the
  * Kotlin and Swift readers refuse, or load without a usable vendor list; this
  * check must find a problem in every one.
  */

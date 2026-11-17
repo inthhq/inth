@@ -11,8 +11,8 @@ import { writePolicyResolutionWire } from '@c15t/schema/types';
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 import { onUnmounted } from 'vue';
 
-import { DevTools } from '../../../packages/vue/src/devtools';
-import { createVueConsentKernelContext } from '../../../packages/vue/src/runtime/kernel';
+import { DevTools } from '../../../packages/sdk/vue/src/devtools';
+import { createVueConsentKernelContext } from '../../../packages/sdk/vue/src/runtime/kernel';
 import {
 	provideStorybookConsentContext,
 	storybookConsentConfig,

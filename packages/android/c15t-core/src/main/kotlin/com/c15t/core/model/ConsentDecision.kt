@@ -4,7 +4,7 @@ package com.c15t.core.model
  * Why one category is or is not allowed, in the three states a host SDK has to tell
  * apart.
  *
- * This is the answer `native/CONTRACT.md` makes the native gate report instead of a
+ * This is the answer `packages/native-protocol/CONTRACT.md` makes the native gate report instead of a
  * boolean. A boolean answers `false` both for a subject who
  * refused and for a device whose policy has not resolved, and those need opposite
  * handling: a refused category stays off, an unresolved one stays off *and keeps

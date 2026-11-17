@@ -16,7 +16,7 @@ const fixture = v.parse(
 		readFileSync(
 			resolve(
 				import.meta.dirname,
-				'../../../../../native/protocol/iab/additional-consent-cases.json'
+				'../../../../../native-protocol/iab/additional-consent-cases.json'
 			),
 			'utf8'
 		)

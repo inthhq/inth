@@ -12,7 +12,7 @@ final class PublicAPITests: XCTestCase {
     func testHostCanResurfacePreferencesFromItsOwnSettings() async throws {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-        let body = try Data(contentsOf: root.appendingPathComponent("examples/consent-demo/fixtures/iab-init.json"))
+        let body = try Data(contentsOf: root.appendingPathComponent("../examples/native/consent-demo/fixtures/iab-init.json"))
         let core = ConsentCore()
         core.bootstrap(CoreConfig(store: InMemoryStore(),
             transport: HostedTransport(baseURL: URL(string: "https://fixture.invalid")!, client: Peer(body)),
@@ -34,7 +34,7 @@ final class PublicAPITests: XCTestCase {
     func testAnAppOwnedScreenReadsTheHeadlessDraftThroughPublicAPI() async throws {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-        let fixture = try Data(contentsOf: root.appendingPathComponent("examples/consent-demo/fixtures/iab-init.json"))
+        let fixture = try Data(contentsOf: root.appendingPathComponent("../examples/native/consent-demo/fixtures/iab-init.json"))
         var json = try XCTUnwrap(JSONSerialization.jsonObject(with: fixture) as? [String: Any])
         let partner: [String: Any] = [
             "id": "house-ads", "name": "House Ads", "privacyPolicyUrl": "https://example.com/house-ads/privacy",

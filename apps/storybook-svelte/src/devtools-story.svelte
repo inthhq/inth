@@ -5,7 +5,7 @@
 	} from '@c15t/conformance/fixtures/devtools';
 	import { ConsentProvider } from '@c15t/svelte';
 
-	import { DevTools } from '../../../packages/svelte/src/lib/devtools';
+	import { DevTools } from '../../../packages/sdk/svelte/src/lib/devtools';
 </script>
 
 <ConsentProvider options={devToolsProviderOptions}>

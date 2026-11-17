@@ -17,7 +17,7 @@
  * Vue keeps its component-only loading by importing the per-component `.css`
  * files explicitly next to each class map.
  *
- * These read the built artifacts, so `bun run --cwd packages/ui build` (or
+ * These read the built artifacts, so `bun run --cwd packages/sdk/ui build` (or
  * `turbo run build --filter=@c15t/ui`, which `test` depends on) must have run.
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
@@ -40,7 +40,7 @@ const PRIMITIVES_DIR = join(DIST_DIR, 'styles', 'primitives');
 const readDist = function readDist(path: string): string {
 	if (!existsSync(path)) {
 		throw new Error(
-			`Missing ${path}. Build @c15t/ui first: bun run --cwd packages/ui build`
+			`Missing ${path}. Build @c15t/ui first: bun run --cwd packages/sdk/ui build`
 		);
 	}
 	return readFileSync(path, 'utf8');
@@ -49,7 +49,7 @@ const readDist = function readDist(path: string): string {
 const listFiles = function listFiles(dir: string, suffix: string): string[] {
 	if (!existsSync(dir)) {
 		throw new Error(
-			`Missing ${dir}. Build @c15t/ui first: bun run --cwd packages/ui build`
+			`Missing ${dir}. Build @c15t/ui first: bun run --cwd packages/sdk/ui build`
 		);
 	}
 	return readdirSync(dir)

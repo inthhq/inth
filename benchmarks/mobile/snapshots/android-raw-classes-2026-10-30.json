@@ -8,7 +8,7 @@
 	"artifacts": [
 		{
 			"module": "c15t-core",
-			"buildOutput": "native/core-android/c15t-core/build/libs/c15t-core.jar",
+			"buildOutput": "packages/android/c15t-core/build/libs/c15t-core.jar",
 			"producerCommit": "3f8d674269e171a1cfd0d235756b2c47a34e9c4e",
 			"artifactSha256": "95c4a23dafd67257d7fd281939ac13eaf62eda0c4ae1ba28ccd7fb035a27d216",
 			"rawClassBytes": 1522104,
@@ -16,7 +16,7 @@
 		},
 		{
 			"module": "c15t-android",
-			"buildOutput": "native/core-android/c15t-android/build/outputs/aar/c15t-android-release.aar",
+			"buildOutput": "packages/android/c15t-android/build/outputs/aar/c15t-android-release.aar",
 			"producerCommit": "3f8d674269e171a1cfd0d235756b2c47a34e9c4e",
 			"artifactSha256": "6fdaae4a949195530bed7b2190830dd106cf876d44af76672a99afff471a97c5",
 			"rawClassBytes": 87786,
@@ -24,7 +24,7 @@
 		},
 		{
 			"module": "c15t-consent-ui",
-			"buildOutput": "native/core-android/c15t-consent-ui/build/outputs/aar/c15t-consent-ui-release.aar",
+			"buildOutput": "packages/android/c15t-consent-ui/build/outputs/aar/c15t-consent-ui-release.aar",
 			"producerCommit": "3f8d674269e171a1cfd0d235756b2c47a34e9c4e",
 			"artifactSha256": "8b4e3bb728350f798ab11574747e4fef481412741454c7d14e517349de9e23ef",
 			"rawClassBytes": 703994,

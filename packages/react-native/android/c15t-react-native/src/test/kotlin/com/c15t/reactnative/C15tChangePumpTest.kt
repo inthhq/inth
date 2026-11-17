@@ -14,7 +14,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Event rules from `native/CONTRACT.md`: the module announces a revision, never a
+ * Event rules from `packages/native-protocol/CONTRACT.md`: the module announces a revision, never a
  * snapshot, and JavaScript pulls.
  */
 class C15tChangePumpTest {

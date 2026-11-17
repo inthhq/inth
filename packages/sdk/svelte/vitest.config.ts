@@ -21,7 +21,7 @@ import { defineConfig, mergeConfig } from 'vitest/config';
 
 const tracingRecipePath = resolve(
 	__dirname,
-	'../../internals/doc-snippets/sveltekit/src/lib/server/trace-consent.ts'
+	'../../../internals/doc-snippets/sveltekit/src/lib/server/trace-consent.ts'
 );
 
 const workspaceAliases = [

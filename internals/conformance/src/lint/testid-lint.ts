@@ -110,11 +110,11 @@ export const runTestIdLint = async function runTestIdLint(
 
 const main = async function main(): Promise<void> {
 	const roots = [
-		'packages/react',
-		'packages/svelte',
-		'packages/vue',
-		'packages/solid',
-		'packages/ui',
+		'packages/sdk/react',
+		'packages/sdk/svelte',
+		'packages/sdk/vue',
+		'packages/sdk/solid',
+		'packages/sdk/ui',
 	];
 	const violations = await runTestIdLint(roots);
 	if (violations.length === 0) {

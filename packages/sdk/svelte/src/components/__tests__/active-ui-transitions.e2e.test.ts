@@ -4,7 +4,7 @@
  * Tests that UI visibility is driven by the `activeUI` enum
  * and transitions correctly between 'none', 'banner', and 'dialog'.
  *
- * Mirrors: packages/react/src/components/__tests__/active-ui-transitions.e2e.test.tsx
+ * Mirrors: packages/sdk/react/src/components/__tests__/active-ui-transitions.e2e.test.tsx
  */
 
 import { fireEvent, render, waitFor } from '@testing-library/svelte';

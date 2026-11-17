@@ -64,7 +64,7 @@ public struct CoreConfig: @unchecked Sendable {
     ///
     /// `nil` and `[]` are the same answer: no scope declared, so every served list is
     /// kept as it arrived. Both web narrows read an empty array that way --
-    /// `narrowGVLToVendors` in `packages/iab/src/tcf/fetch-gvl.ts` hands the document
+    /// `narrowGVLToVendors` in `packages/sdk/iab/src/tcf/fetch-gvl.ts` hands the document
     /// back, and `gvlRequestUrl` in `packages/backend/src/http/gvl.ts` does not put the
     /// scope on the request line at all -- and a core that read `[]` as "show nobody"
     /// would leave a publisher who never scoped anything with an empty drawer under a
@@ -427,7 +427,7 @@ public final class ConsentCore: @unchecked Sendable {
     /// Whether a delivery pass currently holds this core, and whether another has
     /// been asked for in the meantime. Both are in-memory flags on the core's own
     /// lock, and only ``requestDeliveryPass(ownSend:)`` and its bookkeeping helpers
-    /// read them. See "The pending save queue" in `native/CONTRACT.md`.
+    /// read them. See "The pending save queue" in `packages/native-protocol/CONTRACT.md`.
     private var deliveryPassInFlight = false
     private var deliveryPassRequested = false
     private var deliveryPassWaiters: [CheckedContinuation<Bool, Never>] = []
@@ -963,7 +963,7 @@ public final class ConsentCore: @unchecked Sendable {
             }
 
             // A bulk action covers the categories the prompt asks about, which is
-            // what `resolveSaveSelection` in `packages/core` narrows it to.
+            // what `resolveSaveSelection` in `packages/sdk/core` narrows it to.
             let choiceScope = choiceScopeLocked(resolved)
             let receipts = categories(
                 for: intent,
@@ -1448,7 +1448,7 @@ public final class ConsentCore: @unchecked Sendable {
     /// ``ExplicitChoice`` that says the subject answered, so ``PolicyEvaluator`` finds a
     /// current receipt, owes nothing, and no prompt ever comes back. This installs no
     /// receipt at all, so the choice is owed again and the banner returns once the init
-    /// below lands. `native/CONTRACT.md` states this under "Wiping consent (reset)".
+    /// below lands. `packages/native-protocol/CONTRACT.md` states this under "Wiping consent (reset)".
     ///
     /// Three things it has to do that clearing the store does not cover:
     ///
@@ -1606,7 +1606,7 @@ public final class ConsentCore: @unchecked Sendable {
             // The id the records are keyed to is one the producer refuses, so those
             // records describe a subject no query returns. Keep them and the next
             // launch attributes them to the id minted a moment ago: one subject split
-            // across two ids, silently. `native/CONTRACT.md` prices the refused id at
+            // across two ids, silently. `packages/native-protocol/CONTRACT.md` prices the refused id at
             // nothing, so everything written under it goes with it -- the envelope and
             // the queued bodies alike, since those bytes were already refused for
             // carrying this id and replaying them buys a guaranteed rejection.
@@ -1896,7 +1896,7 @@ public final class ConsentCore: @unchecked Sendable {
     /// The acknowledgement a save records when the choice prompt has no category to
     /// decide, or `nil` when it has one.
     ///
-    /// `choiceAcknowledgement` in `packages/core/src/kernel/commands.ts`. It is a notice
+    /// `choiceAcknowledgement` in `packages/sdk/core/src/kernel/commands.ts`. It is a notice
     /// dismissal bound to the choice fingerprint, so the envelope carries it the way it
     /// carries a notice dismissal, and the evaluator never mistakes it for one. A
     /// stored acknowledgement at least as new is kept. Callers must already hold the
@@ -2515,7 +2515,7 @@ public final class ConsentCore: @unchecked Sendable {
             // React Native pump from `onChange`, not from the event hub -- so the new
             // revision would never reach JavaScript, and a relaunch would forget a
             // misconfiguration that has not changed. The pair is the rule: see
-            // "Revisions and error writes" in `native/CONTRACT.md`.
+            // "Revisions and error writes" in `packages/native-protocol/CONTRACT.md`.
             publish(persist: true, mutation: mutation)
             return
         }
@@ -2535,7 +2535,7 @@ public final class ConsentCore: @unchecked Sendable {
 
     /// Ask for a delivery pass, and run one when no other pass holds this core.
     ///
-    /// Contract: `native/CONTRACT.md`, "The pending save queue" -- only one pass may
+    /// Contract: `packages/native-protocol/CONTRACT.md`, "The pending save queue" -- only one pass may
     /// be in flight per core, and this is the only place in the Swift core that
     /// answers that question. Two passes reading the queue at once is the defect the
     /// contract describes: a pass reads the queue once and then sends entry by entry,

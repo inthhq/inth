@@ -7,12 +7,13 @@ const C15T_INSTALLED_STYLESHEET_PATH =
 	/(?:^|[\\/])node_modules[\\/](?:@c15t[\\/][^\\/]+|c15t)[\\/]dist[\\/](?:[^\\/]+[\\/])*[^\\/]+\.css(?:\?[^\\/]*)?$/u;
 
 /**
- * A built stylesheet under `packages/<name>/dist/` of a workspace, with the
- * package directory captured. Any monorepo has these paths, so a match only
- * counts once that directory's `package.json` names a c15t package.
+ * A built stylesheet under `packages/<name>/dist/` or
+ * `packages/<group>/<name>/dist/` of a workspace, with the package directory
+ * captured. Any monorepo has these paths, so a match only counts once that
+ * directory's `package.json` names a c15t package.
  */
 const WORKSPACE_STYLESHEET_PATH =
-	/^(?<directory>.*[\\/]packages[\\/][^\\/]+)[\\/]dist[\\/](?:[^\\/]+[\\/])*[^\\/]+\.css(?:\?[^\\/]*)?$/u;
+	/^(?<directory>.*[\\/]packages[\\/][^\\/]+(?:[\\/][^\\/]+)?)[\\/]dist[\\/](?:[^\\/]+[\\/])*[^\\/]+\.css(?:\?[^\\/]*)?$/u;
 
 interface FileSystem {
 	readFileSync: (path: string, encoding: 'utf8') => string;
@@ -96,9 +97,9 @@ export interface PostcssTailwind3PluginCreator {
  * `@layer` blocks `@c15t/ui/postcss-tailwind3` unwraps.
  *
  * Installed packages match by path. A workspace path such as
- * `packages/react/dist/styles.css` matches only when the package's own
+ * `packages/sdk/react/dist/styles.css` matches only when the package's own
  * `package.json` is named `c15t` or `@c15t/*`, so another monorepo's
- * `packages/react` keeps its layers.
+ * `packages/sdk/react` keeps its layers.
  *
  * @param filePath - Absolute path of a CSS file.
  * @returns `true` for `dist/` stylesheets of `c15t` and `@c15t/*` packages.

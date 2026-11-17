@@ -19,7 +19,7 @@ object C15tJson {
 	 * fact, answer as though nothing were wrong, and then quietly delete that field on
 	 * the next publish: the newest thing the subject decided gone behind a snapshot
 	 * whose numbers still look healthy. Refusing the payload is what
-	 * `native/CONTRACT.md` calls an unreadable envelope, and the answer to one is
+	 * `packages/native-protocol/CONTRACT.md` calls an unreadable envelope, and the answer to one is
 	 * nothing applied and a device that behaves like a fresh install.
 	 */
 	val storage: Json = Json {

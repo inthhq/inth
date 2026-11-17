@@ -388,12 +388,12 @@ class C15tPayloadTest {
 		assertEquals("https://provider.invalid/privacy", providers.single().jsonObject.getValue("policyUrl").jsonPrimitive.content)
 	}
 
-	/** `native/protocol/iab/headless-disclosure-cases.json` and the vendor list it names. */
+	/** `packages/native-protocol/iab/headless-disclosure-cases.json` and the vendor list it names. */
 	private val headless: JsonObject by lazy { json.parseToJsonElement(protocolFile("iab/headless-disclosure-cases.json")).jsonObject }
 
 	private fun protocolFile(path: String): String =
 		generateSequence(java.io.File(System.getProperty("user.dir"))) { it.parentFile }
-			.map { java.io.File(it, "native/protocol/$path") }
+			.map { java.io.File(it, "packages/native-protocol/$path") }
 			.first { it.exists() }
 			.readText()
 
@@ -628,7 +628,7 @@ class C15tPayloadTest {
 	 * The four objects the kernel owns the spelling of, asserted on the payload the bridge
 	 * hands JavaScript.
 	 *
-	 * The fixture runner in `native/core-android` proves this shape against 23 snapshots the
+	 * The fixture runner in `packages/android` proves this shape against 23 snapshots the
 	 * TypeScript kernel wrote. This pins the artifact instead of the model, because the bug
 	 * lived here: the core's own encoder produced the body, its names rode along, and a JSON
 	 * string hides a rename from every type on the receiving side. The snapshot is built by

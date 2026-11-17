@@ -33,7 +33,7 @@ class SubjectIdGeneratorTest {
 
 	@Test
 	fun `every id carries the format the backend validates`() {
-		// Verbatim from subjectIdSchema in packages/schema/src/api/subject/post.ts:
+		// Verbatim from subjectIdSchema in packages/sdk/schema/src/api/subject/post.ts:
 		// anything else is an HTTP 400 and a queue that never drains.
 		val schema = Regex("^sub_[1-9A-HJ-NP-Za-km-z]+$")
 
@@ -89,7 +89,7 @@ class SubjectIdGeneratorTest {
 	private companion object {
 		/**
 		 * Shared with the Swift port and with the web SDK's own copy of this table in
-		 * `packages/core`. [nowMillis] is the wall-clock reading the generator is pinned
+		 * `packages/sdk/core`. [nowMillis] is the wall-clock reading the generator is pinned
 		 * to, not the offset it encodes: the custom epoch is subtracted inside, the way
 		 * `generateSubjectId` subtracts it from `Date.now()`. Reading the column as an
 		 * offset still returns a well formed `sub_` id, so only the expected string

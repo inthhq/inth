@@ -21,9 +21,9 @@ const REPO_ROOT = fileURLToPath(new URL('..', import.meta.url));
  * id check in its own source.
  */
 const ALLOWED = new Set([
-	'packages/core/src/runtime/script-server-start.ts',
-	'packages/react/src/deferred/boot.ts',
-	'packages/react/src/deferred/engine-preload-script.ts',
+	'packages/sdk/core/src/runtime/script-server-start.ts',
+	'packages/sdk/react/src/deferred/boot.ts',
+	'packages/sdk/react/src/deferred/engine-preload-script.ts',
 ]);
 
 const PAGE_OBJECT =
@@ -52,11 +52,14 @@ const sourceFiles = (dir: string): string[] => {
 
 describe('the render page object', () => {
 	it('is read only through pageRender()', () => {
-		const packages = readdirSync(join(REPO_ROOT, 'packages'), {
-			withFileTypes: true,
-		})
-			.filter((entry) => entry.isDirectory())
-			.map((entry) => join(REPO_ROOT, 'packages', entry.name, 'src'));
+		const packages = [
+			...readdirSync(join(REPO_ROOT, 'packages', 'sdk'), {
+				withFileTypes: true,
+			})
+				.filter((entry) => entry.isDirectory())
+				.map((entry) => join(REPO_ROOT, 'packages', 'sdk', entry.name, 'src')),
+			join(REPO_ROOT, 'packages', 'react-native', 'src'),
+		];
 		const offenders = packages
 			.flatMap(sourceFiles)
 			.map((path) => relative(REPO_ROOT, path))

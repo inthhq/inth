@@ -4,7 +4,7 @@ import { readStoredRecords } from '@c15t/core/modules/persistence';
  *
  * Verifies that UI components correctly render and save consent.
  *
- * Mirrors: packages/react/src/components/__tests__/ui-source-tracking.e2e.test.tsx
+ * Mirrors: packages/sdk/react/src/components/__tests__/ui-source-tracking.e2e.test.tsx
  */
 import { fireEvent, render, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, test, vi } from 'vitest';

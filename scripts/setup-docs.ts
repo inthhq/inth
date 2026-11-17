@@ -486,7 +486,7 @@ const cloneDocumentationRepository = function cloneDocumentationRepository(
  * // After successful template clone
  * cloneDocumentationRepository(token, 'development', 'main');
  * installDocumentationTemplate('development', 'main');
- * // Template now available at ./.docs/ with symlinks to ../docs and ../packages
+ * // Template now available at ./.docs/ with symlinks to ../packages/sdk/docs and ../packages
  * ```
  *
  * @see {@link https://rsync.samba.org/documentation.html | Rsync Documentation}

@@ -16,7 +16,7 @@ final class ServedInit: HTTPTransport, @unchecked Sendable {
 
 let protocolDirectory = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
     .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-    .deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("native/protocol")
+    .deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("packages/native-protocol")
 
 func protocolObject(_ path: String) throws -> [String: Any] {
     let data = try Data(contentsOf: protocolDirectory.appendingPathComponent(path))
@@ -62,8 +62,8 @@ func headlessIABSlot(_ core: ConsentCore) -> [String: Any] {
 /// What a React Native screen drawing its own TCF UI receives and commits, under publisher
 /// restrictions and Google Additional Consent providers.
 ///
-/// `native/protocol/iab/headless-disclosure-cases.json` is generated from the web code
-/// (`packages/iab/src/__tests__/native-headless-disclosure.test.ts`). Kotlin's
+/// `packages/native-protocol/iab/headless-disclosure-cases.json` is generated from the web code
+/// (`packages/sdk/iab/src/__tests__/native-headless-disclosure.test.ts`). Kotlin's
 /// `C15tPayloadTest` runs the same cases through its bridge.
 final class C15tHeadlessIABTests: XCTestCase {
     func fixture() throws -> [String: Any] { try headlessFixture() }

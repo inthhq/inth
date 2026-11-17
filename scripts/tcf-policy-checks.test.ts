@@ -12,7 +12,7 @@ import { describe, expect, it } from 'vitest';
  */
 
 const REPO_ROOT = fileURLToPath(new URL('..', import.meta.url));
-const CHECKS_FILE = 'native/protocol/iab/tcf-policy-checks.json';
+const CHECKS_FILE = 'packages/native-protocol/iab/tcf-policy-checks.json';
 
 const PLATFORMS = ['swift', 'kotlin'] as const;
 type Platform = (typeof PLATFORMS)[number];
@@ -79,10 +79,10 @@ const kotlinTestRoots = function kotlinTestRoots(directory: string): string[] {
 
 const TEST_SOURCES: Record<Platform, () => string[]> = {
 	kotlin: () =>
-		kotlinTestRoots(join(REPO_ROOT, 'native/core-android')).flatMap((root) =>
+		kotlinTestRoots(join(REPO_ROOT, 'packages/android')).flatMap((root) =>
 			walk(root, ['.kt', '.java'])
 		),
-	swift: () => walk(join(REPO_ROOT, 'native/core-swift/Tests'), ['.swift']),
+	swift: () => walk(join(REPO_ROOT, 'packages/swift/Tests'), ['.swift']),
 };
 
 const MARKER = /TCF-CHECK:\s*(?<ids>[TP]\d+(?:\s*,\s*[TP]\d+)*)\b/gu;

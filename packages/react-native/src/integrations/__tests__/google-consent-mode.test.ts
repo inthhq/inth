@@ -13,7 +13,7 @@ import {
 
 /**
  * The web's Consent Mode v2 mapping, through
- * `native/protocol/google-consent-mode/consent-mode-v2.json`. Regenerate it
+ * `packages/native-protocol/google-consent-mode/consent-mode-v2.json`. Regenerate it
  * with `bun scripts/generate-google-consent-mode-fixture.ts`.
  */
 interface Fixture {
@@ -30,7 +30,7 @@ const fixture = JSON.parse(
 	readFileSync(
 		resolve(
 			dirname(fileURLToPath(import.meta.url)),
-			'../../../../../native/protocol/google-consent-mode/consent-mode-v2.json'
+			'../../../../native-protocol/google-consent-mode/consent-mode-v2.json'
 		),
 		'utf8'
 	)

@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 /**
  * The process-wide entry point, and the mirror of the Swift API in
- * `native/CONTRACT.md`.
+ * `packages/native-protocol/CONTRACT.md`.
  *
  * Every name here is the contract's name, so a binding layer can forward call for
  * call. [bootstrap] is idempotent and safe from an app-launch hook; the read

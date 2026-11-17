@@ -7,7 +7,7 @@
 		"build": "astro build",
 		"check-types": "astro check",
 		"dev": "astro dev",
-		"fmt": "oxfmt .",
+		"fmt": "oxfmt -c ../../../oxfmt.sdk.config.ts .",
 		"preview": "astro preview",
 		"start": "astro dev"
 	},

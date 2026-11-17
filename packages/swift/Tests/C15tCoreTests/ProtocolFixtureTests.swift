@@ -4,10 +4,10 @@ import XCTest
 
 @_spi(C15tInternal) @testable import C15tCore
 
-/// Runs every fixture in `native/protocol/index.json` against `ConsentCore`.
+/// Runs every fixture in `packages/native-protocol/index.json` against `ConsentCore`.
 ///
 /// The TypeScript kernel produced these files, so a diff here is Swift and
-/// JavaScript reading the same input differently, and `native/CONTRACT.md` rule 4
+/// JavaScript reading the same input differently, and `packages/native-protocol/CONTRACT.md` rule 4
 /// settles that argument in the kernel's favour. Two rules keep the suite honest:
 ///
 /// - Nothing is enumerated by name. `index.json` decides what runs, and a fixture
@@ -18,7 +18,7 @@ import XCTest
 final class ProtocolFixtureTests: XCTestCase {
     /// The task that owns aligning the native snapshot types with the kernel.
     ///
-    /// `native/CONTRACT.md` "Corrections to this contract" settled the shape:
+    /// `packages/native-protocol/CONTRACT.md` "Corrections to this contract" settled the shape:
     /// overrides carry `gpc` and no `test`, privacy signals are a detected /
     /// override / active triple, and the overrides a decision was made against
     /// come from the location `/init` served. This build matches all three, so
@@ -29,14 +29,14 @@ final class ProtocolFixtureTests: XCTestCase {
 
     // MARK: - Locating the fixtures
 
-    /// `native/protocol`, resolved from this file's path because `swift test`
+    /// `packages/native-protocol`, resolved from this file's path because `swift test`
     /// makes no promise about the working directory.
     private static let protocolDirectory: URL = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent()
         .deletingLastPathComponent()
         .deletingLastPathComponent()
         .deletingLastPathComponent()
-        .appendingPathComponent("protocol")
+        .appendingPathComponent("native-protocol")
 
     private struct Index: Decodable {
         struct Entry: Decodable {
@@ -110,7 +110,7 @@ final class ProtocolFixtureTests: XCTestCase {
         let unlisted = onDisk.filter { !listed.contains($0) }
         XCTAssertTrue(
             unlisted.isEmpty,
-            "native/protocol holds \(unlisted.joined(separator: ", ")), which index.json does not list. A runner that reads files by glob would skip them silently: regenerate."
+            "packages/native-protocol holds \(unlisted.joined(separator: ", ")), which index.json does not list. A runner that reads files by glob would skip them silently: regenerate."
         )
     }
 
@@ -234,7 +234,7 @@ final class ProtocolFixtureTests: XCTestCase {
     ///
     /// The observer attaches after bootstrap has settled, because hydration and
     /// bootstrap are mutations in some cores and not in others. That is also why the
-    /// fixture pins deltas and not absolute revisions: `native/CONTRACT.md` refuses
+    /// fixture pins deltas and not absolute revisions: `packages/native-protocol/CONTRACT.md` refuses
     /// to compare the numbering a core starts from.
     /// Run a `reset-consent` fixture.
     ///
@@ -970,7 +970,7 @@ final class ProtocolFixtureTests: XCTestCase {
     /// The names come from the fixture's `carriers` map rather than from literals
     /// here, so the shared file owns the field set and this runner only contributes
     /// the spelling this core happens to use. A field with no entry for this core is
-    /// one it does not carry at all, which `native/CONTRACT.md` records as a
+    /// one it does not carry at all, which `packages/native-protocol/CONTRACT.md` records as a
     /// difference between the two implementations rather than a defect.
     private func recordEnvelopeFields(
         for entry: Index.Entry,
@@ -1061,7 +1061,7 @@ final class ProtocolFixtureTests: XCTestCase {
             return Data(written[..<cut])
 
         case "pre-correction":
-            // The same facts in the shape the first draft of native/CONTRACT.md
+            // The same facts in the shape the first draft of packages/native-protocol/CONTRACT.md
             // described: `test` as an override, and `gpc`/`msa` as a boolean pair.
             var tree = try jsonObject(written, entry: entry)
             var snapshot = tree["snapshot"]?.objectValue ?? [:]
@@ -1434,7 +1434,7 @@ final class ProtocolFixtureTests: XCTestCase {
     /// The snapshot fields a fixture can assert on, by the name the fixture uses.
     ///
     /// Overrides and privacy signals are absent from this list. The first draft of
-    /// `native/CONTRACT.md` gave this build a `test` override and a `gpc`/`msa`
+    /// `packages/native-protocol/CONTRACT.md` gave this build a `test` override and a `gpc`/`msa`
     /// boolean pair, and its Corrections section retired both; the core now carries
     /// `gpc` inside the overrides, a detected / override / active triple, and the
     /// overrides the served location resolved, so every snapshot field under those
@@ -1450,7 +1450,7 @@ final class ProtocolFixtureTests: XCTestCase {
     private static let ledger: [(fixture: String, root: String, fields: [Field])] = [
         // A wipe is a committed mutation, so it publishes current + 1, and the delta the
         // fixture pins is asserted by its runner. Where the device's counting started is the
-        // half `native/CONTRACT.md` leaves to each core, so the absolute runs ahead here for
+        // half `packages/native-protocol/CONTRACT.md` leaves to each core, so the absolute runs ahead here for
         // the same reason every other fixture's does.
         ("reset-consent-opt-in-grants", "expected.baseline.snapshot", [.revision]),
         ("reset-consent-opt-in-grants", "expected.afterInit.snapshot", [.revision]),

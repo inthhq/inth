@@ -16,7 +16,7 @@ import {
  * Script-tag consent gate. CookieBench's script fixture loads
  * `@c15t/browser`'s `c15t.js` with `data-manual` and calls `c15t.init` in
  * hosted mode from a module script; this page does the same, served by the
- * gate proxy with the checkout's own `packages/browser/dist` and the gate's
+ * gate proxy with the checkout's own `packages/sdk/browser/dist` and the gate's
  * fixture backend. The bridge below is `updateGateBridge` from
  * `consent-gate-page.ts` as plain page JavaScript.
  */
@@ -74,7 +74,9 @@ const controlPage = `<!doctype html><html lang="en"><head>${head}</head><body><d
 try {
 	await runConsentGate({
 		backendPrefix: '/__gate/api',
-		directories: { '/__gate/browser/': join(root, 'packages/browser/dist') },
+		directories: {
+			'/__gate/browser/': join(root, 'packages/sdk/browser/dist'),
+		},
 		framework: 'script-tag',
 		notes: [
 			"@c15t/browser c15t.js with data-manual and c15t.init in hosted mode, as CookieBench's script fixture loads it.",

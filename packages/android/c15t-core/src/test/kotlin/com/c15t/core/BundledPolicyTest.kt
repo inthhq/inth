@@ -11,7 +11,7 @@ import kotlin.test.*
 import kotlinx.serialization.json.*
 
 class BundledPolicyTest {
-	private val vector = Json.parseToJsonElement(generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }.map { File(it, "native/protocol/bundled-policy/parity.json") }.first { it.exists() }.readText()).jsonObject
+	private val vector = Json.parseToJsonElement(generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }.map { File(it, "packages/native-protocol/bundled-policy/parity.json") }.first { it.exists() }.readText()).jsonObject
 	private val now = vector.getValue("now").jsonPrimitive.long
 	private val endpoint = vector.getValue("endpoint").jsonPrimitive.content
 	private fun resource(change: (MutableMap<String, JsonElement>) -> Unit = {}): String {
@@ -32,7 +32,7 @@ class BundledPolicyTest {
 	}
 	@Test fun `every malformed shared resource is refused or carries no usable vendor list`() {
 		val fixture = Json.parseToJsonElement(generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }
-			.map { File(it, "native/protocol/bundled-policy/invalid-resources.json") }.first { it.exists() }.readText()).jsonObject
+			.map { File(it, "packages/native-protocol/bundled-policy/invalid-resources.json") }.first { it.exists() }.readText()).jsonObject
 		val problems = fixture.getValue("cases").jsonArray.mapNotNull { case ->
 			val row = case.jsonObject
 			val name = row.getValue("name").jsonPrimitive.content
@@ -282,7 +282,7 @@ class BundledPolicyTest {
 	@Test fun `expired category and IAB bundles keep recording grants and withdrawals`() {
 		for ((name, restartBeforeWithdrawal, country) in listOf(Triple("parity", false, null), Triple("parity", true, null), Triple("iab", false, null), Triple("iab", true, null))) {
 			val source = Json.parseToJsonElement(generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }
-				.map { File(it, "native/protocol/bundled-policy/$name.json") }.first { it.exists() }.readText()).jsonObject
+				.map { File(it, "packages/native-protocol/bundled-policy/$name.json") }.first { it.exists() }.readText()).jsonObject
 			val startedAt = source.getValue("now").jsonPrimitive.long
 			val endpoint = source.getValue("endpoint").jsonPrimitive.content
 			val body = Json.parseToJsonElement(source.getValue("resource").jsonObject.getValue("payload").jsonPrimitive.content).jsonObject.toMutableMap()
@@ -332,7 +332,7 @@ class BundledPolicyTest {
 		}
 	}
 	@Test fun `offline IAB preserves source dates and refuses absent stale or future disclosures`() {
-		val v = Json.parseToJsonElement(generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }.map { File(it, "native/protocol/bundled-policy/iab.json") }.first { it.exists() }.readText()).jsonObject
+		val v = Json.parseToJsonElement(generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }.map { File(it, "packages/native-protocol/bundled-policy/iab.json") }.first { it.exists() }.readText()).jsonObject
 		val configuration = Json { ignoreUnknownKeys = true }.decodeFromJsonElement<com.c15t.core.iab.IabConfiguration>(v.getValue("configuration"))
 		// An older CLI wrote no `customVendors`; an unreadable list still loads the bundle, with none.
 		for (fault in listOf("valid", "missing-gvl", "stale-gvl", "future-gvl", "missing-atp", "stale-atp", "future-atp", "no-custom-vendors", "invalid-custom-vendors")) {
@@ -374,7 +374,7 @@ class BundledPolicyTest {
 	 * list and its grants: unlike a live `/init`, its silence says nothing about the publisher.
 	 */
 	@Test fun `a newer bundle without custom vendors keeps the held list`() {
-		val v = Json.parseToJsonElement(generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }.map { File(it, "native/protocol/bundled-policy/iab.json") }.first { it.exists() }.readText()).jsonObject
+		val v = Json.parseToJsonElement(generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }.map { File(it, "packages/native-protocol/bundled-policy/iab.json") }.first { it.exists() }.readText()).jsonObject
 		val configuration = Json { ignoreUnknownKeys = true }.decodeFromJsonElement<com.c15t.core.iab.IabConfiguration>(v.getValue("configuration"))
 		val original = Json.parseToJsonElement(v.getValue("resource").jsonObject.getValue("payload").jsonPrimitive.content).jsonObject
 		fun raw(body: JsonObject): String {
@@ -400,7 +400,7 @@ class BundledPolicyTest {
 	 * stored: a relaunch with the older bundle, which is not adopted again, must not bring it back.
 	 */
 	@Test fun `a newer bundle listing none withdraws them across a relaunch`() {
-		val v = Json.parseToJsonElement(generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }.map { File(it, "native/protocol/bundled-policy/iab.json") }.first { it.exists() }.readText()).jsonObject
+		val v = Json.parseToJsonElement(generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }.map { File(it, "packages/native-protocol/bundled-policy/iab.json") }.first { it.exists() }.readText()).jsonObject
 		val configuration = Json { ignoreUnknownKeys = true }.decodeFromJsonElement<com.c15t.core.iab.IabConfiguration>(v.getValue("configuration"))
 		val original = Json.parseToJsonElement(v.getValue("resource").jsonObject.getValue("payload").jsonPrimitive.content).jsonObject
 		fun raw(body: JsonObject): String {

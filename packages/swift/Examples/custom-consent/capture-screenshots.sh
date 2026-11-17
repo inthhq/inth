@@ -4,7 +4,7 @@
 # Generates the XcodeGen project, builds once, then launches the app straight onto each screen
 # with launch arguments and saves a screenshot. Needs Xcode and XcodeGen.
 #
-#   bash native/core-swift/Examples/custom-consent/capture-screenshots.sh [output directory]
+#   bash packages/swift/Examples/custom-consent/capture-screenshots.sh [output directory]
 #
 # Writes ios-<stock|custom>-<prompt|preferences|iab>-<light|dark>.png, 12 files, and fails if
 # one is missing.

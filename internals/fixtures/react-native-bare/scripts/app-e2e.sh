@@ -206,8 +206,8 @@ for p in list(range(5554, 5580, 2)) + [5582, 5584]:
   # Mixpanel's Android SDK sends nothing to a host that resolves to loopback, so it
   # reaches the same backend through the emulator's alias for the host machine.
   export C15T_E2E_MIXPANEL_URL="http://10.0.2.2:${BACKEND_PORT}"
-  export C15T_MAVEN_URL="file://${REPO_ROOT}/native/core-android/build/maven-staging"
-  sh "${REPO_ROOT}/native/core-android/gradlew" -p "${REPO_ROOT}/native/core-android" --max-workers=4 \
+  export C15T_MAVEN_URL="file://${REPO_ROOT}/packages/android/build/maven-staging"
+  sh "${REPO_ROOT}/packages/android/gradlew" -p "${REPO_ROOT}/packages/android" --max-workers=4 \
     :c15t-core:publishAllPublicationsToStagingRepository :c15t-android:publishAllPublicationsToStagingRepository :c15t-consent-ui:publishAllPublicationsToStagingRepository > "${OUT}/native-artifacts.log" 2>&1
   ARCH="${C15T_ANDROID_ARCH:-arm64-v8a}"
   rm -rf "${APP_DIR}/android/e2e/build/outputs/androidTest-results"

@@ -32,7 +32,7 @@ const directories: string[] = [];
  */
 const typescriptDir = dirname(
 	createRequire(
-		new URL('../../../../examples/nextjs/package.json', import.meta.url)
+		new URL('../../../../../examples/nextjs/package.json', import.meta.url)
 	).resolve('typescript/package.json')
 );
 

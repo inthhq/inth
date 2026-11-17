@@ -2,7 +2,7 @@
  * The consent vocabulary this package owns.
  *
  * Every name here crosses the bridge: it is a snapshot field, a save-body key,
- * or a category a subject decides on. `native/CONTRACT.md` rule 1 gives the
+ * or a category a subject decides on. `packages/native-protocol/CONTRACT.md` rule 1 gives the
  * native cores consent state and leaves the JavaScript layer to render it, but
  * rendering still means naming.
  *
@@ -75,7 +75,7 @@ export const OPTIONAL_CONSENT_CATEGORIES = [
  *
  * This is the readable set: what `/init` may serve a device, and what both cores
  * are graded against. `@c15t/schema` names the same four in `POLICY_RULE_MODELS`
- * (`packages/schema/src/shared/policy-rule.ts`), and that package is not in this
+ * (`packages/sdk/schema/src/shared/policy-rule.ts`), and that package is not in this
  * one's graph, so `__tests__/vocabulary.type-test.ts` is the gate that keeps this
  * a copy and not a second opinion -- it pins {@link KernelModel} below to the
  * kernel's `Model` union at compile time.

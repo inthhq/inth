@@ -314,7 +314,7 @@
 		"measurement": ["analytics_storage"],
 		"necessary": ["security_storage"]
 	},
-	"oracle": "packages/integrations/src/vendors/_shared/google-consent.ts",
+	"oracle": "packages/sdk/integrations/src/vendors/_shared/google-consent.ts",
 	"types": [
 		{
 			"category": "marketing",

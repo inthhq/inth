@@ -44,7 +44,7 @@ import java.io.File
 
 /**
  * Every bridge payload this binding writes or reads, against
- * `native/protocol/bridge/payloads.json`.
+ * `packages/native-protocol/bridge/payloads.json`.
  *
  * The bridge carries JSON strings, so no compiler sees a key renamed on one side. That file
  * is generated from `src/protocol/bridge-schema.ts`, whose own type test holds the TypeScript
@@ -127,7 +127,7 @@ class BridgeSchemaTest {
 		val problems = samples.flatMap { (name, raw) ->
 			describe(fields(name), json.parseToJsonElement(raw).jsonObject, "$name.")
 		}
-		assertEquals("payloads that drifted from native/protocol/bridge/payloads.json", emptyList<String>(), problems)
+		assertEquals("payloads that drifted from packages/native-protocol/bridge/payloads.json", emptyList<String>(), problems)
 
 		// Optional keys are skipped when absent, so prove this binding can produce every
 		// subject key the schema declares. A declared key no core models fails here.
@@ -302,15 +302,15 @@ class BridgeSchemaTest {
 		}
 	}
 
-	/** Find `native/protocol/bridge/payloads.json` by walking up, because Gradle may start anywhere. */
+	/** Find `packages/native-protocol/bridge/payloads.json` by walking up, because Gradle may start anywhere. */
 	private fun schemaFile(): File {
 		var cursor: File? = File(System.getProperty("user.dir")).absoluteFile
 		while (cursor != null) {
-			val candidate = File(cursor, "native/protocol/bridge/payloads.json")
+			val candidate = File(cursor, "packages/native-protocol/bridge/payloads.json")
 			if (candidate.isFile) return candidate
 			cursor = cursor.parentFile
 		}
-		fail("no native/protocol/bridge/payloads.json above ${System.getProperty("user.dir")}. Run generate:bridge-schema.")
+		fail("no packages/native-protocol/bridge/payloads.json above ${System.getProperty("user.dir")}. Run generate:bridge-schema.")
 		error("unreachable")
 	}
 }

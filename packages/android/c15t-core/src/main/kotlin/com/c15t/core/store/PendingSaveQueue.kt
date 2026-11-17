@@ -35,7 +35,7 @@ sealed class FailedAttempt {
 /**
  * The offline consent-write queue.
  *
- * Rules from `native/CONTRACT.md`, all enforced here:
+ * Rules from `packages/native-protocol/CONTRACT.md`, all enforced here:
  * - the payload is persisted before the request, never after;
  * - one entry per explicit action, replayed unchanged, so a later init cannot
  * rewrite a queued payload;
@@ -88,7 +88,7 @@ class PendingSaveQueue(
 	 * than this moment: a pass reads the queue once and delivers entry by entry, and a save's
 	 * first send carries one entry in hand, so either can still be holding a body that the
 	 * other has already landed. Re-sending it is the resend the contract in
-	 * `native/CONTRACT.md` describes -- identical frozen bytes, same consent id, nothing in
+	 * `packages/native-protocol/CONTRACT.md` describes -- identical frozen bytes, same consent id, nothing in
 	 * stored state moved -- and this queue is the only record of what is owed.
 	 */
 	fun isPending(id: String): Boolean = store.readPending().any { it.id == id }

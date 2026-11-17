@@ -2,7 +2,7 @@ import Foundation
 import XCTest
 @_spi(C15tInternal) @testable import C15tCore
 
-/// `reset()` as `native/CONTRACT.md` states it under "Wiping consent (reset)": a device
+/// `reset()` as `packages/native-protocol/CONTRACT.md` states it under "Wiping consent (reset)": a device
 /// that answered comes back looking like a device that never did.
 ///
 /// The tests that matter here tell the first-launch state apart from a recorded denial.

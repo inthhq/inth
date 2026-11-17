@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 
 /**
- * Generates the `c15t` umbrella package (`packages/c15t`) from the exports
+ * Generates the `c15t` umbrella package (`packages/sdk/c15t`) from the exports
  * maps of the scoped packages it mirrors.
  *
  * The umbrella is a facade: `npm i c15t` installs `@c15t/core`,
@@ -10,7 +10,7 @@
  * The mirrored packages are config-driven (`UMBRELLA_SOURCES`), so mounting
  * another framework package later is a single config entry.
  *
- * What gets generated into `packages/c15t`:
+ * What gets generated into `packages/sdk/c15t`:
  *
  * - The `exports` map (plus `main`/`module`/`types`/`sideEffects`), written
  *   into `package.json` in place. `sideEffects` is derived from the mirrored
@@ -19,7 +19,7 @@
  *   side-effect-free claim.
  * - Committed re-export shims under `shims/` — one `.js`/`.d.ts` pair per
  *   conditional subpath. They are committed (not built) for the same reason
- *   `packages/react/client/` is: the repo stays reviewable and installable
+ *   `packages/sdk/react/client/` is: the repo stays reviewable and installable
  *   without a generation step.
  *
  * Design decisions:
@@ -36,7 +36,7 @@
  * - **CSS subpaths**: an exports target cannot point into another package,
  *   so CSS entries become real files under `dist/` that the umbrella's build
  *   step copies from the scoped package's built `dist/`
- *   (`packages/c15t/scripts/copy-distribution-css.ts`, following the
+ *   (`packages/sdk/c15t/scripts/copy-distribution-css.ts`, following the
  *   `generate-distribution-css` pattern).
  * - **Default exports**: `export *` does not forward `default`, so shims add
  *   `export { default }` only where the scoped entry module itself declares
@@ -44,7 +44,7 @@
  *   the `client/` shim file when the import condition points at one,
  *   otherwise the `src/` module mapped from the `types` condition.
  * - **'use client' targets**: the scoped client entries are themselves
- *   directive-carrying shims (`packages/react/client/**`), which establish
+ *   directive-carrying shims (`packages/sdk/react/client/**`), which establish
  *   their own client boundary — a plain re-export would suffice. The
  *   generated shims still mirror the directive, matching the committed
  *   `@c15t/nextjs` client shims, which re-export `@c15t/react` client
@@ -304,7 +304,7 @@ export interface SourcePackage {
 }
 
 export interface CssCopy {
-	/** Copy target relative to `packages/c15t` (always under `dist/`). */
+	/** Copy target relative to `packages/sdk/c15t` (always under `dist/`). */
 	target: string;
 	/** Scoped package directory under `packages/`. */
 	sourceDirectory: string;
@@ -314,7 +314,7 @@ export interface CssCopy {
 
 export interface UmbrellaArtifacts {
 	exports: ExportsMap;
-	/** Generated shim files, relative to `packages/c15t`. */
+	/** Generated shim files, relative to `packages/sdk/c15t`. */
 	shimFiles: Record<string, string>;
 	/** CSS files the umbrella build step copies from scoped `dist/`. */
 	cssCopies: CssCopy[];
@@ -1224,13 +1224,13 @@ const writeUmbrellaPackage = function writeUmbrellaPackage(
 
 if (import.meta.main) {
 	const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
-	const sources = createSourcePackages(join(repoRoot, 'packages'));
+	const sources = createSourcePackages(join(repoRoot, 'packages', 'sdk'));
 	const artifacts = deriveUmbrellaArtifacts(sources);
-	writeUmbrellaPackage(join(repoRoot, 'packages', 'c15t'), artifacts);
+	writeUmbrellaPackage(join(repoRoot, 'packages', 'sdk', 'c15t'), artifacts);
 
 	console.log(
 		`Generated ${Object.keys(artifacts.exports).length} umbrella exports, ` +
 			`${Object.keys(artifacts.shimFiles).length} shim files, and ` +
-			`${artifacts.cssCopies.length} CSS copy targets in packages/c15t.`
+			`${artifacts.cssCopies.length} CSS copy targets in packages/sdk/c15t.`
 	);
 }

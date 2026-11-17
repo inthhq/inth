@@ -9,10 +9,10 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
 	ANDROID_META,
 	IOS_PLIST_KEY,
-} from '../../../../react-native/src/expo-plugin/constants';
+} from '../../../../../../react-native/src/expo-plugin/constants';
 // The Expo plugin's own rules, which setup has to agree with. Test-only, so the
 // published CLI takes no dependency on the private React Native package.
-import { resolveParams } from '../../../../react-native/src/expo-plugin/params';
+import { resolveParams } from '../../../../../../react-native/src/expo-plugin/params';
 import type { CliCommand, CliContext } from '../../context/types';
 import { runCli } from '../../index';
 import {
@@ -47,18 +47,18 @@ import { createCliLogger } from '../../utils/logger';
 const logger = createCliLogger('error', { write: () => {} });
 const REPO = path.resolve(
 	path.dirname(fileURLToPath(import.meta.url)),
-	'../../../../..'
+	'../../../../../../..'
 );
 const DEFAULT_CATEGORIES = ['necessary', 'measurement', 'marketing'] as const;
 
 const SWIFT_SNIPPETS =
-	'native/core-swift/Tests/C15tAppleTests/CLISnippetTests.swift';
+	'packages/swift/Tests/C15tAppleTests/CLISnippetTests.swift';
 const KOTLIN_SNIPPETS =
-	'native/core-android/c15t-android/src/test/kotlin/com/c15t/android/CliSnippetTest.kt';
+	'packages/android/c15t-android/src/test/kotlin/com/c15t/android/CliSnippetTest.kt';
 const SWIFT_ENTRY_SNIPPETS =
-	'native/core-swift/Tests/C15tConsentUITests/cli-entry-snippet-tests.swift';
+	'packages/swift/Tests/C15tConsentUITests/cli-entry-snippet-tests.swift';
 const KOTLIN_ENTRY_SNIPPETS =
-	'native/core-android/c15t-consent-ui/src/test/kotlin/com/c15t/consentui/cli-entry-snippet-test.kt';
+	'packages/android/c15t-consent-ui/src/test/kotlin/com/c15t/consentui/cli-entry-snippet-test.kt';
 const PRIVACY_URL = 'https://app.example/privacy';
 
 /** The lines between the `c15t-cli-snippet:<name>` markers in a native test, dedented. */
@@ -708,7 +708,7 @@ describe('where setup looks for the project', () => {
 describe('backend URLs', () => {
 	const fixture = JSON.parse(
 		readFileSync(
-			path.join(REPO, 'native/protocol/project-url/cases.json'),
+			path.join(REPO, 'packages/native-protocol/project-url/cases.json'),
 			'utf8'
 		)
 	) as {
@@ -918,7 +918,7 @@ describe('the doc paths the steps print', () => {
 	it('name pages that exist, not unpublished c15t.com pages', async () => {
 		const repo = path.resolve(
 			path.dirname(fileURLToPath(import.meta.url)),
-			'../../../../..'
+			'../../../../../../..'
 		);
 		const expo = await project({ 'package.json': pkg({ expo: '57.0.0' }) });
 		const bare = await project({
@@ -960,7 +960,7 @@ describe('the printed Android version', () => {
 		const properties = await readFile(
 			path.resolve(
 				path.dirname(fileURLToPath(import.meta.url)),
-				'../../../../../native/core-android/gradle.properties'
+				'../../../../../../android/gradle.properties'
 			),
 			'utf8'
 		);

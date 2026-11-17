@@ -16,12 +16,14 @@ import { dirname, join } from 'node:path';
  */
 const EXTERNAL_STYLE_CONTRACTS = [
 	{
-		automaticEntry: 'packages/react/src/components/shared/surface-styles.tsx',
+		automaticEntry:
+			'packages/sdk/react/src/components/shared/surface-styles.tsx',
 		imports: ['@c15t/nextjs/styles.css'],
 		owners: ['benchmarks/nextjs-browser-bench/app/_bench/with-consent.css'],
 	},
 	{
-		automaticEntry: 'packages/react/src/components/shared/surface-styles.tsx',
+		automaticEntry:
+			'packages/sdk/react/src/components/shared/surface-styles.tsx',
 		imports: ['@c15t/tanstack-start/styles.css'],
 		owners: [
 			'benchmarks/tanstack-start-browser-bench/src/bench/with-consent.css',
@@ -29,7 +31,7 @@ const EXTERNAL_STYLE_CONTRACTS = [
 	},
 	{
 		automaticEntry:
-			'packages/react/src/components/shared/iab-first-paint-sheets.ts',
+			'packages/sdk/react/src/components/shared/iab-first-paint-sheets.ts',
 		imports: [
 			'@c15t/tanstack-start/styles.css',
 			'@c15t/tanstack-start/iab/styles.css',
@@ -39,7 +41,7 @@ const EXTERNAL_STYLE_CONTRACTS = [
 		],
 	},
 	{
-		automaticEntry: 'packages/svelte/src/lib/surface-styles.ts',
+		automaticEntry: 'packages/sdk/svelte/src/lib/surface-styles.ts',
 		imports: ['@c15t/svelte/styles.css'],
 		owners: [
 			'client-manifest',
@@ -105,7 +107,7 @@ const API_FALLBACKS = [
 	{
 		// `useScriptLoader()` for Vue and Nuxt. Before it, a page registered
 		// runtime-decided scripts with core's loader directly.
-		automaticEntry: 'packages/vue/src/runtime/composables/script-loader.ts',
+		automaticEntry: 'packages/sdk/vue/src/runtime/composables/script-loader.ts',
 		owner: 'benchmarks/nuxt-browser-bench/app/pages/gate/index.vue',
 		replace: [
 			[

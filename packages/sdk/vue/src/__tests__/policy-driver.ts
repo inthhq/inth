@@ -47,8 +47,8 @@ import type {
 	PolicyStorageBytes,
 	PolicySsrEvidence,
 	ProbePolicyContract,
-} from '../../../../internals/conformance/src/contract/policy-driver';
-import type { ScenarioPolicy } from '../../../../internals/conformance/src/contract/policy-scenarios';
+} from '../../../../../internals/conformance/src/contract/policy-driver';
+import type { ScenarioPolicy } from '../../../../../internals/conformance/src/contract/policy-scenarios';
 import { preloadPersistenceWriter } from '../../../core/src/modules/persistence/mount';
 import { validateStoredConsentEnvelope } from '../../../core/src/modules/persistence/record-codec';
 import { encodeStoredConsentEnvelopeJson } from '../../../core/src/modules/persistence/writer/encode';

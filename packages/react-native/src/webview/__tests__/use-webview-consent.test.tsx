@@ -29,7 +29,7 @@ import type {
 } from '../use-webview-consent';
 
 const protocol = (name: string) =>
-	resolve(__dirname, '../../../../../native/protocol/webview', name);
+	resolve(__dirname, '../../../../native-protocol/webview', name);
 
 const seen: WebViewConsentProps[] = [];
 

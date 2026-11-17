@@ -15,7 +15,7 @@ const file = loadBudgets();
 
 describe('budgets.json', () => {
 	it('names the contract it takes ceilings from', () => {
-		expect(file.contract).toBe('native/CONTRACT.md');
+		expect(file.contract).toBe('packages/native-protocol/CONTRACT.md');
 	});
 
 	it('gives every budget a finite max, a known unit, a source, and a note', () => {

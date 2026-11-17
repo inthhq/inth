@@ -1,8 +1,8 @@
 import { offline } from '@c15t/svelte';
 
-import { mockGVL } from '../../../packages/react/src/components/iab/__tests__/fixtures/mock-consent-state';
-import type { ConsentManagerOptions } from '../../../packages/svelte/src/lib/types';
-import { enTranslations } from '../../../packages/translations/src/index';
+import { mockGVL } from '../../../packages/sdk/react/src/components/iab/__tests__/fixtures/mock-consent-state';
+import type { ConsentManagerOptions } from '../../../packages/sdk/svelte/src/lib/types';
+import { enTranslations } from '../../../packages/sdk/translations/src/index';
 import {
 	storybookPolicy,
 	storybookIABPolicy,

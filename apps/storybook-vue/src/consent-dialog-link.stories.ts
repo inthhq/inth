@@ -3,8 +3,8 @@ import type { HydrationRecords, HydrationResult } from '@c15t/core';
 import buttonStyles from '@c15t/ui/styles/components/button';
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 
-import ConsentDialogLink from '../../../packages/vue/src/runtime/components/consent-dialog-link.vue';
-import ConsentManager from '../../../packages/vue/src/runtime/components/manager.vue';
+import ConsentDialogLink from '../../../packages/sdk/vue/src/runtime/components/consent-dialog-link.vue';
+import ConsentManager from '../../../packages/sdk/vue/src/runtime/components/manager.vue';
 import { useStorybookConsent as setupStorybookConsent } from './storybook-consent-fixtures';
 
 /**

@@ -1,0 +1,11 @@
+{/* Generated from packages/swift/Examples/swiftui-consent/Sources/sample-configuration.swift (docs:swiftui-hosted) by scripts/sync-example-docs.ts. Edit the source file. */}
+
+```swift title="Sources/sample-configuration.swift"
+private func installHosted(backendURL: URL) throws -> ConsentCore {
+    try C15tApple.install(C15tAppleConfiguration(
+        backendURL: backendURL.absoluteString,
+        storage: .keychain(service: "com.c15t.examples.swiftui.hosted"),
+        consentCategories: [.necessary, .measurement]
+    ))
+}
+```

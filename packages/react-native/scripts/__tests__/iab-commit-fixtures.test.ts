@@ -12,7 +12,7 @@ describe('native IAB commit fixtures', () => {
 				resolve(
 					import.meta.dirname,
 					'../../../..',
-					'native/protocol/iab/commit-cases.json'
+					'packages/native-protocol/iab/commit-cases.json'
 				),
 				'utf8'
 			)

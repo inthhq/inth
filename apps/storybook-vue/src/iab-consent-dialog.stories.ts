@@ -1,7 +1,7 @@
 import { tabSwitchFlow } from '@c15t/conformance/play/iab-consent-dialog';
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 
-import IabConsentDialog from '../../../packages/vue/src/runtime/components/iab-panel.vue';
+import IabConsentDialog from '../../../packages/sdk/vue/src/runtime/components/iab-panel.vue';
 import { useStorybookIABConsent as setupStorybookIABConsent } from './storybook-consent-fixtures';
 
 const meta = {

@@ -1,7 +1,7 @@
 import Foundation
 @_spi(C15tInternal) import C15tCore
 
-// Measures the budgets in `native/CONTRACT.md` and prints numbers. Nothing here is
+// Measures the budgets in `packages/native-protocol/CONTRACT.md` and prints numbers. Nothing here is
 // a claim: every line is a measured distribution, and a budget that is not met
 // prints OVER rather than being left out.
 
@@ -226,7 +226,7 @@ func wait(
 }
 
 print("C15tCore benchmarks")
-print("reference: Apple silicon, in-process; budgets from native/CONTRACT.md")
+print("reference: Apple silicon, in-process; budgets from packages/native-protocol/CONTRACT.md")
 
 let seedStore = makeStore()
 let seededEnvelopeBytes = seedStore.data(for: "com.c15t.snapshot").map { Double($0.count) } ?? 0

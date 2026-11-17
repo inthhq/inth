@@ -2852,13 +2852,13 @@
 	},
 	"kind": "vendor-list-scope",
 	"notes": [
-		"expected.document is what narrowGVLToVendors in packages/iab/src/tcf/fetch-gvl.ts returned for this input: called, not restated.",
+		"expected.document is what narrowGVLToVendors in packages/sdk/iab/src/tcf/fetch-gvl.ts returned for this input: called, not restated.",
 		"vendorKeys is the surviving vendors keys in the order the web returned them, which is served order and not the order a host typed the scope in.",
 		"Nothing in expected is invented: an id the served document does not carry contributes no entry, and a survivor arrives with its optional fields attached."
 	],
 	"oracle": {
 		"function": "narrowGVLToVendors",
-		"module": "packages/iab/src/tcf/fetch-gvl.ts",
+		"module": "packages/sdk/iab/src/tcf/fetch-gvl.ts",
 		"package": "@c15t/iab"
 	},
 	"protocolVersion": 1,

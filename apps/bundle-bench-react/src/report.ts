@@ -62,7 +62,7 @@ const createHistoricalEntrySource = function createHistoricalEntrySource() {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentManagerProvider,
-} from '../packages/react/src/index';
+} from '../packages/sdk/react/src/index';
 import { createElement } from 'react';
 
 const benchmarkConsentOptions = ${options};
@@ -158,7 +158,7 @@ const ensureBaselineInstall = function ensureBaselineInstall() {
 };
 
 const ensureUiBuild = function ensureUiBuild(cwd: string) {
-	run(['bunx', 'rslib', 'build', '--no-dts'], resolve(cwd, 'packages/ui'));
+	run(['bunx', 'rslib', 'build', '--no-dts'], resolve(cwd, 'packages/sdk/ui'));
 };
 
 const linkWorkspacePackage = function linkWorkspacePackage({
@@ -182,44 +182,44 @@ const linkWorkspacePackage = function linkWorkspacePackage({
 };
 
 const ensureBaselineWorkspaceBuild = function ensureBaselineWorkspaceBuild() {
-	run(['bun', 'run', 'prebuild'], resolve(WORKTREE_DIR, 'packages/core'));
-	run(['bun', 'run', 'prebuild'], resolve(WORKTREE_DIR, 'packages/react'));
+	run(['bun', 'run', 'prebuild'], resolve(WORKTREE_DIR, 'packages/sdk/core'));
+	run(['bun', 'run', 'prebuild'], resolve(WORKTREE_DIR, 'packages/sdk/react'));
 	run(
 		['bunx', 'rslib', 'build', '--no-dts'],
-		resolve(WORKTREE_DIR, 'packages/schema')
+		resolve(WORKTREE_DIR, 'packages/sdk/schema')
 	);
 	run(
 		['bunx', 'rslib', 'build', '--no-dts'],
-		resolve(WORKTREE_DIR, 'packages/translations')
+		resolve(WORKTREE_DIR, 'packages/sdk/translations')
 	);
 	run(
 		['bunx', 'rslib', 'build', '--no-dts'],
-		resolve(WORKTREE_DIR, 'packages/core')
+		resolve(WORKTREE_DIR, 'packages/sdk/core')
 	);
 	run(
 		['bunx', 'rslib', 'build', '--no-dts'],
-		resolve(WORKTREE_DIR, 'packages/ui')
+		resolve(WORKTREE_DIR, 'packages/sdk/ui')
 	);
 
 	linkWorkspacePackage({
 		packageName: 'c15t',
 		root: WORKTREE_DIR,
-		sourcePath: resolve(WORKTREE_DIR, 'packages/core'),
+		sourcePath: resolve(WORKTREE_DIR, 'packages/sdk/core'),
 	});
 	linkWorkspacePackage({
 		packageName: '@c15t/schema',
 		root: WORKTREE_DIR,
-		sourcePath: resolve(WORKTREE_DIR, 'packages/schema'),
+		sourcePath: resolve(WORKTREE_DIR, 'packages/sdk/schema'),
 	});
 	linkWorkspacePackage({
 		packageName: '@c15t/translations',
 		root: WORKTREE_DIR,
-		sourcePath: resolve(WORKTREE_DIR, 'packages/translations'),
+		sourcePath: resolve(WORKTREE_DIR, 'packages/sdk/translations'),
 	});
 	linkWorkspacePackage({
 		packageName: '@c15t/ui',
 		root: WORKTREE_DIR,
-		sourcePath: resolve(WORKTREE_DIR, 'packages/ui'),
+		sourcePath: resolve(WORKTREE_DIR, 'packages/sdk/ui'),
 	});
 };
 
