@@ -29,19 +29,19 @@ Pick the path for your app. Each one turns GPP on with the defaults below.
 {/* example: fragment */}
 
 ```json title="app.json"
-["@c15t/react-native", { "backendURL": "https://your-project.inth.app", "gpp": true }]
+["@inth/react-native", { "backendURL": "https://your-project.inth.app", "gpp": true }]
 ```
 
-**Bare React Native.** Add `com.c15t.gpp` as a Boolean `true` to
-`Info.plist`, and `<meta-data android:name="com.c15t.GPP" android:value="true" />`
+**Bare React Native.** Add `com.inth.gpp` as a Boolean `true` to
+`Info.plist`, and `<meta-data android:name="com.inth.GPP" android:value="true" />`
 to the `<application>` element of `AndroidManifest.xml`.
 
-**Swift.** Pass `GPPOptions` to `C15tAppleConfiguration(gpp:)`:
+**Swift.** Pass `GPPOptions` to `InthAppleConfiguration(gpp:)`:
 
 {/* example: fragment */}
 
 ```swift
-let configuration = C15tAppleConfiguration(
+let configuration = InthAppleConfiguration(
     backendURL: "https://your-project.inth.app",
     gpp: GPPOptions()
 )
@@ -61,10 +61,10 @@ Replace `https://your-project.inth.app` with the URL from your Inth project.
 
 | Option | Default | Expo field | iOS `Info.plist` key | Android metadata |
 | --- | --- | --- | --- | --- |
-| Turn GPP on | off | `gpp: true` or an object | `com.c15t.gpp`, Boolean | `com.c15t.GPP` |
-| `mspaMode` | unset | `gpp.mspaMode` | `com.c15t.gpp.mspaMode` | `com.c15t.GPP_MSPA_MODE` |
-| `optOutCategories` | `marketing` | `gpp.optOutCategories` | `com.c15t.gpp.optOutCategories`, array | `com.c15t.GPP_OPT_OUT_CATEGORIES`, comma-separated |
-| `tcf` | `true` | `gpp.tcf` | `com.c15t.gpp.tcf`, Boolean | `com.c15t.GPP_TCF` |
+| Turn GPP on | off | `gpp: true` or an object | `com.inth.gpp`, Boolean | `com.inth.GPP` |
+| `mspaMode` | unset | `gpp.mspaMode` | `com.inth.gpp.mspaMode` | `com.inth.GPP_MSPA_MODE` |
+| `optOutCategories` | `marketing` | `gpp.optOutCategories` | `com.inth.gpp.optOutCategories`, array | `com.inth.GPP_OPT_OUT_CATEGORIES`, comma-separated |
+| `tcf` | `true` | `gpp.tcf` | `com.inth.gpp.tcf`, Boolean | `com.inth.GPP_TCF` |
 
 - `mspaMode` is `opt-out-option` or `service-provider`. Set it only if you
   signed the IAB Multi-State Privacy Agreement; the transaction is then
@@ -76,8 +76,8 @@ Replace `https://your-project.inth.app` with the URL from your Inth project.
   empty list means no category drives the opt-outs, so they always report
   "did not opt out", as `optOutCategories: []` does on web. Write the empty
   list as `optOutCategories: []` in Expo, an empty array (`<array/>`) under
-  `com.c15t.gpp.optOutCategories` in `Info.plist`, and the value `none` for
-  `com.c15t.GPP_OPT_OUT_CATEGORIES` on Android. `necessary` is always granted,
+  `com.inth.gpp.optOutCategories` in `Info.plist`, and the value `none` for
+  `com.inth.GPP_OPT_OUT_CATEGORIES` on Android. `necessary` is always granted,
   so it never drives them.
 - `tcf: false` leaves the TCF EU section out under an `iab` policy.
 
@@ -110,12 +110,12 @@ engine removes every `IABGPP_*` key.
   GPC to a category.
 - `MspaCoveredTransaction`: `2` (not covered) unless you set `mspaMode`.
 - Sensitive data, known-child and personal data consents, and the two sensitive
-  data notices: `0` (not applicable). c15t has no category for them, so the
+  data notices: `0` (not applicable). Inth has no category for them, so the
   string states that the app does not process that data. If your app does,
   collect and signal that consent separately.
 
 IAB Tech Lab published US National version 3 in November 2026. No IAB
-reference decoder reads it yet, and web c15t encodes version 2, so the mobile
+reference decoder reads it yet, and web Inth encodes version 2, so the mobile
 engine encodes version 2 as well.
 
 ## The `IABGPP_*` keys
@@ -136,7 +136,7 @@ writes none. Read the section from `IABGPP_7_String` or decode the full string.
 ## Check the signal
 
 In React Native, read the string with `useGPPString()` from
-`@c15t/react-native`. It returns `null` while GPP is off or no section
+`@inth/react-native`. It returns `null` while GPP is off or no section
 applies. In Swift and Kotlin, read `snapshot().gppString` from the engine.
 
 For a US visitor under an `opt-out` rule who has refused nothing, the string is

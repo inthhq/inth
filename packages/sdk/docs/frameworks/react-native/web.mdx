@@ -1,22 +1,22 @@
 ---
 title: Expo web
-description: Run the same @c15t/react-native import on Expo web. The provider, hooks and React Native consent components use the c15t browser engine and your Inth project.
+description: Run the same @inth/react-native import on Expo web. The provider, hooks and React Native consent components use the c15t browser engine and your Inth project.
 group: frameworks
 ---
 
-A universal Expo app imports `@c15t/react-native` once for iOS, Android and
+A universal Expo app imports `@inth/react-native` once for iOS, Android and
 web. On iOS and Android, consent runs in the native core inside the app binary.
 On web there is no binary, so the same `ConsentProvider`, hooks and components
-run on `@c15t/core`, the engine the c15t web SDKs use. Both talk to the same
+run on `@c15t/core`, the engine the Inth web SDKs use. Both talk to the same
 Inth project.
 
 Expo web works with Expo SDK 55 through 58 and Metro, the default web bundler.
 The web build reads its configuration from the Expo config plugin, so you
-configure c15t once in `app.config.ts`.
+configure Inth once in `app.config.ts`.
 
 ## Install the web engine
 
-Install `@c15t/core` next to `@c15t/react-native`, plus Expo's web
+Install `@c15t/core` next to `@inth/react-native`, plus Expo's web
 dependencies if the app does not have them yet:
 
 ```sh
@@ -40,7 +40,7 @@ no consent module. Use a development build for iOS and Android.
 
 The [Expo config plugin](/docs/frameworks/react-native/expo#configure-the-plugin)
 writes `backendURL`, `dryRun`, `domain`, `consentCategories` and `forceGPC` to
-`extra.c15t` in the app config. Expo inlines the app config into the web
+`extra.inth` in the app config. Expo inlines the app config into the web
 bundle, and the web engine reads its options from there. There is no web-only
 option to set.
 
@@ -60,7 +60,7 @@ own UI inside `ConsentPrompt`, for web:
 {/* example: fragment */}
 
 ```tsx title="App.tsx"
-import { ConsentBanner, ConsentProvider } from '@c15t/react-native';
+import { ConsentBanner, ConsentProvider } from '@inth/react-native';
 import { Platform } from 'react-native';
 
 export default function App() {
@@ -78,7 +78,7 @@ they do not draw the banner twice.
 
 For a privacy-settings entry on web, render `ConsentDialog` with `open` and
 `onRequestClose`. `presentConsentPrompt()` and `presentPreferences()` open the
-native screens, so on web they reject with `C15T_NATIVE_UI_EXCLUDED`.
+native screens, so on web they reject with `INTH_NATIVE_UI_EXCLUDED`.
 
 If an owed prompt has no `ConsentBanner` or `ConsentPrompt` mounted for three
 seconds, a development build warns in the browser console.
@@ -91,9 +91,9 @@ seconds, a development build warns in the browser console.
 | `ConsentGate`, `ConsentReady`, `ConsentPrompt` | Same API. |
 | `ConsentBanner`, `ConsentDialog`, `ConsentPreferences` | Render through React Native for Web. |
 | Saving a choice (`useSaveConsents`, `commit`) | Saves to the browser's cookie and `localStorage`, then sends the record to your Inth project. A save the network refuses is queued and retried. |
-| `reset()` | Withdraws the choice and keeps the c15t subject id, as on native. |
+| `reset()` | Withdraws the choice and keeps the Inth subject id, as on native. |
 | `useSetOverrides()` | Sets country, region, language and GPC, then fetches the policy again. |
-| `useIdentify()` | Links the external id to the c15t subject. |
+| `useIdentify()` | Links the external id to the Inth subject. |
 | `dryRun` | Fetches the real policy from `/init` and sends no consent records. |
 
 The web engine reads the browser's own Global Privacy Control signal. Consent
@@ -104,9 +104,9 @@ choices on web are stored per browser, separately from the app on a device.
 | Native feature | On web |
 | --- | --- |
 | Stock native consent screens and auto-present | No native screens. Mount `ConsentBanner` or your own UI. |
-| `presentConsentPrompt()`, `presentPreferences()` | Reject with `C15T_NATIVE_UI_EXCLUDED`. |
+| `presentConsentPrompt()`, `presentPreferences()` | Reject with `INTH_NATIVE_UI_EXCLUDED`. |
 | `onConsentPresenterOutcome()` | Never called, since web opens no native sessions. Read consent from the hooks instead. |
-| App Tracking Transparency | `useTrackingAuthorization()` reports `unsupported`, as on Android. Requests reject with `C15T_TRACKING_UNSUPPORTED`. Consent alone decides tracking. |
+| App Tracking Transparency | `useTrackingAuthorization()` reports `unsupported`, as on Android. Requests reject with `INTH_TRACKING_UNSUPPORTED`. Consent alone decides tracking. |
 | WebView consent sync | `useWebViewConsent()` gets no payload; there is no native core to share state with. |
 | IAB TCF and GPP | `snapshot.iab` and `useGPPString()` are `null`. A TCF commit fails with `iab-unavailable`. The web engine has no IAB support, so it treats an IAB policy as opt-in category consent, as the web SDK does without its IAB addon: no TC string is written. If your project needs TCF on web, do not run it on this client. |
 | `logout()` | Changes nothing. The external id stays linked until the page reloads. Call `reset()` to drop the records on a shared device. |
@@ -117,7 +117,7 @@ choices on web are stored per browser, separately from the app on a device.
 
 A production web bundle refuses `dryRun`, as a native release build does. The
 engine does not start, every optional category reads as denied, the snapshot
-carries `error.code === 'C15T_CONFIGURATION_DRY_RUN'`, and the browser console
+carries `error.code === 'INTH_CONFIGURATION_DRY_RUN'`, and the browser console
 logs the reason. `npx expo export --platform web` builds a production bundle.
 Leave `dryRun` off, or unset its environment variable, for release builds.
 

@@ -48,7 +48,7 @@ all keep the same `decision` fill and `textOnDecision` label treatment.
 | `typography.fontFamily` | A bundled font for every role except the headline |
 | `typography.headlineFont` | System sans, serif, rounded or a bundled custom headline font |
 | `slots` | One part: `.consentBannerTitle`, `.consentBannerDescription`, `.buttonPrimary` or `.buttonSecondary` |
-| `branding` | `.c15t`, `.inth` or `.custom(name:markImageName:)` provider attribution |
+| `branding` | `.inth`, `.inth` or `.custom(name:markImageName:)` provider attribution |
 | `showsBranding` | Visibility of the provider attribution |
 
 Names that have a web token match it: `primary` is `--c15t-primary`, and
@@ -77,16 +77,16 @@ priority over both.
 
 | `Info.plist` key | Value |
 | --- | --- |
-| `com.c15t.consent.brandName` | Your app's name |
-| `com.c15t.consent.brandMark` | Image asset name |
-| `com.c15t.consent.primary` | `#RRGGBB` or `#RRGGBB,#RRGGBB` for light,dark |
-| `com.c15t.consent.textOnPrimary` | Label color using the same format |
-| `com.c15t.consent.radiusMd`, `spaceLg`, `fontSizeBase` | A number of points; the other steps follow the same pattern |
-| `com.c15t.consent.buttonPrimary.borderRadius` | One slot field, as `<slot>.<field>` |
-| `com.c15t.consent.headline` | First-layer headline |
-| `com.c15t.consent.introduction` | First-layer introduction |
-| `com.c15t.consent.brandingProvider` | `c15t` or `inth` |
-| `com.c15t.consent.branding` | Boolean controlling provider attribution |
+| `com.inth.consent.brandName` | Your app's name |
+| `com.inth.consent.brandMark` | Image asset name |
+| `com.inth.consent.primary` | `#RRGGBB` or `#RRGGBB,#RRGGBB` for light,dark |
+| `com.inth.consent.textOnPrimary` | Label color using the same format |
+| `com.inth.consent.radiusMd`, `spaceLg`, `fontSizeBase` | A number of points; the other steps follow the same pattern |
+| `com.inth.consent.buttonPrimary.borderRadius` | One slot field, as `<slot>.<field>` |
+| `com.inth.consent.headline` | First-layer headline |
+| `com.inth.consent.introduction` | First-layer introduction |
+| `com.inth.consent.brandingProvider` | `c15t` or `inth` |
+| `com.inth.consent.branding` | Boolean controlling provider attribution |
 
 Use a native Boolean for `branding`, rather than the string `"false"`.
 Other color, size and slot keys are declared in `ConsentTheme.InfoPlistKey`.
@@ -95,10 +95,10 @@ Other color, size and slot keys are declared in `ConsentTheme.InfoPlistKey`.
 
 The stock screens read every label from `@c15t/translations`, in the policy's
 translation language: the language `/init` serves, or `overrides.language` in
-`C15tAppleConfiguration`. Buttons, headings and category names use the web banner's keys,
+`InthAppleConfiguration`. Buttons, headings and category names use the web banner's keys,
 so they read "Accept All" and "Reject All". App-only sentences, such as the
 category explanations and save errors, come from native-only keys in the same
-package. A language c15t has no copy for falls back to English. IAB screens
+package. A language Inth has no copy for falls back to English. IAB screens
 follow the served vendor list's language.
 
 `ConsentTheme.Copy` changes the headline and introduction. Leave a field `nil`

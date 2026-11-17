@@ -7,8 +7,8 @@ description: Release SwiftPM from the monorepo and publish signed Android artifa
 
 `bun run tegami:mobile` versions Swift and Android independently from the RN
 npm package. SwiftPM installs directly from this monorepo through its root
-`Package.swift` and Swift version tags. Android publishes `com.c15t:c15t-core`,
-`com.c15t:c15t-android` and `com.c15t:c15t-consent-ui` to Maven Central at one
+`Package.swift` and Swift version tags. Android publishes `com.inth:inth-core`,
+`com.inth:inth-android` and `com.inth:inth-consent-ui` to Maven Central at one
 native version.
 
 This automation does not complete mobile release acceptance. Keep native
@@ -25,8 +25,8 @@ Add a note under `.tegami/mobile/` with either or both native package IDs:
 ```md
 ---
 packages:
-  'swift:c15t-swift': patch
-  'maven:c15t-android': patch
+  'swift:inth-swift': patch
+  'maven:inth-android': patch
 ---
 
 ### Fix saved consent restoration
@@ -38,14 +38,14 @@ The main npm flow reads only `.tegami/*.md`. It does not consume these nested
 native notes. The native flow ignores npm workspaces and writes its own
 `.tegami/mobile/publish-lock.yaml`. Do not edit either publish lock by hand.
 
-Swift versioning updates `C15t.version` and regenerates the RN vendored core.
-`C15tApple.version` and the local core podspec continue to read that version.
-Android versioning updates `c15t.native.version`, request metadata and both RN
+Swift versioning updates `Inth.version` and regenerates the RN vendored core.
+`InthApple.version` and the local core podspec continue to read that version.
+Android versioning updates `inth.native.version`, request metadata and both RN
 artifact pins together. It leaves the RN npm version unchanged.
 
 Swift reserves plain semver tags such as `3.0.1-canary.0` and `3.0.1` in this
 repository so SwiftPM can resolve versions. Android keeps tags such as
-`c15t-android@3.0.1`; npm keeps its own package tags and versions. A Swift tag
+`inth-android@3.0.1`; npm keeps its own package tags and versions. A Swift tag
 does not release the Android or npm packages at the same version.
 
 Both release branches use the same channels as npm. `canary` produces
@@ -69,7 +69,7 @@ publication requires the version changes to be committed first.
 ## Provision destinations
 
 SwiftPM uses `https://github.com/c15t/c15t` directly. The root `Package.swift`
-declares `C15tCore`, `C15tApple` and `C15tConsentUI` with explicit paths under
+declares `InthCore`, `InthApple` and `InthConsentUI` with explicit paths under
 `packages/swift`. SwiftPM fetches the repository and its Git metadata, but
 only the selected Swift targets and their dependencies compile. The Android,
 React Native and JavaScript packages are outside that build.
@@ -95,18 +95,18 @@ continues to compile its vendored sources.
 For private testing, a teammate with GitHub read access can install directly
 from `inthhq/c15t-private` at a branch or commit that contains the root
 manifest. Normal GitHub authentication controls access to the package source.
-The public release workflow still admits only `c15t/c15t`; this setup does not
+The public release workflow still admits only `c15t/Inth`; this setup does not
 enable automated private releases or claim that the mobile acceptance gates
 have passed. Keep public publication disabled while private testing continues.
 
-For Android, verify the `com.c15t` namespace in Sonatype Central Portal and
+For Android, verify the `com.inth` namespace in Sonatype Central Portal and
 create a publisher token. Provision the signing key and make its public key
 available through the normal public-key distribution process. The bundle
 verifier requires signatures, checksums, public SCM metadata, source and API
 documentation artifacts for all three modules before upload. Central's
 `USER_MANAGED` upload validates the bundle before an explicit publish request.
 
-Create the `mobile-release` GitHub environment in `c15t/c15t`. Configure its
+Create the `mobile-release` GitHub environment in `c15t/Inth`. Configure its
 reviewers and branch restrictions to match the team's release policy. Set:
 
 | Kind | Name | Value |
@@ -125,7 +125,7 @@ cannot establish those permissions.
 ## Run the workflow
 
 `.github/workflows/release-mobile.yml` runs on every push to
-`canary` or `main` in `c15t/c15t`. It requires CI, uses the `mobile-release`
+`canary` or `main` in `c15t/Inth`. It requires CI, uses the `mobile-release`
 environment, and opens a version PR on `tegami/version-mobile-<branch>` when
 notes are pending. Merging that version PR attempts the release. Publication
 fails before upload unless the native release flag and destination credentials
@@ -201,14 +201,14 @@ locked version and source digest. Once it matches, later source edits can procee
 without rebuilding the completed SDK. A conflicting published tag stops the
 release and must never be replaced.
 If a pending SDK's source has changed on the branch, rerun a workflow whose
-checkout still matches the lock with `gh run rerun RUN_ID --repo c15t/c15t`.
+checkout still matches the lock with `gh run rerun RUN_ID --repo c15t/Inth`.
 GitHub permits reruns for 30 days. A stale version PR can also merge after a
 native fix, leaving no matching workflow run at all. In either case, recover
 from the version PR's original head commit:
 
 ```sh
-gh pr view VERSION_PR --repo c15t/c15t --json headRefOid --jq .headRefOid
-gh workflow run release-mobile.yml --repo c15t/c15t --ref canary \
+gh pr view VERSION_PR --repo c15t/Inth --json headRefOid --jq .headRefOid
+gh workflow run release-mobile.yml --repo c15t/Inth --ref canary \
   -f source_commit=FULL_VERSION_PR_HEAD_SHA \
   -f previous_run_id=RUN_WITH_ORIGINAL_CENTRAL_STATE
 ```
@@ -284,7 +284,7 @@ stage, so this remains an activation gate.
 
 ## Activate the RN npm package
 
-The public package name is `@c15t/react-native`. It uses `release.yml`, not the
+The public package name is `@inth/react-native`. It uses `release.yml`, not the
 native workflow. Its manifest already declares public access, but `private: true` keeps pending RN notes out of release drafts until mobile acceptance
 passes. Keep that flag until the release is approved.
 

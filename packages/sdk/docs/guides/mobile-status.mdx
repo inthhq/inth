@@ -1,10 +1,10 @@
 ---
 title: Mobile availability
-description: Choose a c15t mobile SDK, obtain the private prerelease artifacts and understand the first release's supported integration paths.
+description: Choose an Inth mobile SDK, obtain the private prerelease artifacts and understand the first release's supported integration paths.
 group: guides
 ---
 
-c15t has native Swift and Kotlin SDKs, a React Native adapter and an Expo config
+Inth has native Swift and Kotlin SDKs, a React Native adapter and an Expo config
 plugin. The mobile SDKs are currently available for private integration testing.
 Use the matching artifacts supplied by the maintainer while public publication
 is being prepared.
@@ -16,7 +16,7 @@ is being prepared.
 | SwiftUI | [Swift quickstart](/docs/frameworks/swift/quickstart) | SwiftPM core, Apple services and optional SwiftUI screens |
 | UIKit | [UIKit setup](/docs/frameworks/swift/uikit) | The same Swift products, with a UIKit host |
 | Kotlin with Compose | [Android quickstart](/docs/frameworks/android/quickstart) | Core and Android artifacts, plus optional Compose screens |
-| React Native | [React Native quickstart](/docs/frameworks/react-native/quickstart) | `@c15t/react-native` and its matching native artifacts |
+| React Native | [React Native quickstart](/docs/frameworks/react-native/quickstart) | `@inth/react-native` and its matching native artifacts |
 | Expo | [Expo setup](/docs/frameworks/react-native/expo) | The RN package and config plugin in a custom native build |
 
 Swift and Kotlin apps can use the core and platform services without the stock
@@ -27,17 +27,17 @@ of the build.
 ## Obtain the matching artifacts
 
 For Swift, use a source checkout with the root `Package.swift`. The package is
-named `c15t`, with library products `C15tCore`, `C15tApple` and
-`C15tConsentUI`. It lives in the monorepo. Private Git dependencies use normal
+named `inth`, with library products `InthCore`, `InthApple` and
+`InthConsentUI`. It lives in the monorepo. Private Git dependencies use normal
 repository authentication; local development can add the checkout in Xcode.
 The current source setup does not require a separate Swift repository.
 
 For Android, obtain a versioned Maven repository containing
-`com.c15t:c15t-core`, `com.c15t:c15t-android` and, for stock screens,
-`com.c15t:c15t-consent-ui`. Keep the three artifacts on one native version.
+`com.inth:inth-core`, `com.inth:inth-android` and, for stock screens,
+`com.inth:inth-consent-ui`. Keep the three artifacts on one native version.
 The Android quickstart shows where that repository belongs in Gradle.
 
-For React Native and Expo, install the supplied `@c15t/react-native` tarball.
+For React Native and Expo, install the supplied `@inth/react-native` tarball.
 Its iOS pod includes the native Swift sources. Its Android bridge resolves the
 native version pinned by that package. The npm version and native version can
 differ; keep the adapter's selected native version.
@@ -66,7 +66,7 @@ An RN app can draw its own banner, category preferences and IAB screens with
 `ConsentPrompt`, the draft API and the IAB hooks; see
 [Build your own UI](/docs/frameworks/react-native/headless). It can also build
 without the stock native UI, with `nativeUI: false` in the Expo plugin or
-`c15t.nativeUI=false` in a bare app; see
+`inth.nativeUI=false` in a bare app; see
 [Build without the stock native screens](/docs/frameworks/react-native/headless#build-without-the-stock-native-screens).
 RN apps that need IAB publisher restrictions or custom purposes still use
 app-owned native installation.

@@ -2,9 +2,9 @@
 
 ```swift title="Sources/sample-configuration.swift"
 private func installHosted(backendURL: URL) throws -> ConsentCore {
-    try C15tApple.install(C15tAppleConfiguration(
+    try InthApple.install(InthAppleConfiguration(
         backendURL: backendURL.absoluteString,
-        storage: .keychain(service: "com.c15t.examples.swiftui.hosted"),
+        storage: .keychain(service: "com.inth.examples.swiftui.hosted"),
         consentCategories: [.necessary, .measurement]
     ))
 }

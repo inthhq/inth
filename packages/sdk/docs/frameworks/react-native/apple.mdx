@@ -11,7 +11,7 @@ SwiftUI or UIKit app, choose Swift in the [framework list](/docs/frameworks).
 
 ## Resolve the source products
 
-For authorized source integration, add `packages/swift` as a local Swift package in Xcode. Link `C15tApple` and `C15tCore`; add `C15tConsentUI` only if you use the SwiftUI stock screens. The RN path is different: its CocoaPods target compiles these sources into `C15tReactNative`.
+For authorized source integration, add `packages/swift` as a local Swift package in Xcode. Link `InthApple` and `InthCore`; add `InthConsentUI` only if you use the SwiftUI stock screens. The RN path is different: its CocoaPods target compiles these sources into `InthReactNative`.
 
 The mobile UI target is iOS 16.4 or later. The source manifest also lists other Apple targets for core use; that is not a tested consent-UI or ATT support claim for those targets.
 
@@ -23,7 +23,7 @@ This existing source example shows the public installer. Replace its placeholder
 
 Call it from app startup before optional SDK initialization or RN attachment. The installer validates storage, hydrates synchronously and returns the process's native core. It defaults to Keychain. Repeated installation returns the same engine and keeps its original configuration.
 
-Read `C15t.isAllowed(.measurement)` or `C15t.decision(for: .measurement)` before starting the corresponding optional SDK. Keep an observation alive to stop or reconfigure collection after withdrawal. Unknown or unavailable consent keeps the SDK off.
+Read `Inth.isAllowed(.measurement)` or `Inth.decision(for: .measurement)` before starting the corresponding optional SDK. Keep an observation alive to stop or reconfigure collection after withdrawal. Unknown or unavailable consent keeps the SDK off.
 
 `protectedStorageUnavailable` leaves no new core installed. Retry after protected-data availability or activation; never fall back to plaintext or memory. The repository's SwiftUI/UIKit installation examples show retry ownership. Keychain may survive reinstall, so uninstall is not a reset guarantee.
 
@@ -33,15 +33,15 @@ Apply `.c15tConsent(privacyPolicyURL:theme:autoPresent:)` to your SwiftUI root, 
 
 ## Attach to an RN CocoaPods host
 
-Import only `C15tReactNative` for host-owned installation in a CocoaPods RN app. Set `com.c15t.reactnative.AutoBootstrap` to false, call that module's `C15tApple.install`, then `C15tReactNativeBootstrap.install(core)` before RN starts. Do not also link separately compiled core/platform products, which would create competing singleton authorities.
+Import only `InthReactNative` for host-owned installation in a CocoaPods RN app. Set `com.inth.reactnative.AutoBootstrap` to false, call that module's `InthApple.install`, then `InthReactNativeBootstrap.install(core)` before RN starts. Do not also link separately compiled core/platform products, which would create competing singleton authorities.
 
-The monorepo root also has a Swift package named `c15t` for standalone apps.
-It exports `C15tCore`, `C15tApple` and `C15tConsentUI`. An RN CocoaPods app
-already compiles those sources inside `C15tReactNative`; linking separate
+The monorepo root also has a Swift package named `inth` for standalone apps.
+It exports `InthCore`, `InthApple` and `InthConsentUI`. An RN CocoaPods app
+already compiles those sources inside `InthReactNative`; linking separate
 copies would create competing process authorities.
 
 ## Use ATT and custom services separately
 
-`C15tApple.tracking` shares the explicit ATT orchestration with RN. It requires the app's usage description and never changes c15t consent. The stock prompt asks for ATT after consent by default, only with marketing granted; see [ask for ATT after the consent prompt](/docs/frameworks/react-native/iab#ask-for-att-after-the-consent-prompt). Platform services own foreground/reachability subscriptions; `C15tApple.shutdown()` tears down those subscriptions without clearing consent.
+`InthApple.tracking` shares the explicit ATT orchestration with RN. It requires the app's usage description and never changes Inth consent. The stock prompt asks for ATT after consent by default, only with marketing granted; see [ask for ATT after the consent prompt](/docs/frameworks/react-native/iab#ask-for-att-after-the-consent-prompt). Platform services own foreground/reachability subscriptions; `InthApple.shutdown()` tears down those subscriptions without clearing consent.
 
-`C15tAppleConfiguration` is the only installation an app uses. Its `backendURL` is the project URL from your Inth dashboard, and `C15tApple.install` throws `invalidBackendURL` for any other host. Pass `dryRun: true` inside `#if DEBUG` for development and CI; a release build throws `dryRunInReleaseBuild`. The `CoreConfig` installer and the transport types are internal API for c15t's own tests and fixtures.
+`InthAppleConfiguration` is the only installation an app uses. Its `backendURL` is the project URL from your Inth dashboard, and `InthApple.install` throws `invalidBackendURL` for any other host. Pass `dryRun: true` inside `#if DEBUG` for development and CI; a release build throws `dryRunInReleaseBuild`. The `CoreConfig` installer and the transport types are internal API for Inth's own tests and fixtures.

@@ -5,7 +5,7 @@ group: frameworks
 ---
 
 Add a consent prompt and a Privacy settings button to a SwiftUI app with one
-view modifier. c15t loads the app's policy from your Inth project, stores
+view modifier. Inth loads the app's policy from your Inth project, stores
 choices in Keychain and shows the native screens when a choice is needed. UIKit
 apps use the same engine and prompt through the
 [UIKit guide](/docs/frameworks/swift/uikit).
@@ -31,17 +31,17 @@ distribution and release status.
 ## Add the Swift package
 
 In Xcode, choose **File > Add Package Dependencies > Add Local**, then select
-the root of your c15t checkout. Its `Package.swift` declares the package as
-`c15t`. Add these products to your app target:
+the root of your Inth checkout. Its `Package.swift` declares the package as
+`inth`. Add these products to your app target:
 
 | Product | What your app uses it for |
 | --- | --- |
-| `C15tCore` | Consent state, saved choices and synchronous SDK gates |
-| `C15tApple` | Keychain, HTTP transport and app lifecycle handling |
-| `C15tConsentUI` | The stock SwiftUI prompt and privacy settings |
+| `InthCore` | Consent state, saved choices and synchronous SDK gates |
+| `InthApple` | Keychain, HTTP transport and app lifecycle handling |
+| `InthConsentUI` | The stock SwiftUI prompt and privacy settings |
 
 There is no separate Swift repository. Package naming and Swift imports are
-different: the package is `c15t`, while code imports the products listed above.
+different: the package is `inth`, while code imports the products listed above.
 Keep simulator signing enabled, because the installer checks Keychain access.
 
 ## Add the consent prompt
@@ -68,8 +68,8 @@ it.
 
 `backendURL` must be your Inth project URL. A missing scheme means `https`,
 and a trailing slash is dropped. Any other host, a port, a path, a query or
-credentials make `C15tApple.install` throw
-`C15tAppleInstallationError.invalidBackendURL`. Its description quotes your
+credentials make `InthApple.install` throw
+`InthAppleInstallationError.invalidBackendURL`. Its description quotes your
 value and names the rule it broke.
 
 ### Run without sending records
@@ -79,7 +79,7 @@ For development and CI, pass `dryRun: true` inside `#if DEBUG`:
 {/* example: fragment */}
 
 ```swift
-var configuration = C15tAppleConfiguration(
+var configuration = InthAppleConfiguration(
     backendURL: "https://your-project.inth.app",
     consentCategories: [.necessary, .measurement, .marketing]
 )
@@ -90,7 +90,7 @@ configuration.dryRun = true
 
 The prompt, storage, gates and consent signals work as normal. The engine
 drops consent records instead of queueing or sending them. A release build
-throws `C15tAppleInstallationError.dryRunInReleaseBuild` and installs no
+throws `InthAppleInstallationError.dryRunInReleaseBuild` and installs no
 engine. In a debug build `dryRun` also lets `backendURL` be any `https` URL,
 or `http` on `localhost`, `127.0.0.1` or `[::1]`.
 
@@ -122,7 +122,7 @@ actor. See [native gates and custom UI](/docs/frameworks/swift/headless).
 
 The example does not install analytics. If your app starts optional SDKs during
 launch, install the engine first in `App.init` with
-`try? C15tApple.install(configuration)`, using the same configuration you pass
+`try? InthApple.install(configuration)`, using the same configuration you pass
 to the modifier. The modifier then reuses that engine. Before starting your
 analytics SDK, read the installed core's
 `decision(for: .measurement)` and start only on `.granted`. Retain a gate

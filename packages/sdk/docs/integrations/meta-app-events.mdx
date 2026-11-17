@@ -12,8 +12,8 @@ advertiser ID collection on only while a category allows them, and turns on
 otherwise. The category defaults to `marketing`, as for the web's
 [Meta Pixel](/docs/integrations/meta-pixel).
 
-The helper ships in `C15tApple`, `c15t-android` and
-`@c15t/react-native/integrations`. c15t adds no Meta dependency. For
+The helper ships in `InthApple`, `inth-android` and
+`@inth/react-native/integrations`. c15t adds no Meta dependency. For
 websites, use the [Meta Pixel helper](/docs/integrations/meta-pixel).
 
 ## What the helper changes
@@ -76,8 +76,8 @@ when the helper turns it on.
 ## Connect a Swift app
 
 ```swift title="MetaAppEventsOwner.swift"
-import C15tApple
-import C15tCore
+import InthApple
+import InthCore
 import FBSDKCoreKit
 
 final class MetaAppEventsOwner {
@@ -106,12 +106,12 @@ final class MetaAppEventsOwner {
 ## Connect an Android app
 
 ```kotlin title="MetaAppEventsConsent.kt"
-import com.c15t.android.integrations.MetaAppEventsIntegration
-import com.c15t.core.C15t
+import com.inth.android.integrations.MetaAppEventsIntegration
+import com.inth.core.Inth
 import com.facebook.FacebookSdk
 
 fun connectMetaAppEventsConsent(onError: (Exception) -> Unit): MetaAppEventsIntegration {
-	val core = checkNotNull(C15t.current) { "Install c15t before connecting Meta" }
+	val core = checkNotNull(Inth.current) { "Install Inth before connecting Meta" }
 	return MetaAppEventsIntegration(
 		core = core,
 		setAutoLogAppEventsEnabled = FacebookSdk::setAutoLogAppEventsEnabled,

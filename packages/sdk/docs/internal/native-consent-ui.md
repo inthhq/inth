@@ -3,7 +3,7 @@ title: Native consent UI prototype
 description: Run the private SwiftUI and Compose consent screens with the native consent core.
 ---
 
-The optional `C15tConsentUI` SwiftPM product and `c15t-consent-ui` Android
+The optional `InthConsentUI` SwiftPM product and `inth-consent-ui` Android
 module provide the first native consent-screen prototype. They use the same
 native engine as SDK gates. The core and platform modules remain headless.
 This milestone does not establish production support or TCF certification.
@@ -22,11 +22,11 @@ both URLs through its connection screen. These public configuration values do
 not replace backend policy authoring.
 
 For iOS, install Xcode and XcodeGen, then run `xcodegen generate` from
-`examples/native/consent-demo/ios`. Open `C15tConsentDemo.xcodeproj` and run the
-`C15tConsentDemo` scheme on an iOS Simulator. The candidate deployment floor is
+`examples/native/consent-demo/ios`. Open `InthConsentDemo.xcodeproj` and run the
+`InthConsentDemo` scheme on an iOS Simulator. The candidate deployment floor is
 iOS 16.4. For Android, install JDK 17 and Android SDK 36, then run
 `./gradlew :consent-demo:installDebug` from `packages/android`. Launch the
-`com.c15t.prototype.consent` app on an emulator. The candidate floor is API 24.
+`com.inth.prototype.consent` app on an emulator. The candidate floor is API 24.
 Current simulator and emulator runs do not validate either minimum OS.
 
 ## Attach the optional UI
@@ -51,13 +51,13 @@ lifetime can still keep a `ConsentPresenter(core:)` and apply
 `c15tConsent(presenter:privacyPolicyURL:)`, as
 `ios/Sources/consent-demo-app.swift` does.
 
-On Android, install with `C15tAndroid.install`, then place
-`C15tConsent(privacyPolicyUrl = ...)` beside the host's Compose content, or call
+On Android, install with `InthAndroid.install`, then place
+`InthConsent(privacyPolicyUrl = ...)` beside the host's Compose content, or call
 `attachConsent(privacyPolicyUrl)` from an Activity after `setContentView`. Call
 `ConsentPrompt.of(core).presentPreferences()` from Privacy settings. An app that
 retains its own `ConsentPresenter` can still render
-`C15tConsent(presenter, privacyPolicyUrl)`, as
-`android/src/main/kotlin/com/c15t/demo/consent-demo-activity.kt` does.
+`InthConsent(presenter, privacyPolicyUrl)`, as
+`android/src/main/kotlin/com/inth/demo/consent-demo-activity.kt` does.
 
 Both presenters own drafts, search, navigation and native commits. Accept all
 and Reject all call core intents. Save choices submits the displayed draft with
@@ -93,7 +93,7 @@ entry are a large sheet on iOS and a full-screen window with Close on Android,
 because by then the app behind them belongs to the user.
 
 The stock appearance is warm paper (`#F8F4EE` light, `#171411` dark), ink text,
-the platform system typeface, and c15t blue only for links, switches and Save.
+the platform system typeface, and Inth blue only for links, switches and Save.
 Headlines use San Francisco on iOS and the system sans serif on Android; a host
 can still opt into a different headline face.
 Accept all and Reject all are twins: the same fill, size and weight, side by
@@ -165,7 +165,7 @@ and the footer shares the cards' 16pt edges; the first layer keeps its 24pt
 page margin. List rows rely on the platform's own cell insets with a 44pt
 minimum target, and on iOS 17 and later sections sit 24pt apart.
 
-`ConsentTheme` (Swift, `C15tConsentUI`) and `com.c15t.consentui.ConsentTheme`
+`ConsentTheme` (Swift, `InthConsentUI`) and `com.inth.consentui.ConsentTheme`
 (Kotlin) are the one customization surface. Names with a web token follow
 `--c15t-*` in `@c15t/ui`. Each holds nine semantic colours (`canvas`,
 `surface`, `surfaceMuted`, `text`, `textMuted`, `primary`, `textOnPrimary`,
@@ -202,7 +202,7 @@ ConsentTheme.current = ConsentTheme(
     brand = ConsentTheme.Brand(name = "Pantry", markResId = R.drawable.consent_demo_mark))
 
 // 2. Pass one to the composable.
-C15tConsent(presenter, policyUrl, theme = PantryBrand.theme)
+InthConsent(presenter, policyUrl, theme = PantryBrand.theme)
 ```
 
 3. Declare values in the app binary. iOS reads `Info.plist` keys and Android reads
@@ -212,30 +212,30 @@ dark). Android also accepts colour, drawable and font resources.
 
 | Info.plist | Android meta-data | Value |
 | --- | --- | --- |
-| `com.c15t.consent.primary` | `com.c15t.consent.PRIMARY` | colour |
-| `com.c15t.consent.textOnPrimary` | `com.c15t.consent.TEXT_ON_PRIMARY` | colour |
-| `com.c15t.consent.canvas` | `com.c15t.consent.CANVAS` | colour |
-| `com.c15t.consent.surface` | `com.c15t.consent.SURFACE` | colour |
-| `com.c15t.consent.surfaceMuted` | `com.c15t.consent.SURFACE_MUTED` | colour |
-| `com.c15t.consent.text` | `com.c15t.consent.TEXT` | colour |
-| `com.c15t.consent.textMuted` | `com.c15t.consent.TEXT_MUTED` | colour |
-| `com.c15t.consent.decision` | `com.c15t.consent.DECISION` | colour |
-| `com.c15t.consent.textOnDecision` | `com.c15t.consent.TEXT_ON_DECISION` | colour |
-| `com.c15t.consent.radiusSm`, `radiusMd`, `radiusLg` | `com.c15t.consent.RADIUS_SM`, `RADIUS_MD`, `RADIUS_LG` | points or dp |
-| `com.c15t.consent.spaceXs` to `spaceXl` | `com.c15t.consent.SPACE_XS` to `SPACE_XL` | points or dp |
-| `com.c15t.consent.fontSizeSm`, `fontSizeBase`, `fontSizeLg` | `com.c15t.consent.FONT_SIZE_SM`, `FONT_SIZE_BASE`, `FONT_SIZE_LG` | points or sp |
-| `com.c15t.consent.fontFamily` | `com.c15t.consent.FONT_FAMILY` | PostScript name or font resource |
-| `com.c15t.consent.<slot>.<field>` | `com.c15t.consent.<SLOT>_<FIELD>` | slot colour or size |
-| `com.c15t.consent.headlineFont` | `com.c15t.consent.HEADLINE_FONT` | `serif`, `sans`, `rounded`, or a font |
-| `com.c15t.consent.brand` | `com.c15t.consent.BRAND` | Boolean, show or hide the app identity above the headline |
-| `com.c15t.consent.brandName` | `com.c15t.consent.BRAND_NAME` | text |
-| `com.c15t.consent.brandMark` | `com.c15t.consent.BRAND_MARK` | asset name or drawable |
-| `com.c15t.consent.headline` | `com.c15t.consent.HEADLINE` | text |
-| `com.c15t.consent.introduction` | `com.c15t.consent.INTRODUCTION` | text |
-| `com.c15t.consent.branding` | `com.c15t.consent.BRANDING` | Boolean, show or hide the provider tag |
-| `com.c15t.consent.brandingProvider` | `com.c15t.consent.BRANDING_PROVIDER` | `c15t` or `inth`; `consent` also selects Inth |
-| `com.c15t.consent.brandingName` | `com.c15t.consent.BRANDING_NAME` | custom provider name |
-| `com.c15t.consent.brandingMark` | `com.c15t.consent.BRANDING_MARK` | custom provider asset name or drawable |
+| `com.inth.consent.primary` | `com.inth.consent.PRIMARY` | colour |
+| `com.inth.consent.textOnPrimary` | `com.inth.consent.TEXT_ON_PRIMARY` | colour |
+| `com.inth.consent.canvas` | `com.inth.consent.CANVAS` | colour |
+| `com.inth.consent.surface` | `com.inth.consent.SURFACE` | colour |
+| `com.inth.consent.surfaceMuted` | `com.inth.consent.SURFACE_MUTED` | colour |
+| `com.inth.consent.text` | `com.inth.consent.TEXT` | colour |
+| `com.inth.consent.textMuted` | `com.inth.consent.TEXT_MUTED` | colour |
+| `com.inth.consent.decision` | `com.inth.consent.DECISION` | colour |
+| `com.inth.consent.textOnDecision` | `com.inth.consent.TEXT_ON_DECISION` | colour |
+| `com.inth.consent.radiusSm`, `radiusMd`, `radiusLg` | `com.inth.consent.RADIUS_SM`, `RADIUS_MD`, `RADIUS_LG` | points or dp |
+| `com.inth.consent.spaceXs` to `spaceXl` | `com.inth.consent.SPACE_XS` to `SPACE_XL` | points or dp |
+| `com.inth.consent.fontSizeSm`, `fontSizeBase`, `fontSizeLg` | `com.inth.consent.FONT_SIZE_SM`, `FONT_SIZE_BASE`, `FONT_SIZE_LG` | points or sp |
+| `com.inth.consent.fontFamily` | `com.inth.consent.FONT_FAMILY` | PostScript name or font resource |
+| `com.inth.consent.<slot>.<field>` | `com.inth.consent.<SLOT>_<FIELD>` | slot colour or size |
+| `com.inth.consent.headlineFont` | `com.inth.consent.HEADLINE_FONT` | `serif`, `sans`, `rounded`, or a font |
+| `com.inth.consent.brand` | `com.inth.consent.BRAND` | Boolean, show or hide the app identity above the headline |
+| `com.inth.consent.brandName` | `com.inth.consent.BRAND_NAME` | text |
+| `com.inth.consent.brandMark` | `com.inth.consent.BRAND_MARK` | asset name or drawable |
+| `com.inth.consent.headline` | `com.inth.consent.HEADLINE` | text |
+| `com.inth.consent.introduction` | `com.inth.consent.INTRODUCTION` | text |
+| `com.inth.consent.branding` | `com.inth.consent.BRANDING` | Boolean, show or hide the provider tag |
+| `com.inth.consent.brandingProvider` | `com.inth.consent.BRANDING_PROVIDER` | `c15t` or `inth`; `consent` also selects Inth |
+| `com.inth.consent.brandingName` | `com.inth.consent.BRANDING_NAME` | custom provider name |
+| `com.inth.consent.brandingMark` | `com.inth.consent.BRANDING_MARK` | custom provider asset name or drawable |
 
 The provider tag stays separate from the header. The selected provider also
 supplies the default header logo; explicit app branding overrides that header.
@@ -302,11 +302,11 @@ this test fault. Android uses Boolean extras for these switches. iOS debug fixtu
 do not select fixtures or reset state.
 
 XCUITest lives in `ios/UITests/consent-journey-tests.swift`. Run it with the
-`C15tConsentDemo` scheme and an explicit simulator destination. AndroidJUnitRunner
+`InthConsentDemo` scheme and an explicit simulator destination. AndroidJUnitRunner
 and Compose tests live in `android/src/androidTest`; build
 `:consent-demo:assembleDebugAndroidTest`, install both APKs on a task-owned
-emulator, then run `com.c15t.prototype.consent.test/androidx.test.runner.AndroidJUnitRunner`.
-Screens expose `c15t.*` accessibility identifiers and Compose resource IDs. The
+emulator, then run `com.inth.prototype.consent.test/androidx.test.runner.AndroidJUnitRunner`.
+Screens expose `Inth.*` accessibility identifiers and Compose resource IDs. The
 subset app teams may rely on is listed in `packages/react-native/maestro/selectors.json`
 and documented on the React Native E2E testing page;
 `scripts/native-consent-selectors.test.ts` fails if one leaves either platform. These standalone tests do not replace the separate bare RN app
@@ -378,11 +378,11 @@ authority expires while settings are open, Reject remains available. A changed
 revision still requires an explicit reload before a decision can save; Accept and Save
 remain unavailable until policy refresh.
 
-CocoaPods compiles generated copies of `C15tCore`, `C15tApple` and
-`C15tConsentUI` from the packed RN package. Regenerate with
+CocoaPods compiles generated copies of `InthCore`, `InthApple` and
+`InthConsentUI` from the packed RN package. Regenerate with
 `scripts/sync-vendored-core.ts` and `scripts/sync-vendored-apple.ts`; never edit
-vendored sources. Android resolves versioned `c15t-core`, `c15t-android` and
-`c15t-consent-ui` binaries from the configured Maven repository. The Compose
+vendored sources. Android resolves versioned `inth-core`, `inth-android` and
+`inth-consent-ui` binaries from the configured Maven repository. The Compose
 module publishes Kotlin 2.1 metadata for the Expo 57 consumer. Installing the
 RN binding includes UI code; native headless products do not depend on it.
 Local staging does not authorize remote publication, and the RN package remains

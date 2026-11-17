@@ -1,12 +1,12 @@
 ---
 title: Test your app
-description: Unit- and component-test a React Native or Expo app that uses @c15t/react-native, with jest-expo, React Native Testing Library and a fake native consent core.
+description: Unit- and component-test a React Native or Expo app that uses @inth/react-native, with jest-expo, React Native Testing Library and a fake native consent core.
 group: frameworks
 ---
 
 Jest and Vitest run your components without the native consent module, so a
-`ConsentProvider` on its own throws `NativeC15tUnavailableError` there.
-`@c15t/react-native/testing` gives a test the real consent client over a fake
+`ConsentProvider` on its own throws `NativeInthUnavailableError` there.
+`@inth/react-native/testing` gives a test the real consent client over a fake
 native core: you choose the starting consent, render your screens, check what
 they saved and answer the native prompt the way a person would.
 
@@ -19,7 +19,7 @@ Library. Install them as dev dependencies:
 npx expo install --dev jest-expo jest @types/jest @testing-library/react-native test-renderer
 ```
 
-`@c15t/react-native` ships ES modules, and `jest-expo` only compiles packages
+`@inth/react-native` ships ES modules, and `jest-expo` only compiles packages
 in its allowlist. Add `@c15t` to the preset's `transformIgnorePatterns` entry
 in `package.json`:
 
@@ -43,7 +43,7 @@ Reanimated, also keep the preset's `/node_modules/react-native-reanimated/plugin
 entry. You can read your installed preset's list in
 `node_modules/jest-expo/jest-preset.js`.
 
-Importing `@c15t/react-native` in Jest does not touch the native module. The
+Importing `@inth/react-native` in Jest does not touch the native module. The
 lookup runs when a provider or client first needs it, so plain logic tests
 can import the package without a test client.
 
@@ -165,7 +165,7 @@ expect(consent.prompt.isOpen).toBe(true);
 load React Native the way any React Native component test needs, for example
 with a plugin that compiles `react-native` or an alias to a stand-in. Once
 `react-native` resolves, the test code is the same, with `test` and `expect`
-imported from `vitest`. Add `@c15t/react-native` to `server.deps.inline` as
+imported from `vitest`. Add `@inth/react-native` to `server.deps.inline` as
 well: the package leaves some imports without a file extension so Metro can
 pick each platform's file, and Node cannot load those on its own. A test that
 runs under a web preset gets the web client, which has no native screens:

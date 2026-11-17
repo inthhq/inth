@@ -10,11 +10,11 @@ while the consent engine is unavailable.
 
 ## The native module is unavailable
 
-`NativeC15tUnavailableError` means the installed app cannot supply the c15t
+`NativeInthUnavailableError` means the installed app cannot supply the Inth
 native module.
 
 1. Use a custom native build. Expo Go and a web target cannot load it.
-2. Confirm `@c15t/react-native` is installed in the app project.
+2. Confirm `@inth/react-native` is installed in the app project.
 3. For Expo, run prebuild after configuring the plugin. For bare iOS, run the
    app's pod-install command.
 4. Rebuild and reinstall the native app.
@@ -23,7 +23,7 @@ Restarting Metro changes JavaScript only. It cannot add the missing module or
 a newer native method. Check [Expo setup](/docs/frameworks/react-native/expo)
 or [bare setup](/docs/frameworks/react-native/bare) for the linking steps.
 
-## Android cannot resolve `com.c15t`
+## Android cannot resolve `com.inth`
 
 Check the repository URL and the version requested by the RN adapter in the
 Gradle error. The mobile prerelease requires matching versioned native
@@ -47,7 +47,7 @@ pod still points to missing files.
 
 The RN pod compiles the vendored Swift sources inside the package. It should
 not point to a sibling monorepo checkout. Do not add a second standalone
-`C15tCore` or `C15tApple` product to repair RN linking.
+`InthCore` or `InthApple` product to repair RN linking.
 
 ## Hooks say the provider is missing
 
@@ -76,16 +76,16 @@ adding manual initialization. Keep one installed engine.
 
 Native startup refuses these configurations and starts no engine, so every
 read answers deny-all. iOS prints a code in the console. Android logs an error
-under the `c15t` tag.
+under the `inth` tag.
 
 | iOS code | Cause | Fix |
 | --- | --- | --- |
-| `C15T_CONFIGURATION_BACKEND_URL` | The project URL is missing or is not an Inth project URL. | Set `backendURL` to the URL from your Inth dashboard, such as `https://your-project.inth.app`. |
-| `C15T_CONFIGURATION_DRY_RUN` | `dryRun` is on in a release build. | Remove `dryRun` from release builds. |
-| `C15T_CONFIGURATION_RETIRED` | `Info.plist` still has `com.c15t.backend.mode`, `com.c15t.backend.initUrl` or `com.c15t.test`. | Remove the key. The message names its replacement. |
+| `INTH_CONFIGURATION_BACKEND_URL` | The project URL is missing or is not an Inth project URL. | Set `backendURL` to the URL from your Inth dashboard, such as `https://your-project.inth.app`. |
+| `INTH_CONFIGURATION_DRY_RUN` | `dryRun` is on in a release build. | Remove `dryRun` from release builds. |
+| `INTH_CONFIGURATION_RETIRED` | `Info.plist` still has `com.inth.backend.mode`, `com.inth.backend.initUrl` or `com.inth.test`. | Remove the key. The message names its replacement. |
 
-On Android the retired keys are `com.c15t.MODE` and
-`com.c15t.BACKEND_INIT_URL`. Expo prebuild removes the retired keys it used to
+On Android the retired keys are `com.inth.MODE` and
+`com.inth.BACKEND_INIT_URL`. Expo prebuild removes the retired keys it used to
 write, so rerun prebuild after upgrading.
 
 On iOS, `protectedStorageUnavailable` means installation could not access
@@ -95,7 +95,7 @@ Do not replace protected storage with an in-memory store.
 
 ## The app reports a protocol mismatch or missing method
 
-`C15tProtocolMismatchError` means the JavaScript/native handshake is
+`InthProtocolMismatchError` means the JavaScript/native handshake is
 incompatible. Install the matching package and rebuild the native binary.
 Check the Expo runtime version before distributing another OTA update.
 
@@ -106,7 +106,7 @@ even if the protocol number has not changed. See
 ## The console says a native payload does not match
 
 In development, the consent client warns when the native module's bootstrap
-or commit result is missing a key that `@c15t/react-native` declares. The
+or commit result is missing a key that `@inth/react-native` declares. The
 warning lists each key, such as `subjectId: required, absent from the payload`.
 It usually means the app's native build is older or newer than the JavaScript
 package. Rebuild the app so both halves come from the same release.
@@ -116,7 +116,7 @@ To check a payload yourself, pass it to `describeBridgePayloadDrift`:
 {/* example: fragment */}
 
 ```ts
-import { describeBridgePayloadDrift } from '@c15t/react-native/bridge-schema';
+import { describeBridgePayloadDrift } from '@inth/react-native/bridge-schema';
 
 const problems = describeBridgePayloadDrift('commitResult', result, {
 	allowUnknownKeys: true,
@@ -125,7 +125,7 @@ const problems = describeBridgePayloadDrift('commitResult', result, {
 
 It returns one line per problem, or an empty list when the payload matches.
 `BridgePayloadName` names the payloads it checks, and `BRIDGE_PAYLOADS` lists
-the keys of each. They live in the `@c15t/react-native/bridge-schema` subpath
+the keys of each. They live in the `@inth/react-native/bridge-schema` subpath
 rather than the main entry, so a release app does not carry the table.
 Production builds print no warning.
 

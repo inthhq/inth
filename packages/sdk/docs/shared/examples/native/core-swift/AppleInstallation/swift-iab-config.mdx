@@ -1,8 +1,8 @@
 {/* Generated from packages/swift/Examples/AppleInstallation/Quickstart/iab-installation.swift (docs:swift-iab-config) by scripts/sync-example-docs.ts. Edit the source file. */}
 
 ```swift title="InstallIABConsent.swift"
-import C15tApple
-import C15tCore
+import InthApple
+import InthCore
 import Foundation
 
 func installIABConsent(
@@ -11,7 +11,7 @@ func installIABConsent(
     cmpVersion: Int,
     publisherCountryCode: String
 ) throws -> ConsentCore {
-    try C15tApple.install(C15tAppleConfiguration(
+    try InthApple.install(InthAppleConfiguration(
         backendURL: backendURL,
         iab: IABConfiguration(
             cmpId: cmpID,

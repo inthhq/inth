@@ -79,7 +79,7 @@ and uses `permissive`, so the out-of-scope rows are not covered at all, and no
 scenario pairs a refusal with an expired receipt.
 
 1. Out of scope under `permissive`, both kernels consult the model.
-   `PolicyEvaluator.kt` (packages/android/c15t-core/src/main/kotlin/com/c15t/core/policy/PolicyEvaluator.kt,
+   `PolicyEvaluator.kt` (packages/android/inth-core/src/main/kotlin/com/inth/core/policy/PolicyEvaluator.kt,
    the `else` branch of the scope test) answers a model default, so an `opt-in`
    or `iab` rule denies an ungoverned category with no receipt; web allows it.
    The same branch answers `true` for `opt-out` and `none` before looking at the
@@ -152,8 +152,8 @@ than by this table.
   neither was touched while the three answers were, so a receipt that lapsed on
   the same millisecond before the fix does so after it.
 - One packaging step is now part of the change. The pod compiles a copy of the
-  core at `packages/react-native/vendor/C15tCore`, not
-  `packages/swift/Sources/C15tCore`, so a Swift evaluator fix that is not
+  core at `packages/react-native/vendor/InthCore`, not
+  `packages/swift/Sources/InthCore`, so a Swift evaluator fix that is not
   followed by `bun run scripts/sync-vendored-core.ts` ships the old answer to
   every iOS app. `--check` catches it and `scripts/check-publish-artifacts.ts`
   runs it at release, which is the only reason this is a note and not an
@@ -167,6 +167,6 @@ receipt and with a revision the record predates, and an `iab` rule held to
 `explicit-denial` rows that stopped reproducing and gained the new ones, which is
 the expected direction: a divergence fixed is a row deleted.
 
-Gates at close: Kotlin 237 tests, Swift 187 tests, `@c15t/react-native` 578
+Gates at close: Kotlin 237 tests, Swift 187 tests, `@inth/react-native` 578
 tests, `check-types` clean, and the five-step Android journey on an emulator
 with the banner and dialog geometry at web parity.

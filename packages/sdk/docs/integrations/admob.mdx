@@ -12,8 +12,8 @@ Ads. Marketing grants `ad_storage`, `ad_user_data` and `ad_personalization`,
 with the same [category mapping](/docs/integrations/google-tag#how-categories-map-to-google-consent-types)
 the web uses. Pending consent denies all three.
 
-The helper ships in `C15tApple`, `c15t-android` and
-`@c15t/react-native/integrations`. Google Mobile Ads stays a dependency your
+The helper ships in `InthApple`, `inth-android` and
+`@inth/react-native/integrations`. Google Mobile Ads stays a dependency your
 app installs; c15t adds none.
 
 ## What the helper changes
@@ -60,8 +60,8 @@ request App Tracking Transparency.
 Create the helper after installing c15t, and keep it for the app's lifetime:
 
 ```swift title="AdMobConsent.swift"
-import C15tApple
-import C15tCore
+import InthApple
+import InthCore
 import Foundation
 import GoogleMobileAds
 
@@ -105,13 +105,13 @@ Create the helper in your `Application` after installing c15t:
 import android.content.Context
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
-import com.c15t.android.integrations.AdMobIntegration
-import com.c15t.core.C15t
+import com.inth.android.integrations.AdMobIntegration
+import com.inth.core.Inth
 import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.RequestConfiguration.PublisherPrivacyPersonalizationState
 
 fun connectAdMobConsent(context: Context, onError: (Exception) -> Unit): AdMobIntegration {
-	val core = checkNotNull(C15t.current) { "Install c15t before connecting AdMob" }
+	val core = checkNotNull(Inth.current) { "Install Inth before connecting AdMob" }
 	val preferences = PreferenceManager.getDefaultSharedPreferences(context)
 	return AdMobIntegration(
 		core = core,

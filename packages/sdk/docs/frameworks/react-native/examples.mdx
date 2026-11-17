@@ -48,10 +48,10 @@ Generate and open the example project:
 
 ```sh
 xcodegen generate --spec packages/swift/Examples/swiftui-consent/project.yml
-open packages/swift/Examples/swiftui-consent/C15tSwiftUI.xcodeproj
+open packages/swift/Examples/swiftui-consent/InthSwiftUI.xcodeproj
 ```
 
-Run the `C15tSwiftUI` scheme. The stock presenter is the default. Add
+Run the `InthSwiftUI` scheme. The stock presenter is the default. Add
 `--headless` in the scheme's Run arguments to try the app-owned category form.
 The counter follows measurement permission, so you can see grant and
 withdrawal take effect. The example's README explains hosted configuration.
@@ -64,11 +64,11 @@ larger sample's model, subscriptions and custom draft handling.
 Generate its project into a new or empty directory outside the checkout:
 
 ```sh
-bun examples/native/consent-demo/ios/generate-project.ts /tmp/c15t-consent-demo
-open /tmp/c15t-consent-demo/C15tConsentDemo.xcodeproj
+bun examples/native/consent-demo/ios/generate-project.ts /tmp/inth-consent-demo
+open /tmp/inth-consent-demo/InthConsentDemo.xcodeproj
 ```
 
-Run `C15tConsentDemo` for a SwiftUI app lifecycle or `C15tUIKitDemo` for UIKit.
+Run `InthConsentDemo` for a SwiftUI app lifecycle or `InthUIKitDemo` for UIKit.
 Both host the same presenter. Keep simulator signing enabled so the hosted
 installer's Keychain probe works.
 

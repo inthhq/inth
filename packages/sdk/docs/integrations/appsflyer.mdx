@@ -13,8 +13,8 @@ The category defaults to `marketing`. The three consent fields come from the
 shared [Consent Mode mapping](/docs/integrations/google-tag#how-categories-map-to-google-consent-types),
 so marketing grants them too.
 
-The helper ships in `C15tApple`, `c15t-android` and
-`@c15t/react-native/integrations`. c15t adds no AppsFlyer dependency. The web
+The helper ships in `InthApple`, `inth-android` and
+`@inth/react-native/integrations`. c15t adds no AppsFlyer dependency. The web
 has no AppsFlyer helper.
 
 ## What the helper changes
@@ -60,8 +60,8 @@ exist.
 
 ```swift title="AppsFlyerConsentOwner.swift"
 import AppsFlyerLib
-import C15tApple
-import C15tCore
+import InthApple
+import InthCore
 
 final class AppsFlyerConsentOwner {
     private let integration: AppsFlyerIntegration
@@ -99,15 +99,15 @@ app's lifetime. Pass
 import android.content.Context
 import com.appsflyer.AppsFlyerConsent
 import com.appsflyer.AppsFlyerLib
-import com.c15t.android.integrations.AppsFlyerIntegration
-import com.c15t.core.C15t
+import com.inth.android.integrations.AppsFlyerIntegration
+import com.inth.core.Inth
 
 fun connectAppsFlyerConsent(
 	context: Context,
 	subjectToGdpr: Boolean,
 	onError: (Exception) -> Unit,
 ): AppsFlyerIntegration {
-	val core = checkNotNull(C15t.current) { "Install c15t before connecting AppsFlyer" }
+	val core = checkNotNull(Inth.current) { "Install Inth before connecting AppsFlyer" }
 	val appsFlyer = AppsFlyerLib.getInstance()
 	return AppsFlyerIntegration(
 		core = core,

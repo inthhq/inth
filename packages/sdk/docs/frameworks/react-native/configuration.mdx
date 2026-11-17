@@ -50,7 +50,7 @@ replacement:
 | `mode: 'hosted'` | Remove it. Hosted is the only mode. |
 | `mode: 'selfHosted'` | Nothing. Mobile works only with Inth. Set `backendURL` to your Inth project URL. |
 | `mode: 'offline'` | `dryRun: true` in development and CI. In production keep `backendURL`; `bundleManifest` or `policy` covers a launch without network. |
-| `mode: 'custom'` | `autoBootstrap: false`. Your native app installs c15t before React Native starts. Custom transports are gone. |
+| `mode: 'custom'` | `autoBootstrap: false`. Your native app installs Inth before React Native starts. Custom transports are gone. |
 | `initURL` | Nothing. The app fetches policy from `backendURL`. |
 
 ## Use dryRun in development and CI
@@ -82,8 +82,8 @@ launch:
 
 | Platform | What counts as a release build | Where the refusal appears |
 | --- | --- | --- |
-| iOS | The app was compiled without `DEBUG`. The pod compiles the engine with your app's configuration. | Console, code `C15T_CONFIGURATION_DRY_RUN` |
-| Android | The app is not debuggable (`FLAG_DEBUGGABLE` is off). | Logcat, tag `c15t` |
+| iOS | The app was compiled without `DEBUG`. The pod compiles the engine with your app's configuration. | Console, code `INTH_CONFIGURATION_DRY_RUN` |
+| Android | The app is not debuggable (`FLAG_DEBUGGABLE` is off). | Logcat, tag `inth` |
 
 Remove `dryRun`, or leave its environment variable unset, in release builds.
 
@@ -129,15 +129,15 @@ Use these keys when configuring the same engine without Expo:
 
 | Expo option | iOS `Info.plist` key | Android application metadata |
 | --- | --- | --- |
-| `backendURL` | `com.c15t.backend.url` | `com.c15t.BACKEND_URL` |
-| `dryRun` | `com.c15t.dryRun`, boolean | `com.c15t.DRY_RUN` |
-| `domain` | `com.c15t.backend.domain` | `com.c15t.BACKEND_DOMAIN` |
-| `consentCategories` | `com.c15t.categories`, string array | `com.c15t.CATEGORIES`, comma-separated |
-| `vendors` | `com.c15t.vendors` | `com.c15t.VENDORS`, comma-separated |
-| `policyResource` | `com.c15t.policy.resource` | `com.c15t.POLICY_RESOURCE` |
-| `forceGPC` | `com.c15t.forceGPC` | `com.c15t.FORCE_GPC` |
-| `iab` | `com.c15t.iab.*`, see below | `com.c15t.IAB_*`, see below |
-| `autoBootstrap: false` | `com.c15t.reactnative.AutoBootstrap` | `com.c15t.reactnative.AUTO_BOOTSTRAP` |
+| `backendURL` | `com.inth.backend.url` | `com.inth.BACKEND_URL` |
+| `dryRun` | `com.inth.dryRun`, boolean | `com.inth.DRY_RUN` |
+| `domain` | `com.inth.backend.domain` | `com.inth.BACKEND_DOMAIN` |
+| `consentCategories` | `com.inth.categories`, string array | `com.inth.CATEGORIES`, comma-separated |
+| `vendors` | `com.inth.vendors` | `com.inth.VENDORS`, comma-separated |
+| `policyResource` | `com.inth.policy.resource` | `com.inth.POLICY_RESOURCE` |
+| `forceGPC` | `com.inth.forceGPC` | `com.inth.FORCE_GPC` |
+| `iab` | `com.inth.iab.*`, see below | `com.inth.IAB_*`, see below |
+| `autoBootstrap: false` | `com.inth.reactnative.AutoBootstrap` | `com.inth.reactnative.AUTO_BOOTSTRAP` |
 
 The project URL follows the [same rule](#set-your-inth-project-url) as the
 Expo option, and both platforms check it at launch. Follow
@@ -148,12 +148,12 @@ Remove these retired keys. Expo prebuild deletes them for you.
 
 | Retired key | Use instead |
 | --- | --- |
-| `com.c15t.backend.mode` (iOS), `com.c15t.MODE` (Android) | Nothing for hosted. `com.c15t.dryRun` or `com.c15t.DRY_RUN` in development and CI. |
-| `com.c15t.backend.initUrl` (iOS), `com.c15t.BACKEND_INIT_URL` (Android) | Nothing. The app fetches policy from the project URL. |
+| `com.inth.backend.mode` (iOS), `com.inth.MODE` (Android) | Nothing for hosted. `com.inth.dryRun` or `com.inth.DRY_RUN` in development and CI. |
+| `com.inth.backend.initUrl` (iOS), `com.inth.BACKEND_INIT_URL` (Android) | Nothing. The app fetches policy from the project URL. |
 
 A build that still declares one does not start the engine. iOS logs
-`C15T_CONFIGURATION_RETIRED` with the key and its replacement. Android logs an
-error under the `c15t` tag. Every read answers deny-all until you remove the
+`INTH_CONFIGURATION_RETIRED` with the key and its replacement. Android logs an
+error under the `inth` tag. Every read answers deny-all until you remove the
 key.
 
 ## Declare the categories your app uses
@@ -179,10 +179,10 @@ presenter can save IAB choices. Leave `iab` out to keep IAB TCF off.
 
 | Expo `iab` field | iOS `Info.plist` key | Android metadata | Value |
 | --- | --- | --- | --- |
-| `cmpId` | `com.c15t.iab.cmpId`, integer | `com.c15t.IAB_CMP_ID` | Required. The CMP ID IAB Europe registered for your CMP, 2 to 4095. There is no default. |
-| `cmpVersion` | `com.c15t.iab.cmpVersion`, integer | `com.c15t.IAB_CMP_VERSION` | Required. Your internal CMP version, 0 to 4095. |
-| `publisherCountryCode` | `com.c15t.iab.publisherCountryCode` | `com.c15t.IAB_PUBLISHER_COUNTRY_CODE` | Required. Two letters, such as `DE`. |
-| `consentScreen` | `com.c15t.iab.consentScreen`, integer | `com.c15t.IAB_CONSENT_SCREEN` | Optional. 0 to 63. Defaults to 1. |
+| `cmpId` | `com.inth.iab.cmpId`, integer | `com.inth.IAB_CMP_ID` | Required. The CMP ID IAB Europe registered for your CMP, 2 to 4095. There is no default. |
+| `cmpVersion` | `com.inth.iab.cmpVersion`, integer | `com.inth.IAB_CMP_VERSION` | Required. Your internal CMP version, 0 to 4095. |
+| `publisherCountryCode` | `com.inth.iab.publisherCountryCode` | `com.inth.IAB_PUBLISHER_COUNTRY_CODE` | Required. Two letters, such as `DE`. |
+| `consentScreen` | `com.inth.iab.consentScreen`, integer | `com.inth.IAB_CONSENT_SCREEN` | Optional. 0 to 63. Defaults to 1. |
 
 The Expo plugin stops prebuild when a value is missing or out of range. Native
 startup checks the same ranges. If any `iab` key is present but the set is
@@ -218,7 +218,7 @@ expiry and updates.
 
 Use `autoBootstrap: false` when your app owns native installation, as a
 brownfield app does. Install once, before RN and optional SDK startup, with
-`C15tApple.install` on iOS and `C15tAndroid.install` on Android, then attach
+`InthApple.install` on iOS and `InthAndroid.install` on Android, then attach
 the RN adapter to that engine. The native installers take the same Inth
 project URL and `dryRun` switch. They do not take a custom transport.
 

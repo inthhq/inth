@@ -4,7 +4,7 @@ description: Set the Android consent screens' colors, radii, spacing, type, per-
 group: frameworks
 ---
 
-Pass a `ConsentTheme` to `C15tConsent` to match your app's visual identity.
+Pass a `ConsentTheme` to `InthConsent` to match your app's visual identity.
 The native presenter keeps responsibility for drafts, navigation and saves.
 Start with the [quickstart](/docs/frameworks/android/quickstart) so the same
 screens can be reopened from app settings.
@@ -35,13 +35,13 @@ Create `consent-theme.kt` in your app, using your own package name:
 <include src="../../shared/examples/native/examples/consent-demo/android-brand-theme.mdx" />
 
 Put your logo in the app's drawable resources. In the quickstart's
-`C15tConsent` call, pass the theme as its `theme` argument. This is a change
+`InthConsent` call, pass the theme as its `theme` argument. This is a change
 to that call, using your own drawable name:
 
 {/* example: fragment */}
 
 ```kotlin
-C15tConsent(
+InthConsent(
 	privacyPolicyUrl = "https://your-app.example/privacy",
 	theme = pantryConsentTheme(R.drawable.your_app_mark),
 )
@@ -107,24 +107,24 @@ same native presenter is opened through a wrapper.
 
 | Metadata key | Value |
 | --- | --- |
-| `com.c15t.consent.PRIMARY`, `TEXT_ON_PRIMARY` | `#RRGGBB`, or a comma-separated light,dark pair. |
-| `com.c15t.consent.CANVAS`, `SURFACE`, `SURFACE_MUTED` | Screen and card colors. |
-| `com.c15t.consent.TEXT`, `TEXT_MUTED` | Main and muted text colors. |
-| `com.c15t.consent.DECISION`, `TEXT_ON_DECISION` | Shared Accept/Reject colors. |
-| `com.c15t.consent.RADIUS_SM`, `RADIUS_MD`, `RADIUS_LG` | Radii in dp. |
-| `com.c15t.consent.SPACE_XS` to `SPACE_XL` | Spacing steps in dp. |
-| `com.c15t.consent.FONT_SIZE_SM`, `FONT_SIZE_BASE`, `FONT_SIZE_LG` | Font sizes in sp. |
-| `com.c15t.consent.FONT_FAMILY` | A font resource. |
-| `com.c15t.consent.BUTTON_PRIMARY_BORDER_RADIUS` | One slot field, as `<SLOT>_<FIELD>`. |
-| `com.c15t.consent.HEADLINE_FONT` | `sans`, `serif` or `rounded`; Android maps `rounded` to sans. |
-| `com.c15t.consent.BRAND_NAME`, `BRAND_MARK` | App name and drawable resource. |
-| `com.c15t.consent.BRAND` | `false` hides app identity. |
-| `com.c15t.consent.HEADLINE`, `INTRODUCTION` | First-layer copy. |
-| `com.c15t.consent.BRANDING_PROVIDER` | `c15t` or `inth`. |
-| `com.c15t.consent.BRANDING_NAME`, `BRANDING_MARK` | Custom provider name and drawable. |
-| `com.c15t.consent.BRANDING` | `false` hides provider attribution. |
+| `com.inth.consent.PRIMARY`, `TEXT_ON_PRIMARY` | `#RRGGBB`, or a comma-separated light,dark pair. |
+| `com.inth.consent.CANVAS`, `SURFACE`, `SURFACE_MUTED` | Screen and card colors. |
+| `com.inth.consent.TEXT`, `TEXT_MUTED` | Main and muted text colors. |
+| `com.inth.consent.DECISION`, `TEXT_ON_DECISION` | Shared Accept/Reject colors. |
+| `com.inth.consent.RADIUS_SM`, `RADIUS_MD`, `RADIUS_LG` | Radii in dp. |
+| `com.inth.consent.SPACE_XS` to `SPACE_XL` | Spacing steps in dp. |
+| `com.inth.consent.FONT_SIZE_SM`, `FONT_SIZE_BASE`, `FONT_SIZE_LG` | Font sizes in sp. |
+| `com.inth.consent.FONT_FAMILY` | A font resource. |
+| `com.inth.consent.BUTTON_PRIMARY_BORDER_RADIUS` | One slot field, as `<SLOT>_<FIELD>`. |
+| `com.inth.consent.HEADLINE_FONT` | `sans`, `serif` or `rounded`; Android maps `rounded` to sans. |
+| `com.inth.consent.BRAND_NAME`, `BRAND_MARK` | App name and drawable resource. |
+| `com.inth.consent.BRAND` | `false` hides app identity. |
+| `com.inth.consent.HEADLINE`, `INTRODUCTION` | First-layer copy. |
+| `com.inth.consent.BRANDING_PROVIDER` | `c15t` or `inth`. |
+| `com.inth.consent.BRANDING_NAME`, `BRANDING_MARK` | Custom provider name and drawable. |
+| `com.inth.consent.BRANDING` | `false` hides provider attribution. |
 
-Keys shortened within a row retain the `com.c15t.consent.` prefix.
+Keys shortened within a row retain the `com.inth.consent.` prefix.
 
 ## Know where the copy comes from
 
@@ -134,7 +134,7 @@ translation language: the language `/init` serves, or the `language` in
 keys as the web banner, so they read "Accept All", "Reject All" and
 "Strictly Necessary". Sentences that only make sense in an app, such as the
 category explanations and save errors, are native-only keys in the same
-package. A language c15t has no copy for falls back to English. IAB screens
+package. A language Inth has no copy for falls back to English. IAB screens
 follow the served vendor list's language instead.
 
 `ConsentTheme.Copy` replaces the first-layer headline and introduction. Leave

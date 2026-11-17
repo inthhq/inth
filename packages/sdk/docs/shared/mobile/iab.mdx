@@ -35,14 +35,14 @@ installer:
 
 <include src="../examples/native/examples/consent-demo/android-iab-config.mdx" />
 
-Pass the returned configuration to `C15tAndroid.install(context, config)`
+Pass the returned configuration to `InthAndroid.install(context, config)`
 instead of the category-only configuration in the Android quickstart.
 
 ### React Native and Expo
 
 Expo apps set the plugin's `iab` option with `cmpId`, `cmpVersion`,
 `publisherCountryCode` and an optional `consentScreen`. Bare RN apps set the
-matching `com.c15t.iab.*` `Info.plist` keys and `com.c15t.IAB_*` Android
+matching `com.inth.iab.*` `Info.plist` keys and `com.inth.IAB_*` Android
 metadata. Automatic startup then installs the engine with IAB TCF on and
 writes the CMP ID and version to the platform signal store. There is no
 default CMP ID. [Turn on IAB TCF](/docs/frameworks/react-native/configuration#turn-on-iab-tcf)
@@ -98,7 +98,7 @@ that integration uses. Swift exposes `isIABAllowed`; Kotlin exposes
 reconfigures collection through the vendor's supported API.
 
 For a custom partner, check `isCustomVendorAllowed(id)` instead. To know which
-c15t categories the committed decision grants by the web's rules, read
+Inth categories the committed decision grants by the web's rules, read
 `iabPurposeCategories()`; custom partners' purposes count there too.
 
 TCF consent, legitimate interest, special-feature opt-in and Additional
@@ -129,7 +129,7 @@ authority. The native gate accounts for that validity.
 
 On iOS, ATT authorizes platform tracking. Request it explicitly only if your
 app needs it, with your app-specific usage description. An ATT grant does not
-grant a c15t category or vendor, and a c15t grant does not bypass ATT denial.
+grant an Inth category or vendor, and an Inth grant does not bypass ATT denial.
 Android has no ATT prompt.
 
 In RN, `useTrackingAuthorization()` reads ATT status and
@@ -150,7 +150,7 @@ on `.c15tConsent(...)` and `ConsentRootViewController` in Swift:
 | --- | --- |
 | `afterConsent` (default) | The consent prompt first. Apple's alert after it closes, only while marketing is granted. |
 | `beforeConsent` | Apple's alert first, then the consent prompt, whether the prompt opens by itself or your app opens it. Not recommended; see below. |
-| `manual` | Nothing automatic. Call `requestTrackingAuthorization()`, `useTrackingRequest()` or `C15tApple.tracking.request` yourself. |
+| `manual` | Nothing automatic. Call `requestTrackingAuthorization()`, `useTrackingRequest()` or `InthApple.tracking.request` yourself. |
 
 The SDK asks Apple only when all of these hold:
 
@@ -165,9 +165,9 @@ The SDK asks Apple only when all of these hold:
   counts too; see [ATT and IAB TCF](#att-and-iab-tcf).
 - The app is active. Apple shows nothing to an app that is not active, so the
   request waits for the app to return to the foreground.
-- No c15t screen is open. That includes a notice card, and a prompt or settings
+- No Inth screen is open. That includes a notice card, and a prompt or settings
   screen that is still animating away. The request waits until it has gone.
-- A c15t root is still mounted: the provider in React Native, or an attached
+- An Inth root is still mounted: the provider in React Native, or an attached
   scene in Swift. If the last one goes away while a request waits, the request
   is dropped. A root that mounts later decides again.
 
@@ -180,7 +180,7 @@ With `afterConsent`, three moments can lead to Apple's alert:
 - The person changes marketing from denied to granted in privacy settings.
 
 With `autoPresent` off, nothing is asked at launch. With `afterConsent`, Apple's
-alert still follows a prompt or settings screen your app opens through c15t.
+alert still follows a prompt or settings screen your app opens through Inth.
 
 ### When to use `beforeConsent`
 
@@ -213,7 +213,7 @@ How it behaves:
   waits, that call opens the prompt without Apple's alert.
 
 On Apple's expanded EU sheet, Additional Information closes Apple's sheet with
-no answer recorded and opens c15t's privacy settings. Closing them applies the
+no answer recorded and opens Inth's privacy settings. Closing them applies the
 after-consent rule in either order, so Apple's alert returns only while
 marketing is granted. With `beforeConsent`, a tap on the sheet shown before an
 owed prompt lets that prompt open as the controls; closing it applies the same
@@ -224,7 +224,7 @@ the tap. The stock UI does, so the SDK asks for the button when it can open its
 own screens. A React Native app that draws its own consent UI, or a build
 without the stock native screens, gets the button only by passing
 `onTrackingAdditionalInformation` to `<ConsentProvider>`, which runs on a tap.
-Your own calls to `requestTrackingAuthorization()` and `C15tApple.tracking.request`
+Your own calls to `requestTrackingAuthorization()` and `InthApple.tracking.request`
 show no button unless you pass a handler (`onAdditionalInformation:` in Swift);
 `useTrackingRequest()` asks for it and opens its preference centre.
 
@@ -233,7 +233,7 @@ React Native asks Apple automatically: the provider asks after sessions the
 native screens report, and your UI does not open those. Call
 `useTrackingRequest()` or `requestTrackingAuthorization()` after your own
 consent step, and gate on `useIsTrackingAllowed('marketing')`. Germany, France, Italy, Poland and Romania always get the
-full-page sheet; the rest of the EU gets it when the app prefers it, which c15t
+full-page sheet; the rest of the EU gets it when the app prefers it, which Inth
 does. `NSUserTrackingMarkdownUsageDescription` (`trackingMarkdownUsageDescription`
 in the Expo plugin) is the optional rich-text copy for that sheet.
 
@@ -293,7 +293,7 @@ TCF purposes 2, 3 and 4, and counts as consented only when every one of them
 that some vendor asks consent for is consented. Custom partners count as
 vendors here. Someone must also be able to track: at least one consented
 vendor or custom partner that asks consent for one of those purposes, or a
-consented Google ad tech provider. The c15t `marketing` category must be
+consented Google ad tech provider. The Inth `marketing` category must be
 granted as well. So Accept all asks Apple, Reject all never does, and a custom
 choice asks only when it grants those purposes to a vendor or custom partner.
 A stored TC String that does not counts as a refusal, so `beforeConsent` skips

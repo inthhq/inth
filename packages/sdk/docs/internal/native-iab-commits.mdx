@@ -17,7 +17,7 @@ validation accepts IDs 2 through 4095; it does not prove registration, ownership
 mobile validation or Google certification. Fixture IDs are test data and must
 never become production configuration.
 
-The owner supplied CMP ID 490 for c15t. The official [CMP registry](https://cmp-list.consensu.org/v2/cmp-list.json), updated
+The owner supplied CMP ID 490 for Inth. The official [CMP registry](https://cmp-list.consensu.org/v2/cmp-list.json), updated
 22 October 2026, lists 490 as `Consent Management Inc`, commercial, with the
 `Web` environment only. That identifies the registrant; it does not establish
 mobile approval. The owner handles registration and Google App and AC v2
@@ -373,7 +373,7 @@ publication, cold bootstrap or `core.rebuildTcStorageBus()`. Repair uses current
 native authority and its clock, never raw stored grants or vendor values.
 Mirror writes run outside the core state lock. Queue-only replay bookkeeping
 does not republish stored consent rows after current authority has expired.
-Android's raw `C15tStore.rebuildTcStorageBus()` restores metadata only because a
+Android's raw `InthStore.rebuildTcStorageBus()` restores metadata only because a
 store cannot validate current authority. If authority invalidation cannot persist,
 the bus still removes its grants. Complete storage failure can also prevent a
 cleanup write; startup refusal and vendor initialization remain host duties.

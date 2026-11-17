@@ -72,8 +72,8 @@ Use the bundled Amplitude helper to keep Analytics opt-out in sync with native
 c15t permission. Pending or denied permission enables opt-out. A grant disables
 opt-out. The default category is `measurement`.
 
-The helper ships in `C15tApple`, `c15t-android` and
-`@c15t/react-native/integrations`. Your app owns the Amplitude dependency,
+The helper ships in `InthApple`, `inth-android` and
+`@inth/react-native/integrations`. Your app owns the Amplitude dependency,
 configuration and event calls. The React Native helper uses the JavaScript
 Analytics client's `setOptOut` API; the Swift and Kotlin helpers set the
 native client's `optOut` property.
@@ -109,8 +109,8 @@ Create Amplitude with `optOut` on, then hand its property to the helper:
 
 ```swift title="AmplitudeConsentOwner.swift"
 import AmplitudeSwift
-import C15tApple
-import C15tCore
+import InthApple
+import InthCore
 
 final class AmplitudeConsentOwner {
     private let integration: AmplitudeIntegration
@@ -131,11 +131,11 @@ right after `Amplitude(configuration: Configuration(apiKey: ..., optOut: true))`
 
 ```kotlin title="AmplitudeConsent.kt"
 import com.amplitude.android.Amplitude
-import com.c15t.android.integrations.AmplitudeIntegration
-import com.c15t.core.C15t
+import com.inth.android.integrations.AmplitudeIntegration
+import com.inth.core.Inth
 
 fun connectAmplitudeConsent(amplitude: Amplitude, onError: (Exception) -> Unit): AmplitudeIntegration {
-	val core = checkNotNull(C15t.current) { "Install c15t before connecting Amplitude" }
+	val core = checkNotNull(Inth.current) { "Install Inth before connecting Amplitude" }
 	return AmplitudeIntegration(
 		core = core,
 		setOptOut = { amplitude.optOut = it },

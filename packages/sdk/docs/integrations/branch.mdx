@@ -12,8 +12,8 @@ from marketing and measurement, and sends Google's DMA parameters with
 `setDMAParamsForEEA`. At the lowest level Branch still resolves deep links,
 so the app keeps working without consent.
 
-The helper ships in `C15tApple`, `c15t-android` and
-`@c15t/react-native/integrations`. c15t adds no Branch dependency. The web
+The helper ships in `InthApple`, `inth-android` and
+`@inth/react-native/integrations`. c15t adds no Branch dependency. The web
 has no Branch helper.
 
 ## What the helper changes
@@ -56,8 +56,8 @@ request already carries the level.
 
 ```swift title="BranchConsentOwner.swift"
 import BranchSDK
-import C15tApple
-import C15tCore
+import InthApple
+import InthCore
 
 final class BranchConsentOwner {
     private let integration: BranchIntegration
@@ -93,13 +93,13 @@ c15t names its type `BranchAttribution` so it does not collide with Branch's
 ## Connect an Android app
 
 ```kotlin title="BranchConsent.kt"
-import com.c15t.android.integrations.BranchIntegration
-import com.c15t.core.C15t
+import com.inth.android.integrations.BranchIntegration
+import com.inth.core.Inth
 import io.branch.referral.Branch
 import io.branch.referral.Defines
 
 fun connectBranchConsent(inEea: Boolean, onError: (Exception) -> Unit): BranchIntegration {
-	val core = checkNotNull(C15t.current) { "Install c15t before connecting Branch" }
+	val core = checkNotNull(Inth.current) { "Install Inth before connecting Branch" }
 	return BranchIntegration(
 		core = core,
 		setConsumerProtectionAttributionLevel = { level ->
