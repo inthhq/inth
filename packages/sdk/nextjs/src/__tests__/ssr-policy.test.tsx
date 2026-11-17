@@ -342,7 +342,7 @@ describe('Next.js request policy and RSC hydration', () => {
 			root.render(
 				<ConsentRoot
 					state={{}}
-					config={{ backendURL: '/api/next-prefetch-test' }}
+					config={{ backendURL: '/api/next-prefetch-test', mode: hosted() }}
 					persistence={false}
 				>
 					<Probe />
