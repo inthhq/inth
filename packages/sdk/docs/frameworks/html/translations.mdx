@@ -1,6 +1,6 @@
 ---
 title: Translations
-description: Choose the language of the c15t banner and preference dialog on a plain HTML site, change its wording, and add languages in hosted and local mode with the script tag.
+description: Choose the language of the c15t banner and preference dialog on a plain HTML site, change its wording, and add languages with the script tag.
 group: frameworks
 ---
 
@@ -38,10 +38,11 @@ A multilingual site can print each page's language into the tag, for example
 from the `lang` attribute your CMS already writes on `<html>`.
 
 To switch after load, call `c15t.setLanguage('fr')`. With a backend, c15t asks
-the backend for French copy and re-renders the banner and dialog. In local
-mode, `data-language` and `c15t.setLanguage()` switch to a language that has
-copy in the bundle or in `i18n.messages`. A language with no copy shows the
-default copy. See [add a language in local mode](#add-a-language-in-local-mode).
+the backend for French copy and re-renders the banner and dialog. On a test
+page with `c15t.testing.js`, `data-language` and `c15t.setLanguage()` switch
+to a language that has copy in the bundle or in `i18n.messages`. A language
+with no copy shows the default copy. See
+[add a language on a test page](#add-a-language-on-a-test-page).
 
 ## Change the wording
 
@@ -81,11 +82,11 @@ while a key you actually reworded stays pinned in code. Core bundles only
 English; for other languages, import `@c15t/translations/all` so c15t can
 recognize its stock wording.
 
-## Add a language in local mode
+## Add a language on a test page
 
-Load `c15t.local.js` without `data-backend-url`. Queue your `i18n`
-configuration before that tag. Local mode shows the language named in
-`i18n.locale`, built from your messages over the English defaults:
+Load `c15t.testing.js`. Queue your `i18n` configuration before that tag. It
+shows the language named in `i18n.locale`, built from your messages over the
+English defaults:
 
 {/* example: fragment */}
 
@@ -118,8 +119,8 @@ configuration before that tag. Local mode shows the language named in
 Keys you leave out stay in English, so translate every key your banner and
 dialog show. The messages follow the same structure every c15t package uses.
 
-The script tag bundles English only, so in local mode every other language
-needs an entry in `i18n.messages`. With one entry per language,
+`c15t.testing.js` bundles English only, so every other language needs an
+entry in `i18n.messages`. With one entry per language,
 `data-language` and `c15t.setLanguage()` switch between them. A regional
 code such as `de-AT` uses the `de` entry when there is no `de-AT` entry. A
 language with no entry shows the default copy.

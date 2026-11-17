@@ -8,7 +8,7 @@ import {
 	useActiveUI,
 	useSetActiveUI,
 } from '@c15t/react';
-import type { ConsentProviderOptions } from '@c15t/react';
+import type { ConsentProviderOptions, WithBackendURL } from '@c15t/react';
 import { useEffect, useRef } from 'react';
 
 const Controls = () => {
@@ -31,7 +31,7 @@ const Controls = () => {
 	);
 };
 
-const options: ConsentProviderOptions = {
+const options: WithBackendURL<ConsentProviderOptions> = {
 	consentCategories: ['necessary', 'measurement', 'marketing'],
 	backendURL: '/api/bench-consent', mode: hosted(),
 };

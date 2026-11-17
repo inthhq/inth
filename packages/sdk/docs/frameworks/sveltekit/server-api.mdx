@@ -17,7 +17,7 @@ the browser bundle. Components import from `c15t/svelte`.
 | `c15tHandle(options)` | `c15t/svelte/kit` | `hooks.server.ts` | [c15tHandle](#c15thandle) |
 | `loadConsent` | `c15t/svelte/kit` | `+layout.server.ts`, as `load` | [loadConsent](#loadconsent) |
 | `createConsentRoute(options)` | `c15t/svelte/kit` | `+server.ts` | [createConsentRoute](#createconsentroute) |
-| `manifest()`, `hosted()`, `local()` | `c15t/svelte/kit` | `hooks.server.ts`, as `c15tHandle({ mode })` | [Rendering](./rendering#pick-a-rendering-path) |
+| `manifest()`, `hosted()`, `testing()` | `c15t/svelte/kit` | `hooks.server.ts`, as `c15tHandle({ mode })` | [Rendering](./rendering#pick-a-rendering-path) |
 | `resolveConsent(options)` | `c15t/svelte/server` | Any server code | [resolveConsent](#resolveconsent) |
 | `consentManifest(options)` | `c15t/svelte/vite` | `vite.config.ts` | [consentManifest](#consentmanifest) |
 
@@ -47,7 +47,7 @@ headers either: the page goes to every visitor.
 
 | Option | Type | Default | Behavior |
 | --- | --- | --- | --- |
-| `mode` | `ConsentMode` | `manifest()` | How `loadConsent` resolves the visitor. `manifest()`, `hosted()` or `local()` from `c15t/svelte/kit`. A `custom()` transport throws; pass it to `ConsentRoot`'s `mode` prop instead. |
+| `mode` | `ConsentMode` | `manifest()` | How `loadConsent` resolves the visitor. `manifest()`, `hosted()` or `testing()` from `c15t/svelte/kit`. A `custom()` transport throws; pass it to `ConsentRoot`'s `mode` prop instead. |
 | `routePrefix` | `string` | none | Where `createConsentRoute()` is mounted, such as `/api/c15t`. The browser then resolves consent on pages the server did not, through that route. Without it, the browser asks the backend's `/init`. `'/'` throws ``@c15t/svelte: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'.`` when the hook is created. |
 | `backendURL` | `string` | the URL `consentManifest()` read | The backend. Consent saves go here. A `hosted({ backendURL })` mode's own URL wins. |
 | `snapshot` | `ConsentManifest` | the manifest `consentManifest()` downloaded | A manifest to resolve with. `createConsentRoute()` reads it too. |
@@ -88,7 +88,7 @@ Privacy Control, then resolves the policy with the handle's `mode`:
 | `manifest({ source: 'runtime' })` | From the manifest at `${backendURL}/manifest`, or `manifestURL`, fetched and cached in memory. |
 | `manifest({ resolve: 'browser' })` | Reads the cookie only. The browser resolves the policy. |
 | `hosted()` | Calls the backend's `/init`. |
-| `local()` | From the mode's `policyRules`, or c15t's recommended rules. |
+| `testing()` | From the mode's `policy`, or c15t's recommended rules. |
 
 `consent` holds the resolved state, the mode as data, the backend URL and the
 handle's `routePrefix`. It is plain, serializable data; pass it to
@@ -113,7 +113,6 @@ export const load = (event) => loadConsent(event, { timeoutMs: 1000 });
 | Option | Type | Default | Behavior |
 | --- | --- | --- | --- |
 | `timeoutMs` | `number` or `false` | `500` | Longest wait for the backend or the manifest, in milliseconds. `false` or `Infinity` waits as long as it takes; any other value that is not a finite, non-negative number uses the default. |
-| `reportSessions` | `boolean` | `true` | With a manifest, reports each resolved visit to an absolute backend URL through `/sessions`. |
 | `onBackgroundRevalidate` | `(promise, event) => void` | platform hook when available | Keeps session reports and unfinished requests alive after the response. `event.platform.context.waitUntil` takes precedence; this callback is the fallback. See [keep background work alive](./rendering#keep-background-work-alive-after-the-response). |
 | `cookieName` | `string` | the handle's, or `c15t` | The consent cookie. Match the provider's `storageConfig.storageKey`. |
 | `country`, `region`, `language` | `string` | from the handle or headers | Forces one input for this call. |
@@ -176,7 +175,6 @@ With `proxy` on, it also returns `POST`, `PATCH`, `PUT`, `DELETE` and
 | `manifestURL` | `string` | the handle's `manifest({ manifestURL })` | A manifest URL of its own, such as a CDN. Wins over `backendURL`. Absolute or `/`-relative. |
 | `snapshot` | `ConsentManifest` | the handle's: the mode's `snapshot`, then `c15tHandle({ snapshot })`, then the manifest `consentManifest()` downloaded | A manifest to resolve with. |
 | `proxy` | `true` or `{ paths?, cookieNames? }` | off | Forwards consent writes to `backendURL`. See [save consent through your own origin](./rendering#save-consent-through-your-own-origin). |
-| `reportSessions` | `boolean` | `true` | Reports each resolved visit to the backend's `/sessions`, so Inth counts visitors it never served `/init` to. |
 | `onBackgroundRevalidate` | `(promise, event) => void` | `event.platform.context.waitUntil`, when the adapter provides it | Keeps background manifest refreshes and session reports alive on runtimes that stop work after the response. SvelteKit 3's Cloudflare and Vercel adapters provide none; see [keep background work alive](./rendering#keep-background-work-alive-after-the-response). |
 | `fetchGvl` | `({ reference, language, fetch }) => Promise<GlobalVendorList \| null>` | the shared server cache, with a five-second deadline | Fetches the Global Vendor List under an IAB policy. A rejection fails the init request instead of answering `gvl: null`. |
 | `fetch` | `typeof fetch` | global `fetch` | The fetch used for an absolute `backendURL` or `manifestURL`, and for the vendor list. |
@@ -289,7 +287,6 @@ with each visitor's request inputs.
 | `headers` | `Headers` | required | The incoming request's headers. |
 | `backendURL` | `string` | none | Calls `<backendURL>/init` when no snapshot is supplied. With `snapshot`, an absolute URL receives session reports. Without either, only the cookie and headers are read. A relative URL resolves against `requestURL`, or the `host` header when there is none. |
 | `snapshot` | `ConsentManifest` | none | Build-time snapshot, such as `snapshot` from `c15t/generated`. Resolves locally using this visitor's inputs and takes precedence over backend policy fetching. |
-| `reportSessions` | `boolean` | `true` | Reports manifest resolutions to an absolute `backendURL`. Set `false` to skip reports. Hosted `/init` already counts the visitor. |
 | `onBackgroundRevalidate` | `(promise) => void` | none | Pass the host's `waitUntil` to keep session reports alive after a serverless response. |
 | `requestURL` | `string` or `URL` | none | The URL the framework resolved the request under, such as SvelteKit's `event.url`. `loadConsent` passes it for you. |
 | `trustForwardedHeaders` | `boolean` | `false` | Resolves a relative `backendURL` against `forwarded`, `x-forwarded-host` and `x-forwarded-proto`, and sends the visitor IP to the backend as `x-forwarded-for`. |

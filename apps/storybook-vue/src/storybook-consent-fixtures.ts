@@ -12,7 +12,8 @@ import { consentConfigKey } from '../../../packages/sdk/vue/src/runtime/composab
 import type { ConsentConfig } from '../../../packages/sdk/vue/src/runtime/config';
 import { createVueConsentKernelContext } from '../../../packages/sdk/vue/src/runtime/kernel';
 import type { VueConsentKernelContext } from '../../../packages/sdk/vue/src/runtime/kernel';
-import { hosted } from '../../../packages/sdk/vue/src/runtime/modes';
+// The hosted transport itself, with a fetch that answers from the fixtures.
+import { hosted } from '../../../packages/sdk/core/src/transports/mode';
 import {
 	symbolActiveUI,
 	symbolConsent,

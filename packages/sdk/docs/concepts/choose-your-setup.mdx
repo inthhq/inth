@@ -67,7 +67,7 @@ works with each option; only the URL changes.
 | --- | --- |
 | [Inth](https://inth.com) | You want hosted policies and consent records. The guides use this. |
 | [Self-hosted c15t backend](/docs/self-host/overview) | You need to run the service and its database yourself. |
-| [Local mode](/docs/concepts/modes#local) | Local development and tests. Policies live in your code and choices stay in the browser. c15t keeps no server-side record of consent. Not recommended for production environments. |
+| [`testing()`](/docs/concepts/modes#testing) | Tests. A policy resolves in the browser with no backend, and it throws in production builds. |
 
 To use Inth, create a project, set its policy rules, add your site's origin to
 its trusted origins, and copy the backend URL. The guides use the placeholder

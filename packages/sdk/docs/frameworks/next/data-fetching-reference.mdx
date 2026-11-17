@@ -17,7 +17,7 @@ Requires Next.js 15 or 16 (`next ^15.0.0 || ^16.0.0`).
 | Property | Default | Behavior |
 | --- | --- | --- |
 | `backendURL` | `NEXT_PUBLIC_C15T_BACKEND_URL`, then `NEXT_PUBLIC_INTH_PROJECT_URL` | Backend base URL. Consent submissions go to `/subjects` under it, and the server reads `/manifest` or `/init` from it. |
-| `mode` | `manifest()` | `manifest()`, `hosted()` or `local()` from `c15t/next`. See [consent modes](/docs/concepts/modes). |
+| `mode` | `manifest()` | `manifest()` or `hosted()` from `c15t/next`, or `testing()` from `c15t/next/testing`. `manifest()` falls back to the backend's `/init` with a warning when the manifest is unavailable. See [consent modes](/docs/concepts/modes). |
 | `routePrefix` | none | Where the catch-all consent route is mounted, such as `/api/c15t`. A browser that resolves consent itself asks `${routePrefix}/init` instead of the backend's `/init`. Leave it unset when every page resolves consent on the server. |
 | `proxy` | `false` | The route at `routePrefix` forwards saves (`createConsentRoute({ proxy: true })`), so the browser saves there instead of `${backendURL}/subjects`. The server helpers keep `backendURL`. Needs `routePrefix`. See [optimization](/docs/frameworks/next/optimization#keep-browser-consent-requests-on-your-origin). |
 | `journey` | `'page'` | The consent journey scope, read by both `resolveConsent` and `ConsentRoot` so they agree. |
@@ -42,10 +42,10 @@ checks, so they add no bytes there:
 | Message | Cause |
 | --- | --- |
 | `@c15t/nextjs: defineConsentConfig expects an object.` | The argument is not an object. |
-| ``@c15t/nextjs: defineConsentConfig needs `backendURL`, or NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL) set at build time.`` | No backend URL, and the mode is not `local()` or a `hosted()` with its own `backendURL`. |
-| ``@c15t/nextjs: defineConsentConfig `backendURL` must be an absolute http(s) URL or a `/`-relative path, received "...".`` | A URL is protocol-relative, such as `//your-project.inth.app`, or bare, such as `api/c15t`. The same check covers `routePrefix`, `mode.manifestURL`, `mode.geoURL` and `mode.backendURL`. |
+| ``@c15t/nextjs: defineConsentConfig needs `backendURL`, or NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL) set at build time.`` | No backend URL, and the mode is not `testing()`. |
+| ``@c15t/nextjs: defineConsentConfig `backendURL` must be an absolute http(s) URL or a `/`-relative path, received "...".`` | A URL is protocol-relative, such as `//your-project.inth.app`, or bare, such as `api/c15t`. The same check covers `routePrefix`, `mode.manifestURL` and `mode.geoURL`. |
 | ``@c15t/nextjs: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'.`` | `routePrefix` is `'/'`. A catch-all route at the site root would catch every page. |
-| ``@c15t/nextjs: defineConsentConfig `mode` must be manifest(), hosted() or local() from c15t/next. Pass a custom transport through ConsentRoot `options.mode`.`` | `mode` is not one of the data factories. |
+| ``@c15t/nextjs: defineConsentConfig `mode` must be manifest() or hosted() from c15t/next, or testing() from c15t/next/testing. Pass a transport through ConsentRoot `options.mode`.`` | `mode` is not one of the data factories. |
 | ``@c15t/nextjs: defineConsentConfig `journey` must be 'page', 'tab' or false.`` | `journey` has another value. |
 | ``@c15t/nextjs: `proxy` sends saves through the consent route, so it needs `routePrefix`.`` | `proxy: true` without `routePrefix`. |
 
@@ -85,10 +85,10 @@ See [geography and privacy signals](#geography-and-privacy-signals).
 | `manifest({ resolve: 'browser' })` | Resolves the snapshot with request inputs | Loads the resolver lazily and fetches `${routePrefix}/manifest`, else `${backendURL}/manifest` |
 | `manifest({ source: 'runtime' })` | Fetches and caches `${backendURL}/manifest` | As `manifest()` |
 | `hosted()` | Calls `${backendURL}/init` | Calls `${backendURL}/init` |
-| `local()` | No policy request | Resolves bundled local rules |
+| `testing()` | No policy request | Resolves the test's rules in the browser |
 
 Hosted and manifest modes submit choices to `${backendURL}/subjects`.
-Local mode uses browser persistence only. A prepared server result
+`testing()` uses browser persistence only. A prepared server result
 satisfies the first browser initialization; the browser column describes
 what happens when initialization is needed, including recovery after the
 server render failed.
@@ -123,7 +123,7 @@ replaces only the `request` adapter.
 snapshot `withConsentManifest` downloaded. What it does depends on the mode.
 `manifest()` resolves policy from the snapshot, or from
 `${backendURL}/manifest` through the in-process cache without one. `hosted()`
-calls `${backendURL}/init`. `local()`, or no backend URL at all, makes no
+calls `${backendURL}/init`. `testing()`, or no backend URL at all, makes no
 network request and returns cookie- and header-only state; see
 [cookie-only state](#cookie-only-state).
 
@@ -140,7 +140,6 @@ network request and returns cookie- and header-only state; see
 | `trustForwardedHeaders` | `false` | Resolve a `/`-relative `backendURL` or `manifestURL` against the request's `forwarded`, `x-forwarded-host` and `x-forwarded-proto` headers instead of `host`, and forward the visitor IP to backend `/init` as `x-forwarded-for`. Set it only behind a proxy that sets those headers and drops the ones a client sends. |
 | `onError` | none | Receives the failure from the backend or manifest request, including a `ManifestUnavailableError` when `timeoutMs` runs out or the manifest is backing off after a failure. When omitted, failures are logged with `console.warn` only when `NODE_ENV` is not `production`. |
 | `timeoutMs` | `500` | Longest the render waits for policy, in milliseconds, counted from the start of the resolution. When it runs out, the helper returns the baseline state described below. `false` or `Infinity` waits for the manifest cache's 5 second request timeout, or for the `fetch` implementation on backend `/init`. Any other value that is not a finite, non-negative number uses the default. |
-| `reportSessions` | `true` | In manifest mode, report the resolved init to the backend's `POST /sessions` after the render, server-to-server, so the backend still counts the visitor. Forwards the visitor's user agent and client IP on `x-c15t-client-ip`, never cookies. `false` sends none. |
 | `journey` | the config's `journey` | The consent journey scope this render reports. `ConsentRoot` must use the same value. |
 | `experiment` | none | The banner experiment with the arm this request runs. See [banner experiments](/docs/guides/banner-experiments). |
 | `waitUntil` | none | Receives work that outlives the render so it survives the response: the session report, a manifest refresh, and a manifest request that `timeoutMs` stopped waiting for. In the App Router pass `(task) => after(() => task)` with `after` from `next/server`. The promise never rejects. |
@@ -269,7 +268,7 @@ first paint.
 
 ### Cookie-only state
 
-With `mode: local()`, or when no backend URL is configured anywhere,
+With `mode: testing()`, or when no backend URL is configured anywhere,
 `resolveConsent` returns state that needs the visitor's stored records but no
 resolved policy. It makes no network request. It reads the request and returns a JSON-serializable
 `ConsentState` with `initialRecords`, `initialPrivacySignals.gpc`, `now` and,
@@ -299,7 +298,7 @@ from the headers listed in [geography and privacy signals](#geography-and-privac
 | `PagesResolveConsentOptions` | `c15t/next/pages` | `ResolveConsentOptions` with `req` in place of `request` |
 | `ConsentRootProps` | `c15t/next` | Props of `ConsentRoot`; `ConsentRootProps['state']` also accepts the pending promise |
 | `ConsentConfig` | `c15t/next`, `c15t/next/server`, `c15t/next/pages`, `c15t/next/api` | The frozen `defineConsentConfig` result |
-| `ConsentMode` | `c15t/next` | What `manifest()`, `hosted()` and `local()` return |
+| `ConsentMode` | `c15t/next` | What `manifest()`, `hosted()` and `testing()` return |
 | `NextConsentRouteOptions` | `c15t/next/api` | Options of `createConsentRoute` and `createPagesConsentRoute` |
 | `ConsentPageProps` | `c15t/next/pages` | `pageProps` of a page that exports `withConsentProps`, for `AppProps<ConsentPageProps>` |
 | `WithConsentPropsOptions` | `c15t/next/pages` | `PagesResolveConsentOptions` without `req` |
@@ -327,6 +326,7 @@ Use it when calling the `c15t/next/server` helper from a custom server or
 test harness where `next/headers` is unavailable:
 
 ```ts title="server/consent.ts"
+import { testing } from 'c15t/next/testing';
 import type { IncomingMessage } from 'node:http';
 
 import { createPagesRequestContext } from 'c15t/next/pages';
@@ -359,7 +359,6 @@ forwards the other consent paths to the backend. Everything defaults to
 | `fetch` | `globalThis.fetch` | Fetch implementation for the manifest and Global Vendor List requests. |
 | `trustForwardedHeaders` | `false` | Resolve a `/`-relative `backendURL` or `manifestURL` against the request's `forwarded`, `x-forwarded-host` and `x-forwarded-proto` headers instead of `request.url`. Set it only behind a proxy that sets those headers and drops the ones a client sends. |
 | `onBackgroundRevalidate` | none | Receives detached work started by a request: a background manifest refresh, and the init route's session report. Keep it alive with `after` from `next/server` or a platform `waitUntil`. Called inside the handler; the promises never reject. See [Optimization](/docs/frameworks/next/optimization#configure-manifest-cache-refresh). |
-| `reportSessions` | `true` | Report each init the route resolves to the backend's `POST /sessions`, server-to-server and detached from the response, so the backend still counts the visitor. Needs an absolute `backendURL`; nothing is inferred from a manifest URL. `false` sends none. |
 | `fetchGvl` | built-in cached fetcher | Loads the Global Vendor List for IAB policies. Called only under the conditions described in this section. |
 
 With no snapshot, `manifestURL` wins over `backendURL`. URLs are resolved per
@@ -526,38 +525,28 @@ The [consent route](#do-i-need-the-consent-route) reads geographic headers on
 the server and keeps resolver code and translations out of browser
 initialization.
 
-## Local configuration
+## Testing configuration
 
-Not recommended for production environments. Use local mode for
-development, tests or demos that do not need backend records.
-
-Set `mode: local()` in `c15t.config.ts`. It needs no backend URL:
+For tests only. Set `mode: testing()` from `c15t/next/testing` in the
+`c15t.config.ts` a test build uses. It needs no backend URL:
 
 {/* example: fragment */}
 
 ```ts title="c15t.config.ts"
-import { defineConsentConfig, local } from 'c15t/next';
+import { defineConsentConfig } from 'c15t/next';
+import { testing } from 'c15t/next/testing';
 
-export default defineConsentConfig({ mode: local() });
+export default defineConsentConfig({ mode: testing() });
 ```
 
-Keep your layout. `resolveConsent()` then makes no network request and the
-browser resolves the rules after hydration. `local()` from `c15t/next` is
-data, so the local rules load with `import()` only in apps that use them.
+`resolveConsent()` then makes no network request and the browser resolves the
+policy after hydration. `testing()` is data, so its rules load with
+`import()` only in apps that use them, and the browser transport throws in
+production builds. Pass `testing({ policy })` to resolve your own rules
+instead of the recommended pack.
 
-The default local policy pack handles missing geography; local mode does not
-perform IP lookup. Supply `policyRules` to replace that pack when your local
-policy needs different behavior. Browser persistence stores choices, but this
-setup has no backend record service. See
-[transport choices](/docs/concepts/data-fetching) for the tradeoffs.
-
-In development, local mode warns once per page that c15t keeps no
-server-side record of consent. `local({ acknowledgeNoRecords: true })` hides
-it; see [the development warning](/docs/concepts/modes#the-development-warning).
-
-Local mode runs only when you choose it. `ConsentRoot` throws when
-`manifest()` or `hosted()` finds no backend URL: not in the mode, the config
-or `NEXT_PUBLIC_C15T_BACKEND_URL`. That happens only without a
+`ConsentRoot` throws when `manifest()` or `hosted()` finds no backend URL: not
+in the config or `NEXT_PUBLIC_C15T_BACKEND_URL`. That happens only without a
 `c15t.config.ts`, because `defineConsentConfig` throws without a backend URL.
 See [troubleshooting](/docs/frameworks/next/troubleshooting#why-does-consentroot-throw-that-it-needs-a-backend-url).
 

@@ -8,9 +8,12 @@ import {
 	ConsentDraftProvider,
 	ConsentProvider,
 	ConsentWidget,
-	custom,
 } from '@c15t/react';
 import { lazy, Suspense, useMemo } from 'react';
+
+/** A transport factory that hands the provider `transport`. */
+const customMode = <Transport,>(transport: Transport) =>
+	Object.assign(() => transport, { kind: 'custom' as const });
 
 const Diagnostics = lazy(() => import('../react-harness/diagnostics'));
 
@@ -76,7 +79,7 @@ const ReactManifestClientPage = () => {
 	return (
 		<ConsentProvider
 			options={{
-				mode: custom(transport),
+				mode: customMode(transport),
 				networkBlocker: {
 					logBlockedRequests: false,
 					rules: [

@@ -3,6 +3,7 @@
 import { hosted } from '@c15t/react';
 import { ConsentBanner } from '@c15t/react/consent-banner';
 import { ConsentProvider } from '@c15t/react/provider';
+import type { WithBackendURL } from '@c15t/react';
 import type { ConsentProviderOptions } from '@c15t/react/provider';
 
 import { ReactBenchmarkProbe } from '../_bench/probe';
@@ -18,7 +19,7 @@ const consentCategories = [
 ] satisfies NonNullable<ConsentProviderOptions['consentCategories']>;
 
 const CssBannerModulesPage = () => {
-	const options: ConsentProviderOptions = {
+	const options: WithBackendURL<ConsentProviderOptions> = {
 		callbacks: {
 			onChoiceRecorded() {
 				const state = getBenchState(scenario);

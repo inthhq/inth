@@ -1,18 +1,21 @@
 'use client';
 
 // The provider arms take transports; `hosted` from `@c15t/nextjs` is data.
-import { hosted as hostedTransport } from '@c15t/core';
+import { hosted as hostedTransport } from '@c15t/core/transports';
 import { createManifestTransport } from '@c15t/core/transports/manifest';
 import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentProvider,
 	ConsentRoot,
-	custom,
 	hosted,
 	manifest,
 } from '@c15t/nextjs';
-import type { ConsentProviderOptions, ConsentRootProps } from '@c15t/nextjs';
+import type {
+	ConsentProviderOptions,
+	ConsentRootProps,
+	WithBackendURL,
+} from '@c15t/nextjs';
 import { useMemo } from 'react';
 import type { ReactNode } from 'react';
 
@@ -21,6 +24,10 @@ import { getState } from './state';
 import type { NextjsBenchScenario } from './state';
 
 import './with-consent.css';
+
+/** A transport factory that hands the provider `transport`. */
+const customMode = <Transport,>(transport: Transport) =>
+	Object.assign(() => transport, { kind: 'custom' as const });
 
 const consentCategories = [
 	'necessary',
@@ -32,7 +39,7 @@ const consentCategories = [
 
 const createOptions = function createOptions(
 	scenario: NextjsBenchScenario
-): ConsentProviderOptions {
+): WithBackendURL<ConsentProviderOptions> {
 	return {
 		callbacks: {
 			onChoiceRecorded() {
@@ -117,7 +124,7 @@ export const NextjsManifestClientBenchmarkProvider = ({
 		<ConsentProvider
 			options={{
 				...createOptions(scenario),
-				mode: custom(transport),
+				mode: customMode(transport),
 			}}
 		>
 			<BenchmarkContents scenario={scenario}>{children}</BenchmarkContents>

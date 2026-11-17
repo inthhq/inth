@@ -1,6 +1,3 @@
 /** Kernel with hosted and offline transports. */
-export {
-	createConsentKernel,
-	createHostedTransport,
-	createOfflineTransport,
-} from '@c15t/core';
+export { createConsentKernel, createHostedTransport } from '@c15t/core';
+export { createOfflineTransport } from '@c15t/core/transports';

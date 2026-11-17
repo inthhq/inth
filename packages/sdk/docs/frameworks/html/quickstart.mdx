@@ -41,7 +41,7 @@ tap, key press or scroll, or after 10 seconds, whichever comes first. You
 add only the one tag; `c15t.js` loads `c15t.hosted.js` from the same place.
 See [the two script files](/docs/frameworks/html/attributes-and-api#how-c15tjs-loads-c15thostedjs).
 
-Neither file includes local policy presets, local resolution or manifest
+Neither file includes the policy presets, the testing transport or manifest
 transport code. `/init` returns the policy resolved for this visitor.
 
 ### Where to paste it
@@ -124,15 +124,12 @@ If no banner appears, the policy for your location may not ask for one. See
 
 ## Other ways to run the tag
 
-- **Local mode.** Load `c15t.local.js` from a CDN, without
+- **In tests.** Load `c15t.testing.js` on a test page, without
   `data-backend-url`, and c15t resolves the policy in the browser from
-  `data-policy-rules` or its recommended rules. The browser does not know
-  the visitor's country, so without `data-country` every visitor gets the
-  strict opt-in fallback. Choices stay in that browser, and c15t keeps no
-  server-side record of consent. On development hosts such as `localhost`,
-  the tag logs a warning saying so; `data-acknowledge-no-records` hides it.
-  Not recommended for production environments. Before c15t 3.2 this file
-  was `c15t.offline.js`. The old name still works until c15t v4.
+  `data-policy` or its recommended rules. Without `data-country` every
+  visitor gets the strict opt-in fallback. Choices stay in that browser.
+  Never load it on a production page; the other script files contain
+  neither its transport nor the policy presets.
 - **A self-hosted backend.** A [self-hosted c15t backend](/docs/self-host/overview)
   serves the hosted bundle at `/c15t.js` with its backend URL already
   configured, so the tag needs only a `src`:
@@ -141,7 +138,6 @@ If no banner appears, the policy for your location may not ask for one. See
 - **From a CDN.** Load a pinned version from jsDelivr. Use `c15t.js` with
   `data-backend-url` for hosted mode:
   `<script src="https://cdn.jsdelivr.net/npm/@c15t/browser@<version>/dist/c15t.js" data-backend-url="https://your-project.inth.app" defer></script>`.
-  For local mode, use `dist/c15t.local.js` without `data-backend-url`.
   Replace `<version>` with the exact version listed on
   [npm](https://www.npmjs.com/package/@c15t/browser?activeTab=versions).
   `c15t.js` loads `c15t.hosted.js`, `c15t.commit.js`, `c15t.records.js` and

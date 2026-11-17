@@ -102,7 +102,6 @@ unless you pass `geoURL`. `c15t/next/static` has lower-level helpers that
 resolve a bundled manifest; see
 [static manifest helpers](/docs/frameworks/next/data-fetching-reference#static-manifest-helpers).
 
-Local mode stores choices only in the browser and records nothing. Not
-recommended for production environments. Static hosting alone is not a reason
-to use it; see
-[local configuration](/docs/frameworks/next/data-fetching-reference#local-configuration).
+A static export still needs a backend URL. `testing()` is for tests only and
+throws in production builds; see
+[testing configuration](/docs/frameworks/next/data-fetching-reference#testing-configuration).

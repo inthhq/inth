@@ -11,14 +11,14 @@
 	import { scripts } from './scripts';
 	import { testBackend } from './test-backend';
 
-	const mode = hosted({
+	const backend = {
 		backendURL: 'https://your-project.inth.app',
 		...testBackend('backendURL'),
-	});
+	};
 </script>
 
 <ConsentProvider
-	{mode}
+	{...backend}
 	{scripts}
 >
 	<ExamplePage />

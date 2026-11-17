@@ -10,13 +10,13 @@ import type { ReactNode } from 'react';
 import { scripts } from './scripts';
 import { testBackend } from './test-backend';
 
-const mode = hosted({
+const backend = {
 	backendURL: 'https://your-project.inth.app',
 	...testBackend('backendURL'),
-});
+};
 
 export const Consent = ({ children }: { children: ReactNode }) => (
-	<ConsentProvider options={{ mode, scripts }}>
+	<ConsentProvider options={{ ...backend, scripts }}>
 		{children}
 		<ConsentBanner />
 		<ConsentDialog />

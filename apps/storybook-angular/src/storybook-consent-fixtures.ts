@@ -1,7 +1,7 @@
 import { testing } from '@c15t/angular/testing';
 import type { ApplicationConfig } from '@angular/core';
 import { provideC15t } from '@c15t/angular';
-import type { C15tOptions } from '@c15t/angular';
+import type { C15tOptions, C15tProviderOptions } from '@c15t/angular';
 
 import {
 	seedStorybookChoice,
@@ -107,7 +107,9 @@ export const consentApplication = function consentApplication({
 		merged.prefetch ??
 		(merged.mode === defaultConsentOptions.mode ? defaultPrefetch : undefined);
 
-	return { providers: [provideC15t({ ...merged, prefetch })] };
+	return {
+		providers: [provideC15t({ ...merged, prefetch } as C15tProviderOptions)],
+	};
 };
 
 export type { ConsentRecord };

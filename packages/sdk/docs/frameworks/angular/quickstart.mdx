@@ -21,7 +21,7 @@ The guide uses [Inth](https://inth.com) for policies and consent records.
    origins.
 3. Copy the project's backend URL.
 
-A self-hosted backend or local mode works too; see
+A self-hosted backend works too; see
 [other setups](#other-setups).
 
 The guide uses `hosted()` mode. The browser asks your backend for each
@@ -48,7 +48,7 @@ The Angular CLI installs `@c15t/angular`, then asks where policies come
 from, for your backend URL, and whether to add the banner and dialog. With
 the default answers it makes two changes:
 
-1. It adds `provideC15t({ mode: hosted({ backendURL: '...' }) })` to the
+1. It adds `provideC15t({ backendURL: '...' })` to the
    providers in `src/app/app.config.ts`, or to the `bootstrapApplication()`
    call in `src/main.ts` when the app has no config file.
 2. It adds `ConsentBanner` and `ConsentDialog` to the root component's
@@ -60,7 +60,7 @@ the default answers it makes two changes:
 To skip the prompts, pass the answers as flags, such as
 `ng add @c15t/angular --backend-url=https://your-project.inth.app`. If you
 leave the backend URL empty, it writes `https://your-project.inth.app` with
-a comment to replace it. `--mode=local` writes `local()` instead of
+a comment to replace it. `--mode=local` writes `testing()` instead of
 `hosted()`; see [other setups](#other-setups). `--components=false` leaves
 the root component alone. Running
 `ng add` again adds only what is missing. When it cannot find the root
@@ -156,25 +156,22 @@ not appear, check the `/init` request, then see
 
 ## Other setups
 
-**Local mode** resolves policies in the browser and keeps choices in the
-browser's cookie and local storage, with no backend and no consent records.
-Use it for local development and tests. Not recommended for production
-environments.
+**Tests** pass `testing()` from `@c15t/angular/testing` as the mode. It resolves a policy
+in the browser with no backend and needs no `backendURL`. It throws in
+production builds. With no arguments it uses the recommended rules; pass
+`testing({ policy })` to test your own.
 
 {/* example: fragment */}
 
 ```ts
-import { local, provideC15t } from '@c15t/angular';
+import { provideC15t } from '@c15t/angular';
+import { testing } from '@c15t/angular/testing';
 
-provideC15t({ mode: local(), scripts });
+provideC15t({ mode: testing(), scripts });
 ```
 
-With no arguments, `local()` uses the recommended rules. They ask for opt-in
-in Europe and unknown locations, use opt-out in US privacy states, and show no
-banner where no consent law applies. Pass `local({ policyRules })` to use your
-own.
-[Data fetching](/docs/concepts/data-fetching#when-should-i-use-local-mode)
-explains the trade-offs.
+[Consent modes](/docs/concepts/modes#testing) lists what each country
+shows.
 
 **A self-hosted backend** uses the same setup with your own backend URL. See
 [self-hosting](/docs/self-host/overview).

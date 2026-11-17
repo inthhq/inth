@@ -10,10 +10,8 @@ createApp(App)
 		components: {
 			banner: { card: { class: 'brand-consent-card' } },
 		},
-		mode: hosted({
-			backendURL: 'https://your-project.inth.app',
-			...testBackend('backendURL'),
-		}),
+		backendURL: 'https://your-project.inth.app',
+		...testBackend('backendURL'),
 		presentation: {
 			prompt: { position: 'bottom', variant: 'bar' },
 		},

@@ -11,17 +11,16 @@ group: frameworks
 
 <include src="../../../shared/examples/javascript/init.mdx" />
 
-`mode` is required: a factory from `manifest()`, `hosted()`, `local()` or
-`custom()`, imported from the same entry. Every other option is optional. The
+`backendURL` is required unless `mode` is `testing()` or `enabled` is
+`false`. `mode` is optional: `manifest()` or `hosted()` from the same entry,
+or `testing()` from `@c15t/browser/testing`. Every other option is optional. The
 options are read when the client is created. To change
 `ui`, call `mountUI()` again; to change anything else, dispose the client and
 create a new one.
 
-The mode-specific `@c15t/browser/hosted` and `@c15t/browser/offline` entries
-accept the same UI, gating and lifecycle options. Their connection options
-are restricted to their mode. The hosted entry requires a backend URL or a
-hosted factory and rejects preset names; the offline entry rejects backend
-and manifest options. See [mode-specific configuration](/docs/frameworks/javascript/api/browser#choose-a-bundle-for-one-mode).
+The `@c15t/browser/hosted` entry accepts the same UI, gating and lifecycle
+options. Its connection options are restricted to hosted mode, and it
+requires a backend URL. See [mode-specific configuration](/docs/frameworks/javascript/api/browser#choose-a-bundle-for-one-mode).
 
 <import src="../../../shared/browser/client-options.mdx#connection" />
 

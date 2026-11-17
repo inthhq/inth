@@ -1,53 +1,57 @@
 ---
 title: Consent modes
-description: Reference for manifest(), hosted() and local() in every c15t framework package, where each one resolves the visitor's policy, what it adds to first-load JavaScript, the build-time manifest fetch and its failure policy, and the backend URL variable each framework reads.
+description: Reference for backendURL and the optional mode, manifest(), hosted() and testing(), in every c15t framework package, where each one resolves the visitor's policy, what it adds to first-load JavaScript, the build-time manifest fetch and its fallback, and the backend URL variable each framework reads.
 group: concepts
 ---
 
-## Choose a mode
+## Set the backend, then choose a mode if you need to
 
-A mode decides how c15t finds the policy that applies to a visitor. Every
-framework package exports the same three factories, `manifest()`, `hosted()`
-and `local()`. `local()` was called `offline()` before c15t 3.2, and the old
-name still works until c15t v4. Consent choices go to the backend in `manifest()` and
-`hosted()`, whether that backend is [Inth](https://inth.com) or a
-[self-hosted c15t backend](/docs/self-host/quickstart).
+Every c15t provider needs `backendURL`: your Inth project URL, such as
+`https://your-project.inth.app`. Consent choices are saved there. Most apps
+set nothing else; `mode` is optional.
 
-| Mode | Where the policy resolves | Backend requests on a first visit | Use it when |
+| Mode | Where the policy resolves | Backend requests on a first visit | Default in |
 | --- | --- | --- | --- |
-| `manifest()`, the default | Your server, from the policy the build downloaded. With `resolve: 'browser'`, or in a single-page app, the browser. | None to resolve the policy, unless the browser needs a location it doesn't have. Choices post to `/subjects`. | Server-rendered apps. Rebuild to ship policy changes, or set `source: 'runtime'`. |
-| `hosted()` | The backend's `GET /init` | One `/init` per page that resolves consent. | Single-page apps and static hosting without a server, where the backend reads each visitor's location from the request. Policy edits apply without a rebuild. |
-| `local()` | The browser, from rules in your bundle | None. Choices stay in the browser, and c15t keeps no server-side record of consent. | Local development, tests and demos. Not recommended for production environments. |
+| `manifest()` | Your server, from the policy the build downloaded. With `resolve: 'browser'`, or in a single-page app, the browser. | None to resolve the policy, unless the browser needs a location it doesn't have. Choices post to `/subjects`. | Next.js, TanStack Start, Nuxt, SvelteKit, Astro, and Angular with `provideC15tServer()` |
+| `hosted()` | The backend's `GET /init` | One `/init` per page that resolves consent. | React, Vue, Svelte, Angular in the browser, `@c15t/browser` and the script tag |
+| `testing()` | The browser, from a policy you pass or the recommended rule pack | None. | Never: import it from a package's `/testing` entry, in tests only |
 
-`manifest()` is the default in Next.js, TanStack Start, Nuxt, Astro and
-SvelteKit. React, Vue, Svelte and `@c15t/browser` have no default: pass a
-mode yourself. The React, Vue and Svelte quickstarts use `hosted()`, because
-a browser has no request location and a bundled regional policy still needs
-`/init` on a first visit. The JavaScript quickstart uses `manifest()`. The
-script tag picks its
-mode from the bundle file; see
-[choose a mode](/docs/frameworks/html/attributes-and-api#choose-a-mode).
+Leave `mode` out unless you need something other than your framework's
+default. Pass `hosted()` to make a server-rendered framework ask `/init` for
+every visitor, or `manifest()` to tune how the manifest is read.
 
-[Data fetching](/docs/concepts/data-fetching) compares these paths with the
-custom transport and same-origin proxies.
+`manifest()` falls back to the backend's `/init` when the manifest is
+unavailable: the build could not download it, the backend has no
+`/manifest`, or reading it fails at runtime. c15t logs a warning and the
+visitor still gets a banner. A configuration error, such as an invalid
+`manifestURL`, stays an error.
+
+`backendURL` is required unless `mode` is `testing()` or `enabled` is
+`false`. TypeScript asks for it, and a provider without one throws one error
+that names the option. Server-rendered frameworks also read it from an
+environment variable; see [set the backend URL](#set-the-backend-url).
+
+[Data fetching](/docs/concepts/data-fetching) compares these paths with
+same-origin proxies.
 
 ## Import the factories from your framework package
 
-There are two kinds of factory, and each framework package exports the kind it
-needs under the same three names.
+There are two kinds of factory, and each framework package exports the kind
+it needs.
 
-| Framework | Import from | Pass the mode to | Kind |
-| --- | --- | --- | --- |
-| Next.js | `c15t/next` | `mode` in `c15t.config.ts` | Data |
-| TanStack Start | `c15t/tanstack-start` | `createConsentStateHandler({ mode })` | Data |
-| Nuxt | `c15t/vue` | `c15t.mode` in `nuxt.config.ts` | Data |
-| Astro | `c15t/astro` | `c15t({ mode })` in `astro.config.mjs` | Data |
-| SvelteKit | `c15t/svelte/kit` | `c15tHandle({ mode })` in `src/hooks.server.ts` | Data |
-| React | `c15t/react` | `ConsentProvider`'s `options.mode` | Transport |
-| Vue | `c15t/vue/vue-plugin` | `app.use(c15tVue, { mode })` | Transport |
-| Svelte | `c15t/svelte` | `<ConsentProvider mode={...}>` | Transport |
-| JavaScript | `@c15t/browser` | `init({ mode })` | Transport |
-| Script tag | none | The bundle file: `c15t.js` is hosted, `c15t.local.js` local. The headless and IAB scripts also take `data-mode="manifest"`. | Name |
+| Framework | Import `manifest()` and `hosted()` from | `testing()` from | Pass the mode to | Kind |
+| --- | --- | --- | --- | --- |
+| Next.js | `c15t/next` | `c15t/next/testing` | `mode` in `c15t.config.ts` | Data |
+| TanStack Start | `c15t/tanstack-start` | `c15t/tanstack-start/testing` | `resolveConsent({ mode })` | Data |
+| Nuxt | `c15t/vue` | `c15t/vue/testing` | `c15t.mode` in `nuxt.config.ts` | Data |
+| Astro | `c15t/astro` | `c15t/astro/testing` | `c15t({ mode })` in `astro.config.mjs` | Data |
+| SvelteKit | `c15t/svelte/kit` | `c15t/svelte/testing` | `c15tHandle({ mode })` in `src/hooks.server.ts` | Data |
+| React | `c15t/react` | `c15t/react/testing` | `ConsentProvider`'s `options.mode` | Transport |
+| Vue | `c15t/vue/vue-plugin` | `c15t/vue/testing` | `app.use(c15tVue, { mode })` | Transport |
+| Svelte | `c15t/svelte` | `c15t/svelte/testing` | `<ConsentProvider mode={...}>` | Transport |
+| Angular | `@c15t/angular` | `@c15t/angular/testing` | `provideC15t({ mode })` | Transport |
+| JavaScript | `@c15t/browser` | `@c15t/browser/testing` | `init({ mode })` | Transport |
+| Script tag | none | `c15t.testing.js` | `data-mode="manifest"` on the headless and IAB scripts | Name |
 
 **Data factories** return a plain object such as `{ type: 'manifest' }`.
 Server-rendered frameworks read their config on the server and in the
@@ -56,16 +60,10 @@ framework turns it into a transport in the browser and loads the code of
 any mode other than the default with `import()`. The same factories are
 available from `c15t/modes` (or `@c15t/core/modes`) for shared code.
 
-**Transport factories** return the transport itself, with the same `type` and
-options attached as properties. A single-page app has one environment, so
-the bundler keeps only the mode you import and drops the others.
-
-A server-rendered root that receives a transport factory still works, for
-example `hosted()` from `c15t/react` passed to Next.js `ConsentRoot` as
-`options.mode`. Outside production it warns that the transport's code is now
-in the first-load bundle. `custom(transport)` exists only as a transport, so
-it cannot go in a serializable config. Pass it through the root's
-`options.mode` instead.
+**Transport factories** return the transport itself, with its options
+attached as properties. A single-page app has one environment, so the bundler
+keeps only the mode you import. `hosted()` is data everywhere: it takes no
+options and uses the provider's `backendURL`.
 
 ## manifest()
 
@@ -76,7 +74,7 @@ holds your policy rules and copy, and no visitor data.
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `source` | `'build'` | `'build'` uses the snapshot the build integration downloaded. Without one, such as in dev after a failed fetch, it fetches the manifest at runtime. `'runtime'` always fetches at runtime, so policy edits apply without a rebuild. |
+| `source` | `'build'` | `'build'` uses the snapshot the build integration downloaded. Without one, such as after a failed download, it fetches the manifest at runtime. `'runtime'` always fetches at runtime, so policy edits apply without a rebuild. |
 | `snapshot` | none | A manifest you supply. You can pass `snapshot` or `source`, not both. |
 | `resolve` | `'server'` | `'server'` resolves each visitor on the server and ships no resolver to the browser. `'browser'` resolves in the browser, for pages the server does not render per visitor. Server-rendered frameworks only. |
 | `manifestURL` | see below | Where to fetch the manifest at runtime. On the server, `${backendURL}/manifest`. In the browser, `${routePrefix}/manifest`, else `${backendURL}/manifest`. |
@@ -84,12 +82,11 @@ holds your policy rules and copy, and no visitor data.
 | `inputs` | none | `{ country, region }` when the page already knows the visitor's location, for example from an edge worker. Browser resolution only. |
 
 The transport `manifest()` from `c15t/react`, `c15t/vue/vue-plugin`,
-`c15t/svelte` and `@c15t/browser` always resolve in the browser, so they have
-no `resolve` option. It also takes `backendURL`, `headers`, `credentials`,
-`domain`, `fetch` and `initFallback`. With no options it reads the snapshot
-and the backend URL your build integration downloaded. With `manifestURL`,
-the browser fetches that URL when the page loads and the build's snapshot is
-not used. Saves still go to `backendURL`, or the build's backend URL.
+`c15t/svelte`, `@c15t/angular` and `@c15t/browser` always resolves in the
+browser, so it has no `resolve` option. It also takes `backendURL`,
+`headers`, `credentials`, `domain`, `fetch` and `initFallback`. With no
+options it reads the snapshot and the backend URL your build integration
+downloaded.
 
 When the policy depends on where the visitor is, and the browser does not
 know the country or region, browser resolution asks `geoURL`, then the
@@ -99,92 +96,74 @@ single-page app unless you pass `inputs` or `geoURL`. The `consentManifest()`
 plugins from `c15t/build`, `c15t/vue/vite` and `c15t/svelte/vite` warn
 about this when a single-page app build bundles such a policy.
 
+### When the manifest is unavailable
+
+Each place that reads the manifest falls back to the backend's `/init` and
+logs one warning per manifest URL:
+
+- The build cannot download it: the build warns and the server reads the
+  manifest at runtime. Set `onBuildError: 'fail'` to stop the build instead;
+  see [what happens when the download fails](#what-happens-when-the-download-fails).
+- The server cannot read it, or the backend has no `/manifest`: the server
+  render and the consent route answer from the backend's `/init`.
+- The browser cannot fetch it with `resolve: 'browser'` or in a single-page
+  app: the browser asks the backend's `/init`, and tries the manifest again
+  on the next init.
+
 ## hosted()
 
 `hosted()` asks the backend's `GET /init` for each visitor's policy and posts
-choices to `${backendURL}/subjects`.
+choices to `${backendURL}/subjects`. It takes no options. In React, Vue,
+Svelte, Angular and `@c15t/browser` it is the default, so you write it only to
+be explicit; in a server-rendered framework it replaces the manifest.
+
+## testing()
+
+`testing()` comes from a package's `/testing` entry and is for tests only. It
+resolves a policy in the browser with no backend and sends nothing. It needs
+no `backendURL`, and it throws when `NODE_ENV` is `production`, so a test
+config that reaches a production build fails on load instead of showing
+visitors a banner whose choices nobody records. Its code is only in bundles
+that import the `/testing` entry.
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `backendURL` | the framework's backend URL | Backend URL, absolute or relative such as `/api/c15t`. |
-| `headers` | none | Headers sent with `GET /init`. |
+| `policy` | the recommended rule pack | A `PolicyRule` or an array of them, resolved instead of the pack. The location overrides pick the matching rule, as the backend would. |
+| `iab` | whether the provider configures IAB | Resolve the IAB TCF variant of the recommended pack. |
 
-The transport `hosted()` also takes `initURL`, `assertDecisionInputs`,
-`domain` and `fetch`. `initURL` sends `GET /init` to another URL, usually a
-same-origin route that resolves the manifest, while saves keep going to
-`${backendURL}/subjects`. `assertDecisionInputs` defaults to `true` when
-`initURL` is set, so each save carries the policy decision it was made
-against and the backend can reject a save made against a stale policy.
-
-`hosted()` from `c15t` (`@c15t/core`) is the plain transport and requires
-`backendURL`. The framework exports fill it in from your config or your
-build.
-
-## local()
-
-Not recommended for production environments.
-
-`local()` resolves policy rules in the browser and stores choices in browser
-storage. Nothing reaches a backend, so c15t keeps no server-side record of
-consent. There is also no cross-device history, and with no IP geolocation
-every visitor gets the policy for an unknown location unless you pass
-`overrides`.
-
-| Option | Default | Behavior |
-| --- | --- | --- |
-| `policyRules` | the recommended rule pack | Rules to resolve. Passing rules replaces the pack entirely. |
-| `acknowledgeNoRecords` | `false` | `true` hides the development warning described below. It changes nothing else. |
-
-Unknown country and region are real inputs: test the missing-location case
-against your rules. See [policy rules](/docs/concepts/policies).
-
-### The development warning
-
-In a development build, local mode logs one `console.warn` per page load:
-
-```txt
-[c15t] Local mode keeps consent only in this browser. c15t keeps no
-server-side record of consent. Local mode also has no geolocation, so
-every visitor gets the same policy. Use it for development and tests. For
-production, see https://c15t.com/docs/concepts/modes
-Set acknowledgeNoRecords: true to hide this message.
-```
-
-Production builds never log it, and it never blocks the banner or a save.
-The script-tag files are production builds, so `c15t.local.js`, and
-`c15t.headless.js` or `c15t.iab.js` without a backend URL, log it on
-development hosts instead:
-`localhost`, `127.0.0.1`, `[::1]`, `0.0.0.0` and names ending in
-`.localhost`, `.local` or `.test`. A script tag hides it with
-`data-acknowledge-no-records`.
-
-Set `acknowledgeNoRecords: true` once you have decided a browser-only record is
-enough, such as in tests, or on a site that keeps its own record through
-[callbacks](/docs/frameworks/javascript/callbacks) or a [`custom()` transport](/docs/concepts/data-fetching#can-i-provide-my-own-transport):
+Set `overrides.country` (and `overrides.region`) to pick a policy from the
+recommended pack: an EEA country or `GB` shows the opt-in banner, `DE` with
+IAB shows the TCF banner, a US privacy state such as `US`/`CA` is opt-out
+with no automatic banner, and a country with no rule, such as `JP`, shows no
+banner. No recommended rule shows the opt-out notice banner; pass a rule with
+`prompt: 'notice'` as `policy` to test it.
 
 {/* example: fragment */}
 
-```ts
-import { local } from 'c15t/react';
+```tsx
+import { ConsentProvider } from 'c15t/react';
+import { testing } from 'c15t/react/testing';
 
-const mode = local({ acknowledgeNoRecords: true });
+<ConsentProvider
+	options={{
+		mode: testing({
+			policy: {
+				id: 'notice',
+				match: { fallback: true, isDefault: true },
+				model: 'opt-out',
+				prompt: 'notice',
+			},
+		}),
+	}}
+/>;
 ```
 
-c15t v4 removes the `offline()` name and makes `acknowledgeNoRecords: true`
-required in `local()`'s type.
+To keep consent out of the way in an app's own tests instead, set
+`enabled: false`: it grants every category, shows no UI and sends nothing.
 
-### What a consent record proves
-
-A consent record is the backend's copy of a choice: which categories the
-visitor granted or denied, when, and against which policy and copy. Under the
-GDPR, the business that relies on consent must be able to show that the
-visitor gave it (Article 7(1)). Browser storage alone cannot do that: the
-visitor can clear it, and it never leaves their device.
-
-`manifest()` and `hosted()` post each choice to the backend, which keeps the
-record. To keep records without Inth, run a
-[self-hosted backend](/docs/self-host/overview), or send each choice to your
-own API with `custom()`.
+The script tag has a separate file for tests, `c15t.testing.js`. The other
+script files are production builds and contain neither the testing transport
+nor the policy pack.
 
 ## What each mode adds to first-load JavaScript
 
@@ -197,18 +176,18 @@ runs:
 | `manifest()` | The code that saves choices and builds an init request | The hosted init path, if the browser has to resolve consent again |
 | `manifest({ resolve: 'browser' })` | The code that saves choices | The browser resolver, English copy and the fetch of `${routePrefix}/manifest` or `${backendURL}/manifest`, unless the server state already holds the policy. Other languages load per language. |
 | `hosted()` | The code that saves choices | The hosted init path |
-| `local()` | Nothing mode-specific | The local transport, the rule pack and its copy |
+| `testing()` | Nothing mode-specific | The testing transport, the rule pack and its copy |
 
 With `manifest()` resolved on the server, the manifest snapshot, the resolver,
-the local rule pack and other languages stay out of the browser bundle.
+the rule pack and other languages stay out of the browser bundle.
 
 In a single-page app the bundle contains the mode you imported:
 
 | Mode | In the bundle |
 | --- | --- |
 | `manifest()` | The snapshot, when the build downloaded one, and the code that saves choices. The resolver starts loading when `manifest()` runs, unless the policy needs a location the page does not know. English copy is bundled; other languages load the first time a visitor needs one. |
-| `hosted()` | The hosted transport |
-| `local()` | The local transport, the recommended rule pack and its copy |
+| `hosted()`, or no mode | The hosted transport |
+| `testing()` | The testing transport, the recommended rule pack and its copy |
 
 ## Set the backend URL
 
@@ -229,9 +208,8 @@ Set either variable. The Inth one holds your Inth project URL, so other Inth
 SDKs in the same app can read it too. When both are set, the c15t variable
 wins.
 
-A backend URL resolves in this order: the mode's own `backendURL`, then the
-framework's top-level `backendURL` option, then the c15t variable, then the
-Inth variable. The build reads each variable from the process environment,
+A backend URL resolves in this order: the framework's `backendURL` option,
+then the c15t variable, then the Inth variable. The build reads each variable from the process environment,
 then from `.env.[mode].local`, `.env.[mode]`, `.env.local` and `.env` in the
 project root, so a c15t variable in `.env` still beats an Inth variable in
 the environment. The Vite plugins set an unset `VITE_C15T_BACKEND_URL` to the
@@ -277,39 +255,37 @@ your CI caches build output, force a fresh build.
 
 ## What happens when the download fails
 
-The same policy applies in every framework:
+The same policy applies in every framework: when the download fails or no
+backend URL is set, the build and dev log a warning and finish without a
+snapshot. The server, or a single-page app's browser, then fetches the
+manifest at runtime, and asks the backend's `/init` while it is still
+unavailable.
 
-| Command | Default when the download fails or no backend URL is set |
-| --- | --- |
-| Production build: `next build`, `vite build`, `nuxt build`, `astro build` | The build stops with an error. |
-| Dev: `next dev`, `vite dev`, `nuxt dev`, `astro dev` | A warning. The server, or a single-page app's browser, fetches the manifest at runtime. |
+`onBuildError` changes that:
 
-`onBuildError` picks one behavior for both commands:
-
-- `'fail'` stops dev too.
-- `'runtime'` lets a production build finish without a snapshot. The manifest
-  is then fetched at runtime.
+- `'fail'` stops the build and dev with an error.
+- `'runtime'`, the default, warns and continues. Set it explicitly to turn
+  the warning about a missing backend URL into a notice.
 
 Pass it where you configure the integration: the second argument of
 `withConsentManifest()`, `consentManifest({ onBuildError })`, the `c15t` key
 in `nuxt.config.ts`, or `c15t({ onBuildError })` in Astro.
 
-The `C15T_ON_BUILD_ERROR` environment variable overrides the option, so you
-can deploy during a backend outage without a code change:
+The `C15T_ON_BUILD_ERROR` environment variable overrides the option, so a CI
+job can require a snapshot without a code change:
 
 ```sh
-C15T_ON_BUILD_ERROR=runtime npm run build
+C15T_ON_BUILD_ERROR=fail npm run build
 ```
 
 Any value other than `fail` or `runtime` stops the command. Turborepo's strict
 environment mode hides undeclared variables from tasks, so list
 `C15T_ON_BUILD_ERROR` in the build task's `passThroughEnv` there.
 
-A missing backend URL follows the same policy as a failed download: a
-production build stops, dev warns, and an explicit `'runtime'` logs a notice
-and continues. Astro and Nuxt are stricter in `manifest()` mode, including
+A missing backend URL follows the same policy as a failed download. Astro
+and Nuxt are stricter in `manifest()` mode, including
 `manifest({ snapshot })`: the browser saves consent to the backend, so a
-missing backend URL stops `astro dev` and `nuxt dev` as well.
+missing backend URL stops `astro dev` and `nuxt dev`.
 
 The download is skipped without an error when the build cannot use a
 snapshot:
@@ -317,13 +293,13 @@ snapshot:
 - The backend URL is relative, such as `/api/c15t`. With an explicit
   `onBuildError: 'fail'`, a relative URL stops the build instead.
 - Next.js builds with `output: 'export'`, which has no server.
-- The mode is `hosted()`, `local()`, `manifest({ snapshot })` or
+- The mode is `hosted()`, `testing()`, `manifest({ snapshot })` or
   `manifest({ source: 'runtime' })` in Next.js, Nuxt and Astro. Next.js reads
   the mode from `c15t.config.ts`.
 - A single-page app built with Vite (React, Vue, Svelte, JavaScript) does
   not use `manifest()`. The mode is set in app code, so the plugin downloads
   the manifest only once the bundle turns out to read it, after unused code
-  is dropped. A `hosted()` or `local()` build never contacts the backend.
+  is dropped. A build without `manifest()` never contacts the backend.
   SvelteKit and TanStack Start choose the mode on the server at runtime, so
   their builds always download it.
 

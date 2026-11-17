@@ -22,27 +22,26 @@ backend URL already configured. Headless and IAB routes also inline the
 policy manifest. Load a file from
 `https://cdn.jsdelivr.net/npm/@c15t/browser@<version>/dist/<file>`, or the
 same path on unpkg, when no backend serves it, such as `c15t.devtools.js` or
-`c15t.local.js`.
+`c15t.testing.js`.
 
 | File | What it contains |
 | --- | --- |
-| `c15t.js` | The default tag for hosted mode. A small init script that starts `/init`, shows the stock banner and loads `c15t.hosted.js`. Excludes local policy presets, local resolution and manifest transport code. Requires a backend URL or a queued hosted factory. |
+| `c15t.js` | The default tag for hosted mode. A small init script that starts `/init`, shows the stock banner and loads `c15t.hosted.js`. Excludes the policy presets, the testing transport and manifest transport code. Requires a backend URL. |
 | `c15t.hosted.js` | The consent engine and the rest of the stock UI, such as the trigger. `c15t.js` loads it; you do not add a tag for it. Loaded on its own, it works as the complete one-file tag `c15t.js` was before c15t 3.2. It includes a copy of the dialog, which it uses when `c15t.dialog.js` is not next to it. |
 | `c15t.dialog.js` | The preference dialog, with its preference switches and vendor list. `c15t.js` loads it when the visitor taps Customize before the engine has loaded, and `c15t.hosted.js` loads it the first time it opens the dialog; you do not add a tag for it. |
 | `c15t.commit.js` | The code that stores an Accept or Reject tapped on the banner `c15t.js` shows. `c15t.js` loads it when the visitor presses the banner; you do not add a tag for it. |
 | `c15t.records.js` | The code that reads a stored choice. `c15t.js` loads it at once for a returning visitor, never on a first visit; you do not add a tag for it. |
-| `c15t.local.js` | The stock UI and client for local mode only. Includes policy presets and excludes hosted and manifest transport code. Not recommended for production environments. |
+| `c15t.testing.js` | For test pages only. The stock UI with `testing()`: it resolves a policy in the browser with no backend. Includes the policy presets. The other files contain neither. |
 | `c15t.headless.js` | The same runtime and `window.c15t` API with no banner, dialog or CSS. Your page renders the UI. See [headless](/docs/frameworks/html/headless). |
 | `c15t.iab.js` | Replaces `c15t.js` when your policy uses IAB TCF. See [IAB TCF](/docs/frameworks/html/iab). |
 | `c15t.devtools.js` | The DevTools panel, loaded as a second tag. See [DevTools](/docs/frameworks/html/dev-tools). |
 
-`c15t.local.js` was called `c15t.offline.js` before c15t 3.2. The old file
-still ships with the same behavior and logs a rename note on development
-hosts. c15t v4 removes it.
+`c15t.local.js` and `c15t.offline.js` are gone: a page with no backend is a
+test page, and loads `c15t.testing.js`.
 
-Load one of `c15t.js`, `c15t.local.js`, `c15t.headless.js` or
+Load one of `c15t.js`, `c15t.testing.js`, `c15t.headless.js` or
 `c15t.iab.js` on a page, never two. `c15t.iab.js` throws an error if another one loaded first. When
-`c15t.js`, `c15t.local.js` or `c15t.headless.js` finds another c15t bundle
+`c15t.js`, `c15t.testing.js` or `c15t.headless.js` finds another c15t bundle
 already installed, it leaves the first one in place and does not start a
 second client.
 
@@ -108,7 +107,7 @@ page sets options it cannot apply the way the engine would: a `theme`, `css`,
 `noStyle`. It does the same when the `/init` answer lacks any of the banner's
 copy, since `c15t.js` carries no bundled English to fill the gap. It leaves `/init` to the engine as well for an `experiment`,
 `storageConfig`, `persistence`, `consentSource`, `vendors`, `user`,
-`policyRules`, `prefetch`, or a `hosted()` mode with its own init URL,
+`prefetch`,
 headers or `fetch`. Accepts and rejects it cannot record itself, such as one from a visitor
 who already has a stored choice or under a policy that declares vendors, wait
 for the engine.
@@ -163,21 +162,17 @@ The tag reads attributes once, when the script runs. The default `c15t.js`
 bundle uses hosted mode and requires `data-backend-url` unless a queued
 `config` supplies a backend URL or hosted factory.
 
-`c15t.js` rejects local or manifest mode, manifest options and
-`data-policy-rules`, because the attribute contains preset names. Authored
-`PolicyRule` objects can be passed in a queued `config` instead.
-`c15t.local.js` rejects backend URLs, manifest options and modes other
-than `offline`, the script-tag name for local mode. The headless and IAB
-bundles also accept manifest and custom transports. Every bundle keeps the
-call queue, `data-manual` and the page hooks described below.
+`c15t.js` rejects manifest mode and manifest options. `c15t.testing.js`
+rejects backend URLs, manifest options and mode names. The headless and IAB
+bundles also accept manifest mode, and need a backend URL. Every bundle keeps
+the call queue, `data-manual` and the page hooks described below.
 
 | Attribute | What it does |
 | --- | --- |
 | `data-backend-url` | Your Inth or self-hosted backend URL. Selects hosted mode. |
-| `data-mode` | Optional `hosted` for `c15t.js` or `offline` for `c15t.local.js`. `offline` is the script-tag name for local mode. Headless and IAB also accept `manifest`; without it, they pick `manifest` when a manifest URL is set, `hosted` when a backend URL is set, and `offline` otherwise. Headless and IAB ignore unknown values; `c15t.js` and `c15t.local.js` reject them. |
+| `data-mode` | Optional `hosted`. Headless and IAB also accept `manifest`; without it, they pick `manifest` when a manifest URL is set and `hosted` otherwise. Headless and IAB ignore unknown values; `c15t.js` rejects them. |
 | `data-manifest-url` | Where headless or IAB fetches the policy manifest in manifest mode. See [choose a mode](#choose-a-mode). |
-| `data-policy-rules` | Comma-separated policy presets for local mode, such as `europeOptIn,usPrivacyStatesOptOut,worldNone`. Any name exported by `policyRulePresets` works; an unknown name throws. [Policies](/docs/concepts/policies) describes the presets. |
-| `data-acknowledge-no-records` | Hide the warning that local mode keeps no server-side record of consent. Local mode logs it once per page on development hosts such as `localhost`. See [the development warning](/docs/concepts/modes#the-development-warning). |
+| `data-policy` | `c15t.testing.js` only. Comma-separated policy presets, such as `europeOptIn,usPrivacyStatesOptOut,worldNone`. Any name exported by `policyRulePresets` works; an unknown name throws. Without it, the recommended rules. [Policies](/docs/concepts/policies) describes the presets. |
 | `data-categories` | Comma-separated categories to offer in the preference dialog, such as `measurement,marketing`. Without it, the dialog offers the categories your gated scripts, iframes and rules use. This changes the dialog, not the policy. |
 | `data-country`, `data-region` | The visitor's location, when your host can print it into the page. Policy matching uses these instead of detection. |
 | `data-language` | Use this language instead of the browser's. See [translations](/docs/frameworks/html/translations). |
@@ -237,7 +232,7 @@ write them:
 | --- | --- | --- |
 | Hosted | `c15t.js` with `data-backend-url` | Each fresh visit asks the backend's `/init` endpoint for the visitor's policy. Choices are saved to the backend. |
 | Manifest | `c15t.headless.js` or `c15t.iab.js` with `data-manifest-url`, or `mode: 'manifest'` with an inline `manifest` in `config` | The browser resolves the policy from the backend's public, cacheable `/manifest`. Choices still go to the backend. |
-| Local | `c15t.local.js` with no backend URL | Policy rules come from `data-policy-rules` or c15t's recommended rules. Choices stay in the browser, and c15t keeps no server-side record of consent. Not recommended for production environments. |
+| Testing | `c15t.testing.js` on a test page | Policy rules come from `data-policy` or c15t's recommended rules. Choices stay in the browser. Never load it on a production page. |
 
 A tag loaded from a backend's `/c15t.js`, such as
 `https://your-project.inth.app/c15t.js`, starts in hosted mode with the
@@ -250,11 +245,10 @@ visitor's location and the page does not supply it, c15t falls back to the
 backend's `/init`. [Data fetching](/docs/concepts/data-fetching) compares the
 modes.
 
-Use the default `c15t.js` for hosted mode and `c15t.local.js` for local
-mode. For manifest mode or custom transports with the stock UI, use the
-`@c15t/browser` ES module. The headless script supports those modes with your
-own UI, and the IAB script supports them for IAB policies. Loading `c15t.js`
-without a backend URL throws unless a hosted factory is supplied.
+Use the default `c15t.js` for hosted mode. For manifest mode with the stock
+UI, use the `@c15t/browser` ES module. The headless script supports manifest
+mode with your own UI, and the IAB script supports it for IAB policies.
+Loading `c15t.js` without a backend URL throws.
 
-Local mode cannot see the visitor's country. Without `data-country`, every
-visitor gets the strict opt-in fallback.
+`c15t.testing.js` cannot see the visitor's country. Without `data-country`,
+every visitor gets the strict opt-in fallback.

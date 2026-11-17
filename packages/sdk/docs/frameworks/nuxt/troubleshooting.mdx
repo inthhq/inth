@@ -45,7 +45,7 @@ throws.
 
 **Check.** Only request-time rendering in `manifest()` or `hosted()` mode
 puts the banner in the HTML. `manifest({ resolve: 'browser' })` and
-`local()` resolve in the browser.
+`testing()` resolve in the browser.
 Prerendered routes, routes with a `prerender`, `swr`, `isr` or `cache` rule,
 `nuxt generate` output and `ssr: false` send the same HTML to every visitor,
 so the banner appears after the browser resolves the policy.

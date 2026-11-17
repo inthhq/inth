@@ -3,8 +3,10 @@ import { manifest } from '@c15t/browser';
 import { createConsentRuntime } from 'c15t/runtime';
 
 // Fetch the backend's public manifest and resolve the policy in the browser.
-// Saves still go to the backend.
+// Saves still go to the backend. When the manifest is unavailable, the
+// runtime asks the backend's /init instead.
 export const runtime = createConsentRuntime({
-	mode: manifest({ manifestURL: 'https://your-project.inth.app/manifest' }),
+	backendURL: 'https://your-project.inth.app',
+	mode: manifest(),
 });
 // #endregion docs:transport-manifest
