@@ -43,7 +43,12 @@ export interface ProviderTransportContext {
 }
 
 /** Transport kind exposed through `window.c15t.mode`. */
-export type ProviderTransportKind = 'hosted' | 'manifest' | 'offline';
+export type ProviderTransportKind =
+	| 'hosted'
+	| 'manifest'
+	| 'offline'
+	// The deprecated `custom()` that `@c15t/react-native` still uses.
+	| 'custom';
 
 /**
  * Creates a kernel transport from provider runtime context.

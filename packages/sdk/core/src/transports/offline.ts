@@ -37,6 +37,7 @@ import type {
 	SaveResult,
 } from '../types';
 import type { TransportInitResponse } from './init-output';
+import type { ProviderTransportFactory } from './mode';
 
 /** The offline transport's surface: every init carries `policyResolution`. */
 export interface OfflineKernelTransport extends KernelTransport {
@@ -234,4 +235,41 @@ export const createOfflineTransport = function createOfflineTransport(
 
 		// identify is a no-op in offline mode — no server to notify.
 	};
+};
+
+/**
+ * Options for the deprecated {@link offline}.
+ *
+ * @deprecated See {@link offline}.
+ */
+export interface OfflineModeOptions {
+	/** Rules to resolve; omitted, the recommended pack. */
+	policyRules?: PolicyRule[];
+	/** Hide the development warning that no consent records are kept. */
+	acknowledgeNoRecords?: boolean;
+}
+
+/**
+ * A transport factory that resolves `policyRules` in the browser, kept on
+ * `@c15t/core/transports` only for `@c15t/react-native`'s web tests.
+ * Providers take `testing: withoutNetwork()` from a `/testing` entry.
+ *
+ * @deprecated Remove once `@c15t/react-native` no longer imports it.
+ * @param options - The rules to resolve and `acknowledgeNoRecords`.
+ * @returns A provider transport factory reporting `kind: 'offline'`.
+ */
+export const offline = function offline(
+	options: OfflineModeOptions = {}
+): ProviderTransportFactory {
+	return Object.assign(
+		(context: Parameters<ProviderTransportFactory>[0]): KernelTransport =>
+			createOfflineTransport({
+				acknowledgeNoRecords: options.acknowledgeNoRecords,
+				iabEnabled: context.iabEnabled,
+				policyRules: options.policyRules,
+				translations: context.translations,
+				translationsFor: context.translationsFor,
+			}),
+		{ kind: 'offline' as const }
+	);
 };

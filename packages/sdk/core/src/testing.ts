@@ -46,7 +46,10 @@ export type { ConsentTesting } from './transports/without-network';
  *
  * @internal
  */
-export { createWithoutNetwork } from './transports/without-network';
+export {
+	assertNotProduction,
+	createWithoutNetwork,
+} from './transports/without-network';
 
 /**
  * A `testing` value that resolves the recommended policy pack in the
