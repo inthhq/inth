@@ -1,4 +1,3 @@
-import { hosted } from 'c15t';
 import { createConsentRuntime } from 'c15t/runtime';
 
 import { scripts } from './scripts';

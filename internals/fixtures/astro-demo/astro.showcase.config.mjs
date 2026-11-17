@@ -77,6 +77,12 @@ const iabOptions = iab
 			}),
 		};
 
+// A real backend, when there is one, replaces `testing()` with hosted mode.
+const consentOptions = { ...iabOptions };
+if (backendURL && (!iab || production)) {
+	Object.assign(consentOptions, { backendURL, mode: hosted() });
+}
+
 // Only the selected framework's Astro integration is listed. Loading all
 // three would let a stray chunk from the others reach the page and make the
 // bundle comparison meaningless.
@@ -123,10 +129,7 @@ export default defineConfig({
 			// to talk to a real one. With `C15T_IAB=1` it also carries the
 			// vendor list the server needs to render the IAB banner at all;
 			// hosted and manifest mode get theirs from `/init`.
-			...iabOptions,
-			...(backendURL && (!iab || production)
-				? { backendURL, mode: hosted() }
-				: {}),
+			...consentOptions,
 			scripts: [
 				{
 					category: 'measurement',

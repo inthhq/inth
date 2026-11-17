@@ -4,7 +4,6 @@ import {
 	ConsentDialog,
 	ConsentDialogLink,
 	ConsentProvider,
-	hosted,
 } from 'c15t/react';
 import type { ConsentProviderCallbacks } from 'c15t/react';
 import type { ReactNode } from 'react';

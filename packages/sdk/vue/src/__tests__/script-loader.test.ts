@@ -64,8 +64,8 @@ const provide = (context: VueConsentKernelContext) => ({
 const borrowedRuntime = (options: { enabled?: boolean } = {}) =>
 	createConsentRuntime({
 		...options,
-		prefetch: { initialPolicyResolution: resolution },
 		mode: testing(),
+		prefetch: { initialPolicyResolution: resolution },
 	});
 
 const inserted = (src: string) =>

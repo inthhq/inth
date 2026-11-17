@@ -32,8 +32,8 @@ const Controls = () => {
 };
 
 const options: WithBackendURL<ConsentProviderOptions> = {
-	consentCategories: ['necessary', 'measurement', 'marketing'],
 	backendURL: '/api/bench-consent',
+	consentCategories: ['necessary', 'measurement', 'marketing'],
 	mode: hosted(),
 };
 

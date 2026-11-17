@@ -8,12 +8,12 @@ const backendURL = 'https://your-project.inth.app';
 
 // #region docs:slot
 const options = {
+	backendURL,
 	components: {
 		banner: {
 			root: { className: 'p-[7px] dark:p-[11px]' },
 		},
 	},
-	backendURL,
 };
 // #endregion docs:slot
 

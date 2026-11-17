@@ -1,5 +1,4 @@
 import { policyRulePresets } from '@c15t/schema/types';
-import { testing } from 'c15t/react/testing';
 import { describe, expect, it } from 'vitest';
 
 import {

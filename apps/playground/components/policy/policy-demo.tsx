@@ -715,6 +715,7 @@ export const PolicyDemo = () => {
 					options={
 						demoMode === 'hosted'
 							? {
+									backendURL: HOSTED_DEMO_BACKEND_URL,
 									consentCategories: categories,
 									i18n: {
 										messages:
@@ -723,7 +724,6 @@ export const PolicyDemo = () => {
 													?.messageProfile ?? 'default'
 											].translations,
 									},
-									backendURL: HOSTED_DEMO_BACKEND_URL,
 									mode: hosted(),
 									overrides,
 									presentation: getScenarioById(resolvedExample).presentation,

@@ -273,8 +273,8 @@ describe('provideC15tServer', () => {
 
 	test('leaves an explicit prefetch alone', async () => {
 		const html = await render({
-			prefetch: {},
 			mode: testing(),
+			prefetch: {},
 		});
 		expect(transferred(html)).toBeUndefined();
 	});
@@ -289,7 +289,7 @@ describe('provideC15tServer', () => {
 			},
 		];
 		const returning = await render(
-			{ nonce: 'n0nce', scripts, mode: testing() },
+			{ mode: testing(), nonce: 'n0nce', scripts },
 			{},
 			new Request(`${SITE}/`, { headers: { cookie: CONSENTED } })
 		);
@@ -300,7 +300,7 @@ describe('provideC15tServer', () => {
 		expect(start?.getAttribute('nonce')).toBe('n0nce');
 
 		// A visitor who still owes a choice starts nothing.
-		const fresh = await render({ scripts, mode: testing() });
+		const fresh = await render({ mode: testing(), scripts });
 		expect(fresh).not.toContain('pixel.js');
 	});
 });
@@ -313,7 +313,7 @@ describe('the early-tap script', () => {
 
 	test('goes into <head> with the nonce when the banner renders', async () => {
 		const html = await render(
-			{ nonce: 'n0nce', mode: testing() },
+			{ mode: testing(), nonce: 'n0nce' },
 			{},
 			undefined,
 			BannerApp
@@ -356,7 +356,7 @@ describe('the browser side', () => {
 			providers: [
 				// The id the server render wrote the state under.
 				{ provide: APP_ID, useValue: 'ng' },
-				provideC15t({ persistence: false, mode: testing() }),
+				provideC15t({ mode: testing(), persistence: false }),
 			],
 		});
 		const consent = TestBed.inject(ConsentManager);

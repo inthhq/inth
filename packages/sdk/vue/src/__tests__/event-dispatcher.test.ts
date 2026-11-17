@@ -19,6 +19,7 @@ const posthog: Script = {
 
 test('useEventDispatcher follows the runtime scripts, live consent and one pageview history', async () => {
 	const runtime = createConsentRuntime({
+		mode: testing(),
 		prefetch: {
 			initialPolicyResolution: resolvePolicyRules({
 				countryCode: null,
@@ -35,7 +36,6 @@ test('useEventDispatcher follows the runtime scripts, live consent and one pagev
 			}),
 		},
 		scripts: [posthog],
-		mode: testing(),
 	});
 	const capture = vi.fn();
 	const globals = { posthog: { capture } };

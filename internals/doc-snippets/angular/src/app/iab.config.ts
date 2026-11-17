@@ -14,9 +14,9 @@ export const appConfig: ApplicationConfig = {
 	providers: [
 		provideZonelessChangeDetection(),
 		provideC15t({
+			backendURL: 'https://your-project.inth.app',
 			// The CMP ID IAB Europe assigned to your company.
 			iab: { cmpId: registeredCmpId },
-			backendURL: 'https://your-project.inth.app',
 			mode: hosted(),
 			scripts,
 		}),

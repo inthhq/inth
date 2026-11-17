@@ -1,4 +1,4 @@
-import { hosted, init } from '@c15t/browser';
+import { init } from '@c15t/browser';
 
 import { scripts } from './scripts';
 import { testBackend } from './test-backend';

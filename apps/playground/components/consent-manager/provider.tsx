@@ -197,6 +197,7 @@ export const ConsentManager = ({ children }: ConsentManagerProps) => {
 	return (
 		<ConsentProvider
 			options={{
+				backendURL: DEFAULT_BACKEND_URL,
 				consentCategories: [
 					'necessary',
 					'functionality',
@@ -212,7 +213,6 @@ export const ConsentManager = ({ children }: ConsentManagerProps) => {
 						href: '/legal/terms-of-service',
 					},
 				},
-				backendURL: DEFAULT_BACKEND_URL,
 				mode: hosted(),
 				overrides: geoOverrides,
 				scripts: createDemoScripts('internal-analytics'),

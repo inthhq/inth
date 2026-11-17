@@ -1,4 +1,4 @@
-import { c15tVue, hosted } from 'c15t/vue/vue-plugin';
+import { c15tVue } from 'c15t/vue/vue-plugin';
 import { createApp } from 'vue';
 
 import App from './HeadlessApp.vue';

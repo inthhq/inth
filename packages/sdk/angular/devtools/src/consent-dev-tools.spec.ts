@@ -70,8 +70,8 @@ const configure = (
 		providers: [
 			provideC15t({
 				consentCategories: categories,
-				persistence: false,
 				mode: testing(),
+				persistence: false,
 			}),
 		],
 	});
@@ -172,8 +172,8 @@ describe('@c15t/angular/devtools', () => {
 		TestBed.configureTestingModule({
 			providers: [
 				provideC15t({
-					persistence: false,
 					mode: testing(),
+					persistence: false,
 				}),
 				provideC15tDevTools({ position: 'bottom-right' }),
 			],
@@ -192,6 +192,7 @@ describe('@c15t/angular/devtools', () => {
 			providers: [
 				provideC15t({
 					consentCategories: ['measurement'],
+					mode: testing(),
 					persistence: false,
 					scripts: [
 						{
@@ -200,7 +201,6 @@ describe('@c15t/angular/devtools', () => {
 							src: 'data:text/javascript,void%200',
 						},
 					],
-					mode: testing(),
 				}),
 			],
 		});
@@ -224,6 +224,7 @@ describe('@c15t/angular/devtools', () => {
 			providers: [
 				provideC15t({
 					consentCategories: ['measurement'],
+					mode: testing(),
 					persistence: false,
 					scripts: [
 						{
@@ -232,7 +233,6 @@ describe('@c15t/angular/devtools', () => {
 							src: 'data:text/javascript,void%200',
 						},
 					],
-					mode: testing(),
 				}),
 				{
 					provide: CONSENT_ENGINE_MODULE,

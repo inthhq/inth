@@ -40,6 +40,7 @@ const createOptions = function createOptions(
 	scenario: TanstackBenchScenario
 ): WithBackendURL<ConsentProviderOptions> {
 	return {
+		backendURL: BENCH_BACKEND_URL,
 		callbacks: {
 			onChoiceRecorded() {
 				const state = getState(scenario);
@@ -55,7 +56,6 @@ const createOptions = function createOptions(
 			},
 		},
 		consentCategories,
-		backendURL: BENCH_BACKEND_URL,
 		mode: hosted(),
 		theme: {
 			motion: {

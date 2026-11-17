@@ -84,6 +84,14 @@ const dialogModule = (name: string) =>
 			);
 
 const scriptTagLib = function scriptTagLib(name: string, entry: string) {
+	const source: {
+		define?: Record<string, string>;
+		entry: Record<string, string>;
+	} = { entry: { [name]: entry } };
+	// The testing file must let `testing()` run: it is for test pages.
+	if (name === 'c15t.testing') {
+		source.define = { 'process.env.NODE_ENV': JSON.stringify('test') };
+	}
 	return {
 		autoExternal: false,
 		dts: false,
@@ -98,13 +106,7 @@ const scriptTagLib = function scriptTagLib(name: string, entry: string) {
 				jsOptions: { minimizerOptions: { module: false } },
 			},
 		},
-		source: {
-			// The testing file must let `testing()` run: it is for test pages.
-			...(name === 'c15t.testing'
-				? { define: { 'process.env.NODE_ENV': JSON.stringify('test') } }
-				: {}),
-			entry: { [name]: entry },
-		},
+		source,
 		// A fixed target keeps the CDN file readable by every browser that
 		// still receives security updates, independent of the host's
 		// browserslist.
@@ -202,9 +204,9 @@ export default defineConfig({
 					hosted: './src/hosted.ts',
 					iab: './src/iab.ts',
 					index: './src/index.ts',
-					testing: './src/testing.ts',
 					'postcss-tailwind3': './src/postcss-tailwind3.ts',
 					prefetch: './src/prefetch.ts',
+					testing: './src/testing.ts',
 				},
 			},
 		},

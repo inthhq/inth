@@ -20,6 +20,7 @@ const consentCategories = [
 
 const CssBannerModulesPage = () => {
 	const options: WithBackendURL<ConsentProviderOptions> = {
+		backendURL: '/api/bench-consent',
 		callbacks: {
 			onChoiceRecorded() {
 				const state = getBenchState(scenario);
@@ -35,7 +36,6 @@ const CssBannerModulesPage = () => {
 			},
 		},
 		consentCategories,
-		backendURL: '/api/bench-consent',
 		mode: hosted(),
 		theme: {
 			motion: {

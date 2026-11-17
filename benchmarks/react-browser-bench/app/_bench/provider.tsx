@@ -50,6 +50,7 @@ export const ReactBenchmarkProvider = ({
 	theme?: ConsentProviderOptions['theme'];
 }) => {
 	const options: BenchmarkProviderOptions = {
+		backendURL: '/api/bench-consent',
 		callbacks: {
 			onChoiceRecorded() {
 				const state = getBenchState(scenario);
@@ -65,7 +66,6 @@ export const ReactBenchmarkProvider = ({
 			},
 		},
 		consentCategories,
-		backendURL: '/api/bench-consent',
 		mode: hosted(),
 		styles,
 		theme,

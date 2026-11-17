@@ -183,6 +183,7 @@ export const PolicyBenchmarkProvider = ({
 	}, [backendURL, fixture, scenario]);
 
 	const options: WithBackendURL<ConsentProviderOptions> = {
+		backendURL,
 		callbacks: {
 			onChoiceRecorded() {
 				const state = getPolicyBenchState(scenario, fixture);
@@ -198,7 +199,6 @@ export const PolicyBenchmarkProvider = ({
 			},
 		},
 		consentCategories,
-		backendURL,
 		mode: hosted(),
 		theme: {
 			motion: {
