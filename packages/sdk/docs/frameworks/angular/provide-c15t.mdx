@@ -30,7 +30,7 @@ provider. Injecting one where `provideC15t()` is missing throws Angular's
 
 | Option | Type | Default | Behavior |
 | --- | --- | --- | --- |
-| `mode` | `hosted()` or `manifest()` from `@c15t/angular`, or `testing()` from `@c15t/angular/testing` | `hosted()` | Where policies come from and where choices are saved. Read once. |
+| `mode` | `hosted()` or `manifest()` from `@inth/angular`, or `testing()` from `@inth/angular/testing` | `hosted()` | Where policies come from and where choices are saved. Read once. |
 | `scripts` | `Script[]` | none | Vendor scripts that load when their category is allowed. See [scripts](./scripts). |
 | `vendors` | `Vendor[]` | none | Vendors offered for vendor-level consent outside IAB. See [vendor consent](./vendor-consent). |
 | `consentCategories` | `AllConsentNames[]` | the policy's categories | Categories the preference UI offers, within the policy's scope. |
@@ -40,7 +40,7 @@ provider. Injecting one where `provideC15t()` is missing throws Angular's
 | `i18n` | `Partial<I18nConfig>` | bundled English | Copy overrides per language; see [translations](./translations). Read once. |
 | `colorScheme` | `'light'`, `'dark'`, `'system'` or `null` | mirrors a `dark` class on `<html>` | Toggles the `c15t-dark` class on `<html>`. `null` leaves `<html>` alone. |
 | `noStyle` | `boolean` | `false` | Renders every component without c15t's classes. A component's own `noStyle` input wins. |
-| `styles` | `boolean` | `true` | `false` stops the components adding their `<style>` elements, for apps that import `@c15t/angular/styles.css` themselves. |
+| `styles` | `boolean` | `true` | `false` stops the components adding their `<style>` elements, for apps that import `@inth/angular/styles.css` themselves. |
 | `disableAnimation` | `boolean` | follows `prefers-reduced-motion` | Turns off enter and exit transitions. |
 | `scrollLock`, `trapFocus` | `boolean` | from `presentation` | Defaults for the banner and dialog. `blocking` on a component sets both. |
 | `preloadDialog` | `'idle'` or `'intent'` | `'idle'` | When the deferred dialog starts loading before its first open. See [ConsentDialog](./components/consent-dialog#how-the-dialog-loads). |
@@ -65,9 +65,9 @@ provider. Injecting one where `provideC15t()` is missing throws Angular's
 | `windowDebug` | `boolean` | `true` | Installs `window.c15t` with `{ version, pkg, mode }`. |
 | `runtime` | `ConsentRuntime` | none | A runtime created with `createConsentRuntime()`. Not allowed with `mode`. See [share one runtime](#share-one-runtime). |
 
-Tests pass `testing({ policy })` from `@c15t/angular/testing` as `mode`
+Tests pass `testing({ policy })` from `@inth/angular/testing` as `mode`
 to resolve a policy with no backend. The `C15tOptions` type from
-`@c15t/angular` lists every option.
+`@inth/angular` lists every option.
 
 ## When the runtime starts
 
@@ -125,7 +125,7 @@ are read once; outside production, changing them logs a warning.
 
 Pass `runtime` when the page already has a runtime, for example one shared
 between two Angular applications or with code outside Angular. Create it with
-`createConsentRuntime()` from `@c15t/angular`, call `runtime.start()` and
+`createConsentRuntime()` from `@inth/angular`, call `runtime.start()` and
 `runtime.dispose()` yourself, and pass it as `provideC15t({ runtime })`. The
 provider never starts or disposes a runtime it did not create.
 
@@ -140,7 +140,7 @@ only `consentCategories` to it.
 Open the page in a private window with DevTools open:
 
 1. The banner appears once the policy resolves. `window.c15t` in the console
-   shows `pkg: '@c15t/angular'`.
+   shows `pkg: '@inth/angular'`.
 2. The Network panel shows the request your mode makes: one `/init` for
    `hosted()`, none for `testing()`, and none when the page came with a
    server-resolved state.

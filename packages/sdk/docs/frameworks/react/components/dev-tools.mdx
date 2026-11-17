@@ -22,7 +22,7 @@ import { lazy, Suspense } from 'react';
 
 const DevTools = import.meta.env.DEV
 	? lazy(() =>
-			import('c15t/react/devtools').then(({ DevTools }) => ({
+			import('@inth/react/devtools').then(({ DevTools }) => ({
 				default: DevTools,
 			}))
 		)
@@ -39,9 +39,7 @@ export function ConsentDevTools() {
 
 Render `<ConsentDevTools />` inside the provider from your
 [quickstart](/docs/frameworks/react/quickstart), next to the banner. Import the
-component from `c15t/react/devtools` when you installed the `c15t` package, or
-from `@c15t/react/devtools` when you installed `@c15t/react` directly.
-`@c15t/dev-tools` exports the imperative engine, not the React component.
+component from `@inth/react/devtools`.
 
 If the CLI cannot identify your bundler's development flag, it generates
 `const DevTools = false` with a setup comment. Replace `false` with your

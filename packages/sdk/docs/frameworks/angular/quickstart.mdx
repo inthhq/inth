@@ -31,8 +31,7 @@ vendor edits reach visitors on their next page load, without a rebuild.
 
 ## Install
 
-`@c15t/angular` is its own package; the `c15t` umbrella package has no
-Angular entry point. It needs `@angular/common`, `@angular/core`,
+Install `@inth/angular`. It needs `@angular/common`, `@angular/core`,
 `@angular/forms` and `@angular/platform-browser` 20, 21 or 22, which an
 Angular CLI app already has.
 
@@ -41,10 +40,10 @@ Angular CLI app already has.
 Run this in the app's folder:
 
 ```bash
-ng add @c15t/angular
+ng add @inth/angular
 ```
 
-The Angular CLI installs `@c15t/angular`, then asks for your backend URL
+The Angular CLI installs `@inth/angular`, then asks for your backend URL
 and whether to add the banner and dialog. With
 the default answers it makes two changes:
 
@@ -58,7 +57,7 @@ the default answers it makes two changes:
    Angular 20.
 
 To skip the prompts, pass the answers as flags, such as
-`ng add @c15t/angular --project-url=https://your-project.inth.app`. If you
+`ng add @inth/angular --project-url=https://your-project.inth.app`. If you
 leave the backend URL empty, it writes `https://your-project.inth.app` with
 a comment to replace it. `--components=false` leaves
 the root component alone. Running
@@ -70,16 +69,16 @@ adds neither the provider nor the components, and prints both steps.
 `ng add` does not create `src/scripts.ts`, add `scripts` to `provideC15t()`
 or add a privacy settings button. Install the vendor helpers:
 
-<CommandTabs command="@c15t/integrations" mode="install" />
+<CommandTabs command="@inth/integrations" mode="install" />
 
 Then continue at [List the vendor scripts](#list-the-vendor-scripts), and
 skip the steps `ng add` already did.
 
 ### Install by hand
 
-<CommandTabs command="@c15t/angular @c15t/integrations" mode="install" />
+<CommandTabs command="@inth/angular @inth/integrations" mode="install" />
 
-`@c15t/integrations` holds the vendor helpers. Follow every step below.
+`@inth/integrations` holds the vendor helpers. Follow every step below.
 
 ## List the vendor scripts
 
@@ -121,7 +120,7 @@ Add the components to your root component, `src/app/app.ts`:
 <include src="../../shared/examples/angular/app-component.mdx" />
 
 `<c15t-consent-banner>` shows the banner when the visitor's policy asks for
-one. `<c15t-consent-dialog>`, from `@c15t/angular/consent-dialog`, is the
+one. `<c15t-consent-dialog>`, from `@inth/angular/consent-dialog`, is the
 preference dialog; it loads its code in idle time after the page loads,
 before anyone opens it. `c15tConsentDialogLink` turns your own button into the persistent way back
 to preferences. Put it where visitors look for privacy settings, such as the
@@ -130,7 +129,7 @@ preferences.
 
 There is no stylesheet to import. Each component adds the rules it uses to
 `<head>` as `<style>` elements when it first renders. With Tailwind CSS 3, or
-to put the rules in a cascade layer, add `@c15t/angular/styles.css` to the
+to put the rules in a cascade layer, add `@inth/angular/styles.css` to the
 `styles` array in `angular.json` and pass `styles: false` to `provideC15t()`;
 see [stylesheets and CSS layers](/docs/customization/stylesheets#import-the-stylesheet-yourself).
 
@@ -148,14 +147,14 @@ on the Network tab:
    category) and save. PostHog loads.
 4. Turn it off and save. The page reloads and PostHog does not load.
 
-`window.c15t` in the console shows `pkg: '@c15t/angular'`. If the banner does
+`window.c15t` in the console shows `pkg: '@inth/angular'`. If the banner does
 not appear, check the `/init` request, then see
 [troubleshooting](/docs/frameworks/angular/troubleshooting).
 [Verify consent](/docs/guides/verify-consent) has the release checklist.
 
 ## Other setups
 
-**Tests** pass `testing()` from `@c15t/angular/testing` as the mode. It resolves a policy
+**Tests** pass `testing()` from `@inth/angular/testing` as the mode. It resolves a policy
 in the browser with no backend and needs no `projectUrl`. It throws in
 production builds. With no arguments it uses the recommended rules; pass
 `testing({ policy })` to test your own.
@@ -163,8 +162,8 @@ production builds. With no arguments it uses the recommended rules; pass
 {/* example: fragment */}
 
 ```ts
-import { provideC15t } from '@c15t/angular';
-import { testing } from '@c15t/angular/testing';
+import { provideC15t } from '@inth/angular';
+import { testing } from '@inth/angular/testing';
 
 provideC15t({ mode: testing(), scripts });
 ```

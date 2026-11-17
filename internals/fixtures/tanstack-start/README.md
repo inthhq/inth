@@ -1,7 +1,6 @@
 # c15t × TanStack Start example
 
-A TanStack Start app wired to c15t through the `c15t` umbrella package
-(`c15t/tanstack-start`). The files that set it up:
+A TanStack Start app wired to c15t through `@inth/tanstack-start`. The files that set it up:
 
 - `src/start.ts` registers `consentRequestMiddleware()`, so every server
   request reads one normalized set of geo, language and GPC headers.

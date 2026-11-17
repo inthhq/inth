@@ -2,7 +2,7 @@
 
 One application demonstrates c15t with the App Router and the Pages Router, a
 gated YouTube video, PostHog, X Pixel, a branded design and persistent
-preferences. It uses the public `c15t/next` integration and a cached Inth
+preferences. It uses the public `@inth/nextjs` integration and a cached Inth
 manifest. It is a test app for the acceptance suite; the starter for readers is
 `examples/nextjs`.
 

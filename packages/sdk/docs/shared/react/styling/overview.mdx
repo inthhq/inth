@@ -18,7 +18,7 @@ group: reference
   Tailwind CSS 3 has no cascade layers, and its unlayered preflight beats
   c15t's layered rules. Set `styles: false` in the provider options, import
   `styles.css` above the `@tailwind` directives, and add the
-  `c15t/postcss-tailwind3` PostCSS plugin before `tailwindcss`. Utilities
+  `@inth/react/postcss-tailwind3` PostCSS plugin before `tailwindcss`. Utilities
   you pass to c15t parts then need the important modifier, such as
   `!bg-red-500`. [Tailwind CSS](/docs/customization/tailwind#set-up-tailwind-css-3)
   shows the tested setup for each framework.
@@ -56,9 +56,7 @@ group: reference
   from a client component and change its props, which ships the generator.
 
   Outside a component, call `generateThemeCSS(theme, colorScheme)` from
-  `c15t/react/utils`, or `@c15t/react/utils` with the scoped package. It
-  writes the same CSS as `ConsentTheme`. Outside React, import it from
-  `@c15t/ui/theme`. Call it on the server or at build time and put the result in a
+  `@inth/react/utils`. It writes the same CSS as `ConsentTheme`. Call it on the server or at build time and put the result in a
   `<style>` element or your stylesheet. It escapes `<`, so the result is safe
   inside `<style>`.
 </section>

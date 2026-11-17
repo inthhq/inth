@@ -1,6 +1,6 @@
 ---
 title: Client API
-description: Reference for c15t/astro/client on an Astro site, grouped by task, from reading permissions and recorded choices to opening dialogs, saving consent, gated scripts, the page runtime and analytics events.
+description: Reference for @inth/astro/client on an Astro site, grouped by task, from reading permissions and recorded choices to opening dialogs, saving consent, gated scripts, the page runtime and analytics events.
 group: frameworks
 ---
 
@@ -9,7 +9,7 @@ group: frameworks
 The `c15t()` integration starts one consent runtime per page load and keeps
 it across `ClientRouter` navigation. Every script and island on the page
 shares it. There is no provider to wrap your components in.
-`c15t/astro/client` is how browser code reaches that runtime.
+`@inth/astro/client` is how browser code reaches that runtime.
 
 `getConsentClient()` returns the page's client, or `null` on the server and
 before the page script starts it. The page script is a module script, and
@@ -105,7 +105,7 @@ call `openDialog()` from its click handler:
 {/* example: fragment */}
 
 ```ts
-import { openDialog } from 'c15t/astro/client';
+import { openDialog } from '@inth/astro/client';
 
 document.querySelector('#privacy-link')?.addEventListener('click', () => {
 	void openDialog();
@@ -150,7 +150,7 @@ navigation. Call it yourself only for markup you insert from your own code:
 {/* example: fragment */}
 
 ```ts
-import { activateGatedScripts, getConsent } from 'c15t/astro/client';
+import { activateGatedScripts, getConsent } from '@inth/astro/client';
 
 const snapshot = getConsent();
 if (snapshot) {
@@ -190,7 +190,7 @@ Markup your script changed is replaced on a swap. Render it again on
 {/* example: fragment */}
 
 ```ts
-import { getConsent, subscribe } from 'c15t/astro/client';
+import { getConsent, subscribe } from '@inth/astro/client';
 
 const render = () => {
 	const allowed = getConsent()?.effectivePermissions.measurement ?? false;
@@ -208,7 +208,7 @@ the new page contains it.
 
 ## Send analytics events after consent
 
-`getEventDispatcher()` from `c15t/astro/client` returns the page's event
+`getEventDispatcher()` from `@inth/astro/client` returns the page's event
 dispatcher. It sends your own events to the `scripts` in `c15t.client.ts`, and
 only while their consent allows it. Create it once at module level:
 
@@ -222,7 +222,7 @@ Calls before the page script ran are dropped. For single-page-app pageviews with
 {/* example: fragment */}
 
 ```ts
-import { getEventDispatcher } from 'c15t/astro/client';
+import { getEventDispatcher } from '@inth/astro/client';
 
 const events = getEventDispatcher({ pageviews: ['posthog'] });
 
@@ -238,7 +238,7 @@ collection on purpose.
 
 ## Advanced exports
 
-`c15t/astro/client` also exports what the integration's page script uses:
+`@inth/astro/client` also exports what the integration's page script uses:
 `boot`, `attachBannerActions`, `registerDialogAdapter`,
 `registerDialogSurface`, `registerDialogStyles`, `syncBannerVisibility` and
 `syncSurfaceVisibility`, plus the attribute names `ACTION_ATTRIBUTE`,

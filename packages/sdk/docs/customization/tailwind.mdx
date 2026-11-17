@@ -133,7 +133,7 @@ first paint.
   </Tab>
 
   <Tab value="JavaScript">
-    `init()` from `@c15t/browser` renders into a shadow root, the same way as
+    `init()` from `@inth/sdk` renders into a shadow root, the same way as
     the script tag. Build Tailwind as usual for your page. To put utilities on
     c15t's parts, pass the URL of your built stylesheet in
     `ui.stylesheetUrls`, as in
@@ -147,17 +147,16 @@ Tailwind 3's preflight is unlayered, so it beats the layered rules c15t
 renders itself and strips the banner's padding and borders. On Tailwind 3,
 turn those rules off with `styles: false` and import c15t's `styles.css`
 through a PostCSS plugin. The Astro integration needs only the plugin: it
-detects Tailwind 3 and links `c15t/astro/styles.css` itself. Every c15t
+detects Tailwind 3 and links `@inth/astro/styles.css` itself. Every c15t
 package that ships a stylesheet exports the plugin as
 `<package>/postcss-tailwind3`, so use the one from the package you installed:
 
 | You installed | Plugin name |
 | --- | --- |
-| `c15t` (React, Next.js, TanStack Start, Vue, Nuxt, Astro, Svelte, SvelteKit) | `c15t/postcss-tailwind3` |
-| `@c15t/browser` (script tag in the light DOM) | `@c15t/browser/postcss-tailwind3` |
+| A framework package, such as `@inth/react` or `@inth/svelte` | That package's plugin, such as `@inth/react/postcss-tailwind3` |
+| `@inth/sdk` (script tag in the light DOM) | `@inth/sdk/postcss-tailwind3` |
 
-They are the same plugin. A config that already lists
-`@c15t/ui/postcss-tailwind3` keeps working.
+They are the same plugin.
 
 Make four changes:
 
@@ -203,7 +202,7 @@ plugin and the build fails on c15t's stylesheet. Add the plugin before
 
     <include src="../shared/examples/tailwind-v3/next-16-turbopack/tailwind-config.mdx" />
 
-    Import `c15t/next/styles.css` above the directives. Turbopack fails the
+    Import `@inth/nextjs/styles.css` above the directives. Turbopack fails the
     build when the import sits below them. The same order works with
     webpack. Set `styles: false` in `ConsentRoot`'s `options` as well:
 
@@ -217,7 +216,7 @@ plugin and the build fails on c15t's stylesheet. Add the plugin before
 
     <include src="../shared/examples/tailwind-v3/tanstack-start/tailwind-config.mdx" />
 
-    Import `c15t/tanstack-start/styles.css` above the directives, in the
+    Import `@inth/tanstack-start/styles.css` above the directives, in the
     stylesheet your root route links, and set `styles: false` in
     `ConsentRoot`'s `options`:
 
@@ -231,7 +230,7 @@ plugin and the build fails on c15t's stylesheet. Add the plugin before
 
     <include src="../shared/examples/tailwind-v3/react/tailwind-config.mdx" />
 
-    Import `c15t/react/styles.css` above the directives, import this
+    Import `@inth/react/styles.css` above the directives, import this
     stylesheet from your entry module, and set `styles: false` in the
     `ConsentProvider` options:
 
@@ -275,7 +274,7 @@ plugin and the build fails on c15t's stylesheet. Add the plugin before
     <include src="../shared/examples/tailwind-v3/astro/tailwind-config.mdx" />
 
     When the integration finds Tailwind 3 in the project, it adds
-    `c15t/astro/styles.css` to every page through Astro's CSS pipeline
+    `@inth/astro/styles.css` to every page through Astro's CSS pipeline
     instead of inlining the banner's rules, so the plugin processes it. You
     do not set `styles: false` or import c15t's stylesheet, and the CSS
     entry holds only the directives. The first paint still waits for that
@@ -291,7 +290,7 @@ plugin and the build fails on c15t's stylesheet. Add the plugin before
 
     <include src="../shared/examples/tailwind-v3/svelte/tailwind-config.mdx" />
 
-    Import `c15t/svelte/styles.css` above the directives, import this
+    Import `@inth/svelte/styles.css` above the directives, import this
     stylesheet from `src/main.ts`, and pass `styles={false}` to
     `ConsentProvider`:
 
@@ -305,7 +304,7 @@ plugin and the build fails on c15t's stylesheet. Add the plugin before
 
     <include src="../shared/examples/tailwind-v3/sveltekit/tailwind-config.mdx" />
 
-    Import `c15t/svelte/styles.css` above the directives, import this
+    Import `@inth/svelte/styles.css` above the directives, import this
     stylesheet from your root `+layout.svelte`, and pass `styles={false}` to
     `ConsentRoot`:
 
@@ -455,9 +454,9 @@ instead:
 
 <include src="../shared/examples/tailwind-v3/html/script-tag-light-dom.mdx" />
 
-Import `@c15t/browser/styles.css` above the directives in your Tailwind entry.
-Install `@c15t/browser`, which provides both the stylesheet and
-`@c15t/browser/postcss-tailwind3`:
+Import `@inth/sdk/styles.css` above the directives in your Tailwind entry.
+Install `@inth/sdk`, which provides both the stylesheet and
+`@inth/sdk/postcss-tailwind3`:
 
 <include src="../shared/examples/tailwind-v3/html/tailwind-css-light-dom.mdx" />
 

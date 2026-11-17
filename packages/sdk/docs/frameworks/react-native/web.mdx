@@ -7,7 +7,7 @@ group: frameworks
 A universal Expo app imports `@inth/react-native` once for iOS, Android and
 web. On iOS and Android, consent runs in the native core inside the app binary.
 On web there is no binary, so the same `ConsentProvider`, hooks and components
-run on `@c15t/core`, the engine the Inth web SDKs use. Both talk to the same
+run on `@inth/sdk`, the engine the Inth web SDKs use. Both talk to the same
 Inth project.
 
 Expo web works with Expo SDK 55 through 58 and Metro, the default web bundler.
@@ -16,14 +16,14 @@ configure Inth once in `app.config.ts`.
 
 ## Install the web engine
 
-Install `@c15t/core` next to `@inth/react-native`, plus Expo's web
+Install `@inth/sdk` next to `@inth/react-native`, plus Expo's web
 dependencies if the app does not have them yet:
 
 ```sh
-npx expo install @c15t/core react-dom react-native-web @expo/metro-runtime
+npx expo install @inth/sdk react-dom react-native-web @expo/metro-runtime
 ```
 
-`@c15t/core` is an optional peer dependency. Metro reads it only for web
+`@inth/sdk` is an optional peer dependency. Metro reads it only for web
 bundles. iOS and Android bundles contain none of it, so a native-only app does
 not need it.
 

@@ -7,11 +7,11 @@ group: frameworks
 ## Vite fails to pre-bundle c15t's .vue files
 
 **Check.** `vite dev` reports an error from dependency optimization for a
-`.vue` file under `@c15t/vue`, or the mode throws `c15t: hosted() has no
+`.vue` file under `@inth/vue`, or the mode throws `c15t: hosted() has no
 backend URL`. `consentManifest()` is missing from the `plugins` array of
 `vite.config.ts`.
 
-**Fix.** Add `consentManifest()` from `c15t/vue/vite` to the `plugins` array,
+**Fix.** Add `consentManifest()` from `@inth/vue/vite` to the `plugins` array,
 next to `@vitejs/plugin-vue`, and set `VITE_C15T_BACKEND_URL` (or
 `VITE_INTH_PROJECT_URL`). See the
 [quickstart](/docs/frameworks/vue/quickstart#add-the-vite-plugin).
@@ -22,17 +22,10 @@ next to `@vitejs/plugin-vue`, and set `VITE_C15T_BACKEND_URL` (or
 `projectUrl`, `manifest`, `manifestUrl` and `manifestSnapshot` on the plugin.
 
 **Fix.** Pass `mode: hosted()`, `manifest()` or `testing()` from
-`c15t/vue/vue-plugin`. Move `projectUrl` into the mode, such as
+`@inth/vue/vue-plugin`. Move `projectUrl` into the mode, such as
 `hosted({ projectUrl })`, or let `consentManifest()` supply it.
 
 <include src="../../shared/vite-build-manifest-troubleshooting.mdx" />
-
-## app.use() fails or does nothing
-
-**Check.** Look at where you import the plugin. `c15t/vue` is the Nuxt module
-and is not a Vue plugin.
-
-**Fix.** Import the plugin from `c15t/vue/vue-plugin`.
 
 ## A composable throws "Kernel not found"
 
@@ -117,17 +110,17 @@ initialization in your code.
 ## Names from an earlier alpha are missing
 
 **Check.** An import or component from an earlier v3 alpha fails to resolve,
-such as `c15t/vue/consent-root`, `ConsentPreferencesLink` or the default
-export of `c15t/vue/vite`. The v3 alphas removed names that never shipped in
+such as `@inth/vue/consent-root`, `ConsentPreferencesLink` or the default
+export of `@inth/vue/vite`. The v3 alphas removed names that never shipped in
 a stable release, with no alias.
 
 **Fix.** Use the current names:
 
 | Removed | Use instead |
 | --- | --- |
-| Vue plugin options `projectUrl`, `manifest`, `manifestSnapshot`, `manifestUrl`, `customFetch`, `domain` | `mode`, a factory from `c15t/vue/vue-plugin` that takes them |
-| The default `c15tVue` export of `c15t/vue/vite` | `consentManifest` from `c15t/vue/vite`. The Vue app plugin keeps the name `c15tVue`. |
-| `c15t/vue/consent-root`, `c15t/vue/consent-widget` | Named exports from `c15t/vue/vue-plugin` |
+| Vue plugin options `projectUrl`, `manifest`, `manifestSnapshot`, `manifestUrl`, `customFetch`, `domain` | `mode`, a factory from `@inth/vue/vue-plugin` that takes them |
+| The default `c15tVue` export of `@inth/vue/vite` | `consentManifest` from `@inth/vue/vite`. The Vue app plugin keeps the name `c15tVue`. |
+| `@inth/vue/consent-root`, `@inth/vue/consent-widget` | Named exports from `@inth/vue/vue-plugin` |
 | `ConsentPreferencesLink`, `runtime/components/consent-preferences-link.vue` | `ConsentDialogLink`, `consent-dialog-link.vue` |
 | `ConsentFrame` | `ConsentGate` |
 | `hosted({ url })` | `hosted({ projectUrl })`, or `VITE_C15T_BACKEND_URL` |
@@ -136,6 +129,6 @@ a stable release, with no alias.
 
 [Troubleshoot consent](/docs/guides/troubleshooting) covers problems shared by
 every framework, such as a missing banner, analytics that load before a choice,
-imports that fail because npm installed c15t v2, choices that disappear on
+imports that fail because the wrong package is installed, choices that disappear on
 reload, server HTML that differs from the browser, static builds that fail and
 content blockers that hide the consent UI.

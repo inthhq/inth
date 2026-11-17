@@ -17,8 +17,7 @@ group: reference
   your users' consent records to someone else. Omitting it leaves the add-on
   unmounted: no `__tcfapi`, and no TC String written.
 
-  Install `@c15t/iab` alongside your framework adapter, then mount the IAB
-  components inside an existing consent provider connected to Inth.
+  Mount the IAB components inside an existing consent provider connected to Inth.
 </section>
 
 <section id="configure">
@@ -44,7 +43,7 @@ group: reference
   `c15t: this visitor's policy uses IAB TCF, but no <IABProvider> is mounted`.
   The error happens during render, on the server and in the browser, so
   your error boundary or the framework's error overlay shows it. Render `IABProvider` from
-  `c15t/react/iab` for those visitors, or remove the `iab` model from the
+  `@inth/react/iab` for those visitors, or remove the `iab` model from the
   policy.
 
   ## When the dialog loads
@@ -83,7 +82,7 @@ group: reference
   Fix it one of two ways:
 
   - If the site uses IAB TCF, render `IABProvider` with `IABConsentBanner`
-    and `IABConsentDialog` from `c15t/react/iab` inside your consent
+    and `IABConsentDialog` from `@inth/react/iab` inside your consent
     provider. They can sit next to the standard banner.
   - If it does not, remove the `iab` model from the policy for that region
     in your Inth project or policy pack.
@@ -91,7 +90,7 @@ group: reference
   A backend that answers `gvl: null` turns IAB off for that request. The
   policy then runs as opt-in and nothing throws.
 
-  The check passes once `c15t/react/iab` has loaded. If you import the IAB
+  The check passes once `@inth/react/iab` has loaded. If you import the IAB
   components with a dynamic `import()`, a render of the standard banner
   that happens before the import finishes still throws.
 </section>

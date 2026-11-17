@@ -1,13 +1,13 @@
 # JavaScript (Vite)
 
 The smallest c15t setup for a JavaScript app with a bundler and no UI
-framework: `init()` from `@c15t/browser` mounts the stock consent banner and
+framework: `init()` from `@inth/sdk` mounts the stock consent banner and
 dialog, a "Privacy settings" link reopens the dialog, and PostHog loads only
 after the visitor allows measurement. The build bundles your project's
 policy, and the browser resolves each visitor from it.
 
-- `vite.config.ts` adds `consentManifest` from `c15t/build`, which downloads
-  the policy and serves it as `c15t/generated`.
+- `vite.config.ts` adds `consentManifest` from `@inth/sdk/build`, which downloads
+  the policy and serves it as `@inth/sdk/generated`.
 - `src/main.ts` calls `init()` with the bundled policy and PostHog.
 - `index.html` holds the link. The client opens the dialog for any link to
   `#c15t-preferences`.

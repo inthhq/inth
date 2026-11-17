@@ -21,7 +21,7 @@ policy changes require a rebuild.
 | App Router with `cacheComponents: true` | Either layout above. Never await in the layout itself. | Yes, with either layout | [Cache Components](#use-cache-components) |
 | Static, ISR or `'use cache'` pages | Browser, `ConsentRoot` without `state` | No | [Static, ISR and cached pages](#render-static-isr-and-cached-pages) |
 | Routes that set `ensureStatic` | `'shell'` or `'prefetch'`: either App Router layout. `'navigation'`: browser, without `state` | Same as the layout you use | [Keep pages static with `ensureStatic`](#keep-pages-static-with-ensurestatic) |
-| Pages Router with `getServerSideProps` | `withConsentProps` from `c15t/next/pages` | Yes | [Pages Router](/docs/frameworks/next/pages-router#resolve-consent-in-getserversideprops) |
+| Pages Router with `getServerSideProps` | `withConsentProps` from `@inth/nextjs/pages` | Yes | [Pages Router](/docs/frameworks/next/pages-router#resolve-consent-in-getserversideprops) |
 | Pages Router pages without `getServerSideProps` | Browser, through the same `_app.tsx` and the consent API route | No | [Pages Router](/docs/frameworks/next/pages-router#mount-one-root-for-every-page) |
 | `output: 'export'` | Browser, calling the backend directly | No | [Static export](/docs/frameworks/next/static-export) |
 | A server app that should skip server work and local routes | Browser, calling backend `/init` with `mode: hosted()` | No | [Client-side initialization](/docs/frameworks/next/client-side) |
@@ -37,7 +37,7 @@ frameworks.
 
 ## Stream or await consent in the App Router
 
-Both App Router layouts call `resolveConsent` from `c15t/next/server` in the
+Both App Router layouts call `resolveConsent` from `@inth/nextjs/server` in the
 root layout. They differ in what waits for it.
 
 | Layout | What the visitor gets | Cost |
@@ -75,7 +75,7 @@ whatever the visitor chose. The script loader adopts those tags instead of
 inserting its own. Both App Router layouts do this, including the streamed one,
 and so does the Pages Router `ConsentRoot` on React 18 or 19.
 
-The vendor helpers from `@c15t/integrations` start this way, except Cloudflare
+The vendor helpers from `@inth/integrations` start this way, except Cloudflare
 Zaraz and Sentry. Those two helpers, and `scripts` entries you write yourself,
 start after hydration.
 
@@ -201,7 +201,7 @@ The rendering path decides when consent resolves. The `mode` in
 | Build-time manifest, recommended | `manifest()`, the default, with `withConsentManifest` | Your app has a Next.js server and policy changes ship with a rebuild. |
 | Cached manifest | `manifest({ source: 'runtime' })` | Policy changes must apply without a rebuild. |
 | Backend `/init` | `hosted()` | You want the fewest moving parts, or you export a static site. |
-| Tests | `testing()` from `c15t/next/testing` | Tests only. Throws in production builds. |
+| Tests | `testing()` from `@inth/nextjs/testing` | Tests only. Throws in production builds. |
 
 With a build-time manifest, your Next.js server resolves each visitor locally
 without fetching policy. With runtime caching, warm requests make no policy
@@ -210,7 +210,7 @@ With backend `/init`, every server render or browser initialization
 asks the backend to resolve the visitor. Consent saves go to
 `${projectUrl}/subjects` either way.
 
-Tests run without a backend with `mode: testing()` from `c15t/next/testing`;
+Tests run without a backend with `mode: testing()` from `@inth/nextjs/testing`;
 without a backend URL, `manifest()` and `hosted()` throw. See
 [testing configuration](/docs/frameworks/next/data-fetching-reference#testing-configuration).
 
@@ -223,7 +223,7 @@ lists what each mode does on the server and in the browser, and
 Location-based policies need trusted location headers from your host, such as
 `x-vercel-ip-country` or `cf-ipcountry`. Without them, c15t applies your
 unknown-location rule. Some hosts pass those headers to `proxy.ts` but strip
-them before Server Components run. Add `c15tProxy` from `c15t/next/proxy` in
+them before Server Components run. Add `c15tProxy` from `@inth/nextjs/proxy` in
 that case, as [Forward geography headers](/docs/frameworks/next/geography-headers)
 shows. A static export has no server and cannot read location headers.
 
@@ -246,10 +246,10 @@ requires.
 
 No c15t example or compatibility test runs on the Edge runtime. What is known:
 
-- `c15t/next/pages` takes the Node.js `req` and `res` from `getServerSideProps`
+- `@inth/nextjs/pages` takes the Node.js `req` and `res` from `getServerSideProps`
   and `pages/api` routes, so it needs the Node.js runtime.
 - The App Router examples and tests run `resolveConsent` and the route handlers
-  from `c15t/next/api` on the default Node.js runtime.
+  from `@inth/nextjs/api` on the default Node.js runtime.
 
 Keep the default runtime for layouts, pages and route handlers that use c15t.
 If you set `export const runtime = 'edge'` on them, test the result yourself.

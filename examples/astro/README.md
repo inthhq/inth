@@ -1,6 +1,6 @@
 # Astro starter
 
-An Astro site with server output, the Node adapter and the `c15t/astro`
+An Astro site with server output, the Node adapter and the `@inth/astro`
 integration in its default `manifest()` mode. The build bundles your
 project's policy into the server, and the server resolves each visitor from
 it, so the banner is in the first HTML. PostHog loads once the visitor allows

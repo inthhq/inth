@@ -8,7 +8,7 @@ group: frameworks
 
 ## Declare the vendors
 
-Declaring a vendor turns on vendor switches. Built-in `@c15t/integrations`
+Declaring a vendor turns on vendor switches. Built-in `@inth/integrations`
 helpers then list their own vendor by name, so you only declare a vendor for a
 script of your own, or to replace a helper's name and privacy policy.
 
@@ -18,7 +18,7 @@ Declare the vendors next to the scripts in `c15t.config.ts`, using the
 {/* example: fragment */}
 
 ```ts title="c15t.config.ts"
-import { defineConsentConfig } from 'c15t/next';
+import { defineConsentConfig } from '@inth/nextjs';
 
 export default defineConsentConfig({
 	vendors: [
@@ -53,7 +53,7 @@ category, with its own switch.
 
 ## Build your own vendor switch
 
-`useVendorDraft()` from `c15t/next` reads and stages vendor switches on the
+`useVendorDraft()` from `@inth/nextjs` reads and stages vendor switches on the
 same draft the category switches use, so one save records both.
 `useVendorAllowed(id)` returns whether a vendor may run now: it is declared,
 its category is allowed and the visitor has not switched it off.
@@ -63,7 +63,7 @@ its category is allowed and the visitor has not switched it off.
 ```tsx title="components/x-pixel-switch.tsx (partial)"
 'use client';
 
-import { useVendorAllowed, useVendorDraft } from 'c15t/next';
+import { useVendorAllowed, useVendorDraft } from '@inth/nextjs';
 
 const { vendors, setVendor, save } = useVendorDraft();
 const xPixelAllowed = useVendorAllowed('x-pixel');
@@ -81,7 +81,7 @@ or the vendor list changed under the edit. Call `reset()` to start again.
 `useDeclaredVendors()` returns the declared vendors, and `useVendorChoice()`
 returns the recorded vendor decision, or `null` before the visitor made one.
 To list vendors under each category in your own preference center, call
-`useVendorsListedUnder(category)` from `c15t/next/headless`. It returns the
+`useVendorsListedUnder(category)` from `@inth/nextjs/headless`. It returns the
 vendors the stock dialog lists in that category's row, in declared order. A
 vendor known only from a script's `vendor` slug stays listed after the
 visitor turns it off, so they can turn it back on.

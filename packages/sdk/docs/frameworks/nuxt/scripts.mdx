@@ -13,7 +13,7 @@ instead, so c15t loads it only while its category is allowed. For
 [migrate from `@nuxt/scripts`](#migrate-from-nuxtscripts) or
 [migrate from `nuxt-gtag`](#migrate-from-nuxt-gtag).
 
-Register the helpers from `@c15t/integrations` under the `c15t` key in
+Register the helpers from `@inth/integrations` under the `c15t` key in
 `app/app.config.ts`:
 
 <include src="../../shared/examples/nuxt/app-config.mdx" />
@@ -78,7 +78,7 @@ a category when it is withdrawn. It is plain data, so it can go in
 
 Optional: a visitor can allow marketing and still switch off one vendor in it.
 Skip this unless your site needs per-vendor choices. Declare
-the vendors in the `vendors` option; helpers from `@c15t/integrations` already carry
+the vendors in the `vendors` option; helpers from `@inth/integrations` already carry
 their vendor slug. See [vendor consent](/docs/frameworks/nuxt/vendor-consent).
 
 ## Content Security Policy
@@ -193,7 +193,7 @@ vendor defines once c15t loads it:
 | --- | --- |
 | `proxy.gtag(...)` from `useScriptGoogleAnalytics()` | `window.gtag?.(...)` |
 | `proxy.dataLayer.push(...)` from `useScriptGoogleTagManager()` | `window.dataLayer?.push(...)`, or `window[name]` with a custom `dataLayer` name |
-| `proxy.fbq('track', ...)` from `useScriptMetaPixel()` | `metaPixelEvent(...)` from `@c15t/integrations/meta-pixel`, after checking marketing permission |
+| `proxy.fbq('track', ...)` from `useScriptMetaPixel()` | `metaPixelEvent(...)` from `@inth/integrations/meta-pixel`, after checking marketing permission |
 
 The proxy did nothing during server rendering. `window` does not exist there,
 so call these from an event handler or `onMounted`:

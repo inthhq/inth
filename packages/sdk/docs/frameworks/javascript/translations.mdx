@@ -1,12 +1,12 @@
 ---
 title: Translations
-description: Choose the language of the c15t banner and preference dialog in a JavaScript app, change its wording with i18n, and add languages with @c15t/browser or createConsentRuntime.
+description: Choose the language of the c15t banner and preference dialog in a JavaScript app, change its wording with i18n, and add languages with @inth/sdk or createConsentRuntime.
 group: frameworks
 ---
 
 ## Where the copy comes from
 
-`@c15t/browser` and `c15t` bundle English only. Other languages come from
+`@inth/sdk` and `c15t` bundle English only. Other languages come from
 outside the bundle, and which source wins depends on the transport:
 
 | Transport | Where the copy comes from |
@@ -37,9 +37,9 @@ are not applied.
 
 A key only overrides the backend when your text differs from c15t's built-in
 wording for that language. So passing the stock bundles from
-`@c15t/translations/all` to enable languages keeps edits made in your Inth project visible,
+`@inth/sdk/translations/all` to enable languages keeps edits made in your Inth project visible,
 while a key you actually reworded stays pinned in code. Core bundles only
-English; for other languages, import `@c15t/translations/all` so c15t can
+English; for other languages, import `@inth/sdk/translations/all` so c15t can
 recognize its stock wording.
 
 `testing()` is shown here to keep the example short. It is for tests only
@@ -47,7 +47,7 @@ and throws in production builds.
 
 ## Switch language at runtime
 
-`consent.setLanguage('fr')` from `@c15t/browser` sets the language override
+`consent.setLanguage('fr')` from `@inth/sdk` sets the language override
 and resolves the policy again, which fetches French copy from the backend.
 The banner and dialog re-render. With a runtime or kernel, call
 `kernel.set.language('fr')` and then `kernel.commands.init()`.
@@ -55,10 +55,10 @@ The banner and dialog re-render. With a runtime or kernel, call
 To follow your app's own language setting from the first render, pass it as
 an override: `init({ mode, overrides: { language: 'fr' } })`.
 
-In local mode there is no copy to fetch. With `testing()` from `c15t` or
-`@c15t/browser`, a language set with the `language` override,
+In local mode there is no copy to fetch. With `testing()` from `@inth/sdk/engine` or
+`@inth/sdk`, a language set with the `language` override,
 `setLanguage()` or `kernel.set.language()` switches to that language's copy
-from the bundle or `i18n.messages`. This works for `@c15t/browser` and for a
+from the bundle or `i18n.messages`. This works for `@inth/sdk` and for a
 headless `createConsentRuntime({ mode: testing() })`. A language with no copy
 shows the default copy, and the language a server prefetch detected from
 `Accept-Language` does not switch the copy. The bundle has English only, so
@@ -66,21 +66,21 @@ put every other language in `messages`.
 
 ## Use c15t's bundled translations
 
-`@c15t/translations` has complete copy in more than 30 languages. Its
-`@c15t/translations/all` entry exports `baseTranslations`, keyed by language
+`@inth/sdk/translations` has complete copy in more than 30 languages. Its
+`@inth/sdk/translations/all` entry exports `baseTranslations`, keyed by language
 code, which you can pass as `messages`:
 
 {/* example: fragment */}
 
 ```ts
-import { baseTranslations } from '@c15t/translations/all';
+import { baseTranslations } from '@inth/sdk/translations/all';
 
 init({ i18n: { locale: 'de', messages: { de: baseTranslations.de } } });
 ```
 
 Importing `baseTranslations` adds every language to your bundle. Import it
 only where you need bundled copy in many languages. Install
-`@c15t/translations` to use it.
+`@inth/sdk/translations` to use it.
 
 ## Message keys the stock UI reads
 

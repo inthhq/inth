@@ -32,17 +32,19 @@ Nuxt module have no `i18n` option; their copy comes from the backend.
 
 ## Load only the languages you use
 
-c15t bundles English. Every other language it ships is a separate entry point
-in `@c15t/translations`, named by its language code. Importing one registers
-c15t's built-in copy for that language. `testing()` can then switch to it,
-and your messages that repeat its wording don't hide backend edits. Import
-them in the file that configures the provider, so they load in the browser:
+c15t bundles English. Every other language it ships is a separate
+`translations/<code>` entry in your framework package, such as
+`@inth/react/translations/de`, named by its language code. Importing one
+registers c15t's built-in copy for that language. `testing()` can then switch
+to it, and your messages that repeat its wording don't hide backend edits.
+Import them in the file that configures the provider, so they load in the
+browser:
 
 {/* example: fragment */}
 
 ```ts
-import '@c15t/translations/de';
-import '@c15t/translations/fr';
+import '@inth/react/translations/de';
+import '@inth/react/translations/fr';
 ```
 
 Each entry also exports that copy as `translations`, if you want to read a
@@ -51,17 +53,16 @@ string or build your messages from it:
 {/* example: fragment */}
 
 ```ts
-import { translations as de } from '@c15t/translations/de';
+import { translations as de } from '@inth/react/translations/de';
 ```
 
 The entries are `ar`, `bg`, `bn`, `cs`, `cy`, `da`, `de`, `el`, `es`, `et`,
 `fi`, `fr`, `ga`, `gu`, `he`, `hi`, `hr`, `ht`, `hu`, `id`, `is`, `it`, `ja`,
 `kn`, `ko`, `lb`, `lt`, `lv`, `ml`, `mr`, `ms`, `mt`, `nb`, `nl`, `nn`, `pa`,
 `pl`, `pt`, `rm`, `ro`, `ru`, `sk`, `sl`, `sv`, `ta`, `te`, `th`, `tr`, `ur`,
-`vi`, `yi` and `zh`.
-`@c15t/translations/all` still loads every language at once. The `c15t`
-package doesn't re-export these entries, so add `@c15t/translations` to your
-dependencies.
+`vi`, `yi` and `zh`. `translations/all` still loads every language at once.
+Every framework package has the same entries. Without a framework, import
+them from `@inth/sdk/translations/<code>`.
 
 ## Combine messages with backend copy
 
@@ -77,7 +78,7 @@ wording for that language. So passing a stock bundle to enable a language
 keeps backend edits visible, while a key you actually reworded stays pinned
 in code. c15t only recognizes the built-in wording of English and of the
 languages you [import](#load-only-the-languages-you-use), such as
-`@c15t/translations/de` or `@c15t/translations/all`.
+`@inth/react/translations/de` or `@inth/react/translations/all`.
 
 ## Write labels that describe the action
 
@@ -120,7 +121,7 @@ What follows the direction:
 
 - Text, headings and the button row in the banner, the preference dialog and
   the preference widget flow right to left.
-- The HTML script tag, `@c15t/browser` and Astro's banner also set `lang` on
+- The HTML script tag, `@inth/sdk` and Astro's banner also set `lang` on
   their surfaces. React, Vue and Svelte set `dir` only, so set `lang` on
   `<html>` yourself.
 

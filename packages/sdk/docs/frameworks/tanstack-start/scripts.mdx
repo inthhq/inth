@@ -29,7 +29,7 @@ function's return value must be serializable, and vendor loaders contain
 functions. Scripts only load in the browser, so importing them in the root
 route adds nothing to the server HTML.
 
-Each helper from `@c15t/integrations` sets its own category and a stable `id`.
+Each helper from `@inth/integrations` sets its own category and a stable `id`.
 Remove every other loader for the same vendor, such as a `scripts` entry in a
 route's `head()` or an SDK you initialize at module level, so the vendor loads
 once and only through c15t. [Integrations](/docs/integrations/overview) lists
@@ -72,12 +72,12 @@ configuration and browser limits.
 
 Optional: a visitor can allow marketing and still switch off one vendor in it.
 Skip this unless your site needs per-vendor choices. Pass
-`vendors` to `ConsentRoot`. Helpers from `@c15t/integrations` already carry
+`vendors` to `ConsentRoot`. Helpers from `@inth/integrations` already carry
 their vendor slug. See [vendor consent](/docs/frameworks/tanstack-start/vendor-consent).
 
 ## Send your own analytics events
 
-`useEventDispatcher()` from `c15t/tanstack-start` returns the provider's event
+`useEventDispatcher()` from `@inth/tanstack-start` returns the provider's event
 dispatcher. It sends to the `scripts` you passed to `ConsentRoot` and checks
 consent when an event goes out. For pageviews, render a component that watches
 the router's location:

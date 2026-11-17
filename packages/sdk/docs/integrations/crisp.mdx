@@ -18,10 +18,10 @@ c15t reloads the page, which c15t does by default.
 Copy the website ID from your Crisp installation snippet, where it is assigned
 to `CRISP_WEBSITE_ID`.
 
-<CommandTabs command="@c15t/integrations" mode="install" />
+<CommandTabs command="@inth/integrations" mode="install" />
 
 ```ts title="src/consent-scripts.ts"
-import { crisp } from '@c15t/integrations/crisp';
+import { crisp } from '@inth/integrations/crisp';
 
 export const scripts = [crisp({ websiteId: 'YOUR_WEBSITE_ID' })];
 ```

@@ -7,7 +7,7 @@ group: frameworks
 ## Load DevTools only in development
 
 The module does not register `ConsentDevTools`. Import it from
-`c15t/vue/devtools` with a dynamic import that runs only in development:
+`@inth/nuxt/devtools` with a dynamic import that runs only in development:
 
 <include src="../../../shared/examples/nuxt/devtools.mdx" />
 
@@ -38,7 +38,7 @@ exposes the kernel to it. To turn the tab off in development, set
 
 ```ts title="nuxt.config.ts"
 export default defineNuxtConfig({
-	modules: ['c15t/vue'],
+	modules: ['@inth/nuxt'],
 	c15t: { devtools: false },
 });
 ```

@@ -1,6 +1,6 @@
 ---
 title: Headless
-description: Build a custom consent banner or embed gate in Next.js with the c15t/next/headless hooks inside your existing ConsentRoot.
+description: Build a custom consent banner or embed gate in Next.js with the @inth/nextjs/headless hooks inside your existing ConsentRoot.
 group: frameworks
 ---
 
@@ -9,7 +9,7 @@ group: frameworks
 <import src="../../shared/react/headless.mdx#when-to-go-headless" />
 
 Check for a policy before rendering your own surfaces. `useModel()` from
-`c15t/next` returns `null` while no rule has resolved and `'none'` under a rule
+`@inth/nextjs` returns `null` while no rule has resolved and `'none'` under a rule
 that owes no consent UI, and the pre-built surfaces render nothing in that
 state.
 
@@ -29,7 +29,7 @@ import {
 	useBannerCopy,
 	useConsentLabels,
 	useHeadlessConsentUI,
-} from 'c15t/next/headless';
+} from '@inth/nextjs/headless';
 
 function BannerContent() {
 	const { banner, performAction, openDialog } = useHeadlessConsentUI();

@@ -1,12 +1,12 @@
 ---
 title: Customize
-description: Change the stock @c15t/browser banner, preference dialog and floating trigger in a bundled JavaScript app with theme tokens, CSS, layout, copy, legal links and UI options.
+description: Change the stock @inth/sdk banner, preference dialog and floating trigger in a bundled JavaScript app with theme tokens, CSS, layout, copy, legal links and UI options.
 group: frameworks
 ---
 
 ## Pick the right option
 
-The stock UI from `init()` in `@c15t/browser` is a banner, a preference
+The stock UI from `init()` in `@inth/sdk` is a banner, a preference
 dialog and an optional floating trigger. Each change has one place to go:
 
 | Change | Option |
@@ -75,7 +75,7 @@ import it and turn the inline copy off:
 {/* example: fragment */}
 
 ```ts
-import '@c15t/browser/styles.css';
+import '@inth/sdk/styles.css';
 
 const consent = init({
 	mode: manifest(),
@@ -83,9 +83,9 @@ const consent = init({
 });
 ```
 
-If your bundler runs Tailwind 3, add `@c15t/browser/postcss-tailwind3` before
+If your bundler runs Tailwind 3, add `@inth/sdk/postcss-tailwind3` before
 `tailwindcss` in your PostCSS plugins, using the object form:
-`{ '@c15t/browser/postcss-tailwind3': {}, tailwindcss: {} }`. Without the
+`{ '@inth/sdk/postcss-tailwind3': {}, tailwindcss: {} }`. Without the
 plugin, Tailwind 3 drops the imported rules without an
 error and its preflight overrides the UI. A page that keeps the default shadow
 root needs none of this, because page CSS does not reach the UI.

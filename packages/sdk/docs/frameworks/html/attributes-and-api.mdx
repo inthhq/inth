@@ -15,12 +15,12 @@ group: frameworks
 
 ## Script files
 
-`@c15t/browser` publishes browser bundles. Inth and a self-hosted c15t
+`@inth/sdk` publishes browser bundles. Inth and a self-hosted c15t
 backend serve `c15t.js`, `c15t.headless.js` and `c15t.iab.js` from the
 backend's URL, such as `https://your-project.inth.app/c15t.js`, with the
 backend URL already configured. Headless and IAB routes also inline the
 policy manifest. Load a file from
-`https://cdn.jsdelivr.net/npm/@c15t/browser@<version>/dist/<file>`, or the
+`https://cdn.jsdelivr.net/npm/@inth/sdk@<version>/dist/<file>`, or the
 same path on unpkg, when no backend serves it, such as `c15t.devtools.js` or
 `c15t.testing.js`.
 
@@ -130,7 +130,7 @@ A backend's `/c15t.js` and `/c15t.hosted.js` name its own
 [routes for them](/docs/self-host/api/endpoints#serve-the-script-tag). Set
 `data-hosted-src`, `data-commit-src`, `data-records-src` or
 `data-dialog-src` on the tag to load a file from another URL; take all of
-them from the same `@c15t/browser` version. Under a Content Security Policy,
+them from the same `@inth/sdk` version. Under a Content Security Policy,
 the `script-src` that allows `c15t.js` must allow the other files too; their
 tags carry `data-nonce` or the tag's `nonce`.
 
@@ -246,7 +246,7 @@ backend's `/init`. [Data fetching](/docs/concepts/data-fetching) compares the
 modes.
 
 Use the default `c15t.js` for hosted mode. For manifest mode with the stock
-UI, use the `@c15t/browser` ES module. The headless script supports manifest
+UI, use the `@inth/sdk` ES module. The headless script supports manifest
 mode with your own UI, and the IAB script supports it for IAB policies.
 Loading `c15t.js` without a backend URL throws.
 

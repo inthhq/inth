@@ -1,6 +1,6 @@
 # Astro demo
 
-An Astro site wired to `c15t/astro`. It exercises the parts
+An Astro site wired to `@inth/astro`. It exercises the parts
 that are hard to see in isolation: a banner rendered without any framework
 JavaScript, a preference centre that only downloads when someone opens it,
 consent-gated scripts, geo overrides, and a runtime that survives
@@ -75,7 +75,7 @@ this app.
 ## Banner experiment
 
 `C15T_EXPERIMENT=1` puts the banner-shape experiment in the showcase config.
-The banner is server-rendered, so `@c15t/astro` has no built-in assignment:
+The banner is server-rendered, so `@inth/astro` has no built-in assignment:
 the host resolves the arm, the way a flag provider would. The config sets
 `middleware: false` and registers `src/experiment-middleware.ts`, which
 exports `consentMiddleware({ experimentArm })` and reads the arm from the URL.
@@ -107,7 +107,7 @@ C15T_IAB=1 bun run --cwd internals/fixtures/astro-demo dev
 
 The banner is server-rendered with no framework JavaScript — the purposes
 it names, the "+N more" count and the partner count all come from
-`resolveIABBannerSummary` in `@c15t/iab/headless`, the same model the
+`resolveIABBannerSummary` in `@inth/sdk/iab/headless`, the same model the
 React, Svelte and Vue banners read. "Customize" opens the preference
 centre; the "N partners" link opens it on the vendors tab.
 
@@ -117,7 +117,7 @@ that is why the flag exists rather than a per-page toggle.
 `demo-gvl.mjs` holds a two-vendor Global Vendor List. A real site never
 ships one: hosted and manifest mode fetch it through `/init`, and an
 offline site points `iab.gvlUrl` at where the real list lives, which goes
-through the in-process cache in `@c15t/core/server`.
+through the in-process cache in `@inth/sdk/server`.
 
 ## Consent example
 

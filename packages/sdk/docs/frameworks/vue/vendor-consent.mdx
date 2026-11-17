@@ -8,7 +8,7 @@ group: frameworks
 
 ## Declare the vendors
 
-Declaring a vendor turns on vendor switches. Built-in `@c15t/integrations`
+Declaring a vendor turns on vendor switches. Built-in `@inth/integrations`
 helpers then list their own vendor by name, so you only declare a vendor for a
 script of your own, or to replace a helper's name and privacy policy.
 
@@ -18,7 +18,7 @@ slug each script already carries:
 {/* example: fragment */}
 
 ```ts title="src/scripts.ts (partial)"
-import type { Vendor } from 'c15t';
+import type { Vendor } from '@inth/vue';
 
 export const vendors: Vendor[] = [
 	{
@@ -56,7 +56,7 @@ declared vendor under its category, with its own switch.
 
 ## Build your own vendor switch
 
-`useConsentDraft()` from `c15t/vue/vue-plugin` holds the category and vendor
+`useConsentDraft()` from `@inth/vue/vue-plugin` holds the category and vendor
 switches of a preference form. `vendors` has one value per declared vendor,
 `setVendor(id, granted)` changes one, and `save()` records the categories and
 the vendors that changed:
@@ -65,7 +65,7 @@ the vendors that changed:
 
 ```vue title="src/components/x-pixel-switch.vue (partial)"
 <script setup lang="ts">
-import { useConsentDraft } from 'c15t/vue/vue-plugin';
+import { useConsentDraft } from '@inth/vue/vue-plugin';
 
 const { vendors, setVendor, save } = useConsentDraft();
 </script>
@@ -85,7 +85,7 @@ is `true`. [Composables](/docs/frameworks/vue/composables) covers the draft.
 
 ## Check whether a vendor may run
 
-`useVendorAllowed(id)` from `c15t/vue/vue-plugin` returns a computed that is
+`useVendorAllowed(id)` from `@inth/vue/vue-plugin` returns a computed that is
 `true` while the vendor may run: it is declared, its category is allowed and
 the visitor has not switched it off.
 
@@ -93,7 +93,7 @@ the visitor has not switched it off.
 
 ```vue title="src/components/x-pixel-status.vue (partial)"
 <script setup lang="ts">
-import { useVendorAllowed } from 'c15t/vue/vue-plugin';
+import { useVendorAllowed } from '@inth/vue/vue-plugin';
 
 const xPixelAllowed = useVendorAllowed('x-pixel');
 </script>

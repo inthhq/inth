@@ -30,7 +30,7 @@ you deploy.
 [Create an Inth project](https://inth.com), set its policy rules and add your
 site's origin to its trusted origins. Copy the project's backend URL.
 
-<CommandTabs command="c15t @c15t/integrations" mode="install" />
+<CommandTabs command="@inth/nextjs @inth/integrations" mode="install" />
 
 ## Set the backend URL
 
@@ -88,7 +88,7 @@ such as `createPagesConsentRoute({}, 'path')` for `[...path].ts`.
 
 There is no c15t stylesheet to import. The components render their own rules
 as `<style>` elements, so no stylesheet request holds back the first paint.
-With Tailwind CSS 3, import `c15t/next/styles.css` yourself and set
+With Tailwind CSS 3, import `@inth/nextjs/styles.css` yourself and set
 `styles: false` in `ConsentRoot`'s `options`, as
 [Customize](/docs/frameworks/next/customize#load-the-stylesheet-yourself)
 shows.
@@ -105,7 +105,7 @@ bundled policy with the browser request's location headers.
 
 ## Resolve consent in getServerSideProps
 
-Export `withConsentProps()` from `c15t/next/pages` as the page's
+Export `withConsentProps()` from `@inth/nextjs/pages` as the page's
 `getServerSideProps`:
 
 <include src="../../shared/examples/nextjs-pages-router/pages-ssr.mdx" />

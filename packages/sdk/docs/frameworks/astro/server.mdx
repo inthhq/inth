@@ -1,6 +1,6 @@
 ---
 title: Server API
-description: How the c15t middleware resolves consent for each Astro request, what Astro.locals.c15t holds, the helpers in c15t/astro/server, the injected consent route, and how to cache server-rendered pages safely.
+description: How the c15t middleware resolves consent for each Astro request, what Astro.locals.c15t holds, the helpers in @inth/astro/server, the injected consent route, and how to cache server-rendered pages safely.
 group: frameworks
 ---
 
@@ -124,7 +124,7 @@ In `manifest()` mode the integration injects one on-demand route,
 | `GET /api/c15t/init` | The policy for this request, resolved from the bundled or cached manifest. The browser calls it on prerendered pages, after a failed server resolution, and when a page's consent changes after it loads |
 | `GET /api/c15t/manifest` | Your project's public policy file: the build's snapshot when the build bundled one, otherwise proxied from the backend with its cache headers |
 
-The route is the consent route handler from `@c15t/core/server`, shared
+The route is the consent route handler from `@inth/sdk/server`, shared
 with the Next.js, TanStack Start, SvelteKit and Nuxt adapters. A vendor list that cannot be loaded
 fails the init request rather than answering `gvl: null`, which the browser
 would read as "IAB is off". The manifest path passes upstream only a
@@ -151,13 +151,13 @@ that path. To keep `/init` on your origin, keep the injected route and move
 it with `routePrefix` instead.
 
 The handlers the injected route uses are exported as
-`createConsentRouteHandlers({ options })` from `c15t/astro/server`. Mount
+`createConsentRouteHandlers({ options })` from `@inth/astro/server`. Mount
 them yourself for other clients, or for browser resolution: with
 `mode: manifest({ resolve: 'browser', manifestUrl: '/api/c15t/manifest' })`,
 the browser fetches the manifest from your route. `GET(request, { locals })`
 dispatches by the last path segment.
 
-## Helpers in `c15t/astro/server`
+## Helpers in `@inth/astro/server`
 
 The components and the middleware are built from these helpers. Use them for
 a custom middleware or your own components:
@@ -176,11 +176,11 @@ a custom middleware or your own components:
 
 `resolveConsentContext` takes the integration options already resolved. Get
 them from `Astro.locals.c15t.options`, or with `resolveOptions()` from
-`c15t/astro`. Pass `prerendered: true` only for output that every visitor
+`@inth/astro`. Pass `prerendered: true` only for output that every visitor
 shares. It drops the request's cookie and location.
 
 To run c15t's middleware inside your own, set `middleware: false` and
-register `onRequest` from `c15t/astro/middleware` with Astro's `sequence()` in
+register `onRequest` from `@inth/astro/middleware` with Astro's `sequence()` in
 `src/middleware.ts`. Put it before anything that renders consent components.
 
 ## Check the server path

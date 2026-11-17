@@ -17,7 +17,7 @@ the `ConsentDialog` it opens.
 ```tsx title="components/site-footer.tsx"
 'use client';
 
-import { ConsentDialogLink } from 'c15t/next';
+import { ConsentDialogLink } from '@inth/nextjs';
 import Link from 'next/link';
 
 export function SiteFooter() {
@@ -43,7 +43,7 @@ Router, render it from `pages/_app.tsx` inside `ConsentRoot`, next to
 renders a `button`, so the CSS for `.footer-link` should reset button chrome
 if your footer styles target anchors only.
 
-`c15t/next/components/consent-dialog-link` exports `ConsentDialogLink` and
+`@inth/nextjs/components/consent-dialog-link` exports `ConsentDialogLink` and
 nothing else. Import from that path when a module needs only the link, so it
 does not load the rest of the adapter.
 

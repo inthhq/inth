@@ -50,12 +50,14 @@ Pass `webViewConsentSource()` as the `consentSource` option wherever you
 configure Inth. Inside a WebView your app set up for this origin, it returns a
 source that reads the app's consent. Everywhere else, including a normal
 browser and server rendering, it returns `undefined`, and Inth behaves as if
-the option were not set.
+the option were not set. Import it from the `engine` entry of your framework
+package, here `@inth/react/engine`, or from `@inth/sdk/engine` in plain
+JavaScript.
 
 {/* example: fragment */}
 
 ```ts
-import { webViewConsentSource } from 'c15t';
+import { webViewConsentSource } from '@inth/react/engine';
 
 const options = {
 	consentSource: webViewConsentSource(),

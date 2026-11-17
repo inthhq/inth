@@ -32,7 +32,7 @@ surface:
 ```tsx title="components/privacy-menu-item.tsx"
 'use client';
 
-import { useSetActiveUI } from 'c15t/next';
+import { useSetActiveUI } from '@inth/nextjs';
 
 export function PrivacyMenuItem() {
 	const setActiveUI = useSetActiveUI();
@@ -58,7 +58,7 @@ instead; this dialog stays closed for the `iab` model.
 
 <import src="../../../shared/react/components/consent-dialog.mdx#composition" />
 
-The compound parts import from `c15t/next` as properties of `ConsentDialog`,
+The compound parts import from `@inth/nextjs` as properties of `ConsentDialog`,
 and `ConsentWidget` from the same module. Server Components cannot render
 them: keep the composition in a file with `'use client'`. See
 [Customize](/docs/frameworks/next/customize) for slots and tokens.

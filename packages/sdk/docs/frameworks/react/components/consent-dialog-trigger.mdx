@@ -11,7 +11,7 @@ group: frameworks
 {/* example: fragment */}
 
 ```tsx title="src/consent.tsx"
-import { ConsentDialogTrigger } from 'c15t/react';
+import { ConsentDialogTrigger } from '@inth/react';
 
 // Inside the ConsentProvider from your quickstart, next to the dialog:
 <ConsentDialogTrigger showWhen="after-prompt" />;
@@ -30,7 +30,7 @@ The button carries `data-c15t-rights` with the rights the active policy guarante
 Use `ConsentDialogTriggerToolbar` when you want app-owned controls beside the privacy trigger. It always renders exactly one built-in action that opens the preference center, so `actions` only holds controls your app owns.
 
 ```tsx
-import { ConsentDialogTriggerToolbar } from 'c15t/react';
+import { ConsentDialogTriggerToolbar } from '@inth/react';
 
 <ConsentDialogTriggerToolbar
 	ariaLabel="Site controls"

@@ -1,6 +1,6 @@
 # Live vendor monitor
 
-Live browser probes for every built-in `@c15t/integrations` integration, run every
+Live browser probes for every built-in `@inth/integrations` integration, run every
 six hours and on pushes to the publishing branches by
 `.github/workflows/script-vendor-monitor.yml` (issue
 [#899](https://github.com/c15t/c15t/issues/899)). Unlike the jsdom contract
@@ -14,7 +14,7 @@ The probes import `#inline-start` from this package's `dist/`, so build
 integrations and its dependencies first:
 
 ```sh
-bun turbo run build --filter=@c15t/integrations
+bun turbo run build --filter=@inth/integrations
 bunx playwright install --with-deps chromium
 ```
 
@@ -22,13 +22,13 @@ Then:
 
 ```sh
 # All vendors
-bun run --filter @c15t/integrations test:live-vendors
+bun run --filter @inth/integrations test:live-vendors
 
 # One vendor
-bun run --filter @c15t/integrations test:live-vendors -- --vendor microsoft-clarity
+bun run --filter @inth/integrations test:live-vendors -- --vendor microsoft-clarity
 
 # Custom report path
-bun run --filter @c15t/integrations test:live-vendors -- --report ./report.json
+bun run --filter @inth/integrations test:live-vendors -- --report ./report.json
 ```
 
 The runner exits non-zero when any probed vendor fails and always writes a

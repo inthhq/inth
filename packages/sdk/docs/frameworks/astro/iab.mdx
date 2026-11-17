@@ -14,7 +14,7 @@ String. You need:
   [register.consensu.org/CMP](https://register.consensu.org/CMP). Every TC
   String names the CMP that wrote it, so use the ID your company registered.
 
-The `c15t` package includes the IAB code, so there is nothing else to
+`@inth/astro` includes the IAB code, so there is nothing else to
 install.
 
 ## Turn on IAB in the integration
@@ -35,7 +35,7 @@ external IAB stylesheet so the host's CSS pipeline can process it.
 
 IAB stays off until you set `iab`. Without it, or with `iab: false` or
 `enabled: false`, the page script contains no CMP code and the browser never
-downloads `@c15t/iab`.
+downloads `@inth/sdk/iab`.
 
 If a visitor's policy uses the `iab` model and the backend sends its vendor
 list while `iab` is unset, the server render throws an `IABUnavailableError`

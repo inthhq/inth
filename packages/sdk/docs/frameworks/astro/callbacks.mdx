@@ -73,7 +73,7 @@ vendor on the page can stop itself. See
 ## Listen from a script instead
 
 Callbacks run for the whole site. A script on one page can subscribe to
-changes itself with `subscribe()` from `c15t/astro/client`. For single
+changes itself with `subscribe()` from `@inth/astro/client`. For single
 events, `getConsentClient()?.runtime?.kernel.events.on('choice:recorded', listener)`
 takes the same event names the callbacks map to. Call it after
 `await getConsentClient()?.ready`: the runtime loads after the page for a

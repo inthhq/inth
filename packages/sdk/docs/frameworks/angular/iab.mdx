@@ -14,7 +14,7 @@ String names the CMP that wrote it, so an ID you did not register attributes
 your visitors' consent to someone else. Example CMP IDs in c15t demos are not
 production configuration.
 
-`@c15t/angular` loads the TCF add-on from `@c15t/iab`, which it installs as a
+`@inth/angular` loads the TCF add-on from `@inth/sdk/iab`, which it installs as a
 dependency. The add-on arrives through a dynamic import, so apps without the
 `iab` option never download it.
 
@@ -37,8 +37,8 @@ dialog adds its rules when it opens, including the base rules it needs when
 rendered without a banner. Each sheet appears once per page.
 
 To run the CSS through Tailwind CSS 3 or put it in a named cascade layer,
-set `styles: false` in `provideC15t()` and add `@c15t/angular/styles.css`
-followed by `@c15t/angular/iab/styles.css` to the `styles` array in
+set `styles: false` in `provideC15t()` and add `@inth/angular/styles.css`
+followed by `@inth/angular/iab/styles.css` to the `styles` array in
 `angular.json`.
 [Stylesheets and CSS layers](/docs/customization/stylesheets#import-the-stylesheet-yourself)
 explains when to use that option.
@@ -83,7 +83,7 @@ actions queue until the add-on loads; `whenIABReady()` resolves once it has.
 [ConsentManager](./services#read-and-change-iab-tcf-consent) lists every
 member.
 
-For a custom IAB banner, `getIABTranslations()` from `@c15t/angular/iab` returns
+For a custom IAB banner, `getIABTranslations()` from `@inth/angular/iab` returns
 the IAB copy with English fallbacks.
 
 ## Restrict how vendors use a purpose

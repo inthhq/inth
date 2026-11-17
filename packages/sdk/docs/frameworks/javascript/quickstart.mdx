@@ -1,6 +1,6 @@
 ---
 title: Quickstart
-description: Add the stock c15t banner, preferences and script gating to a JavaScript app built with Vite or another bundler, with no UI framework, using @c15t/browser.
+description: Add the stock c15t banner, preferences and script gating to a JavaScript app built with Vite or another bundler, with no UI framework, using @inth/sdk.
 group: frameworks
 ---
 
@@ -9,7 +9,7 @@ group: frameworks
 [Create an Inth project](https://inth.com/dashboard/sign-up?framework=javascript), set its policy rules, add your
 app's origin to its trusted origins, and copy the project's backend URL.
 
-This guide uses `@c15t/browser` as an ES module in a Vite app, with your
+This guide uses `@inth/sdk` as an ES module in a Vite app, with your
 project's policy bundled at build time. `init()` starts the consent runtime
 and mounts the stock banner and preference dialog. For your own UI, use the
 [headless runtime](/docs/frameworks/javascript/headless) instead. Sites
@@ -21,11 +21,10 @@ Rebuild after changing policies, translations or vendors.
 
 ## Install
 
-<CommandTabs command="@c15t/browser c15t @c15t/integrations" mode="install" />
+<CommandTabs command="@inth/sdk @inth/integrations" mode="install" />
 
-`@c15t/browser` is not part of the `c15t` package. `c15t` supplies the Vite
-plugin at `c15t/build`, and `@c15t/integrations` the PostHog helper used
-below.
+`@inth/sdk` also supplies the Vite plugin at `@inth/sdk/build`, and
+`@inth/integrations` the PostHog helper used below.
 
 ## Bundle your policy
 
@@ -46,7 +45,7 @@ too. When both are set, `VITE_C15T_BACKEND_URL` wins.
 `consentManifest` downloads your project's public policy from `/manifest`
 during `vite build`, or in `vite dev` when the app first loads it, and serves
 it to your app as `snapshot`
-from `c15t/generated`. No file is written into your project.
+from `@inth/sdk/generated`. No file is written into your project.
 
 <include src="../../shared/build-time-manifest-notes.mdx" />
 
@@ -68,7 +67,7 @@ current policy, which can be newer than the snapshot. Vite reads
 you serve the files.
 
 To apply policy edits without rebuilding, pass `hosted()` from
-`@c15t/browser` as the mode instead. The browser then requests the policy from
+`@inth/sdk` as the mode instead. The browser then requests the policy from
 `/init` on every page load. Your bundle keeps only the mode you import.
 
 PostHog waits for measurement permission with `loadMode: 'after-consent'`, and
@@ -144,7 +143,7 @@ ship.
 - Read consent from your code. `consent.has('measurement')` answers whether a
   category is allowed now, `consent.on('consent', listener)` reports changes,
   and `consent.save({ measurement: true })` records a choice. The
-  [@c15t/browser API](/docs/frameworks/javascript/api/browser) lists every
+  [@inth/sdk API](/docs/frameworks/javascript/api/browser) lists every
   method, and [options](/docs/frameworks/javascript/api/browser-options) every
   option.
 - Run code on consent events with [callbacks](/docs/frameworks/javascript/callbacks).

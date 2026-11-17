@@ -25,9 +25,7 @@ from a bottom bar to a fully custom one, with tested code for this framework.
 
 The provider's `theme` prop does not turn colors, radius or other tokens into
 CSS in the browser. Generate the CSS on the server instead, so the first paint
-already uses your brand. Install `@c15t/ui`, which has the generator:
-
-<CommandTabs command="@c15t/ui" mode="install" />
+already uses your brand with `generateThemeCSS` from `@inth/svelte`.
 
 Put the theme in a module under `src/lib/server`. SvelteKit refuses to import
 server-only modules into browser code, so the generator never reaches the bundle:

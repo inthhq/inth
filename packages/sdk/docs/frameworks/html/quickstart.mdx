@@ -10,7 +10,7 @@ group: frameworks
 site's origin to its trusted origins, and copy the project's backend URL. The
 URL is public configuration. It ends up in your page's HTML, which is expected.
 
-This guide loads `@c15t/browser` from your Inth project with a `<script>`
+This guide loads `@inth/sdk` from your Inth project with a `<script>`
 tag. The tag brings the banner, the preference dialog, stored choices and
 script gating. There is nothing to install or build. If your site has a bundler, the same
 package is available as an ES module; [choose your setup](/docs/concepts/choose-your-setup)
@@ -137,9 +137,9 @@ If no banner appears, the policy for your location may not ask for one. See
   your backend's origin in place of `consent.example.com`.
 - **From a CDN.** Load a pinned version from jsDelivr. Use `c15t.js` with
   `data-project-url` for hosted mode:
-  `<script src="https://cdn.jsdelivr.net/npm/@c15t/browser@<version>/dist/c15t.js" data-project-url="https://your-project.inth.app" defer></script>`.
+  `<script src="https://cdn.jsdelivr.net/npm/@inth/sdk@<version>/dist/c15t.js" data-project-url="https://your-project.inth.app" defer></script>`.
   Replace `<version>` with the exact version listed on
-  [npm](https://www.npmjs.com/package/@c15t/browser?activeTab=versions).
+  [npm](https://www.npmjs.com/package/@inth/sdk?activeTab=versions).
   `c15t.js` loads `c15t.hosted.js`, `c15t.commit.js`, `c15t.records.js` and
   `c15t.dialog.js` from the same folder. If you copy `c15t.js` to your own
   server, copy those four next to it. `c15t.dialog.js` is recommended, not
@@ -147,7 +147,7 @@ If no banner appears, the policy for your location may not ask for one. See
   opens its own copy of the dialog.
   A URL without a version loads the newest release, so a new release can
   change your banner without a deploy.
-- **Manifest mode.** Use the `@c15t/browser` ES module for manifest mode
+- **Manifest mode.** Use the `@inth/sdk` ES module for manifest mode
   with the stock UI, or `c15t.headless.js` with your own UI. These clients can
   fetch or inline the backend's cacheable policy manifest. The IAB script
   also supports manifest mode for IAB policies. See

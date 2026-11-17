@@ -20,14 +20,14 @@ be read at build time, for example because it imports something Node can't
 load, the build warns and fetches as for `manifest()`.
 
 The wrapper also finds `c15t.config.ts` (or `.mts`, `.js`, `.mjs`) at the
-project root, next to `next.config.ts`, and points `c15t/generated` at the
+project root, next to `next.config.ts`, and points `@inth/nextjs/generated` at the
 cache, in Turbopack and webpack. `ConsentRoot`, `resolveConsent` and the
 consent route read both without an import. Server code that needs the
-snapshot itself imports `snapshot` from `c15t/generated`. Only server
+snapshot itself imports `snapshot` from `@inth/nextjs/generated`. Only server
 bundles get the snapshot: in a browser bundle,
-`c15t/generated` imports `server-only`, so importing it from a client
-component fails the build. The wrapper also adds `c15t`, `@c15t/core` and
-`@c15t/nextjs` to `transpilePackages`, so Pages Router server bundles see the
+`@inth/nextjs/generated` imports `server-only`, so importing it from a client
+component fails the build. The wrapper also adds `@inth/sdk` and `@inth/nextjs` to
+`transpilePackages`, so Pages Router server bundles see the
 aliases. A package you list in `serverExternalPackages` stays external: it
 reads no `c15t.config.ts` and fetches the policy at runtime.
 

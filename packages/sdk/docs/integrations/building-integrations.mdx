@@ -1,6 +1,6 @@
 ---
 title: Custom integrations
-description: Gate a vendor that has no @c15t/integrations helper, or sync consent with an SDK your app already loads, using a c15t script configuration.
+description: Gate a vendor that has no @inth/integrations helper, or sync consent with an SDK your app already loads, using a c15t script configuration.
 group: integrations
 ---
 
@@ -8,10 +8,12 @@ group: integrations
 
 Check the [integration list](/docs/integrations/overview) first. For a vendor
 without a helper, write a script configuration with a stable `id`, a category
-and the source URL, then register it like any helper:
+and the source URL, then register it like any helper. The `Script` type comes
+from your framework package, here `@inth/react`, or from `@inth/sdk/engine`
+in plain JavaScript:
 
 ```ts title="src/consent-scripts.ts"
-import type { Script } from 'c15t';
+import type { Script } from '@inth/react';
 
 const exampleAnalytics: Script = {
 	id: 'example-analytics',

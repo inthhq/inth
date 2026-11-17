@@ -8,7 +8,7 @@ group: frameworks
 
 See the [design gallery](/docs/customization/recipes) for five banner designs,
 from a bottom bar to a fully custom one. Its React code works in Next.js with
-the same components imported from `c15t/next`.
+the same components imported from `@inth/nextjs`.
 
 ## Load the stylesheet yourself
 
@@ -23,7 +23,7 @@ named cascade layer. Set `styles: false` under `options` in
 {/* example: fragment */}
 
 ```ts title="c15t.config.ts"
-import { defineConsentConfig } from 'c15t/next';
+import { defineConsentConfig } from '@inth/nextjs';
 
 export default defineConsentConfig({ options: { styles: false } });
 ```
@@ -34,7 +34,7 @@ Then import c15t once from the global stylesheet that `app/layout.tsx` or
 {/* example: fragment */}
 
 ```css title="styles/globals.css"
-@import 'c15t/next/styles.css';
+@import '@inth/nextjs/styles.css';
 ```
 
 <import src="../../shared/react/styling/overview.mdx#tailwind-layers" />
@@ -83,7 +83,7 @@ export const actionTheme = defineTheme({
 {/* example: fragment */}
 
 ```ts title="c15t.config.ts"
-import { defineConsentConfig } from 'c15t/next';
+import { defineConsentConfig } from '@inth/nextjs';
 
 import { actionTheme } from './lib/theme';
 
@@ -100,7 +100,7 @@ the existing root, replace the stock banner with:
 ```tsx title="components/regional-banner.tsx"
 'use client';
 
-import { ConsentBanner, usePolicyRule } from 'c15t/next';
+import { ConsentBanner, usePolicyRule } from '@inth/nextjs';
 
 export function RegionalBanner() {
 	const policy = usePolicyRule();

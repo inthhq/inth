@@ -1,6 +1,6 @@
 ---
 title: Iframe blocker
-description: Hold YouTube videos, maps and other embeds in a JavaScript app until their consent category is allowed, with data-src iframes and the c15t iframe blocker in @c15t/browser, createConsentRuntime or your own kernel.
+description: Hold YouTube videos, maps and other embeds in a JavaScript app until their consent category is allowed, with data-src iframes and the c15t iframe blocker in @inth/sdk, createConsentRuntime or your own kernel.
 group: frameworks
 ---
 
@@ -14,7 +14,7 @@ Put the embed's URL in `data-src` instead of `src`, and name its category in
 The iframe blocker gives the iframe its `src` once the category is allowed,
 and takes it away again when the visitor withdraws it. An iframe without
 `src` loads nothing, so the vendor gets no request before consent.
-`@c15t/browser` and `createConsentRuntime` run the blocker by default.
+`@inth/sdk` and `createConsentRuntime` run the blocker by default.
 
 ## Attributes
 
@@ -83,7 +83,7 @@ changes:
 consent.on('consent', () => consent.processIframes());
 ```
 
-`consent.processIframes()` is on the `@c15t/browser` client, and
+`consent.processIframes()` is on the `@inth/sdk` client, and
 `runtime.processIframes()` on a runtime from `createConsentRuntime`. The call
 does nothing before `start()`, after `dispose()`, or when `iframeBlocker` is
 `false`. With automatic blocking on, the blocker does this by itself.

@@ -19,7 +19,7 @@ that Accept and Reject record a choice.
 | [Headless bar](#headless-bar) | Headless | React, Vue, Svelte, HTML |
 
 Next.js and TanStack Start apps use the React code, with the same components
-imported from `c15t/next` or `c15t/tanstack-start`. Nuxt uses the Vue code and
+imported from `@inth/nextjs` or `@inth/tanstack-start`. Nuxt uses the Vue code and
 SvelteKit uses the Svelte code. [Customization](/docs/customization/overview)
 explains when to use each level.
 
@@ -45,7 +45,7 @@ right.
 
   <Tab value="Vue">
     Render `CookieBanner` and `ConsentManager` from
-    `c15t/vue/runtime/components/consent-manager.vue` in place of
+    `@inth/vue/runtime/components/consent-manager.vue` in place of
     `ConsentRoot`. To keep `ConsentRoot`, set `presentation.prompt` in the
     `c15tVue` options instead, as in [customize](/docs/frameworks/vue/customize).
 
@@ -168,7 +168,7 @@ a choice is recorded only when the visitor clicks.
 
 <Tabs items={['React', 'Vue', 'Svelte', 'HTML']}>
   <Tab value="React">
-    `useHeadlessConsentUI()` from `c15t/react/headless` returns the banner
+    `useHeadlessConsentUI()` from `@inth/react/headless` returns the banner
     state and `performAction`. Render `CookieBar` in place of
     `ConsentBanner`, and keep `ConsentDialog`, which Preferences opens.
 
@@ -176,7 +176,7 @@ a choice is recorded only when the visitor clicks.
   </Tab>
 
   <Tab value="Vue">
-    The composables from `c15t/vue/vue-plugin` give the policy's actions and
+    The composables from `@inth/vue/vue-plugin` give the policy's actions and
     the active surface. Render `CookieBar` and `ConsentManager` in place of
     `ConsentRoot`. Preferences sets `activeUI` to `'manager'`, which opens
     `ConsentManager`.

@@ -19,10 +19,10 @@ reloads the page.
 Copy the write key of your Segment JavaScript source. The helper builds the
 loader URL from it.
 
-<CommandTabs command="@c15t/integrations" mode="install" />
+<CommandTabs command="@inth/integrations" mode="install" />
 
 ```ts title="src/consent-scripts.ts"
-import { segment } from '@c15t/integrations/segment';
+import { segment } from '@inth/integrations/segment';
 
 export const scripts = [segment({ writeKey: 'YOUR_SOURCE_WRITE_KEY' })];
 ```

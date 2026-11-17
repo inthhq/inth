@@ -113,7 +113,7 @@ the protocol; the URL can belong to Inth or your own c15t backend.
 {/* example: fragment */}
 
 ```ts title="c15t.config.ts"
-import { defineConsentConfig, hosted } from 'c15t/next';
+import { defineConsentConfig, hosted } from '@inth/nextjs';
 
 export default defineConsentConfig({ mode: hosted() });
 ```
@@ -132,7 +132,8 @@ In the browser, an inline script in `<head>` can start `/init` while the
 app's JavaScript downloads, and `hosted()` uses that response. Vite apps get
 it from `consentManifest()` by default, Nuxt adds it to pages with
 `ssr: false`, and TanStack Start has `consentPrefetchHead`. Elsewhere, render
-`buildPrefetchScript({ projectUrl })` from `c15t` yourself. If c15t assigns
+`buildPrefetchScript({ projectUrl })` from your framework package's `engine`
+entry, such as `@inth/react/engine`, yourself. If c15t assigns
 a banner experiment's arm, give the script the same `experiment`, or
 `hosted()` sends a second `/init` for visitors who have not chosen yet.
 
@@ -145,10 +146,10 @@ resolver or make personalized responses safe to cache.
 For a same-origin init route that resolves a manifest, the hosted transport can
 separate policy reads and record writes. With a backend rewrite mounted at
 `/api/c15t`, a single-page app can use the transport `hosted()` from
-`c15t`:
+`@inth/sdk/engine`:
 
 ```ts title="src/consent-mode.ts"
-import { hosted } from 'c15t';
+import { hosted } from '@inth/sdk/engine';
 
 export const mode = hosted({
 	projectUrl: '/api/c15t',
@@ -197,8 +198,8 @@ in bundles that import the `/testing` entry.
 {/* example: fragment */}
 
 ```tsx title="src/consent.test.tsx"
-import { ConsentProvider } from 'c15t/react';
-import { testing } from 'c15t/react/testing';
+import { ConsentProvider } from '@inth/react';
+import { testing } from '@inth/react/testing';
 
 <ConsentProvider options={{ overrides: { country: 'DE' }, mode: testing() }} />;
 ```

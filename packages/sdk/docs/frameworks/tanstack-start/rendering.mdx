@@ -31,11 +31,11 @@ the consent server function. The server reads the visitor's cookie and location
 headers, resolves their policy from the build-time snapshot, and renders the
 banner into the HTML. To apply policy updates without rebuilding, pass
 `mode: manifest({ source: 'runtime' })` to `createConsentStateHandler`, with
-`manifest` from `c15t/tanstack-start`. The server then fetches the manifest
+`manifest` from `@inth/tanstack-start`. The server then fetches the manifest
 and caches it in memory. Keep the plugin: it still supplies the backend URL.
 
 `createConsentStateHandler({ mode })` takes `manifest()`, `hosted()` or
-`testing()` from `c15t/tanstack-start`. They are plain data, so the state
+`testing()` from `@inth/tanstack-start`. They are plain data, so the state
 carries the mode to `ConsentRoot`, and the browser loads only that mode's
 code. A mode's `snapshot` stays on the server.
 [Consent modes](/docs/concepts/modes) compares them.
@@ -56,7 +56,7 @@ chose. The script loader adopts those tags instead of inserting its own. Nothing
 starts from the HTML while the policy asks the visitor to choose, not even
 `alwaysLoad` entries, and a prerendered page starts nothing.
 
-This works on React 18 and 19. The vendor helpers from `@c15t/integrations`
+This works on React 18 and 19. The vendor helpers from `@inth/integrations`
 start this way, except Cloudflare Zaraz and Sentry. Those two helpers, and
 `scripts` entries you write yourself, start after hydration.
 
@@ -123,14 +123,14 @@ Keep these details right:
   resolved. It also makes the page load IAB vendor lists through the route.
   It means the same as Next.js `defineConsentConfig({ routePrefix })`, and
   like there it has no default. `'/'` throws
-  ``@c15t/tanstack-start: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'.``
+  ``@inth/tanstack-start: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'.``
   when the handler is created. An empty string throws too, because it isn't
   a path that starts with `/`. To run without a consent route, leave
   `routePrefix` out.
 - `proxy: true` on `createConsentStateHandler` sends saves through the route,
   like Next.js `defineConsentConfig({ proxy: true })`. It needs `routePrefix`,
   and throws
-  ``@c15t/tanstack-start: `proxy` sends saves through the consent route, so it needs `routePrefix`.``
+  ``@inth/tanstack-start: `proxy` sends saves through the consent route, so it needs `routePrefix`.``
   without it. With `hosted({ projectUrl })`, the browser still goes through
   the route; only the server asks that URL, so pass the same URL to
   `createConsentRoute({ projectUrl })`. To send only init through the route
@@ -176,7 +176,7 @@ every page, configure the Vite plugin as
 static files. SPA mode renders the same root route
 into its shell.
 
-`c15t/tanstack-start/static` is a lower-level alternative that bundles the
+`@inth/tanstack-start/static` is a lower-level alternative that bundles the
 manifest at build time. `createStaticConsentResolver({ manifest, geoUrl })`
 gives first paint the manifest's unknown-location policy, its fallback rule
 or else its default rule, then the visitor's regional policy once `geoUrl`

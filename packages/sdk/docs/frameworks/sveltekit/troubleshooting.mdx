@@ -8,7 +8,7 @@ group: frameworks
 
 **Check.** `vite build`, `vite dev` and, on SvelteKit 3, `svelte-kit sync`
 download the policy through the `consentManifest` plugin in `vite.config.ts`.
-`vite build` stops with an error that starts with `@c15t/svelte/vite: could
+`vite build` stops with an error that starts with `@inth/svelte/vite: could
 not fetch the consent manifest`, and `vite dev` logs it as a warning. The part
 in parentheses names the cause:
 
@@ -127,30 +127,30 @@ See [customize](/docs/frameworks/sveltekit/customize).
 
 ## Server code ends up in the browser bundle
 
-**Check.** Look for imports of `c15t/svelte/kit` or `c15t/svelte/server` in
+**Check.** Look for imports of `@inth/svelte/kit` or `@inth/svelte/server` in
 components. They are for server files: `hooks.server.ts`,
 `+layout.server.ts`, `+page.server.ts` and `+server.ts`. Imported from a
 component, they pull the manifest resolver and every bundled translation into
 the browser bundle.
 
-**Fix.** Import the components from `c15t/svelte` in components, and set
+**Fix.** Import the components from `@inth/svelte` in components, and set
 the mode on `c15tHandle()` in `hooks.server.ts`.
 
 ## c15tHandle() throws on a transport factory
 
 **Check.** `c15tHandle({ mode })` received a transport factory. The error reads
-"c15tHandle() takes manifest(), hosted() or testing() from c15t/svelte/kit".
+"c15tHandle() takes manifest(), hosted() or testing() from @inth/svelte/kit".
 The handle's mode must be data that can reach the browser, and a custom
 transport is code.
 
 **Fix.** Pass the transport factory to `ConsentRoot`'s `mode` prop, and
-keep the handle's `mode` for one of the data modes from `c15t/svelte/kit`.
+keep the handle's `mode` for one of the data modes from `@inth/svelte/kit`.
 
 ## Names from an earlier alpha are missing
 
 **Check.** An import or option from an earlier v3 alpha fails, such as
 `createSvelteKitConsentRouteHandlers`, `c15tPreload` or
-`loadConsent(event, { projectUrl })`. `@c15t/svelte` was not public in v2, so
+`loadConsent(event, { projectUrl })`. `@inth/svelte` was not public in v2, so
 the alphas renamed these with no alias.
 
 **Fix.** Use the current names:
@@ -160,10 +160,10 @@ the alphas renamed these with no alias.
 | `ConsentManagerProvider` with `prefetch={...}` | `<ConsentRoot state={data.consent}>` |
 | `Frame` | `ConsentGate` |
 | `createSvelteKitConsentRouteHandlers` | `createConsentRoute` |
-| `c15tPreload` | Part of `consentManifest()` from `c15t/svelte/vite` |
+| `c15tPreload` | Part of `consentManifest()` from `@inth/svelte/vite` |
 | `ConsentManifestOptions`, `consentManifest({ outputFile })` | Removed |
 | `loadConsent(event, { projectUrl, manifest, initRoute, shared })` returning `prefetch` | `c15tHandle({ mode, routePrefix, snapshot, projectUrl })` in `src/hooks.server.ts`, and `export { loadConsent as load }`, which returns `{ consent }` |
-| `resolveConsent({ manifest })` from `@c15t/svelte/server` | `resolveConsent({ snapshot })` |
+| `resolveConsent({ manifest })` from `@inth/svelte/server` | `resolveConsent({ snapshot })` |
 
 <include src="../../shared/svelte/troubleshooting.mdx" />
 
@@ -171,7 +171,7 @@ the alphas renamed these with no alias.
 
 [Troubleshoot consent](/docs/guides/troubleshooting) covers problems shared by
 every framework, such as a missing banner, analytics that load before a choice,
-imports that fail because npm installed c15t v2, choices that disappear on
+imports that fail because the wrong package is installed, choices that disappear on
 reload, server HTML that differs from the browser, static builds that fail and
 content blockers that hide the consent UI. [Verify
 consent](/docs/guides/verify-consent) lists the checks to run before release.

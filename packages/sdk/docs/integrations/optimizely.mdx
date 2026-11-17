@@ -23,7 +23,7 @@ just before `.js` in the snippet URL. Replace the example project number below
 with yours. Use one Optimizely snippet per page. Remove the original
 Optimizely snippet and any tag-manager copy so c15t controls when it loads.
 
-<CommandTabs command="@c15t/integrations" mode="install" />
+<CommandTabs command="@inth/integrations" mode="install" />
 
 <include src="../shared/examples/javascript/optimizely-web-scripts.mdx" />
 
@@ -93,7 +93,7 @@ isn't a documented way to stop a snippet that is already running.
 ## Persistent Optimizely opt-out
 
 For a deliberate persistent opt-out, import `optOutOptimizely` from
-`@c15t/integrations/optimizely` and call `optOutOptimizely()`. It sends
+`@inth/integrations/optimizely` and call `optOutOptimizely()`. It sends
 `window.optimizely.push({ type: 'optOut', isOptOut: true })` through an
 existing SDK or queue, and does nothing if neither exists.
 

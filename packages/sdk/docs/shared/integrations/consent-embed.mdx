@@ -17,7 +17,7 @@ and preferences UI. These examples do not create a second consent provider.
     ```tsx title="src/consent-embed.tsx"
     'use client';
 
-    import { ConsentGate } from 'c15t/next';
+    import { ConsentGate } from '@inth/nextjs';
     import { embedCategory, embedURL, embedTitle, embedAspectRatio } from './embed-config';
 
     export function ConsentEmbed() {
@@ -43,7 +43,7 @@ and preferences UI. These examples do not create a second consent provider.
     Render this component inside your existing consent boundary or provider.
 
     ```tsx title="src/consent-embed.tsx"
-    import { ConsentGate } from 'c15t/tanstack-start';
+    import { ConsentGate } from '@inth/tanstack-start';
     import { embedCategory, embedURL, embedTitle, embedAspectRatio } from './embed-config';
 
     export function ConsentEmbed() {
@@ -69,7 +69,7 @@ and preferences UI. These examples do not create a second consent provider.
     Render this component inside your existing consent boundary or provider.
 
     ```tsx title="src/consent-embed.tsx"
-    import { ConsentGate } from 'c15t/react';
+    import { ConsentGate } from '@inth/react';
     import { embedCategory, embedURL, embedTitle, embedAspectRatio } from './embed-config';
 
     export function ConsentEmbed() {
@@ -127,7 +127,7 @@ and preferences UI. These examples do not create a second consent provider.
 
     ```vue title="src/ConsentEmbed.vue"
     <script setup lang="ts">
-    import { ConsentDialogLink, ConsentGate } from 'c15t/vue/vue-plugin';
+    import { ConsentDialogLink, ConsentGate } from '@inth/vue/vue-plugin';
     import { embedCategory, embedURL, embedTitle, embedAspectRatio } from './embed-config';
     </script>
 
@@ -161,7 +161,7 @@ and preferences UI. These examples do not create a second consent provider.
     <c15t-consent-embed style="display: block"></c15t-consent-embed>
 
     <script>
-      import { getConsentClient } from 'c15t/astro/client';
+      import { getConsentClient } from '@inth/astro/client';
       import { mountConsentEmbed } from '../consent-embed';
 
       class ConsentEmbed extends HTMLElement {
@@ -213,7 +213,7 @@ and preferences UI. These examples do not create a second consent provider.
 
     ```svelte title="src/ConsentEmbed.svelte"
     <script lang="ts">
-      import { ConsentGate } from 'c15t/svelte';
+      import { ConsentGate } from '@inth/svelte';
       import { embedCategory, embedURL, embedTitle, embedAspectRatio } from './embed-config';
     </script>
 
@@ -242,7 +242,7 @@ and preferences UI. These examples do not create a second consent provider.
 
     ```svelte title="src/lib/ConsentEmbed.svelte"
     <script lang="ts">
-      import { ConsentGate } from 'c15t/svelte';
+      import { ConsentGate } from '@inth/svelte';
       import { embedCategory, embedURL, embedTitle, embedAspectRatio } from '../embed-config';
     </script>
 
@@ -396,7 +396,7 @@ preferences does not guarantee that the visitor can grant it.
 ## Gate existing iframe markup
 
 For markup that uses `data-category` and `data-src`, the
-`createIframeBlocker` module from `c15t/modules/iframe-blocker` promotes
+`createIframeBlocker` module from `@inth/sdk/modules/iframe-blocker` promotes
 `data-src` only when the category has consent and the URL resolves to HTTP or
 HTTPS. Relative URLs resolve against the iframe document's base URL.
 Malformed URLs and other schemes, including `javascript:`, `data:` and `blob:`,

@@ -2,7 +2,7 @@
 
 ```ts title="src/consent-ui.ts"
 if (import.meta.env.DEV) {
-	const { createDevTools } = await import('@c15t/dev-tools');
+	const { createDevTools } = await import('@inth/sdk/devtools');
 	const tools = createDevTools({ kernel });
 	import.meta.hot?.dispose(() => tools.destroy());
 }

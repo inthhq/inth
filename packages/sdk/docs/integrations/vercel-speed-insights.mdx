@@ -21,10 +21,10 @@ component or `injectSpeedInsights()` call from `@vercel/speed-insights`. The
 collector starts once per page, so a copy loaded outside c15t keeps reporting
 before consent.
 
-<CommandTabs command="@c15t/integrations" mode="install" />
+<CommandTabs command="@inth/integrations" mode="install" />
 
 ```ts title="src/consent-scripts.ts"
-import { vercelSpeedInsights } from '@c15t/integrations/vercel-speed-insights';
+import { vercelSpeedInsights } from '@inth/integrations/vercel-speed-insights';
 
 export const scripts = [vercelSpeedInsights()];
 ```

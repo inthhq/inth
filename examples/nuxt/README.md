@@ -5,7 +5,7 @@ project's policy into the server, and the server resolves each visitor from
 it, so the banner is part of the first HTML. PostHog loads once the visitor
 allows measurement.
 
-- `nuxt.config.ts` registers the `c15t/vue` module. It reads the backend URL
+- `nuxt.config.ts` registers the `@inth/nuxt` module. It reads the backend URL
   from `NUXT_PUBLIC_C15T_BACKEND_URL`, bundles the project's policy into the
   server and adds one consent route under `/api/c15t`.
 - `app/app.config.ts` loads PostHog once the visitor allows measurement.

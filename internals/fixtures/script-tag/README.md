@@ -1,9 +1,9 @@
 # Script-tag example
 
-The `@c15t/browser` banner on plain HTML pages, the way a CMS theme, page builder or static site generator loads it. No framework, no bundler.
+The `@inth/sdk` banner on plain HTML pages, the way a CMS theme, page builder or static site generator loads it. No framework, no bundler.
 
 ```sh
-bun turbo run build --filter=@c15t/browser
+bun turbo run build --filter=@inth/sdk-browser
 bun run --cwd internals/fixtures/script-tag dev
 ```
 

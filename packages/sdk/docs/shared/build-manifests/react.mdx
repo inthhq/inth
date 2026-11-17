@@ -5,7 +5,7 @@ Keep `consentManifest` in your Vite plugin list:
 {/* example: fragment */}
 
 ```ts title="vite.config.ts (plugins option)"
-import { consentManifest } from 'c15t/build';
+import { consentManifest } from '@inth/react/build';
 
 export default {
 	plugins: [
@@ -18,15 +18,15 @@ export default {
 Without `projectUrl`, the plugin reads `VITE_C15T_BACKEND_URL`, then
 `VITE_INTH_PROJECT_URL`. The plugin
 fetches the policy during `vite build`, or in `vite dev` when the app first
-loads it, and serves it as `snapshot` from `c15t/generated`. A build fetches
+loads it, and serves it as `snapshot` from `@inth/react/generated`. A build fetches
 only when the app uses `manifest()`. In `src/consent.tsx`, create the
-provider's mode with `manifest()` from `c15t/react` instead of `hosted()`. It
-reads the snapshot and the backend URL from `c15t/generated`:
+provider's mode with `manifest()` from `@inth/react` instead of `hosted()`. It
+reads the snapshot and the backend URL from `@inth/react/generated`:
 
 {/* example: fragment */}
 
 ```tsx title="src/consent.tsx"
-import { manifest } from 'c15t/react';
+import { manifest } from '@inth/react';
 
 const mode = manifest();
 ```

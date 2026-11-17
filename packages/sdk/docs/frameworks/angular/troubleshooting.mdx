@@ -40,7 +40,7 @@ keep `provideC15t()` in `app.config.ts`, which `app.config.server.ts` merges,
 so the server and the browser both have it.
 
 **Check.** If the provider is there, check that the app resolves one copy of
-`@c15t/angular`. Two copies, for example from a linked package, create two
+`@inth/angular`. Two copies, for example from a linked package, create two
 separate `ConsentManager` classes.
 
 **Fix.** Make the app resolve a single copy, and run `ng cache clean` after
@@ -84,14 +84,14 @@ the console for a Content Security Policy error.
 **Fix.**
 
 - No c15t `<style>` element: `provideC15t()` sets `styles: false` or
-  `noStyle`. With `styles: false`, add `@c15t/angular/styles.css` to the
+  `noStyle`. With `styles: false`, add `@inth/angular/styles.css` to the
   `styles` array in `angular.json`.
 - The console reports a blocked inline style: set `ngCspNonce` on your root
   element or provide `CSP_NONCE`, or set `styles: false` and import the
   stylesheet. The [Content Security Policy page](./content-security-policy)
   covers both.
 - IAB TCF components are unstyled with `styles: false`: add
-  `@c15t/angular/styles.css` and `@c15t/angular/iab/styles.css` together.
+  `@inth/angular/styles.css` and `@inth/angular/iab/styles.css` together.
 
 ## The server HTML and the browser disagree
 

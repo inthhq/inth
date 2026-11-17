@@ -24,7 +24,7 @@ hover and foreground colors when overriding raw variables so the button remains
 readable in each state.
 
 ```ts
-import { defineTheme } from '@c15t/ui/theme';
+import { defineTheme } from '@inth/react';
 
 export const theme = defineTheme({
 	colors: { primary: '#2f6f4e' },
@@ -36,15 +36,16 @@ export const theme = defineTheme({
 });
 ```
 
-Install `@c15t/ui` if importing its theme helper directly. Where the theme
-goes depends on the framework:
+`defineTheme` comes from your framework package: `@inth/react`, `@inth/vue`,
+`@inth/nuxt` and the rest all export it. Where the theme goes depends on the
+framework:
 
 | Framework | Tokens | `consentActions` |
 | --- | --- | --- |
 | Next.js, TanStack Start, React | `<ConsentTheme theme={theme} />`, rendered on the server where the app has one | `theme` in the provider options |
 | Nuxt, Vue | `theme` or `tokens` in the module or plugin options | Not available |
 | Astro | `theme` in the integration options | The same `theme` |
-| Svelte, SvelteKit | `generateThemeCSS(theme)` from `@c15t/ui/theme` on the server, in a `<style>` element, or `--c15t-*` variables in your stylesheet | `theme` on `ConsentProvider` (Svelte) or `ConsentRoot` (SvelteKit) |
+| Svelte, SvelteKit | `generateThemeCSS(theme)` from `@inth/svelte` on the server, in a `<style>` element, or `--c15t-*` variables in your stylesheet | `theme` on `ConsentProvider` (Svelte) or `ConsentRoot` (SvelteKit) |
 | HTML, JavaScript | `ui.theme` | Not available |
 
 React and Svelte providers do not turn tokens in their `theme` option into

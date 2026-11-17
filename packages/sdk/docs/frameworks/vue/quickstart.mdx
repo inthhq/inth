@@ -25,11 +25,11 @@ project reach visitors on their next page load, without a rebuild.
 
 ## Install c15t
 
-<CommandTabs command="c15t @c15t/integrations" mode="install" />
+<CommandTabs command="@inth/vue @inth/integrations" mode="install" />
 
 ## Add the Vite plugin
 
-Add `consentManifest()` from `c15t/vue/vite` to `vite.config.ts`, next to
+Add `consentManifest()` from `@inth/vue/vite` to `vite.config.ts`, next to
 `@vitejs/plugin-vue`:
 
 <include src="../../shared/examples/vue/vite-config.mdx" />
@@ -55,11 +55,9 @@ covers when to turn it off.
 
 ## Install the Vue plugin
 
-Install the plugin from `c15t/vue/vue-plugin` in `src/main.ts`:
+Install the plugin from `@inth/vue/vue-plugin` in `src/main.ts`:
 
 <include src="../../shared/examples/vue/main.mdx" />
-
-`c15t/vue` is the Nuxt module. Do not pass it to `app.use()`.
 
 The plugin creates the consent runtime for this app. When the app mounts, it
 reads the visitor's stored choice, resolves their policy, and starts the

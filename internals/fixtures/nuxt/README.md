@@ -1,7 +1,6 @@
 # c15t × Nuxt example
 
-c15t Nuxt integration through the `c15t` umbrella package (`c15t/vue` is
-`@c15t/vue`). The consent setup is a module entry in a Nuxt layer under
+c15t Nuxt integration through the `@inth/nuxt` module. The consent setup is a module entry in a Nuxt layer under
 `config/`, `ConsentRoot` and `ConsentDialogLink` in `app/app.vue`, and
 `scripts` in `app/app.config.ts`. Without a backend URL the demo falls back to a
 self-hosted `@c15t/backend` mounted at `/api/self-host`

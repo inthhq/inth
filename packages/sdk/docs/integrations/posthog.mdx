@@ -9,7 +9,7 @@ group: integrations
 
 Connect PostHog capture to c15t permission on [the web](#web) or in
 [Swift, Android, React Native and Expo apps](#mobile). Web setup uses
-`@c15t/integrations/posthog`. Mobile helpers ship inside the existing c15t
+`@inth/integrations/posthog`. Mobile helpers ship inside the existing c15t
 platform packages and connect your app's configured PostHog client.
 
 ## Web
@@ -27,10 +27,10 @@ Use the project token that starts with `phc_`, and the region of your PostHog
 project. This example waits for measurement permission before requesting the
 SDK, and turns off cookieless capture after a refusal.
 
-<CommandTabs command="@c15t/integrations" mode="install" />
+<CommandTabs command="@inth/integrations" mode="install" />
 
 ```ts title="src/consent-scripts.ts"
-import { posthog } from '@c15t/integrations/posthog';
+import { posthog } from '@inth/integrations/posthog';
 
 export const scripts = [
 	posthog({
@@ -186,10 +186,12 @@ Pass the current measurement permission from your framework, for example
 If your app already initializes `posthog-js`, keep that setup and register a
 callback-only script instead of the helper. Initialize the SDK with
 `opt_out_capturing_by_default: true` and `cookieless_mode: 'never'` so it
-captures nothing before c15t reports a permission.
+captures nothing before c15t reports a permission. Import the types from your
+framework package, here `@inth/react`, or from `@inth/sdk/engine` in plain
+JavaScript:
 
 ```ts title="src/posthog-consent.ts"
-import type { Script, ScriptCallbackInfo } from 'c15t/modules/script-loader';
+import type { Script, ScriptCallbackInfo } from '@inth/react';
 
 type PostHogConsentApi = {
 	opt_in_capturing: () => unknown;

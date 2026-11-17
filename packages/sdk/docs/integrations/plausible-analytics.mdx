@@ -19,10 +19,10 @@ Copy the script ID from your Plausible installation snippet. It is the part of
 the `pa-<id>.js` file name. Sites that still use the legacy domain-based
 snippet can pass `domain` instead of `scriptId`.
 
-<CommandTabs command="@c15t/integrations" mode="install" />
+<CommandTabs command="@inth/integrations" mode="install" />
 
 ```ts title="src/consent-scripts.ts"
-import { plausibleAnalytics } from '@c15t/integrations/plausible-analytics';
+import { plausibleAnalytics } from '@inth/integrations/plausible-analytics';
 
 export const scripts = [plausibleAnalytics({ scriptId: 'YOUR_SCRIPT_ID' })];
 ```

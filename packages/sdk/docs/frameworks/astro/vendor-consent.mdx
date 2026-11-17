@@ -1,6 +1,6 @@
 ---
 title: Vendor consent
-description: Let visitors allow a category such as marketing on an Astro site and still turn off one vendor in it, with the vendors option on the c15t() integration and the page client from c15t/astro/client.
+description: Let visitors allow a category such as marketing on an Astro site and still turn off one vendor in it, with the vendors option on the c15t() integration and the page client from @inth/astro/client.
 group: frameworks
 ---
 
@@ -8,7 +8,7 @@ group: frameworks
 
 ## Declare the vendors
 
-Declaring a vendor turns on vendor switches. Built-in `@c15t/integrations`
+Declaring a vendor turns on vendor switches. Built-in `@inth/integrations`
 helpers then list their own vendor by name, so you only declare a vendor for a
 script of your own, or to replace a helper's name and privacy policy.
 
@@ -66,7 +66,7 @@ Svelte.
 
 ## Read and record vendor choices in your own script
 
-The page client from `getConsentClient()` in `c15t/astro/client` reads and
+The page client from `getConsentClient()` in `@inth/astro/client` reads and
 records vendor consent:
 
 | Member | Returns or does |
@@ -87,7 +87,7 @@ form. This records marketing as allowed and X Pixel as off:
 {/* example: fragment */}
 
 ```ts title="src/scripts/x-pixel-switch.ts (partial)"
-import { getConsentClient } from 'c15t/astro/client';
+import { getConsentClient } from '@inth/astro/client';
 
 await getConsentClient()?.save({
 	marketing: true,

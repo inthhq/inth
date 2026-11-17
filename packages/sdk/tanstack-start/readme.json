@@ -1,5 +1,5 @@
 {
-	"title": "@c15t/tanstack-start: TanStack Start cookie banner and cookie consent management",
+	"title": "@inth/tanstack-start: TanStack Start cookie banner and cookie consent management",
 	"description": "Cookie banner, consent dialog, and preference center for TanStack Start. A server function in the root loader resolves each visitor's consent policy, such as GDPR opt-in in the EU, so the banner is in the first HTML.",
 	"features": [
 		"Works with `@tanstack/react-start` 1.168.60 or a later 1.x release, including TanStack Start 1.0, on React 18 or 19",
@@ -9,9 +9,9 @@
 		"Prerendered pages and static hosts work too, with `createConsentRoute()` for same-origin consent requests",
 		"Prebuilt cookie banner, consent dialog, and preference center with a theme system",
 		"Headless hooks for a fully custom design",
-		"Analytics, ads, and pixels follow each visitor's choice through @c15t/integrations: Google Tag Manager, Google Consent Mode v2, GA4, Meta Pixel, PostHog, and more",
-		"IAB TCF 2.4 banner, dialog, and hooks through the @c15t/react/iab subpath",
-		"Translations for 53 languages through @c15t/translations"
+		"Analytics, ads, and pixels follow each visitor's choice through @inth/integrations: Google Tag Manager, Google Consent Mode v2, GA4, Meta Pixel, PostHog, and more",
+		"IAB TCF 2.4 banner, dialog, and hooks through the @inth/react/iab subpath",
+		"Translations for 53 languages through @inth/sdk/translations"
 	],
 	"prerequisites": [
 		"`@tanstack/react-start` 1.168.60 or a later 1.x release, including TanStack Start 1.0",
@@ -23,20 +23,18 @@
 	],
 	"manualInstallation": [
 		"",
-		"```bash\npnpm add @c15t/tanstack-start\n```",
+		"```bash\npnpm add @inth/tanstack-start\n```",
 		"",
 		"Then add the prebuilt stylesheet to your app-level CSS entry point:",
 		"",
-		"```css\n/* src/styles.css */\n@import \"@c15t/tanstack-start/styles.css\";\n```",
-		"",
-		"Using several c15t packages? Install [`c15t`](https://www.npmjs.com/package/c15t) and import `c15t/tanstack-start` instead. It is the same code."
+		"```css\n/* src/styles.css */\n@import \"@inth/tanstack-start/styles.css\";\n```"
 	],
 	"usage": [
 		"Set `VITE_C15T_BACKEND_URL` to your Inth backend URL in `.env`",
-		"Add `consentManifest()` from `@c15t/tanstack-start/build` to `vite.config.ts`, before `tanstackStart()`. It downloads your policy at build time and keeps it on the server",
-		"```ts\n// vite.config.ts\nimport { consentManifest } from '@c15t/tanstack-start/build';\nimport { tanstackStart } from '@tanstack/react-start/plugin/vite';\nimport viteReact from '@vitejs/plugin-react';\nimport { defineConfig } from 'vite';\n\nexport default defineConfig({\n  plugins: [consentManifest(), tanstackStart(), viteReact()],\n});\n```",
+		"Add `consentManifest()` from `@inth/tanstack-start/build` to `vite.config.ts`, before `tanstackStart()`. It downloads your policy at build time and keeps it on the server",
+		"```ts\n// vite.config.ts\nimport { consentManifest } from '@inth/tanstack-start/build';\nimport { tanstackStart } from '@tanstack/react-start/plugin/vite';\nimport viteReact from '@vitejs/plugin-react';\nimport { defineConfig } from 'vite';\n\nexport default defineConfig({\n  plugins: [consentManifest(), tanstackStart(), viteReact()],\n});\n```",
 		"Resolve the consent state in the root route loader with `createConsentStateHandler()` in a server function, and pass it to `ConsentRoot`",
-		"```tsx\n// src/routes/__root.tsx\nimport { createRootRoute, Outlet } from '@tanstack/react-router';\nimport { createServerFn } from '@tanstack/react-start';\nimport {\n  ConsentBanner,\n  ConsentDialog,\n  ConsentDialogLink,\n  ConsentRoot,\n} from '@c15t/tanstack-start';\nimport {\n  consentLoaderOptions,\n  createConsentStateHandler,\n} from '@c15t/tanstack-start/server';\n\nconst getConsentState = createServerFn({ method: 'GET' }).handler(\n  createConsentStateHandler()\n);\n\nexport const Route = createRootRoute({\n  ...consentLoaderOptions,\n  loader: async () => ({ consent: await getConsentState() }),\n  component: RootComponent,\n});\n\nfunction RootComponent() {\n  const { consent } = Route.useLoaderData();\n  return (\n    <ConsentRoot state={consent}>\n      <Outlet />\n      <ConsentBanner />\n      <ConsentDialog />\n      <ConsentDialogLink>Privacy settings</ConsentDialogLink>\n    </ConsentRoot>\n  );\n}\n```",
+		"```tsx\n// src/routes/__root.tsx\nimport { createRootRoute, Outlet } from '@tanstack/react-router';\nimport { createServerFn } from '@tanstack/react-start';\nimport {\n  ConsentBanner,\n  ConsentDialog,\n  ConsentDialogLink,\n  ConsentRoot,\n} from '@inth/tanstack-start';\nimport {\n  consentLoaderOptions,\n  createConsentStateHandler,\n} from '@inth/tanstack-start/server';\n\nconst getConsentState = createServerFn({ method: 'GET' }).handler(\n  createConsentStateHandler()\n);\n\nexport const Route = createRootRoute({\n  ...consentLoaderOptions,\n  loader: async () => ({ consent: await getConsentState() }),\n  component: RootComponent,\n});\n\nfunction RootComponent() {\n  const { consent } = Route.useLoaderData();\n  return (\n    <ConsentRoot state={consent}>\n      <Outlet />\n      <ConsentBanner />\n      <ConsentDialog />\n      <ConsentDialogLink>Privacy settings</ConsentDialogLink>\n    </ConsentRoot>\n  );\n}\n```",
 		"For the full setup, see the [TanStack Start quickstart](https://c15t.com/docs/frameworks/tanstack-start/quickstart)"
 	],
 	"docsLink": "https://c15t.com/docs/frameworks/tanstack-start/quickstart",

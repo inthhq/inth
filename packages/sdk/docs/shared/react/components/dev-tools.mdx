@@ -15,9 +15,8 @@ group: reference
 
   ## Installation
 
-  No extra package is required. The React adapter and its engine are included
-  with the `c15t` package. Install `@c15t/dev-tools` directly only when you
-  need the imperative `createDevTools({ kernel })` API.
+  No extra package is required. The framework package includes the panel and
+  its engine.
 </section>
 
 <section id="customization">
@@ -118,7 +117,7 @@ group: reference
 
   For custom inspection tools, import `getScriptDiagnostics(kernel)` and
   `subscribeScriptDiagnostics(kernel, listener)` from
-  `c15t/modules/script-loader`. The subscription reports loader
+  `@inth/sdk/modules/script-loader`. The subscription reports loader
   registration, updates, disposal, and lifecycle events. Read a fresh snapshot
   after changes and call the returned unsubscribe function during cleanup.
 
@@ -128,7 +127,7 @@ group: reference
   and purposes in the IAB tab so the derived categories and TC string stay
   consistent.
 
-  The IAB panel connects to the existing `@c15t/iab` module attached to the
+  The IAB panel connects to the existing `@inth/sdk/iab` module attached to the
   provider's kernel. It does not create a second CMP or replace `__tcfapi`.
   Controls become available after initialization, when the current policy uses
   IAB and the vendor list is loaded.
@@ -156,7 +155,7 @@ group: reference
   live choices; retry to record them.
 
   For custom inspection tools, `getIABControls(kernel)` and
-  `subscribeIABControls(kernel, listener)` are exported from `c15t`.
+  `subscribeIABControls(kernel, listener)` are exported from `@inth/sdk/engine`.
   The getter returns undefined before module initialization and after disposal.
   A snapshot without an attached IAB module is read-only in DevTools.
 
@@ -175,7 +174,7 @@ group: reference
   import { TanStackDevtools } from '@tanstack/react-devtools';
   import { ReactQueryDevtoolsPanel } from '@tanstack/react-query-devtools';
   import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
-  import { c15tDevtools } from 'c15t/react/devtools';
+  import { c15tDevtools } from '@inth/react/devtools';
 
   export function AppDevtools() {
     const router = useRouter();
@@ -198,14 +197,14 @@ group: reference
   }
   ```
 
-  In a Next.js app, import `c15tDevtools` from `c15t/next/devtools` instead. Scoped installs use `@c15t/react/devtools` and `@c15t/nextjs/devtools`.
+  In a Next.js app, import `c15tDevtools` from `@inth/nextjs/devtools` instead. Scoped installs use `@inth/react/devtools` and `@inth/nextjs/devtools`.
 
   The c15t panel follows the TanStack Devtools light or dark theme, not your app's consent theme. If you write the plugin entry yourself, use a render function and pass the theme to `C15tTanStackDevtoolsPanel`:
 
   {/* example: fragment */}
 
   ```tsx
-  import { C15tTanStackDevtoolsPanel } from 'c15t/react/devtools';
+  import { C15tTanStackDevtoolsPanel } from '@inth/react/devtools';
 
   const c15tPlugin = {
     name: 'Consent',

@@ -30,7 +30,7 @@ covers the CMP ID, the vendor list and the provider options.
 | `rootClass` | `string` | none | Extra class on the root element. |
 
 The banner has no text inputs. Its copy comes from the IAB translations, in
-the visitor's language. `getIABTranslations()` from `@c15t/angular/iab` returns
+the visitor's language. `getIABTranslations()` from `@inth/angular/iab` returns
 the same copy for a custom IAB banner.
 
 ## Behavior
@@ -57,7 +57,7 @@ is an `h2`, and every control is a native `<button>`.
 
 `<c15t-iab-consent-banner>` adds its own rules to `<head>`, including the
 first-paint rules it needs before its elements render. With `styles: false`,
-add `@c15t/angular/iab/styles.css` after `@c15t/angular/styles.css` in
+add `@inth/angular/iab/styles.css` after `@inth/angular/styles.css` in
 `angular.json`. It reads the `iabConsentBanner`, `iabConsentBannerCard`,
 `iabConsentBannerHeader`, `iabConsentBannerFooter`, `iabConsentBannerTag` and
 `iabConsentBannerOverlay` theme slots. Buttons carry

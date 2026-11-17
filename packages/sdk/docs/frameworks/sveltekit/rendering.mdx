@@ -8,7 +8,7 @@ group: frameworks
 
 `c15tHandle()` in `src/hooks.server.ts` holds the config for the whole app.
 Its `mode` option decides where each visitor's policy comes from. Import the
-modes from `c15t/svelte/kit`: they are plain data, which `loadConsent`
+modes from `@inth/svelte/kit`: they are plain data, which `loadConsent`
 sends to the browser.
 
 | Your app | Where consent resolves | `c15tHandle()` options |
@@ -41,7 +41,7 @@ directly or through the
 {/* example: fragment */}
 
 ```ts title="src/hooks.server.ts"
-import { c15tHandle, manifest } from 'c15t/svelte/kit';
+import { c15tHandle, manifest } from '@inth/svelte/kit';
 
 export const handle = c15tHandle({ mode: manifest({ source: 'runtime' }) });
 ```
@@ -73,7 +73,7 @@ pages the server did not resolve:
 {/* example: fragment */}
 
 ```ts title="src/hooks.server.ts"
-import { c15tHandle, hosted } from 'c15t/svelte/kit';
+import { c15tHandle, hosted } from '@inth/svelte/kit';
 
 export const handle = c15tHandle({ mode: hosted() });
 ```
@@ -101,7 +101,7 @@ browser:
 {/* example: fragment */}
 
 ```ts title="src/hooks.server.ts"
-import { c15tHandle } from 'c15t/svelte/kit';
+import { c15tHandle } from '@inth/svelte/kit';
 
 export const handle = c15tHandle({ routePrefix: '/api/c15t' });
 ```
@@ -132,7 +132,7 @@ export the write handlers from the same catch-all route:
 {/* example: fragment */}
 
 ```ts title="src/routes/api/c15t/[...path]/+server.ts"
-import { createConsentRoute } from 'c15t/svelte/kit';
+import { createConsentRoute } from '@inth/svelte/kit';
 
 export const { GET, POST, PATCH, PUT, DELETE, OPTIONS } = createConsentRoute({
 	proxy: true,
@@ -144,7 +144,7 @@ Then point saves at the route:
 {/* example: fragment */}
 
 ```ts title="src/hooks.server.ts"
-import { c15tHandle } from 'c15t/svelte/kit';
+import { c15tHandle } from '@inth/svelte/kit';
 
 export const handle = c15tHandle({
 	projectUrl: '/api/c15t',
@@ -185,7 +185,7 @@ the platform's own `waitUntil` as `onBackgroundRevalidate`:
 {/* example: fragment */}
 
 ```ts title="src/routes/api/c15t/[...path]/+server.ts (partial)"
-import { createConsentRoute } from 'c15t/svelte/kit';
+import { createConsentRoute } from '@inth/svelte/kit';
 import { waitUntil } from 'cloudflare:workers'; // Vercel: '@vercel/functions'
 
 export const { GET } = createConsentRoute({
@@ -203,7 +203,7 @@ instead of exporting it directly:
 {/* example: fragment */}
 
 ```ts title="src/routes/+layout.server.ts"
-import { loadConsent } from 'c15t/svelte/kit';
+import { loadConsent } from '@inth/svelte/kit';
 import { waitUntil } from 'cloudflare:workers';
 
 export const load = (event) =>
@@ -232,7 +232,7 @@ own handles through `sequence(c15tHandle(), yourHandle)` from
 
 | Option | Default | What it does |
 | --- | --- | --- |
-| `mode` | `manifest()` | How `loadConsent` resolves the visitor: `manifest()`, `hosted()` or `testing()` from `c15t/svelte/kit`. |
+| `mode` | `manifest()` | How `loadConsent` resolves the visitor: `manifest()`, `hosted()` or `testing()` from `@inth/svelte/kit`. |
 | `routePrefix` | none | Where [`createConsentRoute()`](#serve-the-consent-route) is mounted, such as `/api/c15t`. Without it, the browser asks the backend's `/init` when it resolves consent itself. |
 | `projectUrl` | The URL `consentManifest` read from `PUBLIC_C15T_BACKEND_URL` or `PUBLIC_INTH_PROJECT_URL` | The backend. |
 | `snapshot` | The manifest `consentManifest` downloaded | A manifest of your own to resolve with. |
@@ -254,7 +254,7 @@ trigger's, `ConsentGate`'s or the dialog's. The
 browser's JavaScript does not carry those rules again: the components find
 them in the page. Without the handle, the components load the rules in the
 browser and stay hidden until they arrive, unless `ConsentRoot` sets
-`styles={false}` and the app imports `c15t/svelte/styles.css`.
+`styles={false}` and the app imports `@inth/svelte/styles.css`.
 
 When the visitor's consent already allows some `scripts` entries, through a
 stored choice or a policy that asks for none, `c15tHandle` adds an inline script
@@ -265,7 +265,7 @@ those tags instead of inserting its own. Nothing starts from the HTML while the
 policy asks the visitor to choose, not even `alwaysLoad` entries, and a
 prerendered page starts nothing.
 
-The vendor helpers from `@c15t/integrations` start this way, except Cloudflare
+The vendor helpers from `@inth/integrations` start this way, except Cloudflare
 Zaraz and Sentry. Those two helpers, and `scripts` entries you write yourself,
 start after hydration. A `ConsentProvider` given a `runtime` starts nothing
 from the HTML: its scripts start after hydration.
@@ -332,7 +332,7 @@ the rest:
 {/* example: fragment */}
 
 ```ts title="src/hooks.server.ts"
-import { c15tHandle, hosted } from 'c15t/svelte/kit';
+import { c15tHandle, hosted } from '@inth/svelte/kit';
 
 export const handle = c15tHandle({ mode: hosted() });
 ```
@@ -359,7 +359,7 @@ browser mode in `+layout.svelte`:
 
 ```svelte title="src/routes/+layout.svelte (partial)"
 <script lang="ts">
-	import { ConsentProvider, hosted } from 'c15t/svelte';
+	import { ConsentProvider, hosted } from '@inth/svelte';
 	import { PUBLIC_C15T_BACKEND_URL } from '$env/static/public';
 </script>
 
@@ -425,13 +425,13 @@ in a SvelteKit root layout to get the deferred start.
 
 ## Resolve consent in other server code
 
-`resolveConsent` from `c15t/svelte/server` does what `loadConsent` does
+`resolveConsent` from `@inth/svelte/server` does what `loadConsent` does
 without a SvelteKit event, for endpoints or code outside a load:
 
 {/* example: fragment */}
 
 ```ts
-import { resolveConsent } from 'c15t/svelte/server';
+import { resolveConsent } from '@inth/svelte/server';
 
 const state = await resolveConsent({
 	projectUrl: 'https://your-project.inth.app',
@@ -443,6 +443,6 @@ It never throws. When the backend fails or takes longer than `timeoutMs`,
 500 ms by default, it returns the stored choice without a policy. Pass
 `manifest` to resolve from a manifest you hold instead of calling `/init`. In a load, use `loadConsent`, which
 reads the request and the handle's config from the event.
-Import `c15t/svelte/kit` and `c15t/svelte/server` only from server files
+Import `@inth/svelte/kit` and `@inth/svelte/server` only from server files
 such as `+layout.server.ts`, `+server.ts` and `hooks.server.ts`; imported into
 a component they add server code to the browser bundle.

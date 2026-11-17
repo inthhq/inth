@@ -1,6 +1,6 @@
 # c15t benchmarks
 
-This directory contains the internal benchmark platform for `c15t`, `@c15t/react`, and `@c15t/nextjs`.
+This directory contains the internal benchmark platform for `c15t`, `@inth/react`, and `@inth/nextjs`.
 
 ## Performance suites
 
@@ -9,7 +9,7 @@ This directory contains the internal benchmark platform for `c15t`, `@c15t/react
 - `micro`
   Runs diagnostic mitata microbenchmarks with `bun run bench:micro`. These are excluded from routine CI because the public-operation runtime suite already covers the release gates.
 - `bundle-test-app`
-  Builds a dedicated Next app and records route-level client script size plus publish tarball sizes for `c15t`, `@c15t/react`, and `@c15t/nextjs`.
+  Builds a dedicated Next app and records route-level client script size plus publish tarball sizes for `c15t`, `@inth/react`, and `@inth/nextjs`.
 - `react-browser-bench`
   Runs Playwright against a React-flavoured benchmark app with local deterministic API routes, plus `saved-consent-accept` and `saved-consent-reject` visits.
 - `nextjs-browser-bench`
@@ -19,11 +19,11 @@ This directory contains the internal benchmark platform for `c15t`, `@c15t/react
 - `tanstack-start-browser-bench`
   Runs Playwright against a TanStack Start integration benchmark app with the same fixture, scenarios, and metrics as the Next arm, plus a proxied-save arm. See its README for the head-to-head numbers.
 - `nuxt-browser-bench`
-  Runs Playwright against a Nuxt app on `@c15t/vue`, covering SSR, client SPA, manifest and repeat-visitor paths plus a zero-consent baseline build.
+  Runs Playwright against a Nuxt app on `@inth/nuxt`, covering SSR, client SPA, manifest and repeat-visitor paths plus a zero-consent baseline build.
 - `sveltekit-browser-bench`
-  Runs Playwright against a SvelteKit app on `@c15t/svelte/kit` (`c15tHandle`, `loadConsent`, `createConsentRoute`), with the same scenario names as the Nuxt suite and zero-consent baseline routes.
+  Runs Playwright against a SvelteKit app on `@inth/svelte/kit` (`c15tHandle`, `loadConsent`, `createConsentRoute`), with the same scenario names as the Nuxt suite and zero-consent baseline routes.
 - `astro-browser-bench`
-  Runs Playwright against an Astro app on `@c15t/astro`, covering the server-rendered banner in manifest and hosted modes, the `server:defer` banner island, a repeat visitor, and a zero-consent baseline built without the integration.
+  Runs Playwright against an Astro app on `@inth/astro`, covering the server-rendered banner in manifest and hosted modes, the `server:defer` banner island, a repeat visitor, and a zero-consent baseline built without the integration.
 - `script-lifecycle-bench`
   Runs deterministic local script lifecycle flows for load, unload, reload, callback-only, `alwaysLoad`, and `persistAfterConsentRevoked` behavior.
 - `core-benchmarks` (`policy-runtime` suite)
@@ -31,7 +31,7 @@ This directory contains the internal benchmark platform for `c15t`, `@c15t/react
 - `react-browser-bench` (`policy-*` scenarios)
   Loads `/policy/<fixture>` against an init route that resolves the fixture through the installed schema package, then records prompt readiness, probe render count, request and console-error invariants, the cookie and localStorage bytes the browser holds after an explicit choice or notice dismissal, and, for the persisted repeat visitor, the synchronous persistence hydration cost against the real stored record.
 - `nextjs-browser-bench` (`typical-install` scenario)
-  The Next.js quickstart as documented (`ConsentRoot` with `config`, a streamed `resolveConsent` over the cached manifest, stock banner and dialog) plus gtag, Meta Pixel and TikTok Pixel from `@c15t/integrations`, pointed at local stand-in scripts in `public/bench-vendor/`. Each iteration records a first visit (banner, gtag start, first-party JS by idle, then accept-all to the marketing vendors starting and running) and two returning visits that wait for all three vendors: `typical-install-repeat` reloads in the accepting context (warm cache), `typical-install-returning` opens a new context with its cookies and localStorage (cold cache).
+  The Next.js quickstart as documented (`ConsentRoot` with `config`, a streamed `resolveConsent` over the cached manifest, stock banner and dialog) plus gtag, Meta Pixel and TikTok Pixel from `@inth/integrations`, pointed at local stand-in scripts in `public/bench-vendor/`. Each iteration records a first visit (banner, gtag start, first-party JS by idle, then accept-all to the marketing vendors starting and running) and two returning visits that wait for all three vendors: `typical-install-repeat` reloads in the accepting context (warm cache), `typical-install-returning` opens a new context with its cookies and localStorage (cold cache).
 - `nextjs-browser-bench` (`ssr-repeat` scenario and SSR consistency metrics)
   Adds a persisted repeat visitor over the SSR route plus `consoleErrorCount`, `hydrationWarningCount`, `promptTransitionCount`, and `promptShownCount` for every scenario, so matching server and client inputs must settle on the same prompt without a flash or a hydration warning.
 - `bundle-test-app/client-payload`
@@ -43,7 +43,7 @@ This directory contains the internal benchmark platform for `c15t`, `@c15t/react
 - `shared`
   Shared schema, fixtures, budgets, expected-result registry, comparison logic, and report formatting.
 - `manifest-cache-bench`
-  Benchmarks `fetchCachedManifest` (`@c15t/core/transports/manifest-cache`) against an in-process simulated Vercel CDN fronting an Inth `/manifest` origin: cold bursts, steady-state `s-maxage` expiry, stale-while-revalidate serving with the origin down, and edge-unreachable timeouts. Not wired into CI or `turbo.json`; run by hand with `bun run --cwd benchmarks/manifest-cache-bench bench`. See its README.
+  Benchmarks `fetchCachedManifest` (`@inth/sdk/transports/manifest-cache`) against an in-process simulated Vercel CDN fronting an Inth `/manifest` origin: cold bursts, steady-state `s-maxage` expiry, stale-while-revalidate serving with the origin down, and edge-unreachable timeouts. Not wired into CI or `turbo.json`; run by hand with `bun run --cwd benchmarks/manifest-cache-bench bench`. See its README.
 
 ### Consent tax
 
@@ -142,7 +142,7 @@ budgets for its IAB banner and dialog sheets. The ordinary entry keeps its
 existing caps, and entries that emit no stock styles receive no allowance.
 
 The browser manifest resolver loads each non-English language through its
-own `import()`. Entries that import `@c15t/browser` emit those chunks even
+own `import()`. Entries that import `@inth/sdk` emit those chunks even
 when they never call `manifest()`, so `browser-full` and `browser-headless`
 get a one-time deferred allowance of 85 KiB gzip. Their initial and total
 budgets do not change. The core tarball gets a one-time allowance of 55 KiB
@@ -263,7 +263,7 @@ what CookieBench's does:
 
 Results use suite `consent-gate` and scenario `consent-gate:latency-200ms`.
 The script tag reports under `@c15t/script-lifecycle-bench`, and Nuxt
-reports under `@c15t/vue`. Angular's gate page and control page are two
+reports under `@inth/vue`. Angular's gate page and control page are two
 Angular apps in `angular-browser-bench`: `provideC15tServer()` needs
 `provideC15t()` in the root injector, so an app set up as the rendering
 guide says loads c15t on every route. Its `run-gate.ts` puts a small router

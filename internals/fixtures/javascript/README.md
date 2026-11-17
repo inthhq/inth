@@ -2,14 +2,14 @@
 
 Pages built with Vite, no framework:
 
-- `/` starts the stock banner and preferences from `@c15t/browser` with
+- `/` starts the stock banner and preferences from `@inth/sdk` with
   `init()`. `/branded/` is the same page with theme tokens.
 - `/headless/` renders its own HTML on `createConsentRuntime` from
-  `c15t/runtime`. `/headless/?design=branded` restyles it with CSS.
+  `@inth/sdk/runtime`. `/headless/?design=branded` restyles it with CSS.
 - `/experiment/` is the stock page running a banner experiment. See
   [Banner experiment](#banner-experiment).
 
-All of them register PostHog and X Pixel with `@c15t/integrations`, gate a
+All of them register PostHog and X Pixel with `@inth/integrations`, gate a
 YouTube video on measurement and keep a Privacy settings control on the page.
 
 From the repository root, install and build workspace packages first:

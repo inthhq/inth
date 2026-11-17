@@ -20,10 +20,10 @@ Copy the beacon token from the Web Analytics installation snippet. If
 Cloudflare adds the beacon to this site automatically, turn that off so the
 page has one beacon and c15t controls it.
 
-<CommandTabs command="@c15t/integrations" mode="install" />
+<CommandTabs command="@inth/integrations" mode="install" />
 
 ```ts title="src/consent-scripts.ts"
-import { cloudflareWebAnalytics } from '@c15t/integrations/cloudflare-web-analytics';
+import { cloudflareWebAnalytics } from '@inth/integrations/cloudflare-web-analytics';
 
 export const scripts = [cloudflareWebAnalytics({ token: 'YOUR_BEACON_TOKEN' })];
 ```

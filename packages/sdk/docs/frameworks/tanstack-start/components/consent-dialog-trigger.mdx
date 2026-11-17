@@ -13,7 +13,7 @@ dialog:
 {/* example: fragment */}
 
 ```tsx title="src/routes/__root.tsx"
-import { ConsentDialogTrigger } from 'c15t/tanstack-start';
+import { ConsentDialogTrigger } from '@inth/tanstack-start';
 
 // Inside ConsentRoot, next to ConsentDialog:
 <ConsentDialogTrigger showWhen="after-prompt" />;
@@ -32,6 +32,6 @@ and nothing under a policy that owes no rights.
 `ConsentDialogTriggerToolbar` renders one built-in preferences action plus
 controls your app owns, such as a theme toggle. Each action needs a stable
 `id`, a `label`, an `icon` and an `onSelect` callback. Import it from
-`c15t/tanstack-start`.
+`@inth/tanstack-start`.
 
 <import src="../../../shared/react/components/consent-dialog-trigger.mdx#toolbar-props" />

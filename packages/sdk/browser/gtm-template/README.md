@@ -1,7 +1,7 @@
 # c15t GTM community template
 
 `template.tpl` is the c15t Consent Management tag template for the Google Tag
-Manager Community Template Gallery. It loads the `@c15t/browser` script-tag
+Manager Community Template Gallery. It loads the `@inth/sdk-browser` script-tag
 build and forwards c15t's permissions to Google Consent Mode through the
 existing `window.c15t` queue.
 

@@ -6,7 +6,7 @@ group: frameworks
 
 ## Config reference
 
-`defineConsentConfig` from `c15t/next` declares the app's consent setup in
+`defineConsentConfig` from `@inth/nextjs` declares the app's consent setup in
 `c15t.config.ts` at the project root. `withConsentManifest` in
 `next.config.ts` finds the file and hands it to `ConsentRoot`,
 `resolveConsent`, `withConsentProps`, `createConsentRoute` and
@@ -17,7 +17,7 @@ Requires Next.js 15 or 16 (`next ^15.0.0 || ^16.0.0`).
 | Property | Default | Behavior |
 | --- | --- | --- |
 | `projectUrl` | `NEXT_PUBLIC_C15T_BACKEND_URL`, then `NEXT_PUBLIC_INTH_PROJECT_URL` | Backend base URL. Consent submissions go to `/subjects` under it, and the server reads `/manifest` or `/init` from it. |
-| `mode` | `manifest()` | `manifest()` or `hosted()` from `c15t/next`, or `testing()` from `c15t/next/testing`. `manifest()` falls back to the backend's `/init` with a warning when the manifest is unavailable. See [consent modes](/docs/concepts/modes). |
+| `mode` | `manifest()` | `manifest()` or `hosted()` from `@inth/nextjs`, or `testing()` from `@inth/nextjs/testing`. `manifest()` falls back to the backend's `/init` with a warning when the manifest is unavailable. See [consent modes](/docs/concepts/modes). |
 | `routePrefix` | none | Where the catch-all consent route is mounted, such as `/api/c15t`. A browser that resolves consent itself asks `${routePrefix}/init` instead of the backend's `/init`. Leave it unset when every page resolves consent on the server. |
 | `proxy` | `false` | The route at `routePrefix` forwards saves (`createConsentRoute({ proxy: true })`), so the browser saves there instead of `${projectUrl}/subjects`. The server helpers keep `projectUrl`. Needs `routePrefix`. See [optimization](/docs/frameworks/next/optimization#keep-browser-consent-requests-on-your-origin). |
 | `journey` | `'page'` | The consent journey scope, read by both `resolveConsent` and `ConsentRoot` so they agree. |
@@ -41,13 +41,13 @@ checks, so they add no bytes there:
 
 | Message | Cause |
 | --- | --- |
-| `@c15t/nextjs: defineConsentConfig expects an object.` | The argument is not an object. |
-| ``@c15t/nextjs: defineConsentConfig needs `projectUrl`, or NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL) set at build time.`` | No backend URL, and the mode is not `testing()`. |
-| ``@c15t/nextjs: defineConsentConfig `projectUrl` must be an absolute http(s) URL or a `/`-relative path, received "...".`` | A URL is protocol-relative, such as `//your-project.inth.app`, or bare, such as `api/c15t`. The same check covers `routePrefix`, `mode.manifestUrl` and `mode.geoUrl`. |
-| ``@c15t/nextjs: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'.`` | `routePrefix` is `'/'`. A catch-all route at the site root would catch every page. |
-| ``@c15t/nextjs: defineConsentConfig `mode` must be manifest() or hosted() from c15t/next, or testing() from c15t/next/testing. Pass a transport through ConsentRoot `options.mode`.`` | `mode` is not one of the data factories. |
-| ``@c15t/nextjs: defineConsentConfig `journey` must be 'page', 'tab' or false.`` | `journey` has another value. |
-| ``@c15t/nextjs: `proxy` sends saves through the consent route, so it needs `routePrefix`.`` | `proxy: true` without `routePrefix`. |
+| `@inth/nextjs: defineConsentConfig expects an object.` | The argument is not an object. |
+| ``@inth/nextjs: defineConsentConfig needs `projectUrl`, or NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL) set at build time.`` | No backend URL, and the mode is not `testing()`. |
+| ``@inth/nextjs: defineConsentConfig `projectUrl` must be an absolute http(s) URL or a `/`-relative path, received "...".`` | A URL is protocol-relative, such as `//your-project.inth.app`, or bare, such as `api/c15t`. The same check covers `routePrefix`, `mode.manifestUrl` and `mode.geoUrl`. |
+| ``@inth/nextjs: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'.`` | `routePrefix` is `'/'`. A catch-all route at the site root would catch every page. |
+| ``@inth/nextjs: defineConsentConfig `mode` must be manifest() or hosted() from @inth/nextjs, or testing() from @inth/nextjs/testing. Pass a transport through ConsentRoot `options.mode`.`` | `mode` is not one of the data factories. |
+| ``@inth/nextjs: defineConsentConfig `journey` must be 'page', 'tab' or false.`` | `journey` has another value. |
+| ``@inth/nextjs: `proxy` sends saves through the consent route, so it needs `routePrefix`.`` | `proxy: true` without `routePrefix`. |
 
 Protocol-relative and bare URLs are rejected because the server helpers would
 resolve them against the request host and reach an unintended origin.
@@ -111,10 +111,10 @@ browser saves through it. See
 
 ## Server helper options
 
-`resolveConsent` is the one server helper. `c15t/next/server` exports it for
+`resolveConsent` is the one server helper. `@inth/nextjs/server` exports it for
 the App Router, where the default request context reads `next/headers` and
 calls `await connection()` from `next/server` before reading the clock.
-`c15t/next/pages` exports the same function for the Pages Router, taking the
+`@inth/nextjs/pages` exports the same function for the Pages Router, taking the
 Node `req` instead, and `withConsentProps` wraps it as a `getServerSideProps`.
 All of them accept the options in this section; the Pages Router entry
 replaces only the `request` adapter.
@@ -292,20 +292,20 @@ from the headers listed in [geography and privacy signals](#geography-and-privac
 
 | Type | Exported from | What it names |
 | --- | --- | --- |
-| `ConsentState` | `c15t/next`, `c15t/next/server`, `c15t/next/pages` | The value `resolveConsent` returns and `ConsentRoot` takes as `state` |
-| `ResolveConsentOptions` | `c15t/next/server` | The App Router options bag |
-| `ConsentRequestOptions` | `c15t/next/server` | The request-reading subset: `now`, `cookieName`, `country`, `language`, `request` |
-| `PagesResolveConsentOptions` | `c15t/next/pages` | `ResolveConsentOptions` with `req` in place of `request` |
-| `ConsentRootProps` | `c15t/next` | Props of `ConsentRoot`; `ConsentRootProps['state']` also accepts the pending promise |
-| `ConsentConfig` | `c15t/next`, `c15t/next/server`, `c15t/next/pages`, `c15t/next/api` | The frozen `defineConsentConfig` result |
-| `ConsentMode` | `c15t/next` | What `manifest()`, `hosted()` and `testing()` return |
-| `NextConsentRouteOptions` | `c15t/next/api` | Options of `createConsentRoute` and `createPagesConsentRoute` |
-| `ConsentPageProps` | `c15t/next/pages` | `pageProps` of a page that exports `withConsentProps`, for `AppProps<ConsentPageProps>` |
-| `WithConsentPropsOptions` | `c15t/next/pages` | `PagesResolveConsentOptions` without `req` |
+| `ConsentState` | `@inth/nextjs`, `@inth/nextjs/server`, `@inth/nextjs/pages` | The value `resolveConsent` returns and `ConsentRoot` takes as `state` |
+| `ResolveConsentOptions` | `@inth/nextjs/server` | The App Router options bag |
+| `ConsentRequestOptions` | `@inth/nextjs/server` | The request-reading subset: `now`, `cookieName`, `country`, `language`, `request` |
+| `PagesResolveConsentOptions` | `@inth/nextjs/pages` | `ResolveConsentOptions` with `req` in place of `request` |
+| `ConsentRootProps` | `@inth/nextjs` | Props of `ConsentRoot`; `ConsentRootProps['state']` also accepts the pending promise |
+| `ConsentConfig` | `@inth/nextjs`, `@inth/nextjs/server`, `@inth/nextjs/pages`, `@inth/nextjs/api` | The frozen `defineConsentConfig` result |
+| `ConsentMode` | `@inth/nextjs` | What `manifest()`, `hosted()` and `testing()` return |
+| `NextConsentRouteOptions` | `@inth/nextjs/api` | Options of `createConsentRoute` and `createPagesConsentRoute` |
+| `ConsentPageProps` | `@inth/nextjs/pages` | `pageProps` of a page that exports `withConsentProps`, for `AppProps<ConsentPageProps>` |
+| `WithConsentPropsOptions` | `@inth/nextjs/pages` | `PagesResolveConsentOptions` without `req` |
 
 ### Pages Router differences
 
-`withConsentProps(getServerSideProps?, options?)` from `c15t/next/pages` is a
+`withConsentProps(getServerSideProps?, options?)` from `@inth/nextjs/pages` is a
 `getServerSideProps` that resolves consent and adds it to the page's props as
 `consent`. It wraps the page's own `getServerSideProps` when given; consent
 resolves while it runs, and its `redirect` and `notFound` results pass
@@ -313,7 +313,7 @@ through. `options` takes every option in the App Router table except
 `request`. The state is round-tripped through JSON, because Next.js rejects
 `undefined` prop values such as an absent GPC signal.
 
-`c15t/next/pages` also exports `resolveConsent` with the Node request in place
+`@inth/nextjs/pages` also exports `resolveConsent` with the Node request in place
 of the `request` adapter. `resolveConsent({ req, ...options })` accepts every
 option in the App Router table except `request`; `req` is the request from
 `getServerSideProps` or an API route. Its result can hold `undefined` fields,
@@ -322,15 +322,15 @@ it as a prop, or use `withConsentProps`, which does that for you.
 
 `createPagesRequestContext(req)` builds the `request` adapter itself. Headers
 are converted to Web `Headers`, and cookies are read from the `cookie` header.
-Use it when calling the `c15t/next/server` helper from a custom server or
+Use it when calling the `@inth/nextjs/server` helper from a custom server or
 test harness where `next/headers` is unavailable:
 
 ```ts title="server/consent.ts"
 import type { IncomingMessage } from 'node:http';
 
-import { createPagesRequestContext } from 'c15t/next/pages';
-import { resolveConsent } from 'c15t/next/server';
-import { testing } from 'c15t/next/testing';
+import { createPagesRequestContext } from '@inth/nextjs/pages';
+import { resolveConsent } from '@inth/nextjs/server';
+import { testing } from '@inth/nextjs/testing';
 
 export function resolveRequestConsent(req: IncomingMessage) {
 	return resolveConsent({ request: createPagesRequestContext(req) });
@@ -341,7 +341,7 @@ export function resolveRequestConsent(req: IncomingMessage) {
 
 ### createConsentRoute options
 
-`createConsentRoute(options?)` from `c15t/next/api` returns `GET` for one
+`createConsentRoute(options?)` from `@inth/nextjs/api` returns `GET` for one
 catch-all route, such as `app/api/c15t/[...c15t]/route.ts`. `GET` answers
 `/init` and `/manifest` under the route; every other path answers 404. With
 `proxy`, it also returns `POST`, `PATCH`, `PUT`, `DELETE` and `OPTIONS`, and
@@ -376,7 +376,7 @@ the handler ignores it. Keep the config's `projectUrl` absolute. To keep the
 browser on your origin, set [`proxy: true`](/docs/frameworks/next/optimization#keep-browser-consent-requests-on-your-origin)
 rather than a relative `projectUrl`.
 
-The handlers are built on the consent route handler in `@c15t/core/server`,
+The handlers are built on the consent route handler in `@inth/sdk/server`,
 which the TanStack Start, SvelteKit, Astro and Nuxt adapters share, so the
 rules below are the same in every framework.
 
@@ -430,11 +430,11 @@ client-only `vendors` allowlist on the IAB config makes that server summary
 unusable, so the banner waits for the full list. Filter vendors on the server
 when the banner must render immediately.
 
-`createPagesConsentRoute(options?, param?)` from `c15t/next/pages` accepts the
+`createPagesConsentRoute(options?, param?)` from `@inth/nextjs/pages` accepts the
 same options except `proxy` and returns the default export of a catch-all
 `pages/api` route, `pages/api/c15t/[...c15t].ts`. `param` names the catch-all
 parameter and defaults to `c15t`; a file with another name throws
-``@c15t/nextjs: createPagesConsentRoute found no `c15t` catch-all parameter. Name the file [...c15t].ts or pass its parameter name.``
+``@inth/nextjs: createPagesConsentRoute found no `c15t` catch-all parameter. Name the file [...c15t].ts or pass its parameter name.``
 Because a `pages/api` default export receives every method, requests other
 than `GET` and `HEAD` are answered with `405` and an `allow: GET` header before
 the wrapped handler runs. The bridge
@@ -469,11 +469,11 @@ awaiting or streaming prefetch results.
 
 ## Static manifest helpers
 
-`c15t/next/static` exports `loadStaticManifest`, `createStaticManifestModule`,
+`@inth/nextjs/static` exports `loadStaticManifest`, `createStaticManifestModule`,
 `createStaticConsentResolver` and `resolveUnknownLocationInit` for resolving
 consent from a manifest bundled at build time, for example in an
-`output: 'export'` site. The two resolvers come from `c15t/static`, which
-`c15t/tanstack-start/static` re-exports too.
+`output: 'export'` site. The two resolvers come from `@inth/sdk/static`, which
+`@inth/tanstack-start/static` re-exports too.
 
 - `createStaticManifestModule({ manifestUrl })` fetches a manifest and returns
   TypeScript source for a module you write to disk and import.
@@ -527,14 +527,14 @@ initialization.
 
 ## Testing configuration
 
-For tests only. Set `mode: testing()` from `c15t/next/testing` in the
+For tests only. Set `mode: testing()` from `@inth/nextjs/testing` in the
 `c15t.config.ts` a test build uses. It needs no backend URL:
 
 {/* example: fragment */}
 
 ```ts title="c15t.config.ts"
-import { defineConsentConfig } from 'c15t/next';
-import { testing } from 'c15t/next/testing';
+import { defineConsentConfig } from '@inth/nextjs';
+import { testing } from '@inth/nextjs/testing';
 
 export default defineConsentConfig({ mode: testing() });
 ```

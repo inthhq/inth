@@ -25,7 +25,7 @@ group: integrations
       `next.config.ts`:
 
       ```ts title="c15t.config.ts"
-      import { defineConsentConfig } from 'c15t/next';
+      import { defineConsentConfig } from '@inth/nextjs';
       import { scripts } from './src/consent-scripts';
 
       export default defineConsentConfig({ scripts });
@@ -97,7 +97,7 @@ group: integrations
       {/* example: fragment */}
 
       ```ts title="src/main.ts"
-      import { c15tVue, manifest } from 'c15t/vue/vue-plugin';
+      import { c15tVue, manifest } from '@inth/vue/vue-plugin';
       import { scripts } from './consent-scripts';
 
       app.use(c15tVue, {
@@ -119,7 +119,7 @@ group: integrations
       If the module already exports scripts, combine the two arrays.
 
       ```ts title="src/c15t.client.ts"
-      import type { C15tClientOptionsExtension } from 'c15t/astro';
+      import type { C15tClientOptionsExtension } from '@inth/astro';
       import { scripts } from './consent-scripts';
 
       export default { scripts } satisfies C15tClientOptionsExtension;
@@ -138,7 +138,7 @@ group: integrations
 
       ```svelte title="src/App.svelte"
       <script lang="ts">
-        import { ConsentProvider, manifest } from 'c15t/svelte';
+        import { ConsentProvider, manifest } from '@inth/svelte';
         import { scripts } from './consent-scripts';
       </script>
 
@@ -157,7 +157,7 @@ group: integrations
 
       ```svelte title="src/routes/+layout.svelte"
       <script lang="ts">
-        import { ConsentRoot } from 'c15t/svelte';
+        import { ConsentRoot } from '@inth/svelte';
         import { scripts } from '../consent-scripts';
 
         let { children, data } = $props();
@@ -192,7 +192,7 @@ group: integrations
     </Tab>
 
     <Tab value="HTML">
-      The helpers in `@c15t/integrations` are ES modules that need a bundler. On a
+      The helpers in `@inth/integrations` are ES modules that need a bundler. On a
       page that loads the c15t script tag, paste the vendor's own snippet instead
       and keep it inert until its category is allowed:
 
@@ -209,10 +209,10 @@ group: integrations
     </Tab>
 
     <Tab value="JavaScript">
-      Pass the scripts to `init()` from `@c15t/browser`, next to your mode:
+      Pass the scripts to `init()` from `@inth/sdk`, next to your mode:
 
       ```ts
-      import { init, manifest } from '@c15t/browser';
+      import { init, manifest } from '@inth/sdk';
       import { scripts } from './consent-scripts';
 
       const consent = init({
@@ -222,9 +222,9 @@ group: integrations
       ```
 
       Keep the mode from your quickstart. With
-      `createConsentRuntime` from `c15t/runtime`, pass `scripts` to it instead.
+      `createConsentRuntime` from `@inth/sdk/runtime`, pass `scripts` to it instead.
       A kernel you create yourself needs a loader from
-      `c15t/modules/script-loader`. Attach one loader per kernel. See
+      `@inth/sdk/modules/script-loader`. Attach one loader per kernel. See
       [JavaScript scripts](/docs/frameworks/javascript/scripts).
     </Tab>
   </Tabs>

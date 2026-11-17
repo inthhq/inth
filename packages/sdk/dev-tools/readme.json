@@ -1,5 +1,5 @@
 {
-	"title": "@c15t/dev-tools: Kernel-first consent debugging",
+	"title": "@inth/sdk-dev-tools: Kernel-first consent debugging",
 	"description": "Framework-neutral developer tools for inspecting c15t v3 consent state, resolved policy, location, IAB state, kernel events, and actions.",
 	"features": [
 		"Explicit ConsentKernel binding with no global store discovery",
@@ -16,7 +16,7 @@
 		"",
 		"Framework adapters include this engine, so React, Next.js, Vue, and Svelte applications do not need to install it separately. Install it directly only for the imperative API:",
 		"",
-		"```bash\npnpm add -D @c15t/dev-tools\n```"
+		"```bash\npnpm add -D @inth/sdk-dev-tools\n```"
 	],
 	"usage": [
 		"Create the engine with `createDevTools({ kernel })`",

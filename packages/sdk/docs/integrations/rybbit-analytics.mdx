@@ -18,10 +18,10 @@ element. By default, c15t also reloads the page.
 Copy the site ID from your Rybbit tracking snippet. The helper passes it to
 the script as `data-site-id`.
 
-<CommandTabs command="@c15t/integrations" mode="install" />
+<CommandTabs command="@inth/integrations" mode="install" />
 
 ```ts title="src/consent-scripts.ts"
-import { rybbitAnalytics } from '@c15t/integrations/rybbit-analytics';
+import { rybbitAnalytics } from '@inth/integrations/rybbit-analytics';
 
 export const scripts = [rybbitAnalytics({ siteId: 'YOUR_SITE_ID' })];
 ```

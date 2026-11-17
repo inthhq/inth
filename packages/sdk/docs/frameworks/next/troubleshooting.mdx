@@ -30,9 +30,9 @@ the absolute Inth or self-hosted backend endpoint. To send the browser through
 **Check.** `withConsentManifest` downloads `${projectUrl}/manifest` when
 `next build`, `next dev` or `next typegen` loads `next.config.ts`. When the
 download fails or takes longer than 10 seconds, `next build` stops with an
-error that starts with `@c15t/nextjs/build: could not fetch the consent
+error that starts with `@inth/nextjs/build: could not fetch the consent
 manifest from <url> during the build`. `next dev` logs the same message as a
-warning, and `snapshot` from `c15t/generated` is `undefined`, so the server
+warning, and `snapshot` from `@inth/nextjs/generated` is `undefined`, so the server
 fetches the policy at runtime. It never reuses an old snapshot. The part in
 parentheses names the cause:
 
@@ -57,7 +57,7 @@ require an absolute upstream URL.` The same notice ending in
 `passes manifest({ snapshot })` or `sets manifest({ source: 'runtime' })` is
 expected: those modes read no build-time manifest.
 
-`@c15t/nextjs/build: could not read c15t.config.ts (...)` is a warning: the
+`@inth/nextjs/build: could not read c15t.config.ts (...)` is a warning: the
 build could not evaluate the file, so it fetched the manifest as for
 `manifest()`, whatever the file's `mode`. The part in parentheses is the
 error. The usual cause is an import Node can't load at build time, such as a
@@ -73,25 +73,25 @@ policy on its first request. To drop the build-time fetch, use
 [runtime manifest caching](/docs/frameworks/next/optimization#reuse-cached-policy-data)
 instead.
 
-## Why does importing `c15t/generated` from a client component fail the build?
+## Why does importing `@inth/nextjs/generated` from a client component fail the build?
 
 **Check.** `next build` or `next dev` reports that `server-only` cannot be
-imported from a Client Component, in a module that imports `c15t/generated`.
+imported from a Client Component, in a module that imports `@inth/nextjs/generated`.
 
 **Fix.** `withConsentManifest` keeps the snapshot out of browser bundles, so
-`c15t/generated` only works in server code: Server Components, route
+`@inth/nextjs/generated` only works in server code: Server Components, route
 handlers, `getServerSideProps` and API routes. Most apps never import it.
 `resolveConsent` and the consent route read the snapshot themselves, and
 `ConsentRoot` receives the resolved state.
 
 ## Why is `snapshot` undefined?
 
-**Check.** `snapshot` from `c15t/generated` is `undefined` in server code.
+**Check.** `snapshot` from `@inth/nextjs/generated` is `undefined` in server code.
 
 **Fix.** Check these causes:
 
 - `withConsentManifest` doesn't wrap the config in `next.config.ts`. Without
-  it, `c15t/generated` still resolves, but exports `undefined`.
+  it, `@inth/nextjs/generated` still resolves, but exports `undefined`.
 - The fetch failed in `next dev`, or in a build with
   `C15T_ON_BUILD_ERROR=runtime`. The server then fetches the policy at
   runtime.
@@ -100,7 +100,7 @@ handlers, `getServerSideProps` and API routes. Most apps never import it.
 - The code runs in a package listed in `serverExternalPackages`, which stays
   outside the bundle and doesn't see the alias.
 
-`c15t/generated` ships its own types, so `tsc --noEmit` passes on a fresh
+`@inth/nextjs/generated` ships its own types, so `tsc --noEmit` passes on a fresh
 clone without running Next.js first.
 
 ## Verify manifest fetching
@@ -153,11 +153,11 @@ the next section.
 **Check.** The page, or `next build` while it prerenders the page, throws one
 of these errors from `ConsentRoot`:
 
-- ``@c15t/nextjs: manifest() needs a backend URL. Set NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL), or `projectUrl` in c15t.config.ts.``
-- ``@c15t/nextjs: hosted() needs a backend URL. Set NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL), or `projectUrl` in c15t.config.ts.``
+- ``@inth/nextjs: manifest() needs a backend URL. Set NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL), or `projectUrl` in c15t.config.ts.``
+- ``@inth/nextjs: hosted() needs a backend URL. Set NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL), or `projectUrl` in c15t.config.ts.``
 
 A production build prints only the first sentence, such as
-`@c15t/nextjs: manifest() needs a backend URL.`
+`@inth/nextjs: manifest() needs a backend URL.`
 
 `ConsentRoot` found no `c15t.config.ts`, or got a `config` prop without a
 backend URL, and neither `NEXT_PUBLIC_C15T_BACKEND_URL` nor
@@ -175,24 +175,24 @@ now the root throws. To run without a backend, set `mode: testing()` in
 **Check.** The browser console shows a warning such as:
 
 ```txt
-[c15t] ConsentRoot `mode` is the hosted() transport itself, so its code ships in the first-load bundle. Use hosted() from c15t/next instead: it is plain data, and the root loads the code only when it runs.
+[c15t] ConsentRoot `mode` is the hosted() transport itself, so its code ships in the first-load bundle. Use hosted() from @inth/nextjs instead: it is plain data, and the root loads the code only when it runs.
 ```
 
 **Fix.** `options.mode` received `hosted()`, `testing()` or `manifest()` from
-`c15t/react`, which are transports. Import the mode from `c15t/next` and set
+`@inth/react`, which are transports. Import the mode from `@inth/nextjs` and set
 it as `mode` in `c15t.config.ts`.
 
 ## Why does defineConsentConfig throw?
 
 **Check.** `next build`, `next dev` or the first server render fails with a
-`TypeError` that starts with `@c15t/nextjs: defineConsentConfig`.
+`TypeError` that starts with `@inth/nextjs: defineConsentConfig`.
 `withConsentManifest` reads `c15t.config.ts` when Next.js loads
 `next.config.ts`, so most config errors stop the build before it compiles.
 The checks run on the server only; the browser copy of the file skips them.
 
 **Fix.** The [config reference](/docs/frameworks/next/data-fetching-reference#config-reference)
 lists each message. The most common is
-``@c15t/nextjs: defineConsentConfig needs `projectUrl`, or NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL) set at build time.``
+``@inth/nextjs: defineConsentConfig needs `projectUrl`, or NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL) set at build time.``
 Set the variable in `.env.local` and in your host's build settings, or pass
 `projectUrl`.
 
@@ -260,7 +260,7 @@ boundary. It reads state without recording a choice.
 ```tsx title="app/consent-policy-debug.tsx"
 'use client';
 
-import { useSnapshot } from 'c15t/next';
+import { useSnapshot } from '@inth/nextjs';
 
 export function ConsentPolicyDebug() {
 	const snapshot = useSnapshot();
@@ -293,6 +293,6 @@ your feature needs instead of subscribing to the whole snapshot.
 
 [Troubleshoot consent](/docs/guides/troubleshooting) covers problems shared by
 every framework, such as a missing banner, analytics that load before a choice,
-imports that fail because npm installed c15t v2, choices that disappear on
+imports that fail because the wrong package is installed, choices that disappear on
 reload, server HTML that differs from the browser, static builds that fail and
 content blockers that hide the consent UI.

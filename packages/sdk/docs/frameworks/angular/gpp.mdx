@@ -25,7 +25,7 @@ provideC15t({ mode, scripts, gpp: true });
 such as `gpp: { usFallback: 'none' }`; the options are listed below. Omit
 `gpp`, or pass `gpp: false`, to leave it off.
 
-`@c15t/angular` loads the GPP code from `@c15t/iab/gpp`, which it installs as
+`@inth/angular` loads the GPP code from `@inth/sdk/iab/gpp`, which it installs as
 a dependency, through a dynamic import. Apps without `gpp` never download it.
 The runtime installs `__gpp` once that chunk arrives, in the browser only, and
 removes it when the application is destroyed.
@@ -38,7 +38,7 @@ The TCF EU section needs IAB TCF as well. Set it up with
 [IAB TCF](/docs/frameworks/angular/iab).
 
 With an external `runtime`, `provideC15t()` ignores `gpp`. Set `gpp` and
-`loadGPP: () => import('@c15t/iab/gpp')` in that runtime's
+`loadGPP: () => import('@inth/angular/gpp')` in that runtime's
 `createConsentRuntime()` call instead.
 
 <include src="../../shared/iab-gpp.mdx" />

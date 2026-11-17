@@ -8,13 +8,13 @@ group: frameworks
 
 ## Declare the vendors and record a switch
 
-Declaring a vendor turns on vendor switches. Built-in `@c15t/integrations`
+Declaring a vendor turns on vendor switches. Built-in `@inth/integrations`
 helpers then list their own vendor by name, so you only declare a vendor for a
 script of your own, or to replace a helper's name and privacy policy.
 
 With `createConsentRuntime`, declare the vendors, then render the switch in
 your own UI with the [headless runtime](/docs/frameworks/javascript/headless).
-The stock preference dialog that `init()` from `@c15t/browser` mounts lists
+The stock preference dialog that `init()` from `@inth/sdk` mounts lists
 vendor switches on its own. This module declares X Pixel, reads whether it
 may run, and records a new switch:
 
@@ -34,11 +34,11 @@ export const runtime = createConsentRuntime({
 });
 ```
 
-`init()` from `@c15t/browser` accepts the same `vendors` option. Its client
+`init()` from `@inth/sdk` accepts the same `vendors` option. Its client
 exposes the runtime as `client.runtime`, so the functions above work with it
 too.
 
-`isVendorAllowed(snapshot, id)` from `c15t` backs `canVendorRun()`.
+`isVendorAllowed(snapshot, id)` from `@inth/sdk/engine` backs `canVendorRun()`.
 
 <import src="../../shared/scripts/vendor-consent.mdx#undeclared" />
 

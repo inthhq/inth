@@ -18,7 +18,7 @@ Start on Inth's [free plan](https://inth.com/pricing) and follow the [framework 
 | --- | --- | --- |
 | Apply different rules by region | Policy rules by country and US state. Inth or your backend finds the location | One mode for all visitors, opt-in by default. For a mode per country, you find the location yourself |
 | Keep consent records on a server | Inth hosts the backend and keeps records in its database. Self-hosting is optional | Not included. Callbacks can send records to an endpoint that you build |
-| Use IAB TCF | TCF 2.4 with the `@c15t/iab` add-on. Inth is a registered IAB Europe CMP, ID 490 | Not supported |
+| Use IAB TCF | TCF 2.4 with the `@inth/sdk/iab` add-on. Inth is a registered IAB Europe CMP, ID 490 | Not supported |
 | Respect privacy signals | Reads Global Privacy Control. IAB GPP API for US state opt-outs | Not documented |
 | Use Google Consent Mode v2 | Google tag and GTM integrations send the default and each update | Example code that you connect to its consent callbacks |
 | Use consent in framework components | Native adapters and reactive consent state | Browser library, with framework setup recipes |
@@ -29,7 +29,7 @@ Start on Inth's [free plan](https://inth.com/pricing) and follow the [framework 
 | Clear cookies after withdrawal | Optional rules for each category. A refusal for one vendor needs separate cleanup | Cookie cleanup for each category and service |
 | Change the interface | Themes, component parts and headless APIs | Modal options, CSS and custom content |
 | Licence and price | Apache 2.0, with no licence fee. Inth has a free plan and paid plans | MIT, with no licence fee. You pay to host any parts that you build |
-| Install | `c15t` from npm, or `@c15t/browser` as a script tag | `vanilla-cookieconsent` from npm, or a CDN script |
+| Install | A framework package such as `@inth/react` from npm, or `@inth/sdk` as a script tag | `vanilla-cookieconsent` from npm, or a CDN script |
 
 Sources: [introduction](https://cookieconsent.orestbida.com/essential/introduction.html), [setup](https://cookieconsent.orestbida.com/essential/getting-started.html), [configuration](https://cookieconsent.orestbida.com/reference/configuration-reference.html), [consent records](https://cookieconsent.orestbida.com/advanced/consent-logging.html), [script controls](https://cookieconsent.orestbida.com/advanced/manage-scripts.html), [Google Consent Mode](https://cookieconsent.orestbida.com/advanced/google-consent-mode.html) and the [npm package](https://www.npmjs.com/package/vanilla-cookieconsent).
 
@@ -88,7 +88,7 @@ The library is free, with an MIT licence. The parts that it leaves out are not f
 
 ### Is CookieConsent v3 a CMP?
 
-No. Its documentation says that it is not a CMP and does not support IAB TCF. c15t supports TCF 2.4 with the [`@c15t/iab` add-on](/docs/self-host/guides/iab-tcf). IAB Europe lists Consent Management Inc., the company behind Inth, as a CMP with ID 490. IAB Europe registration is separate from Google's CMP certification.
+No. Its documentation says that it is not a CMP and does not support IAB TCF. c15t supports TCF 2.4 with the [`@inth/sdk/iab` add-on](/docs/self-host/guides/iab-tcf). IAB Europe lists Consent Management Inc., the company behind Inth, as a CMP with ID 490. IAB Europe registration is separate from Google's CMP certification.
 
 ### Does CookieConsent v3 work with React and Next.js?
 

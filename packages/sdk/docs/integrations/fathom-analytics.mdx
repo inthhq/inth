@@ -20,10 +20,10 @@ Copy the site ID from your Fathom embed code, where it is the `data-site`
 value. If your app changes routes without a full page load, also pass `spa`.
 Without it, the helper leaves Fathom's SPA route tracking off.
 
-<CommandTabs command="@c15t/integrations" mode="install" />
+<CommandTabs command="@inth/integrations" mode="install" />
 
 ```ts title="src/consent-scripts.ts"
-import { fathomAnalytics } from '@c15t/integrations/fathom-analytics';
+import { fathomAnalytics } from '@inth/integrations/fathom-analytics';
 
 export const scripts = [fathomAnalytics({ site: 'YOUR_SITE_ID', spa: 'auto' })];
 ```

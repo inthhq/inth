@@ -17,7 +17,7 @@ resolves its policy rules for it in the browser.
   small `FollowLocale` component calls `useSetLanguage` when the route's
   locale changes.
 - [`lib/consent-i18n.ts`](./lib/consent-i18n.ts) imports c15t's built-in
-  German and French from `@c15t/translations/de` and `@c15t/translations/fr`,
+  German and French from `@inth/nextjs/translations/de` and `@inth/nextjs/translations/fr`,
   and rewrites one line per language in Northwind's voice. Everything else in
   the banner and dialog is c15t's own copy.
 - [`components/visitor-preview.tsx`](./components/visitor-preview.tsx) sets

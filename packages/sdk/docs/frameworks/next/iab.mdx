@@ -8,8 +8,8 @@ group: frameworks
 
 <import src="../../shared/react/iab/overview.mdx#prepare" />
 
-Next.js uses the React IAB components. There is no `c15t/next/iab` JavaScript
-entry point, so import the components from `c15t/react/iab` and render this
+Next.js uses the React IAB components. There is no `@inth/nextjs/iab` JavaScript
+entry point, so import the components from `@inth/react/iab` and render this
 Client Component inside the `ConsentRoot` from your
 [App Router](/docs/frameworks/next/app-router) or
 [Pages Router](/docs/frameworks/next/pages-router) setup.
@@ -25,7 +25,7 @@ server HTML, and the dialog loads its rules when opened.
 ## Load an external stylesheet
 
 With Tailwind CSS 3, or when you want to put c15t in a named cascade layer,
-import `c15t/next/styles.css` and then `c15t/next/iab/styles.css` at your global
+import `@inth/nextjs/styles.css` and then `@inth/nextjs/iab/styles.css` at your global
 stylesheet entry. The IAB stylesheet holds the IAB rules and uses the base
 stylesheet's tokens. Set `styles: false` in `ConsentRoot`'s `options` so the
 components use those stylesheets:
@@ -33,8 +33,8 @@ components use those stylesheets:
 {/* example: fragment */}
 
 ```css title="styles/globals.css"
-@import 'c15t/next/styles.css';
-@import 'c15t/next/iab/styles.css';
+@import '@inth/nextjs/styles.css';
+@import '@inth/nextjs/iab/styles.css';
 ```
 
 Tailwind CSS 3 also needs the

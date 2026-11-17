@@ -11,7 +11,7 @@ A banner does not stop a script you load with a `<script>` tag in
 register the vendor with c15t instead, so c15t loads it only while its
 category is allowed.
 
-Pass the helpers from `@c15t/integrations` to the plugin as `scripts`:
+Pass the helpers from `@inth/integrations` to the plugin as `scripts`:
 
 <include src="../../shared/examples/vue/main.mdx" />
 
@@ -63,7 +63,7 @@ a category when it is withdrawn. See
 
 Optional: a visitor can allow marketing and still switch off one vendor in it.
 Skip this unless your site needs per-vendor choices. Declare
-the vendors in the `vendors` option; helpers from `@c15t/integrations` already carry
+the vendors in the `vendors` option; helpers from `@inth/integrations` already carry
 their vendor slug. See [vendor consent](/docs/frameworks/vue/vendor-consent).
 
 ## Content Security Policy
@@ -74,7 +74,7 @@ adds a nonce to every script the loader creates. See
 
 ## Send your own analytics events
 
-`useEventDispatcher()` from `c15t/vue/vue-plugin` returns the app's event dispatcher. It
+`useEventDispatcher()` from `@inth/vue/vue-plugin` returns the app's event dispatcher. It
 sends to the `scripts` in your c15t config and checks consent when an event
 goes out. Call it in `setup` and send a pageview each time the route changes:
 

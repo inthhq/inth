@@ -1,12 +1,12 @@
 ---
 title: IAB GPP
-description: Add the IAB Global Privacy Platform API (__gpp) to a Next.js app with ConsentGPP from c15t/react/gpp, so ad tech can read US state opt-outs and the TCF EU consent string.
+description: Add the IAB Global Privacy Platform API (__gpp) to a Next.js app with ConsentGPP from @inth/react/gpp, so ad tech can read US state opt-outs and the TCF EU consent string.
 group: frameworks
 ---
 
 ## What GPP does
 
-`ConsentGPP` from `c15t/react/gpp` installs `window.__gpp`, the GPP 1.1 CMP
+`ConsentGPP` from `@inth/react/gpp` installs `window.__gpp`, the GPP 1.1 CMP
 API, and keeps its GPP string in step with the visitor's choices. Prebid.js,
 Google Ad Manager and other ad tech read US privacy signals from it.
 
@@ -19,7 +19,7 @@ from the [Pages Router](/docs/frameworks/next/pages-router) guide.
 {/* example: fragment */}
 
 ```tsx title="app/layout.tsx (partial)"
-import { ConsentGPP } from 'c15t/react/gpp';
+import { ConsentGPP } from '@inth/react/gpp';
 
 <ConsentRoot state={resolveConsent()}>
 	<ConsentGPP />
@@ -32,7 +32,7 @@ import { ConsentGPP } from 'c15t/react/gpp';
 `ConsentGPP` renders nothing. `__gpp` exists only in the browser: the
 component installs it after it mounts and removes it when it unmounts. Its
 props are plain data, so a Server Component can render it too. Apps that do
-not import `c15t/react/gpp` bundle none of the GPP code.
+not import `@inth/react/gpp` bundle none of the GPP code.
 
 The props are the GPP options listed below, for example
 `<ConsentGPP usFallback="none" />`.

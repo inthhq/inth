@@ -1,6 +1,6 @@
 ---
 title: Transports
-description: Choose where a JavaScript app's c15t policy comes from and where choices go, with projectUrl and the hosted, manifest and testing modes for @c15t/browser, createConsentRuntime and your own kernel.
+description: Choose where a JavaScript app's c15t policy comes from and where choices go, with projectUrl and the hosted, manifest and testing modes for @inth/sdk, createConsentRuntime and your own kernel.
 group: frameworks
 ---
 
@@ -29,7 +29,7 @@ Each setup takes the transport in a slightly different form:
 
 | Setup | Where it goes |
 | --- | --- |
-| `@c15t/browser` | `init({ projectUrl, mode })`. `mode` is optional: `manifest()` or `hosted()` from `@c15t/browser`, or `testing()` from `@c15t/browser/testing`. |
+| `@inth/sdk` | `init({ projectUrl, mode })`. `mode` is optional: `manifest()` or `hosted()` from `@inth/sdk`, or `testing()` from `@inth/sdk/testing`. |
 | `createConsentRuntime` | `projectUrl`, and an optional `mode` from the same entries. |
 | Script tag | `data-project-url`, and `data-mode="hosted"` or `"manifest"` on the headless and IAB scripts. Tests load `c15t.testing.js`. |
 | `createConsentKernel` | `transport`, the transport object itself, such as `createHostedTransport({ projectUrl })`. |
@@ -37,17 +37,17 @@ Each setup takes the transport in a slightly different form:
 A factory is created once. To switch transports, dispose the client or
 runtime and create a new one.
 
-`init()` from `@c15t/browser` bundles the hosted transport, and the manifest
+`init()` from `@inth/sdk` bundles the hosted transport, and the manifest
 and testing code only when you import them. Passing a mode name throws:
 
 ```txt
-@c15t/browser: `mode` must be hosted() or manifest() from @c15t/browser, or testing() from @c15t/browser/testing. Mode names like "hosted" work only in the script-tag builds.
+@inth/sdk: `mode` must be hosted() or manifest() from @inth/sdk, or testing() from @inth/sdk/testing. Mode names like "hosted" work only in the script-tag builds.
 ```
 
 Leaving out `projectUrl` throws:
 
 ```txt
-@c15t/browser: `projectUrl` is required. Set it to your Inth project URL, or use `mode: testing()` from @c15t/browser/testing in tests.
+@inth/sdk: `projectUrl` is required. Set it to your Inth project URL, or use `mode: testing()` from @inth/sdk/testing in tests.
 ```
 
 ## Hosted
@@ -59,7 +59,7 @@ Inth backend's `/init` for each visitor and saves to its `/subjects`:
 
 `hosted()` takes no options; it uses the `projectUrl` you pass. For a kernel you
 create yourself, `createHostedTransport({ projectUrl })` from
-`c15t/transports` takes these options:
+`@inth/sdk/transports` takes these options:
 
 | Option | What it does |
 | --- | --- |
@@ -80,7 +80,7 @@ Saves still go out with cookies and still need the trusted origin.
 
 ## Manifest
 
-`manifest()` from `@c15t/browser` resolves the policy in the browser from the
+`manifest()` from `@inth/sdk` resolves the policy in the browser from the
 backend's public manifest. With no options it uses the snapshot and backend
 URL `consentManifest()` downloaded; without a snapshot it fetches
 `${projectUrl}/manifest` once. When the manifest is unavailable, it asks the
@@ -109,7 +109,7 @@ rule id differs) resolve in the browser, so the banner shows without a
 request. Such a manifest needs a default rule, plus a fallback rule when it
 has region rules, so that every location matches one. When the location is
 unknown, an IAB policy behind country or region rules still goes to `/init`.
-`manifestNeedsLocation(manifest)` from `@c15t/browser` tells you in advance.
+`manifestNeedsLocation(manifest)` from `@inth/sdk` tells you in advance.
 
 The browser bundle carries English base copy. Another language's base copy
 loads the first time a visitor needs it, and the manifest's own translations
@@ -125,9 +125,9 @@ banner. The script-tag build counts GPP as on, because `c15t.gpp.js` can load
 after `init()`; pass `gpp: false` to `c15t.init()` to resolve in the browser on
 pages that do not load it.
 
-`createManifestTransport` from `c15t/transports/manifest` is for server code
+`createManifestTransport` from `@inth/sdk/transports/manifest` is for server code
 only. It bundles every language. Browser code uses `manifest()`, or
-`createBrowserManifestTransport` from `c15t/transports/manifest-browser`.
+`createBrowserManifestTransport` from `@inth/sdk/transports/manifest-browser`.
 
 ### Bundle the manifest during Vite builds
 
@@ -138,16 +138,16 @@ The [quickstart](/docs/frameworks/javascript/quickstart) and
 
 ## Testing
 
-`testing()` from `@c15t/browser/testing` resolves a policy in the browser and
+`testing()` from `@inth/sdk/testing` resolves a policy in the browser and
 sends nothing. It needs no `projectUrl`, and it throws in production builds,
 so a test configuration that reaches production fails on load.
 
 {/* example: fragment */}
 
 ```ts title="src/consent.test.ts"
-import { init } from '@c15t/browser';
-import { testing } from '@c15t/browser/testing';
-import { policyRulePresets } from 'c15t';
+import { init } from '@inth/sdk';
+import { testing } from '@inth/sdk/testing';
+import { policyRulePresets } from '@inth/sdk/engine';
 
 init({
 	mode: testing({

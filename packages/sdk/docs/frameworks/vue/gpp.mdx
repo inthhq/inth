@@ -17,22 +17,22 @@ Pass `gpp` to the Vue plugin in `src/main.ts`:
 {/* example: fragment */}
 
 ```ts title="src/main.ts"
-import { c15tVue, hosted } from 'c15t/vue/vue-plugin';
+import { c15tVue, hosted } from '@inth/vue/vue-plugin';
 import { createApp } from 'vue';
 
 import App from './App.vue';
 
 createApp(App)
 	.use(c15tVue, {
-		// Loads @c15t/iab/gpp and installs `__gpp` once the app mounts.
+		// Loads @inth/sdk/iab/gpp and installs `__gpp` once the app mounts.
 		gpp: true,
 		mode: hosted(),
 	})
 	.mount('#app');
 ```
 
-The plugin loads `@c15t/iab/gpp` when the app mounts, so apps without `gpp`
-never download it. The Vue integration already depends on `@c15t/iab`;
+The plugin loads `@inth/sdk/iab/gpp` when the app mounts, so apps without `gpp`
+never download it. The Vue integration already depends on `@inth/sdk/iab`;
 nothing else to install. Unmounting the app removes `__gpp`.
 
 Replace `https://your-project.inth.app` with your project's backend URL. The
@@ -40,7 +40,7 @@ GPP string follows the policy and location Inth resolves for the visitor, so
 a US visitor's state comes from the backend.
 
 If you pass the plugin a `runtime` created with `createConsentRuntime()`, the
-plugin ignores `gpp`. Set `gpp` and `loadGPP: () => import('@c15t/iab/gpp')`
+plugin ignores `gpp`. Set `gpp` and `loadGPP: () => import('@inth/vue/gpp')`
 on that runtime instead.
 
 To add the TCF EU section for visitors under an `iab` policy, set up

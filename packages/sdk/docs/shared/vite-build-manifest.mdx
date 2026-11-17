@@ -1,7 +1,7 @@
 `vite build` and `vite dev` fetch the manifest when they start. `vite preview`
 serves the last build without fetching. The plugin writes no file into your
-app, so there is nothing to keep out of Git. `c15t/generated` ships its own
-types, so `tsc`, `vue-tsc` and `svelte-check` pass on a fresh checkout without
+app, so there is nothing to keep out of Git. The `generated` entry ships its
+own types, so `tsc`, `vue-tsc` and `svelte-check` pass on a fresh checkout without
 a build first.
 
 The plugin can't see the options your app passes to `manifest()`. When the

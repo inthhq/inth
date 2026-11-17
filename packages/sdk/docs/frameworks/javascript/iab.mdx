@@ -1,13 +1,13 @@
 ---
 title: IAB TCF
-description: Add IAB TCF to a JavaScript app with the @c15t/browser IAB build, or attach the IAB module to a consent runtime or kernel you own.
+description: Add IAB TCF to a JavaScript app with the @inth/sdk IAB build, or attach the IAB module to a consent runtime or kernel you own.
 group: frameworks
 ---
 
-## Use the IAB build of @c15t/browser
+## Use the IAB build of @inth/sdk
 
 With the stock UI from the [quickstart](/docs/frameworks/javascript/quickstart),
-import `init` from `@c15t/browser/iab` instead of `@c15t/browser`. This entry
+import `init` from `@inth/sdk/iab-client` instead of `@inth/sdk`. This entry
 adds the CMP, the TC string encoder, the IAB banner and the purpose and vendor
 dialog. The plain entry leaves them out. Its stock banner stands aside for a
 policy that uses the `iab` model, so a client that resolves one emits an
@@ -16,7 +16,7 @@ policy that uses the `iab` model, so a client that resolves one emits an
 `iab: false`.
 
 ```ts title="src/main.ts"
-import { init, manifest } from '@c15t/browser/iab';
+import { init, manifest } from '@inth/sdk/iab-client';
 
 const consent = init({
 	mode: manifest(),
@@ -44,16 +44,16 @@ under an IAB policy because it cannot produce a TC string; use `saveIAB()`.
 
 When the resolved policy is not an IAB policy, this entry shows the ordinary
 banner. For your own stylesheet with `ui: { shadow: false }`, import both
-`@c15t/browser/styles.css` and `@c15t/browser/iab/styles.css`.
+`@inth/sdk/styles.css` and `@inth/sdk/iab/styles.css`.
 
 ## Attach the module to your kernel
 
-Without `@c15t/browser`, install `@c15t/iab` with `c15t`. The following
+Without `@inth/sdk`, install `@inth/sdk/iab` with `c15t`. The following
 fragment assumes an existing kernel connected to Inth and an applicable IAB
 policy:
 
 ```ts
-import { createIAB } from '@c15t/iab';
+import { createIAB } from '@inth/sdk/iab';
 
 function attachIAB(
 	kernel: Parameters<typeof createIAB>[0]['kernel'],
@@ -86,7 +86,7 @@ each restriction.
 {/* example: fragment */}
 
 ```ts
-import { createIAB } from '@c15t/iab';
+import { createIAB } from '@inth/sdk/iab';
 
 function attachIAB(
 	kernel: Parameters<typeof createIAB>[0]['kernel'],

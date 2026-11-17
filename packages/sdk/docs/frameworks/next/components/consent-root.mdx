@@ -16,7 +16,7 @@ Follow the [quickstart](/docs/frameworks/next/quickstart),
 Keep `ConsentRoot` mounted across navigation.
 
 Render `ConsentRoot` straight from a Server Component layout, or from
-`pages/_app.tsx`. `c15t/next` gives Server Components a client reference to
+`pages/_app.tsx`. `@inth/nextjs` gives Server Components a client reference to
 it, and `ConsentRoot` reads `c15t.config.ts` itself, so the layout passes only
 `state`. The `state` from `resolveConsent`, or its promise, is plain data and
 can cross from the server to the browser. `withConsentManifest` in
@@ -59,15 +59,15 @@ at a time, and `options.callbacks` one callback at a time, so
 
 Choices post to `${projectUrl}/subjects` in every mode but `testing()`. With
 no backend URL anywhere, `ConsentRoot` throws
-``@c15t/nextjs: manifest() needs a backend URL. Set NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL), or `projectUrl` in c15t.config.ts.``
+``@inth/nextjs: manifest() needs a backend URL. Set NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL), or `projectUrl` in c15t.config.ts.``
 instead of running a mode you did not choose. See
 [testing configuration](/docs/frameworks/next/data-fetching-reference#testing-configuration)
 and [consent modes](/docs/concepts/modes).
 
 `options.mode` also takes a transport factory. A
-`hosted()` or `testing()` transport from `c15t/react` works there, but
+`hosted()` or `testing()` transport from `@inth/react` works there, but
 outside production it warns that its code is now in the first-load bundle.
-Use the data factories from `c15t/next` instead.
+Use the data factories from `@inth/nextjs` instead.
 
 ## Provider options
 
@@ -81,7 +81,7 @@ switch visitors or backends after mounting.
 
 | Option | Purpose |
 | --- | --- |
-| `mode` | `manifest()`, `hosted()` or `testing()` from `c15t/next`, or a transport factory. Replaces the config's `mode` |
+| `mode` | `manifest()`, `hosted()` or `testing()` from `@inth/nextjs`, or a transport factory. Replaces the config's `mode` |
 | `callbacks` | Choice, permission and error events |
 | `theme`, `components` | Consent-action styles, theme slots and component slot attributes. Tokens render through `ConsentTheme` |
 | `presentation` | Prompt and preferences layout behavior |
@@ -104,7 +104,7 @@ signals. Hydration and notice dismissal do not become explicit choices.
 
 ## When would I use ConsentProvider directly?
 
-Use `ConsentProvider` from `c15t/next` when you need to manage the runtime and
+Use `ConsentProvider` from `@inth/nextjs` when you need to manage the runtime and
 transport yourself. For example, it accepts an externally owned `runtime`.
 Its owner must start and dispose that runtime.
 

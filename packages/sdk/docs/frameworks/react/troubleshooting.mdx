@@ -1,6 +1,6 @@
 ---
 title: Troubleshooting
-description: Fix a missing banner, early vendor requests, unstyled components and theme warnings in a React app that uses c15t/react.
+description: Fix a missing banner, early vendor requests, unstyled components and theme warnings in a React app that uses @inth/react.
 group: frameworks
 ---
 
@@ -35,7 +35,7 @@ choice:
 {/* example: fragment */}
 
 ```tsx title="src/consent-policy-debug.tsx"
-import { useSnapshot } from 'c15t/react';
+import { useSnapshot } from '@inth/react';
 
 export function ConsentPolicyDebug() {
 	const snapshot = useSnapshot();
@@ -84,15 +84,15 @@ error.
 **Fix.**
 
 - No c15t `<style>` element: the provider sets `styles: false` or `noStyle`.
-  With `styles: false`, import `c15t/react/styles.css` once in the module
+  With `styles: false`, import `@inth/react/styles.css` once in the module
   that renders the provider.
 - The console reports a blocked inline style: set the provider's `nonce`, as
   [Content Security Policy](/docs/frameworks/react/content-security-policy)
   shows.
 - Under Tailwind 3, buttons lose their padding and cards their borders:
   Tailwind 3's unlayered preflight beats c15t's layered rules. Set
-  `styles: false`, import `c15t/react/styles.css` above the `@tailwind`
-  directives and add `c15t/postcss-tailwind3` before `tailwindcss` in your
+  `styles: false`, import `@inth/react/styles.css` above the `@tailwind`
+  directives and add `@inth/react/postcss-tailwind3` before `tailwindcss` in your
   PostCSS config. Without the plugin, Tailwind 3 drops c15t's rules or fails
   the build with
   `` `@layer components` is used but no matching `@tailwind components` directive is present ``.
@@ -121,6 +121,6 @@ explains the options.
 
 [Troubleshoot consent](/docs/guides/troubleshooting) covers problems shared by
 every framework, such as a missing banner, analytics that load before a choice,
-imports that fail because npm installed c15t v2, choices that disappear on
+imports that fail because the wrong package is installed, choices that disappear on
 reload, server HTML that differs from the browser, static builds that fail and
 content blockers that hide the consent UI.

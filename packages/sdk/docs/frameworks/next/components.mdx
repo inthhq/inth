@@ -1,13 +1,13 @@
 ---
 title: Components
-description: Every c15t component a Next.js app imports from c15t/next, what each renders, which ones are Client Components, and where to start.
+description: Every c15t component a Next.js app imports from @inth/nextjs, what each renders, which ones are Client Components, and where to start.
 group: frameworks
 ---
 
 ## Component reference
 
-`c15t/next` exports `ConsentRoot` and re-exports every component and hook from
-`c15t/react`, so a Next.js app needs one import path. Every component except
+`@inth/nextjs` exports `ConsentRoot` and re-exports every component and hook from
+`@inth/react`, so a Next.js app needs one import path. Every component except
 `ConsentTheme` ships with `'use client'`. You can still render them from a
 Server Component, as long as every prop you pass is serializable.
 
@@ -21,7 +21,7 @@ Server Component, as long as every prop you pass is serializable.
 | `ConsentDialogTrigger` | A floating, draggable button that opens the dialog. `ConsentDialogTriggerToolbar` adds your own actions beside it | Client Component | [ConsentDialogTrigger](/docs/frameworks/next/components/consent-dialog-trigger) |
 | `ConsentGate` | Its children while a category is allowed, a placeholder otherwise | Client Component | [ConsentGate](/docs/frameworks/next/components/consent-gate) |
 | `ConsentTheme` | A `<style>` element with your theme tokens | Server-safe | [Customize](/docs/frameworks/next/customize) |
-| `DevTools` from `c15t/next/devtools` | A development panel for consent state, scripts and events | Client Component | [DevTools](/docs/frameworks/next/components/dev-tools) |
+| `DevTools` from `@inth/nextjs/devtools` | A development panel for consent state, scripts and events | Client Component | [DevTools](/docs/frameworks/next/components/dev-tools) |
 
 Render every component except `ConsentTheme` inside `ConsentRoot`, because
 they read the runtime `ConsentRoot` creates. `ConsentRoot` already renders
@@ -66,11 +66,11 @@ always a Client Component. See [hooks](/docs/frameworks/next/hooks).
 
 ## IAB TCF components
 
-`c15t/next` does not re-export the IAB TCF components. Import
-`IABProvider`, `IABConsentBanner` and `IABConsentDialog` from `c15t/react/iab`,
+`@inth/nextjs` does not re-export the IAB TCF components. Import
+`IABProvider`, `IABConsentBanner` and `IABConsentDialog` from `@inth/react/iab`,
 render them inside `ConsentRoot` next to
-`ConsentBanner` and `ConsentDialog`, and load `c15t/next/styles.css` and
-`c15t/next/iab/styles.css` with `styles: false`. All three are Client
+`ConsentBanner` and `ConsentDialog`, and load `@inth/nextjs/styles.css` and
+`@inth/nextjs/iab/styles.css` with `styles: false`. All three are Client
 Components. The stock banner and dialog stay closed
 under an IAB policy. See [IAB TCF](/docs/frameworks/next/iab).
 
@@ -78,10 +78,10 @@ under an IAB policy. See [IAB TCF](/docs/frameworks/next/iab).
 
 | Import | Exports | Use |
 | --- | --- | --- |
-| `c15t/next/components/consent-dialog-link` | `ConsentDialogLink` only | A module that needs the link without loading the rest of the adapter |
-| `c15t/next/headless` | Headless hooks | Your own banner and dialog markup. See [headless](/docs/frameworks/next/headless) |
-| `c15t/next/server` | `resolveConsent` and the other server helpers | Server Components and Route Handlers |
-| `c15t/next/devtools` | `DevTools` | Development only |
+| `@inth/nextjs/components/consent-dialog-link` | `ConsentDialogLink` only | A module that needs the link without loading the rest of the adapter |
+| `@inth/nextjs/headless` | Headless hooks | Your own banner and dialog markup. See [headless](/docs/frameworks/next/headless) |
+| `@inth/nextjs/server` | `resolveConsent` and the other server helpers | Server Components and Route Handlers |
+| `@inth/nextjs/devtools` | `DevTools` | Development only |
 
 ## Check the components
 

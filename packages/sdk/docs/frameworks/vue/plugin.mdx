@@ -6,15 +6,14 @@ group: frameworks
 
 ## Install the plugin
 
-Import `c15tVue` from `c15t/vue/vue-plugin` and pass it to `app.use()` in
+Import `c15tVue` from `@inth/vue/vue-plugin` and pass it to `app.use()` in
 `src/main.ts`:
 
 <include src="../../shared/examples/vue/main.mdx" />
 
-`c15t/vue` is the Nuxt module, not a Vue plugin. Passing it to `app.use()`
-does nothing useful. The [quickstart](/docs/frameworks/vue/quickstart) covers
-`consentManifest()`, the Vite plugin that supplies the backend URL to
-`hosted()`.
+Nuxt apps install `@inth/nuxt` instead of calling `app.use()`. The
+[quickstart](/docs/frameworks/vue/quickstart) covers `consentManifest()`, the
+Vite plugin that supplies the backend URL to `hosted()`.
 
 ## What the plugin does
 
@@ -51,7 +50,7 @@ runs in the browser.
 
 | Option | Default | What it does |
 | --- | --- | --- |
-| `mode` | `hosted()` | Where the visitor's policy comes from: `hosted()` or `manifest()` from `c15t/vue/vue-plugin`, or `testing()` from `c15t/vue/testing`. See [rendering](/docs/frameworks/vue/rendering). |
+| `mode` | `hosted()` | Where the visitor's policy comes from: `hosted()` or `manifest()` from `@inth/vue/vue-plugin`, or `testing()` from `@inth/vue/testing`. See [rendering](/docs/frameworks/vue/rendering). |
 | `consentCategories` | The policy's categories | Limits the categories the dialog and widget show, within the policy's scope. |
 | `vendors` | Unset | Vendors listed under their category with their own switch. See [vendor consent](/docs/frameworks/vue/vendor-consent). |
 | `storageConfig` | `{ storageKey: 'c15t' }` | Cookie and localStorage name, `crossSubdomain`, `defaultDomain` and `defaultExpiryDays`, 365 by default. |
@@ -63,7 +62,7 @@ mode, not the plugin:
 | --- | --- |
 | `hosted()` | `projectUrl`, by default the one `consentManifest()` read from `VITE_C15T_BACKEND_URL` or `VITE_INTH_PROJECT_URL`. `headers`, `fetch`, `domain`. |
 | `manifest()` | `projectUrl` and the build snapshot default to what `consentManifest()` downloaded. `source: 'runtime'` fetches the manifest when the app starts; `manifestUrl` fetches it from that URL instead of using the snapshot; `snapshot` takes one you supply. `geoUrl`, `inputs`, `initFallback`, `headers`, `credentials`, `fetch`, `domain`. |
-| `testing()` | From `c15t/vue/testing`, for tests. `policy`: the rules to resolve; omitted, c15t's recommended rules. Throws in production builds. |
+| `testing()` | From `@inth/vue/testing`, for tests. `policy`: the rules to resolve; omitted, c15t's recommended rules. Throws in production builds. |
 
 `hosted()` and `manifest()` throw when they have no backend URL: add
 `consentManifest()` to `vite.config.ts` and set `VITE_C15T_BACKEND_URL` (or

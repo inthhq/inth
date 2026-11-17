@@ -1,0 +1,18 @@
+{
+	"title": "@inth/sdk: consent SDK for JavaScript and script tags",
+	"description": "The consent engine, the vanilla JavaScript client, the script-tag builds, UI styles, translations and IAB TCF support. Framework packages such as `@inth/react` and `@inth/vue` build on it. Install it directly for a site without a UI framework, or to load the script-tag build from a CDN.",
+	"prerequisites": [
+		"Node.js 20.19 or later for a bundled app",
+		"An [Inth project](https://inth.com) (free sign-up), a [self-hosted backend](https://c15t.com/docs/self-host/quickstart), or local mode for development and tests"
+	],
+	"usage": [
+		"Start the client with the project URL from your Inth project",
+		"```ts\nimport { init } from '@inth/sdk'\n\ninit({ projectUrl: 'https://your-project.inth.app' })\n```",
+		"For a site without a build step, load `lib/browser/dist/c15t.js` from a CDN instead. See the [script tag quickstart](https://c15t.com/docs/frameworks/html/quickstart)",
+		"For the full setup, see the [JavaScript quickstart](https://c15t.com/docs/frameworks/javascript/quickstart)"
+	],
+	"docsLink": "https://c15t.com/docs/frameworks/javascript/quickstart",
+	"quickStartLink": "https://c15t.com/docs/frameworks/javascript/quickstart",
+	"showCLIGeneration": false,
+	"showHosting": false
+}

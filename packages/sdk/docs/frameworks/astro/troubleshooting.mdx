@@ -19,7 +19,7 @@ See [Rendering and deployment](/docs/frameworks/astro/rendering).
 
 **Check.** A serialized `c15t()` option holds a function. The error names it,
 such as `c15t().scripts[0].onLoad`. A vendor helper from
-`@c15t/integrations`, such as `posthog()`, returns a script with callbacks.
+`@inth/integrations`, such as `posthog()`, returns a script with callbacks.
 
 **Fix.** Move the option to the default export of `src/c15t.client.ts`. See
 [`clientEntrypoint`](/docs/frameworks/astro/integration#cliententrypoint).
@@ -62,7 +62,7 @@ rebuild it.
 **Check.** In `manifest()` mode the integration downloads
 `${projectUrl}/manifest`, or your `manifestUrl`, when `astro build` or
 `astro dev` starts, and waits at most 10 seconds. When the download fails,
-`astro build` stops with an error that starts with `@c15t/astro: could not
+`astro build` stops with an error that starts with `@inth/astro: could not
 fetch the consent manifest from <url> during the build`. `astro dev` logs the
 same message as a warning, and the server fetches the policy at runtime. The
 part in parentheses names the cause:
@@ -98,7 +98,7 @@ the server fetches the policy at runtime.
 npm run build -- --timings
 ```
 
-After a successful build, find `@c15t/astro` in the report's `Integrations`
+After a successful build, find `@inth/astro` in the report's `Integrations`
 section. Read the `astro:config:setup` duration in its row. In `manifest()`
 mode with build-time fetching, this includes the manifest download and other
 c15t setup work. It does not time the request separately. Compare it with the
@@ -208,11 +208,11 @@ layout that imports `consent-dialog-trigger.astro` fails to resolve it.
 | `endpoints: false` | `routePrefix: false` |
 | `buildManifest: false` | `manifest({ source: 'runtime' })` |
 | `buildManifest: true` | `onBuildError: 'fail'` |
-| `ConsentDialogTrigger` from `consent-dialog-trigger.astro` | `ConsentDialogLink` from `c15t/astro/components` |
+| `ConsentDialogTrigger` from `consent-dialog-trigger.astro` | `ConsentDialogLink` from `@inth/astro/components` |
 | `hosted({ domain })` | The top-level `projectUrl` |
-| The `c15t/astro/api/init` and `c15t/astro/api/manifest` entries, and route handlers from `c15t/astro/api` | `routePrefix`, and `createConsentRouteHandlers` and the manifest cache helpers from `c15t/astro/server` |
-| `resolveTransportFactory`, `custom`, and the `C15tModeDescriptor`, `C15tHostedDescriptor`, `C15tManifestDescriptor`, `C15tOfflineDescriptor` and `C15tEndpointOptions` types | `ConsentMode` from `c15t/astro` |
-| `/// <reference types="c15t/astro/middleware" />` in `src/env.d.ts` | Nothing. The integration adds the `Astro.locals.c15t` type. |
+| The `@inth/astro/api/init` and `@inth/astro/api/manifest` entries, and route handlers from `@inth/astro/api` | `routePrefix`, and `createConsentRouteHandlers` and the manifest cache helpers from `@inth/astro/server` |
+| `resolveTransportFactory`, `custom`, and the `C15tModeDescriptor`, `C15tHostedDescriptor`, `C15tManifestDescriptor`, `C15tOfflineDescriptor` and `C15tEndpointOptions` types | `ConsentMode` from `@inth/astro` |
+| `/// <reference types="@inth/astro/middleware" />` in `src/env.d.ts` | Nothing. The integration adds the `Astro.locals.c15t` type. |
 
 ## A vendor loads before the visitor chooses
 
@@ -257,7 +257,7 @@ no rules and links no stylesheet when the dialog opens. Without it, check the
 Network panel for a failed request to the dialog's stylesheet, and the
 console for a Content Security Policy error.
 
-**Fix.** Import `c15t/astro/styles.css`, and `c15t/astro/primitives.css` for
+**Fix.** Import `@inth/astro/styles.css`, and `@inth/astro/primitives.css` for
 the Svelte dialog, from your global stylesheet. See
 [load the stylesheet yourself](/docs/frameworks/astro/customize#load-the-stylesheet-yourself).
 
@@ -268,7 +268,7 @@ the Svelte dialog, from your global stylesheet. See
 before c15t's rules do.
 
 **Fix.** Put `components` after `base` in your first `@layer` statement, or set
-`styles: false` and import `c15t/astro/styles.css` after your layer order
+`styles: false` and import `@inth/astro/styles.css` after your layer order
 statement.
 
 ## The dark mode is wrong or flashes
@@ -334,6 +334,6 @@ See [Content Security Policy](/docs/frameworks/astro/content-security-policy).
 
 [Troubleshoot consent](/docs/guides/troubleshooting) covers problems shared by
 every framework, such as a missing banner, analytics that load before a choice,
-imports that fail because npm installed c15t v2, choices that disappear on
+imports that fail because the wrong package is installed, choices that disappear on
 reload, server HTML that differs from the browser, static builds that fail and
 content blockers that hide the consent UI.

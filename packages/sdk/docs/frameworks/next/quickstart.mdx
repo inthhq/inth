@@ -30,7 +30,7 @@ or vendors.
 
 ## Install c15t
 
-<CommandTabs command="c15t @c15t/integrations" mode="install" />
+<CommandTabs command="@inth/nextjs @inth/integrations" mode="install" />
 
 You don't need to import a stylesheet, because the components add their own
 `<style>` elements. Tailwind CSS 3 is the exception. Import the stylesheet
@@ -102,7 +102,7 @@ awaiting it:
 
 <include src="../../shared/examples/nextjs/quickstart-layout.mdx" />
 
-The layout is a Server Component. `c15t/next` gives it `ConsentRoot`,
+The layout is a Server Component. `@inth/nextjs` gives it `ConsentRoot`,
 `ConsentBanner`, `ConsentDialog` and `ConsentDialogLink` as client components,
 so you don't need a `'use client'` wrapper. `ConsentRoot` already wraps
 `ConsentProvider`, so don't mount both.
@@ -146,7 +146,7 @@ analytics still load.
 | Static, ISR or `'use cache'` pages, Cache Components, `ensureStatic`, or the banner in the first HTML | [Rendering and deployment](/docs/frameworks/next/rendering) |
 | The fewest files, with consent resolved in the browser | [Client-side initialization](/docs/frameworks/next/client-side) |
 
-Tests run without a backend through `testing()` from `c15t/next/testing`,
+Tests run without a backend through `testing()` from `@inth/nextjs/testing`,
 which throws in production builds. See
 [testing configuration](/docs/frameworks/next/data-fetching-reference#testing-configuration).
 
