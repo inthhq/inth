@@ -52,7 +52,7 @@ swift test --package-path .
 (cd packages/android && ./gradlew :c15t-core:test :c15t-android:testDebugUnitTest)
 ```
 
-Swift needs Xcode 26 or newer. Android needs JDK 17 and the Android SDK.
+CI builds Swift with Xcode 26. Android needs JDK 17 and the Android SDK.
 
 ## Pull requests
 
