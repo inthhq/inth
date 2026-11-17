@@ -69,8 +69,8 @@ const mountApp = function mountApp(options: C15tVuePluginOptions) {
 
 test('gpp installs __gpp after the app mounts and removes it on unmount', async () => {
 	const { unmount } = mountApp({
-		backendURL: 'https://consent.example.test',
 		gpp: true,
+		projectUrl: 'https://consent.example.test',
 	});
 
 	await vi.waitFor(() => expect(ping()).toMatchObject({ cmpStatus: 'loaded' }));
@@ -82,10 +82,10 @@ test('gpp installs __gpp after the app mounts and removes it on unmount', async 
 test('gpp options reach createGPP', async () => {
 	const onError = vi.fn();
 	mountApp({
-		backendURL: 'https://consent.example.test',
 		callbacks: { onError },
 		// Neither 1 nor a registered CMP ID, so createGPP rejects it.
 		gpp: { cmpId: 0 },
+		projectUrl: 'https://consent.example.test',
 	});
 
 	await vi.waitFor(() =>
@@ -97,7 +97,7 @@ test('gpp options reach createGPP', async () => {
 });
 
 test('without gpp the plugin installs no __gpp', async () => {
-	mountApp({ backendURL: 'https://consent.example.test' });
+	mountApp({ projectUrl: 'https://consent.example.test' });
 	await flush();
 	expect(gppWindow.__gpp).toBeUndefined();
 });

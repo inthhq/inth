@@ -49,9 +49,9 @@ const renderDescription = function renderDescription(
 	context: 'banner' | 'dialog' | 'manager'
 ) {
 	const config = {
-		backendURL: 'https://consent.example',
 		consentCategories: ['necessary', 'measurement'],
 		domain: 'consent.example',
+		projectUrl: 'https://consent.example',
 	} as ConsentConfig;
 	const kernelContext = createVueConsentKernelContext({
 		config,

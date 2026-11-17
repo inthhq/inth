@@ -58,11 +58,11 @@ const render = async function render(
 	disableAnimation: boolean | undefined
 ) {
 	const config = {
-		backendURL: 'https://consent.example',
 		consentCategories: ['necessary', 'measurement', 'marketing'],
 		customFetch: vi.fn(() => new Response('{}')) as unknown as typeof fetch,
 		disableAnimation: configDisableAnimation,
 		hideBranding: true,
+		projectUrl: 'https://consent.example',
 	} as ConsentConfig;
 	const context = createVueConsentKernelContext({ config, prefetch: init });
 	context.activeUI.value = activeUI;

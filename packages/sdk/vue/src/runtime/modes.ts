@@ -1,6 +1,6 @@
 /**
  * The transports a plain Vue app's `app.use(c15tVue, …)` selects:
- * `manifest()` for `mode`, and the hosted backend for `backendURL`.
+ * `manifest()` for `mode`, and the hosted backend for `projectUrl`.
  *
  * Each is the transport itself, imported statically: a single-page app has
  * one environment, so a bundler drops the code the app does not use. Both
@@ -10,7 +10,7 @@
  */
 import type { HostedModeFactory, ProviderTransportFactory } from '@c15t/core';
 import {
-	backendURL as builtBackendURL,
+	projectUrl as builtProjectUrl,
 	snapshot as builtSnapshot,
 } from '@c15t/core/generated';
 import type { HostedMode } from '@c15t/core/modes';
@@ -32,21 +32,21 @@ export type { BrowserManifestModeFactory } from '@c15t/core/transports/manifest-
 declare const process: { env: { NODE_ENV?: string } };
 
 /** The error for a mode with no backend URL, with the setup hint in dev. */
-const missingBackendURL = function missingBackendURL(
+const missingProjectUrl = function missingProjectUrl(
 	mode: 'hosted' | 'manifest'
 ): Error {
 	let hint = '';
 	try {
 		if (process.env.NODE_ENV !== 'production') {
 			hint =
-				' Add consentManifest() from c15t/vue/vite to vite.config.ts and set VITE_C15T_BACKEND_URL (or VITE_INTH_PROJECT_URL), or pass `backendURL`.';
+				' Add consentManifest() from c15t/vue/vite to vite.config.ts and set VITE_C15T_BACKEND_URL (or VITE_INTH_PROJECT_URL), or pass `projectUrl`.';
 		}
 	} catch {
 		// No bundler and no `process`: the short message has to do.
 	}
 	return new Error(
 		mode === 'hosted'
-			? `c15t: \`backendURL\` is required.${hint}`
+			? `c15t: \`projectUrl\` is required.${hint}`
 			: `c15t: ${mode}() has no backend URL.${hint}`
 	);
 };
@@ -56,18 +56,18 @@ const missingBackendURL = function missingBackendURL(
  * manifest, the default for single-page apps.
  *
  * Without options it uses the manifest and backend URL `consentManifest()`
- * downloaded during the build. With `manifestURL` it fetches that URL when
+ * downloaded during the build. With `manifestUrl` it fetches that URL when
  * the app starts and ignores the build's snapshot. With no build snapshot
  * (a dev server that could not reach the backend, or `source: 'runtime'`)
- * it fetches `${backendURL}/manifest` when the app starts. With
- * `manifestURL` or `source: 'runtime'`, also pass `source: 'runtime'` to
+ * it fetches `${projectUrl}/manifest` when the app starts. With
+ * `manifestUrl` or `source: 'runtime'`, also pass `source: 'runtime'` to
  * `consentManifest()`, so the build downloads no snapshot. English copy is
  * bundled; other languages load on demand.
  *
  * The browser does not know where the visitor is, so when the policy
  * depends on location, the first visit asks the backend's `/init`, as in
  * every single-page app. Pass `inputs` when the page knows the location, or
- * `geoURL` for a route that answers it. `initFallback: false` resolves as
+ * `geoUrl` for a route that answers it. `initFallback: false` resolves as
  * for an unknown location instead, with no request.
  *
  * @param options - Overrides for the build's backend URL and snapshot.
@@ -86,38 +86,38 @@ export const manifest = function manifest(
 	// Test the build's URL on its own: a build that baked one in folds the
 	// check, and its error message, away.
 	if (
-		builtBackendURL === undefined &&
-		options.backendURL === undefined &&
-		options.manifestURL === undefined
+		builtProjectUrl === undefined &&
+		options.projectUrl === undefined &&
+		options.manifestUrl === undefined
 	) {
-		throw missingBackendURL('manifest');
+		throw missingProjectUrl('manifest');
 	}
 	return browserManifest({
-		// A `manifestURL` is fetched at runtime, so the build's snapshot is
+		// A `manifestUrl` is fetched at runtime, so the build's snapshot is
 		// left out, as with `source: 'runtime'`. A snapshot you pass replaces
 		// it.
 		snapshot:
-			options.manifestURL || options.source === 'runtime'
+			options.manifestUrl || options.source === 'runtime'
 				? undefined
 				: builtSnapshot,
 		...options,
-		backendURL: options.backendURL ?? builtBackendURL,
+		projectUrl: options.projectUrl ?? builtProjectUrl,
 	} as BrowserManifestOptions);
 };
 
 /**
  * The transport the plugin's options select: `mode` when it is a factory
- * or a `testing()` value, else the hosted backend at `backendURL`, which
+ * or a `testing()` value, else the hosted backend at `projectUrl`, which
  * defaults to the URL `consentManifest()` read from
  * `VITE_C15T_BACKEND_URL` or `VITE_INTH_PROJECT_URL`.
  *
- * @param options - The plugin's `backendURL` and `mode`.
+ * @param options - The plugin's `projectUrl` and `mode`.
  * @returns A transport factory for the runtime's `mode`.
  * @throws {Error} When none of them is set and the build set no URL.
  * @internal
  */
 export const selectedMode = function selectedMode(options: {
-	backendURL?: string;
+	projectUrl?: string;
 	mode?: ProviderTransportFactory | HostedMode | ConsentTesting;
 }): ProviderTransportFactory {
 	const { mode } = options;
@@ -128,9 +128,9 @@ export const selectedMode = function selectedMode(options: {
 	if (mode && 'transport' in mode && mode.transport) {
 		return mode.transport;
 	}
-	const backendURL = options.backendURL ?? builtBackendURL;
-	if (backendURL === undefined) {
-		throw missingBackendURL('hosted');
+	const projectUrl = options.projectUrl ?? builtProjectUrl;
+	if (projectUrl === undefined) {
+		throw missingProjectUrl('hosted');
 	}
-	return coreHosted({ backendURL }) as HostedModeFactory;
+	return coreHosted({ projectUrl }) as HostedModeFactory;
 };

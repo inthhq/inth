@@ -155,9 +155,9 @@ const mountRoot = async function mountRoot() {
 				[
 					c15tVue,
 					{
-						backendURL: 'https://consent.example',
 						consentCategories: ['necessary', 'measurement', 'marketing'],
 						domain: 'consent.example',
+						projectUrl: 'https://consent.example',
 					},
 				],
 			],
@@ -184,9 +184,9 @@ const mountRootWithConsentProbe = async function mountRootWithConsentProbe() {
 				[
 					c15tVue,
 					{
-						backendURL: 'https://consent.example',
 						consentCategories: ['necessary', 'measurement', 'marketing'],
 						domain: 'consent.example',
+						projectUrl: 'https://consent.example',
 					},
 				],
 			],
@@ -215,10 +215,10 @@ const renderRootToString = async function renderRootToString(
 ) {
 	const { fetchMock } = createFetchMock();
 	const config: RuntimeConsentConfig = {
-		backendURL: 'https://consent.example',
 		consentCategories: ['necessary', 'measurement', 'marketing'],
 		customFetch: fetchMock as unknown as typeof fetch,
 		domain: 'consent.example',
+		projectUrl: 'https://consent.example',
 	};
 	const initialRecords = readStoredRecordsFromCookieHeader(
 		cookieHeader,
@@ -267,9 +267,9 @@ describe('@c15t/vue kernel runtime', () => {
 		const { fetchMock } = createFetchMock();
 		const prefetch = { ...initFixture, subjectId: 'backend+literal' };
 		const config: RuntimeConsentConfig = {
-			backendURL: 'https://consent.example',
 			customFetch: fetchMock as unknown as typeof fetch,
 			iframeBlocker: false,
+			projectUrl: 'https://consent.example',
 		};
 		const context = createVueConsentKernelContext({
 			config,
@@ -322,10 +322,10 @@ describe('@c15t/vue kernel runtime', () => {
 		);
 		const { fetchMock } = createFetchMock();
 		const config: RuntimeConsentConfig = {
-			backendURL: 'https://consent.example',
 			consentCategories: ['necessary', 'measurement', 'marketing'],
 			customFetch: fetchMock as unknown as typeof fetch,
 			iframeBlocker: false,
+			projectUrl: 'https://consent.example',
 		};
 		const context = createVueConsentKernelContext({
 			config,
@@ -376,9 +376,9 @@ describe('@c15t/vue kernel runtime', () => {
 			})
 		);
 		const config: RuntimeConsentConfig = {
-			backendURL: 'https://consent.example',
 			customFetch: createFetchMock().fetchMock as unknown as typeof fetch,
 			iframeBlocker: false,
+			projectUrl: 'https://consent.example',
 		};
 		const context = createVueConsentKernelContext({
 			config,
@@ -427,8 +427,8 @@ describe('@c15t/vue kernel runtime', () => {
 	test('disposes the kernel with its Vue context', () => {
 		const context = createVueConsentKernelContext({
 			config: {
-				backendURL: 'https://consent.example',
 				customFetch: vi.fn() as unknown as typeof fetch,
+				projectUrl: 'https://consent.example',
 			},
 		});
 		const dispose = vi.spyOn(context.kernel, 'dispose');
@@ -522,8 +522,8 @@ describe('@c15t/vue kernel runtime', () => {
 	test('prefetch seeds overrides from init location and language', () => {
 		const context = createVueConsentKernelContext({
 			config: {
-				backendURL: 'https://consent.example',
 				customFetch: vi.fn() as unknown as typeof fetch,
+				projectUrl: 'https://consent.example',
 			},
 			prefetch: {
 				...initFixture,
@@ -675,7 +675,6 @@ describe('@c15t/vue kernel runtime', () => {
 		const { fetchMock } = createFetchMock();
 		const onRequestBlocked = vi.fn();
 		const config: RuntimeConsentConfig = {
-			backendURL: 'https://consent.example',
 			consentCategories: ['necessary', 'measurement', 'marketing'],
 			customFetch: fetchMock as unknown as typeof fetch,
 			domain: 'consent.example',
@@ -685,6 +684,7 @@ describe('@c15t/vue kernel runtime', () => {
 				onRequestBlocked,
 				rules: [{ category: 'marketing', domain: 'tracker.example' }],
 			},
+			projectUrl: 'https://consent.example',
 		};
 		const context = createVueConsentKernelContext({
 			config,
@@ -712,10 +712,10 @@ describe('@c15t/vue kernel runtime', () => {
 	test('iframe blocker is wired by default and honors opting out', async () => {
 		const { fetchMock } = createFetchMock();
 		const baseConfig: RuntimeConsentConfig = {
-			backendURL: 'https://consent.example',
 			consentCategories: ['necessary', 'measurement', 'marketing'],
 			customFetch: fetchMock as unknown as typeof fetch,
 			domain: 'consent.example',
+			projectUrl: 'https://consent.example',
 		};
 
 		const gated = document.createElement('iframe');
@@ -766,7 +766,6 @@ test('the experiment callbacks carry the arm on the impression and the choice', 
 	const shown = vi.fn();
 	const recorded = vi.fn();
 	const config: RuntimeConsentConfig = {
-		backendURL: 'https://consent.example',
 		callbacks: { onChoiceRecorded: recorded, onSurfaceShown: shown },
 		customFetch: fetchMock as unknown as typeof fetch,
 		experiment: {
@@ -775,6 +774,7 @@ test('the experiment callbacks carry the arm on the impression and the choice', 
 			split: { bar: 1 },
 		},
 		iframeBlocker: false,
+		projectUrl: 'https://consent.example',
 	};
 	const context = createVueConsentKernelContext({
 		config,
@@ -827,9 +827,9 @@ test('with `iab` set, mounts the shared CMP for a prefetched IAB reference and e
 		await import('../../../iab/src/__tests__/fixtures/gvl-sample');
 	const { deferInitGvl } = await import('@c15t/core');
 	const config: RuntimeConsentConfig = {
-		backendURL: 'https://consent.test',
 		iab: {},
 		iframeBlocker: false,
+		projectUrl: 'https://consent.test',
 	};
 	const prefetch = deferInitGvl(
 		{
@@ -971,7 +971,7 @@ describe('IAB is opt-in', () => {
 			let thrown: unknown;
 			try {
 				createVueConsentKernelContext({
-					config: { backendURL: 'https://consent.test', iab },
+					config: { iab, projectUrl: 'https://consent.test' },
 					prefetch,
 				});
 			} catch (error) {
@@ -990,15 +990,15 @@ describe('IAB is opt-in', () => {
 		const app = createSSRApp(ConsentRoot);
 
 		expect(() =>
-			app.use(c15tVue, { backendURL: 'https://consent.test', prefetch })
+			app.use(c15tVue, { prefetch, projectUrl: 'https://consent.test' })
 		).toThrow(VUE_MESSAGE);
 	});
 
 	test('with `iab: {}`, the server render shows the IAB banner', async () => {
 		const config: RuntimeConsentConfig = {
-			backendURL: 'https://consent.test',
 			iab: {},
 			iframeBlocker: false,
+			projectUrl: 'https://consent.test',
 		};
 		const context = createVueConsentKernelContext({
 			config,
@@ -1022,8 +1022,8 @@ describe('IAB is opt-in', () => {
 	test('without `iab`, an IAB answer from `/init` reports the error once and shows no surface', async () => {
 		await stubIABBackend();
 		const config: RuntimeConsentConfig = {
-			backendURL: 'https://consent.test',
 			iframeBlocker: false,
+			projectUrl: 'https://consent.test',
 		};
 		const errors: unknown[] = [];
 		const context = createVueConsentKernelContext({
@@ -1078,7 +1078,7 @@ describe('IAB is opt-in', () => {
 		} as InitOutput);
 		const errors: unknown[] = [];
 		const context = createVueConsentKernelContext({
-			config: { backendURL: 'https://consent.test', iframeBlocker: false },
+			config: { iframeBlocker: false, projectUrl: 'https://consent.test' },
 			onIABUnavailable: (error) => errors.push(error),
 		});
 		context.start();
@@ -1103,7 +1103,7 @@ describe('IAB is opt-in', () => {
 		await stubIABBackend({ ...initFixture, cmpId: 28 } as InitOutput);
 		const errors: unknown[] = [];
 		const context = createVueConsentKernelContext({
-			config: { backendURL: 'https://consent.test', iframeBlocker: false },
+			config: { iframeBlocker: false, projectUrl: 'https://consent.test' },
 			onIABUnavailable: (error) => errors.push(error),
 		});
 		context.start();
@@ -1124,9 +1124,9 @@ describe('IAB is opt-in', () => {
 		const errors: unknown[] = [];
 		const context = createVueConsentKernelContext({
 			config: {
-				backendURL: 'https://consent.test',
 				iab: {},
 				iframeBlocker: false,
+				projectUrl: 'https://consent.test',
 			},
 			onIABUnavailable: (error) => errors.push(error),
 		});
@@ -1155,9 +1155,9 @@ test('IAB publisher restrictions configured in Vue reach the CMP and its TC stri
 		{ purposeId: 7, restrictionType: 2 as const, vendorIds: [755] },
 	];
 	const config: RuntimeConsentConfig = {
-		backendURL: 'https://consent.test',
 		iab: { publisherRestrictions },
 		iframeBlocker: false,
+		projectUrl: 'https://consent.test',
 	};
 	vi.stubGlobal(
 		'fetch',

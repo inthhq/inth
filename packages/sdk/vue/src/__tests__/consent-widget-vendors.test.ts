@@ -140,9 +140,9 @@ const renderWidget = async function renderWidget(
 	extra: Partial<ConsentConfig> = {}
 ) {
 	const config = {
-		backendURL: 'https://consent.example',
 		consentCategories: ['necessary', 'marketing', 'measurement'],
 		disableAnimation: true,
+		projectUrl: 'https://consent.example',
 		vendors: VENDORS,
 		...extra,
 	} as ConsentConfig;

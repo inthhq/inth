@@ -119,12 +119,12 @@ const renderManager = async function renderManager(
 	component: Component = ConsentManager
 ) {
 	const config = {
-		backendURL: 'https://consent.example',
 		consentCategories: ['necessary', 'functionality', 'measurement'],
 		customFetch: mockFetch(),
 		disableAnimation: true,
 		domain: 'consent.example',
 		hideBranding: false,
+		projectUrl: 'https://consent.example',
 		trapFocus: false,
 		...overrides,
 	} as ConsentConfig;

@@ -4,7 +4,7 @@
  * maps environment variables by key path, so the Inth name needs this step.
  *
  * The module registers the plugin only when the build's backend URL came
- * from neither the `backendURL` option nor `NUXT_PUBLIC_C15T_BACKEND_URL`,
+ * from neither the `projectUrl` option nor `NUXT_PUBLIC_C15T_BACKEND_URL`,
  * so both still win.
  *
  * @internal

@@ -6,7 +6,7 @@
  * browser. From these three the build chose where the consent route is
  * mounted, which snapshot each bundle holds and which code the browser
  * loads, so they cannot change at runtime. The other mode fields, such as
- * `manifestURL` and `backendURL`, the server reads at runtime, so they stay
+ * `manifestUrl` and `projectUrl`, the server reads at runtime, so they stay
  * overridable.
  *
  * @internal
@@ -88,7 +88,7 @@ export const readBuiltOption = function readBuiltOption(
 
 /**
  * The fixed options a runtime config no longer matches. A change to another
- * mode field, such as `manifestURL`, is not an override.
+ * mode field, such as `manifestUrl`, is not an override.
  *
  * @param c15t - The `public.c15t` runtime config, after Nitro applied the
  * environment.

@@ -31,7 +31,7 @@ export type VueConsentManifestPlugin = Omit<ConsentManifestPlugin, 'config'> & {
  * app. It also keeps `@c15t/vue`, whose components are `.vue` files, out of
  * dependency pre-bundling.
  *
- * `backendURL` defaults to `VITE_C15T_BACKEND_URL`, then
+ * `projectUrl` defaults to `VITE_C15T_BACKEND_URL`, then
  * `VITE_INTH_PROJECT_URL`, including `.env` files. When
  * `VITE_C15T_BACKEND_URL` is unset, the plugin sets
  * `import.meta.env.VITE_C15T_BACKEND_URL` to the URL it used, so app code
@@ -44,7 +44,7 @@ export type VueConsentManifestPlugin = Omit<ConsentManifestPlugin, 'config'> & {
  * `manifest()` then fetches the manifest when the app starts. Set
  * `onBuildError` or `C15T_ON_BUILD_ERROR` to change that. When the policy
  * depends on the visitor's location, the build warns and suggests
- * `hosted()`. With `manifest({ manifestURL })` or
+ * `hosted()`. With `manifest({ manifestUrl })` or
  * `manifest({ source: 'runtime' })`, pass `source: 'runtime'` here too, so
  * the build never fetches a snapshot the app would discard.
  *

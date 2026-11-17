@@ -62,8 +62,8 @@ const modes: [
 	string,
 	(fetch: typeof globalThis.fetch) => ProviderTransportFactory,
 ][] = [
-	['hosted()', (fetch) => hosted({ backendURL: '/api/review', fetch })],
-	['manifest()', (fetch) => manifest({ backendURL: '/api/review', fetch })],
+	['hosted()', (fetch) => hosted({ fetch, projectUrl: '/api/review' })],
+	['manifest()', (fetch) => manifest({ fetch, projectUrl: '/api/review' })],
 	[
 		'Nuxt manifest()',
 		(fetch) => {
@@ -71,7 +71,7 @@ const modes: [
 			vi.stubGlobal('fetch', fetch);
 			return clientMode(
 				{ type: 'manifest' },
-				{ backendURL: '/api/review', routePrefix: '/api/c15t' }
+				{ projectUrl: '/api/review', routePrefix: '/api/c15t' }
 			);
 		},
 	],

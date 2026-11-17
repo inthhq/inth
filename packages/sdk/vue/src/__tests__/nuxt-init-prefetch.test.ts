@@ -332,11 +332,11 @@ describe('the script', () => {
 });
 
 /** `hosted()` with a same-origin backend: the config that gets a script. */
-const HOSTED = { backendURL: '/api/c15t', mode: { type: 'hosted' as const } };
+const HOSTED = { mode: { type: 'hosted' as const }, projectUrl: '/api/c15t' };
 /** The same backend in `manifest()` mode. */
 const HOSTED_BACKEND = {
-	backendURL: '/api/c15t',
 	mode: { type: 'manifest' as const },
+	projectUrl: '/api/c15t',
 };
 
 describe('pages whose request the server cannot know get no script', () => {
@@ -369,7 +369,7 @@ describe('pages whose request the server cannot know get no script', () => {
 		['a prefetch already in the config', { ...HOSTED, prefetch: initResponse }],
 		[
 			'a backend URL the browser would resolve against the page',
-			{ backendURL: 'api/c15t', mode: { type: 'hosted' } },
+			{ mode: { type: 'hosted' }, projectUrl: 'api/c15t' },
 		],
 	])('%s', (_name, config) => {
 		expect(
@@ -384,14 +384,14 @@ describe('pages whose request the server cannot know get no script', () => {
 		expect(
 			buildInitPrefetchTag({
 				config: {
-					backendURL: 'https://consent.example/',
 					mode: { type: 'hosted' },
+					projectUrl: 'https://consent.example/',
 				},
 				shell: true,
 			})
-		).toContain('"backendURL":"https://consent.example/"');
+		).toContain('"projectUrl":"https://consent.example/"');
 		expect(buildInitPrefetchTag({ config: HOSTED, shell: true })).toContain(
-			'"backendURL":"/api/c15t"'
+			'"projectUrl":"/api/c15t"'
 		);
 	});
 

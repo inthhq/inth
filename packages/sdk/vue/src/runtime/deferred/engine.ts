@@ -100,22 +100,22 @@ declare const process: { env: { NODE_ENV?: string } };
  */
 const nuxtClientMode = function nuxtClientMode(
 	mode: NuxtMode,
-	backendURL: string | undefined,
+	projectUrl: string | undefined,
 	routePrefix: string | undefined
 ) {
 	if (mode.type !== 'hosted') {
-		return clientMode(mode, { backendURL, routePrefix }, '@c15t/vue/testing');
+		return clientMode(mode, { projectUrl, routePrefix }, '@c15t/vue/testing');
 	}
-	if (backendURL === undefined) {
+	if (projectUrl === undefined) {
 		throw new Error(
-			`@c15t/vue: \`backendURL\` is required.${
+			`@c15t/vue: \`projectUrl\` is required.${
 				process.env.NODE_ENV === 'production'
 					? ''
-					: ' Set NUXT_PUBLIC_C15T_BACKEND_URL (or NUXT_PUBLIC_INTH_PROJECT_URL), or `c15t.backendURL` in nuxt.config.ts.'
+					: ' Set NUXT_PUBLIC_C15T_BACKEND_URL (or NUXT_PUBLIC_INTH_PROJECT_URL), or `c15t.projectUrl` in nuxt.config.ts.'
 			}`
 		);
 	}
-	return lazyHosted({ backendURL, headers: mode.headers });
+	return lazyHosted({ headers: mode.headers, projectUrl });
 };
 
 export const createNuxtEngineContext = function createNuxtEngineContext(
@@ -147,7 +147,7 @@ export const createNuxtEngineContext = function createNuxtEngineContext(
 		initialRecords: records,
 		mode: nuxtClientMode(
 			withClientData(mode, headers),
-			config.backendURL,
+			config.projectUrl,
 			input.routePrefix
 		),
 		now,

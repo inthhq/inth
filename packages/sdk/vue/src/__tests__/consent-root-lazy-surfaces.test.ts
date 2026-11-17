@@ -63,9 +63,9 @@ const initFixture: InitOutput = {
 } as InitOutput;
 
 const config: RuntimeConsentConfig = {
-	backendURL: 'https://consent.example',
 	consentCategories: ['necessary', 'measurement'],
 	domain: 'consent.example',
+	projectUrl: 'https://consent.example',
 	showTrigger: true,
 	triggerShowWhen: 'always',
 };

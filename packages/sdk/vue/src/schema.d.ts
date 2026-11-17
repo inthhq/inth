@@ -8,7 +8,10 @@ declare module 'nuxt/schema' {
 		c15t?: ModuleOptions;
 	}
 	interface PublicRuntimeConfig {
-		c15t?: Partial<ConsentConfig>;
+		c15t?: Omit<Partial<ConsentConfig>, 'projectUrl'> & {
+			/** The `projectUrl` option. `NUXT_PUBLIC_C15T_BACKEND_URL` replaces it. */
+			backendURL?: string;
+		};
 	}
 }
 

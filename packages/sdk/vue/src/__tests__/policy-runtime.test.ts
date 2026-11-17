@@ -58,8 +58,8 @@ test('subject-only prefetch preserves browser receipts without a prepared record
 		JSON.stringify({ categories: { marketing: receipt }, version: 3 })
 	);
 	const config = {
-		backendURL: '/api/c15t',
 		iframeBlocker: false as const,
+		projectUrl: '/api/c15t',
 		storageConfig: { storageKey },
 	};
 	const prefetch = {

@@ -64,7 +64,7 @@ const initFixture: InitOutput = {
 	},
 } as InitOutput;
 
-const mode = hosted({ backendURL: 'https://consent.example' });
+const mode = hosted({ projectUrl: 'https://consent.example' });
 
 const config: RuntimeConsentConfig = {
 	consentCategories: ['necessary', 'measurement'],

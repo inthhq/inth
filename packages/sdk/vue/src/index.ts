@@ -60,7 +60,7 @@ export {
  */
 export type C15tVuePluginConfig = Omit<
 	Partial<RuntimeConsentConfig>,
-	'backendURL' | 'timeoutMs'
+	'projectUrl' | 'timeoutMs'
 >;
 
 /**
@@ -78,14 +78,14 @@ export type C15tVuePluginOptions = C15tVuePluginConfig &
 				 *
 				 * @example
 				 * ```ts
-				 * app.use(c15tVue, { backendURL: '/api/c15t' });
+				 * app.use(c15tVue, { projectUrl: '/api/c15t' });
 				 * ```
 				 */
-				backendURL?: string;
+				projectUrl?: string;
 				/**
 				 * How the visitor's policy is resolved.
 				 *
-				 * - Omitted, or `hosted()`: ask `${backendURL}/init`.
+				 * - Omitted, or `hosted()`: ask `${projectUrl}/init`.
 				 * - `manifest()` from `c15t/vue/vue-plugin`: resolve from the
 				 *   backend's consent manifest in the browser, falling back to
 				 *   `/init` with a warning when it is unavailable.
@@ -105,7 +105,7 @@ export type C15tVuePluginOptions = C15tVuePluginConfig &
 				runtime?: undefined;
 		  }
 		| {
-				backendURL?: undefined;
+				projectUrl?: undefined;
 				mode?: undefined;
 				/**
 				 * A runtime this app should render instead of building its own
@@ -138,18 +138,18 @@ export type C15tVuePluginOptions = C15tVuePluginConfig &
  * import { c15tVue, manifest } from 'c15t/vue/vue-plugin';
  * import { createApp } from 'vue';
  *
- * createApp(App).use(c15tVue, { backendURL: '/api/c15t' }).mount('#app');
+ * createApp(App).use(c15tVue, { projectUrl: '/api/c15t' }).mount('#app');
  * ```
  */
 export const c15tVue: Plugin<[C15tVuePluginOptions]> = {
 	install(app: App, options: C15tVuePluginOptions) {
 		app.provide(consentConfigKey, options);
 
-		const { backendURL, mode: chosen, runtime, ...rest } = options;
+		const { projectUrl, mode: chosen, runtime, ...rest } = options;
 		const config = rest as RuntimeConsentConfig;
 		const mode = runtime
 			? undefined
-			: selectedMode({ backendURL, mode: chosen });
+			: selectedMode({ mode: chosen, projectUrl });
 		// One runtime per app, shared through `provide`/`inject`.
 		const context = createVueConsentKernelContext({ config, mode, runtime });
 		provideVueConsentContext(app, context);

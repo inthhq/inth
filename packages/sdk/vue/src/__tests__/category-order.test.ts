@@ -55,7 +55,6 @@ const init: InitOutput = {
 
 test('the widget lists categories in the draft order, not the policy or configured order', async () => {
 	const config = {
-		backendURL: 'https://consent.example',
 		consentCategories: [
 			'marketing',
 			'experience',
@@ -64,6 +63,7 @@ test('the widget lists categories in the draft order, not the policy or configur
 			'functionality',
 		],
 		disableAnimation: true,
+		projectUrl: 'https://consent.example',
 	} as ConsentConfig;
 	const context = createVueConsentKernelContext({
 		config,

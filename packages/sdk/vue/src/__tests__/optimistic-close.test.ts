@@ -123,10 +123,10 @@ for (const action of ['accept', 'reject', 'save'] as const) {
 			const onError = vi.fn();
 			const onBeforeLoad = vi.fn();
 			const config = {
-				backendURL: 'https://consent.example',
 				consentCategories: ['necessary', 'functionality', 'measurement'],
 				customFetch: fetch as unknown as typeof globalThis.fetch,
 				disableAnimation: true,
+				projectUrl: 'https://consent.example',
 				scripts: [
 					{
 						callbackOnly: true,
@@ -222,9 +222,9 @@ for (const action of ['accept', 'reject', 'save'] as const) {
 			return Promise.withResolvers<Response>().promise;
 		});
 		const config = {
-			backendURL: 'https://consent.example',
 			customFetch: fetch as unknown as typeof globalThis.fetch,
 			disableAnimation: true,
+			projectUrl: 'https://consent.example',
 			trapFocus: false,
 		} as ConsentConfig;
 		const context = createVueConsentKernelContext({ config, prefetch: init });

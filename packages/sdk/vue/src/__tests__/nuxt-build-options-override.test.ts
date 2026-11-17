@@ -4,7 +4,7 @@
  * `NUXT_PUBLIC_C15T_MODE_RESOLVE` and `NUXT_PUBLIC_C15T_ROUTE_PREFIX`.
  * Nitro applies them to each request's runtime config, which the server
  * render reads and sends to the browser. Other mode fields, such as
- * `manifestURL`, the server reads at runtime, so their overrides stay.
+ * `manifestUrl`, the server reads at runtime, so their overrides stay.
  */
 import { describe, expect, test } from 'vitest';
 
@@ -21,7 +21,7 @@ import type {
 
 const BUILT: BuiltOptions = {
 	mode: {
-		manifestURL: 'http://localhost:3000/api/bench-consent/manifest',
+		manifestUrl: 'http://localhost:3000/api/bench-consent/manifest',
 		resolve: 'browser',
 		type: 'manifest',
 	},
@@ -34,8 +34,8 @@ const overridden = (
 ) => ({
 	public: {
 		c15t: {
-			backendURL: 'https://consent.example.com',
 			mode: { ...BUILT.mode, ...c15t.mode },
+			projectUrl: 'https://consent.example.com',
 			routePrefix: 'routePrefix' in c15t ? c15t.routePrefix : BUILT.routePrefix,
 		},
 	},
@@ -52,7 +52,7 @@ describe('pinBuildOptions', () => {
 		const runtimeConfig = overridden(override);
 		pinBuildOptions(runtimeConfig, BUILT);
 		expect(runtimeConfig.public.c15t).toEqual({
-			backendURL: 'https://consent.example.com',
+			projectUrl: 'https://consent.example.com',
 			...BUILT,
 		});
 	});
@@ -60,15 +60,15 @@ describe('pinBuildOptions', () => {
 	test('keeps the mode fields the server reads at runtime', () => {
 		const runtimeConfig = overridden({
 			mode: {
-				backendURL: 'https://runtime.example.com',
-				manifestURL: 'http://localhost:4100/manifest?cold=1',
+				manifestUrl: 'http://localhost:4100/manifest?cold=1',
+				projectUrl: 'https://runtime.example.com',
 				type: 'hosted',
 			},
 		});
 		pinBuildOptions(runtimeConfig, BUILT);
 		expect(runtimeConfig.public.c15t.mode).toEqual({
-			backendURL: 'https://runtime.example.com',
-			manifestURL: 'http://localhost:4100/manifest?cold=1',
+			manifestUrl: 'http://localhost:4100/manifest?cold=1',
+			projectUrl: 'https://runtime.example.com',
 			resolve: 'browser',
 			type: 'manifest',
 		});
@@ -115,8 +115,8 @@ describe('findOverriddenOptions', () => {
 			findOverriddenOptions(
 				overridden({
 					mode: {
-						backendURL: 'https://runtime.example.com',
-						manifestURL: 'http://localhost:4100/manifest',
+						manifestUrl: 'http://localhost:4100/manifest',
+						projectUrl: 'https://runtime.example.com',
 						source: 'runtime',
 					},
 				}).public.c15t,
@@ -137,15 +137,15 @@ describe('findOverriddenOptions', () => {
 });
 
 describe('createBuildOptionsGuard', () => {
-	test('keeps a runtime manifestURL, with no warning', () => {
+	test('keeps a runtime manifestUrl, with no warning', () => {
 		const warned: BuiltOptionName[] = [];
 		const guard = createBuildOptionsGuard(BUILT, (name) => warned.push(name));
 		const runtimeConfig = overridden({
-			mode: { manifestURL: 'http://localhost:4100/manifest?cold=1' },
+			mode: { manifestUrl: 'http://localhost:4100/manifest?cold=1' },
 		});
 		guard(runtimeConfig);
 		expect(runtimeConfig.public.c15t.mode).toHaveProperty(
-			'manifestURL',
+			'manifestUrl',
 			'http://localhost:4100/manifest?cold=1'
 		);
 		expect(warned).toEqual([]);

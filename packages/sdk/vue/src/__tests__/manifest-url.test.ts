@@ -1,6 +1,6 @@
 import type { ConsentKernel } from '@c15t/core';
 /**
- * A `manifestURL` passed to the Vue plugin's `manifest()` is fetched at
+ * A `manifestUrl` passed to the Vue plugin's `manifest()` is fetched at
  * runtime, even when `consentManifest()` bundled a snapshot.
  */
 import {
@@ -31,7 +31,7 @@ const manifestWithPolicy = (id: string): ConsentManifest => ({
 beforeEach(() => {
 	// What `consentManifest()` serves after a build that downloaded a snapshot.
 	setGenerated({
-		backendURL: 'https://consent.example.test',
+		projectUrl: 'https://consent.example.test',
 		snapshot: manifestWithPolicy('bundled'),
 	});
 });
@@ -79,7 +79,7 @@ const mountWith = function mountWith(
 const policyIdOf = (kernel: ConsentKernel): string | undefined =>
 	kernel.getSnapshot().resolution.policy?.id;
 
-test('without a manifestURL, resolves from the bundled snapshot', async () => {
+test('without a manifestUrl, resolves from the bundled snapshot', async () => {
 	const network = vi.fn(() =>
 		Promise.resolve(new Response('{}', { status: 503 }))
 	);
@@ -91,7 +91,7 @@ test('without a manifestURL, resolves from the bundled snapshot', async () => {
 	expect(network).not.toHaveBeenCalled();
 });
 
-test('a manifestURL is fetched at runtime and wins over the bundled snapshot', async () => {
+test('a manifestUrl is fetched at runtime and wins over the bundled snapshot', async () => {
 	const network = vi.fn((input: RequestInfo | URL) =>
 		Promise.resolve(
 			String(input) === MANIFEST_URL
@@ -101,7 +101,7 @@ test('a manifestURL is fetched at runtime and wins over the bundled snapshot', a
 	);
 	vi.stubGlobal('fetch', network);
 
-	const kernel = mountWith(manifest({ manifestURL: MANIFEST_URL }));
+	const kernel = mountWith(manifest({ manifestUrl: MANIFEST_URL }));
 
 	await expect.poll(() => policyIdOf(kernel())).toBe('from-url');
 	expect(network.mock.calls.map(([input]) => String(input))).toEqual([
@@ -109,11 +109,11 @@ test('a manifestURL is fetched at runtime and wins over the bundled snapshot', a
 	]);
 });
 
-test("a manifestURL on a CDN still saves to the build's backend", () => {
+test("a manifestUrl on a CDN still saves to the build's backend", () => {
 	const mode = manifest({
-		manifestURL: 'https://cdn.example.test/policy.json',
+		manifestUrl: 'https://cdn.example.test/policy.json',
 	});
 
-	expect(mode.backendURL).toBe('https://consent.example.test');
+	expect(mode.projectUrl).toBe('https://consent.example.test');
 	expect(mode.snapshot).toBeUndefined();
 });

@@ -264,7 +264,7 @@ describe('manifest route caching headers', () => {
 });
 
 describe('init route', () => {
-	test('resolves from the manifest read through serverFetch for a relative backendURL', async () => {
+	test('resolves from the manifest read through serverFetch for a relative projectUrl', async () => {
 		mocks.serverFetch.mockResolvedValue(
 			manifestResponse({ 'cache-control': 'public, s-maxage=120' })
 		);
@@ -293,7 +293,7 @@ describe('init route', () => {
 			privacyPolicyUrl: 'https://acme.example/privacy',
 		};
 		// An older backend with no /manifest must not break consent.
-		// The proxy has to go through serverFetch too, or a relative backendURL
+		// The proxy has to go through serverFetch too, or a relative projectUrl
 		// throws ERR_INVALID_URL in Node.
 		// oxlint-disable-next-line require-await -- Preserve sequential execution and callback compatibility.
 		mocks.serverFetch.mockImplementation(async (url: string) => {
@@ -361,13 +361,13 @@ describe('init route', () => {
 		);
 	});
 
-	test("reads the manifest from the mode's manifestURL", async () => {
+	test("reads the manifest from the mode's manifestUrl", async () => {
 		mocks.useRuntimeConfig.mockReturnValue({
 			public: {
 				c15t: {
 					backendURL: 'https://consent.example.com',
 					mode: {
-						manifestURL: 'https://cdn.example.com/manifest.json',
+						manifestUrl: 'https://cdn.example.com/manifest.json',
 						type: 'manifest',
 					},
 				},
@@ -411,7 +411,7 @@ describe('init route', () => {
 });
 
 describe('serverFetch', () => {
-	test("delegates to nitro's localFetch so relative backendURLs resolve", async () => {
+	test("delegates to nitro's localFetch so relative projectUrls resolve", async () => {
 		// `globalThis.fetch` rejects relative URLs in Node; localFetch dispatches
 		// them in-process and hands absolute URLs to real fetch.
 		const serverFetch = createServerFetch(
@@ -456,6 +456,6 @@ describe('saves', () => {
 			clientMode(config.mode, {
 				routePrefix: readNuxtRoutePrefix(config),
 			})
-		).toThrow('`backendURL` is required');
+		).toThrow('`projectUrl` is required');
 	});
 });

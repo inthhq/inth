@@ -133,9 +133,9 @@ describe('plain Vue modes', () => {
 		const context = createVueConsentKernelContext({
 			config: {},
 			mode: manifest({
-				backendURL: 'https://consent.example.com',
 				fetch,
 				inputs: { country: 'DE' },
+				projectUrl: 'https://consent.example.com',
 				snapshot: createManifestFixture(),
 			}),
 		});
@@ -159,8 +159,8 @@ describe('plain Vue modes', () => {
 			.fn<typeof globalThis.fetch>()
 			.mockRejectedValue(new Error('offline'));
 		const mode = manifest({
-			backendURL: 'https://consent.example.com',
 			fetch,
+			projectUrl: 'https://consent.example.com',
 			snapshot: createManifestFixture(),
 		});
 		const transport = mode({} as Parameters<typeof mode>[0]);
@@ -180,9 +180,9 @@ describe('plain Vue modes', () => {
 		const context = createVueConsentKernelContext({
 			config: {},
 			mode: manifest({
-				backendURL: 'https://consent.example.com',
 				fetch,
 				initFallback: false,
+				projectUrl: 'https://consent.example.com',
 				snapshot: createManifestFixture(),
 			}),
 		});
@@ -208,9 +208,9 @@ describe('plain Vue modes', () => {
 		const context = createVueConsentKernelContext({
 			config: {},
 			mode: manifest({
-				backendURL: 'https://consent.example.com',
 				fetch,
 				inputs: { country: 'DE' },
+				projectUrl: 'https://consent.example.com',
 			}),
 		});
 		try {
@@ -229,17 +229,17 @@ describe('plain Vue modes', () => {
 		// no backend URL.
 		expect(() => manifest()).toThrow('consentManifest() from c15t/vue/vite');
 		expect(() => selectedMode({})).toThrow(
-			'c15t: `backendURL` is required. Add consentManifest() from c15t/vue/vite to vite.config.ts and set VITE_C15T_BACKEND_URL (or VITE_INTH_PROJECT_URL), or pass `backendURL`.'
+			'c15t: `projectUrl` is required. Add consentManifest() from c15t/vue/vite to vite.config.ts and set VITE_C15T_BACKEND_URL (or VITE_INTH_PROJECT_URL), or pass `projectUrl`.'
 		);
 	});
 
 	test('the plugin picks the hosted backend for a backend URL alone', () => {
-		expect(selectedMode({ backendURL: '/api/c15t' }).kind).toBe('hosted');
+		expect(selectedMode({ projectUrl: '/api/c15t' }).kind).toBe('hosted');
 	});
 
 	test('the plugin rejects a config without a backend', () => {
 		expect(() => createVueConsentKernelContext({ config: {} })).toThrow(
-			'pass `backendURL`'
+			'pass `projectUrl`'
 		);
 	});
 });
@@ -303,7 +303,7 @@ describe('Nuxt modes', () => {
 			mode: clientMode(
 				{ type: 'manifest' },
 				{
-					backendURL: 'https://backend.example',
+					projectUrl: 'https://backend.example',
 					routePrefix: '/internal/consent',
 				}
 			),
@@ -344,7 +344,7 @@ describe('Nuxt modes', () => {
 					snapshot: createManifestFixture(),
 					type: 'manifest',
 				},
-				{ backendURL: 'https://backend.example' }
+				{ projectUrl: 'https://backend.example' }
 			),
 		});
 		try {

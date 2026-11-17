@@ -61,9 +61,9 @@ const init: InitOutput = {
 	translations: { language: 'en', translations },
 };
 
-const config: Pick<RuntimeConsentConfig, 'backendURL' | 'consentCategories'> = {
-	backendURL: 'https://consent.example',
+const config: Pick<RuntimeConsentConfig, 'projectUrl' | 'consentCategories'> = {
 	consentCategories: ['necessary', 'measurement', 'marketing'],
+	projectUrl: 'https://consent.example',
 };
 
 /** A backend that records every save. */

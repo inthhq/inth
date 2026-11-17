@@ -17,6 +17,7 @@ import type { EventHandlerRequest, H3Event } from 'h3';
 import type { ConsentConfig } from '../config';
 import { readNuxtMode, readNuxtRoutePrefix } from '../nuxt-mode';
 import type { NuxtConsentModeConfig } from '../nuxt-mode';
+import { fromRuntimeConfig } from '../runtime-config';
 
 interface C15TNitroRuntimeConfig {
 	c15t?: Record<string, unknown>;
@@ -32,7 +33,7 @@ type RouteConfig = ConsentConfig & NuxtConsentModeConfig;
 interface RouteDependencies {
 	/**
 	 * Nitro's fetch: dispatches a path in-process and an absolute URL over
-	 * the network, so a relative `backendURL` such as `/api/self-host`
+	 * the network, so a relative `projectUrl` such as `/api/self-host`
 	 * resolves without a host.
 	 */
 	fetch: ManifestFetch;
@@ -83,12 +84,12 @@ const readConsentConfig = function readConsentConfig(
 			? (runtimeConfig as C15TNitroRuntimeConfig)
 			: {};
 	const serverOnly = Object.fromEntries(
-		Object.entries(config.c15t ?? {}).filter(
+		Object.entries(fromRuntimeConfig(config.c15t) ?? {}).filter(
 			([, value]) => value !== '' && value !== undefined && value !== null
 		)
 	);
 	return {
-		...(config.public?.c15t ?? {}),
+		...(fromRuntimeConfig(config.public?.c15t) ?? {}),
 		...serverOnly,
 	} as RouteConfig;
 };
@@ -143,15 +144,15 @@ export const createConsentRoute = function createConsentRoute(
 		const mode = readNuxtMode(config);
 		const handle = createConsentRouteHandler({
 			adapter: '@c15t/vue',
-			backendURL: config.backendURL,
 			fetch: dependencies.fetch,
 			manifest: dependencies.manifest,
-			// With browser resolution, `manifestURL` is what the browser
+			// With browser resolution, `manifestUrl` is what the browser
 			// fetches instead of this route.
-			manifestURL:
+			manifestUrl:
 				mode.type === 'manifest' && mode.resolve !== 'browser'
-					? mode.manifestURL
+					? mode.manifestUrl
 					: undefined,
+			projectUrl: config.projectUrl,
 		});
 		const next = { handle, prefix: readNuxtRoutePrefix(config), runtimeConfig };
 		built.current = next;

@@ -62,8 +62,8 @@ const snapshotFor = (
 ): ConsentSnapshot => {
 	const context = createVueConsentKernelContext({
 		config: {
-			backendURL: 'https://consent.example',
 			consentCategories: ['necessary', 'measurement', 'marketing'],
+			projectUrl: 'https://consent.example',
 		},
 		prefetch: initFor(rule),
 		...options,

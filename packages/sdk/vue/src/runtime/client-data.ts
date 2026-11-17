@@ -8,7 +8,7 @@ import type { NuxtMode } from './nuxt-mode';
  * server read from the request (a CDN's country, for example) to `/init`.
  *
  * As in every single-page app, a policy that depends on a location that
- * neither `inputs` nor `geoURL` supplies is resolved by the backend's
+ * neither `inputs` nor `geoUrl` supplies is resolved by the backend's
  * `/init`, never as an unknown location: that could apply another
  * region's rules.
  *

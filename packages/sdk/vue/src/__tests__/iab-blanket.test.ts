@@ -106,12 +106,12 @@ const acceptSave = ((_input: RequestInfo | URL, request?: RequestInit) =>
 	)) as typeof fetch;
 
 const config = {
-	backendURL: 'https://consent.test',
 	customFetch: acceptSave,
 	disableAnimation: true,
 	hideBranding: true,
 	// IAB is opt-in; these surfaces stand for an app that turned it on.
 	iab: {},
+	projectUrl: 'https://consent.test',
 	trapFocus: false,
 } as ConsentConfig;
 

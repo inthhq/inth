@@ -54,7 +54,7 @@ test.each([false, true])(
 		document.body.append(container);
 		const app = createApp(root);
 		app.use(c15tVue, {
-			backendURL: 'https://consent.example.test',
+			projectUrl: 'https://consent.example.test',
 		});
 		let mounted = false;
 		cleanups.push(() => {
@@ -83,7 +83,7 @@ test("manifest() without a build snapshot reads the backend's /manifest", async 
 	document.body.append(container);
 	const app = createApp(defineComponent({ setup: () => () => h('main') }));
 	app.use(c15tVue, {
-		mode: manifest({ backendURL: 'https://consent.example.test/api/' }),
+		mode: manifest({ projectUrl: 'https://consent.example.test/api/' }),
 	});
 	app.mount(container);
 	cleanups.push(() => {
@@ -129,7 +129,7 @@ test('holds tracker requests from child mount hooks until the blocker decides th
 	};
 	app.use(c15tVue, {
 		...config,
-		backendURL: 'https://consent.example.test',
+		projectUrl: 'https://consent.example.test',
 	});
 	cleanups.push(() => {
 		app.unmount();
@@ -145,7 +145,7 @@ test('holds tracker requests from child mount hooks until the blocker decides th
 	).toBe(false);
 });
 
-test('manifest() with a manifestURL asks the backend /init when the manifest is unavailable', async () => {
+test('manifest() with a manifestUrl asks the backend /init when the manifest is unavailable', async () => {
 	const requests: string[] = [];
 	const network = vi.fn((input: RequestInfo | URL) => {
 		requests.push(String(input));
@@ -157,7 +157,7 @@ test('manifest() with a manifestURL asks the backend /init when the manifest is 
 	const app = createApp(defineComponent({ setup: () => () => h('main') }));
 	// Plain Vue has no Nuxt server, so there is no `/api/c15t/init` to call.
 	app.use(c15tVue, {
-		mode: manifest({ manifestURL: 'https://cdn.example.test/manifest' }),
+		mode: manifest({ manifestUrl: 'https://cdn.example.test/manifest' }),
 	});
 	cleanups.push(() => {
 		app.unmount();
