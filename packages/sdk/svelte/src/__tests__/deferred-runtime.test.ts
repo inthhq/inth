@@ -3,7 +3,6 @@
  * commit chunk cannot finish a choice the stand-in already shows: the
  * engine records it, once, and announces it once.
  */
-import { custom } from '@c15t/core';
 import { afterEach, expect, test, vi } from 'vitest';
 import type { MockInstance } from 'vitest';
 
@@ -20,11 +19,12 @@ import type { EngineFactory } from '../lib/deferred/runtime';
 import { createOwnedRuntime } from '../lib/owned-runtime';
 import { runtimeOptionsFor } from '../lib/provider-options';
 import type { ProviderOptionsInput } from '../lib/provider-options';
+import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 
 const transportInit = vi.fn(() => Promise.resolve({}));
 const transportSave = vi.fn(() => Promise.resolve({ ok: true as const }));
-const mode = custom({ init: transportInit, save: transportSave });
+const mode = transportMode({ init: transportInit, save: transportSave });
 
 type Callbacks = ProviderOptionsInput['callbacks'];
 

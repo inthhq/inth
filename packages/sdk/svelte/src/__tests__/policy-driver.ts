@@ -14,7 +14,7 @@ import type {
 	ConsentPresentation,
 	InitResponse,
 } from '@c15t/core';
-import { custom, createConsentKernel, evaluateConsent } from '@c15t/core';
+import { createConsentKernel, evaluateConsent } from '@c15t/core';
 import { createNetworkBlocker } from '@c15t/core/modules/network-blocker';
 import {
 	createPersistence,
@@ -52,6 +52,7 @@ import { gpcFromHeaders } from '../../../core/src/transports/decision-inputs';
 import { gtag } from '../../../integrations/src/vendors/analytics/google-tag';
 import type { ConsentProviderCallbacks } from '../lib/types';
 import PolicyFixture from './fixtures/policy-fixture.svelte';
+import { transportMode } from './fixtures/transport-mode';
 import { renderSsr } from './server-render';
 import { serializeConsentDom, isConsentElementVisible } from './ssr-dom';
 // oxlint-disable-next-line promise/avoid-new -- Browser effects must settle between scenario operations.
@@ -380,7 +381,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 				disableAnimation: true,
 				// IAB is opt-in: without it an IAB policy throws.
 				iab: setup.policy.model === 'iab' ? {} : undefined,
-				mode: custom({
+				mode: transportMode({
 					init: () => {
 						requests.push({ kind: 'init', payload: null });
 						return failTransport

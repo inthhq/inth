@@ -14,7 +14,7 @@ import { tick } from 'svelte';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import ThemeSwapFixture from '../../__tests__/fixtures/theme-swap-fixture.svelte';
-import { custom } from '../../lib/index';
+import { transportMode } from '../../__tests__/fixtures/transport-mode';
 
 // Drain Svelte's effect queue plus the microtasks the kernel's async
 // commands settle on. Sequential by design: each `tick()` has to resolve
@@ -42,7 +42,7 @@ describe('ConsentProvider option identity', () => {
 		};
 
 		const { rerender } = render(ThemeSwapFixture, {
-			mode: custom(transport),
+			mode: transportMode(transport),
 			theme: { colors: { primary: '#111111' } },
 			user: { externalId: 'user_1' },
 		});
@@ -54,7 +54,7 @@ describe('ConsentProvider option identity', () => {
 		expect(identify).not.toHaveBeenCalled();
 
 		await rerender({
-			mode: custom(transport),
+			mode: transportMode(transport),
 			theme: { colors: { primary: '#222222' } },
 			user: { externalId: 'user_1' },
 		});
@@ -73,7 +73,7 @@ describe('ConsentProvider option identity', () => {
 		};
 
 		const { rerender } = render(ThemeSwapFixture, {
-			mode: custom(transport),
+			mode: transportMode(transport),
 			user: { externalId: 'user_1' },
 		});
 
@@ -81,7 +81,7 @@ describe('ConsentProvider option identity', () => {
 		expect(identify).not.toHaveBeenCalled();
 
 		await rerender({
-			mode: custom(transport),
+			mode: transportMode(transport),
 			user: { externalId: 'user_2' },
 		});
 		await flush();
@@ -101,7 +101,7 @@ describe('ConsentProvider option identity', () => {
 		};
 
 		const { rerender } = render(ThemeSwapFixture, {
-			mode: custom(transport),
+			mode: transportMode(transport),
 			overrides: { country: 'DE' },
 		});
 
@@ -112,7 +112,7 @@ describe('ConsentProvider option identity', () => {
 		});
 
 		await rerender({
-			mode: custom(transport),
+			mode: transportMode(transport),
 			overrides: { country: 'FR' },
 		});
 		await flush();

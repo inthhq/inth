@@ -1,20 +1,21 @@
 /**
- * The Svelte `hosted()` defaults to the backend URL `consentManifest()`
- * read, as Vue's and React's do.
+ * The Svelte provider's transport: a backend URL alone is the hosted
+ * backend, defaulting to the URL `consentManifest()` read, as Vue's does.
  */
 import { afterEach, describe, expect, test } from 'vitest';
 
-import { hosted } from '../index';
+import { selectedMode } from '../select-mode';
+import { withoutNetwork } from '../testing';
 import { setGenerated } from './generated';
 
 afterEach(() => {
 	setGenerated({});
 });
 
-describe('hosted()', () => {
-	test("uses the build's backend URL with no options", () => {
+describe('the transport a ConsentProvider selects', () => {
+	test("is the hosted backend at the build's URL with no options", () => {
 		setGenerated({ backendURL: 'https://consent.example.com' });
-		expect({ ...hosted() }).toMatchObject({
+		expect({ ...selectedMode({}) }).toMatchObject({
 			backendURL: 'https://consent.example.com',
 			type: 'hosted',
 		});
@@ -22,12 +23,19 @@ describe('hosted()', () => {
 
 	test('an explicit backendURL wins', () => {
 		setGenerated({ backendURL: 'https://consent.example.com' });
-		expect(hosted({ backendURL: '/api/c15t' }).backendURL).toBe('/api/c15t');
+		expect({ ...selectedMode({ backendURL: '/api/c15t' }) }).toMatchObject({
+			backendURL: '/api/c15t',
+		});
 	});
 
-	test('names the plugin and the variable when no URL is known', () => {
-		expect(() => hosted()).toThrow(
-			'c15t: hosted() has no backend URL. Add consentManifest() from c15t/svelte/vite to vite.config.ts and set VITE_C15T_BACKEND_URL (or VITE_INTH_PROJECT_URL), or pass `backendURL`.'
+	test('a testing value wins over the backend URL', () => {
+		const testing = withoutNetwork();
+		expect(selectedMode({ backendURL: '/api/c15t', testing })).toBe(
+			testing.transport
 		);
+	});
+
+	test('is none when no URL is known', () => {
+		expect(selectedMode({})).toBeUndefined();
 	});
 });

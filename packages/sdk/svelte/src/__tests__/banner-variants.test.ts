@@ -1,8 +1,8 @@
 import type { ConsentPresentation, KernelConfig } from '@c15t/core';
-import { custom } from '@c15t/core';
 import { render } from '@testing-library/svelte';
 import { describe, expect, test } from 'vitest';
 
+import { transportMode } from './fixtures/transport-mode';
 import Fixture from './fixtures/variant-banner-fixture.svelte';
 import { policyFixture } from './policy-fixture';
 
@@ -40,7 +40,7 @@ const renderFixture = (
 	return render(Fixture, {
 		options: {
 			disableAnimation: true,
-			mode: custom({}),
+			mode: transportMode({}),
 			persistence: false,
 			prefetch,
 			presentation,
@@ -69,7 +69,7 @@ describe('banner variants', () => {
 		const view = render(Fixture, {
 			options: {
 				disableAnimation: true,
-				mode: custom({}),
+				mode: transportMode({}),
 				persistence: false,
 				prefetch: choice(),
 				presentation: { prompt: { trapFocus: false } },

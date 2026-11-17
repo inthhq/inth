@@ -1,4 +1,3 @@
-import { custom } from '@c15t/core';
 import { resolvePolicyRules } from '@c15t/schema/types';
 import styles from '@c15t/ui/styles/components/iab-consent-dialog';
 import { render, waitFor } from '@testing-library/svelte';
@@ -7,13 +6,14 @@ import { describe, expect, test } from 'vitest';
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import type { ConsentManagerOptions } from '../lib/types';
 import Fixture from './fixtures/iab-dialog-motion-fixture.svelte';
+import { transportMode } from './fixtures/transport-mode';
 
 const OVERLAY = '[data-testid="iab-consent-dialog-overlay"]';
 
 const options = {
 	disableAnimation: false,
 	iab: { cmpId: 28 },
-	mode: custom({}),
+	mode: transportMode({}),
 	persistence: false,
 	prefetch: {
 		initialIab: { cmpId: 28, enabled: true, gvl: completeGVL },

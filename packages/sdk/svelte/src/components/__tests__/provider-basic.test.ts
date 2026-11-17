@@ -6,15 +6,17 @@
 
 import { IAB_FIXTURE_CMP_ID, MINIMAL_GVL } from '@c15t/conformance';
 import type { ConsentKernel } from '@c15t/core';
-import { offline } from '@c15t/core';
 import { render } from '@testing-library/svelte';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import ContextConsumerFixture from '../../__tests__/fixtures/context-consumer-fixture.svelte';
 import ProviderOnlyFixture from '../../__tests__/fixtures/provider-only-fixture.svelte';
+import {
+	offlineMode,
+	transportMode,
+} from '../../__tests__/fixtures/transport-mode';
 import { testOffline } from '../../__tests__/test-offline';
 import ConsentProvider from '../../lib/components/consent-provider.svelte';
-import { custom, hosted } from '../../lib/index';
 
 const mockFetch = vi.fn();
 window.fetch = mockFetch;
@@ -96,7 +98,7 @@ describe('ConsentProvider Basic Request Behavior', () => {
 	test('hosted() reports hosted mode and calls the init URL', async () => {
 		const result = render(ProviderOnlyFixture, {
 			options: {
-				mode: hosted({ backendURL: '/api/c15t' }),
+				backendURL: '/api/c15t',
 			},
 		});
 
@@ -145,8 +147,8 @@ describe('ConsentProvider Basic Request Behavior', () => {
 				mountedKernel = kernel;
 			},
 			options: {
+				backendURL: '/api/c15t',
 				iab: { enabled: true, vendors: [755] },
-				mode: hosted({ backendURL: '/api/c15t' }),
 			},
 		});
 
@@ -166,13 +168,13 @@ describe('ConsentProvider Basic Request Behavior', () => {
 		expect((window as WindowWithC15t).__tcfapi).toBeUndefined();
 	});
 
-	test('throws when mode is missing', () => {
+	test('throws when there is no backend URL', () => {
 		expect(() =>
 			render(ConsentProvider, {
 				// @ts-expect-error Verify the runtime guard for untyped callers.
 				options: {},
 			})
-		).toThrow('@c15t/svelte ConsentProvider: `mode` is required.');
+		).toThrow('@c15t/svelte ConsentProvider: `backendURL` is required.');
 	});
 
 	test('should not make fetch calls in offline mode', async () => {
@@ -197,7 +199,7 @@ describe('ConsentProvider Basic Request Behavior', () => {
 		render(ConsentProvider, {
 			mode: testOffline(),
 			options: {
-				mode: hosted({ backendURL: 'https://example.invalid' }),
+				backendURL: 'https://example.invalid',
 			},
 		});
 
@@ -229,17 +231,14 @@ describe('ConsentProvider Basic Request Behavior', () => {
 	test('should resolve policies in offline mode', async () => {
 		const { getByTestId } = render(ContextConsumerFixture, {
 			options: {
-				mode: offline({
-					acknowledgeNoRecords: true,
-					policyRules: [
-						{
-							id: 'policy_region_us_ca',
-							match: { regions: [{ country: 'US', region: 'CA' }] },
-							model: 'opt-out',
-							prompt: 'choice',
-						},
-					],
-				}),
+				mode: offlineMode([
+					{
+						id: 'policy_region_us_ca',
+						match: { regions: [{ country: 'US', region: 'CA' }] },
+						model: 'opt-out',
+						prompt: 'choice',
+					},
+				]),
 				overrides: { country: 'US', region: 'CA' },
 			},
 		});
@@ -258,7 +257,7 @@ describe('ConsentProvider Basic Request Behavior', () => {
 
 		render(ProviderOnlyFixture, {
 			options: {
-				mode: custom({
+				mode: transportMode({
 					init,
 					save(payload) {
 						return Promise.resolve({

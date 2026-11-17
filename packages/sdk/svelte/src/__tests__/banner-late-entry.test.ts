@@ -1,8 +1,8 @@
-import { offline } from '@c15t/core';
 import type { ConsentKernel } from '@c15t/core';
 import { mount, unmount } from 'svelte';
 import { afterEach, expect, onTestFinished, test, vi } from 'vitest';
 
+import { withoutNetwork } from '../lib/testing';
 import ConformanceFixture from './fixtures/conformance-fixture.svelte';
 import { policyFixture } from './policy-fixture';
 
@@ -36,8 +36,8 @@ const mountBanner = async function mountBanner(disableAnimation: boolean) {
 			},
 			options: {
 				disableAnimation,
-				mode: offline({ acknowledgeNoRecords: true }),
 				prefetch: policyFixture({}),
+				testing: withoutNetwork(),
 			},
 		},
 		target,

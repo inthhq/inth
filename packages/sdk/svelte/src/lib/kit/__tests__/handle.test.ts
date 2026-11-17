@@ -1,9 +1,9 @@
-import { custom, hosted as hostedTransport } from '@c15t/core';
 import { clearManifestCache } from '@c15t/core/server';
+import { manifest as browserManifest } from '@c15t/core/transports/manifest-browser';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { transportMode } from '../../../__tests__/fixtures/transport-mode';
 import { c15tHandle } from '../handle';
-import { hosted } from '../index';
 import { createConsentRoute } from '../routes';
 import type { C15tLocals } from '../types';
 import { CONSENTED_COOKIE, createEvent } from './event';
@@ -161,25 +161,33 @@ describe('c15tHandle', () => {
 });
 
 describe('c15tHandle mode', () => {
-	test('stores manifest() by default, with the route prefix and backend', async () => {
+	test('stores the hosted backend by default, with the route prefix and backend', async () => {
 		const { locals } = await runHandle(createEvent(), {
 			backendURL: 'https://consent.example.com',
 			routePrefix: '/api/c15t',
 		});
 		expect(locals).toMatchObject({
 			backendURL: 'https://consent.example.com',
-			mode: { type: 'manifest' },
+			mode: { type: 'hosted' },
 			routePrefix: '/api/c15t',
 		});
 	});
 
+	test('stores a testing value as data', async () => {
+		const { locals } = await runHandle(createEvent(), {
+			testing: { type: 'without-network' },
+		});
+		expect(locals.mode).toEqual({ type: 'without-network' });
+	});
+
 	test('keeps only the data of a transport factory', async () => {
 		const { locals } = await runHandle(createEvent(), {
-			mode: hostedTransport({ backendURL: 'https://consent.example.com' }),
+			mode: browserManifest({ backendURL: 'https://consent.example.com' }),
 		});
-		expect(locals.mode).toEqual(
-			hosted({ backendURL: 'https://consent.example.com' })
-		);
+		expect(locals.mode).toMatchObject({
+			backendURL: 'https://consent.example.com',
+			type: 'manifest',
+		});
 		expect(typeof locals.mode).toBe('object');
 	});
 
@@ -196,10 +204,10 @@ describe('c15tHandle mode', () => {
 		);
 	});
 
-	test('rejects custom(), which cannot reach the browser as data', () => {
-		const mode = custom({ init: () => Promise.resolve({}) });
+	test('rejects transportMode(), which cannot reach the browser as data', () => {
+		const mode = transportMode({ init: () => Promise.resolve({}) });
 		expect(() => c15tHandle({ mode: mode as never })).toThrow(
-			/Pass custom\(\) to <ConsentRoot mode>/u
+			/Pass a transport to <ConsentRoot mode>/u
 		);
 	});
 });
@@ -234,7 +242,6 @@ describe('c15tHandle on the consent route', () => {
 						headers: { 'cache-control': 'public, s-maxage=120' },
 					})
 				),
-				reportSessions: false,
 			});
 			const response = await c15tHandle(options)({
 				event,

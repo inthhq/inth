@@ -7,7 +7,7 @@
  * covers the server render.
  */
 import { MINIMAL_GVL } from '@c15t/conformance/fixtures/gvl';
-import { custom, deferInitGvl, IAB_UNAVAILABLE_ERROR_CODE } from '@c15t/core';
+import { deferInitGvl, IAB_UNAVAILABLE_ERROR_CODE } from '@c15t/core';
 import type { GlobalVendorList } from '@c15t/core';
 import { writePolicyResolutionWire } from '@c15t/schema/types';
 import type { PolicyResolution } from '@c15t/schema/types';
@@ -16,6 +16,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import type { ConsentManagerOptions } from '../lib/types';
 import Fixture from './fixtures/iab-guard-fixture.svelte';
+import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 
 const GVL = MINIMAL_GVL as unknown as GlobalVendorList;
@@ -56,7 +57,7 @@ const mount = function mount(options: Partial<ConsentManagerOptions>) {
 			options: {
 				consentCategories: ['necessary', 'marketing'],
 				disableAnimation: true,
-				mode: custom({}),
+				mode: transportMode({}),
 				persistence: false,
 				...options,
 			} as ConsentManagerOptions,
@@ -94,7 +95,7 @@ describe('an `iab` policy under a provider without `iab`', () => {
 		'throws once /init sends the vendor list by %s',
 		async (gvl) => {
 			const errors = mount({
-				mode: custom({ init: initWith(gvl) } as never),
+				mode: transportMode({ init: initWith(gvl) } as never),
 				prefetch: { ...iabPolicy(), initialPolicyPending: true },
 			});
 
@@ -107,7 +108,7 @@ describe('an `iab` policy under a provider without `iab`', () => {
 
 	test('shows the standard banner when the backend turns IAB off with `gvl: null`', async () => {
 		const errors = mount({
-			mode: custom({ init: initWith('null') } as never),
+			mode: transportMode({ init: initWith('null') } as never),
 			prefetch: { ...iabPolicy(), initialPolicyPending: true },
 		});
 

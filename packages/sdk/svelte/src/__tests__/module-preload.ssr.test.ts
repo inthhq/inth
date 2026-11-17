@@ -1,4 +1,3 @@
-import { offline } from '@c15t/core';
 /**
  * The provider names the on-demand chunk its page starts with, and
  * `c15tHandle`'s page transform turns that into `<link rel="modulepreload">`.
@@ -11,6 +10,7 @@ import { describe, expect, test } from 'vitest';
 
 import ConsentProvider from '../lib/components/consent-provider.svelte';
 import { injectModulePreloads } from '../lib/kit/module-preload';
+import { withoutNetwork } from '../lib/testing';
 import type { ConsentManagerOptions } from '../lib/types';
 
 const HREFS = {
@@ -36,8 +36,8 @@ const renderPage = function renderPage(
 	const { head } = render(ConsentProvider, {
 		props: {
 			options: {
-				mode: offline({ acknowledgeNoRecords: true }),
 				persistence: false,
+				testing: withoutNetwork(),
 				...options,
 			} as ConsentManagerOptions,
 		},

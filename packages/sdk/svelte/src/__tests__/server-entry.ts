@@ -1,4 +1,3 @@
-import { custom } from '@c15t/core';
 import type { ConsentKernel, ConsentSnapshot } from '@c15t/core';
 import type { ComponentProps } from 'svelte';
 import { render } from 'svelte/server';
@@ -7,6 +6,7 @@ import type { ConsentManagerOptions } from '../lib/types';
 import ConformanceFixture from './fixtures/conformance-fixture.svelte';
 import ConsentRootFixture from './fixtures/consent-root-fixture.svelte';
 import PolicyFixture from './fixtures/policy-fixture.svelte';
+import { transportMode } from './fixtures/transport-mode';
 
 export const renderFixture = function renderFixture(
 	props:
@@ -18,7 +18,10 @@ export const renderFixture = function renderFixture(
 	const onKernel = (kernel: ConsentKernel) => {
 		snapshot = kernel.getServerSnapshot();
 	};
-	const options: ConsentManagerOptions = { ...props.options, mode: custom({}) };
+	const options: ConsentManagerOptions = {
+		...props.options,
+		mode: transportMode({}),
+	};
 	const output =
 		fixture === 'policy-fixture.svelte'
 			? render(PolicyFixture, { props: { ...props, onKernel, options } })

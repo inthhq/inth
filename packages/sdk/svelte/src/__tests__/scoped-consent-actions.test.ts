@@ -1,4 +1,3 @@
-import { custom } from '@c15t/core';
 import type { ConsentKernel } from '@c15t/core';
 import { writePolicyResolutionWire } from '@c15t/schema/types';
 import { fireEvent, render, screen } from '@testing-library/svelte';
@@ -8,6 +7,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import type { ConsentManagerState } from '../lib/context.svelte';
 import { draftReady } from './draft-ready';
 import ConformanceFixture from './fixtures/conformance-fixture.svelte';
+import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 
 const required = <Value>(value: Value | undefined): Value => {
@@ -44,7 +44,7 @@ describe('displayed consent actions', () => {
 				options: {
 					consentCategories: ['necessary', 'marketing'],
 					disableAnimation: true,
-					mode: custom({ save }),
+					mode: transportMode({ save }),
 					persistence: false,
 					// The draft stages only moved values, so the visitor's edit
 					// must move away from the record: start granted when the bulk
@@ -107,7 +107,7 @@ describe('displayed consent actions', () => {
 				options: {
 					consentCategories: ['necessary', 'marketing'],
 					disableAnimation: true,
-					mode: custom({ save }),
+					mode: transportMode({ save }),
 					persistence: false,
 					prefetch: policyFixture({}, { categories: ['marketing'] }),
 				},
@@ -168,7 +168,7 @@ describe('displayed consent actions', () => {
 				options: {
 					consentCategories: ['necessary', 'marketing'],
 					disableAnimation: true,
-					mode: custom({ save }),
+					mode: transportMode({ save }),
 					persistence: false,
 					prefetch: policyFixture({}, { categories: ['marketing'] }),
 				},
@@ -232,7 +232,7 @@ describe('displayed consent actions', () => {
 				options: {
 					consentCategories: ['necessary', 'marketing'],
 					disableAnimation: true,
-					mode: custom({ save }),
+					mode: transportMode({ save }),
 					persistence: false,
 					prefetch: policyFixture({}, { categories: ['marketing'] }),
 				},
@@ -281,7 +281,7 @@ describe('displayed consent actions', () => {
 				options: {
 					consentCategories: ['marketing'],
 					disableAnimation: true,
-					mode: custom({}),
+					mode: transportMode({}),
 					persistence: false,
 					prefetch: policyFixture(
 						{},
@@ -325,7 +325,7 @@ describe('displayed consent actions', () => {
 				options: {
 					consentCategories: ['necessary', 'marketing', 'measurement'],
 					disableAnimation: true,
-					mode: custom({
+					mode: transportMode({
 						init: () =>
 							Promise.resolve({
 								policyResolution: writePolicyResolutionWire(
@@ -416,7 +416,7 @@ describe('displayed consent actions', () => {
 				options: {
 					consentCategories: ['necessary', 'marketing', 'measurement'],
 					disableAnimation: true,
-					mode: custom({
+					mode: transportMode({
 						init: () =>
 							Promise.resolve({
 								policyResolution: writePolicyResolutionWire(
@@ -507,7 +507,7 @@ test('scripts infer the displayed categories without a configured list', async (
 			captured.manager = manager;
 		},
 		options: {
-			mode: custom({ save: () => Promise.resolve({ ok: true }) }),
+			mode: transportMode({ save: () => Promise.resolve({ ok: true }) }),
 			persistence: false,
 			prefetch: policyFixture({}, { categories: ['necessary'] }),
 			scripts: [
@@ -554,7 +554,7 @@ test.each(['all', 'necessary'] as const)(
 			},
 			options: {
 				consentCategories: ['necessary', 'marketing'],
-				mode: custom({ save: () => Promise.resolve({ ok: true }) }),
+				mode: transportMode({ save: () => Promise.resolve({ ok: true }) }),
 				persistence: false,
 				prefetch: policyFixture(
 					{},
@@ -604,7 +604,7 @@ test.each(['all', 'necessary', 'custom'] as const)(
 			},
 			options: {
 				disableAnimation: true,
-				mode: custom({ save }),
+				mode: transportMode({ save }),
 				persistence: false,
 				prefetch: policyFixture(),
 			},

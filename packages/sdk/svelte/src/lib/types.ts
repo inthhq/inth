@@ -1,5 +1,4 @@
 import type {
-	ConsentMode,
 	ExperimentState,
 	IABConfig,
 	KernelConfig,
@@ -13,10 +12,12 @@ import type {
 	RuntimePersistenceOptions,
 	RuntimeScriptLoaderOptions,
 } from '@c15t/core/runtime';
+import type { ConsentTesting } from '@c15t/core/testing';
 import type { CreateIABOptions } from '@c15t/iab';
 import type { Theme, UIOptions } from '@c15t/ui/theme';
 
 import type { DialogPreload } from './dialog-warming';
+import type { KitMode } from './kit/types';
 
 /** IAB options a provider accepts, or `false` to leave IAB unmounted. */
 export type ProviderIABOptions =
@@ -59,14 +60,19 @@ export type UsePersistenceOptions = RuntimePersistenceOptions;
  * `createConsentRuntime()` from `@c15t/core/runtime`. `createIAB` and
  * `loadGPP` are supplied by this package, and `pkg` is fixed to
  * `'@c15t/svelte'`.
- * Policy rules are not a provider option: pass them to the transport as
- * `offline({ policyRules })`.
  */
 export interface ConsentManagerOptions
 	extends
 		Omit<
 			ConsentRuntimeOptions,
-			'createIAB' | 'gpp' | 'iab' | 'loadGPP' | 'mode' | 'pkg' | 'policyRules'
+			| 'backendURL'
+			| 'createIAB'
+			| 'gpp'
+			| 'iab'
+			| 'loadGPP'
+			| 'mode'
+			| 'pkg'
+			| 'testing'
 		>,
 		Pick<
 			UIOptions,
@@ -77,27 +83,32 @@ export interface ConsentManagerOptions
 			| 'trapFocus'
 		> {
 	/**
-	 * Transport factory the provider builds its kernel with. Required.
-	 *
-	 * Pass `hosted()` to talk to a c15t backend, `local()` to resolve
-	 * policies locally with no network, or `custom()` to supply your own
-	 * kernel transport or v2 endpoint handlers. This is an initial-only
-	 * option: remount the provider to change it.
+	 * Backend URL, relative (`/api/c15t`) or absolute. Setting it is how the
+	 * provider talks to the hosted backend. Defaults to the URL
+	 * `consentManifest()` from `c15t/svelte/vite` read from
+	 * `VITE_C15T_BACKEND_URL` or `VITE_INTH_PROJECT_URL`. Initial-only:
+	 * remount the provider to change it.
 	 *
 	 * @example
 	 * ```svelte
-	 * <script lang="ts">
-	 *   import { ConsentProvider, hosted } from '@c15t/svelte';
-	 *
-	 *   let { children } = $props();
-	 * </script>
-	 *
-	 * <ConsentProvider mode={hosted({ backendURL: '/api/c15t' })}>
+	 * <ConsentProvider backendURL="/api/c15t">
 	 *   {@render children()}
 	 * </ConsentProvider>
 	 * ```
 	 */
-	mode: ProviderTransportFactory;
+	backendURL?: string;
+	/**
+	 * Resolve the policy from the backend's consent manifest instead of
+	 * asking `/init`: pass `manifest()` from `@c15t/svelte`. Initial-only.
+	 */
+	mode?: ProviderTransportFactory;
+	/**
+	 * Replace the backend in a test: pass `withoutNetwork()` from
+	 * `@c15t/svelte/testing`. It throws in production builds. To keep
+	 * consent out of the way in an app's own tests instead, set
+	 * `enabled: false`.
+	 */
+	testing?: ConsentTesting;
 	/** IAB TCF configuration. Pass `false` to disable the TCF addon. */
 	iab?: ProviderIABOptions;
 	/**
@@ -116,10 +127,7 @@ export interface ConsentManagerOptions
 	 *
 	 * @example
 	 * ```svelte
-	 * <ConsentProvider
-	 *   mode={hosted({ backendURL: '/api/c15t' })}
-	 *   gpp={{ usApproach: 'national' }}
-	 * >
+	 * <ConsentProvider backendURL="/api/c15t" gpp={{ usApproach: 'national' }}>
 	 *   {@render children()}
 	 * </ConsentProvider>
 	 * ```
@@ -178,8 +186,11 @@ export type ConsentProviderCallbacks = NonNullable<
  * `load` can return it.
  */
 export interface ConsentRootState {
-	/** The mode `c15tHandle()` was given, as data. */
-	mode: ConsentMode;
+	/**
+	 * How `c15tHandle()` resolves the visitor, as data: `manifest()`, the
+	 * hosted backend, or a testing value.
+	 */
+	mode: KitMode;
 	/** The visitor's consent state the server resolved. */
 	prefetch: Omit<KernelConfig, 'transport'> & ExperimentState;
 	/** The c15t backend. Saves go here. */

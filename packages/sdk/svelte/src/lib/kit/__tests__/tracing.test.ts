@@ -64,7 +64,6 @@ describe('SvelteKit consent tracing recipe', () => {
 		'records %s %s as init without changing the resolved policy or cache headers',
 		async (method, path) => {
 			const { GET } = createConsentRoute({
-				reportSessions: false,
 				snapshot: MANIFEST_FIXTURE,
 			});
 			const input = { headers: { 'x-vercel-ip-country': 'DE' }, method };
@@ -94,7 +93,6 @@ describe('SvelteKit consent tracing recipe', () => {
 		'records %s %s and preserves the manifest response',
 		async (method, path) => {
 			const { GET } = createConsentRoute({
-				reportSessions: false,
 				snapshot: MANIFEST_FIXTURE,
 			});
 			const { event, span } = tracedEvent(path, { method });
@@ -203,7 +201,6 @@ describe('SvelteKit consent tracing recipe', () => {
 				backendURL: BACKEND,
 				fetch,
 				proxy: true,
-				reportSessions: false,
 				snapshot: MANIFEST_FIXTURE,
 			});
 			const init = path === 'init';

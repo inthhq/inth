@@ -172,7 +172,9 @@ export const selectTransportFactory = function selectTransportFactory(
 	options: Pick<ConsentRuntimeOptions, 'backendURL' | 'mode' | 'testing'>,
 	hostedMode?: (backendURL: string) => ProviderTransportFactory
 ): ProviderTransportFactory | undefined {
-	if (options.testing) {
+	// A testing value that crossed a serialization boundary is data only;
+	// the browser side builds its transport.
+	if (options.testing?.transport) {
 		return options.testing.transport;
 	}
 	if (typeof options.mode === 'function') {

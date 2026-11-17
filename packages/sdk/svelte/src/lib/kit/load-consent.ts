@@ -14,18 +14,15 @@ import {
 	backendURL as builtBackendURL,
 	snapshot as builtSnapshot,
 } from '@c15t/core/generated';
-import type { ConsentMode } from '@c15t/core/modes';
 import { readWaitUntil, resolveRequestConsent } from '@c15t/core/server';
 import type { ResolveRequestConsentOptions } from '@c15t/core/server';
 import type { RequestEvent } from '@sveltejs/kit';
 
 import type { ConsentRootState } from '../types';
-import type { C15tLocals, ConsentRequestOptions } from './types';
+import type { C15tLocals, ConsentRequestOptions, KitMode } from './types';
 
 /** Options for {@link loadConsent}, when you call it from your own `load`. */
 export interface LoadConsentOptions extends ConsentRequestOptions {
-	/** Report manifest resolutions to the backend. @default true */
-	reportSessions?: boolean;
 	/**
 	 * Keeps session reports and unfinished init requests alive after the response.
 	 * Used when `event.platform.context.waitUntil` is unavailable. Pass the
@@ -104,7 +101,7 @@ const backgroundWorkFor = (
 
 /** How the server resolves each mode. */
 const serverResolution = function serverResolution(
-	mode: ConsentMode,
+	mode: KitMode,
 	locals: C15tLocals | undefined,
 	backendURL: string | undefined
 ): Pick<
@@ -115,13 +112,14 @@ const serverResolution = function serverResolution(
 	| 'manifest'
 	| 'manifestURL'
 	| 'mode'
-	| 'offline'
 > {
-	if (mode.type === 'offline') {
-		return { mode: 'offline', offline: { policyRules: mode.policyRules } };
+	if (mode.type === 'without-network') {
+		// The browser resolves it, with the transport that refuses to run
+		// in production.
+		return {};
 	}
 	if (mode.type === 'hosted') {
-		return { backendURL, initHeaders: mode.headers, mode: 'hosted' };
+		return { backendURL, mode: 'hosted' };
 	}
 	if (mode.resolve === 'browser') {
 		// The browser resolves; the server reads the cookie only.
@@ -148,7 +146,7 @@ const serverResolution = function serverResolution(
  * The mode as the browser receives it. A manifest resolved on the server
  * needs no snapshot there.
  */
-const browserMode = function browserMode(mode: ConsentMode): ConsentMode {
+const browserMode = function browserMode(mode: KitMode): KitMode {
 	if (mode.type !== 'manifest' || mode.resolve === 'browser') {
 		return mode;
 	}
@@ -186,9 +184,10 @@ const requestFrom = function requestFrom(
  * <ConsentRoot state={data.consent}>
  * ```
  *
- * It resolves with the mode `c15tHandle()` was given, `manifest()` by
- * default, from the snapshot `consentManifest()` downloaded. Without a
- * snapshot it fetches the manifest from the backend, and caches it.
+ * It resolves with the mode `c15tHandle()` was given. With none it asks
+ * the hosted backend's `/init`. With `manifest()` it resolves from the
+ * snapshot `consentManifest()` downloaded, or fetches and caches the
+ * backend's manifest.
  *
  * Never throws: a failed upstream call degrades to the cookie-only state
  * rather than taking the page down with it. Neither does a slow one: after
@@ -206,11 +205,8 @@ export const loadConsent = async function loadConsent(
 	options: LoadConsentOptions = {}
 ): Promise<{ consent: ConsentRootState }> {
 	const locals = readLocals(event);
-	const mode: ConsentMode = locals?.mode ?? { type: 'manifest' };
-	const backendURL =
-		(mode.type === 'hosted' ? mode.backendURL : undefined) ??
-		locals?.backendURL ??
-		builtBackendURL;
+	const mode: KitMode = locals?.mode ?? { type: 'hosted' };
+	const backendURL = locals?.backendURL ?? builtBackendURL;
 	// Per-call inputs beat the handle's: a route that passes `country` is
 	// naming the country for that page. The handle's cookie name is part of
 	// the request context, so a per-call `country` keeps it.
@@ -234,7 +230,6 @@ export const loadConsent = async function loadConsent(
 			language: options.language,
 			region: options.region,
 		},
-		reportSessions: options.reportSessions,
 		request: requestFrom(event, locals, overridesPerCall),
 		// A prerendered page is one HTML file for every visitor.
 		shared,

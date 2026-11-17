@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { offline } from '@c15t/core';
 	import { resolvePolicyRules } from '@c15t/schema/types';
 
 	import ConsentProvider from '../../lib/components/consent-provider.svelte';
 	import ConsentDevToolsComponent from '../../lib/devtools';
+	import { withoutNetwork } from '../../lib/testing';
 
 	let {
 		categories,
@@ -55,7 +55,7 @@
 
 <ConsentProvider
 	options={{
-		mode: offline({ acknowledgeNoRecords: true }),
+		testing: withoutNetwork(),
 		consentCategories: categories,
 		presentation,
 		storageConfig: storageKey ? { storageKey } : undefined,
@@ -73,7 +73,7 @@
 </ConsentProvider>
 
 {#if multiple}
-	<ConsentProvider options={{ mode: offline({ acknowledgeNoRecords: true }) }}>
+	<ConsentProvider options={{ testing: withoutNetwork() }}>
 		<ConsentDevToolsComponent position="bottom-right" />
 	</ConsentProvider>
 {/if}

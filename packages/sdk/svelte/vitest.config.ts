@@ -52,6 +52,10 @@ const workspaceAliases = [
 		replacement: resolve(__dirname, '../core/src/modes.ts'),
 	},
 	{
+		find: '@c15t/core/testing',
+		replacement: resolve(__dirname, '../core/src/testing.ts'),
+	},
+	{
 		find: '@c15t/core/transports/manifest-browser',
 		replacement: resolve(
 			__dirname,

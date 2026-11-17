@@ -1,10 +1,7 @@
 export {
-	custom,
 	defaultTranslationConfig,
 	detectBrowserLanguage,
-	local,
 	mergeTranslationConfigs,
-	offline,
 	policyRulePresets,
 	prepareTranslationConfig,
 } from '@c15t/core';
@@ -37,8 +34,6 @@ export type {
 	ConsentMode,
 	HostedModeFactory,
 	HostedModeOptions,
-	OfflineModeFactory,
-	OfflineModeOptions,
 	ProviderTransportContext,
 	ProviderTransportFactory,
 	ProviderTransportKind,
@@ -115,8 +110,7 @@ export type {
 	UseScriptLoaderOptions,
 } from './types';
 export type { DialogPreload } from './dialog-warming';
-export type { HostedOptions } from './transports/hosted';
-export { hosted } from './transports/hosted';
+export type { ConsentTesting } from '@c15t/core/testing';
 export type { ManifestModeOptions } from './transports/manifest';
 export { manifest } from './transports/manifest';
 export type { BrowserManifestModeFactory } from '@c15t/core/transports/manifest-browser';

@@ -161,16 +161,6 @@ export interface ConsentRouteOptions {
 		event: RequestEvent
 	) => void;
 	/**
-	 * Report each init the route resolves to the backend's `POST /sessions`,
-	 * server-to-server and detached from the response, so the backend still
-	 * counts visitors it never served `/init` to. The report is handed to
-	 * `onBackgroundRevalidate` like a manifest refresh. Set `false` to send
-	 * none.
-	 *
-	 * @default true
-	 */
-	reportSessions?: boolean;
-	/**
 	 * Forward consent writes to `backendURL` through this route, so the
 	 * browser only talks to this origin. Without it the route answers `GET`
 	 * only and a save gets `405`.
@@ -278,10 +268,7 @@ const readHandleBackendURL = function readHandleBackendURL(
 	event: RequestEvent,
 	locals: C15tLocals | undefined
 ): string | undefined {
-	const mode = locals?.mode;
-	const fromHandle =
-		(mode?.type === 'hosted' ? mode.backendURL : undefined) ??
-		locals?.backendURL;
+	const fromHandle = locals?.backendURL;
 	if (fromHandle === undefined || pointsAtRoute(fromHandle, event, locals)) {
 		return undefined;
 	}
@@ -393,7 +380,6 @@ export const createConsentRoute = function createConsentRoute<
 			manifest: source.snapshot,
 			manifestURL: source.manifestURL,
 			proxy: options.proxy,
-			reportSessions: options.reportSessions,
 		});
 		built = { handle, source };
 		return handle;

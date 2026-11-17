@@ -53,11 +53,8 @@ export type { ConsentRootState } from '../types';
 
 export type {
 	ConsentMode,
-	HostedMode,
-	HostedModeOptions,
 	ManifestMode,
 	ManifestModeOptions,
-	OfflineMode,
-	OfflineModeOptions,
+	WithoutNetworkTestingData,
 } from '@c15t/core/modes';
-export { hosted, local, manifest, offline } from '@c15t/core/modes';
+export { manifest } from '@c15t/core/modes';

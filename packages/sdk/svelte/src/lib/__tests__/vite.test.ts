@@ -115,7 +115,7 @@ describe('location advice', () => {
 			warns: false,
 		},
 	])(
-		'suggests hosted() for a location-based policy in $app: $warns',
+		'suggests the hosted backend for a location-based policy in $app: $warns',
 		async ({ plugins, warns }) => {
 			const warn = vi.fn();
 			const [plugin] = consentManifest({
@@ -135,7 +135,7 @@ describe('location advice', () => {
 			await plugin.renderChunk(source as string);
 			expect(
 				warn.mock.calls.some(([message]) =>
-					/^@c15t\/svelte\/vite: .*location.*hosted\(\)/u.test(String(message))
+					/^@c15t\/svelte\/vite: .*location.*backendURL/u.test(String(message))
 				)
 			).toBe(warns);
 		}

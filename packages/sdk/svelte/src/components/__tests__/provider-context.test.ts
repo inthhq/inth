@@ -4,11 +4,11 @@
  * Mirrors: packages/sdk/react/src/providers/__tests__/provider-context.test.tsx
  */
 
-import { offline } from '@c15t/core';
 import { render, screen, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, test } from 'vitest';
 
 import ContextConsumerFixture from '../../__tests__/fixtures/context-consumer-fixture.svelte';
+import { withoutNetwork } from '../../lib/testing';
 
 describe('ConsentProvider Context Values', () => {
 	beforeEach(() => {
@@ -25,7 +25,7 @@ describe('ConsentProvider Context Values', () => {
 	test('should provide correct context values to children', async () => {
 		render(ContextConsumerFixture, {
 			options: {
-				mode: offline({ acknowledgeNoRecords: true }),
+				testing: withoutNetwork(),
 			},
 		});
 
@@ -37,7 +37,7 @@ describe('ConsentProvider Context Values', () => {
 	test('should provide activeUI state', async () => {
 		render(ContextConsumerFixture, {
 			options: {
-				mode: offline({ acknowledgeNoRecords: true }),
+				testing: withoutNetwork(),
 			},
 		});
 
@@ -49,7 +49,7 @@ describe('ConsentProvider Context Values', () => {
 	test('should provide model state', async () => {
 		render(ContextConsumerFixture, {
 			options: {
-				mode: offline({ acknowledgeNoRecords: true }),
+				testing: withoutNetwork(),
 			},
 		});
 

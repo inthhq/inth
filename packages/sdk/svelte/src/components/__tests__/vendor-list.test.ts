@@ -7,13 +7,13 @@
  * that is off in the draft disables its vendor switches. Accept all clears
  * the denial. The markup mirrors the React rows so parity holds.
  */
-import { custom } from '@c15t/core';
 import type { Vendor } from '@c15t/core';
 import accordionStyles from '@c15t/ui/styles/components/accordion';
 import switchStyles from '@c15t/ui/styles/components/switch';
 import { fireEvent, render, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import WidgetFixture from '../../__tests__/fixtures/widget-fixture.svelte';
 import { policyFixture } from '../../__tests__/policy-fixture';
 import { testOffline } from '../../__tests__/test-offline';
@@ -425,7 +425,7 @@ describe('Svelte consent widget vendor rows', () => {
 			noStyle: false,
 			options: {
 				consentCategories: ['necessary', 'marketing', 'measurement'],
-				mode: custom({
+				mode: transportMode({
 					// The first save waits for the test to release it; later
 					// saves resolve at once.
 					save: () => {

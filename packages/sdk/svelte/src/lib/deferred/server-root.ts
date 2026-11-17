@@ -56,7 +56,14 @@ export const createServerRoot = function createServerRoot(input: {
 		transport: ProviderTransportFactory
 	) => ConsentProviderRuntimeOptions;
 }): ServerRoot {
-	const transport = clientMode(input.mode ?? input.state.mode, input.state);
+	const stateMode = input.state.mode;
+	// The hosted backend travels as `{ type: 'hosted' }`; `clientMode()`
+	// takes it as no mode.
+	const transport = clientMode(
+		input.mode ?? (stateMode?.type === 'hosted' ? undefined : stateMode),
+		input.state,
+		'@c15t/svelte/testing'
+	);
 	const runtime = createOwnedRuntime(input.runtimeOptions(transport));
 	const planned = planServerBoot(runtime, input.options);
 	return {

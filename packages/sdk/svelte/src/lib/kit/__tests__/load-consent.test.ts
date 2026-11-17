@@ -13,8 +13,9 @@ import {
 } from '@c15t/schema/types';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { withoutNetwork } from '../../testing';
 import { c15tHandle } from '../handle';
-import { hosted, manifest, offline } from '../index';
+import { manifest } from '../index';
 import { loadConsent } from '../load-consent';
 import { setBuilding } from './app-env';
 import { CONSENTED_COOKIE, createEvent } from './event';
@@ -139,7 +140,6 @@ describe('loadConsent', () => {
 		);
 		const { consent } = await loadConsent(event, {
 			fetch,
-			reportSessions: false,
 		});
 		expect(consent.prefetch.initialPolicyResolution).toMatchObject({
 			policyId: 'eu-opt-in',
@@ -152,7 +152,10 @@ describe('loadConsent', () => {
 			routePrefix: '/api/c15t',
 		});
 		expect(consent.mode).not.toHaveProperty('snapshot');
-		expect(fetch).not.toHaveBeenCalled();
+		// No policy request; only the session report.
+		expect(
+			fetch.mock.calls.filter(([url]) => !String(url).endsWith('/sessions'))
+		).toEqual([]);
 	});
 
 	test('fetches the manifest from the backend without a snapshot', async () => {
@@ -161,11 +164,10 @@ describe('loadConsent', () => {
 		);
 		const event = await withHandle(
 			createEvent({ fetch, headers: { 'x-c15t-country': 'DE' } }),
-			{ backendURL: BACKEND }
+			{ backendURL: BACKEND, mode: manifest() }
 		);
 		const { consent } = await loadConsent(event, {
 			fetch,
-			reportSessions: false,
 		});
 		expect(fetch.mock.calls[0]?.[0]).toBe(`${BACKEND}/manifest`);
 		expect(consent.prefetch.initialPolicyResolution?.policyId).toBe(
@@ -178,7 +180,7 @@ describe('loadConsent', () => {
 			createEvent({
 				headers: { cookie: CONSENTED_COOKIE, 'x-c15t-country': 'CA' },
 			}),
-			{ mode: offline() }
+			{ testing: withoutNetwork() }
 		);
 		const fromHandle = await loadConsent(event);
 		expect(fromHandle.consent.prefetch.initialOverrides?.country).toBe('CA');
@@ -191,7 +193,7 @@ describe('loadConsent', () => {
 	test('keeps the handle cookie name when a per-call input overrides', async () => {
 		const event = await withHandle(
 			createEvent({ headers: { cookie: CUSTOM_COOKIE } }),
-			{ cookieName: 'my-consent', mode: offline() }
+			{ cookieName: 'my-consent', testing: withoutNetwork() }
 		);
 		const { consent } = await loadConsent(event, { country: 'DE' });
 		expect(consent.prefetch.initialRecords?.choice).not.toBeNull();
@@ -205,7 +207,7 @@ describe('loadConsent', () => {
 				setCookie,
 				url: 'https://app.example.com/',
 			}),
-			{ mode: offline(), storage: { crossSubdomain: true } }
+			{ storage: { crossSubdomain: true }, testing: withoutNetwork() }
 		);
 		const first = await loadConsent(event);
 		const custom = await loadConsent(event, { cookieName: 'my-consent' });
@@ -220,14 +222,16 @@ describe('loadConsent', () => {
 		).toBeUndefined();
 	});
 
-	test('offline mode resolves on the server', async () => {
+	test('a testing value resolves nothing on the server and reaches the browser', async () => {
+		const fetch = answer();
 		const event = await withHandle(
-			createEvent({ headers: { 'x-c15t-country': 'DE' } }),
-			{ mode: offline() }
+			createEvent({ fetch, headers: { 'x-c15t-country': 'DE' } }),
+			{ testing: withoutNetwork() }
 		);
-		const { consent } = await loadConsent(event);
-		expect(consent.prefetch.initialPolicyResolution?.status).toBe('matched');
-		expect(consent.mode).toEqual({ type: 'offline' });
+		const { consent } = await loadConsent(event, { fetch });
+		expect(consent.prefetch.initialPolicyResolution).toBeUndefined();
+		expect(consent.mode).toEqual({ type: 'without-network' });
+		expect(fetch).not.toHaveBeenCalled();
 	});
 
 	test('a relative hosted backend resolves against event.url and stays in-process', async () => {
@@ -241,7 +245,7 @@ describe('loadConsent', () => {
 				},
 				url: 'http://localhost:5173/',
 			}),
-			{ mode: hosted({ backendURL: '/api/self-host' }) }
+			{ backendURL: '/api/self-host' }
 		);
 		const { consent } = await loadConsent(event);
 		expect(String(fetch.mock.calls[0]?.[0]).split('?')[0]).toBe(
@@ -257,7 +261,7 @@ describe('loadConsent', () => {
 		const fetch = answer();
 		const eventFetch = answer();
 		const event = await withHandle(createEvent({ fetch: eventFetch }), {
-			mode: hosted({ backendURL: 'https://api.example.com' }),
+			backendURL: 'https://api.example.com',
 		});
 		await loadConsent(event, { fetch });
 		expect(eventFetch).not.toHaveBeenCalled();
@@ -277,7 +281,7 @@ describe('loadConsent', () => {
 						);
 					}),
 			}),
-			{ mode: hosted({ backendURL: '/api/self-host' }) }
+			{ backendURL: '/api/self-host' }
 		);
 		const pending = loadConsent(event);
 		await vi.advanceTimersByTimeAsync(500);
@@ -308,7 +312,7 @@ describe('loadConsent', () => {
 				fetch,
 				headers: { cookie: CONSENTED_COOKIE, 'x-c15t-country': 'DE' },
 			}),
-			{ mode: hosted({ backendURL: BACKEND }), routePrefix: '/api/c15t' }
+			{ backendURL: BACKEND, routePrefix: '/api/c15t' }
 		);
 		expect((event.locals as { c15t: { config: unknown } }).c15t.config).toEqual(
 			{}
@@ -317,7 +321,7 @@ describe('loadConsent', () => {
 		expect(fetch).not.toHaveBeenCalled();
 		expect(consent).toEqual({
 			backendURL: BACKEND,
-			mode: { backendURL: BACKEND, type: 'hosted' },
+			mode: { type: 'hosted' },
 			prefetch: {},
 			routePrefix: '/api/c15t',
 		});

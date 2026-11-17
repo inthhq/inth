@@ -13,8 +13,8 @@ import type {
  *    the GPC signal. Without a snapshot or `backendURL` this is the whole
  *    result, and no network call is made.
  * 2. With a snapshot, resolves locally using this visitor's inputs. An
- *    absolute `backendURL` receives session reports unless disabled with
- *    `reportSessions: false`. IAB vendor lists can still require a fetch.
+ *    absolute `backendURL` receives a session report. IAB vendor lists can
+ *    still require a fetch.
  * 3. With only a `backendURL`, calls `${backendURL}/init` with the request
  *    context and folds the response into the state, so first paint is
  *    correct without waiting for a client roundtrip.
@@ -55,7 +55,6 @@ export const resolveConsent = function resolveConsent(
 			language: options.language,
 			region: options.region,
 		},
-		reportSessions: options.reportSessions,
 		request: {
 			cookie: options.cookieHeader,
 			headers: options.headers,
@@ -72,4 +71,3 @@ export const resolveConsent = function resolveConsent(
 
 export type { KernelConfig } from '@c15t/core';
 export type { ConsentRequestOptions, ConsentState, ResolveConsentOptions };
-export { custom, hosted, local, offline } from '@c15t/core';

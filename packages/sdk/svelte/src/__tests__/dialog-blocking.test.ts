@@ -1,10 +1,10 @@
-import { custom } from '@c15t/core';
 import type { ConsentPresentation } from '@c15t/core';
 import { render, waitFor } from '@testing-library/svelte';
 import { describe, expect, test } from 'vitest';
 
 import type { ConsentManagerOptions } from '../lib/types';
 import Fixture from './fixtures/dialog-fixture.svelte';
+import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 
 const query = (selector: string) => document.querySelector(selector);
@@ -18,7 +18,7 @@ const renderDialog = (
 		open: true,
 		options: {
 			disableAnimation: true,
-			mode: custom({}),
+			mode: transportMode({}),
 			persistence: false,
 			prefetch: policyFixture(),
 			...options,

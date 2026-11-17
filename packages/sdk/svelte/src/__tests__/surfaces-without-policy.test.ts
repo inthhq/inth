@@ -1,5 +1,4 @@
 import type { InitResponse } from '@c15t/core';
-import { custom } from '@c15t/core';
 import type { PolicyRule } from '@c15t/schema/types';
 import {
 	resolvePolicyRules,
@@ -10,6 +9,7 @@ import { describe, expect, test } from 'vitest';
 
 import type { ConsentContextValue } from '../lib/context.svelte';
 import Fixture from './fixtures/surfaces-fixture.svelte';
+import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 
 const choiceRule: PolicyRule = {
@@ -43,7 +43,7 @@ const renderWithoutPolicy = () => {
 		},
 		options: {
 			disableAnimation: true,
-			mode: custom({
+			mode: transportMode({
 				init: () => Promise.resolve(response),
 				save: () => Promise.resolve({ ok: true, subjectId: 'svelte-test' }),
 			}),

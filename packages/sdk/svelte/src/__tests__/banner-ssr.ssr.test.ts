@@ -1,4 +1,4 @@
-import { createConsentKernel, offline } from '@c15t/core';
+import { createConsentKernel } from '@c15t/core';
 /**
  * Server-render contract for the consent banner.
  *
@@ -15,6 +15,7 @@ import { render } from 'svelte/server';
 import { describe, expect, test } from 'vitest';
 
 import ConsentProvider from '../lib/components/consent-provider.svelte';
+import { withoutNetwork } from '../lib/testing';
 import type { ConsentManagerOptions } from '../lib/types';
 import BannerFixture from './fixtures/banner-fixture.svelte';
 
@@ -49,10 +50,10 @@ const buildOptions = function buildOptions(
 	presentation?: ConsentPresentation
 ): ConsentManagerOptions {
 	return {
-		mode: offline({ acknowledgeNoRecords: true }),
 		persistence: false,
 		prefetch,
 		presentation,
+		testing: withoutNetwork(),
 	} as ConsentManagerOptions;
 };
 
