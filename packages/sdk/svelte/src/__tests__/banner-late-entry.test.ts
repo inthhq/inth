@@ -36,8 +36,8 @@ const mountBanner = async function mountBanner(disableAnimation: boolean) {
 			},
 			options: {
 				disableAnimation,
-				prefetch: policyFixture({}),
 				mode: testing(),
+				prefetch: policyFixture({}),
 			},
 		},
 		target,

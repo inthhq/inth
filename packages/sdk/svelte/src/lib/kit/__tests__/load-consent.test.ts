@@ -207,7 +207,7 @@ describe('loadConsent', () => {
 				setCookie,
 				url: 'https://app.example.com/',
 			}),
-			{ storage: { crossSubdomain: true }, mode: testing() }
+			{ mode: testing(), storage: { crossSubdomain: true } }
 		);
 		const first = await loadConsent(event);
 		const custom = await loadConsent(event, { cookieName: 'my-consent' });

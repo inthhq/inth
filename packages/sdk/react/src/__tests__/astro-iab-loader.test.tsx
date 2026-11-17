@@ -36,12 +36,12 @@ test('reveals the cold Astro IAB island when its module is ready', async () => {
 	const runtime = createConsentRuntime({
 		createIAB,
 		iab: { cmpId: 42, gvl: mockGVL },
+		mode: testing(),
 		persistence: false,
 		prefetch: {
 			...policyFixture({}, { model: 'iab' }),
 			initialIab: { cmpId: 42, enabled: true, gvl: mockGVL },
 		},
-		mode: testing(),
 	});
 	runtime.start();
 	runtime.kernel.set.activeUI('dialog');

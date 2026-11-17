@@ -5,6 +5,7 @@ import type {
 	LegalLinks,
 	ProviderTransportFactory,
 } from '@c15t/core';
+import type { HostedMode } from '@c15t/core/modes';
 import type {
 	ConsentRuntimeOptions,
 	RuntimeGPPOptions,
@@ -12,7 +13,6 @@ import type {
 	RuntimePersistenceOptions,
 	RuntimeScriptLoaderOptions,
 } from '@c15t/core/runtime';
-import type { HostedMode } from '@c15t/core/modes';
 import type { ConsentTesting } from '@c15t/core/testing';
 import type { CreateIABOptions } from '@c15t/iab';
 import type { Theme, UIOptions } from '@c15t/ui/theme';

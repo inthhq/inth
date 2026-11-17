@@ -23,8 +23,8 @@ test('the provider renders no theme stylesheet of its own', () => {
 	const html = renderToString(
 		<ConsentProvider
 			options={{
-				persistence: false,
 				mode: testing(),
+				persistence: false,
 				theme: { colors: { primary: '#008080' } },
 			}}
 		>
@@ -39,10 +39,10 @@ test('the provider renders no theme stylesheet of its own', () => {
 test('renders custom theme CSS before the banner and preserves it through hydration', async () => {
 	const options = {
 		disableAnimation: true,
+		mode: testing(),
 		nonce: 'ssr-theme-nonce',
 		persistence: false as const,
 		prefetch: policyFixture(),
-		mode: testing(),
 		theme: {
 			colors: { primary: '#008080', surface: '#f0fafa' },
 			dark: { primary: '#40e0d0' },
@@ -140,9 +140,9 @@ test.each([
 		const options = {
 			colorScheme,
 			disableAnimation: true,
+			mode: testing(),
 			persistence: false as const,
 			prefetch: policyFixture(),
-			mode: testing(),
 			theme: {
 				colors: { primary: '#008080' },
 				dark: { primary: '#40e0d0' },
@@ -237,9 +237,9 @@ test.each(['</style>', '</StYlE>', '</style >'])(
 				<ConsentTheme theme={{ typography: { fontFamily } }} />
 				<ConsentProvider
 					options={{
+						mode: testing(),
 						persistence: false,
 						prefetch: policyFixture(),
-						mode: testing(),
 					}}
 				>
 					<div data-testid="themed-child" />

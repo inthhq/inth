@@ -22,8 +22,8 @@ describe('ConsentDialogLink', () => {
 			render(
 				<ConsentProvider
 					options={{
-						prefetch: policyFixture({}, { model }),
 						mode: testing(),
+						prefetch: policyFixture({}, { model }),
 					}}
 				>
 					<ConsentDialogLink>Preferences</ConsentDialogLink>

@@ -51,6 +51,7 @@ test.each([
 		<ConsentProvider
 			options={{
 				consentCategories: ['necessary', 'measurement', 'marketing'],
+				mode: testing(),
 				persistence: false,
 				prefetch: policyFixture(
 					{ marketing: true },
@@ -61,7 +62,6 @@ test.each([
 						prompt: 'choice',
 					}
 				),
-				mode: testing(),
 				vendors: VENDORS,
 			}}
 		>

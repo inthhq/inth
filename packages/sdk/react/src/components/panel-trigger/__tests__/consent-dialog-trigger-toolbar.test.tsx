@@ -19,7 +19,7 @@ const renderWithConsent = function renderWithConsent(
 	{ noStyle = false }: { noStyle?: boolean } = {}
 ): void {
 	render(
-		<ComponentFixtureProvider options={{ noStyle, mode: testing() }}>
+		<ComponentFixtureProvider options={{ mode: testing(), noStyle }}>
 			<ConsentDialog />
 			{children}
 		</ComponentFixtureProvider>

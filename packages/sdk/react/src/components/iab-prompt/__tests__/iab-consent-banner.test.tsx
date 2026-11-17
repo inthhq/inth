@@ -117,6 +117,7 @@ const defaultIABOptions: ConsentProviderOptions = {
 		cmpVersion: 1,
 		gvl: mockGVL,
 	},
+	mode: testing(),
 	prefetch: policyFixture(undefined, {
 		categories: undefined,
 		id: 'iab_test',
@@ -124,7 +125,6 @@ const defaultIABOptions: ConsentProviderOptions = {
 		prompt: 'choice',
 		scopeMode: 'strict',
 	}),
-	mode: testing(),
 };
 
 describe('IAB Consent Banner Unit Tests', () => {
@@ -373,6 +373,7 @@ describe('IAB Consent Banner Unit Tests', () => {
 			// but no `IABProvider` effect has run, so there is no handle yet.
 			const options: ConsentProviderOptions = {
 				iab: { cmpId: 160, cmpVersion: 1 },
+				mode: testing(),
 				prefetch: {
 					...defaultIABOptions.prefetch,
 					initialIab: {
@@ -381,7 +382,6 @@ describe('IAB Consent Banner Unit Tests', () => {
 						gvl: mockGVL as never,
 					},
 				},
-				mode: testing(),
 			};
 
 			const html = renderToString(

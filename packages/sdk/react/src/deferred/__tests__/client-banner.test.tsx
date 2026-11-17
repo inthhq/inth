@@ -33,9 +33,9 @@ test('renders the stock banner, and its accept records the choice, under the eng
 		root.render(
 			<EngineProvider
 				options={{
+					mode: testing(),
 					persistence: false,
 					prefetch: policyFixture(),
-					mode: testing(),
 				}}
 			>
 				<ConsentBanner disableAnimation />
@@ -57,9 +57,9 @@ test('compound parts render through the same chunk', async () => {
 		root.render(
 			<EngineProvider
 				options={{
+					mode: testing(),
 					persistence: false,
 					prefetch: policyFixture(),
-					mode: testing(),
 				}}
 			>
 				<ConsentBanner.Root disableAnimation>

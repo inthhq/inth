@@ -25,10 +25,7 @@ import {
 	resolveClientEntrypoint,
 	resolveOptions,
 } from '../integration';
-import {
-	hosted as hostedMode,
-	manifest as manifestMode,
-} from '../mode';
+import { hosted as hostedMode, manifest as manifestMode } from '../mode';
 import { testing as testingMode } from '../testing';
 import type { C15tAstroOptions } from '../types';
 
@@ -765,7 +762,8 @@ describe('astro:config:setup', () => {
 
 	it('registers the middleware before user middleware', async () => {
 		const { calls } = await runSetup({
-			backendURL: '/api/c15t', mode: hostedMode(),
+			backendURL: '/api/c15t',
+			mode: hostedMode(),
 		});
 		expect(calls.addMiddleware).toHaveBeenCalledWith({
 			entrypoint: resolveOwnEntry('@c15t/astro/middleware'),
@@ -1189,9 +1187,10 @@ describe('astro:config:setup', () => {
 
 	it('serves the serialized options from the virtual module', async () => {
 		const { calls } = await runSetup({
+			backendURL: 'https://consent.example.com',
 			consentCategories: ['necessary', 'measurement'],
 			gpp: { usApproach: 'national', usFallback: 'none' },
-			backendURL: 'https://consent.example.com', mode: hostedMode(),
+			mode: hostedMode(),
 		});
 		const [config] = calls.updateConfig.mock.calls[0] as [
 			{

@@ -78,6 +78,7 @@ const PolicyTestProvider = ({
 		options={{
 			components: providerOverrides?.components,
 			initialUI: 'dialog',
+			mode: testing(),
 			persistence: false,
 			prefetch: {
 				...policyFixture(undefined, {
@@ -97,7 +98,6 @@ const PolicyTestProvider = ({
 				preferences: state.policyDialog,
 				prompt: state.policyBanner,
 			},
-			mode: testing(),
 			theme: providerOverrides?.theme,
 		}}
 	>

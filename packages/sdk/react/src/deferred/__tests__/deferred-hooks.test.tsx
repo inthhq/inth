@@ -68,10 +68,10 @@ const Shell = ({
 /** Provider options for the engine, made once per test. */
 const engineOptions = (values: Parameters<typeof policyFixture>[0] = {}) => ({
 	consentCategories: ['measurement' as const],
+	mode: testing(),
 	persistence: false as const,
 	prefetch: policyFixture(values),
 	scripts: [posthog],
-	mode: testing(),
 });
 
 /** The engine a deferred root loads, attached to the stand-in. */

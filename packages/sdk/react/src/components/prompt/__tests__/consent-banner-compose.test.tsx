@@ -23,9 +23,9 @@ const renderComposed = function renderComposed(
 		<ConsentProvider
 			options={{
 				components,
+				mode: testing(),
 				persistence: false,
 				prefetch: policyFixture(undefined, { id: 'banner-compose-test' }),
-				mode: testing(),
 			}}
 		>
 			{children}
@@ -251,9 +251,9 @@ describe('composed ConsentDialog', () => {
 			<ConsentProvider
 				options={{
 					initialUI: 'dialog',
+					mode: testing(),
 					persistence: false,
 					prefetch: policyFixture(undefined, { id: 'dialog-compose-test' }),
-					mode: testing(),
 				}}
 			>
 				<ConsentDialog.Root>

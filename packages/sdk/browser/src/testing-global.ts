@@ -24,9 +24,9 @@ const ENTRY = '@c15t/browser/testing';
 /** The global API installed by `c15t.testing.js`. */
 export interface TestingC15tGlobal extends C15tGlobalBase {
 	/** The testing mode, for `init({ mode: c15t.testing({ policy }) })`. */
-	testing: (options?: TestingModeOptions) => ReturnType<
-		typeof createTestingMode
-	>;
+	testing: (
+		options?: TestingModeOptions
+	) => ReturnType<typeof createTestingMode>;
 }
 
 const testing = (options: TestingModeOptions = {}) =>

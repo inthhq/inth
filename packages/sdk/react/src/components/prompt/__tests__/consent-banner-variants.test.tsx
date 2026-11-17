@@ -27,6 +27,7 @@ const renderBanner = function renderBanner(
 	return render(
 		<ConsentProvider
 			options={{
+				mode: testing(),
 				persistence: false,
 				prefetch: options.language
 					? {
@@ -38,7 +39,6 @@ const renderBanner = function renderBanner(
 						}
 					: prefetch,
 				presentation: options.presentation,
-				mode: testing(),
 			}}
 		>
 			<ConsentBanner

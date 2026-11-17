@@ -29,12 +29,12 @@ const renderWithRule = function renderWithRule(
 	return render(
 		<ComponentFixtureProvider
 			options={{
+				mode: testing(),
 				persistence: false,
 				prefetch: policyFixture(undefined, {
 					id: 'trigger-rights-test',
 					...rule,
 				}),
-				mode: testing(),
 			}}
 		>
 			<ConsentBanner />

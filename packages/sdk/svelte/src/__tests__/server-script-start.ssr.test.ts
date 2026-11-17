@@ -54,6 +54,7 @@ const renderPage = function renderPage({
 	const { body, head } = render(ConsentProvider, {
 		props: {
 			options: {
+				mode: testing(),
 				persistence: false,
 				prefetch: {
 					initialPolicyResolution: resolvePolicyRules({
@@ -65,7 +66,6 @@ const renderPage = function renderPage({
 					now: shared ? undefined : Date.now(),
 				},
 				scripts: [pixel],
-				mode: testing(),
 				...options,
 			} as ConsentManagerOptions,
 		},

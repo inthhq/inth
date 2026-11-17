@@ -36,8 +36,8 @@ const renderPage = function renderPage(
 	const { head } = render(ConsentProvider, {
 		props: {
 			options: {
-				persistence: false,
 				mode: testing(),
+				persistence: false,
 				...options,
 			} as ConsentManagerOptions,
 		},

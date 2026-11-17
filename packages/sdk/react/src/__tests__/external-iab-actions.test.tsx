@@ -57,12 +57,12 @@ const fixture = () => {
 	const runtime = createConsentRuntime({
 		createIAB: () => handle,
 		iab: { cmpId: 42 },
+		mode: testing(),
 		persistence: false,
 		prefetch: {
 			...policyFixture({}, { model: 'iab' }),
 			initialIab: { cmpId: 42, enabled: true },
 		},
-		mode: testing(),
 	});
 	return { handle, runtime };
 };

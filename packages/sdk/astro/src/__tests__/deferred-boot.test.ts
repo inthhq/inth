@@ -7,8 +7,8 @@ import { CONSENT_BOOT_ATTRIBUTE } from '../browser/shell';
 import ConsentScript from '../components/consent-script.astro';
 import ConsentBanner from '../components/prompt.astro';
 import { resolveOptions } from '../integration';
-import { testing as testingMode } from '../testing';
 import { resolveConsentContext } from '../server';
+import { testing as testingMode } from '../testing';
 import type { C15tAstroOptions, C15tLocals } from '../types';
 import { testRule } from './policy-fixture';
 

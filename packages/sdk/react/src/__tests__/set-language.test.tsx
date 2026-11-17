@@ -165,8 +165,8 @@ describe('offline() language', () => {
 	test('overrides.language picks the copy for that language', async () => {
 		await renderProvider({
 			i18n: { messages },
-			overrides: { language: 'de' },
 			mode: testing(),
+			overrides: { language: 'de' },
 		});
 
 		await vi.waitFor(() => expect(title()).toBe('Datenschutz'));
@@ -179,8 +179,8 @@ describe('offline() language', () => {
 	test('an Accept-Language prefetch does not switch the copy', async () => {
 		await renderProvider({
 			i18n: { messages },
-			prefetch: acceptLanguagePrefetch(),
 			mode: testing(),
+			prefetch: acceptLanguagePrefetch(),
 		});
 
 		expect(kernel.getSnapshot().overrides.language).toBe('de');
@@ -190,8 +190,8 @@ describe('offline() language', () => {
 	test('a pending Accept-Language prefetch does not switch the copy', async () => {
 		await renderProvider({
 			i18n: { messages },
-			prefetch: Promise.resolve(acceptLanguagePrefetch()),
 			mode: testing(),
+			prefetch: Promise.resolve(acceptLanguagePrefetch()),
 		});
 
 		expect(kernel.getSnapshot().overrides.language).toBe('de');
@@ -211,8 +211,8 @@ describe('offline() language', () => {
 					fr: { cookieBanner: { title: 'Confidentialité' } },
 				},
 			},
-			prefetch: acceptLanguagePrefetch(),
 			mode: testing(),
+			prefetch: acceptLanguagePrefetch(),
 		});
 
 		setLanguage('fr');

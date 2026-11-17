@@ -14,10 +14,10 @@ import { testing } from '../../../testing';
 // Intent only: idle warming would otherwise call the warmer on its own
 // schedule while the banner is shown.
 const options = {
+	mode: testing(),
 	persistence: false,
 	prefetch: policyFixture(),
 	preloadDialog: 'intent',
-	mode: testing(),
 } as const;
 
 const button = (testId: string) => {

@@ -224,6 +224,7 @@ const buildProviderOptions = (opts: MountOptions): ConsentProviderOptions => {
 	return {
 		...provided,
 		disableAnimation: true,
+		mode: testing(),
 		persistence: opts.persistence ?? false,
 		prefetch: {
 			...prepared,
@@ -245,7 +246,6 @@ const buildProviderOptions = (opts: MountOptions): ConsentProviderOptions => {
 			initialPrivacySignals: { gpc: opts.gpc },
 			initialTranslations: resolveTranslations(provided, opts.locale),
 		},
-		mode: testing(),
 		trapFocus: provided.trapFocus ?? false,
 	};
 };

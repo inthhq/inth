@@ -51,7 +51,10 @@ const resolveMode = function resolveMode(
 			`${pkg}: \`backendURL\` is required. Set it to your Inth project URL, or use \`mode: testing()\` from @c15t/browser/testing in tests.`
 		);
 	}
-	return { factory: hosted({ backendURL: options.backendURL }), name: 'hosted' };
+	return {
+		factory: hosted({ backendURL: options.backendURL }),
+		name: 'hosted',
+	};
 };
 
 /**

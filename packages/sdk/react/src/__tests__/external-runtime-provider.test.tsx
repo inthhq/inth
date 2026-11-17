@@ -21,9 +21,9 @@ const createRuntime = function createRuntime(
 			'measurement',
 			'marketing',
 		],
+		mode: testing(),
 		pkg: '@c15t/react-external-test',
 		prefetch: policyFixture({ measurement: false }),
-		mode: testing(),
 	});
 };
 

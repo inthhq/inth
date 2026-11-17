@@ -13,8 +13,8 @@ import { beforeAll, describe, expect, it } from 'vitest';
 
 import IABConsentBanner from '../components/iab-prompt.astro';
 import { resolveOptions } from '../integration';
-import { testing as testingMode } from '../testing';
 import { resolveConsentContext } from '../server';
+import { testing as testingMode } from '../testing';
 import type { C15tAstroOptions, C15tLocals } from '../types';
 
 let container: AstroContainer;

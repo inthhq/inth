@@ -9,8 +9,8 @@ import ConsentBanner from '../components/prompt.astro';
 import { resolveOptions } from '../integration';
 import { createConsentMiddleware } from '../middleware-handler';
 import { hosted as hostedMode } from '../mode';
-import { testing as testingMode } from '../testing';
 import { buildBannerRevealScript, resolveConsentContext } from '../server';
+import { testing as testingMode } from '../testing';
 import type { C15tAstroOptions, C15tLocals } from '../types';
 import { describeTree } from './dom-tree';
 import { testRule } from './policy-fixture';
@@ -120,7 +120,8 @@ describe('<ConsentBanner /> on a prerendered page', () => {
 		const html = await container.renderToString(ConsentBanner, {
 			locals: {
 				c15t: await runPrerendered({
-					backendURL: 'https://consent.example.com', mode: hostedMode(),
+					backendURL: 'https://consent.example.com',
+					mode: hostedMode(),
 				}),
 			},
 			props: { title: 'Cookies?' },

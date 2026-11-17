@@ -366,8 +366,8 @@ describe('Sentry adapter through the kernel and script loader', () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 		const { client } = createClient();
 		const runtime = createConsentRuntime({
-			scripts: [sentry({ getClient: () => client })],
 			mode: testing(),
+			scripts: [sentry({ getClient: () => client })],
 		});
 		disposers.push(() => runtime.dispose());
 		expect(runtime.kernel.getSnapshot().vendors?.declared).toEqual([
@@ -387,8 +387,8 @@ describe('Sentry adapter through the kernel and script loader', () => {
 		// site declares a vendor itself.
 		const { client } = createClient();
 		const runtime = createConsentRuntime({
-			scripts: [sentry({ getClient: () => client })],
 			mode: testing(),
+			scripts: [sentry({ getClient: () => client })],
 			vendors: [
 				{
 					category: 'necessary',

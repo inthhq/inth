@@ -29,8 +29,12 @@ import type {
 } from '../types';
 
 /** A transport factory that hands the client `transport`. */
-const custom = (transport: Partial<KernelTransport>): ProviderTransportFactory =>
-	Object.assign(() => transport as KernelTransport, { kind: 'custom' as const });
+const custom = (
+	transport: Partial<KernelTransport>
+): ProviderTransportFactory =>
+	Object.assign(() => transport as KernelTransport, {
+		kind: 'custom' as const,
+	});
 
 /** A query pair c15t adds to `/init`. */
 const INIT_PAIR =

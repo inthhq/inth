@@ -100,7 +100,9 @@ const boot = async <ComponentType>(
 	options: Partial<C15tOptions> = {}
 ) => {
 	TestBed.configureTestingModule({
-		providers: [provideC15t({ ...testOptions(), ...options } as C15tProviderOptions)],
+		providers: [
+			provideC15t({ ...testOptions(), ...options } as C15tProviderOptions),
+		],
 	});
 	const fixture = TestBed.createComponent(component);
 	const consent = TestBed.inject(ConsentManager);

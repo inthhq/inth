@@ -62,10 +62,10 @@ test('useEventDispatcher keeps one dispatcher and pageview history through conse
 			options={{
 				consentCategories: ['measurement'],
 				enabled,
+				mode: testing(),
 				persistence: false,
 				prefetch: policyFixture(),
 				scripts: [posthog],
-				mode: testing(),
 			}}
 		>
 			<Page path={path} />

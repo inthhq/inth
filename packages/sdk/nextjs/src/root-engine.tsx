@@ -1,5 +1,6 @@
 'use client';
 
+import type { WithBackendURL } from '@c15t/core/runtime/provider';
 /**
  * The engine side of `ConsentRoot`, loaded on demand by `./root`.
  *
@@ -24,7 +25,6 @@ import {
 	DeferredEngineHost,
 } from '@c15t/react/deferred/engine';
 import { ConsentProvider } from '@c15t/react/provider';
-import type { WithBackendURL } from '@c15t/core/runtime/provider';
 import type { ConsentProviderOptions } from '@c15t/react/provider';
 import * as React from 'react';
 import { Suspense, useState } from 'react';

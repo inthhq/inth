@@ -149,8 +149,8 @@ describe('the client half of the state', () => {
 		const fetch = offlineFetch();
 		const state = await resolveConsent({
 			fetch,
-			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
 			mode: testing(),
+			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
 		});
 		expect(state.initialPolicyResolution).toBeUndefined();
 		expect(state.mode).toEqual({ type: 'testing' });

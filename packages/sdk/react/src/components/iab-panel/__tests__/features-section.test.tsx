@@ -28,6 +28,7 @@ const CONTROLS =
 
 const optionsFor = (gvl: GlobalVendorList): ConsentProviderOptions => ({
 	iab: { cmpId: 160, cmpVersion: 1, gvl },
+	mode: testing(),
 	prefetch: policyFixture(undefined, {
 		categories: undefined,
 		id: 'iab_features_test',
@@ -35,7 +36,6 @@ const optionsFor = (gvl: GlobalVendorList): ConsentProviderOptions => ({
 		prompt: 'choice',
 		scopeMode: 'strict',
 	}),
-	mode: testing(),
 });
 
 const renderDialog = async (options = optionsFor(mockGVL)) => {

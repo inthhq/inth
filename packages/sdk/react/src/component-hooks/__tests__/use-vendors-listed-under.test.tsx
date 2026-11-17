@@ -35,13 +35,13 @@ const createWrapper = function createWrapper(vendors?: Vendor[]) {
 			<ConsentProvider
 				options={{
 					consentCategories: ['necessary', 'marketing', 'measurement'],
+					mode: testing(),
 					persistence: false,
 					prefetch: policyFixture(
 						{ measurement: true },
 						{ categories: ['marketing', 'measurement'], model: 'opt-in' }
 					),
 					scripts: [helperScript],
-					mode: testing(),
 					vendors,
 				}}
 			>

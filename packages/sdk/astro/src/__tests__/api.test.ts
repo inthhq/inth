@@ -11,7 +11,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import { resolveOptions } from '../integration';
-import { hosted as hostedMode, manifest as manifestMode } from '../mode';
+import { manifest as manifestMode } from '../mode';
 import {
 	clearManifestCache,
 	createConsentRouteHandlers,
@@ -206,8 +206,6 @@ it('serves Astro manifest SSR references through the same-origin init route', as
 	expect(await list.json()).toEqual(completeGVL);
 	// The render, the init route and the list request share one download.
 	expect(
-		gvlUpstream.mock.calls.filter(
-			([url]) => !String(url).endsWith('/sessions')
-		)
+		gvlUpstream.mock.calls.filter(([url]) => !String(url).endsWith('/sessions'))
 	).toHaveLength(1);
 });

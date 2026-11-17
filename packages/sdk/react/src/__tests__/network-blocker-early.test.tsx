@@ -63,10 +63,10 @@ const renderWithBeacons = (
 				/>
 				<ConsentProvider
 					options={{
+						mode: testing(),
 						networkBlocker: { logBlockedRequests: false, rules },
 						persistence: false,
 						prefetch,
-						mode: testing(),
 					}}
 				>
 					<Beacon

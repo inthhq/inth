@@ -1,5 +1,5 @@
-import { hosted } from '@c15t/core/transports';
 import type { ProviderTransportFactory } from '@c15t/core';
+import { hosted } from '@c15t/core/transports';
 
 import { createConsentClientWith } from './client-base';
 import type { CreateConsentClientContext } from './client-base';

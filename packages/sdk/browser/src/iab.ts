@@ -1,7 +1,6 @@
+import type { WithBackendURL } from '@c15t/core/runtime';
 /** Optional browser entry with the CMP, TC codec, and IAB preference UI. */
 import { createIAB, initializeIABStub, destroyIABStub } from '@c15t/iab';
-
-import type { WithBackendURL } from '@c15t/core/runtime';
 
 import { createConsentClient as createClient } from './client';
 import { mountIABConsentUI } from './iab/mount';

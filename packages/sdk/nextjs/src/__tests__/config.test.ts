@@ -127,10 +127,7 @@ describe('defineConsentConfig', () => {
 			'invalid manifestURL',
 			{ backendURL: '/api/c15t', mode: manifest({ manifestURL: 'manifest' }) },
 		],
-		[
-			'removed testing option shape',
-			{ mode: { type: 'without-network' } },
-		],
+		['removed testing option shape', { mode: { type: 'without-network' } }],
 		['unknown mode', { backendURL: '/api/c15t', mode: { type: 'custom' } }],
 		['unknown journey', { backendURL: '/api/c15t', journey: 'session' }],
 	])('rejects %s', (_label, input) => {

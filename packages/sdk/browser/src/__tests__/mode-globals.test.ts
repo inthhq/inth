@@ -129,9 +129,7 @@ describe.each(entries)('$mode browser global', ({ create, mode }) => {
 			'custom',
 			'local',
 			'offline',
-		].filter(
-			(other) => other !== mode
-		);
+		].filter((other) => other !== mode);
 		for (const other of unsupported) {
 			expect(api).not.toHaveProperty(other);
 		}
@@ -350,7 +348,13 @@ describe('default CDN entry', () => {
 		expect(api.pkg).toBe('@c15t/browser');
 		expect(api.mode).toBe('hosted');
 		expect(api).toHaveProperty('hosted', expect.any(Function));
-		for (const factory of ['testing', 'offline', 'local', 'manifest', 'custom']) {
+		for (const factory of [
+			'testing',
+			'offline',
+			'local',
+			'manifest',
+			'custom',
+		]) {
 			expect(api).not.toHaveProperty(factory);
 		}
 	});
@@ -401,7 +405,9 @@ describe('default CDN entry', () => {
 			scriptWith({ 'data-no-ui': '' })
 		);
 
-		await expect(loadTag('hosted')).rejects.toThrow(/`backendURL` is required/u);
+		await expect(loadTag('hosted')).rejects.toThrow(
+			/`backendURL` is required/u
+		);
 
 		expect(installed().client).toBeNull();
 		expect(fetchSpy).not.toHaveBeenCalled();

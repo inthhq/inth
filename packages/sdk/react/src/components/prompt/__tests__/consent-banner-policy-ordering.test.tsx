@@ -81,6 +81,7 @@ const renderBanner = function renderBanner(
 					},
 					...componentOverrides,
 				},
+				mode: testing(),
 				persistence: false,
 				prefetch: {
 					...policyFixture(undefined, {
@@ -100,7 +101,6 @@ const renderBanner = function renderBanner(
 					preferences: state.policyDialog,
 					prompt: state.policyBanner,
 				},
-				mode: testing(),
 			}}
 		>
 			<ConsentBanner {...props} />

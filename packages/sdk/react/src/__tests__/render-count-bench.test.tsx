@@ -80,9 +80,9 @@ const runBench = async function runBench(): Promise<Run> {
 	const { getByTestId } = await render(
 		<ConsentProvider
 			options={{
+				mode: testing(),
 				persistence: false,
 				prefetch: policyFixture(),
-				mode: testing(),
 			}}
 		>
 			{Array.from({ length: CHILDREN }, (_, i) => (

@@ -3,14 +3,16 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { readPageOptions, readScriptOptions } from '../auto-init';
 import { autoInit, installGlobal } from '../global';
-import {
-	createTestingGlobal as createGlobal,
-} from '../testing-global';
+import { createTestingGlobal as createGlobal } from '../testing-global';
 import type { TestingC15tGlobal as C15tGlobal } from '../testing-global';
 
 /** A transport factory that hands the client `transport`. */
-const custom = (transport: Partial<KernelTransport>): ProviderTransportFactory =>
-	Object.assign(() => transport as KernelTransport, { kind: 'custom' as const });
+const custom = (
+	transport: Partial<KernelTransport>
+): ProviderTransportFactory =>
+	Object.assign(() => transport as KernelTransport, {
+		kind: 'custom' as const,
+	});
 
 type TestWindow = Window & {
 	c15t?: unknown;

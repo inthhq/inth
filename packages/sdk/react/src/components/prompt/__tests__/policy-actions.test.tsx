@@ -77,6 +77,7 @@ const PolicyTestProvider = ({
 	<ConsentProvider
 		options={{
 			components: providerOverrides?.components,
+			mode: testing(),
 			persistence: false,
 			prefetch: {
 				...policyFixture(undefined, {
@@ -96,7 +97,6 @@ const PolicyTestProvider = ({
 				preferences: state.policyDialog,
 				prompt: state.policyBanner,
 			},
-			mode: testing(),
 			theme: providerOverrides?.theme,
 		}}
 	>

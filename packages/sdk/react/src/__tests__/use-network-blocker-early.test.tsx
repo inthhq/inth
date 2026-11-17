@@ -78,9 +78,9 @@ const renderWithBeacons = (
 		wrap(
 			<ConsentProvider
 				options={{
+					mode: testing(),
 					persistence: false,
 					prefetch,
-					mode: testing(),
 				}}
 			>
 				<Beacon
@@ -160,9 +160,9 @@ test('a retry after suspending does not leave the first render holding', async (
 	await render(
 		<ConsentProvider
 			options={{
+				mode: testing(),
 				persistence: false,
 				prefetch: policyFixture({ measurement: true }),
-				mode: testing(),
 			}}
 		>
 			<Suspense fallback={null}>
@@ -205,8 +205,8 @@ test('a render React discards ends its hold on its own', async () => {
 		render(
 			<ConsentProvider
 				options={{
-					persistence: false,
 					mode: testing(),
+					persistence: false,
 				}}
 			>
 				<ThrowsAfterHook />
@@ -247,10 +247,10 @@ test('a disabled provider blocker leaves the hook holding its requests', async (
 	render(
 		<ConsentProvider
 			options={{
+				mode: testing(),
 				networkBlocker: { enabled: false, rules },
 				persistence: false,
 				prefetch: policyFixture(),
-				mode: testing(),
 			}}
 		>
 			<HookBlocker>
@@ -280,9 +280,9 @@ test('unmounting the hook before its blocker loads fails its held requests close
 	const view = await render(
 		<ConsentProvider
 			options={{
+				mode: testing(),
 				persistence: false,
 				prefetch: policyFixture({ measurement: true }),
-				mode: testing(),
 			}}
 		>
 			<HookBlocker>

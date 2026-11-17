@@ -19,9 +19,9 @@ const mount = (children: ReactNode) =>
 	render(
 		<ConsentProvider
 			options={{
+				mode: testing(),
 				persistence: false,
 				prefetch: policyFixture(undefined, { id: 'banner-hit-area-test' }),
-				mode: testing(),
 			}}
 		>
 			<button

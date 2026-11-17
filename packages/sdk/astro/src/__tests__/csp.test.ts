@@ -24,8 +24,8 @@ import ConsentBanner from '../components/prompt.astro';
 import { buildAstroCsp, buildInlineCodeHashes } from '../csp';
 import { INLINE_IAB_STYLES_CSS } from '../inline-styles';
 import { resolveOptions } from '../integration';
-import { testing as testingMode } from '../testing';
 import { resolveConsentContext } from '../server';
+import { testing as testingMode } from '../testing';
 import type { C15tAstroOptions, C15tLocals } from '../types';
 import { testRule } from './policy-fixture';
 

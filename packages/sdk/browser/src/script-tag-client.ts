@@ -28,8 +28,7 @@ const resolveMode = function resolveMode(
 		const { kind } = options.mode;
 		return {
 			factory: options.mode,
-			name:
-				kind === 'hosted' || kind === 'manifest' ? kind : 'custom',
+			name: kind === 'hosted' || kind === 'manifest' ? kind : 'custom',
 		};
 	}
 	const name = options.mode ?? defaultModeName(options);
@@ -42,15 +41,15 @@ const resolveMode = function resolveMode(
 		return { factory: hosted({ backendURL: options.backendURL }), name };
 	}
 	return {
-			factory: manifest({
-				backendURL: options.backendURL,
-				inputs: {
-					country: options.overrides?.country,
-					region: options.overrides?.region,
-				},
-				manifestURL: options.manifestURL,
-				snapshot: options.manifest,
-			}),
+		factory: manifest({
+			backendURL: options.backendURL,
+			inputs: {
+				country: options.overrides?.country,
+				region: options.overrides?.region,
+			},
+			manifestURL: options.manifestURL,
+			snapshot: options.manifest,
+		}),
 		name,
 	};
 };

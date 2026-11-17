@@ -15,6 +15,7 @@ const fixture = (
 	options: Partial<ComponentFixtureOptions> = {}
 ): ComponentFixtureOptions => ({
 	iab: { cmpId: 160, gvl: mockGVL },
+	mode: testing(),
 	nonce: 'iab-style-nonce',
 	prefetch: {
 		...policyFixture(undefined, {
@@ -24,7 +25,6 @@ const fixture = (
 		}),
 		initialIab: { cmpId: 160, enabled: true, gvl: mockGVL },
 	},
-	mode: testing(),
 	...options,
 });
 

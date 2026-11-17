@@ -242,16 +242,19 @@ describe('the build snapshot in manifest() mode', () => {
 			error: 'invalid consent manifest',
 			response: () => Response.json({ error: 'not a manifest' }),
 		},
-	])("with onBuildError: 'fail', stops the build on $error", async ({ response, error }) => {
-		await expect(
-			setUpModule(
-				{ backendURL: 'https://consent.example.com', onBuildError: 'fail' },
-				vi
-					.fn<typeof globalThis.fetch>()
-					.mockImplementation(() => Promise.resolve(response()))
-			)
-		).rejects.toThrow(error);
-	});
+	])(
+		"with onBuildError: 'fail', stops the build on $error",
+		async ({ response, error }) => {
+			await expect(
+				setUpModule(
+					{ backendURL: 'https://consent.example.com', onBuildError: 'fail' },
+					vi
+						.fn<typeof globalThis.fetch>()
+						.mockImplementation(() => Promise.resolve(response()))
+				)
+			).rejects.toThrow(error);
+		}
+	);
 
 	test('nuxt dev warns and reads the manifest at runtime when the fetch fails', async () => {
 		const nuxt = await setUpModule(

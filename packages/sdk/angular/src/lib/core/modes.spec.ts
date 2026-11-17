@@ -1,6 +1,6 @@
+import { hosted } from '@c15t/core/modes';
 import { describe, expect, test, vi } from 'vitest';
 
-import { hosted } from '@c15t/core/modes';
 import { testing } from '../../../testing/src/testing-mode';
 import {
 	hostedFor,

@@ -57,8 +57,8 @@ test('offline mode without rules resolves the recommended pack: strict opt-in fo
 	await render(
 		<ConsentProvider
 			options={{
-				persistence: false,
 				mode: testing(),
+				persistence: false,
 			}}
 		>
 			<Capture />
@@ -75,8 +75,8 @@ test('exposes only the window.c15t debug object, not the kernel', async () => {
 	const screen = await render(
 		<ConsentProvider
 			options={{
-				persistence: false,
 				mode: testing(),
+				persistence: false,
 			}}
 		>
 			<ConsentBanner />
@@ -193,9 +193,9 @@ test('an offline IAB policy resolves: IAB renders in the tree, so the transport 
 	await render(
 		<ConsentProvider
 			options={{
+				mode: testing({ iab: true }),
 				overrides: { country: 'DE' },
 				persistence: false,
-				mode: testing({ iab: true }),
 			}}
 		>
 			<Capture />
@@ -211,9 +211,9 @@ test('disposes the kernel on unmount', async () => {
 	const screen = await render(
 		<ConsentProvider
 			options={{
+				mode: testing(),
 				persistence: false,
 				prefetch: policyFixture(),
-				mode: testing(),
 			}}
 		>
 			<Capture />
@@ -377,9 +377,9 @@ test('prepared receipts remain authoritative when persistence is disabled', asyn
 	await render(
 		<ConsentProvider
 			options={{
+				mode: testing(),
 				persistence: false,
 				prefetch: policyFixture({ marketing: true }),
-				mode: testing(),
 			}}
 		>
 			<Capture />
@@ -523,10 +523,10 @@ test('passes host presentation through UI context', async () => {
 	const screen = await render(
 		<ConsentProvider
 			options={{
+				mode: testing(),
 				persistence: false,
 				prefetch: policyFixture(),
 				presentation: { prompt: { direction: 'column' } },
-				mode: testing(),
 			}}
 		>
 			<Probe />
@@ -545,9 +545,9 @@ test('merges selected i18n messages with English defaults', async () => {
 					locale: 'en',
 					messages: { en: { cookieBanner: { title: 'Your privacy' } } },
 				},
+				mode: testing(),
 				persistence: false,
 				prefetch: policyFixture(),
-				mode: testing(),
 			}}
 		>
 			<Capture />
@@ -604,9 +604,9 @@ test('StrictMode remount keeps persistence subscriptions active', async () => {
 		<StrictMode>
 			<ConsentProvider
 				options={{
+					mode: testing(),
 					prefetch: policyFixture(),
 					storageConfig: { storageKey: key },
-					mode: testing(),
 				}}
 			>
 				<Capture />
@@ -723,6 +723,7 @@ test('clears configured storage on revocation after stopping scripts', async () 
 					marketing: { localStorage: ['cleanup:ready'] },
 					measurement: { localStorage: ['analytics:visitor'] },
 				},
+				mode: testing(),
 				persistence: false,
 				prefetch: policyFixture({ measurement: true }),
 				scripts: [
@@ -734,7 +735,6 @@ test('clears configured storage on revocation after stopping scripts', async () 
 						onConsentChange,
 					},
 				],
-				mode: testing(),
 			}}
 		>
 			<Capture />
@@ -765,8 +765,8 @@ test('disabled providers leave configured browser data alone', async () => {
 					measurement: { localStorage: ['analytics:visitor'] },
 				},
 				enabled: false,
-				persistence: false,
 				mode: testing(),
+				persistence: false,
 			}}
 		>
 			<Capture />
@@ -837,6 +837,7 @@ test('starts cleanup when an initially disabled provider with scripts is enabled
 			marketing: { localStorage: ['cleanup:ready'] },
 			measurement: { localStorage: ['analytics:visitor'] },
 		},
+		mode: testing(),
 		persistence: false as const,
 		prefetch: policyFixture({ measurement: true }),
 		scripts: [
@@ -847,7 +848,6 @@ test('starts cleanup when an initially disabled provider with scripts is enabled
 				onBeforeLoad,
 			},
 		],
-		mode: testing(),
 	};
 	const provider = (enabled: boolean) => (
 		<ConsentProvider options={{ ...options, enabled }}>

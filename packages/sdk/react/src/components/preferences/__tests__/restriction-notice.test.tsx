@@ -30,13 +30,13 @@ describe('consent widget restriction notice', () => {
 			<ConsentProvider
 				options={{
 					consentCategories: [...CATEGORIES],
+					mode: testing(),
 					prefetch: policyFixture(undefined, {
 						categories: [...CATEGORIES],
 						id: 'draft-toggle',
 						model: 'opt-in',
 						prompt: 'choice',
 					}),
-					mode: testing(),
 				}}
 			>
 				<ConsentWidget />
@@ -61,6 +61,7 @@ describe('consent widget restriction notice', () => {
 			<ConsentProvider
 				options={{
 					consentCategories: [...CATEGORIES],
+					mode: testing(),
 					overrides: { gpc: true },
 					prefetch: policyFixture(
 						{ marketing: true, measurement: true },
@@ -72,7 +73,6 @@ describe('consent widget restriction notice', () => {
 							prompt: 'choice',
 						}
 					),
-					mode: testing(),
 				}}
 			>
 				<ConsentWidget />

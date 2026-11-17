@@ -42,9 +42,9 @@ const createWrapper = function createWrapper({
 		return (
 			<ComponentFixtureProvider
 				options={{
+					mode: testing(),
 					persistence: false,
 					prefetch,
-					mode: testing(),
 				}}
 			>
 				{children}

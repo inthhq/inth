@@ -95,6 +95,7 @@ const renderWidget = (
 		<ConsentProvider
 			options={{
 				consentCategories: [...CATEGORIES],
+				mode: testing(),
 				persistence: false,
 				prefetch: policyFixture(values, {
 					categories: ['marketing', 'measurement'],
@@ -102,7 +103,6 @@ const renderWidget = (
 					model: 'opt-in',
 					prompt: 'choice',
 				}),
-				mode: testing(),
 				vendors: VENDORS,
 			}}
 		>
@@ -390,6 +390,7 @@ describe('vendor switches are opt-in', () => {
 			<ConsentProvider
 				options={{
 					consentCategories: [...CATEGORIES],
+					mode: testing(),
 					persistence: false,
 					prefetch: policyFixture(
 						{ measurement: true },
@@ -401,7 +402,6 @@ describe('vendor switches are opt-in', () => {
 						}
 					),
 					scripts: [helperScript],
-					mode: testing(),
 					vendors,
 				}}
 			>

@@ -60,9 +60,9 @@ test('the lazy dialog renders styled from its first frame', async () => {
 		root.render(
 			<ConsentProvider
 				options={{
+					mode: testing(),
 					persistence: false,
 					prefetch: policyFixture(),
-					mode: testing(),
 				}}
 			>
 				<ConsentDialog

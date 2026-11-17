@@ -116,7 +116,6 @@ describe('manifest() from @c15t/browser', () => {
 	});
 });
 
-
 const SOURCE_DIR = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 /** Bundles an entry for the browser the way an app's bundler would. */
@@ -146,12 +145,16 @@ describe('first-load JavaScript of @c15t/browser', () => {
 			'hosted()',
 			"import { hosted, init } from './index';\ninit({ backendURL: '/c', mode: hosted() });",
 		],
-	])('bundles neither testing() nor the resolver with %s', async (_, entry) => {
-		const code = await bundle(entry);
-		expect(code).not.toContain(TESTING_POLICY);
-		expect(code).not.toContain(TESTING_ERROR);
-		expect(code).not.toContain(RESOLVER);
-	}, 60_000);
+	])(
+		'bundles neither testing() nor the resolver with %s',
+		async (_, entry) => {
+			const code = await bundle(entry);
+			expect(code).not.toContain(TESTING_POLICY);
+			expect(code).not.toContain(TESTING_ERROR);
+			expect(code).not.toContain(RESOLVER);
+		},
+		60_000
+	);
 
 	it('bundles the resolver but not testing() for manifest()', async () => {
 		const code = await bundle(

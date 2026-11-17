@@ -335,9 +335,7 @@ describe('the early-tap script', () => {
 		expect(earlyTapScript(returning)).toBeNull();
 
 		// A page without the stock banner holds nothing.
-		expect(
-			earlyTapScript(await render({ mode: testing() }))
-		).toBeNull();
+		expect(earlyTapScript(await render({ mode: testing() }))).toBeNull();
 	});
 });
 

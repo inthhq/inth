@@ -21,10 +21,10 @@ test('the runtime gpp option mounts __gpp from @c15t/iab/gpp and removes it on d
 	const runtime = createConsentRuntime({
 		gpp: { usFallback: 'none' },
 		loadGPP: () => import('../gpp'),
+		mode: testing(),
 		// The recommended pack's US privacy states rule answers California.
 		overrides: { country: 'US', region: 'CA' },
 		persistence: false,
-		mode: testing(),
 	});
 	runtime.start();
 

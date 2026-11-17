@@ -1,4 +1,5 @@
 import { policyRulePresets } from '@c15t/core';
+import type { KernelTransport, ProviderTransportFactory } from '@c15t/core';
 import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
@@ -8,12 +9,14 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { createScriptTagConsentClient } from '../script-tag-client';
 import { createTestingConsentClient as createConsentClient } from '../testing-global';
 import type { ConsentClient } from '../types';
-import type { KernelTransport, ProviderTransportFactory } from '@c15t/core';
 
 /** A transport factory that hands the client `transport`. */
-const custom = (transport: Partial<KernelTransport>): ProviderTransportFactory =>
-	Object.assign(() => transport as KernelTransport, { kind: 'custom' as const });
-
+const custom = (
+	transport: Partial<KernelTransport>
+): ProviderTransportFactory =>
+	Object.assign(() => transport as KernelTransport, {
+		kind: 'custom' as const,
+	});
 
 const clients: ConsentClient[] = [];
 
@@ -375,10 +378,7 @@ describe('createConsentClient', () => {
 
 	it('rejects inherited object keys as preset names', () => {
 		expect(() =>
-			createConsentClient(
-				{ policy: ['constructor' as never] },
-				{ pkg: 'test' }
-			)
+			createConsentClient({ policy: ['constructor' as never] }, { pkg: 'test' })
 		).toThrow(/unknown policy preset/u);
 	});
 

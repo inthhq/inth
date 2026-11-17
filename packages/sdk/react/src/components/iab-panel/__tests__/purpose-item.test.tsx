@@ -30,8 +30,8 @@ describe('PurposeItem with Google ad tech providers', () => {
 		const screen = await render(
 			<ConsentProvider
 				options={{
-					noStyle: true,
 					mode: testing(),
+					noStyle: true,
 				}}
 			>
 				<PurposeItem

@@ -2,9 +2,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { mountDevTools } from '../devtools';
 import { installGlobal } from '../global';
-import { createTestingGlobal as createGlobal } from '../testing-global';
+import {
+	createTestingGlobal as createGlobal,
+	createTestingConsentClient as createConsentClient,
+} from '../testing-global';
 import type { TestingC15tGlobal as C15tGlobal } from '../testing-global';
-import { createTestingConsentClient as createConsentClient } from '../testing-global';
 import type { ConsentClient } from '../types';
 
 type TestWindow = Window & { c15t?: unknown };

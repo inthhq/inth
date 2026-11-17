@@ -20,8 +20,8 @@ import {
 } from '../client';
 import type { AstroConsentClient } from '../client';
 import { resolveOptions } from '../integration';
-import { testing as testingMode } from '../testing';
 import { buildConfigScript } from '../server';
+import { testing as testingMode } from '../testing';
 import type { C15tAstroOptions, C15tIABOptions } from '../types';
 import { registerDialogAdapter } from '../ui/adapter';
 import type { ConsentDialogHandle } from '../ui/adapter';

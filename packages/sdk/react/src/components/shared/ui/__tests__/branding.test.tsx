@@ -74,6 +74,7 @@ const createConsentTree = function createConsentTree(
 			options={{
 				components: providerOverrides.components,
 				initialUI: state.activeUI === 'dialog' ? 'dialog' : 'banner',
+				mode: testing(),
 				persistence: false,
 				prefetch: {
 					...policyFixture(undefined, {
@@ -97,7 +98,6 @@ const createConsentTree = function createConsentTree(
 					preferences: state.policyDialog,
 					prompt: state.policyBanner,
 				},
-				mode: testing(),
 				theme: providerOverrides.theme,
 			}}
 		>

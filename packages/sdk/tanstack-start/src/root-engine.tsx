@@ -31,6 +31,7 @@ import type {
 import { backendURL as generatedBackendURL } from '@c15t/core/generated';
 import type { ConsentMode } from '@c15t/core/modes';
 import { clientMode } from '@c15t/core/runtime/client-mode';
+import type { WithBackendURL } from '@c15t/core/runtime/provider';
 import { preloadScriptLoaderWith } from '@c15t/core/runtime/script-loader-preload';
 import type * as ScriptServerStart from '@c15t/core/runtime/script-server-start';
 import { resolveStreamedInit } from '@c15t/core/runtime/streamed-init';
@@ -40,7 +41,6 @@ import {
 	DeferredEngineHost,
 } from '@c15t/react/deferred/engine';
 import { ConsentProvider } from '@c15t/react/provider';
-import type { WithBackendURL } from '@c15t/core/runtime/provider';
 import type { ConsentProviderOptions } from '@c15t/react/provider';
 import * as React from 'react';
 import { Suspense, useState } from 'react';

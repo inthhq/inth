@@ -18,10 +18,10 @@ const mount = (
 	render(
 		<ConsentProvider
 			options={{
+				mode: testing(),
 				persistence: false,
 				prefetch: policyFixture(),
 				presentation,
-				mode: testing(),
 			}}
 		>
 			<button type="button">Page action</button>

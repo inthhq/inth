@@ -11,8 +11,8 @@ import ConsentDialogLink from '../components/panel-link.astro';
 import ConsentBanner from '../components/prompt.astro';
 import { INLINE_IAB_STYLES_CSS, INLINE_STYLES_CSS } from '../inline-styles';
 import { resolveOptions } from '../integration';
-import { testing as testingMode } from '../testing';
 import { resolveConsentContext } from '../server';
+import { testing as testingMode } from '../testing';
 import type { C15tAstroOptions, C15tLocals } from '../types';
 import { testRule } from './policy-fixture';
 

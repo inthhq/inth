@@ -23,12 +23,12 @@ const renderBanner = function renderBanner(
 	return render(
 		<ConsentProvider
 			options={{
+				mode: testing(),
 				persistence: false,
 				prefetch: policyFixture(undefined, {
 					id: 'banner-notice-test',
 					...rule,
 				}),
-				mode: testing(),
 				...themeOptions,
 			}}
 		>

@@ -27,8 +27,8 @@ import { boot, EVENTS_KEY } from '../client-engine';
 import type { C15tClientOptionsExtension } from '../client-types';
 import { resolveOptions } from '../integration';
 import { hosted as hostedMode } from '../mode';
-import { testing as testingMode } from '../testing';
 import { snapshotFromConfig } from '../server';
+import { testing as testingMode } from '../testing';
 import type { C15tAstroOptions } from '../types';
 import { registerDialogAdapter } from '../ui/adapter';
 import type { ConsentDialogContext } from '../ui/adapter';
@@ -334,7 +334,8 @@ describe('the first-load shell', () => {
 			{ callbacks: { onChoiceRecorded, onPermissionsChanged } },
 			{
 				...OPTIONS,
-				backendURL: 'https://consent.example', mode: hostedMode(),
+				backendURL: 'https://consent.example',
+				mode: hostedMode(),
 			}
 		);
 		refuseOutboxWrites();

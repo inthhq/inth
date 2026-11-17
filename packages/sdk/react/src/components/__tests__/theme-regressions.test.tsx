@@ -191,8 +191,8 @@ describe('Theme regressions', () => {
 		await render(
 			<ConsentProvider
 				options={{
-					noStyle: true,
 					mode: testing(),
+					noStyle: true,
 				}}
 			>
 				<ConsentBannerTitle data-testid="nostyle-banner-title">
@@ -307,8 +307,8 @@ describe('Theme regressions', () => {
 		await render(
 			<ConsentProvider
 				options={{
-					noStyle: true,
 					mode: testing(),
+					noStyle: true,
 				}}
 			>
 				<div data-testid="nostyle-ad-tech-providers">

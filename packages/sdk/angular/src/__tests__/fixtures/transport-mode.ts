@@ -1,10 +1,10 @@
-import type { ConsentTesting } from '@c15t/core/testing';
 import type {
 	KernelTransport,
 	PolicyRule,
 	ProviderTransportFactory,
 	ProviderTransportKind,
 } from '@c15t/core';
+import type { ConsentTesting } from '@c15t/core/testing';
 
 import { testing } from '../../../testing/src/testing-mode';
 

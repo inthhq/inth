@@ -13,8 +13,8 @@ import { buildIABPrompt } from '../browser/render-iab-prompt';
 import IABConsentBanner from '../components/iab-prompt.astro';
 import { resolveOptions } from '../integration';
 import { hosted as hostedMode } from '../mode';
-import { testing as testingMode } from '../testing';
 import { resolveConsentContext } from '../server';
+import { testing as testingMode } from '../testing';
 import type { C15tAstroOptions } from '../types';
 import { describeTree } from './dom-tree';
 
@@ -59,7 +59,8 @@ describe('<IABConsentBanner /> on a prerendered page', () => {
 			headers: new Headers(),
 			options: resolveOptions({
 				...OPTIONS,
-				backendURL: 'https://consent.example.com', mode: hostedMode(),
+				backendURL: 'https://consent.example.com',
+				mode: hostedMode(),
 			}),
 			prerendered: true,
 		});

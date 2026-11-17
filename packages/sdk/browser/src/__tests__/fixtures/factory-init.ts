@@ -28,9 +28,7 @@ export const toFactoryOptions = function toFactoryOptions(
 	}
 	return {
 		...rest,
-		mode: testing(
-			policy === undefined ? {} : { policy: resolveRules(policy) }
-		),
+		mode: testing(policy === undefined ? {} : { policy: resolveRules(policy) }),
 	};
 };
 

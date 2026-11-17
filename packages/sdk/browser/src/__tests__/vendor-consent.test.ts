@@ -3,8 +3,10 @@ import type { Vendor } from '@c15t/core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { activateGatedScripts } from '../gated-scripts';
-import { createTestingGlobal as createGlobal } from '../testing-global';
-import { createTestingConsentClient as createConsentClient } from '../testing-global';
+import {
+	createTestingGlobal as createGlobal,
+	createTestingConsentClient as createConsentClient,
+} from '../testing-global';
 import type { ConsentClient, ConsentUIHandle } from '../types';
 import { mountConsentUI } from '../ui/mount';
 

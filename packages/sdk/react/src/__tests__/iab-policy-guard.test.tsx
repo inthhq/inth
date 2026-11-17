@@ -164,8 +164,8 @@ describe('an `iab` policy without <IABProvider>', () => {
 
 	it('shows the standard banner for an offline `iab` rule, which has no vendor list', async () => {
 		const { errors } = await mount({
-			overrides: { country: 'DE' },
 			mode: testing({ iab: true }),
+			overrides: { country: 'DE' },
 		});
 
 		await vi.waitFor(() => {

@@ -63,12 +63,12 @@ const runtimes: ConsentRuntime[] = [];
 
 const createKernel = function createKernel(): ConsentKernel {
 	const runtime = createConsentRuntime({
+		mode: testing(),
 		persistence: false,
 		prefetch: {
 			...policyFixture({}, { model: 'iab' }),
 			initialIab: { cmpId: 42, enabled: true },
 		},
-		mode: testing(),
 	});
 	runtimes.push(runtime);
 	return runtime.kernel;

@@ -43,9 +43,9 @@ test('the split dialog and widget entries load nothing until they are needed', a
 		root.render(
 			<ConsentProvider
 				options={{
+					mode: testing(),
 					persistence: false,
 					prefetch: policyFixture(),
-					mode: testing(),
 				}}
 			>
 				<ConsentBanner disableAnimation />

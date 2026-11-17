@@ -32,9 +32,9 @@ test('reveals a cold aggregate dialog as soon as its module is ready', async () 
 		root.render(
 			<ConsentProvider
 				options={{
+					mode: testing(),
 					persistence: false,
 					prefetch: policyFixture(),
-					mode: testing(),
 				}}
 			>
 				<ConsentBanner disableAnimation />

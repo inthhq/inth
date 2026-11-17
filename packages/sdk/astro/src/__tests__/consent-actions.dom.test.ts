@@ -13,8 +13,8 @@ import { buildPrompt, renderPromptIntoSlot } from '../browser/render-prompt';
 import { boot } from '../client';
 import type { AstroConsentClient } from '../client';
 import { resolveOptions } from '../integration';
-import { testing as testingMode } from '../testing';
 import { resolveConsentContext } from '../server';
+import { testing as testingMode } from '../testing';
 import type { C15tAstroOptions } from '../types';
 import { testRule } from './policy-fixture';
 

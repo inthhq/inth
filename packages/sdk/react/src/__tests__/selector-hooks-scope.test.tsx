@@ -21,8 +21,8 @@ const createWrapper = function createWrapper(
 		return (
 			<ConsentProvider
 				options={{
-					persistence: false,
 					mode: testing(),
+					persistence: false,
 					...options,
 				}}
 			>

@@ -3,9 +3,9 @@ import type { GPPPingData } from '@c15t/iab/gpp';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { installGlobal } from '../global';
+import { mountGPP } from '../gpp';
 import { createTestingGlobal as createGlobal } from '../testing-global';
 import type { TestingC15tGlobal as C15tGlobal } from '../testing-global';
-import { mountGPP } from '../gpp';
 import type { ConsentClient, ScriptTagClientOptions } from '../types';
 import { init } from './fixtures/factory-init';
 

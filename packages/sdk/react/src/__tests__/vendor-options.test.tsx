@@ -61,12 +61,12 @@ describe('provider vendor options', () => {
 				<ConsentProvider
 					options={{
 						consentCategories: ['necessary', 'marketing'],
+						mode: testing(),
 						persistence: false,
 						prefetch: policyFixture(
 							{ marketing: true },
 							{ categories: ['marketing'], id: 'late-vendors' }
 						),
-						mode: testing(),
 						vendors,
 					}}
 				>
@@ -98,12 +98,12 @@ describe('provider vendor options', () => {
 				<ConsentProvider
 					options={{
 						consentCategories: ['necessary', 'marketing'],
+						mode: testing(),
 						persistence: false,
 						prefetch: policyFixture(
 							{ marketing: true },
 							{ categories: ['marketing'], id: 'removed-vendors' }
 						),
-						mode: testing(),
 						vendors,
 					}}
 				>
@@ -135,6 +135,7 @@ describe('provider vendor options', () => {
 				<ConsentProvider
 					options={{
 						consentCategories: ['necessary', 'marketing'],
+						mode: testing(),
 						persistence: false,
 						prefetch: policyFixture(
 							{ marketing: true },
@@ -148,7 +149,6 @@ describe('provider vendor options', () => {
 								vendor: 'meta-pixel',
 							},
 						],
-						mode: testing(),
 						vendors,
 					}}
 				>
@@ -182,13 +182,13 @@ describe('provider vendor options', () => {
 				<ConsentProvider
 					options={{
 						consentCategories: ['necessary', 'marketing'],
+						mode: testing(),
 						persistence: false,
 						prefetch: policyFixture(
 							{ marketing: true },
 							{ categories: ['marketing'], id: 'late-scripts' }
 						),
 						scripts,
-						mode: testing(),
 					}}
 				>
 					<button
@@ -234,13 +234,13 @@ describe('provider vendor options', () => {
 				<ConsentProvider
 					options={{
 						consentCategories: ['necessary', 'marketing'],
+						mode: testing(),
 						persistence: false,
 						prefetch: policyFixture(
 							{ marketing: true },
 							{ categories: ['marketing'], id: 'removed-scripts' }
 						),
 						scripts,
-						mode: testing(),
 					}}
 				>
 					<button
@@ -278,6 +278,7 @@ describe('provider vendor options', () => {
 				<ConsentProvider
 					options={{
 						consentCategories: ['necessary', 'marketing'],
+						mode: testing(),
 						persistence: false,
 						prefetch: {
 							...fixture,
@@ -294,7 +295,6 @@ describe('provider vendor options', () => {
 								listVersion: '1',
 							},
 						},
-						mode: testing(),
 						vendors,
 					}}
 				>
@@ -331,6 +331,7 @@ describe('provider vendor options', () => {
 				<ConsentProvider
 					options={{
 						consentCategories: ['necessary', 'marketing'],
+						mode: testing(),
 						persistence: false,
 						prefetch: {
 							...fixture,
@@ -340,7 +341,6 @@ describe('provider vendor options', () => {
 							},
 						},
 						scripts,
-						mode: testing(),
 					}}
 				>
 					<button
@@ -392,6 +392,7 @@ describe('provider vendor options', () => {
 				<ConsentProvider
 					options={{
 						consentCategories: ['necessary', 'marketing'],
+						mode: testing(),
 						persistence: false,
 						prefetch: {
 							...fixture,
@@ -401,7 +402,6 @@ describe('provider vendor options', () => {
 							},
 						},
 						scripts,
-						mode: testing(),
 					}}
 				>
 					<button
@@ -448,6 +448,7 @@ describe('provider vendor options', () => {
 				<ConsentProvider
 					options={{
 						consentCategories: ['necessary', 'marketing'],
+						mode: testing(),
 						persistence: false,
 						prefetch: {
 							...fixture,
@@ -464,7 +465,6 @@ describe('provider vendor options', () => {
 							},
 						},
 						scripts,
-						mode: testing(),
 						vendors,
 					}}
 				>
@@ -524,9 +524,9 @@ describe('provider vendor options', () => {
 				<ConsentProvider
 					options={{
 						consentCategories: ['necessary', 'marketing'],
+						mode: testing(),
 						persistence: false,
 						prefetch: fixture,
-						mode: testing(),
 						vendors,
 					}}
 				>
@@ -575,9 +575,9 @@ describe('provider vendor options', () => {
 				<ConsentProvider
 					options={{
 						consentCategories: ['necessary', 'marketing'],
+						mode: testing(),
 						persistence: false,
 						prefetch: fixture,
-						mode: testing(),
 						vendors,
 					}}
 				>
@@ -641,6 +641,7 @@ describe('provider vendor options', () => {
 			<ConsentProvider
 				options={{
 					consentCategories: ['necessary', 'marketing'],
+					mode: testing(),
 					persistence: false,
 					prefetch: {
 						...fixture,
@@ -653,7 +654,6 @@ describe('provider vendor options', () => {
 							},
 						},
 					},
-					mode: testing(),
 					vendors: [META],
 				}}
 			>
@@ -765,6 +765,7 @@ describe('provider vendor options', () => {
 				<ConsentProvider
 					options={{
 						consentCategories: ['necessary', 'marketing'],
+						mode: testing(),
 						persistence: false,
 						prefetch: {
 							...fixture,
@@ -777,7 +778,6 @@ describe('provider vendor options', () => {
 								},
 							},
 						},
-						mode: testing(),
 						vendors,
 					}}
 				>
@@ -818,9 +818,9 @@ describe('provider vendor options', () => {
 			<ConsentProvider
 				options={{
 					consentCategories: ['necessary', 'marketing'],
+					mode: testing(),
 					persistence: false,
 					prefetch: fixture,
-					mode: testing(),
 					vendors: [META],
 				}}
 			>
@@ -849,6 +849,7 @@ describe('provider vendor options', () => {
 			<ConsentProvider
 				options={{
 					consentCategories: ['necessary', 'marketing'],
+					mode: testing(),
 					persistence: false,
 					prefetch: {
 						...fixture,
@@ -861,7 +862,6 @@ describe('provider vendor options', () => {
 							},
 						},
 					},
-					mode: testing(),
 					vendors: [{ ...META, disabled: true }],
 				}}
 			>

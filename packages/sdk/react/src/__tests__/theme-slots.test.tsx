@@ -42,9 +42,9 @@ describe('theme.slots in React', () => {
 							card: { className: 'app-card', style: { color: 'rgb(4, 5, 6)' } },
 						},
 					},
+					mode: testing(),
 					persistence: false,
 					prefetch: policyFixture(),
-					mode: testing(),
 					theme: {
 						slots: {
 							consentBannerCard: {
@@ -83,9 +83,9 @@ describe('theme.slots in React', () => {
 					components: {
 						banner: { card: { className: 'app-card' } },
 					},
+					mode: testing(),
 					persistence: false,
 					prefetch: policyFixture(),
-					mode: testing(),
 					theme: {
 						slots: {
 							consentBannerCard: { className: 'theme-card', noStyle: true },
@@ -122,9 +122,9 @@ describe('theme.slots in React', () => {
 							root: { style: { color: 'rgb(4, 5, 6)' } },
 						},
 					},
+					mode: testing(),
 					persistence: false,
 					prefetch: policyFixture(),
-					mode: testing(),
 					theme: {
 						slots: {
 							consentGate: {

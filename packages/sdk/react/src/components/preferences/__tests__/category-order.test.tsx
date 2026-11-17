@@ -33,6 +33,7 @@ test('the widget lists categories in the draft order, not the policy or configur
 					'measurement',
 					'functionality',
 				],
+				mode: testing(),
 				persistence: false,
 				prefetch: policyFixture(
 					{},
@@ -45,7 +46,6 @@ test('the widget lists categories in the draft order, not the policy or configur
 						],
 					}
 				),
-				mode: testing(),
 			}}
 		>
 			<ConsentWidget />

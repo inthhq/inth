@@ -122,7 +122,8 @@ describe('browser client graph', () => {
 describe('testing mode on demand', () => {
 	it('hosted mode never loads it', () => {
 		const transport = lazyTransport({
-			backendURL: '/x', mode: hostedMode(),
+			backendURL: '/x',
+			mode: hostedMode(),
 		})(context);
 		expect(transport).toBeDefined();
 		expect(testingModule.loads).toBe(0);

@@ -79,9 +79,9 @@ describe('consent surfaces without a resolved policy', () => {
 			<ComponentFixtureProvider
 				options={{
 					initialUI: 'dialog',
+					mode: testing(),
 					persistence: false,
 					prefetch: { initialPolicyResolution: UNCONFIGURED, now: Date.now() },
-					mode: testing(),
 				}}
 			>
 				<Surfaces />
@@ -143,9 +143,9 @@ describe('consent surfaces without a resolved policy', () => {
 			<ComponentFixtureProvider
 				options={{
 					initialUI: 'dialog',
+					mode: testing(),
 					persistence: false,
 					prefetch: { initialPolicyResolution: UNCONFIGURED, now: Date.now() },
-					mode: testing(),
 				}}
 			>
 				<ConsentDialog />

@@ -11,8 +11,8 @@ import ConsentDialog from '../components/panel.astro';
 import ConsentBanner from '../components/prompt.astro';
 import { resolveOptions } from '../integration';
 import { hosted as hostedMode } from '../mode';
-import { testing as testingMode } from '../testing';
 import { resolveConsentContext } from '../server';
+import { testing as testingMode } from '../testing';
 import type { C15tAstroOptions, C15tLocals } from '../types';
 import { testRule, testWire } from './policy-fixture';
 
@@ -505,7 +505,8 @@ describe('<ConsentBanner /> without a resolved policy', () => {
 			) as never,
 			headers: new Headers(),
 			options: resolveOptions({
-				backendURL: 'https://consent.example.com', mode: hostedMode(),
+				backendURL: 'https://consent.example.com',
+				mode: hostedMode(),
 			}),
 			url: 'https://example.com/',
 		});

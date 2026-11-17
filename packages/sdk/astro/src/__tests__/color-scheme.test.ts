@@ -13,8 +13,8 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 import ConsentScript from '../components/consent-script.astro';
 import ConsentBanner from '../components/prompt.astro';
 import { c15t, resolveOptions } from '../integration';
-import { testing as testingMode } from '../testing';
 import { buildColorSchemeScript, resolveConsentContext } from '../server';
+import { testing as testingMode } from '../testing';
 import type { C15tAstroOptions, C15tLocals } from '../types';
 import { testRule } from './policy-fixture';
 
@@ -66,8 +66,7 @@ const serializedOptions = async function serializedOptions(
 describe('the colorScheme option', () => {
 	it('defaults to system', () => {
 		expect(
-			resolveOptions({ mode: testingMode({ policy: [testRule] }) })
-				.colorScheme
+			resolveOptions({ mode: testingMode({ policy: [testRule] }) }).colorScheme
 		).toBe('system');
 	});
 

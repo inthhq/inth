@@ -1,10 +1,10 @@
-import type { ProviderTransportFactory } from '@c15t/core';
 import {
 	POLICY_CHOICE,
 	POLICY_MAX_AGE,
 	POLICY_NOW,
 	POLICY_SCENARIOS,
 } from '@c15t/conformance/fixtures';
+import type { ProviderTransportFactory } from '@c15t/core';
 import { evaluateConsent } from '@c15t/core';
 import { clearGVLCache } from '@c15t/iab';
 import type { PolicyRule } from '@c15t/schema/types';

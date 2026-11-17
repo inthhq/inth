@@ -16,9 +16,9 @@ import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 const fresh = {
+	mode: testing(),
 	persistence: false,
 	prefetch: policyFixture(),
-	mode: testing(),
 } satisfies ConsentProviderOptions;
 const saved = {
 	...fresh,

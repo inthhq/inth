@@ -50,10 +50,10 @@ const buildOptions = function buildOptions(
 	presentation?: ConsentPresentation
 ): ConsentManagerOptions {
 	return {
+		mode: testing(),
 		persistence: false,
 		prefetch,
 		presentation,
-		mode: testing(),
 	} as ConsentManagerOptions;
 };
 

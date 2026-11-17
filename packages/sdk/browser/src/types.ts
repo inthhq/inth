@@ -26,12 +26,12 @@ import type {
 	Unsubscribe,
 	VendorChoice,
 } from '@c15t/core';
+import type { HostedMode } from '@c15t/core/modes';
 import type {
 	ConsentRuntime,
 	ConsentRuntimeOptions,
 	RuntimeNetworkBlockerOptions,
 } from '@c15t/core/runtime';
-import type { HostedMode } from '@c15t/core/modes';
 import type { ConsentTesting } from '@c15t/core/testing';
 import type { ConsentManifest } from '@c15t/schema/types';
 import type { Theme } from '@c15t/ui/theme';

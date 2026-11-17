@@ -222,7 +222,9 @@ export const DeferredEngineHost = ({
 	const effective = parts ? { ...options, ...parts } : options;
 	return (
 		// The deferred root checked the backend when it took these options.
-		<ConsentProvider options={effective as OwnedRuntimeProviderProps['options']}>
+		<ConsentProvider
+			options={effective as OwnedRuntimeProviderProps['options']}
+		>
 			<Publisher
 				attach={attach}
 				committed={committed}

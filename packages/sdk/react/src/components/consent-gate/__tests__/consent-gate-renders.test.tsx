@@ -34,9 +34,9 @@ test('a ConsentGate re-renders only when its own category changes', async () => 
 	const { getByTestId } = await render(
 		<ConsentProvider
 			options={{
+				mode: testing(),
 				persistence: false,
 				prefetch: policyFixture(),
-				mode: testing(),
 			}}
 		>
 			<Profiler

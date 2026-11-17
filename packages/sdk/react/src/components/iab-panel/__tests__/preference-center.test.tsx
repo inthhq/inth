@@ -212,6 +212,7 @@ const defaultIABOptions: ConsentProviderOptions = {
 		cmpVersion: 1,
 		gvl: mockGVL,
 	},
+	mode: testing(),
 	prefetch: policyFixture(undefined, {
 		categories: undefined,
 		id: 'iab_test',
@@ -219,7 +220,6 @@ const defaultIABOptions: ConsentProviderOptions = {
 		prompt: 'choice',
 		scopeMode: 'strict',
 	}),
-	mode: testing(),
 };
 
 describe('IAB Consent Dialog Unit Tests', () => {

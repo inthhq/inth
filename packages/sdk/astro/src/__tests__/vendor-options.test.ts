@@ -6,8 +6,8 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { resolveOptions } from '../integration';
 import { manifest as manifestMode } from '../mode';
-import { testing as testingMode } from '../testing';
 import { clearManifestCache, resolveConsentContext } from '../server';
+import { testing as testingMode } from '../testing';
 import { testRule } from './policy-fixture';
 
 afterEach(() => {

@@ -5,8 +5,8 @@ import { iabPromptClassNames, promptClassNames } from '../banner/class-names';
 import { buildIABPrompt } from '../browser/render-iab-prompt';
 import { buildPrompt } from '../browser/render-prompt';
 import { resolveOptions } from '../integration';
-import { testing as testingMode } from '../testing';
 import { resolveConsentContext } from '../server';
+import { testing as testingMode } from '../testing';
 import { testRule } from './policy-fixture';
 
 /**

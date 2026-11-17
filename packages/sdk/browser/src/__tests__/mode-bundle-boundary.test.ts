@@ -22,8 +22,8 @@ const check = function check(
 	const compiler = {
 		hooks: {
 			done: {
-				tap: (_name: string, callback: (stats: unknown) => void) => {
-					done = callback;
+				tap: (_name: string, handler: (stats: unknown) => void) => {
+					done = handler;
 				},
 			},
 		},
@@ -31,9 +31,7 @@ const check = function check(
 	modeBundleBoundary(mode).apply(compiler as never);
 	done?.({
 		toJson: () => ({
-			chunks: [
-				{ modules: modules.map((id) => ({ nameForCondition: id })) },
-			],
+			chunks: [{ modules: modules.map((id) => ({ nameForCondition: id })) }],
 		}),
 	});
 };

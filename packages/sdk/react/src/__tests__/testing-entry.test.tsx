@@ -24,9 +24,9 @@ test('shows the opt-in banner for an EEA country and records the choice without 
 		<ConsentProvider
 			options={{
 				consentCategories: ['marketing'],
+				mode: testing(),
 				overrides: { country: 'DE' },
 				persistence: false,
-				mode: testing(),
 			}}
 		>
 			<Marketing />
@@ -46,9 +46,9 @@ test('shows no banner for a country without a privacy rule', async () => {
 	const screen = await render(
 		<ConsentProvider
 			options={{
+				mode: testing(),
 				overrides: { country: 'JP' },
 				persistence: false,
-				mode: testing(),
 			}}
 		>
 			<Marketing />

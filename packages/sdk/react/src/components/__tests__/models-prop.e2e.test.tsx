@@ -53,6 +53,7 @@ const optInOptions: ConsentProviderOptions = {
 		'marketing',
 		'measurement',
 	],
+	mode: testing(),
 	prefetch: policyFixture(undefined, {
 		categories: [
 			'necessary',
@@ -66,7 +67,6 @@ const optInOptions: ConsentProviderOptions = {
 		prompt: 'choice',
 		scopeMode: 'permissive',
 	}),
-	mode: testing(),
 };
 
 describe('models Prop E2E Tests', () => {

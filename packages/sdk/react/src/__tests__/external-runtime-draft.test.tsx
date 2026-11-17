@@ -23,10 +23,10 @@ const createRuntime = function createRuntime(): ConsentRuntime {
 			'measurement',
 			'marketing',
 		],
+		mode: testing(),
 		persistence: false,
 		pkg: '@c15t/react-external-draft-test',
 		prefetch: policyFixture({ experience: false, measurement: false }),
-		mode: testing(),
 	});
 };
 

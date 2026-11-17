@@ -11,8 +11,8 @@
  * @internal
  */
 import type { ProviderTransportFactory } from '@c15t/core';
-import type { HostedMode } from '@c15t/core/modes';
 import { backendURL as builtBackendURL } from '@c15t/core/generated';
+import type { HostedMode } from '@c15t/core/modes';
 import type { ConsentTesting } from '@c15t/core/testing';
 import { hosted } from '@c15t/core/transports';
 

@@ -24,6 +24,7 @@ const createWrapper = function createWrapper(ui: {
 			<ConsentProvider
 				options={{
 					initialUI: ui?.mode,
+					mode: testing(),
 					persistence: false,
 					prefetch: {
 						...policyFixture(undefined, {
@@ -35,7 +36,6 @@ const createWrapper = function createWrapper(ui: {
 						}),
 					},
 					presentation: { preferences: ui?.dialog, prompt: ui?.banner },
-					mode: testing(),
 				}}
 			>
 				{children}

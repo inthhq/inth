@@ -34,11 +34,11 @@ import type {
 	ResolveRequestConsentOptions,
 } from '@c15t/core/server';
 import { hasConsentUI } from '@c15t/core/surface-actions';
+import { assertNotProduction } from '@c15t/core/testing';
 import {
 	DEFAULT_RESOLVE_TIMEOUT_MS,
 	withResolutionBudget,
 } from '@c15t/core/transports/manifest-cache';
-import { assertNotProduction } from '@c15t/core/testing';
 import { recommendedPolicyRules } from '@c15t/schema/types';
 import type {
 	ConsentRequestHeaderInputs,

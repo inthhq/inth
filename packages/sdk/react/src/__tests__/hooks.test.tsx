@@ -390,12 +390,12 @@ describe('v3 react: network blocker lifecycle', () => {
 				<StrictMode>
 					<ConsentProvider
 						options={{
+							mode: testing(),
 							networkBlocker: {
 								logBlockedRequests: false,
 								rules: [{ category: 'marketing', domain: 'example.com' }],
 							},
 							persistence: false,
-							mode: testing(),
 						}}
 					>
 						<div>mounted</div>
@@ -427,12 +427,12 @@ describe('v3 react: network blocker lifecycle', () => {
 			const { rerender } = await render(
 				<ConsentProvider
 					options={{
+						mode: testing(),
 						networkBlocker: {
 							logBlockedRequests: false,
 							rules: [{ category: 'marketing', domain: 'first.example.com' }],
 						},
 						persistence: false,
-						mode: testing(),
 					}}
 				>
 					<div>mounted</div>
@@ -452,12 +452,12 @@ describe('v3 react: network blocker lifecycle', () => {
 			await rerender(
 				<ConsentProvider
 					options={{
+						mode: testing(),
 						networkBlocker: {
 							logBlockedRequests: false,
 							rules: [{ category: 'marketing', domain: 'second.example.com' }],
 						},
 						persistence: false,
-						mode: testing(),
 					}}
 				>
 					<div>mounted</div>
@@ -483,13 +483,13 @@ describe('v3 react: network blocker lifecycle', () => {
 			await render(
 				<ConsentProvider
 					options={{
+						mode: testing(),
 						networkBlocker: {
 							enabled: false,
 							logBlockedRequests: false,
 							rules: [{ category: 'marketing', domain: 'example.com' }],
 						},
 						persistence: false,
-						mode: testing(),
 					}}
 				>
 					<div>mounted</div>

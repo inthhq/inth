@@ -16,7 +16,9 @@ const MODES: ReadonlySet<string> = new Set<ConsentModeName>([
 ]);
 const SCHEMES: ReadonlySet<string> = new Set(['light', 'dark', 'system']);
 
-export const readList = function readList(value: string | null): string[] | undefined {
+export const readList = function readList(
+	value: string | null
+): string[] | undefined {
 	if (!value) {
 		return undefined;
 	}

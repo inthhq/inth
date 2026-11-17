@@ -42,8 +42,8 @@ describe('ConsentProvider theme tokens', () => {
 		const { unmount } = await render(
 			<ConsentProvider
 				options={{
-					persistence: false,
 					mode: testing(),
+					persistence: false,
 				}}
 			>
 				<div data-testid="themed-child" />
@@ -60,6 +60,7 @@ describe('ConsentProvider theme tokens', () => {
 				<ConsentProvider
 					options={{
 						enabled: false,
+						mode: testing(),
 						nonce: 'csp-nonce',
 						persistence: false,
 						scripts: [
@@ -69,7 +70,6 @@ describe('ConsentProvider theme tokens', () => {
 								src: 'https://example.com/nonce.js',
 							},
 						],
-						mode: testing(),
 					}}
 				>
 					<div />
@@ -94,8 +94,8 @@ describe('ConsentProvider theme tokens', () => {
 				<ConsentTheme theme={theme} />
 				<ConsentProvider
 					options={{
-						persistence: false,
 						mode: testing(),
+						persistence: false,
 						theme,
 					}}
 				>
@@ -119,8 +119,8 @@ describe('ConsentProvider theme tokens', () => {
 			const { unmount } = await render(
 				<ConsentProvider
 					options={{
-						persistence: false,
 						mode: testing(),
+						persistence: false,
 						theme: { colors: { surface: 'rgb(1, 2, 3)' } },
 					}}
 				>

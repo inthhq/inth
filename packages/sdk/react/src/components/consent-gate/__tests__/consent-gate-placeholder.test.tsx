@@ -34,6 +34,7 @@ const gateApp = function gateApp(
 	return (
 		<ConsentProvider
 			options={{
+				mode: testing(),
 				persistence: false,
 				prefetch: {
 					initialPolicyResolution: {
@@ -67,7 +68,6 @@ const gateApp = function gateApp(
 						translations: defaultTranslationConfig.translations.en,
 					},
 				},
-				mode: testing(),
 			}}
 		>
 			{ui}

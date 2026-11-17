@@ -89,8 +89,9 @@ describe('server resolution budget', () => {
 		const started = Date.now();
 		const c15t = await resolveContext(
 			{
+				backendURL: BACKEND,
 				middleware: { timeoutMs: false },
-				backendURL: BACKEND, mode: hostedMode(),
+				mode: hostedMode(),
 			},
 			{ fetch: backend.fetch, timeoutMs: 30 }
 		);

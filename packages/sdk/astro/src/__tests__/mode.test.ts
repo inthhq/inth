@@ -1,10 +1,7 @@
 import type { ProviderTransportContext } from '@c15t/core';
 import { describe, expect, it, vi } from 'vitest';
 
-import {
-	hosted as hostedMode,
-	manifest as manifestMode,
-} from '../mode';
+import { hosted as hostedMode, manifest as manifestMode } from '../mode';
 import { testing as testingMode } from '../testing';
 import { hostedTransport, lazyTransport, testingTransport } from '../transport';
 import { testRule } from './policy-fixture';
@@ -38,9 +35,9 @@ describe('the page transports', () => {
 		expect(lazyTransport({ backendURL: '/x', mode: hostedMode() }).kind).toBe(
 			'hosted'
 		);
-		expect(
-			hostedTransport({ backendURL: '/x', mode: hostedMode() }).kind
-		).toBe('hosted');
+		expect(hostedTransport({ backendURL: '/x', mode: hostedMode() }).kind).toBe(
+			'hosted'
+		);
 		expect(testingTransport({ mode: testingMode() }).kind).toBe('offline');
 		expect(
 			lazyTransport({ backendURL: BACKEND, mode: manifestMode() }).kind
