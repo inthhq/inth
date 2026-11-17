@@ -183,7 +183,7 @@ const importConfigFile = async function importConfigFile(
 /**
  * The default export of the app's `c15t.config.*`, evaluated with the loader
  * Next.js uses for `next.config.ts`, so the build sees the same `mode` and
- * `backendURL` as the bundles.
+ * `projectUrl` as the bundles.
  *
  * A config `defineConsentConfig` rejects stops the build with its error.
  * One that can't be evaluated here for another reason (an import Node
@@ -251,11 +251,11 @@ const modeSkipReason = function modeSkipReason(
 	if (mode?.source === 'runtime') {
 		return "c15t.config.ts sets manifest({ source: 'runtime' })";
 	}
-	// The server fetches an absolute manifestURL at runtime and ignores a
+	// The server fetches an absolute manifestUrl at runtime and ignores a
 	// build snapshot. A `/` path is the browser's, so it still needs one.
-	const url = mode?.manifestURL;
+	const url = mode?.manifestUrl;
 	if (url !== undefined && (!url.startsWith('/') || url.startsWith('//'))) {
-		return 'c15t.config.ts passes an absolute manifest({ manifestURL })';
+		return 'c15t.config.ts passes an absolute manifest({ manifestUrl })';
 	}
 	return undefined;
 };
@@ -399,12 +399,12 @@ const withConsentAliases = function withConsentAliases(
  * backend's `/init` while the manifest is unavailable. A missing backend
  * URL counts as a failed fetch. Set `onBuildError: 'fail'`, or
  * `C15T_ON_BUILD_ERROR=fail`, to stop the build instead. The fetch is skipped
- * for a `backendURL` that is not absolute http(s), for `output: 'export'`,
+ * for a `projectUrl` that is not absolute http(s), for `output: 'export'`,
  * which has no server, and when `c15t.config.ts` sets a mode that reads no
  * build-time manifest: `hosted()`, `testing()`, `manifest({ snapshot })` or
  * `manifest({ source: 'runtime' })`. The wrapper evaluates the file with the
  * loader Next.js uses for `next.config.ts` to read its `mode` and
- * `backendURL`.
+ * `projectUrl`.
  *
  * The config and the snapshot reach the helpers through bundler aliases.
  * The wrapper adds `c15t`, `@c15t/core` and `@c15t/nextjs` to
@@ -419,7 +419,7 @@ const withConsentAliases = function withConsentAliases(
  *
  * @param config - Existing Next.js configuration, preserved as given apart
  * from the alias and `env`, which gains the Inth variable.
- * @param options - Backend URL and `onBuildError`. `backendURL` defaults to
+ * @param options - Backend URL and `onBuildError`. `projectUrl` defaults to
  * the one in `c15t.config.ts`, then `NEXT_PUBLIC_C15T_BACKEND_URL`, then
  * `NEXT_PUBLIC_INTH_PROJECT_URL`, from the environment or a `.env` file,
  * and the build appends `/manifest`.
@@ -472,9 +472,9 @@ export const withConsentManifest =
 		const files = await writeManifestCacheModule(
 			{
 				...options,
-				backendURL:
-					options.backendURL ??
-					userConfig?.backendURL ??
+				projectUrl:
+					options.projectUrl ??
+					userConfig?.projectUrl ??
 					readBuildEnv([BACKEND_URL_ENV, INTH_URL_ENV], {
 						mode:
 							phase === PHASE_PRODUCTION_BUILD ? 'production' : 'development',

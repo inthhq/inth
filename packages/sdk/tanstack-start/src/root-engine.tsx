@@ -28,10 +28,10 @@ import type {
 	KernelTransport,
 	ProviderTransportFactory,
 } from '@c15t/core';
-import { backendURL as generatedBackendURL } from '@c15t/core/generated';
+import { projectUrl as generatedProjectUrl } from '@c15t/core/generated';
 import type { ConsentMode } from '@c15t/core/modes';
 import { clientMode } from '@c15t/core/runtime/client-mode';
-import type { WithBackendURL } from '@c15t/core/runtime/provider';
+import type { WithProjectUrl } from '@c15t/core/runtime/provider';
 import { preloadScriptLoaderWith } from '@c15t/core/runtime/script-loader-preload';
 import type * as ScriptServerStart from '@c15t/core/runtime/script-server-start';
 import { resolveStreamedInit } from '@c15t/core/runtime/streamed-init';
@@ -68,20 +68,20 @@ const transportFor = function transportFor(
 	mode: ChosenMode,
 	overrides: KernelOverrides | undefined
 ): ProviderTransportFactory {
-	const backendURL = state?.backendURL ?? generatedBackendURL;
+	const projectUrl = state?.projectUrl ?? generatedProjectUrl;
 	const routePrefix = state?.routePrefix;
 	return clientMode(
 		mode ?? state?.mode,
 		{
-			backendURL,
 			// A `consentPrefetchHead()` script may have started the init request
 			// before hydration. The transport consumes that promise on its first
 			// init, so the first save stays bound to the decision it resolved.
 			initialData: readPrefetchedInitialData({
-				backendURL,
 				overrides,
+				projectUrl,
 				routePrefix,
 			}),
+			projectUrl,
 			routePrefix,
 		},
 		'@c15t/tanstack-start/testing'
@@ -535,7 +535,7 @@ export const EagerConsentRoot = (props: ConsentRootProps) => {
 	return (
 		// `resolveMode` threw already when there is no backend.
 		<ConsentProvider
-			options={providerOptions as WithBackendURL<ConsentProviderOptions>}
+			options={providerOptions as WithProjectUrl<ConsentProviderOptions>}
 		>
 			{props.children}
 			<Suspense fallback={null}>

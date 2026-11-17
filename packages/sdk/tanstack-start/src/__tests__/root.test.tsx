@@ -5,7 +5,7 @@
  * Invariants verified:
  * - State is respected (initial consents, initial overrides).
  * - Kernel is per-mount (two mounts produce two kernels).
- * - The state's `backendURL` and `routePrefix` pick the transport. Init
+ * - The state's `projectUrl` and `routePrefix` pick the transport. Init
  *   goes to the backend unless `routePrefix` names the same-origin consent
  *   route.
  */
@@ -116,7 +116,7 @@ describe('ConsentRoot: transport selection', () => {
 			translations: { language: 'en', translations: { common: {} } },
 		});
 
-	test('an absolute backendURL gets init from the backend by default', async () => {
+	test('an absolute projectUrl gets init from the backend by default', async () => {
 		const fetchSpy = vi
 			.spyOn(globalThis, 'fetch')
 			.mockImplementation(() => Promise.resolve(initResponse()));
@@ -124,7 +124,7 @@ describe('ConsentRoot: transport selection', () => {
 		try {
 			await render(
 				<ConsentRoot
-					state={{ backendURL: 'https://consent.example.com' }}
+					state={{ projectUrl: 'https://consent.example.com' }}
 					persistence={false}
 				>
 					<span>ready</span>
@@ -152,8 +152,8 @@ describe('ConsentRoot: transport selection', () => {
 			await render(
 				<ConsentRoot
 					state={{
-						backendURL: 'https://consent.example.com',
 						mode: { type: 'manifest' },
+						projectUrl: 'https://consent.example.com',
 						routePrefix: '/api/c15t/',
 					}}
 					persistence={false}
@@ -173,7 +173,7 @@ describe('ConsentRoot: transport selection', () => {
 		}
 	});
 
-	test('a same-origin backendURL without routePrefix calls its /init directly', async () => {
+	test('a same-origin projectUrl without routePrefix calls its /init directly', async () => {
 		const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
 			Response.json({
 				branding: 'c15t',
@@ -185,7 +185,7 @@ describe('ConsentRoot: transport selection', () => {
 		try {
 			await render(
 				<ConsentRoot
-					state={{ backendURL: '/api/c15t' }}
+					state={{ projectUrl: '/api/c15t' }}
 					persistence={false}
 				>
 					<span>ready</span>

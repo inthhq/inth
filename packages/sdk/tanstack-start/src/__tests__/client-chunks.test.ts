@@ -38,10 +38,10 @@ const fixture: Record<string, string> = {
 		"globalThis.routes = [() => import('fixture:root-route'), () => import('fixture:provider-route')];",
 	'provider-route': `import { createElement as h } from 'react';
 import { ConsentBanner, ConsentDialog, ConsentProvider } from '@c15t/tanstack-start';
-export default () => h(ConsentProvider, { options: { backendURL: '/api/c15t' } }, h(ConsentBanner), h(ConsentDialog));`,
+export default () => h(ConsentProvider, { options: { projectUrl: '/api/c15t' } }, h(ConsentBanner), h(ConsentDialog));`,
 	'root-route': `import { createElement as h } from 'react';
 import { ConsentBanner, ConsentDialog, ConsentRoot } from '@c15t/tanstack-start';
-export default () => h(ConsentRoot, { state: { backendURL: '/api/c15t' } }, h(ConsentBanner), h(ConsentDialog));`,
+export default () => h(ConsentRoot, { state: { projectUrl: '/api/c15t' } }, h(ConsentBanner), h(ConsentDialog));`,
 };
 
 interface FirstLoad {

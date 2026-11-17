@@ -2,7 +2,7 @@
  * `@c15t/tanstack-start/testing` — run the consent flow in tests with no backend.
  *
  * Pass `mode: testing()` to `resolveConsent()`, or as `ConsentRoot`'s
- * `options.mode`. It needs no `backendURL`. The server resolves nothing,
+ * `options.mode`. It needs no `projectUrl`. The server resolves nothing,
  * and the browser resolves the recommended policy pack with no network;
  * set `overrides.country` (and `overrides.region`) to pick the policy:
  *

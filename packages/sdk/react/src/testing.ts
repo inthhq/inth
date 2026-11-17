@@ -2,7 +2,7 @@
  * `@c15t/react/testing` — render the banner and the consent flow in tests
  * with no backend.
  *
- * Pass `testing()` as the provider's `mode`; it needs no `backendURL`. It
+ * Pass `testing()` as the provider's `mode`; it needs no `projectUrl`. It
  * resolves the recommended policy pack in the browser and sends no
  * request; set `overrides.country` (and `overrides.region`) to pick the
  * policy:

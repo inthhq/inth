@@ -46,8 +46,8 @@ describe('fetchSSRData', () => {
 		);
 
 		const result = await fetchSSRData({
-			backendURL: '/api/c15t',
 			headers: createRequestHeaders(),
+			projectUrl: '/api/c15t',
 		});
 
 		expect(result?.init).toEqual(initResponse);
@@ -56,10 +56,10 @@ describe('fetchSSRData', () => {
 			isHit: true,
 		});
 		expect(result?.metadata?.requestContext).toEqual({
-			backendURL: 'https://example.com/api/c15t',
 			country: 'US',
 			gpc: false,
 			language: null,
+			projectUrl: 'https://example.com/api/c15t',
 			region: null,
 		});
 		expect(typeof result?.metadata?.requestDurationMs).toBe('number');
@@ -87,8 +87,8 @@ describe('fetchSSRData', () => {
 		);
 
 		const result = await fetchSSRData({
-			backendURL: '/api/c15t',
 			headers: createRequestHeaders(),
+			projectUrl: '/api/c15t',
 		});
 
 		expect(result?.metadata?.cache).toEqual({
@@ -111,8 +111,8 @@ describe('fetchSSRData', () => {
 			}
 
 			await fetchSSRData({
-				backendURL: 'https://consent.example.com/api/c15t',
 				headers: requestHeaders,
+				projectUrl: 'https://consent.example.com/api/c15t',
 			});
 
 			expect(fetchMock).toHaveBeenCalledWith(
@@ -126,7 +126,7 @@ describe('fetchSSRData', () => {
 		}
 	);
 
-	it('resolves a relative backendURL against host, not a forged x-forwarded-host', async () => {
+	it('resolves a relative projectUrl against host, not a forged x-forwarded-host', async () => {
 		const fetchMock = vi
 			.fn()
 			.mockResolvedValue(createResponse({ categories: [], gvl: null }));
@@ -135,7 +135,7 @@ describe('fetchSSRData', () => {
 		headers.set('x-forwarded-host', 'attacker.example');
 		headers.set('x-forwarded-proto', 'http');
 
-		await fetchSSRData({ backendURL: '/api/c15t', headers });
+		await fetchSSRData({ headers, projectUrl: '/api/c15t' });
 
 		expect(fetchMock).toHaveBeenCalledWith(
 			'https://example.com/api/c15t/init',
@@ -159,7 +159,7 @@ describe('fetchSSRData', () => {
 			'x-forwarded-host': 'example.com',
 		});
 
-		await fetchSSRData({ backendURL: '/api/c15t', headers });
+		await fetchSSRData({ headers, projectUrl: '/api/c15t' });
 
 		expect(fetchMock).toHaveBeenCalledWith(
 			'https://example.com/api/c15t/init',
@@ -177,8 +177,8 @@ describe('fetchSSRData', () => {
 		vi.stubGlobal('fetch', fetchMock);
 
 		const result = await fetchSSRData({
-			backendURL: 'https://consent.example.com',
 			headers: new Headers(),
+			projectUrl: 'https://consent.example.com',
 		});
 
 		expect(result).toBeUndefined();
@@ -195,12 +195,12 @@ describe('fetchSSRData', () => {
 
 		await Promise.all([
 			fetchSSRData({
-				backendURL: 'https://consent.example.com/api/c15t',
 				headers,
+				projectUrl: 'https://consent.example.com/api/c15t',
 			}),
 			fetchSSRData({
-				backendURL: 'https://consent.example.com/api/c15t',
 				headers,
+				projectUrl: 'https://consent.example.com/api/c15t',
 			}),
 		]);
 
@@ -216,8 +216,8 @@ describe('fetchSSRData', () => {
 		const headers = createRequestHeaders();
 
 		const result = await fetchSSRData({
-			backendURL: 'https://consent.example.com/api/c15t',
 			headers,
+			projectUrl: 'https://consent.example.com/api/c15t',
 		});
 
 		expect(result).toMatchObject({
@@ -230,10 +230,10 @@ describe('fetchSSRData', () => {
 				isHit: false,
 			},
 			requestContext: {
-				backendURL: 'https://consent.example.com/api/c15t',
 				country: 'US',
 				gpc: false,
 				language: null,
+				projectUrl: 'https://consent.example.com/api/c15t',
 				region: null,
 			},
 			requestDurationMs: expect.any(Number),
@@ -258,20 +258,20 @@ describe('fetchSSRData', () => {
 		);
 
 		const result = await fetchSSRData({
-			backendURL: '/api/c15t',
 			headers,
 			overrides: {
 				country: 'DE',
 				language: 'de',
 				region: 'BE',
 			},
+			projectUrl: '/api/c15t',
 		});
 
 		expect(result?.metadata?.requestContext).toEqual({
-			backendURL: 'https://example.com/api/c15t',
 			country: 'DE',
 			gpc: true,
 			language: 'de',
+			projectUrl: 'https://example.com/api/c15t',
 			region: 'BE',
 		});
 	});
@@ -286,8 +286,8 @@ describe('fetchSSRData', () => {
 		const headers = createRequestHeaders();
 
 		const result = await fetchSSRData({
-			backendURL: 'https://consent.example.com/api/c15t',
 			headers,
+			projectUrl: 'https://consent.example.com/api/c15t',
 		});
 
 		expect(result).toBeUndefined();

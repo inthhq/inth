@@ -24,9 +24,9 @@ const render = async (
 	props: Partial<ConsentRootProps> = {}
 ): Promise<string> => {
 	const state = await resolveConsent({
-		// A relative backend is the app's own route: no session report.
-		backendURL: '/api/c15t',
 		mode: manifest(),
+		// A relative backend is the app's own route: no session report.
+		projectUrl: '/api/c15t',
 		request: new Request('https://app.example.com/'),
 		snapshot: manifestOf([rule]),
 	});

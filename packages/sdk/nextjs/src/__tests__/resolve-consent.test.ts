@@ -70,8 +70,8 @@ const requestOf = (
 });
 
 /** A config that asks the backend's `/init` for every render. */
-const hostedAt = (backendURL: string, config: ConsentConfig = {}) =>
-	defineConsentConfig({ mode: hosted(), ...config, backendURL });
+const hostedAt = (projectUrl: string, config: ConsentConfig = {}) =>
+	defineConsentConfig({ mode: hosted(), ...config, projectUrl });
 
 beforeEach(() => {
 	clearManifestCache();
@@ -87,8 +87,8 @@ describe('resolveConsent wiring', () => {
 		const fetch = backend();
 		const state = await resolveConsent({
 			config: defineConsentConfig({
-				backendURL: 'https://consent.example.com',
 				mode: manifest(),
+				projectUrl: 'https://consent.example.com',
 				routePrefix: '/api/consent',
 			}),
 			fetch,
@@ -140,8 +140,8 @@ describe('resolveConsent wiring', () => {
 		const manifestFetch = backend();
 		await resolveConsent({
 			config: defineConsentConfig({
-				backendURL: 'https://consent.example.com',
 				mode: manifest(),
+				projectUrl: 'https://consent.example.com',
 				proxy: true,
 				routePrefix: '/api/consent',
 			}),
@@ -231,8 +231,8 @@ describe('resolveConsent wiring', () => {
 		const fetch = backend();
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 		const config = defineConsentConfig({
-			backendURL: '/api/c15t',
 			mode: manifest(),
+			projectUrl: '/api/c15t',
 			routePrefix: '/api/c15t',
 		});
 		const state = await resolveConsent({
@@ -247,9 +247,9 @@ describe('resolveConsent wiring', () => {
 		);
 		// The handler's own upstream resolves it, as the docs describe.
 		const resolved = await resolveConsent({
-			backendURL: 'https://consent.example.com',
 			config,
 			fetch,
+			projectUrl: 'https://consent.example.com',
 			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
 		});
 		expect(policyCalls(fetch)).toEqual([
@@ -261,8 +261,8 @@ describe('resolveConsent wiring', () => {
 	test('rejects a config with routePrefix / that skipped defineConsentConfig', async () => {
 		await expect(
 			resolveConsent({
-				backendURL: 'https://consent.example.com',
 				config: { routePrefix: '/' },
+				projectUrl: 'https://consent.example.com',
 				request: requestOf({}),
 			})
 		).rejects.toThrow(
@@ -273,8 +273,8 @@ describe('resolveConsent wiring', () => {
 	test('rejects a config routePrefix that is neither a path nor an http(s) URL', async () => {
 		await expect(
 			resolveConsent({
-				backendURL: 'https://consent.example.com',
 				config: { routePrefix: 'api/c15t' },
+				projectUrl: 'https://consent.example.com',
 				request: requestOf({}),
 			})
 		).rejects.toThrow(

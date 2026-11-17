@@ -21,9 +21,9 @@ const policyRules: PolicyRule[] = [
 void policyRules;
 
 ({
-	backendURL: '/api/c15t',
 	clearOnRevocation,
 	consentCategories,
+	projectUrl: '/api/c15t',
 }) satisfies ConsentProviderOptions;
 
 // @ts-expect-error Only c15t's categories are category names.

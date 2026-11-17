@@ -20,17 +20,17 @@ describe('defineConsentConfig', () => {
 			{ category: 'measurement' as const, id: 'tag', src: '/t.js' },
 		];
 		const config = defineConsentConfig({
-			backendURL: 'https://consent.example.com',
 			journey: 'tab',
 			mode: manifest({ resolve: 'browser' }),
+			projectUrl: 'https://consent.example.com',
 			routePrefix: '/api/consent/',
 			scripts,
 		});
 
 		expect(config).toEqual({
-			backendURL: 'https://consent.example.com',
 			journey: 'tab',
 			mode: { resolve: 'browser', type: 'manifest' },
+			projectUrl: 'https://consent.example.com',
 			routePrefix: '/api/consent',
 			scripts,
 		});
@@ -40,13 +40,13 @@ describe('defineConsentConfig', () => {
 	test('reads the backend URL from NEXT_PUBLIC_C15T_BACKEND_URL', () => {
 		vi.stubEnv('NEXT_PUBLIC_C15T_BACKEND_URL', 'https://env.example.com');
 
-		expect(defineConsentConfig().backendURL).toBe('https://env.example.com');
+		expect(defineConsentConfig().projectUrl).toBe('https://env.example.com');
 	});
 
 	test('names NEXT_PUBLIC_INTH_PROJECT_URL in the missing-URL error', () => {
 		vi.stubEnv('NEXT_PUBLIC_C15T_BACKEND_URL', '');
 		expect(() => defineConsentConfig()).toThrow(
-			'@c15t/nextjs: defineConsentConfig needs `backendURL`, or NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL) set at build time.'
+			'@c15t/nextjs: defineConsentConfig needs `projectUrl`, or NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL) set at build time.'
 		);
 	});
 
@@ -70,7 +70,7 @@ describe('defineConsentConfig', () => {
 	test('proxy needs routePrefix', () => {
 		expect(() =>
 			defineConsentConfig({
-				backendURL: 'https://consent.example.com',
+				projectUrl: 'https://consent.example.com',
 				proxy: true,
 			})
 		).toThrow(
@@ -78,12 +78,12 @@ describe('defineConsentConfig', () => {
 		);
 		expect(
 			defineConsentConfig({
-				backendURL: 'https://consent.example.com',
+				projectUrl: 'https://consent.example.com',
 				proxy: true,
 				routePrefix: '/api/c15t/',
 			})
 		).toMatchObject({
-			backendURL: 'https://consent.example.com',
+			projectUrl: 'https://consent.example.com',
 			proxy: true,
 			routePrefix: '/api/c15t',
 		});
@@ -95,7 +95,7 @@ describe('defineConsentConfig', () => {
 			for (const proxy of [false, true]) {
 				expect(() =>
 					defineConsentConfig({
-						backendURL: 'https://consent.example.com',
+						projectUrl: 'https://consent.example.com',
 						proxy,
 						routePrefix,
 					})
@@ -109,27 +109,27 @@ describe('defineConsentConfig', () => {
 	test('accepts relative paths and absolute http(s) URLs', () => {
 		expect(() =>
 			defineConsentConfig({
-				backendURL: '/api/c15t',
 				mode: manifest({
-					manifestURL: 'http://localhost:3000/api/consent/manifest',
+					manifestUrl: 'http://localhost:3000/api/consent/manifest',
 				}),
+				projectUrl: '/api/c15t',
 			})
 		).not.toThrow();
 	});
 
 	test.each([
-		['empty backendURL', { backendURL: '' }],
-		['bare path', { backendURL: 'api/c15t' }],
-		['protocol-relative URL', { backendURL: '//consent.example.com' }],
-		['non-http scheme', { backendURL: 'ftp://consent.example.com' }],
-		['bare routePrefix', { backendURL: '/api/c15t', routePrefix: 'api/c15t' }],
+		['empty projectUrl', { projectUrl: '' }],
+		['bare path', { projectUrl: 'api/c15t' }],
+		['protocol-relative URL', { projectUrl: '//consent.example.com' }],
+		['non-http scheme', { projectUrl: 'ftp://consent.example.com' }],
+		['bare routePrefix', { projectUrl: '/api/c15t', routePrefix: 'api/c15t' }],
 		[
-			'invalid manifestURL',
-			{ backendURL: '/api/c15t', mode: manifest({ manifestURL: 'manifest' }) },
+			'invalid manifestUrl',
+			{ mode: manifest({ manifestUrl: 'manifest' }), projectUrl: '/api/c15t' },
 		],
 		['removed testing option shape', { mode: { type: 'without-network' } }],
-		['unknown mode', { backendURL: '/api/c15t', mode: { type: 'custom' } }],
-		['unknown journey', { backendURL: '/api/c15t', journey: 'session' }],
+		['unknown mode', { mode: { type: 'custom' }, projectUrl: '/api/c15t' }],
+		['unknown journey', { journey: 'session', projectUrl: '/api/c15t' }],
 	])('rejects %s', (_label, input) => {
 		expect(() => defineConsentConfig(input as never)).toThrow(TypeError);
 	});

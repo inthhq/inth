@@ -118,8 +118,8 @@ describe('Pages Router build-time manifest', () => {
 		async (country, region, policyId) => {
 			const fetch = vi.fn<typeof globalThis.fetch>();
 			const state = await resolveConsent({
-				backendURL: 'https://consent.example.com',
 				fetch,
+				projectUrl: 'https://consent.example.com',
 				req: {
 					headers: {
 						host: 'app.example.com',
@@ -137,8 +137,8 @@ describe('Pages Router build-time manifest', () => {
 	test('API routes serve and resolve the snapshot without an upstream fetch', async () => {
 		const fetch = vi.fn<typeof globalThis.fetch>();
 		const route = createPagesConsentRoute({
-			backendURL: 'https://consent.example.com',
 			fetch,
+			projectUrl: 'https://consent.example.com',
 			snapshot: MANIFEST_FIXTURE,
 		});
 		const manifestSink = await callRoute(route, {
@@ -252,8 +252,8 @@ describe('@c15t/nextjs/pages: resolveConsent with a backend', () => {
 
 		const config = await resolveConsent({
 			config: defineConsentConfig({
-				backendURL: '/api/self-host',
 				mode: hosted(),
+				projectUrl: '/api/self-host',
 			}),
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
 			req: {
@@ -284,7 +284,7 @@ describe('@c15t/nextjs/pages: resolveConsent with a backend', () => {
 		expect(JSON.parse(JSON.stringify(config))).toEqual(config);
 	});
 
-	test('manifestURL resolves init locally without calling /init', async () => {
+	test('manifestUrl resolves init locally without calling /init', async () => {
 		const fetchSpy = vi.fn().mockResolvedValue(
 			new Response(JSON.stringify(MANIFEST_FIXTURE), {
 				headers: { 'content-type': 'application/json' },
@@ -293,9 +293,9 @@ describe('@c15t/nextjs/pages: resolveConsent with a backend', () => {
 		);
 
 		const config = await resolveConsent({
-			backendURL: '/api/c15t',
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
-			manifestURL: '/api/consent/manifest',
+			manifestUrl: '/api/consent/manifest',
+			projectUrl: '/api/c15t',
 			req: {
 				headers: {
 					host: 'app.example.com',
@@ -326,7 +326,7 @@ describe('@c15t/nextjs/pages: resolveConsent with a backend', () => {
 		);
 
 		const config = await resolveConsent({
-			config: defineConsentConfig({ backendURL: '/api/c15t', mode: hosted() }),
+			config: defineConsentConfig({ mode: hosted(), projectUrl: '/api/c15t' }),
 			fetch: fetchSpy,
 			req: {
 				headers: {
@@ -345,7 +345,7 @@ describe('@c15t/nextjs/pages: resolveConsent with a backend', () => {
 });
 
 describe('@c15t/nextjs/pages: API bridge', () => {
-	test('API handlers resolve a relative backendURL against host, not x-forwarded-host', async () => {
+	test('API handlers resolve a relative projectUrl against host, not x-forwarded-host', async () => {
 		const fetchSpy = vi.fn().mockResolvedValue(
 			new Response(JSON.stringify(MANIFEST_FIXTURE), {
 				headers: { 'content-type': 'application/json' },
@@ -353,8 +353,8 @@ describe('@c15t/nextjs/pages: API bridge', () => {
 			})
 		);
 		const route = createPagesConsentRoute({
-			backendURL: '/api/c15t',
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
+			projectUrl: '/api/c15t',
 		});
 
 		await callRoute(route, {
@@ -414,8 +414,8 @@ describe('@c15t/nextjs/pages: API bridge', () => {
 			})
 		);
 		const route = createPagesConsentRoute({
-			backendURL: 'https://consent.example.com/api/c15t',
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
+			projectUrl: 'https://consent.example.com/api/c15t',
 		});
 
 		const sink = await callRoute(route, {
@@ -444,8 +444,8 @@ describe('@c15t/nextjs/pages: API bridge', () => {
 				new Response(JSON.stringify(MANIFEST_FIXTURE), { status: 200 })
 			);
 		const route = createPagesConsentRoute({
-			backendURL: 'https://consent.example.com/api/c15t',
 			fetch: fetchSpy as unknown as typeof globalThis.fetch,
+			projectUrl: 'https://consent.example.com/api/c15t',
 		});
 
 		const sink = await callRoute(route, {
@@ -474,8 +474,8 @@ describe('@c15t/nextjs/pages: API bridge', () => {
 				)
 			);
 		const consentConfig = defineConsentConfig({
-			backendURL: 'https://consent.example.com/api/c15t',
 			mode: manifestMode(),
+			projectUrl: 'https://consent.example.com/api/c15t',
 			routePrefix: '/api/consent',
 		});
 		const route = createPagesConsentRoute({
@@ -518,8 +518,8 @@ describe('@c15t/nextjs/pages: API bridge', () => {
 				Response.json({ ok: true, subjectId: 'sub_1' }, { status: 201 })
 			);
 		const options = {
-			backendURL: 'https://consent.example.com',
 			fetch: fetchSpy,
+			projectUrl: 'https://consent.example.com',
 			snapshot: MANIFEST_FIXTURE,
 		};
 		const save = (route: PagesApiHandler) => {
@@ -562,7 +562,7 @@ describe('@c15t/nextjs/pages: API bridge', () => {
 
 	test('one catch-all API route serves manifest and init and 404s the rest', async () => {
 		const route = createPagesConsentRoute({
-			backendURL: 'https://consent.example.com',
+			projectUrl: 'https://consent.example.com',
 			snapshot: MANIFEST_FIXTURE,
 		});
 		const call = async (segments: string[]) => {
@@ -621,7 +621,7 @@ describe('withConsentProps', () => {
 
 	test('adds the visitor state as a JSON-safe consent prop', async () => {
 		const result = await withConsentProps(undefined, {
-			backendURL: 'https://consent.example.com',
+			projectUrl: 'https://consent.example.com',
 			snapshot: MANIFEST_FIXTURE,
 		})(context);
 

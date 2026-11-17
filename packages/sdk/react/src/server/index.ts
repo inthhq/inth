@@ -12,11 +12,11 @@
  * @example
  * ```ts
  * // Direct usage in any framework
- * import { fetchSSRData, extractRelevantHeaders, normalizeBackendURL } from '@c15t/react/server';
+ * import { fetchSSRData, extractRelevantHeaders, normalizeProjectUrl } from '@c15t/react/server';
  *
  * // In your server handler
  * const data = await fetchSSRData({
- *   backendURL: '/api/consent',
+ *   projectUrl: '/api/consent',
  *   headers: request.headers,
  *   debug: true
  * });
@@ -28,7 +28,7 @@
 export { fetchSSRData } from './fetch-ssr-data';
 export { extractRelevantHeaders } from './headers';
 export { createSSRInitCacheKey } from './init-cache-key';
-export { normalizeBackendURL, validateBackendURL } from './normalize-url';
+export { normalizeProjectUrl, validateProjectUrl } from './normalize-url';
 export type {
 	FetchSSRDataOptions,
 	FetchSSRDataOptionsBase,

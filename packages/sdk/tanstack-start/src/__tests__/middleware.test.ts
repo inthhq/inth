@@ -430,7 +430,7 @@ describe('consentRequestMiddleware: consent route at any mount', () => {
 
 	const serve = async function serve(path: string, splat: string) {
 		const { GET } = createConsentRoute({
-			backendURL: 'https://consent.example.com',
+			projectUrl: 'https://consent.example.com',
 			snapshot: MANIFEST_FIXTURE,
 		});
 		const request = new Request(`https://app.example.com${path}`, {
@@ -473,7 +473,7 @@ describe('consentRequestMiddleware: consent route at any mount', () => {
 	test('the route served inside a Start request keeps its headers', async () => {
 		const { createServerEntry } = await import('@tanstack/react-start/server');
 		const { GET } = createConsentRoute({
-			backendURL: 'https://consent.example.com',
+			projectUrl: 'https://consent.example.com',
 			snapshot: MANIFEST_FIXTURE,
 		});
 		const entry = createServerEntry({

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { normalizeBackendURL, validateBackendURL } from './normalize-url';
+import { normalizeProjectUrl, validateProjectUrl } from './normalize-url';
 
-describe('validateBackendURL', () => {
+describe('validateProjectUrl', () => {
 	it('should validate absolute URLs correctly', () => {
 		const validAbsoluteURLs = [
 			'http://example.com',
@@ -12,9 +12,9 @@ describe('validateBackendURL', () => {
 		];
 
 		for (const url of validAbsoluteURLs) {
-			const result = validateBackendURL(url);
+			const result = validateProjectUrl(url);
 			expect(result.isAbsolute).toBe(true);
-			expect(result.normalizedURL).toBe(url);
+			expect(result.normalizedUrl).toBe(url);
 		}
 	});
 
@@ -33,9 +33,9 @@ describe('validateBackendURL', () => {
 		];
 
 		for (const { input, expected } of testCases) {
-			const result = validateBackendURL(input);
+			const result = validateProjectUrl(input);
 			expect(result.isAbsolute).toBe(true);
-			expect(result.normalizedURL).toBe(expected);
+			expect(result.normalizedUrl).toBe(expected);
 		}
 	});
 
@@ -48,7 +48,7 @@ describe('validateBackendURL', () => {
 		];
 
 		for (const url of invalidAbsoluteURLs) {
-			expect(() => validateBackendURL(url)).toThrow();
+			expect(() => validateProjectUrl(url)).toThrow();
 		}
 	});
 
@@ -59,9 +59,9 @@ describe('validateBackendURL', () => {
 		];
 
 		for (const { input, expected } of testCases) {
-			const result = validateBackendURL(input);
+			const result = validateProjectUrl(input);
 			expect(result.isAbsolute).toBe(false);
-			expect(result.normalizedURL).toBe(expected);
+			expect(result.normalizedUrl).toBe(expected);
 		}
 	});
 
@@ -74,9 +74,9 @@ describe('validateBackendURL', () => {
 		];
 
 		for (const { input, expected } of testCases) {
-			const result = validateBackendURL(input);
+			const result = validateProjectUrl(input);
 			expect(result.isAbsolute).toBe(false);
-			expect(result.normalizedURL).toBe(expected);
+			expect(result.normalizedUrl).toBe(expected);
 		}
 	});
 
@@ -89,12 +89,12 @@ describe('validateBackendURL', () => {
 		];
 
 		for (const url of invalidRelativeURLs) {
-			expect(() => validateBackendURL(url)).toThrow();
+			expect(() => validateProjectUrl(url)).toThrow();
 		}
 	});
 });
 
-describe('normalizeBackendURL', () => {
+describe('normalizeProjectUrl', () => {
 	const createMockHeaders = (headers: Record<string, string>) =>
 		({
 			get: (key: string) => headers[key.toLowerCase()] || null,
@@ -104,7 +104,7 @@ describe('normalizeBackendURL', () => {
 		const absoluteURL = 'https://example.com/api';
 		const headers = createMockHeaders({});
 
-		const result = normalizeBackendURL(absoluteURL, headers);
+		const result = normalizeProjectUrl(absoluteURL, headers);
 		expect(result).toBe(absoluteURL);
 	});
 
@@ -123,7 +123,7 @@ describe('normalizeBackendURL', () => {
 		const headers = createMockHeaders({});
 
 		for (const { input, expected } of testCases) {
-			const result = normalizeBackendURL(input, headers);
+			const result = normalizeProjectUrl(input, headers);
 			expect(result).toBe(expected);
 		}
 	});
@@ -135,7 +135,7 @@ describe('normalizeBackendURL', () => {
 			'x-forwarded-proto': 'http',
 		});
 
-		const result = normalizeBackendURL('/api/c15t', headers);
+		const result = normalizeProjectUrl('/api/c15t', headers);
 		expect(result).toBe('https://example.com/api/c15t');
 	});
 
@@ -145,7 +145,7 @@ describe('normalizeBackendURL', () => {
 			'x-forwarded-proto': 'https',
 		});
 
-		const result = normalizeBackendURL('/api/c15t', headers, {
+		const result = normalizeProjectUrl('/api/c15t', headers, {
 			trustForwardedHeaders: true,
 		});
 		expect(result).toBe('https://example.com/api/c15t');
@@ -162,7 +162,7 @@ describe('normalizeBackendURL', () => {
 		const headers = createMockHeaders({ host: 'my-instance.c15t.dev' });
 
 		for (const { input, expected } of testCases) {
-			expect(normalizeBackendURL(input, headers)).toBe(expected);
+			expect(normalizeProjectUrl(input, headers)).toBe(expected);
 		}
 	});
 
@@ -171,7 +171,7 @@ describe('normalizeBackendURL', () => {
 			host: 'localhost:3000',
 		});
 
-		const result = normalizeBackendURL('/api/c15t', headers);
+		const result = normalizeProjectUrl('/api/c15t', headers);
 		expect(result).toBe('http://localhost:3000/api/c15t');
 	});
 
@@ -180,14 +180,14 @@ describe('normalizeBackendURL', () => {
 			referer: 'https://example.com/some/path',
 		});
 
-		const result = normalizeBackendURL('/api/c15t', headers);
+		const result = normalizeProjectUrl('/api/c15t', headers);
 		expect(result).toBeNull();
 	});
 
 	it('should return null when no headers are available to determine base URL', () => {
 		const headers = createMockHeaders({});
 
-		const result = normalizeBackendURL('/api/c15t', headers);
+		const result = normalizeProjectUrl('/api/c15t', headers);
 		expect(result).toBeNull();
 	});
 
@@ -196,7 +196,7 @@ describe('normalizeBackendURL', () => {
 			host: 'example.com',
 		});
 
-		const result = normalizeBackendURL('not-a-url://', headers);
+		const result = normalizeProjectUrl('not-a-url://', headers);
 		expect(result).toBeNull();
 	});
 });

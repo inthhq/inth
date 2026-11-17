@@ -5,7 +5,7 @@ import { manifest } from '@c15t/core/modes';
  *
  * Covers the full flow:
  * 1. Server: resolveConsent calls the backend, returns the enriched state.
- * 2. Client: ConsentRoot with backendURL auto-fires kernel.commands.init().
+ * 2. Client: ConsentRoot with projectUrl auto-fires kernel.commands.init().
  * 3. Client: enabled=false disables init and treats consents as allowed.
  * 4. Prefetched banner visibility reaches the snapshot before the client
  *    roundtrip completes.
@@ -51,7 +51,7 @@ const POLICY_RESOLUTION = writePolicyResolutionWire(
 	})
 );
 
-describe('ConsentRoot: backendURL triggers auto-init', () => {
+describe('ConsentRoot: projectUrl triggers auto-init', () => {
 	test('root reports Next.js adapter identity on window.c15t', async () => {
 		const fetchSpy = vi.fn().mockResolvedValue(
 			new Response(JSON.stringify({ policyResolution: POLICY_RESOLUTION }), {
@@ -67,7 +67,7 @@ describe('ConsentRoot: backendURL triggers auto-init', () => {
 			const { unmount } = await render(
 				<ConsentRoot
 					state={{}}
-					config={{ backendURL: '/api/c15t' }}
+					config={{ projectUrl: '/api/c15t' }}
 					persistence={false}
 				>
 					<div data-testid="probe">ready</div>
@@ -89,7 +89,7 @@ describe('ConsentRoot: backendURL triggers auto-init', () => {
 		}
 	});
 
-	test('root with backendURL fires kernel.commands.init on mount', async () => {
+	test('root with projectUrl fires kernel.commands.init on mount', async () => {
 		const fetchSpy = vi.fn().mockResolvedValue(
 			new Response(
 				JSON.stringify({
@@ -118,7 +118,7 @@ describe('ConsentRoot: backendURL triggers auto-init', () => {
 			const { getByTestId } = await render(
 				<ConsentRoot
 					state={{}}
-					config={{ backendURL: 'http://bench.example.com/api/c15t' }}
+					config={{ projectUrl: 'http://bench.example.com/api/c15t' }}
 					persistence={false}
 				>
 					<Probe />
@@ -181,7 +181,7 @@ describe('ConsentRoot: backendURL triggers auto-init', () => {
 			const { getByTestId } = await render(
 				<ConsentRoot
 					state={{}}
-					config={{ backendURL: 'http://bench.example.com/api/c15t' }}
+					config={{ projectUrl: 'http://bench.example.com/api/c15t' }}
 					options={{ enabled: false }}
 				>
 					<Probe />
@@ -232,7 +232,7 @@ describe('ConsentRoot: resolved state reaches first paint', () => {
 			const { getByTestId } = await render(
 				<ConsentRoot
 					state={state}
-					config={{ backendURL: 'http://bench.example.com/api/c15t' }}
+					config={{ projectUrl: 'http://bench.example.com/api/c15t' }}
 					persistence={false}
 				>
 					<Probe />
@@ -330,8 +330,8 @@ describe('ConsentRoot: config picks the transport', () => {
 					<ConsentRoot
 						state={{}}
 						config={defineConsentConfig({
-							backendURL: 'https://consent.example.com',
 							mode,
+							projectUrl: 'https://consent.example.com',
 							proxy,
 							routePrefix: '/api/consent',
 						})}
@@ -401,8 +401,8 @@ describe('ConsentRoot: config picks the transport', () => {
 				<ConsentRoot
 					state={{ initialOverrides: { country: 'DE' } }}
 					config={defineConsentConfig({
-						backendURL: 'https://consent.example.com',
 						mode: manifest({ resolve: 'browser' }),
+						projectUrl: 'https://consent.example.com',
 						routePrefix: '/api/consent',
 					})}
 					persistence={false}
@@ -450,8 +450,8 @@ describe('ConsentRoot: config picks the transport', () => {
 				<ConsentRoot
 					state={{ initialOverrides: { country: 'US' } }}
 					config={defineConsentConfig({
-						backendURL: 'https://consent.example.com',
 						mode: manifest({ resolve: 'browser' }),
+						projectUrl: 'https://consent.example.com',
 						routePrefix: '/api/consent',
 					})}
 					persistence={false}
@@ -472,7 +472,7 @@ describe('ConsentRoot: config picks the transport', () => {
 		}
 	});
 
-	test('backendURL only: manifest() re-inits against the backend /init', async () => {
+	test('projectUrl only: manifest() re-inits against the backend /init', async () => {
 		const fetchSpy = vi.fn().mockResolvedValue(
 			jsonResponse({
 				branding: 'c15t',
@@ -491,7 +491,7 @@ describe('ConsentRoot: config picks the transport', () => {
 				<ConsentRoot
 					state={{}}
 					config={defineConsentConfig({
-						backendURL: 'https://consent.example.com',
+						projectUrl: 'https://consent.example.com',
 					})}
 					persistence={false}
 				>
@@ -532,8 +532,8 @@ describe('ConsentRoot: config picks the transport', () => {
 				<ConsentRoot
 					state={{}}
 					config={defineConsentConfig({
-						backendURL: 'https://consent.example.com',
 						journey: false,
+						projectUrl: 'https://consent.example.com',
 					})}
 					persistence={false}
 				>
@@ -571,7 +571,7 @@ describe('ConsentRoot: config picks the transport', () => {
 						journey: null,
 					}}
 					config={defineConsentConfig({
-						backendURL: 'https://consent.example.com',
+						projectUrl: 'https://consent.example.com',
 					})}
 					persistence={false}
 				>
@@ -604,7 +604,7 @@ describe('ConsentRoot: config picks the transport', () => {
 				<ConsentRoot
 					state={{}}
 					config={defineConsentConfig({
-						backendURL: 'https://consent.example.com',
+						projectUrl: 'https://consent.example.com',
 						routePrefix: '/api/consent',
 					})}
 					options={{

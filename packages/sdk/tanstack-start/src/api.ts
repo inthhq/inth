@@ -29,7 +29,7 @@
  * {@link ConsentRouteOptions.proxy}.
  */
 import {
-	backendURL as generatedBackendURL,
+	projectUrl as generatedProjectUrl,
 	snapshot as generatedSnapshot,
 } from '@c15t/core/generated';
 import { createConsentRouteHandler } from '@c15t/core/server';
@@ -57,12 +57,12 @@ export interface ConsentRouteOptions {
 	 * `consentManifest()` read from `VITE_C15T_BACKEND_URL` or
 	 * `VITE_INTH_PROJECT_URL`. The proxy forwards to it.
 	 */
-	backendURL?: string;
+	projectUrl?: string;
 
 	/**
-	 * Full manifest URL. Overrides `${backendURL}/manifest`.
+	 * Full manifest URL. Overrides `${projectUrl}/manifest`.
 	 */
-	manifestURL?: string;
+	manifestUrl?: string;
 	/**
 	 * Deployment-bound manifest. Takes precedence over upstream URLs.
 	 * Defaults to the snapshot `consentManifest()` fetched during the build.
@@ -99,7 +99,7 @@ export interface ConsentRouteOptions {
 	onBackgroundRevalidate?: (revalidation: Promise<void>) => void;
 
 	/**
-	 * Resolve a relative `backendURL` or `manifestURL` against the
+	 * Resolve a relative `projectUrl` or `manifestUrl` against the
 	 * request's `x-forwarded-host` and `x-forwarded-proto` instead of
 	 * `request.url`. Off by default: those headers are client-controlled
 	 * unless a trusted proxy strips them, and with the proxy enabled a
@@ -111,7 +111,7 @@ export interface ConsentRouteOptions {
 	trustForwardedHeaders?: boolean;
 
 	/**
-	 * Forward consent traffic to `backendURL` through this route, so the
+	 * Forward consent traffic to `projectUrl` through this route, so the
 	 * browser only ever talks to the app's own origin, the way a Next.js
 	 * app uses a `next.config` rewrite. Pass `proxy: true` to
 	 * `createConsentStateHandler()` too, so the browser sends its saves
@@ -202,7 +202,7 @@ export type ConsentRouteHandlersFor<Options extends ConsentRouteOptions> =
  * @returns Handlers for `createFileRoute('/api/c15t/$')({ server: { handlers } })`.
  * With `proxy` off the set is `GET`; with it on, `POST`, `PATCH`, `PUT`,
  * `DELETE` and `OPTIONS` join. Manifest and init requests fail when there
- * is no snapshot, backend URL or `manifestURL`. Proxy writes need a
+ * is no snapshot, backend URL or `manifestUrl`. Proxy writes need a
  * backend URL.
  * @example
  * ```ts
@@ -225,12 +225,12 @@ export const createConsentRoute = function createConsentRoute<
 	const resolved: ConsentRouteOptions = options ?? {};
 	const handle = createConsentRouteHandler({
 		adapter: '@c15t/tanstack-start',
-		backendURL: resolved.backendURL ?? generatedBackendURL,
 		cache: resolved.cache,
 		fetch: resolved.fetch,
 		fetchGvl: resolved.fetchGvl,
 		manifest: 'snapshot' in resolved ? resolved.snapshot : generatedSnapshot,
-		manifestURL: resolved.manifestURL,
+		manifestUrl: resolved.manifestUrl,
+		projectUrl: resolved.projectUrl ?? generatedProjectUrl,
 		proxy: resolved.proxy,
 		trustForwardedHeaders: resolved.trustForwardedHeaders,
 	});

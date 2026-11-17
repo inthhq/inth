@@ -11,7 +11,7 @@
  * `@c15t/core/generated`: Next.js fails the build when they do.
  *
  * A provider that talks to the hosted backend needs no mode: it sets
- * `backendURL`.
+ * `projectUrl`.
  *
  * @example
  * ```tsx

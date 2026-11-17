@@ -15,10 +15,10 @@ const DEFAULT_SCRIPT_ID = 'c15t-initial-data-prefetch';
  * when it calls the backend directly. The script requests `${base}/init`.
  */
 const prefetchBaseFor = function prefetchBaseFor(
-	backendURL: string,
+	projectUrl: string,
 	routePrefix: string | undefined
 ): string {
-	return routePrefix ? trimTrailingSlashes(routePrefix) : backendURL;
+	return routePrefix ? trimTrailingSlashes(routePrefix) : projectUrl;
 };
 
 /**
@@ -32,16 +32,16 @@ const prefetchBaseFor = function prefetchBaseFor(
  */
 export const readPrefetchedInitialData =
 	function readPrefetchedInitialData(input: {
-		backendURL: string | undefined;
+		projectUrl: string | undefined;
 		overrides: KernelOverrides | undefined;
 		routePrefix: string | undefined;
 	}): ReturnType<typeof getMatchingPrefetchedInitialData> {
-		if (!input.backendURL || typeof window === 'undefined') {
+		if (!input.projectUrl || typeof window === 'undefined') {
 			return undefined;
 		}
 		return getMatchingPrefetchedInitialData({
-			backendURL: prefetchBaseFor(input.backendURL, input.routePrefix),
 			overrides: input.overrides,
+			projectUrl: prefetchBaseFor(input.projectUrl, input.routePrefix),
 		});
 	};
 
@@ -54,7 +54,7 @@ export const readPrefetchedInitialData =
  *
  * Use it on prerendered or `ssr: false` routes where no loader runs on the
  * server, so the banner still resolves as early as possible. Point
- * `backendURL` at the base the root's init request goes to: the
+ * `projectUrl` at the base the root's init request goes to: the
  * `routePrefix` the state carries when it has one, such as `/api/c15t`,
  * otherwise the backend URL. `ConsentRoot` looks the response up by that
  * base and hands it to the provider as its first init.
@@ -68,7 +68,7 @@ export const readPrefetchedInitialData =
  * export const Route = createRootRoute({
  *   head: () => ({
  *     meta: [{ title: 'My app' }],
- *     ...consentPrefetchHead({ backendURL: 'https://consent.example.com' }),
+ *     ...consentPrefetchHead({ projectUrl: 'https://consent.example.com' }),
  *   }),
  * });
  * ```

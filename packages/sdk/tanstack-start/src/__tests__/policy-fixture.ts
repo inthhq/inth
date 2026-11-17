@@ -13,7 +13,7 @@ export const policyFixture = (
 	values: Partial<ConsentState> = {},
 	rule: Partial<PolicyRule> = {},
 	at: number = Date.now()
-): KernelConfig & { backendURL: string } => {
+): KernelConfig & { projectUrl: string } => {
 	const policy = normalizePolicyRule({
 		id: 'react-test',
 		match: { fallback: true },
@@ -27,7 +27,6 @@ export const policyFixture = (
 		([category]) => category !== 'necessary'
 	);
 	return {
-		backendURL: '/api/c15t',
 		initialPolicyResolution: {
 			fingerprints,
 			matchedBy: 'fallback',
@@ -56,5 +55,6 @@ export const policyFixture = (
 				}
 			: undefined,
 		now,
+		projectUrl: '/api/c15t',
 	};
 };

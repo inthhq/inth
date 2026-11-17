@@ -192,9 +192,9 @@ const plan = function plan(
 	let prefetched: ReturnType<typeof startPrefetchedInit>;
 	if (mode) {
 		prefetched = startPrefetchedInit(mode, options.overrides, request);
-	} else if (options.backendURL !== undefined) {
+	} else if (options.projectUrl !== undefined) {
 		prefetched = startPrefetchedHostedInit(
-			options.backendURL,
+			options.projectUrl,
 			options.overrides,
 			request
 		);

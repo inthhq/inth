@@ -36,8 +36,8 @@ describe('createConsentRoute', () => {
 	test('serves manifest and init from the catch-all segment', async () => {
 		const fetch = upstream();
 		const { GET } = createConsentRoute({
-			backendURL: 'https://consent.example.com',
 			fetch,
+			projectUrl: 'https://consent.example.com',
 		});
 
 		const manifest = await GET(
@@ -60,8 +60,8 @@ describe('createConsentRoute', () => {
 	test('answers 404 for every other path without calling the backend', async () => {
 		const fetch = upstream();
 		const { GET } = createConsentRoute({
-			backendURL: 'https://consent.example.com',
 			fetch,
+			projectUrl: 'https://consent.example.com',
 		});
 
 		const responses = await Promise.all(
@@ -83,7 +83,7 @@ describe('createConsentRoute', () => {
 		vi.stubGlobal('fetch', fetch);
 		const { GET } = createConsentRoute({
 			config: defineConsentConfig({
-				backendURL: 'https://consent.example.com',
+				projectUrl: 'https://consent.example.com',
 				routePrefix: '/api/c15t',
 			}),
 		});
@@ -100,8 +100,8 @@ describe('createConsentRoute', () => {
 	test('forwards consent writes when proxy is on', async () => {
 		const fetch = upstream();
 		const handlers = createConsentRoute({
-			backendURL: 'https://consent.example.com',
 			fetch,
+			projectUrl: 'https://consent.example.com',
 			proxy: true,
 		});
 
@@ -124,16 +124,16 @@ describe('createConsentRoute', () => {
 		// A config passed here skips defineConsentConfig's check.
 		expect(() =>
 			createConsentRoute({
-				backendURL: 'https://consent.example.com',
 				config: { routePrefix: '/' },
+				projectUrl: 'https://consent.example.com',
 			})
 		).toThrow(
 			"@c15t/nextjs: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'."
 		);
 		expect(() =>
 			createPagesConsentRoute({
-				backendURL: 'https://consent.example.com',
 				config: { routePrefix: '/' },
+				projectUrl: 'https://consent.example.com',
 			})
 		).toThrow(
 			"@c15t/nextjs: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'."

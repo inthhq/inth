@@ -1,6 +1,6 @@
 /**
  * The transport factory a provider's options select: `mode` when it is a
- * factory or a `testing()` value, else the hosted backend at `backendURL`.
+ * factory or a `testing()` value, else the hosted backend at `projectUrl`.
  *
  * The provider's module imports this with the hosted transport, which
  * loads with the consent engine: a page that defers the engine does not
@@ -24,24 +24,24 @@ const hostedByURL = new Map<string, HostedModeFactory>();
 /**
  * The hosted factory for a backend URL.
  *
- * @param backendURL - Backend URL, relative or absolute.
+ * @param projectUrl - Backend URL, relative or absolute.
  * @returns The same factory for the same URL.
  * @internal
  */
 export const hostedFor = function hostedFor(
-	backendURL: string
+	projectUrl: string
 ): HostedModeFactory {
-	let mode = hostedByURL.get(backendURL);
+	let mode = hostedByURL.get(projectUrl);
 	if (!mode) {
-		mode = createHostedModeFactory({ backendURL }, createHostedTransport);
-		hostedByURL.set(backendURL, mode);
+		mode = createHostedModeFactory({ projectUrl }, createHostedTransport);
+		hostedByURL.set(projectUrl, mode);
 	}
 	return mode;
 };
 
 /** The options that pick a provider's transport. */
 export interface ModeOptions {
-	backendURL?: string;
+	projectUrl?: string;
 	mode?: ProviderTransportFactory | HostedMode | ConsentTesting;
 }
 
@@ -65,7 +65,7 @@ export const selectedMode = function selectedMode(
 	if (mode && 'transport' in mode && mode.transport) {
 		return mode.transport;
 	}
-	return options.backendURL === undefined
+	return options.projectUrl === undefined
 		? undefined
-		: hostedFor(options.backendURL);
+		: hostedFor(options.projectUrl);
 };

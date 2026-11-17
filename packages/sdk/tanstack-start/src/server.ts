@@ -66,7 +66,7 @@ import type {
 	ServerExperiment,
 } from '@c15t/core';
 import {
-	backendURL as generatedBackendURL,
+	projectUrl as generatedProjectUrl,
 	snapshot as generatedSnapshot,
 } from '@c15t/core/generated';
 import type { ConsentMode } from '@c15t/core/modes';
@@ -172,7 +172,7 @@ export interface ConsentClientConfig {
 	 * Backend URL the browser saves to. The route prefix when the consent
 	 * route proxies saves.
 	 */
-	backendURL?: string;
+	projectUrl?: string;
 	/** The mode, as data. `undefined` means `manifest()`. */
 	mode?: ConsentMode;
 	/** Where the consent route is mounted, such as `/api/c15t`. */
@@ -207,7 +207,7 @@ export interface ResolveConsentOptions extends ConsentRequestOptions {
 	 *   manifest. When it is unavailable, ask the backend's `/init` and log
 	 *   a warning. `manifest({ resolve: 'browser' })` leaves it to the
 	 *   browser.
-	 * - `hosted()`: ask the hosted backend's `/init` at `backendURL`.
+	 * - `hosted()`: ask the hosted backend's `/init` at `projectUrl`.
 	 * - `testing()` from `@c15t/tanstack-start/testing`: the server
 	 *   resolves nothing and the browser resolves a policy with no
 	 *   network; its transport throws in production builds.
@@ -221,7 +221,7 @@ export interface ResolveConsentOptions extends ConsentRequestOptions {
 	 * `https://consent.example.com`. Defaults to the URL `consentManifest()`
 	 * read from `VITE_C15T_BACKEND_URL` or `VITE_INTH_PROJECT_URL`. The
 	 * helper reads
-	 * `${backendURL}/manifest` through the in-process manifest cache and
+	 * `${projectUrl}/manifest` through the in-process manifest cache and
 	 * resolves init locally, so the first paint already carries policy, UI,
 	 * translations, and IAB metadata.
 	 *
@@ -233,7 +233,7 @@ export interface ResolveConsentOptions extends ConsentRequestOptions {
 	 * unset) and returns the cookie-and-headers state instead. Other
 	 * relative URLs are fetched.
 	 */
-	backendURL?: string;
+	projectUrl?: string;
 
 	/**
 	 * Inline manifest for hosts that already loaded it, such as an
@@ -268,7 +268,7 @@ export interface ResolveConsentOptions extends ConsentRequestOptions {
 	cookieNames?: readonly string[];
 
 	/**
-	 * Resolve a relative `backendURL` or `manifestURL` against the
+	 * Resolve a relative `projectUrl` or `manifestUrl` against the
 	 * request's `x-forwarded-host` and `x-forwarded-proto` instead of
 	 * `request.url`. Off by default because those headers are
 	 * client-controlled unless a trusted proxy strips them; turn it on only
@@ -335,7 +335,7 @@ export interface ResolveConsentOptions extends ConsentRequestOptions {
 	 * browser then gets init from `${routePrefix}/init`, and saves assert the
 	 * decision inputs it resolved. Deferred public vendor lists load through
 	 * the route, and the render never fetches a URL under the prefix on its
-	 * own origin. Unset, the browser gets init from `${backendURL}/init`.
+	 * own origin. Unset, the browser gets init from `${projectUrl}/init`.
 	 * Same option and default (none) as Next.js
 	 * `defineConsentConfig({ routePrefix })`. `/` is rejected: a catch-all
 	 * route at the site root would catch every page.
@@ -345,8 +345,8 @@ export interface ResolveConsentOptions extends ConsentRequestOptions {
 	/**
 	 * The route at {@link routePrefix} was created with
 	 * `createConsentRoute({ proxy: true })`, so the browser sends saves
-	 * through it instead of straight to `backendURL`, or to `hosted()`'s
-	 * own `backendURL`, which the server keeps using. Needs `routePrefix`.
+	 * through it instead of straight to `projectUrl`, or to `hosted()`'s
+	 * own `projectUrl`, which the server keeps using. Needs `routePrefix`.
 	 *
 	 * @default false
 	 */
@@ -365,10 +365,10 @@ export interface ResolveConsentOptions extends ConsentRequestOptions {
 /** What the server resolves for each mode. */
 const serverModeOptions = function serverModeOptions(
 	options: ResolveConsentOptions,
-	backendURL: string | undefined
+	projectUrl: string | undefined
 ): Pick<
 	ResolveRequestConsentOptions,
-	'backendURL' | 'manifest' | 'manifestURL' | 'mode'
+	'projectUrl' | 'manifest' | 'manifestUrl' | 'mode'
 > {
 	const { mode: selected } = options;
 	if (selected?.type === 'testing') {
@@ -379,8 +379,8 @@ const serverModeOptions = function serverModeOptions(
 	// A snapshot passed in is a manifest to resolve from, as in Next.js.
 	if (selected?.type === 'hosted' && options.snapshot === undefined) {
 		return {
-			backendURL,
-			mode: backendURL ? 'hosted' : undefined,
+			mode: projectUrl ? 'hosted' : undefined,
+			projectUrl,
 		};
 	}
 	const mode = selected?.type === 'manifest' ? selected : undefined;
@@ -393,12 +393,12 @@ const serverModeOptions = function serverModeOptions(
 	if (!snapshot && mode?.source !== 'runtime') {
 		snapshot = 'snapshot' in options ? options.snapshot : generatedSnapshot;
 	}
-	const manifestURL = mode?.manifestURL;
+	const manifestUrl = mode?.manifestUrl;
 	return {
-		backendURL,
 		manifest: snapshot,
-		manifestURL,
-		mode: backendURL || manifestURL || snapshot ? 'manifest' : undefined,
+		manifestUrl,
+		mode: projectUrl || manifestUrl || snapshot ? 'manifest' : undefined,
+		projectUrl,
 	};
 };
 
@@ -408,7 +408,7 @@ const serverModeOptions = function serverModeOptions(
  */
 const clientConfigFor = function clientConfigFor(
 	options: ResolveConsentOptions,
-	backendURL: string | undefined,
+	projectUrl: string | undefined,
 	routePrefix: string | undefined
 ): ConsentClientConfig {
 	if (options.proxy && routePrefix === undefined) {
@@ -417,9 +417,9 @@ const clientConfigFor = function clientConfigFor(
 		);
 	}
 	const config: ConsentClientConfig = {};
-	const clientBackendURL = options.proxy ? routePrefix : backendURL;
-	if (clientBackendURL !== undefined) {
-		config.backendURL = clientBackendURL;
+	const clientProjectUrl = options.proxy ? routePrefix : projectUrl;
+	if (clientProjectUrl !== undefined) {
+		config.projectUrl = clientProjectUrl;
 	}
 	const { mode } = options;
 	if (mode?.type === 'manifest' && mode.resolve !== 'browser') {
@@ -446,12 +446,12 @@ const readRoutePrefix = function readRoutePrefix(
 const resolveConsentState = async function resolveConsentState(
 	options: ResolveConsentOptions
 ): Promise<ConsentState> {
-	const backendURL = options.backendURL ?? generatedBackendURL;
+	const projectUrl = options.projectUrl ?? generatedProjectUrl;
 	const routePrefix = readRoutePrefix(options);
-	const client = clientConfigFor(options, backendURL, routePrefix);
+	const client = clientConfigFor(options, projectUrl, routePrefix);
 	const request = await readCurrentRequest(options.request);
 	const handled = await handledRequestFor(request);
-	const server = serverModeOptions(options, backendURL);
+	const server = serverModeOptions(options, projectUrl);
 	const shared = options.shared ?? isPrerendering();
 	if (!shared) {
 		// The middleware keeps this HTML out of shared caches.

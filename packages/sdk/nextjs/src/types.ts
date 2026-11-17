@@ -67,7 +67,7 @@ export interface ConsentClientOptions {
 	 */
 	options?: Omit<
 		ConsentProviderOptions,
-		| 'backendURL'
+		| 'projectUrl'
 		| 'mode'
 		| 'clearOnRevocation'
 		| 'networkBlocker'

@@ -54,7 +54,7 @@ import type {
 	ConsentRuntimeModules,
 	EarlyInitMode,
 	ResolveStreamedInit,
-	WithBackendURL,
+	WithProjectUrl,
 } from '@c15t/core/runtime/provider';
 import type { ConsentTesting } from '@c15t/core/testing';
 import { applyThemeSlots } from '@c15t/ui/utils';
@@ -183,16 +183,16 @@ export interface ConsentProviderOptions
 	 *
 	 * @example
 	 * ```tsx
-	 * <ConsentProvider options={{ backendURL: '/api/c15t' }}>
+	 * <ConsentProvider options={{ projectUrl: '/api/c15t' }}>
 	 *   {children}
 	 * </ConsentProvider>
 	 * ```
 	 */
-	backendURL?: string;
+	projectUrl?: string;
 	/**
 	 * How the visitor's policy is resolved. Initial-only.
 	 *
-	 * - Omitted, or `hosted()`: ask `${backendURL}/init`.
+	 * - Omitted, or `hosted()`: ask `${projectUrl}/init`.
 	 * - `manifest()` from `c15t/react`: resolve from the backend's consent
 	 *   manifest in the browser, falling back to `/init` with a warning
 	 *   when the manifest is unavailable.
@@ -250,9 +250,9 @@ export interface ConsentProviderOptions
 	 * @example
 	 * ```tsx
 	 * // app/layout.tsx — stays synchronous, so the shell prerenders.
-	 * const config = resolveConsent({ backendURL });
+	 * const config = resolveConsent({ projectUrl });
 	 * return (
-	 *   <ConsentProvider options={{ backendURL, prefetch: config }}>
+	 *   <ConsentProvider options={{ projectUrl, prefetch: config }}>
 	 *     {children}
 	 *   </ConsentProvider>
 	 * );
@@ -362,7 +362,7 @@ export interface ConsentProviderOptions
 /**
  * Options accepted when an external runtime supplies the kernel.
  *
- * `backendURL` and `mode` belong to whoever created the
+ * `projectUrl` and `mode` belong to whoever created the
  * runtime; the provider ignores them.
  * Everything the component tree still owns — theme, slots, legal links —
  * is unchanged.
@@ -387,8 +387,8 @@ export type ExternalRuntimeProviderOptions = Omit<
 
 /** The provider builds and owns its own kernel. */
 export interface OwnedRuntimeProviderProps {
-	/** Requires `backendURL` unless `mode` is `testing()` or `enabled` is `false`. */
-	options: WithBackendURL<ConsentProviderOptions>;
+	/** Requires `projectUrl` unless `mode` is `testing()` or `enabled` is `false`. */
+	options: WithProjectUrl<ConsentProviderOptions>;
 	children: ReactNode;
 	runtime?: undefined;
 }
@@ -1002,7 +1002,7 @@ const isPromiseLike = function isPromiseLike(
  * ```tsx
  * import { createConsentRuntime } from '@c15t/core/runtime';
  *
- * const runtime = createConsentRuntime({ backendURL: '/api/c15t' });
+ * const runtime = createConsentRuntime({ projectUrl: '/api/c15t' });
  * runtime.start();
  *
  * <ConsentProvider runtime={runtime} options={{ theme }}>

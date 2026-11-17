@@ -37,13 +37,13 @@ describe('resolveConsent wiring', () => {
 	test('the server function resolves a build-time snapshot without runtime policy requests', async () => {
 		const manifest = await loadStaticManifest({
 			fetch: manifestFetch(),
-			manifestURL: 'https://consent.example.com/manifest',
+			manifestUrl: 'https://consent.example.com/manifest',
 		});
 		const fetch = vi.fn<typeof globalThis.fetch>();
 		const handler = createConsentStateHandler({
-			backendURL: 'https://consent.example.com',
 			fetch,
 			mode: { type: 'manifest' },
+			projectUrl: 'https://consent.example.com',
 			request: requestOf({
 				'accept-language': 'de-DE',
 				'sec-gpc': '1',
@@ -68,10 +68,10 @@ describe('resolveConsent wiring', () => {
 	test('resolves the backend manifest for the request', async () => {
 		const fetch = manifestFetch();
 		const state = await resolveConsent({
-			backendURL: 'https://consent.example.com',
 			cache: createManifestCache(),
 			fetch,
 			mode: { type: 'manifest' },
+			projectUrl: 'https://consent.example.com',
 			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
 		});
 		expect(String(fetch.mock.calls[0]?.[0])).toBe(
@@ -89,9 +89,9 @@ describe('resolveConsent wiring', () => {
 			Promise.resolve(new Response(null, { status: 204 }))
 		);
 		const tab = await resolveConsent({
-			backendURL: 'https://consent.example.com',
 			fetch: sessions,
 			journey: 'tab',
+			projectUrl: 'https://consent.example.com',
 			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
 			snapshot: MANIFEST_FIXTURE,
 		});
@@ -106,7 +106,7 @@ describe('resolveConsent wiring', () => {
 		for (const off of [{ journey: false as const }]) {
 			// oxlint-disable-next-line no-await-in-loop -- One render at a time.
 			const state = await resolveConsent({
-				backendURL: 'https://consent.example.com',
+				projectUrl: 'https://consent.example.com',
 				request: requestOf({ 'x-vercel-ip-country': 'DE' }),
 				snapshot: MANIFEST_FIXTURE,
 				...off,
@@ -120,7 +120,7 @@ describe('resolveConsent wiring', () => {
 		const request = requestOf({ 'x-vercel-ip-country': 'US' });
 		rememberConsentInputs(request, { country: 'DE' });
 		const state = await resolveConsent({
-			backendURL: 'https://consent.example.com',
+			projectUrl: 'https://consent.example.com',
 			request,
 			snapshot: MANIFEST_FIXTURE,
 		});
@@ -134,9 +134,9 @@ describe('resolveConsent wiring', () => {
 		const fetch = manifestFetch();
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 		const handler = createConsentStateHandler({
-			backendURL: '/consent',
 			cache: createManifestCache(),
 			fetch,
+			projectUrl: '/consent',
 			request: requestOf({ cookie: 'c15t=c.necessary:1,c.marketing:1,i.t:1' }),
 			routePrefix: '/consent',
 		});
@@ -148,15 +148,15 @@ describe('resolveConsent wiring', () => {
 		warn.mockRestore();
 	});
 
-	test('fetches a relative backendURL that is not the route prefix', async () => {
+	test('fetches a relative projectUrl that is not the route prefix', async () => {
 		// A backend mounted elsewhere on the app's origin, beside the consent
 		// route, as the TanStack Start browser bench's manifest-ssr arm does.
 		const fetch = manifestFetch();
 		const state = await resolveConsent({
-			backendURL: '/api/backend',
 			cache: createManifestCache(),
 			fetch,
 			mode: { type: 'manifest' },
+			projectUrl: '/api/backend',
 			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
 			routePrefix: '/api/c15t',
 			snapshot: undefined,
@@ -173,9 +173,9 @@ describe('resolveConsent wiring', () => {
 	test('never fetches the default /api/c15t route, with no routePrefix set', async () => {
 		const fetch = manifestFetch();
 		const state = await createConsentStateHandler({
-			backendURL: '/api/c15t',
 			cache: createManifestCache(),
 			fetch,
+			projectUrl: '/api/c15t',
 			request: requestOf({ cookie: 'c15t=c.necessary:1,c.marketing:1,i.t:1' }),
 		})();
 		expect(fetch).not.toHaveBeenCalled();
@@ -186,9 +186,9 @@ describe('resolveConsent wiring', () => {
 		vi.stubEnv('TSS_PRERENDERING', 'true');
 		const fetch = manifestFetch();
 		const state = await resolveConsent({
-			backendURL: 'https://consent.example.com',
 			cache: createManifestCache(),
 			fetch,
+			projectUrl: 'https://consent.example.com',
 			request: requestOf({
 				cookie: 'c15t=c.necessary:1,c.marketing:1,i.t:1',
 				'x-vercel-ip-country': 'DE',
@@ -196,7 +196,7 @@ describe('resolveConsent wiring', () => {
 		});
 		expect(fetch).not.toHaveBeenCalled();
 		// Only what the browser needs to resolve the visitor itself.
-		expect(state).toEqual({ backendURL: 'https://consent.example.com' });
+		expect(state).toEqual({ projectUrl: 'https://consent.example.com' });
 	});
 
 	test('a deferred vendor list points at the route prefix, trailing slash trimmed', async () => {
@@ -220,7 +220,7 @@ describe('resolveConsent wiring', () => {
 			)
 		);
 		const state = await resolveConsent({
-			backendURL: 'https://consent.example.com',
+			projectUrl: 'https://consent.example.com',
 			request: requestOf(),
 			routePrefix: '/api/consent/',
 			snapshot: {

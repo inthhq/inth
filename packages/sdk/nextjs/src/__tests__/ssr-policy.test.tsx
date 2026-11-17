@@ -158,7 +158,7 @@ describe('Next.js request policy and RSC hydration', () => {
 				)
 			);
 			const config = await resolveConsent({
-				config: { backendURL: 'https://consent.example.com', mode: hosted() },
+				config: { mode: hosted(), projectUrl: 'https://consent.example.com' },
 				cookieName: storageKey,
 				fetch,
 				now,
@@ -330,7 +330,7 @@ describe('Next.js request policy and RSC hydration', () => {
 		vi.stubGlobal('fetch', fetch);
 		try {
 			window.eval(
-				buildPrefetchScript({ backendURL: '/api/next-prefetch-test' })
+				buildPrefetchScript({ projectUrl: '/api/next-prefetch-test' })
 			);
 			container = document.createElement('div');
 			document.body.append(container);
@@ -342,7 +342,7 @@ describe('Next.js request policy and RSC hydration', () => {
 			root.render(
 				<ConsentRoot
 					state={{}}
-					config={{ backendURL: '/api/next-prefetch-test', mode: hosted() }}
+					config={{ mode: hosted(), projectUrl: '/api/next-prefetch-test' }}
 					persistence={false}
 				>
 					<Probe />

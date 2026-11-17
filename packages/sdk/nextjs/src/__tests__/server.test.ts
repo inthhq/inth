@@ -259,8 +259,8 @@ describe('resolveConsent: fluid-compute safety', () => {
 		const resolveVisitor = (prepared: KernelConfig) =>
 			baseResolveConsent({
 				config: defineConsentConfig({
-					backendURL: 'https://consent.example.com',
 					mode: hosted(),
+					projectUrl: 'https://consent.example.com',
 				}),
 				fetch,
 				request: visitorRequest(visitorCookie(prepared)),
@@ -298,8 +298,8 @@ describe('resolveConsent: manifest session reports', () => {
 		headerStore.set('user-agent', 'Mozilla/5.0');
 
 		const state = await resolveConsent({
-			backendURL: 'https://consent.example.com',
 			fetch: fetchSpy,
+			projectUrl: 'https://consent.example.com',
 			snapshot: MANIFEST_FIXTURE,
 			waitUntil: (task) => {
 				registered.push(task);
@@ -333,8 +333,8 @@ describe('resolveConsent: manifest session reports', () => {
 		headerStore.set('next-router-prefetch', '1');
 		headerStore.set('x-vercel-ip-country', 'DE');
 		await resolveConsent({
-			backendURL: 'https://consent.example.com',
 			fetch: fetchSpy,
+			projectUrl: 'https://consent.example.com',
 			snapshot: MANIFEST_FIXTURE,
 		});
 		expect(fetchSpy).not.toHaveBeenCalled();

@@ -9,14 +9,14 @@ import { defineConsentConfig } from '../config';
 
 test('normalizes without checking', () => {
 	const config = defineConsentConfig({
-		backendURL: 'https://consent.example.com',
 		journey: 'session' as never,
+		projectUrl: 'https://consent.example.com',
 		routePrefix: '/api/c15t/',
 	});
 
 	expect(config).toEqual({
-		backendURL: 'https://consent.example.com',
 		journey: 'session',
+		projectUrl: 'https://consent.example.com',
 		routePrefix: '/api/c15t',
 	});
 	expect(Object.isFrozen(config)).toBe(true);

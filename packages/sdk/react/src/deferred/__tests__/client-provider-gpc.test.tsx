@@ -79,11 +79,11 @@ const bannerRoot = () =>
 let answer: (value: unknown) => void = () => undefined;
 const prefetch = function prefetch() {
 	const requestContext = {
-		backendURL: BACKEND,
 		country: null,
 		credentials: 'same-origin',
 		gpc: true,
 		language: null,
+		projectUrl: BACKEND,
 		region: null,
 	};
 	const promise = new Promise((resolve) => {
@@ -129,9 +129,9 @@ test('the stand-in reads the browser signal, and shows no banner the signal answ
 	const screen = await render(
 		<ConsentProvider
 			options={{
-				backendURL: BACKEND,
 				consentCategories: ['necessary', 'measurement', 'marketing'],
 				journey: false,
+				projectUrl: BACKEND,
 			}}
 		>
 			<Probe />

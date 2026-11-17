@@ -38,8 +38,8 @@
  *
  * The backend URL comes from `consentManifest()` in `vite.config.ts`, and
  * the state carries it, the mode and the route prefix to `ConsentRoot`.
- * The browser gets init from `${backendURL}/init` and saves to
- * `${backendURL}/subjects`. Apps that mount `createConsentRoute()` at
+ * The browser gets init from `${projectUrl}/init` and saves to
+ * `${projectUrl}/subjects`. Apps that mount `createConsentRoute()` at
  * `/api/c15t/$` pass `routePrefix: '/api/c15t'` to
  * `createConsentStateHandler()` to resolve init on their own origin, the
  * same option Next.js `defineConsentConfig` takes. With

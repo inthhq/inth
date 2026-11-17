@@ -30,7 +30,7 @@ const renderRoot = (props: Partial<Parameters<typeof ConsentRoot>[0]> = {}) =>
 
 test('stays quiet with a config prop', async () => {
 	const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-	await renderRoot({ config: { backendURL: 'https://consent.example.com' } });
+	await renderRoot({ config: { projectUrl: 'https://consent.example.com' } });
 
 	expect(warn).not.toHaveBeenCalled();
 });
@@ -64,7 +64,7 @@ test('throws with no config and no NEXT_PUBLIC_C15T_BACKEND_URL', () => {
 			</ConsentRoot>
 		)
 	).toThrow(
-		'@c15t/nextjs: `backendURL` is required. Set NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL), or `backendURL` in c15t.config.ts.'
+		'@c15t/nextjs: `projectUrl` is required. Set NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL), or `projectUrl` in c15t.config.ts.'
 	);
 });
 

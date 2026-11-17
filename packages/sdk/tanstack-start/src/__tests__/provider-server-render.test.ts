@@ -17,7 +17,7 @@ test('a server render of a hosted provider sends no /init', () => {
 			ConsentProvider,
 			{
 				options: {
-					backendURL: 'https://consent.example/api/c15t',
+					projectUrl: 'https://consent.example/api/c15t',
 				},
 			},
 			createElement('main', null, 'Shell')

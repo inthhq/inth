@@ -24,7 +24,7 @@ type NextFetchInit = RequestInit & {
  */
 export interface NextConsentRouteOptions extends ConsentSourceOptions {
 	/**
-	 * Resolve a relative `backendURL` or `manifestURL` against the request's
+	 * Resolve a relative `projectUrl` or `manifestUrl` against the request's
 	 * `forwarded`, `x-forwarded-host` and `x-forwarded-proto` headers instead
 	 * of the request URL. Any client can send those headers, so set this
 	 * only behind a proxy that sets them and drops incoming ones.
@@ -124,12 +124,12 @@ const createHandler = function createHandler(options: NextConsentRouteOptions) {
 			const source = resolveConsentSource(options);
 			handler = createConsentRouteHandler({
 				adapter: '@c15t/nextjs',
-				backendURL: source.backendURL,
 				fetch: options.fetch,
 				fetchGvl: options.fetchGvl,
 				manifest: source.snapshot,
 				manifestFetchInit: { next } as NextFetchInit,
-				manifestURL: source.manifestURL,
+				manifestUrl: source.manifestUrl,
+				projectUrl: source.projectUrl,
 				proxy: options.proxy,
 				trustForwardedHeaders: options.trustForwardedHeaders,
 			});
@@ -210,7 +210,7 @@ const readCatchAllPath = async function readCatchAllPath(
  * @param options - Overrides of `c15t.config.ts`, caching, and `proxy`.
  * @returns `GET`, plus `POST`, `PATCH`, `PUT`, `DELETE` and `OPTIONS` when
  * `proxy` is on. A handler throws when it has no manifest, backend URL or
- * `manifestURL` to read.
+ * `manifestUrl` to read.
  * @throws {TypeError} When `options.config` sets `routePrefix: '/'`.
  * @example
  * ```ts
