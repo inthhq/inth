@@ -1,0 +1,21 @@
+# Leaves c15t preferences without saving: taps Back, Cancel or Close, and
+# confirms Discard if there were unsaved changes. Preferences opened from the
+# first layer return to it; preferences opened from the app close.
+#
+#   - runFlow: ../node_modules/@c15t/react-native/maestro/close-preferences.yaml
+# Maestro needs an appId in every flow file; the calling flow's appId is used.
+appId: ${APP_ID}
+---
+- tapOn:
+    id: 'c15t.prefs.cancel'
+- runFlow:
+    when:
+      visible:
+        id: 'c15t.prefs.discard.confirm'
+    commands:
+      - tapOn:
+          id: 'c15t.prefs.discard.confirm'
+- extendedWaitUntil:
+    notVisible:
+      id: "c15t\\.(prefs|iab)\\.save"
+    timeout: ${C15T_TIMEOUT || 15000}

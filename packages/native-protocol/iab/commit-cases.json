@@ -1,0 +1,435 @@
+{
+	"cases": [
+		{
+			"choices": {
+				"publisherConsents": [],
+				"publisherCustomConsents": [],
+				"publisherCustomLegitimateInterests": [],
+				"publisherLegitimateInterests": [],
+				"purposeConsents": [1, 2],
+				"purposeLegitimateInterests": [2, 7],
+				"purposeObjections": [],
+				"specialFeatureOptIns": [],
+				"vendorConsents": [1],
+				"vendorLegitimateInterests": [1, 2],
+				"vendorObjections": []
+			},
+			"configuration": {
+				"cmpId": 53,
+				"cmpVersion": 7,
+				"consentLanguage": "EN",
+				"consentScreen": 1,
+				"numCustomPurposes": 2,
+				"publisherCountryCode": "GB",
+				"publisherRestrictions": []
+			},
+			"id": "accept",
+			"tcString": "CQX48QAQX48QAA1AHBENAqFgAMAAAEIAAAwIAAoABMAA.IABM.YAAAAAAAAQAA"
+		},
+		{
+			"choices": {
+				"publisherConsents": [],
+				"publisherCustomConsents": [],
+				"publisherCustomLegitimateInterests": [],
+				"publisherLegitimateInterests": [],
+				"purposeConsents": [],
+				"purposeLegitimateInterests": [],
+				"purposeObjections": [],
+				"specialFeatureOptIns": [],
+				"vendorConsents": [],
+				"vendorLegitimateInterests": [],
+				"vendorObjections": []
+			},
+			"configuration": {
+				"cmpId": 53,
+				"cmpVersion": 7,
+				"consentLanguage": "EN",
+				"consentScreen": 1,
+				"numCustomPurposes": 2,
+				"publisherCountryCode": "GB",
+				"publisherRestrictions": []
+			},
+			"id": "reject",
+			"tcString": "CQX48QAQX48QAA1AHBENAqFgAAAAAAAAAAwIAAAAAAAA.IABM.YAAAAAAAAQAA"
+		},
+		{
+			"choices": {
+				"publisherConsents": [],
+				"publisherCustomConsents": [2],
+				"publisherCustomLegitimateInterests": [],
+				"publisherLegitimateInterests": [],
+				"purposeConsents": [1],
+				"purposeLegitimateInterests": [7],
+				"purposeObjections": [2],
+				"specialFeatureOptIns": [1],
+				"vendorConsents": [1],
+				"vendorLegitimateInterests": [],
+				"vendorObjections": [2]
+			},
+			"configuration": {
+				"cmpId": 53,
+				"cmpVersion": 7,
+				"consentLanguage": "EN",
+				"consentScreen": 1,
+				"numCustomPurposes": 2,
+				"publisherCountryCode": "GB",
+				"publisherRestrictions": []
+			},
+			"id": "custom",
+			"tcString": "CQX48QAQX48QAA1AHBENAqFoAIAAAAIAAAwIAAoAAAAA.IABM.YAAAAAAAASAA"
+		},
+		{
+			"choices": {
+				"publisherConsents": [2],
+				"publisherCustomConsents": [],
+				"publisherCustomLegitimateInterests": [],
+				"publisherLegitimateInterests": [],
+				"purposeConsents": [2],
+				"purposeLegitimateInterests": [],
+				"purposeObjections": [],
+				"specialFeatureOptIns": [],
+				"vendorConsents": [2],
+				"vendorLegitimateInterests": [],
+				"vendorObjections": []
+			},
+			"configuration": {
+				"cmpId": 53,
+				"cmpVersion": 7,
+				"consentLanguage": "EN",
+				"consentScreen": 1,
+				"numCustomPurposes": 2,
+				"publisherCountryCode": "GB",
+				"publisherRestrictions": [
+					{
+						"purposeId": 2,
+						"type": 1,
+						"vendorIds": [2]
+					}
+				]
+			},
+			"id": "restriction",
+			"tcString": "CQX48QAQX48QAA1AHBENAqFgAEAAAAAAAAwIABEAAAAISACAAIAA.IABM.aAAAAAAAAQAA"
+		},
+		{
+			"choices": {
+				"publisherConsents": [],
+				"publisherCustomConsents": [],
+				"publisherCustomLegitimateInterests": [],
+				"publisherLegitimateInterests": [],
+				"purposeConsents": [],
+				"purposeLegitimateInterests": [],
+				"purposeObjections": [],
+				"specialFeatureOptIns": [],
+				"vendorConsents": [],
+				"vendorLegitimateInterests": [],
+				"vendorObjections": []
+			},
+			"configuration": {
+				"cmpId": 53,
+				"cmpVersion": 7,
+				"consentLanguage": "EN",
+				"consentScreen": 1,
+				"numCustomPurposes": 2,
+				"publisherCountryCode": "GB",
+				"publisherRestrictions": [
+					{
+						"purposeId": 2,
+						"type": 0,
+						"vendorIds": [2]
+					},
+					{
+						"purposeId": 2,
+						"type": 0,
+						"vendorIds": [1]
+					},
+					{
+						"purposeId": 7,
+						"type": 0,
+						"vendorIds": [2]
+					}
+				]
+			},
+			"id": "restriction-ranges",
+			"tcString": "CQX48QAQX48QAA1AHBENAqFgAAAAAAAAAAwIAAAAAABBAAMAAQACHAAQABAA.IABM.YAAAAAAAAQAA"
+		},
+		{
+			"choices": {
+				"publisherConsents": [1, 2, 7],
+				"publisherCustomConsents": [1, 2],
+				"publisherCustomLegitimateInterests": [1, 2],
+				"publisherLegitimateInterests": [2, 7],
+				"purposeConsents": [1, 2, 7],
+				"purposeLegitimateInterests": [2, 7],
+				"purposeObjections": [],
+				"specialFeatureOptIns": [1],
+				"vendorConsents": [1],
+				"vendorLegitimateInterests": [1, 2],
+				"vendorObjections": []
+			},
+			"configuration": {
+				"cmpId": 53,
+				"cmpVersion": 7,
+				"consentLanguage": "EN",
+				"consentScreen": 1,
+				"numCustomPurposes": 2,
+				"publisherCountryCode": "GB",
+				"publisherRestrictions": []
+			},
+			"id": "publisher-purposes",
+			"tcString": "CQX48QAQX48QAA1AHBENAqFoAMIAAEIAAAwIAAoABMAA.IABM.eEAACEAAAXgA"
+		}
+	],
+	"gvl": {
+		"features": {},
+		"gvlSpecificationVersion": 2,
+		"lastUpdated": "2025-09-17T00:00:00Z",
+		"purposes": {
+			"1": {
+				"description": "Purpose 1",
+				"id": 1,
+				"name": "Purpose 1"
+			},
+			"2": {
+				"description": "Purpose 2",
+				"id": 2,
+				"name": "Purpose 2"
+			},
+			"7": {
+				"description": "Purpose 7",
+				"id": 7,
+				"name": "Purpose 7"
+			}
+		},
+		"specialFeatures": {
+			"1": {
+				"description": "Purpose 1",
+				"id": 1,
+				"name": "Purpose 1"
+			}
+		},
+		"specialPurposes": {},
+		"stacks": {},
+		"tcfPolicyVersion": 5,
+		"vendorListVersion": 42,
+		"vendors": {
+			"1": {
+				"cookieMaxAgeSeconds": 0,
+				"features": [],
+				"flexiblePurposes": [2],
+				"id": 1,
+				"legIntPurposes": [2],
+				"name": "Vendor 1",
+				"policyUrl": "https://vendor.example/privacy",
+				"purposes": [1, 2],
+				"specialFeatures": [],
+				"specialPurposes": [],
+				"usesCookies": false,
+				"usesNonCookieAccess": false
+			},
+			"2": {
+				"cookieMaxAgeSeconds": 0,
+				"features": [],
+				"flexiblePurposes": [2],
+				"id": 2,
+				"legIntPurposes": [2, 7],
+				"name": "Vendor 2",
+				"policyUrl": "https://vendor.example/privacy",
+				"purposes": [],
+				"specialFeatures": [],
+				"specialPurposes": [],
+				"usesCookies": false,
+				"usesNonCookieAccess": false
+			}
+		}
+	},
+	"invalidChoices": [
+		{
+			"publisherConsents": [],
+			"publisherCustomConsents": [],
+			"publisherCustomLegitimateInterests": [],
+			"publisherLegitimateInterests": [],
+			"purposeConsents": [25],
+			"purposeLegitimateInterests": [],
+			"purposeObjections": [],
+			"specialFeatureOptIns": [],
+			"vendorConsents": [],
+			"vendorLegitimateInterests": [],
+			"vendorObjections": []
+		},
+		{
+			"publisherConsents": [],
+			"publisherCustomConsents": [],
+			"publisherCustomLegitimateInterests": [],
+			"publisherLegitimateInterests": [],
+			"purposeConsents": [],
+			"purposeLegitimateInterests": [1],
+			"purposeObjections": [],
+			"specialFeatureOptIns": [],
+			"vendorConsents": [],
+			"vendorLegitimateInterests": [],
+			"vendorObjections": []
+		},
+		{
+			"publisherConsents": [],
+			"publisherCustomConsents": [],
+			"publisherCustomLegitimateInterests": [],
+			"publisherLegitimateInterests": [],
+			"purposeConsents": [],
+			"purposeLegitimateInterests": [],
+			"purposeObjections": [],
+			"specialFeatureOptIns": [],
+			"vendorConsents": [999],
+			"vendorLegitimateInterests": [],
+			"vendorObjections": []
+		},
+		{
+			"publisherConsents": [],
+			"publisherCustomConsents": [],
+			"publisherCustomLegitimateInterests": [],
+			"publisherLegitimateInterests": [],
+			"purposeConsents": [2, 2],
+			"purposeLegitimateInterests": [],
+			"purposeObjections": [],
+			"specialFeatureOptIns": [],
+			"vendorConsents": [],
+			"vendorLegitimateInterests": [],
+			"vendorObjections": []
+		},
+		{
+			"publisherConsents": [],
+			"publisherCustomConsents": [],
+			"publisherCustomLegitimateInterests": [],
+			"publisherLegitimateInterests": [],
+			"purposeConsents": [],
+			"purposeLegitimateInterests": [],
+			"purposeObjections": [],
+			"specialFeatureOptIns": [],
+			"vendorConsents": [],
+			"vendorLegitimateInterests": [1],
+			"vendorObjections": [1]
+		},
+		{
+			"publisherConsents": [],
+			"publisherCustomConsents": [],
+			"publisherCustomLegitimateInterests": [],
+			"publisherLegitimateInterests": [],
+			"purposeConsents": [],
+			"purposeLegitimateInterests": [2],
+			"purposeObjections": [2],
+			"specialFeatureOptIns": [],
+			"vendorConsents": [],
+			"vendorLegitimateInterests": [],
+			"vendorObjections": []
+		},
+		{
+			"publisherConsents": [],
+			"publisherCustomConsents": [3],
+			"publisherCustomLegitimateInterests": [],
+			"publisherLegitimateInterests": [],
+			"purposeConsents": [],
+			"purposeLegitimateInterests": [],
+			"purposeObjections": [],
+			"specialFeatureOptIns": [],
+			"vendorConsents": [],
+			"vendorLegitimateInterests": [],
+			"vendorObjections": []
+		}
+	],
+	"invalidConfigurations": [
+		{
+			"cmpId": 0,
+			"cmpVersion": 7,
+			"consentLanguage": "EN",
+			"consentScreen": 1,
+			"numCustomPurposes": 2,
+			"publisherCountryCode": "GB",
+			"publisherRestrictions": []
+		},
+		{
+			"cmpId": 1,
+			"cmpVersion": 7,
+			"consentLanguage": "EN",
+			"consentScreen": 1,
+			"numCustomPurposes": 2,
+			"publisherCountryCode": "GB",
+			"publisherRestrictions": []
+		},
+		{
+			"cmpId": 4096,
+			"cmpVersion": 7,
+			"consentLanguage": "EN",
+			"consentScreen": 1,
+			"numCustomPurposes": 2,
+			"publisherCountryCode": "GB",
+			"publisherRestrictions": []
+		},
+		{
+			"cmpId": 53,
+			"cmpVersion": 7,
+			"consentLanguage": "english",
+			"consentScreen": 1,
+			"numCustomPurposes": 2,
+			"publisherCountryCode": "GB",
+			"publisherRestrictions": []
+		},
+		{
+			"cmpId": 53,
+			"cmpVersion": 7,
+			"consentLanguage": "EN",
+			"consentScreen": 1,
+			"numCustomPurposes": 2,
+			"publisherCountryCode": "gB",
+			"publisherRestrictions": []
+		},
+		{
+			"cmpId": 53,
+			"cmpVersion": 7,
+			"consentLanguage": "EN",
+			"consentScreen": 1,
+			"numCustomPurposes": 2,
+			"publisherCountryCode": "GB",
+			"publisherRestrictions": [
+				{
+					"purposeId": 1,
+					"type": 2,
+					"vendorIds": [1]
+				}
+			]
+		},
+		{
+			"cmpId": 53,
+			"cmpVersion": 7,
+			"consentLanguage": "EN",
+			"consentScreen": 1,
+			"numCustomPurposes": 2,
+			"publisherCountryCode": "GB",
+			"publisherRestrictions": [
+				{
+					"purposeId": 7,
+					"type": 1,
+					"vendorIds": [2]
+				}
+			]
+		},
+		{
+			"cmpId": 53,
+			"cmpVersion": 7,
+			"consentLanguage": "EN",
+			"consentScreen": 1,
+			"numCustomPurposes": 2,
+			"publisherCountryCode": "GB",
+			"publisherRestrictions": [
+				{
+					"purposeId": 7,
+					"type": 0,
+					"vendorIds": [1]
+				}
+			]
+		}
+	],
+	"now": 1758100000000,
+	"oracle": {
+		"package": "@iabtechlabtcf/core",
+		"version": "1.5.22"
+	}
+}

@@ -1,0 +1,30 @@
+{
+	"title": "@c15t/dev-tools: Kernel-first consent debugging",
+	"description": "Framework-neutral developer tools for inspecting c15t v3 consent state, resolved policy, location, IAB state, kernel events, and actions.",
+	"features": [
+		"Explicit ConsentKernel binding with no global store discovery",
+		"Isolated state and event history for multiple providers",
+		"Framework-neutral DOM panel for consent, location, policy, IAB, events, and actions",
+		"Typed kernel event capture without callback instrumentation"
+	],
+	"prerequisites": [
+		"Node.js 20.19 or later",
+		"A c15t v3 ConsentKernel",
+		"A browser DOM"
+	],
+	"manualInstallation": [
+		"",
+		"Framework adapters include this engine, so React, Next.js, Vue, and Svelte applications do not need to install it separately. Install it directly only for the imperative API:",
+		"",
+		"```bash\npnpm add -D @c15t/dev-tools\n```"
+	],
+	"usage": [
+		"Create the engine with `createDevTools({ kernel })`",
+		"Call `destroy()` when the kernel owner unmounts",
+		"Use the framework adapter when the kernel is held in framework context",
+		"Load DevTools only during development"
+	],
+	"docsLink": "https://c15t.com/docs/frameworks/react/components/dev-tools",
+	"quickStartLink": "https://c15t.com/docs/frameworks/react/components/dev-tools",
+	"showCLIGeneration": false
+}

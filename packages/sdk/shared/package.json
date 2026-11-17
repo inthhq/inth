@@ -1,0 +1,12 @@
+{
+	"name": "@c15t/build-shared",
+	"version": "0.0.0",
+	"private": true,
+	"description": "Build helpers the SDK packages import by relative path. Not published.",
+	"type": "module",
+	"devDependencies": {
+		"@rsbuild/core": "1.7.5",
+		"@rsdoctor/rspack-plugin": "1.5.17",
+		"@types/node": "25.5.0"
+	}
+}

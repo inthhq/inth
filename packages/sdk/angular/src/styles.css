@@ -1,0 +1,16 @@
+/**
+ * @c15t/angular: non-IAB stock component styles.
+ *
+ * The stock components add the rules they use to the page themselves. Import
+ * this stylesheet instead when the app serves its own CSS, and set
+ * `styles: false` in `provideC15t()`.
+ *
+ * `@c15t/ui/styles.css` holds the tokens and every component rule, the
+ * dialog's included, and `@c15t/ui/styles/primitives.css` the rules of the
+ * primitives the Angular components use.
+ *
+ * Usage (src/styles.css, or the `styles` array in angular.json):
+ *   @import "@c15t/angular/styles.css";
+ */
+@import '@c15t/ui/styles.css';
+@import '@c15t/ui/styles/primitives.css';

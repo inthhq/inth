@@ -1,0 +1,82 @@
+---
+title: Segment
+description: Load Segment Analytics.js only after measurement consent with the c15t segment helper, guard your own track and identify calls, and check it in DevTools.
+seoTitle: Segment cookie consent with c15t
+seoDescription: Load Segment Analytics.js only with measurement consent. The c15t segment helper sends the first page call after consent.
+icon: segment
+group: integrations
+---
+
+The c15t `segment` helper keeps Segment Analytics.js off the page until
+`measurement` has consent. Until then, c15t does not create `window.analytics`.
+When `measurement` has consent, the helper queues a `page()` call and loads
+Analytics.js. The helper sends no consent signal to Segment. If the visitor
+withdraws consent, c15t removes the script element. By default, c15t also
+reloads the page.
+
+## Configure Segment
+
+Copy the write key of your Segment JavaScript source. The helper builds the
+loader URL from it.
+
+<CommandTabs command="@c15t/integrations" mode="install" />
+
+```ts title="src/consent-scripts.ts"
+import { segment } from '@c15t/integrations/segment';
+
+export const scripts = [segment({ writeKey: 'YOUR_SOURCE_WRITE_KEY' })];
+```
+
+<include src="../shared/integrations/register-scripts.mdx" />
+
+## Options
+
+| Option | Default | Behavior |
+| --- | --- | --- |
+| `writeKey` | Required | Source write key. Empty or whitespace-only values log an error and the script does not load. |
+| `loadOptions` | `{}` | Set as `window.analytics._loadOptions` before the loader runs. Analytics.js reads it on initialization. |
+| `trackPageView` | `true` | Queues one `analytics.page()` call before the loader. Set `false` to send page views yourself. |
+| `scriptUrl` | `https://cdn.segment.com/analytics.js/v1/<writeKey>/analytics.min.js` | Loader URL override. |
+
+## Loading and revocation
+
+`segment` uses the `measurement` category. Before measurement is allowed, c15t
+defines no `window.analytics` and loads nothing from Segment. When measurement
+becomes allowed, the helper creates the `window.analytics` queue with `track`,
+`page`, `identify`, `group`, `alias` and `reset`, sets the load options,
+queues the page view, then loads Analytics.js. On revocation the helper
+removes the script element and calls no Segment API.
+
+Segment forwards events to every destination enabled on the source. A
+measurement grant does not cover a destination that needs marketing
+permission. Configure destination consent in Segment, or load that vendor with
+its own c15t helper instead.
+
+## Guard your own Segment calls
+
+The helper sends the first page view. Calls your code makes, such as `track`
+and `identify`, need their own check. After revocation `window.analytics`
+still exists, so its presence does not mean measurement is allowed. Check the
+permission first, then that the queue exists:
+
+```ts title="src/track-signup.ts"
+export function trackSignup(measurementAllowed: boolean, plan: string) {
+	if (!measurementAllowed || !window.analytics) return;
+	window.analytics.track('Signup', { plan });
+}
+```
+
+Pass the current measurement permission from your framework, for example
+`useConsent('measurement')` in React. Analytics.js sends no page view on
+client-side route changes, so call `window.analytics.page()` from your router
+behind the same check.
+
+## Verify Segment
+
+After you allow measurement, `analytics.min.js` loads from `cdn.segment.com`
+with your write key in the path, and a page call goes to `api.segment.io`.
+Check that each browser destination on the source loads only under the
+permission it needs. Then revoke measurement. Before the reload, calling
+`trackSignup` sends nothing.
+
+<include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

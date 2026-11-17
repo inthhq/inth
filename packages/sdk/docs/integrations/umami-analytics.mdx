@@ -1,0 +1,60 @@
+---
+title: Umami Analytics
+description: Load the Umami Analytics tracker only after measurement consent with the c15t umamiAnalytics helper, point it at a self-hosted instance, and check it in DevTools.
+seoTitle: Umami Analytics cookie consent with c15t
+seoDescription: Load the Umami tracker only with measurement consent. Set it up with the c15t umamiAnalytics helper and check it in DevTools.
+icon: umami-analytics
+group: integrations
+---
+
+The c15t `umamiAnalytics` helper keeps the Umami tracker off the page until
+`measurement` has consent. The helper sends no consent signal to Umami. If the
+visitor withdraws consent, c15t removes the script element. By default, c15t
+also reloads the page.
+
+## Configure Umami Analytics
+
+Copy the website ID from your Umami tracking code. The helper passes it to the
+script as `data-website-id`. For a self-hosted Umami instance, set `scriptUrl`
+to your instance's tracker script.
+
+<CommandTabs command="@c15t/integrations" mode="install" />
+
+```ts title="src/consent-scripts.ts"
+import { umamiAnalytics } from '@c15t/integrations/umami-analytics';
+
+export const scripts = [umamiAnalytics({ websiteId: 'YOUR_WEBSITE_ID' })];
+```
+
+<include src="../shared/integrations/register-scripts.mdx" />
+
+## Options
+
+| Option | Default | Behavior |
+| --- | --- | --- |
+| `websiteId` | Required | Set as `data-website-id`. Empty or whitespace-only values log an error and the script does not load. |
+| `hostUrl` | None | Host that receives events, set as `data-host-url`. |
+| `autoTrack` | None | `false` sets `data-auto-track="false"` and stops automatic tracking. |
+| `domains` | None | Domains to track, set as `data-domains`. Pass a comma-separated string or an array; the helper joins an array with commas. |
+| `tag` | None | Tag attached to events, set as `data-tag`. |
+| `beforeSend` | None | Name of a global function, set as `data-before-send`. Function values are not supported. |
+| `scriptUrl` | `https://cloud.umami.is/script.js` | Loader URL override. |
+
+## Loading and revocation
+
+`umamiAnalytics` uses the `measurement` category. The tracker loads only while
+measurement is allowed. On revocation the helper removes the script element and
+calls no Umami API. Umami sets no cookies, but c15t still waits for measurement
+permission before loading it.
+
+A `beforeSend` hook can change events before Umami sends them. It is not a
+consent check. Define the named global before the tracker loads.
+
+## Verify Umami Analytics
+
+After you allow measurement, the tracker script loads with your
+`data-website-id`, and a request to `/api/send` goes to Umami or to your
+`hostUrl`. If your code calls `window.umami.track`, check measurement
+permission before each call.
+
+<include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

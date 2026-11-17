@@ -1,0 +1,97 @@
+---
+title: Scripts
+description: Load vendor scripts by consent category in a Vue app with the c15t Vue plugin, and what happens when a visitor withdraws consent.
+group: frameworks
+---
+
+## Register vendor scripts
+
+A banner does not stop a script you load with a `<script>` tag in
+`index.html` or a vendor SDK you initialize yourself. Remove those loaders and
+register the vendor with c15t instead, so c15t loads it only while its
+category is allowed.
+
+Pass the helpers from `@c15t/integrations` to the plugin as `scripts`:
+
+<include src="../../shared/examples/vue/main.mdx" />
+
+The plugin starts one script loader when the app mounts, after it has applied
+the visitor's stored choice and privacy signals. Do not also call
+`createScriptLoader` from a component. A component's `onMounted` runs before
+the plugin has read the stored choice, and each script would load twice.
+
+Every vendor guide under [integrations](/docs/integrations/overview) gives the
+helper and options for that vendor.
+
+## Register scripts from a component
+
+The plugin's `scripts` option covers scripts known when the app starts. For
+one a component decides at runtime, such as a tenant's tag or a script one
+route needs, call `useScriptLoader()`. It adds the scripts to the app's one
+loader, so they never load twice, and removes them when the component
+unmounts. Pass a ref or getter and a change reconciles.
+
+<include src="../../shared/examples/vue/script-loader.mdx" />
+
+The returned handle has `updateScripts(next)` to swap them and `dispose()` to
+remove them before the component unmounts. Withdrawing consent reloads the
+page as it does for configured scripts.
+
+## Embeds and other requests
+
+Scripts cover vendor code c15t loads for you. For the rest:
+
+- [Embeds](/docs/frameworks/vue/embeds) gates iframes with `ConsentGate` or
+  the iframe blocker.
+- [Network blocker](/docs/frameworks/vue/network-blocker) holds `fetch` and
+  XHR calls that match a rule until their category is allowed.
+
+## When a visitor withdraws consent
+
+Removing a script tag cannot stop code that already ran. When a save turns off
+a category or vendor that was allowed, c15t reloads the page so the new
+document starts with only permitted code. Set `reloadOnConsentRevoked: false`
+to handle revocation yourself, or use the
+[`onBeforeConsentRevocationReload` callback](/docs/frameworks/vue/callbacks#before-a-revocation-reload)
+to run code before the reload.
+
+`clearOnRevocation` deletes first-party cookies and storage keys that belong to
+a category when it is withdrawn. See
+[clear on revocation](/docs/frameworks/vue/clear-on-revocation).
+
+## Let visitors turn off one vendor
+
+Optional: a visitor can allow marketing and still switch off one vendor in it.
+Skip this unless your site needs per-vendor choices. Declare
+the vendors in the `vendors` option; helpers from `@c15t/integrations` already carry
+their vendor slug. See [vendor consent](/docs/frameworks/vue/vendor-consent).
+
+## Content Security Policy
+
+Allow each vendor's script host in `script-src`. The plugin's `nonce` option
+adds a nonce to every script the loader creates. See
+[Content Security Policy](/docs/frameworks/vue/content-security-policy).
+
+## Send your own analytics events
+
+`useEventDispatcher()` from `c15t/vue/vue-plugin` returns the app's event dispatcher. It
+sends to the `scripts` in your c15t config and checks consent when an event
+goes out. Call it in `setup` and send a pageview each time the route changes:
+
+<include src="../../shared/examples/vue/analytics-events.mdx" />
+
+Call `events.track('sign_up', { method: 'email' })` from an event handler for
+your own events. `track` sends to every registered script with an event API and drops the
+event while measurement is denied. `pageview` sends only to the integrations
+named in `pageviews`, and the first call records the path without sending.
+Every dispatcher shares one pageview history for the provider's lifetime.
+See [send events only to allowed integrations](/docs/integrations/overview#send-events-only-to-allowed-integrations)
+for the supported vendors.
+
+## Verify gating
+
+In a private window, open the Network tab and load the app under a policy that
+asks for consent. Requests to your vendors are absent.
+Allow one category and save, and only that category's vendors load. Withdraw
+it, and the page reloads without loading the vendor again.
+[Verify consent](/docs/guides/verify-consent) has the full checklist.

@@ -1,0 +1,79 @@
+[
+	{
+		"id": "expo-55",
+		"expo": "55.0.32",
+		"expoTemplate": "55.0.44",
+		"reactNative": "0.83.10",
+		"react": "19.2.0",
+		"compileSdk": 36,
+		"expoPackages": {
+			"expo-build-properties": "55.0.18",
+			"expo-constants": "55.0.17",
+			"expo-dev-client": "55.0.41"
+		},
+		"vendorPackages": {
+			"@react-native-firebase/analytics": "26.4.0",
+			"@react-native-firebase/app": "26.4.0",
+			"reason": "React Native Firebase 27 Android Kotlin passes String? to Promise.reject, which React Native 0.83 types as String, so :react-native-firebase_app:compileReleaseKotlin fails. 26.4.0 is the last release before 27 and still compiles that module as Java."
+		},
+		"devPackages": {
+			"typescript": "5.9.3",
+			"reason": "Expo SDK 55's CLI reads tsconfig.json through ts.sys, which the TypeScript 7 native port does not provide, so export:embed fails before Metro starts."
+		}
+	},
+	{
+		"id": "rn-84",
+		"expo": null,
+		"expoTemplate": null,
+		"reactNative": "0.84.1",
+		"react": "19.2.7",
+		"compileSdk": 36
+	},
+	{
+		"id": "expo-56",
+		"expo": "56.0.24",
+		"expoTemplate": "56.0.38",
+		"reactNative": "0.85.3",
+		"react": "19.2.3",
+		"compileSdk": 36,
+		"expoPackages": {
+			"expo-build-properties": "56.0.27",
+			"expo-constants": "56.0.27",
+			"expo-dev-client": "56.0.28"
+		}
+	},
+	{
+		"id": "expo-57",
+		"expo": "57.0.31",
+		"expoTemplate": "57.0.33",
+		"reactNative": "0.86.3",
+		"react": "19.2.3",
+		"compileSdk": 36,
+		"expoPackages": {
+			"expo-build-properties": "57.0.22",
+			"expo-constants": "57.0.22",
+			"expo-dev-client": "57.0.20"
+		}
+	},
+	{
+		"id": "rn-87",
+		"expo": null,
+		"expoTemplate": null,
+		"reactNative": "0.87.1",
+		"react": "19.2.7",
+		"compileSdk": 37
+	},
+	{
+		"id": "expo-58",
+		"expo": "58.0.24",
+		"expoTemplate": "58.0.31",
+		"reactNative": "0.88.1",
+		"react": "19.3.0",
+		"compileSdk": 37,
+		"expoPackages": {
+			"expo-build-properties": "58.0.12",
+			"expo-constants": "58.0.16",
+			"expo-dev-client": "58.0.19"
+		}
+	}
+]

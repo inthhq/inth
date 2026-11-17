@@ -1,0 +1,44 @@
+{
+	"name": "@c15t/fixture-expo-dev",
+	"version": "0.0.0",
+	"private": true,
+	"description": "Expo development-build fixture for @c15t/react-native: the config plugin wires the native consent core, and the screens are the same ones the bare React Native example proves out.",
+	"main": "index.ts",
+	"scripts": {
+		"android": "expo run:android",
+		"bundle": "expo export --platform all --output-dir .artifacts/export --clear",
+		"check-types": "tsc --noEmit",
+		"config": "expo config --type prebuild --json > .artifacts/expo-config.json",
+		"fmt": "oxfmt -c ../../../oxfmt.sdk.config.ts .",
+		"ios": "expo run:ios",
+		"ios:release": "expo run:ios --configuration Release",
+		"lint": "oxlint -c ../../../oxlint.sdk.config.ts App.tsx index.ts src app.config.ts metro.config.js metro-vendor-sources.js plugins",
+		"prebuild": "expo prebuild --clean",
+		"start": "expo start --dev-client"
+	},
+	"dependencies": {
+		"@amplitude/analytics-react-native": "1.13.0",
+		"@c15t/react-native": "workspace:*",
+		"@react-native-async-storage/async-storage": "2.2.0",
+		"@react-native-firebase/analytics": "27.1.0",
+		"@react-native-firebase/app": "27.1.0",
+		"@sentry/react-native": "8.33.0",
+		"expo": "58.0.24",
+		"expo-build-properties": "58.0.12",
+		"expo-constants": "58.0.16",
+		"expo-dev-client": "58.0.19",
+		"mixpanel-react-native": "4.0.0",
+		"posthog-react-native": "4.85.1",
+		"react": "19.3.0",
+		"react-native": "0.88.1",
+		"react-native-get-random-values": "1.11.0"
+	},
+	"devDependencies": {
+		"@babel/runtime": "^7.25.0",
+		"@types/node": "25.5.0",
+		"@types/react": "~19.3.0",
+		"oxfmt": "0.65.0",
+		"oxlint": "1.80.0",
+		"typescript": "7.0.2"
+	}
+}

@@ -1,0 +1,21 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"types": ["node", "vitest/globals"]
+	},
+	"include": [
+		"src",
+		"consent-dialog/src",
+		"consent-dialog-trigger/src",
+		"consent-gate/src",
+		"consent-root/src",
+		"consent-widget/src",
+		"devtools/src",
+		"iab/src",
+		"primitives/src",
+		"ssr/src",
+		"testing/src",
+		"schematics"
+	],
+	"exclude": ["node_modules", "dist"]
+}

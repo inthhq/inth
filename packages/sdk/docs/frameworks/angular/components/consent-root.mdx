@@ -1,0 +1,43 @@
+---
+title: ConsentRoot
+description: Render the c15t banner and preference dialog in one tag in an Angular app with c15t-consent-root, its inputs, and when to use the two components on their own.
+group: frameworks
+---
+
+## Render the stock UI in one tag
+
+`<c15t-consent-root>` renders `<c15t-consent-banner>` and
+`<c15t-consent-dialog>` together. Import `ConsentRoot` and put it in
+your root component instead of the two:
+
+{/* example: fragment */}
+
+```html
+<c15t-consent-root [legalLinks]="['privacyPolicy', 'cookiePolicy']" />
+```
+
+It is not a provider. `provideC15t()` in your application config owns the
+consent state; `<c15t-consent-root>` only renders UI below it. Import it from
+`@c15t/angular/consent-root`. The dialog's code stays out of the first load
+and loads on demand, as described on
+[ConsentDialog](./consent-dialog#how-the-dialog-loads).
+
+## Inputs
+
+| Input | Type | Default | Behavior |
+| --- | --- | --- | --- |
+| `legalLinks` | array of `LegalLinks` keys, or `null` | every configured link | Which of the provider's legal links both surfaces show. |
+| `hideBranding` | `boolean` | `false` | Hides the "Secured by" tag on both surfaces. |
+| `showTrigger` | `boolean` or `ConsentDialogTriggerOptions` | `false` | Renders a floating `<c15t-consent-dialog-trigger>` with the dialog. |
+| `noStyle` | `boolean` | provider's `noStyle` | Drops c15t's classes on both surfaces. |
+| `disableAnimation` | `boolean` | provider's value | Turns off transitions on both surfaces. |
+
+To pass the banner its own inputs, such as `variant` or text, or to use its
+`ng-template` slots, render `<c15t-consent-banner>` and
+`<c15t-consent-dialog>` separately. The result is the same markup.
+
+## Verify it
+
+Open the page in a private window. The banner appears once the policy
+resolves, and its Customize button opens the dialog. In the Elements panel,
+both surfaces render in `<body>`, not inside `<c15t-consent-root>`.

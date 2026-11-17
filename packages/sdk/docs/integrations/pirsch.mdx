@@ -1,0 +1,66 @@
+---
+title: Pirsch
+description: Load Pirsch Analytics only after measurement consent with the c15t pirsch helper, keep custom event bindings working, and check it in DevTools.
+seoTitle: Pirsch cookie consent with c15t
+seoDescription: Load Pirsch Analytics only with measurement consent. The c15t pirsch helper keeps pa.js and pirsch-extended.js off the page until then.
+icon: pirsch
+group: integrations
+---
+
+The c15t `pirsch` helper keeps Pirsch Analytics off the page until `measurement`
+has consent. Until then, c15t loads neither `pa.js` nor `pirsch-extended.js`.
+The helper sends no consent signal to Pirsch. If the visitor withdraws consent,
+c15t removes the script element. By default, c15t also reloads the page.
+
+## Configure Pirsch
+
+Copy the identification code from your Pirsch installation snippet. The helper
+passes it to the script as `data-code`.
+
+<CommandTabs command="@c15t/integrations" mode="install" />
+
+```ts title="src/consent-scripts.ts"
+import { pirsch } from '@c15t/integrations/pirsch';
+
+export const scripts = [
+	pirsch({ identificationCode: 'YOUR_IDENTIFICATION_CODE' }),
+];
+```
+
+<include src="../shared/integrations/register-scripts.mdx" />
+
+## Options
+
+| Option | Default | Behavior |
+| --- | --- | --- |
+| `identificationCode` | Required | Set as `data-code`. Empty or whitespace-only values log an error and the script does not load. |
+| `domain` | None | Extra dashboard domains, each optionally as `domain:CODE`. An array becomes a comma-separated `data-domain`. |
+| `dev` | None | Hostname Pirsch reports instead of localhost, set as `data-dev`. Use it to test locally. |
+| `hitEndpoint` | None | Page view endpoint, set as `data-hit-endpoint`. |
+| `eventEndpoint` | None | Event endpoint, set as `data-event-endpoint`. |
+| `disablePageViews` | None | `true` adds `data-disable-page-views` and stops automatic page views. |
+| `extended` | None | `true` loads `https://api.pirsch.io/pirsch-extended.js` instead of `pa.js`. |
+| `scriptUrl` | `https://api.pirsch.io/pa.js` | Loader URL override. Blank values fall back to the default. |
+
+Pirsch finds its script element by ID, so the helper sets the element ID to
+`pianjs`, or to `pirschextendedjs` with `extended`.
+
+## Loading and revocation
+
+`pirsch` uses the `measurement` category. The script loads only while
+measurement is allowed. Pirsch starts its custom event bindings from a
+`DOMContentLoaded` listener, which has usually fired by the time a visitor
+allows measurement. When the script loads on an already parsed page, the
+helper calls `window.pirschInit()` so those bindings still start.
+
+On revocation the helper removes the script element and calls no Pirsch API.
+
+## Verify Pirsch
+
+After you allow measurement, the `pa.js` request appears and the `#pianjs`
+script element carries your `data-code`. Allow measurement after the page has
+finished loading, then trigger a custom event and check that its request
+appears. If your code calls `window.pirsch` directly, check measurement
+permission before each call.
+
+<include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

@@ -1,0 +1,73 @@
+{
+	"version": 1,
+	"cli": {
+		"analytics": false,
+		"packageManager": "bun"
+	},
+	"newProjectRoot": "projects",
+	"projects": {
+		"gate": {
+			"projectType": "application",
+			"root": "",
+			"sourceRoot": "src/gate",
+			"prefix": "app",
+			"architect": {
+				"build": {
+					"builder": "@angular/build:application",
+					"options": {
+						"browser": "src/gate/main.ts",
+						"index": "src/gate/index.html",
+						"outputMode": "server",
+						"outputPath": "dist/gate",
+						"security": {
+							"allowedHosts": ["127.0.0.1", "localhost"]
+						},
+						"server": "src/gate/main.server.ts",
+						"ssr": {
+							"entry": "src/gate/server.ts"
+						},
+						"tsConfig": "tsconfig.app.json"
+					},
+					"configurations": {
+						"production": {
+							"outputHashing": "all"
+						}
+					},
+					"defaultConfiguration": "production"
+				}
+			}
+		},
+		"control": {
+			"projectType": "application",
+			"root": "",
+			"sourceRoot": "src/control",
+			"prefix": "app",
+			"architect": {
+				"build": {
+					"builder": "@angular/build:application",
+					"options": {
+						"baseHref": "/gate-control/",
+						"browser": "src/control/main.ts",
+						"index": "src/control/index.html",
+						"outputMode": "server",
+						"outputPath": "dist/control",
+						"security": {
+							"allowedHosts": ["127.0.0.1", "localhost"]
+						},
+						"server": "src/control/main.server.ts",
+						"ssr": {
+							"entry": "src/control/server.ts"
+						},
+						"tsConfig": "tsconfig.app.json"
+					},
+					"configurations": {
+						"production": {
+							"outputHashing": "all"
+						}
+					},
+					"defaultConfiguration": "production"
+				}
+			}
+		}
+	}
+}

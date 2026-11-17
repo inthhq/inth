@@ -1,0 +1,13 @@
+/*
+ * The template's literal `../node_modules/@react-native/gradle-plugin` path only works in a
+ * hoisted install. This repository uses Bun's isolated install layout, where a package that
+ * only `react-native` depends on is not linked into this app's node_modules, so
+ * @react-native/gradle-plugin is a devDependency here and the path below resolves.
+ */
+pluginManagement { includeBuild("../node_modules/@react-native/gradle-plugin") }
+plugins { id("com.facebook.react.settings") }
+extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autolinkLibrariesFromCommand() }
+rootProject.name = 'C15tBare'
+include ':app'
+include ':e2e'
+includeBuild('../node_modules/@react-native/gradle-plugin')

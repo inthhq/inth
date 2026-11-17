@@ -1,0 +1,9 @@
+node_modules
+/dist
+/dist-hosted
+/dist-baseline
+/.astro
+/.turbo
+/dist-scripts
+/dist-gate
+/dist-gate-baseline

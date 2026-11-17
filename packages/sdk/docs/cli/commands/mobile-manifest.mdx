@@ -1,0 +1,81 @@
+---
+title: Mobile manifest
+description: Fetch your project's consent manifest at build time and bundle it into an iOS or Android app, with release builds failing on a failed fetch.
+group: cli
+---
+
+## Bundle the manifest into a native build
+
+`c15t mobile-manifest` fetches the hosted `/manifest` and writes it as the
+policy resource the iOS and Android SDKs read before the first network
+response. Run it as a build step so each build carries the latest policy.
+
+```sh
+npx @c15t/cli mobile-manifest \
+  --backend-url https://your-project.inth.app \
+  --out c15t-policy.json \
+  --build release
+```
+
+| Flag | Purpose |
+| --- | --- |
+| `--backend-url` | Required. The project URL from your Inth dashboard, such as `https://your-project.inth.app`. |
+| `--out` | Where to write the resource. Defaults to `c15t-policy.json`. |
+| `--build` | `release` (default) or `debug`. Decides what a failed fetch means. |
+| `--allow-stale-manifest` | Reuse the last fetched copy at `--out` when the fetch fails. |
+| `--expires-in-days` | Days until devices report `policyStale`. Defaults to 30. |
+| `--languages` | Comma-separated languages to compile prompt copy for. English is always included. |
+| `--vendors` | Comma-separated IAB vendor IDs to keep in the bundled GVL. |
+| `--dry-run` | The app is built with `dryRun`. `--backend-url` then takes any `https` URL, or `http` on `localhost`, `127.0.0.1` or `[::1]`. The command still fetches and writes the resource. |
+
+In a project with `@c15t/cli` installed, `npx` runs that copy. Without it,
+`npx @c15t/cli` downloads the package; `npx c15t` does not work, because the
+`c15t` package on npm has no executable.
+
+## The project URL
+
+The command checks `--backend-url` with the rule the native SDKs apply at
+launch, and binds the resource to its normal form,
+`https://your-project.inth.app`. A missing scheme means `https`. Trailing
+slashes are dropped and the host is lowercased. Another host, `http`, a port, a path, a query, a
+fragment, or a username or password fails with `FLAG_INVALID`.
+
+A debug build with `dryRun` on can point at a staging or loopback backend.
+Pass `--dry-run` for that build, so the command accepts the URL the app uses:
+
+```sh
+npx @c15t/cli mobile-manifest \
+  --backend-url http://localhost:8787 \
+  --out c15t-policy.json \
+  --build debug \
+  --dry-run
+```
+
+Leave `--dry-run` off release builds. A release app refuses `dryRun`, and the
+strict rule then refuses the URL too. The Expo plugin's `bundleManifest`
+passes `--dry-run` when its `dryRun` option is on.
+
+## When the backend cannot be reached
+
+The fetch counts as failed when no response arrives, or the backend answers
+`5xx`, `408` or `429`.
+
+- A release build fails, so no release ships without its manifest.
+- A debug build prints a warning and continues with no bundled manifest. It
+  deletes any earlier copy at `--out`, so an old manifest cannot ship by
+  accident.
+- With `--allow-stale-manifest`, both reuse the last fetched copy, if one for
+  the same backend is at `--out`. Air-gapped CI can commit or cache that copy.
+
+A backend that answers with anything else fails every build, debug included,
+with or without `--allow-stale-manifest`: a `404`, a response that is not a
+manifest, or a manifest that does not pass validation is a configuration
+problem to fix, not an outage to wait out.
+
+An expired manifest still works on the device: it shows the prompt, records
+choices and emits `policyStale` until the app reaches the backend. See
+[mobile offline consent](/docs/guides/mobile-offline).
+
+The manifest needs a conservative opt-in or IAB fallback for unknown
+geography, with no preselected optional categories. The command fails when
+that rule is missing, whatever the build type.

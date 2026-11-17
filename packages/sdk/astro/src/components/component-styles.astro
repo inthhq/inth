@@ -1,0 +1,60 @@
+---
+import { isIABConfigured } from '@c15t/core/runtime';
+import {
+	INLINE_IAB_STYLES_CSS,
+	INLINE_IAB_STYLES_ID,
+	INLINE_STYLES_CSS,
+	INLINE_STYLES_ID,
+	markStylesEmitted,
+} from '@c15t/astro/server';
+
+interface Props {
+	/** The outer document's nonce when rendered through a server island. */
+	nonce?: string;
+	/**
+	 * Emit even when the server decided no banner shows, as for a banner
+	 * rendered with `force` or a cached page that renders it later.
+	 */
+	force?: boolean;
+}
+
+const { c15t } = Astro.locals;
+// A visitor the server shows no banner, such as one with a stored choice,
+// gets no first-paint rules: the dialog, which builds on them, adds them
+// when it opens. A page shared by every visitor (prerendered, or no policy
+// yet) may still show one, and IAB sites keep both sheets.
+const needed =
+	Astro.props.force === true ||
+	c15t === undefined ||
+	c15t.shouldShowBanner ||
+	c15t.prerendered ||
+	!c15t.hasPolicy ||
+	isIABConfigured(c15t.options.iab);
+const emit =
+	c15t?.options.inlineStyles === true &&
+	needed &&
+	markStylesEmitted(Astro.locals);
+const nonce = Astro.props.nonce ?? c15t?.nonce;
+---
+
+{
+	emit && (
+		<style
+			is:inline
+			data-c15t-styles={INLINE_STYLES_ID}
+			nonce={nonce}
+			set:html={INLINE_STYLES_CSS}
+		/>
+	)
+}
+
+{
+	emit && isIABConfigured(c15t?.options.iab) && (
+		<style
+			is:inline
+			data-c15t-styles={INLINE_IAB_STYLES_ID}
+			nonce={nonce}
+			set:html={INLINE_IAB_STYLES_CSS}
+		/>
+	)
+}

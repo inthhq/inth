@@ -1,0 +1,58 @@
+---
+title: Fathom Analytics
+description: Load Fathom Analytics only after measurement consent with the c15t fathomAnalytics helper, set its SPA mode, and check it in DevTools.
+seoTitle: Fathom Analytics cookie consent with c15t
+seoDescription: Load Fathom Analytics only with measurement consent. The c15t fathomAnalytics helper keeps script.js off the page until then.
+icon: fathom-analytics
+group: integrations
+---
+
+The c15t `fathomAnalytics` helper keeps Fathom Analytics off the page until
+`measurement` has consent. Fathom says that it sets no cookies, but c15t still
+does not load Fathom's `script.js` before consent. The helper sends no consent
+signal to Fathom, and it does not call `blockTrackingForMe`. If the visitor
+withdraws consent, c15t removes the script element. By default, c15t also
+reloads the page.
+
+## Configure Fathom Analytics
+
+Copy the site ID from your Fathom embed code, where it is the `data-site`
+value. If your app changes routes without a full page load, also pass `spa`.
+Without it, the helper leaves Fathom's SPA route tracking off.
+
+<CommandTabs command="@c15t/integrations" mode="install" />
+
+```ts title="src/consent-scripts.ts"
+import { fathomAnalytics } from '@c15t/integrations/fathom-analytics';
+
+export const scripts = [fathomAnalytics({ site: 'YOUR_SITE_ID', spa: 'auto' })];
+```
+
+<include src="../shared/integrations/register-scripts.mdx" />
+
+## Options
+
+| Option | Default | Behavior |
+| --- | --- | --- |
+| `site` | Required | Site ID, set as `data-site`. The helper trims it. Empty or whitespace-only values log an error and the script does not load. |
+| `spa` | None | `'auto'`, `'history'` or `'hash'`, set as `data-spa`. When omitted, the script has no `data-spa` attribute and SPA route tracking stays off. |
+| `auto` | None | Sets `data-auto` to `'true'` or `'false'` to control automatic page views. When omitted, Fathom's default applies. |
+| `canonical` | None | Sets `data-canonical` to control canonical URL tracking. When omitted, Fathom's default applies. |
+| `honorDnt` | None | Sets `data-honor-dnt` to control whether Fathom honors Do Not Track. When omitted, Fathom's default applies. |
+| `scriptUrl` | `https://cdn.usefathom.com/script.js` | Loader URL override. A blank value falls back to the default. |
+
+## Loading and revocation
+
+`fathomAnalytics` uses the `measurement` category. Fathom sets no cookies, but
+the helper still waits for measurement permission. It loads `script.js` with
+`defer`. On revocation the helper removes the script element and calls no
+Fathom API. It does not call `window.fathom.blockTrackingForMe`.
+
+## Verify Fathom Analytics
+
+After you allow measurement, `script.js` loads from `cdn.usefathom.com` and its
+script element carries your `data-site` and `data-spa` values. Change route in
+your app and check that it sends one page view, not two. If your code calls
+`window.fathom?.trackEvent`, check measurement permission before each call.
+
+<include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

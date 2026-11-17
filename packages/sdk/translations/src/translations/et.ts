@@ -1,0 +1,177 @@
+import type { CompleteTranslations } from '../types';
+
+export const translations: CompleteTranslations = {
+	common: {
+		acceptAll: 'Nõustu kõigiga',
+		acknowledge: 'OK',
+		close: 'Sulge',
+		customize: 'Kohanda',
+		dismiss: 'Sulge',
+		rejectAll: 'Keeldu kõigist',
+		save: 'Salvesta seaded',
+		securedBy: 'Kaitse pakub',
+	},
+	consentGate: {
+		actionButton: 'Luba kategooria {category} nõusolek',
+		error: 'This content could not be loaded.',
+		loading: 'Loading content…',
+		policyBlocked:
+			"This content is unavailable under your region's consent policy.",
+		title: 'Selle sisu vaatamiseks nõustuge kategooria {category} nõusolekuga.',
+	},
+	consentManagerDialog: {
+		description:
+			'Kohandage siin oma privaatsusseadeid. Saate valida, milliseid küpsiseid ja jälgimistehnoloogiaid lubate.',
+		title: 'Privaatsusseaded',
+		vendors: {
+			disabledByCategory:
+				'Lülita see kategooria sisse, et valida teenusepakkujaid.',
+			privacyPolicy: 'Privaatsuspoliitika',
+			switchLabel: 'Luba {vendor}',
+			title: 'Teenusepakkujad ({count})',
+		},
+	},
+	consentTypes: {
+		experience: {
+			description:
+				'Need küpsised aitavad meil pakkuda paremat kasutajakogemust ja testida uusi funktsioone.',
+			title: 'Kogemus',
+		},
+		functionality: {
+			description:
+				'Need küpsised võimaldavad veebisaidi täiustatud funktsionaalsust ja isikupärastamist.',
+			title: 'Funktsionaalsus',
+		},
+		marketing: {
+			description:
+				'Neid küpsiseid kasutatakse asjakohaste reklaamide edastamiseks ja nende tõhususe jälgimiseks.',
+			title: 'Turundus',
+		},
+		measurement: {
+			description:
+				'Need küpsised aitavad meil mõista, kuidas külastajad veebisaidiga suhtlevad, ja parandada selle toimivust.',
+			title: 'Analüütika',
+		},
+		necessary: {
+			description:
+				'Need küpsised on veebisaidi nõuetekohaseks toimimiseks hädavajalikud ja neid ei saa keelata.',
+			title: 'Hädavajalikud',
+		},
+	},
+	cookieBanner: {
+		description:
+			'See sait kasutab küpsiseid, et parandada teie sirvimiskogemust, analüüsida saidi liiklust ja näidata isikupärastatud sisu.',
+		noticeDescription:
+			'Kasutame küpsiseid ja sarnaseid tehnoloogiaid selle saidi töös hoidmiseks, liikluse mõõtmiseks ning sisu ja reklaamide isikupärastamiseks. Saate igal ajal loobuda või oma eelistusi hallata.',
+		noticeTitle: 'Privaatsusteade',
+		title: 'Hindame teie privaatsust',
+	},
+	iab: {
+		app: {
+			consentStorage:
+				'Teie valikud salvestatakse selles seadmes rakenduse tavapärasesse seadete salvestusruumi IABTCF-võtmete all kuni {days} päevaks. Salvestusaeg algab uuesti, kui oma valikuid uuendate.',
+			description:
+				'Meie ja meie {partnerCount} partnerit salvestavad ja/või pääsevad ligi teie seadmes olevatele andmetele ning töötlevad isikuandmeid, nagu unikaalsed identifikaatorid ja sirvimisandmed, selle rakenduse jaoks, et:',
+			legitimateInterestExplanation:
+				'Mõned partnerid töötlevad isikuandmeid, nagu unikaalsed identifikaatorid ja sirvimisandmed, oma õigustatud huvi alusel, selle asemel et nõusolekut küsida. See kehtib ainult selle rakenduse kohta. Teil on õigus sellele töötlemisele vastu vaielda iga eesmärgi ja iga partneri puhul.',
+			scopeServiceSpecific:
+				'Teie nõusolek kehtib ainult sellele rakendusele ega mõjuta teisi teenuseid.',
+			withdraw:
+				'Saate oma valikuid igal ajal muuta või nõusoleku tagasi võtta selle rakenduse jaotises Privaatsusseaded.',
+		},
+		banner: {
+			andMore: 'Ja veel {count}...',
+			description:
+				'Meie ja meie {partnerCount} partnerit salvestavad ja/või pääsevad ligi teie seadmes olevatele andmetele ning töötlevad isikuandmeid, nagu unikaalsed identifikaatorid ja sirvimisandmed sellel veebilehel, et:',
+			legitimateInterestNotice:
+				'Mõned partnerid väidavad, et neil on õigustatud huvi teie andmete töötlemiseks. Teil on õigus sellele töötlemisele vastu vaielda, oma valikuid kohandada ja nõusolek igal ajal tagasi võtta.',
+			partnersLink: '{count} partnerit',
+			scopeGroup: 'Teie valik kehtib kõigil meie veebisaitidel selles grupis.',
+			scopeServiceSpecific:
+				'Sinu nõusolek kehtib ainult sellele veebisaidile ega mõjuta teisi teenuseid.',
+			title: 'Privaatsusseaded',
+		},
+		common: {
+			acceptAll: 'Nõustu kõigiga',
+			clearSelection: 'Tühjenda',
+			customPartner: 'Kohandatud partner, kes ei ole IAB-s registreeritud',
+			customize: 'Kohanda',
+			loading: 'Laadimine...',
+			rejectAll: 'Keeldu kõigist',
+			saveSettings: 'Salvesta seaded',
+			showingSelectedVendor: 'Kuvatakse valitud partner',
+		},
+		preferenceCenter: {
+			description:
+				'Kohandage siin oma privaatsusseadeid. Saate valida, milliseid küpsiseid ja jälgimistehnoloogiaid lubate.',
+			features: {
+				description:
+					'Sellist töötlemist saab kasutada ainult ühe või mitme sellise eesmärgi saavutamiseks, millega nõustumiseks teile selles teatises valik antakse.',
+				title: 'Omadused',
+			},
+			footer: {
+				consentStorage:
+					'Nõusoleku eelistused salvestatakse küpsisesse nimega "euconsent-v2" 13 kuuks. Salvestusaeg võib teie eelistuste uuendamisel uuesti alata.',
+			},
+			purposeItem: {
+				examples: 'Näited',
+				legitimateInterest: 'Õigustatud huvi',
+				objectButton: 'Vaidle vastu',
+				objected: 'Vastu vaieldud',
+				partners: '{count} partnerit',
+				partnersUsingPurpose: 'Selle eesmärgi kasutavad partnerid',
+				rightToObject:
+					'Teil on õigus vaielda vastu töötlemisele, mis põhineb õigustatud huvil.',
+				vendorsUseLegitimateInterest:
+					'{count} teenusepakkujat väidavad õigustatud huvi',
+				withYourPermission: 'Teie loal',
+			},
+			specialPurposes: {
+				title: 'Olulised funktsioonid (nõutud)',
+				tooltip:
+					'Need on vajalikud saidi toimimiseks ja turvalisuseks. IAB TCF-i kohaselt ei saa nendele erieesmärkidele vastu vaielda.',
+			},
+			tabs: {
+				purposes: 'Eesmärgid',
+				vendors: 'Teenusepakkujad',
+			},
+			title: 'Privaatsusseaded',
+			vendorList: {
+				adTechProvidersHeading: 'Google’i reklaamitehnoloogia teenusepakkujad',
+				adTechProvidersNotice:
+					'Google teeb nende reklaamitehnoloogia teenusepakkujatega koostööd väljaspool IAB raamistikku. Teie nõusolek jõuab teenusepakkujani ainult siis, kui lülitate selle sisse ning lubate ka teabe salvestamise teie seadmesse ja isikupärastatud reklaami.',
+				customVendorsHeading: 'Kohandatud partnerid',
+				customVendorsNotice:
+					'Need on kohandatud partnerid, kes ei ole registreeritud IAB läbipaistvuse ja nõusoleku raamistikus (TCF). Nad töötlevad andmeid teie nõusoleku alusel ning nende privaatsustavad võivad erineda IAB-sertifitseeritud partnerite omadest.',
+				dataCategories: 'Andmekategooriad',
+				features: 'Omadused',
+				iabVendorsHeading: 'IAB registreeritud teenusepakkujad',
+				iabVendorsNotice:
+					'Need partnerid on registreeritud IAB läbipaistvuse ja nõusoleku raamistikus (TCF), mis on tööstusstandard nõusoleku haldamiseks',
+				legitimateInterest: 'Õigustatud huvi',
+				maxAge: 'Maksimaalne vanus: {days}p',
+				nonCookieAccess: 'Küpsisteta juurdepääs',
+				privacyPolicy: 'Privaatsuspoliitika',
+				purposes: 'Eesmärgid',
+				requiredNotice: 'Vajalik saidi toimimiseks, ei saa keelata',
+				retention: 'Säilitamine: {days}p',
+				search: 'Otsi teenusepakkujaid...',
+				showingCount: 'Kuvatakse {filtered} / {total} teenusepakkujat',
+				specialFeatures: 'Eriomadused',
+				specialPurposes: 'Eriotstarbed',
+				storageDisclosure: 'Salvestamise teave',
+				usesCookies: 'Kasutab küpsiseid',
+			},
+		},
+	},
+	legalLinks: {
+		cookiePolicy: 'Küpsiste poliitika',
+		privacyPolicy: 'Privaatsuspoliitika',
+		termsOfService: 'Kasutustingimused',
+	},
+	rights: {
+		optOut: 'Ära müü ega jaga minu andmeid',
+		preferences: 'Halda eelistusi',
+	},
+};
+export default translations;

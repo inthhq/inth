@@ -1,0 +1,14 @@
+{/* Generated from internals/fixtures/react-native-bare/src/documentation/meta-app-events-integration.ts (docs:rn-meta-app-events-integration) by scripts/sync-example-docs.ts. Edit the source file. */}
+
+```ts title="meta-app-events-consent.ts"
+import { connectMetaAppEvents } from '@c15t/react-native/integrations';
+import type {
+	MetaAppEventsClient,
+	ConsentIntegration,
+} from '@c15t/react-native/integrations';
+
+export const connectAppMetaAppEvents = (
+	meta: MetaAppEventsClient,
+	onError: (error: unknown) => void
+): ConsentIntegration => connectMetaAppEvents(meta, { onError });
+```

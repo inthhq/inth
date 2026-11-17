@@ -1,0 +1,197 @@
+---
+title: Meta App Events
+description: Connect the Meta (Facebook) SDK's automatic App Events, advertiser ID collection and Limited Data Use to c15t consent in Swift, Kotlin, React Native and Expo.
+seoTitle: Meta (Facebook) SDK consent for mobile apps with c15t
+seoDescription: Turn Meta App Events, advertiser ID collection and Limited Data Use on and off from c15t consent in Swift, Android, React Native and Expo.
+group: integrations
+---
+
+The Meta App Events helper turns the Facebook SDK's automatic App Events and
+advertiser ID collection on only while a category allows them, and turns on
+[Limited Data Use](https://developers.facebook.com/docs/app-events/guides/ccpa)
+otherwise. The category defaults to `marketing`, as for the web's
+[Meta Pixel](/docs/integrations/meta-pixel).
+
+The helper ships in `C15tApple`, `c15t-android` and
+`@c15t/react-native/integrations`. c15t adds no Meta dependency. For
+websites, use the [Meta Pixel helper](/docs/integrations/meta-pixel).
+
+## What the helper changes
+
+| Consent | Meta SDK settings, in order |
+| --- | --- |
+| Category denied or pending | Automatic App Events off, advertiser ID collection off, Limited Data Use on |
+| Category granted | Limited Data Use off, advertiser ID collection on, automatic App Events on |
+
+Limited Data Use is set with country `0` and state `0`, so Meta applies it by
+the user's location. It only changes how Meta processes data from the US
+states it covers.
+
+The helper does not set ATT. On iOS 17 and later, the Meta SDK 17 and later
+[reads the ATT status itself](https://developers.facebook.com/documentation/app-events/guides/advertising-tracking-enabled).
+Request ATT separately; c15t keeps it apart from consent.
+
+## Before you start
+
+Complete the [Swift](/docs/frameworks/swift/quickstart),
+[Android](/docs/frameworks/android/quickstart) or
+[React Native](/docs/frameworks/react-native/quickstart) quickstart, with
+`marketing` in your Inth policy and native configuration. Install the Facebook
+SDK through Meta's [Android](https://developers.facebook.com/docs/app-events/getting-started-app-events-android/)
+or iOS guide, or `react-native-fbsdk-next` for React Native.
+
+Turn both settings off in the native build so nothing is collected before
+c15t connects. On iOS, in `Info.plist`:
+
+{/* example: fragment */}
+
+```xml title="Info.plist"
+<key>FacebookAutoLogAppEventsEnabled</key>
+<false/>
+<key>FacebookAdvertiserIDCollectionEnabled</key>
+<false/>
+```
+
+On Android, inside the manifest's `application`:
+
+{/* example: fragment */}
+
+```xml title="AndroidManifest.xml"
+<meta-data
+	android:name="com.facebook.sdk.AutoLogAppEventsEnabled"
+	android:value="false" />
+<meta-data
+	android:name="com.facebook.sdk.AdvertiserIDCollectionEnabled"
+	android:value="false" />
+```
+
+To block every request to Meta until consent, also set
+`com.facebook.sdk.AutoInitEnabled` to `false` and initialize the SDK yourself
+after the first grant, as Meta's [GDPR guide](https://developers.facebook.com/docs/app-events/gdpr-compliance/)
+describes. That initialization is one-way, so the helper does not do it.
+
+If automatic event logging is off in Events Manager, Meta keeps it off even
+when the helper turns it on.
+
+## Connect a Swift app
+
+```swift title="MetaAppEventsOwner.swift"
+import C15tApple
+import C15tCore
+import FBSDKCoreKit
+
+final class MetaAppEventsOwner {
+    private let integration: MetaAppEventsIntegration
+
+    init(core: ConsentCore) {
+        integration = MetaAppEventsIntegration(
+            core: core,
+            setAutoLogAppEventsEnabled: { Settings.shared.isAutoLogAppEventsEnabled = $0 },
+            setAdvertiserIDCollectionEnabled: { Settings.shared.isAdvertiserIDCollectionEnabled = $0 },
+            setLimitedDataUse: { limited in
+                if limited {
+                    Settings.shared.setDataProcessingOptions(["LDU"], country: 0, state: 0)
+                } else {
+                    Settings.shared.setDataProcessingOptions([])
+                }
+            }
+        )
+    }
+
+    func stop() { integration.cancel() }
+    func syncAfterReset() { integration.sync() }
+}
+```
+
+## Connect an Android app
+
+```kotlin title="MetaAppEventsConsent.kt"
+import com.c15t.android.integrations.MetaAppEventsIntegration
+import com.c15t.core.C15t
+import com.facebook.FacebookSdk
+
+fun connectMetaAppEventsConsent(onError: (Exception) -> Unit): MetaAppEventsIntegration {
+	val core = checkNotNull(C15t.current) { "Install c15t before connecting Meta" }
+	return MetaAppEventsIntegration(
+		core = core,
+		setAutoLogAppEventsEnabled = FacebookSdk::setAutoLogAppEventsEnabled,
+		setAdvertiserIDCollectionEnabled = FacebookSdk::setAdvertiserIDCollectionEnabled,
+		setLimitedDataUse = { limited ->
+			if (limited) FacebookSdk.setDataProcessingOptions(arrayOf("LDU"), 0, 0)
+			else FacebookSdk.setDataProcessingOptions(arrayOf())
+		},
+		onError = onError,
+	)
+}
+```
+
+Keep the returned helper on the application.
+
+## Connect React Native or Expo
+
+Copy the checked connection function into `meta-app-events-consent.ts`:
+
+<include src="../shared/examples/react-native-bare/rn-meta-app-events-integration.mdx" />
+
+Then supply `react-native-fbsdk-next`:
+
+{/* example: fragment */}
+
+```ts title="meta-vendor.ts"
+import { Settings } from 'react-native-fbsdk-next';
+
+import { connectAppMetaAppEvents } from './meta-app-events-consent';
+
+export const connectMetaVendor = (onError: (error: unknown) => void) =>
+	connectAppMetaAppEvents(
+		{
+			setAdvertiserIDCollectionEnabled: (enabled) =>
+				Settings.setAdvertiserIDCollectionEnabled(enabled),
+			setAutoLogAppEventsEnabled: (enabled) =>
+				Settings.setAutoLogAppEventsEnabled(enabled),
+			setLimitedDataUse: (limited) =>
+				limited
+					? Settings.setDataProcessingOptions(['LDU'], 0, 0)
+					: Settings.setDataProcessingOptions([]),
+		},
+		onError
+	);
+```
+
+Expo needs a development build with the `react-native-fbsdk-next` config
+plugin. Expo Go cannot load it.
+
+## Events your app logs
+
+The helper controls automatic events and identifiers. Events your code logs
+with `AppEventsLogger` or `AppEvents` need their own consent check.
+
+## Handle reset and teardown
+
+`sync()` reapplies current consent after app code changes these settings.
+Teardown (`stop()`, `close()` or `disconnect()`) turns collection off and
+Limited Data Use on. Neither deletes data Meta already received.
+
+On withdrawal, the helper makes all three calls even if one of them fails,
+and reports the failure to `onError`.
+
+## Check the integration
+
+1. Launch with no saved choice. Confirm no automatic `fb_mobile_activate_app`
+   event and no advertiser ID in requests.
+2. Grant marketing. Confirm automatic events start and Limited Data Use is
+   off.
+3. Grant or withdraw measurement only. Confirm nothing changes.
+4. Withdraw marketing. Confirm automatic events stop.
+
+Use Meta's App Events debugging in Events Manager. The helper tests cover
+order, withdrawal during a grant and category changes with recorded calls.
+They were not run against the Meta SDK.
+
+The snippets were written against these SDK majors and checked as shown:
+
+| Platform | Version | How |
+| --- | --- | --- |
+| React Native | `react-native-fbsdk-next` 13.4.3 | Type-checked against the package's published types |
+| Android | `facebook-core` 19.0.1 | Method signatures read from the published AAR |
+| iOS | FBSDKCoreKit 19.0.1 | Checked against the SDK's Swift source |

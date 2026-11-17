@@ -1,0 +1,355 @@
+## Choose the offline behavior you need
+
+Saved choices already survive a process restart without a network connection.
+The native engine restores its protected record before returning from
+installation. Optional SDKs stay off while authority is unresolved or invalid.
+
+The mobile SDKs have one mode. The app points at your Inth project, fetches
+policy from it and sends consent records to it. There is no mode without a
+backend and no self-hosted backend on mobile.
+
+A fresh installation has no saved policy. If that first launch must show the
+prompt without connectivity, give the app a policy at build time:
+
+| Policy source | Where the rules come from | Use it when |
+| --- | --- | --- |
+| [Bundled manifest](#bundle-the-manifest-at-build-time) | Exported from your Inth project at build time | Production. The rules are the ones your project serves, and IAB TCF works. |
+| [In-code policy](#define-the-policy-in-code) | Rules you write in source control | You accept keeping the code and the dashboard in step by hand. No IAB TCF. |
+
+The two do not mix. With either one, the engine stores the choice on the
+device, queues the consent record and delivers it to your Inth project when
+the app reconnects.
+
+`dryRun` is a separate switch for development and CI. It drops consent
+records instead of sending them, and a release build refuses it. See
+[Run without sending records](#run-without-sending-records).
+
+Without an in-code policy, the SDK picks the policy in this order:
+
+1. The live `/init` response.
+2. The last good response cached on the device.
+3. The manifest bundled into the app at build time.
+
+A newer bundled manifest replaces an older bundled one cached by an earlier
+build. It never replaces a cached live response.
+
+With an in-code policy, the device resolves the rules itself and never calls
+`/init`.
+
+## Define the policy in code
+
+Write the policy as rules in the backend's `PolicyRule` names: `id`, `match`,
+`model`, `prompt`, `categories`, `scopeMode`, `preselectedCategories`,
+`actions`, `validity`, `privacySignals` and `copyRevision`. The SDK resolves
+them on the device with the backend's matching order: region, country,
+`regionFallbacks`, `fallback`, then `isDefault`. Consent records still go to
+your Inth project at `backendURL`.
+
+Inth recomputes each decision against the policy your project serves. It
+rejects a record whose policy it does not serve, with HTTP 422 and the reason
+`decision-mismatch`. Keep the in-code rules identical to the project's policy
+in the dashboard, and change both together. A bundled manifest avoids the
+problem, because the build exports it from the project. Prefer it for
+production.
+
+The device learns its location from `/init`, which an in-code policy never
+calls. The `fallback` rule applies unless your app sets an override country
+and region, so every policy needs a rule with `match.fallback` or
+`match.isDefault`.
+
+```ts title="app.config.ts"
+export default {
+	plugins: [
+		[
+			'@c15t/react-native',
+			{
+				backendURL: 'https://your-project.inth.app',
+				consentCategories: ['necessary', 'measurement', 'marketing'],
+				policy: {
+					rules: [
+						{
+							id: 'germany',
+							match: { countries: ['DE'] },
+							model: 'opt-in',
+							prompt: 'choice',
+						},
+						{
+							id: 'everywhere_else',
+							match: { fallback: true, isDefault: true },
+							model: 'opt-in',
+							prompt: 'choice',
+						},
+					],
+				},
+			},
+		],
+	],
+};
+```
+
+```swift title="Swift"
+let policy = try ConsentPolicy(rules: [
+    PolicyRule(id: "germany", match: PolicyMatch(countries: ["DE"]), model: .optIn, prompt: .choice),
+    PolicyRule(id: "everywhere_else", match: PolicyMatch(fallback: true, isDefault: true),
+               model: .optIn, prompt: .choice),
+])
+let core = try C15tApple.install(C15tAppleConfiguration(
+    backendURL: "https://your-project.inth.app",
+    policy: policy
+))
+```
+
+```kotlin title="Kotlin"
+val policy = ConsentPolicy(listOf(
+    PolicyRule("germany", PolicyMatch(countries = listOf("DE")), ConsentModel.OPT_IN, PolicyPrompt.CHOICE),
+    PolicyRule("everywhere_else", PolicyMatch(fallback = true, isDefault = true), ConsentModel.OPT_IN, PolicyPrompt.CHOICE),
+))
+C15tAndroid.install(
+    context,
+    NativeConfig(backendUrl = "https://your-project.inth.app", policy = policy),
+)
+```
+
+Both cores also read the same rules as JSON, `{"rules": [...]}`:
+`ConsentPolicy(json:)` in Swift and `ConsentPolicy.fromJson` in Kotlin. Expo
+writes that file for you and names it with `com.c15t.policy.rules` in
+`Info.plist` and `com.c15t.POLICY_RULES` in the Android manifest.
+
+The rules follow the backend's authoring checks: a partial `categories` list
+needs `scopeMode`, `actions` must include `accept` and `reject`, at most one rule
+may set `fallback` and one `isDefault`, the `'*'` wildcard belongs only in
+`categories`, and unknown fields are refused.
+`validity` takes whole or fractional days, such as `0.5`. Expo prebuild runs the
+same checks as the native SDKs, so a policy a device would refuse fails the
+build. A policy the SDK refuses at launch, such as a hand-edited file, leaves
+optional categories off, even if an earlier build stored a usable policy and
+grants, and reports `policy-invalid` in the snapshot `error` and on the error
+stream. Stored choices come back once a later build ships a usable policy.
+
+Change `copyRevision` when the wording people agreed to changes. Returning
+people are asked again after the update. Changing `validity.choiceDays` asks
+again for category choices only, and changing `validity.noticeDays` asks again
+for notice acknowledgements only.
+
+IAB TCF does not work with an in-code policy. The `iab` model needs the Global
+Vendor List, which comes from `/init`, so the SDK refuses an `iab` rule in
+code and Expo prebuild refuses `iab` beside `policy`. Use a bundled manifest
+for IAB on a launch without network.
+
+An in-code policy also does not mix with a bundled manifest. Expo prebuild
+refuses `policy` beside `policyResource` or `bundleManifest`, and Kotlin's
+`NativeConfig` throws when both `policy` and `bundledPolicy` are set. In
+Swift the bundled manifest wins.
+
+## Bundle the manifest at build time
+
+Each build should fetch the latest manifest and bundle it. If the backend
+cannot be reached, a release build fails and a debug build warns and
+continues with no bundled manifest. `allowStaleManifest` lets air-gapped CI
+reuse the last fetched copy instead. A manifest the backend serves but that
+fails validation fails every build.
+
+With Expo, add `@c15t/cli` to `devDependencies` and turn on
+`bundleManifest`:
+
+```ts title="app.config.ts"
+export default {
+	plugins: [
+		[
+			'@c15t/react-native',
+			{
+				backendURL: 'https://your-project.inth.app',
+				bundleManifest: { allowStaleManifest: false, languages: ['de'] },
+			},
+		],
+	],
+};
+```
+
+Prebuild runs `c15t mobile-manifest` and embeds the result in both native
+projects. Prebuild cannot see which variant comes next, so it treats every
+build as release except `expo run:*` with no variant or configuration, or with
+one whose name contains `debug`. `expo run:ios --configuration Production`
+is release. Set `C15T_MANIFEST_BUILD=debug` to say otherwise. When a
+debug prebuild cannot reach the backend, it also removes a manifest an earlier
+prebuild embedded, unless `allowStaleManifest` is on. Top-level `vendors` also
+narrows the GVL in the bundled manifest.
+
+Without Expo, run [`c15t mobile-manifest`](/docs/cli/commands/mobile-manifest)
+as a build step and point the platform at the file:
+
+A configuration or build type counts as debug only when its name contains
+`debug`, in any case. Every other name, such as `Production` or `staging`,
+counts as release, so a production build never quietly skips its manifest.
+
+```sh title="Xcode Run Script phase, after Copy Bundle Resources"
+case "$CONFIGURATION" in
+  *[Dd][Ee][Bb][Uu][Gg]*) BUILD=debug ;;
+  *) BUILD=release ;;
+esac
+npx @c15t/cli mobile-manifest --backend-url https://your-project.inth.app \
+  --out "$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/c15t-policy.json" \
+  --build "$BUILD"
+```
+
+On Android, register the fetch through the variant API, so every variant,
+product flavors included, gets its own copy as a generated asset:
+
+```groovy title="android/app/build.gradle"
+abstract class C15tManifestTask extends DefaultTask {
+    @Input abstract Property<String> getBuild()
+    @Internal abstract DirectoryProperty getAppRoot()
+    @OutputDirectory abstract DirectoryProperty getOutputDir()
+    @Inject abstract ExecOperations getExecOperations()
+
+    @TaskAction
+    void fetch() {
+        def out = new File(outputDir.get().asFile, 'c15t-policy.json')
+        execOperations.exec {
+            workingDir appRoot.get().asFile
+            commandLine 'npx', '@c15t/cli', 'mobile-manifest',
+                '--backend-url', 'https://your-project.inth.app',
+                '--out', out.path, '--build', build.get()
+        }
+    }
+}
+
+androidComponents {
+    onVariants(selector().all()) { variant ->
+        def fetch = tasks.register("c15tManifest${variant.name.capitalize()}", C15tManifestTask) {
+            build = (variant.buildType ?: '').toLowerCase().contains('debug') ? 'debug' : 'release'
+            appRoot = rootProject.layout.projectDirectory.dir('..')
+        }
+        variant.sources.assets.addGeneratedSourceDirectory(fetch) { it.outputDir }
+    }
+}
+```
+
+`addGeneratedSourceDirectory` sets each task's `outputDir` to a directory of
+its own under `build/generated/assets`, so registration sets only `build` and
+`appRoot`. A task you run without that line has no output directory.
+
+On iOS the script writes straight into the built app, so the file is not
+listed in Copy Bundle Resources: a debug build that skipped the fetch then has
+no file to copy rather than an old one. List the output path in the phase's
+Output Files when user script sandboxing is on. Set the keys in the table
+below.
+
+The manifest needs a conservative opt-in or IAB fallback for unknown
+geography, with no preselected optional categories. Export fails when that
+fallback is absent. For a scoped IAB app, supply `--vendors` with the
+comma-separated vendor IDs. Export also needs the GVL and all configured
+Additional Consent provider disclosures.
+
+The resource carries the manifest's custom (non-IAB) vendors, so a launch
+served only by the bundle lists them and Accept all grants them. A resource
+exported by an older CLI carries none, so the app keeps the list it already
+holds. On a first launch that list is empty until a live `/init` answers.
+Re-export the resource after you update the CLI or change the list. Export
+fails when two custom vendors share an id, such as `1` and `"1"`, because the
+app would discard the whole list.
+
+A `dryRun` build can point at a host outside Inth, such as a staging or
+loopback backend. Pass `--dry-run` to `c15t mobile-manifest` for that build so
+the command accepts the same URL. Expo's `bundleManifest` passes it for you
+when `dryRun` is on.
+
+Repository maintainers re-export the example apps' fixtures with
+`bunx tsx scripts/export-mobile-policy.ts`, which takes an explicit
+`--expires-at`.
+
+## Include the resource in the app
+
+| App | Where the JSON goes | Configuration |
+| --- | --- | --- |
+| Swift | The app target's Copy Bundle Resources | Load `BundledPolicyResource` and pass it as `bundledPolicy` during installation |
+| Bare RN, iOS | The app target's Copy Bundle Resources | `com.c15t.policy.resource` names the bundled resource |
+| Kotlin or bare RN, Android | `app/src/main/assets/c15t-policy.json` | `com.c15t.POLICY_RESOURCE` names the asset for automatic installation |
+| Expo | Beside your app config, or another source path | Set `policyResource` in the c15t config plugin and rebuild |
+
+For app-owned Android installation, read the asset JSON and pass it as
+`NativeConfig.bundledPolicy`. Keep the same backend endpoint at export and
+startup. Native loading validates the resource schema, integrity, endpoint
+binding and authority dates.
+
+The JSON is a public app artifact. Put no secrets in it. Its SHA-256 checks
+byte integrity; it is not a signature or an external approval.
+
+## When the bundled manifest expires
+
+An expired bundled manifest still works. If the device is offline, the SDK
+uses it to show the prompt and record choices, and emits a `policyStale`
+event. Optional categories stay off until the person chooses. The next live
+`/init` response replaces the manifest.
+
+| Platform | Event | Current state |
+| --- | --- | --- |
+| Swift | `CoreEvent.policyStale(authority)` on `eventStream` | `ConsentCore.isPolicyStale` |
+| Kotlin | `ConsentCore.onPolicyStale { authority -> }` | `ConsentCore.isPolicyStale` |
+
+Kotlin calls a new `onPolicyStale` observer at once when a stale manifest is
+already in force, so a subscription made after startup still hears it.
+
+A manifest bound to a different backend URL, or issued in the future, supplies
+no policy. Optional SDKs stay off and the core keeps trying to refresh.
+
+IAB disclosures have their own deadline, measured from the original GVL or
+provider-list source date. The default maximum age is seven days. Copying an
+old list into a new app build does not renew it, and an expired list cannot
+authorize a new IAB grant.
+
+Rejection and withdrawal remain available without connectivity. Confirm local
+commit success before dismissing app-owned settings. The native engine stores
+the denial and its delivery obligation together. A later transport failure
+does not undo that withdrawal.
+
+On reconnect, queued records must not restore an earlier grant over a newer
+withdrawal. Do not clear the queue or edit platform IAB keys to recover from a
+delivery failure. See [identity and reset](/docs/guides/mobile-identity) for
+the difference between withdrawal and starting over.
+
+## Run without sending records
+
+`dryRun` is for development and CI. The prompt, storage, SDK gates and consent
+signals work as normal. The engine drops each consent record instead of
+queueing or sending it, and identity calls change local state and send
+nothing. A save reports success with nothing queued. A queue left by an
+earlier build without `dryRun` is never sent, and the first dry-run save
+drops it, so an old record cannot be delivered after a newer choice.
+
+The app still fetches policy from `/init`, so you preview your project's real
+policy. With a bundled manifest or an in-code policy, a dry-run launch needs
+no network at all.
+
+| App | Turn it on |
+| --- | --- |
+| Expo | `dryRun: true` in the config plugin |
+| Bare RN | `com.c15t.dryRun` set to true in `Info.plist`, `com.c15t.DRY_RUN` in Android metadata |
+| Swift | `C15tAppleConfiguration(backendURL:dryRun:)`, inside `#if DEBUG` |
+| Kotlin | `NativeConfig(backendUrl = ..., dryRun = true)`, or `com.c15t.DRY_RUN` metadata |
+
+A release build refuses `dryRun` and starts no engine. Swift decides with
+`#if DEBUG`, because the SDK ships as source and compiles with your app's
+configuration. Android checks whether the host app is debuggable at runtime,
+because the SDK ships as release AARs. `C15tApple.install` throws
+`dryRunInReleaseBuild`, and `C15tAndroid.install` throws
+`IllegalStateException`. The launch hooks that read `Info.plist` or manifest
+metadata log the refusal instead, and every read answers deny-all.
+
+In a debug build, `dryRun` also relaxes the project URL rule to any `https`
+URL, or `http` on `localhost`, `127.0.0.1` or `[::1]`, with a port and a path.
+
+## Check that it works
+
+1. Install a build with a valid bundled policy and launch it offline with no
+   previous choice. The prompt appears and optional SDKs stay off.
+2. Reject, stop the app and relaunch offline. The saved refusal remains.
+3. Reconnect. Confirm delivery at the configured backend.
+4. Repeat with an expired bundle. The prompt still appears, optional SDKs stay
+   off until you choose, and the app receives `policyStale`.
+5. Repeat with a bundle exported for a different backend URL. No prompt
+   appears and optional SDKs stay off.
+
+Changing the bundled resource changes the native binary. Re-export during
+release preparation and build a new binary; a JavaScript OTA update does not
+replace the native resource.

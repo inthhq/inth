@@ -1,0 +1,97 @@
+---
+title: "IAB TCF"
+description: "Shared IAB TCF setup guidance for the React and Next.js adapters."
+group: reference
+---
+
+{/* This file is NOT rendered directly. Sections are imported by framework pages. */}
+
+<section id="prepare">
+  Use the IAB integration when your application needs the Transparency and Consent
+  Framework. Configure an IAB policy, the correct CMP identity and vendor data for
+  your deployment. A demo CMP ID is not a production configuration.
+
+  A CMP ID is assigned to a company when it registers as a CMP with IAB Europe
+  ([register.consensu.org/CMP](https://register.consensu.org/CMP)). Every TC
+  String names the CMP that wrote it, so an ID you did not register attributes
+  your users' consent records to someone else. Omitting it leaves the add-on
+  unmounted: no `__tcfapi`, and no TC String written.
+
+  Install `@c15t/iab` alongside your framework adapter, then mount the IAB
+  components inside an existing consent provider connected to Inth.
+</section>
+
+<section id="configure">
+  Supply the CMP ID from your deployment's IAB configuration. Keep a persistent
+  preferences entry point through the surrounding consent provider.
+
+  ## Resolve the policy before rendering
+
+  IAB components remain hidden until an applicable policy resolves. Forcing a
+  dialog open does not create a policy or vendor list. Inspect resolution and the
+  Global Vendor List response before changing rendering conditions.
+
+  IAB presentation follows `presentation.prompt.blocking` and
+  `presentation.preferences.blocking`. A blocking dialog needs focus management,
+  scroll locking and a backdrop together.
+
+  ## Mount IABProvider for every IAB policy
+
+  IAB is opt-in. The standard `ConsentBanner` and `ConsentDialog` do not
+  handle the IAB model, so when a visitor's policy uses it, the backend
+  sends its vendor list and the app has no `IABProvider`, they throw an
+  `IABUnavailableError` (code `C15T_IAB_UNAVAILABLE`):
+  `c15t: this visitor's policy uses IAB TCF, but no <IABProvider> is mounted`.
+  The error happens during render, on the server and in the browser, so
+  your error boundary or the framework's error overlay shows it. Render `IABProvider` from
+  `c15t/react/iab` for those visitors, or remove the `iab` model from the
+  policy.
+
+  ## When the dialog loads
+
+  `IABConsentDialog` loads its code on demand, so the first page load
+  carries the banner without the preference center. The code downloads at
+  the first of:
+
+  - The browser's first idle period after the page's `load` event, while
+    the IAB banner is shown.
+  - Hover or focus on the banner's Customize button or partners link.
+  - The dialog opening.
+
+  A visitor who opens the dialog before the download finishes waits for
+  it. `open={true}` and `showTrigger` load it on mount, under a model the
+  dialog's `models` prop lists. Under another model, `showTrigger` loads
+  only the trigger. Set
+  `preloadDialog: 'intent'` in the consent provider options to skip the
+  idle download. Idle loading is also skipped with Save-Data on, on `2g`
+  and `slow-2g` connections, and while offline.
+
+  ## Verify vendor and purpose choices
+
+  Test category choices alongside vendor, purpose, legitimate-interest and special
+  feature controls used by your integration. Confirm the TC String and `__tcfapi`
+  reflect the saved state, and verify the vendor's actual requests. A category-only
+  banner test does not establish that the IAB flow works.
+</section>
+
+<section id="missing-provider">
+  The visitor's policy uses the `iab` model and the backend sent its vendor
+  list, but no `IABProvider` is mounted. The standard banner and dialog do
+  not handle the IAB model, so they throw rather than leave the visitor
+  with no consent UI. Server and browser render the same error.
+
+  Fix it one of two ways:
+
+  - If the site uses IAB TCF, render `IABProvider` with `IABConsentBanner`
+    and `IABConsentDialog` from `c15t/react/iab` inside your consent
+    provider. They can sit next to the standard banner.
+  - If it does not, remove the `iab` model from the policy for that region
+    in your Inth project or policy pack.
+
+  A backend that answers `gvl: null` turns IAB off for that request. The
+  policy then runs as opt-in and nothing throws.
+
+  The check passes once `c15t/react/iab` has loaded. If you import the IAB
+  components with a dynamic `import()`, a render of the standard banner
+  that happens before the import finishes still throws.
+</section>

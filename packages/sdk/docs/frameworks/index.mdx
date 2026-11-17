@@ -1,0 +1,51 @@
+---
+title: Frameworks
+description: Choose a c15t setup guide for your web framework, React Native, Expo, SwiftUI, UIKit or Kotlin Android app.
+group: frameworks
+---
+
+## Pick your framework
+
+| Framework | Package | Guide |
+| --- | --- | --- |
+| Next.js | `c15t` (`c15t/next`) | [Next.js quickstart](/docs/frameworks/next/quickstart) |
+| TanStack Start | `c15t` (`c15t/tanstack-start`) | [TanStack Start quickstart](/docs/frameworks/tanstack-start/quickstart) |
+| React | `c15t` (`c15t/react`) | [React quickstart](/docs/frameworks/react/quickstart) |
+| Nuxt | `c15t` (`c15t/vue` Nuxt module) | [Nuxt quickstart](/docs/frameworks/nuxt/quickstart) |
+| Vue | `c15t` (`c15t/vue/vue-plugin`) | [Vue quickstart](/docs/frameworks/vue/quickstart) |
+| Astro | `c15t` (`c15t/astro`) | [Astro quickstart](/docs/frameworks/astro/quickstart) |
+| Svelte | `c15t/svelte` | [Svelte quickstart](/docs/frameworks/svelte/quickstart) |
+| SvelteKit | `c15t/svelte` | [SvelteKit quickstart](/docs/frameworks/sveltekit/quickstart) |
+| Angular 20, 21 or 22, with or without `@angular/ssr` | `@c15t/angular` | [Angular quickstart](/docs/frameworks/angular/quickstart) |
+| HTML, a CMS, a page builder or a static site generator | `@c15t/browser` from a script tag | [HTML quickstart](/docs/frameworks/html/quickstart) |
+| JavaScript with a bundler, or your own UI | `@c15t/browser`, or `c15t` (`c15t/runtime`) | [JavaScript quickstart](/docs/frameworks/javascript/quickstart) |
+| React Native or Expo development builds | `@c15t/react-native` | [React Native quickstart](/docs/frameworks/react-native/quickstart) |
+| SwiftUI or UIKit | Swift package `c15t` | [Swift quickstart](/docs/frameworks/swift/quickstart) |
+| Kotlin Android | `com.c15t` native artifacts | [Android quickstart](/docs/frameworks/android/quickstart) |
+
+Not sure which setup your rendering mode needs? [Choose your setup](/docs/concepts/choose-your-setup)
+maps each app shape, such as a Next.js static export or a prerendered SvelteKit
+site, to a guide.
+
+## Install the right package
+
+Most frameworks use one package, `c15t`, and import the framework entry point:
+`c15t/next`, `c15t/react`, `c15t/vue` (the Nuxt module), `c15t/vue/vue-plugin`
+(plain Vue), `c15t/astro`, `c15t/tanstack-start` or `c15t/svelte`.
+You do not need `@c15t/nextjs` or `@c15t/react` as well; `c15t` depends on
+them. Angular is the exception: install `@c15t/angular`, which `c15t` does not
+re-export.
+
+HTML pages and the
+stock UI in JavaScript use `@c15t/browser`. Vendor script helpers are a separate
+install, `@c15t/integrations`, in every framework.
+
+Mobile SDKs use native consent engines and have their own installation paths.
+They are currently private prereleases. [Mobile availability](/docs/guides/mobile-status)
+explains how to obtain the matching Swift, Maven and RN artifacts.
+
+## After the quickstart
+
+A banner on screen does not mean analytics wait for consent. Move existing
+scripts into c15t, replace embeds that load on their own, and keep a link to
+reopen preferences. Then [verify the integration](/docs/guides/verify-consent).

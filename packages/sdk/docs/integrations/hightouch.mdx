@@ -1,0 +1,59 @@
+---
+title: Hightouch
+description: Load the Hightouch Events browser SDK only after measurement consent with the c15t hightouch helper, and check page events in DevTools.
+seoTitle: Hightouch cookie consent with c15t
+seoDescription: Load the Hightouch Events SDK only with measurement consent. The c15t hightouch helper creates the htevents queue only with consent.
+icon: hightouch
+group: integrations
+---
+
+The c15t `hightouch` helper keeps the Hightouch Events browser SDK off the page
+until `measurement` has consent. Until then, c15t does not create the
+`window.htevents` queue or load `events.min.js`. The helper sends no consent
+signal to Hightouch. If the visitor withdraws consent, c15t removes the script
+element. By default, c15t also reloads the page.
+
+## Configure Hightouch
+
+Copy the write key from your Hightouch Event Source. Remove the original
+Hightouch snippet.
+
+<CommandTabs command="@c15t/integrations" mode="install" />
+
+```ts title="src/consent-scripts.ts"
+import { hightouch } from '@c15t/integrations/hightouch';
+
+export const scripts = [hightouch({ writeKey: 'YOUR_WRITE_KEY' })];
+```
+
+<include src="../shared/integrations/register-scripts.mdx" />
+
+## Options
+
+| Option | Default | Behavior |
+| --- | --- | --- |
+| `writeKey` | Required | Event Source write key passed to `htevents.load`. The helper trims it. Empty values log an error and the script does not load. |
+| `apiHost` | None | API host passed in the load options. Without it, the SDK uses `us-east-1.hightouch-events.com`. Set it only for another region or a first-party tracking host. A blank value is dropped. |
+| `trackPageView` | `true` | Queues `htevents.page()` after `load`. Set `false` when your router sends page calls. |
+| `scriptUrl` | `https://cdn.hightouch-events.com/browser/release/v1-latest/events.min.js` | Loader URL override. A blank value falls back to the default. |
+
+## Loading and revocation
+
+`hightouch` uses the `measurement` category. When measurement becomes allowed,
+the helper creates the `window.htevents` queue with the snippet's methods,
+stores the write key and load options on it, and queues `load` and, by
+default, `page`. Then it loads `events.min.js`, which replays the queue.
+
+On revocation the helper removes the script element and calls no Hightouch API.
+An Event Source can forward events to other destinations, so check each
+destination's purpose in Hightouch as well.
+
+## Verify Hightouch
+
+Filter DevTools Network by `hightouch`. After you allow measurement,
+`events.min.js` loads and a page event reaches your API host. With client-side
+routing, check that each route change sends one page event, not two.
+`window.htevents` still exists after revocation, so check measurement
+permission before your own `htevents.track` calls.
+
+<include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

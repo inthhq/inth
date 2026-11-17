@@ -1,0 +1,280 @@
+import { defineConfig } from 'oxlint';
+import antiSlop from 'ultracite/oxlint/anti-slop';
+import core from 'ultracite/oxlint/core';
+import next from 'ultracite/oxlint/next';
+import react from 'ultracite/oxlint/react';
+import vitest from 'ultracite/oxlint/vitest';
+import vue from 'ultracite/oxlint/vue';
+
+const nextAppDirectories = [
+	'benchmarks/bundle-test-app',
+	'benchmarks/css-layer-preview',
+	'benchmarks/nextjs-browser-bench',
+	'benchmarks/no-tw-test',
+	'benchmarks/react-browser-bench',
+	'benchmarks/script-lifecycle-bench',
+	'benchmarks/tw3-test',
+	'benchmarks/tw4-test',
+	'apps/playground',
+] as const;
+
+const nextAppFiles = nextAppDirectories.map(
+	(directory) => `${directory}/**/*.{js,jsx,ts,tsx}`
+);
+
+const nonReactFrameworkFiles = [
+	'apps/storybook-solid/**/*.{js,jsx,ts,tsx}',
+	'apps/storybook-svelte/**/*.{js,jsx,ts,tsx}',
+	'apps/storybook-vue/**/*.{js,jsx,ts,tsx}',
+	'benchmarks/nuxt-browser-bench/**/*.{js,jsx,ts,tsx}',
+	'internals/fixtures/nuxt/**/*.{js,jsx,ts,tsx}',
+	'internals/fixtures/nuxt-vapor/**/*.{js,jsx,ts,tsx}',
+	'packages/sdk/solid/**/*.{js,jsx,ts,tsx}',
+	'packages/sdk/svelte/**/*.{js,jsx,ts,tsx}',
+	'packages/sdk/vue/**/*.{js,jsx,ts,tsx}',
+] as const;
+
+// These rules reported existing violations during the migration. Every
+// Ultracite rule not listed here was clean and remains enabled as an error.
+// Re-enable deferred rules in focused changes that also fix their violations.
+const deferredRules = [
+	'unicorn/catch-error-name',
+	'unicorn/consistent-existence-index-check',
+	'unicorn/consistent-function-scoping',
+	'unicorn/custom-error-definition',
+	'unicorn/escape-case',
+	'unicorn/filename-case',
+	'unicorn/import-style',
+	'unicorn/new-for-builtins',
+	'unicorn/no-abusive-eslint-disable',
+	'unicorn/no-array-for-each',
+	'unicorn/no-array-method-this-argument',
+	'unicorn/no-array-reduce',
+	'unicorn/no-array-reverse',
+	'unicorn/no-array-sort',
+	'unicorn/no-await-expression-member',
+	'unicorn/no-document-cookie',
+	'unicorn/no-hex-escape',
+	'unicorn/no-immediate-mutation',
+	'unicorn/no-lonely-if',
+	'unicorn/no-negated-condition',
+	'unicorn/no-nested-ternary',
+	'unicorn/no-new-array',
+	'unicorn/no-object-as-default-parameter',
+	'unicorn/no-typeof-undefined',
+	'unicorn/no-unnecessary-array-splice-count',
+	'unicorn/no-unreadable-array-destructuring',
+	'unicorn/no-useless-error-capture-stack-trace',
+	'unicorn/no-useless-fallback-in-spread',
+	'unicorn/no-useless-length-check',
+	'unicorn/no-useless-spread',
+	'unicorn/no-useless-undefined',
+	'unicorn/numeric-separators-style',
+	'unicorn/prefer-add-event-listener',
+	'unicorn/prefer-at',
+	'unicorn/prefer-bigint-literals',
+	'unicorn/prefer-classlist-toggle',
+	'unicorn/prefer-code-point',
+	'unicorn/prefer-default-parameters',
+	'unicorn/prefer-dom-node-append',
+	'unicorn/prefer-dom-node-dataset',
+	'unicorn/prefer-dom-node-remove',
+	'unicorn/prefer-export-from',
+	'unicorn/prefer-import-meta-properties',
+	'unicorn/prefer-logical-operator-over-ternary',
+	'unicorn/prefer-math-trunc',
+	'unicorn/prefer-modern-dom-apis',
+	'unicorn/prefer-module',
+	'unicorn/prefer-native-coercion-functions',
+	'unicorn/prefer-number-coercion',
+	'unicorn/prefer-optional-catch-binding',
+	'unicorn/prefer-query-selector',
+	'unicorn/prefer-response-static-json',
+	'unicorn/prefer-set-has',
+	'unicorn/prefer-single-call',
+	'unicorn/prefer-spread',
+	'unicorn/prefer-string-replace-all',
+	'unicorn/prefer-string-slice',
+	'unicorn/prefer-structured-clone',
+	'unicorn/prefer-ternary',
+	'unicorn/prefer-type-error',
+	'unicorn/relative-url-style',
+	'unicorn/require-module-specifiers',
+	'unicorn/switch-case-braces',
+	'unicorn/text-encoding-identifier-case',
+] as const;
+
+// The remaining anti-slop rules need focused code or architecture changes.
+// Three anti-slop rules are already clean and stay enabled through the preset.
+const deferredAntiSlopRules = [
+	'anti-slop/no-chained-type-assertions',
+	'anti-slop/no-known-value-widening',
+	'anti-slop/no-runtime-typeof',
+	'anti-slop/no-unknown-parameters',
+	'anti-slop/no-unknown-returns',
+	'anti-slop/no-unsafe-dictionary-type',
+	'anti-slop/require-safety-comment-for-type-assertion',
+] as const;
+
+export default defineConfig({
+	extends: [core, react, vue, antiSlop],
+	ignorePatterns: [
+		...core.ignorePatterns,
+		'.codex/**',
+		'.repos/**',
+		'.tmp-bun/**',
+		'apps/shadcn-registry/vendor/**',
+		'packages/sdk/c15t/shims/**',
+		// Injected verbatim into WebView pages, where page script may have
+		// replaced built-ins first. They avoid iterators and destructuring on
+		// purpose; see "WebView consent" in packages/native-protocol/CONTRACT.md.
+		'packages/native-protocol/webview/*.js',
+	],
+	overrides: [
+		{
+			files: [
+				'**/*.{test,spec,test-d,spec-d}.{ts,tsx,js,jsx}',
+				'**/__tests__/**/*.{ts,tsx,js,jsx}',
+			],
+			plugins: ['vitest'],
+			rules: {
+				// Loading the plugin also enables its default rules. Adopt only
+				// these two checks from Ultracite's Vitest preset for now.
+				...Object.fromEntries(
+					Object.keys(vitest.overrides?.[0]?.rules ?? {})
+						.filter((rule) => rule.startsWith('vitest/'))
+						.map((rule) => [rule, 'off'])
+				),
+				'vitest/expect-expect': [
+					'error',
+					{
+						assertFunctionNames: [
+							'expect',
+							'expectTypeOf',
+							'assert',
+							'assertType',
+							// These helpers assert values or throw when a DOM condition fails.
+							'assertParity',
+							'checkCommit',
+							'createBackendConformanceTest',
+							'expectRejected',
+							'expectNonEmpty',
+							'expectScriptMatchesIntegration',
+							'expectSkippedScript',
+							'expectStubCommandQueue',
+							'expectUnique',
+							'waitForElement',
+							'waitForElementRemoved',
+						],
+					},
+				],
+				'vitest/no-conditional-expect': 'error',
+			},
+		},
+		{
+			files: nextAppFiles,
+			plugins: next.plugins,
+			rules: next.rules,
+		},
+		{
+			// shadcn copies these files into users' projects, so they follow
+			// shadcn's code style. Correctness rules still apply.
+			files: ['apps/shadcn-registry/registry/**/*.{ts,tsx}'],
+			rules: {
+				curly: 'off',
+				'func-style': 'off',
+				'import/consistent-type-specifier-style': 'off',
+				'react/function-component-definition': 'off',
+				'react/jsx-handler-names': 'off',
+				'sort-keys': 'off',
+			},
+		},
+		{
+			// Angular declares components and directives as decorated classes.
+			// A primitive's parts share one file, marker directives have no
+			// body, and methods bound from templates need not read `this`.
+			files: [
+				'packages/sdk/angular/**/*.ts',
+				'internals/doc-snippets/angular/**/*.ts',
+				'internals/fixtures/angular/**/*.ts',
+				'benchmarks/angular-browser-bench/src/**/*.ts',
+			],
+			rules: {
+				'class-methods-use-this': 'off',
+				'max-classes-per-file': 'off',
+				'typescript/no-extraneous-class': [
+					'error',
+					{ allowWithDecorator: true },
+				],
+			},
+		},
+		{
+			// Angular's public name for the local-policy mode is `local()` from
+			// `@c15t/angular`. Core's deprecated `offline` alias must not reach
+			// Angular code, docs snippets, fixtures or benches.
+			files: [
+				'packages/sdk/angular/**/*.{ts,mts,js,mjs}',
+				'internals/doc-snippets/angular/**/*.{ts,mts,js,mjs}',
+				'internals/fixtures/angular/**/*.{ts,mts,js,mjs}',
+				'internals/angular-compat/**/*.{ts,mts,js,mjs}',
+				'benchmarks/angular-browser-bench/**/*.{ts,mts,js,mjs}',
+				'apps/storybook-angular/**/*.{ts,mts,js,mjs}',
+			],
+			rules: {
+				'no-restricted-imports': [
+					'error',
+					{
+						paths: [
+							{
+								importNames: ['offline'],
+								message: "Use local() from '@c15t/angular' instead of offline.",
+								name: '@c15t/core',
+							},
+						],
+						patterns: [
+							{
+								group: ['@c15t/core/*'],
+								importNames: ['offline'],
+								message: "Use local() from '@c15t/angular' instead of offline.",
+							},
+						],
+					},
+				],
+			},
+		},
+		{
+			files: [...nonReactFrameworkFiles],
+			rules: {
+				// Vue composables also use the `use*` convention, but do not follow
+				// React's component and hook call-order rules.
+				'react/rules-of-hooks': 'off',
+			},
+		},
+	],
+	rules: {
+		// Callback APIs need Promise executors. Banning the constructor led to
+		// copied wrappers that changed exception handling and runtime support.
+		'promise/avoid-new': 'off',
+		...Object.fromEntries(
+			[...deferredRules, ...deferredAntiSlopRules].map((rule) => [rule, 'off'])
+		),
+		'jsdoc/check-tag-names': [
+			'error',
+			{
+				definedTags: [
+					'defaultValue',
+					'experimental',
+					'packageDocumentation',
+					'remarks',
+					'typeParam',
+					'vitest-environment',
+				],
+			},
+		],
+	},
+	settings: {
+		next: {
+			rootDir: [...nextAppDirectories],
+		},
+	},
+});

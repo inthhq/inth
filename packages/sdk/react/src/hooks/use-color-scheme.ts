@@ -1,0 +1,21 @@
+'use client';
+
+import { setupColorScheme } from '@c15t/ui/utils/color-scheme';
+import { useEffect } from 'react';
+
+export type ColorScheme = 'light' | 'dark' | 'system' | null;
+
+/**
+ * Manage color scheme preferences for components.
+ * React wrapper for `@c15t/ui` setupColorScheme.
+ */
+export const useColorScheme = function useColorScheme(
+	colorScheme?: ColorScheme
+) {
+	useEffect(() => {
+		if (colorScheme === null) {
+			return;
+		}
+		return setupColorScheme(colorScheme as 'light' | 'dark' | 'system');
+	}, [colorScheme]);
+};

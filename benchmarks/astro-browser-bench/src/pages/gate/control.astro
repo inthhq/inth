@@ -1,0 +1,31 @@
+---
+/**
+ * The consent gate's LCP control: the gate page's article with no consent
+ * library. `scripts/run-gate.ts` serves it from a `baseline` build, which has
+ * no c15t integration, boot script or middleware.
+ */
+import {
+	gatePageCSS,
+	gatePageHTML,
+} from '@c15t/benchmarking/consent-gate-page';
+
+export const prerender = false;
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta
+			content="width=device-width,initial-scale=1"
+			name="viewport"
+		/>
+		<title>Field notes</title>
+		<style
+			is:inline
+			set:html={gatePageCSS}
+		/>
+	</head>
+	<body>
+		<Fragment set:html={gatePageHTML} />
+	</body>
+</html>

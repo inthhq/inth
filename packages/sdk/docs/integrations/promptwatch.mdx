@@ -1,0 +1,52 @@
+---
+title: Promptwatch
+description: Load the Promptwatch attribution client only after measurement consent with the c15t promptwatch helper, and check it in DevTools.
+seoTitle: Promptwatch cookie consent with c15t
+seoDescription: Load the Promptwatch client only with measurement consent. Set it up with the c15t promptwatch helper and check it in DevTools.
+icon: promptwatch
+group: integrations
+---
+
+The c15t `promptwatch` helper keeps the Promptwatch client script off the page
+until `measurement` has consent. The helper sends no consent signal to
+Promptwatch. If the visitor withdraws consent, c15t removes the script element.
+By default, c15t also reloads the page.
+
+## Configure Promptwatch
+
+Copy the project ID from your Promptwatch dashboard. The helper passes it to
+the client script as `data-project-id`.
+
+<CommandTabs command="@c15t/integrations" mode="install" />
+
+```ts title="src/consent-scripts.ts"
+import { promptwatch } from '@c15t/integrations/promptwatch';
+
+export const scripts = [promptwatch({ projectId: 'YOUR_PROJECT_ID' })];
+```
+
+<include src="../shared/integrations/register-scripts.mdx" />
+
+## Options
+
+| Option | Default | Behavior |
+| --- | --- | --- |
+| `projectId` | Required | Project ID from the Promptwatch dashboard. Empty or whitespace-only values log an error and the script does not load. |
+| `scriptUrl` | `https://ingest.promptwatch.com/js/client.min.js` | Loader URL override. Blank values fall back to the default. |
+
+## Loading and revocation
+
+`promptwatch` uses the `measurement` category. The client loads only while
+measurement is allowed. On revocation the helper removes the script element
+and calls no Promptwatch API.
+
+The helper controls only the browser client. If your server also sends events
+to Promptwatch, check the visitor's measurement permission there as well.
+
+## Verify Promptwatch
+
+After you allow measurement, the `client.min.js` request goes to
+`ingest.promptwatch.com` and its script element carries your
+`data-project-id`.
+
+<include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

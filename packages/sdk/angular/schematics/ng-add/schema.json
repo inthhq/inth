@@ -1,0 +1,47 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema",
+	"$id": "c15t-angular-ng-add",
+	"title": "c15t ng-add",
+	"type": "object",
+	"properties": {
+		"project": {
+			"type": "string",
+			"description": "The application project to add c15t to.",
+			"$default": {
+				"$source": "projectName"
+			}
+		},
+		"mode": {
+			"type": "string",
+			"description": "Where consent policies come from: a hosted backend such as Inth, or local mode in the browser with no backend.",
+			"enum": ["hosted", "local"],
+			"default": "hosted",
+			"x-prompt": {
+				"message": "Where should c15t get consent policies from?",
+				"type": "list",
+				"items": [
+					{
+						"value": "hosted",
+						"label": "A hosted backend, such as an Inth project (recommended)"
+					},
+					{
+						"value": "local",
+						"label": "Local mode: policies resolve in the browser, no backend and no consent records"
+					}
+				]
+			}
+		},
+		"backendUrl": {
+			"type": "string",
+			"description": "The backend URL for hosted mode, such as your Inth project's URL. Leave it empty to add a placeholder you replace later.",
+			"x-prompt": "Backend URL for hosted mode (leave empty for a placeholder, ignored in local mode):"
+		},
+		"components": {
+			"type": "boolean",
+			"description": "Add <c15t-consent-banner> and <c15t-consent-dialog> to the root component.",
+			"default": true,
+			"x-prompt": "Add the consent banner and dialog to the root component?"
+		}
+	},
+	"required": []
+}

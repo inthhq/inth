@@ -1,0 +1,41 @@
+{
+	"name": "@c15t/next-bundle-bench",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"analyze": "ANALYZE=true next build",
+		"analyze:json": "tsx analyze-bundle.ts --json",
+		"analyze:md": "tsx analyze-bundle.ts --markdown",
+		"bench": "BENCH_OUTPUT_DIR=../../.benchmarks/current/bundle tsx analyze-bundle.ts && BENCH_OUTPUT_DIR=../../.benchmarks/current/bundle tsx analyze-entries.ts",
+		"bench:ci": "BENCH_OUTPUT_DIR=../../.benchmarks/head/bundle tsx analyze-bundle.ts && BENCH_OUTPUT_DIR=../../.benchmarks/head/bundle tsx analyze-entries.ts",
+		"bench:entries": "tsx analyze-entries.ts",
+		"bench:nightly": "BENCH_OUTPUT_DIR=../../.benchmarks/nightly/bundle tsx analyze-bundle.ts && BENCH_OUTPUT_DIR=../../.benchmarks/nightly/bundle tsx analyze-entries.ts",
+		"build": "next build",
+		"dev": "next dev",
+		"test": "vitest run"
+	},
+	"dependencies": {
+		"@c15t/benchmarking": "workspace:*",
+		"@c15t/browser": "workspace:*",
+		"@c15t/core": "workspace:*",
+		"@c15t/nextjs": "workspace:*",
+		"@c15t/react": "workspace:*",
+		"next": "16.2.10",
+		"react": "19.2.7",
+		"react-dom": "19.2.7"
+	},
+	"devDependencies": {
+		"@next/bundle-analyzer": "16.2.10",
+		"@types/bun": "1.3.9",
+		"@types/node": "25.5.0",
+		"@types/react": "19.2.17",
+		"@vitest/coverage-istanbul": "4.1.10",
+		"esbuild": "^0.28.1",
+		"jsdom": "25.0.1",
+		"playwright": "1.61.1",
+		"tsx": "4.23.0",
+		"typescript": "6.0.3",
+		"vite": "8.1.3",
+		"vitest": "4.1.10"
+	}
+}

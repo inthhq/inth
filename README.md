@@ -18,6 +18,22 @@ This repository contains Inth's public developer tools and documentation.
 
 See each package's README for installation, usage, and development instructions.
 
+## SDK
+
+The consent SDK was imported from c15t and is being renamed and repackaged as `@inth/sdk`. Until that lands, its packages keep their `@c15t/*` names and are not published from this repository.
+
+| Path | Contents |
+| --- | --- |
+| [`packages/sdk`](packages/sdk/README.md) | Web packages and the SDK docs source in `packages/sdk/docs`. |
+| `packages/react-native` | React Native and Expo SDK. |
+| `packages/swift` | Swift SDK. The root `Package.swift` points here. |
+| `packages/android` | Android SDK. |
+| `packages/native-protocol` | Fixtures the three mobile SDKs share. |
+| `apps`, `examples`, `benchmarks`, `internals` | Storybooks, example apps, benchmarks, and test fixtures. |
+| `scripts` | SDK repository tooling and its tests. |
+
+Run SDK tasks from the root with the `sdk:*` scripts, such as `pnpm sdk:build`, `pnpm sdk:check-types`, `pnpm sdk:lint`, and `pnpm sdk:test`. Several SDK scripts still need Bun 1.3.11 as a runtime.
+
 ## Documentation
 
 - [CLI documentation](docs/cli/index.mdx)

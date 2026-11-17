@@ -1,0 +1,53 @@
+---
+title: ConsentButton
+description: Accept, reject, save or open preferences from your own Angular markup with the c15t-consent-button attribute component, and what each action records.
+group: frameworks
+---
+
+## Add consent buttons to your own markup
+
+`ConsentButton` is a component on your own `<button>`, selected with
+`button[c15t-consent-button]`. It records a consent action on click and takes
+the stock button styles:
+
+<include src="../../../shared/examples/angular/consent-buttons.mdx" />
+
+Use it in a custom banner, on a privacy page, or in the banner's
+`c15tConsentBannerAction` template; see
+[ConsentBanner](./consent-banner#replace-the-title-description-or-buttons).
+Your button keeps its content, so write the label yourself.
+
+## Inputs
+
+| Input | Type | Default | Behavior |
+| --- | --- | --- | --- |
+| `action` | `'accept'`, `'reject'`, `'save'`, `'customize'` or `'dismiss'` | required | What the button does. |
+| `variant` | `'primary'` or `'neutral'` | `'neutral'` | The theme's `buttonPrimary` or `buttonSecondary` color. |
+| `mode` | `'filled'`, `'stroke'`, `'lighter'` or `'ghost'` | `'stroke'` | The fill. |
+| `size` | `'medium'`, `'small'`, `'xsmall'` or `'xxsmall'` | `'small'` | The size. |
+| `noStyle` | `boolean` | provider's `noStyle` | Drops c15t's classes. |
+
+## What each action records
+
+| `action` | Effect |
+| --- | --- |
+| `accept` | Grants every category in the policy's scope and closes the surface. Same as `saveConsents('all')`. |
+| `reject` | Keeps only the necessary categories and closes the surface. Same as `saveConsents('necessary')`. |
+| `save` | Records the draft from the preference switches. Same as `saveConsents('custom')`. |
+| `customize` | Opens the preference dialog without recording anything. |
+| `dismiss` | Records that the visitor dismissed a notice. Not a grant. |
+
+A button with `action="customize"` also starts loading the deferred dialog in
+idle time and on hover or focus. A click handler of yours that runs first and
+calls `event.preventDefault()` cancels the action.
+
+`ConsentButton` does not check the policy. Rendering an Accept button without
+a Reject button under a policy that requires both is your responsibility; use
+[`HeadlessConsent`](../headless) to render only the actions the policy
+allows.
+
+## Verify it
+
+Clear site data and select each button. Accept and Reject close the banner
+and `ConsentManager.explicitChoice()` holds the choice; Customize opens the
+dialog and records nothing.

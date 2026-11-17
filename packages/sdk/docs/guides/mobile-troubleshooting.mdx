@@ -1,0 +1,74 @@
+---
+title: Troubleshoot native consent
+description: Resolve native installation, policy, protected-storage, presenter and IAB problems in Swift and Android apps.
+group: guides
+---
+
+Start with the installation error, resolved policy and current native gate.
+Keep optional collection off while consent is unavailable.
+
+## The screen never appears
+
+Check that the installed core is ready, `policyPending` is false and its
+prompt requirement asks for a choice. A saved choice, a notice-only policy or
+a policy that needs no prompt can explain the absence. Use Privacy settings
+to reopen saved preferences; the owed-prompt command need not show a first
+layer again.
+
+If policy is pending, inspect `/init` against the exact HTTPS project URL and
+the selected country/language. Check the policy in Inth before adding UI
+fallbacks. If the native core is ready, confirm the same core was passed to
+the presenter and its view is mounted in the active host.
+
+## Swift installation reports protectedStorageUnavailable
+
+The Apple installer checks Keychain before installing the core. Retry after
+protected data becomes available or the app activates. Keep the installation
+error visible and optional SDKs off in the meantime. A simulator app needs
+working signing; an unsigned simulator build can fail the Keychain probe.
+
+Do not switch to memory or plaintext storage to make the error disappear.
+Memory and file-backed stores are development tools with different
+persistence and protection properties.
+
+## Gradle cannot resolve com.c15t
+
+Check the app's dependency repository, not `pluginManagement.repositories`.
+All required artifacts must exist at the native version you selected. For
+the private pilot, supply the repository URL and credentials through the
+build environment. Keep them out of app resources and committed files.
+
+A repository on your laptop is not available to EAS or another build worker.
+Make the versioned artifacts reachable from that worker, then rebuild.
+
+## Save fails or preferences stay open
+
+A resolved operation can refuse a commit. Read the result's reason. Keep the
+draft visible, fix the cause and retry the explicit action.
+
+| Reason | What to do |
+| --- | --- |
+| `policy-pending` | Resolve policy before granting optional consent |
+| `queue-write-failed` | Recover durable storage; do not confirm a save |
+| `concurrent-change` | Reload current state and ask the visitor to review it |
+| Missing or stale IAB disclosures | Refresh the authoritative GVL and provider data |
+
+A network failure after a durable local save is a delivery problem. It must
+not restore an earlier permission or discard a withdrawal.
+
+## An ad SDK starts before consent
+
+Inspect that SDK's manifest initializers, app-delegate hooks, plugins and
+automatic collection settings. Disable optional auto-start and install c15t
+before the vendor. Retain a native gate subscription so later withdrawal
+also changes collection. A UI control alone cannot stop native requests.
+
+## The app has categories but cannot save IAB choices
+
+Confirm the resolved policy is IAB and native CMP/publisher configuration was
+installed before the first engine. Category scope and vendor filtering do not
+provide that configuration. Read [mobile IAB setup](/docs/guides/mobile-iab)
+for native settings and the current RN/Expo limits.
+
+After recovery, rerun the affected steps from
+[Verify mobile consent](/docs/guides/mobile-verify).

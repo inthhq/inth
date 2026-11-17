@@ -1,0 +1,161 @@
+name: C15tConsentDemo
+options:
+  deploymentTarget:
+    iOS: '16.4'
+packages:
+  C15tNative:
+    path: ../../../../packages/swift
+  # Real vendor SDKs for the vendor journey (run-vendor-e2e.sh). The demo app links
+  # them; the c15t Swift packages never do. They stay idle unless a Debug launch
+  # passes C15T_VENDOR_BASE. Pinned exactly so a vendor release cannot change the proof.
+  PostHog:
+    url: https://github.com/PostHog/posthog-ios
+    exactVersion: 3.93.1
+  Mixpanel:
+    url: https://github.com/mixpanel/mixpanel-swift
+    exactVersion: 7.0.0
+  Sentry:
+    url: https://github.com/getsentry/sentry-cocoa
+    exactVersion: 9.32.0
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk
+    exactVersion: 13.1.1
+settings:
+  base:
+    SWIFT_VERSION: '5.9'
+    CODE_SIGN_IDENTITY[sdk=iphonesimulator*]: '-'
+    IPHONEOS_DEPLOYMENT_TARGET: '16.4'
+    MARKETING_VERSION: '1.0.0'
+    CURRENT_PROJECT_VERSION: '1'
+    INFOPLIST_KEY_CFBundleShortVersionString: $(MARKETING_VERSION)
+    INFOPLIST_KEY_CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+targets:
+  C15tConsentDemo:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+      - path: Assets.xcassets
+      - path: VendorSDKs
+      - path: ../fixtures
+        buildPhase: resources
+    dependencies:
+      - package: C15tNative
+        product: C15tConsentUI
+      - package: C15tNative
+        product: C15tApple
+      - package: PostHog
+        product: PostHog
+      - package: Mixpanel
+        product: Mixpanel
+      - package: Sentry
+        product: Sentry
+      - package: Firebase
+        product: FirebaseAnalytics
+    info:
+      path: Generated/Info.plist
+      properties:
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+        # Firebase starts with collection and every consent type denied, so nothing is
+        # measured before the c15t binding applies the saved decision.
+        FIREBASE_ANALYTICS_COLLECTION_ENABLED: false
+        GOOGLE_ANALYTICS_DEFAULT_ALLOW_ANALYTICS_STORAGE: false
+        GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_STORAGE: false
+        GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_USER_DATA: false
+        GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_PERSONALIZATION_SIGNALS: false
+        FirebaseAppDelegateProxyEnabled: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.c15t.prototype.consent
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Consent demo
+        INFOPLIST_KEY_C15tBackendURL: $(C15T_BACKEND_URL)
+        INFOPLIST_KEY_C15tPrivacyPolicyURL: $(C15T_PRIVACY_POLICY_URL)
+  C15tUIKitDemo:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+        excludes: [consent-demo-entry.swift]
+      - path: UIKit
+      - path: Assets.xcassets
+      - path: VendorSDKs
+      - path: ../fixtures
+        buildPhase: resources
+    dependencies:
+      - package: C15tNative
+        product: C15tConsentUI
+      - package: C15tNative
+        product: C15tApple
+      - package: PostHog
+        product: PostHog
+      - package: Mixpanel
+        product: Mixpanel
+      - package: Sentry
+        product: Sentry
+      - package: Firebase
+        product: FirebaseAnalytics
+    info:
+      path: Generated/UIKit-Info.plist
+      properties:
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+          UISceneConfigurations:
+            UIWindowSceneSessionRoleApplication:
+              - UISceneConfigurationName: Consent demo
+                UISceneDelegateClassName: $(PRODUCT_MODULE_NAME).ConsentDemoSceneDelegate
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+        # Firebase starts with collection and every consent type denied, so nothing is
+        # measured before the c15t binding applies the saved decision.
+        FIREBASE_ANALYTICS_COLLECTION_ENABLED: false
+        GOOGLE_ANALYTICS_DEFAULT_ALLOW_ANALYTICS_STORAGE: false
+        GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_STORAGE: false
+        GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_USER_DATA: false
+        GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_PERSONALIZATION_SIGNALS: false
+        FirebaseAppDelegateProxyEnabled: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.c15t.prototype.consent.uikit
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Consent UIKit demo
+        INFOPLIST_KEY_C15tBackendURL: $(C15T_BACKEND_URL)
+        INFOPLIST_KEY_C15tPrivacyPolicyURL: $(C15T_PRIVACY_POLICY_URL)
+  C15tUIKitDemoUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [UITests]
+    dependencies:
+      - target: C15tUIKitDemo
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.c15t.prototype.consent.uikit.uitests
+        GENERATE_INFOPLIST_FILE: YES
+  C15tConsentDemoUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [UITests]
+    dependencies:
+      - target: C15tConsentDemo
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.c15t.prototype.consent.uitests
+        GENERATE_INFOPLIST_FILE: YES
+schemes:
+  C15tConsentDemo:
+    build:
+      targets:
+        C15tConsentDemo: all
+        C15tConsentDemoUITests: [test]
+    test:
+      targets: [C15tConsentDemoUITests]
+  C15tUIKitDemo:
+    build:
+      targets:
+        C15tUIKitDemo: all
+        C15tUIKitDemoUITests: [test]
+    test:
+      targets: [C15tUIKitDemoUITests]

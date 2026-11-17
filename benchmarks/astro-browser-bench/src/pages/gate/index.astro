@@ -1,0 +1,59 @@
+---
+/**
+ * Consent gate page (`scripts/run-gate.ts`), measured from the `gate` build:
+ * CookieBench's article with the server-rendered banner and dialog, laid out
+ * as CookieBench's Astro fixture (`src/pages/index.astro`) does it. The
+ * snapshot is bridged once the boot script has created the client.
+ */
+import ConsentBanner from '@c15t/astro/components/consent-banner.astro';
+import ConsentDialog from '@c15t/astro/components/consent-dialog.astro';
+import ConsentDialogLink from '@c15t/astro/components/consent-dialog-link.astro';
+import ConsentScript from '@c15t/astro/components/consent-script.astro';
+import {
+	gatePageCSS,
+	gatePageHTML,
+} from '@c15t/benchmarking/consent-gate-page';
+
+export const prerender = false;
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta
+			content="width=device-width,initial-scale=1"
+			name="viewport"
+		/>
+		<title>Field notes</title>
+		<style
+			is:inline
+			set:html={gatePageCSS}
+		/>
+		<ConsentScript />
+	</head>
+	<body>
+		<Fragment set:html={gatePageHTML} />
+		<ConsentBanner />
+		<ConsentDialog />
+		<!-- The gate reopens the choice here to replay a change of mind. -->
+		<ConsentDialogLink>Privacy settings</ConsentDialogLink>
+		<script>
+			import { getConsentClient } from '@c15t/astro/client';
+			import { updateGateBridge } from '@c15t/benchmarking/consent-gate-page';
+
+			const deadline = performance.now() + 10_000;
+			const attach = () => {
+				const client = getConsentClient();
+				if (!client) {
+					if (performance.now() < deadline) {
+						requestAnimationFrame(attach);
+					}
+					return;
+				}
+				updateGateBridge(client.getConsent());
+				client.subscribe(updateGateBridge);
+			};
+			attach();
+		</script>
+	</body>
+</html>

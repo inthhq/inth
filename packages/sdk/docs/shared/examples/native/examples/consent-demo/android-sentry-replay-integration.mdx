@@ -1,0 +1,26 @@
+{/* Generated from examples/native/consent-demo/android/src/main/kotlin/com/c15t/demo/sentry-replay-integration-example.kt (docs:android-sentry-replay-integration) by scripts/sync-example-docs.ts. Edit the source file. */}
+
+```kotlin title="SentryReplayConsent.kt"
+package com.c15t.demo
+
+import com.c15t.android.integrations.SentryReplayIntegration
+import com.c15t.core.C15t
+
+// Retain the returned helper beside the initialized Sentry SDK in the app owner.
+// Set Sentry's sessionSampleRate and onErrorSampleRate to 0.0 before setup.
+fun connectAppSentryReplay(
+	start: () -> Unit,
+	stop: () -> Unit,
+	onError: (Exception) -> Unit,
+): SentryReplayIntegration {
+	return SentryReplayIntegration(
+		core = checkNotNull(C15t.current) { "Install c15t before connecting replay" },
+		start = start, // { Sentry.replay().start() }
+		stop = stop, // { Sentry.replay().stop() }
+		onError = onError,
+	)
+}
+// Call helper.sync() after Sentry has started a new session or reinitialized.
+// Zero sampling keeps replay off until this reapplies the native decision.
+// Call helper.close() only when tearing down the app-owned integration.
+```

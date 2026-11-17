@@ -1,0 +1,406 @@
+/**
+ * IAB TCF 2.4 Types
+ *
+ * Type definitions for the Global Vendor List (GVL) and related IAB TCF structures.
+ * Based on IAB TCF v2.4 specification.
+ *
+ * @see https://github.com/InteractiveAdvertisingBureau/GDPR-Transparency-and-Consent-Framework
+ * @packageDocumentation
+ */
+
+// GVL types come through c15t core (which re-exports from @c15t/schema)
+import type { GlobalVendorList } from '@c15t/core';
+
+export type { GlobalVendorList } from '@c15t/core';
+// GVL sub-types imported from @c15t/schema for IAB-specific usage
+// These are not re-exported by c15t core, so we re-export from schema directly
+export type {
+	GVLDataCategory,
+	GVLFeature,
+	GVLPurpose,
+	GVLSpecialFeature,
+	GVLSpecialPurpose,
+	GVLStack,
+	GVLStandardTexts,
+	GVLVendor,
+	GVLVendorUrl,
+} from '@c15t/schema/types';
+
+/**
+ * TCF consent data structure for generating TC Strings.
+ *
+ * @public
+ */
+export interface TCFConsentData {
+	/** Per-purpose consent state (keyed by purpose ID 1-11) */
+	purposeConsents: Record<number, boolean>;
+
+	/** Per-purpose legitimate interest state */
+	purposeLegitimateInterests: Record<number, boolean>;
+
+	/** Per-vendor consent state (keyed by vendor ID) */
+	vendorConsents: Record<string, boolean>;
+
+	/** Per-vendor legitimate interest state */
+	vendorLegitimateInterests: Record<string, boolean>;
+
+	/** Special feature opt-ins (keyed by special feature ID 1-2) */
+	specialFeatureOptIns: Record<number, boolean>;
+
+	/**
+	 * Vendors disclosed to the user in the CMP UI (keyed by vendor ID).
+	 *
+	 * Required for IAB TCF 2.4 compliance. Each vendor shown in the UI should
+	 * have their ID set to true, regardless of whether consent was given.
+	 */
+	vendorsDisclosed: Record<number, boolean>;
+
+	/** Publisher restrictions (optional) */
+	publisherRestrictions?: PublisherRestriction[];
+}
+
+/**
+ * Publisher restriction for one purpose and a set of vendors.
+ *
+ * Encoded in the `PubRestrictions` section of the TC string core segment
+ * and reported by `__tcfapi` as `publisher.restrictions`. Restrictions are
+ * only allowed in service-specific TC strings.
+ *
+ * - `0` prohibits the purpose for the vendors on every legal basis. Each
+ *   vendor must declare the purpose.
+ * - `1` requires consent. Each vendor must declare the purpose for
+ *   legitimate interest and list it in `flexiblePurposes`.
+ * - `2` requires legitimate interest. Each vendor must declare the purpose
+ *   for consent and list it in `flexiblePurposes`. Not allowed for purposes
+ *   1, 3, 4, 5 and 6, which TCF allows only with consent.
+ *
+ * Type `3` is reserved by the spec. Unsupported restrictions throw
+ * `PublisherRestrictionError` from `@c15t/iab` instead of being dropped.
+ *
+ * @public
+ */
+export interface PublisherRestriction {
+	/** Purpose ID this restriction applies to (not a special purpose). */
+	purposeId: number;
+
+	/**
+	 * Restriction type:
+	 * - 0: Purpose flatly not allowed
+	 * - 1: Require consent (cannot use legitimate interest)
+	 * - 2: Require legitimate interest (cannot use consent)
+	 */
+	restrictionType: 0 | 1 | 2;
+
+	/** Vendor IDs this restriction applies to */
+	vendorIds: number[];
+}
+
+/**
+ * CMP status values per IAB TCF spec.
+ *
+ * @public
+ */
+export type CMPStatus = 'stub' | 'loading' | 'loaded' | 'error';
+
+/**
+ * Display status values for the CMP UI.
+ *
+ * @public
+ */
+export type DisplayStatus = 'visible' | 'hidden' | 'disabled';
+
+/**
+ * Event status values for TCF event callbacks.
+ *
+ * @public
+ */
+export type EventStatus =
+	| 'tcloaded'
+	| 'cmpuishown'
+	| 'useractioncomplete'
+	| 'visible';
+
+/**
+ * Ping data returned by __tcfapi 'ping' command.
+ *
+ * @public
+ */
+export interface PingData {
+	/** True if using a registered CMP */
+	gdprApplies: boolean | undefined;
+
+	/** CMP loading status */
+	cmpLoaded: boolean;
+
+	/** CMP status string */
+	cmpStatus: CMPStatus;
+
+	/** Display status of CMP UI */
+	displayStatus: DisplayStatus;
+
+	/** TCF API version */
+	apiVersion: string;
+
+	/** CMP version */
+	cmpVersion: string;
+
+	/** CMP ID registered with IAB */
+	cmpId: number;
+
+	/** GVL version loaded */
+	gvlVersion: number;
+
+	/** TCF policy version */
+	tcfPolicyVersion: number;
+}
+
+/**
+ * TC Data returned by __tcfapi 'getTCData' command.
+ *
+ * @public
+ */
+export interface TCData {
+	/** TC String */
+	tcString: string;
+
+	/**
+	 * Google Additional Consent (ACv2) string, such as `2~1.10~dv.2.3.4`.
+	 * Present only beside a TC string, when Additional Consent is configured.
+	 */
+	addtlConsent?: string;
+
+	/** TCF policy version (e.g., 2 for TCF 2.0, 4 for TCF 2.2) */
+	tcfPolicyVersion?: number;
+
+	/** CMP ID registered with IAB */
+	cmpId?: number;
+
+	/** CMP version */
+	cmpVersion?: number;
+
+	/**
+	 * Always `true` here: the visitor's policy uses IAB TCF. Outside it,
+	 * `__tcfapi` returns {@link TCDataOutsideTCF} instead.
+	 */
+	gdprApplies: true;
+
+	/** Listener ID if from addEventListener */
+	listenerId?: number;
+
+	/** Event status */
+	eventStatus?: EventStatus;
+
+	/** CMP status */
+	cmpStatus: CMPStatus;
+
+	/** Always `true`: TCF requires IsServiceSpecific=1. */
+	isServiceSpecific: boolean;
+
+	/** Whether publisher consent or legitimate interest was established */
+	useNonStandardTexts: boolean;
+
+	/** Publisher country code */
+	publisherCC: string;
+
+	/** Purpose one treatment (0 = no special treatment, 1 = consent not given) */
+	purposeOneTreatment: boolean;
+
+	/** Purpose consents */
+	purpose: {
+		consents: Record<number, boolean>;
+		legitimateInterests: Record<number, boolean>;
+	};
+
+	/** Vendor consents */
+	vendor: {
+		consents: Record<number, boolean>;
+		legitimateInterests: Record<number, boolean>;
+		/**
+		 * Vendors the CMP disclosed to the user (CMP API v2.2). `true` means
+		 * disclosed. Matches the TC string's disclosed vendors segment.
+		 */
+		disclosedVendors: Record<string | number, boolean>;
+	};
+
+	/** Special feature opt-ins */
+	specialFeatureOptins: Record<number, boolean>;
+
+	/** Publisher data */
+	publisher: {
+		consents: Record<number, boolean>;
+		legitimateInterests: Record<number, boolean>;
+		customPurpose: {
+			consents: Record<number, boolean>;
+			legitimateInterests: Record<number, boolean>;
+		};
+		restrictions: Record<number, Record<number, number>>;
+	};
+}
+
+/**
+ * TC Data returned by `__tcfapi` when the visitor's policy does not use IAB
+ * TCF.
+ *
+ * CMP API v2 allows only `gdprApplies`, `tcfPolicyVersion`, `cmpId` and
+ * `cmpVersion` in that case, beside the status fields every response
+ * carries. There is no TC string, Additional Consent string, purpose or
+ * vendor data.
+ *
+ * @public
+ */
+export interface TCDataOutsideTCF {
+	/** Always `false`: the visitor's policy does not use IAB TCF. */
+	gdprApplies: false;
+
+	/** TCF policy version (e.g., 2 for TCF 2.0, 4 for TCF 2.2) */
+	tcfPolicyVersion: number;
+
+	/** CMP ID registered with IAB */
+	cmpId: number;
+
+	/** CMP version */
+	cmpVersion: number;
+
+	/** CMP status */
+	cmpStatus: CMPStatus;
+
+	/** Event status */
+	eventStatus?: EventStatus;
+
+	/** Listener ID if from addEventListener */
+	listenerId?: number;
+}
+
+/**
+ * Callback function type for __tcfapi.
+ *
+ * @public
+ */
+export type TCFApiCallback<
+	T = TCData | TCDataOutsideTCF | PingData | GlobalVendorList | boolean,
+> = (data: T | null, success: boolean) => void;
+
+/**
+ * __tcfapi function signature.
+ *
+ * @public
+ */
+export interface TCFApi {
+	(command: 'ping', version: number, callback: TCFApiCallback<PingData>): void;
+	(
+		command: 'getTCData',
+		version: number,
+		callback: TCFApiCallback<TCData | TCDataOutsideTCF>,
+		vendorIds?: number[]
+	): void;
+	(
+		command: 'getInAppTCData' | 'addEventListener',
+		version: number,
+		callback: TCFApiCallback<TCData | TCDataOutsideTCF>
+	): void;
+	(
+		command: 'getVendorList',
+		version: number,
+		callback: TCFApiCallback<GlobalVendorList>,
+		vendorListVersion?: number
+	): void;
+	(
+		command: 'removeEventListener',
+		version: number,
+		callback: TCFApiCallback<boolean>,
+		listenerId: number
+	): void;
+	/** Queue for stub to store calls before CMP loads */
+	queue?: Parameters<TCFApi>[];
+}
+declare global {
+	interface Window {
+		__tcfapi?: TCFApi;
+	}
+}
+
+/**
+ * IAB TCF Purpose IDs.
+ *
+ * @public
+ */
+export const IAB_PURPOSES = {
+	/** Create profiles for personalised advertising */
+	CREATE_AD_PROFILE: 3,
+	/** Create profiles to personalise content */
+	CREATE_CONTENT_PROFILE: 5,
+	/** Understand audiences through statistics or combinations of data */
+	MARKET_RESEARCH: 9,
+	/** Measure advertising performance */
+	MEASURE_AD_PERFORMANCE: 7,
+	/** Measure content performance */
+	MEASURE_CONTENT_PERFORMANCE: 8,
+	/** Develop and improve services */
+	PRODUCT_DEVELOPMENT: 10,
+	/** Use limited data to select advertising */
+	SELECT_BASIC_ADS: 2,
+	/** Use limited data to select content */
+	SELECT_BASIC_CONTENT: 11,
+	/** Use profiles to select personalised advertising */
+	SELECT_PERSONALISED_ADS: 4,
+	/** Use profiles to select personalised content */
+	SELECT_PERSONALISED_CONTENT: 6,
+	/** Store and/or access information on a device */
+	STORE_ACCESS_INFO: 1,
+} as const;
+
+/**
+ * IAB TCF Special Feature IDs.
+ *
+ * @public
+ */
+export const IAB_SPECIAL_FEATURES = {
+	/** Identify devices based on information actively requested */
+	DEVICE_SCANNING: 2,
+	/** Use precise geolocation data */
+	PRECISE_GEOLOCATION: 1,
+} as const;
+
+/**
+ * IAB TCF Feature IDs.
+ *
+ * @public
+ */
+export const IAB_FEATURES = {
+	/** Identify devices based on information transmitted automatically */
+	IDENTIFY_DEVICES: 3,
+	/** Link different devices */
+	LINK_DEVICES: 2,
+	/** Match and combine data from other data sources */
+	MATCH_COMBINE_DATA: 1,
+} as const;
+
+/**
+ * IAB TCF Data Category IDs.
+ *
+ * @public
+ */
+export const IAB_DATA_CATEGORIES = {
+	/** Authentication-derived identifiers */
+	AUTH_IDENTIFIERS: 5,
+	/** Browsing and interaction data */
+	BROWSING_DATA: 6,
+	/** Device characteristics */
+	DEVICE_CHARACTERISTICS: 2,
+	/** Device identifiers */
+	DEVICE_IDENTIFIERS: 3,
+	/** IP addresses */
+	IP_ADDRESSES: 1,
+	/** Non-precise location data */
+	NON_PRECISE_LOCATION: 8,
+	/** Precise location data */
+	PRECISE_LOCATION: 9,
+	/** Privacy choices */
+	PRIVACY_CHOICES: 11,
+	/** Probabilistic identifiers */
+	PROBABILISTIC_IDENTIFIERS: 4,
+	/** Users' profiles */
+	USER_PROFILES: 10,
+	/** User-provided data */
+	USER_PROVIDED_DATA: 7,
+} as const;

@@ -2,9 +2,46 @@ packages:
   - apps/*
   - packages/*
   - npm/*
+  # The SDK's web packages, kept as separate packages until they merge into
+  # @inth/sdk.
+  - packages/sdk/*
+  - benchmarks/**
+  - internals/**
+  - examples/*
+  # Repository tooling for the SDK, with the tools its scripts use.
+  - scripts
+  - "!**/dist/**"
+  - "!**/.next/**"
+  - "!**/.nuxt/**"
+  - "!**/.output/**"
+  - "!**/storybook-static/**"
+# Turbopack and the React Native tools only read files inside the repository.
+# pnpm 11 links packages from a store in the home folder by default, except in
+# CI, so local installs keep packages under node_modules/.pnpm like CI does.
+enableGlobalVirtualStore: false
+# pnpm's command shims put its store on NODE_PATH, so code could resolve
+# packages it has no path to. An SDK test checks that it cannot.
+extendNodePath: false
 allowBuilds:
+  # SDK dependencies with install scripts. None is needed: each ships a
+  # prebuilt binary or only prints a notice.
+  "@firebase/util": false
+  "@openrouter/sdk": false
+  "@parcel/watcher": false
+  "@sentry/cli": false
+  "@swc/core": false
+  core-js: false
   esbuild: true
+  lmdb: false
+  msgpackr-extract: false
+  msw: false
+  protobufjs: false
+  sharp: false
+  unrs-resolver: false
+# Three days, in minutes. New versions wait this long before they resolve.
+minimumReleaseAge: 4320
 minimumReleaseAgeExclude:
+  - leadtype
   - ultracite@7.10.8
   - "@scriptc/compiler@0.3.6"
   - "@scriptc/llvm-darwin-arm64@0.3.6"
@@ -28,3 +65,40 @@ minimumReleaseAgeExclude:
   - "@scriptc/runtime@0.3.6"
 patchedDependencies:
   "@scriptc/compiler@0.3.6": patches/@scriptc__compiler@0.3.6.patch
+# Carried over from the SDK. Its range-keyed entries for next and vite are not
+# here: pnpm applies those to every range that overlaps, which forced vitest
+# onto vite 7. The lockfile already resolves above those floors.
+overrides:
+  "@grpc/grpc-js": ">=1.14.4"
+  "@hono/node-server": 1.19.17
+  defu: 6.1.7
+  fast-uri: 3.1.5
+  kysely: 0.28.17
+  postcss: 8.5.16
+  protobufjs: 7.6.5
+  shell-quote: ">=1.9.0"
+  typeorm: ">=0.3.26"
+# These tools import typescript without declaring it. pnpm then gives them
+# whichever copy it hoisted, which was TypeScript 7 and has no compiler API.
+# Declaring the peer makes each one use its consumer's TypeScript.
+packageExtensions:
+  "@analogjs/vite-plugin-angular":
+    peerDependencies:
+      typescript: "*"
+  "@sveltejs/package":
+    peerDependencies:
+      typescript: "*"
+  # @nuxt/schema's types import vite and vue. Without the peers it reads a
+  # second copy of each, and Nuxt module code fails to type-check against it.
+  "@nuxt/schema":
+    peerDependencies:
+      vite: "*"
+      vue: "*"
+  # Its vitest entry imports vitest without declaring it, and reached the
+  # root's vitest 5 while the SDK runs vitest 4.
+  "@testing-library/jest-dom":
+    peerDependencies:
+      vitest: "*"
+    peerDependenciesMeta:
+      vitest:
+        optional: true

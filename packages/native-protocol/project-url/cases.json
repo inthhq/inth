@@ -1,0 +1,132 @@
+{
+	"description": "Inth project URL rules for the mobile SDKs. Swift, Kotlin and TypeScript each keep one constant equal to allowedHostSuffixes and run every case below. strict is the rule every build applies. relaxed applies only when dryRun is on in a debug build.",
+	"allowedHostSuffixes": ["inth.app"],
+	"reasons": {
+		"empty": "The value is empty or only whitespace.",
+		"malformed": "The value does not parse as a URL.",
+		"scheme": "The scheme is not https. Relaxed mode also takes http on a loopback host.",
+		"credentials": "The URL carries a username or password.",
+		"host": "The host is not a project host under one of allowedHostSuffixes.",
+		"port": "The URL names a port.",
+		"path": "The URL has a path.",
+		"query": "The URL has a query or a fragment."
+	},
+	"strict": {
+		"accept": [
+			{ "input": "acme.inth.app", "normalized": "https://acme.inth.app" },
+			{
+				"input": "https://acme.inth.app",
+				"normalized": "https://acme.inth.app"
+			},
+			{
+				"input": "https://acme.inth.app/",
+				"normalized": "https://acme.inth.app"
+			},
+			{ "input": "acme.inth.app/", "normalized": "https://acme.inth.app" },
+			{
+				"input": "  https://acme.inth.app/  ",
+				"normalized": "https://acme.inth.app"
+			},
+			{
+				"input": "\n\tacme.inth.app\n",
+				"normalized": "https://acme.inth.app"
+			},
+			{
+				"input": "https://acme.inth.app///",
+				"normalized": "https://acme.inth.app"
+			},
+			{
+				"input": "HTTPS://Acme.Inth.App",
+				"normalized": "https://acme.inth.app"
+			},
+			{
+				"input": "https://my-project-2.inth.app",
+				"normalized": "https://my-project-2.inth.app"
+			},
+			{
+				"input": "https://acme.eu.inth.app",
+				"normalized": "https://acme.eu.inth.app"
+			}
+		],
+		"reject": [
+			{ "input": "", "reason": "empty" },
+			{ "input": "   ", "reason": "empty" },
+			{ "input": "http://acme.inth.app", "reason": "scheme" },
+			{ "input": "ftp://acme.inth.app", "reason": "scheme" },
+			{ "input": "http://localhost:8787", "reason": "scheme" },
+			{ "input": "https://user:secret@acme.inth.app", "reason": "credentials" },
+			{ "input": "https://user@acme.inth.app", "reason": "credentials" },
+			{ "input": "https://consent.example.com", "reason": "host" },
+			{ "input": "consent.example.com", "reason": "host" },
+			{ "input": "https://inth.app", "reason": "host" },
+			{ "input": "https://c15t.dev", "reason": "host" },
+			{ "input": "https://your-project.c15t.dev", "reason": "host" },
+			{ "input": "https://acmeinth.app", "reason": "host" },
+			{ "input": "https://acme.inth.app.example.com", "reason": "host" },
+			{ "input": "https://acme.inth.com", "reason": "host" },
+			{ "input": "https://example.eu.c15t.app", "reason": "host" },
+			{ "input": "https://acme.c15t.com", "reason": "host" },
+			{ "input": "https://.inth.app", "reason": "host" },
+			{ "input": "https://acme..inth.app", "reason": "host" },
+			{ "input": "https://-acme.inth.app", "reason": "host" },
+			{ "input": "https://ac_me.inth.app", "reason": "host" },
+			{ "input": "https://localhost", "reason": "host" },
+			{ "input": "https://127.0.0.1", "reason": "host" },
+			{ "input": "https://acme.inth.app:8443", "reason": "port" },
+			{ "input": "https://acme.inth.app:443", "reason": "port" },
+			{ "input": "https://acme.inth.app:", "reason": "malformed" },
+			{ "input": "https://acme.inth.app:99999", "reason": "malformed" },
+			{ "input": "https://acme.inth.app/api/c15t", "reason": "path" },
+			{ "input": "acme.inth.app/init", "reason": "path" },
+			{ "input": "https://acme.inth.app?project=1", "reason": "query" },
+			{ "input": "https://acme.inth.app/#top", "reason": "query" },
+			{ "input": "https://", "reason": "malformed" },
+			{ "input": "https://acme inth.app", "reason": "malformed" }
+		]
+	},
+	"relaxed": {
+		"accept": [
+			{ "input": "acme.inth.app", "normalized": "https://acme.inth.app" },
+			{
+				"input": "https://staging.consent.example.com/",
+				"normalized": "https://staging.consent.example.com"
+			},
+			{
+				"input": "https://consent.example.com/api/c15t/",
+				"normalized": "https://consent.example.com/api/c15t"
+			},
+			{
+				"input": "https://consent.example.com:8443",
+				"normalized": "https://consent.example.com:8443"
+			},
+			{
+				"input": "http://localhost:8787",
+				"normalized": "http://localhost:8787"
+			},
+			{
+				"input": "http://127.0.0.1:3000/api/self-host",
+				"normalized": "http://127.0.0.1:3000/api/self-host"
+			},
+			{ "input": "http://[::1]:3000", "normalized": "http://[::1]:3000" }
+		],
+		"reject": [
+			{ "input": "", "reason": "empty" },
+			{ "input": "http://staging.consent.example.com", "reason": "scheme" },
+			{ "input": "http://10.0.2.2:3000", "reason": "scheme" },
+			{ "input": "ftp://localhost", "reason": "scheme" },
+			{
+				"input": "https://user:secret@consent.example.com",
+				"reason": "credentials"
+			},
+			{ "input": "https://consent.example.com?x=1", "reason": "query" },
+			{ "input": "https://consent.example.com/#top", "reason": "query" },
+			{ "input": "https://", "reason": "malformed" },
+			{ "input": "https://[gg]", "reason": "malformed" },
+			{ "input": "https://%", "reason": "malformed" },
+			{
+				"input": "https://consent.example.com:99999",
+				"reason": "malformed"
+			}
+		]
+	}
+}

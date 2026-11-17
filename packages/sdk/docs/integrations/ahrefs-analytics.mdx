@@ -1,0 +1,51 @@
+---
+title: Ahrefs Analytics
+description: Load Ahrefs Web Analytics only after measurement consent with the c15t ahrefsAnalytics helper, and check it in DevTools.
+seoTitle: Ahrefs Analytics cookie consent with c15t
+seoDescription: Load Ahrefs Web Analytics only with measurement consent. The c15t ahrefsAnalytics helper keeps analytics.js off the page until then.
+icon: ahrefs
+group: integrations
+---
+
+The c15t `ahrefsAnalytics` helper keeps Ahrefs Web Analytics off the page until
+`measurement` has consent. Ahrefs says that its analytics sets no cookies, but
+c15t still does not load `analytics.js` before consent. The helper sends no
+consent signal to Ahrefs. If the visitor withdraws consent, c15t removes the
+script element. By default, c15t also reloads the page.
+
+## Configure Ahrefs Analytics
+
+Copy the project key from the Ahrefs installation snippet. The helper passes it
+to the analytics script as `data-key`.
+
+<CommandTabs command="@c15t/integrations" mode="install" />
+
+```ts title="src/consent-scripts.ts"
+import { ahrefsAnalytics } from '@c15t/integrations/ahrefs-analytics';
+
+export const scripts = [ahrefsAnalytics({ key: 'YOUR_PROJECT_KEY' })];
+```
+
+<include src="../shared/integrations/register-scripts.mdx" />
+
+## Options
+
+| Option | Default | Behavior |
+| --- | --- | --- |
+| `key` | Required | Project key. Empty or whitespace-only values log an error and the script does not load. |
+| `scriptUrl` | `https://analytics.ahrefs.com/analytics.js` | Loader URL override. |
+
+## Loading and revocation
+
+`ahrefsAnalytics` uses the `measurement` category. The script loads only while
+measurement is allowed. On revocation the helper removes the script element and
+calls no Ahrefs API.
+
+## Verify Ahrefs Analytics
+
+After you allow measurement, the `analytics.js` request appears and its script
+element carries your `data-key`. If your code calls
+`window.AhrefsAnalytics?.sendEvent`, check measurement permission before each
+call.
+
+<include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

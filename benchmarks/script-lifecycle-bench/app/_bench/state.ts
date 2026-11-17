@@ -1,0 +1,84 @@
+'use client';
+
+import type { ScriptLifecycleScenarioName } from './fixtures';
+
+export interface ScriptBenchState {
+	scenario: ScriptLifecycleScenarioName;
+	startedAtMs: number;
+	actionStartedAtMs?: number;
+	actionCompletedAtMs?: number;
+	actionSettled?: boolean;
+	consentSaveCount: number;
+	activeUI: string;
+	loadedIds: string[];
+	loadEventCounts: Record<string, number>;
+	beforeLoadEventCounts: Record<string, number>;
+	consentChangeEventCounts: Record<string, number>;
+	domPresenceById: Record<string, boolean>;
+	reloadCount: number;
+	errors: string[];
+	scriptEvents: Record<string, number>;
+	completionMarkers: Record<string, boolean>;
+	recordScriptExecution?: (id: string) => void;
+}
+
+declare global {
+	interface Window {
+		__c15tScriptBench?: ScriptBenchState;
+	}
+}
+
+export const nowMs = function nowMs(): number {
+	return performance.now();
+};
+
+export const getBenchState = function getBenchState(
+	scenario: ScriptLifecycleScenarioName
+): ScriptBenchState | undefined {
+	if (typeof window === 'undefined') {
+		return undefined;
+	}
+
+	if (
+		!window.__c15tScriptBench ||
+		window.__c15tScriptBench.scenario !== scenario
+	) {
+		window.__c15tScriptBench = {
+			activeUI: 'none',
+			beforeLoadEventCounts: {},
+			completionMarkers: {},
+			consentChangeEventCounts: {},
+			consentSaveCount: 0,
+			domPresenceById: {},
+			errors: [],
+			loadEventCounts: {},
+			loadedIds: [],
+			reloadCount: 0,
+			scenario,
+			scriptEvents: {},
+			startedAtMs: nowMs(),
+		};
+	}
+
+	return window.__c15tScriptBench;
+};
+
+export const incrementCounter = function incrementCounter(
+	record: Record<string, number>,
+	key: string
+): void {
+	record[key] = (record[key] ?? 0) + 1;
+};
+
+export const listDomPresence = function listDomPresence(
+	ids: string[]
+): Record<string, boolean> {
+	return ids.reduce<Record<string, boolean>>((acc, id) => {
+		acc[id] = document.querySelector(`[data-bench-script-id="${id}"]`) !== null;
+		return acc;
+	}, {});
+};
+
+export const normalizeIds = function normalizeIds(ids: string[]): string[] {
+	return [...ids].sort((left, right) => left.localeCompare(right));
+};

@@ -1,0 +1,19 @@
+{
+	"schemaVersion": 1,
+	"output": "./run-001",
+	"archive": "./inputs/c15t.tgz",
+	"maven": "./inputs/maven-staging",
+	"policy": "./inputs/c15t-policy.json",
+	"backendUrl": "https://your-configured-backend.example",
+	"downloadCache": "./downloads",
+	"androidSdk": "./toolchains/android-sdk",
+	"javaHome": "./toolchains/java-17",
+	"gradleHome": "./gradle-cache",
+	"deviceRoot": "./owned-avds",
+	"nativeLockRunner": [
+		"python3",
+		"/absolute/path/to/competitive/with-native-lock.py"
+	],
+	"tenants": {},
+	"runtimeInputs": "./runtime-inputs.json"
+}

@@ -1,0 +1,99 @@
+// #region docs:primitives-dialog
+import {
+	ChangeDetectionStrategy,
+	Component,
+	computed,
+	inject,
+} from '@angular/core';
+import { ConsentManager, Portal } from '@c15t/angular';
+import {
+	DialogBackdrop,
+	DialogClose,
+	DialogContent,
+	DialogDescription,
+	Dialog,
+	DialogPositioner,
+	DialogTitle,
+	SwitchControl,
+	Switch,
+	SwitchThumb,
+} from '@c15t/angular/primitives';
+
+@Component({
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	imports: [
+		DialogBackdrop,
+		DialogClose,
+		DialogContent,
+		DialogDescription,
+		Dialog,
+		DialogPositioner,
+		DialogTitle,
+		Portal,
+		SwitchControl,
+		Switch,
+		SwitchThumb,
+	],
+	selector: 'app-custom-dialog',
+	template: `
+		<ng-container
+			c15tDialog
+			#dialog="c15tDialog"
+			[open]="open()"
+			(openChange)="setOpen($event)"
+			[preventScroll]="true"
+			[unmountOnExit]="true"
+		>
+			@if (dialog.shouldRender()) {
+				<div c15tPortal>
+					<div
+						c15tDialogBackdrop
+						class="backdrop"
+					></div>
+					<div
+						c15tDialogPositioner
+						class="positioner"
+					>
+						<div
+							c15tDialogContent
+							class="card"
+						>
+							<h2 c15tDialogTitle>Cookie settings</h2>
+							<p c15tDialogDescription>Choose what this site may use.</p>
+							<label>
+								<button
+									c15tSwitch
+									[checked]="consent.draft.values().measurement ?? false"
+									(checkedChange)="consent.setConsent('measurement', $event)"
+								>
+									<span c15tSwitchControl><span c15tSwitchThumb></span></span>
+								</button>
+								Analytics
+							</label>
+							<button
+								type="button"
+								(click)="consent.saveConsents('custom')"
+							>
+								Save
+							</button>
+							<button c15tDialogClose>Close</button>
+						</div>
+					</div>
+				</div>
+			}
+		</ng-container>
+	`,
+})
+export class CustomDialog {
+	protected readonly consent = inject(ConsentManager);
+
+	// Open while the consent manager's active surface is the dialog.
+	protected readonly open = computed(
+		() => this.consent.activeUI() === 'dialog'
+	);
+
+	protected setOpen(open: boolean): void {
+		this.consent.setActiveUI(open ? 'dialog' : 'none');
+	}
+}
+// #endregion docs:primitives-dialog

@@ -1,0 +1,26 @@
+{
+	"name": "@c15t/solid",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"scripts": {
+		"build": "tsc --noEmit",
+		"test": "vitest run --passWithNoTests"
+	},
+	"dependencies": {
+		"@c15t/ui": "workspace:*",
+		"solid-js": "^1.9.14"
+	},
+	"devDependencies": {
+		"@c15t/conformance": "workspace:*",
+		"@c15t/typescript-config": "workspace:*",
+		"@vitest/coverage-istanbul": "4.1.10",
+		"jsdom": "25.0.1",
+		"typescript": "7.0.2",
+		"vite": "8.1.3",
+		"vitest": "4.1.10"
+	}
+}

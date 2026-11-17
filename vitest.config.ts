@@ -9,6 +9,18 @@ export default defineConfig({
       "**/inrepo_modules/**",
       "**/.inrepo/**",
       "**/e2e/**",
+      // The SDK's tests run through `pnpm sdk:test` and `pnpm sdk:test:scripts`.
+      "apps/**",
+      "benchmarks/**",
+      "examples/**",
+      "internals/**",
+      "scripts/**",
+      "packages/sdk/**",
+      "packages/react-native/**",
+      "packages/swift/**",
+      "packages/android/**",
+      "packages/native-protocol/**",
+      "packages/cli/vendor/c15t-mobile/**",
     ],
   },
 });

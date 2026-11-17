@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Fake placeholder for the vendor SDK journey. Not a Firebase project: every value is invented. -->
+<plist version="1.0">
+<dict>
+	<key>API_KEY</key>
+	<string>AIzaSyC15tFakeKeyForLocalTestsOnly00000</string>
+	<key>GCM_SENDER_ID</key>
+	<string>123456789000</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.c15t.prototype.consent</string>
+	<key>PROJECT_ID</key>
+	<string>c15t-fake-placeholder</string>
+	<key>STORAGE_BUCKET</key>
+	<string>c15t-fake-placeholder.invalid</string>
+	<key>IS_ADS_ENABLED</key>
+	<false/>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<true/>
+	<key>IS_APPINVITE_ENABLED</key>
+	<false/>
+	<key>IS_GCM_ENABLED</key>
+	<false/>
+	<key>IS_SIGNIN_ENABLED</key>
+	<false/>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:123456789000:ios:c15c0000c15c0000</string>
+</dict>
+</plist>

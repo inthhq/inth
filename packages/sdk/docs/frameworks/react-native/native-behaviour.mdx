@@ -1,0 +1,86 @@
+---
+title: Native startup and SDK gates
+description: Install consent before React Native starts, prevent optional native SDK auto-start and react to later grants and withdrawals.
+group: frameworks
+---
+
+A native analytics or advertising SDK can start before React mounts. Put its
+startup behind a native consent gate. Use React hooks for work that starts
+in React, and native subscriptions for work whose lifetime belongs to iOS or
+Android.
+
+## Install before JavaScript starts
+
+The Expo plugin and bare RN configuration install the engine through native
+launch hooks. By the time `ConsentProvider` attaches, that engine has restored
+saved choices and started resolving policy. The provider checks the native
+protocol; it does not create another consent engine.
+
+| Setup | Native configuration belongs in |
+| --- | --- |
+| Expo | The c15t config plugin, followed by prebuild and a native rebuild |
+| Bare RN, iOS | The app target's `Info.plist`, or app-owned native installation |
+| Bare RN, Android | Application metadata and the launch initializer, or app-owned installation |
+
+Follow [Expo](/docs/frameworks/react-native/expo) or
+[bare setup](/docs/frameworks/react-native/bare) before adding SDK gates.
+Disable the vendor's automatic collection and launch hooks. Check its manifest
+initializers, app-delegate setup and config plugins. c15t does not intercept
+arbitrary native network requests.
+
+## Read the cached native gate
+
+| Platform | Boolean permission | Decision |
+| --- | --- | --- |
+| Swift | `C15t.isAllowed(.measurement)` | `C15t.decision(for: .measurement)` |
+| Kotlin | `C15t.isAllowed(ConsentCategory.MEASUREMENT)` | `C15t.decision(ConsentCategory.MEASUREMENT)` |
+
+These reads use in-memory native state. They perform no disk or network work
+on the calling thread. The decision distinguishes pending, denied and granted.
+Keep collection off for pending and denied. A fresh app can remain pending
+while it waits for policy; let necessary app features continue working.
+
+Effective permission can follow a regional policy default before the person
+records a choice. Read recorded choice separately when your app reports what
+the person explicitly selected.
+
+## Subscribe for the integration's lifetime
+
+Retain the Swift gate subscription or Android `gate`/`gateDecision` handle in
+the owner of your optional SDK integration. Register after installation and
+use the initial delivered permission to configure collection. Apply later
+changes through the vendor's supported enable, disable or shutdown API.
+
+Close the subscription when that integration ends. Do not tie an app-wide
+analytics gate to a short-lived React component or an Activity that rotates.
+Marshal UI work to the platform's main thread because native callbacks can
+arrive on a worker. Native UI code can read state from Kotlin's `snapshotFlow`
+and `decisionFlow`, or Swift's `PublishedConsent`, which need no hop.
+
+A single launch-time check misses withdrawal. The subscription must also cover
+policy changes, identity changes, foreground refresh and recovery.
+
+## Handle unavailable storage
+
+Apple's installer checks Keychain before installing the engine. If it reports
+`protectedStorageUnavailable`, keep optional SDKs off and retry when protected
+data becomes available or the app activates. Retry the protected installation;
+do not replace its store with memory or a plaintext file.
+
+On Android, treat storage read and write errors as unavailable authority. Keep
+failed saves visible and retry after storage recovers. Do not turn an absent
+record into a grant.
+
+## Keep collection and delivery separate
+
+A native commit stores a choice locally before attempting delivery. Launch,
+foreground and reconnect can replay queued saves. A network failure after
+local withdrawal must not reenable collection.
+
+[Commands and outcomes](/docs/frameworks/react-native/usage) explains which
+result confirms a local save. [Offline consent](/docs/guides/mobile-offline)
+covers fresh offline prompting and retained delivery.
+
+Advertising also needs the relevant vendor/purpose/provider permission.
+Apple tracking features may need ATT as another independent gate. Follow
+[IAB and ads](/docs/guides/mobile-iab) for those checks.

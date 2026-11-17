@@ -1,0 +1,342 @@
+/**
+ * IAB Storage E2E Tests
+ *
+ * Browser-based tests for TC String storage compliance.
+ */
+
+import { userEvent } from '@vitest/browser/context';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { render } from 'vitest-browser-react';
+
+import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
+import { IABConsentDialog } from '~/components/iab-panel';
+import { IABConsentBanner } from '~/components/iab-prompt';
+
+import {
+	clearConsentState,
+	defaultProviderIABOptions,
+	getStoredConsent,
+	getStoredTCString,
+	waitForCMP,
+	waitForElement,
+	waitForElementRemoved,
+} from './e2e-setup';
+
+describe('IAB Storage E2E Tests', () => {
+	beforeEach(() => {
+		clearConsentState();
+		vi.clearAllMocks();
+	});
+
+	describe('localStorage Storage', () => {
+		test('should store consent to localStorage', async () => {
+			render(
+				<ConsentProvider options={defaultProviderIABOptions}>
+					<IABConsentBanner />
+					<IABConsentDialog />
+				</ConsentProvider>
+			);
+
+			const acceptButton = await waitForElement(
+				'[data-testid="iab-consent-banner-accept-button"]'
+			);
+			await waitForCMP();
+
+			await userEvent.click(acceptButton);
+			await waitForElementRemoved('[data-testid="iab-consent-banner-card"]');
+
+			// Wait for localStorage to be updated
+			await vi.waitFor(
+				() => {
+					const stored = getStoredConsent();
+					expect(stored).not.toBeNull();
+					return stored;
+				},
+				{ timeout: 1000 }
+			);
+
+			const stored = getStoredConsent();
+			expect(stored?.choice?.categories).toBeDefined();
+		});
+
+		test('should store TC string in localStorage', async () => {
+			render(
+				<ConsentProvider options={defaultProviderIABOptions}>
+					<IABConsentBanner />
+					<IABConsentDialog />
+				</ConsentProvider>
+			);
+
+			const acceptButton = await waitForElement(
+				'[data-testid="iab-consent-banner-accept-button"]'
+			);
+			await waitForCMP();
+
+			await userEvent.click(acceptButton);
+			await waitForElementRemoved('[data-testid="iab-consent-banner-card"]');
+
+			// Verify TC string storage
+			const tcString = await vi.waitFor(
+				() => {
+					const stored = getStoredTCString();
+					expect(stored).not.toBeNull();
+					return stored;
+				},
+				{ timeout: 2000 }
+			);
+			expect(typeof tcString).toBe('string');
+		});
+
+		test('TC string should be valid base64url format', async () => {
+			render(
+				<ConsentProvider options={defaultProviderIABOptions}>
+					<IABConsentBanner />
+					<IABConsentDialog />
+				</ConsentProvider>
+			);
+
+			const acceptButton = await waitForElement(
+				'[data-testid="iab-consent-banner-accept-button"]'
+			);
+			await waitForCMP();
+
+			await userEvent.click(acceptButton);
+			await waitForElementRemoved('[data-testid="iab-consent-banner-card"]');
+
+			const tcString = await vi.waitFor(
+				() => {
+					const stored = getStoredTCString();
+					expect(stored).not.toBeNull();
+					return stored;
+				},
+				{ timeout: 2000 }
+			);
+
+			// TC strings are base64url encoded with dots as section separators
+			// Format: core.disclosedVendors.allowedVendors.publisherTC
+			const tcStringRegex = /^[A-Za-z0-9_-]+(?<capture1>\.[A-Za-z0-9_-]+)*$/u;
+			expect(tcString).toMatch(tcStringRegex);
+		});
+	});
+
+	describe('Storage Update on Consent Change', () => {
+		test('should update storage when Accept All clicked', async () => {
+			render(
+				<ConsentProvider options={defaultProviderIABOptions}>
+					<IABConsentBanner />
+					<IABConsentDialog />
+				</ConsentProvider>
+			);
+
+			const acceptButton = await waitForElement(
+				'[data-testid="iab-consent-banner-accept-button"]'
+			);
+			await waitForCMP();
+
+			// Before action
+			expect(getStoredConsent()).toBeNull();
+
+			await userEvent.click(acceptButton);
+			await waitForElementRemoved('[data-testid="iab-consent-banner-card"]');
+
+			// After action
+			await vi.waitFor(
+				() => {
+					expect(getStoredConsent()).not.toBeNull();
+				},
+				{ timeout: 2000 }
+			);
+		});
+
+		test('should update storage when Reject All clicked', async () => {
+			render(
+				<ConsentProvider options={defaultProviderIABOptions}>
+					<IABConsentBanner />
+					<IABConsentDialog />
+				</ConsentProvider>
+			);
+
+			const rejectButton = await waitForElement(
+				'[data-testid="iab-consent-banner-reject-button"]'
+			);
+			await waitForCMP();
+
+			// Before action
+			expect(getStoredConsent()).toBeNull();
+
+			await userEvent.click(rejectButton);
+			await waitForElementRemoved('[data-testid="iab-consent-banner-card"]');
+
+			await vi.waitFor(
+				() => {
+					const consent = getStoredConsent();
+					expect(consent).not.toBeNull();
+					expect(consent?.choice?.categories.marketing?.value).toBe(false);
+				},
+				{ timeout: 2000 }
+			);
+		});
+	});
+
+	describe('Storage Content', () => {
+		test('should store consent info with timestamp', async () => {
+			render(
+				<ConsentProvider options={defaultProviderIABOptions}>
+					<IABConsentBanner />
+					<IABConsentDialog />
+				</ConsentProvider>
+			);
+
+			const acceptButton = await waitForElement(
+				'[data-testid="iab-consent-banner-accept-button"]'
+			);
+			await waitForCMP();
+
+			const beforeTime = Date.now();
+			await userEvent.click(acceptButton);
+			await waitForElementRemoved('[data-testid="iab-consent-banner-card"]');
+			const afterTime = Date.now();
+
+			await vi.waitFor(
+				() => {
+					const c = getStoredConsent();
+					expect(c?.choice?.categories.marketing?.confirmedAt).toBeDefined();
+					return c;
+				},
+				{ timeout: 2000 }
+			);
+
+			const consent = getStoredConsent();
+			expect(consent?.choice?.categories.marketing?.confirmedAt).toBeDefined();
+			expect(
+				consent?.choice?.categories.marketing?.confirmedAt
+			).toBeGreaterThanOrEqual(beforeTime - 1000);
+			expect(
+				consent?.choice?.categories.marketing?.confirmedAt
+			).toBeLessThanOrEqual(afterTime + 1000);
+		});
+
+		test('should store consent info with subjectId', async () => {
+			render(
+				<ConsentProvider options={defaultProviderIABOptions}>
+					<IABConsentBanner />
+					<IABConsentDialog />
+				</ConsentProvider>
+			);
+
+			const acceptButton = await waitForElement(
+				'[data-testid="iab-consent-banner-accept-button"]'
+			);
+			await waitForCMP();
+
+			await userEvent.click(acceptButton);
+			await waitForElementRemoved('[data-testid="iab-consent-banner-card"]');
+
+			await vi.waitFor(
+				() => {
+					const consent = getStoredConsent();
+					expect(consent?.subject?.subjectId).toBeDefined();
+					expect(typeof consent?.subject?.subjectId).toBe('string');
+				},
+				{ timeout: 2000 }
+			);
+		});
+	});
+
+	describe('Returning visitor', () => {
+		const switchStates = () =>
+			Array.from(
+				document.querySelectorAll(
+					'[data-testid="iab-consent-dialog-card"] [role="switch"]'
+				)
+			).map((element) => element.getAttribute('aria-checked'));
+
+		test('the preference dialog shows the choices saved before a reload', async () => {
+			const firstVisit = await render(
+				<ConsentProvider options={defaultProviderIABOptions}>
+					<IABConsentBanner />
+					<IABConsentDialog />
+				</ConsentProvider>
+			);
+			const acceptButton = await waitForElement(
+				'[data-testid="iab-consent-banner-accept-button"]'
+			);
+			await waitForCMP();
+			await userEvent.click(acceptButton);
+			await waitForElementRemoved('[data-testid="iab-consent-banner-card"]');
+			await vi.waitFor(() => expect(getStoredTCString()).not.toBeNull());
+			await firstVisit.unmount();
+			// A reload starts without the previous page's CMP.
+			delete (window as { __tcfapi?: unknown }).__tcfapi;
+
+			render(
+				<ConsentProvider
+					options={{ ...defaultProviderIABOptions, initialUI: 'dialog' }}
+				>
+					<IABConsentBanner />
+					<IABConsentDialog />
+				</ConsentProvider>
+			);
+			await waitForCMP();
+			await waitForElement('[data-testid="iab-consent-dialog-card"]');
+
+			await vi.waitFor(() => {
+				const states = switchStates();
+				expect(states.length).toBeGreaterThan(0);
+				expect(states).toEqual(states.map(() => 'true'));
+			});
+		});
+	});
+
+	describe('c15t Storage Key', () => {
+		test('should use "c15t" key in localStorage', async () => {
+			render(
+				<ConsentProvider options={defaultProviderIABOptions}>
+					<IABConsentBanner />
+					<IABConsentDialog />
+				</ConsentProvider>
+			);
+
+			const acceptButton = await waitForElement(
+				'[data-testid="iab-consent-banner-accept-button"]'
+			);
+			await waitForCMP();
+
+			await userEvent.click(acceptButton);
+			await waitForElementRemoved('[data-testid="iab-consent-banner-card"]');
+
+			// Should use c15t key
+			await vi.waitFor(
+				() => {
+					expect(getStoredConsent()).not.toBeNull();
+				},
+				{ timeout: 2000 }
+			);
+		});
+
+		test('should use "euconsent-v2" key for TC string', async () => {
+			render(
+				<ConsentProvider options={defaultProviderIABOptions}>
+					<IABConsentBanner />
+					<IABConsentDialog />
+				</ConsentProvider>
+			);
+
+			const acceptButton = await waitForElement(
+				'[data-testid="iab-consent-banner-accept-button"]'
+			);
+			await waitForCMP();
+
+			await userEvent.click(acceptButton);
+			await waitForElementRemoved('[data-testid="iab-consent-banner-card"]');
+
+			// Should use euconsent-v2 key (IAB standard)
+			await vi.waitFor(
+				() => {
+					expect(window.localStorage.getItem('euconsent-v2')).not.toBeNull();
+				},
+				{ timeout: 2000 }
+			);
+		});
+	});
+});

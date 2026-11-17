@@ -1,0 +1,11 @@
+## Update the CLI
+
+- Setup moved to the Inth CLI.
+  [Install the Inth CLI](/docs/cli/overview#install-the-inth-cli), then run
+  `inth c15t` in place of `c15t setup` and `inth c15t codemods` in place of
+  `c15t codemods`.
+- Sign in with `inth login`. Sessions saved by the v2 CLI aren't read.
+- `inth c15t scaffold` writes the backend URL to `.env`, not `.env.local` or
+  `.env.example`.
+- Remix and Gatsby have no CLI support. Pick a guide from
+  [Choose your setup](/docs/concepts/choose-your-setup) for those apps.

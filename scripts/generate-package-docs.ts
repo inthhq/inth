@@ -1,0 +1,491 @@
+#!/usr/bin/env bun
+
+import {
+	cpSync,
+	existsSync,
+	mkdirSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import fg from 'fast-glob';
+import type { Root } from 'mdast';
+import { remark } from 'remark';
+import remarkFrontmatter from 'remark-frontmatter';
+import remarkGfm from 'remark-gfm';
+import { visit } from 'unist-util-visit';
+
+import { docsOriginForVersion } from './docs-origin';
+import {
+	withFrameworkGroups,
+	withPackageSetupLinks,
+} from './package-doc-entry-points';
+import type { PackageSkill } from './package-skill';
+import { packageSkillName, renderPackageSkill } from './package-skill';
+import {
+	packageDocLink,
+	packageIndexLinks,
+	packagePromptLinks,
+	restorePackageDocIncludes,
+} from './rewrite-package-doc-links';
+
+const ROOT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+/** leadtype reads `docs/` under this folder. */
+const DOCS_SOURCE_ROOT = join(ROOT_DIR, 'packages/sdk');
+const DOCS_DIR = 'packages/sdk/docs';
+
+export interface PackageDocsConfig {
+	name: string;
+	outDir: string;
+	summary: string;
+	include: string[];
+	/** Replaces leadtype's generic SKILL.md with c15t guidance. */
+	skill: PackageSkill;
+	/**
+	 * Also writes the skill to `skills/<name>/`, with its own copy of `docs/`.
+	 * Expo's `skills:sync` links only that layout, and an agent resolves a
+	 * link from a linked skill lexically, so the skill cannot point to
+	 * `../../docs`. Only packages without c15t dependencies use it: Expo also
+	 * links skills from transitive dependencies.
+	 */
+	skillDirectory?: boolean;
+}
+
+/** Every framework directory under `docs/frameworks`. */
+const umbrellaFrameworks = [
+	'next',
+	'tanstack-start',
+	'react',
+	'nuxt',
+	'vue',
+	'astro',
+	'svelte',
+	'sveltekit',
+	'angular',
+	'html',
+	'javascript',
+].map((framework) => `frameworks/${framework}/**/*.mdx`);
+
+export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
+	{
+		include: [
+			'frameworks/react-native/**/*.mdx',
+			'frameworks/swift/**/*.mdx',
+			'frameworks/android/**/*.mdx',
+			'guides/mobile-*.mdx',
+			'integrations/overview.mdx',
+			'integrations/firebase-analytics.mdx',
+			'integrations/expo-observe.mdx',
+			'integrations/posthog.mdx',
+			'integrations/mixpanel-analytics.mdx',
+			'integrations/amplitude.mdx',
+			'integrations/sentry.mdx',
+			'integrations/admob.mdx',
+			'integrations/appsflyer.mdx',
+			'integrations/adjust.mdx',
+			'integrations/meta-app-events.mdx',
+			'integrations/braze.mdx',
+			'integrations/branch.mdx',
+			'integrations/singular.mdx',
+		],
+		name: '@c15t/react-native',
+		outDir: 'packages/react-native',
+		skill: {
+			install: 'the maintainer-provided private @c15t/react-native tarball',
+			topic:
+				'the project uses React Native, Expo development builds, Swift or Kotlin native consent',
+		},
+		skillDirectory: true,
+		summary:
+			'Build consent into React Native, Expo, SwiftUI, UIKit and Android apps. Follow a platform quickstart, keep optional SDKs behind consent gates, customize native screens or supply your own UI.',
+	},
+	{
+		include: [
+			'concepts/**/*.mdx',
+			'guides/**/!(mobile-*).mdx',
+			'frameworks/javascript/**/*.mdx',
+			'customization/**/*.mdx',
+			'integrations/**/*.mdx',
+		],
+		name: '@c15t/core',
+		outDir: 'packages/sdk/core',
+		skill: {
+			install: '`npm install c15t`',
+			topic:
+				'the project uses the headless c15t engine, `createConsentRuntime` or custom consent UI',
+			umbrella: true,
+		},
+		summary:
+			'Headless v3 consent, Inth setup, runtime ownership and script loading.',
+	},
+	{
+		include: [
+			'concepts/**/*.mdx',
+			'guides/**/!(mobile-*).mdx',
+			'frameworks/react/**/*.mdx',
+			'customization/**/*.mdx',
+			'integrations/**/*.mdx',
+		],
+		name: '@c15t/react',
+		outDir: 'packages/sdk/react',
+		skill: {
+			install: '`npm install c15t` and import `c15t/react`',
+			topic: 'the project is a React app, such as Vite or React Router',
+			umbrella: true,
+		},
+		summary:
+			'React v3 consent components, hooks, Inth setup and customization.',
+	},
+	{
+		include: [
+			'concepts/**/*.mdx',
+			'guides/**/!(mobile-*).mdx',
+			'frameworks/next/**/*.mdx',
+			'customization/**/*.mdx',
+			'integrations/**/*.mdx',
+		],
+		name: '@c15t/nextjs',
+		outDir: 'packages/sdk/nextjs',
+		skill: {
+			install: '`npm install c15t` and import `c15t/next`',
+			topic:
+				'the project is a Next.js app with the App Router, Pages Router or static export',
+			umbrella: true,
+		},
+		summary:
+			'Next.js v3 App Router, Pages Router, static export and hydration with Inth.',
+	},
+	{
+		include: [
+			'concepts/**/*.mdx',
+			'guides/**/!(mobile-*).mdx',
+			'frameworks/vue/**/*.mdx',
+			'frameworks/nuxt/**/*.mdx',
+			'customization/**/*.mdx',
+			'integrations/**/*.mdx',
+		],
+		name: '@c15t/vue',
+		outDir: 'packages/sdk/vue',
+		skill: {
+			install: '`npm install c15t` and import `c15t/vue`',
+			topic: 'the project is a Vue or Nuxt app',
+			umbrella: true,
+		},
+		summary:
+			'Vue and Nuxt v3 integration, Vite setup, SSR and static hosting with Inth.',
+	},
+	{
+		include: [
+			'concepts/**/*.mdx',
+			'guides/**/!(mobile-*).mdx',
+			'frameworks/svelte/**/*.mdx',
+			'frameworks/sveltekit/**/*.mdx',
+			'customization/**/*.mdx',
+			'integrations/**/*.mdx',
+		],
+		name: '@c15t/svelte',
+		outDir: 'packages/sdk/svelte',
+		skill: {
+			install: '`npm install c15t` and import `c15t/svelte`',
+			topic: 'the project is a Svelte or SvelteKit app',
+			umbrella: true,
+		},
+		summary:
+			'Svelte and SvelteKit v3 providers, request loading and static hosting with Inth.',
+	},
+	{
+		include: [
+			'concepts/**/*.mdx',
+			'guides/**/!(mobile-*).mdx',
+			'frameworks/angular/**/*.mdx',
+			'customization/**/*.mdx',
+			'integrations/**/*.mdx',
+		],
+		name: '@c15t/angular',
+		outDir: 'packages/sdk/angular',
+		skill: {
+			install: '`npm install @c15t/angular`',
+			topic:
+				'the project is an Angular 20, 21 or 22 app, with or without `@angular/ssr`',
+		},
+		summary:
+			'Angular v3 provider, standalone components, signals, headless directives and server rendering with Inth.',
+	},
+	{
+		include: [
+			'concepts/**/*.mdx',
+			'guides/**/!(mobile-*).mdx',
+			'frameworks/astro/**/*.mdx',
+			'customization/**/*.mdx',
+			'integrations/**/*.mdx',
+		],
+		name: '@c15t/astro',
+		outDir: 'packages/sdk/astro',
+		skill: {
+			install: '`npm install c15t` and import `c15t/astro`',
+			topic: 'the project is an Astro site',
+			umbrella: true,
+		},
+		summary:
+			'Astro v3 static and server integration, dialog adapters and runtime ownership.',
+	},
+	{
+		include: [
+			'concepts/**/*.mdx',
+			'guides/**/!(mobile-*).mdx',
+			'frameworks/tanstack-start/**/*.mdx',
+			'customization/**/*.mdx',
+			'integrations/**/*.mdx',
+		],
+		name: '@c15t/tanstack-start',
+		outDir: 'packages/sdk/tanstack-start',
+		skill: {
+			install: '`npm install c15t` and import `c15t/tanstack-start`',
+			topic: 'the project is a TanStack Start app',
+			umbrella: true,
+		},
+		summary:
+			'TanStack Start v3 server functions, request middleware and consent boundaries.',
+	},
+	{
+		include: [
+			'concepts/**/*.mdx',
+			'guides/**/!(mobile-*).mdx',
+			'frameworks/index.mdx',
+			...umbrellaFrameworks,
+			'customization/**/*.mdx',
+			'integrations/**/*.mdx',
+		],
+		name: 'c15t',
+		outDir: 'packages/sdk/c15t',
+		skill: {
+			install:
+				'`npm install c15t` and import the framework subpath, such as `c15t/next`',
+			topic:
+				'the project uses c15t with Next.js, React, TanStack Start, Vue, Nuxt, Astro or plain JavaScript',
+		},
+		summary:
+			'c15t v3 framework integration and consent management. Install c15t and use its framework subpaths; adapters and add-ons absent from its exports use separate packages.',
+	},
+	{
+		include: [
+			'frameworks/*/upgrade-v3.mdx',
+			'concepts/**/*.mdx',
+			'guides/**/!(mobile-*).mdx',
+			'frameworks/*/scripts.mdx',
+			'frameworks/*/embeds.mdx',
+			'frameworks/*/network-blocker.mdx',
+			'customization/**/*.mdx',
+			'integrations/**/*.mdx',
+		],
+		name: '@c15t/integrations',
+		outDir: 'packages/sdk/integrations',
+		skill: {
+			install: '`npm install @c15t/integrations` alongside `c15t`',
+			topic:
+				'the project loads analytics, pixels, tag managers or embeds that must wait for consent',
+		},
+		summary:
+			'Consent-aware vendor integrations and Consent Mode loading contracts.',
+	},
+	{
+		include: [
+			'frameworks/*/upgrade-v3.mdx',
+			'concepts/**/*.mdx',
+			'guides/**/!(mobile-*).mdx',
+			'frameworks/*/scripts.mdx',
+			'frameworks/*/embeds.mdx',
+			'frameworks/*/network-blocker.mdx',
+			'customization/**/*.mdx',
+			'integrations/**/*.mdx',
+		],
+		name: '@c15t/scripts',
+		outDir: 'packages/sdk/scripts',
+		skill: {
+			// The compatibility package re-exports @c15t/integrations; new code
+			// installs the canonical package.
+			install:
+				'`npm install @c15t/integrations` alongside `c15t`, replacing the deprecated `@c15t/scripts`',
+			topic:
+				'the project imports the deprecated `@c15t/scripts` vendor helpers, or loads analytics, pixels, tag managers or embeds that must wait for consent',
+		},
+		summary:
+			'Deprecated v3 compatibility package for @c15t/integrations. Migrate before v4.',
+	},
+	{
+		include: [
+			'concepts/**/*.mdx',
+			'guides/**/!(mobile-*).mdx',
+			'frameworks/html/**/*.mdx',
+			'frameworks/javascript/**/*.mdx',
+			'integrations/**/*.mdx',
+		],
+		name: '@c15t/browser',
+		outDir: 'packages/sdk/browser',
+		skill: {
+			install:
+				'a `<script>` tag for `@c15t/browser` from jsDelivr, or `npm install @c15t/browser`',
+			topic:
+				'the site is plain HTML, a CMS, a page builder or a static site generator, or a bundled app without a UI framework',
+		},
+		summary:
+			'c15t for plain HTML sites from one script tag, and for bundled JavaScript apps with the stock UI: data attributes, the window.c15t API, customization, script and iframe gating, IAB and integrations.',
+	},
+];
+
+const configsByName = new Map(
+	PACKAGE_DOCS_CONFIGS.map((config) => [config.name, config])
+);
+
+const selectedConfigs = function selectedConfigs() {
+	const requested = process.argv.slice(2);
+	if (requested.length === 0 || requested.includes('all')) {
+		return PACKAGE_DOCS_CONFIGS;
+	}
+
+	return requested.map((name) => {
+		const config = configsByName.get(name);
+		if (!config) {
+			throw new Error(`Unsupported package docs target: ${name}`);
+		}
+		return config;
+	});
+};
+
+const runLeadtype = async function runLeadtype(config: PackageDocsConfig) {
+	const outDir = join(ROOT_DIR, config.outDir);
+	rmSync(join(outDir, 'AGENTS.md'), { force: true });
+	rmSync(join(outDir, 'docs'), { force: true, recursive: true });
+	if (config.skillDirectory) {
+		rmSync(join(outDir, 'skills'), { force: true, recursive: true });
+	}
+
+	const command = [
+		'bunx',
+		'leadtype',
+		'generate',
+		'--bundle',
+		'--src',
+		DOCS_SOURCE_ROOT,
+		'--out',
+		outDir,
+		'--name',
+		config.name,
+		'--summary',
+		config.summary,
+	];
+
+	for (const include of config.include) {
+		command.push('--include', include);
+	}
+
+	const proc = Bun.spawn(command, {
+		cwd: ROOT_DIR,
+		env: {
+			...process.env,
+			// leadtype's MDX bundling exceeds Node's default heap on the larger
+			// packages (core, react); raise it here so every caller — all CI
+			// workflows and local builds — gets the fix in one place.
+			NODE_OPTIONS:
+				`${process.env.NODE_OPTIONS ?? ''} --max-old-space-size=6144`.trim(),
+		},
+		stderr: 'inherit',
+		stdout: 'inherit',
+	});
+	const exitCode = await proc.exited;
+	if (exitCode !== 0) {
+		throw new Error(`leadtype package docs failed for ${config.name}`);
+	}
+
+	// Links to pages outside the bundle go to the docs site for this
+	// package's release, not whichever major c15t.com documents today.
+	const { version } = JSON.parse(
+		readFileSync(join(outDir, 'package.json'), 'utf8')
+	) as { version: string };
+	const siteOrigin = docsOriginForVersion(version);
+	const docsDir = join(outDir, 'docs');
+	const files = await fg('**/*.md', { cwd: docsDir });
+	const bundledFiles = new Set(files);
+	await Promise.all(
+		files.map(async (file) => {
+			const processor = remark()
+				.use(remarkFrontmatter)
+				.use(remarkGfm)
+				.use(() => (tree: Root) => {
+					visit(tree, (node) => {
+						if (node.type === 'link' || node.type === 'definition') {
+							node.url = packageDocLink(
+								node.url,
+								file,
+								bundledFiles,
+								siteOrigin
+							);
+						}
+						// leadtype renders <Prompt> as a `prompt` code block, so its
+						// docs paths are plain text rather than link nodes.
+						if (node.type === 'code' && node.lang === 'prompt') {
+							node.value = packagePromptLinks(
+								node.value,
+								file,
+								bundledFiles,
+								siteOrigin
+							);
+						}
+					});
+				});
+			const path = join(docsDir, file);
+			const content = await restorePackageDocIncludes(
+				readFileSync(path, 'utf8'),
+				join(ROOT_DIR, DOCS_DIR, file.replace(/\.md$/u, '.mdx'))
+			);
+			writeFileSync(path, String(await processor.process(content)));
+		})
+	);
+	// Recipes retain their real screenshots when read from an installed package.
+	if (existsSync(join(docsDir, 'customization/recipes.md'))) {
+		cpSync(join(ROOT_DIR, DOCS_DIR, 'assets/v3'), join(docsDir, 'assets/v3'), {
+			recursive: true,
+		});
+	}
+
+	const agentsPath = join(outDir, 'AGENTS.md');
+	const docsReadmePath = join(outDir, 'docs', 'README.md');
+	const agentsContent = withFrameworkGroups(
+		withPackageSetupLinks(
+			packageIndexLinks(
+				readFileSync(agentsPath, 'utf8'),
+				bundledFiles,
+				siteOrigin
+			),
+			bundledFiles
+		)
+	);
+	writeFileSync(agentsPath, agentsContent);
+	const skill = renderPackageSkill(config.name, config.skill, bundledFiles);
+	writeFileSync(join(outDir, 'SKILL.md'), skill);
+	mkdirSync(join(outDir, 'docs'), { recursive: true });
+	writeFileSync(
+		docsReadmePath,
+		agentsContent.replaceAll('(./docs/', '(./'),
+		'utf8'
+	);
+	if (config.skillDirectory) {
+		const skillDir = join(outDir, 'skills', packageSkillName(config.name));
+		cpSync(docsDir, join(skillDir, 'docs'), { recursive: true });
+		writeFileSync(join(skillDir, 'SKILL.md'), skill);
+	}
+};
+
+if (import.meta.main) {
+	await Array.from(selectedConfigs()).reduce(
+		async (previousIteration, config) => {
+			await previousIteration;
+			console.log(`Generating package docs for ${config.name}`);
+			await runLeadtype(config);
+		},
+		Promise.resolve()
+	);
+}

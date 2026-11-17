@@ -1,0 +1,30 @@
+# Flips one category switch in c15t preferences. Set C15T_CATEGORY to the
+# category name, such as measurement or marketing. Run open-preferences.yaml
+# first, and save-preferences.yaml to record the change.
+#
+#   - runFlow:
+#       file: ../node_modules/@c15t/react-native/maestro/toggle-category.yaml
+#       env:
+#         C15T_CATEGORY: measurement
+# Maestro needs an appId in every flow file; the calling flow's appId is used.
+appId: ${APP_ID}
+---
+# The switch can be above or below the viewport, depending on what the test
+# did before, so look down first and then up.
+- scrollUntilVisible:
+    element:
+      id: 'c15t.prefs.category.${C15T_CATEGORY}.switch'
+    direction: DOWN
+    timeout: 10000
+    optional: true
+- runFlow:
+    when:
+      notVisible:
+        id: 'c15t.prefs.category.${C15T_CATEGORY}.switch'
+    commands:
+      - scrollUntilVisible:
+          element:
+            id: 'c15t.prefs.category.${C15T_CATEGORY}.switch'
+          direction: UP
+- tapOn:
+    id: 'c15t.prefs.category.${C15T_CATEGORY}.switch'

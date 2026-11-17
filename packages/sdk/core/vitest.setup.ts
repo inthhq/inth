@@ -1,0 +1,107 @@
+/**
+ * Vitest setup file for Node.js environment
+ *
+ * Provides mock implementations for browser globals in Node.js environment
+ * using specialized testing libraries for better compatibility.
+ */
+import { vi } from 'vitest';
+import 'vitest-localstorage-mock';
+
+import { preloadPersistenceWriter } from './src/modules/persistence/mount';
+
+// Create simple storage implementation
+const mockStorage = {
+	clear: vi.fn(() => mockStorage.store.clear()),
+	getItem: vi.fn((key) => mockStorage.store.get(key) || null),
+	key: vi.fn(() => null),
+	length: 0,
+	removeItem: vi.fn((key) => mockStorage.store.delete(key)),
+	setItem: vi.fn((key, value) => mockStorage.store.set(key, value)),
+	store: new Map(),
+};
+
+// Create a mock window object with location property
+const mockWindow = {
+	XMLHttpRequest: class MockXMLHttpRequest {
+		static UNSENT = 0;
+		static OPENED = 1;
+		static HEADERS_RECEIVED = 2;
+		static LOADING = 3;
+		static DONE = 4;
+
+		onreadystatechange = null;
+		readyState = 0;
+		response = null;
+		responseText = '';
+		responseType = '';
+		status = 0;
+		statusText = '';
+
+		open = vi.fn();
+		send = vi.fn();
+		abort = vi.fn();
+		setRequestHeader = vi.fn();
+		getResponseHeader = vi.fn();
+		getAllResponseHeaders = vi.fn();
+	},
+	fetch: vi.fn(() => Promise.resolve(new Response())),
+	localStorage: mockStorage,
+	location: {
+		hash: '',
+		href: 'https://test.example.com/',
+		origin: 'https://test.example.com',
+		pathname: '/',
+		search: '',
+	},
+};
+
+// If globals don't exist (Node.js environment), mock them
+if (typeof window === 'undefined') {
+	vi.stubGlobal('window', mockWindow);
+}
+
+// Mock location globally for PostHog and other libraries
+if (typeof location === 'undefined') {
+	vi.stubGlobal('location', mockWindow.location);
+}
+
+if (typeof document === 'undefined') {
+	vi.stubGlobal('document', {
+		addEventListener: vi.fn(),
+		cookie: '',
+		createElement: vi.fn(),
+		dispatchEvent: vi.fn(),
+		querySelector: vi.fn(),
+		removeEventListener: vi.fn(),
+	});
+}
+
+// Create fetch mock
+const fetchMock = vi
+	.fn()
+	.mockImplementation(() => Promise.resolve(new Response()));
+vi.stubGlobal('fetch', fetchMock);
+
+// Export mock objects for direct use in tests
+export const mockLocalStorage = mockStorage;
+export const mockDocument = globalThis.document;
+export { fetchMock };
+
+// Helper function for tracking blocker tests
+export const createRejectingFetch = function createRejectingFetch(
+	predicateFn: (url: string, options?: RequestInit) => boolean
+) {
+	return vi.fn().mockImplementation((url: string, options?: RequestInit) => {
+		if (predicateFn(url, options)) {
+			return Promise.reject(
+				new Error(`Request to ${url} blocked due to missing consent`)
+			);
+		}
+		return Promise.resolve(new Response());
+	});
+};
+
+// Persistence loads its write code on demand. Most tests drive a handle
+// synchronously, so load it once up front; `lazy-writer.test.ts` covers a
+// handle whose write code has not landed yet.
+await preloadPersistenceWriter();

@@ -1,0 +1,348 @@
+{
+	"cases": [
+		{
+			"consents": {
+				"necessary": true,
+				"functionality": false,
+				"experience": false,
+				"measurement": false,
+				"marketing": false
+			},
+			"expected": {
+				"ad_storage": "denied",
+				"ad_user_data": "denied",
+				"ad_personalization": "denied",
+				"analytics_storage": "denied",
+				"functionality_storage": "denied",
+				"personalization_storage": "denied",
+				"security_storage": "granted"
+			},
+			"id": "necessary-only"
+		},
+		{
+			"consents": {
+				"necessary": true,
+				"functionality": true,
+				"experience": false,
+				"measurement": false,
+				"marketing": false
+			},
+			"expected": {
+				"ad_storage": "denied",
+				"ad_user_data": "denied",
+				"ad_personalization": "denied",
+				"analytics_storage": "denied",
+				"functionality_storage": "granted",
+				"personalization_storage": "denied",
+				"security_storage": "granted"
+			},
+			"id": "functionality"
+		},
+		{
+			"consents": {
+				"necessary": true,
+				"functionality": false,
+				"experience": true,
+				"measurement": false,
+				"marketing": false
+			},
+			"expected": {
+				"ad_storage": "denied",
+				"ad_user_data": "denied",
+				"ad_personalization": "denied",
+				"analytics_storage": "denied",
+				"functionality_storage": "denied",
+				"personalization_storage": "granted",
+				"security_storage": "granted"
+			},
+			"id": "experience"
+		},
+		{
+			"consents": {
+				"necessary": true,
+				"functionality": true,
+				"experience": true,
+				"measurement": false,
+				"marketing": false
+			},
+			"expected": {
+				"ad_storage": "denied",
+				"ad_user_data": "denied",
+				"ad_personalization": "denied",
+				"analytics_storage": "denied",
+				"functionality_storage": "granted",
+				"personalization_storage": "granted",
+				"security_storage": "granted"
+			},
+			"id": "functionality+experience"
+		},
+		{
+			"consents": {
+				"necessary": true,
+				"functionality": false,
+				"experience": false,
+				"measurement": true,
+				"marketing": false
+			},
+			"expected": {
+				"ad_storage": "denied",
+				"ad_user_data": "denied",
+				"ad_personalization": "denied",
+				"analytics_storage": "granted",
+				"functionality_storage": "denied",
+				"personalization_storage": "denied",
+				"security_storage": "granted"
+			},
+			"id": "measurement"
+		},
+		{
+			"consents": {
+				"necessary": true,
+				"functionality": true,
+				"experience": false,
+				"measurement": true,
+				"marketing": false
+			},
+			"expected": {
+				"ad_storage": "denied",
+				"ad_user_data": "denied",
+				"ad_personalization": "denied",
+				"analytics_storage": "granted",
+				"functionality_storage": "granted",
+				"personalization_storage": "denied",
+				"security_storage": "granted"
+			},
+			"id": "functionality+measurement"
+		},
+		{
+			"consents": {
+				"necessary": true,
+				"functionality": false,
+				"experience": true,
+				"measurement": true,
+				"marketing": false
+			},
+			"expected": {
+				"ad_storage": "denied",
+				"ad_user_data": "denied",
+				"ad_personalization": "denied",
+				"analytics_storage": "granted",
+				"functionality_storage": "denied",
+				"personalization_storage": "granted",
+				"security_storage": "granted"
+			},
+			"id": "experience+measurement"
+		},
+		{
+			"consents": {
+				"necessary": true,
+				"functionality": true,
+				"experience": true,
+				"measurement": true,
+				"marketing": false
+			},
+			"expected": {
+				"ad_storage": "denied",
+				"ad_user_data": "denied",
+				"ad_personalization": "denied",
+				"analytics_storage": "granted",
+				"functionality_storage": "granted",
+				"personalization_storage": "granted",
+				"security_storage": "granted"
+			},
+			"id": "functionality+experience+measurement"
+		},
+		{
+			"consents": {
+				"necessary": true,
+				"functionality": false,
+				"experience": false,
+				"measurement": false,
+				"marketing": true
+			},
+			"expected": {
+				"ad_storage": "granted",
+				"ad_user_data": "granted",
+				"ad_personalization": "granted",
+				"analytics_storage": "denied",
+				"functionality_storage": "denied",
+				"personalization_storage": "denied",
+				"security_storage": "granted"
+			},
+			"id": "marketing"
+		},
+		{
+			"consents": {
+				"necessary": true,
+				"functionality": true,
+				"experience": false,
+				"measurement": false,
+				"marketing": true
+			},
+			"expected": {
+				"ad_storage": "granted",
+				"ad_user_data": "granted",
+				"ad_personalization": "granted",
+				"analytics_storage": "denied",
+				"functionality_storage": "granted",
+				"personalization_storage": "denied",
+				"security_storage": "granted"
+			},
+			"id": "functionality+marketing"
+		},
+		{
+			"consents": {
+				"necessary": true,
+				"functionality": false,
+				"experience": true,
+				"measurement": false,
+				"marketing": true
+			},
+			"expected": {
+				"ad_storage": "granted",
+				"ad_user_data": "granted",
+				"ad_personalization": "granted",
+				"analytics_storage": "denied",
+				"functionality_storage": "denied",
+				"personalization_storage": "granted",
+				"security_storage": "granted"
+			},
+			"id": "experience+marketing"
+		},
+		{
+			"consents": {
+				"necessary": true,
+				"functionality": true,
+				"experience": true,
+				"measurement": false,
+				"marketing": true
+			},
+			"expected": {
+				"ad_storage": "granted",
+				"ad_user_data": "granted",
+				"ad_personalization": "granted",
+				"analytics_storage": "denied",
+				"functionality_storage": "granted",
+				"personalization_storage": "granted",
+				"security_storage": "granted"
+			},
+			"id": "functionality+experience+marketing"
+		},
+		{
+			"consents": {
+				"necessary": true,
+				"functionality": false,
+				"experience": false,
+				"measurement": true,
+				"marketing": true
+			},
+			"expected": {
+				"ad_storage": "granted",
+				"ad_user_data": "granted",
+				"ad_personalization": "granted",
+				"analytics_storage": "granted",
+				"functionality_storage": "denied",
+				"personalization_storage": "denied",
+				"security_storage": "granted"
+			},
+			"id": "measurement+marketing"
+		},
+		{
+			"consents": {
+				"necessary": true,
+				"functionality": true,
+				"experience": false,
+				"measurement": true,
+				"marketing": true
+			},
+			"expected": {
+				"ad_storage": "granted",
+				"ad_user_data": "granted",
+				"ad_personalization": "granted",
+				"analytics_storage": "granted",
+				"functionality_storage": "granted",
+				"personalization_storage": "denied",
+				"security_storage": "granted"
+			},
+			"id": "functionality+measurement+marketing"
+		},
+		{
+			"consents": {
+				"necessary": true,
+				"functionality": false,
+				"experience": true,
+				"measurement": true,
+				"marketing": true
+			},
+			"expected": {
+				"ad_storage": "granted",
+				"ad_user_data": "granted",
+				"ad_personalization": "granted",
+				"analytics_storage": "granted",
+				"functionality_storage": "denied",
+				"personalization_storage": "granted",
+				"security_storage": "granted"
+			},
+			"id": "experience+measurement+marketing"
+		},
+		{
+			"consents": {
+				"necessary": true,
+				"functionality": true,
+				"experience": true,
+				"measurement": true,
+				"marketing": true
+			},
+			"expected": {
+				"ad_storage": "granted",
+				"ad_user_data": "granted",
+				"ad_personalization": "granted",
+				"analytics_storage": "granted",
+				"functionality_storage": "granted",
+				"personalization_storage": "granted",
+				"security_storage": "granted"
+			},
+			"id": "functionality+experience+measurement+marketing"
+		}
+	],
+	"description": "Google Consent Mode v2: the c15t category that grants each consent type, and the signals the web sends for every combination of optional categories.",
+	"generatedBy": "bun scripts/generate-google-consent-mode-fixture.ts",
+	"mapping": {
+		"experience": ["personalization_storage"],
+		"functionality": ["functionality_storage"],
+		"marketing": ["ad_storage", "ad_user_data", "ad_personalization"],
+		"measurement": ["analytics_storage"],
+		"necessary": ["security_storage"]
+	},
+	"oracle": "packages/sdk/integrations/src/vendors/_shared/google-consent.ts",
+	"types": [
+		{
+			"category": "marketing",
+			"type": "ad_storage"
+		},
+		{
+			"category": "marketing",
+			"type": "ad_user_data"
+		},
+		{
+			"category": "marketing",
+			"type": "ad_personalization"
+		},
+		{
+			"category": "measurement",
+			"type": "analytics_storage"
+		},
+		{
+			"category": "functionality",
+			"type": "functionality_storage"
+		},
+		{
+			"category": "experience",
+			"type": "personalization_storage"
+		},
+		{
+			"category": "necessary",
+			"type": "security_storage"
+		}
+	]
+}

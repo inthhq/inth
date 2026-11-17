@@ -1,0 +1,71 @@
+---
+title: Plausible Analytics
+description: Load the Plausible Analytics tracker only after measurement consent with the c15t plausibleAnalytics helper, and check it in DevTools.
+seoTitle: Plausible Analytics cookie consent with c15t
+seoDescription: Load Plausible Analytics only with measurement consent. Set it up with the c15t plausibleAnalytics helper and check it in DevTools.
+icon: plausible
+group: integrations
+---
+
+The c15t `plausibleAnalytics` helper keeps Plausible Analytics off the page
+until `measurement` has consent. Until then, c15t does not define
+`window.plausible`. The helper sends no consent signal to Plausible. If the
+visitor withdraws consent, c15t removes the script element. By default, c15t
+also reloads the page.
+
+## Configure Plausible Analytics
+
+Copy the script ID from your Plausible installation snippet. It is the part of
+the `pa-<id>.js` file name. Sites that still use the legacy domain-based
+snippet can pass `domain` instead of `scriptId`.
+
+<CommandTabs command="@c15t/integrations" mode="install" />
+
+```ts title="src/consent-scripts.ts"
+import { plausibleAnalytics } from '@c15t/integrations/plausible-analytics';
+
+export const scripts = [plausibleAnalytics({ scriptId: 'YOUR_SCRIPT_ID' })];
+```
+
+<include src="../shared/integrations/register-scripts.mdx" />
+
+## Options
+
+| Option | Default | Behavior |
+| --- | --- | --- |
+| `scriptId` | None | Script ID for the `pa-<scriptId>.js` loader. Takes precedence over `domain` and `extension`. |
+| `domain` | None | Legacy site domain, set as `data-domain`. When neither `scriptId` nor `domain` has a non-empty value, the helper logs an error and the script does not load. |
+| `extension` | None | Legacy script extension or array of extensions, such as `['file-downloads', 'outbound-links']`. The helper joins them into `script.<extensions>.js`. Ignored with `scriptId`. |
+| `customProperties` | None | Properties sent with each page view. |
+| `endpoint` | None | Custom event endpoint. With `domain`, the helper also sets it as `data-api`. |
+| `fileDownloads` | None | `{ fileExtensions?: string[] }` for file download tracking. |
+| `hashBasedRouting` | None | `true` tracks hash-based routes. |
+| `autoCapturePageviews` | None | `false` stops automatic page views. |
+| `captureOnLocalhost` | None | `true` records visits on localhost. |
+| `scriptUrl` | `https://plausible.io/js/pa-<scriptId>.js`, or `https://plausible.io/js/script.js` with `domain` | Loader URL override. |
+
+The helper passes `customProperties`, `endpoint`, `fileDownloads`,
+`hashBasedRouting`, `autoCapturePageviews` and `captureOnLocalhost` as init
+options on `window.plausible.o`, which the `scriptId` loader reads. With the
+legacy loader, choose features with `extension`.
+
+## Loading and revocation
+
+`plausibleAnalytics` uses the `measurement` category. When measurement becomes
+allowed, the helper defines a queueing `window.plausible` stub, unless one
+already exists, and then loads the tracker. Calls made before the tracker
+finishes loading wait in the stub's queue.
+
+On revocation the helper removes the script element and calls no Plausible
+API. Plausible sets no cookies, but c15t still waits for measurement
+permission before loading it.
+
+## Verify Plausible Analytics
+
+After you allow measurement, the `pa-<scriptId>.js` request appears, or
+`script.js` with your `data-domain` for the legacy loader. A page view request
+then goes to `plausible.io/api/event`, or to your `endpoint`. After revocation
+`window.plausible` still exists, so if your code sends custom events through
+it, check measurement permission before each call.
+
+<include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

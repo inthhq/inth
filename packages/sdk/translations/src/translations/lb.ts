@@ -1,0 +1,177 @@
+import type { CompleteTranslations } from '../types';
+
+export const translations: CompleteTranslations = {
+	common: {
+		acceptAll: 'All akzeptéieren',
+		acknowledge: 'OK',
+		close: 'Zoumaachen',
+		customize: 'Upassen',
+		dismiss: 'Zoumaachen',
+		rejectAll: 'All refuséieren',
+		save: 'Astellunge späicheren',
+		securedBy: 'Ofgeséchert vun',
+	},
+	consentGate: {
+		actionButton: '{category} Zoustëmmung aktivéieren',
+		error: 'This content could not be loaded.',
+		loading: 'Loading content…',
+		policyBlocked:
+			"This content is unavailable under your region's consent policy.",
+		title: 'Akzeptéiert {category} Zoustëmmung fir dësen Inhalt ze gesinn.',
+	},
+	consentManagerDialog: {
+		description:
+			'Passt Är Privatsphär Astellungen hei un. Dir kënnt wielen wéi eng Zorte vu Cookien an Tracking-Technologien Dir erlaabt.',
+		title: 'Privatsphär Astellungen',
+		vendors: {
+			disabledByCategory: 'Aktivéiert dës Kategorie fir Ubidder auszewielen.',
+			privacyPolicy: 'Dateschutzrichtlinn',
+			switchLabel: '{vendor} erlaben',
+			title: 'Ubidder ({count})',
+		},
+	},
+	consentTypes: {
+		experience: {
+			description:
+				'Dës Cookien hëllefen eis eng besser Benotzererfabrung ze bidden an nei Funktiounen ze testen.',
+			title: 'Erfahrung',
+		},
+		functionality: {
+			description:
+				'Dës Cookien erméiglechen erweidert Funktionalitéit a Personaliséierung vun der Websäit.',
+			title: 'Funktionalitéit',
+		},
+		marketing: {
+			description:
+				'Dës Cookien ginn benotzt fir relevant Reklammen ze liwweren an hir Wierksamkeet ze verfolgen.',
+			title: 'Marketing',
+		},
+		measurement: {
+			description:
+				"Dës Cookien hëllefen eis ze verstoen wéi d'Besicher mat der Websäit interagéieren an hir Leeschtung verbesseren.",
+			title: 'Analytik',
+		},
+		necessary: {
+			description:
+				"Dës Cookien si wesentlech fir datt d'Websäit richteg funktionéiert a kënnen net desaktivéiert ginn.",
+			title: 'Strikt néideg',
+		},
+	},
+	cookieBanner: {
+		description:
+			'Dës Websäit benotzt Cookien fir Är Surferfahrung ze verbesseren, Websäit-Verkéier ze analyséieren an personaliséierten Inhalt unzebidden.',
+		noticeDescription:
+			'Mir benotze Cookien an ähnlech Technologien fir dës Websäit ze bedreiwen, de Verkéier ze moossen an Inhalter a Reklammen ze personaliséieren. Dir kënnt Iech zu all Moment ofmellen oder Är Astellunge verwalten.',
+		noticeTitle: 'Dateschutzhiweis',
+		title: 'Mir schätzen Är Privatsphär',
+	},
+	iab: {
+		app: {
+			consentStorage:
+				'Är Wiel gëtt op dësem Apparat gespäichert, am Standard-Astellungsspäicher vun der App ënner IABTCF-Schlësselen, fir maximal {days} Deeg. D’Späicherdauer gëtt erneiert, wann Dir Är Wiel aktualiséiert.',
+			description:
+				'Mir an eis {partnerCount} Partner späicheren an/oder gräifen op Informatiounen op Ärem Apparat zou a veraarbechten perséinlech Daten, wéi eenzegaarteg Identifizéierer a Browserdaten, fir dës App, fir:',
+			legitimateInterestExplanation:
+				'E puer Partner veraarbechten perséinlech Daten, wéi eenzegaarteg Identifizéierer a Browserdaten, op Basis vun hirem berechtegten Interessi, amplaz no Ärer Zoustëmmung ze froen. Dat gëllt nëmme fir dës App. Dir hutt d’Recht, géint dës Veraarbechtung fir all Zweck a fir all Partner ze protestéieren.',
+			scopeServiceSpecific:
+				'Är Zoustëmmung gëllt nëmme fir dës App a wäert aner Servicer net beaflossen.',
+			withdraw:
+				'Dir kënnt Är Wiel zu all Moment änneren oder Är Zoustëmmung zréckzéien, an de Privatsphär Astellungen vun dëser App.',
+		},
+		banner: {
+			andMore: 'An nach {count}...',
+			description:
+				'Mir an eis {partnerCount} Partner späicheren an/oder gräifen op Informatiounen op Ärem Apparat zou a veraarbechten perséinlech Daten, wéi eenzegaarteg Identifizéierer a Browserdaten, fir dës Websäit, fir:',
+			legitimateInterestNotice:
+				'E puer Partner behaapten e berechtegten Interessi fir Är Daten ze veraarbechten. Dir hutt d’Recht géint dës Veraarbechtung ze protestéieren, Är Wiel unzepassen an Är Zoustëmmung zu all Moment zréckzezéien.',
+			partnersLink: '{count} Partner',
+			scopeGroup: 'Är Auswiel gëllt fir all eis Websäiten an dëser Grupp.',
+			scopeServiceSpecific:
+				'Är Zoustëmmung gëllt nëmme fir dës Websäit a wäert aner Servicer net beaflossen.',
+			title: 'Privatsphär Astellungen',
+		},
+		common: {
+			acceptAll: 'All akzeptéieren',
+			clearSelection: 'Läschen',
+			customPartner: 'Benotzerdefinéierte Partner net am IAB registréiert',
+			customize: 'Upassen',
+			loading: 'Lueden...',
+			rejectAll: 'All refuséieren',
+			saveSettings: 'Astellunge späicheren',
+			showingSelectedVendor: 'Gewielten Ubider gëtt ugewisen',
+		},
+		preferenceCenter: {
+			description:
+				'Passt Är Privatsphär Astellungen hei un. Dir kënnt wielen wéi eng Zorte vu Cookien an Tracking-Technologien Dir erlaabt.',
+			features: {
+				description:
+					'These means of processing can be used solely in pursuit of one or several purposes for which you are given a choice in this notice.',
+				title: 'Fonctiounen',
+			},
+			footer: {
+				consentStorage:
+					'Zoustëmmungsvirléiften ginn an engem Cookie mam Numm "euconsent-v2" fir 13 Méint gespäichert. D’Späicherdauer kann erneiert ginn, wann Dir Är Virléiften aktualiséiert.',
+			},
+			purposeItem: {
+				examples: 'Beispiller',
+				legitimateInterest: 'Berechtegten Interessi',
+				objectButton: 'Protestéieren',
+				objected: 'Protestéiert',
+				partners: '{count} Partner',
+				partnersUsingPurpose: 'Partner déi dësen Zweck benotzen',
+				rightToObject:
+					'Dir hutt d’Recht géint d’Veraarbechtung op Basis vu berechtegten Interessi ze protestéieren.',
+				vendorsUseLegitimateInterest:
+					'{count} Ubidder behaapten berechtegten Interessi',
+				withYourPermission: 'Mat Ärer Erlaabnis',
+			},
+			specialPurposes: {
+				title: 'Wichteg Funktiounen (erfuerderlech)',
+				tooltip:
+					'Dës sinn erfuerderlech fir d’Funktionalitéit an d’Sécherheet vum Site. Geméiss IAB TCF kënnt Dir net géint dës speziell Zwecker protestéieren.',
+			},
+			tabs: {
+				purposes: 'Zwecker',
+				vendors: 'Ubidder',
+			},
+			title: 'Privatsphär Astellungen',
+			vendorList: {
+				adTechProvidersHeading: 'Google-Ubidder fir Reklammtechnologie',
+				adTechProvidersNotice:
+					'Google schafft ausserhalb vum IAB-Framework mat dësen Ubidder fir Reklammtechnologie zesummen. Är Zoustëmmung erreecht en Ubidder nëmmen, wann Dir en aktivéiert an och d’Späichere vun Informatiounen op Ärem Apparat a personaliséiert Reklammen erlaabt.',
+				customVendorsHeading: 'Benotzerdefinéiert Partner',
+				customVendorsNotice:
+					'Dëst si benotzerdefinéiert Partner déi net am IAB Transparency & Consent Framework (TCF) registréiert sinn. Si veraarbechten Daten op Basis vun Ärer Zoustëmmung a kënnen aner Dateschutzpraktiken hunn wéi IAB-registréiert Ubidder.',
+				dataCategories: 'Datekategorien',
+				features: 'Fonctiounen',
+				iabVendorsHeading: 'IAB registréiert Ubidder',
+				iabVendorsNotice:
+					'Dës Partner sinn am IAB Transparency & Consent Framework (TCF) registréiert, en Industriestandard fir d’Gestioun vun der Zoustëmmung',
+				legitimateInterest: 'Ber. Interessi',
+				maxAge: 'Max Alter: {days}d',
+				nonCookieAccess: 'Net-Cookie-Zougang',
+				privacyPolicy: 'Dateschutzrichtlinn',
+				purposes: 'Zwecker',
+				requiredNotice:
+					'Erfuerderlech fir d’Funktionalitéit vum Site, kann net desaktivéiert ginn',
+				retention: 'Bewaaren: {days}d',
+				search: 'Ubidder sichen...',
+				showingCount: '{filtered} vun {total} Ubidder',
+				specialFeatures: 'Speziell Fonctiounen',
+				specialPurposes: 'Speziell Zwecker',
+				storageDisclosure: 'Späicher-Offenlegung',
+				usesCookies: 'Benotzt Cookien',
+			},
+		},
+	},
+	legalLinks: {
+		cookiePolicy: 'Cookie-Politik',
+		privacyPolicy: 'Dateschutzrichtlinn',
+		termsOfService: 'Notzungsbedingungen',
+	},
+	rights: {
+		optOut: 'Meng Donnéeën net verkafen oder deelen',
+		preferences: 'Astellungen verwalten',
+	},
+};
+export default translations;

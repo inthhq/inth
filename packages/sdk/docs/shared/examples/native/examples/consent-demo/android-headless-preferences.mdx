@@ -1,0 +1,56 @@
+{/* Generated from examples/native/consent-demo/android/src/main/kotlin/com/c15t/demo/custom-consent-ui.kt (docs:android-headless-preferences) by scripts/sync-example-docs.ts. Edit the source file. */}
+
+```kotlin title="custom-consent-ui.kt"
+@Composable private fun PreferencesPage(preferences: ConsentPreferencesScope, policyUrl: String, state: LedgerConsentState) {
+    val l = LocalLedger.current
+    val draft = preferences.draft
+    val iab = preferences.iab
+    val tab = state.tab
+    Column(Modifier.fillMaxSize().background(l.paper).blockTouches().safeDrawingPadding().consentPane(preferences.title).testTag("ledger.preferences")) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 28.dp, vertical = 18.dp), verticalAlignment = Alignment.CenterVertically) {
+            BasicText(preferences.title, Modifier.weight(1f).semantics { heading() }.consentInitialFocus(), style = l.display.copy(fontSize = 28.sp, lineHeight = 32.sp))
+            TextAction(draft.iabCopy.appClose, enabled = !draft.isSaving, tag = "ledger.preferences.close", onClick = preferences::requestClose)
+        }
+        if (iab != null) Tabs(listOf(draft.iabCopy.appThisApp, draft.iabCopy.preferenceCenterVendorListPurposes, draft.iabCopy.appPartners), tab) { state.tab = it }
+        Box(Modifier.fillMaxWidth().height(1.dp).background(l.ink))
+        AnimatedContent(tab, Modifier.weight(1f), transitionSpec = { fadeIn(tween(160)) togetherWith fadeOut(tween(90)) }, label = "ledger-tab") { current ->
+            Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 28.dp, vertical = 20.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                if (draft.isStale) Notice(draft.iabCopy.appSettingsChanged, draft.iabCopy.appSettingsChangedDetail, draft.iabCopy.appLoadCurrentSettings) { draft.reset() }
+                if (draft.listUnavailable) Notice(draft.iabCopy.appListOutdated, null, draft.iabCopy.appTryAgain) { draft.refresh() }
+                when {
+                    iab == null || current == 0 -> {
+                        BasicText(preferences.description, Modifier.padding(bottom = 12.dp), style = l.body)
+                        // Each row carries its copy, its lock and the binding for its switch.
+                        preferences.categories.forEachIndexed { index, row ->
+                            LedgerRow("%02d".format(index + 1), row.title, row.description, row.note, row.lockedLabel, if (row.locked) null else row.checked, row.enabled,
+                                "ledger.category.${row.category.wireName}", row.onCheckedChange)
+                        }
+                        preferences.lastChanged?.let { BasicText(it, Modifier.padding(top = 16.dp), style = l.small) }
+                        Link(draft.iabCopy.preferenceCenterVendorListPrivacyPolicy, policyUrl)
+                    }
+                    current == 1 -> IabPurposes(iab)
+                    else -> IabPartners(iab)
+                }
+            }
+        }
+        Box(Modifier.fillMaxWidth().height(1.dp).background(l.ink))
+        Column(Modifier.fillMaxWidth().padding(horizontal = 28.dp, vertical = 16.dp).animateContentSize(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            if (preferences.confirmDiscard) {
+                BasicText(draft.iabCopy.appDiscardChangesTitle, style = l.row)
+                BasicText(draft.iabCopy.appDiscardChangesDetail, style = l.small)
+                ConsentActions {
+                    Stamp(draft.iabCopy.appKeepEditing, draft, null, filled = false, tag = "ledger.discard.keep", onClick = preferences::keepEditing)
+                    Stamp(draft.iabCopy.appDiscardChanges, draft, null, filled = true, tag = "ledger.discard.confirm", onClick = preferences::discard)
+                }
+            } else {
+                Failure(draft, preferences::retry)
+                ConsentActions {
+                    Stamp(preferences.rejectAllLabel, draft, ConsentWriteAction.REJECT_ALL, filled = false, tag = "ledger.preferences.reject", onClick = preferences::rejectAll)
+                    Stamp(preferences.acceptAllLabel, draft, ConsentWriteAction.ACCEPT_ALL, filled = false, tag = "ledger.preferences.accept", onClick = preferences::acceptAll)
+                }
+                Stamp(preferences.saveLabel, draft, ConsentWriteAction.SAVE, filled = true, accent = true, tag = "ledger.preferences.save", onClick = preferences::save)
+            }
+        }
+    }
+}
+```

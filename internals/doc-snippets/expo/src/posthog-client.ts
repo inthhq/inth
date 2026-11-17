@@ -1,0 +1,37 @@
+// #region docs:expo-posthog-client title="posthog-client.ts"
+import { PostHog } from 'posthog-react-native';
+
+// `eas integrations:posthog:connect` writes these to .env.local and to the
+// project's EAS environment variables.
+const projectToken = process.env.EXPO_PUBLIC_POSTHOG_API_KEY;
+const host = process.env.EXPO_PUBLIC_POSTHOG_HOST;
+
+if (!projectToken || !host) {
+	throw new Error(
+		'Set EXPO_PUBLIC_POSTHOG_API_KEY and EXPO_PUBLIC_POSTHOG_HOST.'
+	);
+}
+
+export const posthog = new PostHog(projectToken, {
+	captureAppLifecycleEvents: false,
+	defaultOptIn: false,
+	disableRemoteFeatureFlags: true,
+	disableSurveys: true,
+	enableSessionReplay: false,
+	host,
+	preloadFeatureFlags: false,
+});
+
+// An opt-in PostHog stored before this app used c15t outranks `defaultOptIn`.
+// Opt out before anything can capture; PostHog queues this ahead of later
+// calls, and c15t opts back in once measurement is granted.
+const optOutStoredChoice = async () => {
+	try {
+		await posthog.optOut();
+	} catch {
+		// PostHog could not load or save its storage. The c15t connection's
+		// first sync opts out again and reports that failure to its `onError`.
+	}
+};
+void optOutStoredChoice();
+// #endregion docs:expo-posthog-client

@@ -1,0 +1,77 @@
+import type {
+	AllThemeKeys,
+	ClassNameStyle,
+	Theme,
+	ThemeValue,
+} from '../theme/types';
+import { mergeStyles } from './merge-styles';
+
+/**
+ * Pure logic for retrieving and merging styles from theme and component props.
+ * Framework-agnostic version of useStyles logic.
+ *
+ * Precedence (lowest to highest):
+ * 1. Component internal base classes (baseClassName)
+ * 2. Theme slot classes (from theme context)
+ * 3. Component prop classes (from className prop)
+ */
+export const resolveStyles = function resolveStyles(
+	themeKey: AllThemeKeys,
+	theme?: Theme,
+	componentStyle?: ThemeValue,
+	contextNoStyle = false
+): ClassNameStyle {
+	const themeStyle = theme?.slots?.[themeKey];
+
+	// Handle noStyle flags
+	const themeNoStyle =
+		typeof themeStyle === 'object' && themeStyle !== null
+			? Boolean((themeStyle as ClassNameStyle).noStyle)
+			: false;
+
+	const componentNoStyle =
+		typeof componentStyle === 'object' && componentStyle !== null
+			? Boolean((componentStyle as ClassNameStyle).noStyle)
+			: false;
+
+	const isNoStyle = contextNoStyle || themeNoStyle || componentNoStyle;
+
+	// If noStyle is active, we only return the overrides, skipping base classes
+	if (isNoStyle) {
+		// Merge theme overrides with component overrides. Only `className`
+		// and `style` take part: a `baseClassName` would bring the stock
+		// classes back, and a `noStyle` flag on either side would make
+		// `mergeStyles` drop the other side's overrides.
+		const overridesOf = (value: ThemeValue | undefined): ClassNameStyle =>
+			typeof value === 'object' && value !== null
+				? { className: value.className, style: value.style }
+				: { className: value };
+		const merged = mergeStyles(
+			overridesOf(themeStyle),
+			overridesOf(componentStyle)
+		);
+		return {
+			className: merged.className,
+			noStyle: true,
+			style: merged.style,
+		};
+	}
+
+	// Standard merge: theme overrides applied ON TOP of component defaults
+	const baseDefaults: ThemeValue =
+		typeof componentStyle === 'object'
+			? { ...(componentStyle as ClassNameStyle), className: undefined }
+			: {};
+
+	// 1. Start with internal base classes and defaults from component
+	// 2. Apply theme overrides from slots
+	const withTheme = mergeStyles(baseDefaults, themeStyle || {});
+
+	// 3. Apply component prop overrides (className, style)
+	const final = mergeStyles(withTheme, componentStyle || {});
+
+	return {
+		className: final.className,
+		style: final.style,
+	};
+};

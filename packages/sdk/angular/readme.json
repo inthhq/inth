@@ -1,0 +1,29 @@
+{
+	"title": "@c15t/angular: Angular cookie banner and cookie consent components",
+	"description": "Cookie banner, consent dialog, and preference center for Angular. Standalone components, signals, zoneless change detection, and server rendering. Use the headless state and primitives when you want your own design.",
+	"features": [
+		"Works with Angular 20, 21 and 22, zoneless or with zone.js",
+		"`provideC15t()` sets up consent once; `inject(ConsentManager)` reads it as signals anywhere",
+		"Server rendering with `@angular/platform-server`: the banner is in the first HTML",
+		"Headless directives for switches (with Angular forms), accordions, tabs, dialogs and preference items",
+		"`*c15tIfConsent` keeps content out of the DOM until the visitor agrees",
+		"Translations for 53 languages through @c15t/translations"
+	],
+	"prerequisites": [
+		"Angular 20, 21 or 22",
+		"Node.js 20.19 or later",
+		"An [Inth project](https://inth.com) (free sign-up), a [self-hosted backend](https://c15t.com/docs/self-host/quickstart), or local mode for development and tests"
+	],
+	"manualInstallation": ["", "```bash\npnpm add @c15t/angular\n```"],
+	"usage": [
+		"Add `provideC15t()` to your application providers with a `mode`",
+		"Read consent anywhere with `inject(ConsentManager)`",
+		"Render `<c15t-consent-banner />` and `<c15t-consent-dialog />` once in your root component, and add `c15tConsentDialogLink` to a footer button",
+		"```ts\n// app.config.ts\nimport { ApplicationConfig, provideZonelessChangeDetection } from '@angular/core';\nimport { hosted, provideC15t } from '@c15t/angular';\n\nexport const appConfig: ApplicationConfig = {\n  providers: [\n    provideZonelessChangeDetection(),\n    provideC15t({ mode: hosted({ backendURL: 'https://your-project.inth.app' }) }),\n  ],\n};\n```",
+		"```html\n<!-- Rendered only once the visitor allows marketing -->\n<iframe *c15tIfConsent=\"'marketing'; else blocked\" src=\"https://www.youtube.com/embed/…\"></iframe>\n<ng-template #blocked>Allow marketing cookies to watch this video.</ng-template>\n```"
+	],
+	"docsLink": "https://c15t.com/docs/frameworks/angular/quickstart",
+	"quickStartLink": "https://c15t.com/docs/frameworks/angular/quickstart",
+	"showCLIGeneration": false,
+	"showHosting": true
+}

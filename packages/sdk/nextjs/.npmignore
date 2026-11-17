@@ -1,0 +1,10 @@
+src/
+tests/
+coverage/
+.turbo/
+node_modules/
+*.test.ts
+*.test.tsx
+*.config.ts
+*.config.js
+knip.json 

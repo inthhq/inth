@@ -1,0 +1,179 @@
+import type { CompleteTranslations } from '../types';
+
+export const translations: CompleteTranslations = {
+	common: {
+		acceptAll: 'Alles accepteren',
+		acknowledge: 'OK',
+		close: 'Sluiten',
+		customize: 'Aanpassen',
+		dismiss: 'Sluiten',
+		rejectAll: 'Alles weigeren',
+		save: 'Instellingen opslaan',
+		securedBy: 'Beveiligd door',
+	},
+	consentGate: {
+		actionButton: 'Schakel {category} toestemming in',
+		error: 'This content could not be loaded.',
+		loading: 'Loading content…',
+		policyBlocked:
+			"This content is unavailable under your region's consent policy.",
+		title: 'Accepteer {category} om deze inhoud te bekijken',
+	},
+	consentManagerDialog: {
+		description:
+			'Pas hier uw privacyinstellingen aan. U kunt kiezen welke soorten cookies en trackingtechnologieën u toestaat.',
+		title: 'Privacy-instellingen',
+		vendors: {
+			disabledByCategory:
+				'Schakel deze categorie in om leveranciers te kiezen.',
+			privacyPolicy: 'Privacybeleid',
+			switchLabel: '{vendor} toestaan',
+			title: 'Leveranciers ({count})',
+		},
+	},
+	consentTypes: {
+		experience: {
+			description:
+				'Deze cookies helpen ons om een betere gebruikerservaring te bieden en nieuwe functies te testen',
+			title: 'Ervaring',
+		},
+		functionality: {
+			description:
+				'Deze cookies maken verbeterde functionaliteit en personalisatie van de website mogelijk.',
+			title: 'Functionaliteit',
+		},
+		marketing: {
+			description:
+				'Deze cookies worden gebruikt om relevante advertenties aan te bieden en de effectiviteit ervan bij te houden',
+			title: 'Marketing',
+		},
+		measurement: {
+			description:
+				'Deze cookies helpen ons te begrijpen hoe bezoekers omgaan met de website en de prestaties ervan te verbeteren',
+			title: 'Analytics',
+		},
+		necessary: {
+			description:
+				'Deze cookies zijn essentieel voor het goed functioneren van de website en kunnen niet worden uitgeschakeld',
+			title: 'Strikt noodzakelijk',
+		},
+	},
+	cookieBanner: {
+		description:
+			'Deze site gebruikt cookies om uw surfervaring te verbeteren, het verkeer op de site te analyseren en gepersonaliseerde inhoud te tonen',
+		noticeDescription:
+			'Wij gebruiken cookies en vergelijkbare technologieën om deze site te laten werken, verkeer te meten en inhoud en advertenties te personaliseren. U kunt zich op elk moment afmelden of uw voorkeuren beheren.',
+		noticeTitle: 'Privacymelding',
+		title: 'Wij hechten waarde aan uw privacy',
+	},
+	iab: {
+		app: {
+			consentStorage:
+				'Uw keuzes worden op dit apparaat opgeslagen, in de standaardopslag voor instellingen van de app onder IABTCF-sleutels, voor maximaal {days} dagen. De bewaartermijn gaat opnieuw in wanneer u uw keuzes aanpast.',
+			description:
+				'Wij en onze {partnerCount} partners slaan informatie op een apparaat op en/of openen deze en verwerken persoonlijke gegevens, zoals unieke identificatoren en browsegegevens, voor deze app, om:',
+			legitimateInterestExplanation:
+				'Sommige partners verwerken persoonlijke gegevens, zoals unieke identificatoren en browsegegevens, op basis van hun gerechtvaardigd belang in plaats van om toestemming te vragen. Dit geldt alleen voor deze app. U heeft het recht om bezwaar te maken tegen deze verwerking per doel en per partner.',
+			scopeServiceSpecific:
+				'Uw toestemming geldt alleen voor deze app en heeft geen invloed op andere diensten.',
+			withdraw:
+				'U kunt uw keuzes op elk moment wijzigen of uw toestemming intrekken via Privacy-instellingen in deze app.',
+		},
+		banner: {
+			andMore: 'En nog {count}...',
+			description:
+				'Wij en onze {partnerCount} partners slaan informatie op een apparaat op en/of openen deze en verwerken persoonlijke gegevens, zoals unieke identificatoren en browsegegevens, voor deze website, om:',
+			legitimateInterestNotice:
+				'Sommige partners maken aanspraak op een gerechtvaardigd belang om uw gegevens te verwerken. U heeft het recht om bezwaar te maken tegen deze verwerking, uw keuzes aan te passen en uw toestemming op elk moment in te trekken.',
+			partnersLink: '{count} partners',
+			scopeGroup: 'Uw keuze geldt voor al onze websites in deze groep.',
+			scopeServiceSpecific:
+				'Je toestemming geldt alleen voor deze website en heeft geen invloed op andere diensten.',
+			title: 'Privacy-instellingen',
+		},
+		common: {
+			acceptAll: 'Alles accepteren',
+			clearSelection: 'Wissen',
+			customPartner: 'Aangepaste partner niet geregistreerd bij het IAB',
+			customize: 'Aanpassen',
+			loading: 'Laden...',
+			rejectAll: 'Alles weigeren',
+			saveSettings: 'Instellingen opslaan',
+			showingSelectedVendor: 'Geselecteerde leverancier wordt getoond',
+		},
+		preferenceCenter: {
+			description:
+				'Pas hier uw privacyinstellingen aan. U kunt kiezen welke soorten cookies en trackingtechnologieën u toestaat.',
+			features: {
+				description:
+					'Deze verwerkingsmethoden mogen uitsluitend worden gebruikt ter verwezenlijking van een of meerdere doeleinden waarvoor u in deze kennisgeving de keuze krijgt.',
+				title: 'Functies',
+			},
+			footer: {
+				consentStorage:
+					'Toestemmingsvoorkeuren worden gedurende 13 maanden opgeslagen in een cookie genaamd "euconsent-v2". De bewaartermijn kan opnieuw ingaan wanneer u uw voorkeuren aanpast.',
+			},
+			purposeItem: {
+				examples: 'Voorbeelden',
+				legitimateInterest: 'Gerechtvaardigd belang',
+				objectButton: 'Bezwaar maken',
+				objected: 'Bezwaar gemaakt',
+				partners: '{count} partners',
+				partnersUsingPurpose: 'Partners die dit doeleinde gebruiken',
+				rightToObject:
+					'U heeft het recht om bezwaar te maken tegen verwerking op basis van gerechtvaardigd belang.',
+				vendorsUseLegitimateInterest:
+					'{count} leveranciers maken aanspraak op gerechtvaardigd belang',
+				withYourPermission: 'Met uw toestemming',
+			},
+			specialPurposes: {
+				title: 'Essentiële functies (vereist)',
+				tooltip:
+					'Deze zijn vereist voor de functionaliteit en beveiliging van de site. Volgens IAB TCF kunt u geen bezwaar maken tegen deze speciale doeleinden.',
+			},
+			tabs: {
+				purposes: 'Doeleinden',
+				vendors: 'Leveranciers',
+			},
+			title: 'Privacy-instellingen',
+			vendorList: {
+				adTechProvidersHeading:
+					'Google-leveranciers van advertentietechnologie',
+				adTechProvidersNotice:
+					'Google werkt buiten het IAB-framework samen met deze leveranciers van advertentietechnologie. Uw toestemming bereikt een leverancier alleen als u deze inschakelt en ook het opslaan van informatie op uw apparaat en gepersonaliseerde advertenties toestaat.',
+				customVendorsHeading: 'Aangepaste partners',
+				customVendorsNotice:
+					'Dit zijn aangepaste partners die niet zijn geregistreerd bij het IAB Transparency & Consent Framework (TCF). Ze verwerken gegevens op basis van uw toestemming en kunnen andere privacypraktijken hebben dan IAB-geregistreerde leveranciers.',
+				dataCategories: 'Datacategorieën',
+				features: 'Functies',
+				iabVendorsHeading: 'IAB-geregistreerde leveranciers',
+				iabVendorsNotice:
+					'Deze partners zijn geregistreerd bij het IAB Transparency & Consent Framework (TCF), een industriestandaard voor het beheren van toestemming',
+				legitimateInterest: 'Gerechtv. belang',
+				maxAge: 'Max. leeftijd: {days}d',
+				nonCookieAccess: 'Toegang zonder cookies',
+				privacyPolicy: 'Privacybeleid',
+				purposes: 'Doeleinden',
+				requiredNotice:
+					'Vereist voor websitefunctionaliteit, kan niet worden uitgeschakeld',
+				retention: 'Bewaartermijn: {days}d',
+				search: 'Zoek leveranciers...',
+				showingCount: '{filtered} van {total} leveranciers',
+				specialFeatures: 'Speciale functies',
+				specialPurposes: 'Speciale doeleinden',
+				storageDisclosure: 'Openbaarmaking van opslag',
+				usesCookies: 'Gebruikt cookies',
+			},
+		},
+	},
+	legalLinks: {
+		cookiePolicy: 'Cookiebeleid',
+		privacyPolicy: 'Privacybeleid',
+		termsOfService: 'Servicevoorwaarden',
+	},
+	rights: {
+		optOut: 'Mijn gegevens niet verkopen of delen',
+		preferences: 'Voorkeuren beheren',
+	},
+};
+export default translations;

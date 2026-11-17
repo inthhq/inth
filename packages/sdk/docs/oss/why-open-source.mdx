@@ -1,0 +1,41 @@
+---
+title: Open source
+description: Which parts of c15t are open source, the Apache-2.0 license, where the code lives, and how the hosted Inth backend relates to the self-hostable c15t backend.
+group: reference
+---
+
+## What is open source
+
+Every c15t package is open source. That covers the consent engine (`c15t`),
+the framework adapters, the stock UI, the vendor helpers in
+`@c15t/integrations`, the IAB TCF addon, the CLI and the consent backend,
+`@c15t/backend`. The code and the source of these docs live in
+[c15t/c15t on GitHub](https://github.com/c15t/c15t).
+
+## Why consent code should be readable
+
+A consent manager decides when analytics and ad scripts may run and what gets
+recorded about a visitor. With the source public, you can check how c15t
+stores a choice, which requests it sends before and after consent, and how it
+maps categories to Google Consent Mode or IAB TCF purposes. You can also run
+the same code in your own tests instead of trusting a vendor's description of
+it.
+
+## Hosted and self-hosted backends
+
+The consent backend serves policies and stores consent records.
+[Inth](https://inth.com) runs it for you, and the guides use it. You can also
+run `@c15t/backend` on your own server with your own database; your app talks
+to it the same way it talks to Inth, with a different URL. See the
+[backend overview](/docs/self-host/overview) to decide.
+
+## License
+
+c15t is licensed under the Apache License, Version 2.0. You can use, modify and
+distribute it, including in commercial products, as long as you keep the
+license and notices. See [License](/docs/oss/license).
+
+## Contribute
+
+Read [Contribute to c15t](/docs/oss/contributing) before opening a pull
+request, and the [code of conduct](/docs/oss/code-of-conduct).

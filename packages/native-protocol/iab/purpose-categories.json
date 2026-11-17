@@ -1,0 +1,97 @@
+{
+	"description": "The c15t categories an IAB TCF decision grants, as `iabPurposesToC15tConsents(purposeConsents, basis)` in `packages/sdk/iab/src/tcf/purpose-mapping.ts` derives them. The basis is what `consentBasisPurposes` in `packages/sdk/iab/src/index.ts` passes: the purposes `vendors` (registered vendors, after publisher restrictions) and `customVendors` (custom, non-IAB vendors) ask consent for, plus 1, 3 and 4 when ad tech providers are listed. A category is granted when every purpose of it in the basis is consented, or all of its purposes when none is. `expected` came from the web function.",
+	"generatedBy": "iabPurposesToC15tConsents in packages/sdk/iab",
+	"cases": [
+		{
+			"name": "registered vendors alone decide measurement",
+			"purposeConsents": [1, 7, 9],
+			"vendors": { "10": [1, 7, 9] },
+			"customVendors": {},
+			"adTechProvidersListed": false,
+			"expected": {
+				"experience": false,
+				"functionality": false,
+				"marketing": false,
+				"measurement": true
+			}
+		},
+		{
+			"name": "a custom vendor adds purpose 8 to what decides measurement",
+			"purposeConsents": [1, 7, 9],
+			"vendors": { "10": [1, 7, 9] },
+			"customVendors": { "analytics": [8] },
+			"adTechProvidersListed": false,
+			"expected": {
+				"experience": false,
+				"functionality": false,
+				"marketing": false,
+				"measurement": false
+			}
+		},
+		{
+			"name": "only a custom vendor declares anything",
+			"purposeConsents": [1, 10],
+			"vendors": {},
+			"customVendors": { "chat": [1, 10] },
+			"adTechProvidersListed": false,
+			"expected": {
+				"experience": false,
+				"functionality": true,
+				"marketing": false,
+				"measurement": false
+			}
+		},
+		{
+			"name": "a numeric custom vendor id counts like any other",
+			"purposeConsents": [1, 3, 4],
+			"vendors": { "21": [1, 3, 4] },
+			"customVendors": { "1000482": [2] },
+			"adTechProvidersListed": false,
+			"expected": {
+				"experience": false,
+				"functionality": false,
+				"marketing": false,
+				"measurement": false
+			}
+		},
+		{
+			"name": "ad tech providers and a custom vendor together",
+			"purposeConsents": [1, 3, 4, 5],
+			"vendors": { "1": [1] },
+			"customVendors": { "personalisation": [5] },
+			"adTechProvidersListed": true,
+			"expected": {
+				"experience": true,
+				"functionality": false,
+				"marketing": true,
+				"measurement": false
+			}
+		},
+		{
+			"name": "accept all with custom vendors",
+			"purposeConsents": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+			"vendors": { "10": [1, 2, 7] },
+			"customVendors": { "chat": [10, 11], "internal-ads": [3, 4] },
+			"adTechProvidersListed": false,
+			"expected": {
+				"experience": true,
+				"functionality": true,
+				"marketing": true,
+				"measurement": true
+			}
+		},
+		{
+			"name": "reject all with custom vendors",
+			"purposeConsents": [],
+			"vendors": { "10": [1, 2, 7] },
+			"customVendors": { "chat": [10, 11] },
+			"adTechProvidersListed": false,
+			"expected": {
+				"experience": false,
+				"functionality": false,
+				"marketing": false,
+				"measurement": false
+			}
+		}
+	]
+}

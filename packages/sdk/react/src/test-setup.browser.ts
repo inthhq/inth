@@ -1,0 +1,57 @@
+/**
+ * Browser Test Setup for Vitest
+ *
+ * This file runs in the browser before tests start.
+ * It sets up mock GVL for IAB tests.
+ */
+
+import type * as Core from '@c15t/core';
+import type { RevocationReloadOptions } from '@c15t/core';
+import { vi } from 'vitest';
+
+import { mockGVL } from './components/iab/__tests__/fixtures/mock-consent-state';
+
+// Revoking consent reloads the page by default. A real reload restarts the
+// test iframe, so tests get a no-op reload instead.
+// oxlint-disable-next-line anti-slop/no-module-mocking -- `window.location.reload` cannot be replaced in a real browser. The factory returns the real module with only the reload swapped.
+vi.mock('@c15t/core', async (importOriginal) => {
+	const actual = await importOriginal<typeof Core>();
+	return {
+		...actual,
+		watchRevocationReload: (options: RevocationReloadOptions) =>
+			actual.watchRevocationReload({ reload: () => undefined, ...options }),
+	};
+});
+
+// Every test file starts with the storage a fresh browser has. Files run
+// in one browser context, so what one leaves behind is there for the next:
+// `persistence.clear()` and a revoke store a clear epoch in a cookie as
+// well as localStorage, and a file that clears only localStorage then
+// starts under that epoch, where the deferred commit path refuses to
+// record a choice and the engine has to.
+if (typeof document !== 'undefined') {
+	for (const pair of document.cookie.split(';')) {
+		const name = pair.split('=')[0]?.trim();
+		if (name) {
+			document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+		}
+	}
+	localStorage.clear();
+	sessionStorage.clear();
+}
+
+// Set mock GVL on window immediately (before any other code runs)
+// This is picked up by the bundled core code's fetchGVL function
+if (typeof window !== 'undefined') {
+	(window as unknown as { __c15t_mock_gvl?: typeof mockGVL }).__c15t_mock_gvl =
+		mockGVL;
+
+	console.log('[test-setup.browser] Mock GVL set on window');
+}
+
+// Fetch persistence's write code into the module cache once per test file.
+// A save still waits for its dynamic import, but no longer for the dev
+// server to transform the module graph on first use, which under a loaded
+// run took longer than the tests' one-second waits for a stored choice.
+// The loader is left untouched, so saves keep their lazy path.
+await import('../../core/src/modules/persistence/writer/writer');

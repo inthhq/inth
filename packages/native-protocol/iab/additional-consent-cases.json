@@ -1,0 +1,139 @@
+{
+	"source": "https://support.google.com/admanager/answer/9681920",
+	"now": 1758100000000,
+	"configuration": {
+		"cmpId": 53,
+		"cmpVersion": 7,
+		"consentLanguage": "EN",
+		"consentScreen": 1,
+		"numCustomPurposes": 2,
+		"publisherCountryCode": "GB",
+		"publisherRestrictions": []
+	},
+	"gvl": {
+		"features": {},
+		"gvlSpecificationVersion": 2,
+		"lastUpdated": "2025-09-17T00:00:00Z",
+		"purposes": {
+			"1": {
+				"description": "Purpose 1",
+				"id": 1,
+				"name": "Purpose 1"
+			},
+			"2": {
+				"description": "Purpose 2",
+				"id": 2,
+				"name": "Purpose 2"
+			},
+			"7": {
+				"description": "Purpose 7",
+				"id": 7,
+				"name": "Purpose 7"
+			},
+			"3": {
+				"id": 3,
+				"name": "Purpose 3",
+				"description": "Purpose 3 disclosure"
+			},
+			"4": {
+				"id": 4,
+				"name": "Purpose 4",
+				"description": "Purpose 4 disclosure"
+			}
+		},
+		"specialFeatures": {
+			"1": {
+				"description": "Purpose 1",
+				"id": 1,
+				"name": "Purpose 1"
+			}
+		},
+		"specialPurposes": {},
+		"stacks": {},
+		"tcfPolicyVersion": 5,
+		"vendorListVersion": 42,
+		"vendors": {
+			"1": {
+				"cookieMaxAgeSeconds": 0,
+				"features": [],
+				"flexiblePurposes": [2],
+				"id": 1,
+				"legIntPurposes": [2],
+				"name": "Vendor 1",
+				"policyUrl": "https://vendor.example/privacy",
+				"purposes": [1, 2],
+				"specialFeatures": [],
+				"specialPurposes": [],
+				"usesCookies": false,
+				"usesNonCookieAccess": false
+			},
+			"2": {
+				"cookieMaxAgeSeconds": 0,
+				"features": [],
+				"flexiblePurposes": [2],
+				"id": 2,
+				"legIntPurposes": [2, 7],
+				"name": "Vendor 2",
+				"policyUrl": "https://vendor.example/privacy",
+				"purposes": [],
+				"specialFeatures": [],
+				"specialPurposes": [],
+				"usesCookies": false,
+				"usesNonCookieAccess": false
+			}
+		}
+	},
+	"providers": [
+		{
+			"id": 1,
+			"name": "Google example ATP 1",
+			"policyUrl": "https://provider1.example/privacy"
+		},
+		{
+			"id": 2,
+			"name": "Google example ATP 2",
+			"policyUrl": "https://provider2.example/privacy"
+		},
+		{
+			"id": 3,
+			"name": "Google example ATP 3",
+			"policyUrl": "https://provider3.example/privacy"
+		},
+		{
+			"id": 4,
+			"name": "Google example ATP 4",
+			"policyUrl": "https://provider4.example/privacy"
+		},
+		{
+			"id": 10,
+			"name": "Google example ATP 10",
+			"policyUrl": "https://provider10.example/privacy"
+		}
+	],
+	"cases": [
+		{
+			"id": "reject",
+			"consented": [],
+			"purposeConsents": [1, 3, 4],
+			"expected": "2~~dv.1.2.3.4.10"
+		},
+		{
+			"id": "accept",
+			"consented": [10, 4, 3, 2, 1],
+			"purposeConsents": [1, 3, 4],
+			"expected": "2~1.2.3.4.10~dv."
+		},
+		{
+			"id": "mixed",
+			"consented": [10, 1],
+			"purposeConsents": [1, 3, 4],
+			"expected": "2~1.10~dv.2.3.4"
+		},
+		{
+			"id": "missing-purpose",
+			"consented": [1, 10],
+			"purposeConsents": [1, 3],
+			"expected": "2~~dv.1.2.3.4.10"
+		}
+	]
+}

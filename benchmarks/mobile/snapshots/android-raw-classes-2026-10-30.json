@@ -1,0 +1,48 @@
+{
+	"schemaVersion": 1,
+	"measuredOn": "2026-10-30",
+	"sourceCommit": "3f8d674269e171a1cfd0d235756b2c47a34e9c4e",
+	"verifiedAtCommit": "68760be3251f7476f872cfb00f72f2bc2a404578",
+	"metric": "Uncompressed first-party .class bytes from the core JAR and classes.jar in the Android adapter, Compose presenter and RN bridge Release AARs. Excludes transitive dependencies, DEX conversion, R8, compression and app packaging.",
+	"rebuildCommand": "bun run --cwd benchmarks/mobile bench:ci",
+	"artifacts": [
+		{
+			"module": "c15t-core",
+			"buildOutput": "packages/android/c15t-core/build/libs/c15t-core.jar",
+			"producerCommit": "3f8d674269e171a1cfd0d235756b2c47a34e9c4e",
+			"artifactSha256": "95c4a23dafd67257d7fd281939ac13eaf62eda0c4ae1ba28ccd7fb035a27d216",
+			"rawClassBytes": 1522104,
+			"classCount": 290
+		},
+		{
+			"module": "c15t-android",
+			"buildOutput": "packages/android/c15t-android/build/outputs/aar/c15t-android-release.aar",
+			"producerCommit": "3f8d674269e171a1cfd0d235756b2c47a34e9c4e",
+			"artifactSha256": "6fdaae4a949195530bed7b2190830dd106cf876d44af76672a99afff471a97c5",
+			"rawClassBytes": 87786,
+			"classCount": 23
+		},
+		{
+			"module": "c15t-consent-ui",
+			"buildOutput": "packages/android/c15t-consent-ui/build/outputs/aar/c15t-consent-ui-release.aar",
+			"producerCommit": "3f8d674269e171a1cfd0d235756b2c47a34e9c4e",
+			"artifactSha256": "8b4e3bb728350f798ab11574747e4fef481412741454c7d14e517349de9e23ef",
+			"rawClassBytes": 703994,
+			"classCount": 59
+		},
+		{
+			"module": "c15t-react-native",
+			"buildOutput": "packages/react-native/android/c15t-react-native/build/outputs/aar/c15t-react-native-release.aar",
+			"producerCommit": "256e903bfa542c15126e017c10fdfea70f421521",
+			"artifactSha256": "f7c70703a5e7dca893c5769d57039a6cc259a2f748d35e34b77358a1bfad84c1",
+			"rawClassBytes": 72091,
+			"classCount": 18
+		}
+	],
+	"totalRawClassBytes": 2385975,
+	"limitations": [
+		"Retained artifacts remeasured; no new native build.",
+		"Native source JAR entries match the complete current module Kotlin sources. Android bridge sources are unchanged from its recorded producer commit.",
+		"This is a code-growth allowance calibration, not an APK or store-download size measurement."
+	]
+}

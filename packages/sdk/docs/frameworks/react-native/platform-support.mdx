@@ -1,0 +1,127 @@
+---
+title: Compatibility and updates
+description: Choose compatible RN, Expo and native versions, then keep JavaScript updates paired with the app binary that implements them.
+group: frameworks
+---
+
+c15t uses React Native's New Architecture. Its native engine and screens are
+part of your app binary, so package upgrades and native configuration changes
+need a rebuild. JavaScript-only updates can reuse a compatible binary.
+
+## Check your app versions
+
+The current private prerelease targets:
+
+| Component | Version or requirement |
+| --- | --- |
+| React Native | 0.83.x through 0.88.x, New Architecture enabled |
+| React | `>=19.2.0 <19.4.0`, paired with your RN or Expo release |
+| Expo | SDK 55 through 58 with the RN and React versions Expo prescribes |
+| iOS | 16.4 or later |
+| Swift | Swift 5.9 language mode or later |
+| Android | API 24 or later and JDK 17; compile SDK 36 or the higher version your host requires |
+
+Use an Expo development build or your own native binary. Expo Go and the
+legacy React Native bridge cannot load this module.
+
+Use Expo's prescribed versions together:
+
+| Expo SDK | React Native | React | Android compile SDK |
+| --- | --- | --- | --- |
+| 55 | 0.83.x | 19.2.0 | 36 |
+| 56 | 0.85.x | 19.2.3 | 36 |
+| 57 | 0.86.x | 19.2.3 | 36 |
+| 58 | 0.88.x | 19.3.0 | 37 |
+
+Bare RN 0.84.x and 0.87.x are also compatibility targets. RN 0.87 and 0.88
+require compile SDK 37. Keep your host's compatible Gradle, Android Gradle
+Plugin and Kotlin versions. A newer compile SDK does not raise Android's
+minimum runtime version.
+
+The Expo plugin sets an iOS deployment target of at least 16.4, including for
+Expo 55 apps whose default is 15.1. It preserves a higher app target. Bare RN
+apps must set their deployment target to at least 16.4 themselves.
+
+The compatibility matrix checks packed consumer types, SDK source types,
+Android and iOS Codegen, and Expo Continuous Native Generation. These checks
+do not establish full native app builds, device journeys, accessibility or
+performance acceptance for every pairing. The SDK remains a private
+prerelease. Check your app on the minimum and current OS versions you intend
+to support before shipping.
+
+## Choose versions for a new app
+
+Target RN 0.88 with React 19.3, or Expo 58, for a new integration. Complete
+native builds and the [mobile verification checks](/docs/guides/mobile-verify)
+with that pairing before shipping. Existing apps can retain the older versions
+in the matrix while planning their framework upgrade.
+
+c15t compatibility and upstream maintenance have different lifetimes. As of
+November 3, 2026, RN 0.87 and 0.88 are active upstream, RN 0.86 is at End of
+Cycle, and RN 0.83 through 0.85 are unsupported upstream. Expo 55 and 56 remain
+outside Expo's deprecated SDK list despite using older RN releases. Keeping
+c15t compatible with those apps does not restore upstream RN maintenance. See
+the [React Native release status](https://reactnative.dev/releases/overview)
+and [Expo upgrade guide](https://docs.expo.dev/workflow/upgrading-expo-sdk-walkthrough/).
+
+We review compatibility with every stable RN and Expo release and add versions
+after checking them. We announce removals before dropping an existing framework
+version or raising an OS minimum, and make those changes in a c15t major
+release. New framework releases are not automatically supported by an
+open-ended peer range.
+
+## Keep native artifacts together
+
+The RN npm version and native SDK version identify different releases. The
+current RN manifest is `3.0.0-alpha.2`; its Android build pins native artifacts
+to `3.0.0-alpha.1`. Use the native version selected by the RN package's build
+metadata. Keep core, Android services and Compose UI on that version.
+
+The iOS pod compiles the Swift sources included in the RN package. Do not add
+separate copies of the standalone Swift products to the same RN process.
+
+Keep your app's compatible Gradle, Android Gradle Plugin and Kotlin setup.
+The native producer's Gradle build is not the app's build plugin and should
+not be included as one.
+
+## Rebuild when native inputs change
+
+| Change | New app binary? |
+| --- | --- |
+| Compatible React rendering or app business logic | Usually no; verify against the installed binary |
+| c15t native APIs or Codegen | Yes |
+| SwiftUI or Compose screens | Yes |
+| Native theme, logo assets or copy metadata | Yes |
+| Permissions, ATT usage description or native configuration | Yes |
+| Embedded policy JSON | Yes |
+| Hosted policy or disclosure refresh | No; the engine loads the served data |
+
+The RN adapter checks its protocol during `ConsentProvider` attachment. The
+current protocol is 1. An incompatible binary throws
+`C15tProtocolMismatchError`. A binary can also lack a newer additive method
+while sharing that protocol number, so rebuild if a native command reports
+that its capability is missing.
+
+## Configure Expo updates
+
+When `updates.url` is enabled, the plugin requires `runtimeVersion`. The
+[Expo setup](/docs/frameworks/react-native/expo) uses Expo's fingerprint policy
+to derive it from native inputs. Publish OTA updates only to compatible
+runtimes. Removing that check cannot add missing code to an older app binary.
+
+## Migrate an existing consent screen
+
+Keep one `ConsentProvider` and move optional SDK startup behind native gates.
+Replace overlapping stock React dialogs with the native presenter setup in
+the [quickstart](/docs/frameworks/react-native/quickstart). Keep Privacy
+settings reachable after the first choice.
+
+React `style` and theme props do not style SwiftUI or Compose. Map your brand
+to the [native customization settings](/docs/frameworks/react-native/customize).
+The [headless guide](/docs/frameworks/react-native/headless) covers app-owned
+React controls and the current packaging limits.
+
+Preserve saved consent during upgrades. Reset is an explicit visitor or app
+workflow, not a routine migration step. Before shipping, follow
+[mobile verification](/docs/guides/mobile-verify) and review
+[mobile availability](/docs/guides/mobile-status).

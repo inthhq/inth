@@ -1,0 +1,391 @@
+/**
+ * `@c15t/core` — kernel-first consent engine.
+ *
+ * Design goals:
+ * - Pure construction: `createConsentKernel()` has zero side effects.
+ *   No window writes, no observers, no network, no DOM.
+ * - Framework-neutral contract: `getSnapshot() / subscribe() / set.* / commands.* / events`.
+ *   No store library types leaked. Adapters own reactivity.
+ * - Isomorphic-safe: imports cleanly in Node, RSC, edge runtimes.
+ * - Opt-in side effects: persistence, blockers, script loader, banner fetch
+ *   live in `@c15t/core/modules/*` — adapters call them inside useEffect /
+ *   onMounted / onMount. Never at kernel construction.
+ */
+
+export type {
+	CategoryDecision,
+	ChoiceBasis,
+	CONSENT_CATEGORY,
+	ConsentEvaluation,
+	ConsentSubject,
+	EvaluationPolicy,
+	ExplicitChoice,
+	NoticeDismissal,
+	OptionalConsentCategory,
+	PromptReason,
+	PromptRequirement,
+	RecordIssue,
+	RestrictionReason,
+} from './consent-record';
+export {
+	CONSENT_CATEGORIES,
+	createEvaluationPolicy,
+	evaluateConsentRecord,
+	OPTIONAL_CONSENT_CATEGORIES,
+} from './consent-record';
+export { createConsentKernel } from './kernel';
+
+export {
+	resolveIABBannerSummary,
+	IAB_BANNER_MAX_DISPLAY_ITEMS,
+} from './libs/iab-banner-summary';
+export type { ResolveIABBannerSummaryOptions } from './libs/iab-banner-summary';
+export type {
+	ClearOnRevocationConfig,
+	ClearOnRevocationCookie,
+	ClearOnRevocationTargets,
+} from './modules/clear-on-revocation';
+export type { KernelIABControls } from './modules/iab-controls';
+export {
+	getIABControls,
+	registerIABControls,
+	subscribeIABControls,
+} from './modules/iab-controls';
+export {
+	generateSubjectId,
+	isValidSubjectId,
+} from './libs/generate-subject-id';
+export type {
+	C15tWindowDebug,
+	WindowDebugHandle,
+	WindowDebugMode,
+	WindowDebugModeInput,
+	WindowDebugOptions,
+} from './modules/window-debug';
+export { createWindowDebug } from './modules/window-debug';
+export type { RememberedDecisionInputs } from './transports/decision-inputs';
+export { decisionInputsMatchOverrides } from './transports/decision-inputs';
+export type {
+	CachedGvl,
+	FetchCachedGvlOptions,
+	GvlCache,
+} from './transports/gvl-cache';
+export { clearGvlCache, fetchCachedGvl } from './transports/gvl-cache';
+export type { HostedTransportOptions } from './transports/hosted';
+export { createHostedTransport } from './transports/hosted';
+export type {
+	HostedRecordTransport,
+	HostedRecordTransportOptions,
+} from './transports/hosted-records';
+export { createHostedRecordTransport } from './transports/hosted-records';
+export type { HostedInitRequest } from './transports/hosted-init-request';
+export { createHostedInitRequest } from './transports/hosted-init-request';
+export { hasPrefetchedInitialData } from './libs/prefetch/window-key';
+export {
+	ConsentSaveRejectedError,
+	isConsentSaveRejection,
+} from './transports/save-rejection';
+export {
+	initOutputToKernelConfig,
+	mapInitOutputToInitResponse,
+	mergeInitOutputIntoKernelConfig,
+} from './transports/init-output';
+export type {
+	HostedModeFactory,
+	HostedModeOptions,
+	ProviderTransportContext,
+	ProviderTransportFactory,
+	ProviderTransportKind,
+} from './transports/mode';
+export { custom } from './transports/custom';
+export { earlyInitModes } from './transports/early-init-modes';
+export type { EarlyInitMode } from './transports/early-init-modes';
+export { hosted } from './transports/mode';
+export type {
+	ConsentMode,
+	ConsentModeType,
+	HostedMode,
+	ManifestMode,
+	ManifestModeInputs,
+	OfflineMode,
+} from './modes';
+export type {
+	OfflineKernelTransport,
+	OfflineTransportOptions,
+} from './transports/offline';
+export { createOfflineTransport, local, offline } from './transports/offline';
+export {
+	NO_RECORDS_WARNING,
+	warnNoConsentRecords,
+	warnNoConsentRecordsInDevelopment,
+} from './libs/no-records-warning';
+export type {
+	OfflineModeFactory,
+	OfflineModeOptions,
+} from './transports/offline';
+export { buildSubjectPostBody } from './transports/subject-body';
+export {
+	C15T_POLICY_CONTRACT_HEADER,
+	C15T_VERSION_HEADER,
+	c15tProtocolHeaders,
+	c15tProtocolParams,
+	c15tVersionHeaders,
+} from './transports/version-header';
+export type {
+	AdTechProvider,
+	ConfirmedCoverage,
+	ConsentKernel,
+	ConsentSnapshot,
+	ConsentState,
+	GlobalVendorList,
+	HydrationRecords,
+	HydrationResult,
+	InitContext,
+	InitResponse,
+	InitResult,
+	KernelActiveUI,
+	KernelBranding,
+	KernelConfig,
+	KernelHosting,
+	KernelEvent,
+	KernelIABAuthority,
+	KernelIABState,
+	KernelJourney,
+	KernelModel,
+	KernelOverrides,
+	KernelPrivacySignals,
+	KernelTranslations,
+	KernelTransport,
+	KernelUser,
+	KernelVendorsState,
+	Listener,
+	LocationResponse,
+	NonIABVendor,
+	NoticeDismissResult,
+	PolicyResolution,
+	PolicyScopeMode,
+	ResolvedPolicyRule,
+	ResolvedVendor,
+	PromptSurface,
+	SaveInput,
+	SaveContext,
+	SavePayload,
+	SaveUISource,
+	SaveResult,
+	TranslationsResponse,
+	Unsubscribe,
+	Vendor,
+	VendorChoice,
+	VendorSource,
+} from './types';
+
+// -- Consent categories --------------------------------------------------------
+export type {
+	AllConsentNames,
+	ConsentInfo,
+	ConsentType,
+} from './consent/consent-types';
+export { allConsentNames, consentTypes } from './consent/consent-types';
+export type { NamespaceProps } from './consent/compliance';
+
+// -- Consent conditions --------------------------------------------------------
+export type { HasCondition } from './libs/has';
+export { has } from './libs/has';
+
+// -- Storage -------------------------------------------------------------------
+export type { CookieOptions, StorageConfig } from './libs/cookie';
+export { getRootDomain } from './libs/cookie';
+
+// -- Blockers ------------------------------------------------------------------
+export type {
+	BlockedRequestInfo,
+	NetworkBlockerConfig,
+	NetworkBlockerRule,
+} from './libs/network-blocker/types';
+export type { IframeBlockerOptions } from './modules/iframe-blocker';
+
+// -- Script loader -------------------------------------------------------------
+export type {
+	Script,
+	ScriptCallbackInfo,
+	ScriptDebugAction,
+	ScriptDebugEvent,
+	ScriptDebugEventInput,
+	ScriptDebugListener,
+	ScriptDebugScope,
+	ScriptDebugSource,
+	ScriptLifecycleCallback,
+	ScriptServerStart,
+	ScriptUpdateResult,
+	VendorDetails,
+} from './libs/script-loader/types';
+export {
+	emitScriptDebugEvent,
+	subscribeToScriptDebugEvents,
+} from './libs/script-loader/debug';
+
+// -- Provider option types -----------------------------------------------------
+export type {
+	AdditionalConsentConfig,
+	Callback,
+	Callbacks,
+	CMPApi,
+	CMPApiConfig,
+	CMPStatus,
+	DisplayStatus,
+	EventStatus,
+	FetchGVLResult,
+	IABConfig,
+	LegalLink,
+	LegalLinks,
+	OnChoiceRecordedPayload,
+	OnPermissionsChangedPayload,
+	OnErrorPayload,
+	OnSurfaceShownPayload,
+	Overrides,
+	PingData,
+	PublisherRestriction,
+	SSRInitialData,
+	SSRInitRequestContext,
+	SSRInitRequestMetadata,
+	SSRSkippedReason,
+	TCData,
+	TCDataOutsideTCF,
+	TCFConsentData,
+	User,
+} from './options';
+export type { ActiveUI, Model } from './types';
+
+// -- Prefetch ------------------------------------------------------------------
+export type { PrefetchOptions } from './libs/prefetch';
+export {
+	buildPrefetchScript,
+	getMatchingPrefetchedInitialData,
+	primePrefetchedInitialData,
+} from './libs/prefetch';
+
+// -- Translations --------------------------------------------------------------
+export type {
+	CommonTranslations,
+	ConsentManagerDialogTranslations,
+	ConsentTypesTranslations,
+	ConsentTypeTranslations,
+	CookieBannerTranslations,
+	I18nConfig,
+	LegalLinksTranslations,
+	TranslationConfig,
+	Translations,
+} from '@c15t/translations';
+export {
+	deepMergeTranslations,
+	detectBrowserLanguage,
+	mergeTranslationConfigs,
+	prepareTranslationConfig,
+} from '@c15t/translations';
+export {
+	applyTranslationOverrides,
+	defaultTranslationConfig,
+	resolveLocalTranslations,
+} from './translations';
+export type { TranslationOverrides } from './translations';
+
+// -- Schema re-exports ---------------------------------------------------------
+export type {
+	Branding,
+	InitOutput,
+	PolicyPrompt,
+	PolicyResolutionFailure,
+	PolicyRule,
+	PolicyRulePresets,
+	RecommendedPolicyRulesOptions,
+} from '@c15t/schema/types';
+export {
+	normalizePolicyRule,
+	policyRulePresets,
+	recommendedPolicyRules,
+	readPolicyResolutionWire,
+	resolvePolicyRules,
+	writePolicyResolutionWire,
+	safeFallbackPolicyRule,
+} from '@c15t/schema/types';
+export {
+	PROMPT_VARIANT_DEFAULT_POSITION,
+	PROMPT_VARIANT_POSITIONS,
+	resolveConsentPresentation,
+} from './libs/policy-actions';
+export {
+	actionAppearanceFromTheme,
+	applyExperimentAssignment,
+	applyExperimentTheme,
+	defineExperiment,
+	hostExperiment,
+	resolveExperimentTheme,
+	seedExperiment,
+} from './libs/experiment';
+export type {
+	ActionAppearance,
+	ConsentExperiment,
+	ExperimentActionStyle,
+	ExperimentArm,
+	ExperimentArmName,
+	ExperimentArmTheme,
+	ExperimentAssignment,
+	ExperimentGate,
+	ExperimentState,
+	ServerExperiment,
+	StartExperimentOptions,
+} from './libs/experiment';
+export type { ConsentJourneyOption, JourneyState } from './libs/journey';
+export { createUnreportedJourneys } from './libs/journey';
+export {
+	EXPERIMENT_STORAGE_KEY,
+	JOURNEY_STORAGE_KEY,
+} from './libs/storage-keys';
+export type {
+	ConsentPresentation,
+	PromptPresentation,
+	PromptVariant,
+	PromptPosition,
+	FloatingPromptPosition,
+	BarPromptPosition,
+	WidgetPromptPosition,
+	WallPromptPosition,
+	PreferencesPresentation,
+	SurfacePresentation,
+	PresentationAction,
+	PresentationDiagnostic,
+	ResolvedConsentPresentation,
+} from './libs/policy-actions';
+export {
+	resolveActionLabels,
+	resolvePreferenceControlLabels,
+	resolvePromptCopy,
+} from './libs/consent-copy';
+export type { PreferenceControl, PromptCopy } from './libs/consent-copy';
+
+export {
+	deniedVendorIds,
+	evaluateConsent,
+	getEffectiveGateState,
+	isVendorAllowed,
+	isVendorDenied,
+} from './modules/has';
+export type { RevocationReloadOptions } from './modules/revocation-reload';
+export { watchRevocationReload } from './modules/revocation-reload';
+export type { ResolveVendorsInput, VendorOwner } from './libs/vendors';
+export {
+	declareOwnedVendors,
+	forgetOwnedVendors,
+	vendorsListedUnder,
+} from './libs/vendors';
+export { deferInitGvl } from './transports/gvl-reference';
+export {
+	IAB_UNAVAILABLE_ERROR_CODE,
+	IABUnavailableError,
+	policyNeedsIAB,
+} from './libs/iab-unavailable';
+export type {
+	WebViewConsentSource,
+	WebViewConsentState,
+} from './runtime/webview-consent-source';
+export { webViewConsentSource } from './runtime/webview-consent-source';

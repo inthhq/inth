@@ -1,0 +1,12 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"noEmit": true
+	},
+	"include": [
+		"src/declaration.d.ts",
+		"src/**/__tests__/**/*.type-test.ts",
+		"src/**/__tests__/**/*.type-test.tsx"
+	],
+	"exclude": ["node_modules"]
+}

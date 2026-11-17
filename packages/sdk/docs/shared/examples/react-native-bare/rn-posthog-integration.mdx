@@ -1,0 +1,14 @@
+{/* Generated from internals/fixtures/react-native-bare/src/documentation/posthog-integration.ts (docs:rn-posthog-integration) by scripts/sync-example-docs.ts. Edit the source file. */}
+
+```ts title="posthog-consent.ts"
+import { connectPostHog } from '@c15t/react-native/integrations';
+import type {
+	ConsentIntegration,
+	PostHogClient,
+} from '@c15t/react-native/integrations';
+
+export const connectAppPostHog = (
+	posthog: PostHogClient,
+	onError: (error: unknown) => void
+): ConsentIntegration => connectPostHog(posthog, { onError });
+```

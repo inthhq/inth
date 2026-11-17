@@ -1,0 +1,38 @@
+name: C15tCustomConsent
+options:
+  deploymentTarget:
+    iOS: '16.4'
+packages:
+  C15tNative:
+    path: ../..
+settings:
+  base:
+    SWIFT_VERSION: '5.0'
+    GENERATE_INFOPLIST_FILE: YES
+    CODE_SIGN_IDENTITY[sdk=iphonesimulator*]: '-'
+targets:
+  C15tCustomConsent:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+      # The local /init responses the app serves itself. No backend is contacted.
+      - path: ../../../../examples/native/consent-demo/fixtures
+        buildPhase: resources
+    dependencies:
+      - package: C15tNative
+        product: C15tCore
+      - package: C15tNative
+        product: C15tApple
+      - package: C15tNative
+        product: C15tConsentUI
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.c15t.examples.customconsent
+        INFOPLIST_KEY_CFBundleDisplayName: Custom consent
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+schemes:
+  C15tCustomConsent:
+    build:
+      targets:
+        C15tCustomConsent: all

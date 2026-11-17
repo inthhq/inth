@@ -1,0 +1,3228 @@
+{
+	"cases": [
+		{
+			"createdDaysAgo": 3,
+			"gvl": {
+				"gvlSpecificationVersion": 3,
+				"vendorListVersion": 182,
+				"tcfPolicyVersion": 5,
+				"lastUpdated": "2026-10-22T16:00:18Z",
+				"purposes": {
+					"1": {
+						"id": 1,
+						"name": "Store and/or access information on a device",
+						"description": "Cookies, device or similar online identifiers (e.g. login-based identifiers, randomly assigned identifiers, network based identifiers) together with other information (e.g. browser type and information, language, screen size, supported technologies etc.) can be stored or read on your device to recognise it each time it connects to an app or to a website, for one or several of the purposes presented here.",
+						"illustrations": [
+							"Most purposes explained in this notice rely on the storage or accessing of information from your device when you use an app or visit a website. For example, a vendor or publisher might need to store a cookie on your device during your first visit on a website, to be able to recognise your device during your next visits (by accessing this cookie each time)."
+						]
+					},
+					"2": {
+						"id": 2,
+						"name": "Use limited data to select advertising",
+						"description": "Advertising presented to you on this service can be based on limited data, such as the website or app you are using, your non-precise location, your device type or which content you are (or have been) interacting with (for example, to limit the number of times an ad is presented to you).",
+						"illustrations": [
+							"A car manufacturer wants to promote its electric vehicles to environmentally conscious users living in the city after office hours. The advertising is presented on a page with related content (such as an article on climate change actions) after 6:30 p.m. to users whose non-precise location suggests that they are in an urban zone.",
+							"A large producer of watercolour paints wants to carry out an online advertising campaign for its latest watercolour range, diversifying its audience to reach as many amateur and professional artists as possible and avoiding showing the ad next to mismatched content (for instance, articles about how to paint your house). The number of times that the ad has been presented to you is detected and limited, to avoid presenting it too often."
+						]
+					},
+					"3": {
+						"id": 3,
+						"name": "Create profiles for personalised advertising",
+						"description": "Information about your activity on this service (such as forms you submit, content you look at) can be stored and combined with other information about you (for example, information from your previous activity on this service and other websites or apps) or similar users. This is then used to build or improve a profile about you (that might include possible interests and personal aspects). Your profile can be used (also later) to present advertising that appears more relevant based on your possible interests by this and other entities.",
+						"illustrations": [
+							"If you read several articles about the best bike accessories to buy, this information could be used to create a profile about your interest in bike accessories. Such a profile may be used or improved later on, on the same or a different website or app to present you with advertising for a particular bike accessory brand. If you also look at a configurator for a vehicle on a luxury car manufacturer website, this information could be combined with your interest in bikes to refine your profile and make an assumption that you are interested in luxury cycling gear.",
+							"An apparel company wishes to promote its new line of high-end baby clothes. It gets in touch with an agency that has a network of clients with high income customers (such as high-end supermarkets) and asks the agency to create profiles of young parents or couples who can be assumed to be wealthy and to have a new child, so that these can later be used to present advertising within partner apps based on those profiles."
+						]
+					},
+					"4": {
+						"id": 4,
+						"name": "Use profiles to select personalised advertising",
+						"description": "Advertising presented to you on this service can be based on your advertising profiles, which can reflect your activity on this service or other websites or apps (like the forms you submit, content you look at), possible interests and personal aspects.",
+						"illustrations": [
+							"An online retailer wants to advertise a limited sale on running shoes. It wants to target advertising to users who previously looked at running shoes on its mobile app. Tracking technologies might be used to recognise that you have previously used the mobile app to consult running shoes, in order to present you with the corresponding advertisement on the app.",
+							"A profile created for personalised advertising in relation to a person having searched for bike accessories on a website can be used to present the relevant advertisement for bike accessories on a mobile app of another organisation."
+						]
+					},
+					"5": {
+						"id": 5,
+						"name": "Create profiles to personalise content",
+						"description": "Information about your activity on this service (for instance, forms you submit, non-advertising content you look at) can be stored and combined with other information about you (such as your previous activity on this service or other websites or apps) or similar users. This is then used to build or improve a profile about you (which might for example include possible interests and personal aspects). Your profile can be used (also later) to present content that appears more relevant based on your possible interests, such as by adapting the order in which content is shown to you, so that it is even easier for you to find content that matches your interests.",
+						"illustrations": [
+							"You read several articles on how to build a treehouse on a social media platform. This information might be added to a profile to mark your interest in content related to outdoors as well as do-it-yourself guides (with the objective of allowing the personalisation of content, so that for example you are presented with more blog posts and articles on treehouses and wood cabins in the future).",
+							"You have viewed three videos on space exploration across different TV apps. An unrelated news platform with which you have had no contact builds a profile based on that viewing behaviour, marking space exploration as a topic of possible interest for other videos."
+						]
+					},
+					"6": {
+						"id": 6,
+						"name": "Use profiles to select personalised content",
+						"description": "Content presented to you on this service can be based on your content personalisation profiles, which can reflect your activity on this or other services (for instance, the forms you submit, content you look at), possible interests and personal aspects. This can for example be used to adapt the order in which content is shown to you, so that it is even easier for you to find (non-advertising) content that matches your interests.",
+						"illustrations": [
+							"You read articles on vegetarian food on a social media platform and then use the cooking app of an unrelated company. The profile built about you on the social media platform will be used to present you vegetarian recipes on the welcome screen of the cooking app.",
+							"You have viewed three videos about rowing across different websites. An unrelated video sharing platform will recommend five other videos on rowing that may be of interest to you when you use your TV app, based on a profile built about you when you visited those different websites to watch online videos."
+						]
+					},
+					"7": {
+						"id": 7,
+						"name": "Measure advertising performance",
+						"description": "Information regarding which advertising is presented to you and how you interact with it can be used to determine how well an advert has worked for you or other users and whether the goals of the advertising were reached. For instance, whether you saw an ad, whether you clicked on it, whether it led you to buy a product or visit a website, etc. This is very helpful to understand the relevance of advertising campaigns.",
+						"illustrations": [
+							"You have clicked on an advertisement about a “black Friday” discount by an online shop on the website of a publisher and purchased a product. Your click will be linked to this purchase. Your interaction and that of other users will be measured to know how many clicks on the ad led to a purchase.",
+							"You are one of very few to have clicked on an advertisement about an “international appreciation day” discount by an online gift shop within the app of a publisher. The publisher wants to have reports to understand how often a specific ad placement within the app, and notably the “international appreciation day” ad, has been viewed or clicked by you and other users, in order to help the publisher and its partners (such as agencies) optimise ad placements."
+						]
+					},
+					"8": {
+						"id": 8,
+						"name": "Measure content performance",
+						"description": "Information regarding which content is presented to you and how you interact with it can be used to determine whether the (non-advertising) content e.g. reached its intended audience and matched your interests. For instance, whether you read an article, watch a video, listen to a podcast or look at a product description, how long you spent on this service and the web pages you visit etc. This is very helpful to understand the relevance of (non-advertising) content that is shown to you.",
+						"illustrations": [
+							"You have read a blog post about hiking on a mobile app of a publisher and followed a link to a recommended and related post. Your interactions will be recorded as showing that the initial hiking post was useful to you and that it was successful in interesting you in the related post. This will be measured to know whether to produce more posts on hiking in the future and where to place them on the home screen of the mobile app.",
+							"You were presented a video on fashion trends, but you and several other users stopped watching after 30 seconds. This information is then used to evaluate the right length of future videos on fashion trends."
+						]
+					},
+					"9": {
+						"id": 9,
+						"name": "Understand audiences through statistics or combinations of data from different sources",
+						"description": "Reports can be generated based on the combination of data sets (like user profiles, statistics, market research, analytics data) regarding your interactions and those of other users with advertising or (non-advertising) content to identify common characteristics (for instance, to determine which target audiences are more receptive to an ad campaign or to certain contents).",
+						"illustrations": [
+							"The owner of an online bookstore wants commercial reporting showing the proportion of visitors who consulted and left its site without buying, or consulted and bought the last celebrity autobiography of the month, as well as the average age and the male/female distribution of each category. Data relating to your navigation on its site and to your personal characteristics is then used and combined with other such data to produce these statistics.",
+							"An advertiser wants to better understand the type of audience interacting with its adverts. It calls upon a research institute to compare the characteristics of users who interacted with the ad with typical attributes of users of similar platforms, across different devices. This comparison reveals to the advertiser that its ad audience is mainly accessing the adverts through mobile devices and is likely in the 45-60 age range."
+						]
+					},
+					"10": {
+						"id": 10,
+						"name": "Develop and improve services",
+						"description": "Information about your activity on this service, such as your interaction with ads or content, can be very helpful to improve products and services and to build new products and services based on user interactions, the type of audience, etc. This specific purpose does not include the development or improvement of user profiles and identifiers.",
+						"illustrations": [
+							"A technology platform working with a social media provider notices a growth in mobile app users, and sees based on their profiles that many of them are connecting through mobile connections. It uses a new technology to deliver ads that are formatted for mobile devices and that are low-bandwidth, to improve their performance.",
+							"An advertiser is looking for a way to display ads on a new type of consumer device. It collects information regarding the way users interact with this new kind of device to determine whether it can build a new mechanism for displaying advertising on this type of device."
+						]
+					},
+					"11": {
+						"id": 11,
+						"name": "Use limited data to select content",
+						"description": "Content presented to you on this service can be based on limited data, such as the website or app you are using, your non-precise location, your device type, or which content you are (or have been) interacting with (for example, to limit the number of times a video or an article is presented to you).",
+						"illustrations": [
+							"A travel magazine has published an article on its website about the new online courses proposed by a language school, to improve travelling experiences abroad. The school’s blog posts are inserted directly at the bottom of the page, and selected on the basis of your non-precise location (for instance, blog posts explaining the course curriculum for different languages than the language of the country you are situated in).",
+							"A sports news mobile app has started a new section of articles covering the most recent football games. Each article includes videos hosted by a separate streaming platform showcasing the highlights of each match. If you fast-forward a video, this information may be used to select a shorter video to play next."
+						]
+					}
+				},
+				"specialPurposes": {
+					"1": {
+						"id": 1,
+						"name": "Ensure security, prevent and detect fraud, and fix errors",
+						"description": "Your data can be used to monitor for and prevent unusual and possibly fraudulent activity (for example, regarding advertising, ad clicks by bots), and ensure systems and processes work properly and securely. It can also be used to correct any problems you, the publisher or the advertiser may encounter in the delivery of content and ads and in your interaction with them.",
+						"illustrations": [
+							"An advertising intermediary delivers ads from various advertisers to its network of partnering websites. It notices a large increase in clicks on ads relating to one advertiser, and uses data regarding the source of the clicks to determine that 80% of the clicks come from bots rather than humans."
+						]
+					},
+					"2": {
+						"id": 2,
+						"name": "Deliver and present advertising and content",
+						"description": "Certain information (like an IP address or device capabilities) is used to ensure the technical compatibility of the content or advertising, and to facilitate the transmission of the content or ad to your device.",
+						"illustrations": [
+							"Clicking on a link in an article might normally send you to another page or part of the article. To achieve this, 1°) your browser sends a request to a server linked to the website, 2°) the server answers back (“here is the article you asked for”), using technical information automatically included in the request sent by your device, to properly display the information / images that are part of the article you asked for. Technically, such exchange of information is necessary to deliver the content that appears on your screen."
+						]
+					},
+					"3": {
+						"id": 3,
+						"name": "Save and communicate privacy choices",
+						"description": "The choices you make regarding the purposes and entities listed in this notice are saved and made available to those entities in the form of digital signals (such as a string of characters). This is necessary in order to enable both this service and those entities to respect such choices.",
+						"illustrations": [
+							"When you visit a website and are offered a choice between consenting to the use of profiles for personalised advertising or not consenting, the choice you make is saved and made available to advertising providers, so that advertising presented to you respects that choice."
+						]
+					}
+				},
+				"features": {
+					"1": {
+						"id": 1,
+						"name": "Match and combine data from other data sources",
+						"description": "Information about your activity on this service may be matched and combined with other information relating to you and originating from various sources (for instance your activity on a separate online service, your use of a loyalty card in-store, or your answers to a survey), in support of the purposes explained in this notice.",
+						"illustrations": [
+							"You used your loyalty card when purchasing sunglasses at a local boutique. If you later browse content relating to summer travel, this information may be combined with your previous purchase recorded by the boutique’s loyalty program to present you with ads for swimsuits or other beach accessories."
+						]
+					},
+					"2": {
+						"id": 2,
+						"name": "Link different devices",
+						"description": "In support of the purposes explained in this notice, your device might be considered as likely linked to other devices that belong to you or your household (for instance because you are logged in to the same service on both your phone and your computer, or because you may use the same Internet connection on both devices).",
+						"illustrations": [
+							"You visited an online retailer website from your computer to look at mystery books and you consented to your data being used to create profiles for personalised advertising. If you later browse on your phone using the same Wifi, a vendor may infer you have been using both devices and you may be presented with an ad about the same mystery books in the mobile app you are using, but only if you have consented to receiving personalised advertising on this app."
+						]
+					},
+					"3": {
+						"id": 3,
+						"name": "Identify devices based on information transmitted automatically",
+						"description": "Your device might be distinguished from other devices based on information it automatically sends when accessing the Internet (for instance, the IP address of your Internet connection or the type of browser you are using) in support of the purposes exposed in this notice.",
+						"illustrations": [
+							"When you see an ad in your weather forecast app, some technical details that your device always transmits when accessing the Internet (such as the IP address of your Wifi and the version of your device’s operating system) can be used for instance to limit the number of times you see the same ad in other apps."
+						]
+					}
+				},
+				"specialFeatures": {
+					"1": {
+						"id": 1,
+						"name": "Use precise geolocation data",
+						"description": "With your acceptance, your precise location (within a radius of less than 500 metres) may be used in support of the purposes explained in this notice.",
+						"illustrations": []
+					},
+					"2": {
+						"id": 2,
+						"name": "Identify devices based on information actively requested",
+						"description": "With your acceptance, certain characteristics specific to your device might be requested and used to distinguish it from other devices (such as the installed fonts or plugins, the resolution of your screen) in support of the purposes explained in this notice.",
+						"illustrations": []
+					}
+				},
+				"standardTexts": {
+					"features": "These means of processing can be used solely in pursuit of one or several purposes for which you are given a choice in this notice."
+				},
+				"stacks": {
+					"1": {
+						"id": 1,
+						"purposes": [],
+						"specialFeatures": [1, 2],
+						"name": "Precise geolocation data, and identification through device scanning",
+						"description": "Precise geolocation and information about device characteristics can be used."
+					},
+					"2": {
+						"id": 2,
+						"purposes": [2, 7],
+						"specialFeatures": [],
+						"name": "Advertising based on limited data and advertising measurement",
+						"description": "Advertising can be presented based on limited data. Advertising performance can be measured."
+					},
+					"3": {
+						"id": 3,
+						"purposes": [2, 3, 4],
+						"specialFeatures": [],
+						"name": "Personalised advertising",
+						"description": "Advertising can be personalised based on your profile. Your activity on this service can be used to build or improve a profile about you for personalised advertising."
+					},
+					"4": {
+						"id": 4,
+						"purposes": [2, 7, 9],
+						"specialFeatures": [],
+						"name": "Advertising based on limited data, advertising measurement, and understanding of the audiences",
+						"description": "Advertising can be presented based on limited data. Advertising performance can be measured. Reports can be generated based on your activity and those of others."
+					},
+					"5": {
+						"id": 5,
+						"purposes": [2, 3, 7],
+						"specialFeatures": [],
+						"name": "Advertising based on limited data, personalised advertising profile, and advertising measurement",
+						"description": "Advertising can be presented based on limited data. Your activity on this service can be used to build or improve a profile about you for personalised advertising. Advertising performance can be measured."
+					},
+					"6": {
+						"id": 6,
+						"purposes": [2, 4, 7],
+						"specialFeatures": [],
+						"name": "Selection of personalised advertising and advertising measurement",
+						"description": "Advertising can be personalised based on your profile. Advertising performance can be measured."
+					},
+					"7": {
+						"id": 7,
+						"purposes": [2, 4, 7, 9],
+						"specialFeatures": [],
+						"name": "Selection of personalised advertising, advertising measurement, and audience research",
+						"description": "Advertising can be personalised based on your profile. Advertising performance can be measured. Reports can be generated based on your activity and those of others."
+					},
+					"8": {
+						"id": 8,
+						"purposes": [2, 3, 4, 7],
+						"specialFeatures": [],
+						"name": "Personalised advertising and advertising measurement",
+						"description": "Advertising can be personalised based on your profile. Your activity on this service can be used to build or improve a profile about you for personalised advertising. Advertising performance can be measured."
+					},
+					"9": {
+						"id": 9,
+						"purposes": [2, 3, 4, 7, 9],
+						"specialFeatures": [],
+						"name": "Personalised advertising, advertising measurement, and audience research",
+						"description": "Advertising can be personalised based on your profile. Your activity on this service can be used to build or improve a profile about you for personalised advertising. Advertising performance can be measured. Reports can be generated based on your activity and those of others."
+					},
+					"10": {
+						"id": 10,
+						"purposes": [3, 4],
+						"specialFeatures": [],
+						"name": "Personalised advertising",
+						"description": "Advertising can be personalised based on your profile. Your activity on this service can be used to build or improve a profile about you for personalised advertising."
+					},
+					"11": {
+						"id": 11,
+						"purposes": [5, 6],
+						"specialFeatures": [],
+						"name": "Personalised content",
+						"description": "Content can be personalised based on your profile. Your activity on this service can be used to build or improve a profile about you for personalised content."
+					},
+					"12": {
+						"id": 12,
+						"purposes": [6, 8, 11],
+						"specialFeatures": [],
+						"name": "Selection of personalised content and content measurement",
+						"description": "Content can be personalised based on your profile. Content performance can be measured."
+					},
+					"13": {
+						"id": 13,
+						"purposes": [6, 8, 9, 11],
+						"specialFeatures": [],
+						"name": "Selection of personalised content, content measurement and audience research",
+						"description": "Content can be personalised based on your profile. Content performance can be measured. Reports can be generated based on your activity and those of others.Content can be personalised based on your profile. Content performance can be measured. Reports can be generated based on your activity and those of others."
+					},
+					"14": {
+						"id": 14,
+						"purposes": [5, 6, 8, 11],
+						"specialFeatures": [],
+						"name": "Personalised content and content measurement",
+						"description": "Content can be personalised based on your profile. Your activity on this service can be used to build or improve a profile about you for personalised content. Content performance can be measured."
+					},
+					"15": {
+						"id": 15,
+						"purposes": [5, 6, 8, 9, 11],
+						"specialFeatures": [],
+						"name": "Personalised content, content measurement and audience research",
+						"description": "Content can be personalised based on your profile. Your activity on this service can be used to build or improve a profile about you for personalised content. Content performance can be measured. Reports can be generated based on your activity and those of others."
+					},
+					"16": {
+						"id": 16,
+						"purposes": [5, 6, 8, 9, 10, 11],
+						"specialFeatures": [],
+						"name": "Personalised content, content measurement, audience research, and services development",
+						"description": "Content can be personalised based on your profile. Your activity on this service can be used to build or improve a profile about you for personalised content. Content performance can be measured. Reports can be generated based on your activity and those of others. Your activity on this service can help develop and improve products and services."
+					},
+					"17": {
+						"id": 17,
+						"purposes": [7, 8, 9],
+						"specialFeatures": [],
+						"name": "Advertising and content measurement, and audience research",
+						"description": "Advertising and content performance can be measured. Reports can be generated based on your activity and those of others."
+					},
+					"18": {
+						"id": 18,
+						"purposes": [7, 8],
+						"specialFeatures": [],
+						"name": "Advertising and content measurement",
+						"description": "Advertising and content performance can be measured."
+					},
+					"19": {
+						"id": 19,
+						"purposes": [7, 9],
+						"specialFeatures": [],
+						"name": "Advertising measurement and audience research",
+						"description": "Advertising can be measured. Reports can be generated based on your activity and those of others."
+					},
+					"20": {
+						"id": 20,
+						"purposes": [7, 8, 9, 10],
+						"specialFeatures": [],
+						"name": "Advertising and content measurement, audience research, and services development",
+						"description": "Advertising and content performance can be measured. Your activity on this service can help develop and improve products and services. Reports can be generated based on your activity and those of others."
+					},
+					"21": {
+						"id": 21,
+						"purposes": [8, 9, 10],
+						"specialFeatures": [],
+						"name": "Content measurement, audience research and services development.",
+						"description": "Content performance can be measured. Reports can be generated based on your activity and those of others. Your activity on this service can help develop and improve products and services."
+					},
+					"22": {
+						"id": 22,
+						"purposes": [8, 10],
+						"specialFeatures": [],
+						"name": "Content measurement and services development",
+						"description": "Content performance can be measured. Your activity on this service can help develop and improve products and services."
+					},
+					"23": {
+						"id": 23,
+						"purposes": [2, 4, 6, 7, 8, 11],
+						"specialFeatures": [],
+						"name": "Selection of personalised advertising and content, advertising and content measurement",
+						"description": "Advertising and content can be personalised based on your profile. Advertising and content performance can be measured."
+					},
+					"24": {
+						"id": 24,
+						"purposes": [2, 4, 6, 7, 8, 9, 11],
+						"specialFeatures": [],
+						"name": "Selection of personalised advertising and content, advertising and content measurement, and audience research",
+						"description": "Advertising and content can be personalised based on your profile. Advertising and content performance can be measured. Reports can be generated based on your activity and those of others. Data can be used to build or improve user experience, systems, and software."
+					},
+					"25": {
+						"id": 25,
+						"purposes": [2, 3, 4, 5, 6, 7, 8, 11],
+						"specialFeatures": [],
+						"name": "Personalised advertising and content, advertising and content measurement",
+						"description": "Advertising and content can be personalised based on your profile. Your activity on this service can be used to build or improve a profile about you for personalised advertising or content. Advertising and content performance can be measured."
+					},
+					"26": {
+						"id": 26,
+						"purposes": [2, 3, 4, 5, 6, 7, 8, 9, 11],
+						"specialFeatures": [],
+						"name": "Personalised advertising and content, advertising and content measurement, and audience research",
+						"description": "Advertising and content can be personalised based on your profile. Your activity on this service can be used to build or improve a profile about you for personalised advertising or content. Advertising and content performance can be measured. Reports can be generated based on your activity and those of others."
+					},
+					"27": {
+						"id": 27,
+						"purposes": [3, 5],
+						"specialFeatures": [],
+						"name": "Personalised advertising and content profile",
+						"description": "Your activity on this service can be used to build or improve a profile about you for personalised advertising or content."
+					},
+					"28": {
+						"id": 28,
+						"purposes": [2, 4, 6, 11],
+						"specialFeatures": [],
+						"name": "Selection of personalised advertising and content",
+						"description": "Advertising and content can be personalised based on your profile."
+					},
+					"29": {
+						"id": 29,
+						"purposes": [2, 7, 8, 9],
+						"specialFeatures": [],
+						"name": "Advertising based on limited data, advertising and content measurement, and audience research",
+						"description": "Advertising can be presented based on limited data. Advertising and content performance can be measured. Reports can be generated based on your activity and those of others."
+					},
+					"30": {
+						"id": 30,
+						"purposes": [2, 4, 5, 6, 7, 8, 9, 11],
+						"specialFeatures": [],
+						"name": "Selection of personalised advertising, personalised content, advertising and content measurement, and audience research",
+						"description": "Advertising and content can be personalised based on your profile. Your activity on this service can be used to build or improve a profile about you for personalised advertising or content. Advertising and content performance can be measured. Reports can be generated based on your activity and those of others."
+					},
+					"31": {
+						"id": 31,
+						"purposes": [2, 4, 5, 6, 7, 8, 9, 10, 11],
+						"specialFeatures": [],
+						"name": "Selection of personalised advertising, personalised content, advertising and content measurement, audience research, and services development",
+						"description": "Advertising and content can be personalised based on your profile. Your activity on this service can be used to build or improve a profile about you for personalised content. Advertising and content performance can be measured. Reports can be generated based on your activity and those of others. Your activity on this service can help develop and improve products and services."
+					},
+					"32": {
+						"id": 32,
+						"purposes": [2, 5, 6, 7, 8, 9, 11],
+						"specialFeatures": [],
+						"name": "Advertising based on limited data, personalised content, advertising and content measurement, and audience research",
+						"description": "Advertising can be presented based on limited data. Content can be personalised based on your profile. Your activity on this service can be used to build or improve a profile about you for personalised content. Advertising and content performance can be measured. Reports can be generated based on your activity and those of others."
+					},
+					"33": {
+						"id": 33,
+						"purposes": [2, 5, 6, 7, 8, 9, 10, 11],
+						"specialFeatures": [],
+						"name": "Advertising based on limited data, personalised content, advertising and content measurement, audience research, and services development",
+						"description": "Advertising can be presented based on limited data. Content can be personalised based on your profile. Your activity on this service can be used to build or improve a profile about you for personalised content. Advertising and content performance can be measured. Reports can be generated based on your activity and those of others. Your activity on this service can help develop and improve products and services."
+					},
+					"34": {
+						"id": 34,
+						"purposes": [2, 5, 6, 8, 9, 11],
+						"specialFeatures": [],
+						"name": "Advertising based on limited data, personalised content, content measurement, and audience research",
+						"description": "Advertising can be presented based on limited data. Content can be personalised based on your profile. Your activity on this service can be used to build or improve a profile about you for personalised content. Advertising and content performance can be measured. Reports can be generated based on your activity and those of others."
+					},
+					"35": {
+						"id": 35,
+						"purposes": [2, 5, 6, 8, 9, 10, 11],
+						"specialFeatures": [],
+						"name": "Advertising based on limited data, personalised content, content measurement, audience research and services development",
+						"description": "Advertising can be presented based on limited data. Content can be personalised based on your profile. Your activity on this service can be used to build or improve a profile about you for personalised content. Content performance can be measured. Reports can be generated based on your activity and those of others. Your activity on this service can help develop and improve products and services."
+					},
+					"36": {
+						"id": 36,
+						"purposes": [2, 5, 6, 7, 11],
+						"specialFeatures": [],
+						"name": "Advertising based on limited data, personalised content, and advertising measurement",
+						"description": "Advertising can be presented based on limited data. Content can be personalised based on your profile. Your activity on this service can be used to build or improve a profile about you for personalised content. Advertising performance can be measured."
+					},
+					"37": {
+						"id": 37,
+						"purposes": [2, 5, 6, 7, 10, 11],
+						"specialFeatures": [],
+						"name": "Advertising based on limited data, personalised content, advertising measurement, and services development",
+						"description": "Advertising can be presented based on limited data. Content can be personalised based on your profile. Your activity on this service can be used to build or improve a profile about you for personalised content. Advertising performance can be measured. Your activity on this service can help develop and improve products and services."
+					},
+					"38": {
+						"id": 38,
+						"purposes": [2, 3, 4, 7, 10],
+						"specialFeatures": [],
+						"name": "Personalised advertising, advertising measurement, and services development",
+						"description": "Advertising can be personalised based on your profile.Your activity on this service can be used to build or improve a profile about you for personalised advertising. Advertising performance can be measured. Your activity on this service can help develop and improve products and services."
+					},
+					"39": {
+						"id": 39,
+						"purposes": [2, 3, 4, 7, 9, 10],
+						"specialFeatures": [],
+						"name": "Personalised advertising, advertising measurement, audience research and services development",
+						"description": "Advertising can be personalised based on your profile. Your activity on this service can be used to build or improve a profile about you for personalised advertising. Advertising performance can be measured. Reports can be generated based on your activity and those of others. Your activity on this service can help develop and improve products and services."
+					},
+					"40": {
+						"id": 40,
+						"purposes": [2, 3, 4, 7, 8, 9, 10],
+						"specialFeatures": [],
+						"name": "Personalised advertising, advertising and content measurement, audience research and services development",
+						"description": "Advertising can be personalised based on your profile.Your activity on this service can be used to build or improve a profile about you for personalised advertising. Advertising and content performance can be measured. Reports can be generated based on your activity and those of others. Your activity on this service can help develop and improve products and services."
+					},
+					"41": {
+						"id": 41,
+						"purposes": [2, 3, 4, 6, 7, 8, 9, 10, 11],
+						"specialFeatures": [],
+						"name": "Personalised advertising, selection of personalised content, advertising and content measurement, audience research and services development",
+						"description": "Advertising and content can be personalised based on your profile. Your activity on this service can be used to build or improve a profile about you for personalised advertising. Advertising and content performance can be measured. Reports can be generated based on your activity and those of others. Your activity on this service can help develop and improve products and services."
+					},
+					"42": {
+						"id": 42,
+						"purposes": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+						"specialFeatures": [],
+						"name": "Personalised advertising and content, advertising and content measurement, audience research and services development",
+						"description": "Advertising and content can be personalised based on your profile. Your activity on this service can be used to build or improve a profile about you for personalised advertising and content. Advertising and content performance can be measured. Reports can be generated based on your activity and those of others. Your activity on this service can help develop and improve products and services."
+					},
+					"43": {
+						"id": 43,
+						"purposes": [8, 11],
+						"specialFeatures": [],
+						"name": "Content based on limited data and content measurement",
+						"description": "Content can be selected based on limited data. Content performance can be measured."
+					},
+					"44": {
+						"id": 44,
+						"purposes": [5, 6, 11],
+						"specialFeatures": [],
+						"name": "Personalised content",
+						"description": "Content can be personalised based on your profile. Your activity on this service can be used to build or improve a profile about you for personalised content."
+					},
+					"45": {
+						"id": 45,
+						"purposes": [2, 7, 9, 10],
+						"specialFeatures": [],
+						"name": "Advertising based on limited data, advertising measurement, audience research and services development",
+						"description": "Advertising can be presented based on limited data. Advertising performance can be measured. Reports can be generated based on your activity and those of others.Your activity on this service can help develop and improve products and services."
+					}
+				},
+				"dataCategories": {
+					"1": {
+						"id": 1,
+						"name": "IP addresses",
+						"description": "Your IP address is a number assigned by your Internet Service Provider to any Internet connection. It is not always specific to your device and is not always a stable identifier.It is used to route information on the Internet and display online content (including ads) on your connected device."
+					},
+					"2": {
+						"id": 2,
+						"name": "Device characteristics",
+						"description": "Technical characteristics about the device you are using that are not unique to you, such as the language, the time zone or the operating system."
+					},
+					"3": {
+						"id": 3,
+						"name": "Device identifiers",
+						"description": "A device identifier is a unique string of characters assigned to your device or browser by means of a cookie or other storage technologies. It may be created or accessed to recognise your device e.g. across web pages from the same site or across multiple sites or apps."
+					},
+					"4": {
+						"id": 4,
+						"name": "Probabilistic identifiers",
+						"description": "A probabilistic identifier can be created by combining characteristics associated with your device (the type of browser or operating system used) and the IP address of the Internet connection. If you give your agreement, additional characteristics (e.g. the installed font or screen resolution) can also be combined to improve precision of the probabilistic identifier.Such an identifier is considered \"probabilistic\" because several devices can share the same characteristics and Internet connection. It may be used to recognise your device across e.g. web pages from the same site or across multiple sites or apps."
+					},
+					"5": {
+						"id": 5,
+						"name": "Authentication-derived identifiers",
+						"description": "Where an identifier is created on the basis of authentication data, such as contact details associated with online accounts you have created on websites or apps (e.g. e-mail address, phone number) or customer identifiers (e.g. identifier provided by your telecom operator), that identifier may be used to recognise you across websites, apps and devices when you are logged-in with the same contact details."
+					},
+					"6": {
+						"id": 6,
+						"name": "Browsing and interaction data",
+						"description": "Your online activity such as the websites you visit, apps you are using, the content you search for on this service,  or your interactions with content or ads, such as the number of times you have seen a specific content or ad or whether you clicked on it."
+					},
+					"7": {
+						"id": 7,
+						"name": "User-provided data",
+						"description": "The information you may have provided by way of declaration via a form (e.g. feedback, a comment) or when creating an account (e.g. your age, your occupation)."
+					},
+					"8": {
+						"id": 8,
+						"name": "Non-precise location data",
+						"description": "An approximation of your location, expressed as an area with a radius of at least 500 meters. Your approximate location can be deduced from e.g. the IP address of your connection."
+					},
+					"9": {
+						"id": 9,
+						"name": "Precise location data",
+						"description": "Your precise location within a radius of less than 500 meters based on your GPS coordinates. It may be used only with your acceptance."
+					},
+					"10": {
+						"id": 10,
+						"name": "Users’ profiles",
+						"description": "Certain characteristics (e.g. your possible interests, your purchase intentions, your consumer profile) may be inferred or modeled from your previous online activity (e.g. the content you viewed or the service you used, your time spent on various online content and services) or the information you have provided (e.g. your age, your occupation)."
+					},
+					"11": {
+						"id": 11,
+						"name": "Privacy choices",
+						"description": "Your preferences regarding the processing of your data, based on the information you have received."
+					}
+				},
+				"vendors": {
+					"1": {
+						"id": 1,
+						"name": "Exponential Interactive, Inc d/b/a VDX.tv",
+						"purposes": [1, 2, 3, 4, 7, 8, 9, 10],
+						"legIntPurposes": [],
+						"flexiblePurposes": [2, 7, 8, 9, 10],
+						"specialPurposes": [1, 2],
+						"features": [1, 2, 3],
+						"specialFeatures": [],
+						"cookieMaxAgeSeconds": 7776000,
+						"usesCookies": true,
+						"cookieRefresh": true,
+						"urls": [
+							{
+								"langId": "en",
+								"privacy": "https://vdx.tv/privacy/",
+								"legIntClaim": "https://www.exponential.com/wp-content/uploads/2018/04/Balancing-Assessment-for-Legitimate-Interest-Publishers-v2.pdf"
+							}
+						],
+						"usesNonCookieAccess": false,
+						"dataRetention": {
+							"stdRetention": 397,
+							"purposes": {},
+							"specialPurposes": {}
+						},
+						"dataDeclaration": [1, 3, 4, 6, 8, 10, 11],
+						"deviceStorageDisclosureUrl": "https://tribalfusion.com/compliance_devicestorage_hosting.json"
+					},
+					"2": {
+						"id": 2,
+						"name": "Captify Technologies Limited",
+						"purposes": [1, 2, 3, 4, 7, 9, 10],
+						"legIntPurposes": [],
+						"flexiblePurposes": [],
+						"specialPurposes": [1, 2, 3],
+						"features": [2],
+						"specialFeatures": [2],
+						"cookieMaxAgeSeconds": 31536000,
+						"usesCookies": true,
+						"cookieRefresh": true,
+						"urls": [
+							{
+								"langId": "en",
+								"privacy": "https://www.captifytechnologies.com/privacy-notice/",
+								"legIntClaim": "https://www.captifytechnologies.com/privacy-notice/"
+							}
+						],
+						"usesNonCookieAccess": true,
+						"dataRetention": {
+							"stdRetention": 365,
+							"purposes": {},
+							"specialPurposes": {}
+						},
+						"dataDeclaration": [1, 2, 4, 6, 11],
+						"deviceStorageDisclosureUrl": "https://static.dp.cpx.to/gvl/deviceStorageDisclosure.json"
+					},
+					"4": {
+						"id": 4,
+						"name": "Roq.ad GmbH",
+						"purposes": [1, 2, 3, 4, 7, 9, 10],
+						"legIntPurposes": [],
+						"flexiblePurposes": [],
+						"specialPurposes": [3],
+						"features": [1, 2, 3],
+						"specialFeatures": [1],
+						"cookieMaxAgeSeconds": 31536000,
+						"usesCookies": true,
+						"cookieRefresh": true,
+						"urls": [
+							{
+								"langId": "en",
+								"privacy": "https://www.roq.ad/privacy-policy-roqad/",
+								"legIntClaim": "https://www.roq.ad/privacy-policy-roqad/"
+							}
+						],
+						"usesNonCookieAccess": false,
+						"dataRetention": {
+							"stdRetention": 365,
+							"purposes": {},
+							"specialPurposes": {}
+						},
+						"dataDeclaration": [1, 2, 3, 4, 5, 6, 8, 9, 11],
+						"deviceStorageDisclosureUrl": "https://roqad-public.s3.eu-central-1.amazonaws.com/tcf-disclosure.json"
+					},
+					"6": {
+						"id": 6,
+						"name": "AdSpirit GmbH",
+						"purposes": [1, 2, 3, 4, 7, 9],
+						"legIntPurposes": [],
+						"flexiblePurposes": [],
+						"specialPurposes": [1, 2],
+						"features": [3],
+						"specialFeatures": [],
+						"overflow": {
+							"httpGetLimit": 32
+						},
+						"cookieMaxAgeSeconds": 2592000,
+						"usesCookies": true,
+						"cookieRefresh": true,
+						"urls": [
+							{
+								"langId": "en",
+								"privacy": "https://help.adspirit.de/privacy.php?lang=1",
+								"legIntClaim": "https://help.adspirit.de/privacy.php?lang=1"
+							},
+							{
+								"langId": "de",
+								"privacy": "https://help.adspirit.de/privacy.php",
+								"legIntClaim": "https://help.adspirit.de/privacy.php"
+							}
+						],
+						"usesNonCookieAccess": false,
+						"dataRetention": {
+							"stdRetention": 60,
+							"purposes": {
+								"2": 14,
+								"7": 14
+							},
+							"specialPurposes": {}
+						},
+						"dataDeclaration": [1, 2, 3, 4, 6, 8, 10, 11],
+						"deviceStorageDisclosureUrl": "https://help.adspirit.de/deviceStorage.json"
+					},
+					"8": {
+						"id": 8,
+						"name": "Emerse Sverige AB",
+						"purposes": [1, 3, 4],
+						"legIntPurposes": [2, 7, 8, 9],
+						"flexiblePurposes": [2, 9],
+						"specialPurposes": [1, 2, 3],
+						"features": [1, 2],
+						"specialFeatures": [],
+						"deletedDate": "2025-05-13T15:30:44.66Z",
+						"cookieMaxAgeSeconds": 2592000,
+						"usesCookies": true,
+						"cookieRefresh": false,
+						"urls": [
+							{
+								"langId": "en",
+								"privacy": "https://www.emerse.com/privacy-policy/",
+								"legIntClaim": "https://www.emerse.com/privacy-policy/"
+							}
+						],
+						"usesNonCookieAccess": false,
+						"dataRetention": {
+							"stdRetention": 0,
+							"purposes": {},
+							"specialPurposes": {}
+						},
+						"dataDeclaration": [1, 2, 6, 8, 11],
+						"deviceStorageDisclosureUrl": "https://s3.eu-west-1.amazonaws.com/cors.emerse.com/gdpr-tcf.json"
+					},
+					"9": {
+						"id": 9,
+						"name": "AdMaxim Limited",
+						"purposes": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+						"legIntPurposes": [],
+						"flexiblePurposes": [],
+						"specialPurposes": [],
+						"features": [1, 2, 3],
+						"specialFeatures": [1, 2],
+						"cookieMaxAgeSeconds": 2592000,
+						"usesCookies": true,
+						"cookieRefresh": true,
+						"urls": [
+							{
+								"langId": "en",
+								"privacy": "https://www.admaxim.com/admaxim-privacy-policy/",
+								"legIntClaim": ""
+							}
+						],
+						"usesNonCookieAccess": false,
+						"dataRetention": {
+							"stdRetention": 90,
+							"purposes": {},
+							"specialPurposes": {}
+						},
+						"dataDeclaration": [1, 2, 3, 4, 6, 9, 11],
+						"deviceStorageDisclosureUrl": "https://designmaxim.com/tcf.json"
+					},
+					"10": {
+						"id": 10,
+						"name": "Index Exchange Inc. ",
+						"purposes": [1, 2, 4, 7, 10],
+						"legIntPurposes": [],
+						"flexiblePurposes": [2, 7, 10],
+						"specialPurposes": [1, 2, 3],
+						"features": [1, 3],
+						"specialFeatures": [1],
+						"cookieMaxAgeSeconds": 31536000,
+						"usesCookies": true,
+						"cookieRefresh": true,
+						"urls": [
+							{
+								"langId": "en",
+								"privacy": "https://www.indexexchange.com/privacy",
+								"legIntClaim": "https://www.indexexchange.com/privacy/exchange-platform-privacy-policy/#section-3"
+							}
+						],
+						"usesNonCookieAccess": true,
+						"dataRetention": {
+							"stdRetention": 0,
+							"purposes": {
+								"2": 90,
+								"4": 183,
+								"7": 90,
+								"10": 30
+							},
+							"specialPurposes": {}
+						},
+						"dataDeclaration": [1, 2, 3, 4, 8, 9, 11],
+						"deviceStorageDisclosureUrl": "https://cdn.indexexchange.com/device_storage_disclosure.json"
+					},
+					"11": {
+						"id": 11,
+						"name": "Quantcast",
+						"purposes": [1, 2, 3, 4],
+						"legIntPurposes": [7, 8, 9, 10],
+						"flexiblePurposes": [7, 8, 9, 10],
+						"specialPurposes": [1, 2, 3],
+						"features": [1, 2, 3],
+						"specialFeatures": [2],
+						"cookieMaxAgeSeconds": 157680000,
+						"usesCookies": true,
+						"cookieRefresh": true,
+						"urls": [
+							{
+								"langId": "en",
+								"privacy": "https://www.quantcast.com/privacy",
+								"legIntClaim": "https://www.quantcast.com/privacy"
+							}
+						],
+						"usesNonCookieAccess": true,
+						"dataRetention": {
+							"stdRetention": 395,
+							"purposes": {},
+							"specialPurposes": {}
+						},
+						"dataDeclaration": [1, 2, 3, 4, 5, 6, 7, 8, 10, 11],
+						"deviceStorageDisclosureUrl": "https://www.quantcast.com/.well-known/devicestorage.json"
+					},
+					"12": {
+						"id": 12,
+						"name": "BeeswaxIO Corporation",
+						"purposes": [1, 2, 3, 4, 7],
+						"legIntPurposes": [],
+						"flexiblePurposes": [],
+						"specialPurposes": [1, 2],
+						"features": [1, 3],
+						"specialFeatures": [1],
+						"cookieMaxAgeSeconds": 34128000,
+						"usesCookies": true,
+						"cookieRefresh": true,
+						"urls": [
+							{
+								"langId": "en",
+								"privacy": "https://www.beeswax.com/privacy/",
+								"legIntClaim": "https://www.beeswax.com/privacy/"
+							}
+						],
+						"usesNonCookieAccess": true,
+						"dataRetention": {
+							"stdRetention": 397,
+							"purposes": {
+								"2": 30,
+								"4": 0
+							},
+							"specialPurposes": {}
+						},
+						"dataDeclaration": [1, 2, 3, 4, 6, 8, 9, 11],
+						"deviceStorageDisclosureUrl": "https://beeswax.com/devicedisclosure.json"
+					},
+					"13": {
+						"id": 13,
+						"name": "Sovrn, Inc.",
+						"purposes": [1, 2, 3, 5, 7, 9, 10],
+						"legIntPurposes": [],
+						"flexiblePurposes": [],
+						"specialPurposes": [1, 2],
+						"features": [1, 2, 3],
+						"specialFeatures": [],
+						"cookieMaxAgeSeconds": 31536000,
+						"usesCookies": true,
+						"cookieRefresh": true,
+						"urls": [
+							{
+								"langId": "en",
+								"privacy": "https://www.sovrn.com/privacy-policy/",
+								"legIntClaim": "https://www.sovrn.com/privacy-policy/"
+							}
+						],
+						"usesNonCookieAccess": true,
+						"dataRetention": {
+							"stdRetention": 180,
+							"purposes": {},
+							"specialPurposes": {}
+						},
+						"dataDeclaration": [1, 2, 3, 6, 8, 10, 11],
+						"deviceStorageDisclosureUrl": "https://cdn.sovrn.com/tcf-cookie-disclosure/disclosure.json"
+					},
+					"14": {
+						"id": 14,
+						"name": "Adkernel LLC",
+						"purposes": [1, 3, 4, 9, 10],
+						"legIntPurposes": [2, 7],
+						"flexiblePurposes": [],
+						"specialPurposes": [1, 2, 3],
+						"features": [3],
+						"specialFeatures": [1, 2],
+						"cookieMaxAgeSeconds": 15552000,
+						"usesCookies": true,
+						"cookieRefresh": true,
+						"urls": [
+							{
+								"langId": "en",
+								"privacy": "https://adkernel.com/privacy-policy/",
+								"legIntClaim": "https://adkernel.com/privacy-policy/"
+							}
+						],
+						"usesNonCookieAccess": false,
+						"dataRetention": {
+							"stdRetention": 180,
+							"purposes": {},
+							"specialPurposes": {}
+						},
+						"dataDeclaration": [1, 3, 8, 9, 10],
+						"deviceStorageDisclosureUrl": "https://static.adkernel.com/deviceStorage.json"
+					},
+					"15": {
+						"id": 15,
+						"name": "Adikteev",
+						"purposes": [1, 2, 3, 4, 5, 6, 9, 10, 11],
+						"legIntPurposes": [7, 8],
+						"flexiblePurposes": [],
+						"specialPurposes": [1, 2, 3],
+						"features": [2],
+						"specialFeatures": [],
+						"cookieMaxAgeSeconds": null,
+						"usesCookies": false,
+						"cookieRefresh": false,
+						"urls": [
+							{
+								"langId": "en",
+								"privacy": "https://www.adikteev.com/privacy",
+								"legIntClaim": "https://www.adikteev.com/privacy-policy-app-users"
+							}
+						],
+						"usesNonCookieAccess": true,
+						"dataRetention": {
+							"stdRetention": 730,
+							"purposes": {},
+							"specialPurposes": {
+								"3": 90
+							}
+						},
+						"dataDeclaration": [1, 2, 3, 4, 5, 8, 10],
+						"deviceStorageDisclosureUrl": "https://tcf-registrationprocess.adikteev.com/deviceStorageDisclosureURL.json"
+					},
+					"16": {
+						"id": 16,
+						"name": "RTB House S.A.",
+						"purposes": [1, 2, 3, 4, 7, 9, 10],
+						"legIntPurposes": [],
+						"flexiblePurposes": [],
+						"specialPurposes": [1, 2, 3],
+						"features": [1],
+						"specialFeatures": [],
+						"cookieMaxAgeSeconds": 31536000,
+						"usesCookies": true,
+						"cookieRefresh": true,
+						"urls": [
+							{
+								"langId": "en",
+								"privacy": "https://www.rtbhouse.com/privacy-center",
+								"legIntClaim": "https://www.rtbhouse.com/legitimate_interest_assessments_tcf"
+							},
+							{
+								"langId": "fr",
+								"privacy": "https://www.rtbhouse.com/privacy-center/politique-de-confidentialite-des-services",
+								"legIntClaim": "https://www.rtbhouse.com/legitimate_interest_assessments_tcf"
+							}
+						],
+						"usesNonCookieAccess": true,
+						"dataRetention": {
+							"stdRetention": 565,
+							"purposes": {},
+							"specialPurposes": {}
+						},
+						"dataDeclaration": [1, 2, 3, 6, 8, 10, 11],
+						"deviceStorageDisclosureUrl": "https://www.rtbhouse.com/DeviceStorage.json"
+					},
+					"20": {
+						"id": 20,
+						"name": "N.Rich Technologies Inc.",
+						"purposes": [1, 3, 4],
+						"legIntPurposes": [2, 7, 8, 9, 10],
+						"flexiblePurposes": [2, 7, 8, 9, 10],
+						"specialPurposes": [1, 2, 3],
+						"features": [1, 2],
+						"specialFeatures": [],
+						"cookieMaxAgeSeconds": 46656000,
+						"usesCookies": true,
+						"cookieRefresh": true,
+						"urls": [
+							{
+								"langId": "en",
+								"privacy": "https://nrich.io/privacy-notice",
+								"legIntClaim": "https://nrich.io/gdpr-legitimate-interest-assessment-sheet"
+							}
+						],
+						"usesNonCookieAccess": false,
+						"dataRetention": {
+							"stdRetention": 540,
+							"purposes": {},
+							"specialPurposes": {}
+						},
+						"dataDeclaration": [1, 2, 3, 5, 6, 7, 8, 10, 11],
+						"deviceStorageDisclosureUrl": "https://privacy.nrich.ai/.well-known/deviceStorage.json"
+					},
+					"21": {
+						"id": 21,
+						"name": "The UK Trade Desk Ltd",
+						"purposes": [1, 3, 4],
+						"legIntPurposes": [2, 7, 10],
+						"flexiblePurposes": [2, 7, 10],
+						"specialPurposes": [1, 2, 3],
+						"features": [1, 2, 3],
+						"specialFeatures": [1],
+						"cookieMaxAgeSeconds": 31536000,
+						"usesCookies": true,
+						"cookieRefresh": true,
+						"urls": [
+							{
+								"langId": "en",
+								"privacy": "https://www.thetradedesk.com/us/privacy",
+								"legIntClaim": "https://www.thetradedesk.com/us/privacy"
+							}
+						],
+						"usesNonCookieAccess": true,
+						"dataRetention": {
+							"stdRetention": 99,
+							"purposes": {
+								"2": 365,
+								"4": 132
+							},
+							"specialPurposes": {}
+						},
+						"dataDeclaration": [1, 2, 3, 4, 5, 6, 8, 9, 10, 11],
+						"deviceStorageDisclosureUrl": "https://ttd-misc-public-assets.s3.us-west-2.amazonaws.com/deviceStorageDisclosureURL.json"
+					},
+					"22": {
+						"id": 22,
+						"name": "admetrics GmbH",
+						"purposes": [7, 8],
+						"legIntPurposes": [],
+						"flexiblePurposes": [],
+						"specialPurposes": [],
+						"features": [2],
+						"specialFeatures": [],
+						"deletedDate": "2024-06-11T00:00:00Z",
+						"cookieMaxAgeSeconds": null,
+						"usesCookies": false,
+						"cookieRefresh": false,
+						"urls": [
+							{
+								"langId": "en",
+								"privacy": "https://admetrics.io/en/privacy_policy/"
+							}
+						],
+						"usesNonCookieAccess": false,
+						"dataRetention": {
+							"stdRetention": 365,
+							"purposes": {},
+							"specialPurposes": {}
+						},
+						"dataDeclaration": [1, 2, 6, 11],
+						"deviceStorageDisclosureUrl": "https://www.admetrics.io/tcf/disclosure.json"
+					},
+					"755": {
+						"id": 755,
+						"name": "Google Advertising Products",
+						"purposes": [1, 3, 4],
+						"legIntPurposes": [2, 7, 9, 10],
+						"flexiblePurposes": [2, 7, 9, 10],
+						"specialPurposes": [1, 2, 3],
+						"features": [1, 2, 3],
+						"specialFeatures": [],
+						"cookieMaxAgeSeconds": 34190000,
+						"usesCookies": true,
+						"cookieRefresh": false,
+						"urls": [
+							{
+								"langId": "en",
+								"privacy": "https://business.safety.google/privacy/",
+								"legIntClaim": "https://policies.google.com/privacy#europeanrequirements"
+							},
+							{
+								"langId": "bg",
+								"privacy": "https://business.safety.google/intl/bg/privacy/",
+								"legIntClaim": "https://policies.google.com/privacy?hl=bg#europeanrequirements"
+							},
+							{
+								"langId": "cs",
+								"privacy": "https://business.safety.google/intl/cs/privacy/",
+								"legIntClaim": "https://policies.google.com/privacy?hl=cs#europeanrequirements"
+							},
+							{
+								"langId": "da",
+								"privacy": "https://business.safety.google/intl/da/privacy/",
+								"legIntClaim": "https://policies.google.com/privacy?hl=da#europeanrequirements"
+							},
+							{
+								"langId": "de",
+								"privacy": "https://business.safety.google/intl/de/privacy/",
+								"legIntClaim": "https://policies.google.com/privacy?hl=de#europeanrequirements"
+							},
+							{
+								"langId": "el",
+								"privacy": "https://business.safety.google/intl/el/privacy/",
+								"legIntClaim": "https://policies.google.com/privacy?hl=el#europeanrequirements"
+							},
+							{
+								"langId": "es",
+								"privacy": "https://business.safety.google/intl/es/privacy/",
+								"legIntClaim": "https://policies.google.com/privacy?hl=es#europeanrequirements"
+							},
+							{
+								"langId": "et",
+								"privacy": "https://business.safety.google/intl/et/privacy/",
+								"legIntClaim": "https://policies.google.com/privacy?hl=et#europeanrequirements"
+							},
+							{
+								"langId": "fi",
+								"privacy": "https://business.safety.google/intl/fi/privacy/",
+								"legIntClaim": "https://policies.google.com/privacy?hl=fi#europeanrequirements"
+							},
+							{
+								"langId": "fr",
+								"privacy": "https://business.safety.google/intl/fr/privacy/",
+								"legIntClaim": "https://policies.google.com/privacy?hl=fr#europeanrequirements"
+							},
+							{
+								"langId": "hr",
+								"privacy": "https://business.safety.google/intl/hr/privacy/",
+								"legIntClaim": "https://policies.google.com/privacy?hl=hr#europeanrequirements"
+							},
+							{
+								"langId": "hu",
+								"privacy": "https://business.safety.google/intl/hu/privacy/",
+								"legIntClaim": "https://policies.google.com/privacy?hl=hu#europeanrequirements"
+							},
+							{
+								"langId": "it",
+								"privacy": "https://business.safety.google/intl/it/privacy/",
+								"legIntClaim": "https://policies.google.com/privacy?hl=it#europeanrequirements"
+							},
+							{
+								"langId": "lt",
+								"privacy": "https://business.safety.google/intl/lt/privacy/",
+								"legIntClaim": "https://policies.google.com/privacy?hl=lt#europeanrequirements"
+							},
+							{
+								"langId": "lv",
+								"privacy": "https://business.safety.google/intl/lv/privacy/",
+								"legIntClaim": "https://policies.google.com/privacy?hl=lv#europeanrequirements"
+							},
+							{
+								"langId": "nl",
+								"privacy": "https://business.safety.google/intl/nl/privacy/",
+								"legIntClaim": "https://policies.google.com/privacy?hl=nl#europeanrequirements"
+							},
+							{
+								"langId": "no",
+								"privacy": "https://business.safety.google/intl/no/privacy/",
+								"legIntClaim": "https://policies.google.com/privacy?hl=no#europeanrequirements"
+							},
+							{
+								"langId": "pl",
+								"privacy": "https://business.safety.google/intl/pl/privacy/",
+								"legIntClaim": "https://policies.google.com/privacy?hl=pl#europeanrequirements"
+							},
+							{
+								"langId": "pt",
+								"privacy": "https://business.safety.google/intl/pt-PT/privacy/",
+								"legIntClaim": "https://policies.google.com/privacy?hl=pt-PT#europeanrequirements"
+							},
+							{
+								"langId": "ro",
+								"privacy": "https://business.safety.google/intl/ro/privacy/",
+								"legIntClaim": "https://policies.google.com/privacy?hl=ro#europeanrequirements"
+							},
+							{
+								"langId": "sk",
+								"privacy": "https://business.safety.google/intl/sk/privacy/",
+								"legIntClaim": "https://policies.google.com/privacy?hl=sk#europeanrequirements"
+							},
+							{
+								"langId": "sl",
+								"privacy": "https://business.safety.google/intl/sl/privacy/",
+								"legIntClaim": "https://policies.google.com/privacy?hl=sl#europeanrequirements"
+							},
+							{
+								"langId": "sv",
+								"privacy": "https://business.safety.google/intl/sv/privacy/",
+								"legIntClaim": "https://policies.google.com/privacy?hl=sv#europeanrequirements"
+							}
+						],
+						"usesNonCookieAccess": true,
+						"dataRetention": {
+							"stdRetention": 548,
+							"purposes": {
+								"3": 180,
+								"4": 180
+							},
+							"specialPurposes": {
+								"1": 1096
+							}
+						},
+						"dataDeclaration": [1, 2, 3, 4, 5, 6, 7, 8, 10, 11],
+						"deviceStorageDisclosureUrl": "https://www.gstatic.com/iabtcf/deviceStorageDisclosure.json"
+					}
+				}
+			},
+			"id": "official-tcf24-gvl182",
+			"purposeConsents": [1, 2, 3, 4, 7, 8, 9, 10],
+			"purposeLegitimateInterests": [2, 7, 8, 9, 10],
+			"vendorConsents": [1, 9, 755],
+			"vendorLegitimateInterests": [9, 755],
+			"tcString": "CQszE4AQszE4AA1AHBENC2FgAPPAAEPAAAwIF5wAwAAgAJAXmBecAEBeYAAA.IF5wBoAAgAEAAQAA0ACQAQgAoACoC8wA.YAAAAAAAAAAA"
+		},
+		{
+			"id": "gap-range",
+			"restrictions": [
+				{
+					"purposeId": 2,
+					"type": 0,
+					"vendorIds": [1, 5]
+				}
+			],
+			"tcString": "CQszE4AQszE4AA1AHBENAqFgAAAAAAAAAAwIAAAAAAAhAAQAAQACgAAA.IAUIkAAAABAA.YAAAAAAAAAAA"
+		},
+		{
+			"createdDaysAgo": 3,
+			"id": "multi-day",
+			"purposeConsents": [1, 2],
+			"purposeLegitimateInterests": [7],
+			"vendorConsents": [1, 5, 40],
+			"vendorLegitimateInterests": [8, 40],
+			"tcString": "CQszE4AQszE4AA1AHBENAqFgAMAAAAIAAAwIAUIgAAAABACgAgAAAAIAAAAA.IAUIkAAAABAA.YAAAAAAAAAAA"
+		},
+		{
+			"createdDaysAgo": 365,
+			"gvl": {
+				"features": {},
+				"gvlSpecificationVersion": 3,
+				"lastUpdated": "2025-09-17T00:00:00Z",
+				"purposes": {
+					"1": {
+						"description": "P1",
+						"id": 1,
+						"name": "P1"
+					},
+					"2": {
+						"description": "P2",
+						"id": 2,
+						"name": "P2"
+					},
+					"7": {
+						"description": "P7",
+						"id": 7,
+						"name": "P7"
+					}
+				},
+				"specialFeatures": {
+					"1": {
+						"description": "P1",
+						"id": 1,
+						"name": "P1"
+					}
+				},
+				"specialPurposes": {},
+				"stacks": {},
+				"tcfPolicyVersion": 5,
+				"vendorListVersion": 318,
+				"vendors": {
+					"1": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1,
+						"legIntPurposes": [],
+						"name": "V1",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"3": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [],
+						"id": 3,
+						"legIntPurposes": [],
+						"name": "V3",
+						"policyUrl": "https://v.example",
+						"purposes": [2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false,
+						"deletedDate": "2025-01-01T00:00:00Z"
+					},
+					"5": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 5,
+						"legIntPurposes": [],
+						"name": "V5",
+						"policyUrl": "https://v.example",
+						"purposes": [2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"8": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 8,
+						"legIntPurposes": [2, 7],
+						"name": "V8",
+						"policyUrl": "https://v.example",
+						"purposes": [],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"40": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [],
+						"id": 40,
+						"legIntPurposes": [7],
+						"name": "V40",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"100": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 100,
+						"legIntPurposes": [2, 7],
+						"name": "V100",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"113": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 113,
+						"legIntPurposes": [7],
+						"name": "V113",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"126": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 126,
+						"legIntPurposes": [2, 7],
+						"name": "V126",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"139": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 139,
+						"legIntPurposes": [7],
+						"name": "V139",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"152": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 152,
+						"legIntPurposes": [2, 7],
+						"name": "V152",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"165": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 165,
+						"legIntPurposes": [7],
+						"name": "V165",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"178": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 178,
+						"legIntPurposes": [2, 7],
+						"name": "V178",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"191": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 191,
+						"legIntPurposes": [7],
+						"name": "V191",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"204": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 204,
+						"legIntPurposes": [2, 7],
+						"name": "V204",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"217": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 217,
+						"legIntPurposes": [7],
+						"name": "V217",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"230": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 230,
+						"legIntPurposes": [2, 7],
+						"name": "V230",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"243": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 243,
+						"legIntPurposes": [7],
+						"name": "V243",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"256": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 256,
+						"legIntPurposes": [2, 7],
+						"name": "V256",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"269": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 269,
+						"legIntPurposes": [7],
+						"name": "V269",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"282": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 282,
+						"legIntPurposes": [2, 7],
+						"name": "V282",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"295": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 295,
+						"legIntPurposes": [7],
+						"name": "V295",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"308": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 308,
+						"legIntPurposes": [2, 7],
+						"name": "V308",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"321": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 321,
+						"legIntPurposes": [7],
+						"name": "V321",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"334": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 334,
+						"legIntPurposes": [2, 7],
+						"name": "V334",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"347": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 347,
+						"legIntPurposes": [7],
+						"name": "V347",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"360": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 360,
+						"legIntPurposes": [2, 7],
+						"name": "V360",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"373": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 373,
+						"legIntPurposes": [7],
+						"name": "V373",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"386": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 386,
+						"legIntPurposes": [2, 7],
+						"name": "V386",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"399": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 399,
+						"legIntPurposes": [7],
+						"name": "V399",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"412": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 412,
+						"legIntPurposes": [2, 7],
+						"name": "V412",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"425": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 425,
+						"legIntPurposes": [7],
+						"name": "V425",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"438": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 438,
+						"legIntPurposes": [2, 7],
+						"name": "V438",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"451": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 451,
+						"legIntPurposes": [7],
+						"name": "V451",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"464": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 464,
+						"legIntPurposes": [2, 7],
+						"name": "V464",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"477": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 477,
+						"legIntPurposes": [7],
+						"name": "V477",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"490": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 490,
+						"legIntPurposes": [2, 7],
+						"name": "V490",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"503": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 503,
+						"legIntPurposes": [7],
+						"name": "V503",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"516": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 516,
+						"legIntPurposes": [2, 7],
+						"name": "V516",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"529": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 529,
+						"legIntPurposes": [7],
+						"name": "V529",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"542": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 542,
+						"legIntPurposes": [2, 7],
+						"name": "V542",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"555": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 555,
+						"legIntPurposes": [7],
+						"name": "V555",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"568": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 568,
+						"legIntPurposes": [2, 7],
+						"name": "V568",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"581": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 581,
+						"legIntPurposes": [7],
+						"name": "V581",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"594": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 594,
+						"legIntPurposes": [2, 7],
+						"name": "V594",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"607": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 607,
+						"legIntPurposes": [7],
+						"name": "V607",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"620": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 620,
+						"legIntPurposes": [2, 7],
+						"name": "V620",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"633": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 633,
+						"legIntPurposes": [7],
+						"name": "V633",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"646": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 646,
+						"legIntPurposes": [2, 7],
+						"name": "V646",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"659": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 659,
+						"legIntPurposes": [7],
+						"name": "V659",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"672": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 672,
+						"legIntPurposes": [2, 7],
+						"name": "V672",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"685": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 685,
+						"legIntPurposes": [7],
+						"name": "V685",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"698": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 698,
+						"legIntPurposes": [2, 7],
+						"name": "V698",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"711": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 711,
+						"legIntPurposes": [7],
+						"name": "V711",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"724": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 724,
+						"legIntPurposes": [2, 7],
+						"name": "V724",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"737": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 737,
+						"legIntPurposes": [7],
+						"name": "V737",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"750": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 750,
+						"legIntPurposes": [2, 7],
+						"name": "V750",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"763": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 763,
+						"legIntPurposes": [7],
+						"name": "V763",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"776": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 776,
+						"legIntPurposes": [2, 7],
+						"name": "V776",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"789": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 789,
+						"legIntPurposes": [7],
+						"name": "V789",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"802": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 802,
+						"legIntPurposes": [2, 7],
+						"name": "V802",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"815": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 815,
+						"legIntPurposes": [7],
+						"name": "V815",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"828": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 828,
+						"legIntPurposes": [2, 7],
+						"name": "V828",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"841": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 841,
+						"legIntPurposes": [7],
+						"name": "V841",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"854": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 854,
+						"legIntPurposes": [2, 7],
+						"name": "V854",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"867": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 867,
+						"legIntPurposes": [7],
+						"name": "V867",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"880": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 880,
+						"legIntPurposes": [2, 7],
+						"name": "V880",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"893": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 893,
+						"legIntPurposes": [7],
+						"name": "V893",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"906": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 906,
+						"legIntPurposes": [2, 7],
+						"name": "V906",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"919": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 919,
+						"legIntPurposes": [7],
+						"name": "V919",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"932": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 932,
+						"legIntPurposes": [2, 7],
+						"name": "V932",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"945": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 945,
+						"legIntPurposes": [7],
+						"name": "V945",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"958": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 958,
+						"legIntPurposes": [2, 7],
+						"name": "V958",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"971": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 971,
+						"legIntPurposes": [7],
+						"name": "V971",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"984": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 984,
+						"legIntPurposes": [2, 7],
+						"name": "V984",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"997": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 997,
+						"legIntPurposes": [7],
+						"name": "V997",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1010": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1010,
+						"legIntPurposes": [2, 7],
+						"name": "V1010",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1023": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1023,
+						"legIntPurposes": [7],
+						"name": "V1023",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1036": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1036,
+						"legIntPurposes": [2, 7],
+						"name": "V1036",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1049": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1049,
+						"legIntPurposes": [7],
+						"name": "V1049",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1062": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1062,
+						"legIntPurposes": [2, 7],
+						"name": "V1062",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1075": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1075,
+						"legIntPurposes": [7],
+						"name": "V1075",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1088": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1088,
+						"legIntPurposes": [2, 7],
+						"name": "V1088",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1101": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1101,
+						"legIntPurposes": [7],
+						"name": "V1101",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1114": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1114,
+						"legIntPurposes": [2, 7],
+						"name": "V1114",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1127": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1127,
+						"legIntPurposes": [7],
+						"name": "V1127",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1140": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1140,
+						"legIntPurposes": [2, 7],
+						"name": "V1140",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1153": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1153,
+						"legIntPurposes": [7],
+						"name": "V1153",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1166": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1166,
+						"legIntPurposes": [2, 7],
+						"name": "V1166",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1179": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1179,
+						"legIntPurposes": [7],
+						"name": "V1179",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1192": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1192,
+						"legIntPurposes": [2, 7],
+						"name": "V1192",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1205": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1205,
+						"legIntPurposes": [7],
+						"name": "V1205",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1218": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1218,
+						"legIntPurposes": [2, 7],
+						"name": "V1218",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1231": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1231,
+						"legIntPurposes": [7],
+						"name": "V1231",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1244": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1244,
+						"legIntPurposes": [2, 7],
+						"name": "V1244",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1257": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1257,
+						"legIntPurposes": [7],
+						"name": "V1257",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1270": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1270,
+						"legIntPurposes": [2, 7],
+						"name": "V1270",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1283": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1283,
+						"legIntPurposes": [7],
+						"name": "V1283",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1296": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1296,
+						"legIntPurposes": [2, 7],
+						"name": "V1296",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1309": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1309,
+						"legIntPurposes": [7],
+						"name": "V1309",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1322": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1322,
+						"legIntPurposes": [2, 7],
+						"name": "V1322",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1335": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1335,
+						"legIntPurposes": [7],
+						"name": "V1335",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1348": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1348,
+						"legIntPurposes": [2, 7],
+						"name": "V1348",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1361": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1361,
+						"legIntPurposes": [7],
+						"name": "V1361",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1374": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1374,
+						"legIntPurposes": [2, 7],
+						"name": "V1374",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1387": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1387,
+						"legIntPurposes": [7],
+						"name": "V1387",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1400": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1400,
+						"legIntPurposes": [2, 7],
+						"name": "V1400",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1413": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1413,
+						"legIntPurposes": [7],
+						"name": "V1413",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1426": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1426,
+						"legIntPurposes": [2, 7],
+						"name": "V1426",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1439": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1439,
+						"legIntPurposes": [7],
+						"name": "V1439",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1452": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1452,
+						"legIntPurposes": [2, 7],
+						"name": "V1452",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1465": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1465,
+						"legIntPurposes": [7],
+						"name": "V1465",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1478": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1478,
+						"legIntPurposes": [2, 7],
+						"name": "V1478",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1491": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1491,
+						"legIntPurposes": [7],
+						"name": "V1491",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1504": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1504,
+						"legIntPurposes": [2, 7],
+						"name": "V1504",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1517": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1517,
+						"legIntPurposes": [7],
+						"name": "V1517",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1530": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1530,
+						"legIntPurposes": [2, 7],
+						"name": "V1530",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1543": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1543,
+						"legIntPurposes": [7],
+						"name": "V1543",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1556": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1556,
+						"legIntPurposes": [2, 7],
+						"name": "V1556",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1569": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1569,
+						"legIntPurposes": [7],
+						"name": "V1569",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1582": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1582,
+						"legIntPurposes": [2, 7],
+						"name": "V1582",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1595": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1595,
+						"legIntPurposes": [7],
+						"name": "V1595",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1608": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1608,
+						"legIntPurposes": [2, 7],
+						"name": "V1608",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1621": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1621,
+						"legIntPurposes": [7],
+						"name": "V1621",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1634": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1634,
+						"legIntPurposes": [2, 7],
+						"name": "V1634",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1647": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1647,
+						"legIntPurposes": [7],
+						"name": "V1647",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1660": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1660,
+						"legIntPurposes": [2, 7],
+						"name": "V1660",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1673": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1673,
+						"legIntPurposes": [7],
+						"name": "V1673",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1686": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1686,
+						"legIntPurposes": [2, 7],
+						"name": "V1686",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1699": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1699,
+						"legIntPurposes": [7],
+						"name": "V1699",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1712": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1712,
+						"legIntPurposes": [2, 7],
+						"name": "V1712",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1725": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1725,
+						"legIntPurposes": [7],
+						"name": "V1725",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1738": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1738,
+						"legIntPurposes": [2, 7],
+						"name": "V1738",
+						"policyUrl": "https://v.example",
+						"purposes": [1],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"1751": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1751,
+						"legIntPurposes": [7],
+						"name": "V1751",
+						"policyUrl": "https://v.example",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					}
+				}
+			},
+			"id": "larger-tcf24",
+			"purposeConsents": [1, 2],
+			"purposeLegitimateInterests": [2, 7],
+			"vendorConsents": [1, 5, 100, 113, 1751],
+			"vendorLegitimateInterests": [8, 40, 100, 113, 1751],
+			"tcString": "CQszE4AQszE4AA1AHBENE-FgAMAAAEIAAAwINrwBQAAgAFADIAHEDa4NrwBQAEAAoADIAHEDa4AA.INrokAAAABAAAAAAAAABAAgAQAIAEACABAAgAQAIAEACABAAgAQAIAEACABAAgAQAIAEACABAAgAQAIAEACABAAgAQAIAEACABAAgAQAIAEACABAAgAQAIAEACABAAgAQAIAEACABAAgAQAIAEACABAAgAQAIAEACABAAgAQAIAEACABAAgAQAIAEACABAAgAQAIAEACABAAgAQAIAEACABAAgAQAIAEACABAAgAQAIAEACABAAgAQAIAEACABAAgAQAIAEACABAAgAQAIAEACABAAgAQAIAEACABAAg.YAAAAAAAAAAA"
+		},
+		{
+			"id": "prune",
+			"purposeConsents": [1, 2, 7],
+			"purposeLegitimateInterests": [2, 7],
+			"vendorConsents": [1, 5, 8, 40],
+			"vendorLegitimateInterests": [1, 5, 8, 40],
+			"tcString": "CQszE4AQszE4AA1AHBENAqFgAMIAAEIAAAwIAUIgAAAABACgAgAAAAIAAAAA.IAUIkAAAABAA.YAAAAAAAAAAA"
+		}
+	],
+	"gvl": {
+		"features": {},
+		"gvlSpecificationVersion": 3,
+		"lastUpdated": "2025-09-17T00:00:00Z",
+		"purposes": {
+			"1": {
+				"description": "P1",
+				"id": 1,
+				"name": "P1"
+			},
+			"2": {
+				"description": "P2",
+				"id": 2,
+				"name": "P2"
+			},
+			"7": {
+				"description": "P7",
+				"id": 7,
+				"name": "P7"
+			}
+		},
+		"specialFeatures": {
+			"1": {
+				"description": "P1",
+				"id": 1,
+				"name": "P1"
+			}
+		},
+		"specialPurposes": {},
+		"stacks": {},
+		"tcfPolicyVersion": 5,
+		"vendorListVersion": 42,
+		"vendors": {
+			"1": {
+				"cookieMaxAgeSeconds": 0,
+				"features": [],
+				"flexiblePurposes": [2],
+				"id": 1,
+				"legIntPurposes": [],
+				"name": "V1",
+				"policyUrl": "https://v.example",
+				"purposes": [1, 2],
+				"specialFeatures": [],
+				"specialPurposes": [],
+				"usesCookies": false,
+				"usesNonCookieAccess": false
+			},
+			"3": {
+				"cookieMaxAgeSeconds": 0,
+				"features": [],
+				"flexiblePurposes": [],
+				"id": 3,
+				"legIntPurposes": [],
+				"name": "V3",
+				"policyUrl": "https://v.example",
+				"purposes": [2],
+				"specialFeatures": [],
+				"specialPurposes": [],
+				"usesCookies": false,
+				"usesNonCookieAccess": false,
+				"deletedDate": "2025-01-01T00:00:00Z"
+			},
+			"5": {
+				"cookieMaxAgeSeconds": 0,
+				"features": [],
+				"flexiblePurposes": [2],
+				"id": 5,
+				"legIntPurposes": [],
+				"name": "V5",
+				"policyUrl": "https://v.example",
+				"purposes": [2],
+				"specialFeatures": [],
+				"specialPurposes": [],
+				"usesCookies": false,
+				"usesNonCookieAccess": false
+			},
+			"8": {
+				"cookieMaxAgeSeconds": 0,
+				"features": [],
+				"flexiblePurposes": [2],
+				"id": 8,
+				"legIntPurposes": [2, 7],
+				"name": "V8",
+				"policyUrl": "https://v.example",
+				"purposes": [],
+				"specialFeatures": [],
+				"specialPurposes": [],
+				"usesCookies": false,
+				"usesNonCookieAccess": false
+			},
+			"40": {
+				"cookieMaxAgeSeconds": 0,
+				"features": [],
+				"flexiblePurposes": [],
+				"id": 40,
+				"legIntPurposes": [7],
+				"name": "V40",
+				"policyUrl": "https://v.example",
+				"purposes": [1],
+				"specialFeatures": [],
+				"specialPurposes": [],
+				"usesCookies": false,
+				"usesNonCookieAccess": false
+			}
+		}
+	},
+	"now": 1793145600000,
+	"oracle": "@iabtechlabtcf/core@1.5.22"
+}
