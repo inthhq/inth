@@ -3,6 +3,8 @@ title: Custom integrations
 description: Gate a vendor that has no @c15t/integrations helper, or sync
   consent with an SDK your app already loads, using a c15t script configuration.
 group: integrations
+lastModified: "2026-11-17T01:01:48Z"
+lastAuthor: Kaylee
 ---
 
 ## Define a script
