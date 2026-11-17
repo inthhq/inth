@@ -213,3 +213,48 @@ describe("release plans", () => {
     });
   });
 });
+
+describe("browser groups", () => {
+  const kinds = (files: string[]) =>
+    Object.fromEntries(
+      createPlan(files, workspaces).browser.map((group) => [
+        group.kind,
+        group.targets,
+      ])
+    );
+
+  test("an Angular change runs its own fixtures and parity", () => {
+    const groups = kinds(["packages/sdk/angular/src/index.ts"]);
+    expect(groups.examples).toBe("angular");
+    expect(groups.parity).toBe("react,svelte,vue,astro,angular");
+  });
+
+  test("a Vue change reaches every fixture through the c15t umbrella", () => {
+    const groups = kinds(["packages/sdk/vue/src/index.ts"]);
+    expect(groups.examples?.split(",")).toContain("nuxt");
+    expect(groups.examples?.split(",")).toContain("react");
+  });
+
+  test("the acceptance harness runs every example", () => {
+    const groups = kinds([
+      "internals/fixtures/acceptance/src/starters.test.ts",
+    ]);
+    expect(groups.examples?.split(",")).toHaveLength(19);
+    expect(groups.journeys).toBe("nextjs,nuxt,sveltekit");
+  });
+
+  test("a CLI change runs no browser group", () => {
+    expect(kinds(["packages/cli/src/index.ts"])).toEqual({});
+  });
+
+  test("a full run includes every group", () => {
+    expect(fullPlan(workspaces).browser.map((group) => group.kind)).toEqual([
+      "examples",
+      "starters",
+      "compat",
+      "parity",
+      "journeys",
+      "styles",
+    ]);
+  });
+});

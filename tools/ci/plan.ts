@@ -7,6 +7,9 @@ import { execFileSync } from "node:child_process";
 import { appendFileSync, readFileSync } from "node:fs";
 import path from "node:path";
 
+import { browserGroups } from "./browser-groups.ts";
+import type { BrowserGroup } from "./browser-groups.ts";
+
 export type Product = "cli" | "sdk" | "mobile";
 
 export interface Workspace {
@@ -18,6 +21,8 @@ export interface Workspace {
 
 export interface Plan {
   android: boolean;
+  /** Browser integration groups for scripts/ci-browser.ts. */
+  browser: BrowserGroup[];
   cli: boolean;
   full: boolean;
   /** Mobile workspaces a web change reaches through the graph but does not run. */
@@ -30,6 +35,8 @@ export interface Plan {
   sdkPackages: string[];
   /** Selected SDK directories outside `packages/sdk` with a test script. */
   sdkWorkspaceTests: string[];
+  /** Selected SDK directories with a check-types:test script. */
+  sdkTestTypes: string[];
   /** Selected SDK directories with a check-types script. */
   sdkTypes: string[];
   swift: boolean;
@@ -184,18 +191,28 @@ const directoriesWith = (
 const isSdkPackage = (directory: string) =>
   directory.startsWith("packages/sdk/");
 
+const sdkWorkspaces = (workspaces: Workspace[]) =>
+  workspaces.filter(
+    (workspace) =>
+      workspace.directory !== "" &&
+      workspaceProduct(workspace.directory) === "sdk"
+  );
+
 const buildPlan = (
   selected: Workspace[],
   flags: Pick<
     Plan,
     "android" | "cli" | "full" | "reactNative" | "sdk" | "swift"
   >,
-  mobileReached: string[]
+  mobileReached: string[],
+  workspaces: Workspace[]
 ): Plan => ({
   ...flags,
+  browser: browserGroups(selected, sdkWorkspaces(workspaces)),
   mobileReached,
   sdkPackageTests: directoriesWith(selected, "test", isSdkPackage),
   sdkPackages: directoriesWith(selected, "build", isSdkPackage),
+  sdkTestTypes: directoriesWith(selected, "check-types:test", () => true),
   sdkTypes: directoriesWith(selected, "check-types", () => true),
   sdkWorkspaceTests: directoriesWith(
     selected,
@@ -203,13 +220,6 @@ const buildPlan = (
     (directory) => !isSdkPackage(directory)
   ),
 });
-
-const sdkWorkspaces = (workspaces: Workspace[]) =>
-  workspaces.filter(
-    (workspace) =>
-      workspace.directory !== "" &&
-      workspaceProduct(workspace.directory) === "sdk"
-  );
 
 /** What a release or a manual run can ask for. `mobile` means all three. */
 export type ProductOption = Product | "android" | "react-native" | "swift";
@@ -243,7 +253,8 @@ export const fullPlan = (
       sdk: products.includes("sdk") || android || reactNative || swift,
       swift,
     },
-    []
+    [],
+    workspaces
   );
 };
 
@@ -328,7 +339,8 @@ export const createPlan = (files: string[], workspaces: Workspace[]): Plan => {
       sdk: sdk || mobile || selected.length > 0,
       swift: native.swift,
     },
-    mobileReached
+    mobileReached,
+    workspaces
   );
 };
 

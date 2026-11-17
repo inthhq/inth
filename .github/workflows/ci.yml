@@ -35,11 +35,13 @@ jobs:
       contents: read
     outputs:
       android: ${{ steps.plan.outputs.android }}
+      browser: ${{ steps.plan.outputs.browser }}
       cli: ${{ steps.plan.outputs.cli }}
       reactNative: ${{ steps.plan.outputs.reactNative }}
       sdk: ${{ steps.plan.outputs.sdk }}
       sdkPackageTests: ${{ steps.plan.outputs.sdkPackageTests }}
       sdkPackages: ${{ steps.plan.outputs.sdkPackages }}
+      sdkTestTypes: ${{ steps.plan.outputs.sdkTestTypes }}
       sdkTypes: ${{ steps.plan.outputs.sdkTypes }}
       sdkWorkspaceTests: ${{ steps.plan.outputs.sdkWorkspaceTests }}
       swift: ${{ steps.plan.outputs.swift }}
@@ -248,6 +250,7 @@ jobs:
     env:
       NODE_OPTIONS: --max-old-space-size=6144
       PACKAGES: ${{ needs.plan.outputs.sdkPackages }}
+      TEST_TYPES: ${{ needs.plan.outputs.sdkTestTypes }}
       TYPES: ${{ needs.plan.outputs.sdkTypes }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -263,7 +266,13 @@ jobs:
         if: ${{ !cancelled() && env.TYPES != '[]' }}
         run: |
           mapfile -t filters < <(jq -r '.[] | "--filter=./" + .' <<< "$TYPES")
-          pnpm turbo run check-types check-types:test --concurrency=4 "${filters[@]}"
+          pnpm turbo run check-types --concurrency=4 --continue "${filters[@]}"
+      # A separate run, so packages without the task do not build for it.
+      - name: Check test types
+        if: ${{ !cancelled() && env.TEST_TYPES != '[]' }}
+        run: |
+          mapfile -t filters < <(jq -r '.[] | "--filter=./" + .' <<< "$TEST_TYPES")
+          pnpm turbo run check-types:test --concurrency=4 "${filters[@]}"
 
   sdk-tests:
     name: SDK package tests
@@ -283,6 +292,11 @@ jobs:
       - uses: ./.github/actions/setup-sdk
         with:
           browsers: "true"
+      # @c15t/svelte's tests import a SvelteKit doc snippet whose tsconfig
+      # extends $app/tsconfig, which only `svelte-kit sync` writes. c15t's CI
+      # got it as a side effect of running type checks first in the same job.
+      - name: Generate SvelteKit types the tests import
+        run: pnpm --dir internals/doc-snippets/sveltekit exec svelte-kit sync
       # Two at a time: the browser suites each start Chromium, and more at once
       # starve a four-core runner.
       - name: Run tests
@@ -320,6 +334,51 @@ jobs:
         run: |
           mapfile -t filters < <(jq -r '.[] | "--filter=./" + .' <<< "$TESTS")
           pnpm turbo run test --concurrency=2 --continue "${filters[@]}"
+
+  # Browser acceptance, starter smoke tests, Next.js compatibility, framework
+  # parity, SSR journeys and CSS compatibility, one job per group. The planner
+  # picks the targets in each group; scripts/ci-browser.ts runs them.
+  sdk-browser:
+    name: Browser integration (${{ matrix.kind }})
+    needs: plan
+    if: needs.plan.outputs.browser != '[]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.browser) }}
+    env:
+      NODE_OPTIONS: --max-old-space-size=6144
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-sdk
+        with:
+          browsers: "true"
+      - name: Build the SDK packages
+        run: pnpm turbo run build --concurrency=4 --filter='./packages/sdk/*'
+      - name: Run the selected contracts
+        env:
+          CI_INTEGRATION: ${{ matrix.kind }}
+          CI_TARGETS: ${{ matrix.targets }}
+        run: bun scripts/ci-browser.ts
+      - name: Save browser evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: browser-${{ matrix.kind }}
+          include-hidden-files: true
+          path: |
+            internals/fixtures/acceptance/artifacts/
+            apps/parity-runner/playwright-report/
+            apps/parity-runner/test-results/
+            .ci-reports/
+          if-no-files-found: ignore
+          retention-days: 7
 
   # Mobile: React Native's JavaScript, Swift on macOS, Android with Gradle.
   react-native:
@@ -482,6 +541,7 @@ jobs:
       - sdk-build
       - sdk-tests
       - sdk-workspace-tests
+      - sdk-browser
       - react-native
       - swift
       - android

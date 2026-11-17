@@ -106,18 +106,24 @@ const packOne = function packOne(dir: string, tarballDir: string): string {
 	// `--ignore-scripts`: some packages rebuild themselves in `prepack`, and
 	// the artifact check runs in the release flow; here the built `dist` is
 	// what Turbo just produced.
+	// pnpm, not `bun pm pack`: the workspace is a pnpm install, so only pnpm
+	// can resolve its `workspace:` dependency versions.
 	const output = run(
-		'bun',
-		['pm', 'pack', '--quiet', '--ignore-scripts', '--destination', tarballDir],
+		'pnpm',
+		[
+			'--config.ignore-scripts=true',
+			'pack',
+			'--pack-destination',
+			tarballDir,
+			'--json',
+		],
 		dir
 	);
-	// `--quiet` prints the tarball path; older versions print just the name.
-	const name = output.split('\n').at(-1) ?? '';
-	const tarball = name.startsWith('/') ? name : join(tarballDir, name);
-	if (!name || !existsSync(tarball)) {
-		throw new Error(`bun pm pack produced no tarball for ${dir}: ${output}`);
+	const { filename } = JSON.parse(output) as { filename?: string };
+	if (!filename || !existsSync(filename)) {
+		throw new Error(`pnpm pack produced no tarball for ${dir}: ${output}`);
 	}
-	return tarball;
+	return filename;
 };
 
 const replaceWithDirectory = function replaceWithDirectory(path: string) {
@@ -235,7 +241,7 @@ export interface InstallPackedPackagesOptions {
 }
 
 /**
- * Packs the workspace dependency closure of `roots` with `bun pm pack`,
+ * Packs the workspace dependency closure of `roots` with `pnpm pack`,
  * extracts every tarball as a real directory under
  * `<targetDir>/node_modules`, and links the closure's third-party runtime
  * dependencies beside them.
