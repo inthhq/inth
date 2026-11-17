@@ -9,7 +9,6 @@ import { resolveDocsNavigation } from 'leadtype/llm';
 import { defaultRemarkPlugins, remarkInclude } from 'leadtype/remark';
 import { expect, test } from 'vitest';
 
-import umbrellaPackage from '../packages/sdk/c15t/package.json';
 import docsConfig from '../packages/sdk/docs/docs.config';
 import scriptsPackage from '../packages/sdk/integrations/package.json';
 import { builtInScriptIntegrations } from '../packages/sdk/integrations/src/registry';
@@ -30,19 +29,51 @@ test('vendor setup stays on one canonical integration page across platforms', as
 	expect(duplicates).toEqual([]);
 });
 
-test('documented umbrella imports exist in the package export map', async () => {
-	const exports = Object.keys(umbrellaPackage.exports);
-	const files = await fg('**/*.mdx', { cwd: docsRoot });
+/** Workspace folder of each documented @inth package. */
+const DOCUMENTED_PACKAGES: Record<string, string> = {
+	'@inth/angular': 'packages/sdk/angular',
+	'@inth/astro': 'packages/sdk/astro',
+	'@inth/integrations': 'packages/sdk/integrations',
+	'@inth/nextjs': 'packages/sdk/nextjs',
+	'@inth/nuxt': 'packages/sdk/nuxt',
+	'@inth/react': 'packages/sdk/react',
+	'@inth/sdk': 'packages/sdk/sdk',
+	'@inth/svelte': 'packages/sdk/svelte',
+	'@inth/tanstack-start': 'packages/sdk/tanstack-start',
+	'@inth/vue': 'packages/sdk/vue',
+};
+
+test('documented @inth imports exist in their package export maps', async () => {
+	const exportsOf = new Map(
+		Object.entries(DOCUMENTED_PACKAGES).map(([name, dir]) => [
+			name,
+			Object.keys(
+				JSON.parse(
+					readFileSync(
+						fileURLToPath(new URL(`../${dir}/package.json`, import.meta.url)),
+						'utf8'
+					)
+				).exports
+			),
+		])
+	);
+	const files = await fg('**/*.mdx', {
+		cwd: docsRoot,
+		ignore: ['**/upgrade-v3.mdx', '**/upgrade-v3/**'],
+	});
 	const invalidImports: string[] = [];
 	for (const file of files) {
 		const content = readFileSync(resolve(docsRoot, file), 'utf8');
 		const imports = content.matchAll(
-			/(?:from\s+|import\s*\(?)["'](?<specifier>c15t(?:\/[^"']*)?)["']/gu
+			/(?:from\s+|import\s*\(?)["'](?<specifier>(?:@inth\/[a-z-]+|c15t)(?:\/[^"']*)?)["']/gu
 		);
 		for (const match of imports) {
 			const name = match.groups?.specifier?.split('?')[0] ?? '';
-			const key = `.${name.slice(4)}`;
-			const exists = exports.some(
+			const [scope = '', pkg = ''] = name.split('/');
+			const packageName = `${scope}/${pkg}`;
+			const exports = exportsOf.get(packageName);
+			const key = `.${name.slice(packageName.length)}`;
+			const exists = exports?.some(
 				(entry) =>
 					entry === key ||
 					(entry.endsWith('*') && key.startsWith(entry.slice(0, -1)))
@@ -179,14 +210,14 @@ test('c15t install commands select the documented release', async () => {
 	expect(wrong).toEqual([]);
 });
 
-test('installation tabs flatten to usable umbrella-package commands', async () => {
+test('installation tabs flatten to usable package commands', async () => {
 	const { markdown } = await convertMdxToMarkdown(
 		resolve(docsRoot, 'frameworks/react/quickstart.mdx'),
 		[remarkInclude, ...defaultRemarkPlugins]
 	);
-	expect(markdown).toContain('npm install c15t');
-	expect(markdown).toContain('pnpm add c15t');
-	expect(markdown).toContain('bun add c15t');
+	expect(markdown).toContain('npm install @inth/react');
+	expect(markdown).toContain('pnpm add @inth/react');
+	expect(markdown).toContain('bun add @inth/react');
 	expect(markdown).toContain("from '@inth/react'");
 	expect(markdown).not.toContain('CommandTabs');
 	expect(markdown).not.toContain('package-install');

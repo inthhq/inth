@@ -55,7 +55,7 @@ test('the package bundles cover every web framework quickstart', () => {
 test('package skills link only to pages in the bundle', () => {
 	const skill = renderPackageSkill(
 		'@inth/vue',
-		{ install: '`npm install c15t`', topic: 'the project is a Vue app' },
+		{ install: '`npm install @inth/vue`', topic: 'the project is a Vue app' },
 		new Set([
 			'concepts/choose-your-setup.md',
 			'frameworks/vue/quickstart.md',
@@ -63,13 +63,13 @@ test('package skills link only to pages in the bundle', () => {
 			'guides/verify-consent.md',
 		])
 	);
-	expect(skill).toMatch(/^---\nname: c15t-vue\n/u);
+	expect(skill).toMatch(/^---\nname: inth-vue\n/u);
 	expect(skill).toContain('[Nuxt](./docs/frameworks/nuxt/quickstart.md)');
 	expect(skill).toContain('[Vue](./docs/frameworks/vue/quickstart.md)');
 	expect(skill).not.toContain('frameworks/next/');
 	expect(skill).not.toContain('troubleshooting.md');
 	expect(skill).toContain('Not recommended for production environments.');
-	expect(skill).toContain('`npm install c15t`');
+	expect(skill).toContain('`npm install @inth/vue`');
 });
 
 test('skills fit the package they ship in', () => {

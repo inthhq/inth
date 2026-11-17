@@ -2,7 +2,7 @@
 /**
  * The gate page's article without any consent library: the LCP control.
  * `run-gate.ts` serves it from the zero-consent baseline build
- * (C15T_BENCH_BASELINE=1), which omits the `@inth/vue` module.
+ * (C15T_BENCH_BASELINE=1), which omits the `@inth/nuxt` module.
  */
 import {
 	gatePageCSS,

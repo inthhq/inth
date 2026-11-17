@@ -24,8 +24,8 @@
  * are not `NUXT_PUBLIC_*` names because Nitro would apply those at runtime
  * over `runtimeConfig.public.c15t.experiment`.
  */
-import { manifest } from '@inth/vue';
-import type { ModuleOptions } from '@inth/vue';
+import { manifest } from '@inth/nuxt';
+import type { ModuleOptions } from '@inth/nuxt';
 
 const staticOutput = process.env.C15T_NUXT_OUTPUT === 'static';
 // The acceptance suite points the demo at a mock backend with this variable.

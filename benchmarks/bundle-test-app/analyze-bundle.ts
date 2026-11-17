@@ -356,7 +356,7 @@ const main = async function main() {
 			},
 			metrics: [
 				// packages/sdk/core is @inth/sdk/engine; the c15t umbrella is a separate package.
-				summarizeMetric('@inth/sdk/engine', 'bytes', [coreTarball.size]),
+				summarizeMetric('@inth/sdk-core', 'bytes', [coreTarball.size]),
 				summarizeMetric('@inth/react', 'bytes', [reactTarball.size]),
 				summarizeMetric('@inth/nextjs', 'bytes', [nextjsTarball.size]),
 			],

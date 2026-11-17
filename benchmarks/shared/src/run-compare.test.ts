@@ -160,9 +160,9 @@ const tarballResult = (
 	...makeResult('tarballs', {}, artifactBudgets),
 	metadata: { nextjsIncludesDialogRules: includesDialogRules },
 	metrics: Object.entries({
-		'@inth/sdk/engine': 10_000,
 		'@inth/nextjs': nextjsBytes,
 		'@inth/react': reactBytes,
+		'@inth/sdk': 10_000,
 	}).map(([name, value]) => summarizeMetric(name, 'bytes', [value])),
 	package: '@c15t/next-bundle-bench',
 	suite: 'artifact',

@@ -41,13 +41,13 @@ describe('workspaceDependencyClosure', () => {
 				version: '3.0.0',
 			},
 			{
-				dependencies: { '@inth/sdk/engine': 'workspace:*' },
+				dependencies: { '@inth/sdk-core': 'workspace:*' },
 				dir: 'react',
 				name: '@inth/react',
 				peerDependencies: { react: '^19' },
 				version: '3.0.0',
 			},
-			{ dir: 'core', name: '@inth/sdk/engine', version: '3.0.0' },
+			{ dir: 'core', name: '@inth/sdk-core', version: '3.0.0' },
 			{ dir: 'cli', name: '@c15t/cli', version: '3.0.0' },
 		].map((info) => [info.name, info])
 	);
@@ -55,7 +55,7 @@ describe('workspaceDependencyClosure', () => {
 	it('follows workspace specifiers only', () => {
 		expect(
 			workspaceDependencyClosure(packages, 'c15t').map((info) => info.name)
-		).toEqual(['c15t', '@inth/react', '@inth/sdk/engine']);
+		).toEqual(['c15t', '@inth/react', '@inth/sdk-core']);
 	});
 
 	it('throws for an unknown root', () => {
@@ -67,7 +67,7 @@ describe('workspaceDependencyClosure', () => {
 
 describe('packedTarballName', () => {
 	it('matches pack output for scoped and unscoped names', () => {
-		expect(packedTarballName('@inth/sdk/engine', '3.0.0-alpha.2')).toBe(
+		expect(packedTarballName('@inth/sdk-core', '3.0.0-alpha.2')).toBe(
 			'c15t-core-3.0.0-alpha.2.tgz'
 		);
 		expect(packedTarballName('c15t', '3.0.0-alpha.2')).toBe(
@@ -91,7 +91,7 @@ describe('consumerPackageJson', () => {
 			...versions,
 			tarballs: new Map([
 				['c15t', '/t/c15t.tgz'],
-				['@inth/sdk/engine', '/t/core.tgz'],
+				['@inth/sdk-core', '/t/core.tgz'],
 			]),
 		});
 		expect(manifest.dependencies).toMatchObject({
@@ -99,7 +99,7 @@ describe('consumerPackageJson', () => {
 			next: '16.2.10',
 		});
 		expect(manifest.overrides).toEqual({
-			'@inth/sdk/engine': 'file:/t/core.tgz',
+			'@inth/sdk-core': 'file:/t/core.tgz',
 		});
 	});
 
@@ -116,7 +116,7 @@ describe('consumerPackageJson', () => {
 		expect(() =>
 			consumerPackageJson({
 				...versions,
-				tarballs: new Map([['@inth/sdk/engine', '/t/core.tgz']]),
+				tarballs: new Map([['@inth/sdk-core', '/t/core.tgz']]),
 			})
 		).toThrow('no c15t package');
 	});

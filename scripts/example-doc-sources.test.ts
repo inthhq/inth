@@ -297,7 +297,7 @@ describe('hand-written docs examples', () => {
 			'  ```',
 			'',
 			'```bash',
-			'npm install c15t',
+			'npm install @inth/nextjs',
 			'```',
 			'',
 			fragmentMarker,

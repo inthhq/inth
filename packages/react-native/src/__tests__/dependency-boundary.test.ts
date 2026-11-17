@@ -38,13 +38,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const SRC = resolve(HERE, '..');
 
 /** Specifiers that must never reach the app bundle as a runtime dependency. */
-const FORBIDDEN = [
-	'c15t',
-	'@inth/sdk/engine',
-	'@inth/sdk/iab',
-	'@c15t/backend',
-	'@iabtechlabtcf/core',
-];
+const FORBIDDEN = ['c15t', '@inth/sdk', '@c15t/backend', '@iabtechlabtcf/core'];
 
 /**
  * Every `import`/`re-export … from '…'` statement, so the specifier and its
@@ -152,10 +146,8 @@ test('the kernel and the codec stay devDependencies, and only web may peer on th
 	// A native app installs nothing for web: the kernel is an optional peer.
 	expect(
 		Object.keys(manifest.peerDependencies ?? {}).filter(isForbiddenModule)
-	).toEqual(['@inth/sdk/engine']);
-	expect(manifest.peerDependenciesMeta?.['@inth/sdk/engine']?.optional).toBe(
-		true
-	);
+	).toEqual(['@inth/sdk']);
+	expect(manifest.peerDependenciesMeta?.['@inth/sdk']?.optional).toBe(true);
 });
 
 test('source declarations and lazy imports cannot name web packages either', () => {

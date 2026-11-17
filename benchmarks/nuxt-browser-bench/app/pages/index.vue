@@ -1,6 +1,6 @@
 <template>
 	<main style="padding: 2rem; font-family: system-ui, sans-serif">
-		<h1>@inth/vue Nuxt Browser Bench</h1>
+		<h1>@inth/nuxt Nuxt Browser Bench</h1>
 		<ul>
 			<li><NuxtLink to="/ssr">/ssr</NuxtLink></li>
 			<li><NuxtLink to="/ssr-manifest">/ssr-manifest</NuxtLink></li>

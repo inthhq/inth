@@ -17,8 +17,7 @@
 	],
 	"ignoreDependencies": [
 		"@babel/core",
-		"@inth/sdk/engine",
-		"@inth/sdk/iab",
+		"@inth/sdk",
 		"@c15t/typescript-config",
 		"@c15t/vitest-config",
 		"@react-native/codegen",

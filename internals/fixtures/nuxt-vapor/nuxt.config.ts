@@ -13,7 +13,7 @@
  * (`future.compatibilityVersion: 5`) and the 4.6 opt-ins that touch
  * rendering: `early404` and prerendered error pages.
  */
-import { manifest } from '@inth/vue';
+import { manifest } from '@inth/nuxt';
 
 const future = process.env.C15T_NUXT_FUTURE === '1';
 
@@ -34,7 +34,7 @@ export default defineNuxtConfig({
 		experimental: { early404: true, prerenderErrorPages: true },
 		future: { compatibilityVersion: 5 },
 	}),
-	modules: ['@inth/vue'],
+	modules: ['@inth/nuxt'],
 	typescript: { strict: true },
 	// Vapor needs Vue 3.6. Opt components in with `<script setup vapor>`.
 	vue: { vapor: true },

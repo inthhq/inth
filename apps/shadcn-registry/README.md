@@ -35,7 +35,7 @@ entry in the project's `components.json`:
 
 Every UI item ships three times, as `next-*`, `react-*` and
 `tanstack-start-*`. The build writes the Next.js and TanStack Start copies
-by pointing `c15t/react` imports at `c15t/next` or `c15t/tanstack-start`.
+by pointing `@inth/react` imports at `@inth/nextjs` or `@inth/tanstack-start`.
 Nothing else changes. Each framework has its own `consent-manager`, because
 that's where the setups differ.
 
@@ -50,7 +50,7 @@ depend on.
 - Write in shadcn's style: 2-space indent, double quotes, no semicolons,
   function declarations. Oxfmt skips `registry/`, and `oxlint.config.ts` has
   an override for it.
-- Import c15t only from `c15t/react` and `c15t/react/headless`. Any other
+- Import c15t only from `@inth/react` and `@inth/react/headless`. Any other
   c15t entry point fails the build, because the other frameworks have no
   twin for it.
 - Import local code only from `@/components/ui/*`, `@/components/c15t/*` and

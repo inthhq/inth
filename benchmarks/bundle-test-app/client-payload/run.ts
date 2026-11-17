@@ -505,9 +505,9 @@ const main = async function main() {
 					name,
 					routes,
 					versions: {
-						'@inth/sdk/engine': installedVersion(armDir, '@inth/sdk/engine'),
 						'@inth/nextjs': installedVersion(armDir, '@inth/nextjs'),
 						'@inth/react': installedVersion(armDir, '@inth/react'),
+						'@inth/sdk': installedVersion(armDir, '@inth/sdk'),
 						c15t: installedVersion(armDir, 'c15t'),
 						next: installedVersion(armDir, 'next'),
 					},

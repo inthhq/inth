@@ -2,7 +2,7 @@
 
 Benchmarks the in-process manifest cache in
 `packages/sdk/core/src/libs/manifest-cache-runtime.ts` (public entry
-`@c15t/core/transports/manifest-cache`, `createManifestCache` /
+`@inth/sdk/transports/manifest-cache`, `createManifestCache` /
 `fetchCachedManifest`) against a simulated Vercel CDN fronting an Inth
 `/manifest` origin. No real sockets: `src/vercel-cdn.ts` is an in-process
 `fetch`-compatible simulator with configurable edge/origin RTT, a
@@ -20,7 +20,7 @@ bun run --cwd benchmarks/manifest-cache-bench bench        # all scenarios
 bun run --cwd benchmarks/manifest-cache-bench bench:quick   # skips edge-unreachable-warm
 ```
 
-`@c15t/core` must already be built (`bun turbo run build --filter=@c15t/core`)
+`@inth/sdk/engine` must already be built (`bun turbo run build --filter=@inth/sdk-core`)
 — this package imports the built `dist`, not `src`, so it measures whatever
 is currently installed.
 

@@ -101,7 +101,7 @@ export const artifactV3Budgets: MetricBudget[] = [
 		comparator: 'percent-lte',
 		description:
 			'v3 @inth/sdk/engine tarball must be at least 30% smaller than the v2 core package (published as c15t).',
-		metric: '@inth/sdk/engine',
+		metric: '@inth/sdk-core',
 		threshold: -30,
 	},
 	{
@@ -347,7 +347,7 @@ export const artifactBudgets: MetricBudget[] = [
 		comparator: 'absolute-and-percent-lte',
 		description:
 			'@inth/sdk/engine tarball growth, excluding bundled docs, must stay below 15kB and 10%, plus the vendor consent and clientMode() bundle allowances.',
-		metric: '@inth/sdk/engine',
+		metric: '@inth/sdk-core',
 		secondaryThreshold: 10 + CLIENT_MODE_BUNDLES_TARBALL_PERCENT,
 		threshold:
 			15360 + VENDOR_CONSENT_TARBALL_BYTES + CLIENT_MODE_BUNDLES_TARBALL_BYTES,

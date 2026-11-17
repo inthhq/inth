@@ -78,6 +78,10 @@ export const moduleReferences = function moduleReferences(
 	return references;
 };
 
+/** The web SDK packages: @inth/sdk and the framework packages. */
+const WEB_PACKAGE =
+	/^@inth\/(?:sdk|react|nextjs|vue|svelte|angular|astro|tanstack-start|integrations)(?:\/|$)/u;
+
 export const isForbiddenModule = function isForbiddenModule(
 	specifier: string
 ): boolean {
@@ -85,20 +89,26 @@ export const isForbiddenModule = function isForbiddenModule(
 		specifier === 'c15t' ||
 		specifier.startsWith('c15t/') ||
 		specifier.startsWith('@c15t/') ||
+		WEB_PACKAGE.test(specifier) ||
 		specifier.startsWith('@iabtechlabtcf/')
 	);
 };
 
+/** The engine's entries in @inth/sdk, which sit at its top level. */
+const ENGINE_ENTRY =
+	/^@inth\/sdk\/(?:engine|build|consent-categories|consent-record|events|experiment|generated|iab-support|libs|modes|modules|preference-draft|runtime|server|static|surface-actions|surface-state|testing|transports)(?:\/|$)/u;
+
 /**
  * Whether a module is the browser consent engine the web twins run on.
  *
- * `@inth/sdk/engine` is the one web package a `.web` file may reach. The IAB codec,
- * the backend and the umbrella package stay forbidden everywhere.
+ * The engine's entries in `@inth/sdk` are what a `.web` file may reach. The
+ * IAB codec, the vanilla client, the backend and the framework packages stay
+ * forbidden everywhere.
  */
 export const isWebEngineModule = function isWebEngineModule(
 	specifier: string
 ): boolean {
-	return specifier === '@inth/sdk/engine' || specifier.startsWith('@inth/sdk/');
+	return ENGINE_ENTRY.test(specifier);
 };
 
 /**

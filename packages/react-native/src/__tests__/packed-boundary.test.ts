@@ -121,7 +121,8 @@ test('packed runtime, declarations and consumer stay independent of web consent 
 				type: 'module',
 			})
 		);
-		execFileSync('bun', ['install', '--ignore-scripts'], {
+		// The web engine is an optional peer, and @inth/sdk is not on npm yet.
+		execFileSync('bun', ['install', '--ignore-scripts', '--omit', 'peer'], {
 			cwd: directory,
 			stdio: 'pipe',
 		});
@@ -417,11 +418,11 @@ test('the actual local mobile tarball contains useful generated docs and no web 
 			// Only web needs the browser engine, so it is an optional peer and
 			// nothing a native app installs.
 			expect(Object.keys(dependencies).filter(isForbiddenModule)).toEqual(
-				index === 2 ? ['@inth/sdk/engine'] : []
+				index === 2 ? ['@inth/sdk'] : []
 			);
 		}
 		expect(read('package.json')).toMatch(
-			/"peerDependenciesMeta":\s*\{\s*"@inth\/sdk\/engine":\s*\{\s*"optional":\s*true/u
+			/"peerDependenciesMeta":\s*\{\s*"@inth\/sdk":\s*\{\s*"optional":\s*true/u
 		);
 		expect(read('package.json')).not.toContain('workspace:');
 		expect(read('docs/frameworks/react-native/quickstart.md')).toContain(

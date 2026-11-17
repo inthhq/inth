@@ -68,7 +68,7 @@ it.each([
 
 it('caps @inth/sdk/engine tarball growth at 79,872 bytes over the v3 tarball', () => {
 	const budget = artifactBudgets.find(
-		(entry) => entry.metric === '@inth/sdk/engine'
+		(entry) => entry.metric === '@inth/sdk-core'
 	);
 	expect.assert(budget);
 	const base = summarizeMetric(budget.metric, 'bytes', [323_549]);

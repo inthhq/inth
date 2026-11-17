@@ -126,7 +126,7 @@ describe('walking the built entry', () => {
 		// under directories the subpath never names, and a walk that stopped at main
 		// entries would report an edge put back as two string arrays.
 		const subpathEntry = resolveWorkspaceEntry(
-			'@inth/sdk/engine',
+			'@inth/sdk-core',
 			'./consent-categories',
 			REPO_ROOT
 		);

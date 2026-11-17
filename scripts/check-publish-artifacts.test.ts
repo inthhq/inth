@@ -140,30 +140,28 @@ describe('getBlockedReason', () => {
 	it('rejects CommonJS artifacts outside dist', () => {
 		// The ESM-only guard must cover the whole tarball: a stale shim or a
 		// root-level .cjs entry is just as much a CommonJS leak as dist output.
-		expect(getBlockedReason('c15t', 'shims/index.cjs')).toBe(
+		expect(getBlockedReason('@inth/react', 'shims/index.cjs')).toBe(
 			'CommonJS artifact in ESM-only package'
 		);
-		expect(getBlockedReason('@inth/sdk/engine', 'index.cjs')).toBe(
+		expect(getBlockedReason('@inth/sdk', 'index.cjs')).toBe(
 			'CommonJS artifact in ESM-only package'
 		);
 	});
 
 	it('rejects CommonJS artifacts under dist', () => {
-		expect(getBlockedReason('@inth/sdk/engine', 'dist/index.cjs')).toBe(
+		expect(getBlockedReason('@inth/sdk', 'dist/index.cjs')).toBe(
 			'CommonJS artifact in ESM-only package'
 		);
 	});
 
 	it('allows ESM runtime output and shims', () => {
-		expect(getBlockedReason('@inth/sdk/engine', 'dist/index.js')).toBeNull();
-		expect(getBlockedReason('c15t', 'shims/index.js')).toBeNull();
-		expect(getBlockedReason('c15t', 'shims/index.d.ts')).toBeNull();
+		expect(getBlockedReason('@inth/sdk', 'dist/index.js')).toBeNull();
+		expect(getBlockedReason('@inth/react', 'shims/index.js')).toBeNull();
+		expect(getBlockedReason('@inth/react', 'shims/index.d.ts')).toBeNull();
 	});
 
 	it('still rejects test artifacts in dist', () => {
-		expect(getBlockedReason('@inth/sdk/engine', 'dist/foo.test.js')).toBe(
-			'test file'
-		);
+		expect(getBlockedReason('@inth/sdk', 'dist/foo.test.js')).toBe('test file');
 	});
 
 	// Expo resolves a config plugin through `require`, so this one file is CommonJS on
@@ -173,17 +171,29 @@ describe('getBlockedReason', () => {
 		expect(
 			getBlockedReason('@inth/react-native', 'dist/expo-plugin/index.cjs')
 		).toBeNull();
-		expect(getBlockedReason('@inth/sdk/ui', 'dist/expo-plugin/index.cjs')).toBe(
+		expect(getBlockedReason('@inth/sdk-ui', 'dist/expo-plugin/index.cjs')).toBe(
 			'CommonJS artifact in ESM-only package'
 		);
 	});
 	it('allows the declaration for the @inth/sdk/ui/styles/dialog export', () => {
 		expect(
-			getBlockedReason('@inth/sdk/ui', 'dist/styles/dialog.d.ts')
+			getBlockedReason('@inth/sdk-ui', 'dist/styles/dialog.d.ts')
 		).toBeNull();
-		expect(getBlockedReason('@inth/sdk/ui', 'dist/styles/other.d.ts')).toBe(
+		expect(getBlockedReason('@inth/sdk-ui', 'dist/styles/other.d.ts')).toBe(
 			'declaration file in runtime dist'
 		);
+	});
+
+	it("judges files under @inth/sdk lib/<folder>/ as that part's", () => {
+		expect(
+			getBlockedReason('@inth/sdk', 'lib/ui/dist/styles/dialog.d.ts')
+		).toBeNull();
+		expect(getBlockedReason('@inth/sdk', 'lib/core/dist/foo.test.js')).toBe(
+			getBlockedReason('@inth/sdk-core', 'dist/foo.test.js')
+		);
+		expect(
+			getBlockedReason('@inth/sdk', 'lib/core/dist/foo.test.js')
+		).not.toBeNull();
 	});
 });
 
@@ -715,12 +725,12 @@ describe('packages that must stay clear of the consent kernel', () => {
 		const packageDir = kernelFreeFixture(
 			'dependency',
 			{ 'dist/index.js': 'export const x = 1;\n' },
-			{ '@inth/sdk/engine': '^3.0.0' }
+			{ '@inth/sdk': '^3.0.0' }
 		);
 
 		expect(scan(packageDir, ['dist/index.js', 'package.json'])).toEqual([
 			{
-				path: 'dependencies.@inth/sdk/engine',
+				path: 'dependencies.@inth/sdk',
 				reason: expect.stringContaining('published dependency'),
 				size: 0,
 			},
@@ -735,20 +745,20 @@ describe('packages that must stay clear of the consent kernel', () => {
 			{ 'dist/index.js': 'export const x = 1;\n' },
 			{},
 			{
-				peerDependencies: { '@inth/sdk/engine': '^3.2.0' },
-				peerDependenciesMeta: { '@inth/sdk/engine': { optional: true } },
+				peerDependencies: { '@inth/sdk': '^3.2.0' },
+				peerDependenciesMeta: { '@inth/sdk': { optional: true } },
 			}
 		);
 		const required = kernelFreeFixture(
 			'required-peer',
 			{ 'dist/index.js': 'export const x = 1;\n' },
 			{},
-			{ peerDependencies: { '@inth/sdk/engine': '^3.2.0' } }
+			{ peerDependencies: { '@inth/sdk': '^3.2.0' } }
 		);
 
 		expect(scan(optional, ['dist/index.js'])).toStrictEqual([]);
 		expect(scan(required, ['dist/index.js']).map(({ path }) => path)).toEqual([
-			'peerDependencies.@inth/sdk/engine',
+			'peerDependencies.@inth/sdk',
 		]);
 	});
 
@@ -831,7 +841,7 @@ describe('packages that must stay clear of the consent kernel', () => {
 
 		makeTree(packageDir, {
 			'package.json': JSON.stringify({
-				dependencies: { '@inth/sdk/engine': 'workspace:*' },
+				dependencies: { '@inth/sdk': 'workspace:*' },
 				name: '@inth/react',
 				version: '0.0.0',
 			}),
@@ -888,18 +898,17 @@ describe('packages that must stay clear of the consent kernel', () => {
 			for (const field of ['dependencies', 'optionalDependencies'] as const) {
 				expect(
 					manifest[field] ?? {},
-					`@inth/sdk/engine must not appear in ${field} of ${packageName}`
-				).not.toHaveProperty('@inth/sdk/engine');
+					`@inth/sdk must not appear in ${field} of ${packageName}`
+				).not.toHaveProperty('@inth/sdk');
 			}
 			// Web runs the browser engine; a native install never pulls it in.
 			expect(
-				manifest.peerDependencies?.['@inth/sdk/engine'] === undefined ||
-					manifest.peerDependenciesMeta?.['@inth/sdk/engine']?.optional ===
-						true,
-				`@inth/sdk/engine may only be an optional peer of ${packageName}`
+				manifest.peerDependencies?.['@inth/sdk'] === undefined ||
+					manifest.peerDependenciesMeta?.['@inth/sdk']?.optional === true,
+				`@inth/sdk may only be an optional peer of ${packageName}`
 			).toBe(true);
 
-			expect(manifest.devDependencies).toHaveProperty('@inth/sdk/engine');
+			expect(manifest.devDependencies).toHaveProperty('@inth/sdk');
 		}
 	});
 });
@@ -914,34 +923,32 @@ describe('scanUiComponentStyleArtifacts', () => {
 		}
 	});
 
+	// @inth/sdk ships the UI part under lib/ui/; its sources sit in
+	// packages/sdk/ui, beside the package.
 	const createUiPackage = (classMap: string) => {
-		packageDir = mkdtempSync(join(tmpdir(), 'c15t-ui-artifacts-'));
-		mkdirSync(join(packageDir, 'src/styles/components'), { recursive: true });
-		mkdirSync(join(packageDir, 'dist/styles/components'), { recursive: true });
+		const root = mkdtempSync(join(tmpdir(), 'c15t-ui-artifacts-'));
+		packageDir = root;
+		const dist = join(root, 'sdk/lib/ui/dist/styles/components');
+		mkdirSync(join(root, 'ui/src/styles/components'), { recursive: true });
+		mkdirSync(dist, { recursive: true });
 		writeFileSync(
-			join(packageDir, 'src/styles/components/prompt.module.css'),
+			join(root, 'ui/src/styles/components/prompt.module.css'),
 			'.root {}\n'
 		);
+		writeFileSync(join(dist, 'prompt.css'), '.c15t-ui-root-abc {}\n');
+		writeFileSync(join(dist, 'prompt.js'), classMap);
 		writeFileSync(
-			join(packageDir, 'dist/styles/components/prompt.css'),
-			'.c15t-ui-root-abc {}\n'
-		);
-		writeFileSync(
-			join(packageDir, 'dist/styles/components/prompt.js'),
-			classMap
-		);
-		writeFileSync(
-			join(packageDir, 'dist/styles/components/prompt.d.ts'),
+			join(dist, 'prompt.d.ts'),
 			'declare const styles: Record<string, string>;\nexport default styles;\n'
 		);
 
-		return packageDir;
+		return join(root, 'sdk');
 	};
 
 	const packedFiles = new Set([
-		'dist/styles/components/prompt.css',
-		'dist/styles/components/prompt.js',
-		'dist/styles/components/prompt.d.ts',
+		'lib/ui/dist/styles/components/prompt.css',
+		'lib/ui/dist/styles/components/prompt.js',
+		'lib/ui/dist/styles/components/prompt.d.ts',
 	]);
 
 	it('accepts CSS-free class maps', () => {
@@ -950,7 +957,7 @@ describe('scanUiComponentStyleArtifacts', () => {
 		);
 
 		expect(
-			scanUiComponentStyleArtifacts(dir, '@inth/sdk/ui', packedFiles)
+			scanUiComponentStyleArtifacts(dir, '@inth/sdk', packedFiles)
 		).toEqual([]);
 	});
 
@@ -962,10 +969,10 @@ describe('scanUiComponentStyleArtifacts', () => {
 		);
 
 		expect(
-			scanUiComponentStyleArtifacts(dir, '@inth/sdk/ui', packedFiles)
+			scanUiComponentStyleArtifacts(dir, '@inth/sdk', packedFiles)
 		).toEqual([
 			expect.objectContaining({
-				path: 'dist/styles/components/prompt.js',
+				path: 'lib/ui/dist/styles/components/prompt.js',
 				reason: 'component ESM class map must not import CSS',
 			}),
 		]);
