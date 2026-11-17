@@ -56,6 +56,10 @@ cleanup() {
       "${ADB}" -s "${DEVICE}" logcat -d -v threadtime > "${OUT}/device-final.log" 2>&1
       # The main buffer can drop an app crash's stack. The crash buffer keeps it.
       "${ADB}" -s "${DEVICE}" logcat -b crash -d -v threadtime > "${OUT}/device-crash.log" 2>&1
+      # Logcat prints no stack when an UnknownHostException is in the cause chain. Dropbox keeps it.
+      for tag in data_app_crash data_app_native_crash; do
+        "${ADB}" -s "${DEVICE}" shell dumpsys dropbox --print "${tag}" > "${OUT}/dropbox-${tag}.txt" 2>&1
+      done
       "${ADB}" -s "${DEVICE}" exec-out screencap -p > "${OUT}/final.png"
       "${ADB}" -s "${DEVICE}" pull /data/local/tmp/c15t-video.log "${OUT}/video.log"
       mkdir -p "${OUT}/video-segments"
