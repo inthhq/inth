@@ -409,6 +409,42 @@ jobs:
         if: ${{ !cancelled() }}
         run: bun scripts/react-native-autolink.ts
 
+  # The packed React Native package in a fresh app for each supported React
+  # Native and Expo release: types, SDK source types, Codegen and Expo prebuild.
+  react-native-compat:
+    name: React Native compatibility (${{ matrix.cell }})
+    needs: plan
+    if: needs.plan.outputs.reactNative == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        cell: [expo-55, rn-84, expo-56, expo-57, rn-87, expo-58]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-sdk
+      - name: Build the React Native package
+        run: pnpm turbo run build --filter=./packages/react-native
+      - name: Check packed types, SDK source types, Codegen and Expo prebuild
+        env:
+          CELL: ${{ matrix.cell }}
+        run: bun scripts/mobile-compatibility.ts --cell "$CELL" --output "${RUNNER_TEMP}/mobile-compatibility"
+      - name: Save compatibility evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: react-native-compat-${{ matrix.cell }}
+          path: |
+            ${{ runner.temp }}/mobile-compatibility/*.log
+            ${{ runner.temp }}/mobile-compatibility/result.json
+          if-no-files-found: ignore
+          retention-days: 7
+
   swift:
     name: Swift
     needs: plan
@@ -543,6 +579,7 @@ jobs:
       - sdk-workspace-tests
       - sdk-browser
       - react-native
+      - react-native-compat
       - swift
       - android
     runs-on: ubuntu-24.04
