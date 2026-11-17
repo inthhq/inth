@@ -1,0 +1,137 @@
+# Source of truth for this repository's GitHub labels, in the format
+# crazy-max/ghaction-github-labeler reads (`from_name` renames a label).
+# No workflow syncs it yet; apply changes by hand or add a labeler workflow.
+# Kind (one), area (one or more) and state (maintainers apply it).
+# An issue without labels is untriaged.
+
+# --- Kind ---
+
+- name: bug
+  color: "d73a4a"
+  description: Something isn't working
+
+- name: feature
+  color: "0e8a16"
+  description: New feature or enhancement
+  from_name: enhancement
+
+- name: docs
+  color: "0075ca"
+  description: Documentation updates or improvements
+  from_name: documentation
+
+# --- Product ---
+
+- name: area:cli
+  color: "c5def5"
+  description: Inth CLI (packages/cli, npm/*)
+
+- name: area:sdk
+  color: "c5def5"
+  description: Web SDK core, UI and shared packages (packages/sdk)
+
+- name: area:react-native
+  color: "fbca04"
+  description: React Native and Expo SDK
+
+- name: area:swift
+  color: "fbca04"
+  description: Swift SDK (packages/swift)
+
+- name: area:android
+  color: "fbca04"
+  description: Android SDK (packages/android)
+
+- name: area:ci
+  color: "c5def5"
+  description: CI, release workflows and repository tooling
+
+# --- Web SDK framework ---
+
+- name: area:react
+  color: "fbca04"
+  description: React adapter, components and hooks
+
+- name: area:next
+  color: "fbca04"
+  description: Next.js App and Pages Router, RSC, middleware
+
+- name: area:vue
+  color: "fbca04"
+  description: Vue and Nuxt
+
+- name: area:svelte
+  color: "fbca04"
+  description: Svelte and SvelteKit
+
+- name: area:angular
+  color: "fbca04"
+  description: Angular adapter
+
+- name: area:astro
+  color: "fbca04"
+  description: Astro integration
+
+- name: area:tanstack
+  color: "fbca04"
+  description: TanStack Start
+
+- name: area:iab
+  color: "c5def5"
+  description: IAB TCF and GPP
+
+- name: area:scripts
+  color: "c5def5"
+  description: Vendor loaders and integrations (GTM, pixels)
+
+# --- State ---
+
+- name: needs-repro
+  color: "fbca04"
+  description: Waiting on a minimal reproduction
+
+- name: needs-info
+  color: "fbca04"
+  description: Waiting on versions, environment or clarification
+
+- name: needs-approval
+  color: "e4e669"
+  description: A maintainer approves the feature or refactor before work starts
+
+- name: blocked
+  color: "b60205"
+  description: Blocked by other work or an upstream dependency
+
+- name: help wanted
+  color: "008672"
+  description: Community contributions welcome
+
+- name: good first issue
+  color: "7057ff"
+  description: Good for newcomers
+
+- name: duplicate
+  color: "cfd3d7"
+  description: This issue or pull request already exists
+
+- name: wontfix
+  color: "ffffff"
+  description: This will not be worked on
+
+- name: invalid
+  color: "e4e669"
+  description: This doesn't seem right
+
+- name: question
+  color: "d876e3"
+  description: Further information is requested
+
+- name: upstream
+  color: "e99695"
+  description: Belongs to a dependency or external tool
+
+# --- Automation ---
+
+- name: dependencies
+  color: "0366d6"
+  description: Pull requests that update a dependency

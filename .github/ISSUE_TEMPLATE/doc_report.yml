@@ -1,0 +1,26 @@
+name: Documentation issue
+description: Report a problem with the Inth CLI or SDK docs
+labels: ["docs"]
+body:
+  - type: input
+    id: page
+    attributes:
+      label: Page URL or file
+      placeholder: https://inth.com/docs/... or docs/cli/install.mdx
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is wrong?
+      description: Quote the relevant section and explain the issue.
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggested
+    attributes:
+      label: Suggested change
+    validations:
+      required: false

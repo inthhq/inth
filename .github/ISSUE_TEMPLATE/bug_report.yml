@@ -1,0 +1,58 @@
+name: Bug report
+description: Report a bug in the Inth CLI or SDK
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: product
+    attributes:
+      label: Product
+      options:
+        - Inth CLI
+        - Web SDK (c15t packages)
+        - React Native SDK
+        - Swift SDK
+        - Android SDK
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Run `inth --version` for the CLI, or check the package version in your lockfile.
+      placeholder: "1.0.0"
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Logs, screenshots, operating system, framework and related issues.
+    validations:
+      required: false
