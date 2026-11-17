@@ -25,7 +25,7 @@ import type {
 	OptionalConsentCategory,
 } from '../protocol/vocabulary';
 import { OPTIONAL_CONSENT_CATEGORIES } from '../protocol/vocabulary';
-import { isPrivacyPolicyURL } from '../provider/privacy-policy-url';
+import { isPrivacyPolicyUrl } from '../provider/privacy-policy-url';
 
 /** The handshake a current native build reports. */
 export const FAKE_BOOTSTRAP = {
@@ -724,7 +724,7 @@ export const createFakeNativeInth = function createFakeNativeInth(
 	 */
 	const present = (
 		presentation: 'prompt' | 'preferences',
-		privacyPolicyURL: string
+		privacyPolicyUrl: string
 	): Promise<string> => {
 		if (bootstrapFlag('nativeUI') === false) {
 			return Promise.reject(
@@ -736,7 +736,7 @@ export const createFakeNativeInth = function createFakeNativeInth(
 				)
 			);
 		}
-		if (!isPrivacyPolicyURL(privacyPolicyURL)) {
+		if (!isPrivacyPolicyUrl(privacyPolicyUrl)) {
 			return Promise.reject(
 				Object.assign(
 					new Error(
@@ -863,10 +863,10 @@ export const createFakeNativeInth = function createFakeNativeInth(
 		},
 		identify: () => Promise.resolve(),
 		logout: () => Promise.resolve(),
-		presentConsentPrompt: (privacyPolicyURL: string) =>
-			present('prompt', privacyPolicyURL),
-		presentPreferences: (privacyPolicyURL: string) =>
-			present('preferences', privacyPolicyURL),
+		presentConsentPrompt: (privacyPolicyUrl: string) =>
+			present('prompt', privacyPolicyUrl),
+		presentPreferences: (privacyPolicyUrl: string) =>
+			present('preferences', privacyPolicyUrl),
 		refresh: () => Promise.resolve(),
 		removeListeners: () => undefined,
 		requestTrackingAuthorization: answerTracking,

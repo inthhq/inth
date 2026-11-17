@@ -73,7 +73,7 @@ export const buildMetaDataPairs = function buildMetaDataPairs(
 		});
 	}
 
-	pairs.push({ name: ANDROID_META.backendUrl, value: params.backendURL });
+	pairs.push({ name: ANDROID_META.backendUrl, value: params.projectUrl });
 	if (params.dryRun) {
 		pairs.push({ name: ANDROID_META.dryRun, value: 'true' });
 	}

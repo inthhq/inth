@@ -17,7 +17,7 @@
 export const INTH_PROJECT_HOST_SUFFIXES = ['inth.app'] as const;
 
 /** Why a URL was refused, in the fixture's `reasons` codes. */
-export type ProjectURLReason =
+export type ProjectUrlReason =
 	| 'empty'
 	| 'malformed'
 	| 'scheme'
@@ -27,8 +27,8 @@ export type ProjectURLReason =
 	| 'path'
 	| 'query';
 
-/** Options for {@link normalizeProjectURL}. */
-export interface ProjectURLOptions {
+/** Options for {@link normalizeProjectUrl}. */
+export interface ProjectUrlOptions {
 	/**
 	 * The rule for a `dryRun` build: any `https` URL, or `http` on `localhost`,
 	 * `127.0.0.1` or `[::1]`, with a port and a path allowed.
@@ -39,7 +39,7 @@ export interface ProjectURLOptions {
 	/**
 	 * The option name the message starts with.
 	 *
-	 * @defaultValue 'backendURL'
+	 * @defaultValue 'projectUrl'
 	 */
 	option?: string;
 }
@@ -56,7 +56,7 @@ const PROJECT_HOST = new RegExp(
 
 const LOOPBACK_HOSTS: readonly string[] = ['localhost', '127.0.0.1', '[::1]'];
 
-const DETAILS: Record<ProjectURLReason, string> = {
+const DETAILS: Record<ProjectUrlReason, string> = {
 	credentials: 'it must not carry a username or password',
 	empty: 'the value is empty',
 	host: `the host must be a project host under ${INTH_PROJECT_HOST_SUFFIXES.join(' or ')}`,
@@ -73,10 +73,10 @@ const PLAUSIBLE_HOST = /^(?:\[[0-9a-f:.]+\]|[a-z0-9.-]+)$/u;
 const RELAXED_SCHEME_DETAIL =
 	'the scheme must be https, or http on localhost, 127.0.0.1 or [::1]';
 
-/** A `backendURL` that is not an Inth project URL. */
-export class ProjectURLError extends Error {
+/** A `projectUrl` that is not an Inth project URL. */
+export class ProjectUrlError extends Error {
 	/** The code from `packages/native-protocol/project-url/cases.json`. */
-	readonly reason: ProjectURLReason;
+	readonly reason: ProjectUrlReason;
 	/** The value as it was given. */
 	readonly input: string;
 
@@ -86,20 +86,20 @@ export class ProjectURLError extends Error {
 	 * @param options - The rule that refused it and the option name to print.
 	 */
 	constructor(
-		reason: ProjectURLReason,
+		reason: ProjectUrlReason,
 		input: string,
-		options: ProjectURLOptions = {}
+		options: ProjectUrlOptions = {}
 	) {
 		const detail =
 			reason === 'scheme' && options.relaxed === true
 				? RELAXED_SCHEME_DETAIL
 				: DETAILS[reason];
 		super(
-			`${options.option ?? 'backendURL'} must be the project URL from your ` +
+			`${options.option ?? 'projectUrl'} must be the project URL from your ` +
 				`Inth dashboard, such as ${EXAMPLE}. Got "${input}": ` +
 				`${detail}.`
 		);
-		this.name = 'ProjectURLError';
+		this.name = 'ProjectUrlError';
 		this.reason = reason;
 		this.input = input;
 	}
@@ -137,7 +137,7 @@ const splitPort = (
 };
 
 /** The parts of a URL the rule looks at, as written apart from case. */
-interface ProjectURLParts {
+interface ProjectUrlParts {
 	readonly scheme: string;
 	readonly host: string;
 	readonly port: string | null;
@@ -148,7 +148,7 @@ interface ProjectURLParts {
 }
 
 /** Split `scheme://authority/path?query`, or `null` when no host can be read. */
-const splitURL = (url: string): ProjectURLParts | null => {
+const splitURL = (url: string): ProjectUrlParts | null => {
 	const separator = url.indexOf('://');
 	const rest = url.slice(separator + 3);
 	const authorityEnd = rest.search(/[#/?]/u);
@@ -170,7 +170,7 @@ const splitURL = (url: string): ProjectURLParts | null => {
 };
 
 /** What only the strict rule refuses: the host, a port and a path, in that order. */
-const strictProblem = (parts: ProjectURLParts): ProjectURLReason | null => {
+const strictProblem = (parts: ProjectUrlParts): ProjectUrlReason | null => {
 	if (!PROJECT_HOST.test(parts.host)) {
 		return 'host';
 	}
@@ -184,7 +184,7 @@ const strictProblem = (parts: ProjectURLParts): ProjectURLReason | null => {
 const inspectURL = (
 	value: string,
 	relaxed: boolean
-): ProjectURLParts | ProjectURLReason => {
+): ProjectUrlParts | ProjectUrlReason => {
 	if (/\s/u.test(value)) {
 		return 'malformed';
 	}
@@ -223,17 +223,17 @@ const inspectURL = (
  * @param input - The value as the developer wrote it.
  * @param options - `relaxed` for a `dryRun` build, and the option name to print.
  * @returns The normal form, without a trailing slash.
- * @throws {ProjectURLError} When the value is refused. `reason` carries the code.
+ * @throws {ProjectUrlError} When the value is refused. `reason` carries the code.
  */
-export const normalizeProjectURL = (
+export const normalizeProjectUrl = (
 	input: string,
-	options: ProjectURLOptions = {}
+	options: ProjectUrlOptions = {}
 ): string => {
 	const value = input.trim();
 	const found =
 		value === '' ? 'empty' : inspectURL(value, options.relaxed === true);
 	if (typeof found === 'string') {
-		throw new ProjectURLError(found, input, options);
+		throw new ProjectUrlError(found, input, options);
 	}
 	const port = found.port === null ? '' : `:${found.port}`;
 	const normalized = `${found.scheme}://${found.host}${port}${found.path}`;
@@ -241,7 +241,7 @@ export const normalizeProjectURL = (
 	try {
 		void new URL(normalized);
 	} catch {
-		throw new ProjectURLError('malformed', input, options);
+		throw new ProjectUrlError('malformed', input, options);
 	}
 	return normalized;
 };

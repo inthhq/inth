@@ -71,7 +71,7 @@ const payloadProblem = function payloadProblem(
 		return 'its schemaVersion is not 1';
 	}
 	if (payload.endpoint !== endpoint?.replace(/\/+$/u, '')) {
-		return 'it belongs to a different backendURL';
+		return 'it belongs to a different projectUrl';
 	}
 	const { expiresAt, issuedAt } = payload;
 	if (!isWholeNumberIn(issuedAt, 0, now)) {

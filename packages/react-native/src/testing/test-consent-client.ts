@@ -60,7 +60,7 @@ export interface CreateTestConsentClientOptions {
 	 * Whether the binary links the stock native consent screens. Pass `false` to
 	 * test an app that draws its own consent UI; the provider then presents
 	 * nothing. Render it with `autoPresent={false}`, which is what lets the
-	 * provider's types leave out `privacyPolicyURL`.
+	 * provider's types leave out `privacyPolicyUrl`.
 	 *
 	 * @default true
 	 */

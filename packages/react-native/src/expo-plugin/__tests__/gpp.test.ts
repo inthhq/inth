@@ -16,7 +16,7 @@ import { applyInfoPlist } from '../ios';
 import { resolveParams } from '../params';
 import { FIXTURE_DIR } from './helpers';
 
-const backendURL = 'https://demo.inth.app';
+const projectUrl = 'https://demo.inth.app';
 
 const metaData = async function metaData(
 	params: ReturnType<typeof resolveParams>[]
@@ -39,7 +39,7 @@ const metaData = async function metaData(
 
 describe('the gpp option', () => {
 	it('writes nothing while GPP is off', async () => {
-		const params = resolveParams({ backendURL });
+		const params = resolveParams({ projectUrl });
 		expect(params.gpp).toBeNull();
 		const plist = applyInfoPlist(params, {});
 		for (const key of IOS_GPP_PLIST_KEYS) {
@@ -52,7 +52,7 @@ describe('the gpp option', () => {
 	});
 
 	it('true writes only the switch, so both cores keep their defaults', async () => {
-		const params = resolveParams({ backendURL, gpp: true });
+		const params = resolveParams({ gpp: true, projectUrl });
 		const plist = applyInfoPlist(params, {});
 		expect(plist[IOS_PLIST_KEY.gpp]).toBe(true);
 		expect(plist).not.toHaveProperty(IOS_PLIST_KEY.gppMspaMode);
@@ -65,12 +65,12 @@ describe('the gpp option', () => {
 
 	it('writes every option in the shape each reader parses', async () => {
 		const params = resolveParams({
-			backendURL,
 			gpp: {
 				mspaMode: 'service-provider',
 				optOutCategories: ['marketing', 'measurement'],
 				tcf: false,
 			},
+			projectUrl,
 		});
 		const plist = applyInfoPlist(params, {});
 		expect(plist[IOS_PLIST_KEY.gppMspaMode]).toBe('service-provider');
@@ -89,10 +89,10 @@ describe('the gpp option', () => {
 
 	it('removing gpp on incremental prebuild clears every GPP key', async () => {
 		const on = resolveParams({
-			backendURL,
 			gpp: { mspaMode: 'opt-out-option', tcf: false },
+			projectUrl,
 		});
-		const off = resolveParams({ backendURL });
+		const off = resolveParams({ projectUrl });
 		const plist = applyInfoPlist(off, applyInfoPlist(on, {}));
 		for (const key of IOS_GPP_PLIST_KEYS) {
 			expect(plist).not.toHaveProperty(key);
@@ -104,11 +104,11 @@ describe('the gpp option', () => {
 	});
 
 	it('keeps an unset opt-out list apart from an empty one on both platforms', async () => {
-		const unset = resolveParams({ backendURL, gpp: { tcf: true } });
-		const empty = resolveParams({ backendURL, gpp: { optOutCategories: [] } });
+		const unset = resolveParams({ gpp: { tcf: true }, projectUrl });
+		const empty = resolveParams({ gpp: { optOutCategories: [] }, projectUrl });
 		const onlyNecessary = resolveParams({
-			backendURL,
 			gpp: { optOutCategories: ['necessary'] },
+			projectUrl,
 		});
 
 		expect(unset.gpp?.optOutCategories).toBeNull();
@@ -139,9 +139,9 @@ describe('the gpp option', () => {
 	it('refuses an MSPA mode neither core names', () => {
 		expect(() =>
 			resolveParams({
-				backendURL,
 				// @ts-expect-error -- the value app.json would carry
 				gpp: { mspaMode: 'signatory' },
+				projectUrl,
 			})
 		).toThrow(InthPluginError);
 	});

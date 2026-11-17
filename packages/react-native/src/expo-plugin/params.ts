@@ -8,7 +8,7 @@ import type { InthConsentCategoryId } from './constants';
 import { InthPluginError } from './errors';
 import { resolveAndroidMavenRepository } from './maven';
 import type { InthAndroidMavenRepository } from './maven';
-import { normalizeProjectURL, ProjectURLError } from './project-url';
+import { normalizeProjectUrl, ProjectUrlError } from './project-url';
 import type { InthThemePluginProps } from './theme';
 
 /**
@@ -163,7 +163,7 @@ export interface InthPluginProps {
 	/** Path to a build-exported native policy JSON, relative to the Expo project. */
 	policyResource?: string;
 	/**
-	 * Fetch the latest manifest from `backendURL` at prebuild and bundle it, so a
+	 * Fetch the latest manifest from `projectUrl` at prebuild and bundle it, so a
 	 * first launch with no network still shows the prompt. With `dryRun`, the
 	 * command gets `--dry-run` and takes the same relaxed URL rule.
 	 *
@@ -191,7 +191,7 @@ export interface InthPluginProps {
 		  };
 	/**
 	 * Policy rules kept in source control. The device resolves them itself and
-	 * never calls `/init`; consent records still go to `backendURL`.
+	 * never calls `/init`; consent records still go to `projectUrl`.
 	 *
 	 * The device has no location without `/init`, so the `fallback` rule applies
 	 * unless the app sets an override country and region. Cannot be combined
@@ -206,12 +206,12 @@ export interface InthPluginProps {
 	 * under `inth.app`, with no port or path. `dryRun` relaxes
 	 * that.
 	 */
-	backendURL: string;
+	projectUrl: string;
 	/**
 	 * Development and CI switch: consent works as normal on the device, and
 	 * consent records are dropped instead of sent.
 	 *
-	 * It also relaxes the `backendURL` rule to any `https` URL, or `http` on
+	 * It also relaxes the `projectUrl` rule to any `https` URL, or `http` on
 	 * `localhost`, `127.0.0.1` or `[::1]`. A release build refuses to start
 	 * Inth with `dryRun` on, so remove it before you ship.
 	 *
@@ -380,8 +380,8 @@ export interface ResolvedInthParams {
 	/** The in-code policy rules, or `null` when the policy comes from `/init`. */
 	readonly policyRules: readonly InthPolicyRule[] | null;
 	/** The project URL in its normal form, without a trailing slash. */
-	readonly backendURL: string;
-	/** Hostname of {@link backendURL}, used for the iOS privacy manifest. */
+	readonly projectUrl: string;
+	/** Hostname of {@link projectUrl}, used for the iOS privacy manifest. */
 	readonly backendHost: string;
 	/** Whether consent records are dropped instead of sent. */
 	readonly dryRun: boolean;
@@ -438,7 +438,7 @@ export interface ResolvedInthParams {
 
 const USAGE =
 	'configure it in app.json as ' +
-	`{ "plugins": [["@inth/react-native", { "backendURL": "https://your-project.inth.app" }]] }`;
+	`{ "plugins": [["@inth/react-native", { "projectUrl": "https://your-project.inth.app" }]] }`;
 
 /**
  * Options this plugin used to take, with what replaces each one.
@@ -453,14 +453,14 @@ const RETIRED_MODES: Readonly<Record<string, string>> = {
 		'are gone.',
 	hosted:
 		"mode 'hosted' was removed. Hosted is the only mode: remove mode and " +
-		'keep backendURL.',
+		'keep projectUrl.',
 	offline:
 		"mode 'offline' was removed. Use dryRun: true for development and CI. " +
-		'In production keep backendURL; bundleManifest or an in-code policy ' +
+		'In production keep projectUrl; bundleManifest or an in-code policy ' +
 		'covers a launch without network.',
 	selfHosted:
 		"mode 'selfHosted' was removed and has no replacement. The mobile SDKs " +
-		'work only with Inth: remove mode and set backendURL to your Inth ' +
+		'work only with Inth: remove mode and set projectUrl to your Inth ' +
 		'project URL.',
 };
 
@@ -474,30 +474,30 @@ const assertNoRetiredOptions = function assertNoRetiredOptions(
 				? RETIRED_MODES[String(given.mode)]
 				: undefined) ??
 				`mode was removed; got ${JSON.stringify(given.mode)}. Hosted is ` +
-					'the only mode: remove mode and set backendURL to your Inth ' +
+					'the only mode: remove mode and set projectUrl to your Inth ' +
 					'project URL.'
 		);
 	}
 	if (given.initURL !== undefined) {
 		throw new InthPluginError(
 			'initURL was removed and has no replacement. Policy is fetched from ' +
-				'backendURL: remove initURL.'
+				'projectUrl: remove initURL.'
 		);
 	}
 };
 
 /** The project URL in its normal form, or the plugin's error for a refused one. */
-const resolveBackendURL = function resolveBackendURL(
+const resolveProjectUrl = function resolveProjectUrl(
 	value: unknown,
 	dryRun: boolean
 ): string {
 	if (typeof value !== 'string') {
-		throw new InthPluginError(`backendURL is required. ${USAGE}`);
+		throw new InthPluginError(`projectUrl is required. ${USAGE}`);
 	}
 	try {
-		return normalizeProjectURL(value, { relaxed: dryRun });
+		return normalizeProjectUrl(value, { relaxed: dryRun });
 	} catch (error) {
-		if (error instanceof ProjectURLError) {
+		if (error instanceof ProjectUrlError) {
 			throw new InthPluginError(error.message, error.reason);
 		}
 		throw error;
@@ -505,8 +505,8 @@ const resolveBackendURL = function resolveBackendURL(
 };
 
 /** `www.example.com` from the normal form, without a port. */
-const hostOf = function hostOf(backendURL: string): string {
-	return new URL(backendURL).hostname;
+const hostOf = function hostOf(projectUrl: string): string {
+	return new URL(projectUrl).hostname;
 };
 
 const normalizeOptionalText = function normalizeOptionalText(
@@ -1492,8 +1492,8 @@ export const resolveParams = function resolveParams(
 		);
 	}
 	const dryRun = props.dryRun === true;
-	const backendURL = resolveBackendURL(props.backendURL, dryRun);
-	const backendHost = hostOf(backendURL);
+	const projectUrl = resolveProjectUrl(props.projectUrl, dryRun);
+	const backendHost = hostOf(projectUrl);
 	assertPolicySourcesDoNotMix(props);
 
 	const att = resolveAppTrackingTransparency(props);
@@ -1520,7 +1520,7 @@ export const resolveParams = function resolveParams(
 		if (!privacyTrackingDomains.includes(backendHost)) {
 			throw new InthPluginError(
 				`privacyTrackingDomains must list ${backendHost}, the host of ` +
-					`backendURL. Consent records and the Inth subject id are sent ` +
+					`projectUrl. Consent records and the Inth subject id are sent ` +
 					`there, so Apple expects it declared whenever the app tracks. ` +
 					`Got ${privacyTrackingDomains.join(', ') || '(none)'}.`
 			);
@@ -1534,7 +1534,6 @@ export const resolveParams = function resolveParams(
 		appTrackingTransparency: att,
 		autoBootstrap: props.autoBootstrap ?? true,
 		backendHost,
-		backendURL,
 		bundleManifest: normalizeBundleManifest(props),
 		consentCategories: normalizeConsentCategories(props.consentCategories),
 		domain: normalizeOptionalText(props.domain, 'domain'),
@@ -1550,6 +1549,7 @@ export const resolveParams = function resolveParams(
 		),
 		policyRules: normalizePolicy(props.policy),
 		privacyTrackingDomains,
+		projectUrl,
 		skipNativeBuildCheck: props.skipNativeBuildCheck ?? false,
 		vendors: normalizeVendors(props.vendors),
 	};

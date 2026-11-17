@@ -12,7 +12,7 @@
  *     [
  *       "@inth/react-native",
  *       {
- *         "backendURL": "https://your-project.inth.app",
+ *         "projectUrl": "https://your-project.inth.app",
  *         "androidMavenRepository": { "url": "https://maven.example.com/inth" }
  *       }
  *     ]
@@ -54,10 +54,10 @@ export type {
 } from './params';
 export {
 	INTH_PROJECT_HOST_SUFFIXES,
-	normalizeProjectURL,
-	ProjectURLError,
+	normalizeProjectUrl,
+	ProjectUrlError,
 } from './project-url';
-export type { ProjectURLOptions, ProjectURLReason } from './project-url';
+export type { ProjectUrlOptions, ProjectUrlReason } from './project-url';
 export type { WorkflowContext } from './workflow';
 
 export type { InthAndroidMavenRepository } from './maven';

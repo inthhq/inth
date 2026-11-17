@@ -5,7 +5,7 @@
 
 import { describe, expect, test } from 'vitest';
 
-import { isPrivacyPolicyURL } from '../privacy-policy-url';
+import { isPrivacyPolicyUrl } from '../privacy-policy-url';
 
 describe('accepted', () => {
 	test.each([
@@ -24,7 +24,7 @@ describe('accepted', () => {
 		'https://192.168.0.1/privacy',
 		'https://localhost',
 	])('%s', (value) => {
-		expect(isPrivacyPolicyURL(value)).toBe(true);
+		expect(isPrivacyPolicyUrl(value)).toBe(true);
 	});
 });
 
@@ -65,6 +65,6 @@ describe('refused', () => {
 			`https://${'a'.repeat(60)}.${'b'.repeat(60)}.${'c'.repeat(60)}.${'d'.repeat(60)}.${'e'.repeat(20)}/p`,
 		],
 	])('%s', (_reason, value) => {
-		expect(isPrivacyPolicyURL(value)).toBe(false);
+		expect(isPrivacyPolicyUrl(value)).toBe(false);
 	});
 });

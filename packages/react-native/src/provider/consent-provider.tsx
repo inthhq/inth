@@ -25,10 +25,10 @@ import type { ConsentClient } from '../native/client';
 import {
 	onConsentPresenterOutcome,
 	presentPreferences,
-	sessionPrivacyPolicyURL,
+	sessionPrivacyPolicyUrl,
 } from '../native/presenter';
 import {
-	assertPrivacyPolicyURL,
+	assertPrivacyPolicyUrl,
 	configureAutoPresent,
 	linksNativeUI,
 	recordConsentPresenter,
@@ -67,12 +67,12 @@ import type {
 export type ConsentProviderPromptProps =
 	// The opt-out comes first on purpose. TypeScript reports a failed union
 	// against its last member, so `<ConsentProvider>` with no props is told that
-	// `privacyPolicyURL` is missing rather than that `autoPresent` is.
+	// `privacyPolicyUrl` is missing rather than that `autoPresent` is.
 	| {
 			/** Present nothing by itself. The manual presenter APIs work as before. */
 			readonly autoPresent: false;
 			/** Unused while `autoPresent` is `false`. */
-			readonly privacyPolicyURL?: string;
+			readonly privacyPolicyUrl?: string;
 	  }
 	| {
 			/**
@@ -84,7 +84,7 @@ export type ConsentProviderPromptProps =
 			 */
 			readonly autoPresent?: boolean;
 			/** The app's HTTPS privacy-policy URL, linked from the prompt. */
-			readonly privacyPolicyURL: string;
+			readonly privacyPolicyUrl: string;
 	  };
 
 /**
@@ -206,7 +206,7 @@ export interface ConsentProviderBaseProps {
  *
  * export function App() {
  *     return (
- *         <ConsentProvider privacyPolicyURL="https://example.com/privacy">
+ *         <ConsentProvider privacyPolicyUrl="https://example.com/privacy">
  *             <Root />
  *         </ConsentProvider>
  *     );
@@ -220,7 +220,7 @@ export interface ConsentProviderBaseProps {
  * @param props.safeAreaInsets - Bands the surfaces stay clear of, when the host
  *   measured them.
  * @param props.autoPresent - `false` leaves presenting to the app.
- * @param props.privacyPolicyURL - The HTTPS privacy policy the prompt links to.
+ * @param props.privacyPolicyUrl - The HTTPS privacy policy the prompt links to.
  * @param props.trackingRequest - When to ask for App Tracking Transparency.
  * @param props.trackingReprompt - Whether to ask again a year after an answer.
  * @param props.onTrackingAdditionalInformation - Your own controls for Apple's
@@ -232,7 +232,7 @@ export interface ConsentProviderBaseProps {
  *   protocol this bundle does not support. The message names both sides and the
  *   fix, which is a rebuild rather than a JavaScript update.
  * @throws {TypeError} When the provider presents the prompt and
- *   `privacyPolicyURL` is not an HTTPS URL. A binary built without the stock
+ *   `privacyPolicyUrl` is not an HTTPS URL. A binary built without the stock
  *   native screens (`bootstrap.nativeUI === false`) presents nothing, so it
  *   neither checks the URL nor needs one.
  */
@@ -240,7 +240,7 @@ export const ConsentProvider = ({
 	autoPresent = true,
 	children,
 	client: clientProp,
-	privacyPolicyURL,
+	privacyPolicyUrl,
 	safeAreaInsets,
 	trackingRequest = 'afterConsent',
 	trackingReprompt = 'never',
@@ -273,7 +273,7 @@ export const ConsentProvider = ({
 	// needs no URL either: the app draws its own consent UI.
 	const presents = autoPresent && inherited === null && linksNativeUI(client);
 	if (presents) {
-		assertPrivacyPolicyURL(privacyPolicyURL);
+		assertPrivacyPolicyUrl(privacyPolicyUrl);
 	}
 
 	// An inner provider that was given nothing keeps the ancestor's measurement
@@ -330,10 +330,10 @@ export const ConsentProvider = ({
 		const off = (): void => {
 			configureAutoPresent(client, {
 				autoPresent: false,
-				privacyPolicyURL: privacyPolicyURL ?? null,
+				privacyPolicyURL: privacyPolicyUrl ?? null,
 			});
 		};
-		if (!presents || privacyPolicyURL === undefined) {
+		if (!presents || privacyPolicyUrl === undefined) {
 			off();
 			return;
 		}
@@ -344,7 +344,7 @@ export const ConsentProvider = ({
 			}
 			configureAutoPresent(client, {
 				autoPresent: !holdsAutoPresent(client, trackingRequest, token, sync),
-				privacyPolicyURL,
+				privacyPolicyURL: privacyPolicyUrl,
 			});
 		};
 		sync();
@@ -367,7 +367,7 @@ export const ConsentProvider = ({
 			}
 			off();
 		};
-	}, [client, inherited, presents, privacyPolicyURL, trackingRequest]);
+	}, [client, inherited, presents, privacyPolicyUrl, trackingRequest]);
 
 	// With beforeConsent, a prompt the app opens itself waits for Apple's alert
 	// too. The wait was installed while rendering; this keeps it through strict
@@ -442,15 +442,15 @@ export const ConsentProvider = ({
 			// A session the app opened carries its URL; one native opened by itself
 			// used the provider's.
 			const url =
-				sessionPrivacyPolicyURL(outcome.sessionId) ?? privacyPolicyURL;
+				sessionPrivacyPolicyUrl(outcome.sessionId) ?? privacyPolicyUrl;
 			void afterPrompt(url);
 		});
 		// A stored choice still in force owes no prompt this launch, so the rule
 		// applies as soon as the core has an answer. Only a presenting provider
 		// does this, and it always has a URL.
 		let stopLaunch = (): void => undefined;
-		if (presents && privacyPolicyURL !== undefined) {
-			const launchURL = privacyPolicyURL;
+		if (presents && privacyPolicyUrl !== undefined) {
+			const launchURL = privacyPolicyUrl;
 			const check = (): boolean =>
 				checkTrackingAtLaunch(client, token, trackingRequest, () => {
 					// Nothing else would show those controls; closing them asks again.
@@ -475,7 +475,7 @@ export const ConsentProvider = ({
 		inherited,
 		onTrackingAdditionalInformation,
 		presents,
-		privacyPolicyURL,
+		privacyPolicyUrl,
 		trackingReprompt,
 		trackingRequest,
 	]);

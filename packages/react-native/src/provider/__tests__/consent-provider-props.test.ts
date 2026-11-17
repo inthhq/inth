@@ -1,6 +1,6 @@
 /**
  * What TypeScript tells a developer who renders `<ConsentProvider>` with no
- * props. The fix is to pass `privacyPolicyURL`, so that is the property the
+ * props. The fix is to pass `privacyPolicyUrl`, so that is the property the
  * error must name, not `autoPresent`.
  *
  * TypeScript 7 has no JavaScript compiler API, so this runs the package's own
@@ -57,19 +57,19 @@ const typeCheck = function typeCheck(source: string): string {
 	}
 };
 
-test('a provider with no props is told that privacyPolicyURL is missing', () => {
+test('a provider with no props is told that privacyPolicyUrl is missing', () => {
 	const output = typeCheck(
 		'export const app = <ConsentProvider><span /></ConsentProvider>;'
 	);
 
-	expect(output).toContain("Property 'privacyPolicyURL' is missing");
+	expect(output).toContain("Property 'privacyPolicyUrl' is missing");
 	expect(output).not.toContain("Property 'autoPresent' is missing");
 }, 60_000);
 
 test('the one-line form type-checks', () => {
 	expect(
 		typeCheck(
-			'export const app = <ConsentProvider privacyPolicyURL="https://example.com/privacy"><span /></ConsentProvider>;'
+			'export const app = <ConsentProvider privacyPolicyUrl="https://example.com/privacy"><span /></ConsentProvider>;'
 		)
 	).toBe('');
 }, 60_000);

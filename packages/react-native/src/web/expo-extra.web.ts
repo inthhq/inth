@@ -19,7 +19,7 @@ export interface WebConsentOptions {
 	 * `https://your-project.inth.app`. It follows the rule the plugin applies:
 	 * with `dryRun`, any `https` URL or `http` on a loopback host also passes.
 	 */
-	readonly backendURL: string;
+	readonly projectUrl: string;
 	/**
 	 * Drop consent records instead of sending them. A production web bundle
 	 * refuses it, as a native release build does: every read answers deny-all.
@@ -67,18 +67,18 @@ export const webOptionsFromManifest = function webOptionsFromManifest(
 	if (typeof inth !== 'object' || inth === null) {
 		return null;
 	}
-	const { backendURL, consentCategories, domain, dryRun, forceGPC } =
+	const { projectUrl, consentCategories, domain, dryRun, forceGPC } =
 		inth as Record<string, unknown>;
-	if (typeof backendURL !== 'string') {
+	if (typeof projectUrl !== 'string') {
 		return null;
 	}
 	return {
-		backendURL,
 		consentCategories: Array.isArray(consentCategories)
 			? (consentCategories as WebConsentOptions['consentCategories'])
 			: null,
 		domain: typeof domain === 'string' ? domain : null,
 		dryRun: dryRun === true,
 		forceGPC: forceGPC === true,
+		projectUrl,
 	};
 };

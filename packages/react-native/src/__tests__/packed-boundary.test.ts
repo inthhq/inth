@@ -257,10 +257,10 @@ test('packed runtime, declarations and consumer stay independent of web consent 
 					assert.equal(typeof plugin.default, 'function');
 					const config = plugin.applyParamsOnConfig(
 						{ name: 'Packed consumer', slug: 'packed-consumer' },
-						{ backendURL: 'https://your-project.inth.app', policy: { rules: [{ id: 'everywhere', match: { fallback: true, isDefault: true }, model: 'opt-in', prompt: 'choice' }] } },
+						{ projectUrl: 'https://your-project.inth.app', policy: { rules: [{ id: 'everywhere', match: { fallback: true, isDefault: true }, model: 'opt-in', prompt: 'choice' }] } },
 						{ argv: ['node', 'expo', 'config'], env: {}, projectRoot: process.cwd() }
 					);
-					assert.equal(config.extra.inth.backendURL, 'https://your-project.inth.app');
+					assert.equal(config.extra.inth.projectUrl, 'https://your-project.inth.app');
 					assert.equal(config.extra.inth.dryRun, false);
 					assert.equal('mode' in config.extra.inth, false);
 				}
@@ -278,7 +278,7 @@ test('packed runtime, declarations and consumer stay independent of web consent 
 			export const gate: typeof useConsent = useConsent;
 			export type Snapshot = ConsentSnapshot;
 			export const plugin: typeof withInth = withInth;
-			export const pluginProps: InthPluginProps = { backendURL: 'https://your-project.inth.app', policy: { rules: [{ id: 'everywhere', match: { fallback: true, isDefault: true }, model: 'opt-in', prompt: 'choice' }] } };
+			export const pluginProps: InthPluginProps = { projectUrl: 'https://your-project.inth.app', policy: { rules: [{ id: 'everywhere', match: { fallback: true, isDefault: true }, model: 'opt-in', prompt: 'choice' }] } };
 			export const firebase: typeof connectFirebaseAnalytics = connectFirebaseAnalytics;
 			export const posthog: typeof connectPostHog = connectPostHog;
 			export const amplitude: typeof connectAmplitude = connectAmplitude;

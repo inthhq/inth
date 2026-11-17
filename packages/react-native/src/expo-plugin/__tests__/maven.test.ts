@@ -13,7 +13,7 @@ const repository = {
 const apply = async (androidMavenRepository = repository, contents = '') => {
 	const config = applyToFixture({
 		androidMavenRepository,
-		backendURL: 'https://acme.inth.app',
+		projectUrl: 'https://acme.inth.app',
 	});
 	const result = await runMod(config, 'android', 'projectBuildGradle', {
 		...gradleFile('project-build.gradle'),

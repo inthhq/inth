@@ -79,7 +79,7 @@ const MIN_SDK_LINE = 'minSdkVersion rootProject.ext.minSdkVersion';
 /** Run the plugin's finalized Android mod, the way prebuild ends. */
 const finalize = function finalize(projectRoot: string) {
 	return runMod(
-		applyToFixture({ backendURL: 'https://acme.inth.app' }),
+		applyToFixture({ projectUrl: 'https://acme.inth.app' }),
 		'android',
 		'finalized',
 		undefined,

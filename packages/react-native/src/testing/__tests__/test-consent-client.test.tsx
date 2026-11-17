@@ -212,7 +212,7 @@ describe('the simulated native prompt', () => {
 		handle = renderTree(
 			<ConsentProvider
 				client={consent.client}
-				privacyPolicyURL={PRIVACY_URL}
+				privacyPolicyUrl={PRIVACY_URL}
 			>
 				<AnalyticsScreen />
 			</ConsentProvider>
@@ -240,7 +240,7 @@ describe('the simulated native prompt', () => {
 		handle = renderTree(
 			<ConsentProvider
 				client={consent.client}
-				privacyPolicyURL={PRIVACY_URL}
+				privacyPolicyUrl={PRIVACY_URL}
 			>
 				<AnalyticsScreen />
 			</ConsentProvider>
@@ -423,7 +423,7 @@ describe('installation', () => {
 			>
 				<ConsentProvider
 					client={consent.client}
-					privacyPolicyURL={PRIVACY_URL}
+					privacyPolicyUrl={PRIVACY_URL}
 				>
 					<AnalyticsScreen />
 				</ConsentProvider>
@@ -695,7 +695,7 @@ describe('the automatic prompt across snapshot changes', () => {
 		renderTree(
 			<ConsentProvider
 				client={consent.client}
-				privacyPolicyURL={PRIVACY_URL}
+				privacyPolicyUrl={PRIVACY_URL}
 			>
 				<AnalyticsScreen />
 			</ConsentProvider>

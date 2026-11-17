@@ -291,7 +291,7 @@ const runSeed = async function runSeed(seed: number): Promise<string[]> {
 	const element = () =>
 		autoPresent ? (
 			<ConsentProvider
-				privacyPolicyURL={URL}
+				privacyPolicyUrl={URL}
 				trackingRequest={mode}
 			>
 				{child ? <PresentsOnMount /> : null}

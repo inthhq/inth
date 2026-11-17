@@ -62,8 +62,6 @@ export const ANDROID_META = {
 export const IOS_PLIST_KEY = {
 	/** Present only when the host bootstraps the core itself. */
 	autoBootstrap: 'com.inth.reactnative.AutoBootstrap',
-	/** Inth project URL. */
-	backendURL: 'com.inth.backend.url',
 	/** Category id array the app offers, read by the iOS bridge. */
 	categories: 'com.inth.categories',
 	/** Value sent as the `domain` field of `POST /subjects`. */
@@ -91,6 +89,8 @@ export const IOS_PLIST_KEY = {
 	policyResource: 'com.inth.policy.resource',
 	/** Bundle filename of the in-code policy. */
 	policyRules: 'com.inth.policy.rules',
+	/** Inth project URL. */
+	projectUrl: 'com.inth.backend.url',
 	/**
 	 * Comma-separated IAB vendor ids the app may disclose, read by the iOS bridge.
 	 *

@@ -195,7 +195,7 @@ describe('the root app.plugin.js', () => {
 					},
 					{
 						androidMavenRepository: { url: 'https://maven.example.com/inth' },
-						backendURL: 'https://acme.inth.app',
+						projectUrl: 'https://acme.inth.app',
 						skipNativeBuildCheck: true,
 					}
 				);
@@ -224,7 +224,7 @@ describe('the root app.plugin.js', () => {
 			expect(root.resolved.plugin).toBe(subpath.resolved.plugin);
 			expect(root.config).toEqual(subpath.config);
 			expect(root.config.extra).toMatchObject({
-				inth: { backendURL: 'https://acme.inth.app' },
+				inth: { projectUrl: 'https://acme.inth.app' },
 			});
 		});
 	});

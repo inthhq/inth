@@ -18,8 +18,8 @@ import {
 
 const BACKEND = 'https://acme.inth.app';
 const ATT_PROPS = {
-	backendURL: BACKEND,
 	enableAppTrackingTransparency: true,
+	projectUrl: BACKEND,
 	skAdNetworkIdentifiers: ['cstr6suwn9.skadnetwork', '4f3dc5j5db.skadnetwork'],
 	trackingUsageDescription: 'We use your activity to pick the ads you see.',
 } as const;
@@ -98,8 +98,8 @@ describe('App Tracking Transparency', () => {
 		// the flag off the binary must not carry the prompt they belong to.
 		const applied = await runInfoPlist(
 			applyToFixture({
-				backendURL: BACKEND,
 				forceGPC: true,
+				projectUrl: BACKEND,
 				skAdNetworkIdentifiers: ['cstr6suwn9.skadnetwork'],
 			})
 		);
@@ -172,8 +172,8 @@ describe('App Tracking Transparency', () => {
 	it('refuses a prompt string it would have to invent', () => {
 		expect(() =>
 			applyToFixture({
-				backendURL: BACKEND,
 				enableAppTrackingTransparency: true,
+				projectUrl: BACKEND,
 			})
 		).toThrowError(/needs trackingUsageDescription/u);
 	});
@@ -190,8 +190,8 @@ describe('App Tracking Transparency', () => {
 	it('refuses tracking domains with no tracking prompt to back them', () => {
 		expect(() =>
 			applyToFixture({
-				backendURL: BACKEND,
 				privacyTrackingDomains: ['ads.example.com'],
+				projectUrl: BACKEND,
 			})
 		).toThrowError(/without\s+enableAppTrackingTransparency/u);
 	});
@@ -208,7 +208,7 @@ describe('App Tracking Transparency', () => {
 
 describe('the native keys', () => {
 	it('writes the project URL and no mode key', async () => {
-		const config = applyToFixture({ backendURL: ' Acme.Inth.App/ ' });
+		const config = applyToFixture({ projectUrl: ' Acme.Inth.App/ ' });
 		const plist = (await runInfoPlist(config)).ios?.infoPlist;
 		const manifest = (
 			await runMod(config, 'android', 'manifest', await readFixtureManifest())
@@ -220,8 +220,8 @@ describe('the native keys', () => {
 			'com.inth.backend.url': BACKEND,
 		});
 		expect(config.extra?.inth).toMatchObject({
-			backendURL: BACKEND,
 			dryRun: false,
+			projectUrl: BACKEND,
 		});
 		expect(config.extra?.inth).not.toHaveProperty('mode');
 		expect(metaNamesOf(manifest)).toStrictEqual([
@@ -257,8 +257,8 @@ describe('the native keys', () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 		try {
 			const props = {
-				backendURL: 'http://localhost:8787/api/self-host/',
 				dryRun: true,
+				projectUrl: 'http://localhost:8787/api/self-host/',
 			};
 			const config = applyToFixture(props);
 			applyToFixture(props);
@@ -279,8 +279,8 @@ describe('the native keys', () => {
 				$: { 'android:name': 'com.inth.DRY_RUN', 'android:value': 'true' },
 			});
 			expect(config.extra?.inth).toMatchObject({
-				backendURL: 'http://localhost:8787/api/self-host',
 				dryRun: true,
+				projectUrl: 'http://localhost:8787/api/self-host',
 			});
 			const warnings = warn.mock.calls.filter(([message]) =>
 				String(message).includes('dryRun is on')
@@ -296,16 +296,16 @@ describe('the native keys', () => {
 
 	it('refuses the same loopback URL without dryRun', () => {
 		expect(() =>
-			applyToFixture({ backendURL: 'http://localhost:8787/api/self-host' })
+			applyToFixture({ projectUrl: 'http://localhost:8787/api/self-host' })
 		).toThrowError(
-			/backendURL must be the project URL from your Inth dashboard/u
+			/projectUrl must be the project URL from your Inth dashboard/u
 		);
 	});
 
 	it('leaves the core unstarted when the native app installs it', async () => {
 		const config = applyToFixture({
 			autoBootstrap: false,
-			backendURL: BACKEND,
+			projectUrl: BACKEND,
 		});
 		const plist = (await runInfoPlist(config)).ios?.infoPlist;
 		const manifest = (
@@ -326,7 +326,7 @@ describe('the native keys', () => {
 	});
 
 	it('writes the force-GPC switch in each platform spelling', async () => {
-		const config = applyToFixture({ backendURL: BACKEND, forceGPC: true });
+		const config = applyToFixture({ forceGPC: true, projectUrl: BACKEND });
 		const manifest = (
 			await runMod(config, 'android', 'manifest', await readFixtureManifest())
 		).modResults as AndroidConfig.Manifest.AndroidManifest;
@@ -346,8 +346,8 @@ describe('the native keys', () => {
 
 	it('keeps the domain on both platforms', async () => {
 		const config = applyToFixture({
-			backendURL: BACKEND,
 			domain: 'app.example.com',
+			projectUrl: BACKEND,
 		});
 		const manifest = (
 			await runMod(config, 'android', 'manifest', await readFixtureManifest())
@@ -370,7 +370,7 @@ describe('the native keys', () => {
 		'refuses the retired mode %s before anything is written',
 		(mode) => {
 			expect(() =>
-				applyToFixture({ backendURL: BACKEND, mode } as never)
+				applyToFixture({ mode, projectUrl: BACKEND } as never)
 			).toThrowError(new RegExp(`mode '${mode}' was removed`, 'u'));
 		}
 	);

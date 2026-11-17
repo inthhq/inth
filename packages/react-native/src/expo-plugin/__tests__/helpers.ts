@@ -34,8 +34,8 @@ export const IN_CODE_POLICY = {
 
 /** Props for an app whose policy is in code. */
 export const WITH_POLICY = {
-	backendURL: 'https://acme.inth.app',
 	policy: IN_CODE_POLICY,
+	projectUrl: 'https://acme.inth.app',
 } as const;
 
 export const PREBUILD_ARGV = ['node', '/usr/local/bin/expo', 'prebuild'];

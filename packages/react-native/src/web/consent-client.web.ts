@@ -30,7 +30,7 @@ import { createConsentRuntime } from '@c15t/core/runtime';
 import type { ConsentRuntime, ConsentRuntimeOptions } from '@c15t/core/runtime';
 import { createHostedTransport, custom, hosted } from '@c15t/core/transports';
 
-import { normalizeProjectURL } from '../expo-plugin/project-url';
+import { normalizeProjectUrl } from '../expo-plugin/project-url';
 import { denyAllSnapshot } from '../lib/deny-all-snapshot';
 import {
 	categoryDecision,
@@ -135,15 +135,15 @@ interface ClientState {
  * identity calls change local state only. The hosted transport is kept for
  * `init` alone, so the page still shows the project's policy.
  *
- * @param backendURL - The project URL.
+ * @param projectUrl - The project URL.
  * @param domain - The `domain` a save would carry.
  * @returns A transport factory that never writes.
  */
 const dryRunMode = function dryRunMode(
-	backendURL: string,
+	projectUrl: string,
 	domain: string | undefined
 ): ProviderTransportFactory {
-	const transport = createHostedTransport({ backendURL, domain });
+	const transport = createHostedTransport({ domain, projectUrl });
 	const dropping: KernelTransport = {
 		identify: () => Promise.resolve(),
 		init: (context) =>
@@ -372,7 +372,7 @@ const intentRefusal = function intentRefusal(
  * @param options - The project URL and the other plugin values.
  * @param dependencies - Test seams.
  * @returns A client. Call {@link ConsentClient.dispose} to stop the engine.
- * @throws {ProjectURLError} When `backendURL` breaks the project URL rule.
+ * @throws {ProjectUrlError} When `projectUrl` breaks the project URL rule.
  */
 // oxlint-disable-next-line max-lines-per-function, max-statements -- One closure holds the client state, as `createConsentClient` does on native.
 export const createWebConsentClient = function createWebConsentClient(
@@ -381,7 +381,7 @@ export const createWebConsentClient = function createWebConsentClient(
 ): ConsentClient {
 	const production = dependencies.production ?? isProduction();
 	const dryRun = options.dryRun === true;
-	const backendURL = normalizeProjectURL(options.backendURL, {
+	const projectUrl = normalizeProjectUrl(options.projectUrl, {
 		relaxed: dryRun,
 	});
 	const domain = options.domain ?? undefined;
@@ -412,8 +412,7 @@ export const createWebConsentClient = function createWebConsentClient(
 		);
 	}
 
-	const runtimeOptions: ConsentRuntimeOptions & { backendURL: string } = {
-		backendURL,
+	const runtimeOptions: ConsentRuntimeOptions & { projectUrl: string } = {
 		consentCategories:
 			options.consentCategories === null ||
 			options.consentCategories === undefined
@@ -422,8 +421,9 @@ export const createWebConsentClient = function createWebConsentClient(
 		mode:
 			dependencies.mode ??
 			(dryRun
-				? dryRunMode(backendURL, domain)
-				: hosted({ backendURL, domain })),
+				? dryRunMode(projectUrl, domain)
+				: hosted({ domain, projectUrl })),
+		projectUrl,
 		// A decision input from the first request on, so /init resolves the
 		// policy for a GPC visitor; the kernel derives the signal from it.
 		...(options.forceGPC === true && { overrides: { gpc: true } }),

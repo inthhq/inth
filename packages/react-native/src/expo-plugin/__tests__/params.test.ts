@@ -8,7 +8,7 @@ const BACKEND = 'https://acme.inth.app';
 
 describe('resolveParams', () => {
 	it('defaults a hosted install', () => {
-		expect(resolveParams({ backendURL: BACKEND })).toMatchObject({
+		expect(resolveParams({ projectUrl: BACKEND })).toMatchObject({
 			appTrackingTransparency: {
 				enabled: false,
 				skAdNetworkIdentifiers: [],
@@ -16,18 +16,18 @@ describe('resolveParams', () => {
 			},
 			autoBootstrap: true,
 			backendHost: 'acme.inth.app',
-			backendURL: BACKEND,
 			domain: null,
 			dryRun: false,
 			forceGPC: false,
+			projectUrl: BACKEND,
 			skipNativeBuildCheck: false,
 		});
 	});
 
 	it('writes the project URL in its normal form', () => {
-		expect(resolveParams({ backendURL: ' Acme.Inth.App/// ' })).toMatchObject({
+		expect(resolveParams({ projectUrl: ' Acme.Inth.App/// ' })).toMatchObject({
 			backendHost: 'acme.inth.app',
-			backendURL: BACKEND,
+			projectUrl: BACKEND,
 		});
 	});
 
@@ -45,29 +45,29 @@ describe('resolveParams', () => {
 		['a query string', `${BACKEND}?key=leaked`, 'query'],
 		['an empty string', '', 'empty'],
 	])('rejects %s: %s', (_label, value, reason) => {
-		const refused = () => resolveParams({ backendURL: value });
+		const refused = () => resolveParams({ projectUrl: value });
 		expect(refused).toThrowError(InthPluginError);
 		expect(refused).toThrowError(
 			expect.objectContaining({
 				message: expect.stringContaining(
-					`backendURL must be the project URL from your Inth dashboard, such as https://your-project.inth.app. Got "${value}": `
+					`projectUrl must be the project URL from your Inth dashboard, such as https://your-project.inth.app. Got "${value}": `
 				),
 				reason,
 			})
 		);
 	});
 
-	it('requires backendURL', () => {
+	it('requires projectUrl', () => {
 		expect(() => resolveParams({} as never)).toThrowError(
-			/backendURL is required/u
+			/projectUrl is required/u
 		);
 		expect(() => resolveParams({ dryRun: true } as never)).toThrowError(
-			/backendURL is required/u
+			/projectUrl is required/u
 		);
 	});
 
 	it.each([
-		['hosted', /Hosted is the only mode: remove mode and keep backendURL/u],
+		['hosted', /Hosted is the only mode: remove mode and keep projectUrl/u],
 		['selfHosted', /has no replacement\. The mobile SDKs work only with Inth/u],
 		['offline', /Use dryRun: true for development and CI/u],
 		['custom', /Set autoBootstrap to false/u],
@@ -76,7 +76,7 @@ describe('resolveParams', () => {
 		'refuses the retired mode %s and names what replaces it',
 		(mode, message) => {
 			const refused = () =>
-				resolveParams({ backendURL: BACKEND, mode } as never);
+				resolveParams({ mode, projectUrl: BACKEND } as never);
 			expect(refused).toThrowError(InthPluginError);
 			expect(refused).toThrowError(message);
 		}
@@ -85,20 +85,20 @@ describe('resolveParams', () => {
 	it('refuses the retired initURL and says where policy comes from', () => {
 		expect(() =>
 			resolveParams({
-				backendURL: BACKEND,
 				initURL: `${BACKEND}/init`,
+				projectUrl: BACKEND,
 			} as never)
-		).toThrowError(/initURL was removed.*Policy is fetched from backendURL/u);
+		).toThrowError(/initURL was removed.*Policy is fetched from projectUrl/u);
 	});
 
 	describe('dryRun', () => {
 		it('is off unless set, and must be a boolean', () => {
-			expect(resolveParams({ backendURL: BACKEND }).dryRun).toBe(false);
-			expect(resolveParams({ backendURL: BACKEND, dryRun: true }).dryRun).toBe(
+			expect(resolveParams({ projectUrl: BACKEND }).dryRun).toBe(false);
+			expect(resolveParams({ dryRun: true, projectUrl: BACKEND }).dryRun).toBe(
 				true
 			);
 			expect(() =>
-				resolveParams({ backendURL: BACKEND, dryRun: 'yes' as never })
+				resolveParams({ dryRun: 'yes' as never, projectUrl: BACKEND })
 			).toThrowError(/dryRun must be true or false/u);
 		});
 
@@ -114,12 +114,12 @@ describe('resolveParams', () => {
 				'https://staging.consent.example.com',
 				'staging.consent.example.com',
 			],
-		])('relaxes the host rule: %s', (value, backendURL, backendHost) => {
-			expect(resolveParams({ backendURL: value, dryRun: true })).toMatchObject({
+		])('relaxes the host rule: %s', (value, projectUrl, backendHost) => {
+			expect(resolveParams({ dryRun: true, projectUrl: value })).toMatchObject({
 				backendHost,
-				backendURL,
+				projectUrl,
 			});
-			expect(() => resolveParams({ backendURL: value })).toThrowError(
+			expect(() => resolveParams({ projectUrl: value })).toThrowError(
 				InthPluginError
 			);
 		});
@@ -130,7 +130,7 @@ describe('resolveParams', () => {
 				['https://user:secret@consent.example.com', 'credentials'],
 			]) {
 				expect(() =>
-					resolveParams({ backendURL: value as string, dryRun: true })
+					resolveParams({ dryRun: true, projectUrl: value as string })
 				).toThrowError(expect.objectContaining({ reason }));
 			}
 		});
@@ -139,15 +139,15 @@ describe('resolveParams', () => {
 	it('defaults to no declared category scope', () => {
 		// Empty means "write nothing", which the cores read as no declaration.
 		expect(
-			resolveParams({ backendURL: BACKEND }).consentCategories
+			resolveParams({ projectUrl: BACKEND }).consentCategories
 		).toStrictEqual([]);
 	});
 
 	it('trims and de-duplicates a declared category scope', () => {
 		expect(
 			resolveParams({
-				backendURL: BACKEND,
 				consentCategories: [' necessary ', 'necessary', 'marketing'],
+				projectUrl: BACKEND,
 			}).consentCategories
 		).toStrictEqual(['necessary', 'marketing']);
 	});
@@ -157,27 +157,27 @@ describe('resolveParams', () => {
 		// wrote it anyway would ship rows the host never typed.
 		expect(() =>
 			resolveParams({
-				backendURL: BACKEND,
 				consentCategories: ['marketing', 'experiance'],
+				projectUrl: BACKEND,
 			})
 		).toThrowError(/unknown: "experiance"/u);
 	});
 
 	it('refuses an empty category list instead of meaning "everything"', () => {
 		expect(() =>
-			resolveParams({ backendURL: BACKEND, consentCategories: [] })
+			resolveParams({ consentCategories: [], projectUrl: BACKEND })
 		).toThrowError(/Omit it entirely when the app declares no categories/u);
 	});
 
 	it('defaults no declared vendor scope to every served vendor', () => {
 		// Empty means "write nothing", which both cores read as no scope rather
 		// than as a drawer with nothing in it.
-		expect(resolveParams({ backendURL: BACKEND }).vendors).toStrictEqual([]);
+		expect(resolveParams({ projectUrl: BACKEND }).vendors).toStrictEqual([]);
 	});
 
 	it('de-duplicates a declared vendor scope and keeps the order written', () => {
 		expect(
-			resolveParams({ backendURL: BACKEND, vendors: [755, 42, 8, 42] }).vendors
+			resolveParams({ projectUrl: BACKEND, vendors: [755, 42, 8, 42] }).vendors
 		).toStrictEqual([755, 42, 8]);
 	});
 
@@ -185,7 +185,7 @@ describe('resolveParams', () => {
 		// Both cores read an empty scope as no scope, so writing one would ship the
 		// widest possible disclosure under a name that reads like the narrowest.
 		expect(() =>
-			resolveParams({ backendURL: BACKEND, vendors: [] })
+			resolveParams({ projectUrl: BACKEND, vendors: [] })
 		).toThrowError(/Omit it entirely to disclose every vendor/u);
 	});
 
@@ -193,19 +193,19 @@ describe('resolveParams', () => {
 		// The readers drop an entry they cannot name rather than trusting it, so a
 		// plugin that wrote one anyway would ship a drawer the host never typed.
 		expect(() =>
-			resolveParams({ backendURL: BACKEND, vendors: [42, 0, -3, 7.5] })
+			resolveParams({ projectUrl: BACKEND, vendors: [42, 0, -3, 7.5] })
 		).toThrowError(/invalid: 0, -3, 7\.5/u);
 	});
 
 	it('leaves IAB off when no iab settings are given', () => {
-		expect(resolveParams({ backendURL: BACKEND }).iab).toBeNull();
+		expect(resolveParams({ projectUrl: BACKEND }).iab).toBeNull();
 	});
 
 	it('resolves IAB settings and uppercases the country code', () => {
 		expect(
 			resolveParams({
-				backendURL: BACKEND,
 				iab: { cmpId: 1234, cmpVersion: 7, publisherCountryCode: ' de ' },
+				projectUrl: BACKEND,
 			}).iab
 		).toStrictEqual({
 			cmpId: 1234,
@@ -215,13 +215,13 @@ describe('resolveParams', () => {
 		});
 		expect(
 			resolveParams({
-				backendURL: BACKEND,
 				iab: {
 					cmpId: 4095,
 					cmpVersion: 0,
 					consentScreen: 0,
 					publisherCountryCode: 'GB',
 				},
+				projectUrl: BACKEND,
 			}).iab?.consentScreen
 		).toBe(0);
 	});
@@ -268,24 +268,24 @@ describe('resolveParams', () => {
 	])('refuses IAB settings %j at prebuild', (iab, message) => {
 		expect(() =>
 			resolveParams({
-				backendURL: BACKEND,
 				iab: iab as unknown as InthIabPluginProps,
+				projectUrl: BACKEND,
 			})
 		).toThrowError(message);
 	});
 
 	it('refuses a domain with a space in it', () => {
 		expect(() =>
-			resolveParams({ backendURL: BACKEND, domain: 'two words' })
+			resolveParams({ domain: 'two words', projectUrl: BACKEND })
 		).toThrowError(/domain must be a single non-empty token/u);
 	});
 
 	it('refuses a tracking domain spelled as a URL', () => {
 		expect(() =>
 			resolveParams({
-				backendURL: BACKEND,
 				enableAppTrackingTransparency: true,
 				privacyTrackingDomains: ['https://ads.example.com/'],
+				projectUrl: BACKEND,
 				trackingUsageDescription: 'Relevant ads.',
 			})
 		).toThrowError(/bare hostnames/u);
@@ -293,13 +293,13 @@ describe('resolveParams', () => {
 
 	it('lowercases and dedupes tracking domains', () => {
 		const resolved = resolveParams({
-			backendURL: BACKEND,
 			enableAppTrackingTransparency: true,
 			privacyTrackingDomains: [
 				'ADS.example.com',
 				'ads.example.com',
 				'acme.inth.app',
 			],
+			projectUrl: BACKEND,
 			trackingUsageDescription: 'Relevant ads.',
 		});
 
@@ -310,15 +310,15 @@ describe('resolveParams', () => {
 	});
 
 	it('starts the core at launch unless the native app installs it', () => {
-		expect(resolveParams({ backendURL: BACKEND }).autoBootstrap).toBe(true);
+		expect(resolveParams({ projectUrl: BACKEND }).autoBootstrap).toBe(true);
 		expect(
-			resolveParams({ autoBootstrap: false, backendURL: BACKEND }).autoBootstrap
+			resolveParams({ autoBootstrap: false, projectUrl: BACKEND }).autoBootstrap
 		).toBe(false);
 	});
 
 	it('names the app.json shape when given no parameters at all', () => {
 		expect(() => resolveParams(undefined)).toThrowError(
-			/"plugins": \[\["@inth\/react-native", \{ "backendURL"/u
+			/"plugins": \[\["@inth\/react-native", \{ "projectUrl"/u
 		);
 	});
 });
