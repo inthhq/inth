@@ -22,7 +22,7 @@
  * @internal
  */
 
-import type { ConsentSnapshot } from '@c15t/core';
+import type { ConsentSnapshot, ProviderTransportFactory } from '@c15t/core';
 import {
 	hasGlobalPrivacyControlSignal,
 	hasStoredConsent,
@@ -179,12 +179,12 @@ const plan = function plan(
 	// factory: the first load needs only the backend URL.
 	const selected = options.mode;
 	// `hosted()` is data; a `testing()` value carries its transport.
-	const mode =
-		typeof selected === 'function'
-			? selected
-			: selected && 'transport' in selected
-				? selected.transport
-				: undefined;
+	let mode: ProviderTransportFactory | undefined;
+	if (typeof selected === 'function') {
+		mode = selected;
+	} else if (selected && 'transport' in selected) {
+		mode = selected.transport;
+	}
 	const request = {
 		journey: options.journey,
 		storageKey: storageKeyOf(options),

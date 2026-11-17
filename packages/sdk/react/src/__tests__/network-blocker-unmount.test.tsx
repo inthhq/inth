@@ -81,11 +81,11 @@ test('unmounting before the blocker loads fails held requests closed', async () 
 	const view = await render(
 		<ConsentProvider
 			options={{
+				mode: testing(),
 				networkBlocker: { logBlockedRequests: false, rules },
 				persistence: false,
 				// Stored consent allows it: still unchecked, so still blocked.
 				prefetch: policyFixture({ measurement: true }),
-				mode: testing(),
 			}}
 		>
 			<Beacon requests={requests} />

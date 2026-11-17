@@ -80,19 +80,15 @@ describe('the mode a provider selects', () => {
 		expect(selectedMode({ backendURL: '/api/c15t' })).toBe(mode);
 	});
 
-	test('is the testing transport over backendURL and mode', () => {
-		const testing = testing();
+	test('is the testing transport over backendURL', () => {
+		const testingMode = testing();
 
-		expect(
-			selectedMode({
-				backendURL: '/api/c15t',
-				mode: manifest({ backendURL: '' }),
-				testing,
-			})
-		).toBe(testing.transport);
+		expect(selectedMode({ backendURL: '/api/c15t', mode: testingMode })).toBe(
+			testingMode.transport
+		);
 	});
 
-	test('is none without backendURL, mode or testing', () => {
+	test('is none without backendURL or mode', () => {
 		expect(selectedMode({})).toBeUndefined();
 	});
 });

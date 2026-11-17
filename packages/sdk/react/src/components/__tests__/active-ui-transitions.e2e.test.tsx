@@ -65,6 +65,7 @@ const defaultOptions: ConsentProviderOptions = {
 		'marketing',
 		'measurement',
 	],
+	mode: testing(),
 	prefetch: policyFixture(undefined, {
 		categories: [
 			'necessary',
@@ -80,7 +81,6 @@ const defaultOptions: ConsentProviderOptions = {
 	}),
 	// These tests seed or read records under the default key.
 	storageConfig: DEFAULT_KEY_STORAGE,
-	mode: testing(),
 };
 
 const storedAcceptAllConsent = () => ({

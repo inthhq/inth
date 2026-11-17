@@ -12,7 +12,7 @@ import {
 import { testing } from '../testing';
 
 // An unknown location resolves the recommended pack's Europe opt-in rule.
-const testing = testing();
+const testingMode = testing();
 const ChoiceProbe = () => {
 	const allowed = useConsent('marketing');
 	const choice = useExplicitChoice();
@@ -39,7 +39,7 @@ test('the preset quickstart records rejection, restores it, and reopens preferen
 			options={{
 				callbacks: { onChoiceRecorded },
 				consentCategories: ['marketing'],
-				testing,
+				mode: testingMode,
 			}}
 		>
 			<ChoiceProbe />

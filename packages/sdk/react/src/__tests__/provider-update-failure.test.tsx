@@ -34,14 +34,14 @@ test('an update that rejects is not an unhandled rejection', async () => {
 	};
 	window.addEventListener('unhandledrejection', onRejection);
 	try {
-		const testing = testing();
+		const testingMode = testing();
 		const prefetch = policyFixture();
 		const provider = (externalId: string) => (
 			<ConsentProvider
 				options={{
+					mode: testingMode,
 					persistence: false,
 					prefetch,
-					testing,
 					user: { externalId },
 				}}
 			>

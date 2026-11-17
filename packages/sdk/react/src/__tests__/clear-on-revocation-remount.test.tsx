@@ -34,7 +34,7 @@ pageWriterLoader.load = async () => {
 
 const consentKey = 'remount-revocation-consent';
 // An unknown location resolves the recommended pack's Europe opt-in rule.
-const testing = testing();
+const testingMode = testing();
 
 const Permission = () => {
 	const allowed = useConsent('measurement');
@@ -47,6 +47,7 @@ const App = ({ onLoad }: { onLoad: () => void }) => (
 			clearOnRevocation: {
 				measurement: { cookies: [consentKey], localStorage: [consentKey] },
 			},
+			mode: testingMode,
 			scripts: [
 				{
 					callbackOnly: true,
@@ -56,7 +57,6 @@ const App = ({ onLoad }: { onLoad: () => void }) => (
 				},
 			],
 			storageConfig: { storageKey: consentKey },
-			testing,
 		}}
 	>
 		<Permission />

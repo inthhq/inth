@@ -228,6 +228,7 @@ export const defaultProviderIABOptions: ConsentProviderOptions = {
 		cmpVersion: 1,
 		gvl: mockGVL,
 	},
+	mode: testing(),
 	prefetch: policyFixture(undefined, {
 		categories: undefined,
 		id: 'iab_default',
@@ -237,7 +238,6 @@ export const defaultProviderIABOptions: ConsentProviderOptions = {
 	}),
 	// These tests read the TC string and records under the default key.
 	storageConfig: DEFAULT_KEY_STORAGE,
-	mode: testing(),
 };
 
 /**

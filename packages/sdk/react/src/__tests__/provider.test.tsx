@@ -481,16 +481,16 @@ test('onSurfaceShown fires once init resolves the policy', async () => {
 test('uses current callback props without replacing the kernel', async () => {
 	const first = vi.fn();
 	const second = vi.fn();
-	const testing = testing();
+	const testingMode = testing();
 	const prefetch = policyFixture();
 	const screen = await render(
 		<ConsentProvider
 			options={{
 				callbacks: { onChoiceRecorded: first },
 				consentCategories: ['marketing'],
+				mode: testingMode,
 				persistence: false,
 				prefetch,
-				testing,
 			}}
 		>
 			<Capture />
@@ -501,9 +501,9 @@ test('uses current callback props without replacing the kernel', async () => {
 			options={{
 				callbacks: { onChoiceRecorded: second },
 				consentCategories: ['marketing'],
+				mode: testingMode,
 				persistence: false,
 				prefetch,
-				testing,
 			}}
 		>
 			<Capture />
@@ -781,7 +781,7 @@ test('storage is read once: a new storage key warns and records stay where they 
 	const firstKey = 'cleanup-first';
 	const nextKey = 'cleanup-next';
 	const prefetch = policyFixture({ measurement: true });
-	const testing = testing();
+	const testingMode = testing();
 	const clearOnRevocation = {
 		measurement: { localStorage: ['cleanup-*'] },
 	};
@@ -791,9 +791,9 @@ test('storage is read once: a new storage key warns and records stay where they 
 			options={{
 				clearOnRevocation,
 				consentCategories: ['measurement'],
+				mode: testingMode,
 				persistence: { skipHydration: true, storageConfig: { storageKey } },
 				prefetch,
-				testing,
 			}}
 		>
 			<Capture />

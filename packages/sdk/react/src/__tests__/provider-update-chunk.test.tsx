@@ -20,11 +20,13 @@ test('a rerender with the same option values loads no update module', async () =
 	// Vite's module graph can fill the browser's default resource buffer.
 	performance.setResourceTimingBufferSize(5000);
 	performance.clearResourceTimings();
-	const testing = testing();
+	const testingMode = testing();
 	const prefetch = policyFixture();
 	const first = { externalId: 'user_1' };
 	const provider = (user: { externalId: string }) => (
-		<ConsentProvider options={{ persistence: false, prefetch, testing, user }}>
+		<ConsentProvider
+			options={{ mode: testingMode, persistence: false, prefetch, user }}
+		>
 			<span>child</span>
 		</ConsentProvider>
 	);

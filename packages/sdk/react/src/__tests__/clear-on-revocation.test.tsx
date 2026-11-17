@@ -15,7 +15,7 @@ const exactKey = 'cleanup-browser-id';
 const prefixKeys = ['cleanup-browser-event-1', 'cleanup-browser-event-2'];
 const unrelatedKey = 'application-setting';
 // An unknown location resolves the recommended pack's Europe opt-in rule.
-const testing = testing();
+const testingMode = testing();
 
 const writeIntegrationData = () => {
 	for (const key of [exactKey, ...prefixKeys, unrelatedKey]) {
@@ -64,6 +64,7 @@ const App = ({ onLoad }: { onLoad: () => void }) => (
 					sessionStorage: [exactKey, 'cleanup-browser-event-*'],
 				},
 			},
+			mode: testingMode,
 			scripts: [
 				{
 					callbackOnly: true,
@@ -73,7 +74,6 @@ const App = ({ onLoad }: { onLoad: () => void }) => (
 				},
 			],
 			storageConfig: { storageKey: consentKey },
-			testing,
 		}}
 	>
 		<Permission />

@@ -33,7 +33,7 @@ pageWriterLoader.load = async () => {
 };
 
 // An unknown location resolves the recommended pack's Europe opt-in rule.
-const testing = testing();
+const testingMode = testing();
 const ChoiceProbe = () => {
 	const allowed = useConsent('marketing');
 	const choice = useExplicitChoice();
@@ -60,7 +60,7 @@ test('the quickstart remounted before its rejection is stored restores the rejec
 			options={{
 				callbacks: { onChoiceRecorded },
 				consentCategories: ['marketing'],
-				testing,
+				mode: testingMode,
 			}}
 		>
 			<ChoiceProbe />

@@ -34,9 +34,9 @@ const withProvider = function withProvider(options = {}) {
 					'measurement',
 					'marketing',
 				],
+				mode: testing(),
 				persistence: false,
 				prefetch: policyFixture(),
-				mode: testing(),
 				...options,
 			}}
 		>

@@ -32,9 +32,9 @@ const Provider = ({
 		options={{
 			// A permissive policy offers only what the site declares.
 			consentCategories: ['measurement', 'marketing'],
+			mode: testing(),
 			persistence: false,
 			prefetch: policyFixture(),
-			mode: testing(),
 			...options,
 		}}
 	>

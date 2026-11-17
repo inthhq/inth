@@ -709,6 +709,7 @@ describe('provider vendor options', () => {
 				<ConsentProvider
 					options={{
 						consentCategories: ['necessary', 'marketing', 'measurement'],
+						mode: testing(),
 						persistence: false,
 						prefetch: fixture,
 						// The provider names the same slug under marketing, denied.
@@ -720,7 +721,6 @@ describe('provider vendor options', () => {
 								vendor: 'ga',
 							},
 						],
-						mode: testing(),
 						vendors,
 					}}
 				>

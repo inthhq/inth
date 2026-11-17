@@ -48,16 +48,16 @@ test('loads scripts only when added and preserves cleanup ordering and initial c
 	const replacementCleanup: ClearOnRevocationConfig = {
 		measurement: { localStorage: ['analytics:replacement'] },
 	};
-	const testing = testing();
+	const testingMode = testing();
 	const prefetch = policyFixture({ measurement: true });
 	const provider = (scripts: Script[], clearOnRevocation = initialCleanup) => (
 		<ConsentProvider
 			options={{
 				clearOnRevocation,
+				mode: testingMode,
 				persistence: false,
 				prefetch,
 				scripts,
-				testing,
 			}}
 		>
 			<Capture />
@@ -116,7 +116,7 @@ test('loads scripts only when added and preserves cleanup ordering and initial c
 	expect(scriptModuleRequests()).toHaveLength(1);
 	await screen.rerender(
 		<ConsentProvider
-			options={{ persistence: false, prefetch, scripts, testing }}
+			options={{ mode: testingMode, persistence: false, prefetch, scripts }}
 		>
 			<Capture />
 		</ConsentProvider>

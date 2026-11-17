@@ -241,6 +241,7 @@ export const runFrameworkConformance = ({
 			reloadOnConsentRevoked: false,
 			...provided,
 			disableAnimation: true,
+			mode: testing(),
 			persistence: opts.persistence ?? false,
 			prefetch: {
 				...prepared,
@@ -262,7 +263,6 @@ export const runFrameworkConformance = ({
 				initialPrivacySignals: { gpc: opts.gpc },
 				initialTranslations: resolveTranslations(provided, opts.locale),
 			},
-			mode: testing(),
 			trapFocus: provided.trapFocus ?? false,
 		};
 	};
