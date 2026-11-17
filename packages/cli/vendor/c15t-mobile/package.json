@@ -5,7 +5,6 @@
 	"license": "Apache-2.0",
 	"type": "module",
 	"dependencies": {
-		"@c15t/schema": "workspace:*",
-		"@c15t/translations": "workspace:*"
+		"@inth/sdk": "workspace:*"
 	}
 }

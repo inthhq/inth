@@ -6,7 +6,7 @@ import { join, resolve } from 'node:path';
 import {
 	buildConsentManifestFromConfig,
 	policyRulePresets,
-} from '@c15t/schema';
+} from '@inth/sdk/schema';
 import { describe, expect, it } from 'vitest';
 
 import { bundleMobileManifest } from '~/mobile/bundle-manifest';

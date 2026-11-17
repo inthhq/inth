@@ -6,7 +6,7 @@ This code is not part of `@inth/cli` yet. Nothing compiles, tests or publishes i
 
 ## Why it is not an `inth` command yet
 
-The CLI ships as one native binary built by Scriptc, with no npm runtime dependencies. The exporter needs `@c15t/schema` and `@c15t/translations`, and Scriptc 0.3.6 refuses the parts of their source it uses. `scriptc coverage --fail-on blockers` on an entry that imports them, with `@c15t/translations` mapped to its source, reports:
+The CLI ships as one native binary built by Scriptc, with no npm runtime dependencies. The exporter needs `@inth/sdk/schema` and `@inth/sdk/translations`, and Scriptc 0.3.6 refuses the parts of their source it uses. `scriptc coverage --fail-on blockers` on an entry that imports them, with `@inth/sdk/translations` mapped to its source, reports:
 
 - `parseConsentManifest` and `parseAdTechProviderList` validate with valibot. `ConsentManifest` and the ad-tech provider type are valibot `InferOutput` types, which do not compile (SC2009), and valibot itself uses `Date.prototype.toJSON` and `isFinite` on unknown values (SC2020, SC2012).
 - `readPolicyResolutionWire` and `writePolicyResolutionWire`: an object spread of a union in `policy-resolution-wire.ts` (SC1090), a record width mismatch in the same file (SC2002), and `localeCompare` with a locale argument in `canonical-order.ts` (SC2020).

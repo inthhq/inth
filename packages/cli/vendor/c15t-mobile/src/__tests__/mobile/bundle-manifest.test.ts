@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import {
 	buildConsentManifestFromConfig,
 	policyRulePresets,
-} from '@c15t/schema';
+} from '@inth/sdk/schema';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { mobileManifest } from '~/commands/mobile-manifest';

@@ -7,8 +7,8 @@ import {
 	parseConsentManifest,
 	resolvePolicyResolutionFromManifest,
 	writePolicyResolutionWire,
-} from '@c15t/schema';
-import { enTranslations } from '@c15t/translations';
+} from '@inth/sdk/schema';
+import { enTranslations } from '@inth/sdk/translations';
 
 import { gvlProblem, resourceProblem } from './resource-check';
 
@@ -38,7 +38,7 @@ interface GlobalVendorListDocument {
 	[key: string]: unknown;
 }
 
-/** Keep the framework half of the GVL and only the declared vendors, as `@c15t/iab` does. */
+/** Keep the framework half of the GVL and only the declared vendors, as `@inth/sdk/iab` does. */
 const narrowGVLToVendors = (
 	gvl: GlobalVendorListDocument,
 	vendorIds: readonly number[]
