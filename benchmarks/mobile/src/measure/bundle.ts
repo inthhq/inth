@@ -205,7 +205,7 @@ const measureIosBytes = function measureIosBytes(): BundleMetric {
 		'xcodebuild',
 		[
 			'-scheme',
-			'C15tCore',
+			'InthCore',
 			'-destination',
 			'generic/platform=iOS Simulator',
 			'-derivedDataPath',
@@ -228,13 +228,13 @@ const measureIosBytes = function measureIosBytes(): BundleMetric {
 		'Build',
 		'Products',
 		'Release-iphonesimulator',
-		'C15tCore.o'
+		'InthCore.o'
 	);
 	if (!existsSync(objectFile)) {
 		return { reason: `the iOS build produced no ${objectFile}`, value: null };
 	}
 
-	const thin = join(scratchDir('ios'), 'C15tCore-arm64.o');
+	const thin = join(scratchDir('ios'), 'InthCore-arm64.o');
 	const thinned = exec(
 		'xcrun',
 		['lipo', '-thin', 'arm64', objectFile, '-output', thin],
@@ -263,7 +263,7 @@ const measureIosBytes = function measureIosBytes(): BundleMetric {
 
 	return {
 		detail:
-			'C15tCore only, arm64 simulator slice; the TurboModule binding is its own row',
+			'InthCore only, arm64 simulator slice; the TurboModule binding is its own row',
 		value: bytes,
 	};
 };
@@ -287,7 +287,7 @@ const measureIosBindingBytes = function measureIosBindingBytes(): BundleMetric {
 
 	return {
 		reason:
-			'the binding compiles against React Native headers, which need a pod install in a host app; packages/react-native ships a podspec but no C15tReactNative.xcodeproj',
+			'the binding compiles against React Native headers, which need a pod install in a host app; packages/react-native ships a podspec but no InthReactNative.xcodeproj',
 		value: null,
 	};
 };
@@ -321,9 +321,9 @@ export const measureAndroidBytes = function measureAndroidBytes(
 	const core = exec(
 		'./gradlew',
 		[
-			':c15t-core:publishAllPublicationsToStagingRepository',
-			':c15t-android:publishAllPublicationsToStagingRepository',
-			':c15t-consent-ui:publishAllPublicationsToStagingRepository',
+			':inth-core:publishAllPublicationsToStagingRepository',
+			':inth-android:publishAllPublicationsToStagingRepository',
+			':inth-consent-ui:publishAllPublicationsToStagingRepository',
 			'--no-configuration-cache',
 			'--console=plain',
 			'-q',
@@ -341,7 +341,7 @@ export const measureAndroidBytes = function measureAndroidBytes(
 
 	const bridge = exec(
 		'./gradlew',
-		[':c15t-react-native:assembleRelease', '--console=plain', '-q'],
+		[':inth-react-native:assembleRelease', '--console=plain', '-q'],
 		{
 			cwd: androidBridge,
 			env: {
@@ -361,7 +361,7 @@ export const measureAndroidBytes = function measureAndroidBytes(
 		[
 			'core jar',
 			jarClassBytes(
-				join(androidCore, 'c15t-core', 'build', 'libs', 'c15t-core.jar')
+				join(androidCore, 'inth-core', 'build', 'libs', 'inth-core.jar')
 			),
 		],
 		[
@@ -369,11 +369,11 @@ export const measureAndroidBytes = function measureAndroidBytes(
 			aarClassBytes(
 				join(
 					androidCore,
-					'c15t-android',
+					'inth-android',
 					'build',
 					'outputs',
 					'aar',
-					'c15t-android-release.aar'
+					'inth-android-release.aar'
 				),
 				'android-aar'
 			),
@@ -383,11 +383,11 @@ export const measureAndroidBytes = function measureAndroidBytes(
 			aarClassBytes(
 				join(
 					androidCore,
-					'c15t-consent-ui',
+					'inth-consent-ui',
 					'build',
 					'outputs',
 					'aar',
-					'c15t-consent-ui-release.aar'
+					'inth-consent-ui-release.aar'
 				),
 				'consent-ui-aar'
 			),
@@ -397,11 +397,11 @@ export const measureAndroidBytes = function measureAndroidBytes(
 			aarClassBytes(
 				join(
 					androidBridge,
-					'c15t-react-native',
+					'inth-react-native',
 					'build',
 					'outputs',
 					'aar',
-					'c15t-react-native-release.aar'
+					'inth-react-native-release.aar'
 				),
 				'bridge-aar'
 			),
@@ -432,7 +432,7 @@ export const measureAndroidBytes = function measureAndroidBytes(
 };
 
 /**
- * The JavaScript an app carries because it installed c15t.
+ * The JavaScript an app carries because it installed Inth.
  *
  * @param shippedModules - Module count of the package's own `dist`, for the detail.
  * @returns Raw and gzipped closure bytes, plus the module count.
@@ -444,7 +444,7 @@ const measureJavaScriptClosure = function measureJavaScriptClosure(
 	const entry = join(DIST_DIR, 'index.js');
 
 	if (!existsSync(entry)) {
-		const reason = `no built entry at ${entry}; run bun turbo run build --filter=@c15t/react-native`;
+		const reason = `no built entry at ${entry}; run bun turbo run build --filter=@inth/react-native`;
 		return {
 			bytes: { ...empty, reason },
 			files: { ...empty, reason },
@@ -472,7 +472,7 @@ const measureJavaScriptClosure = function measureJavaScriptClosure(
 	const own = closure.files.filter((file) => file.startsWith(DIST_DIR)).length;
 	const detail = [
 		`${closure.files.length} modules from the entry`,
-		`${own} from @c15t/react-native, ${closure.files.length - own} from other @c15t packages`,
+		`${own} from @inth/react-native, ${closure.files.length - own} from other @c15t packages`,
 	];
 	if (closure.external.length > 0) {
 		detail.push(`host imports not counted: ${closure.external.join(', ')}`);
@@ -508,7 +508,7 @@ export const measureBundle = function measureBundle(): BundleResult {
 	let gzip: BundleMetric;
 
 	if (files.length === 0) {
-		const reason = `no built JavaScript under ${DIST_DIR}; run bun turbo run build --filter=@c15t/react-native`;
+		const reason = `no built JavaScript under ${DIST_DIR}; run bun turbo run build --filter=@inth/react-native`;
 		raw = { reason, value: null };
 		gzip = { reason, value: null };
 	} else {

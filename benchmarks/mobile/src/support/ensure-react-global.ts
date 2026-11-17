@@ -1,5 +1,5 @@
 /**
- * Work around a defect in the shipped `@c15t/react-native` output.
+ * Work around a defect in the shipped `@inth/react-native` output.
  *
  * `dist/provider/consent-provider.js` compiles its JSX with the classic runtime
  * (`React.createElement`) without importing `React`, while every other file in

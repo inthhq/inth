@@ -1,9 +1,9 @@
 // #region docs:rn-meta-app-events-integration title="meta-app-events-consent.ts"
-import { connectMetaAppEvents } from '@c15t/react-native/integrations';
+import { connectMetaAppEvents } from '@inth/react-native/integrations';
 import type {
 	MetaAppEventsClient,
 	ConsentIntegration,
-} from '@c15t/react-native/integrations';
+} from '@inth/react-native/integrations';
 
 export const connectAppMetaAppEvents = (
 	meta: MetaAppEventsClient,

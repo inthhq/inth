@@ -1,15 +1,15 @@
 // #region docs:android-mixpanel-integration title="MixpanelConsent.kt"
-package com.c15t.demo
+package com.inth.demo
 
-import com.c15t.android.integrations.MixpanelIntegration
-import com.c15t.core.C15t
+import com.inth.android.integrations.MixpanelIntegration
+import com.inth.core.Inth
 
 fun connectAppMixpanel(
 	optInTracking: () -> Unit,
 	optOutTracking: () -> Unit,
 	onError: (Exception) -> Unit,
 ): MixpanelIntegration {
-	val core = checkNotNull(C15t.current) { "Install c15t before connecting analytics" }
+	val core = checkNotNull(Inth.current) { "Install Inth before connecting analytics" }
 	return MixpanelIntegration(
 		core = core,
 		optInTracking = optInTracking,

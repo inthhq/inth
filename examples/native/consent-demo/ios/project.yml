@@ -1,12 +1,12 @@
-name: C15tConsentDemo
+name: InthConsentDemo
 options:
   deploymentTarget:
     iOS: '16.4'
 packages:
-  C15tNative:
+  InthNative:
     path: ../../../../packages/swift
   # Real vendor SDKs for the vendor journey (run-vendor-e2e.sh). The demo app links
-  # them; the c15t Swift packages never do. They stay idle unless a Debug launch
+  # them; the Inth Swift packages never do. They stay idle unless a Debug launch
   # passes C15T_VENDOR_BASE. Pinned exactly so a vendor release cannot change the proof.
   PostHog:
     url: https://github.com/PostHog/posthog-ios
@@ -30,7 +30,7 @@ settings:
     INFOPLIST_KEY_CFBundleShortVersionString: $(MARKETING_VERSION)
     INFOPLIST_KEY_CFBundleVersion: $(CURRENT_PROJECT_VERSION)
 targets:
-  C15tConsentDemo:
+  InthConsentDemo:
     type: application
     platform: iOS
     sources:
@@ -40,10 +40,10 @@ targets:
       - path: ../fixtures
         buildPhase: resources
     dependencies:
-      - package: C15tNative
-        product: C15tConsentUI
-      - package: C15tNative
-        product: C15tApple
+      - package: InthNative
+        product: InthConsentUI
+      - package: InthNative
+        product: InthApple
       - package: PostHog
         product: PostHog
       - package: Mixpanel
@@ -58,7 +58,7 @@ targets:
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
         # Firebase starts with collection and every consent type denied, so nothing is
-        # measured before the c15t binding applies the saved decision.
+        # measured before the Inth binding applies the saved decision.
         FIREBASE_ANALYTICS_COLLECTION_ENABLED: false
         GOOGLE_ANALYTICS_DEFAULT_ALLOW_ANALYTICS_STORAGE: false
         GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_STORAGE: false
@@ -67,13 +67,13 @@ targets:
         FirebaseAppDelegateProxyEnabled: false
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.c15t.prototype.consent
+        PRODUCT_BUNDLE_IDENTIFIER: com.inth.prototype.consent
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_CFBundleDisplayName: Consent demo
-        INFOPLIST_KEY_C15tBackendURL: $(C15T_BACKEND_URL)
-        INFOPLIST_KEY_C15tPrivacyPolicyURL: $(C15T_PRIVACY_POLICY_URL)
-  C15tUIKitDemo:
+        INFOPLIST_KEY_InthBackendURL: $(C15T_BACKEND_URL)
+        INFOPLIST_KEY_InthPrivacyPolicyURL: $(C15T_PRIVACY_POLICY_URL)
+  InthUIKitDemo:
     type: application
     platform: iOS
     sources:
@@ -85,10 +85,10 @@ targets:
       - path: ../fixtures
         buildPhase: resources
     dependencies:
-      - package: C15tNative
-        product: C15tConsentUI
-      - package: C15tNative
-        product: C15tApple
+      - package: InthNative
+        product: InthConsentUI
+      - package: InthNative
+        product: InthApple
       - package: PostHog
         product: PostHog
       - package: Mixpanel
@@ -109,7 +109,7 @@ targets:
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
         # Firebase starts with collection and every consent type denied, so nothing is
-        # measured before the c15t binding applies the saved decision.
+        # measured before the Inth binding applies the saved decision.
         FIREBASE_ANALYTICS_COLLECTION_ENABLED: false
         GOOGLE_ANALYTICS_DEFAULT_ALLOW_ANALYTICS_STORAGE: false
         GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_STORAGE: false
@@ -118,44 +118,44 @@ targets:
         FirebaseAppDelegateProxyEnabled: false
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.c15t.prototype.consent.uikit
+        PRODUCT_BUNDLE_IDENTIFIER: com.inth.prototype.consent.uikit
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_CFBundleDisplayName: Consent UIKit demo
-        INFOPLIST_KEY_C15tBackendURL: $(C15T_BACKEND_URL)
-        INFOPLIST_KEY_C15tPrivacyPolicyURL: $(C15T_PRIVACY_POLICY_URL)
-  C15tUIKitDemoUITests:
+        INFOPLIST_KEY_InthBackendURL: $(C15T_BACKEND_URL)
+        INFOPLIST_KEY_InthPrivacyPolicyURL: $(C15T_PRIVACY_POLICY_URL)
+  InthUIKitDemoUITests:
     type: bundle.ui-testing
     platform: iOS
     sources: [UITests]
     dependencies:
-      - target: C15tUIKitDemo
+      - target: InthUIKitDemo
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.c15t.prototype.consent.uikit.uitests
+        PRODUCT_BUNDLE_IDENTIFIER: com.inth.prototype.consent.uikit.uitests
         GENERATE_INFOPLIST_FILE: YES
-  C15tConsentDemoUITests:
+  InthConsentDemoUITests:
     type: bundle.ui-testing
     platform: iOS
     sources: [UITests]
     dependencies:
-      - target: C15tConsentDemo
+      - target: InthConsentDemo
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.c15t.prototype.consent.uitests
+        PRODUCT_BUNDLE_IDENTIFIER: com.inth.prototype.consent.uitests
         GENERATE_INFOPLIST_FILE: YES
 schemes:
-  C15tConsentDemo:
+  InthConsentDemo:
     build:
       targets:
-        C15tConsentDemo: all
-        C15tConsentDemoUITests: [test]
+        InthConsentDemo: all
+        InthConsentDemoUITests: [test]
     test:
-      targets: [C15tConsentDemoUITests]
-  C15tUIKitDemo:
+      targets: [InthConsentDemoUITests]
+  InthUIKitDemo:
     build:
       targets:
-        C15tUIKitDemo: all
-        C15tUIKitDemoUITests: [test]
+        InthUIKitDemo: all
+        InthUIKitDemoUITests: [test]
     test:
-      targets: [C15tUIKitDemoUITests]
+      targets: [InthUIKitDemoUITests]

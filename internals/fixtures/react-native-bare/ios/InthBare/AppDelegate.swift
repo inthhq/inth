@@ -1,6 +1,6 @@
 // The E2E artifact is a Release build that talks to a loopback backend, which only
-// the SDK's internal install path allows. An app imports C15tReactNative plainly.
-@_spi(C15tInternal) import C15tReactNative
+// the SDK's internal install path allows. An app imports InthReactNative plainly.
+@_spi(InthInternal) import InthReactNative
 import FirebaseCore
 import UIKit
 import React
@@ -20,18 +20,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
-    // firebase.json keeps collection off and every consent type denied until c15t
+    // firebase.json keeps collection off and every consent type denied until Inth
     // grants measurement. The Firebase project in GoogleService-Info.plist is fake.
     FirebaseApp.configure()
-    if let endpoint = Bundle.main.object(forInfoDictionaryKey: "C15tAppE2EURL") as? String,
+    if let endpoint = Bundle.main.object(forInfoDictionaryKey: "InthAppE2EURL") as? String,
        URL(string: endpoint)?.host == "localhost" {
       let control = fixtureControl(endpoint)
       if let now = control["now"] as? Int64 { e2eClock.set(now) }
       let declared = (control["categories"] as? [String])?.compactMap(ConsentCategory.init(rawValue:)) ?? [.necessary, .functionality, .experience, .measurement, .marketing]
       // The test-only artifact opts out of automatic bootstrap. One protected core owns UI and gates.
       do {
-        _ = try C15tApple.install(CoreConfig(store: KeychainStore(service: "com.c15t.bare.e2e"),
-          bundledPolicy: Bundle.main.url(forResource: "c15t-policy", withExtension: "json").flatMap { BundledPolicyResource(url: $0, endpoint: endpoint + "/api/self-host") },
+        _ = try InthApple.install(CoreConfig(store: KeychainStore(service: "com.inth.bare.e2e"),
+          bundledPolicy: Bundle.main.url(forResource: "inth-policy", withExtension: "json").flatMap { BundledPolicyResource(url: $0, endpoint: endpoint + "/api/self-host") },
           transport: HostedTransport(baseURL: URL(string: endpoint + "/api/self-host")!),
           consentCategories: declared,
           iab: IABConfiguration(cmpId: 53, cmpVersion: 7, publisherCountryCode: "GB"), now: e2eClock.read, storageBus: UserDefaultsStorageBus()))
@@ -47,21 +47,21 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     window = UIWindow(frame: UIScreen.main.bounds)
 
     factory.startReactNative(
-      withModuleName: "C15tBare",
+      withModuleName: "InthBare",
       in: window,
       launchOptions: demoLaunchOptions(launchOptions)
     )
 
-    if let endpoint = Bundle.main.object(forInfoDictionaryKey: "C15tAppE2EURL") as? String,
+    if let endpoint = Bundle.main.object(forInfoDictionaryKey: "InthAppE2EURL") as? String,
        URL(string: endpoint)?.host == "localhost" {
-      let timer = DispatchSource.makeTimerSource(queue: DispatchQueue(label: "c15t.fixture-observer"))
+      let timer = DispatchSource.makeTimerSource(queue: DispatchQueue(label: "inth.fixture-observer"))
       timer.schedule(deadline: .now(), repeating: .milliseconds(500))
       timer.setEventHandler { [self] in
         let control = fixtureControl(endpoint)
         if let now = control["now"] as? Int64 { e2eClock.set(now) }
-        guard let snapshot = try? JSONSerialization.jsonObject(with: Data(C15tPayload.snapshot(C15t.snapshot()).utf8)) else { return }
-        let gates = ["experience": C15t.isAllowed(.experience), "functionality": C15t.isAllowed(.functionality), "measurement": C15t.isAllowed(.measurement), "marketing": C15t.isAllowed(.marketing)]
-        let body: [String: Any] = ["snapshot": snapshot, "gates": gates, "process": ProcessInfo.processInfo.processIdentifier, "clock": e2eClock.read(), "control": control, "source": "native-core", "pendingSaves": C15t.current?.pendingSaveCount() ?? 0, "iabConsent": (C15t.current?.iabConsent()).flatMap { try? JSONSerialization.jsonObject(with: JSONEncoder().encode($0)) } ?? NSNull()]
+        guard let snapshot = try? JSONSerialization.jsonObject(with: Data(InthPayload.snapshot(Inth.snapshot()).utf8)) else { return }
+        let gates = ["experience": Inth.isAllowed(.experience), "functionality": Inth.isAllowed(.functionality), "measurement": Inth.isAllowed(.measurement), "marketing": Inth.isAllowed(.marketing)]
+        let body: [String: Any] = ["snapshot": snapshot, "gates": gates, "process": ProcessInfo.processInfo.processIdentifier, "clock": e2eClock.read(), "control": control, "source": "native-core", "pendingSaves": Inth.current?.pendingSaveCount() ?? 0, "iabConsent": (Inth.current?.iabConsent()).flatMap { try? JSONSerialization.jsonObject(with: JSONEncoder().encode($0)) } ?? NSNull()]
         var request = URLRequest(url: URL(string: endpoint + "/e2e/native")!)
         request.httpMethod = "POST"
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
@@ -74,8 +74,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     return true
   }
 
-  // A headless run cannot answer the "Open in c15t Bare?" confirmation that iOS raises
-  // before it hands an incoming `c15t-demo://` open to the app, and a CI machine has no
+  // A headless run cannot answer the "Open in Inth Bare?" confirmation that iOS raises
+  // before it hands an incoming `inth-demo://` open to the app, and a CI machine has no
   // finger for it. The same link therefore also arrives as the `C15T_DEMO_LINK` variable,
   // which `simctl launch` passes through from its `SIMCTL_CHILD_` prefixed names.
   //
@@ -123,7 +123,7 @@ class ReactNativeDelegate: RCTDefaultReactNativeFactoryDelegate {
   }
 }
 
-// Available only to the artifact with C15tAppE2EURL set to loopback by the runner.
+// Available only to the artifact with InthAppE2EURL set to loopback by the runner.
 private final class FixtureClock: @unchecked Sendable {
   private let lock = NSLock()
   private var value: Int64?

@@ -1,4 +1,4 @@
-package com.c15t.demo
+package com.inth.demo
 
 import android.content.Intent
 import android.os.ParcelFileDescriptor
@@ -19,7 +19,7 @@ import java.net.URL
 
 /**
  * Consent journeys against the real PostHog, Mixpanel, Sentry Session Replay and
- * Firebase Analytics SDKs, bound through the c15t Android integration helpers.
+ * Firebase Analytics SDKs, bound through the Inth Android integration helpers.
  *
  * PostHog, Mixpanel and Sentry send to `scripts/vendor_capture.py`. Start it,
  * forward its port and pass its base URL:
@@ -28,7 +28,7 @@ import java.net.URL
  * python3 scripts/vendor_capture.py --port 39874 --out <dir>
  * adb reverse tcp:39874 tcp:39874
  * gradlew :consent-demo:connectedDebugAndroidTest \
- *   -Pandroid.testInstrumentationRunnerArguments.c15tVendorCapture=http://localhost:39874
+ *   -Pandroid.testInstrumentationRunnerArguments.inthVendorCapture=http://localhost:39874
  * ```
  *
  * Without the argument the network journey runs only if the default port answers.
@@ -46,10 +46,10 @@ import java.net.URL
  *
  * ```
  * gradlew :consent-demo:connectedDebugAndroidTest \
- *   -Pandroid.testInstrumentationRunnerArguments.class=com.c15t.demo.RealVendorSdkTest#posthogLiveFollowsConsent \
- *   -Pandroid.testInstrumentationRunnerArguments.c15tPostHogLiveHost=https://eu.i.posthog.com \
- *   -Pandroid.testInstrumentationRunnerArguments.c15tPostHogLiveKey=$POSTHOG_E2E_PROJECT_KEY \
- *   -Pandroid.testInstrumentationRunnerArguments.c15tPostHogLiveRunId=<unique id>
+ *   -Pandroid.testInstrumentationRunnerArguments.class=com.inth.demo.RealVendorSdkTest#posthogLiveFollowsConsent \
+ *   -Pandroid.testInstrumentationRunnerArguments.inthPostHogLiveHost=https://eu.i.posthog.com \
+ *   -Pandroid.testInstrumentationRunnerArguments.inthPostHogLiveKey=$POSTHOG_E2E_PROJECT_KEY \
+ *   -Pandroid.testInstrumentationRunnerArguments.inthPostHogLiveRunId=<unique id>
  * ```
  *
  * It cannot see PostHog's traffic. It drives the same journey, waits after
@@ -88,7 +88,7 @@ class RealVendorSdkTest {
 	}
 
 	private fun awaitClosed() {
-		compose.waitUntil(10_000) { listOf("c15t.first-layer.accept-all", "c15t.prefs.save").all { compose.onAllNodesWithTag(it).fetchSemanticsNodes().isEmpty() } }
+		compose.waitUntil(10_000) { listOf("inth.first-layer.accept-all", "inth.prefs.save").all { compose.onAllNodesWithTag(it).fetchSemanticsNodes().isEmpty() } }
 	}
 
 	private var probes = 0
@@ -104,18 +104,18 @@ class RealVendorSdkTest {
 
 	private fun setMeasurement(on: Boolean) {
 		waitFor("fixture.open-preferences").performScrollTo().performClick()
-		waitFor("c15t.prefs").performScrollToNode(hasTestTag("c15t.prefs.category.measurement.switch"))
-		val toggle = compose.onNodeWithTag("c15t.prefs.category.measurement.switch")
+		waitFor("inth.prefs").performScrollToNode(hasTestTag("inth.prefs.category.measurement.switch"))
+		val toggle = compose.onNodeWithTag("inth.prefs.category.measurement.switch")
 		if (on) toggle.assertIsOff() else toggle.assertIsOn()
 		toggle.performClick()
-		compose.onNodeWithTag("c15t.prefs.save").performClick()
+		compose.onNodeWithTag("inth.prefs.save").performClick()
 		awaitClosed()
 		awaitPermission("measurement", on)
 	}
 
 	private fun rejectAll() {
 		waitFor("fixture.open-preferences").performScrollTo().performClick()
-		waitFor("c15t.prefs.reject-all").performClick()
+		waitFor("inth.prefs.reject-all").performClick()
 		awaitClosed()
 		awaitPermission("measurement", false)
 	}
@@ -123,7 +123,7 @@ class RealVendorSdkTest {
 	/** Steps 1 and 2: fresh install, then Reject all. Ends on a fresh-install core with no choice. */
 	private fun freshThenReject(name: String, vendorExtras: Intent.() -> Unit, assertNone: (String) -> Unit) {
 		launch(name, reset = true, vendorExtras)
-		waitFor("c15t.first-layer.reject-all")
+		waitFor("inth.first-layer.reject-all")
 		// Dismissing the first layer records nothing; the host stays undecided.
 		device.pressBack()
 		waitFor("fixture.state.explicit-choice").assertTextEquals("none")
@@ -138,7 +138,7 @@ class RealVendorSdkTest {
 	// region Network vendors through the capture server
 
 	private val captureBase: String? by lazy {
-		val argument = InstrumentationRegistry.getArguments().getString("c15tVendorCapture")
+		val argument = InstrumentationRegistry.getArguments().getString("inthVendorCapture")
 		val base = (argument ?: "http://localhost:39874").trimEnd('/')
 		val reachable = runCatching { get("$base/health").getBoolean("ok") }.getOrDefault(false)
 		if (argument != null) Assert.assertTrue("Vendor capture server at $base is not reachable. Run adb reverse.", reachable)
@@ -189,7 +189,7 @@ class RealVendorSdkTest {
 	}
 
 	/**
-	 * The requests c15t governs: every PostHog and Mixpanel capture, and Sentry
+	 * The requests Inth governs: every PostHog and Mixpanel capture, and Sentry
 	 * only when it carries replay. The Sentry helper controls Session Replay and
 	 * leaves error reporting and profiling to the app.
 	 */
@@ -236,7 +236,7 @@ class RealVendorSdkTest {
 	@Test fun posthogMixpanelAndSentryReplayFollowConsent() {
 		Assume.assumeTrue("PostHog points at a live project in this run", live == null)
 		val base = captureBase
-		Assume.assumeTrue("Start scripts/vendor_capture.py, adb reverse its port and pass c15tVendorCapture", base != null)
+		Assume.assumeTrue("Start scripts/vendor_capture.py, adb reverse its port and pass inthVendorCapture", base != null)
 		val extras: Intent.() -> Unit = { putExtra(VendorSdkRequest.CAPTURE_EXTRA, base) }
 		// Read the capture position before launching so startup traffic is checked too.
 		val beforeFresh = captured(0).last
@@ -265,10 +265,10 @@ class RealVendorSdkTest {
 
 	private val live: PostHogLive? by lazy {
 		val arguments = InstrumentationRegistry.getArguments()
-		val host = arguments.getString("c15tPostHogLiveHost")?.takeIf { it.isNotBlank() }
-		val key = arguments.getString("c15tPostHogLiveKey")?.takeIf { it.isNotBlank() }
-		if ((host == null) != (key == null)) Assert.fail("Pass both c15tPostHogLiveHost and c15tPostHogLiveKey, or neither")
-		val runId = arguments.getString("c15tPostHogLiveRunId")?.takeIf { it.isNotBlank() } ?: java.util.UUID.randomUUID().toString()
+		val host = arguments.getString("inthPostHogLiveHost")?.takeIf { it.isNotBlank() }
+		val key = arguments.getString("inthPostHogLiveKey")?.takeIf { it.isNotBlank() }
+		if ((host == null) != (key == null)) Assert.fail("Pass both inthPostHogLiveHost and inthPostHogLiveKey, or neither")
+		val runId = arguments.getString("inthPostHogLiveRunId")?.takeIf { it.isNotBlank() } ?: java.util.UUID.randomUUID().toString()
 		PostHogLive.from(host, key, runId)
 	}
 
@@ -308,7 +308,7 @@ class RealVendorSdkTest {
 
 	@Test fun posthogLiveFollowsConsent() {
 		val live = live
-		Assume.assumeTrue("Pass c15tPostHogLiveHost and c15tPostHogLiveKey to send to a real PostHog project", live != null)
+		Assume.assumeTrue("Pass inthPostHogLiveHost and inthPostHogLiveKey to send to a real PostHog project", live != null)
 		checkNotNull(live)
 		val extras: Intent.() -> Unit = {
 			putExtra(VendorSdkRequest.POSTHOG_LIVE_HOST_EXTRA, live.host)
@@ -429,8 +429,8 @@ class RealVendorSdkTest {
 	// endregion
 
 	private companion object {
-		const val EVIDENCE_TAG = "c15t-vendor-evidence"
-		const val PROBE_EVENT = "c15t_probe"
+		const val EVIDENCE_TAG = "inth-vendor-evidence"
+		const val PROBE_EVENT = "inth_probe"
 		val NETWORK_VENDORS = listOf("posthog", "mixpanel", "sentry")
 		val REPLAY_ITEMS = setOf("replay_event", "replay_recording", "replay_video")
 		const val POLL_MS = 250L

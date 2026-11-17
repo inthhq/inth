@@ -3,9 +3,9 @@
  * Copy the Swift consent core into the React Native package.
  *
  * `packages/swift` is the core's only home, and the binding's pod used to reach it through
- * `s.dependency "C15tCore"`. That dependency resolves inside this repository only because the
- * example Podfiles write `pod "C15tCore", :path => "../packages/swift"`. An app that
- * installs `@c15t/react-native` from npm has no such path and no published pod to fall back
+ * `s.dependency "InthCore"`. That dependency resolves inside this repository only because the
+ * example Podfiles write `pod "InthCore", :path => "../packages/swift"`. An app that
+ * installs `@inth/react-native` from npm has no such path and no published pod to fall back
  * to, so `pod install` fails there while every job in this repository stays green. CocoaPods
  * has no way to point a `s.dependency` at a path, so the only shape that resolves for a
  * consumer is the core's sources travelling inside the package.
@@ -13,16 +13,16 @@
  * Vendoring is a packaging step, not a fork. `packages/swift` stays the source of truth and
  * `packages/react-native/Package.swift` stays two-module, so a later Swift Package Manager
  * release of the core is unaffected; only the CocoaPods path compiles the copy, into the
- * binding's own module. The bridge's `import C15tCore` sites are wrapped in
- * `#if canImport(C15tCore)` so one set of sources serves both, which is the split
- * `C15tReactNativeRuntime.swift` already uses for `C15tReactNativeBridge`.
+ * binding's own module. The bridge's `import InthCore` sites are wrapped in
+ * `#if canImport(InthCore)` so one set of sources serves both, which is the split
+ * `InthReactNativeRuntime.swift` already uses for `InthReactNativeBridge`.
  *
  * Because the copy is generated, drift is the failure to design against: an edited file under
  * `vendor/`, a core file deleted upstream and left behind here, or a core change that was never
  * synced would all ship silently. `--check` compares the two trees byte for byte and names
  * every difference, and `scripts/check-publish-artifacts.ts` runs it as part of the release
  * gate, so a stale copy cannot be published. Run this script without `--check` after changing
- * anything under `packages/swift/Sources/C15tCore`.
+ * anything under `packages/swift/Sources/InthCore`.
  */
 
 import {
@@ -44,7 +44,7 @@ export const coreSourceDir = join(
 	'packages',
 	'swift',
 	'Sources',
-	'C15tCore'
+	'InthCore'
 );
 
 /** The generated copy the pod compiles. Never edit anything under here. */
@@ -53,7 +53,7 @@ export const vendoredCoreDir = join(
 	'packages',
 	'react-native',
 	'vendor',
-	'C15tCore'
+	'InthCore'
 );
 
 /** One file of the core, as both a source of truth path and a generated destination. */
@@ -188,14 +188,14 @@ export const describeDrift = function describeDrift(
 	drift: VendoredCoreDrift
 ): string {
 	if (drift.kind === 'missing') {
-		return `vendor/C15tCore/${drift.relativePath} is missing. Run bun scripts/sync-vendored-core.ts.`;
+		return `vendor/InthCore/${drift.relativePath} is missing. Run bun scripts/sync-vendored-core.ts.`;
 	}
 
 	if (drift.kind === 'orphan') {
-		return `vendor/C15tCore/${drift.relativePath} has no file in packages/swift. Run bun scripts/sync-vendored-core.ts.`;
+		return `vendor/InthCore/${drift.relativePath} has no file in packages/swift. Run bun scripts/sync-vendored-core.ts.`;
 	}
 
-	return `vendor/C15tCore/${drift.relativePath} differs from packages/swift/Sources/C15tCore/${drift.relativePath}. Run bun scripts/sync-vendored-core.ts.`;
+	return `vendor/InthCore/${drift.relativePath} differs from packages/swift/Sources/InthCore/${drift.relativePath}. Run bun scripts/sync-vendored-core.ts.`;
 };
 
 /**
@@ -266,7 +266,7 @@ const main = function main(): void {
 	console.log(
 		check
 			? `Vendored Swift core matches packages/swift: ${fileCount} file(s).`
-			: `Vendored ${fileCount} file(s) into packages/react-native/vendor/C15tCore.`
+			: `Vendored ${fileCount} file(s) into packages/react-native/vendor/InthCore.`
 	);
 };
 

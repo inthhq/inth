@@ -1,9 +1,9 @@
 // #region docs:rn-admob-integration title="admob-consent.ts"
-import { connectAdMob } from '@c15t/react-native/integrations';
+import { connectAdMob } from '@inth/react-native/integrations';
 import type {
 	AdMobClient,
 	ConsentIntegration,
-} from '@c15t/react-native/integrations';
+} from '@inth/react-native/integrations';
 
 export const connectAppAdMob = (
 	admob: AdMobClient,

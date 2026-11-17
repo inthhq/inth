@@ -22,14 +22,14 @@ export const posthog = new PostHog(projectToken, {
 	preloadFeatureFlags: false,
 });
 
-// An opt-in PostHog stored before this app used c15t outranks `defaultOptIn`.
+// An opt-in PostHog stored before this app used Inth outranks `defaultOptIn`.
 // Opt out before anything can capture; PostHog queues this ahead of later
-// calls, and c15t opts back in once measurement is granted.
+// calls, and Inth opts back in once measurement is granted.
 const optOutStoredChoice = async () => {
 	try {
 		await posthog.optOut();
 	} catch {
-		// PostHog could not load or save its storage. The c15t connection's
+		// PostHog could not load or save its storage. The Inth connection's
 		// first sync opts out again and reports that failure to its `onError`.
 	}
 };

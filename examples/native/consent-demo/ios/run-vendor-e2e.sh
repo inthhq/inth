@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Real vendor SDK journey for the iOS demo: PostHog, Mixpanel, Sentry Replay and Firebase
-# Analytics against the c15t Swift helpers. Starts the capture server, generates the
+# Analytics against the Inth Swift helpers. Starts the capture server, generates the
 # XcodeGen project, runs VendorSDKTests per scheme on a dedicated simulator, and checks
 # Firebase's own debug log. Evidence lands in $C15T_VENDOR_E2E_OUT (or .artifacts/).
 #
 #   bash examples/native/consent-demo/ios/run-vendor-e2e.sh
 #
-# C15T_VENDOR_SCHEMES      schemes to run (default: "C15tConsentDemo C15tUIKitDemo")
-# C15T_IOS_VENDOR_DEVICE   simulator name, created when missing (default: c15t-ios-vendors)
+# C15T_VENDOR_SCHEMES      schemes to run (default: "InthConsentDemo InthUIKitDemo")
+# C15T_IOS_VENDOR_DEVICE   simulator name, created when missing (default: inth-ios-vendors)
 # C15T_IOS_DEVICE          device type for a new simulator (default: iPhone 17 Pro)
 # C15T_IOS_RUNTIME         runtime identifier for a new simulator (default: newest iOS)
 # C15T_VENDOR_SPM_DIR      cloned SwiftPM packages, kept between runs for speed
@@ -19,14 +19,14 @@ OUT="${C15T_VENDOR_E2E_OUT:-${IOS_DIR}/.artifacts/vendor-e2e/${RUN_ID}}"
 mkdir -p "${OUT}"
 OUT="$(cd "${OUT}" && pwd)"
 [[ -z "$(ls -A "${OUT}")" ]] || { echo "Use an empty evidence directory: ${OUT}" >&2; exit 2; }
-SCHEMES="${C15T_VENDOR_SCHEMES:-C15tConsentDemo C15tUIKitDemo}"
-DEVICE_NAME="${C15T_IOS_VENDOR_DEVICE:-c15t-ios-vendors}"
-SPM_DIR="${C15T_VENDOR_SPM_DIR:-${HOME}/Library/Caches/c15t-ios-vendor-sdks/SourcePackages}"
-WORK="$(mktemp -d /tmp/c15t-vendor-e2e.XXXXXX)"
+SCHEMES="${C15T_VENDOR_SCHEMES:-InthConsentDemo InthUIKitDemo}"
+DEVICE_NAME="${C15T_IOS_VENDOR_DEVICE:-inth-ios-vendors}"
+SPM_DIR="${C15T_VENDOR_SPM_DIR:-${HOME}/Library/Caches/inth-ios-vendor-sdks/SourcePackages}"
+WORK="$(mktemp -d /tmp/inth-vendor-e2e.XXXXXX)"
 CAPTURE_PID=""; DEVICE=""; LOG_PID=""
 # Firebase cannot reach the capture server; its own debug log is the evidence. Debug
 # messages are never persisted, so the log is streamed while the tests run.
-LOG_PREDICATE='subsystem == "com.c15t.vendor-e2e" OR subsystem BEGINSWITH "com.google.firebase"'
+LOG_PREDICATE='subsystem == "com.inth.vendor-e2e" OR subsystem BEGINSWITH "com.google.firebase"'
 
 cleanup() {
   result=$?
@@ -133,7 +133,7 @@ LOG_PID=$!
 for scheme in ${SCHEMES}; do
   # TEST_RUNNER_ variables reach the XCUITest runner, which passes them on to the app.
   TEST_RUNNER_C15T_VENDOR_BASE="${BASE}" TEST_RUNNER_C15T_CAPTURE_DIR="${OUT}/${scheme}" \
-  xcodebuild test -project "${WORK}/project/C15tConsentDemo.xcodeproj" -scheme "${scheme}" \
+  xcodebuild test -project "${WORK}/project/InthConsentDemo.xcodeproj" -scheme "${scheme}" \
     -destination "platform=iOS Simulator,id=${DEVICE}" \
     -only-testing:"${scheme}UITests/VendorSDKTests" \
     -derivedDataPath "${WORK}/derived" -clonedSourcePackagesDirPath "${SPM_DIR}" \

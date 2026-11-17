@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * Resolve `@c15t/react-native`'s autolinking the way a host app does.
+ * Resolve `@inth/react-native`'s autolinking the way a host app does.
  *
  * Nothing else in this repository asks React Native's CLI what it makes of the package. The
  * standalone Gradle build in `packages/react-native/android` never goes through autolinking,
@@ -24,11 +24,11 @@
  * same pass: a config file that stops the podspec from being found breaks `pod install` too.
  *
  * The check then runs a second time against the *packed* package. Both fixtures install
- * `@c15t/react-native` as a symlink into this workspace, so the first pass resolves the
+ * `@inth/react-native` as a symlink into this workspace, so the first pass resolves the
  * checkout, and a checkout carries `src/specs`, `ios/Tests`, a Gradle wrapper, and every other
  * file `package.json`'s `files` array leaves out of the tarball. An allowlist that drops
  * something an app reads -- the Codegen input directory, the podspec's license file -- is
- * invisible to it and fatal to `pod install` and `:c15t-react-native:generateC15tCodegen` in
+ * invisible to it and fatal to `pod install` and `:inth-react-native:generateInthCodegen` in
  * the app. So `packReactNativePackage()` runs `npm pack`, installs the result over the
  * fixture's symlink, and asks the same two linkers the same questions.
  */
@@ -62,17 +62,17 @@ const PACKAGE_DIR = join(ROOT, 'packages', 'react-native');
  */
 const EXPO_EXAMPLE_DIR = join(ROOT, 'internals', 'fixtures', 'expo-dev');
 
-const PACKAGE_NAME = '@c15t/react-native';
+const PACKAGE_NAME = '@inth/react-native';
 
 /** The library module, not the `android` directory above it. */
-const ANDROID_MODULE_DIR = join('android', 'c15t-react-native');
+const ANDROID_MODULE_DIR = join('android', 'inth-react-native');
 
 /** The Java package the library's `ReactPackage` lives in, and therefore the one the CLI has
  * to find in the autolinked build file. */
-const EXPECTED_PACKAGE = 'com.c15t.reactnative';
+const EXPECTED_PACKAGE = 'com.inth.reactnative';
 
 /** The import the app's generated `PackageList` writes for this library. */
-const EXPECTED_IMPORT = `import ${EXPECTED_PACKAGE}.C15tReactNativePackage;`;
+const EXPECTED_IMPORT = `import ${EXPECTED_PACKAGE}.InthReactNativePackage;`;
 
 /** The Android half of one entry in `react-native config`'s output. */
 interface AndroidDependencyConfig {
@@ -94,7 +94,7 @@ interface DependencyConfig {
 	};
 }
 
-/** The Java package Codegen writes `NativeC15tSpec` into. */
+/** The Java package Codegen writes `NativeInthSpec` into. */
 const codegenJavaPackage = function codegenJavaPackage(): string {
 	const readRequire = createRequire(import.meta.url);
 	const manifest = readRequire(
@@ -154,9 +154,9 @@ const checkAndroidEntry = function checkAndroidEntry(
 		);
 	}
 
-	if (android.packageInstance !== 'new C15tReactNativePackage()') {
+	if (android.packageInstance !== 'new InthReactNativePackage()') {
 		failures.push(
-			`packageInstance is ${JSON.stringify(android.packageInstance)}, expected "new C15tReactNativePackage()".`
+			`packageInstance is ${JSON.stringify(android.packageInstance)}, expected "new InthReactNativePackage()".`
 		);
 	}
 
@@ -178,10 +178,10 @@ interface AutolinkCheckOptions {
  * Check the autolinking a host app would get, from a parsed linker answer.
  *
  * @param dependencies - The `dependencies` map of the config, keyed by package name.
- * @param javaPackage - The package Codegen is configured to generate `NativeC15tSpec` into.
+ * @param javaPackage - The package Codegen is configured to generate `NativeInthSpec` into.
  * Read from the package manifest; a parameter so a drift can be tested without editing it.
  * @param options - Which linker produced the config, and whether it should carry iOS.
- * @returns Every way the answer disagrees with what `@c15t/react-native` ships. Empty means an
+ * @returns Every way the answer disagrees with what `@inth/react-native` ships. Empty means an
  * app can link the library.
  */
 export const checkAutolinkConfig = function checkAutolinkConfig(
@@ -202,11 +202,11 @@ export const checkAutolinkConfig = function checkAutolinkConfig(
 	const failures = checkAndroidEntry(dependency.platforms?.android, linker);
 
 	// One string is the AGP namespace, the Kotlin package the package class sits in, and the
-	// package Codegen generates NativeC15tSpec into. If codegenConfig drifts, the app writes the
+	// package Codegen generates NativeInthSpec into. If codegenConfig drifts, the app writes the
 	// spec somewhere the library cannot see it and the module fails to compile against it.
 	if (javaPackage !== EXPECTED_PACKAGE) {
 		failures.push(
-			`Codegen generates NativeC15tSpec into "${javaPackage}" but the autolinked library is in "${EXPECTED_PACKAGE}", which is a duplicate-class or a missing-class failure depending on the build.`
+			`Codegen generates NativeInthSpec into "${javaPackage}" but the autolinked library is in "${EXPECTED_PACKAGE}", which is a duplicate-class or a missing-class failure depending on the build.`
 		);
 	}
 
@@ -219,9 +219,9 @@ export const checkAutolinkConfig = function checkAutolinkConfig(
 		failures.push(
 			`${linker} has no iOS half for ${PACKAGE_NAME}, so \`pod install\` would not see it.`
 		);
-	} else if (!ios.podspecPath.endsWith('C15tReactNative.podspec')) {
+	} else if (!ios.podspecPath.endsWith('InthReactNative.podspec')) {
 		failures.push(
-			`the iOS podspec resolved to "${ios.podspecPath}", not C15tReactNative.podspec.`
+			`the iOS podspec resolved to "${ios.podspecPath}", not InthReactNative.podspec.`
 		);
 	}
 
@@ -400,7 +400,7 @@ export interface HostReadPath {
 }
 
 /** The podspec, which is both the iOS half of autolinking and the thing that names the rest. */
-const PODSPEC_NAME = 'C15tReactNative.podspec';
+const PODSPEC_NAME = 'InthReactNative.podspec';
 
 /**
  * Shared with `scripts/check-publish-artifacts.ts` so the release gate and this check hold the
@@ -427,9 +427,9 @@ export const hostReadPaths: HostReadPath[] = [
 			'both linkers read `dependency.platforms`; Expo reads only `.js` and `.ts`, so a `.cjs` is invisible to it',
 	},
 	{
-		path: 'src/specs/NativeC15t.ts',
+		path: 'src/specs/NativeInth.ts',
 		readBy:
-			'`codegenConfig.jsSrcsDir`, which the app reads to generate `NativeC15tSpec` for both platforms',
+			'`codegenConfig.jsSrcsDir`, which the app reads to generate `NativeInthSpec` for both platforms',
 	},
 	{
 		path: 'android/codegen/generate-spec.mjs',
@@ -437,20 +437,20 @@ export const hostReadPaths: HostReadPath[] = [
 			'`library.gradle`, which generates the spec into the bridge module, because an app never generates the spec of a library it links',
 	},
 	{
-		path: 'android/c15t-react-native/build.gradle.kts',
+		path: 'android/inth-react-native/build.gradle.kts',
 		readBy:
 			'the CLI text-matches this file for the namespace, and it is the module build script the app evaluates',
 	},
 	{
-		path: 'android/c15t-react-native/library.gradle',
+		path: 'android/inth-react-native/library.gradle',
 		readBy: "the module build script's `apply(from:)`",
 	},
 	{
-		path: 'android/c15t-react-native/consumer-rules.pro',
+		path: 'android/inth-react-native/consumer-rules.pro',
 		readBy: '`consumerProguardFiles` in `library.gradle`',
 	},
 	{
-		path: 'android/c15t-react-native/src/main/AndroidManifest.xml',
+		path: 'android/inth-react-native/src/main/AndroidManifest.xml',
 		readBy:
 			'the first Java-package lookup the CLI makes, and the androidx.startup entry that bootstraps the core',
 	},
@@ -636,7 +636,7 @@ export const checkPodspecPaths = function checkPodspecPaths(
 		const normalized = pattern.replaceAll('\\', '/');
 
 		// A podspec is read from wherever the pod lives, which for an installed library is
-		// `node_modules/@c15t/react-native`. Two directories up is the consumer's tree.
+		// `node_modules/@inth/react-native`. Two directories up is the consumer's tree.
 		if (normalized === '..' || normalized.startsWith('../')) {
 			failures.push(
 				`${field} points outside the package at "${pattern}", which resolves into the host app's tree, not ours.`
@@ -712,7 +712,7 @@ export const checkPackedPackageSurface = function checkPackedPackageSurface(
 		}
 	} else {
 		failures.push(
-			'the packed package declares no `codegenConfig.jsSrcsDir`, so no app can generate NativeC15tSpec.'
+			'the packed package declares no `codegenConfig.jsSrcsDir`, so no app can generate NativeInthSpec.'
 		);
 	}
 
@@ -833,7 +833,7 @@ const installIntoExample = function installIntoExample(
  * Ask both linkers what they make of the packed package.
  *
  * The swap is real and it is undone in the same call, which is also the whole reason the two
- * fixtures cannot be checked in parallel: only one install of `@c15t/react-native` exists in
+ * fixtures cannot be checked in parallel: only one install of `@inth/react-native` exists in
  * each of them at a time.
  *
  * @param packed - The packed package to install.

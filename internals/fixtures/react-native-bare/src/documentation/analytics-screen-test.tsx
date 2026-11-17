@@ -6,8 +6,8 @@
  * fixture's own Vitest run away from it.
  */
 // #region docs:testing-component-test title="analytics-screen.test.tsx"
-import { ConsentProvider } from '@c15t/react-native';
-import { createTestConsentClient } from '@c15t/react-native/testing';
+import { ConsentProvider } from '@inth/react-native';
+import { createTestConsentClient } from '@inth/react-native/testing';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import { AnalyticsScreen } from './analytics-screen';

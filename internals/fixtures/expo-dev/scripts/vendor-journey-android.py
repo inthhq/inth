@@ -29,7 +29,7 @@ parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.R
 parser.add_argument('--serial', required=True)
 parser.add_argument('--backend', required=True, help='E2E backend origin as the host reaches it')
 parser.add_argument('--out', type=Path, required=True)
-parser.add_argument('--package', default='com.c15t.expodev')
+parser.add_argument('--package', default='com.inth.expodev')
 args = parser.parse_args()
 out = args.out.resolve()
 screens = out / 'screens'
@@ -105,7 +105,7 @@ def reveal(resource_id: str) -> ET.Element:
     for _ in range(12):
         root = hierarchy()
         node = find(root, resource_id)
-        pinned = [find(root, 'c15t.prefs.reject-all'), find(root, 'c15t.prefs.save')]
+        pinned = [find(root, 'inth.prefs.reject-all'), find(root, 'inth.prefs.save')]
         floor = min((bounds(item)[1] for item in pinned if item is not None), default=10**6)
         if node is not None and bounds(node)[3] < floor - 8:
             return node
@@ -141,7 +141,7 @@ def vendor_probes() -> list[dict]:
 
 
 def governed_capture(since: int) -> tuple[int, list[dict]]:
-    """Capture requests after since. Sentry counts only replay items, the part c15t controls."""
+    """Capture requests after since. Sentry counts only replay items, the part Inth controls."""
     captured = fetch_json(f'/captured?kind=capture&since={since}')
     rows = [row for row in captured['requests']
             if row['vendor'] != 'sentry' or any(item.startswith('replay_') for item in row.get('items', []))]
@@ -231,10 +231,10 @@ def journey() -> None:
     launch()
     # Vendor step 1: a fresh install sends nothing, including the launch probe.
     assert_vendors_silent('vendor-1-fresh-install', 0, await_vendor_probe(0, 'startup', False))
-    await_node('c15t.first-layer.reject-all', timeout=60)
+    await_node('inth.first-layer.reject-all', timeout=60)
     capture('01-fresh-prompt')
 
-    tap('c15t.first-layer.reject-all')
+    tap('inth.first-layer.reject-all')
     await_label('fixture.prompt', 'prompt:none')
     capture('02-rejected')
     # Vendor step 2: a refusal keeps every vendor silent.
@@ -242,12 +242,12 @@ def journey() -> None:
     assert_vendors_silent('vendor-2-reject-all', reject_seq, send_vendor_probe(False))
 
     tap('fixture.open-preferences')
-    switch = reveal('c15t.prefs.category.measurement.switch')
+    switch = reveal('inth.prefs.category.measurement.switch')
     check(switch.get('checked') == 'false', f'Measurement started on: {switch.attrib}')
-    tap('c15t.prefs.category.measurement.switch')
-    await_node('c15t.prefs.category.measurement.switch', matches=lambda node: node.get('checked') == 'true')
+    tap('inth.prefs.category.measurement.switch')
+    await_node('inth.prefs.category.measurement.switch', matches=lambda node: node.get('checked') == 'true')
     capture('03-measurement-switched-on')
-    tap('c15t.prefs.save')
+    tap('inth.prefs.save')
     await_label('fixture.measurement', 'measurement:granted')
     capture('04-measurement-granted')
     # Vendor step 3: measurement is the category every helper defaults to.
@@ -255,9 +255,9 @@ def journey() -> None:
     assert_vendors_capture('vendor-3-grant-measurement', grant_seq, send_vendor_probe(True))
 
     tap('fixture.open-preferences')
-    await_node('c15t.prefs.reject-all')
+    await_node('inth.prefs.reject-all')
     capture('05-preferences-before-withdrawal')
-    tap('c15t.prefs.reject-all')
+    tap('inth.prefs.reject-all')
     await_label('fixture.measurement', 'measurement:denied')
     capture('06-withdrawn')
     # Vendor step 4: after in-flight uploads settle, a withdrawal stops every vendor.

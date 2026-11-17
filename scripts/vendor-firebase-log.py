@@ -4,13 +4,13 @@
 Firebase cannot be pointed at the capture server, so the iOS vendor journey
 (``examples/native/consent-demo/ios/run-vendor-e2e.sh``) streams the simulator's
 unified log as ndjson while ``VendorSDKTests`` runs. The test writes one marker
-per step (``c15t-vendor-step <step> seq=<n>``) from its runner process, and the
+per step (``inth-vendor-step <step> seq=<n>``) from its runner process, and the
 app runs with ``-FIRDebugEnabled -FIRAnalyticsDebugEnabled
 -FIRAnalyticsVerboseLoggingEnabled``. Firebase then logs:
 
   I-ACS023012 / I-ACS023013   collection enabled / disabled
   I-ACS025055                 "... analytics_storage is granted|denied ..."
-  I-ACS023051                 "Logging event: ... c15t_probe ..."  (accepted)
+  I-ACS023051                 "Logging event: ... inth_probe ..."  (accepted)
   I-ACS023049                 "Analytics is disabled. Event not logged"
 
 Each step runs from its marker to the next marker of the same app. Its state is
@@ -44,9 +44,9 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-MARKER = re.compile(r'c15t-vendor-step (\S+) seq=(\d+)')
+MARKER = re.compile(r'inth-vendor-step (\S+) seq=(\d+)')
 STORAGE = re.compile(r'analytics_storage is (granted|denied)')
-PROBE = 'c15t_probe'
+PROBE = 'inth_probe'
 PROBE_SENT = re.compile(r'^probe \d+ sent$')
 # Firebase logs a probe's outcome about 1 ms after the app logs the send.
 PROBE_WINDOW_SECONDS = 3.0

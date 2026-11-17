@@ -30,9 +30,9 @@ for name in ['react-native', 'react']:
     if name == 'react-native':
         version = os.environ.get('INSTALLED_RN_VERSION', version)
     (package / 'package.json').write_text(json.dumps({'version': version}))
-packed = root / 'node_modules/@c15t/react-native'
+packed = root / 'node_modules/@inth/react-native'
 packed.mkdir(parents=True)
-spec = packed / 'android/c15t-react-native/build/generated/source/codegen/java/com/c15t/reactnative/NativeC15tSpec.java'
+spec = packed / 'android/inth-react-native/build/generated/source/codegen/java/com/inth/reactnative/NativeInthSpec.java'
 spec.parent.mkdir(parents=True)
 spec.write_text('generated')
 `;
@@ -44,7 +44,7 @@ root = Path.cwd()
 for relative, content in [
     ('app/build/outputs/apk/release/app-release-unsigned.apk', 'apk'),
     ('app/build/outputs/mapping/release/mapping.txt', 'mapping'),
-    ('app/build/intermediates/merged_manifests/release/processReleaseManifest/AndroidManifest.xml', 'com.c15t.reactnative.C15tReactNativeInitializer'),
+    ('app/build/intermediates/merged_manifests/release/processReleaseManifest/AndroidManifest.xml', 'com.inth.reactnative.InthReactNativeInitializer'),
 ]:
     output = root / relative
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -132,7 +132,7 @@ describe('isolated Android consumer version selection', () => {
 				});
 				expect(evidence.commands.at(-1)).toEqual(
 					expect.arrayContaining([
-						`-Pc15t.reactNativeVersion=${reactNative}`,
+						`-Pinth.reactNativeVersion=${reactNative}`,
 						`-PcompileSdkVersion=${compileSdk}`,
 						':headless:test',
 						':app:assembleRelease',

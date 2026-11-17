@@ -24,15 +24,15 @@ final class ReadOnlyLayoutTests: XCTestCase {
         app.launchEnvironment = ["C15T_FIXTURE_SCENARIO": scenario, "C15T_FIXTURE_RESET": "1"]
         app.launchArguments = ["-UIPreferredContentSizeCategoryName", accessibility ? "UICTContentSizeCategoryAccessibilityXXXL" : "UICTContentSizeCategoryL"]
         app.launch()
-        let customize = app.buttons[scenario == "gpc-on" ? "fixture.open-preferences" : "c15t.first-layer.customize"]
+        let customize = app.buttons[scenario == "gpc-on" ? "fixture.open-preferences" : "inth.first-layer.customize"]
         XCTAssertTrue(customize.waitForExistence(timeout: 10))
         for _ in 0..<12 where !customize.isHittable { app.swipeUp() }
         XCTAssertTrue(customize.isHittable)
         customize.tap()
-        let save = app.buttons["c15t.prefs.save"]
+        let save = app.buttons["inth.prefs.save"]
         XCTAssertTrue(save.waitForExistence(timeout: 5))
         let suffix = scenario == "gpc-on" ? "restricted" : "locked"
-        let row = app.descendants(matching: .any)["c15t.prefs.category.\(category).\(suffix)"].firstMatch
+        let row = app.descendants(matching: .any)["inth.prefs.category.\(category).\(suffix)"].firstMatch
         for _ in 0..<20 where !row.exists {
             let window = app.frame
             let top = app.navigationBars["Privacy Settings"].frame.maxY
@@ -44,7 +44,7 @@ final class ReadOnlyLayoutTests: XCTestCase {
         }
         XCTAssertTrue(row.waitForExistence(timeout: 5))
         XCTAssertTrue(title.allSatisfy { row.label.contains($0) } && row.label.contains(status), row.label)
-        XCTAssertFalse(app.switches["c15t.prefs.category.\(category).switch"].exists)
+        XCTAssertFalse(app.switches["inth.prefs.category.\(category).switch"].exists)
 
         // The category deliberately combines its accessibility children. Read the rendered words,
         // then express their positions relative to the row across its single scrolling list.

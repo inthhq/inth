@@ -25,7 +25,7 @@ if (
 	});
 	if (!values.endpoint || !values.out || !values['expires-at']) {
 		throw new Error(
-			'Use --endpoint https://your-project.inth.app --out c15t-policy.json --expires-at <ISO timestamp>.'
+			'Use --endpoint https://your-project.inth.app --out inth-policy.json --expires-at <ISO timestamp>.'
 		);
 	}
 	await writeFile(

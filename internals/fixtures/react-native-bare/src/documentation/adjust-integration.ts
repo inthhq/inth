@@ -1,9 +1,9 @@
 // #region docs:rn-adjust-integration title="adjust-consent.ts"
-import { connectAdjust } from '@c15t/react-native/integrations';
+import { connectAdjust } from '@inth/react-native/integrations';
 import type {
 	AdjustClient,
 	ConsentIntegration,
-} from '@c15t/react-native/integrations';
+} from '@inth/react-native/integrations';
 
 export const connectAppAdjust = (
 	adjust: AdjustClient,

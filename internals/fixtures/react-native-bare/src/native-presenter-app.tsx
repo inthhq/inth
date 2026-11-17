@@ -4,11 +4,11 @@ import {
 	presentConsentPrompt,
 	presentPreferences,
 	useConsentStatus,
-} from '@c15t/react-native';
+} from '@inth/react-native';
 import type {
 	ConsentPresenterOutcome,
 	ConsentPresenterSession,
-} from '@c15t/react-native';
+} from '@inth/react-native';
 import { useEffect, useState } from 'react';
 import { Button, Text, View } from 'react-native';
 
@@ -169,7 +169,7 @@ export const NativePresenterApp = () => {
 	}, []);
 	return (
 		<View style={{ flex: 1, gap: 24, padding: 32, paddingTop: 80 }}>
-			<Text accessibilityRole="header">c15t native consent</Text>
+			<Text accessibilityRole="header">Inth native consent</Text>
 			<Button
 				testID="fixture.open-preferences"
 				title="Privacy settings"

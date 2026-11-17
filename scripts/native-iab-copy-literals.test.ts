@@ -25,8 +25,8 @@ import {
 const REPO_ROOT = fileURLToPath(new URL('..', import.meta.url));
 
 const UI_SOURCE_ROOTS = [
-	'packages/swift/Sources/C15tConsentUI',
-	'packages/android/c15t-consent-ui/src/main',
+	'packages/swift/Sources/InthConsentUI',
+	'packages/android/inth-consent-ui/src/main',
 ];
 
 /** Every English value of the category-mode table, web keys included. */

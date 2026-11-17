@@ -12,7 +12,7 @@
  * Spawned as its own process by `measure/idle.ts`.
  */
 
-import { createConsentClient } from '@c15t/react-native';
+import { createConsentClient } from '@inth/react-native';
 
 import { ensureReactGlobalForDist } from './ensure-react-global';
 import { installBenchNativeModule } from './fake-native';
@@ -25,7 +25,7 @@ import {
 } from './react-native-stub';
 
 /** Name the native cores register the TurboModule under. */
-const MODULE_NAME = 'C15t';
+const MODULE_NAME = 'Inth';
 
 const parseWindow = function parseWindow(
 	raw: string | undefined,
@@ -52,7 +52,7 @@ const native = installBenchNativeModule(
 	buildSnapshot()
 );
 
-// The same emitter surface `getNativeC15tEvents()` builds in a real app, so the
+// The same emitter surface `getNativeInthEvents()` builds in a real app, so the
 // listener this process holds is the kind the contract is about.
 const client = createConsentClient(
 	native as never,

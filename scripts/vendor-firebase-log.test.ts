@@ -6,8 +6,8 @@ import { join } from 'node:path';
 import { expect, it } from 'vitest';
 
 const script = new URL('./vendor-firebase-log.py', import.meta.url).pathname;
-const runner = '/data/C15tConsentDemoUITests-Runner';
-const app = '/data/C15tConsentDemo';
+const runner = '/data/InthConsentDemoUITests-Runner';
+const app = '/data/InthConsentDemo';
 
 /** One unified-log row as `log stream --style ndjson` prints it. */
 const row = (second: number, process: string, eventMessage: string) =>
@@ -23,34 +23,34 @@ const enabled = '[FirebaseAnalytics][I-ACS023012] Analytics collection enabled';
 const refused =
 	'[FirebaseAnalytics][I-ACS023049] Analytics is disabled. Event not logged';
 const logged =
-	'[FirebaseAnalytics][I-ACS023051] Logging event: origin, name, params: app, c15t_probe, { probe = 3; }';
+	'[FirebaseAnalytics][I-ACS023051] Logging event: origin, name, params: app, inth_probe, { probe = 3; }';
 const consent = (storage: string) =>
 	`[FirebaseAnalytics][I-ACS025055] ad_storage is denied. analytics_storage is ${storage}. ad_user_data is denied. ad_personalization is denied.`;
 
 /** A journey as Firebase logs it. `withdrawn` is the outcome of the post-withdrawal probe. */
 const journey = (withdrawn: string) => [
-	row(1, runner, 'c15t-vendor-step 1-fresh seq=0'),
+	row(1, runner, 'inth-vendor-step 1-fresh seq=0'),
 	row(2, app, 'probe 1 sent'),
 	// On a fresh install Firebase's logging starts after the first probe.
 	row(3, app, disabled),
 	row(4, app, refused),
-	row(5, runner, 'c15t-vendor-step 2-reject seq=0'),
+	row(5, runner, 'inth-vendor-step 2-reject seq=0'),
 	row(6, app, 'probe 2 sent'),
 	row(7, app, refused),
 	// The grant lands before the next marker: the state belongs to step 3.
 	row(8, app, consent('granted')),
 	row(9, app, enabled),
-	row(10, runner, 'c15t-vendor-step 3-grant seq=0'),
+	row(10, runner, 'inth-vendor-step 3-grant seq=0'),
 	row(11, app, 'probe 3 sent'),
 	row(12, app, logged),
 	row(13, app, consent('denied')),
 	row(14, app, disabled),
-	row(15, runner, 'c15t-vendor-step 4-withdraw seq=4'),
+	row(15, runner, 'inth-vendor-step 4-withdraw seq=4'),
 	row(16, app, 'probe 4 sent'),
 	row(17, app, withdrawn),
 	row(18, app, consent('denied')),
 	row(19, app, disabled),
-	row(20, runner, 'c15t-vendor-step 5-relaunch seq=4'),
+	row(20, runner, 'inth-vendor-step 5-relaunch seq=4'),
 	row(21, app, 'probe 1 sent'),
 	row(22, app, refused),
 ];
@@ -77,7 +77,7 @@ const check = (lines: string[], expectApps: string[] = []) => {
 it('reads collection, analytics_storage and the probe outcome per step', () => {
 	const result = check(journey(refused));
 	expect(result.status, result.stderr).toBe(0);
-	const steps = result.evidence.apps.C15tConsentDemo.map(
+	const steps = result.evidence.apps.InthConsentDemo.map(
 		(step: Record<string, unknown>) => [
 			step.step,
 			step.collection,
@@ -99,7 +99,7 @@ it('fails when Firebase logs the probe after withdrawal', () => {
 	const result = check(journey(logged));
 	expect(result.status).toBe(1);
 	expect(result.evidence.failures).toEqual([
-		'C15tConsentDemo 4-withdraw: probe logged 1 time(s), refused 0 time(s) (plus 0 refusal(s) not tied to the probe)',
+		'InthConsentDemo 4-withdraw: probe logged 1 time(s), refused 0 time(s) (plus 0 refusal(s) not tied to the probe)',
 	]);
 });
 
@@ -119,14 +119,14 @@ it('does not count a refusal of another event as the probe refusal', () => {
 	const result = check(lines);
 	expect(result.status).toBe(1);
 	expect(result.evidence.failures).toEqual([
-		'C15tConsentDemo 4-withdraw: probe logged 0 time(s), refused 0 time(s) (plus 1 refusal(s) not tied to the probe)',
+		'InthConsentDemo 4-withdraw: probe logged 0 time(s), refused 0 time(s) (plus 1 refusal(s) not tied to the probe)',
 	]);
 });
 
 it('fails when an expected app produced no step markers', () => {
-	const result = check(journey(refused), ['C15tConsentDemo', 'C15tUIKitDemo']);
+	const result = check(journey(refused), ['InthConsentDemo', 'InthUIKitDemo']);
 	expect(result.status).toBe(1);
 	expect(result.evidence.failures).toEqual([
-		'C15tUIKitDemo: no step markers in the device log',
+		'InthUIKitDemo: no step markers in the device log',
 	]);
 });

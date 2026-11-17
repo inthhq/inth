@@ -1,9 +1,9 @@
 // #region docs:rn-appsflyer-integration title="appsflyer-consent.ts"
-import { connectAppsFlyer } from '@c15t/react-native/integrations';
+import { connectAppsFlyer } from '@inth/react-native/integrations';
 import type {
 	AppsFlyerClient,
 	ConsentIntegration,
-} from '@c15t/react-native/integrations';
+} from '@inth/react-native/integrations';
 
 export const connectAppAppsFlyer = (
 	appsFlyer: AppsFlyerClient,

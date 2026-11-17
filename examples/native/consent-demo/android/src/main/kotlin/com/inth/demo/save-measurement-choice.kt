@@ -1,11 +1,11 @@
 // #region docs:android-category-save title="save-measurement-choice.kt"
-package com.c15t.demo
+package com.inth.demo
 
-import com.c15t.android.awaitSave
-import com.c15t.core.ConsentCore
-import com.c15t.core.CommitIntent
-import com.c15t.core.CommitResult
-import com.c15t.core.model.ConsentCategory
+import com.inth.android.awaitSave
+import com.inth.core.ConsentCore
+import com.inth.core.CommitIntent
+import com.inth.core.CommitResult
+import com.inth.core.model.ConsentCategory
 
 suspend fun saveMeasurementChoice(
     core: ConsentCore,

@@ -7,13 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		02CF476F24BB8FC4C0973B29 /* Pods_C15tBare.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BAC87C5D93AC097B4B117D45 /* Pods_C15tBare.framework */; };
+		02CF476F24BB8FC4C0973B29 /* Pods_InthBare.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BAC87C5D93AC097B4B117D45 /* Pods_InthBare.framework */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		70C9BD220C03CB78352846B9 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		AB0001E8BA67B01D1000EA57 /* consent-journey.swift in Sources */ = {isa = PBXBuildFile; fileRef = E059D9E2BF36BA8B9EA96F76 /* consent-journey.swift */; };
-		B017D1E00000000000000001 /* c15t-policy.json in Resources */ = {isa = PBXBuildFile; fileRef = B017D1E00000000000000002 /* c15t-policy.json */; };
+		B017D1E00000000000000001 /* inth-policy.json in Resources */ = {isa = PBXBuildFile; fileRef = B017D1E00000000000000002 /* inth-policy.json */; };
 		B017D1E00000000000000003 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = B017D1E00000000000000004 /* GoogleService-Info.plist */; };
 		CDCF2894CDED58FA35388F12 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 375AB9A2843A409A81285E37 /* FirebaseCore */; };
 		EAFE7EC0FC13CA1AF7B1202E /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6698F8D90906F61CFEF10D1A /* Foundation.framework */; };
@@ -25,24 +25,24 @@
 			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 13B07F861A680F5B00A75B9A;
-			remoteInfo = C15tBare;
+			remoteInfo = InthBare;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		13B07F961A680F5B00A75B9A /* C15tBare.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = C15tBare.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = C15tBare/Images.xcassets; sourceTree = "<group>"; };
-		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = C15tBare/Info.plist; sourceTree = "<group>"; };
-		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = C15tBare/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		3B4392A12AC88292D35C810B /* Pods-C15tBare.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-C15tBare.debug.xcconfig"; path = "Target Support Files/Pods-C15tBare/Pods-C15tBare.debug.xcconfig"; sourceTree = "<group>"; };
-		5709B34CF0A7D63546082F79 /* Pods-C15tBare.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-C15tBare.release.xcconfig"; path = "Target Support Files/Pods-C15tBare/Pods-C15tBare.release.xcconfig"; sourceTree = "<group>"; };
+		13B07F961A680F5B00A75B9A /* InthBare.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = InthBare.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = InthBare/Images.xcassets; sourceTree = "<group>"; };
+		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = InthBare/Info.plist; sourceTree = "<group>"; };
+		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = InthBare/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		3B4392A12AC88292D35C810B /* Pods-InthBare.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-InthBare.debug.xcconfig"; path = "Target Support Files/Pods-InthBare/Pods-InthBare.debug.xcconfig"; sourceTree = "<group>"; };
+		5709B34CF0A7D63546082F79 /* Pods-InthBare.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-InthBare.release.xcconfig"; path = "Target Support Files/Pods-InthBare/Pods-InthBare.release.xcconfig"; sourceTree = "<group>"; };
 		6698F8D90906F61CFEF10D1A /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
-		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = C15tBare/AppDelegate.swift; sourceTree = "<group>"; };
-		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = C15tBare/LaunchScreen.storyboard; sourceTree = "<group>"; };
-		9873631E7CB5175899040A7C /* C15tBareUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = C15tBareUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		B017D1E00000000000000002 /* c15t-policy.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = "c15t-policy.json"; path = "C15tBare/c15t-policy.json"; sourceTree = "<group>"; };
-		B017D1E00000000000000004 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "C15tBare/GoogleService-Info.plist"; sourceTree = "<group>"; };
-		BAC87C5D93AC097B4B117D45 /* Pods_C15tBare.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_C15tBare.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = InthBare/AppDelegate.swift; sourceTree = "<group>"; };
+		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = InthBare/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		9873631E7CB5175899040A7C /* InthBareUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = InthBareUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B017D1E00000000000000002 /* inth-policy.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = "inth-policy.json"; path = "InthBare/inth-policy.json"; sourceTree = "<group>"; };
+		B017D1E00000000000000004 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "InthBare/GoogleService-Info.plist"; sourceTree = "<group>"; };
+		BAC87C5D93AC097B4B117D45 /* Pods_InthBare.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_InthBare.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		E059D9E2BF36BA8B9EA96F76 /* consent-journey.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "consent-journey.swift"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
@@ -52,7 +52,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				02CF476F24BB8FC4C0973B29 /* Pods_C15tBare.framework in Frameworks */,
+				02CF476F24BB8FC4C0973B29 /* Pods_InthBare.framework in Frameworks */,
 				CDCF2894CDED58FA35388F12 /* FirebaseCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -68,18 +68,18 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		13B07FAE1A68108700A75B9A /* C15tBare */ = {
+		13B07FAE1A68108700A75B9A /* InthBare */ = {
 			isa = PBXGroup;
 			children = (
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
-				B017D1E00000000000000002 /* c15t-policy.json */,
+				B017D1E00000000000000002 /* inth-policy.json */,
 				B017D1E00000000000000004 /* GoogleService-Info.plist */,
 				761780EC2CA45674006654EE /* AppDelegate.swift */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
 			);
-			name = C15tBare;
+			name = InthBare;
 			sourceTree = "<group>";
 		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
@@ -87,7 +87,7 @@
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
 				8FE7B7CA7381A74DDFDEE06F /* iOS */,
-				BAC87C5D93AC097B4B117D45 /* Pods_C15tBare.framework */,
+				BAC87C5D93AC097B4B117D45 /* Pods_InthBare.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -102,12 +102,12 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
-				13B07FAE1A68108700A75B9A /* C15tBare */,
+				13B07FAE1A68108700A75B9A /* InthBare */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
-				92AD0CE9041335B0A36DED94 /* C15tBareUITests */,
+				92AD0CE9041335B0A36DED94 /* InthBareUITests */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -117,8 +117,8 @@
 		83CBBA001A601CBA00E9B192 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				13B07F961A680F5B00A75B9A /* C15tBare.app */,
-				9873631E7CB5175899040A7C /* C15tBareUITests.xctest */,
+				13B07F961A680F5B00A75B9A /* InthBare.app */,
+				9873631E7CB5175899040A7C /* InthBareUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -131,20 +131,20 @@
 			name = iOS;
 			sourceTree = "<group>";
 		};
-		92AD0CE9041335B0A36DED94 /* C15tBareUITests */ = {
+		92AD0CE9041335B0A36DED94 /* InthBareUITests */ = {
 			isa = PBXGroup;
 			children = (
 				E059D9E2BF36BA8B9EA96F76 /* consent-journey.swift */,
 			);
-			name = C15tBareUITests;
-			path = C15tBareUITests;
+			name = InthBareUITests;
+			path = InthBareUITests;
 			sourceTree = "<group>";
 		};
 		BBD78D7AC51CEA395F1C20DB /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				3B4392A12AC88292D35C810B /* Pods-C15tBare.debug.xcconfig */,
-				5709B34CF0A7D63546082F79 /* Pods-C15tBare.release.xcconfig */,
+				3B4392A12AC88292D35C810B /* Pods-InthBare.debug.xcconfig */,
+				5709B34CF0A7D63546082F79 /* Pods-InthBare.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -152,9 +152,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		13B07F861A680F5B00A75B9A /* C15tBare */ = {
+		13B07F861A680F5B00A75B9A /* InthBare */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "C15tBare" */;
+			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "InthBare" */;
 			buildPhases = (
 				C38B50BA6285516D6DCD4F65 /* [CP] Check Pods Manifest.lock */,
 				13B07F871A680F5B00A75B9A /* Sources */,
@@ -171,17 +171,17 @@
 			);
 			dependencies = (
 			);
-			name = C15tBare;
+			name = InthBare;
 			packageProductDependencies = (
 				375AB9A2843A409A81285E37 /* FirebaseCore */,
 			);
-			productName = C15tBare;
-			productReference = 13B07F961A680F5B00A75B9A /* C15tBare.app */;
+			productName = InthBare;
+			productReference = 13B07F961A680F5B00A75B9A /* InthBare.app */;
 			productType = "com.apple.product-type.application";
 		};
-		ED7A49299D6EBC4638F07E5B /* C15tBareUITests */ = {
+		ED7A49299D6EBC4638F07E5B /* InthBareUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 23D056DB4E020AD8A7B341BD /* Build configuration list for PBXNativeTarget "C15tBareUITests" */;
+			buildConfigurationList = 23D056DB4E020AD8A7B341BD /* Build configuration list for PBXNativeTarget "InthBareUITests" */;
 			buildPhases = (
 				5A941B2BA58E263F3E3C6512 /* Sources */,
 				300DC80E107DC4454E30B78A /* Frameworks */,
@@ -192,9 +192,9 @@
 			dependencies = (
 				1747BA45C575BF5EFF6F2EB3 /* PBXTargetDependency */,
 			);
-			name = C15tBareUITests;
-			productName = C15tBareUITests;
-			productReference = 9873631E7CB5175899040A7C /* C15tBareUITests.xctest */;
+			name = InthBareUITests;
+			productName = InthBareUITests;
+			productReference = 9873631E7CB5175899040A7C /* InthBareUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -210,7 +210,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "C15tBare" */;
+			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "InthBare" */;
 			compatibilityVersion = "Xcode 12.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -226,8 +226,8 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				13B07F861A680F5B00A75B9A /* C15tBare */,
-				ED7A49299D6EBC4638F07E5B /* C15tBareUITests */,
+				13B07F861A680F5B00A75B9A /* InthBare */,
+				ED7A49299D6EBC4638F07E5B /* InthBareUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -239,7 +239,7 @@
 			files = (
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
-				B017D1E00000000000000001 /* c15t-policy.json in Resources */,
+				B017D1E00000000000000001 /* inth-policy.json in Resources */,
 				B017D1E00000000000000003 /* GoogleService-Info.plist in Resources */,
 				70C9BD220C03CB78352846B9 /* PrivacyInfo.xcprivacy in Resources */,
 			);
@@ -277,15 +277,15 @@
 			files = (
 			);
 			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-C15tBare/Pods-C15tBare-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-InthBare/Pods-InthBare-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-C15tBare/Pods-C15tBare-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-InthBare/Pods-InthBare-frameworks-${CONFIGURATION}-output-files.xcfilelist",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-C15tBare/Pods-C15tBare-frameworks.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-InthBare/Pods-InthBare-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		6162A841DE8FB1DD34B65833 /* [RNFB] Embed Firebase SPM Frameworks */ = {
@@ -356,7 +356,7 @@
 			outputFileListPaths = (
 			);
 			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-C15tBare-checkManifestLockResult.txt",
+				"$(DERIVED_FILE_DIR)/Pods-InthBare-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -369,15 +369,15 @@
 			files = (
 			);
 			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-C15tBare/Pods-C15tBare-resources-${CONFIGURATION}-input-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-InthBare/Pods-InthBare-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-C15tBare/Pods-C15tBare-resources-${CONFIGURATION}-output-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-InthBare/Pods-InthBare-resources-${CONFIGURATION}-output-files.xcfilelist",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-C15tBare/Pods-C15tBare-resources.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-InthBare/Pods-InthBare-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -404,8 +404,8 @@
 /* Begin PBXTargetDependency section */
 		1747BA45C575BF5EFF6F2EB3 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			name = C15tBare;
-			target = 13B07F861A680F5B00A75B9A /* C15tBare */;
+			name = InthBare;
+			target = 13B07F861A680F5B00A75B9A /* InthBare */;
 			targetProxy = 5B8195DF6DE0B2417B276CB8 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -413,14 +413,14 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 3B4392A12AC88292D35C810B /* Pods-C15tBare.debug.xcconfig */;
+			baseConfigurationReference = 3B4392A12AC88292D35C810B /* Pods-InthBare.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_EXPLICIT_MODULES = NO;
 				CLANG_ENABLE_MODULES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_BITCODE = NO;
-				INFOPLIST_FILE = C15tBare/Info.plist;
+				INFOPLIST_FILE = InthBare/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -433,7 +433,7 @@
 					"-lc++",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
-				PRODUCT_NAME = C15tBare;
+				PRODUCT_NAME = InthBare;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_ENABLE_EXPLICIT_MODULES = NO;
 				SWIFT_INCLUDE_PATHS = "$(inherited) ${SYMROOT}/${CONFIGURATION}${EFFECTIVE_PLATFORM_NAME}/";
@@ -446,13 +446,13 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 5709B34CF0A7D63546082F79 /* Pods-C15tBare.release.xcconfig */;
+			baseConfigurationReference = 5709B34CF0A7D63546082F79 /* Pods-InthBare.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_EXPLICIT_MODULES = NO;
 				CLANG_ENABLE_MODULES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				INFOPLIST_FILE = C15tBare/Info.plist;
+				INFOPLIST_FILE = InthBare/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -465,7 +465,7 @@
 					"-lc++",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
-				PRODUCT_NAME = C15tBare;
+				PRODUCT_NAME = InthBare;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_ENABLE_EXPLICIT_MODULES = NO;
 				SWIFT_INCLUDE_PATHS = "$(inherited) ${SYMROOT}/${CONFIGURATION}${EFFECTIVE_PLATFORM_NAME}/";
@@ -487,13 +487,13 @@
 					"$(inherited)",
 					"-ObjC",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.c15t.bare.uitests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.inth.bare.uitests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SWIFT_ENABLE_EXPLICIT_MODULES = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = C15tBare;
+				TEST_TARGET_NAME = InthBare;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
@@ -698,20 +698,20 @@
 					"$(inherited)",
 					"-ObjC",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.c15t.bare.uitests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.inth.bare.uitests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SWIFT_ENABLE_EXPLICIT_MODULES = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = C15tBare;
+				TEST_TARGET_NAME = InthBare;
 			};
 			name = Debug;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "C15tBare" */ = {
+		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "InthBare" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				13B07F941A680F5B00A75B9A /* Debug */,
@@ -720,7 +720,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		23D056DB4E020AD8A7B341BD /* Build configuration list for PBXNativeTarget "C15tBareUITests" */ = {
+		23D056DB4E020AD8A7B341BD /* Build configuration list for PBXNativeTarget "InthBareUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				4392917C7C0564138F9C7C31 /* Release */,
@@ -729,7 +729,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "C15tBare" */ = {
+		83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "InthBare" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				83CBBA201A601CBA00E9B192 /* Debug */,

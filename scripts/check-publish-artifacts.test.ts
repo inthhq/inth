@@ -171,7 +171,7 @@ describe('getBlockedReason', () => {
 	// the test below enforces.
 	it('allows the CommonJS entry that a require condition hands out', () => {
 		expect(
-			getBlockedReason('@c15t/react-native', 'dist/expo-plugin/index.cjs')
+			getBlockedReason('@inth/react-native', 'dist/expo-plugin/index.cjs')
 		).toBeNull();
 		expect(getBlockedReason('@c15t/ui', 'dist/expo-plugin/index.cjs')).toBe(
 			'CommonJS artifact in ESM-only package'
@@ -190,36 +190,36 @@ describe('native leak shapes', () => {
 	// published with whatever the toolchain next to it left behind. Each of these is a
 	// directory some other build writes.
 	it.each([
-		'ios/Tests/C15tReactNativeTests/C15tPayloadTests.swift',
+		'ios/Tests/InthReactNativeTests/InthPayloadTests.swift',
 		'ios/Pods/Manifest.lock',
 		'ios/build/Release-iphoneos/lib.a',
 		'android/.gradle/9.0/checksums/checksums.lock',
 		'android/build/reports/lint-results.xml',
-		'android/c15t-react-native/build/outputs/aar/a.aar',
-		'android/c15t-react-native/src/test/kotlin/XTest.kt',
-		'android/c15t-react-native/src/androidTest/kotlin/XTest.kt',
+		'android/inth-react-native/build/outputs/aar/a.aar',
+		'android/inth-react-native/src/test/kotlin/XTest.kt',
+		'android/inth-react-native/src/androidTest/kotlin/XTest.kt',
 		'src/specs/__tests__/android-spec-surface.test.ts',
 	])('rejects %s wherever it sits in the tarball', (path) => {
-		expect(getBlockedReason('@c15t/react-native', path)).not.toBeNull();
+		expect(getBlockedReason('@inth/react-native', path)).not.toBeNull();
 	});
 
 	// The narrow allowlist names files whose spelling sits next to these shapes on purpose:
 	// `build.gradle.kts` has to survive a rule about build directories, or the package that
 	// holds it cannot be published at all.
 	it.each([
-		'android/c15t-react-native/build.gradle.kts',
-		'android/c15t-react-native/library.gradle',
-		'android/c15t-react-native/consumer-rules.pro',
-		'android/c15t-react-native/src/main/AndroidManifest.xml',
+		'android/inth-react-native/build.gradle.kts',
+		'android/inth-react-native/library.gradle',
+		'android/inth-react-native/consumer-rules.pro',
+		'android/inth-react-native/src/main/AndroidManifest.xml',
 		'android/codegen/generate-spec.mjs',
-		'ios/C15tReactNative/Bridge/C15tPayload.swift',
-		'ios/C15tReactNative/Resources/Privacy.xcprivacy',
-		'C15tReactNative.podspec',
-		'src/specs/NativeC15t.ts',
+		'ios/InthReactNative/Bridge/InthPayload.swift',
+		'ios/InthReactNative/Resources/Privacy.xcprivacy',
+		'InthReactNative.podspec',
+		'src/specs/NativeInth.ts',
 		'dist/index.js',
 		'dist-types/index.d.ts',
 	])('allows %s', (path) => {
-		expect(getBlockedReason('@c15t/react-native', path)).toBeNull();
+		expect(getBlockedReason('@inth/react-native', path)).toBeNull();
 	});
 });
 
@@ -246,35 +246,35 @@ describe('the files allowlist against a build tree', () => {
 				'android/*/build/',
 				'coverage/',
 			].join('\n'),
-			'C15tReactNative.podspec': 'Pod::Spec.new do |s|\nend\n',
+			'InthReactNative.podspec': 'Pod::Spec.new do |s|\nend\n',
 			'LICENSE.md': 'Apache-2.0',
 			NOTICE: 'Copyright Consent Management Inc',
 			'android/.gradle/9.0/checksums.lock': 'binary\n',
-			'android/c15t-react-native/build.gradle.kts': 'plugins {\n}\n',
-			'android/c15t-react-native/build/outputs/aar/a.aar': 'binary\n',
-			'android/c15t-react-native/consumer-rules.pro': '-keep\n',
-			'android/c15t-react-native/library.gradle': 'android {\n}\n',
-			'android/c15t-react-native/src/main/AndroidManifest.xml': '<manifest/>\n',
-			'android/c15t-react-native/src/main/kotlin/X.kt': 'class X\n',
-			'android/c15t-react-native/src/test/kotlin/XTest.kt': 'class XTest\n',
 			'android/codegen/generate-spec.mjs': 'export {};\n',
+			'android/inth-react-native/build.gradle.kts': 'plugins {\n}\n',
+			'android/inth-react-native/build/outputs/aar/a.aar': 'binary\n',
+			'android/inth-react-native/consumer-rules.pro': '-keep\n',
+			'android/inth-react-native/library.gradle': 'android {\n}\n',
+			'android/inth-react-native/src/main/AndroidManifest.xml': '<manifest/>\n',
+			'android/inth-react-native/src/main/kotlin/X.kt': 'class X\n',
+			'android/inth-react-native/src/test/kotlin/XTest.kt': 'class XTest\n',
 			'dist-types/index.d.ts': 'export declare const x: number;\n',
 			'dist/index.js': 'export const x = 1;\n',
-			'ios/C15tReactNative/Bridge/C15tPayload.swift': 'enum C15tPayload {}\n',
-			'ios/C15tReactNative/C15tReactNative.h':
+			'ios/InthReactNative/Bridge/InthPayload.swift': 'enum InthPayload {}\n',
+			'ios/InthReactNative/InthReactNative.h':
 				'#import <Foundation/Foundation.h>\n',
-			'ios/C15tReactNative/Resources/Privacy.xcprivacy': '<plist/>\n',
+			'ios/InthReactNative/Resources/Privacy.xcprivacy': '<plist/>\n',
 			'ios/Pods/Manifest.lock': 'PODS: {}\n',
-			'ios/Tests/C15tReactNativeTests/C15tPayloadTests.swift':
+			'ios/Tests/InthReactNativeTests/InthPayloadTests.swift':
 				'import XCTest\n',
 			'ios/build/Release-iphoneos/lib.a': 'binary\n',
 			'package.json': JSON.stringify({
 				files,
-				name: '@c15t/react-native',
+				name: '@inth/react-native',
 				version: '0.0.0',
 			}),
 			'react-native.config.js': 'export default {};\n',
-			'src/specs/NativeC15t.ts': 'export default null;\n',
+			'src/specs/NativeInth.ts': 'export default null;\n',
 			'src/specs/__tests__/android-spec-surface.test.ts':
 				'import {} from "vitest";\n',
 		});
@@ -286,7 +286,7 @@ describe('the files allowlist against a build tree', () => {
 		return paths
 			.map((path) => ({
 				path,
-				reason: getBlockedReason('@c15t/react-native', path),
+				reason: getBlockedReason('@inth/react-native', path),
 			}))
 			.filter(({ reason }) => reason !== null);
 	};
@@ -324,7 +324,7 @@ describe('the files allowlist against a build tree', () => {
 			'ios',
 			'android',
 			'react-native.config.js',
-			'C15tReactNative.podspec',
+			'InthReactNative.podspec',
 		]);
 		const paths = packed.files.map(({ path }) => path);
 		const offenders = offenderPaths(paths).map(({ path }) => path);
@@ -332,17 +332,17 @@ describe('the files allowlist against a build tree', () => {
 		expect(paths).toContain('ios/Pods/Manifest.lock');
 		expect(paths).toContain('ios/build/Release-iphoneos/lib.a');
 		expect(paths).toContain(
-			'android/c15t-react-native/build/outputs/aar/a.aar'
+			'android/inth-react-native/build/outputs/aar/a.aar'
 		);
 
 		// Everything the wide list leaks is something the gate now refuses.
 		for (const leaked of [
 			'ios/Pods/Manifest.lock',
 			'ios/build/Release-iphoneos/lib.a',
-			'ios/Tests/C15tReactNativeTests/C15tPayloadTests.swift',
+			'ios/Tests/InthReactNativeTests/InthPayloadTests.swift',
 			'android/.gradle/9.0/checksums.lock',
-			'android/c15t-react-native/build/outputs/aar/a.aar',
-			'android/c15t-react-native/src/test/kotlin/XTest.kt',
+			'android/inth-react-native/build/outputs/aar/a.aar',
+			'android/inth-react-native/src/test/kotlin/XTest.kt',
 		]) {
 			expect(offenders, `${leaked} should be an offender`).toContain(leaked);
 		}
@@ -351,7 +351,7 @@ describe('the files allowlist against a build tree', () => {
 		// input every app reads out of `react-native config` is not in the tarball either:
 		// one allowlist that both publishes a pod install and ships a package that cannot
 		// generate its own spec.
-		expect(paths).not.toContain('src/specs/NativeC15t.ts');
+		expect(paths).not.toContain('src/specs/NativeInth.ts');
 		expect(paths).not.toContain(
 			'src/specs/__tests__/android-spec-surface.test.ts'
 		);
@@ -499,7 +499,7 @@ describe('vendored native sources', () => {
 		const files: Record<string, string> = {};
 
 		for (const file of vendoredCorePlan()) {
-			files[`vendor/C15tCore/${file.relativePath}`] = readFileSync(
+			files[`vendor/InthCore/${file.relativePath}`] = readFileSync(
 				file.sourcePath,
 				'utf8'
 			);
@@ -517,14 +517,14 @@ describe('vendored native sources', () => {
 		expect(scanPackedVendoredSources(packageDir, new Set())).toStrictEqual([]);
 	});
 
-	it.each(['C15tCore', 'C15tApple', 'C15tConsentUI'])(
+	it.each(['InthCore', 'InthApple', 'InthConsentUI'])(
 		'rejects a missing %s directory before prepack can recreate it',
 		(module) => {
 			const packageDir = vendoredPackage(`missing-${module}`);
 			makeTree(packageDir, {
-				'package.json': JSON.stringify({ name: '@c15t/react-native' }),
+				'package.json': JSON.stringify({ name: '@inth/react-native' }),
 			});
-			for (const sourceModule of ['C15tApple', 'C15tConsentUI']) {
+			for (const sourceModule of ['InthApple', 'InthConsentUI']) {
 				cpSync(
 					join(ROOT, 'packages/swift/Sources', sourceModule),
 					join(packageDir, 'vendor', sourceModule),
@@ -539,8 +539,8 @@ describe('vendored native sources', () => {
 				issues.every(({ path }) => path.startsWith(`vendor/${module}/`))
 			).toBe(true);
 			const entries: Record<string, string> = {
-				C15tApple: 'C15tApple.swift',
-				C15tCore: 'ConsentCore.swift',
+				InthApple: 'InthApple.swift',
+				InthCore: 'ConsentCore.swift',
 			};
 			const entry = entries[module] ?? 'consent-presenter.swift';
 			expect(issues.map(({ path }) => path)).toContain(
@@ -559,14 +559,14 @@ describe('vendored native sources', () => {
 		const packageDir = vendoredPackage('edited');
 
 		appendFileSync(
-			join(packageDir, 'vendor/C15tCore/ConsentCore.swift'),
+			join(packageDir, 'vendor/InthCore/ConsentCore.swift'),
 			'\n// hand edit\n'
 		);
 
 		const issues = scanVendoredNativeSources(packageDir);
 
 		expect(issues).toHaveLength(1);
-		expect(issues[0]?.path).toBe('vendor/C15tCore/ConsentCore.swift');
+		expect(issues[0]?.path).toBe('vendor/InthCore/ConsentCore.swift');
 		expect(issues[0]?.reason).toMatch(/stale vendored native source/u);
 		expect(issues[0]?.reason).toMatch(/sync-vendored-core\.ts/u);
 	});
@@ -575,31 +575,31 @@ describe('vendored native sources', () => {
 		const packageDir = vendoredPackage('orphan');
 
 		makeTree(packageDir, {
-			'vendor/C15tCore/RenamedAway.swift': '// upstream',
+			'vendor/InthCore/RenamedAway.swift': '// upstream',
 		});
 
 		expect(
 			scanVendoredNativeSources(packageDir).map((issue) => issue.path)
-		).toStrictEqual(['vendor/C15tCore/RenamedAway.swift']);
+		).toStrictEqual(['vendor/InthCore/RenamedAway.swift']);
 	});
 
 	it('names a vendored file the tarball left out', () => {
 		const packageDir = vendoredPackage('not-packed');
 		const packed = new Set(
-			vendoredCorePlan().map((file) => `vendor/C15tCore/${file.relativePath}`)
+			vendoredCorePlan().map((file) => `vendor/InthCore/${file.relativePath}`)
 		);
 
-		packed.delete('vendor/C15tCore/ConsentCore.swift');
+		packed.delete('vendor/InthCore/ConsentCore.swift');
 
 		expect(
 			scanPackedVendoredSources(packageDir, packed).map((issue) => issue.path)
-		).toStrictEqual(['vendor/C15tCore/ConsentCore.swift']);
+		).toStrictEqual(['vendor/InthCore/ConsentCore.swift']);
 	});
 
 	it('accepts a tarball that carries every vendored file', () => {
 		const packageDir = vendoredPackage('fully-packed');
 		const packed = new Set(
-			vendoredCorePlan().map((file) => `vendor/C15tCore/${file.relativePath}`)
+			vendoredCorePlan().map((file) => `vendor/InthCore/${file.relativePath}`)
 		);
 
 		expect(scanPackedVendoredSources(packageDir, packed)).toStrictEqual([]);
@@ -612,7 +612,7 @@ describe('vendored native sources', () => {
 		'publishes the copy, because a pod cannot depend on a path',
 		{ timeout: 120_000 },
 		() => {
-			// The reason the copy exists. An npm-installed app has no `C15tCore` pod to resolve, so
+			// The reason the copy exists. An npm-installed app has no `InthCore` pod to resolve, so
 			// the kernel reaches it only inside this package, and the podspec must compile from there
 			// rather than name a dependency nobody publishes.
 			const reactNativeDir = join(ROOT, 'packages', 'react-native');
@@ -622,17 +622,17 @@ describe('vendored native sources', () => {
 			const packed = runPack(reactNativeDir, { ignoreScripts: true });
 			const packedPaths = packed.files.map((file) => file.path);
 			const packedVendored = packedPaths.filter((path) =>
-				path.startsWith('vendor/C15tCore/')
+				path.startsWith('vendor/InthCore/')
 			);
 
 			expect(packedVendored.sort()).toEqual(
 				vendoredCorePlan()
-					.map((file) => `vendor/C15tCore/${file.relativePath}`)
+					.map((file) => `vendor/InthCore/${file.relativePath}`)
 					.sort()
 			);
 
 			const podspecSource = readFileSync(
-				join(reactNativeDir, 'C15tReactNative.podspec'),
+				join(reactNativeDir, 'InthReactNative.podspec'),
 				'utf8'
 			);
 
@@ -643,9 +643,9 @@ describe('vendored native sources', () => {
 				.filter((line) => !line.trimStart().startsWith('#'))
 				.join('\n');
 
-			expect(spec).not.toMatch(/s\.dependency\s+"C15tCore"/u);
+			expect(spec).not.toMatch(/s\.dependency\s+"InthCore"/u);
 			expect(spec).not.toMatch(/C15T_CORE_POD_VERSION/u);
-			expect(spec).toMatch(/vendor\/C15tCore\/\*\*\/\*\.swift/u);
+			expect(spec).toMatch(/vendor\/InthCore\/\*\*\/\*\.swift/u);
 			expect(
 				scanPackedVendoredSources(reactNativeDir, new Set(packedPaths))
 			).toStrictEqual([]);
@@ -661,7 +661,7 @@ describe('packages that must stay clear of the consent kernel', () => {
 	});
 
 	/**
-	 * A packed `@c15t/react-native`, with the build output under discussion.
+	 * A packed `@inth/react-native`, with the build output under discussion.
 	 *
 	 * The name matters: the guard only applies to the packages `kernelFreePackages`
 	 * names, so every fixture here has to be the real name to be a fixture at all.
@@ -681,7 +681,7 @@ describe('packages that must stay clear of the consent kernel', () => {
 			...files,
 			'package.json': JSON.stringify({
 				dependencies,
-				name: '@c15t/react-native',
+				name: '@inth/react-native',
 				version: '0.0.0',
 				...peers,
 			}),
@@ -701,7 +701,7 @@ describe('packages that must stay clear of the consent kernel', () => {
 
 		return scanKernelFreePackage(
 			packageDir,
-			'@c15t/react-native',
+			'@inth/react-native',
 			manifest,
 			new Set(packedFilePaths)
 		);

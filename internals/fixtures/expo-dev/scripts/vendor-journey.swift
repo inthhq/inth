@@ -3,7 +3,7 @@ import XCTest
 /// The real-vendor consent journey for the Expo E2E build, on iOS.
 ///
 /// The steps and the traffic rules match the vendor steps in the bare fixture's
-/// `ConsentJourney` (react-native-bare/ios/C15tBareUITests/consent-journey.swift):
+/// `ConsentJourney` (react-native-bare/ios/InthBareUITests/consent-journey.swift):
 /// a fresh install and a refusal send no user data, a measurement grant delivers
 /// the probe, a withdrawal stops every vendor once in-flight uploads settle, and a
 /// relaunch keeps the refusal. Firebase is checked from its log after the run.
@@ -12,7 +12,7 @@ import XCTest
 private let vendorQuietSeconds: TimeInterval = 6
 
 final class VendorJourney: XCTestCase {
-  private let app = XCUIApplication(bundleIdentifier: "com.c15t.expodev")
+  private let app = XCUIApplication(bundleIdentifier: "com.inth.expodev")
   /// Vendors whose traffic the capture server records. Firebase is checked from its log.
   private let trafficVendors = ["posthog", "mixpanel", "amplitude", "sentry"]
 
@@ -49,7 +49,7 @@ final class VendorJourney: XCTestCase {
 
   // MARK: Real vendor SDKs
 
-  /// Capture requests after `since`. Sentry counts only replay items, the part c15t controls.
+  /// Capture requests after `since`. Sentry counts only replay items, the part Inth controls.
   private func governedCapture(since: Int) throws -> (last: Int, rows: [[String: Any]]) {
     let captured = try fetchJSON("/captured?kind=capture&since=\(since)")
     // A response without the list is a broken capture server, never "no traffic".
@@ -169,8 +169,8 @@ final class VendorJourney: XCTestCase {
   /// Scroll the native preferences until `control` sits clear of the pinned buttons.
   private func reveal(_ control: XCUIElement) {
     for _ in 0..<18 {
-      let save = app.buttons["c15t.prefs.save"]
-      let reject = app.buttons["c15t.prefs.reject-all"]
+      let save = app.buttons["inth.prefs.save"]
+      let reject = app.buttons["inth.prefs.reject-all"]
       let bottom = reject.exists ? reject.frame.minY - 12 : save.exists ? save.frame.minY - 12 : app.frame.maxY - 40
       let top: CGFloat = 150
       if control.exists && control.isHittable && control.frame.midY > top && control.frame.midY < bottom { return }
@@ -207,10 +207,10 @@ final class VendorJourney: XCTestCase {
     launch()
     // Vendor step 1: a fresh install sends nothing, including the launch probe.
     try assertVendorsSilent("vendor-1-fresh-install", since: 0, probe: try awaitVendorProbe(after: 0, reason: "startup", measurement: false))
-    XCTAssertTrue(element("c15t.first-layer.reject-all").waitForExistence(timeout: 60), "No native prompt\n\(app.debugDescription)")
+    XCTAssertTrue(element("inth.first-layer.reject-all").waitForExistence(timeout: 60), "No native prompt\n\(app.debugDescription)")
     capture("01-fresh-prompt")
 
-    tap("c15t.first-layer.reject-all")
+    tap("inth.first-layer.reject-all")
     awaitLabel("fixture.prompt", "prompt:none")
     capture("02-rejected")
     // Vendor step 2: a refusal keeps every vendor silent.
@@ -218,10 +218,10 @@ final class VendorJourney: XCTestCase {
     try assertVendorsSilent("vendor-2-reject-all", since: rejectSeq, probe: try sendVendorProbe(measurement: false))
 
     tap("fixture.open-preferences")
-    tap("c15t.prefs.category.measurement.switch")
-    XCTAssertEqual(element("c15t.prefs.category.measurement.switch").value as? String, "1")
+    tap("inth.prefs.category.measurement.switch")
+    XCTAssertEqual(element("inth.prefs.category.measurement.switch").value as? String, "1")
     capture("03-measurement-switched-on")
-    tap("c15t.prefs.save")
+    tap("inth.prefs.save")
     awaitLabel("fixture.measurement", "measurement:granted")
     capture("04-measurement-granted")
     // Vendor step 3: measurement is the category every helper defaults to.
@@ -229,9 +229,9 @@ final class VendorJourney: XCTestCase {
     try assertVendorsCapture("vendor-3-grant-measurement", since: grantSeq, probe: try sendVendorProbe(measurement: true))
 
     tap("fixture.open-preferences")
-    XCTAssertTrue(element("c15t.prefs.reject-all").waitForExistence(timeout: 30))
+    XCTAssertTrue(element("inth.prefs.reject-all").waitForExistence(timeout: 30))
     capture("05-preferences-before-withdrawal")
-    tap("c15t.prefs.reject-all")
+    tap("inth.prefs.reject-all")
     awaitLabel("fixture.measurement", "measurement:denied")
     capture("06-withdrawn")
     // Vendor step 4: after in-flight uploads settle, a withdrawal stops every vendor.

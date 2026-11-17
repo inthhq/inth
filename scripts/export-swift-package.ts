@@ -15,7 +15,7 @@ import { valid } from 'semver';
 
 const nativeRoot = 'packages/swift';
 const manifestPath = `${nativeRoot}/Package.swift`;
-const versionPath = `${nativeRoot}/Sources/C15tCore/Transports.swift`;
+const versionPath = `${nativeRoot}/Sources/InthCore/Transports.swift`;
 const metadataPath = 'swift-package-source.json';
 const sourceRoots = [
 	`${nativeRoot}/Sources/`,
@@ -333,7 +333,7 @@ export const exportSwiftPackage = (options: {
 	const version =
 		versions.length === 1 ? versions[0]?.groups?.version : undefined;
 	if (!version || valid(version) !== version) {
-		throw new Error('Swift source must declare one valid C15t.version.');
+		throw new Error('Swift source must declare one valid Inth.version.');
 	}
 	if (options.manifest === 'root') {
 		required('Package.swift');

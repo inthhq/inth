@@ -14,8 +14,8 @@
 import type {
 	TrackingRequest,
 	TrackingRequestPayload,
-} from '@c15t/react-native';
-import { useIsTrackingAllowed } from '@c15t/react-native';
+} from '@inth/react-native';
+import { useIsTrackingAllowed } from '@inth/react-native';
 import { useState } from 'react';
 
 import { Button, Card, Flag, Hint, Row, Text } from './ui';
@@ -70,9 +70,9 @@ export const TrackingCard = ({
 			<Hint>
 				`authorization` is the platform arm, never a consent decision.
 				`marketing runs` is what `useIsTrackingAllowed` says, and that wants the
-				c15t answer too, so an Apple yes on its own changes nothing here.
+				Inth answer too, so an Apple yes on its own changes nothing here.
 				Against the fake core, and on Android, the request rejects with
-				`C15T_TRACKING_UNSUPPORTED`: there is no platform sheet to show.
+				`INTH_TRACKING_UNSUPPORTED`: there is no platform sheet to show.
 			</Hint>
 		</Card>
 	);

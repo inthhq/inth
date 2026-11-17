@@ -12,7 +12,7 @@ import {
 	getConsentClient,
 	useConsentStatus,
 	useConsent,
-} from '@c15t/react-native';
+} from '@inth/react-native';
 import { createElement } from 'react';
 import type { ReactNode } from 'react';
 import { act, create } from 'react-test-renderer';
@@ -33,7 +33,7 @@ import {
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
 /** Name the native cores register the TurboModule under. */
-const MODULE_NAME = 'C15t';
+const MODULE_NAME = 'Inth';
 
 /** Renders recorded per probe since the last reset. */
 const renderCounts = new Map<string, number>();

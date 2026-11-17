@@ -1,10 +1,10 @@
 // #region docs:android-brand-theme title="consent-theme.kt"
-package com.c15t.demo
+package com.inth.demo
 
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.c15t.consentui.ConsentTheme
-import com.c15t.consentui.ConsentThemeColor
+import com.inth.consentui.ConsentTheme
+import com.inth.consentui.ConsentThemeColor
 
 fun pantryConsentTheme(brandMark: Int): ConsentTheme = ConsentTheme.c15t.copy(
     colors = ConsentTheme.Colors.c15t.copy(

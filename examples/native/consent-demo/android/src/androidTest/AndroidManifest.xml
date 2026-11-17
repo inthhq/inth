@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application>
-        <meta-data android:name="com.c15t.consent.PRIMARY" android:value="#009688" />
-        <meta-data android:name="com.c15t.consent.TEXT_ON_PRIMARY" android:resource="@android:color/white" />
-        <meta-data android:name="com.c15t.consent.DECISION" android:value="#009688,#4FD1C0" />
+        <meta-data android:name="com.inth.consent.PRIMARY" android:value="#009688" />
+        <meta-data android:name="com.inth.consent.TEXT_ON_PRIMARY" android:resource="@android:color/white" />
+        <meta-data android:name="com.inth.consent.DECISION" android:value="#009688,#4FD1C0" />
     </application>
 </manifest>

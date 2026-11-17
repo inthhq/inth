@@ -1,7 +1,7 @@
 /**
  * App E2E only: the host the real-vendor consent journey drives.
  *
- * The vendor SDKs, their c15t connections and the probe are the bare fixture's
+ * The vendor SDKs, their Inth connections and the probe are the bare fixture's
  * (`react-native-bare/src/vendors`), imported unchanged so both apps prove the
  * same code. Consent controls belong to the stock native presenter. This screen
  * only presents it, sends vendor probes and shows the prompt state and the
@@ -13,12 +13,12 @@ import {
 	presentPreferences,
 	useConsentStatus,
 	useConsent,
-} from '@c15t/react-native';
+} from '@inth/react-native';
 import { useEffect, useState } from 'react';
 import { Button, Text, View } from 'react-native';
 
 import { useE2eVendorProbe } from '../../../react-native-bare/src/vendors/e2e-vendor-probe';
-import { config } from '../c15t/config';
+import { config } from '../inth/config';
 
 const privacyPolicyURL = 'https://c15t.com/privacy';
 
@@ -64,7 +64,7 @@ export const VendorJourneyApp = () => {
 
 	return (
 		<View style={{ flex: 1, gap: 24, padding: 32, paddingTop: 80 }}>
-			<Text accessibilityRole="header">c15t vendor journey</Text>
+			<Text accessibilityRole="header">Inth vendor journey</Text>
 			<Button
 				testID="fixture.open-preferences"
 				title="Privacy settings"

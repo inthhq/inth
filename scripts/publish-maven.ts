@@ -25,9 +25,9 @@ export const centralDocumentation = [
 
 const centralApi = 'https://central.sonatype.com/api/v1/publisher/';
 const artifacts = [
-	['c15t-core', 'jar'],
-	['c15t-android', 'aar'],
-	['c15t-consent-ui', 'aar'],
+	['inth-core', 'jar'],
+	['inth-android', 'aar'],
+	['inth-consent-ui', 'aar'],
 ] as const;
 const checksumAlgorithms = ['md5', 'sha1', 'sha256', 'sha512'] as const;
 const deploymentStates = [
@@ -86,7 +86,7 @@ const assertVersion = function assertVersion(version: string) {
 const primaryPaths = function primaryPaths(version: string) {
 	assertVersion(version);
 	return artifacts.flatMap(([artifact, extension]) => {
-		const prefix = `com/c15t/${artifact}/${version}/${artifact}-${version}`;
+		const prefix = `com/inth/${artifact}/${version}/${artifact}-${version}`;
 		return [
 			`${prefix}.${extension}`,
 			`${prefix}-sources.jar`,
@@ -144,7 +144,7 @@ def text(path):
 def require(condition, message):
     if not condition:
         raise ValueError(message)
-require(text('m:groupId') == 'com.c15t', 'groupId')
+require(text('m:groupId') == 'com.inth', 'groupId')
 require(text('m:artifactId') == sys.argv[2], 'artifactId')
 require(text('m:version') == sys.argv[3], 'version')
 require((text('m:packaging') or 'jar') == sys.argv[4], 'packaging')
@@ -153,7 +153,7 @@ for field in ['m:name', 'm:description', 'm:url', 'm:licenses/m:license/m:name',
 require(text('m:scm/m:url') == 'https://github.com/c15t/c15t', 'scm url')
 require(text('m:scm/m:connection') == 'scm:git:https://github.com/c15t/c15t.git', 'scm connection')
 for dependency in p.findall('m:dependencies/m:dependency', ns):
-    if dependency.findtext('m:groupId', namespaces=ns) == 'com.c15t':
+    if dependency.findtext('m:groupId', namespaces=ns) == 'com.inth':
         require(dependency.findtext('m:version', namespaces=ns) == sys.argv[3], 'dependency version')
 `;
 	try {
@@ -186,7 +186,7 @@ const verifyModule = function verifyModule(
 	if (
 		!isRecord(metadata) ||
 		!isRecord(metadata.component) ||
-		metadata.component.group !== 'com.c15t' ||
+		metadata.component.group !== 'com.inth' ||
 		metadata.component.module !== artifact ||
 		metadata.component.version !== version ||
 		!Array.isArray(metadata.variants)
@@ -202,7 +202,7 @@ const verifyModule = function verifyModule(
 			: []) {
 			if (
 				isRecord(dependency) &&
-				dependency.group === 'com.c15t' &&
+				dependency.group === 'com.inth' &&
 				(!isRecord(dependency.version) ||
 					dependency.version.requires !== version)
 			) {
@@ -243,7 +243,7 @@ export const verifyMavenRepository = function verifyMavenRepository({
 	for (const [artifact, extension] of artifacts) {
 		const prefix = join(
 			repository,
-			`com/c15t/${artifact}/${version}/${artifact}-${version}`
+			`com/inth/${artifact}/${version}/${artifact}-${version}`
 		);
 		verifyPom(`${prefix}.pom`, artifact, extension, version);
 		verifyModule(`${prefix}.module`, artifact, version);
@@ -264,7 +264,7 @@ export const stageMavenRelease = function stageMavenRelease({
 	const declared = readFileSync(
 		join(project, 'gradle.properties'),
 		'utf8'
-	).match(/^c15t\.native\.version=(?<version>.+)$/mu)?.groups?.version;
+	).match(/^inth\.native\.version=(?<version>.+)$/mu)?.groups?.version;
 	if (declared !== version) {
 		throw new Error(
 			'The requested Maven version differs from the native source.'
@@ -511,7 +511,7 @@ const readMavenDeploymentStatus = async function readMavenDeploymentStatus(
 				([artifact]) =>
 					Array.isArray(value.purls) &&
 					value.purls.includes(
-						`pkg:maven/com.c15t/${artifact}@${record.version}`
+						`pkg:maven/com.inth/${artifact}@${record.version}`
 					)
 			))
 	) {
@@ -617,13 +617,13 @@ export const uploadMavenBundle = async function uploadMavenBundle(
 		new Blob([readFileSync(options.bundle)], {
 			type: 'application/octet-stream',
 		}),
-		`c15t-android-${options.version}.zip`
+		`inth-android-${options.version}.zip`
 	);
 	let response: Response;
 	try {
 		response = await centralRequest(
 			options,
-			`upload?publishingType=USER_MANAGED&name=${encodeURIComponent(`c15t-android-${options.version}`)}`,
+			`upload?publishingType=USER_MANAGED&name=${encodeURIComponent(`inth-android-${options.version}`)}`,
 			body
 		);
 	} catch (error) {

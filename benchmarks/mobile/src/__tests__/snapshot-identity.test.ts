@@ -3,7 +3,7 @@
  * client the boundary builds.
  */
 
-import { createConsentClient } from '@c15t/react-native';
+import { createConsentClient } from '@inth/react-native';
 import { describe, expect, it } from 'vitest';
 
 import { ensureReactGlobalForDist } from '../support/ensure-react-global';
@@ -19,7 +19,7 @@ ensureReactGlobalForDist();
 resetNativeStub();
 
 const native = installBenchNativeModule(
-	'C15t',
+	'Inth',
 	setNativeModule,
 	buildSnapshot()
 );

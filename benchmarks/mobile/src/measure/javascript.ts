@@ -1,5 +1,5 @@
 /**
- * JavaScript-side measurements for `@c15t/react-native`.
+ * JavaScript-side measurements for `@inth/react-native`.
  *
  * The consent kernel is native, so the numbers the contract budgets belong to
  * Swift and Kotlin. What lives here is the boundary the app actually waits on:
@@ -9,7 +9,7 @@
  */
 
 import { median } from '@c15t/benchmarking/utils';
-import { createConsentClient } from '@c15t/react-native';
+import { createConsentClient } from '@inth/react-native';
 
 import { ensureReactGlobalForDist } from '../support/ensure-react-global';
 import { installBenchNativeModule } from '../support/fake-native';
@@ -20,7 +20,7 @@ import {
 } from '../support/fixtures';
 import { resetNativeStub, setNativeModule } from '../support/react-native-stub';
 
-const MODULE_NAME = 'C15t';
+const MODULE_NAME = 'Inth';
 
 /** The event surface a client needs, without a real emitter. */
 const silentEvents = {

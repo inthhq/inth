@@ -1,15 +1,15 @@
-package com.c15t.demo
+package com.inth.demo
 
-import com.c15t.core.iab.AdTechProvider
-import com.c15t.core.iab.IabChoices
-import com.c15t.core.iab.IabCommittedConsent
-import com.c15t.core.iab.IabListAvailability
-import com.c15t.core.model.ConsentModel
-import com.c15t.core.model.ConsentSnapshot
-import com.c15t.core.model.KernelIabState
-import com.c15t.core.store.TcStorageBusKeys
-import com.c15t.core.tc.GlobalVendorList
-import com.c15t.core.tc.GvlVendorEntry
+import com.inth.core.iab.AdTechProvider
+import com.inth.core.iab.IabChoices
+import com.inth.core.iab.IabCommittedConsent
+import com.inth.core.iab.IabListAvailability
+import com.inth.core.model.ConsentModel
+import com.inth.core.model.ConsentSnapshot
+import com.inth.core.model.KernelIabState
+import com.inth.core.store.TcStorageBusKeys
+import com.inth.core.tc.GlobalVendorList
+import com.inth.core.tc.GvlVendorEntry
 import kotlinx.serialization.json.*
 import org.junit.Assert.*
 import org.junit.Test

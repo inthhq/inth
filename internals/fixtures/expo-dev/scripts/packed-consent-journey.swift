@@ -1,7 +1,7 @@
 import XCTest
 
 final class PackedConsentJourney: XCTestCase {
-  private let app = XCUIApplication(bundleIdentifier: "com.c15t.expodev")
+  private let app = XCUIApplication(bundleIdentifier: "com.inth.expodev")
   override func setUpWithError() throws { continueAfterFailure = false }
   private func capture(_ name: String) {
     let image = XCTAttachment(screenshot: app.screenshot()); image.name = name; image.lifetime = .keepAlways; add(image)
@@ -28,7 +28,7 @@ final class PackedConsentJourney: XCTestCase {
   }
   func testColdOfflinePackedRelease() throws {
     launch()
-    let reject = app.buttons["c15t.first-layer.reject-all"]
+    let reject = app.buttons["inth.first-layer.reject-all"]
     XCTAssertTrue(reject.waitForExistence(timeout: 45))
     capture("01-cold-offline-native-prompt")
     reject.tap()
@@ -47,7 +47,7 @@ final class PackedConsentJourney: XCTestCase {
     XCTAssertEqual(try JSONSerialization.data(withJSONObject: rejected, options: .sortedKeys), try JSONSerialization.data(withJSONObject: restored, options: .sortedKeys))
     capture("03-offline-process-restart")
     app.buttons["Privacy settings"].tap()
-    let measurement = app.switches["c15t.prefs.category.measurement.switch"]
+    let measurement = app.switches["inth.prefs.category.measurement.switch"]
     XCTAssertTrue(measurement.waitForExistence(timeout: 15))
     XCTAssertEqual(measurement.value as? String, "0")
     app.swipeUp()

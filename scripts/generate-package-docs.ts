@@ -91,10 +91,10 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			'integrations/branch.mdx',
 			'integrations/singular.mdx',
 		],
-		name: '@c15t/react-native',
+		name: '@inth/react-native',
 		outDir: 'packages/react-native',
 		skill: {
-			install: 'the maintainer-provided private @c15t/react-native tarball',
+			install: 'the maintainer-provided private @inth/react-native tarball',
 			topic:
 				'the project uses React Native, Expo development builds, Swift or Kotlin native consent',
 		},

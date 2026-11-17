@@ -1,14 +1,14 @@
-package com.c15t.demo
+package com.inth.demo
 
-import com.c15t.core.NativeConfig
-import com.c15t.core.iab.IabCommittedConsent
-import com.c15t.core.iab.IabConfiguration
-import com.c15t.core.iab.AdTechProvider
-import com.c15t.core.iab.IabListAvailability
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentModel
-import com.c15t.core.model.ConsentSnapshot
-import com.c15t.core.store.TcStorageBusKeys
+import com.inth.core.NativeConfig
+import com.inth.core.iab.IabCommittedConsent
+import com.inth.core.iab.IabConfiguration
+import com.inth.core.iab.AdTechProvider
+import com.inth.core.iab.IabListAvailability
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentModel
+import com.inth.core.model.ConsentSnapshot
+import com.inth.core.store.TcStorageBusKeys
 import java.net.URI
 import kotlinx.serialization.json.*
 
@@ -167,7 +167,7 @@ internal fun captureTcfReview(
     val core = evidence.getValue("core").jsonObject
     val disclosures = evidence.getValue("disclosures").jsonObject
     val text = buildString {
-        appendLine("c15t Android TCF review")
+        appendLine("Inth Android TCF review")
         appendLine("Build: ${build.appId} ${build.appVersion} (${build.appBuild}) ${build.buildType}")
         appendLine("SDK: ${build.sdkVersion}")
         appendLine("Captured at epoch ms: $capturedAtMs")

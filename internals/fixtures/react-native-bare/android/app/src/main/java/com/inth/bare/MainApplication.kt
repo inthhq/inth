@@ -1,4 +1,4 @@
-package com.c15t.bare
+package com.inth.bare
 
 import android.app.Application
 import com.facebook.react.PackageList
@@ -28,7 +28,7 @@ class MainApplication : Application(), ReactApplication {
         org.json.JSONObject(connection.inputStream.bufferedReader().use { it.readText() })
       } finally { connection.disconnect() }
     }
-    Thread(result, "c15t-fixture-control").start()
+    Thread(result, "inth-fixture-control").start()
     return result.get(5, java.util.concurrent.TimeUnit.SECONDS)
   }
 
@@ -51,38 +51,38 @@ class MainApplication : Application(), ReactApplication {
   override fun onCreate() {
     super.onCreate()
     val metadata = packageManager.getApplicationInfo(packageName, android.content.pm.PackageManager.GET_META_DATA).metaData
-    if (metadata?.getBoolean("com.c15t.APP_E2E", false) == true) {
+    if (metadata?.getBoolean("com.inth.APP_E2E", false) == true) {
       val control = startupControl()
       val clock = java.util.concurrent.atomic.AtomicLong(control.optLong("now", System.currentTimeMillis()))
       val declared = control.optJSONArray("categories")?.let { values ->
-        (0 until values.length()).map { name -> com.c15t.core.model.ConsentCategory.entries.first { it.wireName == values.getString(name) } }
-      } ?: com.c15t.core.model.ConsentCategory.entries.toList()
+        (0 until values.length()).map { name -> com.inth.core.model.ConsentCategory.entries.first { it.wireName == values.getString(name) } }
+      } ?: com.inth.core.model.ConsentCategory.entries.toList()
       // A Release E2E build that talks to a loopback backend, so it installs through
-      // c15t's internal door. An app calls install(context, config) with its Inth URL.
-      val config = com.c15t.core.NativeConfig(
+      // Inth's internal door. An app calls install(context, config) with its Inth URL.
+      val config = com.inth.core.NativeConfig(
         backendUrl = "http://localhost:3000/api/self-host",
-        bundledPolicy = assets.open("c15t-policy.json").bufferedReader().use { it.readText() },
+        bundledPolicy = assets.open("inth-policy.json").bufferedReader().use { it.readText() },
         consentCategories = declared,
-        iab = com.c15t.core.iab.IabConfiguration(cmpId = 53, cmpVersion = 7, publisherCountryCode = "GB")
+        iab = com.inth.core.iab.IabConfiguration(cmpId = 53, cmpVersion = 7, publisherCountryCode = "GB")
       )
-      com.c15t.android.C15tAndroid.install(this, config,
-        transport = com.c15t.core.transport.HostedTransport(com.c15t.android.C15tHttpClient(), config),
-        clock = com.c15t.core.spi.Clock { if (control.has("now")) clock.get() else System.currentTimeMillis() })
-      java.util.Timer("c15t-fixture-observer", true).scheduleAtFixedRate(object : java.util.TimerTask() {
+      com.inth.android.InthAndroid.install(this, config,
+        transport = com.inth.core.transport.HostedTransport(com.inth.android.InthHttpClient(), config),
+        clock = com.inth.core.spi.Clock { if (control.has("now")) clock.get() else System.currentTimeMillis() })
+      java.util.Timer("inth-fixture-observer", true).scheduleAtFixedRate(object : java.util.TimerTask() {
         override fun run() {
           try {
             val latest = fixtureControl()
             if (latest.has("now")) clock.set(latest.getLong("now"))
-            val snapshot = com.c15t.core.C15t.snapshot()
+            val snapshot = com.inth.core.Inth.snapshot()
             val gates = org.json.JSONObject()
-            listOf(com.c15t.core.model.ConsentCategory.FUNCTIONALITY, com.c15t.core.model.ConsentCategory.EXPERIENCE, com.c15t.core.model.ConsentCategory.MEASUREMENT, com.c15t.core.model.ConsentCategory.MARKETING).forEach {
-              gates.put(it.wireName, com.c15t.core.C15t.isAllowed(it))
+            listOf(com.inth.core.model.ConsentCategory.FUNCTIONALITY, com.inth.core.model.ConsentCategory.EXPERIENCE, com.inth.core.model.ConsentCategory.MEASUREMENT, com.inth.core.model.ConsentCategory.MARKETING).forEach {
+              gates.put(it.wireName, com.inth.core.Inth.isAllowed(it))
             }
             val body = org.json.JSONObject().put("source", "native-core").put("gates", gates)
               .put("activityGeneration", MainActivity.fixtureGeneration).put("process", android.os.Process.myPid()).put("clock", clock.get()).put("control", latest)
-              .put("snapshot", org.json.JSONObject(com.c15t.reactnative.C15tPayload.snapshot(snapshot)))
-              .put("iabConsent", com.c15t.core.C15t.current?.iabConsent?.let {
-                org.json.JSONObject(com.c15t.core.store.C15tJson.storage.encodeToString(com.c15t.core.iab.IabCommittedConsent.serializer(), it))
+              .put("snapshot", org.json.JSONObject(com.inth.reactnative.InthPayload.snapshot(snapshot)))
+              .put("iabConsent", com.inth.core.Inth.current?.iabConsent?.let {
+                org.json.JSONObject(com.inth.core.store.InthJson.storage.encodeToString(com.inth.core.iab.IabCommittedConsent.serializer(), it))
               } ?: org.json.JSONObject.NULL)
             val connection = java.net.URL("http://localhost:3000/e2e/native").openConnection() as java.net.HttpURLConnection
             try {

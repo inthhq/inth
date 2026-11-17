@@ -1,4 +1,4 @@
-# c15t React Native fixture (bare)
+# Inth React Native fixture (bare)
 
 See the [mobile demo index](../../../packages/sdk/docs/frameworks/react-native/examples.mdx) for
 current native modes, setup commands and the limits of IAB and hosted coverage.
@@ -22,7 +22,7 @@ verify a new SDK revision.
 
 - `ConsentProvider` and the protocol handshake against the Swift/Kotlin core in the
   binary, with the mismatch error surfaced on screen instead of a red box.
-- The headless surface: `useSnapshot`, `useSaveConsents`, `useConsentActions`, `useC15tBootstrap`,
+- The headless surface: `useSnapshot`, `useSaveConsents`, `useConsentActions`, `useInthBootstrap`,
   `useConsent`, `ConsentGate`, `ConsentReady`, `ConsentPrompt`.
 - The built-in `ConsentBanner`, `ConsentDialog`, and `ConsentPreferences`.
 - `useTrackingRequest`, the Apple tracking journey on the Privacy screen: the sheet, the
@@ -43,7 +43,7 @@ verify a new SDK revision.
 - `safeAreaInsets` on `ConsentProvider`, measured from React Native core in
   `src/safe-area.ts`, so the surfaces and this app's own header lay out against the same
   bands and nothing lands under a clock or a home indicator.
-- `c15t-demo://` links, which is how a consent journey is run on a machine that cannot
+- `inth-demo://` links, which is how a consent journey is run on a machine that cannot
   tap a screen. See [Drive it from a shell](#drive-it-from-a-shell).
 
 Only the public package entry point is imported. There are no imports from
@@ -72,28 +72,28 @@ No hosted save has been verified against the public demo.
 Use your Inth project URL for your app. Update the JS environment value and
 regenerate the resource when changing endpoints. Point the native core at it by editing the two files the core actually reads:
 
-- `ios/C15tBare/Info.plist` → `com.c15t.backend.url`
-- `android/app/src/main/AndroidManifest.xml` → `com.c15t.BACKEND_URL`
+- `ios/InthBare/Info.plist` → `com.inth.backend.url`
+- `android/app/src/main/AndroidManifest.xml` → `com.inth.BACKEND_URL`
 
 There is no mode key. The mobile SDKs work only with Inth hosted projects, and both
 platforms refuse any other host at launch. For a debug build against a staging or
-loopback backend, also set `com.c15t.dryRun` (iOS) and `com.c15t.DRY_RUN` (Android);
+loopback backend, also set `com.inth.dryRun` (iOS) and `com.inth.DRY_RUN` (Android);
 that drops consent records, and a release build refuses it. An
 absent key means "not configured", so leave a value out rather than setting it to an
 empty string. `internals/fixtures/expo-dev` gets the same keys written by the config plugin.
 
-There is no key to add. A c15t project is identified by its backend URL, and neither
+There is no key to add. An Inth project is identified by its backend URL, and neither
 `/init` nor `/subjects` carries a credential, so nothing here takes one.
 
 To make the ads card ask Apple for anything, add `NSUserTrackingUsageDescription` to
-`ios/C15tBare/Info.plist` with a prompt App Review will accept. Add
+`ios/InthBare/Info.plist` with a prompt App Review will accept. Add
 `NSUserTrackingMarkdownUsageDescription` too if you want the expanded European Union
 sheet, which iOS 27.2 draws in place of the plain one for a device inside the countries
 Apple enabled. The plain key is not optional either way: Apple falls back to it on older
 systems and outside those countries. Per-locale Markdown goes in
 `<locale>.lproj/InfoPlist.strings`, not in the plist, which is what
 [internals/fixtures/expo-dev](../expo-dev) has the config plugin write. Then set
-`NSPrivacyTracking` to `true` in `ios/C15tBare/PrivacyInfo.xcprivacy`. An app that asks
+`NSPrivacyTracking` to `true` in `ios/InthBare/PrivacyInfo.xcprivacy`. An app that asks
 for the identifier is usually linking data across apps, and that key currently says it
 does not. Leave it `false` only if you ask and then never track.
 
@@ -104,36 +104,36 @@ hosted defaults.
 
 ## Drive it from a shell
 
-The app registers `c15t-demo://`, so a consent journey is one command in and one
+The app registers `inth-demo://`, so a consent journey is one command in and one
 screenshot out. This exists because a Mac with no `Simulator.app` has no `simctl tap`, no
 `idb`, and no Maestro, which means the iOS half of this fixture cannot be driven any other
 way. Android takes the identical link through an intent filter, so a step written once
 runs on both platforms.
 
 ```sh
-xcrun simctl openurl <udid> c15t-demo://accept
-adb -s emulator-5554 shell am start -a android.intent.action.VIEW -d 'c15t-demo://accept'
+xcrun simctl openurl <udid> inth-demo://accept
+adb -s emulator-5554 shell am start -a android.intent.action.VIEW -d 'inth-demo://accept'
 
 xcrun simctl io <udid> screenshot after-accept.png
 adb -s emulator-5554 exec-out screencap -p > after-accept.png
 ```
 
 iOS 26 does not hand a custom-scheme open to the app without asking. `simctl openurl`
-raises "Open in “c15t Bare”?" and the journey waits there for that tap; in a Simulator
+raises "Open in “Inth Bare”?" and the journey waits there for that tap; in a Simulator
 window with the keyboard attached, Return answers it. Where there is no finger for it, the
 same link goes in as a launch variable. It enters through the launch options, so
 JavaScript cannot tell it apart from a link the OS delivered, and the verbs are unchanged.
 
 ```sh
-SIMCTL_CHILD_C15T_DEMO_LINK='c15t-demo://accept' \
-  xcrun simctl launch --terminate-running-process <udid> org.reactjs.native.example.C15tBare
+SIMCTL_CHILD_C15T_DEMO_LINK='inth-demo://accept' \
+  xcrun simctl launch --terminate-running-process <udid> org.reactjs.native.example.InthBare
 ```
 
 A valid stored or bundled policy lets these verbs operate offline. Without one,
 the app waits for hosted `/init` before it can show a consent prompt. The native
 E2E commands below start their own controlled backend and export their own resource.
 
-The grammar is `c15t-demo://<verb>[/<argument>][?name=value[&name=value]]`. Quote the URL
+The grammar is `inth-demo://<verb>[/<argument>][?name=value[&name=value]]`. Quote the URL
 on Android: `?` and `&` belong to the shell otherwise.
 
 | Verb | What it calls |
@@ -161,7 +161,7 @@ not exist says so on screen, with the list, rather than doing nothing.
 Which is what `report=1` is for. On iOS a link can only arrive at launch, and the tab the
 receipt is printed on is app state, so the next launch wipes the receipt along with the tab.
 A step that wants its receipt on screen has to ask for the tab in the same link:
-`c15t-demo://save?measurement=1&report=1`. Without the flag the answer exists only in the
+`inth-demo://save?measurement=1&report=1`. Without the flag the answer exists only in the
 JavaScript instance that the next step terminates.
 
 Three things worth knowing:
@@ -207,7 +207,7 @@ Four things it does that are easy to get wrong:
   binary dials a Metro server, and on a machine with several worktrees checked out that is
   whichever server started first, so Debug starts its own and probes upward from 8084.
 - It sends links through `C15T_DEMO_LINK`, not `simctl openurl`. iOS asks
-  "Open in “c15t Bare”?" before it hands a custom-scheme open to the app, and a headless
+  "Open in “Inth Bare”?" before it hands a custom-scheme open to the app, and a headless
   run has no finger for it. One link per cold start also means every step survives process
   death on its own. Set `IOS_JOURNEY_PROBE_OPENURL=1` to re-test that claim rather than
   repeat it.
@@ -226,7 +226,7 @@ the server has it.
 ## Prove the Android journey in one command
 
 `scripts/android-journey.sh` walks the same route on a connected device or emulator. It clears
-the app with `pm clear`, sends each verb as a real `c15t-demo://` deep link, and asserts the
+the app with `pm clear`, sends each verb as a real `inth-demo://` deep link, and asserts the
 outcome out of the view hierarchy rather than off a screenshot, so a step fails on the exact
 word it did not find.
 
@@ -273,7 +273,7 @@ A `custom` action from `banner` naming exactly the purposes you switched on is t
 because a dismissal is not a choice.
 
 The registration lives in three files, and all three are needed. `CFBundleURLTypes` in
-`ios/C15tBare/Info.plist` and the intent filter in `AndroidManifest.xml` are what make
+`ios/InthBare/Info.plist` and the intent filter in `AndroidManifest.xml` are what make
 iOS and Android deliver the link at all, and `AppDelegate.swift` forwards it to
 `RCTLinkingManager`, which is what puts it in front of `Linking`. Drop the forward and the
 OS accepts the URL while the app stays silent, which looks exactly like a broken verb.
@@ -281,8 +281,8 @@ OS accepts the URL while the app stays silent, which looks exactly like a broken
 To get back to a first-install prompt:
 
 ```sh
-adb uninstall com.c15t.bare                                          # Android: enough
-xcrun simctl uninstall <udid> org.reactjs.native.example.C15tBare     # iOS: not enough
+adb uninstall com.inth.bare                                          # Android: enough
+xcrun simctl uninstall <udid> org.reactjs.native.example.InthBare     # iOS: not enough
 xcrun simctl erase <task-owned-udid>                                  # destroys this simulator's data
 ```
 
@@ -308,10 +308,10 @@ Run them from this directory, or from the root with `bun run --cwd internals/fix
 
 The native build setup is maintained in each platform directory.
 
-- iOS: the first run needs `bun run pod-install`. The autolinked `C15tReactNative`
+- iOS: the first run needs `bun run pod-install`. The autolinked `InthReactNative`
   pod compiles its generated Swift core and Apple services. Do not add a separate
-  `C15tCore` pod. The deployment target is 16.4.
-- Android: the host resolves versioned `com.c15t` artifacts from its configured
+  `InthCore` pod. The deployment target is 16.4.
+- Android: the host resolves versioned `com.inth` artifacts from its configured
   exclusive Maven repository. `settings.gradle` does not include the native
   producer or substitute its source. Set `C15T_MAVEN_URL` to an available private
   repository or explicit local staging URL; HTTPS resolution also needs the
@@ -333,11 +333,11 @@ configuration. Both platforms have been built, installed and launched;
 iOS resolves. `pod install` from `ios/` prints:
 
 ```console
-Auto-linking React Native module for target `C15tBare`: C15tReactNative
+Auto-linking React Native module for target `InthBare`: InthReactNative
 Pod installation complete! There are 88 dependencies from the Podfile and 87 total pods installed.
 ```
 
-with `C15tCore` and `C15tReactNative` both at 3.0.0-alpha.1, so the podspec, the `C15t`
+with `InthCore` and `InthReactNative` both at 3.0.0-alpha.1, so the podspec, the `Inth`
 TurboModule codegen, and the local core path all hold. Nothing is scoped away to get that:
 the Podfile calls `use_native_modules!` with no arguments and so runs the same unscoped
 `react-native config` a Gradle build would.
@@ -348,9 +348,9 @@ autolinking metadata is usable at all:
 
 ```console
 $ npx react-native config --platform android
-  "@c15t/react-native": {
-      "sourceDir": ".../node_modules/@c15t/react-native/android/c15t-react-native",
-      "packageImportPath": "import com.c15t.reactnative.C15tReactNativePackage;",
+  "@inth/react-native": {
+      "sourceDir": ".../node_modules/@inth/react-native/android/inth-react-native",
+      "packageImportPath": "import com.inth.reactnative.InthReactNativePackage;",
 
 $ cd android && sh ./gradlew :app:mergeDebugResources --console=plain
 BUILD SUCCESSFUL in 28s
@@ -364,7 +364,7 @@ because the Podfile passed an iOS-scoped autolink command around it. Both workar
 and the mobile SDK CI group runs it.
 
 Two warnings from that `pod install` belong to the package too.
-`C15tReactNative.podspec` declares `license => '../../LICENSE.md'`, which is this
+`InthReactNative.podspec` declares `license => '../../LICENSE.md'`, which is this
 repository's root license and exists two directories above the package only in a
 checkout, not in a consumer's `node_modules`. And React Native notes that calling
 `pod install` directly is deprecated in favour of its own build integration.
@@ -378,7 +378,7 @@ Two more notes for anyone building natively from a checkout:
 
 ## Historical device run
 
-iPhone 17 Pro on iOS 26.4, built by `xcodebuild` against `C15tBare.xcworkspace`, installed
+iPhone 17 Pro on iOS 26.4, built by `xcodebuild` against `InthBare.xcworkspace`, installed
 with `simctl`, talking to `apps/playground` serving `@c15t/backend` at
 `http://localhost:3000/api/self-host`. The app came up on the native core: the CORE panel
 read `native (TurboModule)`, the handshake reported protocol 1, and the banner rendered with
@@ -405,8 +405,8 @@ compiled from source through the `includeBuild` in `settings.gradle`, talking to
 `adb shell input tap` at coordinates read out of `uiautomator dump`, which is how every
 step in the checklist below was run. Process death is `am force-stop`, not a swipe.
 
-The core came up native, and `no_backup/c15t` holds `com.c15t.snapshot` and
-`com.c15t.pending` as AES/GCM blobs. After a force-stop and relaunch the first frame
+The core came up native, and `no_backup/inth` holds `com.inth.snapshot` and
+`com.inth.pending` as AES/GCM blobs. After a force-stop and relaunch the first frame
 reported `stored snapshot: true`, `ready: true`, `policyPending: false` and the revision it
 had before the kill, and the banner stayed dismissed.
 
@@ -437,7 +437,7 @@ A JavaScript reload will not clear it, and the warning will keep firing.
 
 ## Fake core
 
-The example ships an in-JavaScript fake core (`src/c15t/fake-native.ts`) built only on
+The example ships an in-JavaScript fake core (`src/inth/fake-native.ts`) built only on
 `createConsentClient(module, events)` and `ConsentClientContext`, which is how the
 package says to inject a mock. It implements the same TurboModule surface: hydrate and
 init on timers, a 1 Hz `isAllowed` sampler whose recent samples print on screen, a
@@ -465,7 +465,7 @@ not a response that happened to be quick.
 
 The cached-snapshot steps and the queued-save steps below passed on Android, driven over
 `adb` with the backend stopped and restarted between them. An accept committed while the
-backend was down grew `com.c15t.pending` from 44 to 1612 bytes, which is the payload on
+backend was down grew `com.inth.pending` from 44 to 1612 bytes, which is the payload on
 disk rather than a promise in memory; after a force-stop and a relaunch with the backend
 back up, the queue drained to its empty 44 bytes and the backend held exactly one
 `accept_all` row for that install's new `sub_` subject, carrying the five purposes the
@@ -649,7 +649,7 @@ Two things in `metro.config.js` are consequences of running an app inside a Bun
 workspace, not SDK behaviour, and both are commented in the file:
 
 - `watchFolders` has to include the repository root, because the real files behind
-  the `@c15t/react-native` symlink live outside the app directory. Without it Metro
+  the `@inth/react-native` symlink live outside the app directory. Without it Metro
   cannot see the package it is bundling.
 - `extraNodeModules` points `@babel/runtime` at this app's copy. React Native's Babel
   preset rewrites every transformed file, the linked SDK included, to import helpers

@@ -1,6 +1,6 @@
 import Foundation
 import XCTest
-@testable import C15tDemoReviewSupport
+@testable import InthDemoReviewSupport
 
 final class IABReviewSupportTests: XCTestCase {
     func testRequiresExplicitIdentityAndValidatesBounds() throws {
@@ -187,7 +187,7 @@ final class IABReviewSupportTests: XCTestCase {
     }
 
     private func withDefaults(_ body: (UserDefaults) throws -> Void) throws {
-        let suite = "c15t-review-tests-" + UUID().uuidString
+        let suite = "inth-review-tests-" + UUID().uuidString
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
         defer { defaults.removePersistentDomain(forName: suite) }
         try body(defaults)

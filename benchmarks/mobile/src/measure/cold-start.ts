@@ -1,15 +1,15 @@
 /**
  * Cold-start cost of the JavaScript boundary, measured in fresh processes.
  *
- * The contract budgets 10 ms of cold start "attributable to c15t". The warm loop
+ * The contract budgets 10 ms of cold start "attributable to Inth". The warm loop
  * in `measure/javascript.ts` cannot answer that: a handshake that costs 0.003 ms
  * after 300 repetitions costs milliseconds the first time the process runs it. So
  * this measurement spawns one process per sample and lets each do exactly one
  * launch, which is the only way to observe a cold module graph.
  *
  * What it does not claim: an app-launch number. A device spends time starting the
- * process, the React Native runtime, and Hermes before any c15t code runs, and
- * Node's ESM resolver charges c15t for resolving 58 file specifiers that a bundled
+ * process, the React Native runtime, and Hermes before any Inth code runs, and
+ * Node's ESM resolver charges Inth for resolving 58 file specifiers that a bundled
  * app resolves from one bundle. So this is the JavaScript half of the contract's
  * span, measured under a loader that is harsher than the one in the binary. The
  * native half is `native_bootstrap_to_snapshot_cold_ms`.

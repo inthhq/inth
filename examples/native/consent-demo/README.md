@@ -5,7 +5,7 @@ It lists setup and run commands for UIKit, the Swift native harness, Android,
 bare React Native and Expo, and separates local fixture coverage from hosted
 acceptance.
 
-The iOS XcodeGen project has `C15tUIKitDemo` and `C15tConsentDemo` schemes.
+The iOS XcodeGen project has `InthUIKitDemo` and `InthConsentDemo` schemes.
 UIKit owns its window and hosts the same stock SwiftUI consent screens. Android
 is the existing `:consent-demo` Gradle app. Debug builds offer Category, Notice,
 and IAB TCF and Additional Consent modes on the setup screen. Release builds
@@ -38,7 +38,7 @@ The iOS demo links PostHog, Mixpanel, Sentry and Firebase Analytics, pinned in
 `ios/project.yml`. They start only in a Debug fixture launch that sets
 `C15T_VENDOR_BASE`, so the demo behaves as before for everyone else.
 `ios/VendorSDKs/vendor-sdk-harness.swift` configures each SDK with collection
-off, binds it to the measurement category through the c15t Swift helpers, and
+off, binds it to the measurement category through the Inth Swift helpers, and
 adds Probe vendors and Flush buttons above the consent screens.
 
 ```sh
@@ -47,7 +47,7 @@ bash examples/native/consent-demo/ios/run-vendor-e2e.sh
 
 The runner starts `scripts/vendor_capture.py`, points PostHog, Mixpanel and
 Sentry at it, and runs `VendorSDKTests` in both schemes on its own
-`c15t-ios-vendors` simulator, which it erases first. The test probes before any
+`inth-ios-vendors` simulator, which it erases first. The test probes before any
 decision, after Reject all, after granting measurement, after withdrawing it
 in Privacy settings, and after a relaunch. It expects capture traffic only
 after the grant. Firebase cannot be redirected, so it runs against the fake
@@ -71,11 +71,11 @@ afterwards.
 `RealVendorSdkTest#posthogLiveFollowsConsent` runs only when it gets a host
 and project key. It starts PostHog alone, with its debug log off, and registers
 a `run_id` super property so every event the SDK sends carries it. It then
-drives the usual journey and sends one `c15t_probe` event per step, tagged
+drives the usual journey and sends one `inth_probe` event per step, tagged
 `step=fresh|rejected|granted|withdrawn|relaunched`, and flushes after each
 probe. The test checks PostHog's own opt-out state at each step, but it cannot
 see the traffic. It logs the run id, the expected outcome per step and the
-anonymous `distinct_id` under the `c15t-vendor-evidence` logcat tag.
+anonymous `distinct_id` under the `inth-vendor-evidence` logcat tag.
 
 Run it by dispatching the Depot CI workflow on `canary`:
 
@@ -126,6 +126,6 @@ project, and `switch-project` does not carry over to the next call. Make
 305107 the current project first, either in the PostHog project switcher or
 with `user-settings-update` (`set_current_team`), and switch back afterwards.
 
-A passing run has one `c15t_probe` row with `step=granted`, and no rows with
+A passing run has one `inth_probe` row with `step=granted`, and no rows with
 `fresh`, `rejected`, `withdrawn` or `relaunched`. Treat any other event as a
 failure until you have explained it.

@@ -6,7 +6,7 @@ optional=['functionality','experience','measurement','marketing']
 events=[json.loads(x) for x in (out/'events.jsonl').read_text().splitlines()]
 native=[e['body'] for e in events if e['path']=='/e2e/native']
 attempts=[json.loads(x) for x in (out/'delivery-attempts.jsonl').read_text().splitlines()]
-resource=json.loads(json.loads((out/'policy-assets/c15t-policy.json').read_text())['payload'])
+resource=json.loads(json.loads((out/'policy-assets/inth-policy.json').read_text())['payload'])
 expiry=resource['expiresAt']
 def values(n): return n['snapshot']['explicitChoice']['categories'] if n['snapshot']['explicitChoice'] else {}
 def denial(n): return all(values(n).get(c,{}).get('value') is False and n['gates'][c] is False for c in optional)

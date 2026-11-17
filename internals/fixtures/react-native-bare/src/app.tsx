@@ -21,14 +21,13 @@ import {
 	useConsentStyles,
 	useConsentStatus,
 	useTrackingRequest,
-} from '@c15t/react-native';
-import type { ConsentIabSelection, ConsentIabTab } from '@c15t/react-native';
+} from '@inth/react-native';
+import type { ConsentIabSelection, ConsentIabTab } from '@inth/react-native';
 import { Component, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Pressable, Text as NativeText, View } from 'react-native';
 
 import { useAppearance } from './appearance';
-import { useConsentSource } from './c15t/consent-source';
 import {
 	Badge,
 	Button,
@@ -44,6 +43,7 @@ import { useDemoDeepLinks } from './deep-links/use-deep-links';
 import { useDemoActions } from './deep-links/use-demo-actions';
 import { useE2eObserver } from './e2e-observer';
 import { IAB_DEMO_DISPLAY_MODEL } from './fixtures/iab-display-model';
+import { useConsentSource } from './inth/consent-source';
 import { NativePresenterApp } from './native-presenter-app';
 import { DiagnosticsScreen } from './screens/diagnostics';
 import { PrivacyScreen } from './screens/privacy';
@@ -106,7 +106,7 @@ class ErrorBoundary extends Component<
 					<Hint>
 						`ConsentProvider` throws on purpose when the binary cannot speak the
 						protocol this bundle expects. Rebuild the app, or install the
-						@c15t/react-native version that shipped with the binary.
+						@inth/react-native version that shipped with the binary.
 					</Hint>
 				</Card>
 			</Screen>
@@ -115,7 +115,7 @@ class ErrorBoundary extends Component<
 }
 
 /**
- * Shown when the binary has no c15t module, which is a build fact.
+ * Shown when the binary has no Inth module, which is a build fact.
  *
  * It resolves the theme for itself: there is no consent state to read at this point,
  * but `useConsentStyles` needs none, and this screen is still drawn in the palette the
@@ -134,10 +134,10 @@ const MissingNativeCore = () => {
 						selectable
 						style={{ fontSize: 13 }}
 					>
-						{nativeError?.message ?? 'The c15t TurboModule is not registered.'}
+						{nativeError?.message ?? 'The Inth TurboModule is not registered.'}
 					</NativeText>
 					<Hint>
-						Rebuild after installing @c15t/react-native. On iOS run pod install
+						Rebuild after installing @inth/react-native. On iOS run pod install
 						and build again; on Android clean and rebuild. The fake core below
 						is a fixture, not a substitute for that.
 					</Hint>
@@ -179,7 +179,7 @@ const Header = ({
 			<View
 				style={{ alignItems: 'center', flexDirection: 'row', gap: spacing.sm }}
 			>
-				<Heading>c15t Bare</Heading>
+				<Heading>Inth Bare</Heading>
 				<View style={{ marginLeft: 'auto' }}>
 					<Segmented
 						onChange={setAppearance}

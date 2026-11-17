@@ -120,4 +120,4 @@ for row in report:
 if failures:
     print('\n'.join(failures))
     sys.exit(1)
-print('Firebase followed every c15t decision')
+print('Firebase followed every Inth decision')

@@ -70,7 +70,7 @@ it('separates capture traffic from config fetches for each vendor', async () => 
 	expect((await flags.json()).featureFlags).toEqual({});
 	const batch = await fetch(`${base}/vendor/posthog/batch/`, {
 		body: gzipSync(
-			JSON.stringify({ api_key: 'k', batch: [{ event: 'c15t_probe' }] })
+			JSON.stringify({ api_key: 'k', batch: [{ event: 'inth_probe' }] })
 		),
 		headers: { 'Content-Encoding': 'gzip' },
 		method: 'POST',
@@ -79,7 +79,7 @@ it('separates capture traffic from config fetches for each vendor', async () => 
 
 	// Mixpanel posts a form body and expects a bare "1".
 	const track = await fetch(`${base}/vendor/mixpanel/track/?ip=1`, {
-		body: `data=${encodeURIComponent(JSON.stringify([{ event: 'c15t_probe' }]))}`,
+		body: `data=${encodeURIComponent(JSON.stringify([{ event: 'inth_probe' }]))}`,
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 		method: 'POST',
 	});
@@ -88,7 +88,7 @@ it('separates capture traffic from config fetches for each vendor', async () => 
 	await fetch(`${base}/vendor/amplitude/2/httpapi`, {
 		body: JSON.stringify({
 			api_key: 'k',
-			events: [{ event_type: 'c15t_probe' }],
+			events: [{ event_type: 'inth_probe' }],
 		}),
 		method: 'POST',
 	});
@@ -122,9 +122,9 @@ it('separates capture traffic from config fetches for each vendor', async () => 
 		}))
 	).toEqual([
 		{ events: [], items: [], kind: 'config', vendor: 'posthog' },
-		{ events: ['c15t_probe'], items: [], kind: 'capture', vendor: 'posthog' },
-		{ events: ['c15t_probe'], items: [], kind: 'capture', vendor: 'mixpanel' },
-		{ events: ['c15t_probe'], items: [], kind: 'capture', vendor: 'amplitude' },
+		{ events: ['inth_probe'], items: [], kind: 'capture', vendor: 'posthog' },
+		{ events: ['inth_probe'], items: [], kind: 'capture', vendor: 'mixpanel' },
+		{ events: ['inth_probe'], items: [], kind: 'capture', vendor: 'amplitude' },
 		{
 			events: [],
 			items: ['replay_event', 'replay_video', 'session'],

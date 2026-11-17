@@ -16,7 +16,7 @@ import {
 	ConsentBanner,
 	ConsentClientContext,
 	createConsentClient,
-} from '@c15t/react-native';
+} from '@inth/react-native';
 import { createElement } from 'react';
 import { act, create } from 'react-test-renderer';
 import type { ReactTestInstance, ReactTestRenderer } from 'react-test-renderer';
@@ -39,7 +39,7 @@ import {
 ).IS_REACT_ACT_ENVIRONMENT = true;
 
 /** Name the native cores register the TurboModule under. */
-const MODULE_NAME = 'C15t';
+const MODULE_NAME = 'Inth';
 
 /** The English label the fixture ships for the primary action. */
 const ACCEPT_LABEL = 'Accept all';

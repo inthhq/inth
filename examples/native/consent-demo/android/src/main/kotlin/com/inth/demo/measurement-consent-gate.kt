@@ -1,10 +1,10 @@
 // #region docs:android-measurement-gate title="MeasurementConsentGate.kt"
-package com.c15t.demo
+package com.inth.demo
 
 import android.os.Handler
 import android.os.Looper
-import com.c15t.core.C15t
-import com.c15t.core.model.ConsentCategory
+import com.inth.core.Inth
+import com.inth.core.model.ConsentCategory
 
 class MeasurementConsentGate(
     private val setCollectionEnabled: (Boolean) -> Unit,
@@ -13,10 +13,10 @@ class MeasurementConsentGate(
     @Volatile private var closed = false
     private val onPermission: (Boolean) -> Unit = {
         main.post {
-            if (!closed) setCollectionEnabled(C15t.isAllowed(ConsentCategory.MEASUREMENT))
+            if (!closed) setCollectionEnabled(Inth.isAllowed(ConsentCategory.MEASUREMENT))
         }
     }
-    private val subscription = C15t.gate(ConsentCategory.MEASUREMENT, onPermission)
+    private val subscription = Inth.gate(ConsentCategory.MEASUREMENT, onPermission)
 
     override fun close() {
         closed = true

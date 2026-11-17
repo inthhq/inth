@@ -81,9 +81,9 @@ export const prepareCompatibilityOutput = function prepareCompatibilityOutput(
 
 const consumerSource = `
 import { Text, View } from 'react-native';
-import { ConsentProvider, useConsent, useSaveConsents } from '@c15t/react-native';
-import withC15t, { type C15tPluginProps } from '@c15t/react-native/expo-plugin';
-import { connectPostHog, connectFirebaseAnalytics } from '@c15t/react-native/integrations';
+import { ConsentProvider, useConsent, useSaveConsents } from '@inth/react-native';
+import withInth, { type InthPluginProps } from '@inth/react-native/expo-plugin';
+import { connectPostHog, connectFirebaseAnalytics } from '@inth/react-native/integrations';
 
 function PrivacyStatus() {
   const allowed = useConsent('measurement');
@@ -91,8 +91,8 @@ function PrivacyStatus() {
   return <View><Text onPress={() => { void saveConsents('none'); }}>{allowed ? 'Allowed' : 'Denied'}</Text></View>;
 }
 export const App = () => <ConsentProvider privacyPolicyURL="https://example.com/privacy"><PrivacyStatus /></ConsentProvider>;
-export const plugin: typeof withC15t = withC15t;
-export const configuration: C15tPluginProps = {
+export const plugin: typeof withInth = withInth;
+export const configuration: InthPluginProps = {
 	backendURL: 'https://your-project.inth.app',
 	policy: {
 		rules: [
@@ -195,7 +195,7 @@ const main = function main(): void {
 			throw new Error(`${cell.id} failed. See ${log}.`, { cause: error });
 		}
 	};
-	const archive = join(output, 'c15t-react-native.tgz');
+	const archive = join(output, 'inth-react-native.tgz');
 	// pnpm, not `bun pm pack`: the workspace is a pnpm install, so only pnpm
 	// can resolve the package's `workspace:` dependency versions.
 	run(
@@ -213,7 +213,7 @@ const main = function main(): void {
 			{
 				dependencies: {
 					...hostVersions(cell),
-					'@c15t/react-native': `file:${archive}`,
+					'@inth/react-native': `file:${archive}`,
 					'@types/node': '25.5.0',
 					'@types/react': cell.react.startsWith('19.3.') ? '19.3.0' : '19.2.17',
 				},
@@ -236,7 +236,7 @@ const main = function main(): void {
 			);
 		}
 	}
-	const installed = join(consumer, 'node_modules/@c15t/react-native');
+	const installed = join(consumer, 'node_modules/@inth/react-native');
 	const sdkSource = join(consumer, 'sdk-source');
 	cpSync(join(PACKAGE, 'src'), sdkSource, {
 		filter: (path) => !path.includes('/__tests__'),
@@ -285,13 +285,13 @@ const main = function main(): void {
 		]);
 		const spec =
 			platform === 'android'
-				? 'java/com/c15t/reactnative/NativeC15tSpec.java'
-				: 'C15tSpec/C15tSpec.h';
+				? 'java/com/inth/reactnative/NativeInthSpec.java'
+				: 'InthSpec/InthSpec.h';
 		if (
-			!readFileSync(join(generated, spec), 'utf8').includes('NativeC15tSpec')
+			!readFileSync(join(generated, spec), 'utf8').includes('NativeInthSpec')
 		) {
 			throw new Error(
-				`${cell.id}: ${platform} Codegen omitted NativeC15tSpec.`
+				`${cell.id}: ${platform} Codegen omitted NativeInthSpec.`
 			);
 		}
 	}
@@ -301,13 +301,13 @@ const main = function main(): void {
 			JSON.stringify(
 				{
 					expo: {
-						android: { package: 'com.c15t.compatibility' },
-						ios: { bundleIdentifier: 'com.c15t.compatibility' },
-						name: 'C15tCompatibility',
+						android: { package: 'com.inth.compatibility' },
+						ios: { bundleIdentifier: 'com.inth.compatibility' },
+						name: 'InthCompatibility',
 						platforms: ['ios', 'android'],
 						plugins: [
 							[
-								'@c15t/react-native',
+								'@inth/react-native',
 								{
 									backendURL: 'https://your-project.inth.app',
 									consentCategories: ['necessary', 'measurement'],
@@ -350,7 +350,7 @@ const main = function main(): void {
 			'utf8'
 		);
 		if (
-			!application.includes('com.c15t.reactnative.C15tReactNativeInitializer')
+			!application.includes('com.inth.reactnative.InthReactNativeInitializer')
 		) {
 			throw new Error(`${cell.id}: Expo omitted native startup configuration.`);
 		}
@@ -359,7 +359,7 @@ const main = function main(): void {
 		const version = readFileSync(
 			join(ROOT, 'packages/android/gradle.properties'),
 			'utf8'
-		).match(/^c15t.native.version=(?<version>.+)$/mu)?.groups?.version;
+		).match(/^inth.native.version=(?<version>.+)$/mu)?.groups?.version;
 		if (!version) {
 			throw new Error('Missing staged native version.');
 		}

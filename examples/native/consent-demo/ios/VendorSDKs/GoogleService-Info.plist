@@ -4,17 +4,17 @@
 <plist version="1.0">
 <dict>
 	<key>API_KEY</key>
-	<string>AIzaSyC15tFakeKeyForLocalTestsOnly00000</string>
+	<string>AIzaSyInthFakeKeyForLocalTestsOnly00000</string>
 	<key>GCM_SENDER_ID</key>
 	<string>123456789000</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.c15t.prototype.consent</string>
+	<string>com.inth.prototype.consent</string>
 	<key>PROJECT_ID</key>
-	<string>c15t-fake-placeholder</string>
+	<string>inth-fake-placeholder</string>
 	<key>STORAGE_BUCKET</key>
-	<string>c15t-fake-placeholder.invalid</string>
+	<string>inth-fake-placeholder.invalid</string>
 	<key>IS_ADS_ENABLED</key>
 	<false/>
 	<key>IS_ANALYTICS_ENABLED</key>

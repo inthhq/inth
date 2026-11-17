@@ -1,4 +1,4 @@
-package com.c15t.demo
+package com.inth.demo
 
 import android.content.Context
 import android.content.Intent
@@ -48,12 +48,12 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
-import com.c15t.consentui.headless.*
-import com.c15t.core.ConsentCore
+import com.inth.consentui.headless.*
+import com.inth.core.ConsentCore
 
 /**
  * A consent UI drawn entirely by the app on the headless blocks in
- * `com.c15t.consentui.headless`. Nothing here comes from the stock screens or from Material:
+ * `com.inth.consentui.headless`. Nothing here comes from the stock screens or from Material:
  * the paper-and-ink palette, the serif and monospace type, the ruled ledger rows, the square
  * switch and the motion are this file's. The blocks supply when to show, the copy, the draft,
  * the save and the accessibility.

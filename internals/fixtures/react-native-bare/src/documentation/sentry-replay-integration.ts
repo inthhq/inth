@@ -1,9 +1,9 @@
 // #region docs:rn-sentry-replay-integration title="sentry-replay-consent.ts"
-import { connectSentryReplay } from '@c15t/react-native/integrations';
+import { connectSentryReplay } from '@inth/react-native/integrations';
 import type {
 	ConsentIntegration,
 	SentryReplayClient,
-} from '@c15t/react-native/integrations';
+} from '@inth/react-native/integrations';
 
 export const connectAppSentryReplay = (
 	replay: SentryReplayClient,

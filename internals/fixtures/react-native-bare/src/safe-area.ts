@@ -12,7 +12,7 @@
  * second guess at the same hardware.
  */
 
-import type { ConsentSafeAreaInsets } from '@c15t/react-native';
+import type { ConsentSafeAreaInsets } from '@inth/react-native';
 import { useMemo } from 'react';
 import { NativeModules, Platform, StatusBar } from 'react-native';
 

@@ -19,8 +19,8 @@ const microsToMillis = function microsToMillis(micros: number): number {
 /**
  * Build every native-core row from the two bench runs.
  *
- * @param swift - Output of `C15tCoreBench`, or the reason it is absent.
- * @param kotlin - Output of `:c15t-core:bench`, or the reason it is absent.
+ * @param swift - Output of `InthCoreBench`, or the reason it is absent.
+ * @param kotlin - Output of `:inth-core:bench`, or the reason it is absent.
  * @param budgets - The loaded budget map.
  * @returns Rows in report order, measured or carrying a reason.
  */
@@ -41,7 +41,7 @@ export const nativeRows = function nativeRows(
 		}
 		const metric = swift.metrics[key];
 		if (!metric) {
-			return { reason: `C15tCoreBench did not report "${key}"` };
+			return { reason: `InthCoreBench did not report "${key}"` };
 		}
 		return {
 			detail: metric.detail,
@@ -60,7 +60,7 @@ export const nativeRows = function nativeRows(
 		}
 		const metric = kotlin.metrics[key];
 		if (!metric) {
-			return { reason: `:c15t-core:bench did not report "${key}"` };
+			return { reason: `:inth-core:bench did not report "${key}"` };
 		}
 		return {
 			detail: metric.detail,

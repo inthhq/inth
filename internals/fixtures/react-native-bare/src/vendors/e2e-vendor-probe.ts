@@ -5,7 +5,7 @@
  * {@link E2eVendorProbeSettings}, because bare RN and Expo inline different
  * environment variables into the bundle.
  *
- * Every launch sends one startup probe once the c15t connections have applied
+ * Every launch sends one startup probe once the Inth connections have applied
  * their first state, before the consent prompt is presented. That covers a fresh
  * install and a relaunch with a saved refusal, and on Android it runs before the
  * prompt's Activity pauses JavaScript timers. Later probes come from the
@@ -13,7 +13,7 @@
  * `/e2e/state` and the vendor traffic from `/captured`.
  */
 
-import { getConsentClient } from '@c15t/react-native';
+import { getConsentClient } from '@inth/react-native';
 import { useCallback, useEffect, useState } from 'react';
 
 import { startRealVendorSdks } from './real-sdks';
@@ -61,7 +61,7 @@ const runProbe = async (reason: ProbeReason): Promise<void> => {
 	const running = await sdks;
 	probes += 1;
 	// Firebase event names allow letters, digits and underscores, up to 40.
-	const name = `c15t_probe_${Date.now()}_${probes}`;
+	const name = `inth_probe_${Date.now()}_${probes}`;
 	if (running === null || running === undefined) {
 		await report({
 			errors: integrationErrors,

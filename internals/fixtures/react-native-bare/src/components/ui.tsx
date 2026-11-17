@@ -11,8 +11,8 @@
  * those reuse the resolved part style verbatim instead of restating it.
  */
 
-import { resolveConsentTypeRoles } from '@c15t/react-native';
-import type { ConsentStyles, ConsentThemeColors } from '@c15t/react-native';
+import { resolveConsentTypeRoles } from '@inth/react-native';
+import type { ConsentStyles, ConsentThemeColors } from '@inth/react-native';
 import { createContext, useContext } from 'react';
 import type { ReactNode } from 'react';
 import {

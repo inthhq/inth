@@ -71,14 +71,14 @@ const tarballBlockedPathPatterns: { reason: string; pattern: RegExp }[] = [
  * The CommonJS artifacts this repository publishes on purpose.
  *
  * v3 ships ESM-only everywhere else. Expo resolves a config plugin with Node's CommonJS
- * resolver and then `require()`s what it finds, which is why `@c15t/react-native` bundles
+ * resolver and then `require()`s what it finds, which is why `@inth/react-native` bundles
  * `src/expo-plugin` into one self-contained `.cjs` (see that package's `rslib.config.ts`) and
  * hands it out under the `require` export condition. `check-publish-artifacts.test.ts` fails
  * when an entry here is no longer a `require` target of that package's exports map, so the
  * exception cannot outlive the loader that needs it.
  */
 export const allowedCommonJsArtifacts: Record<string, string[]> = {
-	'@c15t/react-native': ['dist/expo-plugin/index.cjs'],
+	'@inth/react-native': ['dist/expo-plugin/index.cjs'],
 };
 
 const distBlockedPathPatterns: { reason: string; pattern: RegExp }[] = [
@@ -100,7 +100,7 @@ const distBlockedPathPatterns: { reason: string; pattern: RegExp }[] = [
  * The consent kernel a mobile app must never be asked to install.
  *
  * `@c15t/core` is the browser engine: it owns consent state, storage, script
- * gating, and callbacks in JavaScript. `@c15t/react-native` renders the state the
+ * gating, and callbacks in JavaScript. `@inth/react-native` renders the state the
  * Swift and Kotlin cores own instead, so the kernel is the oracle its tests and
  * fixture generator run against, not a package a phone build resolves.
  */
@@ -115,7 +115,7 @@ const KERNEL_PACKAGE = '@c15t/core';
  * rather than a missing import somebody forgot to delete.
  */
 export const kernelFreePackages: Record<string, string> = {
-	'@c15t/react-native':
+	'@inth/react-native':
 		'its consent kernel is native, so the JavaScript kernel is a test oracle here',
 };
 
@@ -130,7 +130,7 @@ const SPECIFIER_PATTERNS = [
 /**
  * Build output only a web bundle reads: a `.web` module, which Metro and the
  * other React Native web bundlers resolve in place of its native sibling on web
- * alone. `@c15t/react-native` runs the browser engine there, because a web
+ * alone. `@inth/react-native` runs the browser engine there, because a web
  * build has no native core, so these files may import the kernel.
  */
 const WEB_ONLY_OUTPUT = /\.web\.(?:[cm]?js|d\.ts)$/u;
@@ -345,10 +345,21 @@ const requiredPackedFilesByPackage: Record<string, string[]> = {
 		'src/styles.tw3.css',
 		'src/iab/styles.tw3.css',
 	],
+	'@c15t/scripts': ['AGENTS.md', 'docs/README.md'],
+	'@c15t/ui': [
+		'styles.css',
+		'styles.tw3.css',
+		'iab/styles.css',
+		'iab/styles.tw3.css',
+		'dist/styles.css',
+		'dist/styles.tw3.css',
+		'dist/iab/styles.css',
+		'dist/iab/styles.tw3.css',
+	],
 	// The native half has one owner for this list: `scripts/react-native-autolink.ts` says
 	// what a host app opens, and the release gate holds the tarball to it. A named directory
 	// is a directory npm will sweep, so every entry here is a file.
-	'@c15t/react-native': [
+	'@inth/react-native': [
 		...hostReadPaths.map(({ path }) => path),
 		'AGENTS.md',
 		'SKILL.md',
@@ -369,20 +380,9 @@ const requiredPackedFilesByPackage: Record<string, string[]> = {
 		'maestro/selectors.json',
 		'maestro/toggle-category.yaml',
 		// Expo's `skills:sync` links only `skills/<name>/SKILL.md`.
-		'skills/c15t-react-native/SKILL.md',
-		'skills/c15t-react-native/docs/README.md',
-		'skills/c15t-react-native/docs/frameworks/react-native/expo.md',
-	],
-	'@c15t/scripts': ['AGENTS.md', 'docs/README.md'],
-	'@c15t/ui': [
-		'styles.css',
-		'styles.tw3.css',
-		'iab/styles.css',
-		'iab/styles.tw3.css',
-		'dist/styles.css',
-		'dist/styles.tw3.css',
-		'dist/iab/styles.css',
-		'dist/iab/styles.tw3.css',
+		'skills/inth-react-native/SKILL.md',
+		'skills/inth-react-native/docs/README.md',
+		'skills/inth-react-native/docs/frameworks/react-native/expo.md',
 	],
 	c15t: ['AGENTS.md'],
 };
@@ -401,7 +401,7 @@ const rootTw3ProxyContents: Record<string, string> = {
 /**
  * Refuse a published license copy that is not the repository's license.
  *
- * A podspec has to point its `s.license` file inside the package, so `@c15t/react-native`
+ * A podspec has to point its `s.license` file inside the package, so `@inth/react-native`
  * carries a copy of the root `LICENSE`. A copy is a copy: it goes stale the moment the
  * repository one is edited, and nothing but this check would notice, which is the same failure
  * that had the podspec naming `../../LICENSE.md` in the first place.
@@ -450,8 +450,8 @@ export const scanPublishedLicenses = function scanPublishedLicenses(
 /**
  * Refuse a checked-out copy of the native core that has drifted from its source of truth.
  *
- * The React Native pod compiles the Swift consent kernel from `vendor/C15tCore`, because a pod
- * cannot point `s.dependency` at a path and no `C15tCore` pod is published, so an app installed
+ * The React Native pod compiles the Swift consent kernel from `vendor/InthCore`, because a pod
+ * cannot point `s.dependency` at a path and no `InthCore` pod is published, so an app installed
  * from npm gets a kernel only if this package carries one. `packages/swift` stays the source
  * of truth and the copy is generated, so any difference between the two is a defect: a pod built
  * from the copy is not a pod built from the core, and a reader of the checkout cannot
@@ -467,8 +467,8 @@ export const scanVendoredNativeSources = function scanVendoredNativeSources(
 ): { path: string; size: number; reason: string }[] {
 	const requiresNativeSources =
 		existsSync(join(packageDir, 'package.json')) &&
-		readManifest(packageDir).name === '@c15t/react-native';
-	return ['C15tCore', 'C15tApple', 'C15tConsentUI'].flatMap((module) => {
+		readManifest(packageDir).name === '@inth/react-native';
+	return ['InthCore', 'InthApple', 'InthConsentUI'].flatMap((module) => {
 		const directory = `vendor/${module}`;
 		const vendoredDir = join(packageDir, directory);
 		if (!requiresNativeSources && !existsSync(vendoredDir)) {
@@ -477,7 +477,7 @@ export const scanVendoredNativeSources = function scanVendoredNativeSources(
 		const sourceDir = join(ROOT, 'packages/swift/Sources', module);
 		return compareTrees(sourceDir, vendoredDir).map((drift) => ({
 			path: `${directory}/${drift.relativePath}`,
-			reason: `stale vendored native source: ${module === 'C15tCore' ? describeDrift(drift) : 'Run bun scripts/sync-vendored-apple.ts.'}`,
+			reason: `stale vendored native source: ${module === 'InthCore' ? describeDrift(drift) : 'Run bun scripts/sync-vendored-apple.ts.'}`,
 			size: 0,
 		}));
 	});
@@ -487,7 +487,7 @@ export const scanVendoredNativeSources = function scanVendoredNativeSources(
  * Refuse a vendored native source that never reaches the tarball.
  *
  * A generated copy that stays on disk helps nobody: `files` is an allowlist, and dropping
- * `vendor/C15tCore` from it publishes a podspec whose `source_files` matches nothing, so the
+ * `vendor/InthCore` from it publishes a podspec whose `source_files` matches nothing, so the
  * consumer builds a pod with no consent kernel in it and the failure surfaces as a missing type
  * in an app that cannot see this repository.
  *
@@ -499,7 +499,7 @@ export const scanPackedVendoredSources = function scanPackedVendoredSources(
 	packageDir: string,
 	packedFilePaths: Set<string>
 ): { path: string; size: number; reason: string }[] {
-	return ['C15tCore', 'C15tApple', 'C15tConsentUI'].flatMap((module) => {
+	return ['InthCore', 'InthApple', 'InthConsentUI'].flatMap((module) => {
 		const directory = `vendor/${module}`;
 		const vendoredDir = join(packageDir, directory);
 		if (!existsSync(vendoredDir)) {

@@ -7,12 +7,12 @@
  * a URL parser that Hermes only partly provides:
  *
  * ```text
- * c15t-demo://<verb>[/<argument>][?name=value[&name=value]]
+ * inth-demo://<verb>[/<argument>][?name=value[&name=value]]
  * ```
  */
 
 /** The scheme registered in `Info.plist` and `AndroidManifest.xml`. */
-export const DEMO_LINK_SCHEME = 'c15t-demo';
+export const DEMO_LINK_SCHEME = 'inth-demo';
 
 /** One parsed demo link. */
 export interface DemoLink {
@@ -70,7 +70,7 @@ export const parseDemoLink = (
 		return null;
 	}
 
-	// `c15t-demo:accept` reaches JavaScript from some Android launchers, which drop
+	// `inth-demo:accept` reaches JavaScript from some Android launchers, which drop
 	// the authority slashes, so both spellings of one command are accepted.
 	const body = (() => {
 		const lower = url.toLowerCase();

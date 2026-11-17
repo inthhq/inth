@@ -1,5 +1,5 @@
 // #region docs:testing-screen title="analytics-screen.tsx"
-import { useConsent, useSaveConsents } from '@c15t/react-native';
+import { useConsent, useSaveConsents } from '@inth/react-native';
 import { Pressable, Text, View } from 'react-native';
 
 export const AnalyticsScreen = () => {

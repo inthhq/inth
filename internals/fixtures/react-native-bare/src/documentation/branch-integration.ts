@@ -1,9 +1,9 @@
 // #region docs:rn-branch-integration title="branch-consent.ts"
-import { connectBranch } from '@c15t/react-native/integrations';
+import { connectBranch } from '@inth/react-native/integrations';
 import type {
 	BranchClient,
 	ConsentIntegration,
-} from '@c15t/react-native/integrations';
+} from '@inth/react-native/integrations';
 
 export const connectAppBranch = (
 	branch: BranchClient,

@@ -104,7 +104,7 @@ test('the umbrella skill names the package instead of repeating c15t', () => {
 
 test('mobile skills describe native authority and link only bundled mobile guides', () => {
 	const config = PACKAGE_DOCS_CONFIGS.find(
-		(entry) => entry.name === '@c15t/react-native'
+		(entry) => entry.name === '@inth/react-native'
 	);
 	expect(config).toBeDefined();
 	if (!config) {

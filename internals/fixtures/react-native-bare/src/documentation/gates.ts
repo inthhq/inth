@@ -1,5 +1,5 @@
 // #region docs:headless-gate title="use-measurement.ts"
-import { useConsent, useIsTrackingAllowed } from '@c15t/react-native';
+import { useConsent, useIsTrackingAllowed } from '@inth/react-native';
 import { useEffect } from 'react';
 
 // start must return cleanup that stops this SDK's optional collection.

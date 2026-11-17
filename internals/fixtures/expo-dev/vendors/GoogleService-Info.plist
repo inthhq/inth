@@ -5,17 +5,17 @@
 <plist version="1.0">
 <dict>
 	<key>API_KEY</key>
-	<string>AIzaSyFAKE-c15t-e2e-placeholder-0000000</string>
+	<string>AIzaSyFAKE-inth-e2e-placeholder-0000000</string>
 	<key>GCM_SENDER_ID</key>
 	<string>123456789012</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.c15t.expodev</string>
+	<string>com.inth.expodev</string>
 	<key>PROJECT_ID</key>
-	<string>c15t-e2e-placeholder</string>
+	<string>inth-e2e-placeholder</string>
 	<key>STORAGE_BUCKET</key>
-	<string>c15t-e2e-placeholder.appspot.com</string>
+	<string>inth-e2e-placeholder.appspot.com</string>
 	<key>IS_ADS_ENABLED</key>
 	<false/>
 	<key>IS_ANALYTICS_ENABLED</key>

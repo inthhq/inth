@@ -1,6 +1,6 @@
-// #region docs:iab-first-layer title="iab-first-layer.tsx"
-import { useIABSnapshot, useSaveConsents } from '@c15t/react-native';
 import { translations } from '@c15t/translations/en';
+// #region docs:iab-first-layer title="iab-first-layer.tsx"
+import { useIABSnapshot, useSaveConsents } from '@inth/react-native';
 import { Button, Text, View } from 'react-native';
 
 const copy = translations.iab;

@@ -1,4 +1,4 @@
-import C15tReactNative
+import InthReactNative
 import Foundation
 
 private enum PackedNativeProof {
@@ -7,8 +7,8 @@ private enum PackedNativeProof {
     let source = DispatchSource.makeTimerSource(queue: DispatchQueue(label: "packed.fixture.native-proof"))
     source.schedule(deadline: .now(), repeating: .milliseconds(250))
     source.setEventHandler {
-      guard let snapshot = try? JSONSerialization.jsonObject(with: Data(C15tPayload.snapshot(C15t.snapshot()).utf8)) else { return }
-      let gates = ["necessary": C15t.isAllowed(.necessary), "functionality": C15t.isAllowed(.functionality), "experience": C15t.isAllowed(.experience), "measurement": C15t.isAllowed(.measurement), "marketing": C15t.isAllowed(.marketing)]
+      guard let snapshot = try? JSONSerialization.jsonObject(with: Data(InthPayload.snapshot(Inth.snapshot()).utf8)) else { return }
+      let gates = ["necessary": Inth.isAllowed(.necessary), "functionality": Inth.isAllowed(.functionality), "experience": Inth.isAllowed(.experience), "measurement": Inth.isAllowed(.measurement), "marketing": Inth.isAllowed(.marketing)]
       let body: [String: Any] = ["snapshot": snapshot, "gates": gates, "process": ProcessInfo.processInfo.processIdentifier, "source": "installed-native-core"]
       let data = try! JSONSerialization.data(withJSONObject: body, options: .sortedKeys)
       let url = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0].appendingPathComponent("packed-native-proof.jsonl")

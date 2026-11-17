@@ -27,9 +27,9 @@ import {
 const version = '3.0.0-canary.2';
 const deploymentId = '28570f16-da32-4c14-bd2e-c1acc0782365';
 const modules = [
-	['c15t-core', 'jar'],
-	['c15t-android', 'aar'],
-	['c15t-consent-ui', 'aar'],
+	['inth-core', 'jar'],
+	['inth-android', 'aar'],
+	['inth-consent-ui', 'aar'],
 ] as const;
 let root: string;
 let keyring: string;
@@ -68,7 +68,7 @@ const seal = (file: string) => {
 const modulePath = (artifact: string, suffix: string) =>
 	join(
 		repository,
-		`com/c15t/${artifact}/${version}/${artifact}-${version}${suffix}`
+		`com/inth/${artifact}/${version}/${artifact}-${version}${suffix}`
 	);
 
 const status = (state = 'VALIDATED') =>
@@ -77,7 +77,7 @@ const status = (state = 'VALIDATED') =>
 			deploymentId,
 			deploymentState: state,
 			purls: modules.map(
-				([artifact]) => `pkg:maven/com.c15t/${artifact}@${version}`
+				([artifact]) => `pkg:maven/com.inth/${artifact}@${version}`
 			),
 		})
 	);
@@ -138,7 +138,7 @@ beforeAll(() => {
 	for (const [artifact, extension] of modules) {
 		const prefix = join(
 			fixture,
-			`com/c15t/${artifact}/${version}/${artifact}-${version}`
+			`com/inth/${artifact}/${version}/${artifact}-${version}`
 		);
 		mkdirSync(dirname(prefix), { recursive: true });
 		const files: [string, string | Buffer][] = [
@@ -148,25 +148,25 @@ beforeAll(() => {
 			[
 				'.pom',
 				`<project xmlns="http://maven.apache.org/POM/4.0.0">
-<modelVersion>4.0.0</modelVersion><groupId>com.c15t</groupId>
+<modelVersion>4.0.0</modelVersion><groupId>com.inth</groupId>
 <artifactId>${artifact}</artifactId><version>${version}</version><packaging>${extension}</packaging>
 <name>${artifact}</name><description>Consent SDK</description><url>https://c15t.com</url>
 <licenses><license><name>Apache 2.0</name><url>https://www.apache.org/licenses/LICENSE-2.0.txt</url></license></licenses>
 <developers><developer><name>c15t</name></developer></developers>
 <scm><url>https://github.com/c15t/c15t</url><connection>scm:git:https://github.com/c15t/c15t.git</connection></scm>
-<dependencies><dependency><groupId>com.c15t</groupId><artifactId>c15t-core</artifactId><version>${version}</version></dependency></dependencies>
+<dependencies><dependency><groupId>com.inth</groupId><artifactId>inth-core</artifactId><version>${version}</version></dependency></dependencies>
 </project>`,
 			],
 			[
 				'.module',
 				JSON.stringify({
-					component: { group: 'com.c15t', module: artifact, version },
+					component: { group: 'com.inth', module: artifact, version },
 					variants: [
 						{
 							dependencies: [
 								{
-									group: 'com.c15t',
-									module: 'c15t-core',
+									group: 'com.inth',
+									module: 'inth-core',
 									version: { requires: version },
 								},
 							],
@@ -217,7 +217,7 @@ test('verifies actual signatures and checksums, then ZIPs only the selected nati
 });
 
 test('rejects a corrupted checksum before bundling', () => {
-	writeFileSync(modulePath('c15t-core', '.jar.sha256'), '0'.repeat(64));
+	writeFileSync(modulePath('inth-core', '.jar.sha256'), '0'.repeat(64));
 	expect(() =>
 		createMavenBundle({ output: bundle, repository, version })
 	).toThrow(/sha256 checksum differs/u);
@@ -226,7 +226,7 @@ test('rejects a corrupted checksum before bundling', () => {
 
 test('rejects invalid detached signatures', () => {
 	writeFileSync(
-		modulePath('c15t-android', '.aar.asc'),
+		modulePath('inth-android', '.aar.asc'),
 		'invalid PGP signature'
 	);
 	expect(() => verifyMavenRepository({ repository, version })).toThrow(
@@ -257,7 +257,7 @@ test.each(['0', '1'])(
 		const previous = process.env.PYTHONOPTIMIZE;
 		process.env.PYTHONOPTIMIZE = optimization;
 		try {
-			const pom = modulePath('c15t-android', '.pom');
+			const pom = modulePath('inth-android', '.pom');
 			const original = readFileSync(pom, 'utf8');
 			writeFileSync(
 				pom,
@@ -272,7 +272,7 @@ test.each(['0', '1'])(
 			);
 			writeFileSync(pom, original);
 			seal(pom);
-			const metadata = modulePath('c15t-android', '.module');
+			const metadata = modulePath('inth-android', '.module');
 			writeFileSync(
 				metadata,
 				readFileSync(metadata, 'utf8').replace(

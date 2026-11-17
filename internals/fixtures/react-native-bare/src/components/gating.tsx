@@ -14,11 +14,11 @@ import {
 	ConsentPrompt,
 	useConsentDecision,
 	useConsent,
-} from '@c15t/react-native';
+} from '@inth/react-native';
 import type { ReactNode } from 'react';
 
-import { CATEGORIES } from '../c15t/fake-native';
-import type { Category } from '../c15t/fake-native';
+import { CATEGORIES } from '../inth/fake-native';
+import type { Category } from '../inth/fake-native';
 import { Card, Flag, Hint, Row, Text } from './ui';
 
 /**

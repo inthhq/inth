@@ -1,4 +1,4 @@
-package com.c15t.demo
+package com.inth.demo
 
 import android.content.Intent
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
@@ -35,16 +35,16 @@ class ConsentScreenshotTest {
             device.executeShellCommand("cmd uimode night ${if (tone == "dark") "yes" else "no"}")
             for (ui in listOf("stock", "custom")) {
                 val custom = ui == "custom"
-                open("category", ui, if (custom) "ledger.prompt" else "c15t.first-layer") {
+                open("category", ui, if (custom) "ledger.prompt" else "inth.first-layer") {
                     capture("android-$ui-prompt-$tone")
-                    compose.onNodeWithTag(if (custom) "ledger.prompt.customize" else "c15t.first-layer.customize").performClick()
-                    waitFor(if (custom) "ledger.preferences" else "c15t.prefs")
+                    compose.onNodeWithTag(if (custom) "ledger.prompt.customize" else "inth.first-layer.customize").performClick()
+                    waitFor(if (custom) "ledger.preferences" else "inth.prefs")
                     capture("android-$ui-preferences-$tone")
                 }
-                open("iab", ui, if (custom) "ledger.prompt" else "c15t.first-layer") {
-                    compose.onNodeWithTag(if (custom) "ledger.prompt.customize" else "c15t.first-layer.customize").performClick()
+                open("iab", ui, if (custom) "ledger.prompt" else "inth.first-layer") {
+                    compose.onNodeWithTag(if (custom) "ledger.prompt.customize" else "inth.first-layer.customize").performClick()
                     if (custom) { waitFor("ledger.preferences"); compose.onNodeWithTag("ledger.tab.1").performClick(); waitFor("ledger.purpose.1") }
-                    else waitFor("c15t.iab")
+                    else waitFor("inth.iab")
                     capture("android-$ui-iab-$tone")
                 }
             }
@@ -67,5 +67,5 @@ class ConsentScreenshotTest {
         assertTrue("$name was not written", device.executeShellCommand("ls $DIRECTORY").contains("$name.png"))
     }
 
-    private companion object { const val DIRECTORY = "/sdcard/Download/c15t-consent-screenshots" }
+    private companion object { const val DIRECTORY = "/sdcard/Download/inth-consent-screenshots" }
 }

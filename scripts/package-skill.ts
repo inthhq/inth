@@ -31,8 +31,8 @@ export interface PackageSkill {
  * `skills:sync` links a skill under its directory name, and skills-npm under
  * its frontmatter name, so both must agree.
  *
- * @param packageName - The npm package name, such as `@c15t/react-native`.
- * @returns The skill name, such as `c15t-react-native`.
+ * @param packageName - The npm package name, such as `@inth/react-native`.
+ * @returns The skill name, such as `inth-react-native`.
  */
 export const packageSkillName = (packageName: string): string =>
 	packageName.replace(/^@/u, '').replace(/\//gu, '-');
@@ -54,7 +54,7 @@ export const renderPackageSkill = function renderPackageSkill(
 	skill: PackageSkill,
 	bundledFiles: ReadonlySet<string>
 ): string {
-	if (packageName === '@c15t/react-native') {
+	if (packageName === '@inth/react-native') {
 		const guides = [
 			['quickstart', 'React Native quickstart'],
 			['expo', 'Expo and EAS'],

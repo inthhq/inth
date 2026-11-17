@@ -8,7 +8,7 @@
  * fixtures stays quiet.
  */
 
-import { createConsentClient } from '@c15t/react-native';
+import { createConsentClient } from '@inth/react-native';
 import { describe, expect, it } from 'vitest';
 
 import { STORED_SNAPSHOT } from '../measure/cached-consent';
@@ -27,7 +27,7 @@ ensureReactGlobalForDist();
 const clientFor = function clientFor(
 	snapshot: ReturnType<typeof buildSnapshot>
 ) {
-	const native = installBenchNativeModule('C15t', setNativeModule, snapshot);
+	const native = installBenchNativeModule('Inth', setNativeModule, snapshot);
 
 	return createConsentClient(
 		native as never,
@@ -41,7 +41,7 @@ const clientFor = function clientFor(
 /** A client over a snapshot the store would hand back. */
 const clientForStored = function clientForStored() {
 	const native = installBenchNativeModule(
-		'C15t',
+		'Inth',
 		setNativeModule,
 		STORED_SNAPSHOT
 	);

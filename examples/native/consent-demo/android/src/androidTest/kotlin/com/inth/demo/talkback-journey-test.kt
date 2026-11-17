@@ -1,4 +1,4 @@
-package com.c15t.demo
+package com.inth.demo
 
 import android.app.UiAutomation
 import android.os.SystemClock

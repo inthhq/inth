@@ -15,7 +15,7 @@ import { AppearanceProvider, useAppearance } from './src/appearance';
 import {
 	ConsentSourceProvider,
 	useConsentSource,
-} from './src/c15t/consent-source';
+} from './src/inth/consent-source';
 import { useAppTheme } from './src/theme';
 
 const Root = () => {

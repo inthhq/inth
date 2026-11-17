@@ -1,5 +1,5 @@
 @file:OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
-package com.c15t.demo
+package com.inth.demo
 
 import android.app.Application
 import android.content.ClipData
@@ -23,16 +23,16 @@ import androidx.compose.ui.semantics.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.*
-import com.c15t.android.*
-import com.c15t.consentui.*
-import com.c15t.core.*
-import com.c15t.core.iab.*
-import com.c15t.core.model.*
-import com.c15t.core.spi.*
-import com.c15t.core.store.*
-import com.c15t.core.transport.*
-import com.c15t.prototype.BuildConfig
-import com.c15t.prototype.R
+import com.inth.android.*
+import com.inth.consentui.*
+import com.inth.core.*
+import com.inth.core.iab.*
+import com.inth.core.model.*
+import com.inth.core.spi.*
+import com.inth.core.store.*
+import com.inth.core.transport.*
+import com.inth.prototype.BuildConfig
+import com.inth.prototype.R
 import kotlinx.coroutines.*
 import java.net.URI
 import java.util.concurrent.atomic.AtomicBoolean
@@ -70,7 +70,7 @@ class ConsentDemoActivity : ComponentActivity() {
                             "hidden" -> (providerTheme ?: ConsentTheme.c15t).copy(brand = ConsentTheme.Brand.Hidden)
                             else -> providerTheme
                         }
-                        C15tConsent(model.policyUrl, theme = identityTheme, core = core)
+                        InthConsent(model.policyUrl, theme = identityTheme, core = core)
                     }
                 }
             }
@@ -104,7 +104,7 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
     var showReviewDiagnostics by mutableStateOf(false); private set
     var consentPresentationDeferred by mutableStateOf(false); private set
     private var reviewProfile: TcfReviewProfile? = null
-    private var fixtureStore: C15tStore? = null
+    private var fixtureStore: InthStore? = null
     var fault: FaultPreferences? = null
     var http: FixtureHttp? = null
     private var started = false
@@ -160,9 +160,9 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
                         }
                         val config = NativeConfig(backendUrl = backend ?: "https://fixture.invalid", consentCategories = ConsentCategory.entries, detectedGpc = scenario == "gpc-on",
                             iab = if (mode == "iab") IabConfiguration(cmpId = 53, cmpVersion = 7, publisherCountryCode = "GB", publisherRestrictions = listOf(IabPublisherRestriction(7,0,listOf(2)))) else null)
-                        val durableStore = C15tStore(store)
+                        val durableStore = InthStore(store)
                         fixtureStore = durableStore
-                        val kernel = ConsentCore(config, durableStore, transport = HostedTransport(if (backend == null) peer else C15tHttpClient(),config), executor = TaskExecutor.DIRECT)
+                        val kernel = ConsentCore(config, durableStore, transport = HostedTransport(if (backend == null) peer else InthHttpClient(),config), executor = TaskExecutor.DIRECT)
                         kernel.bootstrap()
                         fault = store; http = peer
                         policyUrl = "https://example.test/privacy"
@@ -176,7 +176,7 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
                         kernel
                     } else {
                         val config = profile?.nativeConfig() ?: NativeConfig(backendUrl = hostedBackend!!, consentCategories = ConsentCategory.entries)
-                        C15tAndroid.install(context, config)
+                        InthAndroid.install(context, config)
                         policyUrl = hostedPrivacy!!
                         if (profile != null) {
                             reviewSetupSaved = reviewPreferences().edit().apply {
@@ -184,7 +184,7 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
                                 profile.storedValues().forEach { (key, value) -> putString(key, value) }
                             }.commit()
                         }
-                        requireNotNull(C15t.current)
+                        requireNotNull(Inth.current)
                     }
                 }
                 core = engine
@@ -201,10 +201,10 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
         val engine = core ?: return
         snapshot = engine.snapshot()
         reportUrl?.let { url ->
-            val raw = com.c15t.core.wire.SnapshotWire.encodeToString(snapshot)
+            val raw = com.inth.core.wire.SnapshotWire.encodeToString(snapshot)
             viewModelScope.launch(Dispatchers.IO) {
                 val body = org.json.JSONObject().put("core", "native").put("snapshot", raw).put("session", launchId).toString()
-                runCatching { C15tHttpClient().send(HttpRequest(method = HttpRequest.POST, url = url, headers = mapOf("Content-Type" to "application/json"), body = body)) }
+                runCatching { InthHttpClient().send(HttpRequest(method = HttpRequest.POST, url = url, headers = mapOf("Content-Type" to "application/json"), body = body)) }
             }
         }
         viewModelScope.launch { pending = withContext(Dispatchers.IO) { fixtureStore?.readPending()?.size ?: 0 } }
@@ -227,7 +227,7 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
         val providers = engine.adTechProviderDisclosures()
         val platformValues = android.preference.PreferenceManager.getDefaultSharedPreferences(getApplication<Application>()).all
         reviewCapture = captureTcfReview(profile,
-            TcfReviewBuild(BuildConfig.APPLICATION_ID, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE.toString(), BuildConfig.BUILD_TYPE, C15tProtocol.DEFAULT_SDK_VERSION),
+            TcfReviewBuild(BuildConfig.APPLICATION_ID, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE.toString(), BuildConfig.BUILD_TYPE, InthProtocol.DEFAULT_SDK_VERSION),
             currentSnapshot, authority, listStatus, acStatus, providers, platformValues,
             capturedAt, lastError)
     }
@@ -262,7 +262,7 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
             vendorProbes++
         }
     }
-    private fun reviewPreferences() = getApplication<Application>().getSharedPreferences("c15t.tcf-review-setup", 0)
+    private fun reviewPreferences() = getApplication<Application>().getSharedPreferences("inth.tcf-review-setup", 0)
     override fun onCleared() { subscription?.close(); errors?.close(); vendorProbe?.close() }
 }
 
@@ -359,8 +359,8 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
         Text("Core, disclosure status and platform storage are separate reads. Refresh after each decision. Text and JSON copy the same observation, including TC and AC strings, but no subject ID, external ID or receipt.")
         Button(onClick = onClose) { Text(if (model.consentPresentationDeferred) "Show consent screen" else "Back to demo") }
         Button(onClick = model::refreshReviewReport) { Text("Refresh report") }
-        Button(onClick = { scope.launch { clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("c15t TCF review", model.reviewReport))) } }) { Text("Copy report") }
-        Button(onClick = { scope.launch { clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("c15t mobile evidence JSON", model.reviewReportJson))) } }, modifier = Modifier.testTag("review.copy-json")) { Text("Copy JSON") }
+        Button(onClick = { scope.launch { clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("Inth TCF review", model.reviewReport))) } }) { Text("Copy report") }
+        Button(onClick = { scope.launch { clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("Inth mobile evidence JSON", model.reviewReportJson))) } }, modifier = Modifier.testTag("review.copy-json")) { Text("Copy JSON") }
         Button(onClick = { confirmReset = true }) { Text("Reset consent") }
         Text(if (model.reviewSetupSaved) "Review setup reconnects on relaunch." else "Review setup is not saved. Enter it again after relaunch.")
         TextButton(onClick = model::forgetReviewSetup) { Text("Forget setup for next launch") }

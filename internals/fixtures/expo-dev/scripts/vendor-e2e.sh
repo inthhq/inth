@@ -22,7 +22,7 @@ mkdir -p "${OUT}"
 OUT="$(cd "${OUT}" && pwd)"
 [[ ! -e "${OUT}/backend-ready" && ! -e "${OUT}/result.json" ]] || { echo "Use a fresh evidence directory: ${OUT}" >&2; exit 2; }
 # tsx creates a Unix socket under TMPDIR. Evidence paths can exceed its path limit.
-TASK_TMP="$(mktemp -d /tmp/c15t-expo-e2e.XXXXXX)"
+TASK_TMP="$(mktemp -d /tmp/inth-expo-e2e.XXXXXX)"
 export TMPDIR="${TASK_TMP}/"
 printf '%s\n' "${LABEL}" > "${OUT}/cell.txt"
 BACKEND_PORT="${C15T_APP_E2E_PORT:-39875}"
@@ -34,7 +34,7 @@ cleanup() {
   set +e
   if [[ -n "${VIDEO_PID}" ]]; then
     if [[ "${PLATFORM}" == android ]]; then
-      "${ADB}" -s "${DEVICE}" shell touch /data/local/tmp/c15t-video-stop
+      "${ADB}" -s "${DEVICE}" shell touch /data/local/tmp/inth-video-stop
       "${ADB}" -s "${DEVICE}" shell pkill -2 screenrecord
       "${ADB}" -s "${DEVICE}" shell 'for i in 1 2 3 4 5 6 7 8 9 10; do pidof screenrecord >/dev/null || exit 0; sleep 1; done; exit 1'
     else
@@ -47,7 +47,7 @@ cleanup() {
   done
   if [[ "${PLATFORM}" == ios && -n "${DEVICE}" ]]; then
     xcrun simctl io "${DEVICE}" screenshot "${OUT}/final.png"
-    xcrun simctl spawn "${DEVICE}" log show --last 20m --style compact --predicate 'process == "c15tExpoDev"' > "${OUT}/device.log" 2>&1
+    xcrun simctl spawn "${DEVICE}" log show --last 20m --style compact --predicate 'process == "inthExpoDev"' > "${OUT}/device.log" 2>&1
     if [[ -d "${OUT}/journey.xcresult" ]]; then
       xcrun xcresulttool export attachments --path "${OUT}/journey.xcresult" --output-path "${OUT}/attachments"
       xcrun xcresulttool get test-results summary --path "${OUT}/journey.xcresult" --format json > "${OUT}/test-summary.json"
@@ -59,7 +59,7 @@ cleanup() {
       "${ADB}" -s "${DEVICE}" logcat -d -v threadtime > "${OUT}/device-final.log" 2>&1
       "${ADB}" -s "${DEVICE}" exec-out screencap -p > "${OUT}/final.png"
       mkdir -p "${OUT}/video-segments"
-      "${ADB}" -s "${DEVICE}" pull /data/local/tmp/c15t-video-segments/. "${OUT}/video-segments"
+      "${ADB}" -s "${DEVICE}" pull /data/local/tmp/inth-video-segments/. "${OUT}/video-segments"
       python3 - "${OUT}" <<'PYVIDEO'
 import pathlib,subprocess,sys
 out=pathlib.Path(sys.argv[1])
@@ -194,7 +194,7 @@ curl -fsS "http://127.0.0.1:${BACKEND_PORT}/health" > "${OUT}/backend-health.jso
 cd "${REPO_ROOT}"
 git rev-parse HEAD > "${OUT}/source-head.txt"
 git diff --stat > "${OUT}/source-diff.txt"
-bun turbo run build --filter=@c15t/react-native --filter=@c15t/schema > "${OUT}/dependencies.log" 2>&1
+bun turbo run build --filter=@inth/react-native --filter=@c15t/schema > "${OUT}/dependencies.log" 2>&1
 
 # The URL the app dials. Android reaches the host through adb reverse on its own port 3000.
 if [[ "${PLATFORM}" == android ]]; then
@@ -208,21 +208,21 @@ else
 fi
 mkdir -p "${OUT}/policy-assets"
 C15T_E2E_BINDING="${APP_URL}" C15T_E2E_FETCH="http://localhost:${BACKEND_PORT}" \
-  bunx tsx scripts/export-mobile-e2e-policy.ts "${OUT}/policy-assets/c15t-policy.json"
+  bunx tsx scripts/export-mobile-e2e-policy.ts "${OUT}/policy-assets/inth-policy.json"
 
 export CI=1 EXPO_NO_TELEMETRY=1 SENTRY_DISABLE_AUTO_UPLOAD=true C15T_LOCAL_PODS=false
 export EXPO_PUBLIC_C15T_APP_E2E=1 EXPO_PUBLIC_C15T_FAKE_NATIVE=false
 export EXPO_PUBLIC_C15T_BACKEND_URL="${APP_URL}/api/self-host"
 export EXPO_PUBLIC_C15T_E2E_URL="${APP_URL}" EXPO_PUBLIC_C15T_E2E_MIXPANEL_URL="${MIXPANEL_URL}"
-export C15T_E2E_POLICY="${OUT}/policy-assets/c15t-policy.json"
+export C15T_E2E_POLICY="${OUT}/policy-assets/inth-policy.json"
 
 if [[ -n "${CELL}" ]]; then
   # A packed consumer at the cell's versions, outside the checkout.
-  CONSUMER="$(mktemp -d "${C15T_EXPO_CONSUMER_ROOT:-${HOME}}/c15t-expo-${CELL}.XXXXXX")/app"
+  CONSUMER="$(mktemp -d "${C15T_EXPO_CONSUMER_ROOT:-${HOME}}/inth-expo-${CELL}.XXXXXX")/app"
   # pnpm, not `bun pm pack`: the workspace is a pnpm install, so only pnpm can
   # resolve the package's `workspace:` dependency versions.
-  (cd "${REPO_ROOT}/packages/react-native" && pnpm --config.ignore-scripts=true pack --out "${OUT}/c15t-react-native.tgz") > "${OUT}/pack.log" 2>&1
-  python3 "${APP_DIR}/scripts/prepare-packed-consumer.py" --package "${OUT}/c15t-react-native.tgz" --output "${CONSUMER}" --cell "${CELL}" > "${OUT}/consumer.json"
+  (cd "${REPO_ROOT}/packages/react-native" && pnpm --config.ignore-scripts=true pack --out "${OUT}/inth-react-native.tgz") > "${OUT}/pack.log" 2>&1
+  python3 "${APP_DIR}/scripts/prepare-packed-consumer.py" --package "${OUT}/inth-react-native.tgz" --output "${CONSUMER}" --cell "${CELL}" > "${OUT}/consumer.json"
   APP="${CONSUMER}"
   (cd "${APP}" && bun install) > "${OUT}/install.log" 2>&1
   cp "${APP}/package.json" "${OUT}/consumer-package.json"
@@ -244,7 +244,7 @@ const installed = (name) => {
   }
 };
 const names = ['expo', 'react', 'react-native', 'expo-build-properties', 'expo-constants', 'expo-dev-client',
-  '@c15t/react-native', 'posthog-react-native', 'mixpanel-react-native', '@amplitude/analytics-react-native',
+  '@inth/react-native', 'posthog-react-native', 'mixpanel-react-native', '@amplitude/analytics-react-native',
   '@sentry/react-native', '@react-native-firebase/app', '@react-native-firebase/analytics',
   '@react-native-async-storage/async-storage', 'react-native-get-random-values'];
 const versions = {};
@@ -276,7 +276,7 @@ ios=sorted((version(r["version"]), r["identifier"]) for r in json.load(sys.stdin
   and os.environ["SIM_DEVICE"] in [d["name"] for d in r.get("supportedDeviceTypes", [])])
 if not ios: raise SystemExit("No iOS runtime at or below SDK " + os.environ["SIM_SDK"] + " runs " + os.environ["SIM_DEVICE"])
 print(ios[-1 if os.environ["PICK"] == "newest" else 0][1])')}"
-  DEVICE="$(xcrun simctl create "c15t-expo-e2e-${LABEL}-${RUN_ID}" "${SIM_DEVICE}" "${RUNTIME}")"
+  DEVICE="$(xcrun simctl create "inth-expo-e2e-${LABEL}-${RUN_ID}" "${SIM_DEVICE}" "${RUNTIME}")"
   printf '%s\n' "${DEVICE}" > "${OUT}/device-id.txt"
   printf '%s\n' "${RUNTIME}" > "${OUT}/device-version.txt"
   xcodebuild -version > "${OUT}/toolchain.txt"
@@ -285,12 +285,12 @@ print(ios[-1 if os.environ["PICK"] == "newest" else 0][1])')}"
   xcrun simctl ui "${DEVICE}" appearance light
   DERIVED="${C15T_APP_E2E_DERIVED:-${OUT}/derived}"
   # Keep the ad-hoc signature: an unsigned Simulator app cannot write the Keychain.
-  xcodebuild build -workspace "${APP}/ios/c15tExpoDev.xcworkspace" -scheme c15tExpoDev \
+  xcodebuild build -workspace "${APP}/ios/inthExpoDev.xcworkspace" -scheme inthExpoDev \
     -configuration Release -destination "platform=iOS Simulator,id=${DEVICE}" \
     -derivedDataPath "${DERIVED}" \
     CODE_SIGNING_ALLOWED=YES CODE_SIGNING_FOR_SIMULATOR=YES CODE_SIGN_IDENTITY=- \
     ONLY_ACTIVE_ARCH=YES > "${OUT}/build.log" 2>&1
-  APP_BUNDLE="${DERIVED}/Build/Products/Release-iphonesimulator/c15tExpoDev.app"
+  APP_BUNDLE="${DERIVED}/Build/Products/Release-iphonesimulator/inthExpoDev.app"
   xcrun simctl install "${DEVICE}" "${APP_BUNDLE}"
   # An external UI test bundle drives the installed app, as packed-launch-ios.py does.
   HARNESS="${OUT}/harness"
@@ -301,9 +301,9 @@ print(ios[-1 if os.environ["PICK"] == "newest" else 0][1])')}"
 {"name": "VendorJourney", "options": {"deploymentTarget": {"iOS": "16.4"}},
  "settings": {"base": {"SWIFT_VERSION": "5.0", "CODE_SIGN_IDENTITY": "-", "CODE_SIGNING_FOR_SIMULATOR": "YES", "GENERATE_INFOPLIST_FILE": "YES"}},
  "targets": {
-  "Host": {"type": "application", "platform": "iOS", "sources": ["host.swift"], "settings": {"base": {"PRODUCT_BUNDLE_IDENTIFIER": "com.c15t.vendor-journey-host"}}},
+  "Host": {"type": "application", "platform": "iOS", "sources": ["host.swift"], "settings": {"base": {"PRODUCT_BUNDLE_IDENTIFIER": "com.inth.vendor-journey-host"}}},
   "Journey": {"type": "bundle.ui-testing", "platform": "iOS", "sources": ["journey.swift"], "dependencies": [{"target": "Host"}],
-   "settings": {"base": {"PRODUCT_BUNDLE_IDENTIFIER": "com.c15t.vendor-journey-tests", "TEST_TARGET_NAME": "Host"}}}},
+   "settings": {"base": {"PRODUCT_BUNDLE_IDENTIFIER": "com.inth.vendor-journey-tests", "TEST_TARGET_NAME": "Host"}}}},
  "schemes": {"VendorJourney": {"build": {"targets": {"Host": "all", "Journey": ["test"]}}, "test": {"targets": ["Journey"]}}}}
 JSON
   xcodegen generate --spec "${HARNESS}/project.json" > "${OUT}/harness-project.log" 2>&1
@@ -319,7 +319,7 @@ def update(value):
   if isinstance(value,dict):
     if 'TestBundlePath' in value:
       value['UITargetAppPath']=app
-      value['UITargetAppBundleIdentifier']='com.c15t.expodev'
+      value['UITargetAppBundleIdentifier']='com.inth.expodev'
       value.setdefault('EnvironmentVariables',{})['C15T_E2E_URL']=url
     for child in list(value.values()): update(child)
   elif isinstance(value,list):
@@ -329,7 +329,7 @@ open(path,'wb').write(plistlib.dumps(data))
 PYRUN
   # Firebase cannot be redirected; its debug log (the journey launches with
   # -FIRDebugEnabled -FIRAnalyticsDebugEnabled) is the evidence for its consent state.
-  xcrun simctl spawn "${DEVICE}" log stream --level debug --style compact --predicate 'process == "c15tExpoDev"' > "${OUT}/app-stream.log" 2>&1 &
+  xcrun simctl spawn "${DEVICE}" log stream --level debug --style compact --predicate 'process == "inthExpoDev"' > "${OUT}/app-stream.log" 2>&1 &
   LOG_PID=$!
   xcrun simctl io "${DEVICE}" recordVideo --codec=h264 "${OUT}/journey.mp4" > "${OUT}/video.log" 2>&1 &
   VIDEO_PID=$!
@@ -346,7 +346,7 @@ else
   ARCH="${C15T_ANDROID_ARCH:-arm64-v8a}"
   export C15T_MAVEN_URL="file://${REPO_ROOT}/packages/android/build/maven-staging"
   sh "${REPO_ROOT}/packages/android/gradlew" -p "${REPO_ROOT}/packages/android" --max-workers=4 \
-    :c15t-core:publishAllPublicationsToStagingRepository :c15t-android:publishAllPublicationsToStagingRepository :c15t-consent-ui:publishAllPublicationsToStagingRepository > "${OUT}/native-artifacts.log" 2>&1
+    :inth-core:publishAllPublicationsToStagingRepository :inth-android:publishAllPublicationsToStagingRepository :inth-consent-ui:publishAllPublicationsToStagingRepository > "${OUT}/native-artifacts.log" 2>&1
   (cd "${APP}" && bun x expo prebuild --platform android --clean --no-install) > "${OUT}/prebuild.log" 2>&1
   sh "${APP}/android/gradlew" -p "${APP}/android" --refresh-dependencies :app:assembleRelease \
     -PreactNativeArchitectures="${ARCH}" > "${OUT}/build.log" 2>&1
@@ -355,7 +355,7 @@ else
   [[ -s "${MAPPING}" ]] || { echo "The Release build did not run R8: no ${MAPPING}" >&2; exit 1; }
   # Kept to read obfuscated stack traces from the journey logs.
   gzip -c "${MAPPING}" > "${OUT}/r8-mapping.txt.gz"
-  AVD_NAME="c15t-expo-e2e-${LABEL}-${RUN_ID}"
+  AVD_NAME="inth-expo-e2e-${LABEL}-${RUN_ID}"
   echo no | "${AVDMANAGER}" create avd --name "${AVD_NAME}" --package "${IMAGE}" --device pixel_6 > "${OUT}/avd.log" 2>&1
   # Start above the default 5554 so a developer's own emulator keeps its port.
   PORT="$(python3 -c 'import socket
@@ -395,15 +395,15 @@ for p in range(5560, 5586, 2):
   start_log_streams
   cat > "${OUT}/record-video.sh" <<'SHVIDEO'
 #!/system/bin/sh
-mkdir -p /data/local/tmp/c15t-video-segments
+mkdir -p /data/local/tmp/inth-video-segments
 segment=0
-while [ ! -e /data/local/tmp/c15t-video-stop ]; do
-  screenrecord --time-limit 170 "/data/local/tmp/c15t-video-segments/$(printf '%03d' "$segment").mp4"
+while [ ! -e /data/local/tmp/inth-video-stop ]; do
+  screenrecord --time-limit 170 "/data/local/tmp/inth-video-segments/$(printf '%03d' "$segment").mp4"
   segment=$((segment + 1))
 done
 SHVIDEO
-  "${ADB}" -s "${DEVICE}" push "${OUT}/record-video.sh" /data/local/tmp/c15t-record-video.sh > "${OUT}/video-start.log" 2>&1
-  "${ADB}" -s "${DEVICE}" shell 'nohup sh /data/local/tmp/c15t-record-video.sh >/data/local/tmp/c15t-video.log 2>&1 </dev/null &'
+  "${ADB}" -s "${DEVICE}" push "${OUT}/record-video.sh" /data/local/tmp/inth-record-video.sh > "${OUT}/video-start.log" 2>&1
+  "${ADB}" -s "${DEVICE}" shell 'nohup sh /data/local/tmp/inth-record-video.sh >/data/local/tmp/inth-video.log 2>&1 </dev/null &'
   VIDEO_PID=remote
   install_apk || { recover_offline_device && install_apk; } \
     || android_failed "adb install failed: $(tail -n 1 "${OUT}/install-apk.log")"

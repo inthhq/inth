@@ -1,8 +1,8 @@
 // #region docs:android-iab-config title="iab-configuration.kt"
-package com.c15t.demo
+package com.inth.demo
 
-import com.c15t.core.NativeConfig
-import com.c15t.core.iab.IabConfiguration
+import com.inth.core.NativeConfig
+import com.inth.core.iab.IabConfiguration
 
 fun iabConfig(
     projectUrl: String,

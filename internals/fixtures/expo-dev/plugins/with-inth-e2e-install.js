@@ -19,14 +19,14 @@ const { mergeContents } = require(
 );
 
 /** The policy file's name in the app bundle and in the Android assets. */
-const POLICY_NAME = 'c15t-e2e-policy';
+const POLICY_NAME = 'inth-e2e-policy';
 const POLICY_FILE = `${POLICY_NAME}.json`;
 
 /** A string literal that Kotlin and Swift both read the same way. */
 const literal = (value) => {
 	if (!/^[\w\-.:/]+$/u.test(value)) {
 		throw new Error(
-			`with-c15t-e2e-install cannot write ${JSON.stringify(value)} into native source.`
+			`with-inth-e2e-install cannot write ${JSON.stringify(value)} into native source.`
 		);
 	}
 	return `"${value}"`;
@@ -41,18 +41,18 @@ const kotlinSource = (
 ) => `package ${packageName}
 
 import android.app.Application
-import com.c15t.android.C15tAndroid
-import com.c15t.android.C15tHttpClient
-import com.c15t.core.C15tInternalApi
-import com.c15t.core.NativeConfig
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.transport.HostedTransport
+import com.inth.android.InthAndroid
+import com.inth.android.InthHttpClient
+import com.inth.core.InthInternalApi
+import com.inth.core.NativeConfig
+import com.inth.core.model.ConsentCategory
+import com.inth.core.transport.HostedTransport
 
-// Written by plugins/with-c15t-e2e-install.js for an App E2E build.
-// A Release build that talks to the loopback E2E backend installs through c15t's
-// internal door. An app calls C15tAndroid.install(context, config) with its Inth URL.
-@OptIn(C15tInternalApi::class)
-object C15tE2EInstall {
+// Written by plugins/with-inth-e2e-install.js for an App E2E build.
+// A Release build that talks to the loopback E2E backend installs through Inth's
+// internal door. An app calls InthAndroid.install(context, config) with its Inth URL.
+@OptIn(InthInternalApi::class)
+object InthE2EInstall {
   fun install(application: Application) {
     val declared = listOf(${consentCategories.map(literal).join(', ')})
     val config = NativeConfig(
@@ -60,7 +60,7 @@ object C15tE2EInstall {
       bundledPolicy = application.assets.open("${POLICY_FILE}").bufferedReader().use { it.readText() },
       consentCategories = declared.map { name -> ConsentCategory.entries.first { it.wireName == name } },
     )
-    C15tAndroid.install(application, config, transport = HostedTransport(C15tHttpClient(), config))
+    InthAndroid.install(application, config, transport = HostedTransport(InthHttpClient(), config))
   }
 }
 `;
@@ -69,27 +69,27 @@ const swiftHelper = (
 	backendURL,
 	consentCategories
 ) => `// App E2E only. A Release build that talks to the loopback E2E backend installs
-// through c15t's internal door, before React Native starts.
-private func installC15tForE2E() {
+// through Inth's internal door, before React Native starts.
+private func installInthForE2E() {
   let endpoint = ${literal(backendURL)}
   do {
-    _ = try C15tApple.install(CoreConfig(
-      store: KeychainStore(service: C15tBridgeConfiguration.defaultKeychainService),
+    _ = try InthApple.install(CoreConfig(
+      store: KeychainStore(service: InthBridgeConfiguration.defaultKeychainService),
       bundledPolicy: Bundle.main.url(forResource: "${POLICY_NAME}", withExtension: "json")
         .flatMap { BundledPolicyResource(url: $0, endpoint: endpoint) },
       transport: HostedTransport(baseURL: URL(string: endpoint)!),
       consentCategories: [${consentCategories.map(literal).join(', ')}].compactMap(ConsentCategory.init(rawValue:)),
       storageBus: UserDefaultsStorageBus()))
-  } catch { fatalError("c15t E2E install failed: \\(error)") }
+  } catch { fatalError("Inth E2E install failed: \\(error)") }
 }
 `;
 
 /**
  * Install the consent core from native code in an App E2E build.
  *
- * The c15t plugin accepts only an Inth project URL, and a Release build cannot
+ * The Inth plugin accepts only an Inth project URL, and a Release build cannot
  * use dryRun, so the app installs the core itself against the loopback E2E
- * backend before React Native starts. The c15t plugin runs with
+ * backend before React Native starts. The Inth plugin runs with
  * `autoBootstrap: false`, and the bridge attaches to this core. The bare
  * fixture's AppDelegate and MainApplication do the same thing by hand.
  *
@@ -99,7 +99,7 @@ private func installC15tForE2E() {
  * exported for that URL (absolute, or relative to the project).
  * @returns {import('expo/config').ExpoConfig} The configuration with the native install.
  */
-const withC15tE2EInstall = (
+const withInthE2EInstall = (
 	config,
 	{ backendURL, consentCategories, policy }
 ) => {
@@ -111,16 +111,16 @@ const withC15tE2EInstall = (
 	const policySource = (projectRoot) => path.resolve(projectRoot, policy);
 
 	let next = withAppBuildGradle(config, (gradle) => {
-		// The React Native module keeps c15t as `implementation`, so the app module
+		// The React Native module keeps Inth as `implementation`, so the app module
 		// needs its own compile dependency. Same version rule as its library.gradle.
 		gradle.modResults.contents = merge(gradle.modResults.contents, {
 			anchor: /^dependencies\s*\{/u,
 			comment: '//',
-			newSrc: `    def c15tCoreVersion = findProperty('c15t.core.version') ?: '3.0.0-alpha.1'
-    implementation("com.c15t:c15t-core:$c15tCoreVersion")
-    implementation("com.c15t:c15t-android:$c15tCoreVersion")`,
+			newSrc: `    def inthCoreVersion = findProperty('inth.core.version') ?: '3.0.0-alpha.1'
+    implementation("com.inth:inth-core:$inthCoreVersion")
+    implementation("com.inth:inth-android:$inthCoreVersion")`,
 			offset: 1,
-			tag: 'c15t-e2e-install-dependencies',
+			tag: 'inth-e2e-install-dependencies',
 		});
 		return gradle;
 	});
@@ -129,9 +129,9 @@ const withC15tE2EInstall = (
 		application.modResults.contents = merge(application.modResults.contents, {
 			anchor: /super\.onCreate\(\)/u,
 			comment: '//',
-			newSrc: '    C15tE2EInstall.install(this)',
+			newSrc: '    InthE2EInstall.install(this)',
 			offset: 1,
-			tag: 'c15t-e2e-install',
+			tag: 'inth-e2e-install',
 		});
 		return application;
 	});
@@ -141,7 +141,7 @@ const withC15tE2EInstall = (
 		(mod) => {
 			const packageName = mod.android?.package;
 			if (!packageName) {
-				throw new Error('with-c15t-e2e-install needs android.package.');
+				throw new Error('with-inth-e2e-install needs android.package.');
 			}
 			const main = path.join(
 				mod.modRequest.platformProjectRoot,
@@ -150,7 +150,7 @@ const withC15tE2EInstall = (
 			const sources = path.join(main, 'java', ...packageName.split('.'));
 			fs.mkdirSync(sources, { recursive: true });
 			fs.writeFileSync(
-				path.join(sources, 'C15tE2EInstall.kt'),
+				path.join(sources, 'InthE2EInstall.kt'),
 				kotlinSource(packageName, backendURL, consentCategories)
 			);
 			fs.mkdirSync(path.join(main, 'assets'), { recursive: true });
@@ -164,27 +164,27 @@ const withC15tE2EInstall = (
 
 	next = withAppDelegate(next, (delegate) => {
 		let { contents } = delegate.modResults;
-		// CocoaPods compiles the vendored core into the C15tReactNative module.
+		// CocoaPods compiles the vendored core into the InthReactNative module.
 		contents = merge(contents, {
 			anchor: /^import React$/u,
 			comment: '//',
-			newSrc: '@_spi(C15tInternal) import C15tReactNative',
+			newSrc: '@_spi(InthInternal) import InthReactNative',
 			offset: 0,
-			tag: 'c15t-e2e-install-import',
+			tag: 'inth-e2e-install-import',
 		});
 		contents = merge(contents, {
 			anchor: /let delegate = ReactNativeDelegate\(\)/u,
 			comment: '//',
-			newSrc: '    installC15tForE2E()',
+			newSrc: '    installInthForE2E()',
 			offset: 0,
-			tag: 'c15t-e2e-install',
+			tag: 'inth-e2e-install',
 		});
 		contents = merge(contents, {
 			anchor: /^class ReactNativeDelegate\b/u,
 			comment: '//',
 			newSrc: swiftHelper(backendURL, consentCategories),
 			offset: 0,
-			tag: 'c15t-e2e-install-helper',
+			tag: 'inth-e2e-install-helper',
 		});
 		delegate.modResults.contents = contents;
 		return delegate;
@@ -217,4 +217,4 @@ const withC15tE2EInstall = (
 	return next;
 };
 
-module.exports = withC15tE2EInstall;
+module.exports = withInthE2EInstall;

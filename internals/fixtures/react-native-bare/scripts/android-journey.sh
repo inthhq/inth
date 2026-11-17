@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 #
-# Prove the c15t consent journey on a connected Android device, end to end, in one command.
+# Prove the Inth consent journey on a connected Android device, end to end, in one command.
 #
 #   internals/fixtures/react-native-bare/scripts/android-journey.sh
 #
 # This is the Android half of the same proof ios-journey.sh gives you. Android hands a
-# c15t-demo:// link to the app without a confirmation, so verbs go in as real deep links and
+# inth-demo:// link to the app without a confirmation, so verbs go in as real deep links and
 # no launch-variable workaround is needed.
 #
 # What each step asserts is read out of the view hierarchy (uiautomator), not off a
@@ -28,8 +28,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 REPO_ROOT="$(cd "${APP_DIR}/../../.." && pwd)"
 
-PKG="com.c15t.bare"
-ACTIVITY="${PKG}/com.c15t.bare.MainActivity"
+PKG="com.inth.bare"
+ACTIVITY="${PKG}/com.inth.bare.MainActivity"
 OUT_DIR="${JOURNEY_OUT:-/tmp/android-journey/$(basename "${REPO_ROOT}")}"
 BACKEND_URL="${JOURNEY_BACKEND:-http://localhost:3000/api/self-host}"
 
@@ -75,7 +75,7 @@ fi
 
 # Two runs driving one device read each other's screens, so one of them reports a step that
 # never happened. The lock is per serial, which is the thing actually being fought over.
-LOCK_DIR="${TMPDIR:-/tmp}c15t-android-journey-${SERIAL}.lock"
+LOCK_DIR="${TMPDIR:-/tmp}inth-android-journey-${SERIAL}.lock"
 mkdir "${LOCK_DIR}" 2>/dev/null ||
 	die "another run already drives ${SERIAL}. Its lock is ${LOCK_DIR}."
 trap 'rmdir "${LOCK_DIR}" 2>/dev/null || true' EXIT
@@ -162,7 +162,7 @@ capture () {
 
 # die_if_dead <name>: the app can fail before JavaScript, and then every consent label is
 # missing for a reason that has nothing to do with consent. Both journey scripts rebuild
-# @c15t/react-native, and the debug Android app is served that same dist over Metro, so a run
+# @inth/react-native, and the debug Android app is served that same dist over Metro, so a run
 # that starts while another worktree is rebuilding lands on a dead instance. Saying so beats
 # reporting that the banner never appeared.
 die_if_dead () {
@@ -170,7 +170,7 @@ die_if_dead () {
 	if grep -qE "loadJSBundleFromAssets|ReactHostImpl|JSBundleLoader|Unable to load script" \
 		"${xml}" 2>/dev/null; then
 		rm -f "${xml}"
-		die "the app on ${SERIAL} crashed loading its JavaScript bundle, so nothing below this line could mean anything. Another build was probably replacing @c15t/react-native mid-run. Wait for it and re-run."
+		die "the app on ${SERIAL} crashed loading its JavaScript bundle, so nothing below this line could mean anything. Another build was probably replacing @inth/react-native mid-run. Wait for it and re-run."
 	fi
 }
 
@@ -218,7 +218,7 @@ link () {
 	"${ADB}" -s "${SERIAL}" shell am force-stop "${PKG}" >/dev/null 2>&1
 	sleep 1
 	"${ADB}" -s "${SERIAL}" shell am start -a android.intent.action.VIEW \
-		-d "'c15t-demo://${1}'" >/dev/null 2>&1
+		-d "'inth-demo://${1}'" >/dev/null 2>&1
 	sleep "${2:-8}"
 }
 

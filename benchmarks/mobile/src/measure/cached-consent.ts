@@ -23,7 +23,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { median } from '@c15t/benchmarking/utils';
-import { createConsentClient } from '@c15t/react-native';
+import { createConsentClient } from '@inth/react-native';
 
 import { ensureReactGlobalForDist } from '../support/ensure-react-global';
 import { installBenchNativeModule } from '../support/fake-native';
@@ -35,7 +35,7 @@ import {
 import { resetNativeStub, setNativeModule } from '../support/react-native-stub';
 
 /** Name the native cores register the TurboModule under. */
-const MODULE_NAME = 'C15t';
+const MODULE_NAME = 'Inth';
 
 /** The event surface a client needs, without a real emitter. */
 const silentEvents = {
@@ -133,7 +133,7 @@ export const measureCachedConsent = function measureCachedConsent(
 	ensureReactGlobalForDist();
 
 	const storePath = join(
-		mkdtempSync(join(tmpdir(), 'c15t-bench-store-')),
+		mkdtempSync(join(tmpdir(), 'inth-bench-store-')),
 		'consent.json'
 	);
 	writeFileSync(storePath, STORED_ENVELOPE, 'utf8');

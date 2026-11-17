@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-               BuildableName = "C15tBare.app"
-               BlueprintName = "C15tBare"
-               ReferencedContainer = "container:C15tBare.xcodeproj">
+               BuildableName = "InthBare.app"
+               BlueprintName = "InthBare"
+               ReferencedContainer = "container:InthBare.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
          <BuildActionEntry
@@ -29,9 +29,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "ED7A49299D6EBC4638F07E5B"
-               BuildableName = "C15tBareUITests.xctest"
-               BlueprintName = "C15tBareUITests"
-               ReferencedContainer = "container:C15tBare.xcodeproj">
+               BuildableName = "InthBareUITests.xctest"
+               BlueprintName = "InthBareUITests"
+               ReferencedContainer = "container:InthBare.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -47,9 +47,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "ED7A49299D6EBC4638F07E5B"
-               BuildableName = "C15tBareUITests.xctest"
-               BlueprintName = "C15tBareUITests"
-               ReferencedContainer = "container:C15tBare.xcodeproj">
+               BuildableName = "InthBareUITests.xctest"
+               BlueprintName = "InthBareUITests"
+               ReferencedContainer = "container:InthBare.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -69,9 +69,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "C15tBare.app"
-            BlueprintName = "C15tBare"
-            ReferencedContainer = "container:C15tBare.xcodeproj">
+            BuildableName = "InthBare.app"
+            BlueprintName = "InthBare"
+            ReferencedContainer = "container:InthBare.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -86,9 +86,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "C15tBare.app"
-            BlueprintName = "C15tBare"
-            ReferencedContainer = "container:C15tBare.xcodeproj">
+            BuildableName = "InthBare.app"
+            BlueprintName = "InthBare"
+            ReferencedContainer = "container:InthBare.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

@@ -1,9 +1,9 @@
-package com.c15t.demo
+package com.inth.demo
 
 import java.net.URI
 
 /**
- * Real vendor SDKs bound to the c15t integration helpers, for the consent
+ * Real vendor SDKs bound to the Inth integration helpers, for the consent
  * journeys in `RealVendorSdkTest`. Debug builds wire them (`src/debug`); release
  * builds of the demo carry no vendor SDK and never return a probe.
  */

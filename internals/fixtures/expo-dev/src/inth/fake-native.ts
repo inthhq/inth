@@ -7,11 +7,11 @@
 /* eslint-disable max-classes-per-file */
 
 /**
- * A fake c15t native consent core, written against the public package surface.
+ * A fake Inth native consent core, written against the public package surface.
  *
  * The real core is Swift on iOS and Kotlin on Android, and this file is neither.
  * It is the same shape the real one has from JavaScript's point of view: a
- * `NativeC15tTurboModule` plus an event emitter, handed to the package's own
+ * `NativeInthTurboModule` plus an event emitter, handed to the package's own
  * `createConsentClient`, so every hook, gate, and built-in surface in this app
  * runs the identical code path it runs against a device build. Nothing here is
  * imported from `packages/react-native/src`.
@@ -35,17 +35,17 @@ import {
 	defaultNativeOverrides,
 	denyAllSnapshot,
 	PROTOCOL_VERSION,
-} from '@c15t/react-native';
+} from '@inth/react-native';
 import type {
 	CommitIntent,
 	CommitResult,
 	ConsentSnapshot,
-	NativeC15tTurboModule,
+	NativeInthTurboModule,
 	NativeEventName,
 	NativeEventsLike,
 	NativeOverrides,
 	NativeOverridesInput,
-} from '@c15t/react-native';
+} from '@inth/react-native';
 
 import { readIntent } from './read-intent';
 
@@ -168,7 +168,7 @@ export interface FakeNativeOptions {
 export interface FakeNativeSession {
 	/** Changes on every restart so React can remount the subtree. */
 	readonly id: number;
-	readonly module: NativeC15tTurboModule;
+	readonly module: NativeInthTurboModule;
 	readonly events: NativeEventsLike;
 	/** The core behind the module, for the controls the fixture exposes. */
 	readonly core: FakeCore;
@@ -331,7 +331,7 @@ const parseJson = <ValueType>(text: string): ValueType | null => {
 };
 
 /**
- * A random subject id, which is what the contract asks for: a c15t-owned UUID,
+ * A random subject id, which is what the contract asks for: a inth-owned UUID,
  * never something derived from the hardware. It is not crypto-random because
  * this is a fixture, and it is labelled so nothing mistakes it for the real one.
  */
@@ -349,7 +349,7 @@ const newSubjectId = (): string => {
  * arguments, so nothing in the package knows the difference.
  */
 class FakeCore {
-	public readonly module: NativeC15tTurboModule;
+	public readonly module: NativeInthTurboModule;
 	public readonly events: NativeEventsLike;
 
 	private readonly sdk: FakeNativeSdk;
@@ -429,7 +429,7 @@ class FakeCore {
 					Object.assign(
 						new Error('The fake core has no platform gate to ask'),
 						{
-							code: 'C15T_TRACKING_UNSUPPORTED',
+							code: 'INTH_TRACKING_UNSUPPORTED',
 						}
 					)
 				),
@@ -440,7 +440,7 @@ class FakeCore {
 					Object.assign(
 						new Error('The fake core has no platform gate to ask'),
 						{
-							code: 'C15T_TRACKING_UNSUPPORTED',
+							code: 'INTH_TRACKING_UNSUPPORTED',
 						}
 					)
 				),

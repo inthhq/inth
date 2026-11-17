@@ -10,12 +10,12 @@
 import { StatusBar } from 'react-native';
 
 import { App as Shell, UnavailableScreen } from './src/app';
-import { config } from './src/c15t/config';
+import { VendorJourneyApp } from './src/e2e/vendor-journey-app';
+import { config } from './src/inth/config';
 import {
 	ConsentSourceProvider,
 	useConsentSource,
-} from './src/c15t/consent-source';
-import { VendorJourneyApp } from './src/e2e/vendor-journey-app';
+} from './src/inth/consent-source';
 
 const Root = () => {
 	const { nativeError } = useConsentSource();

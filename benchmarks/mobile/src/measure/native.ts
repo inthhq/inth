@@ -2,8 +2,8 @@
  * Numbers out of the two native benches.
  *
  * `packages/native-protocol/CONTRACT.md` budgets the native kernels, and both already ship a bench
- * program: `swift run -c release C15tCoreBench` and
- * `./gradlew :c15t-core:bench`. This module runs them and lifts the medians out
+ * program: `swift run -c release InthCoreBench` and
+ * `./gradlew :inth-core:bench`. This module runs them and lifts the medians out
  * of their output. It deliberately does not patch either bench: the harness reads
  * the program the contract's own workers maintain, so a row here cannot drift
  * from what a maintainer reproduces by hand.
@@ -91,7 +91,7 @@ const SWIFT_LABELS: Record<string, string> = {
 };
 
 /**
- * Parse `C15tCoreBench` output.
+ * Parse `InthCoreBench` output.
  *
  * @param stdout - Raw standard output.
  * @returns Metrics keyed by the harness row id.
@@ -168,7 +168,7 @@ const sampleCount = function sampleCount(
 };
 
 /**
- * Parse `:c15t-core:bench` output.
+ * Parse `:inth-core:bench` output.
  *
  * @param stdout - Raw standard output.
  * @returns Metrics keyed by the harness row id.
@@ -251,7 +251,7 @@ export const runSwiftBench = function runSwiftBench(
 		return { ...base, unavailable: `swift build failed: ${built.error}` };
 	}
 
-	const ran = run('xcrun', ['swift', 'run', '-c', 'release', 'C15tCoreBench'], {
+	const ran = run('xcrun', ['swift', 'run', '-c', 'release', 'InthCoreBench'], {
 		cwd: packagePath,
 		env: { DEVELOPER_DIR: XCODE_DEVELOPER_DIR },
 		timeoutMs,
@@ -259,7 +259,7 @@ export const runSwiftBench = function runSwiftBench(
 	if (ran.error) {
 		return {
 			...base,
-			unavailable: `C15tCoreBench exited non-zero: ${ran.error}`,
+			unavailable: `InthCoreBench exited non-zero: ${ran.error}`,
 		};
 	}
 
@@ -295,7 +295,7 @@ export const runKotlinBench = function runKotlinBench(
 
 	const ran = run(
 		'./gradlew',
-		[':c15t-core:bench', '--console=plain', '-q', '--offline'],
+		[':inth-core:bench', '--console=plain', '-q', '--offline'],
 		{
 			cwd: projectPath,
 			timeoutMs,
@@ -304,7 +304,7 @@ export const runKotlinBench = function runKotlinBench(
 	if (ran.error) {
 		return {
 			...base,
-			unavailable: `:c15t-core:bench exited non-zero: ${ran.error}`,
+			unavailable: `:inth-core:bench exited non-zero: ${ran.error}`,
 		};
 	}
 

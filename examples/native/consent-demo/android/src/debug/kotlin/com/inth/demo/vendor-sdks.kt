@@ -1,14 +1,14 @@
-package com.c15t.demo
+package com.inth.demo
 
 import android.content.Context
 import android.os.Bundle
 import android.util.Log
-import com.c15t.android.integrations.FirebaseAnalyticsConsent
-import com.c15t.android.integrations.FirebaseAnalyticsIntegration
-import com.c15t.android.integrations.MixpanelIntegration
-import com.c15t.android.integrations.PostHogIntegration
-import com.c15t.android.integrations.SentryReplayIntegration
-import com.c15t.core.ConsentCore
+import com.inth.android.integrations.FirebaseAnalyticsConsent
+import com.inth.android.integrations.FirebaseAnalyticsIntegration
+import com.inth.android.integrations.MixpanelIntegration
+import com.inth.android.integrations.PostHogIntegration
+import com.inth.android.integrations.SentryReplayIntegration
+import com.inth.core.ConsentCore
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
 import com.google.firebase.analytics.FirebaseAnalytics
@@ -23,9 +23,9 @@ import java.io.File
 import java.net.URI
 
 /** Fake credentials. Only [PostHogLive] runs reach a real vendor project. */
-private const val POSTHOG_KEY = "phc_c15t_consent_demo_fake_key"
-private const val MIXPANEL_TOKEN = "c15t-consent-demo-fake-token"
-private const val PROBE_EVENT = "c15t_probe"
+private const val POSTHOG_KEY = "phc_inth_consent_demo_fake_key"
+private const val MIXPANEL_TOKEN = "inth-consent-demo-fake-token"
+private const val PROBE_EVENT = "inth_probe"
 /** The development machine as seen from an Android Emulator. */
 private const val EMULATOR_HOST = "10.0.2.2"
 
@@ -168,7 +168,7 @@ internal fun connectVendorSdks(context: Context, core: ConsentCore, request: Ven
 		override val vendors: List<String> = vendors
 
 		override fun probe(label: String) {
-			Log.i("c15t-vendor-probe", "probe $label")
+			Log.i("inth-vendor-probe", "probe $label")
 			if (request.captureBase != null) {
 				PostHog.capture(PROBE_EVENT, properties = mapOf("step" to label))
 				PostHog.flush()

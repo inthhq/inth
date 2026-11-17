@@ -1,9 +1,9 @@
-import type { CommitIntent, OptionalConsentCategory } from '@c15t/react-native';
+import type { CommitIntent, OptionalConsentCategory } from '@inth/react-native';
 
 /**
  * The categories an `explicit` intent may name. A `Record` over the type, so a
  * missing or invented category fails the type check. A value import from
- * `@c15t/react-native` would load React Native, which this file must not.
+ * `@inth/react-native` would load React Native, which this file must not.
  */
 const OPTIONAL_CATEGORIES: Record<OptionalConsentCategory, true> = {
 	experience: true,

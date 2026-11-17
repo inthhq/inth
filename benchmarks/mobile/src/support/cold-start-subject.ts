@@ -8,15 +8,15 @@
  *
  * What runs before the anchor is excluded from the number on purpose:
  *
- * - `react`, because an app pays it whether or not c15t is installed;
+ * - `react`, because an app pays it whether or not Inth is installed;
  * - the bench stub, because a device has React Native loaded before app code runs;
  * - the harness's own support files, including the sweep over `dist` that looks for
  *   a missing `React` import, which reads every built file and would otherwise be
- *   charged to c15t as launch cost.
+ *   charged to Inth as launch cost.
  *
  * That sweep also warms the page cache for `dist`, which is the faithful choice: a
  * bundled app reads its one JS bundle regardless, so the bytes are not attributable
- * to c15t and the module evaluation is.
+ * to Inth and the module evaluation is.
  *
  * Spawned as its own process by `measure/cold-start.ts`, one process per sample.
  */
@@ -24,7 +24,7 @@
 import type { BenchNativeModule } from './fake-native';
 
 /** Name the native cores register the TurboModule under. */
-const MODULE_NAME = 'C15t';
+const MODULE_NAME = 'Inth';
 
 const now = function now(): number {
 	return performance.now();
@@ -67,7 +67,7 @@ const native: BenchNativeModule = installBenchNativeModule(
 );
 
 const moduleStart = now();
-const boundary = await import('@c15t/react-native');
+const boundary = await import('@inth/react-native');
 const moduleLoadMs = now() - moduleStart;
 
 const attachStart = now();

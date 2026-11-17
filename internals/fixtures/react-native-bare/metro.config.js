@@ -6,7 +6,7 @@ const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
  * The workspace root, three levels up.
  *
  * Bun keeps the real package directories in a store under the root and puts a symlink
- * in each workspace's own node_modules, and `@c15t/react-native` is a workspace link
+ * in each workspace's own node_modules, and `@inth/react-native` is a workspace link
  * like any other. Metro crawls the project directory and nothing else unless it is
  * told otherwise, so without this the bundler cannot see the SDK it is supposed to be
  * bundling even though TypeScript resolves it happily.

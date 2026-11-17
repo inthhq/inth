@@ -32,12 +32,12 @@ final class PreferencesAlignmentTests: XCTestCase {
         app.launchArguments = ["-UIPreferredContentSizeCategoryName",
             accessibility ? "UICTContentSizeCategoryAccessibilityXXXL" : "UICTContentSizeCategoryL"]
         app.launch()
-        let customize = app.buttons["c15t.first-layer.customize"]
+        let customize = app.buttons["inth.first-layer.customize"]
         XCTAssertTrue(customize.waitForExistence(timeout: 10))
         reveal(customize)
         customize.tap()
 
-        let prefix = iab ? "c15t.iab" : "c15t.prefs"
+        let prefix = iab ? "inth.iab" : "inth.prefs"
         let save = app.buttons[prefix + ".save"]
         for presentation in ["fullscreen", "standing"] {
             XCTAssertTrue(save.waitForExistence(timeout: 5))
@@ -52,7 +52,7 @@ final class PreferencesAlignmentTests: XCTestCase {
 
             // A standing sheet leaves the host list in the hierarchy. Identify the actual
             // preferences card by its required category, never by the first cell in the app.
-            let card = app.cells.containing(.any, identifier: "c15t.prefs.category.necessary.locked").firstMatch
+            let card = app.cells.containing(.any, identifier: "inth.prefs.category.necessary.locked").firstMatch
             reveal(card, save: save)
             XCTAssertTrue(card.exists)
             let cardFrame = card.frame
@@ -95,7 +95,7 @@ final class PreferencesAlignmentTests: XCTestCase {
                 ? app.navigationBars["Privacy Settings"].frame.maxY + 8 : app.frame.minY + 100
             let bottom: CGFloat
             if let save, save.exists {
-                let footer = app.otherElements["c15t.footer"]
+                let footer = app.otherElements["inth.footer"]
                 bottom = footer.exists ? footer.frame.minY - 12 : save.frame.minY - 20
             } else { bottom = app.frame.maxY - 40 }
             let visible = element.exists && element.frame.height > 0

@@ -1,16 +1,16 @@
 // #region docs:android-firebase-integration title="FirebaseConsent.kt"
-package com.c15t.demo
+package com.inth.demo
 
-import com.c15t.android.integrations.FirebaseAnalyticsConsent
-import com.c15t.android.integrations.FirebaseAnalyticsIntegration
-import com.c15t.core.C15t
+import com.inth.android.integrations.FirebaseAnalyticsConsent
+import com.inth.android.integrations.FirebaseAnalyticsIntegration
+import com.inth.core.Inth
 
 fun connectAppFirebaseAnalytics(
 	setConsent: (FirebaseAnalyticsConsent) -> Unit,
 	setCollectionEnabled: (Boolean) -> Unit,
 	onError: (Exception) -> Unit,
 ): FirebaseAnalyticsIntegration {
-	val core = checkNotNull(C15t.current) { "Install c15t before connecting analytics" }
+	val core = checkNotNull(Inth.current) { "Install Inth before connecting analytics" }
 	return FirebaseAnalyticsIntegration(
 		core = core,
 		setConsent = setConsent,

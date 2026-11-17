@@ -2,7 +2,7 @@
  * The ATT sequence reads IAB TCF consent through the web's category derivation,
  * not a second one. `packages/native-protocol/att/iab-marketing.json` holds the shared
  * cases; this runs their purpose half against `iabPurposesToC15tConsents`, and
- * `IABMarketingFixtureTests` in `packages/swift/Tests/C15tAppleTests` runs all
+ * `IABMarketingFixtureTests` in `packages/swift/Tests/InthAppleTests` runs all
  * of them against Swift.
  */
 import { readFileSync } from 'node:fs';

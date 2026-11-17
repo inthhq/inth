@@ -1,5 +1,5 @@
 /**
- * The JavaScript an app actually carries because c15t is installed.
+ * The JavaScript an app actually carries because Inth is installed.
  *
  * `measure/bundle.ts` counts the bytes `packages/react-native/dist` ships, which is
  * the right number for the tarball and the wrong one for "bundle-size impact". An
@@ -10,7 +10,7 @@
  * has.
  *
  * So this walks the built module graph from the entry and hands back the files the
- * c15t packages contribute. It reads import statements rather than loading modules,
+ * Inth packages contribute. It reads import statements rather than loading modules,
  * which keeps it honest about files a bundler includes but a cold launch might skip,
  * and it names what it could not resolve instead of dropping it, because a silent
  * skip here would understate the number it exists to measure.

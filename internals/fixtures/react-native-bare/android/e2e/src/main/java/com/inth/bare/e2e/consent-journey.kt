@@ -1,4 +1,4 @@
-package com.c15t.bare.e2e
+package com.inth.bare.e2e
 
 import android.os.Build
 import android.os.SystemClock
@@ -29,7 +29,7 @@ class ConsentJourney {
     private val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
     private val output = File(InstrumentationRegistry.getInstrumentation().context.getExternalFilesDir(null), "evidence").apply { mkdirs() }
     private val categories = listOf("functionality", "measurement", "marketing")
-    private val app = "com.c15t.bare"
+    private val app = "com.inth.bare"
 
     private fun canonical(value: JSONObject): String = value.keys().asSequence().sorted().joinToString(prefix = "{", postfix = "}") { key ->
         val child = value.get(key)
@@ -100,7 +100,7 @@ class ConsentJourney {
 
     private fun rows(array: org.json.JSONArray) = (0 until array.length()).map { array.getJSONObject(it) }
 
-    /** Capture requests after [since]. Sentry counts only replay items, the part c15t controls. */
+    /** Capture requests after [since]. Sentry counts only replay items, the part Inth controls. */
     private fun governedCapture(since: Int): Pair<Int, List<JSONObject>> {
         val captured = fetchJson("/captured?kind=capture&since=$since")
         val governed = rows(captured.getJSONArray("requests")).filter { row ->
@@ -216,7 +216,7 @@ class ConsentJourney {
     private fun launch(reset: Boolean = false) {
         device.executeShellCommand("am force-stop $app")
         if (reset) {
-            device.executeShellCommand("am start -W -a android.intent.action.VIEW -d c15t-demo://reset -n $app/.MainActivity")
+            device.executeShellCommand("am start -W -a android.intent.action.VIEW -d inth-demo://reset -n $app/.MainActivity")
         } else {
             device.executeShellCommand("am start -W -n $app/.MainActivity")
         }
@@ -357,32 +357,32 @@ class ConsentJourney {
         prepare.requestMethod = "POST"; prepare.doOutput = true
         prepare.outputStream.use { it.write("{}".toByteArray()) }; check(prepare.responseCode == 200); prepare.disconnect()
         launch(reset = true)
-        tap("c15t.first-layer.reject-all")
+        tap("inth.first-layer.reject-all")
         awaitState("iab-rejected") { _, report -> report.getJSONArray("saves").length() == 4 }
         tap("fixture.block-js")
         val started = SystemClock.elapsedRealtime()
         while (!report().getJSONObject("jsBlock").optBoolean("blocked") && SystemClock.elapsedRealtime() - started < 10000) SystemClock.sleep(100)
         assertTrue(report().getJSONObject("jsBlock").optBoolean("blocked"))
         capture("08-native-iab-blocked-js")
-        setChecked("c15t.prefs.category.measurement.switch", true)
-        for (id in listOf(1, 3, 4, 7)) setChecked("c15t.iab.purpose.$id.consent", true)
-        reveal("c15t.iab.purpose.7.details").click()
-        setChecked("c15t.iab.purpose.7.li", true); setChecked("c15t.iab.purpose.7.li", false)
-        reveal("c15t.iab.partners").click()
-        search("c15t.iab.vendors.search", "elan")
+        setChecked("inth.prefs.category.measurement.switch", true)
+        for (id in listOf(1, 3, 4, 7)) setChecked("inth.iab.purpose.$id.consent", true)
+        reveal("inth.iab.purpose.7.details").click()
+        setChecked("inth.iab.purpose.7.li", true); setChecked("inth.iab.purpose.7.li", false)
+        reveal("inth.iab.partners").click()
+        search("inth.iab.vendors.search", "elan")
         capture("09-native-partner-search")
-        tap("c15t.iab.vendors.vendor.1")
-        setChecked("c15t.iab.vendor.1.consent", true)
-        setChecked("c15t.iab.vendor.1.li", true); setChecked("c15t.iab.vendor.1.li", false)
+        tap("inth.iab.vendors.vendor.1")
+        setChecked("inth.iab.vendor.1.consent", true)
+        setChecked("inth.iab.vendor.1.li", true); setChecked("inth.iab.vendor.1.li", false)
         capture("10-native-partner-details")
         device.pressBack(); device.pressBack()
-        reveal("c15t.iab.other-partners").click()
-        search("c15t.ac.search", "Harbour")
+        reveal("inth.iab.other-partners").click()
+        search("inth.ac.search", "Harbour")
         capture("before-additional-consent-toggle")
-        setChecked("c15t.ac.provider.10.switch", true)
+        setChecked("inth.ac.provider.10.switch", true)
         capture("11-native-additional-consent")
         device.pressBack()
-        tap("c15t.iab.save")
+        tap("inth.iab.save")
         val deadline = SystemClock.elapsedRealtime() + 8000
         var observed = report()
         while (observed.optJSONObject("native")?.optJSONObject("gates")?.optBoolean("measurement") != true && SystemClock.elapsedRealtime() < deadline) {
@@ -441,7 +441,7 @@ class ConsentJourney {
         }
         network(false); launch(); fresh()
         capture("20-expiry-initial-prompt")
-        tap("c15t.first-layer.accept-all")
+        tap("inth.first-layer.accept-all")
         val all = expiryState("expiry-earlier-all") { snapshot, _ -> optional.all { receipts(snapshot)?.optJSONObject(it)?.opt("value") == true } }
         val prior = all.getJSONObject("native").getInt("process")
         capture("21-expiry-earlier-all")
@@ -450,10 +450,10 @@ class ConsentJourney {
             snapshot.optJSONArray("consentCategories")?.toString() == "[\"necessary\",\"measurement\"]" && !snapshot.getBoolean("policyPending") && report.getJSONObject("native").getInt("process") != prior && optional.all { receipts(snapshot)?.optJSONObject(it)?.opt("value") == true }
         }
         tap("fixture.open-preferences")
-        control("c15t.prefs.category.measurement.switch")
-        assertFalse(device.hasObject(By.res("c15t.prefs.category.marketing.switch")))
+        control("inth.prefs.category.measurement.switch")
+        assertFalse(device.hasObject(By.res("inth.prefs.category.marketing.switch")))
         capture("22-expiry-narrowed-preferences")
-        tap("c15t.prefs.cancel")
+        tap("inth.prefs.cancel")
         setControl(JSONObject().put("now", 1793232001000L))
         // The injected clock moves before the real deadline worker publishes its revision.
         expiryState("expiry-exact-boundary") { snapshot, report ->
@@ -461,13 +461,13 @@ class ConsentJourney {
                 snapshot.getLong("evaluatedAt") == 1793232001000L && snapshot.optLong("nextDeadline", Long.MAX_VALUE) > 1793232001000L
         }
         tap("fixture.open-preferences")
-        control("c15t.status.unavailable.retry")
-        assertFalse(device.hasObject(By.res("c15t.prefs.category.measurement.switch")))
-        assertTrue(control("c15t.prefs.reject-all").isEnabled)
-        assertFalse(device.hasObject(By.res("c15t.prefs.accept-all")))
-        assertFalse(device.hasObject(By.res("c15t.prefs.save")))
+        control("inth.status.unavailable.retry")
+        assertFalse(device.hasObject(By.res("inth.prefs.category.measurement.switch")))
+        assertTrue(control("inth.prefs.reject-all").isEnabled)
+        assertFalse(device.hasObject(By.res("inth.prefs.accept-all")))
+        assertFalse(device.hasObject(By.res("inth.prefs.save")))
         capture("23-expiry-reject-only")
-        tap("c15t.prefs.reject-all")
+        tap("inth.prefs.reject-all")
         val denial = expiryState("expiry-durable-full-denial", ::denied)
         val frozen = canonical(denial.getJSONObject("native").getJSONObject("snapshot").getJSONObject("explicitChoice"))
         assertEquals(0, denial.getJSONArray("saves").length())
@@ -485,7 +485,7 @@ class ConsentJourney {
         setControl(JSONObject().put("categories", org.json.JSONArray(listOf("necessary") + optional))); launch()
         expiryState("expiry-wide-refresh-no-resurrection") { snapshot, report -> denied(snapshot, report) && snapshot.getJSONArray("consentCategories").length() == 5 && !snapshot.getBoolean("policyPending") && report.getJSONArray("saves").length() == 1 }
         tap("fixture.open-preferences")
-        assertFalse(control("c15t.prefs.category.measurement.switch").isChecked)
+        assertFalse(control("inth.prefs.category.measurement.switch").isChecked)
         capture("27-expiry-wide-denial")
     }
 
@@ -499,11 +499,11 @@ class ConsentJourney {
         scenario("fallback"); network(true); launch()
         awaitState("adapter-definitive-no-match") { snapshot, _ -> snapshot.getJSONObject("resolution").getString("status") == "no-match" }
         tap("fixture.present-prompt")
-        control("c15t.first-layer.reject-all")
+        control("inth.first-layer.reject-all")
         val opened = awaitState("adapter-fallback-command") { _, report -> report.getJSONObject("jsBlock").optJSONArray("presentations")?.length() == 1 }
         val fallbackId = opened.getJSONObject("jsBlock").getJSONArray("presentations").getJSONObject(0).getString("sessionId")
         capture("30-fallback-choice")
-        tap("c15t.first-layer.reject-all")
+        tap("inth.first-layer.reject-all")
         val committed = awaitState("adapter-fallback-committed") { snapshot, report ->
             !snapshot.isNull("explicitChoice") && report.getJSONArray("saves").length() == 1 && report.getJSONObject("jsBlock").optJSONArray("outcomes")?.length() == 1
         }
@@ -517,7 +517,7 @@ class ConsentJourney {
         scenario("notice"); launch()
         awaitState("adapter-notice-owed") { snapshot, _ -> snapshot.getJSONObject("promptRequirement").getString("kind") == "notice" }
         tap("fixture.present-prompt")
-        control("c15t.notice.acknowledge")
+        control("inth.notice.acknowledge")
         val notice = awaitState("adapter-notice-command") { _, report -> report.getJSONObject("jsBlock").optJSONArray("presentations")?.length() == 1 }
         val native = notice.getJSONObject("native")
         val generation = native.getInt("activityGeneration")
@@ -526,13 +526,13 @@ class ConsentJourney {
         val priorChoice = canonical(native.getJSONObject("snapshot").getJSONObject("explicitChoice"))
         tap("fixture.block-js-recreation")
         awaitState("adapter-js-blocked") { _, report -> report.getJSONObject("jsBlock").optBoolean("blocked") }
-        device.executeShellCommand("am start -W --ez c15t.fixture.recreate true -n $app/.MainActivity")
+        device.executeShellCommand("am start -W --ez inth.fixture.recreate true -n $app/.MainActivity")
         val recreated = awaitState("adapter-native-activity-recreated") { _, report -> report.getJSONObject("native").getInt("activityGeneration") > generation }
         assertEquals(process, recreated.getJSONObject("native").getInt("process"))
         assertTrue(recreated.getJSONObject("jsBlock").getBoolean("blocked"))
-        control("c15t.notice.acknowledge")
+        control("inth.notice.acknowledge")
         capture("32-notice-recreated-with-js-blocked")
-        tap("c15t.notice.acknowledge")
+        tap("inth.notice.acknowledge")
         val acknowledged = awaitState("adapter-native-ack-before-js") { snapshot, _ -> snapshot.getJSONObject("promptRequirement").getString("kind") == "none" }
         assertTrue(acknowledged.getJSONObject("jsBlock").getBoolean("blocked"))
         assertEquals(priorChoice, canonical(acknowledged.getJSONObject("native").getJSONObject("snapshot").getJSONObject("explicitChoice")))
@@ -564,12 +564,12 @@ class ConsentJourney {
             awaitState("first-install-unknown") { snapshot, report ->
                 snapshot.isNull("policySnapshotToken") && snapshot.getJSONObject("location").isNull("countryCode") && !report.getBoolean("backendOnline") && report.getJSONArray("saves").length() == 0
             }
-            control("c15t.first-layer.reject-all")
-            control("c15t.first-layer.accept-all")
-            control("c15t.first-layer.customize")
+            control("inth.first-layer.reject-all")
+            control("inth.first-layer.accept-all")
+            control("inth.first-layer.customize")
             device.waitForIdle()
             capture("01-fresh-prompt")
-            tap("c15t.first-layer.reject-all")
+            tap("inth.first-layer.reject-all")
             val rejected = localChoice(emptySet(), 0)
             // Vendor step 2: a refusal keeps every vendor silent.
             val rejectSeq = governedCapture(0).first
@@ -581,7 +581,7 @@ class ConsentJourney {
 
             launch(reset = true)
             fresh()
-            tap("c15t.first-layer.accept-all")
+            tap("inth.first-layer.accept-all")
             val accepted = localChoice(categories.toSet(), 1)
             network(true); launch()
             assertEquals(choiceBytes(accepted), choiceBytes(choice(categories.toSet(), 2)))
@@ -590,10 +590,10 @@ class ConsentJourney {
 
             launch(reset = true)
             fresh()
-            tap("c15t.first-layer.customize")
-            tap("c15t.prefs.category.measurement.switch")
+            tap("inth.first-layer.customize")
+            tap("inth.prefs.category.measurement.switch")
             capture("04-customize-measurement")
-            tap("c15t.prefs.save")
+            tap("inth.prefs.save")
             val saved = localChoice(setOf("measurement"), 2)
             val savedChoice = canonical(saved.getJSONObject("snapshot").getJSONObject("explicitChoice"))
             capture("05-saved")
@@ -602,20 +602,20 @@ class ConsentJourney {
             assertVendorsCapture("vendor-3-grant-measurement", grantSeq, sendVendorProbe())
 
             tap("fixture.repeat-preferences")
-            assertTrue("Saved switch is checked", control("c15t.prefs.category.measurement.switch").isChecked)
-            tap("c15t.prefs.category.measurement.switch")
-            assertTrue("The unsaved draft changed the visible switch", device.wait(Until.hasObject(By.res("c15t.prefs.category.measurement.switch").checked(false)), 5000))
+            assertTrue("Saved switch is checked", control("inth.prefs.category.measurement.switch").isChecked)
+            tap("inth.prefs.category.measurement.switch")
+            assertTrue("The unsaved draft changed the visible switch", device.wait(Until.hasObject(By.res("inth.prefs.category.measurement.switch").checked(false)), 5000))
             device.setOrientationLeft()
             device.setOrientationNatural()
-            assertFalse("Draft survives native host recreation", afterConfigurationChange("c15t.prefs.category.measurement.switch").isChecked)
+            assertFalse("Draft survives native host recreation", afterConfigurationChange("inth.prefs.category.measurement.switch").isChecked)
             device.pressHome()
             device.executeShellCommand("am start -W -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -f 0x10200000 -n $app/.MainActivity")
             if (device.wait(Until.hasObject(By.res("fixture.open-preferences")), 3000)) tap("fixture.open-preferences")
-            assertFalse("Draft survives background", control("c15t.prefs.category.measurement.switch").isChecked)
+            assertFalse("Draft survives background", control("inth.prefs.category.measurement.switch").isChecked)
             device.unfreezeRotation()
             capture("06-unsaved-draft")
-            tap("c15t.prefs.cancel")
-            tap("c15t.prefs.discard.confirm")
+            tap("inth.prefs.cancel")
+            tap("inth.prefs.discard.confirm")
             control("fixture.open-preferences")
             val probe = report().getJSONObject("jsBlock").getJSONObject("sessionProbe")
             assertEquals(probe.getJSONObject("first").getString("sessionId"), probe.getJSONObject("repeated").getString("sessionId"))
@@ -624,17 +624,17 @@ class ConsentJourney {
             assertEquals(savedChoice, canonical(cancelled.getJSONObject("snapshot").getJSONObject("explicitChoice")))
 
             tap("fixture.open-preferences")
-            assertTrue(control("c15t.prefs.category.measurement.switch").isChecked)
-            assertFalse(control("c15t.prefs.category.marketing.switch").isChecked)
+            assertTrue(control("inth.prefs.category.measurement.switch").isChecked)
+            assertFalse(control("inth.prefs.category.marketing.switch").isChecked)
 
             launch()
             awaitState("new-process") { _, report -> report.optString("session") != saved.getString("session") }
             val relaunched = localChoice(setOf("measurement"), 2)
             assertEquals(savedChoice, canonical(relaunched.getJSONObject("snapshot").getJSONObject("explicitChoice")))
             tap("fixture.open-preferences")
-            assertTrue(control("c15t.prefs.category.measurement.switch").isChecked)
+            assertTrue(control("inth.prefs.category.measurement.switch").isChecked)
             capture("07-relaunched-preferences")
-            tap("c15t.prefs.reject-all")
+            tap("inth.prefs.reject-all")
             val withdrawn = localChoice(emptySet(), 2)
             capture("08-withdrawn-offline")
             // Vendor step 4: after in-flight uploads settle, a withdrawal stops every vendor.
@@ -665,14 +665,14 @@ class ConsentJourney {
         prepare.requestMethod = "POST"; prepare.doOutput = true
         prepare.outputStream.use { it.write("{\"kind\":\"notice\"}".toByteArray()) }; check(prepare.responseCode == 200); prepare.disconnect()
         launch()
-        control("c15t.notice.acknowledge")
+        control("inth.notice.acknowledge")
         val beforeSnapshot = report().getJSONObject("native").getJSONObject("snapshot")
         val before = choiceBytes(JSONObject().put("snapshot", beforeSnapshot))
         tap("fixture.host-action")
         assertTrue(device.wait(Until.hasObject(By.res("fixture.host-count").text("1")), 5000))
-        control("c15t.notice.acknowledge")
+        control("inth.notice.acknowledge")
         capture("14-nonmodal-native-notice")
-        tap("c15t.notice.acknowledge")
+        tap("inth.notice.acknowledge")
         val after = awaitState("notice-acknowledged") { snapshot, report ->
             val outcomes = report.getJSONObject("jsBlock").optJSONArray("outcomes")
             snapshot.getJSONObject("promptRequirement").getString("kind") == "none" && outcomes != null && outcomes.length() > 0 &&

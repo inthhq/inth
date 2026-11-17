@@ -1,8 +1,8 @@
 // #region docs:android-sentry-replay-integration title="SentryReplayConsent.kt"
-package com.c15t.demo
+package com.inth.demo
 
-import com.c15t.android.integrations.SentryReplayIntegration
-import com.c15t.core.C15t
+import com.inth.android.integrations.SentryReplayIntegration
+import com.inth.core.Inth
 
 // Retain the returned helper beside the initialized Sentry SDK in the app owner.
 // Set Sentry's sessionSampleRate and onErrorSampleRate to 0.0 before setup.
@@ -12,7 +12,7 @@ fun connectAppSentryReplay(
 	onError: (Exception) -> Unit,
 ): SentryReplayIntegration {
 	return SentryReplayIntegration(
-		core = checkNotNull(C15t.current) { "Install c15t before connecting replay" },
+		core = checkNotNull(Inth.current) { "Install Inth before connecting replay" },
 		start = start, // { Sentry.replay().start() }
 		stop = stop, // { Sentry.replay().stop() }
 		onError = onError,

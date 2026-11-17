@@ -21,17 +21,17 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { exportSwiftPackage } from './export-swift-package';
 
 const nativeRoot = 'packages/swift';
-const sourcePath = `${nativeRoot}/Sources/C15tCore/Transports.swift`;
-const core = 'extension C15t { public static let version = "3.0.0-alpha.1" }\n';
+const sourcePath = `${nativeRoot}/Sources/InthCore/Transports.swift`;
+const core = 'extension Inth { public static let version = "3.0.0-alpha.1" }\n';
 const manifest = `// swift-tools-version:5.9
 import PackageDescription
 let package = Package(
-    name: "C15tCore",
+    name: "InthCore",
     platforms: [.iOS("16.4")],
-    products: [.library(name: "C15tCore", targets: ["C15tCore"])],
+    products: [.library(name: "InthCore", targets: ["InthCore"])],
     targets: [
-        .target(name: "C15tCore"),
-        .testTarget(name: "C15tCoreTests", dependencies: ["C15tCore"]),
+        .target(name: "InthCore"),
+        .testTarget(name: "InthCoreTests", dependencies: ["InthCore"]),
     ]
 )
 `;
@@ -79,7 +79,7 @@ const fixture = (packageManifest = manifest) => {
 	write(`${nativeRoot}/Package.swift`, packageManifest);
 	write(sourcePath, core);
 	write(
-		`${nativeRoot}/Tests/C15tCoreTests/fixture-tests.swift`,
+		`${nativeRoot}/Tests/InthCoreTests/fixture-tests.swift`,
 		'// shared fixtures\n'
 	);
 	write(
@@ -124,10 +124,10 @@ describe('Swift source distribution', () => {
 	it('preserves the committed root manifest for monorepo release validation', () => {
 		const repo = fixture();
 		const rootManifest = manifest
-			.replace('name: "C15tCore",\n', 'name: "c15t",\n')
+			.replace('name: "InthCore",\n', 'name: "c15t",\n')
 			.replace(
-				'.target(name: "C15tCore")',
-				'.target(name: "C15tCore", path: "packages/swift/Sources/C15tCore")'
+				'.target(name: "InthCore")',
+				'.target(name: "InthCore", path: "packages/swift/Sources/InthCore")'
 			);
 		repo.write('Package.swift', rootManifest);
 		const sourceCommit = repo.commit();
@@ -162,9 +162,9 @@ describe('Swift source distribution', () => {
 			`${nativeRoot}/Examples/private.swift`,
 			`${nativeRoot}/.build/debug/binary`,
 			`${nativeRoot}/.swiftpm/configuration.json`,
-			`${nativeRoot}/C15tCore.podspec`,
+			`${nativeRoot}/InthCore.podspec`,
 			`${nativeRoot}/CHANGELOG.md`,
-			`${nativeRoot}/Sources/C15tCore/.build/stale.swift`,
+			`${nativeRoot}/Sources/InthCore/.build/stale.swift`,
 			'packages/private/secret.txt',
 			'packages/android/private.kt',
 		]) {
@@ -178,7 +178,7 @@ describe('Swift source distribution', () => {
 		repo.write('AGENTS.md', '# Monorepo contributor guide\n');
 		const sourceCommit = repo.commit();
 		repo.write(sourcePath, 'uncommitted source must not ship');
-		repo.write(`${nativeRoot}/Sources/C15tCore/untracked.swift`, 'untracked');
+		repo.write(`${nativeRoot}/Sources/InthCore/untracked.swift`, 'untracked');
 		const result = exportSwiftPackage({ ...repo, ref: 'HEAD' });
 		expect(result).toEqual({
 			output: repo.output,
@@ -197,14 +197,14 @@ describe('Swift source distribution', () => {
 		);
 		const exported = Object.keys(tree(repo.output));
 		expect(exported).not.toContain(
-			`${nativeRoot}/Sources/C15tCore/untracked.swift`
+			`${nativeRoot}/Sources/InthCore/untracked.swift`
 		);
 		expect(
 			exported.some(
 				(path) => path.includes('private') || path.includes('.build')
 			)
 		).toBe(false);
-		expect(exported).not.toContain(`${nativeRoot}/C15tCore.podspec`);
+		expect(exported).not.toContain(`${nativeRoot}/InthCore.podspec`);
 		expect(exported).not.toContain(`${nativeRoot}/CHANGELOG.md`);
 		// The consumer notes ship; the monorepo's contributor AGENTS.md does not.
 		expect(readFileSync(join(repo.output, `${nativeRoot}/AGENTS.md`))).toEqual(
@@ -228,22 +228,22 @@ describe('Swift source distribution', () => {
 		const products = (source: string) =>
 			source.slice(source.indexOf('products:'), source.indexOf('targets: [\n'));
 		expect(products(root)).toBe(products(canonical));
-		for (const name of ['C15tApple', 'C15tConsentUI', 'C15tCoreBench']) {
+		for (const name of ['InthApple', 'InthConsentUI', 'InthCoreBench']) {
 			expect(root).toContain(`path: "${nativeRoot}/Sources/${name}"`);
 		}
 		for (const name of [
-			'C15tCoreTests',
-			'C15tAppleTests',
-			'C15tConsentUITests',
+			'InthCoreTests',
+			'InthAppleTests',
+			'InthConsentUITests',
 		]) {
 			expect(root).toContain(`path: "${nativeRoot}/Tests/${name}"`);
 		}
 		expect(root).toContain(
-			'dependencies: ["C15tConsentUI", "C15tCore", "C15tApple"]'
+			'dependencies: ["InthConsentUI", "InthCore", "InthApple"]'
 		);
 		const testDirectory = join(
 			repo.output,
-			`${nativeRoot}/Tests/C15tCoreTests`
+			`${nativeRoot}/Tests/InthCoreTests`
 		);
 		expect(
 			readFileSync(
@@ -279,11 +279,11 @@ describe('Swift source distribution', () => {
 
 	it('prefixes explicit target paths and preserves target-relative resource declarations', () => {
 		const withResources = manifest.replace(
-			'.target(name: "C15tCore")',
+			'.target(name: "InthCore")',
 			`.target(
-            name: "C15tCore",
+            name: "InthCore",
             path: ".",
-            sources: ["Sources/C15tCore"],
+            sources: ["Sources/InthCore"],
             resources: [.copy("Resources/Privacy.xcprivacy")]
         )`
 		);
@@ -292,7 +292,7 @@ describe('Swift source distribution', () => {
 		exportSwiftPackage({ ...repo, ref: 'HEAD' });
 		const root = readFileSync(join(repo.output, 'Package.swift'), 'utf8');
 		expect(root).toContain(`path: "${nativeRoot}"`);
-		expect(root).toContain('sources: ["Sources/C15tCore"]');
+		expect(root).toContain('sources: ["Sources/InthCore"]');
 		expect(root).toContain('resources: [.copy("Resources/Privacy.xcprivacy")]');
 		expect(
 			readFileSync(
@@ -305,14 +305,14 @@ describe('Swift source distribution', () => {
 	it('inserts path before resources without changing comments or string contents', () => {
 		const repo = fixture(
 			manifest.replace(
-				'.target(name: "C15tCore")',
-				`.target(name: "C15tCore", /* nested /* target */ comment */ resources: [.copy("Privacy.xcprivacy")])`
+				'.target(name: "InthCore")',
+				`.target(name: "InthCore", /* nested /* target */ comment */ resources: [.copy("Privacy.xcprivacy")])`
 			)
 		);
 		repo.commit();
 		exportSwiftPackage({ ...repo, ref: 'HEAD' });
 		expect(readFileSync(join(repo.output, 'Package.swift'), 'utf8')).toContain(
-			`.target(name: "C15tCore", path: "${nativeRoot}/Sources/C15tCore", /* nested /* target */ comment */ resources: [.copy("Privacy.xcprivacy")])`
+			`.target(name: "InthCore", path: "${nativeRoot}/Sources/InthCore", /* nested /* target */ comment */ resources: [.copy("Privacy.xcprivacy")])`
 		);
 	});
 
@@ -380,8 +380,8 @@ describe('Swift source distribution', () => {
 	it.each([
 		{
 			manifest: manifest.replace(
-				'.target(name: "C15tCore")',
-				'.target(name: "C15tCore", path: "../private")'
+				'.target(name: "InthCore")',
+				'.target(name: "InthCore", path: "../private")'
 			),
 			reason: 'inside packages/swift',
 		},
@@ -394,14 +394,14 @@ describe('Swift source distribution', () => {
 		},
 		{
 			manifest: manifest.replace(
-				'.target(name: "C15tCore")',
-				'.binaryTarget(name: "C15tCore", path: "binary")'
+				'.target(name: "InthCore")',
+				'.binaryTarget(name: "InthCore", path: "binary")'
 			),
 			reason: 'Unsupported Swift manifest',
 		},
 		{
 			manifest: manifest.replace(
-				'.target(name: "C15tCore")',
+				'.target(name: "InthCore")',
 				'.target(name: coreName)'
 			),
 			reason: 'Unsupported Swift manifest',
@@ -422,7 +422,7 @@ describe('Swift source distribution', () => {
 		const repo = fixture();
 		symlinkSync(
 			'/private/source',
-			join(repo.cwd, nativeRoot, 'Sources/C15tCore/link.swift')
+			join(repo.cwd, nativeRoot, 'Sources/InthCore/link.swift')
 		);
 		repo.commit();
 		expect(() => exportSwiftPackage({ ...repo, ref: 'HEAD' })).toThrow(
@@ -449,7 +449,7 @@ describe('Swift source distribution', () => {
 		repo.write(sourcePath, core.replace('3.0.0-alpha.1', 'not-a-version'));
 		repo.commit();
 		expect(() => exportSwiftPackage({ ...repo, ref: 'HEAD' })).toThrow(
-			'valid C15t.version'
+			'valid Inth.version'
 		);
 		expect(() => exportSwiftPackage({ ...repo, ref: '--not-a-ref' })).toThrow();
 		expect(existsSync(repo.output)).toBe(false);

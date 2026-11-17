@@ -39,7 +39,7 @@
 			"max": 10,
 			"unit": "ms",
 			"source": "contract",
-			"note": "Cold-start overhead attributable to c15t: under 10 ms. This row times the read path only: handshake to the first synchronous snapshot() in the first client the process builds. The module evaluation an app also pays before that read is a separate row, cold_start_js_to_first_consent_ms, because it is a different span measured a different way (one fresh process per sample rather than a warm loop)."
+			"note": "Cold-start overhead attributable to Inth: under 10 ms. This row times the read path only: handshake to the first synchronous snapshot() in the first client the process builds. The module evaluation an app also pays before that read is a separate row, cold_start_js_to_first_consent_ms, because it is a different span measured a different way (one fresh process per sample rather than a warm loop)."
 		},
 		"commit_ack_no_network_ms": {
 			"max": 50,
@@ -129,7 +129,7 @@
 			"max": 511329,
 			"unit": "bytes",
 			"source": "allowance",
-			"note": "Unpacked JavaScript in the @c15t/react-native tarball. Measured 391,357 B over 117 modules on the integrated mobile release wave (#134). The bytes bought automatic prompt presentation, the consent draft and headless IAB hooks, WebView consent sync, the GPP string, ATT sequencing and the typed bridge schema, which ships behind the @c15t/react-native/bridge-schema subpath, plus Expo plugin theme, SDK-floor, policy-in-code and manifest bundling steps, about 114 KiB of build-time Node code that never reaches a device. The ceiling keeps the earlier headroom ratio (262,144 over 200,638, or 1.3066). js_closure_bytes is the row that says what an app carries."
+			"note": "Unpacked JavaScript in the @inth/react-native tarball. Measured 391,357 B over 117 modules on the integrated mobile release wave (#134). The bytes bought automatic prompt presentation, the consent draft and headless IAB hooks, WebView consent sync, the GPP string, ATT sequencing and the typed bridge schema, which ships behind the @inth/react-native/bridge-schema subpath, plus Expo plugin theme, SDK-floor, policy-in-code and manifest bundling steps, about 114 KiB of build-time Node code that never reaches a device. The ceiling keeps the earlier headroom ratio (262,144 over 200,638, or 1.3066). js_closure_bytes is the row that says what an app carries."
 		},
 		"js_shipped_gzip_bytes": {
 			"max": 98433,
@@ -141,7 +141,7 @@
 			"max": 1326815,
 			"unit": "bytes",
 			"source": "allowance",
-			"note": "Bytes C15tCore adds to an iOS binary, measured as the linked __TEXT plus __DATA of the arm64 simulator slice of a Release build. canary at c11784370, this wave's base, measures 1,020,928 B (nightly validation run 42945664232, and push run 42894097433 on the same commit); IAB TCF was already in the core there. The integrated mobile release wave (#134) measures 1,207,625 B, so the wave adds 186,697 B: the policy-in-code and bundled-policy paths, the GPP encoder, resolver and storage rows, WebView consent sync, the observable consent models, and the prompt-owed bookkeeping auto-present reads. The ceiling uses the headroom ratio of android_binary_bytes (1.0987) over the wave's measurement. The 475,805 B in results/latest.json was recorded at bea070a on 2026-09-17, well before canary's current core, so it is no baseline for this row."
+			"note": "Bytes InthCore adds to an iOS binary, measured as the linked __TEXT plus __DATA of the arm64 simulator slice of a Release build. canary at c11784370, this wave's base, measures 1,020,928 B (nightly validation run 42945664232, and push run 42894097433 on the same commit); IAB TCF was already in the core there. The integrated mobile release wave (#134) measures 1,207,625 B, so the wave adds 186,697 B: the policy-in-code and bundled-policy paths, the GPP encoder, resolver and storage rows, WebView consent sync, the observable consent models, and the prompt-owed bookkeeping auto-present reads. The ceiling uses the headroom ratio of android_binary_bytes (1.0987) over the wave's measurement. The 475,805 B in results/latest.json was recorded at bea070a on 2026-09-17, well before canary's current core, so it is no baseline for this row."
 		},
 		"ios_binding_bytes": {
 			"max": 262144,
@@ -189,7 +189,7 @@
 			"max": 120,
 			"unit": "ms",
 			"source": "allowance",
-			"note": "Built entry to a readable snapshot, in a process that has never seen c15t: module evaluation plus the first handshake. Measured 10.9 ms on the development machine when the entry was a boundary layer; the entry now links the surfaces and the IAB drawer too, and reads 46 ms on a macOS runner and 75 ms on an Ubuntu runner. 120 ms is a blow-up guard, not a promise: it leaves a shared runner half again as slow, and Node's specifier resolution charges c15t for work a bundled app does not do. It is deliberately not the contract's 10 ms, which is a device-profile number."
+			"note": "Built entry to a readable snapshot, in a process that has never seen Inth: module evaluation plus the first handshake. Measured 10.9 ms on the development machine when the entry was a boundary layer; the entry now links the surfaces and the IAB drawer too, and reads 46 ms on a macOS runner and 75 ms on an Ubuntu runner. 120 ms is a blow-up guard, not a promise: it leaves a shared runner half again as slow, and Node's specifier resolution charges Inth for work a bundled app does not do. It is deliberately not the contract's 10 ms, which is a device-profile number."
 		},
 		"cached_consent_available_ms": {
 			"max": 3,
@@ -225,7 +225,7 @@
 			"max": 298561,
 			"unit": "bytes",
 			"source": "allowance",
-			"note": "Unpacked JavaScript an app carries because c15t is installed: every module a release Metro build reaches from the built entry, with __DEV__ inlined as false and dead branches folded. Measured 74,507 B over 48 modules as a boundary layer, 165,270 B once the surfaces and the IAB drawer joined the entry, and 250,972 B over 76 modules on the integrated mobile release wave (#134): automatic prompt presentation (native decides when the prompt opens, so its JavaScript state machine left the entry), the consent draft, headless IAB hooks, WebView consent sync, the GPP string hook and ATT sequencing. The bridge schema table and its drift checker load only inside a __DEV__ branch, so a release app carries none of their 9.7 KB. The ceiling keeps the earlier headroom ratio (196,608 over 165,270, or 1.1896). It still fails the moment a runtime import to the @c15t/core barrel comes back: that edge measured 389,639 B over 131 modules, because behind two string arrays sits the kernel, the schema, and the translations."
+			"note": "Unpacked JavaScript an app carries because Inth is installed: every module a release Metro build reaches from the built entry, with __DEV__ inlined as false and dead branches folded. Measured 74,507 B over 48 modules as a boundary layer, 165,270 B once the surfaces and the IAB drawer joined the entry, and 250,972 B over 76 modules on the integrated mobile release wave (#134): automatic prompt presentation (native decides when the prompt opens, so its JavaScript state machine left the entry), the consent draft, headless IAB hooks, WebView consent sync, the GPP string hook and ATT sequencing. The bridge schema table and its drift checker load only inside a __DEV__ branch, so a release app carries none of their 9.7 KB. The ceiling keeps the earlier headroom ratio (196,608 over 165,270, or 1.1896). It still fails the moment a runtime import to the @c15t/core barrel comes back: that edge measured 389,639 B over 131 modules, because behind two string arrays sits the kernel, the schema, and the translations."
 		},
 		"js_closure_gzip_bytes": {
 			"max": 63389,

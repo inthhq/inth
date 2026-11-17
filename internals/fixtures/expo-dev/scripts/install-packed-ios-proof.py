@@ -9,9 +9,9 @@ args = parser.parse_args()
 consumer = args.consumer.resolve()
 source = Path(__file__).resolve().parent
 repo = source.parents[3]
-if consumer.is_relative_to(repo) or not (consumer / 'vendor/c15t-react-native.tgz').is_file():
+if consumer.is_relative_to(repo) or not (consumer / 'vendor/inth-react-native.tgz').is_file():
     parser.error('Expected a packed consumer outside the source checkout')
-app = consumer / 'ios/c15tExpoDev/AppDelegate.swift'
+app = consumer / 'ios/inthExpoDev/AppDelegate.swift'
 text = app.read_text()
 if 'PackedNativeProof' in text:
     parser.error('Native proof is already installed')

@@ -232,7 +232,7 @@ export const renderReport = function renderReport(
 	const lines: string[] = [];
 
 	lines.push(
-		`c15t mobile benchmark  ${artifact.commitSha}  ${artifact.timestamp}`
+		`Inth mobile benchmark  ${artifact.commitSha}  ${artifact.timestamp}`
 	);
 	lines.push(
 		`  ${artifact.environment.os}/${artifact.environment.arch}  bun ${artifact.environment.bunVersion ?? 'n/a'}  node ${artifact.environment.nodeVersion ?? 'n/a'}  dirty=${String(artifact.gitDirty)}`

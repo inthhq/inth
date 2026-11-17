@@ -1,6 +1,6 @@
 // #region docs:android-quickstart title="ConsentApplication.kt"
 // #region docs:android-install title="ConsentApplication.kt"
-package com.c15t.demo
+package com.inth.demo
 
 import android.app.Application
 import android.content.Context
@@ -17,24 +17,24 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import com.c15t.android.C15tAndroid
-import com.c15t.android.decisionFlow
-import com.c15t.consentui.C15tConsent
-import com.c15t.consentui.ConsentPrompt
-import com.c15t.consentui.attachConsent
-import com.c15t.core.C15t
-import com.c15t.core.NativeConfig
-import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentDecision
+import com.inth.android.InthAndroid
+import com.inth.android.decisionFlow
+import com.inth.consentui.InthConsent
+import com.inth.consentui.ConsentPrompt
+import com.inth.consentui.attachConsent
+import com.inth.core.Inth
+import com.inth.core.NativeConfig
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentDecision
 
 fun installConsent(context: Context) {
-    C15tAndroid.install(context, NativeConfig(
+    InthAndroid.install(context, NativeConfig(
         backendUrl = "https://your-project.inth.app",
         consentCategories = listOf(ConsentCategory.NECESSARY, ConsentCategory.MEASUREMENT, ConsentCategory.MARKETING),
     ))
 }
 
-fun measurementMayStart(): Boolean = C15t.isAllowed(ConsentCategory.MEASUREMENT)
+fun measurementMayStart(): Boolean = Inth.isAllowed(ConsentCategory.MEASUREMENT)
 // #endregion docs:android-install
 
 class ConsentApplication : Application() {
@@ -48,7 +48,7 @@ class ConsentApplication : Application() {
 class ConsentActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val core = checkNotNull(C15t.current) { "Install c15t in Application first" }
+        val core = checkNotNull(Inth.current) { "Install Inth in Application first" }
         setContent {
             MaterialTheme {
                 // Recomposes when the decision changes, on the main thread.
@@ -60,7 +60,7 @@ class ConsentActivity : ComponentActivity() {
                             Text("Privacy settings")
                         }
                     }
-                    C15tConsent(privacyPolicyUrl = "https://your-app.example/privacy")
+                    InthConsent(privacyPolicyUrl = "https://your-app.example/privacy")
                 }
             }
         }

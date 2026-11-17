@@ -1,7 +1,7 @@
 /**
  * The native rows are only as good as the parsers that lift them out of two
  * unrelated toolchains' stdout. These cases use real captured output from
- * `C15tCoreBench` and `:c15t-core:bench`, so a label change upstream shows up as
+ * `InthCoreBench` and `:inth-core:bench`, so a label change upstream shows up as
  * a red test rather than as a table that quietly lost rows.
  */
 
@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest';
 
 import { parseKotlinBench, parseSwiftBench } from '../measure/native';
 
-const SWIFT_OUTPUT = `C15tCore benchmarks
+const SWIFT_OUTPUT = `InthCore benchmarks
 reference: Apple silicon, in-process; budgets from packages/native-protocol/CONTRACT.md
 stored envelope: 1898 bytes
 
@@ -43,7 +43,7 @@ read 10 queued bodies n=200    mean µs=   20.52  p50=   20.42  p95=   20.88  ma
 Done.
 `;
 
-const KOTLIN_OUTPUT = `c15t-core benchmarks
+const KOTLIN_OUTPUT = `inth-core benchmarks
   jvm=17.0.20+0 cores=18
   warmup=500 measured=3000  medians in microseconds
 
@@ -71,7 +71,7 @@ all measured budgets met
 `;
 
 /** The same run on a machine where the cold samples could not be forked. */
-const KOTLIN_OUTPUT_NO_COLD = `c15t-core benchmarks
+const KOTLIN_OUTPUT_NO_COLD = `inth-core benchmarks
   jvm=17.0.20+0 cores=18
   warmup=500 measured=3000  medians in microseconds
 

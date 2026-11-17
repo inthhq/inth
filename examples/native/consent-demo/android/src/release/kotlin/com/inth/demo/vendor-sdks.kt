@@ -1,7 +1,7 @@
-package com.c15t.demo
+package com.inth.demo
 
 import android.content.Context
-import com.c15t.core.ConsentCore
+import com.inth.core.ConsentCore
 
 /** Release builds of the demo carry no vendor SDKs. See src/debug for the real wiring. */
 @Suppress("UNUSED_PARAMETER")

@@ -1,7 +1,7 @@
 import XCTest
 
 final class ConsentJourney: XCTestCase {
-  private let app = XCUIApplication(bundleIdentifier: "org.reactjs.native.example.C15tBare")
+  private let app = XCUIApplication(bundleIdentifier: "org.reactjs.native.example.InthBare")
   private let categories = ["functionality", "measurement", "marketing"]
 
   override func setUpWithError() throws {
@@ -72,7 +72,7 @@ final class ConsentJourney: XCTestCase {
     try report()["vendorProbes"] as? [[String: Any]] ?? []
   }
 
-  /// Capture requests after `since`. Sentry counts only replay items, the part c15t controls.
+  /// Capture requests after `since`. Sentry counts only replay items, the part Inth controls.
   private func governedCapture(since: Int) throws -> (last: Int, rows: [[String: Any]]) {
     let captured = try fetchJSON("/captured?kind=capture&since=\(since)")
     // A response without the list is a broken capture server, never "no traffic".
@@ -186,7 +186,7 @@ final class ConsentJourney: XCTestCase {
 
   private func launch(reset: Bool = false) {
     app.terminate()
-    app.launchEnvironment = reset ? ["C15T_DEMO_LINK": "c15t-demo://reset"] : [:]
+    app.launchEnvironment = reset ? ["C15T_DEMO_LINK": "inth-demo://reset"] : [:]
     // Firebase debug logging is the evidence for Firebase, which cannot be redirected.
     app.launchArguments = ["-FIRDebugEnabled", "-FIRAnalyticsDebugEnabled"]
     app.launch()
@@ -289,7 +289,7 @@ final class ConsentJourney: XCTestCase {
     try network(false); launch()
     try fresh()
     capture("20-expiry-initial-prompt")
-    tap("c15t.first-layer.accept-all")
+    tap("inth.first-layer.accept-all")
     let all = try expiryState("expiry-earlier-all") { snapshot, _ in optional.allSatisfy { receipts(snapshot)[$0]?["value"] as? Bool == true } }
     let prior = (all["native"] as? [String: Any])?["process"] as? Int
     capture("21-expiry-earlier-all")
@@ -299,10 +299,10 @@ final class ConsentJourney: XCTestCase {
         && optional.allSatisfy { receipts(snapshot)[$0]?["value"] as? Bool == true }
     }
     tap("fixture.open-preferences")
-    XCTAssertTrue(app.switches["c15t.prefs.category.measurement.switch"].waitForExistence(timeout: 10))
-    XCTAssertFalse(app.switches["c15t.prefs.category.marketing.switch"].exists)
+    XCTAssertTrue(app.switches["inth.prefs.category.measurement.switch"].waitForExistence(timeout: 10))
+    XCTAssertFalse(app.switches["inth.prefs.category.marketing.switch"].exists)
     capture("22-expiry-narrowed-preferences")
-    tap("c15t.prefs.cancel")
+    tap("inth.prefs.cancel")
     try setControl(["now": 1793232001000])
     try expiryState("expiry-exact-boundary") { snapshot, report in
       snapshot["policyPending"] as? Bool == true && (report["native"] as? [String: Any])?["clock"] as? Int64 == 1793232001000
@@ -310,14 +310,14 @@ final class ConsentJourney: XCTestCase {
         && (snapshot["nextDeadline"] as? Int64 ?? Int64.max) > 1793232001000
     }
     tap("fixture.open-preferences")
-    XCTAssertTrue(app.buttons["c15t.status.unavailable.retry"].waitForExistence(timeout: 10))
-    XCTAssertFalse(app.switches["c15t.prefs.category.measurement.switch"].exists)
-    XCTAssertTrue(app.buttons["c15t.prefs.reject-all"].waitForExistence(timeout: 10))
-    XCTAssertTrue(app.buttons["c15t.prefs.reject-all"].isEnabled)
-    XCTAssertFalse(app.buttons["c15t.prefs.accept-all"].exists)
-    XCTAssertFalse(app.buttons["c15t.prefs.save"].exists)
+    XCTAssertTrue(app.buttons["inth.status.unavailable.retry"].waitForExistence(timeout: 10))
+    XCTAssertFalse(app.switches["inth.prefs.category.measurement.switch"].exists)
+    XCTAssertTrue(app.buttons["inth.prefs.reject-all"].waitForExistence(timeout: 10))
+    XCTAssertTrue(app.buttons["inth.prefs.reject-all"].isEnabled)
+    XCTAssertFalse(app.buttons["inth.prefs.accept-all"].exists)
+    XCTAssertFalse(app.buttons["inth.prefs.save"].exists)
     capture("23-expiry-reject-only")
-    tap("c15t.prefs.reject-all")
+    tap("inth.prefs.reject-all")
     let denial = try expiryState("expiry-durable-full-denial", denied)
     let deniedChoice = try XCTUnwrap(((denial["native"] as? [String: Any])?["snapshot"] as? [String: Any])?["explicitChoice"])
     let bytes = try JSONSerialization.data(withJSONObject: deniedChoice, options: .sortedKeys)
@@ -341,7 +341,7 @@ final class ConsentJourney: XCTestCase {
       denied(snapshot, report) && (snapshot["consentCategories"] as? [String])?.count == 5 && snapshot["policyPending"] as? Bool == false && (report["saves"] as? [Any])?.count == 1
     }
     tap("fixture.open-preferences")
-    XCTAssertEqual(app.switches["c15t.prefs.category.measurement.switch"].value as? String, "0")
+    XCTAssertEqual(app.switches["inth.prefs.category.measurement.switch"].value as? String, "0")
     capture("27-expiry-wide-denial")
   }
 
@@ -360,7 +360,7 @@ final class ConsentJourney: XCTestCase {
     }
     XCTAssertNotNil(initial["snapshot"])
     capture("01-fresh-prompt")
-    tap("c15t.first-layer.reject-all")
+    tap("inth.first-layer.reject-all")
     let rejected = try localChoice([], saves: 0)
     // Vendor step 2: a refusal keeps every vendor silent.
     let rejectSeq = try governedCapture(since: 0).last
@@ -373,7 +373,7 @@ final class ConsentJourney: XCTestCase {
 
     launch(reset: true)
     try fresh()
-    tap("c15t.first-layer.accept-all")
+    tap("inth.first-layer.accept-all")
     let accepted = try localChoice(Set(categories), saves: 1)
     try network(true); launch()
     let deliveredAccept = try choice(Set(categories), saves: 2)
@@ -383,11 +383,11 @@ final class ConsentJourney: XCTestCase {
 
     launch(reset: true)
     try fresh()
-    tap("c15t.first-layer.customize")
-    tap("c15t.prefs.category.measurement.switch")
-    XCTAssertEqual(app.switches["c15t.prefs.category.measurement.switch"].value as? String, "1")
+    tap("inth.first-layer.customize")
+    tap("inth.prefs.category.measurement.switch")
+    XCTAssertEqual(app.switches["inth.prefs.category.measurement.switch"].value as? String, "1")
     capture("04-customize-measurement")
-    tap("c15t.prefs.save")
+    tap("inth.prefs.save")
     let saved = try localChoice(["measurement"], saves: 2)
     capture("05-saved")
     // Vendor step 3: measurement is the category every helper defaults to.
@@ -395,18 +395,18 @@ final class ConsentJourney: XCTestCase {
     try assertVendorsCapture("vendor-3-grant-measurement", since: grantSeq, probe: try sendVendorProbe())
 
     tap("fixture.repeat-preferences")
-    let measurement = app.descendants(matching: .any)["c15t.prefs.category.measurement.switch"].firstMatch
+    let measurement = app.descendants(matching: .any)["inth.prefs.category.measurement.switch"].firstMatch
     XCTAssertTrue(measurement.waitForExistence(timeout: 15))
     XCTAssertEqual(measurement.value as? String, "1")
-    tap("c15t.prefs.category.measurement.switch")
+    tap("inth.prefs.category.measurement.switch")
     XCTAssertEqual(measurement.value as? String, "0")
     XCUIDevice.shared.press(.home)
     app.activate()
     XCTAssertTrue(measurement.waitForExistence(timeout: 15))
     XCTAssertEqual(measurement.value as? String, "0")
     capture("06-unsaved-draft")
-    tap("c15t.prefs.cancel")
-    tap("c15t.prefs.discard.confirm")
+    tap("inth.prefs.cancel")
+    tap("inth.prefs.discard.confirm")
     XCTAssertTrue(app.buttons["fixture.open-preferences"].waitForExistence(timeout: 10))
     let sessionReport = try report()
     let probe = try XCTUnwrap((sessionReport["jsBlock"] as? [String: Any])?["sessionProbe"] as? [String: [String: Any]])
@@ -419,7 +419,7 @@ final class ConsentJourney: XCTestCase {
 
     tap("fixture.open-preferences")
     XCTAssertEqual(measurement.value as? String, "1")
-    XCTAssertEqual(app.descendants(matching: .any)["c15t.prefs.category.marketing.switch"].firstMatch.value as? String, "0")
+    XCTAssertEqual(app.descendants(matching: .any)["inth.prefs.category.marketing.switch"].firstMatch.value as? String, "0")
 
     launch()
     try awaitState("new-process") { _, report in report["session"] as? String != saved["session"] as? String }
@@ -429,7 +429,7 @@ final class ConsentJourney: XCTestCase {
     tap("fixture.open-preferences")
     XCTAssertEqual(measurement.value as? String, "1")
     capture("07-relaunched-preferences")
-    tap("c15t.prefs.reject-all")
+    tap("inth.prefs.reject-all")
     let withdrawn = try localChoice([], saves: 2)
     capture("08-withdrawn-offline")
     // Vendor step 4: after in-flight uploads settle, a withdrawal stops every vendor.
@@ -457,8 +457,8 @@ final class ConsentJourney: XCTestCase {
 
   private func reveal(_ control: XCUIElement) {
     for _ in 0..<18 {
-      let save = app.buttons["c15t.iab.save"].exists ? app.buttons["c15t.iab.save"] : app.buttons["c15t.prefs.save"]
-      let reject = app.buttons["c15t.iab.reject-all"].exists ? app.buttons["c15t.iab.reject-all"] : app.buttons["c15t.prefs.reject-all"]
+      let save = app.buttons["inth.iab.save"].exists ? app.buttons["inth.iab.save"] : app.buttons["inth.prefs.save"]
+      let reject = app.buttons["inth.iab.reject-all"].exists ? app.buttons["inth.iab.reject-all"] : app.buttons["inth.prefs.reject-all"]
       let bottom = reject.exists ? reject.frame.minY - 12 : save.exists ? save.frame.minY - 12 : app.frame.maxY - 40
       let top: CGFloat = 150
       if control.exists && control.isHittable && control.frame.midY > top && control.frame.midY < bottom { return }
@@ -477,36 +477,36 @@ final class ConsentJourney: XCTestCase {
     URLSession.shared.dataTask(with: request) { _, _, _ in prepared.fulfill() }.resume()
     wait(for: [prepared], timeout: 5)
     launch(reset: true)
-    tap("c15t.first-layer.reject-all")
+    tap("inth.first-layer.reject-all")
     try awaitState("iab-rejected") { _, report in (report["saves"] as? [Any])?.count == 4 }
     tap("fixture.block-js")
     let blockedDeadline = Date().addingTimeInterval(10)
     while (try report()["jsBlock"] as? [String: Any])?["blocked"] as? Bool != true && Date() < blockedDeadline { RunLoop.current.run(until: Date().addingTimeInterval(0.1)) }
     XCTAssertEqual((try report()["jsBlock"] as? [String: Any])?["blocked"] as? Bool, true)
     capture("08-native-iab-blocked-js")
-    tap("c15t.prefs.category.measurement.switch")
+    tap("inth.prefs.category.measurement.switch")
     for id in [1, 3, 4, 7] {
-      let control = app.switches["c15t.iab.purpose.\(id).consent"]; reveal(control); control.tap()
+      let control = app.switches["inth.iab.purpose.\(id).consent"]; reveal(control); control.tap()
     }
-    let details = app.buttons["c15t.iab.purpose.7.details"]; reveal(details); details.tap()
-    let li = app.switches["c15t.iab.purpose.7.li"]; reveal(li); li.tap(); li.tap()
-    let partners = app.buttons["c15t.iab.partners"]; reveal(partners); partners.tap()
-    let search = app.textFields["c15t.iab.vendors.search"]; XCTAssertTrue(search.waitForExistence(timeout: 5)); search.tap(); search.typeText("elan")
+    let details = app.buttons["inth.iab.purpose.7.details"]; reveal(details); details.tap()
+    let li = app.switches["inth.iab.purpose.7.li"]; reveal(li); li.tap(); li.tap()
+    let partners = app.buttons["inth.iab.partners"]; reveal(partners); partners.tap()
+    let search = app.textFields["inth.iab.vendors.search"]; XCTAssertTrue(search.waitForExistence(timeout: 5)); search.tap(); search.typeText("elan")
     capture("09-native-partner-search")
-    tap("c15t.iab.vendors.vendor.1")
-    tap("c15t.iab.vendor.1.consent")
-    tap("c15t.iab.vendor.1.li"); tap("c15t.iab.vendor.1.li")
+    tap("inth.iab.vendors.vendor.1")
+    tap("inth.iab.vendor.1.consent")
+    tap("inth.iab.vendor.1.li"); tap("inth.iab.vendor.1.li")
     capture("10-native-partner-details")
-    tap("c15t.iab.vendor.back"); tap("c15t.iab.vendors.back")
-    let ac = app.buttons["c15t.iab.other-partners"]; reveal(ac); ac.tap()
-    let acSearch = app.textFields["c15t.ac.search"]; XCTAssertTrue(acSearch.waitForExistence(timeout: 5)); acSearch.tap(); acSearch.typeText("Harbour")
-    let provider = app.switches["c15t.ac.provider.10.switch"]; reveal(provider)
+    tap("inth.iab.vendor.back"); tap("inth.iab.vendors.back")
+    let ac = app.buttons["inth.iab.other-partners"]; reveal(ac); ac.tap()
+    let acSearch = app.textFields["inth.ac.search"]; XCTAssertTrue(acSearch.waitForExistence(timeout: 5)); acSearch.tap(); acSearch.typeText("Harbour")
+    let provider = app.switches["inth.ac.provider.10.switch"]; reveal(provider)
     XCTAssertEqual(provider.value as? String, "0")
     provider.coordinate(withNormalizedOffset: CGVector(dx: 0.93, dy: 0.5)).tap()
     XCTAssertEqual(provider.value as? String, "1")
     capture("11-native-additional-consent")
-    tap("c15t.ac.back")
-    tap("c15t.iab.save")
+    tap("inth.ac.back")
+    tap("inth.iab.save")
     let deadline = Date().addingTimeInterval(8)
     var observed: [String: Any] = [:]
     repeat {
@@ -556,14 +556,14 @@ final class ConsentJourney: XCTestCase {
     URLSession.shared.dataTask(with: request) { _, _, _ in done.fulfill() }.resume()
     wait(for: [done], timeout: 5)
     launch()
-    XCTAssertTrue(app.buttons["c15t.notice.acknowledge"].waitForExistence(timeout: 20))
+    XCTAssertTrue(app.buttons["inth.notice.acknowledge"].waitForExistence(timeout: 20))
     let before = try report()
     tap("fixture.host-action")
     XCTAssertTrue(app.staticTexts["fixture.host-count"].waitForExistence(timeout: 5))
     XCTAssertEqual(app.staticTexts["fixture.host-count"].label, "1")
-    XCTAssertTrue(app.buttons["c15t.notice.acknowledge"].exists)
+    XCTAssertTrue(app.buttons["inth.notice.acknowledge"].exists)
     capture("14-nonmodal-native-notice")
-    tap("c15t.notice.acknowledge")
+    tap("inth.notice.acknowledge")
     let after = try awaitState("notice-acknowledged") { snapshot, report in
       (snapshot["promptRequirement"] as? [String: Any])?["kind"] as? String == "none"
         && ((report["jsBlock"] as? [String: Any])?["outcomes"] as? [[String: Any]])?.last?["kind"] as? String == "acknowledged"

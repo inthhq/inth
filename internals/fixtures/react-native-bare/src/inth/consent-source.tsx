@@ -26,10 +26,10 @@ import {
 	ConsentClientContext,
 	createConsentClient,
 	getConsentClient,
-	getNativeC15t,
-	hasNativeC15tSurface,
-} from '@c15t/react-native';
-import type { ConsentClient } from '@c15t/react-native';
+	getNativeInth,
+	hasNativeInthSurface,
+} from '@inth/react-native';
+import type { ConsentClient } from '@inth/react-native';
 import {
 	createContext,
 	useCallback,
@@ -90,15 +90,15 @@ const ConsentSourceContext = createContext<ConsentSource>(NO_SOURCE);
 export const useConsentSource = (): ConsentSource =>
 	useContext(ConsentSourceContext);
 
-/** Whether the binary carries the c15t TurboModule. */
+/** Whether the binary carries the Inth TurboModule. */
 const probeNative = (): { client: ConsentClient } | { error: Error } => {
 	try {
-		const nativeModule = getNativeC15t();
+		const nativeModule = getNativeInth();
 
-		if (!hasNativeC15tSurface(nativeModule)) {
+		if (!hasNativeInthSurface(nativeModule)) {
 			return {
 				error: new Error(
-					'The c15t module is registered but incomplete, so the native build does not match this JavaScript package.'
+					'The Inth module is registered but incomplete, so the native build does not match this JavaScript package.'
 				),
 			};
 		}

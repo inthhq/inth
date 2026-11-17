@@ -2,7 +2,7 @@ apply plugin: "com.android.test"
 apply plugin: "org.jetbrains.kotlin.android"
 
 android {
-    namespace "com.c15t.bare.e2e"
+    namespace "com.inth.bare.e2e"
     compileSdk rootProject.ext.compileSdkVersion
     targetProjectPath = ":app"
     // A separate process is required to kill and relaunch the app under test.
