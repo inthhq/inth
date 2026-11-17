@@ -365,15 +365,24 @@ export const readWorkspaces = (root: string): Workspace[] => {
       maxBuffer: 64 * 1024 * 1024,
     })
   );
-  return listed.map((entry) => {
-    const manifest = readManifest(entry.path);
+  const manifests = listed.map((entry) => readManifest(entry.path));
+  // @inth/sdk copies the private @inth/sdk-<folder> packages into lib/ and
+  // declares none of them, so a change to one reaches it only through here.
+  const sdkParts = manifests
+    .map((manifest) => manifest.name)
+    .filter((name) => name.startsWith("@inth/sdk-"));
+  return listed.map((entry, index) => {
+    const manifest = manifests[index];
     return {
-      dependencies: Object.keys({
-        ...manifest.dependencies,
-        ...manifest.devDependencies,
-        ...manifest.optionalDependencies,
-        ...manifest.peerDependencies,
-      }),
+      dependencies: [
+        ...Object.keys({
+          ...manifest.dependencies,
+          ...manifest.devDependencies,
+          ...manifest.optionalDependencies,
+          ...manifest.peerDependencies,
+        }),
+        ...(manifest.name === "@inth/sdk" ? sdkParts : []),
+      ],
       directory: path.relative(root, entry.path).split(path.sep).join("/"),
       name: manifest.name,
       scripts: Object.keys(manifest.scripts ?? {}),

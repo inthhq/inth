@@ -1,7 +1,7 @@
 name: Release Android
 
-# DISABLED. This release line turns on after its packages are renamed from
-# c15t to Inth and the owner adds registry credentials. Until then it runs
+# DISABLED. Its packages carry Inth names; this release line turns on once
+# the owner adds registry credentials. Until then it runs
 # only by hand, and tools/ci/release-guard.ts stops the publish job: it
 # refuses while the ANDROID_RELEASE_ENABLED repository variable is not "true",
 # and it refuses any c15t, @c15t/* or com.c15t artifact even when the variable
