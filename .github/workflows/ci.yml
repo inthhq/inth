@@ -337,12 +337,7 @@ jobs:
       - uses: ./.github/actions/setup-sdk
       - name: Build, check types and test
         run: >-
-          pnpm turbo run build check-types test --concurrency=2 --continue
-          --filter=./packages/react-native
-          --filter=./benchmarks/mobile
-          --filter=./internals/doc-snippets/expo
-          --filter=./internals/fixtures/expo-dev
-          --filter=./internals/fixtures/react-native-bare
+          pnpm turbo run build check-types test --concurrency=2 --continue --filter=./packages/react-native --filter=./benchmarks/mobile --filter=./internals/doc-snippets/expo --filter=./internals/fixtures/expo-dev --filter=./internals/fixtures/react-native-bare
       # Assembling the Android library proves Gradle compiles it, not that a host
       # app can find it. This asks the React Native CLI and Expo's resolver, from
       # the checkout and from the packed tarball.
@@ -433,14 +428,7 @@ jobs:
       - name: Test the Kotlin core and stage the Android libraries
         working-directory: packages/android
         run: >-
-          ./gradlew
-          :c15t-core:test
-          :c15t-android:testDebugUnitTest
-          :c15t-consent-ui:testDebugUnitTest
-          :c15t-core:publishAllPublicationsToStagingRepository
-          :c15t-android:publishAllPublicationsToStagingRepository
-          :c15t-consent-ui:publishAllPublicationsToStagingRepository
-          --no-configuration-cache --console=plain
+          ./gradlew :c15t-core:test :c15t-android:testDebugUnitTest :c15t-consent-ui:testDebugUnitTest :c15t-core:publishAllPublicationsToStagingRepository :c15t-android:publishAllPublicationsToStagingRepository :c15t-consent-ui:publishAllPublicationsToStagingRepository --no-configuration-cache --console=plain
       - name: Resolve the staged libraries in an isolated consumer app
         run: |
           native_version="$(sed -n 's/^c15t.native.version=//p' packages/android/gradle.properties)"
