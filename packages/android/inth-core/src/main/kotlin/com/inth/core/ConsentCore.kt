@@ -1094,15 +1094,18 @@ class ConsentCore @InthInternalApi constructor(
 			)
 		}
 
-		// Published before the first send, so the response to it -- which can name a canonical
-		// subject id and so commit an identity change of its own -- is the later publication.
-		notifySnapshot()
-
 		// The first send is not joined. What this thread may claim about it is whatever the
 		// atomic holds at this instant and nothing more: `null` behind a pool, and the
 		// settled answer only where the host's executor ran the send before returning.
 		val firstSend = AtomicReference<Delivery>()
-		background.execute { requestDeliveryPass { deliverIfOwed(entry)?.let(firstSend::set) } }
+		// Published before the first send, so the response to it -- which can name a canonical
+		// subject id and so commit an identity change of its own -- is the later publication.
+		// An observer that throws still fails this call, but the durable entry is sent.
+		try {
+			notifySnapshot()
+		} finally {
+			background.execute { requestDeliveryPass { deliverIfOwed(entry)?.let(firstSend::set) } }
+		}
 		val delivered = firstSend.get() === Delivery.Reached
 
 		CommitResult(
