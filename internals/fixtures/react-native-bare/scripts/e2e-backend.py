@@ -62,7 +62,8 @@ def records_problem(body):
     if not isinstance(categories, dict) or set(body['answer']) != {'categories'}:
         return 'answer must be { categories }'
     confirmed = body.get('confirmed')
-    if not isinstance(confirmed, list) or not set(confirmed) <= set(categories):
+    if not isinstance(confirmed, list) or not all(isinstance(name, str) for name in confirmed) \
+            or not set(confirmed) <= set(categories):
         return 'confirmed must name keys of answer.categories'
     return None
 
