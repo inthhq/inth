@@ -12,6 +12,7 @@
 import { createElement, useEffect, useMemo, useState } from 'react';
 import type { ComponentProps, FC, ReactNode } from 'react';
 
+import { useTriggerLabels } from '~/component-hooks/use-trigger-labels';
 import { useDevToolsLauncherAvailable } from '~/devtools-launcher';
 
 import { TriggerButton } from './atoms/button';
@@ -120,7 +121,7 @@ const ConsentDialogTriggerComponent = ({
 	icon = 'branding',
 	defaultPosition = 'bottom-right',
 	persistPosition = true,
-	ariaLabel = 'Open privacy settings',
+	ariaLabel,
 	showWhen = 'always',
 	size = 'md',
 	className,
@@ -131,15 +132,17 @@ const ConsentDialogTriggerComponent = ({
 	// With <ConsentDevTools> mounted, become a two-item toolbar that carries
 	// the DevTools launcher, so one control occupies the corner.
 	const hostsDevTools = useDevToolsLauncherAvailable();
+	const triggerLabels = useTriggerLabels();
+	const label = ariaLabel ?? triggerLabels.label;
 	const preferences = useMemo(
-		() => ({ className, icon, label: ariaLabel }),
-		[ariaLabel, className, icon]
+		() => ({ className, icon, label }),
+		[className, icon, label]
 	);
 
 	const button = (
 		<TriggerButton
 			size={size}
-			ariaLabel={ariaLabel}
+			ariaLabel={label}
 			className={className}
 			noStyle={noStyle}
 		>

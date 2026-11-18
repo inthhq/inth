@@ -99,6 +99,46 @@ const dragElement = async function dragElement(
 	});
 };
 
+// Regression: the trigger and toolbar names were hardcoded English.
+test('names the trigger and the toolbar from the trigger translations', async () => {
+	render(
+		<ComponentFixtureProvider
+			options={{
+				i18n: {
+					locale: 'en',
+					messages: {
+						en: {
+							trigger: {
+								label: 'Privacy settings, please',
+								toolbarLabel: 'Site controls',
+							},
+						},
+					},
+				},
+				mode: testing(),
+			}}
+		>
+			<ConsentDialogTrigger showWhen="always" />
+			<ConsentDialogTriggerToolbar
+				actions={[
+					{ icon: null, id: 'theme', label: 'Theme', onSelect: vi.fn() },
+				]}
+			/>
+		</ComponentFixtureProvider>
+	);
+
+	await vi.waitFor(() => {
+		expect(
+			document.querySelector(
+				'button[data-inth-trigger="true"][aria-label="Privacy settings, please"]'
+			)
+		).toBeInTheDocument();
+		expect(
+			document.querySelector('[role="toolbar"][aria-label="Site controls"]')
+		).toBeInTheDocument();
+	});
+});
+
 describe('ConsentDialogTrigger compatibility', () => {
 	test('keeps the existing single-button trigger behavior and compound API', async () => {
 		renderWithConsent(<ConsentDialogTrigger showWhen="always" />);

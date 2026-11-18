@@ -20,7 +20,6 @@ export {
 	type TriggerSize,
 	TriggerText,
 	type TriggerTextProps,
-	type TriggerVisibility,
 	type UseDraggableOptions,
 	type UseDraggableReturn,
 	useDraggable,

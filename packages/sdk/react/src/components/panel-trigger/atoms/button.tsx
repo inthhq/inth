@@ -11,6 +11,7 @@ import { forwardRef as createForwardRef } from 'react';
 import type { FocusEvent, MouseEvent, PointerEvent, ReactNode } from 'react';
 
 import { useIdleDialogWarming, warmDialogChunk } from '~/chunk-warming';
+import { useTriggerLabels } from '~/component-hooks/use-trigger-labels';
 import { usePolicyRule } from '~/hooks';
 import { useTheme } from '~/hooks/use-theme';
 import { useUIConfig } from '~/ui-config-context';
@@ -51,8 +52,8 @@ export interface TriggerButtonProps {
 	size?: TriggerSize;
 
 	/**
-	 * Accessible label for the button.
-	 * @default 'Open privacy settings'
+	 * Accessible label for the button. Defaults to the `trigger.label`
+	 * translation ("Open privacy settings").
 	 */
 	ariaLabel?: string;
 
@@ -89,7 +90,7 @@ export const TriggerButton = createForwardRef<
 		{
 			children,
 			size = 'md',
-			ariaLabel = 'Open privacy settings',
+			ariaLabel,
 			className,
 			'data-testid': dataTestId = 'consent-dialog-trigger',
 			noStyle,
@@ -97,6 +98,7 @@ export const TriggerButton = createForwardRef<
 		ref
 	) => {
 		const policy = usePolicyRule();
+		const triggerLabels = useTriggerLabels();
 		const { components } = useUIConfig();
 		const { disableAnimation, noStyle: contextNoStyle } = useTheme();
 		const {
@@ -157,7 +159,7 @@ export const TriggerButton = createForwardRef<
 				data-inth-rights={policy.rights.join(' ')}
 				// Stops the hover and snap transitions, as on the other surfaces.
 				data-disable-animation={disableAnimation ? '' : undefined}
-				aria-label={ariaLabel}
+				aria-label={ariaLabel ?? triggerLabels.label}
 				onClick={handleClick}
 				onFocus={handleFocus}
 				onPointerEnter={handlePointerEnter}

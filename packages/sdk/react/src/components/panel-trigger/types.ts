@@ -4,6 +4,7 @@
  * @packageDocumentation
  */
 
+import type { ConsentDialogTriggerVisibility } from '@inth/sdk/schema/config';
 import type { CornerPosition } from '@inth/sdk/ui/utils/trigger-utils';
 import type { ReactNode } from 'react';
 
@@ -18,17 +19,6 @@ import type { ClassNameStyle } from '~/types/theme';
  * - `ReactNode` - Custom icon element
  */
 export type TriggerIcon = 'branding' | 'fingerprint' | 'settings' | ReactNode;
-
-/**
- * Visibility options for when to show a trigger.
- *
- * - `'always'` - Visible whenever the preference center is closed
- * - `'after-prompt'` - Visible only once no prompt is owed: after a choice
- *   is saved or a notice is dismissed, and hidden again while a policy
- *   change asks for a new answer
- * - `'never'` - Never visible (useful for programmatic control)
- */
-export type TriggerVisibility = 'always' | 'after-prompt' | 'never';
 
 /**
  * Size options for trigger controls.
@@ -67,9 +57,8 @@ export interface ConsentDialogTriggerProps {
 	persistPosition?: boolean;
 
 	/**
-	 * Accessible label for the trigger button.
-	 *
-	 * @default 'Open privacy settings'
+	 * Accessible label for the trigger button. Defaults to the
+	 * `trigger.label` translation ("Open privacy settings").
 	 */
 	ariaLabel?: string;
 
@@ -90,7 +79,7 @@ export interface ConsentDialogTriggerProps {
 	 *
 	 * @default 'always'
 	 */
-	showWhen?: TriggerVisibility;
+	showWhen?: ConsentDialogTriggerVisibility;
 
 	/**
 	 * Size of the trigger button.
@@ -212,22 +201,21 @@ export interface ConsentDialogTriggerToolbarProps extends Omit<
 	persistPosition?: boolean;
 
 	/**
-	 * Accessible label for the toolbar.
-	 *
-	 * @default 'Privacy controls'
+	 * Accessible label for the toolbar. Defaults to the
+	 * `trigger.toolbarLabel` translation ("Privacy controls").
 	 */
 	ariaLabel?: string;
 
 	/**
 	 * Controls when the built-in preferences action is visible. App-owned
 	 * `actions` always render, so a theme toggle stays available while a
-	 * prompt is owed; `after-prompt` hides only the preferences action until
+	 * prompt is owed; `after-consent` hides only the preferences action until
 	 * the visitor has answered, and `never` omits it. The toolbar renders
 	 * nothing only when it has no visible item.
 	 *
 	 * @default 'always'
 	 */
-	showWhen?: TriggerVisibility;
+	showWhen?: ConsentDialogTriggerVisibility;
 
 	/**
 	 * Size of each toolbar action.

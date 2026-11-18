@@ -9,10 +9,15 @@
 import type { PolicyRight } from '@inth/sdk/schema/types';
 import styles from '@inth/sdk/ui/styles/components/consent-dialog-trigger';
 import { followDevToolsDock } from '@inth/sdk/ui/utils/devtools-launcher';
+import {
+	nextToolbarItem,
+	toolbarOrder,
+} from '@inth/sdk/ui/utils/trigger-utils';
 import type { KeyboardEvent, MouseEvent, ReactNode } from 'react';
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { useConsentLabels } from '~/component-hooks/use-consent-labels';
+import { useTriggerLabels } from '~/component-hooks/use-trigger-labels';
 import { useDevToolsLauncher } from '~/devtools-launcher';
 import { usePolicyRule } from '~/hooks';
 import { useTheme } from '~/hooks/use-theme';
@@ -97,14 +102,6 @@ type ToolbarItem =
 	| ToolbarCustomItem
 	| ToolbarDevToolsItem;
 
-const DEVTOOLS_ITEM: ToolbarDevToolsItem = {
-	focusId: 'devtools',
-	icon: <DevToolsIcon />,
-	id: 'devtools',
-	kind: 'devtools',
-	label: 'inth DevTools',
-};
-
 /**
  * The built-in action reflects the strongest persistent right the active
  * rule guarantees: the opt-out label under an opt-out rule, otherwise the
@@ -146,15 +143,21 @@ const createToolbarItems = function createToolbarItems(
 	right: ToolbarPreferencesRight,
 	defaultLabel: string,
 	showPreferences: boolean,
-	showDevTools: boolean
+	devToolsLabel: string | null
 ): readonly ToolbarItem[] {
 	const customItems: ToolbarItem[] = actions.map((action) => ({
 		...action,
 		focusId: `custom:${action.id}`,
 		kind: 'custom',
 	}));
-	if (showDevTools) {
-		customItems.push(DEVTOOLS_ITEM);
+	if (devToolsLabel !== null) {
+		customItems.push({
+			focusId: 'devtools',
+			icon: <DevToolsIcon />,
+			id: 'devtools',
+			kind: 'devtools',
+			label: devToolsLabel,
+		});
 	}
 
 	if (!showPreferences) {
@@ -189,18 +192,12 @@ const orderItemsForCorner = function orderItemsForCorner(
 	}
 
 	const customItems = items.filter((item) => item.kind === 'custom');
-	const cornerFacesStart =
-		orientation === 'horizontal'
-			? corner.endsWith('left')
-			: corner.startsWith('top');
-	// Preferences sits in the corner; DevTools, a development aid, sits
-	// farthest from it.
-	const head = preferencesItem ? [preferencesItem] : [];
-	const tail = devToolsItem ? [devToolsItem] : [];
+	const byKind = { devtools: devToolsItem, preferences: preferencesItem };
+	const [first, last] = toolbarOrder(corner, orientation).map(
+		(kind) => byKind[kind]
+	);
 
-	return cornerFacesStart
-		? [...head, ...customItems, ...tail]
-		: [...tail, ...customItems, ...head];
+	return [...(first ? [first] : []), ...customItems, ...(last ? [last] : [])];
 };
 
 export interface TriggerToolbarProps extends Omit<
@@ -219,7 +216,10 @@ export interface TriggerToolbarProps extends Omit<
 	/** Layout direction for the toolbar. @default 'horizontal' */
 	orientation?: TriggerOrientation;
 
-	/** Accessible name for the toolbar group. @default 'Privacy controls' */
+	/**
+	 * Accessible name for the toolbar group. Defaults to the
+	 * `trigger.toolbarLabel` translation ("Privacy controls").
+	 */
 	ariaLabel?: string;
 
 	/**
@@ -238,7 +238,7 @@ export const TriggerToolbar = ({
 	preferences,
 	size = 'md',
 	orientation = 'horizontal',
-	ariaLabel = 'Privacy controls',
+	ariaLabel,
 	showPreferences = true,
 	className,
 	style,
@@ -246,6 +246,7 @@ export const TriggerToolbar = ({
 }: TriggerToolbarProps): ReactNode => {
 	const { components } = useUIConfig();
 	const { disableAnimation, noStyle: contextNoStyle } = useTheme();
+	const triggerLabels = useTriggerLabels();
 	const {
 		label: defaultPreferencesLabel,
 		right: preferencesRight,
@@ -273,7 +274,7 @@ export const TriggerToolbar = ({
 					preferencesRight,
 					defaultPreferencesLabel,
 					showPreferences,
-					showDevTools
+					showDevTools ? triggerLabels.devToolsLabel : null
 				),
 				orientation,
 				corner
@@ -287,6 +288,7 @@ export const TriggerToolbar = ({
 			preferencesRight,
 			showDevTools,
 			showPreferences,
+			triggerLabels.devToolsLabel,
 		]
 	);
 
@@ -330,45 +332,21 @@ export const TriggerToolbar = ({
 		: firstEnabledId;
 
 	const handleToolbarKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-		const nextKey = orientation === 'vertical' ? 'ArrowDown' : 'ArrowRight';
-		const previousKey = orientation === 'vertical' ? 'ArrowUp' : 'ArrowLeft';
-
-		if (
-			event.key !== nextKey &&
-			event.key !== previousKey &&
-			event.key !== 'Home' &&
-			event.key !== 'End'
-		) {
-			return;
-		}
-
-		const enabledItems = orderedItems.filter((item) => !item.disabled);
-		if (enabledItems.length === 0) {
-			return;
-		}
-
-		event.preventDefault();
-		const currentIndex = enabledItems.findIndex(
-			(item) => item.focusId === resolvedActiveItemId
+		const enabledIds = orderedItems
+			.filter((item) => !item.disabled)
+			.map((item) => item.focusId);
+		const nextId = nextToolbarItem(
+			enabledIds,
+			resolvedActiveItemId,
+			event.key,
+			orientation
 		);
-		let nextIndex: number;
-
-		if (event.key === 'Home') {
-			nextIndex = 0;
-		} else if (event.key === 'End') {
-			nextIndex = enabledItems.length - 1;
-		} else if (event.key === nextKey) {
-			nextIndex = (currentIndex + 1) % enabledItems.length;
-		} else {
-			nextIndex =
-				(currentIndex - 1 + enabledItems.length) % enabledItems.length;
+		if (nextId === undefined) {
+			return;
 		}
-
-		const nextItem = enabledItems[nextIndex];
-		if (nextItem) {
-			setActiveItemId(nextItem.focusId);
-			itemRefs.current.get(nextItem.focusId)?.focus();
-		}
+		event.preventDefault();
+		setActiveItemId(nextId);
+		itemRefs.current.get(nextId)?.focus();
 	};
 
 	const handleItemClick = (
@@ -393,7 +371,7 @@ export const TriggerToolbar = ({
 	return (
 		<div
 			{...toolbarDOMStyle}
-			aria-label={ariaLabel}
+			aria-label={ariaLabel ?? triggerLabels.toolbarLabel}
 			aria-orientation={orientation}
 			data-corner={corner}
 			data-inth-trigger-toolbar="true"

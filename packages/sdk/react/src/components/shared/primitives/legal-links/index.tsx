@@ -1,4 +1,5 @@
 import type { LegalLinks as LegalLinksType } from '@inth/sdk/engine';
+import { defaultTranslationConfig } from '@inth/sdk/surface-state';
 import styles from '@inth/sdk/ui/styles/components/legal-links';
 import { resolveTranslations } from '@inth/sdk/ui/utils';
 import { useContext, useMemo, useSyncExternalStore } from 'react';
@@ -6,7 +7,6 @@ import { useContext, useMemo, useSyncExternalStore } from 'react';
 import { KernelContext } from '~/context';
 import { useServerSnapshot } from '~/kernel-selector';
 import { useUIConfig, V3UIConfigContext } from '~/ui-config-context';
-import { defaultTranslationConfig } from '~/utils/default-translation-config';
 import { mergeSlotProps } from '~/utils/merge-slot-props';
 
 const noopSubscribe = () => () => undefined;

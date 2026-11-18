@@ -885,7 +885,7 @@ export const IABConsentDialog: FC<IABConsentDialogProps> = ({
 											{featureRows.length > 0 && (
 												<section
 													aria-label={
-														iabTranslations.preferenceCenter.features.title
+														iabTranslations.preferenceCenter.features?.title
 													}
 													className={
 														config.noStyle ? undefined : styles.featuresSection
@@ -904,7 +904,7 @@ export const IABConsentDialog: FC<IABConsentDialogProps> = ({
 																	: styles.featuresTitle
 															}
 														>
-															{iabTranslations.preferenceCenter.features.title}
+															{iabTranslations.preferenceCenter.features?.title}
 														</h3>
 														<p
 															className={
@@ -915,7 +915,7 @@ export const IABConsentDialog: FC<IABConsentDialogProps> = ({
 														>
 															{featuresStandardText ??
 																iabTranslations.preferenceCenter.features
-																	.description}
+																	?.description}
 														</p>
 													</div>
 													<div

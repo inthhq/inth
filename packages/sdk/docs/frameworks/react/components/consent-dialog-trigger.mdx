@@ -14,10 +14,10 @@ group: frameworks
 import { ConsentDialogTrigger } from '@inth/react';
 
 // Inside the ConsentProvider from your quickstart, next to the dialog:
-<ConsentDialogTrigger showWhen="after-prompt" />;
+<ConsentDialogTrigger showWhen="after-consent" />;
 ```
 
-`showWhen="after-prompt"` keeps the button out of the way while a choice or notice is still owed and shows it once the visitor has answered, so the banner and the trigger never compete for the same corner. The default, `always`, shows it whenever the preference center is closed.
+`showWhen="after-consent"` keeps the button out of the way while a choice or notice is still owed and shows it once the visitor has answered, so the banner and the trigger never compete for the same corner. The default, `always`, shows it whenever the preference center is closed.
 
 The button carries `data-inth-rights` with the rights the active policy guarantees, so a stylesheet can label it differently under an opt-out rule.
 
@@ -69,7 +69,7 @@ single `ConsentDialogTrigger`, follow the policy:
 
 | Situation | Built-in action and `ConsentDialogTrigger` |
 | --- | --- |
-| A choice or notice is still owed, with `showWhen="after-prompt"` | Hidden until the visitor answers |
+| A choice or notice is still owed, with `showWhen="after-consent"` | Hidden until the visitor answers |
 | `showWhen="never"` on the toolbar | Left out of the toolbar |
 | No policy rule has resolved: resolution failed, no rule matched and you set no default, or init is still withheld | Hidden; appears without a remount once a rule resolves |
 | The rule has `model: 'none'` | Hidden, unless the rule adds `rights: ['preferences']` |

@@ -1592,7 +1592,7 @@ export const PolicyPlayground = () => {
 												ariaLabel="Playground privacy controls"
 												defaultPosition="bottom-right"
 												persistPosition={false}
-												showWhen="after-prompt"
+												showWhen="after-consent"
 												actions={[
 													{
 														icon: 'settings',

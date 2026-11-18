@@ -147,13 +147,13 @@ const dismissNotice = async function dismissNotice(): Promise<void> {
 	});
 };
 
-describe('after-prompt visibility', () => {
+describe('after-consent visibility', () => {
 	test('keeps app actions while a notice is owed and adds the preferences action after dismissal', async () => {
 		renderWithRule(
 			OPT_OUT_NOTICE,
 			<ConsentDialogTriggerToolbar
 				actions={[THEME_ACTION]}
-				showWhen="after-prompt"
+				showWhen="after-consent"
 			/>
 		);
 
@@ -178,7 +178,7 @@ describe('after-prompt visibility', () => {
 	test('renders nothing while a notice is owed when the toolbar has no app actions', async () => {
 		renderWithRule(
 			OPT_OUT_NOTICE,
-			<ConsentDialogTriggerToolbar showWhen="after-prompt" />
+			<ConsentDialogTriggerToolbar showWhen="after-consent" />
 		);
 
 		await vi.waitFor(() => {
@@ -218,7 +218,7 @@ describe('after-prompt visibility', () => {
 	test('hides the single trigger while a choice is owed and shows it after a choice', async () => {
 		renderWithRule(
 			OPT_IN_CHOICE,
-			<ConsentDialogTrigger showWhen="after-prompt" />
+			<ConsentDialogTrigger showWhen="after-consent" />
 		);
 
 		await vi.waitFor(() => {
@@ -268,7 +268,7 @@ test('a no-prompt international profile keeps a generic working preference butto
 			prompt: 'none',
 		},
 		<ConsentDialogTriggerToolbar
-			showWhen="after-prompt"
+			showWhen="after-consent"
 			defaultPosition="top-right"
 			persistPosition={false}
 		/>

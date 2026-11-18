@@ -32,7 +32,6 @@ export type {
 	TriggerIcon as TriggerIconType,
 	TriggerOrientation,
 	TriggerSize,
-	TriggerVisibility,
 } from './types';
 // Hook
 export {

@@ -315,6 +315,67 @@ describe('IAB preference item interactions', () => {
 		});
 	});
 
+	// Regression: the refresh note was hardcoded English.
+	test('shows the max age with the translated refresh note', async () => {
+		render(
+			<ConsentProvider
+				options={{
+					...defaultIABOptions,
+					i18n: {
+						locale: 'en',
+						messages: {
+							en: {
+								iab: {
+									preferenceCenter: {
+										vendorList: { maxAgeRefreshes: '(renewed)' },
+									},
+								},
+							},
+						},
+					},
+				}}
+			>
+				<IABConsentDialog open />
+			</ConsentProvider>
+		);
+
+		const vendorsTab = await vi.waitFor(
+			() => {
+				const el = Array.from(
+					document.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+				).find((button) =>
+					button.textContent?.toLowerCase().includes('vendor')
+				);
+				return getDefined(el);
+			},
+			{ timeout: 5000 }
+		);
+		await userEvent.click(vendorsTab);
+
+		const vendorHeader = await vi.waitFor(
+			() =>
+				getDefined(
+					Array.from(
+						document.querySelectorAll<HTMLElement>('[id^="vendor-"]')
+					).find((element) =>
+						element.textContent?.includes('Exponential Interactive')
+					)
+				),
+			{ timeout: 5000 }
+		);
+		await userEvent.click(
+			getDefined(
+				vendorHeader.querySelector<HTMLElement>(
+					'[data-slot="preference-item-trigger"]'
+				)
+			)
+		);
+
+		await vi.waitFor(() => {
+			expect(vendorHeader.textContent).toContain('Max Age: 365d (renewed)');
+		});
+	});
+
 	test('links each vendor to the privacy policy its GVL entry declares', async () => {
 		render(
 			<ConsentProvider options={defaultIABOptions}>
