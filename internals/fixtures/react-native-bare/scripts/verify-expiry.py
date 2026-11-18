@@ -28,7 +28,7 @@ assert all(x['body']['consentAction']!='all' for x in live)
 restored=[n for n in withdrawals if not n['snapshot']['policyPending'] and len(n['snapshot']['consentCategories'])==5]
 assert restored
 assert restored[-1]['snapshot']['resolution']['fingerprint']==all_grants[0]['snapshot']['resolution']['fingerprint']
-assert live[0]['body']['choice']==restored[-1]['snapshot']['explicitChoice']
+assert live[0]['body']['answer']['categories']=={c:r for c,r in restored[-1]['snapshot']['explicitChoice']['categories'].items() if c!='necessary'}
 result={'passed':True,'expiresAt':expiry,'issuedAt':resource['issuedAt'],'earlierAllProcesses':sorted({n['process'] for n in all_grants}), 'narrowedProcesses':sorted({n['process'] for n in narrowed}), 'denialProcesses':sorted({n['process'] for n in withdrawals}), 'exactBoundaryReadings':len(boundary), 'deniedReadings':len(withdrawals), 'acceptedProtocolDeliveries':len(live),'offlineDenialAttempts':len(offline), 'exactReplayBodySha256':hashlib.sha256(bytes.fromhex(live[0]['rawHex'])).hexdigest(), 'sameFingerprint':restored[-1]['snapshot']['resolution']['fingerprint'], 'liveHostedReceiptAcceptance':False}
 (out/'expiry-verification.json').write_text(json.dumps(result,indent=2))
 print(json.dumps(result,indent=2))

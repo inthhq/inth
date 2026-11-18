@@ -16,7 +16,7 @@
              com.inth.BACKEND_URL      required: the Inth project URL
              com.inth.DRY_RUN                 true drops records, for development and
                                       CI; refused unless the app is debuggable
-             com.inth.BACKEND_DOMAIN          domain sent on subject writes
+             com.inth.BACKEND_PROPERTY        property sent on consent records
              com.inth.CATEGORIES      comma-separated category scope the app
                                       offers; iOS spells this the
                                       com.inth.categories plist array. Absent

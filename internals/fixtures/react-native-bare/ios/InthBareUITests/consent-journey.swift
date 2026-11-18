@@ -211,15 +211,14 @@ final class ConsentJourney: XCTestCase {
             writes.count == saves,
             writes.last?["consentAction"] as? String == (granted.isEmpty ? "necessary" : granted == Set(self.categories) ? "all" : "custom"),
             let delivered = writes.last,
-            let preferences = delivered["preferences"] as? [String: Bool],
-            let deliveredChoice = delivered["choice"] as? [String: Any],
-            let deliveredReceipts = deliveredChoice["categories"] as? [String: [String: Any]],
-            NSDictionary(dictionary: receipts).isEqual(NSDictionary(dictionary: deliveredReceipts)),
+            let answer = delivered["answer"] as? [String: Any],
+            let deliveredReceipts = answer["categories"] as? [String: [String: Any]],
+            NSDictionary(dictionary: receipts.filter { $0.key != "necessary" }).isEqual(NSDictionary(dictionary: deliveredReceipts)),
             delivered["subjectId"] as? String == (snapshot["subject"] as? [String: Any])?["subjectId"] as? String,
             permissions["necessary"] == true else { return false }
       return self.categories.allSatisfy { category in
         permissions[category] == granted.contains(category)
-          && preferences[category] == granted.contains(category)
+          && deliveredReceipts[category]?["value"] as? Bool == granted.contains(category)
           && receipts[category]?["value"] as? Bool == granted.contains(category)
           && receipts[category]?["confirmedAt"] as? Double != nil
       }
@@ -321,6 +320,8 @@ final class ConsentJourney: XCTestCase {
     let denial = try expiryState("expiry-durable-full-denial", denied)
     let deniedChoice = try XCTUnwrap(((denial["native"] as? [String: Any])?["snapshot"] as? [String: Any])?["explicitChoice"])
     let bytes = try JSONSerialization.data(withJSONObject: deniedChoice, options: .sortedKeys)
+    // The records body carries the same receipts as `answer.categories`, without `necessary`.
+    let deniedReceipts = try XCTUnwrap((deniedChoice as? [String: Any])?["categories"] as? [String: Any]).filter { $0.key != "necessary" }
     XCTAssertEqual((denial["saves"] as? [Any])?.count, 0)
     capture("24-expiry-denied")
     launch()
@@ -332,7 +333,9 @@ final class ConsentJourney: XCTestCase {
     try network(true); launch()
     let replayed = try expiryState("expiry-replayed-same-fingerprint", { snapshot, report in denied(snapshot, report) && snapshot["policyPending"] as? Bool == false && (report["saves"] as? [Any])?.count == 1 })
     let delivered = try XCTUnwrap((replayed["saves"] as? [[String: Any]])?.first)
-    XCTAssertEqual(bytes, try JSONSerialization.data(withJSONObject: XCTUnwrap(delivered["choice"]), options: .sortedKeys))
+    XCTAssertEqual(
+      try JSONSerialization.data(withJSONObject: deniedReceipts, options: .sortedKeys),
+      try JSONSerialization.data(withJSONObject: XCTUnwrap((delivered["answer"] as? [String: Any])?["categories"]), options: .sortedKeys))
     XCTAssertEqual(delivered["consentAction"] as? String, "necessary")
     capture("26-expiry-replayed")
     // Widen again to prove removed grants were erased, rather than merely hidden.

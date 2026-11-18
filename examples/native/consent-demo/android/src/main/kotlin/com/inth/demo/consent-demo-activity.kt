@@ -443,7 +443,7 @@ class FaultPreferences(private val prefs: android.content.SharedPreferences) : K
 /** Test-only HTTP peer. HostedTransport owns all parsing and exact decision body authoring. */
 class FixtureHttp(private val body: String, private val directory: java.io.File, @Volatile var offline: Boolean) : HttpClient {
     override fun send(request: HttpRequest): HttpResponse {
-        if (request.method == HttpRequest.GET) return if (offline) HttpResponse(503) else HttpResponse(200, mapOf("x-inth-policy-contract" to "1"),body)
+        if (request.method == HttpRequest.GET) return if (offline) HttpResponse(503) else HttpResponse(200, emptyMap(), body)
         request.body?.let { java.io.File(directory,"last-save.json").writeText(it) }
         return HttpResponse(503)
     }

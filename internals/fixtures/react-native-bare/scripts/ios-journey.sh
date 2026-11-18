@@ -116,7 +116,7 @@ command -v xcrun >/dev/null || die "xcrun is not on PATH"
 python -c 'import PIL' 2>/dev/null ||
 	die "Pillow is missing, so frames cannot be compared: python3 -m pip install pillow"
 
-curl -fsS -m 10 -o /dev/null "${BACKEND_URL}/init" ||
+curl -fsS -m 10 -o /dev/null "${BACKEND_URL}/v1/consent/init" ||
 	die "the consent backend is not answering at ${BACKEND_URL}. Start it with:
       DATABASE_URL='postgres://postgres:inth@localhost:5432/inth' \\
         bun run --cwd apps/playground dev:localhost
