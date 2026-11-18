@@ -280,9 +280,18 @@ dependencies {
 
 // The tests read the real Codegen input, so the bridge cannot quietly disagree with what an
 // app's generated spec will look like.
+// They also read the shared fixtures by walking up from the module. Declaring both as inputs
+// makes a changed file rerun the tests instead of replaying a cached pass. A host app has no
+// fixtures beside the package, and never runs these tests.
+File nativeProtocolDir = new File(packageRoot.parentFile, 'native-protocol')
 tasks.withType(Test).configureEach {
 	systemProperty 'inth.spec.file', new File(specRoot, 'NativeInth.ts').absolutePath
 	systemProperty 'inth.stub.spec.file', stubSpec.absolutePath
+	inputs.dir(specRoot).withPropertyName('inthSpecs').withPathSensitivity(PathSensitivity.RELATIVE)
+	inputs.file(stubSpec).withPropertyName('inthStubSpec').withPathSensitivity(PathSensitivity.RELATIVE)
+	if (nativeProtocolDir.isDirectory()) {
+		inputs.dir(nativeProtocolDir).withPropertyName('nativeProtocolFixtures').withPathSensitivity(PathSensitivity.RELATIVE)
+	}
 }
 
 if (generatesIntoThisModule) {

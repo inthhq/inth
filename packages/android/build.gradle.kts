@@ -20,3 +20,17 @@ tasks.register("verifyNativeVersion") {
 		}
 	}
 }
+
+// Unit tests find the shared fixtures by walking up from the module, so Gradle cannot see
+// them. Declared as inputs, a changed fixture reruns the tests instead of replaying a cached
+// pass.
+subprojects {
+	tasks.withType<Test>().configureEach {
+		inputs.dir(rootDir.resolve("../native-protocol"))
+			.withPropertyName("nativeProtocolFixtures")
+			.withPathSensitivity(PathSensitivity.RELATIVE)
+		inputs.dir(rootDir.resolve("../../examples/native/consent-demo/fixtures"))
+			.withPropertyName("consentDemoFixtures")
+			.withPathSensitivity(PathSensitivity.RELATIVE)
+	}
+}
