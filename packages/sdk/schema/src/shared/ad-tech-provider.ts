@@ -56,7 +56,7 @@ export const ADDITIONAL_CONSENT_V2_PATTERN =
  * Above it the whole list is requested and narrowed after parsing, so a long
  * configuration costs bytes rather than a failed request.
  */
-export const MAX_AD_TECH_PROVIDER_QUERY_IDS = 500;
+const MAX_AD_TECH_PROVIDER_QUERY_IDS = 500;
 
 /**
  * How long a provider list request may take before it is aborted. The list

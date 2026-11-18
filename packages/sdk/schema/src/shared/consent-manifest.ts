@@ -25,8 +25,8 @@ import { getTranslationsData } from './translations-runtime';
 import type { I18nOptions, LoggerLike } from './translations-runtime';
 import type { Vendor } from './vendor';
 
-export type ConsentManifestBranding = (typeof brandingValues)[number];
-export type ConsentManifestHosting = (typeof hostingValues)[number];
+type ConsentManifestBranding = (typeof brandingValues)[number];
+type ConsentManifestHosting = (typeof hostingValues)[number];
 
 export interface ConsentManifestGVLReference {
 	version?: number | string;

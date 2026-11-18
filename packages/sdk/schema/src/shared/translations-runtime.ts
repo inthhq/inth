@@ -11,7 +11,6 @@ import {
 	primaryLanguage,
 	resolveActiveProfile,
 	resolveFallbackLanguage,
-	validatePolicyI18nConfig,
 } from './policy-i18n-validation';
 import type { PolicyRule } from './policy-rule';
 
@@ -178,33 +177,6 @@ const resolveActiveProfileOrWarn = function resolveActiveProfileOrWarn(input: {
 	return input.defaultProfile;
 };
 
-export const listProfiles = function listProfiles(options: {
-	customTranslations?: Record<string, Partial<Translations>>;
-	i18n?: I18nOptions;
-}): string[] {
-	const profiles = normalizeProfiles({
-		customTranslations: options.customTranslations,
-		i18n: options.i18n,
-	});
-	return Object.keys(profiles).sort();
-};
-
-export const validateMessages = function validateMessages(options: {
-	customTranslations?: Record<string, Partial<Translations>>;
-	i18n?: I18nOptions;
-	policies?: PolicyRule[];
-}): {
-	profiles: string[];
-	errors: string[];
-	warnings: string[];
-} {
-	return validatePolicyI18nConfig({
-		customTranslations: options.customTranslations,
-		i18n: options.i18n,
-		policies: options.policies,
-	});
-};
-
 // oxlint-disable-next-line complexity -- Preserve established branch order and control flow.
 export const getTranslationsData = function getTranslationsData(
 	acceptLanguage: string | null,
@@ -308,22 +280,4 @@ export const getTranslationsData = function getTranslationsData(
 		language,
 		translations: translations as CompleteTranslations,
 	};
-};
-
-export const getTranslations = function getTranslations(
-	acceptLanguage: string,
-	options: {
-		baseTranslations?: BaseTranslations;
-		customTranslations?: Record<string, Partial<Translations>>;
-		i18n?: I18nOptions;
-		policyI18n?: PolicyRule['i18n'];
-		logger?: LoggerLike;
-	}
-) {
-	return getTranslationsData(acceptLanguage, options.customTranslations, {
-		baseTranslations: options.baseTranslations,
-		i18n: options.i18n,
-		logger: options.logger,
-		policyI18n: options.policyI18n,
-	});
 };

@@ -7,8 +7,7 @@ import type {
 export const DEFAULT_BANNER_POSITION =
 	'bottom-left' as const satisfies ConsentBannerPosition;
 
-export const DEFAULT_MANAGER_MODE =
-	'dialog' as const satisfies ConsentManagerMode;
+const DEFAULT_MANAGER_MODE = 'dialog' as const satisfies ConsentManagerMode;
 
 /** Default values aligned with `@inth/sdk/ui` `defaultTheme` / `themeToVars()`. */
 export const defaultConsentConfig = {

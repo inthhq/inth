@@ -10,11 +10,9 @@ export {
 export {
 	buildConsentManifestFromConfig,
 	type ConsentManifest,
-	type ConsentManifestBranding,
 	type ConsentManifestConfig,
 	type ConsentManifestAdditionalConsent,
 	type ConsentManifestGVLReference,
-	type ConsentManifestHosting,
 	type ConsentManifestIAB,
 	type ConsentManifestPolicyFailure,
 	type ConsentManifestPolicyPack,
@@ -64,10 +62,7 @@ export {
 	INIT_VERSION_PARAM,
 	type InitRequestParams,
 } from './init-request-params';
-export {
-	brandingValues as brandingValuesConst,
-	DEFAULT_GVL_ENDPOINT,
-} from './constants';
+export { DEFAULT_GVL_ENDPOINT } from './constants';
 export {
 	buildConsentId,
 	type ConsentSubmissionIdentity,
@@ -81,9 +76,7 @@ export {
 	type ConsentRequestHeaderInputs,
 	consentInputsToOverrides,
 	extractConsentRequestInputs,
-	getRegionFromHeaders,
 	GPC_HEADERS,
-	headersToRecord,
 	parseGlobalPrivacyControl,
 	REGION_HEADERS,
 } from './geo-headers';
@@ -118,7 +111,6 @@ export {
 	adTechProviderFetchSignal,
 	adTechProviderListUrl,
 	adTechProviderSchema,
-	MAX_AD_TECH_PROVIDER_QUERY_IDS,
 	normalizeAdTechProviderIds,
 	parseAdTechProviderList,
 } from './ad-tech-provider';
@@ -127,12 +119,7 @@ export {
 	CONSENT_ONLY_PURPOSES,
 	permittedLegitimateInterestPurposes,
 } from './tcf-purposes';
-export {
-	DEFAULT_IP_HEADERS_LIST,
-	getIpAddress,
-	type IpAddressConfig,
-	maskIpAddress,
-} from './client-ip';
+export { getIpAddress, type IpAddressConfig, maskIpAddress } from './client-ip';
 export {
 	type ForwardedElement,
 	forwardedNodeAddress,
@@ -279,22 +266,13 @@ export {
 	policyMatchers,
 	UK_COUNTRY_CODES,
 } from './policy-runtime';
+export { dedupeDefinedValues } from './policy-utils';
 export {
-	compactDefined,
-	dedupeDefinedValues,
-	dedupeTrimmedStrings,
-} from './policy-utils';
-export { resolveProjectUrl } from './server-url';
-export type { ResolveProjectUrlOptions } from './server-url';
-export {
-	getTranslations,
 	getTranslationsData,
 	type I18nMessageProfile,
 	type I18nMessageProfiles,
 	type I18nOptions,
 	type LoggerLike,
-	listProfiles,
-	validateMessages,
 } from './translations-runtime';
 
 export type {
