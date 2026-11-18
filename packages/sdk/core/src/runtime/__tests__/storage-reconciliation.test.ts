@@ -34,7 +34,16 @@ import {
 import { encodeStoredConsentEnvelopeCompact } from '../../modules/persistence/writer/encode';
 import type { KernelTransport } from '../../types';
 import { createConsentRuntime } from '../index';
+import type { ProviderTransportFactory } from '../../transports/mode';
 import type { ConsentRuntime, ConsentRuntimeOptions } from '../types';
+
+/**
+ * Options a test passes over the defaults. Its mode is a transport factory,
+ * so the merged options still name their backend the way an entry point must.
+ */
+type RuntimeOverrides = Partial<
+	ConsentRuntimeOptions & { mode: ProviderTransportFactory }
+>;
 
 const runtimes: ConsentRuntime[] = [];
 const optIn = matchedResolution(optInRule());
@@ -67,7 +76,7 @@ const createTransport = (
 });
 
 const start = (
-	options: Partial<ConsentRuntimeOptions> = {},
+	options: RuntimeOverrides = {},
 	transport: KernelTransport = createTransport()
 ) => {
 	const runtime = createConsentRuntime({
@@ -377,7 +386,7 @@ test('dispose removes the listeners and cancels a scheduled reconciliation', asy
 	expect(active.reconcileStorage()).toBe(false);
 });
 
-const threeCategories: Partial<ConsentRuntimeOptions> = {
+const threeCategories: RuntimeOverrides = {
 	consentCategories: ['necessary', 'measurement', 'marketing'],
 };
 

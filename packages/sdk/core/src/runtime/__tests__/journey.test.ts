@@ -34,7 +34,16 @@ import {
 } from '../index';
 import { createJourneyController } from '../journey';
 import type { JourneyStorage } from '../journey';
+import type { ProviderTransportFactory } from '../../transports/mode';
 import type { ConsentRuntime, ConsentRuntimeOptions } from '../types';
+
+/**
+ * Options a test passes over the defaults. Its mode is a transport factory,
+ * so the merged options still name their backend the way an entry point must.
+ */
+type RuntimeOverrides = Partial<
+	ConsentRuntimeOptions & { mode: ProviderTransportFactory }
+>;
 
 const SERVER_ID = '3b241101-e2bb-4255-8caf-4136c566a962';
 
@@ -88,7 +97,7 @@ const init = () => requests.filter((request) => request.path === '/init');
 const saves = () => requests.filter((request) => request.path === '/subjects');
 
 /** Start a runtime, as a page load does, and wait for its `/init`. */
-const load = async (options: Partial<ConsentRuntimeOptions> = {}) => {
+const load = async (options: RuntimeOverrides = {}) => {
 	const runtime = createConsentRuntime({
 		consentCategories: ['necessary', 'measurement'],
 		mode: backend(),

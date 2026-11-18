@@ -18,7 +18,16 @@ import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import type { Script } from '../../libs/script-loader/types';
 import { createConsentRuntime } from '../index';
 import { serverScriptStart } from '../script-server-start';
+import type { ProviderTransportFactory } from '../../transports/mode';
 import type { ConsentRuntimeOptions, RuntimePrefetch } from '../types';
+
+/**
+ * Options a test passes over the defaults. Its mode is a transport factory,
+ * so the merged options still name their backend the way an entry point must.
+ */
+type RuntimeOverrides = Partial<
+	ConsentRuntimeOptions & { mode: ProviderTransportFactory }
+>;
 
 type SignalWindow = Window & {
 	__c15tLoaderRan?: boolean;
@@ -53,7 +62,7 @@ const pixel: Script = {
 
 interface Case {
 	name: string;
-	options?: Partial<ConsentRuntimeOptions>;
+	options?: RuntimeOverrides;
 	prefetch: RuntimePrefetch;
 	script?: Partial<Script>;
 	stored?: 'newer-denial' | 'older-denial';
@@ -194,12 +203,12 @@ const runPage = async function runPage(
 				: CONFIRMED_AT - 5000
 		);
 	}
-	const options: ConsentRuntimeOptions = {
+	const options = {
 		mode,
 		prefetch: scenario.prefetch,
 		scripts: [{ ...pixel, ...scenario.script }],
 		...scenario.options,
-	};
+	} satisfies ConsentRuntimeOptions;
 	if (withServerStart) {
 		const code = serverScriptStart(options);
 		if (code) {
@@ -238,11 +247,11 @@ test.each(cases)('$name', async (scenario) => {
 
 test('a loader that mounts before the first frame starts the script once', async () => {
 	resetPage();
-	const options: ConsentRuntimeOptions = {
+	const options = {
 		mode,
 		prefetch: prefetchFor({ marketing: true }),
 		scripts: [pixel],
-	};
+	} satisfies ConsentRuntimeOptions;
 	vi.spyOn(document, 'hidden', 'get').mockReturnValue(false);
 	const frames: FrameRequestCallback[] = [];
 	vi.spyOn(window, 'requestAnimationFrame').mockImplementation((frame) => {
