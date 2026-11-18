@@ -70,8 +70,10 @@ type Version = (typeof VERSIONS)[number];
 const SLOT_PADDING = { dark: '11px', light: '7px' } as const;
 
 /**
- * `/init` for the adapters that have no offline mode (Vue and Nuxt). The
- * other fixtures use `offline()` with the same rule.
+ * `/init` for every fixture. Vue and Nuxt call `/api/c15t` on their own
+ * origin; the others name the placeholder project URL, which has no
+ * backend, so the verifier answers for it. There is no manifest: manifest
+ * mode falls back to `/init`.
  */
 const initResponse: InitOutput = {
 	branding: 'c15t',
@@ -91,6 +93,25 @@ const initResponse: InitOutput = {
 		})
 	),
 	translations: { language: 'en', translations: enTranslations },
+};
+
+/** The project URL the fixtures name. Nothing serves it. */
+const PROJECT_URL = 'https://your-project.inth.app';
+
+/** Where the fixtures' consent requests go: their own origin, or the placeholder project. */
+const BACKEND_ROUTES = ['**/api/c15t/**', `${PROJECT_URL}/**`];
+
+const answerBackend = async function answerBackend(route: Route) {
+	const { pathname } = new URL(route.request().url());
+	if (pathname.endsWith('/init')) {
+		await route.fulfill({ json: initResponse });
+		return;
+	}
+	if (pathname.endsWith('/manifest')) {
+		await route.fulfill({ status: 404 });
+		return;
+	}
+	await route.fulfill({ json: {} });
 };
 
 const pick = function pick(name: string): Set<string> | undefined {
@@ -356,14 +377,10 @@ const checkFixture = async function checkFixture(
 				viewport: { height: 900, width: 1280 },
 			});
 			// oxlint-disable-next-line no-await-in-loop -- Registered before navigation.
-			await context.route('**/api/c15t/**', async (route) => {
-				const { pathname } = new URL(route.request().url());
-				if (pathname.endsWith('/init')) {
-					await route.fulfill({ json: initResponse });
-					return;
-				}
-				await route.fulfill({ json: {} });
-			});
+			for (const backend of BACKEND_ROUTES) {
+				// oxlint-disable-next-line no-await-in-loop -- Registered before navigation.
+				await context.route(backend, answerBackend);
+			}
 			const hold: ScriptHold = { active: false, held: [] };
 			// oxlint-disable-next-line no-await-in-loop -- Registered before navigation.
 			await context.route(SCRIPT_URL, (route) => {

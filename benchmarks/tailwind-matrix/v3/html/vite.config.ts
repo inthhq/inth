@@ -5,19 +5,27 @@ import { defineConfig } from 'vite';
 import type { Plugin } from 'vite';
 
 /**
- * Stands in for the CDN: emits `@c15t/browser`'s script-tag build as
- * `/c15t.js`. Vite only builds the page's Tailwind stylesheet here.
+ * The script-tag build's files a page with a backend loads. `c15t.js` loads
+ * `c15t.hosted.js` from its own folder, which loads `c15t.dialog.js`.
+ */
+const SCRIPT_FILES = ['c15t.js', 'c15t.hosted.js', 'c15t.dialog.js'];
+
+/**
+ * Stands in for the CDN: emits `@c15t/browser`'s script-tag build next to
+ * the page. Vite only builds the page's Tailwind stylesheet here.
  */
 const c15tScript = (): Plugin => ({
 	generateBundle() {
-		this.emitFile({
-			fileName: 'c15t.js',
-			source: readFileSync(
-				fileURLToPath(import.meta.resolve('@c15t/browser/c15t.js')),
-				'utf8'
-			),
-			type: 'asset',
-		});
+		for (const fileName of SCRIPT_FILES) {
+			this.emitFile({
+				fileName,
+				source: readFileSync(
+					fileURLToPath(import.meta.resolve(`@c15t/browser/${fileName}`)),
+					'utf8'
+				),
+				type: 'asset',
+			});
+		}
 	},
 	name: 'c15t-script-tag',
 });
