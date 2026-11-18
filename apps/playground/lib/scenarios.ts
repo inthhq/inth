@@ -20,7 +20,7 @@ export const DEMO_POLICY_SNAPSHOT_KEY =
 export const DEFAULT_SCENARIO_ID = 'preset-europe-opt-in';
 
 /** The shared inth.com demo project that hosted mode talks to. */
-export const HOSTED_DEMO_BACKEND_URL = 'https://inth-demo-consent-io.inth.app';
+export const HOSTED_DEMO_BACKEND_URL = 'https://c15t-demo-consent-io.inth.app';
 
 // ---------------------------------------------------------------------------
 // IAB TCF demo configuration
