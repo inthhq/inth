@@ -29,7 +29,7 @@ export interface DevToolsDock {
 	readonly block: number;
 }
 
-/** Kernel views available in the first v3 DevTools release. */
+/** Kernel views DevTools can show. */
 export type DevToolsTab =
 	| 'consents'
 	| 'scripts'
@@ -71,11 +71,7 @@ export interface DevToolsState {
 	readonly scripts: readonly ScriptDiagnostic[];
 }
 
-/**
- * Receives synchronous state changes until unsubscribed or destroyed.
- * @param state - State after the change.
- * @param previousState - State before the change.
- */
+/** Receives synchronous state changes until unsubscribed or destroyed. */
 export type DevToolsStateListener = (
 	state: DevToolsState,
 	previousState: DevToolsState
@@ -96,11 +92,6 @@ export interface StateManager {
 	destroy: () => void;
 }
 
-/**
- * Create an isolated DevTools state store.
- * @param options - Initial snapshot, presentation, and event retention limit.
- * @returns A manager whose destroy method releases its subscriptions.
- */
 // oxlint-disable-next-line func-style -- Preserve the public factory declaration.
 export function createStateManager(options: {
 	snapshot: ConsentSnapshot;

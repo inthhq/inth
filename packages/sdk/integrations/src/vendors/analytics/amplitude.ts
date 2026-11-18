@@ -289,9 +289,6 @@ export interface AmplitudeOptions {
 /**
  * Creates an Amplitude Browser SDK 2 script.
  *
- * @param options - The options for the Amplitude script.
- * @returns The Amplitude script configuration.
- *
  * @remarks
  * When `apiKey` is missing or blank, the helper logs
  * `amplitude: missing or invalid apiKey` with `console.error` and returns a

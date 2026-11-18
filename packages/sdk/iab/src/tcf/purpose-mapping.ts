@@ -1,7 +1,5 @@
 /**
- * IAB Purpose to Inth Consent Mapping
- *
- * Maps IAB TCF purposes (1-11) to inth's consent categories.
+ * Maps IAB TCF purposes (1-11) to Inth's consent categories.
  *
  * @packageDocumentation
  */
@@ -22,10 +20,7 @@ export const INTH_TO_IAB_PURPOSE_MAP: Record<AllConsentNames, number[]> = {
 };
 
 /**
- * Converts Inth consent state to IAB purpose consents.
- *
- * @param consents - Inth consent state object
- * @returns IAB purpose consent state (keyed by purpose ID 1-11)
+ * Converts Inth consent state to IAB purpose consents, keyed by purpose ID.
  *
  * @example
  * ```typescript
@@ -72,14 +67,12 @@ export const inthConsentsToIabPurposes = function inthConsentsToIabPurposes(
  * When multiple IAB purposes map to the same Inth category,
  * the category is considered consented only if ALL its purposes are consented.
  *
- * @param purposeConsents - IAB purpose consent state
  * @param consentPurposes - Purposes some vendor processes on consent once
  * publisher restrictions apply. When given, a category is decided by its
  * purposes in this set: the visitor has no consent to give for the others,
  * and their legitimate interest is enforced per vendor by the IAB gate. A
  * category with none of its purposes in the set falls back to all of them,
  * so legitimate interest alone never grants a category.
- * @returns Inth consent state object
  *
  * @example
  * ```typescript
@@ -119,7 +112,6 @@ export const iabPurposesToInthConsents = function iabPurposesToInthConsents(
 		if (category === 'necessary') {
 			continue;
 		}
-		// Category is consented if ALL its deciding purposes are consented
 		const deciding = consentPurposes
 			? purposes.filter((purposeId) => consentPurposes.has(purposeId))
 			: [];

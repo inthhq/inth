@@ -13,9 +13,6 @@ const isoDateOrTimestampSchema = v.union(
 	'Expected an ISO 8601 date or timestamp'
 );
 
-/**
- * GET /experiments/:id/summary query params
- */
 export const experimentSummaryQuerySchema = v.object({
 	/** Only consents recorded for this domain name. */
 	domain: v.optional(
@@ -77,9 +74,6 @@ export type ExperimentSummaryAction =
 
 const actionCount = v.pipe(v.number(), v.integer(), v.minValue(0));
 
-/**
- * One arm of an experiment, as the summary reports it.
- */
 export const experimentArmSummarySchema = v.object({
 	arm: v.string(),
 	/**
@@ -104,9 +98,6 @@ export const experimentArmSummarySchema = v.object({
 	medianTimeToDecisionMs: v.nullable(v.number()),
 });
 
-/**
- * GET /experiments/:id/summary output schema
- */
 export const experimentSummaryOutputSchema = v.object({
 	/** Sorted by arm name. Empty when no consent carries this experiment id. */
 	arms: v.array(experimentArmSummarySchema),
@@ -117,7 +108,6 @@ export const experimentSummaryOutputSchema = v.object({
 	to: v.nullable(v.string()),
 });
 
-// Type exports
 /**
  * Query parameters of `GET /experiments/:id/summary`: an optional `from`/`to`
  * window and an optional `domain` filter. Inferred from

@@ -73,7 +73,6 @@ const TYPES_DIR = join(import.meta.dirname, '..', 'dist-types');
 const PRIMITIVES_DIR = join(DIST_DIR, 'styles', 'primitives');
 const COMPONENTS_DIR = join(DIST_DIR, 'styles', 'components');
 
-// ── Step 1: Normalize primitive CSS Module artifacts ─────────────────
 // Rename *_module.css → *.module.css and strip the bare
 // `import"./foo.module.css"` side-effect imports from the class maps:
 // - Class names are hardcoded in the JS (rslib resolves them at build time)
@@ -104,8 +103,6 @@ for (const file of readdirSync(PRIMITIVES_DIR)) {
 		writeFileSync(filePath, content);
 	}
 }
-
-// ── Step 2: Discover sources ─────────────────────────────────────────
 
 const discoverPrimitiveNames = function discoverPrimitiveNames(): string[] {
 	return readdirSync(PRIMITIVES_DIR)
@@ -196,8 +193,6 @@ if (surfaceSheetProblems.length > 0) {
 	);
 }
 
-// ── Step 3: Split each stylesheet into unlayered vs component rules ──
-
 /**
  * Locate the `@layer components { ... }` block, matching braces so nested
  * `@media` / `@supports` blocks inside the layer are handled correctly.
@@ -232,9 +227,9 @@ const findComponentsLayer = function findComponentsLayer(
  * custom properties, `@keyframes`, media-scoped overrides) and the component
  * rules from inside `@layer components`.
  *
- * Stylesheets without a `@layer components` wrapper (e.g.
- * consent-dialog-trigger, which inlines its variables into selectors) are
- * treated entirely as component rules.
+ * Stylesheets without a `@layer components` wrapper (e.g. panel-trigger,
+ * which inlines its variables into selectors) are treated entirely as
+ * component rules.
  */
 const splitStylesheet = function splitStylesheet(source: string): {
 	unlayered: string;
@@ -440,7 +435,7 @@ const writeDist = function writeDist(relativePath: string, css: string) {
  *
  * An app overrides a token with a `:root` rule, and a dark one with
  * `:root.dark` or `:root.inth-dark`. Against `styles.css` those win by
- * coming later, since the app imports inth's stylesheet first. A
+ * coming later, since the app imports Inth's stylesheet first. A
  * component's `<style>` can come after the app's stylesheets instead:
  * React hoists it into `<head>` after them, and Svelte appends it. So the
  * defaults rank by specificity here: a bare `:root` becomes `:where(:root)`
@@ -489,7 +484,6 @@ const writeSheet = function writeSheet(name: string, css: string): string {
 	return text;
 };
 
-// ── Non-IAB entrypoints ─────────────────────────────────────────────
 const seenUnlayered = new Set<string>();
 const nonIab = collectCssParts(
 	[
@@ -527,14 +521,11 @@ const componentRules = [
 	...rulesFor(nonIab.ruleParts, 'dialog', 'styles.css'),
 ];
 
-// dist/styles.css — layer order, tokens, every variable, every non-IAB
-// component rule in @layer components (Tailwind 4 and native CSS layers).
 writeDist(
 	'styles.css',
 	joinParts([LAYER_ORDER, DEFAULT_THEME_CSS, rootCss, layered(componentRules)])
 );
 
-// dist/styles.tw3.css — the same, flat (kept for existing Tailwind 3 imports)
 writeDist(
 	'styles.tw3.css',
 	joinParts([DEFAULT_THEME_CSS, rootCss, componentRules.join('\n\n')])
@@ -740,7 +731,6 @@ writeSheet(
 	`${LAYER_ORDER}\n@layer components{${primitiveRules.join('\n')}}`
 );
 
-// ── IAB entrypoints ─────────────────────────────────────────────────
 // Loaded next to styles.css, so they carry only IAB variables and rules:
 // no second copy of the tokens or of the variables styles.css declares.
 if (IAB_COMPONENTS.length > 0) {
@@ -773,13 +763,11 @@ if (IAB_COMPONENTS.length > 0) {
 		'/* @inth/sdk-ui IAB TCF styles. Load after @inth/sdk-ui/styles.css, which holds the tokens. */';
 	const iabRoot = iab.rootParts.join('\n\n');
 
-	// dist/iab/styles.css — @layer components
 	writeDist(
 		'iab/styles.css',
 		joinParts([LAYER_ORDER, iabBanner, iabRoot, layered(iabRules)])
 	);
 
-	// dist/iab/styles.tw3.css — flat rules (kept for existing Tailwind 3 imports)
 	writeDist(
 		'iab/styles.tw3.css',
 		joinParts([iabBanner, iabRoot, iabRules.join('\n\n')])

@@ -110,7 +110,7 @@ describe('styling stock UI parts from outside', () => {
 
 	it('lets a Tailwind 4 style utilities layer beat the stock components layer', async () => {
 		// Tailwind 4 declares the same layer order the stock sheet declares
-		// first, so its utilities outrank inth's components layer.
+		// first, so its utilities outrank Inth's components layer.
 		const card = await mountCard({
 			stylesheetUrls: [
 				cssURL(

@@ -1,7 +1,6 @@
 @import url('./animations/enter-exit.css');
 
 :root {
-	/* Manager Colors */
 	--consent-manager-background-color: var(--inth-surface);
 	--consent-manager-background-color-dark: var(--inth-surface);
 	--consent-manager-border-color: var(--inth-border);
@@ -16,7 +15,6 @@
 	--consent-manager-link-text-color-dark: var(--inth-text);
 	--consent-manager-branding-link-color: var(--inth-primary);
 
-	/* Manager Layout */
 	--consent-manager-padding: 0;
 	--consent-manager-radius: 0;
 	--consent-manager-gap: var(--inth-space-xs);
@@ -25,13 +23,11 @@
 	--consent-manager-z-index: 50;
 	--consent-manager-footer-padding: var(--inth-space-lg) 0 0 0;
 
-	/* Typography */
 	--consent-manager-title-size: var(--inth-font-size-sm);
 	--consent-manager-title-line-height: var(--inth-line-height-tight);
 	--consent-manager-title-tracking: -0.006em;
 	--consent-manager-title-weight: var(--inth-font-weight-semibold);
 
-	/* Animation */
 	--consent-manager-entry-animation: var(--inth-enter-animation);
 	--consent-manager-exit-animation: var(--inth-exit-animation);
 

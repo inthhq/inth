@@ -43,8 +43,6 @@ const loads = new Map<string, Promise<DialogFile | undefined>>();
  * Load `c15t.dialog.js` from `src`, once per URL, unless a file from this
  * release has run already.
  *
- * @param src - The file's URL.
- * @param nonce - The page's script nonce, if any.
  * @returns What the file published, or `undefined` when it failed to load,
  * did not publish, or came from another release. A failed load is tried
  * again on the next call.

@@ -169,8 +169,6 @@ const mountRoot = function mountRoot(
  * same root: in the page with `shadow: false`, or through `stylesheetUrls`
  * or `css` in shadow mode.
  *
- * @param client - The client to render.
- * @param options - Where and how to mount.
  * @returns A handle that re-renders or tears down.
  * @throws {Error} When `container` is a selector that matches nothing.
  *

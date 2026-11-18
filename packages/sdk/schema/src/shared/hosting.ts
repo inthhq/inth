@@ -9,5 +9,4 @@ export const hostingSchema = v.picklist(hostingValues);
 
 export type Hosting = v.InferOutput<typeof hostingSchema>;
 
-// Re-export for convenience
 export { hostingValues };

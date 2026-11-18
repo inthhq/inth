@@ -1,8 +1,3 @@
-/**
- * Utility functions for processing the v2 theme system.
- * Handles token-to-CSS variable conversion and dark mode overrides.
- */
-
 import type { ColorTokens, Theme, ThemeCSSVariables } from './types';
 
 interface RGBColor {
@@ -14,9 +9,6 @@ interface RGBColor {
 const DEFAULT_LIGHT_CONTRAST_COLOR = '#ffffff';
 const DEFAULT_DARK_CONTRAST_COLOR = '#000000';
 
-/**
- * Default design tokens for the v2 theme system.
- */
 export const defaultDarkColors: Required<ColorTokens> = {
 	border: 'hsl(0, 0%, 20%)',
 	borderHover: 'hsl(0, 0%, 25%)',
@@ -489,8 +481,8 @@ ${selectors.dark}{${dark}}
  * Generates a CSS string for the theme variables.
  *
  * Call it where your app renders on the server or at build time, and put
- * the result in a `<style>` element or a stylesheet. The browser runtime no
- * longer generates theme CSS. `<` is written as a CSS escape, so the result
+ * the result in a `<style>` element or a stylesheet. The browser runtime does
+ * not generate theme CSS. `<` is written as a CSS escape, so the result
  * is safe inside a `<style>` element.
  *
  * The light-DOM selectors (`:root`, `.inth-theme-root`) are one
@@ -499,7 +491,6 @@ ${selectors.dark}{${dark}}
  * package stylesheet. `:host` keeps the defaults' specificity, so inside a
  * shadow root put the result after the package stylesheet.
  * Apply `inth-no-transitions` while switching themes to suppress animations.
- * @param theme - Theme tokens to serialize.
  * @param colorScheme - Select a scheme before hydration; defaults to root classes.
  * @returns Theme CSS, including system preference rules when requested.
  */
@@ -517,8 +508,6 @@ export const generateThemeCSS = function generateThemeCSS(
  * `styles.css`.
  *
  * @internal
- * @param theme - Theme tokens to serialize.
- * @returns Theme CSS on the base selectors.
  */
 export const generateDefaultThemeCSS = function generateDefaultThemeCSS(
 	theme: Theme

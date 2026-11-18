@@ -187,10 +187,8 @@ const checkDeclaration = (
  *
  * Entries with the same purpose and type are merged, vendor IDs are sorted
  * and de-duplicated, and the result is ordered by purpose, then type.
+ * `undefined` returns an empty list.
  *
- * @param input - Restrictions from configuration or a decoded TC string.
- * @param context - Vendor list and string scope to check against.
- * @returns The normalized restrictions. `undefined` returns an empty list.
  * @throws {PublisherRestrictionError} When a restriction is malformed,
  * uses the reserved type `3`, requires legitimate interest for a purpose
  * that is consent-only under `context.policyVersion` (the current policy
@@ -280,9 +278,6 @@ export const validatePublisherRestrictions =
  * an array is returned as is for {@link validatePublisherRestrictions} to
  * reject; holes become `undefined` entries, which it also rejects.
  *
- * @param input - Restrictions as configured.
- * @returns A copy that shares no arrays or entries with `input`.
- *
  * @internal
  */
 export const copyPublisherRestrictionInput =
@@ -304,10 +299,7 @@ export const copyPublisherRestrictionInput =
 
 /**
  * Converts restrictions to the `__tcfapi` shape: purpose ID, then vendor
- * ID, then restriction type.
- *
- * @param restrictions - Normalized restrictions.
- * @returns The `publisher.restrictions` value for `TCData`.
+ * ID, then restriction type, as `TCData.publisher.restrictions`.
  *
  * @public
  */
@@ -329,12 +321,7 @@ export const toTCDataRestrictions = function toTCDataRestrictions(
  * Whether two restriction lists restrict the listed vendors the same way.
  *
  * Decoded ranges may cover IDs that are not in the vendor list, so only
- * vendors in `gvl` are compared.
- *
- * @param left - Restrictions from one source.
- * @param right - Restrictions from another source.
- * @param vendors - Vendors of the list whose entries are compared.
- * @returns `true` when every listed vendor has the same restrictions.
+ * vendors in `vendors` are compared.
  *
  * @internal
  */

@@ -64,11 +64,6 @@ declare global {
 	}
 }
 
-/**
- * Converts Inth and user-supplied consent values into Clarity Consent V2 state.
- *
- * @internal
- */
 const toClarityConsentState = function toClarityConsentState(
 	value: unknown
 ): ClarityConsentState | undefined {
@@ -111,7 +106,7 @@ const getConsentValue = function getConsentValue(
 };
 
 /**
- * The Consent V2 values `defaultConsent` sets, over the ones inth's consent
+ * The Consent V2 values `defaultConsent` sets, over the ones Inth's consent
  * state gives.
  *
  * @internal
@@ -222,8 +217,6 @@ export interface ClarityOptions {
 /**
  * Creates a Microsoft Clarity script.
  *
- * @param options - The options for the Clarity script.
- * @returns The Clarity script configuration.
  * @remarks When `id` is missing or blank and no `scriptUrl` override is set, the helper logs
  *   `clarity: missing or invalid id` with `console.error` and
  *   returns a script that never loads.

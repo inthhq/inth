@@ -2,14 +2,7 @@ import { describe, expect, test } from 'vitest';
 
 import { accordionVariants } from '../accordion';
 
-/**
- * Note: CSS modules return empty objects in test environments without a bundler.
- * These tests focus on:
- * 1. Function execution without errors
- * 2. Proper handling of variant props
- * 3. Custom class appending behavior
- * 4. Return type structure
- */
+/** CSS modules return empty objects in test environments without a bundler. */
 describe('accordionVariants', () => {
 	describe('function structure', () => {
 		test('returns object with all expected methods', () => {
@@ -147,7 +140,6 @@ describe('accordionVariants', () => {
 			const variants = accordionVariants();
 			const rootClass = variants.root({ class: '' });
 
-			// Should not have trailing/leading spaces from empty class
 			expect(rootClass.trim()).toBe(rootClass);
 		});
 

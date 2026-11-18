@@ -1,55 +1,27 @@
 import type * as IabtechlabtcfCoreTypes from '@iabtechlabtcf/core';
 /**
- * Lazy Loading for @iabtechlabtcf/core
- *
- * Provides lazy loading of the IAB TCF core library to minimize
- * bundle impact for users who don't enable IAB mode.
+ * Loads `@iabtechlabtcf/core` (about 50KB) on first use, so pages that never
+ * encode or decode a TC string never download it.
  *
  * @packageDocumentation
  */
 
-/**
- * The lazy-loaded TCF core module type.
- */
 export type TCFCoreModule = typeof IabtechlabtcfCoreTypes;
 
-/** Cached module reference */
 let tcfCoreModule: TCFCoreModule | null = null;
 
-/** Promise for in-flight loading */
 let loadingPromise: Promise<TCFCoreModule> | null = null;
 
-/**
- * Lazily loads the @iabtechlabtcf/core module.
- *
- * This ensures the ~50KB library is only loaded when IAB mode is enabled,
- * keeping the bundle size zero for users who don't use IAB.
- *
- * @returns Promise resolving to the TCF core module
- *
- * @example
- * ```typescript
- * const { TCModel, TCString, GVL } = await getTCFCore();
- *
- * const gvl = new GVL(gvlData);
- * const tcModel = new TCModel(gvl);
- * const encoded = TCString.encode(tcModel);
- * ```
- *
- * @public
- */
+/** @public */
 export const getTCFCore = function getTCFCore(): Promise<TCFCoreModule> {
-	// Return cached module if already loaded
 	if (tcfCoreModule) {
 		return Promise.resolve(tcfCoreModule);
 	}
 
-	// If already loading, return the existing promise
 	if (loadingPromise) {
 		return loadingPromise;
 	}
 
-	// Start loading
 	loadingPromise = (async () => {
 		try {
 			const module = await import('@iabtechlabtcf/core');

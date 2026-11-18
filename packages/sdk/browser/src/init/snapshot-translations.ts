@@ -2,7 +2,7 @@
  * The init script's stand-in for `@inth/sdk/engine`'s translations module inside
  * `buildInitialSnapshot`.
  *
- * Core's `applyTranslationOverrides` compares app overrides with inth's
+ * Core's `applyTranslationOverrides` compares app overrides with Inth's
  * built-in copy, so it carries bundled English. The init script passes no
  * overrides (a page with `i18n` options leaves the banner to the engine),
  * and without them core only renames legacy keys, which this does the same
@@ -20,7 +20,6 @@ import { migrateLegacyTranslationKeys } from '@inth/sdk-translations';
 /**
  * `applyTranslationOverrides` without overrides.
  *
- * @param resolved - The resolved translations.
  * @param overrides - Must be absent.
  * @returns The translations with legacy keys renamed.
  * @throws {Error} When overrides are given.

@@ -176,13 +176,12 @@ export type TestWindow = Window &
 	};
 
 /**
- * Imperative shim over the v3 script loader for vendor contract tests.
+ * Imperative shim over the script loader for vendor contract tests.
  *
  * The loader is bound to a kernel whose subscription is muted, so the DOM is
- * only reconciled on these explicit calls. That mirrors the v2 loader these
- * tests were written against: `loadScripts(scripts, consents)` mounts every
- * eligible script (firing `onConsentChange` for ones already mounted) and
- * `updateScripts` additionally reports what was unmounted.
+ * only reconciled on these explicit calls: `loadScripts(scripts, consents)`
+ * mounts every eligible script (firing `onConsentChange` for ones already
+ * mounted) and `updateScripts` additionally reports what was unmounted.
  */
 let kernel: ConsentKernel = createConsentKernel();
 let loader: ScriptLoaderHandle | null = null;

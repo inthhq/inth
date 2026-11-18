@@ -37,10 +37,6 @@ const attachShadowRoot = function attachShadowRoot(
 /**
  * A `<style>` carrying the client's nonce: a nonce-based `style-src`
  * blocks an unnonced one, even in a shadow root.
- *
- * @param text - The sheet.
- * @param nonce - The page's CSP nonce.
- * @returns The element.
  */
 export const createStyle = function createStyle(
 	text: string,
@@ -64,8 +60,6 @@ export const createStyle = function createStyle(
  * instead, from either `dark` or `inth-dark` on `<html>`.
  *
  * @param wrapper - The `.inth-host` wrapper.
- * @param host - The host element.
- * @param scheme - The configured scheme.
  * @returns Stops following it.
  */
 export const applyColorScheme = function applyColorScheme(
@@ -114,13 +108,9 @@ export const applyColorScheme = function applyColorScheme(
 /**
  * Build the UI root and append it to `container`.
  *
- * @param container - Where the host goes.
- * @param options - Shadow and colour-scheme options.
  * @param styleText - The stock sheet; empty for none.
- * @param nonce - The page's CSP nonce.
  * @param beforeContent - Called with the root after the `<style>` and
  * before the wrapper, for `stylesheetUrls` links.
- * @returns The root.
  */
 export const createUIRoot = function createUIRoot(
 	container: HTMLElement,

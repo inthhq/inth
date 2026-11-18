@@ -81,8 +81,6 @@ export interface HotjarOptions {
 /**
  * Creates a Hotjar script.
  *
- * @param options - The options for the Hotjar script.
- * @returns The Hotjar script configuration.
  * @remarks When `siteId` is missing, blank, or `0`, the helper logs
  *   `hotjar: missing or invalid siteId` with `console.error` and returns a
  *   script that never loads.

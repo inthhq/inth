@@ -339,7 +339,7 @@ describe('rudderstack', () => {
 				writeKey: 'WRITE_KEY',
 			})
 		).toThrowError(
-			'rudderstack: consentManagement.mapping must map at least one inth category to a non-empty list of RudderStack consent IDs'
+			'rudderstack: consentManagement.mapping must map at least one Inth category to a non-empty list of RudderStack consent IDs'
 		);
 	});
 });

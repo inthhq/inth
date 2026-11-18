@@ -20,8 +20,8 @@
  *
  * @example
  * ```ts
- * import { init } from '@inth/sdk-browser';
- * import { testing } from '@inth/sdk-browser/testing';
+ * import { init } from '@inth/sdk';
+ * import { testing } from '@inth/sdk/testing';
  *
  * init({ overrides: { country: 'DE' }, mode: testing() });
  * ```

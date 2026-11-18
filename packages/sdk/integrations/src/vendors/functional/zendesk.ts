@@ -131,8 +131,6 @@ const reuseZendeskScript = createScriptReuse<ZendeskWidgetOptions>();
  * configurations share the active lifecycle across rerenders.
  * Keep `reloadOnConsentRevoked` enabled to unload code already running.
  *
- * @param options - Public widget key and optional consent condition.
- * @returns A consent-gated Zendesk Messaging script.
  * @remarks A missing or blank key logs an error and returns a script that
  * never loads. This helper targets Messaging, not Web Widget Classic.
  * @example

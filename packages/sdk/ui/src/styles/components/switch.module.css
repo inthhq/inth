@@ -1,21 +1,17 @@
 @layer components {
-	/* Root switch wrapper */
 	.root:not(:global(.headless)) {
-		/* Layout variables */
 		--switch-height: 1.25rem;
 		--switch-width: 2rem;
 		--switch-padding: 0.125rem;
 		--switch-duration: var(--inth-duration-normal);
 		--switch-ease: var(--inth-easing);
 
-		/* Thumb sizes */
 		--switch-thumb-size: 0.75rem;
 		--switch-thumb-size-disabled: 0.625rem;
 		--switch-thumb-translate: calc(
 			var(--switch-width) - var(--switch-thumb-size) - 2 * var(--switch-padding)
 		);
 
-		/* Colors */
 		--switch-background-color: var(--inth-switch-track);
 		--switch-background-color-dark: var(--inth-switch-track);
 		--switch-background-color-hover: var(--inth-surface-hover);
@@ -29,7 +25,6 @@
 		--switch-thumb-background-color-disabled: var(--inth-surface-hover);
 		--switch-thumb-background-color-disabled-dark: var(--inth-surface-hover);
 
-		/* Shadows */
 		--switch-shadow-thumb: 0 0 0 1px var(--inth-border);
 		--switch-shadow-thumb-dark: 0 0 0 1px var(--inth-border);
 		--switch-focus-ring: var(--inth-primary);
@@ -55,7 +50,6 @@
 		touch-action: manipulation;
 	}
 
-	/* Switch track */
 	.root:not(:global(.headless)) .track {
 		display: flex;
 		align-items: center;
@@ -75,7 +69,6 @@
 		background-color: var(--switch-background-color-dark);
 	}
 
-	/* Track states */
 	.root:not(:global(.headless)) .track:hover {
 		background-color: var(--switch-background-color-hover);
 	}
@@ -120,7 +113,6 @@
 		background-color: var(--switch-background-color-checked-dark);
 	}
 
-	/* Disabled states */
 	.root:not(:global(.headless))[data-disabled] {
 		cursor: not-allowed;
 	}
@@ -155,7 +147,6 @@
 		background-color: var(--switch-background-color-checked-dark);
 	}
 
-	/* Switch thumb */
 	.root:not(:global(.headless)) .thumb {
 		position: relative;
 		display: block;
@@ -167,7 +158,6 @@
 		transform: translateX(0);
 	}
 
-	/* Thumb states */
 	.root:not(:global(.headless)) .thumb::before {
 		content: '';
 		position: absolute;
@@ -270,7 +260,6 @@
 		height: var(--switch-thumb-size);
 	}
 
-	/* Reduced motion preference */
 	@media (prefers-reduced-motion: reduce) {
 		.root:not(:global(.headless)) .track,
 		.root:not(:global(.headless)) .thumb {

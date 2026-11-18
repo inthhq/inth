@@ -1,21 +1,17 @@
 :root {
-	/* Typography */
 	--consent-dialog-branding-font-size: var(--inth-font-size-base);
 	--consent-dialog-branding-font-weight: var(--inth-font-weight-medium);
 	--consent-dialog-branding-line-height: var(--inth-line-height-relaxed);
 	--consent-dialog-branding-letter-spacing: -0.01em;
 
-	/* Colors */
 	--consent-dialog-branding-focus-color: var(--inth-primary);
 	--consent-dialog-branding-focus-color-dark: var(--inth-primary);
 	--consent-dialog-foreground-color: var(--inth-text);
 	--consent-dialog-foreground-color-dark: var(--inth-text);
 
-	/* Spacing */
 	--consent-dialog-card-padding: var(--inth-space-lg);
 	--consent-dialog-card-padding-mobile: var(--inth-space-md);
 
-	/* Branding */
 	--consent-dialog-branding-gap: var(--inth-space-sm);
 	--consent-dialog-branding-icon-height: 1.25rem;
 	--consent-dialog-branding-icon-width: auto;

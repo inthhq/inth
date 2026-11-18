@@ -178,7 +178,6 @@ const supportsEarlyBanner = function supportsEarlyBanner(
  * Run the init script for `script`: install the stand-in `window.inth`,
  * start `/init` unless the page inits itself, and schedule the engine.
  *
- * @param script - The init script's tag.
  * @returns The stand-in, or `null` when `window.inth` is already an API.
  * @internal
  */

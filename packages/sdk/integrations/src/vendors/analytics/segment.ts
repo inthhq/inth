@@ -21,10 +21,6 @@ export interface SegmentApi {
 	/**
 	 * Queues an event tracking call.
 	 *
-	 * @param event - Event name to record.
-	 * @param properties - Optional event properties payload.
-	 * @returns `void`.
-	 *
 	 * @remarks
 	 * Calls are queued until Analytics.js initializes.
 	 *
@@ -37,10 +33,6 @@ export interface SegmentApi {
 	/**
 	 * Queues a page tracking call.
 	 *
-	 * @param name - Optional page name override.
-	 * @param properties - Optional page metadata payload.
-	 * @returns `void`.
-	 *
 	 * @remarks
 	 * If no name is passed, Segment infers the current page context.
 	 *
@@ -52,11 +44,6 @@ export interface SegmentApi {
 	page: (name?: string, properties?: Record<string, unknown>) => void;
 	/**
 	 * Queues a user identification call.
-	 *
-	 * @param userId - Stable user identifier.
-	 * @param traits - Optional trait map associated with the user.
-	 * @param options - Optional Segment call options.
-	 * @returns `void`.
 	 *
 	 * @remarks
 	 * Ensure the client is initialized and use a stable `userId` to avoid
@@ -75,11 +62,6 @@ export interface SegmentApi {
 	/**
 	 * Queues a group association call for account-level analytics.
 	 *
-	 * @param groupId - Group or account identifier.
-	 * @param traits - Optional group trait map.
-	 * @param options - Optional Segment call options.
-	 * @returns `void`.
-	 *
 	 * @example
 	 * ```ts
 	 * window.analytics.group('acme-inc', { plan: 'enterprise' });
@@ -95,8 +77,6 @@ export interface SegmentApi {
 	 *
 	 * @param userId - New canonical user identifier.
 	 * @param previousId - Optional previous anonymous or legacy identifier.
-	 * @param options - Optional Segment call options.
-	 * @returns `void`.
 	 *
 	 * @remarks
 	 * Use `previousId` only when linking an existing anonymous identity to the
@@ -114,8 +94,6 @@ export interface SegmentApi {
 	) => void;
 	/**
 	 * Queues a reset call that clears current user identity state.
-	 *
-	 * @returns `void`.
 	 *
 	 * @example
 	 * ```ts
@@ -197,8 +175,6 @@ export interface SegmentOptions {
 /**
  * Creates a Segment Analytics.js script.
  *
- * @param options - The options for the Segment script.
- * @returns The Segment script configuration.
  * @remarks When `writeKey` is missing or blank, the helper logs
  *   `segment: missing or invalid writeKey` with `console.error` and
  *   returns a script that never loads.

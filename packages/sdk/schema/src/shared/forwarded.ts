@@ -7,9 +7,6 @@
 /** One element of a `Forwarded` header: its parameters, names lowercased. */
 export type ForwardedElement = Readonly<Record<string, string>>;
 
-/**
- * Splits `value` on `separator` outside quoted strings.
- */
 const splitOutsideQuotes = function splitOutsideQuotes(
 	value: string,
 	separator: ',' | ';'
@@ -47,7 +44,6 @@ const unquote = function unquote(value: string): string {
  * Parses an RFC 7239 `Forwarded` header into its elements, the client's
  * proxy first. Commas and semicolons inside quoted strings are kept.
  *
- * @param value - The header value.
  * @returns Each element's parameters, empty for a missing header.
  *
  * @example

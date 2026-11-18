@@ -10,10 +10,10 @@
  *
  * @example
  * ```ts
- * import { init } from '@inth/sdk-browser';
- * import '@inth/sdk-browser/styles.css'; // only with `ui: { shadow: false }`
+ * import { init } from '@inth/sdk';
+ * import '@inth/sdk/styles.css'; // only with `ui: { shadow: false }`
  *
- * const Inth = init({ projectUrl: 'https://your-project.inth.app' });
+ * const inth = init({ projectUrl: 'https://your-project.inth.app' });
  * inth.on('consent', (snapshot) => console.log(snapshot.effectivePermissions));
  * ```
  */
@@ -27,10 +27,8 @@ import { mountConsentUI } from './ui/mount';
 const PKG = '@inth/sdk';
 
 /**
- * Create the page's client without starting it.
- *
- * @param options - Client options.
- * @returns The client. Call `start()` to resolve the policy and mount.
+ * Create the page's client without starting it. Call `start()` to resolve
+ * the policy and mount.
  */
 export const createConsentClient = function createConsentClient(
 	options: WithProjectUrl<ConsentClientOptions>
@@ -38,12 +36,7 @@ export const createConsentClient = function createConsentClient(
 	return createClient(options, { mountUI: mountConsentUI, pkg: PKG });
 };
 
-/**
- * Create and start the page's client, mounting the UI unless `ui: false`.
- *
- * @param options - Client options.
- * @returns The started client.
- */
+/** Create and start the page's client, mounting the UI unless `ui: false`. */
 export const init = function init(
 	options: WithProjectUrl<ConsentClientOptions>
 ): ConsentClient {

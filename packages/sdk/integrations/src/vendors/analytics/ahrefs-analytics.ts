@@ -71,8 +71,6 @@ export interface AhrefsAnalyticsOptions {
  *
  * @see https://ahrefs.com/web-analytics
  *
- * @param options - The options for the Ahrefs Analytics script.
- * @returns The Ahrefs Analytics script.
  * @remarks When `key` is missing or blank, the
  *   helper logs `ahrefsAnalytics: missing or invalid key` with
  *   `console.error` and returns a script that never loads.

@@ -18,13 +18,11 @@ export const patchSubjectParamsSchema = v.object({
 });
 
 export const patchSubjectInputSchema = v.object({
-	/** External user ID to link to this subject */
 	externalId: v.pipe(
 		v.string(),
 		v.description('External user ID from your authentication system.'),
 		v.examples(['user_123'])
 	),
-	/** Identity provider that issued the external ID */
 	identityProvider: v.optional(
 		v.pipe(
 			v.string(),
@@ -58,8 +56,6 @@ export const patchSubjectFullInputSchema = v.object({
 });
 
 /**
- * PATCH /subject/:id output schema
- *
  * `identityProvider` is always present: the backend stores `'external'` when
  * the request omits it.
  */
@@ -71,9 +67,6 @@ export const patchSubjectOutputSchema = v.object({
 	}),
 });
 
-/**
- * Error schemas for PATCH /subject/:id
- */
 export const patchSubjectErrorSchemas = {
 	inputValidationFailed: v.object({
 		fieldErrors: v.record(v.string(), v.array(v.string())),
@@ -84,7 +77,6 @@ export const patchSubjectErrorSchemas = {
 	}),
 };
 
-// Type exports
 export type PatchSubjectFullInput = v.InferOutput<
 	typeof patchSubjectFullInputSchema
 >;

@@ -102,8 +102,6 @@ export interface UmamiAnalyticsOptions {
  *
  * @see https://umami.is/docs/tracker-config
  *
- * @param options - The options for the Umami Analytics script.
- * @returns The Umami Analytics script.
  * @remarks When `websiteId` is missing or blank, the helper logs
  *   `umamiAnalytics: missing or invalid websiteId` with `console.error` and
  *   returns a script that never loads.

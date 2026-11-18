@@ -47,10 +47,6 @@ const DRAG_SLOP_PX = 5;
  * or `c15t.devtools.js`), the visible trigger becomes a two-item toolbar
  * that carries the DevTools launcher and docks the panel beside itself.
  * Hidden, it hands the launcher back to the panel.
- *
- * @param ctx - The mount context.
- * @param options - Trigger options.
- * @returns The surface.
  */
 // oxlint-disable-next-line max-lines-per-function -- Drag, snap and visibility are one gesture.
 export const createTrigger = function createTrigger(
@@ -287,7 +283,6 @@ export const createTrigger = function createTrigger(
 		return true;
 	};
 	element.addEventListener('click', () => {
-		// A drag that ended on the button is not a request to open.
 		if (shouldActivate()) {
 			ctx.client.openDialog();
 		}

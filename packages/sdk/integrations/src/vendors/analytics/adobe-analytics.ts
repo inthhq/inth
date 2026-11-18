@@ -124,9 +124,6 @@ export interface AdobeAnalyticsOptions {
  * @see https://experienceleague.adobe.com/en/docs/experience-platform/tags/publish/environments/environments
  * @see https://experienceleague.adobe.com/en/docs/experience-platform/tags/extensions/client/client-data-layer/overview
  *
- * @param options - The options for the Adobe Analytics script.
- * @returns The Adobe Analytics script.
- *
  * @remarks
  * When `scriptUrl` is missing, blank, invalid, or not `https:`, the helper
  * logs the problem with `console.error` and returns a script that never

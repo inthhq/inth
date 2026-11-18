@@ -103,7 +103,6 @@ export interface XPixelEvent {
 	contents?: XPixelContent[];
 }
 
-// Extended Window interface to include X Pixel-specific properties
 declare global {
 	interface Window {
 		twq?: (event: string, ...args: unknown[]) => void;
@@ -111,10 +110,8 @@ declare global {
 }
 
 /**
- * X (Twitter) Pixel vendor manifest.
- *
- * Uses structured startup steps to load the X tracking pixel.
- * No consent API — the script simply loads or doesn't based on consent.
+ * X (Twitter) Pixel vendor manifest. X has no consent API, so the script
+ * loads only with consent.
  */
 export const xPixelManifest = {
 	...vendorManifestContract,
@@ -169,8 +166,6 @@ export interface XPixelOptions {
  * This script loads only when consent is granted.
  * X Pixel does not expose a consent update API, so Inth treats it as a standard consent-gated loader.
  *
- * @param options - The options for the X Pixel script
- * @returns The X Pixel script configuration
  * @remarks When `pixelId` is missing or blank, the
  *   helper logs `xPixel: missing or invalid pixelId` with
  *   `console.error` and returns a script that never loads.
@@ -210,9 +205,7 @@ export const xPixel = function xPixel({
 /**
  * Tracks an X Pixel conversion event.
  *
- * @param eventId - The event ID to track
- * @example 'tw-xxxx-xxxx'
- * @param metadata - Optional metadata to track
+ * @param eventId - Event ID from X Ads Manager, for example `tw-xxxx-xxxx`.
  *
  * @example
  * ```ts

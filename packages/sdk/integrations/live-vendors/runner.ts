@@ -83,7 +83,6 @@ interface CliOptions {
  * Parses runner CLI arguments.
  *
  * @param argv - Arguments after the script path (`--vendor id`, `--report path`).
- * @returns The parsed vendor filter and report path.
  * @throws {Error} when `--vendor`/`--report` is missing its value or an
  * unknown argument is passed.
  */
@@ -119,7 +118,6 @@ const parseArgs = function parseArgs(argv: string[]): CliOptions {
 /**
  * Bundles the browser-side harness with `Bun.build`.
  *
- * @returns The bundled harness JavaScript served to the probe page.
  * @throws {Error} with the collected build logs when bundling fails.
  */
 const buildHarnessBundle =

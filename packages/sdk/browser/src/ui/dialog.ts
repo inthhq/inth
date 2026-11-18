@@ -21,10 +21,6 @@ const DEFAULT_DURATION_MS = 200;
  * as in the React and Vue dialogs. Like the stock dialogs of the other
  * adapters it has no close button, and clicking the backdrop does not
  * close it: the visitor leaves through a choice or Escape.
- *
- * @param ctx - The mount context.
- * @param options - Dialog options.
- * @returns The surface.
  */
 // oxlint-disable-next-line max-lines-per-function -- Build, open, close and reconcile are one lifecycle.
 export const createDialog = function createDialog(

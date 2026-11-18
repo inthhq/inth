@@ -274,9 +274,7 @@ export interface ConsentClientBaseOptions extends Pick<
 	 * @default true
 	 */
 	reloadOnConsentRevoked?: boolean;
-	/** Lifecycle callbacks. */
 	callbacks?: Callbacks;
-	/** Cookie and storage settings. */
 	storageConfig?: StorageConfig;
 	/** Known country, region, language or GPC signal. */
 	overrides?: KernelOverrides;
@@ -322,7 +320,7 @@ export interface ConsentClientBaseOptions extends Pick<
  *
  * @example
  * ```ts
- * import { init } from '@inth/sdk-browser';
+ * import { init } from '@inth/sdk';
  *
  * init({ projectUrl: 'https://your-project.inth.app' });
  * ```
@@ -393,7 +391,7 @@ export interface TestingScriptTagOptions extends Omit<
 	'mode' | 'projectUrl' | 'manifest' | 'manifestUrl'
 > {
 	/**
-	 * Always `testing()`: a value from `c15t.testing()`, or a transport
+	 * Always `testing()`: a value from `inth.testing()`, or a transport
 	 * factory a test stands in for the backend with, is used as is.
 	 */
 	mode?: ConsentTesting | ProviderTransportFactory;
@@ -474,12 +472,7 @@ export interface ConsentClient {
 	readonly started: boolean;
 	/** The current consent snapshot. */
 	getSnapshot: () => ConsentSnapshot;
-	/**
-	 * Observe every snapshot change.
-	 *
-	 * @param listener - Called with each new snapshot.
-	 * @returns An unsubscribe function.
-	 */
+	/** Observe every snapshot change. */
 	subscribe: (listener: (snapshot: ConsentSnapshot) => void) => Unsubscribe;
 	/**
 	 * Resolves once the policy is resolved and the UI can render. A
@@ -551,15 +544,9 @@ export interface ConsentClient {
 	/**
 	 * Merge into the geo, language and GPC context: a key you pass replaces
 	 * its value, `undefined` clears it, and a key you leave out stays.
-	 *
-	 * @param overrides - The keys to change.
 	 */
 	setOverrides: (overrides: KernelOverrides) => void;
-	/**
-	 * Associate the consent record with an external identity.
-	 *
-	 * @param user - The external user.
-	 */
+	/** Associate the consent record with an external identity. */
 	identify: (user: KernelUser) => Promise<void>;
 	/**
 	 * Listen for a client event.
@@ -569,10 +556,6 @@ export interface ConsentClient {
 	 * attached after a fast init misses nothing. A listener that throws is
 	 * reported with `console.error`; the listeners after it and the matching
 	 * `inth:*` document event still run.
-	 *
-	 * @param event - The event name.
-	 * @param listener - Called with the event payload.
-	 * @returns An unsubscribe function.
 	 */
 	on: <EventName extends keyof ConsentClientEventMap>(
 		event: EventName,

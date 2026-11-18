@@ -19,7 +19,6 @@ interface ResolveContext {
  * package, so it takes the same aliases and loads the same modules.
  *
  * @param root - The framework package's directory.
- * @returns The Vite plugin.
  */
 export const privateSdkNames = function privateSdkNames(root: string) {
 	return {

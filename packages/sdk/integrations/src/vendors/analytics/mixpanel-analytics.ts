@@ -149,8 +149,6 @@ export interface MixpanelAnalyticsOptions {
 /**
  * Creates a Mixpanel Analytics script.
  *
- * @param options - The options for the Mixpanel Analytics script.
- * @returns The Mixpanel Analytics script configuration.
  * @remarks When `token` is missing, blank, or not a 32-character
  *   hexadecimal Mixpanel project token, the helper logs the problem with
  *   `console.error` and returns a script that never loads.

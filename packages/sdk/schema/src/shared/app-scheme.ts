@@ -14,7 +14,6 @@
  */
 const WEB_SCHEMES = new Set(['http:', 'https:', 'ws:', 'wss:']);
 
-/** Matches a URL scheme prefix (e.g. `https://`, `capacitor://`). */
 const SCHEME_REGEX = /^(?<scheme>[a-z][a-z\d+.-]*):\/\//iu;
 
 /**

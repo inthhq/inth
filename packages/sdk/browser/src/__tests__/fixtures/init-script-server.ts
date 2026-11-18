@@ -111,9 +111,6 @@ ${body}
 /**
  * Answer one fixture request, or call `next`.
  *
- * @param request - The request.
- * @param response - The response.
- * @param next - The next middleware.
  * @param dist - The package's `dist` directory.
  */
 export const serveInitScriptFixture = async function serveInitScriptFixture(

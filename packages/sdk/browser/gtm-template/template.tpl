@@ -13,16 +13,16 @@ ___INFO___
   "id": "cvt_temp_public_id",
   "version": 1,
   "securityGroups": [],
-  "displayName": "inth Consent Management",
+  "displayName": "Inth Consent Management",
   "categories": [
     "TAG_MANAGEMENT",
     "UTILITY"
   ],
   "brand": {
     "id": "github.com_inth",
-    "displayName": "inth"
+    "displayName": "Inth"
   },
-  "description": "Load the inth consent banner and set Google Consent Mode v2 from the visitor's choice. Fire it on the Consent Initialization - All Pages trigger.",
+  "description": "Load the Inth consent banner and set Google Consent Mode v2 from the visitor's choice. Fire it on the Consent Initialization - All Pages trigger.",
   "containerContexts": [
     "WEB"
   ]
@@ -35,15 +35,15 @@ ___TEMPLATE_PARAMETERS___
   {
     "type": "CHECKBOX",
     "name": "loadScript",
-    "checkboxText": "Load inth from this tag",
+    "checkboxText": "Load Inth from this tag",
     "simpleValueType": true,
     "defaultValue": true,
-    "help": "Untick this when your page already loads the inth script tag. The tag then only sends consent to Google's tags."
+    "help": "Untick this when your page already loads the Inth script tag. The tag then only sends consent to Google's tags."
   },
   {
     "type": "TEXT",
     "name": "scriptUrl",
-    "displayName": "inth script URL",
+    "displayName": "Inth script URL",
     "simpleValueType": true,
     "valueHint": "https://your-project.inth.app/c15t.js",
     "valueValidators": [
@@ -94,7 +94,7 @@ ___TEMPLATE_PARAMETERS___
         "type": "EQUALS"
       }
     ],
-    "help": "What inth asks the visitor about, besides strictly necessary. Tick each purpose your container's tags serve. Untick all to keep the categories your inth setup already sets.",
+    "help": "What Inth asks the visitor about, besides strictly necessary. Tick each purpose your container's tags serve. Untick all to keep the categories your Inth setup already sets.",
     "subParams": [
       {
         "type": "CHECKBOX",
@@ -247,7 +247,7 @@ ___TEMPLATE_PARAMETERS___
           }
         ],
         "newRowButtonText": "Add a region",
-        "help": "What Google's tags may do before inth reports the visitor's permissions. With no rows, every type is denied except security storage, which follows inth's necessary category. If you add region rows, add one with Region blank for everyone else."
+        "help": "What Google's tags may do before Inth reports the visitor's permissions. With no rows, every type is denied except security storage, which follows Inth's necessary category. If you add region rows, add one with Region blank for everyone else."
       },
       {
         "type": "TEXT",
@@ -260,7 +260,7 @@ ___TEMPLATE_PARAMETERS___
             "type": "NON_NEGATIVE_NUMBER"
           }
         ],
-        "help": "How long Google's tags wait for inth before they use the defaults above."
+        "help": "How long Google's tags wait for Inth before they use the defaults above."
       },
       {
         "type": "CHECKBOX",
@@ -283,12 +283,12 @@ ___TEMPLATE_PARAMETERS___
 
 ___SANDBOXED_JS_FOR_WEB_TEMPLATE___
 
-// inth Consent Management for Google Tag Manager.
+// Inth Consent Management for Google Tag Manager.
 //
 // Sets the Google Consent Mode v2 default, loads the @inth/sdk script tag
-// build, and turns each inth permission change into a consent update. It talks
-// to inth only through the documented `window.inth` queue, so it works whether
-// this tag or the page loads inth, and in either order.
+// build, and turns each Inth permission change into a consent update. It talks
+// to Inth only through the documented `window.inth` queue, so it works whether
+// this tag or the page loads Inth, and in either order.
 //
 // Uses setDefaultConsentState and updateConsentState, never
 // gtag('consent', ...), so updates stay in order with the container's events.
@@ -313,7 +313,7 @@ const CONSENT_TYPES = [
   'security_storage'
 ];
 
-// inth category -> Google consent types. Matches the default mapping of the
+// Inth category -> Google consent types. Matches the default mapping of the
 // googleTagManager() helper in @inth/integrations.
 const CONSENT_MAPPING = {
   necessary: ['security_storage'],
@@ -323,7 +323,7 @@ const CONSENT_MAPPING = {
   experience: ['personalization_storage']
 };
 
-// inth category -> the checkbox that asks about it.
+// Inth category -> the checkbox that asks about it.
 const CATEGORY_FIELDS = {
   functionality: 'categoryFunctionality',
   measurement: 'categoryMeasurement',
@@ -336,7 +336,7 @@ const JSDELIVR_PREFIX = 'cdn.jsdelivr.net/npm/@inth/sdk@';
 const DIGITS = '0123456789';
 const PRERELEASE_CHARS =
   DIGITS + 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.-';
-// Bundles that install inth. Add-ons such as c15t.gpp.js wait for one of
+// Bundles that install Inth. Add-ons such as c15t.gpp.js wait for one of
 // these, so loading one alone would show nothing and never send an update.
 // Inth serves no offline bundle.
 const INTH_FILES = ['c15t.js', 'c15t.headless.js', 'c15t.iab.js'];
@@ -504,9 +504,9 @@ if (defaultRows.length === 0) {
   }
 }
 
-// 2. Updates from inth.
+// 2. Updates from Inth.
 
-// Before `ready`, inth has not resolved the visitor's policy yet, so its
+// Before `ready`, Inth has not resolved the visitor's policy yet, so its
 // permissions are only the strict fallback. Sending them would end the wait
 // above early.
 const applySnapshot = (snapshot) => {
@@ -531,7 +531,7 @@ const onConsent = (snapshot) => {
   applySnapshot(snapshot);
 };
 
-// 3. Subscribe once per page and load inth if asked to.
+// 3. Subscribe once per page and load Inth if asked to.
 
 // `window.inth` is the queue array until the script runs, then the API,
 // whose push() takes the same calls.
@@ -548,7 +548,7 @@ const projectUrl =
   typeof data.projectUrl === 'string' ? data.projectUrl.trim() : '';
 
 if (inject && !isAllowedScriptUrl(scriptUrl)) {
-  log('inth: "inth script URL" must be an Inth project /c15t.js URL or a ' +
+  log('inth: "Inth script URL" must be an Inth project /c15t.js URL or a ' +
       'jsDelivr URL for an exact @inth/sdk version and c15t.js, ' +
       'c15t.local.js, c15t.headless.js or c15t.iab.js. Got: ' + scriptUrl);
   data.gtmOnFailure();
@@ -557,8 +557,8 @@ if (inject && !isAllowedScriptUrl(scriptUrl)) {
   data.gtmOnFailure();
 } else {
   if (inject) {
-    // A page that loads inth only through this tag registers no scripts for
-    // inth to infer its categories from, so it would ask about none.
+    // A page that loads Inth only through this tag registers no scripts for
+    // Inth to infer its categories from, so it would ask about none.
     const config = {};
     const categories = readCategories();
     if (projectUrl !== '') config.projectUrl = projectUrl;

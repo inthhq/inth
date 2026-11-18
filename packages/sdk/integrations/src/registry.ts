@@ -815,30 +815,19 @@ export const builtInScriptIntegrations = [
 	},
 ] as const satisfies readonly IntegrationRegistryEntry[];
 
-/**
- * Concrete registry entry type inferred from `builtInScriptIntegrations`.
- */
 export type BuiltInScriptIntegration =
 	(typeof builtInScriptIntegrations)[number];
 
-/**
- * Union of stable keys for built-in integrations.
- */
 export type BuiltInScriptIntegrationKey = BuiltInScriptIntegration['key'];
 
-/**
- * Union of public package subpaths for built-in integrations.
- */
 export type BuiltInScriptIntegrationSubpath =
 	BuiltInScriptIntegration['packageSubpath'];
 
 /**
  * Looks up a built-in integration by its registry key.
  *
- * @param key - Stable integration key.
- * @returns The matching built-in integration entry.
- * @throws {Error}("Unknown built-in script integration: <key>")` when the key is
- * not present. Catch this when accepting untrusted or user-provided keys.
+ * @throws {Error} `Unknown built-in script integration: <key>` when the key
+ * is not present. Catch this when accepting untrusted or user-provided keys.
  *
  * @example
  * ```ts
@@ -864,7 +853,6 @@ export const getBuiltInScriptIntegration = function getBuiltInScriptIntegration(
  * Finds a built-in integration by its public package subpath.
  *
  * @param subpath - Kebab-case subpath such as `google-tag`.
- * @returns The matching integration, or `undefined` when no entry matches.
  *
  * @example
  * ```ts
@@ -887,7 +875,6 @@ export const getBuiltInScriptIntegrationBySubpath =
  * Use this to connect a resolved manifest/script id back to registry metadata.
  *
  * @param vendor - Vendor id emitted as `Script.id`.
- * @returns The matching integration, or `undefined` when no entry matches.
  *
  * @example
  * ```ts

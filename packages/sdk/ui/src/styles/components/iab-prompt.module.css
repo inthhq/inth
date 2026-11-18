@@ -1,13 +1,11 @@
 @import url('./animations/iab-prompt.css');
 
 :root {
-	/* Typography */
 	--iab-consent-banner-font-family: var(--inth-font-family);
 	--iab-consent-banner-line-height: var(--inth-line-height-normal);
 	--iab-consent-banner-text-size-adjust: 100%;
 	--iab-consent-banner-tab-size: 4;
 
-	/* Layout variables */
 	--iab-consent-banner-border-radius-sm: var(--inth-radius-sm);
 	--iab-consent-banner-border-radius: var(--inth-radius-lg);
 	--iab-consent-banner-max-width: 560px;
@@ -19,15 +17,12 @@
 	--iab-consent-banner-animation-duration: var(--inth-duration-fast);
 	--iab-consent-banner-animation-timing: var(--inth-easing-in);
 
-	/* Border */
 	--iab-consent-banner-border-width: 1px;
 	--iab-consent-banner-border-width-hairline: 1px;
 
-	/* Shadow */
 	--iab-consent-banner-shadow: var(--inth-shadow-lg);
 	--iab-consent-banner-shadow-dark: var(--inth-shadow-lg);
 
-	/* Colors */
 	--iab-consent-banner-background-color: var(--inth-surface);
 	--iab-consent-banner-background-color-dark: var(--inth-surface);
 	--iab-consent-banner-footer-background-color: var(--inth-surface-hover);
@@ -120,7 +115,6 @@
 		}
 	}
 
-	/* Card styles */
 	.cardShell {
 		display: flex;
 		flex-direction: column;
@@ -145,7 +139,6 @@
 		box-shadow: var(--iab-consent-banner-shadow-dark);
 	}
 
-	/* Divider between sections */
 	.card > :not([hidden]) ~ :not([hidden]) {
 		border-top-width: var(--iab-consent-banner-border-width);
 		border-top-style: solid;
@@ -333,7 +326,6 @@
 		background-color: var(--iab-consent-banner-overlay-background-color-dark);
 	}
 
-	/* Reduced motion preference */
 	@media (prefers-reduced-motion: reduce) {
 		.bannerEntering[data-entry='late']:not(.bannerHidden),
 		.overlayEntering[data-entry='late']:not(.overlayHidden),

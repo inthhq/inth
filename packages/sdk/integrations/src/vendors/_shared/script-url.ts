@@ -1,17 +1,6 @@
 /**
  * Trims an optional string and treats empty or whitespace-only values as
  * missing.
- *
- * @param value - Optional string value, usually a user-provided override.
- * @returns The trimmed string when it contains non-whitespace characters,
- * otherwise `undefined`.
- *
- * @example
- * ```ts
- * trimToUndefined(', https://cdn.example.com  '); // 'https://cdn.example.com'
- * trimToUndefined('   '); // undefined
- * trimToUndefined(undefined); // undefined
- * ```
  */
 export const trimToUndefined = function trimToUndefined(
 	value: string | undefined
@@ -30,26 +19,7 @@ export const trimToUndefined = function trimToUndefined(
 
 /**
  * Resolves a script URL from an optional override and a required fallback.
- *
- * @param override - Explicit script URL supplied by the integration caller.
- * @param fallback - Default vendor script URL.
- * @returns The trimmed `override` when it contains non-whitespace characters,
- * otherwise `fallback`. An empty or whitespace-only override counts as unset.
- *
- * @example
- * ```ts
- * resolveScriptUrl(undefined, 'https://cdn.example.com/default.js');
- * // 'https://cdn.example.com/default.js'
- * ```
- *
- * @example
- * ```ts
- * resolveScriptUrl(
- * 	'https://custom.com/script.js',
- * 	'https://cdn.example.com/default.js'
- * );
- * // 'https://custom.com/script.js'
- * ```
+ * An empty or whitespace-only override counts as unset.
  */
 export const resolveScriptUrl = function resolveScriptUrl(
 	override: string | undefined,
@@ -94,19 +64,6 @@ export const stripTrailingSlashes = function stripTrailingSlashes(
 
 /**
  * Joins a base URL and path with exactly one slash between them.
- *
- * @param base - Base URL or origin. Trailing slashes are removed before joining.
- * @param path - Path segment. Leading slashes are removed before joining.
- * @returns A slash-joined URL string.
- *
- * @example
- * ```ts
- * joinUrlPath('https://example.com///', '///script.js');
- * // 'https://example.com/script.js'
- *
- * joinUrlPath('https://example.com', 'script.js');
- * // 'https://example.com/script.js'
- * ```
  */
 export const joinUrlPath = function joinUrlPath(
 	base: string,

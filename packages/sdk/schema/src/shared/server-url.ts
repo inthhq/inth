@@ -100,7 +100,6 @@ export interface ResolveProjectUrlOptions {
  * sees only headers, and every header it can read is sent by the client.
  *
  * @param projectUrl - The configured URL, absolute or `/`-relative.
- * @param headers - The incoming request headers.
  * @param options - `trustForwardedHeaders` to read forwarding headers.
  * @returns The absolute URL, or `null` when it cannot be resolved.
  */

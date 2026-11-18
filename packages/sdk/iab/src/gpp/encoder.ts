@@ -121,7 +121,6 @@ const encodeField = function encodeField(
 	return entries.map((entry) => fixedInteger(entry, bits)).join('');
 };
 
-/** Encodes one subsection from its field table. */
 const encodeSubsection = function encodeSubsection(
 	fields: readonly GPPFieldSpec[],
 	values: GPPFieldValues
@@ -142,9 +141,8 @@ export interface USSectionValues {
  * Encodes a US section: the core subsection, then the GPC subsection when
  * the section defines one.
  *
- * @param definition - The section's field table.
- * @param values - Field values. Absent fields encode as `0`.
- * @returns The section string.
+ * Absent fields encode as `0`.
+ *
  * @throws {RangeError} When a value does not fit its field.
  */
 export const encodeUSSection = function encodeUSSection(
@@ -161,7 +159,6 @@ export const encodeUSSection = function encodeUSSection(
 	})}`;
 };
 
-/** An encoded section and its ID. */
 export interface EncodedGPPSection {
 	id: number;
 	encoded: string;

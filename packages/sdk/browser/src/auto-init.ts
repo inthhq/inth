@@ -11,7 +11,7 @@ import type {
 	ConsentUIOptions,
 } from './types';
 
-/** Attribute that turns auto-init off so the page calls `c15t.init()`. */
+/** Attribute that turns auto-init off so the page calls `inth.init()`. */
 export const MANUAL_ATTRIBUTE = 'data-manual';
 
 const MODES: ReadonlySet<string> = new Set<ConsentModeName>([
@@ -106,7 +106,6 @@ const readNonce = function readNonce(element: Element): string | undefined {
  * UI's `<style>` element passes a nonce-based CSP.
  *
  * @param element - The script element, or `null` outside a classic script.
- * @returns Options for `init()`.
  */
 // oxlint-disable-next-line complexity -- One attribute per branch; a table would hide the shape.
 export const readScriptOptions = function readScriptOptions(
@@ -212,7 +211,6 @@ const mergeUI = function mergeUI(
  *
  * @param base - The options underneath.
  * @param override - The options on top.
- * @returns The merged options.
  */
 export const mergeClientOptions = function mergeClientOptions(
 	base: ScriptTagClientOptions,
@@ -233,7 +231,6 @@ export const mergeClientOptions = function mergeClientOptions(
  * Resolve the page's options: the script tag's attributes first, then each
  * queued `config` call on top, in order.
  *
- * @param script - The current script element.
  * @param configs - Options queued as `['config', options]` before load.
  * @returns Options and whether the page asked to init itself.
  */

@@ -34,12 +34,6 @@ export const REGION_HEADERS = [
 ] as const;
 
 /**
- * Every header name that carries a consent request input. This is the
- * canonical allowlist for forwarding to a Inth backend and for cache-key
- * derivation. Framework adapters may append transport-specific extras
- * (e.g. `user-agent`, prefetch hints) but must include all of these.
- */
-/**
  * GPC headers, highest priority first. `x-c15t-gpc` is the application
  * override: browsers refuse to let scripts set `Sec-*` request headers, so a
  * client that needs to assert a GPC value on its own init request sends it
@@ -47,6 +41,12 @@ export const REGION_HEADERS = [
  */
 export const GPC_HEADERS = ['x-c15t-gpc', 'sec-gpc'] as const;
 
+/**
+ * Every header name that carries a consent request input. This is the
+ * canonical allowlist for forwarding to an Inth backend and for cache-key
+ * derivation. Framework adapters may append transport-specific extras
+ * (e.g. `user-agent`, prefetch hints) but must include all of these.
+ */
 export const CONSENT_REQUEST_HEADER_NAMES = [
 	...COUNTRY_HEADERS,
 	...REGION_HEADERS,

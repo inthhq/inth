@@ -50,8 +50,6 @@ const resolveMode = function resolveMode(
 /**
  * Create the page's consent client without starting it.
  *
- * @param options - Client options.
- * @param context - Entry-point wiring.
  * @returns The client. Call `start()` to resolve the policy and mount.
  * @throws {Error} When there is no backend URL and `mode` is not
  *   `testing()`, or `mode` is not one this entry takes.

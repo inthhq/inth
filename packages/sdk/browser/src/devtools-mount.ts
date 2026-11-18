@@ -26,11 +26,9 @@ export type PublishDevToolsLauncher = typeof publishDevToolsLauncher;
  * stock trigger, which then shows a DevTools button and docks the panel
  * beside itself. `destroy()` withdraws the offer first.
  *
- * @param client - The page's client.
  * @param options - Panel placement and initial state.
  * @param publish - The launcher slot's `publishDevToolsLauncher`, from the
  * bundle that renders the trigger. Omit to keep the floating launcher.
- * @returns The panel.
  * @internal
  */
 export const createBrowserDevTools = function createBrowserDevTools(

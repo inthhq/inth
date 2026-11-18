@@ -8,9 +8,6 @@ interface QueuePixelInstallStep {
 	args: unknown[];
 }
 
-/**
- * Options for building the common pixel install sequence.
- */
 export interface BuildQueuePixelInstallOptions {
 	/** Global queue function to call, for example `rdt` or `snaptr`. */
 	global: string;
@@ -24,10 +21,6 @@ export interface BuildQueuePixelInstallOptions {
 
 /**
  * Builds the common queue-pixel install sequence used by advertising pixels.
- *
- * @param options - Queue pixel install options.
- * @returns Manifest install steps containing the required init call, an
- * optional tracking call, and an async `loadScript` step.
  */
 export const buildQueuePixelInstall = function buildQueuePixelInstall({
 	global,

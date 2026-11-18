@@ -28,7 +28,6 @@ import {
 /**
  * Creates the page's consent runtime.
  *
- * @param options - The runtime configuration.
  * @returns The runtime, not started.
  */
 export const createBrowserRuntime = function createBrowserRuntime(

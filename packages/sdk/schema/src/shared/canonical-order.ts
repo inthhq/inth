@@ -68,8 +68,6 @@ const collate = function collate(left: string, right: string): number {
  * Compares two strings in the order `localeCompare` gives under the root
  * collation, without a collator when both are printable ASCII.
  *
- * @param left - First string.
- * @param right - Second string.
  * @returns Negative when `left` sorts first, positive when `right` does,
  * zero when they are equal.
  * @example

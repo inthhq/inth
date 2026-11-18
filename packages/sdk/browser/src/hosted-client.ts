@@ -14,7 +14,6 @@ import type {
  * Create a hosted client with no manifest mode selection.
  *
  * @param options - Hosted options, including a backend URL or hosted factory.
- * @param context - Entry-point wiring.
  * @returns The client, not started.
  * @throws {Error} For another mode, manifest inputs, or no backend.
  * @internal
@@ -41,7 +40,7 @@ export const createHostedConsentClient = function createHostedConsentClient(
 	) {
 		throw new Error('@inth/sdk/hosted: only hosted mode is supported.');
 	}
-	// `c15t.hosted()` called on the init script's stand-in.
+	// `inth.hosted()` called on the init script's stand-in.
 	const marked = readHostedMarker(mode);
 	let factory: ProviderTransportFactory;
 	if (marked) {

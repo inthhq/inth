@@ -3,7 +3,7 @@
  * and `dist/inth.iab.css`.
  *
  * Bundler users who mount the UI into the light DOM (`shadow: false`)
- * import `@inth/sdk-browser/styles.css`; it is the same sheet the script-tag
+ * import `@inth/sdk/styles.css`; it is the same sheet the script-tag
  * build inlines: `@inth/sdk-ui/styles.css` plus the dialog rules, since this
  * package renders the dialog eagerly, pruned to the rules these surfaces can
  * match. Runs after `rslib build`, which cleans `dist/` first.

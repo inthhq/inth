@@ -1,12 +1,3 @@
-/**
- * Non-IAB Vendor Schema
- *
- * Valibot schema for custom vendors not registered with IAB.
- * These vendors must manually declare their data practices for transparency.
- *
- * @packageDocumentation
- */
-
 import * as v from 'valibot';
 
 /**
@@ -17,14 +8,10 @@ import * as v from 'valibot';
  * data practices to maintain the same level of transparency as IAB vendors.
  */
 export const nonIABVendorSchema = v.object({
-	// Storage Declaration
-
 	/** Maximum cookie/storage duration in seconds */
 	cookieMaxAgeSeconds: v.optional(
 		v.pipe(v.number(), v.integer(), v.minValue(1))
 	),
-
-	// Data Declaration (uses IAB data category IDs for consistency)
 
 	/**
 	 * Data categories collected/used (IAB data category IDs 1-11).
@@ -38,8 +25,6 @@ export const nonIABVendorSchema = v.object({
 
 	/** Description of what this vendor does */
 	description: v.optional(v.string()),
-
-	// Feature Declaration (uses IAB feature IDs for consistency)
 
 	/**
 	 * Features this vendor uses (IAB feature IDs 1-3).
@@ -72,8 +57,6 @@ export const nonIABVendorSchema = v.object({
 	/** Privacy policy URL (required for transparency) */
 	privacyPolicyUrl: v.pipe(v.string(), v.url()),
 
-	// Purpose Declaration (uses IAB purpose IDs 1-11 for consistency)
-
 	/**
 	 * IAB purposes this vendor requires consent for.
 	 * Uses standard IAB purpose IDs (1-11) for consistency.
@@ -89,24 +72,18 @@ export const nonIABVendorSchema = v.object({
 		v.array(v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(2)))
 	),
 
-	/** Whether this vendor uses cookies */
 	usesCookies: v.optional(v.boolean()),
 
 	/** Whether this vendor uses non-cookie storage (localStorage, IndexedDB, etc.) */
 	usesNonCookieAccess: v.optional(v.boolean()),
 });
 
-/**
- * Schema for consent state of a non-IAB vendor.
- */
 export const nonIABVendorConsentSchema = v.object({
-	/** Whether the user has consented */
 	consented: v.boolean(),
 
 	/** Timestamp when consent was given/modified */
 	timestamp: v.number(),
 
-	/** Vendor ID */
 	vendorId: v.union([v.string(), v.pipe(v.number(), v.integer())]),
 });
 

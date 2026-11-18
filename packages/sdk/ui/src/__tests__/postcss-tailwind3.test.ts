@@ -126,7 +126,7 @@ describe('@inth/sdk/ui/postcss-tailwind3', () => {
 	test('unwraps inth rules inlined into an app stylesheet', async () => {
 		// Vite and postcss-import inline `@import`ed files before other
 		// plugins run. The inlined nodes keep their own source file, so the
-		// plugin unwraps inth's layers and leaves the app's own alone.
+		// plugin unwraps Inth's layers and leaves the app's own alone.
 		const app = parse(
 			'@tailwind components;\n@layer components { .app-card { color: red; } }',
 			{ from: '/app/src/index.css' }
@@ -249,7 +249,7 @@ describe('@inth/sdk/ui/postcss-tailwind3', () => {
 			'/app/node_modules/inth-theme/dist/styles.css',
 			'/app/node_modules/@inth/cli/dist/styles.css',
 			'/repo/packages/web/dist/styles.css',
-			// Another monorepo's workspace package with a inth-like name.
+			// Another monorepo's workspace package with an Inth-like name.
 			'/home/dev/app/packages/sdk/react/dist/styles.css',
 			'/app/src/styles.css',
 		]) {

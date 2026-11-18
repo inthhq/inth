@@ -85,7 +85,6 @@ export interface InitRequestParams {
  *
  * @param url - The init URL, absolute or relative, or `''` for just the query.
  * @param params - The inputs. Absent fields are left out.
- * @returns The URL with the parameters.
  */
 export const appendInitParams = function appendInitParams(
 	url: string,

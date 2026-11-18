@@ -82,7 +82,7 @@
 		}
 	}
 
-	/* The banner's card shell is a `inth-banner` container. When the card is
+	/* The banner's card shell is an `inth-banner` container. When the card is
 	   too narrow for one row, undo the row rules above so the actions keep
 	   the narrow layout on any viewport: grouped actions share a row and
 	   each group takes the full width. In English, one row needs about

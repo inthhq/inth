@@ -76,7 +76,6 @@ export interface TheTradeDeskPixelOptions {
 
 /**
  * Initializes The Trade Desk Universal Pixel after marketing consent.
- * @param options - Advertiser, pixel IDs and optional processing policy.
  * @returns A gated script, or a skipped script for missing IDs.
  * @remarks Keep reload on revocation enabled. There is no documented stop API.
  * @example theTradeDeskPixel({ advertiserId: 'ADVERTISER_ID', pixelIds: ['PIXEL_ID'] });

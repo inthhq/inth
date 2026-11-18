@@ -35,7 +35,7 @@ import type {
  * @throws {Error} When no snapshot, manifest URL or backend URL is known.
  * @example
  * ```ts
- * import { init, manifest } from '@inth/sdk-browser';
+ * import { init, manifest } from '@inth/sdk';
  *
  * init({ mode: manifest() });
  * ```

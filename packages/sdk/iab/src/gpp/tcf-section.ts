@@ -24,7 +24,6 @@ interface IdVector {
 	has: (id: number) => boolean;
 }
 
-/** IDs set in a vector, in ascending order. */
 const idsOf = function idsOf(vector: IdVector, maxId = vector.maxId): number[] {
 	const ids: number[] = [];
 	for (let id = 1; id <= maxId; id += 1) {
@@ -52,8 +51,6 @@ const segmentTypes = function segmentTypes(tcString: string): number[] {
  * segments the string contains, in string order. Bitfields and vendor
  * ranges are arrays of the IDs that are set; dates are `Date` objects.
  *
- * @param tcString - A TC String.
- * @returns Parsed subsections.
  * @throws {Error} When the string cannot be decoded.
  */
 export const parseTCFEUSection = async function parseTCFEUSection(

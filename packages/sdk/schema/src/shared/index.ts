@@ -63,7 +63,6 @@ export {
 	INIT_VERSION_PARAM,
 	type InitRequestParams,
 } from './init-request-params';
-// Export constants separately for runtime-safe usage
 export {
 	brandingValues as brandingValuesConst,
 	DEFAULT_GVL_ENDPOINT,

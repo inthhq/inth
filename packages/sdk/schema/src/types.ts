@@ -6,22 +6,19 @@
  * listed one by one: the light entry carries constants and helpers, and of
  * the Valibot schemas only the vendor list and ad tech provider ones, which
  * bundlers drop when unused. For the other schemas, import from
- * '@inth/sdk-schema'.
+ * '@inth/sdk/schema'.
  */
 
-// API types - Consent (v2.0: only check endpoint remains)
 export type {
 	CheckConsentOutput,
 	CheckConsentQuery,
 	ConsentCheckResult,
 } from './api/consent';
-// API types - Experiment
 export type {
 	ExperimentSummaryOutput,
 	ExperimentSummaryQuery,
 	ExperimentArmSummary,
 } from './api/experiment';
-// API types - Init
 export type {
 	InitOutput,
 	LocationResponse,
@@ -32,12 +29,9 @@ export type {
 	LegalDocumentCurrentOutput,
 	LegalDocumentCurrentParams,
 } from './api/legal-document';
-// API types - Meta
 export type { StatusOutput } from './api/meta';
-// API types - Session
 export { CONSENT_MODELS } from './api/session';
 export type { ConsentSessionReport, ConsentSessionSource } from './api/session';
-// API types - Subject
 export type {
 	ConsentItem,
 	GetSubjectInput,
@@ -56,7 +50,6 @@ export type {
 	SubjectItem,
 	VendorChoiceWire,
 } from './api/subject';
-// Domain types
 export type {
 	AuditLog,
 	Consent,

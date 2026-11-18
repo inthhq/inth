@@ -1,7 +1,5 @@
 /**
- * CMP API Implementation (__tcfapi)
- *
- * Implements the IAB TCF __tcfapi global function using functional programming.
+ * The IAB TCF `__tcfapi` global.
  *
  * @packageDocumentation
  */
@@ -27,9 +25,6 @@ import { toTCDataRestrictions } from './publisher-restrictions';
 import { clearStubQueue, getStubQueue } from './stub';
 import { decodeTCString, getDisclosedVendorIds } from './tc-string';
 
-/**
- * Sets a cookie value.
- */
 const setCookie = function setCookie(
 	name: string,
 	value: string,
@@ -43,9 +38,6 @@ const setCookie = function setCookie(
 	document.cookie = `${name}=${encodeURIComponent(value)}; max-age=${maxAge}; path=/; SameSite=Lax`;
 };
 
-/**
- * Gets a cookie value.
- */
 const getCookie = function getCookie(name: string): string | null {
 	if (typeof document === 'undefined') {
 		return null;
@@ -63,8 +55,6 @@ const getCookie = function getCookie(name: string): string | null {
  * localStorage copy, so vendors reading storage directly, and
  * `loadFromStorage()`, no longer find it. Each entry is removed only while
  * it still holds `tcString`: another tab may have saved a newer one.
- *
- * @param tcString - The superseded TC string.
  *
  * @internal
  */
@@ -101,9 +91,6 @@ export const clearStoredTCString = function clearStoredTCString(
  * AC string of a TC string already saved, and vendors reading storage must
  * not keep finding the provider in it. Like {@link clearStoredTCString},
  * each store changes only while it still holds `tcString`.
- *
- * @param tcString - The TC string the AC string was saved beside.
- * @param addtlConsent - The AC string it now carries, if any.
  *
  * @internal
  */
@@ -169,29 +156,8 @@ const copyConsentData = function copyConsentData(
 };
 
 /**
- * Creates a CMP API instance using functional composition.
- *
- * This installs __tcfapi on window and returns control functions.
- * Uses closures for state management (no classes).
- *
- * @param config - Configuration for the CMP API
- * @returns CMP API control interface
- *
- * @example
- * ```typescript
- * const cmpApi = createCMPApi({
- *   gvl: gvlData,
- * });
- *
- * // Update consent when user saves
- * cmpApi.updateConsent(tcString);
- *
- * // Show/hide UI
- * cmpApi.setDisplayStatus('visible');
- *
- * // Clean up
- * cmpApi.destroy();
- * ```
+ * Installs the real `__tcfapi` on `window`, replays the calls the stub
+ * queued, and returns the controls that publish consent through it.
  *
  * @public
  */
@@ -222,7 +188,6 @@ export const createCMPApi = function createCMPApi(
 	>();
 	let nextListenerId = 0;
 
-	// Decoded TC data cache
 	let cachedTCData: TCData | null = null;
 	/** Counts changes to the published state, so answers can detect them. */
 	let stateRevision = 0;
@@ -264,7 +229,6 @@ export const createCMPApi = function createCMPApi(
 		// Restrictions always come from the string vendors receive.
 		let restrictions: Record<number, Record<number, number>> = {};
 
-		// Decode TC string if present
 		if (string) {
 			try {
 				const decoded = await decodeTCString(string);
@@ -327,9 +291,6 @@ export const createCMPApi = function createCMPApi(
 		return tcData;
 	};
 
-	/**
-	 * Builds TC Data from current state.
-	 */
 	const buildTCData = async function buildTCData(
 		eventStatus?: EventStatus,
 		listenerId?: number
@@ -353,9 +314,8 @@ export const createCMPApi = function createCMPApi(
 			}
 			return outside;
 		}
-		// Use cached data if available and tc string hasn't changed. Callers
-		// get their own copy, down to the nested maps, so changing a result
-		// never changes the next one.
+		// Callers get their own copy, down to the nested maps, so changing a
+		// result never changes the next one.
 		if (
 			cachedTCData &&
 			cachedTCData.tcString === tcString &&
@@ -386,7 +346,6 @@ export const createCMPApi = function createCMPApi(
 			return buildTCData(eventStatus, listenerId);
 		}
 
-		// Cache a private copy of the data
 		if (!eventStatus) {
 			cachedTCData = structuredClone(tcData);
 		}
@@ -412,9 +371,6 @@ export const createCMPApi = function createCMPApi(
 		handler(tcData, true);
 	};
 
-	/**
-	 * Handles the 'ping' command.
-	 */
 	const handlePing = function handlePing(
 		handler: TCFApiCallback<PingData>
 	): void {
@@ -432,9 +388,6 @@ export const createCMPApi = function createCMPApi(
 		);
 	};
 
-	/**
-	 * Handles the 'getTCData' command.
-	 */
 	const handleGetTCData = async function handleGetTCData(
 		handler: TCFApiCallback<TCData | TCDataOutsideTCF>,
 		_vendorIds?: number[]
@@ -442,18 +395,12 @@ export const createCMPApi = function createCMPApi(
 		await sendCurrentTCData(handler, () => undefined);
 	};
 
-	/**
-	 * Handles the 'getInAppTCData' command (alias for getTCData).
-	 */
 	const handleGetInAppTCData = function handleGetInAppTCData(
 		handler: TCFApiCallback<TCData | TCDataOutsideTCF>
 	): Promise<void> {
 		return handleGetTCData(handler);
 	};
 
-	/**
-	 * Handles the 'getVendorList' command.
-	 */
 	const handleGetVendorList = function handleGetVendorList(
 		handler: TCFApiCallback<GlobalVendorList>,
 		_vendorListVersion?: number
@@ -483,9 +430,6 @@ export const createCMPApi = function createCMPApi(
 		return hasSignal() ? 'tcloaded' : undefined;
 	};
 
-	/**
-	 * Handles the 'addEventListener' command.
-	 */
 	const handleAddEventListener = async function handleAddEventListener(
 		handler: TCFApiCallback<TCData | TCDataOutsideTCF>
 	): Promise<void> {
@@ -497,9 +441,6 @@ export const createCMPApi = function createCMPApi(
 		await sendCurrentTCData(handler, currentStatus, listenerId);
 	};
 
-	/**
-	 * Handles the 'removeEventListener' command.
-	 */
 	const handleRemoveEventListener = function handleRemoveEventListener(
 		handler: TCFApiCallback<boolean>,
 		listenerId: number
@@ -509,9 +450,6 @@ export const createCMPApi = function createCMPApi(
 		handler(existed, true);
 	};
 
-	/**
-	 * Notifies all event listeners of a state change.
-	 */
 	const notifyEventListeners = async function notifyEventListeners(
 		eventStatus: EventStatus | undefined
 	): Promise<void> {
@@ -526,10 +464,8 @@ export const createCMPApi = function createCMPApi(
 			return;
 		}
 
-		// Get queued calls from stub before replacing
 		const queuedCalls = getStubQueue();
 
-		// Install the real __tcfapi
 		window.__tcfapi = ((
 			command: string,
 			version: number,
@@ -573,19 +509,16 @@ export const createCMPApi = function createCMPApi(
 			}
 		}) as typeof window.__tcfapi;
 
-		// Clear the stub queue
 		clearStubQueue();
 
 		// The real API is created with a list. Replayed calls can read it now.
 		cmpStatus = 'loaded';
 
-		// Process queued calls
 		for (const args of queuedCalls) {
 			window.__tcfapi?.(...args);
 		}
 	};
 
-	// Initialize on creation
 	initializeAPI();
 
 	return {
@@ -612,7 +545,6 @@ export const createCMPApi = function createCMPApi(
 				return cookieValue;
 			}
 
-			// Fallback to localStorage
 			if (typeof localStorage !== 'undefined') {
 				try {
 					const localValue = localStorage.getItem(IAB_STORAGE_KEYS.tcString);
@@ -644,7 +576,6 @@ export const createCMPApi = function createCMPApi(
 				setCookie(IAB_STORAGE_KEYS.additionalConsent, '', 0);
 			}
 
-			// Also save to localStorage as backup
 			if (typeof localStorage !== 'undefined') {
 				try {
 					localStorage.setItem(IAB_STORAGE_KEYS.tcString, newTcString);
@@ -686,7 +617,6 @@ export const createCMPApi = function createCMPApi(
 			// not change, or half change, the vectors published for this string.
 			currentConsentData =
 				newTcString && consentData ? copyConsentData(consentData) : null;
-			// Invalidate cache
 			cachedTCData = null;
 			stateRevision += 1;
 			if (cmpStatus !== 'loaded') {

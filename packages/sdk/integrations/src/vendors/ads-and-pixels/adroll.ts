@@ -48,7 +48,6 @@ export interface AdrollPixelOptions {
 
 /**
  * Loads AdRoll v2 only after marketing consent and queues the initial page view.
- * @param options - Public advertiser and pixel IDs, plus an optional loader URL.
  * @returns A gated script, or a skipped script for missing IDs.
  * @remarks Keep reload on revocation enabled. AdRoll has no documented stop API.
  * @example adrollPixel({ advertiserId: 'ADVERTISER_ID', pixelId: 'PIXEL_ID' });

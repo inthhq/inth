@@ -57,11 +57,9 @@ export interface FrontChatOptions {
 /**
  * Creates a Front Chat script gated on functionality consent.
  *
- * Keep inth's default reload-on-revocation behaviour enabled to stop an
+ * Keep Inth's default reload-on-revocation behaviour enabled to stop an
  * already-running widget. Removing its loader cannot unload the SDK.
  *
- * @param options - Front channel and launcher configuration.
- * @returns The Front Chat script configuration.
  * @remarks When `chatId` is missing or blank, the helper logs
  *   `frontChat: missing or invalid chatId` with `console.error` and returns
  *   a script that never loads. Copy the public ID from the Front channel's
@@ -129,7 +127,6 @@ export const frontChat = function frontChat(options: FrontChatOptions): Script {
  * navigation.
  * Safe to call during SSR or before the SDK loads.
  *
- * @returns Nothing.
  * @example
  * shutdownFrontChat();
  * @see https://dev.frontapp.com/docs/chat-sdk-reference

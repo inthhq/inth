@@ -3,7 +3,7 @@
  *
  * Bundled with `Bun.build` and served into a real Chromium page by the
  * runner. Exposes a small window API that loads one vendor script through the
- * production `inth` script loader and runs the probe checks defined in
+ * production Inth script loader and runs the probe checks defined in
  * `../vendors`.
  */
 import { createConsentKernel } from '@inth/sdk/engine';
@@ -74,9 +74,7 @@ const harness: LiveVendorProbeHarness = {
 	 * before any custom `runtimeCheck` runs — proving the remote bundle
 	 * actually executed.
 	 *
-	 * @param vendor - Registry vendor id with a probe config.
-	 * @returns The runtime assertion result; never throws across the
-	 * `page.evaluate` boundary.
+	 * Never throws across the `page.evaluate` boundary.
 	 */
 	check(vendor: string): LiveProbeCheckResult {
 		const config = getLiveVendorProbeConfig(vendor);
@@ -140,13 +138,12 @@ const harness: LiveVendorProbeHarness = {
 	/**
 	 * Loads one vendor through the production script loader.
 	 *
-	 * @param vendor - Registry vendor id with a probe config.
-	 * @param granted - Whether to load with granted (all categories) or denied
-	 * (necessary-only) consent.
-	 * @returns Whether the loader injected the script, its `alwaysLoad` flag,
-	 * and the bootstrap assertion captured synchronously — before the remote
+	 * The bootstrap assertion is captured synchronously, before the remote
 	 * loader can respond. Harness failures are serialized into `error` instead
 	 * of throwing across the `page.evaluate` boundary.
+	 *
+	 * @param granted - Whether to load with granted (all categories) or denied
+	 * (necessary-only) consent.
 	 */
 	load(vendor: string, granted: boolean): LiveProbeLoadOutcome {
 		const config = getLiveVendorProbeConfig(vendor);

@@ -52,7 +52,6 @@
 			var(--accordion-border-color-dark, var(--inth-border));
 	}
 
-	/* Focus styles for item */
 	.item:focus-within:not(:has(.triggerInner:focus-visible)) {
 		background-color: var(
 			--accordion-background-hover,
@@ -233,7 +232,6 @@
 		color: var(--accordion-content-color-dark, var(--inth-text-muted));
 	}
 
-	/* Reduced motion preference */
 	@media (prefers-reduced-motion: reduce) {
 		.item,
 		.content,

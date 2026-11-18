@@ -1,6 +1,6 @@
 /**
  * A site page running web Inth with its stock banner, the way a site does
- * when a Inth mobile app may open it in a WebView. The server put the native
+ * when an Inth mobile app may open it in a WebView. The server put the native
  * document-start script first in `<head>`, as `WKUserScript` and
  * `addDocumentStartJavaScript` would.
  */

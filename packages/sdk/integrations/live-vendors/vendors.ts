@@ -728,7 +728,7 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 		createScript: () => vector({ pixelId: 'inth-test-pixel' }),
 		loaderUrlSubstring: 'https://cdn.vector.co/pixel.js',
 		notes:
-			'Only the exact GET script URL https://cdn.vector.co/pixel.js is allowed by the batch config. The placeholder pixel proves bootstrap, manager replacement and nested queue replay only. API, settings, identity, collection, partner and other script requests stay blocked. Real account/domain settings and visitor identification are not validated. Settings require an authorized X-Request-URL; public account IDs cannot validate this test origin. Blocked empty settings responses may produce vendor JSON errors, which must remain visible. Vector has no documented complete stop API; revocation requires the normal inth reload, and retained code may continue without it.',
+			'Only the exact GET script URL https://cdn.vector.co/pixel.js is allowed by the batch config. The placeholder pixel proves bootstrap, manager replacement and nested queue replay only. API, settings, identity, collection, partner and other script requests stay blocked. Real account/domain settings and visitor identification are not validated. Settings require an authorized X-Request-URL; public account IDs cannot validate this test origin. Blocked empty settings responses may produce vendor JSON errors, which must remain visible. Vector has no documented complete stop API; revocation requires the normal Inth reload, and retained code may continue without it.',
 		// oxlint-disable-next-line complexity -- Check source-backed manager aliases, live methods, queue drain and exact pixel replay together.
 		runtimeCheck: () => {
 			// pixel.js constructs __vector_manager, aliases Vector/vector to it,
@@ -2300,9 +2300,6 @@ export const liveVendorProbeConfigs: LiveVendorProbeConfig[] = [
 	},
 ];
 
-/**
- * Looks up the live probe config for a vendor id.
- */
 export const getLiveVendorProbeConfig = function getLiveVendorProbeConfig(
 	vendor: string
 ): LiveVendorProbeConfig | undefined {

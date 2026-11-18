@@ -16,7 +16,6 @@ import * as v from 'valibot';
 
 import { DEFAULT_GVL_ENDPOINT } from './constants';
 
-/** Schema for one Google ad tech provider. */
 export const adTechProviderSchema = v.object({
 	/** Google ATP ID. */
 	id: v.pipe(v.number(), v.safeInteger(), v.minValue(1)),
@@ -95,12 +94,7 @@ export const adTechProviderFetchSignal = function adTechProviderFetchSignal():
 	return controller.signal;
 };
 
-/**
- * Distinct positive integer IDs, ascending.
- *
- * @param ids - Configured provider IDs.
- * @returns The usable IDs, deduplicated and sorted.
- */
+/** Distinct positive integer IDs, ascending. */
 export const normalizeAdTechProviderIds = function normalizeAdTechProviderIds(
 	ids: readonly number[]
 ): number[] {
@@ -113,7 +107,6 @@ export const normalizeAdTechProviderIds = function normalizeAdTechProviderIds(
  * The request URL for a set of providers. Joined by hand because an endpoint
  * may be relative, which `URL` rejects without a base.
  *
- * @param url - The provider list endpoint.
  * @param ids - Normalized provider IDs.
  * @returns The endpoint with the `providerIds` filter, when it fits.
  */

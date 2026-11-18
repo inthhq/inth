@@ -22,12 +22,6 @@ export interface LoggerLike {
 }
 
 /**
- * Shared wildcard matching utilities for CORS origin checks.
- *
- * @packageDocumentation
- */
-
-/**
  * Checks if an origin matches a wildcard domain pattern.
  *
  * @param origin - Hostname or normalized origin to check
@@ -43,16 +37,8 @@ export const matchesWildcard = function matchesWildcard(
 	return origin !== wildcardDomain && origin.endsWith(`.${wildcardDomain}`);
 };
 
-/**
- * Origin validation utilities for CORS security
- *
- * @packageDocumentation
- */
-
-/** Regular expression to match www prefix in domain names */
 const WWW_REGEX = /^www\./u;
 
-/** Regular expression matching a URL scheme prefix (e.g. `https://`) */
 const PROTOCOL_REGEX = /^[a-z][a-z\d+.-]*:\/\//iu;
 
 /** Default ports for the protocols we accept, used to resolve origins. */
@@ -106,7 +92,6 @@ const normalizeTrustedDomain = function normalizeTrustedDomain(
 
 	const hasProtocol = PROTOCOL_REGEX.test(trimmed);
 	const withoutProtocol = trimmed.replace(PROTOCOL_REGEX, '');
-	// The authority is everything before the first path/query/fragment marker.
 	const authority = withoutProtocol.split(/[/?#]/u)[0] ?? '';
 
 	try {
@@ -226,12 +211,8 @@ const matchesTrustedDomain = function matchesTrustedDomain(
  *
  * @param origin - The origin URL to validate (e.g. https://example.com)
  * @param trustedDomains - Array of trusted domain patterns. Can include wildcards (e.g. *.example.com)
- * @param logger - Optional logger for debugging validation process
  *
- * @returns `true` if the origin matches any trusted domain pattern, `false` otherwise
- *
- * @throws {Error} When trustedDomains array is empty
- * @throws {TypeError} When origin URL is invalid
+ * @returns `false` for an empty `trustedDomains` or an invalid origin; never throws.
  *
  * @example
  * ```ts
@@ -259,13 +240,11 @@ export const isOriginTrusted = function isOriginTrusted(
 			`Checking if origin ${origin} is trusted in ${trustedDomains}`
 		);
 
-		// Special case: if "*" is in trusted domains, allow all origins
 		if (trustedDomains.includes('*')) {
 			logger?.debug?.('Allowing all origins');
 			return true;
 		}
 
-		// Parse the origin URL to get host components
 		const url = new URL(origin);
 		const originHostname = url.hostname.toLowerCase();
 		// `undefined` for ordinary web origins; `capacitor:` and friends for

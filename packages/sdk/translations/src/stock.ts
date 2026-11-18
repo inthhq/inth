@@ -18,14 +18,13 @@ const getRegistry = function getRegistry(): StockRegistry {
 };
 
 /**
- * Record inth's built-in copy for some languages.
+ * Record Inth's built-in copy for some languages.
  *
  * `@inth/sdk/translations/all` registers every bundled language when it loads,
  * and English is always registered. Code that merges app messages over
  * backend copy reads this to tell a stock string, which should not shadow
  * a backend edit, from a customized one.
  *
- * @param translations - Built-in copy keyed by language.
  * @internal
  */
 export const registerStockTranslations = function registerStockTranslations(
@@ -38,10 +37,8 @@ export const registerStockTranslations = function registerStockTranslations(
 };
 
 /**
- * inth's built-in copy for a language, when it has been registered.
- *
- * @param language - The language code, for example `de`.
- * @returns The built-in copy, or `undefined` when it is not loaded.
+ * Inth's built-in copy for a language, or `undefined` until that language
+ * is registered.
  */
 export const getStockTranslations = function getStockTranslations(
 	language: string

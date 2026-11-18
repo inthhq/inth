@@ -10,7 +10,6 @@ import { mountConsentUI } from './ui/mount';
 /**
  * Create a hosted client without starting it.
  *
- * @param options - Hosted client options.
  * @returns The client. Call `start()` to resolve the policy and mount.
  * @throws {Error} When options require another bundle.
  */
@@ -26,8 +25,6 @@ export const createConsentClient = function createConsentClient(
 /**
  * Create and start a hosted client, mounting the UI unless `ui: false`.
  *
- * @param options - Hosted client options.
- * @returns The started client.
  * @throws {Error} When options require another bundle.
  */
 export const init = function init(

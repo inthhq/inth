@@ -42,7 +42,6 @@ const drawMark = function drawMark(mark: BrandMark): SVGSVGElement {
 /**
  * The brand's compact mark, as on the other SDKs' triggers.
  *
- * @param value - The brand the transport resolved.
  * @returns A decorative, `currentColor` SVG.
  */
 export const createBrandMark = function createBrandMark(
@@ -54,7 +53,6 @@ export const createBrandMark = function createBrandMark(
 /**
  * Render the "Secured by" tag, or nothing.
  *
- * @param params - Branding, placement and copy.
  * @returns The anchor, or `null` when hidden.
  */
 export const renderBranding = function renderBranding(

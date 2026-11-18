@@ -62,7 +62,6 @@ const getConsentApi = (): ZarazConsentApi | undefined => {
  * Disable automatic pageviews and send the first Pageview from onReady to avoid
  * running tools with a stale Zaraz consent cookie before synchronization.
  *
- * @param options - Purpose mapping and synchronization callbacks.
  * @returns A callback-only script for the existing Inth script loader.
  * @throws {Error} If the mapping is empty, contains blank IDs, or maps an ID twice.
  * @example
@@ -86,7 +85,7 @@ export const cloudflareZaraz = (options: CloudflareZarazOptions): Script => {
 		}
 	}
 	if (mappings.size === 0) {
-		throw new Error('Map at least one Zaraz purpose to a inth category.');
+		throw new Error('Map at least one Zaraz purpose to an Inth category.');
 	}
 
 	let latest: ConsentState | undefined;

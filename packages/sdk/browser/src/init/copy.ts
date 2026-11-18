@@ -35,7 +35,6 @@ const BANNER_COPY = {
 /**
  * Whether the snapshot's translations hold every string the banner reads.
  *
- * @param snapshot - The snapshot the banner renders from.
  * @returns `true` when the banner needs no bundled copy.
  */
 export const hasBannerCopy = function hasBannerCopy(
@@ -54,9 +53,6 @@ export const hasBannerCopy = function hasBannerCopy(
  * Call only when {@link hasBannerCopy} holds, so every string core's
  * `consent-copy` order would reach is in the bundle and no English is
  * needed behind it.
- *
- * @param snapshot - The snapshot.
- * @returns The copy.
  */
 export const resolveCopy = function resolveCopy(
 	snapshot: ConsentSnapshot

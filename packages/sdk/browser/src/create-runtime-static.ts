@@ -27,8 +27,6 @@ import {
 /**
  * Creates the page runtime with every module mounted statically.
  *
- * @param options - The runtime configuration.
- * @returns The runtime handle.
  * @internal
  */
 export const createBrowserRuntime = function createBrowserRuntime(

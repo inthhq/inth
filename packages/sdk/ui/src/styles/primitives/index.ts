@@ -20,7 +20,6 @@
  * ```
  */
 
-// Accordion exports
 export {
 	type AccordionColorCSSVariables,
 	type AccordionContentCSSVariables,
@@ -35,7 +34,6 @@ export {
 	type AccordionVariantsProps,
 	accordionVariants,
 } from './accordion';
-// Button exports
 export {
 	type ButtonMode,
 	type ButtonSize,
@@ -51,7 +49,6 @@ export {
 	type PreferenceItemVariantsProps,
 	preferenceItemVariants,
 } from './preference-item';
-// Switch exports
 export {
 	type SwitchCSSVariables,
 	type SwitchRootCSSVariables,

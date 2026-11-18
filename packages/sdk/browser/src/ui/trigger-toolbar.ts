@@ -34,7 +34,6 @@ export interface TriggerToolbarParams {
 	icon: SVGSVGElement;
 	/** Ship the DOM without class names. */
 	noStyle: boolean;
-	/** Item size. */
 	size: 'sm' | 'md' | 'lg';
 	/** Runs on a click or key press on an item; `false` cancels it. */
 	shouldActivate: (event: MouseEvent) => boolean;
@@ -64,8 +63,6 @@ export interface TriggerToolbar {
  * attributes and ARIA as the React `ConsentDialogTrigger` toolbar. The
  * caller owns drag, position classes and visibility.
  *
- * @param params - Labels, icon and handlers.
- * @returns The toolbar.
  * @internal
  */
 export const createTriggerToolbar = function createTriggerToolbar(

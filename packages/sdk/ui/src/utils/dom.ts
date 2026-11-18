@@ -1,8 +1,3 @@
-/**
- * Utility functions for DOM manipulation and browser-specific logic.
- * Framework-agnostic.
- */
-
 import { getTextDirection } from './text-direction';
 
 let lastFocusedElement: HTMLElement | null = null;
@@ -103,7 +98,6 @@ export const getFocusableElements = function getFocusableElements(
 let scrollLockCount = 0;
 let scrollLockRestore: (() => void) | null = null;
 
-/** Whether an element's computed overflow is `visible` on both axes. */
 const hasVisibleOverflow = (style: CSSStyleDeclaration): boolean =>
 	[style.overflowX, style.overflowY].every(
 		(value) => value === '' || value === 'visible'
@@ -317,9 +311,6 @@ const readActiveElement = (): Element | null => {
  * reaches them: the lowest positive `tabindex` first, then document order.
  * Controls a browser would refuse to focus, disabled through an ancestor
  * `fieldset` or inside an `inert` subtree, are left out.
- *
- * @param container - The element to search inside.
- * @returns The tabbable elements in sequential focus order.
  */
 export const tabbableElements = function tabbableElements(
 	container: HTMLElement
@@ -336,12 +327,7 @@ export const tabbableElements = function tabbableElements(
 	];
 };
 
-/**
- * The element sequential Tab would reach first inside `container`.
- *
- * @param container - The element to search inside.
- * @returns The first tabbable element, or `undefined` when there is none.
- */
+/** The element sequential Tab would reach first inside `container`. */
 export const firstTabbable = function firstTabbable(
 	container: HTMLElement
 ): HTMLElement | undefined {
@@ -419,7 +405,6 @@ export const setupFocusTrap = function setupFocusTrap(
 		}
 	}, 0);
 
-	// Tab key event handler
 	const handleKeyDown = (e: KeyboardEvent) => {
 		if (e.key !== 'Tab') {
 			return;
@@ -478,9 +463,6 @@ export const setupFocusTrap = function setupFocusTrap(
 		clearTimeout(focusTimer);
 		document.removeEventListener('keydown', handleKeyDown);
 
-		// Restore focus when trap is disabled. If the previously-focused
-		// element was unmounted while the trap was active, fall back to its
-		// re-rendered equivalent (matched by id/data-testid) when one exists.
 		if (previousFocus && typeof previousFocus.focus === 'function') {
 			setTimeout(() => {
 				const target = previousFocus.isConnected

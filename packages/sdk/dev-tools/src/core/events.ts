@@ -95,10 +95,7 @@ const replayMessage = (ok: boolean, rejected: string | undefined): string =>
 /**
  * Converts a kernel event into the stable log shape shown by DevTools.
  *
- * @param event - Event emitted by a consent kernel.
- * @param id - Instance-local event identifier.
  * @param timestamp - Capture time in milliseconds.
- * @returns A serializable DevTools event.
  */
 // oxlint-disable-next-line func-style, complexity -- Exhaustive public conversion of the kernel event union.
 export function kernelEventToDevToolsEvent(

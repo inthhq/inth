@@ -50,7 +50,6 @@ export interface OneDollarStatsOptions {
  * handles client-side navigation itself.
  *
  * @param options - Tracker settings without the `data-` prefix.
- * @returns The OneDollarStats script configuration.
  * @throws {Error} When hostname is not a bare host, or a setting name is not
  * a valid attribute name or its value is not a string.
  */

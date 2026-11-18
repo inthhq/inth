@@ -334,7 +334,6 @@ describe('mergeTranslationConfigs', () => {
 
 	it('should handle undefined custom config', () => {
 		const result = mergeTranslationConfigs(defaultConfig);
-		// Should return complete translations with English fallbacks
 		expect(result.defaultLanguage).toBe(defaultConfig.defaultLanguage);
 		expect(result.translations.en?.consentManagerDialog?.description).toBe(
 			'Customize your privacy settings here. You can choose which types of cookies and tracking technologies you allow.'

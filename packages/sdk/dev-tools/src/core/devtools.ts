@@ -114,7 +114,6 @@ export interface DevToolsInstance {
  * The instance owns no global state. Multiple calls can inspect separate
  * kernels on the same page without sharing events, view state, or cleanup.
  *
- * @param options - Kernel and optional presentation settings.
  * @returns A live DevTools instance. Call `destroy()` during app cleanup.
  *
  * @example

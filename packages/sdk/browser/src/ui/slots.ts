@@ -67,9 +67,6 @@ export type SlotApplier = <ElementType extends HTMLElement | null>(
  * `noStyle: true` replaces the stock classes of that element instead.
  * Slot classes stay when the mount's `noStyle` drops the stock ones, the
  * way `resolveStyles` in `@inth/sdk/ui` keeps overrides.
- *
- * @param slots - The theme's `slots`.
- * @returns The applier.
  */
 export const createSlotApplier = function createSlotApplier(
 	slots: ComponentSlots | undefined

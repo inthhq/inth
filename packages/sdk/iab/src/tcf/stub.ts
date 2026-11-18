@@ -1,10 +1,7 @@
 /**
- * IAB TCF Stub
- *
- * The stub creates the __tcfapi function immediately and queues calls
- * until the real CMP is ready. It also sets up cross-frame communication.
- *
- * Based on IAB TCF specification for CMP stub implementation.
+ * IAB TCF `__tcfapi` stub, following the TCF CMP API stub requirements: it
+ * answers `ping`, queues every other call until the real CMP loads, and
+ * serves `__tcfapiLocator` postMessage calls from child frames.
  *
  * @packageDocumentation
  */
@@ -13,12 +10,10 @@ import type { PingData, TCFApi, TCFApiCallback } from '@inth/sdk-core';
 
 import { CMP_VERSION_NUMBER, createPingData } from './cmp-defaults';
 
-/** Whether the stub has been initialized */
 let stubInitialized = false;
 /** The stub this module installed, distinct from a replacement CMP API. */
 let ownedStub: TCFApi | null = null;
 
-/** Iframe element for cross-frame communication */
 let locatorIframe: HTMLIFrameElement | null = null;
 
 /**
@@ -37,11 +32,6 @@ const createStubPingData = (): PingData =>
 		tcfPolicyVersion: 5,
 	});
 
-/**
- * The stub implementation of __tcfapi.
- *
- * Queues all calls except 'ping' for processing when the real CMP loads.
- */
 const createStubApi = function createStubApi(): TCFApi {
 	const queue: Parameters<TCFApi>[] = [];
 
@@ -52,10 +42,8 @@ const createStubApi = function createStubApi(): TCFApi {
 		parameter?: unknown
 	) => {
 		if (command === 'ping') {
-			// Ping can be handled immediately
 			(handler as TCFApiCallback<PingData>)(createStubPingData(), true);
 		} else {
-			// Queue all other commands
 			queue.push([
 				command,
 				apiVersion,
@@ -71,10 +59,8 @@ const createStubApi = function createStubApi(): TCFApi {
 };
 
 /**
- * Creates the __tcfapiLocator iframe for cross-frame communication.
- *
- * This allows child iframes (e.g., ad iframes) to locate the CMP
- * by looking for this named iframe in parent frames.
+ * Child frames, such as ad iframes, find the CMP by looking for an iframe
+ * named `__tcfapiLocator` in their parent frames.
  */
 const createLocatorIframe =
 	function createLocatorIframe(): HTMLIFrameElement | null {
@@ -82,7 +68,6 @@ const createLocatorIframe =
 			return null;
 		}
 
-		// Check if locator already exists
 		if (document.querySelector('iframe[name="__tcfapiLocator"]')) {
 			return null;
 		}
@@ -93,16 +78,12 @@ const createLocatorIframe =
 		iframe.setAttribute('aria-hidden', 'true');
 		iframe.tabIndex = -1;
 
-		// Add to body or document element
 		const target = document.body ?? document.documentElement;
 		target.appendChild(iframe);
 
 		return iframe;
 	};
 
-/**
- * Message handler for cross-frame __tcfapi communication.
- */
 const handlePostMessage = function handlePostMessage(
 	event: MessageEvent
 ): void {
@@ -112,7 +93,6 @@ const handlePostMessage = function handlePostMessage(
 
 	const { data } = event;
 
-	// Check if this is a __tcfapiCall message
 	if (!data || typeof data !== 'object' || !('__tcfapiCall' in data)) {
 		return;
 	}
@@ -128,7 +108,6 @@ const handlePostMessage = function handlePostMessage(
 		return;
 	}
 
-	// Execute the command and send response
 	(
 		window.__tcfapi as (
 			command: string,
@@ -148,7 +127,6 @@ const handlePostMessage = function handlePostMessage(
 				},
 			};
 
-			// Send response back to the caller
 			if (event.source && typeof event.source.postMessage === 'function') {
 				(event.source as Window).postMessage(response, '*');
 			}
@@ -158,24 +136,12 @@ const handlePostMessage = function handlePostMessage(
 };
 
 /**
- * Initializes the IAB TCF stub.
- *
- * This should be called as early as possible in the page lifecycle
- * to ensure __tcfapi is available before any vendors attempt to use it.
- *
- * Features:
- * - Creates __tcfapi function that queues calls
- * - Creates __tcfapiLocator iframe for cross-frame communication
- * - Sets up postMessage handler for iframe communication
- *
- * @example
- * ```typescript
- * // Call early in your app initialization
- * initializeIABStub();
- *
- * // Later, when the real CMP is ready, it will drain the queue
- * const cmpApi = createCMPApi({ cmpId: 28, gvl });
- * ```
+ * Installs a `__tcfapi` stub that queues calls, the `__tcfapiLocator`
+ * iframe, and the postMessage handler for calls from child frames. Call it
+ * as early as possible, so `__tcfapi` exists before any vendor script runs.
+ * A `__tcfapi` already on the page is left in place. `createIAB` calls it
+ * on mount, and the real CMP API replays the queue once the vendor list
+ * loads.
  *
  * @public
  */
@@ -184,33 +150,23 @@ export const initializeIABStub = function initializeIABStub(): void {
 		return;
 	}
 
-	// Don't reinitialize if already done
 	if (stubInitialized) {
 		return;
 	}
 
-	// Create stub API if not already present
 	if (!window.__tcfapi) {
 		ownedStub = createStubApi();
 		window.__tcfapi = ownedStub;
 	}
 
-	// Create locator iframe
 	locatorIframe = createLocatorIframe();
 
-	// Set up postMessage handler
 	window.addEventListener('message', handlePostMessage);
 
 	stubInitialized = true;
 };
 
-/**
- * Gets the queued calls from the stub.
- *
- * @returns Array of queued __tcfapi calls, or empty array if no stub
- *
- * @public
- */
+/** @public */
 export const getStubQueue = function getStubQueue(): Parameters<TCFApi>[] {
 	if (typeof window === 'undefined' || !window.__tcfapi) {
 		return [];
@@ -219,11 +175,7 @@ export const getStubQueue = function getStubQueue(): Parameters<TCFApi>[] {
 	return window.__tcfapi.queue ?? [];
 };
 
-/**
- * Clears the stub queue after processing.
- *
- * @public
- */
+/** @public */
 export const clearStubQueue = function clearStubQueue(): void {
 	if (typeof window !== 'undefined' && window.__tcfapi?.queue) {
 		window.__tcfapi.queue = [];
@@ -231,7 +183,8 @@ export const clearStubQueue = function clearStubQueue(): void {
 };
 
 /**
- * Destroys the IAB stub and cleans up.
+ * Removes the stub's message handler and locator iframe, and `__tcfapi`
+ * while it is still this module's stub.
  *
  * @public
  */
@@ -240,10 +193,8 @@ export const destroyIABStub = function destroyIABStub(): void {
 		return;
 	}
 
-	// Remove postMessage handler
 	window.removeEventListener('message', handlePostMessage);
 
-	// Remove locator iframe
 	if (locatorIframe?.parentNode) {
 		locatorIframe.parentNode.removeChild(locatorIframe);
 		locatorIframe = null;

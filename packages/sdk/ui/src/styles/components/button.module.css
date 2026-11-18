@@ -1,11 +1,9 @@
 :root {
-	/* Primary Colors */
 	--button-primary: var(--inth-primary);
 	--button-primary-dark: var(--inth-primary);
 	--button-primary-hover: var(--inth-primary-hover);
 	--button-primary-hover-dark: var(--inth-primary-hover);
 
-	/* Neutral Colors */
 	--button-neutral: var(--inth-text-muted);
 	--button-neutral-dark: var(--inth-text-muted);
 	--button-neutral-hover: var(--inth-text);
@@ -13,11 +11,9 @@
 	--button-neutral-soft: var(--inth-surface-hover);
 	--button-neutral-soft-dark: var(--inth-surface-hover);
 
-	/* Focus Colors */
 	--button-focus-ring: var(--inth-primary);
 	--button-focus-ring-dark: var(--inth-primary);
 
-	/* Theme Colors */
 	--button-text: var(--inth-text);
 	--button-text-dark: var(--inth-text);
 	--button-text-hover: var(--inth-text);
@@ -29,7 +25,6 @@
 	--button-hover-overlay: var(--inth-surface-hover);
 	--button-hover-overlay-dark: var(--inth-surface-hover);
 
-	/* Hover States (10% opacity for non-filled variants) */
 	--button-primary-hover-tint: color-mix(
 		in srgb,
 		var(--inth-primary) 10%,
@@ -41,7 +36,6 @@
 		transparent
 	);
 
-	/* Component Variables */
 	--button-font: var(--inth-font-family);
 	--button-border-width: 1px;
 	--button-border-style: solid;
@@ -61,18 +55,14 @@
 		color var(--inth-duration-fast) var(--inth-easing);
 	--button-cursor: pointer;
 
-	/* Shadows */
-	/* Base Shadows */
 	--button-shadow: var(--inth-shadow-sm);
 	--button-shadow-dark: var(--inth-shadow-sm);
 
-	/* Focus Shadows */
 	--button-shadow-primary-focus: 0 0 0 2px var(--button-focus-ring);
 	--button-shadow-neutral-focus: 0 0 0 2px var(--button-focus-ring);
 	--button-shadow-primary-focus-dark: 0 0 0 2px var(--button-focus-ring-dark);
 	--button-shadow-neutral-focus-dark: 0 0 0 2px var(--button-focus-ring-dark);
 
-	/* Primary Shadows */
 	--button-shadow-primary:
 		var(--button-shadow), inset 0 0 0 1px var(--button-primary);
 	--button-shadow-primary-dark:
@@ -80,7 +70,6 @@
 	--button-shadow-primary-hover: none;
 	--button-shadow-primary-hover-dark: none;
 
-	/* Neutral Shadows */
 	--button-shadow-neutral:
 		var(--button-shadow), inset 0 0 0 1px var(--button-neutral-soft);
 	--button-shadow-neutral-dark:
@@ -90,7 +79,6 @@
 }
 
 @layer components {
-	/* Base Button Styles */
 	.button:not(:global(.headless)) {
 		display: inline-flex;
 		align-items: center;
@@ -112,7 +100,6 @@
 		touch-action: manipulation;
 	}
 
-	/* Focus Styles */
 	.button:not(:global(.headless)):focus-visible {
 		outline: none;
 		box-shadow: var(--button-shadow-primary-focus);
@@ -136,7 +123,6 @@
 		transform: scale(0.97);
 	}
 
-	/* Size Variants */
 	.button:not(:global(.headless))[data-size='small'] {
 		padding: 0.5rem 0.75rem;
 		font-size: var(--button-font-size);
@@ -155,7 +141,6 @@
 		line-height: var(--button-line-height);
 	}
 
-	/* Primary Button Variants */
 	.button:not(:global(.headless))[data-variant='primary'][data-mode='filled'] {
 		background-color: var(--button-primary);
 		color: var(--button-background-color);
@@ -290,7 +275,6 @@
 		transition: var(--button-hover-transition-color);
 	}
 
-	/* Neutral Button Variants */
 	.button:not(:global(.headless))[data-variant='neutral'][data-mode='filled'] {
 		background-color: var(--button-neutral);
 		color: var(--button-background-color);
@@ -576,14 +560,12 @@
 		transition: var(--button-hover-transition-color);
 	}
 
-	/* Icon Styles */
 	.buttonIcon:not(:global(.headless)) {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
 	}
 
-	/* Reduced motion preference */
 	@media (prefers-reduced-motion: reduce) {
 		.button:not(:global(.headless)),
 		.button:not(

@@ -177,7 +177,6 @@ export interface InitStandIn {
 /**
  * The init script's handoff, when `window.inth` is its stand-in.
  *
- * @returns The boot object, or `undefined`.
  * @internal
  */
 export const readBoot = function readBoot(): InitBoot | undefined {

@@ -165,8 +165,6 @@ const isLoadedForeignCmp = function isLoadedForeignCmp(
 /**
  * Installs `__gpp`, taking over the calls and listeners a stub queued.
  *
- * @param config - Supported sections and the initial state.
- * @returns Control interface over the API.
  * @throws {Error} When another CMP that has already loaded owns `__gpp`.
  *
  * @internal

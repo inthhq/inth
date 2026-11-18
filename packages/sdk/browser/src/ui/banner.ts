@@ -29,12 +29,9 @@ export interface BannerSurface extends Surface {
  * Reuses the framework banners' stylesheet classes and test IDs.
  * Shows when the kernel requests a category choice or notice prompt.
  *
- * @param ctx - The mount context.
- * @param options - Copy and behaviour overrides.
  * @param adopted - A banner another surface rendered (the init script's).
  * The first sync rebuilds it in place without an entry animation, or hides
  * it when no banner is due.
- * @returns The surface.
  */
 // oxlint-disable-next-line max-lines-per-function -- Build, show, hide and reconcile are one lifecycle.
 export const createBanner = function createBanner(

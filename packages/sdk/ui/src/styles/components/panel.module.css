@@ -1,7 +1,6 @@
 @import url('./animations/enter-exit.css');
 
 :root {
-	/* Typography */
 	--consent-dialog-font-family: var(--inth-font-family);
 	--consent-dialog-line-height: var(--inth-line-height-tight);
 	--consent-dialog-title-font-size: var(--inth-font-size-sm);
@@ -13,7 +12,6 @@
 	--consent-dialog-footer-gap: var(--inth-space-sm);
 	--consent-dialog-footer-font-size: var(--inth-font-size-sm);
 
-	/* Colors */
 	--consent-dialog-stroke-color: var(--inth-border);
 	--consent-dialog-stroke-color-dark: var(--inth-border);
 	--consent-dialog-link-text-color: var(--inth-text);
@@ -29,7 +27,6 @@
 	--consent-dialog-overlay-background-color: var(--inth-overlay);
 	--consent-dialog-overlay-background-color-dark: var(--inth-overlay);
 
-	/* Spacing */
 	--consent-dialog-card-padding: var(--inth-space-lg);
 	--consent-dialog-card-padding-mobile: var(--inth-space-md);
 	--consent-dialog-card-gap: var(--inth-space-xs);
@@ -37,7 +34,6 @@
 	--consent-dialog-content-gap: var(--inth-space-md);
 	--consent-dialog-footer-padding-y: var(--inth-space-md);
 
-	/* Layout */
 	--consent-dialog-card-radius: var(--inth-radius-lg);
 	--consent-dialog-max-width: 28rem;
 	--consent-dialog-height: 100%;
@@ -51,13 +47,11 @@
 	--consent-dialog-z-index: 999999;
 	--consent-dialog-overlay-z-index: 999998;
 
-	/* Effects */
 	--consent-dialog-card-shadow: var(--inth-shadow-sm);
 	--consent-dialog-border-width: 1px;
 	--consent-dialog-border-width-hairline: 1px;
 	--consent-dialog-border-style: solid;
 
-	/* Animation */
 	--consent-dialog-animation-duration: var(--inth-duration-normal);
 	--consent-dialog-animation-timing: var(--inth-easing-out);
 }
@@ -540,7 +534,6 @@
 			var(--consent-dialog-border-style) var(--consent-dialog-stroke-color);
 	}
 
-	/* Hide footer when it has no children */
 	.footer:not(:global(.headless)):empty {
 		display: none;
 		border-top: none;

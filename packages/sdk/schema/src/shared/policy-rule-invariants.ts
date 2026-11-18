@@ -113,7 +113,6 @@ export const isPolicyRight = function isPolicyRight(
 	return typeof value === 'string' && RIGHT_SET.has(value);
 };
 
-/** Whether the model permits the prompt. */
 export const isValidPolicyPromptForModel = function isValidPolicyPromptForModel(
 	model: PolicyRuleModel,
 	prompt: PolicyPrompt

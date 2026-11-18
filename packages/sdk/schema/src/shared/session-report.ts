@@ -47,9 +47,6 @@ export interface SessionExperiment {
 
 /**
  * The {@link CONSENT_EXPERIMENT_HEADER} value for an arm.
- *
- * @param experiment - The experiment id and arm.
- * @returns The header value.
  */
 export const formatExperimentHeader = function formatExperimentHeader(
 	experiment: SessionExperiment
@@ -61,9 +58,6 @@ export const formatExperimentHeader = function formatExperimentHeader(
  * Read a {@link CONSENT_EXPERIMENT_HEADER} value. Anything malformed or
  * longer than 128 characters per part reads as no experiment: the header is
  * analytics and never fails a request.
- *
- * @param value - The raw header value, if any.
- * @returns The experiment and arm, or `null`.
  */
 export const parseExperimentHeader = function parseExperimentHeader(
 	value: string | null | undefined
@@ -143,7 +137,6 @@ const JOURNEY_ID =
  * Read a journey id. Anything but a UUID reads as none: the parameter is
  * analytics and never fails a request.
  *
- * @param value - The raw parameter value, if any.
  * @returns The id in lower case, or `null`.
  */
 export const parseJourneyId = function parseJourneyId(
@@ -156,9 +149,6 @@ export const parseJourneyId = function parseJourneyId(
 
 /**
  * Read a journey scope. Anything but `page` or `tab` reads as none.
- *
- * @param value - The raw parameter value, if any.
- * @returns The scope, or `null`.
  */
 export const parseJourneyScope = function parseJourneyScope(
 	value: string | null | undefined
@@ -218,7 +208,6 @@ const readJourneyNamed = function readJourneyNamed(
  * {@link LEGACY_CONSENT_JOURNEY_PARAMS}; the two sets are never mixed.
  *
  * @param source - The request URL, absolute or relative, or its query.
- * @returns The journey, or `null`.
  */
 export const readJourneyParams = function readJourneyParams(
 	source: string | URL | URLSearchParams | null | undefined
@@ -239,9 +228,7 @@ export const readJourneyParams = function readJourneyParams(
 /**
  * Append a journey to a URL's query string. A relative URL stays relative.
  *
- * @param url - The request URL.
  * @param journey - The journey. `storedChoice` is written when set.
- * @returns The URL with the journey parameters.
  */
 export const appendJourneyParams = function appendJourneyParams(
 	url: string,
@@ -265,10 +252,6 @@ export const appendJourneyParams = function appendJourneyParams(
  * whose prompt is `none` (every `none` model) shows none, so both are
  * `not-required`. `no-match` and `unconfigured` still show the safe opt-in
  * fallback, so they are owed like a matched prompt.
- *
- * @param init - The resolved init payload.
- * @param storedChoice - Whether a choice or notice dismissal was stored.
- * @returns The prompt state at the start of the journey.
  */
 export const deriveJourneyPrompt = function deriveJourneyPrompt(
 	init: Pick<InitOutput, 'policyResolution'>,
@@ -298,9 +281,6 @@ export interface SessionJourney {
 /**
  * The hostname of an `Origin` header or a request URL, or `undefined` for
  * anything that is not an `http(s)` URL (including the opaque `null` origin).
- *
- * @param value - An origin or absolute URL.
- * @returns The hostname, or `undefined`.
  */
 export const journeyDomainFrom = function journeyDomainFrom(
 	value: string | URL | null | undefined
@@ -327,7 +307,6 @@ export const journeyDomainFrom = function journeyDomainFrom(
  * @param url - The `/init` request URL.
  * @param site - Where the domain comes from: the request's `Origin`, or the
  *   URL of the page or route the browser asked.
- * @returns The journey, or `null`.
  */
 export const readSessionJourney = function readSessionJourney(
 	url: string | URL | null | undefined,
@@ -357,7 +336,6 @@ export interface SessionReportInputs {
 }
 
 export interface BuildConsentSessionReportOptions {
-	/** The resolved init payload. */
 	init: InitOutput;
 	/** The manifest it was resolved from. Only its identity is read. */
 	manifest: Pick<ConsentManifest, 'revision' | 'tenantId'>;
@@ -378,12 +356,7 @@ export interface BuildConsentSessionReportOptions {
 	journey?: SessionJourney | null;
 }
 
-/**
- * Builds the `POST /sessions` body for one resolution.
- *
- * @param options - The resolved payload, its manifest, and the inputs.
- * @returns The report body.
- */
+/** Builds the `POST /sessions` body for one resolution. */
 export const buildConsentSessionReport = function buildConsentSessionReport(
 	options: BuildConsentSessionReportOptions
 ): ConsentSessionReport {
@@ -439,7 +412,6 @@ export const buildConsentSessionReport = function buildConsentSessionReport(
  * resolves consent so the response is right, but it is not a session;
  * reporting it would count visits that never happened.
  *
- * @param headers - The incoming request's headers.
  * @returns `true` for a prefetch or prerender request.
  */
 export const isSpeculativeRequest = function isSpeculativeRequest(

@@ -5,7 +5,7 @@
  * drop it into a shadow root, and it needs the hashed class names without
  * importing the CSS-module JS (whose `import './x.css'` side effect would
  * make the bundler emit a separate stylesheet). Reading both from the
- * published `dist/` of `@inth/sdk-ui` keeps this package's DOM in lockstep
+ * built `dist/` of `@inth/sdk-ui` keeps this package's DOM in lockstep
  * with the React, Svelte and Vue surfaces: same classes, same tokens.
  * Rules only other frameworks' surfaces can match are dropped, and so are
  * comments and formatting whitespace (`prune-stylesheet.ts`).

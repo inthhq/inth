@@ -66,17 +66,12 @@ export const clearPendingTap = function clearPendingTap(): void {
 	}
 };
 
-/**
- * The marker, or `null` when there is none or it cannot be read.
- *
- * @returns The marker.
- */
+/** The marker, or `null` when there is none or it cannot be read. */
 export const readPendingTap = function readPendingTap(): PendingTap | null {
 	try {
 		const tap = JSON.parse(
 			localStorage.getItem(PENDING_TAP_KEY) ?? 'null'
 		) as PendingTap | null;
-		// `all`, `none` or a categories object.
 		return tap?.c &&
 			(typeof tap.c === 'object' || tap.c === 'all' || tap.c === 'none')
 			? tap

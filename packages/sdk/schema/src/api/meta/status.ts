@@ -1,8 +1,5 @@
 import * as v from 'valibot';
 
-/**
- * Output schema for status endpoint
- */
 export const statusOutputSchema = v.object({
 	client: v.object({
 		acceptLanguage: v.nullable(v.string()),
