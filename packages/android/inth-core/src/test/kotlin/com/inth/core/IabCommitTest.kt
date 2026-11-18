@@ -172,14 +172,19 @@ class IabCommitTest {
 		core.bootstrap()
 		core.identify(KernelUser("u1"))
 		assertTrue(core.save(CommitIntent.All).ok)
+		val sent = Triple(recorded.initRequests.size, recorded.saveRequests.size, recorded.linkRequests.size)
 		backend.fail = true
 		core.logout()
 		assertEquals("u1", core.snapshot().subject?.externalId)
 		backend.fail = false
 		core.logout()
 		assertNull(core.snapshot().subject?.externalId)
-		assertNull(store.readEnvelope()?.snapshot?.subject?.externalId)
-		assertTrue(recorded.linkRequests.isEmpty(), "logout sends nothing")
+		assertNull(assertNotNull(store.readEnvelope()?.snapshot?.subject, "logout keeps the stored subject").externalId)
+		assertEquals(
+			sent,
+			Triple(recorded.initRequests.size, recorded.saveRequests.size, recorded.linkRequests.size),
+			"logout sends nothing",
+		)
 	}
 
 	@Test
