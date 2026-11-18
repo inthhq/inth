@@ -49,6 +49,17 @@ BASE = '/api/self-host'
 INIT = BASE + '/v1/consent/init'
 RECORDS = BASE + '/v1/consent/records'
 LINK = re.compile(re.escape(BASE) + r'/v1/subjects/([^/]+)/link')
+# The request headers no core may send, pinned by the shared transport fixture.
+HEADER_RULES = json.loads((root / 'packages/native-protocol/transport/cases.json').read_text())['headers']
+
+
+def header_problem(headers):
+    """The first request header the transport fixture forbids, or None."""
+    for name in headers.keys():
+        lowered = name.lower()
+        if lowered in HEADER_RULES['forbidden'] or lowered.startswith(tuple(HEADER_RULES['forbiddenPrefixes'])):
+            return lowered + ' is a forbidden request header'
+    return None
 
 
 def records_problem(body):
@@ -113,6 +124,10 @@ class Handler(BaseHTTPRequestHandler):
                 if not online:
                     self.connection.shutdown(socket.SHUT_RDWR)
                     self.connection.close()
+                    return
+                problem = header_problem(self.headers)
+                if problem:
+                    self.fail(400, 'invalid_request', problem)
                     return
                 self.reply(transport['status'], transport['body'])
             elif self.path == '/e2e/control':
@@ -196,7 +211,7 @@ class Handler(BaseHTTPRequestHandler):
                     self.connection.shutdown(socket.SHUT_RDWR)
                     self.connection.close()
                     return
-                problem = records_problem(body)
+                problem = header_problem(self.headers) or records_problem(body)
                 if problem:
                     self.fail(400, 'invalid_request', problem)
                     return
@@ -219,6 +234,10 @@ class Handler(BaseHTTPRequestHandler):
                 if not online:
                     self.connection.shutdown(socket.SHUT_RDWR)
                     self.connection.close()
+                    return
+                problem = header_problem(self.headers)
+                if problem:
+                    self.fail(400, 'invalid_request', problem)
                     return
                 if not isinstance(body.get('externalId'), str):
                     self.fail(400, 'invalid_request', 'externalId is required')

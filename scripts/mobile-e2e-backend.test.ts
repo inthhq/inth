@@ -210,6 +210,24 @@ it('records a /v1 body once per idempotency key, as the backend does', async () 
 		});
 		expect(malformed.status).toBe(400);
 
+		// transport/cases.json forbids the retired x-c15t- headers on every route.
+		const retired = await fetch(`${url}/api/self-host/v1/consent/records`, {
+			body: JSON.stringify({
+				...body,
+				idempotencyKey: '019c1c38-a400-7100-8000-0000000003ff',
+			}),
+			headers: {
+				'content-type': 'application/json',
+				'x-c15t-policy-contract': '1',
+			},
+			method: 'POST',
+		});
+		expect(retired.status).toBe(400);
+		const init = await fetch(`${url}/api/self-host/v1/consent/init`, {
+			headers: { 'x-c15t-version': '1' },
+		});
+		expect(init.status).toBe(400);
+
 		expect((await (await fetch(`${url}/e2e/state`)).json()).saves).toEqual([
 			body,
 		]);
