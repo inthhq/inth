@@ -20,6 +20,7 @@ import {
 	resolveRequestConsent,
 	resolveServerMode,
 } from '@inth/sdk/server';
+import type { ServerMode } from '@inth/sdk/server';
 import type { RequestEvent } from '@sveltejs/kit';
 
 import type { ConsentRootState } from '../types';
@@ -91,10 +92,30 @@ export interface LoadConsentOptions extends ConsentRequestOptions {
 	experiment?: ServerExperiment;
 }
 
-const readLocals = function readLocals(
+/** @internal */
+export const readLocals = function readLocals(
 	event: RequestEvent
 ): InthLocals | undefined {
-	return (event.locals as { inth?: InthLocals }).inth;
+	return (event.locals as { inth?: InthLocals } | undefined)?.inth;
+};
+
+/**
+ * The handle's mode, resolved for the render, the consent route and the
+ * browser. The backend URL is the handle's, then the one the build read.
+ *
+ * @internal
+ */
+export const readServerMode = function readServerMode(
+	locals: InthLocals | undefined
+): ServerMode {
+	return resolveServerMode({
+		adapter: '@inth/svelte',
+		buildSnapshot: locals?.snapshot ?? builtSnapshot,
+		mode: locals?.mode,
+		projectUrl: locals?.projectUrl ?? builtProjectUrl,
+		proxy: locals?.proxy,
+		routePrefix: locals?.routePrefix,
+	});
 };
 
 const backgroundWorkFor = (
@@ -154,14 +175,7 @@ export const loadConsent = async function loadConsent(
 	options: LoadConsentOptions = {}
 ): Promise<{ consent: ConsentRootState }> {
 	const locals = readLocals(event);
-	const projectUrl = locals?.projectUrl ?? builtProjectUrl;
-	const server = resolveServerMode({
-		adapter: '@inth/svelte',
-		buildSnapshot: locals?.snapshot ?? builtSnapshot,
-		mode: locals?.mode,
-		projectUrl,
-		routePrefix: locals?.routePrefix,
-	});
+	const server = readServerMode(locals);
 	// Per-call inputs beat the handle's: a route that passes `country` is
 	// naming the country for that page. The handle's cookie name is part of
 	// the request context, so a per-call `country` keeps it.
@@ -198,8 +212,8 @@ export const loadConsent = async function loadConsent(
 		mode: server.browser.mode,
 		prefetch: state,
 	};
-	if (projectUrl !== undefined) {
-		consent.projectUrl = projectUrl;
+	if (server.browser.projectUrl !== undefined) {
+		consent.projectUrl = server.browser.projectUrl;
 	}
 	if (locals?.routePrefix !== undefined) {
 		consent.routePrefix = locals.routePrefix;

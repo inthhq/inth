@@ -46,7 +46,8 @@ headers either: the page goes to every visitor.
 | --- | --- | --- | --- |
 | `mode` | `ConsentMode` | `manifest()` | How `loadConsent` resolves the visitor. `manifest()`, `hosted()` or `testing()` from `@inth/svelte/kit`. A `custom()` transport throws; pass it to `ConsentRoot`'s `mode` prop instead. |
 | `routePrefix` | `string` | none | Where `createConsentRoute()` is mounted, such as `/api/inth`. The browser then resolves consent on pages the server did not, through that route. Without it, the browser asks the backend's `/init`. `'/'` throws ``@inth/svelte: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/inth'.`` when the hook is created. |
-| `projectUrl` | `string` | the URL `consentManifest()` read | The backend. Consent saves go here. |
+| `projectUrl` | `string` | the URL `consentManifest()` read | The backend. Consent saves go here, unless `proxy` is on. |
+| `proxy` | `boolean` | `false` | Sends the browser's consent saves to the route at `routePrefix`, which forwards them to `projectUrl` with `createConsentRoute({ proxy: true })`. Throws without `routePrefix`. See [save consent through your own origin](./rendering#save-consent-through-your-own-origin). |
 | `snapshot` | `ConsentManifest` | the manifest `consentManifest()` downloaded | A manifest to resolve with. `createConsentRoute()` reads it too. |
 | `cookieName` | `string` | `inth` | The consent cookie. Match the provider's `storageConfig.storageKey`. |
 | `country`, `region`, `language` | `string` | from headers | Forces the input for every request. |
@@ -58,7 +59,7 @@ headers either: the page goes to every visitor.
 | `config` | The `ConsentState` from the cookie and request inputs, without a resolved policy. |
 | `inputs` | `{ country?, region?, language?, gpc? }` for this request. |
 | `mode` | The handle's mode, as data. |
-| `projectUrl`, `routePrefix`, `snapshot`, `cookieName` | The handle's options, when you passed them. |
+| `projectUrl`, `proxy`, `routePrefix`, `snapshot`, `cookieName` | The handle's options, when you passed them. |
 | `shared` | `true` while SvelteKit prerenders. |
 
 Some runtimes refuse to change request headers. The handle then skips step
@@ -168,9 +169,9 @@ With `proxy` on, it also returns `POST`, `PATCH`, `PUT`, `DELETE` and
 
 | Option | Type | Default | Behavior |
 | --- | --- | --- | --- |
-| `projectUrl` | `string` | the handle's: a `hosted()` mode's `projectUrl`, then `inthHandle({ projectUrl })`, then the URL `consentManifest()` read from `PUBLIC_INTH_PROJECT_URL` | The backend's base URL, absolute or `/`-relative. The manifest is at `<projectUrl>/manifest` when there is no snapshot. A handle `projectUrl` that points at this route, as in the proxy setup, is skipped. |
-| `manifestUrl` | `string` | the handle's `manifest({ manifestUrl })` | A manifest URL of its own, such as a CDN. Wins over `projectUrl`. Absolute or `/`-relative. |
-| `snapshot` | `ConsentManifest` | the handle's: the mode's `snapshot`, then `inthHandle({ snapshot })`, then the manifest `consentManifest()` downloaded | A manifest to resolve with. |
+| `projectUrl` | `string` | the handle's: `inthHandle({ projectUrl })`, then the URL `consentManifest()` read from `PUBLIC_INTH_PROJECT_URL` | The backend's base URL, absolute or `/`-relative. The manifest is at `<projectUrl>/manifest` when there is no snapshot. |
+| `manifestUrl` | `string` | the handle's `manifest({ manifestUrl })`, unless it is on this route | A manifest URL of its own, such as a CDN. Wins over `projectUrl`. Absolute or `/`-relative. |
+| `snapshot` | `ConsentManifest` | the handle's: the mode's `snapshot`, then `inthHandle({ snapshot })`, then the manifest `consentManifest()` downloaded; none for `source: 'runtime'` or an absolute `manifestUrl` | A manifest to resolve with. The route and `loadConsent` pick the same one. |
 | `proxy` | `true` or `{ paths?, cookieNames? }` | off | Forwards consent writes to `projectUrl`. See [save consent through your own origin](./rendering#save-consent-through-your-own-origin). |
 | `onBackgroundRevalidate` | `(promise, event) => void` | `event.platform.context.waitUntil`, when the adapter provides it | Keeps background manifest refreshes and session reports alive on runtimes that stop work after the response. SvelteKit 3's Cloudflare and Vercel adapters provide none; see [keep background work alive](./rendering#keep-background-work-alive-after-the-response). |
 | `fetchGvl` | `({ reference, language, fetch }) => Promise<GlobalVendorList \| null>` | the shared server cache, with a five-second deadline | Fetches the Global Vendor List under an IAB policy. A rejection fails the init request instead of answering `gvl: null`. |

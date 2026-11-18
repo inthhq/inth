@@ -15,8 +15,8 @@ import type {
 } from '@inth/sdk/schema/types';
 import {
 	normalizeRoutePrefix,
-	readModeData,
 	readRequestConsent,
+	resolveServerMode,
 	writeConsentInputHeaders,
 } from '@inth/sdk/server';
 import type { RequestEvent } from '@sveltejs/kit';
@@ -60,6 +60,15 @@ export interface InthHandleOptions extends ConsentRequestOptions {
 	 * root would catch every page.
 	 */
 	routePrefix?: string;
+	/**
+	 * Send the browser's consent saves through the consent route at
+	 * `routePrefix`, so the browser talks only to this origin. The route
+	 * needs `createConsentRoute({ proxy: true })` to forward them to
+	 * `projectUrl`. Requires `routePrefix`.
+	 *
+	 * @default false
+	 */
+	proxy?: boolean;
 	/**
 	 * A manifest to resolve with instead of the one `consentManifest()`
 	 * downloaded.
@@ -137,16 +146,22 @@ const normalizeRequestHeaders = function normalizeRequestHeaders(
  *
  * @returns A `handle` hook that populates `event.locals.inth`.
  * @throws {TypeError} When `mode` is a transport with no data, which
- * cannot reach the browser, or `routePrefix` is `/` or not a path.
+ * cannot reach the browser, `routePrefix` is `/` or not a path, or `proxy`
+ * is set without `routePrefix`.
  */
 export const inthHandle = function inthHandle(
 	options: InthHandleOptions = {}
 ): InthHandle {
-	const mode = readModeData('@inth/svelte', options.mode);
 	const routePrefix =
 		options.routePrefix === undefined
 			? undefined
 			: normalizeRoutePrefix('@inth/svelte', options.routePrefix);
+	const { mode } = resolveServerMode({
+		adapter: '@inth/svelte',
+		mode: options.mode,
+		proxy: options.proxy,
+		routePrefix,
+	});
 	return async ({ event, resolve }) => {
 		const { headers } = event.request;
 		// A prerendered page is one HTML file for every visitor: no cookie or
@@ -174,6 +189,9 @@ export const inthHandle = function inthHandle(
 		}
 		if (routePrefix !== undefined) {
 			locals.routePrefix = routePrefix;
+		}
+		if (options.proxy) {
+			locals.proxy = true;
 		}
 		if (options.snapshot !== undefined) {
 			locals.snapshot = options.snapshot;

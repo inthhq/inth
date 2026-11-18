@@ -13,10 +13,6 @@
  * proxy's hop chain, and `platform.context.waitUntil` keeps detached work
  * alive.
  */
-import {
-	projectUrl as builtProjectUrl,
-	snapshot as builtSnapshot,
-} from '@inth/sdk/generated';
 import type { ConsentManifest } from '@inth/sdk/schema/types';
 import {
 	createConsentRouteHandlerCache,
@@ -36,7 +32,7 @@ import type {
 } from '@inth/sdk/server';
 import type { RequestEvent, RequestHandler } from '@sveltejs/kit';
 
-import type { InthLocals } from './types';
+import { readLocals, readServerMode } from './load-consent';
 
 export type { ConsentProxyOptions } from '@inth/sdk/server';
 
@@ -97,23 +93,22 @@ const readForwarding = function readForwarding(
 
 export interface ConsentRouteOptions {
 	/**
-	 * The Inth backend. Defaults to what `inthHandle()` was given: a
-	 * `hosted()` mode's `projectUrl`, then the handle's `projectUrl`, then
-	 * the URL `consentManifest()` read from `PUBLIC_INTH_PROJECT_URL`. A
-	 * handle `projectUrl` that points at this route, as in the proxy setup,
-	 * is skipped. The manifest is read from `${projectUrl}/manifest` when
-	 * there is no snapshot.
+	 * The Inth backend. Defaults to the handle's `projectUrl`, then the URL
+	 * `consentManifest()` read from `PUBLIC_INTH_PROJECT_URL`. The manifest
+	 * is read from `${projectUrl}/manifest` when there is no snapshot.
 	 */
 	projectUrl?: string;
 	/**
 	 * Full manifest URL. Takes precedence over `${projectUrl}/manifest`.
-	 * Defaults to the `manifestUrl` of the handle's `manifest()` mode.
+	 * Defaults to the `manifestUrl` of the handle's `manifest()` mode,
+	 * unless that one is this route's own.
 	 */
 	manifestUrl?: string;
 	/**
 	 * A manifest to resolve with. Defaults to the handle's: the mode's
 	 * `snapshot`, then `inthHandle({ snapshot })`, then the one
-	 * `consentManifest()` downloaded.
+	 * `consentManifest()` downloaded. A mode that reads its manifest at
+	 * runtime (`source: 'runtime'`, an absolute `manifestUrl`) uses none.
 	 */
 	snapshot?: ConsentManifest;
 	/**
@@ -192,104 +187,13 @@ export interface ConsentRouteOptions {
 export type ConsentRouteHandlersFor<Options extends ConsentRouteOptions> =
 	ConsentRouteMethodHandlersFor<Options, RequestHandler>;
 
-interface RouteSource {
-	projectUrl: string | undefined;
-	manifestUrl: string | undefined;
-	snapshot: ConsentManifest | undefined;
-}
-
-const asPath = (value: string): string => `/${trimPathSlashes(value)}`;
-
-/**
- * Whether a handle's relative `projectUrl` names this route, as
- * `inthHandle({ projectUrl: '/api/inth', routePrefix: '/api/inth' })` does
- * when saves go through the proxy. Forwarding there would call the route
- * itself.
- */
-const pointsAtRoute = function pointsAtRoute(
-	projectUrl: string,
-	event: RequestEvent,
-	locals: InthLocals | undefined
-): boolean {
-	if (!projectUrl.startsWith('/')) {
-		return false;
-	}
-	const target = asPath(projectUrl);
-	if (
-		locals?.routePrefix !== undefined &&
-		target === asPath(locals.routePrefix)
-	) {
-		return true;
-	}
-	const rest = readRestPath(event);
-	const pathname = asPath(event.url.pathname);
-	const mount =
-		rest === undefined || rest === ''
-			? pathname
-			: pathname.slice(0, -(rest.length + 1));
-	return target === asPath(mount);
-};
-
-const readHandleProjectUrl = function readHandleProjectUrl(
-	event: RequestEvent,
-	locals: InthLocals | undefined
-): string | undefined {
-	const fromHandle = locals?.projectUrl;
-	if (fromHandle === undefined || pointsAtRoute(fromHandle, event, locals)) {
-		return undefined;
-	}
-	return fromHandle;
-};
-
-/** The handle's snapshot, as `loadConsent` reads it. */
-const readHandleSnapshot = function readHandleSnapshot(
-	locals: InthLocals | undefined
-): ConsentManifest | undefined {
-	const mode = locals?.mode;
-	if (mode?.type !== 'manifest') {
-		return locals?.snapshot ?? builtSnapshot;
-	}
-	if (mode.snapshot) {
-		return mode.snapshot;
-	}
-	return mode.source === 'runtime'
-		? undefined
-		: (locals?.snapshot ?? builtSnapshot);
-};
-
-/**
- * The route's sources: explicit options first, then what `inthHandle()`
- * stored on `event.locals.inth`, then what the build downloaded. The same
- * order `loadConsent` uses, so the two agree.
- */
-const readRouteSource = function readRouteSource(
-	options: ConsentRouteOptions,
-	event: RequestEvent
-): RouteSource {
-	const { inth: locals } = (event.locals ?? {}) as { inth?: InthLocals };
-	const mode = locals?.mode;
-	// With browser resolution, `manifestUrl` is what the browser fetches
-	// instead of this route.
-	const modeManifestUrl =
-		mode?.type === 'manifest' && mode.resolve !== 'browser'
-			? mode.manifestUrl
-			: undefined;
-	return {
-		manifestUrl: options.manifestUrl ?? modeManifestUrl,
-		projectUrl:
-			options.projectUrl ??
-			readHandleProjectUrl(event, locals) ??
-			builtProjectUrl,
-		snapshot: options.snapshot ?? readHandleSnapshot(locals),
-	};
-};
-
 /**
  * Creates the catch-all consent route. Only prerendered pages need it: the
  * server resolves every other page in `loadConsent`.
  *
  * The route reads the snapshot, backend URL and mode `inthHandle()` was
- * given from `event.locals.inth`, so they are set once, on the handle.
+ * given from `event.locals.inth`, so they are set once, on the handle, and
+ * the route and `loadConsent` read the manifest from the same place.
  * Options passed here win.
  *
  * ```ts
@@ -307,7 +211,8 @@ const readRouteSource = function readRouteSource(
  * ```
  *
  * With `proxy: true` the route also forwards consent writes to the
- * backend:
+ * backend, and `inthHandle({ proxy: true, routePrefix })` points the
+ * browser's saves at it:
  *
  * ```ts
  * export const { GET, POST, PATCH, PUT, DELETE, OPTIONS } =
@@ -327,14 +232,14 @@ export const createConsentRoute = function createConsentRoute<
 	const handlerFor = function handlerFor(
 		event: RequestEvent
 	): ConsentRouteHandler {
-		const source = readRouteSource(options, event);
+		const { route } = readServerMode(readLocals(event));
 		return cached({
 			adapter: '@inth/svelte',
 			fetch: options.fetch,
 			fetchGvl: options.fetchGvl,
-			manifest: source.snapshot,
-			manifestUrl: source.manifestUrl,
-			projectUrl: source.projectUrl,
+			manifest: options.snapshot ?? route.manifest,
+			manifestUrl: options.manifestUrl ?? route.manifestUrl,
+			projectUrl: options.projectUrl ?? route.projectUrl,
 			proxy: options.proxy,
 		});
 	};

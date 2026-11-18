@@ -79,8 +79,8 @@ name, the server reads nothing and renders the banner for every visitor.
 
 ## Saving fails with 405 from /api/inth
 
-**Check.** `inthHandle({ projectUrl: '/api/inth' })` sends saves to the
-consent route, but the route does not forward writes. A route file that
+**Check.** `inthHandle({ proxy: true })` sends saves to the consent route,
+but the route does not forward writes. A route file that
 exports only `GET` still answers a save with `405`.
 
 **Fix.** Pass `proxy: true` to `createConsentRoute` and export
@@ -91,14 +91,14 @@ catch-all route. See
 ## The consent route times out or calls itself
 
 **Check.** `createConsentRoute` needs the backend's URL. It reads it from
-`inthHandle()` and then `consentManifest` unless you pass `projectUrl`, and
-skips a handle `projectUrl` that points at the route itself. A relative
-`projectUrl` passed to the route names a route in your own app, which the
-handlers call in-process; if it points at `/api/inth`, the route requests
-itself.
+`inthHandle()` and then `consentManifest` unless you pass `projectUrl`. A
+relative `projectUrl` names a route in your own app, which the handlers call
+in-process; if it points at `/api/inth`, the route requests itself. To send
+saves through the route, set `inthHandle({ proxy: true })`, not
+`projectUrl: '/api/inth'`.
 
-**Fix.** Pass the Inth URL as `createConsentRoute({ projectUrl })`, or leave
-it unset so the route uses `PUBLIC_INTH_PROJECT_URL`.
+**Fix.** Pass the Inth URL as `projectUrl`, or leave it unset so the route
+uses `PUBLIC_INTH_PROJECT_URL`.
 
 ## Consent requests go to the wrong backend
 

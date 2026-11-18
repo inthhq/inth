@@ -1,8 +1,4 @@
-import type {
-	ExperimentState,
-	KernelConfig,
-	StorageConfig,
-} from '@inth/sdk/engine';
+import type { ExperimentState, KernelConfig } from '@inth/sdk/engine';
 import type { ConsentMode } from '@inth/sdk/modes';
 import type {
 	ConsentManifest,
@@ -48,8 +44,9 @@ export type KitMode = ConsentMode;
  * `config` is the serializable {@link ConsentState} read from the cookie
  * and the request alone; `inputs` is the normalized geo/language/GPC
  * context the handle derived from the request, kept so downstream loads
- * and route handlers do not re-parse headers. `mode`, `routePrefix` and
- * `snapshot` are the handle's options, for `loadConsent`.
+ * and route handlers do not re-parse headers. `mode`, `projectUrl`,
+ * `proxy`, `routePrefix` and `snapshot` are the handle's options, for
+ * `loadConsent` and `createConsentRoute`.
  */
 export interface InthLocals {
 	/** Consent state seeded from the consent cookie and request inputs. */
@@ -62,6 +59,8 @@ export interface InthLocals {
 	projectUrl?: string;
 	/** Prefix of the app's consent route, such as `/api/inth`. */
 	routePrefix?: string;
+	/** The browser saves consent through the consent route. */
+	proxy?: true;
 	/** A manifest that replaces the one the build downloaded. */
 	snapshot?: ConsentManifest;
 	/**
@@ -70,19 +69,6 @@ export interface InthLocals {
 	 * silently re-read the default `inth` key and lose persisted consent.
 	 */
 	cookieName?: string;
-	/**
-	 * @deprecated Inth no longer sets a subject cookie, so the handle never
-	 * sets this. Removed in v4.
-	 */
-	storage?: Pick<
-		StorageConfig,
-		'crossSubdomain' | 'defaultDomain' | 'defaultExpiryDays'
-	>;
-	/**
-	 * @deprecated Inth no longer sets a subject cookie, so the handle never
-	 * sets this. Removed in v4.
-	 */
-	trustForwardedHeaders?: boolean;
 	/**
 	 * Set while SvelteKit prerenders: the page is shared between visitors,
 	 * so `loadConsent` makes no upstream call and carries no visitor state.

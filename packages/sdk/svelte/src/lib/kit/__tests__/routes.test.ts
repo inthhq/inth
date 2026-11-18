@@ -235,16 +235,53 @@ describe('createConsentRoute with inthHandle', () => {
 		);
 	});
 
+	test("an absolute manifestUrl wins over the build's snapshot, as in loadConsent", async () => {
+		setGenerated({
+			projectUrl: BACKEND,
+			snapshot: { ...MANIFEST_FIXTURE, revision: 'from-the-build' },
+		});
+		const fetch = upstream();
+		const { GET } = createConsentRoute({ fetch });
+		const response = await throughHandle(
+			inthHandle({
+				mode: manifestMode({ manifestUrl: 'https://cdn.example/manifest' }),
+			}),
+			GET,
+			restEvent('manifest')
+		);
+		expect(await response.json()).not.toMatchObject({
+			revision: 'from-the-build',
+		});
+		expect(String(fetch.mock.calls[0]?.[0])).toBe(
+			'https://cdn.example/manifest'
+		);
+	});
+
+	test("a manifestUrl on the route's own prefix reads the backend's manifest", async () => {
+		const fetch = upstream();
+		const eventFetch = vi.fn<typeof globalThis.fetch>();
+		const { GET } = createConsentRoute({ fetch });
+		const response = await throughHandle(
+			inthHandle({
+				mode: manifestMode({ manifestUrl: '/api/inth/manifest' }),
+				projectUrl: BACKEND,
+				routePrefix: '/api/inth',
+			}),
+			GET,
+			restEvent('manifest', { fetch: eventFetch })
+		);
+		expect(response.status).toBe(200);
+		expect(String(fetch.mock.calls[0]?.[0])).toBe(`${BACKEND}/manifest`);
+		expect(eventFetch).not.toHaveBeenCalled();
+	});
+
 	test('the proxy setup forwards saves to the build backend, not to itself', async () => {
-		// inthHandle({ projectUrl: '/api/inth', routePrefix: '/api/inth' })
-		// points the browser at the route; the route must forward upstream.
+		// The handle points the browser at the route; the route forwards
+		// upstream.
 		setGenerated({ projectUrl: BACKEND });
 		const fetch = upstream();
 		const eventFetch = vi.fn<typeof globalThis.fetch>();
-		const handle = inthHandle({
-			projectUrl: '/api/inth',
-			routePrefix: '/api/inth',
-		});
+		const handle = inthHandle({ proxy: true, routePrefix: '/api/inth' });
 		const { GET, POST } = createConsentRoute({ fetch, proxy: true });
 
 		const page = createEvent({ url: 'https://shop.example/' });

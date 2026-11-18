@@ -26,7 +26,8 @@ const manifestHandle = inthHandle({
 		manifestUrl: '/api/bench-consent/manifest',
 		source: 'runtime',
 	}),
-	projectUrl: '/api/inth',
+	projectUrl: '/api/bench-consent',
+	proxy: true,
 	routePrefix: '/api/inth',
 });
 

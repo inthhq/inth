@@ -147,14 +147,15 @@ Then point saves at the route:
 import { inthHandle } from '@inth/svelte/kit';
 
 export const handle = inthHandle({
-	projectUrl: '/api/inth',
+	proxy: true,
 	routePrefix: '/api/inth',
 });
 ```
 
-The route skips a handle `projectUrl` that points at itself, and forwards to
-the backend URL `consentManifest` read from `PUBLIC_INTH_PROJECT_URL`. To
-forward somewhere else, pass `createConsentRoute({ projectUrl, proxy: true })`.
+The browser then saves to `/api/inth`, and the route forwards to the handle's
+`projectUrl`, else the backend URL `consentManifest` read from
+`PUBLIC_INTH_PROJECT_URL`. To forward somewhere else, pass
+`createConsentRoute({ projectUrl, proxy: true })`.
 With the proxy on, `GET`
 still resolves `init` and `manifest` in the process, and the handlers forward
 other requests to `projectUrl`. They forward only
