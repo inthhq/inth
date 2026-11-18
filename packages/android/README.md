@@ -45,7 +45,8 @@ such as `https://your-project.inth.app`. `InthAndroid.install` throws on any oth
 value; the manifest path logs the reason and leaves the engine uninstalled.
 The SDK calls the project's `/v1` consent routes. Each consent record carries a
 `property`, which is the application ID unless you set `NativeConfig.property` (or
-`com.inth.BACKEND_PROPERTY`).
+`com.inth.BACKEND_PROPERTY`). The SDK sends either value in lowercase, so an
+application ID of `com.Example.App` reaches the backend as `com.example.app`.
 
 `Inth.identify(user)` attaches an external ID on the device and to later consent
 records. Pass an `identityToken` as well to link the device to that person on the
