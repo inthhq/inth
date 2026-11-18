@@ -1,6 +1,7 @@
 {
 	"extends": "@inth/typescript-config/base.json",
 	"compilerOptions": {
+		"lib": ["dom", "esnext"],
 		"moduleResolution": "bundler",
 		"paths": {
 			"#imports": ["./src/runtime/vue/stubs.ts"],
