@@ -1599,18 +1599,17 @@ class ConsentCore @InthInternalApi constructor(
 			return
 		}
 		val origin = if (unusable.legacyUuidShape) {
-			"it has the UUID shape this SDK wrote before the sub_ format existed"
+			"it has the UUIDv4 shape an early prerelease of this SDK wrote"
 		} else {
 			"it is a format this SDK never wrote"
 		}
 		emitError(
 			KernelError(
 				code = "subject-id-unusable",
-				message = "Inth: the stored subject id ${unusable.id} $origin, and the Inth " +
-					"backend only accepts ids matching ^sub_[1-9A-HJ-NP-Za-km-z]+$, so this build " +
-					"cannot use that identity. The consent saved under it was discarded with it, " +
-					"because the backend refused every save that carried it and holds no decision " +
-					"for it. A new subject id was minted, so the app asks for consent again; " +
+				message = "Inth: the stored subject id ${unusable.id} is unusable: $origin. The Inth backend " +
+					"takes a lowercase UUIDv7 or a c15t id matching ^sub_[1-9A-HJ-NP-Za-km-z]+$, so " +
+					"this build cannot use that identity. The consent saved under it was discarded " +
+					"with it. A new subject id was minted, so the app asks for consent again; " +
 					"nothing the subject chose was overwritten on the server.",
 			),
 		)

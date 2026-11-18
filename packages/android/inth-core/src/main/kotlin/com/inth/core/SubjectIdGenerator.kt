@@ -1,7 +1,6 @@
 package com.inth.core
 
 import com.inth.core.spi.Clock
-import java.math.BigInteger
 import java.security.SecureRandom
 
 /**
@@ -29,19 +28,19 @@ fun interface SubjectEntropy {
 }
 
 /**
- * Generates the Inth subject id.
+ * Generates the Inth subject id: a UUIDv7 in lowercase canonical text.
  *
- * Byte-for-byte the same as `generateSubjectId` in `@inth/sdk-core`, so the backend sees
- * one id format no matter which SDK wrote it. The wire format is not cosmetic:
- * `POST /subjects` validates `subjectId` against `subjectIdSchema` in
- * `@inth/sdk-schema`, which answers anything else with `INPUT_VALIDATION_FAILED`, and a
- * native install whose ids are rejected never drains its pending-save queue.
+ * Every `/v1` route takes this form. The layout is pinned by
+ * `packages/native-protocol/subject-id/uuidv7.json`, and the Swift core mints the same
+ * vectors:
  *
- * The 20-byte buffer is the timestamp offset from [EPOCH_MILLIS] as eight big-endian
- * bytes, then [RANDOM_BYTES] random bytes, all of it base58-encoded behind a `sub_`
- * prefix. The prefix costs a backend rejection; the timestamp costs chronological
- * ordering; the random half is the only part that carries entropy, and it is never a
- * hardware identifier.
+ * - bytes 0 to 5: milliseconds since the Unix epoch, big-endian, clamped to
+ *   `[0, 2^48 - 1]` so a device with a wrong clock still writes an id the backend accepts;
+ * - byte 6: `0x70 | (random[0] & 0x0f)`, byte 7: `random[1]`;
+ * - byte 8: `0x80 | (random[2] & 0x3f)`, bytes 9 to 15: `random[3..9]`.
+ *
+ * The random half is the only part that carries entropy, and it is never a hardware
+ * identifier. The same generator makes each save's idempotency key.
  */
 class SubjectIdGenerator(
 	private val clock: Clock = Clock.SYSTEM,
@@ -59,46 +58,16 @@ class SubjectIdGenerator(
 		require(random.size == RANDOM_BYTES) {
 			"Inth: subject entropy must return $RANDOM_BYTES bytes, got ${random.size}"
 		}
-		val buffer = ByteArray(TOTAL_BYTES)
-		writeTimestamp(clock.nowMillis() - EPOCH_MILLIS, buffer)
-		random.copyInto(buffer, destinationOffset = TIMESTAMP_BYTES)
-		return ID_PREFIX + base58Encode(buffer)
-	}
-
-	/**
-	 * Stamp [offset] across the first eight bytes, big-endian.
-	 *
-	 * The unsigned shift on a signed [offset] is what puts a clock behind the epoch,
-	 * which makes [offset] negative, on the same two's-complement bytes the web SDK
-	 * writes through `setUint32`. Clamp nothing: a device whose clock is wrong still
-	 * owes the backend an id it accepts.
-	 */
-	private fun writeTimestamp(offset: Long, buffer: ByteArray) {
-		for (index in 0 until TIMESTAMP_BYTES) {
-			buffer[index] = (offset ushr ((TIMESTAMP_BYTES - 1 - index) * 8)).toByte()
+		val millis = clock.nowMillis().coerceIn(0L, MAX_MILLIS)
+		val bytes = ByteArray(16)
+		for (index in 0 until 6) {
+			bytes[index] = (millis ushr ((5 - index) * 8)).toByte()
 		}
-	}
-
-	/**
-	 * Base58 of [buffer] read as one unsigned big integer, most significant digit
-	 * first, plus one `1` per leading zero byte: dropping those bytes would drop
-	 * information the web SDK keeps.
-	 */
-	private fun base58Encode(buffer: ByteArray): String {
-		val digits = StringBuilder()
-		var magnitude = BigInteger(1, buffer)
-		while (magnitude > BigInteger.ZERO) {
-			val (quotient, digit) = magnitude.divideAndRemainder(BASE58_DIVISOR)
-			digits.append(BASE58_ALPHABET[digit.toInt()])
-			magnitude = quotient
-		}
-		for (byte in buffer) {
-			if (byte.toInt() != 0) {
-				break
-			}
-			digits.append(BASE58_ALPHABET[0])
-		}
-		return digits.reverse().toString()
+		bytes[6] = (0x70 or (random[0].toInt() and 0x0f)).toByte()
+		bytes[7] = random[1]
+		bytes[8] = (0x80 or (random[2].toInt() and 0x3f)).toByte()
+		random.copyInto(bytes, destinationOffset = 9, startIndex = 3)
+		return format(bytes)
 	}
 
 	companion object {
@@ -109,34 +78,47 @@ class SubjectIdGenerator(
 		fun generate(): String = default.generate()
 
 		/**
-		 * Whether [candidate] is an id this generator writes, and therefore an id the
-		 * producer accepts: `^sub_[1-9A-HJ-NP-Za-km-z]+$`, the pattern in
-		 * `subjectIdSchema` in `packages/sdk/schema/src/api/subject/post.ts`.
-		 *
-		 * This is the gate for adopting a *stored* id too, not just for minting a new
-		 * one. `packages/native-protocol/CONTRACT.md` puts the read side of the format rule the same way
-		 * the write side: an id the producer will not accept is an identity this build
-		 * cannot use, and it is worth nothing. The legacy UUID shape is not an exception
-		 * -- see [isLegacyUuidShape] for the one thing it is good for.
+		 * Whether [candidate] is a stored subject id this build adopts: a UUIDv7
+		 * ([isUuidV7]) or a c15t id ([isC15tId]). Anything else is `subject-id-unusable`.
+		 * These are the `read` cases in `uuidv7.json`.
 		 */
-		fun isValid(candidate: String): Boolean {
-			if (!candidate.startsWith(ID_PREFIX) || candidate.length == ID_PREFIX.length) {
+		fun isValid(candidate: String): Boolean = isUuidV7(candidate) || isC15tId(candidate)
+
+		/**
+		 * Whether [candidate] is a lowercase canonical UUIDv7 with the RFC 4122 variant.
+		 * The nil and max UUIDs fail the version check, so they are never accepted.
+		 */
+		fun isUuidV7(candidate: String): Boolean {
+			if (!isLowercaseUuid(candidate)) {
 				return false
 			}
-			return candidate.substring(ID_PREFIX.length).all { it in BASE58_ALPHABET }
+			return candidate[UUID_VERSION_INDEX] == '7' && candidate[UUID_VARIANT_INDEX] in "89ab"
 		}
 
 		/**
-		 * Whether [candidate] is the lowercase UUID v4 shape this SDK minted before
-		 * [SubjectIdGenerator] existed.
-		 *
-		 * Diagnosis only, and deliberately separate from [isValid]: recognising the
-		 * legacy shape is how a host explains to a user why they are being asked again,
-		 * and it is never a reason to adopt an id. Every id matched here is one the
-		 * producer answers with `INPUT_VALIDATION_FAILED`. Uppercase UUIDs are IDFV and
-		 * ADID, and this matches lowercase only, which is the form this SDK alone wrote.
+		 * Whether [candidate] is a c15t subject id: `sub_` followed by base58 text,
+		 * `^sub_[1-9A-HJ-NP-Za-km-z]+$`. A `/v1` route takes it and answers with the
+		 * canonical UUIDv7, which the core then adopts.
 		 */
-		fun isLegacyUuidShape(candidate: String): Boolean {
+		fun isC15tId(candidate: String): Boolean {
+			if (!candidate.startsWith(C15T_PREFIX) || candidate.length == C15T_PREFIX.length) {
+				return false
+			}
+			return candidate.substring(C15T_PREFIX.length).all { it in BASE58_ALPHABET }
+		}
+
+		/**
+		 * Whether [candidate] is the lowercase UUID v4 shape an early prerelease of this SDK
+		 * minted.
+		 *
+		 * Diagnosis only: it lets the `subject-id-unusable` message say which build wrote
+		 * the id. It is never a reason to adopt one.
+		 */
+		fun isLegacyUuidShape(candidate: String): Boolean =
+			isLowercaseUuid(candidate) &&
+				candidate[UUID_VERSION_INDEX] == '4' && candidate[UUID_VARIANT_INDEX] in "89ab"
+
+		private fun isLowercaseUuid(candidate: String): Boolean {
 			if (candidate.length != UUID_LENGTH) {
 				return false
 			}
@@ -150,29 +132,29 @@ class SubjectIdGenerator(
 					return false
 				}
 			}
-			return candidate[UUID_VERSION_INDEX] == '4' && candidate[UUID_VARIANT_INDEX] in "89ab"
+			return true
+		}
+
+		private fun format(bytes: ByteArray): String {
+			val hex = bytes.joinToString("") { "%02x".format(it.toInt() and 0xff) }
+			return "${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-" +
+				"${hex.substring(16, 20)}-${hex.substring(20)}"
 		}
 
 		private val default = SubjectIdGenerator()
 
-		private const val ID_PREFIX = "sub_"
+		private const val RANDOM_BYTES = 10
+		private const val MAX_MILLIS = (1L shl 48) - 1
+
+		private const val C15T_PREFIX = "sub_"
 
 		private const val UUID_LENGTH = 36
 		private val UUID_HYPHENS = setOf(8, 13, 18, 23)
 		private const val UUID_VERSION_INDEX = 14
 		private const val UUID_VARIANT_INDEX = 19
 
-		/** The web SDK's custom epoch: 2023-11-14T22:13:20Z. */
-		private const val EPOCH_MILLIS = 1_700_000_000_000L
-
-		private const val TIMESTAMP_BYTES = 8
-		private const val RANDOM_BYTES = 12
-		private const val TOTAL_BYTES = TIMESTAMP_BYTES + RANDOM_BYTES
-
-		/** Bitcoin's alphabet, shared with the server: no `0`, `O`, `I`, or `l`. */
+		/** Bitcoin's alphabet, the one c15t ids use: no `0`, `O`, `I`, or `l`. */
 		private const val BASE58_ALPHABET =
 			"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
-
-		private val BASE58_DIVISOR = BigInteger.valueOf(58)
 	}
 }

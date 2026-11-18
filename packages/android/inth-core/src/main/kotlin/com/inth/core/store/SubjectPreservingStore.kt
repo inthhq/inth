@@ -5,7 +5,7 @@ import com.inth.core.spi.KeyValueStore
 /**
  * Keeps the subject id out of the storage that encryption protects.
  *
- * The subject id is a random `sub_` id that Inth generates itself: it is not
+ * The subject id is a random UUIDv7 that Inth generates itself: it is not
  * sensitive and it is not a hardware identifier, so encrypting it buys nothing while
  * costing everything. As long as it sat in the same slot as the consent records, a
  * lost AndroidKeyStore key took the identity with it, and the next launch resolved a

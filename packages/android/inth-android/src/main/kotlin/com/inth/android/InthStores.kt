@@ -33,7 +33,7 @@ import java.io.IOException
  * that decision is made.
  *
  * The subject id is the one thing deliberately not on that path. It is a random
- * `sub_` id, so encrypting it protects nothing, and storing it beside the records
+ * UUIDv7, so encrypting it protects nothing, and storing it beside the records
  * meant a lost keystore key also lost the installation's identity. It gets its own
  * preference file, which no key can invalidate, so a keystore reset costs the
  * records and not the audit trail; [SubjectPreservingStore] does the routing and

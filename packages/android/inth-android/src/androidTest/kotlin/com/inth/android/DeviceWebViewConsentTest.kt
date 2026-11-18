@@ -85,7 +85,8 @@ class DeviceWebViewConsentTest {
 		// evaluateJavascript returns the string JSON-encoded.
 		assertEquals(true, seen.contains("\\\"version\\\":1"))
 		assertEquals(true, seen.contains("\\\"permissions\\\""))
-		assertEquals(false, seen.contains("sub_"))
+		val subjectId = requireNotNull(Inth.current?.snapshot()?.subject?.id)
+		assertEquals(false, seen.contains(subjectId))
 	}
 
 	@Test
