@@ -3,7 +3,7 @@
 // so the root project itself configures nothing, and this file carries no plugin at all.
 //
 // This is not the library's build script, in this build or in anyone else's. React Native
-// autolinks c15t-react-native/, so that module's build.gradle.kts is the library inside a host
+// autolinks inth-react-native/, so that module's build.gradle.kts is the library inside a host
 // app and here alike. It used to be this file's job to apply the library on an app's behalf,
 // which gave the autolinker a build script whose sources and namespace lived one directory
 // down: React Native matches the build file it is pointed at to find a library's Java package,

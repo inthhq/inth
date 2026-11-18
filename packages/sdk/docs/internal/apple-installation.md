@@ -3,8 +3,8 @@ title: Install the Apple platform module
 description: Install and hydrate one native consent engine for SwiftUI, UIKit and React Native in the private prerelease.
 ---
 
-Use the `C15tApple` library from `packages/swift` for application installation.
-It depends on `C15tCore` and Apple frameworks. It has no RN, Expo, JavaScript
+Use the `InthApple` library from `packages/swift` for application installation.
+It depends on `InthCore` and Apple frameworks. It has no RN, Expo, JavaScript
 runtime or stock UI dependency. These source modules are private prerelease
 artifacts. Registry resolution, clean standalone consumers and device acceptance
 remain unproven.
@@ -18,7 +18,7 @@ consumer or device criteria.
 
 ## Install before SDK startup
 
-Call `C15tApple.install(C15tAppleConfiguration(backendURL: ...))` before starting
+Call `InthApple.install(InthAppleConfiguration(backendURL: ...))` before starting
 optional SDKs or the RN host. `backendURL` is the project URL from the Inth
 dashboard. `InthProjectURL` checks it against the cases in
 `packages/native-protocol/project-url/cases.json` and installation throws
@@ -29,18 +29,18 @@ and is refused in a release build. Keychain is the default storage.
 
 Installation verifies a storage write, read and delete, then hydrates the existing
 native engine synchronously. Network resolution and queue delivery use the core's
-scheduler. The returned core is also `C15t.current`. Cached `C15t.isAllowed` and
-`C15t.decision` reads do no storage or network work. A new or unavailable decision
+scheduler. The returned core is also `Inth.current`. Cached `Inth.isAllowed` and
+`Inth.decision` reads do no storage or network work. A new or unavailable decision
 keeps optional SDKs gated.
 
 Repeated installation returns the same core and retains its original
 configuration. Concurrent callers through this installer wait for its first
 hydration to finish. A second call does not change the backend, identity or
-store. Do not call raw `C15t.bootstrap` concurrently with production installation.
+store. Do not call raw `Inth.bootstrap` concurrently with production installation.
 Raw `CoreConfig()` uses memory and no transport, so it is unsuitable as a
 production startup recipe.
 
-`C15tApple.install(CoreConfig)` is internal API (`@_spi(C15tInternal)`) for tests
+`InthApple.install(CoreConfig)` is internal API (`@_spi(InthInternal)`) for tests
 and first-party fixtures. It validates storage in the same way and skips the
 host rule. A custom store must implement `ConsentStore.read(for:)`, returning
 `nil` only for a missing item and throwing on operational read failures.
@@ -54,7 +54,7 @@ needs a bundled manifest or an in-code policy to show a first prompt. A
 
 ## Handle protected storage failure
 
-`C15tAppleInstallationError.protectedStorageUnavailable` leaves no new core
+`InthAppleInstallationError.protectedStorageUnavailable` leaves no new core
 installed. Keep optional SDKs off and retry installation after protected data
 becomes available. Do not replace Keychain with memory or plaintext storage after
 a failure. Invalid hosted URLs and attachment of an unbootstrapped host engine
@@ -82,26 +82,26 @@ Keychain data.
 
 RN's existing launch hook parses legacy Info.plist configuration and calls the
 same Apple installer. If the native app installed first, RN attaches to that
-instance. Set `com.c15t.reactnative.AutoBootstrap` to `false` when the application
-owns startup. `C15tReactNativeBootstrap.install(core)` remains an attachment path
+instance. Set `com.inth.reactnative.AutoBootstrap` to `false` when the application
+owns startup. `InthReactNativeBootstrap.install(core)` remains an attachment path
 for an already bootstrapped engine. It refuses a different installed engine.
 No adapter creates a second authoritative consent engine.
 Startup returns `false` and logs configuration or installation failures. The
 optional configuration and transport factories return `nil` for refused settings.
 
-In a CocoaPods RN application, host Swift code must `import C15tReactNative` and
-call that module's public `C15tApple.install`, `C15tApple.tracking`, `C15t.current`
-and `C15tReactNativeBootstrap.install` APIs. The pod compiles the generated core,
-Apple services and bridge into that same module. Do not also link a `C15tCore`
-pod or a separate SwiftPM `C15tCore`/`C15tApple` product into that process. A second
+In a CocoaPods RN application, host Swift code must `import InthReactNative` and
+call that module's public `InthApple.install`, `InthApple.tracking`, `Inth.current`
+and `InthReactNativeBootstrap.install` APIs. The pod compiles the generated core,
+Apple services and bridge into that same module. Do not also link a `InthCore`
+pod or a separate SwiftPM `InthCore`/`InthApple` product into that process. A second
 compiled copy has its own installation singleton and can compete for the same
 Keychain service. Changing the service does not make two consent authorities safe.
 Set the auto-bootstrap opt-out in Info.plist before native host installation.
 `packages/swift/Examples/AppleInstallation/cocoapods-host.swift` shows the
 module imports and attachment ordering for this path.
 
-SwiftPM source consumers import `C15tCore`, `C15tApple` and
-`C15tReactNativeBridge` from the same resolved source package. The RN SwiftPM
+SwiftPM source consumers import `InthCore`, `InthApple` and
+`InthReactNativeBridge` from the same resolved source package. The RN SwiftPM
 manifest currently supports a local source checkout only, through its default
 path or `C15T_CORE_PATH`. It explicitly refuses `C15T_CORE_VERSION` and
 `C15T_CORE_URL` until a remote native package containing both products exists.
@@ -110,34 +110,34 @@ distribution and clean SwiftPM consumers remain release gates.
 
 The Apple module owns foreground and reachability subscriptions. Foreground hands
 queue replay and policy refresh to the core. A newly regained network requests
-queue replay. Installation registers once. `C15tApple.shutdown()` removes those
+queue replay. Installation registers once. `InthApple.shutdown()` removes those
 subscriptions without clearing consent or replacing the core. A later install or
 attach registers them again. Hosts that own their own lifecycle can shut down the
 automatic registrations and call the core directly.
 
-`C15tTrackingController` provides the existing optional ATT orchestration without
-RN. Use `C15tApple.tracking` so native hosts and RN share one prompt flight. It reads current OS authorization on every request and requires
+`InthTrackingController` provides the existing optional ATT orchestration without
+RN. Use `InthApple.tracking` so native hosts and RN share one prompt flight. It reads current OS authorization on every request and requires
 the app's usage string before asking Apple. RN delegates to this same controller
-implementation. ATT results never modify c15t consent. Apps that require both
-permissions must check c15t consent and OS authorization separately. OS prompt
+implementation. ATT results never modify Inth consent. Apps that require both
+permissions must check Inth consent and OS authorization separately. OS prompt
 presentation and Settings changes still need on-device verification.
 
 ## Versions and validation limits
 
-Core requests report `x-c15t-version: <C15t.version>`. Platform-created
-hosted transports also report `x-c15t-platform: <platform>-><C15tApple.version>`,
-where `C15tAppleConfiguration.platform` is `apple` by default and `rn` for a core
+Core requests report `x-c15t-version: <Inth.version>`. Platform-created
+hosted transports also report `x-c15t-platform: <platform>-><InthApple.version>`,
+where `InthAppleConfiguration.platform` is `apple` by default and `rn` for a core
 the React Native bridge configures, on
 init, save and identity requests. These native source versions are independent
 of the RN npm version. None is the internal 12-bit IAB CMP version or a claim of
-CMP registration or certification. `C15t.version` in `Transports.swift` is the
-source of truth for the Swift native package. `C15tApple.version` aliases it and
-the local `C15tCore.podspec` reads it directly. The pod no longer accepts an
+CMP registration or certification. `Inth.version` in `Transports.swift` is the
+source of truth for the Swift native package. `InthApple.version` aliases it and
+the local `InthCore.podspec` reads it directly. The pod no longer accepts an
 independent `C15T_CORE_POD_VERSION`. Tests compare the native module versions;
 request tests verify both header values.
 
 The CocoaPods RN package compiles generated copies of both native modules into
-its existing pod target. SwiftPM keeps `C15tCore`, `C15tApple` and the RN bridge as
+its existing pod target. SwiftPM keeps `InthCore`, `InthApple` and the RN bridge as
 separate modules. Run `bun scripts/sync-vendored-core.ts` and
 `bun scripts/sync-vendored-apple.ts` after source changes. Artifact checks reject
 drift or sources omitted from the packed package. Never edit the copies by hand.

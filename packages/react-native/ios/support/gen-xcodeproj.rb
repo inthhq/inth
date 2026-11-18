@@ -1,7 +1,7 @@
 require 'xcodeproj'
 require 'fileutils'
 
-# Regenerates ios/C15tReactNative.xcodeproj, the project react-native.config.js points
+# Regenerates ios/InthReactNative.xcodeproj, the project react-native.config.js points
 # iOS at. It exists so the Swift half of the binding compiles for an iOS slice without
 # an example app checkout, and so a hand-authored pbxproj stays reviewable as a diff.
 #
@@ -15,22 +15,22 @@ require 'fileutils'
 # app gets it, as a local SwiftPM package reference at packages/swift.
 #
 # The React-linked sources under ReactNative/ are deliberately absent. They import
-# React and the `NativeC15tSpec` protocol that Codegen generates into the host app's
+# React and the `NativeInthSpec` protocol that Codegen generates into the host app's
 # ReactCodegen pod, so they compile only inside an app build, via the podspec or
 # Package.swift's C15T_SPM_INCLUDE_RN path.
 
-project_path = 'C15tReactNative.xcodeproj'
+project_path = 'InthReactNative.xcodeproj'
 FileUtils.rm_rf(project_path)
 project = Xcodeproj::Project.new(project_path)
 
-BRIDGE_DIR = 'C15tReactNative/Bridge'
-PRIVACY = 'C15tReactNative/Resources/Privacy.xcprivacy'
-UMBRELLA = 'C15tReactNative/C15tReactNative.h'
+BRIDGE_DIR = 'InthReactNative/Bridge'
+PRIVACY = 'InthReactNative/Resources/Privacy.xcprivacy'
+UMBRELLA = 'InthReactNative/InthReactNative.h'
 # Relative to this project directory (packages/react-native/ios).
 CORE_PACKAGE = '../../swift'
-CORE_PRODUCTS = %w[C15tCore C15tApple].freeze
+CORE_PRODUCTS = %w[InthCore InthApple].freeze
 
-target = project.new_target(:framework, 'C15tReactNative', :ios, '16.4')
+target = project.new_target(:framework, 'InthReactNative', :ios, '16.4')
 
 group = project.main_group.new_group('Bridge')
 Dir.glob(File.join(BRIDGE_DIR, '*.swift')).sort.each do |file|
@@ -84,6 +84,6 @@ project.save
 scheme = Xcodeproj::XCScheme.new
 scheme.add_build_target(target)
 scheme.set_launch_target(target)
-scheme.save_as(project_path, 'C15tReactNative', true)
+scheme.save_as(project_path, 'InthReactNative', true)
 
 puts "generated #{project_path} (core package: #{CORE_PACKAGE}, products: #{CORE_PRODUCTS.join(', ')})"

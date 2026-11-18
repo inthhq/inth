@@ -25,8 +25,8 @@ if output.is_relative_to(repo) or (output.exists() and any(output.iterdir())):
     parser.error('--output must be an empty directory outside the checkout')
 with tarfile.open(package) as archive:
     member = archive.extractfile('package/package.json')
-    if member is None or json.load(member).get('name') != '@c15t/react-native':
-        parser.error('--package must be an @c15t/react-native tarball')
+    if member is None or json.load(member).get('name') != '@inth/react-native':
+        parser.error('--package must be an @inth/react-native tarball')
 cell = None
 if args.cell is not None:
     cells = json.loads((repo / 'scripts/mobile-compatibility.json').read_text())
@@ -46,7 +46,7 @@ shutil.copytree(fixture, output, dirs_exist_ok=True, ignore=shutil.ignore_patter
     'node_modules', 'android', 'ios', '.expo', '.artifacts', '.env', '.env.*',
     '*.tsbuildinfo', 'scripts', 'bun.lock', 'package-lock.json', 'yarn.lock'))
 (output / 'vendor').mkdir()
-shutil.copy(package, output / 'vendor/c15t-react-native.tgz')
+shutil.copy(package, output / 'vendor/inth-react-native.tgz')
 
 # The E2E host imports the bare fixture's vendor code (see metro-vendor-sources.js).
 # Copy it into the app, minus tests, and point the one import at the copy.
@@ -62,7 +62,7 @@ host.write_text(source.replace("'../../../react-native-bare/src/", "'../../react
 
 manifest = output / 'package.json'
 config = json.loads(manifest.read_text())
-config['dependencies']['@c15t/react-native'] = 'file:vendor/c15t-react-native.tgz'
+config['dependencies']['@inth/react-native'] = 'file:vendor/inth-react-native.tgz'
 config['packageManager'] = 'bun@1.3.11'
 if cell is not None:
     config['dependencies'].update({'expo': cell['expo'], 'react': cell['react'], 'react-native': cell['reactNative'],
@@ -78,7 +78,7 @@ if cell is not None:
         config[section].update(overrides)
     # The fixture's React types follow its own React; a cell on another minor needs its own.
     config['devDependencies']['@types/react'] = '~19.3.0' if cell['react'].startswith('19.3.') else '~19.2.2'
-    config['c15tCompatibilityCell'] = cell
+    config['inthCompatibilityCell'] = cell
 manifest.write_text(json.dumps(config, indent=2) + '\n')
 # Same release-age gate as the checkout, so a cell resolves the same way here.
 (output / 'bunfig.toml').write_text('[install]\nminimumReleaseAge = 259200\n')
@@ -89,6 +89,6 @@ manifest.write_text(json.dumps(config, indent=2) + '\n')
     "module.exports = withVendorSources(getDefaultConfig(__dirname));\n")
 # EAS uploads the tarball with the app. Never depend on the producer's absolute path.
 (output / '.easignore').write_text(
-    'node_modules\n/android\n/ios\n.expo\n.artifacts\n.env*\n!vendor/c15t-react-native.tgz\n')
-print(json.dumps({'consumer': str(output), 'sdkInput': 'vendor/c15t-react-native.tgz',
+    'node_modules\n/android\n/ios\n.expo\n.artifacts\n.env*\n!vendor/inth-react-native.tgz\n')
+print(json.dumps({'consumer': str(output), 'sdkInput': 'vendor/inth-react-native.tgz',
                   'cell': args.cell, 'owner': 'inth-com', 'installed': False, 'cloudBuild': False}, indent=2))

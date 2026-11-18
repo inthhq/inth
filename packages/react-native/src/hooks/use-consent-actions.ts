@@ -30,7 +30,7 @@ export interface ConsentActions {
 	 */
 	refresh: () => Promise<void>;
 	/**
-	 * Detach the external id. Consent stays with the c15t subject id, so
+	 * Detach the external id. Consent stays with the Inth subject id, so
 	 * signing out does not reset consent.
 	 */
 	logout: () => Promise<void>;
@@ -43,7 +43,7 @@ export interface ConsentActions {
 	 * a recorded reject-everything. It is the surface for a "start over" affordance
 	 * and for a reviewer who needs the fresh-install state without reinstalling.
 	 *
-	 * The c15t subject id is kept, because the backend holds an audit history
+	 * The Inth subject id is kept, because the backend holds an audit history
 	 * keyed to it; erasing what the backend holds for that subject is a backend
 	 * call, not something this wipe can do on the device. Overrides and the
 	 * configured category scope are kept as well, since they are configuration
@@ -70,9 +70,9 @@ export interface ConsentActions {
 	 * dialog appears once and later calls resolve with the answer on the device. Inside
 	 * it, an answered request may come back a year later, whichever way it went, and the
 	 * only way to find out whether this install is eligible is to ask. It rejects with
-	 * `C15T_TRACKING_NOT_CONFIGURED` on an iOS build whose `Info.plist` carries no
+	 * `INTH_TRACKING_NOT_CONFIGURED` on an iOS build whose `Info.plist` carries no
 	 * `NSUserTrackingUsageDescription`, where the system dialog is suppressed and the
-	 * answer comes back denied without a word, and with `C15T_TRACKING_UNSUPPORTED` on
+	 * answer comes back denied without a word, and with `INTH_TRACKING_UNSUPPORTED` on
 	 * Android, where there is no platform question to ask.
 	 *
 	 * @returns The platform arm after the request settled.

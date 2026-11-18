@@ -9,8 +9,8 @@
  * core. Every diagnostic read lives on the Diagnostics tab.
  */
 
-import type { AllConsentNames, TrackingRequest } from '@c15t/react-native';
-import { useSnapshot, useConsent } from '@c15t/react-native';
+import type { AllConsentNames, TrackingRequest } from '@inth/react-native';
+import { useSnapshot, useConsent } from '@inth/react-native';
 import { View } from 'react-native';
 
 import { TrackingCard } from '../components/tracking';

@@ -1,10 +1,10 @@
 plugins { id 'org.jetbrains.kotlin.jvm' }
 kotlin { jvmToolchain(17) }
 dependencies {
-    implementation "com.c15t:c15t-core:${providers.gradleProperty('c15t.core.version').get()}"
+    implementation "com.inth:inth-core:${providers.gradleProperty('inth.core.version').get()}"
     testImplementation 'junit:junit:4.13.2'
 }
-test { systemProperty 'c15t.expectedVersion', providers.gradleProperty('c15t.core.version').get() }
+test { systemProperty 'inth.expectedVersion', providers.gradleProperty('inth.core.version').get() }
 
 // Inspect the resolved graph, including transitive dependencies, rather than source imports.
 tasks.register('verifyHeadlessGraph') {

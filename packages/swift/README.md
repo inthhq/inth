@@ -1,9 +1,9 @@
-# c15t for Swift
+# Inth for Swift
 
-Native consent management for SwiftUI and UIKit apps. c15t resolves your Inth
+Native consent management for SwiftUI and UIKit apps. Inth resolves your Inth
 project's policy, stores choices on the device, presents consent screens and
 provides synchronous gates for optional SDKs. It also powers the Apple side of
-`@c15t/react-native`.
+`@inth/react-native`.
 
 Start with the [Swift quickstart](../sdk/docs/frameworks/swift/quickstart.mdx).
 It names the files to add to your app, shows the stock consent presenter and
@@ -11,17 +11,17 @@ keeps a Privacy settings action available after the first choice.
 
 ## Products
 
-The root `Package.swift` names the package `c15t` and exports these products:
+The root `Package.swift` names the package `inth` and exports these products:
 
 | Product | Purpose |
 | --- | --- |
-| `C15tCore` | Policy evaluation, consent and IAB authority, durable records, queued saves and cached gates |
-| `C15tApple` | Protected Keychain installation, HTTP transport, lifecycle/reachability handling and optional ATT orchestration |
-| `C15tConsentUI` | Optional SwiftUI prompt, settings, native drafts and disclosure screens |
+| `InthCore` | Policy evaluation, consent and IAB authority, durable records, queued saves and cached gates |
+| `InthApple` | Protected Keychain installation, HTTP transport, lifecycle/reachability handling and optional ATT orchestration |
+| `InthConsentUI` | Optional SwiftUI prompt, settings, native drafts and disclosure screens |
 
 SwiftUI and UIKit consent UI requires iOS 16.4 or later. The core and platform
 products do not depend on React Native, Expo or a JavaScript runtime. Apps with
-their own UI can omit `C15tConsentUI`.
+their own UI can omit `InthConsentUI`.
 
 These are currently private source artifacts. In Xcode, add the authorized
 checkout's root as a local Swift package. A separate Swift repository is not
@@ -49,8 +49,8 @@ UIKit and IAB review modes.
 
 ## Headless blocks
 
-`C15tConsentUI` also has blocks that carry behaviour and no look, for an app
-that draws its own consent screens. c15t supplies the state, the actions, the
+`InthConsentUI` also has blocks that carry behaviour and no look, for an app
+that draws its own consent screens. Inth supplies the state, the actions, the
 localized copy and the accessibility. The stock screens run on the same draft.
 
 | Block | What it does |
@@ -87,7 +87,7 @@ on the saved decision, never on a draft.
 
 ## Consent before optional SDK startup
 
-Call `C15tApple.install` before starting optional SDKs. It verifies protected
+Call `InthApple.install` before starting optional SDKs. It verifies protected
 storage and hydrates the process's single core before returning. A fresh
 installation remains pending until a usable policy is available.
 
@@ -129,7 +129,7 @@ complete IAB decision.
 
 The Apple installer projects vendor-readable `IABTCF_*` values to standard
 UserDefaults while the protected native record remains authoritative. Pass
-`iab:` to `C15tAppleConfiguration` to turn IAB TCF on. IAB registration,
+`iab:` to `InthAppleConfiguration` to turn IAB TCF on. IAB registration,
 mobile validation and Google App certification remain separate requirements.
 
 ## Build and test
@@ -144,12 +144,12 @@ swift test
 The nested package also exposes the benchmark executable:
 
 ```sh
-swift run --package-path packages/swift C15tCoreBench
+swift run --package-path packages/swift InthCoreBench
 ```
 
 The shared fixtures in `packages/native-protocol` check wire behavior across Swift,
 Kotlin and TypeScript. Package tests do not replace the iOS app journeys in the
 verification guide.
 
-`Sources/C15tCore/Resources/PrivacyInfo.xcprivacy` ships as a SwiftPM resource.
+`Sources/InthCore/Resources/PrivacyInfo.xcprivacy` ships as a SwiftPM resource.
 Review the app's final privacy manifest along with the other SDKs it embeds.

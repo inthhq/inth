@@ -3,7 +3,7 @@
  *
  * iOS and Android run consent in the native core, and the client in
  * `native/client.ts` only reads its snapshot. A web build has no native core,
- * so this file runs the same engine the c15t web SDKs run: a `@c15t/core`
+ * so this file runs the same engine the Inth web SDKs run: a `@c15t/core`
  * runtime with persistence, talking to the same Inth project. It implements
  * the {@link ConsentClient} contract, so the provider, the hooks, the headless
  * components and the drawn components are the same code on all three
@@ -100,7 +100,7 @@ const isSamePrompt = function isSamePrompt(
 };
 
 /** The code the snapshot carries when a production bundle refuses `dryRun`. */
-export const WEB_CONFIGURATION_DRY_RUN_CODE = 'C15T_CONFIGURATION_DRY_RUN';
+export const WEB_CONFIGURATION_DRY_RUN_CODE = 'INTH_CONFIGURATION_DRY_RUN';
 
 /** What {@link createWebConsentClient} needs besides the options. */
 export interface WebConsentClientDependencies {
@@ -148,7 +148,7 @@ const dryRunMode = function dryRunMode(
 		identify: () => Promise.resolve(),
 		init: (context) =>
 			transport.init?.(context) ??
-			Promise.reject(new Error('c15t: the hosted transport has no init.')),
+			Promise.reject(new Error('Inth: the hosted transport has no init.')),
 		save: (payload) =>
 			Promise.resolve({ ok: true, subjectId: payload.subjectId }),
 	};
@@ -202,7 +202,7 @@ export const toNativeSnapshot = function toNativeSnapshot(
 			resolution.status === 'failed'
 				? {
 						code: resolution.reason,
-						message: `c15t could not resolve the consent policy from the project (${resolution.reason}). Optional categories stay denied until it can.`,
+						message: `Inth could not resolve the consent policy from the project (${resolution.reason}). Optional categories stay denied until it can.`,
 					}
 				: null,
 		evaluatedAt: kernel.evaluatedAt,
@@ -272,9 +272,9 @@ const refusedCommit = function refusedCommit(
 const trackingUnsupported = function trackingUnsupported(): Error {
 	return Object.assign(
 		new Error(
-			'c15t: App Tracking Transparency is an iOS prompt, and a web build has nothing to ask. Consent alone decides tracking on web.'
+			'Inth: App Tracking Transparency is an iOS prompt, and a web build has nothing to ask. Consent alone decides tracking on web.'
 		),
-		{ code: 'C15T_TRACKING_UNSUPPORTED' }
+		{ code: 'INTH_TRACKING_UNSUPPORTED' }
 	);
 };
 
@@ -408,7 +408,7 @@ export const createWebConsentClient = function createWebConsentClient(
 	if (refused) {
 		// oxlint-disable-next-line no-console -- A consent engine that never starts must be visible in every build.
 		console.error(
-			`c15t: dryRun is on in a production web bundle, so c15t did not start and every optional category is denied (${WEB_CONFIGURATION_DRY_RUN_CODE}). Remove dryRun, or leave its environment variable unset, before you build a release.`
+			`Inth: dryRun is on in a production web bundle, so Inth did not start and every optional category is denied (${WEB_CONFIGURATION_DRY_RUN_CODE}). Remove dryRun, or leave its environment variable unset, before you build a release.`
 		);
 	}
 
@@ -426,7 +426,7 @@ export const createWebConsentClient = function createWebConsentClient(
 		// A decision input from the first request on, so /init resolves the
 		// policy for a GPC visitor; the kernel derives the signal from it.
 		...(options.forceGPC === true && { overrides: { gpc: true } }),
-		pkg: '@c15t/react-native',
+		pkg: '@inth/react-native',
 		// A native app does not restart when consent is withdrawn, so neither
 		// does the page: consumers hear the change through the client.
 		reloadOnConsentRevoked: false,
@@ -444,7 +444,7 @@ export const createWebConsentClient = function createWebConsentClient(
 	let mappedFrom: KernelSnapshot | null = null;
 	const unstarted = denyAllSnapshot(
 		refused
-			? `dryRun is on in a production web bundle, so c15t did not start (${WEB_CONFIGURATION_DRY_RUN_CODE}).`
+			? `dryRun is on in a production web bundle, so Inth did not start (${WEB_CONFIGURATION_DRY_RUN_CODE}).`
 			: 'The web consent engine has not started yet.'
 	);
 	let snapshot: ConsentSnapshot = refused
@@ -660,11 +660,11 @@ export const createWebConsentClient = function createWebConsentClient(
 			isTrackingPermitted(categoryDecision(read(), category), 'unsupported'),
 		logout: (): Promise<void> => {
 			// The browser engine cannot detach an external id: it stays linked
-			// until the page reloads. Consent stays with the c15t subject id.
+			// until the page reloads. Consent stays with the Inth subject id.
 			if (!warnedLogout && !production) {
 				warnedLogout = true;
 				console.warn(
-					'c15t: logout() changes nothing on web. The browser engine keeps the external id linked until the page reloads. Call reset() to drop the consent records on a shared device.'
+					'Inth: logout() changes nothing on web. The browser engine keeps the external id linked until the page reloads. Call reset() to drop the consent records on a shared device.'
 				);
 			}
 			return Promise.resolve();

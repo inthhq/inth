@@ -18,22 +18,22 @@ protocol; it does not create another consent engine.
 
 | Setup | Native configuration belongs in |
 | --- | --- |
-| Expo | The c15t config plugin, followed by prebuild and a native rebuild |
+| Expo | The Inth config plugin, followed by prebuild and a native rebuild |
 | Bare RN, iOS | The app target's `Info.plist`, or app-owned native installation |
 | Bare RN, Android | Application metadata and the launch initializer, or app-owned installation |
 
 Follow [Expo](/docs/frameworks/react-native/expo) or
 [bare setup](/docs/frameworks/react-native/bare) before adding SDK gates.
 Disable the vendor's automatic collection and launch hooks. Check its manifest
-initializers, app-delegate setup and config plugins. c15t does not intercept
+initializers, app-delegate setup and config plugins. Inth does not intercept
 arbitrary native network requests.
 
 ## Read the cached native gate
 
 | Platform | Boolean permission | Decision |
 | --- | --- | --- |
-| Swift | `C15t.isAllowed(.measurement)` | `C15t.decision(for: .measurement)` |
-| Kotlin | `C15t.isAllowed(ConsentCategory.MEASUREMENT)` | `C15t.decision(ConsentCategory.MEASUREMENT)` |
+| Swift | `Inth.isAllowed(.measurement)` | `Inth.decision(for: .measurement)` |
+| Kotlin | `Inth.isAllowed(ConsentCategory.MEASUREMENT)` | `Inth.decision(ConsentCategory.MEASUREMENT)` |
 
 These reads use in-memory native state. They perform no disk or network work
 on the calling thread. The decision distinguishes pending, denied and granted.

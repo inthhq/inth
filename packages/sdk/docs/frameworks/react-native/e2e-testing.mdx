@@ -1,14 +1,14 @@
 ---
 title: E2E testing
-description: Get through the native c15t consent prompt in Maestro, EAS Workflows and agent-device tests of a React Native or Expo app, using stable selectors and shipped subflows.
-seoTitle: E2E testing the c15t consent prompt with Maestro and Expo
-seoDescription: Stable selectors and ready-made Maestro subflows to accept, reject, or customize the c15t consent prompt in your React Native and Expo E2E tests.
+description: Get through the native Inth consent prompt in Maestro, EAS Workflows and agent-device tests of a React Native or Expo app, using stable selectors and shipped subflows.
+seoTitle: E2E testing the Inth consent prompt with Maestro and Expo
+seoDescription: Stable selectors and ready-made Maestro subflows to accept, reject, or customize the Inth consent prompt in your React Native and Expo E2E tests.
 group: frameworks
 ---
 
-A fresh install shows the c15t consent prompt before your app's first screen,
+A fresh install shows the Inth consent prompt before your app's first screen,
 so every end-to-end test meets it. The stock SwiftUI and Compose screens carry
-the same stable selectors on iOS and Android, and `@c15t/react-native` ships
+the same stable selectors on iOS and Android, and `@inth/react-native` ships
 Maestro subflows that answer the prompt. Start each test with one of them, or
 use the selectors to test your consent journeys.
 
@@ -24,7 +24,7 @@ appId: com.example.app
 - launchApp:
     clearState: true
     clearKeychain: true
-- runFlow: ../node_modules/@c15t/react-native/maestro/dismiss-if-shown.yaml
+- runFlow: ../node_modules/@inth/react-native/maestro/dismiss-if-shown.yaml
 - assertVisible: 'Welcome!'
 ```
 
@@ -37,7 +37,7 @@ To accept instead, pass `C15T_CHOICE`:
 
 ```yaml title=".maestro/home.yaml"
 - runFlow:
-    file: ../node_modules/@c15t/react-native/maestro/dismiss-if-shown.yaml
+    file: ../node_modules/@inth/react-native/maestro/dismiss-if-shown.yaml
     env:
       C15T_CHOICE: accept-all
 ```
@@ -48,7 +48,7 @@ SDKs running.
 
 ### Shipped subflows
 
-All flows are in `node_modules/@c15t/react-native/maestro/`.
+All flows are in `node_modules/@inth/react-native/maestro/`.
 
 | Flow | What it does | Variables |
 | --- | --- | --- |
@@ -71,12 +71,12 @@ appId: com.example.app
 - launchApp:
     clearState: true
     clearKeychain: true
-- runFlow: ../node_modules/@c15t/react-native/maestro/open-preferences.yaml
+- runFlow: ../node_modules/@inth/react-native/maestro/open-preferences.yaml
 - runFlow:
-    file: ../node_modules/@c15t/react-native/maestro/toggle-category.yaml
+    file: ../node_modules/@inth/react-native/maestro/toggle-category.yaml
     env:
       C15T_CATEGORY: measurement
-- runFlow: ../node_modules/@c15t/react-native/maestro/save-preferences.yaml
+- runFlow: ../node_modules/@inth/react-native/maestro/save-preferences.yaml
 ```
 
 After the last step, the prompt is gone and only measurement is on. Assert
@@ -93,18 +93,18 @@ preferences, then reuse the flows:
 - tapOn: 'Privacy settings'
 - extendedWaitUntil:
     visible:
-      id: 'c15t\.(prefs|iab)\.save'
+      id: 'inth\.(prefs|iab)\.save'
     timeout: 15000
 - runFlow:
-    file: ../node_modules/@c15t/react-native/maestro/toggle-category.yaml
+    file: ../node_modules/@inth/react-native/maestro/toggle-category.yaml
     env:
       C15T_CATEGORY: marketing
-- runFlow: ../node_modules/@c15t/react-native/maestro/save-preferences.yaml
+- runFlow: ../node_modules/@inth/react-native/maestro/save-preferences.yaml
 ```
 
 ## Start each test from a fresh install
 
-c15t keeps the decision in protected storage. On iOS that is the Keychain,
+Inth keeps the decision in protected storage. On iOS that is the Keychain,
 which survives `clearState`, so use both options on `launchApp` to get the
 prompt again. On Android `clearState` is enough, and Maestro ignores
 `clearKeychain` there, so one flow works on both:
@@ -132,43 +132,43 @@ combine IDs with `|`.
 
 | Selector | Screen | What it is |
 | --- | --- | --- |
-| `c15t.first-layer` | First layer | The full-screen prompt |
-| `c15t.first-layer.title` | First layer | Headline |
-| `c15t.first-layer.accept-all` | First layer | Accept all |
-| `c15t.first-layer.reject-all` | First layer | Reject all. While policy is still loading it is the only decision |
-| `c15t.first-layer.customize` | First layer | Opens preferences inside the prompt |
-| `c15t.first-layer.description` | First layer, IAB | The disclosure sentence with the partner count |
-| `c15t.first-layer.summary.item.<index>` | First layer, IAB | One purpose in the summary card, from 0 |
-| `c15t.first-layer.partner-count` | First layer, IAB | Opens the partner list |
-| `c15t.notice` | Notice | The notice card over your app |
-| `c15t.notice.acknowledge` | Notice | Got it. Records the dismissal and grants nothing |
-| `c15t.notice.settings` | Notice | Opens preferences |
-| `c15t.prefs` | Preferences | The category list |
-| `c15t.prefs.category.<category>.switch` | Preferences | Switch for an optional category, such as `measurement` |
-| `c15t.prefs.category.<category>.locked` | Preferences | Status of `necessary`, which cannot change. Use it for `necessary` only |
-| `c15t.prefs.category.<category>.restricted` | Preferences | An optional category the policy or a privacy signal keeps off. iOS puts it on the row, Android on the row's note |
-| `c15t.prefs.accept-all` | Preferences | Accept all |
-| `c15t.prefs.reject-all` | Preferences | Reject all |
-| `c15t.prefs.save` | Preferences | Save |
-| `c15t.prefs.cancel` | Preferences, IAB preferences | Back to the first layer, or Cancel and Close when your app opened preferences |
-| `c15t.prefs.discard.confirm` | Preferences, IAB preferences | Discard unsaved changes |
-| `c15t.prefs.discard.keep` | Preferences, IAB preferences | Keep editing |
-| `c15t.iab` | IAB preferences | The IAB list |
-| `c15t.iab.accept-all` | IAB preferences | Accept all |
-| `c15t.iab.reject-all` | IAB preferences | Reject all |
-| `c15t.iab.save` | IAB preferences | Save |
-| `c15t.iab.purpose.<purpose>.consent` | IAB preferences | Consent switch for an IAB purpose, by purpose ID |
-| `c15t.iab.special-feature.<feature>.switch` | IAB preferences | Opt-in switch for a special feature, by ID |
-| `c15t.iab.partners` | IAB preferences | Opens the partner list |
-| `c15t.iab.vendors` | Partner list | The IAB partner list |
-| `c15t.iab.vendors.search` | Partner list | Search field |
-| `c15t.iab.vendors.vendor.<vendor>` | Partner list | One partner, by Global Vendor List ID |
-| `c15t.iab.vendors.back` | Partner list | Back to IAB preferences |
-| `c15t.privacy-policy` | Any | Your privacy policy link |
+| `inth.first-layer` | First layer | The full-screen prompt |
+| `inth.first-layer.title` | First layer | Headline |
+| `inth.first-layer.accept-all` | First layer | Accept all |
+| `inth.first-layer.reject-all` | First layer | Reject all. While policy is still loading it is the only decision |
+| `inth.first-layer.customize` | First layer | Opens preferences inside the prompt |
+| `inth.first-layer.description` | First layer, IAB | The disclosure sentence with the partner count |
+| `inth.first-layer.summary.item.<index>` | First layer, IAB | One purpose in the summary card, from 0 |
+| `inth.first-layer.partner-count` | First layer, IAB | Opens the partner list |
+| `inth.notice` | Notice | The notice card over your app |
+| `inth.notice.acknowledge` | Notice | Got it. Records the dismissal and grants nothing |
+| `inth.notice.settings` | Notice | Opens preferences |
+| `inth.prefs` | Preferences | The category list |
+| `inth.prefs.category.<category>.switch` | Preferences | Switch for an optional category, such as `measurement` |
+| `inth.prefs.category.<category>.locked` | Preferences | Status of `necessary`, which cannot change. Use it for `necessary` only |
+| `inth.prefs.category.<category>.restricted` | Preferences | An optional category the policy or a privacy signal keeps off. iOS puts it on the row, Android on the row's note |
+| `inth.prefs.accept-all` | Preferences | Accept all |
+| `inth.prefs.reject-all` | Preferences | Reject all |
+| `inth.prefs.save` | Preferences | Save |
+| `inth.prefs.cancel` | Preferences, IAB preferences | Back to the first layer, or Cancel and Close when your app opened preferences |
+| `inth.prefs.discard.confirm` | Preferences, IAB preferences | Discard unsaved changes |
+| `inth.prefs.discard.keep` | Preferences, IAB preferences | Keep editing |
+| `inth.iab` | IAB preferences | The IAB list |
+| `inth.iab.accept-all` | IAB preferences | Accept all |
+| `inth.iab.reject-all` | IAB preferences | Reject all |
+| `inth.iab.save` | IAB preferences | Save |
+| `inth.iab.purpose.<purpose>.consent` | IAB preferences | Consent switch for an IAB purpose, by purpose ID |
+| `inth.iab.special-feature.<feature>.switch` | IAB preferences | Opt-in switch for a special feature, by ID |
+| `inth.iab.partners` | IAB preferences | Opens the partner list |
+| `inth.iab.vendors` | Partner list | The IAB partner list |
+| `inth.iab.vendors.search` | Partner list | Search field |
+| `inth.iab.vendors.vendor.<vendor>` | Partner list | One partner, by Global Vendor List ID |
+| `inth.iab.vendors.back` | Partner list | Back to IAB preferences |
+| `inth.privacy-policy` | Any | Your privacy policy link |
 
-These selectors are a stable contract. c15t's own tests fail if one goes
+These selectors are a stable contract. Inth's own tests fail if one goes
 missing from either platform, so a rename cannot slip into a release unnoticed.
-The list is also in `node_modules/@c15t/react-native/maestro/selectors.json`.
+The list is also in `node_modules/@inth/react-native/maestro/selectors.json`.
 Other identifiers on these screens can change in any release.
 
 Below the accessibility text sizes, the decision buttons are pinned to the
@@ -208,11 +208,11 @@ The EAS Workflows `maestro` job checks out your repository, and its
 include no dependency install, so do not count on `node_modules` being there.
 Either install dependencies in the job's `after_checkout` hook, or copy the
 flows into your Maestro directory and commit them, repeating the copy when you
-upgrade `@c15t/react-native`:
+upgrade `@inth/react-native`:
 
 ```sh
-mkdir -p .maestro/c15t
-cp node_modules/@c15t/react-native/maestro/* .maestro/c15t/
+mkdir -p .maestro/inth
+cp node_modules/@inth/react-native/maestro/* .maestro/inth/
 ```
 
 Then call them as `runFlow: c15t/dismiss-if-shown.yaml` from a flow in
@@ -236,7 +236,7 @@ Simulator and the Android Emulator and points at your test project:
 
 Replace the URL with the one from your test project in Inth. Read it in
 `app.config.ts`, beside the rest of your
-[c15t plugin options](/docs/frameworks/react-native/expo#configure-the-plugin):
+[Inth plugin options](/docs/frameworks/react-native/expo#configure-the-plugin):
 
 {/* example: fragment */}
 
@@ -274,7 +274,7 @@ covers the rest of the workflow setup.
 [e2e.com](https://docs.expo.dev/guides/using-e2e/) drives the Simulator and
 Emulator through Callstack's agent-device, which reads the same accessibility
 tree. The selectors above work as `id=` selectors there, for example
-`agent-device press id=c15t.first-layer.reject-all`. Snapshots list them as
+`agent-device press id=inth.first-layer.reject-all`. Snapshots list them as
 each element's identifier, next to the visible label.
 
 On Android, Maestro and agent-device each start their own UI Automator driver.
@@ -284,6 +284,6 @@ Maestro fails with a driver start-up timeout.
 ## Check what the selectors cover
 
 The selectors and flows target the stock native screens that
-`@c15t/react-native` presents. If you build your own consent UI with the
+`@inth/react-native` presents. If you build your own consent UI with the
 [headless hooks](/docs/frameworks/react-native/headless), give your controls
 your own test IDs. The shipped flows will not find them.

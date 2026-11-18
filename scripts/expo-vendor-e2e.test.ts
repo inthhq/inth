@@ -32,9 +32,9 @@ const fakePackage = (directory: string): string => {
 	mkdirSync(join(directory, 'package'));
 	writeFileSync(
 		join(directory, 'package/package.json'),
-		JSON.stringify({ name: '@c15t/react-native' })
+		JSON.stringify({ name: '@inth/react-native' })
 	);
-	const archive = join(directory, 'c15t-react-native.tgz');
+	const archive = join(directory, 'inth-react-native.tgz');
 	execFileSync('tar', ['-czf', archive, '-C', directory, 'package']);
 	return archive;
 };
@@ -64,7 +64,7 @@ describe('Expo vendor journey range', () => {
 			);
 			expect(consumer.dependencies).toMatchObject({
 				...newest?.expoPackages,
-				'@c15t/react-native': 'file:vendor/c15t-react-native.tgz',
+				'@inth/react-native': 'file:vendor/inth-react-native.tgz',
 				expo: newest?.expo,
 				react: newest?.react,
 				'react-native': newest?.reactNative,

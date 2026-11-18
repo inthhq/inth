@@ -23,11 +23,11 @@ const SOURCE_DIR = join(REPO_ROOT, 'packages/native-protocol/webview');
 
 export const SWIFT_OUTPUT = join(
 	REPO_ROOT,
-	'packages/swift/Sources/C15tCore/generated/webview-consent-scripts.generated.swift'
+	'packages/swift/Sources/InthCore/generated/webview-consent-scripts.generated.swift'
 );
 export const KOTLIN_OUTPUT = join(
 	REPO_ROOT,
-	'packages/android/c15t-core/src/main/kotlin/com/c15t/core/webview/generated/webview-consent-scripts.kt'
+	'packages/android/inth-core/src/main/kotlin/com/inth/core/webview/generated/webview-consent-scripts.kt'
 );
 export const TYPESCRIPT_OUTPUT = join(
 	REPO_ROOT,
@@ -92,7 +92,7 @@ export const renderKotlin = function renderKotlin(
 	scripts: WebViewConsentScripts
 ): string {
 	return `// ${HEADER}
-package com.c15t.core.webview
+package com.inth.core.webview
 
 /**
  * The WebView consent scripts, byte for byte the files in

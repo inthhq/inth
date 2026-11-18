@@ -27,18 +27,18 @@ import type { PackedPackage } from './react-native-autolink';
 
 /** A config that says a host app can link the library on both platforms. */
 const working = {
-	'@c15t/react-native': {
+	'@inth/react-native': {
 		platforms: {
 			android: {
 				packageImportPath:
-					'import com.c15t.reactnative.C15tReactNativePackage;',
-				packageInstance: 'new C15tReactNativePackage()',
+					'import com.inth.reactnative.InthReactNativePackage;',
+				packageInstance: 'new InthReactNativePackage()',
 				sourceDir:
-					'/app/node_modules/@c15t/react-native/android/c15t-react-native',
+					'/app/node_modules/@inth/react-native/android/inth-react-native',
 			},
 			ios: {
 				podspecPath:
-					'/app/node_modules/@c15t/react-native/C15tReactNative.podspec',
+					'/app/node_modules/@inth/react-native/InthReactNative.podspec',
 			},
 		},
 	},
@@ -54,13 +54,13 @@ describe('checkAutolinkConfig', () => {
 	// lookups came up empty: `react-native config` exited 1 and the host app died in
 	// settings evaluation rather than at a compiler.
 	it('rejects an Android source directory above the library module', () => {
-		const sourceDir = '/app/node_modules/@c15t/react-native/android';
+		const sourceDir = '/app/node_modules/@inth/react-native/android';
 		const failures = checkAutolinkConfig({
-			'@c15t/react-native': {
+			'@inth/react-native': {
 				platforms: {
-					...working['@c15t/react-native'].platforms,
+					...working['@inth/react-native'].platforms,
 					android: {
-						...working['@c15t/react-native'].platforms.android,
+						...working['@inth/react-native'].platforms.android,
 						sourceDir,
 					},
 				},
@@ -82,9 +82,9 @@ describe('checkAutolinkConfig', () => {
 
 	it('reports Android autolinking switched off', () => {
 		const failures = checkAutolinkConfig({
-			'@c15t/react-native': {
+			'@inth/react-native': {
 				platforms: {
-					...working['@c15t/react-native'].platforms,
+					...working['@inth/react-native'].platforms,
 					android: null,
 				},
 			},
@@ -97,12 +97,12 @@ describe('checkAutolinkConfig', () => {
 	// name is a host app that does not compile.
 	it('reports a package class the CLI could not resolve', () => {
 		const failures = checkAutolinkConfig({
-			'@c15t/react-native': {
+			'@inth/react-native': {
 				platforms: {
-					...working['@c15t/react-native'].platforms,
+					...working['@inth/react-native'].platforms,
 					android: {
-						...working['@c15t/react-native'].platforms.android,
-						packageImportPath: 'import com.c15t.wrong.C15tReactNativePackage;',
+						...working['@inth/react-native'].platforms.android,
+						packageImportPath: 'import com.inth.wrong.InthReactNativePackage;',
 					},
 				},
 			},
@@ -111,17 +111,17 @@ describe('checkAutolinkConfig', () => {
 		expect(failures.join('\n')).toContain('packageImportPath');
 	});
 
-	// Codegen emits NativeC15tSpec into the package named by codegenConfig, and the autolinked
+	// Codegen emits NativeInthSpec into the package named by codegenConfig, and the autolinked
 	// library has to be in that same package for the module to compile against the spec.
 	it('reports a Java package that disagrees with Codegen', () => {
 		const message = checkAutolinkConfig(
 			working,
-			'com.c15t.somewhere.else'
+			'com.inth.somewhere.else'
 		).join('\n');
 
-		expect(message).toContain('Codegen generates NativeC15tSpec into');
-		expect(message).toContain('com.c15t.somewhere.else');
-		expect(message).toContain('com.c15t.reactnative');
+		expect(message).toContain('Codegen generates NativeInthSpec into');
+		expect(message).toContain('com.inth.somewhere.else');
+		expect(message).toContain('com.inth.reactnative');
 	});
 
 	it('accepts the Codegen package the package manifest actually declares', () => {
@@ -134,8 +134,8 @@ describe('checkAutolinkConfig', () => {
 	// that stops being discovered is a broken iOS build with no Android involvement.
 	it('reports a missing podspec', () => {
 		const failures = checkAutolinkConfig({
-			'@c15t/react-native': {
-				platforms: { ...working['@c15t/react-native'].platforms, ios: null },
+			'@inth/react-native': {
+				platforms: { ...working['@inth/react-native'].platforms, ios: null },
 			},
 		});
 
@@ -144,9 +144,9 @@ describe('checkAutolinkConfig', () => {
 
 	it('reports a podspec that is not the binding', () => {
 		const failures = checkAutolinkConfig({
-			'@c15t/react-native': {
+			'@inth/react-native': {
 				platforms: {
-					...working['@c15t/react-native'].platforms,
+					...working['@inth/react-native'].platforms,
 					ios: { podspecPath: '/somewhere/Else.podspec' },
 				},
 			},
@@ -160,7 +160,7 @@ describe('checkReactNativeAutolinking', () => {
 	// The whole path, from the example app's own install of the CLI. This is the assertion CI
 	// is paid for: `packages/react-native/android` builds the same library without ever asking
 	// the CLI what it makes of it.
-	it('resolves @c15t/react-native from the bare example app', () => {
+	it('resolves @inth/react-native from the bare example app', () => {
 		expect(checkReactNativeAutolinking()).toStrictEqual([]);
 	}, 60_000);
 });
@@ -169,9 +169,9 @@ describe('Expo autolinking', () => {
 	// Expo answers one platform per invocation, so its `--platform android` output has no iOS
 	// half by design. Without the option the check would report a false failure for every
 	// healthy Expo app.
-	const androidEntry = working['@c15t/react-native'].platforms.android;
+	const androidEntry = working['@inth/react-native'].platforms.android;
 	const androidOnly = {
-		'@c15t/react-native': {
+		'@inth/react-native': {
 			platforms: { android: androidEntry },
 		},
 	};
@@ -202,10 +202,10 @@ describe('Expo autolinking', () => {
 	});
 
 	it('still checks Android properly when iOS is not expected', () => {
-		const sourceDir = '/app/node_modules/@c15t/react-native/android';
+		const sourceDir = '/app/node_modules/@inth/react-native/android';
 		const failures = checkAutolinkConfig(
 			{
-				'@c15t/react-native': {
+				'@inth/react-native': {
 					platforms: {
 						android: { ...androidEntry, sourceDir },
 					},
@@ -220,7 +220,7 @@ describe('Expo autolinking', () => {
 
 	// Runs the real linker against the real fixture, which is the only way to catch a config
 	// file Expo cannot read: the bare fixture exercises the community CLI and would stay green.
-	it('resolves @c15t/react-native from the Expo example app', () => {
+	it('resolves @inth/react-native from the Expo example app', () => {
 		expect(checkExpoAndroidAutolinking()).toStrictEqual([]);
 	}, 60_000);
 });
@@ -236,9 +236,9 @@ describe('Expo autolinking', () => {
 const FAKE_PODSPEC = `
 Pod::Spec.new do |s|
   s.license = { :type => "Apache-2.0", :file => "LICENSE.md" }
-  s.source_files = "ios/C15tReactNative/**/*.{h,swift,m,mm}"
-  s.public_header_files = "ios/C15tReactNative/C15tReactNative.h"
-  s.resource_bundle = { "C15tReactNative" => "ios/C15tReactNative/Resources/Privacy.xcprivacy" }
+  s.source_files = "ios/InthReactNative/**/*.{h,swift,m,mm}"
+  s.public_header_files = "ios/InthReactNative/InthReactNative.h"
+  s.resource_bundle = { "InthReactNative" => "ios/InthReactNative/Resources/Privacy.xcprivacy" }
   s.preserve_paths = "ios", "package.json", "react-native.config.js"
 end
 `;
@@ -247,23 +247,23 @@ describe('globToRegExp', () => {
 	// CocoaPods reads `source_files` with a glob, and this is the one pattern the binding
 	// declares, so the check that says "the pod builds from nothing" hinges on matching it.
 	it('matches a brace set across directories', () => {
-		const matcher = globToRegExp('ios/C15tReactNative/**/*.{h,swift,m,mm}');
+		const matcher = globToRegExp('ios/InthReactNative/**/*.{h,swift,m,mm}');
 
-		expect(matcher.test('ios/C15tReactNative/Bridge/C15tPayload.swift')).toBe(
+		expect(matcher.test('ios/InthReactNative/Bridge/InthPayload.swift')).toBe(
 			true
 		);
-		expect(matcher.test('ios/C15tReactNative/C15tReactNative.h')).toBe(true);
-		expect(matcher.test('ios/C15tReactNative/ReactNative/Module.mm')).toBe(
+		expect(matcher.test('ios/InthReactNative/InthReactNative.h')).toBe(true);
+		expect(matcher.test('ios/InthReactNative/ReactNative/Module.mm')).toBe(
 			true
 		);
 	});
 
 	it('stays inside the directory the pattern names', () => {
-		const matcher = globToRegExp('ios/C15tReactNative/**/*.{h,swift,m,mm}');
+		const matcher = globToRegExp('ios/InthReactNative/**/*.{h,swift,m,mm}');
 
 		expect(matcher.test('ios/Tests/X.swift')).toBe(false);
-		expect(matcher.test('ios/C15tReactNative.swift')).toBe(false);
-		expect(matcher.test('android/c15t-react-native/build.gradle.kts')).toBe(
+		expect(matcher.test('ios/InthReactNative.swift')).toBe(false);
+		expect(matcher.test('android/inth-react-native/build.gradle.kts')).toBe(
 			false
 		);
 	});
@@ -281,9 +281,9 @@ describe('podspecPathDeclarations', () => {
 			podspecPathDeclarations(FAKE_PODSPEC).map(({ pattern }) => pattern)
 		).toStrictEqual([
 			'LICENSE.md',
-			'ios/C15tReactNative/**/*.{h,swift,m,mm}',
-			'ios/C15tReactNative/C15tReactNative.h',
-			'ios/C15tReactNative/Resources/Privacy.xcprivacy',
+			'ios/InthReactNative/**/*.{h,swift,m,mm}',
+			'ios/InthReactNative/InthReactNative.h',
+			'ios/InthReactNative/Resources/Privacy.xcprivacy',
 			'ios',
 			'package.json',
 			'react-native.config.js',
@@ -295,7 +295,7 @@ describe('the published podspec', () => {
 	const source = readFileSync(
 		join(
 			dirname(new URL(import.meta.url).pathname),
-			'../packages/react-native/C15tReactNative.podspec'
+			'../packages/react-native/InthReactNative.podspec'
 		),
 		'utf8'
 	);
@@ -307,10 +307,10 @@ describe('the published podspec', () => {
 			.filter(({ field }) => field === 's.source_files')
 			.map(({ pattern }) => pattern);
 		expect(sources).toStrictEqual([
-			'ios/C15tReactNative/**/*.{h,swift,m,mm}',
-			'vendor/C15tCore/**/*.swift',
-			'vendor/C15tApple/**/*.swift',
-			'vendor/C15tConsentUI/**/*.swift',
+			'ios/InthReactNative/**/*.{h,swift,m,mm}',
+			'vendor/InthCore/**/*.swift',
+			'vendor/InthApple/**/*.swift',
+			'vendor/InthConsentUI/**/*.swift',
 		]);
 	});
 
@@ -327,9 +327,9 @@ describe('checkPodspecPaths', () => {
 		'LICENSE.md',
 		'package.json',
 		'react-native.config.js',
-		'ios/C15tReactNative/C15tReactNative.h',
-		'ios/C15tReactNative/Bridge/C15tPayload.swift',
-		'ios/C15tReactNative/Resources/Privacy.xcprivacy',
+		'ios/InthReactNative/InthReactNative.h',
+		'ios/InthReactNative/Bridge/InthPayload.swift',
+		'ios/InthReactNative/Resources/Privacy.xcprivacy',
 	];
 
 	it('accepts a podspec that resolves against the tarball', () => {
@@ -354,11 +354,11 @@ describe('checkPodspecPaths', () => {
 		const failures = checkPodspecPaths(
 			FAKE_PODSPEC,
 			packedPaths.filter(
-				(path) => !path.startsWith('ios/C15tReactNative/Bridge')
+				(path) => !path.startsWith('ios/InthReactNative/Bridge')
 			)
 		);
 
-		expect(failures.join('\n')).not.toContain('C15tReactNative.h');
+		expect(failures.join('\n')).not.toContain('InthReactNative.h');
 	});
 
 	it('reports a source pattern that matches no packed file', () => {
@@ -381,10 +381,10 @@ describe('checkPackedPackageSurface', () => {
 		const installedDir = join(workDir, name, 'package');
 
 		const files: Record<string, string> = {
-			'C15tReactNative.podspec': FAKE_PODSPEC,
+			'InthReactNative.podspec': FAKE_PODSPEC,
 			'package.json': JSON.stringify({
-				codegenConfig: { jsSrcsDir: 'src/specs', name: 'C15tSpec' },
-				name: '@c15t/react-native',
+				codegenConfig: { jsSrcsDir: 'src/specs', name: 'InthSpec' },
+				name: '@inth/react-native',
 				version: '0.0.0',
 			}),
 		};
@@ -393,9 +393,9 @@ describe('checkPackedPackageSurface', () => {
 			files[path] ??= 'export {};\n';
 		}
 
-		files['ios/C15tReactNative/C15tReactNative.h'] = '#import <Foundation.h>\n';
-		files['ios/C15tReactNative/Bridge/C15tPayload.swift'] = 'enum X {}\n';
-		files['ios/C15tReactNative/Resources/Privacy.xcprivacy'] = '<plist/>\n';
+		files['ios/InthReactNative/InthReactNative.h'] = '#import <Foundation.h>\n';
+		files['ios/InthReactNative/Bridge/InthPayload.swift'] = 'enum X {}\n';
+		files['ios/InthReactNative/Resources/Privacy.xcprivacy'] = '<plist/>\n';
 
 		for (const [path, contents] of Object.entries(files)) {
 			const target = join(installedDir, path);
@@ -421,11 +421,11 @@ describe('checkPackedPackageSurface', () => {
 	it('reports a Codegen input directory the tarball left out', () => {
 		const packed = fakeInstall('no-specs');
 
-		rmSync(join(packed.installedDir, 'src/specs/NativeC15t.ts'));
+		rmSync(join(packed.installedDir, 'src/specs/NativeInth.ts'));
 
 		const failures = checkPackedPackageSurface({
 			...packed,
-			paths: packed.paths.filter((path) => path !== 'src/specs/NativeC15t.ts'),
+			paths: packed.paths.filter((path) => path !== 'src/specs/NativeInth.ts'),
 		});
 
 		expect(failures.join('\n')).toContain('codegenConfig.jsSrcsDir');
@@ -436,13 +436,13 @@ describe('checkPackedPackageSurface', () => {
 		const packed = fakeInstall('no-gradle');
 
 		rmSync(
-			join(packed.installedDir, 'android/c15t-react-native/library.gradle')
+			join(packed.installedDir, 'android/inth-react-native/library.gradle')
 		);
 
 		const failures = checkPackedPackageSurface({
 			...packed,
 			paths: packed.paths.filter(
-				(path) => path !== 'android/c15t-react-native/library.gradle'
+				(path) => path !== 'android/inth-react-native/library.gradle'
 			),
 		});
 
@@ -459,7 +459,7 @@ describe('autolinking from the packed tarball', () => {
 			// The gate holds the tarball to the same shapes; the packed tree is the one a
 			// consumer can actually publish, so it is the one worth checking here too.
 			const leaks = packed.paths.filter(
-				(path) => getBlockedReason('@c15t/react-native', path) !== null
+				(path) => getBlockedReason('@inth/react-native', path) !== null
 			);
 
 			expect(leaks).toStrictEqual([]);

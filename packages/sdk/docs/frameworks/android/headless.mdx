@@ -5,7 +5,7 @@ group: frameworks
 ---
 
 Build your own consent screens from the headless blocks in
-`com.c15t.consentui.headless`. They decide when a prompt is owed, hold the
+`com.inth.consentui.headless`. They decide when a prompt is owed, hold the
 draft, save it, supply the translated copy and handle TalkBack and hardware
 Back. They draw nothing, so layout, type, colour and motion are yours. The
 stock screens run on the same blocks.
@@ -14,12 +14,12 @@ stock screens run on the same blocks.
 
 Follow the dependency and installation steps in the
 [quickstart](/docs/frameworks/android/quickstart). The blocks ship in
-`c15t-consent-ui`, beside the stock screens. A release build with code
-shrinking drops the stock screens when nothing calls them. Call `C15tAndroid.install` before the optional SDK
+`inth-consent-ui`, beside the stock screens. A release build with code
+shrinking drops the stock screens when nothing calls them. Call `InthAndroid.install` before the optional SDK
 integrations you control. Disable vendor auto-initializers that run before your
 app's launch code.
 
-Do not call `C15tConsent` or `attachConsent` when your app draws the prompt.
+Do not call `InthConsent` or `attachConsent` when your app draws the prompt.
 An app with its own UI is responsible for the layout, the privacy-policy link
 and a permanent privacy-settings entry.
 
@@ -201,11 +201,11 @@ for SDK gates outside Compose and for a form that changes one category.
 
 ## Read the current permission
 
-`C15t.isAllowed(ConsentCategory.MEASUREMENT)` returns the effective permission
+`Inth.isAllowed(ConsentCategory.MEASUREMENT)` returns the effective permission
 now. It is a synchronous memory read. A false value covers both a refusal and
 an unresolved policy.
 
-Use `C15t.decision(ConsentCategory.MEASUREMENT)` when those states affect your UI:
+Use `Inth.decision(ConsentCategory.MEASUREMENT)` when those states affect your UI:
 
 | Decision | What the integration should do |
 | --- | --- |
@@ -235,7 +235,7 @@ owner ends; do not close an app-wide gate whenever an Activity rotates.
 
 The vendor must start with collection disabled. If it has no supported method
 to stop collection, design the integration around its supported shutdown or
-recreation behavior before enabling it. c15t does not intercept its network
+recreation behavior before enabling it. Inth does not intercept its network
 traffic or cancel work it already sent.
 
 For more than a boolean, use `gateDecision`. Every observer method (`gate`,
@@ -246,8 +246,8 @@ arrive on a worker thread, so marshal UI updates to the main thread.
 
 ## Show consent state in Compose
 
-`c15t-android` exposes the core's state as Kotlin flows. Import them from
-`com.c15t.android`:
+`inth-android` exposes the core's state as Kotlin flows. Import them from
+`com.inth.android`:
 
 | API | What it gives you |
 | --- | --- |
@@ -266,7 +266,7 @@ measurement decision this way.
 
 ## Save a category form
 
-Read `C15t.current` after installation and keep its snapshot revision when you
+Read `Inth.current` after installation and keep its snapshot revision when you
 create a draft. Seed editable controls from `snapshot.explicitChoice`, keeping
 unrecorded choices distinct from effective policy defaults.
 

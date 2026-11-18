@@ -5,7 +5,7 @@ import type { ConfigPlugin } from 'expo/config-plugins';
 
 import { withFinalizedMod } from './config-plugins';
 import { MIN_ANDROID_COMPILE_SDK, MIN_ANDROID_MIN_SDK } from './constants';
-import { C15tPluginError } from './errors';
+import { InthPluginError } from './errors';
 
 /** The generated Android files that can set an SDK level, by path under `android/`. */
 export interface AndroidSdkFiles {
@@ -280,7 +280,7 @@ const firstFile = function firstFile(
  * `rootProject.ext.*`, and the `expo-root-project` Gradle plugin fills those
  * from, in order, a root `ext` block, the `android.*SdkVersion` keys in
  * `gradle.properties`, then React Native's version catalog. The catalog default
- * already meets c15t's floors, so only an explicit value can fall below them.
+ * already meets Inth's floors, so only an explicit value can fall below them.
  *
  * Only the value Gradle applies counts. A literal in the app module wins over
  * the other two. Within one block, such as `android/defaultConfig`, the last
@@ -325,14 +325,14 @@ export const findAndroidSdkSettings = function findAndroidSdkSettings(
 };
 
 /**
- * Fail when the project sets an SDK level below what the c15t AARs need.
+ * Fail when the project sets an SDK level below what the Inth AARs need.
  *
  * The plugin does not raise the number. On a current template there is no
  * number to raise, and a value that is there was set on purpose, usually through
  * `expo-build-properties`, which would write it back on the next prebuild.
  *
  * @param files - File contents keyed by path under `android/`.
- * @throws {C15tPluginError} When any explicit level is below its floor.
+ * @throws {InthPluginError} When any explicit level is below its floor.
  */
 export const assertAndroidSdkFloor = function assertAndroidSdkFloor(
 	files: AndroidSdkFiles
@@ -352,14 +352,14 @@ export const assertAndroidSdkFloor = function assertAndroidSdkFloor(
 			: `raise it in android/${setting.file}`;
 		return (
 			`${setting.level} is ${String(setting.value)} in android/${setting.file}; ` +
-			`c15t needs ${String(floor?.floor)} or later (${fix}).`
+			`Inth needs ${String(floor?.floor)} or later (${fix}).`
 		);
 	});
-	throw new C15tPluginError(
-		`the Android project is below the c15t SDK floor. ${lines.join(' ')} ` +
+	throw new InthPluginError(
+		`the Android project is below the Inth SDK floor. ${lines.join(' ')} ` +
 			`Below minSdk ${String(MIN_ANDROID_MIN_SDK)} the manifest merger fails, ` +
-			`and below compileSdk ${String(MIN_ANDROID_COMPILE_SDK)} the c15t ` +
-			`AARs do not compile, both with errors that do not name c15t.`
+			`and below compileSdk ${String(MIN_ANDROID_COMPILE_SDK)} the Inth ` +
+			`AARs do not compile, both with errors that do not name Inth.`
 	);
 };
 

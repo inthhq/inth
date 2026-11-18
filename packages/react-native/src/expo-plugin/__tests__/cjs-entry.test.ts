@@ -89,9 +89,9 @@ describe('the CommonJS plugin entry', () => {
 		const loaded = builtCjsEntry();
 
 		expect(typeof loaded.default).toBe('function');
-		expect(typeof loaded.withC15t).toBe('function');
+		expect(typeof loaded.withInth).toBe('function');
 		expect(typeof loaded.applyParamsOnConfig).toBe('function');
-		expect(typeof loaded.C15tPluginError).toBe('function');
+		expect(typeof loaded.InthPluginError).toBe('function');
 	});
 
 	it("is one bundled file that loads the app's expo/config-plugins", () => {
@@ -109,12 +109,12 @@ describe('the CommonJS plugin entry', () => {
 
 	it('names the expo peer when it cannot resolve expo/config-plugins', () => {
 		builtCjsEntry();
-		const directory = mkdtempSync(join(tmpdir(), 'c15t-plugin-no-expo-'));
+		const directory = mkdtempSync(join(tmpdir(), 'inth-plugin-no-expo-'));
 		try {
 			const isolated = join(directory, 'index.cjs');
 			writeFileSync(isolated, readFileSync(cjsEntryPath));
 			expect(() => createRequire(isolated)(isolated)).toThrowError(
-				/C15tPluginError|expo is a peer dependency/u
+				/InthPluginError|expo is a peer dependency/u
 			);
 		} finally {
 			rmSync(directory, { force: true, recursive: true });
@@ -138,9 +138,9 @@ describe('the ES module plugin entry', () => {
 const withTemporaryApp = function withTemporaryApp<ResultType>(
 	run: (projectRoot: string) => ResultType
 ): ResultType {
-	const projectRoot = mkdtempSync(join(tmpdir(), 'c15t-app-plugin-'));
+	const projectRoot = mkdtempSync(join(tmpdir(), 'inth-app-plugin-'));
 	try {
-		mkdirSync(join(projectRoot, 'node_modules/@c15t'), { recursive: true });
+		mkdirSync(join(projectRoot, 'node_modules/@inth'), { recursive: true });
 		symlinkSync(packageRoot, join(projectRoot, 'node_modules', manifest.name));
 		symlinkSync(
 			dirname(requireFromPackage.resolve('expo/package.json')),
@@ -194,7 +194,7 @@ describe('the root app.plugin.js', () => {
 						slug: 'example',
 					},
 					{
-						androidMavenRepository: { url: 'https://maven.example.com/c15t' },
+						androidMavenRepository: { url: 'https://maven.example.com/inth' },
 						backendURL: 'https://acme.inth.app',
 						skipNativeBuildCheck: true,
 					}
@@ -224,7 +224,7 @@ describe('the root app.plugin.js', () => {
 			expect(root.resolved.plugin).toBe(subpath.resolved.plugin);
 			expect(root.config).toEqual(subpath.config);
 			expect(root.config.extra).toMatchObject({
-				c15t: { backendURL: 'https://acme.inth.app' },
+				inth: { backendURL: 'https://acme.inth.app' },
 			});
 		});
 	});

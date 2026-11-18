@@ -8,7 +8,7 @@
  * before. Keep the export list equal to `client.ts`.
  *
  * A web build has no binary to read the project URL from. The Expo config
- * plugin writes the same options it puts in the binary to `extra.c15t`, and
+ * plugin writes the same options it puts in the binary to `extra.inth`, and
  * Expo's bundler inlines the app config into the web bundle, so that is
  * where the configuration comes from.
  */
@@ -56,7 +56,7 @@ const readExpoManifest = function readExpoManifest(): unknown {
  * Get the page's consent client, creating it on first use.
  *
  * @returns The shared client over the browser engine.
- * @throws {Error} When the app config carries no `extra.c15t`.
+ * @throws {Error} When the app config carries no `extra.inth`.
  * @throws {ProjectURLError} When `backendURL` is not an Inth project URL.
  */
 export const getConsentClient = function getConsentClient(): ConsentClient {
@@ -64,7 +64,7 @@ export const getConsentClient = function getConsentClient(): ConsentClient {
 		const options = webOptionsFromManifest(readExpoManifest());
 		if (options === null) {
 			throw new Error(
-				'@c15t/react-native has no web configuration. A web build has no native binary to read the project URL from, so it reads extra.c15t, which the Expo config plugin "@c15t/react-native" writes and the Expo bundler inlines. Add the plugin to app.config.ts, and restart the bundler with --clear after changing it.'
+				'@inth/react-native has no web configuration. A web build has no native binary to read the project URL from, so it reads extra.inth, which the Expo config plugin "@inth/react-native" writes and the Expo bundler inlines. Add the plugin to app.config.ts, and restart the bundler with --clear after changing it.'
 			);
 		}
 		client = createWebConsentClient(options);
@@ -76,7 +76,7 @@ export const getConsentClient = function getConsentClient(): ConsentClient {
 /**
  * Make `next` the page's shared client, so {@link getConsentClient} returns it.
  *
- * Only `@c15t/react-native/testing` calls this, so an app's own
+ * Only `@inth/react-native/testing` calls this, so an app's own
  * `<ConsentProvider>` reaches the test client under a web test preset too.
  *
  * @internal

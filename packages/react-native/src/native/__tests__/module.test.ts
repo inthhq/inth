@@ -20,15 +20,15 @@ import {
 	setNativeModule,
 	setRegistryThrows,
 } from '../../__tests__/helpers/react-native-stub';
-import { NATIVE_C15T_MODULE_NAME } from '../../protocol';
+import { NATIVE_INTH_MODULE_NAME } from '../../protocol';
 import {
-	getNativeC15t,
-	getNativeC15tEvents,
-	hasNativeC15tSurface,
-	NativeC15tUnavailableError,
+	getNativeInth,
+	getNativeInthEvents,
+	hasNativeInthSurface,
+	NativeInthUnavailableError,
 } from '../module';
 
-describe('getNativeC15t', () => {
+describe('getNativeInth', () => {
 	beforeEach(() => {
 		resetNativeStub();
 	});
@@ -36,22 +36,22 @@ describe('getNativeC15t', () => {
 	test('returns the registered module', () => {
 		const fake = { getBootstrap: () => '', getSnapshot: () => '' };
 
-		setNativeModule(NATIVE_C15T_MODULE_NAME, fake);
+		setNativeModule(NATIVE_INTH_MODULE_NAME, fake);
 
-		expect(getNativeC15t()).toBe(fake);
+		expect(getNativeInth()).toBe(fake);
 	});
 
 	test('names the causes when no module is registered', () => {
-		const message = captureErrorMessage(getNativeC15t);
+		const message = captureErrorMessage(getNativeInth);
 
-		expect(captureErrorMessage(getNativeC15t)).toContain('"C15t"');
+		expect(captureErrorMessage(getNativeInth)).toContain('"Inth"');
 		expect(message).toContain('Expo Go');
 		expect(message).toContain('pod install');
 		expect(message).toContain('JavaScript-only update');
 	});
 
 	test('throws its own error type for a missing module', () => {
-		expect(() => getNativeC15t()).toThrow(NativeC15tUnavailableError);
+		expect(() => getNativeInth()).toThrow(NativeInthUnavailableError);
 	});
 
 	test('wraps a registry that invariants rather than returning null', () => {
@@ -59,16 +59,16 @@ describe('getNativeC15t', () => {
 		// the diagnosis still has to come from this package.
 		setRegistryThrows(true);
 
-		expect(captureErrorMessage(getNativeC15t)).toContain(
+		expect(captureErrorMessage(getNativeInth)).toContain(
 			'the TurboModule registry refused the lookup'
 		);
 	});
 });
 
-describe('hasNativeC15tSurface', () => {
+describe('hasNativeInthSurface', () => {
 	test('accepts a module with the synchronous reads', () => {
 		expect(
-			hasNativeC15tSurface({
+			hasNativeInthSurface({
 				commit: () => Promise.resolve(''),
 				getBootstrap: () => '',
 				getSnapshot: () => '',
@@ -77,36 +77,36 @@ describe('hasNativeC15tSurface', () => {
 	});
 
 	test('rejects a module built against another protocol', () => {
-		expect(hasNativeC15tSurface({ getBootstrap: () => '' } as never)).toBe(
+		expect(hasNativeInthSurface({ getBootstrap: () => '' } as never)).toBe(
 			false
 		);
 	});
 });
 
-describe('getNativeC15tEvents', () => {
+describe('getNativeInthEvents', () => {
 	beforeEach(() => {
 		resetNativeStub();
 	});
 
 	test('rejects a half-built native binding', () => {
-		setNativeModule(NATIVE_C15T_MODULE_NAME, {
+		setNativeModule(NATIVE_INTH_MODULE_NAME, {
 			getBootstrap: () => '',
 			getSnapshot: () => '',
 		});
 
-		expect(captureErrorMessage(getNativeC15tEvents)).toContain(
+		expect(captureErrorMessage(getNativeInthEvents)).toContain(
 			'missing getBootstrap, getSnapshot, or commit'
 		);
 	});
 
 	test('delivers every event payload as JSON text', () => {
-		setNativeModule(NATIVE_C15T_MODULE_NAME, {
+		setNativeModule(NATIVE_INTH_MODULE_NAME, {
 			commit: () => Promise.resolve(''),
 			getBootstrap: () => '',
 			getSnapshot: () => JSON.stringify(buildSnapshot()),
 		});
 
-		const events = getNativeC15tEvents();
+		const events = getNativeInthEvents();
 		const received: string[] = [];
 
 		const subscription = events.addListener('snapshot', (payload) => {

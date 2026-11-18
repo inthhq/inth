@@ -13,7 +13,7 @@ import {
 	withAndroidManifest,
 	withInfoPlist,
 } from './config-plugins';
-import { C15tPluginError } from './errors';
+import { InthPluginError } from './errors';
 
 /**
  * Colour fields of the `theme` prop that the native consent screens draw.
@@ -24,7 +24,7 @@ import { C15tPluginError } from './errors';
  * remaining fields are surfaces the native screens draw and the web components
  * do not, so they keep the native name. Each value is `#RRGGBB`.
  */
-export interface C15tThemeColors {
+export interface InthThemeColors {
 	/** Links, switches, the Save button and the brand eyebrow. Web: `--c15t-primary`. */
 	primary?: string;
 	/** Text on `primary`. Web: `--c15t-text-on-primary`. */
@@ -45,11 +45,11 @@ export interface C15tThemeColors {
 	textOnDecision?: string;
 }
 
-/** Name of one {@link C15tThemeColors} field. */
-export type C15tThemeColorName = keyof C15tThemeColors;
+/** Name of one {@link InthThemeColors} field. */
+export type InthThemeColorName = keyof InthThemeColors;
 
 /**
- * The `theme` prop of `@c15t/react-native/expo-plugin`.
+ * The `theme` prop of `@inth/react-native/expo-plugin`.
  *
  * It is the same type `createConsentTheme` takes, so one object can style the
  * native consent screens here and the React Native components at runtime. Its
@@ -60,7 +60,7 @@ export type C15tThemeColorName = keyof C15tThemeColors;
  * `colors.border` and `typography.lineHeight`, are checked and left out of the
  * native keys.
  */
-export type C15tThemePluginProps = ConsentThemeOptions;
+export type InthThemePluginProps = ConsentThemeOptions;
 
 /** Native key pair for one theme value. */
 interface ThemeKey {
@@ -69,8 +69,8 @@ interface ThemeKey {
 }
 
 const key = (ios: string, android: string): ThemeKey => ({
-	android: `com.c15t.consent.${android}`,
-	ios: `com.c15t.consent.${ios}`,
+	android: `com.inth.consent.${android}`,
+	ios: `com.inth.consent.${ios}`,
 });
 
 /**
@@ -80,7 +80,7 @@ const key = (ios: string, android: string): ThemeKey => ({
  * `ConsentTheme.Meta` in `consent-theme.kt`; `__tests__/theme.test.ts` checks
  * every key against those sources.
  */
-export const THEME_COLOR_KEYS: Readonly<Record<C15tThemeColorName, ThemeKey>> =
+export const THEME_COLOR_KEYS: Readonly<Record<InthThemeColorName, ThemeKey>> =
 	{
 		canvas: key('canvas', 'CANVAS'),
 		decision: key('decision', 'DECISION'),
@@ -159,8 +159,8 @@ const constantCase = (name: string): string =>
 	name.replace(/[A-Z]/gu, (letter) => `_${letter}`).toUpperCase();
 
 /**
- * Native key for one slot field: `com.c15t.consent.buttonPrimary.backgroundColor`
- * on iOS and `com.c15t.consent.BUTTON_PRIMARY_BACKGROUND_COLOR` on Android,
+ * Native key for one slot field: `com.inth.consent.buttonPrimary.backgroundColor`
+ * on iOS and `com.inth.consent.BUTTON_PRIMARY_BACKGROUND_COLOR` on Android,
  * which is the format `InfoPlistKey.slot` and `Meta.slot` build.
  */
 export const slotKey = (slot: ConsentNativeSlot, field: SlotField): ThemeKey =>
@@ -184,7 +184,7 @@ export const THEME_OWNED_KEYS: readonly ThemeKey[] = [
 type ThemeValue = string | number | boolean;
 
 /** Validated theme, as native key and value pairs. */
-export interface ResolvedC15tTheme {
+export interface ResolvedInthTheme {
 	readonly entries: readonly {
 		readonly key: ThemeKey;
 		readonly value: ThemeValue;
@@ -193,7 +193,7 @@ export interface ResolvedC15tTheme {
 	}[];
 }
 
-const COLOR_NAMES = Object.keys(THEME_COLOR_KEYS) as C15tThemeColorName[];
+const COLOR_NAMES = Object.keys(THEME_COLOR_KEYS) as InthThemeColorName[];
 const HEX_COLOR = /^#[\dA-Fa-f]{6}$/u;
 
 const quote = (value: unknown): string => JSON.stringify(value) ?? 'undefined';
@@ -203,7 +203,7 @@ const asObject = function asObject(
 	label: string
 ): Record<string, unknown> {
 	if (value === null || typeof value !== 'object' || Array.isArray(value)) {
-		throw new C15tPluginError(
+		throw new InthPluginError(
 			`${label} must be an object. Got ${quote(value)}.`
 		);
 	}
@@ -220,7 +220,7 @@ const assertKnownFields = function assertKnownFields(
 	const unknown = Object.keys(value).filter((name) => !known.includes(name));
 	if (unknown.length > 0) {
 		const names = unknown.map((name) => JSON.stringify(name)).join(', ');
-		throw new C15tPluginError(
+		throw new InthPluginError(
 			`${label} has no ${names} field. It accepts ${known.join(', ')}. ${hint}`.trim()
 		);
 	}
@@ -232,7 +232,7 @@ const UNSUPPORTED =
 
 const readHex = function readHex(value: unknown, label: string): string {
 	if (typeof value !== 'string' || !HEX_COLOR.test(value.trim())) {
-		throw new C15tPluginError(
+		throw new InthPluginError(
 			`${label} must be a hex colour such as "#2563EB". The native ` +
 				`screens read #RRGGBB only, without alpha or CSS functions. Got ` +
 				`${quote(value)}.`
@@ -244,7 +244,7 @@ const readHex = function readHex(value: unknown, label: string): string {
 const readColors = function readColors(
 	value: unknown,
 	label: string
-): Partial<Record<C15tThemeColorName, string>> {
+): Partial<Record<InthThemeColorName, string>> {
 	if (value === undefined) {
 		return {};
 	}
@@ -258,12 +258,12 @@ const readColors = function readColors(
 	for (const name of JS_ONLY_COLOR_NAMES) {
 		const color = fields[name];
 		if (color !== undefined && (typeof color !== 'string' || color === '')) {
-			throw new C15tPluginError(
+			throw new InthPluginError(
 				`${label}.${name} must be a colour string. Got ${quote(color)}.`
 			);
 		}
 	}
-	const colors: Partial<Record<C15tThemeColorName, string>> = {};
+	const colors: Partial<Record<InthThemeColorName, string>> = {};
 	for (const name of COLOR_NAMES) {
 		const color = fields[name];
 		if (color !== undefined) {
@@ -297,7 +297,7 @@ const readText = function readText(
 		return null;
 	}
 	if (typeof value !== 'string' || value.trim() === '') {
-		throw new C15tPluginError(
+		throw new InthPluginError(
 			`${label} must be a non-empty string. Got ${quote(value)}.`
 		);
 	}
@@ -312,7 +312,7 @@ const readFlag = function readFlag(
 		return null;
 	}
 	if (typeof value !== 'boolean') {
-		throw new C15tPluginError(
+		throw new InthPluginError(
 			`${label} must be true or false. Got ${quote(value)}.`
 		);
 	}
@@ -337,7 +337,7 @@ const readNumber = function readNumber(
 		!Number.isFinite(value) ||
 		(positive ? value <= 0 : value < 0)
 	) {
-		throw new C15tPluginError(
+		throw new InthPluginError(
 			`${label} must be a number of ${unit}, ${positive ? 'above 0' : '0 or more'}. ` +
 				`Got ${quote(value)}.`
 		);
@@ -364,7 +364,7 @@ const checkNumbers = function checkNumbers(
 const POINTS = 'points (dp on Android)';
 
 /** Native entries one part of the theme resolves to. */
-type ThemeEntries = ResolvedC15tTheme['entries'][number][];
+type ThemeEntries = ResolvedInthTheme['entries'][number][];
 
 /** Keep only the values that were set. */
 const entriesOf = (
@@ -387,7 +387,7 @@ const resolveColors = function resolveColors(
 				if (darkValue !== undefined) {
 					// The native value is one colour, or a light and dark pair. A dark
 					// value alone has no light half to pair with.
-					throw new C15tPluginError(
+					throw new InthPluginError(
 						`theme.dark.${name} needs theme.colors.${name} as its light value.`
 					);
 				}
@@ -480,7 +480,7 @@ const resolveFont = function resolveFont(
 	const keywords = field === 'headlineFont';
 	const checked = (name: string, at: string): string => {
 		if (!keywords && isKeyword(name)) {
-			throw new C15tPluginError(
+			throw new InthPluginError(
 				`${at} ${quote(name)} names a built-in face, which the native body ` +
 					`text cannot use: it takes a font the app bundles. Leave ${field} ` +
 					`out for the system face.`
@@ -490,7 +490,7 @@ const resolveFont = function resolveFont(
 	};
 	const androidName = (name: string, at: string): string => {
 		if (!isKeyword(name) && !ANDROID_FONT_RESOURCE.test(name)) {
-			throw new C15tPluginError(
+			throw new InthPluginError(
 				`${at} ${quote(name)} is not an Android font resource name ` +
 					`(lowercase letters, digits and _), so Android would keep its ` +
 					`default face. Use { "ios": ${quote(name)}, "android": ` +
@@ -510,7 +510,7 @@ const resolveFont = function resolveFont(
 	const ios = readText(fonts.ios, `${label}.ios`);
 	const android = readText(fonts.android, `${label}.android`);
 	if (ios === null && android === null) {
-		throw new C15tPluginError(`${label} needs ios, android or both.`);
+		throw new InthPluginError(`${label} needs ios, android or both.`);
 	}
 	return [
 		...(ios === null
@@ -639,7 +639,7 @@ const resolveBrand = function resolveBrand(value: unknown): ThemeEntries {
 	const mark = readText(brand.mark, 'theme.brand.mark');
 	const hidden = readFlag(brand.hidden, 'theme.brand.hidden');
 	if (hidden === true && (name !== null || mark !== null)) {
-		throw new C15tPluginError(
+		throw new InthPluginError(
 			'theme.brand.hidden hides the app name and mark, so theme.brand.name ' +
 				'and theme.brand.mark would never show. Remove one or the other.'
 		);
@@ -664,7 +664,7 @@ const resolveBranding = function resolveBranding(value: unknown): ThemeEntries {
 	);
 	const { provider } = branding;
 	if (provider !== undefined && provider !== 'c15t' && provider !== 'inth') {
-		throw new C15tPluginError(
+		throw new InthPluginError(
 			`theme.branding.provider must be "c15t" or "inth". Got ${quote(provider)}.`
 		);
 	}
@@ -672,13 +672,13 @@ const resolveBranding = function resolveBranding(value: unknown): ThemeEntries {
 	const mark = readText(branding.mark, 'theme.branding.mark');
 	const hidden = readFlag(branding.hidden, 'theme.branding.hidden');
 	if (provider !== undefined && name !== null) {
-		throw new C15tPluginError(
+		throw new InthPluginError(
 			'theme.branding.name sets a custom provider and replaces ' +
 				'theme.branding.provider. Set one of them.'
 		);
 	}
 	if (mark !== null && name === null) {
-		throw new C15tPluginError(
+		throw new InthPluginError(
 			'theme.branding.mark needs theme.branding.name: the built-in ' +
 				'providers use their own marks.'
 		);
@@ -696,11 +696,11 @@ const resolveBranding = function resolveBranding(value: unknown): ThemeEntries {
  *
  * @param input - The `theme` value from the plugin props.
  * @returns The native entries to write, or `null` when no theme was given.
- * @throws {C15tPluginError} When a value would not render as written.
+ * @throws {InthPluginError} When a value would not render as written.
  */
 export const resolveTheme = function resolveTheme(
 	input: unknown
-): ResolvedC15tTheme | null {
+): ResolvedInthTheme | null {
 	if (input === undefined) {
 		return null;
 	}
@@ -753,7 +753,7 @@ export const resolveTheme = function resolveTheme(
  * @returns The plist to write back.
  */
 export const applyThemeInfoPlist = function applyThemeInfoPlist(
-	theme: ResolvedC15tTheme,
+	theme: ResolvedInthTheme,
 	infoPlist: InfoPlist
 ): InfoPlist {
 	const next: InfoPlist = { ...infoPlist };
@@ -777,7 +777,7 @@ export const applyThemeInfoPlist = function applyThemeInfoPlist(
  * @returns The same manifest with the theme entries replaced.
  */
 export const applyThemeAndroidManifest = function applyThemeAndroidManifest(
-	theme: ResolvedC15tTheme,
+	theme: ResolvedInthTheme,
 	manifest: AndroidConfig.Manifest.AndroidManifest
 ): AndroidConfig.Manifest.AndroidManifest {
 	const application =
@@ -802,7 +802,7 @@ export const applyThemeAndroidManifest = function applyThemeAndroidManifest(
  * Register the theme mods. With no `theme` prop nothing is registered, so an
  * app that themes the screens through its own config plugin keeps its values.
  */
-export const withC15tTheme: ConfigPlugin<ResolvedC15tTheme | null> = (
+export const withInthTheme: ConfigPlugin<ResolvedInthTheme | null> = (
 	config,
 	theme
 ) => {

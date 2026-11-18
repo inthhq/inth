@@ -1,5 +1,5 @@
 // #region docs:app-entry title="App.tsx"
-import { ConsentProvider } from '@c15t/react-native';
+import { ConsentProvider } from '@inth/react-native';
 import { Text, View } from 'react-native';
 
 import { PrivacySettingsButton } from './setup';

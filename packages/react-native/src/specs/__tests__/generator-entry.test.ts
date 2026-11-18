@@ -1,7 +1,7 @@
 /**
  * The generator has to work when it is named through a symlink.
  *
- * A host app's `node_modules/@c15t/react-native` is a link into a workspace, and the autolinked
+ * A host app's `node_modules/@inth/react-native` is a link into a workspace, and the autolinked
  * Gradle build invokes `generate-spec.mjs` by that linked path. The script decides whether it is
  * the process entry point by comparing `process.argv[1]` with its own module URL, and Node
  * resolves the link on one side of that comparison but not the other, so the check was false in
@@ -35,9 +35,9 @@ const PACKAGE_ROOT = resolve(
 const SPEC_JAVA = join(
 	'java',
 	'com',
-	'c15t',
+	'inth',
 	'reactnative',
-	'NativeC15tSpec.java'
+	'NativeInthSpec.java'
 );
 
 /** Runs the generator, and returns what it wrote. */
@@ -67,7 +67,7 @@ let linkedPackage = '';
 
 describe('generate-spec entry point', () => {
 	beforeAll(() => {
-		workspace = mkdtempSync(join(tmpdir(), 'c15t-codegen-link-'));
+		workspace = mkdtempSync(join(tmpdir(), 'inth-codegen-link-'));
 		linkedPackage = join(workspace, 'react-native');
 		symlinkSync(PACKAGE_ROOT, linkedPackage);
 	});
@@ -84,7 +84,7 @@ describe('generate-spec entry point', () => {
 		const specFile = join(output, SPEC_JAVA);
 
 		expect(existsSync(specFile), `expected ${specFile}`).toBe(true);
-		expect(readFileSync(specFile, 'utf8')).toContain('NativeC15tSpec');
+		expect(readFileSync(specFile, 'utf8')).toContain('NativeInthSpec');
 	});
 
 	// The entry check is the thing under test, and it has to stay false for an import.

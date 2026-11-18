@@ -20,13 +20,13 @@ Build and pack `packages/react-native`, then run:
 
 ```sh
 python3 internals/fixtures/expo-dev/scripts/prepare-packed-consumer.py \
-  --package /absolute/path/c15t-react-native.tgz \
+  --package /absolute/path/inth-react-native.tgz \
   --output /absolute/path/empty-consumer-directory
 ```
 
 The output must be outside the checkout. The helper copies the app without
 installed dependencies or generated native projects, stores the tarball at
-`vendor/c15t-react-native.tgz`, and changes the dependency to that relative
+`vendor/inth-react-native.tgz`, and changes the dependency to that relative
 path. Its `.easignore` keeps the tarball in the uploaded build input and excludes
 local environment files. Metro uses Expo's normal resolver in the packed app.
 No producer checkout path is needed on a cloud builder.
@@ -72,14 +72,14 @@ These are environment variable names, never credential values. Supply both
 values through the supported secure build environment. Gradle reads them at
 configuration time and fails if either is absent, including during IDE sync or
 tasks such as `clean`. The plugin never reads their
-values into app configuration, generated Gradle files or `extra.c15t`.
+values into app configuration, generated Gradle files or `extra.inth`.
 The URL must use HTTPS without embedded credentials, query parameters or a
 fragment. An absolute `file:///...` URL is accepted only for local staging,
 without credentials. Never upload that local URL to a cloud builder.
 
 The plugin writes a managed `exclusiveContent` block in Expo's Groovy root
 `build.gradle`. Repeated CNG replaces that block rather than appending copies;
-changing or removing the prop updates or removes it. `com.c15t` resolves only
+changing or removing the prop updates or removes it. `com.inth` resolves only
 from the configured repository. Earlier repositories cannot supply matching
 coordinates, and missing artifacts fail without fallback. Kotlin DSL hosts
 must configure the equivalent settings-owned block themselves. The bare RN

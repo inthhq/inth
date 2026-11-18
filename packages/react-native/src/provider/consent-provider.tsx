@@ -104,7 +104,7 @@ export interface ConsentProviderBaseProps {
 	 * module in the running binary.
 	 *
 	 * For tests: pass the client from `createTestConsentClient()` in
-	 * `@c15t/react-native/testing`. Leave it unset in an app. The hooks read
+	 * `@inth/react-native/testing`. Leave it unset in an app. The hooks read
 	 * this client, but presenting the prompt and preferences always goes to
 	 * the native module installed for the process, which the test client
 	 * replaces. A client built with `createConsentClient` over some other
@@ -114,7 +114,7 @@ export interface ConsentProviderBaseProps {
 	 *
 	 * @example
 	 * ```tsx
-	 * import { createTestConsentClient } from '@c15t/react-native/testing';
+	 * import { createTestConsentClient } from '@inth/react-native/testing';
 	 *
 	 * const consent = createTestConsentClient({ consent: 'unset' });
 	 *
@@ -202,7 +202,7 @@ export interface ConsentProviderBaseProps {
  *
  * @example
  * ```tsx
- * import { ConsentProvider } from '@c15t/react-native';
+ * import { ConsentProvider } from '@inth/react-native';
  *
  * export function App() {
  *     return (
@@ -226,9 +226,9 @@ export interface ConsentProviderBaseProps {
  * @param props.onTrackingAdditionalInformation - Your own controls for Apple's
  *   Additional Information button, when you draw your own consent UI.
  * @returns The children, with consent available through the hooks.
- * @throws {NativeC15tUnavailableError} When the native module is not in the
+ * @throws {NativeInthUnavailableError} When the native module is not in the
  *   running binary, for example in Expo Go.
- * @throws {C15tProtocolMismatchError} When the embedded native build speaks a
+ * @throws {InthProtocolMismatchError} When the embedded native build speaks a
  *   protocol this bundle does not support. The message names both sides and the
  *   fix, which is a rebuild rather than a JavaScript update.
  * @throws {TypeError} When the provider presents the prompt and

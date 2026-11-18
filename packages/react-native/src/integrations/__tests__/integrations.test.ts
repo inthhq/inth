@@ -292,7 +292,7 @@ describe('PostHog', () => {
 				await expect(integration.ready).rejects.toBe(vendorFailure);
 				await vi.waitFor(() =>
 					expect(errorLog).toHaveBeenCalledWith(
-						'[c15t] Analytics integration error reporter failed.',
+						'[Inth] Analytics integration error reporter failed.',
 						reporterFailure
 					)
 				);

@@ -1,8 +1,8 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { C15tPluginError } from './errors';
-import type { ResolvedC15tParams } from './params';
+import { InthPluginError } from './errors';
+import type { ResolvedInthParams } from './params';
 
 /**
  * Everything the workflow checks need that is not the config.
@@ -100,16 +100,16 @@ const hasNativeProject = function hasNativeProject(
  * Expo Go ships a fixed set of native modules, so a project that uses this
  * plugin and still launches in Expo Go has a JavaScript bundle with no consent
  * core behind it: every read answers deny-all, the banner never appears, and the
- * failure looks like a c15t bug rather than a missing build. Catching it here
+ * failure looks like an Inth bug rather than a missing build. Catching it here
  * costs one sentence instead of a day.
  *
  * @param params - Resolved plugin parameters; `skipNativeBuildCheck` waives it.
  * @param context - Project root, argv, and environment.
- * @throws {C15tPluginError} When the only thing this config could launch into is
+ * @throws {InthPluginError} When the only thing this config could launch into is
  * Expo Go.
  */
 export const assertCustomNativeBuild = function assertCustomNativeBuild(
-	params: ResolvedC15tParams,
+	params: ResolvedInthParams,
 	context: WorkflowContext
 ): void {
 	if (params.skipNativeBuildCheck) {
@@ -126,8 +126,8 @@ export const assertCustomNativeBuild = function assertCustomNativeBuild(
 		return;
 	}
 
-	throw new C15tPluginError(
-		`@c15t/react-native needs a custom native build and this project has ` +
+	throw new InthPluginError(
+		`@inth/react-native needs a custom native build and this project has ` +
 			`none, so it would launch in Expo Go with no consent core behind it. ` +
 			`Create a development build with "npx expo run:ios" or ` +
 			`"eas build --profile development --platform all" and open that instead. ` +
@@ -137,15 +137,15 @@ export const assertCustomNativeBuild = function assertCustomNativeBuild(
 };
 
 /** How the Android package can be registered by hand. */
-const MANUAL_ANDROID_PACKAGE_PATTERN = /\bC15tReactNativePackage\b/u;
+const MANUAL_ANDROID_PACKAGE_PATTERN = /\bInthReactNativePackage\b/u;
 
 /** How the iOS target can be linked by hand. */
 const MANUAL_IOS_POD_PATTERN =
-	/^\s*pod\s+['"](?:C15tReactNative|@c15t\/react-native)['"]/imu;
+	/^\s*pod\s+['"](?:InthReactNative|@inth\/react-native)['"]/imu;
 
 /** How the Android module can be wired into a bare build by hand. */
 const MANUAL_GRADLE_PROJECT_PATTERN =
-	/project\(\s*['"]:c15t-react-native['"]\s*\)/u;
+	/project\(\s*['"]:inth-react-native['"]\s*\)/u;
 
 const assertNotRegisteredManually = function assertNotRegisteredManually(
 	matched: boolean,
@@ -155,59 +155,59 @@ const assertNotRegisteredManually = function assertNotRegisteredManually(
 	if (!matched) {
 		return;
 	}
-	throw new C15tPluginError(
-		`${fileLabel} already registers the c15t native module by hand, and ` +
+	throw new InthPluginError(
+		`${fileLabel} already registers the Inth native module by hand, and ` +
 			`this plugin registers it too, which fails the build with a duplicate ` +
 			`module name. Keep one: ${fix}, or remove ` +
-			`the c15t plugin from app.json if this app owns its ` +
+			`the Inth plugin from app.json if this app owns its ` +
 			`native wiring.`
 	);
 };
 
 /**
- * Reject a `MainApplication` that lists the c15t package explicitly.
+ * Reject a `MainApplication` that lists the Inth package explicitly.
  *
  * Autolinking supplies the package, so a hand-written entry point list produces
  * two registrations of the same TurboModule.
  *
  * @param contents - `MainApplication.java` or `.kt` source.
- * @throws {C15tPluginError} When the package is already there.
+ * @throws {InthPluginError} When the package is already there.
  */
 export const assertNoManualAndroidRegistration =
 	function assertNoManualAndroidRegistration(contents: string): void {
 		assertNotRegisteredManually(
 			MANUAL_ANDROID_PACKAGE_PATTERN.test(contents),
 			'MainApplication',
-			'delete the C15tReactNativePackage entry from the package list'
+			'delete the InthReactNativePackage entry from the package list'
 		);
 	};
 
 /**
- * Reject a `Podfile` that pods the c15t iOS target explicitly.
+ * Reject a `Podfile` that pods the Inth iOS target explicitly.
  *
  * @param contents - `ios/Podfile` contents.
- * @throws {C15tPluginError} When the pod is already there.
+ * @throws {InthPluginError} When the pod is already there.
  */
 export const assertNoManualIosRegistration =
 	function assertNoManualIosRegistration(contents: string): void {
 		assertNotRegisteredManually(
 			MANUAL_IOS_POD_PATTERN.test(contents),
 			'ios/Podfile',
-			'delete the pod line for C15tReactNative'
+			'delete the pod line for InthReactNative'
 		);
 	};
 
 /**
- * Reject an app `build.gradle` that includes the c15t module by path.
+ * Reject an app `build.gradle` that includes the Inth module by path.
  *
  * @param contents - `android/app/build.gradle` contents.
- * @throws {C15tPluginError} When the module is already included.
+ * @throws {InthPluginError} When the module is already included.
  */
 export const assertNoManualGradleRegistration =
 	function assertNoManualGradleRegistration(contents: string): void {
 		assertNotRegisteredManually(
 			MANUAL_GRADLE_PROJECT_PATTERN.test(contents),
 			'android/app/build.gradle',
-			'delete the implementation project(":c15t-react-native") line'
+			'delete the implementation project(":inth-react-native") line'
 		);
 	};

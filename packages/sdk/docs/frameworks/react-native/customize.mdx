@@ -32,7 +32,7 @@ renderers. This theme sets the primary and decision colors, the button radius,
 spacing, type sizes, the headline face and a pill shape for the decision
 buttons:
 
-```json title="src/c15t/consent-theme.json"
+```json title="src/inth/consent-theme.json"
 {
 	"colors": {
 		"decision": "#172554",
@@ -64,7 +64,7 @@ Pass the same object to `createConsentTheme` for `ConsentBanner`,
 
 <include src="../../shared/examples/expo-dev/expo-theme-components.mdx" />
 
-The object's type is `ConsentThemeOptions` from `@c15t/react-native`. Each
+The object's type is `ConsentThemeOptions` from `@inth/react-native`. Each
 renderer reads the fields it draws and ignores the rest: the native screens
 ignore `motion`, `typography.fontWeight`, `typography.lineHeight` and the
 colors only the components draw, such as `border`; the components ignore
@@ -91,17 +91,17 @@ button radius, the page gutter and the body size:
 {/* example: fragment */}
 
 ```xml title="Info.plist entries"
-<key>com.c15t.consent.primary</key>
+<key>com.inth.consent.primary</key>
 <string>#2563EB,#60A5FA</string>
-<key>com.c15t.consent.decision</key>
+<key>com.inth.consent.decision</key>
 <string>#172554,#DBEAFE</string>
-<key>com.c15t.consent.textOnDecision</key>
+<key>com.inth.consent.textOnDecision</key>
 <string>#FFFFFF,#172554</string>
-<key>com.c15t.consent.radiusMd</key>
+<key>com.inth.consent.radiusMd</key>
 <real>16</real>
-<key>com.c15t.consent.spaceLg</key>
+<key>com.inth.consent.spaceLg</key>
 <real>28</real>
-<key>com.c15t.consent.fontSizeBase</key>
+<key>com.inth.consent.fontSizeBase</key>
 <real>17</real>
 ```
 
@@ -110,12 +110,12 @@ On Android, add the corresponding metadata inside `<application>`:
 {/* example: fragment */}
 
 ```xml title="AndroidManifest.xml application entries"
-<meta-data android:name="com.c15t.consent.PRIMARY" android:value="#2563EB,#60A5FA" />
-<meta-data android:name="com.c15t.consent.DECISION" android:value="#172554,#DBEAFE" />
-<meta-data android:name="com.c15t.consent.TEXT_ON_DECISION" android:value="#FFFFFF,#172554" />
-<meta-data android:name="com.c15t.consent.RADIUS_MD" android:value="16" />
-<meta-data android:name="com.c15t.consent.SPACE_LG" android:value="28" />
-<meta-data android:name="com.c15t.consent.FONT_SIZE_BASE" android:value="17" />
+<meta-data android:name="com.inth.consent.PRIMARY" android:value="#2563EB,#60A5FA" />
+<meta-data android:name="com.inth.consent.DECISION" android:value="#172554,#DBEAFE" />
+<meta-data android:name="com.inth.consent.TEXT_ON_DECISION" android:value="#FFFFFF,#172554" />
+<meta-data android:name="com.inth.consent.RADIUS_MD" android:value="16" />
+<meta-data android:name="com.inth.consent.SPACE_LG" android:value="28" />
+<meta-data android:name="com.inth.consent.FONT_SIZE_BASE" android:value="17" />
 ```
 
 A single `#RRGGBB` color applies in both appearances. A comma-separated pair
@@ -174,8 +174,8 @@ does not select a different consent provider.
 
 ## Use Inth attribution
 
-Set `com.c15t.consent.brandingProvider` to `inth` in iOS `Info.plist`, or
-`com.c15t.consent.BRANDING_PROVIDER` to `inth` in Android application metadata.
+Set `com.inth.consent.brandingProvider` to `inth` in iOS `Info.plist`, or
+`com.inth.consent.BRANDING_PROVIDER` to `inth` in Android application metadata.
 Use `c15t` for the other built-in provider. Both names use bundled marks.
 
 For custom attribution, set `brandingName` and optionally `brandingMark` on
@@ -190,7 +190,7 @@ or accessibility text needs more space.
 
 ## Native setting reference
 
-Every iOS suffix below starts with `com.c15t.consent.`. Android suffixes use
+Every iOS suffix below starts with `com.inth.consent.`. Android suffixes use
 the same prefix inside application metadata. The Expo column is the field in
 the config plugin's `theme` option.
 
@@ -236,7 +236,7 @@ The native presenter reads every label from `@c15t/translations`, in the
 policy's translation language, on iOS and Android alike. Buttons, headings and
 category names use the web banner's keys, so they read "Accept All" and
 "Reject All". App-only sentences, such as the category explanations and save
-errors, come from native-only keys in the same package. A language c15t has
+errors, come from native-only keys in the same package. A language Inth has
 no copy for falls back to English.
 
 `headline` and `introduction` replace the first-layer copy in every language.

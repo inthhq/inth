@@ -155,7 +155,7 @@ export const ROWS = {
 	coldStartOverhead: {
 		budgetKey: 'cold_start_overhead_ms',
 		id: 'cold_start_overhead_ms',
-		label: 'cold-start overhead attributable to c15t',
+		label: 'cold-start overhead attributable to Inth',
 		surface: 'react-native-js',
 		unit: 'ms',
 	},

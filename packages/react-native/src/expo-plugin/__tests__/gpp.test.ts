@@ -11,7 +11,7 @@ import {
 	IOS_GPP_PLIST_KEYS,
 	IOS_PLIST_KEY,
 } from '../constants';
-import { C15tPluginError } from '../errors';
+import { InthPluginError } from '../errors';
 import { applyInfoPlist } from '../ios';
 import { resolveParams } from '../params';
 import { FIXTURE_DIR } from './helpers';
@@ -143,6 +143,6 @@ describe('the gpp option', () => {
 				// @ts-expect-error -- the value app.json would carry
 				gpp: { mspaMode: 'signatory' },
 			})
-		).toThrow(C15tPluginError);
+		).toThrow(InthPluginError);
 	});
 });

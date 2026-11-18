@@ -31,7 +31,7 @@ import {
 	isProtocolVersionSupported,
 	MAX_SUPPORTED_PROTOCOL_VERSION,
 	MIN_SUPPORTED_PROTOCOL_VERSION,
-	NATIVE_C15T_MODULE_NAME,
+	NATIVE_INTH_MODULE_NAME,
 	NATIVE_EVENT_NAMES,
 	PROTOCOL_VERSION,
 } from '../index';
@@ -201,7 +201,7 @@ describe('protocol handshake', () => {
 	test('the mismatch message names both sides and the fix', () => {
 		const message = describeProtocolMismatch(99);
 		expect(message).toContain('99');
-		expect(message).toContain('@c15t/react-native');
+		expect(message).toContain('@inth/react-native');
 		expect(message).toContain('Rebuild');
 		expect(message).toContain(
 			`${MIN_SUPPORTED_PROTOCOL_VERSION} to ${MAX_SUPPORTED_PROTOCOL_VERSION}`
@@ -211,7 +211,7 @@ describe('protocol handshake', () => {
 
 describe('native boundary constants', () => {
 	test('the module name matches the TurboModule lookup', () => {
-		expect(NATIVE_C15T_MODULE_NAME).toBe('C15t');
+		expect(NATIVE_INTH_MODULE_NAME).toBe('Inth');
 	});
 
 	test('a device with no app context has no overrides and one language', () => {

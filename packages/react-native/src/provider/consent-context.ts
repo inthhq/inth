@@ -30,7 +30,7 @@ export const useConsentClient = function useConsentClient(): ConsentClient {
 
 	if (client === null) {
 		throw new Error(
-			'@c15t/react-native hooks need a <ConsentProvider> above them in the tree. Render <ConsentProvider> once, near the root of your app, and mount the consent UI inside it.'
+			'@inth/react-native hooks need a <ConsentProvider> above them in the tree. Render <ConsentProvider> once, near the root of your app, and mount the consent UI inside it.'
 		);
 	}
 

@@ -1,5 +1,5 @@
 {
-	"description": "The web v3 consent-record envelope written into native protected storage. It is a real c15t format and not this one, so a native core that read it would be granting consent out of a codec it has never written and cannot re-derive.",
+	"description": "The web v3 consent-record envelope written into native protected storage. It is a real Inth format and not this one, so a native core that read it would be granting consent out of a codec it has never written and cannot re-derive.",
 	"expected": {
 		"read": {
 			"decoded": false,

@@ -1,5 +1,5 @@
 {
-	"description": "A c15t install that loaded the vendor list but recorded nothing: every vector empty, so the string is all of the fixed-width fields and three zero-length vectors.",
+	"description": "An Inth install that loaded the vendor list but recorded nothing: every vector empty, so the string is all of the fixed-width fields and three zero-length vectors.",
 	"expected": {
 		"decode": {
 			"fields": {

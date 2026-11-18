@@ -1,13 +1,13 @@
 ---
 title: Consent in WebViews
-description: Pass the consent a visitor gave in your Swift, Android or React Native app to your own site in a WebView, so web c15t shows no second banner.
+description: Pass the consent a visitor gave in your Swift, Android or React Native app to your own site in a WebView, so web Inth shows no second banner.
 group: guides
-seoTitle: Sync app consent into WebViews with c15t
-seoDescription: Hand native consent from a Swift, Kotlin or React Native app to web c15t in a WebView. No second banner, listed origins only, no subject ID.
+seoTitle: Sync app consent into WebViews with Inth
+seoDescription: Hand native consent from a Swift, Kotlin or React Native app to web Inth in a WebView. No second banner, listed origins only, no subject ID.
 ---
 
 When your app opens your own site in a WebView, the site's banner shows again,
-because web c15t cannot see the choice the visitor made in the app. Two changes
+because web Inth cannot see the choice the visitor made in the app. Two changes
 fix this: the app injects its consent into the WebView, and the site reads it
 with `webViewConsentSource()`.
 
@@ -47,9 +47,9 @@ nothing and behaves as it would in a browser.
 ## Set up the site
 
 Pass `webViewConsentSource()` as the `consentSource` option wherever you
-configure c15t. Inside a WebView your app set up for this origin, it returns a
+configure Inth. Inside a WebView your app set up for this origin, it returns a
 source that reads the app's consent. Everywhere else, including a normal
-browser and server rendering, it returns `undefined`, and c15t behaves as if
+browser and server rendering, it returns `undefined`, and Inth behaves as if
 the option were not set.
 
 {/* example: fragment */}
@@ -82,13 +82,13 @@ returned object for as long as the WebView lives.
 
 ### Swift
 
-`ConsentWebView` is in `C15tApple`. It adds a main-frame user script to the web
+`ConsentWebView` is in `InthApple`. It adds a main-frame user script to the web
 view's `WKUserContentController` and replaces it when consent changes, so every
 page load gets the current state, and a loaded page gets each change.
 
 ```swift
-import C15tApple
-import C15tCore
+import InthApple
+import InthCore
 import WebKit
 
 final class SiteViewController: UIViewController {
@@ -98,7 +98,7 @@ final class SiteViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view = webView
-        guard let core = C15t.current else { return }
+        guard let core = Inth.current else { return }
         do {
             consentSync = try ConsentWebView(
                 webView: webView,
@@ -129,13 +129,13 @@ web view stays in use.
 
 ### Kotlin
 
-`ConsentWebView` is in `com.c15t.android`. It uses
+`ConsentWebView` is in `com.inth.android`. It uses
 `WebViewCompat.addDocumentStartJavaScript` from `androidx.webkit`, with your
 origins as the origin rules.
 
 ```kotlin
-import com.c15t.android.ConsentWebView
-import com.c15t.core.C15t
+import com.inth.android.ConsentWebView
+import com.inth.core.Inth
 
 class SiteActivity : AppCompatActivity() {
     private var consentSync: ConsentWebView? = null
@@ -144,7 +144,7 @@ class SiteActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         val webView = WebView(this).apply { settings.javaScriptEnabled = true }
         setContentView(webView)
-        val core = C15t.current ?: return
+        val core = Inth.current ?: return
         consentSync = ConsentWebView.attach(webView, core, listOf("https://www.example.com")) {
             showConsentPreferences()
         }
@@ -174,7 +174,7 @@ page shows its own banner.
 {/* example: fragment */}
 
 ```tsx
-import { useWebViewConsent } from '@c15t/react-native';
+import { useWebViewConsent } from '@inth/react-native';
 import { WebView } from 'react-native-webview';
 
 export function Site({ onOpenPrivacy }: { onOpenPrivacy: () => void }) {
@@ -200,7 +200,7 @@ when the page starts loading.
 ## Choices made in the page
 
 Consent flows one way, from the app to the page. The page cannot record a
-choice: under `webViewConsentSource()` web c15t shows no banner or dialog, and
+choice: under `webViewConsentSource()` web Inth shows no banner or dialog, and
 `acceptAll()` and similar calls are refused. A page has no way to prove that a
 person, and not some script on it, made a choice, so the app does not accept
 choices from it.
@@ -211,7 +211,7 @@ on the page, for example from a "Cookie settings" link, calls your
 frame holds, so an iframe on your site cannot send one, on any platform.
 Swift and Android also check the frame and origin the WebView reports. React
 Native also checks the page's origin and ignores requests less than a second
-apart. When the visitor saves in the app, the page receives the new state. If a saved change withdraws a category the page was using, web c15t
+apart. When the visitor saves in the app, the page receives the new state. If a saved change withdraws a category the page was using, web Inth
 reloads the page, unless you set `reloadOnConsentRevoked: false`.
 
 ## Security
@@ -227,7 +227,7 @@ reloads the page, unless you set `reloadOnConsentRevoked: false`.
   app.
 - When a page stops being listed, because you remove its origin or close the
   helper, the app first tells that page to stop: it denies every optional
-  category and no longer follows the app. If it was using a category, web c15t
+  category and no longer follows the app. If it was using a category, web Inth
   reloads it, and the reload shows your site's own banner. It never keeps a
   grant the app can no longer update.
 - On iOS, one `WKUserContentController` is one consent scope, because its
@@ -236,10 +236,10 @@ reloads the page, unless you set `reloadOnConsentRevoked: false`.
   web view's consent never reaches another web view's pages. Android and
   `react-native-webview` inject per WebView.
 - In a normal browser, `webViewConsentSource()` returns `undefined` unless a
-  script that ran before c15t defined the object. Such a script could equally
-  write c15t's own consent cookie.
+  script that ran before Inth defined the object. Such a script could equally
+  write Inth's own consent cookie.
 
-`packages/native-protocol/CONTRACT.md` in the c15t repository describes the injected scripts and
+`packages/native-protocol/CONTRACT.md` in the Inth repository describes the injected scripts and
 the state in full.
 
 ## Check that it works

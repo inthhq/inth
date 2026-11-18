@@ -16,7 +16,7 @@ const DAY_MS = 86_400_000;
 const REEXPORT =
 	'bunx tsx scripts/export-mobile-policy.ts --endpoint <endpoint> --expires-at <ISO date> --out <file>';
 
-const fixtures = execFileSync('git', ['ls-files', '*c15t-policy.json'], {
+const fixtures = execFileSync('git', ['ls-files', '*inth-policy.json'], {
 	cwd: REPO_ROOT,
 	encoding: 'utf8',
 })

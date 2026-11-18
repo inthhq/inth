@@ -4,13 +4,13 @@ description: Build your own SwiftUI consent prompt, preferences and IAB screens 
 group: frameworks
 ---
 
-Build your own consent screens from the headless blocks in `C15tConsentUI`.
+Build your own consent screens from the headless blocks in `InthConsentUI`.
 They decide when a prompt is owed, hold the draft, save it, supply the
 translated copy and handle VoiceOver. They draw nothing, so layout, type,
 colour and motion are yours. The stock screens run on the same blocks.
 
-Link `C15tCore`, `C15tApple` and `C15tConsentUI`. Install with
-`C15tApple.install(_:)` during launch, using the same `C15tAppleConfiguration`
+Link `InthCore`, `InthApple` and `InthConsentUI`. Install with
+`InthApple.install(_:)` during launch, using the same `InthAppleConfiguration`
 as the [quickstart](/docs/frameworks/swift/quickstart), and leave out its
 `.c15tConsent` modifier. Your app owns the layout, the privacy-policy link and
 a standing Privacy settings action.

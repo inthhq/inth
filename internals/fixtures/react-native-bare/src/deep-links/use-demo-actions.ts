@@ -8,7 +8,7 @@ import {
 	useIdentify,
 	useSaveConsents,
 	useSetOverrides,
-} from '@c15t/react-native';
+} from '@inth/react-native';
 import { useMemo } from 'react';
 
 import type { DemoActions } from './verbs';

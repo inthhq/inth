@@ -1,0 +1,121 @@
+import Foundation
+
+/// Where a ``WebViewConsentSync`` puts its scripts. Calls arrive on the web view's
+/// thread, through the `post` the sync was given.
+public protocol WebViewConsentTarget: AnyObject {
+    /// Replace this sync's document-start script with `script`.
+    func install(_ script: String)
+    /// Run `script` in the loaded main frame.
+    func evaluate(_ script: String)
+    /// Remove this sync's document-start script.
+    func uninstall()
+}
+
+/// Keeps one web view in step with a ``ConsentCore``, with no WebKit in it.
+///
+/// The platform glue (`ConsentWebView` in InthApple, or a host's own) supplies a
+/// ``WebViewConsentTarget`` and a `post` that runs work on the web view's thread.
+/// Every ordering rule lives here, so a plain `swift test` can check it:
+///
+/// - the core is observed before the first state is read, so a change between
+///   the two is not missed;
+/// - an unchanged state is not pushed again;
+/// - a replacement keeps the secrets of the sync it replaces, because a loaded
+///   page only accepts the token it was given at document start;
+/// - an origin that stops being listed is revoked first: a page loaded from it
+///   gets a "no state" update it still accepts, so it cannot keep the last state,
+///   grants included, after the app stops talking to it. ``close()`` revokes all;
+/// - a sync released without ``close()`` still removes its script. Its web view is
+///   gone by then, so there is no page left to revoke.
+///
+/// Every method runs on the web view's thread.
+public final class WebViewConsentSync: @unchecked Sendable {
+    /// The scripts this sync injects, with the secrets it uses.
+    public let script: WebViewConsentScript
+    private let core: ConsentCore
+    private let target: WebViewConsentTarget
+    private let post: (@escaping () -> Void) -> Void
+    private var subscription: ConsentSubscription?
+    private var published: WebViewConsentState?
+    private var closed = false
+
+    /// Start syncing `core` into `target` for `allowedOrigins`.
+    ///
+    /// - Parameters:
+    ///   - replacing: The sync this one replaces on the same web view. It is closed,
+    ///     origins it no longer lists are revoked, and its token and request key
+    ///     carry over.
+    ///   - secretsFrom: Scripts whose token and request key to use, when this web
+    ///     view shares its document-start scripts with others (one
+    ///     `WKUserContentController` for several web views). `replacing` wins.
+    ///   - post: Runs a block on the web view's thread.
+    /// - Throws: ``WebViewConsentScript/OriginError`` when an origin is not accepted
+    ///   or the list is empty.
+    public init(
+        core: ConsentCore,
+        allowedOrigins: [String],
+        target: WebViewConsentTarget,
+        replacing: WebViewConsentSync? = nil,
+        secretsFrom: WebViewConsentScript? = nil,
+        post: @escaping (@escaping () -> Void) -> Void
+    ) throws {
+        let script = try (replacing?.script ?? secretsFrom)?.replacingOrigins(allowedOrigins)
+            ?? WebViewConsentScript(allowedOrigins: allowedOrigins)
+        self.script = script
+        replacing?.close(revoking: replacing?.script.origins.filter { !script.origins.contains($0) } ?? [])
+        self.core = core
+        self.target = target
+        self.post = post
+        let observer = Observer { [weak self] in
+            post { self?.publish() }
+        }
+        // Observe first, so a change between the first read and the subscription
+        // is not missed. The handle owns the closure, which reaches this sync weakly.
+        subscription = core.onChange { _ in observer.changed() }
+        publish()
+    }
+
+    deinit {
+        if !closed {
+            subscription?.cancel()
+            target.uninstall()
+        }
+    }
+
+    /// Push the current state, if it changed since the last push.
+    public func publish() {
+        guard !closed else { return }
+        let state = WebViewConsentState(core: core)
+        guard state != published else { return }
+        published = state
+        target.install(script.documentStart(state))
+        // The update script checks the page origin itself, so a page that navigated
+        // off the list gets nothing.
+        target.evaluate(script.update(state))
+    }
+
+    /// Stop syncing. The loaded page stops following the app (every optional
+    /// category denied), and pages loaded afterwards get nothing. Safe to call more
+    /// than once.
+    public func close() {
+        close(revoking: script.origins)
+    }
+
+    /// Close, revoking only `origins`: those a replacement no longer lists.
+    private func close(revoking origins: [String]) {
+        guard !closed else { return }
+        closed = true
+        subscription?.cancel()
+        subscription = nil
+        if !origins.isEmpty {
+            target.evaluate(script.revoke(fromOrigins: origins, previous: published))
+        }
+        target.uninstall()
+    }
+
+    /// Carries the non-`Sendable` `post` into the core's callback. Called on any queue.
+    private final class Observer: @unchecked Sendable {
+        let changed: () -> Void
+        init(_ changed: @escaping () -> Void) { self.changed = changed }
+    }
+}

@@ -1,5 +1,5 @@
 /**
- * The five vendor SDKs the c15t integrations control, started for real.
+ * The five vendor SDKs the Inth integrations control, started for real.
  *
  * Each SDK starts in its refused state, as the integration docs require, and is
  * handed to the same `connectApp*` functions the documentation shows. Traffic goes
@@ -11,7 +11,7 @@
  */
 
 import { createInstance as createAmplitude } from '@amplitude/analytics-react-native';
-import type { ConsentIntegration } from '@c15t/react-native/integrations';
+import type { ConsentIntegration } from '@inth/react-native/integrations';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
 	getAnalytics,
@@ -43,9 +43,9 @@ export type VendorName = (typeof VENDOR_NAMES)[number];
 
 /** Placeholder project keys. The capture server accepts anything. */
 const FAKE_KEYS = {
-	amplitude: 'c15t_e2e_amplitude_key',
-	mixpanel: 'c15t_e2e_mixpanel_token',
-	posthog: 'phc_c15t_e2e',
+	amplitude: 'inth_e2e_amplitude_key',
+	mixpanel: 'inth_e2e_mixpanel_token',
+	posthog: 'phc_inth_e2e',
 } as const;
 
 /** Upper bound for one vendor's flush, so a stuck SDK fails the probe. */
@@ -61,16 +61,16 @@ export interface VendorProbeResult {
 	readonly finishedAt: number;
 }
 
-/** The running SDKs and their c15t connections. */
+/** The running SDKs and their Inth connections. */
 export interface RealVendorSdks {
-	/** One app-lifetime c15t connection per vendor. */
+	/** One app-lifetime Inth connection per vendor. */
 	readonly integrations: Readonly<Record<VendorName, ConsentIntegration>>;
 	/**
 	 * Settle every integration with `sync()`, then send one event named `name`
 	 * through every SDK and flush each one.
 	 *
 	 * The calls are not gated on consent: the point is to see whether the
-	 * vendor's own opt-out, set by c15t, drops them. Sentry gets a breadcrumb and
+	 * vendor's own opt-out, set by Inth, drops them. Sentry gets a breadcrumb and
 	 * a client flush. Replay segments upload on Sentry's own schedule, and
 	 * `Replay.flush()` is avoided because it starts a replay when none is running.
 	 */
@@ -110,7 +110,7 @@ const withTimeout = async <ResultType>(
 };
 
 /**
- * Start every SDK refused, connect each one to c15t, and wait for the first apply.
+ * Start every SDK refused, connect each one to Inth, and wait for the first apply.
  *
  * @param options - Capture server origin and an error reporter.
  * @returns The connected SDKs, once every integration's `ready` has settled.
@@ -127,7 +127,7 @@ export const startRealVendorSdks = async ({
 		onError(vendor, error);
 	};
 
-	// Sentry: replay is started only by c15t. Both sample rates stay at zero so
+	// Sentry: replay is started only by Inth. Both sample rates stay at zero so
 	// Sentry never records on its own, and error reporting is left as configured.
 	Sentry.init({
 		dsn: endpoints.sentryDsn,
@@ -230,7 +230,7 @@ export const startRealVendorSdks = async ({
 				await amplitude.flush().promise;
 			}),
 			attempt('sentry', async () => {
-				Sentry.addBreadcrumb({ category: 'c15t.probe', message: name });
+				Sentry.addBreadcrumb({ category: 'inth.probe', message: name });
 				await Sentry.flush();
 			}),
 			// The modular API is typed void, matching the web SDK.

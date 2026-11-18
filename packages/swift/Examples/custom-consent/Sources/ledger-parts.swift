@@ -1,4 +1,4 @@
-import C15tConsentUI
+import InthConsentUI
 import SwiftUI
 
 // The ledger look: paper and ink, serif and monospace type, ruled rows, a square switch. Every

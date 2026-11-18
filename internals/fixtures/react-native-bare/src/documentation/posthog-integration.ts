@@ -1,9 +1,9 @@
 // #region docs:rn-posthog-integration title="posthog-consent.ts"
-import { connectPostHog } from '@c15t/react-native/integrations';
+import { connectPostHog } from '@inth/react-native/integrations';
 import type {
 	ConsentIntegration,
 	PostHogClient,
-} from '@c15t/react-native/integrations';
+} from '@inth/react-native/integrations';
 
 export const connectAppPostHog = (
 	posthog: PostHogClient,

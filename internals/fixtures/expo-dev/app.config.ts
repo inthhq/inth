@@ -1,4 +1,4 @@
-import type { C15tPluginProps } from '@c15t/react-native/expo-plugin';
+import type { InthPluginProps } from '@inth/react-native/expo-plugin';
 import type { ConfigContext, ExpoConfig } from 'expo/config';
 import type { ConfigPlugin } from 'expo/config-plugins';
 import expoPackage from 'expo/package.json';
@@ -10,9 +10,9 @@ import expoPackage from 'expo/package.json';
  * React Native components. The Expo and Customize docs pages show this block.
  */
 // #region docs:expo-theme title="app.config.ts"
-import consentTheme from './src/c15t/consent-theme.json';
+import consentTheme from './src/inth/consent-theme.json';
 
-const theme: C15tPluginProps['theme'] = consentTheme;
+const theme: InthPluginProps['theme'] = consentTheme;
 // #endregion docs:expo-theme
 
 /**
@@ -39,15 +39,15 @@ const isOff = (value: string | undefined): boolean =>
  * backend URL and `C15T_E2E_POLICY`, the policy resource it exported from that
  * backend. Normal builds keep the hosted demo and the committed resource.
  *
- * The c15t plugin accepts only an Inth project URL, and a Release build cannot
+ * The Inth plugin accepts only an Inth project URL, and a Release build cannot
  * use `dryRun`. So in this mode the plugin gets the demo project as a placeholder
- * with `autoBootstrap: false`, and `plugins/with-c15t-e2e-install` makes the
+ * with `autoBootstrap: false`, and `plugins/with-inth-e2e-install` makes the
  * native app install the core against the loopback backend before React Native
  * starts. The JavaScript screens still read the loopback URL.
  */
 const appE2e = process.env.EXPO_PUBLIC_C15T_APP_E2E === '1';
 
-const consentCategories: NonNullable<C15tPluginProps['consentCategories']> = [
+const consentCategories: NonNullable<InthPluginProps['consentCategories']> = [
 	'necessary',
 	'functionality',
 	'experience',
@@ -107,7 +107,7 @@ Vous pouvez changer cela dans Réglages à tout moment.`,
 您可以随时在设置中更改。`,
 };
 
-const c15tPluginProps: C15tPluginProps = {
+const inthPluginProps: InthPluginProps = {
 	androidMavenRepository: (process.env.C15T_MAVEN_URL ?? '').startsWith('file:')
 		? { url: process.env.C15T_MAVEN_URL ?? '' }
 		: {
@@ -122,17 +122,17 @@ const c15tPluginProps: C15tPluginProps = {
 	backendURL: appE2e ? 'https://example-inth.inth.app' : backendURL,
 	consentCategories,
 	// `C15T_DRY_RUN=1` drops consent records and lets a debug build use a staging
-	// or loopback URL. A release build refuses to start c15t with it on.
+	// or loopback URL. A release build refuses to start Inth with it on.
 	dryRun: process.env.C15T_DRY_RUN === '1',
 	// The App Tracking Transparency opt-in. Consent to marketing cookies is not Apple
 	// tracking authorization, so this fixture asks for both: the banner decides what
-	// c15t may store, and the Apple sheet decides what the advertising identifier is
+	// Inth may store, and the Apple sheet decides what the advertising identifier is
 	// worth. See the tracking card on the Consent tab for the request itself.
 	enableAppTrackingTransparency: true,
 	// An App E2E build installs the core itself, with its own policy resource.
 	...(appE2e
 		? { autoBootstrap: false }
-		: { policyResource: process.env.C15T_E2E_POLICY ?? './c15t-policy.json' }),
+		: { policyResource: process.env.C15T_E2E_POLICY ?? './inth-policy.json' }),
 	// `C15T_NATIVE_UI=0` builds without the stock native consent screens; the app
 	// then draws its own with the headless hooks (src/screens/headless.tsx).
 	...(process.env.C15T_NATIVE_UI === '0' ? { nativeUI: false } : { theme }),
@@ -157,8 +157,8 @@ const plugins: PluginEntry[] = [
 	// the plugin's Expo Go guard passes on its own. There is no `skipNativeBuildCheck`
 	// here on purpose: this project has no Expo Go path, and a bare `expo config` in
 	// CI should keep saying so.
-	['@c15t/react-native', c15tPluginProps],
-	// The vendor SDKs the c15t integrations control. They are always linked and
+	['@inth/react-native', inthPluginProps],
+	// The vendor SDKs the Inth integrations control. They are always linked and
 	// start only in an App E2E build (`src/e2e/vendor-journey-app.tsx`).
 	[
 		'expo-build-properties',
@@ -187,13 +187,13 @@ const plugins: PluginEntry[] = [
 	'@react-native-firebase/analytics',
 	// No Sentry project: nothing uploads source maps or debug symbols.
 	['@sentry/react-native/expo', { disableAutoUpload: true }],
-	// c15t's 16.4 floor for every pod, as the bare fixture's Podfile sets it.
+	// Inth's 16.4 floor for every pod, as the bare fixture's Podfile sets it.
 	['./plugins/with-pod-deployment-floor', { floor: '16.4' }],
 	// The native install against the loopback backend, in an App E2E build only.
 	...(appE2e
 		? [
 				[
-					'./plugins/with-c15t-e2e-install',
+					'./plugins/with-inth-e2e-install',
 					{
 						backendURL,
 						consentCategories,
@@ -210,10 +210,10 @@ const plugins: PluginEntry[] = [
  * unsorted object.
  */
 /* eslint-disable eslint/sort-keys */
-const c15tExpoConfig = ({ config }: ConfigContext): ExpoConfig => ({
+const inthExpoConfig = ({ config }: ConfigContext): ExpoConfig => ({
 	...config,
-	name: 'c15t Expo Dev',
-	slug: 'c15t-expo-dev',
+	name: 'Inth Expo Dev',
+	slug: 'inth-expo-dev',
 	version: '1.0.0',
 	orientation: 'portrait',
 	scheme: 'c15texpodev',
@@ -222,21 +222,21 @@ const c15tExpoConfig = ({ config }: ConfigContext): ExpoConfig => ({
 	// react-native-web for a fixture that will never render in a browser.
 	platforms: ['ios', 'android'],
 	// No `newArchEnabled` here. Expo SDK 57 dropped the field because the New
-	// Architecture is the only option, which is what @c15t/react-native needs: the
+	// Architecture is the only option, which is what @inth/react-native needs: the
 	// TurboModule has no legacy-bridge fallback.
 	ios: {
-		bundleIdentifier: 'com.c15t.expodev',
+		bundleIdentifier: 'com.inth.expodev',
 		// Placeholder Firebase project; firebase.json keeps collection off.
 		googleServicesFile: './vendors/GoogleService-Info.plist',
 		supportsTablet: true,
 	},
 	android: {
 		googleServicesFile: './vendors/google-services.json',
-		package: 'com.c15t.expodev',
+		package: 'com.inth.expodev',
 	},
 	plugins: plugins as ExpoConfig['plugins'],
 	extra: {
-		c15t: {
+		inth: {
 			backendURL,
 			forceFakeNative: !isOff(process.env.EXPO_PUBLIC_C15T_FAKE_NATIVE),
 			sampleIntervalMs:
@@ -245,4 +245,4 @@ const c15tExpoConfig = ({ config }: ConfigContext): ExpoConfig => ({
 	},
 });
 
-export default c15tExpoConfig;
+export default inthExpoConfig;

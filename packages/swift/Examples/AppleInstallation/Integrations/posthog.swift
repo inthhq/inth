@@ -1,6 +1,6 @@
 // #region docs:swift-posthog-binding title="PostHogOwner.swift"
-import C15tApple
-import C15tCore
+import InthApple
+import InthCore
 
 final class PostHogOwner {
     private let consent: PostHogIntegration

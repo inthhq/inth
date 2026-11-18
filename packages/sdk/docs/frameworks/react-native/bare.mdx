@@ -1,6 +1,6 @@
 ---
 title: Bare React Native
-description: Configure iOS and Android native startup in a bare React Native app, link the c15t package and open the shared native consent screens.
+description: Configure iOS and Android native startup in a bare React Native app, link the Inth package and open the shared native consent screens.
 group: frameworks
 ---
 
@@ -18,7 +18,7 @@ the private package tarball and its matching Maven repository access, then
 install the tarball from your app directory:
 
 ```sh
-npm install /absolute/path/to/c15t-react-native.tgz
+npm install /absolute/path/to/inth-react-native.tgz
 ```
 
 Prepare an Inth project URL and your app's privacy-policy URL as described in
@@ -41,7 +41,7 @@ bundle exec pod install
 If your project does not use Bundler, run its existing pod-install command.
 Open the generated `.xcworkspace` when building in Xcode.
 
-Autolinking discovers `C15tReactNative.podspec`. That pod compiles the native
+Autolinking discovers `InthReactNative.podspec`. That pod compiles the native
 core, Apple services and SwiftUI screens included in the installed package.
 Keep this as the single consent engine in an RN app. Adding separate core
 SwiftPM products to the same process would create a second native authority.
@@ -54,12 +54,12 @@ In your app target's `Info.plist`, add these entries inside the root `<dict>`:
 
 Replace `https://example-inth.inth.app/` with the project URL from your Inth
 dashboard. Any other host stops the launch with
-`C15T_CONFIGURATION_BACKEND_URL` in the console.
+`INTH_CONFIGURATION_BACKEND_URL` in the console.
 Adjust the optional categories to match the features your app uses.
 `necessary` stays enabled.
 
-The `com.c15t.policy.resource` entry is optional. To use it, export
-`c15t-policy.json` with the [offline policy guide](/docs/guides/mobile-offline),
+The `com.inth.policy.resource` entry is optional. To use it, export
+`inth-policy.json` with the [offline policy guide](/docs/guides/mobile-offline),
 add it to the app target, and check Copy Bundle Resources. Remove that entry
 if you are starting with online policy resolution only.
 
@@ -70,7 +70,7 @@ Keep App Transport Security enabled for your production HTTPS endpoint.
 
 ### Make the native dependencies reachable
 
-The RN adapter uses versioned `com.c15t` core, platform and UI artifacts. Add the
+The RN adapter uses versioned `com.inth` core, platform and UI artifacts. Add the
 repository supplied with your private SDK access to the app's Gradle
 repositories. This is the repository block used by the reference RN app:
 
@@ -83,12 +83,12 @@ your build environment. Never put a token in app metadata or JavaScript.
 
 If your project centralizes repositories in `settings.gradle`, add the same
 repository there instead of declaring project repositories. Keep the
-`com.c15t` group filter. Preserve your app's existing React Native Gradle
+`com.inth` group filter. Preserve your app's existing React Native Gradle
 plugin setup; consuming the native artifacts does not require including the
 SDK producer's Gradle build.
 
 The adapter selects the native version. Do not add a separate, newer
-`com.c15t` dependency by guessing from the npm version.
+`com.inth` dependency by guessing from the npm version.
 
 ### Configure native launch
 
@@ -100,8 +100,8 @@ Keep `android.permission.INTERNET` in
 
 Replace the project URL and adjust the category list as on iOS. If you use the
 optional offline resource, put it in
-`android/app/src/main/assets/c15t-policy.json`. Otherwise remove the
-`com.c15t.POLICY_RESOURCE` metadata entry.
+`android/app/src/main/assets/inth-policy.json`. Otherwise remove the
+`com.inth.POLICY_RESOURCE` metadata entry.
 
 The AndroidX Startup initializer installs and hydrates consent before your
 first Activity and JavaScript frame. `ACCESS_NETWORK_STATE` enables reconnect
@@ -151,15 +151,15 @@ If your native app must install the engine itself, as a brownfield app or one
 with IAB publisher restrictions does, disable it and install the engine before
 RN starts. Both installers take your Inth project URL:
 
-- iOS uses `com.c15t.reactnative.AutoBootstrap: false`. Call
-  `C15tApple.install(C15tAppleConfiguration(backendURL:))` from the
-  `C15tReactNative` module, then attach the core with
-  `C15tReactNativeBootstrap.install(core)`. Set
+- iOS uses `com.inth.reactnative.AutoBootstrap: false`. Call
+  `InthApple.install(InthAppleConfiguration(backendURL:))` from the
+  `InthReactNative` module, then attach the core with
+  `InthReactNativeBootstrap.install(core)`. Set
   `configuration.platform = "rn"` before installing, or requests are
   attributed to a Swift app.
-- Android uses `com.c15t.reactnative.AUTO_BOOTSTRAP: false`. Install through
+- Android uses `com.inth.reactnative.AUTO_BOOTSTRAP: false`. Install through
   the Android platform API before starting the React host, and set
-  `platform = C15tProtocol.PLATFORM_REACT_NATIVE` in `NativeConfig` so requests
+  `platform = InthProtocol.PLATFORM_REACT_NATIVE` in `NativeConfig` so requests
   are attributed to React Native rather than to a Kotlin app.
 
 Use [IAB setup](/docs/guides/mobile-iab) for native CMP and publisher

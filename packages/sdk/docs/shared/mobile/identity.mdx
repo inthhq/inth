@@ -9,7 +9,7 @@ Call `identify(externalId)` after your app knows the signed-in account, and
 gates before resuming optional collection. Keep any backend identity
 verification requirements configured separately.
 
-The c15t subject identifies the consent record. An external ID links that
+The Inth subject identifies the consent record. An external ID links that
 subject to an app account. Logout detaches the account; it does not create a
 new subject or delete the backend audit trail. Category receipts can remain
 with the subject. IAB identity transitions retire existing authority and
@@ -38,9 +38,9 @@ reject-all, account erasure or deletion of remote records.
 | --- | --- |
 | React Native | `useConsentActions().reset()` |
 | Swift | `reset()` on the installed `ConsentCore` |
-| Kotlin | `reset()` on the installed kernel, available as `C15t.current` |
+| Kotlin | `reset()` on the installed kernel, available as `Inth.current` |
 
-Kotlin's static `C15t.uninstall()` is teardown of the process singleton. It leaves
+Kotlin's static `Inth.uninstall()` is teardown of the process singleton. It leaves
 persisted consent intact and is not the consent-reset command.
 
 The engine retains required IAB withdrawal obligations when resetting existing

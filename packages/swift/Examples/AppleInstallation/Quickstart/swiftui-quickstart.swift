@@ -1,6 +1,6 @@
 // #region docs:swift-quickstart-app title="MyApp.swift"
-import C15tApple
-import C15tConsentUI
+import InthApple
+import InthConsentUI
 import SwiftUI
 
 @main
@@ -9,7 +9,7 @@ struct MyApp: App {
         WindowGroup {
             ContentView()
                 .c15tConsent(
-                    C15tAppleConfiguration(
+                    InthAppleConfiguration(
                         backendURL: "https://your-project.inth.app",
                         consentCategories: [.necessary, .measurement, .marketing]
                     ),

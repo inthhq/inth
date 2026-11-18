@@ -448,13 +448,13 @@ describe('tc-string withdrawn vendors', () => {
 });
 
 describe('tc-string populations', () => {
-	test('parity vectors carry only what c15t writes, and always at the day floor', () => {
+	test('parity vectors carry only what Inth writes, and always at the day floor', () => {
 		const parity = FIXTURES.filter((f) => f.population === 'parity');
 		expect(parity.length).toBeGreaterThan(0);
 		for (const fixture of parity) {
 			expect(fixture.expects).toEqual({ decode: true, encode: true });
 			const day = Math.floor(fixture.input.now / 86_400_000) * 86_400_000;
-			// c15t truncates the confirmation time before it reaches the model, so a
+			// Inth truncates the confirmation time before it reaches the model, so a
 			// port that stamps the raw clock cannot reproduce these bytes.
 			expect(fixture.input.model.created).toBe(day);
 			expect(fixture.input.model.lastUpdated).toBe(day);
@@ -466,7 +466,7 @@ describe('tc-string populations', () => {
 		}
 	});
 
-	test('decode-coverage vectors reach past c15t and are not graded on encoding', () => {
+	test('decode-coverage vectors reach past Inth and are not graded on encoding', () => {
 		const coverage = FIXTURES.filter((f) => f.population === 'decode-coverage');
 		expect(coverage.length).toBeGreaterThan(0);
 		for (const fixture of coverage) {

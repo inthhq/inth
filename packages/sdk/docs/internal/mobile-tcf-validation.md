@@ -1,11 +1,11 @@
 ---
 title: Mobile TCF validation
-description: Prepare c15t native review apps, evidence and access for IAB Europe mobile validation.
+description: Prepare Inth native review apps, evidence and access for IAB Europe mobile validation.
 ---
 
 # Mobile TCF validation
 
-c15t needs mobile validation as well as web validation. IAB Europe checks the
+Inth needs mobile validation as well as web validation. IAB Europe checks the
 CMP's UI and technical operation for each environment before listing that
 environment. Native review apps are the practical way to demonstrate both.
 They do not establish approval by themselves.
@@ -30,10 +30,10 @@ confirm whether IAB wants a signed APK, TestFlight invitation or another route.
 A public app-store listing, public source repository and separate app for each
 wrapper are not established requirements in the public sources checked here.
 
-c15t's existing CMP ID is **490**. The
+Inth's existing CMP ID is **490**. The
 [official CMP list](https://cmplist.consensu.org/v2/cmp-list.json), checked on
 2 November 2026, lists it as `Consent Management Inc` with `Web` as its only
-environment. Use 490 when configuring c15t's private mobile review builds.
+environment. Use 490 when configuring Inth's private mobile review builds.
 The internal CMP version remains a separate value and must be supplied.
 
 Prepare mobile validation under this existing registration. The
@@ -64,7 +64,7 @@ form's label into a conformance claim.
 IAB's [v2.3 transition notice](https://iabeurope.eu/all-you-need-to-know-about-the-transition-to-tcf-v2-3/)
 requires the disclosed-vendors segment in newly created TC Strings from
 1 March 2026. No separate official v2.4 mobile transition deadline was verified
-in this research. The c15t [first-release contract](mobile-support.md) targets
+in this research. The Inth [first-release contract](mobile-support.md) targets
 TCF 2.4 and Google Additional Consent v2.
 
 The SDK's semantic version, internal CMP version, GVL version, policy version
@@ -80,8 +80,8 @@ acceptance with the intended submission configuration.
 
 | App | What it demonstrates | Scope limit |
 | --- | --- | --- |
-| iOS `C15tConsentDemo` | SwiftUI host, protected consent storage and standard UserDefaults signals | Simulator builds do not prove physical-device behavior |
-| iOS `C15tUIKitDemo` | UIKit lifecycle hosting the same SwiftUI consent presenter | The consent UI is shared with the SwiftUI host |
+| iOS `InthConsentDemo` | SwiftUI host, protected consent storage and standard UserDefaults signals | Simulator builds do not prove physical-device behavior |
+| iOS `InthUIKitDemo` | UIKit lifecycle hosting the same SwiftUI consent presenter | The consent UI is shared with the SwiftUI host |
 | Android `:consent-demo` | Kotlin/Compose host, protected consent storage and application-default SharedPreferences signals | Build success does not prove device behavior |
 | Bare RN and Expo | Existing native adapters can host the same presenter | The review mode does not complete typed RN/Expo IAB bootstrap or establish wrapper approval |
 
@@ -97,7 +97,7 @@ On the native demo setup screen, select the IAB review option and supply:
 - A public HTTPS Inth project URL whose resolved policy actually uses IAB and
   returns the intended current vendor disclosures.
 - The app's HTTPS privacy policy URL.
-- CMP ID `490` for c15t's review under its existing registration.
+- CMP ID `490` for Inth's review under its existing registration.
 - The internal CMP version, in the 12-bit range, independently of SDK semver.
 - The publisher's two-letter country code.
 - An optional comma-separated vendor scope. An empty scope keeps the served
@@ -154,18 +154,18 @@ implementation:
 
 ```sh
 swift test --package-path examples/native/consent-demo/ios \
-  --scratch-path /tmp/c15t-tcf-review-tests
-bun examples/native/consent-demo/ios/generate-project.ts /tmp/c15t-tcf-review
+  --scratch-path /tmp/inth-tcf-review-tests
+bun examples/native/consent-demo/ios/generate-project.ts /tmp/inth-tcf-review
 xcodebuild build \
-  -project /tmp/c15t-tcf-review/C15tConsentDemo.xcodeproj \
-  -scheme C15tConsentDemo -configuration Release \
+  -project /tmp/inth-tcf-review/InthConsentDemo.xcodeproj \
+  -scheme InthConsentDemo -configuration Release \
   -sdk iphonesimulator \
-  -derivedDataPath /tmp/c15t-tcf-review/derived
+  -derivedDataPath /tmp/inth-tcf-review/derived
 xcodebuild build \
-  -project /tmp/c15t-tcf-review/C15tConsentDemo.xcodeproj \
-  -scheme C15tUIKitDemo -configuration Release \
+  -project /tmp/inth-tcf-review/InthConsentDemo.xcodeproj \
+  -scheme InthUIKitDemo -configuration Release \
   -sdk iphonesimulator \
-  -derivedDataPath /tmp/c15t-tcf-review/derived
+  -derivedDataPath /tmp/inth-tcf-review/derived
 ```
 
 Keep ad-hoc simulator signing enabled for the Keychain probe. These are
@@ -234,7 +234,7 @@ policy check or certify the SDK.
 Follow the [Google mobile certification guide](mobile-google-certification.md)
 for the separate publisher App intake, required test-app screenshots, native
 JSON exports and local signal checks. IAB mobile validation does not establish
-Google App approval. c15t is not currently Google-certified.
+Google App approval. Inth is not currently Google-certified.
 
 Keep public SDK publishing disabled until the applicable approval and
 [mobile release gates](mobile-support.md#first-release-gates) are complete.

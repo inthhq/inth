@@ -1,8 +1,8 @@
-@_spi(C15tInternal) import C15tApple
-@_spi(C15tInternal) import C15tCore
+@_spi(InthInternal) import InthApple
+@_spi(InthInternal) import InthCore
 import Foundation
 import XCTest
-@testable import C15tSwiftUI
+@testable import InthSwiftUI
 
 @MainActor
 final class AppConsentModelTests: XCTestCase {
@@ -91,7 +91,7 @@ final class AppConsentModelTests: XCTestCase {
         var attempts = 0
         let model = AppConsentModel(stockUI: false) {
             attempts += 1
-            if attempts == 1 { throw C15tAppleInstallationError.protectedStorageUnavailable }
+            if attempts == 1 { throw InthAppleInstallationError.protectedStorageUnavailable }
             return core
         }
         XCTAssertNil(model.core)

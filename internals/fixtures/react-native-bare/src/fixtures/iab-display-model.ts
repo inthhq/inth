@@ -1,7 +1,7 @@
 /**
  * The disclosure the example app draws, as one snapshot of web-model data.
  *
- * The drawer in `@c15t/react-native` renders from props and reads no consent
+ * The drawer in `@inth/react-native` renders from props and reads no consent
  * kernel, so a screen showing it has to be handed a whole display model. This
  * is that hand-over, written out: the rows the web resolver builds from the
  * sample GVL in
@@ -28,7 +28,7 @@
 import type {
 	ConsentIabDisplayModel,
 	ConsentIabProcessedVendor,
-} from '@c15t/react-native';
+} from '@inth/react-native';
 /** Partner 1 on a purpose row it claims under consent. */
 const GVL_VENDOR_1: ConsentIabProcessedVendor = {
 	cookieMaxAgeSeconds: 7776000,

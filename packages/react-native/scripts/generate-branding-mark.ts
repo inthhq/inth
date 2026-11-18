@@ -340,8 +340,8 @@ const renderScale = function renderScale(
 	html: string
 ): string {
 	const stamp = `${Date.now()}-${target.pixels}`;
-	const htmlPath = join(tmpdir(), `c15t-mark-${stamp}.html`);
-	const pngPath = join(tmpdir(), `c15t-mark-${stamp}.png`);
+	const htmlPath = join(tmpdir(), `inth-mark-${stamp}.html`);
+	const pngPath = join(tmpdir(), `inth-mark-${stamp}.png`);
 
 	writeFileSync(htmlPath, html);
 

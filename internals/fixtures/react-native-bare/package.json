@@ -2,7 +2,7 @@
 	"name": "@c15t/fixture-react-native-bare",
 	"version": "0.0.0",
 	"private": true,
-	"description": "Bare React Native fixture for @c15t/react-native: native consent kernel, built-in banner and dialog, preference centre, consent-gated loading, and a fake native stub for offline gating checks.",
+	"description": "Bare React Native fixture for @inth/react-native: native consent kernel, built-in banner and dialog, preference centre, consent-gated loading, and a fake native stub for offline gating checks.",
 	"main": "index.js",
 	"scripts": {
 		"android": "react-native run-android",
@@ -22,8 +22,8 @@
 	},
 	"dependencies": {
 		"@amplitude/analytics-react-native": "1.13.0",
-		"@c15t/react-native": "workspace:*",
 		"@c15t/translations": "workspace:*",
+		"@inth/react-native": "workspace:*",
 		"@react-native-async-storage/async-storage": "2.2.0",
 		"@react-native-firebase/analytics": "27.1.0",
 		"@react-native-firebase/app": "27.1.0",

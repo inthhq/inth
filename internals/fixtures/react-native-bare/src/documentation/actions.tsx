@@ -1,5 +1,5 @@
 // #region docs:commit-results title="privacy-actions.tsx"
-import { useSaveConsents } from '@c15t/react-native';
+import { useSaveConsents } from '@inth/react-native';
 import { useState } from 'react';
 import { Button, Text, View } from 'react-native';
 

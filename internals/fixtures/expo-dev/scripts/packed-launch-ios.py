@@ -33,16 +33,16 @@ def files(root):
     return {str(p.relative_to(root)): digest(p) for p in sorted(root.rglob('*')) if p.is_file()}
 
 result = {'passed': False, 'backend': 'https://example-inth.inth.app/', 'sdkInput': str(args.archive.resolve()), 'archiveSha256': digest(args.archive), 'networkFault': 'process-injected NSURLProtocol; every app HTTP(S) request fails with NSURLErrorNotConnectedToInternet before network dispatch; host and other Simulators unchanged'}
-app = out / 'input/c15tExpoDev.app'
+app = out / 'input/inthExpoDev.app'
 app.parent.mkdir()
 shutil.copytree(args.app.resolve(), app, symlinks=True)
 result['appFiles'] = files(app)
 info = plistlib.loads((app / 'Info.plist').read_bytes())
-assert info['CFBundleIdentifier'] == 'com.c15t.expodev'
-assert 'com.c15t.backend.mode' not in info and 'com.c15t.backend.initUrl' not in info
-assert info.get('com.c15t.dryRun', False) is False
-assert info['com.c15t.backend.url'].rstrip('/') == result['backend'].rstrip('/')
-result['hostedPlist'] = {key: value for key, value in info.items() if 'c15t' in key.lower()}
+assert info['CFBundleIdentifier'] == 'com.inth.expodev'
+assert 'com.inth.backend.mode' not in info and 'com.inth.backend.initUrl' not in info
+assert info.get('com.inth.dryRun', False) is False
+assert info['com.inth.backend.url'].rstrip('/') == result['backend'].rstrip('/')
+result['hostedPlist'] = {key: value for key, value in info.items() if 'inth' in key.lower()}
 (out / 'source-head.txt').write_text(run(['git', 'rev-parse', 'HEAD']))
 (out / 'source.patch').write_text(run(['git', 'diff', '--binary']))
 project = out / 'harness'
@@ -50,14 +50,14 @@ project.mkdir()
 (project / 'host.swift').write_text('import UIKit\n@main class Host: UIResponder, UIApplicationDelegate { var window: UIWindow? }\n')
 shutil.copyfile(source / 'packed-consent-journey.swift', project / 'journey.swift')
 (project / 'project.json').write_text(json.dumps({'name': 'PackedAcceptance', 'options': {'deploymentTarget': {'iOS': '16.4'}}, 'settings': {'base': {'SWIFT_VERSION': '5.0', 'CODE_SIGN_IDENTITY': '-', 'CODE_SIGNING_FOR_SIMULATOR': 'YES', 'GENERATE_INFOPLIST_FILE': 'YES'}}, 'targets': {
-    'Host': {'type': 'application', 'platform': 'iOS', 'sources': ['host.swift'], 'settings': {'base': {'PRODUCT_BUNDLE_IDENTIFIER': 'com.c15t.packed-acceptance-host'}}},
-    'Journey': {'type': 'bundle.ui-testing', 'platform': 'iOS', 'sources': ['journey.swift'], 'dependencies': [{'target': 'Host'}], 'settings': {'base': {'PRODUCT_BUNDLE_IDENTIFIER': 'com.c15t.packed-acceptance-tests', 'TEST_TARGET_NAME': 'Host'}}}}, 'schemes': {'PackedAcceptance': {'build': {'targets': {'Host': 'all', 'Journey': ['test']}}, 'test': {'targets': ['Journey']}}}}))
+    'Host': {'type': 'application', 'platform': 'iOS', 'sources': ['host.swift'], 'settings': {'base': {'PRODUCT_BUNDLE_IDENTIFIER': 'com.inth.packed-acceptance-host'}}},
+    'Journey': {'type': 'bundle.ui-testing', 'platform': 'iOS', 'sources': ['journey.swift'], 'dependencies': [{'target': 'Host'}], 'settings': {'base': {'PRODUCT_BUNDLE_IDENTIFIER': 'com.inth.packed-acceptance-tests', 'TEST_TARGET_NAME': 'Host'}}}}, 'schemes': {'PackedAcceptance': {'build': {'targets': {'Host': 'all', 'Journey': ['test']}}, 'test': {'targets': ['Journey']}}}}))
 device = None
 video = None
 try:
     logged('project.log', ['xcodegen', 'generate', '--spec', str(project / 'project.json')])
     runtime = next(r['identifier'] for r in json.loads(run(['xcrun', 'simctl', 'list', 'runtimes', '-j']))['runtimes'] if r['isAvailable'] and r['name'].startswith('iOS 26.4'))
-    device = run(['xcrun', 'simctl', 'create', f'c15t-packed-ios-{os.getpid()}', 'iPhone 17 Pro', runtime]).strip()
+    device = run(['xcrun', 'simctl', 'create', f'inth-packed-ios-{os.getpid()}', 'iPhone 17 Pro', runtime]).strip()
     result['device'] = device
     result['runtime'] = runtime
     (out / 'device-id.txt').write_text(device)
@@ -78,7 +78,7 @@ try:
         if isinstance(value, dict):
             if 'TestBundlePath' in value:
                 value['UITargetAppPath'] = str(app)
-                value['UITargetAppBundleIdentifier'] = 'com.c15t.expodev'
+                value['UITargetAppBundleIdentifier'] = 'com.inth.expodev'
                 value.setdefault('EnvironmentVariables', {})['C15T_PACKED_FAULT'] = str(fault)
                 value['EnvironmentVariables']['C15T_PACKED_NATIVE_PROOF'] = '1' if args.native_proof else '0'
             for child in list(value.values()): configure(child)
@@ -89,7 +89,7 @@ try:
     with (out / 'video.log').open('w') as log:
         video = subprocess.Popen(['xcrun', 'simctl', 'io', device, 'recordVideo', '--codec=h264', str(out / 'journey.mp4')], stdout=log, stderr=subprocess.STDOUT)
     logged('test.log', ['xcodebuild', 'test-without-building', '-xctestrun', str(xctestrun), '-destination', f'platform=iOS Simulator,id={device}', '-resultBundlePath', str(out / 'journey.xcresult'), '-parallel-testing-enabled', 'NO', '-collect-test-diagnostics', 'never'])
-    container = Path(run(['xcrun', 'simctl', 'get_app_container', device, 'com.c15t.expodev', 'data']).strip())
+    container = Path(run(['xcrun', 'simctl', 'get_app_container', device, 'com.inth.expodev', 'data']).strip())
     shutil.copyfile(container / 'Library/Caches/packed-network-fault-loaded.txt', out / 'network-fault-loaded.txt')
     shutil.copyfile(container / 'Library/Caches/packed-network-fault.jsonl', out / 'network-fault.jsonl')
     events = [json.loads(line) for line in (out / 'network-fault.jsonl').read_text().splitlines()]
@@ -115,7 +115,7 @@ finally:
         video.send_signal(__import__('signal').SIGINT)
         video.wait(timeout=30)
     if device:
-        logged('device.log', ['xcrun', 'simctl', 'spawn', device, 'log', 'show', '--last', '10m', '--style', 'compact', '--predicate', 'process == "c15tExpoDev"'])
+        logged('device.log', ['xcrun', 'simctl', 'spawn', device, 'log', 'show', '--last', '10m', '--style', 'compact', '--predicate', 'process == "inthExpoDev"'])
         run(['xcrun', 'simctl', 'io', device, 'screenshot', str(out / 'final.png')])
         run(['xcrun', 'simctl', 'shutdown', device]); run(['xcrun', 'simctl', 'delete', device])
     if (out / 'journey.xcresult').exists():

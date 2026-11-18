@@ -267,7 +267,7 @@ describe('createWebConsentClient', () => {
 		expect(client.isTrackingAllowed('marketing')).toBe(true);
 		expect(client.getWebViewConsent()).toBeNull();
 		await expect(client.requestTrackingAuthorization()).rejects.toMatchObject({
-			code: 'C15T_TRACKING_UNSUPPORTED',
+			code: 'INTH_TRACKING_UNSUPPORTED',
 		});
 	});
 
@@ -587,12 +587,12 @@ describe('dryRun on web', () => {
 });
 
 describe('webOptionsFromManifest', () => {
-	test('reads extra.c15t from the JSON text Expo inlines', () => {
+	test('reads extra.inth from the JSON text Expo inlines', () => {
 		expect(
 			webOptionsFromManifest(
 				JSON.stringify({
 					extra: {
-						c15t: {
+						inth: {
 							backendURL: PROJECT,
 							consentCategories: ['measurement'],
 							domain: null,
@@ -677,9 +677,9 @@ describe('the shared provider on web', () => {
 		tree.unmount();
 	});
 
-	test('names the Expo config plugin when the app config has no extra.c15t', () => {
+	test('names the Expo config plugin when the app config has no extra.inth', () => {
 		expect(() => getConsentClient()).toThrowError(
-			/extra\.c15t[\s\S]*"@c15t\/react-native"/u
+			/extra\.inth[\s\S]*"@inth\/react-native"/u
 		);
 	});
 });

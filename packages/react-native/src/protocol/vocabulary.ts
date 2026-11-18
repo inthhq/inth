@@ -46,7 +46,7 @@ export const CONSENT_CATEGORIES = [
 /**
  * Every category, including `necessary`.
  *
- * The name is the one the rest of c15t uses for this union, on the snapshot, in
+ * The name is the one the rest of Inth uses for this union, on the snapshot, in
  * the hooks, and in the protocol fixtures. It is not a mobile spelling.
  */
 export type AllConsentNames = (typeof CONSENT_CATEGORIES)[number];

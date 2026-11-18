@@ -21,7 +21,7 @@ export interface AppsFlyerClient {
  *
  * In `setConsentData`, build `new AppsFlyerConsent(isUserSubjectToGDPR,
  * adUserData, adPersonalization, adStorage)`. `isUserSubjectToGDPR` is yours to
- * supply: c15t's policy model is not a legal jurisdiction flag. Marketing
+ * supply: Inth's policy model is not a legal jurisdiction flag. Marketing
  * grants all three types and is the default category.
  *
  * Written against `react-native-appsflyer` 6. Version 7 removed

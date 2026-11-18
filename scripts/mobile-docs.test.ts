@@ -67,7 +67,7 @@ test('advertised mobile README guides have public source pages', () => {
 
 test('the mobile bundle covers every public mobile guide and advertises native setup', () => {
 	const config = PACKAGE_DOCS_CONFIGS.find(
-		(entry) => entry.name === '@c15t/react-native'
+		(entry) => entry.name === '@inth/react-native'
 	);
 	expect(config).toBeDefined();
 	const included = fg.sync(config?.include ?? [], {
@@ -109,7 +109,7 @@ test('the mobile bundle covers every public mobile guide and advertises native s
 
 test('the mobile bundle includes every integration guide for a mobile helper', () => {
 	const config = PACKAGE_DOCS_CONFIGS.find(
-		(entry) => entry.name === '@c15t/react-native'
+		(entry) => entry.name === '@inth/react-native'
 	);
 	const included = new Set(
 		fg.sync(config?.include ?? [], { cwd: resolve(root, 'packages/sdk/docs') })
@@ -117,7 +117,7 @@ test('the mobile bundle includes every integration guide for a mobile helper', (
 	// A guide that names a mobile helper package documents an export of the
 	// tarball, so it must ship with it.
 	const mobileHelper =
-		/@c15t\/react-native\/integrations|`C15tApple`|com\.c15t\.android\.integrations/u;
+		/@inth\/react-native\/integrations|`InthApple`|com\.inth\.android\.integrations/u;
 	const guides = fg
 		.sync('integrations/*.mdx', { cwd: resolve(root, 'packages/sdk/docs') })
 		.filter((file) =>

@@ -1,5 +1,5 @@
 /**
- * The `react-native` exports `@c15t/react-native` touches at import time.
+ * The `react-native` exports `@inth/react-native` touches at import time.
  *
  * Vitest and `tsx` swap `react-native` for this file through a resolve alias.
  * The package's own production lookup path runs unchanged: `TurboModuleRegistry`
@@ -95,7 +95,7 @@ export class NativeEventEmitter {
 }
 
 /**
- * The value exports of `react-native` that `@c15t/react-native` imports.
+ * The value exports of `react-native` that `@inth/react-native` imports.
  *
  * The package's public entry pulls the headless components, and those reach the
  * platform helpers below. Each one answers the way a device would with no

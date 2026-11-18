@@ -3,7 +3,7 @@
  * decides when a prompt is owed and presents it, exactly as it does for a
  * Swift or Kotlin app. This file only tells native the provider's settings and
  * mirrors what native reports on screen, so the ATT sequence can wait for a
- * c15t screen to close.
+ * Inth screen to close.
  *
  * There is one mirror per client, so React strict mode, a remounted provider
  * and a nested provider all see the same record.
@@ -29,14 +29,14 @@ import { isPrivacyPolicyURL } from './privacy-policy-url';
  *
  * Permanent: the same URL fails the same way on every attempt.
  */
-export const PRESENTER_INVALID_URL_CODE = 'C15T_PRESENTER_INVALID_URL';
+export const PRESENTER_INVALID_URL_CODE = 'INTH_PRESENTER_INVALID_URL';
 
 /**
  * The code presenters reject with in a binary built without the stock native screens
- * (`c15t.nativeUI=false`, the Expo plugin's `nativeUI: false`). Permanent: the binary
+ * (`inth.nativeUI=false`, the Expo plugin's `nativeUI: false`). Permanent: the binary
  * cannot gain them, so it is reported once.
  */
-export const NATIVE_UI_EXCLUDED_CODE = 'C15T_NATIVE_UI_EXCLUDED';
+export const NATIVE_UI_EXCLUDED_CODE = 'INTH_NATIVE_UI_EXCLUDED';
 
 /**
  * Whether the running binary links the stock native consent screens.
@@ -70,7 +70,7 @@ interface PresenterMirror {
 	sent: string | null;
 	/** Reported once each: an old binary, a binary without screens, a refused URL. */
 	readonly reported: Set<string>;
-	/** Told after every change, for steps that wait until no c15t screen is up. */
+	/** Told after every change, for steps that wait until no Inth screen is up. */
 	readonly watchers: Set<() => void>;
 	/** Detaches the native listeners, for a client that is thrown away. */
 	readonly listeners: (() => void)[];
@@ -141,7 +141,7 @@ const mirrorFor = function mirrorFor(client: ConsentClient): PresenterMirror {
 				// per launch: it is a note for the developer, not an error.
 				report(mirror, 'unavailable', () => {
 					console.warn(
-						`c15t ConsentProvider: the native presenter could not show the owed consent prompt yet (${unavailable.code}). It shows it once the app has a foreground window or Activity.`,
+						`Inth ConsentProvider: the native presenter could not show the owed consent prompt yet (${unavailable.code}). It shows it once the app has a foreground window or Activity.`,
 						unavailable.message
 					);
 				});
@@ -156,7 +156,7 @@ const mirrorFor = function mirrorFor(client: ConsentClient): PresenterMirror {
 /**
  * Stop mirroring for a client that is thrown away, detaching its native
  * listeners. An app's client lives as long as the app and never needs this;
- * `@c15t/react-native/testing` calls it when a test client is disposed.
+ * `@inth/react-native/testing` calls it when a test client is disposed.
  *
  * @internal
  * @param client - The client to forget.
@@ -203,7 +203,7 @@ const failed = function failed(
 		report(mirror, `url:${String(settings.privacyPolicyURL)}`, () => {
 			// oxlint-disable-next-line no-console -- An owed consent prompt that can never show must be visible in every build.
 			console.error(
-				`c15t ConsentProvider: the native presenter refused privacyPolicyURL ${JSON.stringify(settings.privacyPolicyURL)}, so the owed consent prompt cannot show. Pass an absolute HTTPS URL with a DNS host.`,
+				`Inth ConsentProvider: the native presenter refused privacyPolicyURL ${JSON.stringify(settings.privacyPolicyURL)}, so the owed consent prompt cannot show. Pass an absolute HTTPS URL with a DNS host.`,
 				error
 			);
 		});
@@ -211,13 +211,13 @@ const failed = function failed(
 		report(mirror, 'excluded', () => {
 			// oxlint-disable-next-line no-console -- An owed consent prompt that can never show must be visible in every build.
 			console.error(
-				'c15t ConsentProvider: this binary was built without the stock native consent screens (c15t.nativeUI=false), so the owed consent prompt cannot be presented natively. Pass autoPresent={false} and draw the consent UI in JavaScript.',
+				'Inth ConsentProvider: this binary was built without the stock native consent screens (inth.nativeUI=false), so the owed consent prompt cannot be presented natively. Pass autoPresent={false} and draw the consent UI in JavaScript.',
 				error
 			);
 		});
 	} else if (!isProduction()) {
 		console.warn(
-			'c15t ConsentProvider: native refused the auto-present settings.',
+			'Inth ConsentProvider: native refused the auto-present settings.',
 			error
 		);
 	}
@@ -270,7 +270,7 @@ export const configureAutoPresent = function configureAutoPresent(
 			report(mirror, 'old-binary', () => {
 				// oxlint-disable-next-line no-console -- An owed consent prompt that never shows must be visible in every build.
 				console.error(
-					'c15t ConsentProvider: this native build predates native auto-present (no configureAutoPresent), so the consent prompt does not present by itself. Rebuild the app with this version of @c15t/react-native, or call presentConsentPrompt yourself until then.'
+					'Inth ConsentProvider: this native build predates native auto-present (no configureAutoPresent), so the consent prompt does not present by itself. Rebuild the app with this version of @inth/react-native, or call presentConsentPrompt yourself until then.'
 				);
 			});
 		}
@@ -280,7 +280,7 @@ export const configureAutoPresent = function configureAutoPresent(
 };
 
 /**
- * Whether native reports a c15t screen on screen.
+ * Whether native reports an Inth screen on screen.
  *
  * @internal
  * @param client - The client to read.

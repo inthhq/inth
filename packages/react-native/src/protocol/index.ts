@@ -136,4 +136,4 @@ export type NativeEventName = (typeof NATIVE_EVENT_NAMES)[number];
  * JavaScript side looks it up by. It is the single agreed identifier between
  * the Codegen spec, the Swift module, and the Android module.
  */
-export const NATIVE_C15T_MODULE_NAME = 'C15t';
+export const NATIVE_INTH_MODULE_NAME = 'Inth';

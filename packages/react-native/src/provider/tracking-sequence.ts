@@ -162,7 +162,7 @@ export const setTrackingReprompt = function setTrackingReprompt(
 };
 
 /**
- * Note that Apple paused on Additional Information and c15t's settings opened:
+ * Note that Apple paused on Additional Information and Inth's settings opened:
  * closing them applies the after-consent rule in either order.
  *
  * @param client - The provider's client.
@@ -271,7 +271,7 @@ const whenActive = (token: SequenceToken): Promise<boolean> =>
 	});
 
 /**
- * Wait until native reports no c15t screen open. Apple will not show its alert
+ * Wait until native reports no Inth screen open. Apple will not show its alert
  * over a presentation, and the person should finish one screen first.
  *
  * @returns `false` when `token` was cancelled first.

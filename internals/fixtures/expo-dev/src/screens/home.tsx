@@ -9,20 +9,17 @@
  */
 
 import {
-	useC15tBootstrap,
+	useInthBootstrap,
 	useConsentActions,
 	useDismissNotice,
 	useIdentify,
 	useSaveConsents,
 	useSetOverrides,
 	useSnapshot,
-} from '@c15t/react-native';
-import type { TrackingRequest } from '@c15t/react-native';
+} from '@inth/react-native';
+import type { TrackingRequest } from '@inth/react-native';
 import { useState } from 'react';
 
-import { config } from '../c15t/config';
-import { useConsentSource } from '../c15t/consent-source';
-import type { FakeLogEntry, PermissionSample } from '../c15t/fake-native';
 import {
 	GatedVendor,
 	GatingHint,
@@ -41,6 +38,9 @@ import {
 	Text,
 	Toggle,
 } from '../components/ui';
+import { config } from '../inth/config';
+import { useConsentSource } from '../inth/consent-source';
+import type { FakeLogEntry, PermissionSample } from '../inth/fake-native';
 
 /** External id the identify button sends. */
 const EXTERNAL_ID = 'runner-42';
@@ -332,7 +332,7 @@ export const HomeScreen = ({
 	readonly tracking: TrackingRequest;
 }) => {
 	const snapshot = useSnapshot();
-	const bootstrap = useC15tBootstrap();
+	const bootstrap = useInthBootstrap();
 	const { kind } = useConsentSource();
 
 	return (

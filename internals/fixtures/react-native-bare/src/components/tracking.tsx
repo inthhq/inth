@@ -13,8 +13,8 @@
 import type {
 	TrackingAuthorization,
 	TrackingRequest,
-} from '@c15t/react-native';
-import { useIsTrackingAllowed } from '@c15t/react-native';
+} from '@inth/react-native';
+import { useIsTrackingAllowed } from '@inth/react-native';
 import { useState } from 'react';
 import { Platform } from 'react-native';
 

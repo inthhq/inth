@@ -168,7 +168,7 @@ ran inherits that cleanup duty. [spec]
 
 My recommendation, stated plainly so nobody has to re-derive it: **write the `IABTCF_*` bus in
 the platform-standard location, and keep the Keychain and the AndroidKeyStore-backed store as
-the authoritative c15t copy.** Do not move the existing store. The reasoning and the exact
+the authoritative Inth copy.** Do not move the existing store. The reasoning and the exact
 files are in the next section.
 
 ### 1.4 Keys that are in the wild but not in S1's table
@@ -219,12 +219,12 @@ page text I fetched does not print the literal file name, so this document does 
 **Write through `getDefaultSharedPreferences(context)`, the same call vendors read, and never
 derive a file name.** [spec] for the call; the file name is not verified here.
 
-This is where our current Android core is wrong for TCF specifically. `C15tStores.kt` builds:
+This is where our current Android core is wrong for TCF specifically. `InthStores.kt` builds:
 
 - primary: `EncryptedFileStore(File(appContext.noBackupFilesDir, StorePaths.DIRECTORY))`, an
   AES-GCM file store keyed by AndroidKeyStore (`KeystoreKeyProvider`, `AesGcmCodec`);
-- fallback: `getSharedPreferences("c15t.consent.fallback", Context.MODE_PRIVATE)`;
-- subject id: `getSharedPreferences("c15t.subject", Context.MODE_PRIVATE)`.
+- fallback: `getSharedPreferences("inth.consent.fallback", Context.MODE_PRIVATE)`;
+- subject id: `getSharedPreferences("inth.subject", Context.MODE_PRIVATE)`.
 
 None of those three is the application-default file, so a vendor doing exactly what S1 says
 reads an empty store and concludes no CMP is present. The fallback line even logs "AndroidKeyStore
@@ -263,10 +263,10 @@ of the linked Apple page plus S1's own example, not a literal quote from S1.
 
 ### 2.3 The Keychain decision, and the security trade-off we owe the reader
 
-Our iOS core today: `KeychainStore(service: "com.c15t.core")` writing generic-password items
+Our iOS core today: `KeychainStore(service: "com.inth.core")` writing generic-password items
 (`kSecClassGenericPassword`, `kSecAttrService` = service, `kSecAttrAccount` = key) under
-`com.c15t.subject`, `com.c15t.snapshot`, `com.c15t.pending`
-(`core-swift/Sources/C15tCore/ConsentStore.swift:184-250`). `packages/native-protocol/CONTRACT.md:284` states
+`com.inth.subject`, `com.inth.snapshot`, `com.inth.pending`
+(`core-swift/Sources/InthCore/ConsentStore.swift:184-250`). `packages/native-protocol/CONTRACT.md:284` states
 iOS "writes the snapshot envelope plus the consent records to the Keychain", and
 `packages/native-protocol/CONTRACT.md:32` keeps Keychain use inside the store conformances. `packages/native-protocol/CONTRACT.md:7-8`
 puts TCF entirely out of scope: "No TC string, no GVL state, no `IABTCF_*` keys."
@@ -300,8 +300,8 @@ Consequences to design for, both of them real:
 
 - **Backup asymmetry.** Defaults databases are included in device backup [S10], so the bus
   travels with an iTunes/iCloud restore. Our Android primary store deliberately sits in
-  `noBackupFilesDir`, so the c15t record does not travel. On a restored device a vendor can see
-  a TC String that c15t has no matching record for. The safe resolution is the one the contract
+  `noBackupFilesDir`, so the Inth record does not travel. On a restored device a vendor can see
+  a TC String that Inth has no matching record for. The safe resolution is the one the contract
   already uses: with no stored envelope the core serves `ready: false, policyPending: true` and
   every optional category denied (`packages/native-protocol/CONTRACT.md:292-293`), and it must not accept the bus
   as proof of anything.
@@ -316,7 +316,7 @@ Consequences to design for, both of them real:
 The instruction that matters for whoever builds this: **do not create a second consent store.**
 There is one, it is the Keychain on iOS and the `EncryptedFileStore` under `noBackupFilesDir` on
 Android, and it stays authoritative. The IAB bus is an *egress* projection of that state, written
-by the same store layer that already owns `com.c15t.snapshot`, so a mutation writes the snapshot
+by the same store layer that already owns `com.inth.snapshot`, so a mutation writes the snapshot
 and refreshes the bus in one committed step. `packages/native-protocol/CONTRACT.md` rule 1 ("Native owns consent
 state. There is no second consent kernel in JavaScript") and rule 3 ("no Keychain outside the
 store conformances") both survive that shape; a JS-side writer or a second store would break them.
@@ -325,7 +325,7 @@ rebuild-after-wipe test is the cheapest guard against drift.
 
 On Android this does mean a third preferences location exists — the application-default file —
 because the spec requires a file we do not control. That is the standard's requirement, not a
-c15t design choice, and it is the one place where "match the existing storage" and "satisfy the
+Inth design choice, and it is the one place where "match the existing storage" and "satisfy the
 spec" cannot both be literal. The fix is not to move the encrypted store.
 
 ## 3. The TC String, byte-exactly
@@ -582,7 +582,7 @@ For a mobile core that means four things, in priority order:
 4. **Do not retrofit the segment by guessing.** S6's rule is explicit: only backfill
    `vendorsDisclosed` for strings whose disclosure set we actually recorded, and leave `lastUpdated`
    alone when we do. Our native envelope does not today record a disclosure set, because there is no
-   disclosure concept in it. So for c15t: no backfill until we store what was shown.
+   disclosure concept in it. So for Inth: no backfill until we store what was shown.
 
 ## 5. What a CMP must render in-app
 
@@ -703,11 +703,11 @@ What our code does today, verified on this branch:
 
 | Fact | Where |
 | --- | --- |
-| iOS consent snapshot, records and pending queue in the Keychain; generic-password items under service `com.c15t.core`, accounts `com.c15t.subject` / `com.c15t.snapshot` / `com.c15t.pending` | `packages/swift/Sources/C15tCore/ConsentStore.swift:7-11,184-250`; `packages/native-protocol/CONTRACT.md:284-287` |
-| Android primary store is AES-GCM encrypted **files** in `noBackupFilesDir`; unencrypted `SharedPreferences` file `c15t.consent.fallback` is the keystore-failure fallback; subject id in `c15t.subject` | `packages/android/c15t-android/src/main/kotlin/com/c15t/android/C15tStores.kt:31-53,93,99-125` |
+| iOS consent snapshot, records and pending queue in the Keychain; generic-password items under service `com.inth.core`, accounts `com.inth.subject` / `com.inth.snapshot` / `com.inth.pending` | `packages/swift/Sources/InthCore/ConsentStore.swift:7-11,184-250`; `packages/native-protocol/CONTRACT.md:284-287` |
+| Android primary store is AES-GCM encrypted **files** in `noBackupFilesDir`; unencrypted `SharedPreferences` file `inth.consent.fallback` is the keystore-failure fallback; subject id in `inth.subject` | `packages/android/inth-android/src/main/kotlin/com/inth/android/InthStores.kt:31-53,93,99-125` |
 | No TCF at all: "IAB TCF is out of scope for this phase. No TC string, no GVL state, no `IABTCF_*` keys." | `packages/native-protocol/CONTRACT.md:7-8` |
-| Consent expiry is server-driven: the evaluator derives `nextDeadline` from `policy.choiceMaxAgeMs` | `packages/swift/Sources/C15tCore/PolicyEvaluator.swift:111,285`; `ConsentCore.swift:516` |
-| The only local timer-like constant is a 7-day cap on queued saves, not on consent | `packages/swift/Sources/C15tCore/PendingSaveQueue.swift:96` (`maxAgeMs = 7 * 24 * 60 * 60 * 1000`) |
+| Consent expiry is server-driven: the evaluator derives `nextDeadline` from `policy.choiceMaxAgeMs` | `packages/swift/Sources/InthCore/PolicyEvaluator.swift:111,285`; `ConsentCore.swift:516` |
+| The only local timer-like constant is a 7-day cap on queued saves, not on consent | `packages/swift/Sources/InthCore/PendingSaveQueue.swift:96` (`maxAgeMs = 7 * 24 * 60 * 60 * 1000`) |
 | Web side: TC string cookie max-age 395 days, and a 395-day retention constant | `packages/sdk/iab/src/tcf/cmp-api.ts:397`; `packages/sdk/iab/src/authority.ts:7` |
 | iOS Keychain items survive uninstall, so a reinstall is not a fresh install; Android needs `pm clear` | `packages/native-protocol/CONTRACT.md:566` |
 | `reset()` must leave no `explicitChoice`, notice dismissal, policy claim or queued save, while keeping subject id, overrides and privacy signals | `packages/native-protocol/CONTRACT.md:560-575` |
@@ -762,9 +762,9 @@ these are the spec duties it would miss. Ordered by how much they matter.
 
 1. **No bus at all.** `packages/native-protocol/CONTRACT.md:7-8` excludes `IABTCF_*` outright. Against S1's "shall set
    the NSUserDefaults/SharedPreferences variables" and S5 Chapter II §4.1's full-specifications
-   duty, a c15t mobile SDK is currently invisible to every vendor SDK that follows the standard.
-2. **Wrong location on Android even if we started writing keys.** `C15tStores.kt` uses
-   `c15t.consent.fallback` and `c15t.subject`; S1 requires the application-default
+   duty, an Inth mobile SDK is currently invisible to every vendor SDK that follows the standard.
+2. **Wrong location on Android even if we started writing keys.** `InthStores.kt` uses
+   `inth.consent.fallback` and `inth.subject`; S1 requires the application-default
    `PreferenceManager.getDefaultSharedPreferences(context)` file. Keys written into either named
    file satisfy nobody.
 3. **Wrong location on iOS.** `KeychainStore` is unreachable from vendor code that follows S1. The
@@ -776,7 +776,7 @@ these are the spec duties it would miss. Ordered by how much they matter.
 5. **No policy-version comparison, therefore no re-establishment.** S2 "Global Vendor List and TCF
    Policy Updates" is a shall; neither core has any equivalent of it.
 6. **Nothing in the native state model can answer Appendix B.** The snapshot has
-   `consentCategories`, `effectivePermissions` and five c15t categories; there is no purpose, special
+   `consentCategories`, `effectivePermissions` and five Inth categories; there is no purpose, special
    purpose, feature, special feature, stack, vendor, GVL-version, consent-screen, consent-language,
    publisher-CC, or disclosure-set concept. Every field the TC string needs — 3.2 — is
    unrepresentable today. The `iab` slot is still `JsonNull` on Kotlin, while Swift already carries a
@@ -793,7 +793,7 @@ these are the spec duties it would miss. Ordered by how much they matter.
    publisher's declaration beside it: `NativeConfig.vendors` (`NativeConfig.kt:61`) and
    `CoreConfig.vendors` (`ConsentCore.swift:57`), where `null`/`nil` and an empty list all read as
    no scope declared. Web's `iab.vendors` does three jobs and mobile now does two of them. The
-   request goes out with `x-c15t-vendors` (`C15tProtocol.kt:48`, `Transports.swift:53`): deduped,
+   request goes out with `x-c15t-vendors` (`InthProtocol.kt:48`, `Transports.swift:53`): deduped,
    ascending, comma-separated, and absent above the same 500 that `MAX_GVL_QUERY_VENDOR_IDS` uses.
    The held list is pruned on every path it arrives by — `ConsentCore.kt:253` and `:1077`,
    `ConsentCore.swift:1076` and `:1490` — which is what makes it a read-path rule rather than a
@@ -803,8 +803,8 @@ these are the spec duties it would miss. Ordered by how much they matter.
    declaration sends no header and still gets a narrow device. The third job is still missing,
    because a device holds one list and reports it whole: web clears a `gvlReference.summary` that had
    counted the wider list (`packages/sdk/core/src/runtime/index.ts:272-283`) and there is no such summary
-   to clear here. `@c15t/react-native` spells the declaration as the plugin's `vendors` prop, which
-   becomes the `com.c15t.vendors` plist string and the `com.c15t.VENDORS` meta-data both cores read
+   to clear here. `@inth/react-native` spells the declaration as the plugin's `vendors` prop, which
+   becomes the `com.inth.vendors` plist string and the `com.inth.VENDORS` meta-data both cores read
    at launch, before JavaScript exists.
 9. **No resurface affordance.** Appendix B C(f) wants an easily reachable resurfacing entry, naming
    "the top-level settings of the Publisher's app", and an equivalent withdraw-all control. The
@@ -817,7 +817,7 @@ these are the spec duties it would miss. Ordered by how much they matter.
     `TCData` reported over `__tcfapi` disagree with the TC String on web.
 11. **`reset()` does not yet clear a bus**, and iOS Keychain persistence across uninstall means a
     naive reset leaves a live signal behind (section 6, point 3 and 4).
-12. **The GVL proxy question transfers.** c15t/Inth operates `gvl.inth.app`
+12. **The GVL proxy question transfers.** inth/Inth operates `gvl.inth.app`
     (`packages/sdk/iab/src/tcf/constants.ts:25` `GVL_ENDPOINT`). A mobile SDK pointed at a proxy we run
     inherits the same staleness and availability duties, and S2's caching rules above are
     the only licence for using an archived version offline.

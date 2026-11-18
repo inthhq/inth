@@ -8,7 +8,7 @@
  * built package links, including the components.
  */
 
-import { createConsentClient, useConsentSafeArea } from '@c15t/react-native';
+import { createConsentClient, useConsentSafeArea } from '@inth/react-native';
 
 process.stdout.write(
 	`${JSON.stringify({

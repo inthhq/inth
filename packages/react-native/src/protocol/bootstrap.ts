@@ -25,7 +25,7 @@ export interface BootstrapPayload {
 	readonly nativeSdkVersion: string;
 	/**
 	 * Subject id the core generated or loaded, or `null` before the first
-	 * write. It is a c15t-generated `sub_` id, never a hardware identifier.
+	 * write. It is a inth-generated `sub_` id, never a hardware identifier.
 	 */
 	readonly subjectId: string | null;
 	/**
@@ -43,9 +43,9 @@ export interface BootstrapPayload {
 	readonly commitRevision: boolean;
 	/**
 	 * Whether the binary links the stock native consent screens. `false` in a
-	 * build with `c15t.nativeUI` false (the Expo plugin's `nativeUI: false`),
+	 * build with `inth.nativeUI` false (the Expo plugin's `nativeUI: false`),
 	 * where `presentConsentPrompt` and `presentPreferences` reject with
-	 * `C15T_NATIVE_UI_EXCLUDED`. An older binary sends no flag; the client reads
+	 * `INTH_NATIVE_UI_EXCLUDED`. An older binary sends no flag; the client reads
 	 * that as `true` (see `ADDITIVE_BOOTSTRAP_DEFAULTS`), because every such
 	 * binary links them.
 	 */

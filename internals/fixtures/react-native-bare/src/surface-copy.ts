@@ -11,8 +11,8 @@
  * serves a bundle, a partial one, or nothing.
  */
 
-import type { AllConsentNames, ConsentSnapshot } from '@c15t/react-native';
-import { CONSENT_CATEGORIES } from '@c15t/react-native';
+import type { AllConsentNames, ConsentSnapshot } from '@inth/react-native';
+import { CONSENT_CATEGORIES } from '@inth/react-native';
 
 /**
  * What the package shows when the bundle does not name a category.

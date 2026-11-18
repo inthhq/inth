@@ -127,7 +127,7 @@ export const nativeSelection = (file: string): NativeSelection => {
     return { ...noNative, android: true };
   }
   if (
-    /^packages\/react-native\/(?:ios\/|Package\.swift$|C15tReactNative\.podspec$|vendor\/)/u.test(
+    /^packages\/react-native\/(?:ios\/|Package\.swift$|InthReactNative\.podspec$|vendor\/)/u.test(
       file
     )
   ) {
@@ -299,7 +299,7 @@ export const createPlan = (files: string[], workspaces: Workspace[]): Plan => {
     }
   }
   // Follow the graph from each changed workspace. A web SDK change can reach
-  // @c15t/react-native through @c15t/core, but the mobile jobs run only for
+  // @inth/react-native through @c15t/core, but the mobile jobs run only for
   // mobile changes, so those workspaces are reported and not run.
   const mobileOwners = [...owners].filter((name) =>
     workspaces.some(

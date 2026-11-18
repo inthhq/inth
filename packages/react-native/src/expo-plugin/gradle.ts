@@ -1,13 +1,13 @@
 import type { AndroidConfig } from 'expo/config-plugins';
 
-import { C15tPluginError } from './errors';
-import type { C15tAndroidMavenRepository } from './maven';
+import { InthPluginError } from './errors';
+import type { InthAndroidMavenRepository } from './maven';
 
 /** A `build.gradle` as the mod hands it over. */
 export type GradleFile = AndroidConfig.Paths.GradleProjectFile;
 
 const MAVEN_BLOCK =
-	/\n?\/\/ @generated begin c15t-maven\n[\s\S]*?\/\/ @generated end c15t-maven\n?/gu;
+	/\n?\/\/ @generated begin inth-maven\n[\s\S]*?\/\/ @generated end inth-maven\n?/gu;
 
 const groovyString = (value: string): string =>
 	`'${value.replaceAll('\\', '\\\\').replaceAll("'", "\\'")}'`;
@@ -23,14 +23,14 @@ const groovyString = (value: string): string =>
  */
 export const applyProjectBuildGradle = function applyProjectBuildGradle(
 	gradleFile: GradleFile,
-	repository: C15tAndroidMavenRepository | null = null
+	repository: InthAndroidMavenRepository | null = null
 ): GradleFile {
 	const contents = gradleFile.contents.replaceAll(MAVEN_BLOCK, '');
 	if (repository === null) {
 		return { ...gradleFile, contents };
 	}
 	if (gradleFile.language !== 'groovy') {
-		throw new C15tPluginError(
+		throw new InthPluginError(
 			'androidMavenRepository requires the Expo Groovy root build.gradle template. Configure exclusiveContent in settings.gradle.kts for a Kotlin DSL host.'
 		);
 	}
@@ -43,13 +43,13 @@ export const applyProjectBuildGradle = function applyProjectBuildGradle(
             username = System.getenv(${groovyString(credentials.usernameEnvironmentVariable)})
             password = System.getenv(${groovyString(credentials.passwordEnvironmentVariable)})
             if (!username || !password) {
-              throw new GradleException('c15t Maven credentials are missing. Set the configured environment variables in the build environment.')
+              throw new GradleException('Inth Maven credentials are missing. Set the configured environment variables in the build environment.')
             }
           }`;
 	return {
 		...gradleFile,
 		contents: `${contents.trimEnd()}
-// @generated begin c15t-maven
+// @generated begin inth-maven
 allprojects {
   repositories {
     exclusiveContent {
@@ -58,11 +58,11 @@ allprojects {
           url = uri(${groovyString(repository.url)})${authentication}
         }
       }
-      filter { includeGroup('com.c15t') }
+      filter { includeGroup('com.inth') }
     }
   }
 }
-// @generated end c15t-maven
+// @generated end inth-maven
 `,
 	};
 };

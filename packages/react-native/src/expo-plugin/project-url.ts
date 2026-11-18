@@ -8,7 +8,7 @@
  * This file exists twice, byte for byte: in
  * `packages/react-native/src/expo-plugin/project-url.ts` and in
  * `packages/cli/vendor/c15t-mobile/src/mobile/project-url.ts`. The Expo plugin ships without
- * runtime dependencies on other c15t packages and the CLI cannot depend on the
+ * runtime dependencies on other Inth packages and the CLI cannot depend on the
  * React Native package, so neither can import the other. The CLI test
  * `src/__tests__/mobile/project-url.test.ts` fails when the copies differ.
  */

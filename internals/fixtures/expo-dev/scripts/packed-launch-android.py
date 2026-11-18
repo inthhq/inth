@@ -21,7 +21,7 @@ out.mkdir(parents=True, exist_ok=False)
 sdk = Path(os.environ.get('ANDROID_HOME', str(Path.home() / 'Library/Android/sdk')))
 adb = str(sdk / 'platform-tools/adb')
 manager = str(sdk / 'cmdline-tools/latest/bin/avdmanager')
-name = f'c15t-packed-expo-{os.getpid()}'
+name = f'inth-packed-expo-{os.getpid()}'
 for port in list(range(5554, 5580, 2)) + [5582, 5584]:
     with socket.socket() as probe:
         try:
@@ -33,7 +33,7 @@ else:
     raise RuntimeError('No free task emulator port')
 serial = f'emulator-{port}'
 (out / 'device-id.txt').write_text(serial)
-package = 'com.c15t.expodev'
+package = 'com.inth.expodev'
 emulator = None
 
 def run(command, **options):
@@ -43,8 +43,8 @@ def device(*command):
     return run([adb, '-s', serial, *command])
 
 def hierarchy():
-    device('shell', 'uiautomator', 'dump', '/sdcard/c15t-packed.xml')
-    return device('shell', 'cat', '/sdcard/c15t-packed.xml')
+    device('shell', 'uiautomator', 'dump', '/sdcard/inth-packed.xml')
+    return device('shell', 'cat', '/sdcard/inth-packed.xml')
 
 def find(predicate, timeout=45):
     deadline = time.monotonic() + timeout
@@ -132,9 +132,9 @@ try:
     device('shell', 'input', 'keyevent', '224')
     device('shell', 'input', 'keyevent', '82')
     device('install', '-r', str(args.apk.resolve()))
-    device('shell', 'nohup screenrecord --time-limit 180 /data/local/tmp/c15t-packed.mp4 >/data/local/tmp/c15t-packed-video.log 2>&1 </dev/null &')
+    device('shell', 'nohup screenrecord --time-limit 180 /data/local/tmp/inth-packed.mp4 >/data/local/tmp/inth-packed-video.log 2>&1 </dev/null &')
     device('shell', 'am', 'start', '-W', '-n', package + '/.MainActivity')
-    reject = find(lambda node: node.get('resource-id') == 'c15t.first-layer.reject-all')
+    reject = find(lambda node: node.get('resource-id') == 'inth.first-layer.reject-all')
     capture('01-cold-offline-native-prompt')
     tap(reject)
     state_node = find(lambda node: node.get('resource-id') == 'fixture.native-state' and '"explicitChoice":{' in node.get('text', ''))
@@ -155,7 +155,7 @@ try:
     assert restored['permissions'] == state['permissions']
     capture('03-offline-process-restart')
     tap(find(lambda node: node.get('text') == 'Privacy settings'))
-    switch = find(lambda node: node.get('resource-id') == 'c15t.prefs.category.measurement.switch')
+    switch = find(lambda node: node.get('resource-id') == 'inth.prefs.category.measurement.switch')
     assert switch.get('checked') == 'false'
     capture('04-restored-native-preferences')
     result['networkAfterRelaunch'] = network_state('after-relaunch')
@@ -163,7 +163,7 @@ try:
     result['passed'] = True
 finally:
     if emulator is not None:
-        for command in [('shell', 'pkill', '-2', 'screenrecord'), ('shell', 'for i in 1 2 3 4 5 6 7 8 9 10; do pidof screenrecord >/dev/null || exit 0; sleep 1; done; exit 1'), ('pull', '/data/local/tmp/c15t-packed.mp4', str(out / 'journey.mp4')), ('pull', '/data/local/tmp/c15t-packed-video.log', str(out / 'video.log')), ('emu', 'kill')]:
+        for command in [('shell', 'pkill', '-2', 'screenrecord'), ('shell', 'for i in 1 2 3 4 5 6 7 8 9 10; do pidof screenrecord >/dev/null || exit 0; sleep 1; done; exit 1'), ('pull', '/data/local/tmp/inth-packed.mp4', str(out / 'journey.mp4')), ('pull', '/data/local/tmp/inth-packed-video.log', str(out / 'video.log')), ('emu', 'kill')]:
             try:
                 device(*command)
             except subprocess.CalledProcessError:

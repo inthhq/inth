@@ -44,24 +44,24 @@ const archive = function archive(
 const fixture = function fixture(
 	options: { bridgeRequiresUi?: boolean; omitUi?: boolean } = {}
 ) {
-	const root = mkdtempSync(join(tmpdir(), 'c15t-android-bytes-'));
+	const root = mkdtempSync(join(tmpdir(), 'inth-android-bytes-'));
 	roots.push(root);
 	const core = join(root, 'packages', 'android');
 	const bridge = join(root, 'packages', 'react-native', 'android');
 	mkdirSync(core, { recursive: true });
 	mkdirSync(bridge, { recursive: true });
 	const outputs = [
-		['c15t-core', join(core, 'c15t-core/build/libs/c15t-core.jar'), 17],
+		['inth-core', join(core, 'inth-core/build/libs/inth-core.jar'), 17],
 		[
-			'c15t-android',
-			join(core, 'c15t-android/build/outputs/aar/c15t-android-release.aar'),
+			'inth-android',
+			join(core, 'inth-android/build/outputs/aar/inth-android-release.aar'),
 			19,
 		],
 		[
-			'c15t-consent-ui',
+			'inth-consent-ui',
 			join(
 				core,
-				'c15t-consent-ui/build/outputs/aar/c15t-consent-ui-release.aar'
+				'inth-consent-ui/build/outputs/aar/inth-consent-ui-release.aar'
 			),
 			23,
 		],
@@ -69,7 +69,7 @@ const fixture = function fixture(
 	const builds = outputs.map(([name, output, bytes]) => ({
 		name,
 		output,
-		seed: archive(root, name, bytes, name !== 'c15t-core'),
+		seed: archive(root, name, bytes, name !== 'inth-core'),
 	}));
 	const [, , [, ui]] = outputs;
 	if (!options.omitUi) {
@@ -84,10 +84,10 @@ const fs = require('node:fs');
 const path = require('node:path');
 for (const artifact of ${JSON.stringify(builds)}) {
   if (!process.argv.includes(':' + artifact.name + ':publishAllPublicationsToStagingRepository')) continue;
-  if (${Boolean(options.omitUi)} && artifact.name === 'c15t-consent-ui') continue;
+  if (${Boolean(options.omitUi)} && artifact.name === 'inth-consent-ui') continue;
   fs.mkdirSync(path.dirname(artifact.output), { recursive: true });
   fs.copyFileSync(artifact.seed, artifact.output);
-  if (artifact.name === 'c15t-consent-ui') fs.writeFileSync(${JSON.stringify(marker)}, 'current');
+  if (artifact.name === 'inth-consent-ui') fs.writeFileSync(${JSON.stringify(marker)}, 'current');
 }
 `,
 		{ mode: 0o755 }
@@ -99,7 +99,7 @@ for (const artifact of ${JSON.stringify(builds)}) {
 const fs = require('node:fs');
 const path = require('node:path');
 if (${Boolean(options.bridgeRequiresUi)} && !fs.existsSync(${JSON.stringify(marker)})) process.exit(41);
-const output = path.join(process.cwd(), 'c15t-react-native/build/outputs/aar/c15t-react-native-release.aar');
+const output = path.join(process.cwd(), 'inth-react-native/build/outputs/aar/inth-react-native-release.aar');
 fs.mkdirSync(path.dirname(output), { recursive: true });
 fs.copyFileSync(${JSON.stringify(bridgeSeed)}, output);
 `,

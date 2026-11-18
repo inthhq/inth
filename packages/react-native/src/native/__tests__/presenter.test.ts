@@ -6,7 +6,7 @@ import {
 	resetNativeStub,
 	setNativeModule,
 } from '../../__tests__/helpers/react-native-stub';
-import { NATIVE_C15T_MODULE_NAME } from '../../protocol';
+import { NATIVE_INTH_MODULE_NAME } from '../../protocol';
 import {
 	closeConsentPresenter,
 	onConsentPresenterOutcome,
@@ -29,7 +29,7 @@ const native = {
 describe('shared native presenter boundary', () => {
 	beforeEach(() => {
 		resetNativeStub();
-		setNativeModule(NATIVE_C15T_MODULE_NAME, native);
+		setNativeModule(NATIVE_INTH_MODULE_NAME, native);
 	});
 
 	test('forwards commands and preserves session identity', async () => {

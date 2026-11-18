@@ -1,34 +1,34 @@
 # SwiftUI consent example
 
-A standalone iOS app using the local Swift package's `C15tCore`,
-`C15tApple` and `C15tConsentUI` products. Requires Xcode, XcodeGen and iOS 16.4
+A standalone iOS app using the local Swift package's `InthCore`,
+`InthApple` and `InthConsentUI` products. Requires Xcode, XcodeGen and iOS 16.4
 or later. It does not use React Native, Expo, CocoaPods or JavaScript.
 
 From the repository root:
 
 ```sh
 xcodegen generate --spec packages/swift/Examples/swiftui-consent/project.yml
-open packages/swift/Examples/swiftui-consent/C15tSwiftUI.xcodeproj
+open packages/swift/Examples/swiftui-consent/InthSwiftUI.xcodeproj
 ```
 
-Select the `C15tSwiftUI` scheme and an iOS simulator, then Run. The generated
+Select the `InthSwiftUI` scheme and an iOS simulator, then Run. The generated
 project is ignored. Keep simulator code signing enabled so Keychain can pass
 the installer's storage probe. The project uses ad-hoc simulator signing with no
 developer account. To compile without launching:
 
 ```sh
 xcodebuild build \
-  -project packages/swift/Examples/swiftui-consent/C15tSwiftUI.xcodeproj \
-  -scheme C15tSwiftUI -destination 'generic/platform=iOS Simulator' \
-  -derivedDataPath /tmp/c15t-swiftui-derived
+  -project packages/swift/Examples/swiftui-consent/InthSwiftUI.xcodeproj \
+  -scheme InthSwiftUI -destination 'generic/platform=iOS Simulator' \
+  -derivedDataPath /tmp/inth-swiftui-derived
 ```
 
 To launch that build on a booted simulator you own, replace `SIMULATOR_UDID`:
 
 ```sh
 xcrun simctl install SIMULATOR_UDID \
-  /tmp/c15t-swiftui-derived/Build/Products/Debug-iphonesimulator/C15tSwiftUI.app
-xcrun simctl launch SIMULATOR_UDID com.c15t.examples.swiftui
+  /tmp/inth-swiftui-derived/Build/Products/Debug-iphonesimulator/InthSwiftUI.app
+xcrun simctl launch SIMULATOR_UDID com.inth.examples.swiftui
 ```
 
 Append `--headless` to the launch command for the custom form. Terminate the
@@ -65,10 +65,10 @@ To run the tests on a simulator you own, replace `SIMULATOR_UDID` with its ID:
 
 ```sh
 xcodebuild test \
-  -project packages/swift/Examples/swiftui-consent/C15tSwiftUI.xcodeproj \
-  -scheme C15tSwiftUI -destination 'id=SIMULATOR_UDID' \
-  -derivedDataPath /tmp/c15t-swiftui-tests \
-  -resultBundlePath /tmp/c15t-swiftui-tests.xcresult \
+  -project packages/swift/Examples/swiftui-consent/InthSwiftUI.xcodeproj \
+  -scheme InthSwiftUI -destination 'id=SIMULATOR_UDID' \
+  -derivedDataPath /tmp/inth-swiftui-tests \
+  -resultBundlePath /tmp/inth-swiftui-tests.xcresult \
   -parallel-testing-enabled NO -collect-test-diagnostics never
 ```
 

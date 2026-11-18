@@ -10,7 +10,7 @@ struct IABReviewProfile: Codable, Equatable, Sendable {
     let publisherCountry: String
     let vendorIDs: [Int]?
 
-    static let defaultsKey = "c15t.demo.iab-review-profile.v1"
+    static let defaultsKey = "inth.demo.iab-review-profile.v1"
 
     init(backend: String, privacyPolicy: String, cmpId: String, cmpVersion: String, publisherCountry: String, vendorIDs: String = "") throws {
         backendURL = try Self.publicURL(backend, name: "Inth project URL")
@@ -154,7 +154,7 @@ struct IABReviewReport {
                 : list.map { "ATP \($0.id): \($0.name), \($0.policyUrl)" }
         } ?? ["Retained ATP disclosures: unavailable"]
         return ([
-            "c15t mobile IAB review report",
+            "Inth mobile IAB review report",
             "Captured at: \(ISO8601DateFormatter().string(from: Date(timeIntervalSince1970: Double(capturedAtMs) / 1000)))",
             "This report does not establish CMP registration, certification or ad-serving eligibility.",
             "Capture reads are not atomic. Refresh after a transition or an unexpected mismatch.",

@@ -39,16 +39,16 @@ dependencyResolutionManagement {
 						}
 					}
 				}
-				filter { includeGroup("com.c15t") }
+				filter { includeGroup("com.inth") }
 			}
 		}
 	}
 }
 
-rootProject.name = "c15t-react-native-android"
+rootProject.name = "inth-react-native-android"
 
-include(":c15t-react-native")
+include(":inth-react-native")
 
 // The Codegen output belongs to the host app, not to this library. See
-// c15t-spec/build.gradle.kts for why that is a compileOnly module.
-include(":c15t-spec")
+// inth-spec/build.gradle.kts for why that is a compileOnly module.
+include(":inth-spec")

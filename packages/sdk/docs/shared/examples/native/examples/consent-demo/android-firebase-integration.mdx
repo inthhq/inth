@@ -1,18 +1,18 @@
-{/* Generated from examples/native/consent-demo/android/src/main/kotlin/com/c15t/demo/firebase-integration-example.kt (docs:android-firebase-integration) by scripts/sync-example-docs.ts. Edit the source file. */}
+{/* Generated from examples/native/consent-demo/android/src/main/kotlin/com/inth/demo/firebase-integration-example.kt (docs:android-firebase-integration) by scripts/sync-example-docs.ts. Edit the source file. */}
 
 ```kotlin title="FirebaseConsent.kt"
-package com.c15t.demo
+package com.inth.demo
 
-import com.c15t.android.integrations.FirebaseAnalyticsConsent
-import com.c15t.android.integrations.FirebaseAnalyticsIntegration
-import com.c15t.core.C15t
+import com.inth.android.integrations.FirebaseAnalyticsConsent
+import com.inth.android.integrations.FirebaseAnalyticsIntegration
+import com.inth.core.Inth
 
 fun connectAppFirebaseAnalytics(
 	setConsent: (FirebaseAnalyticsConsent) -> Unit,
 	setCollectionEnabled: (Boolean) -> Unit,
 	onError: (Exception) -> Unit,
 ): FirebaseAnalyticsIntegration {
-	val core = checkNotNull(C15t.current) { "Install c15t before connecting analytics" }
+	val core = checkNotNull(Inth.current) { "Install Inth before connecting analytics" }
 	return FirebaseAnalyticsIntegration(
 		core = core,
 		setConsent = setConsent,

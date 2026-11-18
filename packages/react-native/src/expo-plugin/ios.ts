@@ -19,8 +19,8 @@ import {
 	IOS_PLIST_KEY,
 	RETIRED_IOS_PLIST_KEYS,
 } from './constants';
-import { C15tPluginError } from './errors';
-import type { ResolvedC15tParams } from './params';
+import { InthPluginError } from './errors';
+import type { ResolvedInthParams } from './params';
 import { POLICY_RESOURCE_NAME, POLICY_RULES_NAME } from './policy-resource';
 
 const minimumDeploymentTarget = (
@@ -84,14 +84,14 @@ export const withIosDeploymentTargetFloor: ConfigPlugin = (config) => {
 };
 
 /**
- * The `ios.privacyManifests` shape, narrowed to what c15t declares.
+ * The `ios.privacyManifests` shape, narrowed to what Inth declares.
  *
  * Written into the Expo config rather than straight to disk: prebuild's default
  * plugins run `IOSConfig.PrivacyInfo.withPrivacyInfo`, which merges this field
  * into the app's `PrivacyInfo.xcprivacy`. A plugin that wrote the file itself
  * would fight that merge on every `expo prebuild`.
  */
-export interface C15tPrivacyManifestDeclarations {
+export interface InthPrivacyManifestDeclarations {
 	/** Whether the shipped binary uses data for tracking. */
 	NSPrivacyTracking: boolean;
 	/** Hosts the binary may send tracking data to. */
@@ -133,7 +133,7 @@ const CF_BUNDLE_LOCALIZATIONS_KEY = 'CFBundleLocalizations';
  * is a value it has to parse.
  */
 export const buildInfoPlistEntries = function buildInfoPlistEntries(
-	params: ResolvedC15tParams
+	params: ResolvedInthParams
 ): Record<string, string | number | boolean | string[]> {
 	const entries: Record<string, string | number | boolean | string[]> = {
 		[IOS_PLIST_KEY.backendURL]: params.backendURL,
@@ -159,7 +159,7 @@ export const buildInfoPlistEntries = function buildInfoPlistEntries(
 		entries[IOS_PLIST_KEY.categories] = [...params.consentCategories];
 	}
 	// The same list Android gets as meta-data, written as text because that is the
-	// shape `C15tBridgeConfiguration.declaredVendors` and the Android reader share.
+	// shape `InthBridgeConfiguration.declaredVendors` and the Android reader share.
 	// An empty declaration stays unwritten, because absence is the full-disclosure
 	// answer; the cores prune whatever they are served down to these ids either way.
 	if (params.vendors.length > 0) {
@@ -268,7 +268,7 @@ const mergeBundleLocalizations = function mergeBundleLocalizations(
 };
 
 /**
- * Write c15t's bootstrap config and tracking keys into `Info.plist`.
+ * Write Inth's bootstrap config and tracking keys into `Info.plist`.
  *
  * The App Tracking Transparency keys appear only when the host opted in. Apple
  * reads `NSUserTrackingUsageDescription` as a promise about the app, and a
@@ -292,7 +292,7 @@ const mergeBundleLocalizations = function mergeBundleLocalizations(
  * @returns A new plist object; the input is not mutated.
  */
 export const applyInfoPlist = function applyInfoPlist(
-	params: ResolvedC15tParams,
+	params: ResolvedInthParams,
 	infoPlist: InfoPlist
 ): InfoPlist {
 	const next: InfoPlist = { ...infoPlist };
@@ -408,7 +408,7 @@ const readInfoPlistStrings = async function readInfoPlistStrings(
 
 	const contents = bytes.toString('utf8');
 	if (contents.includes('\uFFFD')) {
-		throw new C15tPluginError(
+		throw new InthPluginError(
 			`${path} is not a UTF-8 or UTF-16 string table, so this plugin ` +
 				`cannot add ${MARKDOWN_USAGE_DESCRIPTION_KEY} to it without a ` +
 				`chance of losing what is already in there. Add the entry by hand.`
@@ -467,7 +467,7 @@ const addMarkdownEntryToStrings = async function addMarkdownEntryToStrings(
 	const entry = `"${MARKDOWN_USAGE_DESCRIPTION_KEY}" = "${escapeStringsValue(value)}";`;
 	const contents =
 		existing === null
-			? `/* Added by @c15t/react-native at prebuild. */\n${entry}\n`
+			? `/* Added by @inth/react-native at prebuild. */\n${entry}\n`
 			: `${existing.contents.replace(/\s*$/u, '')}\n\n${entry}\n`;
 	const payload = `${existing?.byteOrderMark ?? ''}${contents}`;
 
@@ -494,7 +494,7 @@ const addMarkdownEntryToStrings = async function addMarkdownEntryToStrings(
  */
 export const applyLocalizedMarkdownDescriptions =
 	async function applyLocalizedMarkdownDescriptions(
-		params: ResolvedC15tParams,
+		params: ResolvedInthParams,
 		options: {
 			readonly projectName: string;
 			readonly project: XcodeProject;
@@ -566,7 +566,7 @@ export const applyLocalizedMarkdownDescriptions =
 	};
 
 /**
- * Build the `ios.privacyManifests` entries c15t is responsible for.
+ * Build the `ios.privacyManifests` entries Inth is responsible for.
  *
  * The core declares no required-reason API types: it stores consent in the
  * Keychain and its own application-support files, and neither is on Apple's
@@ -575,8 +575,8 @@ export const applyLocalizedMarkdownDescriptions =
  */
 export const buildPrivacyManifestDeclarations =
 	function buildPrivacyManifestDeclarations(
-		params: ResolvedC15tParams
-	): C15tPrivacyManifestDeclarations {
+		params: ResolvedInthParams
+	): InthPrivacyManifestDeclarations {
 		return {
 			NSPrivacyTracking: params.appTrackingTransparency.enabled,
 			NSPrivacyTrackingDomains: [...params.privacyTrackingDomains],

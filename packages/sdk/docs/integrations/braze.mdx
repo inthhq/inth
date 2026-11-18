@@ -15,8 +15,8 @@ The category defaults to `marketing`, like the web's email and messaging
 helpers. The two attributes come from the shared
 [Consent Mode mapping](/docs/integrations/google-tag#how-categories-map-to-google-consent-types).
 
-The helper ships in `C15tApple`, `c15t-android` and
-`@c15t/react-native/integrations`. c15t adds no Braze dependency. The web has
+The helper ships in `InthApple`, `inth-android` and
+`@inth/react-native/integrations`. c15t adds no Braze dependency. The web has
 no Braze helper.
 
 ## What the helper changes
@@ -71,8 +71,8 @@ part of the app's function rather than marketing, pass
 
 ```swift title="BrazeConsentOwner.swift"
 import BrazeKit
-import C15tApple
-import C15tCore
+import InthApple
+import InthCore
 
 final class BrazeConsentOwner {
     private let integration: BrazeIntegration
@@ -98,11 +98,11 @@ final class BrazeConsentOwner {
 ```kotlin title="BrazeConsent.kt"
 import android.content.Context
 import com.braze.Braze
-import com.c15t.android.integrations.BrazeIntegration
-import com.c15t.core.C15t
+import com.inth.android.integrations.BrazeIntegration
+import com.inth.core.Inth
 
 fun connectBrazeConsent(context: Context, onError: (Exception) -> Unit): BrazeIntegration {
-	val core = checkNotNull(C15t.current) { "Install c15t before connecting Braze" }
+	val core = checkNotNull(Inth.current) { "Install Inth before connecting Braze" }
 	return BrazeIntegration(
 		core = core,
 		enableSdk = { Braze.enableSdk(context) },

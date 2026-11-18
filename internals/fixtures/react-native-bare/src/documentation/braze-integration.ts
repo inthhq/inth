@@ -1,9 +1,9 @@
 // #region docs:rn-braze-integration title="braze-consent.ts"
-import { connectBraze } from '@c15t/react-native/integrations';
+import { connectBraze } from '@inth/react-native/integrations';
 import type {
 	BrazeClient,
 	ConsentIntegration,
-} from '@c15t/react-native/integrations';
+} from '@inth/react-native/integrations';
 
 export const connectAppBraze = (
 	braze: BrazeClient,

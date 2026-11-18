@@ -4,10 +4,10 @@ import type { ProjectURLReason } from './project-url';
  * The single error type the plugin raises.
  *
  * Every message here names the prop or file to change, because the alternative
- * is a prebuild that fails inside a plist writer with no idea that c15t asked
+ * is a prebuild that fails inside a plist writer with no idea that Inth asked
  * for it.
  */
-export class C15tPluginError extends Error {
+export class InthPluginError extends Error {
 	/**
 	 * Why `backendURL` was refused, in the reason codes of
 	 * `packages/native-protocol/project-url/cases.json`. Unset for every other error.
@@ -24,8 +24,8 @@ export class C15tPluginError extends Error {
 		reason?: ProjectURLReason,
 		options?: ErrorOptions
 	) {
-		super(`@c15t/react-native config plugin: ${message}`, options);
-		this.name = 'C15tPluginError';
+		super(`@inth/react-native config plugin: ${message}`, options);
+		this.name = 'InthPluginError';
 		this.reason = reason;
 	}
 }

@@ -11,30 +11,30 @@
       android:theme="@style/AppTheme"
       android:usesCleartextTraffic="${usesCleartextTraffic}"
       android:supportsRtl="true">
-      <!-- c15t native core configuration. Absent means "not configured".
+      <!-- Inth native core configuration. Absent means "not configured".
 
-             com.c15t.BACKEND_URL      required: the Inth project URL
-             com.c15t.DRY_RUN                 true drops records, for development and
+             com.inth.BACKEND_URL      required: the Inth project URL
+             com.inth.DRY_RUN                 true drops records, for development and
                                       CI; refused unless the app is debuggable
-             com.c15t.BACKEND_DOMAIN          domain sent on subject writes
-             com.c15t.CATEGORIES      comma-separated category scope the app
+             com.inth.BACKEND_DOMAIN          domain sent on subject writes
+             com.inth.CATEGORIES      comma-separated category scope the app
                                       offers; iOS spells this the
-                                      com.c15t.categories plist array. Absent
+                                      com.inth.categories plist array. Absent
                                       means the full policy scope.
-             com.c15t.FORCE_GPC       force the GPC signal on for a staged build
-             com.c15t.reactnative.AUTO_BOOTSTRAP
+             com.inth.FORCE_GPC       force the GPC signal on for a staged build
+             com.inth.reactnative.AUTO_BOOTSTRAP
                                       false only when the app starts the core
                                       itself before React Native initializes -->
       <!-- #region docs:bare-android-configuration title="AndroidManifest.xml application entries" -->
-      <meta-data android:name="com.c15t.POLICY_RESOURCE" android:value="c15t-policy.json" />
+      <meta-data android:name="com.inth.POLICY_RESOURCE" android:value="inth-policy.json" />
       <meta-data
-        android:name="com.c15t.BACKEND_URL"
+        android:name="com.inth.BACKEND_URL"
         android:value="https://example-inth.inth.app/" />
       <!-- The same four categories apps/playground declares to its web provider
            as consentCategories, so one backend and one policy render the same
            four dialog rows on web and on mobile. -->
       <meta-data
-        android:name="com.c15t.CATEGORIES"
+        android:name="com.inth.CATEGORIES"
         android:value="necessary, functionality, measurement, marketing" />
       <!-- #endregion docs:bare-android-configuration -->
       <activity
@@ -49,7 +49,7 @@
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
         <!-- The demo's own scheme, so a reviewer at a shell can drive a consent journey
-             with `adb shell am start -a android.intent.action.VIEW -d c15t-demo://accept`.
+             with `adb shell am start -a android.intent.action.VIEW -d inth-demo://accept`.
              JavaScript answers the verbs in src/deep-links, the same handler iOS runs when
              `xcrun simctl openurl` delivers the identical link. The activity is already
              singleTask, so a link that arrives while the app is up comes in as a new
@@ -58,7 +58,7 @@
             <action android:name="android.intent.action.VIEW" />
             <category android:name="android.intent.category.DEFAULT" />
             <category android:name="android.intent.category.BROWSABLE" />
-            <data android:scheme="c15t-demo" />
+            <data android:scheme="inth-demo" />
         </intent-filter>
       </activity>
     </application>

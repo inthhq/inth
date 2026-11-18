@@ -1,8 +1,8 @@
 /**
- * Delivery: `c15t-demo://` links in, verbs out.
+ * Delivery: `inth-demo://` links in, verbs out.
  *
  * Both platforms arrive through React Native's own `Linking` module, so one handler
- * serves both. The scheme is registered in `ios/C15tBare/Info.plist` for iOS and by
+ * serves both. The scheme is registered in `ios/InthBare/Info.plist` for iOS and by
  * an intent filter in `AndroidManifest.xml` for Android, and everything after that
  * is this file.
  *
@@ -86,7 +86,7 @@ export const useDemoDeepLinks = (context: DemoVerbContext): DemoLinks => {
 			// in the table the verbs share.
 			receipt = DEMO_VERB_LINES.join('\n');
 		} else if (verb === undefined) {
-			receipt = `no verb "${link.verb}" - try c15t-demo://help`;
+			receipt = `no verb "${link.verb}" - try inth-demo://help`;
 		} else {
 			try {
 				receipt = await verb.run(latest.current, link);

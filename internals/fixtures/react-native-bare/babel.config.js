@@ -77,7 +77,7 @@ for (const [key, value] of Object.entries(loaded)) {
  *
  * @returns {object} A Babel plugin.
  */
-const inlineC15tEnv = () => ({
+const inlineInthEnv = () => ({
 	visitor: {
 		MemberExpression(nodePath) {
 			const { node } = nodePath;
@@ -108,6 +108,6 @@ const inlineC15tEnv = () => ({
 });
 
 module.exports = {
-	plugins: [inlineC15tEnv],
+	plugins: [inlineInthEnv],
 	presets: ['module:@react-native/babel-preset'],
 };

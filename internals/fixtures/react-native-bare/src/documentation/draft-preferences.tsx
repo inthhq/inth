@@ -1,6 +1,6 @@
 // #region docs:draft-preferences title="privacy-settings.tsx"
-import { useConsentDraft } from '@c15t/react-native';
-import type { AllConsentNames } from '@c15t/react-native';
+import { useConsentDraft } from '@inth/react-native';
+import type { AllConsentNames } from '@inth/react-native';
 import { useState } from 'react';
 import { Button, Switch, Text, View } from 'react-native';
 

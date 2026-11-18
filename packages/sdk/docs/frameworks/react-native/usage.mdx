@@ -80,14 +80,14 @@ When a session is open, `presentation` says what it shows: `prompt` for the
 initial prompt or a notice, `preferences` for standing privacy settings. A
 binary built before this field omits it.
 
-A rejected call carries one of two codes. `C15T_PRESENTER_INVALID_URL` means
+A rejected call carries one of two codes. `INTH_PRESENTER_INVALID_URL` means
 the native host refused the privacy-policy URL, and the same URL will fail
-again. `C15T_PRESENTER_UNAVAILABLE` means there was no foreground window,
+again. `INTH_PRESENTER_UNAVAILABLE` means there was no foreground window,
 Activity or installed core yet, so a later call can succeed.
 
 The native decision covers everything automatic. A prompt owed while the app is
 in the background, before its window or Activity is ready, or across a
-`C15t.uninstall()` and a new install, opens once the app is in the foreground
+`Inth.uninstall()` and a new install, opens once the app is in the foreground
 again. A prompt owed behind open settings opens when they close. A prompt the
 person dismissed, also one the app opened itself, stays closed until the
 requirement changes. With `autoPresent={false}` nothing opens by itself. If
@@ -134,7 +134,7 @@ of dismissing an overlapping React dialog.
 | `refresh()` | Resolve policy again and retry pending delivery. It does not record a choice. |
 | `identify(externalId)` | Attach the signed-in app identity. |
 | `logout()` | Detach that external identity. |
-| `reset()` | Clear local consent authority and require a new choice while keeping the c15t subject. |
+| `reset()` | Clear local consent authority and require a new choice while keeping the Inth subject. |
 | `setOverrides(overrides)` | Set QA country, region, language or GPC inputs. |
 | `requestTrackingAuthorization()` | Request Apple's separate tracking authorization where supported. `<ConsentProvider>` already asks after consent unless `trackingRequest="manual"`. |
 

@@ -11,27 +11,27 @@ import {
 	ConsentDialog,
 	ConsentPreferences,
 	createConsentTheme,
-	useC15tBootstrap,
+	useInthBootstrap,
 	useTrackingRequest,
 	useConsentStatus,
 	useSnapshot,
 	presentConsentPrompt,
 	presentPreferences,
 	onConsentPresenterOutcome,
-} from '@c15t/react-native';
+} from '@inth/react-native';
 import { Component, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Text as NativeText, View } from 'react-native';
 
-import { useConsentSource } from './c15t/consent-source';
-import consentTheme from './c15t/consent-theme.json';
 import { Button, Card, Hint, Screen } from './components/ui';
+import { useConsentSource } from './inth/consent-source';
+import consentTheme from './inth/consent-theme.json';
 import { HeadlessConsentApp } from './screens/headless';
 import { HomeScreen } from './screens/home';
 import { PreferencesScreen } from './screens/preferences';
 
 // #region docs:expo-theme-components title="app.tsx"
-// `consentTheme` is src/c15t/consent-theme.json, the object app.config.ts
+// `consentTheme` is src/inth/consent-theme.json, the object app.config.ts
 // passes to the plugin. Here it styles the React Native components.
 const theme = createConsentTheme(consentTheme);
 // #endregion docs:expo-theme-components
@@ -91,7 +91,7 @@ class ErrorBoundary extends Component<
 					<Hint>
 						`ConsentProvider` throws on purpose when the binary cannot speak the
 						protocol this bundle expects. Rebuild the app, or install the
-						@c15t/react-native version that shipped with the binary.
+						@inth/react-native version that shipped with the binary.
 					</Hint>
 				</Card>
 			</Screen>
@@ -99,7 +99,7 @@ class ErrorBoundary extends Component<
 	}
 }
 
-/** Shown when the binary has no c15t module, which is a build fact. */
+/** Shown when the binary has no Inth module, which is a build fact. */
 const MissingNativeCore = () => {
 	const { enableFake, nativeError } = useConsentSource();
 
@@ -110,10 +110,10 @@ const MissingNativeCore = () => {
 					selectable
 					style={{ fontSize: 13 }}
 				>
-					{nativeError?.message ?? 'The c15t TurboModule is not registered.'}
+					{nativeError?.message ?? 'The Inth TurboModule is not registered.'}
 				</NativeText>
 				<Hint>
-					Rebuild after installing @c15t/react-native. On iOS run pod install
+					Rebuild after installing @inth/react-native. On iOS run pod install
 					and build again; on Android clean and rebuild. The fake core below is
 					a fixture, not a substitute for that.
 				</Hint>
@@ -241,7 +241,7 @@ const NativeApp = () => {
 	return (
 		<View style={{ flex: 1, gap: 24, padding: 32, paddingTop: 80 }}>
 			<NativeText accessibilityRole="header">
-				c15t Expo native consent
+				Inth Expo native consent
 			</NativeText>
 			<Button
 				label="Privacy settings"
@@ -272,7 +272,7 @@ const NativeApp = () => {
  * draws its own consent UI instead of asking native to present one.
  */
 const NativeOrHeadlessApp = () =>
-	useC15tBootstrap().nativeUI === false ? (
+	useInthBootstrap().nativeUI === false ? (
 		<HeadlessConsentApp />
 	) : (
 		<NativeApp />

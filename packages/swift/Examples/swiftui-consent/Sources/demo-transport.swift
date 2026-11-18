@@ -1,13 +1,13 @@
-@_spi(C15tInternal) import C15tCore
+@_spi(InthInternal) import InthCore
 import Foundation
 
 /// Local sample policy. Saves stay queued; this transport never claims remote delivery.
 /// Transports are internal API, used here so the demo runs with no backend.
-struct DemoTransport: C15tTransport {
+struct DemoTransport: InthTransport {
     let domain = "swiftui-consent-demo"
     var unavailable = false
 
-    func performInit(_ context: InitContext) async -> Result<InitResponse, C15tError> {
+    func performInit(_ context: InitContext) async -> Result<InitResponse, InthError> {
         if unavailable { return .failure(.offline) }
         do {
             let policy = try JSONDecoder().decode(JSONValue.self, from: Data(Self.policy.utf8))
@@ -17,8 +17,8 @@ struct DemoTransport: C15tTransport {
         }
     }
 
-    func sendSave(_ body: Data) async -> Result<Void, C15tError> { .failure(.offline) }
-    func patchIdentity(subjectId: String, externalId: String, identityProvider: String?) async -> Result<Void, C15tError> {
+    func sendSave(_ body: Data) async -> Result<Void, InthError> { .failure(.offline) }
+    func patchIdentity(subjectId: String, externalId: String, identityProvider: String?) async -> Result<Void, InthError> {
         .failure(.offline)
     }
 

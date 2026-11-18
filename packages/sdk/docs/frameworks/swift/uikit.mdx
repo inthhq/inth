@@ -1,6 +1,6 @@
 ---
 title: UIKit
-description: Add the native c15t consent prompt to a UIKit app with one root view controller, and keep privacy settings reachable from your own screens.
+description: Add the native Inth consent prompt to a UIKit app with one root view controller, and keep privacy settings reachable from your own screens.
 group: frameworks
 ---
 
@@ -12,7 +12,7 @@ required.
 ## Add the package
 
 Follow [Add the Swift package](/docs/frameworks/swift/quickstart#add-the-swift-package)
-to link `C15tCore`, `C15tApple` and `C15tConsentUI`. Use the project URL from
+to link `InthCore`, `InthApple` and `InthConsentUI`. Use the project URL from
 your Inth dashboard and the app's HTTPS privacy-policy URL. Your project needs the
 policy and categories described in the
 [quickstart prerequisites](/docs/frameworks/swift/quickstart#before-you-start).
@@ -54,7 +54,7 @@ Call `ConsentPrompt.current?.presentPreferences()` on the main actor from your
 Privacy settings action. It opens the same stored choices that SDK gates read,
 and does nothing while a prompt or settings session is already open.
 
-To update a UIKit label, create a `PublishedConsent` for `C15t.current` and
+To update a UIKit label, create a `PublishedConsent` for `Inth.current` and
 subscribe to `decisionPublisher(for: .measurement)`. It delivers the current
 decision and then each change, on the main thread. Keep the returned
 `AnyCancellable` in the controller.
@@ -63,7 +63,7 @@ decision and then each change, on the main thread. Keep the returned
 
 If your app starts optional SDKs during launch, install the engine first in
 `application(_:didFinishLaunchingWithOptions:)` with
-`try? C15tApple.install(configuration)`, using the same configuration. The root
+`try? InthApple.install(configuration)`, using the same configuration. The root
 view controller then reuses that engine, and saved consent is available before
 optional SDK startup.
 
@@ -86,7 +86,7 @@ closed. Repeat after background and foreground transitions, and confirm only
 one prompt is ever on screen.
 
 The maintained UIKit demo lives in `examples/native/consent-demo/ios`. Its
-`C15tUIKitDemo` scheme hosts the same stock presenter and has local category
+`InthUIKitDemo` scheme hosts the same stock presenter and has local category
 and IAB demonstrations. Those sample policies are separate from your hosted
 project and its review configuration.
 

@@ -1,9 +1,9 @@
-# c15t React Native fixture (Expo development build)
+# Inth React Native fixture (Expo development build)
 
 See the [mobile demo index](../../../packages/sdk/docs/frameworks/react-native/examples.mdx) for
 current native modes, setup commands and the limits of IAB and hosted coverage.
 
-An Expo SDK 58 custom native build for `@c15t/react-native`. Normal native mode
+An Expo SDK 58 custom native build for `@inth/react-native`. Normal native mode
 requests the stock SwiftUI or Compose presenter and displays native state and
 outcomes. The labelled fake mode uses a separate React shell. It shares some
 fixture helpers with bare RN; the apps are not identical consumer journeys.
@@ -14,14 +14,14 @@ IAB modes in the demo index for that fixture coverage.
 
 ## Expo Go will not run this app
 
-`@c15t/react-native` is a custom native module: the consent kernel is Swift on iOS and
-Kotlin on Android, registered through Codegen as the `C15t` TurboModule. Expo Go ships
+`@inth/react-native` is a custom native module: the consent kernel is Swift on iOS and
+Kotlin on Android, registered through Codegen as the `Inth` TurboModule. Expo Go ships
 a fixed set of native modules and cannot carry one added by a config plugin, so there
 is no path where this app works there.
 
 Opening it in Expo Go does not fail loudly. The JavaScript bundle loads, finds no
 module, and every read answers from the deny-all default: the banner never appears,
-every category is `false`, `policyPending` stays `true`, and it looks exactly like a c15t
+every category is `false`, `policyPending` stays `true`, and it looks exactly like an Inth
 bug. That is why the config plugin checks the launch target at configure time and
 refuses rather than letting you find this out at runtime.
 
@@ -42,7 +42,7 @@ need the built client to open it.
 ## Setup
 
 The default backend is the public Inth demo, `https://example-inth.inth.app/`.
-Use your Inth project URL for your app. The plugin embeds `c15t-policy.json` before
+Use your Inth project URL for your app. The plugin embeds `inth-policy.json` before
 JavaScript starts; the demo resource expires on 5 November 2026. Regenerate it
 before prebuild when changing the endpoint or renewing its authority.
 See [mobile policy resources](../../../packages/native-protocol/docs/mobile-policy-resources.md).
@@ -57,9 +57,9 @@ cp .env.example .env
 before it evaluates `app.config.ts`, so one file feeds both halves:
 
 - `app.config.ts` passes `backendURL` to the config plugin, which writes
-  `com.c15t.backend.url` into `ios/Info.plist` and
-  `com.c15t.BACKEND_URL` into `AndroidManifest.xml` at prebuild time. With
-  `C15T_DRY_RUN=1` it also writes `com.c15t.dryRun` and `com.c15t.DRY_RUN`.
+  `com.inth.backend.url` into `ios/Info.plist` and
+  `com.inth.BACKEND_URL` into `AndroidManifest.xml` at prebuild time. With
+  `C15T_DRY_RUN=1` it also writes `com.inth.dryRun` and `com.inth.DRY_RUN`.
 - The `EXPO_PUBLIC_` copies are inlined into the JavaScript bundle and drive what the
   screens report and which core the app attaches to.
 
@@ -76,7 +76,7 @@ the design, not a mistake in this example.
 The mobile SDKs work only with Inth hosted projects, so the plugin refuses any
 other host. To point a debug build at a staging or loopback backend, set
 `C15T_DRY_RUN=1`. It drops consent records, and a release build refuses to start
-c15t with it. Keep the native and JavaScript URLs equal and export the resource
+Inth with it. Keep the native and JavaScript URLs equal and export the resource
 from the same backend's manifest.
 
 ## Commands
@@ -95,8 +95,8 @@ from the same backend's manifest.
 `ios/` and `android/` are generated and gitignored. Delete them freely; prebuild writes
 them back from `app.config.ts`, and the plugin is idempotent.
 
-The autolinked `C15tReactNative` pod compiles the generated Swift core and Apple
-services. Do not add a separate `C15tCore` pod to this app. The checkout-only
+The autolinked `InthReactNative` pod compiles the generated Swift core and Apple
+services. Do not add a separate `InthCore` pod to this app. The checkout-only
 `C15T_LOCAL_PODS` flag now controls Android source substitution only.
 
 For Android, `app.config.ts` explicitly passes `androidMavenRepository` to the
@@ -114,7 +114,7 @@ Firebase Analytics SDKs through config plugins in `app.config.ts`:
 `@react-native-firebase/app` and `analytics`, `@sentry/react-native/expo` with
 uploads off, and `expo-build-properties` for dynamic frameworks, which React
 Native Firebase needs on iOS. The placeholder Firebase project is in `vendors/`,
-and `firebase.json` keeps collection and every consent type off until c15t
+and `firebase.json` keeps collection and every consent type off until Inth
 grants them. Normal builds link the SDKs and never start them.
 
 An E2E build (`EXPO_PUBLIC_C15T_APP_E2E=1`) renders `src/e2e/vendor-journey-app.tsx`
@@ -123,13 +123,13 @@ instead of the shell. It starts the SDKs with the bare fixture's code in
 helpers. `metro-vendor-sources.js` lets Metro read those files and resolves their
 packages from this app, so the bundle never picks up the bare app's React Native.
 
-The c15t plugin accepts only an Inth project URL, and a Release build cannot use
+The Inth plugin accepts only an Inth project URL, and a Release build cannot use
 `dryRun`. So an E2E build gives the plugin the demo project with
-`autoBootstrap: false`, and `plugins/with-c15t-e2e-install.js` makes the native
+`autoBootstrap: false`, and `plugins/with-inth-e2e-install.js` makes the native
 app install the core against the loopback backend before React Native starts,
-through c15t's internal install path. It writes `C15tE2EInstall.kt` and a call in
+through Inth's internal install path. It writes `InthE2EInstall.kt` and a call in
 `MainApplication.kt` on Android, a helper and a call in `AppDelegate.swift` on
-iOS, and bundles the exported policy as `c15t-e2e-policy.json` on both.
+iOS, and bundles the exported policy as `inth-e2e-policy.json` on both.
 
 ```sh
 bash scripts/vendor-e2e.sh ios
@@ -141,7 +141,7 @@ C15T_EXPO_CELL=expo-57 bash scripts/vendor-e2e.sh android
 The runner builds a Release app with the bundle inside the binary and the bare
 fixture's loopback backend and capture server. It creates its own Simulator or
 AVD and deletes it after the run. Without `C15T_EXPO_CELL` it builds this fixture in place.
-With `expo-55`, `expo-56` or `expo-57` it packs `@c15t/react-native` and uses
+With `expo-55`, `expo-56` or `expo-57` it packs `@inth/react-native` and uses
 `scripts/prepare-packed-consumer.py --cell` to make a consumer outside the
 checkout. That consumer takes Expo, React Native, React and the other Expo packages
 (`expoPackages`) from that cell of `scripts/mobile-compatibility.json`. The vendor SDKs keep this fixture's pins in every cell. The committed
@@ -189,15 +189,15 @@ Things that differ from the bare fixture:
 
 Verified here: `bun run check-types` is clean, `expo export --platform all` writes
 2.2 MB Hermes bundles for iOS and Android, `expo prebuild --clean --no-install` exits 0
-with the `com.c15t.*` keys and the startup initializer in place, and `pod install` inside
+with the `com.inth.*` keys and the startup initializer in place, and `pod install` inside
 the generated `ios/` prints
 
 ```console
 Pod installation complete! There are 96 dependencies from the Podfile and 95 total pods installed.
 ```
 
-with `C15tCore` and `C15tReactNative` both at 3.0.0-alpha.1, so the plugin's Podfile line,
-the podspec, and the `C15t` TurboModule codegen all hold. `pod install` and `xcodebuild`
+with `InthCore` and `InthReactNative` both at 3.0.0-alpha.1, so the plugin's Podfile line,
+the podspec, and the `Inth` TurboModule codegen all hold. `pod install` and `xcodebuild`
 need `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer` on this machine, because
 `xcode-select` points at Command Line Tools.
 
@@ -214,7 +214,7 @@ this package gets exercised, on CI, by `bun run check:react-native-autolink`; se
 
 ## Fake core
 
-The example ships an in-JavaScript fake core (`src/c15t/fake-native.ts`) built only on
+The example ships an in-JavaScript fake core (`src/inth/fake-native.ts`) built only on
 `createConsentClient(module, events)` and `ConsentClientContext`, which is how the
 package says to inject a mock: hydrate and init on timers, a 1 Hz `isAllowed` sampler
 whose recent samples print on screen, a drift timer that flips one permission every few
@@ -283,11 +283,11 @@ to change the native keys, since those are compiled into the binary.
 native projects. After a prebuild you should find:
 
 ```
-ios/c15tExpoDev/Info.plist              com.c15t.backend.url
-ios/c15tExpoDev/Info.plist              NSUserTrackingUsageDescription, NSUserTrackingMarkdownUsageDescription
+ios/inthExpoDev/Info.plist              com.inth.backend.url
+ios/inthExpoDev/Info.plist              NSUserTrackingUsageDescription, NSUserTrackingMarkdownUsageDescription
 ios/.../Supporting/de.lproj/InfoPlist.strings   NSUserTrackingMarkdownUsageDescription
-android/.../AndroidManifest.xml         <meta-data android:name="com.c15t.BACKEND_URL" ...>
-android/.../AndroidManifest.xml         com.c15t.reactnative.C15tReactNativeInitializer
+android/.../AndroidManifest.xml         <meta-data android:name="com.inth.BACKEND_URL" ...>
+android/.../AndroidManifest.xml         com.inth.reactnative.InthReactNativeInitializer
 ```
 
 Android has no mode key; it infers the transport from which keys are present. An absent
@@ -304,7 +304,7 @@ That plain string is the alert Apple shows, and the Markdown key does not replac
 Apple draws the plain one on every older system and to every device outside the countries
 where it enabled the expanded sheet. `trackingMarkdownUsageDescription` is the copy that
 expanded sheet renders, as Markdown, so bold, italics, bullets, and paragraph breaks.
-Apple picks who sees it, not c15t, and no surface here reads the copy back.
+Apple picks who sees it, not Inth, and no surface here reads the copy back.
 
 `trackingMarkdownUsageDescriptionLocalizations` adds the same prompt per locale, keyed the
 way Xcode spells a tag. Each entry becomes an `InfoPlist.strings` in that
@@ -327,8 +327,8 @@ reason the card prints `useIsTrackingAllowed` beside the arm.
 Run the packed smoke against an existing Simulator Release app and its SDK archive:
 
 ```sh
-python3 scripts/packed-launch-ios.py --app /absolute/path/c15tExpoDev.app \
-  --archive /absolute/path/c15t-react-native.tgz --out /absolute/path/new-evidence
+python3 scripts/packed-launch-ios.py --app /absolute/path/inthExpoDev.app \
+  --archive /absolute/path/inth-react-native.tgz --out /absolute/path/new-evidence
 ```
 
 The app must retain the designated hosted endpoint and the bundled policy. Build
@@ -354,7 +354,7 @@ For direct native gate evidence, run `scripts/install-packed-ios-proof.py --cons
 /absolute/path/consumer` after prebuild and before the Release build, then pass
 `--native-proof` to the smoke runner. This adds a read-only native observer to the
 consumer's AppDelegate. It runs only with the runner's launch environment and
-records the installed core's snapshot plus actual `C15t.isAllowed` values to the
+records the installed core's snapshot plus actual `Inth.isAllowed` values to the
 app sandbox. The smoke requires fresh bundled readings and full denial in both
 processes. The SDK still comes only from the archive.
 

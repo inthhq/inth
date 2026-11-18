@@ -27,7 +27,7 @@ const settings = {
 	dryRun: false,
 	expiresInDays: 14,
 	languages: ['en', 'de'],
-	out: 'c15t-policy.json',
+	out: 'inth-policy.json',
 	vendors: [755, 42],
 };
 
@@ -85,7 +85,7 @@ describe('bundling the manifest at prebuild', () => {
 			manifestArguments(
 				backendURL,
 				settings,
-				'/app/c15t-policy.json',
+				'/app/inth-policy.json',
 				'release'
 			)
 		).toEqual([
@@ -93,7 +93,7 @@ describe('bundling the manifest at prebuild', () => {
 			'--backend-url',
 			backendURL,
 			'--out',
-			'/app/c15t-policy.json',
+			'/app/inth-policy.json',
 			'--build',
 			'release',
 			'--allow-stale-manifest',
@@ -114,19 +114,19 @@ describe('bundling the manifest at prebuild', () => {
 		const failing = exitingWith(1);
 		await expect(
 			fetchBundledManifest('/app-a', backendURL, settings, 'release', {
-				resolveCli: () => '/bin/c15t',
+				resolveCli: () => '/bin/inth',
 				spawn: failing,
 			})
 		).rejects.toThrow(/could not fetch the manifest for this release build/u);
 		const passing = exitingWith(0);
-		const deps = { resolveCli: () => '/bin/c15t', spawn: passing };
+		const deps = { resolveCli: () => '/bin/inth', spawn: passing };
 		await fetchBundledManifest('/app-b', backendURL, settings, 'debug', deps);
 		await fetchBundledManifest('/app-b', backendURL, settings, 'debug', deps);
 		expect(passing).toHaveBeenCalledTimes(1);
 	});
 
 	it('needs @c15t/cli installed in the app', async () => {
-		const root = await mkdtemp(join(tmpdir(), 'c15t-cli-'));
+		const root = await mkdtemp(join(tmpdir(), 'inth-cli-'));
 		try {
 			await writeFile(join(root, 'package.json'), '{}');
 			expect(() => resolveCli(root)).toThrow(
@@ -147,7 +147,7 @@ describe('bundling the manifest at prebuild', () => {
 
 	it('replaces policyResource and does not mix with an in-code policy', () => {
 		const resolved = resolveParams({ backendURL, bundleManifest: true });
-		expect(resolved.policyResource).toBe('c15t-policy.json');
+		expect(resolved.policyResource).toBe('inth-policy.json');
 		expect(resolved.bundleManifest?.allowStaleManifest).toBe(false);
 		expect(() =>
 			resolveParams({
@@ -169,7 +169,7 @@ describe('bundling the manifest at prebuild', () => {
 	});
 
 	it('rejects a resource that expires before it was issued, and embeds a merely expired one', async () => {
-		const root = await mkdtemp(join(tmpdir(), 'c15t-dates-'));
+		const root = await mkdtemp(join(tmpdir(), 'inth-dates-'));
 		try {
 			const write = async (
 				name: string,
@@ -221,18 +221,18 @@ describe('bundling the manifest at prebuild', () => {
 	});
 
 	it('removes a resource from an Expo Xcode project without a Resources group', async () => {
-		const root = await mkdtemp(join(tmpdir(), 'c15t-pbx-'));
+		const root = await mkdtemp(join(tmpdir(), 'inth-pbx-'));
 		try {
-			await mkdir(join(root, 'ios/C15tBare.xcodeproj'), { recursive: true });
+			await mkdir(join(root, 'ios/InthBare.xcodeproj'), { recursive: true });
 			await copyFile(
 				join(FIXTURE_DIR, 'project.pbxproj'),
-				join(root, 'ios/C15tBare.xcodeproj/project.pbxproj')
+				join(root, 'ios/InthBare.xcodeproj/project.pbxproj')
 			);
 			const original = IOSConfig.XcodeUtils.getPbxproj(root);
 			const before = original.writeSync();
 			const added = IOSConfig.XcodeUtils.addResourceFileToGroup({
-				filepath: `C15tBare/${POLICY_RESOURCE_NAME}`,
-				groupName: 'C15tBare',
+				filepath: `InthBare/${POLICY_RESOURCE_NAME}`,
+				groupName: 'InthBare',
 				isBuildFile: true,
 				project: original,
 			});
@@ -240,7 +240,7 @@ describe('bundling the manifest at prebuild', () => {
 			expect(
 				removeXcodeResource(
 					added,
-					`C15tBare/${POLICY_RESOURCE_NAME}`
+					`InthBare/${POLICY_RESOURCE_NAME}`
 				).writeSync()
 			).toBe(before);
 		} finally {
@@ -249,7 +249,7 @@ describe('bundling the manifest at prebuild', () => {
 	});
 
 	it('removes the copies an earlier build embedded when a debug fetch is skipped', async () => {
-		const root = await mkdtemp(join(tmpdir(), 'c15t-skip-'));
+		const root = await mkdtemp(join(tmpdir(), 'inth-skip-'));
 		try {
 			// A CLI that writes nothing and succeeds: a debug build that could not
 			// reach the backend, without allowStaleManifest.
@@ -263,14 +263,14 @@ describe('bundling the manifest at prebuild', () => {
 				join(root, 'node_modules/@c15t/cli/bin.mjs'),
 				'process.exit(0);\n'
 			);
-			const iosCopy = join(root, 'ios/C15tBare', POLICY_RESOURCE_NAME);
+			const iosCopy = join(root, 'ios/InthBare', POLICY_RESOURCE_NAME);
 			const androidCopy = join(
 				root,
 				'android/app/src/main/assets',
 				POLICY_RESOURCE_NAME
 			);
-			await mkdir(join(root, 'ios/C15tBare.xcodeproj'), { recursive: true });
-			await mkdir(join(root, 'ios/C15tBare'), { recursive: true });
+			await mkdir(join(root, 'ios/InthBare.xcodeproj'), { recursive: true });
+			await mkdir(join(root, 'ios/InthBare'), { recursive: true });
 			await mkdir(join(root, 'android/app/src/main/assets'), {
 				recursive: true,
 			});
@@ -278,11 +278,11 @@ describe('bundling the manifest at prebuild', () => {
 			await writeFile(androidCopy, 'stale');
 			await copyFile(
 				join(FIXTURE_DIR, 'project.pbxproj'),
-				join(root, 'ios/C15tBare.xcodeproj/project.pbxproj')
+				join(root, 'ios/InthBare.xcodeproj/project.pbxproj')
 			);
 			const project = IOSConfig.XcodeUtils.addResourceFileToGroup({
-				filepath: `C15tBare/${POLICY_RESOURCE_NAME}`,
-				groupName: 'C15tBare',
+				filepath: `InthBare/${POLICY_RESOURCE_NAME}`,
+				groupName: 'InthBare',
 				isBuildFile: true,
 				project: IOSConfig.XcodeUtils.getPbxproj(root),
 			});
@@ -291,7 +291,7 @@ describe('bundling the manifest at prebuild', () => {
 				{ argv: ['node', 'expo', 'run:ios'], projectRoot: root }
 			);
 			const ios = await runMod(config, 'ios', 'xcodeproj', project, {
-				projectName: 'C15tBare',
+				projectName: 'InthBare',
 				projectRoot: root,
 			});
 			await runMod(config, 'android', 'dangerous', {}, { projectRoot: root });

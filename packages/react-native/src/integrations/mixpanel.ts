@@ -4,7 +4,7 @@ import type {
 	ConsentIntegration,
 } from './consent-integration';
 
-/** App-owned Mixpanel client. No Mixpanel dependency is loaded by c15t. */
+/** App-owned Mixpanel client. No Mixpanel dependency is loaded by Inth. */
 export interface MixpanelClient {
 	/** Enable tracking. Mixpanel emits an opt-in event. */
 	optInTracking: () => void | Promise<void>;
@@ -20,7 +20,7 @@ export interface MixpanelClient {
  * submit another command. Construction with a grant, a later grant and explicit
  * sync can submit optInTracking, which emits Mixpanel's opt-in event. Native
  * opt-out can clear data or flush earlier queued data, depending on platform.
- * c15t submits no extra flush before withdrawal.
+ * Inth submits no extra flush before withdrawal.
  *
  * Mixpanel's RN setters return void and discard their native promises. The helper
  * serializes command submission, but ready, sync and disconnect cannot confirm

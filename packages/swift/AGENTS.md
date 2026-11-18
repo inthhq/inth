@@ -1,6 +1,6 @@
-# c15t for Swift: notes for coding agents
+# Inth for Swift: notes for coding agents
 
-This file ships with the `c15t` Swift package. It tells an agent working in an
+This file ships with the `inth` Swift package. It tells an agent working in an
 app that depends on the package where the guides are and which rules the
 integration must keep.
 
@@ -9,10 +9,10 @@ integration must keep.
 The Swift SDK is a private prerelease, and its guides are not published on
 c15t.com yet. Read them from either place:
 
-- The c15t source your maintainer supplied: `docs/frameworks/swift/`
+- The Inth source your maintainer supplied: `docs/frameworks/swift/`
   (`quickstart.mdx`, `uikit.mdx`, `headless.mdx`, `customize.mdx`) and
   `docs/guides/mobile-*.mdx` (IAB, offline startup, identity, verification).
-- The `@c15t/react-native` package, which bundles the same pages as Markdown
+- The `@inth/react-native` package, which bundles the same pages as Markdown
   under `docs/frameworks/swift/` and `docs/guides/`.
 
 `packages/swift/README.md` beside this file lists the products. Once the
@@ -21,8 +21,8 @@ mobile SDKs are public, the pages move to `https://c15t.com/docs/frameworks/swif
 ## Rules the integration keeps
 
 - Install one engine, once, at launch, with
-  `C15tApple.install(C15tAppleConfiguration(...))`, and keep the returned core.
-  `C15t.current` returns it later. Never install a second engine.
+  `InthApple.install(InthAppleConfiguration(...))`, and keep the returned core.
+  `Inth.current` returns it later. Never install a second engine.
 - `backendURL` is the project URL from the Inth dashboard, such as
   `https://your-project.inth.app`. Mobile works only with Inth: no self-hosted
   backend, no offline mode, no custom transport, no `initURL`.

@@ -4,7 +4,7 @@ description: Configure the Android project URL, category scope, startup metadata
 group: frameworks
 ---
 
-Pass `NativeConfig` to `C15tAndroid.install` once during app startup. The
+Pass `NativeConfig` to `InthAndroid.install` once during app startup. The
 [quickstart](/docs/frameworks/android/quickstart) uses hosted Inth policy and
 Android's default storage and lifecycle services.
 
@@ -16,7 +16,7 @@ The app fetches policy from that project and sends consent records to it.
 There is no self-hosted backend, no mode without a backend and no `initUrl`
 on mobile.
 
-`C15tAndroid.install` checks the value and uses its normal form,
+`InthAndroid.install` checks the value and uses its normal form,
 `https://your-project.inth.app`:
 
 - A missing scheme means `https`, so `your-project.inth.app` works.
@@ -52,7 +52,7 @@ policy. With `bundledPolicy` or `policy`, a dry-run launch needs no network.
 {/* example: fragment */}
 
 ```kotlin
-C15tAndroid.install(
+InthAndroid.install(
 	context,
 	NativeConfig(
 		backendUrl = "https://your-project.inth.app",
@@ -64,7 +64,7 @@ C15tAndroid.install(
 Use your app's own `BuildConfig`. The SDK ships as release AARs, so it cannot
 read its own build type. It checks the host app's `FLAG_DEBUGGABLE` at
 runtime. An app that is not debuggable refuses `dryRun`:
-`C15tAndroid.install` throws `IllegalStateException` and installs no engine.
+`InthAndroid.install` throws `IllegalStateException` and installs no engine.
 
 In a debuggable app, `dryRun` also lets `backendUrl` be any `https` URL, or
 `http` on `localhost`, `127.0.0.1` or `[::1]`, with a port and a path.
@@ -92,7 +92,7 @@ Use an explicit list when the app integrates known optional categories.
 ## Use manifest startup instead
 
 For category consent with default platform services, the bundled AndroidX
-Startup initializer can install c15t before the first Activity. In that setup,
+Startup initializer can install Inth before the first Activity. In that setup,
 provide application metadata instead of the quickstart's explicit
 `installConsent` call:
 
@@ -100,18 +100,18 @@ provide application metadata instead of the quickstart's explicit
 
 ```xml title="app/src/main/AndroidManifest.xml"
 <application>
-	<meta-data android:name="com.c15t.BACKEND_URL" android:value="https://your-project.inth.app" />
-	<meta-data android:name="com.c15t.CATEGORIES" android:value="necessary,measurement,marketing" />
+	<meta-data android:name="com.inth.BACKEND_URL" android:value="https://your-project.inth.app" />
+	<meta-data android:name="com.inth.CATEGORIES" android:value="necessary,measurement,marketing" />
 </application>
 ```
 
-Change the project URL before building. The library manifest supplies the c15t
+Change the project URL before building. The library manifest supplies the Inth
 initializer registration. With no usable project URL, the initializer leaves
-c15t inactive and optional gates closed.
+Inth inactive and optional gates closed.
 
 Use explicit installation when the app supplies IAB identity or other
 app-owned configuration. Repeated installation retains the first
-engine; it does not update its configuration. Remove only c15t's initializer
+engine; it does not update its configuration. Remove only Inth's initializer
 metadata if you need to suppress automatic installation, preserving other
 AndroidX Startup users:
 
@@ -122,12 +122,12 @@ AndroidX Startup users:
 	android:name="androidx.startup.InitializationProvider"
 	android:authorities="${applicationId}.androidx-startup"
 	tools:node="merge">
-	<meta-data android:name="com.c15t.android.C15tInitializer" tools:node="remove" />
+	<meta-data android:name="com.inth.android.InthInitializer" tools:node="remove" />
 </provider>
 ```
 
 Declare `xmlns:tools="http://schemas.android.com/tools"` on the manifest root
-when using this override. Disabling c15t's initializer does not disable vendor
+when using this override. Disabling Inth's initializer does not disable vendor
 initializers. Configure each optional SDK's startup separately.
 
 ## Native configuration reference
@@ -152,41 +152,41 @@ initializers. Configure each optional SDK's startup separately.
 `platform` labels requests in the `x-c15t-platform` header, as
 `<platform>-><sdkVersion>`. Keep the default `android` in a Kotlin or Java app.
 In a React Native app that installs the engine itself, with `AUTO_BOOTSTRAP`
-off, set `platform = C15tProtocol.PLATFORM_REACT_NATIVE` (`rn`). A React Native
+off, set `platform = InthProtocol.PLATFORM_REACT_NATIVE` (`rn`). A React Native
 app that keeps the automatic startup already sends `rn`. Set `null` to send no
 platform header. The value is attribution only and changes no consent decision.
 
-The corresponding manifest keys are `com.c15t.BACKEND_URL`, `DRY_RUN`,
+The corresponding manifest keys are `com.inth.BACKEND_URL`, `DRY_RUN`,
 `BACKEND_DOMAIN`, `CATEGORIES`, `POLICY_RESOURCE` and `POLICY_RULES`, with the
-same `com.c15t.` prefix. `POLICY_RESOURCE` names a bundled manifest in app
+same `com.inth.` prefix. `POLICY_RESOURCE` names a bundled manifest in app
 assets, and `POLICY_RULES` names an asset holding in-code policy rules as
 JSON. Declare one of the two, never both. Native configuration supports more
 options than manifest startup.
 
 Manifest startup refuses a project URL that breaks the rule above, `DRY_RUN`
-in an app that is not debuggable, and the retired keys `com.c15t.MODE` and
-`com.c15t.BACKEND_INIT_URL`. It logs one error under the `c15t` tag and
+in an app that is not debuggable, and the retired keys `com.inth.MODE` and
+`com.inth.BACKEND_INIT_URL`. It logs one error under the `inth` tag and
 leaves the engine uninstalled, so every read answers deny-all. Remove the
-retired keys. Use `com.c15t.DRY_RUN` in development and CI in place of
-`com.c15t.MODE`. `com.c15t.BACKEND_INIT_URL` has no replacement, because the
+retired keys. Use `com.inth.DRY_RUN` in development and CI in place of
+`com.inth.MODE`. `com.inth.BACKEND_INIT_URL` has no replacement, because the
 app fetches policy from the project URL.
 
 ## Handle identity and reset
 
-`C15t.identify(KernelUser(...))` associates the installation with your app's
-external account. `C15t.logout()` detaches that identity. Neither creates a new
-c15t subject or deletes the backend audit trail. Recheck current gates after
+`Inth.identify(KernelUser(...))` associates the installation with your app's
+external account. `Inth.logout()` detaches that identity. Neither creates a new
+Inth subject or deletes the backend audit trail. Recheck current gates after
 identity changes; IAB authority may be retired and a new choice required.
 
 For an explicit withdrawal, save `CommitIntent.Necessary` and inspect the commit
 result. For a start-over control, call the installed kernel's
-`C15t.current?.reset()`. This resets local consent and resolves policy again.
-`C15t.uninstall()` only drops the singleton for teardown and leaves persisted
+`Inth.current?.reset()`. This resets local consent and resolves policy again.
+`Inth.uninstall()` only drops the singleton for teardown and leaves persisted
 consent unchanged. Neither operation is a backend account-deletion API.
 
 ## Handle a policy or storage failure
 
-`C15t.decision(category)` distinguishes `PENDING`, `DENIED` and `GRANTED`.
+`Inth.decision(category)` distinguishes `PENDING`, `DENIED` and `GRANTED`.
 Keep optional collection off while policy or storage is unavailable. Let the
 person continue using necessary app functions and offer retry where appropriate.
 

@@ -28,7 +28,7 @@
 	"dependencies": {
 		"@c15t/benchmarking": "workspace:*",
 		"@c15t/core": "workspace:*",
-		"@c15t/react-native": "workspace:*",
+		"@inth/react-native": "workspace:*",
 		"react": "19.2.7"
 	},
 	"devDependencies": {

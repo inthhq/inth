@@ -13,15 +13,15 @@ export type {
 	SnapshotSelector,
 } from './client';
 export { NativeBridgeError } from './bridge-error';
-export { C15tProtocolMismatchError } from './protocol-mismatch-error';
+export { InthProtocolMismatchError } from './protocol-mismatch-error';
 export {
-	getNativeC15t,
-	getNativeC15tEvents,
-	hasNativeC15tSurface,
-	NativeC15tUnavailableError,
+	getNativeInth,
+	getNativeInthEvents,
+	hasNativeInthSurface,
+	NativeInthUnavailableError,
 } from './module';
 export type {
-	NativeC15tTurboModule,
+	NativeInthTurboModule,
 	NativeEventSubscription,
 	NativeEventsLike,
 } from './module';

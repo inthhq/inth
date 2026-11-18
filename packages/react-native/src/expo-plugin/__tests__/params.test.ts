@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { C15tPluginError } from '../errors';
+import { InthPluginError } from '../errors';
 import { resolveParams } from '../params';
-import type { C15tIabPluginProps } from '../params';
+import type { InthIabPluginProps } from '../params';
 
 const BACKEND = 'https://acme.inth.app';
 
@@ -46,7 +46,7 @@ describe('resolveParams', () => {
 		['an empty string', '', 'empty'],
 	])('rejects %s: %s', (_label, value, reason) => {
 		const refused = () => resolveParams({ backendURL: value });
-		expect(refused).toThrowError(C15tPluginError);
+		expect(refused).toThrowError(InthPluginError);
 		expect(refused).toThrowError(
 			expect.objectContaining({
 				message: expect.stringContaining(
@@ -77,7 +77,7 @@ describe('resolveParams', () => {
 		(mode, message) => {
 			const refused = () =>
 				resolveParams({ backendURL: BACKEND, mode } as never);
-			expect(refused).toThrowError(C15tPluginError);
+			expect(refused).toThrowError(InthPluginError);
 			expect(refused).toThrowError(message);
 		}
 	);
@@ -120,7 +120,7 @@ describe('resolveParams', () => {
 				backendURL,
 			});
 			expect(() => resolveParams({ backendURL: value })).toThrowError(
-				C15tPluginError
+				InthPluginError
 			);
 		});
 
@@ -269,7 +269,7 @@ describe('resolveParams', () => {
 		expect(() =>
 			resolveParams({
 				backendURL: BACKEND,
-				iab: iab as unknown as C15tIabPluginProps,
+				iab: iab as unknown as InthIabPluginProps,
 			})
 		).toThrowError(message);
 	});
@@ -318,7 +318,7 @@ describe('resolveParams', () => {
 
 	it('names the app.json shape when given no parameters at all', () => {
 		expect(() => resolveParams(undefined)).toThrowError(
-			/"plugins": \[\["@c15t\/react-native", \{ "backendURL"/u
+			/"plugins": \[\["@inth\/react-native", \{ "backendURL"/u
 		);
 	});
 });

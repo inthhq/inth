@@ -375,9 +375,9 @@ Analytics takes four of these types: `analytics_storage`, `ad_storage`,
 `ad_user_data` and `ad_personalization`. The
 [Firebase Analytics integration](./firebase-analytics.md) sends
 all four. Swift exposes the table as `GoogleConsentMode` and
-`GoogleConsentType` in `C15tApple`, Android in
-`com.c15t.android.integrations`, and React Native as
-`resolveGoogleConsentMode` in `@c15t/react-native/integrations`. Each mobile
+`GoogleConsentType` in `InthApple`, Android in
+`com.inth.android.integrations`, and React Native as
+`resolveGoogleConsentMode` in `@inth/react-native/integrations`. Each mobile
 copy is tested against the web mapping, so they cannot drift apart.
 
 ## Verify the Google tag

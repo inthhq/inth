@@ -287,9 +287,9 @@ The helpers add no vendor dependencies and do not change your consent UI.
 | IAB-aware advertising SDKs                       | Standard native TCF and Additional Consent signals, plus vendor and purpose gates. Verify each SDK and mediation configuration.                                             | [Mobile IAB](https://c15t.com/docs/guides/mobile-iab)                                                  |
 | GTM, gtag.js, browser pixels and website widgets | The existing web helpers operate in a browser. Use the vendor's mobile SDK where one exists.                                                                                | [Web integrations](./building-integrations.md)                                                         |
 
-These helpers ship in the existing `C15tApple`, `c15t-android` and
-`@c15t/react-native` packages. RN imports use
-`@c15t/react-native/integrations`. Install only the vendor SDKs your app uses.
+These helpers ship in the existing `InthApple`, `inth-android` and
+`@inth/react-native` packages. RN imports use
+`@inth/react-native/integrations`. Install only the vendor SDKs your app uses.
 
 ### Install consent before optional SDKs
 

@@ -11,7 +11,7 @@ const { log } = console;
 const { error } = console;
 
 /**
- * Unified Documentation Fetcher for C15t
+ * Unified Documentation Fetcher for Inth
  *
  * This script handles both local development setup and production builds for the
  * documentation site. It fetches a private Next.js documentation template from
@@ -33,7 +33,7 @@ const { error } = console;
  * - Use --branch=canary for canary releases
  * - Use --branch=develop for development branch
  *
- * @author Generated for C15t workspace
+ * @author Generated for Inth workspace
  * @version 2.1.0
  * @since 2025
  *

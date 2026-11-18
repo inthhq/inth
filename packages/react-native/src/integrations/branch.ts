@@ -46,7 +46,7 @@ export type BranchOptions = Pick<
  * Marketing sets `FULL`. Measurement alone sets `MINIMAL`, Branch's
  * analytics-only level. Anything else, including pending consent, sets `NONE`,
  * which keeps deep links working. In `setDMAParamsForEEA`, pass your own EEA
- * flag, since c15t's policy model is not a legal jurisdiction flag, then
+ * flag, since Inth's policy model is not a legal jurisdiction flag, then
  * `adPersonalization` and `adUserData`. When lowering the level, both calls
  * are made even if the first fails. Requires `react-native-branch` 6.5 or
  * later.

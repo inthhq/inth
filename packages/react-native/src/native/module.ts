@@ -2,7 +2,7 @@
  * The single lookup point for the native consent module.
  *
  * Everything else in this package talks to Swift and Kotlin through
- * {@link getNativeC15t} or the client built on top of it, so there is exactly
+ * {@link getNativeInth} or the client built on top of it, so there is exactly
  * one place that touches `TurboModuleRegistry`, and exactly one readable error
  * when the module is not there.
  *
@@ -13,14 +13,14 @@
 
 import { NativeEventEmitter, TurboModuleRegistry } from 'react-native';
 
-import { NATIVE_C15T_MODULE_NAME } from '../protocol';
-import type { Spec } from '../specs/NativeC15t';
+import { NATIVE_INTH_MODULE_NAME } from '../protocol';
+import type { Spec } from '../specs/NativeInth';
 
 /**
  * The TurboModule the native cores register: the Codegen spec plus the
- * registration name `C15t`.
+ * registration name `Inth`.
  */
-export type NativeC15tTurboModule = Spec;
+export type NativeInthTurboModule = Spec;
 
 /**
  * A subscription handed back by {@link NativeEventsLike}, in the shape
@@ -52,44 +52,44 @@ export interface NativeEventsLike {
 }
 
 /**
- * Thrown when the c15t TurboModule is not registered in the running binary.
+ * Thrown when the Inth TurboModule is not registered in the running binary.
  *
  * Detectability is the point: the failure is a build or host-app problem, so
  * the message names the causes in the order people hit them.
  */
-export class NativeC15tUnavailableError extends Error {
+export class NativeInthUnavailableError extends Error {
 	/**
 	 * @param reason - Why the lookup failed, already human readable.
 	 */
 	public constructor(reason: string) {
 		super(
 			[
-				`@c15t/react-native cannot reach its native consent module "${NATIVE_C15T_MODULE_NAME}": ${reason}`,
+				`@inth/react-native cannot reach its native consent module "${NATIVE_INTH_MODULE_NAME}": ${reason}`,
 				'',
 				'This package needs a custom native build with the New Architecture enabled. Usual causes:',
 				'- The app runs in Expo Go, which cannot contain custom native modules. Use a development build instead.',
-				'- The iOS pods were not installed or the app was not rebuilt after installing @c15t/react-native. Run pod install, then rebuild clean.',
-				'- The Android app was not rebuilt after installing @c15t/react-native. Clean and rebuild the app.',
+				'- The iOS pods were not installed or the app was not rebuilt after installing @inth/react-native. Run pod install, then rebuild clean.',
+				'- The Android app was not rebuilt after installing @inth/react-native. Clean and rebuild the app.',
 				'- It runs on web, which has no native module; ConsentProvider uses the browser engine.',
 				'',
 				'A JavaScript-only update (Expo Updates, CodePush) cannot add a missing native module; it has to ship inside the binary.',
 			].join('\n')
 		);
-		this.name = 'NativeC15tUnavailableError';
+		this.name = 'NativeInthUnavailableError';
 	}
 }
 
 /**
  * A module and emitter installed in place of the registry, or `null`.
  *
- * Only `@c15t/react-native/testing` installs one, so a Jest or Vitest run has
+ * Only `@inth/react-native/testing` installs one, so a Jest or Vitest run has
  * a native core to talk to. Everything that reaches native goes through
- * {@link getNativeC15t} and {@link getNativeC15tEvents}, so the presenter
+ * {@link getNativeInth} and {@link getNativeInthEvents}, so the presenter
  * calls reach the same fake as the client does.
  */
 let installed: {
 	readonly events: NativeEventsLike;
-	readonly nativeModule: NativeC15tTurboModule;
+	readonly nativeModule: NativeInthTurboModule;
 } | null = null;
 
 /**
@@ -100,8 +100,8 @@ let installed: {
  * @param events - The emitter every subscription attaches to.
  * @returns Uninstall them again, if they are still the installed pair.
  */
-export const installNativeC15t = function installNativeC15t(
-	nativeModule: NativeC15tTurboModule,
+export const installNativeInth = function installNativeInth(
+	nativeModule: NativeInthTurboModule,
 	events: NativeEventsLike
 ): () => void {
 	const pair = { events, nativeModule };
@@ -123,10 +123,10 @@ export const installNativeC15t = function installNativeC15t(
  * does with the snapshot.
  *
  * @returns The registered TurboModule.
- * @throws {NativeC15tUnavailableError} When the module is missing, so the
+ * @throws {NativeInthUnavailableError} When the module is missing, so the
  *   caller gets the build diagnosis rather than an undefined read later.
  */
-export const getNativeC15t = function getNativeC15t(): NativeC15tTurboModule {
+export const getNativeInth = function getNativeInth(): NativeInthTurboModule {
 	if (installed !== null) {
 		return installed.nativeModule;
 	}
@@ -134,15 +134,15 @@ export const getNativeC15t = function getNativeC15t(): NativeC15tTurboModule {
 	let candidate: Spec | null | undefined = null;
 
 	try {
-		candidate = TurboModuleRegistry.get<Spec>(NATIVE_C15T_MODULE_NAME);
+		candidate = TurboModuleRegistry.get<Spec>(NATIVE_INTH_MODULE_NAME);
 	} catch (error: unknown) {
-		throw new NativeC15tUnavailableError(
+		throw new NativeInthUnavailableError(
 			`the TurboModule registry refused the lookup (${String(error instanceof Error ? error.message : error)})`
 		);
 	}
 
 	if (candidate === null || candidate === undefined) {
-		throw new NativeC15tUnavailableError(
+		throw new NativeInthUnavailableError(
 			`no module is registered under that name`
 		);
 	}
@@ -160,8 +160,8 @@ export const getNativeC15t = function getNativeC15t(): NativeC15tTurboModule {
  * @param nativeModule - Candidate module from the registry.
  * @returns `true` when every synchronous read the client needs exists.
  */
-export const hasNativeC15tSurface = function hasNativeC15tSurface(
-	nativeModule: NativeC15tTurboModule
+export const hasNativeInthSurface = function hasNativeInthSurface(
+	nativeModule: NativeInthTurboModule
 ): boolean {
 	return (
 		typeof nativeModule.getBootstrap === 'function' &&
@@ -200,18 +200,18 @@ const toEventJson = function toEventJson(payload: unknown): string {
  * `remove` is safe to call twice.
  *
  * @returns An emitter the consent client can subscribe through.
- * @throws {NativeC15tUnavailableError} When the module is missing or incomplete.
+ * @throws {NativeInthUnavailableError} When the module is missing or incomplete.
  */
-export const getNativeC15tEvents =
-	function getNativeC15tEvents(): NativeEventsLike {
+export const getNativeInthEvents =
+	function getNativeInthEvents(): NativeEventsLike {
 		if (installed !== null) {
 			return installed.events;
 		}
 
-		const nativeModule = getNativeC15t();
+		const nativeModule = getNativeInth();
 
-		if (!hasNativeC15tSurface(nativeModule)) {
-			throw new NativeC15tUnavailableError(
+		if (!hasNativeInthSurface(nativeModule)) {
+			throw new NativeInthUnavailableError(
 				'the registered module is missing getBootstrap, getSnapshot, or commit, so the native build does not match this JavaScript package'
 			);
 		}

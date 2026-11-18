@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Captures every consent screen of the custom consent example on an iOS Simulator: the stock
-# C15tConsentUI screens and the custom ones built on the headless blocks, in light and dark.
+# InthConsentUI screens and the custom ones built on the headless blocks, in light and dark.
 # Generates the XcodeGen project, builds once, then launches the app straight onto each screen
 # with launch arguments and saves a screenshot. Needs Xcode and XcodeGen.
 #
@@ -9,20 +9,20 @@
 # Writes ios-<stock|custom>-<prompt|preferences|iab>-<light|dark>.png, 12 files, and fails if
 # one is missing.
 #
-# C15T_SCREENSHOT_OUT      output directory (default: a c15t-custom-consent-screenshots folder in the temp directory)
-# C15T_SCREENSHOT_DEVICE   simulator name, created when missing (default: c15t-custom-consent)
+# C15T_SCREENSHOT_OUT      output directory (default: a inth-custom-consent-screenshots folder in the temp directory)
+# C15T_SCREENSHOT_DEVICE   simulator name, created when missing (default: inth-custom-consent)
 # C15T_SCREENSHOT_SETTLE   seconds to wait after each launch (default: 6)
 # C15T_IOS_DEVICE          device type for a new simulator (default: iPhone 17 Pro)
 # C15T_IOS_RUNTIME         runtime identifier for a new simulator (default: newest iOS)
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-OUT="${1:-${C15T_SCREENSHOT_OUT:-${TMPDIR:-/tmp}/c15t-custom-consent-screenshots}}"
+OUT="${1:-${C15T_SCREENSHOT_OUT:-${TMPDIR:-/tmp}/inth-custom-consent-screenshots}}"
 mkdir -p "${OUT}"
 OUT="$(cd "${OUT}" && pwd)"
-DEVICE_NAME="${C15T_SCREENSHOT_DEVICE:-c15t-custom-consent}"
+DEVICE_NAME="${C15T_SCREENSHOT_DEVICE:-inth-custom-consent}"
 SETTLE="${C15T_SCREENSHOT_SETTLE:-6}"
-BUNDLE_ID=com.c15t.examples.customconsent
-WORK="$(mktemp -d /tmp/c15t-custom-consent.XXXXXX)"
+BUNDLE_ID=com.inth.examples.customconsent
+WORK="$(mktemp -d /tmp/inth-custom-consent.XXXXXX)"
 DEVICE=""
 
 cleanup() {
@@ -71,10 +71,10 @@ print(max(runtimes, key=lambda r: version(r["version"]))["identifier"])
   DEVICE="$(xcrun simctl create "${DEVICE_NAME}" "${DEVICE_TYPE}" "${RUNTIME}")"
 fi
 
-xcodebuild build -project "${HERE}/C15tCustomConsent.xcodeproj" -scheme C15tCustomConsent \
+xcodebuild build -project "${HERE}/InthCustomConsent.xcodeproj" -scheme InthCustomConsent \
   -destination "platform=iOS Simulator,id=${DEVICE}" -derivedDataPath "${WORK}/derived" \
   > "${WORK}/build.log" 2>&1 || { grep -E 'error:|warning: unre' "${WORK}/build.log" >&2; tail -n 60 "${WORK}/build.log" >&2; exit 1; }
-APP="${WORK}/derived/Build/Products/Debug-iphonesimulator/C15tCustomConsent.app"
+APP="${WORK}/derived/Build/Products/Debug-iphonesimulator/InthCustomConsent.app"
 [[ -d "${APP}" ]] || { echo "The build produced no app at ${APP}" >&2; exit 1; }
 
 xcrun simctl shutdown "${DEVICE}" > /dev/null 2>&1 || true

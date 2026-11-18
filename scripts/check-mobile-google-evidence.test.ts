@@ -111,7 +111,7 @@ const decision = function decision(
 		});
 	}
 	return {
-		app: { build: '1', id: 'com.c15t.demo', version: '1.0' },
+		app: { build: '1', id: 'com.inth.demo', version: '1.0' },
 		capturedAtMs: Date.parse('2026-11-02T00:01:00Z'),
 		configuration: {
 			cmpId: 490,

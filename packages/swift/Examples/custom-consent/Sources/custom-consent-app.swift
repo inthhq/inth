@@ -1,6 +1,6 @@
-@_spi(C15tInternal) import C15tApple
-import C15tConsentUI
-@_spi(C15tInternal) import C15tCore
+@_spi(InthInternal) import InthApple
+import InthConsentUI
+@_spi(InthInternal) import InthCore
 import SwiftUI
 
 /// What the launch arguments ask for, so a script can put the app on any screen with no taps.
@@ -10,7 +10,7 @@ struct LaunchOptions {
     let screen: Screen
     /// `--iab`, or `--screen iab`: serve the IAB TCF fixture instead of the category one.
     let iab: Bool
-    /// `--stock`: show the stock `C15tConsentUI` screens instead of the custom ones.
+    /// `--stock`: show the stock `InthConsentUI` screens instead of the custom ones.
     let stock: Bool
 
     init(arguments: [String]) {
@@ -130,7 +130,7 @@ enum FixtureBackend {
         }
         var body = try Data(contentsOf: resource)
         if iab { body = try addingCustomPartner(to: body) }
-        return try C15tApple.install(CoreConfig(
+        return try InthApple.install(CoreConfig(
             store: InMemoryStore(),
             transport: HostedTransport(baseURL: URL(string: "https://fixture.invalid")!, client: Peer(body: body)),
             consentCategories: ConsentCategory.allCases,

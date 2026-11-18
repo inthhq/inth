@@ -1,14 +1,14 @@
 import type { AndroidConfig, ConfigPlugin } from 'expo/config-plugins';
 
 import { withGradleProperties, withPodfileProperties } from './config-plugins';
-import { C15tPluginError } from './errors';
+import { InthPluginError } from './errors';
 
 /**
  * The build property both native builds read: `Podfile.properties.json` for
- * `C15tReactNative.podspec`, `gradle.properties` for `library.gradle`. `false`
+ * `InthReactNative.podspec`, `gradle.properties` for `library.gradle`. `false`
  * leaves the stock consent screens out of the binary.
  */
-export const NATIVE_UI_PROPERTY = 'c15t.nativeUI';
+export const NATIVE_UI_PROPERTY = 'inth.nativeUI';
 
 /**
  * Validate the `nativeUI` prop.
@@ -19,7 +19,7 @@ export const NATIVE_UI_PROPERTY = 'c15t.nativeUI';
  * @param value - The `nativeUI` prop.
  * @param theme - The `theme` prop.
  * @returns Whether the build links the stock consent screens.
- * @throws {C15tPluginError} When the value is not a boolean, or `false` with a theme.
+ * @throws {InthPluginError} When the value is not a boolean, or `false` with a theme.
  */
 export const resolveNativeUI = function resolveNativeUI(
 	value: unknown,
@@ -29,12 +29,12 @@ export const resolveNativeUI = function resolveNativeUI(
 		return true;
 	}
 	if (typeof value !== 'boolean') {
-		throw new C15tPluginError(
+		throw new InthPluginError(
 			`nativeUI must be true or false. Got ${JSON.stringify(value) ?? 'undefined'}.`
 		);
 	}
 	if (!value && theme !== undefined) {
-		throw new C15tPluginError(
+		throw new InthPluginError(
 			'nativeUI: false leaves the stock consent screens out of the build, so ' +
 				'theme would style nothing. Remove theme, or pass the same object to ' +
 				'createConsentTheme for the React Native components.'
@@ -88,7 +88,7 @@ export const applyNativeUIGradleProperties =
  * Register the property on both platforms. The stock build clears a value a
  * previous prebuild wrote, so turning `nativeUI` back on needs no manual step.
  */
-export const withC15tNativeUI: ConfigPlugin<boolean> = (config, nativeUI) => {
+export const withInthNativeUI: ConfigPlugin<boolean> = (config, nativeUI) => {
 	const next = withPodfileProperties(config, (cfg) => ({
 		...cfg,
 		modResults: applyNativeUIPodfileProperties(cfg.modResults, nativeUI),

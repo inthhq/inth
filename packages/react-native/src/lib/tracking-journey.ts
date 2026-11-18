@@ -22,7 +22,7 @@ import type { ConsentDecision } from './selectors';
 /**
  * The categories a tracking request is treated as standing for, when a host names none.
  *
- * This is a default for one decision in this file and not a mapping from c15t categories
+ * This is a default for one decision in this file and not a mapping from Inth categories
  * onto legal bases. `necessary` is excluded because it is not a tracking behaviour and the
  * platform gate has nothing to say about it, which {@link isTrackingPermitted} already says.
  * The other two optional categories that can carry an identifier are `measurement` and
@@ -54,7 +54,7 @@ export const MAX_TRACKING_REQUEST_TURNS = 5;
  * sheet comes back only while at least one of the categories the request was standing for is
  * granted. Refusing every one of them finishes the journey where it stands, because sending
  * someone to a tracking prompt whose answer has already been overridden in your own UI is
- * worse than not asking, and Apple's sheet cannot see a c15t category.
+ * worse than not asking, and Apple's sheet cannot see an Inth category.
  *
  * A `pending` category does not count as granted. A policy that has not resolved is a wait,
  * and a platform prompt does not end a wait, whatever the arm Apple reported.

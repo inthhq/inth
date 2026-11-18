@@ -16,12 +16,12 @@ import {
 	useSnapshot,
 	useTCString,
 	useVendorConsent,
-} from '@c15t/react-native';
+} from '@inth/react-native';
 import type {
 	AllConsentNames,
 	CommitResult,
 	IABDraftHandle,
-} from '@c15t/react-native';
+} from '@inth/react-native';
 import { useState } from 'react';
 import { ScrollView, Switch, Text, View } from 'react-native';
 
@@ -253,7 +253,7 @@ export const HeadlessConsentApp = () => {
 		<ScrollView
 			contentContainerStyle={{ gap: 16, padding: 24, paddingTop: 72 }}
 		>
-			<Text accessibilityRole="header">c15t Expo, custom consent UI</Text>
+			<Text accessibilityRole="header">Inth Expo, custom consent UI</Text>
 			<Hint>
 				This binary links no stock consent screens. Everything below is app code
 				on the headless hooks.

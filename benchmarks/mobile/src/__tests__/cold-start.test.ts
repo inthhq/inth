@@ -1,5 +1,5 @@
 /**
- * Cold start has to be measured in a process that has never seen c15t, so the sample
+ * Cold start has to be measured in a process that has never seen Inth, so the sample
  * unit is a spawn. These cases pay for the quick sampling plan and check that what
  * came back really is a launch: a fresh process that ended holding a readable
  * snapshot, with the harness's own work kept out of the span.

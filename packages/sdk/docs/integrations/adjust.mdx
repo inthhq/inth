@@ -14,8 +14,8 @@ DMA values come from the shared
 [Consent Mode mapping](/docs/integrations/google-tag#how-categories-map-to-google-consent-types),
 so marketing grants them.
 
-The helper ships in `C15tApple`, `c15t-android` and
-`@c15t/react-native/integrations`. c15t adds no Adjust dependency. The web
+The helper ships in `InthApple`, `inth-android` and
+`@inth/react-native/integrations`. c15t adds no Adjust dependency. The web
 has no Adjust helper.
 
 ## What the helper changes
@@ -60,8 +60,8 @@ them at start, so the first session already follows consent.
 
 ```swift title="AdjustConsentOwner.swift"
 import AdjustSdk
-import C15tApple
-import C15tCore
+import InthApple
+import InthCore
 
 final class AdjustConsentOwner {
     private let integration: AdjustIntegration
@@ -94,11 +94,11 @@ lifetime.
 ```kotlin title="AdjustConsent.kt"
 import com.adjust.sdk.Adjust
 import com.adjust.sdk.AdjustThirdPartySharing
-import com.c15t.android.integrations.AdjustIntegration
-import com.c15t.core.C15t
+import com.inth.android.integrations.AdjustIntegration
+import com.inth.core.Inth
 
 fun connectAdjustConsent(inEea: Boolean, onError: (Exception) -> Unit): AdjustIntegration {
-	val core = checkNotNull(C15t.current) { "Install c15t before connecting Adjust" }
+	val core = checkNotNull(Inth.current) { "Install Inth before connecting Adjust" }
 	val flag = { granted: Boolean -> if (granted) "1" else "0" }
 	return AdjustIntegration(
 		core = core,

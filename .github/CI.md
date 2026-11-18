@@ -26,9 +26,9 @@ CI_PRODUCTS=cli node tools/ci/plan.ts            # one product, as a release doe
 
 The browser integration groups come from c15t's planner (`tools/ci/browser-groups.ts`) and run through `scripts/ci-browser.ts`: example acceptance, starter smoke tests, Next.js compatibility cells, framework parity across the Storybooks, SSR journeys and CSS compatibility. A group runs when a fixture, starter, Storybook or bench it covers is selected.
 
-The React Native compatibility matrix packs `@c15t/react-native` and installs it in a fresh app for each React Native and Expo release in `scripts/mobile-compatibility.json`, then checks types, Codegen and Expo prebuild.
+The React Native compatibility matrix packs `@inth/react-native` and installs it in a fresh app for each React Native and Expo release in `scripts/mobile-compatibility.json`, then checks types, Codegen and Expo prebuild.
 
-A web SDK change never runs the mobile jobs, even when it reaches `@c15t/react-native` through `@c15t/core` or `@c15t/iab`. The planner lists those workspaces as `mobileReached` in the job summary. The React Native release runs their checks before it publishes.
+A web SDK change never runs the mobile jobs, even when it reaches `@inth/react-native` through `@c15t/core` or `@c15t/iab`. The planner lists those workspaces as `mobileReached` in the job summary. The React Native release runs their checks before it publishes.
 
 The six CLI jobs are required checks on `main` under their exact names. They always run. When a change has no CLI work, each one prints a line and reports success, so a required check never waits forever.
 

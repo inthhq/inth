@@ -1,6 +1,6 @@
 const { withPodfile } = require('expo/config-plugins');
 
-const MARKER = '# c15t-fixture: pod deployment floor';
+const MARKER = '# inth-fixture: pod deployment floor';
 
 /**
  * Lift every pod target below the app's iOS floor to that floor.

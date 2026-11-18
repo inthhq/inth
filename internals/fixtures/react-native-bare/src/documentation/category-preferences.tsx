@@ -1,5 +1,5 @@
 // #region docs:category-preferences title="category-preferences.tsx"
-import { useConsent, useSaveConsents, useSnapshot } from '@c15t/react-native';
+import { useConsent, useSaveConsents, useSnapshot } from '@inth/react-native';
 import { useState } from 'react';
 import { Switch, Text, View } from 'react-native';
 

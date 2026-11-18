@@ -4,8 +4,8 @@ title: Android artifact preparation and consumer checks
 
 # Android artifact preparation and consumer checks
 
-The Android RN adapter consumes `com.c15t:c15t-core`,
-`com.c15t:c15t-android` and `com.c15t:c15t-consent-ui` at one pinned native version. It does not include the
+The Android RN adapter consumes `com.inth:inth-core`,
+`com.inth:inth-android` and `com.inth:inth-consent-ui` at one pinned native version. It does not include the
 native Gradle build in an app's build. The producer can use AGP 9 without
 loading that plugin into Expo 57 / RN 0.86's AGP 8.12 host.
 
@@ -18,13 +18,13 @@ release runs as part of this check.
 
 ## Artifact boundaries
 
-- `c15t-core` is a JVM JAR. Consent, IAB decisions, hydration, durable commit
+- `inth-core` is a JVM JAR. Consent, IAB decisions, hydration, durable commit
   logic and the queue remain native. Its dependency graph contains Kotlin and
   serialization, without Android, RN, Expo or UI.
-- `c15t-android` is an AAR. It adds Android persistence, transport, startup and
+- `inth-android` is an AAR. It adds Android persistence, transport, startup and
   lifecycle services and exports the core as an API dependency. It has no stock
   UI dependency.
-- `c15t-consent-ui` is the optional stock Compose UI AAR. Native headless apps
+- `inth-consent-ui` is the optional stock Compose UI AAR. Native headless apps
   can use the core and platform artifacts without installing it.
 - The packed RN adapter compiles its bridge with the host's Kotlin plugin and
   consumes all three binaries to provide its stock presenter.
@@ -49,10 +49,10 @@ From the repository root, with JDK 17 and the Android SDK available:
 
 ```sh
 packages/android/gradlew -p packages/android \
-  :c15t-core:test :c15t-android:testDebugUnitTest \
-  :c15t-core:publishAllPublicationsToStagingRepository \
-  :c15t-android:publishAllPublicationsToStagingRepository \
-  :c15t-consent-ui:publishAllPublicationsToStagingRepository \
+  :inth-core:test :inth-android:testDebugUnitTest \
+  :inth-core:publishAllPublicationsToStagingRepository \
+  :inth-android:publishAllPublicationsToStagingRepository \
+  :inth-consent-ui:publishAllPublicationsToStagingRepository \
   --no-configuration-cache
 ```
 
@@ -63,9 +63,9 @@ Apache 2.0 license text, the root NOTICE attribution and native version metadata
 under `META-INF/proguard`; platform rules retain the initializer that AndroidX
 Startup discovers through the merged manifest.
 
-`c15t.native.version` in `packages/android/gradle.properties` is the native
+`inth.native.version` in `packages/android/gradle.properties` is the native
 artifact version. `verifyNativeVersion` refuses publication when it differs
-from `C15tProtocol.DEFAULT_SDK_VERSION`, the default request and bridge native
+from `InthProtocol.DEFAULT_SDK_VERSION`, the default request and bridge native
 SDK metadata. The RN JavaScript package version is independent; changing its
 version alone must not relabel the native engine. Update the native version,
 request metadata and RN artifact pin together for a native release. The
@@ -88,7 +88,7 @@ repository configuration; the library's standalone settings do not configure
 its host. For a host using settings-owned repositories, use the
 `exclusiveContent` declaration in
 `packages/android/consumer-smoke/android/settings.gradle`, replacing the
-`c15t.repository` provider with the approved HTTPS repository. For a standard
+`inth.repository` provider with the approved HTTPS repository. For a standard
 RN host with project-owned repositories, add this explicit block to the root
 `android/build.gradle`. Replace the URL with the approved repository:
 
@@ -98,7 +98,7 @@ allprojects {
     exclusiveContent {
       forRepository {
         maven {
-          url = uri('https://maven.example.com/c15t')
+          url = uri('https://maven.example.com/inth')
           credentials {
             username = System.getenv('C15T_MAVEN_USERNAME')
             password = System.getenv('C15T_MAVEN_TOKEN')
@@ -108,7 +108,7 @@ allprojects {
           }
         }
       }
-      filter { includeGroup('com.c15t') }
+      filter { includeGroup('com.inth') }
     }
   }
 }
@@ -119,12 +119,12 @@ of editing generated native files. See [the packed Expo guide](expo-packed-consu
 The plugin has no default private repository and accepts credential environment
 variable names only.
 
-Keep `com.c15t` exclusive to that repository with `exclusiveContent`, not a
+Keep `com.inth` exclusive to that repository with `exclusiveContent`, not a
 `content` filter on one Maven repository. A content filter alone still lets
 earlier repositories supply these coordinates. Exclusive routing fails when
 the configured repository lacks an artifact, without falling back elsewhere. Do not add `mavenLocal()`,
 `includeBuild` for the native core, or dependency substitutions. Set
-`c15t.core.version` in the host's Gradle properties when validating another
+`inth.core.version` in the host's Gradle properties when validating another
 native prerelease. Credentials belong in environment variables supplied by the
 secure account/CI flow, never in app configuration or committed Gradle files.
 
@@ -163,7 +163,7 @@ To add the installed RN bridge and real Codegen output, first build and pack the
 RN package, then pass its tarball as `--rn-package /absolute/path/package.tgz`.
 The runner keeps the Gradle root in `consumer/android` and the npm install in
 `consumer/node_modules`, matching a normal scoped installation. It leaves
-`c15t.spec.source` unset so normal Codegen detection runs. The runner installs RN 0.86.3 and React 19.2.7 into the isolated consumer. This
+`inth.spec.source` unset so normal Codegen detection runs. The runner installs RN 0.86.3 and React 19.2.7 into the isolated consumer. This
 checks packed bridge compilation against the Expo toolchain; it is not a full
 Expo or RN app launch.
 

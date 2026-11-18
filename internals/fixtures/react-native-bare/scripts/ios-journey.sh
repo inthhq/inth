@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 #
-# Prove the c15t consent journey on the iOS Simulator, end to end, in one command.
+# Prove the Inth consent journey on the iOS Simulator, end to end, in one command.
 #
 #   internals/fixtures/react-native-bare/scripts/ios-journey.sh [release|debug]
 #
 # Delivery, and why it is not `simctl openurl`
 # -------------------------------------------
-# iOS 26 will not hand a `c15t-demo://` open to the app without asking first: it raises
-# "Open in c15t Bare?" and waits for a tap. This machine cannot answer it. `simctl io`
+# iOS 26 will not hand a `inth-demo://` open to the app without asking first: it raises
+# "Open in Inth Bare?" and waits for a tap. This machine cannot answer it. `simctl io`
 # offers enumerate, poll, recordVideo, screenshot and screenConfig, and there is no
 # Simulator.app in the Xcode bundle to click in, so there is no finger to give it. Every
 # verb therefore goes in as the `C15T_DEMO_LINK` launch variable, which
-# `ios/C15tBare/AppDelegate.swift` puts into the launch options as a URL, so
+# `ios/InthBare/AppDelegate.swift` puts into the launch options as a URL, so
 # `Linking.getInitialURL()` returns it and the verb table runs unchanged. One link per
 # cold start, which also means every step survives process death on its own.
 #
@@ -37,7 +37,7 @@
 #   - port 8081, which belongs to the Android verification; Metro here starts at 8084
 #   - adb and anything Android
 #   - the packages the Next demo at :3000 serves, which is why the SDK build stays
-#     filtered to @c15t/react-native and never becomes a root `bun turbo build`
+#     filtered to @inth/react-native and never becomes a root `bun turbo build`
 #
 
 set -euo pipefail
@@ -50,10 +50,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # one shared /tmp/ios-journey, so a second run cleared the first run's evidence and
 # compared it against frames it never took.
 OUT_DIR="${IOS_JOURNEY_OUT:-/tmp/ios-journey/$(basename "${REPO_ROOT}")}"
-SIM_NAME="${IOS_JOURNEY_SIM:-c15t-ios-journey}"
+SIM_NAME="${IOS_JOURNEY_SIM:-inth-ios-journey}"
 SIM_DEVICE="${IOS_JOURNEY_DEVICE:-iPhone 17 Pro}"
 SIM_RUNTIME="${IOS_JOURNEY_RUNTIME:-com.apple.CoreSimulator.SimRuntime.iOS-26-4}"
-BUNDLE_ID="org.reactjs.native.example.C15tBare"
+BUNDLE_ID="org.reactjs.native.example.InthBare"
 BACKEND_URL="${IOS_JOURNEY_BACKEND:-http://localhost:3000/api/self-host}"
 DERIVED="${IOS_JOURNEY_DERIVED:-/tmp/ios-journey-derived}"
 SCALE="${IOS_JOURNEY_SCALE:-3}"
@@ -118,7 +118,7 @@ python -c 'import PIL' 2>/dev/null ||
 
 curl -fsS -m 10 -o /dev/null "${BACKEND_URL}/init" ||
 	die "the consent backend is not answering at ${BACKEND_URL}. Start it with:
-      DATABASE_URL='postgres://postgres:c15t@localhost:5432/c15t' \\
+      DATABASE_URL='postgres://postgres:c15t@localhost:5432/inth' \\
         bun run --cwd apps/playground dev:localhost
     Without it the core retries quietly and no prompt ever renders, which looks
     exactly like a banner that never ships."
@@ -127,7 +127,7 @@ curl -fsS -m 10 -o /dev/null "${BACKEND_URL}/init" ||
 # openurl on this machine must raise the confirmation and go nowhere.
 if [[ "${IOS_JOURNEY_PROBE_OPENURL:-0}" == "1" ]]; then
 	log "openurl probe, expecting the iOS confirmation this run cannot answer"
-	sim openurl "${SIM_UDID:-booted}" "c15t-demo://help" >/dev/null 2>&1 ||
+	sim openurl "${SIM_UDID:-booted}" "inth-demo://help" >/dev/null 2>&1 ||
 		warn "simctl openurl itself exited non-zero"
 fi
 
@@ -148,7 +148,7 @@ log "simulator ${SIM_NAME} ${SIM_UDID}"
 # Two runs on one simulator is the worst failure this script can have: each erases the
 # other's device and screenshots the other's screen, so a step reads as obstructed or
 # as a frame that did not move, and the run that reports it is not the run at fault.
-LOCK_DIR="${TMPDIR:-/tmp}c15t-ios-journey-${SIM_UDID}.lock"
+LOCK_DIR="${TMPDIR:-/tmp}inth-ios-journey-${SIM_UDID}.lock"
 mkdir "${LOCK_DIR}" 2>/dev/null ||
 	die "another run already drives ${SIM_NAME}. Its lock is ${LOCK_DIR}. Wait for it, or point this run at another device with IOS_JOURNEY_SIM."
 
@@ -163,8 +163,8 @@ sim ui "${SIM_UDID}" appearance light
 # 3. Build
 # ---------------------------------------------------------------------------
 
-log "building @c15t/react-native, filtered: the Next demo must not see a rebuild"
-(cd "${REPO_ROOT}" && bun turbo run build --filter=@c15t/react-native >/dev/null) ||
+log "building @inth/react-native, filtered: the Next demo must not see a rebuild"
+(cd "${REPO_ROOT}" && bun turbo run build --filter=@inth/react-native >/dev/null) ||
 	die "the SDK did not build. Nothing below this line can be believed without it."
 
 # A development pod resolves its source globs when `pod install` runs, and the
@@ -176,12 +176,12 @@ log "building @c15t/react-native, filtered: the Next demo must not see a rebuild
 #
 # Directory existence and mtimes are both the wrong ruler. The directory survives
 # whatever stale list it was built with, and the SDK build immediately over this
-# rewrites every file under vendor/C15tCore, so mtimes would force an integration on
+# rewrites every file under vendor/InthCore, so mtimes would force an integration on
 # every run. Instead the daemon integrates when the covered contents change: the Podfile
 # and the sorted checksum list of the vendored sources are the fingerprint, saved
 # inside Pods/, which is gitignored, so only the run that changed the key list pays.
-KERNEL_POD_SOURCES="${REPO_ROOT}/packages/react-native/vendor/C15tCore"
-POD_STAMP="${APP_DIR}/ios/Pods/.c15t-kernel-sources.cksum"
+KERNEL_POD_SOURCES="${REPO_ROOT}/packages/react-native/vendor/InthCore"
+POD_STAMP="${APP_DIR}/ios/Pods/.inth-kernel-sources.cksum"
 
 kernel_pod_fingerprint() {
 	{
@@ -201,11 +201,11 @@ if [[ ! -d "${APP_DIR}/ios/Pods" ]] || [[ "${NEEDED_POD_FINGERPRINT}" != "${CURR
 	printf '%s\n' "${NEEDED_POD_FINGERPRINT}" > "${POD_STAMP}"
 fi
 
-log "building the C15tBare app (${MODE})"
+log "building the InthBare app (${MODE})"
 
 XCODE_ARGS=(
-	-workspace "${APP_DIR}/ios/C15tBare.xcworkspace"
-	-scheme C15tBare
+	-workspace "${APP_DIR}/ios/InthBare.xcworkspace"
+	-scheme InthBare
 	-sdk iphonesimulator
 	-destination 'generic/platform=iOS Simulator'
 	-derivedDataPath "${DERIVED}"
@@ -249,8 +249,8 @@ fi
 	xcodebuild "${XCODE_ARGS[@]}" build >/tmp/ios-journey-build.log 2>&1) ||
 	die "xcodebuild failed, see /tmp/ios-journey-build.log"
 
-APP_PATH="$(find "${DERIVED}/Build/Products" -maxdepth 2 -name 'C15tBare.app' -type d | head -1)"
-[[ -n "${APP_PATH}" ]] || die "no C15tBare.app under ${DERIVED}/Build/Products"
+APP_PATH="$(find "${DERIVED}/Build/Products" -maxdepth 2 -name 'InthBare.app' -type d | head -1)"
+[[ -n "${APP_PATH}" ]] || die "no InthBare.app under ${DERIVED}/Build/Products"
 
 mkdir -p "${OUT_DIR}"
 rm -f "${OUT_DIR}"/*.png "${OUT_DIR}"/*.png.md5 "${OUT_DIR}"/*.json "${OUT_DIR}"/*.app-md5
@@ -483,24 +483,24 @@ step 01-fresh-banner "fresh install: banner owing a decision" diff banner "" 14
 
 # 2. dismissNotice on an opt-in policy is not a decision. A cold start is what makes
 #    this read as storage rather than as a sheet that happened to stay open.
-step 02-dismiss-still-owed "dismiss leaves an opt-in prompt owed" same:01-fresh-banner banner "c15t-demo://dismiss" 8
+step 02-dismiss-still-owed "dismiss leaves an opt-in prompt owed" same:01-fresh-banner banner "inth-demo://dismiss" 8
 
 # 3. The consent manager, the path the banner's Customize button takes. This is also
 #    the frame that proves the launch-variable channel reaches the verb table.
-step 03-customize-dialog "consent manager open, every category listed" diff dialog "c15t-demo://customize" 8
+step 03-customize-dialog "consent manager open, every category listed" diff dialog "inth-demo://customize" 8
 
 # 4. acceptAll over the real bridge: the prompt goes away and every category the policy
 #    governs reads allowed to its own subscriber, which is what unblocks a gate.
-step 04-accept-everything "acceptAll: prompt gone, categories allowed" diff none "c15t-demo://accept" 8
+step 04-accept-everything "acceptAll: prompt gone, categories allowed" diff none "inth-demo://accept" 8
 
 # 5. Process death, then the stored answer, with nothing owed.
 step 05-relaunch-no-prompt "relaunched: reads as saved, no prompt owed" quiet:04-accept-everything none "" 12
 
 # 6. One category moved off. A deep link commits it through the action; no fake thumb.
-step 06-save-measurement-off "save measurement=0: one category moves" diff none "c15t-demo://save?measurement=0" 8
+step 06-save-measurement-off "save measurement=0: one category moves" diff none "inth-demo://save?measurement=0" 8
 
 # 7. That category, read back off stored state, switch and all.
-step 07-preference-centre "preference centre: measurement off, rest on" diff dialog "c15t-demo://preferences" 8
+step 07-preference-centre "preference centre: measurement off, rest on" diff dialog "inth-demo://preferences" 8
 
 # 8. The same answer with the process gone: this is persistence, not sheet state.
 step 08-relaunch-measurement-off "relaunched: measurement still off" diff none "" 12
@@ -508,7 +508,7 @@ step 08-relaunch-measurement-off "relaunched: measurement still off" diff none "
 # 9. The other palette, driven by the platform rather than a forced override, because
 #    the demo follows the system unless a verb says otherwise.
 appearance dark
-step 09-dark-dialog "dark scheme from the platform, manager open" diff dialog "c15t-demo://customize" 8
+step 09-dark-dialog "dark scheme from the platform, manager open" diff dialog "inth-demo://customize" 8
 
 # 10. The core's own wipe, not a reinstall, and the prompt back where it started.
 #     Light again, on purpose. Only the modal dialog dims what is behind it, so in dark the
@@ -518,7 +518,7 @@ step 09-dark-dialog "dark scheme from the platform, manager open" diff dialog "c
 #     which would report a missing prompt rather than a missing edge. Step 09 keeps the dark
 #     coverage, and the frame this step is compared against was taken in light.
 appearance light
-step 10-reset-prompt-returns "reset: first-run prompt owed again" diff banner "c15t-demo://reset" 12
+step 10-reset-prompt-returns "reset: first-run prompt owed again" diff banner "inth-demo://reset" 12
 
 # 11. And it is owed in storage, so a second cold start still shows it.
 step 11-reset-relaunch-owed "relaunched after reset: prompt still owed" same:10-reset-prompt-returns banner "" 12

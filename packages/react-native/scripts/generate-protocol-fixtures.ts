@@ -33,7 +33,7 @@
  *   the device answers with once the init it re-ran lands.
  * - `tc-string-*.json` — a TC Model plus a vendor list in, the base64url TCF string the
  *   reference encoder produced out, and the field map its decoder read back. These are
- *   the only fixtures the c15t kernel has no hand in: their oracle is
+ *   the only fixtures the Inth kernel has no hand in: their oracle is
  *   `@iabtechlabtcf/core`, because there is no native TC String SDK to adopt. Two
  *   populations, recorded per fixture as `population` and `expects`. See
  *   `./tc-string-fixtures.ts` for what each one obliges a core to do.
@@ -52,8 +52,8 @@
  * The consent *policy* half of IAB TCF stays out of scope: no kernel fixture carries a
  * TC string, no GVL, and the snapshot `iab` slot is emitted as `null`. The wire half is
  * now in scope as its own kind, and it is deliberately not threaded through the kernel —
- * c15t's own encoder populates a subset of `TCModel`, so a vector set cut only from
- * c15t's outputs would pass a decoder that cannot see publisherRestrictions or
+ * Inth's own encoder populates a subset of `TCModel`, so a vector set cut only from
+ * Inth's outputs would pass a decoder that cannot see publisherRestrictions or
  * purposeOneTreatment at all. Both populations therefore drive the reference directly.
  *
  * Stored envelopes are the one thing here the kernel does not produce, because it has
@@ -148,7 +148,7 @@ const DOMAIN = 'app.example.com';
  * `subjectIdSchema` in `packages/sdk/schema/src/api/subject/post.ts` requires
  * `^sub_[1-9A-HJ-NP-Za-km-z]+$` and answers anything else with
  * `INPUT_VALIDATION_FAILED`, so a UUID-shaped id in a fixture pins a `POST /subjects`
- * body that no c15t backend would ever accept, and both native cores would faithfully
+ * body that no Inth backend would ever accept, and both native cores would faithfully
  * implement a save that can only fail. These are minted by `generateSubjectId` at the
  * pinned `NOW` with the twelve random bytes noted on each, which is the encoding
  * `packages/native-protocol/CONTRACT.md` pins: eight big-endian bytes of `now - 1_700_000_000_000`, then
@@ -2194,7 +2194,7 @@ interface StoredEnvelope {
  * Write the web consent-record envelope.
  *
  * Neither native core writes this shape, which is exactly why it survives here: it
- * is the bytes one c15t surface stores and another must refuse. Producing it from
+ * is the bytes one Inth surface stores and another must refuse. Producing it from
  * the real v3 codec rather than typing it by hand keeps the refusal honest — the
  * fixture hands over a genuine web envelope, not a guess at one.
  */
@@ -2221,7 +2221,7 @@ const encodeEnvelope = function encodeEnvelope(
 const ENVELOPE_FORMAT_VERSION = 1;
 
 /** The field a read fixture adds when it wants one this build cannot name. */
-const UNRECOGNISED_ENVELOPE_FIELD = 'com.c15t.experiment';
+const UNRECOGNISED_ENVELOPE_FIELD = 'com.inth.experiment';
 
 /**
  * What a core that reaches no backend answers with.
@@ -2469,7 +2469,7 @@ const buildNativeEnvelopeFixtures =
 			{
 				after: grants.after,
 				description:
-					'The web v3 consent-record envelope written into native protected storage. It is a real c15t format and not this one, so a native core that read it would be granting consent out of a codec it has never written and cannot re-derive.',
+					'The web v3 consent-record envelope written into native protected storage. It is a real Inth format and not this one, so a native core that read it would be granting consent out of a codec it has never written and cannot re-derive.',
 				id: 'native-envelope-foreign-wire',
 				input: {
 					...grantedInput(),
@@ -2831,7 +2831,7 @@ const assertProtocolVersions = function assertProtocolVersions(
 	}
 	if (!isProtocolVersionSupported(PROTOCOL_VERSION)) {
 		throw new Error(
-			`PROTOCOL_VERSION (${String(PROTOCOL_VERSION)}) is outside the range @c15t/react-native supports, so no native core could accept a fixture built against it. Widen the supported range in src/protocol/version.ts first.`
+			`PROTOCOL_VERSION (${String(PROTOCOL_VERSION)}) is outside the range @inth/react-native supports, so no native core could accept a fixture built against it. Widen the supported range in src/protocol/version.ts first.`
 		);
 	}
 

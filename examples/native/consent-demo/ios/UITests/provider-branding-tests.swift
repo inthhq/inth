@@ -4,7 +4,7 @@ import XCTest
 
 extension ConsentJourneyTests {
     private var attribution: XCUIElement {
-        app.descendants(matching: .any)["c15t.first-layer.branding"].firstMatch
+        app.descendants(matching: .any)["inth.first-layer.branding"].firstMatch
     }
 
     private func revealAttribution() {
@@ -51,12 +51,12 @@ extension ConsentJourneyTests {
     }
 
     private func checkAttribution(_ provider: String, name: String, inline: Bool = false) throws {
-        let customize = button("c15t.first-layer.customize")
+        let customize = button("inth.first-layer.customize")
         XCTAssertTrue(customize.waitForExistence(timeout: 10))
         let mark = attribution
         XCTAssertTrue(mark.waitForExistence(timeout: 5))
         try checkRenderedAttributionCount(1, name: name)
-        XCTAssertEqual(app.descendants(matching: .any).matching(identifier: "c15t.first-layer.branding").count, 1)
+        XCTAssertEqual(app.descendants(matching: .any).matching(identifier: "inth.first-layer.branding").count, 1)
         XCTAssertEqual(mark.label, "Secured by \(provider)")
         XCTAssertNotEqual(mark.elementType, .button)
         XCTAssertTrue(app.windows.firstMatch.frame.contains(mark.frame))
@@ -72,7 +72,7 @@ extension ConsentJourneyTests {
             XCTAssertGreaterThanOrEqual(mark.frame.minY, customize.frame.maxY)
             XCTAssertLessThanOrEqual(mark.frame.maxX, customize.frame.maxX + 1)
         }
-        let reject = button("c15t.first-layer.reject-all"), accept = button("c15t.first-layer.accept-all")
+        let reject = button("inth.first-layer.reject-all"), accept = button("inth.first-layer.accept-all")
         XCTAssertEqual(reject.frame.width, accept.frame.width, accuracy: 0.5)
         XCTAssertEqual(reject.frame.height, accept.frame.height, accuracy: 0.5)
         XCTAssertTrue(customize.isHittable)
@@ -85,10 +85,10 @@ extension ConsentJourneyTests {
             for appearance in ["light", "dark"] {
                 launch(appearance: appearance, branding: provider)
                 try checkAttribution(provider == "inth" ? "Inth" : "c15t", name: "ios-branding-\(provider)-\(appearance)")
-                XCTAssertTrue(button("c15t.first-layer.accept-all").isHittable)
-                XCTAssertTrue(button("c15t.first-layer.reject-all").isHittable)
-                button("c15t.first-layer.customize").tap()
-                XCTAssertTrue(button("c15t.prefs.save").waitForExistence(timeout: 5))
+                XCTAssertTrue(button("inth.first-layer.accept-all").isHittable)
+                XCTAssertTrue(button("inth.first-layer.reject-all").isHittable)
+                button("inth.first-layer.customize").tap()
+                XCTAssertTrue(button("inth.prefs.save").waitForExistence(timeout: 5))
                 XCTAssertFalse(attribution.exists)
                 app.terminate()
             }
@@ -98,7 +98,7 @@ extension ConsentJourneyTests {
     func test23AttributionKeepsInlineLayoutAtAccessibilityTextSizes() throws {
         for provider in ["c15t", "inth"] {
             launch(branding: provider, arguments: Self.ax5)
-            XCTAssertTrue(button("c15t.first-layer.customize").waitForExistence(timeout: 10))
+            XCTAssertTrue(button("inth.first-layer.customize").waitForExistence(timeout: 10))
             revealAttribution()
             try checkAttribution(provider == "inth" ? "Inth" : "c15t", name: "ios-branding-accessibility-\(provider)", inline: true)
             app.terminate()
@@ -113,17 +113,17 @@ extension ConsentJourneyTests {
 
     func test25HiddenAttributionDoesNotRender() throws {
         launch(branding: "hidden")
-        XCTAssertTrue(button("c15t.first-layer.customize").waitForExistence(timeout: 10))
+        XCTAssertTrue(button("inth.first-layer.customize").waitForExistence(timeout: 10))
         try checkRenderedAttributionCount(0, name: "ios-branding-hidden")
         XCTAssertFalse(attribution.exists)
-        XCTAssertTrue(app.staticTexts["c15t.first-layer.brand"].exists)
+        XCTAssertTrue(app.staticTexts["inth.first-layer.brand"].exists)
     }
 
     func test26AttributionStaysExclusiveWhenReturningFromPreferences() throws {
         launch(branding: "inth")
         try checkAttribution("Inth", name: "ios-branding-before-preferences")
-        button("c15t.first-layer.customize").tap()
-        let back = button("c15t.prefs.cancel")
+        button("inth.first-layer.customize").tap()
+        let back = button("inth.prefs.cancel")
         XCTAssertTrue(back.waitForExistence(timeout: 5))
         back.tap()
         try checkAttribution("Inth", name: "ios-branding-after-preferences")
@@ -166,7 +166,7 @@ extension ConsentJourneyTests {
             try checkAttribution("Example Privacy Platform",
                                  name: arguments.isEmpty ? "ios-branding-wide-provider" : "ios-branding-wide-provider-rtl",
                                  inline: true)
-            let customize = button("c15t.first-layer.customize").frame
+            let customize = button("inth.first-layer.customize").frame
             if arguments.isEmpty {
                 XCTAssertEqual(attribution.frame.maxX, customize.maxX, accuracy: 0.5)
             } else {

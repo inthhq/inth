@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { syncVendoredCore } from './sync-vendored-core';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
-const drift = ['C15tApple', 'C15tConsentUI'].flatMap((module) =>
+const drift = ['InthApple', 'InthConsentUI'].flatMap((module) =>
 	syncVendoredCore({
 		check: process.argv.includes('--check'),
 		sourceDir: join(root, 'packages/swift/Sources', module),

@@ -99,7 +99,7 @@ root `_layout.tsx`. Keep it mounted for the life of the app.
 read stored consent and resolved the policy. While it is `pending`, a
 returning user keeps the value the previous launch saved, so they do not lose
 that launch's metrics even when the policy cannot load. A new user, for whom
-`useC15tBootstrap().hasStoredSnapshot` is `false`, has no grant to keep, so
+`useInthBootstrap().hasStoredSnapshot` is `false`, has no grant to keep, so
 the component turns sending off until they decide, even if the policy never
 loads. The same happens when the decision goes back to `pending` later in the
 session, for example after `reset()`, because the earlier grant no longer

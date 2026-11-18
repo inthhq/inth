@@ -19,16 +19,16 @@
  *   publisher restrictions, `purposeOneTreatment`, `useNonStandardTexts`, vendor and
  *   custom-purpose ids wide enough that no range encoding is trivial. A native
  *   decoder must read these correctly; its encoder is explicitly not graded on them,
- *   because c15t cannot produce the input. Without this population a decoder that
- *   stops after the last field c15t happens to write would pass every parity vector
+ *   because Inth cannot produce the input. Without this population a decoder that
+ *   stops after the last field Inth happens to write would pass every parity vector
  *   and still be wrong.
  *
  * Both populations run under the clock `index.json` pins. That clock matters more
  * than it looks: a core segment carries `created` and `lastUpdated`, so without a
  * frozen clock a golden string is not reproducible. `parity` vectors go one step
- * further and carry c15t's own timestamp rule -- the day floor of the clock, not the
+ * further and carry Inth's own timestamp rule -- the day floor of the clock, not the
  * clock -- which is why `input.now` and `input.model.created` differ. See
- * {@link c15tTimestamp}.
+ * {@link inthTimestamp}.
  *
  * Where the reference loses information on the way out, the loss is written into
  * that fixture's `notes` by {@link fidelityNotes}, which compares what went in with
@@ -128,7 +128,7 @@ export type TcStringPopulation = (typeof TC_STRING_POPULATIONS)[number];
 /**
  * What a runner must assert for one population, as data.
  *
- * `parity` vectors are encodable by c15t and therefore graded on both directions;
+ * `parity` vectors are encodable by Inth and therefore graded on both directions;
  * `decode-coverage` vectors are not, so only the decode half is asserted.
  */
 /**
@@ -403,16 +403,16 @@ interface TcStringDecodedFields extends TcStringModel {
 
 // -- Plumbing ---------------------------------------------------------------
 
-/** The day floor c15t stamps `created` and `lastUpdated` with. */
+/** The day floor Inth stamps `created` and `lastUpdated` with. */
 const DAY_MS = 86_400_000;
 
 /**
- * c15t truncates the confirmation time to a UTC day before it reaches the model
+ * Inth truncates the confirmation time to a UTC day before it reaches the model
  * (`packages/sdk/iab/src/tcf/tc-string.ts`, `confirmedDay`). A parity vector that used
- * the raw clock would therefore pin a string c15t can never produce, and both native
- * cores would faithfully implement a timestamp no c15t install ever writes.
+ * the raw clock would therefore pin a string Inth can never produce, and both native
+ * cores would faithfully implement a timestamp no Inth install ever writes.
  */
-const c15tTimestamp = function c15tTimestamp(now: number): number {
+const inthTimestamp = function inthTimestamp(now: number): number {
 	return Math.floor(now / DAY_MS) * DAY_MS;
 };
 
@@ -748,19 +748,19 @@ const fidelityNotes = function fidelityNotes(
 
 // -- Defaults ---------------------------------------------------------------
 
-/** The CMP identity c15t writes. 28 is the registered example id its docs use. */
+/** The CMP identity Inth writes. 28 is the registered example id its docs use. */
 const C15T_CMP_ID = 28;
 const C15T_CMP_VERSION = 1;
 
 /**
- * A model with c15t's defaults in it.
+ * A model with Inth's defaults in it.
  *
  * `supportOOB` and `isServiceSpecific` sit at the reference's own constructor
- * defaults rather than at c15t's, because c15t writes `isServiceSpecific` and leaves
- * `supportOOB` alone -- so `false` here is "c15t never touched it", which is what a
+ * defaults rather than at Inth's, because Inth writes `isServiceSpecific` and leaves
+ * `supportOOB` alone -- so `false` here is "Inth never touched it", which is what a
  * parity vector has to reproduce.
  */
-const c15tModel = function c15tModel(
+const inthModel = function inthModel(
 	now: number,
 	overrides: Partial<TcStringModel>
 ): TcStringModel {
@@ -769,9 +769,9 @@ const c15tModel = function c15tModel(
 		cmpVersion: C15T_CMP_VERSION,
 		consentLanguage: 'EN',
 		consentScreen: 1,
-		created: c15tTimestamp(now),
+		created: inthTimestamp(now),
 		isServiceSpecific: true,
-		lastUpdated: c15tTimestamp(now),
+		lastUpdated: inthTimestamp(now),
 		numCustomPurposes: 0,
 		publisherConsents: [],
 		publisherCountryCode: 'US',
@@ -866,18 +866,18 @@ const EVEN_VENDOR_IDS_UP_TO_700 = Array.from(
 
 /** A vector as this file declares it, before the clock turns it into a string. */
 interface CaseSpec {
-	/** Defaults to a string the CMP hands a vendor, which is what c15t produces. */
+	/** Defaults to a string the CMP hands a vendor, which is what Inth produces. */
 	encodingOptions?: { isForVendors?: boolean };
 	/** One sentence on the difference this case exists to catch. */
 	description: string;
 	id: string;
-	/** Fields to move off c15t's defaults; everything else stays at them. */
+	/** Fields to move off Inth's defaults; everything else stays at them. */
 	model: Partial<TcStringModel>;
 	/** Case-specific notes, prepended to the fidelity notes the build derives. */
 	notes: string[];
 	population: TcStringPopulation;
 	/**
-	 * Which reading of the frozen clock each timestamp carries. `day` is c15t's
+	 * Which reading of the frozen clock each timestamp carries. `day` is Inth's
 	 * day floor, `clock` is the clock itself. Both default to `day` because that is
 	 * what @c15t/iab writes; a vector that wants the two fields to differ asks for
 	 * them here rather than hard-coding a millisecond value that would only be right
@@ -905,10 +905,10 @@ const POPULATION_NOTES: Record<TcStringPopulation, string> = {
 /**
  * Where the two populations stop being a label and become a checked claim.
  *
- * A parity vector is only worth having if it really is a string c15t can produce, so
+ * A parity vector is only worth having if it really is a string Inth can produce, so
  * every field outside the set `packages/sdk/iab/src/tcf/tc-string.ts` touches has to sit
- * at c15t's default. Marking a decode-coverage case as `parity` fails the build here
- * rather than quietly handing both native cores a byte string no c15t install emits
+ * at Inth's default. Marking a decode-coverage case as `parity` fails the build here
+ * rather than quietly handing both native cores a byte string no Inth install emits
  * and a parity failure neither of them can fix.
  */
 const assertParitySurface = function assertParitySurface(
@@ -951,14 +951,14 @@ const assertParitySurface = function assertParitySurface(
 		untouched.push('publisherCountryCode');
 	}
 	if (
-		model.created !== c15tTimestamp(now) ||
-		model.lastUpdated !== c15tTimestamp(now)
+		model.created !== inthTimestamp(now) ||
+		model.lastUpdated !== inthTimestamp(now)
 	) {
 		untouched.push('created/lastUpdated');
 	}
 	if (untouched.length > 0) {
 		throw new Error(
-			`${id} is marked population=parity but leaves ${untouched.join(', ')} outside what @c15t/iab writes. Either move those to a decode-coverage vector or drop them here; a parity byte string neither native core can reach from a c15t install certifies an encoder nobody has to build.`
+			`${id} is marked population=parity but leaves ${untouched.join(', ')} outside what @c15t/iab writes. Either move those to a decode-coverage vector or drop them here; a parity byte string neither native core can reach from an Inth install certifies an encoder nobody has to build.`
 		);
 	}
 };
@@ -1058,7 +1058,7 @@ const CASE_SPECS: readonly CaseSpec[] = [
 	// -- population: parity --------------------------------------------------
 	{
 		description:
-			'A c15t install that loaded the vendor list but recorded nothing: every vector empty, so the string is all of the fixed-width fields and three zero-length vectors.',
+			'An Inth install that loaded the vendor list but recorded nothing: every vector empty, so the string is all of the fixed-width fields and three zero-length vectors.',
 		id: 'tc-string-parity-nothing-set',
 		model: {},
 		notes: [
@@ -1092,7 +1092,7 @@ const CASE_SPECS: readonly CaseSpec[] = [
 	},
 	{
 		description:
-			'Vendors were disclosed but not consented to, the shape a c15t preference centre reaches when the user opened the list and saved nothing.',
+			'Vendors were disclosed but not consented to, the shape an Inth preference centre reaches when the user opened the list and saved nothing.',
 		id: 'tc-string-parity-vendor-consents-empty',
 		model: { vendorsDisclosed: [1, 2, 3] },
 		notes: [
@@ -1275,7 +1275,7 @@ const CASE_SPECS: readonly CaseSpec[] = [
 	},
 	{
 		description:
-			'The two remaining core-segment bits c15t leaves alone: non-standard texts set, and supportOOB on with the string addressed to vendors.',
+			'The two remaining core-segment bits Inth leaves alone: non-standard texts set, and supportOOB on with the string addressed to vendors.',
 		id: 'tc-string-decode-non-standard-texts-and-oob',
 		model: {
 			isServiceSpecific: false,
@@ -1461,7 +1461,7 @@ const timestampsFor = function timestampsFor(
 	const pick = function pick(which: 'created' | 'lastUpdated'): number {
 		return (timestamps?.[which] ?? 'day') === 'clock'
 			? now
-			: c15tTimestamp(now);
+			: inthTimestamp(now);
 	};
 	return { created: pick('created'), lastUpdated: pick('lastUpdated') };
 };
@@ -1473,7 +1473,7 @@ const buildTcStringCase = function buildTcStringCase(
 	protocolVersion: number
 ): TcStringFixture {
 	const vendorList = vendorListFor(spec.vendorList);
-	const model = c15tModel(now, {
+	const model = inthModel(now, {
 		...timestampsFor(now, spec.timestamps),
 		...spec.model,
 	});

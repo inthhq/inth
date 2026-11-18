@@ -61,7 +61,7 @@ and region, so every policy needs a rule with `match.fallback` or
 export default {
 	plugins: [
 		[
-			'@c15t/react-native',
+			'@inth/react-native',
 			{
 				backendURL: 'https://your-project.inth.app',
 				consentCategories: ['necessary', 'measurement', 'marketing'],
@@ -93,7 +93,7 @@ let policy = try ConsentPolicy(rules: [
     PolicyRule(id: "everywhere_else", match: PolicyMatch(fallback: true, isDefault: true),
                model: .optIn, prompt: .choice),
 ])
-let core = try C15tApple.install(C15tAppleConfiguration(
+let core = try InthApple.install(InthAppleConfiguration(
     backendURL: "https://your-project.inth.app",
     policy: policy
 ))
@@ -104,7 +104,7 @@ val policy = ConsentPolicy(listOf(
     PolicyRule("germany", PolicyMatch(countries = listOf("DE")), ConsentModel.OPT_IN, PolicyPrompt.CHOICE),
     PolicyRule("everywhere_else", PolicyMatch(fallback = true, isDefault = true), ConsentModel.OPT_IN, PolicyPrompt.CHOICE),
 ))
-C15tAndroid.install(
+InthAndroid.install(
     context,
     NativeConfig(backendUrl = "https://your-project.inth.app", policy = policy),
 )
@@ -112,8 +112,8 @@ C15tAndroid.install(
 
 Both cores also read the same rules as JSON, `{"rules": [...]}`:
 `ConsentPolicy(json:)` in Swift and `ConsentPolicy.fromJson` in Kotlin. Expo
-writes that file for you and names it with `com.c15t.policy.rules` in
-`Info.plist` and `com.c15t.POLICY_RULES` in the Android manifest.
+writes that file for you and names it with `com.inth.policy.rules` in
+`Info.plist` and `com.inth.POLICY_RULES` in the Android manifest.
 
 The rules follow the backend's authoring checks: a partial `categories` list
 needs `scopeMode`, `actions` must include `accept` and `reject`, at most one rule
@@ -156,7 +156,7 @@ With Expo, add `@c15t/cli` to `devDependencies` and turn on
 export default {
 	plugins: [
 		[
-			'@c15t/react-native',
+			'@inth/react-native',
 			{
 				backendURL: 'https://your-project.inth.app',
 				bundleManifest: { allowStaleManifest: false, languages: ['de'] },
@@ -188,7 +188,7 @@ case "$CONFIGURATION" in
   *) BUILD=release ;;
 esac
 npx @c15t/cli mobile-manifest --backend-url https://your-project.inth.app \
-  --out "$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/c15t-policy.json" \
+  --out "$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/inth-policy.json" \
   --build "$BUILD"
 ```
 
@@ -196,7 +196,7 @@ On Android, register the fetch through the variant API, so every variant,
 product flavors included, gets its own copy as a generated asset:
 
 ```groovy title="android/app/build.gradle"
-abstract class C15tManifestTask extends DefaultTask {
+abstract class InthManifestTask extends DefaultTask {
     @Input abstract Property<String> getBuild()
     @Internal abstract DirectoryProperty getAppRoot()
     @OutputDirectory abstract DirectoryProperty getOutputDir()
@@ -204,7 +204,7 @@ abstract class C15tManifestTask extends DefaultTask {
 
     @TaskAction
     void fetch() {
-        def out = new File(outputDir.get().asFile, 'c15t-policy.json')
+        def out = new File(outputDir.get().asFile, 'inth-policy.json')
         execOperations.exec {
             workingDir appRoot.get().asFile
             commandLine 'npx', '@c15t/cli', 'mobile-manifest',
@@ -216,7 +216,7 @@ abstract class C15tManifestTask extends DefaultTask {
 
 androidComponents {
     onVariants(selector().all()) { variant ->
-        def fetch = tasks.register("c15tManifest${variant.name.capitalize()}", C15tManifestTask) {
+        def fetch = tasks.register("inthManifest${variant.name.capitalize()}", InthManifestTask) {
             build = (variant.buildType ?: '').toLowerCase().contains('debug') ? 'debug' : 'release'
             appRoot = rootProject.layout.projectDirectory.dir('..')
         }
@@ -263,9 +263,9 @@ Repository maintainers re-export the example apps' fixtures with
 | App | Where the JSON goes | Configuration |
 | --- | --- | --- |
 | Swift | The app target's Copy Bundle Resources | Load `BundledPolicyResource` and pass it as `bundledPolicy` during installation |
-| Bare RN, iOS | The app target's Copy Bundle Resources | `com.c15t.policy.resource` names the bundled resource |
-| Kotlin or bare RN, Android | `app/src/main/assets/c15t-policy.json` | `com.c15t.POLICY_RESOURCE` names the asset for automatic installation |
-| Expo | Beside your app config, or another source path | Set `policyResource` in the c15t config plugin and rebuild |
+| Bare RN, iOS | The app target's Copy Bundle Resources | `com.inth.policy.resource` names the bundled resource |
+| Kotlin or bare RN, Android | `app/src/main/assets/inth-policy.json` | `com.inth.POLICY_RESOURCE` names the asset for automatic installation |
+| Expo | Beside your app config, or another source path | Set `policyResource` in the Inth config plugin and rebuild |
 
 For app-owned Android installation, read the asset JSON and pass it as
 `NativeConfig.bundledPolicy`. Keep the same backend endpoint at export and
@@ -324,15 +324,15 @@ no network at all.
 | App | Turn it on |
 | --- | --- |
 | Expo | `dryRun: true` in the config plugin |
-| Bare RN | `com.c15t.dryRun` set to true in `Info.plist`, `com.c15t.DRY_RUN` in Android metadata |
-| Swift | `C15tAppleConfiguration(backendURL:dryRun:)`, inside `#if DEBUG` |
-| Kotlin | `NativeConfig(backendUrl = ..., dryRun = true)`, or `com.c15t.DRY_RUN` metadata |
+| Bare RN | `com.inth.dryRun` set to true in `Info.plist`, `com.inth.DRY_RUN` in Android metadata |
+| Swift | `InthAppleConfiguration(backendURL:dryRun:)`, inside `#if DEBUG` |
+| Kotlin | `NativeConfig(backendUrl = ..., dryRun = true)`, or `com.inth.DRY_RUN` metadata |
 
 A release build refuses `dryRun` and starts no engine. Swift decides with
 `#if DEBUG`, because the SDK ships as source and compiles with your app's
 configuration. Android checks whether the host app is debuggable at runtime,
-because the SDK ships as release AARs. `C15tApple.install` throws
-`dryRunInReleaseBuild`, and `C15tAndroid.install` throws
+because the SDK ships as release AARs. `InthApple.install` throws
+`dryRunInReleaseBuild`, and `InthAndroid.install` throws
 `IllegalStateException`. The launch hooks that read `Info.plist` or manifest
 metadata log the refusal instead, and every read answers deny-all.
 

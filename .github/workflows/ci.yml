@@ -531,25 +531,25 @@ jobs:
         working-directory: packages/android
         run: |
           ./gradlew \
-            :c15t-core:test \
-            :c15t-android:testDebugUnitTest \
-            :c15t-consent-ui:testDebugUnitTest \
-            :c15t-core:publishAllPublicationsToStagingRepository \
-            :c15t-android:publishAllPublicationsToStagingRepository \
-            :c15t-consent-ui:publishAllPublicationsToStagingRepository \
+            :inth-core:test \
+            :inth-android:testDebugUnitTest \
+            :inth-consent-ui:testDebugUnitTest \
+            :inth-core:publishAllPublicationsToStagingRepository \
+            :inth-android:publishAllPublicationsToStagingRepository \
+            :inth-consent-ui:publishAllPublicationsToStagingRepository \
             --no-configuration-cache --console=plain
       - name: Resolve the staged libraries in an isolated consumer app
         run: |
-          native_version="$(sed -n 's/^c15t.native.version=//p' packages/android/gradle.properties)"
+          native_version="$(sed -n 's/^inth.native.version=//p' packages/android/gradle.properties)"
           python3 packages/android/consumer-smoke/verify.py \
             --staging-repository packages/android/build/maven-staging \
-            --version "${native_version}" --output "${RUNNER_TEMP}/c15t-android-consumer"
+            --version "${native_version}" --output "${RUNNER_TEMP}/inth-android-consumer"
       - uses: ./.github/actions/setup-sdk
       - name: Test and assemble the React Native Android binding
         env:
           C15T_MAVEN_URL: file://${{ github.workspace }}/packages/android/build/maven-staging
         working-directory: packages/react-native/android
-        run: ./gradlew :c15t-react-native:testDebugUnitTest :c15t-react-native:assembleRelease --console=plain
+        run: ./gradlew :inth-react-native:testDebugUnitTest :inth-react-native:assembleRelease --console=plain
       - name: Save Android reports
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -558,8 +558,8 @@ jobs:
           path: |
             packages/android/**/build/reports/
             packages/android/**/build/test-results/
-            packages/react-native/android/c15t-react-native/build/reports/
-            ${{ runner.temp }}/c15t-android-consumer/result.json
+            packages/react-native/android/inth-react-native/build/reports/
+            ${{ runner.temp }}/inth-android-consumer/result.json
           retention-days: 7
           if-no-files-found: ignore
 

@@ -26,7 +26,7 @@
  * The honest limit: this is the JavaScript half of interactivity. react-test-renderer
  * runs no layout pass, no platform `Modal`, and no font loading, and the stub's
  * `Animated` finishes on the spot, so a device adds its own frames to every number
- * here. They say what c15t's render costs, not what a phone's first frame costs.
+ * here. They say what Inth's render costs, not what a phone's first frame costs.
  */
 
 import { spawnSubject } from '../support/spawn-subject';

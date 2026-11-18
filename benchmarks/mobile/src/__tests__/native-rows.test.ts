@@ -43,7 +43,7 @@ const kotlinRun = function kotlinRun(
 	return result;
 };
 
-const COLD_OUTPUT = `c15t-core benchmarks
+const COLD_OUTPUT = `inth-core benchmarks
   warmup=500 measured=3000  medians in microseconds
 
   bootstrap() to first snapshot(), cold
@@ -51,7 +51,7 @@ const COLD_OUTPUT = `c15t-core benchmarks
     ok
 `;
 
-const WITHOUT_COLD = `c15t-core benchmarks
+const WITHOUT_COLD = `inth-core benchmarks
   warmup=500 measured=3000  medians in microseconds
 
   bootstrap() to first snapshot(), cold (not measured)
@@ -97,10 +97,10 @@ describe('the Kotlin cold bootstrap row', () => {
 	});
 
 	it('carries the platform reason when the bench could not run at all', () => {
-		const row = rowFor('', ':c15t-core:bench exited non-zero');
+		const row = rowFor('', ':inth-core:bench exited non-zero');
 
 		expect(row.status).toBe('not-measured');
 		expect(row.value).toBeNull();
-		expect(row.reason).toBe(':c15t-core:bench exited non-zero');
+		expect(row.reason).toBe(':inth-core:bench exited non-zero');
 	});
 });

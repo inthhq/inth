@@ -53,7 +53,7 @@ react {
 
     /* Autolinking */
     autolinkLibrariesWithApp()
-    if (providers.gradleProperty("c15t.appE2e").getOrElse("false").toBoolean()) {
+    if (providers.gradleProperty("inth.appE2e").getOrElse("false").toBoolean()) {
         extraPackagerArgs = ["--reset-cache"]
     }
 }
@@ -81,17 +81,17 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.c15t.bare"
-    if (providers.gradleProperty("c15t.appE2e").getOrElse("false").toBoolean()) {
+    namespace "com.inth.bare"
+    if (providers.gradleProperty("inth.appE2e").getOrElse("false").toBoolean()) {
         sourceSets.release.manifest.srcFile "src/e2e/AndroidManifest.xml"
     }
     defaultConfig {
-        applicationId "com.c15t.bare"
+        applicationId "com.inth.bare"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
-        if (providers.gradleProperty("c15t.appE2e").getOrElse("false").toBoolean()) {
+        if (providers.gradleProperty("inth.appE2e").getOrElse("false").toBoolean()) {
             manifestPlaceholders.usesCleartextTraffic = "true"
         }
     }
@@ -119,8 +119,8 @@ android {
 
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
-    implementation("com.c15t:c15t-core:3.0.0-alpha.1")
-    implementation("com.c15t:c15t-android:3.0.0-alpha.1")
+    implementation("com.inth:inth-core:3.0.0-alpha.1")
+    implementation("com.inth:inth-android:3.0.0-alpha.1")
 
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
@@ -132,13 +132,13 @@ dependencies {
     }
 }
 
-// MainApplication's E2E install supplies its own transport, which is internal c15t API.
+// MainApplication's E2E install supplies its own transport, which is internal Inth API.
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
-    compilerOptions.freeCompilerArgs.add("-opt-in=com.c15t.core.C15tInternalApi")
+    compilerOptions.freeCompilerArgs.add("-opt-in=com.inth.core.InthInternalApi")
 }
 
-if (providers.gradleProperty("c15t.appE2e").orNull == "true") {
-    android.sourceSets.main.assets.srcDirs = [providers.gradleProperty("c15t.policyAssets").get()]
+if (providers.gradleProperty("inth.appE2e").orNull == "true") {
+    android.sourceSets.main.assets.srcDirs = [providers.gradleProperty("inth.policyAssets").get()]
 }
 
 // Babel embeds these values. Gradle otherwise reuses a bundle built without

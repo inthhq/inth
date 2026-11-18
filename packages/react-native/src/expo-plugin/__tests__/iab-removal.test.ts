@@ -33,7 +33,7 @@ it('removing iab on incremental prebuild clears the earlier CMP identity', async
 		expect(firstPlist).toHaveProperty(key);
 	}
 	const partialPlist = applyInfoPlist(withoutConsentScreen, firstPlist);
-	expect(partialPlist).not.toHaveProperty('com.c15t.iab.consentScreen');
+	expect(partialPlist).not.toHaveProperty('com.inth.iab.consentScreen');
 	const nextPlist = applyInfoPlist(withoutIab, firstPlist);
 	for (const key of IOS_IAB_PLIST_KEYS) {
 		expect(nextPlist).not.toHaveProperty(key);
@@ -50,7 +50,7 @@ it('removing iab on incremental prebuild clears the earlier CMP identity', async
 	applyAndroidManifest(withIab, manifest);
 	expect(names()).toEqual(expect.arrayContaining([...ANDROID_IAB_META_KEYS]));
 	applyAndroidManifest(withoutConsentScreen, manifest);
-	expect(names()).not.toContain('com.c15t.IAB_CONSENT_SCREEN');
+	expect(names()).not.toContain('com.inth.IAB_CONSENT_SCREEN');
 	applyAndroidManifest(withoutIab, manifest);
 	for (const key of ANDROID_IAB_META_KEYS) {
 		expect(names()).not.toContain(key);
@@ -60,13 +60,13 @@ it('removing iab on incremental prebuild clears the earlier CMP identity', async
 it('removes the retired keys from a native project that was not regenerated', async () => {
 	const plist = applyInfoPlist(resolveParams({ backendURL }), {
 		CFBundleDisplayName: 'Privacy demo',
-		'com.c15t.backend.initUrl': 'https://app.example.com/api/init',
-		'com.c15t.backend.mode': 'selfHosted',
-		'com.c15t.backend.url': 'https://consent.example.com/c15t',
+		'com.inth.backend.initUrl': 'https://app.example.com/api/init',
+		'com.inth.backend.mode': 'selfHosted',
+		'com.inth.backend.url': 'https://consent.example.com/inth',
 	});
 	expect(plist).toStrictEqual({
 		CFBundleDisplayName: 'Privacy demo',
-		'com.c15t.backend.url': backendURL,
+		'com.inth.backend.url': backendURL,
 	});
 
 	const manifest = await AndroidConfig.Manifest.readAndroidManifestAsync(
@@ -75,9 +75,9 @@ it('removes the retired keys from a native project that was not regenerated', as
 	const application =
 		AndroidConfig.Manifest.getMainApplicationOrThrow(manifest);
 	for (const [name, value] of [
-		['com.c15t.MODE', 'offline'],
-		['com.c15t.BACKEND_INIT_URL', 'https://app.example.com/api/init'],
-		['com.c15t.BACKEND_URL', 'https://consent.example.com/c15t'],
+		['com.inth.MODE', 'offline'],
+		['com.inth.BACKEND_INIT_URL', 'https://app.example.com/api/init'],
+		['com.inth.BACKEND_URL', 'https://consent.example.com/inth'],
 	] as const) {
 		AndroidConfig.Manifest.addMetaDataItemToMainApplication(
 			application,
@@ -86,10 +86,10 @@ it('removes the retired keys from a native project that was not regenerated', as
 		);
 	}
 	applyAndroidManifest(resolveParams({ backendURL }), manifest);
-	const c15tEntries = (application['meta-data'] ?? [])
-		.filter((item) => item.$['android:name'].startsWith('com.c15t.'))
+	const inthEntries = (application['meta-data'] ?? [])
+		.filter((item) => item.$['android:name'].startsWith('com.inth.'))
 		.map((item) => [item.$['android:name'], item.$['android:value']]);
-	expect(c15tEntries).toStrictEqual([['com.c15t.BACKEND_URL', backendURL]]);
+	expect(inthEntries).toStrictEqual([['com.inth.BACKEND_URL', backendURL]]);
 });
 
 it('writes the dryRun flag on both platforms only while it is on', async () => {
@@ -100,9 +100,9 @@ it('writes the dryRun flag on both platforms only while it is on', async () => {
 	const off = resolveParams({ backendURL });
 
 	const plist = applyInfoPlist(on, {});
-	expect(plist['com.c15t.dryRun']).toBe(true);
-	expect(plist['com.c15t.backend.url']).toBe('http://localhost:8787');
-	expect(applyInfoPlist(off, plist)).not.toHaveProperty('com.c15t.dryRun');
+	expect(plist['com.inth.dryRun']).toBe(true);
+	expect(plist['com.inth.backend.url']).toBe('http://localhost:8787');
+	expect(applyInfoPlist(off, plist)).not.toHaveProperty('com.inth.dryRun');
 
 	const manifest = await AndroidConfig.Manifest.readAndroidManifestAsync(
 		join(FIXTURE_DIR, 'AndroidManifest.xml')
@@ -112,9 +112,9 @@ it('writes the dryRun flag on both platforms only while it is on', async () => {
 			'meta-data'
 		]?.find((item) => item.$['android:name'] === name)?.$['android:value'];
 	applyAndroidManifest(on, manifest);
-	expect(value('com.c15t.DRY_RUN')).toBe('true');
-	expect(value('com.c15t.BACKEND_URL')).toBe('http://localhost:8787');
+	expect(value('com.inth.DRY_RUN')).toBe('true');
+	expect(value('com.inth.BACKEND_URL')).toBe('http://localhost:8787');
 	applyAndroidManifest(off, manifest);
-	expect(value('com.c15t.DRY_RUN')).toBeUndefined();
-	expect(value('com.c15t.BACKEND_URL')).toBe(backendURL);
+	expect(value('com.inth.DRY_RUN')).toBeUndefined();
+	expect(value('com.inth.BACKEND_URL')).toBe(backendURL);
 });

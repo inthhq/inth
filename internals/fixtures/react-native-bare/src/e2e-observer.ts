@@ -1,7 +1,7 @@
-import { getNativeC15t } from '@c15t/react-native';
+import { getNativeInth } from '@inth/react-native';
 import { useEffect } from 'react';
 
-import { useConsentSource } from './c15t/consent-source';
+import { useConsentSource } from './inth/consent-source';
 
 const session = `${Date.now()}-${Math.random()}`;
 
@@ -20,10 +20,10 @@ export const useE2eObserver = (): void => {
 				{
 					body: JSON.stringify({
 						bootstrap:
-							kind === 'native' ? getNativeC15t().getBootstrap() : null,
+							kind === 'native' ? getNativeInth().getBootstrap() : null,
 						core: kind,
 						session,
-						snapshot: kind === 'native' ? getNativeC15t().getSnapshot() : null,
+						snapshot: kind === 'native' ? getNativeInth().getSnapshot() : null,
 					}),
 					headers: { 'Content-Type': 'application/json' },
 					method: 'POST',

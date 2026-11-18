@@ -1,7 +1,7 @@
 import os
 import XCTest
 
-/// Real PostHog, Mixpanel and Sentry Replay traffic follows the c15t measurement decision.
+/// Real PostHog, Mixpanel and Sentry Replay traffic follows the Inth measurement decision.
 ///
 /// Runs only under `run-vendor-e2e.sh`, which starts `scripts/vendor_capture.py` and passes
 /// its base URL as `C15T_VENDOR_BASE`. The app points every SDK at that server; this test
@@ -16,7 +16,7 @@ final class VendorSDKTests: XCTestCase {
 
     var app: XCUIApplication!
     var base: URL!
-    let marker = Logger(subsystem: "com.c15t.vendor-e2e", category: "step")
+    let marker = Logger(subsystem: "com.inth.vendor-e2e", category: "step")
     var evidence: [[String: Any]] = []
 
     override func setUpWithError() throws {
@@ -45,11 +45,11 @@ final class VendorSDKTests: XCTestCase {
         // Read the capture position before launching so SDK startup traffic is checked too.
         let beforeFresh = capturedLast()
         launch(reset: true)
-        XCTAssertTrue(app.buttons["c15t.first-layer.reject-all"].waitForExistence(timeout: 15))
+        XCTAssertTrue(app.buttons["inth.first-layer.reject-all"].waitForExistence(timeout: 15))
         try expectNoCapture(step: "1-fresh", since: beforeFresh)
 
         // 2. Reject all.
-        app.buttons["c15t.first-layer.reject-all"].tap()
+        app.buttons["inth.first-layer.reject-all"].tap()
         XCTAssertTrue(app.buttons["fixture.open-preferences"].waitForExistence(timeout: 10))
         XCTAssertEqual(app.staticTexts["fixture.state.permission.measurement"].label, "measurement: false")
         try expectNoCapture(step: "2-reject")
@@ -136,12 +136,12 @@ final class VendorSDKTests: XCTestCase {
         expectation(for: ready, evaluatedWith: open)
         waitForExpectations(timeout: 10)
         open.tap()
-        let measurement = app.switches["c15t.prefs.category.measurement.switch"]
+        let measurement = app.switches["inth.prefs.category.measurement.switch"]
         XCTAssertTrue(measurement.waitForExistence(timeout: 10))
         for _ in 0..<8 where !measurement.isHittable { app.swipeUp() }
         if (measurement.value as? String == "1") != on { measurement.tap() }
         XCTAssertEqual(measurement.value as? String, on ? "1" : "0")
-        let save = app.buttons["c15t.prefs.save"]
+        let save = app.buttons["inth.prefs.save"]
         for _ in 0..<8 where !save.isHittable { app.swipeUp() }
         save.tap()
         let state = app.staticTexts["fixture.state.permission.measurement"]
@@ -167,7 +167,7 @@ final class VendorSDKTests: XCTestCase {
     @discardableResult
     func mark(_ step: String) -> Int {
         let last = capturedLast()
-        marker.notice("c15t-vendor-step \(step, privacy: .public) seq=\(last, privacy: .public)")
+        marker.notice("inth-vendor-step \(step, privacy: .public) seq=\(last, privacy: .public)")
         return last
     }
 
@@ -180,14 +180,14 @@ final class VendorSDKTests: XCTestCase {
 
     // MARK: - Capture server
 
-    /// A capture request for `vendor`. Sentry counts replay items only: the c15t helper gates
+    /// A capture request for `vendor`. Sentry counts replay items only: the Inth helper gates
     /// replay, not errors or sessions. `probeOnly` asks for the probe event itself.
     static func counts(_ row: [String: Any], for vendor: String, probeOnly: Bool) -> Bool {
         guard row["vendor"] as? String == vendor, row["kind"] as? String == "capture" else { return false }
         if vendor == "sentry" {
             return !replayItems.isDisjoint(with: row["items"] as? [String] ?? [])
         }
-        return !probeOnly || (row["events"] as? [String] ?? []).contains("c15t_probe")
+        return !probeOnly || (row["events"] as? [String] ?? []).contains("inth_probe")
     }
 
     func capturedLast() -> Int {

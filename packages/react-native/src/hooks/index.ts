@@ -5,7 +5,7 @@
  * this folder renders anything, and nothing in it holds consent state.
  */
 
-export { useC15tBootstrap } from './use-c15t-bootstrap';
+export { useInthBootstrap } from './use-inth-bootstrap';
 export { useGPPString } from './use-gpp-string';
 export { useSnapshot } from './use-snapshot';
 export {

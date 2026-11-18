@@ -1,5 +1,5 @@
 /**
- * Checks for a build with `c15t.nativeUI` false, which has no stock native
+ * Checks for a build with `inth.nativeUI` false, which has no stock native
  * consent screens. Nothing else in such a build can collect consent, so the two
  * ways it ends up collecting none get said out loud: a prompt nobody renders,
  * and an IAB configuration no custom screen can disclose.
@@ -55,9 +55,9 @@ export const claimPrompt = function claimPrompt(
 };
 
 const unsupportedIABMessage = (gaps: readonly string[]): string =>
-	`c15t: this build has no stock native consent screens (c15t.nativeUI is false), and the IAB TCF configuration needs them: ${gaps.join(' and ')} cannot be disclosed by a custom screen, so useIAB() stays null and no TCF decision can be collected. Build with the stock screens (remove nativeUI: false), or serve a configuration without publisher restrictions or Additional Consent providers.`;
+	`Inth: this build has no stock native consent screens (inth.nativeUI is false), and the IAB TCF configuration needs them: ${gaps.join(' and ')} cannot be disclosed by a custom screen, so useIAB() stays null and no TCF decision can be collected. Build with the stock screens (remove nativeUI: false), or serve a configuration without publisher restrictions or Additional Consent providers.`;
 
-const UNCLAIMED_PROMPT_MESSAGE = `c15t: a consent prompt has been owed for ${String(UNCLAIMED_PROMPT_MS / 1000)} seconds, but this build has no stock native consent screens (c15t.nativeUI is false) and no <ConsentPrompt> or <ConsentBanner> is mounted. Optional categories stay denied until the subject answers. Mount one of them; if your app renders its own prompt another way, wrap it in <ConsentPrompt>.`;
+const UNCLAIMED_PROMPT_MESSAGE = `Inth: a consent prompt has been owed for ${String(UNCLAIMED_PROMPT_MS / 1000)} seconds, but this build has no stock native consent screens (inth.nativeUI is false) and no <ConsentPrompt> or <ConsentBanner> is mounted. Optional categories stay denied until the subject answers. Mount one of them; if your app renders its own prompt another way, wrap it in <ConsentPrompt>.`;
 
 /**
  * Watch a client in a build without the stock native screens.

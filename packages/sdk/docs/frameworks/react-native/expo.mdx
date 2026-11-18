@@ -1,10 +1,10 @@
 ---
 title: Expo and EAS
-description: Add the c15t Expo config plugin, build a custom native app and configure EAS access and OTA compatibility.
+description: Add the Inth Expo config plugin, build a custom native app and configure EAS access and OTA compatibility.
 group: frameworks
 ---
 
-The c15t config plugin writes your Inth project and consent settings into the
+The Inth config plugin writes your Inth project and consent settings into the
 native app at build time. You then use the same provider, hooks and native
 consent screens as a bare React Native app.
 
@@ -20,33 +20,33 @@ The mobile prerelease uses a maintainer-provided package tarball and versioned
 Android artifacts. Install the tarball from your Expo app directory:
 
 ```sh
-npm install /absolute/path/to/c15t-react-native.tgz
+npm install /absolute/path/to/inth-react-native.tgz
 ```
 
 Obtain the Maven repository URL and build-time access for Android. The plugin
 has no default artifact repository. [Mobile availability](/docs/guides/mobile-status)
 records the current distribution options.
 
-The package ships a `c15t-react-native` agent skill. Since SDK 58, Expo links
+The package ships a `inth-react-native` agent skill. Since SDK 58, Expo links
 agent skills that installed packages ship: run `npx @expo/agent-cli
 skills:sync` to link it for your coding agent.
 
 ## Configure the plugin
 
-Add `@c15t/react-native` to the `plugins` list in your existing
+Add `@inth/react-native` to the `plugins` list in your existing
 `app.config.ts`. Merge the plugin entry into your current configuration so you
 retain your app's bundle identifier, package name and other plugins:
 
 <include src="../../shared/examples/expo-dev/expo-config.mdx" />
 
-Import the plugin's types from `@c15t/react-native/expo-plugin`, as the example
+Import the plugin's types from `@inth/react-native/expo-plugin`, as the example
 does. That subpath also works as the plugin name, so an existing
-`'@c15t/react-native/expo-plugin'` entry needs no change. Both names give the
+`'@inth/react-native/expo-plugin'` entry needs no change. Both names give the
 same native configuration.
 
 The plugin runs on your app's own copy of Expo's config plugin library, the one
 `expo/config-plugins` provides, so it follows the Expo SDK you installed.
-`@c15t/react-native` declares `expo` 55 through 58 as an optional peer
+`@inth/react-native` declares `expo` 55 through 58 as an optional peer
 dependency; a bare React Native app does not need it.
 
 Replace these values before building:
@@ -64,12 +64,12 @@ reference values, not your app's configuration. The Inth project URL is public
 and goes into the binary. Repository credentials are build-time inputs.
 
 If you keep `policyResource`, follow [offline policies](/docs/guides/mobile-offline)
-to export `c15t-policy.json` beside `app.config.ts` before prebuild. This allows
+to export `inth-policy.json` beside `app.config.ts` before prebuild. This allows
 a fresh installation to resolve a conservative policy without a network
 connection. You can add it after the online path works.
 
 For development and CI, add `dryRun: true`. Consent works on the device and
-the app sends no consent records. A release build refuses to start c15t with
+the app sends no consent records. A release build refuses to start Inth with
 it, so keep it out of release configuration. See
 [Use dryRun in development and CI](/docs/frameworks/react-native/configuration#use-dryrun-in-development-and-ci).
 
@@ -78,7 +78,7 @@ permission, SDK floors and iOS privacy declarations. It also sets Google
 Analytics for Firebase's four
 [Consent Mode defaults](/docs/integrations/firebase-analytics#deny-consent-mode-signals-by-default)
 to denied in `Info.plist` and `AndroidManifest.xml`, so Firebase grants nothing
-before c15t's consent is read. These keys are harmless in an app without
+before Inth's consent is read. These keys are harmless in an app without
 Firebase. The native engine owns
 policy resolution and storage. You do not pass a backend URL to
 `ConsentProvider` in JavaScript.
@@ -157,7 +157,7 @@ For an app whose entry point is `App.tsx`, use the quickstart's `App.tsx`
 example directly.
 
 For Expo Router, change your existing root layout instead. Import
-`ConsentProvider` from `@c15t/react-native` in `app/_layout.tsx` or
+`ConsentProvider` from `@inth/react-native` in `app/_layout.tsx` or
 `src/app/_layout.tsx`. Wrap the existing `Stack` or `Slot` in that layout,
 keeping your other providers and navigation configuration. For example, this
 fragment wraps an existing `Stack`:
@@ -180,7 +180,7 @@ Privacy settings action reachable after the first prompt closes.
 ## Run the same app on web
 
 A universal app can also run on web with `npx expo start --web`. The same
-import then uses the c15t browser engine instead of the native core and reads
+import then uses the Inth browser engine instead of the native core and reads
 this plugin's configuration. Install `@c15t/core` for web and mount
 `ConsentBanner` there, since web has no native screens. See
 [Expo web](/docs/frameworks/react-native/web) for the setup and for which
@@ -248,7 +248,7 @@ For a feature that needs Apple's tracking authorization, set
 
 Once ATT is enabled, `<ConsentProvider>` asks for it after the consent prompt
 closes, and only if the person granted marketing. Set `trackingRequest` to
-`beforeConsent` or `manual` to change that. A c15t consent grant does not
+`beforeConsent` or `manual` to change that. An Inth consent grant does not
 replace Apple's answer. Read
 [ask for ATT after the consent prompt](/docs/frameworks/react-native/iab#ask-for-att-after-the-consent-prompt)
 for the order and the App Store reasoning, and

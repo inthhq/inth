@@ -20,7 +20,7 @@ const read = (path: string): string =>
 /** Kotlin's save refuses through one helper, `refusedCommit(code, message)`. */
 const kotlinRefusals = function kotlinRefusals(): string[] {
 	const source = read(
-		'packages/android/c15t-core/src/main/kotlin/com/c15t/core/ConsentCore.kt'
+		'packages/android/inth-core/src/main/kotlin/com/inth/core/ConsentCore.kt'
 	);
 	return [...source.matchAll(/refusedCommit\(\s*"(?<code>[a-z-]+)"/gu)].map(
 		(match) => match.groups?.code ?? ''
@@ -29,7 +29,7 @@ const kotlinRefusals = function kotlinRefusals(): string[] {
 
 /** Swift's save refuses with `.failure(CoreErrorInfo(code: ...))` in its body. */
 const swiftRefusals = function swiftRefusals(): string[] {
-	const source = read('packages/swift/Sources/C15tCore/ConsentCore.swift');
+	const source = read('packages/swift/Sources/InthCore/ConsentCore.swift');
 	const start = source.indexOf('public func save(_ intent: CommitIntent');
 	const end = source.indexOf('\n    public func ', start + 1);
 	const body = source.slice(start, end === -1 ? undefined : end);

@@ -3,8 +3,8 @@
  * function, not a second one. `packages/native-protocol/iab/purpose-categories.json`
  * holds the shared cases, custom (non-IAB) vendors included; this runs them
  * against `iabPurposesToC15tConsents`. `IABPurposeCategoriesTests` in
- * `packages/swift/Tests/C15tCoreTests` and `IabPurposeCategoriesTest` in
- * `packages/android/c15t-core` run the same cases against Swift and Kotlin.
+ * `packages/swift/Tests/InthCoreTests` and `IabPurposeCategoriesTest` in
+ * `packages/android/inth-core` run the same cases against Swift and Kotlin.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';

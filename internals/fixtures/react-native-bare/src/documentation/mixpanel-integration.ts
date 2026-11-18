@@ -1,9 +1,9 @@
 // #region docs:rn-mixpanel-integration title="mixpanel-consent.ts"
-import { connectMixpanel } from '@c15t/react-native/integrations';
+import { connectMixpanel } from '@inth/react-native/integrations';
 import type {
 	ConsentIntegration,
 	MixpanelClient,
-} from '@c15t/react-native/integrations';
+} from '@inth/react-native/integrations';
 
 export const connectAppMixpanel = (
 	mixpanel: MixpanelClient,

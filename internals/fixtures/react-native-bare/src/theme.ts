@@ -8,11 +8,11 @@
  * surfaces it hosts teaches the wrong lesson about the default theme.
  */
 
-import type { ConsentColorScheme, ConsentTheme } from '@c15t/react-native';
+import type { ConsentColorScheme, ConsentTheme } from '@inth/react-native';
 import {
 	defaultConsentTheme,
 	resolveConsentColorScheme,
-} from '@c15t/react-native';
+} from '@inth/react-native';
 import { useColorScheme } from 'react-native';
 
 /** What the reviewer picked in the header control. */

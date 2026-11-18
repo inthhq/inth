@@ -13,8 +13,8 @@ withdrawal. It sets
 from marketing, and Singular passes that to Google as the DMA consent
 signals. The category defaults to `marketing`.
 
-The helper ships in `C15tApple`, `c15t-android` and
-`@c15t/react-native/integrations`. c15t adds no Singular dependency. The web
+The helper ships in `InthApple`, `inth-android` and
+`@inth/react-native/integrations`. c15t adds no Singular dependency. The web
 has no Singular helper.
 
 ## What the helper changes
@@ -73,8 +73,8 @@ consent, for example to resolve Singular Links, this helper does not fit.
 ## Connect a Swift app
 
 ```swift title="SingularConsentOwner.swift"
-import C15tApple
-import C15tCore
+import InthApple
+import InthCore
 import Singular
 
 final class SingularConsentOwner {
@@ -103,13 +103,13 @@ final class SingularConsentOwner {
 
 ```kotlin title="SingularConsent.kt"
 import android.content.Context
-import com.c15t.android.integrations.SingularIntegration
-import com.c15t.core.C15t
+import com.inth.android.integrations.SingularIntegration
+import com.inth.core.Inth
 import com.singular.sdk.Singular
 import com.singular.sdk.SingularConfig
 
 fun connectSingularConsent(context: Context, onError: (Exception) -> Unit): SingularIntegration {
-	val core = checkNotNull(C15t.current) { "Install c15t before connecting Singular" }
+	val core = checkNotNull(Inth.current) { "Install Inth before connecting Singular" }
 	return SingularIntegration(
 		core = core,
 		start = { limit ->

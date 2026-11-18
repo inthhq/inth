@@ -2,167 +2,167 @@
 	"$comment": "Stable selectors on the stock native consent screens: SwiftUI accessibilityIdentifier on iOS, Compose testTag exposed as resource-id on Android. scripts/native-consent-selectors.test.ts fails when one disappears from either platform, from docs/frameworks/react-native/e2e-testing.mdx, or when a flow here uses an id not listed. <name> segments are filled at runtime.",
 	"selectors": [
 		{
-			"id": "c15t.first-layer",
+			"id": "inth.first-layer",
 			"screen": "first-layer",
 			"description": "The first-layer page"
 		},
 		{
-			"id": "c15t.first-layer.title",
+			"id": "inth.first-layer.title",
 			"screen": "first-layer",
 			"description": "Headline"
 		},
 		{
-			"id": "c15t.first-layer.accept-all",
+			"id": "inth.first-layer.accept-all",
 			"screen": "first-layer",
 			"description": "Accept all"
 		},
 		{
-			"id": "c15t.first-layer.reject-all",
+			"id": "inth.first-layer.reject-all",
 			"screen": "first-layer",
 			"description": "Reject all. While policy is pending it is the only decision"
 		},
 		{
-			"id": "c15t.first-layer.customize",
+			"id": "inth.first-layer.customize",
 			"screen": "first-layer",
 			"description": "Opens preferences inside the same page"
 		},
 		{
-			"id": "c15t.first-layer.description",
+			"id": "inth.first-layer.description",
 			"screen": "first-layer",
 			"description": "IAB only: the disclosure sentence with the partner count"
 		},
 		{
-			"id": "c15t.first-layer.summary.item.<index>",
+			"id": "inth.first-layer.summary.item.<index>",
 			"screen": "first-layer",
 			"description": "IAB only: one purpose in the summary card, from 0"
 		},
 		{
-			"id": "c15t.first-layer.partner-count",
+			"id": "inth.first-layer.partner-count",
 			"screen": "first-layer",
 			"description": "IAB only: opens the partner list"
 		},
 		{
-			"id": "c15t.notice",
+			"id": "inth.notice",
 			"screen": "notice",
 			"description": "The notice card over the app"
 		},
 		{
-			"id": "c15t.notice.acknowledge",
+			"id": "inth.notice.acknowledge",
 			"screen": "notice",
 			"description": "Got it. Records an acknowledgement, grants nothing"
 		},
 		{
-			"id": "c15t.notice.settings",
+			"id": "inth.notice.settings",
 			"screen": "notice",
 			"description": "Opens preferences"
 		},
 		{
-			"id": "c15t.prefs",
+			"id": "inth.prefs",
 			"screen": "preferences",
 			"description": "Category preferences list"
 		},
 		{
-			"id": "c15t.prefs.category.<category>.switch",
+			"id": "inth.prefs.category.<category>.switch",
 			"screen": "preferences",
 			"description": "Switch for an optional category, such as measurement or marketing"
 		},
 		{
-			"id": "c15t.prefs.category.<category>.locked",
+			"id": "inth.prefs.category.<category>.locked",
 			"screen": "preferences",
 			"description": "Status of the necessary category, which cannot be changed. Only necessary carries it on both platforms"
 		},
 		{
-			"id": "c15t.prefs.category.<category>.restricted",
+			"id": "inth.prefs.category.<category>.restricted",
 			"screen": "preferences",
 			"description": "An optional category the policy or a privacy signal keeps off: the row on iOS, its note on Android"
 		},
 		{
-			"id": "c15t.prefs.accept-all",
+			"id": "inth.prefs.accept-all",
 			"screen": "preferences",
 			"description": "Accept all"
 		},
 		{
-			"id": "c15t.prefs.reject-all",
+			"id": "inth.prefs.reject-all",
 			"screen": "preferences",
 			"description": "Reject all"
 		},
 		{
-			"id": "c15t.prefs.save",
+			"id": "inth.prefs.save",
 			"screen": "preferences",
 			"description": "Save choices"
 		},
 		{
-			"id": "c15t.prefs.cancel",
+			"id": "inth.prefs.cancel",
 			"screen": "preferences",
 			"description": "Back to the first layer, or Cancel or Close for preferences opened from the app. Also used in IAB mode"
 		},
 		{
-			"id": "c15t.prefs.discard.confirm",
+			"id": "inth.prefs.discard.confirm",
 			"screen": "preferences",
 			"description": "Discard unsaved changes"
 		},
 		{
-			"id": "c15t.prefs.discard.keep",
+			"id": "inth.prefs.discard.keep",
 			"screen": "preferences",
 			"description": "Keep editing"
 		},
 		{
-			"id": "c15t.iab",
+			"id": "inth.iab",
 			"screen": "iab-preferences",
 			"description": "IAB preferences list"
 		},
 		{
-			"id": "c15t.iab.accept-all",
+			"id": "inth.iab.accept-all",
 			"screen": "iab-preferences",
 			"description": "Accept all"
 		},
 		{
-			"id": "c15t.iab.reject-all",
+			"id": "inth.iab.reject-all",
 			"screen": "iab-preferences",
 			"description": "Reject all"
 		},
 		{
-			"id": "c15t.iab.save",
+			"id": "inth.iab.save",
 			"screen": "iab-preferences",
 			"description": "Save choices"
 		},
 		{
-			"id": "c15t.iab.purpose.<purpose>.consent",
+			"id": "inth.iab.purpose.<purpose>.consent",
 			"screen": "iab-preferences",
 			"description": "Consent switch for an IAB purpose, by purpose ID"
 		},
 		{
-			"id": "c15t.iab.special-feature.<feature>.switch",
+			"id": "inth.iab.special-feature.<feature>.switch",
 			"screen": "iab-preferences",
 			"description": "Opt-in switch for a special feature"
 		},
 		{
-			"id": "c15t.iab.partners",
+			"id": "inth.iab.partners",
 			"screen": "iab-preferences",
 			"description": "Opens the IAB partner list"
 		},
 		{
-			"id": "c15t.iab.vendors",
+			"id": "inth.iab.vendors",
 			"screen": "iab-partners",
 			"description": "The IAB partner list"
 		},
 		{
-			"id": "c15t.iab.vendors.search",
+			"id": "inth.iab.vendors.search",
 			"screen": "iab-partners",
 			"description": "Partner search field"
 		},
 		{
-			"id": "c15t.iab.vendors.vendor.<vendor>",
+			"id": "inth.iab.vendors.vendor.<vendor>",
 			"screen": "iab-partners",
 			"description": "One partner row, by GVL vendor ID"
 		},
 		{
-			"id": "c15t.iab.vendors.back",
+			"id": "inth.iab.vendors.back",
 			"screen": "iab-partners",
 			"description": "Back to IAB preferences"
 		},
 		{
-			"id": "c15t.privacy-policy",
+			"id": "inth.privacy-policy",
 			"screen": "any",
 			"description": "The app's privacy policy link"
 		}

@@ -1,5 +1,5 @@
 // #region docs:native-root title="setup.tsx"
-import { presentPreferences } from '@c15t/react-native';
+import { presentPreferences } from '@inth/react-native';
 import { Button } from 'react-native';
 
 export const PrivacySettingsButton = () => (

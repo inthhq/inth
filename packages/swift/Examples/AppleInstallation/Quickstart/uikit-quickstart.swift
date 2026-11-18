@@ -1,6 +1,6 @@
 // #region docs:swift-uikit-app title="AppDelegate.swift"
-import C15tApple
-import C15tConsentUI
+import InthApple
+import InthConsentUI
 import SwiftUI
 import UIKit
 
@@ -30,7 +30,7 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         let window = UIWindow(windowScene: scene)
         window.rootViewController = ConsentRootViewController(
             root: UIHostingController(rootView: ContentView()),
-            configuration: C15tAppleConfiguration(
+            configuration: InthAppleConfiguration(
                 backendURL: "https://your-project.inth.app",
                 consentCategories: [.necessary, .measurement, .marketing]
             ),

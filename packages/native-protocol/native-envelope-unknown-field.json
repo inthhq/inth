@@ -1,5 +1,5 @@
 {
-	"description": "A valid envelope with one field this build does not recognise: `com.c15t.experiment`. Reading it partly would restore the grant inside it, so the whole envelope is dropped, nothing is applied, and the answer is identical to a fresh install.",
+	"description": "A valid envelope with one field this build does not recognise: `com.inth.experiment`. Reading it partly would restore the grant inside it, so the whole envelope is dropped, nothing is applied, and the answer is identical to a fresh install.",
 	"expected": {
 		"read": {
 			"decoded": false,
@@ -179,7 +179,7 @@
 			"action": "all"
 		},
 		"defect": {
-			"addField": "com.c15t.experiment",
+			"addField": "com.inth.experiment",
 			"kind": "unknown-field",
 			"value": true
 		}

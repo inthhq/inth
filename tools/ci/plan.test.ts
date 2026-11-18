@@ -56,7 +56,7 @@ describe("routing", () => {
     expect(plan.sdkPackageTests).toContain("packages/sdk/react");
     expect(plan.sdkPackageTests).toContain("packages/sdk/nextjs");
     expect(plan.sdkTypes).toContain("examples/nextjs");
-    expect(plan.mobileReached).toContain("@c15t/react-native");
+    expect(plan.mobileReached).toContain("@inth/react-native");
   });
 
   test("a leaf SDK change does not select unrelated packages", () => {
@@ -78,7 +78,7 @@ describe("routing", () => {
   });
 
   test("native sources run the toolchain they need", () => {
-    expect(selected(["packages/swift/Sources/C15tCore/Kernel.swift"])).toEqual({
+    expect(selected(["packages/swift/Sources/InthCore/Kernel.swift"])).toEqual({
       ...none,
       sdk: true,
       swift: true,
@@ -89,7 +89,7 @@ describe("routing", () => {
       swift: true,
     });
     expect(
-      selected(["packages/android/c15t-core/src/main/kotlin/Kernel.kt"])
+      selected(["packages/android/inth-core/src/main/kotlin/Kernel.kt"])
     ).toEqual({ ...none, android: true, sdk: true });
   });
 
@@ -100,15 +100,15 @@ describe("routing", () => {
       sdk: true,
     });
     expect(
-      selected(["packages/react-native/ios/C15tReactNative/Bridge/Pump.swift"])
+      selected(["packages/react-native/ios/InthReactNative/Bridge/Pump.swift"])
     ).toEqual({ ...none, reactNative: true, sdk: true, swift: true });
     expect(
-      selected(["packages/react-native/android/c15t-react-native/build.gradle"])
+      selected(["packages/react-native/android/inth-react-native/build.gradle"])
     ).toEqual({ ...none, android: true, reactNative: true, sdk: true });
   });
 
   test("React Native Codegen specs run both native builds", () => {
-    expect(selected(["packages/react-native/src/specs/NativeC15t.ts"])).toEqual(
+    expect(selected(["packages/react-native/src/specs/NativeInth.ts"])).toEqual(
       { ...none, android: true, reactNative: true, sdk: true, swift: true }
     );
   });

@@ -1,5 +1,5 @@
-import C15tApple
-import C15tCore
+import InthApple
+import InthCore
 import SwiftUI
 import UIKit
 
@@ -15,7 +15,7 @@ struct ConsentExampleApp: App {
             _installationError = State(initialValue: error)
         }
         // Optional SDK startup belongs after this synchronous native gate.
-        // A failed install leaves C15t.isAllowed(.measurement) false.
+        // A failed install leaves Inth.isAllowed(.measurement) false.
     }
 
     var body: some Scene {
@@ -31,7 +31,7 @@ struct ConsentExampleApp: App {
     }
 
     private func retryInstallation() {
-        guard installationError as? C15tAppleInstallationError == .protectedStorageUnavailable else { return }
+        guard installationError as? InthAppleInstallationError == .protectedStorageUnavailable else { return }
         do {
             try InstallConsent.install()
             installationError = nil

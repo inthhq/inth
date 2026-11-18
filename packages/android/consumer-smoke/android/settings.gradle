@@ -14,7 +14,7 @@ dependencyResolutionManagement {
         exclusiveContent {
             forRepository {
                 maven {
-                    url = uri(providers.gradleProperty('c15t.repository').get())
+                    url = uri(providers.gradleProperty('inth.repository').get())
                     if (url.scheme == 'https') {
                         credentials {
                             username = System.getenv('C15T_MAVEN_USERNAME')
@@ -23,13 +23,13 @@ dependencyResolutionManagement {
                     }
                 }
             }
-            filter { includeGroup('com.c15t') }
+            filter { includeGroup('com.inth') }
         }
     }
 }
-rootProject.name = 'c15t-artifact-consumer'
+rootProject.name = 'inth-artifact-consumer'
 include ':headless', ':app'
-if (file('../node_modules/@c15t/react-native').isDirectory()) {
-    include ':c15t-react-native'
-    project(':c15t-react-native').projectDir = file('../node_modules/@c15t/react-native/android/c15t-react-native')
+if (file('../node_modules/@inth/react-native').isDirectory()) {
+    include ':inth-react-native'
+    project(':inth-react-native').projectDir = file('../node_modules/@inth/react-native/android/inth-react-native')
 }

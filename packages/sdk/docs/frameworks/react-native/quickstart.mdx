@@ -4,7 +4,7 @@ description: Add native consent screens and a privacy-settings entry to React Na
 group: frameworks
 ---
 
-c15t gives your app a native consent prompt, saved preferences and hooks for
+Inth gives your app a native consent prompt, saved preferences and hooks for
 reading permissions in React. SwiftUI renders the iOS screens and Compose
 renders the Android screens. Choices live in the native engine, so an optional
 SDK can check them before JavaScript starts.
@@ -21,7 +21,7 @@ upgrading an existing app.
 
 For a new app, target RN 0.88 with React 19.3, or Expo 58, and verify the native
 build and consent journeys before shipping. Older pairings remain available
-for existing apps; c15t compatibility does not extend upstream maintenance.
+for existing apps; Inth compatibility does not extend upstream maintenance.
 
 The mobile SDK is currently a private prerelease. Obtain the package tarball
 and access to its matching Android Maven artifacts from your maintainer.
@@ -48,10 +48,10 @@ Run this in your app directory, replacing the path with the tarball you
 received:
 
 ```sh
-npm install /absolute/path/to/c15t-react-native.tgz
+npm install /absolute/path/to/inth-react-native.tgz
 ```
 
-React Native uses `@c15t/react-native` as a separate package. The web `c15t`
+React Native uses `@inth/react-native` as a separate package. The web `c15t`
 package does not include it.
 
 ## Configure the native app

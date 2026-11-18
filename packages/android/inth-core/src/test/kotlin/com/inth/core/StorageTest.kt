@@ -1,0 +1,167 @@
+package com.inth.core
+
+import com.inth.core.crypto.AesGcmCodec
+import com.inth.core.model.ConsentSnapshot
+import com.inth.core.model.ConsentCategory
+import com.inth.core.model.ConsentSubject
+import com.inth.core.model.ConsentModel
+import com.inth.core.policy.EvaluationPolicy
+import com.inth.core.policy.NoticeDismissal
+import com.inth.core.policy.PolicyPrompt
+import com.inth.core.policy.ScopeMode
+import com.inth.core.store.InthJson
+import com.inth.core.store.InthStore
+import com.inth.core.store.InthStoreKeys
+import com.inth.core.store.SnapshotEnvelope
+import javax.crypto.KeyGenerator
+import javax.crypto.SecretKey
+import javax.crypto.spec.SecretKeySpec
+import kotlin.test.Test
+import kotlin.test.assertContentEquals
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+
+/** Storage round trips and the AES/GCM framing the Android module builds on. */
+class StorageTest {
+	@Test
+	fun `the envelope round trips and keeps the reserved iab key`() {
+		val backend = InMemoryKeyValueStore()
+		val store = InthStore(backend)
+		val envelope = SnapshotEnvelope(
+			snapshot = ConsentSnapshot(
+				revision = 12,
+				policyPending = false,
+				ready = true,
+				subject = ConsentSubject(id = "subject-1", externalId = "user-42"),
+				explicitChoice = com.inth.core.model.ExplicitChoice(
+					consents = mapOf("measurement" to true),
+					action = com.inth.core.model.ConsentAction.CUSTOM,
+					actionAt = 1_700_000_000_000L,
+					fingerprint = "choice-fp-1",
+				),
+				restrictions = mapOf("marketing" to listOf("gpc")),
+				policySnapshotToken = "snap-1",
+				evaluatedAt = 1_700_000_000_000L,
+			),
+			evaluationPolicy = null,
+			noticeDismissal = NoticeDismissal(dismissedAt = 1_700_000_000_000L, fingerprint = "choice-fp-1"),
+		)
+
+		store.writeEnvelope(envelope)
+		val raw = assertNotNull(backend.read(InthStoreKeys.SNAPSHOT), "the envelope must be stored under the contract key")
+
+		val decoded = InthJson.storage.decodeFromString(SnapshotEnvelope.serializer(), raw)
+		assertEquals(envelope.snapshot, decoded.snapshot)
+		assertEquals(12L, decoded.snapshot.revision)
+		assertEquals("user-42", decoded.snapshot.subject?.externalId)
+		assertEquals(listOf("gpc"), decoded.snapshot.restrictions["marketing"])
+		assertTrue("\"iab\":null" in raw, "the reserved IAB slot must serialize as null, got: $raw")
+		assertNull(decoded.evaluationPolicy)
+		assertNotNull(decoded.noticeDismissal)
+	}
+
+	/**
+	 * `EvaluationPolicy` grew a `noticeFingerprint`, and the envelope carries no format
+	 * version to record that in -- `AesGcmCodec`'s version byte gates the framing, not
+	 * the fields. So the old shape has to keep decoding: an unreadable envelope is
+	 * indistinguishable from a fresh install, and the subject would lose every grant
+	 * they ever gave because this build added a key.
+	 */
+	@Test
+	fun `an envelope written before the notice fingerprint existed still decodes`() {
+		val policy = EvaluationPolicy(
+			id = "pol_1",
+			model = ConsentModel.OPT_IN,
+			prompt = PolicyPrompt.NOTICE,
+			scope = listOf(ConsentCategory.MEASUREMENT),
+			scopeMode = ScopeMode.STRICT,
+			choiceMs = 1_000L,
+			noticeMs = 1_000L,
+			choiceFingerprint = "choice-fp-1",
+			policyFingerprint = "policy-fp-1",
+			noticeFingerprint = "notice-fp-1",
+		)
+		val envelope = SnapshotEnvelope(
+			snapshot = ConsentSnapshot(revision = 3, policyPending = false, ready = true),
+			evaluationPolicy = policy,
+		)
+		val raw = InthJson.storage.encodeToString(SnapshotEnvelope.serializer(), envelope)
+		val retired = ""","noticeFingerprint":"notice-fp-1""""
+		assertTrue(retired in raw, "the current build is expected to write the key: $raw")
+
+		val decoded = InthJson.storage.decodeFromString(SnapshotEnvelope.serializer(), raw.replace(retired, ""))
+		assertEquals(
+			"choice-fp-1",
+			assertNotNull(decoded.evaluationPolicy).noticeFingerprint,
+			"a missing key falls back to the answer this build used to give, not to a refused envelope",
+		)
+	}
+
+	@Test
+	fun `a subject survives its own storage key`() {
+		val backend = InMemoryKeyValueStore()
+		val store = InthStore(backend)
+
+		store.writeSubject(ConsentSubject(id = "sub_4ZrjtiRsJnoW34Px8dAvhPTKJiWc"))
+
+		assertEquals(
+			"sub_4ZrjtiRsJnoW34Px8dAvhPTKJiWc",
+			assertNotNull(store.readSubject()).id,
+			"an id the producer accepts is the one that reads back",
+		)
+		assertEquals(setOf(InthStoreKeys.SUBJECT), backend.keys, "identity lives in its own slot")
+	}
+
+	@Test
+	fun `aes-gcm round trips and rejects a tampered blob`() {
+		val codec = AesGcmCodec(keyProviderOf(generateKey()))
+		val plaintext = """{"revision":3,"ready":true}""".toByteArray()
+
+		val blob = codec.encrypt(plaintext)
+		assertContentEquals(plaintext, codec.decrypt(blob))
+
+		// Flipping any byte must break the GCM tag rather than change the read.
+		for (index in blob.indices step maxOf(1, blob.size / 7)) {
+			val tampered = blob.copyOf().also { it[index] = (it[index].toInt() xor 0x40).toByte() }
+			assertNull(codec.decrypt(tampered), "byte $index is not covered by the tag")
+		}
+	}
+
+	@Test
+	fun `aes-gcm rejects a blob from another key and a foreign payload`() {
+		val codec = AesGcmCodec(keyProviderOf(generateKey()))
+		val blob = codec.encrypt("secret".toByteArray())
+
+		val other = AesGcmCodec(keyProviderOf(generateKey()))
+		assertNull(other.decrypt(blob), "a different key must not read the blob")
+		assertNull(codec.decrypt("plaintext, not an Inth blob".toByteArray()))
+		assertNull(codec.decrypt(ByteArray(0)))
+	}
+
+	@Test
+	fun `a revoked key is reported as key loss, not as a verdict on the blob`() {
+		var key: SecretKey? = generateKey()
+		val codec = AesGcmCodec(
+			object : com.inth.core.spi.SymmetricKeyProvider {
+				override fun key(): SecretKey = key ?: throw java.security.KeyStoreException("key revoked")
+			},
+		)
+		val blob = codec.encrypt("state".toByteArray())
+		key = null
+
+		// Returning null here would read as "nothing was ever stored", which hides an
+		// infrastructure failure behind a policy answer. The storage layer needs the
+		// difference so it can step down to an unprotected store instead.
+		assertFailsWith<java.security.KeyStoreException> { codec.decrypt(blob) }
+	}
+
+	private fun keyProviderOf(secret: SecretKey) = object : com.inth.core.spi.SymmetricKeyProvider {
+		override fun key(): SecretKey = secret
+	}
+
+	private fun generateKey(): SecretKey = KeyGenerator.getInstance("AES").apply { init(256) }.generateKey()
+		.let { SecretKeySpec(it.encoded, "AES") }
+}

@@ -23,7 +23,7 @@ bunx tsx scripts/export-mobile-policy.ts \
   --endpoint https://your-project.inth.app \
   --expires-at 2026-11-05T00:00:00Z \
   --languages en,fr \
-  --out c15t-policy.json
+  --out inth-policy.json
 ```
 
 The exporter fetches `/manifest` over TLS and validates it with
@@ -50,11 +50,11 @@ subject, receipt, effective permissions, TC string, delivery queue or
 
 | Host | Configuration |
 | --- | --- |
-| Bare iOS | Add the JSON to Copy Bundle Resources. Set `com.c15t.policy.resource` to its filename in Info.plist. Keep `com.c15t.backend.url` set to your Inth project URL. |
-| Bare Android | Put the JSON in `app/src/main/assets`. Set `com.c15t.POLICY_RESOURCE` to its asset path in application metadata. Keep `com.c15t.BACKEND_URL` configured. |
+| Bare iOS | Add the JSON to Copy Bundle Resources. Set `com.inth.policy.resource` to its filename in Info.plist. Keep `com.inth.backend.url` set to your Inth project URL. |
+| Bare Android | Put the JSON in `app/src/main/assets`. Set `com.inth.POLICY_RESOURCE` to its asset path in application metadata. Keep `com.inth.BACKEND_URL` configured. |
 | Expo development or release build | Set the config plugin's `policyResource` to the JSON path relative to the Expo project, alongside `backendURL`. Prebuild copies the exact bytes into both native projects and registers the iOS resource. Rebuild the binary after changing it. |
-| Swift host | Load `BundledPolicyResource` from resource URL or Data with the configured endpoint, then pass it as `C15tAppleConfiguration.bundledPolicy` to `C15tApple.install`. |
-| Kotlin host | Read the resource into `NativeConfig.bundledPolicy` and pass it to `C15tAndroid.install`. `C15tAndroid.configFrom` can load the declared asset for you. |
+| Swift host | Load `BundledPolicyResource` from resource URL or Data with the configured endpoint, then pass it as `InthAppleConfiguration.bundledPolicy` to `InthApple.install`. |
+| Kotlin host | Read the resource into `NativeConfig.bundledPolicy` and pass it to `InthAndroid.install`. `InthAndroid.configFrom` can load the declared asset for you. |
 
 Precedence is the live `/init` response, then the last good cached response,
 then the bundled manifest. A cached live response always wins over the bundle.

@@ -2,17 +2,17 @@
 
 Generated. Do not edit anything in this directory.
 
-`C15tCore/` is a byte-for-byte copy of `../../swift/Sources/C15tCore`, written
+`InthCore/` is a byte-for-byte copy of `../../swift/Sources/InthCore`, written
 by `bun scripts/sync-vendored-core.ts`. The binding's pod compiles that copy into its own
 module, which is what lets an app installed from npm resolve a consent kernel: CocoaPods cannot
-point `s.dependency` at a path, so a `C15tCore` dependency is a pod the consumer does not have.
+point `s.dependency` at a path, so a `InthCore` dependency is a pod the consumer does not have.
 
 `packages/swift` stays the source of truth. `packages/react-native/Package.swift` stays
 two-module and keeps the core as its own SwiftPM target, so a later Swift Package Manager
-release of the core is unaffected by this directory. The bridge's `import C15tCore` sites are
-wrapped in `#if canImport(C15tCore)`, so one set of core sources serves both build paths.
+release of the core is unaffected by this directory. The bridge's `import InthCore` sites are
+wrapped in `#if canImport(InthCore)`, so one set of core sources serves both build paths.
 
-After changing anything under `packages/swift/Sources/C15tCore`, run:
+After changing anything under `packages/swift/Sources/InthCore`, run:
 
 ```sh
 bun scripts/sync-vendored-core.ts

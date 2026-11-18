@@ -18,7 +18,7 @@ import type {
 	SaveConsentsInput,
 	ConsentIabTab,
 	TrackingRequestPayload,
-} from '@c15t/react-native';
+} from '@inth/react-native';
 
 import type { Appearance } from '../theme';
 import { APPEARANCE_HINT, isAppearance } from '../theme';

@@ -10,7 +10,7 @@ it.each([
 	['FAILURES!!!\nTests run: 1, Failures: 1\nINSTRUMENTATION_CODE: -1', 1],
 	['INSTRUMENTATION_FAILED: Process crashed.\nINSTRUMENTATION_CODE: 0', 1],
 ])('preserves the actual Android runner result for %s', async (log, exit) => {
-	const out = await mkdtemp(join(tmpdir(), 'c15t-android-result-'));
+	const out = await mkdtemp(join(tmpdir(), 'inth-android-result-'));
 	try {
 		const input = join(out, 'test.log');
 		const report = join(out, 'result.xml');

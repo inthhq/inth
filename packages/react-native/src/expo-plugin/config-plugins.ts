@@ -2,7 +2,7 @@ import { createRequire } from 'node:module';
 
 import type * as ConfigPluginsModule from 'expo/config-plugins';
 
-import { C15tPluginError } from './errors';
+import { InthPluginError } from './errors';
 
 type ConfigPlugins = typeof ConfigPluginsModule;
 
@@ -43,8 +43,8 @@ const loadConfigPlugins = function loadConfigPlugins(): ConfigPlugins {
 			'code' in error &&
 			error.code === 'MODULE_NOT_FOUND'
 		) {
-			throw new C15tPluginError(
-				'cannot find expo/config-plugins from where @c15t/react-native is installed. expo is a peer dependency: install @c15t/react-native and expo so that the package can resolve expo, for example both in the app package.',
+			throw new InthPluginError(
+				'cannot find expo/config-plugins from where @inth/react-native is installed. expo is a peer dependency: install @inth/react-native and expo so that the package can resolve expo, for example both in the app package.',
 				undefined,
 				{ cause: error }
 			);

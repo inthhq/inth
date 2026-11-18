@@ -49,7 +49,7 @@ Mobile SDKs:
 ```sh
 pnpm turbo run test --filter=./packages/react-native
 swift test --package-path .
-(cd packages/android && ./gradlew :c15t-core:test :c15t-android:testDebugUnitTest)
+(cd packages/android && ./gradlew :inth-core:test :inth-android:testDebugUnitTest)
 ```
 
 CI builds Swift with Xcode 26. Android needs JDK 17 and the Android SDK.

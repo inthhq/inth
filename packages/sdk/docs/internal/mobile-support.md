@@ -1,6 +1,6 @@
 ---
 title: Mobile support contract
-description: Module ownership, candidate versions, transport modes and OTA compatibility for the private c15t mobile SDK.
+description: Module ownership, candidate versions, transport modes and OTA compatibility for the private Inth mobile SDK.
 ---
 
 The mobile SDK is a private prerelease. No mobile version is supported for
@@ -11,7 +11,7 @@ A successful unit test or native build does not establish those gates.
 
 | Module | Owns | May depend on |
 | --- | --- | --- |
-| Swift `C15tCore` and Kotlin `c15t-core` | Consent and IAB authority, durable records, hydration, immutable save queue and cached gates before JavaScript | OS and native libraries, no RN, Expo, JavaScript runtime or stock UI |
+| Swift `InthCore` and Kotlin `inth-core` | Consent and IAB authority, durable records, hydration, immutable save queue and cached gates before JavaScript | OS and native libraries, no RN, Expo, JavaScript runtime or stock UI |
 | Apple and Android platform services | Protected storage selection, transport installation, foreground and reachability subscriptions, optional platform permission orchestration | Native core and OS APIs, no RN or stock UI |
 | Optional SwiftUI and Compose UI | Native drafts, search, navigation and commits | Platform services and core |
 | RN adapter | Typed commands, hooks, React wrappers and native host adapters | Native installation and React Native |
@@ -28,7 +28,7 @@ Synchronous gates read cached state and perform no storage or network work.
 Unknown or denied permission keeps optional SDKs off.
 
 The RN runtime, its declarations and its transitive runtime dependencies must
-install without another c15t JavaScript package, a backend runtime or a JS TCF
+install without another Inth JavaScript package, a backend runtime or a JS TCF
 codec. Keep `@c15t/core`, `@c15t/iab` and `@iabtechlabtcf/core` as development
 conformance oracles. Build, test, docs and Codegen dependencies are allowed.
 
@@ -83,9 +83,9 @@ when changing the matrix.
 
 Review the matrix with every stable RN and Expo release. Pin and exercise a
 new pairing before widening peers. Announce framework removals and OS minimum
-increases before making them, and ship them in a c15t major release. An upstream
+increases before making them, and ship them in an Inth major release. An upstream
 End of Cycle or unsupported label prompts a review; it does not silently remove
-c15t compatibility from an existing release. Retain New Architecture only.
+Inth compatibility from an existing release. Retain New Architecture only.
 
 ## Launch transport modes
 
@@ -100,7 +100,7 @@ recommended for production environments as the only launch transport.
 The legacy `none` transport and memory/file storage options are development
 facilities. Raw `CoreConfig()` is not a production installer.
 
-ATT authorization is separate from consent. An Apple grant cannot grant a c15t
+ATT authorization is separate from consent. An Apple grant cannot grant an Inth
 category. Asking for ATT is optional, explicit and subject to the app's usage
 strings and OS capabilities. A native SDK that requires both permissions must
 check both answers.

@@ -63,7 +63,7 @@ export const isPlatformTrackingSatisfied = function isPlatformTrackingSatisfied(
  * );
  * ```
  *
- * @param decision - The c15t answer for the category being gated.
+ * @param decision - The Inth answer for the category being gated.
  * @param authorization - What the platform reported about tracking.
  * @returns `true` only when consent is granted and the platform is satisfied.
  */

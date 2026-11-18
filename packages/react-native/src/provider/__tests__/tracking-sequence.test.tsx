@@ -555,7 +555,7 @@ describe('beforeConsent and screens the app opens', () => {
 	});
 });
 
-describe('never over a c15t screen', () => {
+describe('never over an Inth screen', () => {
 	test('waits for a prompt that opens as settings close', async () => {
 		const { fake, order } = boot(saved(false));
 		const tree = renderTree(<App />);

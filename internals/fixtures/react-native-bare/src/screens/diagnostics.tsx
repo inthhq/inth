@@ -8,10 +8,8 @@
  * app until someone asks what the kernel thinks.
  */
 
-import { useSnapshot, useC15tBootstrap } from '@c15t/react-native';
+import { useSnapshot, useInthBootstrap } from '@inth/react-native';
 
-import { config } from '../c15t/config';
-import { useConsentSource } from '../c15t/consent-source';
 import {
 	GatedVendor,
 	GatingHint,
@@ -21,6 +19,8 @@ import {
 import { ActionsCard, DeepLinkCard, FakeCoreCard } from '../components/harness';
 import { Badge, Card, Flag, Hint, Row, Screen, Text } from '../components/ui';
 import type { DemoLinks } from '../deep-links/use-deep-links';
+import { config } from '../inth/config';
+import { useConsentSource } from '../inth/consent-source';
 
 /** Clock time with milliseconds. */
 const time = (at: number): string =>
@@ -171,7 +171,7 @@ const SnapshotCard = () => {
 
 /** What the bridge reported when the app attached. */
 const HandshakeCard = () => {
-	const bootstrap = useC15tBootstrap();
+	const bootstrap = useInthBootstrap();
 
 	return (
 		<Card title="Handshake">

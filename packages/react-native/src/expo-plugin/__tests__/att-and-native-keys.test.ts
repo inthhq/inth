@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { AndroidConfig } from 'expo/config-plugins';
 import { describe, expect, it, vi } from 'vitest';
 
-import { applyParamsOnConfig } from '../with-c15t';
+import { applyParamsOnConfig } from '../with-inth';
 import {
 	FIXTURE_DIR,
 	PREBUILD_ARGV,
@@ -65,7 +65,7 @@ describe('App Tracking Transparency', () => {
 				{ SKAdNetworkIdentifier: 'cstr6suwn9.skadnetwork' },
 				{ SKAdNetworkIdentifier: '4f3dc5j5db.skadnetwork' },
 			],
-			'com.c15t.backend.url': BACKEND,
+			'com.inth.backend.url': BACKEND,
 		});
 	});
 
@@ -89,7 +89,7 @@ describe('App Tracking Transparency', () => {
 		expect(applied.ios?.infoPlist).toStrictEqual({
 			...GOOGLE_CONSENT_PLIST_DEFAULTS,
 			ITSAppUsesNonExemptEncryption: false,
-			'com.c15t.backend.url': BACKEND,
+			'com.inth.backend.url': BACKEND,
 		});
 	});
 
@@ -107,8 +107,8 @@ describe('App Tracking Transparency', () => {
 		expect(applied.ios?.infoPlist).toStrictEqual({
 			...GOOGLE_CONSENT_PLIST_DEFAULTS,
 			ITSAppUsesNonExemptEncryption: false,
-			'com.c15t.backend.url': BACKEND,
-			'com.c15t.forceGPC': true,
+			'com.inth.backend.url': BACKEND,
+			'com.inth.forceGPC': true,
 		});
 	});
 
@@ -217,16 +217,16 @@ describe('the native keys', () => {
 		expect(plist).toStrictEqual({
 			...GOOGLE_CONSENT_PLIST_DEFAULTS,
 			ITSAppUsesNonExemptEncryption: false,
-			'com.c15t.backend.url': BACKEND,
+			'com.inth.backend.url': BACKEND,
 		});
-		expect(config.extra?.c15t).toMatchObject({
+		expect(config.extra?.inth).toMatchObject({
 			backendURL: BACKEND,
 			dryRun: false,
 		});
-		expect(config.extra?.c15t).not.toHaveProperty('mode');
+		expect(config.extra?.inth).not.toHaveProperty('mode');
 		expect(metaNamesOf(manifest)).toStrictEqual([
 			'expo.modules.updates.ENABLED',
-			'com.c15t.BACKEND_URL',
+			'com.inth.BACKEND_URL',
 			...GOOGLE_CONSENT_META_DATA_NAMES,
 		]);
 		expect(providerOf(manifest)).toHaveLength(1);
@@ -242,13 +242,13 @@ describe('the native keys', () => {
 		expect(plist).toStrictEqual({
 			...GOOGLE_CONSENT_PLIST_DEFAULTS,
 			ITSAppUsesNonExemptEncryption: false,
-			'com.c15t.backend.url': BACKEND,
-			'com.c15t.policy.rules': 'c15t-policy-rules.json',
+			'com.inth.backend.url': BACKEND,
+			'com.inth.policy.rules': 'inth-policy-rules.json',
 		});
 		expect(metaNamesOf(manifest)).toStrictEqual([
 			'expo.modules.updates.ENABLED',
-			'com.c15t.POLICY_RULES',
-			'com.c15t.BACKEND_URL',
+			'com.inth.POLICY_RULES',
+			'com.inth.BACKEND_URL',
 			...GOOGLE_CONSENT_META_DATA_NAMES,
 		]);
 	});
@@ -270,15 +270,15 @@ describe('the native keys', () => {
 			expect(plist).toStrictEqual({
 				...GOOGLE_CONSENT_PLIST_DEFAULTS,
 				ITSAppUsesNonExemptEncryption: false,
-				'com.c15t.backend.url': 'http://localhost:8787/api/self-host',
-				'com.c15t.dryRun': true,
+				'com.inth.backend.url': 'http://localhost:8787/api/self-host',
+				'com.inth.dryRun': true,
 			});
 			expect(
 				AndroidConfig.Manifest.getMainApplicationOrThrow(manifest)['meta-data']
 			).toContainEqual({
-				$: { 'android:name': 'com.c15t.DRY_RUN', 'android:value': 'true' },
+				$: { 'android:name': 'com.inth.DRY_RUN', 'android:value': 'true' },
 			});
-			expect(config.extra?.c15t).toMatchObject({
+			expect(config.extra?.inth).toMatchObject({
 				backendURL: 'http://localhost:8787/api/self-host',
 				dryRun: true,
 			});
@@ -287,7 +287,7 @@ describe('the native keys', () => {
 			);
 			expect(warnings).toHaveLength(1);
 			expect(String(warnings[0]?.[0])).toContain(
-				'a release build will refuse to start c15t'
+				'a release build will refuse to start Inth'
 			);
 		} finally {
 			warn.mockRestore();
@@ -313,13 +313,13 @@ describe('the native keys', () => {
 		).modResults as AndroidConfig.Manifest.AndroidManifest;
 
 		expect(plist).toMatchObject({
-			'com.c15t.backend.url': BACKEND,
-			'com.c15t.reactnative.AutoBootstrap': false,
+			'com.inth.backend.url': BACKEND,
+			'com.inth.reactnative.AutoBootstrap': false,
 		});
 		expect(metaNamesOf(manifest)).toStrictEqual([
 			'expo.modules.updates.ENABLED',
-			'com.c15t.BACKEND_URL',
-			'com.c15t.reactnative.AUTO_BOOTSTRAP',
+			'com.inth.BACKEND_URL',
+			'com.inth.reactnative.AUTO_BOOTSTRAP',
 			...GOOGLE_CONSENT_META_DATA_NAMES,
 		]);
 		expect(providerOf(manifest)).toBeUndefined();
@@ -334,11 +334,11 @@ describe('the native keys', () => {
 			AndroidConfig.Manifest.getMainApplicationOrThrow(manifest);
 
 		expect((await runInfoPlist(config)).ios?.infoPlist).toMatchObject({
-			'com.c15t.forceGPC': true,
+			'com.inth.forceGPC': true,
 		});
 		expect(application['meta-data']).toContainEqual({
 			$: {
-				'android:name': 'com.c15t.FORCE_GPC',
+				'android:name': 'com.inth.FORCE_GPC',
 				'android:value': 'true',
 			},
 		});
@@ -354,13 +354,13 @@ describe('the native keys', () => {
 		).modResults as AndroidConfig.Manifest.AndroidManifest;
 
 		expect((await runInfoPlist(config)).ios?.infoPlist).toMatchObject({
-			'com.c15t.backend.domain': 'app.example.com',
+			'com.inth.backend.domain': 'app.example.com',
 		});
 		expect(
 			AndroidConfig.Manifest.getMainApplicationOrThrow(manifest)['meta-data']
 		).toContainEqual({
 			$: {
-				'android:name': 'com.c15t.BACKEND_DOMAIN',
+				'android:name': 'com.inth.BACKEND_DOMAIN',
 				'android:value': 'app.example.com',
 			},
 		});

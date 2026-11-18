@@ -2,7 +2,7 @@
 
 `bun run bench:mobile` measures the budgets in [`packages/native-protocol/CONTRACT.md`](../../packages/native-protocol/CONTRACT.md)
 against the Swift core, the Kotlin core, and the JavaScript boundary of
-`@c15t/react-native`, prints one table, and stores the run.
+`@inth/react-native`, prints one table, and stores the run.
 
 It also answers the seven performance axes issue #1010 named. The mapping is asserted
 in [`src/axes.ts`](./src/axes.ts) and
@@ -39,7 +39,7 @@ and prints every number it can, and does not fail when it cannot.
 | 4 | Consent action latency | `consent_ui_action_to_commit_ms` (tap on the rendered control to the intent reaching the module), `commit_ack_no_network_ms`, `native_commit_ack_no_network_ms`, `native_commit_ack_disk_ms`, `kotlin_commit_ack_no_network_ms` | JS and Kotlin rows: required on the Android+JS leg. Swift rows: iOS leg, required. The UI row is measured on both legs and required on the Android+JS one |
 | 5 | React rerenders | `rerenders_per_consent_change`, `rerenders_per_unchanged_event` | Both legs, required |
 | 6 | Idle CPU and memory | `idle_cpu_percent`, `idle_rss_growth_bytes`, `idle_heap_growth_bytes` | Runs on both legs and is budget-gated, deliberately not required: a shared runner's quiet window is not quiet |
-| 7 | Bundle-size impact | `js_shipped_bytes`, `js_shipped_gzip_bytes` (this package's tarball), `js_closure_bytes`, `js_closure_gzip_bytes`, `js_closure_modules` (everything an app carries because c15t is installed), `ios_binary_bytes`, `android_binary_bytes` | JS and Android: both legs, required. iOS binary: iOS leg, required. The `js_closure_*` rows are size rows, so both legs require them: each leg builds the package, and a byte count reads the same on either machine. `ios_binding_bytes`: never measured, see below |
+| 7 | Bundle-size impact | `js_shipped_bytes`, `js_shipped_gzip_bytes` (this package's tarball), `js_closure_bytes`, `js_closure_gzip_bytes`, `js_closure_modules` (everything an app carries because Inth is installed), `ios_binary_bytes`, `android_binary_bytes` | JS and Android: both legs, required. iOS binary: iOS leg, required. The `js_closure_*` rows are size rows, so both legs require them: each leg builds the package, and a byte count reads the same on either machine. `ios_binding_bytes`: never measured, see below |
 
 The run writes these mappings into its own notes, so a table printed from
 `results/latest.json` says which rows of which axis went unmeasured on that machine.
@@ -101,10 +101,10 @@ contract makes, and a `Source` of `allowance` in the table says so.
 
 | Surface | How |
 | --- | --- |
-| `swift-core` | Runs `xcrun swift run -c release C15tCoreBench` in `packages/swift` and reads its p50s. Requires Xcode, not just Command Line Tools. |
-| `kotlin-core` | Runs `./gradlew :c15t-core:bench` in `packages/android` and reads its medians. Plain JVM; no emulator needed. |
-| `react-native-js` | Loads the built `dist/` of `@c15t/react-native` under Node with `react-native` replaced by [`src/support/react-native-stub.ts`](./src/support/react-native-stub.ts) and a TurboModule fake that answers with no network. |
-| `bundle` | JavaScript bytes from `dist/`, iOS bytes from the linked arm64 slice of `C15tCore`, Android bytes from the compiled class bytes of the release artifacts. |
+| `swift-core` | Runs `xcrun swift run -c release InthCoreBench` in `packages/swift` and reads its p50s. Requires Xcode, not just Command Line Tools. |
+| `kotlin-core` | Runs `./gradlew :inth-core:bench` in `packages/android` and reads its medians. Plain JVM; no emulator needed. |
+| `react-native-js` | Loads the built `dist/` of `@inth/react-native` under Node with `react-native` replaced by [`src/support/react-native-stub.ts`](./src/support/react-native-stub.ts) and a TurboModule fake that answers with no network. |
+| `bundle` | JavaScript bytes from `dist/`, iOS bytes from the linked arm64 slice of `InthCore`, Android bytes from the compiled class bytes of the release artifacts. |
 
 `android_binary_bytes` sums the uncompressed `.class` entries in the Kotlin core,
 Android adapter, Compose consent UI and React Native bridge Release artifacts.
@@ -169,7 +169,7 @@ from inside `benchmarks/mobile`.
   certifies the contract's 10 ms cold-start figure, which is a device-profile promise;
   the JavaScript row beside it is a module-loader number on a dev machine.
 - **The Metro bundle delta.** Same missing job. It would need one Metro build of the
-  example with c15t and one without, and the closure bytes are a stand-in for nothing
+  example with Inth and one without, and the closure bytes are a stand-in for nothing
   more than the module graph, not for what Metro and Hermes actually keep.
 - **`ios_binding_bytes`.** The TurboModule binding compiles against React Native
   headers, which exist only after a `pod install` in a host app. It needs a CocoaPods

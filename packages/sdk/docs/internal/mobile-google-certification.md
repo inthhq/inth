@@ -1,14 +1,14 @@
 ---
 title: Google mobile CMP certification
-description: Prepare c15t test apps, diagnostics and the Google publisher CMP App certification request.
+description: Prepare Inth test apps, diagnostics and the Google publisher CMP App certification request.
 ---
 
 # Google mobile CMP certification
 
 Prepare Google's publisher CMP certification for the **App** platform using
-c15t's existing IAB CMP ID, **490**. This is separate from the advertiser
+Inth's existing IAB CMP ID, **490**. This is separate from the advertiser
 [CMP Partner Program](https://cmppartnerprogram.withgoogle.com/) and from
-[IAB mobile validation](mobile-tcf-validation.md). c15t is not currently a
+[IAB mobile validation](mobile-tcf-validation.md). Inth is not currently a
 Google-certified CMP. The official IAB list checked on 2 November 2026 lists
 490 as `Consent Management Inc`, with `Web` as its only environment.
 
@@ -154,7 +154,7 @@ legitimate-interest or special-feature grants.
 disclosure in decision strings. It never requires a grant. `--require-ac`
 requires usable provider disclosures and matching ACv2 signals, including
 purposes 1, 3 and 4 before positive ATP consent. AC is optional in Google's
-intake; c15t's intended first release includes it. Existing AC is checked even
+intake; Inth's intended first release includes it. Existing AC is checked even
 without the flag.
 
 A passing observation proves only the checks reported for that file. It does

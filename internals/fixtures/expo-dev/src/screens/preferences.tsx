@@ -8,10 +8,8 @@
  * writes nothing.
  */
 
-import { useSnapshot } from '@c15t/react-native';
+import { useSnapshot } from '@inth/react-native';
 
-import { OPTIONAL_CATEGORIES } from '../c15t/fake-native';
-import type { OptionalCategory } from '../c15t/fake-native';
 import {
 	Button,
 	ButtonGrid,
@@ -22,6 +20,8 @@ import {
 	Screen,
 	Text,
 } from '../components/ui';
+import { OPTIONAL_CATEGORIES } from '../inth/fake-native';
+import type { OptionalCategory } from '../inth/fake-native';
 
 const formatWhen = (at: number): string =>
 	new Date(at).toISOString().slice(0, 16);

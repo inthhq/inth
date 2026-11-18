@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Measure the c15t consent surfaces on an Android device against the web surfaces.
+"""Measure the Inth consent surfaces on an Android device against the web surfaces.
 
 The iOS twin, ios-surface-metrics.py, has to read geometry off pixels because a headless
 simulator hands back no view tree. Android gives us `uiautomator dump`, so the numbers here
@@ -36,8 +36,8 @@ surface was not measured at all, because "not measured" must never read as "pass
 
 --mode iab-drawer grades the full-page IAB disclosure instead of a banner or a dialog,
 against the web iab-panel figures recorded in WEB_IAB. Open it with the demo link
-`c15t-demo://iab` (the partner list, which is what the web's `{count} partners` link
-opens) or `c15t-demo://iab/purposes`. The gap between purpose rows is only gradeable on
+`inth-demo://iab` (the partner list, which is what the web's `{count} partners` link
+opens) or `inth-demo://iab/purposes`. The gap between purpose rows is only gradeable on
 the purposes tab and the row pitch only on the partners tab, because the purposes rows
 differ in height and the partner rows do not; whichever half is not on screen is
 printed under NOT MEASURED rather than quietly dropped.
@@ -128,7 +128,7 @@ BANNER_TITLE = "your privacy"
 DIALOG_TITLE = "Privacy Settings"
 DENSITY = re.compile(r"density: (\d+)")
 BOUNDS = re.compile(r"\[(-?\d+),(-?\d+)\]\[(-?\d+),(-?\d+)\]")
-REMOTE_DUMP = "/sdcard/c15t-metrics.xml"
+REMOTE_DUMP = "/sdcard/inth-metrics.xml"
 
 
 def resolve_adb(explicit):

@@ -9,14 +9,14 @@ plugins {
 
 // The artifact version and default request/bridge metadata describe the same native SDK.
 tasks.register("verifyNativeVersion") {
-	val nativeVersion = providers.gradleProperty("c15t.native.version").get()
-	val protocolSource = file("c15t-core/src/main/kotlin/com/c15t/core/transport/C15tProtocol.kt")
+	val nativeVersion = providers.gradleProperty("inth.native.version").get()
+	val protocolSource = file("inth-core/src/main/kotlin/com/inth/core/transport/InthProtocol.kt")
 	inputs.property("nativeVersion", nativeVersion)
 	inputs.file(protocolSource)
 	doLast {
 		val declared = Regex("DEFAULT_SDK_VERSION = \"([^\"]+)\"").find(protocolSource.readText())?.groupValues?.get(1)
 		check(declared == nativeVersion) {
-			"c15t.native.version=$nativeVersion differs from request metadata $declared"
+			"inth.native.version=$nativeVersion differs from request metadata $declared"
 		}
 	}
 }

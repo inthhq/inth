@@ -1,4 +1,4 @@
-import C15tCore
+import InthCore
 import Foundation
 
 /// A local counter with explicit start/stop, standing in for an analytics SDK.

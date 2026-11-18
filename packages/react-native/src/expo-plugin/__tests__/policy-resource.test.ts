@@ -21,7 +21,7 @@ import { FIXTURE_DIR } from './helpers';
 const endpoint = 'https://demo.inth.app';
 describe('Expo native policy embedding', () => {
 	it('copies exact bytes to assets and refuses wrong project or expired authority', async () => {
-		const root = await mkdtemp(join(tmpdir(), 'c15t-policy-'));
+		const root = await mkdtemp(join(tmpdir(), 'inth-policy-'));
 		try {
 			const payload = JSON.stringify({
 				defaultLanguage: 'en',
@@ -38,7 +38,7 @@ describe('Expo native policy embedding', () => {
 				sha256: createHash('sha256').update(payload).digest('hex'),
 			});
 			await writeFile(join(root, 'input.json'), source);
-			const output = join(root, 'android/app/src/main/assets/c15t-policy.json');
+			const output = join(root, 'android/app/src/main/assets/inth-policy.json');
 			await embedPolicyResource(root, 'input.json', endpoint, output);
 			expect(await readFile(output, 'utf8')).toBe(source);
 			await expect(

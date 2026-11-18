@@ -95,7 +95,7 @@ const javaScriptRows = async function javaScriptRows(
 		}),
 		makeRow(ROWS.coldStartOverhead, budgets, {
 			detail:
-				'same span as the cold handshake: the only c15t work before the first read',
+				'same span as the cold handshake: the only Inth work before the first read',
 			samples: 1,
 			value: js.bootstrapToSnapshotColdMs,
 		}),
@@ -388,7 +388,7 @@ export const runBenchmark = async function runBenchmark(
 	const contractCold = budgets.cold_start_overhead_ms?.max;
 	if (contractCold !== undefined && cold.toFirstConsentMs > contractCold) {
 		notes.push(
-			`the cold JavaScript span measures ${cold.toFirstConsentMs} ms, over the ${contractCold} ms the contract budgets for cold-start overhead. The contract row above times only the read path in a warm process; the contract number is a device-profile one and this harness runs on Node's module loader, which charges c15t for resolving every specifier a bundled app resolves from one bundle. Read the two rows together and treat neither as an app-launch number.`
+			`the cold JavaScript span measures ${cold.toFirstConsentMs} ms, over the ${contractCold} ms the contract budgets for cold-start overhead. The contract row above times only the read path in a warm process; the contract number is a device-profile one and this harness runs on Node's module loader, which charges Inth for resolving every specifier a bundled app resolves from one bundle. Read the two rows together and treat neither as an app-launch number.`
 		);
 	}
 
@@ -435,7 +435,7 @@ export const runBenchmark = async function runBenchmark(
 		environment: getEnvironment(),
 		gitDirty: safeGitDirty(),
 		notes,
-		package: '@c15t/react-native',
+		package: '@inth/react-native',
 		previous: previous
 			? {
 					previousCommitSha: previous.commitSha,

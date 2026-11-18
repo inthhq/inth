@@ -1,7 +1,7 @@
 # Custom consent example
 
 A standalone iOS app with one consent UI drawn entirely by the app. It is built
-only from the headless blocks in `C15tConsentUI`: `ConsentDraft`,
+only from the headless blocks in `InthConsentUI`: `ConsentDraft`,
 `HeadlessConsentPrompt`, `HeadlessConsentPreferences`, `ConsentGate`,
 `ConsentReady` and `ConsentActions`. The blocks decide when a prompt is owed and
 supply the copy, the draft, the save and the accessibility. The look is the
@@ -22,10 +22,10 @@ From the repository root:
 
 ```sh
 xcodegen generate --spec packages/swift/Examples/custom-consent/project.yml
-open packages/swift/Examples/custom-consent/C15tCustomConsent.xcodeproj
+open packages/swift/Examples/custom-consent/InthCustomConsent.xcodeproj
 ```
 
-Select the `C15tCustomConsent` scheme and an iOS simulator, then Run. The
+Select the `InthCustomConsent` scheme and an iOS simulator, then Run. The
 generated project is ignored.
 
 ## Launch arguments
@@ -39,10 +39,10 @@ arguments, or to `xcrun simctl launch`:
 | `--screen preferences` | The preferences screen. |
 | `--screen iab` | The IAB TCF purposes. Uses the IAB fixture. |
 | `--iab` | Serve the IAB TCF fixture instead of the category one. |
-| `--stock` | Show the stock `C15tConsentUI` screens instead of the custom ones. |
+| `--stock` | Show the stock `InthConsentUI` screens instead of the custom ones. |
 
 ```sh
-xcrun simctl launch SIMULATOR_UDID com.c15t.examples.customconsent --iab --screen prompt
+xcrun simctl launch SIMULATOR_UDID com.inth.examples.customconsent --iab --screen prompt
 ```
 
 ## Screenshots
@@ -51,7 +51,7 @@ xcrun simctl launch SIMULATOR_UDID com.c15t.examples.customconsent --iab --scree
 the stock and the custom screens in light and dark:
 
 ```sh
-bash packages/swift/Examples/custom-consent/capture-screenshots.sh /tmp/c15t-consent-screens
+bash packages/swift/Examples/custom-consent/capture-screenshots.sh /tmp/inth-consent-screens
 ```
 
 It writes 12 files named

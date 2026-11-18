@@ -10,7 +10,7 @@ import { useConsentClient } from '../provider/consent-context';
 /**
  * Whether tracking behaviour may run for one category.
  *
- * Two answers have to agree, and this hook reads both: the c15t decision for
+ * Two answers have to agree, and this hook reads both: the Inth decision for
  * `category`, and the platform's tracking authorization. This is what an
  * analytics or ad SDK gates on, because either half alone is wrong in a
  * different direction. Consent granted on a device where Apple says no is still

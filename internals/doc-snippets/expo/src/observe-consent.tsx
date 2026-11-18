@@ -1,5 +1,5 @@
 // #region docs:expo-observe-consent title="observe-consent.tsx"
-import { useC15tBootstrap, useConsentDecision } from '@c15t/react-native';
+import { useInthBootstrap, useConsentDecision } from '@inth/react-native';
 import { Observe } from 'expo-observe';
 import type { ObserveConfig } from 'expo-observe';
 import { useEffect, useRef } from 'react';
@@ -12,7 +12,7 @@ export const ObserveConsent = (): null => {
 	// pending until stored consent has loaded and the policy has resolved.
 	const decision = useConsentDecision('measurement');
 	// Whether this install has saved consent from an earlier launch.
-	const { hasStoredSnapshot } = useC15tBootstrap();
+	const { hasStoredSnapshot } = useInthBootstrap();
 	// Whether a decision has been read this session. Pending after that means
 	// consent was reset or is being resolved again, not a launch still loading.
 	const decided = useRef(false);

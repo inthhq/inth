@@ -1,6 +1,6 @@
 #if DEBUG
-import C15tApple
-import C15tCore
+import InthApple
+import InthCore
 import FirebaseAnalytics
 import FirebaseCore
 import Mixpanel
@@ -13,11 +13,11 @@ import UIKit
 ///
 /// It exists for `run-vendor-e2e.sh`: a launch that sets `C15T_VENDOR_BASE` to the
 /// local capture server gets every SDK configured in its denied state, bound to the
-/// c15t Swift helpers, and a probe button that sends one event through each SDK.
+/// Inth Swift helpers, and a probe button that sends one event through each SDK.
 /// Without that variable the demo links the SDKs but never starts them.
 @MainActor
 final class VendorSDKHarness {
-    static let log = Logger(subsystem: "com.c15t.vendor-e2e", category: "app")
+    static let log = Logger(subsystem: "com.inth.vendor-e2e", category: "app")
 
     /// Returns a harness when the launch asks for one. Only a loopback HTTP base is accepted.
     static func fromEnvironment() -> VendorSDKHarness? {
@@ -47,7 +47,7 @@ final class VendorSDKHarness {
         let log = Self.log
         let vendorBase = base.absoluteString.hasSuffix("/") ? String(base.absoluteString.dropLast()) : base.absoluteString
 
-        let posthog = PostHogConfig(projectToken: "phc_c15t_fake_local_token", host: vendorBase + "/vendor/posthog")
+        let posthog = PostHogConfig(projectToken: "phc_inth_fake_local_token", host: vendorBase + "/vendor/posthog")
         posthog.optOut = true
         posthog.debug = true
         PostHogSDK.shared.setup(posthog)
@@ -57,7 +57,7 @@ final class VendorSDKHarness {
             optOut: { log.notice("binding posthog optOut"); PostHogSDK.shared.optOut() }))
 
         let mixpanel = Mixpanel.initialize(
-            token: "c15t-fake-mixpanel-token", trackAutomaticEvents: true,
+            token: "inth-fake-mixpanel-token", trackAutomaticEvents: true,
             optOutTrackingByDefault: true, serverURL: vendorBase + "/vendor/mixpanel")
         mixpanel.loggingEnabled = true
         bindings.append(MixpanelIntegration(
@@ -69,7 +69,7 @@ final class VendorSDKHarness {
         SentrySDK.start { options in
             options.dsn = dsn
             options.debug = true
-            // Replay is started and stopped only by the c15t binding.
+            // Replay is started and stopped only by the Inth binding.
             options.sessionReplay.sessionSampleRate = 0
             options.sessionReplay.onErrorSampleRate = 0
             // Keep other Sentry products quiet so the capture log shows replay alone.
@@ -118,9 +118,9 @@ final class VendorSDKHarness {
         probes += 1
         let probe = probes
         Self.log.notice("probe \(probe) sent")
-        PostHogSDK.shared.capture("c15t_probe", properties: ["probe": probe])
-        Mixpanel.mainInstance().track(event: "c15t_probe", properties: ["probe": probe])
-        Analytics.logEvent("c15t_probe", parameters: ["probe": probe])
+        PostHogSDK.shared.capture("inth_probe", properties: ["probe": probe])
+        Mixpanel.mainInstance().track(event: "inth_probe", properties: ["probe": probe])
+        Analytics.logEvent("inth_probe", parameters: ["probe": probe])
         flush()
         probeWindow?.count.text = "probes: \(probe)"
     }

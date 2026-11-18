@@ -4,7 +4,7 @@ import { defineConfig } from 'vitest/config';
 
 /**
  * `react-native` points at the bench stub for the same reason `tsconfig.json`
- * does: the harness measures the c15t boundary, not a React Native runtime. The
+ * does: the harness measures the Inth boundary, not a React Native runtime. The
  * alias has to be here too, because Vitest resolves through Vite and ignores
  * TypeScript path mappings.
  */

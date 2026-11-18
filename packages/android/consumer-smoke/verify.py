@@ -23,8 +23,8 @@ def exact_package_version(value):
 
 def verify_staging(repository, version):
     """Validate binaries, source archives and API docs in a staged Maven version."""
-    for artifact, extension in [('c15t-core', 'jar'), ('c15t-android', 'aar'), ('c15t-consent-ui', 'aar')]:
-        directory = repository / 'com/c15t' / artifact / version
+    for artifact, extension in [('inth-core', 'jar'), ('inth-android', 'aar'), ('inth-consent-ui', 'aar')]:
+        directory = repository / 'com/inth' / artifact / version
         prefix = directory / f'{artifact}-{version}'
         for suffix in [f'.{extension}', '.pom', '.module', '-sources.jar', '-javadoc.jar']:
             if not Path(f'{prefix}{suffix}').is_file():
@@ -45,7 +45,7 @@ def verify_staging(repository, version):
             with zipfile.ZipFile(f'{prefix}-{classifier}.jar') as archive:
                 entries = archive.namelist()
                 for notice in ['LICENSE', 'NOTICE']:
-                    if f'META-INF/licenses/com.c15t/{artifact}/{notice}' not in entries:
+                    if f'META-INF/licenses/com.inth/{artifact}/{notice}' not in entries:
                         raise ValueError(f'{artifact} {classifier} is missing {notice}')
                 if classifier == 'sources' and not any(p.endswith('.kt') for p in entries):
                     raise ValueError(f'{artifact} has no Kotlin sources')
@@ -54,9 +54,9 @@ def verify_staging(repository, version):
         with zipfile.ZipFile(f'{prefix}.{extension}') as archive:
             if extension == 'jar':
                 entries = archive.namelist()
-                if 'META-INF/proguard/c15t-core.pro' not in entries:
+                if 'META-INF/proguard/inth-core.pro' not in entries:
                     raise ValueError('JVM artifact is missing its shrinker rules')
-            elif artifact == 'c15t-android' and 'proguard.txt' not in archive.namelist():
+            elif artifact == 'inth-android' and 'proguard.txt' not in archive.namelist():
                 raise ValueError('Android artifact is missing consumer shrinker rules')
             if extension == 'aar':
                 with zipfile.ZipFile(io.BytesIO(archive.read('classes.jar'))) as classes:
@@ -64,7 +64,7 @@ def verify_staging(repository, version):
             else:
                 entries = archive.namelist()
             for notice in ['LICENSE', 'NOTICE']:
-                if f'META-INF/licenses/com.c15t/{artifact}/{notice}' not in entries:
+                if f'META-INF/licenses/com.inth/{artifact}/{notice}' not in entries:
                     raise ValueError(f'{artifact} is missing {notice}')
 
 
@@ -88,7 +88,7 @@ def main():
         parser.error('--compile-sdk must be at least 36 for the staged native artifacts')
     fixture = Path(__file__).resolve().parent
     root = fixture.parents[2]
-    output = args.output.resolve() if args.output else Path(tempfile.mkdtemp(prefix='c15t-android-consumer-'))
+    output = args.output.resolve() if args.output else Path(tempfile.mkdtemp(prefix='inth-android-consumer-'))
     if output.is_relative_to(root):
         parser.error('The consumer and its caches must be outside the checkout')
     output.mkdir(parents=True, exist_ok=True)
@@ -131,12 +131,12 @@ def main():
     if args.rn_package:
         tarball = args.rn_package.resolve()
         (consumer / 'package.json').write_text(json.dumps({
-            'name': 'c15t-packed-android-consumer', 'private': True,
-            'dependencies': {'@c15t/react-native': f'file:{tarball}',
+            'name': 'inth-packed-android-consumer', 'private': True,
+            'dependencies': {'@inth/react-native': f'file:{tarball}',
                              'react-native': args.react_native_version, 'react': args.react_version}
         }, indent=2))
         run(['bun', 'install', '--ignore-scripts'])
-        packed = consumer / 'node_modules/@c15t/react-native'
+        packed = consumer / 'node_modules/@inth/react-native'
         if packed.is_symlink():
             raise ValueError('RN package must be an installed tarball, not a workspace link')
         installed = {}
@@ -150,16 +150,16 @@ def main():
     host_properties = [f'-PcompileSdkVersion={args.compile_sdk}']
     if react_native_version:
         # Both app and bridge use the version that was actually installed for Codegen.
-        host_properties.append(f'-Pc15t.reactNativeVersion={react_native_version}')
+        host_properties.append(f'-Pinth.reactNativeVersion={react_native_version}')
     run(['./gradlew', '--no-daemon', '--no-build-cache', '--no-configuration-cache', '--console=plain',
-         f'-Pc15t.repository={repository_url}', f'-Pc15t.core.version={args.version}',
+         f'-Pinth.repository={repository_url}', f'-Pinth.core.version={args.version}',
          *host_properties, ':headless:test', ':app:assembleRelease'], cwd=android)
     apk = android / 'app/build/outputs/apk/release/app-release-unsigned.apk'
     mapping = android / 'app/build/outputs/mapping/release/mapping.txt'
     if not apk.is_file() or not mapping.is_file() or not mapping.stat().st_size:
         raise ValueError('Expected an R8 release APK and nonempty mapping')
     manifest = android / 'app/build/intermediates/merged_manifests/release/processReleaseManifest/AndroidManifest.xml'
-    initializer = 'com.c15t.reactnative.C15tReactNativeInitializer' if args.rn_package else 'com.c15t.android.C15tInitializer'
+    initializer = 'com.inth.reactnative.InthReactNativeInitializer' if args.rn_package else 'com.inth.android.InthInitializer'
     if initializer not in manifest.read_text():
         raise ValueError('The artifact lost its pre-JS startup initializer')
     result = {'proof': proof, 'version': args.version, 'packedRN': bool(args.rn_package),
@@ -170,9 +170,9 @@ def main():
     if args.rn_package:
         result['reactNativeVersion'] = react_native_version
         result['reactVersion'] = react_version
-        spec = packed / 'android/c15t-react-native/build/generated/source/codegen/java/com/c15t/reactnative/NativeC15tSpec.java'
+        spec = packed / 'android/inth-react-native/build/generated/source/codegen/java/com/inth/reactnative/NativeInthSpec.java'
         if not spec.is_file():
-            raise ValueError('Normal auto-detection did not generate NativeC15tSpec')
+            raise ValueError('Normal auto-detection did not generate NativeInthSpec')
         result['codegenSpec'] = str(spec)
     if args.staging_repository:
         result['notVerified'].append('remote versioned artifact resolution')

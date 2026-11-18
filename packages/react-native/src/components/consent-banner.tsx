@@ -135,7 +135,7 @@ const ConsentBannerActions = ({
 					/>
 					<ConsentButton
 						kind="secondary"
-						testID="c15t.first-layer.customize"
+						testID="inth.first-layer.customize"
 						label={copy.customize}
 						onPress={customize}
 						parts={parts}
@@ -157,7 +157,7 @@ const ConsentBannerActions = ({
 						<ConsentButton
 							disabled={busy}
 							kind="secondary"
-							testID="c15t.first-layer.reject-all"
+							testID="inth.first-layer.reject-all"
 							label={copy.rejectAll}
 							onPress={() => {
 								void decide('reject');
@@ -168,7 +168,7 @@ const ConsentBannerActions = ({
 						<ConsentButton
 							disabled={busy}
 							kind="secondary"
-							testID="c15t.first-layer.accept-all"
+							testID="inth.first-layer.accept-all"
 							label={copy.acceptAll}
 							onPress={() => {
 								void decide('accept');
@@ -179,7 +179,7 @@ const ConsentBannerActions = ({
 					</View>
 					<ConsentButton
 						disabled={busy}
-						testID="c15t.first-layer.customize"
+						testID="inth.first-layer.customize"
 						label={copy.customize}
 						onPress={customize}
 						parts={parts}

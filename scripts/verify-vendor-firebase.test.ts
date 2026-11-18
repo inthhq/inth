@@ -54,7 +54,7 @@ describe('verify-vendor-firebase.py', () => {
 			storageDenied,
 			fa(start + 0.457, 'Setting app measurement enabled (FE): false'),
 		]);
-		expect(result.stdout).toContain('Firebase followed every c15t decision');
+		expect(result.stdout).toContain('Firebase followed every Inth decision');
 		expect(result.status).toBe(0);
 	});
 
@@ -93,7 +93,7 @@ describe('verify-vendor-firebase.py', () => {
 			],
 			true
 		);
-		expect(result.stdout).toContain('Firebase followed every c15t decision');
+		expect(result.stdout).toContain('Firebase followed every Inth decision');
 		expect(result.status).toBe(0);
 	});
 	it('reads a refusal that Firebase logs just after the probe, over an earlier grant', () => {
@@ -111,7 +111,7 @@ describe('verify-vendor-firebase.py', () => {
 				'Setting storage consent(FE): source=API,ad_storage=denied,analytics_storage=denied'
 			),
 		]);
-		expect(result.stdout).toContain('Firebase followed every c15t decision');
+		expect(result.stdout).toContain('Firebase followed every Inth decision');
 		expect(result.status).toBe(0);
 	});
 });

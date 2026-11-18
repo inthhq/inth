@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Measure the c15t consent surfaces in an iOS Simulator screenshot, in points.
+"""Measure the Inth consent surfaces in an iOS Simulator screenshot, in points.
 
 Android gets a view tree from `uiautomator dump`. A headless iOS runner gets a
 screenshot and nothing else: `simctl io` has no hierarchy dump, and this Xcode ships

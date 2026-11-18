@@ -9,7 +9,7 @@
 import type { PolicyRule } from '@c15t/core';
 import { expectTypeOf } from 'vitest';
 
-import type { C15tPolicyRule } from '../params';
+import type { InthPolicyRule } from '../params';
 
 type Mutable<Type> = {
 	-readonly [Key in keyof Type]: Type[Key] extends readonly (infer Item)[]
@@ -19,5 +19,5 @@ type Mutable<Type> = {
 			: Type[Key];
 };
 
-expectTypeOf<Mutable<C15tPolicyRule>>().toExtend<PolicyRule>();
-expectTypeOf<keyof C15tPolicyRule>().toExtend<keyof PolicyRule>();
+expectTypeOf<Mutable<InthPolicyRule>>().toExtend<PolicyRule>();
+expectTypeOf<keyof InthPolicyRule>().toExtend<keyof PolicyRule>();

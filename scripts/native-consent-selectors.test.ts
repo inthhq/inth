@@ -8,7 +8,7 @@ import { parseAllDocuments } from 'yaml';
 
 /**
  * App teams' E2E suites tap the stock native consent screens by these IDs, and
- * the Maestro subflows in `@c15t/react-native/maestro` ship them. Renaming one
+ * the Maestro subflows in `@inth/react-native/maestro` ship them. Renaming one
  * on either platform breaks every suite built on it, so each documented ID
  * must stay in the Swift and Kotlin sources and on the docs page, and the
  * shipped flows may use only documented IDs.
@@ -22,8 +22,8 @@ const DOCS_PAGE = join(
 );
 
 const PLATFORM_SOURCES = {
-	android: 'packages/android/c15t-consent-ui/src/main',
-	ios: 'packages/swift/Sources/C15tConsentUI',
+	android: 'packages/android/inth-consent-ui/src/main',
+	ios: 'packages/swift/Sources/InthConsentUI',
 } as const;
 
 interface Selector {
@@ -50,7 +50,7 @@ const walk = function walk(directory: string, pattern: RegExp): string[] {
 const escape = (text: string): string =>
 	text.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
 
-/** Splits `c15t.prefs.category.<category>.switch` into literals and slots. */
+/** Splits `inth.prefs.category.<category>.switch` into literals and slots. */
 const parts = (id: string): string[] => id.split(/<[a-z]+>/u);
 
 /**

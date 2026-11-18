@@ -1,8 +1,8 @@
 // The Debug fixture scenarios inject an HTTP peer and a fault store, which is the
 // SDK's internal API. An app imports these modules plainly and passes a project URL.
-@_spi(C15tInternal) import C15tApple
-@_spi(C15tInternal) import C15tCore
-import C15tConsentUI
+@_spi(InthInternal) import InthApple
+@_spi(InthInternal) import InthCore
+import InthConsentUI
 import SwiftUI
 
 struct ConsentDemoContent: View {
@@ -90,7 +90,7 @@ final class DemoSession: ObservableObject {
                     iab: mode == "iab" ? IABConfiguration(cmpId: 53, cmpVersion: 7, publisherCountryCode: "GB",
                         publisherRestrictions: [IABPublisherRestriction(purposeId: 7, type: 0, vendorIds: [2])]) : nil,
                     gpc: scenario == "gpc-on", initRetry: .disabled)
-                core = try await Task.detached { try C15tApple.install(config) }.value
+                core = try await Task.detached { try InthApple.install(config) }.value
                 await core.waitUntilIdle()
                 self.store = fault
                 self.transport = http
@@ -107,9 +107,9 @@ final class DemoSession: ObservableObject {
             } else {
                 let savedReview = url == nil && policy == nil ? IABReviewProfile.load() : nil
                 if let review = review ?? savedReview {
-                    let service = (Bundle.main.bundleIdentifier ?? "com.c15t.prototype.consent") + ".iab-review"
+                    let service = (Bundle.main.bundleIdentifier ?? "com.inth.prototype.consent") + ".iab-review"
                     core = try await Task.detached {
-                        try C15tApple.install(C15tAppleConfiguration(
+                        try InthApple.install(InthAppleConfiguration(
                             backendURL: review.backendURL.absoluteString, dryRun: dryRun,
                             storage: .keychain(service: service),
                             consentCategories: [.necessary, .functionality, .experience, .measurement, .marketing],
@@ -122,13 +122,13 @@ final class DemoSession: ObservableObject {
                     reviewReconnect = true
                     consentUIEnabled = !inspectBeforeShowingConsent
                 } else {
-                    let raw = url ?? Bundle.main.object(forInfoDictionaryKey: "C15tBackendURL") as? String ?? ""
-                    let privacy = policy ?? Bundle.main.object(forInfoDictionaryKey: "C15tPrivacyPolicyURL") as? String ?? ""
+                    let raw = url ?? Bundle.main.object(forInfoDictionaryKey: "InthBackendURL") as? String ?? ""
+                    let privacy = policy ?? Bundle.main.object(forInfoDictionaryKey: "InthPrivacyPolicyURL") as? String ?? ""
                     guard let backend = URL(string: raw), backend.scheme == "https", backend.host != nil,
                         let policyURL = URL(string: privacy), policyURL.scheme == "https", policyURL.host != nil else { return }
                     self.policyURL = policyURL
-                    let config = C15tAppleConfiguration(backendURL: backend.absoluteString, dryRun: dryRun, consentCategories: [.necessary, .functionality, .experience, .measurement, .marketing])
-                    core = try await Task.detached { try C15tApple.install(config) }.value
+                    let config = InthAppleConfiguration(backendURL: backend.absoluteString, dryRun: dryRun, consentCategories: [.necessary, .functionality, .experience, .measurement, .marketing])
+                    core = try await Task.detached { try InthApple.install(config) }.value
                 }
             }
             started = true
@@ -184,7 +184,7 @@ final class DemoSession: ObservableObject {
             IABReviewAdTechProvider(id: provider.id, name: provider.name, policyUrl: provider.policyUrl)
         }
         let info = Bundle.main.infoDictionary ?? [:]
-        let report = IABReviewReport(capturedAtMs: capturedAtMs, profile: profile, sdkVersion: C15tApple.version,
+        let report = IABReviewReport(capturedAtMs: capturedAtMs, profile: profile, sdkVersion: InthApple.version,
             appID: Bundle.main.bundleIdentifier ?? "unspecified",
             appVersion: info["CFBundleShortVersionString"] as? String ?? "unspecified",
             appBuild: info["CFBundleVersion"] as? String ?? "unspecified",

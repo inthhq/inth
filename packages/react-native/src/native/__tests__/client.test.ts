@@ -3,7 +3,7 @@
  * changed, and a subscriber only hears about a change it can see.
  *
  * `react-native` resolves to the faithful stub in this package's Vitest
- * config, so `getNativeC15tEvents()` builds over the registered fake exactly
+ * config, so `getNativeInthEvents()` builds over the registered fake exactly
  * as it does over the Swift and Kotlin modules.
  */
 
@@ -32,9 +32,9 @@ import {
 	resetConsentClient,
 } from '../client';
 import type { ConsentClient } from '../client';
-import { getNativeC15tEvents } from '../module';
-import type { NativeC15tTurboModule } from '../module';
-import { C15tProtocolMismatchError } from '../protocol-mismatch-error';
+import { getNativeInthEvents } from '../module';
+import type { NativeInthTurboModule } from '../module';
+import { InthProtocolMismatchError } from '../protocol-mismatch-error';
 
 /** Build a client over a fresh fake module. */
 const makeClient = function makeClient(
@@ -45,7 +45,7 @@ const makeClient = function makeClient(
 ): { client: ConsentClient; fake: FakeNativeModule } {
 	const fake = createFakeNativeModule(options);
 
-	return { client: createConsentClient(fake, getNativeC15tEvents()), fake };
+	return { client: createConsentClient(fake, getNativeInthEvents()), fake };
 };
 
 /** Watch one snapshot field, and report how often the client calls back. */
@@ -88,7 +88,7 @@ describe('handshake', () => {
 
 	// A JavaScript-only update can run over a binary built before `nativeUI` existed.
 	// That binary links the stock screens, so its silence must read as `true`;
-	// only an explicit `false` from a `c15t.nativeUI=false` build means they are out.
+	// only an explicit `false` from a `inth.nativeUI=false` build means they are out.
 	test.each([
 		['absent', undefined, true],
 		['false', false, false],
@@ -130,7 +130,7 @@ describe('handshake', () => {
 
 		const error = captureError(getConsentClient);
 
-		expect(error).toBeInstanceOf(C15tProtocolMismatchError);
+		expect(error).toBeInstanceOf(InthProtocolMismatchError);
 		expect(error.protocolVersion).toBe(99);
 	});
 
@@ -139,7 +139,7 @@ describe('handshake', () => {
 
 		const error = captureError(getConsentClient);
 
-		expect(error).toBeInstanceOf(C15tProtocolMismatchError);
+		expect(error).toBeInstanceOf(InthProtocolMismatchError);
 		expect(error.protocolVersion).toBeNull();
 	});
 
@@ -164,7 +164,7 @@ describe('handshake', () => {
 
 		fake.getBootstrap.mockReturnValue('not-json');
 
-		expect(() => createConsentClient(fake, getNativeC15tEvents())).toThrow(
+		expect(() => createConsentClient(fake, getNativeInthEvents())).toThrow(
 			NativeBridgeError
 		);
 	});
@@ -1037,7 +1037,7 @@ describe('tracking authorization', () => {
 		expect(client.getTrackingAuthorization()).toBe('not-determined');
 
 		fake.rejectTrackingRequestWith(
-			'C15T_TRACKING_NOT_CONFIGURED',
+			'INTH_TRACKING_NOT_CONFIGURED',
 			'no prompt string'
 		);
 
@@ -1063,8 +1063,8 @@ describe('tracking authorization', () => {
 			...fake,
 			getTrackingAuthorization: undefined,
 			requestTrackingAuthorization: undefined,
-		} as unknown as NativeC15tTurboModule;
-		const client = createConsentClient(stale, getNativeC15tEvents());
+		} as unknown as NativeInthTurboModule;
+		const client = createConsentClient(stale, getNativeInthEvents());
 
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 

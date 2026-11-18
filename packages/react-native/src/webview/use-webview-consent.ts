@@ -88,7 +88,7 @@ const call = (script: string, ...args: readonly unknown[]): string =>
 
 /**
  * Keep the pages a `WebView` loads in step with native consent, so a site
- * that runs web c15t with `consentSource: webViewConsentSource()` shows no
+ * that runs web Inth with `consentSource: webViewConsentSource()` shows no
  * second banner and follows the app's choice.
  *
  * Only pages on `allowedOrigins` receive anything, and only in the main
@@ -104,7 +104,7 @@ const call = (script: string, ...args: readonly unknown[]): string =>
  * @example
  * ```tsx
  * import { WebView } from 'react-native-webview';
- * import { useWebViewConsent } from '@c15t/react-native';
+ * import { useWebViewConsent } from '@inth/react-native';
  *
  * function Site() {
  *     const consent = useWebViewConsent({

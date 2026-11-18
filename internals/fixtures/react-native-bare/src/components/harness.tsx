@@ -16,13 +16,13 @@ import {
 	useIdentify,
 	useSaveConsents,
 	useSetOverrides,
-} from '@c15t/react-native';
+} from '@inth/react-native';
 import { useState } from 'react';
 
-import { useConsentSource } from '../c15t/consent-source';
-import type { FakeLogEntry, PermissionSample } from '../c15t/fake-native';
 import type { DemoLinks } from '../deep-links/use-deep-links';
 import { DEMO_VERB_LINES } from '../deep-links/verbs';
+import { useConsentSource } from '../inth/consent-source';
+import type { FakeLogEntry, PermissionSample } from '../inth/fake-native';
 import { Button, ButtonGrid, Card, Flag, Hint, Mono, Row, Toggle } from './ui';
 
 /** Clock time with milliseconds, the resolution the samples are taken at. */
@@ -189,7 +189,7 @@ export const DeepLinkCard = ({ links }: { readonly links: DemoLinks }) => (
 			</Hint>
 		))}
 		<Hint>
-			{DEMO_VERB_LINES.map((line) => `c15t-demo://${line}`).join('\n')}
+			{DEMO_VERB_LINES.map((line) => `inth-demo://${line}`).join('\n')}
 		</Hint>
 	</Card>
 );
