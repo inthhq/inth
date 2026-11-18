@@ -1,12 +1,22 @@
-import { policyRulePresets, custom } from '@c15t/core';
+import { policyRulePresets } from '@c15t/core';
+import type { KernelTransport, ProviderTransportFactory } from '@c15t/core';
 import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
 } from '@c15t/schema/types';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { createScriptTagConsentClient as createConsentClient } from '../script-tag-client';
+import { createScriptTagConsentClient } from '../script-tag-client';
+import { createTestingConsentClient as createConsentClient } from '../testing-global';
 import type { ConsentClient } from '../types';
+
+/** A transport factory that hands the client `transport`. */
+const custom = (
+	transport: Partial<KernelTransport>
+): ProviderTransportFactory =>
+	Object.assign(() => transport as KernelTransport, {
+		kind: 'custom' as const,
+	});
 
 const clients: ConsentClient[] = [];
 
@@ -24,9 +34,8 @@ const start = function start(
 ): ConsentClient {
 	const client = createConsentClient(
 		{
-			acknowledgeNoRecords: true,
 			consentCategories: ['measurement', 'marketing'],
-			policyRules: [
+			policy: [
 				{
 					...policyRulePresets.europeOptIn(),
 					categories: ['measurement', 'marketing'],
@@ -158,11 +167,11 @@ describe('createConsentClient', () => {
 		}
 	}
 
-	it('resolves an offline policy and asks for the banner', async () => {
+	it('resolves a testing policy and asks for the banner', async () => {
 		const client = start();
 		const snapshot = await client.ready();
 
-		expect(client.mode).toBe('offline');
+		expect(client.mode).toBe('testing');
 		expect(snapshot.activeUI).toBe('banner');
 		expect(snapshot.model).toBe('opt-in');
 		expect(client.hasConsented()).toBe(false);
@@ -181,7 +190,7 @@ describe('createConsentClient', () => {
 		const categories = ['marketing', 'experience', 'measurement'] as const;
 		const client = start({
 			consentCategories: [...categories],
-			policyRules: [
+			policy: [
 				{
 					...policyRulePresets.europeOptIn(),
 					categories: [...categories],
@@ -329,10 +338,13 @@ describe('createConsentClient', () => {
 
 	it('picks hosted mode from a backendURL and requires one for hosted', () => {
 		expect(() =>
-			createConsentClient({ mode: 'hosted' }, { pkg: 'test' })
+			createScriptTagConsentClient({ mode: 'hosted' }, { pkg: 'test' })
 		).toThrow(/backendURL/u);
+		expect(() => createScriptTagConsentClient({}, { pkg: 'test' })).toThrow(
+			/backendURL/u
+		);
 
-		const client = createConsentClient(
+		const client = createScriptTagConsentClient(
 			{ backendURL: 'https://example.test' },
 			{ pkg: 'test' }
 		);
@@ -343,21 +355,21 @@ describe('createConsentClient', () => {
 	it('resolves policy presets by name and picks one by country', async () => {
 		const german = start({
 			overrides: { country: 'DE' },
-			policyRules: ['europeOptIn', 'usPrivacyStatesOptOut', 'worldNone'],
+			policy: ['europeOptIn', 'usPrivacyStatesOptOut', 'worldNone'],
 		});
 		expect((await german.ready()).model).toBe('opt-in');
 		german.dispose();
 
 		const californian = start({
 			overrides: { country: 'US', region: 'CA' },
-			policyRules: ['europeOptIn', 'usPrivacyStatesOptOut', 'worldNone'],
+			policy: ['europeOptIn', 'usPrivacyStatesOptOut', 'worldNone'],
 		});
 		expect((await californian.ready()).model).toBe('opt-out');
 		californian.dispose();
 
 		const elsewhere = start({
 			overrides: { country: 'BR' },
-			policyRules: ['europeOptIn', 'usPrivacyStatesOptOut', 'worldNone'],
+			policy: ['europeOptIn', 'usPrivacyStatesOptOut', 'worldNone'],
 		});
 		const snapshot = await elsewhere.ready();
 		expect(snapshot.model).toBe('none');
@@ -366,17 +378,14 @@ describe('createConsentClient', () => {
 
 	it('rejects inherited object keys as preset names', () => {
 		expect(() =>
-			createConsentClient(
-				{ policyRules: ['constructor' as never] },
-				{ pkg: 'test' }
-			)
+			createConsentClient({ policy: ['constructor' as never] }, { pkg: 'test' })
 		).toThrow(/unknown policy preset/u);
 	});
 
 	it('rejects an unknown policy preset name', () => {
 		expect(() =>
 			createConsentClient(
-				{ policyRules: ['everywhereOptIn' as never] },
+				{ policy: ['everywhereOptIn' as never] },
 				{ pkg: 'test' }
 			)
 		).toThrow(/unknown policy preset/u);
@@ -602,7 +611,7 @@ describe('translations', () => {
 		);
 	});
 
-	it('offline mode renders the language named by overrides (data-language)', async () => {
+	it('testing mode renders the language named by overrides (data-language)', async () => {
 		const client = start({
 			i18n: { messages: german },
 			overrides: { language: 'de' },
@@ -617,7 +626,7 @@ describe('translations', () => {
 		expect(translations?.translations.common.acceptAll).toBe('Accept All');
 	});
 
-	it('offline setLanguage switches the copy when that language is available', async () => {
+	it('testing setLanguage switches the copy when that language is available', async () => {
 		const client = start({ i18n: { messages: german } });
 		expect((await client.ready()).translations?.language).toBe('en');
 

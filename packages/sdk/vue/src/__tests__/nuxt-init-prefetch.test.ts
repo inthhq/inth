@@ -333,8 +333,11 @@ describe('the script', () => {
 
 /** `hosted()` with a same-origin backend: the config that gets a script. */
 const HOSTED = { backendURL: '/api/c15t', mode: { type: 'hosted' as const } };
-/** The same backend in the default `manifest()` mode. */
-const HOSTED_BACKEND = { backendURL: '/api/c15t' };
+/** The same backend in `manifest()` mode. */
+const HOSTED_BACKEND = {
+	backendURL: '/api/c15t',
+	mode: { type: 'manifest' as const },
+};
 
 describe('pages whose request the server cannot know get no script', () => {
 	test.each([
@@ -343,7 +346,10 @@ describe('pages whose request the server cannot know get no script', () => {
 			"manifest({ resolve: 'browser' }), which sends no /init",
 			{ ...HOSTED_BACKEND, mode: { resolve: 'browser', type: 'manifest' } },
 		],
-		['offline(), which sends no request', { mode: { type: 'offline' } }],
+		[
+			'testing(), which sends no request',
+			{ mode: { type: 'testing' as const } },
+		],
 		[
 			'hosted() with init headers the script cannot send',
 			{
@@ -374,7 +380,7 @@ describe('pages whose request the server cannot know get no script', () => {
 		).toBeUndefined();
 	});
 
-	test("hosted() with an absolute or a same-origin backend gets one, the mode's first", () => {
+	test('the hosted backend with an absolute or a same-origin URL gets one', () => {
 		expect(
 			buildInitPrefetchTag({
 				config: {
@@ -384,15 +390,9 @@ describe('pages whose request the server cannot know get no script', () => {
 				shell: true,
 			})
 		).toContain('"backendURL":"https://consent.example/"');
-		expect(
-			buildInitPrefetchTag({
-				config: {
-					backendURL: 'https://consent.example/',
-					mode: { backendURL: '/api/c15t', type: 'hosted' },
-				},
-				shell: true,
-			})
-		).toContain('"backendURL":"/api/c15t"');
+		expect(buildInitPrefetchTag({ config: HOSTED, shell: true })).toContain(
+			'"backendURL":"/api/c15t"'
+		);
 	});
 
 	test('a nonce cannot close its attribute', () => {

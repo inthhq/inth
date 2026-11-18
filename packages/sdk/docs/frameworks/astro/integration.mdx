@@ -47,7 +47,7 @@ Your Inth or self-hosted backend. The browser saves consent there with
 `POST /subjects`, `hosted()` asks its `/init`, and `manifest()` reads
 `${backendURL}/manifest`. It defaults to `PUBLIC_C15T_BACKEND_URL`, then
 `PUBLIC_INTH_PROJECT_URL`, read from the environment or a `.env` file in the
-project root when `astro.config.mjs` loads. A `hosted({ backendURL })` of its own wins over both.
+project root when `astro.config.mjs` loads.
 
 On the server, a relative backend URL or `manifestURL`, such as `/api/self-host`,
 resolves against the URL Astro gives the request, `Astro.url`. c15t does not
@@ -65,7 +65,7 @@ integration uses `manifest()`.
 | `manifest({ source: 'runtime' })` | On your server, from the policy fetched and cached at runtime | A server adapter and a backend URL |
 | `manifest({ resolve: 'browser' })` | In the browser, from the manifest | A backend URL. Works on static output: the integration prerenders `${routePrefix}/manifest` |
 | `hosted()` | At your backend's `/init`, from the server on request-rendered pages and from the browser otherwise | A backend URL |
-| `local()` | In the browser and on your server, with no backend | Nothing. Not recommended for production environments. |
+| `testing()` | In the browser and on your server, with no backend | Nothing. Tests only; throws in production builds. |
 
 `manifest()` accepts:
 
@@ -84,7 +84,7 @@ integration uses `manifest()`.
 | `backendURL` | `string` | Backend base URL, in place of the top-level `backendURL`. Absolute, or same-origin such as `/api/self-host` |
 | `headers` | `Record<string, string>` | Extra headers sent with `/init` from the server and the browser. From the server, only geography, language and privacy-signal headers are sent |
 
-`local()` accepts `policyRules`, the rules to resolve locally. Without them
+`testing()` from `c15t/astro/testing` accepts `policy`, the rules to resolve. Without them
 it resolves the recommended rule pack. Choices persist in the visitor's cookie
 and localStorage only, and there are no consent records.
 
@@ -104,7 +104,7 @@ changes after it loads, such as after a language change, asks it again.
 
 The route renders on demand, so `astro build` with `manifest()` needs a server
 adapter. `manifest({ resolve: 'browser' })` on static output prerenders only
-`${routePrefix}/manifest`. `hosted()` and `local()` inject nothing. Set
+`${routePrefix}/manifest`. `hosted()` and `testing()` inject nothing. Set
 `routePrefix: false` to inject nothing in `manifest()` mode. The browser then
 asks the backend's `/init`, not a route of your own. See
 [serve the routes yourself](/docs/frameworks/astro/server#serve-the-routes-yourself).
@@ -114,7 +114,6 @@ asks the backend's `/init`, not a route of your own. See
 | Option | Type | Default | Effect |
 | --- | --- | --- | --- |
 | `onBuildError` | `'fail' \| 'runtime'` | Unset | What a failed build-time manifest fetch does in `manifest()` mode. Unset, `astro build` stops and `astro dev` logs a warning, and the server fetches the policy at runtime. `'fail'` stops both. `'runtime'` lets both continue. A missing backend URL counts as a failed fetch. The `C15T_ON_BUILD_ERROR` environment variable overrides it. See [build-time manifests](/docs/frameworks/astro/rendering#bundle-the-manifest-during-builds). |
-| `reportSessions` | `boolean` | `true` | In `manifest()` mode, reports each visitor the server resolves to the backend, so visitor counts stay complete. |
 | `consentCategories` | `AllConsentNames[]` | Inferred from scripts and the policy | Categories the banner and dialog offer |
 | `scripts` | `Script[]` | None | Scripts without callbacks, loaded when their category is allowed. See [Scripts](/docs/frameworks/astro/scripts) |
 | `vendors` | `Vendor[]` | None | Vendors the dialog lists with their own switch inside a category. Merged with vendors from the backend manifest. See [Vendor consent](/docs/frameworks/astro/vendor-consent) |
@@ -207,11 +206,11 @@ one copy. Keep it small, because it loads on every page.
 
 | Message contains | Cause |
 | --- | --- |
-| `` `mode` must be manifest(), hosted() or local() `` | `mode` is a transport function, or not built with a helper from `c15t/astro` |
+| `` `mode` must be manifest(), hosted() or testing() `` | `mode` is a transport function, or not built with a helper from `c15t/astro` |
 | `is a function` | A serialized option, such as a `scripts` entry from `@c15t/integrations`, holds a function. Move it to `src/c15t.client.ts` |
 | `manifest() needs a backend URL` | No `backendURL`, `PUBLIC_C15T_BACKEND_URL` or `PUBLIC_INTH_PROJECT_URL` |
 | `manifest({ snapshot }) still needs a backend URL` | A snapshot, but no `backendURL`, `PUBLIC_C15T_BACKEND_URL` or `PUBLIC_INTH_PROJECT_URL`. Saves go to the backend whatever `routePrefix` is |
-| `hosted() needs a backend URL` | No `backendURL`, `hosted({ backendURL })`, `PUBLIC_C15T_BACKEND_URL` or `PUBLIC_INTH_PROJECT_URL` |
+| `hosted() needs a backend URL` | No `backendURL`, `PUBLIC_C15T_BACKEND_URL` or `PUBLIC_INTH_PROJECT_URL` |
 | `gives the server no manifest to fetch` | `backendURL: ''` without `manifest({ manifestURL })` or `manifest({ snapshot })` |
 | `` `routePrefix` must be a path `` | `routePrefix` is not `false` and does not start with `/` |
 | ``@c15t/astro: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'.`` | `routePrefix` is `'/'`. A catch-all route at the site root would answer every page |

@@ -8,10 +8,10 @@ import {
 	ConsentDialog,
 	ConsentProvider,
 	ConsentRoot,
-	custom,
 } from '@c15t/tanstack-start';
 import type {
 	ConsentProviderOptions,
+	WithBackendURL,
 	ConsentRootProps,
 } from '@c15t/tanstack-start';
 import type { ConsentState } from '@c15t/tanstack-start/server';
@@ -21,6 +21,10 @@ import type { ReactNode } from 'react';
 import { TanstackBenchmarkProbe } from './probe';
 import { getState } from './state';
 import type { TanstackBenchScenario } from './state';
+
+/** A transport factory that hands the provider `transport`. */
+const customMode = <Transport,>(transport: Transport) =>
+	Object.assign(() => transport, { kind: 'custom' as const });
 
 const BENCH_BACKEND_URL = '/api/bench-consent';
 
@@ -34,8 +38,9 @@ const consentCategories = [
 
 const createOptions = function createOptions(
 	scenario: TanstackBenchScenario
-): ConsentProviderOptions {
+): WithBackendURL<ConsentProviderOptions> {
 	return {
+		backendURL: BENCH_BACKEND_URL,
 		callbacks: {
 			onChoiceRecorded() {
 				const state = getState(scenario);
@@ -51,7 +56,7 @@ const createOptions = function createOptions(
 			},
 		},
 		consentCategories,
-		mode: hosted({ backendURL: BENCH_BACKEND_URL }),
+		mode: hosted(),
 		theme: {
 			motion: {
 				duration: {
@@ -129,7 +134,7 @@ export const TanstackManifestClientBenchmarkProvider = ({
 		<ConsentProvider
 			options={{
 				...createOptions(scenario),
-				mode: custom(transport),
+				mode: customMode(transport),
 			}}
 		>
 			<BenchmarkContents scenario={scenario}>{children}</BenchmarkContents>

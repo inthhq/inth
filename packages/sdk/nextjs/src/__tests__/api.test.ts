@@ -12,6 +12,12 @@ import type { NextRouteHandler } from '../api';
 import { defineConsentConfig } from '../config';
 import { MANIFEST_FIXTURE } from './manifest-fixture';
 
+/** The requests that fetch policy, leaving out the session reports. */
+const policyCalls = (spy: { mock: { calls: unknown[][] } }): unknown[] =>
+	spy.mock.calls
+		.map(([url]) => url)
+		.filter((url) => !String(url).endsWith('/sessions'));
+
 /** Calls a fixed-mount route handler, which reads the last URL segment. */
 const call = (handler: NextRouteHandler, url: string, init?: RequestInit) =>
 	handler(new Request(url, init), { params: Promise.resolve({}) });
@@ -38,7 +44,6 @@ describe('@c15t/nextjs/api', () => {
 		const { GET } = createConsentRoute({
 			backendURL: 'https://consent.example.com',
 			fetch,
-			reportSessions: false,
 			snapshot: MANIFEST_FIXTURE,
 		});
 		const served = await call(GET, 'https://app.example.com/api/c15t/manifest');
@@ -63,7 +68,7 @@ describe('@c15t/nextjs/api', () => {
 				});
 			})
 		);
-		expect(fetch).not.toHaveBeenCalled();
+		expect(policyCalls(fetch)).toEqual([]);
 	});
 
 	test('GET answers init and the manifest, with the Data Cache hint', async () => {
@@ -72,7 +77,6 @@ describe('@c15t/nextjs/api', () => {
 			backendURL: 'https://consent.example.com',
 			fetch,
 			manifestRevalidateSeconds: 120,
-			reportSessions: false,
 		});
 
 		const init = await call(GET, 'https://app.example.com/api/c15t/init', {
@@ -89,7 +93,7 @@ describe('@c15t/nextjs/api', () => {
 			policyResolution: { policyId: 'eu-opt-in' },
 		});
 		expect(served.status).toBe(304);
-		expect(fetch).toHaveBeenCalledTimes(1);
+		expect(policyCalls(fetch)).toHaveLength(1);
 		expect(fetch).toHaveBeenCalledWith(
 			'https://consent.example.com/manifest',
 			expect.objectContaining({ next: { revalidate: 120 } })

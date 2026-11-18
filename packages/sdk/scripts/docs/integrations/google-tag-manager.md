@@ -230,7 +230,8 @@ export const appConfig: ApplicationConfig = {
 		provideZonelessChangeDetection(),
 		provideC15t({
 			// Keep the mode and other options from your quickstart.
-			mode: hosted({ backendURL: 'https://your-project.inth.app' }),
+			backendURL: 'https://your-project.inth.app',
+			mode: hosted(),
 			scripts,
 		}),
 	],
@@ -426,9 +427,6 @@ To add it:
      serves the script with its backend URL already set.
    * `https://cdn.jsdelivr.net/npm/@c15t/browser@<version>/dist/c15t.js`,
      with **Backend URL** set to your backend. The tag fails without it.
-   * `https://cdn.jsdelivr.net/npm/@c15t/browser@<version>/dist/c15t.local.js`
-     for local mode, with **Backend URL** left blank. This file needs
-     version 3.2.0 or later; earlier versions call it `c15t.offline.js`.
 4. Under **Consent categories**, tick each purpose your container's tags
    serve. c15t asks the visitor about these, besides strictly necessary.
    Analytics and Marketing are ticked by default. With none ticked, c15t

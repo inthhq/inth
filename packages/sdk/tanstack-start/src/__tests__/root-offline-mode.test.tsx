@@ -6,12 +6,12 @@
  * first-load JavaScript is checked on the built package in
  * `client-chunks.test.ts`.
  */
-import { offline } from '@c15t/core/modes';
 import { useActiveUI, useModel } from '@c15t/react';
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { ConsentRoot } from '../root';
+import { testing } from '../testing';
 
 const PolicyStatus = () => {
 	const model = useModel();
@@ -32,7 +32,7 @@ describe('ConsentRoot offline mode', () => {
 					persistence={false}
 					state={{
 						initialOverrides: { country: 'DE' },
-						mode: offline({ acknowledgeNoRecords: true }),
+						mode: testing(),
 					}}
 				>
 					<PolicyStatus />
@@ -62,7 +62,7 @@ describe('ConsentRoot offline mode', () => {
 						<PolicyStatus />
 					</ConsentRoot>
 				)
-			).rejects.toThrow('manifest() needs a backend URL');
+			).rejects.toThrow('`backendURL` is required');
 		} finally {
 			error.mockRestore();
 		}

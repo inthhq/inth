@@ -7,7 +7,8 @@ import { afterEach, assert, beforeEach, expect, test, vi } from 'vitest';
 import { cdp } from 'vitest/browser';
 
 import { ConsentBanner } from '../components/prompt';
-import { ConsentProvider, ConsentTheme, offline } from '../index';
+import { ConsentProvider, ConsentTheme } from '../index';
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 beforeEach(() => {
@@ -22,7 +23,7 @@ test('the provider renders no theme stylesheet of its own', () => {
 	const html = renderToString(
 		<ConsentProvider
 			options={{
-				mode: offline({ acknowledgeNoRecords: true }),
+				mode: testing(),
 				persistence: false,
 				theme: { colors: { primary: '#008080' } },
 			}}
@@ -38,7 +39,7 @@ test('the provider renders no theme stylesheet of its own', () => {
 test('renders custom theme CSS before the banner and preserves it through hydration', async () => {
 	const options = {
 		disableAnimation: true,
-		mode: offline({ acknowledgeNoRecords: true }),
+		mode: testing(),
 		nonce: 'ssr-theme-nonce',
 		persistence: false as const,
 		prefetch: policyFixture(),
@@ -139,7 +140,7 @@ test.each([
 		const options = {
 			colorScheme,
 			disableAnimation: true,
-			mode: offline({ acknowledgeNoRecords: true }),
+			mode: testing(),
 			persistence: false as const,
 			prefetch: policyFixture(),
 			theme: {
@@ -236,7 +237,7 @@ test.each(['</style>', '</StYlE>', '</style >'])(
 				<ConsentTheme theme={{ typography: { fontFamily } }} />
 				<ConsentProvider
 					options={{
-						mode: offline({ acknowledgeNoRecords: true }),
+						mode: testing(),
 						persistence: false,
 						prefetch: policyFixture(),
 					}}

@@ -1,17 +1,17 @@
+import { benchPolicy } from '@c15t/benchmarking/bench-policy';
 import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogTrigger,
 	ConsentProvider,
-	offline,
 } from '@c15t/react';
 
 export const App = () => (
 	<ConsentProvider
 		options={{
 			disableAnimation: true,
-			mode: offline({
-				policyRules: [
+			mode: benchPolicy({
+				policy: [
 					{
 						id: 'repro-opt-in',
 						match: { fallback: true, isDefault: true },

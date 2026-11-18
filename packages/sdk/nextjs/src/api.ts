@@ -64,17 +64,6 @@ export interface NextConsentRouteOptions extends ConsentSourceOptions {
 	onBackgroundRevalidate?: (revalidation: Promise<void>) => void;
 
 	/**
-	 * Report each init the route resolves to the backend's `POST /sessions`,
-	 * server-to-server and detached from the response, so the backend still
-	 * counts visitors it never served `/init` to. The report is handed to
-	 * `onBackgroundRevalidate` like a manifest refresh. Set `false` to send
-	 * none.
-	 *
-	 * @default true
-	 */
-	reportSessions?: boolean;
-
-	/**
 	 * Loads the Global Vendor List for IAB policies. Defaults to the shared
 	 * server cache, with a deadline on the upstream request.
 	 */
@@ -142,7 +131,6 @@ const createHandler = function createHandler(options: NextConsentRouteOptions) {
 				manifestFetchInit: { next } as NextFetchInit,
 				manifestURL: source.manifestURL,
 				proxy: options.proxy,
-				reportSessions: options.reportSessions,
 				trustForwardedHeaders: options.trustForwardedHeaders,
 			});
 		}

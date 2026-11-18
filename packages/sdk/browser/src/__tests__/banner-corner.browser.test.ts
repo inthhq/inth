@@ -36,7 +36,6 @@ describe.each([
 			// Offline mode renders a language only when it has copy for it.
 			i18n: { messages: { he: { cookieBanner: { title: 'פרטיות' } } } },
 			iab,
-			mode: 'offline',
 			overrides: { country: 'DE', language: 'he' },
 			ui: { disableAnimation: true },
 		});

@@ -5,7 +5,8 @@ import react from '@astrojs/react';
 import svelte from '@astrojs/svelte';
 import vue from '@astrojs/vue';
 import { defineConfig } from 'astro/config';
-import c15t, { hosted, offline } from 'c15t/astro';
+import c15t, { hosted } from 'c15t/astro';
+import { testing } from 'c15t/astro/testing';
 
 import { demoGvl, demoIabPolicy } from './demo-gvl.mjs';
 import { testBackend } from './test-backend.mjs';
@@ -45,8 +46,13 @@ const experiment = process.env.C15T_EXPERIMENT === '1';
 const iab = process.env.C15T_IAB === '1';
 
 // The acceptance suite's mock backend, when it sets one. Without it the
-// showcase runs offline.
-const { url: backendURL } = testBackend('url');
+// showcase resolves its rules with `testing()` in `astro dev`. `testing()`
+// refuses a production build, so `astro build` without a backend asks a
+// placeholder backend instead and renders no server-side banner.
+const testBackendURL = testBackend('url').url;
+const production = process.env.NODE_ENV === 'production';
+const backendURL =
+	testBackendURL ?? (production ? 'https://your-project.inth.app' : undefined);
 
 // Built up rather than spread conditionally: the IAB options and the mode
 // travel together — a TCF policy pack with no vendor list resolves a
@@ -54,15 +60,13 @@ const { url: backendURL } = testBackend('url');
 const iabOptions = iab
 	? {
 			iab: { cmpId: 160, gvl: demoGvl },
-			mode: offline({
-				acknowledgeNoRecords: true,
-				policyRules: [demoIabPolicy],
+			mode: testing({
+				policy: [demoIabPolicy],
 			}),
 		}
 	: {
-			mode: offline({
-				acknowledgeNoRecords: true,
-				policyRules: [
+			mode: testing({
+				policy: [
 					{
 						id: 'default',
 						match: { fallback: true, isDefault: true },
@@ -72,6 +76,12 @@ const iabOptions = iab
 				],
 			}),
 		};
+
+// A real backend, when there is one, replaces `testing()` with hosted mode.
+const consentOptions = { ...iabOptions };
+if (backendURL && (!iab || production)) {
+	Object.assign(consentOptions, { backendURL, mode: hosted() });
+}
 
 // Only the selected framework's Astro integration is listed. Loading all
 // three would let a stray chunk from the others reach the page and make the
@@ -114,13 +124,12 @@ export default defineConfig({
 				cookiePolicy: { href: '/cookies', label: 'Cookie Policy' },
 				privacyPolicy: { href: '/privacy', label: 'Privacy Policy' },
 			},
-			// `offline()` resolves policies locally, so the demo runs with no
+			// `testing()` resolves policies locally, so the demo runs with no
 			// backend. Swap in `hosted()` or `manifest()` and a `backendURL`
 			// to talk to a real one. With `C15T_IAB=1` it also carries the
 			// vendor list the server needs to render the IAB banner at all;
 			// hosted and manifest mode get theirs from `/init`.
-			...iabOptions,
-			mode: backendURL && !iab ? hosted({ backendURL }) : iabOptions.mode,
+			...consentOptions,
 			scripts: [
 				{
 					category: 'measurement',

@@ -56,7 +56,13 @@ export const createServerRoot = function createServerRoot(input: {
 		transport: ProviderTransportFactory
 	) => ConsentProviderRuntimeOptions;
 }): ServerRoot {
-	const transport = clientMode(input.mode ?? input.state.mode, input.state);
+	const stateMode = input.state.mode;
+	// No mode at all is `manifest()`, as in `c15tHandle()`.
+	const transport = clientMode(
+		input.mode ?? stateMode,
+		input.state,
+		'@c15t/svelte/testing'
+	);
 	const runtime = createOwnedRuntime(input.runtimeOptions(transport));
 	const planned = planServerBoot(runtime, input.options);
 	return {

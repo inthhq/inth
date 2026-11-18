@@ -52,7 +52,6 @@ export const supportsEarlyStart = function supportsEarlyStart(
 			options.consentSource ||
 			options.manifest ||
 			options.manifestURL ||
-			options.policyRules ||
 			options.vendors ||
 			options.user ||
 			options.iab

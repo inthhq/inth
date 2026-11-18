@@ -11,30 +11,10 @@
 				"$source": "projectName"
 			}
 		},
-		"mode": {
-			"type": "string",
-			"description": "Where consent policies come from: a hosted backend such as Inth, or local mode in the browser with no backend.",
-			"enum": ["hosted", "local"],
-			"default": "hosted",
-			"x-prompt": {
-				"message": "Where should c15t get consent policies from?",
-				"type": "list",
-				"items": [
-					{
-						"value": "hosted",
-						"label": "A hosted backend, such as an Inth project (recommended)"
-					},
-					{
-						"value": "local",
-						"label": "Local mode: policies resolve in the browser, no backend and no consent records"
-					}
-				]
-			}
-		},
 		"backendUrl": {
 			"type": "string",
-			"description": "The backend URL for hosted mode, such as your Inth project's URL. Leave it empty to add a placeholder you replace later.",
-			"x-prompt": "Backend URL for hosted mode (leave empty for a placeholder, ignored in local mode):"
+			"description": "The backend URL, such as your Inth project's URL. Leave it empty to add a placeholder you replace later.",
+			"x-prompt": "Backend URL (leave empty for a placeholder):"
 		},
 		"components": {
 			"type": "boolean",

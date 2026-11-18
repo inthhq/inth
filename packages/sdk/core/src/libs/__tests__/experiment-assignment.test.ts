@@ -5,11 +5,11 @@ import { policyRulePresets } from '@c15t/schema/types';
 import type { PolicyRule } from '@c15t/schema/types';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import { createExperimentController } from '../../experiment';
 import { createConsentKernel } from '../../kernel';
 import { createConsentRuntime } from '../../runtime';
 import type { ConsentRuntimeOptions } from '../../runtime';
-import { custom } from '../../transports/mode';
 import { createOfflineTransport } from '../../transports/offline';
 import type { KernelEvent, KernelTransport } from '../../types';
 import type { ConsentExperiment, ExperimentAssignment } from '../experiment';
@@ -163,7 +163,7 @@ describe('createExperimentController', () => {
 			.mockImplementation(() => undefined);
 		const runtime = createConsentRuntime({
 			experiment: wallExperiment,
-			mode: custom(transport),
+			mode: transportMode(transport),
 		});
 		const shown: KernelEvent[] = [];
 		const recorded: KernelEvent[] = [];
@@ -330,7 +330,7 @@ describe('an experiment whose banner asks about no categories', () => {
 		const runtime = createConsentRuntime({
 			consentCategories,
 			experiment: { ...experiment, arm: 'bar' },
-			mode: custom(sequencedTransport([[permissiveRule]])),
+			mode: transportMode(sequencedTransport([[permissiveRule]])),
 		});
 		const shown: KernelEvent[] = [];
 		const recorded: KernelEvent[] = [];

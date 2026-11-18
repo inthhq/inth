@@ -11,12 +11,12 @@
  *
  * @internal
  */
-import type { ConsentMode } from '@c15t/core/modes';
+import type { NuxtMode } from '../nuxt-mode';
 
 /** The options the build used. */
 export interface BuiltOptions {
 	/** The mode as data, without its snapshot. */
-	mode: ConsentMode;
+	mode: NuxtMode;
 	/** Where the consent route is mounted, or `false` for none. */
 	routePrefix: string | false;
 }

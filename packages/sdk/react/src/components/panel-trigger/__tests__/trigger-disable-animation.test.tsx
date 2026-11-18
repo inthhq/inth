@@ -11,7 +11,8 @@ import {
 	ConsentDialogTrigger,
 	ConsentDialogTriggerToolbar,
 } from '~/components/panel-trigger';
-import { offline } from '~/transports/offline';
+
+import { testing } from '../../../testing';
 
 const longestTransition = (element: Element | null): number =>
 	element
@@ -28,7 +29,7 @@ describe.each([false, true])('disableAnimation %s', (disableAnimation) => {
 			<ConsentProvider
 				options={{
 					disableAnimation,
-					mode: offline({ acknowledgeNoRecords: true }),
+					mode: testing(),
 				}}
 			>
 				<ConsentDialogTrigger showWhen="always" />

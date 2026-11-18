@@ -11,8 +11,10 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { KernelContext } from '../context';
-import { ConsentProvider, custom, offline, useSetLanguage } from '../index';
+import { ConsentProvider, useSetLanguage } from '../index';
 import type { ConsentProviderOptions } from '../provider';
+import { testing } from '../testing';
+import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 
 const messages = {
@@ -69,7 +71,7 @@ describe('useSetLanguage', () => {
 				},
 			})
 		);
-		await renderProvider({ mode: custom({ init }) });
+		await renderProvider({ mode: transportMode({ init }) });
 		await vi.waitFor(() => expect(init).toHaveBeenCalledTimes(1));
 
 		setLanguage('fr');
@@ -88,7 +90,7 @@ describe('useSetLanguage', () => {
 				),
 			})
 		);
-		await renderProvider({ mode: custom({ init }) });
+		await renderProvider({ mode: transportMode({ init }) });
 		setLanguage('de');
 		await vi.waitFor(() => expect(init).toHaveBeenCalledTimes(2));
 
@@ -110,7 +112,11 @@ describe('useSetLanguage', () => {
 		);
 		await render(
 			<ConsentProvider
-				options={{ enabled: false, mode: custom({ init }), persistence: false }}
+				options={{
+					enabled: false,
+					mode: transportMode({ init }),
+					persistence: false,
+				}}
 			>
 				<Capture />
 			</ConsentProvider>
@@ -132,7 +138,7 @@ describe('offline() language', () => {
 	test('useSetLanguage switches to the copy for that language', async () => {
 		await renderProvider({
 			i18n: { messages },
-			mode: offline({ acknowledgeNoRecords: true }),
+			mode: testing(),
 		});
 		expect(title()).toBe('Privacy');
 
@@ -145,7 +151,7 @@ describe('offline() language', () => {
 	test('a language with no copy keeps the default copy', async () => {
 		await renderProvider({
 			i18n: { messages },
-			mode: offline({ acknowledgeNoRecords: true }),
+			mode: testing(),
 		});
 		setLanguage('de');
 		await vi.waitFor(() => expect(title()).toBe('Datenschutz'));
@@ -159,7 +165,7 @@ describe('offline() language', () => {
 	test('overrides.language picks the copy for that language', async () => {
 		await renderProvider({
 			i18n: { messages },
-			mode: offline({ acknowledgeNoRecords: true }),
+			mode: testing(),
 			overrides: { language: 'de' },
 		});
 
@@ -173,7 +179,7 @@ describe('offline() language', () => {
 	test('an Accept-Language prefetch does not switch the copy', async () => {
 		await renderProvider({
 			i18n: { messages },
-			mode: offline({ acknowledgeNoRecords: true }),
+			mode: testing(),
 			prefetch: acceptLanguagePrefetch(),
 		});
 
@@ -184,7 +190,7 @@ describe('offline() language', () => {
 	test('a pending Accept-Language prefetch does not switch the copy', async () => {
 		await renderProvider({
 			i18n: { messages },
-			mode: offline({ acknowledgeNoRecords: true }),
+			mode: testing(),
 			prefetch: Promise.resolve(acceptLanguagePrefetch()),
 		});
 
@@ -205,7 +211,7 @@ describe('offline() language', () => {
 					fr: { cookieBanner: { title: 'Confidentialité' } },
 				},
 			},
-			mode: offline({ acknowledgeNoRecords: true }),
+			mode: testing(),
 			prefetch: acceptLanguagePrefetch(),
 		});
 

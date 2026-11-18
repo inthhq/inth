@@ -12,6 +12,7 @@
 		ProviderOptionsInput,
 		ProviderRuntimeProps,
 	} from '../provider-options';
+	import { selectedMode } from '../select-mode';
 	import type { ConsentManagerOptions } from '../types';
 	import ProviderView from './provider-view.svelte';
 
@@ -34,7 +35,14 @@
 	const externalRuntime = untrack(() => props.runtime);
 	const ownedRuntime: ConsentProviderRuntime | undefined =
 		externalRuntime === undefined
-			? untrack(() => createOwnedRuntime(runtimeOptionsFor(options)))
+			? untrack(() =>
+					createOwnedRuntime(
+						runtimeOptionsFor({
+							...options,
+							mode: selectedMode(options),
+						})
+					)
+				)
 			: undefined;
 	// Names the on-demand chunks this page starts with, so `c15tHandle` can
 	// preload them from the server-rendered head. The same on the server and

@@ -7,6 +7,7 @@ import { expectTypeOf } from 'vitest';
 
 import type { hosted, manifest } from '../src/module';
 import type { ModuleOptions } from '../src/nuxt-options';
+import type { testing } from '../src/testing';
 
 // Module options accept every runtime option that survives JSON.
 expectTypeOf<{
@@ -64,7 +65,12 @@ expectTypeOf<{
 	mode: ReturnType<typeof manifest>;
 	routePrefix: false;
 }>().toExtend<ModuleOptions>();
-expectTypeOf<{ mode: ReturnType<typeof hosted> }>().toExtend<ModuleOptions>();
+expectTypeOf<{
+	mode: ReturnType<typeof testing>;
+}>().toExtend<ModuleOptions>();
+expectTypeOf<{
+	mode: ReturnType<typeof hosted>;
+}>().toExtend<ModuleOptions>();
 export const wrongRoutePrefix: ModuleOptions = {
 	// @ts-expect-error A route prefix is a path or `false`.
 	routePrefix: true,
@@ -72,7 +78,7 @@ export const wrongRoutePrefix: ModuleOptions = {
 export const modeInAppConfig = defineAppConfig({
 	c15t: {
 		// @ts-expect-error The build reads `mode` from nuxt.config.ts only.
-		mode: { type: 'hosted' },
+		mode: { type: 'manifest' },
 	},
 });
 

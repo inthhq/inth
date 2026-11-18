@@ -78,10 +78,10 @@
 			"import": "./dist/hosted.js",
 			"default": "./dist/hosted.js"
 		},
-		"./offline": {
-			"types": "./dist-types/offline.d.ts",
-			"import": "./dist/offline.js",
-			"default": "./dist/offline.js"
+		"./testing": {
+			"types": "./dist-types/testing.d.ts",
+			"import": "./dist/testing.js",
+			"default": "./dist/testing.js"
 		},
 		"./headless": {
 			"types": "./dist-types/headless.d.ts",
@@ -104,8 +104,7 @@
 		"./c15t.commit.js": "./dist/c15t.commit.js",
 		"./c15t.records.js": "./dist/c15t.records.js",
 		"./c15t.dialog.js": "./dist/c15t.dialog.js",
-		"./c15t.local.js": "./dist/c15t.local.js",
-		"./c15t.offline.js": "./dist/c15t.offline.js",
+		"./c15t.testing.js": "./dist/c15t.testing.js",
 		"./c15t.headless.js": "./dist/c15t.headless.js",
 		"./c15t.devtools.js": "./dist/c15t.devtools.js",
 		"./c15t.gpp.js": "./dist/c15t.gpp.js",

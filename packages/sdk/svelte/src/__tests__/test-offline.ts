@@ -1,5 +1,6 @@
-import { offline } from '@c15t/core';
 import type { PolicyRule } from '@c15t/schema/types';
+
+import { offlineMode } from './fixtures/transport-mode';
 
 /**
  * Opt-in choice rule matching every visitor. Component tests mount it so a
@@ -12,6 +13,5 @@ export const TEST_OPT_IN_RULE: PolicyRule = {
 	prompt: 'choice',
 };
 
-/** Offline mode with the shared opt-in rule, for tests that render surfaces. */
-export const testOffline = () =>
-	offline({ acknowledgeNoRecords: true, policyRules: [TEST_OPT_IN_RULE] });
+/** A transport with the shared opt-in rule, for tests that render surfaces. */
+export const testOffline = () => offlineMode([TEST_OPT_IN_RULE]);

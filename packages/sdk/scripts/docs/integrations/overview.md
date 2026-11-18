@@ -7,6 +7,8 @@ seoDescription: Connect analytics, ad pixels, chat widgets and embeds to your
   cookie banner. c15t has helpers for Google Tag Manager, Meta Pixel, PostHog,
   Segment and Hotjar.
 group: integrations
+lastModified: "2026-11-17T01:01:48Z"
+lastAuthor: Kaylee
 ---
 
 Find a vendor below for its web and mobile setup. Browser script helpers live in

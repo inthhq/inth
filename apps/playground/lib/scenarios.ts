@@ -4,7 +4,7 @@
  * Every scenario pairs a location with a policy pack so the demo can show
  * how c15t resolves policies by geography. The same definitions drive:
  *
- * - The client demo in offline mode (`offline({ policyRules })`)
+ * - The client demo in offline mode (`testing({ policyRules })`)
  */
 
 import type { Translations } from '@c15t/translations';
@@ -176,7 +176,7 @@ export interface DemoScenario {
 	/** Host presentation the scenario sets explicitly, if any. */
 	presentation?: ConsentPresentation;
 	/**
-	 * Resolve through `recommendedPolicyRules()`, the pack a bare `offline()`
+	 * Resolve through `recommendedPolicyRules()`, the pack a bare `testing()`
 	 * applies, instead of the scenario's policy plus the demo fallback. The
 	 * scenario's `policy` is then the rule the pack is expected to select.
 	 */

@@ -10,9 +10,9 @@ import type { ConsentDraftHandle } from '../index';
 import {
 	ConsentDraftProvider,
 	ConsentProvider,
-	offline,
 	useConsentDraft,
 } from '../index';
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 const createRuntime = function createRuntime(): ConsentRuntime {
@@ -23,7 +23,7 @@ const createRuntime = function createRuntime(): ConsentRuntime {
 			'measurement',
 			'marketing',
 		],
-		mode: offline({ acknowledgeNoRecords: true }),
+		mode: testing(),
 		persistence: false,
 		pkg: '@c15t/react-external-draft-test',
 		prefetch: policyFixture({ experience: false, measurement: false }),

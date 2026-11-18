@@ -6,17 +6,26 @@
  */
 import { describe, expect, test, vi } from 'vitest';
 
-import { custom } from '../../transports/mode';
+import { transportMode } from '../../__tests__/fixtures/transport-mode';
+import type { ProviderTransportFactory } from '../../transports/mode';
 import type { KernelTransport } from '../../types';
 import { createConsentRuntime } from '../index';
 import type { ConsentRuntimeGPPFactory, ConsentRuntimeOptions } from '../types';
+
+/**
+ * Options a test passes over the defaults. Its mode is a transport factory,
+ * so the merged options still name their backend the way an entry point must.
+ */
+type RuntimeOverrides = Partial<
+	ConsentRuntimeOptions & { mode: ProviderTransportFactory }
+>;
 
 const transport: KernelTransport = {
 	init: vi.fn().mockResolvedValue({}),
 	save: vi.fn().mockResolvedValue({ ok: true }),
 };
 
-const setup = function setup(options: Partial<ConsentRuntimeOptions> = {}) {
+const setup = function setup(options: RuntimeOverrides = {}) {
 	const dispose = vi.fn();
 	const createGPP = vi.fn<ConsentRuntimeGPPFactory>(() => ({ dispose }));
 	const loadGPP = vi.fn(() => Promise.resolve({ createGPP }));
@@ -25,7 +34,7 @@ const setup = function setup(options: Partial<ConsentRuntimeOptions> = {}) {
 		callbacks: { onError },
 		gpp: true,
 		loadGPP,
-		mode: custom(transport),
+		mode: transportMode(transport),
 		...options,
 	});
 	return { createGPP, dispose, loadGPP, onError, runtime };

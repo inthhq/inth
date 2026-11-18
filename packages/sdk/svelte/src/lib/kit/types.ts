@@ -10,6 +10,12 @@ import type { ConsentState } from '../server/types';
 export type { ConsentRequestOptions, ConsentState } from '../server/types';
 
 /**
+ * How a visitor is resolved: `manifest()` (a handle with no mode),
+ * `hosted()` or `testing()`. @internal
+ */
+export type KitMode = ConsentMode;
+
+/**
  * What {@link c15tHandle} stores on `event.locals.c15t`.
  *
  * `config` is the serializable {@link ConsentState} read from the cookie
@@ -24,7 +30,7 @@ export interface C15tLocals {
 	/** Normalized country / region / language / GPC for this request. */
 	inputs: ConsentRequestInputs;
 	/** How `loadConsent` resolves the visitor. */
-	mode: ConsentMode;
+	mode: KitMode;
 	/** The c15t backend, when the handle was given one. */
 	backendURL?: string;
 	/** Prefix of the app's consent route, such as `/api/c15t`. */

@@ -27,7 +27,7 @@ keeps every default you leave out:
 
 <include src="../../shared/examples/javascript/translations.mdx" />
 
-This example runs in local mode, so the German copy shows as written. With a
+This example runs with `testing()`, so the German copy shows as written. With a
 backend, the `/init` response, a server prefetch or the manifest carries your
 Inth project's copy for the visitor's language. Your `i18n.messages` for that
 language override it key by key, and keys you leave out keep the project's
@@ -42,8 +42,8 @@ while a key you actually reworded stays pinned in code. Core bundles only
 English; for other languages, import `@c15t/translations/all` so c15t can
 recognize its stock wording.
 
-Local mode is shown here to keep the example short. Not recommended for
-production environments.
+`testing()` is shown here to keep the example short. It is for tests only
+and throws in production builds.
 
 ## Switch language at runtime
 
@@ -55,11 +55,11 @@ The banner and dialog re-render. With a runtime or kernel, call
 To follow your app's own language setting from the first render, pass it as
 an override: `init({ mode, overrides: { language: 'fr' } })`.
 
-In local mode there is no copy to fetch. With `local()` from `c15t` or
+In local mode there is no copy to fetch. With `testing()` from `c15t` or
 `@c15t/browser`, a language set with the `language` override,
 `setLanguage()` or `kernel.set.language()` switches to that language's copy
 from the bundle or `i18n.messages`. This works for `@c15t/browser` and for a
-headless `createConsentRuntime({ mode: local() })`. A language with no copy
+headless `createConsentRuntime({ mode: testing() })`. A language with no copy
 shows the default copy, and the language a server prefetch detected from
 `Accept-Language` does not switch the copy. The bundle has English only, so
 put every other language in `messages`.

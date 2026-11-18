@@ -537,7 +537,7 @@ describe('manifest request credentials', () => {
 describe('init route', () => {
 	test('resolves geo, language and GPC locally and is never shared-cached', async () => {
 		const fetch = upstream();
-		const response = await route({ fetch, reportSessions: false })(
+		const response = await route({ fetch })(
 			request('/api/c15t/init', {
 				headers: {
 					'accept-language': 'de-DE,de;q=0.9',
@@ -556,7 +556,12 @@ describe('init route', () => {
 			policyId: 'eu-opt-in',
 			status: 'matched',
 		});
-		expect(calledURLs(fetch)).toEqual([`${BACKEND}/manifest`]);
+		// Init resolves in-process: the backend sees the manifest request and
+		// the session report, never `/init`.
+		expect(calledURLs(fetch).sort()).toEqual([
+			`${BACKEND}/manifest`,
+			`${BACKEND}/sessions`,
+		]);
 	});
 
 	test('echoes the resolved inputs so a server-rendered page keeps GPC', async () => {
@@ -723,7 +728,6 @@ describe('Google Additional Consent providers', () => {
 	test('are served with the IAB init the manifest resolves', async () => {
 		const response = await route({
 			fetch: withProviders(providerManifest),
-			reportSessions: false,
 		})(request('/api/c15t/init'));
 		const body = (await response.json()) as InitOutput;
 		expect(body.adTechProviders).toEqual([
@@ -736,14 +740,13 @@ describe('Google Additional Consent providers', () => {
 			...MANIFEST,
 			iab: providerManifest.iab,
 		} as ConsentManifest);
-		const notIab = await route({ fetch: optIn, reportSessions: false })(
+		const notIab = await route({ fetch: optIn })(
 			request('/api/c15t/init', { headers: { 'x-c15t-country': 'DE' } })
 		);
 		expect(await notIab.json()).not.toHaveProperty('adTechProviders');
 
 		const failed = await route({
 			fetch: withProviders(providerManifest),
-			reportSessions: false,
 		})(
 			request('/api/c15t/init', {
 				headers: { 'x-c15t-policy-contract': '99' },
@@ -783,9 +786,7 @@ describe('Google Additional Consent providers', () => {
 		const fetch = vi.fn<ManifestFetch>((input, init) =>
 			String(input).includes('/api/ac-relative') ? answer() : base(input, init)
 		);
-		const response = await route({ fetch, reportSessions: false })(
-			request('/api/c15t/init')
-		);
+		const response = await route({ fetch })(request('/api/c15t/init'));
 		const body = (await response.json()) as InitOutput;
 		expect(body.adTechProviders?.map(({ id }) => id)).toEqual([89]);
 		expect(calledURLs(fetch)).toContain(
@@ -797,10 +798,9 @@ describe('Google Additional Consent providers', () => {
 		const { answer, manifest } = relativeEndpoint('/api/ac-local');
 		const fetch = upstream(manifest);
 		const localFetch = vi.fn<ManifestFetch>(() => answer());
-		const response = await route({ fetch, reportSessions: false })(
-			request('/api/c15t/init'),
-			{ localFetch }
-		);
+		const response = await route({ fetch })(request('/api/c15t/init'), {
+			localFetch,
+		});
 		const body = (await response.json()) as InitOutput;
 		expect(body.adTechProviders?.map(({ id }) => id)).toEqual([89]);
 		expect(calledURLs(localFetch)).toEqual(['/api/ac-local?providerIds=89']);
@@ -809,8 +809,8 @@ describe('Google Additional Consent providers', () => {
 	test('from localFetch are cached per handler, not across apps', async () => {
 		const { answer, manifest } = relativeEndpoint('/api/ac-tenant');
 		const fetch = upstream(manifest);
-		const first = route({ fetch, reportSessions: false });
-		const second = route({ fetch, reportSessions: false });
+		const first = route({ fetch });
+		const second = route({ fetch });
 		const firstLocal = vi.fn<ManifestFetch>(() => answer());
 		const secondLocal = vi.fn<ManifestFetch>(() => answer());
 		const nextRequest = vi.fn<ManifestFetch>(() => answer());
@@ -827,7 +827,6 @@ describe('Google Additional Consent providers', () => {
 	test('are withdrawn with an empty list once the manifest stops listing them', async () => {
 		const response = await route({
 			fetch: withProviders(IAB_MANIFEST as unknown as ConsentManifest),
-			reportSessions: false,
 		})(request('/api/c15t/init'));
 		const body = (await response.json()) as InitOutput;
 		expect(body.adTechProviders).toEqual([]);
@@ -879,7 +878,7 @@ describe('vendor list', () => {
 
 	test('the default loader reads through the process cache with the protocol headers', async () => {
 		const fetch = upstream(IAB_MANIFEST);
-		const handle = route({ fetch, reportSessions: false });
+		const handle = route({ fetch });
 		await handle(request('/api/c15t/init'));
 		await handle(request('/api/c15t/init'));
 		await handle(request('/api/c15t/init?c15t-gvl=42&language=en'));
@@ -925,9 +924,7 @@ describe('vendor list', () => {
 			}
 			return Promise.resolve(json(IAB_MANIFEST));
 		});
-		const pending = route({ fetch, reportSessions: false })(
-			request('/api/c15t/init')
-		);
+		const pending = route({ fetch })(request('/api/c15t/init'));
 		await flush();
 		expect(timeout).toHaveBeenCalledWith(GVL_FETCH_TIMEOUT_MS);
 		deadlines.at(-1)?.abort();
@@ -1008,7 +1005,6 @@ describe('session reports', () => {
 
 	test.each([
 		['a HEAD probe', {}, { method: 'HEAD' }],
-		['reportSessions: false', { reportSessions: false }, {}],
 		['a relative backendURL', { backendURL: '/api/self-host' }, {}],
 		[
 			'a manifestURL alone',
@@ -1050,7 +1046,7 @@ describe('client abort', () => {
 		);
 		const controller = new AbortController();
 		const registered: Promise<void>[] = [];
-		const pending = route({ fetch, reportSessions: false })(
+		const pending = route({ fetch })(
 			request('/api/c15t/init', { signal: controller.signal }),
 			{ waitUntil: (task) => registered.push(task) }
 		);
@@ -1098,7 +1094,7 @@ describe('request budget', () => {
 		);
 		const registered: Promise<void>[] = [];
 		await expect(
-			route({ fetch, reportSessions: false })(
+			route({ fetch })(
 				request('/api/c15t/init', {
 					headers: { [CONSENT_ROUTE_TIMEOUT_HEADER]: '50' },
 				}),
@@ -1397,15 +1393,40 @@ describe('/init fallback for a backend without /manifest', () => {
 		}
 	);
 
-	test('does not send every request to /init while the manifest backs off', async () => {
+	test('falls back to /init while the manifest backs off, without asking the manifest again', async () => {
 		const fetch = vi.fn<ManifestFetch>(() =>
 			Promise.resolve(new Response('unavailable', { status: 503 }))
 		);
 		const handle = route({ fetch });
 		await expect(handle(request('/api/c15t/init'))).rejects.toThrow(/503/u);
 		await expect(handle(request('/api/c15t/init'))).rejects.toThrow();
-		// The first request tried the manifest and fell back to /init once.
-		expect(fetch).toHaveBeenCalledTimes(2);
+		expect(calledURLs(fetch)).toEqual([
+			`${BACKEND}/manifest`,
+			`${BACKEND}/init`,
+			`${BACKEND}/init`,
+		]);
+	});
+
+	test('answers from /init with a warning when the manifest fails', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+		const answer = backendInit({
+			location: { countryCode: 'DE', regionCode: null },
+			policyResolution: matchedIab(),
+			translations: { language: 'en', translations: {} },
+		});
+		const fetch = vi.fn<ManifestFetch>((url, init) =>
+			String(url).endsWith('/manifest')
+				? Promise.resolve(new Response('unavailable', { status: 500 }))
+				: answer(url, init)
+		);
+		const handle = route({ backendURL: `${BACKEND}/warn`, fetch });
+		expect((await handle(request('/api/c15t/init'))).ok).toBe(true);
+		expect(warn).toHaveBeenCalledWith(
+			expect.stringContaining(
+				`could not read the consent manifest from ${BACKEND}/warn/manifest`
+			)
+		);
+		warn.mockRestore();
 	});
 
 	test('keeps falling back for a backend that has no /manifest', async () => {
@@ -1441,10 +1462,15 @@ describe('/init fallback for a backend without /manifest', () => {
 describe('proxy', () => {
 	test('keeps manifest and init in-process and forwards other paths and writes', async () => {
 		const fetch = upstream();
-		const handle = route({ fetch, proxy: true, reportSessions: false });
+		const handle = route({ fetch, proxy: true });
 		await handle(request('/api/c15t/manifest'), { path: 'manifest' });
 		await handle(request('/api/c15t/init'), { path: 'init' });
-		expect(calledURLs(fetch)).toEqual([`${BACKEND}/manifest`]);
+		// Init resolves in-process: the backend sees the manifest request and
+		// the session report, never `/init`.
+		expect(calledURLs(fetch).sort()).toEqual([
+			`${BACKEND}/manifest`,
+			`${BACKEND}/sessions`,
+		]);
 
 		fetch.mockImplementation(() =>
 			Promise.resolve(json({ ok: true }, {}, 201))

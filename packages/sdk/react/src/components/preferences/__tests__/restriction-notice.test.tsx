@@ -10,7 +10,8 @@ import { page } from 'vitest/browser';
 import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentWidget } from '~/components/preferences';
-import { offline } from '~/transports/offline';
+
+import { testing } from '../../../testing';
 
 const CATEGORIES = [
 	'necessary',
@@ -29,7 +30,7 @@ describe('consent widget restriction notice', () => {
 			<ConsentProvider
 				options={{
 					consentCategories: [...CATEGORIES],
-					mode: offline({ acknowledgeNoRecords: true }),
+					mode: testing(),
 					prefetch: policyFixture(undefined, {
 						categories: [...CATEGORIES],
 						id: 'draft-toggle',
@@ -60,7 +61,7 @@ describe('consent widget restriction notice', () => {
 			<ConsentProvider
 				options={{
 					consentCategories: [...CATEGORIES],
-					mode: offline({ acknowledgeNoRecords: true }),
+					mode: testing(),
 					overrides: { gpc: true },
 					prefetch: policyFixture(
 						{ marketing: true, measurement: true },

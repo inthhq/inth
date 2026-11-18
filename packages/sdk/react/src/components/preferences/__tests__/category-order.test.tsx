@@ -11,7 +11,8 @@ import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/compone
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentWidget } from '~/components/preferences';
 import { useConsentDraft } from '~/draft';
-import { offline } from '~/transports/offline';
+
+import { testing } from '../../../testing';
 
 const ITEM_PREFIX = 'consent-widget-accordion-item-';
 
@@ -32,7 +33,7 @@ test('the widget lists categories in the draft order, not the policy or configur
 					'measurement',
 					'functionality',
 				],
-				mode: offline({ acknowledgeNoRecords: true }),
+				mode: testing(),
 				persistence: false,
 				prefetch: policyFixture(
 					{},

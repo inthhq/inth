@@ -1,4 +1,3 @@
-import { hosted } from '@c15t/core';
 import { createConsentRuntime } from '@c15t/core/runtime';
 import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest';
 import {
@@ -257,7 +256,7 @@ describe('the Vue plugin applies colorScheme', () => {
 	test('leaves the class to the host that owns a borrowed runtime', () => {
 		stubSystemScheme(true);
 		const runtime = createConsentRuntime({
-			mode: hosted({ backendURL: 'https://consent.example.test' }),
+			backendURL: 'https://consent.example.test',
 			pkg: '@c15t/vue-test',
 		});
 		const app = createApp(defineComponent({ setup: () => () => h('main') }));

@@ -1,4 +1,4 @@
-import { createConsentKernel, custom } from '@c15t/core';
+import { createConsentKernel } from '@c15t/core';
 import {
 	createPersistence,
 	readStoredRecords,
@@ -10,6 +10,7 @@ import { describe, expect, test, vi } from 'vitest';
 import type { ConsentContextValue } from '../lib/context.svelte';
 import { draftReady } from './draft-ready';
 import Fixture from './fixtures/policy-state-fixture.svelte';
+import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 
 const required = <Value>(value: Value | null | undefined): Value => {
@@ -39,7 +40,7 @@ describe('policy records and Svelte controls', () => {
 			capture: context.capture,
 			options: {
 				callbacks: { onChoiceRecorded: choice },
-				mode: custom({ init }),
+				mode: transportMode({ init }),
 				persistence: false,
 				prefetch,
 			},
@@ -61,7 +62,7 @@ describe('policy records and Svelte controls', () => {
 			options: {
 				callbacks: { onChoiceRecorded: choice },
 				disableAnimation: true,
-				mode: custom({}),
+				mode: transportMode({}),
 				persistence: false,
 				prefetch: policyFixture({}, { model: 'opt-out', prompt: 'notice' }),
 			},
@@ -95,7 +96,7 @@ describe('policy records and Svelte controls', () => {
 			options: {
 				callbacks: { onChoiceRecorded: choice },
 				consentCategories: ['necessary', 'marketing'],
-				mode: custom({}),
+				mode: transportMode({}),
 				persistence: false,
 				prefetch: {
 					...policyFixture(
@@ -121,7 +122,7 @@ describe('policy records and Svelte controls', () => {
 			capture: context.capture,
 			options: {
 				consentCategories: ['marketing'],
-				mode: custom({
+				mode: transportMode({
 					init: () =>
 						Promise.resolve({
 							policyResolution: writePolicyResolutionWire(
@@ -152,7 +153,7 @@ describe('policy records and Svelte controls', () => {
 			capture: context.capture,
 			onclick: (event) => event.preventDefault(),
 			options: {
-				mode: custom({}),
+				mode: transportMode({}),
 				persistence: false,
 				prefetch: policyFixture(),
 			},
@@ -183,7 +184,7 @@ describe('policy records and Svelte controls', () => {
 		const context = captureContext();
 		const view = render(Fixture, {
 			capture: context.capture,
-			options: { mode: custom({}), prefetch, storageConfig: config },
+			options: { mode: transportMode({}), prefetch, storageConfig: config },
 		});
 		await waitFor(() =>
 			expect(context.current.snapshot.explicitChoice).toEqual(saved)
@@ -205,7 +206,7 @@ describe('policy records and Svelte controls', () => {
 			capture: context.capture,
 			options: {
 				disableAnimation: true,
-				mode: custom({}),
+				mode: transportMode({}),
 				persistence: false,
 				prefetch,
 			},
@@ -244,7 +245,7 @@ describe('policy records and Svelte controls', () => {
 					capture: context.capture,
 					options: {
 						callbacks: { onChoiceRecorded: choice },
-						mode: custom({ init }),
+						mode: transportMode({ init }),
 						persistence: false,
 						prefetch: {
 							...policyFixture(
@@ -282,7 +283,7 @@ describe('policy records and Svelte controls', () => {
 			const view = render(Fixture, {
 				capture: context.capture,
 				options: {
-					mode: custom({}),
+					mode: transportMode({}),
 					persistence: false,
 					prefetch: policyFixture(),
 					theme: {

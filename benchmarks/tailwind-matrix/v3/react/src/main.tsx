@@ -1,33 +1,19 @@
-import {
-	ConsentBanner,
-	ConsentDialog,
-	ConsentProvider,
-	offline,
-} from 'c15t/react';
+import { ConsentBanner, ConsentDialog, ConsentProvider } from 'c15t/react';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import './app.css';
 
-const mode = offline({
-	policyRules: [
-		{
-			id: 'tailwind-matrix',
-			match: { isDefault: true },
-			model: 'opt-in',
-			prompt: 'choice',
-		},
-	],
-});
+const backendURL = 'https://your-project.inth.app';
 
 // #region docs:slot
 const options = {
+	backendURL,
 	components: {
 		banner: {
 			root: { className: '!p-[7px] dark:!p-[11px]' },
 		},
 	},
-	mode,
 	// Tailwind 3 builds c15t's stylesheet from app.css.
 	styles: false,
 };

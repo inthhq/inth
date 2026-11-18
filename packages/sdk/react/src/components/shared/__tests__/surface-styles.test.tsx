@@ -6,7 +6,8 @@ import { ComponentFixtureProvider } from '~/__tests__/component-fixture-provider
 import type { ComponentFixtureOptions } from '~/__tests__/component-fixture-provider';
 import { ConsentDialog } from '~/components/panel';
 import { ConsentBanner } from '~/components/prompt';
-import { offline } from '~/transports/offline';
+
+import { testing } from '../../../testing';
 
 /**
  * The stock surfaces render the c15t rules they use, so an app that imports
@@ -25,7 +26,7 @@ const c15tStyles = () =>
 	].map((element) => element.dataset.href);
 
 const fixture = (options: Partial<ComponentFixtureOptions> = {}) => ({
-	mode: offline({ acknowledgeNoRecords: true }),
+	mode: testing(),
 	...options,
 });
 

@@ -13,7 +13,6 @@ import { PREFETCH_WINDOW_KEY } from '../../../../core/src/libs/prefetch/window-k
 import init from '../../../../core/src/runtime/__tests__/fixtures/hosted-init-gb.json' with { type: 'json' };
 import { ConsentBanner } from '../../components/prompt';
 import { useSnapshot } from '../../hooks';
-import { hosted } from '../../transports/hosted';
 import { createConsentProvider } from '../client-provider';
 
 let releaseEngine: () => void = () => undefined;
@@ -130,9 +129,9 @@ test('the stand-in reads the browser signal, and shows no banner the signal answ
 	const screen = await render(
 		<ConsentProvider
 			options={{
+				backendURL: BACKEND,
 				consentCategories: ['necessary', 'measurement', 'marketing'],
 				journey: false,
-				mode: hosted({ backendURL: BACKEND }),
 			}}
 		>
 			<Probe />

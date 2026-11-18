@@ -220,7 +220,7 @@ describe('policy playground helpers', () => {
 			inspectPlaygroundRule(rule, { country: 'US', region: 'SD' }).errors
 		).toEqual([]);
 	});
-	it('emits a bare offline() for presets in the recommended pack', () => {
+	it('emits a bare testing() for presets in the recommended pack', () => {
 		expect([...RECOMMENDED_PRESET_IDS].sort()).toEqual(
 			[
 				'europeOptIn',
@@ -238,15 +238,15 @@ describe('policy playground helpers', () => {
 			undefined,
 			{ recommended: true }
 		);
-		expect(recommended).toContain('mode: offline()');
+		expect(recommended).toContain('mode: testing()');
 		expect(recommended).toContain('recommended pack');
-		expect(recommended).not.toContain('offline({ policyRules })');
+		expect(recommended).not.toContain('testing({ policy: policyRules })');
 		expect(recommended).not.toContain('policyRulePresets');
 		const explicit = buildProviderSnippet(
 			policyRulePresets.californiaOptOut(),
 			'californiaOptOut'
 		);
-		expect(explicit).toContain('offline({ policyRules })');
+		expect(explicit).toContain('testing({ policy: policyRules })');
 		expect(explicit).toContain('policyRulePresets.californiaOptOut()');
 		expect(
 			buildBackendSnippet(policyRulePresets.worldNone(), 'worldNone', {
@@ -368,7 +368,10 @@ describe('policy playground helpers', () => {
 			toolbar: true,
 		});
 		expect(withToolbar).toContain(
-			"import { ConsentBanner, ConsentDialog, ConsentDialogTriggerToolbar, ConsentProvider, offline } from 'c15t/react';"
+			"import { ConsentBanner, ConsentDialog, ConsentDialogTriggerToolbar, ConsentProvider } from 'c15t/react';"
+		);
+		expect(withToolbar).toContain(
+			"import { testing } from 'c15t/react/testing';"
 		);
 		expect(withToolbar).toContain(
 			'    <ConsentDialogTriggerToolbar showWhen="after-prompt" />\n'

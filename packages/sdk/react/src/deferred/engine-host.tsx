@@ -20,7 +20,10 @@ import {
 	StreamedPrefetchContext,
 } from '../context';
 import { ConsentProvider } from '../provider';
-import type { ConsentProviderOptions } from '../provider';
+import type {
+	ConsentProviderOptions,
+	OwnedRuntimeProviderProps,
+} from '../provider';
 import type { DeferredCommitted } from './committed';
 import type { DeferredEngine } from './deferred-kernel';
 import { loadDeferredScriptLoader } from './registry';
@@ -218,7 +221,10 @@ export const DeferredEngineHost = ({
 	);
 	const effective = parts ? { ...options, ...parts } : options;
 	return (
-		<ConsentProvider options={effective}>
+		// The deferred root checked the backend when it took these options.
+		<ConsentProvider
+			options={effective as OwnedRuntimeProviderProps['options']}
+		>
 			<Publisher
 				attach={attach}
 				committed={committed}

@@ -46,12 +46,11 @@ Open <http://localhost:3115> and the browser console. You'll see lines like:
 [analytics] consent_choice_made { arm: 'bar', assigned_by: 'c15t', consent_action: 'all', experiment_id: 'banner-layout', surface: 'banner', time_to_decision_ms: 2140 }
 ```
 
-The app runs in local mode, so it needs no backend. c15t's bundled policy
-rules ask for opt-in consent, and choices stay in the browser. For
-production, replace `local()` in `components/consent.tsx` with
-`hosted({ backendURL: 'https://your-project.inth.app' })`. The backend then counts
-impressions and choices per arm on its own, including those of visitors your
-analytics never loads for.
+Set `NEXT_PUBLIC_C15T_BACKEND_URL` in `.env.local` to your Inth project URL,
+such as `https://your-project.inth.app`. c15t reads the project's consent
+manifest and sends each choice there. The backend counts impressions and
+choices per arm on its own, including those of visitors your analytics never
+loads for.
 
 ## See both arms
 

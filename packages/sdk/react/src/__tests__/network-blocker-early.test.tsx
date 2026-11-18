@@ -4,8 +4,8 @@ import type { ReactNode } from 'react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { offline } from '../index';
 import { ConsentProvider } from '../provider';
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 const TRACKER = 'https://tracker.example/collect';
@@ -63,7 +63,7 @@ const renderWithBeacons = (
 				/>
 				<ConsentProvider
 					options={{
-						mode: offline({ acknowledgeNoRecords: true }),
+						mode: testing(),
 						networkBlocker: { logBlockedRequests: false, rules },
 						persistence: false,
 						prefetch,

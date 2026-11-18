@@ -16,8 +16,9 @@ import { policyRulePresets } from '@c15t/core';
 import { resolvePolicyRules } from '@c15t/schema/types';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createGlobal, installGlobal } from '../global';
-import type { C15tGlobal } from '../global';
+import { installGlobal } from '../global';
+import { createTestingGlobal as createGlobal } from '../testing-global';
+import type { TestingC15tGlobal as C15tGlobal } from '../testing-global';
 import type { ConsentClientOptions } from '../types';
 
 const template = readFileSync(
@@ -308,9 +309,8 @@ const policy = {
 	scopeMode: 'strict' as const,
 };
 const options: ConsentClientOptions = {
-	acknowledgeNoRecords: true,
 	consentCategories: [...categories],
-	policyRules: [policy],
+	policy: [policy],
 	prefetch: {
 		initialPolicyResolution: resolvePolicyRules({ rules: [policy] }),
 	},

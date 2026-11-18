@@ -12,7 +12,8 @@ import type { ComponentFixtureOptions } from '~/__tests__/component-fixture-prov
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentDialog } from '~/components/panel';
 import { ConsentBanner } from '~/components/prompt';
-import { offline } from '~/transports/offline';
+
+import { testing } from '../../../testing';
 
 const renderComposed = function renderComposed(
 	children: ReactNode,
@@ -22,7 +23,7 @@ const renderComposed = function renderComposed(
 		<ConsentProvider
 			options={{
 				components,
-				mode: offline({ acknowledgeNoRecords: true }),
+				mode: testing(),
 				persistence: false,
 				prefetch: policyFixture(undefined, { id: 'banner-compose-test' }),
 			}}
@@ -250,7 +251,7 @@ describe('composed ConsentDialog', () => {
 			<ConsentProvider
 				options={{
 					initialUI: 'dialog',
-					mode: offline({ acknowledgeNoRecords: true }),
+					mode: testing(),
 					persistence: false,
 					prefetch: policyFixture(undefined, { id: 'dialog-compose-test' }),
 				}}

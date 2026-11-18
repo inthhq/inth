@@ -13,8 +13,8 @@ import { buildPrompt, renderPromptIntoSlot } from '../browser/render-prompt';
 import { boot } from '../client';
 import type { AstroConsentClient } from '../client';
 import { resolveOptions } from '../integration';
-import { offline as offlineMode } from '../mode';
 import { resolveConsentContext } from '../server';
+import { testing as testingMode } from '../testing';
 import type { C15tAstroOptions } from '../types';
 import { testRule } from './policy-fixture';
 
@@ -58,9 +58,8 @@ const start = async function start(
 ): Promise<AstroConsentClient> {
 	const resolved = resolveOptions({
 		...options,
-		mode: offlineMode({
-			acknowledgeNoRecords: true,
-			policyRules: [{ ...testRule, ...rule }],
+		mode: testingMode({
+			policy: [{ ...testRule, ...rule }],
 		}),
 	});
 	const { config } = await resolveConsentContext({

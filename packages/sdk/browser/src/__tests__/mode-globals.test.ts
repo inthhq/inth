@@ -13,7 +13,7 @@ import { createGlobal } from '../global';
 import { autoInit, installGlobal } from '../global-base';
 import type { C15tGlobalBase } from '../global-base';
 import { createHostedGlobal } from '../hosted-global';
-import { createOfflineGlobal } from '../offline-global';
+import { createTestingGlobal } from '../testing-global';
 import type { ConsentClientOptions } from '../types';
 
 /** A query pair c15t adds to `/init`. */
@@ -45,7 +45,7 @@ const policy = {
 const resolution = resolvePolicyRules({ rules: [policy] });
 const entries = [
 	{ create: createHostedGlobal, mode: 'hosted' },
-	{ create: createOfflineGlobal, mode: 'offline' },
+	{ create: createTestingGlobal, mode: 'testing' },
 ] as const;
 
 const scriptWith = function scriptWith(
@@ -59,12 +59,12 @@ const scriptWith = function scriptWith(
 };
 
 const optionsFor = function optionsFor(
-	mode: 'hosted' | 'offline'
+	mode: 'hosted' | 'testing'
 ): ConsentClientOptions {
 	return {
 		...(mode === 'hosted'
 			? { backendURL: 'https://consent.example.test' }
-			: { acknowledgeNoRecords: true, policyRules: [policy] }),
+			: { policy: [policy] }),
 		consentCategories: ['measurement'],
 		prefetch: { initialPolicyResolution: resolution },
 		reloadOnConsentRevoked: false,
@@ -77,13 +77,13 @@ const installed = function installed(): C15tGlobalBase {
 };
 
 const loadTag = async function loadTag(
-	mode: 'hosted' | 'offline'
+	mode: 'hosted' | 'testing'
 ): Promise<C15tGlobalBase> {
 	vi.resetModules();
 	if (mode === 'hosted') {
 		await import('../entries/cdn');
 	} else {
-		await import('../entries/cdn-local');
+		await import('../entries/cdn-testing');
 	}
 	return installed();
 };
@@ -122,9 +122,14 @@ describe.each(entries)('$mode browser global', ({ create, mode }) => {
 		const api = create();
 		expect(api.pkg).toBe(`@c15t/browser/${mode}`);
 		expect(api).toHaveProperty(mode, expect.any(Function));
-		const unsupported = ['hosted', 'offline', 'manifest', 'custom'].filter(
-			(other) => other !== mode
-		);
+		const unsupported = [
+			'hosted',
+			'testing',
+			'manifest',
+			'custom',
+			'local',
+			'offline',
+		].filter((other) => other !== mode);
 		for (const other of unsupported) {
 			expect(api).not.toHaveProperty(other);
 		}
@@ -146,7 +151,7 @@ describe.each(entries)('$mode browser global', ({ create, mode }) => {
 				? { 'data-backend-url': 'https://consent.example.test' }
 				: {
 						'data-acknowledge-no-records': '',
-						'data-policy-rules': 'europeOptIn',
+						'data-policy': 'europeOptIn',
 					}),
 			'data-categories': 'marketing',
 			'data-color-scheme': 'dark',
@@ -215,7 +220,7 @@ describe.each(entries)('$mode browser global', ({ create, mode }) => {
 		await api.ready();
 		expect(api.mode).toBe(mode);
 		expect(api.pkg).toBe(
-			mode === 'hosted' ? '@c15t/browser' : '@c15t/browser/offline'
+			mode === 'hosted' ? '@c15t/browser' : '@c15t/browser/testing'
 		);
 		expect(loaded).not.toHaveBeenCalled();
 		const saving = api.acceptAll();
@@ -295,8 +300,8 @@ describe.each(entries)('$mode browser global', ({ create, mode }) => {
 					}),
 				},
 			};
-			if (mode === 'offline') {
-				config.policyRules = [california];
+			if (mode === 'testing') {
+				config.policy = [california];
 			}
 			testWindow.c15t = [['config', config]];
 			if (order === 'before') {
@@ -343,7 +348,13 @@ describe('default CDN entry', () => {
 		expect(api.pkg).toBe('@c15t/browser');
 		expect(api.mode).toBe('hosted');
 		expect(api).toHaveProperty('hosted', expect.any(Function));
-		for (const factory of ['offline', 'manifest', 'custom']) {
+		for (const factory of [
+			'testing',
+			'offline',
+			'local',
+			'manifest',
+			'custom',
+		]) {
 			expect(api).not.toHaveProperty(factory);
 		}
 	});
@@ -387,14 +398,16 @@ describe('default CDN entry', () => {
 		expect(api.hosting).toBeNull();
 	});
 
-	it('requires a backend rather than falling back to offline', async () => {
+	it('requires a backend rather than falling back to testing', async () => {
 		const fetchSpy = vi.fn<typeof fetch>();
 		vi.stubGlobal('fetch', fetchSpy);
 		vi.spyOn(document, 'currentScript', 'get').mockReturnValue(
 			scriptWith({ 'data-no-ui': '' })
 		);
 
-		await expect(loadTag('hosted')).rejects.toThrow(/provide backendURL/u);
+		await expect(loadTag('hosted')).rejects.toThrow(
+			/`backendURL` is required/u
+		);
 
 		expect(installed().client).toBeNull();
 		expect(fetchSpy).not.toHaveBeenCalled();
@@ -402,8 +415,7 @@ describe('default CDN entry', () => {
 	});
 
 	it.each<[string, ConsentClientOptions, RegExp]>([
-		['offline mode', { mode: 'offline' }, /only hosted mode/u],
-		['preset names', { policyRules: ['europeOptIn'] }, /policy preset names/u],
+		['manifest mode', { mode: 'manifest' }, /only hosted mode/u],
 		[
 			'inline manifest',
 			{ manifest: { branding: 'c15t', revision: '1', schemaVersion: 2 } },
@@ -427,9 +439,9 @@ describe('default CDN entry', () => {
 		expect(localStorage.length).toBe(0);
 	});
 
-	it('rejects an offline script-tag mode', async () => {
+	it('rejects another script-tag mode', async () => {
 		vi.spyOn(document, 'currentScript', 'get').mockReturnValue(
-			scriptWith({ 'data-mode': 'offline' })
+			scriptWith({ 'data-mode': 'testing' })
 		);
 
 		await expect(loadTag('hosted')).rejects.toThrow(/data-mode/u);
@@ -437,28 +449,27 @@ describe('default CDN entry', () => {
 	});
 });
 
-describe('offline CDN entry', () => {
-	it('resolves offline presets without a backend or explicit mode', async () => {
+describe('testing CDN entry', () => {
+	it('resolves policy presets without a backend or explicit mode', async () => {
 		const fetchSpy = vi.fn<typeof fetch>();
 		vi.stubGlobal('fetch', fetchSpy);
 		testWindow.c15t = [
 			[
 				'config',
 				{
-					acknowledgeNoRecords: true,
 					consentCategories: ['measurement'],
 					overrides: { country: 'DE' },
-					policyRules: ['europeOptIn'],
+					policy: ['europeOptIn'],
 					ui: false,
 				},
 			],
 		];
 
-		const api = await loadTag('offline');
+		const api = await loadTag('testing');
 		const snapshot = await api.ready();
 		await api.acceptAll();
 
-		expect(api.mode).toBe('offline');
+		expect(api.mode).toBe('testing');
 		expect(snapshot.model).toBe('opt-in');
 		expect(api.has('measurement')).toBe(true);
 		expect(fetchSpy).not.toHaveBeenCalled();

@@ -4,25 +4,11 @@ import {
 	Outlet,
 	Scripts,
 } from '@tanstack/react-router';
-import {
-	ConsentBanner,
-	ConsentDialog,
-	ConsentRoot,
-	offline,
-} from 'c15t/tanstack-start';
+import { ConsentBanner, ConsentDialog, ConsentRoot } from 'c15t/tanstack-start';
 
 import appCss from '../styles.css?url';
 
-const mode = offline({
-	policyRules: [
-		{
-			id: 'tailwind-matrix',
-			match: { isDefault: true },
-			model: 'opt-in',
-			prompt: 'choice',
-		},
-	],
-});
+const backendURL = 'https://your-project.inth.app';
 
 const RootComponent = () => (
 	<html lang="en">
@@ -32,7 +18,7 @@ const RootComponent = () => (
 		<body>
 			<ConsentRoot
 				persistence={false}
-				state={{}}
+				state={{ backendURL }}
 				// #region docs:slot
 				options={{
 					components: {
@@ -40,7 +26,6 @@ const RootComponent = () => (
 							root: { className: 'p-[7px] dark:p-[11px]' },
 						},
 					},
-					mode,
 				}}
 				// #endregion docs:slot
 			>

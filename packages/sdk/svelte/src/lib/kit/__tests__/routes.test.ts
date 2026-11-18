@@ -9,7 +9,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { setGenerated } from '../../__tests__/generated';
 import { c15tHandle } from '../handle';
-import { hosted, manifest as manifestMode } from '../index';
+import { manifest as manifestMode } from '../index';
 import { loadConsent } from '../load-consent';
 import { createConsentRoute } from '../routes';
 import { createEvent } from './event';
@@ -51,7 +51,6 @@ describe('createConsentRoute', () => {
 		const { GET } = createConsentRoute({
 			backendURL: BACKEND,
 			fetch,
-			reportSessions: false,
 			snapshot: MANIFEST_FIXTURE,
 		});
 		expect(await (await GET(restEvent('manifest'))).json()).toEqual(
@@ -63,7 +62,10 @@ describe('createConsentRoute', () => {
 		expect(await response.json()).toMatchObject({
 			policyResolution: { policyId: 'eu-opt-in', status: 'matched' },
 		});
-		expect(fetch).not.toHaveBeenCalled();
+		// No policy request; only the session report.
+		expect(
+			fetch.mock.calls.filter(([url]) => !String(url).endsWith('/sessions'))
+		).toEqual([]);
 	});
 
 	test('returns GET, and the write methods with proxy on', () => {
@@ -80,7 +82,6 @@ describe('createConsentRoute', () => {
 		const { GET } = createConsentRoute({
 			backendURL: BACKEND,
 			fetch,
-			reportSessions: false,
 		});
 		const manifest = await GET(restEvent('manifest'));
 		const root = await GET(restEvent(''));
@@ -96,7 +97,6 @@ describe('createConsentRoute', () => {
 		const eventFetch = upstream();
 		const { GET } = createConsentRoute({
 			backendURL: '/api/self-host',
-			reportSessions: false,
 		});
 		await GET(
 			createEvent({
@@ -172,7 +172,7 @@ describe('createConsentRoute with c15tHandle', () => {
 	test("reads the handle's snapshot, so it is passed once", async () => {
 		const fetch = vi.fn<typeof globalThis.fetch>();
 		const own = { ...MANIFEST_FIXTURE, revision: 'from-the-handle' };
-		const { GET } = createConsentRoute({ fetch, reportSessions: false });
+		const { GET } = createConsentRoute({ fetch });
 		const response = await throughHandle(
 			c15tHandle({ backendURL: BACKEND, snapshot: own }),
 			GET,
@@ -186,14 +186,14 @@ describe('createConsentRoute with c15tHandle', () => {
 
 	test("reads the handle's backend URL and a hosted() mode's own", async () => {
 		const fetch = upstream();
-		const { GET } = createConsentRoute({ fetch, reportSessions: false });
+		const { GET } = createConsentRoute({ fetch });
 		await throughHandle(
 			c15tHandle({ backendURL: 'https://handle.example' }),
 			GET,
 			restEvent('manifest')
 		);
 		await throughHandle(
-			c15tHandle({ mode: hosted({ backendURL: 'https://hosted.example' }) }),
+			c15tHandle({ backendURL: 'https://hosted.example' }),
 			GET,
 			restEvent('manifest')
 		);
@@ -205,7 +205,7 @@ describe('createConsentRoute with c15tHandle', () => {
 
 	test("reads a manifest() mode's manifestURL", async () => {
 		const fetch = upstream();
-		const { GET } = createConsentRoute({ fetch, reportSessions: false });
+		const { GET } = createConsentRoute({ fetch });
 		await throughHandle(
 			c15tHandle({
 				backendURL: BACKEND,
@@ -224,7 +224,6 @@ describe('createConsentRoute with c15tHandle', () => {
 		const { GET } = createConsentRoute({
 			backendURL: 'https://route.example',
 			fetch,
-			reportSessions: false,
 		});
 		await throughHandle(
 			c15tHandle({ backendURL: 'https://handle.example' }),
@@ -252,9 +251,7 @@ describe('createConsentRoute with c15tHandle', () => {
 		const { consent } = await handle({
 			event: page,
 			resolve: async (event) =>
-				Response.json(
-					await loadConsent(event, { fetch, reportSessions: false })
-				),
+				Response.json(await loadConsent(event, { fetch })),
 		}).then((response) => response.json());
 		expect(consent).toMatchObject({
 			backendURL: '/api/c15t',

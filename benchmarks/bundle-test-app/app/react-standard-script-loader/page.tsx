@@ -1,8 +1,8 @@
 'use client';
 
+import { benchPolicy } from '@c15t/benchmarking/bench-policy';
 import type { AllConsentNames } from '@c15t/core';
 import type { Script } from '@c15t/core/modules/script-loader';
-import { offline } from '@c15t/react';
 import { ConsentBanner } from '@c15t/react/consent-banner';
 import { ConsentDialog } from '@c15t/react/consent-dialog';
 import { ConsentWidget } from '@c15t/react/consent-widget';
@@ -87,8 +87,8 @@ const TestComponent = () => {
 const ReactStandardScriptLoaderPage = () => (
 	<ConsentProvider
 		options={{
-			mode: offline({
-				policyRules: [
+			mode: benchPolicy({
+				policy: [
 					{
 						id: 'bench-opt-in',
 						match: { fallback: true, isDefault: true },

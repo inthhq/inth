@@ -15,8 +15,8 @@ import { renderHook } from 'vitest-browser-react';
 import { ComponentFixtureProvider } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { KernelContext } from '~/context';
-import { offline } from '~/transports/offline';
 
+import { testing } from '../../testing';
 import { useConsentGate } from '../use-consent-gate';
 
 interface FixtureOptions {
@@ -42,7 +42,7 @@ const createWrapper = function createWrapper({
 		return (
 			<ComponentFixtureProvider
 				options={{
-					mode: offline({ acknowledgeNoRecords: true }),
+					mode: testing(),
 					persistence: false,
 					prefetch,
 				}}

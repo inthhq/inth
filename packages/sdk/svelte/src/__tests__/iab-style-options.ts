@@ -1,7 +1,6 @@
-import { custom } from '@c15t/core';
-
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import type { ConsentManagerOptions } from '../lib/types';
+import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 
 export const iabStyleOptions = (
@@ -9,7 +8,7 @@ export const iabStyleOptions = (
 ): ConsentManagerOptions => ({
 	disableAnimation: true,
 	iab: { cmpId: 28 },
-	mode: custom({}),
+	mode: transportMode({}),
 	persistence: false,
 	prefetch: {
 		...policyFixture({}, { categories: ['marketing'], model: 'iab' }),

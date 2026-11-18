@@ -7,8 +7,8 @@ import { CONSENT_BOOT_ATTRIBUTE } from '../browser/shell';
 import ConsentScript from '../components/consent-script.astro';
 import ConsentBanner from '../components/prompt.astro';
 import { resolveOptions } from '../integration';
-import { offline as offlineMode } from '../mode';
 import { resolveConsentContext } from '../server';
+import { testing as testingMode } from '../testing';
 import type { C15tAstroOptions, C15tLocals } from '../types';
 import { testRule } from './policy-fixture';
 
@@ -25,7 +25,7 @@ const buildLocals = async function buildLocals(
 		headers: new Headers(),
 		options: resolveOptions({
 			consentCategories: ['necessary', 'measurement', 'marketing'],
-			mode: offlineMode({ policyRules: [testRule] }),
+			mode: testingMode({ policy: [testRule] }),
 			...options,
 		}),
 	});

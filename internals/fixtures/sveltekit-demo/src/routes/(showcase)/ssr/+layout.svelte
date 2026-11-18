@@ -6,8 +6,8 @@
 		ConsentProvider,
 		IABConsentBanner,
 		IABConsentDialog,
-		offline,
 	} from '@c15t/svelte';
+	import { testing } from '@c15t/svelte/testing';
 	import { baseTranslations } from '@c15t/translations/all';
 	import { policyRulePresets, resolvePolicyRules } from 'c15t';
 
@@ -22,7 +22,7 @@
 
 <ConsentProvider
 	options={{
-		mode: offline({ acknowledgeNoRecords: true, policyRules: rules }),
+		mode: testing({ policy: rules }),
 		prefetch: { initialPolicyResolution: resolution },
 		consentCategories: ['necessary', 'marketing', 'measurement'],
 		iab: {

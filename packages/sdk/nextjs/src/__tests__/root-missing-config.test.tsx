@@ -4,12 +4,12 @@
  * outside production, and throws when nothing gives it a backend URL
  * instead of running a mode the app never chose.
  */
-import { offline } from '@c15t/core/modes';
 import { renderToString } from 'react-dom/server';
 import { afterEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { ConsentRoot } from '../root';
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 afterEach(() => {
@@ -64,14 +64,14 @@ test('throws with no config and no NEXT_PUBLIC_C15T_BACKEND_URL', () => {
 			</ConsentRoot>
 		)
 	).toThrow(
-		'@c15t/nextjs: manifest() needs a backend URL. Set NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL), or `backendURL` in c15t.config.ts.'
+		'@c15t/nextjs: `backendURL` is required. Set NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL), or `backendURL` in c15t.config.ts.'
 	);
 });
 
-test('renders an explicit offline() without a backend URL', () => {
+test('renders testing() without a backend URL', () => {
 	const html = renderToString(
 		<ConsentRoot
-			config={{ mode: offline({ acknowledgeNoRecords: true }) }}
+			config={{ mode: testing() }}
 			state={policyFixture()}
 		>
 			<div>offline root</div>

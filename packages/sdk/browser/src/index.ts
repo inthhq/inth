@@ -2,20 +2,23 @@
  * `@c15t/browser` — consent for sites without a build step.
  *
  * Most sites load `dist/c15t.js` from a CDN and never import this module.
- * This ES module takes the transport as a factory, `manifest()`, `hosted()`
- * or `local()`, so a bundler keeps only the mode the page uses. The
- * headless subset lives at `@c15t/browser/headless`.
+ * This ES module asks the backend's `/init` by default; `mode: manifest()`
+ * resolves from the consent manifest instead, and is left out of the
+ * bundle when the page does not import it. Tests pass `testing()` from
+ * `@c15t/browser/testing`. The headless subset lives at
+ * `@c15t/browser/headless`.
  *
  * @example
  * ```ts
- * import { init, manifest } from '@c15t/browser';
+ * import { init } from '@c15t/browser';
  * import '@c15t/browser/styles.css'; // only with `ui: { shadow: false }`
  *
- * // The policy and backend URL consentManifest() from c15t/build downloaded.
- * const c15t = init({ mode: manifest() });
+ * const c15t = init({ backendURL: 'https://your-project.inth.app' });
  * c15t.on('consent', (snapshot) => console.log(snapshot.effectivePermissions));
  * ```
  */
+
+import type { WithBackendURL } from '@c15t/core/runtime';
 
 import { createConsentClient as createClient } from './client';
 import type { ConsentClient, ConsentClientOptions } from './types';
@@ -30,7 +33,7 @@ const PKG = '@c15t/browser';
  * @returns The client. Call `start()` to resolve the policy and mount.
  */
 export const createConsentClient = function createConsentClient(
-	options: ConsentClientOptions
+	options: WithBackendURL<ConsentClientOptions>
 ): ConsentClient {
 	return createClient(options, { mountUI: mountConsentUI, pkg: PKG });
 };
@@ -42,25 +45,23 @@ export const createConsentClient = function createConsentClient(
  * @returns The started client.
  */
 export const init = function init(
-	options: ConsentClientOptions
+	options: WithBackendURL<ConsentClientOptions>
 ): ConsentClient {
 	const client = createConsentClient(options);
 	client.start();
 	return client;
 };
 
-export { custom } from '@c15t/core';
 export { ACTION_ATTRIBUTE, PREFERENCES_HASH } from './client';
 export type { PageAction } from './client';
-export { resolveRules } from './policy-rules';
 export { getEventDispatcher } from '@c15t/core/events';
 export type {
 	EventDispatcher,
 	EventProperties,
 	RuntimeEventDispatcherOptions as GetEventDispatcherOptions,
 } from '@c15t/core/events';
-export { hosted } from './transports/hosted';
-export type { HostedOptions } from './transports/hosted';
+export { hosted } from '@c15t/core/modes';
+export type { HostedMode } from '@c15t/core/modes';
 export {
 	ACTIVATED_ATTRIBUTE,
 	activateGatedScripts,
@@ -71,8 +72,6 @@ export type {
 	BrowserManifestModeFactory,
 	ManifestModeOptions,
 } from './transports/manifest';
-export { local, offline } from './transports/offline';
-export type { OfflineModeOptions } from './transports/offline';
 export type {
 	ConsentBannerOptions,
 	ConsentClient,
@@ -83,7 +82,6 @@ export type {
 	ScriptTagClientOptions,
 	ConsentDialogOptions,
 	ConsentSaveInput,
-	PolicyPresetName,
 	ConsentTriggerOptions,
 	ConsentUIHandle,
 	ConsentUIOptions,

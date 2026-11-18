@@ -395,9 +395,11 @@ export const createFirstLoadChunkPlugin =
  * and `VITE_INTH_PROJECT_URL`, including `.env` files. When
  * `VITE_C15T_BACKEND_URL` is unset, the plugin sets
  * `import.meta.env.VITE_C15T_BACKEND_URL` to the URL it used, so app code
- * reads the same value. A missing URL or a failed fetch stops
- * `vite build` and warns in `vite dev`, where `snapshot` is `undefined`.
- * Set `onBuildError` or `C15T_ON_BUILD_ERROR` to change that. In a Svelte
+ * reads the same value. A missing URL or a failed fetch warns, and
+ * `snapshot` is `undefined`, so the policy is read at runtime, from the
+ * backend's `/init` while the manifest is unavailable. Set
+ * `onBuildError: 'fail'` or `C15T_ON_BUILD_ERROR=fail` to stop the build
+ * instead. In a Svelte
  * single-page app whose policy depends on the visitor's location, the
  * build warns and suggests `hosted()`. With `manifest({ manifestURL })` or
  * `manifest({ source: 'runtime' })`, pass `source: 'runtime'` here too, so

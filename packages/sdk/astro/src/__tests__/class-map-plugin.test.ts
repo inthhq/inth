@@ -9,7 +9,7 @@ import {
 	createClassMapPlugin,
 	EMPTY_STYLESHEET_ID,
 } from '../libs/class-map-plugin';
-import { offline as offlineMode } from '../mode';
+import { testing as testingMode } from '../testing';
 
 const directory = mkdtempSync(join(tmpdir(), 'c15t-class-maps-'));
 const withCSS = join(directory, 'panel.js');
@@ -135,7 +135,7 @@ describe('class maps without CSS', () => {
 describe('buildVitePlugins', () => {
 	const names = async (styles?: boolean) =>
 		(
-			await buildVitePlugins(resolveOptions({ mode: offlineMode(), styles }))
+			await buildVitePlugins(resolveOptions({ mode: testingMode(), styles }))
 		).map((plugin) => plugin.name);
 
 	it('drops the islands’ CSS when the full stylesheet is injected', async () => {

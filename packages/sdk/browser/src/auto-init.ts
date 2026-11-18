@@ -12,12 +12,13 @@ export const MANUAL_ATTRIBUTE = 'data-manual';
 
 const MODES: ReadonlySet<string> = new Set<ConsentModeName>([
 	'hosted',
-	'offline',
 	'manifest',
 ]);
 const SCHEMES: ReadonlySet<string> = new Set(['light', 'dark', 'system']);
 
-const readList = function readList(value: string | null): string[] | undefined {
+export const readList = function readList(
+	value: string | null
+): string[] | undefined {
 	if (!value) {
 		return undefined;
 	}
@@ -90,7 +91,7 @@ const readNonce = function readNonce(element: Element): string | undefined {
  *
  * ```html
  * <script src="https://cdn.jsdelivr.net/npm/@c15t/browser/dist/c15t.js"
- *   data-backend-url="https://your-instance.c15t.dev"
+ *   data-backend-url="https://your-project.inth.app"
  *   data-categories="measurement,marketing"
  *   data-color-scheme="dark"
  *   data-privacy-policy-url="/privacy"
@@ -125,10 +126,6 @@ export const readScriptOptions = function readScriptOptions(
 	if (manifestURL) {
 		options.manifestURL = manifestURL;
 	}
-	const policies = readList(element.getAttribute('data-policy-rules'));
-	if (policies) {
-		options.policyRules = policies as ScriptTagClientOptions['policyRules'];
-	}
 	const categories = readList(element.getAttribute('data-categories'));
 	if (categories) {
 		options.consentCategories = categories as AllConsentNames[];
@@ -144,9 +141,6 @@ export const readScriptOptions = function readScriptOptions(
 	const nonce = readNonce(element);
 	if (nonce) {
 		options.nonce = nonce;
-	}
-	if (readFlag(element, 'data-acknowledge-no-records')) {
-		options.acknowledgeNoRecords = true;
 	}
 	if (readFlag(element, 'data-no-ui')) {
 		options.ui = false;

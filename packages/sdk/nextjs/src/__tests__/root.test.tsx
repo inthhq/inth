@@ -7,16 +7,16 @@
  * - Kernel is per-mount (two mounts → two kernels).
  * - Selector hooks work downstream.
  */
-import { offline } from '@c15t/core/modes';
 import { useConsent, useOverrides } from '@c15t/react';
 import { describe, expect, test } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { ConsentRoot } from '../root';
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
-/** These tests are not about the backend; an explicit offline({ acknowledgeNoRecords: true }) needs none. */
-const OFFLINE_CONFIG = { mode: offline({ acknowledgeNoRecords: true }) };
+/** These tests are not about the backend; testing() needs none. */
+const OFFLINE_CONFIG = { mode: testing() };
 
 describe('ConsentRoot: state is honored', () => {
 	test('initial consents from state reach useConsent', async () => {

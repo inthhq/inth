@@ -106,24 +106,27 @@ export interface C15tMiddlewareOptions {
 /** Options accepted by the `c15t()` Astro integration. */
 export interface C15tAstroOptions {
 	/**
-	 * Your c15t backend: the browser saves consent there with
-	 * `POST /subjects`, `hosted()` asks its `/init`, and `manifest()` reads
-	 * `${backendURL}/manifest`.
+	 * Your Inth backend: the browser saves consent there with
+	 * `POST /subjects`, `manifest()` reads `${backendURL}/manifest`, and
+	 * `hosted()` asks its `/init`. Required unless `mode` is `testing()`.
 	 *
 	 * Defaults to `PUBLIC_C15T_BACKEND_URL`, then `PUBLIC_INTH_PROJECT_URL`,
 	 * read from the environment or a `.env` file in the project root when
-	 * `astro.config.mjs` loads. A
-	 * `hosted({ backendURL })` of its own wins over both.
+	 * `astro.config.mjs` loads.
 	 */
 	backendURL?: string;
 	/**
-	 * Where the visitor's policy comes from. Build it with `manifest()`,
-	 * `hosted()` or `local()` from `c15t/astro`.
+	 * Where the visitor's policy comes from: `manifest()` or `hosted()`
+	 * from `c15t/astro`, or `testing()` from `c15t/astro/testing`.
 	 *
 	 * `manifest()` downloads your project's policy when `astro build` or
-	 * `astro dev` starts and resolves each visitor on the server.
+	 * `astro dev` starts and resolves each visitor on the server. When the
+	 * manifest is unavailable, the server and the consent route ask the
+	 * backend's `/init` and log a warning.
 	 * `manifest({ source: 'runtime' })` fetches it at runtime instead, so
-	 * policy edits apply without a rebuild.
+	 * policy edits apply without a rebuild. `hosted()` asks the backend's
+	 * `/init` for every visitor. `testing()` resolves a policy with no
+	 * backend, for tests, and throws in production builds.
 	 *
 	 * @default manifest()
 	 */
@@ -136,7 +139,7 @@ export interface C15tAstroOptions {
 	 * never calls a route of your own at that path.
 	 *
 	 * The route renders on demand, so `astro build` needs a server adapter.
-	 * A static site uses `hosted()` or `local()`, or
+	 * A static site uses `hosted()`, or
 	 * `manifest({ resolve: 'browser' })`, which prerenders only
 	 * `${routePrefix}/manifest`. `/` is rejected: a catch-all route at the
 	 * site root would catch every page.
@@ -145,22 +148,14 @@ export interface C15tAstroOptions {
 	 */
 	routePrefix?: string | false;
 	/**
-	 * What a failed build-time manifest fetch does. `'fail'` stops
-	 * `astro build` and `astro dev`. `'runtime'` logs a warning, and the
-	 * server fetches the policy at runtime. Unset, `astro build` fails and
-	 * `astro dev` warns. The `C15T_ON_BUILD_ERROR` environment variable
+	 * What a failed build-time manifest fetch does. `'runtime'` (the
+	 * default) logs a warning, and the server fetches the policy at
+	 * runtime, asking the backend's `/init` while the manifest is
+	 * unavailable. `'fail'` stops `astro build` and `astro dev`. The
+	 * `C15T_ON_BUILD_ERROR` environment variable
 	 * overrides this option. The fetch waits at most 10 seconds.
 	 */
 	onBuildError?: 'fail' | 'runtime';
-	/**
-	 * In `manifest()` mode, report each init the server resolves, in the
-	 * middleware and the injected route, to the backend's `POST /sessions`,
-	 * server-to-server and detached from the response, so the backend still
-	 * counts visitors it never served `/init` to. Set `false` to send none.
-	 *
-	 * @default true
-	 */
-	reportSessions?: boolean;
 	/** Host layout and styling constrained by the active policy. */
 	presentation?: ConsentPresentation;
 	/**

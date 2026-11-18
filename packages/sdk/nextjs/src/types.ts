@@ -62,11 +62,12 @@ export interface ConsentClientOptions {
 
 	/**
 	 * Additional React provider options. `options.mode` replaces the
-	 * config's `mode`: `manifest()`, `hosted()` or `local()` from
-	 * `c15t/next`, or a transport such as `custom(transport)`.
+	 * config's `mode`: `manifest()`, `hosted()` or `testing()`, or a
+	 * transport factory.
 	 */
 	options?: Omit<
 		ConsentProviderOptions,
+		| 'backendURL'
 		| 'mode'
 		| 'clearOnRevocation'
 		| 'networkBlocker'

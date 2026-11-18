@@ -5,8 +5,8 @@ import { render } from 'vitest-browser-react';
 import { ComponentFixtureProvider } from '~/__tests__/component-fixture-provider';
 import { ConsentDevTools } from '~/devtools';
 import { useDevToolsLauncherAvailable } from '~/devtools-launcher';
-import { offline } from '~/transports/offline';
 
+import { testing } from '../../../testing';
 import { ConsentDialogTrigger } from '../index';
 
 /**
@@ -40,9 +40,7 @@ describe('ConsentDialogTrigger with ConsentDevTools', () => {
 		async () => {
 			const seen: boolean[] = [];
 			await render(
-				<ComponentFixtureProvider
-					options={{ mode: offline({ acknowledgeNoRecords: true }) }}
-				>
+				<ComponentFixtureProvider options={{ mode: testing() }}>
 					<ConsentDevTools />
 					<ConsentDialogTrigger showWhen="always" />
 					<LauncherProbe seen={seen} />

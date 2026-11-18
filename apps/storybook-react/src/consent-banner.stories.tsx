@@ -9,9 +9,8 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import {
 	ConsentBanner,
 	ConsentDialog,
-	offline,
 } from '../../../packages/sdk/react/src/index';
-import { storybookPolicy } from '../../storybook-consent-policy';
+import { storybookMode, storybookPolicy } from '../../storybook-consent-policy';
 import {
 	editableConsentOptions,
 	StorybookConsentProvider,
@@ -71,17 +70,14 @@ export const Notice: Story = {
 		<StorybookConsentProvider
 			options={{
 				...editableConsentOptions,
-				mode: offline({
-					acknowledgeNoRecords: true,
-					policyRules: [
-						{
-							...storybookPolicy,
-							id: 'storybook-notice',
-							model: 'opt-out',
-							prompt: 'notice',
-						},
-					],
-				}),
+				mode: storybookMode([
+					{
+						...storybookPolicy,
+						id: 'storybook-notice',
+						model: 'opt-out',
+						prompt: 'notice',
+					},
+				]),
 				presentation: undefined,
 			}}
 		>

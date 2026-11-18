@@ -64,7 +64,9 @@ export {
 // Private (`ɵ`): the idle boundary the IAB dialog's prefetch waits for.
 export { whenPageIdle as ɵwhenPageIdle } from './lib/core/dialog-warming';
 export type { DialogPreload } from './lib/core/dialog-warming';
-export { custom, hosted, local, manifest } from './lib/core/modes';
+export { manifest } from './lib/core/modes';
+export { hosted, type HostedMode } from '@c15t/core/modes';
+export type { ConsentTesting } from '@c15t/core/testing';
 export { defaultTranslationConfig } from './lib/core/translation-defaults';
 export {
 	detectBrowserLanguage,
@@ -107,8 +109,6 @@ export type {
 	LegalLinks,
 	LocationResponse,
 	NonIABVendor,
-	OfflineModeFactory,
-	OfflineModeOptions,
 	PolicyRule,
 	PolicyScopeMode,
 	PreferenceControl,

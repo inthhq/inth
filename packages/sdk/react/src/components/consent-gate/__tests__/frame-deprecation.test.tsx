@@ -3,8 +3,8 @@ import { render } from 'vitest-browser-react';
 
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentProvider } from '~/provider';
-import { offline } from '~/transports/offline';
 
+import { testing } from '../../../testing';
 import { Frame } from '../frame';
 import { ConsentGate } from '../index';
 
@@ -15,7 +15,7 @@ afterEach(() => {
 test('Frame renders the ConsentGate and warns once that it is deprecated', async () => {
 	const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 	const options = {
-		mode: offline({ acknowledgeNoRecords: true }),
+		mode: testing(),
 		persistence: false,
 		prefetch: policyFixture(),
 	};

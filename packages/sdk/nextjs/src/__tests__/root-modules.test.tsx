@@ -4,17 +4,17 @@
  * Verifies that passing curated module props causes the corresponding
  * modules to mount and react to kernel state.
  */
-import { offline } from '@c15t/core/modes';
 import { useDeclaredVendors, useVendorAllowed } from '@c15t/react';
 import { ConsentGPP } from '@c15t/react/gpp';
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { ConsentRoot } from '../root';
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
-/** These tests are not about the backend; an explicit offline({ acknowledgeNoRecords: true }) needs none. */
-const OFFLINE_CONFIG = { mode: offline({ acknowledgeNoRecords: true }) };
+/** These tests are not about the backend; testing() needs none. */
+const OFFLINE_CONFIG = { mode: testing() };
 
 describe('ConsentRoot module props', () => {
 	test('scripts prop mounts <script> tags for eligible categories', async () => {

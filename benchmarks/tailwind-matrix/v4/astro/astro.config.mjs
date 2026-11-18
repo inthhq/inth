@@ -2,22 +2,15 @@
 import svelte from '@astrojs/svelte';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'astro/config';
-import c15t, { local } from 'c15t/astro';
+import c15t, { hosted } from 'c15t/astro';
 
 export default defineConfig({
 	integrations: [
 		svelte(),
 		c15t({
-			mode: local({
-				policyRules: [
-					{
-						id: 'tailwind-matrix',
-						match: { isDefault: true },
-						model: 'opt-in',
-						prompt: 'choice',
-					},
-				],
-			}),
+			backendURL: 'https://your-project.inth.app',
+			// A static site: the browser asks the backend's /init.
+			mode: hosted(),
 		}),
 	],
 	vite: { plugins: [tailwindcss()] },

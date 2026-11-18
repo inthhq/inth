@@ -11,7 +11,7 @@ group: frameworks
 | Browser-only Angular app served as static files | `provideC15t()` with `hosted()`, as in the [quickstart](/docs/frameworks/angular/quickstart). The banner mounts after the app bootstraps. |
 | Angular with `@angular/ssr` and a Node server | `provideC15tServer()` and `createConsentRoute()` from `@c15t/angular/ssr`. The banner is in the first HTML, and the browser only talks to your origin. This page. |
 | Prerendered routes (`RenderMode.Prerender`) | Every visitor gets the same HTML, so it carries no visitor's consent. The browser resolves consent after hydration. See [prerendered and cached pages](#prerendered-and-cached-pages). |
-| A prototype with no backend | `local()`, which the server resolves from its own rules. Not recommended for production environments. |
+| Tests with no backend | `testing()` from `@c15t/angular/testing`, which the server resolves from its own rules. Throws in production builds. |
 
 `@c15t/angular/ssr` needs `@angular/ssr` and `@angular/platform-server`
 20, 21 or 22. An app created with `ng new --ssr`, or after `ng add @angular/ssr`,
@@ -27,10 +27,10 @@ through Angular's `REQUEST` token, resolves the visitor's consent with the
 - `hosted()` asks the backend's `/init`, forwarding the visitor's cookie,
   location headers and language. With `route`, a backend on your own consent
   route is resolved in-process, with no network request.
-- `local()` resolves the policy from its rules and the request's location
+- `testing()` resolves the policy from its rules and the request's location
   headers.
 - `manifest()` resolves from the backend's manifest.
-- `custom()` gives the server nothing to call. The stored cookie still seeds
+- A transport factory of your own gives the server nothing to call. The stored cookie still seeds
   the state, and the browser resolves the policy after hydration.
 
 `ConsentManager` reads that state on the server, so the render includes the
@@ -75,7 +75,6 @@ project's backend URL in the server's environment.
 | `manifestURL` | `${backendURL}/manifest` | A full manifest URL, such as a CDN copy. |
 | `snapshot` | none | A manifest to resolve with. Nothing is fetched. |
 | `proxy` | `false` | Forward consent writes to `backendURL`. |
-| `reportSessions` | `true` | Report each resolved init to the backend's `POST /sessions`. Needs an absolute `backendURL`. |
 | `trustForwardedHeaders` | `false` | Believe `Forwarded` and `X-Forwarded-*` headers. Only behind a proxy that sets them and drops incoming ones. |
 | `fetch`, `fetchGvl` | `globalThis.fetch` | Fetch for the manifest and for the Global Vendor List under an IAB policy. |
 | `waitUntil` | none | Keeps manifest refreshes and session reports alive past the response, on runtimes that stop work once a response is sent. |
@@ -110,7 +109,6 @@ Render consent routes on the server, not as prerendered pages:
 | `trustForwardedHeaders` | `false` | Resolve a relative backend against the request's forwarding headers and forward the visitor IP. Only behind a proxy that sets those headers. |
 | `fetch` | `globalThis.fetch` | Fetch for a backend on another origin. |
 | `timeoutMs` | `500` | Longest the render waits for the policy, in milliseconds. `false` waits for the upstream. |
-| `reportSessions` | `true` | Manifest mode: report the resolved init to `POST /sessions`. Needs an absolute backend URL. |
 | `waitUntil` | none | Keeps session reports and late upstream work alive past the response. |
 | `shared` | `false` | The HTML is served to more than one visitor. No cookie, geo header or clock is read. |
 
@@ -142,7 +140,7 @@ const response =
 A page built with `RenderMode.Prerender`, or served from a shared cache,
 reaches every visitor with the same HTML. `provideC15tServer()` treats a
 render without a request as shared: it reads no cookie, geo header or clock,
-and resolves only `local()` mode. Pass `shared: true` for a server-rendered
+and resolves only `testing()` mode. Pass `shared: true` for a server-rendered
 page you cache. The browser then resolves the visitor's consent after
 hydration, so the banner appears after the first paint. Never cache a page
 that a request-specific render produced.

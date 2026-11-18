@@ -1,9 +1,9 @@
 import type { ConsentState } from '@c15t/core';
-import { offline } from '@c15t/core';
 import { render, fireEvent } from '@testing-library/svelte';
 import { expect, test, vi } from 'vitest';
 
 import type { ConsentContextValue } from '../lib/context.svelte';
+import { testing } from '../lib/testing';
 import Fixture from './fixtures/policy-state-fixture.svelte';
 
 test('Svelte provider options share external gates and preference controls', async () => {
@@ -37,7 +37,7 @@ test('Svelte provider options share external gates and preference controls', asy
 		options: {
 			consentSource: source,
 			iframeBlocker: false,
-			mode: offline({ acknowledgeNoRecords: true }),
+			mode: testing(),
 			scripts: [script],
 		},
 	});

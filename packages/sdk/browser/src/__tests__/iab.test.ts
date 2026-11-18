@@ -1,9 +1,10 @@
+import type { ProviderTransportFactory } from '@c15t/core';
 import { getIABControls } from '@c15t/core';
 import { clearGVLCache } from '@c15t/iab';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
-import { offline } from '../transports/offline';
+import { testing } from '../testing';
 import type { ConsentClient, ScriptTagClientOptions } from '../types';
 import { initIAB as init, init as initOrdinary } from './fixtures/factory-init';
 
@@ -13,7 +14,6 @@ const start = async (
 ): Promise<ConsentClient> => {
 	const client = init({
 		iab: { cmpId: 28, gvl: completeGVL },
-		mode: 'offline',
 		overrides: { country: 'DE' },
 		ui: { styles: false },
 		...options,
@@ -56,7 +56,6 @@ describe('IAB browser entry', () => {
 		);
 		const client = init({
 			iab: { cmpId: 28, gvlURL: 'https://example.test/gvl.json' },
-			mode: 'offline',
 			overrides: { country: 'DE' },
 			ui: false,
 		});
@@ -76,7 +75,6 @@ describe('IAB browser entry', () => {
 		);
 		const client = init({
 			iab: { cmpId: 28, gvlURL: 'https://example.test/gvl.json' },
-			mode: 'offline',
 			overrides: { country: 'DE' },
 			ui: false,
 		});
@@ -92,7 +90,6 @@ describe('IAB browser entry', () => {
 	it('binds one CMP to the page kernel and installs the stub synchronously', async () => {
 		const client = init({
 			iab: { cmpId: 28, gvl: completeGVL },
-			mode: 'offline',
 			overrides: { country: 'DE' },
 			ui: false,
 		});
@@ -325,7 +322,7 @@ describe('IAB browser entry', () => {
 		expect(() => initOrdinary({ iab: { cmpId: 28 } })).toThrow('IAB requires');
 	});
 	it('uses ordinary UI when a region resolves a non-IAB policy', async () => {
-		const client = await start({ policyRules: ['europeOptIn'] });
+		const client = await start({ policy: ['europeOptIn'] });
 		expect(client.getSnapshot().model).toBe('opt-in');
 		expect(query(client, 'consent-banner-card')).toBeTruthy();
 		expect(
@@ -395,8 +392,8 @@ describe('IAB browser entry', () => {
 		);
 	});
 	it('closes preferences on the local record when the backend save fails', async () => {
-		const factory = offline({ acknowledgeNoRecords: true });
-		const mode: typeof factory = Object.assign(
+		const factory = testing().transport;
+		const mode: ProviderTransportFactory = Object.assign(
 			(context: Parameters<typeof factory>[0]) => ({
 				...factory(context),
 				save: () => Promise.reject(new Error('network unavailable')),
@@ -430,7 +427,6 @@ describe('IAB browser entry', () => {
 		vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
 		const client = init({
 			iab: { cmpId: 28, gvlURL: 'https://example.test/gvl.json' },
-			mode: 'offline',
 			overrides: { country: 'DE' },
 			ui: { styles: false },
 		});

@@ -1,14 +1,14 @@
 'use client';
 
-import { offline } from '@c15t/react';
+import { benchPolicy } from '@c15t/benchmarking/bench-policy';
 import { ConsentBanner } from '@c15t/react/consent-banner';
 import { ConsentProvider } from '@c15t/react/provider';
 
 const CssBannerModulesPage = () => (
 	<ConsentProvider
 		options={{
-			mode: offline({
-				policyRules: [
+			mode: benchPolicy({
+				policy: [
 					{
 						id: 'bench-opt-in',
 						match: { fallback: true, isDefault: true },

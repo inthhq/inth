@@ -8,8 +8,9 @@ import { buildPrompt } from '../browser/render-prompt';
 import ConsentBanner from '../components/prompt.astro';
 import { resolveOptions } from '../integration';
 import { createConsentMiddleware } from '../middleware-handler';
-import { hosted as hostedMode, offline as offlineMode } from '../mode';
+import { hosted as hostedMode } from '../mode';
 import { buildBannerRevealScript, resolveConsentContext } from '../server';
+import { testing as testingMode } from '../testing';
 import type { C15tAstroOptions, C15tLocals } from '../types';
 import { describeTree } from './dom-tree';
 import { testRule } from './policy-fixture';
@@ -21,7 +22,7 @@ beforeAll(async () => {
 });
 
 const OFFLINE: C15tAstroOptions = {
-	mode: offlineMode({ policyRules: [testRule] }),
+	mode: testingMode({ policy: [testRule] }),
 };
 
 /**
@@ -82,7 +83,7 @@ describe('prerendered routes', () => {
 	it('leaves a hosted policy for the browser to resolve', async () => {
 		const fetchImpl = vi.fn();
 		const c15t = await runPrerendered(
-			{ mode: hostedMode({ backendURL: 'https://consent.example.com' }) },
+			{ backendURL: 'https://consent.example.com', mode: hostedMode() },
 			fetchImpl as never
 		);
 		expect(fetchImpl).not.toHaveBeenCalled();
@@ -119,7 +120,8 @@ describe('<ConsentBanner /> on a prerendered page', () => {
 		const html = await container.renderToString(ConsentBanner, {
 			locals: {
 				c15t: await runPrerendered({
-					mode: hostedMode({ backendURL: 'https://consent.example.com' }),
+					backendURL: 'https://consent.example.com',
+					mode: hostedMode(),
 				}),
 			},
 			props: { title: 'Cookies?' },
@@ -174,8 +176,8 @@ describe('browser-rendered banner', () => {
 				cookiePolicy: { href: '/cookies', label: 'Cookies' },
 				privacyPolicy: { href: '/privacy', label: 'Privacy' },
 			},
-			mode: offlineMode({
-				policyRules: [{ ...testRule, ...parityCase.rule } as typeof testRule],
+			mode: testingMode({
+				policy: [{ ...testRule, ...parityCase.rule } as typeof testRule],
 			}),
 			...parityCase.options,
 		};

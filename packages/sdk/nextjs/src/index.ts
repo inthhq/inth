@@ -49,10 +49,8 @@ export { defineConsentConfig } from './config';
 export type {
 	ConsentMode,
 	HostedMode,
-	HostedModeOptions,
 	ManifestMode,
 	ManifestModeOptions,
-	OfflineMode,
-	OfflineModeOptions,
+	TestingMode,
 } from '@c15t/core/modes';
-export { hosted, local, manifest, offline } from '@c15t/core/modes';
+export { hosted, manifest } from '@c15t/core/modes';

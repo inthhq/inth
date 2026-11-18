@@ -194,7 +194,7 @@ describe('TanStack Start client chunks', () => {
 		// wake-up on a failed server start, the render's page object and the
 		// live-option wake-up, and the plain-script checks that keep the early
 		// start to what it can verify) sits in the first load.
-		expect(brotli).toBeLessThanOrEqual(19_243);
+		expect(brotli).toBeLessThanOrEqual(19_247);
 	}, 60_000);
 
 	test('a root route applies a streamed state with code its engine brings', async () => {

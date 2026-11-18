@@ -1,4 +1,3 @@
-import { custom } from '@c15t/core';
 import { expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
@@ -7,6 +6,7 @@ import { warmDialogChunk } from '~/chunk-warming';
 import { ConsentBanner } from '~/components/prompt';
 
 import { ComponentFixtureProvider } from './component-fixture-provider';
+import { transportMode } from './fixtures/transport-mode';
 // The dialog module loads only once the test warms it, after this observer.
 import { moduleRequested } from './module-requests';
 import { policyFixture } from './policy-fixture';
@@ -22,7 +22,7 @@ test('warming the dialog loads the chunk the deferred root opens early', async (
 		<ComponentFixtureProvider
 			options={{
 				disableAnimation: true,
-				mode: custom({}),
+				mode: transportMode({}),
 				persistence: false,
 				prefetch: policyFixture({}, { model: 'opt-in' }),
 			}}

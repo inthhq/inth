@@ -15,6 +15,7 @@ import type {
 	ProviderTransportContext,
 } from '@c15t/core';
 import { createPersistence } from '@c15t/core/modules/persistence';
+import { hosted } from '@c15t/core/transports';
 import {
 	readJourneyParams,
 	writePolicyResolutionWire,
@@ -26,7 +27,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { KernelContext } from '../context';
-import { hosted, useSnapshot } from '../index';
+import { useSnapshot } from '../index';
 import { UNCOMMITTED_HOLD_MS } from '../module-hooks/network-hold';
 import { ConsentProvider } from '../provider';
 import { policyFixture } from './policy-fixture';
@@ -406,9 +407,7 @@ test('a retry after the global fetch changed sends its own request through the n
 	vi.stubGlobal('fetch', globalFetch('old'));
 	// No `fetch`: the transport takes the global one when it is built.
 	const App = () => (
-		<ConsentProvider
-			options={{ mode: hosted({ backendURL: BACKEND }), persistence: false }}
-		>
+		<ConsentProvider options={{ backendURL: BACKEND, persistence: false }}>
 			<SuspendsOnce />
 			<Capture />
 		</ConsentProvider>

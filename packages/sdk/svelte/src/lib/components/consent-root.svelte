@@ -56,8 +56,7 @@
 	type ConsentRootProps = Omit<ConsentManagerOptions, 'mode' | 'prefetch'> & {
 		children?: Snippet;
 		/**
-		 * A transport of your own, such as `custom()` from `@c15t/svelte`,
-		 * instead of the mode `c15tHandle()` was given. Read once, when the
+		 * A transport of your own, instead of the mode `c15tHandle()` was given. Read once, when the
 		 * root mounts.
 		 */
 		mode?: ProviderTransportFactory;

@@ -196,16 +196,6 @@ export interface ResolveConsentOptions
 	timeoutMs?: number | false;
 
 	/**
-	 * Report the init this render resolved from the manifest to the
-	 * backend's `POST /sessions`, server-to-server and detached from the
-	 * render, so the backend still counts visitors it never served `/init`
-	 * to. Only the manifest path reports; a hosted `/init` call is already
-	 * the backend's own signal. Set `false` to send none.
-	 *
-	 * @default true
-	 */
-	reportSessions?: boolean;
-	/**
 	 * The consent journey scope this render reports. Defaults to the
 	 * config's `journey`; `ConsentRoot` must use the same value.
 	 */
@@ -329,7 +319,6 @@ export const resolveConsent = async function resolveConsent(
 		overrides: { country: options.country, language: options.language },
 		// The app's own consent route: the render never fetches it.
 		ownRoutes: routePrefix ? [routePrefix] : [],
-		reportSessions: options.reportSessions,
 		request: facts,
 		storage: options.cookieName
 			? { storageKey: options.cookieName }

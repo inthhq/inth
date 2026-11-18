@@ -1,18 +1,17 @@
 import { writePolicyResolutionWire } from '@c15t/schema/types';
 import type { ConsentManifest } from '@c15t/schema/types';
 /**
- * Provider transport factories, `hosted()`, `offline()` and `custom()`, and
- * the data factories from `@c15t/core/modes`.
+ * The `hosted()` transport factory and the data factories from
+ * `@c15t/core/modes`.
  */
-import { describe, expect, expectTypeOf, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 
-import type { KernelTransport, SavePayload } from '../index';
+import type { SavePayload } from '../index';
 import * as modes from '../modes';
-import type { ConsentMode, ManifestModeOptions } from '../modes';
+import type { ManifestModeOptions } from '../modes';
 import { readHostedMode } from '../transports/hosted-modes';
-import { custom, hosted } from '../transports/mode';
+import { hosted } from '../transports/mode';
 import type { ProviderTransportContext } from '../transports/mode';
-import { offline } from '../transports/offline';
 import { matchedResolution, optInRule } from './fixtures/kernel-fixtures';
 
 const context: ProviderTransportContext = {
@@ -133,7 +132,6 @@ describe('hosted()', () => {
 			kind: 'hosted',
 			type: 'hosted',
 		});
-		expectTypeOf(mode).toExtend<ConsentMode>();
 	});
 
 	test('recognizes its own factories, not wrappers that copy them', () => {
@@ -217,47 +215,15 @@ describe('hosted()', () => {
 	});
 });
 
-describe('offline()', () => {
-	test('carries its policy rules as enumerable data', () => {
-		const policyRules = [optInRule({ id: 'everywhere' })];
-
-		expect({ ...offline() }).toEqual({ kind: 'offline', type: 'offline' });
-		expect({ ...offline({ policyRules }) }).toEqual({
-			kind: 'offline',
-			policyRules,
-			type: 'offline',
-		});
-		expectTypeOf(offline()).toExtend<ConsentMode>();
-	});
-});
-
-describe('offline() transport', () => {
-	test('answers init with the location it resolved for, as /init does', async () => {
-		const transport = offline({ acknowledgeNoRecords: true })(context);
-		const response = await transport.init?.({
-			overrides: { country: 'DE', region: 'BE' },
-		} as Parameters<NonNullable<KernelTransport['init']>>[0]);
-
-		expect(response?.location).toEqual({ countryCode: 'DE', regionCode: 'BE' });
-	});
-});
-
 describe('@c15t/core/modes', () => {
 	test('returns plain, serializable data', () => {
 		const snapshot = { revision: '1', schemaVersion: 2 } as never;
 		const all = [
 			modes.manifest(),
 			modes.manifest({ resolve: 'browser', snapshot }),
-			modes.hosted({ backendURL: 'https://backend.example' }),
-			modes.offline({ policyRules: [optInRule({ id: 'everywhere' })] }),
 		];
 
-		expect(all.map((mode) => mode.type)).toEqual([
-			'manifest',
-			'manifest',
-			'hosted',
-			'offline',
-		]);
+		expect(all.map((mode) => mode.type)).toEqual(['manifest', 'manifest']);
 		expect(JSON.parse(JSON.stringify(all))).toEqual(all);
 		expect(modes.manifest({ source: 'runtime' })).toEqual({
 			source: 'runtime',
@@ -271,24 +237,5 @@ describe('@c15t/core/modes', () => {
 		const both: ManifestModeOptions = { snapshot, source: 'build' };
 
 		expect(both).toBeDefined();
-	});
-});
-
-describe('custom()', () => {
-	test('passes a kernel transport through unchanged', () => {
-		const transport: KernelTransport = { init: vi.fn(), save: vi.fn() };
-		const mode = custom(transport);
-
-		expect(mode.kind).toBe('custom');
-		expect(mode(context)).toBe(transport);
-	});
-
-	test('rejects removed endpoint-handler configuration', () => {
-		expect(() =>
-			custom({
-				// @ts-expect-error Old endpoint handlers are no longer supported.
-				setConsent: vi.fn(),
-			})
-		).toThrow('custom() requires a KernelTransport');
 	});
 });

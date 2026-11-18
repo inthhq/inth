@@ -8,7 +8,7 @@ group: concepts
 
 Where policy resolves and where choices are saved are separate from who runs
 the backend. Inth and a [self-hosted backend](/docs/self-host/quickstart) speak
-the same protocol, so every path below works with either. Only `local()`
+the same protocol, so every path below works with either. Only `testing()`
 removes backend requests. For a recommendation by framework, start with
 [choose your setup](/docs/concepts/choose-your-setup).
 
@@ -18,8 +18,7 @@ removes backend requests. For a recommendation by framework, start with
 | Cached manifest on your server | Your application resolves public policy data with each request's location and signals | Inth or your c15t backend | Policy changes must reach the app without rebuilding, or builds cannot access the backend |
 | Regular backend `/init` | The consent backend | The same backend | You have no application server, as in a React, Vue or Svelte single-page app, want the fewest moving parts, or need backend-owned request resolution |
 | Manifest in the browser | The browser, using a supplied location, or `/init` when the policy needs one it doesn't have | Inth or your c15t backend | The policy has no location rules or the page knows the visitor's location, and you accept about 3 KB more bundle and a rebuild for policy edits |
-| Local | The browser or local runtime, using bundled rules | No backend submission. c15t keeps no server-side record of consent. | Local development and tests. Not recommended for production environments. |
-| Custom transport | Your implementation | Your implementation | An existing service cannot use the c15t backend protocol |
+| `testing()` | The browser or local runtime, using the test's rules | No backend submission | Tests only. It throws in production builds. |
 
 ## What is a consent manifest?
 
@@ -65,7 +64,7 @@ each resolution: the host posts to the backend's `POST /sessions` from the
 server, after the response. The browser sends nothing, and the report stores
 no identity; the visitor's IP address and user agent are forwarded under the
 backend's usual IP handling. Static output resolves in the browser and sends
-no report. Set `reportSessions: false` on an adapter to turn it off.
+no report.
 
 ## Link an init to the save that follows
 
@@ -188,53 +187,31 @@ needing the upstream URL. A static export cannot serve a Next.js route or
 rewrite at runtime; use the absolute Inth URL or a proxy provided by the static
 host instead.
 
-## When should I use local mode?
+## How do I test without a backend?
 
-Not recommended for production environments. Use Inth or a self-hosted backend
-for production policy and consent records.
+Pass `testing()` from your framework package's `/testing` entry as `mode`.
+It resolves a policy in the browser, sends no request and needs no
+`backendURL`. It throws when `NODE_ENV` is `production`, and its code is only
+in bundles that import the `/testing` entry.
 
-`local()`, called `offline()` before c15t 3.2, resolves bundled policy rules
-without an init request and acknowledges saves locally. The runtime's
-persistence module stores the choice in browser storage. c15t keeps no
-server-side record of consent, so there is no audit history, no cross-device
-record and no IP geolocation. [What a consent record proves](/docs/concepts/modes#what-a-consent-record-proves)
-explains what that leaves out.
+{/* example: fragment */}
 
-Use your framework's `local()` so its translations and provider context are
-included. In a React app it replaces the mode passed to `ConsentProvider`:
+```tsx title="src/consent.test.tsx"
+import { ConsentProvider } from 'c15t/react';
+import { testing } from 'c15t/react/testing';
 
-```ts title="src/consent-mode.ts"
-import { local } from 'c15t/react';
-
-export const mode = local();
+<ConsentProvider options={{ overrides: { country: 'DE' }, mode: testing() }} />;
 ```
 
-In development builds, local mode warns once per page that c15t keeps no
-server-side record of consent. Pass `local({ acknowledgeNoRecords: true })` to
-hide the warning once you have decided a browser-only record is enough; see
-[the development warning](/docs/concepts/modes#the-development-warning).
+With no `policy`, `testing()` uses the recommended rule pack, and the
+location overrides pick the rule. Pass `testing({ policy })` with your own
+[policy rules](/docs/concepts/policies) to test another prompt, such as the
+opt-out notice. See [consent modes](/docs/concepts/modes#testing).
 
-In Next.js, TanStack Start, Nuxt, Astro and SvelteKit, pass the data
-`local()` from the framework package where the config takes `mode`; see
-[consent modes](/docs/concepts/modes#import-the-factories-from-your-framework-package).
-
-With no `policyRules`, the local transport uses the recommended rule pack.
-Supplying `policyRules` replaces that pack. Unknown country and region are
-real resolution inputs; local mode does not discover a visitor's location.
-Use [policy rules](/docs/concepts/policies) to understand
-matching and defaults, and test the missing-location case.
-
-Local mode is an explicit architecture choice, not an automatic fallback for
-a failed Inth request. If hosted initialization fails before a policy resolves,
-optional permissions remain denied and the stock prompt stays hidden. Observe
-initialization failures instead of silently changing policy sources.
-
-## Can I provide my own transport?
-
-`custom(transport)` accepts a `KernelTransport` with the v3 `init` and `save`
-contract. It does not accept v2 endpoint handlers such as `setConsent`. Keep
-policy resolution, record acknowledgments and failure behavior consistent with
-the kernel contract. Prefer a built-in transport when your backend supports it.
+`testing()` is not a fallback. When the manifest is unavailable,
+`manifest()` asks the backend's `/init`. If hosted initialization fails
+before a policy resolves, optional permissions remain denied and the stock
+prompt stays hidden.
 
 ## Verify the selected path
 

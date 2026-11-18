@@ -10,7 +10,7 @@ import { tick } from 'svelte';
 import { expect, test, vi } from 'vitest';
 
 import ThemeSwapFixture from '../../__tests__/fixtures/theme-swap-fixture.svelte';
-import { custom } from '../../lib/index';
+import { transportMode } from '../../__tests__/fixtures/transport-mode';
 
 const updateModuleLoads = vi.hoisted(() => ({ count: 0 }));
 // oxlint-disable-next-line anti-slop/no-module-mocking -- The property under test is whether the provider loads this module at all. The factory only counts loads and returns the real module.
@@ -30,7 +30,7 @@ const flush = async function flush() {
 };
 
 test('mounting loads no update module; a new user does', async () => {
-	const mode = custom({
+	const mode = transportMode({
 		init: vi.fn().mockResolvedValue({}),
 		save: vi.fn().mockResolvedValue({ ok: true }),
 	});

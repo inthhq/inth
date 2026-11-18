@@ -5,8 +5,8 @@ import { afterEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { KernelContext } from '../context';
-import { offline } from '../index';
 import { ConsentProvider } from '../provider';
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 const scriptModuleRequests = () =>
@@ -48,13 +48,13 @@ test('loads scripts only when added and preserves cleanup ordering and initial c
 	const replacementCleanup: ClearOnRevocationConfig = {
 		measurement: { localStorage: ['analytics:replacement'] },
 	};
-	const mode = offline({ acknowledgeNoRecords: true });
+	const testingMode = testing();
 	const prefetch = policyFixture({ measurement: true });
 	const provider = (scripts: Script[], clearOnRevocation = initialCleanup) => (
 		<ConsentProvider
 			options={{
 				clearOnRevocation,
-				mode,
+				mode: testingMode,
 				persistence: false,
 				prefetch,
 				scripts,
@@ -115,7 +115,9 @@ test('loads scripts only when added and preserves cleanup ordering and initial c
 	await vi.waitFor(() => expect(onBeforeLoad).toHaveBeenCalledTimes(3));
 	expect(scriptModuleRequests()).toHaveLength(1);
 	await screen.rerender(
-		<ConsentProvider options={{ mode, persistence: false, prefetch, scripts }}>
+		<ConsentProvider
+			options={{ mode: testingMode, persistence: false, prefetch, scripts }}
+		>
 			<Capture />
 		</ConsentProvider>
 	);

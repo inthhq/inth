@@ -31,6 +31,7 @@ import type {
 import { backendURL as generatedBackendURL } from '@c15t/core/generated';
 import type { ConsentMode } from '@c15t/core/modes';
 import { clientMode } from '@c15t/core/runtime/client-mode';
+import type { WithBackendURL } from '@c15t/core/runtime/provider';
 import { preloadScriptLoaderWith } from '@c15t/core/runtime/script-loader-preload';
 import type * as ScriptServerStart from '@c15t/core/runtime/script-server-start';
 import { resolveStreamedInit } from '@c15t/core/runtime/streamed-init';
@@ -59,25 +60,42 @@ type RecordedState = PromiseLike<ConsentState> & {
 	value?: ConsentState;
 };
 
+/** What the root picks a transport from, before the state's own. */
+type ChosenMode = ConsentMode | ProviderTransportFactory | undefined;
+
 const transportFor = function transportFor(
 	state: ConsentState | undefined,
-	mode: ConsentMode | ProviderTransportFactory | undefined,
+	mode: ChosenMode,
 	overrides: KernelOverrides | undefined
 ): ProviderTransportFactory {
 	const backendURL = state?.backendURL ?? generatedBackendURL;
 	const routePrefix = state?.routePrefix;
-	return clientMode(mode ?? state?.mode, {
-		backendURL,
-		// A `consentPrefetchHead()` script may have started the init request
-		// before hydration. The transport consumes that promise on its first
-		// init, so the first save stays bound to the decision it resolved.
-		initialData: readPrefetchedInitialData({
+	return clientMode(
+		mode ?? state?.mode,
+		{
 			backendURL,
-			overrides,
+			// A `consentPrefetchHead()` script may have started the init request
+			// before hydration. The transport consumes that promise on its first
+			// init, so the first save stays bound to the decision it resolved.
+			initialData: readPrefetchedInitialData({
+				backendURL,
+				overrides,
+				routePrefix,
+			}),
 			routePrefix,
-		}),
-		routePrefix,
-	});
+		},
+		'@c15t/tanstack-start/testing'
+	);
+};
+
+/** The kind a mode reports through `window.c15t.mode`. */
+const kindOf = function kindOf(
+	mode: ConsentMode | undefined
+): ProviderTransportFactory['kind'] {
+	if (mode === undefined || mode.type === 'manifest') {
+		return 'manifest';
+	}
+	return mode.type === 'hosted' ? 'hosted' : 'offline';
 };
 
 /**
@@ -126,13 +144,13 @@ const deferredTransport = function deferredTransport(
 				},
 			};
 		},
-		{ kind: mode?.type ?? ('manifest' as const) }
+		{ kind: kindOf(mode) }
 	);
 };
 
 const resolveMode = function resolveMode(
 	state: ConsentState | Promise<ConsentState>,
-	mode: ConsentMode | ProviderTransportFactory | undefined,
+	mode: ChosenMode,
 	overrides: KernelOverrides | undefined
 ): ProviderTransportFactory {
 	if (typeof mode === 'function') {
@@ -515,7 +533,10 @@ const AfterPage = ({
 export const EagerConsentRoot = (props: ConsentRootProps) => {
 	const { bootData, providerOptions, serverStart } = useRootOptions(props);
 	return (
-		<ConsentProvider options={providerOptions}>
+		// `resolveMode` threw already when there is no backend.
+		<ConsentProvider
+			options={providerOptions as WithBackendURL<ConsentProviderOptions>}
+		>
 			{props.children}
 			<Suspense fallback={null}>
 				<AfterPage

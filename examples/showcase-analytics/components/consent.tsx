@@ -1,6 +1,6 @@
 'use client';
 
-import { ConsentBanner, ConsentDialog, ConsentRoot, local } from 'c15t/next';
+import { ConsentBanner, ConsentDialog, ConsentRoot } from 'c15t/next';
 import type { ClearOnRevocationConfig, ConsentRootProps } from 'c15t/next';
 import type { ReactNode } from 'react';
 
@@ -10,10 +10,12 @@ import { scripts, vendors } from '@/lib/scripts';
 
 import { ConsentDevTools } from './consent-dev-tools';
 
-// Runs without a backend: policy rules ship with c15t and choices stay in
-// this browser. In production, swap this line for your project's backend:
-// const mode = hosted({ backendURL: 'https://your-project.inth.app' });
-const mode = local();
+// The backend is your Inth project: set NEXT_PUBLIC_C15T_BACKEND_URL in
+// .env.local. The policy comes from its consent manifest.
+const config = {
+	backendURL:
+		process.env.NEXT_PUBLIC_C15T_BACKEND_URL ?? 'https://your-project.inth.app',
+};
 
 const options: ConsentRootProps['options'] = {
 	callbacks: {
@@ -21,7 +23,6 @@ const options: ConsentRootProps['options'] = {
 		// vendor already ran can't be unloaded. Leave a note for the next page.
 		onBeforeConsentRevocationReload: rememberRevocation,
 	},
-	mode,
 	// The layout renders the tokens; the components read the button roles.
 	theme: brandTheme,
 };
@@ -38,6 +39,7 @@ const clearOnRevocation: ClearOnRevocationConfig = {
 
 export const Consent = ({ children }: { children: ReactNode }) => (
 	<ConsentRoot
+		config={config}
 		state={{}}
 		scripts={scripts}
 		vendors={vendors}

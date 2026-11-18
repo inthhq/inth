@@ -1,5 +1,4 @@
 import { MINIMAL_GVL } from '@c15t/conformance';
-import { custom } from '@c15t/core';
 import type { GlobalVendorList } from '@c15t/schema/types';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
@@ -16,6 +15,7 @@ import { resetIABDialogWarmingForTests } from '~/iab-dialog-deferred';
 
 import { ComponentFixtureProvider } from './component-fixture-provider';
 import type { ComponentFixtureOptions } from './component-fixture-provider';
+import { transportMode } from './fixtures/transport-mode';
 import { moduleRequested as moduleLoaded } from './module-requests';
 import { policyFixture } from './policy-fixture';
 
@@ -27,7 +27,7 @@ const DIALOG_MODULE = '/src/components/panel/panel.tsx';
 const options = (model: 'iab' | 'opt-in'): ComponentFixtureOptions => ({
 	disableAnimation: true,
 	iab: { cmpId: 123, gvl: MINIMAL_GVL as unknown as GlobalVendorList },
-	mode: custom({}),
+	mode: transportMode({}),
 	persistence: false,
 	prefetch: policyFixture({}, { model }),
 });

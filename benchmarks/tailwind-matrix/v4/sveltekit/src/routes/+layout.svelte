@@ -1,29 +1,15 @@
 <script lang="ts">
-	import {
-		ConsentBanner,
-		ConsentDialog,
-		ConsentProvider,
-		offline,
-	} from '@c15t/svelte';
+	import { ConsentBanner, ConsentDialog, ConsentProvider } from '@c15t/svelte';
 
 	import '../app.css';
 
 	let { children } = $props();
 
-	const mode = offline({
-		policyRules: [
-			{
-				id: 'tailwind-matrix',
-				match: { isDefault: true },
-				model: 'opt-in',
-				prompt: 'choice',
-			},
-		],
-	});
+	const backendURL = 'https://your-project.inth.app';
 </script>
 
 <ConsentProvider
-	{mode}
+	{backendURL}
 	persistence={false}
 >
 	{@render children()}

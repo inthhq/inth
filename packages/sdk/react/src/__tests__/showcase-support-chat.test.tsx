@@ -5,7 +5,7 @@ import { page } from 'vitest/browser';
 import { SupportChat } from '../../../../../examples/showcase-gated-embeds/components/support-chat';
 import { useVendorAllowed } from '../hooks';
 import { useKernel } from '../kernel-selector';
-import { offline } from '../transports/offline';
+import { testing } from '../testing';
 import { ComponentFixtureProvider } from './component-fixture-provider';
 import { policyFixture } from './policy-fixture';
 
@@ -36,7 +36,7 @@ describe('showcase support chat', () => {
 			<ComponentFixtureProvider
 				options={{
 					consentCategories: ['necessary', 'functionality'],
-					mode: offline({ acknowledgeNoRecords: true }),
+					mode: testing(),
 					persistence: false,
 					prefetch: policyFixture(
 						{ functionality: true },

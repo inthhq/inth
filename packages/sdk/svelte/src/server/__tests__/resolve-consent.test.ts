@@ -98,10 +98,12 @@ describe('@c15t/svelte/server resolveConsent', () => {
 					cookie: 'c15t=c.necessary:1,c.marketing:1,i.t:1234567890',
 					'sec-gpc': '1',
 				}),
-				reportSessions: false,
 				snapshot: MANIFEST_FIXTURE,
 			});
-			expect(fetch).not.toHaveBeenCalled();
+			// No policy request; only the session report.
+			expect(
+				fetch.mock.calls.filter(([url]) => !String(url).endsWith('/sessions'))
+			).toEqual([]);
 			expect(state.initialPolicyResolution).toMatchObject({
 				policyId,
 				status: 'matched',

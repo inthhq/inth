@@ -19,7 +19,7 @@ Angular major if your app does not already use Angular Material or the CDK:
 
 ## Write a test
 
-This test renders the banner and dialog under `provideC15t()` with `local()`,
+This test renders the banner and dialog under `provideC15t()` with `testing()`,
 so no request leaves the test, and drives them with `ConsentBannerHarness` and
 `ConsentDialogHarness`:
 
@@ -27,7 +27,7 @@ so no request leaves the test, and drives them with `ConsentBannerHarness` and
 
 Three parts of the setup matter:
 
-- **A policy rule.** With no `policyRules`, `local()` uses the recommended
+- **A policy rule.** With no `policy`, `testing()` uses the recommended
   rules, and the policy a test gets depends on that pack. The rule in the
   example asks every visitor for an opt-in choice, so the test always gets
   the banner.

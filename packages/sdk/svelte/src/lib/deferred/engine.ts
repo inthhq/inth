@@ -103,7 +103,13 @@ const committedOptions = function committedOptions(
 export const createRootEngine = function createRootEngine(
 	input: RootEngineInput
 ): RootEngine {
-	const transport = clientMode(input.mode ?? input.state.mode, input.state);
+	const stateMode = input.state.mode;
+	// No mode at all is `manifest()`, as in `c15tHandle()`.
+	const transport = clientMode(
+		input.mode ?? stateMode,
+		input.state,
+		'@c15t/svelte/testing'
+	);
 	const options = input.committed
 		? committedOptions(input.options, input.committed)
 		: input.options;

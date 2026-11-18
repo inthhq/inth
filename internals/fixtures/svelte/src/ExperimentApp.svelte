@@ -19,10 +19,10 @@
 	import { scripts } from './scripts';
 	import { testBackend } from './test-backend';
 
-	const mode = hosted({
+	const backend = {
 		backendURL: 'https://your-project.inth.app',
 		...testBackend('backendURL'),
-	});
+	};
 	// `&arm=wall` sets the arm the way a flag provider would; without it
 	// c15t picks one.
 	const experiment = experimentFromSearch(location.search);
@@ -31,7 +31,7 @@
 <ConsentProvider
 	callbacks={experimentCallbacks}
 	{experiment}
-	{mode}
+	{...backend}
 	{scripts}
 >
 	<ExamplePage experiment />

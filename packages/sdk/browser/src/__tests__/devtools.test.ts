@@ -1,9 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { mountDevTools } from '../devtools';
-import { createGlobal, installGlobal } from '../global';
-import type { C15tGlobal } from '../global';
-import { createScriptTagConsentClient as createConsentClient } from '../script-tag-client';
+import { installGlobal } from '../global';
+import {
+	createTestingGlobal as createGlobal,
+	createTestingConsentClient as createConsentClient,
+} from '../testing-global';
+import type { TestingC15tGlobal as C15tGlobal } from '../testing-global';
 import type { ConsentClient } from '../types';
 
 type TestWindow = Window & { c15t?: unknown };
@@ -35,7 +38,6 @@ describe('mountDevTools', () => {
 	it('mounts the panel against the client kernel', async () => {
 		const client = createConsentClient(
 			{
-				acknowledgeNoRecords: true,
 				consentCategories: ['measurement'],
 				ui: false,
 			},
@@ -60,9 +62,8 @@ describe('mountDevTools', () => {
 	it('changes location through the panel and re-resolves the policy', async () => {
 		const client = createConsentClient(
 			{
-				acknowledgeNoRecords: true,
 				overrides: { country: 'DE' },
-				policyRules: ['europeOptIn', 'worldNone'],
+				policy: ['europeOptIn', 'worldNone'],
 				ui: false,
 			},
 			{ pkg: 'test' }
@@ -90,7 +91,7 @@ describe('window.c15t.onInit', () => {
 
 		installGlobal(api);
 		expect(onInit).not.toHaveBeenCalled();
-		const client = api.init({ acknowledgeNoRecords: true, ui: false });
+		const client = api.init({ ui: false });
 
 		return vi.waitFor(() => {
 			expect(onInit).toHaveBeenCalledWith(client);
@@ -102,7 +103,7 @@ describe('window.c15t.onInit', () => {
 		installGlobal(api);
 		const cancelled = vi.fn();
 		api.onInit(cancelled)();
-		const client = api.init({ acknowledgeNoRecords: true, ui: false });
+		const client = api.init({ ui: false });
 		const late = vi.fn();
 		api.onInit(late);
 

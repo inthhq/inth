@@ -1,6 +1,6 @@
 'use client';
 
-import { ConsentTheme, offline } from '@c15t/react';
+import { ConsentTheme } from '@c15t/react';
 import { ConsentDialog } from '@c15t/react/components/consent-dialog';
 import { ConsentWidget } from '@c15t/react/components/consent-widget';
 import { ConsentBanner } from '@c15t/react/consent-banner';
@@ -10,6 +10,7 @@ import { ConsentProvider } from '@c15t/react/provider';
 import buttonStyles from '@c15t/ui/styles/components/button';
 import { useEffect } from 'react';
 
+import { benchPolicy } from './bench-policy';
 import type { CssLayerEnvironmentId, CssLayerSurface } from './css-layer-types';
 
 export type { CssLayerSurface } from './css-layer-types';
@@ -138,7 +139,7 @@ export const CssLayerScenarioRenderer = ({
 					href: '/legal/terms',
 				},
 			},
-			mode: offline({ policyRules: [POLICY] }),
+			mode: benchPolicy({ policy: [POLICY] }),
 			persistence: false,
 			// Tailwind CSS 3's unlayered preflight beats the components' layered
 			// rules, so that app imports styles.css through postcss-tailwind3.

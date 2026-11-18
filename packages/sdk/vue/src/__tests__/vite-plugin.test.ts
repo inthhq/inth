@@ -85,32 +85,29 @@ describe('Vue production builds', () => {
 			.fn<typeof globalThis.fetch>()
 			.mockRejectedValue(new TypeError('fetch failed'));
 
-	it.each(['hosted()', 'offline()'])(
-		'builds an app that uses %s while the backend is down',
-		async (mode) => {
-			const fetch = unreachable();
-			await buildApp(
-				`import { hosted, offline } from 'MODES';\nexport const mode = ${mode};\n`,
-				fetch
-			);
-			expect(fetch).not.toHaveBeenCalled();
-		}
-	);
+	it('builds an app that uses the hosted backend while the backend is down', async () => {
+		const fetch = unreachable();
+		await buildApp(
+			"import { selectedMode } from 'MODES';\nexport const mode = selectedMode({ backendURL: '/api/c15t' });\n",
+			fetch
+		);
+		expect(fetch).not.toHaveBeenCalled();
+	});
 
-	it('stops a manifest() build while the backend is down', async () => {
+	it('builds a manifest() app with no snapshot while the backend is down', async () => {
 		const fetch = unreachable();
 		await expect(
 			buildApp(
 				"import { manifest } from 'MODES';\nexport const mode = manifest();\n",
 				fetch
 			)
-		).rejects.toThrow('could not fetch the consent manifest');
+		).resolves.toBeDefined();
 		expect(fetch).toHaveBeenCalledTimes(1);
 	});
 });
 
 describe('location advice', () => {
-	it('suggests hosted() when a manifest() build bundles a policy that depends on location', async () => {
+	it('suggests the hosted backend when a manifest() build bundles a policy that depends on location', async () => {
 		const warn = vi.fn();
 		const plugin = consentManifest({
 			backendURL: 'https://consent.example.com',
@@ -143,7 +140,7 @@ describe('location advice', () => {
 		);
 		await plugin.renderChunk(source as string);
 		expect(warn).toHaveBeenCalledWith(
-			expect.stringMatching(/^@c15t\/vue\/vite: .*location.*hosted\(\)/u)
+			expect.stringMatching(/^@c15t\/vue\/vite: .*location.*backendURL/u)
 		);
 	});
 });

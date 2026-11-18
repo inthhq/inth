@@ -10,7 +10,7 @@ import {
 	ConsentProvider,
 	hosted,
 } from '@c15t/react';
-import type { ConsentProviderOptions } from '@c15t/react';
+import type { ConsentProviderOptions, WithBackendURL } from '@c15t/react';
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
 
@@ -182,7 +182,8 @@ export const PolicyBenchmarkProvider = ({
 		}
 	}, [backendURL, fixture, scenario]);
 
-	const options: ConsentProviderOptions = {
+	const options: WithBackendURL<ConsentProviderOptions> = {
+		backendURL,
 		callbacks: {
 			onChoiceRecorded() {
 				const state = getPolicyBenchState(scenario, fixture);
@@ -198,7 +199,7 @@ export const PolicyBenchmarkProvider = ({
 			},
 		},
 		consentCategories,
-		mode: hosted({ backendURL }),
+		mode: hosted(),
 		theme: {
 			motion: {
 				duration: {

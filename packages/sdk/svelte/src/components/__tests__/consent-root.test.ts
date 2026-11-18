@@ -2,10 +2,10 @@
  * `ConsentRoot` turns the mode in the state `loadConsent` returned into a
  * transport, or takes one through `mode`.
  */
-import { custom } from '@c15t/core';
 import { render } from '@testing-library/svelte';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import ConsentRoot from '../../lib/components/consent-root.svelte';
 
 const mockFetch = vi.fn();
@@ -52,7 +52,7 @@ describe('ConsentRoot', () => {
 		const result = render(ConsentRoot, {
 			state: {
 				backendURL: 'https://consent.example.com',
-				mode: { backendURL: 'https://consent.example.com', type: 'hosted' },
+				mode: { type: 'hosted' },
 				prefetch: {},
 			},
 		});
@@ -69,7 +69,7 @@ describe('ConsentRoot', () => {
 	test('uses the transport passed as mode', async () => {
 		const init = vi.fn(() => Promise.resolve({}));
 		const result = render(ConsentRoot, {
-			mode: custom({ init }),
+			mode: transportMode({ init }),
 			state: { mode: { type: 'manifest' }, prefetch: {} },
 		});
 

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@analogjs/storybook-angular';
 import { provideC15t } from '@c15t/angular';
-import type { C15tOptions } from '@c15t/angular';
+import type { C15tProviderOptions } from '@c15t/angular';
 import { ConsentDevTools } from '@c15t/angular/devtools';
 import {
 	devToolsProviderOptions,
@@ -13,7 +13,7 @@ const meta = {
 	parameters: { layout: 'fullscreen' },
 	render: () => ({
 		applicationConfig: {
-			providers: [provideC15t(devToolsProviderOptions as C15tOptions)],
+			providers: [provideC15t(devToolsProviderOptions as C15tProviderOptions)],
 		},
 		moduleMetadata: { imports: [ConsentDevTools] },
 		props: { getConsentCategories: getDevToolsCategories },

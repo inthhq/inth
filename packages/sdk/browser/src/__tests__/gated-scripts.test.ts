@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { activateGatedScripts } from '../gated-scripts';
-import { createScriptTagConsentClient } from '../script-tag-client';
+import { createTestingConsentClient as createScriptTagConsentClient } from '../testing-global';
 import type { ConsentClient } from '../types';
 
 const clients: ConsentClient[] = [];
@@ -10,11 +10,7 @@ const clients: ConsentClient[] = [];
 const createConsentClient: typeof createScriptTagConsentClient = (
 	options,
 	context
-) =>
-	createScriptTagConsentClient(
-		{ acknowledgeNoRecords: true, ...options },
-		context
-	);
+) => createScriptTagConsentClient({ ...options }, context);
 
 const clearCookies = function clearCookies(): void {
 	for (const entry of document.cookie.split(';')) {

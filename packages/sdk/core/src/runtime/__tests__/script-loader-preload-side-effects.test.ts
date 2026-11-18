@@ -20,6 +20,7 @@ import {
 	NOW,
 	optInRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import { STORAGE_KEY, STORAGE_KEY_V2 } from '../../libs/storage-keys';
 import { pageWriterLoader } from '../../modules/persistence/writer-loader';
 import {
@@ -27,7 +28,6 @@ import {
 	encodeVendorChoice,
 } from '../../modules/persistence/writer/encode';
 import type { ScriptLoaderHandle } from '../../modules/script-loader/types';
-import { custom } from '../../transports/mode';
 import {
 	createConsentProviderRuntime,
 	defaultRuntimeModules,
@@ -254,7 +254,7 @@ const construct = function construct(
 	const runtime = createConsentProviderRuntime(
 		{
 			iframeBlocker: false,
-			mode: custom({
+			mode: transportMode({
 				init: vi.fn().mockResolvedValue({}),
 				save: vi.fn().mockResolvedValue({ ok: true }),
 			}),

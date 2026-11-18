@@ -66,6 +66,11 @@
 			"import": "./dist/modes.js",
 			"default": "./dist/modes.js"
 		},
+		"./testing": {
+			"types": "./dist-types/testing.d.ts",
+			"import": "./dist/testing.js",
+			"default": "./dist/testing.js"
+		},
 		"./provider": {
 			"types": "./dist-types/provider.d.ts",
 			"import": "./dist/provider.js",

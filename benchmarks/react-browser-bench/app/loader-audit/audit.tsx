@@ -1,7 +1,12 @@
 'use client';
 
+import { benchPolicy } from '@c15t/benchmarking/bench-policy';
 import { createConsentRuntime } from '@c15t/core/runtime';
-import type { ConsentRuntime, ConsentRuntimeOptions } from '@c15t/core/runtime';
+import type {
+	ConsentRuntime,
+	ConsentRuntimeOptions,
+	WithBackendURL,
+} from '@c15t/core/runtime';
 import { createIAB } from '@c15t/iab';
 import {
 	ConsentProvider,
@@ -9,7 +14,6 @@ import {
 	ConsentDialog,
 	ConsentWidget,
 	hosted,
-	offline,
 	useActiveUI,
 	useSetActiveUI,
 } from '@c15t/react';
@@ -21,7 +25,7 @@ import AstroDialog from '../../../../packages/sdk/astro/src/components/islands/p
 import { policyFixture } from '../../../../packages/sdk/react/src/__tests__/policy-fixture';
 import { mockGVL } from '../../../../packages/sdk/react/src/components/iab/__tests__/fixtures/mock-consent-state';
 
-const options = { mode: hosted({ backendURL: '/api/bench-consent' }) };
+const options = { backendURL: '/api/bench-consent', mode: hosted() };
 const Probe = () => {
 	useEffect(() => {
 		window.dispatchEvent(new CustomEvent('loader-probe-mounted'));
@@ -37,7 +41,7 @@ const Probe = () => {
 };
 const createRuntime = (iab: boolean) => {
 	const runtimeOptions: ConsentRuntimeOptions = {
-		mode: offline(),
+		mode: benchPolicy(),
 		persistence: false,
 		pkg: 'loader-audit',
 		prefetch: policyFixture(),
@@ -50,7 +54,10 @@ const createRuntime = (iab: boolean) => {
 		runtimeOptions.createIAB = createIAB;
 		runtimeOptions.iab = { cmpId: 42, gvl: mockGVL };
 	}
-	return createConsentRuntime(runtimeOptions);
+	// The options carry a transport factory.
+	return createConsentRuntime(
+		runtimeOptions as WithBackendURL<ConsentRuntimeOptions>
+	);
 };
 const LoadedSurface = ({
 	variant,

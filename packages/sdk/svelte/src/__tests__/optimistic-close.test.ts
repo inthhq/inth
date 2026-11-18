@@ -1,5 +1,4 @@
 import { MINIMAL_GVL } from '@c15t/conformance';
-import { custom } from '@c15t/core';
 import type { ConsentKernel } from '@c15t/core';
 import type { GlobalVendorList } from '@c15t/schema/types';
 import { resolvePolicyRules } from '@c15t/schema/types';
@@ -7,6 +6,7 @@ import { mount, tick, unmount } from 'svelte';
 import { afterEach, expect, onTestFinished, test, vi } from 'vitest';
 
 import ConformanceFixture from './fixtures/conformance-fixture.svelte';
+import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 
 afterEach(() => {
@@ -65,7 +65,7 @@ test.each(
 			options: {
 				callbacks: { onError },
 				disableAnimation: true,
-				mode: custom({ save }),
+				mode: transportMode({ save }),
 				prefetch: policyFixture({}, { categories: ['marketing'] }),
 				scripts: [
 					{
@@ -138,7 +138,7 @@ test.each(
 			options: {
 				disableAnimation: true,
 				iab: { cmpId: 123, gvl: MINIMAL_GVL as unknown as GlobalVendorList },
-				mode: custom({ save }),
+				mode: transportMode({ save }),
 				persistence: false,
 				prefetch: {
 					initialIab: {

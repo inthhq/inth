@@ -1,8 +1,9 @@
 /** @vitest-environment jsdom */
-import { createConsentKernel, offline, vendorsListedUnder } from '@c15t/core';
+import { createConsentKernel, vendorsListedUnder } from '@c15t/core';
 import type { AllConsentNames, HasCondition, Script } from '@c15t/core';
 import { createScriptLoader } from '@c15t/core/modules/script-loader';
 import { createConsentRuntime } from '@c15t/core/runtime';
+import { testing } from '@c15t/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { scripts as sentryExampleScripts } from '../../../../internals/doc-snippets/javascript/src/sentry';
@@ -365,7 +366,7 @@ describe('Sentry adapter through the kernel and script loader', () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 		const { client } = createClient();
 		const runtime = createConsentRuntime({
-			mode: offline({ acknowledgeNoRecords: true }),
+			mode: testing(),
 			scripts: [sentry({ getClient: () => client })],
 		});
 		disposers.push(() => runtime.dispose());
@@ -386,7 +387,7 @@ describe('Sentry adapter through the kernel and script loader', () => {
 		// site declares a vendor itself.
 		const { client } = createClient();
 		const runtime = createConsentRuntime({
-			mode: offline({ acknowledgeNoRecords: true }),
+			mode: testing(),
 			scripts: [sentry({ getClient: () => client })],
 			vendors: [
 				{

@@ -1,4 +1,3 @@
-import { custom } from '@c15t/core';
 import type { PolicyRule } from '@c15t/schema/types';
 import { resolvePolicyRules } from '@c15t/schema/types';
 import { render, waitFor } from '@testing-library/svelte';
@@ -6,6 +5,7 @@ import { describe, expect, test } from 'vitest';
 
 import type { ConsentContextValue } from '../lib/context.svelte';
 import Fixture from './fixtures/surfaces-fixture.svelte';
+import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 
 /** A regime with no consent law: permitted by default, nothing owed. */
@@ -36,7 +36,7 @@ const renderUnderNone = (rule: PolicyRule) => {
 		},
 		options: {
 			disableAnimation: true,
-			mode: custom({
+			mode: transportMode({
 				init: () => Promise.resolve({}),
 				save: () => Promise.resolve({ ok: true, subjectId: 'svelte-test' }),
 			}),

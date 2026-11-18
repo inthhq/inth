@@ -8,7 +8,7 @@ import {
 	defaultRuntimeModules,
 } from '../runtime';
 import type { ConsentProviderRuntimeOptions } from '../runtime/types';
-import { custom } from '../transports/mode';
+import { transportMode } from './fixtures/transport-mode';
 
 test('delivers only configured and consented events, isolates failures, and stops immediately on revocation', () => {
 	const kernel = createConsentKernel({ initialExternalPermissions: {} });
@@ -90,7 +90,7 @@ test('a runtime dispatcher follows the provider: its scripts, live consent, and 
 	};
 	const options: ConsentProviderRuntimeOptions = {
 		consentCategories: ['measurement'],
-		mode: custom({
+		mode: transportMode({
 			init: vi.fn().mockResolvedValue({}),
 			save: vi.fn().mockResolvedValue({ ok: true }),
 		}),
@@ -145,7 +145,7 @@ test('dispatchers on one runtime with different pageviews each get every navigat
 	const runtime = createConsentProviderRuntime(
 		{
 			consentCategories: ['measurement'],
-			mode: custom({
+			mode: transportMode({
 				init: vi.fn().mockResolvedValue({}),
 				save: vi.fn().mockResolvedValue({ ok: true }),
 			}),

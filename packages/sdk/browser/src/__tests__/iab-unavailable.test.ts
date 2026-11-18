@@ -8,7 +8,11 @@
  * error.
  */
 import { deferInitGvl, IAB_UNAVAILABLE_ERROR_CODE } from '@c15t/core';
-import type { InitResponse } from '@c15t/core';
+import type {
+	InitResponse,
+	KernelTransport,
+	ProviderTransportFactory,
+} from '@c15t/core';
 import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
@@ -17,10 +21,17 @@ import type { PolicyRule } from '@c15t/schema/types';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
-import { custom } from '../index';
-import { offline } from '../transports/offline';
+import { testing } from '../testing';
 import type { ConsentClient, ScriptTagClientOptions } from '../types';
 import { init, initIAB } from './fixtures/factory-init';
+
+/** A transport factory that hands the client `transport`. */
+const custom = (
+	transport: Partial<KernelTransport>
+): ProviderTransportFactory =>
+	Object.assign(() => transport as KernelTransport, {
+		kind: 'custom' as const,
+	});
 
 const policy = (model: PolicyRule['model']) =>
 	writePolicyResolutionWire(
@@ -177,9 +188,8 @@ describe('offline mode without IAB', () => {
 			}
 		});
 		const client = init({
-			mode: offline({
-				acknowledgeNoRecords: true,
-				policyRules: policyRules && [...policyRules],
+			mode: testing({
+				policy: policyRules && [...policyRules],
 			}),
 		});
 		clients.push(client);

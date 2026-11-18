@@ -42,7 +42,6 @@ describe.each(['ordinary', 'IAB'])('%s script-tag legal links', (variant) => {
 	): Promise<ConsentClient> => {
 		const { options } = readPageOptions(scriptWith(attributes), configs);
 		const clientOptions: ScriptTagClientOptions = {
-			mode: 'offline',
 			overrides: { country: 'DE' },
 			...options,
 			ui:

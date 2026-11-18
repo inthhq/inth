@@ -12,13 +12,14 @@ import { render } from 'vitest-browser-react';
 import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentBanner } from '~/components/prompt';
-import { offline } from '~/transports/offline';
+
+import { testing } from '../../../testing';
 
 const mount = (children: ReactNode) =>
 	render(
 		<ConsentProvider
 			options={{
-				mode: offline({ acknowledgeNoRecords: true }),
+				mode: testing(),
 				persistence: false,
 				prefetch: policyFixture(undefined, { id: 'banner-hit-area-test' }),
 			}}

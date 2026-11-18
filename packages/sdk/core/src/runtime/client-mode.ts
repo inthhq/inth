@@ -1,5 +1,4 @@
 import { isProductionBuild } from '../libs/is-production';
-import { warnNoConsentRecordsInDevelopment } from '../libs/no-records-warning';
 /**
  * `@c15t/core/runtime/client-mode` — turn a consent mode into the transport
  * a server-framework client root uses, keeping every path that page doesn't
@@ -10,21 +9,22 @@ import { warnNoConsentRecordsInDevelopment } from '../libs/no-records-warning';
  * banner with it, so the browser usually never runs init. What first load
  * needs is what a save needs:
  *
- * - `manifest()` resolved on the server (the default) and `hosted()`
+ * - `hosted()` and `manifest()` (the default) resolved on the server
  *   statically include only the hosted record transport and the
  *   init-request builder. A re-init loads the hosted transport with
  *   `import()` and sends its first `/init` alongside the chunk request.
  * - `manifest({ resolve: 'browser' })` loads the browser resolver with
  *   `import()`, starting when the transport is built, alongside the
  *   manifest request.
- * - `local()` loads the offline transport and its policy pack with
- *   `import()` on first init.
+ * - `testing()` from a `/testing` entry loads its transport and the
+ *   policy pack with `import()` on first init.
  *
  * No path here statically imports the resolver, a policy pack, the server
  * snapshot or any translation.
  */
 import { hasPrefetchedInitialData } from '../libs/prefetch/window-key';
-import type { ConsentMode, OfflineModeOptions } from '../modes';
+import type { ConsentMode, TestingModeOptions } from '../modes';
+import { testingOptionsOf } from '../modes';
 import type { SSRInitialData } from '../options/ssr';
 import type * as HostedModule from '../transports/hosted';
 import { createHostedInitRequest } from '../transports/hosted-init-request';
@@ -38,14 +38,14 @@ import type {
 	ProviderTransportFactory,
 	ProviderTransportKind,
 } from '../transports/mode';
-import type * as OfflineModule from '../transports/offline';
+import type * as TestingTransportModule from '../transports/testing';
 import type { InitContext, KernelConfig, KernelTransport } from '../types';
 
 /** Where a client root's transport sends requests. */
 export interface ClientModeOptions {
 	/**
-	 * Backend URL for saves, and for `GET /init` in hosted mode. A hosted
-	 * mode's own `backendURL` wins. When the consent route forwards writes,
+	 * Backend URL for saves, and for `GET /init` with no `mode`. When the
+	 * consent route forwards writes,
 	 * as with Next.js and TanStack Start's `proxy`, pass the route prefix
 	 * here: `routePrefix` alone never receives saves, because a route
 	 * without a proxy answers `GET` only.
@@ -59,8 +59,8 @@ export interface ClientModeOptions {
 	routePrefix?: string;
 	/**
 	 * An init response already requested, such as by an inline prefetch
-	 * script that ran before hydration. A server-resolved `manifest()` or a
-	 * `hosted()` mode answers its first init with it instead of sending
+	 * script that ran before hydration. A server-resolved `manifest()` or
+	 * the hosted backend answers its first init with it instead of sending
 	 * `/init`.
 	 */
 	initialData?: Promise<SSRInitialData | undefined>;
@@ -78,9 +78,9 @@ export type LoadHostedModule = () => Promise<
 	Pick<typeof HostedModule, 'createHostedTransport'>
 >;
 
-/** The offline transport's module, or a stand-in for tests. */
-export type LoadOfflineModule = () => Promise<
-	Pick<typeof OfflineModule, 'offline'>
+/** The `testing()` transport's module, or a stand-in for tests. */
+export type LoadTestingModule = () => Promise<
+	Pick<typeof TestingTransportModule, 'testingTransport'>
 >;
 
 /** The browser resolver's module, or a stand-in for tests. */
@@ -90,7 +90,7 @@ export type LoadManifestBrowserModule = () => Promise<
 
 // Every chunk here is built self-contained; see `lazy-hosted.ts`.
 const loadHostedModule: LoadHostedModule = () => import('./lazy-hosted');
-const loadOfflineModule: LoadOfflineModule = () => import('./lazy-offline');
+const loadTestingModule: LoadTestingModule = () => import('./lazy-offline');
 const loadManifestBrowserModule: LoadManifestBrowserModule = () =>
 	import('./lazy-manifest-browser');
 
@@ -332,34 +332,30 @@ export const lazyHosted = function lazyHosted(
 };
 
 /**
- * Offline mode that loads `offline()` on first init. `offline()` carries
- * the recommended policy-rule pack, so a static import would ship that pack
- * to every page that renders the root with a backend, where it never runs.
- * An offline page the server already resolved never inits, so it never
- * loads them either.
+ * The `testing()` transport, loaded on first init. It carries the
+ * recommended policy pack, so a static import would ship that pack to every
+ * page that renders the root with a backend, where it never runs. The
+ * loaded chunk throws in production builds, so the check ships only to
+ * apps that pass a testing value.
  *
- * @param options - Rules to resolve. Omitted, the provider's `policyRules`,
- *   then the recommended pack.
- * @param load - Loads the offline transport's module.
+ * @param entry - The testing entry named in the production error.
+ * @param options - `iab` picks the pack's IAB TCF variant.
+ * @param load - Loads the transport's module.
  * @returns A provider transport factory reporting `kind: 'offline'`.
  */
-export const lazyOffline = function lazyOffline(
-	options: OfflineModeOptions = {},
-	load: LoadOfflineModule = loadOfflineModule
+export const lazyTesting = function lazyTesting(
+	entry: string,
+	options: TestingModeOptions = {},
+	load: LoadTestingModule = loadTestingModule
 ): ProviderTransportFactory {
 	return Object.assign(
 		(context: ProviderTransportContext): KernelTransport => {
-			// Here, not in `local()`: a page the server resolved never loads it.
-			warnNoConsentRecordsInDevelopment(options.acknowledgeNoRecords);
 			let transportPromise: Promise<KernelTransport> | undefined;
 			const loadTransport = function loadTransport(): Promise<KernelTransport> {
 				transportPromise ??= (async () => {
 					try {
-						const { offline } = await load();
-						return offline({
-							acknowledgeNoRecords: true,
-							policyRules: options.policyRules ?? context.policyRules,
-						})(context);
+						const { testingTransport } = await load();
+						return testingTransport(entry, options)(context);
 					} catch (error) {
 						// Let the kernel's retry make a fresh import attempt.
 						transportPromise = undefined;
@@ -508,15 +504,21 @@ export const lazyBrowserManifest = function lazyBrowserManifest(
 let warnedImplementation = false;
 
 /**
- * The transport factory a server-framework client root uses for a mode.
+ * The transport factory a server-framework client root uses for its
+ * options.
  *
- * Takes the data from `@c15t/core/modes`. A transport factory, such as
- * `custom()` or a single-page app's `hosted()`, is returned unchanged; in
- * development an implementation factory warns once, because its code is
+ * Takes the data from `@c15t/core/modes` and the testing entries. With
+ * none, the root uses manifest mode, the default of every server
+ * framework: the server resolves from the manifest and a browser re-init
+ * goes through the consent route, which falls back to the backend's
+ * `/init` when the manifest is unavailable. A transport factory is
+ * returned unchanged; in development it warns once, because its code is
  * now in the client bundle.
  *
- * @param mode - The mode. Defaults to `manifest()`.
+ * @param mode - `manifest()`, `hosted()` or `testing()` data, a transport
+ *   factory, or `undefined` for `manifest()`.
  * @param options - Backend URL and the app's consent route prefix.
+ * @param testingEntry - The testing entry named in the production error.
  * @returns A provider transport factory that carries the mode's data.
  * @throws {Error} When the mode needs a backend URL and none is set.
  * @example
@@ -531,15 +533,13 @@ let warnedImplementation = false;
  * ```
  */
 export const clientMode = function clientMode(
-	mode: ConsentMode | ProviderTransportFactory | undefined,
-	options: ClientModeOptions = {}
+	selected: ConsentMode | ProviderTransportFactory | undefined,
+	options: ClientModeOptions = {},
+	testingEntry = '@c15t/core/testing'
 ): ProviderTransportFactory {
+	const mode = selected ?? { type: 'manifest' as const };
 	if (typeof mode === 'function') {
-		if (
-			mode.kind !== 'custom' &&
-			!warnedImplementation &&
-			!isProductionBuild()
-		) {
+		if (!warnedImplementation && !isProductionBuild()) {
 			warnedImplementation = true;
 			console.warn(
 				`c15t: \`mode\` is the ${mode.kind}() transport itself, so its code ships in the client bundle. Pass the ${mode.kind}() your framework package exports instead: it is plain data, and the root loads the code only when it runs.`
@@ -547,60 +547,40 @@ export const clientMode = function clientMode(
 		}
 		return mode;
 	}
-	const data: ConsentMode = mode ?? { type: 'manifest' };
 	const routePrefix =
 		options.routePrefix === undefined
 			? undefined
 			: trimSlash(options.routePrefix);
-	if (data.type === 'offline') {
-		return Object.assign(
-			lazyOffline({
-				acknowledgeNoRecords: data.acknowledgeNoRecords,
-				policyRules: data.policyRules,
-			}),
-			data
-		);
-	}
-	if (data.type === 'hosted') {
-		const backendURL = data.backendURL ?? options.backendURL;
-		if (backendURL === undefined) {
-			throw new Error(
-				'c15t: hosted() needs a backend URL. Set `backendURL` on the mode or in your config.'
-			);
-		}
-		return Object.assign(
-			lazyHosted({
-				backendURL,
-				headers: data.headers,
-				initialData: options.initialData,
-			}),
-			data
-		);
+	if (mode?.type === 'testing') {
+		return lazyTesting(testingEntry, testingOptionsOf(mode));
 	}
 	// Saves never fall back to `routePrefix`: a consent route only forwards
 	// writes when the caller says so by passing it as `backendURL`.
 	const { backendURL } = options;
 	if (backendURL === undefined) {
 		throw new Error(
-			'c15t: manifest() needs a backend URL. Set `backendURL` in your config.'
+			'c15t: `backendURL` is required. Set it in your config, or use `mode: testing()` from a /testing entry in tests.'
 		);
 	}
-	if (data.resolve === 'browser') {
+	if (mode.type === 'hosted') {
+		return lazyHosted({ backendURL, initialData: options.initialData });
+	}
+	if (mode.resolve === 'browser') {
 		const {
 			resolve: _resolve,
 			source: _source,
 			type: _type,
 			...browser
-		} = data;
+		} = mode;
 		return Object.assign(
 			lazyBrowserManifest({
 				...browser,
 				backendURL,
 				manifestURL:
-					data.manifestURL ??
+					mode.manifestURL ??
 					(routePrefix === undefined ? undefined : `${routePrefix}/manifest`),
 			} as LazyBrowserManifestOptions),
-			data
+			mode
 		);
 	}
 	return Object.assign(
@@ -610,6 +590,6 @@ export const clientMode = function clientMode(
 			initialData: options.initialData,
 			kind: 'manifest',
 		}),
-		data
+		mode
 	);
 };

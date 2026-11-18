@@ -2,7 +2,7 @@
  * The boot data `ConsentRoot` leaves for the browser, and the rule for when
  * the engine may wait.
  */
-import { custom, defaultTranslationConfig } from '@c15t/core';
+import { defaultTranslationConfig } from '@c15t/core';
 import { afterEach, describe, expect, test } from 'vitest';
 
 import { readConsentBoot } from '../lib/deferred/boot';
@@ -15,6 +15,7 @@ import { modulePreloadMarker } from '../lib/module-preload';
 import { createOwnedRuntime } from '../lib/owned-runtime';
 import { runtimeOptionsFor } from '../lib/provider-options';
 import type { ProviderOptionsInput } from '../lib/provider-options';
+import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 
 // The page's categories: a permissive policy grants the ones it does not
@@ -30,7 +31,7 @@ const runtimeFor = (options: ProviderOptionsInput) =>
 		runtimeOptionsFor({
 			consentCategories: CATEGORIES,
 			...options,
-			mode: custom({}),
+			mode: transportMode({}),
 		})
 	);
 
@@ -55,7 +56,7 @@ describe('canDeferEngine', () => {
 		expect(
 			canDeferEngine(
 				createOwnedRuntime(
-					runtimeOptionsFor({ ...options, mode: custom({}) })
+					runtimeOptionsFor({ ...options, mode: transportMode({}) })
 				).kernel.getSnapshot(),
 				options
 			)

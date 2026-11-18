@@ -2,11 +2,11 @@
  * The `gpp` option mounts the IAB GPP CMP API (`window.__gpp`) from
  * `@c15t/iab/gpp` when the app mounts, and removes it on unmount.
  */
-import { offline } from '@c15t/core';
 import { createConsentRuntime } from '@c15t/core/runtime';
 import { afterEach, beforeAll, expect, test, vi } from 'vitest';
 import { createApp, defineComponent, h } from 'vue';
 
+import { testing } from '../testing';
 import { c15tVue } from './test-plugin';
 import type { C15tVuePluginOptions } from './test-plugin';
 
@@ -104,7 +104,7 @@ test('without gpp the plugin installs no __gpp', async () => {
 
 test('a borrowed runtime keeps GPP to itself', async () => {
 	const runtime = createConsentRuntime({
-		mode: offline({ acknowledgeNoRecords: true }),
+		mode: testing(),
 		persistence: false,
 	});
 	runtime.start();

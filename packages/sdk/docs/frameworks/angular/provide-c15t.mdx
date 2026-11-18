@@ -30,7 +30,7 @@ provider. Injecting one where `provideC15t()` is missing throws Angular's
 
 | Option | Type | Default | Behavior |
 | --- | --- | --- | --- |
-| `mode` | `hosted()`, `local()`, `manifest()` or `custom()` result, all from `@c15t/angular` | required | Where policies come from and where choices are saved. Read once. |
+| `mode` | `hosted()` or `manifest()` from `@c15t/angular`, or `testing()` from `@c15t/angular/testing` | `hosted()` | Where policies come from and where choices are saved. Read once. |
 | `scripts` | `Script[]` | none | Vendor scripts that load when their category is allowed. See [scripts](./scripts). |
 | `vendors` | `Vendor[]` | none | Vendors offered for vendor-level consent outside IAB. See [vendor consent](./vendor-consent). |
 | `consentCategories` | `AllConsentNames[]` | the policy's categories | Categories the preference UI offers, within the policy's scope. |
@@ -65,8 +65,8 @@ provider. Injecting one where `provideC15t()` is missing throws Angular's
 | `windowDebug` | `boolean` | `true` | Installs `window.c15t` with `{ version, pkg, mode }`. |
 | `runtime` | `ConsentRuntime` | none | A runtime created with `createConsentRuntime()`. Not allowed with `mode`. See [share one runtime](#share-one-runtime). |
 
-There is no `policyRules` option. For local policy rules, pass
-`local({ policyRules })` as `mode`. The `C15tOptions` type from
+Tests pass `testing({ policy })` from `@c15t/angular/testing` as `mode`
+to resolve a policy with no backend. The `C15tOptions` type from
 `@c15t/angular` lists every option.
 
 ## When the runtime starts
@@ -142,7 +142,7 @@ Open the page in a private window with DevTools open:
 1. The banner appears once the policy resolves. `window.c15t` in the console
    shows `pkg: '@c15t/angular'`.
 2. The Network panel shows the request your mode makes: one `/init` for
-   `hosted()`, none for `local()`, and none when the page came with a
+   `hosted()`, none for `testing()`, and none when the page came with a
    server-resolved state.
 3. A component that injects `ConsentManager` renders without a
    `NullInjectorError`.

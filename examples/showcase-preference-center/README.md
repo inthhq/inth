@@ -32,11 +32,10 @@ bun run build:libs
 bun run --cwd examples/showcase-preference-center dev
 ```
 
-Open http://localhost:3111. The app runs in local mode: the policy resolves
-in the browser and choices stay in that browser, so it works without an
-account. For production, replace `local()` in `components/consent.tsx`
-with `hosted({ backendURL: 'https://your-project.inth.app' })` and use your own
-PostHog and Meta Pixel IDs in `lib/vendors.ts`.
+Open http://localhost:3111. Set `NEXT_PUBLIC_C15T_BACKEND_URL` in `.env.local` to your Inth project URL,
+such as `https://your-project.inth.app`. c15t reads the project's consent
+manifest and sends each choice there. Use your own PostHog and Meta Pixel IDs in
+`lib/vendors.ts`.
 
 ## Docs
 

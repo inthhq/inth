@@ -15,7 +15,8 @@ import { createRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { ConsentProvider, custom } from '../index';
+import { ConsentProvider } from '../index';
+import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 
 const loads = vi.hoisted(() => ({ created: 0, evaluated: 0 }));
@@ -139,7 +140,7 @@ const scripts: Script[] = [
 	},
 ];
 
-const mode = custom({
+const mode = transportMode({
 	init: () => Promise.resolve({}),
 	save: () => Promise.resolve({ ok: true }),
 });

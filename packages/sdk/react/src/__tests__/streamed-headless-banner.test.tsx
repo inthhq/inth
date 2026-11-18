@@ -11,7 +11,8 @@ import { renderToString } from 'react-dom/server';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 import { StreamedConsentSurface, useHeadlessConsentUI } from '../headless';
-import { ConsentProvider, custom } from '../index';
+import { ConsentProvider } from '../index';
+import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 import {
 	deferred,
@@ -62,7 +63,7 @@ const Page = ({
 		<body>
 			<ConsentProvider
 				options={{
-					mode: custom({ init: transportInit, save: transportSave }),
+					mode: transportMode({ init: transportInit, save: transportSave }),
 					persistence: false,
 					prefetch: prefetch as KernelConfig | Promise<KernelConfig>,
 				}}

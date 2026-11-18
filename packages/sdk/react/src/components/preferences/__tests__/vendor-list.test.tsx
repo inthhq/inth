@@ -18,7 +18,8 @@ import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentWidget } from '~/components/preferences';
 import { useConsent, useVendorAllowed, useVendorChoice } from '~/hooks';
 import { useKernel } from '~/kernel-selector';
-import { offline } from '~/transports/offline';
+
+import { testing } from '../../../testing';
 
 const CATEGORIES = ['necessary', 'marketing', 'measurement'] as const;
 
@@ -94,7 +95,7 @@ const renderWidget = (
 		<ConsentProvider
 			options={{
 				consentCategories: [...CATEGORIES],
-				mode: offline({ acknowledgeNoRecords: true }),
+				mode: testing(),
 				persistence: false,
 				prefetch: policyFixture(values, {
 					categories: ['marketing', 'measurement'],
@@ -389,7 +390,7 @@ describe('vendor switches are opt-in', () => {
 			<ConsentProvider
 				options={{
 					consentCategories: [...CATEGORIES],
-					mode: offline({ acknowledgeNoRecords: true }),
+					mode: testing(),
 					persistence: false,
 					prefetch: policyFixture(
 						{ measurement: true },

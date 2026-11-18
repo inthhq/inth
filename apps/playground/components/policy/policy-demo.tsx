@@ -6,7 +6,6 @@ import {
 	ConsentDialog,
 	ConsentProvider,
 	hosted,
-	offline,
 	useInit,
 	useSetActiveUI,
 	useConsentDraft,
@@ -20,6 +19,7 @@ import {
 	IABConsentDialog,
 	IABProvider,
 } from 'c15t/react/iab';
+import { testing } from 'c15t/react/testing';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
@@ -715,6 +715,7 @@ export const PolicyDemo = () => {
 					options={
 						demoMode === 'hosted'
 							? {
+									backendURL: HOSTED_DEMO_BACKEND_URL,
 									consentCategories: categories,
 									i18n: {
 										messages:
@@ -723,7 +724,7 @@ export const PolicyDemo = () => {
 													?.messageProfile ?? 'default'
 											].translations,
 									},
-									mode: hosted({ backendURL: HOSTED_DEMO_BACKEND_URL }),
+									mode: hosted(),
 									overrides,
 									presentation: getScenarioById(resolvedExample).presentation,
 									scripts: createDemoScripts('demo-analytics'),
@@ -738,8 +739,8 @@ export const PolicyDemo = () => {
 													?.messageProfile ?? 'default'
 											].translations,
 									},
-									mode: offline({
-										policyRules: getScenarioPolicyRules(resolvedExample),
+									mode: testing({
+										policy: getScenarioPolicyRules(resolvedExample),
 									}),
 									overrides,
 									presentation: getScenarioById(resolvedExample).presentation,

@@ -38,7 +38,6 @@ describe('createConsentRoute', () => {
 		const { GET } = createConsentRoute({
 			backendURL: 'https://consent.example.com',
 			fetch,
-			reportSessions: false,
 		});
 
 		const manifest = await GET(

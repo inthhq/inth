@@ -1,4 +1,4 @@
-import { custom, deferInitGvl } from '@c15t/core';
+import { deferInitGvl } from '@c15t/core';
 import type { ConsentKernel } from '@c15t/core';
 import { resolvePolicyRules } from '@c15t/schema/types';
 import { mount, unmount } from 'svelte';
@@ -11,6 +11,7 @@ import '@c15t/iab';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import ConformanceFixture from './fixtures/conformance-fixture.svelte';
+import { transportMode } from './fixtures/transport-mode';
 
 test.each(
 	(['iab-consent-banner', 'iab-consent-dialog'] as const).flatMap((component) =>
@@ -52,7 +53,7 @@ test.each(
 				options: {
 					disableAnimation: true,
 					iab: { cmpId: 28 },
-					mode: custom({}),
+					mode: transportMode({}),
 					persistence: false,
 					prefetch: {
 						initialIab: {
@@ -141,7 +142,7 @@ test.each(['iab-consent-banner', 'iab-consent-dialog'] as const)(
 				options: {
 					disableAnimation: true,
 					iab: { cmpId: 28, gvl: completeGVL },
-					mode: custom({ save }),
+					mode: transportMode({ save }),
 					persistence: false,
 					prefetch: {
 						initialPolicyResolution: resolvePolicyRules({
@@ -210,7 +211,7 @@ test('closing a reopened IAB dialog supersedes a pending deferred save', async (
 			options: {
 				disableAnimation: true,
 				iab: { cmpId: 28 },
-				mode: custom({}),
+				mode: transportMode({}),
 				persistence: false,
 				prefetch: {
 					initialIab: {

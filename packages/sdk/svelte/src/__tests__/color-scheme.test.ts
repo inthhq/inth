@@ -1,9 +1,9 @@
-import { custom } from '@c15t/core';
 import { render } from '@testing-library/svelte';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import type { ConsentManagerOptions } from '../lib/types';
 import Fixture from './fixtures/color-scheme-fixture.svelte';
+import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 
 const root = document.documentElement;
@@ -11,7 +11,7 @@ const isDark = () => root.classList.contains('c15t-dark');
 
 const renderWith = (colorScheme?: ConsentManagerOptions['colorScheme']) => {
 	const options = {
-		mode: custom({}),
+		mode: transportMode({}),
 		persistence: false,
 		prefetch: policyFixture(),
 	} as ConsentManagerOptions;

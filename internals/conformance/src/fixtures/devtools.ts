@@ -1,4 +1,3 @@
-import { custom } from '@c15t/core';
 import type {
 	ConsentPresentation,
 	KernelConfig,
@@ -10,6 +9,10 @@ import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
 } from '@c15t/schema/types';
+
+/** A transport factory that hands the provider `transport`. */
+const customMode = <Transport>(transport: Transport) =>
+	Object.assign(() => transport, { kind: 'custom' as const });
 
 export const devToolsCategories = [
 	'necessary',
@@ -80,7 +83,7 @@ export const devToolsPresentation = {
 /** No external requests or persisted consent in comparison stories. */
 export const devToolsProviderOptions = {
 	consentCategories: [...devToolsCategories],
-	mode: custom(transport),
+	mode: customMode(transport),
 	persistence: false,
 	prefetch: devToolsPrefetch,
 	presentation: devToolsPresentation,

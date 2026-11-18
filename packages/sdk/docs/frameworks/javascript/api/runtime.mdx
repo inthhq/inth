@@ -25,7 +25,8 @@ Only `mode` is required.
 
 | Option | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `mode` | transport factory | required | Where the policy comes from and where choices go: `hosted()`, `local()`, `manifest()` or `custom()`. `local()` switches copy when the kernel's language changes. See [transports](/docs/frameworks/javascript/transports). Read once. |
+| `backendURL` | `string` | required | Your Inth backend URL. Not needed with `mode: testing()` or `enabled: false`. |
+| `mode` | `hosted()`, `manifest()` or `testing()` | `hosted()` | Where the policy comes from. `testing()` comes from `c15t/testing` and throws in production builds. See [transports](/docs/frameworks/javascript/transports). |
 | `scripts` | `Script[]` | none | Vendor scripts the loader mounts as categories are allowed. See [script loader](/docs/frameworks/javascript/modules/script-loader). |
 | `consentCategories` | category names | inferred | Categories to offer alongside those your scripts, rules and vendors use, within the policy's scope. |
 | `networkBlocker` | `{ rules, enabled?, logBlockedRequests?, onRequestBlocked? }` or `false` | off | Hold matching `fetch` and XHR requests until their category is allowed. See [network blocker](/docs/frameworks/javascript/modules/network-blocker). |
@@ -37,7 +38,6 @@ Only `mode` is required.
 | `callbacks` | `{ onChoiceRecorded?, onPermissionsChanged?, onError?, onBeforeConsentRevocationReload? }` | none | See [callbacks](/docs/frameworks/javascript/callbacks). |
 | `overrides` | `{ country?, region?, language?, gpc? }` | none | Decision inputs the page knows. |
 | `prefetch` | kernel configuration | none | A server-resolved init answer. With a resolved policy, `start()` skips the `/init` request. A prefetch marked `initialPolicyPending` is provisional, so `start()` still sends it. |
-| `policyRules` | `PolicyRule[]` | none | Rules a local transport resolves. |
 | `i18n` | `{ locale?, messages }` | English | Initial language, and messages that override the bundled or backend copy key by key for the same language. See [translations](/docs/frameworks/javascript/translations). |
 | `presentation` | `{ prompt?, preferences? }` | none | Layout and blocking, for UIs that call `resolveConsentPresentation`. |
 | `journey` | `'page'`, `'tab'` or `false` | `'page'` | Random id that links each `/init` to the save that follows. See [session reports](/docs/concepts/data-fetching#link-an-init-to-the-save-that-follows). |

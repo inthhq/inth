@@ -7,7 +7,7 @@ import type { KernelHosting } from '../../types';
  * The transport kind reported on `window.c15t`. Reflects what the
  * adapter actually built.
  */
-export type WindowDebugMode = 'hosted' | 'offline' | 'custom' | 'manifest';
+export type WindowDebugMode = 'hosted' | 'offline' | 'manifest' | 'custom';
 
 /**
  * Options for {@link createWindowDebug}.

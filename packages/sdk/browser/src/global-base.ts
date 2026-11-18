@@ -429,6 +429,7 @@ export const installGlobal = function installGlobal<Api extends C15tGlobalBase>(
  * @param context - Entry-point wiring (UI mounter, package name).
  * @param createClient - The entry's client constructor.
  * @param supportedMode - When set, reject incompatible script-tag modes.
+ * @param readOptions - Reads the options on the script tag.
  * @returns The API, not yet installed on `window`.
  * @internal
  */
@@ -439,7 +440,10 @@ export const createGlobalWith = function createGlobalWith(
 		options: ScriptTagClientOptions,
 		context: CreateConsentClientContext
 	) => ConsentClient,
-	supportedMode?: 'hosted' | 'offline'
+	supportedMode?: 'hosted' | 'testing',
+	readOptions: (
+		script: Element | null
+	) => ScriptTagClientOptions = readScriptOptions
 ): C15tGlobalBase {
 	// `currentScript` points at this bundle only while it is executing.
 	// Manual init may run in another script or an event callback later.
@@ -458,7 +462,7 @@ export const createGlobalWith = function createGlobalWith(
 			`@c15t/browser/${supportedMode}: data-mode must be '${supportedMode}' when using this bundle.`
 		);
 	}
-	const scriptOptions = readScriptOptions(script);
+	const scriptOptions = readOptions(script);
 	let client: ConsentClient | null = null;
 	// Resolved by `c15t.gpp.js`. Until then a client's GPP waits; pages
 	// without the add-on never load it.

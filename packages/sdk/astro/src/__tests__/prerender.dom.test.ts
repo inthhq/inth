@@ -11,8 +11,8 @@ import {
 import { boot, registerIAB, setPromptRendererLoaderForTest } from '../client';
 import type { AstroConsentClient } from '../client';
 import { resolveOptions } from '../integration';
-import { offline as offlineMode } from '../mode';
 import { resolveConsentContext } from '../server';
+import { testing as testingMode } from '../testing';
 import type { C15tAstroOptions } from '../types';
 import { createTestPageIAB } from './page-iab';
 import { testResolution, testRule } from './policy-fixture';
@@ -31,7 +31,7 @@ import '../browser/render-prompt';
  */
 
 const OPTIONS: C15tAstroOptions = {
-	mode: offlineMode({ acknowledgeNoRecords: true, policyRules: [testRule] }),
+	mode: testingMode({ policy: [testRule] }),
 };
 
 // The boot script registers this for a site that sets `iab`.
@@ -271,9 +271,8 @@ describe('the spot <IABConsentBanner /> leaves', () => {
 	const IAB_OPTIONS: C15tAstroOptions = {
 		consentCategories: ['necessary', 'marketing'],
 		iab: { cmpId: 160, gvl: MINIMAL_GVL as never },
-		mode: offlineMode({
-			acknowledgeNoRecords: true,
-			policyRules: [
+		mode: testingMode({
+			policy: [
 				{
 					categories: ['marketing'],
 					id: 'iab',

@@ -1,5 +1,6 @@
 import type { HydrationRecords, HydrationResult } from '@c15t/core';
 import { clientMode } from '@c15t/core/runtime/client-mode';
+import { hosted } from '@c15t/core/transports';
 import {
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,
@@ -9,7 +10,7 @@ import { translations } from '@c15t/translations/en';
 import { afterEach, expect, test, vi } from 'vitest';
 
 import { createVueConsentKernelContext } from '../runtime/kernel';
-import { hosted, manifest } from '../runtime/modes';
+import { manifest } from '../runtime/modes';
 import type { ProviderTransportFactory } from '../runtime/modes';
 
 /**

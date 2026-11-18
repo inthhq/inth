@@ -14,11 +14,11 @@
 		ConsentDialogTrigger,
 		ConsentProvider,
 		ConsentRoot,
-		offline,
 		IABConsentBanner,
 		IABConsentDialog,
 	} from '@c15t/svelte';
 	import type { ConsentManagerOptions } from '@c15t/svelte';
+	import { testing } from '@c15t/svelte/testing';
 	import { baseTranslations } from '@c15t/translations/all';
 
 	import { createDemoScripts } from '#lib/consent-manager/demo-scripts.js';
@@ -140,9 +140,8 @@
 {#if isIabPlayground}
 	<!-- The IAB playground resolves in the browser and keeps saves in memory. -->
 	<ConsentProvider
-		mode={offline({
-			acknowledgeNoRecords: true,
-			policyRules: [
+		mode={testing({
+			policy: [
 				{
 					id: 'devtools-iab-playground',
 					match: { fallback: true, isDefault: true },

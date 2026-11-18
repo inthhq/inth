@@ -313,6 +313,39 @@ describe('createBrowserManifestTransport()', () => {
 		expect(response?.location?.countryCode).toBeNull();
 	});
 
+	test('asks GET /init, with a warning, when the manifest is unavailable', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+		const fetchSpy = vi.fn<typeof fetch>((input) =>
+			Promise.resolve(
+				String(input).endsWith('/manifest')
+					? new Response('missing', { status: 404 })
+					: jsonResponse({
+							location: { countryCode: 'DE', regionCode: null },
+							translations: { language: 'en', translations: {} },
+						})
+			)
+		);
+		const transport = createBrowserManifestTransport({
+			backendURL: 'https://fallback.example',
+			fetch: fetchSpy,
+		});
+
+		await transport.init?.(initContext({ language: 'en' }));
+
+		expect(
+			fetchSpy.mock.calls.map(([url]) => String(url).split('?')[0])
+		).toEqual([
+			'https://fallback.example/manifest',
+			'https://fallback.example/init',
+		]);
+		expect(warn).toHaveBeenCalledWith(
+			expect.stringContaining(
+				'could not read the consent manifest from https://fallback.example/manifest'
+			)
+		);
+		warn.mockRestore();
+	});
+
 	test('fetches the manifest with the given headers and credentials', async () => {
 		const fetchSpy = vi.fn<typeof fetch>(() =>
 			Promise.resolve(jsonResponse(everywhereManifest))

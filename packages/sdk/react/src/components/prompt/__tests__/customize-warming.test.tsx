@@ -8,12 +8,13 @@ import { registerDialogChunkWarmer } from '~/chunk-warming';
 import { ConsentDialogLink } from '~/components/panel-link';
 import { ConsentDialogTrigger } from '~/components/panel-trigger';
 import { ConsentBanner } from '~/components/prompt';
-import { offline } from '~/transports/offline';
+
+import { testing } from '../../../testing';
 
 // Intent only: idle warming would otherwise call the warmer on its own
 // schedule while the banner is shown.
 const options = {
-	mode: offline({ acknowledgeNoRecords: true }),
+	mode: testing(),
 	persistence: false,
 	prefetch: policyFixture(),
 	preloadDialog: 'intent',

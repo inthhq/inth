@@ -7,7 +7,7 @@ import type {
 	ConsentProviderOptions,
 	PolicyRule,
 } from '../index';
-import { offline, policyRulePresets } from '../index';
+import { policyRulePresets } from '../index';
 
 const consentCategories: AllConsentNames[] = ['measurement', 'marketing'];
 const clearOnRevocation: ClearOnRevocationConfig = {
@@ -18,10 +18,12 @@ const policyRules: PolicyRule[] = [
 	policyRulePresets.worldNone(),
 ];
 
+void policyRules;
+
 ({
+	backendURL: '/api/c15t',
 	clearOnRevocation,
 	consentCategories,
-	mode: offline({ policyRules }),
 }) satisfies ConsentProviderOptions;
 
 // @ts-expect-error Only c15t's categories are category names.

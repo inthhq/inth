@@ -4,11 +4,13 @@
  * `@c15t/core/generated`, which `consentManifest()` serves, and the state
  * hands the browser everything `ConsentRoot` needs.
  */
+import { hosted } from '@c15t/core/modes';
 import { createManifestCache } from '@c15t/core/server';
 import { describe, expect, test, vi } from 'vitest';
 
 import { createConsentRoute } from '../api';
 import { createConsentStateHandler, resolveConsent } from '../server';
+import { testing } from '../testing';
 import { MANIFEST_FIXTURE } from './manifest-fixture';
 
 // oxlint-disable-next-line anti-slop/no-module-mocking -- Stands in for the virtual module the Vite plugin serves.
@@ -30,7 +32,7 @@ describe('defaults from @c15t/core/generated', () => {
 		const fetch = offlineFetch();
 		const state = await createConsentStateHandler({
 			fetch,
-			reportSessions: false,
+			mode: { type: 'manifest' },
 			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
 		})();
 		expect(state.initialPolicyResolution).toMatchObject({
@@ -38,14 +40,17 @@ describe('defaults from @c15t/core/generated', () => {
 			status: 'matched',
 		});
 		expect(state.backendURL).toBe('https://consent.example.com');
-		expect(state).not.toHaveProperty('mode');
+		expect(state.mode).toEqual({ type: 'manifest' });
 		expect(state).not.toHaveProperty('routePrefix');
-		expect(fetch).not.toHaveBeenCalled();
+		// No policy request; only the session report.
+		expect(
+			fetch.mock.calls.filter(([url]) => !String(url).endsWith('/sessions'))
+		).toEqual([]);
 	});
 
 	test('the consent route serves the build snapshot', async () => {
 		const fetch = offlineFetch();
-		const { GET } = createConsentRoute({ fetch, reportSessions: false });
+		const { GET } = createConsentRoute({ fetch });
 		const response = await GET({
 			params: { _splat: 'manifest' },
 			request: new Request('https://app.example.com/api/c15t/manifest'),
@@ -63,7 +68,6 @@ describe('the client half of the state', () => {
 				snapshot: MANIFEST_FIXTURE,
 				type: 'manifest',
 			},
-			reportSessions: false,
 			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
 			routePrefix: '/api/c15t/',
 		});
@@ -81,7 +85,6 @@ describe('the client half of the state', () => {
 	test('proxy sends saves through the route prefix', async () => {
 		const state = await resolveConsent({
 			proxy: true,
-			reportSessions: false,
 			request: requestOf(),
 			routePrefix: '/api/c15t',
 		});
@@ -94,22 +97,19 @@ describe('the client half of the state', () => {
 		).rejects.toThrow('needs `routePrefix`');
 	});
 
-	test("proxy keeps hosted()'s backend URL on the server", async () => {
+	test('proxy keeps the hosted backend URL on the server', async () => {
 		const fetch = offlineFetch();
 		const state = await resolveConsent({
+			backendURL: 'https://backend.example',
 			fetch,
-			mode: { backendURL: 'https://backend.example', type: 'hosted' },
+			mode: hosted(),
 			proxy: true,
-			reportSessions: false,
 			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
 			routePrefix: '/api/c15t',
 		});
 		// The browser's init and saves go through the route.
-		expect(state).toMatchObject({
-			backendURL: '/api/c15t',
-			mode: { type: 'hosted' },
-		});
-		expect(state.mode).not.toHaveProperty('backendURL');
+		expect(state).toMatchObject({ backendURL: '/api/c15t' });
+		expect(state.mode).toEqual({ type: 'hosted' });
 		// The server still asks the hosted backend.
 		expect(String(fetch.mock.calls[0]?.[0])).toMatch(
 			/^https:\/\/backend\.example\/init/u
@@ -129,12 +129,31 @@ describe('the client half of the state', () => {
 		expect(fetch).not.toHaveBeenCalled();
 	});
 
-	test('offline() resolves bundled rules on the server', async () => {
+	test('with no mode, resolves from the build snapshot as manifest() does', async () => {
+		const fetch = offlineFetch();
 		const state = await resolveConsent({
-			mode: { type: 'offline' },
+			fetch,
 			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
 		});
-		expect(state.initialPolicyResolution?.status).toBe('matched');
-		expect(state.mode).toEqual({ type: 'offline' });
+		expect(state.initialPolicyResolution).toMatchObject({
+			policyId: 'eu-opt-in',
+			status: 'matched',
+		});
+		expect(state.mode).toBeUndefined();
+		expect(
+			fetch.mock.calls.filter(([url]) => !String(url).endsWith('/sessions'))
+		).toEqual([]);
+	});
+
+	test('testing() resolves nothing on the server and reaches the browser', async () => {
+		const fetch = offlineFetch();
+		const state = await resolveConsent({
+			fetch,
+			mode: testing(),
+			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
+		});
+		expect(state.initialPolicyResolution).toBeUndefined();
+		expect(state.mode).toEqual({ type: 'testing' });
+		expect(fetch).not.toHaveBeenCalled();
 	});
 });

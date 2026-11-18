@@ -3,13 +3,13 @@
  * the slot's classes and its `style`, with camelCase style keys, and only
  * on the part the slot names.
  */
-import { custom } from '@c15t/core';
 import type { ComponentSlots } from '@c15t/ui/theme';
 import { render, waitFor } from '@testing-library/svelte';
 import { describe, expect, test } from 'vitest';
 
 import type { ConsentManagerOptions } from '../lib/types';
 import Fixture from './fixtures/theme-slots-fixture.svelte';
+import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 
 const SLOT = {
@@ -23,7 +23,7 @@ const renderWithSlots = async function renderWithSlots(
 	render(Fixture, {
 		options: {
 			legalLinks: { privacyPolicy: { href: 'https://example.test/privacy' } },
-			mode: custom({}),
+			mode: transportMode({}),
 			persistence: false,
 			prefetch: policyFixture(),
 			theme: { slots },

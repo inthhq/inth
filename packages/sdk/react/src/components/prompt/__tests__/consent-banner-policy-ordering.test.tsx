@@ -7,7 +7,8 @@ import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/compone
 import type { ConsentStateFixture } from '~/__tests__/consent-state-fixture';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentBanner } from '~/components/prompt';
-import { offline } from '~/transports/offline';
+
+import { testing } from '../../../testing';
 
 type ConsentManagerState = ConsentStateFixture;
 
@@ -80,7 +81,7 @@ const renderBanner = function renderBanner(
 					},
 					...componentOverrides,
 				},
-				mode: offline({ acknowledgeNoRecords: true }),
+				mode: testing(),
 				persistence: false,
 				prefetch: {
 					...policyFixture(undefined, {

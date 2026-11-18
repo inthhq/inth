@@ -8,14 +8,14 @@ import { baseTranslations } from '@c15t/translations/all';
  */
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import { createIframeBlocker } from '../../modules/iframe-blocker';
 import { createNetworkBlocker } from '../../modules/network-blocker';
 import { holdNetworkRequests } from '../../modules/network-blocker/hold';
 import { createPersistence } from '../../modules/persistence';
 import { createScriptLoader } from '../../modules/script-loader';
+import { testing } from '../../testing';
 import { resolveLocalTranslations } from '../../translations';
-import { custom } from '../../transports/mode';
-import { offline } from '../../transports/offline';
 import type { KernelTransport } from '../../types';
 import {
 	createConsentProviderRuntime,
@@ -115,7 +115,7 @@ describe('createRuntimeKernel', () => {
 		};
 		const kernel = createRuntimeKernel({
 			iab: { cmpId: 28, vendors: [1] },
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 			prefetch: {
 				...RESOLVED_PREFETCH,
 				initialIab: { enabled: true, gvl: null, gvlReference },
@@ -129,10 +129,10 @@ describe('createRuntimeKernel', () => {
 		kernel.dispose();
 	});
 
-	test('throws when `mode` is not a transport factory', () => {
-		expect(() =>
-			createRuntimeKernel({ mode: undefined as never })
-		).toThrowError(/`mode` is required/u);
+	test('throws when the options select no transport', () => {
+		expect(() => createRuntimeKernel({})).toThrowError(
+			/`backendURL` is required/u
+		);
 	});
 
 	test.each([
@@ -144,24 +144,20 @@ describe('createRuntimeKernel', () => {
 		['@c15t/browser/hosted', '@c15t/browser/hosted init()'],
 		['@c15t/nextjs', '@c15t/nextjs ConsentRoot'],
 		['@c15t/tanstack-start', '@c15t/tanstack-start ConsentRoot'],
-	])('the missing-mode error from %s names %s', (pkg, owner) => {
-		expect(() =>
-			createRuntimeKernel({ mode: undefined as never, pkg })
-		).toThrowError(
-			`${owner}: \`mode\` is required. Use manifest() or hosted().`
+	])('the missing-backend error from %s names %s', (pkg, owner) => {
+		expect(() => createRuntimeKernel({ pkg })).toThrowError(
+			`${owner}: \`backendURL\` is required.`
 		);
-		expect(() =>
-			createRuntimeKernel({ mode: undefined as never, pkg })
-		).not.toThrowError(/ConsentManagerProvider/u);
+		expect(() => createRuntimeKernel({ pkg })).not.toThrowError(
+			/ConsentManagerProvider/u
+		);
 	});
 
-	test('the production missing-mode error names the package only', () => {
+	test('the production missing-backend error names the package only', () => {
 		vi.stubEnv('NODE_ENV', 'production');
 		try {
-			expect(() =>
-				createRuntimeKernel({ mode: undefined as never, pkg: '@c15t/react' })
-			).toThrowError(
-				'@c15t/react: `mode` is required. Use manifest() or hosted().'
+			expect(() => createRuntimeKernel({ pkg: '@c15t/react' })).toThrowError(
+				'@c15t/react: `backendURL` is required.'
 			);
 		} finally {
 			vi.unstubAllEnvs();
@@ -170,7 +166,7 @@ describe('createRuntimeKernel', () => {
 
 	test('merges prefetched backend vendors with code-declared ones and keeps the list version', () => {
 		const kernel = createRuntimeKernel({
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 			prefetch: {
 				...RESOLVED_PREFETCH,
 				initialVendors: {
@@ -218,7 +214,7 @@ describe('createRuntimeKernel', () => {
 	test('a disabled runtime ignores a prefetched vendor denial', () => {
 		const kernel = createRuntimeKernel({
 			enabled: false,
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 			prefetch: {
 				...RESOLVED_PREFETCH,
 				initialRecords: {
@@ -237,7 +233,7 @@ describe('createRuntimeKernel', () => {
 	test('grants every category and suppresses UI when disabled', () => {
 		const kernel = createRuntimeKernel({
 			enabled: false,
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 		});
 
 		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(true);
@@ -246,7 +242,7 @@ describe('createRuntimeKernel', () => {
 
 	test('merges provider overrides over prefetched overrides', () => {
 		const kernel = createRuntimeKernel({
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 			overrides: { country: 'DE' },
 			prefetch: { initialOverrides: { country: 'US', language: 'fr' } },
 		});
@@ -259,7 +255,7 @@ describe('createRuntimeKernel', () => {
 
 	test('normalizes a v2 `{ id }` user into `{ externalId }`', () => {
 		const kernel = createRuntimeKernel({
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 			user: { id: 'user_1', identityProvider: 'auth0' },
 		});
 
@@ -295,7 +291,7 @@ describe('app i18n over backend translations', () => {
 		});
 		const kernel = createRuntimeKernel({
 			i18n: appI18n,
-			mode: custom(transport),
+			mode: transportMode(transport),
 		});
 
 		await kernel.commands.init();
@@ -310,7 +306,7 @@ describe('app i18n over backend translations', () => {
 	test('an app override survives a server prefetch for the same language', () => {
 		const kernel = createRuntimeKernel({
 			i18n: appI18n,
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 			prefetch: { ...RESOLVED_PREFETCH, initialTranslations: backendEnglish },
 		});
 
@@ -331,7 +327,7 @@ describe('app i18n over backend translations', () => {
 			i18n: {
 				messages: { de: { cookieBanner: { title: 'Kekse' } } },
 			} as never,
-			mode: custom(transport),
+			mode: transportMode(transport),
 		});
 
 		await kernel.commands.init();
@@ -353,7 +349,7 @@ describe('app i18n over backend translations', () => {
 			i18n: {
 				messages: { de: { cookieBanner: { title: 'Kekse' } } },
 			} as never,
-			mode: custom(transport),
+			mode: transportMode(transport),
 		});
 
 		await kernel.commands.init();
@@ -368,7 +364,7 @@ describe('app i18n over backend translations', () => {
 describe('stock bundles passed as i18n messages', () => {
 	const stockGerman = baseTranslations.de;
 	const hostedGerman = (translations: Record<string, unknown>) =>
-		custom(
+		transportMode(
 			createTransport({
 				init: vi.fn().mockResolvedValue({
 					...RESOLVED_PREFETCH,
@@ -463,7 +459,7 @@ describe('offline copy with every bundled language loaded', () => {
 
 	test('a language set through the kernel switches to the bundled copy', async () => {
 		const kernel = createRuntimeKernel({
-			mode: offline({ acknowledgeNoRecords: true }),
+			mode: testing(),
 		});
 		await kernel.commands.init();
 
@@ -481,7 +477,9 @@ describe('createConsentRuntime', () => {
 	test('defers storage hydration until start and preserves valid legacy records', () => {
 		document.cookie = `c15t=c.necessary:1,c.marketing:1,i.t:${Date.now()}; path=/`;
 
-		const runtime = createConsentRuntime({ mode: custom(createTransport()) });
+		const runtime = createConsentRuntime({
+			mode: transportMode(createTransport()),
+		});
 
 		expect(runtime.kernel.getSnapshot().explicitChoice).toBeNull();
 		runtime.start();
@@ -496,7 +494,7 @@ describe('createConsentRuntime', () => {
 		document.cookie = `c15t=c.necessary:1,c.marketing:1,i.t:${Date.now()}; path=/`;
 
 		const runtime = createConsentRuntime({
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 			persistence: false,
 		});
 
@@ -506,7 +504,7 @@ describe('createConsentRuntime', () => {
 
 	test('`start()` runs init once and is idempotent', async () => {
 		const transport = createTransport();
-		const runtime = createConsentRuntime({ mode: custom(transport) });
+		const runtime = createConsentRuntime({ mode: transportMode(transport) });
 
 		runtime.start();
 		runtime.start();
@@ -519,7 +517,7 @@ describe('createConsentRuntime', () => {
 
 	test('`start()` with a resolved prefetch still records the first impression', () => {
 		const runtime = createConsentRuntime({
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 			prefetch: RESOLVED_PREFETCH,
 		});
 		const shown: string[] = [];
@@ -538,7 +536,7 @@ describe('createConsentRuntime', () => {
 	test('`start()` skips init when the prefetch already resolved the policy', async () => {
 		const transport = createTransport();
 		const runtime = createConsentRuntime({
-			mode: custom(transport),
+			mode: transportMode(transport),
 			prefetch: RESOLVED_PREFETCH,
 		});
 
@@ -553,7 +551,7 @@ describe('createConsentRuntime', () => {
 	test('`start()` still replays `init:applied` for a skipped init', async () => {
 		const transport = createTransport();
 		const runtime = createConsentRuntime({
-			mode: custom(transport),
+			mode: transportMode(transport),
 			prefetch: RESOLVED_PREFETCH,
 		});
 		const applied = vi.fn();
@@ -568,7 +566,7 @@ describe('createConsentRuntime', () => {
 	test('`start()` runs init for a prefetch without a resolved policy', async () => {
 		const transport = createTransport();
 		const runtime = createConsentRuntime({
-			mode: custom(transport),
+			mode: transportMode(transport),
 			prefetch: { initialOverrides: { country: 'DE' } },
 		});
 
@@ -582,7 +580,7 @@ describe('createConsentRuntime', () => {
 	test('`reinit()` still calls init with a resolved prefetch', async () => {
 		const transport = createTransport();
 		const runtime = createConsentRuntime({
-			mode: custom(transport),
+			mode: transportMode(transport),
 			prefetch: RESOLVED_PREFETCH,
 		});
 
@@ -594,7 +592,7 @@ describe('createConsentRuntime', () => {
 
 	test('`start()` publishes the window debug handle under the given pkg', () => {
 		const runtime = createConsentRuntime({
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 			pkg: '@c15t/svelte',
 		});
 
@@ -611,7 +609,7 @@ describe('createConsentRuntime', () => {
 		const transport = createTransport();
 		const runtime = createConsentRuntime({
 			enabled: false,
-			mode: custom(transport),
+			mode: transportMode(transport),
 		});
 
 		runtime.start();
@@ -626,7 +624,7 @@ describe('createConsentRuntime', () => {
 		const onBeforeLoad = vi.fn();
 		const runtime = createConsentRuntime({
 			enabled: false,
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 			scripts: [
 				{
 					callbackOnly: true,
@@ -651,7 +649,7 @@ describe('createConsentRuntime', () => {
 		const runtime = createConsentRuntime({
 			createIAB,
 			iab: { cmpId: 42, cmpVersion: '3' },
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 		});
 
 		expect(runtime.iab).toBeNull();
@@ -672,7 +670,7 @@ describe('createConsentRuntime', () => {
 	test('leaves IAB unmounted when no factory is injected', () => {
 		const runtime = createConsentRuntime({
 			iab: { cmpId: 42 },
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 		});
 
 		runtime.start();
@@ -686,7 +684,7 @@ describe('createConsentRuntime', () => {
 		const runtime = createConsentRuntime({
 			createIAB,
 			iab: { enabled: true },
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 		});
 		const seen: (ConsentRuntimeIABHandle | null)[] = [];
 		runtime.subscribe(() => seen.push(runtime.iab));
@@ -704,7 +702,7 @@ describe('createConsentRuntime', () => {
 	test('`identify()` normalizes the user and swallows transport failures', async () => {
 		const identify = vi.fn().mockRejectedValue(new Error('offline'));
 		const runtime = createConsentRuntime({
-			mode: custom(createTransport({ identify })),
+			mode: transportMode(createTransport({ identify })),
 		});
 
 		await expect(
@@ -722,7 +720,7 @@ describe('createConsentRuntime', () => {
 
 	test('`reinit()` re-runs init and is inert when disabled', async () => {
 		const transport = createTransport();
-		const runtime = createConsentRuntime({ mode: custom(transport) });
+		const runtime = createConsentRuntime({ mode: transportMode(transport) });
 
 		await runtime.reinit();
 		expect(transport.init).toHaveBeenCalledTimes(1);
@@ -731,7 +729,7 @@ describe('createConsentRuntime', () => {
 		const disabledTransport = createTransport();
 		const disabled = createConsentRuntime({
 			enabled: false,
-			mode: custom(disabledTransport),
+			mode: transportMode(disabledTransport),
 		});
 		await disabled.reinit();
 		expect(disabledTransport.init).not.toHaveBeenCalled();
@@ -739,7 +737,9 @@ describe('createConsentRuntime', () => {
 	});
 
 	test('`setOverrides()` writes through to the kernel', () => {
-		const runtime = createConsentRuntime({ mode: custom(createTransport()) });
+		const runtime = createConsentRuntime({
+			mode: transportMode(createTransport()),
+		});
 
 		runtime.setOverrides({ country: 'FR' });
 		expect(runtime.kernel.getSnapshot().overrides.country).toBe('FR');
@@ -758,7 +758,7 @@ describe('createConsentRuntime', () => {
 	test('`setConsentCategories()` replaces the configured categories', () => {
 		const runtime = createConsentRuntime({
 			consentCategories: ['necessary'],
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 		});
 
 		expect(runtime.consentCategories).toEqual(['necessary']);
@@ -769,7 +769,7 @@ describe('createConsentRuntime', () => {
 
 	test('`dispose()` stops the runtime and blocks a later `start()`', () => {
 		const transport = createTransport();
-		const runtime = createConsentRuntime({ mode: custom(transport) });
+		const runtime = createConsentRuntime({ mode: transportMode(transport) });
 
 		runtime.start();
 		runtime.dispose();
@@ -786,7 +786,7 @@ describe('createConsentRuntime', () => {
 		document.body.append(iframe);
 		const runtime = createConsentRuntime({
 			iframeBlocker: { disableAutomaticBlocking: true },
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 		});
 
 		runtime.processIframes();
@@ -812,7 +812,7 @@ describe('createConsentRuntime', () => {
 		window.fetch = original as unknown as typeof window.fetch;
 		try {
 			const runtime = createConsentRuntime({
-				mode: custom(createTransport()),
+				mode: transportMode(createTransport()),
 				networkBlocker: {
 					rules: [{ category: 'measurement', domain: 'tracker.example' }],
 				},
@@ -841,7 +841,7 @@ describe('createConsentRuntime', () => {
 		window.fetch = original as unknown as typeof window.fetch;
 		try {
 			const runtime = createConsentRuntime({
-				mode: custom(createTransport()),
+				mode: transportMode(createTransport()),
 				networkBlocker: {
 					rules: [{ category: 'measurement', domain: 'tracker.example' }],
 				},
@@ -879,7 +879,7 @@ describe('createConsentRuntime', () => {
 					de: { cookieBanner: { title: 'Kekse' } } as never,
 				},
 			},
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 		});
 
 		const { translations } = runtime.kernel.getSnapshot();
@@ -892,7 +892,7 @@ describe('createConsentRuntime', () => {
 	test('a locale on its own still selects that language', () => {
 		const runtime = createConsentRuntime({
 			i18n: { locale: 'de' },
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 		});
 
 		// `@c15t/core` bundles English only, so the copy stays English until
@@ -906,7 +906,7 @@ describe('createConsentRuntime', () => {
 
 	test('reinit after dispose does not touch the kernel', async () => {
 		const transport = createTransport();
-		const runtime = createConsentRuntime({ mode: custom(transport) });
+		const runtime = createConsentRuntime({ mode: transportMode(transport) });
 
 		runtime.start();
 		await vi.waitFor(() => expect(transport.init).toHaveBeenCalled());
@@ -928,17 +928,19 @@ describe('windowDebug', () => {
 	});
 
 	test('installs the debug object on start by default', () => {
-		const runtime = createConsentRuntime({ mode: custom(createTransport()) });
+		const runtime = createConsentRuntime({
+			mode: transportMode(createTransport()),
+		});
 
 		runtime.start();
 
-		expect((window as DebugWindow).c15t).toMatchObject({ mode: 'custom' });
+		expect((window as DebugWindow).c15t).toMatchObject({ mode: 'hosted' });
 		runtime.dispose();
 	});
 
 	test('reports the hosting the init response named', async () => {
 		const runtime = createConsentRuntime({
-			mode: custom(
+			mode: transportMode(
 				createTransport({
 					init: vi.fn().mockResolvedValue({ hosting: 'inth' }),
 				})
@@ -957,7 +959,7 @@ describe('windowDebug', () => {
 		const owned = { mine: true };
 		(window as DebugWindow).c15t = owned;
 		const runtime = createConsentRuntime({
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 			windowDebug: false,
 		});
 
@@ -992,7 +994,7 @@ describe('the runtime network hold', () => {
 		]);
 		try {
 			const runtime = createConsentRuntime({
-				mode: custom(createTransport()),
+				mode: transportMode(createTransport()),
 				networkBlocker: {
 					rules: [{ category: 'measurement', domain: 'tracker.example' }],
 				},
@@ -1024,7 +1026,7 @@ describe('the runtime network hold', () => {
 		]);
 		try {
 			const runtime = createConsentRuntime({
-				mode: custom(createTransport()),
+				mode: transportMode(createTransport()),
 				networkBlocker: {
 					enabled: false,
 					rules: [{ category: 'marketing', domain: 'ads.example' }],
@@ -1077,7 +1079,7 @@ describe('the runtime network hold', () => {
 		) {
 			return createConsentProviderRuntime(
 				{
-					mode: custom(createTransport()),
+					mode: transportMode(createTransport()),
 					networkBlocker: { rules: RULES as never },
 					persistence: false,
 					prefetch: RESOLVED_PREFETCH,
@@ -1174,7 +1176,7 @@ describe('revocation reload', () => {
 		const onBeforeConsentRevocationReload = vi.fn();
 		const runtime = createConsentRuntime({
 			callbacks: { onBeforeConsentRevocationReload },
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 			prefetch: RESOLVED_PREFETCH,
 			...options,
 		});
@@ -1225,7 +1227,7 @@ describe('lifecycle verbs', () => {
 		// Vue's copy left `vendorChoice` behind, so a cleared visitor kept
 		// their vendor denials.
 		const runtime = createConsentRuntime({
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 			persistence: false,
 			prefetch: {
 				...RESOLVED_PREFETCH,
@@ -1254,7 +1256,7 @@ describe('lifecycle verbs', () => {
 
 	test('`clearRecords()` with persistence clears storage and announces it', async () => {
 		const runtime = createConsentRuntime({
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 			prefetch: RESOLVED_PREFETCH,
 		});
 		runtime.start();
@@ -1275,7 +1277,7 @@ describe('lifecycle verbs', () => {
 		// a provisional prefetch is a placeholder, so the runtime asks.
 		const transport = createTransport();
 		const runtime = createConsentRuntime({
-			mode: custom(transport),
+			mode: transportMode(transport),
 			prefetch: { ...RESOLVED_PREFETCH, initialPolicyPending: true },
 		});
 
@@ -1286,7 +1288,7 @@ describe('lifecycle verbs', () => {
 
 	test('adopting a resolved prefetch marks the kernel live, honours a detected GPC signal and replays `init:applied`', () => {
 		const runtime = createConsentRuntime({
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 			prefetch: {
 				...RESOLVED_PREFETCH,
 				initialPrivacySignals: { gpc: true },
@@ -1321,7 +1323,7 @@ describe('lifecycle verbs', () => {
 		});
 		const runtime = createConsentProviderRuntime(
 			{
-				mode: custom(createTransport()),
+				mode: transportMode(createTransport()),
 				networkBlocker: { rules: [] },
 				prefetch: RESOLVED_PREFETCH,
 				scripts: [{ callbackOnly: true, category: 'measurement', id: 'a' }],
@@ -1370,7 +1372,7 @@ describe('lifecycle verbs', () => {
 				publisherCountryCode: 'DE',
 				publisherRestrictions: publisherRestrictions as never,
 			},
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 		});
 
 		runtime.start();
@@ -1388,7 +1390,7 @@ describe('lifecycle verbs', () => {
 	test('`setLanguage()` switches the language and asks the backend again, once', async () => {
 		const transport = createTransport();
 		const runtime = createConsentRuntime({
-			mode: custom(transport),
+			mode: transportMode(transport),
 			prefetch: RESOLVED_PREFETCH,
 		});
 		runtime.start();
@@ -1405,7 +1407,7 @@ describe('lifecycle verbs', () => {
 		const disabledTransport = createTransport();
 		const disabled = createConsentRuntime({
 			enabled: false,
-			mode: custom(disabledTransport),
+			mode: transportMode(disabledTransport),
 		});
 		disabled.setLanguage('de');
 
@@ -1416,7 +1418,7 @@ describe('lifecycle verbs', () => {
 				openPreferences: vi.fn(),
 				subscribe: () => () => undefined,
 			},
-			mode: custom(externalTransport),
+			mode: transportMode(externalTransport),
 		});
 		external.setLanguage('de');
 
@@ -1432,11 +1434,11 @@ describe('lifecycle verbs', () => {
 		const server = { arm: 'b', arms: { b: {} }, id: 'server' };
 		const fromOption = createConsentRuntime({
 			experiment: option,
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 		});
 		const fromServer = createConsentRuntime({
 			experiment: option,
-			mode: custom(createTransport()),
+			mode: transportMode(createTransport()),
 			prefetch: { ...RESOLVED_PREFETCH, experiment: server },
 		});
 

@@ -8,7 +8,8 @@ import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/compone
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentBanner } from '~/components/prompt';
 import { useActiveUI } from '~/hooks';
-import { offline } from '~/transports/offline';
+
+import { testing } from '../../../testing';
 
 const ActiveUIProbe = () => (
 	<output data-testid="active-ui">{useActiveUI()}</output>
@@ -22,7 +23,7 @@ const renderBanner = function renderBanner(
 	return render(
 		<ConsentProvider
 			options={{
-				mode: offline({ acknowledgeNoRecords: true }),
+				mode: testing(),
 				persistence: false,
 				prefetch: policyFixture(undefined, {
 					id: 'banner-notice-test',

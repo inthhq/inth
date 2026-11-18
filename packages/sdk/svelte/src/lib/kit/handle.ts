@@ -23,21 +23,28 @@ import {
 	loadServerScriptStart,
 } from './server-script-start';
 import { injectSurfaceStyles, nonceEarlyTapScript } from './surface-styles';
-import type { C15tLocals, ConsentRequestOptions } from './types';
+import type { C15tLocals, ConsentRequestOptions, KitMode } from './types';
 
 /** Options for {@link c15tHandle}. */
 export interface C15tHandleOptions extends ConsentRequestOptions {
 	/**
 	 * The c15t backend. Defaults to the URL `consentManifest()` read from
-	 * `PUBLIC_C15T_BACKEND_URL` or `PUBLIC_INTH_PROJECT_URL`. A
-	 * `hosted({ backendURL })` mode's own URL wins.
+	 * `PUBLIC_C15T_BACKEND_URL` or `PUBLIC_INTH_PROJECT_URL`. Required
+	 * unless `mode` is `testing()`.
 	 */
 	backendURL?: string;
 	/**
-	 * How `loadConsent` resolves the visitor: `manifest()` (the default),
-	 * `hosted()` or `local()` from `@c15t/svelte/kit`. They are plain
-	 * data; `ConsentRoot` loads the code a mode needs in the browser only
-	 * when it runs.
+	 * How the visitor is resolved. Plain data; `ConsentRoot` loads the code
+	 * it needs in the browser only when it runs.
+	 *
+	 * - Omitted, or `manifest()` from `@c15t/svelte/kit`: resolve from the
+	 *   backend's consent manifest, which the build downloads. When it is
+	 *   unavailable, ask the backend's `/init` and log a warning.
+	 * - `hosted()` from `@c15t/svelte/kit`: ask the backend's `/init` for
+	 *   every visitor.
+	 * - `testing()` from `@c15t/svelte/testing`: the server resolves
+	 *   nothing, and the browser resolves a policy with no network; its
+	 *   transport throws in production builds.
 	 *
 	 * @default manifest()
 	 */
@@ -135,17 +142,21 @@ const normalizeRequestHeaders = function normalizeRequestHeaders(
 };
 
 /**
- * The data a mode carries. A transport factory, such as `hosted()` from
- * `@c15t/svelte`, carries its options as data too; only that data reaches
- * the browser.
+ * The data a handle's options resolve the visitor with. A transport
+ * factory, such as `manifest()` from `@c15t/svelte`, carries its options
+ * as data too; only that data reaches the browser.
  */
-const modeData = function modeData(mode: ConsentMode): ConsentMode {
+const modeData = function modeData(options: C15tHandleOptions): KitMode {
+	const { mode } = options;
+	if (mode === undefined) {
+		return { type: 'manifest' };
+	}
 	if (typeof mode !== 'function') {
 		return mode;
 	}
 	if (!(mode as Partial<ConsentMode>).type) {
 		throw new TypeError(
-			'c15t: c15tHandle() takes manifest(), hosted() or local() from c15t/svelte/kit. Pass custom() to <ConsentRoot mode> instead.'
+			'c15t: c15tHandle() takes manifest() or hosted() from c15t/svelte/kit, or testing() from c15t/svelte/testing. Pass a transport to <ConsentRoot mode> instead.'
 		);
 	}
 	const { kind: _kind, ...data } = mode as ConsentMode & { kind?: string };
@@ -177,13 +188,13 @@ const modeData = function modeData(mode: ConsentMode): ConsentMode {
  * @param options - The mode, the consent route's prefix, a snapshot, the
  * cookie name and geo/language overrides.
  * @returns A `handle` hook that populates `event.locals.c15t`.
- * @throws {TypeError} When `mode` is `custom()`, which cannot reach the
- * browser as data, or `routePrefix` is `/` or not a path.
+ * @throws {TypeError} When `mode` is a transport with no data, which
+ * cannot reach the browser, or `routePrefix` is `/` or not a path.
  */
 export const c15tHandle = function c15tHandle(
 	options: C15tHandleOptions = {}
 ): C15tHandle {
-	const mode = modeData(options.mode ?? { type: 'manifest' });
+	const mode = modeData(options);
 	const routePrefix =
 		options.routePrefix === undefined
 			? undefined

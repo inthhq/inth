@@ -7,13 +7,10 @@
  */
 import { describe, expect, test } from 'vitest';
 
-import {
-	createConsentKernel,
-	createOfflineTransport,
-	offline,
-	resolveLocalTranslations,
-} from '../index';
+import { createConsentKernel, resolveLocalTranslations } from '../index';
 import { createConsentRuntime } from '../runtime';
+import { testing } from '../testing';
+import { createOfflineTransport } from '../transports/offline';
 
 describe('createOfflineTransport: basic behavior', () => {
 	test('no rules resolve the recommended pack', async () => {
@@ -220,7 +217,7 @@ describe('createOfflineTransport: kernel integration', () => {
 	});
 });
 
-describe('offline(): language changes', () => {
+describe('offline transports: language changes', () => {
 	const messages = {
 		de: { cookieBanner: { title: 'Wir schätzen Ihre Privatsphäre' } },
 	};
@@ -253,7 +250,7 @@ describe('offline(): language changes', () => {
 	test('a language set through the kernel switches the copy', async () => {
 		const runtime = createConsentRuntime({
 			i18n: { messages } as never,
-			mode: offline({ acknowledgeNoRecords: true }),
+			mode: testing(),
 			persistence: false,
 			windowDebug: false,
 		});
@@ -303,7 +300,7 @@ describe('offline(): language changes', () => {
 	test('the detected language switches the copy once the app chose another', async () => {
 		const runtime = createConsentRuntime({
 			i18n: { locale: 'en', messages } as never,
-			mode: offline({ acknowledgeNoRecords: true }),
+			mode: testing(),
 			persistence: false,
 			prefetch: { initialOverrides: { language: 'de' } },
 			windowDebug: false,
@@ -325,7 +322,7 @@ describe('offline(): language changes', () => {
 
 	test('a prefetch that resolves after the transport is built still counts as detected', async () => {
 		let prefetch: { initialOverrides?: { language?: string } } = {};
-		const transport = offline({ acknowledgeNoRecords: true })({
+		const transport = testing().transport({
 			get prefetch() {
 				return prefetch;
 			},
@@ -346,7 +343,7 @@ describe('offline(): language changes', () => {
 	test('a language a server prefetch detected does not switch the copy', async () => {
 		const runtime = createConsentRuntime({
 			i18n: { locale: 'en', messages } as never,
-			mode: offline({ acknowledgeNoRecords: true }),
+			mode: testing(),
 			persistence: false,
 			prefetch: { initialOverrides: { language: 'de' } },
 			windowDebug: false,

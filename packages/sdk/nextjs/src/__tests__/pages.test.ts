@@ -1,9 +1,9 @@
-import { hosted } from '@c15t/core/modes';
 /**
  * Tests for `@c15t/nextjs/pages`: the Node req/res bridge that lets
  * `getServerSideProps` and `pages/api` routes use the server helpers and
  * route handlers built for the App Router.
  */
+import { hosted, manifest as manifestMode } from '@c15t/core/modes';
 import { clearManifestCache } from '@c15t/core/server';
 import { writePolicyResolutionWire } from '@c15t/schema/types';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
@@ -19,6 +19,12 @@ import {
 import type { PagesApiHandler } from '../pages';
 import { MANIFEST_FIXTURE } from './manifest-fixture';
 import { policyFixture } from './policy-fixture';
+
+/** The requests that fetch policy, leaving out the session reports. */
+const policyCalls = (spy: { mock: { calls: unknown[][] } }): unknown[] =>
+	spy.mock.calls
+		.map(([url]) => url)
+		.filter((url) => !String(url).endsWith('/sessions'));
 
 const createInitOutput = function createInitOutput(
 	overrides: Record<string, unknown> = {}
@@ -114,7 +120,6 @@ describe('Pages Router build-time manifest', () => {
 			const state = await resolveConsent({
 				backendURL: 'https://consent.example.com',
 				fetch,
-				reportSessions: false,
 				req: {
 					headers: {
 						host: 'app.example.com',
@@ -125,7 +130,7 @@ describe('Pages Router build-time manifest', () => {
 				snapshot: MANIFEST_FIXTURE,
 			});
 			expect(state.initialPolicyResolution?.policy?.id).toBe(policyId);
-			expect(fetch).not.toHaveBeenCalled();
+			expect(policyCalls(fetch)).toEqual([]);
 		}
 	);
 
@@ -134,7 +139,6 @@ describe('Pages Router build-time manifest', () => {
 		const route = createPagesConsentRoute({
 			backendURL: 'https://consent.example.com',
 			fetch,
-			reportSessions: false,
 			snapshot: MANIFEST_FIXTURE,
 		});
 		const manifestSink = await callRoute(route, {
@@ -157,7 +161,7 @@ describe('Pages Router build-time manifest', () => {
 			countryCode: 'DE',
 			regionCode: 'BE',
 		});
-		expect(fetch).not.toHaveBeenCalled();
+		expect(policyCalls(fetch)).toEqual([]);
 	});
 });
 
@@ -471,6 +475,7 @@ describe('@c15t/nextjs/pages: API bridge', () => {
 			);
 		const consentConfig = defineConsentConfig({
 			backendURL: 'https://consent.example.com/api/c15t',
+			mode: manifestMode(),
 			routePrefix: '/api/consent',
 		});
 		const route = createPagesConsentRoute({
@@ -515,7 +520,6 @@ describe('@c15t/nextjs/pages: API bridge', () => {
 		const options = {
 			backendURL: 'https://consent.example.com',
 			fetch: fetchSpy,
-			reportSessions: false,
 			snapshot: MANIFEST_FIXTURE,
 		};
 		const save = (route: PagesApiHandler) => {
@@ -559,7 +563,6 @@ describe('@c15t/nextjs/pages: API bridge', () => {
 	test('one catch-all API route serves manifest and init and 404s the rest', async () => {
 		const route = createPagesConsentRoute({
 			backendURL: 'https://consent.example.com',
-			reportSessions: false,
 			snapshot: MANIFEST_FIXTURE,
 		});
 		const call = async (segments: string[]) => {
@@ -619,7 +622,6 @@ describe('withConsentProps', () => {
 	test('adds the visitor state as a JSON-safe consent prop', async () => {
 		const result = await withConsentProps(undefined, {
 			backendURL: 'https://consent.example.com',
-			reportSessions: false,
 			snapshot: MANIFEST_FIXTURE,
 		})(context);
 
@@ -663,9 +665,7 @@ describe('withConsentProps', () => {
 	test('a first visit gets no c15t-sid cookie, and the state carries no subject', async () => {
 		const page = createPageContext({ cookie: 'theme=dark' });
 		page.responseHeaders.set('set-cookie', 'session=1; Path=/');
-		const result = await withConsentProps(undefined, {
-			reportSessions: false,
-		})(page.context);
+		const result = await withConsentProps(undefined, {})(page.context);
 
 		if (!('props' in result)) {
 			throw new Error('expected props');
@@ -681,7 +681,6 @@ describe('withConsentProps', () => {
 			cookie: 'my-consent=c.necessary:1,c.marketing:1,i.t:1',
 		});
 		const result = await withConsentProps(undefined, {
-			reportSessions: false,
 			storage: { storageKey: 'my-consent' },
 		})(page.context);
 

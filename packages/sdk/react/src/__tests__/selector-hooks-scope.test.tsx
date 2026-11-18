@@ -11,7 +11,8 @@ import {
 	useSaveConsents,
 	useSubscribeToConsentChanges,
 } from '~/hooks';
-import { offline } from '~/transports/offline';
+
+import { testing } from '../testing';
 
 const createWrapper = function createWrapper(
 	options: Partial<ConsentProviderOptions> = {}
@@ -20,7 +21,7 @@ const createWrapper = function createWrapper(
 		return (
 			<ConsentProvider
 				options={{
-					mode: offline({ acknowledgeNoRecords: true }),
+					mode: testing(),
 					persistence: false,
 					...options,
 				}}

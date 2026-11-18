@@ -20,8 +20,8 @@ import {
 } from '../client';
 import type { AstroConsentClient } from '../client';
 import { resolveOptions } from '../integration';
-import { offline as offlineMode } from '../mode';
 import { buildConfigScript } from '../server';
+import { testing as testingMode } from '../testing';
 import type { C15tAstroOptions, C15tIABOptions } from '../types';
 import { registerDialogAdapter } from '../ui/adapter';
 import type { ConsentDialogHandle } from '../ui/adapter';
@@ -36,7 +36,7 @@ registerIAB(pageIAB);
 
 const OPTIONS: C15tAstroOptions = {
 	consentCategories: ['necessary', 'measurement', 'marketing'],
-	mode: offlineMode({ acknowledgeNoRecords: true, policyRules: [testRule] }),
+	mode: testingMode({ policy: [testRule] }),
 };
 
 const INLINE_CONFIG = {
@@ -588,7 +588,7 @@ describe('opening without an inlined resolution', () => {
 		// the recommended pack instead.
 		const booted = startPending({
 			consentCategories: OPTIONS.consentCategories,
-			mode: offlineMode({ acknowledgeNoRecords: true, policyRules: [] }),
+			mode: testingMode({ policy: [] }),
 		});
 		await booted.openDialog();
 
@@ -612,9 +612,8 @@ describe('opening without an inlined resolution', () => {
 		renderBanner();
 		const booted = startPending({
 			consentCategories: OPTIONS.consentCategories,
-			mode: offlineMode({
-				acknowledgeNoRecords: true,
-				policyRules: [
+			mode: testingMode({
+				policy: [
 					{
 						id: 'none',
 						match: { fallback: true, isDefault: true },
@@ -646,9 +645,8 @@ describe('opening without an inlined resolution', () => {
 		renderBanner();
 		const booted = startPending({
 			consentCategories: OPTIONS.consentCategories,
-			mode: offlineMode({
-				acknowledgeNoRecords: true,
-				policyRules: [
+			mode: testingMode({
+				policy: [
 					{
 						id: 'none-with-preferences',
 						match: { fallback: true, isDefault: true },

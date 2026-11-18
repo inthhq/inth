@@ -36,9 +36,11 @@ import { ConsentDialog } from '~/components/panel';
 import { ConsentWidget } from '~/components/preferences';
 import { KernelContext } from '~/context';
 import { IABProvider, IABConsentBanner, IABConsentDialog } from '~/iab';
-import { ConsentBanner, ConsentProvider, custom, offline } from '~/index';
+import { ConsentBanner, ConsentProvider } from '~/index';
 import type { ConsentProviderOptions } from '~/index';
 
+import { testing } from '../testing';
+import { transportMode } from './fixtures/transport-mode';
 import { createPolicySession, probePolicyContract } from './policy-driver';
 import { policyFixture } from './policy-fixture';
 
@@ -222,7 +224,7 @@ const buildProviderOptions = (opts: MountOptions): ConsentProviderOptions => {
 	return {
 		...provided,
 		disableAnimation: true,
-		mode: offline({ acknowledgeNoRecords: true }),
+		mode: testing(),
 		persistence: opts.persistence ?? false,
 		prefetch: {
 			...prepared,
@@ -448,7 +450,7 @@ const driver: TestDriver = {
 		const lifecycle = lifecycleTransportFor(opts);
 		const options = buildProviderOptions(opts);
 		if (lifecycle.transport) {
-			options.mode = custom(lifecycle.transport);
+			options.mode = transportMode(lifecycle.transport);
 		}
 		let mountedKernel: ConsentKernel | null = null;
 		let resolveSettled: () => void = () => {};

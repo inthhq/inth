@@ -15,7 +15,8 @@ import { ConsentWidget } from '~/components/preferences';
 import { ConsentBanner } from '~/components/prompt';
 import { KernelContext } from '~/context';
 import { useHasConsentUI, useModel } from '~/hooks';
-import { offline } from '~/transports/offline';
+
+import { testing } from '../../testing';
 
 /**
  * A `none` rule grants everything in scope and owes nothing: no prompt, no
@@ -99,7 +100,7 @@ describe('consent surfaces under a none rule', () => {
 			<ComponentFixtureProvider
 				options={{
 					initialUI: 'dialog',
-					mode: offline({ acknowledgeNoRecords: true }),
+					mode: testing(),
 					persistence: false,
 					prefetch: noneRule(),
 				}}
@@ -134,7 +135,7 @@ describe('consent surfaces under a none rule', () => {
 		render(
 			<ComponentFixtureProvider
 				options={{
-					mode: offline({ acknowledgeNoRecords: true }),
+					mode: testing(),
 					persistence: false,
 					prefetch: noneRule(['preferences']),
 				}}

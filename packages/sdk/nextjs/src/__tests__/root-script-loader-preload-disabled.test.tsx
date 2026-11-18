@@ -6,7 +6,6 @@
  * Kept apart from `root-script-loader-preload.test.tsx`: the mocked module
  * evaluates once per file, so each file can show one load.
  */
-import { offline } from '@c15t/core/modes';
 import type * as ScriptLoaderModule from '@c15t/core/modules/script-loader';
 import type { Script } from '@c15t/core/modules/script-loader';
 import { createRoot } from 'react-dom/client';
@@ -14,10 +13,11 @@ import type { Root } from 'react-dom/client';
 import { afterEach, expect, test, vi } from 'vitest';
 
 import { ConsentRoot } from '../root';
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
-/** These tests are not about the backend; an explicit offline({ acknowledgeNoRecords: true }) needs none. */
-const OFFLINE_CONFIG = { mode: offline({ acknowledgeNoRecords: true }) };
+/** These tests are not about the backend; testing() needs none. */
+const OFFLINE_CONFIG = { mode: testing() };
 
 const loads = vi.hoisted(() => ({ evaluated: 0, loaded: 0 }));
 

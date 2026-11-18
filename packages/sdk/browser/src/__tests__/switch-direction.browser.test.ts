@@ -45,7 +45,6 @@ const openDialog = async function openDialog(
 	client = init({
 		// Offline mode renders a language only when it has copy for it.
 		i18n: { messages: { he: { consentManagerDialog: { title: 'פרטיות' } } } },
-		mode: 'offline',
 		overrides: { country: 'DE', language },
 		ui: { colorScheme: 'light', disableAnimation: true },
 	});

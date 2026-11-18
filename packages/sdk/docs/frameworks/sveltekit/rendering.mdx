@@ -78,8 +78,8 @@ import { c15tHandle, hosted } from 'c15t/svelte/kit';
 export const handle = c15tHandle({ mode: hosted() });
 ```
 
-`hosted()` reads the backend URL from `consentManifest`, or takes
-`hosted({ backendURL })`. The request to `/init` carries the resolved
+`hosted()` reads the backend URL from `consentManifest`, or from the hook's
+`backendURL` option. The request to `/init` carries the resolved
 location, language and GPC, the `user-agent` and, over `https` or to a
 loopback host, the consent cookie alone. Every render waits on the backend,
 up to 500 ms. `consentManifest` still downloads the manifest during the
@@ -232,9 +232,9 @@ own handles through `sequence(c15tHandle(), yourHandle)` from
 
 | Option | Default | What it does |
 | --- | --- | --- |
-| `mode` | `manifest()` | How `loadConsent` resolves the visitor: `manifest()`, `hosted()` or `local()` from `c15t/svelte/kit`. |
+| `mode` | `manifest()` | How `loadConsent` resolves the visitor: `manifest()`, `hosted()` or `testing()` from `c15t/svelte/kit`. |
 | `routePrefix` | none | Where [`createConsentRoute()`](#serve-the-consent-route) is mounted, such as `/api/c15t`. Without it, the browser asks the backend's `/init` when it resolves consent itself. |
-| `backendURL` | The URL `consentManifest` read from `PUBLIC_C15T_BACKEND_URL` or `PUBLIC_INTH_PROJECT_URL` | The backend. `hosted({ backendURL })` wins. |
+| `backendURL` | The URL `consentManifest` read from `PUBLIC_C15T_BACKEND_URL` or `PUBLIC_INTH_PROJECT_URL` | The backend. |
 | `snapshot` | The manifest `consentManifest` downloaded | A manifest of your own to resolve with. |
 | `cookieName` | `c15t` | The consent cookie. Match the provider's `storageConfig.storageKey`. |
 | `country`, `region`, `language` | from headers | Forces one input for every request. |
@@ -361,11 +361,9 @@ browser mode in `+layout.svelte`:
 <script lang="ts">
 	import { ConsentProvider, hosted } from 'c15t/svelte';
 	import { PUBLIC_C15T_BACKEND_URL } from '$env/static/public';
-
-	const mode = hosted({ backendURL: PUBLIC_C15T_BACKEND_URL });
 </script>
 
-<ConsentProvider {mode} {scripts}>
+<ConsentProvider backendURL={PUBLIC_C15T_BACKEND_URL} mode={hosted()} {scripts}>
 ```
 
 The browser resolves consent through the backend's `/init`.

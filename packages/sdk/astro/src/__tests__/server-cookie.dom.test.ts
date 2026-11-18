@@ -3,8 +3,8 @@ import { createPersistence } from '@c15t/core/modules/persistence';
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 
 import { resolveOptions } from '../integration';
-import { offline as offlineMode } from '../mode';
 import { resolveConsentContext } from '../server';
+import { testing as testingMode } from '../testing';
 import type { C15tAstroOptions } from '../types';
 import { testRule, testResolution } from './policy-fixture';
 
@@ -35,9 +35,8 @@ const resolve = async function resolve(
 	return await resolveConsentContext({
 		headers: new Headers(cookieHeader ? { cookie: cookieHeader } : {}),
 		options: resolveOptions({
-			mode: offlineMode({
-				acknowledgeNoRecords: true,
-				policyRules: [testRule],
+			mode: testingMode({
+				policy: [testRule],
 			}),
 			...options,
 		}),

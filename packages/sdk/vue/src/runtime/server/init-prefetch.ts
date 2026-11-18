@@ -34,7 +34,7 @@ import { buildPrefetchScript } from '@c15t/core';
 
 import type { RuntimeConsentConfig } from '../kernel';
 import { readNuxtMode } from '../nuxt-mode';
-import type { NuxtConsentModeConfig } from '../nuxt-mode';
+import type { NuxtResolvedModeConfig } from '../nuxt-mode';
 
 /** The `c15t` key of a Nitro route rule. */
 export interface InitPrefetchRouteRule {
@@ -48,7 +48,7 @@ export interface InitPrefetchInput {
 	 * The c15t config the browser starts with: the public runtime config,
 	 * with the app config merged over it.
 	 */
-	config: Partial<RuntimeConsentConfig> & NuxtConsentModeConfig;
+	config: Partial<RuntimeConsentConfig> & NuxtResolvedModeConfig;
 	/** Whether the HTML is a shell the server did not render (`ssr: false`). */
 	shell: boolean;
 	/** The route's `c15t` route rule, if any. */
@@ -91,7 +91,7 @@ export const buildInitPrefetchTag = function buildInitPrefetchTag(
 		return undefined;
 	}
 	// The URL the browser's hosted transport asks, so both match.
-	const backendURL = mode.backendURL ?? config.backendURL;
+	const { backendURL } = config;
 	if (!(backendURL && FETCHABLE_BACKEND_RE.test(backendURL))) {
 		return undefined;
 	}

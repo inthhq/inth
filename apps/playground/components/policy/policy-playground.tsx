@@ -20,7 +20,6 @@ import {
 	ConsentDialog,
 	ConsentDialogTriggerToolbar,
 	ConsentProvider,
-	offline,
 	useSnapshot,
 } from 'c15t/react';
 import { KernelContext, ProviderServicesContext } from 'c15t/react/context';
@@ -30,6 +29,7 @@ import {
 	IABConsentDialog,
 	IABProvider,
 } from 'c15t/react/iab';
+import { testing } from 'c15t/react/testing';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import * as React from 'react';
@@ -1291,7 +1291,7 @@ export const PolicyPlayground = () => {
 
 	const providerOptions = React.useMemo(
 		() => ({
-			mode: offline({ policyRules: [rule] }),
+			mode: testing({ policy: [rule] }),
 			overrides,
 			presentation,
 			storageConfig: STORAGE_CONFIG,
@@ -1543,7 +1543,7 @@ export const PolicyPlayground = () => {
 							</TabsContent>
 							<TabsContent value="resolution">
 								<p className="text-muted-foreground mb-2 text-xs leading-5">
-									What <code>offline({'{ policyRules: [rule] }'})</code> would
+									What <code>testing({'{ policy: [rule] }'})</code> would
 									resolve for the simulated visitor. A no-match or failure falls
 									back to safe opt-in at runtime.
 								</p>

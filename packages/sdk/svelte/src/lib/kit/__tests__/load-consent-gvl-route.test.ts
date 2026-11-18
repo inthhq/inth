@@ -51,7 +51,7 @@ describe('loadConsent', () => {
 			mode: manifest({ snapshot: IAB_MANIFEST }),
 			routePrefix: '/api/c15t',
 		})({ event, resolve: () => Promise.resolve(new Response()) });
-		const { consent } = await loadConsent(event, { reportSessions: false });
+		const { consent } = await loadConsent(event);
 		expect(consent.prefetch.initialIab?.gvlReference?.url).toMatch(
 			/^\/api\/c15t\/init\?c15t-gvl=42/u
 		);

@@ -4,8 +4,8 @@ import { renderHook } from 'vitest-browser-react';
 
 import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
 import type { ComponentFixtureOptions as ConsentProviderOptions } from '~/__tests__/component-fixture-provider';
-import { offline } from '~/transports/offline';
 
+import { testing } from '../../testing';
 import { useTranslations } from '../use-translations';
 
 const createWrapper = function createWrapper(
@@ -15,7 +15,7 @@ const createWrapper = function createWrapper(
 		return (
 			<ConsentProvider
 				options={{
-					mode: offline({ acknowledgeNoRecords: true }),
+					mode: testing(),
 					persistence: false,
 					...options,
 				}}

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { activateGatedScripts } from '../gated-scripts';
-import { createScriptTagConsentClient as createConsentClient } from '../script-tag-client';
+import { createTestingConsentClient as createConsentClient } from '../testing-global';
 
 const frames: HTMLIFrameElement[] = [];
 const scriptURLs: string[] = [];
@@ -61,7 +61,6 @@ describe('gated script execution in Chromium', () => {
 			"document.body.dataset.observedVendor = document.body.dataset.vendor ?? 'missing';"
 		);
 		const client = createConsentClient({
-			acknowledgeNoRecords: true,
 			ui: false,
 		});
 		activateGatedScripts(client.getSnapshot(), root);
@@ -82,7 +81,6 @@ describe('gated script execution in Chromium', () => {
 		expect(script.getAttribute('nonce')).toBe('');
 		expect(script.nonce).toBe(nonce);
 		const client = createConsentClient({
-			acknowledgeNoRecords: true,
 			ui: false,
 		});
 		activateGatedScripts(client.getSnapshot(), root);
@@ -96,7 +94,6 @@ describe("gated scripts under 'strict-dynamic'", () => {
 	const openStrictDynamic = async () => {
 		const root = await createFrame('/__c15t-test__/strict-dynamic');
 		const client = createConsentClient({
-			acknowledgeNoRecords: true,
 			ui: false,
 		});
 		return { client, root };

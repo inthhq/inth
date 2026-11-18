@@ -3,9 +3,14 @@
  * exports only.
  */
 import type { ExplicitChoice, KernelConfig, PolicyRule } from 'c15t';
-import { createOfflineTransport, custom, resolvePolicyRules } from 'c15t';
+import { resolvePolicyRules } from 'c15t';
 import { createConsentRuntime } from 'c15t/runtime';
 import type { ConsentRuntime } from 'c15t/runtime';
+import { createOfflineTransport } from 'c15t/transports';
+
+/** A transport factory that hands the provider `transport`. */
+const customMode = <Transport>(transport: Transport) =>
+	Object.assign(() => transport, { kind: 'custom' as const });
 
 const DAY_MS = 86_400_000;
 
@@ -62,7 +67,7 @@ export const createObservedRuntime = function createObservedRuntime(
 	}
 	return createConsentRuntime({
 		iframeBlocker: false,
-		mode: custom(
+		mode: customMode(
 			createOfflineTransport({
 				acknowledgeNoRecords: true,
 				policyRules: [OBSERVED_RULE],

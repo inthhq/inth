@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { mountDevTools } from '../devtools';
 import type { C15tGlobalBase } from '../global-base';
-import { createScriptTagConsentClient as createConsentClient } from '../script-tag-client';
+import { createTestingConsentClient as createConsentClient } from '../testing-global';
 import type {
 	ConsentClient,
 	ConsentClientOptions,
@@ -29,8 +29,7 @@ const ui: ConsentUIOptions = {
 };
 // No banner, so the trigger shows as soon as the policy resolves.
 const options: ConsentClientOptions = {
-	acknowledgeNoRecords: true,
-	policyRules: ['worldNone'],
+	policy: ['worldNone'],
 	ui,
 };
 
@@ -179,11 +178,11 @@ describe('trigger with DevTools', () => {
 describe('c15t.devtools.js', () => {
 	/** Load a script-tag entry as its own bundle, with its own modules. */
 	const loadTag = async function loadTag(
-		entry: 'cdn-local' | 'cdn-devtools'
+		entry: 'cdn-testing' | 'cdn-devtools'
 	): Promise<void> {
 		vi.resetModules();
-		await (entry === 'cdn-local'
-			? import('../entries/cdn-local')
+		await (entry === 'cdn-testing'
+			? import('../entries/cdn-testing')
 			: import('../entries/cdn-devtools'));
 	};
 
@@ -193,8 +192,8 @@ describe('c15t.devtools.js', () => {
 			testWindow.c15t = [['config', options]];
 			const [first, second] =
 				sequence === 'main tag first'
-					? (['cdn-local', 'cdn-devtools'] as const)
-					: (['cdn-devtools', 'cdn-local'] as const);
+					? (['cdn-testing', 'cdn-devtools'] as const)
+					: (['cdn-devtools', 'cdn-testing'] as const);
 			await loadTag(first);
 			await loadTag(second);
 			const api = testWindow.c15t as C15tGlobalBase;

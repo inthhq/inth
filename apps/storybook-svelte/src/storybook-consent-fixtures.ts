@@ -1,14 +1,13 @@
-import { offline } from '@c15t/svelte';
-
 import { mockGVL } from '../../../packages/sdk/react/src/components/iab/__tests__/fixtures/mock-consent-state';
 import type { ConsentManagerOptions } from '../../../packages/sdk/svelte/src/lib/types';
 import { enTranslations } from '../../../packages/sdk/translations/src/index';
 import {
-	storybookPolicy,
+	seedStorybookChoice,
 	storybookIABPolicy,
 	storybookIABPresentation,
+	storybookMode,
+	storybookPolicy,
 	storybookPresentation,
-	seedStorybookChoice,
 } from '../../storybook-consent-policy';
 
 type ConsentRecord = Record<string, boolean>;
@@ -44,7 +43,7 @@ export const seedTCString = function seedTCString(tcString: string | null) {
 };
 
 export const defaultConsentOptions: ConsentManagerOptions = {
-	mode: offline({ acknowledgeNoRecords: true, policyRules: [storybookPolicy] }),
+	mode: storybookMode([storybookPolicy]),
 	presentation: storybookPresentation,
 	translations: { language: 'en', translations: enTranslations },
 };
@@ -70,10 +69,7 @@ export const editableStoredConsent: ConsentRecord = {
 export const defaultIABOptions: ConsentManagerOptions = {
 	...defaultConsentOptions,
 	iab: { cmpId: 160, cmpVersion: 1, gvl: mockGVL },
-	mode: offline({
-		acknowledgeNoRecords: true,
-		policyRules: [storybookIABPolicy],
-	}),
+	mode: storybookMode([storybookIABPolicy]),
 	presentation: storybookIABPresentation,
 };
 

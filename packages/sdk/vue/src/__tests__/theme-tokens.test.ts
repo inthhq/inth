@@ -1,4 +1,3 @@
-import { hosted } from '@c15t/core';
 import { createConsentRuntime } from '@c15t/core/runtime';
 import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest';
 import { createApp, createSSRApp, defineComponent, h, toValue } from 'vue';
@@ -149,7 +148,7 @@ describe('the Vue plugin applies tokens', () => {
 
 	test('leaves styling to the host that owns a borrowed runtime', () => {
 		const runtime = createConsentRuntime({
-			mode: hosted({ backendURL: 'https://consent.example.test' }),
+			backendURL: 'https://consent.example.test',
 			pkg: '@c15t/vue-test',
 		});
 		const app = createApp(defineComponent({ setup: () => () => h('main') }));

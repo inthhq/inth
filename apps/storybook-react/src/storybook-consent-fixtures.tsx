@@ -3,18 +3,16 @@ import type { ReactNode } from 'react';
 
 import { mockGVL } from '../../../packages/sdk/react/src/components/iab/__tests__/fixtures/mock-consent-state';
 import { IABProvider } from '../../../packages/sdk/react/src/iab';
-import {
-	ConsentProvider,
-	offline,
-} from '../../../packages/sdk/react/src/index';
+import { ConsentProvider } from '../../../packages/sdk/react/src/index';
 import type { ConsentProviderOptions } from '../../../packages/sdk/react/src/index';
 import {
-	storybookPolicy,
-	storybookPolicyResolution,
+	seedStorybookChoice,
 	storybookIABPolicy,
 	storybookIABPresentation,
+	storybookMode,
+	storybookPolicy,
+	storybookPolicyResolution,
 	storybookPresentation,
-	seedStorybookChoice,
 } from '../../storybook-consent-policy';
 
 type ConsentRecord = Record<string, boolean>;
@@ -57,14 +55,14 @@ export const seedTCString = function seedTCString(tcString: string | null) {
 };
 
 export const defaultConsentOptions: ConsentProviderOptions = {
-	mode: offline({ acknowledgeNoRecords: true, policyRules: [storybookPolicy] }),
+	mode: storybookMode([storybookPolicy]),
 	presentation: storybookPresentation,
 };
 
 /**
  * The default policy, already resolved, for stories that keep the default
  * `mode`. Consent surfaces render only once a policy exists, so a story that
- * waits on the async `offline()` init paints without its link, trigger, and
+ * waits on the async `testing()` init paints without its link, trigger, and
  * widget for a tick, which a play function that tabs straight away notices.
  * Stories that bring their own `mode` (a notice rule, IAB) must not receive
  * it: it would override their rule with the default choice policy.
@@ -93,10 +91,8 @@ export const editableStoredConsent: ConsentRecord = {
 
 export const defaultIABOptions: ConsentProviderOptions = {
 	...defaultConsentOptions,
-	mode: offline({
-		acknowledgeNoRecords: true,
-		policyRules: [storybookIABPolicy],
-	}),
+	// The provider cannot see the IABProvider below it.
+	mode: storybookMode([storybookIABPolicy], { iab: true }),
 	presentation: storybookIABPresentation,
 };
 

@@ -1,16 +1,18 @@
+import { readHostedMode } from '@c15t/core/runtime/provider';
 /**
- * `manifest()` and `hosted()` from `c15t/react` default to what the build
- * integration downloaded, served as `@c15t/core/generated`. Without a build
- * integration that module exports `undefined`, so they need their source
- * passed in.
+ * `manifest()` from `c15t/react` defaults to what the build integration
+ * downloaded, served as `@c15t/core/generated`. Without a build
+ * integration that module exports `undefined`, so it needs its source
+ * passed in. A provider with only `backendURL` uses the hosted backend.
  */
 import { manifest as browserManifest } from '@c15t/core/transports/manifest-browser';
 import type { ConsentManifest } from '@c15t/schema/types';
 import { describe, expect, test } from 'vitest';
 
-import { hosted, manifest } from '../modes';
-import { hostedWithBuild } from '../transports/hosted';
+import { manifest } from '../modes';
+import { testing } from '../testing';
 import { withBuildDefaults } from '../transports/manifest';
+import { selectedMode } from '../transports/select-mode';
 
 const built: ConsentManifest = {
 	branding: 'c15t',
@@ -68,21 +70,25 @@ describe('manifest() from c15t/react', () => {
 	});
 });
 
-describe('hosted() from c15t/react', () => {
-	test('defaults to the backend URL the build read', () => {
-		expect(hostedWithBuild({}, 'https://built.example').backendURL).toBe(
-			'https://built.example'
-		);
-		expect(
-			hostedWithBuild({ backendURL: '/api/c15t' }, 'https://built.example')
-				.backendURL
-		).toBe('/api/c15t');
+describe('the mode a provider selects', () => {
+	test('is the hosted backend when only backendURL is set', () => {
+		const mode = selectedMode({ backendURL: '/api/c15t' });
+
+		expect(mode?.kind).toBe('hosted');
+		expect(mode && readHostedMode(mode)).toEqual({ backendURL: '/api/c15t' });
+		// Each render gets the same factory for the same URL.
+		expect(selectedMode({ backendURL: '/api/c15t' })).toBe(mode);
 	});
 
-	test('needs a backend URL when the build set none', () => {
-		expect(() => hosted()).toThrow(
-			'c15t: hosted() needs `backendURL`. Pass it, or add consentManifest() from c15t/build to your Vite config and set VITE_C15T_BACKEND_URL (or VITE_INTH_PROJECT_URL).'
+	test('is the testing transport over backendURL', () => {
+		const testingMode = testing();
+
+		expect(selectedMode({ backendURL: '/api/c15t', mode: testingMode })).toBe(
+			testingMode.transport
 		);
-		expect(hosted({ backendURL: '/api/c15t' }).kind).toBe('hosted');
+	});
+
+	test('is none without backendURL or mode', () => {
+		expect(selectedMode({})).toBeUndefined();
 	});
 });

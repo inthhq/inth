@@ -5,14 +5,13 @@ import {
 	ConsentDialog,
 	ConsentDialogLink,
 	ConsentProvider,
-	hosted,
 } from 'c15t/react';
 import type { ConsentProviderCallbacks } from 'c15t/react';
 import type { ReactNode } from 'react';
 
 import { scripts } from './scripts';
 
-const mode = hosted({ backendURL: 'https://your-project.inth.app' });
+const backendURL = 'https://your-project.inth.app';
 
 // `control` is the stock banner. `wall` blocks the page until the visitor
 // chooses.
@@ -64,9 +63,9 @@ export const Consent = ({
 }) => (
 	<ConsentProvider
 		options={{
+			backendURL,
 			callbacks,
 			experiment: arm === 'off' ? undefined : { ...bannerExperiment, arm },
-			mode,
 			scripts,
 		}}
 	>

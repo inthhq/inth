@@ -3,11 +3,11 @@ import type { Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
+import { offlineMode } from '../../src/__tests__/fixtures/transport-mode';
 import { testOptions } from '../../src/__tests__/test-local';
 import { ConsentBanner } from '../../src/lib/banner/consent-banner';
 import { ConsentManager } from '../../src/lib/core/consent-manager';
 import { warmDialog } from '../../src/lib/core/dialog-warming';
-import { local } from '../../src/lib/core/modes';
 import type { C15tProviderOptions } from '../../src/lib/core/options';
 import { provideC15t } from '../../src/lib/core/provide-c15t';
 import { iabTestOptions } from '../../testing/src/__tests__/harness-test-bed';
@@ -80,17 +80,14 @@ describe('the IAB dialog body loading', () => {
 			...testOptions(),
 			disableAnimation: true,
 			...iabTestOptions(),
-			mode: local({
-				acknowledgeNoRecords: true,
-				policyRules: [
-					{
-						id: 'opt-in',
-						match: { fallback: true, isDefault: true },
-						model: 'opt-in',
-						prompt: 'choice',
-					},
-				],
-			}),
+			mode: offlineMode([
+				{
+					id: 'opt-in',
+					match: { fallback: true, isDefault: true },
+					model: 'opt-in',
+					prompt: 'choice',
+				},
+			]),
 		}) as C15tProviderOptions;
 
 	test('loads nothing under a policy that is not IAB', async () => {

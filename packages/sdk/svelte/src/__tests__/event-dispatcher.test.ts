@@ -1,10 +1,10 @@
-import { offline } from '@c15t/core';
 import type { EventDispatcher } from '@c15t/core/events';
 import { render } from '@testing-library/svelte';
 import { expect, test, vi } from 'vitest';
 
 import type { ConsentContextValue } from '../lib/context.svelte';
 import Fixture from './fixtures/event-dispatcher-fixture.svelte';
+import { offlineMode } from './fixtures/transport-mode';
 import { TEST_OPT_IN_RULE } from './test-offline';
 
 test('getEventDispatcher follows the provider scripts, live consent and one pageview history', async () => {
@@ -22,10 +22,7 @@ test('getEventDispatcher follows the provider scripts, live consent and one page
 		dispatcherOptions: () => ({ globals, pageviews: ['posthog'] }),
 		options: {
 			iframeBlocker: false,
-			mode: offline({
-				acknowledgeNoRecords: true,
-				policyRules: [{ ...TEST_OPT_IN_RULE, categories: ['measurement'] }],
-			}),
+			mode: offlineMode([{ ...TEST_OPT_IN_RULE, categories: ['measurement'] }]),
 			scripts: [
 				{
 					callbackOnly: true,

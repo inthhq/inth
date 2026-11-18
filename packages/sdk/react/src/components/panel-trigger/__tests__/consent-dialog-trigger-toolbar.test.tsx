@@ -6,8 +6,8 @@ import { userEvent } from 'vitest/browser';
 
 import { ComponentFixtureProvider } from '~/__tests__/component-fixture-provider';
 import { ConsentDialog } from '~/components/panel';
-import { offline } from '~/transports/offline';
 
+import { testing } from '../../../testing';
 import { ConsentDialogTrigger, ConsentDialogTriggerToolbar } from '../index';
 
 /**
@@ -19,9 +19,7 @@ const renderWithConsent = function renderWithConsent(
 	{ noStyle = false }: { noStyle?: boolean } = {}
 ): void {
 	render(
-		<ComponentFixtureProvider
-			options={{ mode: offline({ acknowledgeNoRecords: true }), noStyle }}
-		>
+		<ComponentFixtureProvider options={{ mode: testing(), noStyle }}>
 			<ConsentDialog />
 			{children}
 		</ComponentFixtureProvider>

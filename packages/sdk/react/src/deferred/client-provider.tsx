@@ -22,11 +22,12 @@
  * @internal
  */
 
-import type { ConsentSnapshot } from '@c15t/core';
+import type { ConsentSnapshot, ProviderTransportFactory } from '@c15t/core';
 import {
 	hasGlobalPrivacyControlSignal,
 	hasStoredConsent,
 	pendingBootSnapshot,
+	startPrefetchedHostedInit,
 	startPrefetchedInit,
 } from '@c15t/core/runtime/deferred-boot';
 import type { DeferredSnapshotOptions } from '@c15t/core/runtime/deferred-snapshot';
@@ -174,10 +175,30 @@ const plan = function plan(
 	// Without an inline prefetch in the page, the provider sends that
 	// request itself, so the banner waits for `/init` alone, not for the
 	// engine's chunk and then `/init`.
-	const prefetched = startPrefetchedInit(options.mode, options.overrides, {
+	// Picked as the engine will, without building the hosted transport's
+	// factory: the first load needs only the backend URL.
+	const selected = options.mode;
+	// `hosted()` is data; a `testing()` value carries its transport.
+	let mode: ProviderTransportFactory | undefined;
+	if (typeof selected === 'function') {
+		mode = selected;
+	} else if (selected && 'transport' in selected) {
+		mode = selected.transport;
+	}
+	const request = {
 		journey: options.journey,
 		storageKey: storageKeyOf(options),
-	});
+	};
+	let prefetched: ReturnType<typeof startPrefetchedInit>;
+	if (mode) {
+		prefetched = startPrefetchedInit(mode, options.overrides, request);
+	} else if (options.backendURL !== undefined) {
+		prefetched = startPrefetchedHostedInit(
+			options.backendURL,
+			options.overrides,
+			request
+		);
+	}
 	// Hydrating what the provider rendered on the server, with no prefetch
 	// to read: the stand-in renders the same pending state, and the engine
 	// loads at once.

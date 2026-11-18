@@ -2,7 +2,7 @@
  * One page of the cross-tab storage test: a consent client with default
  * persistence, plus a log of what its subscribers saw.
  */
-import { createScriptTagConsentClient as createConsentClient } from '../../script-tag-client';
+import { createTestingConsentClient as createConsentClient } from '../../testing-global';
 import type { ConsentClient } from '../../types';
 
 /** What the test reads from each page. */
@@ -19,9 +19,7 @@ export interface StorageSyncPage {
 }
 
 const client = createConsentClient({
-	acknowledgeNoRecords: true,
 	consentCategories: ['necessary', 'measurement', 'marketing'],
-	mode: 'offline',
 	overrides: { country: 'DE' },
 	ui: false,
 });

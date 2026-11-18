@@ -14,7 +14,7 @@ import type {
 	ConsentPresentation,
 	InitResponse,
 } from '@c15t/core';
-import { custom, createConsentKernel, evaluateConsent } from '@c15t/core';
+import { createConsentKernel, evaluateConsent } from '@c15t/core';
 import { createNetworkBlocker } from '@c15t/core/modules/network-blocker';
 import {
 	createPersistence,
@@ -44,11 +44,16 @@ import { validateStoredConsentEnvelope } from '../../../core/src/modules/persist
 import { encodeStoredConsentEnvelopeJson } from '../../../core/src/modules/persistence/writer/encode';
 import { gpcFromHeaders } from '../../../core/src/transports/decision-inputs';
 import { gtag } from '../../../integrations/src/vendors/analytics/google-tag';
-import type { C15tCallbacks, C15tOptions } from '../lib/core/options';
+import type {
+	C15tCallbacks,
+	C15tOptions,
+	C15tProviderOptions,
+} from '../lib/core/options';
 import { bootClient, renderServer } from './conformance-app';
 import type { ClientApp, FixtureContent } from './conformance-app';
 import { POLICY_SURFACES } from './conformance-registry';
 import type { ConformanceEntry } from './conformance-registry';
+import { transportMode } from './fixtures/transport-mode';
 import { serializeConsentDom, isConsentElementVisible } from './ssr-dom';
 // oxlint-disable-next-line promise/avoid-new -- Browser effects must settle between scenario operations.
 const settle = () =>
@@ -392,7 +397,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 				disableAnimation: true,
 				// IAB is opt-in: without it an IAB policy throws.
 				iab: setup.policy.model === 'iab' ? {} : undefined,
-				mode: custom({
+				mode: transportMode({
 					init: () => {
 						requests.push({ kind: 'init', payload: null });
 						return failTransport
@@ -429,7 +434,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 	const boot = async (hydrate: boolean, options: C15tOptions) => {
 		root = await bootClient(
 			container as HTMLDivElement,
-			options,
+			options as C15tProviderOptions,
 			policyContent(setup.probeGates),
 			hydrate
 		);
@@ -448,7 +453,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 		if (hydrate) {
 			const app = tree(true);
 			const rendered = await renderServer(
-				{ ...app.options, callbacks: undefined },
+				{ ...app.options, callbacks: undefined } as C15tProviderOptions,
 				policyContent(setup.probeGates)
 			);
 			container.innerHTML = rendered.body;

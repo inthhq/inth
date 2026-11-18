@@ -3,11 +3,11 @@ import {
 	recipeRejects,
 } from '@c15t/conformance/play/docs-recipes';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { ConsentDialog, offline } from 'c15t/react';
+import { ConsentDialog } from 'c15t/react';
 import type { ConsentProviderOptions } from 'c15t/react';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 
-import { storybookPolicy } from '../../storybook-consent-policy';
+import { storybookMode, storybookPolicy } from '../../storybook-consent-policy';
 import { RecipePage } from './docs-recipe-page';
 import { CookieBanner } from './docs-recipes/compose-banner';
 import {
@@ -71,17 +71,14 @@ const customizeOpensDialog: Story['play'] = async () => {
 
 const noticeOptions: Partial<ConsentProviderOptions> = {
 	...editableConsentOptions,
-	mode: offline({
-		acknowledgeNoRecords: true,
-		policyRules: [
-			{
-				...storybookPolicy,
-				id: 'storybook-notice',
-				model: 'opt-out',
-				prompt: 'notice',
-			},
-		],
-	}),
+	mode: storybookMode([
+		{
+			...storybookPolicy,
+			id: 'storybook-notice',
+			model: 'opt-out',
+			prompt: 'notice',
+		},
+	]),
 	presentation: undefined,
 };
 

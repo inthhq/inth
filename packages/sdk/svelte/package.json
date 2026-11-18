@@ -113,6 +113,11 @@
 			"svelte": "./dist/dialog-panel.js",
 			"default": "./dist/dialog-panel.js"
 		},
+		"./testing": {
+			"types": "./dist/testing.d.ts",
+			"import": "./dist/testing.js",
+			"default": "./dist/testing.js"
+		},
 		"./kit": {
 			"types": "./dist/kit/index.d.ts",
 			"import": "./dist/kit/index.js",

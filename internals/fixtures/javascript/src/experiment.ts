@@ -4,7 +4,7 @@
  * until the visitor chooses. c15t picks the arm; `?arm=wall` sets it the
  * way a flag provider would.
  */
-import { hosted, init } from '@c15t/browser';
+import { init } from '@c15t/browser';
 import type {
 	ConsentExperiment,
 	OnChoiceRecordedPayload,
@@ -54,6 +54,8 @@ const logExperimentEvent = function logExperimentEvent(text: string): void {
 };
 
 const consent = init({
+	backendURL: 'https://your-project.inth.app',
+	...testBackend('backendURL'),
 	callbacks: {
 		onChoiceRecorded: (payload: OnChoiceRecordedPayload) => {
 			if (!payload.experiment) {
@@ -85,10 +87,6 @@ const consent = init({
 		},
 	},
 	experiment,
-	mode: hosted({
-		backendURL: 'https://your-project.inth.app',
-		...testBackend('backendURL'),
-	}),
 	scripts,
 });
 

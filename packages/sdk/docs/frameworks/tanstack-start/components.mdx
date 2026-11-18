@@ -49,9 +49,9 @@ The state carries the backend URL, the mode and the route prefix you passed
 to `createConsentStateHandler`, so `ConsentRoot` has no props for them. With
 `state={{}}`, it takes the backend URL from `consentManifest()` and uses
 `manifest()`. Without a backend URL from either, it throws, unless the mode is
-`local()`. `options.mode` replaces the state's mode: `manifest()`,
-`hosted()` or `local()` from `c15t/tanstack-start`, or a transport such as
-`custom(transport)`.
+`testing()`. `options.mode` replaces the state's mode: `manifest()`,
+`hosted()` or `testing()` from `c15t/tanstack-start`, or a transport such as
+a transport factory.
 
 `ConsentRoot` creates the runtime once, when it mounts, and ignores later
 changes to `state`. Keep it in the root route so client navigation never

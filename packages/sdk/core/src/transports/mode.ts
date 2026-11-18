@@ -1,7 +1,4 @@
-import type { PolicyRule } from '@c15t/schema/types';
-
 import type { AllConsentNames } from '../consent/consent-types';
-import type { HostedModeOptions as HostedModeDataOptions } from '../modes';
 import type { SSRInitialData } from '../options/ssr';
 import type {
 	KernelConfig,
@@ -16,8 +13,6 @@ import { createHostedModeFactory } from './hosted-factory';
 export interface ProviderTransportContext {
 	/** Categories configured on the provider. */
 	consentCategories?: AllConsentNames[];
-	/** v3 policy rules configured on the provider. */
-	policyRules?: PolicyRule[];
 	/** Whether the provider configured IAB TCF. */
 	iabEnabled?: boolean;
 	/**
@@ -52,16 +47,16 @@ export type ProviderTransportKind =
 	| 'hosted'
 	| 'manifest'
 	| 'offline'
+	// The deprecated `custom()` that `@inth/react-native` still uses.
 	| 'custom';
 
 /**
  * Creates a kernel transport from provider runtime context.
  *
- * Providers require one of these as their `mode` option. Build it with
- * `hosted()`, `local()`, `manifest()` or `custom()` rather than
- * by hand so the `kind` property stays accurate. `kind` lets adapters
- * report the selected transport through `window.c15t.mode` without
- * importing every transport implementation.
+ * A provider builds one from its options: the hosted transport for
+ * `backendURL`, or the one its `mode` carries (`manifest()`, `testing()`).
+ * `kind` lets adapters report the selected transport through
+ * `window.c15t.mode` without importing every transport implementation.
  *
  * @param context - Provider values needed to create the transport.
  * @returns A transport for the consent kernel.
@@ -72,7 +67,7 @@ export interface ProviderTransportFactory {
 }
 
 /** Options for {@link hosted}. */
-export interface HostedModeOptions extends HostedModeDataOptions {
+export interface HostedModeOptions {
 	/** Backend URL. Can be relative (`/api/c15t`) or absolute. */
 	backendURL: string;
 	/** Domain sent when consent is saved. */
@@ -116,8 +111,7 @@ export interface HostedModeOptions extends HostedModeDataOptions {
 
 /**
  * What `hosted()` returns: a transport factory that also carries its
- * options as enumerable data, so it satisfies `HostedMode` from
- * `@c15t/core/modes`.
+ * options as enumerable data.
  */
 export type HostedModeFactory = ProviderTransportFactory &
 	Readonly<HostedModeOptions> & {
@@ -126,13 +120,15 @@ export type HostedModeFactory = ProviderTransportFactory &
 	};
 
 /**
- * Selects the hosted transport for a consent provider.
+ * Builds the hosted transport factory a provider uses for its
+ * `backendURL`. Apps set `backendURL` on the provider; adapters and tests
+ * that need the hosted transport's other options call this.
  *
  * @param options - Hosted backend connection options.
  * @returns A hosted provider transport factory carrying its options.
  * @example
  * ```ts
- * import { hosted } from '@c15t/core';
+ * import { hosted } from '@c15t/core/transports';
  *
  * const mode = hosted({ backendURL: '/api/c15t' });
  *
@@ -149,5 +145,3 @@ export const hosted = function hosted(
 ): HostedModeFactory {
 	return createHostedModeFactory(options, createHostedTransport);
 };
-
-export { custom } from './custom';

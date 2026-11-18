@@ -11,13 +11,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { boot, registerRuntimeModules } from '../client';
 import type { AstroConsentClient } from '../client';
 import { resolveOptions } from '../integration';
-import { offline as offlineMode } from '../mode';
+import { testing as testingMode } from '../testing';
 import type { C15tAstroOptions } from '../types';
 import { testResolution, testRule } from './policy-fixture';
 
 const OPTIONS: C15tAstroOptions = {
 	consentCategories: ['necessary', 'measurement'],
-	mode: offlineMode({ acknowledgeNoRecords: true, policyRules: [testRule] }),
+	mode: testingMode({ policy: [testRule] }),
 	scripts: [
 		{
 			category: 'necessary',

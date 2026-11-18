@@ -1,4 +1,3 @@
-import { hosted } from '@c15t/core/modes';
 /**
  * Wiring tests for `resolveConsent` on top of `resolveRequestConsent` from
  * `@c15t/core/server`. The resolution rules themselves (forwarding, budget,
@@ -7,6 +6,7 @@ import { hosted } from '@c15t/core/modes';
  * request adapter's headers and cookies, the config's mode and route
  * prefix, and the development warning.
  */
+import { hosted, manifest } from '@c15t/core/modes';
 import { clearManifestCache } from '@c15t/core/server';
 import {
 	resolvePolicyRules,
@@ -19,6 +19,12 @@ import type { ConsentConfig } from '../config';
 import { resolveConsent } from '../server';
 import type { NextRequestContext } from '../server';
 import { MANIFEST_FIXTURE } from './manifest-fixture';
+
+/** The requests that fetch policy, leaving out the session reports. */
+const policyCalls = (spy: { mock: { calls: unknown[][] } }): string[] =>
+	spy.mock.calls
+		.map(([input]) => String(input))
+		.filter((url) => !url.endsWith('/sessions'));
 
 const INIT = {
 	branding: 'c15t',
@@ -65,7 +71,7 @@ const requestOf = (
 
 /** A config that asks the backend's `/init` for every render. */
 const hostedAt = (backendURL: string, config: ConsentConfig = {}) =>
-	defineConsentConfig({ ...config, backendURL, mode: hosted() });
+	defineConsentConfig({ mode: hosted(), ...config, backendURL });
 
 beforeEach(() => {
 	clearManifestCache();
@@ -82,13 +88,13 @@ describe('resolveConsent wiring', () => {
 		const state = await resolveConsent({
 			config: defineConsentConfig({
 				backendURL: 'https://consent.example.com',
+				mode: manifest(),
 				routePrefix: '/api/consent',
 			}),
 			fetch,
-			reportSessions: false,
 			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
 		});
-		expect(fetch.mock.calls.map(([input]) => String(input))).toEqual([
+		expect(policyCalls(fetch)).toEqual([
 			'https://consent.example.com/manifest',
 		]);
 		expect(fetch.mock.calls[0]?.[1]).toMatchObject({
@@ -114,10 +120,6 @@ describe('resolveConsent wiring', () => {
 
 		for (const options of [
 			{ config: hostedAt('https://consent.example.com', { journey: false }) },
-			{
-				config: hostedAt('https://consent.example.com'),
-				reportSessions: false,
-			},
 		]) {
 			const off = backend();
 			// oxlint-disable-next-line no-await-in-loop -- One render at a time keeps the calls apart.
@@ -139,14 +141,14 @@ describe('resolveConsent wiring', () => {
 		await resolveConsent({
 			config: defineConsentConfig({
 				backendURL: 'https://consent.example.com',
+				mode: manifest(),
 				proxy: true,
 				routePrefix: '/api/consent',
 			}),
 			fetch: manifestFetch,
-			reportSessions: false,
 			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
 		});
-		expect(manifestFetch.mock.calls.map(([input]) => String(input))).toEqual([
+		expect(policyCalls(manifestFetch)).toEqual([
 			'https://consent.example.com/manifest',
 		]);
 
@@ -230,6 +232,7 @@ describe('resolveConsent wiring', () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 		const config = defineConsentConfig({
 			backendURL: '/api/c15t',
+			mode: manifest(),
 			routePrefix: '/api/c15t',
 		});
 		const state = await resolveConsent({
@@ -247,10 +250,9 @@ describe('resolveConsent wiring', () => {
 			backendURL: 'https://consent.example.com',
 			config,
 			fetch,
-			reportSessions: false,
 			request: requestOf({ 'x-vercel-ip-country': 'DE' }),
 		});
-		expect(fetch.mock.calls.map(([input]) => String(input))).toEqual([
+		expect(policyCalls(fetch)).toEqual([
 			'https://consent.example.com/manifest',
 		]);
 		expect(resolved.initialPolicyResolution?.status).toBe('matched');

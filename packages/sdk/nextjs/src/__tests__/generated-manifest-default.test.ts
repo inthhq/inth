@@ -20,6 +20,7 @@ vi.mock('@c15t/nextjs/generated-manifest', async () => ({
 
 const config = defineConsentConfig({
 	backendURL: 'https://consent.example.com',
+	mode: manifest(),
 	routePrefix: '/api/c15t',
 });
 
@@ -53,7 +54,6 @@ describe('generated manifest default', () => {
 	test('resolveConsent reads the snapshot', async () => {
 		const state = await resolveConsent({
 			config,
-			reportSessions: false,
 			request: {
 				cookies: () => ({ toString: () => '' }),
 				headers: () =>
@@ -65,7 +65,10 @@ describe('generated manifest default', () => {
 		});
 
 		expect(JSON.stringify(state)).toContain('eu-opt-in');
-		expect(fetch).not.toHaveBeenCalled();
+		// Only the session report, detached from the render.
+		expect(
+			fetch.mock.calls.filter(([url]) => !String(url).endsWith('/sessions'))
+		).toEqual([]);
 	});
 
 	test("source: 'runtime' fetches the backend's manifest instead", async () => {

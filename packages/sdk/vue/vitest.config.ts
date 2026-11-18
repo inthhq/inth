@@ -78,6 +78,7 @@ export default mergeConfig(
 						__dirname,
 						'../core/src/runtime/client-mode.ts'
 					),
+					'@c15t/core/testing': resolve(__dirname, '../core/src/testing.ts'),
 				},
 				{
 					'@c15t/core/modules/clear-on-revocation': resolve(
@@ -200,6 +201,12 @@ export default mergeConfig(
 					'@c15t/core/runtime': resolve(
 						__dirname,
 						'../core/src/runtime/index.ts'
+					),
+				},
+				{
+					'@c15t/core/transports': resolve(
+						__dirname,
+						'../core/src/transports/index.ts'
 					),
 				},
 				{ '@c15t/core': resolve(__dirname, '../core/src/index.ts') },

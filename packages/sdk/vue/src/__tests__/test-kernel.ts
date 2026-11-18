@@ -4,7 +4,8 @@
  * transport through the config fields older tests used (`backendURL`,
  * `customFetch`, `domain`), and this wrapper turns them into `hosted()`.
  */
-import { hosted } from '@c15t/core';
+
+import { hosted } from '@c15t/core/transports';
 
 import { createVueConsentKernelContext as createContext } from '../runtime/kernel';
 import type {

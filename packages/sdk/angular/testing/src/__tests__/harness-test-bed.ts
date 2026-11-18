@@ -4,10 +4,10 @@ import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { provideC15t } from '@c15t/angular';
 import type { C15tProviderOptions } from '@c15t/angular';
-import { local } from '@c15t/core';
 import { expect, vi } from 'vitest';
 
 import { completeGVL } from '../../../../iab/src/__tests__/fixtures/gvl-sample';
+import { offlineMode } from '../../../src/__tests__/fixtures/transport-mode';
 import { testOptions } from '../../../src/__tests__/test-local';
 
 /** A booted harness test: the fixture and both loaders. */
@@ -65,17 +65,14 @@ export const iabTestOptions =
 	function iabTestOptions(): Partial<C15tProviderOptions> {
 		return {
 			iab: { cmpId: 28, gvl: completeGVL },
-			mode: local({
-				acknowledgeNoRecords: true,
-				policyRules: [
-					{
-						id: 'test-iab',
-						match: { fallback: true, isDefault: true },
-						model: 'iab',
-						prompt: 'choice',
-					},
-				],
-			}),
+			mode: offlineMode([
+				{
+					id: 'test-iab',
+					match: { fallback: true, isDefault: true },
+					model: 'iab',
+					prompt: 'choice',
+				},
+			]),
 		} as Partial<C15tProviderOptions>;
 	};
 

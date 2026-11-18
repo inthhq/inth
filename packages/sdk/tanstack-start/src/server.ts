@@ -199,11 +199,20 @@ export type ConsentState = Omit<KernelConfig, 'transport'> &
 /** Options for {@link resolveConsent}. */
 export interface ResolveConsentOptions extends ConsentRequestOptions {
 	/**
-	 * How the visitor's policy is resolved, as data from
-	 * `@c15t/tanstack-start`: `manifest()` (the default) resolves it here
-	 * from the policy snapshot, `manifest({ resolve: 'browser' })` leaves it
-	 * to the browser, `hosted()` asks the backend's `/init`, and `local()`
-	 * resolves bundled rules. The state carries the mode to `ConsentRoot`.
+	 * How the visitor's policy is resolved. The state carries it to
+	 * `ConsentRoot`.
+	 *
+	 * - Omitted, or `manifest()` from `@c15t/tanstack-start`: resolve here
+	 *   from the policy snapshot the build downloaded, or the backend's
+	 *   manifest. When it is unavailable, ask the backend's `/init` and log
+	 *   a warning. `manifest({ resolve: 'browser' })` leaves it to the
+	 *   browser.
+	 * - `hosted()`: ask the hosted backend's `/init` at `backendURL`.
+	 * - `testing()` from `@c15t/tanstack-start/testing`: the server
+	 *   resolves nothing and the browser resolves a policy with no
+	 *   network; its transport throws in production builds.
+	 *
+	 * @default manifest()
 	 */
 	mode?: ConsentMode;
 
@@ -300,17 +309,6 @@ export interface ResolveConsentOptions extends ConsentRequestOptions {
 	timeoutMs?: number | false;
 
 	/**
-	 * Report the init this render resolved from the manifest to the
-	 * backend's `POST /sessions`, server-to-server and detached from the
-	 * render, so the backend still counts visitors it never served `/init`
-	 * to. The report is handed to `onBackgroundRevalidate` like a manifest
-	 * refresh. Set `false` to send none.
-	 *
-	 * @default true
-	 */
-	reportSessions?: boolean;
-
-	/**
 	 * The consent journey scope this render reports. Pass `ConsentRoot` the
 	 * same `journey`.
 	 */
@@ -370,26 +368,25 @@ const serverModeOptions = function serverModeOptions(
 	backendURL: string | undefined
 ): Pick<
 	ResolveRequestConsentOptions,
-	'backendURL' | 'initHeaders' | 'manifest' | 'manifestURL' | 'mode' | 'offline'
+	'backendURL' | 'manifest' | 'manifestURL' | 'mode'
 > {
-	const { mode } = options;
-	if (mode?.type === 'offline') {
+	const { mode: selected } = options;
+	if (selected?.type === 'testing') {
+		// The browser resolves it, with the transport that refuses to run in
+		// production.
+		return {};
+	}
+	// A snapshot passed in is a manifest to resolve from, as in Next.js.
+	if (selected?.type === 'hosted' && options.snapshot === undefined) {
 		return {
 			backendURL,
-			mode: 'offline',
-			offline: { policyRules: mode.policyRules },
+			mode: backendURL ? 'hosted' : undefined,
 		};
 	}
-	if (mode?.type === 'hosted') {
-		return {
-			backendURL: mode.backendURL ?? backendURL,
-			initHeaders: mode.headers,
-			mode: 'hosted',
-		};
-	}
+	const mode = selected?.type === 'manifest' ? selected : undefined;
 	if (mode?.resolve === 'browser') {
 		// The browser resolves the visitor; the render reads cookies and
-		// headers only. Without a mode, a backend URL would mean hosted.
+		// headers only.
 		return {};
 	}
 	let snapshot = mode?.snapshot;
@@ -427,12 +424,6 @@ const clientConfigFor = function clientConfigFor(
 	const { mode } = options;
 	if (mode?.type === 'manifest' && mode.resolve !== 'browser') {
 		const { snapshot: _snapshot, ...data } = mode;
-		config.mode = data;
-	} else if (mode?.type === 'hosted' && options.proxy) {
-		// The browser's init and saves go through the route, which
-		// `clientMode()` uses only when the mode names no URL of its own.
-		// The server keeps the hosted backend URL.
-		const { backendURL: _backendURL, ...data } = mode;
 		config.mode = data;
 	} else if (mode !== undefined) {
 		config.mode = mode;
@@ -483,7 +474,6 @@ const resolveConsentState = async function resolveConsentState(
 		// on this origin, are fetched. Without a prefix, the conventional
 		// mount is guarded.
 		ownRoutes: [routePrefix ?? DEFAULT_CONSENT_ROUTE_PREFIX],
-		reportSessions: options.reportSessions,
 		request: {
 			headers: request.headers,
 			// What `consentRequestMiddleware` normalized for this request, so

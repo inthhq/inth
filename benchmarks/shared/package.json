@@ -4,6 +4,7 @@
 	"type": "module",
 	"exports": {
 		".": "./src/index.ts",
+		"./bench-policy": "./src/bench-policy.ts",
 		"./browser": "./src/browser.ts",
 		"./budgets": "./src/budgets.ts",
 		"./css-layer-runtime": "./src/css-layer-runtime.tsx",

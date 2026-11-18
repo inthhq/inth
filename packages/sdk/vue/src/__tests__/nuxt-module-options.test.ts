@@ -165,7 +165,13 @@ const setUpModule = async function setUpModule(
 	warn.mockClear();
 	vi.stubGlobal('fetch', fetch);
 	try {
-		const nuxt = createNuxt(c15t, ssr, lifecycle);
+		// Most of these tests describe manifest(); a config with no mode uses
+		// the hosted backend, which `no mode uses the hosted backend` covers.
+		const options =
+			'mode' in c15t || 'testing' in c15t
+				? c15t
+				: { ...c15t, mode: { type: 'manifest' } };
+		const nuxt = createNuxt(options, ssr, lifecycle);
 		await runWithNuxtContext(nuxt, () => module({}, nuxt));
 		return nuxt;
 	} finally {
@@ -236,16 +242,19 @@ describe('the build snapshot in manifest() mode', () => {
 			error: 'invalid consent manifest',
 			response: () => Response.json({ error: 'not a manifest' }),
 		},
-	])('stops the build on $error', async ({ response, error }) => {
-		await expect(
-			setUpModule(
-				{ backendURL: 'https://consent.example.com' },
-				vi
-					.fn<typeof globalThis.fetch>()
-					.mockImplementation(() => Promise.resolve(response()))
-			)
-		).rejects.toThrow(error);
-	});
+	])(
+		"with onBuildError: 'fail', stops the build on $error",
+		async ({ response, error }) => {
+			await expect(
+				setUpModule(
+					{ backendURL: 'https://consent.example.com', onBuildError: 'fail' },
+					vi
+						.fn<typeof globalThis.fetch>()
+						.mockImplementation(() => Promise.resolve(response()))
+				)
+			).rejects.toThrow(error);
+		}
+	);
 
 	test('nuxt dev warns and reads the manifest at runtime when the fetch fails', async () => {
 		const nuxt = await setUpModule(
@@ -260,9 +269,23 @@ describe('the build snapshot in manifest() mode', () => {
 		);
 	});
 
-	test('nuxt build stops when the fetch fails', async () => {
+	test('nuxt build warns and reads the manifest at runtime when the fetch fails', async () => {
+		const nuxt = await setUpModule(
+			{ backendURL: 'https://consent.example.com' },
+			unreachable()
+		);
+		expect(await importManifestSnapshot(nuxt)).toBeUndefined();
+		expect(warn).toHaveBeenCalledWith(
+			expect.stringContaining('during the build (getaddrinfo ENOTFOUND)')
+		);
+	});
+
+	test("with onBuildError: 'fail', nuxt build stops when the fetch fails", async () => {
 		await expect(
-			setUpModule({ backendURL: 'https://consent.example.com' }, unreachable())
+			setUpModule(
+				{ backendURL: 'https://consent.example.com', onBuildError: 'fail' },
+				unreachable()
+			)
 		).rejects.toThrow(
 			"@c15t/vue: could not fetch the consent manifest from https://consent.example.com/manifest during the build (getaddrinfo ENOTFOUND). Set `C15T_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to deploy with runtime fetching."
 		);
@@ -445,8 +468,11 @@ describe('the build snapshot in manifest() mode', () => {
 			{ backendURL: 'https://consent.example.com', mode: { type: 'hosted' } },
 		],
 		[
-			'offline()',
-			{ backendURL: 'https://consent.example.com', mode: { type: 'offline' } },
+			'testing()',
+			{
+				backendURL: 'https://consent.example.com',
+				mode: { type: 'testing' },
+			},
 		],
 		[
 			"source: 'runtime'",
@@ -516,6 +542,25 @@ describe('mode and routePrefix', () => {
 			.map(({ route }) => route)
 			.filter((route) => route.endsWith('/**'));
 
+	test('hosted() uses the hosted backend, with no consent route', async () => {
+		const nuxt = await setUpModule({
+			backendURL: 'https://consent.example.com',
+			mode: { type: 'hosted' },
+		});
+		expect(handlerRoutes(nuxt)).toEqual([]);
+		expect(
+			(nuxt.options.runtimeConfig.public.c15t as { mode: unknown }).mode
+		).toEqual({ type: 'hosted' });
+	});
+
+	test('no mode means manifest(), with the consent route', async () => {
+		const nuxt = await setUpModule({ backendURL: '/api/self-host' });
+		expect(handlerRoutes(nuxt)).toEqual(['/api/c15t/**']);
+		expect(
+			(nuxt.options.runtimeConfig.public.c15t as { mode: unknown }).mode
+		).toEqual({ type: 'manifest' });
+	});
+
 	test('manifest() adds one catch-all consent route', async () => {
 		const nuxt = await setUpModule({ backendURL: '/api/self-host' });
 		expect(handlerRoutes(nuxt)).toEqual(['/api/c15t/**']);
@@ -544,7 +589,10 @@ describe('mode and routePrefix', () => {
 
 	test('publishes the checked routePrefix over one already in runtimeConfig', async () => {
 		warn.mockClear();
-		const nuxt = createNuxt({ backendURL: '/api/self-host' });
+		const nuxt = createNuxt({
+			backendURL: '/api/self-host',
+			mode: { type: 'manifest' },
+		});
 		nuxt.options.runtimeConfig.public.c15t = { routePrefix: '/' };
 		await runWithNuxtContext(nuxt, () => module({}, nuxt));
 		// The route and the browser read the same prefix.
@@ -620,7 +668,7 @@ describe('mode and routePrefix', () => {
 		const transport = Object.assign(() => ({}), { kind: 'hosted' });
 		await expect(
 			setUpModule({ backendURL: '/api/self-host', mode: transport })
-		).rejects.toThrow("Import `manifest`, `hosted` or `local` from 'c15t/vue'");
+		).rejects.toThrow("Import `manifest` or `hosted` from 'c15t/vue'");
 	});
 
 	test('nuxt generate warns that the server cannot resolve the policy', async () => {

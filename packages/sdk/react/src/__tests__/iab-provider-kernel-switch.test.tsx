@@ -19,7 +19,7 @@ import { IABContext } from '../context/iab-context-value';
 import type { IABContextValue } from '../context/iab-context-value';
 import { IABProvider, useIAB } from '../iab-context';
 import type { ReactIABState } from '../iab-context';
-import { offline } from '../transports/offline';
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 const iab = vi.hoisted(() => ({
@@ -63,7 +63,7 @@ const runtimes: ConsentRuntime[] = [];
 
 const createKernel = function createKernel(): ConsentKernel {
 	const runtime = createConsentRuntime({
-		mode: offline({ acknowledgeNoRecords: true }),
+		mode: testing(),
 		persistence: false,
 		prefetch: {
 			...policyFixture({}, { model: 'iab' }),

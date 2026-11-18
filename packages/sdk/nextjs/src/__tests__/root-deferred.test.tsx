@@ -15,7 +15,7 @@ import {
 	serverScriptStart,
 	storedChoiceCheckScript,
 } from '@c15t/core/runtime/script-server-start';
-import { custom, useScriptLoader } from '@c15t/react';
+import { useScriptLoader } from '@c15t/react';
 import { ServerBootData } from '@c15t/react/deferred/engine';
 import { useSaveConsents, useSnapshot } from '@c15t/react/hooks';
 import { ConsentProvider } from '@c15t/react/provider';
@@ -30,9 +30,10 @@ import { encodeStoredConsentEnvelopeJson } from '../../../core/src/modules/persi
 import { ConsentRoot } from '../root';
 import type { ConsentRootProps } from '../root';
 import type { ConsentState } from '../types';
+import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 
-const mode = custom({
+const mode = transportMode({
 	init: () => Promise.resolve({}),
 	save: () => Promise.resolve({ ok: true as const }),
 });

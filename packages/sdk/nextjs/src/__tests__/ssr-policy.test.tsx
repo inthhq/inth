@@ -6,7 +6,6 @@ import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogTrigger,
-	custom,
 	useSnapshot,
 } from '@c15t/react';
 import { writePolicyResolutionWire } from '@c15t/schema/types';
@@ -19,6 +18,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { encodeStoredConsentEnvelopeJson } from '../../../core/src/modules/persistence/writer/encode';
 import { ConsentRoot } from '../root';
 import { resolveConsent } from '../server';
+import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 
 const required = <Value,>(value: Value): NonNullable<Value> => {
@@ -90,7 +90,7 @@ const hydrate = async (config: KernelConfig) => {
 		<ConsentRoot
 			state={JSON.parse(JSON.stringify(config))}
 			persistence={{ storageConfig: { storageKey } }}
-			options={{ disableAnimation: true, mode: custom({ init }) }}
+			options={{ disableAnimation: true, mode: transportMode({ init }) }}
 		>
 			<ConsentBanner />
 			<ConsentDialog />
@@ -342,7 +342,7 @@ describe('Next.js request policy and RSC hydration', () => {
 			root.render(
 				<ConsentRoot
 					state={{}}
-					config={{ backendURL: '/api/next-prefetch-test' }}
+					config={{ backendURL: '/api/next-prefetch-test', mode: hosted() }}
 					persistence={false}
 				>
 					<Probe />

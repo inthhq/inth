@@ -14,7 +14,7 @@ depends on the `mode` you pass to `provideC15t()`:
 | --- | --- | --- |
 | `hosted()` | The backend's `/init` response, in the language the browser or server asked for, with your `i18n` messages for that language on top | Every language the backend bundles: ar, bg, bn, cs, cy, da, de, el, en, es, et, fi, fr, ga, gu, he, hi, hr, ht, hu, id, is, it, ja, kn, ko, lb, lt, lv, ml, mr, ms, mt, nb, nl, nn, pa, pl, pt, rm, ro, ru, sk, sl, sv, ta, te, th, tr, ur, vi, yi and zh |
 | `manifest()` | The manifest's translations over the base copy for the visitor's language, with your `i18n` messages on top | English base copy is bundled; another language's base copy loads the first time a visitor needs it |
-| `local()` | The `i18n` option, merged over bundled English | English, plus any language you supply in full |
+| `testing()` | The `i18n` option, merged over bundled English | English, plus any language you supply in full |
 
 The browser bundle carries English only. Other languages arrive from the
 backend, or from messages you pass.
@@ -65,7 +65,7 @@ English; for other languages, import `@c15t/translations/all` so c15t can
 recognize its stock wording. A self-hosted backend takes `customTranslations`
 and `i18n` in its [configuration](/docs/self-host/api/configuration).
 
-In `local()` mode, `i18n` is the only source of copy, and it applies from the
+In `testing()` mode, `i18n` is the only source of copy, and it applies from the
 first render.
 
 ## Common message keys

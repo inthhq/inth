@@ -1,7 +1,7 @@
 import type { ConsentState } from '@c15t/core';
 import { expect, test, vi } from 'vitest';
 
-import { createScriptTagConsentClient as createConsentClient } from '../script-tag-client';
+import { createTestingConsentClient as createConsentClient } from '../testing-global';
 
 test('browser client delegates preferences and loads scripts only for external grants', async () => {
 	let permissions: Partial<ConsentState> | null = null;
@@ -27,7 +27,6 @@ test('browser client delegates preferences and loads scripts only for external g
 	};
 
 	const client = createConsentClient({
-		acknowledgeNoRecords: true,
 		consentSource: source,
 		iframeBlocker: false,
 		scripts: [script],

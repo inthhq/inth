@@ -5,7 +5,6 @@ import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentRoot,
-	custom,
 	defineConsentConfig,
 	hosted,
 } from '@c15t/nextjs';
@@ -22,6 +21,10 @@ import {
 import { CompatProbe, getCompatCounters } from './probe';
 import { createStaticTransport } from './static-transport';
 import type { CompatManifest } from './static-transport';
+
+/** A transport factory that hands the provider `transport`. */
+const customMode = <Transport,>(transport: Transport) =>
+	Object.assign(() => transport, { kind: 'custom' as const });
 
 export interface ConsentShellProps {
 	children?: ReactNode;
@@ -63,7 +66,7 @@ const createMode = function createMode({
 			return undefined;
 		}
 		case 'manifest': {
-			return custom(
+			return customMode(
 				createManifestTransport({
 					backendURL,
 					manifestURL: COMPAT_MANIFEST_URL,
@@ -74,7 +77,7 @@ const createMode = function createMode({
 			if (!manifest) {
 				throw new Error('ConsentShell: transport="static" needs a manifest');
 			}
-			return custom(createStaticTransport({ backendURL, manifest }));
+			return customMode(createStaticTransport({ backendURL, manifest }));
 		}
 		default: {
 			return undefined;

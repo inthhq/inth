@@ -21,7 +21,6 @@ const mountTrigger = async function mountTrigger(
 	disableAnimation: boolean
 ): Promise<HTMLElement> {
 	client = init({
-		mode: 'offline',
 		overrides: { country: 'DE' },
 		ui: {
 			banner: false,

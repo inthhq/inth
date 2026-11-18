@@ -70,6 +70,7 @@ import type {
 	ManifestCache,
 	ManifestFetch,
 } from '../libs/manifest-cache-runtime';
+import { warnManifestFallback } from '../libs/manifest-fallback';
 import { resolveSessionReportBackendURL } from '../libs/session-report';
 import { readStoredRecordsFromCookieHeader } from '../modules/persistence/hydrate';
 import { resolveStorageKeys } from '../modules/persistence/record-storage';
@@ -308,15 +309,6 @@ export interface ResolveRequestConsentOptions {
 	 */
 	waitUntil?: (task: Promise<void>) => void;
 	/**
-	 * Manifest mode: report the resolved init to the backend's
-	 * `POST /sessions`, detached from the render. Needs an absolute
-	 * {@link backendURL}. Hosted mode never reports: the backend's own
-	 * `/init` already counted the visitor.
-	 *
-	 * @default true
-	 */
-	reportSessions?: boolean;
-	/**
 	 * The provider's `journey`. A render reports `'page'` either way; `false`
 	 * starts none, and the state's `journey` is then `null` so the browser
 	 * sends none either.
@@ -542,7 +534,7 @@ const startServerJourney = function startServerJourney(
 	const unreported =
 		mode === 'manifest' &&
 		!resolveSessionReportBackendURL({ backendURL: options.backendURL });
-	if (!enabled || options.reportSessions === false || unreported) {
+	if (!enabled || unreported) {
 		return null;
 	}
 	const { domain, speculative } = read();
@@ -853,6 +845,10 @@ export const resolveRequestConsent = async function resolveRequestConsent(
 	};
 
 	/** The manifest through the process cache, and what was sent for it. */
+	// The manifest URL the last read failed on: only that failure falls
+	// back to `/init`, not a missing or misconfigured source.
+	let manifestSource: string | undefined;
+	let unavailableManifest: string | undefined;
 	const loadManifest = async function loadManifest(): Promise<{
 		manifest: ConsentManifest;
 		credentials: Record<string, string> | undefined;
@@ -873,6 +869,7 @@ export const resolveRequestConsent = async function resolveRequestConsent(
 		}
 		const source = resolveTarget(sourceURL);
 		const credentials = manifestCredentials(source);
+		manifestSource = source.url;
 		try {
 			const { manifest } = await fetchCachedManifest({
 				cache: options.cache,
@@ -887,6 +884,7 @@ export const resolveRequestConsent = async function resolveRequestConsent(
 			});
 			return { credentials, manifest };
 		} catch (error) {
+			unavailableManifest = manifestSource;
 			throw new RequestConsentError(
 				`${options.adapter}: the manifest at ${source.url} could not be read.`,
 				source.url,
@@ -939,22 +937,19 @@ export const resolveRequestConsent = async function resolveRequestConsent(
 				},
 				loadGvl: loadGvlFor(manifest),
 				manifest,
-				report:
-					options.reportSessions === false
-						? undefined
-						: {
-								abandoned: () => abandoned,
-								adapter: options.adapter,
-								// As configured, not request-resolved: a relative backend
-								// is this app's proxy, which means no report.
-								backendURL: options.backendURL,
-								experiment: arm,
-								fetch: options.fetch,
-								headers: readVisitorHeaders(),
-								journey: journey ?? undefined,
-								source: 'render',
-								waitUntil: options.waitUntil,
-							},
+				report: {
+					abandoned: () => abandoned,
+					adapter: options.adapter,
+					// As configured, not request-resolved: a relative backend
+					// is this app's proxy, which means no report.
+					backendURL: options.backendURL,
+					experiment: arm,
+					fetch: options.fetch,
+					headers: readVisitorHeaders(),
+					journey: journey ?? undefined,
+					source: 'render',
+					waitUntil: options.waitUntil,
+				},
 			});
 			// The list stays inline when the browser could not fetch it the same
 			// way: a caller's own fetch, or a manifest read with credentials.
@@ -1119,10 +1114,35 @@ export const resolveRequestConsent = async function resolveRequestConsent(
 			return mergeInitResponseIntoKernelConfig(base, response ?? undefined);
 		};
 
+	/**
+	 * Manifest mode, falling back to the backend's `/init` with a warning
+	 * when the manifest could not be read and time is left. A missing or
+	 * misconfigured source stays an error.
+	 */
+	const resolveFromManifestOrInit =
+		async function resolveFromManifestOrInit(): Promise<RequestConsentState> {
+			try {
+				return await resolveFromManifest();
+			} catch (error) {
+				const { cause } = error as { cause?: unknown };
+				if (
+					unavailableManifest === undefined ||
+					!(options.initURL || options.backendURL) ||
+					remaining() === 0 ||
+					(cause instanceof ManifestUnavailableError &&
+						cause.reason === 'timeout')
+				) {
+					throw error;
+				}
+				warnManifestFallback(unavailableManifest, cause ?? error);
+				return await resolveFromHosted();
+			}
+		};
+
 	const run = (): Promise<RequestConsentState> => {
 		switch (mode) {
 			case 'manifest':
-				return resolveFromManifest();
+				return resolveFromManifestOrInit();
 			case 'offline':
 				return resolveOffline();
 			default:

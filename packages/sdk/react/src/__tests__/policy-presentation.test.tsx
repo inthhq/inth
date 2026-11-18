@@ -2,7 +2,6 @@
 // maps carry no CSS of their own.
 import '@c15t/ui/styles.css';
 import type { ConsentKernel, KernelConfig } from '@c15t/core';
-import { custom } from '@c15t/core';
 import {
 	normalizePolicyRule,
 	createPolicyRuleFingerprints,
@@ -19,6 +18,7 @@ import { KernelContext } from '../context';
 import { ConsentDraftProvider, useConsentDraft } from '../draft';
 import { ConsentProvider } from '../provider';
 import { consentMarkup } from './consent-markup';
+import { transportMode } from './fixtures/transport-mode';
 
 const now = Date.now();
 const resolution = (input: Partial<PolicyRule> = {}): PolicyResolution => {
@@ -91,7 +91,7 @@ describe('policy presentation reference behavior', () => {
 			<ConsentProvider
 				options={{
 					callbacks: { onChoiceRecorded: choice },
-					mode: custom({ init, save }),
+					mode: transportMode({ init, save }),
 					persistence: false,
 					prefetch: {
 						initialPolicyResolution: resolution({
@@ -157,7 +157,7 @@ describe('policy presentation reference behavior', () => {
 			<ConsentProvider
 				options={{
 					callbacks: { onChoiceRecorded: choice },
-					mode: custom({}),
+					mode: transportMode({}),
 					persistence: false,
 					prefetch: initial,
 				}}
@@ -193,7 +193,7 @@ describe('policy presentation reference behavior', () => {
 			<ConsentProvider
 				options={{
 					callbacks: { onChoiceRecorded: choice },
-					mode: custom({
+					mode: transportMode({
 						init: () => Promise.resolve({ policyResolution: policy }),
 					}),
 					persistence: false,
@@ -220,7 +220,7 @@ describe('policy presentation reference behavior', () => {
 		const screen = await render(
 			<ConsentProvider
 				options={{
-					mode: custom({}),
+					mode: transportMode({}),
 					persistence: false,
 					prefetch: {
 						initialPolicyResolution: resolution({
@@ -276,7 +276,7 @@ it('hydrates prepared server HTML without a prompt flash, callback, request or r
 		<ConsentProvider
 			options={{
 				callbacks: { onChoiceRecorded, onPermissionsChanged },
-				mode: custom({ init }),
+				mode: transportMode({ init }),
 				prefetch: { initialPolicyResolution, initialRecords, now: clock },
 			}}
 		>
@@ -311,7 +311,7 @@ it('diagnoses theme overrides that give equivalent actions unequal prominence', 
 	const screen = await render(
 		<ConsentProvider
 			options={{
-				mode: custom({}),
+				mode: transportMode({}),
 				persistence: false,
 				prefetch: { initialPolicyResolution: resolution() },
 				theme: {
@@ -351,7 +351,7 @@ it('starts real expiry timers for prepared records without replaying choice or w
 		<ConsentProvider
 			options={{
 				callbacks: { onChoiceRecorded, onPermissionsChanged },
-				mode: custom({}),
+				mode: transportMode({}),
 				persistence: false,
 				prefetch: {
 					initialPolicyResolution: policy,
@@ -397,7 +397,7 @@ it.each([false, true])(
 			<ConsentProvider
 				options={{
 					disableAnimation: true,
-					mode: custom({}),
+					mode: transportMode({}),
 					persistence: false,
 					prefetch: { initialPolicyResolution: resolution(), now },
 					presentation: { preferences: { blocking } },
@@ -439,7 +439,7 @@ it('custom dialog content scrolls inside the capped card', async () => {
 		<ConsentProvider
 			options={{
 				disableAnimation: true,
-				mode: custom({}),
+				mode: transportMode({}),
 				persistence: false,
 				prefetch: { initialPolicyResolution: resolution(), now },
 			}}
@@ -484,7 +484,7 @@ it.each([false, true])(
 			<ConsentProvider
 				options={{
 					disableAnimation: true,
-					mode: custom({}),
+					mode: transportMode({}),
 					persistence: false,
 					prefetch: { initialPolicyResolution: resolution(), now },
 					presentation: { preferences: { blocking } },

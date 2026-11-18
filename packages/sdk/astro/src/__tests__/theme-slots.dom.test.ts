@@ -5,8 +5,8 @@ import { iabPromptClassNames, promptClassNames } from '../banner/class-names';
 import { buildIABPrompt } from '../browser/render-iab-prompt';
 import { buildPrompt } from '../browser/render-prompt';
 import { resolveOptions } from '../integration';
-import { offline as offlineMode } from '../mode';
 import { resolveConsentContext } from '../server';
+import { testing as testingMode } from '../testing';
 import { testRule } from './policy-fixture';
 
 /**
@@ -19,9 +19,8 @@ describe('browser-rendered banner and theme.slots', () => {
 		const locals = await resolveConsentContext({
 			headers: new Headers(),
 			options: resolveOptions({
-				mode: offlineMode({
-					acknowledgeNoRecords: true,
-					policyRules: [testRule],
+				mode: testingMode({
+					policy: [testRule],
 				}),
 			}),
 		});
@@ -81,9 +80,8 @@ describe('browser-rendered banner and an experiment arm', () => {
 			headers: new Headers(),
 			options: resolveOptions({
 				experiment,
-				mode: offlineMode({
-					acknowledgeNoRecords: true,
-					policyRules: [testRule],
+				mode: testingMode({
+					policy: [testRule],
 				}),
 			}),
 		});
@@ -109,9 +107,8 @@ describe('browser-rendered IAB banner and theme.slots', () => {
 			options: resolveOptions({
 				consentCategories: ['necessary', 'marketing'],
 				iab: { cmpId: 160, gvl: MINIMAL_GVL as never },
-				mode: offlineMode({
-					acknowledgeNoRecords: true,
-					policyRules: [
+				mode: testingMode({
+					policy: [
 						{
 							categories: ['marketing'],
 							id: 'astro_iab_test',

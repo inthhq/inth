@@ -1,6 +1,6 @@
 'use client';
 
-import { ConsentDialog, ConsentRoot, local } from 'c15t/next';
+import { ConsentDialog, ConsentRoot } from 'c15t/next';
 import type { ReactNode } from 'react';
 
 import { northwindTheme } from '@/lib/theme';
@@ -8,18 +8,20 @@ import { i18n, scripts, vendors } from '@/lib/vendors';
 
 import { CookieBanner } from './cookie-banner';
 
-// Offline mode resolves the policy in the browser and keeps choices in this
-// browser only, so the demo runs without an account. In production, point
-// it at your backend instead:
-//   const mode = hosted({ backendURL: 'https://your-project.inth.app' });
-const mode = local();
+// The backend is your Inth project: set NEXT_PUBLIC_C15T_BACKEND_URL in
+// .env.local. The policy comes from its consent manifest.
+const config = {
+	backendURL:
+		process.env.NEXT_PUBLIC_C15T_BACKEND_URL ?? 'https://your-project.inth.app',
+};
 
 export const Consent = ({ children }: { children: ReactNode }) => (
 	<ConsentRoot
+		config={config}
 		state={{}}
 		scripts={scripts}
 		vendors={vendors}
-		options={{ i18n, mode, theme: northwindTheme }}
+		options={{ i18n, theme: northwindTheme }}
 	>
 		{children}
 		<CookieBanner />

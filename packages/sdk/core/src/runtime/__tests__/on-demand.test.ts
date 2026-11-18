@@ -13,11 +13,11 @@ import { fileURLToPath } from 'node:url';
 import { resolvePolicyRules } from '@c15t/schema/types';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import { createIframeBlocker } from '../../modules/iframe-blocker';
 import { createPersistence } from '../../modules/persistence';
 import { watchRevocationReload } from '../../modules/revocation-reload';
 import { createWindowDebug } from '../../modules/window-debug';
-import { custom } from '../../transports/mode';
 import { onDemandRuntimeModules } from '../on-demand-modules';
 import { createConsentProviderRuntime } from '../provider-runtime';
 import { createConsentRuntimeWith } from '../runtime-with-modules';
@@ -48,7 +48,7 @@ const create = function create(
 ): ConsentProviderRuntime {
 	const runtime = createConsentProviderRuntime(
 		{
-			mode: custom({
+			mode: transportMode({
 				init: vi.fn().mockResolvedValue({}),
 				save: vi.fn().mockResolvedValue({ ok: true }),
 			}),
@@ -188,7 +188,7 @@ describe('createConsentRuntimeWith', () => {
 			const factories = await import('../on-demand-factories');
 			const runtime = createConsentRuntimeWith(
 				{
-					mode: custom({
+					mode: transportMode({
 						init: vi.fn().mockResolvedValue({}),
 						save: vi.fn().mockResolvedValue({ ok: true }),
 					}),
@@ -233,7 +233,7 @@ describe('createConsentRuntimeWith', () => {
 		const onBeforeLoad = vi.fn();
 		const runtime = createConsentRuntimeWith(
 			{
-				mode: custom({
+				mode: transportMode({
 					init: vi.fn().mockResolvedValue({}),
 					save: vi.fn().mockResolvedValue({ ok: true }),
 				}),

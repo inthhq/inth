@@ -18,7 +18,7 @@ import {
 import { useConsentSaveAction } from '../draft-context';
 import { useConsent, useSnapshot } from '../hooks';
 import { ConsentProvider } from '../provider';
-import { offline } from '../transports/offline';
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 const Provider = ({
@@ -32,7 +32,7 @@ const Provider = ({
 		options={{
 			// A permissive policy offers only what the site declares.
 			consentCategories: ['measurement', 'marketing'],
-			mode: offline({ acknowledgeNoRecords: true }),
+			mode: testing(),
 			persistence: false,
 			prefetch: policyFixture(),
 			...options,

@@ -1,10 +1,10 @@
-import { custom } from '@c15t/core';
 import styles from '@c15t/ui/styles/components/consent-dialog';
 import { render, waitFor } from '@testing-library/svelte';
 import { describe, expect, test } from 'vitest';
 
 import type { ConsentManagerOptions } from '../lib/types';
 import Fixture from './fixtures/dialog-motion-fixture.svelte';
+import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 
 const ROOT = '[data-testid="consent-dialog-root"]';
@@ -12,7 +12,7 @@ const ROOT = '[data-testid="consent-dialog-root"]';
 const optionsWith = (disableAnimation: boolean) =>
 	({
 		disableAnimation,
-		mode: custom({}),
+		mode: transportMode({}),
 		persistence: false,
 		prefetch: policyFixture(),
 	}) as ConsentManagerOptions;

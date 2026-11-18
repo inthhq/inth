@@ -97,32 +97,24 @@ export type {
 	ProviderTransportFactory,
 	ProviderTransportKind,
 } from './transports/mode';
-export { custom } from './transports/custom';
 export { earlyInitModes } from './transports/early-init-modes';
 export type { EarlyInitMode } from './transports/early-init-modes';
-export { hosted } from './transports/mode';
 export type {
 	ConsentMode,
 	ConsentModeType,
 	HostedMode,
 	ManifestMode,
 	ManifestModeInputs,
-	OfflineMode,
+	TestingMode,
+	TestingModeOptions,
 } from './modes';
-export type {
-	OfflineKernelTransport,
-	OfflineTransportOptions,
-} from './transports/offline';
-export { createOfflineTransport, local, offline } from './transports/offline';
+export { hosted } from './modes';
+export type { ConsentTesting } from './transports/testing';
 export {
 	NO_RECORDS_WARNING,
 	warnNoConsentRecords,
 	warnNoConsentRecordsInDevelopment,
 } from './libs/no-records-warning';
-export type {
-	OfflineModeFactory,
-	OfflineModeOptions,
-} from './transports/offline';
 export { buildSubjectPostBody } from './transports/subject-body';
 export {
 	C15T_POLICY_CONTRACT_HEADER,

@@ -7,7 +7,7 @@
  * lifecycle handle. Framework packages extend {@link ConsentRuntimeOptions}
  * with their own UI-only fields rather than restating the shared ones.
  */
-import type { PolicyRule, Vendor } from '@c15t/schema/types';
+import type { Vendor } from '@c15t/schema/types';
 import type { I18nConfig } from '@c15t/translations';
 
 import type { AllConsentNames } from '../consent/consent-types';
@@ -19,6 +19,7 @@ import type {
 } from '../libs/experiment';
 import type { ConsentJourneyOption, JourneyState } from '../libs/journey';
 import type { ConsentPresentation } from '../libs/policy-actions';
+import type { HostedMode } from '../modes';
 import type {
 	ClearOnRevocationConfig,
 	ClearOnRevocationHandle,
@@ -53,6 +54,7 @@ import type { Callbacks } from '../options/callbacks';
 import type { IABConfig } from '../options/iab';
 import type { User } from '../options/user';
 import type { ProviderTransportFactory } from '../transports/mode';
+import type { ConsentTesting } from '../transports/testing';
 import type {
 	ConsentKernel,
 	ConsentSnapshot,
@@ -342,6 +344,14 @@ export interface ConsentRuntimeModules {
 	 */
 	mountIAB?: (options: RuntimeIABMountOptions) => () => void;
 	/**
+	 * Builds the transport factory for the options' `backendURL`. Pass
+	 * `hosted()`'s builder from `@c15t/core/transports`
+	 * (`defaultRuntimeModules` does). A host that builds its own transport
+	 * for `backendURL` passes that instead, or passes `mode` and leaves this
+	 * out.
+	 */
+	hostedMode?: (backendURL: string) => ProviderTransportFactory;
+	/**
 	 * Lets the provider runtime accept a `prefetch` that is still a promise.
 	 * Pass `streamPrefetch` from `@c15t/core/runtime`. Without it a pending
 	 * prefetch is ignored (with a warning outside production) and the runtime
@@ -392,14 +402,27 @@ export interface ConsentRuntimeOptions {
 	 */
 	enabled?: boolean;
 	/**
-	 * Transport factory the runtime builds its kernel with. Required.
-	 *
-	 * Pass `hosted()` to talk to a c15t backend, `local()` to resolve
-	 * policies locally with no network, or `custom()` to supply your own
-	 * kernel transport or v2 endpoint handlers. This is an initial-only
-	 * option: create a new runtime to change it.
+	 * Backend URL, relative (`/api/c15t`) or absolute. Each init asks
+	 * `${backendURL}/init` (or reads its consent manifest with
+	 * `mode: manifest()`), and saves go to `${backendURL}/subjects`.
+	 * Required unless `mode` is `testing()` or `enabled` is `false`; a
+	 * runtime without one throws. Initial-only.
 	 */
-	mode: ProviderTransportFactory;
+	backendURL?: string;
+	/**
+	 * How the visitor's policy is resolved. Initial-only.
+	 *
+	 * - Omitted, or `hosted()` from `@c15t/core`: ask `${backendURL}/init`.
+	 * - `manifest()` from `@c15t/core/transports/manifest-browser`: resolve
+	 *   from the backend's consent manifest in the browser, falling back to
+	 *   `/init` with a warning when the manifest is unavailable.
+	 * - `testing()` from `@c15t/core/testing`: resolve a policy with no
+	 *   backend, for tests. It throws in production builds.
+	 *
+	 * To keep consent out of the way in an app's own tests instead, set
+	 * `enabled: false`.
+	 */
+	mode?: ProviderTransportFactory | HostedMode | ConsentTesting;
 	/** Cookie/localStorage naming and lifetime for stored consent. */
 	storageConfig?: StorageConfig;
 	/**
@@ -516,8 +539,6 @@ export interface ConsentRuntimeOptions {
 	 * only through {@link ConsentRuntime.reconcileStorage}.
 	 */
 	persistence?: boolean | RuntimePersistenceOptions;
-	/** Ordered policy rules evaluated by local transports. */
-	policyRules?: PolicyRule[];
 	/** Locale and message overrides merged over the bundled translations. */
 	i18n?: Partial<I18nConfig>;
 	/** Categories to offer alongside discovered integration categories, within policy scope. */
@@ -570,12 +591,29 @@ export interface ConsentProviderRuntimeOptions extends Omit<
 }
 
 /**
+ * What makes a provider's options complete: a `backendURL`, a `testing()`
+ * mode, a transport factory that carries its own backend (such as a
+ * single-page app's `manifest()`, which reads the build's backend URL), or
+ * `enabled: false`. Entry points take their options as
+ * `WithBackendURL<Options>`, so TypeScript asks for `backendURL` with no
+ * mode and with `hosted()`.
+ *
+ * @typeParam T - The entry point's options.
+ * @typeParam TTesting - What that entry point's `testing()` returns.
+ */
+export type WithBackendURL<T, TTesting = ConsentTesting> = T &
+	(
+		| { backendURL: string }
+		| { mode: TTesting | ProviderTransportFactory }
+		| { enabled: false }
+	);
+
+/**
  * The option set {@link ConsentProviderRuntime.update} takes: the whole
  * current options, the way a component re-renders with all of its props.
- * `mode` may be left out; it is read once.
+ * `backendURL` and `mode` are read once.
  */
-export type ConsentRuntimeUpdate = Omit<ConsentProviderRuntimeOptions, 'mode'> &
-	Partial<Pick<ConsentProviderRuntimeOptions, 'mode'>>;
+export type ConsentRuntimeUpdate = ConsentProviderRuntimeOptions;
 
 /**
  * A started or startable consent runtime.
@@ -707,7 +745,7 @@ export interface ConsentRuntime {
 	 * ```ts
 	 * const runtime = createConsentRuntime({
 	 *   iframeBlocker: { disableAutomaticBlocking: true },
-	 *   mode: local(),
+	 *   mode: testing(),
 	 * });
 	 * runtime.start();
 	 * container.append(embed);

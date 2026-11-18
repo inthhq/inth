@@ -5,8 +5,8 @@ import { renderHook } from 'vitest-browser-react';
 import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { useKernel } from '~/kernel-selector';
-import { offline } from '~/transports/offline';
 
+import { testing } from '../../testing';
 import { useVendorsListedUnder } from '../use-vendors-listed-under';
 
 // What an `@c15t/integrations` helper puts on its script: a vendor slug and
@@ -35,7 +35,7 @@ const createWrapper = function createWrapper(vendors?: Vendor[]) {
 			<ConsentProvider
 				options={{
 					consentCategories: ['necessary', 'marketing', 'measurement'],
-					mode: offline({ acknowledgeNoRecords: true }),
+					mode: testing(),
 					persistence: false,
 					prefetch: policyFixture(
 						{ measurement: true },

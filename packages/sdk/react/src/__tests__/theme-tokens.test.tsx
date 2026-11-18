@@ -8,7 +8,8 @@
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { ConsentProvider, ConsentTheme, offline } from '../index';
+import { ConsentProvider, ConsentTheme } from '../index';
+import { testing } from '../testing';
 
 // Raw source text, inlined by Vite so the scan works in browser-mode vitest.
 const rawSources = import.meta.glob(
@@ -41,7 +42,7 @@ describe('ConsentProvider theme tokens', () => {
 		const { unmount } = await render(
 			<ConsentProvider
 				options={{
-					mode: offline({ acknowledgeNoRecords: true }),
+					mode: testing(),
 					persistence: false,
 				}}
 			>
@@ -59,7 +60,7 @@ describe('ConsentProvider theme tokens', () => {
 				<ConsentProvider
 					options={{
 						enabled: false,
-						mode: offline({ acknowledgeNoRecords: true }),
+						mode: testing(),
 						nonce: 'csp-nonce',
 						persistence: false,
 						scripts: [
@@ -93,7 +94,7 @@ describe('ConsentProvider theme tokens', () => {
 				<ConsentTheme theme={theme} />
 				<ConsentProvider
 					options={{
-						mode: offline({ acknowledgeNoRecords: true }),
+						mode: testing(),
 						persistence: false,
 						theme,
 					}}
@@ -118,7 +119,7 @@ describe('ConsentProvider theme tokens', () => {
 			const { unmount } = await render(
 				<ConsentProvider
 					options={{
-						mode: offline({ acknowledgeNoRecords: true }),
+						mode: testing(),
 						persistence: false,
 						theme: { colors: { surface: 'rgb(1, 2, 3)' } },
 					}}

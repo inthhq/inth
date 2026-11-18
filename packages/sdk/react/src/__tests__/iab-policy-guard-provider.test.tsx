@@ -5,7 +5,7 @@
  */
 import { MINIMAL_GVL } from '@c15t/conformance';
 import type { GlobalVendorList } from '@c15t/core';
-import { custom, deferInitGvl } from '@c15t/core';
+import { deferInitGvl } from '@c15t/core';
 import { writePolicyResolutionWire } from '@c15t/schema/types';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
@@ -15,6 +15,7 @@ import { ConsentDialog } from '../components/panel';
 import { ConsentBanner } from '../components/prompt';
 import { IABProvider } from '../iab-context';
 import { ConsentProvider } from '../provider';
+import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 
 const GVL = MINIMAL_GVL as unknown as GlobalVendorList;
@@ -43,7 +44,7 @@ describe('an `iab` policy with <IABProvider>', () => {
 				<ConsentProvider
 					options={{
 						disableAnimation: true,
-						mode: custom({ init }),
+						mode: transportMode({ init }),
 						persistence: false,
 						prefetch:
 							source === 'prefetch'

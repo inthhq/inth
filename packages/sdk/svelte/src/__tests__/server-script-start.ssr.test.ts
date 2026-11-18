@@ -7,7 +7,6 @@
  * Runs in the `ssr` project, so the provider is server-compiled as it is
  * during a SvelteKit render.
  */
-import { offline } from '@c15t/core';
 import type { Script } from '@c15t/core';
 import type { PolicyRule } from '@c15t/schema/types';
 import { resolvePolicyRules } from '@c15t/schema/types';
@@ -21,6 +20,7 @@ import {
 	createServerStartInjector,
 	loadServerScriptStart,
 } from '../lib/kit/server-script-start';
+import { testing } from '../lib/testing';
 import type { ConsentManagerOptions } from '../lib/types';
 
 const pixel: Script = {
@@ -54,7 +54,7 @@ const renderPage = function renderPage({
 	const { body, head } = render(ConsentProvider, {
 		props: {
 			options: {
-				mode: offline({ acknowledgeNoRecords: true }),
+				mode: testing(),
 				persistence: false,
 				prefetch: {
 					initialPolicyResolution: resolvePolicyRules({

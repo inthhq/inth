@@ -12,8 +12,9 @@ import { IAB_PROMPT_SLOT_ATTRIBUTE } from '../banner/slot';
 import { buildIABPrompt } from '../browser/render-iab-prompt';
 import IABConsentBanner from '../components/iab-prompt.astro';
 import { resolveOptions } from '../integration';
-import { hosted as hostedMode, offline as offlineMode } from '../mode';
+import { hosted as hostedMode } from '../mode';
 import { resolveConsentContext } from '../server';
+import { testing as testingMode } from '../testing';
 import type { C15tAstroOptions } from '../types';
 import { describeTree } from './dom-tree';
 
@@ -35,7 +36,7 @@ const IAB_POLICY = {
 const OPTIONS: C15tAstroOptions = {
 	consentCategories: ['necessary', 'marketing'],
 	iab: { cmpId: 160, gvl: MINIMAL_GVL as never },
-	mode: offlineMode({ policyRules: [IAB_POLICY as never] }),
+	mode: testingMode({ policy: [IAB_POLICY as never] }),
 };
 
 describe('<IABConsentBanner /> on a prerendered page', () => {
@@ -58,7 +59,8 @@ describe('<IABConsentBanner /> on a prerendered page', () => {
 			headers: new Headers(),
 			options: resolveOptions({
 				...OPTIONS,
-				mode: hostedMode({ backendURL: 'https://consent.example.com' }),
+				backendURL: 'https://consent.example.com',
+				mode: hostedMode(),
 			}),
 			prerendered: true,
 		});

@@ -213,11 +213,11 @@ const resolveRoutePrefix = function resolveRoutePrefix(
 };
 
 /** Every `type` a mode can carry. */
-const MODE_TYPES = new Set(['manifest', 'hosted', 'offline']);
+const MODE_TYPES = new Set(['manifest', 'hosted', 'testing']);
 
 /**
  * Check the mode is plain data from `manifest()`, `hosted()` or
- * `local()`, and that it has a backend to talk to.
+ * `testing()`, and that it has a backend to talk to.
  *
  * `manifest()` reads `${backendURL}/manifest` on the server and the
  * browser saves consent at `${backendURL}/subjects`, so without a backend
@@ -245,12 +245,12 @@ const resolveMode = function resolveMode(
 		!MODE_TYPES.has((mode as { type?: unknown }).type as string)
 	) {
 		throw new Error(
-			'@c15t/astro: `mode` must be manifest(), hosted() or local() from c15t/astro. A transport function cannot be serialized into the page.'
+			'@c15t/astro: `mode` must be manifest() or hosted() from c15t/astro, or testing() from c15t/astro/testing. A transport function cannot be serialized into the page.'
 		);
 	}
 	const envHint =
 		'Set PUBLIC_C15T_BACKEND_URL (or PUBLIC_INTH_PROJECT_URL) in .env, or pass `backendURL` to c15t().';
-	if (mode.type === 'hosted' && (mode.backendURL ?? backendURL) === undefined) {
+	if (mode.type === 'hosted' && backendURL === undefined) {
 		throw new Error(
 			`@c15t/astro: hosted() needs a backend URL to ask for each visitor's policy. ${envHint}`
 		);
@@ -414,7 +414,6 @@ export const toClientOptions = function toClientOptions(
 		clientEntrypoint: _clientEntrypoint,
 		middleware: _middleware,
 		onBuildError: _onBuildError,
-		reportSessions: _reportSessions,
 		styles: _styles,
 		...client
 	} = resolved;
@@ -617,7 +616,7 @@ const pageRuntimeModules = function pageRuntimeModules(
  * The transport export of `@c15t/astro/client` the page registers, so it
  * ships only the code its mode runs.
  *
- * - `local()` loads its transport on the first init.
+ * - `testing()` loads its transport on the first init.
  * - `hosted()` on a site with no adapter: every page is prerendered and
  *   every first visit inits, so the whole hosted transport ships with it.
  * - Otherwise the server resolved the visitor, so only the save path ships
@@ -630,9 +629,9 @@ const pageRuntimeModules = function pageRuntimeModules(
 const transportExport = function transportExport(
 	resolved: C15tResolvedOptions,
 	hasAdapter: boolean
-): 'hostedTransport' | 'lazyTransport' | 'offlineTransport' {
-	if (resolved.mode.type === 'offline') {
-		return 'offlineTransport';
+): 'hostedTransport' | 'lazyTransport' | 'testingTransport' {
+	if (resolved.mode.type === 'testing') {
+		return 'testingTransport';
 	}
 	if (resolved.mode.type === 'hosted' && !hasAdapter) {
 		return 'hostedTransport';
@@ -846,7 +845,7 @@ const routeIsPrerendered = function routeIsPrerendered(
 
 /**
  * Whether the integration injects its route: in `manifest()` mode, unless
- * `routePrefix: false`. Hosted and offline pages never call it.
+ * `routePrefix: false`. Hosted and testing pages never call it.
  */
 const injectsRoute = function injectsRoute(
 	resolved: C15tResolvedOptions
@@ -865,7 +864,7 @@ const injectsRoute = function injectsRoute(
 const missingAdapterMessage = function missingAdapterMessage(
 	routePrefix: string
 ): string {
-	return `@c15t/astro: manifest() resolves each visitor on the server and injects an on-demand route at ${routePrefix}/[...path], which needs a server adapter to build. For a static site, use hosted(), local() or manifest({ resolve: 'browser' }), or set \`routePrefix: false\`.`;
+	return `@c15t/astro: manifest() resolves each visitor on the server and injects an on-demand route at ${routePrefix}/[...path], which needs a server adapter to build. For a static site, use hosted() or manifest({ resolve: 'browser' }), or set \`routePrefix: false\`.`;
 };
 
 /**

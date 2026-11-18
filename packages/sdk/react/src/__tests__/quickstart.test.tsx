@@ -1,4 +1,3 @@
-import { policyRulePresets } from '@c15t/schema/types';
 import { afterEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
@@ -7,15 +6,13 @@ import {
 	ConsentDialog,
 	ConsentDialogLink,
 	ConsentProvider,
-	offline,
 	useConsent,
 	useExplicitChoice,
 } from '../index';
+import { testing } from '../testing';
 
-const mode = offline({
-	acknowledgeNoRecords: true,
-	policyRules: [policyRulePresets.europeOptIn()],
-});
+// An unknown location resolves the recommended pack's Europe opt-in rule.
+const testingMode = testing();
 const ChoiceProbe = () => {
 	const allowed = useConsent('marketing');
 	const choice = useExplicitChoice();
@@ -42,7 +39,7 @@ test('the preset quickstart records rejection, restores it, and reopens preferen
 			options={{
 				callbacks: { onChoiceRecorded },
 				consentCategories: ['marketing'],
-				mode,
+				mode: testingMode,
 			}}
 		>
 			<ChoiceProbe />

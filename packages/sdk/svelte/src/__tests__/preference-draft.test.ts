@@ -3,7 +3,6 @@
  * provider, read through the state API. The draft rules are pinned by the
  * core suite; this covers the runes wiring and the provider's contract.
  */
-import { custom } from '@c15t/core';
 import type { ConsentKernel } from '@c15t/core';
 import { render } from '@testing-library/svelte';
 import { tick } from 'svelte';
@@ -11,6 +10,7 @@ import { expect, test, vi } from 'vitest';
 
 import type { ConsentManagerState } from '../lib/context.svelte';
 import ConformanceFixture from './fixtures/conformance-fixture.svelte';
+import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 
 const mountProvider = function mountProvider(
@@ -29,7 +29,7 @@ const mountProvider = function mountProvider(
 		options: {
 			consentCategories: ['necessary', 'marketing', 'measurement'],
 			disableAnimation: true,
-			mode: custom({}),
+			mode: transportMode({}),
 			persistence: false,
 			prefetch: policyFixture({}, { categories: ['marketing', 'measurement'] }),
 		},

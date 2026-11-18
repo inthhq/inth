@@ -1,14 +1,14 @@
 'use client';
 
-import { offline } from '@c15t/react';
+import { benchPolicy } from '@c15t/benchmarking/bench-policy';
 import { IABConsentDialog } from '@c15t/react/iab';
 import { ConsentProvider } from '@c15t/react/provider';
 
 const CssIabModulesPage = () => (
 	<ConsentProvider
 		options={{
-			mode: offline({
-				policyRules: [
+			mode: benchPolicy({
+				policy: [
 					{
 						id: 'bench-iab',
 						match: { fallback: true, isDefault: true },

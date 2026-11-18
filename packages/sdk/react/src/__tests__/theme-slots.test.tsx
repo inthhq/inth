@@ -12,7 +12,7 @@ import { render } from 'vitest-browser-react';
 import { ConsentGate } from '../components/consent-gate';
 import { ConsentBanner } from '../components/prompt';
 import { ConsentProvider } from '../provider';
-import { offline } from '../transports/offline';
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 const part = (testId: string) =>
@@ -42,7 +42,7 @@ describe('theme.slots in React', () => {
 							card: { className: 'app-card', style: { color: 'rgb(4, 5, 6)' } },
 						},
 					},
-					mode: offline({ acknowledgeNoRecords: true }),
+					mode: testing(),
 					persistence: false,
 					prefetch: policyFixture(),
 					theme: {
@@ -83,7 +83,7 @@ describe('theme.slots in React', () => {
 					components: {
 						banner: { card: { className: 'app-card' } },
 					},
-					mode: offline({ acknowledgeNoRecords: true }),
+					mode: testing(),
 					persistence: false,
 					prefetch: policyFixture(),
 					theme: {
@@ -122,7 +122,7 @@ describe('theme.slots in React', () => {
 							root: { style: { color: 'rgb(4, 5, 6)' } },
 						},
 					},
-					mode: offline({ acknowledgeNoRecords: true }),
+					mode: testing(),
 					persistence: false,
 					prefetch: policyFixture(),
 					theme: {

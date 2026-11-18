@@ -5,13 +5,12 @@ import {
 	ConsentDialog,
 	ConsentDialogLink,
 	ConsentProvider,
-	hosted,
 } from 'c15t/react';
 import type { ReactNode } from 'react';
 
 const options = {
-	// Asks VITE_C15T_BACKEND_URL for each visitor's policy.
-	mode: hosted(),
+	// Your Inth project URL, from VITE_C15T_BACKEND_URL in .env.
+	backendURL: import.meta.env.VITE_C15T_BACKEND_URL as string,
 	scripts: [
 		posthog({
 			id: 'phc_your_project_key',

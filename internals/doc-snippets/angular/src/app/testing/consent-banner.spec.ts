@@ -1,17 +1,13 @@
-// #region docs:harness-banner-test title="src/app/consent-banner.spec.ts"
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import {
-	ConsentBanner,
-	ConsentManager,
-	local,
-	provideC15t,
-} from '@c15t/angular';
+import { ConsentBanner, ConsentManager, provideC15t } from '@c15t/angular';
 import { ConsentDialog } from '@c15t/angular/consent-dialog';
+// #region docs:harness-banner-test title="src/app/consent-banner.spec.ts"
 import {
 	ConsentBannerHarness,
 	ConsentDialogHarness,
+	testing,
 } from '@c15t/angular/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
 
@@ -32,9 +28,8 @@ describe('consent banner', () => {
 					// Tests start with no stored choice and no motion.
 					disableAnimation: true,
 					// Nothing leaves the test: policies and choices stay in memory.
-					mode: local({
-						acknowledgeNoRecords: true,
-						policyRules: [
+					mode: testing({
+						policy: [
 							{
 								id: 'test-opt-in',
 								match: { fallback: true, isDefault: true },

@@ -8,8 +8,8 @@ import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/compone
 import type { ConsentStateFixture } from '~/__tests__/consent-state-fixture';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentDialogFooter } from '~/components/panel/atoms/card';
-import { offline } from '~/transports/offline';
 
+import { testing } from '../../../../testing';
 import { BrandingCompactLogo, BrandingLink } from '../branding';
 
 type ConsentManagerState = ConsentStateFixture;
@@ -74,7 +74,7 @@ const createConsentTree = function createConsentTree(
 			options={{
 				components: providerOverrides.components,
 				initialUI: state.activeUI === 'dialog' ? 'dialog' : 'banner',
-				mode: offline({ acknowledgeNoRecords: true }),
+				mode: testing(),
 				persistence: false,
 				prefetch: {
 					...policyFixture(undefined, {

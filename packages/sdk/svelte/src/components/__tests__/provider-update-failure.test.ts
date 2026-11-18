@@ -9,7 +9,7 @@ import { tick } from 'svelte';
 import { expect, test, vi } from 'vitest';
 
 import ThemeSwapFixture from '../../__tests__/fixtures/theme-swap-fixture.svelte';
-import { custom } from '../../lib/index';
+import { transportMode } from '../../__tests__/fixtures/transport-mode';
 
 const updateModuleLoads = vi.hoisted(() => ({ count: 0 }));
 // oxlint-disable-next-line anti-slop/no-module-mocking -- The property under test is what the provider does when this chunk fails to load; nothing else can make a dynamic import reject.
@@ -25,7 +25,7 @@ test('an update module that fails to load is not an unhandled rejection', async 
 	};
 	process.on('unhandledRejection', onRejection);
 	try {
-		const mode = custom({
+		const mode = transportMode({
 			init: vi.fn().mockResolvedValue({}),
 			save: vi.fn().mockResolvedValue({ ok: true }),
 		});

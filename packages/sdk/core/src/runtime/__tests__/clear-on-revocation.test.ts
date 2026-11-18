@@ -7,11 +7,20 @@ import {
 	optInRule,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import type { InternalKernel } from '../../kernel/internals';
-import { custom } from '../../transports/mode';
+import type { ProviderTransportFactory } from '../../transports/mode';
 import type { InitResponse } from '../../types';
 import { createConsentRuntime } from '../index';
 import type { ConsentRuntime, ConsentRuntimeOptions } from '../types';
+
+/**
+ * Options a test passes over the defaults. Its mode is a transport factory,
+ * so the merged options still name their backend the way an entry point must.
+ */
+type RuntimeOverrides = Partial<
+	ConsentRuntimeOptions & { mode: ProviderTransportFactory }
+>;
 
 const runtimes: ConsentRuntime[] = [];
 const config = {
@@ -38,11 +47,11 @@ const seed = () => {
 	sessionStorage.setItem('analytics:session', 'session');
 };
 
-const createRuntime = (options: Partial<ConsentRuntimeOptions> = {}) => {
+const createRuntime = (options: RuntimeOverrides = {}) => {
 	const runtime = createConsentRuntime({
 		clearOnRevocation: config,
 		consentCategories: ['measurement'],
-		mode: custom({
+		mode: transportMode({
 			init: () =>
 				Promise.resolve({
 					policyResolution: writePolicyResolutionWire(resolution),
@@ -126,7 +135,7 @@ test('waits for hosted policy resolution instead of sweeping the provisional fal
 	seed();
 	const pending = Promise.withResolvers<InitResponse>();
 	const runtime = createRuntime({
-		mode: custom({ init: () => pending.promise }),
+		mode: transportMode({ init: () => pending.promise }),
 		prefetch: undefined,
 	});
 	const applied = Promise.withResolvers<undefined>();

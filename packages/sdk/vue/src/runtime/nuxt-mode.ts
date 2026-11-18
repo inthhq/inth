@@ -3,7 +3,7 @@
  * server and in the browser. Both come from `nuxt.config.ts` only, so the
  * build and every runtime agree on them.
  */
-import type { ConsentMode } from '@c15t/core/modes';
+import type { ConsentMode, HostedMode } from '@c15t/core/modes';
 
 /** Where the module serves its consent route unless `routePrefix` says otherwise. */
 export const DEFAULT_NUXT_ROUTE_PREFIX = '/api/c15t';
@@ -17,9 +17,18 @@ export interface NuxtConsentModeConfig {
 	 */
 	backendURL?: string;
 	/**
-	 * Where the visitor's policy comes from: `manifest()`, `hosted()` or
-	 * `local()` from `c15t/vue`. Plain data, read from `nuxt.config.ts`
-	 * only.
+	 * How the visitor's policy is resolved. Plain data, read from
+	 * `nuxt.config.ts` only.
+	 *
+	 * - Omitted, or `manifest()` from `c15t/vue`: resolve from the
+	 *   backend's consent manifest, which the build downloads. When it is
+	 *   unavailable, the server and the consent route ask the backend's
+	 *   `/init` and log a warning.
+	 * - `hosted()` from `c15t/vue`: ask the backend's `/init` for every
+	 *   visitor.
+	 * - `testing()` from `c15t/vue/testing`: the browser resolves a policy
+	 *   with no network, for tests. Needs no `backendURL`, and throws in
+	 *   production builds.
 	 *
 	 * @default manifest()
 	 */
@@ -40,6 +49,21 @@ const trimTrailingSlashes = function trimTrailingSlashes(path: string): string {
 	return path.replace(/\/+$/u, '');
 };
 
+/** The hosted backend, with the headers the server forwards. @internal */
+export interface NuxtHostedMode {
+	type: 'hosted';
+	/** Consent headers forwarded to `/init`. */
+	headers?: Record<string, string>;
+}
+
+/** What a config resolves to: `manifest()`, `hosted()` or `testing()`. @internal */
+export type NuxtMode = Exclude<ConsentMode, HostedMode> | NuxtHostedMode;
+
+/** A mode config holding the mode the build resolved. @internal */
+export type NuxtResolvedModeConfig = Omit<NuxtConsentModeConfig, 'mode'> & {
+	mode?: NuxtMode;
+};
+
 /**
  * The mode a config names, `manifest()` when it names none.
  *
@@ -48,8 +72,8 @@ const trimTrailingSlashes = function trimTrailingSlashes(path: string): string {
  * @internal
  */
 export const readNuxtMode = function readNuxtMode(
-	config: Pick<NuxtConsentModeConfig, 'mode'>
-): ConsentMode {
+	config: Pick<NuxtResolvedModeConfig, 'mode'>
+): NuxtMode {
 	return config.mode ?? { type: 'manifest' };
 };
 
@@ -64,7 +88,7 @@ export const readNuxtMode = function readNuxtMode(
  * @internal
  */
 export const readNuxtRoutePrefix = function readNuxtRoutePrefix(
-	config: NuxtConsentModeConfig
+	config: NuxtResolvedModeConfig
 ): string | undefined {
 	if (
 		config.routePrefix === false ||
@@ -86,7 +110,7 @@ export const readNuxtRoutePrefix = function readNuxtRoutePrefix(
  * @internal
  */
 export const resolvesOnServer = function resolvesOnServer(
-	mode: ConsentMode
+	mode: NuxtMode
 ): boolean {
 	if (mode.type === 'manifest') {
 		return mode.resolve !== 'browser';

@@ -1,12 +1,12 @@
 'use client';
 
+import { benchPolicy } from '@c15t/benchmarking/bench-policy';
 import {
 	ConsentBanner,
 	ConsentProvider,
 	useEffectivePermissions,
 } from '@c15t/nextjs';
 // The provider takes a transport; `offline` from `@c15t/nextjs` is data.
-import { offline } from '@c15t/react';
 
 const BasicState = () => {
 	const consents = useEffectivePermissions();
@@ -15,8 +15,8 @@ const BasicState = () => {
 const NextjsBasicPage = () => (
 	<ConsentProvider
 		options={{
-			mode: offline({
-				policyRules: [
+			mode: benchPolicy({
+				policy: [
 					{
 						id: 'bench-opt-in',
 						match: { fallback: true, isDefault: true },

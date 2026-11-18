@@ -4,7 +4,6 @@
  * CMP handle's provider choice, and saving encodes it in the Additional
  * Consent string.
  */
-import { custom } from '@c15t/core';
 import type { ConsentKernel } from '@c15t/core';
 import { resolvePolicyRules } from '@c15t/schema/types';
 import { render } from '@testing-library/svelte';
@@ -18,6 +17,7 @@ import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import IABVendorList from '../lib/components/iab-vendor-list.svelte';
 import { getIABTranslations } from '../lib/iab-translations';
 import ConformanceFixture from './fixtures/conformance-fixture.svelte';
+import { transportMode } from './fixtures/transport-mode';
 
 const adTechProviders = [
 	{ id: 89, name: 'Example Ad Tech', policyUrl: 'https://ads.example/privacy' },
@@ -92,7 +92,7 @@ test('a provider switch in the dialog writes the CMP selection and saving encode
 					cmpId: 28,
 					gvl: completeGVL,
 				},
-				mode: custom({}),
+				mode: transportMode({}),
 				persistence: false,
 				prefetch: {
 					initialPolicyResolution: resolvePolicyRules({

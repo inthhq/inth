@@ -26,8 +26,9 @@ import type { AstroConsentClient } from '../client';
 import { boot, EVENTS_KEY } from '../client-engine';
 import type { C15tClientOptionsExtension } from '../client-types';
 import { resolveOptions } from '../integration';
-import { hosted as hostedMode, offline as offlineMode } from '../mode';
+import { hosted as hostedMode } from '../mode';
 import { snapshotFromConfig } from '../server';
+import { testing as testingMode } from '../testing';
 import type { C15tAstroOptions } from '../types';
 import { registerDialogAdapter } from '../ui/adapter';
 import type { ConsentDialogContext } from '../ui/adapter';
@@ -37,7 +38,7 @@ registerRuntimeModules(onDemandRuntimeModules);
 
 const OPTIONS: C15tAstroOptions = {
 	consentCategories: ['necessary', 'measurement', 'marketing'],
-	mode: offlineMode({ acknowledgeNoRecords: true, policyRules: [testRule] }),
+	mode: testingMode({ policy: [testRule] }),
 };
 
 const SCRIPT = {
@@ -333,7 +334,8 @@ describe('the first-load shell', () => {
 			{ callbacks: { onChoiceRecorded, onPermissionsChanged } },
 			{
 				...OPTIONS,
-				mode: hostedMode({ backendURL: 'https://consent.example' }),
+				backendURL: 'https://consent.example',
+				mode: hostedMode(),
 			}
 		);
 		refuseOutboxWrites();

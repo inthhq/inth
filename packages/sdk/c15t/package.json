@@ -69,6 +69,11 @@
 			"import": "./shims/modes.js",
 			"default": "./shims/modes.js"
 		},
+		"./testing": {
+			"types": "./shims/testing.d.ts",
+			"import": "./shims/testing.js",
+			"default": "./shims/testing.js"
+		},
 		"./surface-actions": {
 			"types": "./shims/surface-actions.d.ts",
 			"import": "./shims/surface-actions.js",
@@ -263,6 +268,11 @@
 			"types": "./shims/react/modes.d.ts",
 			"import": "./shims/react/modes.js",
 			"default": "./shims/react/modes.js"
+		},
+		"./react/testing": {
+			"types": "./shims/react/testing.d.ts",
+			"import": "./shims/react/testing.js",
+			"default": "./shims/react/testing.js"
 		},
 		"./react/provider": {
 			"types": "./shims/react/provider.d.ts",
@@ -467,6 +477,11 @@
 			"import": "./shims/next.js",
 			"default": "./shims/next.js"
 		},
+		"./next/testing": {
+			"types": "./shims/next/testing.d.ts",
+			"import": "./shims/next/testing.js",
+			"default": "./shims/next/testing.js"
+		},
 		"./next/server": {
 			"types": "./shims/next/server.d.ts",
 			"import": "./shims/next/server.js",
@@ -531,6 +546,11 @@
 			"import": "./shims/tanstack-start.js",
 			"default": "./shims/tanstack-start.js"
 		},
+		"./tanstack-start/testing": {
+			"types": "./shims/tanstack-start/testing.d.ts",
+			"import": "./shims/tanstack-start/testing.js",
+			"default": "./shims/tanstack-start/testing.js"
+		},
 		"./tanstack-start/server": {
 			"types": "./shims/tanstack-start/server.d.ts",
 			"browser": "./shims/tanstack-start/server.js",
@@ -561,6 +581,11 @@
 			"types": "./shims/vue.d.ts",
 			"import": "./shims/vue.js",
 			"default": "./shims/vue.js"
+		},
+		"./vue/testing": {
+			"types": "./shims/vue/testing.d.ts",
+			"import": "./shims/vue/testing.js",
+			"default": "./shims/vue/testing.js"
 		},
 		"./vue/vite": {
 			"types": "./shims/vue/vite.d.ts",
@@ -699,6 +724,11 @@
 			"import": "./shims/astro/api.js",
 			"default": "./shims/astro/api.js"
 		},
+		"./astro/testing": {
+			"types": "./shims/astro/testing.d.ts",
+			"import": "./shims/astro/testing.js",
+			"default": "./shims/astro/testing.js"
+		},
 		"./astro/ui/svelte": {
 			"types": "./shims/astro/ui/svelte.d.ts",
 			"import": "./shims/astro/ui/svelte.js",
@@ -774,6 +804,11 @@
 			"types": "./shims/svelte/dialog-panel.d.ts",
 			"svelte": "./shims/svelte/dialog-panel.js",
 			"default": "./shims/svelte/dialog-panel.js"
+		},
+		"./svelte/testing": {
+			"types": "./shims/svelte/testing.d.ts",
+			"import": "./shims/svelte/testing.js",
+			"default": "./shims/svelte/testing.js"
 		},
 		"./svelte/kit": {
 			"types": "./shims/svelte/kit.d.ts",

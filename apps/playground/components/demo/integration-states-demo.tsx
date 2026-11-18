@@ -1,6 +1,7 @@
 'use client';
 
-import { ConsentGate, ConsentProvider, offline } from 'c15t/react';
+import { ConsentGate, ConsentProvider } from 'c15t/react';
+import { testing } from 'c15t/react/testing';
 import { RotateCcw } from 'lucide-react';
 import { useState } from 'react';
 
@@ -88,8 +89,8 @@ export const IntegrationStatesDemo = () => (
 	<ConsentProvider
 		options={{
 			consentCategories: ['necessary', 'measurement', 'marketing'],
-			mode: offline({
-				policyRules: [
+			mode: testing({
+				policy: [
 					{
 						id: 'demo-integration-states',
 						match: { fallback: true, isDefault: true },

@@ -6,7 +6,6 @@
  * The write code is held back for the whole file, so it holds one test:
  * the page loads the code once.
  */
-import { policyRulePresets } from '@c15t/schema/types';
 import { afterEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
@@ -16,10 +15,10 @@ import {
 	ConsentDialog,
 	ConsentDialogLink,
 	ConsentProvider,
-	offline,
 	useConsent,
 	useExplicitChoice,
 } from '../index';
+import { testing } from '../testing';
 
 // Hold back the write code's chunk, as a slow network would, so the
 // remount happens before it loads.
@@ -33,10 +32,8 @@ pageWriterLoader.load = async () => {
 	return loadWriter();
 };
 
-const mode = offline({
-	acknowledgeNoRecords: true,
-	policyRules: [policyRulePresets.europeOptIn()],
-});
+// An unknown location resolves the recommended pack's Europe opt-in rule.
+const testingMode = testing();
 const ChoiceProbe = () => {
 	const allowed = useConsent('marketing');
 	const choice = useExplicitChoice();
@@ -63,7 +60,7 @@ test('the quickstart remounted before its rejection is stored restores the rejec
 			options={{
 				callbacks: { onChoiceRecorded },
 				consentCategories: ['marketing'],
-				mode,
+				mode: testingMode,
 			}}
 		>
 			<ChoiceProbe />

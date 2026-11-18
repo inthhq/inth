@@ -1,9 +1,10 @@
 import type { ApplicationConfig } from '@angular/core';
-import { local, provideC15t } from '@c15t/angular';
-import type { C15tOptions } from '@c15t/angular';
+import { provideC15t } from '@c15t/angular';
+import type { C15tOptions, C15tProviderOptions } from '@c15t/angular';
 
 import {
 	seedStorybookChoice,
+	storybookMode,
 	storybookPolicy,
 	storybookPolicyResolution,
 	storybookPresentation,
@@ -42,7 +43,7 @@ export const seedTCString = function seedTCString(tcString: string | null) {
 };
 
 export const defaultConsentOptions: C15tOptions = {
-	mode: local({ acknowledgeNoRecords: true, policyRules: [storybookPolicy] }),
+	mode: storybookMode([storybookPolicy]),
 	presentation: storybookPresentation,
 };
 
@@ -106,7 +107,9 @@ export const consentApplication = function consentApplication({
 		merged.prefetch ??
 		(merged.mode === defaultConsentOptions.mode ? defaultPrefetch : undefined);
 
-	return { providers: [provideC15t({ ...merged, prefetch })] };
+	return {
+		providers: [provideC15t({ ...merged, prefetch } as C15tProviderOptions)],
+	};
 };
 
 export type { ConsentRecord };

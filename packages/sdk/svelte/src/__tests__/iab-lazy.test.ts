@@ -14,11 +14,11 @@ import { dirname, join } from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 
-import { offline } from '@c15t/core';
 import { mount, unmount } from 'svelte';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { isIABConfigured } from '../lib/iab-loader';
+import { testing } from '../lib/testing';
 import type { ConsentManagerOptions } from '../lib/types';
 import ProviderOnlyFixture from './fixtures/provider-only-fixture.svelte';
 
@@ -45,7 +45,7 @@ const mountProvider = function mountProvider(
 	const app = mount(ProviderOnlyFixture, {
 		props: {
 			options: {
-				mode: offline({ acknowledgeNoRecords: true }),
+				mode: testing(),
 				persistence: false,
 				...options,
 			} as ConsentManagerOptions,

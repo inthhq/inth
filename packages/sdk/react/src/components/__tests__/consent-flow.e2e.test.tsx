@@ -20,7 +20,8 @@ import { ConsentDialog } from '~/components/panel';
 import { ConsentDialogTrigger } from '~/components/panel-trigger';
 import { ConsentWidget } from '~/components/preferences';
 import { ConsentBanner } from '~/components/prompt';
-import { offline } from '~/transports/offline';
+
+import { testing } from '../../testing';
 
 const getDefined = <Value,>(
 	value: Value,
@@ -61,7 +62,7 @@ const defaultOptions: ConsentProviderOptions = {
 		'marketing',
 		'measurement',
 	],
-	mode: offline({ acknowledgeNoRecords: true }),
+	mode: testing(),
 	prefetch: policyFixture(undefined, {
 		categories: [
 			'necessary',

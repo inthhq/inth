@@ -3,7 +3,6 @@
  * Astro and the script tag apply it: classes and `style` on the part the
  * slot names.
  */
-import { custom } from '@c15t/core';
 import { resolvePolicyRules } from '@c15t/schema/types';
 import bannerStyles from '@c15t/ui/styles/components/iab-consent-banner';
 import dialogStyles from '@c15t/ui/styles/components/iab-consent-dialog';
@@ -14,6 +13,7 @@ import { describe, expect, test } from 'vitest';
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import type { ConsentManagerOptions } from '../lib/types';
 import ConformanceFixture from './fixtures/conformance-fixture.svelte';
+import { transportMode } from './fixtures/transport-mode';
 
 const SLOT = {
 	className: 'brand-slot',
@@ -29,7 +29,7 @@ const renderIAB = async function renderIAB(
 		options: {
 			disableAnimation: true,
 			iab: { cmpId: 28 },
-			mode: custom({}),
+			mode: transportMode({}),
 			persistence: false,
 			prefetch: {
 				initialIab: { cmpId: 28, enabled: true, gvl: completeGVL },

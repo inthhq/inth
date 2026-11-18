@@ -12,14 +12,14 @@ import type {
 	IABUnavailableError,
 	KernelConfig,
 } from '@c15t/core';
-import type { ConsentMode } from '@c15t/core/modes';
 import { readStoredRecordsFromCookieHeader } from '@c15t/core/modules/persistence';
-import { clientMode } from '@c15t/core/runtime/client-mode';
+import { clientMode, lazyHosted } from '@c15t/core/runtime/client-mode';
 
 import { withClientData } from '../client-data';
 import type { ConsentConfig } from '../config';
 import { createVueConsentKernelContext } from '../kernel';
 import type { RuntimeConsentConfig, VueConsentKernelContext } from '../kernel';
+import type { NuxtMode } from '../nuxt-mode';
 import type { DeferredCommitted } from './commit';
 
 /** What the plugin read before it loaded the engine. @internal */
@@ -28,7 +28,7 @@ export interface NuxtEngineInput {
 	/** Consent headers the server read from the request. */
 	headers: Record<string, string>;
 	/** The mode from `nuxt.config.ts`. */
-	mode: ConsentMode;
+	mode: NuxtMode;
 	routePrefix: string | undefined;
 	/** The state the server resolved, from the payload. */
 	prefetchState: KernelConfig | undefined;
@@ -90,6 +90,34 @@ const committedConfig = function committedConfig(
  * @throws {IABUnavailableError} When the state needs IAB and `iab` is not set.
  * @internal
  */
+/** Bundlers replace `process.env.NODE_ENV` at build time. */
+declare const process: { env: { NODE_ENV?: string } };
+
+/**
+ * The transport for the mode the browser runs. The hosted backend keeps
+ * the consent headers the server forwarded; the rest go through
+ * `clientMode()`.
+ */
+const nuxtClientMode = function nuxtClientMode(
+	mode: NuxtMode,
+	backendURL: string | undefined,
+	routePrefix: string | undefined
+) {
+	if (mode.type !== 'hosted') {
+		return clientMode(mode, { backendURL, routePrefix }, '@c15t/vue/testing');
+	}
+	if (backendURL === undefined) {
+		throw new Error(
+			`@c15t/vue: \`backendURL\` is required.${
+				process.env.NODE_ENV === 'production'
+					? ''
+					: ' Set NUXT_PUBLIC_C15T_BACKEND_URL (or NUXT_PUBLIC_INTH_PROJECT_URL), or `c15t.backendURL` in nuxt.config.ts.'
+			}`
+		);
+	}
+	return lazyHosted({ backendURL, headers: mode.headers });
+};
+
 export const createNuxtEngineContext = function createNuxtEngineContext(
 	input: NuxtEngineInput
 ): VueConsentKernelContext {
@@ -117,10 +145,11 @@ export const createNuxtEngineContext = function createNuxtEngineContext(
 		headers,
 		host: 'nuxt',
 		initialRecords: records,
-		mode: clientMode(withClientData(mode, headers), {
-			backendURL: config.backendURL,
-			routePrefix: input.routePrefix,
-		}),
+		mode: nuxtClientMode(
+			withClientData(mode, headers),
+			config.backendURL,
+			input.routePrefix
+		),
 		now,
 		onIABUnavailable: input.onIABUnavailable,
 		prefetchState: input.prefetchState,

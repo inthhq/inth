@@ -6,7 +6,7 @@
  */
 import { webViewConsentSource } from '@c15t/core';
 
-import { createScriptTagConsentClient as createConsentClient } from '../../script-tag-client';
+import { createTestingConsentClient as createConsentClient } from '../../testing-global';
 import type { ConsentClient } from '../../types';
 import { mountConsentUI } from '../../ui/mount';
 
@@ -34,10 +34,8 @@ Object.assign(window, {
 const consentSource = webViewConsentSource();
 const client = createConsentClient(
 	{
-		acknowledgeNoRecords: true,
 		consentCategories: ['necessary', 'measurement', 'marketing'],
 		consentSource,
-		mode: 'offline',
 		overrides: { country: 'DE' },
 		reloadOnConsentRevoked: false,
 		ui: { disableAnimation: true },

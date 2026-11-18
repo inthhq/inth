@@ -2,18 +2,18 @@ import { policyRulePresets } from '@c15t/core';
 import type { GPPPingData } from '@c15t/iab/gpp';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createGlobal, installGlobal } from '../global';
-import type { C15tGlobal } from '../global';
+import { installGlobal } from '../global';
 import { mountGPP } from '../gpp';
+import { createTestingGlobal as createGlobal } from '../testing-global';
+import type { TestingC15tGlobal as C15tGlobal } from '../testing-global';
 import type { ConsentClient, ScriptTagClientOptions } from '../types';
 import { init } from './fixtures/factory-init';
 
 const testWindow = window as Window & { c15t?: unknown };
 const options: ScriptTagClientOptions = {
-	acknowledgeNoRecords: true,
 	overrides: { country: 'US', region: 'CA' },
 	persistence: false,
-	policyRules: [
+	policy: [
 		{ ...policyRulePresets.californiaOptOut(), match: { isDefault: true } },
 	],
 	ui: false,

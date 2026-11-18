@@ -2,7 +2,7 @@ import { policyRulePresets } from '@c15t/core';
 import { resolvePolicyRules } from '@c15t/schema/types';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createScriptTagConsentClient as createConsentClient } from '../script-tag-client';
+import { createTestingConsentClient as createConsentClient } from '../testing-global';
 import type { ConsentClient, ConsentClientOptions } from '../types';
 
 const clients: ConsentClient[] = [];
@@ -63,7 +63,6 @@ describe.each(startupCases)('%s client startup', (_name, options) => {
 			trackObservers();
 			const client = createConsentClient({
 				...options,
-				acknowledgeNoRecords: true,
 				ui: false,
 			});
 			clients.push(client);

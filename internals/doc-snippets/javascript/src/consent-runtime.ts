@@ -7,7 +7,8 @@ import { scripts } from './scripts';
 // One runtime for the page: policy, stored choices, script loading,
 // iframe blocking and the reload after a revocation.
 export const runtime = createConsentRuntime({
-	mode: hosted({ backendURL: 'https://your-project.inth.app' }),
+	backendURL: 'https://your-project.inth.app',
+	mode: hosted(),
 	scripts,
 });
 // #endregion docs:runtime

@@ -16,7 +16,7 @@ import type { AstroConsentClient } from '../client';
 // loads, so no test timeout covers the compile.
 import * as reactPanelSurface from '../components/islands/panel-surface';
 import { resolveOptions } from '../integration';
-import { offline as offlineMode } from '../mode';
+import { testing as testingMode } from '../testing';
 import type { C15tAstroOptions, C15tColorScheme } from '../types';
 import { registerDialogAdapter, registerDialogSurface } from '../ui/adapter';
 import { reactDialogAdapter } from '../ui/react';
@@ -57,7 +57,7 @@ const start = function start(
 	extra: Partial<C15tAstroOptions> = {}
 ): AstroConsentClient {
 	const options: C15tAstroOptions = {
-		mode: offlineMode({ acknowledgeNoRecords: true }),
+		mode: testingMode(),
 		...extra,
 	};
 	if (colorScheme) {
@@ -203,7 +203,7 @@ describe('colorScheme: null', () => {
 		client = boot(
 			resolveOptions({
 				colorScheme: null,
-				mode: offlineMode({ acknowledgeNoRecords: true }),
+				mode: testingMode(),
 			})
 		);
 		expect(isDark()).toBe(false);
@@ -218,9 +218,8 @@ describe('opening the React dialog', () => {
 		registerDialogAdapter('react', () => Promise.resolve(reactDialogAdapter));
 		registerDialogSurface('react', () => Promise.resolve(reactPanelSurface));
 		const opened = start(colorScheme, {
-			mode: offlineMode({
-				acknowledgeNoRecords: true,
-				policyRules: [testRule],
+			mode: testingMode({
+				policy: [testRule],
 			}),
 			ui: 'react',
 		});

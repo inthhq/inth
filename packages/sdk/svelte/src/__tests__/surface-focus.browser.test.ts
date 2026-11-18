@@ -1,10 +1,10 @@
-import { custom } from '@c15t/core';
 import { firstTabbable } from '@c15t/ui/utils';
 import { mount, unmount } from 'svelte';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { ensureSurfaceStyles } from '../lib/surface-styles';
 import Fixture from './fixtures/pending-sheets-fixture.svelte';
+import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 
 /**
@@ -45,7 +45,7 @@ const mountSurface = function mountSurface(surface: 'banner' | 'dialog') {
 		props: {
 			options: {
 				disableAnimation: true,
-				mode: custom({}),
+				mode: transportMode({}),
 				persistence: false,
 				prefetch: policyFixture(),
 			},

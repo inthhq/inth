@@ -19,8 +19,8 @@ import { useEffect } from 'react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { offline } from '../index';
 import { ConsentProvider } from '../provider';
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 const chunk = vi.hoisted(() => {
@@ -81,7 +81,7 @@ test('unmounting before the blocker loads fails held requests closed', async () 
 	const view = await render(
 		<ConsentProvider
 			options={{
-				mode: offline({ acknowledgeNoRecords: true }),
+				mode: testing(),
 				networkBlocker: { logBlockedRequests: false, rules },
 				persistence: false,
 				// Stored consent allows it: still unchecked, so still blocked.

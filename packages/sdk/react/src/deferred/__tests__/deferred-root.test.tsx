@@ -12,6 +12,7 @@ import { Suspense, act, useLayoutEffect, useSyncExternalStore } from 'react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 import { serverScriptStart } from '../../../../core/src/runtime/script-server-start';
+import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import { policyFixture } from '../../__tests__/policy-fixture';
 import {
 	BANNER,
@@ -21,7 +22,7 @@ import {
 } from '../../__tests__/streamed-ssr-harness';
 import type { StreamedPage } from '../../__tests__/streamed-ssr-harness';
 import { useSaveConsents, useSnapshot } from '../../hooks';
-import { ConsentProvider, custom } from '../../index';
+import { ConsentProvider } from '../../index';
 import { useScriptLoader } from '../../module-hooks/script-loader';
 import {
 	canDeferEngine,
@@ -56,7 +57,7 @@ const policyConfig = function policyConfig(
 
 const transportInit = vi.fn(() => Promise.resolve({}));
 const transportSave = vi.fn(() => Promise.resolve({ ok: true as const }));
-const mode = custom({ init: transportInit, save: transportSave });
+const mode = transportMode({ init: transportInit, save: transportSave });
 /** The categories the page uses, as the CookieBench fixture names them. */
 const consentCategories = ['necessary', 'marketing'] as const;
 

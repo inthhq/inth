@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { ConsentBanner, ConsentProvider, offline } from '@c15t/svelte';
+	import { ConsentBanner, ConsentProvider } from '@c15t/svelte';
 	import type { Theme } from '@c15t/svelte';
+	import { testing } from '@c15t/svelte/testing';
 
 	import ForceBannerShow from '#lib/components/ForceBannerShow.svelte';
 	import {
@@ -546,9 +547,8 @@
 	{#key key}
 		<ConsentProvider
 			options={{
-				mode: offline({
-					acknowledgeNoRecords: true,
-					policyRules: [
+				mode: testing({
+					policy: [
 						{
 							id: 'demo-theme',
 							match: { fallback: true, isDefault: true },

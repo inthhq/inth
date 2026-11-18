@@ -1,9 +1,9 @@
-import { custom } from '@c15t/core';
 import { render, waitFor } from '@testing-library/svelte';
 import { expect, test } from 'vitest';
 
 import type { ConsentManagerOptions } from '../lib/types';
 import Fixture from './fixtures/legal-links-fixture.svelte';
+import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 
 test('legal links read as a list after the description, as in React', async () => {
@@ -13,7 +13,7 @@ test('legal links read as a list after the description, as in React', async () =
 				cookiePolicy: { href: '/cookies', label: 'Cookies' },
 				privacyPolicy: { href: '/privacy', label: 'Privacy' },
 			},
-			mode: custom({}),
+			mode: transportMode({}),
 			persistence: false,
 			prefetch: policyFixture(),
 		} as ConsentManagerOptions,

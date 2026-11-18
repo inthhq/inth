@@ -13,8 +13,8 @@ import { beforeAll, describe, expect, it } from 'vitest';
 
 import IABConsentBanner from '../components/iab-prompt.astro';
 import { resolveOptions } from '../integration';
-import { offline as offlineMode } from '../mode';
 import { resolveConsentContext } from '../server';
+import { testing as testingMode } from '../testing';
 import type { C15tAstroOptions, C15tLocals } from '../types';
 
 let container: AstroContainer;
@@ -35,7 +35,7 @@ const IAB_POLICY = {
 const iabOptions: C15tAstroOptions = {
 	consentCategories: ['necessary', 'marketing'],
 	iab: { cmpId: 160, gvl: MINIMAL_GVL as never },
-	mode: offlineMode({ policyRules: [IAB_POLICY as never] }),
+	mode: testingMode({ policy: [IAB_POLICY as never] }),
 };
 
 const buildLocals = async function buildLocals(
@@ -234,7 +234,7 @@ describe('<IABConsentBanner />', () => {
 		const locals = await buildLocals({
 			consentCategories: ['necessary', 'marketing'],
 			iab: { cmpId: 160 },
-			mode: offlineMode({ policyRules: [IAB_POLICY as never] }),
+			mode: testingMode({ policy: [IAB_POLICY as never] }),
 		});
 		const html = await render(locals);
 		expect(html).not.toContain('data-testid="iab-consent-banner-root"');
@@ -245,8 +245,8 @@ describe('<IABConsentBanner />', () => {
 		// IAB rule when a CMP is configured, so pin an opt-in rule instead.
 		const locals = await buildLocals({
 			iab: { cmpId: 160, gvl: MINIMAL_GVL as never },
-			mode: offlineMode({
-				policyRules: [
+			mode: testingMode({
+				policy: [
 					{
 						id: 'opt-in-only',
 						match: { fallback: true, isDefault: true },

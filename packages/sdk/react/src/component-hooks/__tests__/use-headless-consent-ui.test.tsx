@@ -10,8 +10,8 @@ import { renderHook } from 'vitest-browser-react';
 import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { KernelContext } from '~/context';
-import { offline } from '~/transports/offline';
 
+import { testing } from '../../testing';
 import { useHeadlessConsentUI } from '../use-headless-consent-ui';
 
 const createWrapper = function createWrapper(ui: {
@@ -24,7 +24,7 @@ const createWrapper = function createWrapper(ui: {
 			<ConsentProvider
 				options={{
 					initialUI: ui?.mode,
-					mode: offline({ acknowledgeNoRecords: true }),
+					mode: testing(),
 					persistence: false,
 					prefetch: {
 						...policyFixture(undefined, {

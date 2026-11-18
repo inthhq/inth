@@ -78,6 +78,7 @@ export interface ConsentRootProps {
 	 */
 	options?: Omit<
 		ConsentProviderOptions,
+		| 'backendURL'
 		| 'mode'
 		| 'clearOnRevocation'
 		| 'networkBlocker'
@@ -91,8 +92,9 @@ export interface ConsentRootProps {
 		| '__resolveStreamedInit'
 	> & {
 		/**
-		 * Replaces the mode the state carries. Takes the data from
-		 * `@c15t/tanstack-start`, or a transport factory such as `custom()`.
+		 * Replaces the mode the state carries: `manifest()` or `hosted()`
+		 * from `@c15t/tanstack-start`, `testing()` from
+		 * `@c15t/tanstack-start/testing`, or a transport factory.
 		 */
 		mode?: ConsentMode | ProviderTransportFactory;
 	};

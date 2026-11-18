@@ -8,7 +8,6 @@
 import { createConsentManifestPolicyPack } from '@c15t/schema/types';
 import type { ConsentManifest } from '@c15t/schema/types';
 import type { ConsentSnapshot } from 'c15t';
-import { createOfflineTransport, custom } from 'c15t';
 import { ConsentRoot as NextConsentRoot } from 'c15t/next';
 import type { ConsentState as NextConsentState } from 'c15t/next';
 import { resolveConsent as resolveNextConsent } from 'c15t/next/server';
@@ -17,6 +16,7 @@ import { clearManifestCache } from 'c15t/server';
 import { ConsentRoot as TanStackConsentRoot } from 'c15t/tanstack-start';
 import { resolveConsent as resolveTanStackConsent } from 'c15t/tanstack-start/server';
 import type { ConsentState as TanStackConsentState } from 'c15t/tanstack-start/server';
+import { createOfflineTransport } from 'c15t/transports';
 import { act } from 'react';
 import type { ReactNode } from 'react';
 import { renderToString } from 'react-dom/server';
@@ -32,6 +32,10 @@ import {
 import { OBSERVED_RULE, observedPolicy } from '../src/policy';
 import { ConsentProbe } from '../src/react';
 import { mount, unmountAll } from './dom';
+
+/** A transport factory that hands the provider `transport`. */
+const customMode = <Transport,>(transport: Transport) =>
+	Object.assign(() => transport, { kind: 'custom' as const });
 
 const BACKEND_URL = 'https://consent.example.test';
 const MANIFEST: ConsentManifest = {
@@ -62,7 +66,7 @@ const visitorCookie = async function visitorCookie(
 	clearBrowserStorage();
 	const runtime = createConsentRuntime({
 		iframeBlocker: false,
-		mode: custom(
+		mode: customMode(
 			createOfflineTransport({
 				acknowledgeNoRecords: true,
 				policyRules: [OBSERVED_RULE],
@@ -106,12 +110,17 @@ const RELEASE_TIMEOUT_MS = 2000;
  * A manifest endpoint that holds its answers until `expected` fetches are
  * waiting, then answers the newest first, so the first visitor's resolution
  * finishes after the second one's. Later fetches are answered at once.
+ * Each resolution also reports itself to `POST /sessions`; those are
+ * answered at once and not counted as manifest fetches.
  */
 const reversedManifestFetch = function reversedManifestFetch(expected: number) {
 	const pending: (() => void)[] = [];
 	const requested: string[] = [];
 	let released = false;
 	const fetch = (input: RequestInfo | URL): Promise<Response> => {
+		if (String(input).endsWith('/sessions')) {
+			return Promise.resolve(new Response(null, { status: 204 }));
+		}
 		requested.push(String(input));
 		if (released) {
 			return Promise.resolve(manifestResponse());
@@ -268,7 +277,6 @@ describe('Next.js request isolation', () => {
 					backendURL: BACKEND_URL,
 					fetch: upstream.fetch,
 					manifestURL: `${BACKEND_URL}/manifest`,
-					reportSessions: false,
 					request: nextRequest(cookie),
 					// Isolation, not the render budget, is under test here.
 					timeoutMs: false,
@@ -317,7 +325,6 @@ describe('TanStack Start request isolation', () => {
 			resolveTanStackConsent({
 				backendURL: BACKEND_URL,
 				fetch: upstream.fetch,
-				reportSessions: false,
 				request: tanStackRequest(cookie),
 				// Isolation, not the render budget, is under test here.
 				timeoutMs: false,

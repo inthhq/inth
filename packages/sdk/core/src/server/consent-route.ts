@@ -62,6 +62,7 @@ import type {
 	ManifestCache,
 	ManifestFetch,
 } from '../libs/manifest-cache-runtime';
+import { warnManifestFallback } from '../libs/manifest-fallback';
 import { reportConsentSession } from '../libs/session-report';
 import {
 	fetchCachedAdTechProviders,
@@ -176,13 +177,6 @@ export interface ConsentRouteHandlerOptions {
 	 * @default false
 	 */
 	trustForwardedHeaders?: boolean;
-	/**
-	 * Report each init the route resolves to the backend's `POST /sessions`.
-	 * Needs an absolute `backendURL`.
-	 *
-	 * @default true
-	 */
-	reportSessions?: boolean;
 	/**
 	 * Forward consent writes and other allowlisted paths to `backendURL`.
 	 * With it on, the manifest request also carries the cookies
@@ -551,23 +545,6 @@ const isBudgetTimeout = function isBudgetTimeout(error: unknown): boolean {
 	);
 };
 
-/**
- * Whether a failed manifest read may fall back to backend `/init`: for a
- * backend that has no `/manifest` (404), and for the request that saw a
- * failure first. Not when the budget ran out, and not while the key backs
- * off after a failure, which would put the load the backoff removes back on
- * the same backend.
- */
-const canFallBackToInit = function canFallBackToInit(cause: unknown): boolean {
-	if (!(cause instanceof ManifestUnavailableError)) {
-		return true;
-	}
-	if (cause.reason === 'timeout') {
-		return false;
-	}
-	return (cause.cause as { status?: unknown } | undefined)?.status === 404;
-};
-
 /** A configured URL and the fetch that reaches it. */
 interface ResolvedTarget {
 	url: string;
@@ -932,8 +909,9 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 	};
 
 	/**
-	 * Older backends may not expose `/manifest`: ask the backend's own
-	 * `GET /init`, forwarding only the consent request headers (geo,
+	 * When the manifest is unavailable (an older backend with no
+	 * `/manifest`, an error, or a source backing off after one), ask the
+	 * backend's own `GET /init` and warn once. Forwards only the consent request headers (geo,
 	 * language, GPC) and the browser's consent journey, and rebuild the canonical output from its answer so
 	 * unknown upstream fields cannot carry stale policy evidence.
 	 */
@@ -941,9 +919,11 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 		request: Request,
 		context: ConsentRouteRequestContext,
 		budget: Budget,
-		cause: unknown
+		cause: unknown,
+		manifestURL: string
 	): Promise<Response> {
-		if (!options.backendURL || options.manifest || !canFallBackToInit(cause)) {
+		// A timeout means the budget ran out: there is no time left to ask.
+		if (!options.backendURL || options.manifest || isBudgetTimeout(cause)) {
 			throw cause;
 		}
 		if (budget.expired()) {
@@ -953,6 +933,7 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 				{ cause }
 			);
 		}
+		warnManifestFallback(manifestURL, cause);
 		const backend = resolveBackend(request, context, options.backendURL);
 		const forward: Record<string, string> = { ...c15tProtocolHeaders };
 		for (const name of CONSENT_REQUEST_HEADER_NAMES) {
@@ -1060,7 +1041,13 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 					cached: { manifest },
 				} = await readManifest(request, context, source, budget, undefined));
 			} catch (cause) {
-				return await fallBackToBackendInit(request, context, budget, cause);
+				return await fallBackToBackendInit(
+					request,
+					context,
+					budget,
+					cause,
+					source.url
+				);
 			}
 		}
 		const loadGvl = createGvlLoader(manifest, budget, context);
@@ -1084,22 +1071,19 @@ export const createConsentRouteHandler = function createConsentRouteHandler(
 			loadAdTechProviders: createAdTechProviderLoader(request, budget, context),
 			loadGvl,
 			manifest,
-			report:
-				options.reportSessions === false
-					? undefined
-					: {
-							// A request that went away is a render that stopped
-							// waiting; the browser inits again and reports the view.
-							abandoned: () => request.signal.aborted,
-							adapter,
-							backendURL: options.backendURL,
-							fetch: options.fetch as typeof globalThis.fetch | undefined,
-							headers: request.headers,
-							method: request.method,
-							source: 'route',
-							url: request.url,
-							waitUntil: context.waitUntil,
-						},
+			report: {
+				// A request that went away is a render that stopped
+				// waiting; the browser inits again and reports the view.
+				abandoned: () => request.signal.aborted,
+				adapter,
+				backendURL: options.backendURL,
+				fetch: options.fetch as typeof globalThis.fetch | undefined,
+				headers: request.headers,
+				method: request.method,
+				source: 'route',
+				url: request.url,
+				waitUntil: context.waitUntil,
+			},
 		});
 		return Response.json(deferInitGvlToRoute(payload, url.pathname), {
 			headers: initHeaders,

@@ -4,16 +4,16 @@ import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentProvider,
-	offline,
 } from '../../../packages/sdk/react/src/index';
+import { testing } from '../../../packages/sdk/react/src/testing';
 import { benchmarkConsentOptions } from './fixtures';
 
 export const CurrentConsentSurfaces = () => (
 	<ConsentProvider
 		options={{
 			...benchmarkConsentOptions,
-			mode: offline({
-				policyRules: [
+			mode: testing({
+				policy: [
 					{
 						id: 'bench-opt-in',
 						match: { fallback: true, isDefault: true },

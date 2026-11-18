@@ -4,13 +4,13 @@
  * instead of shipping no consent UI.
  */
 import { MINIMAL_GVL } from '@c15t/conformance/fixtures/gvl';
-import { custom } from '@c15t/core';
 import type { GlobalVendorList } from '@c15t/core';
 import { render } from 'svelte/server';
 import { describe, expect, test } from 'vitest';
 
 import type { ConsentManagerOptions } from '../lib/types';
 import BannerFixture from './fixtures/banner-fixture.svelte';
+import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 
 const GVL = MINIMAL_GVL as unknown as GlobalVendorList;
@@ -18,7 +18,7 @@ const GVL = MINIMAL_GVL as unknown as GlobalVendorList;
 const options = (iab?: ConsentManagerOptions['iab']): ConsentManagerOptions =>
 	({
 		iab,
-		mode: custom({}),
+		mode: transportMode({}),
 		persistence: false,
 		prefetch: {
 			...policyFixture({}, { categories: ['marketing'], model: 'iab' }),

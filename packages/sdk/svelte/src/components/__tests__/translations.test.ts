@@ -4,7 +4,6 @@
  * Mirrors: packages/sdk/react/src/hooks/__tests__/use-translations.test.tsx
  */
 
-import { custom } from '@c15t/core';
 import type { KernelTranslations, Translations } from '@c15t/core';
 import {
 	resolvePolicyRules,
@@ -15,6 +14,7 @@ import { render, screen, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, test } from 'vitest';
 
 import ContextConsumerFixture from '../../__tests__/fixtures/context-consumer-fixture.svelte';
+import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import { TEST_OPT_IN_RULE, testOffline } from '../../__tests__/test-offline';
 
 const backendEnglish = {
@@ -315,7 +315,7 @@ describe('Translations', () => {
 		render(ContextConsumerFixture, {
 			options: {
 				i18n: appTitle,
-				mode: custom({
+				mode: transportMode({
 					init: () =>
 						Promise.resolve({
 							policyResolution: writePolicyResolutionWire(matchedResolution()),

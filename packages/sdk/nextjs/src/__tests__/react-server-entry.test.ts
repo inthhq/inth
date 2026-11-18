@@ -52,6 +52,6 @@ describe('@c15t/nextjs react-server entry', () => {
 			type: 'manifest',
 		});
 		expect(reactServer.hosted()).toEqual({ type: 'hosted' });
-		expect(reactServer.offline()).toEqual({ type: 'offline' });
+		expect(reactServer).not.toHaveProperty('offline');
 	});
 });

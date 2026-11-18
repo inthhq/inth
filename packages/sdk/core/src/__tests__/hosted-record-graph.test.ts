@@ -103,11 +103,15 @@ describe('hosted record transport graph', () => {
 		}
 	});
 
-	test('custom() does not reach the hosted transport', () => {
-		expect(staticGraph('transports/custom.ts').files).not.toContain(
-			'transports/hosted.ts'
-		);
-	});
+	test.each(['index.ts', 'runtime/index.ts', 'runtime/client-mode.ts'])(
+		'%s does not reach the testing transport or the offline transport',
+		(entry) => {
+			const { files } = staticGraph(entry);
+
+			expect(files).not.toContain('transports/testing.ts');
+			expect(files).not.toContain('transports/offline.ts');
+		}
+	);
 
 	test('the full hosted transport loads the subject-record reviver on demand', () => {
 		expect(staticGraph('transports/hosted.ts').files).not.toContain(

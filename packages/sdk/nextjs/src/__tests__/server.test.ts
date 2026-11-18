@@ -339,15 +339,4 @@ describe('resolveConsent: manifest session reports', () => {
 		});
 		expect(fetchSpy).not.toHaveBeenCalled();
 	});
-
-	test('sends nothing when reportSessions is false', async () => {
-		const fetchSpy = vi.fn();
-		await resolveConsent({
-			backendURL: 'https://consent.example.com',
-			fetch: fetchSpy,
-			reportSessions: false,
-			snapshot: MANIFEST_FIXTURE,
-		});
-		expect(fetchSpy).not.toHaveBeenCalled();
-	});
 });

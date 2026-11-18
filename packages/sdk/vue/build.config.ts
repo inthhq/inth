@@ -13,6 +13,7 @@ export default defineBuildConfig({
 	entries: [
 		'./src/vite',
 		'./src/index',
+		'./src/testing',
 		'./src/devtools',
 		'./src/postcss-tailwind3',
 	],

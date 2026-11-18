@@ -15,6 +15,8 @@ import { policyFixture } from './policy-fixture';
 vi.mock('@c15t/nextjs/user-config', () => ({
 	default: {
 		backendURL: 'https://consent.example.com',
+		// Manifest mode, so the browser inits through the route prefix.
+		mode: { type: 'manifest' },
 		routePrefix: '/api/consent',
 		scripts: [
 			{

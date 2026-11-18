@@ -15,6 +15,7 @@ import {
 	optInRule,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import type { InternalKernel } from '../../kernel/internals';
 import {
 	clearStoredConsentRecords,
@@ -31,10 +32,18 @@ import {
 	readStoredVendorChoice,
 } from '../../modules/persistence/record-storage';
 import { encodeStoredConsentEnvelopeCompact } from '../../modules/persistence/writer/encode';
-import { custom } from '../../transports/mode';
+import type { ProviderTransportFactory } from '../../transports/mode';
 import type { KernelTransport } from '../../types';
 import { createConsentRuntime } from '../index';
 import type { ConsentRuntime, ConsentRuntimeOptions } from '../types';
+
+/**
+ * Options a test passes over the defaults. Its mode is a transport factory,
+ * so the merged options still name their backend the way an entry point must.
+ */
+type RuntimeOverrides = Partial<
+	ConsentRuntimeOptions & { mode: ProviderTransportFactory }
+>;
 
 const runtimes: ConsentRuntime[] = [];
 const optIn = matchedResolution(optInRule());
@@ -67,13 +76,13 @@ const createTransport = (
 });
 
 const start = (
-	options: Partial<ConsentRuntimeOptions> = {},
+	options: RuntimeOverrides = {},
 	transport: KernelTransport = createTransport()
 ) => {
 	const runtime = createConsentRuntime({
 		consentCategories: ['necessary', 'measurement'],
 		iframeBlocker: false,
-		mode: custom(transport),
+		mode: transportMode(transport),
 		prefetch: { initialPolicyResolution: resolution },
 		...options,
 	});
@@ -377,7 +386,7 @@ test('dispose removes the listeners and cancels a scheduled reconciliation', asy
 	expect(active.reconcileStorage()).toBe(false);
 });
 
-const threeCategories: Partial<ConsentRuntimeOptions> = {
+const threeCategories: RuntimeOverrides = {
 	consentCategories: ['necessary', 'measurement', 'marketing'],
 };
 

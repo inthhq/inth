@@ -231,15 +231,13 @@
 			window.addEventListener('example:log', (e) => log(e.detail));
 		</script>
 
-		<!-- Offline mode with three geo-keyed presets, starting as a German
-		     visitor. Change the country on the DevTools Location tab and run
-		     init: DE/FR show the opt-in banner, US-CA the opt-out flow,
-		     anywhere else no banner. -->
+		<!-- The testing file, with three geo-keyed presets and no backend,
+		     starting as a German visitor. Change the country on the DevTools
+		     Location tab and run init: DE/FR show the opt-in banner, US-CA
+		     the opt-out flow, anywhere else no banner. -->
 		<script
-			src="/c15t.offline.js"
-			data-mode="offline"
-			data-acknowledge-no-records
-			data-policy-rules="europeOptIn,usPrivacyStatesOptOut,worldNone"
+			src="/c15t.testing.js"
+			data-policy="europeOptIn,usPrivacyStatesOptOut,worldNone"
 			data-country="DE"
 			data-color-scheme="system"
 			defer

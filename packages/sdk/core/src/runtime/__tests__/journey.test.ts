@@ -19,10 +19,12 @@ import {
 	noticeRule,
 	optInRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import { buildPrefetchScript } from '../../libs/prefetch/prefetch';
 import { JOURNEY_STORAGE_KEY } from '../../libs/storage-keys';
 import { clearStoredConsentRecords } from '../../modules/persistence/__tests__/record-writes';
-import { custom, hosted } from '../../transports/mode';
+import { hosted } from '../../transports/mode';
+import type { ProviderTransportFactory } from '../../transports/mode';
 import { c15tProtocolHeaders } from '../../transports/version-header';
 import type { KernelTransport } from '../../types';
 import {
@@ -34,6 +36,14 @@ import {
 import { createJourneyController } from '../journey';
 import type { JourneyStorage } from '../journey';
 import type { ConsentRuntime, ConsentRuntimeOptions } from '../types';
+
+/**
+ * Options a test passes over the defaults. Its mode is a transport factory,
+ * so the merged options still name their backend the way an entry point must.
+ */
+type RuntimeOverrides = Partial<
+	ConsentRuntimeOptions & { mode: ProviderTransportFactory }
+>;
 
 const SERVER_ID = '3b241101-e2bb-4255-8caf-4136c566a962';
 
@@ -87,7 +97,7 @@ const init = () => requests.filter((request) => request.path === '/init');
 const saves = () => requests.filter((request) => request.path === '/subjects');
 
 /** Start a runtime, as a page load does, and wait for its `/init`. */
-const load = async (options: Partial<ConsentRuntimeOptions> = {}) => {
+const load = async (options: RuntimeOverrides = {}) => {
 	const runtime = createConsentRuntime({
 		consentCategories: ['necessary', 'measurement'],
 		mode: backend(),
@@ -357,7 +367,7 @@ describe("journey: 'tab'", () => {
 			{
 				consentCategories: ['necessary', 'measurement'],
 				journey: 'tab',
-				mode: custom({ init: () => Promise.resolve({}), save }),
+				mode: transportMode({ init: () => Promise.resolve({}), save }),
 				prefetch: stream.promise,
 			},
 			{ ...defaultRuntimeModules, streamPrefetch }
@@ -386,7 +396,7 @@ describe("journey: 'tab'", () => {
 		const runtime = createConsentProviderRuntime(
 			{
 				consentCategories: ['necessary', 'measurement'],
-				mode: custom({ init: () => Promise.resolve({}), save }),
+				mode: transportMode({ init: () => Promise.resolve({}), save }),
 				persistence: false,
 				// Still pending: only the synchronous adoption can hand it over.
 				prefetch: new Promise(() => {
@@ -467,7 +477,7 @@ describe('a journey a server render started', () => {
 		const runtime = createConsentProviderRuntime(
 			{
 				consentCategories: ['necessary', 'measurement'],
-				mode: custom({ init: () => Promise.resolve({}), save }),
+				mode: transportMode({ init: () => Promise.resolve({}), save }),
 				prefetch: stream.promise,
 			},
 			{ ...defaultRuntimeModules, streamPrefetch }
@@ -503,7 +513,7 @@ describe('a journey a server render started', () => {
 		const runtime = createConsentProviderRuntime(
 			{
 				consentCategories: ['necessary', 'measurement'],
-				mode: custom({ init: transportInit, save }),
+				mode: transportMode({ init: transportInit, save }),
 				prefetch: stream.promise,
 			},
 			{ ...defaultRuntimeModules, streamPrefetch }
@@ -531,7 +541,7 @@ describe('a journey a server render started', () => {
 			{
 				consentCategories: ['necessary', 'measurement'],
 				journey: 'tab',
-				mode: custom({
+				mode: transportMode({
 					init: () => Promise.resolve({}),
 					save: () => Promise.resolve({ ok: true }),
 				}),
@@ -563,7 +573,7 @@ describe('a journey a server render started', () => {
 		const runtime = createConsentProviderRuntime(
 			{
 				consentCategories: ['necessary', 'measurement'],
-				mode: custom({ init: () => Promise.resolve({}), save }),
+				mode: transportMode({ init: () => Promise.resolve({}), save }),
 				prefetch: stream.promise,
 			},
 			{ ...defaultRuntimeModules, streamPrefetch }
@@ -603,7 +613,7 @@ describe('a streamed prefetch the runtime cannot stream', () => {
 		const runtime = createConsentProviderRuntime(
 			{
 				consentCategories: ['necessary', 'measurement'],
-				mode: custom({ init: transportInit, save }),
+				mode: transportMode({ init: transportInit, save }),
 				prefetch: stream.promise,
 			},
 			defaultRuntimeModules

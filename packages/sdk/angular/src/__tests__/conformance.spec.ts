@@ -28,7 +28,7 @@ import type {
 	SuiteApi,
 	TestDriver,
 } from '@c15t/conformance';
-import { custom, deferInitGvl, local } from '@c15t/core';
+import { deferInitGvl } from '@c15t/core';
 import type {
 	AllConsentNames,
 	ConsentKernel,
@@ -44,11 +44,13 @@ import {
 import type { GlobalVendorList } from '@c15t/schema/types';
 import { describe, expect, test } from 'vitest';
 
+import { testing } from '../../testing/src/testing-mode';
 import { whenIABReady } from '../lib/core/iab-loader';
-import type { C15tOptions } from '../lib/core/options';
+import type { C15tOptions, C15tProviderOptions } from '../lib/core/options';
 import { bootClient, renderServer } from './conformance-app';
 import type { ClientApp } from './conformance-app';
 import { CONFORMANCE_COMPONENTS } from './conformance-registry';
+import { transportMode } from './fixtures/transport-mode';
 import { createPolicySession, probePolicyContract } from './policy-driver';
 
 type StoreState = Record<string, unknown> & {
@@ -149,7 +151,7 @@ const buildProviderOptions = function buildProviderOptions(
 		...provided,
 		consentCategories: consentCategoriesFor(provided),
 		disableAnimation: provided.disableAnimation ?? true,
-		mode: provided.mode ?? local({ acknowledgeNoRecords: true }),
+		...(provided.mode ? { mode: provided.mode } : { mode: testing() }),
 		persistence: opts.persistence ?? provided.persistence ?? false,
 		prefetch,
 		trapFocus: provided.trapFocus ?? false,
@@ -236,16 +238,18 @@ const driver: TestDriver = {
 						),
 					});
 			});
-			options.mode = custom({ init: () => promise });
+			options.mode = transportMode({ init: () => promise });
 		} else if (opts.initMode === 'failing') {
-			options.mode = custom({
+			options.mode = transportMode({
 				init: () => Promise.reject(new Error('Init failed')),
 			});
 		}
 
 		const container = document.createElement('div');
 		document.body.append(container);
-		const app = await bootClient(container, options, { entries });
+		const app = await bootClient(container, options as C15tProviderOptions, {
+			entries,
+		});
 		lastApp = app;
 
 		if (isIabComponent(opts.component)) {
@@ -288,7 +292,9 @@ const driver: TestDriver = {
 				deferInitGvl({ gvl: options.prefetch.initialIab.gvl }, '/test-gvl')
 			);
 		}
-		const rendered = await renderServer(options, { entries });
+		const rendered = await renderServer(options as C15tProviderOptions, {
+			entries,
+		});
 		return rendered.html;
 	},
 };

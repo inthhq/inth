@@ -1,10 +1,10 @@
+import { hosted } from '@c15t/core/transports';
 /**
  * The `c15tVue` plugin for tests whose subject is not the mode. Their
  * options name a backend the way older tests did, with `backendURL`; this
  * wrapper turns it into `hosted()` and installs the real plugin. A test
  * that passes `mode` or `runtime` gets the plugin unchanged.
  */
-import { hosted } from '@c15t/core';
 import type { App, Plugin } from 'vue';
 
 import { c15tVue as plugin } from '../index';

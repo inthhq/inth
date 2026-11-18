@@ -1,7 +1,7 @@
 {/* Generated from internals/doc-snippets/javascript/src/translations.ts (docs:translations) by scripts/sync-example-docs.ts. Edit the source file. */}
 
 ```ts title="src/main.ts"
-import { init, local } from '@c15t/browser';
+import { testing } from '@c15t/browser/testing';
 import { policyRulePresets } from 'c15t';
 
 import { scripts } from './scripts';
@@ -28,7 +28,7 @@ export const consent = init({
 			},
 		},
 	},
-	mode: local({ policyRules: [policyRulePresets.europeOptIn()] }),
+	mode: testing({ policy: [policyRulePresets.europeOptIn()] }),
 	scripts,
 });
 ```

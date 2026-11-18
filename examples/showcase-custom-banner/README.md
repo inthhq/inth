@@ -53,10 +53,9 @@ bun run --cwd examples/showcase-custom-banner dev
 
 Then open http://localhost:3110.
 
-The app runs c15t in local mode, so you don't need an account. The policy
-ships in the bundle, and choices are stored in the browser with no consent
-records. For production, replace the `mode` line in `components/consent.tsx`
-with `hosted({ backendURL: 'https://your-project.inth.app' })`.
+Set `NEXT_PUBLIC_C15T_BACKEND_URL` in `.env.local` to your Inth project URL,
+such as `https://your-project.inth.app`. c15t reads the project's consent
+manifest and sends each choice there.
 
 Set `NEXT_PUBLIC_POSTHOG_KEY` to send events to your own PostHog project.
 Without it the app uses a placeholder key. c15t still loads PostHog after you

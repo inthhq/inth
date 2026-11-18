@@ -1,6 +1,7 @@
 import { createRoot } from 'react-dom/client';
 import { expect, test, vi } from 'vitest';
 
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 // Vitest's browser mode serves each source module as its own request, so the
@@ -38,12 +39,11 @@ test('the split dialog and widget entries load nothing until they are needed', a
 		await import('../preferences');
 		const { ConsentBanner } = await import('../prompt');
 		const { ConsentProvider } = await import('../provider');
-		const { offline } = await import('../transports/offline');
 
 		root.render(
 			<ConsentProvider
 				options={{
-					mode: offline({ acknowledgeNoRecords: true }),
+					mode: testing(),
 					persistence: false,
 					prefetch: policyFixture(),
 				}}

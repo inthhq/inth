@@ -17,7 +17,8 @@ import { c15tHandle, hosted, manifest } from '@c15t/svelte/kit';
 import type { C15tHandle } from '@c15t/svelte/kit';
 
 const hostedHandle = c15tHandle({
-	mode: hosted({ backendURL: '/api/bench-consent' }),
+	backendURL: '/api/bench-consent',
+	mode: hosted(),
 });
 
 const manifestHandle = c15tHandle({

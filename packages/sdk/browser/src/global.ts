@@ -1,4 +1,4 @@
-import { custom, hosted, local, offline } from '@c15t/core';
+import { hosted } from '@c15t/core/transports';
 import { manifest } from '@c15t/core/transports/manifest-browser';
 
 import type { CreateConsentClientContext } from './client-base';
@@ -9,19 +9,15 @@ import { createScriptTagConsentClient } from './script-tag-client';
 export { autoInit, GLOBAL_NAME, installGlobal } from './global-base';
 export type { C15tGlobalBase, QueuedCall } from './global-base';
 
-/** The global API installed by the browser bundle with every transport. */
+/** The global API installed by the browser bundle with the hosted and manifest transports. */
 export interface C15tGlobal extends C15tGlobalBase {
-	/** Transport factories, for `init({ mode: c15t.hosted({ backendURL }) })`. */
+	/** Transport factories, for `init({ mode: c15t.manifest({ inputs }) })`. */
 	hosted: typeof hosted;
-	local: typeof local;
-	/** @deprecated Use `local`. c15t v4 removes `offline`. */
-	offline: typeof offline;
-	custom: typeof custom;
 	manifest: typeof manifest;
 }
 
 /**
- * Build the global API with every transport.
+ * Build the global API with the hosted and manifest transports.
  *
  * @param context - Entry-point wiring (UI mounter, package name).
  * @returns The API, not yet installed on `window`.
@@ -31,12 +27,6 @@ export const createGlobal = function createGlobal(
 ): C15tGlobal {
 	return Object.assign(
 		createGlobalWith(context, createScriptTagConsentClient),
-		{
-			custom,
-			hosted,
-			local,
-			manifest,
-			offline,
-		}
+		{ hosted, manifest }
 	);
 };

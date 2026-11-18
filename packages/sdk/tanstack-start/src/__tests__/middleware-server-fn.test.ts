@@ -8,7 +8,7 @@ import { realpathSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-import { offline } from '@c15t/core/modes';
+import { manifest } from '@c15t/core/modes';
 import { createServerFn } from '@tanstack/react-start';
 import { createElement } from 'react';
 import { renderToReadableStream } from 'react-dom/server';
@@ -20,6 +20,7 @@ import type { ConsentRequestContext } from '../middleware';
 import { ConsentRoot } from '../root';
 import { createConsentStateHandler } from '../server';
 import type { ConsentState } from '../server';
+import { manifestOf } from './manifest-fixture';
 
 const packageRoot = join(dirname(fileURLToPath(import.meta.url)), '../..');
 
@@ -107,11 +108,11 @@ test('renders ConsentRoot from a server function that lists it', async () => {
 		.handler(
 			(() => undefined) as never,
 			createConsentStateHandler({
-				mode: offline({
-					acknowledgeNoRecords: true,
-					policyRules: [optInRule()],
-				}),
+				// A relative backend is the app's own route: no session report.
+				backendURL: '/api/c15t',
+				mode: manifest(),
 				request,
+				snapshot: manifestOf([optInRule()]),
 			}) as never
 		);
 

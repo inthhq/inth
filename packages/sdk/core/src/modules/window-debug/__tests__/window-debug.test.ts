@@ -25,7 +25,7 @@ describe('resolveWindowDebugMode', () => {
 	test('uses the kind declared by the provider transport factory', () => {
 		expect(resolveWindowDebugMode({ kind: 'offline' })).toBe('offline');
 		expect(resolveWindowDebugMode({ kind: 'hosted' })).toBe('hosted');
-		expect(resolveWindowDebugMode({ kind: 'custom' })).toBe('custom');
+		expect(resolveWindowDebugMode({ kind: 'manifest' })).toBe('manifest');
 	});
 });
 

@@ -34,13 +34,16 @@ import type {
 	ResolveRequestConsentOptions,
 } from '@c15t/core/server';
 import { hasConsentUI } from '@c15t/core/surface-actions';
+import { assertNotProduction } from '@c15t/core/testing';
 import {
 	DEFAULT_RESOLVE_TIMEOUT_MS,
 	withResolutionBudget,
 } from '@c15t/core/transports/manifest-cache';
+import { recommendedPolicyRules } from '@c15t/schema/types';
 import type {
 	ConsentRequestHeaderInputs,
 	GlobalVendorList,
+	PolicyRule,
 } from '@c15t/schema/types';
 import { baseTranslations } from '@c15t/translations/all';
 import { generateThemeCSS } from '@c15t/ui/theme';
@@ -175,10 +178,7 @@ const modeOptions = function modeOptions(
 	switch (mode.type) {
 		case 'hosted':
 			return {
-				backendURL: mode.backendURL ?? options.backendURL,
-				// The browser's own `/init` carries these; so does the render's,
-				// or server and browser resolve different policies.
-				initHeaders: mode.headers,
+				backendURL: options.backendURL,
 				mode: 'hosted',
 			};
 		case 'manifest':
@@ -193,19 +193,24 @@ const modeOptions = function modeOptions(
 				manifest: mode.snapshot,
 				manifestURL: mode.manifestURL,
 				mode: 'manifest',
-				reportSessions: options.reportSessions,
 			};
-		default:
+		default: {
+			// `testing()`: never in production.
+			assertNotProduction('@c15t/astro/testing');
+			// A pack whose model is `iab` needs a configured CMP to be eligible.
+			const iabEnabled = isIABConfigured(options.iab);
 			return {
 				mode: 'offline',
 				offline: {
-					// Same reason as the client factory in `mode.ts`: a pack whose
-					// model is `iab` needs a configured CMP to be eligible.
-					iabEnabled: isIABConfigured(options.iab),
-					policyRules: mode.policyRules,
+					iabEnabled,
+					policyRules:
+						mode.policy === undefined
+							? recommendedPolicyRules({ iab: mode.iab ?? iabEnabled })
+							: ([] as PolicyRule[]).concat(mode.policy),
 					translations,
 				},
 			};
+		}
 	}
 };
 

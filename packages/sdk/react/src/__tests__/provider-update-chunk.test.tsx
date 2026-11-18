@@ -7,8 +7,8 @@
 import { expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { offline } from '../index';
 import { ConsentProvider } from '../provider';
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 const updateModuleRequests = () =>
@@ -20,11 +20,13 @@ test('a rerender with the same option values loads no update module', async () =
 	// Vite's module graph can fill the browser's default resource buffer.
 	performance.setResourceTimingBufferSize(5000);
 	performance.clearResourceTimings();
-	const mode = offline({ acknowledgeNoRecords: true });
+	const testingMode = testing();
 	const prefetch = policyFixture();
 	const first = { externalId: 'user_1' };
 	const provider = (user: { externalId: string }) => (
-		<ConsentProvider options={{ mode, persistence: false, prefetch, user }}>
+		<ConsentProvider
+			options={{ mode: testingMode, persistence: false, prefetch, user }}
+		>
 			<span>child</span>
 		</ConsentProvider>
 	);

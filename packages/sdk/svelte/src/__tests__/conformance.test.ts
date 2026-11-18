@@ -26,7 +26,7 @@ import type {
 	SuiteApi,
 	TestDriver,
 } from '@c15t/conformance';
-import { custom, deferInitGvl, offline } from '@c15t/core';
+import { deferInitGvl } from '@c15t/core';
 import type {
 	AllConsentNames,
 	ConsentKernel,
@@ -44,8 +44,10 @@ import { mount, unmount } from 'svelte';
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 
 import { whenIABReady } from '../lib/iab-loader';
+import { testing } from '../lib/testing';
 import type { ConsentManagerOptions } from '../lib/types';
 import ConformanceFixture from './fixtures/conformance-fixture.svelte';
+import { transportMode } from './fixtures/transport-mode';
 import { createPolicySession, probePolicyContract } from './policy-driver';
 import { closeSsrWorker, renderSsr, warmSsrWorker } from './server-render';
 
@@ -136,7 +138,7 @@ const buildProviderOptions = function buildProviderOptions(
 		...provided,
 		consentCategories: consentCategoriesFor(provided),
 		disableAnimation: provided.disableAnimation ?? true,
-		mode: provided.mode ?? offline({ acknowledgeNoRecords: true }),
+		...(provided.mode ? { mode: provided.mode } : { mode: testing() }),
 		persistence: opts.persistence ?? provided.persistence ?? false,
 		prefetch,
 		trapFocus: provided.trapFocus ?? false,
@@ -214,9 +216,9 @@ const driver: TestDriver = {
 						),
 					});
 			});
-			options.mode = custom({ init: () => promise });
+			options.mode = transportMode({ init: () => promise });
 		} else if (opts.initMode === 'failing') {
-			options.mode = custom({
+			options.mode = transportMode({
 				init: () => Promise.reject(new Error('Init failed')),
 			});
 		}

@@ -54,8 +54,10 @@ export const readBackendURLFromEnv = function readBackendURLFromEnv():
  */
 export interface ConsentConfig extends ConsentClientOptions {
 	/**
-	 * Backend base URL. Consent saves (`/subjects`) go here, and the server
-	 * reads `/manifest` or `/init` from it.
+	 * Backend base URL: your Inth project URL. The server reads its
+	 * consent manifest (or asks its `/init` with `mode: hosted()`), and
+	 * consent saves (`/subjects`) go here. Required unless `mode` is
+	 * `testing()`; the environment variables below supply it when unset.
 	 *
 	 * @default process.env.NEXT_PUBLIC_C15T_BACKEND_URL, then
 	 * process.env.NEXT_PUBLIC_INTH_PROJECT_URL
@@ -63,9 +65,21 @@ export interface ConsentConfig extends ConsentClientOptions {
 	backendURL?: string;
 
 	/**
-	 * How the visitor's policy is resolved: `manifest()`, `hosted()` or
-	 * `local()` from `c15t/next`. They are plain data, so the browser only
-	 * loads the code of the mode it runs.
+	 * How the visitor's policy is resolved. Plain data, so the browser only
+	 * loads the code it runs.
+	 *
+	 * - Omitted, or `manifest()` from `c15t/next`: resolve from the
+	 *   backend's consent manifest, which the build downloads. When it is
+	 *   unavailable, the server and the consent route ask the backend's
+	 *   `/init` instead and log a warning.
+	 * - `hosted()` from `c15t/next`: ask the backend's `/init` for every
+	 *   visitor.
+	 * - `testing()` from `c15t/next/testing`: the browser resolves a policy
+	 *   with no network, for tests. Needs no `backendURL`, and throws in
+	 *   production builds.
+	 *
+	 * To keep consent out of the way in an app's own tests instead, set
+	 * `enabled: false`.
 	 *
 	 * @default manifest()
 	 */
@@ -89,7 +103,7 @@ export interface ConsentConfig extends ConsentClientOptions {
 	 * The route at {@link routePrefix} was created with
 	 * `createConsentRoute({ proxy: true })` (or `createPagesConsentRoute`),
 	 * so the browser sends saves through it instead of straight to
-	 * `backendURL`, or to `hosted()`'s own `backendURL`. The server helpers
+	 * `backendURL`. The server helpers
 	 * keep using those URLs, so keep them absolute. Needs `routePrefix`.
 	 * Same option as TanStack Start's `createConsentStateHandler({ proxy })`.
 	 *
@@ -157,18 +171,7 @@ export const checkRoutePrefix = function checkRoutePrefix(
 	return routePrefix.replace(/\/+$/u, '');
 };
 
-const MODE_TYPES = new Set(['manifest', 'hosted', 'offline']);
-
-/**
- * Whether a mode can run without the config's backend URL: offline mode,
- * or hosted mode with its own.
- */
-const modeHasBackend = function modeHasBackend(mode: ConsentMode): boolean {
-	return (
-		mode.type === 'offline' ||
-		(mode.type === 'hosted' && mode.backendURL !== undefined)
-	);
-};
+const MODE_TYPES = new Set(['manifest', 'hosted', 'testing']);
 
 /**
  * The checks `defineConsentConfig` runs on the server.
@@ -182,13 +185,13 @@ const assertConsentConfig = function assertConsentConfig(
 		throw new TypeError('@c15t/nextjs: defineConsentConfig expects an object.');
 	}
 	const backendURL = config.backendURL ?? readBackendURLFromEnv();
-	const mode = config.mode ?? { type: 'manifest' as const };
-	if (!MODE_TYPES.has(mode.type)) {
+	const { mode } = config;
+	if (mode !== undefined && !MODE_TYPES.has(mode.type)) {
 		throw new TypeError(
-			'@c15t/nextjs: defineConsentConfig `mode` must be manifest(), hosted() or local() from c15t/next. Pass a custom transport through ConsentRoot `options.mode`.'
+			'@c15t/nextjs: defineConsentConfig `mode` must be manifest() or hosted() from c15t/next, or testing() from c15t/next/testing. Pass a transport through ConsentRoot `options.mode`.'
 		);
 	}
-	if (backendURL === undefined && !modeHasBackend(mode)) {
+	if (backendURL === undefined && mode?.type !== 'testing') {
 		throw new TypeError(
 			`@c15t/nextjs: defineConsentConfig needs \`backendURL\`, or ${BACKEND_URL_ENV} (or NEXT_PUBLIC_INTH_PROJECT_URL) set at build time.`
 		);
@@ -202,12 +205,9 @@ const assertConsentConfig = function assertConsentConfig(
 			'@c15t/nextjs: `proxy` sends saves through the consent route, so it needs `routePrefix`.'
 		);
 	}
-	if (mode.type === 'manifest') {
+	if (mode?.type === 'manifest') {
 		assertConsentURL('mode.manifestURL', mode.manifestURL);
 		assertConsentURL('mode.geoURL', mode.geoURL);
-	}
-	if (mode.type === 'hosted') {
-		assertConsentURL('mode.backendURL', mode.backendURL);
 	}
 	if (
 		config.journey !== undefined &&
@@ -237,10 +237,10 @@ const assertConsentConfig = function assertConsentConfig(
  * every server render. A browser bundle skips them.
  *
  * @returns The validated, frozen config.
- * @throws {TypeError} When the mode needs a backend URL and none is set, a
- * URL is neither an absolute `http(s)` URL nor a `/`-relative path,
- * `routePrefix` is `/`, `proxy` is set without `routePrefix`, or `mode` or
- * `journey` is not one this package knows.
+ * @throws {TypeError} When no backend URL is set and `mode` is not
+ * `testing()`, a URL is neither an absolute `http(s)` URL nor a
+ * `/`-relative path, `routePrefix` is `/`, `proxy` is set without
+ * `routePrefix`, or `mode` or `journey` is not one this package knows.
  * @example
  * ```ts
  * // c15t.config.ts

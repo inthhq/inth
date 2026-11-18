@@ -246,9 +246,9 @@ describe('Next.js build-time manifest', () => {
 		]);
 	});
 
-	test('next build stops when the fetch fails and leaves the earlier snapshot alone', async () => {
+	test("with onBuildError: 'fail', next build stops when the fetch fails and leaves the earlier snapshot alone", async () => {
 		const root = await createRoot();
-		const options = optionsFor();
+		const options = { ...optionsFor(), onBuildError: 'fail' as const };
 		const wrapped = withConsentManifest({}, options);
 		await wrapped('phase-production-build', { defaultConfig: {} });
 		const before = await readServerModule(root);
@@ -386,7 +386,7 @@ describe('Next.js build-time manifest', () => {
 			const root = await createRoot();
 			await writeFile(
 				join(root, 'c15t.config.ts'),
-				"export default { backendURL: 'https://config.example.com' };\n"
+				"export default { backendURL: 'https://config.example.com', mode: { type: 'manifest' } };\n"
 			);
 			const { fetch } = optionsFor();
 			await build({ fetch });
@@ -412,15 +412,15 @@ describe('Next.js build-time manifest', () => {
 			vi.stubEnv('NEXT_PUBLIC_INTH_PROJECT_URL', undefined);
 			await createRoot();
 			const { fetch } = optionsFor();
-			await expect(build({ fetch })).rejects.toThrow(
+			await expect(build({ fetch, onBuildError: 'fail' })).rejects.toThrow(
 				'Pass backendURL or set NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL).'
 			);
 		});
 	});
 
 	test.each([
-		['hosted()', "{ mode: { type: 'hosted' } }", 'uses hosted()'],
-		['offline()', "{ mode: { type: 'offline' } }", 'uses local()'],
+		['hosted()', "{ mode: { type: 'hosted' } }", 'sets hosted()'],
+		['testing()', "{ mode: { type: 'testing' } }", 'sets testing()'],
 		[
 			'manifest({ snapshot })',
 			"{ mode: { type: 'manifest', snapshot: { revision: 'own' } } }",
@@ -486,7 +486,7 @@ describe('Next.js build-time manifest', () => {
 		const root = await createRoot();
 		await writeFile(
 			join(root, 'c15t.config.ts'),
-			"export default { backendURL: 'https://config.example.com' };\n"
+			"export default { backendURL: 'https://config.example.com', mode: { type: 'manifest' } };\n"
 		);
 		const { fetch } = optionsFor();
 		await withConsentManifest({}, { fetch })('phase-production-build', {

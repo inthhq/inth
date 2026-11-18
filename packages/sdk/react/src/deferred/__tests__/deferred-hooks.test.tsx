@@ -14,9 +14,9 @@ import { policyFixture } from '../../__tests__/policy-fixture';
 import { KernelContext, ProviderServicesContext } from '../../context';
 import { useEventDispatcher } from '../../event-dispatcher';
 import { markIABProviderLoaded } from '../../hooks/use-iab-policy-guard';
-import { offline } from '../../index';
 import { usePersistence } from '../../module-hooks/persistence';
 import { useScriptLoader } from '../../module-hooks/script-loader';
+import { testing } from '../../testing';
 import { iabProviderLoaded, whenIABProviderLoads } from '../boot';
 import { createDeferredKernel } from '../deferred-kernel';
 import type { DeferredKernelHandle } from '../deferred-kernel';
@@ -68,7 +68,7 @@ const Shell = ({
 /** Provider options for the engine, made once per test. */
 const engineOptions = (values: Parameters<typeof policyFixture>[0] = {}) => ({
 	consentCategories: ['measurement' as const],
-	mode: offline({ acknowledgeNoRecords: true }),
+	mode: testing(),
 	persistence: false as const,
 	prefetch: policyFixture(values),
 	scripts: [posthog],

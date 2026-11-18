@@ -38,8 +38,9 @@ const GateBridge = () => {
 const GatePage = () => (
 	<ConsentProvider
 		options={{
+			backendURL: '/api/bench-consent',
 			consentCategories: [...gateConsentCategories],
-			mode: hosted({ backendURL: '/api/bench-consent' }),
+			mode: hosted(),
 		}}
 	>
 		<style dangerouslySetInnerHTML={{ __html: gatePageCSS }} />

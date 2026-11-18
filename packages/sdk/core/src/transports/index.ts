@@ -43,14 +43,16 @@ export type {
 	ProviderTransportFactory,
 	ProviderTransportKind,
 } from './mode';
-export { custom } from './custom';
 export { hosted } from './mode';
 export type {
 	OfflineKernelTransport,
 	OfflineTransportOptions,
 } from './offline';
-export { createOfflineTransport, local, offline } from './offline';
-export type { OfflineModeFactory, OfflineModeOptions } from './offline';
+export { createOfflineTransport } from './offline';
+// Deprecated, kept for `@inth/react-native` only.
+export { offline } from './offline';
+export type { OfflineModeOptions } from './offline';
+export { custom } from './custom';
 export {
 	ConsentSaveRejectedError,
 	isConsentSaveRejection,

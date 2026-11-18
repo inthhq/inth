@@ -87,6 +87,7 @@ const HeadlessBenchmarkUI = () => {
 const HeadlessPage = () => (
 	<ConsentProvider
 		options={{
+			backendURL: '/api/bench-consent',
 			callbacks: {
 				onChoiceRecorded() {
 					const state = getBenchState(scenario);
@@ -102,7 +103,7 @@ const HeadlessPage = () => (
 				},
 			},
 			consentCategories,
-			mode: hosted({ backendURL: '/api/bench-consent' }),
+			mode: hosted(),
 		}}
 	>
 		<HeadlessBenchmarkUI />

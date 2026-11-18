@@ -15,6 +15,7 @@ export const OPTIONS: Record<keyof ConsentProviderOptions, 'display' | 'key'> =
 		__debugPkg: 'key',
 		__preloadScriptLoader: 'key',
 		__resolveStreamedInit: 'key',
+		backendURL: 'key',
 		callbacks: 'key',
 		clearOnRevocation: 'key',
 		colorScheme: 'display',

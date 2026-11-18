@@ -58,8 +58,6 @@ export interface ResolveConsentOptions extends ConsentRequestOptions {
 	 * `c15t/generated`. Resolves locally using this visitor's inputs.
 	 */
 	snapshot?: ConsentManifest;
-	/** Report manifest resolutions to the backend. @default true */
-	reportSessions?: boolean;
 	/**
 	 * Hands session reports to the host's `waitUntil` so they outlive the response.
 	 * The promise never rejects. Defaults to detached work without registration.

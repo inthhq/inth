@@ -151,6 +151,8 @@ export default mergeConfig(
 					'@c15t/core/iab-support',
 					resolve(__dirname, '../core/src/iab-support.ts'),
 				],
+				['@c15t/core/testing', resolve(__dirname, '../core/src/testing.ts')],
+				['@c15t/core/modes', resolve(__dirname, '../core/src/modes.ts')],
 				['@c15t/core', resolve(__dirname, '../core/src/index.ts')],
 				['@c15t/schema/types', resolve(__dirname, '../schema/src/types.ts')],
 				[

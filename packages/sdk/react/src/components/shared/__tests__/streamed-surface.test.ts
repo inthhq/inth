@@ -10,13 +10,13 @@ import {
 } from '@c15t/core/runtime';
 import { expect, test } from 'vitest';
 
-import { custom } from '../../../index';
+import { transportMode } from '../../../__tests__/fixtures/transport-mode';
 import { readRecorded } from '../streamed-surface';
 
 test('throws the pending promise, then returns the recorded result', async () => {
 	const stream = Promise.withResolvers<{ now: number }>();
 	const runtime = createConsentProviderRuntime(
-		{ mode: custom({}), persistence: false, prefetch: stream.promise },
+		{ mode: transportMode({}), persistence: false, prefetch: stream.promise },
 		{ ...defaultRuntimeModules, streamPrefetch }
 	);
 	const settled = runtime.streamed?.settled;
@@ -42,7 +42,7 @@ test('a rejected stream reads as undefined on the retry', async () => {
 	const rejected = Promise.reject(new Error('backend down'));
 	rejected.catch(() => undefined);
 	const runtime = createConsentProviderRuntime(
-		{ mode: custom({}), persistence: false, prefetch: rejected },
+		{ mode: transportMode({}), persistence: false, prefetch: rejected },
 		{ ...defaultRuntimeModules, streamPrefetch }
 	);
 	const settled = runtime.streamed?.settled;

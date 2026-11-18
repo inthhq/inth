@@ -1,5 +1,6 @@
 'use client';
 
+import type { WithBackendURL } from '@c15t/core/runtime/provider';
 /**
  * The engine side of `ConsentRoot`, loaded on demand by `./root`.
  *
@@ -483,7 +484,10 @@ const AfterPage = ({
 export const EagerConsentRoot = (props: ConsentRootProps) => {
 	const { children, providerOptions, serverStart } = useRootOptions(props);
 	return (
-		<ConsentProvider options={providerOptions}>
+		// `createMode` threw already when there is no backend.
+		<ConsentProvider
+			options={providerOptions as WithBackendURL<ConsentProviderOptions>}
+		>
 			{children}
 			<Suspense fallback={null}>
 				<AfterPage

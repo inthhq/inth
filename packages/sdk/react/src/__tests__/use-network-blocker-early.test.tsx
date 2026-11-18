@@ -8,9 +8,10 @@ import type { ReactNode } from 'react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { offline, useNetworkBlocker } from '../index';
+import { useNetworkBlocker } from '../index';
 import { UNCOMMITTED_HOLD_MS } from '../module-hooks/network-hold';
 import { ConsentProvider } from '../provider';
+import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 
 const TRACKER = 'https://tracker.example/collect';
@@ -77,7 +78,7 @@ const renderWithBeacons = (
 		wrap(
 			<ConsentProvider
 				options={{
-					mode: offline({ acknowledgeNoRecords: true }),
+					mode: testing(),
 					persistence: false,
 					prefetch,
 				}}
@@ -159,7 +160,7 @@ test('a retry after suspending does not leave the first render holding', async (
 	await render(
 		<ConsentProvider
 			options={{
-				mode: offline({ acknowledgeNoRecords: true }),
+				mode: testing(),
 				persistence: false,
 				prefetch: policyFixture({ measurement: true }),
 			}}
@@ -204,7 +205,7 @@ test('a render React discards ends its hold on its own', async () => {
 		render(
 			<ConsentProvider
 				options={{
-					mode: offline({ acknowledgeNoRecords: true }),
+					mode: testing(),
 					persistence: false,
 				}}
 			>
@@ -246,7 +247,7 @@ test('a disabled provider blocker leaves the hook holding its requests', async (
 	render(
 		<ConsentProvider
 			options={{
-				mode: offline({ acknowledgeNoRecords: true }),
+				mode: testing(),
 				networkBlocker: { enabled: false, rules },
 				persistence: false,
 				prefetch: policyFixture(),
@@ -279,7 +280,7 @@ test('unmounting the hook before its blocker loads fails its held requests close
 	const view = await render(
 		<ConsentProvider
 			options={{
-				mode: offline({ acknowledgeNoRecords: true }),
+				mode: testing(),
 				persistence: false,
 				prefetch: policyFixture({ measurement: true }),
 			}}

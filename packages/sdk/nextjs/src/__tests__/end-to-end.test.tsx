@@ -1,5 +1,5 @@
 import type { KernelConfig } from '@c15t/core';
-import { hosted, manifest, offline } from '@c15t/core/modes';
+import { manifest } from '@c15t/core/modes';
 /**
  * End-to-end tests for the Next.js adapter.
  *
@@ -21,6 +21,7 @@ import { render } from 'vitest-browser-react';
 
 import { defineConsentConfig } from '../config';
 import { ConsentRoot } from '../root';
+import { testing } from '../testing';
 import { MANIFEST_FIXTURE } from './manifest-fixture';
 import { policyFixture } from './policy-fixture';
 
@@ -74,7 +75,7 @@ describe('ConsentRoot: backendURL triggers auto-init', () => {
 			);
 
 			await vi.waitFor(() => {
-				// The default mode, manifest(), re-inits through the backend.
+				// The default mode is manifest().
 				expect((window as WindowWithC15t).c15t).toMatchObject({
 					mode: 'manifest',
 					pkg: '@c15t/nextjs',
@@ -134,7 +135,7 @@ describe('ConsentRoot: backendURL triggers auto-init', () => {
 		}
 	});
 
-	test('an offline() root fires no network call', async () => {
+	test('a testing() root fires no network call', async () => {
 		const fetchSpy = vi.fn().mockResolvedValue(new Response());
 		const originalFetch = globalThis.fetch;
 		globalThis.fetch = fetchSpy as unknown as typeof globalThis.fetch;
@@ -147,7 +148,7 @@ describe('ConsentRoot: backendURL triggers auto-init', () => {
 		try {
 			const { getByTestId } = await render(
 				<ConsentRoot
-					config={{ mode: offline({ acknowledgeNoRecords: true }) }}
+					config={{ mode: testing() }}
 					state={{}}
 					persistence={false}
 				>
@@ -156,7 +157,7 @@ describe('ConsentRoot: backendURL triggers auto-init', () => {
 			);
 
 			await expect.element(getByTestId('probe')).toHaveTextContent('false');
-			// offline() resolves in the browser and saves nowhere.
+			// testing() resolves in the browser and saves nowhere.
 			expect(fetchSpy).not.toHaveBeenCalled();
 		} finally {
 			globalThis.fetch = originalFetch;
@@ -290,19 +291,13 @@ describe('ConsentRoot: config picks the transport', () => {
 			'saves post to the backend',
 			undefined,
 			'https://consent.example.com/subjects',
-			undefined,
+			manifest(),
 		],
 		[
 			'with proxy, saves post to the route too',
 			true,
 			'/api/consent/subjects',
-			undefined,
-		],
-		[
-			"with proxy, hosted()'s own backend URL stays on the server",
-			true,
-			'/api/consent/subjects',
-			hosted({ backendURL: 'https://hosted.example.com' }),
+			manifest(),
 		],
 	])(
 		'routePrefix: init hits the same-origin route, %s',

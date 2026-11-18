@@ -102,9 +102,10 @@ if (benchMode === 'manifest' || benchMode === 'scripts') {
 } else if (benchMode === 'hosted') {
 	integrations.push(
 		c15t({
+			backendURL,
 			consentCategories,
 			middleware: { skip: ['/api/bench-consent'] },
-			mode: hosted({ backendURL }),
+			mode: hosted(),
 		})
 	);
 }

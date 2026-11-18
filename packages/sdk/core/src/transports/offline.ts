@@ -13,7 +13,7 @@
  *
  * Use cases:
  * - Pure static sites with no backend.
- * - Tests and storybook fixtures.
+ * - Server-side resolution of a `testing()` test page.
  * - Apps that deliberately choose a bundled policy instead of a backend.
  */
 import type {
@@ -28,7 +28,6 @@ import {
 } from '@c15t/schema/types';
 
 import { warnNoConsentRecordsInDevelopment } from '../libs/no-records-warning';
-import type { OfflineModeOptions as OfflineModeDataOptions } from '../modes';
 import type {
 	InitContext,
 	KernelBranding,
@@ -99,7 +98,7 @@ export interface OfflineTransportOptions {
 
 	/**
 	 * Hide the development warning that this transport keeps no consent
-	 * records. See `acknowledgeNoRecords` on `local()`.
+	 * records.
 	 */
 	acknowledgeNoRecords?: boolean;
 }
@@ -148,8 +147,9 @@ const normalizeTranslations = function normalizeTranslations(
  * @param readDetectedLanguage - Reads the detected language at each init, so
  * a prefetch that resolves after the transport is built still counts.
  * @returns A function from the requested language, if any, to the copy.
+ * @internal
  */
-const createOfflineTranslationSelector =
+export const createOfflineTranslationSelector =
 	function createOfflineTranslationSelector(
 		translations: KernelTranslations,
 		translationsFor: OfflineTransportOptions['translationsFor'],
@@ -237,109 +237,39 @@ export const createOfflineTransport = function createOfflineTransport(
 	};
 };
 
-/** Options for {@link local}. */
-export interface OfflineModeOptions extends OfflineModeDataOptions {
-	/**
-	 * Rules to resolve locally. Omit them to use `recommendedPolicyRules()`:
-	 * strict opt-in for Europe, the UK, Quebec and unknown locations, opt-out
-	 * for the US states with a privacy law, and `none` everywhere else.
-	 * Passing rules replaces that pack entirely.
-	 */
+/**
+ * Options for the deprecated {@link offline}.
+ *
+ * @deprecated See {@link offline}.
+ */
+export interface OfflineModeOptions {
+	/** Rules to resolve; omitted, the recommended pack. */
 	policyRules?: PolicyRule[];
+	/** Hide the development warning that no consent records are kept. */
+	acknowledgeNoRecords?: boolean;
 }
 
 /**
- * What `local()` returns: a transport factory that also carries its
- * options as enumerable data, so it satisfies `OfflineMode` from
- * `@c15t/core/modes`.
+ * A transport factory that resolves `policyRules` in the browser, kept on
+ * `@c15t/core/transports` only for `@inth/react-native`'s web tests.
+ * Providers take `mode: testing()` from a `/testing` entry.
+ *
+ * @deprecated Remove once `@inth/react-native` no longer imports it.
+ * @param options - The rules to resolve and `acknowledgeNoRecords`.
+ * @returns A provider transport factory reporting `kind: 'offline'`.
  */
-export type OfflineModeFactory = ProviderTransportFactory &
-	Readonly<OfflineModeOptions> & {
-		readonly kind: 'offline';
-		readonly type: 'offline';
-	};
-
-/**
- * Selects a transport that resolves policy rules locally, with no network.
- * Consent stays in the visitor's browser, and c15t keeps no server-side
- * record of it. Use it for development and tests. In development builds it
- * warns once per page until you set `acknowledgeNoRecords: true`.
- *
- * A language the app sets through the kernel (`overrides.language`,
- * `kernel.set.language()`) switches the copy when c15t's built-in copy or
- * the provider's `i18n.messages` has that language. A language with no copy
- * gets the startup copy back, still labelled with the startup language. The
- * language a server prefetch detected from `Accept-Language` does not switch
- * the copy until the app has asked for a different language.
- *
- * @param options - Explicit policy rules, absent for the recommended pack,
- *   and `acknowledgeNoRecords`.
- * @returns A provider transport factory with no network requests.
- * @example
- * ```ts
- * import { local } from '@c15t/core';
- * import { createConsentRuntime } from '@c15t/core/runtime';
- *
- * const runtime = createConsentRuntime({
- * 	i18n: { messages: { de: { cookieBanner: { title: 'Datenschutz' } } } },
- * 	mode: local({ acknowledgeNoRecords: true }),
- * });
- * runtime.kernel.set.language('de');
- * ```
- */
-export const local = function local(
+export const offline = function offline(
 	options: OfflineModeOptions = {}
-): OfflineModeFactory {
-	const settings: OfflineModeOptions = {};
-	if (options.policyRules !== undefined) {
-		settings.policyRules = options.policyRules;
-	}
-	if (options.acknowledgeNoRecords !== undefined) {
-		settings.acknowledgeNoRecords = options.acknowledgeNoRecords;
-	}
+): ProviderTransportFactory {
 	return Object.assign(
-		(context: Parameters<ProviderTransportFactory>[0]): KernelTransport => {
-			warnNoConsentRecordsInDevelopment(settings.acknowledgeNoRecords);
-			const rules =
-				settings.policyRules ??
-				recommendedPolicyRules({ iab: context.iabEnabled });
-			// Read at each init: a pending prefetch fills `context.prefetch`
-			// after this transport is built.
-			const selectTranslations = createOfflineTranslationSelector(
-				context.translations,
-				context.translationsFor,
-				() => context.prefetch.initialOverrides?.language
-			);
-			return {
-				init: ({ overrides }: InitContext) => {
-					const countryCode = overrides.country ?? null;
-					const regionCode = overrides.region ?? null;
-					return Promise.resolve({
-						// The location it resolved for, as `/init` and
-						// `createOfflineTransport()` answer: surfaces that read
-						// the init's display data wait for one.
-						location: { countryCode, regionCode },
-						policyResolution: writePolicyResolutionWire(
-							resolvePolicyRules({
-								countryCode,
-								iabEnabled: context.iabEnabled,
-								regionCode,
-								rules,
-							})
-						),
-						translations: selectTranslations(overrides.language),
-					});
-				},
-			};
-		},
-		settings,
-		{ kind: 'offline' as const, type: 'offline' as const }
+		(context: Parameters<ProviderTransportFactory>[0]): KernelTransport =>
+			createOfflineTransport({
+				acknowledgeNoRecords: options.acknowledgeNoRecords,
+				iabEnabled: context.iabEnabled,
+				policyRules: options.policyRules,
+				translations: context.translations,
+				translationsFor: context.translationsFor,
+			}),
+		{ kind: 'offline' as const }
 	);
 };
-
-/**
- * The old name for {@link local}.
- *
- * @deprecated Use `local()`. c15t v4 removes `offline()`.
- */
-export const offline = local;
