@@ -76,7 +76,6 @@
 
 	let corner: CornerPosition = $state(untrack(() => defaultPosition));
 
-	// Drag state
 	let dragState: DragState = $state(createInitialDragState());
 	let isSnapping = $state(false);
 	let hasDragged = $state(false);
@@ -177,7 +176,6 @@
 			: toolbarItems[0]
 	);
 
-	// Position class mapping
 	const cornerClassMap: Record<CornerPosition, string> = {
 		'bottom-left': styles.bottomLeft || '',
 		'bottom-right': styles.bottomRight || '',
@@ -193,7 +191,6 @@
 
 	const positionClass = $derived(cornerClassMap[corner] || '');
 
-	// Drag style
 	const dragStyle = $derived(
 		dragState.isDragging
 			? `transform: translate(${dragState.currentX - dragState.startX}px, ${dragState.currentY - dragState.startY}px); transition: none;`
@@ -319,7 +316,6 @@
 	};
 
 	const handleClick = function handleClick(e: MouseEvent) {
-		// Don't open dialog if this was a drag interaction
 		if (hasDragged) {
 			return;
 		}

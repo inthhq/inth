@@ -46,19 +46,14 @@ const OPTION_NAMES: readonly BuiltOptionName[] = [
 	'routePrefix',
 ];
 
-/**
- * The environment variable that overrides an option at runtime.
- *
- * @param name - The option.
- * @returns The variable, such as `NUXT_PUBLIC_INTH_MODE_TYPE`.
- */
+/** The environment variable that overrides an option at runtime. */
 export const buildOptionVariable = function buildOptionVariable(
 	name: BuiltOptionName
 ): string {
 	return VARIABLES[name];
 };
 
-/** An option's value in a `inth` config; `undefined` when it is unset. */
+/** An option's value in an `inth` config; `undefined` when it is unset. */
 const readOption = function readOption(
 	inth: { mode?: unknown; routePrefix?: unknown },
 	name: BuiltOptionName
@@ -75,8 +70,6 @@ const readOption = function readOption(
 /**
  * The built value of an option.
  *
- * @param built - The options the build used.
- * @param name - The option.
  * @returns The value; `undefined` for a `resolve` the build left out.
  */
 export const readBuiltOption = function readBuiltOption(
@@ -90,10 +83,8 @@ export const readBuiltOption = function readBuiltOption(
  * The fixed options a runtime config no longer matches. A change to another
  * mode field, such as `manifestUrl`, is not an override.
  *
- * @param Inth - The `public.inth` runtime config, after Nitro applied the
+ * @param inth - The `public.inth` runtime config, after Nitro applied the
  * environment.
- * @param built - The options the build used.
- * @returns The names of the options that differ, in a stable order.
  */
 export const findOverriddenOptions = function findOverriddenOptions(
 	inth: Record<string, unknown> | undefined,
@@ -113,7 +104,6 @@ export const findOverriddenOptions = function findOverriddenOptions(
  * request keeps every other mode field it has.
  *
  * @param runtimeConfig - The request's runtime config, changed in place.
- * @param built - The options the build used.
  */
 export const pinBuildOptions = function pinBuildOptions(
 	runtimeConfig: BuiltOptionsRuntimeConfig,
@@ -145,10 +135,8 @@ export const pinBuildOptions = function pinBuildOptions(
  * built options back when an override is present, and reports each
  * overridden option once.
  *
- * @param built - The options the build used.
  * @param warn - Receives the name of each option the first time it is
  * overridden.
- * @returns The check to run with each request's runtime config.
  */
 export const createBuildOptionsGuard = function createBuildOptionsGuard(
 	built: BuiltOptions,

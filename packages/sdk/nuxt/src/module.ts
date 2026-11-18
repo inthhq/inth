@@ -100,7 +100,6 @@ interface DevToolsCustomTab {
 	view: { src: string; type: 'iframe' };
 }
 
-/** Whether Nuxt installs its DevTools module for this build. */
 const isNuxtDevToolsEnabled = (nuxt: Nuxt): boolean => {
 	const { devtools } = nuxt.options;
 	return typeof devtools === 'boolean' ? devtools : devtools?.enabled !== false;
@@ -134,13 +133,12 @@ const addDevToolsTab = (
 			category: 'app',
 			icon: joinURL(baseURL, DEVTOOLS_ICON_ROUTE),
 			name: 'inth',
-			title: 'inth',
+			title: 'Inth',
 			view: { src: joinURL(baseURL, DEVTOOLS_PAGE_ROUTE), type: 'iframe' },
 		});
 	});
 };
 
-/** Source of a module whose default export is the manifest snapshot. */
 const renderSnapshotModule = (snapshot: ConsentManifest | undefined): string =>
 	`export default ${snapshot ? JSON.stringify(snapshot) : 'undefined'};`;
 
@@ -348,7 +346,6 @@ const publishOptions = function publishOptions(
 	publicRuntimeConfig.inth = published;
 };
 
-/** The modules the snapshot templates declare, with their documentation. */
 const SNAPSHOT_MODULES = [
 	['#inth/manifest-snapshot', 'The server snapshot for the consent route.'],
 	[
@@ -454,8 +451,8 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 
 		// Transpile/inline the module runtime by directory, not just package
 		// name. When the module is registered through an aliasing package
-		// (e.g. the `inth` umbrella re-exporting `@inth/vue`), the runtime
-		// files can resolve through a symlink chain whose real path carries no
+		// that re-exports `@inth/vue`, the runtime files can resolve through
+		// a symlink chain whose real path carries no
 		// `node_modules/@inth/vue` segment, so a name-only pattern misses them
 		// and Nitro externalizes server-handler imports with broken relative
 		// paths. Registering the resolved runtime directory and its real path
@@ -486,9 +483,9 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 		}
 
 		// Type the `inth` key of `app.config.ts`. A type template reaches the
-		// app's types whichever package registered the module, including the
-		// `inth` umbrella. It imports the option types from the declarations
-		// next to this file: the source in this repo, `module.d.mts` once built.
+		// app's types whichever package registered the module. It imports
+		// the option types from the declarations next to this file: the
+		// source in this repo, `module.d.mts` once built.
 		// `CustomAppConfig` types `useAppConfig()`. `AppConfigInput` types
 		// `defineAppConfig()`: it extended `CustomAppConfig` until Nuxt 4.6,
 		// which made them separate, so augment both.
@@ -508,11 +505,11 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 							'',
 							"declare module '@nuxt/schema' {",
 							'\tinterface CustomAppConfig {',
-							'\t\t/** inth options, merged over the `inth` module options. */',
+							'\t\t/** Inth options, merged over the `inth` module options. */',
 							'\t\tinth?: Partial<InthNuxtAppConfig>;',
 							'\t}',
 							'\tinterface AppConfigInput {',
-							'\t\t/** inth options, merged over the `inth` module options. */',
+							'\t\t/** Inth options, merged over the `inth` module options. */',
 							'\t\tinth?: Partial<InthNuxtAppConfig>;',
 							'\t}',
 							'}',
@@ -553,7 +550,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 					[
 						"declare module 'nitropack/types' {",
 						'\tinterface NitroRouteConfig {',
-						'\t\t/** inth options for the routes this rule matches. */',
+						'\t\t/** Inth options for the routes this rule matches. */',
 						'\t\tinth?: {',
 						'\t\t\t/**',
 						'\t\t\t * `false` writes no early `/init` script into the HTML of an',

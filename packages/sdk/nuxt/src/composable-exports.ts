@@ -64,7 +64,6 @@ const collectExportNames = function collectExportNames(
  * and `export { … }` declarations, which is all the composables use.
  *
  * @param entry - Absolute path of the composables index.
- * @returns The composable names, sorted.
  * @internal
  */
 export const readComposableExports = function readComposableExports(

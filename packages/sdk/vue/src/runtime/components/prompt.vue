@@ -162,16 +162,12 @@ const bannerTitle = computed(
 	() => resolvePromptCopy(bundle.value, promptKind.value).title
 );
 
-/**
- * Notice acknowledgement leaves category choices and permissions unchanged.
- */
 const labels = computed(() => resolveActionLabels(bundle.value));
 
 const rightLabels = computed(() =>
 	resolvePreferenceControlLabels(bundle.value)
 );
 
-/** Additional buttons open preferences and use underlined text styling. */
 const onRight = function onRight() {
 	activeUI.value = 'manager';
 };

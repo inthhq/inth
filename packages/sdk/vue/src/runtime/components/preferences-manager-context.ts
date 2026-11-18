@@ -3,7 +3,9 @@ import type { InjectionKey } from 'vue';
 
 import type { ConsentDraft } from '../composables/draft';
 
-/** Manager-owned draft and completion behavior for its inline widget.
+/**
+ * Manager-owned draft and completion behavior for its inline widget.
+ *
  * @internal
  */
 export const consentWidgetManagerKey: InjectionKey<{

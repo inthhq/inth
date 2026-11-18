@@ -59,8 +59,6 @@ const HEAD_END = '</head>';
  * else the nonce SvelteKit put on its own scripts, so a nonce-based
  * `style-src` admits them.
  *
- * @param html - A chunk of the rendered page.
- * @returns The chunk with the styles; unchanged without a marker.
  * @internal
  */
 export const injectSurfaceStyles = function injectSurfaceStyles(
@@ -106,8 +104,6 @@ const EARLY_TAP_TAG = '<script data-inth-early-tap>';
  * scripts, when the provider had no `nonce` to render it with, so a
  * nonce-based `script-src` admits it.
  *
- * @param html - A chunk of the rendered page.
- * @returns The chunk; unchanged without the script or a page nonce.
  * @internal
  */
 export const nonceEarlyTapScript = function nonceEarlyTapScript(

@@ -71,9 +71,6 @@ const isChunkURL = (href: string | undefined): href is string =>
  * the nonce SvelteKit put on its own scripts, so a nonce-based
  * `script-src` admits them.
  *
- * @param html - A chunk of the rendered page.
- * @param hrefs - Chunk URLs; the ones the plugin wrote by default.
- * @returns The chunk with the links; unchanged without a marker.
  * @internal
  */
 export const injectModulePreloads = function injectModulePreloads(

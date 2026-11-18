@@ -45,7 +45,6 @@ export interface ServerRoot {
  * @param input.options - The root's options, with its `prefetch`.
  * @param input.runtimeOptions - `runtimeOptionsFor` those options, given
  * the transport.
- * @returns The runtime, its transport, the boot markup and the marker.
  * @internal
  */
 export const createServerRoot = function createServerRoot(input: {

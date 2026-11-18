@@ -116,7 +116,6 @@ export const useResolvedPresentation =
  * `generateThemeCSS` from `@inth/sdk/ui/theme`). Equal to `base` while no arm
  * is assigned or the arm has no theme.
  *
- * @param base - The host theme, or nothing.
  * @returns The theme to render, reactive to `base` and the assignment.
  * @throws {Error} When no snapshot, kernel context or kernel is provided.
  *

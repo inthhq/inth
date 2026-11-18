@@ -35,8 +35,6 @@ export const withRegisteredScripts = function withRegisteredScripts(
 	if (extra.length === 0) {
 		return config;
 	}
-	// One entry per id, the latest registration's: the loader keys its
-	// elements by id, and two entries for one id could insert two.
 	const byId = new Map<string, Script>();
 	for (const script of [...(config.scripts ?? []), ...extra]) {
 		byId.delete(script.id);

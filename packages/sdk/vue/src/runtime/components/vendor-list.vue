@@ -20,7 +20,6 @@ import { switchVariants } from '../primitives/switch-variants';
 import { slotAttrs } from '../utils/slot-attrs';
 
 const props = defineProps<{
-	/** Category whose vendors to list. */
 	category: AllConsentNames;
 	/** Whether the category is on in the draft; off disables the switches. */
 	categoryOn: boolean;
@@ -28,7 +27,6 @@ const props = defineProps<{
 	vendors: readonly ResolvedVendor[];
 	/** Granted flag per vendor from the draft. */
 	granted: Readonly<Record<string, boolean>>;
-	/** Drop the built-in styling. */
 	noStyle: boolean;
 }>();
 

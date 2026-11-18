@@ -80,7 +80,6 @@
 		);
 	};
 
-	// Per-element theme key resolution
 	const widgetRootStyle = $derived(
 		resolveStyles(
 			'consentWidget',

@@ -30,9 +30,6 @@ export type RuntimeConsentConfig = KernelConsentConfig & TestTransportConfig;
 /**
  * {@link createContext} with `mode` defaulting to `hosted()` built from the
  * config's `projectUrl`, `customFetch` and `domain`.
- *
- * @param options - The context options.
- * @returns The context.
  */
 export const createVueConsentKernelContext =
 	function createVueConsentKernelContext(

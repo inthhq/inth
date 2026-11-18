@@ -24,7 +24,6 @@ export interface SurfaceTranslations {
  * defaults, so a surface renders its default copy in the visitor's language
  * and still has text before init has delivered any.
  *
- * @returns The active bundle and the English fallback.
  * @internal
  */
 export const useSurfaceTranslations =

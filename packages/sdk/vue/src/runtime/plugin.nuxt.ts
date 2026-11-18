@@ -56,7 +56,7 @@ const warnUnusedInitPrefetch = function warnUnusedInitPrefetch(
 		if (pending && Object.keys(pending).length > 0) {
 			// oxlint-disable-next-line no-console -- Development-only diagnostic.
 			console.warn(
-				"[inth] This page's HTML started an /init request that the app did not use, so it sent its own. A client plugin probably changed inth's config for this route: set `routeRules: { '<route>': { inth: { initPrefetch: false } } }`."
+				"[inth] This page's HTML started an /init request that the app did not use, so it sent its own. A client plugin probably changed Inth's config for this route: set `routeRules: { '<route>': { inth: { initPrefetch: false } } }`."
 			);
 		}
 	});
@@ -68,9 +68,6 @@ const warnUnusedInitPrefetch = function warnUnusedInitPrefetch(
  * failed import renders the page without it; the script loader then starts
  * those entries after hydration.
  *
- * @param config - The merged Inth config.
- * @param state - The state the server resolved, with its clock.
- * @returns The head entry for the script.
  * @internal
  */
 export const serverScriptStartHead = async function serverScriptStartHead(
@@ -110,7 +107,7 @@ export const serverScriptStartHead = async function serverScriptStartHead(
  * Whether this plugin run is the server render. Nuxt replaces
  * `import.meta.server` at build time; elsewhere (unit tests) a missing
  * `window` decides.
- * @returns `true` on the server.
+ *
  * @internal
  */
 const rendersOnServer = function rendersOnServer(): boolean {
@@ -146,8 +143,6 @@ interface NuxtSSRModules {
  * which the module adds to the client manifest).
  *
  * @param nuxtApp - The Nuxt app; only a real server render has an SSR context.
- * @param deferred - Whether the browser defers the engine.
- * @param engineKey - The engine's client manifest key.
  */
 const markEnginePreload = function markEnginePreload(
 	nuxtApp: {

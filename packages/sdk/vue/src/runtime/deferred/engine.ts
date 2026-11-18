@@ -82,15 +82,6 @@ const committedConfig = function committedConfig(
 	};
 };
 
-/**
- * Builds the app's consent runtime in the browser, starting from the
- * server's state and, after a deferred commit, from the committed records.
- *
- * @param input - What the plugin read.
- * @returns The runtime context.
- * @throws {IABUnavailableError} When the state needs IAB and `iab` is not set.
- * @internal
- */
 /** Bundlers replace `process.env.NODE_ENV` at build time. */
 declare const process: { env: { NODE_ENV?: string } };
 
@@ -119,6 +110,13 @@ const nuxtClientMode = function nuxtClientMode(
 	return lazyHosted({ headers: mode.headers, projectUrl });
 };
 
+/**
+ * Builds the app's consent runtime in the browser, starting from the
+ * server's state and, after a deferred commit, from the committed records.
+ *
+ * @throws {IABUnavailableError} When the state needs IAB and `iab` is not set.
+ * @internal
+ */
 export const createNuxtEngineContext = function createNuxtEngineContext(
 	input: NuxtEngineInput
 ): VueConsentKernelContext {

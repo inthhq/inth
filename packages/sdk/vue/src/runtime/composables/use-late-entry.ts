@@ -10,7 +10,6 @@ import type { Ref, WatchSource } from 'vue';
  * including one hydrated from server HTML, is part of the first paint and
  * stays unmarked; that also keeps hydration matching the server markup.
  *
- * @param open - Whether the banner is rendered.
  * @returns A ref that is `true` when the mount should carry
  * `data-entry="late"`.
  */

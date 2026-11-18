@@ -43,7 +43,6 @@ export interface NuxtConsentRequest {
  * @param config - The merged Inth runtime config. Its `projectUrl` is the
  * server's: the private `NUXT_INTH_PROJECT_URL` over the public one, as the
  * consent route reads it.
- * @param request - The request facts from Nuxt's composables.
  * @returns The serializable state the client hydrates from.
  */
 export const resolveNuxtConsent = async function resolveNuxtConsent(
@@ -72,8 +71,6 @@ export const resolveNuxtConsent = async function resolveNuxtConsent(
 		adapter: '@inth/nuxt',
 		experiment,
 		localFetch,
-		// Off here means the page has no journey: the state says so and the
-		// browser sends none.
 		request: { headers: request.headers, url: request.url },
 		storage: config.storageConfig,
 		timeoutMs: config.timeoutMs,

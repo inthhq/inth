@@ -19,8 +19,8 @@ const NONCE_ATTRIBUTE = /\snonce="(?<nonce>[\w+/=-]+)"/u;
 /**
  * A body end tag, the name in any case with space before `>`, or a comment
  * or an element whose text is not markup, such as a script or a style, or
- * not rendered, a template, so its text can't hold one. A comment or element a chunk ends in runs to
- * the end of the chunk.
+ * not rendered, a template, so its text can't hold one. A comment or
+ * element a chunk ends in runs to the end of the chunk.
  */
 const PAGE_TOKEN =
 	/<!--[\s\S]*?(?:-->|$)|<(?<tag>script|style|template|textarea|title|xmp|iframe|noembed|noframes|noscript)(?=[\s/>])(?<attributes>[^>]*)>[\s\S]*?(?:<\/\k<tag>\s*>|$)|<\/body\s*>/giu;
@@ -39,7 +39,6 @@ interface PageStart {
 
 type Locals = RequestEvent['locals'];
 
-/** Each request's start, by its `event.locals`. */
 const pageStarts = new WeakMap<Locals, PageStart>();
 
 /** The start for the request being rendered, if its handle made one. */
@@ -58,8 +57,6 @@ const currentPageStart = (): PageStart | undefined => {
  * request being rendered. The first provider on the page starts the
  * scripts.
  *
- * @param serverScriptStart - Builds the start's code from the provider's
- * options.
  * @internal
  */
 export const registerPageStart = function registerPageStart(
@@ -145,9 +142,9 @@ const heldEnd = (text: string, body: number): string => {
  * It adds the script to the last chunk (`done`), before the last `</body>`:
  * SvelteKit's page template closes the body after everything the app
  * renders, so an earlier `</body>` is not the end, and one in a comment or
- * a script's or style's text is not a tag. Until the last chunk, the transform holds the page from
- * the last `</body>`, else up to 1 KB of a tag a chunk ends partway
- * through, such as a script with its nonce.
+ * a script's or style's text is not a tag. Until the last chunk, the
+ * transform holds the page from the last `</body>`, else up to 1 KB of a
+ * tag a chunk ends partway through, such as a script with its nonce.
  *
  * The script takes the provider's `nonce` option, else the nonce SvelteKit
  * put on its own scripts, so a nonce-based `script-src` admits it. The tags
@@ -155,8 +152,6 @@ const heldEnd = (text: string, body: number): string => {
  *
  * @param locals - The request's `event.locals`, which the render reaches
  * through `getRequestEvent()`.
- * @returns The transform, which returns each chunk with the script added
- * to the last.
  * @internal
  */
 export const createServerStartInjector = function createServerStartInjector(

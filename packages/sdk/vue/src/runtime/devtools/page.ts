@@ -95,15 +95,13 @@ const CONNECT_SCRIPT = `(function (key) {
 /**
  * HTML for the Inth DevTools tab. The page carries no panel code: the app
  * mounts the panel into it, so the panel shares the app's kernel.
- *
- * @returns A standalone HTML document.
  */
 export const renderDevToolsPage = (): string => `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>inth DevTools</title>
+<title>Inth DevTools</title>
 <style>
 html, body, #inth-devtools { height: 100%; margin: 0; }
 #inth-devtools:empty { display: none; }
@@ -113,7 +111,7 @@ body { font-family: ui-sans-serif, system-ui, sans-serif; }
 </style>
 </head>
 <body>
-<p id="inth-devtools-waiting">Waiting for the inth consent provider in the app…</p>
+<p id="inth-devtools-waiting">Waiting for the Inth consent provider in the app…</p>
 <div id="inth-devtools"></div>
 <script>${CONNECT_SCRIPT}(${JSON.stringify(DEVTOOLS_BRIDGE_KEY)});</script>
 </body>

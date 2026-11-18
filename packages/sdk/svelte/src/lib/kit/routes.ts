@@ -95,7 +95,6 @@ const readForwarding = function readForwarding(
 	};
 };
 
-/** Options for {@link createConsentRoute}. */
 export interface ConsentRouteOptions {
 	/**
 	 * The Inth backend. Defaults to what `inthHandle()` was given: a
@@ -193,14 +192,12 @@ export interface ConsentRouteOptions {
 export type ConsentRouteHandlersFor<Options extends ConsentRouteOptions> =
 	ConsentRouteMethodHandlersFor<Options, RequestHandler>;
 
-/** What the route resolves with, from its options and the handle's. */
 interface RouteSource {
 	projectUrl: string | undefined;
 	manifestUrl: string | undefined;
 	snapshot: ConsentManifest | undefined;
 }
 
-/** A path with one leading slash and none trailing, for comparison. */
 const asPath = (value: string): string => `/${trimPathSlashes(value)}`;
 
 /**
@@ -233,7 +230,6 @@ const pointsAtRoute = function pointsAtRoute(
 	return target === asPath(mount);
 };
 
-/** The handle's backend URL, unless it points at this route. */
 const readHandleProjectUrl = function readHandleProjectUrl(
 	event: RequestEvent,
 	locals: InthLocals | undefined
@@ -318,8 +314,6 @@ const readRouteSource = function readRouteSource(
  *   createConsentRoute({ proxy: true });
  * ```
  *
- * @param routeOptions - Manifest source, fetch implementation, GVL
- * fetcher, proxy. Every one is optional.
  * @returns `GET`; with `proxy` on, `POST`, `PATCH`, `PUT`, `DELETE` and
  * `OPTIONS` join.
  */

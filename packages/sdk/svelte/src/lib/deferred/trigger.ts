@@ -33,13 +33,11 @@ const SURFACES = `${EARLY_TAP_ROOT},[data-testid="consent-banner-overlay"]`;
  * `img[fetchpriority=high]` that is still loading has loaded or failed (the
  * window `load` event when there is none), the visitor presses a pointer
  * or key or scrolls anywhere on the page outside the stock banner,
- * focuses a stock consent surface, or `ENGINE_TIMEOUT_MS`
- * passed.
+ * focuses a stock consent surface, or `ENGINE_TIMEOUT_MS` passed.
  *
  * Input inside the stock banner does not load the engine: a tap there is
  * recorded without it (see `runtime.ts`), and the engine loads after.
  *
- * @param start - Loads the engine.
  * @returns Removes the listeners.
  * @internal
  */
@@ -96,10 +94,9 @@ export const scheduleDeferredEngine = function scheduleDeferredEngine(
 };
 
 /**
- * Calls `done` once the browser is idle, or after `timeout` without
- * `requestIdleCallback` (Safari).
+ * Calls `done` once the browser is idle, or after `timeout` at most.
+ * Without `requestIdleCallback` (Safari) it calls `done` on the next task.
  *
- * @param done - Runs once.
  * @param timeout - Longest wait, in milliseconds.
  * @internal
  */

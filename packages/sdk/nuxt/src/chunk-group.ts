@@ -23,7 +23,6 @@ const CONSENT_PACKAGES = [
 	['@inth/vue', '@inth/vue'],
 ] as const;
 
-/** The directory of the nearest `package.json` named `name` above `file`. */
 const packageRoot = function packageRoot(
 	file: string,
 	name: string
@@ -57,7 +56,6 @@ const escapeRegExp = (value: string): string =>
  * `node_modules`, where core's group test would not find them.
  *
  * @param from - A file inside `@inth/vue`.
- * @returns One directory per package that resolves.
  * @internal
  */
 export const consentPackageDirs = function consentPackageDirs(
@@ -85,7 +83,6 @@ export const consentPackageDirs = function consentPackageDirs(
  * load.
  *
  * @param dirs - Real package directories, from {@link consentPackageDirs}.
- * @returns The group.
  * @internal
  */
 export const nuxtConsentChunkGroup = function nuxtConsentChunkGroup(
@@ -120,7 +117,6 @@ const CONFIG_MODULES =
  * page whose first load still holds connections, each extra request can
  * cost a round trip before the dialog shows.
  *
- * @param dirs - Real package directories.
  * @returns The group; list it after {@link nuxtConsentChunkGroup}, which
  * keeps any of these modules a first load imports.
  * @internal
@@ -152,8 +148,6 @@ export const nuxtConsentConfigChunkGroup = function nuxtConsentConfigChunkGroup(
  * A client-build Vite plugin that adds {@link nuxtConsentChunkGroup}, when
  * the Rolldown in use supports it and the app sets no chunking of its own.
  *
- * @param dirs - Real package directories.
- * @returns The Vite plugin.
  * @internal
  */
 export const groupConsentChunks = function groupConsentChunks(

@@ -29,7 +29,6 @@ const baseName = (file: string): string =>
  * chunk's CSS files but not their sources.
  *
  * @param index - Filled in when the client bundle is written.
- * @returns A Vite plugin for the client build.
  * @internal
  */
 export const collectStyleSources = function collectStyleSources(
@@ -68,12 +67,12 @@ export const collectStyleSources = function collectStyleSources(
  *
  * With `features.inlineStyles`, Nuxt writes the styles of every component
  * it server-renders into the HTML, and drops the `<link>` for a chunk named
- * after such a component. inth's components share chunks (the banner and
+ * after such a component. Inth's components share chunks (the banner and
  * the dialog use the same buttons), and those shared chunks kept their
  * render-blocking links next to the inlined copy of the same rules.
  *
  * A CSS file of a lazy chunk moves from the chunk's stylesheets to its
- * preloaded assets when every rule in it comes from a Inth stylesheet that
+ * preloaded assets when every rule in it comes from an Inth stylesheet that
  * only Vue components import (Nuxt inlines those for each component it
  * renders), and no chunk the entry imports statically carries it. That
  * covers a component's own chunk too: Nuxt 4.6 bundles a component the
@@ -91,8 +90,6 @@ export const collectStyleSources = function collectStyleSources(
  *
  * @param manifest - Nuxt's client manifest, edited in place.
  * @param index - The CSS file sources {@link collectStyleSources} recorded.
- * @param inlineStyles - Nuxt's resolved `features.inlineStyles`.
- * @param isConsentFile - Whether a file belongs to a Inth package.
  * @internal
  */
 export const preloadInlinedConsentStyles = function preloadInlinedConsentStyles(

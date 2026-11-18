@@ -50,7 +50,6 @@ export interface ServerGeneratedPlugin {
  * lets Vite resolve that import to the build's virtual module, as it does
  * in `vite build`.
  *
- * @returns The Vite plugin.
  * @internal
  */
 export const createServerGeneratedPlugin =
@@ -128,10 +127,8 @@ export interface ModulePreloadPlugin {
  * Each on-demand chunk's URL in a client build, or `''` for one the build
  * put in an entry chunk (the page loads it anyway) or left out.
  *
- * @param bundle - The client build's output.
  * @param base - Where the client output is served from (`paths.assets`,
  * else `paths.base`).
- * @returns The URL per chunk name.
  * @internal
  */
 export const resolveChunkHrefs = function resolveChunkHrefs(
@@ -178,7 +175,6 @@ const listScripts = async function listScripts(
  *
  * @param serverDirectory - SvelteKit's server output.
  * @param hrefs - The URL per chunk name; `''` drops the link.
- * @returns The files changed.
  * @internal
  */
 export const writeChunkHrefs = async function writeChunkHrefs(
@@ -219,7 +215,6 @@ export const writeChunkHrefs = async function writeChunkHrefs(
  * the plugin does nothing: there is no server render to put a link in.
  * {@link consentManifest} includes it.
  *
- * @returns The Vite plugin.
  * @internal
  */
 export const createModulePreloadPlugin =
@@ -313,7 +308,7 @@ interface OutputHookContext {
 	meta: { rolldownVersion?: string; watchMode: boolean };
 }
 
-/** The plugin that puts inth's shared first-load modules in one chunk. */
+/** The plugin that puts Inth's shared first-load modules in one chunk. */
 export interface FirstLoadChunkPlugin {
 	apply: 'build';
 	name: string;
@@ -342,7 +337,6 @@ export interface FirstLoadChunkPlugin {
  *
  * {@link consentManifest} includes it.
  *
- * @returns The Vite plugin.
  * @internal
  */
 export const createFirstLoadChunkPlugin =
@@ -383,9 +377,9 @@ export const createFirstLoadChunkPlugin =
 
 /**
  * Serves the deployment's consent manifest and backend URL as the virtual
- * module `@inth/sdk/generated` (also `@inth/sdk/generated`). Import `snapshot`
- * from it; no file is written into the app. `vite build` fetches the
- * manifest only when the bundle reads `snapshot`: a Svelte app that uses
+ * module `@inth/sdk/generated`. Import `snapshot` from it; no file is
+ * written into the app. `vite build` fetches the manifest only when the
+ * bundle reads `snapshot`: a Svelte app that uses
  * `hosted()` or `local()` never depends on the backend at build time.
  *
  * In a SvelteKit app (the `sveltekit()` plugin is present), the snapshot
@@ -401,9 +395,8 @@ export const createFirstLoadChunkPlugin =
  * `snapshot` is `undefined`, so the policy is read at runtime, from the
  * backend's `/init` while the manifest is unavailable. Set
  * `onBuildError: 'fail'` or `INTH_ON_BUILD_ERROR=fail` to stop the build
- * instead. In a Svelte
- * single-page app whose policy depends on the visitor's location, the
- * build warns and suggests `hosted()`. With `manifest({ manifestUrl })` or
+ * instead. In a Svelte single-page app whose policy depends on the
+ * visitor's location, the build warns and suggests `hosted()`. With `manifest({ manifestUrl })` or
  * `manifest({ source: 'runtime' })`, pass `source: 'runtime'` here too, so
  * the build never fetches a snapshot the app would discard.
  *
@@ -411,14 +404,13 @@ export const createFirstLoadChunkPlugin =
  * holds the script loader and the network blocker into the server output,
  * so `inthHandle` adds a `<link rel="modulepreload">` for it to every page
  * whose provider has `scripts` or blocker rules. With Vite 8 it puts the
- * small modules inth's first-load code shares with the consent engine into
+ * small modules Inth's first-load code shares with the consent engine into
  * one chunk ({@link createFirstLoadChunkPlugin}).
  *
  * @param options - Backend URL, `onBuildError` and `source`. Appends
  * `/manifest`.
  * @returns The Vite plugins, for `plugins`.
- * @throws {Error} When the fetch fails in `'fail'` mode, the default for
- * `vite build`.
+ * @throws {Error} When the fetch fails in `'fail'` mode.
  * @example
  * ```ts
  * // vite.config.ts

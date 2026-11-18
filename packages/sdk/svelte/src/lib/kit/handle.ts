@@ -29,12 +29,10 @@ import {
 import { injectSurfaceStyles, nonceEarlyTapScript } from './surface-styles';
 import type { InthLocals, ConsentRequestOptions } from './types';
 
-/** Options for {@link inthHandle}. */
 export interface InthHandleOptions extends ConsentRequestOptions {
 	/**
 	 * The Inth backend. Defaults to the URL `consentManifest()` read from
-	 * `PUBLIC_INTH_PROJECT_URL`. Required
-	 * unless `mode` is `testing()`.
+	 * `PUBLIC_INTH_PROJECT_URL`. Required unless `mode` is `testing()`.
 	 */
 	projectUrl?: string;
 	/**
@@ -137,8 +135,6 @@ const normalizeRequestHeaders = function normalizeRequestHeaders(
  * handle reads no cookie or geo header, and leaves no
  * stored consent, clock or privacy signal on `event.locals.inth`.
  *
- * @param options - The mode, the consent route's prefix, a snapshot, the
- * cookie name and geo/language overrides.
  * @returns A `handle` hook that populates `event.locals.inth`.
  * @throws {TypeError} When `mode` is a transport with no data, which
  * cannot reach the browser, or `routePrefix` is `/` or not a path.

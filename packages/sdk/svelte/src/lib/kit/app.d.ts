@@ -15,7 +15,7 @@
  * declare global {
  *   namespace App {
  *     interface Locals {
- *       Inth: InthLocals;
+ *       inth: InthLocals;
  *     }
  *   }
  * }

@@ -127,10 +127,8 @@
 		})
 	);
 
-	// IAB state
 	const iabState = $derived(consent.state.iab);
 
-	// Translations
 	const iabT = $derived(getIABTranslations(consent.state.translationConfig));
 	const coreTranslations = $derived(
 		resolveTranslations(
@@ -142,7 +140,6 @@
 		getTextDirection(consent.state.translationConfig?.defaultLanguage)
 	);
 
-	// Open state
 	const isOpen = $derived(
 		consent.state.hasConsentUi &&
 			models.includes(consent.state.model) &&
@@ -150,7 +147,6 @@
 			iabState?.config.enabled === true
 	);
 
-	// Tab state
 	let activeTab = $state<string | null>('purposes');
 	let selectedVendorId = $state<VendorId | null>(null);
 	let specialPurposesExpanded = $state(false);
@@ -301,12 +297,12 @@
 </script>
 
 <!--
-	Plain elements, not the Ark dialog: React's IAB preference centre is
-	hand-rolled, and a primitive library's `data-slot`/`data-state`
-	bookkeeping is exactly the kind of difference the cross-framework gate
-	is there to catch. The behaviour the primitive provided — portal, focus
-	trap, scroll lock, Escape to close — comes from the same actions the
-	IAB banner uses.
+	Plain elements, not the dialog primitive: React's IAB preference centre
+	is hand-rolled, and the primitive's `data-slot`/`data-state` bookkeeping
+	is exactly the kind of difference the cross-framework gate is there to
+	catch. The behaviour the primitive provides — portal, focus trap,
+	scroll lock, Escape to close — comes from the same actions the IAB
+	banner uses.
 -->
 {#if isOpen}
 	<div use:portal>
@@ -346,7 +342,6 @@
 				use:scrollLock={preferences.blocking}
 				onkeydown={handleDialogKeydown}
 			>
-				<!-- Header -->
 				<div
 					class={headerStyle.className || ''}
 					style={toStyleAttributeValue(headerStyle.style)}
@@ -576,7 +571,6 @@
 									</section>
 								{/if}
 
-								<!-- Consent storage notice -->
 								<div class={noStyle ? '' : styles.consentNotice || ''}>
 									<p class={noStyle ? '' : styles.consentNoticeText || ''}>
 										{iabT.preferenceCenter.footer.consentStorage}
@@ -613,7 +607,6 @@
 					</div>
 				</Tabs.Root>
 
-				<!-- Footer -->
 				<div
 					class={footerStyle.className || ''}
 					style={toStyleAttributeValue(footerStyle.style)}

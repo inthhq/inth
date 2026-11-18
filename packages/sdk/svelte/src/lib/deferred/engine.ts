@@ -96,7 +96,6 @@ const committedOptions = function committedOptions(
  * Builds the root's runtime in the browser, from the server's state and,
  * after a deferred commit, from the committed records.
  *
- * @param input - What the root read.
  * @returns The runtime, not started, and its transport.
  * @internal
  */

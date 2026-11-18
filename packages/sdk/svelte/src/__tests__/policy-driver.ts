@@ -173,7 +173,7 @@ const getDom = (kernel: ConsentKernel): PolicyDomEvidence => {
 	};
 };
 
-/** Execute raw shared scenarios against a mounted React provider and real controls. */
+/** Execute raw shared scenarios against a mounted Svelte provider and real controls. */
 export const createPolicySession: CreatePolicySession = async (setup) => {
 	// Persistence loads its write code on demand, and a save's write waits
 	// for it. Load it first, as core's own test setup does: otherwise the

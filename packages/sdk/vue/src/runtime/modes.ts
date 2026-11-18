@@ -100,9 +100,6 @@ export const manifest = function manifest(
 		throw missingProjectUrl('manifest');
 	}
 	return browserManifest({
-		// A `manifestUrl` is fetched at runtime, so the build's snapshot is
-		// left out, as with `source: 'runtime'`. A snapshot you pass replaces
-		// it.
 		snapshot:
 			options.manifestUrl || options.source === 'runtime'
 				? undefined
@@ -118,8 +115,6 @@ export const manifest = function manifest(
  * defaults to the URL `consentManifest()` read from
  * `VITE_INTH_PROJECT_URL`.
  *
- * @param options - The plugin's `projectUrl` and `mode`.
- * @returns A transport factory for the runtime's `mode`.
  * @throws {Error} When none of them is set and the build set no URL.
  * @internal
  */

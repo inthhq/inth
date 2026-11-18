@@ -161,7 +161,6 @@ export interface ConsentManagerState extends Pick<
 	 * category, without a negation. Empty under an `iab` policy, where the
 	 * TC string decides and vendor rows are not shown.
 	 *
-	 * @param category - The category row being rendered.
 	 * @returns The vendors to list, in declared order.
 	 */
 	getDisplayedVendors: (category: AllConsentNames) => ResolvedVendor[];
@@ -229,7 +228,6 @@ export interface ThemeContextValue {
 export interface ConsentControllerOptions {
 	/** The runtime's one clear sequence. */
 	clearRecords: () => void;
-	/** The runtime's language switch. */
 	setLanguage: (code: string) => void;
 	getSnapshot: () => ConsentSnapshot;
 	getDraft: () => ConsentDraftState;
@@ -321,13 +319,10 @@ const createConsentState = function createConsentState(
 				getSnapshotLocal().experiment
 			);
 		},
-		// -- Controller-owned state (computed from snapshot + provider options) --
-
 		get consentTypes() {
 			return displayedConsentTypes(controller.consentCategories);
 		},
 
-		// -- Methods --------------------------------------------------------------
 		getDisplayedConsents() {
 			return displayedConsentTypes(controller.consentCategories);
 		},
@@ -349,8 +344,6 @@ const createConsentState = function createConsentState(
 			);
 		},
 		isVendorAllowed(vendorId: string) {
-			// At the snapshot's own clock, as before: core's
-			// `isVendorAllowed(snapshot, vendorId, snapshot.evaluatedAt)`.
 			return isSnapshotVendorAllowed(getSnapshotLocal(), vendorId);
 		},
 		dismissNotice() {
@@ -383,7 +376,6 @@ const createConsentState = function createConsentState(
 			return hasConsentUI(getSnapshotLocal());
 		},
 
-		// -- Snapshot passthrough (was previously served by a Proxy) -------------
 		get explicitChoice() {
 			return getSnapshotLocal().explicitChoice;
 		},
@@ -508,11 +500,8 @@ const createConsentState = function createConsentState(
 };
 
 /**
- * Provide the consent context.
- *
  * @param getKernel - The kernel the provider renders now. It changes when
  * the runtime's `enabled` toggles.
- * @param options - The provider's state and runtime verbs.
  */
 export const setConsentContext = function setConsentContext(
 	getKernel: () => ConsentKernel,

@@ -6,8 +6,6 @@ import type { Ref } from 'vue';
  *
  * SSR-safe: the ref stays `false` during server rendering and flips to
  * `true` in the browser once the component mounts.
- *
- * @returns A ref that becomes `true` after mount
  */
 export const useMounted = function useMounted(): Ref<boolean> {
 	const mounted = ref(false);

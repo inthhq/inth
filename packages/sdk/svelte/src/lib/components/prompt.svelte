@@ -33,12 +33,10 @@
 		bannerFocusTrap as focusTrap,
 		bannerScrollLock as scrollLock,
 	} from '../actions/banner-actions';
-	// Banner uses custom portal/focus-trap/scroll-lock actions (not Ark UI's built-in)
-	// because the banner is not an Ark Dialog - it's a simpler container that
-	// conditionally acts as a dialog. The ConsentDialog uses Ark's Dialog which
-	// includes its own focus trap and scroll prevention. When transitioning from
-	// banner to dialog, the banner unmounts (removing its focus trap) before
-	// the dialog mounts (establishing Ark's focus trap), so they don't compete.
+	// The banner is not a dialog primitive: it acts as a dialog only when
+	// blocking, so it takes the portal, focus-trap and scroll-lock actions
+	// itself. Moving to the dialog unmounts the banner, and its focus trap,
+	// before the dialog mounts its own, so the two never compete.
 	import { portal } from '../actions/portal';
 	import { getConsentContext, getThemeContext } from '../context.svelte';
 	import { BANNER_SHEETS } from '../surface-styles';
@@ -50,9 +48,6 @@
 	import PolicyActionsRenderer from './policy-actions-renderer.svelte';
 	import SurfaceStyles from './surface-styles.svelte';
 
-	/**
-	 * Button identifiers for the consent banner layout.
-	 */
 	type ConsentBannerButton = 'reject' | 'accept' | 'customize' | 'dismiss';
 	type ConsentBannerLayout = (ConsentBannerButton | ConsentBannerButton[])[];
 
@@ -147,7 +142,6 @@
 		localDisableAnimation ?? theme.disableAnimation ?? false
 	);
 
-	// Translations
 	const translations = $derived(
 		resolveTranslations(
 			consent.state.translationConfig,
@@ -158,7 +152,6 @@
 		getTextDirection(consent.state.translationConfig?.defaultLanguage)
 	);
 
-	// Visibility logic
 	const shouldShowBanner = $derived(
 		consent.state.hasConsentUi &&
 			consent.state.activeUI === 'banner' &&
@@ -171,7 +164,6 @@
 		() => disableAnimation
 	);
 
-	// Styling - per-element theme key resolution shared across framework adapters.
 	const rootStyle = $derived(
 		resolveStyles(
 			'consentBanner',

@@ -88,7 +88,6 @@
 		customVendors.map((vendor) => mapCustomVendor(vendor))
 	);
 
-	// Combine and sort all vendors
 	const vendors = $derived(
 		[...iabVendors, ...mappedCustomVendors].sort((a, b) =>
 			a.name.localeCompare(b.name)
@@ -160,7 +159,6 @@
 		}
 	};
 
-	// Precompute vendor lookup maps once (O(V+P)) instead of per-vendor-per-render (O(V×P)).
 	type VendorPurposeEntry = ProcessedPurpose & {
 		usesLegitimateInterest: boolean;
 	};
@@ -313,7 +311,6 @@
 		</div>
 	{/if}
 
-	<!-- IAB Registered Vendors -->
 	{#if filteredIABVendors.length > 0}
 		<div class={noStyle ? '' : styles.vendorSection || ''}>
 			<div class={noStyle ? '' : styles.iabVendorSectionHeader || ''}>
@@ -419,7 +416,6 @@
 							innerClassName={noStyle ? '' : styles.vendorListContent || ''}
 							{noStyle}
 						>
-							<!-- Links -->
 							<div class={noStyle ? '' : styles.vendorLinks || ''}>
 								{#if vendor.policyUrl}
 									<a
@@ -462,7 +458,6 @@
 								{/if}
 							</div>
 
-							<!-- Badges -->
 							<div class={noStyle ? '' : styles.vendorBadges || ''}>
 								{#if vendor.usesCookies}
 									<span class={noStyle ? '' : styles.vendorBadge || ''}>
@@ -489,7 +484,6 @@
 								{/if}
 							</div>
 
-							<!-- Purposes -->
 							{#if vendorPurposes.length > 0}
 								<div class={noStyle ? '' : styles.vendorPurposesList || ''}>
 									<h4 class={noStyle ? '' : styles.vendorPurposesTitle || ''}>
@@ -541,7 +535,6 @@
 								</div>
 							{/if}
 
-							<!-- Legitimate Interest Objection -->
 							{#if hasLegitimateInterest && onVendorLegitimateInterestToggle}
 								<div class={noStyle ? '' : styles.vendorLiSection || ''}>
 									<div
@@ -578,7 +571,6 @@
 								</div>
 							{/if}
 
-							<!-- Data Categories -->
 							{#if vendor.dataDeclaration && vendor.dataDeclaration.length > 0}
 								<div class={noStyle ? '' : styles.vendorPurposesList || ''}>
 									<h4 class={noStyle ? '' : styles.vendorPurposesTitle || ''}>
@@ -600,7 +592,6 @@
 								</div>
 							{/if}
 
-							<!-- Special Purposes -->
 							{#if vendorSpecialPurposes.length > 0}
 								<div class={noStyle ? '' : styles.vendorPurposesList || ''}>
 									<h4 class={noStyle ? '' : styles.vendorPurposesTitle || ''}>
@@ -643,7 +634,6 @@
 								</div>
 							{/if}
 
-							<!-- Special Features -->
 							{#if vendorSpecialFeatures.length > 0}
 								<div class={noStyle ? '' : styles.vendorPurposesList || ''}>
 									<h4 class={noStyle ? '' : styles.vendorPurposesTitle || ''}>
@@ -660,7 +650,6 @@
 								</div>
 							{/if}
 
-							<!-- Features -->
 							{#if vendorFeatures.length > 0}
 								<div class={noStyle ? '' : styles.vendorPurposesList || ''}>
 									<h4 class={noStyle ? '' : styles.vendorPurposesTitle || ''}>
@@ -701,7 +690,6 @@
 		</div>
 	{/if}
 
-	<!-- Custom/Non-IAB Vendors -->
 	{#if filteredCustomVendors.length > 0}
 		<div class={noStyle ? '' : styles.vendorSection || ''}>
 			<div class={noStyle ? '' : styles.customVendorSectionHeader || ''}>

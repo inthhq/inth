@@ -15,8 +15,7 @@ export type {
 
 /**
  * Packages that ship `.vue` files. Vite's dependency pre-bundling cannot
- * load them, so they stay out of it, along with the `inth` umbrella that
- * re-exports them.
+ * load them, so they stay out of it.
  */
 const VUE_SOURCE_PACKAGES = ['@inth/vue', 'inth'];
 
@@ -28,7 +27,7 @@ export type VueConsentManifestPlugin = Omit<ConsentManifestPlugin, 'config'> & {
 /**
  * The Inth Vite plugin for a plain Vue app. It serves the deployment's
  * consent manifest and backend URL as the virtual module
- * `@inth/sdk/generated` (also `@inth/sdk/generated`), which `manifest()` and
+ * `@inth/sdk/generated`, which `manifest()` and
  * `hosted()` from `@inth/vue/vue-plugin` read. No file is written into the
  * app. It also keeps `@inth/vue`, whose components are `.vue` files, out of
  * dependency pre-bundling.

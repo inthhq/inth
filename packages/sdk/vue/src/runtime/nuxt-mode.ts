@@ -64,8 +64,6 @@ export type NuxtResolvedModeConfig = Omit<NuxtConsentModeConfig, 'mode'> & {
 /**
  * The mode a config names, `manifest()` when it names none.
  *
- * @param config - The module options or the public runtime config.
- * @returns The mode as data.
  * @internal
  */
 export const readNuxtMode = function readNuxtMode(
@@ -80,8 +78,6 @@ export const readNuxtMode = function readNuxtMode(
  * The module checked the prefix at setup (it rejects `/`), so this runs in
  * the browser without the check.
  *
- * @param config - The module options or the public runtime config.
- * @returns The prefix without a trailing slash.
  * @internal
  */
 export const readNuxtRoutePrefix = function readNuxtRoutePrefix(
@@ -104,7 +100,6 @@ export const readNuxtRoutePrefix = function readNuxtRoutePrefix(
  * does not render per visitor, and `local()` resolves in the browser,
  * where its rules and copy load on demand.
  *
- * @param mode - The mode.
  * @returns `true` when the browser receives a resolved policy.
  * @internal
  */

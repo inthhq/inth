@@ -29,8 +29,6 @@ export interface LegacyProjectUrlRuntimeConfig {
  * Empty values count as unset.
  *
  * @param runtimeConfig - The request's runtime config, changed in place.
- * @param env - The server's environment variables.
- * @param variables - The variables to apply, from the module.
  */
 export const applyLegacyProjectUrl = function applyLegacyProjectUrl(
 	runtimeConfig: LegacyProjectUrlRuntimeConfig,

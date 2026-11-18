@@ -1,7 +1,7 @@
 /**
  * The Nuxt module turns the `<link>`s Nuxt writes for Inth stylesheets it
  * already inlines into preloads. Nuxt drops the link for a chunk named
- * after a component it inlines, but inth's components share chunks, and
+ * after a component it inlines, but Inth's components share chunks, and
  * each shared chunk's stylesheet stayed a render-blocking `<link>` next to
  * the inlined copy of the same rules. On a throttled phone, those links
  * held the first paint of a page with a banner from about 450 ms to

@@ -45,7 +45,6 @@ export const useCookie = function useCookie<T extends object | string | null>(
 				return defaultValue;
 			}
 
-			// Parse the cookie value
 			const match = document.cookie.match(
 				new RegExp(`(?:^|; )${name}=([^;]*)`, 'u')
 			);
@@ -56,19 +55,14 @@ export const useCookie = function useCookie<T extends object | string | null>(
 		set(newValue) {
 			if (typeof document !== 'undefined') {
 				if (newValue) {
-					// Set the cookie (defaults to 1 year expiration and root path)
 					const maxAge = 60 * 60 * 24 * 365;
 					document.cookie = `${name}=${encodeURIComponent(encode(newValue))}; path=/; max-age=${maxAge}`;
 				} else {
-					// Delete the cookie if the ref is set to null or empty string
 					document.cookie = `${name}=; max-age=0; path=/`;
 				}
 			}
 
-			// Tells Vue the value changed so it can trigger DOM updates
 			trigger();
 		},
 	}));
 };
-
-// JSON.parse and JSON.stringify with silent errors that return the original value

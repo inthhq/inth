@@ -65,9 +65,7 @@ export const STYLES_MARKER = 'inth-styles';
  * The marker's `content`: the sheet ids, space-separated, then an optional
  * `nonce=…` for the `<style>` elements `inthHandle` writes.
  *
- * @param sheets - The surface's sheets.
  * @param nonce - The provider's `nonce` option.
- * @returns The marker content.
  * @internal
  */
 export const stylesMarker = function stylesMarker(

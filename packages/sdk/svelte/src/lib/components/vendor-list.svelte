@@ -20,9 +20,7 @@
 		category,
 		noStyle = false,
 	}: {
-		/** Category whose vendors to list. */
 		category: AllConsentNames;
-		/** Drop the built-in styling. */
 		noStyle?: boolean;
 	} = $props();
 

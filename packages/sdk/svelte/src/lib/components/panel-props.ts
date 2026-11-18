@@ -12,7 +12,6 @@ export interface ConsentDialogTriggerProps {
 	class?: string;
 }
 
-/** Props for `ConsentDialog`. */
 export interface ConsentDialogProps {
 	open?: boolean;
 	noStyle?: boolean;

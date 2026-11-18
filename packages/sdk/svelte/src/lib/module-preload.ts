@@ -34,9 +34,7 @@ interface ModulePreloadOptions {
  * management is enabled. Either one loads the shared chunk. `ConsentRoot`
  * adds its engine for a visitor the engine must serve at once.
  *
- * @param options - The provider's options.
  * @param extra - `engine: true` to preload `ConsentRoot`'s engine.
- * @returns The marker content.
  * @internal
  */
 export const modulePreloadMarker = function modulePreloadMarker(

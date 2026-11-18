@@ -41,7 +41,6 @@ const DEFAULT_DARK_CSS = generateDefaultThemeCSS({ dark: defaultDarkColors });
  *
  * @param tokens - Token values from the consent config. Omitted keys keep
  * their defaults.
- * @param options - The config's `theme` and `colorScheme`.
  * @returns CSS rules for `:root` and `:host`.
  *
  * @example

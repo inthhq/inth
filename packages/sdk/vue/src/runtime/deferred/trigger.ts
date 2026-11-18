@@ -38,8 +38,6 @@ const SURFACES = `${EARLY_TAP_ROOT},[data-testid="consent-banner-overlay"]`;
  * tap the banner's inline script recorded, before or after hydration, and
  * input inside the banner does not load the engine.
  *
- * @param start - Loads the engine.
- * @param onTap - Routes a recorded banner tap.
  * @returns Removes the listeners and stops routing taps to `onTap`.
  * @internal
  */

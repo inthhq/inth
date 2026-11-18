@@ -69,7 +69,6 @@
 			{feature.description}
 		</p>
 
-		<!-- Illustrations / Examples -->
 		{#if feature.illustrations.length > 0}
 			<div>
 				<PreferenceItem.Root

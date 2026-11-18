@@ -39,10 +39,7 @@ export interface NuxtConsentBoot {
  * consent source, GPP, the network blocker, or a configured script that
  * may run now and the server did not start).
  *
- * @param snapshot - The snapshot the server rendered with.
- * @param config - The app's Inth config.
  * @param now - The clock. Defaults to `Date.now()`.
- * @returns `true` when the engine may wait.
  * @internal
  */
 export const canDeferEngine = function canDeferEngine(

@@ -97,7 +97,6 @@ const readLocals = function readLocals(
 	return (event.locals as { inth?: InthLocals }).inth;
 };
 
-/** Prefer the adapter's hook; use the caller's hook on other platforms. */
 const backgroundWorkFor = (
 	event: RequestEvent,
 	fallback: LoadConsentOptions['onBackgroundRevalidate']
@@ -111,10 +110,6 @@ const backgroundWorkFor = (
 	);
 };
 
-/**
- * The request as `inthHandle` left it: its inputs, unless this call
- * overrides them.
- */
 const requestFrom = function requestFrom(
 	event: RequestEvent,
 	locals: InthLocals | undefined,
@@ -141,10 +136,10 @@ const requestFrom = function requestFrom(
  * <ConsentRoot state={data.consent}>
  * ```
  *
- * It resolves with the mode `inthHandle()` was given. With none it asks
- * the hosted backend's `/init`. With `manifest()` it resolves from the
- * snapshot `consentManifest()` downloaded, or fetches and caches the
- * backend's manifest.
+ * It resolves with the mode `inthHandle()` was given. With none, or with
+ * `manifest()`, it resolves from the snapshot `consentManifest()`
+ * downloaded, or fetches and caches the backend's manifest. With
+ * `hosted()` it asks the backend's `/init`.
  *
  * Never throws: a failed upstream call degrades to the cookie-only state
  * rather than taking the page down with it. Neither does a slow one: after
@@ -152,9 +147,6 @@ const requestFrom = function requestFrom(
  * SvelteKit prerenders, the page carries no visitor's consent and makes no
  * upstream call; the browser resolves the visitor itself.
  *
- * @param event - The SvelteKit request event from `load`.
- * @param options - Geo/language overrides, upstream fetch settings and the
- * time budget, when you call it from your own `load`.
  * @returns `{ consent }`, for `<ConsentRoot state={data.consent}>`.
  */
 export const loadConsent = async function loadConsent(

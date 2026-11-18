@@ -92,12 +92,10 @@
 		return vendorLegitimateInterests[String(vendorId)] ?? true;
 	};
 
-	// Check if purpose-level LI is allowed (not objected)
 	const isPurposeLIAllowed = $derived(
 		purposeLegitimateInterests[purpose.id] ?? true
 	);
 
-	// Handler for purpose-level LI objection
 	const handlePurposeLIObjection = function handlePurposeLIObjection() {
 		const newValue = !isPurposeLIAllowed;
 		onPurposeLegitimateInterestToggle?.(purpose.id, newValue);
@@ -108,7 +106,6 @@
 		}
 	};
 
-	// Separate IAB and custom vendors
 	const iabConsentVendors = $derived(consentVendors.filter((v) => !v.isCustom));
 	const customConsentVendors = $derived(
 		consentVendors.filter((v) => v.isCustom)
@@ -127,7 +124,6 @@
 		purpose.hasConsentBasis !== false || !onPurposeLegitimateInterestToggle
 	);
 
-	// Handle purpose toggle - also toggles all consent-based vendors
 	const handlePurposeToggle = function handlePurposeToggle(value: boolean) {
 		onToggle(value);
 		for (const vendor of consentVendors) {
@@ -207,7 +203,6 @@
 			{purpose.description}
 		</p>
 
-		<!-- Purpose-level Legitimate Interest Objection -->
 		{#if legIntVendors.length > 0 && onPurposeLegitimateInterestToggle}
 			<div class={noStyle ? '' : styles.purposeLiSection || ''}>
 				<div class={noStyle ? '' : styles.purposeLiSectionHeader || ''}>
@@ -241,7 +236,6 @@
 			</div>
 		{/if}
 
-		<!-- Legacy badge when no toggle handler -->
 		{#if legIntVendors.length > 0 && !onPurposeLegitimateInterestToggle}
 			<div class={noStyle ? '' : styles.legitimateInterestBadge || ''}>
 				<LegitimateInterestIcon
@@ -254,7 +248,6 @@
 			</div>
 		{/if}
 
-		<!-- Illustrations / Examples -->
 		{#if purpose.illustrations && purpose.illustrations.length > 0}
 			<div>
 				<PreferenceItem.Root
@@ -282,7 +275,6 @@
 			</div>
 		{/if}
 
-		<!-- Vendor list within purpose -->
 		<div>
 			<PreferenceItem.Root
 				bind:open={showVendors}
@@ -302,7 +294,6 @@
 					innerClassName={noStyle ? '' : styles.vendorSection || ''}
 					{noStyle}
 				>
-					<!-- IAB Consent Vendors -->
 					{#if iabConsentVendors.length > 0}
 						<h5 class={noStyle ? '' : styles.vendorSectionTitle || ''}>
 							{iabT.preferenceCenter.purposeItem.withYourPermission}
@@ -347,7 +338,6 @@
 						{/each}
 					{/if}
 
-					<!-- IAB Legitimate Interest Vendors -->
 					{#if iabLegIntVendors.length > 0}
 						<h5
 							class={noStyle
@@ -429,7 +419,6 @@
 						{/each}
 					{/if}
 
-					<!-- Custom Vendors -->
 					{#if customConsentVendors.length > 0 || customLegIntVendors.length > 0}
 						<div class={noStyle ? '' : styles.customVendorPurposeSection || ''}>
 							<h5 class={noStyle ? '' : styles.vendorSectionTitleCustom || ''}>

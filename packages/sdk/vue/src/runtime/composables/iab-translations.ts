@@ -9,8 +9,6 @@ import { useConsentInit } from './init';
 /**
  * The IAB copy for the active language, each key the bundle leaves out
  * filled from English.
- *
- * @returns The complete IAB translations for the active language.
  */
 export const useIabTranslations =
 	function useIabTranslations(): ComputedRef<ResolvedIABCopy> {
