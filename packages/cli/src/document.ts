@@ -30,10 +30,30 @@ export interface DocumentHash {
 
 type AddBytes = (bytes: Uint8Array) => void;
 
+const unknownOption = (option: string): CliError =>
+  new CliError(
+    "usage_error",
+    `Unknown option "${terminalText(option)}". Run inth document hash --help.`
+  );
+
 export const parseDocumentArguments = (
   result: CliArguments,
   args: string[]
 ): DocumentHashArguments => {
+  // The top-level parser stores these outside result.values, so a copy before
+  // "document" never reaches the loop below.
+  if (result.organization !== undefined) {
+    throw unknownOption("--organization");
+  }
+  if (result.authMode !== undefined) {
+    throw unknownOption("--auth");
+  }
+  if (result.token !== undefined) {
+    throw unknownOption("--token");
+  }
+  if (result.noBrowser) {
+    throw unknownOption("--no-browser");
+  }
   const positional: string[] = [];
   for (const arg of args) {
     if (arg === "--help" || arg === "-h") {
@@ -44,10 +64,7 @@ export const parseDocumentArguments = (
       result.nonInteractive = true;
     } else if (arg.startsWith("-") && arg !== "-") {
       const equals = arg.indexOf("=");
-      throw new CliError(
-        "usage_error",
-        `Unknown option "${terminalText(equals === -1 ? arg : arg.slice(0, equals))}". Run inth document hash --help.`
-      );
+      throw unknownOption(equals === -1 ? arg : arg.slice(0, equals));
     } else {
       positional.push(arg);
     }
@@ -105,7 +122,7 @@ const readFile = async (path: string, add: AddBytes): Promise<void> => {
       throw notRegularFile(path);
     }
     const buffer = new Uint8Array(65_536);
-    for (;;) {
+    for (let reads = 1; ; reads += 1) {
       const count = accessFile(path, () =>
         readSync(descriptor, buffer, 0, buffer.byteLength, null)
       );
@@ -113,8 +130,11 @@ const readFile = async (path: string, add: AddBytes): Promise<void> => {
         return;
       }
       add(buffer.subarray(0, count));
-      // eslint-disable-next-line no-await-in-loop -- Yield between bounded reads so cancellation can interrupt large files.
-      await setTimeout(0);
+      // Each timer waits about 1 ms, so yield once per 1 MiB, not per read.
+      if (reads % 16 === 0) {
+        // eslint-disable-next-line no-await-in-loop -- Yield between bounded batches so cancellation can interrupt large files.
+        await setTimeout(0);
+      }
     }
   } finally {
     closeSync(descriptor);

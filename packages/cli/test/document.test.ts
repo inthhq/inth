@@ -76,6 +76,10 @@ describe("inth document hash arguments", () => {
     [["document", "hash", "a.md", "b.md"]],
     [["document", "publish", "a.md"]],
     [["document", "hash", "a.md", "--organization", "org_123"]],
+    [["--organization", "org_123", "document", "hash", "a.md"]],
+    [["--auth", "agent", "document", "hash", "a.md"]],
+    [["--token", "inth_test", "document", "hash", "a.md"]],
+    [["--no-browser", "document", "hash", "a.md"]],
   ])("rejects %j", (args) => {
     expect(() => parseArguments(args)).toThrow(
       expect.objectContaining({ code: "usage_error" })
