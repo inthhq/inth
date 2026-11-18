@@ -214,6 +214,8 @@ public struct HTTPResponse: Sendable, Equatable {
         var urlRequest = URLRequest(url: request.url)
         urlRequest.httpMethod = request.method.rawValue
         urlRequest.httpBody = request.body
+        // The app's shared cookie store is not the SDK's to send, and `/v1` reads none.
+        urlRequest.httpShouldHandleCookies = false
         for (name, value) in request.headers {
             urlRequest.setValue(value, forHTTPHeaderField: name)
         }

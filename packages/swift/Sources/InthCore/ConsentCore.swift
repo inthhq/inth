@@ -2305,8 +2305,16 @@ public final class ConsentCore: @unchecked Sendable {
         }
         guard let transport = config.transport else { return }
         let context = lock.withLock {
-            InitContext(
-                overrides: wireOverrides,
+            // Init names GPC only when there is a signal: the app's override, or a
+            // detection. A device with neither sends no `gpc`.
+            let signal = gpcSignal
+            return InitContext(
+                overrides: KernelOverridesWire(
+                    country: overrides.country,
+                    region: overrides.region,
+                    language: overrides.language,
+                    gpc: signal.override ?? (signal.active ? true : nil)
+                ),
                 user: user,
                 subjectId: identity?.id ?? "",
                 vendors: config.vendors

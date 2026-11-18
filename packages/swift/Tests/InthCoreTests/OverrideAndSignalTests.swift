@@ -24,6 +24,28 @@ final class OverrideAndSignalTests: XCTestCase {
         try InthJSON.decode(ConsentSnapshot.self, from: try XCTUnwrap(InthJSON.encode(.object(fields))))
     }
 
+    // MARK: - Init
+
+    func testInitNamesGpcOnlyWhenThereIsASignal() async throws {
+        func initQuery(override: Bool?, detected: Bool?) async throws -> [String: String] {
+            let http = StubHTTP()
+            let core = ConsentCore()
+            await core.bootstrapAndSettle(Fixture.configured(
+                store: InMemoryStore(), transport: Fixture.transport(http), clock: TestClock(),
+                overrides: ConsentOverrides(country: nil, region: nil, language: "en", gpc: override),
+                gpc: detected))
+            let url = try XCTUnwrap(http.recordedInitRequests.first?.url)
+            let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+            return Dictionary(uniqueKeysWithValues: items.map { ($0.name, $0.value ?? "") })
+        }
+        let none = try await initQuery(override: nil, detected: nil)
+        XCTAssertNil(none["gpc"], "no override and no detection")
+        let off = try await initQuery(override: false, detected: true)
+        XCTAssertEqual(off["gpc"], "0", "the override wins")
+        let detected = try await initQuery(override: nil, detected: true)
+        XCTAssertEqual(detected["gpc"], "1")
+    }
+
     // MARK: - Shape
 
     func testOverridesEncodeTheFourKernelFieldsAndNothingElse() throws {
