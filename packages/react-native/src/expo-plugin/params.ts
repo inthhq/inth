@@ -472,7 +472,11 @@ const RETIRED_MODES: Readonly<Record<string, string>> = {
 const assertNoRetiredOptions = function assertNoRetiredOptions(
 	props: InthPluginProps
 ): void {
-	const given = props as { initURL?: unknown; mode?: unknown };
+	const given = props as {
+		domain?: unknown;
+		initURL?: unknown;
+		mode?: unknown;
+	};
 	if (given.mode !== undefined) {
 		throw new InthPluginError(
 			(Object.hasOwn(RETIRED_MODES, String(given.mode))
@@ -487,6 +491,12 @@ const assertNoRetiredOptions = function assertNoRetiredOptions(
 		throw new InthPluginError(
 			'initURL was removed and has no replacement. Policy is fetched from ' +
 				'projectUrl: remove initURL.'
+		);
+	}
+	if (given.domain !== undefined) {
+		throw new InthPluginError(
+			'domain was renamed to property. Rename the option: consent records ' +
+				'name the property you set.'
 		);
 	}
 };
