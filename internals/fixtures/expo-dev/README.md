@@ -101,8 +101,8 @@ services. Do not add a separate `InthCore` pod to this app. The checkout-only
 
 For Android, `app.config.ts` explicitly passes `androidMavenRepository` to the
 shipped plugin. The fixture selects `https://maven.pkg.github.com/inthhq/inth-private`
-unless `INTH_MAVEN_URL` supplies a staging URL at prebuild time. HTTPS credentials
-come from `INTH_MAVEN_USERNAME` and `INTH_MAVEN_TOKEN` when Gradle runs. No fixture
+unless `C15T_MAVEN_URL` supplies a staging URL at prebuild time. HTTPS credentials
+come from `C15T_MAVEN_USERNAME` and `C15T_MAVEN_TOKEN` when Gradle runs. No fixture
 plugin adds a Maven repository. See the maintained
 [packed consumer guide](../../../packages/sdk/docs/internal/expo-packed-consumer.md) for the
 options, exclusive routing and clean external-consumer checks.

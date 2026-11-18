@@ -38,8 +38,8 @@ exclusiveContent {
 			url = uri(providers.gradleProperty("inth.repository").get())
 			if (url.scheme == "https") {
 				credentials {
-					username = providers.environmentVariable("INTH_MAVEN_USERNAME").orNull
-					password = providers.environmentVariable("INTH_MAVEN_TOKEN").orNull
+					username = providers.environmentVariable("C15T_MAVEN_USERNAME").orNull
+					password = providers.environmentVariable("C15T_MAVEN_TOKEN").orNull
 				}
 			}
 		}

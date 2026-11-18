@@ -210,7 +210,7 @@ for p in list(range(5554, 5580, 2)) + [5582, 5584]:
   # Mixpanel's Android SDK sends nothing to a host that resolves to loopback, so it
   # reaches the same backend through the emulator's alias for the host machine.
   export INTH_E2E_MIXPANEL_URL="http://10.0.2.2:${BACKEND_PORT}"
-  export INTH_MAVEN_URL="file://${REPO_ROOT}/packages/android/build/maven-staging"
+  export C15T_MAVEN_URL="file://${REPO_ROOT}/packages/android/build/maven-staging"
   sh "${REPO_ROOT}/packages/android/gradlew" -p "${REPO_ROOT}/packages/android" --max-workers=4 \
     :inth-core:publishAllPublicationsToStagingRepository :inth-android:publishAllPublicationsToStagingRepository :inth-consent-ui:publishAllPublicationsToStagingRepository > "${OUT}/native-artifacts.log" 2>&1
   ARCH="${INTH_ANDROID_ARCH:-arm64-v8a}"

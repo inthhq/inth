@@ -56,14 +56,14 @@ compilation; record runtime acceptance separately.
 
 The shipped plugin accepts `androidMavenRepository`. It has no default
 repository. The fixture explicitly selects the private pilot GitHub Packages
-URL, or the `INTH_MAVEN_URL` environment override at prebuild time:
+URL, or the `C15T_MAVEN_URL` environment override at prebuild time:
 
 ```ts
 androidMavenRepository: {
   url: 'https://maven.pkg.github.com/inthhq/inth-private',
   credentials: {
-    usernameEnvironmentVariable: 'INTH_MAVEN_USERNAME',
-    passwordEnvironmentVariable: 'INTH_MAVEN_TOKEN',
+    usernameEnvironmentVariable: 'C15T_MAVEN_USERNAME',
+    passwordEnvironmentVariable: 'C15T_MAVEN_TOKEN',
   },
 }
 ```
@@ -86,7 +86,7 @@ must configure the equivalent settings-owned block themselves. The bare RN
 fixture uses the same exclusive repository contract. Neither fixture substitutes
 a native source project.
 
-For local staging, pass `INTH_MAVEN_URL=file:///absolute/path/maven-staging` to
+For local staging, pass `C15T_MAVEN_URL=file:///absolute/path/maven-staging` to
 both prebuild and Gradle. Prebuild records the explicit URL, so changing the
 environment later requires another prebuild. Run the real host check from the
 consumer directory, without any React Native directory or Codegen override:

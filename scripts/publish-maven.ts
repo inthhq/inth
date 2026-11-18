@@ -286,8 +286,8 @@ export const stageMavenRelease = function stageMavenRelease({
 			cwd,
 			env: {
 				...process.env,
-				INTH_MAVEN_CENTRAL: 'true',
-				INTH_MAVEN_PUBLISH: 'false',
+				C15T_MAVEN_CENTRAL: 'true',
+				C15T_MAVEN_PUBLISH: 'false',
 			},
 			stdio: 'inherit',
 		}

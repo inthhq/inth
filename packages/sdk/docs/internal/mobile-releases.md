@@ -114,8 +114,8 @@ reviewers and branch restrictions to match the team's release policy. Set:
 | Variable | `INTH_NATIVE_PUBLISH` | Leave unset until native acceptance passes; then `true` |
 | Secret | `INTH_CENTRAL_USERNAME` | Central publisher token username |
 | Secret | `INTH_CENTRAL_TOKEN` | Central publisher token password |
-| Secret | `INTH_MAVEN_SIGNING_KEY` | ASCII-armored private signing key |
-| Secret | `INTH_MAVEN_SIGNING_PASSWORD` | Signing key passphrase |
+| Secret | `C15T_MAVEN_SIGNING_KEY` | ASCII-armored private signing key |
+| Secret | `C15T_MAVEN_SIGNING_PASSWORD` | Signing key passphrase |
 
 Keep credentials in the secure account or CI setup. Do not put them in notes,
 Gradle properties, app configuration or chat. Setup requires repository access,

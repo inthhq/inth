@@ -91,7 +91,7 @@ describe('runtime experiments', () => {
 		await vi.waitFor(() => expect(shown).toHaveLength(1));
 		const assignment = first.runtime.kernel.getSnapshot().experiment;
 		expect(assignment).toMatchObject({
-			assignedBy: 'inth',
+			assignedBy: 'c15t',
 			id: 'banner-shape',
 		});
 		// The first impression already carries the arm.

@@ -792,7 +792,7 @@ test('the experiment callbacks carry the arm on the impression and the choice', 
 	try {
 		await vi.waitFor(() => expect(shown).toHaveBeenCalledOnce());
 		expect(shown.mock.calls[0]?.[0]).toMatchObject({
-			experiment: { arm: 'bar', assignedBy: 'inth', id: 'banner-shape' },
+			experiment: { arm: 'bar', assignedBy: 'c15t', id: 'banner-shape' },
 			surface: 'banner',
 		});
 		await context.kernel.commands.save('all');

@@ -270,7 +270,7 @@ export interface SavePayload {
 	experiment?: {
 		id: string;
 		arm: string;
-		assignedBy: 'host' | 'inth';
+		assignedBy: 'host' | 'c15t';
 		acknowledgedDiagnostics: boolean;
 	};
 	/**

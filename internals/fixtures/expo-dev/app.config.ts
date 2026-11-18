@@ -108,15 +108,15 @@ Vous pouvez changer cela dans Réglages à tout moment.`,
 };
 
 const inthPluginProps: InthPluginProps = {
-	androidMavenRepository: (process.env.INTH_MAVEN_URL ?? '').startsWith('file:')
-		? { url: process.env.INTH_MAVEN_URL ?? '' }
+	androidMavenRepository: (process.env.C15T_MAVEN_URL ?? '').startsWith('file:')
+		? { url: process.env.C15T_MAVEN_URL ?? '' }
 		: {
 				credentials: {
-					passwordEnvironmentVariable: 'INTH_MAVEN_TOKEN',
-					usernameEnvironmentVariable: 'INTH_MAVEN_USERNAME',
+					passwordEnvironmentVariable: 'C15T_MAVEN_TOKEN',
+					usernameEnvironmentVariable: 'C15T_MAVEN_USERNAME',
 				},
 				url:
-					process.env.INTH_MAVEN_URL ??
+					process.env.C15T_MAVEN_URL ??
 					'https://maven.pkg.github.com/inthhq/inth-private',
 			},
 	consentCategories,

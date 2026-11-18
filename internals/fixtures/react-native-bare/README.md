@@ -313,7 +313,7 @@ The native build setup is maintained in each platform directory.
   `InthCore` pod. The deployment target is 16.4.
 - Android: the host resolves versioned `com.inth` artifacts from its configured
   exclusive Maven repository. `settings.gradle` does not include the native
-  producer or substitute its source. Set `INTH_MAVEN_URL` to an available private
+  producer or substitute its source. Set `C15T_MAVEN_URL` to an available private
   repository or explicit local staging URL; HTTPS resolution also needs the
   build environment's credentials. JDK 17 and the SDK levels in `android/build.gradle`
   are required. Set `ANDROID_HOME` or `sdk.dir` in `android/local.properties`.

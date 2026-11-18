@@ -208,7 +208,7 @@ test('applies the assigned experiment arm slots to the stock banner', async () =
 	context.kernel.set.experiment({
 		acknowledgedDiagnostics: false,
 		arm: 'branded',
-		assignedBy: 'inth',
+		assignedBy: 'c15t',
 		id: 'card-class',
 	});
 	await flushPromises();

@@ -182,7 +182,7 @@ export const createExperimentControllerWith =
 		// seeing the banner they saw. A host arm is the host's to repeat.
 		let stored = false;
 		const unsubscribe =
-			assignment.assignedBy === 'inth'
+			assignment.assignedBy === 'c15t'
 				? kernel.events.on('surface:shown', (event) => {
 						if (stored || event.surface !== 'banner' || !event.experiment) {
 							return;

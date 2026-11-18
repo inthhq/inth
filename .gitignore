@@ -117,3 +117,7 @@ packages/react-native/skills/
 !/examples/vue/.env
 !/internals/svelte-compat/*/.env
 !.env.*.example
+
+# Vitest browser-mode failure output
+__screenshots__/
+.vitest-attachments/

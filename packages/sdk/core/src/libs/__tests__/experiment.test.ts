@@ -79,7 +79,7 @@ describe('pickExperimentArm', () => {
 		).toEqual({
 			acknowledgedDiagnostics: false,
 			arm: 'bar',
-			assignedBy: 'inth',
+			assignedBy: 'c15t',
 			id: 'banner-shape',
 		});
 	});

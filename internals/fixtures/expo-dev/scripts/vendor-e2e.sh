@@ -344,7 +344,7 @@ else
   AVDMANAGER="${ANDROID_HOME}/cmdline-tools/latest/bin/avdmanager"
   IMAGE="${INTH_ANDROID_IMAGE:-system-images;android-36;google_apis;arm64-v8a}"
   ARCH="${INTH_ANDROID_ARCH:-arm64-v8a}"
-  export INTH_MAVEN_URL="file://${REPO_ROOT}/packages/android/build/maven-staging"
+  export C15T_MAVEN_URL="file://${REPO_ROOT}/packages/android/build/maven-staging"
   sh "${REPO_ROOT}/packages/android/gradlew" -p "${REPO_ROOT}/packages/android" --max-workers=4 \
     :inth-core:publishAllPublicationsToStagingRepository :inth-android:publishAllPublicationsToStagingRepository :inth-consent-ui:publishAllPublicationsToStagingRepository > "${OUT}/native-artifacts.log" 2>&1
   (cd "${APP}" && bun x expo prebuild --platform android --clean --no-install) > "${OUT}/prebuild.log" 2>&1

@@ -71,7 +71,7 @@ test('built-in assignment holds the banner until the arm is picked, then stores 
 		);
 		const assignment = context.snapshot.value.experiment;
 		expect(assignment).toMatchObject({
-			assignedBy: 'inth',
+			assignedBy: 'c15t',
 			id: 'banner-shape',
 		});
 		expect(['control', 'bar', 'floating']).toContain(assignment?.arm);

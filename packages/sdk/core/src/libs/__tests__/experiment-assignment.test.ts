@@ -231,7 +231,7 @@ describe('createExperimentController', () => {
 	});
 
 	test('stores a inth-picked arm only once the banner has shown it', async () => {
-		const kernel = heldKernel([choiceRule], { arm: 'bar', assignedBy: 'inth' });
+		const kernel = heldKernel([choiceRule], { arm: 'bar', assignedBy: 'c15t' });
 		const controller = createExperimentController({
 			experiment,
 			kernel,
@@ -251,7 +251,7 @@ describe('createExperimentController', () => {
 	test('stores nothing for a visitor who is never prompted', async () => {
 		const kernel = heldKernel([{ ...choiceRule, prompt: 'none' }], {
 			arm: 'bar',
-			assignedBy: 'inth',
+			assignedBy: 'c15t',
 		});
 		const controller = createExperimentController({
 			experiment,
