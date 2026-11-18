@@ -11,10 +11,7 @@
  */
 import type { InthProviderOptions } from '@inth/angular';
 import type { RuntimePrefetch } from '@inth/sdk/runtime';
-import type { serverScriptStart } from '@inth/sdk/runtime/script-server-start';
 import { SAFE_NONCE } from '@inth/sdk/server';
-
-type ServerStartOptions = Parameters<typeof serverScriptStart>[0];
 
 /**
  * Adds the start of the scripts `state` allows to the end of `<body>`.
@@ -39,7 +36,7 @@ export const startScriptsOnServer = async function startScriptsOnServer(
 		code = loaded.serverScriptStart({
 			...options,
 			prefetch: state,
-		} as unknown as ServerStartOptions);
+		});
 	} catch {
 		return;
 	}

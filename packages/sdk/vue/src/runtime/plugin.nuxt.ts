@@ -82,7 +82,7 @@ export const serverScriptStartHead = async function serverScriptStartHead(
 		const { serverScriptStart } =
 			await import('@inth/sdk/runtime/script-server-start');
 		code = serverScriptStart({
-			...(config as unknown as Parameters<typeof serverScriptStart>[0]),
+			...config,
 			prefetch: state,
 		});
 	} catch {
