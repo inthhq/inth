@@ -301,7 +301,7 @@ class ConsentHostTest {
         }
         val client = object : HttpClient {
             override fun send(request: HttpRequest) = if (request.method == HttpRequest.GET)
-                HttpResponse(200, mapOf("x-inth-policy-contract" to "1"), body) else HttpResponse(503)
+                HttpResponse(200, emptyMap(), body) else HttpResponse(503)
         }
         return ConsentCore(config, InthStore(store), transport = HostedTransport(client, config), executor = TaskExecutor.DIRECT).also { it.bootstrap() }
     }

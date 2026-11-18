@@ -55,7 +55,7 @@ class ConsentPromptLifetimeTest {
         val config = NativeConfig("https://fixture.invalid")
         val client = object : HttpClient {
             override fun send(request: HttpRequest) = if (request.method == HttpRequest.GET)
-                HttpResponse(200, mapOf("x-inth-policy-contract" to "1"), body) else HttpResponse(503)
+                HttpResponse(200, emptyMap(), body) else HttpResponse(503)
         }
         val store = object : KeyValueStore {
             private val values = java.util.concurrent.ConcurrentHashMap<String, String>()

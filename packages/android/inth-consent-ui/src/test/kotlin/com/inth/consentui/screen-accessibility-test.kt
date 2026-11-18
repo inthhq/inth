@@ -316,7 +316,7 @@ class ScreenAccessibilityTest {
         val config = NativeConfig("https://fixture.invalid", overrides = KernelOverrides(language = language))
         val client = object : HttpClient {
             override fun send(request: HttpRequest) = if (request.method == HttpRequest.GET)
-                HttpResponse(200, mapOf("x-inth-policy-contract" to "1"), fixture) else HttpResponse(503)
+                HttpResponse(200, emptyMap(), fixture) else HttpResponse(503)
         }
         val core = ConsentCore(config, InthStore(store), transport = HostedTransport(client, config), executor = TaskExecutor.DIRECT)
         core.bootstrap()

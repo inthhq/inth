@@ -448,7 +448,7 @@ class ConsentHostAutoPresentTest {
 
     private fun transport(config: NativeConfig, body: String) = HostedTransport(object : HttpClient {
         override fun send(request: HttpRequest) = if (request.method == HttpRequest.GET)
-            HttpResponse(200, mapOf("x-inth-policy-contract" to "1"), body) else HttpResponse(503)
+            HttpResponse(200, emptyMap(), body) else HttpResponse(503)
     }, config)
 
     private fun boot(name: String): ConsentCore {
