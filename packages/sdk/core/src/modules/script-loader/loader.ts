@@ -110,6 +110,8 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 	);
 	/** The list as given, so the registry's list can resolve it again. */
 	let configured: readonly Script[] = options.scripts;
+	/** Whether `configured` waits to replace the registered scripts. */
+	let staged = false;
 	/** Scripts registered for consent but not mounted; see `HeldScript`. */
 	let held: HeldScript[] = [];
 	const refusedIds = new Set<string>();
@@ -509,8 +511,19 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 	};
 
 	const replaceScripts = (configuredNext: readonly Script[]): void => {
+		const heldBefore = held;
 		const next = resolveSources(configuredNext);
 		configured = configuredNext;
+		// A waiting script's check runs once the list arrives. Until then the
+		// batch waits too, so a check that fails leaves the registered
+		// scripts in place, as it would have if it had run now.
+		staged = held.some(
+			({ reason, script }) => reason === 'waiting' && script.validate
+		);
+		if (staged) {
+			held = heldBefore;
+			return;
+		}
 		const nextScripts = new Set(next);
 		const nextById = new Map(next.map((script) => [script.id, script]));
 		const previous = new Set(normalized.map(({ script }) => script));
@@ -659,7 +672,7 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 			}
 			registryState = state;
 			stopWaiting?.();
-			if (disposed || held.length === 0) {
+			if (disposed || (held.length === 0 && !staged)) {
 				return;
 			}
 			// Resolve the list again: waiting scripts mount now, from the

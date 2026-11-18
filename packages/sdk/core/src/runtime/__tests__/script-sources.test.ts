@@ -1281,6 +1281,103 @@ describe('experimentalScriptRegistry', () => {
 		runtime.dispose();
 	});
 
+	test('keeps the registered scripts when a waiting script fails its check once the list arrives', async () => {
+		let answer: (response: Record<string, unknown>) => void = () => undefined;
+		const onDispose = vi.fn();
+		const onDebug = vi.fn();
+		const options: ConsentProviderRuntimeOptions = {
+			experimentalScriptRegistry: true,
+			mode: initMode(
+				() =>
+					new Promise((resolve) => {
+						answer = resolve;
+					})
+			),
+			persistence: false,
+			scriptLoader: { onDebug },
+			scripts: [{ ...necessaryOther, onDispose }],
+		};
+		const runtime = createConsentProviderRuntime(
+			options,
+			defaultRuntimeModules
+		);
+		runtime.start();
+		await vi.waitFor(() => expect(element('other')).not.toBeNull());
+
+		await runtime.update({
+			...options,
+			scripts: [
+				integrationScript({
+					validate: () => {
+						throw new Error('invalid configuration');
+					},
+				}),
+			],
+		});
+		answer({
+			scriptRegistry: {
+				sources: { vendor: { integrity: HASH_INTEGRITY, src: HASH_SRC } },
+			},
+		});
+		await vi.waitFor(() =>
+			expect(onDebug).toHaveBeenCalledWith(
+				expect.objectContaining({
+					action: 'error',
+					message: expect.stringContaining('invalid configuration'),
+				})
+			)
+		);
+
+		expect(onDispose).not.toHaveBeenCalled();
+		expect(element('other')?.isConnected).toBe(true);
+		expect(element('vendor')).toBeNull();
+		runtime.dispose();
+	});
+
+	test('replaces the registered scripts once a waiting script passes its check', async () => {
+		let answer: (response: Record<string, unknown>) => void = () => undefined;
+		const onDispose = vi.fn();
+		const validate = vi.fn();
+		const options: ConsentProviderRuntimeOptions = {
+			experimentalScriptRegistry: true,
+			mode: initMode(
+				() =>
+					new Promise((resolve) => {
+						answer = resolve;
+					})
+			),
+			persistence: false,
+			scripts: [{ ...necessaryOther, onDispose }],
+		};
+		const runtime = createConsentProviderRuntime(
+			options,
+			defaultRuntimeModules
+		);
+		runtime.start();
+		await vi.waitFor(() => expect(element('other')).not.toBeNull());
+
+		await runtime.update({
+			...options,
+			scripts: [integrationScript({ validate })],
+		});
+		expect(onDispose).not.toHaveBeenCalled();
+		answer({
+			scriptRegistry: {
+				sources: { vendor: { integrity: HASH_INTEGRITY, src: HASH_SRC } },
+			},
+		});
+
+		await vi.waitFor(() =>
+			expect(fetchAttributes('vendor').src).toBe(HASH_SRC)
+		);
+		expect(validate).toHaveBeenCalledWith(
+			expect.objectContaining({ src: HASH_SRC })
+		);
+		expect(onDispose).toHaveBeenCalledOnce();
+		expect(element('other')).toBeNull();
+		runtime.dispose();
+	});
+
 	test('applies to scripts a provider passes after it started', async () => {
 		const options: ConsentProviderRuntimeOptions = {
 			experimentalScriptRegistry: true,

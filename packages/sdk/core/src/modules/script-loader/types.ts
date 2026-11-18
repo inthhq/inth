@@ -128,7 +128,9 @@ export interface ScriptLoaderOptions {
 	 * `@inth/integrations` built, has a `src` and no entry in `sources`
 	 * waits. It then loads from the registry's entry for its `id`, or from
 	 * its own URL when there is none or init carried no list. An entry the
-	 * loader cannot check keeps the script from loading at all.
+	 * loader cannot check keeps the script from loading at all. A new
+	 * script list in which a waiting script has `validate` replaces the
+	 * current one only once the list arrives and every check passes.
 	 */
 	registry?: {
 		/**
