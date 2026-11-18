@@ -346,7 +346,7 @@ describe('POST /v1/consent/sessions', () => {
 		'%s reports nothing, and the save carries no journey',
 		async (_label, report) => {
 			const { calls, fetch } = stubFetch(() =>
-				json(200, { subjectId: SUBJECT })
+				json(200, { recordId: RECORD, subjectId: SUBJECT })
 			);
 			const transport = createV1ManifestTransport({
 				fetch,
