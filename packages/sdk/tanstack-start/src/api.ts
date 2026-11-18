@@ -32,10 +32,13 @@ import {
 	projectUrl as generatedProjectUrl,
 	snapshot as generatedSnapshot,
 } from '@inth/sdk/generated';
+import type { ConsentMode } from '@inth/sdk/modes';
 import type { ConsentManifest } from '@inth/sdk/schema/types';
 import {
 	createConsentRouteHandler,
 	createConsentRouteMethodHandlers,
+	normalizeRoutePrefix,
+	resolveServerMode,
 } from '@inth/sdk/server';
 import type {
 	ConsentProxyOptions,
@@ -56,6 +59,25 @@ export type { ConsentProxyOptions } from '@inth/sdk/server';
 /** Options for {@link createConsentRoute}. */
 export interface ConsentRouteOptions {
 	/**
+	 * The `mode` given to `createConsentStateHandler()`, so the route reads
+	 * the manifest where the render does: a `manifest()` mode's `snapshot`
+	 * or `manifestUrl` (unless that URL is this route's own), and no build
+	 * snapshot for `source: 'runtime'` or an absolute `manifestUrl`.
+	 *
+	 * @default manifest()
+	 */
+	mode?: ConsentMode;
+
+	/**
+	 * Where this route is mounted, the same `routePrefix` given to
+	 * `createConsentStateHandler()`. A mode's `manifestUrl` on it is the
+	 * browser's way here, not a manifest to read.
+	 *
+	 * @default '/api/inth'
+	 */
+	routePrefix?: string;
+
+	/**
 	 * Backend base URL that serves `/manifest`, for example
 	 * `https://your-project.inth.app`. Defaults to the URL
 	 * `consentManifest()` read from `VITE_INTH_PROJECT_URL`. The proxy forwards to it.
@@ -63,14 +85,15 @@ export interface ConsentRouteOptions {
 	projectUrl?: string;
 
 	/**
-	 * Full manifest URL. Overrides `${projectUrl}/manifest`.
+	 * Full manifest URL. Overrides `${projectUrl}/manifest` and the mode's.
 	 */
 	manifestUrl?: string;
 	/**
 	 * Deployment-bound manifest. Takes precedence over upstream URLs.
-	 * Defaults to the snapshot `consentManifest()` fetched during the build.
-	 * `undefined`, which a build that could not fetch the manifest produces,
-	 * makes the server fetch the policy at runtime.
+	 * Defaults to the mode's `snapshot`, then the one `consentManifest()`
+	 * fetched during the build. `undefined`, which a build that could not
+	 * fetch the manifest produces, makes the server fetch the policy at
+	 * runtime.
 	 */
 	snapshot?: ConsentManifest | undefined;
 
@@ -177,7 +200,7 @@ export type ConsentRouteHandlersFor<Options extends ConsentRouteOptions> =
  * Creates the handlers for the same-origin consent route,
  * `src/routes/api/inth/$.ts`. The splat names the consent path.
  *
- * @param options - Backend, snapshot, fetch, GVL, cache, and proxy
+ * @param options - Mode, backend, snapshot, fetch, GVL, cache, and proxy
  * options. The backend URL and snapshot default to what
  * `consentManifest()` provides.
  * @returns Handlers for `createFileRoute('/api/inth/$')({ server: { handlers } })`.
@@ -204,14 +227,24 @@ export const createConsentRoute = function createConsentRoute<
 	Options extends ConsentRouteOptions = ConsentRouteOptions,
 >(options?: Options): ConsentRouteHandlersFor<Options> {
 	const resolved: ConsentRouteOptions = options ?? {};
+	const source = resolveServerMode({
+		adapter: '@inth/tanstack-start',
+		buildSnapshot:
+			'snapshot' in resolved ? resolved.snapshot : generatedSnapshot,
+		mode: resolved.mode,
+		projectUrl: resolved.projectUrl ?? generatedProjectUrl,
+		routePrefix:
+			resolved.routePrefix === undefined
+				? undefined
+				: normalizeRoutePrefix('@inth/tanstack-start', resolved.routePrefix),
+	}).route;
 	const handle = createConsentRouteHandler({
+		...source,
 		adapter: '@inth/tanstack-start',
 		cache: resolved.cache,
 		fetch: resolved.fetch,
 		fetchGvl: resolved.fetchGvl,
-		manifest: 'snapshot' in resolved ? resolved.snapshot : generatedSnapshot,
-		manifestUrl: resolved.manifestUrl,
-		projectUrl: resolved.projectUrl ?? generatedProjectUrl,
+		manifestUrl: resolved.manifestUrl ?? source.manifestUrl,
 		proxy: resolved.proxy,
 		trustForwardedHeaders: resolved.trustForwardedHeaders,
 	});

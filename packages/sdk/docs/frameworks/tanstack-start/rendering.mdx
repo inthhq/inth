@@ -33,6 +33,8 @@ banner into the HTML. To apply policy updates without rebuilding, pass
 `mode: manifest({ source: 'runtime' })` to `createConsentStateHandler`, with
 `manifest` from `@inth/tanstack-start`. The server then fetches the manifest
 and caches it in memory. Keep the plugin: it still supplies the backend URL.
+Pass the same `mode`, and the same `routePrefix`, to `createConsentRoute`, so
+the route reads the manifest where the render does.
 
 `createConsentStateHandler({ mode })` takes `manifest()`, `hosted()` or
 `testing()` from `@inth/tanstack-start`. They are plain data, so the state

@@ -7,6 +7,7 @@
 import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 
+import { manifest } from '@inth/angular';
 import { clearManifestCache } from '@inth/sdk/server';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
@@ -100,6 +101,19 @@ describe('createConsentRoute', () => {
 		} finally {
 			global.mockRestore();
 		}
+	});
+
+	test("reads the manifest where the render does, from provideInth()'s mode", async () => {
+		const fetch = upstream();
+		const route = createConsentRoute({
+			fetch,
+			mode: manifest({ manifestUrl: 'https://cdn.example/manifest' }),
+			projectUrl: BACKEND,
+		});
+		await route.fetch(new Request(`${SITE}/api/inth/manifest`));
+		expect(String(fetch.mock.calls[0]?.[0])).toBe(
+			'https://cdn.example/manifest'
+		);
 	});
 
 	test('rejects a backend URL that names the route itself', () => {

@@ -60,6 +60,25 @@ describe('defaults from @inth/sdk/generated', () => {
 	});
 });
 
+describe('the consent route with the render mode', () => {
+	test('an absolute manifestUrl wins over the build snapshot, as in the render', async () => {
+		const fetch = vi
+			.fn<typeof globalThis.fetch>()
+			.mockResolvedValue(Response.json(MANIFEST_FIXTURE));
+		const { GET } = createConsentRoute({
+			fetch,
+			mode: { manifestUrl: 'https://cdn.example/manifest', type: 'manifest' },
+		});
+		await GET({
+			params: { _splat: 'manifest' },
+			request: new Request('https://app.example.com/api/inth/manifest'),
+		});
+		expect(String(fetch.mock.calls[0]?.[0])).toBe(
+			'https://cdn.example/manifest'
+		);
+	});
+});
+
 describe('the client half of the state', () => {
 	test('carries the mode and route prefix, never the snapshot', async () => {
 		const state = await resolveConsent({

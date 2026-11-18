@@ -1,4 +1,3 @@
-import type { ConsentManifest } from '@inth/sdk/schema/types';
 /**
  * The same-origin consent route for an Angular server.
  *
@@ -7,6 +6,8 @@ import type { ConsentManifest } from '@inth/sdk/schema/types';
  * prefix in front of `AngularAppEngine` or `AngularNodeAppEngine`, and lets
  * `provideInthServer()` reach it in-process.
  */
+import type { InthOptions } from '@inth/angular';
+import type { ConsentManifest } from '@inth/sdk/schema/types';
 import {
 	createConsentRouteHandler,
 	DEFAULT_CONSENT_ROUTE_PREFIX,
@@ -14,6 +15,7 @@ import {
 	normalizeRoutePrefix,
 	readRequestForwarding,
 	resolveRequestOrigin,
+	resolveServerMode,
 	trimPathSlashes,
 } from '@inth/sdk/server';
 import type {
@@ -21,6 +23,7 @@ import type {
 	ConsentProxyOptions,
 	ConsentRouteFetchGvl,
 	ManifestFetch,
+	ServerModeInput,
 } from '@inth/sdk/server';
 
 export type { ConsentProxyOptions } from '@inth/sdk/server';
@@ -36,14 +39,25 @@ export interface ConsentRouteOptions {
 	 */
 	routePrefix?: string;
 	/**
+	 * The `mode` given to `provideInth()`, so the route reads the manifest
+	 * where the server render does: a `manifest()` mode's `snapshot` or
+	 * `manifestUrl`, unless that URL is this route's own.
+	 *
+	 * @default manifest()
+	 */
+	mode?: InthOptions['mode'];
+	/**
 	 * The Inth backend. The manifest is read from `${projectUrl}/manifest`
 	 * unless `manifestUrl` or `snapshot` is set; session reports and the
 	 * proxy go here. Must not name this route.
 	 */
 	projectUrl?: string;
-	/** Full manifest URL. Takes precedence over `${projectUrl}/manifest`. */
+	/**
+	 * Full manifest URL. Takes precedence over `${projectUrl}/manifest` and
+	 * the mode's.
+	 */
 	manifestUrl?: string;
-	/** A manifest to resolve with. No manifest is fetched. */
+	/** A manifest to resolve with, in place of the mode's. No manifest is fetched. */
 	snapshot?: ConsentManifest;
 	/** Fetch for an absolute `projectUrl` or `manifestUrl`. */
 	fetch?: ManifestFetch;
@@ -184,8 +198,9 @@ const FORWARDING_HEADERS = [
  *   (await consentRoute.fetch(request)) ?? (await angularApp.handle(request));
  * ```
  *
- * @throws {TypeError} When `routePrefix` is `/` or not a path, or a
- * relative `projectUrl` or `manifestUrl` is the route or beneath it.
+ * @throws {TypeError} When `routePrefix` is `/` or not a path, a relative
+ * `projectUrl` or `manifestUrl` is the route or beneath it, or `mode` is
+ * not a mode.
  */
 export const createConsentRoute = function createConsentRoute(
 	options: ConsentRouteOptions = {}
@@ -194,13 +209,20 @@ export const createConsentRoute = function createConsentRoute(
 		ADAPTER,
 		options.routePrefix ?? DEFAULT_CONSENT_ROUTE_PREFIX
 	);
+	const { route } = resolveServerMode({
+		adapter: ADAPTER,
+		browserTransports: true,
+		mode: options.mode as ServerModeInput,
+		projectUrl: options.projectUrl,
+		routePrefix,
+	});
 	const handler = createConsentRouteHandler({
 		adapter: ADAPTER,
 		fetch: options.fetch,
 		fetchGvl: options.fetchGvl,
-		manifest: options.snapshot,
-		manifestUrl: options.manifestUrl,
-		projectUrl: options.projectUrl,
+		manifest: options.snapshot ?? route.manifest,
+		manifestUrl: options.manifestUrl ?? route.manifestUrl,
+		projectUrl: route.projectUrl,
 		proxy: options.proxy,
 		routePrefix,
 		trustForwardedHeaders: options.trustForwardedHeaders,
