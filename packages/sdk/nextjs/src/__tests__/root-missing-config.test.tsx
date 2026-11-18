@@ -63,9 +63,7 @@ test('throws with no config and no NEXT_PUBLIC_INTH_PROJECT_URL', () => {
 				<div>root</div>
 			</ConsentRoot>
 		)
-	).toThrow(
-		'@inth/nextjs: `projectUrl` is required. Set NEXT_PUBLIC_INTH_PROJECT_URL, or `projectUrl` in inth.config.ts.'
-	);
+	).toThrow('`projectUrl` is required');
 });
 
 test('renders testing() without a backend URL', () => {

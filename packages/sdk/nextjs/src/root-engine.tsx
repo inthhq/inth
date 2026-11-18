@@ -15,7 +15,6 @@ import {
 import type { ScriptServerStartModule } from '@inth/react/deferred/engine';
 import { ConsentProvider } from '@inth/react/provider';
 import type { ConsentProviderOptions } from '@inth/react/provider';
-import type { WithProjectUrl } from '@inth/sdk/runtime/provider';
 /**
  * The engine side of `ConsentRoot`, loaded on demand by `./root`.
  *
@@ -29,12 +28,13 @@ import type { WithProjectUrl } from '@inth/sdk/runtime/provider';
  * forwards it to the React provider as `options.prefetch`. Kernel creation,
  * persistence, init, and module wiring live in `@inth/react`.
  */
+import { clientMode } from '@inth/sdk/runtime/client-mode';
+import type { WithProjectUrl } from '@inth/sdk/runtime/provider';
 import { preloadScriptLoaderWith } from '@inth/sdk/runtime/script-loader-preload';
 import { resolveStreamedInit } from '@inth/sdk/runtime/streamed-init';
 import { Suspense, useState } from 'react';
 import type { ReactNode } from 'react';
 
-import { createClientMode } from './client-mode';
 import type { ConsentConfig } from './config';
 import { readProjectUrlFromEnv } from './config';
 import { NEXT_CHUNKS } from './engine-chunks';
@@ -74,10 +74,17 @@ const createMode = function createMode(
 	config: ConsentConfig | undefined,
 	options: ConsentClientOptions['options']
 ) {
-	// The config carries the backend URL, route prefix and `proxy`.
-	return createClientMode(
+	// With `proxy` the consent route forwards writes, so the browser sends
+	// everything to it, even for a `hosted()` with its own `projectUrl`.
+	return clientMode(
 		options?.mode ?? config?.mode,
-		config ?? { projectUrl: readProjectUrlFromEnv() }
+		config
+			? {
+					projectUrl: config.proxy ? config.routePrefix : config.projectUrl,
+					routePrefix: config.routePrefix,
+				}
+			: { projectUrl: readProjectUrlFromEnv() },
+		'@inth/nextjs/testing'
 	);
 };
 
