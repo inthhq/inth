@@ -239,6 +239,17 @@ describe('deepMergeTranslations', () => {
 			preferences: 'Custom Preferences',
 		});
 	});
+
+	it('merges the trigger section', () => {
+		const result = deepMergeTranslations(
+			{ ...baseTranslations, trigger: { label: 'Base label' } },
+			{ trigger: { toolbarLabel: 'Custom toolbar' } }
+		);
+		expect(result.trigger).toEqual({
+			label: 'Base label',
+			toolbarLabel: 'Custom toolbar',
+		});
+	});
 });
 
 describe('mergeTranslationConfigs', () => {

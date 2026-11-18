@@ -26,8 +26,11 @@ export { IABUnavailableError, policyNeedsIAB } from './libs/iab-unavailable';
 export { resolveConsentPresentation } from './libs/policy-actions';
 export {
 	resolveActionLabels,
+	resolveCategoryTitle,
+	resolveIABCopy,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
+	resolveTriggerLabels,
 } from './libs/consent-copy';
 export {
 	applyExperimentAssignment,

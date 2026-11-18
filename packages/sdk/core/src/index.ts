@@ -265,9 +265,11 @@ export type {
 	ConsentTypeTranslations,
 	CookieBannerTranslations,
 	I18nConfig,
+	IABTranslations,
 	LegalLinksTranslations,
 	TranslationConfig,
 	Translations,
+	TriggerTranslations,
 } from '@inth/sdk-translations';
 export {
 	deepMergeTranslations,
@@ -351,8 +353,11 @@ export type {
 } from './libs/policy-actions';
 export {
 	resolveActionLabels,
+	resolveCategoryTitle,
+	resolveIABCopy,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
+	resolveTriggerLabels,
 } from './libs/consent-copy';
 export type { PreferenceControl, PromptCopy } from './libs/consent-copy';
 

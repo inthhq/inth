@@ -29,6 +29,16 @@ export interface RightsTranslations {
 	preferences: string;
 }
 
+/** Accessible names for the floating trigger that reopens preferences. */
+export interface TriggerTranslations {
+	/** Accessible name of the trigger button. */
+	label: string;
+	/** Accessible name of the toolbar that holds the trigger and DevTools. */
+	toolbarLabel: string;
+	/** Accessible name of the toolbar item that opens DevTools. */
+	devToolsLabel: string;
+}
+
 export interface LegalLinksTranslations {
 	privacyPolicy: string;
 	cookiePolicy: string;
@@ -276,6 +286,11 @@ export interface CompleteTranslations {
 	legalLinks: LegalLinksTranslations;
 	iab: IABTranslations;
 	rights: RightsTranslations;
+	/**
+	 * Optional so custom translation objects keep compiling; English
+	 * provides it and fills the gaps for every other language.
+	 */
+	trigger?: TriggerTranslations;
 }
 
 // Partial translations interface (used for other languages)
@@ -297,6 +312,7 @@ export interface Translations {
 	legalLinks?: Partial<LegalLinksTranslations>;
 	iab?: DeepPartial<IABTranslations>;
 	rights?: Partial<RightsTranslations>;
+	trigger?: Partial<TriggerTranslations>;
 }
 
 // Helper type for deep partial
