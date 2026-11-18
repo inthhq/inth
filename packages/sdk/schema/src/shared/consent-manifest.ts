@@ -8,7 +8,7 @@ import {
 import { DEFAULT_GVL_ENDPOINT } from './constants';
 import type { brandingValues, hostingValues } from './constants';
 import { createDeterministicFingerprintSync } from './policy-fingerprint';
-import { normalizeLanguage } from './policy-i18n-validation';
+import { primaryLanguage } from './policy-i18n-validation';
 import {
 	matchPolicyRules,
 	readPolicyResolutionWire,
@@ -246,7 +246,7 @@ export const sliceConsentManifestLanguage =
 		manifest: ConsentManifest,
 		language: string
 	): ConsentManifest {
-		const normalizedLanguage = normalizeLanguage(language) ?? language;
+		const normalizedLanguage = primaryLanguage(language) ?? language;
 		const customTranslations = manifest.translations?.customTranslations;
 		const i18n = manifest.translations?.i18n;
 

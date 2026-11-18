@@ -8,7 +8,7 @@ import { translations as enTranslations } from '@inth/sdk-translations/en';
 
 import {
 	isBuiltInMessageProfile,
-	normalizeLanguage,
+	primaryLanguage,
 	resolveActiveProfile,
 	resolveFallbackLanguage,
 	validatePolicyI18nConfig,
@@ -238,9 +238,9 @@ export const getTranslationsData = function getTranslationsData(
 			? resolveFallbackLanguage({ profile: profiles[profile] })
 			: 'en';
 
-	const policyLanguage = normalizeLanguage(options?.policyI18n?.language);
+	const policyLanguage = primaryLanguage(options?.policyI18n?.language);
 	const requestedBaseLanguage =
-		policyLanguage ?? normalizeLanguage(acceptLanguage);
+		policyLanguage ?? primaryLanguage(acceptLanguage);
 	if (
 		!options?.baseTranslations &&
 		requestedBaseLanguage &&

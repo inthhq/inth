@@ -8,7 +8,11 @@
  * evidence the backend has to reject a save made against a stale policy.
  */
 
-import { GPC_HEADERS, parseGlobalPrivacyControl } from '@inth/sdk-schema/types';
+import {
+	GPC_HEADERS,
+	parseGlobalPrivacyControl,
+	primaryLanguage,
+} from '@inth/sdk-schema/types';
 import type { InitOutput } from '@inth/sdk-schema/types';
 
 import type { KernelOverrides, SavePayload } from '../types';
@@ -21,10 +25,6 @@ export interface RememberedDecisionInputs {
 	language: string;
 	gpc?: boolean;
 }
-
-const primaryLanguage = function primaryLanguage(value: string): string {
-	return value.toLowerCase().split('-')[0] ?? value.toLowerCase();
-};
 
 /**
  * Whether kernel overrides still describe the inputs a remembered decision

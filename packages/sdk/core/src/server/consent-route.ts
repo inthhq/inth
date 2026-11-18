@@ -34,6 +34,7 @@ import {
 	parsePolicyContractHeader,
 	POLICY_CONTRACT_HEADER,
 	POLICY_CONTRACT_VERSION,
+	primaryLanguage,
 	readJourneyParams,
 	readPolicyResolutionWire,
 	writePolicyResolutionWire,
@@ -406,7 +407,7 @@ export const resolveConsentInit = async function resolveConsentInit(
 	);
 	if (options.loadGvl && isIabMatch(manifest, payload)) {
 		payload.gvl = await options.loadGvl(
-			payload.translations.language.split('-')[0] || 'en'
+			primaryLanguage(payload.translations.language) ?? 'en'
 		);
 	}
 	const adTechProviders = await providers;

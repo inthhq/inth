@@ -1,4 +1,7 @@
-import { extractConsentRequestInputs } from '@inth/sdk-schema/types';
+import {
+	extractConsentRequestInputs,
+	primaryLanguage,
+} from '@inth/sdk-schema/types';
 import type {
 	AdTechProvider,
 	GlobalVendorList,
@@ -8,7 +11,7 @@ import type {
 import { resolveIABBannerSummary } from '../libs/iab-banner-summary';
 
 const normalizeLanguage = (language?: string): string =>
-	language?.split('-')[0]?.toLowerCase() || 'en';
+	primaryLanguage(language) ?? 'en';
 
 /**
  * Replace a fetched list with a reference and its banner summary.

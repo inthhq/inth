@@ -259,10 +259,12 @@ export {
 	policyRuleModelSchema,
 	resolvedPolicyRuleSchema,
 } from './policy-wire-schema';
+export { BASE_LANGUAGES } from './base-languages';
 export {
 	type PolicyI18nMessageProfileLike,
 	type PolicyI18nValidationOptions,
 	type PolicyI18nValidationResult,
+	primaryLanguage,
 	validatePolicyI18nConfig,
 } from './policy-i18n-validation';
 export {

@@ -10,6 +10,7 @@
 
 import {
 	POLICY_CONTRACT_VERSION,
+	primaryLanguage,
 	resolveInitFromManifest,
 } from '@inth/sdk-schema/types';
 import type {
@@ -475,7 +476,7 @@ export const createManifestTransport = function createManifestTransport(
 					})
 			);
 			if (shouldFetchGvl(manifest, payload) && manifest.iab?.gvl) {
-				const language = payload.translations.language.split('-')[0] || 'en';
+				const language = primaryLanguage(payload.translations.language) ?? 'en';
 				payload.gvl = await (options.fetchGvl ?? defaultFetchGvl)({
 					fetch: fetchImpl,
 					language,
