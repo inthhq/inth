@@ -98,16 +98,16 @@ export const CONSENT_JOURNEY_STORED_PARAM = 'stored';
 
 /**
  * The journey parameter names `3.0.0-alpha.8` and `alpha.9` clients sent:
- * `inthJourney`, `inthJourneyScope` and `inthStored`. Readers fall back to
+ * `c15tJourney`, `c15tJourneyScope` and `c15tStored`. Readers fall back to
  * them when a request carries no journey under the current names. Never
  * written. Remove once the alpha clients that send them are retired.
  *
  * @internal
  */
 export const LEGACY_CONSENT_JOURNEY_PARAMS = {
-	id: 'inthJourney',
-	scope: 'inthJourneyScope',
-	stored: 'inthStored',
+	id: 'c15tJourney',
+	scope: 'c15tJourneyScope',
+	stored: 'c15tStored',
 } as const;
 
 /**
