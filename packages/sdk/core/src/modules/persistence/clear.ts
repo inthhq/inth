@@ -9,10 +9,12 @@
  *
  * @internal
  */
+import { IAB_STORAGE_KEYS } from '@inth/sdk-schema/types';
+
 import type { CookieOptions } from '../../libs/cookie';
 import { deleteCookie, writeCookie } from '../../libs/cookie';
 import { removeLegacySubjectId } from '../../libs/legacy-subject-id';
-import { IAB_STORAGE_KEYS, storageKeyFamilies } from '../../libs/storage-keys';
+import { storageKeyFamilies } from '../../libs/storage-keys';
 import { EPOCH_CLOCK_TOLERANCE_MS } from './record-codec';
 import { readStoredClearEpoch, resolveStorageKeys } from './record-storage';
 import type { StorageConfig } from './types';
@@ -72,9 +74,14 @@ export const clearStoredConsentRecords = function clearStoredConsentRecords(
 	removeLegacySubjectId(config, cookie);
 	// Addon bytes must be removed even when the addon is not mounted.
 	removeLocalStorageKey(IAB_STORAGE_KEYS.authority);
-	removeLocalStorageKey(IAB_STORAGE_KEYS.tcString);
-	deleteCookie(IAB_STORAGE_KEYS.tcString, cookie, config);
-	deleteCookie(IAB_STORAGE_KEYS.tcString);
+	for (const key of [
+		IAB_STORAGE_KEYS.tcString,
+		IAB_STORAGE_KEYS.additionalConsent,
+	]) {
+		removeLocalStorageKey(key);
+		deleteCookie(key, cookie, config);
+		deleteCookie(key);
+	}
 };
 
 /**

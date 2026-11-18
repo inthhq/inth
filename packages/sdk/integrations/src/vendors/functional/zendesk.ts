@@ -1,9 +1,9 @@
-import { has } from '@inth/sdk/engine';
 import type { Script, ScriptCallbackInfo } from '@inth/sdk/engine';
 
 import { resolveManifest } from '../../resolve';
 import { runtimeTimestampValue, vendorManifestContract } from '../../types';
 import type { VendorManifest } from '../../types';
+import { permitted } from '../_shared/permitted';
 import { readId, skipMissingId } from '../_shared/required-id';
 import {
 	createScriptReuse,
@@ -70,8 +70,7 @@ const createZendeskScript = (options: ZendeskWidgetOptions): Script => {
 	const grantedRegistrations = (info: ScriptCallbackInfo) =>
 		getScriptRegistrations(info).filter(
 			// Configuration removal reports hasConsent: false even while granted.
-			(state) =>
-				state.vendor?.granted !== false && has(category, state.consents)
+			(state) => permitted(state, category)
 		);
 
 	const updateCookieRange = (info: ScriptCallbackInfo): void => {

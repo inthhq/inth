@@ -9,8 +9,9 @@
  * @packageDocumentation
  */
 
-import { version } from '../version';
-import type { PingData, TCFApi, TCFApiCallback } from './iab-tcf-types';
+import type { PingData, TCFApi, TCFApiCallback } from '@inth/sdk-core';
+
+import { CMP_VERSION_NUMBER, createPingData } from './cmp-defaults';
 
 /** Whether the stub has been initialized */
 let stubInitialized = false;
@@ -21,22 +22,20 @@ let ownedStub: TCFApi | null = null;
 let locatorIframe: HTMLIFrameElement | null = null;
 
 /**
- * Creates the initial stub ping response.
+ * The stub's ping answer. It has no CMP ID or vendor list yet, and reports
+ * the default CMP version.
  */
-const createStubPingData = function createStubPingData(): PingData {
-	return {
-		apiVersion: '2.3',
+const createStubPingData = (): PingData =>
+	createPingData({
 		cmpId: 0,
-		cmpLoaded: false,
 		cmpStatus: 'stub',
-		cmpVersion: version,
+		cmpVersion: CMP_VERSION_NUMBER,
 		displayStatus: 'hidden',
 		gdprApplies: undefined,
 		gvlVersion: 0,
 		// TCF 2.4 still uses policy version 5
 		tcfPolicyVersion: 5,
-	};
-};
+	});
 
 /**
  * The stub implementation of __tcfapi.
@@ -232,22 +231,6 @@ export const clearStubQueue = function clearStubQueue(): void {
 };
 
 /**
- * Checks if the stub is currently active (vs the real CMP).
- *
- * @returns True if the current __tcfapi is the stub
- *
- * @public
- */
-export const isStubActive = function isStubActive(): boolean {
-	if (typeof window === 'undefined' || !window.__tcfapi) {
-		return false;
-	}
-
-	// The stub has a queue property
-	return Array.isArray(window.__tcfapi.queue);
-};
-
-/**
  * Destroys the IAB stub and cleans up.
  *
  * @public
@@ -272,15 +255,4 @@ export const destroyIABStub = function destroyIABStub(): void {
 	}
 	ownedStub = null;
 	stubInitialized = false;
-};
-
-/**
- * Checks if the stub has been initialized.
- *
- * @returns True if the stub has been initialized
- *
- * @public
- */
-export const isStubInitialized = function isStubInitialized(): boolean {
-	return stubInitialized;
 };

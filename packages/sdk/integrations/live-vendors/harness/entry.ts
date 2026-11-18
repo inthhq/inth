@@ -11,6 +11,7 @@ import type { ConsentState } from '@inth/sdk/engine';
 import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import type { ScriptLoaderHandle } from '@inth/sdk/modules/script-loader';
 
+import { ALL_DENIED } from '../../src/engine/vendor-consent';
 import type {
 	LiveProbeCheckResult,
 	LiveProbeLoadOutcome,
@@ -23,14 +24,6 @@ declare global {
 		__inthLiveVendorProbe?: LiveVendorProbeHarness;
 	}
 }
-
-const deniedConsents: ConsentState = {
-	experience: false,
-	functionality: false,
-	marketing: false,
-	measurement: false,
-	necessary: true,
-};
 
 const grantedConsents: ConsentState = {
 	experience: true,
@@ -169,7 +162,7 @@ const harness: LiveVendorProbeHarness = {
 
 		try {
 			const script = config.createScript();
-			let consents = deniedConsents;
+			let consents = ALL_DENIED;
 			if (granted) {
 				consents = grantedConsents;
 			}

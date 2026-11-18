@@ -5,7 +5,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	grantedMarketingConsents,
 	grantedMeasurementConsents,
 	installHeadProbe,
@@ -38,7 +38,7 @@ describe('openaiPixel loader contract', () => {
 		});
 		const scripts = [openaiPixel({ debug: true, pixelId })];
 
-		expect(loadScripts(scripts, deniedConsents)).toEqual([]);
+		expect(loadScripts(scripts, ALL_DENIED)).toEqual([]);
 		expect(loadScripts(scripts, grantedMeasurementConsents)).toEqual([]);
 		expect(loads).toBe(0);
 		expect(getOaiq()).toBeUndefined();
@@ -54,7 +54,7 @@ describe('openaiPixel loader contract', () => {
 		]);
 		runtime.mockClear();
 
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(runtime).toHaveBeenLastCalledWith('consent', false);
 		expect(document.querySelectorAll('script')).toHaveLength(1);
 		updateScripts(scripts, grantedMarketingConsents);
@@ -72,7 +72,7 @@ describe('openaiPixel loader contract', () => {
 		});
 		const scripts = [openaiPixel({ pixelId })];
 		loadScripts(scripts, grantedMarketingConsents);
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		if (scriptElement === undefined) {
 			throw new Error('Expected the OpenAI Pixel SDK script to be appended');
 		}

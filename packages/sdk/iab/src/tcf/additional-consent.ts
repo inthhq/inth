@@ -24,21 +24,6 @@ import {
 	isProviderId,
 } from './additional-consent-codec';
 
-/**
- * Default provider list endpoint. It serves Google's
- * `additional-consent-providers.csv` as JSON, filtered by `providerIds`.
- *
- * @internal
- */
-export const AD_TECH_PROVIDERS_ENDPOINT = AD_TECH_PROVIDERS_URL;
-
-/**
- * TCF purposes a provider needs before the AC string lists it as consented.
- *
- * @internal
- */
-export { AD_TECH_PROVIDER_PURPOSES };
-
 export {
 	decodeAdditionalConsent,
 	encodeAdditionalConsent,
@@ -85,13 +70,13 @@ const inflight = new Map<string, Promise<AdTechProvider[]>>();
  * carry IDs from Google's current file.
  *
  * @param providerIds - Google ATP IDs the publisher works with.
- * @param endpoint - Provider list URL. Defaults to {@link AD_TECH_PROVIDERS_ENDPOINT}.
+ * @param endpoint - Provider list URL. Defaults to {@link AD_TECH_PROVIDERS_URL}.
  * @returns The listed providers, sorted by ID.
  * @throws {Error} When the request fails or the response has no provider map.
  */
 export const fetchAdTechProviders = function fetchAdTechProviders(
 	providerIds: readonly number[],
-	endpoint: string = AD_TECH_PROVIDERS_ENDPOINT
+	endpoint: string = AD_TECH_PROVIDERS_URL
 ): Promise<AdTechProvider[]> {
 	const ids = normalizeAdTechProviderIds(providerIds);
 	if (ids.length === 0) {

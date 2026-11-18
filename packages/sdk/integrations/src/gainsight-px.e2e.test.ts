@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
 	clearAllScripts,
-	deniedConsents,
+	ALL_DENIED,
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
@@ -30,7 +30,7 @@ const getAptrinsic = function getAptrinsic(): AptrinsicStub {
 	return (window as PxWindow).aptrinsic;
 };
 
-const grantedConsents = { ...deniedConsents, measurement: true };
+const grantedConsents = { ...ALL_DENIED, measurement: true };
 
 describe('Gainsight PX production loader contract', () => {
 	registerVendorContractCleanup();
@@ -52,8 +52,8 @@ describe('Gainsight PX production loader contract', () => {
 	it('creates no PX global, loader or storage until the mapped category is granted', () => {
 		const scripts = [gainsightPx({ productKey: 'AP-PRODUCT-KEY-2' })];
 		const append = vi.spyOn(document.head, 'appendChild');
-		loadScripts(scripts, deniedConsents);
-		updateScripts(scripts, { ...deniedConsents, functionality: true });
+		loadScripts(scripts, ALL_DENIED);
+		updateScripts(scripts, { ...ALL_DENIED, functionality: true });
 		expect((window as PxWindow).aptrinsic).toBeUndefined();
 		expect(append).not.toHaveBeenCalled();
 		expect(document.cookie).not.toMatch(/apt\.(?:uid|sid)=/u);
@@ -95,14 +95,14 @@ describe('Gainsight PX production loader contract', () => {
 			await kernel.commands.save(grantedConsents);
 			const loader = createScriptLoader({ kernel, scripts: [original] });
 			try {
-				await kernel.commands.save(denied ? deniedConsents : grantedConsents);
+				await kernel.commands.save(denied ? ALL_DENIED : grantedConsents);
 				runtime.mockClear();
 				expect(() => loader.updateScripts([replacement])).toThrow(
 					'cannot change productKey after the SDK has started'
 				);
 				expect(runtime).not.toHaveBeenCalled();
 				expect(getAptrinsic()).toBe(runtime);
-				await kernel.commands.save(deniedConsents);
+				await kernel.commands.save(ALL_DENIED);
 				await kernel.commands.save(grantedConsents);
 				expect(runtime.mock.calls).toEqual(
 					denied
@@ -172,9 +172,7 @@ describe('Gainsight PX production loader contract', () => {
 					await kernel.commands.save(grantedConsents);
 					let loader = createScriptLoader({ kernel, scripts: [original] });
 					try {
-						await kernel.commands.save(
-							denied ? deniedConsents : grantedConsents
-						);
+						await kernel.commands.save(denied ? ALL_DENIED : grantedConsents);
 						if (disposed) {
 							loader.dispose();
 						}
@@ -194,7 +192,7 @@ describe('Gainsight PX production loader contract', () => {
 							loader = createScriptLoader({ kernel, scripts: [original] });
 						}
 						runtime.mockClear();
-						await kernel.commands.save(deniedConsents);
+						await kernel.commands.save(ALL_DENIED);
 						await kernel.commands.save(grantedConsents);
 						expect(runtime.mock.calls).toEqual([
 							...(denied ? [] : [['config', 'enableTag', false], ['reset']]),
@@ -222,7 +220,7 @@ describe('Gainsight PX production loader contract', () => {
 			installHeadProbe(executeSdk);
 			const original = gainsightPx({ productKey: 'AP-ORIGINAL-2' });
 			loadScripts([original], grantedConsents);
-			const consents = denied ? deniedConsents : grantedConsents;
+			const consents = denied ? ALL_DENIED : grantedConsents;
 			updateScripts([original], consents);
 			runtime.mockClear();
 			expect(() =>
@@ -234,7 +232,7 @@ describe('Gainsight PX production loader contract', () => {
 			expect(runtime).not.toHaveBeenCalled();
 			updateScripts([original], { ...consents, functionality: true });
 			expect(runtime).not.toHaveBeenCalled();
-			updateScripts([original], deniedConsents);
+			updateScripts([original], ALL_DENIED);
 			updateScripts([original], grantedConsents);
 			expect(runtime).toHaveBeenLastCalledWith('config', 'enableTag', true);
 			expect(executeSdk).toHaveBeenCalledTimes(1);
@@ -259,7 +257,7 @@ describe('Gainsight PX production loader contract', () => {
 		).toThrow('Reload the page to switch PX products');
 		expect(runtime).not.toHaveBeenCalled();
 		const original = gainsightPx({ productKey: 'AP-REMOUNT-ORIGINAL-2' });
-		loadScripts([original], deniedConsents);
+		loadScripts([original], ALL_DENIED);
 		expect(runtime.mock.calls).toEqual([
 			['config', 'enableTag', false],
 			['reset'],
@@ -285,7 +283,7 @@ describe('Gainsight PX production loader contract', () => {
 			'cannot change productKey after the SDK has started'
 		);
 		expect(runtime).not.toHaveBeenCalled();
-		loadScripts([gainsightPx({ productKey: 'AP-SERVER-2' })], deniedConsents);
+		loadScripts([gainsightPx({ productKey: 'AP-SERVER-2' })], ALL_DENIED);
 		expect(runtime.mock.calls).toEqual([
 			['config', 'enableTag', false],
 			['reset'],
@@ -302,7 +300,7 @@ describe('Gainsight PX production loader contract', () => {
 		});
 		const denied = createConsentKernel();
 		const granted = createConsentKernel();
-		await denied.commands.save(deniedConsents);
+		await denied.commands.save(ALL_DENIED);
 		await granted.commands.save(grantedConsents);
 		const createScript = () => gainsightPx({ productKey: 'AP-SHARED-START-2' });
 		const deniedOwner = createScriptLoader({
@@ -412,14 +410,14 @@ describe('Gainsight PX production loader contract', () => {
 				['identify', user, account],
 			]);
 
-			updateScripts(scripts, deniedConsents);
+			updateScripts(scripts, ALL_DENIED);
 			expect(runtime.mock.calls).toEqual([
 				['config', 'enableTag', true],
 				['identify', user, account],
 				['config', 'enableTag', false],
 				['reset'],
 			]);
-			updateScripts(scripts, deniedConsents);
+			updateScripts(scripts, ALL_DENIED);
 			expect(runtime).toHaveBeenCalledTimes(4);
 			if (recreated) {
 				scripts = [createScript()];
@@ -454,7 +452,7 @@ describe('Gainsight PX production loader contract', () => {
 			const second = createScriptLoader({ kernel, scripts: [createScript()] });
 			try {
 				(originalOwner ? first : second).dispose();
-				await kernel.commands.save(deniedConsents);
+				await kernel.commands.save(ALL_DENIED);
 				expect(runtime).toHaveBeenLastCalledWith('reset');
 				await kernel.commands.save(grantedConsents);
 				expect(runtime).toHaveBeenLastCalledWith('config', 'enableTag', true);
@@ -477,7 +475,7 @@ describe('Gainsight PX production loader contract', () => {
 	it('starts PX disabled when an earlier shared owner denies consent', async () => {
 		const denied = createConsentKernel();
 		const granted = createConsentKernel();
-		await denied.commands.save(deniedConsents);
+		await denied.commands.save(ALL_DENIED);
 		await granted.commands.save(grantedConsents);
 		const createScript = () =>
 			gainsightPx({ productKey: 'AP-SHARED-DENIAL-2', user: { id: 'user' } });
@@ -510,7 +508,7 @@ describe('Gainsight PX production loader contract', () => {
 		const granted = createConsentKernel();
 		const denied = createConsentKernel();
 		await granted.commands.save(grantedConsents);
-		await denied.commands.save(deniedConsents);
+		await denied.commands.save(ALL_DENIED);
 		const createScript = () =>
 			gainsightPx({ productKey: 'AP-SHARED-DENIED-2' });
 		const first = createScriptLoader({
@@ -567,7 +565,7 @@ describe('Gainsight PX production loader contract', () => {
 				scripts: scripts.slice(1, 2),
 			});
 			try {
-				await kernel.commands.save(deniedConsents);
+				await kernel.commands.save(ALL_DENIED);
 				expect(runtime).toHaveBeenLastCalledWith('reset');
 				(originalOwner ? first : second).dispose();
 				(originalOwner ? second : first).dispose();
@@ -613,7 +611,7 @@ describe('Gainsight PX production loader contract', () => {
 			const runtime = Object.assign(vi.fn(), { __sdkBundleStarted: true });
 			Reflect.set(window, 'aptrinsic', runtime);
 			element?.dispatchEvent(new Event('load'));
-			await kernel.commands.save(deniedConsents);
+			await kernel.commands.save(ALL_DENIED);
 			await kernel.commands.save(grantedConsents);
 			expect(runtime.mock.calls).toEqual([
 				['config', 'enableTag', false],
@@ -639,7 +637,7 @@ describe('Gainsight PX production loader contract', () => {
 		loadScripts([script], grantedConsents);
 		const previous = getAptrinsic();
 		clearAllScripts();
-		loadScripts([script], deniedConsents);
+		loadScripts([script], ALL_DENIED);
 		expect(document.head.querySelector('script')).toBeNull();
 		updateScripts([script], grantedConsents);
 		expect(getAptrinsic()).not.toBe(previous);
@@ -685,12 +683,12 @@ describe('Gainsight PX production loader contract', () => {
 					});
 					loadScripts([initial], grantedConsents);
 					if (ending === 'revocation') {
-						updateScripts([initial], deniedConsents);
+						updateScripts([initial], ALL_DENIED);
 					} else {
 						clearAllScripts();
 					}
 					const replacement = gainsightPx(options);
-					loadScripts([replacement], deniedConsents);
+					loadScripts([replacement], ALL_DENIED);
 					expect(document.head.querySelector('script')).toBeNull();
 					const atAppend = vi.fn(() => {
 						const stub = getAptrinsic();
@@ -769,7 +767,7 @@ describe('Gainsight PX production loader contract', () => {
 			document.head.appendChild(element);
 			Reflect.set(globalThis, '__inthStarted', { [script.id]: element });
 			const kernel = createConsentKernel();
-			await kernel.commands.save(allow ? grantedConsents : deniedConsents);
+			await kernel.commands.save(allow ? grantedConsents : ALL_DENIED);
 			const loader = createScriptLoader({
 				kernel,
 				scripts: [cloned ? { ...client, anonymizeId: false } : client],
@@ -992,7 +990,7 @@ describe('Gainsight PX production loader contract', () => {
 					document.head.appendChild(element);
 					Reflect.set(globalThis, '__inthStarted', { [server.id]: element });
 					const kernel = createConsentKernel();
-					await kernel.commands.save(allow ? grantedConsents : deniedConsents);
+					await kernel.commands.save(allow ? grantedConsents : ALL_DENIED);
 					let loader: ReturnType<typeof createScriptLoader> | undefined;
 					try {
 						expect(() => {
@@ -1057,7 +1055,7 @@ describe('Gainsight PX production loader contract', () => {
 		loadScripts([script], grantedConsents);
 		const queue = getAptrinsic();
 		clearAllScripts();
-		loadScripts([script], deniedConsents);
+		loadScripts([script], ALL_DENIED);
 		expect(getAptrinsic()).toBe(queue);
 		expect(document.head.querySelector('script')).toBeNull();
 		updateScripts([script], grantedConsents);
@@ -1069,7 +1067,7 @@ describe('Gainsight PX production loader contract', () => {
 		const scripts = [gainsightPx({ productKey: 'AP-PRODUCT-KEY-2' })];
 		loadScripts(scripts, grantedConsents);
 		const initial = document.head.querySelector('script');
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		const queue = getAptrinsic().q.map((entry) => Array.from(entry));
 		expect(queue).toEqual([
 			['config', 'enableTag', true],
@@ -1102,7 +1100,7 @@ describe('Gainsight PX production loader contract', () => {
 			let script = createScript();
 			loadScripts([script], grantedConsents);
 			if (recreated) {
-				updateScripts([script], deniedConsents);
+				updateScripts([script], ALL_DENIED);
 			}
 			clearAllScripts();
 			expect(document.head.querySelector('script')).toBeNull();
@@ -1111,12 +1109,12 @@ describe('Gainsight PX production loader contract', () => {
 			}
 			runtime.mockClear();
 
-			loadScripts([script], deniedConsents);
+			loadScripts([script], ALL_DENIED);
 			expect(runtime.mock.calls).toEqual([
 				['config', 'enableTag', false],
 				['reset'],
 			]);
-			updateScripts([script], { ...deniedConsents, functionality: true });
+			updateScripts([script], { ...ALL_DENIED, functionality: true });
 			expect(runtime).toHaveBeenCalledTimes(2);
 			updateScripts([script], grantedConsents);
 			expect(executeSdk).toHaveBeenCalledTimes(1);
@@ -1124,7 +1122,7 @@ describe('Gainsight PX production loader contract', () => {
 				['config', 'enableTag', true],
 				['identify', { id: 'remount-user' }],
 			]);
-			updateScripts([script], deniedConsents);
+			updateScripts([script], ALL_DENIED);
 			updateScripts([script], grantedConsents);
 			expect(executeSdk).toHaveBeenCalledTimes(1);
 		}
@@ -1157,7 +1155,7 @@ describe('Gainsight PX production loader contract', () => {
 			clearAllScripts();
 			expect(document.head.querySelector('script')).toBeNull();
 			runtime.mockClear();
-			loadScripts([script], denied ? deniedConsents : grantedConsents);
+			loadScripts([script], denied ? ALL_DENIED : grantedConsents);
 			expect(runtime.mock.calls).toEqual(
 				denied
 					? [['config', 'enableTag', false], ['reset']]
@@ -1182,7 +1180,7 @@ describe('Gainsight PX production loader contract', () => {
 		];
 		loadScripts(scripts, grantedConsents);
 		expect((window as PxWindow).aptrinsic).toBeUndefined();
-		updateScripts(scripts, { ...deniedConsents, experience: true });
+		updateScripts(scripts, { ...ALL_DENIED, experience: true });
 		expect(typeof getAptrinsic()).toBe('function');
 		const runtime = vi.fn();
 		Reflect.set(window, 'aptrinsic', runtime);

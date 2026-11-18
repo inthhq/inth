@@ -5,7 +5,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
@@ -15,7 +15,7 @@ import { crisp } from './vendors/functional/crisp';
 import { INTERCOM_API_BASES, intercom } from './vendors/functional/intercom';
 
 const grantedFunctionalityConsents = {
-	...deniedConsents,
+	...ALL_DENIED,
 	functionality: true,
 };
 

@@ -10,7 +10,7 @@ import * as sentry11 from 'sentry-browser-v11';
 import * as sentry11Min from 'sentry-browser-v11-min';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { deniedConsents, grantedMeasurementConsents } from './e2e-test-utils';
+import { ALL_DENIED, grantedMeasurementConsents } from './e2e-test-utils';
 import { sentry } from './vendors/analytics/sentry';
 import type { SentryEnvelope } from './vendors/analytics/sentry';
 
@@ -172,7 +172,7 @@ describe.each(sdkVersions)('Sentry $version CDN', ({ sdk, version }) => {
 		expect(replayEvent).toMatchObject({ error_ids: [errorId] });
 		expect(envelopes.get('before')).toEqual([]);
 
-		await second.kernel.commands.save(deniedConsents);
+		await second.kernel.commands.save(ALL_DENIED);
 		await vi.advanceTimersByTimeAsync(0);
 		expect(replay.getRecordingMode()).toBeUndefined();
 		replay.start();

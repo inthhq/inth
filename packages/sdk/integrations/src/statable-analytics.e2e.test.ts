@@ -3,7 +3,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	grantedMarketingConsents,
 	grantedMeasurementConsents,
 	installHeadProbe,
@@ -30,7 +30,7 @@ describe('Statable consent lifecycle', () => {
 		const localKeys = Object.keys(window.localStorage);
 		const sessionKeys = Object.keys(window.sessionStorage);
 
-		expect(loadScripts([script], deniedConsents)).toEqual([]);
+		expect(loadScripts([script], ALL_DENIED)).toEqual([]);
 		expect(updateScripts([script], grantedMarketingConsents).loaded).toEqual(
 			[]
 		);
@@ -68,7 +68,7 @@ describe('Statable consent lifecycle', () => {
 			[]
 		);
 		expect(appended).toBe(1);
-		expect(updateScripts(scripts, deniedConsents).unloaded).toEqual([
+		expect(updateScripts(scripts, ALL_DENIED).unloaded).toEqual([
 			'statable-analytics',
 		]);
 		expect(document.querySelector('script')).toBeNull();
@@ -82,7 +82,7 @@ describe('Statable consent lifecycle', () => {
 		const scripts = [statableAnalytics({ siteId: 12345 })];
 		loadScripts(scripts, grantedMeasurementConsents);
 		const element = document.querySelector('script');
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		element?.dispatchEvent(new Event('load'));
 
 		expect(element?.isConnected).toBe(false);

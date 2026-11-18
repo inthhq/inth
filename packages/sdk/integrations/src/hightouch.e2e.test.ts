@@ -5,7 +5,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	grantedMeasurementConsents,
 	installHeadProbe,
 	loadScripts,
@@ -132,7 +132,7 @@ describe('hightouch contract', () => {
 					id: 'hightouch-contract',
 				},
 			],
-			deniedConsents
+			ALL_DENIED
 		);
 
 		expect(appended).toBe(false);

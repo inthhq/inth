@@ -10,9 +10,8 @@
  * @packageDocumentation
  */
 
-import type { GlobalVendorList } from '@inth/sdk-core';
-
-import type { PublisherRestriction } from './iab-tcf-types';
+import type { GlobalVendorList, PublisherRestriction } from '@inth/sdk-core';
+import { CONSENT_ONLY_PURPOSES } from '@inth/sdk-schema/types';
 
 /**
  * Restriction types defined by the TCF v2 core segment.
@@ -29,15 +28,6 @@ export const PUBLISHER_RESTRICTION_TYPES = {
 	/** A flexible purpose the vendor declares for consent must use LI. */
 	REQUIRE_LEGITIMATE_INTEREST: 2,
 } as const;
-
-/**
- * Purposes that TCF policy version 4 and later allow only with consent.
- * Purpose 1 was never allowed legitimate interest; TCF 2.2 removed it for
- * purposes 3 to 6.
- *
- * @public
- */
-export const CONSENT_ONLY_PURPOSES: readonly number[] = [1, 3, 4, 5, 6];
 
 /** The first TCF policy version (TCF 2.2) that bars LI for purposes 3 to 6. */
 const CONSENT_ONLY_POLICY_VERSION = 4;

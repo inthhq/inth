@@ -1,4 +1,3 @@
-import { compareCanonical } from './canonical-order';
 /**
  * Invariants of a resolved v3 policy rule, without the authoring validator.
  *
@@ -7,10 +6,12 @@ import { compareCanonical } from './canonical-order';
  * pack. Keeping them apart from `policy-rule.ts` keeps that work, and the
  * fingerprint hashing it pulls in, out of client bundles.
  */
+import type { AllConsentNames } from '@inth/sdk-translations';
+
+import { compareCanonical } from './canonical-order';
 import type {
 	PolicyActionConstraints,
 	PolicyChoiceAction,
-	PolicyConsentCategory,
 	PolicyOptionalCategory,
 	PolicyPrompt,
 	PolicyPromptAction,
@@ -19,13 +20,18 @@ import type {
 	ResolvedPolicyRule,
 } from './policy-rule';
 
+/**
+ * The consent categories, in stable display order. Every other list of them
+ * derives from this one; translations, which schema builds on, keeps its own
+ * name type, and `satisfies` keeps the two in step.
+ */
 export const POLICY_CONSENT_CATEGORIES = [
 	'necessary',
 	'functionality',
 	'experience',
 	'measurement',
 	'marketing',
-] as const satisfies readonly PolicyConsentCategory[];
+] as const satisfies readonly AllConsentNames[];
 
 /** Optional categories in canonical (sorted) order. */
 export const POLICY_OPTIONAL_CATEGORIES = [

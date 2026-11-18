@@ -7,7 +7,7 @@ import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	loadScripts,
 	registerVendorContractCleanup,
 	updateScripts,
@@ -21,7 +21,7 @@ const options = {
 	orgId: 'INTHFAKE@AdobeOrg',
 	version: '2.30.0',
 } as const;
-const granted = { ...deniedConsents, experience: true };
+const granted = { ...ALL_DENIED, experience: true };
 
 const deferred = () => {
 	let resolveOperation: () => void = () => undefined;
@@ -101,7 +101,7 @@ describe('Adobe Target pending consent through the core loader', () => {
 			if (general === 'out') {
 				sdk.requests[0]?.operation.resolve();
 				await vi.runOnlyPendingTimersAsync();
-				updateScripts(scripts, deniedConsents);
+				updateScripts(scripts, ALL_DENIED);
 			}
 			const failure = new Error(`rejected ${general}`);
 			sdk.requests.at(-1)?.operation.reject(failure);
@@ -113,13 +113,13 @@ describe('Adobe Target pending consent through the core loader', () => {
 			const count = sdk.requests.length;
 			await vi.runOnlyPendingTimersAsync();
 			expect(sdk.requests).toHaveLength(count);
-			updateScripts(scripts, general === 'in' ? granted : deniedConsents);
+			updateScripts(scripts, general === 'in' ? granted : ALL_DENIED);
 			expect(sdk.requests).toHaveLength(count + 1);
 			expect(sdk.requests.at(-1)?.general).toBe(general);
 			sdk.requests.at(-1)?.operation.resolve();
 			await vi.runOnlyPendingTimersAsync();
 			expect(sdk.acknowledged).toBe(general);
-			updateScripts(scripts, general === 'in' ? granted : deniedConsents);
+			updateScripts(scripts, general === 'in' ? granted : ALL_DENIED);
 			expect(sdk.requests).toHaveLength(count + 1);
 			expect(document.head.querySelectorAll('script')).toHaveLength(1);
 			expect(element.isConnected).toBe(true);
@@ -135,8 +135,8 @@ describe('Adobe Target pending consent through the core loader', () => {
 			const scripts = [adobeTarget(options)];
 			loadScripts(scripts, granted);
 			await finishLoad();
-			updateScripts(scripts, deniedConsents);
-			updateScripts(scripts, deniedConsents);
+			updateScripts(scripts, ALL_DENIED);
+			updateScripts(scripts, ALL_DENIED);
 			expect(sdk.requests.map((request) => request.general)).toEqual(['in']);
 			if (outcome === 'resolve') {
 				sdk.requests[0]?.operation.resolve();
@@ -160,7 +160,7 @@ describe('Adobe Target pending consent through the core loader', () => {
 		const scripts = [adobeTarget(options)];
 		loadScripts(scripts, granted);
 		await finishLoad();
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, granted);
 		updateScripts(scripts, granted);
 		expect(sdk.requests.map((request) => request.general)).toEqual(['in']);
@@ -168,7 +168,7 @@ describe('Adobe Target pending consent through the core loader', () => {
 		await vi.runOnlyPendingTimersAsync();
 		expect(sdk.acknowledged).toBe('in');
 		expect(sdk.requests).toHaveLength(1);
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(sdk.requests.at(-1)?.general).toBe('out');
 		sdk.requests.at(-1)?.operation.resolve();
 		await vi.runOnlyPendingTimersAsync();
@@ -186,7 +186,7 @@ describe('Adobe Target pending consent through the core loader', () => {
 			await finishLoad();
 			sdk.requests[0]?.operation.resolve();
 			await vi.runOnlyPendingTimersAsync();
-			updateScripts(scripts, deniedConsents);
+			updateScripts(scripts, ALL_DENIED);
 			updateScripts(scripts, granted);
 			expect(sdk.requests.map((request) => request.general)).toEqual([
 				'in',
@@ -263,7 +263,7 @@ describe('Adobe Target pending consent through the core loader', () => {
 		configuring.reject(failure);
 		await vi.runOnlyPendingTimersAsync();
 		updateScripts(scripts, granted);
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, granted);
 		expect(sdk.runtime).toHaveBeenCalledExactlyOnceWith('configure', {
 			datastreamId: options.datastreamId,

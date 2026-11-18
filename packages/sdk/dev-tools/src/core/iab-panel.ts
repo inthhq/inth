@@ -1,5 +1,6 @@
 import { getIABControls } from '@inth/sdk-core';
 import type { ConsentKernel, KernelIABControls } from '@inth/sdk-core';
+import { permittedLegitimateInterestPurposes } from '@inth/sdk-schema/types';
 
 import type { RunAction } from './action-runner';
 import {
@@ -28,18 +29,6 @@ interface Choice {
 }
 
 const PAGE_SIZE = 20;
-
-/**
- * Purposes TCF Policies Appendix A allows only with consent. A custom vendor
- * may still declare them for legitimate interest, so the panel must not
- * offer that switch. Mirrors `CONSENT_ONLY_PURPOSES` in `@inth/sdk/iab`.
- */
-const CONSENT_ONLY_PURPOSES: readonly number[] = [1, 3, 4, 5, 6];
-
-const permittedLegitimateInterest = (
-	purposeIds: readonly number[] | undefined
-): number[] =>
-	(purposeIds ?? []).filter((id) => !CONSENT_ONLY_PURPOSES.includes(id));
 
 const createSwitch = (
 	document: Document,
@@ -169,8 +158,9 @@ export const renderIABPanel = (
 					: undefined,
 				custom: vendor.custom,
 				id: vendor.id,
-				legitimateInterest: permittedLegitimateInterest(vendor.legIntPurposes)
-					.length
+				legitimateInterest: permittedLegitimateInterestPurposes(
+					vendor.legIntPurposes
+				).length
 					? (iab.vendorLegitimateInterests[String(vendor.id)] ?? false)
 					: undefined,
 				name: vendor.name,
@@ -192,7 +182,9 @@ export const renderIABPanel = (
 			consent: iab.purposeConsents[purpose.id] ?? false,
 			id: purpose.id,
 			legitimateInterest: vendors.some((vendor) =>
-				permittedLegitimateInterest(vendor.legIntPurposes).includes(purpose.id)
+				permittedLegitimateInterestPurposes(vendor.legIntPurposes).includes(
+					purpose.id
+				)
 			)
 				? (iab.purposeLegitimateInterests[purpose.id] ?? false)
 				: undefined,

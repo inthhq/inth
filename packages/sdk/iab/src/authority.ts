@@ -1,14 +1,18 @@
-import type { ConsentSnapshot, KernelIABAuthority } from '@inth/sdk-core';
+import type {
+	ConsentSnapshot,
+	KernelIABAuthority,
+	PublisherRestriction,
+} from '@inth/sdk-core';
+import {
+	IAB_STORAGE_KEYS,
+	permittedLegitimateInterestPurposes,
+} from '@inth/sdk-schema/types';
 
-import { permittedLegitimateInterestPurposes } from './headless/effective-vendor-list';
 import { additionalConsentFor } from './tcf/additional-consent';
-import type { PublisherRestriction } from './tcf/iab-tcf-types';
 import { sameListedRestrictions } from './tcf/publisher-restrictions';
 import { decodeTCString } from './tcf/tc-string';
 import type { DecodedTCString } from './tcf/tc-string';
 
-/** localStorage key of the authority receipt. */
-export const AUTHORITY_KEY = 'inth-iab-authority-v1';
 const RETENTION_MS = 395 * 86_400_000;
 const DISCLOSURE_REQUIRED_AT = Date.UTC(2026, 1, 28);
 
@@ -39,7 +43,7 @@ export const readAuthorityReceiptText = function readAuthorityReceiptText():
 	| string
 	| null {
 	try {
-		return localStorage.getItem(AUTHORITY_KEY);
+		return localStorage.getItem(IAB_STORAGE_KEYS.authority);
 	} catch {
 		return null;
 	}
@@ -62,7 +66,7 @@ export const storeAuthority = function storeAuthority(
 ): void {
 	try {
 		localStorage.setItem(
-			AUTHORITY_KEY,
+			IAB_STORAGE_KEYS.authority,
 			JSON.stringify({
 				...authority,
 				customConsents: authority.vendorConsents,
@@ -376,9 +380,9 @@ export const clearAuthorityReceipt = function clearAuthorityReceipt(
 	try {
 		if (
 			expected === undefined ||
-			localStorage.getItem(AUTHORITY_KEY) === expected
+			localStorage.getItem(IAB_STORAGE_KEYS.authority) === expected
 		) {
-			localStorage.removeItem(AUTHORITY_KEY);
+			localStorage.removeItem(IAB_STORAGE_KEYS.authority);
 		}
 	} catch {
 		/* Storage may be unavailable. */

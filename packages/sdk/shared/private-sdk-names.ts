@@ -1,9 +1,6 @@
 import { join } from 'node:path';
 
-import { toPublicSpecifier } from '../sdk/scripts/assemble';
-
-const PRIVATE_NAME =
-	/^@inth\/sdk-(?:browser|core|dev-tools|iab|logger|schema|translations|ui)(?:\/|$)/u;
+import { isPrivateSdkName, toPublicSpecifier } from './sdk-parts';
 
 interface ResolveContext {
 	resolve: (
@@ -29,7 +26,7 @@ export const privateSdkNames = function privateSdkNames(root: string) {
 		enforce: 'pre' as const,
 		name: 'inth:private-sdk-names',
 		resolveId(this: ResolveContext, id: string) {
-			if (!PRIVATE_NAME.test(id)) {
+			if (!isPrivateSdkName(id)) {
 				return null;
 			}
 			return this.resolve(toPublicSpecifier(id), join(root, 'package.json'), {

@@ -4,6 +4,7 @@ import type { IntegrationConsentCondition } from '../../registry';
 import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
 import type { VendorManifest } from '../../types';
+import { permitted } from '../_shared/permitted';
 import { readId, skipMissingId } from '../_shared/required-id';
 import { trimToUndefined } from '../_shared/script-url';
 
@@ -120,7 +121,7 @@ const defaultScriptUrl = function defaultScriptUrl(
 const consentFor = function consentFor(
 	info: ScriptCallbackInfo
 ): HubSpotConsent {
-	if (!info.hasConsent || info.vendor?.granted === false) {
+	if (!permitted(info)) {
 		return DENIED_CONSENT;
 	}
 	return {
@@ -226,11 +227,7 @@ const createController = (host: Window, installation: HubSpotInstallation) => {
 							analytics: left.analytics && right.analytics,
 							functionality: left.functionality && right.functionality,
 						})),
-			gate:
-				states.length > 0 &&
-				states.every(
-					(info) => info.hasConsent && info.vendor?.granted !== false
-				),
+			gate: states.length > 0 && states.every((info) => permitted(info)),
 		};
 	};
 

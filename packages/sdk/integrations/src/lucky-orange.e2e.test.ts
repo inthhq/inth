@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
 	clearAllScripts,
-	deniedConsents,
+	ALL_DENIED,
 	loadScripts,
 	registerVendorContractCleanup,
 	updateScripts,
@@ -12,8 +12,8 @@ import type { LuckyOrangeApi } from './vendors/analytics/lucky-orange';
 import { luckyOrange } from './vendors/analytics/lucky-orange';
 
 const GLOBALS = ['LOQ', 'LO'];
-const granted = { ...deniedConsents, measurement: true };
-const unrelated = { ...deniedConsents, marketing: true };
+const granted = { ...ALL_DENIED, measurement: true };
+const unrelated = { ...ALL_DENIED, marketing: true };
 const getLoader = (): HTMLScriptElement => {
 	const loader = document.querySelector<HTMLScriptElement>('script[src]');
 	if (!loader) {
@@ -42,7 +42,7 @@ describe('Lucky Orange consent loader', () => {
 		const cookies = document.cookie;
 		const local = { ...localStorage };
 		const session = { ...sessionStorage };
-		loadScripts(scripts, deniedConsents);
+		loadScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, unrelated);
 		expect(document.querySelector('script[src]')).toBeNull();
 		for (const name of GLOBALS) {
@@ -60,7 +60,7 @@ describe('Lucky Orange consent loader', () => {
 		);
 		updateScripts(scripts, granted);
 		expect(getLoader()).toBe(first);
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(first.isConnected).toBe(true);
 		updateScripts(scripts, granted);
 		expect(getLoader()).toBe(first);
@@ -72,7 +72,7 @@ describe('Lucky Orange consent loader', () => {
 		];
 		loadScripts(scripts, granted);
 		expect(document.querySelector('script[src]')).toBeNull();
-		updateScripts(scripts, { ...deniedConsents, experience: true });
+		updateScripts(scripts, { ...ALL_DENIED, experience: true });
 		expect(getLoader()).toBeDefined();
 	});
 });
@@ -111,7 +111,7 @@ describe('Lucky Orange privacy readiness', () => {
 			);
 			expect(api.$internal.ready).toHaveBeenCalledWith('privacy');
 			if (!dispose) {
-				updateScripts(scripts, deniedConsents);
+				updateScripts(scripts, ALL_DENIED);
 				updateScripts(scripts, granted);
 			}
 			expect(api.privacy.setConsentStatus).not.toHaveBeenCalled();
@@ -138,7 +138,7 @@ describe('Lucky Orange privacy readiness', () => {
 		};
 		entry[1](api);
 		expect(api.$internal.ready).toHaveBeenCalledWith('privacy');
-		updateScripts([create()], deniedConsents);
+		updateScripts([create()], ALL_DENIED);
 		expect(api.privacy.setConsentStatus).not.toHaveBeenCalled();
 		resolvePrivacy(undefined);
 		await privacyReady;
@@ -147,7 +147,7 @@ describe('Lucky Orange privacy readiness', () => {
 		updateScripts([create()], granted);
 		updateScripts([create()], granted);
 		expect(api.privacy.setConsentStatus.mock.calls).toEqual([[false], [true]]);
-		updateScripts([create()], deniedConsents);
+		updateScripts([create()], ALL_DENIED);
 		expect(api.privacy.setConsentStatus.mock.calls).toEqual([
 			[false],
 			[true],
@@ -163,7 +163,7 @@ describe('Lucky Orange privacy readiness', () => {
 		if (!Array.isArray(queue)) {
 			throw new Error('Expected LOQ');
 		}
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		const api = {
 			$internal: { ready: vi.fn().mockResolvedValue(undefined) },
 			privacy: { setConsentStatus: vi.fn() },

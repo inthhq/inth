@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
 	clearAllScripts,
-	deniedConsents,
+	ALL_DENIED,
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
@@ -28,8 +28,8 @@ afterEach(() => {
 });
 
 const GLOBALS = ['_elqQ'];
-const granted = { ...deniedConsents, marketing: true };
-const unrelated = { ...deniedConsents, measurement: true };
+const granted = { ...ALL_DENIED, marketing: true };
+const unrelated = { ...ALL_DENIED, measurement: true };
 const getLoader = (): HTMLScriptElement => {
 	const loader = document.querySelector<HTMLScriptElement>('script[src]');
 	if (!loader) {
@@ -54,7 +54,7 @@ describe('Oracle Eloqua consent loader', () => {
 		const session = { ...sessionStorage };
 		const cookieWrite = vi.spyOn(document, 'cookie', 'set');
 		const storageWrite = vi.spyOn(Storage.prototype, 'setItem');
-		loadScripts(scripts, deniedConsents);
+		loadScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, unrelated);
 		expect(document.querySelector('script[src]')).toBeNull();
 		for (const name of GLOBALS) {
@@ -72,7 +72,7 @@ describe('Oracle Eloqua consent loader', () => {
 		expect(first.src).toBe('https://img.en25.com/i/elqCfg.min.js');
 		updateScripts(scripts, granted);
 		expect(getLoader()).toBe(first);
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(first.isConnected).toBe(true);
 		updateScripts(scripts, granted);
 		expect(getLoader()).toBe(first);
@@ -84,7 +84,7 @@ describe('Oracle Eloqua consent loader', () => {
 		];
 		loadScripts(scripts, granted);
 		expect(document.querySelector('script[src]')).toBeNull();
-		updateScripts(scripts, { ...deniedConsents, experience: true });
+		updateScripts(scripts, { ...ALL_DENIED, experience: true });
 		expect(getLoader()).toBeDefined();
 	});
 });
@@ -168,7 +168,7 @@ describe('Eloqua dispatcher lifecycle', () => {
 				document
 					.querySelector('script[src*="pps=41"]')
 					?.dispatchEvent(new Event('load'));
-				void kernel.commands.save(deniedConsents);
+				void kernel.commands.save(ALL_DENIED);
 				document
 					.querySelector('script[src*="pps=42"]')
 					?.dispatchEvent(new Event('load'));
@@ -297,7 +297,7 @@ describe('Eloqua dispatcher lifecycle', () => {
 				document
 					.querySelector('script[src*="pps=41"]')
 					?.dispatchEvent(new Event('load'));
-				await deniedKernel.commands.save(deniedConsents);
+				await deniedKernel.commands.save(ALL_DENIED);
 				expect(push.mock.calls.at(-1)).toEqual([['elqOptOut']]);
 				document
 					.querySelectorAll('script[src*="pps=42"]')
@@ -369,7 +369,7 @@ describe('Eloqua dispatcher lifecycle', () => {
 			expect(active.mock.calls.at(-1)).toEqual([
 				['elqTrackPageView', window.location.href],
 			]);
-			await deniedKernel.commands.save(deniedConsents);
+			await deniedKernel.commands.save(ALL_DENIED);
 			expect(active.mock.calls.at(-1)).toEqual([['elqOptOut']]);
 			document.cookie = 'OPTIN=0; path=/';
 			Array.from(document.querySelectorAll('script[src*="pps=42"]'))
@@ -426,7 +426,7 @@ describe('Eloqua dispatcher lifecycle', () => {
 			first.dispose();
 			expect(push.mock.calls).toEqual(beforeDisposal);
 			expect(getLoader()).toBe(element);
-			await adopterKernel.commands.save(deniedConsents);
+			await adopterKernel.commands.save(ALL_DENIED);
 			finish('42');
 			await adopterKernel.commands.save(adopterGranted);
 			finish('41');
@@ -580,7 +580,7 @@ describe('Eloqua dispatcher lifecycle', () => {
 					scripts: [create()],
 				});
 				await Promise.resolve();
-				await kernels[1]?.commands.save(deniedConsents);
+				await kernels[1]?.commands.save(ALL_DENIED);
 				const optOut = document.querySelector('script[src*="pps=42"]');
 				expect(optOut).not.toBeNull();
 				document.cookie = 'OPTIN=0; path=/';
@@ -602,7 +602,7 @@ describe('Eloqua dispatcher lifecycle', () => {
 		const push = installDispatcher();
 		getLoader().dispatchEvent(new Event('load'));
 		const response = document.querySelector('script[src*="pps=41"]');
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(push).not.toHaveBeenCalledWith(['elqOptOut']);
 		response?.dispatchEvent(new Event('load'));
 		expect(push.mock.calls.at(-1)).toEqual([['elqOptOut']]);
@@ -624,9 +624,9 @@ describe('Eloqua dispatcher lifecycle', () => {
 			document.cookie = `OPTIN=${pps === '41' ? '1' : '0'}; path=/`;
 			response?.dispatchEvent(new Event('load'));
 		};
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, granted);
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		finish('41');
 		expect(push.mock.calls).toEqual([[['elqOptIn']], [['elqOptOut']]]);
 		updateScripts(scripts, granted);
@@ -639,7 +639,7 @@ describe('Eloqua dispatcher lifecycle', () => {
 		expect(push.mock.calls.at(-1)).toEqual([
 			['elqTrackPageView', window.location.href],
 		]);
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		finish('42');
 		expect(document.cookie).toContain('OPTIN=0');
 		expect(push).toHaveBeenCalledTimes(5);
@@ -662,7 +662,7 @@ describe('Eloqua dispatcher lifecycle', () => {
 		response?.dispatchEvent(new Event('error'));
 		response?.dispatchEvent(new Event('load'));
 		expect(push.mock.calls).toEqual([[['elqOptIn']]]);
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		document
 			.querySelector('script[src*="pps=42"]')
 			?.dispatchEvent(new Event('error'));
@@ -682,13 +682,13 @@ describe('Eloqua dispatcher lifecycle', () => {
 			if (remounted) {
 				clearAllScripts();
 			} else {
-				updateScripts(scripts, deniedConsents);
+				updateScripts(scripts, ALL_DENIED);
 			}
 			document
 				.querySelector('script[src*="pps=42"]')
 				?.dispatchEvent(new Event('error'));
 			expect(push).toHaveBeenCalledTimes(3);
-			loadScripts(scripts, deniedConsents);
+			loadScripts(scripts, ALL_DENIED);
 			expect(push).toHaveBeenCalledTimes(4);
 			expect(push.mock.calls.at(-1)).toEqual([['elqOptOut']]);
 			const response = Array.from(
@@ -697,7 +697,7 @@ describe('Eloqua dispatcher lifecycle', () => {
 			expect(response).toBeDefined();
 			document.cookie = 'OPTIN=0; path=/';
 			response?.dispatchEvent(new Event('load'));
-			loadScripts(scripts, deniedConsents);
+			loadScripts(scripts, ALL_DENIED);
 			expect(push).toHaveBeenCalledTimes(4);
 			expect(document.cookie).toContain('OPTIN=0');
 		}
@@ -708,7 +708,7 @@ describe('Eloqua dispatcher lifecycle', () => {
 			const deniedKernel = createConsentKernel();
 			const grantedKernel = createConsentKernel();
 			const consents = {
-				...deniedConsents,
+				...ALL_DENIED,
 				experience: true,
 				measurement: true,
 			};
@@ -901,7 +901,7 @@ describe('Eloqua dispatcher lifecycle', () => {
 		]);
 		updateScripts(scripts, granted);
 		expect(push).toHaveBeenCalledTimes(2);
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(push.mock.calls.at(-1)).toEqual([['elqOptOut']]);
 		document
 			.querySelector('script[src*="pps=42"]')
@@ -923,7 +923,7 @@ describe('Eloqua dispatcher lifecycle', () => {
 		const push = installDispatcher();
 		loader.dispatchEvent(new Event('load'));
 		const response = document.querySelector('script[src*="pps=41"]');
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		response?.dispatchEvent(new Event('load'));
 		expect(push.mock.calls).not.toContainEqual([
 			['elqTrackPageView', window.location.href],
@@ -937,7 +937,7 @@ describe('Eloqua dispatcher lifecycle', () => {
 		const create = () => eloquaTracking({ siteId: '1973398186' });
 		loadScripts([create()], granted);
 		const loader = getLoader();
-		updateScripts([create()], deniedConsents);
+		updateScripts([create()], ALL_DENIED);
 		const push = installDispatcher();
 		loader.dispatchEvent(new Event('load'));
 		expect(push.mock.calls).toEqual([[['elqOptOut']]]);

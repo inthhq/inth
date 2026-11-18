@@ -1,15 +1,17 @@
 import type {
 	AllConsentNames,
-	ConsentState,
 	HasCondition,
 	Script,
 	ScriptCallbackInfo,
 } from '@inth/sdk/engine';
 import { has } from '@inth/sdk/engine';
 
+import { isRecord } from '../../engine/runtime';
+import { ALL_DENIED } from '../../engine/vendor-consent';
 import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
 import type { VendorManifest } from '../../types';
+import { permitted } from '../_shared/permitted';
 import {
 	waitForReplayIdle,
 	waitForReplayLoad,
@@ -361,15 +363,6 @@ const errorsCategory: AllConsentNames = 'measurement';
 const clientRetryMs = 100;
 const errorTags = { 'inth.integration': 'sentry' };
 const urlDetailsPattern = /[?#]/u;
-/** Initial permissions used to decide whether early IP inference needs a warning. */
-const ALL_DENIED: ConsentState = {
-	experience: false,
-	functionality: false,
-	marketing: false,
-	measurement: false,
-	necessary: true,
-};
-
 const cdnBaseUrl = 'https://browser.sentry-cdn.com';
 const defaultVersion = '11.4.0';
 const errorsBundle = 'bundle.min.js';
@@ -497,9 +490,6 @@ const loadScriptElement = (
 		});
 		document.head.append(element);
 	});
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-	typeof value === 'object' && value !== null && !Array.isArray(value);
 
 const stripUrlDetails = (url: string): string => {
 	const details = url.search(urlDetailsPattern);
@@ -1222,10 +1212,7 @@ const createGate = (options: GateOptions) => {
 		// Vendor denial overrides every feature condition, including necessary.
 		const registrations = getScriptRegistrations(info);
 		const every = (category: HasCondition<AllConsentNames>): boolean =>
-			registrations.every(
-				(state) =>
-					state.vendor?.granted !== false && has(category, state.consents)
-			);
+			registrations.every((state) => permitted(state, category));
 		const errors = !options.errorsGated || every(errorsCategory);
 		latest = {
 			errors,

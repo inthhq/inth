@@ -1,4 +1,4 @@
-import type { AllConsentNames } from '@inth/sdk/engine';
+import { POLICY_CONSENT_CATEGORIES } from '@inth/sdk/schema/types';
 import { describe, expect, it } from 'vitest';
 
 import packageJson from '../package.json' with { type: 'json' };
@@ -82,14 +82,6 @@ import { optimizelyWebManifest } from './vendors/functional/optimizely';
 import { wisepopsManifest } from './vendors/functional/wisepops';
 import { zendeskWidgetManifest } from './vendors/functional/zendesk';
 import { googleTagManagerManifest } from './vendors/tag-managers/google-tag-manager';
-
-const validConsentCategories = [
-	'necessary',
-	'functionality',
-	'experience',
-	'measurement',
-	'marketing',
-] as const satisfies readonly AllConsentNames[];
 
 const vendorManifests = [
 	clayManifest,
@@ -243,7 +235,7 @@ describe('script integration registry', () => {
 			for (const category of getConditionCategories(
 				integration.consentCategory
 			)) {
-				expect(validConsentCategories).toContain(category);
+				expect(POLICY_CONSENT_CATEGORIES).toContain(category);
 			}
 		}
 	});

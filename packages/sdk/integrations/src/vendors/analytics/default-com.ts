@@ -4,6 +4,7 @@ import type { IntegrationConsentCondition } from '../../registry';
 import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
 import type { VendorManifest } from '../../types';
+import { permitted } from '../_shared/permitted';
 import { readId, skipMissingId } from '../_shared/required-id';
 import { resolveScriptUrl, trimToUndefined } from '../_shared/script-url';
 
@@ -390,7 +391,7 @@ const claimLoader = function claimLoader(
 	if (
 		typeof document === 'undefined' ||
 		!info.element ||
-		(!alwaysLoad && (!info.hasConsent || info.vendor?.granted === false))
+		(!alwaysLoad && !permitted(info))
 	) {
 		return false;
 	}
@@ -427,10 +428,10 @@ const ownsLoader = function ownsLoader(
 const mapConsent = function mapConsent(
 	info: ScriptCallbackInfo
 ): DefaultComConsent {
-	const permitted = info.hasConsent && info.vendor?.granted !== false;
+	const allowed = permitted(info);
 	return {
-		analytics: permitted && info.consents.measurement === true,
-		marketing: permitted && info.consents.marketing === true,
+		analytics: allowed && info.consents.measurement === true,
+		marketing: allowed && info.consents.marketing === true,
 	};
 };
 
@@ -677,8 +678,8 @@ export const defaultComFormsSdk = function defaultComFormsSdk(
 			return;
 		}
 		const previous = sdkOwners.get(registration);
-		const permitted = info.hasConsent && info.vendor?.granted !== false;
-		const sdk = !permitted && previous ? previous : window.DefaultPixelSDK;
+		const allowed = permitted(info);
+		const sdk = !allowed && previous ? previous : window.DefaultPixelSDK;
 		if (!sdk) {
 			return;
 		}
@@ -695,7 +696,7 @@ export const defaultComFormsSdk = function defaultComFormsSdk(
 		state.registrations.set(registration, mapConsent(info));
 		joinPreloadOwners(state);
 		forwardSdkConsent(sdk);
-		if (permitted && !sameSdkOptions(state.options, initOptions)) {
+		if (allowed && !sameSdkOptions(state.options, initOptions)) {
 			const applied = snapshotSdkOptions(initOptions);
 			sdk.init(applied);
 			state.options = snapshotSdkOptions(applied);

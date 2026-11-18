@@ -1,4 +1,7 @@
 import type { AllConsentNames, ConsentState, Script } from '@inth/sdk/engine';
+import { POLICY_CONSENT_CATEGORIES } from '@inth/sdk/schema/types';
+
+import { signalConsents } from '../../engine/vendor-consent';
 
 /** The Zaraz Consent API methods used by the bridge. */
 export interface ZarazConsentApi {
@@ -25,23 +28,8 @@ export interface CloudflareZarazOptions {
 	onError?: (error: unknown) => void;
 }
 
-const consentCategories: readonly AllConsentNames[] = [
-	'necessary',
-	'functionality',
-	'experience',
-	'measurement',
-	'marketing',
-];
 const readyEvent = 'zarazConsentAPIReady';
 const vendorId = 'cloudflare-zaraz';
-/** What a visitor who turned the Zaraz vendor off grants: nothing optional. */
-const ALL_DENIED: ConsentState = {
-	experience: false,
-	functionality: false,
-	marketing: false,
-	measurement: false,
-	necessary: true,
-};
 
 const isConsentApi = (api: unknown): api is ZarazConsentApi =>
 	typeof api === 'object' &&
@@ -84,7 +72,7 @@ const getConsentApi = (): ZarazConsentApi | undefined => {
  */
 export const cloudflareZaraz = (options: CloudflareZarazOptions): Script => {
 	const mappings = new Map<string, AllConsentNames>();
-	for (const category of consentCategories) {
+	for (const category of POLICY_CONSENT_CATEGORIES) {
 		for (const purpose of options.purposes[category] ?? []) {
 			if (!purpose.trim() || purpose !== purpose.trim()) {
 				throw new Error(
@@ -164,9 +152,7 @@ export const cloudflareZaraz = (options: CloudflareZarazOptions): Script => {
 		return true;
 	};
 	const update: NonNullable<Script['onConsentChange']> = (info) => {
-		// A visitor who turned this vendor off gets every optional category
-		// denied, whatever the category state.
-		latest = info.vendor?.granted === false ? ALL_DENIED : info.consents;
+		latest = signalConsents(info);
 		if (typeof document === 'undefined') {
 			return;
 		}

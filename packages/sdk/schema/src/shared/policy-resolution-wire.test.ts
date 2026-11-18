@@ -7,7 +7,7 @@
  * tests read the sources, not a bundle, so a failure names the import that
  * pulled resolution back into the reader's module graph.
  */
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -48,7 +48,10 @@ const staticGraph = function staticGraph(entry: string): Set<string> {
 	return new Set([...seen].map((file) => file.slice(SOURCE_DIR.length + 1)));
 };
 
-/** Source module each name in an `export { ... } from` block comes from. */
+/**
+ * Source module each name in an `export { ... } from` block comes from,
+ * looked up in the barrel when the block re-exports one.
+ */
 const exportSources = function exportSources(
 	file: string
 ): Map<string, string> {
@@ -57,11 +60,16 @@ const exportSources = function exportSources(
 	for (const match of text.matchAll(
 		/^export\s+\{(?<names>[^}]*)\}\s+from\s+'(?<source>[^']+)';/gmu
 	)) {
+		const source = match.groups?.source as string;
+		const barrel = join(dirname(file), source, 'index.ts');
+		const barrelSources = existsSync(join(SOURCE_DIR, barrel))
+			? exportSources(barrel)
+			: undefined;
 		const names = match.groups?.names ?? '';
 		for (const name of names.split(',')) {
 			const trimmed = name.trim();
 			if (trimmed && !trimmed.startsWith('type ')) {
-				sources.set(trimmed, match.groups?.source as string);
+				sources.set(trimmed, barrelSources?.get(trimmed) ?? source);
 			}
 		}
 	}

@@ -5,8 +5,10 @@ import {
 	AD_TECH_PROVIDERS_URL,
 	normalizeAdTechProviderIds,
 } from './ad-tech-provider';
+import { DEFAULT_GVL_ENDPOINT } from './constants';
 import type { brandingValues, hostingValues } from './constants';
 import { createDeterministicFingerprintSync } from './policy-fingerprint';
+import { normalizeLanguage } from './policy-i18n-validation';
 import {
 	matchPolicyRules,
 	readPolicyResolutionWire,
@@ -122,13 +124,6 @@ export interface ResolveInitFromManifestOptions {
 	/** Logger used for one-time translation fallback warnings. */
 	logger?: LoggerLike;
 }
-
-const normalizeLanguageSlice = function normalizeLanguageSlice(
-	value: string
-): string {
-	const normalized = value.split(',')[0]?.split(';')[0]?.trim().toLowerCase();
-	return normalized?.split('-')[0] ?? value;
-};
 
 const stripIabTranslations = function stripIabTranslations(
 	translations: Record<string, unknown>
@@ -251,7 +246,7 @@ export const sliceConsentManifestLanguage =
 		manifest: ConsentManifest,
 		language: string
 	): ConsentManifest {
-		const normalizedLanguage = normalizeLanguageSlice(language);
+		const normalizedLanguage = normalizeLanguage(language) ?? language;
 		const customTranslations = manifest.translations?.customTranslations;
 		const i18n = manifest.translations?.i18n;
 
@@ -405,8 +400,6 @@ export interface ConsentManifestConfig {
 	/** Version label of `vendors`, for display and audit only. */
 	readonly vendorListVersion?: string;
 }
-
-const DEFAULT_GVL_ENDPOINT = 'https://gvl.inth.app';
 
 const buildGvlReference = function buildGvlReference(
 	config: ConsentManifestConfig

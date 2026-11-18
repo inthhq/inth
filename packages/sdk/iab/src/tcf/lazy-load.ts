@@ -68,35 +68,3 @@ export const getTCFCore = function getTCFCore(): Promise<TCFCoreModule> {
 
 	return loadingPromise;
 };
-
-/**
- * Checks if the TCF core module is already loaded.
- *
- * @returns True if the module is loaded and ready
- *
- * @public
- */
-export const isTCFCoreLoaded = function isTCFCoreLoaded(): boolean {
-	return tcfCoreModule !== null;
-};
-
-/**
- * Gets the cached TCF core module synchronously.
- *
- * @returns The cached module or null if not loaded
- *
- * @public
- */
-export const getTCFCoreSync = function getTCFCoreSync(): TCFCoreModule | null {
-	return tcfCoreModule;
-};
-
-/**
- * Resets the module cache (mainly for testing).
- *
- * @internal
- */
-export const resetTCFCoreCache = function resetTCFCoreCache(): void {
-	tcfCoreModule = null;
-	loadingPromise = null;
-};

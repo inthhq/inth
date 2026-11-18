@@ -1,3 +1,5 @@
+import { IAB_STORAGE_KEYS } from '@inth/sdk-schema/types';
+
 import type { StorageConfig } from './cookie';
 
 /** Default consent storage key. */
@@ -31,16 +33,6 @@ export const EXPERIMENT_STORAGE_KEY = 'inth-experiment-v1';
  * `sessionStorage` while a prompt is due. Removed once a choice is recorded.
  */
 export const JOURNEY_STORAGE_KEY = 'inth-journey-v1';
-
-/**
- * Where the optional IAB addon keeps its authority receipt and TC string.
- * Clearing removes them and revocation cleanup keeps them without loading
- * the addon.
- */
-export const IAB_STORAGE_KEYS = {
-	authority: 'inth-iab-authority-v1',
-	tcString: 'euconsent-v2',
-} as const;
 
 /**
  * The keys one consent storage key derives. Notice dismissals, vendor
@@ -152,8 +144,9 @@ export const ownedStorageKeys = function ownedStorageKeys(
 		PENDING_SAVES_STORAGE_KEY,
 		SUBJECT_REASSIGNMENTS_STORAGE_KEY,
 		EXPERIMENT_STORAGE_KEY,
-		IAB_STORAGE_KEYS.authority,
-		IAB_STORAGE_KEYS.tcString,
+		// The IAB addon's records, which revocation cleanup keeps without
+		// loading the addon.
+		...Object.values(IAB_STORAGE_KEYS),
 	];
 };
 

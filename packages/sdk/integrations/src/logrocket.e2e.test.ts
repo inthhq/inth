@@ -5,7 +5,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	grantedMeasurementConsents,
 	installHeadProbe,
 	loadScripts,
@@ -50,7 +50,7 @@ describe('logRocket contract', () => {
 			id: 'logrocket-contract',
 		};
 
-		loadScripts([script], deniedConsents);
+		loadScripts([script], ALL_DENIED);
 		expect(appendCount).toBe(0);
 
 		loadScripts([script], grantedMeasurementConsents);
@@ -67,7 +67,7 @@ describe('logRocket contract', () => {
 			document.getElementById('inth-script-logrocket-contract')
 		).toBeInstanceOf(HTMLScriptElement);
 
-		const result = updateScripts([script], deniedConsents);
+		const result = updateScripts([script], ALL_DENIED);
 
 		expect(result.unloaded).toEqual(['logrocket-contract']);
 		expect(

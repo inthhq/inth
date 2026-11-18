@@ -2,7 +2,7 @@ import { createConsentKernel } from '@inth/sdk-core';
 import { createPersistence } from '@inth/sdk-core/modules/persistence';
 import { afterEach, expect, it, vi } from 'vitest';
 
-import { writePolicyResolutionWire } from '../../../../schema/src/types';
+import { writePolicyResolutionWire } from '@inth/sdk-schema/types';
 import { createDevTools } from '../../index';
 import { policyResolution } from '../helpers/kernel';
 

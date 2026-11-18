@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
 	clearAllScripts,
-	deniedConsents,
+	ALL_DENIED,
 	grantedMarketingConsents,
 	grantedMeasurementConsents,
 	installHeadProbe,
@@ -64,7 +64,7 @@ describe('Vercel Speed Insights loader contract', () => {
 		const { appended, send } = installCollector();
 
 		const scripts = [vercelSpeedInsights({ sampleRate: 0.5 })];
-		loadScripts(scripts, deniedConsents);
+		loadScripts(scripts, ALL_DENIED);
 		expect(appended).toHaveLength(0);
 		expect((window as SpeedInsightsWindow).siq).toBeUndefined();
 
@@ -75,7 +75,7 @@ describe('Vercel Speed Insights loader contract', () => {
 		expect(appended[0]?.getAttribute('data-sample-rate')).toBe('0.5');
 		expect(send()).toEqual(event);
 
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(appended[0]?.isConnected).toBe(false);
 		expect(send()).toBeNull();
 
@@ -109,7 +109,7 @@ describe('Vercel Speed Insights loader contract', () => {
 		expect(appended[1]?.isConnected).toBe(true);
 		expect(send()).toEqual(event);
 
-		updateScripts([vercelSpeedInsights()], deniedConsents);
+		updateScripts([vercelSpeedInsights()], ALL_DENIED);
 		expect(send()).toBeNull();
 	});
 });

@@ -5,7 +5,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	grantedMeasurementConsents,
 	installHeadProbe,
 	loadScripts,
@@ -51,7 +51,7 @@ describe('pirsch contract', () => {
 			id: 'pirsch-contract',
 		};
 
-		loadScripts([script], deniedConsents);
+		loadScripts([script], ALL_DENIED);
 		expect(appendCount).toBe(0);
 
 		loadScripts([script], grantedMeasurementConsents);

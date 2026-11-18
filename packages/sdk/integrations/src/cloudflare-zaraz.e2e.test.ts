@@ -4,7 +4,7 @@ import type { Script } from '@inth/sdk/engine';
 import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { deniedConsents } from './e2e-test-utils';
+import { ALL_DENIED } from './e2e-test-utils';
 import { cloudflareZaraz } from './vendors/tag-managers/cloudflare-zaraz';
 import type { ZarazConsentApi } from './vendors/tag-managers/cloudflare-zaraz';
 
@@ -45,7 +45,7 @@ const mount = (
 	})
 ) => {
 	const kernel = createConsentKernel();
-	void kernel.commands.save(deniedConsents);
+	void kernel.commands.save(ALL_DENIED);
 	const loader = createScriptLoader({ kernel, scripts: [script] });
 	disposers.push(
 		() => kernel.dispose(),
@@ -100,7 +100,7 @@ describe('Zaraz consent bridge through the kernel and script loader', () => {
 			expect(onError).toHaveBeenCalledWith(error);
 			expect(onReady).not.toHaveBeenCalled();
 			expect(api.sendQueuedEvents).not.toHaveBeenCalled();
-			void kernel.commands.save({ ...deniedConsents, marketing: true });
+			void kernel.commands.save({ ...ALL_DENIED, marketing: true });
 			expect(api.getAll()).toEqual({ analytics: false });
 			expect(onReady).toHaveBeenCalledOnce();
 		}
@@ -175,7 +175,7 @@ describe('Zaraz consent bridge through the kernel and script loader', () => {
 				})
 			);
 			void kernel.commands.save({
-				...deniedConsents,
+				...ALL_DENIED,
 				marketing: true,
 				measurement: true,
 			});
@@ -189,7 +189,7 @@ describe('Zaraz consent bridge through the kernel and script loader', () => {
 			expect(onReady).not.toHaveBeenCalled();
 			expect(api.getAll()).toEqual({ ads: true, analytics: true });
 			if (revoke) {
-				void kernel.commands.save({ ...deniedConsents, marketing: true });
+				void kernel.commands.save({ ...ALL_DENIED, marketing: true });
 			}
 			document.dispatchEvent(new Event('zarazConsentAPIReady'));
 			expect(api.sendQueuedEvents).toHaveBeenCalledTimes(revoke ? 1 : 2);
@@ -202,7 +202,7 @@ describe('Zaraz consent bridge through the kernel and script loader', () => {
 	it('preserves grants when the kernel already has the returning visitor choice', () => {
 		const { api } = installZaraz({ analytics: true });
 		const kernel = createConsentKernel();
-		void kernel.commands.save({ ...deniedConsents, measurement: true });
+		void kernel.commands.save({ ...ALL_DENIED, measurement: true });
 		const onReady = vi.fn();
 		const loader = createScriptLoader({
 			kernel,
@@ -259,16 +259,16 @@ describe('Zaraz consent bridge through the kernel and script loader', () => {
 				purposes: { marketing: ['ads'], measurement: ['analytics'] },
 			})
 		);
-		await kernel.commands.save({ ...deniedConsents, measurement: true });
+		await kernel.commands.save({ ...ALL_DENIED, measurement: true });
 		expect(api.getAll()).toEqual({ ads: false, analytics: true });
 		expect(order).toEqual(['set', 'flush']);
 		await kernel.commands.save({
-			...deniedConsents,
+			...ALL_DENIED,
 			marketing: true,
 			measurement: true,
 		});
 		expect(api.getAll()).toEqual({ ads: true, analytics: true });
-		await kernel.commands.save(deniedConsents);
+		await kernel.commands.save(ALL_DENIED);
 		expect(api.getAll()).toEqual({ ads: false, analytics: false });
 		expect(order).toEqual(['set', 'flush', 'set', 'flush', 'set']);
 		expect(onReady).toHaveBeenCalledOnce();
@@ -276,8 +276,8 @@ describe('Zaraz consent bridge through the kernel and script loader', () => {
 
 	it('uses the latest permissions when the API arrives after several changes', async () => {
 		const { kernel } = mount();
-		await kernel.commands.save({ ...deniedConsents, measurement: true });
-		await kernel.commands.save({ ...deniedConsents, marketing: true });
+		await kernel.commands.save({ ...ALL_DENIED, measurement: true });
+		await kernel.commands.save({ ...ALL_DENIED, marketing: true });
 		const { api } = installZaraz();
 		document.dispatchEvent(new Event('zarazConsentAPIReady'));
 		expect(api.getAll()).toEqual({ ads: true, analytics: false });
@@ -288,7 +288,7 @@ describe('Zaraz consent bridge through the kernel and script loader', () => {
 		const { api } = installZaraz(undefined, false);
 		const add = vi.spyOn(document, 'addEventListener');
 		const { kernel } = mount();
-		await kernel.commands.save({ ...deniedConsents, measurement: true });
+		await kernel.commands.save({ ...ALL_DENIED, measurement: true });
 		document.dispatchEvent(new Event('zarazConsentAPIReady'));
 		expect(api.set).not.toHaveBeenCalled();
 		expect(
@@ -297,7 +297,7 @@ describe('Zaraz consent bridge through the kernel and script loader', () => {
 		api.APIReady = true;
 		document.dispatchEvent(new Event('zarazConsentAPIReady'));
 		expect(api.getAll().analytics).toBe(true);
-		await kernel.commands.save(deniedConsents);
+		await kernel.commands.save(ALL_DENIED);
 		expect(api.getAll().analytics).toBe(false);
 		expect(
 			add.mock.calls.filter(([name]) => name === 'zarazConsentAPIReady')
@@ -308,7 +308,7 @@ describe('Zaraz consent bridge through the kernel and script loader', () => {
 		'does not apply obsolete permissions after %s',
 		async (action) => {
 			const { kernel, loader } = mount();
-			await kernel.commands.save({ ...deniedConsents, measurement: true });
+			await kernel.commands.save({ ...ALL_DENIED, measurement: true });
 			if (action === 'dispose') {
 				loader.dispose();
 			}
@@ -333,7 +333,7 @@ describe('Zaraz consent bridge through the kernel and script loader', () => {
 			purposes: { measurement: ['analytics'] },
 		});
 		const { kernel, loader } = mount(script);
-		await kernel.commands.save({ ...deniedConsents, measurement: true });
+		await kernel.commands.save({ ...ALL_DENIED, measurement: true });
 		loader.updateScripts([script]);
 		loader.updateScripts([script]);
 		expect(api.set).toHaveBeenCalledOnce();
@@ -342,7 +342,7 @@ describe('Zaraz consent bridge through the kernel and script loader', () => {
 
 	it('does not synchronize during removal when the vendor has just become ready', async () => {
 		const { kernel, loader } = mount();
-		await kernel.commands.save({ ...deniedConsents, measurement: true });
+		await kernel.commands.save({ ...ALL_DENIED, measurement: true });
 		const { api } = installZaraz();
 		loader.updateScripts([]);
 		document.dispatchEvent(new Event('zarazConsentAPIReady'));
@@ -358,7 +358,7 @@ describe('Zaraz consent bridge through the kernel and script loader', () => {
 				sendQueuedEvents: false,
 			})
 		);
-		await kernel.commands.save({ ...deniedConsents, measurement: true });
+		await kernel.commands.save({ ...ALL_DENIED, measurement: true });
 		expect(api.getAll()).toEqual({ analytics: true, reporting: true });
 		expect(api.modal).toBe(true);
 		expect(api.sendQueuedEvents).not.toHaveBeenCalled();
@@ -369,7 +369,7 @@ describe('Zaraz consent bridge through the kernel and script loader', () => {
 		const { kernel } = mount(
 			cloudflareZaraz({ purposes: { measurement: ['typo'] } })
 		);
-		await kernel.commands.save({ ...deniedConsents, measurement: true });
+		await kernel.commands.save({ ...ALL_DENIED, measurement: true });
 		expect(api.getAll()).toEqual({ analytics: false });
 	});
 
@@ -385,7 +385,7 @@ describe('Zaraz consent bridge through the kernel and script loader', () => {
 			purposes: { marketing: ['ads'], measurement: ['analytics'] },
 		});
 		const consents = {
-			...deniedConsents,
+			...ALL_DENIED,
 			marketing: true,
 			measurement: true,
 		};

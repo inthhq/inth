@@ -14,12 +14,12 @@ import type {
 	GlobalVendorList,
 	NonIABVendor,
 } from '@inth/sdk-core';
-import { AD_TECH_PROVIDER_PURPOSES } from '@inth/sdk-schema/types';
-
 import {
-	applyPublisherRestrictionsToGVL,
+	AD_TECH_PROVIDER_PURPOSES,
 	permittedLegitimateInterestPurposes,
-} from './effective-vendor-list';
+} from '@inth/sdk-schema/types';
+
+import { applyPublisherRestrictionsToGVL } from './effective-vendor-list';
 import type {
 	HeadlessIABDialogData,
 	HeadlessIABProcessedFeature,

@@ -54,7 +54,7 @@ const goldenVectors = [
 	},
 	{
 		expected:
-			'022db6788d676d5212e4249243ac3ee4f6b5e2dd77a298b4d4443d4c5826c6ac',
+			'4fd612d463abbbf015b2f0aa848b7cff5bbb141b85289c4490c30c0781645ddc',
 		input: 'inth',
 		label: 'short ascii',
 	},

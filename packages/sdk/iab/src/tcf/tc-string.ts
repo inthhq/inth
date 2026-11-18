@@ -7,9 +7,12 @@
  */
 
 import type { PurposeRestrictionVector } from '@iabtechlabtcf/core';
-import type { GlobalVendorList } from '@inth/sdk-core';
+import type {
+	GlobalVendorList,
+	PublisherRestriction,
+	TCFConsentData,
+} from '@inth/sdk-core';
 
-import type { PublisherRestriction, TCFConsentData } from './iab-tcf-types';
 import { getTCFCore } from './lazy-load';
 import {
 	PublisherRestrictionError,
@@ -458,69 +461,4 @@ export const decodeTCString = async function decodeTCString(
 			tcModel.vendorsDisclosed.maxId
 		),
 	};
-};
-
-/**
- * Validates a TC String format.
- *
- * @param tcString - The TC String to validate
- * @returns True if the string appears to be a valid TC String format
- *
- * @public
- */
-export const isValidTCStringFormat = function isValidTCStringFormat(
-	tcString: string
-): boolean {
-	// TC Strings are base64url encoded and start with a version indicator
-	// Version 2 strings typically start with 'C' or 'B' after base64url encoding
-	if (!tcString || typeof tcString !== 'string') {
-		return false;
-	}
-
-	// Basic format check: should be base64url characters
-	const base64urlRegex = /^[A-Za-z0-9_-]+$/u;
-	if (!base64urlRegex.test(tcString)) {
-		return false;
-	}
-
-	// Should be at least a minimum length to contain header
-	if (tcString.length < 10) {
-		return false;
-	}
-
-	return true;
-};
-
-/**
- * Checks if a TC String has consent for a specific vendor.
- *
- * @param tcString - The TC String to check
- * @param vendorId - The vendor ID to check
- * @returns True if the vendor has consent
- *
- * @public
- */
-export const hasVendorConsent = async function hasVendorConsent(
-	tcString: string,
-	vendorId: number
-): Promise<boolean> {
-	const decoded = await decodeTCString(tcString);
-	return decoded.vendorConsents[vendorId] === true;
-};
-
-/**
- * Checks if a TC String has consent for a specific purpose.
- *
- * @param tcString - The TC String to check
- * @param purposeId - The purpose ID to check (1-11)
- * @returns True if the purpose has consent
- *
- * @public
- */
-export const hasPurposeConsent = async function hasPurposeConsent(
-	tcString: string,
-	purposeId: number
-): Promise<boolean> {
-	const decoded = await decodeTCString(tcString);
-	return decoded.purposeConsents[purposeId] === true;
 };

@@ -6,7 +6,7 @@ import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	grantedMarketingConsents,
 	grantedMeasurementConsents,
 	loadScripts,
@@ -51,7 +51,7 @@ describe('RB2B core loader consent contract', () => {
 	});
 	it('creates no vendor globals, requests or storage before mapped consent', () => {
 		const scripts = [rb2b({ accountKey: 'inthfake' })];
-		loadScripts(scripts, deniedConsents);
+		loadScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, grantedMeasurementConsents);
 		expect(document.querySelector('script')).toBeNull();
 		for (const key of ['reb2b']) {
@@ -71,7 +71,7 @@ describe('RB2B core loader consent contract', () => {
 		const scripts = [rb2b({ accountKey: 'inthfake' })];
 		loadScripts(scripts, grantedMarketingConsents);
 		const old = document.querySelector('script');
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(old?.isConnected).toBe(true);
 		old?.dispatchEvent(new Event('load'));
 		expect(document.querySelector('script')).toBe(old);

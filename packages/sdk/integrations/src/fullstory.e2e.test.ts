@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	loadScripts,
 	registerVendorContractCleanup,
 	updateScripts,
@@ -17,8 +17,8 @@ const GLOBALS = [
 	'_fs_capture_on_startup',
 	'_fs_namespace',
 ];
-const granted = { ...deniedConsents, measurement: true };
-const unrelated = { ...deniedConsents, marketing: true };
+const granted = { ...ALL_DENIED, measurement: true };
+const unrelated = { ...ALL_DENIED, marketing: true };
 const getLoader = (): HTMLScriptElement => {
 	const loader = document.querySelector<HTMLScriptElement>('script[src]');
 	if (!loader) {
@@ -60,7 +60,7 @@ describe('FullStory consent loader', () => {
 		const cookies = document.cookie;
 		const local = { ...localStorage };
 		const session = { ...sessionStorage };
-		loadScripts(scripts, deniedConsents);
+		loadScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, unrelated);
 		expect(document.querySelector('script[src]')).toBeNull();
 		for (const name of GLOBALS) {
@@ -78,7 +78,7 @@ describe('FullStory consent loader', () => {
 		);
 		updateScripts(scripts, granted);
 		expect(getLoader()).toBe(first);
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(first.isConnected).toBe(true);
 		updateScripts(scripts, granted);
 		expect(getLoader()).toBe(first);
@@ -90,7 +90,7 @@ describe('FullStory consent loader', () => {
 		];
 		loadScripts(scripts, granted);
 		expect(document.querySelector('script[src]')).toBeNull();
-		updateScripts(scripts, { ...deniedConsents, experience: true });
+		updateScripts(scripts, { ...ALL_DENIED, experience: true });
 		expect(getLoader()).toBeDefined();
 	});
 });
@@ -134,7 +134,7 @@ describe('FullStory v2 capture controls', () => {
 		const loader = getLoader();
 		loader.dispatchEvent(new Event('load'));
 		updateScripts([create()], granted);
-		updateScripts([create()], deniedConsents);
+		updateScripts([create()], ALL_DENIED);
 		updateScripts([create()], granted);
 		expect(control.mock.calls.map(([name]) => name)).toEqual([
 			'setIdentity',
@@ -158,7 +158,7 @@ describe('FullStory v2 capture controls', () => {
 		const scripts = [fullStory({ orgId: 'late-org' })];
 		loadScripts(scripts, granted);
 		const loader = getLoader();
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		loader.dispatchEvent(new Event('load'));
 		expect(window.FS?.q?.map(([name]) => name)).toEqual([
 			'init',
@@ -226,13 +226,13 @@ describe('FullStory fetch instrumentation contract', () => {
 		const original = vi.fn<typeof fetch>();
 		window.fetch = original;
 		const scripts = [fullStory({ orgId: 'fetch-consent-org' })];
-		loadScripts(scripts, deniedConsents);
+		loadScripts(scripts, ALL_DENIED);
 		expect(window.fetch).toBe(original);
 		updateScripts(scripts, granted);
 		const forward = window.fetch;
 		expect(forward).not.toBe(original);
 		getLoader().dispatchEvent(new Event('load'));
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, granted);
 		expect(window.fetch).toBe(forward);
 		expect(window.FS?._w?.fetch).toBe(original);

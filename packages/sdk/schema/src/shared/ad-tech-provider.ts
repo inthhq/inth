@@ -14,6 +14,8 @@
 
 import * as v from 'valibot';
 
+import { DEFAULT_GVL_ENDPOINT } from './constants';
+
 /** Schema for one Google ad tech provider. */
 export const adTechProviderSchema = v.object({
 	/** Google ATP ID. */
@@ -40,7 +42,7 @@ export const AD_TECH_PROVIDER_PURPOSES = [1, 3, 4] as const;
  * Default provider list endpoint. It serves Google's provider CSV as JSON,
  * filtered by `?providerIds=1,2,3`.
  */
-export const AD_TECH_PROVIDERS_URL = 'https://gvl.inth.app/additional-consent';
+export const AD_TECH_PROVIDERS_URL = `${DEFAULT_GVL_ENDPOINT}/additional-consent`;
 
 /**
  * Shape of a Google Additional Consent v2 string, such as `2~89.486~dv.2572`:

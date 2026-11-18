@@ -5,7 +5,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	grantedMeasurementConsents,
 	installHeadProbe,
 	loadScripts,
@@ -167,7 +167,7 @@ describe('amplitude contract', () => {
 					id: 'amplitude-contract',
 				},
 			],
-			deniedConsents
+			ALL_DENIED
 		);
 
 		expect(appended).toBe(false);
@@ -195,7 +195,7 @@ describe('amplitude contract', () => {
 		});
 
 		loadScripts([script], grantedMeasurementConsents);
-		updateScripts([script], deniedConsents);
+		updateScripts([script], ALL_DENIED);
 
 		expect(setOptOut).toHaveBeenCalledWith(true);
 		expect(
@@ -247,7 +247,7 @@ describe('amplitude contract', () => {
 		});
 
 		loadScripts([script], grantedMeasurementConsents);
-		updateScripts([script], deniedConsents);
+		updateScripts([script], ALL_DENIED);
 		loadScripts([script], grantedMeasurementConsents);
 
 		const win = window as TestWindow;

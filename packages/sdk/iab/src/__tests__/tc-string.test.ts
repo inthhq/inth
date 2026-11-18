@@ -3,13 +3,13 @@
  */
 
 import { createConsentKernel } from '@inth/sdk-core';
+import type { TCData, TCFConsentData } from '@inth/sdk-core';
 import { resolvePolicyRules } from '@inth/sdk-schema/types';
 import { describe, expect, test, vi } from 'vitest';
 
 import { createIAB } from '../index';
 import { createCMPApi } from '../tcf/cmp-api';
 import { CMP_VERSION_NUMBER } from '../tcf/cmp-defaults';
-import type { TCData, TCFConsentData } from '../tcf/iab-tcf-types';
 import { decodeTCString, generateTCString } from '../tcf/tc-string';
 import { MINIMAL_TC_STRING } from './fixtures/tc-strings';
 import {

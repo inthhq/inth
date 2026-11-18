@@ -33,10 +33,7 @@
  */
 
 import { narrowGVLToVendors } from '../../sdk/iab/src/tcf/fetch-gvl';
-import type {
-	GVLVendor,
-	GlobalVendorList,
-} from '../../sdk/iab/src/tcf/iab-tcf-types';
+import type { GVLVendor, GlobalVendorList } from '../../sdk/schema/src/types';
 
 // -- The oracle -------------------------------------------------------------
 

@@ -11,7 +11,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
 	clearAllScripts,
-	deniedConsents,
+	ALL_DENIED,
 	loadScripts,
 	registerVendorContractCleanup,
 	updateScripts,
@@ -19,7 +19,7 @@ import {
 import type { ada as createAda, AdaOptions } from './vendors/functional/ada';
 
 const SDK_URL = 'https://messaging-assets.ada.support/sdk.js';
-const grantedConsents = { ...deniedConsents, functionality: true };
+const grantedConsents = { ...ALL_DENIED, functionality: true };
 
 const deferred = function deferred() {
 	let complete!: () => void;
@@ -77,7 +77,7 @@ describe('Ada Messaging core loader contract', () => {
 		expect(scripts[0]).toMatchObject({ callbackOnly: true, id: 'ada' });
 		expect(scripts[0]?.src).toBeUndefined();
 		expect(scripts[0]?.alwaysLoad).toBeUndefined();
-		expect(loadScripts(scripts, deniedConsents)).toEqual([]);
+		expect(loadScripts(scripts, ALL_DENIED)).toEqual([]);
 		await settle();
 		expect(evaluateModule).not.toHaveBeenCalled();
 		expect(document.querySelector('script, iframe')).toBeNull();
@@ -112,10 +112,10 @@ describe('Ada Messaging core loader contract', () => {
 		expect(window.sessionStorage).toBeInstanceOf(Storage);
 		const local = { ...window.localStorage };
 		const session = { ...window.sessionStorage };
-		expect(loadScripts(scripts, deniedConsents)).toEqual([]);
+		expect(loadScripts(scripts, ALL_DENIED)).toEqual([]);
 		expect(
 			updateScripts(scripts, {
-				...deniedConsents,
+				...ALL_DENIED,
 				experience: true,
 				marketing: true,
 				measurement: true,
@@ -179,7 +179,7 @@ describe('Ada Messaging core loader contract', () => {
 		loadScripts(scripts, grantedConsents);
 		updateScripts(scripts, grantedConsents);
 		await vi.waitFor(() => expect(evaluateModule).toHaveBeenCalledOnce());
-		expect(updateScripts(scripts, deniedConsents).unloaded).toEqual(['ada']);
+		expect(updateScripts(scripts, ALL_DENIED).unloaded).toEqual(['ada']);
 		importGate.resolve();
 		await settle();
 		expect(createAdaEmbedInterface).not.toHaveBeenCalled();
@@ -195,7 +195,7 @@ describe('Ada Messaging core loader contract', () => {
 		const scripts = [ada({ handle: '' }), ada({ handle: 'agent' })];
 		loadScripts(scripts, grantedConsents);
 		await vi.waitFor(() => expect(evaluateModule).toHaveBeenCalledOnce());
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		importGate.resolve();
 		await settle();
 		expect(client.start).not.toHaveBeenCalled();
@@ -272,7 +272,7 @@ describe('Ada Messaging core loader contract', () => {
 			firstLoader.dispose();
 			expect(client.stop).not.toHaveBeenCalled();
 			expect(secondLoader.getLoadedScriptIds()).toEqual(['ada']);
-			await secondKernel.commands.save(deniedConsents);
+			await secondKernel.commands.save(ALL_DENIED);
 			expect(client.stop).toHaveBeenCalledOnce();
 		} finally {
 			firstLoader.dispose();
@@ -289,7 +289,7 @@ describe('Ada Messaging core loader contract', () => {
 		loadScripts(scripts, grantedConsents);
 		await settle();
 		expect(evaluateModule).not.toHaveBeenCalled();
-		updateScripts(scripts, { ...deniedConsents, marketing: true });
+		updateScripts(scripts, { ...ALL_DENIED, marketing: true });
 		importGate.resolve();
 		await vi.waitFor(() => expect(client.start).toHaveBeenCalledOnce());
 		updateScripts(scripts, grantedConsents);
@@ -300,7 +300,7 @@ describe('Ada Messaging core loader contract', () => {
 		const scripts = [ada({ handle: 'agent' })];
 		loadScripts(scripts, grantedConsents);
 		await vi.waitFor(() => expect(evaluateModule).toHaveBeenCalledOnce());
-		expect(updateScripts(scripts, deniedConsents).unloaded).toEqual(['ada']);
+		expect(updateScripts(scripts, ALL_DENIED).unloaded).toEqual(['ada']);
 		importGate.resolve();
 		await settle();
 		expect(createAdaEmbedInterface).not.toHaveBeenCalled();
@@ -313,7 +313,7 @@ describe('Ada Messaging core loader contract', () => {
 		const scripts = [ada({ handle: 'agent' })];
 		loadScripts(scripts, grantedConsents);
 		await vi.waitFor(() => expect(evaluateModule).toHaveBeenCalledOnce());
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		updateScripts(scripts, grantedConsents);
 		importGate.resolve();
 		await vi.waitFor(() => expect(client.start).toHaveBeenCalledOnce());
@@ -324,7 +324,7 @@ describe('Ada Messaging core loader contract', () => {
 	it('cancels a queued grant before the SDK import starts', async () => {
 		const scripts = [ada({ handle: 'agent' })];
 		loadScripts(scripts, grantedConsents);
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		await settle();
 		expect(evaluateModule).not.toHaveBeenCalled();
 		expect(createAdaEmbedInterface).not.toHaveBeenCalled();
@@ -339,8 +339,8 @@ describe('Ada Messaging core loader contract', () => {
 		loadScripts(scripts, grantedConsents);
 		await vi.waitFor(() => expect(client.start).toHaveBeenCalledOnce());
 		await settle();
-		expect(updateScripts(scripts, deniedConsents).unloaded).toEqual(['ada']);
-		updateScripts(scripts, deniedConsents);
+		expect(updateScripts(scripts, ALL_DENIED).unloaded).toEqual(['ada']);
+		updateScripts(scripts, ALL_DENIED);
 		expect(client.stop).toHaveBeenCalledOnce();
 		updateScripts(scripts, grantedConsents);
 		await settle();
@@ -363,7 +363,7 @@ describe('Ada Messaging core loader contract', () => {
 		importGate.resolve();
 		loadScripts(scripts, grantedConsents);
 		await vi.waitFor(() => expect(client.start).toHaveBeenCalledOnce());
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(client.stop).toHaveBeenCalledOnce();
 		updateScripts(scripts, grantedConsents);
 		await settle();
@@ -380,7 +380,7 @@ describe('Ada Messaging core loader contract', () => {
 		const scripts = [ada({ handle: 'agent' })];
 		loadScripts(scripts, grantedConsents);
 		await vi.waitFor(() => expect(client.start).toHaveBeenCalledOnce());
-		updateScripts(scripts, deniedConsents);
+		updateScripts(scripts, ALL_DENIED);
 		expect(client.stop).toHaveBeenCalledOnce();
 		await settle();
 		updateScripts(scripts, grantedConsents);

@@ -5,7 +5,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import {
-	deniedConsents,
+	ALL_DENIED,
 	grantedMeasurementConsents,
 	installHeadProbe,
 	loadScripts,
@@ -157,7 +157,7 @@ describe('heap contract', () => {
 					id: 'heap-contract',
 				},
 			],
-			deniedConsents
+			ALL_DENIED
 		);
 
 		expect(appended).toBe(false);
@@ -181,7 +181,7 @@ describe('heap contract', () => {
 
 		loadScripts([script], grantedMeasurementConsents);
 
-		const result = updateScripts([script], deniedConsents);
+		const result = updateScripts([script], ALL_DENIED);
 
 		expect(result.unloaded).toEqual(['heap-contract']);
 		expect(document.getElementById('inth-script-heap-contract')).toBeNull();
@@ -213,7 +213,7 @@ describe('heap contract', () => {
 		});
 
 		loadScripts([script], grantedMeasurementConsents);
-		updateScripts([script], deniedConsents);
+		updateScripts([script], ALL_DENIED);
 		loadScripts([script], grantedMeasurementConsents);
 
 		expect(appends).toBe(2);
