@@ -42,6 +42,16 @@ enum ConsentDelivery {
         }
     }
 
+    /// Whether `newer`'s answer names every category `older`'s does, so replacing `older`
+    /// with it loses no receipt the backend has not seen. A later answer can name fewer,
+    /// as when a new policy fingerprint leaves the earlier receipts out of the choice.
+    static func covers(_ newer: Data, _ older: Data) -> Bool {
+        guard let mine = InthJSON.parse(newer)?["answer"]?["categories"]?.objectValue,
+            let theirs = InthJSON.parse(older)?["answer"]?["categories"]?.objectValue
+        else { return false }
+        return Set(theirs.keys).isSubset(of: Set(mine.keys))
+    }
+
     /// A body whose complete answer grants no optional category, and which either is a
     /// reject-all or confirmed at least one denial. `necessary` is implied by `answer`.
     static func isWithdrawal(_ body: Data) -> Bool {
@@ -172,7 +182,7 @@ final class PendingSaveQueue: @unchecked Sendable {
         let wrote = lock.withLock {
             var entries = readEntries()
             if ConsentDelivery.isWithdrawal(body) {
-                entries.removeAll { ConsentDelivery.sameOwner($0.body, body) }
+                entries.removeAll { ConsentDelivery.sameOwner($0.body, body) && ConsentDelivery.covers(body, $0.body) }
             }
             entries.sort { left, right in
                 left.actionAt == right.actionAt ? left.queuedAt < right.queuedAt : left.actionAt < right.actionAt
@@ -373,7 +383,8 @@ final class PendingSaveQueue: @unchecked Sendable {
             var entries = readEntries().filter {
                 (!supersedeGrants || $0.isProtectedWithdrawal)
                     && !(entry.isProtectedWithdrawal
-                        && ConsentDelivery.sameOwner($0.body, body, subjectIds: subjectIds))
+                        && ConsentDelivery.sameOwner($0.body, body, subjectIds: subjectIds)
+                        && ConsentDelivery.covers(body, $0.body))
             }
             entries.sort { left, right in
                 left.actionAt == right.actionAt ? left.queuedAt < right.queuedAt : left.actionAt < right.actionAt
