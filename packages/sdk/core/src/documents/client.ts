@@ -23,6 +23,7 @@ import { isUuidV7 } from '../libs/subject-uuid';
 import { readApiError } from '../transports/v1/error';
 import {
 	currentDocumentPath,
+	readJson,
 	resolveV1Fetch,
 	trimTrailingSlash,
 	V1_JSON_HEADERS,
@@ -118,6 +119,8 @@ const readCurrent = function readCurrent(
 		typeof body.document.type === 'string' &&
 		typeof body.document.version === 'string' &&
 		typeof body.document.hash === 'string' &&
+		typeof body.document.effectiveDate === 'string' &&
+		typeof body.document.requiresAcceptance === 'boolean' &&
 		typeof body.proofToken === 'string' &&
 		body.proofToken &&
 		typeof body.proofTokenExpiresAt === 'string'
@@ -134,7 +137,15 @@ const readAcceptances = function readAcceptances(
 		isRecord(body) &&
 		typeof body.subjectId === 'string' &&
 		isUuidV7(body.subjectId) &&
-		Array.isArray(body.acceptances)
+		Array.isArray(body.acceptances) &&
+		body.acceptances.every(
+			(acceptance) =>
+				isRecord(acceptance) &&
+				typeof acceptance.type === 'string' &&
+				typeof acceptance.version === 'string' &&
+				typeof acceptance.hash === 'string' &&
+				typeof acceptance.acceptedAt === 'number'
+		)
 	) {
 		return body as unknown as V1DocumentAcceptancesOutput;
 	}
@@ -231,7 +242,7 @@ export const createDocumentsClient = function createDocumentsClient(
 			assertDocumentType(type);
 			const response = await fetchImpl(`${base}${currentDocumentPath(type)}`, {
 				credentials: options.credentials,
-				headers: { accept: 'application/json', ...authorization },
+				headers: { accept: 'application/json' },
 				method: 'GET',
 			});
 			if (!response.ok) {
@@ -240,7 +251,7 @@ export const createDocumentsClient = function createDocumentsClient(
 					response
 				);
 			}
-			return readCurrent(await response.json());
+			return readCurrent(await readJson(response));
 		},
 
 		async recordAcceptances(input) {
@@ -257,7 +268,7 @@ export const createDocumentsClient = function createDocumentsClient(
 					response
 				);
 			}
-			return readAcceptances(await response.json());
+			return readAcceptances(await readJson(response));
 		},
 	};
 };

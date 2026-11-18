@@ -43,11 +43,12 @@ const RECORDED = {
 };
 
 describe('getCurrent: GET /v1/documents/:type/current', () => {
-	test('reads the version in force and its proof token', async () => {
+	test('reads the version in force and its proof token, without the secret key', async () => {
 		const { calls, fetch } = stubFetch(() => json(200, CURRENT));
 		const documents = createDocumentsClient({
 			fetch,
 			projectUrl: `${PROJECT_URL}/`,
+			secretKey: 'sk_test',
 		});
 
 		const current = await documents.getCurrent('terms_us');
@@ -57,6 +58,25 @@ describe('getCurrent: GET /v1/documents/:type/current', () => {
 		expect(calls[0]?.url).toBe(`${PROJECT_URL}/v1/documents/terms_us/current`);
 		expect(calls[0]?.init.method).toBe('GET');
 		expect(calls[0]?.headers).toEqual({ accept: 'application/json' });
+	});
+
+	test.each([
+		['a page', () => new Response('<html>ok</html>', { status: 200 })],
+		[
+			'a document without effectiveDate',
+			() =>
+				json(200, {
+					...CURRENT,
+					document: { ...CURRENT.document, effectiveDate: undefined },
+				}),
+		],
+	])('refuses an answer that is %s', async (_label, answer) => {
+		const { fetch } = stubFetch(answer);
+		const documents = createDocumentsClient({ fetch, projectUrl: PROJECT_URL });
+
+		await expect(documents.getCurrent('terms_us')).rejects.toThrow(
+			/answer is unreadable/u
+		);
 	});
 
 	test('a type with no current version throws not_found', async () => {
