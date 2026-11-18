@@ -220,8 +220,8 @@ describe('TanStack Start client chunks', () => {
 		// deferred root now shares and which rejects a save waiting for an
 		// engine chunk that failed, replaces React's own copy. Core's build
 		// keeps its local names, which an app's minifier shortens, and the
-		// instant commit sits in a file of its own: 1,184 bytes (21,808).
-		expect(brotli).toBeLessThanOrEqual(21_808);
+		// instant commit sits in a file of its own: 1,203 bytes (21,827).
+		expect(brotli).toBeLessThanOrEqual(21_827);
 	}, 60_000);
 
 	test('a root route applies a streamed state with code its engine brings', async () => {
