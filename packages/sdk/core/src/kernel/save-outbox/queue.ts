@@ -238,6 +238,7 @@ const createStoredLists = function createStoredLists(
 
 		return (
 			typeof value.subjectId === 'string' &&
+			isOptionalString(value.idempotencyKey) &&
 			isBooleanRecord(value.consents) &&
 			isPlainRecord(value.overrides) &&
 			isSaveUser(value.user) &&

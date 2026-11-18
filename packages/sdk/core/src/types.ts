@@ -672,6 +672,11 @@ export interface ConfirmedCoverage {
  */
 export interface SavePayload {
 	subjectId: string;
+	/**
+	 * UUID made once with the action. A queued replay sends the same key, so
+	 * a backend that reads it records the action once.
+	 */
+	idempotencyKey?: string;
 	subject: Readonly<ConsentSubject>;
 	/** Receipt snapshot for this action; superseded categories are omitted when delivery is narrowed. */
 	choice: Readonly<ExplicitChoice>;
