@@ -129,6 +129,8 @@ describe('save idempotency key', () => {
 		first.dispose();
 		await store.transact((tx) => {
 			const entries = (tx.read('saves') ?? []) as QueuedEntry[];
+			expect(entries).toHaveLength(1);
+			expect(isUuidV7(entries[0]?.payload.idempotencyKey ?? '')).toBe(true);
 			tx.write(
 				'saves',
 				entries.map((entry) => ({
