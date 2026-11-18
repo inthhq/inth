@@ -69,6 +69,41 @@ class TransportFixtureTest {
 	}
 
 	@Test
+	fun `requests carry the fixture headers`() {
+		val rule = fixture.getValue("headers").jsonObject
+		val initCase = rule.getValue("init").jsonObject
+		val overrides = initCase.getValue("overrides").jsonObject
+		val (transport, http) = transport()
+		transport.init(
+			InitContext(
+				overrides = KernelOverrides(
+					country = overrides.text("country"),
+					region = overrides.text("region"),
+					language = overrides.text("language"),
+				),
+				subject = null,
+				gpc = false,
+				vendors = initCase.getValue("vendors").jsonArray.map { it.jsonPrimitive.int },
+			),
+		)
+		transport.save(QueuedSave("q1", 0, payload(), body = "{}"))
+		transport.link(ConsentSubject("019c1c38-a400-7100-8000-000000000002"), KernelUser("user_123"), "token-1")
+
+		val sent = initCase.getValue("sent").jsonObject.mapValues { it.value.jsonPrimitive.content }
+		val initHeaders = http.requests.first().headers
+		assertEquals(sent, sent.keys.associateWith { initHeaders[it] })
+		val prefixes = rule.getValue("forbiddenPrefixes").jsonArray.map { it.jsonPrimitive.content }
+		val forbidden = rule.getValue("forbidden").jsonArray.map { it.jsonPrimitive.content }
+		assertEquals(3, http.requests.size)
+		for (request in http.requests) {
+			assertEquals("android->${config.sdkVersion}", request.headers[rule.text("platform")], request.url)
+			val refused = request.headers.keys.map { it.lowercase() }
+				.filter { name -> name in forbidden || prefixes.any { name.startsWith(it) } }
+			assertEquals(emptyList(), refused, request.url)
+		}
+	}
+
+	@Test
 	fun `records go to the fixture route`() {
 		val records = fixture.getValue("records").jsonObject
 		val (transport, http) = transport()

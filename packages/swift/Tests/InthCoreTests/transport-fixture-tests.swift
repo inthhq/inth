@@ -43,6 +43,44 @@ final class TransportFixtureTests: XCTestCase {
         }
     }
 
+    func testRequestsCarryTheFixtureHeaders() async throws {
+        let rule = try XCTUnwrap(fixture()["headers"])
+        let initCase = try XCTUnwrap(rule["init"])
+        let overrides = try XCTUnwrap(initCase["overrides"])
+        let (transport, client) = try transport()
+        _ = await transport.performInit(InitContext(
+            overrides: KernelOverridesWire(
+                country: overrides["country"]?.stringValue,
+                region: overrides["region"]?.stringValue,
+                language: overrides["language"]?.stringValue,
+                gpc: nil),
+            user: nil, subjectId: "019c1c38-a400-7100-8000-000000000002",
+            vendors: initCase["vendors"]?.arrayValue?.compactMap { $0.intValue.map(Int.init) }))
+        _ = await transport.sendSave(Data("{}".utf8))
+        _ = await transport.linkSubject(
+            subjectId: "019c1c38-a400-7100-8000-000000000002", externalId: "user_123",
+            identityProvider: nil, identityToken: "token-1")
+
+        let sent = try XCTUnwrap(initCase["sent"]?.objectValue)
+        let initHeaders = try XCTUnwrap(client.requests.first?.headers)
+        for (name, value) in sent {
+            XCTAssertEqual(initHeaders[name], value.stringValue, name)
+        }
+        XCTAssertEqual(client.requests.count, 3)
+        for request in client.requests {
+            XCTAssertEqual(Self.forbiddenHeaders(request.headers, rule), [], request.url.path)
+        }
+    }
+
+    /// The header names on a request that the fixture's `headers` rule forbids.
+    private static func forbiddenHeaders(_ headers: [String: String], _ rule: JSONValue) -> [String] {
+        let prefixes = rule["forbiddenPrefixes"]?.arrayValue?.compactMap(\.stringValue) ?? []
+        let names = rule["forbidden"]?.arrayValue?.compactMap(\.stringValue) ?? []
+        return headers.keys.map { $0.lowercased() }
+            .filter { name in names.contains(name) || prefixes.contains { name.hasPrefix($0) } }
+            .sorted()
+    }
+
     func testRecordsGoToTheFixtureRoute() async throws {
         let records = try XCTUnwrap(fixture()["records"])
         let (transport, client) = try transport()
