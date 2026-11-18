@@ -84,8 +84,8 @@ import { fileURLToPath } from 'node:url';
 
 import {
 	buildSubjectPostBody,
-	C15T_POLICY_CONTRACT_HEADER,
-	c15tProtocolHeaders,
+	INTH_POLICY_CONTRACT_HEADER,
+	inthProtocolHeaders,
 	createConsentKernel,
 	generateSubjectId,
 	isValidSubjectId,
@@ -220,7 +220,7 @@ const SUBJECT_MINTS: Record<string, { clock: number; randomHex: string }> = {
  * Read from the kernel rather than hard-coded so a fixture can never pin a
  * contract the code it generates against has already moved past.
  */
-const CONTRACT_HEADER_VALUE = c15tProtocolHeaders[C15T_POLICY_CONTRACT_HEADER];
+const CONTRACT_HEADER_VALUE = inthProtocolHeaders[INTH_POLICY_CONTRACT_HEADER];
 
 /**
  * The translation bundle `/init` serves.
@@ -960,7 +960,7 @@ const transportFor = function transportFor(
 		// A negotiated producer declares its contract on the response. Without this
 		// header every client treats the body as pre-contract and fails closed, so
 		// the fixtures that carry a policy have to declare it.
-		headers: { [C15T_POLICY_CONTRACT_HEADER]: CONTRACT_HEADER_VALUE },
+		headers: { [INTH_POLICY_CONTRACT_HEADER]: CONTRACT_HEADER_VALUE },
 		status: 200,
 	};
 };
@@ -982,7 +982,7 @@ const unspeakingTransportFor = function unspeakingTransportFor(
 	return {
 		body,
 		headers: {
-			[C15T_POLICY_CONTRACT_HEADER]: UNSPOKEN_CONTRACT_HEADER_VALUE,
+			[INTH_POLICY_CONTRACT_HEADER]: UNSPOKEN_CONTRACT_HEADER_VALUE,
 		},
 		status: 200,
 	};
@@ -998,7 +998,7 @@ const unspeakingTransportFor = function unspeakingTransportFor(
 const initResponseFor = function initResponseFor(
 	transport: InitTransport
 ): InitResponse {
-	const declared = transport.headers[C15T_POLICY_CONTRACT_HEADER];
+	const declared = transport.headers[INTH_POLICY_CONTRACT_HEADER];
 	return mapInitOutputToInitResponse(
 		transport.body,
 		{},
@@ -1020,7 +1020,7 @@ const isDefinitiveInit = function isDefinitiveInit(
 ): boolean {
 	return (
 		transport.status === 200 &&
-		transport.headers[C15T_POLICY_CONTRACT_HEADER] === CONTRACT_HEADER_VALUE
+		transport.headers[INTH_POLICY_CONTRACT_HEADER] === CONTRACT_HEADER_VALUE
 	);
 };
 
@@ -2157,7 +2157,7 @@ const buildSaveBodyFixtures = async function buildSaveBodyFixtures(): Promise<
 			expected: {
 				request: {
 					body: buildSubjectPostBody(payload, { domain: DOMAIN }),
-					headers: { [C15T_POLICY_CONTRACT_HEADER]: CONTRACT_HEADER_VALUE },
+					headers: { [INTH_POLICY_CONTRACT_HEADER]: CONTRACT_HEADER_VALUE },
 					method: 'POST',
 					path: '/subjects',
 				},
@@ -2906,7 +2906,7 @@ const assertWiresReadable = function assertWiresReadable(
 			// all, which is the rule under test in the revision trace. Asking a client
 			// reader to consume it would assert the opposite of the contract.
 			if (
-				transport.headers[C15T_POLICY_CONTRACT_HEADER] !== CONTRACT_HEADER_VALUE
+				transport.headers[INTH_POLICY_CONTRACT_HEADER] !== CONTRACT_HEADER_VALUE
 			) {
 				continue;
 			}
@@ -3026,7 +3026,7 @@ const writeIndex = function writeIndex(
 		generatedBy: 'packages/react-native/scripts/generate-protocol-fixtures.ts',
 		kinds: [...new Set(entries.map((entry) => entry.kind))].sort(),
 		policyContractHeader: {
-			name: C15T_POLICY_CONTRACT_HEADER,
+			name: INTH_POLICY_CONTRACT_HEADER,
 			value: CONTRACT_HEADER_VALUE,
 		},
 		protocolVersion: PROTOCOL_VERSION,
