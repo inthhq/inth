@@ -5,6 +5,9 @@ import { join } from 'node:path';
 
 import { it, expect } from 'vitest';
 
+// The platform header both cores send, named by transport/cases.json.
+const PLATFORM = { 'x-inth-platform': 'rn->0.0.0' };
+
 it('keeps observer routes reachable while the consent backend is unavailable', async () => {
 	const out = await mkdtemp(join(tmpdir(), 'inth-backend-'));
 	const process = spawn(
@@ -65,8 +68,13 @@ it('keeps observer routes reachable while the consent backend is unavailable', a
 			).ok
 		).toBe(true);
 		expect(
-			(await (await fetch(`${url}/api/self-host/v1/consent/init`)).json())
-				.policyResolution.status
+			(
+				await (
+					await fetch(`${url}/api/self-host/v1/consent/init`, {
+						headers: PLATFORM,
+					})
+				).json()
+			).policyResolution.status
 		).toBe('matched');
 		expect((await fetch(`${url}/api/self-host/init`)).status).toBe(404);
 		expect((await (await fetch(`${url}/e2e/state`)).json()).saves).toEqual([]);
@@ -177,7 +185,7 @@ it('records a /v1 body once per idempotency key, as the backend does', async () 
 		const post = (payload: unknown) =>
 			fetch(`${url}/api/self-host/v1/consent/records`, {
 				body: JSON.stringify(payload),
-				headers: { 'content-type': 'application/json' },
+				headers: { 'content-type': 'application/json', ...PLATFORM },
 				method: 'POST',
 			});
 
@@ -219,14 +227,25 @@ it('records a /v1 body once per idempotency key, as the backend does', async () 
 			headers: {
 				'content-type': 'application/json',
 				'x-c15t-policy-contract': '1',
+				...PLATFORM,
 			},
 			method: 'POST',
 		});
 		expect(retired.status).toBe(400);
 		const init = await fetch(`${url}/api/self-host/v1/consent/init`, {
-			headers: { 'x-c15t-version': '1' },
+			headers: { 'x-c15t-version': '1', ...PLATFORM },
 		});
 		expect(init.status).toBe(400);
+		// It also names the platform header every request carries.
+		const anonymous = await fetch(`${url}/api/self-host/v1/consent/records`, {
+			body: JSON.stringify({
+				...body,
+				idempotencyKey: '019c1c38-a400-7100-8000-0000000004ff',
+			}),
+			headers: { 'content-type': 'application/json' },
+			method: 'POST',
+		});
+		expect(anonymous.status).toBe(400);
 
 		expect((await (await fetch(`${url}/e2e/state`)).json()).saves).toEqual([
 			body,
