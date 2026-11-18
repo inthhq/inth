@@ -813,3 +813,53 @@ describe('GTM template scenarios', () => {
 		)(mock, mockObject, runCode, assertApi, assertThat, {});
 	});
 });
+
+describe('Google consent mapping', () => {
+	// The Swift, Kotlin and React Native helpers are graded against this
+	// fixture, which is generated from @inth/integrations' default mapping.
+	const fixture = JSON.parse(
+		readFileSync(
+			join(
+				dirname(fileURLToPath(import.meta.url)),
+				'../../../../native-protocol/google-consent-mode/consent-mode-v2.json'
+			),
+			'utf8'
+		)
+	) as {
+		cases: {
+			consents: Record<string, boolean>;
+			expected: Record<string, 'granted' | 'denied'>;
+			id: string;
+		}[];
+	};
+	const literal = (name: string): unknown => {
+		const match = new RegExp(
+			`^const ${name} = (?<value>[\\s\\S]*?);$`,
+			'mu'
+		).exec(section('SANDBOXED_JS_FOR_WEB_TEMPLATE'));
+		if (!match?.groups?.value) {
+			throw new Error(`template.tpl has no ${name}`);
+		}
+		return compile([], `return ${match.groups.value};`)();
+	};
+
+	it.each(fixture.cases.map((testCase) => [testCase.id, testCase] as const))(
+		'matches the generated fixture for %s',
+		(_id, testCase) => {
+			const types = literal('CONSENT_TYPES') as string[];
+			const mapping = literal('CONSENT_MAPPING') as Record<string, string[]>;
+			const signal = Object.fromEntries(
+				Object.entries(mapping).flatMap(([category, consentTypes]) =>
+					consentTypes.map((type) => [
+						type,
+						testCase.consents[category] ? 'granted' : 'denied',
+					])
+				)
+			);
+			expect(types.toSorted()).toEqual(
+				Object.keys(testCase.expected).toSorted()
+			);
+			expect(signal).toEqual(testCase.expected);
+		}
+	);
+});
