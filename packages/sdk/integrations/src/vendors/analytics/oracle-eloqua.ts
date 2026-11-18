@@ -54,7 +54,8 @@ export interface EloquaTrackingOptions {
 	/**
 	 * Custom loader URL. Consent commands must synchronously append a matching
 	 * pps=41/42 script with the installed siteid. Deferred or unmatched responses
-	 * block tracking until reload.
+	 * block tracking until reload. A `scriptLoader.sources` or script registry
+	 * entry that moves the loader to another URL counts as a custom loader too.
 	 */
 	scriptUrl?: string;
 }
@@ -388,7 +389,9 @@ export const eloquaTracking = function eloquaTracking(
 			if (!dispatcher && window._elqQ && installed) {
 				dispatcher = {
 					queue: window._elqQ,
-					synchronous: config.scriptUrl === defaultScriptUrl,
+					// Only the stock loader is known to answer synchronously; a
+					// source entry can move this tag to another URL.
+					synchronous: loadedElement.src === defaultScriptUrl,
 				};
 				try {
 					dispatcher.queue.push(['elqSetSiteId', installed.siteId]);

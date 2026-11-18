@@ -516,6 +516,32 @@ describe('Eloqua consent response failures through the core loader', () => {
 			expect(actions(sdk)).toEqual([['elqOptIn']]);
 		}
 	);
+
+	it.each(['missing', 'deferred'] as const)(
+		'quarantines a loader a scriptLoader.sources entry replaces, with a %s response',
+		async (behavior) => {
+			const source = 'https://acme.example/scripts/eloqua@0123456789abcdef.js';
+			const kernel = createConsentKernel();
+			await kernel.commands.save(granted);
+			const script = eloquaTracking(account);
+			const loader = createScriptLoader({
+				kernel,
+				scripts: [script],
+				sources: { [script.id]: { src: source } },
+			});
+			owners.push({ kernel, loader });
+			const sdk = installSdk(getLoader(source));
+			sdk.behavior.elqOptIn = behavior;
+			sdk.load();
+			await Promise.resolve();
+
+			// The element loads the source, not the stock loader, so the
+			// dispatcher is not known to answer synchronously.
+			expect(report.mock.calls.flat().join(' ')).toContain(
+				'Reload before tracking again.'
+			);
+		}
+	);
 });
 
 const conflictPairs: { name: string; other: EloquaTrackingOptions }[] = [

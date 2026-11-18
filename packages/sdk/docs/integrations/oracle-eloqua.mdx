@@ -30,7 +30,7 @@ Copy your site ID from Eloqua and remove the original asynchronous tracking snip
 
 Missing or blank required values log an error and never load.
 
-Custom loaders must synchronously append one matching consent response script when `elqOptIn` or `elqOptOut` runs. Preserve `pps=41` for opt-in, `pps=42` for opt-out, and the installed account's `siteid` query parameter. The response itself can complete asynchronously. A deferred or unmatched custom response leaves consent indeterminate. The helper reports the problem and blocks tracking and further consent commands until reload.
+Custom loaders must synchronously append one matching consent response script when `elqOptIn` or `elqOptOut` runs. Preserve `pps=41` for opt-in, `pps=42` for opt-out, and the installed account's `siteid` query parameter. The response itself can complete asynchronously. A deferred or unmatched custom response leaves consent indeterminate. The helper reports the problem and blocks tracking and further consent commands until reload. A `scriptLoader.sources` or script registry entry that moves the loader to another URL makes it a custom loader too.
 
 A custom dispatcher that throws also blocks tracking and further consent commands until reload, even if it appended a matching response before throwing.
 
