@@ -25,7 +25,10 @@ import {
 import type { Model } from '@inth/sdk/engine';
 import { resolveIABBannerSummary } from '@inth/sdk/iab-support';
 import { saveIABConsentSurface } from '@inth/sdk/surface-actions';
-import { resolveConsentPresentation } from '@inth/sdk/surface-state';
+import {
+	resolveConsentPresentation,
+	resolveIABCopy,
+} from '@inth/sdk/surface-state';
 import buttonStyles from '@inth/sdk/ui/styles/components/button';
 import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-banner';
@@ -36,7 +39,6 @@ import {
 } from '@inth/sdk/ui/utils';
 
 import { IAB_FIRST_PAINT_SHEETS } from './iab-first-paint-sheets';
-import { getIABTranslations } from './iab-translations';
 
 type IABBannerSummary = ReturnType<typeof resolveIABBannerSummary>;
 
@@ -278,11 +280,11 @@ export class IABConsentBanner {
 	readonly #iab = this.#consent.iab;
 	/** @internal */
 	protected readonly translations = computed(() =>
-		getIABTranslations(this.#consent.translationConfig())
+		resolveIABCopy(this.#consent.copy())
 	);
 	/** @internal */
 	protected readonly textDirection = computed(() =>
-		getTextDirection(this.#consent.translationConfig().defaultLanguage)
+		getTextDirection(this.#consent.translations()?.language)
 	);
 	readonly #shouldShow = computed(
 		() =>

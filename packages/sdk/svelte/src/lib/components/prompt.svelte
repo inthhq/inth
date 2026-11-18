@@ -15,18 +15,13 @@
 		replayEarlyConsentTaps,
 	} from '@inth/sdk/surface-actions';
 	import {
-		defaultTranslationConfig,
 		resolveActionLabels,
 		resolvePreferenceControlLabels,
 		resolvePromptCopy,
 	} from '@inth/sdk/surface-state';
 	import styles from '@inth/sdk/ui/styles/components/consent-banner';
 	import { resolveActionAppearance } from '@inth/sdk/ui/theme';
-	import {
-		resolveStyles,
-		resolveTranslations,
-		toStyleAttributeValue,
-	} from '@inth/sdk/ui/utils';
+	import { resolveStyles, toStyleAttributeValue } from '@inth/sdk/ui/utils';
 	import { getTextDirection } from '@inth/sdk/ui/utils/text-direction';
 	import { onMount } from 'svelte';
 
@@ -143,14 +138,9 @@
 		localDisableAnimation ?? theme.disableAnimation ?? false
 	);
 
-	const translations = $derived(
-		resolveTranslations(
-			consent.state.translationConfig,
-			defaultTranslationConfig
-		)
-	);
+	const translations = $derived(consent.state.copy);
 	const textDirection = $derived(
-		getTextDirection(consent.state.translationConfig?.defaultLanguage)
+		getTextDirection(consent.state.translations?.language)
 	);
 
 	const shouldShowBanner = $derived(

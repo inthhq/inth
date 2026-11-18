@@ -8,5 +8,4 @@ export * from './merge-styles';
 export * from './reduced-motion';
 export * from './resolve-styles';
 export * from './theme-slots';
-export * from './translations';
 export * from './trigger-utils';

@@ -154,7 +154,7 @@ export const IABConsentDialog: FC<IABConsentDialogProps> = ({
 		iab: iabState,
 		activeUI,
 		policyDialog,
-		translationConfig,
+		language,
 		model,
 	} = useIABConsentManager({
 		preferences: { scrollLock: localScrollLock, trapFocus: localTrapFocus },
@@ -163,7 +163,7 @@ export const IABConsentDialog: FC<IABConsentDialogProps> = ({
 		useHeadlessIABConsentUI();
 	const resolvedScrollLock = policyDialog.blocking;
 
-	const textDirection = useTextDirection(translationConfig.defaultLanguage);
+	const textDirection = useTextDirection(language);
 	const cardRef = useRef<HTMLDivElement>(null);
 	const contentRef = useRef<HTMLDivElement>(null);
 	const previousHeightRef = useRef<number | null>(null);

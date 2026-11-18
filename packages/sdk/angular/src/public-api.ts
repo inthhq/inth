@@ -192,7 +192,6 @@ export {
 	Branding as ɵBranding,
 	InlineLegalLinks as ɵInlineLegalLinks,
 	PolicyActions as ɵPolicyActions,
-	resolvedTranslations as ɵresolvedTranslations,
 	shouldShowBranding as ɵshouldShowBranding,
 } from './lib/shared';
 export type { LegalLinkSelection as ɵLegalLinkSelection } from './lib/shared';

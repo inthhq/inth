@@ -1,3 +1,4 @@
+import { resolveIABCopy } from '@inth/sdk/surface-state';
 /**
  * A purpose row whose vendors all use legitimate interest has nothing a
  * consent switch could turn off. Showing one reads as an opt-out while
@@ -10,7 +11,6 @@ import { describe, expect, test, vi } from 'vitest';
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import IABPurposeItem from '../lib/components/iab-purpose-item.svelte';
 import IABStackItem from '../lib/components/iab-stack-item.svelte';
-import { getIABTranslations } from '../lib/iab-translations';
 
 const purpose = (hasConsentBasis: boolean) => ({
 	description: '',
@@ -53,7 +53,7 @@ describe('IAB purpose row consent switch', () => {
 		async (hasConsentBasis, count) => {
 			const { container } = render(IABPurposeItem, {
 				...handlers,
-				iabT: getIABTranslations(),
+				iabT: resolveIABCopy(undefined),
 				isEnabled: true,
 				purpose: purpose(hasConsentBasis),
 				vendorConsents: {},
@@ -77,7 +77,7 @@ describe('IAB purpose row consent switch', () => {
 		const { container } = render(IABStackItem, {
 			...handlers,
 			consents: {},
-			iabT: getIABTranslations(),
+			iabT: resolveIABCopy(undefined),
 			onToggle: vi.fn(),
 			stack: {
 				description: '',
@@ -96,7 +96,7 @@ describe('IAB purpose row consent switch', () => {
 		const onToggle = vi.fn();
 		const { container } = render(IABStackItem, {
 			consents: {},
-			iabT: getIABTranslations(),
+			iabT: resolveIABCopy(undefined),
 			onToggle,
 			onVendorClick: vi.fn(),
 			onVendorToggle: vi.fn(),
@@ -144,7 +144,7 @@ describe('IAB purpose row objection controls', () => {
 		const onVendorLegitimateInterestToggle = vi.fn();
 		const { container } = render(IABPurposeItem, {
 			...handlers,
-			iabT: getIABTranslations(),
+			iabT: resolveIABCopy(undefined),
 			isEnabled: false,
 			legitimateInterests,
 			onPurposeObjection,

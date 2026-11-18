@@ -6,11 +6,11 @@ import {
 } from '@angular/core';
 import { ɵresolveNoStyle as resolveNoStyle } from '@inth/angular';
 import type { ProcessedFeature } from '@inth/sdk/iab/headless';
+import type { ResolvedIABCopy } from '@inth/sdk/surface-state';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 
 import { ChevronRightIcon } from './iab-icons';
 import { PREFERENCE_ITEM } from './iab-purpose-item';
-import type { IABTranslations } from './iab-translations';
 
 /**
  * One informational IAB Feature row.
@@ -172,7 +172,7 @@ export class IABFeatureItem {
 	/** @internal */
 	protected readonly resolvedNoStyle = resolveNoStyle(this.noStyle);
 	/** The IAB copy. */
-	readonly iabT = input.required<IABTranslations>();
+	readonly iabT = input.required<ResolvedIABCopy>();
 
 	/** @internal */
 	protected readonly styles = styles as Record<string, string | undefined>;

@@ -9,13 +9,6 @@ const SVG_NS = 'http://www.w3.org/2000/svg';
 const PLUS = 'M5 12h14M12 5v14';
 const MINUS = 'M5 12h14';
 
-const DEFAULT_COPY: VendorListTranslations = {
-	disabledByCategory: 'Turn on this category to choose vendors.',
-	privacyPolicy: 'Privacy policy',
-	switchLabel: 'Allow {vendor}',
-	title: 'Vendors ({count})',
-};
-
 const {
 	preferenceItem: itemStyles,
 	switch: switchStyles,
@@ -45,8 +38,8 @@ export interface VendorListParams {
 	category: AllConsentNames;
 	/** The vendors listed under it, in declared order. */
 	vendors: readonly ResolvedVendor[];
-	/** Translated copy; missing keys fall back to English. */
-	copy: Partial<VendorListTranslations> | undefined;
+	/** Translated copy, from `resolveVendorListCopy`. */
+	copy: VendorListTranslations;
 	/** Ship the DOM without class names. */
 	noStyle: boolean;
 	/** Marks the switches as `toggle` parts, like the category switches. */
@@ -198,7 +191,7 @@ export const createVendorList = function createVendorList(
 	if (vendors.length === 0) {
 		return null;
 	}
-	const copy = { ...DEFAULT_COPY, ...params.copy };
+	const { copy } = params;
 	const style = (name: keyof typeof listStyles): string =>
 		noStyle ? '' : (listStyles[name] ?? '');
 	const hint = h(

@@ -23,7 +23,7 @@ const entries = computed(() =>
 	resolveLegalLinkEntries(
 		config.value.legalLinks,
 		props.links,
-		translations.value.bundle?.legalLinks
+		translations.value?.legalLinks
 	)
 );
 </script>

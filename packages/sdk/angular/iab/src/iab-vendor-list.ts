@@ -33,6 +33,7 @@ import type {
 	ProcessedPurpose,
 	ProcessedVendor,
 } from '@inth/sdk/iab/headless';
+import type { ResolvedIABCopy } from '@inth/sdk/surface-state';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 import switchStyles from '@inth/sdk/ui/styles/components/switch';
 import { switchVariants } from '@inth/sdk/ui/styles/primitives';
@@ -50,7 +51,6 @@ import {
 } from './iab-icons';
 import { PREFERENCE_ITEM, SWITCH } from './iab-purpose-item';
 import type { IABVendorChoice } from './iab-purpose-item';
-import type { IABTranslations } from './iab-translations';
 
 const sw = switchVariants();
 
@@ -845,7 +845,7 @@ export class IABVendorList {
 	/** @internal */
 	protected readonly resolvedNoStyle = resolveNoStyle(this.noStyle);
 	/** The IAB copy. */
-	readonly iabT = input.required<IABTranslations>();
+	readonly iabT = input.required<ResolvedIABCopy>();
 	/** The UI language, which picks each vendor's privacy links. */
 	readonly language = input<string | undefined>(undefined);
 

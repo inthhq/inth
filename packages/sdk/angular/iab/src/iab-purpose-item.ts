@@ -32,6 +32,7 @@ import type {
 	IABLegitimateInterestState,
 	ProcessedPurpose,
 } from '@inth/sdk/iab/headless';
+import type { ResolvedIABCopy } from '@inth/sdk/surface-state';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 import switchStyles from '@inth/sdk/ui/styles/components/switch';
 
@@ -41,7 +42,6 @@ import {
 	LegitimateInterestIcon,
 	LockIcon,
 } from './iab-icons';
-import type { IABTranslations } from './iab-translations';
 
 /** A vendor's choice, as the IAB rows emit it. */
 export interface IABVendorChoice {
@@ -572,7 +572,7 @@ export class IABPurposeItem {
 	/** @internal */
 	protected readonly resolvedNoStyle = resolveNoStyle(this.noStyle);
 	/** The IAB copy. */
-	readonly iabT = input.required<IABTranslations>();
+	readonly iabT = input.required<ResolvedIABCopy>();
 
 	/** The consent switch changed. */
 	readonly purposeToggle = output<boolean>();

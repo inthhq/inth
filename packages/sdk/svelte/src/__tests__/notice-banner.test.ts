@@ -169,6 +169,23 @@ describe('notice banner', () => {
 		view.unmount();
 	});
 
+	test('a bundle with only some sections keeps them and reads English for the rest', () => {
+		const { view } = renderFixture({
+			...policyFixture(),
+			initialTranslations: {
+				language: 'de',
+				translations: { cookieBanner: { title: 'Ihre Privatsphäre' } },
+			},
+		});
+		expect(
+			query('[data-testid="consent-banner-title"]')?.textContent?.trim()
+		).toBe('Ihre Privatsphäre');
+		expect(
+			query('[data-testid="consent-banner-accept-button"]')?.textContent?.trim()
+		).toBe('Accept All');
+		view.unmount();
+	});
+
 	test('a choice prompt with customize renders no rights group', () => {
 		const { view } = renderFixture(policyFixture());
 		const root = required(query('[data-testid="consent-banner-root"]'));

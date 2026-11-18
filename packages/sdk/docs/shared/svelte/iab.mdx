@@ -88,8 +88,9 @@ and vendor consents, `isLoadingGVL`, and the actions `acceptAll()`,
 member.
 
 For a custom IAB banner, `@inth/svelte/headless` exports
-`resolveIABBannerSummary`, `processGVLForDialog` and `getIABTranslations`,
-the same helpers `@inth/sdk/iab/headless` has.
+`resolveIABBannerSummary` and `processGVLForDialog`, the same helpers
+`@inth/sdk/iab/headless` has, and `resolveIABCopy`: `resolveIABCopy(consent.copy)`
+is the IAB copy with English fallbacks.
 
 ## Restrict how vendors use a purpose
 

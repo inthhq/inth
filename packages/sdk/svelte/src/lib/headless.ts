@@ -6,6 +6,7 @@ export type {
 } from '@inth/sdk/engine';
 export {
 	resolveActionLabels,
+	resolveIABCopy,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
 } from '@inth/sdk/engine';
@@ -13,6 +14,7 @@ export type {
 	PreferenceControl,
 	PresentationAction,
 	PromptCopy,
+	ResolvedIABCopy,
 } from '@inth/sdk/engine';
 export { focusTrap } from './actions/focus-trap';
 export { portal } from './actions/portal';
@@ -33,7 +35,6 @@ export {
 	type EventProperties,
 	type GetEventDispatcherOptions,
 } from './event-dispatcher';
-export { getIABTranslations, type IABTranslations } from './iab-translations';
 export {
 	type HeadlessIABVendorId,
 	type ProcessedFeature,

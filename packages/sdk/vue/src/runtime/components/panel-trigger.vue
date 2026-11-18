@@ -48,7 +48,7 @@ const translations = useSurfaceTranslations();
 const mounted = useMounted();
 const triggerRef = ref<HTMLElement | null>(null);
 
-const labels = computed(() => resolveTriggerLabels(translations.value.bundle));
+const labels = computed(() => resolveTriggerLabels(translations.value));
 const triggerLabel = computed(
 	() => config.value.triggerAriaLabel ?? labels.value.label
 );

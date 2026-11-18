@@ -5,7 +5,7 @@
 	const languages = ['en', 'zh', 'fr', 'de'];
 
 	const cycleLanguage = function cycleLanguage() {
-		const currentLang = consent.translationConfig?.defaultLanguage ?? 'en';
+		const currentLang = consent.translations?.language ?? 'en';
 		const currentIndex = languages.indexOf(currentLang);
 		const nextIndex = (currentIndex + 1) % languages.length;
 		consent.setLanguage(languages[nextIndex]);

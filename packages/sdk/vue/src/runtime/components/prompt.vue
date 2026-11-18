@@ -120,7 +120,6 @@ const {
 }));
 
 const translations = useSurfaceTranslations();
-const bundle = computed(() => translations.value.bundle);
 const promptKind = computed(() => snapshot.value.policyRule.prompt);
 
 const hasConsentUi = useHasConsentUi();
@@ -160,13 +159,13 @@ const card = ref<HTMLElement | null>(null);
 useFocusTrap(card, () => shouldTrapFocus.value);
 
 const bannerTitle = computed(
-	() => resolvePromptCopy(bundle.value, promptKind.value).title
+	() => resolvePromptCopy(translations.value, promptKind.value).title
 );
 
-const labels = computed(() => resolveActionLabels(bundle.value));
+const labels = computed(() => resolveActionLabels(translations.value));
 
 const rightLabels = computed(() =>
-	resolvePreferenceControlLabels(bundle.value)
+	resolvePreferenceControlLabels(translations.value)
 );
 
 const onRight = function onRight() {

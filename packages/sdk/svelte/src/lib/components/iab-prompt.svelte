@@ -6,6 +6,7 @@
 	import type { Model } from '@inth/sdk/engine';
 	import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 	import { saveIABConsentSurface } from '@inth/sdk/surface-actions';
+	import { resolveIABCopy } from '@inth/sdk/surface-state';
 	import buttonStyles from '@inth/sdk/ui/styles/components/button';
 	import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
 	import styles from '@inth/sdk/ui/styles/components/iab-consent-banner';
@@ -20,7 +21,6 @@
 	import { scrollLock } from '../actions/scroll-lock';
 	import { getConsentContext, getThemeContext } from '../context.svelte';
 	import { IAB_FIRST_PAINT_SHEETS } from '../iab-first-paint-sheets';
-	import { getIABTranslations } from '../iab-translations';
 	import { useBannerVisibility } from '../use-banner-visibility.svelte';
 	import Branding from './branding.svelte';
 	import Overlay from './overlay.svelte';
@@ -72,9 +72,9 @@
 
 	const iabState = $derived(consent.state.iab);
 
-	const iabT = $derived(getIABTranslations(consent.state.translationConfig));
+	const iabT = $derived(resolveIABCopy(consent.state.copy));
 	const textDirection = $derived(
-		getTextDirection(consent.state.translationConfig?.defaultLanguage)
+		getTextDirection(consent.state.translations?.language)
 	);
 
 	const shouldShowBanner = $derived(

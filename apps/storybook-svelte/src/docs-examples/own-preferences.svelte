@@ -3,8 +3,7 @@
 	import { getConsentManager } from '@inth/svelte';
 
 	const consent = getConsentManager();
-	const config = $derived(consent.translationConfig);
-	const copy = $derived(config.translations[config.defaultLanguage ?? 'en']);
+	const copy = $derived(consent.copy);
 </script>
 
 {#if consent.draft.isStale}
@@ -21,7 +20,7 @@
 				onchange={(event) =>
 					consent.setConsent(category.name, event.currentTarget.checked)}
 			/>
-			{copy?.consentTypes?.[category.name]?.title ?? category.name}
+			{copy.consentTypes[category.name]?.title ?? category.name}
 		</label>
 	{/each}
 </fieldset>

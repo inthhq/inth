@@ -30,7 +30,9 @@ export {
 	resolveIABCopy,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
+	resolveSurfaceTranslations,
 	resolveTriggerLabels,
+	resolveVendorListCopy,
 } from './libs/consent-copy';
 export type { ResolvedIABCopy } from './libs/consent-copy';
 export {

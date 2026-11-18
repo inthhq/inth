@@ -13,6 +13,7 @@ import type {
 	IABLegitimateInterestState,
 	ProcessedStack,
 } from '@inth/sdk/iab/headless';
+import type { ResolvedIABCopy } from '@inth/sdk/surface-state';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 import switchStyles from '@inth/sdk/ui/styles/components/switch';
 
@@ -23,7 +24,6 @@ import type {
 	IABPurposeRow,
 	IABVendorChoice,
 } from './iab-purpose-item';
-import type { IABTranslations } from './iab-translations';
 
 /** A stack, or a display-model row whose purposes carry `hasConsentBasis`. */
 export type IABStackRow = Omit<ProcessedStack, 'purposes'> & {
@@ -173,7 +173,7 @@ export class IABStackItem {
 	/** @internal */
 	protected readonly resolvedNoStyle = resolveNoStyle(this.noStyle);
 	/** The IAB copy. */
-	readonly iabT = input.required<IABTranslations>();
+	readonly iabT = input.required<ResolvedIABCopy>();
 
 	/** A purpose's consent changed. */
 	readonly purposeToggle = output<IABPurposeChoice>();

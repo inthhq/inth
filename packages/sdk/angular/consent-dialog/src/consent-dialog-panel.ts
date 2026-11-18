@@ -16,7 +16,6 @@ import {
 	ɵBranding as Branding,
 	ɵInlineLegalLinks as InlineLegalLinks,
 	ɵNoStyleScope as NoStyleScope,
-	ɵresolvedTranslations as resolvedTranslations,
 	ɵresolveNoStyle as resolveNoStyle,
 	ɵshouldShowBranding as shouldShowBranding,
 	ɵSURFACE_CLOSED as SURFACE_CLOSED,
@@ -243,14 +242,14 @@ export class ConsentDialogPanel {
 	readonly rootClass = input<string | undefined>(undefined);
 
 	/** @internal */
-	protected readonly translations = resolvedTranslations(this.#consent);
+	protected readonly translations = this.#consent.copy;
 	/** @internal */
 	protected readonly hasConsentUi = computed(() =>
 		this.#consent.hasConsentUi()
 	);
 	/** @internal */
 	protected readonly textDirection = computed(() =>
-		getTextDirection(this.#consent.translationConfig().defaultLanguage)
+		getTextDirection(this.#consent.translations()?.language)
 	);
 	/** @internal */
 	protected readonly resolvedNoStyle = resolveNoStyle(this.noStyle);

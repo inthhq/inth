@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { ProcessedFeature } from '@inth/sdk/iab/headless';
+	import type { ResolvedIABCopy } from '@inth/sdk/surface-state';
 	/**
 	 * One informational IAB Feature row.
 	 *
@@ -10,7 +11,6 @@
 	 */
 	import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 
-	import type { IABTranslations } from '../iab-translations';
 	import { PreferenceItem } from '../primitives';
 	import ChevronRightIcon from './icons/chevron-right-icon.svelte';
 
@@ -24,7 +24,7 @@
 		/** The row's `data-testid`, from the shared display model. */
 		testId?: string;
 		noStyle?: boolean;
-		iabT: IABTranslations;
+		iabT: ResolvedIABCopy;
 	} = $props();
 
 	let isExpanded = $state(false);

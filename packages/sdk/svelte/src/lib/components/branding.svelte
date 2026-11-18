@@ -1,10 +1,8 @@
 <script lang="ts">
-	import { defaultTranslationConfig } from '@inth/sdk/surface-state';
 	import styles from '@inth/sdk/ui/styles/components/branding';
 	import {
 		resolveBrandingTag,
 		resolveStyles,
-		resolveTranslations,
 		toStyleAttributeValue,
 	} from '@inth/sdk/ui/utils';
 	import type { BrandingSurface } from '@inth/sdk/ui/utils';
@@ -27,12 +25,7 @@
 	const theme = getThemeContext();
 
 	const noStyle = $derived(localNoStyle ?? theme.noStyle ?? false);
-	const translations = $derived(
-		resolveTranslations(
-			consent.state.translationConfig,
-			defaultTranslationConfig
-		)
-	);
+	const translations = $derived(consent.state.copy);
 
 	let hostname = $state('');
 	onMount(() => {

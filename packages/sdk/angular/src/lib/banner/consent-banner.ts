@@ -48,7 +48,6 @@ import { ConsentButton } from '../shared/consent-button';
 import { InlineLegalLinks } from '../shared/inline-legal-links';
 import type { LegalLinkSelection } from '../shared/inline-legal-links';
 import { PolicyActions } from '../shared/policy-actions';
-import { resolvedTranslations } from '../shared/translations';
 import {
 	ConsentBannerAction,
 	ConsentBannerDescription,
@@ -384,10 +383,10 @@ export class ConsentBanner {
 		() => this.disableAnimation() ?? this.#theme.disableAnimation()
 	);
 
-	readonly #translations = resolvedTranslations(this.consent);
+	readonly #translations = this.consent.copy;
 	/** @internal */
 	protected readonly textDirection = computed(() =>
-		getTextDirection(this.consent.translationConfig()?.defaultLanguage)
+		getTextDirection(this.consent.translations()?.language)
 	);
 
 	readonly #shouldShow = computed(

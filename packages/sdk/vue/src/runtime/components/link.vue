@@ -29,7 +29,7 @@ const entry = computed(() => {
 		? resolveLegalLinkEntries(
 				{ [props.link]: { ...configured, href } },
 				[props.link],
-				translations.value.bundle?.legalLinks
+				translations.value?.legalLinks
 			)[0]
 		: undefined;
 });

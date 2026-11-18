@@ -1,9 +1,11 @@
 /** Resolve the copy a consent UI renders from the active translations. */
 import type { PolicyPrompt, PolicyRight } from '@inth/sdk-schema/types';
 import type {
+	CompleteTranslations,
 	IABTranslations,
 	Translations,
 	TriggerTranslations,
+	VendorListTranslations,
 } from '@inth/sdk-translations';
 // The `/en` entry, not the package root: the React components that share a
 // chunk with lazy surfaces call these helpers, and importing the root (with
@@ -228,4 +230,111 @@ export const resolveTriggerLabels = function resolveTriggerLabels(
 		enTranslations.trigger as TriggerTranslations,
 		translations?.trigger
 	);
+};
+
+/**
+ * Copy for the vendor rows under a category, every key filled.
+ *
+ * @param translations - The active language bundle. Missing keys use English.
+ *
+ * @example
+ * ```ts
+ * resolveVendorListCopy(translations).title.replace('{count}', '3');
+ * ```
+ */
+export const resolveVendorListCopy = function resolveVendorListCopy(
+	translations: Partial<Translations> | undefined
+): VendorListTranslations {
+	// English always carries the section.
+	return mergeOver(
+		enTranslations.consentManagerDialog.vendors as VendorListTranslations,
+		translations?.consentManagerDialog?.vendors
+	);
+};
+
+/** `overrides` over `defaults`, keeping keys only `overrides` has. */
+const mergeAll = function mergeAll(
+	defaults: Record<string, unknown>,
+	overrides: Record<string, unknown>
+): Record<string, unknown> {
+	const result: Record<string, unknown> = { ...defaults };
+	for (const [key, value] of Object.entries(overrides)) {
+		if (value === undefined) {
+			continue;
+		}
+		const fallback = result[key];
+		result[key] =
+			isSection(fallback) && isSection(value)
+				? mergeAll(fallback, value)
+				: value;
+	}
+	return result;
+};
+
+const resolvedBundles = new WeakMap<object, CompleteTranslations>();
+
+/**
+ * The copy a consent surface renders: the active language bundle with
+ * English filling every key it leaves out, so a partial backend bundle
+ * renders the same in every framework.
+ *
+ * @remarks
+ * Reads the legacy `frame` section as `consentGate`, and an older bundle's
+ * `common.dismiss` as `common.acknowledge`, as `deepMergeTranslations`
+ * does. A bundle without notice copy keeps its own choice copy for the
+ * notice, as `resolvePromptCopy` reads it. The result is cached per bundle.
+ *
+ * @param snapshot - A consent snapshot, or anything carrying its
+ * `translations`.
+ * @returns The complete translations.
+ *
+ * @example
+ * ```ts
+ * const t = resolveSurfaceTranslations(kernel.getSnapshot());
+ * t.cookieBanner.title;
+ * ```
+ */
+export const resolveSurfaceTranslations = function resolveSurfaceTranslations(
+	snapshot:
+		| { translations?: { translations?: unknown } | null }
+		| null
+		| undefined
+): CompleteTranslations {
+	const bundle = snapshot?.translations?.translations;
+	const english = enTranslations as CompleteTranslations;
+	if (!isSection(bundle)) {
+		return english;
+	}
+	const cached = resolvedBundles.get(bundle);
+	if (cached) {
+		return cached;
+	}
+	const { frame, ...current } = bundle;
+	if (isSection(frame)) {
+		current.consentGate = isSection(current.consentGate)
+			? { ...frame, ...current.consentGate }
+			: frame;
+	}
+	const merged = mergeAll(
+		english as unknown as Record<string, unknown>,
+		current
+	) as unknown as CompleteTranslations;
+	const common = isSection(current.common) ? current.common : {};
+	if (common.acknowledge === undefined && typeof common.dismiss === 'string') {
+		merged.common = { ...merged.common, acknowledge: common.dismiss };
+	}
+	// A language without notice copy reads its own choice copy before
+	// English, as `resolvePromptCopy` does.
+	const banner = isSection(current.cookieBanner) ? current.cookieBanner : {};
+	merged.cookieBanner = {
+		...merged.cookieBanner,
+		noticeDescription: (banner.noticeDescription ??
+			banner.description ??
+			merged.cookieBanner.noticeDescription) as string,
+		noticeTitle: (banner.noticeTitle ??
+			banner.title ??
+			merged.cookieBanner.noticeTitle) as string,
+	};
+	resolvedBundles.set(bundle, merged);
+	return merged;
 };

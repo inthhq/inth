@@ -70,14 +70,14 @@ const IABConsentDialogRoot: FC<IABConsentDialogRootProps> = ({
 }) => {
 	const {
 		activeUI,
-		translationConfig,
+		language,
 		iab: iabState,
 		policyDialog,
 		model,
 	} = useIABConsentManager({ preferences: { scrollLock, trapFocus } });
 	const setActiveUI = useSetActiveUI();
 	const { components } = useUIConfig();
-	const textDirection = useTextDirection(translationConfig.defaultLanguage);
+	const textDirection = useTextDirection(language);
 
 	const isMounted = useIsHydrated();
 	const [isVisible, setIsVisible] = useState(false);

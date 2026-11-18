@@ -47,7 +47,7 @@ actually chose, never `has()`.
 | `location()`, `resolution()` | The visitor's resolved location, and how the policy was resolved. |
 | `consentCategories()`, `consentTypes()` | The categories the preference UI shows, and their metadata. |
 | `presentation()`, `theme()`, `experiment()` | The configured presentation and theme, with the assigned experiment arm merged in. |
-| `translations()`, `translationConfig()` | The resolved copy in the active language, and the full configuration the components read. |
+| `copy()`, `translations()` | The copy the components render, with English filling every key the active language leaves out, and the active language's translations as the backend sent them. |
 | `legalLinks()` | The provider's `legalLinks`. |
 | `options()` | The provider's options, as changed by `updateOptions()`. |
 | `snapshot()` | The whole kernel snapshot. Each field above is a slice of it. |
@@ -147,7 +147,7 @@ from code outside Angular's reactivity.
 | `ConsentTheme` | The provider's `theme`, `noStyle`, `disableAnimation`, `scrollLock`, `trapFocus`, `colorScheme`, `legalLinks`, `preloadDialog`, `styles` and `nonce`, as signals. |
 | `injectEventDispatcher()` | Send analytics events to the provider's scripts. See [scripts](./scripts#send-your-own-analytics-events). |
 | `resolvePromptCopy`, `resolveActionLabels`, `resolvePreferenceControlLabels` | Banner copy and button labels in the active language. |
-| `getIABTranslations` | IAB copy with English fallbacks, for a custom IAB banner. |
+| `resolveIABCopy` | IAB copy with English fallbacks, for a custom IAB banner: `resolveIABCopy(consent.copy())`. |
 | `createConsentRuntime` | A runtime you own, for [sharing one](./provide-inth#share-one-runtime). |
 
 ## Verify the state you read

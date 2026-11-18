@@ -1,16 +1,12 @@
 <script lang="ts">
 	import type { Model } from '@inth/sdk/engine';
-	import {
-		defaultTranslationConfig,
-		resolveConsentPresentation,
-	} from '@inth/sdk/engine';
+	import { resolveConsentPresentation } from '@inth/sdk/engine';
 	import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 	import { isDialogDismissKey } from '@inth/sdk/ui/primitives';
 	import styles from '@inth/sdk/ui/styles/components/consent-dialog';
 	import {
 		getTextDirection,
 		resolveStyles,
-		resolveTranslations,
 		toStyleAttributeValue,
 	} from '@inth/sdk/ui/utils';
 
@@ -58,14 +54,9 @@
 		localDisableAnimation ?? theme.disableAnimation ?? false
 	);
 
-	const translations = $derived(
-		resolveTranslations(
-			consent.state.translationConfig,
-			defaultTranslationConfig
-		)
-	);
+	const translations = $derived(consent.state.copy);
 	const textDirection = $derived(
-		getTextDirection(consent.state.translationConfig?.defaultLanguage)
+		getTextDirection(consent.state.translations?.language)
 	);
 
 	// With `open` set the parent owns visibility, as in React:

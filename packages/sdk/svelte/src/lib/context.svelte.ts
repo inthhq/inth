@@ -24,7 +24,6 @@ import type {
 	KernelIABState,
 	Model,
 	ResolvedVendor,
-	TranslationConfig,
 } from '@inth/sdk/engine';
 import type { createPreferenceDraft } from '@inth/sdk/preference-draft';
 import type { ConsentRuntime } from '@inth/sdk/runtime';
@@ -35,7 +34,8 @@ import {
 	saveConsentSurface,
 	showConsentSurface,
 } from '@inth/sdk/surface-actions';
-import { defaultTranslationConfig } from '@inth/sdk/surface-state';
+import { resolveSurfaceTranslations } from '@inth/sdk/surface-state';
+import type { CompleteTranslations } from '@inth/sdk/translations';
 import type { Theme, UIOptions } from '@inth/sdk/ui/theme';
 import { getContext, setContext } from 'svelte';
 
@@ -156,7 +156,11 @@ export interface ConsentManagerState extends Pick<
 	/** Whether Inth or an external CMP offers a preferences control. */
 	hasConsentPreferences: boolean;
 	legalLinks: ConsentManagerOptions['legalLinks'];
-	translationConfig: TranslationConfig;
+	/**
+	 * The copy the surfaces render: the active language bundle with English
+	 * filling every key it leaves out.
+	 */
+	copy: CompleteTranslations;
 	getDisplayedConsents: () => ConsentType[];
 	/**
 	 * The vendors listed under one category: presentable, naming that
@@ -244,25 +248,6 @@ export interface ConsentControllerOptions {
 	/** See {@link ConsentContextValue.runtime}. */
 	runtime: ConsentRuntime;
 }
-
-const toTranslationConfig = function toTranslationConfig(
-	snapshot: ConsentSnapshot
-): TranslationConfig {
-	const defaults = defaultTranslationConfig;
-	const resolved = snapshot.translations;
-	if (!resolved) {
-		return defaults;
-	}
-
-	return {
-		...defaults,
-		defaultLanguage: resolved.language,
-		translations: {
-			...defaults.translations,
-			[resolved.language]: resolved.translations,
-		},
-	};
-};
 
 const toActiveUI = function toActiveUI(ui: KernelActiveUI): ActiveUI {
 	return (ui ?? 'none') as ActiveUI;
@@ -481,8 +466,8 @@ const createConsentState = function createConsentState(
 			);
 		},
 
-		get translationConfig() {
-			return toTranslationConfig(getSnapshotLocal());
+		get copy() {
+			return resolveSurfaceTranslations(getSnapshotLocal());
 		},
 		get translations() {
 			return getSnapshotLocal().translations;

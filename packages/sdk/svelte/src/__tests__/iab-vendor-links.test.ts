@@ -1,3 +1,4 @@
+import { resolveIABCopy } from '@inth/sdk/surface-state';
 /**
  * Vendor links from the GVL or custom vendor config reach `href` only when
  * they are absolute http(s) URLs. Svelte does not block other schemes itself.
@@ -7,7 +8,6 @@ import { expect, test, vi } from 'vitest';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import IABVendorList from '../lib/components/iab-vendor-list.svelte';
-import { getIABTranslations } from '../lib/iab-translations';
 
 const [vendorId, gvlVendor] = Object.entries(completeGVL.vendors)[0] ?? [];
 
@@ -33,7 +33,7 @@ test('renders no link for vendor URLs that are not absolute http(s)', async () =
 				purposes: [1],
 			},
 		],
-		iabT: getIABTranslations(),
+		iabT: resolveIABCopy(undefined),
 		onClearSelection: vi.fn(),
 		onVendorToggle: vi.fn(),
 		purposes: [],

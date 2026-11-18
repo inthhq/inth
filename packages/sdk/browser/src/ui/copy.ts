@@ -1,9 +1,8 @@
 import {
-	deepMergeTranslations,
-	defaultTranslationConfig,
 	resolveActionLabels,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
+	resolveSurfaceTranslations,
 } from '@inth/sdk-core';
 import type {
 	ConsentSnapshot,
@@ -41,7 +40,6 @@ export interface SurfaceCopy {
 export const resolveCopy = function resolveCopy(
 	snapshot: ConsentSnapshot
 ): SurfaceCopy {
-	const fallback = defaultTranslationConfig.translations.en as Translations;
 	const bundle = snapshot.translations?.translations as
 		| Partial<Translations>
 		| undefined;
@@ -52,9 +50,6 @@ export const resolveCopy = function resolveCopy(
 		dir: getTextDirection(language),
 		language,
 		prompt: resolvePromptCopy(bundle, snapshot.policyRule.prompt),
-		// Bundled English is complete, so the merge is too.
-		t: (bundle
-			? deepMergeTranslations(fallback, bundle)
-			: fallback) as CompleteTranslations,
+		t: resolveSurfaceTranslations(snapshot),
 	};
 };

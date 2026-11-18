@@ -83,8 +83,9 @@ actions queue until the add-on loads; `whenIABReady()` resolves once it has.
 [ConsentManager](./services#read-and-change-iab-tcf-consent) lists every
 member.
 
-For a custom IAB banner, `getIABTranslations()` from `@inth/angular/iab` returns
-the IAB copy with English fallbacks.
+For a custom IAB banner, `resolveIABCopy(consent.copy())`, with
+`resolveIABCopy` from `@inth/angular/iab`, returns the IAB copy with English
+fallbacks.
 
 ## Restrict how vendors use a purpose
 

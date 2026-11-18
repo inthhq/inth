@@ -20,7 +20,6 @@ import { ConsentManager } from '../core/consent-manager';
 import { ConsentTheme } from '../core/consent-theme';
 import { resolveNoStyle } from '../core/no-style';
 import { BrandMarkIcon } from './icons';
-import { resolvedTranslations } from './translations';
 
 /**
  * Whether a surface renders its attribution. Wrap the
@@ -106,7 +105,7 @@ export class Branding {
 	readonly #noStyle = resolveNoStyle(this.noStyle);
 
 	/** @internal */
-	protected readonly translations = resolvedTranslations(this.#consent);
+	protected readonly translations = this.#consent.copy;
 
 	readonly #hostname = signal('');
 	/** @internal */

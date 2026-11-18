@@ -30,7 +30,6 @@ import type {
 	KernelIABState,
 	Model,
 	ResolvedVendor,
-	TranslationConfig,
 } from '@inth/sdk/engine';
 import type { IABHandle } from '@inth/sdk/iab';
 import type {
@@ -51,7 +50,6 @@ import {
 	applyExperimentAssignment,
 	applyExperimentTheme,
 	consentTypes as defaultConsentTypes,
-	defaultTranslationConfig,
 	deniedVendorIds,
 	has as evaluateHas,
 	hasGlobalPrivacyControlSignal,
@@ -59,8 +57,10 @@ import {
 	iabSurfaceActions,
 	pendingBootSnapshot,
 	policyNeedsIAB,
+	resolveSurfaceTranslations,
 	vendorsListedUnder,
 } from '@inth/sdk/surface-state';
+import type { CompleteTranslations } from '@inth/sdk/translations';
 import type { Theme } from '@inth/sdk/ui/theme';
 
 import { INTH_BOOT, restoreBoot } from './deferred/boot';
@@ -169,24 +169,6 @@ export interface ConsentDraftState {
 	 */
 	save: (categories: readonly AllConsentNames[]) => Promise<void>;
 }
-
-const toTranslationConfig = function toTranslationConfig(
-	snapshot: ConsentSnapshot
-): TranslationConfig {
-	const defaults = defaultTranslationConfig;
-	const resolved = snapshot.translations;
-	if (!resolved) {
-		return defaults;
-	}
-	return {
-		...defaults,
-		defaultLanguage: resolved.language,
-		translations: {
-			...defaults.translations,
-			[resolved.language]: resolved.translations,
-		},
-	};
-};
 
 /** Metadata for the displayed categories, in the draft's order. */
 const displayedConsentTypes = function displayedConsentTypes(
@@ -314,8 +296,11 @@ export class ConsentManager {
 	readonly hasConsentPreferences: Signal<boolean>;
 	/** The provider's `legalLinks` option. */
 	readonly legalLinks: Signal<InthSharedOptions['legalLinks']>;
-	/** The translations the surfaces resolve their copy against. */
-	readonly translationConfig: Signal<TranslationConfig>;
+	/**
+	 * The copy the surfaces render: the active language bundle with English
+	 * filling every key it leaves out.
+	 */
+	readonly copy: Signal<CompleteTranslations>;
 	/** The IAB TCF state, or `null` without IAB. */
 	readonly iab: Signal<AngularIABState | null>;
 	/**
@@ -451,7 +436,7 @@ export class ConsentManager {
 			hasConsentPreferences(snapshot())
 		);
 		this.legalLinks = computed(() => this.#options().legalLinks);
-		this.translationConfig = computed(() => toTranslationConfig(snapshot()));
+		this.copy = computed(() => resolveSurfaceTranslations(snapshot()));
 		this.iab = computed(() => this.#projectIAB());
 		this.iabUnavailable = computed(
 			() =>

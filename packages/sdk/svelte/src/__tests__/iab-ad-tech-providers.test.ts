@@ -6,16 +6,16 @@
  */
 import type { ConsentKernel } from '@inth/sdk/engine';
 import { resolvePolicyRules } from '@inth/sdk/schema/types';
+import { resolveIABCopy } from '@inth/sdk/surface-state';
 import { render } from '@testing-library/svelte';
 import { mount, unmount } from 'svelte';
-import { expect, onTestFinished, test, vi } from 'vitest';
 // The IAB components load this package lazily. Importing it here makes Vite
 // transform it while it collects this file, not inside `vi.waitFor`.
 import '@inth/sdk/iab';
+import { expect, onTestFinished, test, vi } from 'vitest';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import IABVendorList from '../lib/components/iab-vendor-list.svelte';
-import { getIABTranslations } from '../lib/iab-translations';
 import ConformanceFixture from './fixtures/conformance-fixture.svelte';
 import { transportMode } from './fixtures/transport-mode';
 
@@ -28,7 +28,7 @@ test('lists each provider with its privacy policy and a consent switch', () => {
 	const { container } = render(IABVendorList, {
 		adTechProviderConsents: { '2577': true },
 		adTechProviders,
-		iabT: getIABTranslations(),
+		iabT: resolveIABCopy(undefined),
 		onAdTechProviderToggle: vi.fn(),
 		onClearSelection: vi.fn(),
 		onVendorToggle: vi.fn(),

@@ -19,16 +19,16 @@ import {
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,
 } from '@inth/sdk/schema/types';
+import { resolveIABCopy } from '@inth/sdk/surface-state';
 import { afterEach, describe, expect, test } from 'vitest';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import type { IABPurposeChoice, IABVendorChoice } from './iab-purpose-item';
 import { IABPurposeItem } from './iab-purpose-item';
 import { IABStackItem } from './iab-stack-item';
-import { getIABTranslations } from './iab-translations';
 import { IABVendorList } from './iab-vendor-list';
 
-const iabT = getIABTranslations();
+const iabT = resolveIABCopy(undefined);
 const disposers: (() => void)[] = [];
 
 afterEach(() => {

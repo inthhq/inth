@@ -8,7 +8,6 @@ import {
 } from '@angular/core';
 import {
 	ConsentManager,
-	ɵresolvedTranslations as resolvedTranslations,
 	ɵresolveNoStyle as resolveNoStyle,
 } from '@inth/angular';
 import {
@@ -22,15 +21,9 @@ import {
 	uniqueId,
 } from '@inth/angular/primitives';
 import type { AllConsentNames, ResolvedVendor } from '@inth/sdk/engine';
+import { resolveVendorListCopy } from '@inth/sdk/surface-state';
 import switchStyles from '@inth/sdk/ui/styles/components/switch';
 import vendorListStyles from '@inth/sdk/ui/styles/components/vendor-list';
-
-const DEFAULT_COPY = {
-	disabledByCategory: 'Turn on this category to choose vendors.',
-	privacyPolicy: 'Privacy policy',
-	switchLabel: 'Allow {vendor}',
-	title: 'Vendors ({count})',
-};
 
 /**
  * Vendor cards nested inside one category's accordion content. Each is a
@@ -193,15 +186,14 @@ export class ConsentVendorList {
 	/** @internal */
 	protected readonly resolvedNoStyle = resolveNoStyle(this.noStyle);
 
-	readonly #translations = resolvedTranslations(this.#consent);
+	readonly #translations = this.#consent.copy;
 
 	/** @internal */
 	protected readonly switchClasses = switchStyles;
 	/** @internal */
-	protected readonly copy = computed(() => ({
-		...DEFAULT_COPY,
-		...this.#translations().consentManagerDialog.vendors,
-	}));
+	protected readonly copy = computed(() =>
+		resolveVendorListCopy(this.#translations())
+	);
 	/** @internal */
 	protected readonly vendors = computed(() =>
 		this.#consent.getDisplayedVendors(this.category())

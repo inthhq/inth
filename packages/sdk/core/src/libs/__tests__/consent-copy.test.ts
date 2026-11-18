@@ -1,3 +1,4 @@
+import { translations as en } from '@inth/sdk-translations/en';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -6,6 +7,7 @@ import {
 	resolveIABCopy,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
+	resolveSurfaceTranslations,
 	resolveTriggerLabels,
 } from '../consent-copy';
 
@@ -108,5 +110,56 @@ describe('consent copy', () => {
 				toolbarLabel: 'Privacy controls',
 			}
 		);
+	});
+});
+
+describe('resolveSurfaceTranslations', () => {
+	it('fills every key a partial bundle leaves out from English', () => {
+		const bundle = {
+			consentTypes: { custom_tracking: { description: 'D', title: 'T' } },
+			cookieBanner: { title: 'Hallo' },
+		};
+		const t = resolveSurfaceTranslations({
+			translations: { language: 'de', translations: bundle },
+		});
+		expect(t.cookieBanner.title).toBe('Hallo');
+		expect(t.cookieBanner.description).toBe(en.cookieBanner.description);
+		expect(t.consentManagerDialog).toEqual(en.consentManagerDialog);
+		expect(t.consentTypes.marketing).toEqual(en.consentTypes.marketing);
+		expect((t.consentTypes as Record<string, unknown>).custom_tracking).toEqual(
+			{ description: 'D', title: 'T' }
+		);
+		expect(
+			resolveSurfaceTranslations({
+				translations: { language: 'de', translations: bundle },
+			})
+		).toBe(t);
+	});
+
+	it('is English without a bundle', () => {
+		expect(resolveSurfaceTranslations({ translations: null })).toBe(en);
+	});
+
+	it('keeps the own choice copy of a bundle for a notice it does not translate', () => {
+		const t = resolveSurfaceTranslations({
+			translations: { translations: { cookieBanner: { title: 'Hallo' } } },
+		});
+		expect(resolvePromptCopy(t, 'notice').title).toBe('Hallo');
+		expect(resolvePromptCopy(t, 'notice').description).toBe(
+			en.cookieBanner.noticeDescription
+		);
+	});
+
+	it('reads the legacy frame and dismiss keys', () => {
+		const t = resolveSurfaceTranslations({
+			translations: {
+				translations: {
+					common: { dismiss: 'OK' },
+					frame: { title: 'Blocked' },
+				},
+			},
+		});
+		expect(t.consentGate.title).toBe('Blocked');
+		expect(t.common.acknowledge).toBe('OK');
 	});
 });

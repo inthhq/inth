@@ -16,7 +16,6 @@ import {
 	ɵBranding as Branding,
 	ɵNoStyleScope as NoStyleScope,
 	ɵPolicyActions as PolicyActions,
-	ɵresolvedTranslations as resolvedTranslations,
 	ɵresolveNoStyle as resolveNoStyle,
 	ɵshouldShowBranding as shouldShowBranding,
 } from '@inth/angular';
@@ -318,10 +317,10 @@ export class ConsentWidgetRoot {
 	/** @internal */
 	protected readonly resolvedNoStyle = resolveNoStyle(this.noStyle);
 	/** @internal */
-	protected readonly translations = resolvedTranslations(this.consent);
+	protected readonly translations = this.consent.copy;
 	/** @internal */
 	protected readonly textDirection = computed(() =>
-		getTextDirection(this.consent.translationConfig().defaultLanguage)
+		getTextDirection(this.consent.translations()?.language)
 	);
 
 	/** @internal */

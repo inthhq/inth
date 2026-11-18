@@ -2,7 +2,6 @@
 	import type { AllConsentNames } from '@inth/sdk/engine';
 	import {
 		actionAppearanceFromTheme,
-		defaultTranslationConfig,
 		resolveConsentPresentation,
 	} from '@inth/sdk/engine';
 	import { createPreferenceDraft } from '@inth/sdk/preference-draft';
@@ -14,7 +13,6 @@
 	import {
 		getTextDirection,
 		resolveStyles,
-		resolveTranslations,
 		toStyleAttributeValue,
 	} from '@inth/sdk/ui/utils';
 
@@ -47,15 +45,10 @@
 
 	const noStyle = $derived(localNoStyle ?? theme.noStyle ?? false);
 
-	const translations = $derived(
-		resolveTranslations(
-			consent.state.translationConfig,
-			defaultTranslationConfig
-		)
-	);
+	const translations = $derived(consent.state.copy);
 
 	const textDirection = $derived(
-		getTextDirection(consent.state.translationConfig?.defaultLanguage)
+		getTextDirection(consent.state.translations?.language)
 	);
 
 	const displayedConsents = $derived(

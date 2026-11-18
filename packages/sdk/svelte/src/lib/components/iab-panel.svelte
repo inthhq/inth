@@ -1,6 +1,5 @@
 <script lang="ts">
 	import {
-		defaultTranslationConfig,
 		resolveConsentPresentation,
 		resolveIABBannerSummary,
 	} from '@inth/sdk/engine';
@@ -12,6 +11,7 @@
 	import type { HeadlessIABVendorId as VendorId } from '@inth/sdk/iab/headless';
 	import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 	import { saveIABConsentSurface } from '@inth/sdk/surface-actions';
+	import { resolveIABCopy } from '@inth/sdk/surface-state';
 	import { isDialogDismissKey } from '@inth/sdk/ui/primitives/dialog';
 	import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
 	import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
@@ -19,7 +19,6 @@
 	import {
 		getTextDirection,
 		resolveStyles,
-		resolveTranslations,
 		toStyleAttributeValue,
 	} from '@inth/sdk/ui/utils';
 
@@ -28,7 +27,6 @@
 	import { scrollLock } from '../actions/scroll-lock';
 	import { getConsentContext, getThemeContext } from '../context.svelte';
 	import { IAB_DIALOG_SHEETS } from '../iab-dialog-sheets';
-	import { getIABTranslations } from '../iab-translations';
 	import { Tabs } from '../primitives';
 	import Branding from './branding.svelte';
 	import IABFeatureItem from './iab-feature-item.svelte';
@@ -130,15 +128,10 @@
 
 	const iabState = $derived(consent.state.iab);
 
-	const iabT = $derived(getIABTranslations(consent.state.translationConfig));
-	const coreTranslations = $derived(
-		resolveTranslations(
-			consent.state.translationConfig,
-			defaultTranslationConfig
-		)
-	);
+	const iabT = $derived(resolveIABCopy(consent.state.copy));
+	const coreTranslations = $derived(consent.state.copy);
 	const textDirection = $derived(
-		getTextDirection(consent.state.translationConfig?.defaultLanguage)
+		getTextDirection(consent.state.translations?.language)
 	);
 
 	const isOpen = $derived(

@@ -32,13 +32,8 @@ import {
 	ɵresolveNoStyle as resolveNoStyle,
 } from '@inth/angular';
 import type { AllConsentNames } from '@inth/sdk/engine';
-import { defaultTranslationConfig } from '@inth/sdk/surface-state';
 import styles from '@inth/sdk/ui/styles/components/consent-gate';
-import {
-	resolveStyles,
-	resolveTranslations,
-	toStyleAttributeValue,
-} from '@inth/sdk/ui/utils';
+import { resolveStyles, toStyleAttributeValue } from '@inth/sdk/ui/utils';
 
 /** What a gate's placeholder template receives. */
 export interface ConsentGatePlaceholderContext {
@@ -230,12 +225,7 @@ export class ConsentGate {
 		);
 	});
 
-	readonly #translations = computed(() =>
-		resolveTranslations(
-			this.#consent.translationConfig(),
-			defaultTranslationConfig
-		)
-	);
+	readonly #translations = this.#consent.copy;
 
 	readonly #categoryTitle = computed(() => {
 		const category = this.category();

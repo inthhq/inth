@@ -1,12 +1,7 @@
 <script lang="ts">
 	import type { AllConsentNames } from '@inth/sdk/engine';
-	import { defaultTranslationConfig } from '@inth/sdk/engine';
 	import styles from '@inth/sdk/ui/styles/components/consent-gate';
-	import {
-		resolveStyles,
-		resolveTranslations,
-		toStyleAttributeValue,
-	} from '@inth/sdk/ui/utils';
+	import { resolveStyles, toStyleAttributeValue } from '@inth/sdk/ui/utils';
 	import type { Snippet } from 'svelte';
 	import { onMount } from 'svelte';
 
@@ -54,12 +49,7 @@
 		consent.kernel.set.registerConsentCategories([category]);
 	});
 
-	const translations = $derived(
-		resolveTranslations(
-			consent.state.translationConfig,
-			defaultTranslationConfig
-		)
-	);
+	const translations = $derived(consent.state.copy);
 	const gateTitle = $derived(
 		(
 			translations.consentGate?.title ??

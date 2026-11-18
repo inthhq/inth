@@ -1,11 +1,7 @@
 <script lang="ts">
 	import type { LegalLinks as LegalLinksType } from '@inth/sdk/engine';
-	import { defaultTranslationConfig } from '@inth/sdk/surface-state';
 	import legalLinkStyles from '@inth/sdk/ui/styles/components/legal-links';
-	import {
-		resolveLegalLinkEntries,
-		resolveTranslations,
-	} from '@inth/sdk/ui/utils';
+	import { resolveLegalLinkEntries } from '@inth/sdk/ui/utils';
 
 	import { getConsentContext, getThemeContext } from '../context.svelte';
 
@@ -30,10 +26,7 @@
 		resolveLegalLinkEntries(
 			consent.state.legalLinks,
 			links,
-			resolveTranslations(
-				consent.state.translationConfig,
-				defaultTranslationConfig
-			).legalLinks
+			consent.state.copy.legalLinks
 		)
 	);
 </script>

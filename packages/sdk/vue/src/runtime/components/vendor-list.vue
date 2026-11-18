@@ -7,7 +7,7 @@
  * so the cross-framework parity runner sees identical DOM.
  */
 import type { AllConsentNames, ResolvedVendor } from '@inth/sdk/engine';
-import type { VendorListTranslations } from '@inth/sdk/translations';
+import { resolveVendorListCopy } from '@inth/sdk/surface-state';
 import vendorListStyles from '@inth/sdk/ui/styles/components/vendor-list';
 
 import '@inth/sdk/ui/styles/components/vendor-list.css';
@@ -41,12 +41,7 @@ const sw = switchVariants();
 /** Two surfaces can list the same vendor at once, so ids are scoped per instance. */
 const uid = useId();
 
-// English carries every vendor list key.
-const copy = computed<VendorListTranslations>(() => ({
-	...(translations.value.english.consentManagerDialog
-		.vendors as VendorListTranslations),
-	...translations.value.bundle?.consentManagerDialog?.vendors,
-}));
+const copy = computed(() => resolveVendorListCopy(translations.value));
 
 const styles = computed(() => (props.noStyle ? undefined : vendorListStyles));
 const title = computed(() =>

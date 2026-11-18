@@ -32,16 +32,12 @@ const snapshot = useConsentSnapshot();
  */
 const bannerDescription = computed(
 	() =>
-		resolvePromptCopy(
-			translations.value.bundle,
-			snapshot.value.policyRule.prompt
-		).description
+		resolvePromptCopy(translations.value, snapshot.value.policyRule.prompt)
+			.description
 );
 
 const dialogDescription = computed(
-	() =>
-		translations.value.bundle?.consentManagerDialog?.description ??
-		translations.value.english.consentManagerDialog.description
+	() => translations.value.consentManagerDialog.description
 );
 
 const legalLinks = computed(() => {

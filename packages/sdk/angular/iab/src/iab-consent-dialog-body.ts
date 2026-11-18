@@ -20,7 +20,6 @@ import {
 	ɵInitialFocus as InitialFocus,
 	ɵNoStyleScope as NoStyleScope,
 	ɵOverlay as Overlay,
-	ɵresolvedTranslations as resolvedTranslations,
 	ɵresolveNoStyle as resolveNoStyle,
 	ɵshouldShowBranding as shouldShowBranding,
 } from '@inth/angular';
@@ -38,7 +37,10 @@ import {
 } from '@inth/sdk/iab/headless';
 import type { HeadlessIABVendorId } from '@inth/sdk/iab/headless';
 import { saveIABConsentSurface } from '@inth/sdk/surface-actions';
-import { resolveConsentPresentation } from '@inth/sdk/surface-state';
+import {
+	resolveConsentPresentation,
+	resolveIABCopy,
+} from '@inth/sdk/surface-state';
 import { isDialogDismissKey } from '@inth/sdk/ui/primitives/dialog';
 import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
@@ -54,7 +56,6 @@ import { ChevronRightIcon, CloseIcon, InfoIcon, LockIcon } from './iab-icons';
 import { IABPurposeItem } from './iab-purpose-item';
 import type { IABPurposeChoice, IABVendorChoice } from './iab-purpose-item';
 import { IABStackItem } from './iab-stack-item';
-import { getIABTranslations } from './iab-translations';
 import { IABVendorList } from './iab-vendor-list';
 import type { IABAdTechProviderChoice } from './iab-vendor-list';
 
@@ -536,13 +537,13 @@ export class IABConsentDialogBody {
 	protected readonly resolvedNoStyle = resolveNoStyle(this.noStyle);
 	/** @internal */
 	protected readonly translations = computed(() =>
-		getIABTranslations(this.#consent.translationConfig())
+		resolveIABCopy(this.#consent.copy())
 	);
 	/** @internal */
-	protected readonly coreTranslations = resolvedTranslations(this.#consent);
+	protected readonly coreTranslations = this.#consent.copy;
 	/** @internal */
 	protected readonly textDirection = computed(() =>
-		getTextDirection(this.#consent.translationConfig().defaultLanguage)
+		getTextDirection(this.#consent.translations()?.language)
 	);
 	/** @internal */
 	protected readonly language = computed(

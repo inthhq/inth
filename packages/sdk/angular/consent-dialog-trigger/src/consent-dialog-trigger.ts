@@ -28,7 +28,6 @@ import {
 	warmDialog,
 	ɵBrandMarkIcon as BrandMarkIcon,
 	ɵNoStyleScope as NoStyleScope,
-	ɵresolvedTranslations as resolvedTranslations,
 	ɵresolveNoStyle as resolveNoStyle,
 } from '@inth/angular';
 import type { ConsentDialogTriggerVisibility } from '@inth/sdk/schema/config';
@@ -287,7 +286,7 @@ export class ConsentDialogTrigger {
 		this.consent.snapshot().policyRule.rights.join(' ')
 	);
 
-	readonly #translations = resolvedTranslations(this.consent);
+	readonly #translations = this.consent.copy;
 	/** @internal */
 	protected readonly labels = computed(() =>
 		resolveTriggerLabels(this.#translations())

@@ -16,13 +16,13 @@
 		ProcessedPurpose,
 		ProcessedVendor,
 	} from '@inth/sdk/iab/headless';
+	import type { ResolvedIABCopy } from '@inth/sdk/surface-state';
 	import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 	import switchStyles from '@inth/sdk/ui/styles/components/switch';
 	import { switchVariants } from '@inth/sdk/ui/styles/primitives';
 	import { tick, untrack } from 'svelte';
 	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 
-	import type { IABTranslations } from '../iab-translations';
 	import { PreferenceItem, Switch } from '../primitives';
 	import ChevronDownIcon from './icons/chevron-down-icon.svelte';
 	import CloseIcon from './icons/close-icon.svelte';
@@ -72,7 +72,7 @@
 		adTechProviderConsents?: Record<string, boolean>;
 		onAdTechProviderToggle?: (providerId: number, value: boolean) => void;
 		noStyle?: boolean;
-		iabT: IABTranslations;
+		iabT: ResolvedIABCopy;
 		/** The UI language, which picks each vendor's privacy links. */
 		language?: string;
 	} = $props();

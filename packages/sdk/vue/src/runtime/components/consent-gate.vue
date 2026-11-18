@@ -41,13 +41,9 @@ watch(
 );
 
 const categoryTitle = computed(() => {
-	const { bundle, english } = translations.value;
-	const category = props.category as keyof typeof english.consentTypes;
-	return (
-		bundle?.consentTypes?.[category]?.title ??
-		english.consentTypes[category]?.title ??
-		props.category
-	);
+	const { consentTypes } = translations.value;
+	const category = props.category as keyof typeof consentTypes;
+	return consentTypes[category]?.title ?? props.category;
 });
 
 /**
@@ -66,22 +62,17 @@ const policyBlocked = computed(() => {
 
 // The same `consentGate.*` copy the React and Svelte gates show.
 const title = computed(() => {
-	const { bundle, english } = translations.value;
+	const { consentGate } = translations.value;
 	if (policyBlocked.value) {
-		return (
-			bundle?.consentGate?.policyBlocked ?? english.consentGate.policyBlocked
-		);
+		return consentGate.policyBlocked;
 	}
-	return (bundle?.consentGate?.title ?? english.consentGate.title).replace(
+	return consentGate.title.replace('{category}', categoryTitle.value);
+});
+const actionLabel = computed(() => {
+	return translations.value.consentGate.actionButton.replace(
 		'{category}',
 		categoryTitle.value
 	);
-});
-const actionLabel = computed(() => {
-	const { bundle, english } = translations.value;
-	return (
-		bundle?.consentGate?.actionButton ?? english.consentGate.actionButton
-	).replace('{category}', categoryTitle.value);
 });
 
 const openPreferences = function openPreferences() {

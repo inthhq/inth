@@ -2,6 +2,7 @@ import {
 	consentTypes,
 	deniedVendorIds,
 	resolveCategoryTitle,
+	resolveVendorListCopy,
 	vendorsListedUnder,
 } from '@inth/sdk-core';
 import type {
@@ -316,7 +317,7 @@ export const createWidget = function createWidget(
 		});
 		const vendorList = createVendorList({
 			category: name,
-			copy: t.consentManagerDialog.vendors,
+			copy: resolveVendorListCopy(t),
 			noStyle,
 			onToggle: toggleVendor,
 			openCards: openVendorCards,

@@ -13,11 +13,7 @@ const activeUI = useConsentActiveUI();
 const hasConsentUi = useHasConsentPreferences();
 const translations = useSurfaceTranslations();
 // Names what the link opens, in the visitor's language.
-const label = computed(
-	() =>
-		translations.value.bundle?.consentManagerDialog?.title ??
-		translations.value.english.consentManagerDialog.title
-);
+const label = computed(() => translations.value.consentManagerDialog.title);
 </script>
 
 <template>

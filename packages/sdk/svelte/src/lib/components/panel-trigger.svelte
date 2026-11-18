@@ -1,9 +1,6 @@
 <script lang="ts">
 	import type { ConsentDialogTriggerVisibility } from '@inth/sdk/schema/config';
-	import {
-		defaultTranslationConfig,
-		resolveTriggerLabels,
-	} from '@inth/sdk/surface-state';
+	import { resolveTriggerLabels } from '@inth/sdk/surface-state';
 	import styles from '@inth/sdk/ui/styles/components/consent-dialog-trigger';
 	import {
 		createInitialDragState,
@@ -15,7 +12,6 @@
 		resolveBrandMark,
 		resolveStyles,
 		toStyleAttributeValue,
-		resolveTranslations,
 		toolbarOrder,
 	} from '@inth/sdk/ui/utils';
 	import type {
@@ -96,14 +92,7 @@
 			showWhen,
 		})
 	);
-	const labels = $derived(
-		resolveTriggerLabels(
-			resolveTranslations(
-				consent.state.translationConfig,
-				defaultTranslationConfig
-			)
-		)
-	);
+	const labels = $derived(resolveTriggerLabels(consent.state.copy));
 	const preferencesLabel = $derived(ariaLabel ?? labels.label);
 
 	// Load the deferred dialog before the first click, but only while the

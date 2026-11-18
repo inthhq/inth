@@ -11,7 +11,6 @@ import { resolveLegalLinkEntries } from '@inth/sdk/ui/utils';
 
 import { ConsentManager } from '../core/consent-manager';
 import { resolveNoStyle } from '../core/no-style';
-import { resolvedTranslations } from './translations';
 
 /** Which legal links a surface shows. `null` or unset shows none. */
 export type LegalLinkSelection = readonly (keyof LegalLinks)[] | null;
@@ -55,7 +54,7 @@ export class InlineLegalLinks {
 	readonly noStyle = input<boolean | undefined>(undefined);
 	readonly #noStyle = resolveNoStyle(this.noStyle);
 
-	readonly #translations = resolvedTranslations(this.#consent);
+	readonly #translations = this.#consent.copy;
 
 	/** @internal */
 	protected readonly entries = computed(() =>

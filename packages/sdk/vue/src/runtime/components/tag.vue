@@ -37,11 +37,7 @@ const tag = computed(() =>
 	})
 );
 
-const securedBy = computed(
-	() =>
-		translations.value.bundle?.common?.securedBy ??
-		translations.value.english.common.securedBy
-);
+const securedBy = computed(() => translations.value.common.securedBy);
 </script>
 
 <template>
