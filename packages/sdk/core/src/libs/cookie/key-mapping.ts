@@ -1,10 +1,7 @@
 /**
  * @packageDocumentation
- * Cookie key mapping for storage optimization.
- *
- * @remarks
- * This module handles compression of cookie keys to reduce cookie size
- * while keeping consent keys readable.
+ * The short keys of the v2 compact cookie format, expanded when a v2
+ * cookie is read.
  */
 
 /**
@@ -13,7 +10,7 @@
  *
  * @internal
  */
-export const COOKIE_KEY_MAP = {
+const COOKIE_KEY_MAP = {
 	consentInfo: 'i',
 	consents: 'c',
 	externalId: 'eid',
@@ -33,37 +30,13 @@ export const COOKIE_KEY_MAP = {
  *
  * @internal
  */
-export const REVERSE_COOKIE_KEY_MAP = Object.entries(COOKIE_KEY_MAP).reduce(
+const REVERSE_COOKIE_KEY_MAP = Object.entries(COOKIE_KEY_MAP).reduce(
 	(acc, [key, value]) => {
 		acc[value] = key;
 		return acc;
 	},
 	{} as Record<string, string>
 );
-
-/**
- * Shortens keys in a flattened object using the key map.
- *
- * @param flattened - Flattened object with full keys
- * @returns Flattened object with shortened keys
- *
- * @internal
- */
-export const shortenFlatKeys = function shortenFlatKeys(
-	flattened: Record<string, string>
-): Record<string, string> {
-	const shortened: Record<string, string> = {};
-
-	for (const [key, value] of Object.entries(flattened)) {
-		const keys = key.split('.');
-		const shortenedKeys = keys.map(
-			(k) => COOKIE_KEY_MAP[k as keyof typeof COOKIE_KEY_MAP] || k
-		);
-		shortened[shortenedKeys.join('.')] = value;
-	}
-
-	return shortened;
-};
 
 /**
  * Expands shortened keys in a flattened object back to full keys.

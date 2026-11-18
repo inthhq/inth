@@ -945,7 +945,8 @@ describe('flushPendingMounts', () => {
 					target: 'body',
 				},
 				deps.getSnapshot(),
-				true
+				true,
+				null
 			);
 			expect(document.head.querySelector('script')?.getAttribute('src')).toBe(
 				'https://x/early.js'

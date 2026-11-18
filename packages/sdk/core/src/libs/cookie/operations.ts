@@ -4,14 +4,7 @@
  */
 
 import { resolveCookieDomain } from './domain-utils';
-import { expandFlatKeys, shortenFlatKeys } from './key-mapping';
 import { readCookieValueFromHeader } from './read-header';
-import {
-	flatToString,
-	flattenObject,
-	stringToFlat,
-	unflattenObject,
-} from './serialization';
 import type { StorageConfig } from './types';
 
 /**
@@ -32,17 +25,6 @@ export interface CookieWriteReport {
 	error?: unknown;
 }
 
-const serializeCookieValue = function serializeCookieValue(
-	value: unknown
-): string {
-	if (typeof value === 'string') {
-		return value;
-	}
-	const flattened = flattenObject(value as Record<string, unknown>);
-	const shortened = shortenFlatKeys(flattened);
-	return flatToString(shortened);
-};
-
 /**
  * Writes a cookie and reports what happened instead of swallowing it.
  *
@@ -54,22 +36,19 @@ const serializeCookieValue = function serializeCookieValue(
  */
 export const writeCookie = function writeCookie(
 	name: string,
-	value: unknown,
+	value: string,
 	config?: StorageConfig
 ): CookieWriteReport {
 	if (typeof document === 'undefined') {
 		return { attempted: false, verified: false };
 	}
 
-	let cookieValue: string;
 	try {
-		cookieValue = serializeCookieValue(value);
-
 		const date = new Date();
 		const expiryDays = config?.defaultExpiryDays ?? 365;
 		date.setTime(date.getTime() + expiryDays * 24 * 60 * 60 * 1000);
 		const parts = [
-			`${name}=${cookieValue}`,
+			`${name}=${value}`,
 			`expires=${date.toUTCString()}`,
 			'path=/',
 		];
@@ -96,52 +75,23 @@ export const writeCookie = function writeCookie(
 	} catch {
 		readBack = undefined;
 	}
-	return { attempted: true, verified: readBack === cookieValue };
+	return { attempted: true, verified: readBack === value };
 };
 
 /**
- * @param value - Cookie value (will be flattened to compact string format)
- *
- * @remarks
- * Uses a flat key:value,key:value format without JSON special characters.
- * This avoids issues with curly braces, quotes, and simplifies encoding.
- * Only colons and commas are used as delimiters.
+ * {@link writeCookie}, warning instead of reporting when the assignment
+ * throws.
  *
  * @internal
  */
 export const setCookie = function setCookie(
 	name: string,
-	value: unknown,
+	value: string,
 	config?: StorageConfig
 ): void {
 	const report = writeCookie(name, value, config);
 	if (!report.attempted && report.error !== undefined) {
 		console.warn(`Failed to set cookie "${name}":`, report.error);
-	}
-};
-
-/**
- * Parses a stored Inth cookie value using the same compact format that
- * `setCookie` writes. This is safe for server adapters that already have the
- * raw cookie value from a request header and cannot read `document.cookie`.
- *
- * @internal
- */
-export const parseCookieValue = function parseCookieValue<ReturnType = unknown>(
-	cookieValue: string
-): ReturnType | null {
-	try {
-		if (cookieValue.includes(':')) {
-			const shortened = stringToFlat(cookieValue);
-			const expanded = expandFlatKeys(shortened);
-			const nested = unflattenObject(expanded);
-			return nested as ReturnType;
-		}
-
-		return cookieValue as ReturnType;
-	} catch (error) {
-		console.warn('Failed to parse cookie value:', error);
-		return null;
 	}
 };
 
@@ -172,41 +122,6 @@ export const getRawCookieValue = function getRawCookieValue(
 	} catch (error) {
 		console.warn(`Failed to get cookie "${name}":`, error);
 		onUnavailable?.();
-		return null;
-	}
-};
-
-/**
- * @returns Parsed cookie value or null if not found
- *
- * @internal
- */
-export const getCookie = function getCookie<ReturnType = unknown>(
-	name: string
-): ReturnType | null {
-	if (typeof document === 'undefined') {
-		return null;
-	}
-
-	try {
-		const nameEQ = `${name}=`;
-		const cookies = document.cookie.split(';');
-
-		for (const cookie of cookies) {
-			let c = cookie;
-			while (c.charAt(0) === ' ') {
-				c = c.substring(1);
-			}
-
-			if (c.indexOf(nameEQ) === 0) {
-				const cookieValue = c.substring(nameEQ.length);
-				return parseCookieValue<ReturnType>(cookieValue);
-			}
-		}
-
-		return null;
-	} catch (error) {
-		console.warn(`Failed to get cookie "${name}":`, error);
 		return null;
 	}
 };

@@ -12,6 +12,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { NOW } from '../../../__tests__/fixtures/kernel-fixtures';
+import { encodeV2Cookie } from '../../../__tests__/fixtures/v2-cookie';
 import { createConsentKernel } from '../../../kernel';
 import { deleteCookie, setCookie } from '../../../libs/cookie';
 import {
@@ -100,7 +101,7 @@ describe('persistence: hydration is read-only', () => {
 	});
 
 	test('hydrating from a cookie does not mirror it into localStorage', () => {
-		setCookie(STORAGE_KEY_V2, storedPayload());
+		setCookie(STORAGE_KEY_V2, encodeV2Cookie(storedPayload()));
 		const cookieBefore = document.cookie;
 
 		const kernel = createConsentKernel({ now: NOW });
@@ -338,7 +339,7 @@ describe('persistence: explicit choices still write', () => {
 		const storageConfig = { storageKey: 'custom-key' };
 		const defaultPayload = storedPayload();
 		localStorage.setItem(STORAGE_KEY_V2, JSON.stringify(defaultPayload));
-		setCookie(STORAGE_KEY_V2, defaultPayload);
+		setCookie(STORAGE_KEY_V2, encodeV2Cookie(defaultPayload));
 		const defaultCookie = document.cookie;
 
 		const kernel = createConsentKernel({ now: NOW });
