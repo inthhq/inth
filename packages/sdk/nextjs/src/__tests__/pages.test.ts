@@ -679,12 +679,12 @@ describe('withConsentProps', () => {
 		expect(page.responseHeaders.get('set-cookie')).toBe('session=1; Path=/');
 	});
 
-	test('storage.storageKey names the consent cookie', async () => {
+	test('cookieName names the consent cookie', async () => {
 		const page = createPageContext({
 			cookie: 'my-consent=c.necessary:1,c.marketing:1,i.t:1',
 		});
 		const result = await withConsentProps(undefined, {
-			storage: { storageKey: 'my-consent' },
+			cookieName: 'my-consent',
 		})(page.context);
 
 		if (!('props' in result)) {

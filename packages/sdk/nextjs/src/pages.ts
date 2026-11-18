@@ -15,7 +15,6 @@
  * ```
  */
 
-import type { StorageConfig } from '@inth/sdk/engine';
 import type {
 	ConsentProxyRouteMethodHandlers,
 	ConsentRouteMethodHandlers,
@@ -200,16 +199,7 @@ export interface ConsentPageProps {
 }
 
 /** Options for {@link withConsentProps}: `resolveConsent` without `req`. */
-export type WithConsentPropsOptions = Omit<
-	PagesResolveConsentOptions,
-	'req'
-> & {
-	/**
-	 * The client's `storageConfig`. `storageKey` names the consent cookie,
-	 * like `cookieName`, and wins over it.
-	 */
-	storage?: Pick<StorageConfig, 'storageKey'>;
-};
+export type WithConsentPropsOptions = Omit<PagesResolveConsentOptions, 'req'>;
 
 /**
  * `getServerSideProps` that resolves the visitor's consent from
@@ -243,11 +233,9 @@ export const withConsentProps = function withConsentProps<
 	getServerSideProps?: GetServerSideProps<Props>,
 	options: WithConsentPropsOptions = {}
 ): GetServerSideProps<Props & ConsentPageProps> {
-	const { storage, ...resolveOptions } = options;
-	const cookieName = storage?.storageKey ?? options.cookieName;
 	return async (context: GetServerSidePropsContext) => {
 		const [state, result] = await Promise.all([
-			resolveConsent({ ...resolveOptions, cookieName, req: context.req }),
+			resolveConsent({ ...options, req: context.req }),
 			getServerSideProps ? getServerSideProps(context) : { props: {} as Props },
 		]);
 		if (!('props' in result)) {
