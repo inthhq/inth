@@ -9,8 +9,7 @@
  *
  * An acceptance carries an idempotency key: make one per user action with
  * `createIdempotencyKey()` and send the same key on every retry of it, so
- * the backend records the action once. Without one, each call makes its
- * own key and counts as a new action.
+ * the backend records the action once.
  */
 import { V1_DOCUMENT_TYPE_PATTERN } from '@inth/sdk-schema/types';
 import type {
@@ -20,7 +19,7 @@ import type {
 	V1DocumentCurrentOutput,
 } from '@inth/sdk-schema/types';
 
-import { createIdempotencyKey } from '../libs/subject-uuid';
+import { isUuidV7 } from '../libs/subject-uuid';
 import { readApiError } from '../transports/v1/error';
 import {
 	currentDocumentPath,
@@ -70,10 +69,10 @@ export interface RecordAcceptancesInput {
 	/** Epoch milliseconds of the acceptance. Defaults to now. */
 	acceptedAt?: number;
 	/**
-	 * Key of this user action. Send the same key on every retry. Defaults to
-	 * a new key, which makes the call a new action.
+	 * Key of this user action, from `createIdempotencyKey()`. Send the same
+	 * key on every retry.
 	 */
-	idempotencyKey?: string;
+	idempotencyKey: string;
 	/**
 	 * The visitor's IP address and user agent, when a server records the
 	 * acceptance for them. Honoured only with a secret key.
@@ -120,7 +119,8 @@ const readCurrent = function readCurrent(
 		typeof body.document.version === 'string' &&
 		typeof body.document.hash === 'string' &&
 		typeof body.proofToken === 'string' &&
-		body.proofToken
+		body.proofToken &&
+		typeof body.proofTokenExpiresAt === 'string'
 	) {
 		return body as unknown as V1DocumentCurrentOutput;
 	}
@@ -133,6 +133,7 @@ const readAcceptances = function readAcceptances(
 	if (
 		isRecord(body) &&
 		typeof body.subjectId === 'string' &&
+		isUuidV7(body.subjectId) &&
 		Array.isArray(body.acceptances)
 	) {
 		return body as unknown as V1DocumentAcceptancesOutput;
@@ -145,14 +146,19 @@ const readAcceptances = function readAcceptances(
  *
  * @param input - What the caller passed.
  * @returns The body of `POST /v1/documents/acceptances`.
- * @throws {TypeError} When there is no acceptance, no subject ID or external
- * ID, or a document type is malformed.
+ * @throws {TypeError} When there is no acceptance, no idempotency key, no
+ * subject ID or external ID, or a document type is malformed.
  */
 const buildAcceptancesBody = function buildAcceptancesBody(
 	input: RecordAcceptancesInput
 ): V1DocumentAcceptancesInput {
 	if (input.acceptances.length === 0) {
 		throw new TypeError(`${LABEL}: pass at least one acceptance.`);
+	}
+	if (!input.idempotencyKey) {
+		throw new TypeError(
+			`${LABEL}: pass an idempotencyKey from createIdempotencyKey().`
+		);
 	}
 	if (!(input.subjectId || input.externalId)) {
 		throw new TypeError(`${LABEL}: pass a subjectId or an externalId.`);
@@ -166,7 +172,7 @@ const buildAcceptancesBody = function buildAcceptancesBody(
 			type,
 		})),
 		acceptedAt: input.acceptedAt ?? Date.now(),
-		idempotencyKey: input.idempotencyKey ?? createIdempotencyKey(),
+		idempotencyKey: input.idempotencyKey,
 	};
 	if (input.subjectId) {
 		body.subjectId = input.subjectId;

@@ -1,6 +1,7 @@
 /**
  * The documents client against a stubbed `fetch`.
  */
+import { v1DocumentAcceptancesInputSchema } from '@inth/sdk-schema/v1';
 import { describe, expect, test } from 'vitest';
 
 import {
@@ -121,40 +122,23 @@ describe('recordAcceptances: POST /v1/documents/acceptances', () => {
 		});
 	});
 
-	test('a retry with the same key sends the same key', async () => {
-		const { calls, fetch } = stubFetch(
-			() => v1Error(503, 'server_error'),
-			() => json(200, RECORDED)
-		);
-		const documents = createDocumentsClient({ fetch, projectUrl: PROJECT_URL });
-		const input = {
-			acceptances: [{ proofToken: 'proof-terms', type: 'terms_us' }],
-			idempotencyKey: KEY,
-			subjectId: SUBJECT,
-		};
-
-		await documents.recordAcceptances(input).catch(() => undefined);
-		await documents.recordAcceptances(input);
-
-		expect(
-			calls.map(
-				(call) => (call.body as { idempotencyKey: string }).idempotencyKey
-			)
-		).toEqual([KEY, KEY]);
-	});
-
-	test('makes a key when none is passed', async () => {
+	test('builds a body the acceptances schema accepts, dated now by default', async () => {
 		const { calls, fetch } = stubFetch(() => json(200, RECORDED));
 		const documents = createDocumentsClient({ fetch, projectUrl: PROJECT_URL });
 
 		await documents.recordAcceptances({
 			acceptances: [{ proofToken: 'proof-terms', type: 'terms_us' }],
-			subjectId: SUBJECT,
+			externalId: 'user_123',
+			idempotencyKey: KEY,
+			identityProvider: 'clerk',
+			identityToken: 'token',
+			property: 'WWW.Example.com',
+			subjectId: 'sub_2VZxR7YmNpKq3WfLs8TgHd',
 		});
 
-		expect(bodyAt(calls, 0).idempotencyKey).toMatch(
-			/^[\da-f]{8}-[\da-f]{4}-7[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/u
-		);
+		expect(
+			v1DocumentAcceptancesInputSchema['~standard'].validate(bodyAt(calls, 0))
+		).not.toHaveProperty('issues');
 		expect(bodyAt(calls, 0).acceptedAt).toEqual(expect.any(Number));
 	});
 
@@ -190,6 +174,7 @@ describe('recordAcceptances: POST /v1/documents/acceptances', () => {
 		const error = await documents
 			.recordAcceptances({
 				acceptances: [{ proofToken: 'old', type: 'terms_us' }],
+				idempotencyKey: KEY,
 				subjectId: SUBJECT,
 			})
 			.catch((caught: unknown) => caught);
@@ -201,14 +186,32 @@ describe('recordAcceptances: POST /v1/documents/acceptances', () => {
 	});
 
 	test.each([
-		['no acceptance', { acceptances: [], subjectId: SUBJECT }],
+		[
+			'no acceptance',
+			{ acceptances: [], idempotencyKey: KEY, subjectId: SUBJECT },
+		],
+		[
+			'no key',
+			{
+				acceptances: [{ proofToken: 'p', type: 'terms_us' }],
+				idempotencyKey: '',
+				subjectId: SUBJECT,
+			},
+		],
 		[
 			'no subject or person',
-			{ acceptances: [{ proofToken: 'p', type: 'terms_us' }] },
+			{
+				acceptances: [{ proofToken: 'p', type: 'terms_us' }],
+				idempotencyKey: KEY,
+			},
 		],
 		[
 			'a malformed type',
-			{ acceptances: [{ proofToken: 'p', type: 'Terms' }], subjectId: SUBJECT },
+			{
+				acceptances: [{ proofToken: 'p', type: 'Terms' }],
+				idempotencyKey: KEY,
+				subjectId: SUBJECT,
+			},
 		],
 	])('refuses %s without a request', async (_label, input) => {
 		const { calls, fetch } = stubFetch(() => json(200, RECORDED));
