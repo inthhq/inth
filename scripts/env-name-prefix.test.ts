@@ -31,13 +31,13 @@ const isHistorical = (path: string) =>
 
 const tokenPattern =
 	/(?<![A-Za-z0-9_])[A-Z0-9_]*(?:C15T|INTH)_[A-Z0-9_]+(?![A-Za-z0-9_])/gu;
-const brandPattern = /(?:^|_)(C15T|INTH)_/gu;
+const brandPattern = /(?:^|_)(?<brand>C15T|INTH)_/gu;
 
 /**
  * Map each name suffix (the part after `C15T_` or `INTH_`, ignoring any prefix
  * such as `EXPO_PUBLIC_` or `SIMCTL_CHILD_`) to where each spelling appears.
  */
-function collectSuffixes() {
+const collectSuffixes = function collectSuffixes() {
 	const files = execFileSync('git', ['ls-files', '-z'], {
 		cwd: root,
 		encoding: 'utf8',
@@ -57,7 +57,7 @@ function collectSuffixes() {
 		}
 		for (const [token] of text.matchAll(tokenPattern)) {
 			for (const match of token.matchAll(brandPattern)) {
-				const brand = match[1] as 'C15T' | 'INTH';
+				const brand = match.groups?.brand as 'C15T' | 'INTH';
 				const suffix = token.slice((match.index ?? 0) + match[0].length);
 				const entry = suffixes.get(suffix) ?? {
 					C15T: new Set(),
@@ -69,7 +69,7 @@ function collectSuffixes() {
 		}
 	}
 	return suffixes;
-}
+};
 
 describe('environment and constant names', () => {
 	const suffixes = collectSuffixes();
@@ -83,9 +83,9 @@ describe('environment and constant names', () => {
 					!(suffix in allowedBothPrefixes)
 			)
 			.map(([suffix, entry]) => ({
-				suffix,
 				C15T: [...entry.C15T].sort(),
 				INTH: [...entry.INTH].sort(),
+				suffix,
 			}));
 		expect(split).toEqual([]);
 	});
