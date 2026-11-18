@@ -1,4 +1,4 @@
-// The browser integration groups from the Inth repository's CI planner. Each
+// The browser integration groups from the c15t repository's CI planner. Each
 // group runs through scripts/ci-browser.ts with a list of targets; a target is
 // selected when its fixture, starter, Storybook or bench is selected.
 

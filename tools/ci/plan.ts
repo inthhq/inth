@@ -1,4 +1,4 @@
-// Selects the CI jobs a change needs. Adapted from the Inth repository's
+// Selects the CI jobs a change needs. Adapted from the c15t repository's
 // scripts/ci-plan.ts: a changed file selects the workspace that owns it, and
 // every workspace that depends on that one through the pnpm workspace graph.
 // Files outside every workspace either select a product by path or, when the
