@@ -11,10 +11,10 @@ import {
 	clearManifestCache,
 	CONSENT_ROUTE_TIMEOUT_HEADER,
 } from '@inth/sdk/server';
+import { readNuxtRoutePrefix } from '@inth/vue/nuxt';
 import { createApp, createRouter, toWebHandler } from 'h3';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { readNuxtRoutePrefix } from '../runtime/nuxt-mode';
 import { createConsentRoute } from '../runtime/server/route-factories';
 import { createServerFetch } from '../runtime/server/server-fetch';
 

@@ -4,8 +4,10 @@
 		"moduleResolution": "bundler",
 		"paths": {
 			"#imports": ["../vue/src/runtime/vue/stubs.ts"],
-			"#inth/composables": ["../vue/src/runtime/composables/index.ts"]
+			"#inth/composables": ["../vue/src/runtime/composables/index.ts"],
+			"@inth/vue/nuxt": ["../vue/src/nuxt.ts"]
 		}
 	},
-	"include": ["src/**/*.ts", "src/**/*.d.ts"]
+	"include": ["src/**/*.ts", "src/**/*.d.ts"],
+	"exclude": ["src/**/*.nuxt.ts"]
 }

@@ -31,10 +31,11 @@
  * request, so prerendered and cached shells can hold it.
  */
 import { buildPrefetchScript } from '@inth/sdk/engine';
-
-import type { RuntimeConsentConfig } from '../kernel';
-import { readNuxtMode } from '../nuxt-mode';
-import type { NuxtResolvedModeConfig } from '../nuxt-mode';
+import { readNuxtMode } from '@inth/vue/nuxt';
+import type {
+	NuxtResolvedModeConfig,
+	RuntimeConsentConfig,
+} from '@inth/vue/nuxt';
 
 /** The `inth` key of a Nitro route rule. */
 export interface InitPrefetchRouteRule {

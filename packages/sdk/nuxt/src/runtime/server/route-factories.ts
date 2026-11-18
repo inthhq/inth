@@ -15,12 +15,11 @@ import {
 	resolveServerMode,
 } from '@inth/sdk/server';
 import type { ConsentRouteHandler, ManifestFetch } from '@inth/sdk/server';
+import type { ConsentConfig } from '@inth/vue';
+import { readNuxtMode, readNuxtRoutePrefix } from '@inth/vue/nuxt';
+import type { NuxtConsentModeConfig } from '@inth/vue/nuxt';
 import { defineEventHandler, sendWebResponse, toWebRequest } from 'h3';
 import type { EventHandlerRequest, H3Event } from 'h3';
-
-import type { ConsentConfig } from '../config';
-import { readNuxtMode, readNuxtRoutePrefix } from '../nuxt-mode';
-import type { NuxtConsentModeConfig } from '../nuxt-mode';
 
 interface InthNitroRuntimeConfig {
 	inth?: Record<string, unknown>;

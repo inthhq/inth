@@ -105,6 +105,11 @@
 			"import": "./dist/devtools.mjs",
 			"default": "./dist/devtools.mjs"
 		},
+		"./nuxt": {
+			"types": "./dist/nuxt.d.mts",
+			"import": "./dist/nuxt.mjs",
+			"default": "./dist/nuxt.mjs"
+		},
 		"./runtime/*": "./dist/runtime/*",
 		"./composables/*": "./dist/runtime/composables/*",
 		"./runtime/components/consent-banner.vue": {
