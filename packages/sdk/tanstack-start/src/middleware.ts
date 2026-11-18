@@ -1,4 +1,3 @@
-import type { StorageConfig } from '@inth/sdk/engine';
 import { extractConsentRequestInputs } from '@inth/sdk/schema/types';
 import type { ConsentRequestHeaderInputs as ConsentRequestInputs } from '@inth/sdk/schema/types';
 import { writeConsentInputHeaders } from '@inth/sdk/server';
@@ -40,27 +39,6 @@ export interface ConsentRequestMiddlewareOptions {
 	 * @default true
 	 */
 	normalizeHeaders?: boolean;
-
-	/**
-	 * @deprecated Inth no longer sets a subject cookie, so the middleware
-	 * reads nothing from this. Removed in v4.
-	 */
-	storage?: Pick<
-		StorageConfig,
-		'crossSubdomain' | 'defaultDomain' | 'defaultExpiryDays' | 'storageKey'
-	>;
-
-	/**
-	 * @deprecated Inth no longer sets a subject cookie, so the middleware
-	 * reads nothing from this. Removed in v4.
-	 */
-	trustForwardedHeaders?: boolean;
-
-	/**
-	 * @deprecated Inth no longer sets a subject cookie, so this does
-	 * nothing. Removed in v4.
-	 */
-	subjectCookie?: boolean;
 }
 
 /** Request context contributed by {@link consentRequestMiddleware}. */

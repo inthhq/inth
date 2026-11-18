@@ -1,13 +1,40 @@
-import type { StorageConfig } from '@inth/sdk/engine';
+import type {
+	ExperimentState,
+	KernelConfig,
+	StorageConfig,
+} from '@inth/sdk/engine';
 import type { ConsentMode } from '@inth/sdk/modes';
 import type {
 	ConsentManifest,
 	ConsentRequestHeaderInputs,
 } from '@inth/sdk/schema/types';
 
-import type { ConsentState } from '../server/types';
+/**
+ * How the request is read: the consent cookie name and explicit
+ * geo/language overrides. Shared by `inthHandle` and `loadConsent`.
+ */
+export interface ConsentRequestOptions {
+	/**
+	 * Cookie name holding persisted consent. Defaults to `inth`, the
+	 * persistence module's storage key. Set this only if you customized
+	 * `storageConfig.storageKey` client-side; it must match.
+	 */
+	cookieName?: string;
+	/** Force the resolved country, ignoring geo headers. */
+	country?: string;
+	/** Force the resolved region, ignoring geo headers. */
+	region?: string;
+	/** Force the resolved language, ignoring `Accept-Language`. */
+	language?: string;
+}
 
-export type { ConsentRequestOptions, ConsentState } from '../server/types';
+/**
+ * The visitor's resolved consent state: the JSON-serializable subset of
+ * `KernelConfig` the server helpers return and the provider's `prefetch`
+ * prop accepts. `transport` is omitted because it holds functions, which a
+ * SvelteKit `load` cannot serialize.
+ */
+export type ConsentState = Omit<KernelConfig, 'transport'> & ExperimentState;
 
 /**
  * How a visitor is resolved: `manifest()` (a handle with no mode),
@@ -56,16 +83,6 @@ export interface InthLocals {
 	 * sets this. Removed in v4.
 	 */
 	trustForwardedHeaders?: boolean;
-	/**
-	 * @deprecated Inth no longer sets a subject cookie, so the handle never
-	 * sets this. Removed in v4. Read the request's own `Cookie` header.
-	 */
-	cookie?: string;
-	/**
-	 * @deprecated Inth no longer sets a subject cookie, so the handle never
-	 * sets this. Removed in v4.
-	 */
-	subjectCookie?: false;
 	/**
 	 * Set while SvelteKit prerenders: the page is shared between visitors,
 	 * so `loadConsent` makes no upstream call and carries no visitor state.

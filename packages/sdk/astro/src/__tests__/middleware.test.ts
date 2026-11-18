@@ -237,7 +237,6 @@ describe('consent middleware', () => {
 		const inth = await run({
 			headers: { cookie: 'theme=dark' },
 			options: {
-				middleware: { subjectCookie: true, trustForwardedHeaders: true },
 				mode: testingMode({ policy: [testRule] }),
 				storageConfig: { crossSubdomain: true, storageKey: 'consent' },
 			},

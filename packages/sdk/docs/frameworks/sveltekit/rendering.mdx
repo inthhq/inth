@@ -424,24 +424,21 @@ in a SvelteKit root layout to get the deferred start.
 
 ## Resolve consent in other server code
 
-`resolveConsent` from `@inth/svelte/server` does what `loadConsent` does
-without a SvelteKit event, for endpoints or code outside a load:
+`loadConsent` takes any SvelteKit request event, so an endpoint resolves
+consent the way a load does, with the handle's config:
 
 {/* example: fragment */}
 
 ```ts
-import { resolveConsent } from '@inth/svelte/server';
+// src/routes/api/consent-state/+server.ts
+import { loadConsent } from '@inth/svelte/kit';
+import { json } from '@sveltejs/kit';
 
-const state = await resolveConsent({
-	projectUrl: 'https://your-project.inth.app',
-	headers: request.headers,
-});
+export const GET = async (event) => json((await loadConsent(event)).consent);
 ```
 
 It never throws. When the backend fails or takes longer than `timeoutMs`,
-500 ms by default, it returns the stored choice without a policy. Pass
-`manifest` to resolve from a manifest you hold instead of calling `/init`. In a load, use `loadConsent`, which
-reads the request and the handle's config from the event.
-Import `@inth/svelte/kit` and `@inth/svelte/server` only from server files
+500 ms by default, it returns the stored choice without a policy.
+Import `@inth/svelte/kit` only from server files
 such as `+layout.server.ts`, `+server.ts` and `hooks.server.ts`; imported into
 a component they add server code to the browser bundle.

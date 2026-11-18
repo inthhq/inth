@@ -8,7 +8,6 @@
  * with, on `event.locals.inth`.
  */
 import { building } from '$app/env';
-import type { StorageConfig } from '@inth/sdk/engine';
 import type { ConsentMode } from '@inth/sdk/modes';
 import type {
 	ConsentManifest,
@@ -68,25 +67,6 @@ export interface InthHandleOptions extends ConsentRequestOptions {
 	 * downloaded.
 	 */
 	snapshot?: ConsentManifest;
-	/**
-	 * @deprecated Inth no longer sets a subject cookie, so the handle reads
-	 * nothing from this. Removed in v4.
-	 */
-	storage?: Pick<
-		StorageConfig,
-		'crossSubdomain' | 'defaultDomain' | 'defaultExpiryDays'
-	>;
-	/**
-	 * @deprecated Inth no longer sets a subject cookie, so the handle reads
-	 * nothing from this. Removed in v4. `loadConsent` takes its own
-	 * `trustForwardedHeaders` for a relative hosted backend.
-	 */
-	trustForwardedHeaders?: boolean;
-	/**
-	 * @deprecated Inth no longer sets a subject cookie, so this does
-	 * nothing. Removed in v4.
-	 */
-	subjectCookie?: boolean;
 }
 
 /**

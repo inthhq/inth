@@ -126,8 +126,7 @@ See [customize](/docs/frameworks/sveltekit/customize).
 
 ## Server code ends up in the browser bundle
 
-**Check.** Look for imports of `@inth/svelte/kit` or `@inth/svelte/server` in
-components. They are for server files: `hooks.server.ts`,
+**Check.** Look for imports of `@inth/svelte/kit` in components. They are for server files: `hooks.server.ts`,
 `+layout.server.ts`, `+page.server.ts` and `+server.ts`. Imported from a
 component, they pull the manifest resolver and every bundled translation into
 the browser bundle.
@@ -162,7 +161,7 @@ the alphas renamed these with no alias.
 | `inthPreload` | Part of `consentManifest()` from `@inth/svelte/vite` |
 | `ConsentManifestOptions`, `consentManifest({ outputFile })` | Removed |
 | `loadConsent(event, { projectUrl, manifest, initRoute, shared })` returning `prefetch` | `inthHandle({ mode, routePrefix, snapshot, projectUrl })` in `src/hooks.server.ts`, and `export { loadConsent as load }`, which returns `{ consent }` |
-| `resolveConsent({ manifest })` from `@inth/svelte/server` | `resolveConsent({ snapshot })` |
+| `resolveConsent()` from `@inth/svelte/server` | `loadConsent(event)` from `@inth/svelte/kit`, in a load or an endpoint |
 
 <include src="../../shared/svelte/troubleshooting.mdx" />
 

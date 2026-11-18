@@ -186,8 +186,8 @@ from [send the events to your own analytics](#send-the-events-to-your-own-analyt
 in `options`. The layout awaits consent inside `<Suspense>`, as in
 [render the banner in the server HTML](/docs/frameworks/next/app-router#render-the-banner-in-the-server-html),
 so the banner is in the server HTML already showing the visitor's arm.
-`resolveConsent` in `@inth/tanstack-start/server` and `@inth/svelte/server`
-takes the same `experiment`.
+`resolveConsent` in `@inth/tanstack-start/server` and `loadConsent`
+in `@inth/svelte/kit` take the same `experiment`.
 
 If you pass `resolveConsent()` to `ConsentRoot` without awaiting it (the
 streaming layout), the client mounts before the state arrives. Pass the
@@ -419,9 +419,9 @@ On a server-rendered page the server calls `/init`, not the browser, so the
 server has to know the arm. Pass the experiment to `resolveConsent`, as in
 [Vercel Flags SDK](#vercel-flags-sdk): it sends only `{ id, arm }` to the
 backend and hands the full experiment to the client in its state.
-`resolveConsent` takes `experiment` in `@inth/nextjs/server`,
-`@inth/tanstack-start/server` and `@inth/svelte/server`; Astro and Nuxt pass
-the arm they rendered on their own. When Inth picks the arm in the browser,
+`resolveConsent` takes `experiment` in `@inth/nextjs/server` and
+`@inth/tanstack-start/server`, as `loadConsent` does in `@inth/svelte/kit`;
+Astro and Nuxt pass the arm they rendered on their own. When Inth picks the arm in the browser,
 the browser's own `/init` carries it, so a server-rendered page that skips
 the client `/init` has no count for built-in assignment. Resolve the arm with
 a flag on those pages.

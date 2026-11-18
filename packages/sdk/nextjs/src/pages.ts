@@ -211,20 +211,9 @@ export type WithConsentPropsOptions = Omit<
 > & {
 	/**
 	 * The client's `storageConfig`. `storageKey` names the consent cookie,
-	 * like `cookieName`, and wins over it. The other fields are deprecated:
-	 * Inth no longer sets a subject cookie, so nothing reads them. They are
-	 * removed in v4.
+	 * like `cookieName`, and wins over it.
 	 */
-	storage?: Pick<
-		StorageConfig,
-		'crossSubdomain' | 'defaultDomain' | 'defaultExpiryDays' | 'storageKey'
-	>;
-
-	/**
-	 * @deprecated Inth no longer sets a subject cookie, so this does
-	 * nothing. Removed in v4.
-	 */
-	subjectCookie?: boolean;
+	storage?: Pick<StorageConfig, 'storageKey'>;
 };
 
 /**
@@ -259,7 +248,7 @@ export const withConsentProps = function withConsentProps<
 	getServerSideProps?: GetServerSideProps<Props>,
 	options: WithConsentPropsOptions = {}
 ): GetServerSideProps<Props & ConsentPageProps> {
-	const { storage, subjectCookie: _subjectCookie, ...resolveOptions } = options;
+	const { storage, ...resolveOptions } = options;
 	const cookieName = storage?.storageKey ?? options.cookieName;
 	return async (context: GetServerSidePropsContext) => {
 		const [state, result] = await Promise.all([

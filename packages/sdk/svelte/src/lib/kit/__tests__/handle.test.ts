@@ -255,20 +255,15 @@ describe('inthHandle on the consent route', () => {
 		}
 	);
 
-	test('a page request sets no subject cookie, whatever the deprecated options say', async () => {
+	test('a page request sets no subject cookie', async () => {
 		const setCookie = vi.fn();
 		const event = createEvent({
 			headers: { cookie: 'theme=dark' },
 			setCookie,
 			url: 'https://shop.example/pricing',
 		});
-		const { locals } = await runHandle(event, {
-			storage: { crossSubdomain: true },
-			subjectCookie: true,
-			trustForwardedHeaders: true,
-		});
+		await runHandle(event);
 		expect(setCookie).not.toHaveBeenCalled();
-		expect(locals.cookie).toBeUndefined();
 		expect(event.request.headers.get('cookie')).toBe('theme=dark');
 	});
 });

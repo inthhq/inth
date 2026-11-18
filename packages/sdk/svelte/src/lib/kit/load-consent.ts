@@ -10,6 +10,7 @@
  * `waitUntil`, and the config and inputs `inthHandle` stored.
  */
 import { building } from '$app/env';
+import type { ServerExperiment } from '@inth/sdk/engine';
 import {
 	projectUrl as builtProjectUrl,
 	snapshot as builtSnapshot,
@@ -80,6 +81,14 @@ export interface LoadConsentOptions extends ConsentRequestOptions {
 	 * @default 500
 	 */
 	timeoutMs?: number | false;
+
+	/**
+	 * The banner experiment with the arm this request runs, from your
+	 * feature flag. While the visitor has no stored choice, the server's
+	 * `/init` carries the arm, or its session report does in manifest mode.
+	 * The state carries the experiment to `ConsentRoot`.
+	 */
+	experiment?: ServerExperiment;
 }
 
 const readLocals = function readLocals(
@@ -173,6 +182,7 @@ export const loadConsent = async function loadConsent(
 	const state = await resolveRequestConsent({
 		...server.consent,
 		adapter: '@inth/svelte',
+		experiment: options.experiment,
 		fetch: options.fetch,
 		forwardHeaders: options.forwardHeaders,
 		// SvelteKit answers this app's own routes in-process, so the consent

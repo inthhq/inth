@@ -29,15 +29,6 @@ describe('inthProxy', () => {
 		expect(response.headers.get('x-middleware-request-sec-gpc')).toBe('1');
 	});
 
-	test('the deprecated subject options set no cookie', () => {
-		const response = inthProxy(request(), {
-			storage: { crossSubdomain: true, storageKey: 'consent' },
-			subjectCookie: true,
-			trustForwardedHeaders: true,
-		});
-		expect(response.headers.get('set-cookie')).toBeNull();
-	});
-
 	test('cookie: true still sets the geo cookies', () => {
 		const response = inthProxy(request({ 'cf-ipcountry': 'DE' }), {
 			cookie: true,

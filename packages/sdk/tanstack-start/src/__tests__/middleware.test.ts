@@ -187,18 +187,6 @@ describe('consentRequestMiddleware: no subject cookie', () => {
 		const state = await resolveConsent({ request });
 		expect(state.initialRecords?.subject?.subjectId).toBe('sub_returning');
 	});
-
-	test('the deprecated subject options set no cookie', async () => {
-		const { response } = await run(
-			consentRequestMiddleware({
-				storage: { storageKey: 'consent' },
-				subjectCookie: true,
-				trustForwardedHeaders: true,
-			}),
-			{}
-		);
-		expect(response.headers.getSetCookie()).toEqual(['session=1']);
-	});
 });
 
 /** Runs the middleware around a page that may render consent. */

@@ -75,9 +75,6 @@
 			"kit/locals": [
 				"./dist/kit/app.d.ts"
 			],
-			"server": [
-				"./dist/server/index.d.ts"
-			],
 			"vite": [
 				"./dist/vite.d.ts"
 			]
@@ -126,11 +123,6 @@
 		},
 		"./kit/locals": {
 			"types": "./dist/kit/app.d.ts"
-		},
-		"./server": {
-			"types": "./dist/server/index.d.ts",
-			"import": "./dist/server/index.js",
-			"default": "./dist/server/index.js"
 		},
 		"./vite": {
 			"types": "./dist/vite.d.ts",

@@ -172,8 +172,6 @@ field.
 | `enabled` | `boolean` | `true` | Registers the middleware that sets `Astro.locals.inth` |
 | `skip` | `string[]` | `[]` | Path prefixes the middleware leaves alone. `'/api'` covers `/api/health` but not `/apidocs` |
 | `timeoutMs` | `number \| false` | `500` | Longest a server render waits for the policy. `false` or `Infinity` waits however long the backend takes; any other value that is not a finite, non-negative number uses the default |
-| `trustForwardedHeaders` | `boolean` | `false` | Deprecated. Does nothing: Inth no longer sets a subject ID cookie. Removed in v4 |
-| `subjectCookie` | `boolean` | — | Deprecated. Does nothing: Inth no longer sets a subject ID cookie. Removed in v4 |
 
 The integration's own route under `routePrefix` is always skipped. On a
 skipped route, `Astro.locals.inth` is unset and `ConsentBanner` throws, so

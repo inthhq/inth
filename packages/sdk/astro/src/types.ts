@@ -94,16 +94,6 @@ export interface InthMiddlewareOptions {
 	 * @default 500
 	 */
 	timeoutMs?: number | false;
-	/**
-	 * @deprecated Inth no longer sets a subject cookie, so the middleware
-	 * reads nothing from this. Removed in v4.
-	 */
-	trustForwardedHeaders?: boolean;
-	/**
-	 * @deprecated Inth no longer sets a subject cookie, so this does
-	 * nothing. Removed in v4.
-	 */
-	subjectCookie?: boolean;
 }
 
 /** Options accepted by the `inth()` Astro integration. */
@@ -499,16 +489,8 @@ export interface InthResolvedOptions extends Omit<
 	routePrefix?: string;
 	ui: InthUIAdapterName;
 	colorScheme: InthColorScheme;
-	middleware: Required<
-		Omit<
-			InthMiddlewareOptions,
-			'subjectCookie' | 'timeoutMs' | 'trustForwardedHeaders'
-		>
-	> &
-		Pick<
-			InthMiddlewareOptions,
-			'subjectCookie' | 'timeoutMs' | 'trustForwardedHeaders'
-		>;
+	middleware: Required<Omit<InthMiddlewareOptions, 'timeoutMs'>> &
+		Pick<InthMiddlewareOptions, 'timeoutMs'>;
 	/**
 	 * Whether the components inline the first-paint rules and the client
 	 * links the dialog's when it opens. `false` with `styles: false`, and on

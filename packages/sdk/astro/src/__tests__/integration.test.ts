@@ -18,7 +18,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { buildInlineCodeHashes } from '../csp';
 import {
-	buildLocalsTypes,
+	LOCALS_TYPES,
 	inth,
 	createOwnEntryResolver,
 	inferUIAdapter,
@@ -114,8 +114,8 @@ const runDone = async function runDone(
 	);
 	const logger = { error: vi.fn(), warn: vi.fn() };
 	const injectTypes = vi.fn();
-	const run = () =>
-		integration.hooks['astro:config:done']?.({
+	const run = async () =>
+		await integration.hooks['astro:config:done']?.({
 			config: { adapter, integrations },
 			injectTypes,
 			logger,
@@ -1330,12 +1330,11 @@ describe('astro:config:done', () => {
 		await done();
 		expect(done.injectTypes).toHaveBeenCalledWith({
 			content: expect.stringMatching(
-				/inth: import\('(?:@inth\/astro|@inth\/astro)'\)\.InthLocals;/u
+				/inth: import\('@inth\/astro'\)\.InthLocals;/u
 			),
 			filename: 'locals.d.ts',
 		});
-		const content = await buildLocalsTypes(undefined);
-		expect(content).toMatch(/^declare namespace App \{/u);
+		expect(LOCALS_TYPES).toMatch(/^declare namespace App \{/u);
 	});
 
 	it.each(['dev', 'sync'])(

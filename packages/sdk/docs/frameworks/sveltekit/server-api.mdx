@@ -1,16 +1,16 @@
 ---
 title: Server API
-description: Reference for inthHandle, loadConsent, createConsentRoute and resolveConsent from @inth/svelte/kit and @inth/svelte/server, with every option and default.
+description: Reference for inthHandle, loadConsent and createConsentRoute from @inth/svelte/kit, with every option and default.
 group: frameworks
 ---
 
 ## Import server helpers only in server files
 
-`@inth/svelte/kit` holds the SvelteKit helpers and `@inth/svelte/server` the
-framework-free `resolveConsent`. Import them from `hooks.server.ts`,
-`+layout.server.ts`, `+page.server.ts` and `+server.ts` only. Imported into a
-component, they add the manifest resolver and every bundled translation to
-the browser bundle. Components import from `@inth/svelte`.
+`@inth/svelte/kit` holds the SvelteKit helpers. Import them from
+`hooks.server.ts`, `+layout.server.ts`, `+page.server.ts` and `+server.ts`
+only. Imported into a component, they add the manifest resolver and every
+bundled translation to the browser bundle. Components import from
+`@inth/svelte`.
 
 | Export | From | Use it in | Page |
 | --- | --- | --- | --- |
@@ -18,13 +18,10 @@ the browser bundle. Components import from `@inth/svelte`.
 | `loadConsent` | `@inth/svelte/kit` | `+layout.server.ts`, as `load` | [loadConsent](#loadconsent) |
 | `createConsentRoute(options)` | `@inth/svelte/kit` | `+server.ts` | [createConsentRoute](#createconsentroute) |
 | `manifest()`, `hosted()`, `testing()` | `@inth/svelte/kit` | `hooks.server.ts`, as `inthHandle({ mode })` | [Rendering](./rendering#pick-a-rendering-path) |
-| `resolveConsent(options)` | `@inth/svelte/server` | Any server code | [resolveConsent](#resolveconsent) |
 | `consentManifest(options)` | `@inth/svelte/vite` | `vite.config.ts` | [consentManifest](#consentmanifest) |
 
 The modes from `@inth/svelte/kit` return plain data that reaches the browser
-through `loadConsent`. `@inth/svelte/server` re-exports the browser
-transports `hosted`, `local` and `custom` from the engine, for code that
-builds a provider itself.
+through `loadConsent`.
 
 ## inthHandle
 
@@ -52,7 +49,6 @@ headers either: the page goes to every visitor.
 | `projectUrl` | `string` | the URL `consentManifest()` read | The backend. Consent saves go here. |
 | `snapshot` | `ConsentManifest` | the manifest `consentManifest()` downloaded | A manifest to resolve with. `createConsentRoute()` reads it too. |
 | `cookieName` | `string` | `inth` | The consent cookie. Match the provider's `storageConfig.storageKey`. |
-| `storage`, `trustForwardedHeaders`, `subjectCookie` | | | Deprecated. They do nothing: Inth no longer sets a subject ID cookie. Removed in v4. |
 | `country`, `region`, `language` | `string` | from headers | Forces the input for every request. |
 
 `event.locals.inth` has this shape, exported as `InthLocals`:
@@ -113,6 +109,7 @@ export const load = (event) => loadConsent(event, { timeoutMs: 1000 });
 | Option | Type | Default | Behavior |
 | --- | --- | --- | --- |
 | `timeoutMs` | `number` or `false` | `500` | Longest wait for the backend or the manifest, in milliseconds. `false` or `Infinity` waits as long as it takes; any other value that is not a finite, non-negative number uses the default. |
+| `experiment` | `ServerExperiment` | none | The banner experiment with this request's arm. While the visitor has no stored choice, the backend counts the arm; the state carries the experiment to `ConsentRoot`. |
 | `onBackgroundRevalidate` | `(promise, event) => void` | platform hook when available | Keeps session reports and unfinished requests alive after the response. `event.platform.context.waitUntil` takes precedence; this callback is the fallback. See [keep background work alive](./rendering#keep-background-work-alive-after-the-response). |
 | `cookieName` | `string` | the handle's, or `inth` | The consent cookie. Match the provider's `storageConfig.storageKey`. |
 | `country`, `region`, `language` | `string` | from the handle or headers | Forces one input for this call. |
@@ -275,31 +272,6 @@ This recipe covers requests to the consent route. Consent resolved during
 server rendering runs through `loadConsent` in `+layout.server.ts`, under
 SvelteKit's load tracing. Browser hydration, vendor scripts, and background
 manifest refreshes need separate instrumentation.
-
-## resolveConsent
-
-`resolveConsent(options)` from `@inth/svelte/server` does what `loadConsent`
-does without a SvelteKit event. Pass `snapshot` to resolve a build-time snapshot
-with each visitor's request inputs.
-
-| Option | Type | Default | Behavior |
-| --- | --- | --- | --- |
-| `headers` | `Headers` | required | The incoming request's headers. |
-| `projectUrl` | `string` | none | Calls `<projectUrl>/init` when no snapshot is supplied. With `snapshot`, an absolute URL receives session reports. Without either, only the cookie and headers are read. A relative URL resolves against `requestUrl`, or the `host` header when there is none. |
-| `snapshot` | `ConsentManifest` | none | Build-time snapshot, such as `snapshot` from `@inth/svelte/generated`. Resolves locally using this visitor's inputs and takes precedence over backend policy fetching. |
-| `onBackgroundRevalidate` | `(promise) => void` | none | Pass the host's `waitUntil` to keep session reports alive after a serverless response. |
-| `requestUrl` | `string` or `URL` | none | The URL the framework resolved the request under, such as SvelteKit's `event.url`. `loadConsent` passes it for you. |
-| `trustForwardedHeaders` | `boolean` | `false` | Resolves a relative `projectUrl` against `forwarded`, `x-forwarded-host` and `x-forwarded-proto`, and sends the visitor IP to the backend as `x-forwarded-for`. |
-| `cookieName` | `string` | `inth` | The consent cookie. |
-| `cookieHeader` | `string` or `null` | `headers.get('cookie')` | A cookie header to read instead. |
-| `country`, `region`, `language` | `string` | from headers | Forces one input. |
-| `forwardHeaders` | `string[]` | none | Extra headers to send to `/init`, under the same rule as `loadConsent`. |
-| `fetch` | `typeof fetch` | global `fetch` | The fetch for `/init`, session reports and IAB vendor lists. |
-| `timeoutMs` | `number` or `false` | `500` | Longest wait for `/init`, in milliseconds, with the same rule as `loadConsent`. |
-| `now` | `number` | the current time | The request time, shared with the browser. |
-
-It never throws; a failed or slow call returns the stored choice without a
-policy.
 
 ## consentManifest
 

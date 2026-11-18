@@ -178,12 +178,6 @@ const resolveMiddleware = function resolveMiddleware(
 	if (raw.timeoutMs !== undefined) {
 		resolved.timeoutMs = raw.timeoutMs;
 	}
-	if (raw.trustForwardedHeaders !== undefined) {
-		resolved.trustForwardedHeaders = raw.trustForwardedHeaders;
-	}
-	if (raw.subjectCookie !== undefined) {
-		resolved.subjectCookie = raw.subjectCookie;
-	}
 	return resolved;
 };
 
@@ -868,37 +862,17 @@ const bundleBuildManifest = async function bundleBuildManifest(
  * The `App.Locals` declaration the integration adds to `.astro/types.d.ts`,
  * so a site types `Astro.locals.inth` without an `env.d.ts` line.
  *
- * It names the package the site itself depends on: under a strict package
- * manager, a site that installed `inth` cannot see `@inth/astro`.
- *
- * @param root - The Astro project root.
- * @returns The declaration file's content.
  * @internal
  */
-export const buildLocalsTypes = async function buildLocalsTypes(
-	root: URL | undefined
-): Promise<string> {
-	let source = '@inth/astro';
-	try {
-		const { createRequire } = await import('node:module');
-		const require = createRequire(
-			new URL('package.json', root ?? `file://${process.cwd()}/`)
-		);
-		require.resolve('@inth/astro');
-		source = '@inth/astro';
-	} catch {
-		// `@inth/astro` is installed directly.
-	}
-	return [
-		'declare namespace App {',
-		'	interface Locals {',
-		'		/** Consent context resolved by the inth middleware. */',
-		`		inth: import('${source}').InthLocals;`,
-		'	}',
-		'}',
-		'',
-	].join('\n');
-};
+export const LOCALS_TYPES = [
+	'declare namespace App {',
+	'	interface Locals {',
+	'		/** Consent context resolved by the inth middleware. */',
+	"		inth: import('@inth/astro').InthLocals;",
+	'	}',
+	'}',
+	'',
+].join('\n');
 
 /**
  * Resolve the options for this site: the backend URL from the environment
@@ -976,12 +950,12 @@ export const inth = function inth(
 
 	return {
 		hooks: {
-			async 'astro:config:done'({ config, injectTypes, logger }) {
+			'astro:config:done'({ config, injectTypes, logger }) {
 				if (!resolved) {
 					return;
 				}
 				injectTypes({
-					content: await buildLocalsTypes(config.root),
+					content: LOCALS_TYPES,
 					filename: 'locals.d.ts',
 				});
 				// Astro would stop the build on its own, with a generic
