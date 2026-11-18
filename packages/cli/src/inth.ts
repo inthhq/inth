@@ -20,6 +20,7 @@ import { chatRetryDiagnostic, requireChatPerson } from "./chat.ts";
 import { CliError } from "./cli-error.ts";
 import { selectCommandConnection } from "./connection-selection.ts";
 import { colorEnabled, organizationReference } from "./display.ts";
+import { hashDocument } from "./document.ts";
 import { diagnosticStep, startErrorDiagnostics } from "./error-diagnostics.ts";
 import { helpCommands } from "./help.ts";
 import { identitySummary } from "./identity.ts";
@@ -267,6 +268,12 @@ const runLocalCommand = async (options: CliArguments): Promise<boolean> => {
       mobileSetupMessage(result),
       JSON.stringify(result)
     );
+    return true;
+  }
+  if (options.document) {
+    diagnosticStep("document_hash");
+    const result = await hashDocument(options.document.path, controller.signal);
+    printResult(options.json, result.hash, JSON.stringify(result));
     return true;
   }
   return false;

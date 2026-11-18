@@ -2,6 +2,7 @@ import { boilerplateFrameworks } from "../vendor/c15t/generate/index.ts";
 import { requiresAgentConnection } from "./auth-types.ts";
 import { C15T_CODEMODS_USAGE } from "./c15t-codemods.ts";
 import { C15T_USAGE, CODING_AGENTS } from "./c15t.ts";
+import { DOCUMENT_HASH_USAGE } from "./document.ts";
 import { FEEDBACK_CATEGORIES, FEEDBACK_SURFACES } from "./feedback.ts";
 import { MCP_CLIENTS } from "./mcp-clients.ts";
 import { MOBILE_SETUP_USAGE } from "./mobile.ts";
@@ -1077,6 +1078,31 @@ export const COMMAND_METADATA: CommandMetadata[] = [
     paginated: false,
     scopes: [],
     usage: MOBILE_SETUP_USAGE.slice(7),
+  },
+  {
+    action: "hash",
+    authentication: "none",
+    command: "document",
+    description:
+      "Print the hash that identifies a version of a legal document, such as a privacy policy or terms of service",
+    effects: [
+      "Hashes the exact bytes of the published file with SHA-256 and prints sha256: followed by lowercase hex. Line endings, whitespace and encoding are not normalized, so CRLF and LF copies of the same text hash differently.",
+      "Reads the named regular file, or stdin when the path is -. Needs no sign-in, never prompts and sends nothing from the document.",
+      "With --json, data holds path (null for stdin), bytes and hash.",
+    ],
+    examples: [
+      "inth document hash privacy-policy.md",
+      "inth document hash terms.html --json",
+      "inth document hash - < privacy-policy.md",
+    ],
+    options: [
+      option("json", "boolean", "Print the result as JSON"),
+      option("non-interactive", "boolean", "Accepted; hashing never prompts"),
+      option("help", "boolean", "Show help for this command"),
+    ],
+    paginated: false,
+    scopes: [],
+    usage: DOCUMENT_HASH_USAGE.slice(7),
   },
   {
     action: "",

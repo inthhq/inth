@@ -24,6 +24,7 @@ const OPERATIONS = new Set([
   "mcp_command",
   "skills_command",
   "mobile_setup",
+  "document_hash",
 ]);
 
 let operations: string[] = [];

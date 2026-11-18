@@ -34,7 +34,7 @@ inth project update prj_123 --data-file project-update.json
 
 An empty `consent.trustedOrigins` array allows every origin. Use an explicit list to restrict origins.
 
-Only a file flag with `-` reads stdin. Files and stdin must contain UTF-8 text. JSON input is limited to 1 MiB, or 64 KiB for feedback. `--data @file` has no special file meaning. Raw `api` writes also accept `--data-file`.
+For request input, only a file flag with `-` reads stdin, and files and stdin must contain UTF-8 text. JSON input is limited to 1 MiB, or 64 KiB for feedback. `--data @file` has no special file meaning. Raw `api` writes also accept `--data-file`.
 
 Chat and Support writes also accept `--message-file <path|->` for message text. `--message -` sends a literal hyphen. See [chat commands](./commands#how-do-i-use-inth-agent-chats) for limits and safe retries.
 

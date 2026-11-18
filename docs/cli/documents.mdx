@@ -1,0 +1,52 @@
+---
+title: Hash a legal document with the Inth CLI
+description: Run inth document hash to print the SHA-256 hash that identifies a published version of a privacy policy or terms of service.
+---
+
+Inth records which version of a privacy policy or terms of service each person accepted, and identifies each version by a hash of the document. `inth document hash` prints that hash for a file. It needs no sign-in, never prompts and sends nothing from the document.
+
+## How do I hash a document?
+
+```sh
+inth document hash privacy-policy.md
+```
+
+The command prints one line:
+
+```txt
+sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08
+```
+
+To hash the policy your site serves, download it first, so a failed download stops before hashing:
+
+```sh
+curl -fsSL -o privacy.html https://example.com/privacy && inth document hash privacy.html
+```
+
+To hash stdin, pass `-` as the path.
+
+## How is the hash computed?
+
+The hash is `sha256:` followed by the lowercase hex SHA-256 of the file's exact bytes. It matches `shasum -a 256` and `sha256sum`. The CLI does not change line endings, whitespace or text encoding first, so a copy with CRLF line endings hashes differently from one with LF. Hash the file you publish.
+
+## How do I read the hash from a script?
+
+```sh
+inth document hash terms.html --json
+```
+
+With `--json`, `data` holds `path`, `bytes` and `hash`. `path` is null for stdin.
+
+```json
+{
+  "schemaVersion": 2,
+  "ok": true,
+  "data": {
+    "path": "terms.html",
+    "bytes": 4,
+    "hash": "sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+  }
+}
+```
+
+A missing file, a directory or anything else that is not a regular file fails with `usage_error` and exit code `1`. The message names the path, such as `File not found: terms.html`.
