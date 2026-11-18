@@ -12,10 +12,7 @@ import {
 	ConsentManager,
 	ConsentStyles,
 	ConsentTheme,
-	resolveComponentStyles,
-	resolveConsentActionStyle,
 	SURFACE_SCOPES,
-	toStyleAttribute,
 	ɵBranding as Branding,
 	ɵNoStyleScope as NoStyleScope,
 	ɵPolicyActions as PolicyActions,
@@ -37,12 +34,19 @@ import {
 	uniqueId,
 } from '@inth/angular/primitives';
 import type { AllConsentNames, ConsentType } from '@inth/sdk/engine';
+import { actionAppearanceFromTheme } from '@inth/sdk/engine';
 import { createPreferenceDraft } from '@inth/sdk/preference-draft';
 import { resolveConsentPresentation } from '@inth/sdk/surface-state';
 import accordionStyles from '@inth/sdk/ui/styles/components/accordion';
 import managerStyles from '@inth/sdk/ui/styles/components/consent-manager';
 import switchStyles from '@inth/sdk/ui/styles/components/switch';
-import { getTextDirection } from '@inth/sdk/ui/utils';
+import { resolveActionAppearance } from '@inth/sdk/ui/theme';
+import type { ConsentActionKey } from '@inth/sdk/ui/theme';
+import {
+	getTextDirection,
+	resolveStyles,
+	toStyleAttributeValue,
+} from '@inth/sdk/ui/utils';
 
 import { ConsentVendorList } from './consent-vendor-list';
 import { DIALOG_SHEETS } from './dialog-sheets';
@@ -251,11 +255,8 @@ const formatConsentName = function formatConsentName(name: string): string {
 					<button
 						inth-consent-button
 						[action]="'reject'"
-						[variant]="
-							themedActions().reject.variant ??
-							(primary ? 'primary' : 'neutral')
-						"
-						[mode]="themedActions().reject.mode ?? 'stroke'"
+						[variant]="appearance('reject', primary).variant"
+						[mode]="appearance('reject', primary).mode"
 						data-action="reject"
 						data-testid="consent-widget-reject-button"
 					>
@@ -266,11 +267,8 @@ const formatConsentName = function formatConsentName(name: string): string {
 					<button
 						inth-consent-button
 						[action]="'accept'"
-						[variant]="
-							themedActions().accept.variant ??
-							(primary ? 'primary' : 'neutral')
-						"
-						[mode]="themedActions().accept.mode ?? 'stroke'"
+						[variant]="appearance('accept', primary).variant"
+						[mode]="appearance('accept', primary).mode"
 						data-action="accept"
 						data-testid="consent-widget-footer-accept-all-button"
 					>
@@ -282,10 +280,8 @@ const formatConsentName = function formatConsentName(name: string): string {
 						inth-consent-button
 						[action]="'save'"
 						[disabled]="consent.draft.isStale()"
-						[variant]="
-							themedActions().save.variant ?? (primary ? 'primary' : 'neutral')
-						"
-						[mode]="themedActions().save.mode ?? 'stroke'"
+						[variant]="appearance('save', primary).variant"
+						[mode]="appearance('save', primary).mode"
 						data-action="save"
 						data-testid="consent-widget-footer-save-button"
 					>
@@ -299,9 +295,7 @@ const formatConsentName = function formatConsentName(name: string): string {
 			<a
 				inth-branding
 				[noStyle]="resolvedNoStyle()"
-				[variant]="'dialog-tag'"
-				[themeKey]="'consentWidgetTag'"
-				data-testid="consent-widget-branding"
+				surface="widget"
 			></a>
 		}`,
 })
@@ -346,7 +340,7 @@ export class ConsentWidgetRoot {
 
 	/** @internal */
 	protected readonly rootStyle = computed(() =>
-		resolveComponentStyles(
+		resolveStyles(
 			'consentWidget',
 			this.#theme.theme(),
 			{
@@ -374,20 +368,13 @@ export class ConsentWidgetRoot {
 	);
 
 	/** @internal */
-	protected readonly themedActions = computed(() => {
-		const theme = this.#theme.theme();
-		return {
-			accept: resolveConsentActionStyle(theme, 'accept'),
-			customize: resolveConsentActionStyle(theme, 'customize'),
-			dismiss: resolveConsentActionStyle(theme, 'dismiss'),
-			reject: resolveConsentActionStyle(theme, 'reject'),
-			save: resolveConsentActionStyle(theme, 'save'),
-		};
-	});
+	protected appearance(action: ConsentActionKey, primary: boolean) {
+		return resolveActionAppearance(this.#theme.theme(), action, primary);
+	}
 	/** @internal */
 	protected readonly presentation = computed(() =>
 		resolveConsentPresentation({
-			actionAppearance: this.themedActions(),
+			actionAppearance: actionAppearanceFromTheme(this.#theme.theme()),
 			policy: this.consent.snapshot().policyRule,
 			presentation: this.consent.presentation(),
 			surface: 'preferences',
@@ -415,8 +402,9 @@ export class ConsentWidgetRoot {
 	/** @internal */
 	protected styleOf(style: { style?: unknown }): string | null {
 		return (
-			toStyleAttribute(style.style as Parameters<typeof toStyleAttribute>[0]) ??
-			null
+			toStyleAttributeValue(
+				style.style as Parameters<typeof toStyleAttributeValue>[0]
+			) ?? null
 		);
 	}
 
@@ -493,11 +481,11 @@ export class ConsentWidgetRoot {
 	}
 
 	#slot(
-		key: Parameters<typeof resolveComponentStyles>[0],
+		key: Parameters<typeof resolveStyles>[0],
 		baseClassName: string | undefined
 	) {
 		const noStyle = this.resolvedNoStyle();
-		return resolveComponentStyles(
+		return resolveStyles(
 			key,
 			this.#theme.theme(),
 			{ baseClassName, noStyle },

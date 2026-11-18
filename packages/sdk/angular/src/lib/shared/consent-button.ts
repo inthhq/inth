@@ -10,12 +10,12 @@ import {
 	PLATFORM_ID,
 } from '@angular/core';
 import buttonStyles from '@inth/sdk/ui/styles/components/button';
+import { resolveStyles, toStyleAttributeValue } from '@inth/sdk/ui/utils';
 
 import { ConsentManager } from '../core/consent-manager';
 import { ConsentTheme } from '../core/consent-theme';
 import { holdIdleDialogWarming, warmDialog } from '../core/dialog-warming';
 import { resolveNoStyle } from '../core/no-style';
-import { resolveComponentStyles, toStyleAttribute } from '../core/slot-styles';
 import { SURFACE_CLOSED } from '../core/surface-close';
 
 /**
@@ -101,7 +101,7 @@ export class ConsentButton {
 
 	readonly #resolved = computed(() => {
 		const noStyle = this.resolvedNoStyle();
-		return resolveComponentStyles(
+		return resolveStyles(
 			this.variant() === 'primary' ? 'buttonPrimary' : 'buttonSecondary',
 			this.#theme.theme(),
 			{ baseClassName: noStyle ? undefined : buttonStyles.button, noStyle },
@@ -116,7 +116,7 @@ export class ConsentButton {
 
 	/** @internal */
 	protected readonly style = computed(
-		() => toStyleAttribute(this.#resolved().style) ?? ''
+		() => toStyleAttributeValue(this.#resolved().style) ?? ''
 	);
 
 	constructor() {

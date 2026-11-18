@@ -28,15 +28,17 @@ import {
 	ConsentStyles,
 	ConsentTheme,
 	fallbackTranslations,
-	resolveComponentStyles,
 	SURFACE_SCOPES,
-	toStyleAttribute,
 	ɵNoStyleScope as NoStyleScope,
 	ɵresolveNoStyle as resolveNoStyle,
 } from '@inth/angular';
 import type { AllConsentNames } from '@inth/sdk/engine';
 import styles from '@inth/sdk/ui/styles/components/consent-gate';
-import { resolveTranslations } from '@inth/sdk/ui/utils';
+import {
+	resolveStyles,
+	resolveTranslations,
+	toStyleAttributeValue,
+} from '@inth/sdk/ui/utils';
 
 /** What a gate's placeholder template receives. */
 export interface ConsentGatePlaceholderContext {
@@ -284,7 +286,7 @@ export class ConsentGate {
 	/** @internal */
 	protected readonly placeholderStyle = computed(() => {
 		const noStyle = this.resolvedNoStyle();
-		return resolveComponentStyles(
+		return resolveStyles(
 			'consentGate',
 			this.#theme.theme(),
 			{ baseClassName: styles.placeholder, noStyle },
@@ -294,13 +296,13 @@ export class ConsentGate {
 
 	/** @internal */
 	protected readonly placeholderStyleAttribute = computed(
-		() => toStyleAttribute(this.placeholderStyle().style) ?? null
+		() => toStyleAttributeValue(this.placeholderStyle().style) ?? null
 	);
 
 	/** @internal */
 	protected readonly titleStyle = computed(() => {
 		const noStyle = this.resolvedNoStyle();
-		return resolveComponentStyles(
+		return resolveStyles(
 			'consentGateTitle',
 			this.#theme.theme(),
 			{ baseClassName: styles.title, noStyle },
@@ -310,7 +312,7 @@ export class ConsentGate {
 
 	/** @internal */
 	protected readonly titleStyleAttribute = computed(
-		() => toStyleAttribute(this.titleStyle().style) ?? null
+		() => toStyleAttributeValue(this.titleStyle().style) ?? null
 	);
 
 	/**
@@ -321,7 +323,7 @@ export class ConsentGate {
 	 */
 	protected readonly buttonStyle = computed(() => {
 		const noStyle = this.resolvedNoStyle();
-		return resolveComponentStyles(
+		return resolveStyles(
 			'consentGateButton',
 			this.#theme.theme(),
 			{ noStyle },
@@ -331,7 +333,7 @@ export class ConsentGate {
 
 	/** @internal */
 	protected readonly buttonStyleAttribute = computed(
-		() => toStyleAttribute(this.buttonStyle().style) ?? ''
+		() => toStyleAttributeValue(this.buttonStyle().style) ?? ''
 	);
 
 	/** @internal */

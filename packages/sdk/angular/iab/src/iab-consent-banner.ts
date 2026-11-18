@@ -13,10 +13,8 @@ import {
 	ConsentTheme,
 	FocusTrap,
 	Portal,
-	resolveComponentStyles,
 	ScrollLock,
 	SURFACE_SCOPES,
-	toStyleAttribute,
 	ɵbannerVisibility as bannerVisibility,
 	ɵBranding as Branding,
 	ɵNoStyleScope as NoStyleScope,
@@ -31,7 +29,11 @@ import { resolveConsentPresentation } from '@inth/sdk/surface-state';
 import buttonStyles from '@inth/sdk/ui/styles/components/button';
 import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-banner';
-import { getTextDirection } from '@inth/sdk/ui/utils';
+import {
+	getTextDirection,
+	resolveStyles,
+	toStyleAttributeValue,
+} from '@inth/sdk/ui/utils';
 
 import { IAB_FIRST_PAINT_SHEETS } from './iab-first-paint-sheets';
 import { getIABTranslations } from './iab-translations';
@@ -100,9 +102,7 @@ export type IABBannerButton = 'reject' | 'accept' | 'customize';
 							<a
 								inth-branding
 								[noStyle]="resolvedNoStyle()"
-								[variant]="'banner-tag'"
-								[themeKey]="'iabConsentBannerTag'"
-								data-testid="iab-consent-banner-branding"
+								surface="iab-banner"
 							></a>
 						}
 						<div
@@ -302,7 +302,7 @@ export class IABConsentBanner {
 	);
 
 	readonly #rootStyle = computed(() =>
-		resolveComponentStyles(
+		resolveStyles(
 			'iabConsentBanner',
 			this.#theme.theme(),
 			{
@@ -315,7 +315,7 @@ export class IABConsentBanner {
 	);
 	/** @internal */
 	protected readonly rootStyle = computed(() =>
-		toStyleAttribute(this.#rootStyle().style)
+		toStyleAttributeValue(this.#rootStyle().style)
 	);
 	/** @internal */
 	protected readonly surfaceClass = computed(() => {
@@ -330,7 +330,7 @@ export class IABConsentBanner {
 	});
 	/** @internal */
 	protected readonly cardStyle = computed(() =>
-		resolveComponentStyles(
+		resolveStyles(
 			'iabConsentBannerCard',
 			this.#theme.theme(),
 			{ baseClassName: styles.card, noStyle: this.resolvedNoStyle() },
@@ -339,7 +339,7 @@ export class IABConsentBanner {
 	);
 	/** @internal */
 	protected readonly headerStyle = computed(() =>
-		resolveComponentStyles(
+		resolveStyles(
 			'iabConsentBannerHeader',
 			this.#theme.theme(),
 			{ baseClassName: styles.header, noStyle: this.resolvedNoStyle() },
@@ -348,7 +348,7 @@ export class IABConsentBanner {
 	);
 	/** @internal */
 	protected readonly footerStyle = computed(() =>
-		resolveComponentStyles(
+		resolveStyles(
 			'iabConsentBannerFooter',
 			this.#theme.theme(),
 			{
@@ -389,8 +389,8 @@ export class IABConsentBanner {
 	}
 
 	/** @internal */
-	protected toStyle(style: Parameters<typeof toStyleAttribute>[0]) {
-		return toStyleAttribute(style) ?? null;
+	protected toStyle(style: Parameters<typeof toStyleAttributeValue>[0]) {
+		return toStyleAttributeValue(style) ?? null;
 	}
 
 	/** @internal */

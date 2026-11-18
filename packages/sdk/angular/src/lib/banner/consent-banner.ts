@@ -13,10 +13,17 @@ import {
 	PLATFORM_ID,
 } from '@angular/core';
 import type { Model, PromptPosition, PromptVariant } from '@inth/sdk/engine';
+import { actionAppearanceFromTheme } from '@inth/sdk/engine';
 import type { PolicyRight } from '@inth/sdk/schema/types';
 import { replayEarlyConsentTaps } from '@inth/sdk/surface-actions';
 import { resolveConsentPresentation } from '@inth/sdk/surface-state';
 import styles from '@inth/sdk/ui/styles/components/consent-banner';
+import { resolveActionAppearance } from '@inth/sdk/ui/theme';
+import {
+	resolveLegalLinkEntries,
+	resolveStyles,
+	toStyleAttributeValue,
+} from '@inth/sdk/ui/utils';
 import { getTextDirection } from '@inth/sdk/ui/utils/text-direction';
 
 import { ConsentManager } from '../core/consent-manager';
@@ -27,11 +34,6 @@ import {
 } from '../core/consent-styles';
 import { ConsentTheme } from '../core/consent-theme';
 import { NoStyleScope, resolveNoStyle } from '../core/no-style';
-import {
-	resolveComponentStyles,
-	resolveConsentActionStyle,
-	toStyleAttribute,
-} from '../core/slot-styles';
 import { registeredDefaultTranslations } from '../core/translation-defaults';
 import { FocusTrap } from '../overlay/focus-trap';
 import { Overlay } from '../overlay/overlay';
@@ -39,10 +41,7 @@ import { Portal } from '../overlay/portal';
 import { ScrollLock } from '../overlay/scroll-lock';
 import { Branding, shouldShowBranding } from '../shared/branding';
 import { ConsentButton } from '../shared/consent-button';
-import {
-	InlineLegalLinks,
-	selectLegalLinks,
-} from '../shared/inline-legal-links';
+import { InlineLegalLinks } from '../shared/inline-legal-links';
 import type { LegalLinkSelection } from '../shared/inline-legal-links';
 import { PolicyActions } from '../shared/policy-actions';
 import { resolvedTranslations } from '../shared/translations';
@@ -157,9 +156,7 @@ const primaryActions = function primaryActions(
 							<a
 								inth-branding
 								[noStyle]="resolvedNoStyle()"
-								[variant]="'banner-tag'"
-								[themeKey]="'consentBannerTag'"
-								data-testid="consent-banner-branding"
+								surface="banner"
 							></a>
 						}
 						<div
@@ -399,23 +396,12 @@ export class ConsentBanner {
 	/** @internal */
 	protected readonly visibility = bannerVisibility(() => this.#shouldShow());
 
-	readonly #themedActions = computed(() => {
-		const theme = this.#theme.theme();
-		return {
-			accept: resolveConsentActionStyle(theme, 'accept'),
-			customize: resolveConsentActionStyle(theme, 'customize'),
-			dismiss: resolveConsentActionStyle(theme, 'dismiss'),
-			reject: resolveConsentActionStyle(theme, 'reject'),
-			save: resolveConsentActionStyle(theme, 'save'),
-		};
-	});
-
 	/** @internal */
 	protected readonly presentation = computed(() => {
 		const primary = this.primaryButton();
 		const presentation = this.consent.presentation();
 		return resolveConsentPresentation({
-			actionAppearance: this.#themedActions(),
+			actionAppearance: actionAppearanceFromTheme(this.#theme.theme()),
 			override: {
 				blocking: this.blocking(),
 				layout: this.layout(),
@@ -456,7 +442,8 @@ export class ConsentBanner {
 	/** @internal */
 	protected readonly hasLegalLinks = computed(
 		() =>
-			selectLegalLinks(this.consent.legalLinks(), this.legalLinks()).length > 0
+			resolveLegalLinkEntries(this.consent.legalLinks(), this.legalLinks())
+				.length > 0
 	);
 
 	// Before the engine registers its defaults there are none: the server
@@ -522,16 +509,11 @@ export class ConsentBanner {
 		const noStyle = this.resolvedNoStyle();
 		const theme = this.#theme.theme();
 		const resolve = (
-			key: Parameters<typeof resolveComponentStyles>[0],
+			key: Parameters<typeof resolveStyles>[0],
 			baseClassName: string | undefined,
 			className?: string
 		) =>
-			resolveComponentStyles(
-				key,
-				theme,
-				{ baseClassName, className, noStyle },
-				noStyle
-			);
+			resolveStyles(key, theme, { baseClassName, className, noStyle }, noStyle);
 		return {
 			card: resolve('consentBannerCard', styles.card),
 			description: resolve('consentBannerDescription', styles.description),
@@ -555,7 +537,7 @@ export class ConsentBanner {
 		for (const key of Object.keys(parts) as (keyof typeof parts)[]) {
 			out[key] = {
 				className: parts[key].className || '',
-				style: toStyleAttribute(parts[key].style) ?? '',
+				style: toStyleAttributeValue(parts[key].style) ?? '',
 			};
 		}
 		return out;
@@ -629,14 +611,18 @@ export class ConsentBanner {
 			return null;
 		}
 		const id = action as ConsentBannerButton;
-		const themed = this.#themedActions()[id];
+		const { mode, variant } = resolveActionAppearance(
+			this.#theme.theme(),
+			id,
+			primary
+		);
 		return {
 			$implicit: id,
 			label: this.#labels()[id] ?? '',
-			mode: themed.mode ?? 'stroke',
+			mode,
 			primary,
 			testId: `consent-banner-${id}-button`,
-			variant: themed.variant ?? (primary ? 'primary' : 'neutral'),
+			variant,
 		};
 	}
 

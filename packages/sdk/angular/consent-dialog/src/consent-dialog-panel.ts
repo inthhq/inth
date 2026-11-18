@@ -12,15 +12,12 @@ import {
 	ConsentStyles,
 	ConsentTheme,
 	Portal,
-	resolveComponentStyles,
 	SURFACE_SCOPES,
-	toStyleAttribute,
 	ɵBranding as Branding,
 	ɵInlineLegalLinks as InlineLegalLinks,
 	ɵNoStyleScope as NoStyleScope,
 	ɵresolvedTranslations as resolvedTranslations,
 	ɵresolveNoStyle as resolveNoStyle,
-	ɵselectLegalLinks as selectLegalLinks,
 	ɵshouldShowBranding as shouldShowBranding,
 	ɵSURFACE_CLOSED as SURFACE_CLOSED,
 } from '@inth/angular';
@@ -36,7 +33,12 @@ import { resolveConsentPresentation } from '@inth/sdk/surface-state';
 import { isDialogDismissKey } from '@inth/sdk/ui/primitives';
 import styles from '@inth/sdk/ui/styles/components/consent-dialog';
 import type { ClassNameStyle } from '@inth/sdk/ui/theme';
-import { getTextDirection } from '@inth/sdk/ui/utils';
+import {
+	getTextDirection,
+	resolveLegalLinkEntries,
+	resolveStyles,
+	toStyleAttributeValue,
+} from '@inth/sdk/ui/utils';
 
 import { DEFAULT_DIALOG_MODELS } from './dialog-options';
 import type {
@@ -195,9 +197,7 @@ import type {
 									<a
 										inth-branding
 										[noStyle]="resolvedNoStyle()"
-										[variant]="'dialog-tag'"
-										[themeKey]="'consentDialogTag'"
-										data-testid="consent-dialog-branding"
+										surface="dialog"
 									></a>
 								}
 							</div>
@@ -310,7 +310,8 @@ export class ConsentDialogPanel {
 	/** @internal */
 	protected readonly hasLegalLinks = computed(
 		() =>
-			selectLegalLinks(this.#consent.legalLinks(), this.legalLinks()).length > 0
+			resolveLegalLinkEntries(this.#consent.legalLinks(), this.legalLinks())
+				.length > 0
 	);
 	/** @internal */
 	protected readonly showBranding = computed(() =>
@@ -320,7 +321,7 @@ export class ConsentDialogPanel {
 	/** @internal */
 	protected readonly rootStyle = computed(() => {
 		const noStyle = this.resolvedNoStyle();
-		return resolveComponentStyles(
+		return resolveStyles(
 			'consentDialog',
 			this.#theme.theme(),
 			{ className: this.rootClass(), noStyle },
@@ -396,7 +397,7 @@ export class ConsentDialogPanel {
 
 	/** @internal */
 	protected styleOf(style: ClassNameStyle): string | null {
-		return toStyleAttribute(style.style) ?? null;
+		return toStyleAttributeValue(style.style) ?? null;
 	}
 
 	/**
@@ -438,11 +439,11 @@ export class ConsentDialogPanel {
 	}
 
 	#slot(
-		key: Parameters<typeof resolveComponentStyles>[0],
+		key: Parameters<typeof resolveStyles>[0],
 		baseClassName: string | undefined
 	): ClassNameStyle {
 		const noStyle = this.resolvedNoStyle();
-		return resolveComponentStyles(
+		return resolveStyles(
 			key,
 			this.#theme.theme(),
 			{ baseClassName, noStyle },

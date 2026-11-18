@@ -7,6 +7,7 @@ import {
 } from '@angular/core';
 import type { LegalLinks } from '@inth/sdk/engine';
 import legalLinkStyles from '@inth/sdk/ui/styles/components/legal-links';
+import { resolveLegalLinkEntries } from '@inth/sdk/ui/utils';
 
 import { ConsentManager } from '../core/consent-manager';
 import { resolveNoStyle } from '../core/no-style';
@@ -15,55 +16,9 @@ import { resolvedTranslations } from './translations';
 /** Which legal links a surface shows. `null` or unset shows none. */
 export type LegalLinkSelection = readonly (keyof LegalLinks)[] | null;
 
-/** One legal link to render. @internal */
-export interface LegalLinkEntry {
-	readonly type: keyof LegalLinks;
-	readonly href: string;
-	readonly target: string;
-	readonly rel: string | null;
-	readonly label: string | undefined;
-}
-
-/**
- * The provider's legal links that a surface selected, in the provider's
- * order. Wrap the {@link InlineLegalLinks} host in `@if` on a
- * non-empty result.
- *
- * @param all - `ConsentManager.legalLinks()`.
- * @param links - The surface's `legalLinks` input.
- * @returns The links to render; empty when there are none.
- * @internal
- */
-export const selectLegalLinks = function selectLegalLinks(
-	all: LegalLinks | undefined,
-	links: LegalLinkSelection | undefined
-): LegalLinkEntry[] {
-	if (!(links && all)) {
-		return [];
-	}
-	const entries: LegalLinkEntry[] = [];
-	for (const [type, link] of Object.entries(all) as [
-		keyof LegalLinks,
-		LegalLinks[keyof LegalLinks],
-	][]) {
-		if (!(link && links.includes(type))) {
-			continue;
-		}
-		entries.push({
-			href: link.href,
-			label: link.label,
-			rel:
-				link.rel || (link.target === '_blank' ? 'noopener noreferrer' : null),
-			target: link.target || '_blank',
-			type,
-		});
-	}
-	return entries;
-};
-
 /**
  * The legal links that follow a surface's description inline. The host is
- * the wrapping `<span>`; render it only when {@link selectLegalLinks}
+ * the wrapping `<span>`; render it only when `resolveLegalLinkEntries`
  * returns links.
  *
  * @internal
@@ -74,18 +29,18 @@ export const selectLegalLinks = function selectLegalLinks(
 	// A space before the links and after each comma, as in React's
 	// `InlineLegalLinks`.
 	template: `<ng-container>{{ ' ' }}</ng-container>
-		@for (link of entries(); track link.type; let last = $last) {
+		@for (link of entries(); track link.key) {
 			<span
 				><a
 					[href]="link.href"
 					[attr.target]="link.target"
-					[attr.rel]="link.rel"
+					[attr.rel]="link.rel ?? null"
 					[attr.class]="linkClass()"
 					[attr.data-testid]="
-						testIdPrefix() ? testIdPrefix() + '-' + link.type : null
+						testIdPrefix() ? testIdPrefix() + '-' + link.key : null
 					"
-					>{{ labelOf(link) }}{{ last ? '' : ',' }}</a
-				>{{ last ? '' : ' ' }}</span
+					>{{ link.label }}{{ link.separated ? ',' : '' }}</a
+				>{{ link.separated ? ' ' : '' }}</span
 			>
 		}`,
 })
@@ -104,21 +59,14 @@ export class InlineLegalLinks {
 
 	/** @internal */
 	protected readonly entries = computed(() =>
-		selectLegalLinks(this.#consent.legalLinks(), this.links())
+		resolveLegalLinkEntries(
+			this.#consent.legalLinks(),
+			this.links(),
+			this.#translations().legalLinks
+		)
 	);
 	/** @internal */
 	protected readonly linkClass = computed(() =>
 		this.#noStyle() ? null : legalLinkStyles.legalLink || null
 	);
-
-	/** @internal */
-	protected labelOf(link: LegalLinkEntry): string {
-		return (
-			link.label ??
-			(this.#translations().legalLinks as Record<string, string> | undefined)?.[
-				link.type
-			] ??
-			link.type
-		);
-	}
 }
