@@ -42,6 +42,7 @@ export interface MountDeps {
 		| 'getConsentReader'
 		| 'getLoadErrorReporter'
 		| 'registration'
+		| 'vendorAxisActive'
 	>;
 	/** Stop lifecycle callbacks when disposal is requested during mounting. */
 	isDisposed: () => boolean;

@@ -1,3 +1,4 @@
+import { vendorAxisActive } from '../libs/vendors';
 /**
  * Reload the page after a visitor revokes a permission.
  *
@@ -75,7 +76,7 @@ export const hasRevokedPermission = function hasRevokedPermission(
 	) {
 		return true;
 	}
-	if (after.model === 'iab' || after.vendorChoice === before.vendorChoice) {
+	if (!vendorAxisActive(after) || after.vendorChoice === before.vendorChoice) {
 		return false;
 	}
 	const now = Date.now();

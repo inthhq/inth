@@ -15,6 +15,7 @@ import {
 	declareOwnedVendors,
 	forgetOwnedVendors,
 	isValidVendorId,
+	vendorAxisActive,
 	withoutOwnedVendors,
 } from '../../libs/vendors';
 import {
@@ -36,5 +37,6 @@ export const scriptLoaderTools: ScriptLoaderTools = {
 	gateState: getEffectiveGateState,
 	has,
 	isVendorId: isValidVendorId,
+	vendorAxisActive,
 	withoutOwners: withoutOwnedVendors,
 };

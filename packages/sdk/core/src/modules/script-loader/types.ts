@@ -22,6 +22,7 @@ import type {
 	declareOwnedVendors,
 	forgetOwnedVendors,
 	isValidVendorId,
+	vendorAxisActive,
 	withoutOwnedVendors,
 } from '../../libs/vendors';
 import type {
@@ -67,6 +68,7 @@ export interface ScriptLoaderTools {
 	categoriesOf: typeof extractConsentNamesFromCondition;
 	/** Hands a debug event to the page's script debug listeners. */
 	debug: typeof dispatchScriptDebugEvent;
+	vendorAxisActive: typeof vendorAxisActive;
 	/** `declareOwnedVendors`. */
 	declareOwners: typeof declareOwnedVendors;
 	/** `deniedVendorIds`. */

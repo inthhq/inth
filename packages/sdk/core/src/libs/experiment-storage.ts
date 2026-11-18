@@ -6,6 +6,7 @@
  */
 import { deleteCookie, getRawCookieValue, setCookie } from './cookie';
 import type { StorageConfig } from './cookie';
+import { localStorageOf } from './local-storage';
 import { EXPERIMENT_STORAGE_KEY } from './storage-keys';
 
 /** What the browser keeps between visits: the arm the banner showed. */
@@ -36,14 +37,6 @@ const parseStored = function parseStored(
 	}
 };
 
-const localStorageAvailable = function localStorageAvailable(): boolean {
-	try {
-		return typeof localStorage !== 'undefined' && localStorage !== null;
-	} catch {
-		return false;
-	}
-};
-
 /**
  * Read the stored arm, from localStorage first and the cookie fallback
  * second. Never throws; unreadable storage reads as no record.
@@ -52,11 +45,10 @@ const localStorageAvailable = function localStorageAvailable(): boolean {
  */
 export const readStoredExperimentArm =
 	function readStoredExperimentArm(): StoredExperimentArm | null {
-		if (localStorageAvailable()) {
+		const storage = localStorageOf();
+		if (storage) {
 			try {
-				const stored = parseStored(
-					localStorage.getItem(EXPERIMENT_STORAGE_KEY)
-				);
+				const stored = parseStored(storage.getItem(EXPERIMENT_STORAGE_KEY));
 				if (stored) {
 					return stored;
 				}
@@ -131,9 +123,10 @@ export const writeStoredExperimentArm = function writeStoredExperimentArm(
 	storageConfig?: StorageConfig
 ): void {
 	const serialized = JSON.stringify({ arm: record.arm, id: record.id });
-	if (localStorageAvailable()) {
+	const storage = localStorageOf();
+	if (storage) {
 		try {
-			localStorage.setItem(EXPERIMENT_STORAGE_KEY, serialized);
+			storage.setItem(EXPERIMENT_STORAGE_KEY, serialized);
 			if (getRawCookieValue(EXPERIMENT_STORAGE_KEY)) {
 				deleteCookie(EXPERIMENT_STORAGE_KEY, undefined, storageConfig);
 			}

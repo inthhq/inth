@@ -17,6 +17,7 @@ import { writePolicyResolutionWire } from '@inth/sdk-schema/types';
 
 import type { Script } from '../libs/script-loader/types';
 import { STORED_NAMES_CHECK } from '../libs/storage-keys';
+import { vendorAxisActive } from '../libs/vendors';
 import {
 	deniedVendorIds,
 	evaluateConsent,
@@ -507,7 +508,8 @@ export const serverScriptStartPlan = function serverScriptStartPlan(
 		return nothingStarted(renderId);
 	}
 	const consents = getEffectiveGateState(snapshot).effectivePermissions;
-	const denied = snapshot.model === 'iab' ? null : deniedVendorIds(snapshot);
+	const vendorsDecide = vendorAxisActive(snapshot);
+	const denied = vendorsDecide ? deniedVendorIds(snapshot) : null;
 	const preludes = new Set<string>();
 	const starts: string[] = [];
 	/** The resources the code below starts, which the page marks. */
@@ -531,7 +533,7 @@ export const serverScriptStartPlan = function serverScriptStartPlan(
 					hasConsent,
 					id: script.id,
 					vendor:
-						script.vendor && snapshot.model !== 'iab'
+						script.vendor && vendorsDecide
 							? { granted: !denied?.has(script.vendor), id: script.vendor }
 							: undefined,
 				},

@@ -1,4 +1,5 @@
 import type { OptionalConsentCategory } from '../../consent-record/types';
+import type { cookieDomainsOf } from '../../libs/cookie/domain-utils';
 import type { StorageConfig } from '../../libs/cookie/types';
 import type { ownedStorageKeys } from '../../libs/storage-keys';
 import type { ConsentKernel } from '../../types';
@@ -52,6 +53,8 @@ export interface ClearOnRevocationHandle {
  * @internal
  */
 export interface ClearOnRevocationTools {
+	/** `cookieDomainsOf`: the domains a cookie may be scoped to. */
+	cookieDomainsOf: typeof cookieDomainsOf;
 	/** `getEffectiveGateState`. */
 	gateState: typeof getEffectiveGateState;
 	optionalConsentCategories: readonly OptionalConsentCategory[];

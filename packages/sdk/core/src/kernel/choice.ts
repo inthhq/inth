@@ -26,6 +26,7 @@ import type { AllConsentNames } from '../consent/consent-types';
 import { generateSubjectId } from '../libs/generate-subject-id';
 import { extractConsentNamesFromCondition, has } from '../libs/has';
 import type { HasCondition } from '../libs/has';
+import { vendorAxisActive } from '../libs/vendors';
 import type { PresentedSelection } from '../policy';
 import type {
 	ConsentSnapshot,
@@ -292,7 +293,7 @@ const resolveVendorSelection = function resolveVendorSelection(
 	categories?: readonly AllConsentNames[]
 ): VendorChoice | null {
 	const current = snapshot.vendorChoice;
-	if (snapshot.model === 'iab') {
+	if (!vendorAxisActive(snapshot)) {
 		return current;
 	}
 	const bulk = input === 'all' || input === 'none';
@@ -347,7 +348,7 @@ const vendorChoicePayload = function vendorChoicePayload(
 	previous: ConsentSnapshot['vendorChoice']
 ): SavePayload['vendorChoice'] {
 	const declared = snapshot.vendors?.declared ?? [];
-	if (snapshot.model === 'iab' || snapshot.vendorChoice === null) {
+	if (!vendorAxisActive(snapshot) || snapshot.vendorChoice === null) {
 		return undefined;
 	}
 	const denied = new Set(snapshot.vendorChoice.denied);
