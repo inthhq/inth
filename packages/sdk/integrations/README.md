@@ -63,7 +63,7 @@ On the web, every page of the [Inth docs](https://c15t.com/docs) has a Markdown 
 
 ## Support
 
-- Join our [Discord community](https://inth.link/discord)
+- Join our [Discord community](https://c15t.link/discord)
 - Open an issue on our [GitHub repository](https://github.com/c15t/c15t/issues)
 - Visit [inth.com](https://inth.com) and use the chat widget
 - Contact our support team via email [support@inth.com](mailto:support@inth.com)

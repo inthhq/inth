@@ -7,7 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const DEFAULT_SUPPORT_SECTIONS = [
-	'Join our [Discord community](https://inth.link/discord)',
+	'Join our [Discord community](https://c15t.link/discord)',
 	'Open an issue on our [GitHub repository](https://github.com/c15t/c15t/issues)',
 	'Visit [inth.com](https://inth.com) and use the chat widget',
 	'Contact our support team via email [support@inth.com](mailto:support@inth.com)',
@@ -205,7 +205,7 @@ ${[
 	}),
 	renderThemeAwareBadge({
 		alt: 'Discord',
-		href: 'https://inth.link/discord',
+		href: 'https://c15t.link/discord',
 		src: 'https://shieldcn.dev/discord/1312171102268690493.svg?variant=outline',
 	}),
 	renderThemeAwareBadge({
