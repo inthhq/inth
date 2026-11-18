@@ -7,7 +7,7 @@ import path from "node:path";
 
 export type ReleaseProduct = "android" | "react-native" | "sdk" | "swift";
 
-const inthName = /^(?:inth$|@inth\/)/u;
+const c15tName = /^(?:c15t$|@c15t\/)/u;
 
 const readJson = (file: string) => {
   const manifest: { name: string; private?: boolean } = JSON.parse(
@@ -70,13 +70,13 @@ export const releaseRefusals = (
   }
   const legacy = names.filter(
     (name) =>
-      inthName.test(name) ||
-      name.startsWith("com.inth") ||
-      name.toLowerCase().startsWith("inth")
+      c15tName.test(name) ||
+      name.startsWith("com.c15t") ||
+      name.toLowerCase().startsWith("c15t")
   );
   if (legacy.length > 0) {
     refusals.push(
-      `These still carry inth names and must not publish from this repository: ${legacy.join(", ")}.`
+      `These still carry c15t names and must not publish from this repository: ${legacy.join(", ")}.`
     );
   }
   return refusals;

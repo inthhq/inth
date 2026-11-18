@@ -4,7 +4,7 @@ name: Release SDK
 # the owner adds registry credentials. Until then it runs
 # only by hand, and tools/ci/release-guard.ts stops the publish job: it
 # refuses while the SDK_RELEASE_ENABLED repository variable is not "true", and
-# it refuses any inth, @inth/* or com.inth artifact even when the variable is
+# it refuses any c15t, @c15t/* or com.c15t artifact even when the variable is
 # set. The publish step is a placeholder that fails; nothing here can publish.
 #
 # Releases: npm, @inth/sdk and the framework packages in packages/sdk. Tags:
@@ -44,7 +44,7 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version-file: .node-version
-      - name: Refuse while disabled or while artifacts carry inth names
+      - name: Refuse while disabled or while artifacts carry c15t names
         env:
           RELEASE_ENABLED: ${{ vars.SDK_RELEASE_ENABLED }}
         run: node tools/ci/release-guard.ts sdk

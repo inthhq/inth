@@ -52,7 +52,7 @@ SwiftPM resolves the root `Package.swift` from plain semver tags such as `1.2.3`
 
 `release.yml` keeps its file name because npm trusted publishing for `@inth/cli` names it (`packages/cli/scripts/tegami.ts`). Renaming the file makes npm reject the publish.
 
-The four disabled workflows run by hand only. Each verifies its product, then `tools/ci/release-guard.ts` stops the publish job. The guard refuses while the product's repository variable (`SDK_RELEASE_ENABLED`, `REACT_NATIVE_RELEASE_ENABLED`, `SWIFT_RELEASE_ENABLED`, `ANDROID_RELEASE_ENABLED`) is not `true`. It also refuses any `inth`, `@inth/*` or `com.inth` artifact, even with the variable set. After the guard, each publish step is a placeholder that fails. Every product now carries Inth names. To turn a line on: wire its publish step, give that job the permissions it needs, put its credentials in a protected environment, then set the variable.
+The four disabled workflows run by hand only. Each verifies its product, then `tools/ci/release-guard.ts` stops the publish job. The guard refuses while the product's repository variable (`SDK_RELEASE_ENABLED`, `REACT_NATIVE_RELEASE_ENABLED`, `SWIFT_RELEASE_ENABLED`, `ANDROID_RELEASE_ENABLED`) is not `true`. It also refuses any `c15t`, `@c15t/*` or `com.c15t` artifact, even with the variable set. After the guard, each publish step is a placeholder that fails. Every product now carries Inth names. To turn a line on: wire its publish step, give that job the permissions it needs, put its credentials in a protected environment, then set the variable.
 
 ## Secrets and variables
 

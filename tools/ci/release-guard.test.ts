@@ -24,11 +24,11 @@ test("each product finds what it would publish", () => {
 test("every product carries Inth names", () => {
   for (const product of products) {
     const refusals = releaseRefusals(root, product, "true");
-    expect(refusals.join("\n"), product).not.toMatch(/inth names/u);
+    expect(refusals.join("\n"), product).not.toMatch(/c15t names/u);
   }
 });
 
-test("a package with a inth name refuses, even when enabled", () => {
+test("a package with a c15t name refuses, even when enabled", () => {
   const fixture = mkdtempSync(path.join(tmpdir(), "release-guard-"));
   try {
     mkdirSync(path.join(fixture, "packages/react-native"), { recursive: true });
@@ -37,7 +37,7 @@ test("a package with a inth name refuses, even when enabled", () => {
       JSON.stringify({ name: "@c15t/react-native" })
     );
     expect(releaseRefusals(fixture, "react-native", "true").join("\n")).toMatch(
-      /inth names/u
+      /c15t names/u
     );
   } finally {
     rmSync(fixture, { force: true, recursive: true });
