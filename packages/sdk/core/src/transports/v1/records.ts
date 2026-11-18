@@ -6,7 +6,7 @@
  * kernel and travels with the next save. There is no route for a browser to
  * read a subject, so there is no `loadSubjectRecord`.
  */
-import { appendJourneyParams } from '@inth/sdk-schema/types';
+import { appendJourneyParams, V1_UUID_PATTERN } from '@inth/sdk-schema/types';
 import type { V1ConsentRecordLink } from '@inth/sdk-schema/types';
 
 import { isUuidV7 } from '../../libs/subject-uuid';
@@ -95,7 +95,7 @@ const readLink = function readLink(
 	return undefined;
 };
 
-/** The save result, or `undefined` for an answer that is not `{ subjectId, recordId }`. */
+/** The save result, or `undefined` for an answer that is not `{ subjectId, recordId }` with a UUIDv7 subject and a UUID record. */
 const toSaveResult = function toSaveResult(
 	data: unknown
 ): (V1SaveResult & { subjectId: string }) | undefined {
@@ -107,7 +107,7 @@ const toSaveResult = function toSaveResult(
 		typeof body.subjectId !== 'string' ||
 		!isUuidV7(body.subjectId) ||
 		typeof body.recordId !== 'string' ||
-		body.recordId.length === 0
+		!V1_UUID_PATTERN.test(body.recordId)
 	) {
 		return undefined;
 	}

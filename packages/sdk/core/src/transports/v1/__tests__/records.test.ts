@@ -302,6 +302,10 @@ describe('save: the answer', () => {
 			() => json(200, { recordId: RECORD, subjectId: LEGACY_SUBJECT }),
 		],
 		['no record ID', () => json(200, { subjectId: SUBJECT })],
+		[
+			'a record ID that is not a UUID',
+			() => json(200, { recordId: 'unknown', subjectId: SUBJECT }),
+		],
 		['a page', () => new Response('<html>ok</html>', { status: 200 })],
 	])('retries an answer with %s', async (_label, answer) => {
 		const { fetch } = stubFetch(answer);
