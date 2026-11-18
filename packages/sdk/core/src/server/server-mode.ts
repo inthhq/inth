@@ -86,6 +86,14 @@ export interface ServerModeOptions {
 	 */
 	browserTransports?: boolean;
 	/**
+	 * The adapter ships the browser's snapshot in a module of its own
+	 * (Nuxt's `#inth/client-manifest-snapshot`), so `browser.mode` carries
+	 * none, even for `resolve: 'browser'`.
+	 *
+	 * @default false
+	 */
+	snapshotShipsSeparately?: boolean;
+	/**
 	 * The snapshot the build downloaded (`@inth/sdk/generated`, or the
 	 * adapter's own build output). `undefined` when it made none.
 	 */
@@ -139,7 +147,7 @@ export interface ServerMode {
 		/**
 		 * The mode without what only the server reads: `snapshot` and
 		 * `source` stay on the server unless the browser resolves the
-		 * policy itself.
+		 * policy itself, and `snapshot` with `snapshotShipsSeparately`.
 		 */
 		mode: ConsentMode;
 		/** Where the browser saves: the route prefix when proxied. */
@@ -381,9 +389,19 @@ const resolvePolicy = function resolvePolicy(
 };
 
 /** The browser's copy of the mode. */
-const browserModeOf = function browserModeOf(mode: ConsentMode): ConsentMode {
-	if (mode.type !== 'manifest' || mode.resolve === 'browser') {
+const browserModeOf = function browserModeOf(
+	mode: ConsentMode,
+	snapshotShipsSeparately: boolean | undefined
+): ConsentMode {
+	if (mode.type !== 'manifest') {
 		return mode;
+	}
+	if (mode.resolve === 'browser') {
+		if (!(snapshotShipsSeparately && mode.snapshot)) {
+			return mode;
+		}
+		const { snapshot: _snapshot, ...data } = mode;
+		return data;
 	}
 	const { snapshot: _snapshot, source: _source, ...data } = mode;
 	return data;
@@ -428,7 +446,7 @@ export const resolveServerMode = function resolveServerMode(
 	const manifestUrl = serverManifestUrl(mode, ownRoute);
 	return {
 		browser: {
-			mode: browserModeOf(mode),
+			mode: browserModeOf(mode, options.snapshotShipsSeparately),
 			projectUrl: options.proxy ? options.routePrefix : options.projectUrl,
 		},
 		consent: {

@@ -24,6 +24,7 @@ import {
 	inferUIAdapter,
 	resolveClientEntrypoint,
 	resolveOptions,
+	toClientOptions,
 } from '../integration';
 import { hosted as hostedMode, manifest as manifestMode } from '../mode';
 import { testing as testingMode } from '../testing';
@@ -138,6 +139,27 @@ describe('createOwnEntryResolver', () => {
 		expect(resolveOwnEntry('@inth/astro/not-an-entry')).toBe(
 			'@inth/astro/not-an-entry'
 		);
+	});
+});
+
+describe('toClientOptions', () => {
+	it("gives the browser core's copy of the mode", () => {
+		const projectUrl = 'https://consent.example.com';
+		const browserResolved = toClientOptions(
+			resolveOptions({
+				mode: manifestMode({ resolve: 'browser', snapshot: INLINE_MANIFEST }),
+				projectUrl,
+			})
+		);
+		// The browser resolves the policy itself, from the snapshot.
+		expect(browserResolved.mode).toMatchObject({ snapshot: INLINE_MANIFEST });
+		const serverResolved = toClientOptions(
+			resolveOptions({
+				mode: manifestMode({ snapshot: INLINE_MANIFEST }),
+				projectUrl,
+			})
+		);
+		expect(serverResolved.mode).toEqual({ type: 'manifest' });
 	});
 });
 

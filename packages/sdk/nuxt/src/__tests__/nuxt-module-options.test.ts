@@ -560,6 +560,24 @@ describe('where the snapshot goes', () => {
 		});
 		expect(warn).not.toHaveBeenCalled();
 	});
+
+	test("resolve: 'browser' keeps a mode's own snapshot out of runtime config", async () => {
+		const snapshot = createSnapshot();
+		const nuxt = await setUpModule(
+			{
+				mode: { resolve: 'browser', snapshot, type: 'manifest' },
+				projectUrl: 'https://consent.example.com',
+				routePrefix: false,
+			},
+			snapshotResponse(snapshot),
+			false,
+			{ _generate: true }
+		);
+		expect(await importClientManifestSnapshot(nuxt)).toEqual(snapshot);
+		expect(
+			(nuxt.options.runtimeConfig.public.inth as { mode: unknown }).mode
+		).toEqual({ resolve: 'browser', type: 'manifest' });
+	});
 });
 
 describe('mode and routePrefix', () => {

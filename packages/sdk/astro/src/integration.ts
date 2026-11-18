@@ -347,8 +347,9 @@ export const resolveOptions = function resolveOptions(
 };
 
 /**
- * The options the browser receives: everything but the snapshot and what
- * only the server and the build read. Every byte here is in each page's
+ * The options the browser receives: everything but what only the server
+ * and the build read, and the mode as core's `resolveServerMode` gives it
+ * to the browser. Every byte here is in each page's
  * boot chunk.
  *
  * @returns The browser's copy.
@@ -366,10 +367,11 @@ export const toClientOptions = function toClientOptions(
 		styles: _styles,
 		...client
 	} = resolved;
-	if (client.mode.type === 'manifest') {
-		const { snapshot: _snapshot, source: _source, ...mode } = client.mode;
-		client.mode = mode;
-	} else {
+	client.mode = resolveServerMode({
+		adapter: '@inth/astro',
+		mode: client.mode,
+	}).browser.mode;
+	if (client.mode.type !== 'manifest') {
 		// Only `manifest()` calls the injected route.
 		delete client.routePrefix;
 	}

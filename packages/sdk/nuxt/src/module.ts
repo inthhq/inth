@@ -283,27 +283,6 @@ const warnStaticServerResolution = function warnStaticServerResolution(
 };
 
 /**
- * The mode as the browser and the server read it from runtime config: the
- * browser's copy, by the rule `resolveServerMode` applies in every adapter,
- * and never a snapshot, which the snapshot templates carry instead.
- */
-const publishedMode = function publishedMode(
-	mode: NuxtMode,
-	projectUrl: string | undefined
-): NuxtMode {
-	const browser = resolveServerMode({
-		adapter: '@inth/nuxt',
-		mode: mode as ConsentMode,
-		projectUrl,
-	}).browser.mode as NuxtMode;
-	if (browser.type !== 'manifest' || !browser.snapshot) {
-		return browser;
-	}
-	const { snapshot: _snapshot, ...rest } = browser;
-	return rest;
-};
-
-/**
  * Puts the module options in the public runtime config, which the server
  * render and the browser read. Values already there win, except `mode` and
  * `routePrefix`: the build chose the consent route, the snapshots and the
@@ -313,16 +292,12 @@ const publishedMode = function publishedMode(
  */
 const publishOptions = function publishOptions(
 	options: Omit<ModuleOptions, 'devtools' | 'initPrefetch' | 'onBuildError'>,
-	mode: NuxtMode,
+	built: BuiltOptions,
 	nuxt: Nuxt
 ): void {
 	const existing = nuxt.options.runtimeConfig.public.inth as
 		| Record<string, unknown>
 		| undefined;
-	const built: BuiltOptions = {
-		mode: publishedMode(mode, options.projectUrl),
-		routePrefix: options.routePrefix ?? false,
-	};
 	for (const name of ['mode', 'routePrefix'] as const) {
 		if (
 			existing?.[name] !== undefined &&
@@ -391,13 +366,17 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 		// config, so it must be mode data, not a transport. `nuxt prepare`
 		// runs during dependency installation, where the backend variable
 		// is often unset, so the backend is not checked then.
-		const mode = resolveServerMode({
+		const server = resolveServerMode({
 			adapter: '@inth/nuxt',
 			backendHint: `Set ${NUXT_PROJECT_URL_ENV}, or \`inth.projectUrl\` in nuxt.config.ts.`,
 			checkBackend: !nuxt.options._prepare,
 			mode: options.mode,
 			projectUrl: options.projectUrl,
-		}).mode as NuxtMode;
+			// The snapshot templates carry the browser's snapshot: in runtime
+			// config, Nitro would replace every `null` in it with `''`.
+			snapshotShipsSeparately: true,
+		});
+		const mode = server.mode as NuxtMode;
 		options.routePrefix = checkRoutePrefix(options);
 		const routePrefix = readNuxtRoutePrefix(options);
 		warnStaticServerResolution(mode, nuxt);
@@ -446,7 +425,14 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 			getContents: () => renderSnapshotModule(clientSnapshot),
 		}).dst;
 
-		publishOptions(options, mode, nuxt);
+		// The build chose the route, the snapshots and the browser code from
+		// `mode` and `routePrefix`; a runtime override such as
+		// `NUXT_PUBLIC_INTH_ROUTE_PREFIX` would make the browser disagree.
+		const built: BuiltOptions = {
+			mode: server.browser.mode as NuxtMode,
+			routePrefix: options.routePrefix ?? false,
+		};
+		publishOptions(options, built, nuxt);
 
 		// Transpile/inline the module runtime by directory, not just package
 		// name. When the module is registered through an aliasing package
@@ -573,13 +559,6 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 		);
 
 		addPlugin(runtime.resolve('./runtime/plugin.nuxt'));
-		// The build chose the route, the snapshots and the browser code from
-		// `mode` and `routePrefix`; a runtime override such as
-		// `NUXT_PUBLIC_INTH_ROUTE_PREFIX` would make the browser disagree.
-		const built: BuiltOptions = {
-			mode: publishedMode(mode, options.projectUrl),
-			routePrefix: options.routePrefix ?? false,
-		};
 		nuxt.options.nitro.virtual['#@inth/sdk/build-options'] = () =>
 			`export default ${JSON.stringify(built)};\n`;
 		addServerPlugin(resolver.resolve('./runtime/server/build-options.nuxt'));

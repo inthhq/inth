@@ -163,6 +163,14 @@ describe('resolveServerMode: checks', () => {
 		);
 	});
 
+	test("snapshotShipsSeparately keeps a browser-resolved mode's snapshot off browser.mode", () => {
+		const mode = manifest({ resolve: 'browser', snapshot: OWN });
+		expect(resolve({ mode }).browser.mode).toHaveProperty('snapshot', OWN);
+		expect(
+			resolve({ mode, snapshotShipsSeparately: true }).browser.mode
+		).toEqual({ resolve: 'browser', type: 'manifest' });
+	});
+
 	test('browserTransports leaves a transport without mode data to the browser', () => {
 		const { consent } = resolve({
 			browserTransports: true,
