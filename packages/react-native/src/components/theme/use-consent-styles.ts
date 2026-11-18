@@ -97,7 +97,7 @@ const LARGE_TEXT_SCALE = 1.6;
 const MIN_BODY_HEIGHT = 148;
 
 /**
- * The height of the "Secured by c15t" tab, which shares the wrapper a card is
+ * The height of the "Secured by" tab, which shares the wrapper a card is
  * mounted in rather than the card itself.
  *
  * `min-height: 1.75rem` on `.brandingTag`. It has to come off the height a card
@@ -267,7 +267,6 @@ const TRACKING_EM = {
 	bannerBody: -0.006,
 	bannerTitle: -0.011,
 	brandingLabel: 0.01,
-	brandingWordmark: -0.03,
 	dialogTitle: -0.025,
 } as const;
 
@@ -995,7 +994,7 @@ export const useConsentStyles = function useConsentStyles(
 				flexDirection: 'column',
 				overflow: 'hidden',
 			},
-			// The "Secured by c15t" tab. Every measurement here is `.brandingTag`:
+			// The "Secured by" tab. Every measurement here is `.brandingTag`:
 			// `min-height 1.75rem`, `padding .28125rem .625rem`, `gap .375rem`, and a
 			// `0.6875rem` label at `line-height: 1`, which is why the line height is the
 			// size rather than a step on the type scale. Which corners stay round, and
@@ -1022,31 +1021,15 @@ export const useConsentStyles = function useConsentStyles(
 				// tab overlaps it by. The web rule carries the same value.
 				zIndex: 2,
 			},
-			// The two runs of the tag are not the same size, which is the only reason
-			// they are two parts. Both ask for `--consent-dialog-branding-label-size`,
-			// 11pt, but the `max-width: 480px` query every phone matches restates
-			// `.brandingWordmarkLabel` as `0.625rem`, and it wins on specificity: it
-			// carries the same `:not(.headless)` as the rule it displaces and comes
-			// later. Its own sibling `.brandingCopy` is spelled without the `:not()`
-			// in that query, so it loses, and stays at 11. The live banner at 411 wide
-			// measures "Secured by" at 11 and `c15t` at 10, and the crop shows the
-			// brand sitting visibly smaller than the words in front of it -- a single
-			// part for both cannot draw that. Both carry a line of their own size,
-			// which is `.brandingText`'s and `.brandingWordmarkLabel`'s `line-height: 1`.
-			// They also part company on tracking, which is how the brand hugs its mark:
-			// `.brandingTag .brandingCopy` opens by `.01em`, +0.11 at 11pt, and the
-			// wordmark closes by `.03em`, -0.3 at 10.
+			// `--consent-dialog-branding-label-size`, 11pt, which the phone query
+			// leaves alone because its `.brandingCopy` rule lacks the `:not()` that
+			// would tie it. `line-height: 1` is `.brandingText`'s, and `.01em` is
+			// `.brandingTag .brandingCopy`'s tracking, +0.11 at 11pt.
 			brandingLabel: {
 				color: colors.textOnPrimary,
 				fontSize: 11,
 				letterSpacing: Number((TRACKING_EM.brandingLabel * 11).toFixed(4)),
 				lineHeight: 11,
-			},
-			brandingWordmark: {
-				color: colors.textOnPrimary,
-				fontSize: 10,
-				letterSpacing: Number((TRACKING_EM.brandingWordmark * 10).toFixed(4)),
-				lineHeight: 10,
 			},
 			caption: textStyle(typography.caption, colors.textMuted),
 			captionLink: textStyle(typography.caption, colors.text),
