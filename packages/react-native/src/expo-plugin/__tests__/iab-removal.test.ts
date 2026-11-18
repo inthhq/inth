@@ -60,6 +60,7 @@ it('removing iab on incremental prebuild clears the earlier CMP identity', async
 it('removes the retired keys from a native project that was not regenerated', async () => {
 	const plist = applyInfoPlist(resolveParams({ projectUrl }), {
 		CFBundleDisplayName: 'Privacy demo',
+		'com.inth.backend.domain': 'app.example.com',
 		'com.inth.backend.initUrl': 'https://app.example.com/api/init',
 		'com.inth.backend.mode': 'selfHosted',
 		'com.inth.backend.url': 'https://consent.example.com/inth',
@@ -77,6 +78,7 @@ it('removes the retired keys from a native project that was not regenerated', as
 	for (const [name, value] of [
 		['com.inth.MODE', 'offline'],
 		['com.inth.BACKEND_INIT_URL', 'https://app.example.com/api/init'],
+		['com.inth.BACKEND_DOMAIN', 'app.example.com'],
 		['com.inth.BACKEND_URL', 'https://consent.example.com/inth'],
 	] as const) {
 		AndroidConfig.Manifest.addMetaDataItemToMainApplication(
