@@ -504,7 +504,7 @@ describe('useConsentActions', () => {
 		const { actions, identify, setOverrides } = capturedCommands();
 
 		await actions.refresh();
-		await identify({ externalId: 'user-7' });
+		await identify({ externalId: 'user-7', identityToken: 'signed-token' });
 		await actions.logout();
 		await actions.reset();
 		await setOverrides({ country: 'US' });
@@ -512,6 +512,7 @@ describe('useConsentActions', () => {
 
 		expect(fake.refreshCalls).toBe(1);
 		expect(fake.identifyCalls).toEqual(['user-7']);
+		expect(fake.identify).toHaveBeenCalledWith('user-7', 'signed-token');
 		expect(fake.logoutCalls).toBe(1);
 		expect(fake.resetCalls).toBe(1);
 		expect(fake.overrideCalls).toEqual(['{"country":"US"}']);

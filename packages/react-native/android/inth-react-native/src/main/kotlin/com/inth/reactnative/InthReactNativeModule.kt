@@ -180,6 +180,7 @@ class InthReactNativeModule(appContext: ReactApplicationContext) : NativeInthSpe
 
 	override fun identify(
 		externalId: String,
+		identityToken: String?,
 		promise: Promise,
 	) {
 		if (!ensureCore()) {
@@ -187,7 +188,9 @@ class InthReactNativeModule(appContext: ReactApplicationContext) : NativeInthSpe
 			return
 		}
 		try {
-			Inth.identify(KernelUser(externalId = externalId))
+			// The core links the subject on the backend only with a token, and holds the
+			// token for that one request.
+			Inth.identify(KernelUser(externalId = externalId), identityToken)
 			promise.resolve(null)
 		} catch (error: Exception) {
 			promise.reject(REJECT_IDENTIFY, error.message, error)

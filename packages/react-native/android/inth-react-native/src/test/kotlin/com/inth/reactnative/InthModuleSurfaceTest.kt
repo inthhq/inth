@@ -31,7 +31,7 @@ class InthModuleSurfaceTest {
 			"setOverrides" to 2,
 			"dismissNotice" to 0,
 			"refresh" to 1,
-			"identify" to 2,
+			"identify" to 3,
 			"logout" to 1,
 			"reset" to 1,
 			"getTrackingAuthorization" to 0,
