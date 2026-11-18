@@ -4,6 +4,9 @@ import { describe, expect, test } from 'vitest';
 import {
 	applyPublisherRestrictionsToGVL,
 	countIABPartners,
+	formatVendorMaxAge,
+	mapCustomVendor,
+	mapGvlVendor,
 	processGVLForDialog,
 	resolveIABBannerSummary,
 	resolveIABDialogDisplayModel,
@@ -134,6 +137,43 @@ describe('@inth/sdk/iab headless dialog data', () => {
 			statisticsPurpose?.vendors.find((vendor) => vendor.id === 755)
 				?.usesLegitimateInterest
 		).toBe(false);
+	});
+});
+
+describe('@inth/sdk/iab headless vendor rows', () => {
+	test('a custom vendor row carries its data categories and permitted LI only', () => {
+		const row = mapCustomVendor({
+			...customVendor,
+			dataCategories: [1, 3],
+			legIntPurposes: [1, 9],
+		});
+		expect(row.dataDeclaration).toEqual([1, 3]);
+		expect(row.legIntPurposes).toEqual([9]);
+		expect(mapCustomVendor(customVendor, 1).usesLegitimateInterest).toBe(false);
+	});
+
+	test('a GVL vendor row reads data categories from dataDeclaration', () => {
+		const [id, vendor] = Object.entries(completeGVL.vendors)[0] ?? [];
+		if (!(id && vendor)) {
+			throw new Error('fixture has no vendor');
+		}
+		const row = mapGvlVendor(
+			id,
+			{ ...vendor, dataDeclaration: [4] } as never,
+			'en'
+		);
+		expect(row.id).toBe(Number(id));
+		expect(row.dataDeclaration).toEqual([4]);
+	});
+
+	test('max age rounds days up and appends the refresh note', () => {
+		const copy = { maxAge: 'Max Age: {days}d', maxAgeRefreshes: '(refreshes)' };
+		expect(formatVendorMaxAge(129_600, false, copy)).toBe('Max Age: 2d');
+		expect(formatVendorMaxAge(3600, true, copy)).toBe(
+			'Max Age: 1d (refreshes)'
+		);
+		expect(formatVendorMaxAge(0, false, copy)).toBe('Max Age: 0d');
+		expect(formatVendorMaxAge(null, true, copy)).toBeNull();
 	});
 });
 

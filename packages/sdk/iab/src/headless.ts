@@ -30,6 +30,9 @@ export {
 	resolveIABDialogDisplayModel,
 } from './headless/display-model';
 export {
+	formatVendorMaxAge,
+	mapCustomVendor,
+	mapGvlVendor,
 	type ProcessedFeature,
 	type ProcessedGVLData,
 	type ProcessedPurpose,
@@ -37,6 +40,7 @@ export {
 	type ProcessedStack,
 	type ProcessedVendor,
 	processGVLForDialog,
+	type VendorMaxAgeCopy,
 } from './headless/dialog-data';
 export {
 	type IABVendorUrls,
