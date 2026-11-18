@@ -20,4 +20,4 @@ const dist = resolve(import.meta.dirname, '../dist');
 
 await mkdir(dist, { recursive: true });
 await writeFile(join(dist, 'inth.css'), stylesheet);
-await writeFile(join(dist, 'c15t.iab.css'), iabStylesheet + adapterStyles);
+await writeFile(join(dist, 'inth.iab.css'), iabStylesheet + adapterStyles);
