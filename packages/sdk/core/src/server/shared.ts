@@ -3,6 +3,7 @@
  * so a copy cannot drift: the default route prefix, the in-process origin,
  * path trimming, the canonical consent request headers and the nonce shape.
  */
+import { COUNTRY_HEADERS, REGION_HEADERS } from '@inth/sdk-schema/types';
 import type { ConsentRequestHeaderInputs } from '@inth/sdk-schema/types';
 
 import type { ManifestFetch } from '../libs/manifest-cache-runtime';
@@ -73,10 +74,10 @@ export const writeConsentInputHeaders = function writeConsentInputHeaders<
 					(target as Record<string, string>)[name] = value;
 				};
 	if (inputs.country) {
-		set('x-c15t-country', inputs.country);
+		set(COUNTRY_HEADERS[0], inputs.country);
 	}
 	if (inputs.region) {
-		set('x-c15t-region', inputs.region);
+		set(REGION_HEADERS[0], inputs.region);
 	}
 	if (inputs.language) {
 		set('accept-language', inputs.language);

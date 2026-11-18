@@ -1,6 +1,5 @@
 import type { LegalLinks as LegalLinksType } from '@inth/sdk/engine';
 import type { LegalLinksTranslations } from '@inth/sdk/translations';
-import { defaultTranslationConfig } from '@inth/sdk/surface-state';
 import styles from '@inth/sdk/ui/styles/components/legal-links';
 import { resolveLegalLinkEntries } from '@inth/sdk/ui/utils';
 import { useContext, useSyncExternalStore } from 'react';

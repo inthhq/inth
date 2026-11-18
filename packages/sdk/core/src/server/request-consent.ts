@@ -39,14 +39,12 @@ import {
 	CONSENT_EXPERIMENT_HEADER,
 	CONSENT_REQUEST_HEADER_NAMES,
 	consentInputsToOverrides,
-	COUNTRY_HEADERS,
 	extractConsentRequestInputs,
 	formatExperimentHeader,
 	getIpAddress,
 	isSpeculativeRequest,
 	journeyDomainFrom,
 	POLICY_CONTRACT_VERSION,
-	REGION_HEADERS,
 } from '@inth/sdk-schema/types';
 import type {
 	ConsentManifest,

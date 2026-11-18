@@ -32,8 +32,10 @@ import {
 	uniqueId,
 } from '@inth/angular/primitives';
 import { resolveIABBannerSummary } from '@inth/sdk/iab-support';
-import { applyPublisherRestrictionsToGVL } from '@inth/sdk/iab/headless';
-import { resolveIABDialogDisplayModel } from '@inth/sdk/iab/headless';
+import {
+	applyPublisherRestrictionsToGVL,
+	resolveIABDialogDisplayModel,
+} from '@inth/sdk/iab/headless';
 import type { HeadlessIABVendorId } from '@inth/sdk/iab/headless';
 import { saveIABConsentSurface } from '@inth/sdk/surface-actions';
 import { resolveConsentPresentation } from '@inth/sdk/surface-state';
