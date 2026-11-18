@@ -32,9 +32,9 @@ import {
 	readStoredVendorChoice,
 } from '../../modules/persistence/record-storage';
 import { encodeStoredConsentEnvelopeCompact } from '../../modules/persistence/writer/encode';
+import type { ProviderTransportFactory } from '../../transports/mode';
 import type { KernelTransport } from '../../types';
 import { createConsentRuntime } from '../index';
-import type { ProviderTransportFactory } from '../../transports/mode';
 import type { ConsentRuntime, ConsentRuntimeOptions } from '../types';
 
 /**

@@ -9,9 +9,9 @@ import {
 } from '../../__tests__/fixtures/kernel-fixtures';
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import type { InternalKernel } from '../../kernel/internals';
+import type { ProviderTransportFactory } from '../../transports/mode';
 import type { InitResponse } from '../../types';
 import { createConsentRuntime } from '../index';
-import type { ProviderTransportFactory } from '../../transports/mode';
 import type { ConsentRuntime, ConsentRuntimeOptions } from '../types';
 
 /**

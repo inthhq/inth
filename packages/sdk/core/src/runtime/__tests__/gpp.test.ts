@@ -7,9 +7,9 @@
 import { describe, expect, test, vi } from 'vitest';
 
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
+import type { ProviderTransportFactory } from '../../transports/mode';
 import type { KernelTransport } from '../../types';
 import { createConsentRuntime } from '../index';
-import type { ProviderTransportFactory } from '../../transports/mode';
 import type { ConsentRuntimeGPPFactory, ConsentRuntimeOptions } from '../types';
 
 /**

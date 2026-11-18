@@ -24,6 +24,7 @@ import { buildPrefetchScript } from '../../libs/prefetch/prefetch';
 import { JOURNEY_STORAGE_KEY } from '../../libs/storage-keys';
 import { clearStoredConsentRecords } from '../../modules/persistence/__tests__/record-writes';
 import { hosted } from '../../transports/mode';
+import type { ProviderTransportFactory } from '../../transports/mode';
 import { c15tProtocolHeaders } from '../../transports/version-header';
 import type { KernelTransport } from '../../types';
 import {
@@ -34,7 +35,6 @@ import {
 } from '../index';
 import { createJourneyController } from '../journey';
 import type { JourneyStorage } from '../journey';
-import type { ProviderTransportFactory } from '../../transports/mode';
 import type { ConsentRuntime, ConsentRuntimeOptions } from '../types';
 
 /**
