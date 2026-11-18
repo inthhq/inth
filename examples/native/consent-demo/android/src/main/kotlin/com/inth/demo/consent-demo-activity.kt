@@ -59,6 +59,7 @@ class ConsentDemoActivity : ComponentActivity() {
                         if (model.customUi) { LedgerConsent(core, model.policyUrl, ledger); return@Box }
                         val theme = if (model.fixtureTheme == "brand") PantryBrand.theme else null
                         val providerTheme = when (model.fixtureBranding) {
+                            "c15t" -> (theme ?: ConsentTheme.c15t).copy(branding = ConsentTheme.Branding.C15t)
                             "inth" -> (theme ?: ConsentTheme.c15t).copy(branding = ConsentTheme.Branding.Inth)
                             "custom" -> (theme ?: ConsentTheme.c15t).copy(branding = ConsentTheme.Branding.Custom("Pantry", R.drawable.consent_demo_mark))
                             "hidden" -> (theme ?: ConsentTheme.c15t).copy(showsBranding = false)
@@ -70,11 +71,41 @@ class ConsentDemoActivity : ComponentActivity() {
                             "hidden" -> (providerTheme ?: ConsentTheme.c15t).copy(brand = ConsentTheme.Brand.Hidden)
                             else -> providerTheme
                         }
-                        InthConsent(model.policyUrl, theme = identityTheme, core = core)
+                        InthConsent(model.policyUrl, theme = remember(identityTheme) { demoLayout(identityTheme) }, core = core)
                     }
                 }
             }
         }
+    }
+
+    /**
+     * Debug builds can try each first-layer layout, appearance and Save position in any mode without a rebuild:
+     * `adb shell am start -n <package>/com.inth.demo.ConsentDemoActivity --es C15T_DEMO_FIRST_LAYER sheet --es C15T_DEMO_APPEARANCE system --es C15T_DEMO_SAVE_PLACEMENT top`.
+     */
+    private fun demoLayout(theme: ConsentTheme?): ConsentTheme? = demoName(demoOptions(fixtureLayout(theme)))
+
+    /** The journeys check the paper page and its footer Save. `stock` runs one on the theme a normal launch gets. */
+    private fun fixtureLayout(theme: ConsentTheme?): ConsentTheme? {
+        if (!BuildConfig.DEBUG || intent?.getStringExtra("C15T_FIXTURE_SCENARIO") == null) return theme
+        if (intent?.getStringExtra("C15T_FIXTURE_THEME") == "stock") return theme
+        return (theme ?: ConsentTheme.c15t).copy(appearance = ConsentTheme.Appearance.C15t, savePlacement = ConsentTheme.SavePlacement.Bottom)
+    }
+
+    /** Outside the Debug fixtures the demo names itself above the headline, as a real app would. */
+    private fun demoName(theme: ConsentTheme?): ConsentTheme? {
+        if (BuildConfig.DEBUG && intent?.getStringExtra("C15T_FIXTURE_SCENARIO") != null) return theme
+        val base = theme ?: ConsentTheme.resolve(this)
+        return if (base.brand.name == null) base.copy(brand = base.brand.copy(name = "Inth Demo")) else base
+    }
+
+    private fun demoOptions(theme: ConsentTheme?): ConsentTheme? {
+        if (!BuildConfig.DEBUG) return theme
+        val layout = intent?.getStringExtra("C15T_DEMO_FIRST_LAYER")?.trim()?.let { value -> ConsentTheme.FirstLayer.entries.firstOrNull { it.name.equals(value, ignoreCase = true) } }
+        val appearance = intent?.getStringExtra("C15T_DEMO_APPEARANCE")?.trim()?.let { value -> ConsentTheme.Appearance.entries.firstOrNull { it.name.equals(value, ignoreCase = true) } }
+        val placement = intent?.getStringExtra("C15T_DEMO_SAVE_PLACEMENT")?.trim()?.let { value -> ConsentTheme.SavePlacement.entries.firstOrNull { it.name.equals(value, ignoreCase = true) } }
+        if (layout == null && appearance == null && placement == null) return theme
+        val base = theme ?: ConsentTheme.resolve(this)
+        return base.copy(firstLayer = layout ?: base.firstLayer, appearance = appearance ?: base.appearance, savePlacement = placement ?: base.savePlacement)
     }
 }
 

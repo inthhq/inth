@@ -109,6 +109,7 @@ export const IAB_COPY_KEYS = [
 	'app.refreshesStoredInformation',
 	'app.retentionNotProvided',
 	'app.retentionTitle',
+	'app.save',
 	'app.searchOtherPartners',
 	'app.searchPartners',
 	'app.sessionOnly',

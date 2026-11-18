@@ -114,6 +114,8 @@ data class IabCopy(
     val appRetentionNotProvided: String,
     /** `iab.app.retentionTitle` */
     val appRetentionTitle: String,
+    /** `iab.app.save` */
+    val appSave: String,
     /** `iab.app.searchOtherPartners` */
     val appSearchOtherPartners: String,
     /** `iab.app.searchPartners` */
@@ -346,6 +348,7 @@ data class IabCopy(
             appRefreshesStoredInformation = "Refreshes stored information",
             appRetentionNotProvided = "Not provided by this partner.",
             appRetentionTitle = "How long data is kept",
+            appSave = "Save",
             appSearchOtherPartners = "Search other partners",
             appSearchPartners = "Search partners",
             appSessionOnly = "This session only",
@@ -463,6 +466,7 @@ data class IabCopy(
                 appRefreshesStoredInformation = text("appRefreshesStoredInformation") ?: return null,
                 appRetentionNotProvided = text("appRetentionNotProvided") ?: return null,
                 appRetentionTitle = text("appRetentionTitle") ?: return null,
+                appSave = text("appSave") ?: return null,
                 appSearchOtherPartners = text("appSearchOtherPartners") ?: return null,
                 appSearchPartners = text("appSearchPartners") ?: return null,
                 appSessionOnly = text("appSessionOnly") ?: return null,

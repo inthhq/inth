@@ -62,7 +62,6 @@ import type {
 	DeferredKernelHandle,
 	DeferredKernelOptions,
 } from './deferred-kernel';
-import type * as DialogModule from './dialog';
 import {
 	canCommitInstantly,
 	commitInstantly,
@@ -76,7 +75,7 @@ import {
 	setDeferredScriptStarter,
 } from './registry';
 import { acceptedPermissions, isPlainScript, isRunnableNow } from './runnable';
-import { DeferredSessionContext, read, record } from './session';
+import { DeferredSessionContext, read, record, recordOnce } from './session';
 import type { DeferredSession, Recorded } from './session';
 import {
 	BANNER_ROOT,
@@ -151,7 +150,11 @@ export interface DeferredConsentShellProps<EngineModule> {
 	slotAfterMount?: boolean;
 	/** The root's `prefetch`, a promise when the server streams it. */
 	prefetch: unknown;
-	/** Imports the engine. Use `import()` so it stays out of first load. */
+	/**
+	 * Imports the engine. Use `import()` so it stays out of first load.
+	 * Return the same promise until a failed import is tried again, as
+	 * `recordOnce` does.
+	 */
 	loadEngine: () => Promise<EngineModule>;
 	/** Imports the commit path (`commit.ts`). Defaults to `import()`. */
 	loadCommit?: () => Promise<typeof CommitModule>;
@@ -514,22 +517,33 @@ const createSession = function createSession<EngineModule>(
 		holdPresses(true);
 	}
 	let result: CommitTapResult | null = null;
-	const engine = record(
-		// oxlint-disable-next-line promise/prefer-await-to-then -- Chains the loads without an async render.
-		started.then(async () => {
-			const loaded = await loadEngine();
-			await commitSettled;
-			engineRendering = true;
-			holdPresses(false);
-			return loaded;
-		})
-	);
-
-	let commitModule: Promise<typeof CommitModule> | undefined;
-	const loadCommit = () => {
-		commitModule ??= importCommit();
-		return commitModule;
+	// The engine's load. `loadEngine` retries its own import; after a
+	// failure this starts over only when it began a new attempt, so the
+	// backoff and the cap stay `loadEngine`'s.
+	let engineAttempt: Promise<EngineModule> | undefined;
+	let engineLoad: Recorded<EngineModule> | undefined;
+	const engine = (): Recorded<EngineModule> => {
+		if (
+			!engineLoad ||
+			(engineLoad.status === 'rejected' && loadEngine() !== engineAttempt)
+		) {
+			engineLoad = record(
+				(async () => {
+					await started;
+					engineAttempt = loadEngine();
+					const loaded = await engineAttempt;
+					await commitSettled;
+					engineRendering = true;
+					holdPresses(false);
+					return loaded;
+				})()
+			);
+		}
+		return engineLoad;
 	};
+	engine();
+
+	const loadCommit = recordOnce(importCommit);
 	/** Starts `load` in the next task: a tap's own task stays short. */
 	const soon = (load: () => unknown): void => {
 		setTimeout(load, 0);
@@ -626,11 +640,7 @@ const createSession = function createSession<EngineModule>(
 		keepHidden();
 	};
 
-	let dialogModule: Promise<typeof DialogModule> | undefined;
-	const loadDialog = () => {
-		dialogModule ??= importDialog();
-		return dialogModule;
-	};
+	const loadDialog = recordOnce(importDialog);
 	let resolveEarlyDialog: (surfaces: unknown) => void = () => undefined;
 	const earlyDialog = new Promise<unknown>((resolve) => {
 		resolveEarlyDialog = resolve;
@@ -980,7 +990,7 @@ const createSession = function createSession<EngineModule>(
 			let value = surfaces.get(key) as Recorded<Value> | undefined;
 			if (!value) {
 				// oxlint-disable-next-line promise/prefer-await-to-then -- See above.
-				const fromEngine = handle.ready.then(async () => pick(await engine));
+				const fromEngine = handle.ready.then(async () => pick(await engine()));
 				value = record(
 					// The dialog may open before the engine (`openDialog`): the
 					// same component, from its own module.
@@ -1010,7 +1020,7 @@ const EngineSlot = function EngineSlot<EngineModule>({
 	session: ShellSession;
 }): ReactNode {
 	return render(
-		read(session.engine) as EngineModule,
+		read(session.engine()) as EngineModule,
 		session.handle.attach,
 		session.committed()
 	);

@@ -42,7 +42,10 @@ export type {
 export { ConsentPreferences } from './consent-preferences';
 export type { ConsentPreferencesProps } from './consent-preferences';
 export {
+	CONSENT_APPEARANCES,
 	CONSENT_COLOR_SCHEMES,
+	CONSENT_FIRST_LAYERS,
+	CONSENT_SAVE_PLACEMENTS,
 	consentColorsFor,
 	createConsentTheme,
 	defaultConsentTheme,
@@ -50,7 +53,10 @@ export {
 	resolveConsentTypeRoles,
 } from './theme/create-consent-theme';
 export type {
+	ConsentAppearance,
 	ConsentColorScheme,
+	ConsentFirstLayer,
+	ConsentSavePlacement,
 	ConsentTheme,
 	ConsentNativeSlot,
 	ConsentNativeSlotStyle,

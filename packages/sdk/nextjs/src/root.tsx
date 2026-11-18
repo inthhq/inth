@@ -28,7 +28,7 @@ import {
 	liveRootKey,
 	learnEngineChunks,
 	read,
-	record,
+	recordOnce,
 	rootNeedsEngine,
 	scriptsNeedEngine,
 	startsScriptsWithoutEngine,
@@ -54,7 +54,25 @@ type EngineModule = typeof RootEngine;
 
 let engineModule: Recorded<EngineModule> | undefined;
 
-/** The engine's module, loading once. */
+/**
+ * Imports the engine's chunk. An object, so a test can make the import
+ * fail.
+ *
+ * @internal
+ */
+export const engineChunk = {
+	load: (): Promise<EngineModule> => import('./root-engine'),
+};
+
+// In the browser, records the engine's chunk URLs, which the server
+// preloads for a later visitor it must serve at once.
+const importEngine = recordOnce(() =>
+	typeof document === 'undefined'
+		? engineChunk.load()
+		: learnEngineChunks(() => engineChunk.load(), NEXT_CHUNKS)
+);
+
+/** The engine's module, loading once, or again after a failed import. */
 const loadEngine = (): Recorded<EngineModule> => {
 	if (engineNow) {
 		// Outside browser bundles the engine is already in: a server render
@@ -65,14 +83,7 @@ const loadEngine = (): Recorded<EngineModule> => {
 		});
 		return engineModule;
 	}
-	// In the browser, records the engine's chunk URLs, which the server
-	// preloads for a later visitor it must serve at once.
-	engineModule ??= record(
-		typeof document === 'undefined'
-			? import('./root-engine')
-			: learnEngineChunks(() => import('./root-engine'), NEXT_CHUNKS)
-	);
-	return engineModule;
+	return importEngine();
 };
 
 /**

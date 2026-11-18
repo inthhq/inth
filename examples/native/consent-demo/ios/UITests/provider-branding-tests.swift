@@ -167,11 +167,8 @@ extension ConsentJourneyTests {
                                  name: arguments.isEmpty ? "ios-branding-wide-provider" : "ios-branding-wide-provider-rtl",
                                  inline: true)
             let customize = button("inth.first-layer.customize").frame
-            if arguments.isEmpty {
-                XCTAssertEqual(attribution.frame.maxX, customize.maxX, accuracy: 0.5)
-            } else {
-                XCTAssertEqual(attribution.frame.minX, customize.minX, accuracy: 0.5)
-            }
+            // The inline tag is centred under the actions in both writing directions.
+            XCTAssertEqual(attribution.frame.midX, customize.midX, accuracy: 1)
             app.terminate()
         }
     }

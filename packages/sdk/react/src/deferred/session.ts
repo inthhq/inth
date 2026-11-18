@@ -44,6 +44,41 @@ export const record = function record<Value>(
 	return recorded;
 };
 
+/**
+ * `load()`, recorded and shared by every call. After a failed load the next
+ * call loads again, a second later, up to three loads in all; after that
+ * the failure stays, so `read` throws it to the error boundary.
+ *
+ * @remarks
+ * Three loads a second apart ride out a dropped connection, while a chunk
+ * a deploy removed fails within seconds instead of being requested in a
+ * loop by every render that reads it.
+ *
+ * @internal
+ */
+export const recordOnce = function recordOnce<Value>(
+	load: () => Promise<Value>
+): () => Recorded<Value> {
+	let loading: Recorded<Value> | undefined;
+	let loads = 0;
+	return () => {
+		if (!loading || (loading.status === 'rejected' && loads < 3)) {
+			loads += 1;
+			loading = record(
+				loads > 1
+					? (async () => {
+							await new Promise((resolve) => {
+								setTimeout(resolve, 1000);
+							});
+							return load();
+						})()
+					: load()
+			);
+		}
+		return loading;
+	};
+};
+
 /** React 19's `use`, absent from React 18. */
 const { use } = React as {
 	use?: <Value>(value: Promise<Value>) => Value;
@@ -75,7 +110,7 @@ export interface DeferredSession {
 	/** Starts loading the engine and the banner. Idempotent. */
 	start: () => void;
 	/** The engine's module, once started and loaded. */
-	engine: Recorded<unknown>;
+	engine: () => Recorded<unknown>;
 	/**
 	 * A value from the engine's module, such as a stock surface, read once
 	 * the engine attached, so the surface hydrates against the engine's

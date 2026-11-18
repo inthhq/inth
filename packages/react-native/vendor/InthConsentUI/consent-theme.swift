@@ -336,6 +336,38 @@ public struct ConsentTheme: Equatable, Sendable {
         }
     }
 
+    /// How the first choice is presented. Every layout shows the same text, the same partner link
+    /// and the same equal Accept all and Reject all; only the container changes. Settings opened
+    /// from it always take the full screen. At accessibility text sizes every layout is `page`.
+    public enum FirstLayer: String, CaseIterable, Sendable {
+        /// A full-screen page.
+        case page
+        /// A floating sheet at the bottom, with the app dimmed behind it.
+        case sheet
+        /// A centred card in the manner of a system permission alert, with the app dimmed behind it.
+        case prompt
+    }
+
+    /// Where Save Settings sits in Privacy Settings. Reject All and Accept All stay together at the
+    /// bottom either way. At accessibility text sizes Save is always at the bottom.
+    public enum SavePlacement: String, CaseIterable, Sendable {
+        /// A full-width button under Reject All and Accept All.
+        case bottom
+        /// A text button at the trailing end of the navigation bar. The default.
+        case top
+    }
+
+    /// Where the stock colours come from. A theme whose ``colors`` a host has set keeps them.
+    /// The ``FirstLayer/sheet`` and ``FirstLayer/prompt`` layouts sit over the app, so they
+    /// always take the `system` colours.
+    public enum Appearance: String, CaseIterable, Sendable {
+        /// Warm paper and ink.
+        case c15t
+        /// The platform's own backgrounds and text colours with the app's accent colour, and a
+        /// centred first-layer page. The default.
+        case system
+    }
+
     /// First-layer copy a host may replace. Decision labels are not here on purpose. A `nil` field
     /// shows the stock copy from `@c15t/translations` in the policy's language; a host string is
     /// shown as given in every language.
@@ -366,10 +398,18 @@ public struct ConsentTheme: Equatable, Sendable {
     public var branding: Branding
     /// Whether the small provider attribution appears under the first-layer actions.
     public var showsBranding: Bool
+    /// Container of the first choice.
+    public var firstLayer: FirstLayer
+    /// Source of the stock colours.
+    public var appearance: Appearance
+    /// Position of Save Settings in Privacy Settings.
+    public var savePlacement: SavePlacement
 
     public init(colors: Colors = .c15t, radius: Radius = Radius(), spacing: Spacing = Spacing(),
         typography: Typography = Typography(), slots: [Slot: SlotStyle] = [:],
-        brand: Brand = Brand(), copy: Copy = .c15t, showsBranding: Bool = true, branding: Branding = .c15t) {
+        brand: Brand = Brand(), copy: Copy = .c15t, showsBranding: Bool = true, branding: Branding = .inth,
+        firstLayer: FirstLayer = .page, appearance: Appearance = .system,
+        savePlacement: SavePlacement = .top) {
         self.colors = colors
         self.radius = radius
         self.spacing = spacing
@@ -379,12 +419,15 @@ public struct ConsentTheme: Equatable, Sendable {
         self.copy = copy
         self.showsBranding = showsBranding
         self.branding = branding
+        self.firstLayer = firstLayer
+        self.appearance = appearance
+        self.savePlacement = savePlacement
     }
 
     /// The overrides for `slot`, or an empty style.
     func slot(_ slot: Slot) -> SlotStyle { slots[slot] ?? SlotStyle() }
 
-    /// The stock c15t appearance.
+    /// The stock theme: the system appearance, with Save Settings in the navigation bar.
     public static let c15t = ConsentTheme()
 
     /// The theme hosts that present without passing one get. Set it once at launch.
@@ -427,7 +470,13 @@ public struct ConsentTheme: Equatable, Sendable {
         public static let brandMark = "com.inth.consent.brandMark"
         public static let headline = "com.inth.consent.headline"
         public static let introduction = "com.inth.consent.introduction"
-        /// A Boolean. `false` hides the "Secured by c15t" line.
+        /// `page`, `sheet` or `prompt`.
+        public static let firstLayer = "com.inth.consent.firstLayer"
+        /// `c15t` or `system`.
+        public static let appearance = "com.inth.consent.appearance"
+        /// `bottom` or `top`.
+        public static let savePlacement = "com.inth.consent.savePlacement"
+        /// A Boolean. `false` hides the provider tag.
         public static let branding = "com.inth.consent.branding"
         /// `c15t` or `inth`. `consent` is an alias for `inth`.
         public static let brandingProvider = "com.inth.consent.brandingProvider"
@@ -490,6 +539,9 @@ public struct ConsentTheme: Equatable, Sendable {
             theme.branding = .custom(name: name, markImageName: mark)
         }
         if let flag = flag(dictionary[InfoPlistKey.branding]) { theme.showsBranding = flag }
+        if let layout = string(dictionary[InfoPlistKey.firstLayer]).flatMap({ FirstLayer(rawValue: $0.lowercased()) }) { theme.firstLayer = layout }
+        if let appearance = string(dictionary[InfoPlistKey.appearance]).flatMap({ Appearance(rawValue: $0.lowercased()) }) { theme.appearance = appearance }
+        if let placement = string(dictionary[InfoPlistKey.savePlacement]).flatMap({ SavePlacement(rawValue: $0.lowercased()) }) { theme.savePlacement = placement }
         return theme
     }
 
@@ -544,6 +596,49 @@ public struct ConsentTheme: Equatable, Sendable {
         return (max(a, b) + 0.05) / (min(a, b) + 0.05)
     }
 
+    /// `colour` moved toward black, or toward white when `lighten`, until it reaches `ratio`
+    /// against `surface`. A colour that already reaches it is returned unchanged.
+    static func adjusted(_ colour: UInt32, against surface: UInt32, ratio: Double, lighten: Bool) -> UInt32 {
+        var result = colour
+        var step = 0.0
+        while contrastRatio(result, surface) < ratio, step < 1 {
+            step += 0.04
+            func channel(_ shift: UInt32) -> UInt32 {
+                let start = Double((colour >> shift) & 255)
+                return UInt32((start + ((lighten ? 255 : 0) - start) * step).rounded()) << shift
+            }
+            result = channel(16) | channel(8) | channel(0)
+        }
+        return result
+    }
+
+    /// This theme with ``Appearance/system`` applied: the platform's grouped backgrounds and label
+    /// colours, links and switches in `tint`, and decisions filled with `tint` darkened until
+    /// white text on it reaches the 5:1 IAB TCF minimum. A theme that is not `system`, or whose
+    /// colours a host has set, is returned unchanged.
+    /// - Parameter tint: The app's accent colour as light and dark sRGB values.
+    func withSystemAppearance(tint: ConsentThemeColor) -> ConsentTheme {
+        guard appearance == .system || firstLayer != .page, colors == .c15t else { return self }
+        var theme = self
+        let decision = ConsentThemeColor(
+            light: Self.adjusted(tint.light, against: 0xFFFFFF, ratio: minimumDecisionContrast, lighten: false),
+            dark: Self.adjusted(tint.dark, against: 0xFFFFFF, ratio: minimumDecisionContrast, lighten: false))
+        theme.colors = Colors(
+            canvas: ConsentThemeColor(light: 0xF2F2F7, dark: 0x000000),
+            surface: ConsentThemeColor(light: 0xFFFFFF, dark: 0x1C1C1E),
+            surfaceMuted: ConsentThemeColor(light: 0xFFFFFF, dark: 0x1C1C1E),
+            text: ConsentThemeColor(light: 0x000000, dark: 0xFFFFFF),
+            textMuted: ConsentThemeColor(light: 0x6C6C70, dark: 0xAEAEB2),
+            primary: ConsentThemeColor(
+                light: Self.adjusted(tint.light, against: 0xF2F2F7, ratio: 4.5, lighten: false),
+                dark: Self.adjusted(tint.dark, against: 0x1C1C1E, ratio: 4.5, lighten: true)),
+            textOnPrimary: ConsentThemeColor(light: 0xFFFFFF, dark: 0x000000),
+            decision: decision,
+            textOnDecision: ConsentThemeColor(light: 0xFFFFFF))
+        return theme
+    }
+    private var minimumDecisionContrast: Double { Self.minimumDecisionContrast }
+
     /// The fill and label the decision buttons draw: the ``Slot/buttonPrimary`` colours over
     /// `decision` and `textOnDecision`.
     var decisionFill: ConsentThemeColor { slot(.buttonPrimary).backgroundColor ?? colors.decision }
@@ -553,6 +648,39 @@ public struct ConsentTheme: Equatable, Sendable {
     var decisionContrast: Double {
         min(Self.contrastRatio(decisionLabel.light, decisionFill.light),
             Self.contrastRatio(decisionLabel.dark, decisionFill.dark))
+    }
+
+    /// The label of Reject all and Accept all on a sheet or a prompt. There the two are tonal: the
+    /// text colour on a tint of the surface. A host palette whose text colour falls under 5:1 on
+    /// that tint in an appearance gets black or white there, whichever reads better.
+    /// - Parameter prompt: The prompt tints with the text colour; the sheet tints with the accent.
+    func cardDecisionLabel(prompt: Bool) -> ConsentThemeColor {
+        let tint = cardTint(prompt: prompt)
+        return ConsentThemeColor(light: Self.cardDecision(text: colors.text.light, tint: tint.light).label,
+            dark: Self.cardDecision(text: colors.text.dark, tint: tint.dark).label)
+    }
+
+    /// The fill the card actions draw, as an opaque colour: the tint over the card's surface, moved
+    /// toward white or black where a mid-grey tint would leave neither black nor white at 5:1.
+    func cardDecisionFill(prompt: Bool) -> ConsentThemeColor {
+        let tint = cardTint(prompt: prompt)
+        return ConsentThemeColor(light: Self.cardDecision(text: colors.text.light, tint: tint.light).fill,
+            dark: Self.cardDecision(text: colors.text.dark, tint: tint.dark).fill)
+    }
+
+    private func cardTint(prompt: Bool) -> ConsentThemeColor {
+        if prompt { return colors.surface.blended(toward: colors.text, fraction: 0.1) }
+        return ConsentThemeColor(
+            light: colors.surface.blended(toward: colors.primary, fraction: 0.16).light,
+            dark: colors.surface.blended(toward: colors.primary, fraction: 0.28).dark)
+    }
+
+    /// A label and fill at 5:1 or more in one appearance.
+    private static func cardDecision(text: UInt32, tint: UInt32) -> (label: UInt32, fill: UInt32) {
+        if contrastRatio(text, tint) >= minimumDecisionContrast { return (text, tint) }
+        let black = contrastRatio(0x000000, tint) >= contrastRatio(0xFFFFFF, tint)
+        let label: UInt32 = black ? 0x000000 : 0xFFFFFF
+        return (label, adjusted(tint, against: label, ratio: minimumDecisionContrast, lighten: black))
     }
 
     /// This theme, or this theme with the stock decision colours when the host's fall under 5:1
@@ -598,6 +726,21 @@ extension UIColor {
     convenience init(rgb value: UInt32) {
         self.init(red: CGFloat((value >> 16) & 255) / 255, green: CGFloat((value >> 8) & 255) / 255,
             blue: CGFloat(value & 255) / 255, alpha: 1)
+    }
+}
+
+extension ConsentThemeColor {
+    /// The app's accent colour: the `AccentColor` asset when the app has one, otherwise the
+    /// system blue, read in the light and the dark appearance.
+    @MainActor static func appAccent(bundle: Bundle = .main) -> ConsentThemeColor {
+        let colour = UIColor(named: "AccentColor", in: bundle, compatibleWith: nil) ?? .systemBlue
+        func rgb(_ style: UIUserInterfaceStyle) -> UInt32 {
+            var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+            colour.resolvedColor(with: UITraitCollection(userInterfaceStyle: style)).getRed(&r, green: &g, blue: &b, alpha: &a)
+            func channel(_ value: CGFloat) -> UInt32 { UInt32((min(max(value, 0), 1) * 255).rounded()) }
+            return channel(r) << 16 | channel(g) << 8 | channel(b)
+        }
+        return ConsentThemeColor(light: rgb(.light), dark: rgb(.dark))
     }
 }
 

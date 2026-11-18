@@ -33,30 +33,41 @@ internal object ProviderMarks {
         .addPath(PathParser().parsePathString("M72.1149 20.1264V0H80.0343V35.0608H74.2747L54.9798 14.8193V35.0608H47.0604V0H52.964L72.1149 20.1264Z").toNodes(), fill = SolidColor(Color.Black), pathFillType = PathFillType.EvenOdd)
         .addPath(PathParser().parsePathString("M71.36 41.6H88V89.6H0V41.6H61.12V31.04L71.36 41.6ZM6.15594 48.0891V56.4034H19.1784V83.2H27.4428V56.4034H40.5656V48.0891H6.15594ZM47.0603 48.1391V83.2H55.3247V70.2441H71.7531V83.2H80.0675V48.1391H71.7531V61.9797H55.3247V48.1391H47.0603Z").toNodes(), fill = SolidColor(Color.Black), pathFillType = PathFillType.EvenOdd)
         .build()
+    /** The horizontal wordmark for the provider tag, from `inth-wordmark.svg`; the square mark stays for the identity above the headline. */
+    val inthWordmark: ImageVector = ImageVector.Builder("Inth wordmark", 35.dp, 12.dp, 292f, 100f)
+        .addPath(PathParser().parsePathString("M291.667 83.333H156.076L138.889 100V0h152.778zM149.576 11.266V25.7h22.609v46.522h14.348V25.7h22.782V11.266zM220.591 11.352v60.87h14.348V49.73h28.521v22.493h14.435v-60.87H263.46v24.03h-28.521v-24.03z").toNodes(), fill = SolidColor(Color.Black), pathFillType = PathFillType.EvenOdd)
+        .addPath(PathParser().parsePathString("M60.348 11.111V25.46H37.391v32.174h22.957V71.98H0V57.633h22.956V25.459H0V11.111zM114.512 46.053V11.11h13.749v60.87h-9.999L84.764 36.839v35.142h-13.75V11.11h10.25z").toNodes(), fill = SolidColor(Color.Black))
+        .build()
 }
 
-/** The provider tag: [securedBy], the lead-in in the screen's language, then the provider. */
-@Composable internal fun ProviderBranding(securedBy: String) {
+/**
+ * The provider tag, centred under the actions: [securedBy], the lead-in in the screen's language,
+ * then the provider. Inth's wordmark is its name, so no text follows it. The first layer and
+ * Privacy Settings each tag their own with [id].
+ */
+@Composable internal fun ProviderBranding(securedBy: String, id: String = "inth.first-layer.branding", modifier: Modifier = Modifier.fillMaxWidth()) {
     val theme = LocalConsentTheme.current
     val provider = theme.branding
     val color = theme.colors.textMuted.color()
     Row(
-        modifier = Modifier.fillMaxWidth().testTag("inth.first-layer.branding")
+        modifier = modifier.testTag(id)
             .semantics(mergeDescendants = true) { contentDescription = "$securedBy ${provider.name}" },
-        horizontalArrangement = Arrangement.spacedBy(5.dp, Alignment.End),
+        horizontalArrangement = Arrangement.spacedBy(5.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(securedBy, style = MaterialTheme.typography.labelMedium, color = color,
+        // The smallest caption size: the tag is a signature, not a line of the page.
+        Text(securedBy, style = MaterialTheme.typography.labelSmall, color = color,
             modifier = Modifier.clearAndSetSemantics {})
-        val logo = Modifier.size(15.dp).testTag("inth.first-layer.branding.logo")
+        val logo = Modifier.size(15.dp).testTag("$id.logo")
         when (provider) {
             ConsentTheme.Branding.C15t -> Icon(ProviderMarks.c15t, null, modifier = logo, tint = color)
-            ConsentTheme.Branding.Inth -> Icon(ProviderMarks.inth, null, modifier = logo, tint = color)
+            ConsentTheme.Branding.Inth -> Icon(ProviderMarks.inthWordmark, null, tint = color,
+                modifier = Modifier.size(35.dp, 12.dp).testTag("$id.logo"))
             is ConsentTheme.Branding.Custom -> provider.markResId?.let {
                 Image(painterResource(it), null, modifier = logo)
             }
         }
-        Text(provider.name, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold,
-            color = color, modifier = Modifier.clearAndSetSemantics {})
+        if (provider != ConsentTheme.Branding.Inth) Text(provider.name, style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold, color = color, modifier = Modifier.clearAndSetSemantics {})
     }
 }

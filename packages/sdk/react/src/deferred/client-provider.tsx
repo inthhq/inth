@@ -51,8 +51,7 @@ import { canDeferEngine, rootNeedsEngine } from './boot';
 import type * as ClientEngine from './client-engine';
 import type { DeferredCommitConfig } from './committed';
 import type { DeferredKernelHandle } from './deferred-kernel';
-import { read, record } from './session';
-import type { Recorded } from './session';
+import { read, recordOnce } from './session';
 import { DeferredConsentShell } from './shell';
 import { warmSurfaces } from './surface-warmers';
 import { scheduleDeferredEngine } from './trigger';
@@ -317,12 +316,11 @@ const plan = function plan(
 export const createConsentProvider = function createConsentProvider(
 	importEngine: () => Promise<EngineModule> = () => import('./client-engine')
 ): (props: ConsentProviderProps) => ReactNode {
-	let engine: Recorded<EngineModule> | undefined;
-	/** Starts loading the engine once per page. */
-	const loadEngine = (): Recorded<EngineModule> => {
-		engine ??= record(importEngine());
-		return engine;
-	};
+	/**
+	 * Starts loading the engine once per page, retrying a failed import as
+	 * `recordOnce` does.
+	 */
+	const loadEngine = recordOnce(importEngine);
 
 	const EngineProvider = (props: ConsentProviderProps): ReactNode => {
 		const loaded = read(loadEngine());

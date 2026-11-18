@@ -302,8 +302,10 @@ export type ConsentFontName =
  * the Expo plugin's `theme` option takes, so one object styles the components
  * in this package and the native presenter.
  *
- * Its fields follow the web `Theme` from `@inth/sdk/ui`. `slots`, `brand` and
- * `branding` style the native presenter only; `motion` and the colours in
+ * Its fields follow the web `Theme` from `@inth/sdk/ui`. `slots`, `brand`,
+ * `branding`, `firstLayer`, `appearance` and `savePlacement` style the native
+ * presenter only;
+ * `motion` and the colours in
  * {@link ConsentThemeColors} that the native presenter does not draw style
  * these components only.
  */
@@ -348,7 +350,46 @@ export interface ConsentThemeOptions {
 		/** `true` hides the attribution. */
 		readonly hidden?: boolean;
 	};
+	/**
+	 * Native presenter: how the first choice is presented. `page` is a
+	 * full-screen page, `sheet` a floating sheet over the app and `prompt` a
+	 * centred card like a system permission alert. Every layout shows the same
+	 * text and the same equal Accept all and Reject all. Defaults to `page`.
+	 */
+	readonly firstLayer?: ConsentFirstLayer;
+	/**
+	 * Native presenter: where the stock colours come from. `system` uses the
+	 * platform's backgrounds and text colours with the app's accent colour.
+	 * `sheet` and `prompt` always use it. Colours set in `colors` win.
+	 * Defaults to `system`.
+	 */
+	readonly appearance?: ConsentAppearance;
+	/**
+	 * Native presenter: where Save sits in Privacy Settings. `top` is a short
+	 * button at the end of the navigation bar; `bottom` is a full-width Save
+	 * Settings button under Reject All and Accept All. At accessibility text
+	 * sizes it is always at the bottom. Defaults to `top`.
+	 */
+	readonly savePlacement?: ConsentSavePlacement;
 }
+
+/** The first-layer layouts of the native presenter. */
+export const CONSENT_FIRST_LAYERS = ['page', 'sheet', 'prompt'] as const;
+
+/** One of {@link CONSENT_FIRST_LAYERS}. */
+export type ConsentFirstLayer = (typeof CONSENT_FIRST_LAYERS)[number];
+
+/** The stock palettes of the native presenter. */
+export const CONSENT_APPEARANCES = ['c15t', 'system'] as const;
+
+/** One of {@link CONSENT_APPEARANCES}. */
+export type ConsentAppearance = (typeof CONSENT_APPEARANCES)[number];
+
+/** Where the native presenter can place Save Settings. */
+export const CONSENT_SAVE_PLACEMENTS = ['bottom', 'top'] as const;
+
+/** One of {@link CONSENT_SAVE_PLACEMENTS}. */
+export type ConsentSavePlacement = (typeof CONSENT_SAVE_PLACEMENTS)[number];
 
 /** The two schemes the package ships defaults for. */
 export const CONSENT_COLOR_SCHEMES = ['light', 'dark'] as const;

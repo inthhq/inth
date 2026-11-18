@@ -44,7 +44,10 @@ export {
 	ConsentDialog,
 	ConsentIabDrawer,
 	ConsentPreferences,
+	CONSENT_APPEARANCES,
 	CONSENT_COLOR_SCHEMES,
+	CONSENT_FIRST_LAYERS,
+	CONSENT_SAVE_PLACEMENTS,
 	CONSENT_THEME_PARTS,
 	consentColorsFor,
 	createConsentTheme,
@@ -57,7 +60,10 @@ export {
 } from './components';
 export type {
 	ConsentBannerProps,
+	ConsentAppearance,
 	ConsentColorScheme,
+	ConsentFirstLayer,
+	ConsentSavePlacement,
 	ConsentDialogProps,
 	ConsentPartStyles,
 	ConsentPreferencesProps,

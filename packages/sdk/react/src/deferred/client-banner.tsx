@@ -35,8 +35,7 @@ import type { ConsentBannerCompoundComponent } from '../components/prompt/index'
 import { KernelContext } from '../context';
 import { useIsHydrated } from '../hooks/use-is-hydrated';
 import { useServerSnapshot } from '../kernel-selector';
-import { DeferredSessionContext, read, record } from './session';
-import type { Recorded } from './session';
+import { DeferredSessionContext, read, recordOnce } from './session';
 import { addSurfaceWarmer } from './surface-warmers';
 
 type BannerModule = typeof BannerModuleNamespace;
@@ -44,30 +43,34 @@ type BannerModule = typeof BannerModuleNamespace;
 // oxlint-disable-next-line typescript/no-explicit-any -- Props pass through unchanged.
 type AnyComponent = ComponentType<any>;
 
+/**
+ * Imports the banner's chunk. An object, so a test can make the import
+ * fail.
+ *
+ * @internal
+ */
+export const bannerChunk = {
+	load: (): Promise<BannerModule> => import('../components/prompt/index'),
+};
+
 let loaded: BannerModule | undefined;
-let loading: Recorded<BannerModule> | undefined;
 const listeners = new Set<() => void>();
 
 /**
- * Starts loading the banner's code once per page.
+ * Starts loading the banner's code once per page, retrying a failed import
+ * as `recordOnce` does.
  *
  * @returns The module, recorded for `read`.
  * @internal
  */
-export const loadClientBanner =
-	function loadClientBanner(): Recorded<BannerModule> {
-		loading ??= record(
-			(async () => {
-				const module = await import('../components/prompt/index');
-				loaded = module;
-				for (const listener of listeners) {
-					listener();
-				}
-				return module;
-			})()
-		);
-		return loading;
-	};
+export const loadClientBanner = recordOnce(async (): Promise<BannerModule> => {
+	const module = await bannerChunk.load();
+	loaded = module;
+	for (const listener of listeners) {
+		listener();
+	}
+	return module;
+});
 
 addSurfaceWarmer(() => {
 	loadClientBanner();
@@ -107,9 +110,29 @@ const Gate = ({ eager, pick, props }: GateProps): ReactNode => {
 	);
 	const load = eager || !session || showing;
 	useEffect(() => {
-		if (load) {
-			loadClientBanner();
+		if (!load) {
+			return;
 		}
+		let active = true;
+		// After a failed download, ask again: `loadClientBanner` waits before
+		// it retries and returns the same failure once it gave up.
+		const wait = async (loading: Promise<BannerModule>): Promise<void> => {
+			try {
+				await loading;
+			} catch {
+				if (!active) {
+					return;
+				}
+				const next = loadClientBanner();
+				if (next !== loading) {
+					await wait(next);
+				}
+			}
+		};
+		void wait(loadClientBanner());
+		return () => {
+			active = false;
+		};
 	}, [load]);
 	if (module) {
 		return createElement(pick(module), props);

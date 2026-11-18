@@ -4,6 +4,11 @@ import type {
 	InfoPlist,
 } from 'expo/config-plugins';
 
+import {
+	CONSENT_APPEARANCES,
+	CONSENT_FIRST_LAYERS,
+	CONSENT_SAVE_PLACEMENTS,
+} from '../components/theme/create-consent-theme';
 import type {
 	ConsentNativeSlot,
 	ConsentThemeOptions,
@@ -113,6 +118,7 @@ export const JS_ONLY_COLOR_NAMES = [
 
 /** Native keys for the non-colour theme values. */
 export const THEME_KEYS = {
+	appearance: key('appearance', 'APPEARANCE'),
 	brand: key('brand', 'BRAND'),
 	brandMark: key('brandMark', 'BRAND_MARK'),
 	brandName: key('brandName', 'BRAND_NAME'),
@@ -120,6 +126,7 @@ export const THEME_KEYS = {
 	brandingMark: key('brandingMark', 'BRANDING_MARK'),
 	brandingName: key('brandingName', 'BRANDING_NAME'),
 	brandingProvider: key('brandingProvider', 'BRANDING_PROVIDER'),
+	firstLayer: key('firstLayer', 'FIRST_LAYER'),
 	fontFamily: key('fontFamily', 'FONT_FAMILY'),
 	fontSizeBase: key('fontSizeBase', 'FONT_SIZE_BASE'),
 	fontSizeLg: key('fontSizeLg', 'FONT_SIZE_LG'),
@@ -128,6 +135,7 @@ export const THEME_KEYS = {
 	radiusLg: key('radiusLg', 'RADIUS_LG'),
 	radiusMd: key('radiusMd', 'RADIUS_MD'),
 	radiusSm: key('radiusSm', 'RADIUS_SM'),
+	savePlacement: key('savePlacement', 'SAVE_PLACEMENT'),
 	spaceLg: key('spaceLg', 'SPACE_LG'),
 	spaceMd: key('spaceMd', 'SPACE_MD'),
 	spaceSm: key('spaceSm', 'SPACE_SM'),
@@ -691,6 +699,24 @@ const resolveBranding = function resolveBranding(value: unknown): ThemeEntries {
 	]);
 };
 
+/** One of a fixed set of names, as the native value. */
+const readChoice = function readChoice(
+	value: unknown,
+	label: string,
+	choices: readonly string[]
+): string | null {
+	if (value === undefined) {
+		return null;
+	}
+	if (typeof value !== 'string' || !choices.includes(value)) {
+		const names = choices.map((name) => JSON.stringify(name)).join(', ');
+		throw new InthPluginError(
+			`${label} must be one of ${names}. Got ${quote(value)}.`
+		);
+	}
+	return value;
+};
+
 /**
  * Validate the `theme` prop and translate it into native keys.
  *
@@ -718,6 +744,9 @@ export const resolveTheme = function resolveTheme(
 			'slots',
 			'brand',
 			'branding',
+			'firstLayer',
+			'appearance',
+			'savePlacement',
 		],
 		UNSUPPORTED
 	);
@@ -738,6 +767,28 @@ export const resolveTheme = function resolveTheme(
 			...resolveSlots(theme.slots),
 			...resolveBrand(theme.brand),
 			...resolveBranding(theme.branding),
+			...entriesOf([
+				[
+					THEME_KEYS.firstLayer,
+					readChoice(
+						theme.firstLayer,
+						'theme.firstLayer',
+						CONSENT_FIRST_LAYERS
+					),
+				],
+				[
+					THEME_KEYS.appearance,
+					readChoice(theme.appearance, 'theme.appearance', CONSENT_APPEARANCES),
+				],
+				[
+					THEME_KEYS.savePlacement,
+					readChoice(
+						theme.savePlacement,
+						'theme.savePlacement',
+						CONSENT_SAVE_PLACEMENTS
+					),
+				],
+			]),
 		],
 	};
 };

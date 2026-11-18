@@ -105,7 +105,8 @@ def reveal(resource_id: str) -> ET.Element:
     for _ in range(12):
         root = hierarchy()
         node = find(root, resource_id)
-        pinned = [find(root, 'inth.prefs.reject-all'), find(root, 'inth.prefs.save')]
+        # Reject All is always in the footer. Save can sit in the top app bar, so it is no floor.
+        pinned = [find(root, 'inth.prefs.reject-all')]
         floor = min((bounds(item)[1] for item in pinned if item is not None), default=10**6)
         if node is not None and bounds(node)[3] < floor - 8:
             return node

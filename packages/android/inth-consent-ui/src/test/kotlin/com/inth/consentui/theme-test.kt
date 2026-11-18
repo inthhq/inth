@@ -9,6 +9,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.test.core.app.ApplicationProvider
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
@@ -214,11 +215,135 @@ class ThemeTest {
             assertEquals(base, base.applying(Bundle().apply { putString(ConsentTheme.Meta.META_RADIUS_MD, value) }, context))
         }
     }
+
+    @Test fun firstLayerAndAppearanceComeFromTheManifest() {
+        assertEquals(ConsentTheme.FirstLayer.Page, ConsentTheme.c15t.firstLayer)
+        assertEquals(ConsentTheme.Appearance.System, ConsentTheme.c15t.appearance)
+        val theme = ConsentTheme(appearance = ConsentTheme.Appearance.C15t).applying(Bundle().apply {
+            putString(ConsentTheme.Meta.META_FIRST_LAYER, " Sheet ")
+            putString(ConsentTheme.Meta.META_APPEARANCE, "SYSTEM")
+        }, context)
+        assertEquals(ConsentTheme.FirstLayer.Sheet, theme.firstLayer)
+        assertEquals(ConsentTheme.Appearance.System, theme.appearance)
+        assertEquals(ConsentTheme.FirstLayer.Prompt, theme.applying(Bundle().apply { putString(ConsentTheme.Meta.META_FIRST_LAYER, "prompt") }, context).firstLayer)
+        // An unreadable value keeps what the theme had.
+        assertEquals(theme, theme.applying(Bundle().apply {
+            putString(ConsentTheme.Meta.META_FIRST_LAYER, "drawer")
+            putInt(ConsentTheme.Meta.META_APPEARANCE, 3)
+        }, context))
+    }
+
+    @Test fun savePlacementComesFromTheManifest() {
+        assertEquals(ConsentTheme.SavePlacement.Top, ConsentTheme.c15t.savePlacement)
+        val top = ConsentTheme(savePlacement = ConsentTheme.SavePlacement.Bottom).applying(Bundle().apply { putString(ConsentTheme.Meta.META_SAVE_PLACEMENT, " TOP ") }, context)
+        assertEquals(ConsentTheme.SavePlacement.Top, top.savePlacement)
+        assertEquals(ConsentTheme.SavePlacement.Bottom, top.applying(Bundle().apply { putString(ConsentTheme.Meta.META_SAVE_PLACEMENT, "bottom") }, context).savePlacement)
+        // An unreadable value keeps what the theme had.
+        assertEquals(top, top.applying(Bundle().apply { putString(ConsentTheme.Meta.META_SAVE_PLACEMENT, "middle") }, context))
+        assertEquals(top, top.applying(Bundle().apply { putInt(ConsentTheme.Meta.META_SAVE_PLACEMENT, 1) }, context))
+    }
+
+    // TCF-CHECK: P11
+    @Test fun cardDecisionsKeepFiveToOneOnAHostPalette() {
+        // Mid-grey text passes on a page's solid decision fill but not on a card's tint of the surface.
+        val colours = ConsentTheme.Colors.c15t.copy(text = ConsentThemeColor(0x6B6B6B, 0x8A8A8A), surface = ConsentThemeColor(0xFFFFFF, 0x1C1C1E))
+        for (prompt in listOf(true, false)) {
+            val theme = ConsentTheme(colors = colours, firstLayer = if (prompt) ConsentTheme.FirstLayer.Prompt else ConsentTheme.FirstLayer.Sheet)
+            val label = theme.cardDecisionLabel(prompt)
+            val fill = theme.cardDecisionFill(prompt)
+            assertTrue(ConsentTheme.contrastRatio(label.light, fill.light) >= 5.0)
+            assertTrue(ConsentTheme.contrastRatio(label.dark, fill.dark) >= 5.0)
+            assertNotEquals(colours.text, label)
+            // The stock card palette keeps its own text colour.
+            val stock = ConsentTheme(firstLayer = theme.firstLayer).withSystemAppearance(ConsentThemeColor(0x007AFF))
+            assertEquals(stock.colors.text, stock.cardDecisionLabel(prompt))
+            // A mid-grey tint leaves neither black nor white at 5:1, so the fill moves too.
+            val grey = ConsentTheme.Colors.c15t.copy(surface = ConsentThemeColor(0x848484), text = ConsentThemeColor(0x000000), primary = ConsentThemeColor(0x333333))
+            val mid = ConsentTheme(colors = grey, firstLayer = theme.firstLayer)
+            assertTrue(ConsentTheme.contrastRatio(mid.cardDecisionLabel(prompt).light, mid.cardDecisionFill(prompt).light) >= 5.0)
+            assertTrue(ConsentTheme.contrastRatio(mid.cardDecisionLabel(prompt).dark, mid.cardDecisionFill(prompt).dark) >= 5.0)
+        }
+    }
+
+    // TCF-CHECK: P11
+    @Test fun systemAppearanceKeepsDecisionsAtFiveToOneForAnyAccent() {
+        // System blue, a pale yellow and white: none reaches 5:1 under white text as given.
+        for (accent in listOf(0x007AFF, 0xFFE066, 0xFFFFFF, 0x118C5C)) {
+            val theme = ConsentTheme(appearance = ConsentTheme.Appearance.System).withSystemAppearance(ConsentThemeColor(accent))
+            val name = accent.toString(16)
+            assertTrue(name, ConsentTheme.contrastRatio(theme.decisionFill.light, theme.decisionLabel.light) >= ConsentTheme.DECISION_CONTRAST_FLOOR)
+            assertTrue(name, ConsentTheme.contrastRatio(theme.decisionFill.dark, theme.decisionLabel.dark) >= ConsentTheme.DECISION_CONTRAST_FLOOR)
+            assertTrue(name, ConsentTheme.contrastRatio(theme.colors.primary.light, theme.colors.canvas.light) >= 4.5)
+            assertTrue(name, ConsentTheme.contrastRatio(theme.colors.primary.dark, theme.colors.surface.dark) >= 4.5)
+            // The 5:1 guard that runs after it finds nothing to replace.
+            assertSame(theme, theme.withReadableDecisions())
+        }
+    }
+
+    @Test fun systemAppearanceLeavesHostColoursAndOtherAppearancesAlone() {
+        val accent = ConsentThemeColor(0x007AFF)
+        val paper = ConsentTheme(appearance = ConsentTheme.Appearance.C15t)
+        assertSame(paper, paper.withSystemAppearance(accent))
+        val host = ConsentTheme(colors = ConsentTheme.Colors.c15t.copy(primary = ConsentThemeColor(0x00796B)), appearance = ConsentTheme.Appearance.System)
+        assertSame(host, host.withSystemAppearance(accent))
+        assertEquals(ConsentThemeColor(0xF2F2F7, 0x000000), ConsentTheme(appearance = ConsentTheme.Appearance.System).withSystemAppearance(accent).colors.canvas)
+    }
+
+    @Test fun sheetAndPromptTakeTheSystemColoursWhateverTheAppearance() {
+        val accent = ConsentThemeColor(0x007AFF)
+        val system = ConsentTheme(appearance = ConsentTheme.Appearance.System).withSystemAppearance(accent).colors
+        for (layout in listOf(ConsentTheme.FirstLayer.Sheet, ConsentTheme.FirstLayer.Prompt)) {
+            assertEquals(system, ConsentTheme(firstLayer = layout).withSystemAppearance(accent).colors)
+            // A host's own colours stay on a card too.
+            val host = ConsentTheme(colors = ConsentTheme.Colors.c15t.copy(primary = ConsentThemeColor(0x00796B)), firstLayer = layout)
+            assertSame(host, host.withSystemAppearance(accent))
+        }
+    }
+
+    @Test fun appAccentComesFromTheApplicationThemeInBothAppearances() {
+        val info = context.applicationInfo
+        val previous = info.theme
+        try {
+            info.theme = android.R.style.Theme_Material_Light
+            assertEquals(ConsentThemeColor(0x008577), ConsentTheme.appAccent(context))
+            info.theme = android.R.style.Theme_DeviceDefault_DayNight
+            // A day-night theme gives each appearance its own accent, whatever the device shows now.
+            assertEquals(ConsentThemeColor(0x00668B, 0xC1E8FF), ConsentTheme.appAccent(context))
+            // An application with no theme reads the caller's.
+            info.theme = 0
+            assertEquals(ConsentThemeColor(0x008577), ConsentTheme.appAccent(android.view.ContextThemeWrapper(context, android.R.style.Theme_Material_Light)))
+        } finally { info.theme = previous }
+    }
+
+    // TCF-CHECK: P1
+    @Test fun largeTextAlwaysGetsTheFullPage() {
+        for (layout in ConsentTheme.FirstLayer.entries) {
+            val theme = ConsentTheme(firstLayer = layout)
+            assertFalse(theme.firstLayerChrome(largeText = true).card)
+            assertEquals(layout != ConsentTheme.FirstLayer.Page, theme.firstLayerChrome(largeText = false).card)
+        }
+        val system = ConsentTheme(appearance = ConsentTheme.Appearance.System)
+        assertEquals(FirstLayerChrome.System, system.firstLayerChrome(largeText = false))
+        assertEquals(FirstLayerChrome.Prompt, system.copy(firstLayer = ConsentTheme.FirstLayer.Prompt).firstLayerChrome(largeText = false))
+        assertEquals(FirstLayerChrome.System, system.copy(firstLayer = ConsentTheme.FirstLayer.Prompt).firstLayerChrome(largeText = true))
+    }
+
+    // TCF-CHECK: P1
+    @Test fun anIabChoiceInAWideWindowGetsTheFullPage() {
+        for (layout in listOf(ConsentTheme.FirstLayer.Sheet, ConsentTheme.FirstLayer.Prompt)) {
+            val theme = ConsentTheme(firstLayer = layout)
+            assertFalse(theme.firstLayerChrome(largeText = false, iabInWideWindow = true).card)
+            assertTrue(theme.firstLayerChrome(largeText = false, iabInWideWindow = false).card)
+        }
+    }
+
     @Test fun providerBrandingIsIndependentOfTheAppIdentity() {
         val base = ConsentTheme(brand = ConsentTheme.Brand(name = "Pantry"))
-        assertEquals(ConsentTheme.Branding.C15t, base.branding)
+        assertEquals(ConsentTheme.Branding.Inth, base.branding)
+        assertEquals("Inth", base.branding.name)
+        val c15t = base.copy(branding = ConsentTheme.Branding.C15t)
         for (value in listOf("inth", "consent", " Inth ")) {
-            val result = base.applying(Bundle().apply { putString(ConsentTheme.Meta.META_BRANDING_PROVIDER, value) }, context)
+            val result = c15t.applying(Bundle().apply { putString(ConsentTheme.Meta.META_BRANDING_PROVIDER, value) }, context)
             assertEquals(ConsentTheme.Branding.Inth, result.branding)
             assertEquals(base.brand, result.brand)
         }
@@ -240,7 +365,7 @@ class ThemeTest {
 
     @Test fun orphanAndMalformedProviderMarksKeepBuiltInIdentity() {
         val markOnly = Bundle().apply { putInt(ConsentTheme.Meta.META_BRANDING_MARK, android.R.drawable.ic_dialog_info) }
-        assertEquals(ConsentTheme.Branding.C15t, ConsentTheme.c15t.applying(markOnly, context).branding)
+        assertEquals(ConsentTheme.Branding.Inth, ConsentTheme.c15t.applying(markOnly, context).branding)
         val custom = ConsentTheme(branding = ConsentTheme.Branding.Custom("Example"))
         assertEquals(ConsentTheme.Branding.Custom("Example", android.R.drawable.ic_dialog_info), custom.applying(markOnly, context).branding)
         for (value in listOf(0, -1, 99999)) {
@@ -292,6 +417,31 @@ class IdentityTest {
         assertEquals("Y", HeaderIdentity.initial(missing.name))
         assertEquals("P", HeaderIdentity.initial("pantry"))
         assertEquals("", HeaderIdentity.initial("  "))
+    }
+
+    @Test fun appLabelAndIconStandInOnlyOutsideTheStockPage() {
+        val info = context.applicationInfo
+        val label = info.nonLocalizedLabel
+        val icon = info.icon
+        try {
+            info.nonLocalizedLabel = " Pantry "
+            info.icon = android.R.drawable.sym_def_app_icon
+            // The stock page keeps the placeholder and the provider mark.
+            val stock = HeaderIdentity.resolve(context, ConsentTheme.Brand(), ConsentTheme.Branding.Inth, PLACEHOLDER)
+            assertEquals(HeaderIdentity(PLACEHOLDER, provider = ConsentTheme.Branding.Inth), stock)
+            val app = HeaderIdentity.resolve(context, ConsentTheme.Brand(), ConsentTheme.Branding.Inth, PLACEHOLDER, appIdentity = true)
+            assertEquals("Pantry", app.name)
+            assertTrue(app.icon != null)
+            assertNull(app.provider)
+            // A host's own name and mark still come first.
+            val host = HeaderIdentity.resolve(context, ConsentTheme.Brand(name = "Larder", markResId = android.R.drawable.ic_dialog_info), ConsentTheme.Branding.Inth, PLACEHOLDER, appIdentity = true)
+            assertEquals(HeaderIdentity("Larder", markResId = android.R.drawable.ic_dialog_info), host)
+            // An app that declares neither falls back as the stock page does.
+            info.nonLocalizedLabel = null
+            info.labelRes = 0
+            info.icon = 0
+            assertEquals(stock, HeaderIdentity.resolve(context, ConsentTheme.Brand(), ConsentTheme.Branding.Inth, PLACEHOLDER, appIdentity = true))
+        } finally { info.nonLocalizedLabel = label; info.icon = icon }
     }
 
     @Test fun customProvidersUseTheirMarkOrInitial() {

@@ -209,6 +209,17 @@ describe('theme prop', () => {
 		expect(plist['com.inth.consent.brandingProvider']).toBe('inth');
 	});
 
+	it('writes the first-layer layout and appearance', async () => {
+		const plist = await themedPlist({
+			appearance: 'system',
+			firstLayer: 'sheet',
+			savePlacement: 'top',
+		});
+		expect(plist['com.inth.consent.savePlacement']).toBe('top');
+		expect(plist['com.inth.consent.firstLayer']).toBe('sheet');
+		expect(plist['com.inth.consent.appearance']).toBe('system');
+	});
+
 	it('replaces stale theme keys but keeps copy keys', async () => {
 		const plist = await themedPlist(
 			{ colors: { primary: '#2563EB' } },
@@ -446,6 +457,21 @@ describe('theme prop', () => {
 			'a provider mark without a name',
 			{ branding: { mark: 'acme' } },
 			/theme\.branding\.mark needs theme\.branding\.name/u,
+		],
+		[
+			'an unknown first-layer layout',
+			{ firstLayer: 'drawer' },
+			/theme\.firstLayer must be one of "page", "sheet", "prompt"/u,
+		],
+		[
+			'an unknown appearance',
+			{ appearance: 'dark' },
+			/theme\.appearance must be one of "c15t", "system"/u,
+		],
+		[
+			'an unknown save placement',
+			{ savePlacement: 'left' },
+			/theme\.savePlacement must be one of "bottom", "top"/u,
 		],
 		['a non-object', 'dark', /theme must be an object/u],
 	])('refuses %s at prebuild', (_label, theme, message) => {

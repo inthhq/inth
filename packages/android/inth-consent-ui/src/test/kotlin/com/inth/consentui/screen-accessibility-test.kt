@@ -206,6 +206,63 @@ class ScreenAccessibilityTest {
         compose.onNodeWithTag("inth.first-layer.branding.logo", useUnmergedTree = true).assertDoesNotExist()
     }
 
+    /** Inth's tag draws the horizontal wordmark, which is its name; the other providers keep a square mark. */
+    @Test fun inthProviderTagShowsItsWordmark() {
+        val provider = mutableStateOf<ConsentTheme.Branding>(ConsentTheme.Branding.Inth)
+        compose.setContent {
+            CompositionLocalProvider(LocalConsentTheme provides ConsentTheme(branding = provider.value)) {
+                ProviderBranding("Secured by")
+            }
+        }
+        fun logo() = compose.onNodeWithTag("inth.first-layer.branding.logo", useUnmergedTree = true).fetchSemanticsNode().size
+        compose.onNodeWithTag("inth.first-layer.branding").assertContentDescriptionEquals("Secured by Inth")
+        assertTrue("wordmark was ${logo()}", logo().width > 2 * logo().height)
+        compose.runOnIdle { provider.value = ConsentTheme.Branding.C15t }
+        assertEquals(logo().width, logo().height)
+    }
+
+    // TCF-CHECK: P10
+    @Test fun sheetShowsTheSameChoicesOnACardAndOpensFullScreenSettings() = assertCard(ConsentTheme.FirstLayer.Sheet, "inth.first-layer.sheet")
+
+    // TCF-CHECK: P10
+    @Test fun promptShowsTheSameChoicesOnACardAndOpensFullScreenSettings() = assertCard(ConsentTheme.FirstLayer.Prompt, "inth.first-layer.prompt")
+
+    private fun assertCard(layout: ConsentTheme.FirstLayer, tag: String) {
+        Dispatchers.setMain(Dispatchers.Unconfined)
+        try {
+            val presenter = show(DecisionStore(), ConsentTheme(firstLayer = layout))
+            val card = compose.onNodeWithTag(tag).assertIsDisplayed().fetchSemanticsNode()
+            val window = generateSequence(card) { it.parent }.last().size
+            assertTrue("card was ${card.size} in $window", card.size.height < window.height && card.size.width < window.width)
+            for (id in listOf("title", "body", "customize", "branding")) compose.onNodeWithTag("inth.first-layer.$id").assertIsDisplayed()
+            // The sheet names the app in one row; the prompt, like a system dialog, has no identity.
+            if (layout == ConsentTheme.FirstLayer.Sheet) compose.onNodeWithTag("inth.first-layer.brand").assertIsDisplayed()
+            else compose.onNodeWithTag("inth.first-layer.brand").assertDoesNotExist()
+            val reject = compose.onNodeWithTag("inth.first-layer.reject-all").assertIsDisplayed().fetchSemanticsNode().size
+            assertEquals(reject, compose.onNodeWithTag("inth.first-layer.accept-all").assertIsDisplayed().fetchSemanticsNode().size)
+            compose.onNodeWithTag("inth.first-layer.customize").performClick()
+            compose.waitForIdle()
+            compose.onNodeWithTag("inth.prefs.title").assertIsDisplayed()
+            compose.onNodeWithTag(tag).assertDoesNotExist()
+            // Back returns to the card.
+            compose.runOnIdle { presenter.requestClose() }
+            compose.waitForIdle()
+            compose.onNodeWithTag(tag).assertIsDisplayed()
+        } finally { Dispatchers.resetMain() }
+    }
+
+    // TCF-CHECK: P1
+    @Test fun largeTextShowsASheetThemeAsThePage() {
+        Dispatchers.setMain(Dispatchers.Unconfined)
+        try {
+            RuntimeEnvironment.setFontScale(2f)
+            show(DecisionStore(), ConsentTheme(firstLayer = ConsentTheme.FirstLayer.Sheet))
+            compose.onNodeWithTag("inth.first-layer.sheet").assertDoesNotExist()
+            compose.onNodeWithTag("inth.first-layer.brand").assertExists()
+            compose.onNodeWithTag("inth.first-layer.accept-all").assertExists()
+        } finally { RuntimeEnvironment.setFontScale(1f); Dispatchers.resetMain() }
+    }
+
     /** Category mode speaks the policy's language, from `@c15t/translations`, not English literals. */
     @Test fun categoryLabelsFollowThePolicyLanguage() {
         Dispatchers.setMain(Dispatchers.Unconfined)
@@ -219,11 +276,11 @@ class ScreenAccessibilityTest {
             }
             compose.onNodeWithTag("inth.first-layer.title").assertTextEquals(german.headline)
             compose.onNodeWithTag("inth.first-layer.body").assertTextEquals(german.introduction)
-            compose.onNodeWithTag("inth.first-layer.branding").assertContentDescriptionEquals("${german.securedBy} c15t")
+            compose.onNodeWithTag("inth.first-layer.branding").assertContentDescriptionEquals("${german.securedBy} Inth")
             compose.onNodeWithTag("inth.first-layer.brand").assertContentDescriptionEquals(german.brandPlaceholder)
             compose.runOnIdle { presenter.customize() }
             compose.waitForIdle()
-            compose.onNodeWithTag("inth.prefs.save").assertContentDescriptionEquals(german.save)
+            compose.onNodeWithTag("inth.prefs.save").assertContentDescriptionEquals(com.inth.consentui.generated.IabCopy.forLanguage("de").appSave)
         } finally { Dispatchers.resetMain() }
     }
 
