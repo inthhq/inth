@@ -58,7 +58,7 @@ for (const file of walk(srcDir)) {
 					restored += 1;
 				}
 			} catch {
-				// output variant doesn't exist — fine
+				// Not every output variant exists.
 			}
 		}
 	}

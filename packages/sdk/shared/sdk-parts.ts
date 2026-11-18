@@ -25,7 +25,6 @@ export const PRIVATE_SPECIFIER = new RegExp(
 	'gu'
 );
 
-/** Whether an import specifier names a private part. */
 export const isPrivateSdkName = (id: string): boolean =>
 	new RegExp(`^@inth\\/sdk-(?:${PART_PATTERN})(?:\\/|$)`, 'u').test(id);
 
@@ -40,7 +39,6 @@ export const MERGED_ENTRIES: Record<string, readonly [Part, string][]> = {
 	],
 };
 
-/** Public subpath for a private package's export key. */
 export const toPublicSubpath = function toPublicSubpath(
 	part: Part,
 	key: string
