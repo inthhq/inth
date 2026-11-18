@@ -252,16 +252,20 @@ export const setupScrollLock = function setupScrollLock() {
 };
 
 /**
- * Finds a rendered equivalent of an element that was unmounted while a focus
- * trap was active. Consent surfaces often unmount their opener while open
- * (e.g. the floating dialog trigger hides while the dialog is shown and
- * re-renders as a new node on close), so restoring focus to the original
- * node would silently no-op and drop keyboard users at `<body>`. Matching by
- * `id`, then by `data-testid`, re-targets the remounted opener instead.
+ * Where focus returns after a surface closes: `element` while it is still
+ * in the page, else a rendered equivalent. Consent surfaces often unmount
+ * their opener while open (e.g. the floating dialog trigger hides while the
+ * dialog is shown and re-renders as a new node on close), so restoring
+ * focus to the original node would silently no-op and drop keyboard users
+ * at `<body>`. Matching by `id`, then by `data-testid`, re-targets the
+ * remounted opener instead.
  */
 export const findFocusRestoreEquivalent = function findFocusRestoreEquivalent(
 	element: HTMLElement
 ): HTMLElement | null {
+	if (element.isConnected) {
+		return element;
+	}
 	if (element.id) {
 		const byId = document.getElementById(element.id);
 		if (byId) {
@@ -465,10 +469,9 @@ export const setupFocusTrap = function setupFocusTrap(
 
 		if (previousFocus && typeof previousFocus.focus === 'function') {
 			setTimeout(() => {
-				const target = previousFocus.isConnected
-					? previousFocus
-					: findFocusRestoreEquivalent(previousFocus);
-				target?.focus({ preventScroll: true });
+				findFocusRestoreEquivalent(previousFocus)?.focus({
+					preventScroll: true,
+				});
 			}, 0);
 		}
 	};

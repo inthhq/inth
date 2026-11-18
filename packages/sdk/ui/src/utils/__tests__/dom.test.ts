@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { setupColorScheme } from '../color-scheme';
 import {
+	findFocusRestoreEquivalent,
 	getFocusableElements,
 	getTextDirection,
 	firstTabbable,
@@ -487,6 +488,25 @@ describe('getFocusableElements', () => {
 		const elements = getFocusableElements(container);
 		expect(elements).toHaveLength(1);
 		expect(elements[0]).toBe(button);
+	});
+});
+
+describe('findFocusRestoreEquivalent', () => {
+	afterEach(() => {
+		document.body.replaceChildren();
+	});
+
+	test('returns the element while it is in the page, else its remounted twin', () => {
+		const opener = document.createElement('button');
+		opener.id = 'opener';
+		document.body.append(opener);
+		expect(findFocusRestoreEquivalent(opener)).toBe(opener);
+
+		opener.remove();
+		const twin = document.createElement('button');
+		twin.id = 'opener';
+		document.body.append(twin);
+		expect(findFocusRestoreEquivalent(opener)).toBe(twin);
 	});
 });
 

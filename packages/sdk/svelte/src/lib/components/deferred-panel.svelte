@@ -23,17 +23,6 @@
 		})();
 		return pending;
 	};
-
-	/**
-	 * Where focus returns after the dialog: the opener itself, or the element
-	 * that took its place. A banner's Customize button is gone while the
-	 * dialog is open, and the banner renders a new one when it comes back.
-	 */
-	const focusReturnTarget = function focusReturnTarget(
-		opener: HTMLElement
-	): HTMLElement | null {
-		return opener.isConnected ? opener : findFocusRestoreEquivalent(opener);
-	};
 </script>
 
 <script lang="ts">
@@ -97,7 +86,7 @@
 			) {
 				return;
 			}
-			focusReturnTarget(previous)?.focus({ preventScroll: true });
+			findFocusRestoreEquivalent(previous)?.focus({ preventScroll: true });
 		}, 0);
 		return () => clearTimeout(timer);
 	});

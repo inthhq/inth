@@ -55,17 +55,6 @@ export class InitialFocus {
 }
 
 /**
- * Where focus returns after a dialog: the opener itself, or the element
- * that took its place. A banner's Customize button is gone while the
- * dialog is open, and the banner renders a new one when it comes back.
- */
-const focusReturnTarget = function focusReturnTarget(
-	opener: HTMLElement
-): HTMLElement | null {
-	return opener.isConnected ? opener : findFocusRestoreEquivalent(opener);
-};
-
-/**
  * Returns focus to the control that opened the dialog once it closes.
  *
  * A dialog follows `activeUI === 'dialog'` unless its parent sets `open`.
@@ -104,7 +93,7 @@ export const returnFocusAfterDialog = function returnFocusAfterDialog(
 			) {
 				return;
 			}
-			focusReturnTarget(target)?.focus({ preventScroll: true });
+			findFocusRestoreEquivalent(target)?.focus({ preventScroll: true });
 		}, 0);
 	};
 	const remember = (): void => {
@@ -199,7 +188,7 @@ export const returnFocusAfterDialog = function returnFocusAfterDialog(
 					active === document.body ||
 					active === document.documentElement
 				) {
-					focusReturnTarget(target)?.focus({ preventScroll: true });
+					findFocusRestoreEquivalent(target)?.focus({ preventScroll: true });
 				}
 			}, 0);
 		}
