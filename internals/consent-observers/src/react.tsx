@@ -31,7 +31,6 @@ export const useObservedSnapshot =
 		);
 	};
 
-/** Props for {@link ConsentProbe}. */
 export interface ConsentProbeProps {
 	/** Identifies the probe in the DOM. */
 	name: string;
