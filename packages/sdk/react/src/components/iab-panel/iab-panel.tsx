@@ -248,9 +248,9 @@ export const IABConsentDialog: FC<IABConsentDialogProps> = ({
 		[iabState]
 	);
 
-	const handlePurposeLegitimateInterestToggle = useCallback(
-		(purposeId: number, value: boolean) => {
-			iabState?.setPurposeLegitimateInterest(purposeId, value);
+	const handlePurposeObjection = useCallback(
+		(purposeId: number, objected: boolean) => {
+			iabState?.setPurposeObjection(purposeId, objected);
 		},
 		[iabState]
 	);
@@ -694,18 +694,11 @@ export const IABConsentDialog: FC<IABConsentDialogProps> = ({
 														vendorConsents={iabState.vendorConsents}
 														onVendorToggle={handleVendorToggle}
 														onVendorClick={handleVendorClick}
-														vendorLegitimateInterests={
-															iabState.vendorLegitimateInterests
-														}
+														legitimateInterests={iabState}
 														onVendorLegitimateInterestToggle={
 															handleVendorLegitimateInterestToggle
 														}
-														purposeLegitimateInterests={
-															iabState.purposeLegitimateInterests
-														}
-														onPurposeLegitimateInterestToggle={
-															handlePurposeLegitimateInterestToggle
-														}
+														onPurposeObjection={handlePurposeObjection}
 													/>
 												) : (
 													<PurposeItem
@@ -728,20 +721,13 @@ export const IABConsentDialog: FC<IABConsentDialogProps> = ({
 														vendorConsents={iabState.vendorConsents}
 														onVendorToggle={handleVendorToggle}
 														onVendorClick={handleVendorClick}
-														vendorLegitimateInterests={
-															iabState.vendorLegitimateInterests
-														}
+														legitimateInterests={iabState}
 														onVendorLegitimateInterestToggle={
 															handleVendorLegitimateInterestToggle
 														}
-														purposeLegitimateInterests={
+														onPurposeObjection={
 															row.kind === 'purpose'
-																? iabState.purposeLegitimateInterests
-																: undefined
-														}
-														onPurposeLegitimateInterestToggle={
-															row.kind === 'purpose'
-																? handlePurposeLegitimateInterestToggle
+																? handlePurposeObjection
 																: undefined
 														}
 													/>
@@ -943,9 +929,7 @@ export const IABConsentDialog: FC<IABConsentDialogProps> = ({
 												selectedVendorId={selectedVendorId}
 												onClearSelection={() => setSelectedVendorId(null)}
 												customVendors={iabState.nonIABVendors}
-												vendorLegitimateInterests={
-													iabState.vendorLegitimateInterests
-												}
+												legitimateInterests={iabState}
 												onVendorLegitimateInterestToggle={
 													handleVendorLegitimateInterestToggle
 												}

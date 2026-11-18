@@ -249,13 +249,12 @@
 			iabState?.setVendorLegitimateInterest(vendorId, value);
 		};
 
-	const handlePurposeLegitimateInterestToggle =
-		function handlePurposeLegitimateInterestToggle(
-			purposeId: number,
-			value: boolean
-		) {
-			iabState?.setPurposeLegitimateInterest(purposeId, value);
-		};
+	const handlePurposeObjection = function handlePurposeObjection(
+		purposeId: number,
+		objected: boolean
+	) {
+		iabState?.setPurposeObjection(purposeId, objected);
+	};
 
 	const handleSave = async function handleSave() {
 		if (!iabState) {
@@ -431,10 +430,9 @@
 											vendorConsents={iabState.vendorConsents}
 											onVendorToggle={handleVendorToggle}
 											onVendorClick={handleVendorClick}
-											vendorLegitimateInterests={iabState.vendorLegitimateInterests}
+											legitimateInterests={iabState}
 											onVendorLegitimateInterestToggle={handleVendorLegitimateInterestToggle}
-											purposeLegitimateInterests={iabState.purposeLegitimateInterests}
-											onPurposeLegitimateInterestToggle={handlePurposeLegitimateInterestToggle}
+											onPurposeObjection={handlePurposeObjection}
 											{noStyle}
 											{iabT}
 										/>
@@ -448,7 +446,7 @@
 											vendorConsents={iabState.vendorConsents}
 											onVendorToggle={handleVendorToggle}
 											onVendorClick={handleVendorClick}
-											vendorLegitimateInterests={iabState.vendorLegitimateInterests}
+											legitimateInterests={iabState}
 											onVendorLegitimateInterestToggle={handleVendorLegitimateInterestToggle}
 											{noStyle}
 											{iabT}
@@ -462,10 +460,9 @@
 											vendorConsents={iabState.vendorConsents}
 											onVendorToggle={handleVendorToggle}
 											onVendorClick={handleVendorClick}
-											vendorLegitimateInterests={iabState.vendorLegitimateInterests}
+											legitimateInterests={iabState}
 											onVendorLegitimateInterestToggle={handleVendorLegitimateInterestToggle}
-											purposeLegitimateInterests={iabState.purposeLegitimateInterests}
-											onPurposeLegitimateInterestToggle={handlePurposeLegitimateInterestToggle}
+											onPurposeObjection={handlePurposeObjection}
 											{noStyle}
 											{iabT}
 										/>
@@ -595,7 +592,7 @@
 									{selectedVendorId}
 									onClearSelection={() => (selectedVendorId = null)}
 									customVendors={iabState.nonIABVendors}
-									vendorLegitimateInterests={iabState.vendorLegitimateInterests}
+									legitimateInterests={iabState}
 									onVendorLegitimateInterestToggle={handleVendorLegitimateInterestToggle}
 									adTechProviders={iabState.adTechProviders}
 									adTechProviderConsents={iabState.adTechProviderConsents}

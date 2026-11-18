@@ -1,6 +1,7 @@
 'use client';
 
 import { countIABPartners } from '@inth/sdk/iab/headless';
+import type { IABLegitimateInterestState } from '@inth/sdk/iab/headless';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 import { useState } from 'react';
 import type { FC } from 'react';
@@ -15,9 +16,6 @@ import type { ProcessedStack, VendorId } from '../types';
 import { useIABTranslations } from '../use-iab-translations';
 import { PurposeItem } from './purpose-item';
 
-const EMPTY_VENDOR_INTERESTS: Record<string, boolean> = {};
-const EMPTY_PURPOSE_INTERESTS: Record<number, boolean> = {};
-
 interface StackItemProps {
 	/** A stack, or a display-model stack row whose purposes carry `hasConsentBasis`. */
 	stack: Omit<ProcessedStack, 'purposes'> & {
@@ -30,18 +28,14 @@ interface StackItemProps {
 	vendorConsents: Record<string, boolean>;
 	onVendorToggle: (vendorId: VendorId, value: boolean) => void;
 	onVendorClick: (vendorId: VendorId) => void;
-	/** Legitimate interest objections - true means user has NOT objected (allowed) */
-	vendorLegitimateInterests?: Record<string, boolean>;
+	/** Draft and vendor list the legitimate interest controls read. */
+	legitimateInterests?: IABLegitimateInterestState;
 	onVendorLegitimateInterestToggle?: (
 		vendorId: VendorId,
 		value: boolean
 	) => void;
-	/** Purpose-level legitimate interest state - true means NOT objected (allowed) */
-	purposeLegitimateInterests?: Record<number, boolean>;
-	onPurposeLegitimateInterestToggle?: (
-		purposeId: number,
-		value: boolean
-	) => void;
+	/** Object to a purpose's legitimate interest, or withdraw the objection. */
+	onPurposeObjection?: (purposeId: number, objected: boolean) => void;
 }
 
 export const StackItem: FC<StackItemProps> = ({
@@ -51,10 +45,9 @@ export const StackItem: FC<StackItemProps> = ({
 	vendorConsents,
 	onVendorToggle,
 	onVendorClick,
-	vendorLegitimateInterests = EMPTY_VENDOR_INTERESTS,
+	legitimateInterests,
 	onVendorLegitimateInterestToggle,
-	purposeLegitimateInterests = EMPTY_PURPOSE_INTERESTS,
-	onPurposeLegitimateInterestToggle,
+	onPurposeObjection,
 }) => {
 	const { components } = useUIConfig();
 	const { noStyle } = useTheme();
@@ -65,9 +58,7 @@ export const StackItem: FC<StackItemProps> = ({
 	// The others offer only their own objection control; without one, the
 	// rows keep their consent switch and the stack covers them too.
 	const consentPurposes = stack.purposes.filter(
-		(p) =>
-			p.hasConsentBasis !== false ||
-			onPurposeLegitimateInterestToggle === undefined
+		(p) => p.hasConsentBasis !== false || onPurposeObjection === undefined
 	);
 	const allEnabled = consentPurposes.every((p) => consents[p.id] ?? false);
 	const someEnabled =
@@ -179,14 +170,11 @@ export const StackItem: FC<StackItemProps> = ({
 							vendorConsents={vendorConsents}
 							onVendorToggle={onVendorToggle}
 							onVendorClick={onVendorClick}
-							vendorLegitimateInterests={vendorLegitimateInterests}
+							legitimateInterests={legitimateInterests}
 							onVendorLegitimateInterestToggle={
 								onVendorLegitimateInterestToggle
 							}
-							purposeLegitimateInterests={purposeLegitimateInterests}
-							onPurposeLegitimateInterestToggle={
-								onPurposeLegitimateInterestToggle
-							}
+							onPurposeObjection={onPurposeObjection}
 						/>
 					))}
 				</div>

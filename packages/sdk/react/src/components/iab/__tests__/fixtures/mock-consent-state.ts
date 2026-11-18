@@ -291,6 +291,7 @@ export const createMockIABState = function createMockIABState(
 		// Actions
 		setPurposeConsent: () => {},
 		setPurposeLegitimateInterest: () => {},
+		setPurposeObjection: () => {},
 		setSpecialFeatureOptIn: () => {},
 		setVendorConsent: () => {},
 		setVendorLegitimateInterest: () => {},

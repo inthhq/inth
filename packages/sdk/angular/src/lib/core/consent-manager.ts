@@ -56,6 +56,7 @@ import {
 	has as evaluateHas,
 	hasGlobalPrivacyControlSignal,
 	IABUnavailableError,
+	iabSurfaceActions,
 	pendingBootSnapshot,
 	policyNeedsIAB,
 	vendorsListedUnder,
@@ -116,6 +117,8 @@ export interface AngularIABState extends KernelIABState {
 	) => void;
 	setPurposeConsent: (purposeId: number, value: boolean) => void;
 	setPurposeLegitimateInterest: (purposeId: number, value: boolean) => void;
+	/** Object to a purpose's legitimate interest, for it and its vendors. */
+	setPurposeObjection: (purposeId: number, objected: boolean) => void;
 	setSpecialFeatureOptIn: (featureId: number, value: boolean) => void;
 	/** Set consent for a Google ad tech provider (Additional Consent). */
 	setAdTechProviderConsent: (providerId: number, value: boolean) => void;
@@ -203,10 +206,7 @@ const displayedConsentTypes = function displayedConsentTypes(
 const EMPTY: Readonly<Record<string, boolean>> = Object.freeze({});
 
 const noop = () => {
-	/* no IAB handle yet */
-};
-const noopAsync = async () => {
-	/* no IAB handle yet */
+	/* nothing to stop yet */
 };
 
 /**
@@ -1021,26 +1021,15 @@ export class ConsentManager {
 		// IAB surfaces in the first HTML. Until `@inth/sdk/iab` lands the lazy
 		// handle queues calls and replays them; without a handle the actions
 		// are no-ops.
-		const handle = this.#iabHandle();
 		const tab = this.#iabTab;
 		return {
 			...iab,
-			acceptAll: handle?.acceptAll ?? noop,
+			...iabSurfaceActions(this.#iabHandle()),
 			config: { cmpId: iab.cmpId, enabled: iab.enabled },
 			isLoadingGVL: iab.enabled && !iab.gvl,
 			nonIABVendors: iab.customVendors,
 			preferenceCenterTab: tab(),
-			rejectAll: handle?.rejectAll ?? noop,
-			save: handle?.save ?? noopAsync,
-			setAdTechProviderConsent: (providerId, value) =>
-				handle?.setAdTechProviderConsent?.(providerId, value),
 			setPreferenceCenterTab: (next) => tab.set(next),
-			setPurposeConsent: handle?.setPurposeConsent ?? noop,
-			setPurposeLegitimateInterest:
-				handle?.setPurposeLegitimateInterest ?? noop,
-			setSpecialFeatureOptIn: handle?.setSpecialFeatureOptIn ?? noop,
-			setVendorConsent: handle?.setVendorConsent ?? noop,
-			setVendorLegitimateInterest: handle?.setVendorLegitimateInterest ?? noop,
 		};
 	}
 }

@@ -14,9 +14,11 @@ export {
 export type { ResolveIABBannerSummaryOptions } from '@inth/sdk-core/iab-support';
 export {
 	applyPublisherRestrictionsToGVL,
+	type IABLegitimateInterestState,
 	introducedLegitimateInterest,
 	type IntroducedLegitimateInterest,
-} from './headless/effective-vendor-list';
+	isLegitimateInterestAllowed,
+} from '@inth/sdk-core/iab-support';
 export { permittedLegitimateInterestPurposes } from '@inth/sdk-schema/types';
 export {
 	type HeadlessIABDialogDisplayModel,

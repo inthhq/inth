@@ -10,6 +10,7 @@ import { ɵresolveNoStyle as resolveNoStyle } from '@inth/angular';
 import { countIABPartners } from '@inth/sdk/iab/headless';
 import type {
 	HeadlessIABVendorId,
+	IABLegitimateInterestState,
 	ProcessedStack,
 } from '@inth/sdk/iab/headless';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
@@ -128,8 +129,7 @@ export type IABStackRow = Omit<ProcessedStack, 'purposes'> & {
 								[purpose]="purpose"
 								[isEnabled]="consents()[purpose.id] ?? false"
 								[vendorConsents]="vendorConsents()"
-								[vendorLegitimateInterests]="vendorLegitimateInterests()"
-								[purposeLegitimateInterests]="purposeLegitimateInterests()"
+								[legitimateInterests]="legitimateInterests()"
 								[purposeObjection]="purposeObjection()"
 								[vendorObjection]="vendorObjection()"
 								[noStyle]="resolvedNoStyle()"
@@ -159,14 +159,8 @@ export class IABStackItem {
 	readonly consents = input<Readonly<Record<number, boolean>>>({});
 	/** Consent per vendor, keyed by vendor id. */
 	readonly vendorConsents = input<Readonly<Record<string, boolean>>>({});
-	/** Legitimate interest per vendor. */
-	readonly vendorLegitimateInterests = input<Readonly<Record<string, boolean>>>(
-		{}
-	);
-	/** Legitimate interest per purpose. */
-	readonly purposeLegitimateInterests = input<
-		Readonly<Record<number, boolean>>
-	>({});
+	/** Draft and vendor list the legitimate interest controls read. */
+	readonly legitimateInterests = input<IABLegitimateInterestState | null>(null);
 	/**
 	 * Offer the purpose-level objection. Purposes with no vendor on consent
 	 * then leave the stack switch, which would change nothing for them.

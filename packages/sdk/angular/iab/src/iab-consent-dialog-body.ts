@@ -237,12 +237,7 @@ const primaryButtonClass = buttonVariants({
 													[stack]="row"
 													[consents]="state.purposeConsents"
 													[vendorConsents]="state.vendorConsents"
-													[vendorLegitimateInterests]="
-														state.vendorLegitimateInterests
-													"
-													[purposeLegitimateInterests]="
-														state.purposeLegitimateInterests
-													"
+													[legitimateInterests]="state"
 													[purposeObjection]="true"
 													[vendorObjection]="true"
 													[noStyle]="resolvedNoStyle()"
@@ -254,7 +249,7 @@ const primaryButtonClass = buttonVariants({
 														setVendorLegitimateInterest($event)
 													"
 													(purposeLegitimateInterestToggle)="
-														setPurposeLegitimateInterest($event)
+														setPurposeObjection($event)
 													"
 												/>
 											} @else if (row.toggle === 'special-feature') {
@@ -265,9 +260,7 @@ const primaryButtonClass = buttonVariants({
 														state.specialFeatureOptIns[row.id] ?? false
 													"
 													[vendorConsents]="state.vendorConsents"
-													[vendorLegitimateInterests]="
-														state.vendorLegitimateInterests
-													"
+													[legitimateInterests]="state"
 													[vendorObjection]="true"
 													[noStyle]="resolvedNoStyle()"
 													[iabT]="iabT"
@@ -286,12 +279,7 @@ const primaryButtonClass = buttonVariants({
 													[testId]="row.testId"
 													[isEnabled]="state.purposeConsents[row.id] ?? false"
 													[vendorConsents]="state.vendorConsents"
-													[vendorLegitimateInterests]="
-														state.vendorLegitimateInterests
-													"
-													[purposeLegitimateInterests]="
-														state.purposeLegitimateInterests
-													"
+													[legitimateInterests]="state"
 													[purposeObjection]="true"
 													[vendorObjection]="true"
 													[noStyle]="resolvedNoStyle()"
@@ -308,7 +296,7 @@ const primaryButtonClass = buttonVariants({
 														setVendorLegitimateInterest($event)
 													"
 													(purposeLegitimateInterestToggle)="
-														setPurposeLegitimateInterest($event)
+														setPurposeObjection($event)
 													"
 												/>
 											}
@@ -434,9 +422,7 @@ const primaryButtonClass = buttonVariants({
 											[vendorConsents]="state.vendorConsents"
 											[selectedVendorId]="selectedVendorId()"
 											[customVendors]="state.nonIABVendors"
-											[vendorLegitimateInterests]="
-												state.vendorLegitimateInterests
-											"
+											[legitimateInterests]="state"
 											[vendorObjection]="true"
 											[adTechProviders]="state.adTechProviders ?? []"
 											[adTechProviderConsents]="
@@ -781,11 +767,8 @@ export class IABConsentDialogBody {
 	}
 
 	/** @internal */
-	protected setPurposeLegitimateInterest({
-		purposeId,
-		value,
-	}: IABPurposeChoice): void {
-		this.iab()?.setPurposeLegitimateInterest(purposeId, value);
+	protected setPurposeObjection({ purposeId, value }: IABPurposeChoice): void {
+		this.iab()?.setPurposeObjection(purposeId, !value);
 	}
 
 	/** @internal */

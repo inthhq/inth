@@ -209,78 +209,36 @@ const essentialPartnerCount = computed(
  * Each switch writes the CMP handle's selection at once, as React and
  * Svelte do. The handle's selection is the IAB draft: it stays in kernel
  * state until a save encodes it, and the handle keeps unsaved selections
- * when another tab's receipt reloads. Without a handle the selection is
- * written to the kernel directly.
+ * when another tab's receipt reloads.
  */
-const select = function select(
-	apply: (handle: NonNullable<typeof kernelContext.iab>) => void,
-	field: Exclude<keyof typeof iabSelection.value, 'preferenceCenterTab'>,
-	id: number | string,
-	value: boolean
-) {
-	const handle = kernelContext.iab;
-	if (handle) {
-		apply(handle);
-		return;
-	}
-	iabSelection.value = {
-		...iabSelection.value,
-		[field]: { ...iabSelection.value[field], [String(id)]: value },
-	};
-};
-
 const setPurposeConsent = function setPurposeConsent(
 	purposeId: number,
 	value: boolean
 ) {
-	select(
-		(handle) => handle.setPurposeConsent(purposeId, value),
-		'purposeConsents',
-		purposeId,
-		value
-	);
+	kernelContext.iab?.setPurposeConsent(purposeId, value);
 };
 
-const setPurposeLegitimateInterest = function setPurposeLegitimateInterest(
+const setPurposeObjection = function setPurposeObjection(
 	purposeId: number,
-	value: boolean
+	objected: boolean
 ) {
-	select(
-		(handle) => handle.setPurposeLegitimateInterest(purposeId, value),
-		'purposeLegitimateInterests',
-		purposeId,
-		value
-	);
+	kernelContext.iab?.setPurposeObjection(purposeId, objected);
 };
 
 const setVendorConsent = function setVendorConsent(
 	vendorId: IabVendorId,
 	value: boolean
 ) {
-	select(
-		(handle) => handle.setVendorConsent(vendorId, value),
-		'vendorConsents',
-		vendorId,
-		value
-	);
+	kernelContext.iab?.setVendorConsent(vendorId, value);
 };
 
 const setVendorLegitimateInterest = function setVendorLegitimateInterest(
 	vendorId: IabVendorId,
 	value: boolean
 ) {
-	select(
-		(handle) => handle.setVendorLegitimateInterest(vendorId, value),
-		'vendorLegitimateInterests',
-		vendorId,
-		value
-	);
+	kernelContext.iab?.setVendorLegitimateInterest(vendorId, value);
 };
 
-/**
- * Providers load only through the CMP handle, so a provider switch always
- * has one to write to.
- */
 const setAdTechProviderConsent = function setAdTechProviderConsent(
 	providerId: number,
 	value: boolean
@@ -292,12 +250,7 @@ const setSpecialFeatureOptIn = function setSpecialFeatureOptIn(
 	featureId: number,
 	value: boolean
 ) {
-	select(
-		(handle) => handle.setSpecialFeatureOptIn(featureId, value),
-		'specialFeatureOptIns',
-		featureId,
-		value
-	);
+	kernelContext.iab?.setSpecialFeatureOptIn(featureId, value);
 };
 
 watch(
@@ -585,12 +538,7 @@ useFocusTrap(card, () => shouldTrapFocus.value, {
 												:stack="row"
 												:consents="iabSelection.purposeConsents"
 												:vendor-consents="iabSelection.vendorConsents"
-												:vendor-legitimate-interests="
-													iabSelection.vendorLegitimateInterests
-												"
-												:purpose-legitimate-interests="
-													iabSelection.purposeLegitimateInterests
-												"
+												:legitimate-interests="snapshot.iab"
 												@toggle="
 													(purposeId, value) =>
 														setPurposeConsent(purposeId, value)
@@ -603,9 +551,9 @@ useFocusTrap(card, () => shouldTrapFocus.value, {
 													(vendorId, value) =>
 														setVendorLegitimateInterest(vendorId, value)
 												"
-												@purpose-legitimate-interest-toggle="
-													(purposeId, value) =>
-														setPurposeLegitimateInterest(purposeId, value)
+												@purpose-objection="
+													(purposeId, objected) =>
+														setPurposeObjection(purposeId, objected)
 												"
 											/>
 											<IabPurposeItem
@@ -616,9 +564,7 @@ useFocusTrap(card, () => shouldTrapFocus.value, {
 													iabSelection.specialFeatureOptIns[row.id] ?? false
 												"
 												:vendor-consents="iabSelection.vendorConsents"
-												:vendor-legitimate-interests="
-													iabSelection.vendorLegitimateInterests
-												"
+												:legitimate-interests="snapshot.iab"
 												@toggle="
 													(value) => setSpecialFeatureOptIn(row.id, value)
 												"
@@ -639,12 +585,7 @@ useFocusTrap(card, () => shouldTrapFocus.value, {
 													iabSelection.purposeConsents[row.id] ?? false
 												"
 												:vendor-consents="iabSelection.vendorConsents"
-												:vendor-legitimate-interests="
-													iabSelection.vendorLegitimateInterests
-												"
-												:purpose-legitimate-interests="
-													iabSelection.purposeLegitimateInterests
-												"
+												:legitimate-interests="snapshot.iab"
 												@toggle="(value) => setPurposeConsent(row.id, value)"
 												@vendor-toggle="
 													(vendorId, value) => setVendorConsent(vendorId, value)
@@ -654,8 +595,8 @@ useFocusTrap(card, () => shouldTrapFocus.value, {
 													(vendorId, value) =>
 														setVendorLegitimateInterest(vendorId, value)
 												"
-												@purpose-legitimate-interest-toggle="
-													(value) => setPurposeLegitimateInterest(row.id, value)
+												@purpose-objection="
+													(objected) => setPurposeObjection(row.id, objected)
 												"
 											/>
 										</template>
@@ -835,9 +776,7 @@ useFocusTrap(card, () => shouldTrapFocus.value, {
 											:vendor-consents="iabSelection.vendorConsents"
 											:selected-vendor-id="selectedVendorId"
 											:custom-vendors="customVendors"
-											:vendor-legitimate-interests="
-												iabSelection.vendorLegitimateInterests
-											"
+											:legitimate-interests="snapshot.iab"
 											@vendor-toggle="
 												(vendorId, value) => setVendorConsent(vendorId, value)
 											"

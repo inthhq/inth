@@ -1,6 +1,10 @@
 <script lang="ts">
-	import { countIABPartners } from '@inth/sdk/iab/headless';
+	import {
+		countIABPartners,
+		isLegitimateInterestAllowed,
+	} from '@inth/sdk/iab/headless';
 	import type {
+		IABLegitimateInterestState,
 		HeadlessIABVendorId as VendorId,
 		ProcessedPurpose,
 	} from '@inth/sdk/iab/headless';
@@ -29,10 +33,9 @@
 		onVendorToggle,
 		onVendorClick,
 		isLocked = false,
-		vendorLegitimateInterests = {},
+		legitimateInterests,
 		onVendorLegitimateInterestToggle,
-		purposeLegitimateInterests = {},
-		onPurposeLegitimateInterestToggle,
+		onPurposeObjection,
 		noStyle = false,
 		iabT,
 	}: {
@@ -50,16 +53,14 @@
 		onVendorToggle: (vendorId: VendorId, value: boolean) => void;
 		onVendorClick: (vendorId: VendorId) => void;
 		isLocked?: boolean;
-		vendorLegitimateInterests?: Record<string, boolean>;
+		/** Draft and vendor list the legitimate interest controls read. */
+		legitimateInterests?: IABLegitimateInterestState;
 		onVendorLegitimateInterestToggle?: (
 			vendorId: VendorId,
 			value: boolean
 		) => void;
-		purposeLegitimateInterests?: Record<number, boolean>;
-		onPurposeLegitimateInterestToggle?: (
-			purposeId: number,
-			value: boolean
-		) => void;
+		/** Object to a purpose's legitimate interest, or withdraw the objection. */
+		onPurposeObjection?: (purposeId: number, objected: boolean) => void;
 		noStyle?: boolean;
 		iabT: IABTranslations;
 	} = $props();
@@ -89,21 +90,15 @@
 	const getVendorLegitimateInterest = function getVendorLegitimateInterest(
 		vendorId: VendorId
 	): boolean {
-		return vendorLegitimateInterests[String(vendorId)] ?? true;
+		return isLegitimateInterestAllowed(legitimateInterests, 'vendor', vendorId);
 	};
 
 	const isPurposeLIAllowed = $derived(
-		purposeLegitimateInterests[purpose.id] ?? true
+		isLegitimateInterestAllowed(legitimateInterests, 'purpose', purpose.id)
 	);
 
 	const handlePurposeLIObjection = function handlePurposeLIObjection() {
-		const newValue = !isPurposeLIAllowed;
-		onPurposeLegitimateInterestToggle?.(purpose.id, newValue);
-		if (onVendorLegitimateInterestToggle) {
-			for (const vendor of legIntVendors) {
-				onVendorLegitimateInterestToggle(vendor.id, newValue);
-			}
-		}
+		onPurposeObjection?.(purpose.id, isPurposeLIAllowed);
 	};
 
 	const iabConsentVendors = $derived(consentVendors.filter((v) => !v.isCustom));
@@ -121,7 +116,7 @@
 	// while every vendor kept processing; the objection control is the one
 	// that counts.
 	const showConsentSwitch = $derived(
-		purpose.hasConsentBasis !== false || !onPurposeLegitimateInterestToggle
+		purpose.hasConsentBasis !== false || !onPurposeObjection
 	);
 
 	const handlePurposeToggle = function handlePurposeToggle(value: boolean) {
@@ -203,7 +198,7 @@
 			{purpose.description}
 		</p>
 
-		{#if legIntVendors.length > 0 && onPurposeLegitimateInterestToggle}
+		{#if legIntVendors.length > 0 && onPurposeObjection}
 			<div class={noStyle ? '' : styles.purposeLiSection || ''}>
 				<div class={noStyle ? '' : styles.purposeLiSectionHeader || ''}>
 					<div class={noStyle ? '' : styles.purposeLiInfo || ''}>
@@ -236,7 +231,7 @@
 			</div>
 		{/if}
 
-		{#if legIntVendors.length > 0 && !onPurposeLegitimateInterestToggle}
+		{#if legIntVendors.length > 0 && !onPurposeObjection}
 			<div class={noStyle ? '' : styles.legitimateInterestBadge || ''}>
 				<LegitimateInterestIcon
 					class={noStyle ? '' : styles.legitimateInterestIcon || ''}

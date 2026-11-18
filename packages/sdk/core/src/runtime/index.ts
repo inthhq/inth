@@ -87,9 +87,13 @@ export type {
 } from './types';
 export type { WireRuntimeCallbacksOptions } from './callbacks';
 export { wireRuntimeCallbacks } from './callbacks';
-export type { IABModuleLoader, LazyIABFactory } from './lazy-iab';
+export type {
+	IABModuleLoader,
+	IABSurfaceActions,
+	LazyIABFactory,
+} from './lazy-iab';
 export { isIABConfigured } from './iab-options';
-export { createLazyIABFactory } from './lazy-iab';
+export { createLazyIABFactory, iabSurfaceActions } from './lazy-iab';
 export { lazyRuntimeModule } from './lazy-module';
 export { mountRuntimeIAB } from './iab-mount';
 export type { RuntimeIABMountOptions } from './iab-mount';

@@ -27,6 +27,7 @@
 		ConsentProviderRuntime,
 		ConsentRuntime,
 	} from '@inth/sdk/runtime/provider';
+	import { iabSurfaceActions } from '@inth/sdk/surface-state';
 	import { warnOnUnappliedThemeTokens } from '@inth/sdk/ui/theme';
 	import { setupColorScheme } from '@inth/sdk/ui/utils';
 	import { BROWSER, DEV } from 'esm-env';
@@ -248,16 +249,9 @@
 		// IAB surfaces in the first HTML. Until `@inth/sdk/iab` lands the lazy
 		// handle queues calls and replays them, so an early Accept still
 		// records consent; without any handle the actions are no-ops.
-		const readyHandle = iabHandle;
-		const noop = () => {
-			/* empty */
-		};
-		const noopAsync = async () => {
-			/* empty */
-		};
 		return {
 			...iab,
-			acceptAll: readyHandle?.acceptAll ?? noop,
+			...iabSurfaceActions(iabHandle),
 			config: {
 				cmpId: iab.cmpId,
 				enabled: iab.enabled,
@@ -265,20 +259,9 @@
 			isLoadingGVL: iab.enabled && !iab.gvl,
 			nonIABVendors: iab.customVendors,
 			preferenceCenterTab: iabTab,
-			rejectAll: readyHandle?.rejectAll ?? noop,
-			save: readyHandle?.save ?? noopAsync,
-			setAdTechProviderConsent: (providerId, value) =>
-				readyHandle?.setAdTechProviderConsent?.(providerId, value),
 			setPreferenceCenterTab(tab) {
 				iabTab = tab;
 			},
-			setPurposeConsent: readyHandle?.setPurposeConsent ?? noop,
-			setPurposeLegitimateInterest:
-				readyHandle?.setPurposeLegitimateInterest ?? noop,
-			setSpecialFeatureOptIn: readyHandle?.setSpecialFeatureOptIn ?? noop,
-			setVendorConsent: readyHandle?.setVendorConsent ?? noop,
-			setVendorLegitimateInterest:
-				readyHandle?.setVendorLegitimateInterest ?? noop,
 		};
 	};
 

@@ -13,12 +13,12 @@ import type {
 	GlobalVendorList,
 	NonIABVendor,
 } from '@inth/sdk-core';
+import { applyPublisherRestrictionsToGVL } from '@inth/sdk-core/iab-support';
 import {
 	AD_TECH_PROVIDER_PURPOSES,
 	permittedLegitimateInterestPurposes,
 } from '@inth/sdk-schema/types';
 
-import { applyPublisherRestrictionsToGVL } from './effective-vendor-list';
 import type {
 	HeadlessIABDialogData,
 	HeadlessIABProcessedFeature,

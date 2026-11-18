@@ -23,9 +23,13 @@ import {
 	Switch,
 	SwitchThumb,
 } from '@inth/angular/primitives';
-import { countIABPartners } from '@inth/sdk/iab/headless';
+import {
+	countIABPartners,
+	isLegitimateInterestAllowed,
+} from '@inth/sdk/iab/headless';
 import type {
 	HeadlessIABVendorId,
+	IABLegitimateInterestState,
 	ProcessedPurpose,
 } from '@inth/sdk/iab/headless';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
@@ -554,14 +558,8 @@ export class IABPurposeItem {
 	readonly vendorConsents = input<Readonly<Record<string, boolean>>>({});
 	/** Shows a locked row: the switch is on and cannot change. */
 	readonly isLocked = input(false);
-	/** Legitimate interest per vendor; a missing vendor is allowed. */
-	readonly vendorLegitimateInterests = input<Readonly<Record<string, boolean>>>(
-		{}
-	);
-	/** Legitimate interest per purpose; a missing purpose is allowed. */
-	readonly purposeLegitimateInterests = input<
-		Readonly<Record<number, boolean>>
-	>({});
+	/** Draft and vendor list the legitimate interest controls read. */
+	readonly legitimateInterests = input<IABLegitimateInterestState | null>(null);
 	/**
 	 * Offer the purpose-level objection. Without it, a purpose whose vendors
 	 * all use legitimate interest keeps its consent switch.
@@ -634,8 +632,12 @@ export class IABPurposeItem {
 		this.legIntVendors().filter((v) => v.isCustom)
 	);
 	/** @internal */
-	protected readonly isPurposeLIAllowed = computed(
-		() => this.purposeLegitimateInterests()[this.purpose().id] ?? true
+	protected readonly isPurposeLIAllowed = computed(() =>
+		isLegitimateInterestAllowed(
+			this.legitimateInterests(),
+			'purpose',
+			this.purpose().id
+		)
 	);
 	/**
 	 * With no vendor on consent, a consent switch would look like an opt-out
@@ -676,7 +678,11 @@ export class IABPurposeItem {
 
 	/** @internal */
 	protected vendorLegitimateInterest(vendorId: HeadlessIABVendorId): boolean {
-		return this.vendorLegitimateInterests()[String(vendorId)] ?? true;
+		return isLegitimateInterestAllowed(
+			this.legitimateInterests(),
+			'vendor',
+			vendorId
+		);
 	}
 
 	/** The purpose switch also sets every consent-based vendor. @internal */
@@ -687,20 +693,11 @@ export class IABPurposeItem {
 		}
 	}
 
-	/** The purpose objection also sets every LI vendor. @internal */
+	/** @internal */
 	protected toggleObjection(): void {
-		const value = !this.isPurposeLIAllowed();
 		this.purposeLegitimateInterestToggle.emit({
 			purposeId: this.purpose().id,
-			value,
+			value: !this.isPurposeLIAllowed(),
 		});
-		if (this.vendorObjection()) {
-			for (const vendor of this.legIntVendors()) {
-				this.vendorLegitimateInterestToggle.emit({
-					value,
-					vendorId: vendor.id,
-				});
-			}
-		}
 	}
 }

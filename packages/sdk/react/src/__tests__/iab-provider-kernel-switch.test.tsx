@@ -49,6 +49,7 @@ vi.mock('@inth/sdk/iab', async (importOriginal) => ({
 			save: vi.fn(() => Promise.resolve()),
 			setPurposeConsent: vi.fn(),
 			setPurposeLegitimateInterest: vi.fn(),
+			setPurposeObjection: vi.fn(),
 			setSpecialFeatureOptIn: vi.fn(),
 			setVendorConsent: vi.fn(),
 			setVendorLegitimateInterest: vi.fn(),

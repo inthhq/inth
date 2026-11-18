@@ -27,7 +27,7 @@ import type { GlobalVendorList, PublisherRestriction } from '@inth/sdk-core';
 import { resolveIABBannerSummary } from '@inth/sdk-core';
 import { describe, expect, test } from 'vitest';
 
-import { applyPublisherRestrictionsToGVL } from '../headless/effective-vendor-list';
+import { applyPublisherRestrictionsToGVL } from '../headless';
 import { additionalConsentFor } from '../tcf/additional-consent';
 import { generateTCString } from '../tcf/tc-string';
 

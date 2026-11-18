@@ -2,6 +2,7 @@
 	import { countIABPartners } from '@inth/sdk/iab/headless';
 	import type {
 		HeadlessIABVendorId as VendorId,
+		IABLegitimateInterestState,
 		ProcessedStack,
 	} from '@inth/sdk/iab/headless';
 	import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
@@ -21,10 +22,9 @@
 		vendorConsents,
 		onVendorToggle,
 		onVendorClick,
-		vendorLegitimateInterests = {},
+		legitimateInterests,
 		onVendorLegitimateInterestToggle,
-		purposeLegitimateInterests = {},
-		onPurposeLegitimateInterestToggle,
+		onPurposeObjection,
 		noStyle = false,
 		iabT,
 	}: {
@@ -39,16 +39,14 @@
 		vendorConsents: Record<string, boolean>;
 		onVendorToggle: (vendorId: VendorId, value: boolean) => void;
 		onVendorClick: (vendorId: VendorId) => void;
-		vendorLegitimateInterests?: Record<string, boolean>;
+		/** Draft and vendor list the legitimate interest controls read. */
+		legitimateInterests?: IABLegitimateInterestState;
 		onVendorLegitimateInterestToggle?: (
 			vendorId: VendorId,
 			value: boolean
 		) => void;
-		purposeLegitimateInterests?: Record<number, boolean>;
-		onPurposeLegitimateInterestToggle?: (
-			purposeId: number,
-			value: boolean
-		) => void;
+		/** Object to a purpose's legitimate interest, or withdraw the objection. */
+		onPurposeObjection?: (purposeId: number, objected: boolean) => void;
 		noStyle?: boolean;
 		iabT: IABTranslations;
 	} = $props();
@@ -61,7 +59,7 @@
 	// rows keep their consent switch and the stack covers them too.
 	const consentPurposes = $derived(
 		stack.purposes.filter(
-			(p) => p.hasConsentBasis !== false || !onPurposeLegitimateInterestToggle
+			(p) => p.hasConsentBasis !== false || !onPurposeObjection
 		)
 	);
 	const allEnabled = $derived(
@@ -150,10 +148,9 @@
 					{vendorConsents}
 					{onVendorToggle}
 					{onVendorClick}
-					{vendorLegitimateInterests}
+					{legitimateInterests}
 					{onVendorLegitimateInterestToggle}
-					{purposeLegitimateInterests}
-					{onPurposeLegitimateInterestToggle}
+					{onPurposeObjection}
 					{noStyle}
 					{iabT}
 				/>

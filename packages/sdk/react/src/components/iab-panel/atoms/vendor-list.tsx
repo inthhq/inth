@@ -7,9 +7,11 @@ import type {
 } from '@inth/sdk/engine';
 import {
 	formatVendorMaxAge,
+	isLegitimateInterestAllowed,
 	mapCustomVendor,
 	mapGvlVendor,
 } from '@inth/sdk/iab/headless';
+import type { IABLegitimateInterestState } from '@inth/sdk/iab/headless';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 import { useEffect, useRef, useState } from 'react';
 import type { FC } from 'react';
@@ -92,8 +94,8 @@ interface VendorListProps {
 	selectedVendorId: VendorId | null;
 	onClearSelection: () => void;
 	customVendors?: NonIABVendor[];
-	/** Legitimate interest state - true means user has NOT objected (allowed) */
-	vendorLegitimateInterests?: Record<string, boolean>;
+	/** Draft and vendor list the legitimate interest controls read. */
+	legitimateInterests?: IABLegitimateInterestState;
 	onVendorLegitimateInterestToggle?: (
 		vendorId: VendorId,
 		value: boolean
@@ -145,7 +147,7 @@ export const VendorList: FC<VendorListProps> = ({
 	selectedVendorId,
 	onClearSelection,
 	customVendors = EMPTY_CUSTOM_VENDORS,
-	vendorLegitimateInterests = EMPTY_VENDOR_INTERESTS,
+	legitimateInterests,
 	onVendorLegitimateInterestToggle,
 	adTechProviders = EMPTY_AD_TECH_PROVIDERS,
 	adTechProviderConsents = EMPTY_VENDOR_INTERESTS,
@@ -326,8 +328,11 @@ export const VendorList: FC<VendorListProps> = ({
 			(p) => p.usesLegitimateInterest
 		).length;
 		const hasLegitimateInterest = vendor.legIntPurposes.length > 0;
-		const isLegitimateInterestAllowed =
-			vendorLegitimateInterests[vendorKey] ?? true;
+		const legitimateInterestAllowed = isLegitimateInterestAllowed(
+			legitimateInterests,
+			'vendor',
+			vendor.id
+		);
 		const standardRetentionDays = vendor.dataRetention?.stdRetention;
 		const maxAgeText = formatVendorMaxAge(
 			vendor.cookieMaxAgeSeconds,
@@ -465,13 +470,13 @@ export const VendorList: FC<VendorListProps> = ({
 								onClick={() =>
 									onVendorLegitimateInterestToggle(
 										vendor.id,
-										!isLegitimateInterestAllowed
+										!legitimateInterestAllowed
 									)
 								}
-								className={`${styles.objectButton} ${isLegitimateInterestAllowed ? '' : styles.objectButtonActive}`}
-								aria-pressed={!isLegitimateInterestAllowed}
+								className={`${styles.objectButton} ${legitimateInterestAllowed ? '' : styles.objectButtonActive}`}
+								aria-pressed={!legitimateInterestAllowed}
 							>
-								{isLegitimateInterestAllowed
+								{legitimateInterestAllowed
 									? iab.preferenceCenter.purposeItem.objectButton
 									: iab.preferenceCenter.purposeItem.objected}
 							</button>

@@ -9,6 +9,7 @@ import { userEvent } from 'vitest/browser';
 
 import { ComponentFixtureProvider as ConsentProvider } from '~/__tests__/component-fixture-provider';
 
+import { completeGVL } from '../../../../../iab/src/__tests__/fixtures/gvl-sample';
 import { testing } from '../../../testing';
 import { PurposeItem } from '../atoms/purpose-item';
 
@@ -85,5 +86,78 @@ describe('PurposeItem with Google ad tech providers', () => {
 		await expect
 			.element(screen.getByRole('link', { name: 'Seedtag' }))
 			.toHaveAttribute('href', 'https://seedtag.example/p');
+	});
+});
+
+describe('PurposeItem objection controls', () => {
+	// Vendor 10 declares purpose 7 on legitimate interest; the restriction
+	// moves vendor 755 there. With an empty draft a plain Save encodes the
+	// purpose and vendor 755 as allowed and vendor 10 as objected.
+	const legitimateInterests = {
+		gvl: completeGVL,
+		publisherRestrictions: [
+			{ purposeId: 7, restrictionType: 2 as const, vendorIds: [755] },
+		],
+		purposeLegitimateInterests: {},
+		vendorLegitimateInterests: {},
+	};
+	const vendor = (id: number) => ({
+		cookieMaxAgeSeconds: null,
+		deviceStorageDisclosureUrl: null,
+		features: [],
+		id,
+		legIntPurposes: [7],
+		name: `Vendor ${id}`,
+		policyUrl: '',
+		purposes: [],
+		specialFeatures: [],
+		specialPurposes: [],
+		usesCookies: false,
+		usesLegitimateInterest: true,
+		usesNonCookieAccess: false,
+	});
+
+	test('show what a plain Save encodes, and object through one call', async () => {
+		const onPurposeObjection = vi.fn();
+		const onVendorLegitimateInterestToggle = vi.fn();
+		const screen = await render(
+			<ConsentProvider options={{ mode: testing() }}>
+				<PurposeItem
+					purpose={{
+						description: '',
+						hasConsentBasis: false,
+						id: 7,
+						illustrations: [],
+						name: 'Measure advertising performance',
+						vendors: [vendor(755), vendor(10)],
+					}}
+					isEnabled={false}
+					onToggle={vi.fn()}
+					vendorConsents={{}}
+					onVendorToggle={vi.fn()}
+					onVendorClick={vi.fn()}
+					legitimateInterests={legitimateInterests}
+					onPurposeObjection={onPurposeObjection}
+					onVendorLegitimateInterestToggle={onVendorLegitimateInterestToggle}
+				/>
+			</ConsentProvider>
+		);
+
+		await userEvent.click(screen.getByText('Measure advertising performance'));
+		await userEvent.click(screen.getByText(/Partners Using This Purpose/u));
+		await expect.element(screen.getByText('Vendor 10')).toBeInTheDocument();
+		const pressed = Array.from(
+			screen.container.querySelectorAll('button[aria-pressed]'),
+			(button) => button.getAttribute('aria-pressed')
+		);
+		// The purpose objection, then vendors 755 and 10.
+		expect(pressed).toEqual(['false', 'false', 'true']);
+
+		const purposeObjection = screen.container.querySelector<HTMLElement>(
+			'button[aria-pressed]'
+		);
+		await userEvent.click(purposeObjection as HTMLElement);
+		expect(onPurposeObjection).toHaveBeenCalledWith(7, true);
+		expect(onVendorLegitimateInterestToggle).not.toHaveBeenCalled();
 	});
 });

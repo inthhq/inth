@@ -1,5 +1,6 @@
 import { getIABControls } from '@inth/sdk-core';
 import type { ConsentKernel, KernelIABControls } from '@inth/sdk-core';
+import { isLegitimateInterestAllowed } from '@inth/sdk-core/iab-support';
 import { permittedLegitimateInterestPurposes } from '@inth/sdk-schema/types';
 
 import type { RunAction } from './action-runner';
@@ -161,7 +162,7 @@ export const renderIABPanel = (
 				legitimateInterest: permittedLegitimateInterestPurposes(
 					vendor.legIntPurposes
 				).length
-					? (iab.vendorLegitimateInterests[String(vendor.id)] ?? false)
+					? isLegitimateInterestAllowed(iab, 'vendor', vendor.id)
 					: undefined,
 				name: vendor.name,
 				setConsent: (api, value) => api.setVendorConsent(vendor.id, value),
@@ -186,7 +187,7 @@ export const renderIABPanel = (
 					purpose.id
 				)
 			)
-				? (iab.purposeLegitimateInterests[purpose.id] ?? false)
+				? isLegitimateInterestAllowed(iab, 'purpose', purpose.id)
 				: undefined,
 			name: purpose.name,
 			setConsent: (api, value) => api.setPurposeConsent(purpose.id, value),

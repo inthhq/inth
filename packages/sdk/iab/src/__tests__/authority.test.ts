@@ -15,6 +15,7 @@ import {
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { createAuthorityReceipt, validateAuthority } from '../authority';
+import { isLegitimateInterestAllowed } from '../headless';
 import { createIAB } from '../index';
 import type { IABHandle } from '../index';
 import { PublisherRestrictionError } from '../tcf/publisher-restrictions';
@@ -2790,6 +2791,82 @@ test('an objection overrides the legitimate interest a restriction introduces', 
 			kernel.getSnapshot()
 		)
 	).toBe(false);
+});
+
+test('an untouched legitimate interest control shows what a plain Save encodes', async () => {
+	// Vendor 10 declares purpose 7 on legitimate interest; the restriction
+	// moves vendor 755 there. Only the moved signal is encoded as allowed.
+	const kernel = makeKernel();
+	const addon = createIAB({
+		cmpId: 28,
+		gvl: completeGVL,
+		kernel,
+		publisherRestrictions: [
+			{ purposeId: 7, restrictionType: 2, vendorIds: [755] },
+		],
+	});
+	disposers.push(addon.dispose);
+	await addon.whenReady();
+	const before = kernel.getSnapshot().iab;
+	const shown = {
+		purpose2: isLegitimateInterestAllowed(before, 'purpose', 2),
+		purpose7: isLegitimateInterestAllowed(before, 'purpose', 7),
+		vendor10: isLegitimateInterestAllowed(before, 'vendor', 10),
+		vendor755: isLegitimateInterestAllowed(before, 'vendor', '755'),
+	};
+	await addon.save();
+	const decoded = await decodeTCString(
+		kernel.getSnapshot().iab?.authority?.tcString ?? ''
+	);
+	expect(shown).toEqual({
+		purpose2: decoded.purposeLegitimateInterests[2] ?? false,
+		purpose7: decoded.purposeLegitimateInterests[7] ?? false,
+		vendor10: decoded.vendorLegitimateInterests[10] ?? false,
+		vendor755: decoded.vendorLegitimateInterests[755] ?? false,
+	});
+	expect(shown).toEqual({
+		purpose2: false,
+		purpose7: true,
+		vendor10: false,
+		vendor755: true,
+	});
+});
+
+test('a purpose objection sets every vendor using legitimate interest for it', async () => {
+	const kernel = makeKernel();
+	const addon = createIAB({
+		cmpId: 28,
+		customVendors: [
+			{
+				id: 'custom-li',
+				legIntPurposes: [7],
+				name: 'Custom LI',
+				privacyPolicyUrl: 'https://example.com/privacy',
+				purposes: [],
+			},
+		],
+		gvl: completeGVL,
+		kernel,
+		publisherRestrictions: [
+			{ purposeId: 7, restrictionType: 2, vendorIds: [755] },
+		],
+	});
+	disposers.push(addon.dispose);
+	await addon.whenReady();
+	addon.setPurposeObjection(7, true);
+	const { iab } = kernel.getSnapshot();
+	expect(iab?.purposeLegitimateInterests).toEqual({ 7: false });
+	expect(iab?.vendorLegitimateInterests).toEqual({
+		10: false,
+		755: false,
+		'custom-li': false,
+	});
+	addon.setPurposeObjection(7, false);
+	expect(kernel.getSnapshot().iab?.vendorLegitimateInterests).toEqual({
+		10: true,
+		755: true,
+		'custom-li': true,
+	});
 });
 
 describe('Accept All covers what the visitor was shown', () => {

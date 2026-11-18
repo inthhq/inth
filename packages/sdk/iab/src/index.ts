@@ -30,7 +30,9 @@ import type {
 	PublisherRestriction,
 } from '@inth/sdk-core';
 import {
+	applyPublisherRestrictionsToGVL,
 	inthProtocolParams,
+	introducedLegitimateInterest,
 	registerIABControls,
 } from '@inth/sdk-core/iab-support';
 import {
@@ -49,10 +51,6 @@ import {
 	storeAuthority,
 	validateAuthority,
 } from './authority';
-import {
-	applyPublisherRestrictionsToGVL,
-	introducedLegitimateInterest,
-} from './headless/effective-vendor-list';
 import { fetchAdTechProviders } from './tcf/additional-consent';
 import {
 	clearStoredTCString,
@@ -224,6 +222,13 @@ export interface IABHandle {
 	 * purposes 1 and 3 to 6, which TCF allows only with consent.
 	 */
 	setPurposeLegitimateInterest: (purposeId: number, value: boolean) => void;
+	/**
+	 * Object to legitimate interest for an IAB purpose (`true`), or withdraw
+	 * the objection (`false`). Sets the purpose signal and the signal of
+	 * every vendor that uses legitimate interest for it after publisher
+	 * restrictions, custom vendors included.
+	 */
+	setPurposeObjection: (purposeId: number, objected: boolean) => void;
 	/** Opt in/out of a special feature (1 = geo, 2 = device ID). */
 	setSpecialFeatureOptIn: (featureId: number, value: boolean) => void;
 	/**
@@ -2249,6 +2254,38 @@ export const createIAB = function createIAB(
 			}
 			kernel.set.iab({
 				purposeLegitimateInterests: { ...current, [id]: value },
+			});
+		},
+		setPurposeObjection(id, objected) {
+			const value = !objected;
+			const iab = readIAB(kernel);
+			if (value && permittedLegitimateInterestPurposes([id]).length === 0) {
+				return;
+			}
+			const liVendors = [
+				...Object.values(
+					iab.gvl
+						? applyPublisherRestrictionsToGVL(iab.gvl, publisherRestrictions)
+								.vendors
+						: {}
+				).filter((vendor) => vendor.legIntPurposes?.includes(id)),
+				...iab.customVendors.filter((vendor) =>
+					permittedLegitimateInterestPurposes(vendor.legIntPurposes).includes(
+						id
+					)
+				),
+			];
+			kernel.set.iab({
+				purposeLegitimateInterests: {
+					...iab.purposeLegitimateInterests,
+					[id]: value,
+				},
+				vendorLegitimateInterests: {
+					...iab.vendorLegitimateInterests,
+					...Object.fromEntries(
+						liVendors.map((vendor) => [String(vendor.id), value])
+					),
+				},
 			});
 		},
 		setSpecialFeatureOptIn(id, value) {

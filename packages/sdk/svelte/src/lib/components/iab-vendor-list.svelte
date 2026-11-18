@@ -6,11 +6,13 @@
 	} from '@inth/sdk/engine';
 	import {
 		formatVendorMaxAge,
+		isLegitimateInterestAllowed,
 		mapCustomVendor,
 		mapGvlVendor,
 	} from '@inth/sdk/iab/headless';
 	import type {
 		HeadlessIABVendorId as VendorId,
+		IABLegitimateInterestState,
 		ProcessedPurpose,
 		ProcessedVendor,
 	} from '@inth/sdk/iab/headless';
@@ -42,7 +44,7 @@
 		selectedVendorId,
 		onClearSelection,
 		customVendors = [],
-		vendorLegitimateInterests = {},
+		legitimateInterests,
 		onVendorLegitimateInterestToggle,
 		adTechProviders = [],
 		adTechProviderConsents = {},
@@ -58,7 +60,8 @@
 		selectedVendorId: VendorId | null;
 		onClearSelection: () => void;
 		customVendors?: NonIABVendor[];
-		vendorLegitimateInterests?: Record<string, boolean>;
+		/** Draft and vendor list the legitimate interest controls read. */
+		legitimateInterests?: IABLegitimateInterestState;
 		onVendorLegitimateInterestToggle?: (
 			vendorId: VendorId,
 			value: boolean
@@ -334,8 +337,11 @@
 						(p) => p.usesLegitimateInterest
 					).length}
 					{@const hasLegitimateInterest = vendor.legIntPurposes.length > 0}
-					{@const isLegitimateInterestAllowed =
-						vendorLegitimateInterests[vendorKey] ?? true}
+					{@const liAllowed = isLegitimateInterestAllowed(
+						legitimateInterests,
+						'vendor',
+						vendor.id
+					)}
 					{@const standardRetentionDays = vendor.dataRetention?.stdRetention}
 					{@const maxAgeText = getMaxAgeText(vendor)}
 
@@ -553,14 +559,14 @@
 											onclick={() =>
 												onVendorLegitimateInterestToggle?.(
 													vendor.id,
-													!isLegitimateInterestAllowed
+													!liAllowed
 												)}
 											class={noStyle
 												? ''
-												: `${styles.objectButton || ''} ${!isLegitimateInterestAllowed ? styles.objectButtonActive || '' : ''}`}
-											aria-pressed={!isLegitimateInterestAllowed}
+												: `${styles.objectButton || ''} ${!liAllowed ? styles.objectButtonActive || '' : ''}`}
+											aria-pressed={!liAllowed}
 										>
-											{isLegitimateInterestAllowed
+											{liAllowed
 												? iabT.preferenceCenter.purposeItem.objectButton
 												: iabT.preferenceCenter.purposeItem.objected}
 										</button>
@@ -709,8 +715,11 @@
 					{@const vendorSpecialFeatures = getVendorSpecialFeatures(vendor.id)}
 					{@const vendorFeatures = getVendorFeatures(vendor.id)}
 					{@const hasLegitimateInterest = vendor.legIntPurposes.length > 0}
-					{@const isLegitimateInterestAllowed =
-						vendorLegitimateInterests[vendorKey] ?? true}
+					{@const liAllowed = isLegitimateInterestAllowed(
+						legitimateInterests,
+						'vendor',
+						vendor.id
+					)}
 					{@const maxAgeText = getMaxAgeText(vendor)}
 
 					<PreferenceItem.Root
@@ -837,14 +846,14 @@
 											onclick={() =>
 												onVendorLegitimateInterestToggle?.(
 													vendor.id,
-													!isLegitimateInterestAllowed
+													!liAllowed
 												)}
 											class={noStyle
 												? ''
-												: `${styles.objectButton || ''} ${!isLegitimateInterestAllowed ? styles.objectButtonActive || '' : ''}`}
-											aria-pressed={!isLegitimateInterestAllowed}
+												: `${styles.objectButton || ''} ${!liAllowed ? styles.objectButtonActive || '' : ''}`}
+											aria-pressed={!liAllowed}
 										>
-											{isLegitimateInterestAllowed
+											{liAllowed
 												? iabT.preferenceCenter.purposeItem.objectButton
 												: iabT.preferenceCenter.purposeItem.objected}
 										</button>

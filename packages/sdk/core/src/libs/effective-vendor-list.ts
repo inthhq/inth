@@ -11,8 +11,10 @@
  * @packageDocumentation
  */
 
-import type { GlobalVendorList, PublisherRestriction } from '@inth/sdk-core';
 import { CONSENT_ONLY_PURPOSES } from '@inth/sdk-schema/types';
+
+import type { PublisherRestriction } from '../options/iab-tcf';
+import type { GlobalVendorList, KernelIABState } from '../types';
 
 type Vendor = GlobalVendorList['vendors'][number];
 
@@ -163,3 +165,70 @@ export const introducedLegitimateInterest =
 		const sorted = (ids: Set<number>) => [...ids].sort((a, b) => a - b);
 		return { purposes: sorted(purposes), vendors: sorted(vendors) };
 	};
+
+/** The IAB state a legitimate interest control reads. */
+export type IABLegitimateInterestState = Pick<
+	KernelIABState,
+	| 'gvl'
+	| 'publisherRestrictions'
+	| 'purposeLegitimateInterests'
+	| 'vendorLegitimateInterests'
+>;
+
+// Every control of a dialog asks with the same list and restrictions.
+let lastIntroduced: {
+	gvl: GlobalVendorList;
+	restrictions: readonly PublisherRestriction[] | undefined;
+	result: IntroducedLegitimateInterest;
+} | null = null;
+
+const introducedFor = (
+	gvl: GlobalVendorList,
+	restrictions: readonly PublisherRestriction[] | undefined
+): IntroducedLegitimateInterest => {
+	if (
+		lastIntroduced?.gvl !== gvl ||
+		lastIntroduced.restrictions !== restrictions
+	) {
+		lastIntroduced = {
+			gvl,
+			restrictions,
+			result: introducedLegitimateInterest(gvl, restrictions),
+		};
+	}
+	return lastIntroduced.result;
+};
+
+/**
+ * Whether a legitimate interest control shows "allowed": the draft value,
+ * else whether a publisher restriction introduced the signal. This is the
+ * value a plain Save encodes.
+ *
+ * @param kind - A purpose or a vendor signal.
+ * @param id - The purpose ID or vendor ID.
+ *
+ * @public
+ */
+export const isLegitimateInterestAllowed = function isLegitimateInterestAllowed(
+	iab: IABLegitimateInterestState | null | undefined,
+	kind: 'purpose' | 'vendor',
+	id: number | string
+): boolean {
+	if (!iab) {
+		return false;
+	}
+	const draft =
+		kind === 'purpose'
+			? iab.purposeLegitimateInterests[Number(id)]
+			: iab.vendorLegitimateInterests[String(id)];
+	if (draft !== undefined) {
+		return draft;
+	}
+	if (!iab.gvl) {
+		return false;
+	}
+	const introduced = introducedFor(iab.gvl, iab.publisherRestrictions);
+	return (
+		kind === 'purpose' ? introduced.purposes : introduced.vendors
+	).includes(Number(id));
+};

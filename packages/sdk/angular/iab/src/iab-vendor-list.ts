@@ -23,11 +23,13 @@ import type {
 } from '@inth/sdk/engine';
 import {
 	formatVendorMaxAge,
+	isLegitimateInterestAllowed,
 	mapCustomVendor,
 	mapGvlVendor,
 } from '@inth/sdk/iab/headless';
 import type {
 	HeadlessIABVendorId,
+	IABLegitimateInterestState,
 	ProcessedPurpose,
 	ProcessedVendor,
 } from '@inth/sdk/iab/headless';
@@ -725,7 +727,7 @@ const lookup = function lookup(
 			let-row
 		>
 			@if (row.hasLegitimateInterest && vendorObjection()) {
-				@let allowed = vendorLegitimateInterests()[row.id] ?? true;
+				@let allowed = legitimateInterestAllowed(row.id);
 				<div [class]="cls(styles.vendorLiSection)">
 					<div [class]="cls(styles.vendorLiSectionHeader)">
 						<h4 [class]="cls(styles.vendorPurposesTitle)">
@@ -828,10 +830,8 @@ export class IABVendorList {
 	readonly selectedVendorId = input<HeadlessIABVendorId | null>(null);
 	/** Publisher-declared non-IAB vendors. */
 	readonly customVendors = input<readonly NonIABVendor[]>([]);
-	/** Legitimate interest per vendor; a missing vendor is allowed. */
-	readonly vendorLegitimateInterests = input<Readonly<Record<string, boolean>>>(
-		{}
-	);
+	/** Draft and vendor list the legitimate interest controls read. */
+	readonly legitimateInterests = input<IABLegitimateInterestState | null>(null);
 	/** Offer each legitimate-interest vendor's objection button. */
 	readonly vendorObjection = input(false);
 	/** Google ad tech providers disclosed for Additional Consent. */
@@ -1042,6 +1042,15 @@ export class IABVendorList {
 					.map((name) => name || '')
 					.join(' ')
 					.trim();
+	}
+
+	/** @internal */
+	protected legitimateInterestAllowed(vendorId: string): boolean {
+		return isLegitimateInterestAllowed(
+			this.legitimateInterests(),
+			'vendor',
+			vendorId
+		);
 	}
 
 	/** @internal */

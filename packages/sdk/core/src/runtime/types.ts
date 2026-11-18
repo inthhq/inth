@@ -192,6 +192,11 @@ export interface ConsentRuntimeIABHandle {
 	setPurposeConsent: (purposeId: number, value: boolean) => void;
 	/** Set legitimate interest for a specific IAB purpose. */
 	setPurposeLegitimateInterest: (purposeId: number, value: boolean) => void;
+	/**
+	 * Object to legitimate interest for a purpose, or withdraw the
+	 * objection, for the purpose and every vendor using it on that basis.
+	 */
+	setPurposeObjection: (purposeId: number, objected: boolean) => void;
 	/** Opt in/out of a special feature (1 = geo, 2 = device ID). */
 	setSpecialFeatureOptIn: (featureId: number, value: boolean) => void;
 	/** Set consent for a Google ad tech provider (Additional Consent). */

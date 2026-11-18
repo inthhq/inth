@@ -80,8 +80,10 @@ confirm it with `inth.saveIAB()`:
 
 `ready()` waits for the policy. `cmp.whenReady()` waits for the vendor list and
 CMP setup, and rejects if setup fails. The handle also has
-`setPurposeLegitimateInterest`, `setVendorLegitimateInterest` and
-`setSpecialFeatureOptIn`. Each edits the draft; `saveIAB()` confirms it.
+`setPurposeLegitimateInterest`, `setVendorLegitimateInterest`,
+`setPurposeObjection` (the purpose and every vendor using it on legitimate
+interest) and `setSpecialFeatureOptIn`. Each edits the draft; `saveIAB()`
+confirms it.
 `inth.save({ ... })` with categories fails under an IAB policy, because it
 cannot produce a TC string.
 

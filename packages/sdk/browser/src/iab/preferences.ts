@@ -2,7 +2,7 @@ import type { ConsentSnapshot } from '@inth/sdk-core';
 import {
 	applyPublisherRestrictionsToGVL,
 	countIABPartners,
-	introducedLegitimateInterest,
+	isLegitimateInterestAllowed,
 	permittedLegitimateInterestPurposes,
 	resolveIABDialogDisplayModel,
 } from '@inth/sdk-iab/headless';
@@ -35,14 +35,6 @@ export const createIABPreferences = (
 	const copy = resolveCopy(snapshot);
 	const t = copy.t.iab;
 	const model = resolveIABDialogDisplayModel(snapshot.iab);
-	// Legitimate interest a restriction introduces applies until the visitor
-	// objects, and saving encodes it that way, so show it as allowed.
-	const introduced = snapshot.iab?.gvl
-		? introducedLegitimateInterest(
-				snapshot.iab.gvl,
-				snapshot.iab.publisherRestrictions
-			)
-		: { purposes: [], vendors: [] };
 	const styles = classes.dialog;
 	const css = (value: string): string => (noStyle ? '' : value);
 	const updates: ((value: ConsentSnapshot) => void)[] = [];
@@ -196,17 +188,8 @@ export const createIABPreferences = (
 						t.preferenceCenter.purposeItem.legitimateInterest,
 						`${row.testId}-li`,
 						(value) =>
-							value.iab?.purposeLegitimateInterests[row.id] ??
-							introduced.purposes.includes(row.id),
-						(value) => {
-							const handle = client.runtime.iab;
-							handle?.setPurposeLegitimateInterest(row.id, value);
-							for (const vendor of row.vendors) {
-								if (vendor.usesLegitimateInterest) {
-									handle?.setVendorLegitimateInterest(vendor.id, value);
-								}
-							}
-						},
+							isLegitimateInterestAllowed(value.iab, 'purpose', row.id),
+						(value) => client.runtime.iab?.setPurposeObjection(row.id, !value),
 						row.name
 					)
 				);
@@ -550,9 +533,7 @@ export const createIABPreferences = (
 					toggle(
 						t.preferenceCenter.purposeItem.legitimateInterest,
 						`iab-vendor-${id}-li`,
-						(value) =>
-							value.iab?.vendorLegitimateInterests[id] ??
-							introduced.vendors.includes(Number(id)),
+						(value) => isLegitimateInterestAllowed(value.iab, 'vendor', id),
 						(value) =>
 							client.runtime.iab?.setVendorLegitimateInterest(id, value),
 						vendor.name
