@@ -38,6 +38,7 @@ export const createClearOnRevocationWith = (
 		...tools.ownedStorageKeys(),
 		...tools.ownedStorageKeys(storageConfig),
 	]);
+	const protectedSessionKeys = new Set(tools.ownedSessionStorageKeys);
 	const previous = new Map<OptionalConsentCategory, boolean>();
 	const reconcile = (): void => {
 		const snapshot = kernel.getSnapshot();
@@ -56,7 +57,12 @@ export const createClearOnRevocationWith = (
 			const wasGranted = previous.get(category);
 			previous.set(category, granted);
 			if (!granted && wasGranted !== false) {
-				clearTargets(targets, protectedKeys, tools.cookieDomainsOf);
+				clearTargets(
+					targets,
+					protectedKeys,
+					protectedSessionKeys,
+					tools.cookieDomainsOf
+				);
 			}
 		}
 	};

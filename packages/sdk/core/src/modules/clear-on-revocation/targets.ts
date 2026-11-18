@@ -157,6 +157,7 @@ const clearStorage = (
 export const clearTargets = (
 	targets: ClearOnRevocationTargets,
 	protectedKeys: ReadonlySet<string>,
+	protectedSessionKeys: ReadonlySet<string>,
 	cookieDomainsOf: ClearOnRevocationTools['cookieDomainsOf']
 ): void => {
 	for (const cookie of targets.cookies ?? []) {
@@ -166,7 +167,10 @@ export const clearTargets = (
 		clearStorage('localStorage', targets.localStorage, protectedKeys);
 	}
 	if (targets.sessionStorage?.length) {
-		// Inth does not persist consent records in sessionStorage.
-		clearStorage('sessionStorage', targets.sessionStorage);
+		clearStorage(
+			'sessionStorage',
+			targets.sessionStorage,
+			protectedSessionKeys
+		);
 	}
 };
