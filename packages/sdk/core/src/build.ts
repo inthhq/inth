@@ -104,7 +104,7 @@ const BUILD_MANIFEST_TIMEOUT_MS = 10_000;
  * @returns `true` when {@link loadBuildManifest} has a URL to fetch.
  * @internal
  */
-export const hasBuildManifestSource = (options: {
+const hasBuildManifestSource = (options: {
 	projectUrl?: string;
 	manifestUrl?: string;
 }): boolean => {
@@ -128,7 +128,7 @@ export type ManifestBuildErrorMode = 'runtime' | 'fail';
 export type ManifestBuildCommand = 'build' | 'dev';
 
 /** Environment variable that overrides `onBuildError` in every framework. */
-export const MANIFEST_BUILD_ERROR_ENV = 'INTH_ON_BUILD_ERROR';
+const MANIFEST_BUILD_ERROR_ENV = 'INTH_ON_BUILD_ERROR';
 
 /** Inth variable suffixes, and the c15t suffixes they replaced. */
 const LEGACY_ENV_SUFFIXES = [
@@ -291,7 +291,7 @@ const isBuildErrorMode = (value: unknown): value is ManifestBuildErrorMode =>
  * @throws {Error} When the option or the variable has another value.
  * @internal
  */
-export const resolveManifestBuildErrorMode = (
+const resolveManifestBuildErrorMode = (
 	onBuildError: unknown,
 	label: string,
 	source: BuildEnvSource = {}
@@ -328,7 +328,7 @@ export interface ManifestBuildLogger {
  * @param logger - Where messages go. Defaults to the console.
  * @internal
  */
-export const labelledBuildLogger = (
+const labelledBuildLogger = (
 	label: string,
 	logger: ManifestBuildLogger = console
 ): ManifestBuildLogger => ({
@@ -663,7 +663,7 @@ export const MANIFEST_CACHE_DIR = 'node_modules/.cache/inth';
  * the `server-only` import.
  * @internal
  */
-export const renderGeneratedModule = (
+const renderGeneratedModule = (
 	module: GeneratedManifestModule,
 	options: { clientStub?: boolean; serverOnly?: boolean } = {}
 ): string => {
@@ -690,7 +690,7 @@ export const renderGeneratedModule = (
  * @returns TypeScript declarations.
  * @internal
  */
-export const renderGeneratedDeclarations = (importSource: string): string =>
+const renderGeneratedDeclarations = (importSource: string): string =>
 	[
 		`import type { ConsentManifest } from '${importSource}';`,
 		'',
