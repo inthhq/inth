@@ -172,6 +172,24 @@ final class SubjectLinkTests: XCTestCase {
         XCTAssertEqual(core.snapshot().subject?.externalId, "user_123")
     }
 
+    func testAnAnswerForASubjectTheCoreNoLongerHoldsIsNotAdopted() async throws {
+        let core = await started(subjectId: Self.c15tId)
+        http.saveResponse = .json(#"{"subjectId":"\#(Self.canonical)","recordId":"rec_1"}"#)
+        http.holdsSaves = true
+        core.save(.all)
+        await http.waitUntilSaveRequests(1)
+
+        // The identity slot is cleared while the save is in flight, so the next
+        // hydrate mints a new subject.
+        _ = store.set(nil, for: StorageKey.subject)
+        let fresh = try XCTUnwrap(core.hydrate().subject?.id)
+        XCTAssertNotEqual(fresh, Self.c15tId)
+
+        http.releaseSaves()
+        await core.waitUntilIdle()
+        XCTAssertEqual(core.snapshot().subject?.id, fresh, "the answer was for the subject the slot no longer holds")
+    }
+
     // MARK: - Idempotency key
 
     func testAReplaySendsTheSameIdempotencyKey() async throws {

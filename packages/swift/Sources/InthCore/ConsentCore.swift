@@ -1202,7 +1202,7 @@ public final class ConsentCore: @unchecked Sendable {
                     case let .success(canonical):
                         queue.remove(id: queuedID)
                         self.events.emit(.saveDelivered(subjectId: subjectId))
-                        self.adoptCanonicalSubjectId(canonical)
+                        self.adoptCanonicalSubjectId(canonical, sentFor: subjectId)
                     case let .failure(error):
                         self.settleFailedSend(
                             error,
@@ -1395,7 +1395,7 @@ public final class ConsentCore: @unchecked Sendable {
                 identityToken: identityToken
             ) {
             case let .success(canonical):
-                self.adoptCanonicalSubjectId(canonical)
+                self.adoptCanonicalSubjectId(canonical, sentFor: identity.id)
             case let .failure(error):
                 self.events.emit(.error(error.info))
             }
@@ -1407,14 +1407,16 @@ public final class ConsentCore: @unchecked Sendable {
     /// `packages/native-protocol/CONTRACT.md`, "Adopting the canonical id": when it is a
     /// UUIDv7 and differs from the stored id, the identity slot and the envelope change
     /// together as one identity change, with one revision and one publication and the
-    /// same decision. Anything else is ignored. Queued bodies keep the id they were
-    /// frozen with; the replaced id is remembered so they still count as this subject's.
-    private func adoptCanonicalSubjectId(_ candidate: String?) {
+    /// same decision. Anything else is ignored, and so is an answer to a request sent for
+    /// a subject the core no longer holds, such as one a reset replaced while it was in
+    /// flight. Queued bodies keep the id they were frozen with; the replaced id is
+    /// remembered so they still count as this subject's.
+    private func adoptCanonicalSubjectId(_ candidate: String?, sentFor sentId: String) {
         guard let candidate, SubjectId.isUUIDv7(candidate) else { return }
         let mutation = mutationGate.acquire()
         defer { mutation.release() }
         let wired = lock.withLock { () -> (CoreConfig, SubjectIdentity, [String])? in
-            guard let config, let identity, identity.id != candidate else { return nil }
+            guard let config, let identity, identity.id == sentId, identity.id != candidate else { return nil }
             return (config, identity, previousSubjectIds)
         }
         guard let (config, current, previous) = wired,
@@ -2696,7 +2698,9 @@ public final class ConsentCore: @unchecked Sendable {
         let report = await queue.replay(using: transport, shouldDeliver: { self.canDeliverIAB($0.body) }) {
             entry, result in
             self.events.emit(.saveReplayed(subjectId: entry.subjectId, ok: result.isSuccess))
-            if case let .success(canonical) = result { self.adoptCanonicalSubjectId(canonical) }
+            if case let .success(canonical) = result {
+                self.adoptCanonicalSubjectId(canonical, sentFor: entry.subjectId)
+            }
         } onDrop: { entry, error, outcome in
             // A pass that reported only deliveries would leave this entry missing
             // from both the queue and the record of what happened to it.
