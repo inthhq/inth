@@ -169,3 +169,35 @@ export const createStaticManifestModule = async (
 	const manifest = await loadStaticManifest(options, defaults.label);
 	return renderStaticManifestModule(names, manifest);
 };
+
+/** What a framework's `/static` entry exports for build-time manifests. */
+export interface StaticManifestEntry {
+	/** Fetches the manifest used by static builds. */
+	loadStaticManifest: (
+		options: Pick<StaticManifestModuleOptions, 'manifestUrl' | 'fetch'>
+	) => Promise<ConsentManifest>;
+	/** Generates a typed manifest module for a static build. */
+	createStaticManifestModule: (
+		options: StaticManifestModuleOptions
+	) => Promise<string>;
+}
+
+/**
+ * The build-time manifest helpers of a framework's `/static` entry, which
+ * names itself in errors and as the generated module's type import.
+ *
+ * @param entry - The entry's specifier, such as `@inth/nextjs/static`.
+ * @returns `loadStaticManifest` and `createStaticManifestModule`.
+ * @example
+ * ```ts
+ * export const { createStaticManifestModule, loadStaticManifest } =
+ *   createStaticManifestEntry('@inth/nextjs/static');
+ * ```
+ */
+export const createStaticManifestEntry = (
+	entry: string
+): StaticManifestEntry => ({
+	createStaticManifestModule: (options) =>
+		createStaticManifestModule(options, { importSource: entry, label: entry }),
+	loadStaticManifest: (options) => loadStaticManifest(options, entry),
+});

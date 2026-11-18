@@ -96,10 +96,14 @@ export {
 	writeConsentInputHeaders,
 } from './shared';
 export {
+	createStaticManifestEntry,
 	createStaticManifestModule,
 	loadStaticManifest,
 } from './static-manifest';
-export type { StaticManifestModuleOptions } from './static-manifest';
+export type {
+	StaticManifestEntry,
+	StaticManifestModuleOptions,
+} from './static-manifest';
 export type {
 	RequestHeaderSource,
 	ResolveRequestOriginOptions,
