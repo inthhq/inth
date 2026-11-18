@@ -24,6 +24,7 @@ import type {
 	failBlockedXhr,
 	NetworkHold,
 	releaseNetworkRequests,
+	ruleMatches,
 	stashXhr,
 	XHR_REQUEST,
 } from './hold';
@@ -81,6 +82,7 @@ export interface NetworkBlockerTools {
 	failBlockedXhr: typeof failBlockedXhr;
 	forgetOwners: typeof forgetOwnedVendors;
 	releaseHolds: typeof releaseNetworkRequests;
+	ruleMatches: typeof ruleMatches;
 	stashXhr: typeof stashXhr;
 	/** The key the hold's XHR patch stores a request under. */
 	xhrRequest: typeof XHR_REQUEST;

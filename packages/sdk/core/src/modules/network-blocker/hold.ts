@@ -196,6 +196,32 @@ export const releaseNetworkRequests =
 		return replayAll(hold?.queue.splice(0) ?? []);
 	};
 
+/**
+ * Whether `rule` covers a request: the rule's domain or a subdomain of it
+ * (case-insensitive), a pathname holding its `pathIncludes`, and one of its
+ * `methods`. A rule without `pathIncludes` or `methods` covers every path
+ * or method. The hold and the blocker decide with this one test.
+ *
+ * @internal
+ */
+export const ruleMatches = function ruleMatches(
+	rule: NetworkBlockerRule,
+	url: URL,
+	method: string
+): boolean {
+	const domain = rule.domain.trim().toLowerCase();
+	const host = url.hostname.toLowerCase();
+	const verb = method.toUpperCase();
+	return (
+		domain !== '' &&
+		(host === domain || host.endsWith(`.${domain}`)) &&
+		(typeof rule.pathIncludes !== 'string' ||
+			url.pathname.includes(rule.pathIncludes)) &&
+		(!rule.methods?.length ||
+			rule.methods.some((allowed) => allowed.toUpperCase() === verb))
+	);
+};
+
 /** What a request gets: sent, held, or blocked at once. */
 const SEND = 0;
 const HOLD = 1;
@@ -219,20 +245,10 @@ const matches = function matches(
 	} catch {
 		return SEND;
 	}
-	const host = url.hostname.toLowerCase();
-	const verb = method.toUpperCase();
 	let found = SEND;
 	for (const owner of hold.owners) {
 		for (const rule of owner.rules) {
-			const domain = rule.domain.trim().toLowerCase();
-			if (
-				domain &&
-				(host === domain || host.endsWith(`.${domain}`)) &&
-				(typeof rule.pathIncludes !== 'string' ||
-					url.pathname.includes(rule.pathIncludes)) &&
-				(!rule.methods?.length ||
-					rule.methods.some((allowed) => allowed.toUpperCase() === verb))
-			) {
+			if (ruleMatches(rule, url, method)) {
 				if (owner.failed) {
 					return BLOCK;
 				}
