@@ -189,7 +189,7 @@ Browser persistence reads stored records again at these moments:
 
 | Moment | What happens |
 | --- | --- |
-| Another tab or window on the same origin changes a Inth localStorage key | Reconciles on the `storage` event |
+| Another tab or window on the same origin changes an Inth localStorage key | Reconciles on the `storage` event |
 | The page becomes visible again | Reconciles on `visibilitychange` |
 | The window regains focus | Reconciles on `focus` |
 | The network reconnects | No storage read |

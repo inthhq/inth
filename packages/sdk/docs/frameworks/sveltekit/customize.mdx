@@ -45,7 +45,7 @@ Render it in `<svelte:head>` in the layout:
 <include src="../../shared/examples/sveltekit/theme-style.mdx" />
 
 SvelteKit writes `<svelte:head>` content before its stylesheet links, and
-`inthHandle` adds inth's default rules at the end of `<head>`. The
+`inthHandle` adds Inth's default rules at the end of `<head>`. The
 `generateThemeCSS` selectors are more specific than those defaults, so the
 theme still wins. Keep the `inth-theme` id. In development, the provider logs a warning when its
 `theme` prop has tokens and the page has no `<style id="inth-theme">`. `generateThemeCSS` escapes `<`,

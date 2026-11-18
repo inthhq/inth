@@ -71,7 +71,7 @@ uses `:root:root`, so it beats your own `:root` rule.
 ## A slot class has no effect
 
 **Check.** The class is defined in a component's `styles`. Angular's emulated
-encapsulation adds an attribute selector to it, and inth's elements do not
+encapsulation adds an attribute selector to it, and Inth's elements do not
 carry your component's attribute.
 
 **Fix.** Define slot classes in a global stylesheet.
@@ -96,7 +96,7 @@ the console for a Content Security Policy error.
 ## The server HTML and the browser disagree
 
 **Check.** With server rendering, the console shows an Angular hydration
-error (`NG0500` and similar) near a Inth component, or the banner flashes
+error (`NG0500` and similar) near an Inth component, or the banner flashes
 after load.
 
 **Fix.** Check that `provideClientHydration()` is in `app.config.ts` and

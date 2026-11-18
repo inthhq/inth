@@ -11,7 +11,7 @@ The Inth `wisepops` helper loads Wisepops only after `marketing` has consent.
 Before then, it creates no Wisepops snippet queue and writes no Wisepops
 storage. It queues `defaultConsent: 'denied'` before the SDK runs and calls
 `wisepops('consent', 'granted')` after the loader finishes with consent still
-allowed. Keep inth's default reload on revocation enabled because Wisepops
+allowed. Keep Inth's default reload on revocation enabled because Wisepops
 cannot revoke consent programmatically.
 
 ## Configure Wisepops
@@ -22,7 +22,7 @@ code. The loader URL contains your public site ID in its `h` parameter:
 
 Use the Inth helper in place of the Wisepops installation snippet. Remove
 other Wisepops installations, including any tag manager or CMS plugin that
-loads it, so they do not bypass inth's consent check. Use one Wisepops site
+loads it, so they do not bypass Inth's consent check. Use one Wisepops site
 ID per document. Reload the page when changing site IDs; replacing a helper
 configuration does not reinitialize an SDK that has already started.
 
@@ -123,7 +123,7 @@ on the new page.
 
 Wisepops automatically integrates with Shopify Customer Privacy. Check
 Wisepops' [Shopify consent behavior](https://support.wisepops.com/en/articles/12679556-cookie-consent-mode)
-and your Shopify privacy settings separately. inth's Wisepops helper does not
+and your Shopify privacy settings separately. Inth's Wisepops helper does not
 synchronize Inth choices with Shopify. Contact Wisepops support if you need to
 disable its Shopify privacy integration, and use a single installation so a
 Shopify app does not load the vendor outside Inth.

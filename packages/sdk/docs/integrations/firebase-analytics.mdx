@@ -35,7 +35,7 @@ Add Firebase through its official [Apple](https://firebase.google.com/docs/ios/s
 [Android](https://firebase.google.com/docs/android/setup) or
 [React Native Firebase](https://rnfirebase.io/analytics/usage) instructions.
 Configure the Firebase app and Analytics module before connecting its APIs.
-inth's mobile packages are currently a private prerelease; see
+Inth's mobile packages are currently a private prerelease; see
 [mobile availability](/docs/guides/mobile-status) for installation access.
 
 The helper sends Consent Mode signals to Firebase only. It does not grant IAB
@@ -77,7 +77,7 @@ explains the persisted setting.
 
 Firebase reads its Consent Mode defaults at launch, before the helper sends
 the first `setConsent`. Without defaults, Firebase sets no consent values.
-Set all four to denied, so nothing is granted before inth's consent is read.
+Set all four to denied, so nothing is granted before Inth's consent is read.
 For iOS, add these Booleans to the app target's `Info.plist`:
 
 {/* example: fragment */}
@@ -131,7 +131,7 @@ collection default:
 }
 ```
 
-In an Expo app, inth's config plugin writes the four denied defaults into
+In an Expo app, Inth's config plugin writes the four denied defaults into
 `Info.plist` and `AndroidManifest.xml` on every prebuild. On Android it marks
 them `tools:replace="android:value"`, so they win over React Native
 Firebase's library values.
@@ -140,7 +140,7 @@ For React Native and Expo, a JavaScript connection runs after native startup.
 It cannot prevent earlier Firebase collection. Apply the native settings
 through the vendor's supported build configuration and keep the
 [native startup gate](/docs/frameworks/react-native/native-behaviour). Expo
-needs a custom native build containing both packages. inth's config plugin
+needs a custom native build containing both packages. Inth's config plugin
 writes only the Consent Mode defaults above. It does not install or configure
 Firebase, and Expo Go cannot load this integration.
 

@@ -18,7 +18,7 @@ same props, except that `state` replaces `mode` and `prefetch`.
 | `legalLinks` | `LegalLinks` | none | Privacy policy, cookie policy and terms links shown in the banner and dialog. Updates after mount. |
 | `i18n` | `Partial<I18nConfig>` | bundled English | Copy overrides per language. They win key by key over the backend's copy for the same language; see [translations](../translations). Read once. |
 | `colorScheme` | `'light'`, `'dark'`, `'system'` or `null` | none | Toggles the `inth-dark` class on `<html>`. `null` or unset leaves `<html>` alone. Updates after mount. |
-| `noStyle` | `boolean` | `false` | Renders every component without inth's classes. A component's own `noStyle` wins. |
+| `noStyle` | `boolean` | `false` | Renders every component without Inth's classes. A component's own `noStyle` wins. |
 | `disableAnimation` | `boolean` | follows `prefers-reduced-motion` | Turns off enter and exit transitions. |
 | `scrollLock`, `trapFocus` | `boolean` | from `presentation` | Defaults for the banner and dialog. `blocking` on a component sets both. |
 | `preloadDialog` | `'idle'` or `'intent'` | `'idle'` | When `ConsentDialog` starts loading before its first open. See [ConsentDialog](./consent-dialog). |

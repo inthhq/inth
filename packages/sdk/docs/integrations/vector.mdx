@@ -42,7 +42,7 @@ methods are preserved. The helper sends no identification calls itself.
 
 The loader stays registered across withdrawal and regrant to avoid duplicate
 execution on the same page. Vector has no documented complete shutdown API.
-Keep inth's default page reload on revocation enabled. With reload disabled,
+Keep Inth's default page reload on revocation enabled. With reload disabled,
 running code, pending loads and partner activity can continue until navigation.
 The reload doesn't clear Vector's storage.
 
@@ -79,7 +79,7 @@ marketing consent and confirm that `pixel.js` loads once. Withdraw consent and
 confirm the page reloads and blocks Vector on the new page. Check Network,
 cookies, local storage and session storage.
 
-inth's live vendor probe uses a placeholder pixel ID. It confirms that the
+Inth's live vendor probe uses a placeholder pixel ID. It confirms that the
 downloaded SDK replaces the queue, replays the nested calls and registers the
 pixel. It blocks settings, identity and collection requests, so the SDK can log
 a JSON error for the empty settings response. Vector checks the requesting

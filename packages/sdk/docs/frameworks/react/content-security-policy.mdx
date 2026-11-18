@@ -10,7 +10,7 @@ A React app with Inth adds these to the page, and your policy must allow them:
 
 | What | Directive |
 | --- | --- |
-| The `<style>` elements the banner, dialog and other stock components render with inth's rules | `style-src` with a nonce |
+| The `<style>` elements the banner, dialog and other stock components render with Inth's rules | `style-src` with a nonce |
 | `@inth/react/styles.css`, only if you import it with `styles: false` | `style-src 'self'` |
 | The `<style id="inth-theme">` element, if you render `ConsentTheme` | `style-src` with a nonce or its hash |
 | `<script>` elements the script loader creates for `scripts` entries, both `src` and inline | `script-src` with each vendor's host, or a nonce |
@@ -64,7 +64,7 @@ when a server renders or rewrites your `index.html` per request.
 Pass the nonce as `options.nonce` on `ConsentProvider`. The script loader
 stamps it on every `<script>` it creates. A `nonce` on a single `scripts`
 entry takes precedence for that element. The stock components put it on the
-`<style>` elements that carry inth's rules.
+`<style>` elements that carry Inth's rules.
 
 With Vite, set `html.cspNonce` to a placeholder in `vite.config.ts`, and have
 your server replace it with a new nonce on every response. Vite then adds
@@ -94,9 +94,9 @@ On a static host, allow the early `/init` script by the hash in the browser's
 `Refused to execute inline script` error. If the policy blocks it, the app
 sends `/init` itself.
 
-## Allow inth's style elements
+## Allow Inth's style elements
 
-The banner, dialog and other stock components render inth's rules as
+The banner, dialog and other stock components render Inth's rules as
 `<style>` elements. A `style-src` without `'unsafe-inline'` must admit them.
 Either:
 
@@ -138,7 +138,7 @@ open DevTools. Test under a policy that asks for a choice, such as an EU
 opt-in policy.
 
 1. The banner renders with its theme colors, and the console shows no
-   `Refused to` error that mentions a Inth element, your backend or a vendor.
+   `Refused to` error that mentions an Inth element, your backend or a vendor.
 2. Before a choice, the Network tab shows no vendor requests.
 3. Click **Accept All**. The vendor scripts load, and their `<script>` elements have ids
    starting `inth-`. With a nonce, read each element's `nonce` property in the

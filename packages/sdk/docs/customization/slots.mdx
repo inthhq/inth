@@ -1,6 +1,6 @@
 ---
 title: Component parts
-description: Find every part of inth's banner, dialog, widget, trigger and ConsentGate placeholder, its key in your framework's part API, and the data attributes to select on.
+description: Find every part of Inth's banner, dialog, widget, trigger and ConsentGate placeholder, its key in your framework's part API, and the data attributes to select on.
 group: customization
 ---
 
@@ -213,17 +213,17 @@ components: {
 Test notices as well as choice prompts. A notice has an acknowledge action,
 `data-action="dismiss"`, instead of accept and reject.
 
-## Do not target inth's class names
+## Do not target Inth's class names
 
-inth's stock class names are generated from CSS Modules and end in a hash, such
+Inth's stock class names are generated from CSS Modules and end in a hash, such
 as `inth-ui-card-lgjVq`. The hash changes whenever the source CSS changes, and
 the classes disappear under `noStyle`. A rule that targets one breaks on an
 upgrade without warning. Target a part API, `data-testid`, a `data-*`
 attribute or `::part()` instead.
 
-## Remove inth's classes with noStyle
+## Remove Inth's classes with noStyle
 
-`noStyle` renders the same markup and behavior without inth's stock classes. It
+`noStyle` renders the same markup and behavior without Inth's stock classes. It
 keeps your part classes and styles, `data-testid` and the `data-*` attributes.
 It does not replace layout, spacing, focus indicators or responsive behavior,
 so use it when you intend to write all of that yourself.

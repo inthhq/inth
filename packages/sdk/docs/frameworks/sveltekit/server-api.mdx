@@ -84,7 +84,7 @@ Privacy Control, then resolves the policy with the handle's `mode`:
 | `manifest({ source: 'runtime' })` | From the manifest at `${projectUrl}/manifest`, or `manifestUrl`, fetched and cached in memory. |
 | `manifest({ resolve: 'browser' })` | Reads the cookie only. The browser resolves the policy. |
 | `hosted()` | Calls the backend's `/init`. |
-| `testing()` | From the mode's `policy`, or inth's recommended rules. |
+| `testing()` | From the mode's `policy`, or Inth's recommended rules. |
 
 `consent` holds the resolved state, the mode as data, the backend URL and the
 handle's `routePrefix`. It is plain, serializable data; pass it to

@@ -86,7 +86,7 @@ forwards both permissions as `false` and skips initialization. An already
 started helper can still execute after withdrawal. Amazon's helper writes a
 cookie during evaluation, before the first explicit consent update.
 
-If Amazon has not consumed inth's queued initialization commands, withdrawal
+If Amazon has not consumed Inth's queued initialization commands, withdrawal
 removes those entries. Amazon can still be waiting to consume the queue after
 the browser reports that `amzn.js` has loaded. The helper preserves commands
 your application queued itself.
@@ -95,7 +95,7 @@ Both loaders stay on the page after revocation. When ACS is available, the
 helper calls `amznConsent` with `enableAdStorage: false` and
 `enableUserData: false`. This forwards withdrawal. Amazon documents no
 shutdown or unload command for this tag, and ACS denial does not stop all
-requests from the running runtime. Keep inth's default reload on revocation
+requests from the running runtime. Keep Inth's default reload on revocation
 to stop that runtime. Removing script elements cannot undo executed code,
 requests already sent or cookies already set.
 

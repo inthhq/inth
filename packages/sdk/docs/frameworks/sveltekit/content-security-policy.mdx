@@ -1,6 +1,6 @@
 ---
 title: Content Security Policy
-description: Write a Content Security Policy for a SvelteKit app using Inth with SvelteKit's csp option, covering vendor hosts, inth's style elements, the server-rendered theme style and style attributes.
+description: Write a Content Security Policy for a SvelteKit app using Inth with SvelteKit's csp option, covering vendor hosts, Inth's style elements, the server-rendered theme style and style attributes.
 group: frameworks
 ---
 
@@ -74,9 +74,9 @@ entry takes precedence for that entry's tag.
 If your policy blocks the script, the script loader starts those entries
 after hydration instead.
 
-## Allow inth's style elements
+## Allow Inth's style elements
 
-inth's components add their rules as `<style>` elements. On a server-rendered
+Inth's components add their rules as `<style>` elements. On a server-rendered
 page, `inthHandle` writes the banner's rules into the HTML `<head>` with the
 provider's `nonce`, or else the nonce SvelteKit put on its own scripts, so a
 nonce-based policy admits them. A prerendered page under `mode: 'auto'` gets

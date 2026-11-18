@@ -7,16 +7,16 @@ group: reference
 {/* This file is NOT rendered directly. Sections are imported by framework pages. */}
 
 <section id="tailwind-layers">
-  inth's rules live in the cascade layer `components`, and each `<style>`
+  Inth's rules live in the cascade layer `components`, and each `<style>`
   element the components render opens with Tailwind CSS 4's layer order,
   `@layer properties, theme, base, components, utilities;`. Unlayered CSS,
-  Tailwind 4 utilities and StyleX's atomic classes override inth's rules
+  Tailwind 4 utilities and StyleX's atomic classes override Inth's rules
   without specificity tricks, whichever stylesheet loads first.
   [Stylesheets and CSS layers](/docs/customization/stylesheets) explains the
   order and which file holds the dialog's rules.
 
   Tailwind CSS 3 has no cascade layers, and its unlayered preflight beats
-  inth's layered rules. Set `styles: false` in the provider options, import
+  Inth's layered rules. Set `styles: false` in the provider options, import
   `styles.css` above the `@tailwind` directives, and add the
   `@inth/react/postcss-tailwind3` PostCSS plugin before `tailwindcss`. Utilities
   you pass to Inth parts then need the important modifier, such as

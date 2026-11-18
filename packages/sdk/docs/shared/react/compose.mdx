@@ -9,7 +9,7 @@ group: reference
 <section id="when-to-compose">
   Compose the banner from its parts when you need its elements in a different
   order, an element it does not have, or your design system's button in place
-  of inth's. The parts keep the stock
+  of Inth's. The parts keep the stock
   behavior. They read the same policy, record the same choices and render the
   same class names, so theme tokens and slots still apply.
 
@@ -41,8 +41,8 @@ group: reference
   so the example skips it.
 
   Each action part gets those props plus `asChild` and `noStyle`. `asChild`
-  renders `BrandButton` in place of inth's `button`, and `noStyle` drops
-  inth's button classes so they do not compete with yours. The part keeps its
+  renders `BrandButton` in place of Inth's `button`, and `noStyle` drops
+  Inth's button classes so they do not compete with yours. The part keeps its
   behavior. Accept saves every category and Reject saves only necessary, and
   both close the banner. Customize opens the preference dialog. Dismiss
   records that the visitor saw a notice, without recording a choice.
@@ -115,13 +115,13 @@ group: reference
   - `className` keeps both, the part's classes first.
   - `style` merges, and your values win per property.
   - Event handlers both run, yours first. On an action button, calling
-    `event.preventDefault()` in yours skips inth's action.
+    `event.preventDefault()` in yours skips Inth's action.
   - The part's ref and your child's ref both receive the DOM node.
   - Your child keeps its own children. The part's default content, such as a
     button label, does not render.
 
   Your component has to pass its ref and every prop it does not use to its
-  DOM element. Otherwise inth's click handler, `data-action` and focus
+  DOM element. Otherwise Inth's click handler, `data-action` and focus
   handling never reach the page. The `BrandButton` in the example does both.
   Pass exactly one element. Text, a fragment or several children render
   nothing.
@@ -206,7 +206,7 @@ group: reference
   ## Keep theme tokens and slots working
 
   The parts render the stock class names, and the banner's `Root` renders
-  inth's rules, so inth's styles and `--inth-*` tokens style a composed
+  Inth's rules, so Inth's styles and `--inth-*` tokens style a composed
   banner the way they style the stock one.
 
   Slots in the provider's `options.components` reach each part by key:
@@ -219,7 +219,7 @@ group: reference
 
   Action buttons read the `button.primary` or `button.secondary` slot and the
   `theme.consentActions` entry for their `consentAction`. `noStyle` on a
-  button drops inth's button classes and keeps slot classes. `noStyle` on
+  button drops Inth's button classes and keeps slot classes. `noStyle` on
   `Root` removes the built-in styling from every part inside it.
 </section>
 

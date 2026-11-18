@@ -105,7 +105,7 @@ picks up a new URL only when you generate it again.
 | `onBuildError` | Unset | What a failed build-time manifest download does in `manifest()` mode. Unset, `nuxt build` stops and `nuxt dev` logs a warning, and the server fetches the policy at runtime. `'fail'` stops both. `'runtime'` lets both continue. A missing backend URL stops both in `manifest()` mode, with or without a snapshot, because the browser saves consent there. The `INTH_ON_BUILD_ERROR` environment variable overrides it. The download waits at most 10 seconds. |
 | `timeoutMs` | `500` | Longest wait for the policy during server rendering. `false` or `Infinity` waits as long as the backend takes; any other value that is not a finite, non-negative number uses the default. |
 | `initPrefetch` | `true` | Pages with `ssr: false` in `hosted()` mode start `/init` from an inline script in the page head, before the app's JavaScript loads. Skipped when `consentSource`, `experiment` or `hosted({ headers })` is set, and when Nitro auto-imports are off, as under `future.compatibilityVersion: 5`, because the server cannot then read `app.config.ts`. `false` turns it off. To turn it off for some routes, set the route rule `inth: { initPrefetch: false }`. See [Content Security Policy](/docs/frameworks/nuxt/content-security-policy#allow-the-early-init-script). |
-| `devtools` | `true` | Adds a Inth tab to Nuxt DevTools in development. Production builds don't include it. See [DevTools](/docs/frameworks/nuxt/components/dev-tools). |
+| `devtools` | `true` | Adds an Inth tab to Nuxt DevTools in development. Production builds don't include it. See [DevTools](/docs/frameworks/nuxt/components/dev-tools). |
 
 ### Modes
 
@@ -116,7 +116,7 @@ picks up a new URL only when you generate it again.
 | `manifest({ snapshot })` | A manifest you supply, for example imported from a JSON file in `nuxt.config.ts`. The build downloads nothing. Consent saves still go to `projectUrl`, so it needs one. |
 | `manifest({ resolve: 'browser' })` | The browser resolves the policy from the manifest, for `nuxt generate` and static hosting. Only this mode adds the snapshot to the browser bundle. Takes `geoUrl` and `inputs` for the visitor's location. Pair it with `routePrefix: false` on a static host. |
 | `hosted()` | Every server render, and the browser on pages the server did not resolve, asks the backend's `/init`. |
-| `testing()` | The browser resolves policy rules with no backend. `testing({ policy })` replaces inth's recommended rules. Tests only; throws in production builds. |
+| `testing()` | The browser resolves policy rules with no backend. `testing({ policy })` replaces Inth's recommended rules. Tests only; throws in production builds. |
 
 `manifest()` also takes `manifestUrl`, the URL the build and the server
 download the manifest from, by default `${projectUrl}/manifest`.

@@ -229,14 +229,14 @@ also confirm browser consent requests use your origin.
 
 ## Know when ConsentRoot loads its engine
 
-`ConsentRoot` keeps inth's consent engine out of the page's first-load
+`ConsentRoot` keeps Inth's consent engine out of the page's first-load
 JavaScript. The engine is the code that stores consent, saves choices and
 renders the banner in React. The server still renders the whole root, so the
 banner, its styles and any [scripts the server starts](/docs/frameworks/next/rendering#start-allowed-scripts-before-hydration)
 are in the first HTML.
 
 In the browser the page under `ConsentRoot` hydrates at once. Until the engine
-loads, inth's hooks return the consent state the server rendered with, and
+loads, Inth's hooks return the consent state the server rendered with, and
 most of their actions, such as `useSetActiveUI()`, wait for the engine and run
 when it arrives. The banner keeps its server HTML.
 

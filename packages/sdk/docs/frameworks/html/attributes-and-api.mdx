@@ -232,7 +232,7 @@ write them:
 | --- | --- | --- |
 | Hosted | `c15t.js` with `data-project-url` | Each fresh visit asks the backend's `/init` endpoint for the visitor's policy. Choices are saved to the backend. |
 | Manifest | `c15t.headless.js` or `c15t.iab.js` with `data-manifest-url`, or `mode: 'manifest'` with an inline `manifest` in `config` | The browser resolves the policy from the backend's public, cacheable `/manifest`. Choices still go to the backend. |
-| Testing | `c15t.testing.js` on a test page | Policy rules come from `data-policy` or inth's recommended rules. Choices stay in the browser. Never load it on a production page. |
+| Testing | `c15t.testing.js` on a test page | Policy rules come from `data-policy` or Inth's recommended rules. Choices stay in the browser. Never load it on a production page. |
 
 A tag loaded from a backend's `/c15t.js`, such as
 `https://your-project.inth.app/c15t.js`, starts in hosted mode with the

@@ -35,7 +35,7 @@ loader load, including when consent was already granted at page startup.
 
 If sign-in completes after `onReady`, identify the user from your app's auth
 change handler. Right before you call `window.Appcues.identify`, check that
-the method exists, the user is still signed in, and inth's current consent
+the method exists, the user is still signed in, and Inth's current consent
 allows both the script's category and the `appcues` vendor. The category
 defaults to `experience`; check your override instead if you changed it. Skip
 identification if any check fails. If Appcues hasn't loaded yet, let

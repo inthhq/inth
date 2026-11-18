@@ -10,7 +10,7 @@ group: frameworks
 and connects the modules a page needs, such as stored choices, script
 loading, iframe gating, network blocking, data clearing, IAB, callbacks and
 the reload after a withdrawal. It renders nothing. Use it when you render your own UI, connect a
-framework without a Inth adapter, or share one consent state between several
+framework without an Inth adapter, or share one consent state between several
 parts of a page. `@inth/sdk` builds one for you; see
 [choose a headless API](/docs/frameworks/javascript/headless#choose-a-headless-api).
 
@@ -48,7 +48,7 @@ Only `mode` is required.
 | `experimentalScriptRegistry` | `boolean` | `false` | Experimental. Load `@inth/integrations` scripts from the sources the Inth script registry lists in the consent manifest, each with an integrity hash the browser checks. See [Inth script registry](#inth-script-registry-experimental). Read when the runtime starts. Every framework package takes it in the same options. |
 | `iab` | IAB options or `false` | none | CMP settings. Needs `createIAB`. |
 | `createIAB` | `createIAB` from `@inth/sdk/iab` | none | The IAB module factory. Without it, `iab` is ignored. |
-| `consentSource` | `{ getPermissions, subscribe, openPreferences }` | none | Take consent from another authority. Inth then shows no banner or dialog, stores nothing and mounts no IAB CMP. Pass `webViewConsentSource()` to follow a Inth mobile app when the page runs in its WebView; see [consent in WebViews](/docs/guides/mobile-webview). Read once. |
+| `consentSource` | `{ getPermissions, subscribe, openPreferences }` | none | Take consent from another authority. Inth then shows no banner or dialog, stores nothing and mounts no IAB CMP. Pass `webViewConsentSource()` to follow an Inth mobile app when the page runs in its WebView; see [consent in WebViews](/docs/guides/mobile-webview). Read once. |
 | `enabled` | `boolean` | `true` | `false` grants every category, skips init and mounts no blocker, persistence or IAB. Scripts load at once. |
 | `pkg` | `string` | `'@inth/sdk/engine'` | The package name `window.__inthDebug` reports. |
 

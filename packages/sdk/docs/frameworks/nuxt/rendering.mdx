@@ -266,7 +266,7 @@ once its JavaScript loads, so the policy request no longer waits for the
 app's bundle. The script contains your backend URL and nothing about the
 visitor. Turn it off with the module option `initPrefetch: false`, or for one
 route with `routeRules: { '/path': { inth: { initPrefetch: false } } }`. Use
-the route rule when a client plugin changes inth's configuration for that
+the route rule when a client plugin changes Inth's configuration for that
 route, because the server cannot see that change and the early request would
 go unused.
 

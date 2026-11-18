@@ -254,7 +254,7 @@ integration with the [consent verification guide](/docs/guides/verify-consent).
 
 ## Mobile SDKs
 
-inth's mobile packages include consent helpers for Firebase Analytics, PostHog,
+Inth's mobile packages include consent helpers for Firebase Analytics, PostHog,
 Mixpanel, Amplitude, Sentry Session Replay, AdMob, AppsFlyer, Adjust, Meta App
 Events, Braze, Branch and Singular.
 Install the vendor's SDK in your app, then connect it to the native consent engine.
@@ -335,7 +335,7 @@ must prove destination startup, event creation, queue handling and withdrawal
 for the specific SDK versions it uses. Follow
 [Segment's consent configuration](https://www.twilio.com/docs/segment/privacy/consent-management/configure-consent-management)
 or [RudderStack's native consent setup](https://www.rudderstack.com/docs/sources/event-streams/sdks/client-side-features/consent-management/setup/)
-with inth's native gates. Do not substitute the web script helpers.
+with Inth's native gates. Do not substitute the web script helpers.
 
 Support, messaging and advertising SDKs need their own app integration. Keep
 support availability separate from optional marketing tracking. Native IAB
@@ -360,7 +360,7 @@ If an RN error reporter throws or rejects, Inth logs that reporter failure to
 the console while preserving the vendor rejection for the caller. Android logs
 ordinary exceptions from its reporter and continues notifying other integrations.
 
-If the vendor rejects a disable operation, report and retry the failure. inth's
+If the vendor rejects a disable operation, report and retry the failure. Inth's
 stored refusal remains authoritative, but the app cannot claim that vendor
 collection stopped until its API succeeds. Keep optional app-side event calls
 behind the current permission too.

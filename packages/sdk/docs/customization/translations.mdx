@@ -35,7 +35,7 @@ Nuxt module have no `i18n` option; their copy comes from the backend.
 Inth bundles English. Every other language it ships is a separate
 `translations/<code>` entry in your framework package, such as
 `@inth/react/translations/de`, named by its language code. Importing one
-registers inth's built-in copy for that language. `testing()` can then switch
+registers Inth's built-in copy for that language. `testing()` can then switch
 to it, and your messages that repeat its wording don't hide backend edits.
 Import them in the file that configures the provider, so they load in the
 browser:
@@ -73,7 +73,7 @@ Inth project. Inth looks up messages for the exact language first, then for
 its primary language, so `de-AT` uses your `de` messages when there is no
 `de-AT` entry. Messages for other languages are not applied.
 
-A key only overrides the backend when your text differs from inth's built-in
+A key only overrides the backend when your text differs from Inth's built-in
 wording for that language. So passing a stock bundle to enable a language
 keeps backend edits visible, while a key you actually reworded stays pinned
 in code. Inth only recognizes the built-in wording of English and of the

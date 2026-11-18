@@ -40,7 +40,7 @@ Inth.
 On load, the helper queues `giveCookieConsent`. On withdrawal it calls
 `denyCookieConsent` when available. These methods were verified in the served
 tracker, but Clay does not document them. Denial moves identifiers from persistent
-storage into session storage. It does not stop requests. Keep inth's default
+storage into session storage. It does not stop requests. Keep Inth's default
 `reloadOnConsentRevoked` behavior enabled. With reload disabled, the tracker can
 continue sending events until navigation. Removing its loader cannot unload the
 tracker or its child scripts.

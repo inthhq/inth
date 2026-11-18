@@ -21,7 +21,7 @@ In a Svelte app without server rendering, Svelte sets every `style` value
 through the DOM, which a policy does not block, so Inth needs no
 `'unsafe-inline'` for style attributes.
 
-inth's components add their rules to `<head>` as `<style>` elements, and a
+Inth's components add their rules to `<head>` as `<style>` elements, and a
 `style-src` without `'unsafe-inline'` blocks those. A static host has no
 nonce to give the provider, so set `styles={false}` on
 `ConsentProvider` and import `@inth/svelte/styles.css` from your

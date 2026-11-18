@@ -1,6 +1,6 @@
 ---
 title: Custom integrations
-description: Gate a vendor that has no @inth/integrations helper, or sync consent with an SDK your app already loads, using a Inth script configuration.
+description: Gate a vendor that has no @inth/integrations helper, or sync consent with an SDK your app already loads, using an Inth script configuration.
 group: integrations
 ---
 
@@ -105,7 +105,7 @@ const examplePixel = {
 };
 ```
 
-Nothing persists across a reload. After inth's revocation reload, or any later
+Nothing persists across a reload. After Inth's revocation reload, or any later
 page load, the script loads again only when permission allows it. Without
 `persistAfterConsentRevoked`, Inth removes the element on revocation, then
 calls `onConsentChange`.

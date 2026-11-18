@@ -36,7 +36,7 @@ language, or compute them from your own i18n library.
 ## Change the copy site-wide
 
 Pass `i18n` to the provider. `messages` holds partial translations per
-language; the keys you leave out keep inth's copy:
+language; the keys you leave out keep Inth's copy:
 
 <include src="../examples/storybook-svelte/consent-i18n.mdx" />
 
@@ -51,7 +51,7 @@ messages for the exact language first, then for its primary language, so a
 visitor resolved to `de-AT` gets your `de` messages when there is no `de-AT`
 entry. Messages for other languages are not applied.
 
-A key only overrides the backend when your text differs from inth's built-in
+A key only overrides the backend when your text differs from Inth's built-in
 wording for that language. So passing the stock bundles from
 `@inth/svelte/translations/all` to enable languages keeps backend edits visible,
 while a key you actually reworded stays pinned in code. Core bundles only

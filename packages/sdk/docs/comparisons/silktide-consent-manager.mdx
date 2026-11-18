@@ -91,7 +91,7 @@ Silktide documents no IAB TCF support. Its source has no TCF API. Inth supports 
 
 ### Does Silktide Consent Manager support Google Consent Mode v2?
 
-Yes. You map each consent type to Consent Mode parameters, such as `analytics_storage` or `ad_user_data`. After a change, Silktide calls `gtag('consent', 'update', ...)`. It also pushes a dataLayer event. inth's [Google tag integration](/docs/integrations/google-tag) sends the default before `config`. It sends an update after each change. Inth also has a [GTM integration](/docs/integrations/google-tag-manager).
+Yes. You map each consent type to Consent Mode parameters, such as `analytics_storage` or `ad_user_data`. After a change, Silktide calls `gtag('consent', 'update', ...)`. It also pushes a dataLayer event. Inth's [Google tag integration](/docs/integrations/google-tag) sends the default before `config`. It sends an update after each change. Inth also has a [GTM integration](/docs/integrations/google-tag-manager).
 
 ### Does Silktide Consent Manager work with React or Next.js?
 
@@ -99,7 +99,7 @@ Yes, from client code. Silktide gives a browser global, `window.silktideConsentM
 
 ### Can I move from Silktide Consent Manager to Inth?
 
-Yes. Map each Silktide consent type to a Inth category. Move its `scripts` entries to registered integrations. Then remove the Silktide files. Inth does not read Silktide's stored choices. Decide if you carry them over or ask visitors again.
+Yes. Map each Silktide consent type to an Inth category. Move its `scripts` entries to registered integrations. Then remove the Silktide files. Inth does not read Silktide's stored choices. Decide if you carry them over or ask visitors again.
 
 ## What to plan for with Inth
 

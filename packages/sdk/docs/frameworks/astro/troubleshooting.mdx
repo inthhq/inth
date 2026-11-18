@@ -72,7 +72,7 @@ part in parentheses names the cause:
 - `/manifest responded 404`, or another status: the URL is not your project's
   backend. The placeholder `https://your-project.inth.app` returns 404.
 - `/manifest returned an invalid consent manifest`: the URL answers, but not
-  with a Inth manifest.
+  with an Inth manifest.
 
 A relative or empty URL, such as `/api/inth`, skips the fetch. With
 `onBuildError: 'fail'`, it stops the build with `build-time manifests require
@@ -263,9 +263,9 @@ the Svelte dialog, from your global stylesheet. See
 
 ## The banner loses its padding with Tailwind CSS
 
-**Check.** Tailwind's preflight in the `base` layer is overriding inth's
+**Check.** Tailwind's preflight in the `base` layer is overriding Inth's
 `components` layer. This happens when your own stylesheet names its layers
-before inth's rules do.
+before Inth's rules do.
 
 **Fix.** Put `components` after `base` in your first `@layer` statement, or set
 `styles: false` and import `@inth/astro/styles.css` after your layer order

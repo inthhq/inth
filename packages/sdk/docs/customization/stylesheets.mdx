@@ -1,6 +1,6 @@
 ---
 title: Stylesheets and CSS layers
-description: See how Inth delivers its styles in each framework without a render-blocking stylesheet, when to import styles.css yourself with styles false, which file holds the dialog's rules, and how inth's cascade layer meets your own.
+description: See how Inth delivers its styles in each framework without a render-blocking stylesheet, when to import styles.css yourself with styles false, which file holds the dialog's rules, and how Inth's cascade layer meets your own.
 group: customization
 ---
 
@@ -105,14 +105,14 @@ The surfaces render no stylesheet with `noStyle`, or when the provider sets
 Set `styles: false` in the provider options and import `styles.css` when you
 need control over the file:
 
-- **Tailwind CSS 3.** inth's `<style>` rules sit in a native
+- **Tailwind CSS 3.** Inth's `<style>` rules sit in a native
   `@layer components`, and Tailwind 3's unlayered preflight beats them. Import
   `styles.css` through the `postcss-tailwind3` plugin instead, as
   [Tailwind CSS](/docs/customization/tailwind#set-up-tailwind-css-3) shows.
   Astro sites skip this: the integration detects Tailwind 3 and links the
   stylesheet itself.
 - **A named cascade layer.** Import the stylesheet into your own layer, as in
-  [order inth's layer against your CSS](#order-inths-layer-against-your-css).
+  [order Inth's layer against your CSS](#order-inths-layer-against-your-css).
 - **Cached styles across document visits.** Keep external CSS when its HTTP
   cache performs better for your site's repeat visits. Compare cold and warm
   visits on your production host before choosing this option.
@@ -158,7 +158,7 @@ Earlier 3.0 alphas shipped the dialog's rules in a separate `dialog.css`, which
 the dialog's code imported. `@inth/astro/dialog.css` is now empty and stays
 only so existing imports keep resolving. Remove that import.
 
-## Order inth's layer against your CSS
+## Order Inth's layer against your CSS
 
 Inth puts its component rules in the cascade layer `components`. Tokens,
 variables and keyframes stay unlayered. Each stylesheet, and each `<style>`
@@ -184,8 +184,8 @@ What this means for your overrides:
 - Tokens are not layered. Set them as described in
   [theme tokens](/docs/customization/tokens).
 
-If your CSS declares its own layer order, load that statement before inth's
-rules. To put inth's rules in a named layer, set `styles: false` and import
+If your CSS declares its own layer order, load that statement before Inth's
+rules. To put Inth's rules in a named layer, set `styles: false` and import
 the stylesheet into that layer, such as
 `@import '@inth/react/styles.css' layer(inth)`. Its component rules then sit
 in `inth.components`, so order `inth` against your own layers.
@@ -213,8 +213,8 @@ links no stylesheet when the dialog opens. The Svelte dialog, the default
 @import '@inth/astro/iab/styles.css';
 ```
 
-Keep inth's rules when you restyle the surfaces. The browser hides the Astro
-banner with the `hidden` attribute, and inth's rules make that attribute beat
+Keep Inth's rules when you restyle the surfaces. The browser hides the Astro
+banner with the `hidden` attribute, and Inth's rules make that attribute beat
 the banner's own `display` rule.
 
 ## Style the script tag's shadow root
@@ -227,7 +227,7 @@ the UI's CSS does not reach your page. To style it:
 | --- | --- |
 | `ui.theme` | Tokens, written after the stylesheet inside the shadow root |
 | `ui.css` | A string of CSS added after the stylesheet and the theme |
-| `ui.stylesheetUrls` | Stylesheets linked inside the shadow root, after inth's, with the client's `nonce`. They load asynchronously, so the first frame can render without them |
+| `ui.stylesheetUrls` | Stylesheets linked inside the shadow root, after Inth's, with the client's `nonce`. They load asynchronously, so the first frame can render without them |
 | `::part()` | Page CSS that reaches a part by its slot key, as in `[data-inth-ui]::part(consentBannerCard)` |
 | `ui.shadow: false`, or `data-shadow="false"` | Renders into the page, so your stylesheets apply. Inth still injects its stylesheet next to the UI |
 | `ui.styles: false` | Drops the injected stylesheet. With `shadow: false`, load `@inth/sdk/styles.css` from your bundle, or link `dist/inth.css` from the same package version as the script |
@@ -237,9 +237,9 @@ such as Tailwind 4's `@property` rules, only takes effect in the page's
 stylesheets. Of these options, the script tag has an attribute for `shadow`
 only. Set the others with `inth.push(['config', { ui: { ... } }])`.
 
-## Run without inth's styles
+## Run without Inth's styles
 
-`noStyle` removes inth's stock classes from the markup, and in the script tag
+`noStyle` removes Inth's stock classes from the markup, and in the script tag
 also the injected stylesheet. Your part classes, `data-testid` and the `data-*`
 attributes stay. [Component parts](/docs/customization/slots#remove-inths-classes-with-nostyle)
 lists where each framework takes it.
@@ -289,7 +289,7 @@ themselves.
 
 1. Open DevTools Network, clear site data and reload. No Inth stylesheet
    request appears before the first paint. In the HTML or the Elements panel,
-   `<head>` holds inth's rules: `<style data-href="inth-tokens inth-button inth-banner">`
+   `<head>` holds Inth's rules: `<style data-href="inth-tokens inth-button inth-banner">`
    in React 19, or a `<style data-inth-styles>` element in Svelte, SvelteKit
    and Astro. In React 18, or with a `nonce`, the `<style>` sits next to the
    banner instead.
@@ -299,7 +299,7 @@ themselves.
    Astro.
 3. With `styles: false`, your imported `styles.css` loads once, and no Inth
    `<style>` element appears.
-4. Select a banner part and read the Styles panel. inth's rules appear under
+4. Select a banner part and read the Styles panel. Inth's rules appear under
    `@layer components`, and your unlayered rules for the same property win.
 5. On a page that styles its scrollbar with `::-webkit-scrollbar`, open the
    preference dialog in Chrome on macOS. `<html>` gets

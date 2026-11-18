@@ -15,13 +15,13 @@ definition and `init`, then adds the loader.
 
 On withdrawal, it queues `gdpr_optin: false`, a neutral `{ type: 'other' }`
 page and `init`, then removes the loader. Insider has no unload method, so keep
-inth's default reload on revocation to stop code the SDK already ran.
+Inth's default reload on revocation to stop code the SDK already ran.
 
 ## Configure Insider One
 
 Ask Insider for your public `partnerName` and `partnerId`, and confirm that
 Web SDK integration is turned on for your account. Remove any existing Insider
-tag or tag-manager installation so it can't load outside inth's consent gate.
+tag or tag-manager installation so it can't load outside Inth's consent gate.
 Also remove any code that defines or fills `window.insider_object`. Insider
 doesn't support that legacy integration alongside `InsiderQueue`.
 
@@ -220,7 +220,7 @@ account settings and SDK updates can change the storage used.
 
 Check your account in DevTools Application after a grant and again after a
 withdrawal. Record cookie names, domains, paths and expiries, plus localStorage
-and sessionStorage keys. Set up inth's clear-on-revocation rules from that
+and sessionStorage keys. Set up Inth's clear-on-revocation rules from that
 list. The helper doesn't guess storage prefixes to delete, and browser
 JavaScript can't remove HttpOnly or third-party cookies.
 

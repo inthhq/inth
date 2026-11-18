@@ -92,7 +92,7 @@ optional category, whatever the categories allow. See
 
 When the Zaraz consent API is ready, the bridge reads `zaraz.consent.getAll()`
 and sets each returned purpose to `true` only if its mapped category is
-allowed in inth's effective permissions, which include policy restrictions.
+allowed in Inth's effective permissions, which include policy restrictions.
 Purposes you did not map are set to `false`. If the API is not ready,
 the bridge waits for the `zarazConsentAPIReady` event and applies the latest
 permissions; it does not poll. On each consent change it calls

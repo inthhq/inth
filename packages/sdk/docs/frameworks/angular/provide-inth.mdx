@@ -39,7 +39,7 @@ provider. Injecting one where `provideInth()` is missing throws Angular's
 | `legalLinks` | `LegalLinks` | none | Privacy policy, cookie policy and terms links shown in the banner and dialog. |
 | `i18n` | `Partial<I18nConfig>` | bundled English | Copy overrides per language; see [translations](./translations). Read once. |
 | `colorScheme` | `'light'`, `'dark'`, `'system'` or `null` | mirrors a `dark` class on `<html>` | Toggles the `inth-dark` class on `<html>`. `null` leaves `<html>` alone. |
-| `noStyle` | `boolean` | `false` | Renders every component without inth's classes. A component's own `noStyle` input wins. |
+| `noStyle` | `boolean` | `false` | Renders every component without Inth's classes. A component's own `noStyle` input wins. |
 | `styles` | `boolean` | `true` | `false` stops the components adding their `<style>` elements, for apps that import `@inth/angular/styles.css` themselves. |
 | `disableAnimation` | `boolean` | follows `prefers-reduced-motion` | Turns off enter and exit transitions. |
 | `scrollLock`, `trapFocus` | `boolean` | from `presentation` | Defaults for the banner and dialog. `blocking` on a component sets both. |

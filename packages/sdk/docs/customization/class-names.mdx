@@ -1,6 +1,6 @@
 ---
 title: Class names and CSS-in-JS
-description: Style inth's component parts with CSS Modules, vanilla-extract, StyleX, Emotion or plain class names, and see which approach works in each framework.
+description: Style Inth's component parts with CSS Modules, vanilla-extract, StyleX, Emotion or plain class names, and see which approach works in each framework.
 group: customization
 ---
 
@@ -8,14 +8,14 @@ group: customization
 
 CSS Modules, vanilla-extract, StyleX, Emotion and Tailwind all end up as a class
 on an element and a rule in a stylesheet. Give Inth the class through your
-framework's part API, and the rule wins over inth's own rule for that part:
-inth's rules sit in the `components` cascade layer, and an unlayered rule from
+framework's part API, and the rule wins over Inth's own rule for that part:
+Inth's rules sit in the `components` cascade layer, and an unlayered rule from
 your stylesheet outranks any layered one.
 
 Each example below adds a 3px colored border and 4px corners to the banner card.
 The React examples run as Storybook stories in CI, which check that each class
 lands on the card and that the computed border comes from the class, not from
-inth's own card rule. The script tag examples run in the example app's browser
+Inth's own card rule. The script tag examples run in the example app's browser
 tests.
 
 | Framework | Part API | Class key | Inline `style` | Where the class's CSS must load |
@@ -58,7 +58,7 @@ plugin for your bundler, such as `@stylexjs/unplugin`:
 <include src="../shared/examples/storybook-react/class-names-stylex.mdx" />
 
 StyleX writes atomic classes into an unlayered stylesheet, so they outrank
-inth's layered rules without extra specificity.
+Inth's layered rules without extra specificity.
 
 ## Emotion
 
@@ -80,7 +80,7 @@ vanilla-extract or Emotion works the same way. To use StyleX, map its
 `className` to `class`.
 
 Svelte scopes component styles, so a class defined in a component's `<style>`
-block does not reach a Inth part. Define it in a global stylesheet or with
+block does not reach an Inth part. Define it in a global stylesheet or with
 `:global(.your-class)`. `theme.slots` accepts a string or
 `{ className, style }`, and `class` on `ConsentBanner` goes on the banner root.
 
@@ -114,7 +114,7 @@ two parts:
 
 1. Open the page in a private window so the banner shows.
 2. Select the banner card in the Elements panel. It carries your class.
-3. In the Styles panel, your rule applies and inth's rule for the same
+3. In the Styles panel, your rule applies and Inth's rule for the same
    property is struck out. If your class is on the element but its rule is
    missing, the stylesheet does not reach the part. Check the "Where the class's CSS
    must load" column in [Pass a class to a part](#pass-a-class-to-a-part).

@@ -42,7 +42,7 @@ The banner and your app share one consent state. A privacy settings screen in yo
 
 ## How consent affects page load
 
-A Inth server can cache the public consent manifest, the file that holds your policy rules. With a warm cache, it resolves each visitor without asking the backend for the policy on every page request. Saving a choice and refreshing the cache still go to the backend. [Data fetching](/docs/concepts/data-fetching) has the details.
+An Inth server can cache the public consent manifest, the file that holds your policy rules. With a warm cache, it resolves each visitor without asking the backend for the policy on every page request. Saving a choice and refreshing the cache still go to the backend. [Data fetching](/docs/concepts/data-fetching) has the details.
 
 In the Next.js App Router, the default setup streams. The page appears first, and the banner follows in a later chunk before hydration. If the page and the banner must arrive together, await consent instead, and the page waits for it. [Rendering options](/docs/frameworks/next/rendering) covers both.
 
@@ -73,7 +73,7 @@ Sources: [Mobile and OTT/CTV SDKs](https://developer.onetrust.com/onetrust/docs/
 - **A drop-in replacement for your current setup.** If you're moving from OneTrust, check identity, record retention, admin access and migration before you switch.
 - **Free backend operations.** Inth has its own service terms. Self-hosting means you run the database, backups and maintenance.
 
-inth's [document snapshot helpers](/docs/self-host/guides/legal-document-snapshot-integration) attest to which version of a legal document your server supplied, with its content hash. They don't write the legal text, and they don't prove acceptance. Your app still verifies and records acceptance in its own flow.
+Inth's [document snapshot helpers](/docs/self-host/guides/legal-document-snapshot-integration) attest to which version of a legal document your server supplied, with its content hash. They don't write the legal text, and they don't prove acceptance. Your app still verifies and records acceptance in its own flow.
 
 ## Try it on one real flow
 

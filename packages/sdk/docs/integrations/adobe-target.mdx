@@ -99,7 +99,7 @@ separate Adobe Tags or Web SDK initializer.
 | Option | Default | Behavior |
 | --- | --- | --- |
 | `mode` | Required | `'atjs'` or `'websdk'`. Register one deployment path per page. |
-| `category` | `'experience'` | A Inth category or condition. Use a stricter condition if the SDK also serves other purposes. |
+| `category` | `'experience'` | An Inth category or condition. Use a stricter condition if the SDK also serves other purposes. |
 | `nonce` | None | CSP nonce for the loader. Surrounding whitespace is trimmed. A nonce from the consent provider also reaches the loader. |
 | `scriptUrl` | Required for at.js | URL of your at.js download. Root-relative URLs work. Surrounding whitespace is trimmed. |
 | `targetGlobalSettings` | `{ optinEnabled: true }` | at.js settings applied before the file loads. Supported fields are `cookieDomain`, `secureOnly`, `bodyHidingEnabled`, `bodyHiddenStyle`, `pageLoadEnabled`, `viewsEnabled`, `timeout`, `visitorApiTimeout`, `cspScriptNonce` and `cspStyleNonce`. The helper always sets `optinEnabled` to `true`. |
@@ -139,7 +139,7 @@ The helper checks current consent when configuration finishes. It doesn't
 leave an earlier opt-in waiting in Adobe's configuration queue. Once the
 helper hands a command to Adobe, the SDK can still finish that command or an
 in-flight request after revocation. Its consent API doesn't unload listeners
-or restore rendered decisions. Keep inth's default reload on revocation.
+or restore rendered decisions. Keep Inth's default reload on revocation.
 
 Removing the last Inth registration sends a denial to the installed SDK when
 its consent API is available. It can't unload Adobe's runtime. Reload the page
@@ -148,7 +148,7 @@ even with the same options. Web SDK allows configuration only once per
 instance. Also reload before you change IDs, versions or deployment mode.
 
 `defaultConsent: 'pending'` is a configuration default, not a replacement for
-inth's loading gate. Adobe can use consent saved on an earlier page instead.
+Inth's loading gate. Adobe can use consent saved on an earlier page instead.
 The helper resends the permitted state after loading on each page. Web SDK
 persists consent, including an opt-out, in `kndctr_<orgId>_consent`, and its
 consent update can contact Adobe. Adobe replaces `@` with `_` in the

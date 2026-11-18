@@ -76,7 +76,7 @@ covers the options.
 ## The banner has no styles
 
 **Check.** In DevTools Elements, the banner has classes but no rules apply.
-Look for inth's `<style>` element: `<style data-href="inth-tokens inth-button inth-banner">`
+Look for Inth's `<style>` element: `<style data-href="inth-tokens inth-button inth-banner">`
 in `<head>` on React 19, or `<style data-inth-styles>` next to the banner on
 React 18 or with a `nonce`. Check the console for a Content Security Policy
 error.
@@ -90,10 +90,10 @@ error.
   [Content Security Policy](/docs/frameworks/react/content-security-policy)
   shows.
 - Under Tailwind 3, buttons lose their padding and cards their borders:
-  Tailwind 3's unlayered preflight beats inth's layered rules. Set
+  Tailwind 3's unlayered preflight beats Inth's layered rules. Set
   `styles: false`, import `@inth/react/styles.css` above the `@tailwind`
   directives and add `@inth/react/postcss-tailwind3` before `tailwindcss` in your
-  PostCSS config. Without the plugin, Tailwind 3 drops inth's rules or fails
+  PostCSS config. Without the plugin, Tailwind 3 drops Inth's rules or fails
   the build with
   `` `@layer components` is used but no matching `@tailwind components` directive is present ``.
   See [Tailwind CSS](/docs/customization/tailwind#set-up-tailwind-css-3).
@@ -110,7 +110,7 @@ and slot styles from `theme`.
 ## The banner is missing from server-rendered HTML
 
 **Check.** Your app uses React Router framework mode, Remix or another
-server-rendered setup without a Inth adapter. There this is expected: the
+server-rendered setup without an Inth adapter. There this is expected: the
 browser resolves consent after hydration.
 
 **Fix.** None is needed for consent to work.

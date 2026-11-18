@@ -86,7 +86,7 @@ Inth stamps a nonce on these DOM nodes:
   both `src` and inline `textContent` scripts, gets `options.nonce`. A `nonce`
   set on an individual `scripts` entry takes precedence for that element.
 - The `<style>` elements that the banner, dialog and other stock components
-  render with inth's rules get `options.nonce`. With a nonce set, they render
+  render with Inth's rules get `options.nonce`. With a nonce set, they render
   next to each component instead of moving into `<head>`, because React drops
   the nonce of a style it moves.
 - The inline `<script>` that a server-rendered `ConsentBanner` puts before its
@@ -173,7 +173,7 @@ violation should mention `inth-theme`. Grant a category that gates one of your
 - The `<style id="inth-theme">` element carries the same nonce and the
   `--inth-*` variables are applied to the banner.
 - No `Refused to load the script` or `Refused to apply inline style` errors
-  mention a Inth element. A refused vendor dependency points to a missing
+  mention an Inth element. A refused vendor dependency points to a missing
   `'strict-dynamic'` or vendor host.
 - The consent submission to `/subjects` succeeds. A `connect-src` violation
   here means the backend origin is missing.

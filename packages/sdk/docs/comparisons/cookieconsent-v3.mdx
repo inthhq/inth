@@ -100,11 +100,11 @@ No. Its documentation says that it does not store consent records. You send the 
 
 ### Does CookieConsent v3 support Google Consent Mode v2?
 
-Yes, with example code. The guide sets denied defaults. Then it calls `gtag('consent', 'update', ...)` from consent callbacks. You add this code to your site and keep it up to date. inth's [Google tag integration](/docs/integrations/google-tag) sends the Consent Mode v2 default before `config`. It sends an update after each change. Inth also has a [GTM integration](/docs/integrations/google-tag-manager).
+Yes, with example code. The guide sets denied defaults. Then it calls `gtag('consent', 'update', ...)` from consent callbacks. You add this code to your site and keep it up to date. Inth's [Google tag integration](/docs/integrations/google-tag) sends the Consent Mode v2 default before `config`. It sends an update after each change. Inth also has a [GTM integration](/docs/integrations/google-tag-manager).
 
 ### Can I move from CookieConsent v3 to Inth?
 
-Yes. Map each CookieConsent category to a Inth category. Map each CookieConsent service to a registered integration. Then remove the old script loaders. Inth does not read CookieConsent's `cc_cookie` cookie. Decide if you carry previous choices over or ask visitors again.
+Yes. Map each CookieConsent category to an Inth category. Map each CookieConsent service to a registered integration. Then remove the old script loaders. Inth does not read CookieConsent's `cc_cookie` cookie. Decide if you carry previous choices over or ask visitors again.
 
 ## What to plan for with Inth
 

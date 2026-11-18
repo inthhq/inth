@@ -17,7 +17,7 @@ the cause:
 | `/manifest responded 404` | The backend URL is wrong, or still the `https://your-project.inth.app` placeholder. |
 | `no backend URL is set` | Neither the `projectUrl` option nor `VITE_INTH_PROJECT_URL` is set, or it is empty. `vite build` stops; `vite dev` warns. |
 | `skipped the consent manifest fetch` (a notice) | The backend URL is relative. With `onBuildError: 'fail'`, this is the error `build-time manifests require an absolute upstream URL`. |
-| `/manifest returned an invalid consent manifest.` | The URL answers, but not with a Inth v3 manifest. |
+| `/manifest returned an invalid consent manifest.` | The URL answers, but not with an Inth v3 manifest. |
 | `fetch failed` or `no response within 10 seconds` | The machine running the command cannot reach the backend. |
 
 **Fix.** Set `VITE_INTH_PROJECT_URL` to your

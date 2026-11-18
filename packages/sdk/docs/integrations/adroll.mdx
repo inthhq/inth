@@ -12,7 +12,7 @@ AdRoll retargets site visitors with ads and measures conversions. The Inth
 sets the AdRoll globals, queues the first `pageView` and adds the loader.
 
 AdRoll has no API to stop its pixel. When the visitor withdraws, the helper
-leaves AdRoll on the page, and inth's default page reload removes it.
+leaves AdRoll on the page, and Inth's default page reload removes it.
 
 ## Configure AdRoll
 
@@ -60,7 +60,7 @@ marketing and any vendor consent stay granted.
 
 AdRoll documents no public stop or teardown API, and the helper sends no
 withdrawal command. On withdrawal, it keeps the loader element on the page.
-Keep inth's default `reloadOnConsentRevoked` enabled. With reload disabled,
+Keep Inth's default `reloadOnConsentRevoked` enabled. With reload disabled,
 loaded code, partner pixels and timers can keep running until the visitor
 navigates. If the visitor grants consent again on the same page, the helper
 reuses the loader and doesn't send a second `pageView`.

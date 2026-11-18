@@ -11,7 +11,7 @@ allow them:
 
 | What | Directive |
 | --- | --- |
-| The `<style>` elements the banner, dialog and other stock components render with inth's rules | `style-src` with the request nonce |
+| The `<style>` elements the banner, dialog and other stock components render with Inth's rules | `style-src` with the request nonce |
 | The Inth stylesheet, only if you link it yourself with `styles: false` | `style-src 'self'` |
 | The `<style id="inth-theme">` element, if you render `ConsentTheme` | `style-src` with the request nonce |
 | `<script>` elements the script loader creates for `scripts` entries, both `src` and inline | `script-src` with the request nonce, or each vendor's host |
@@ -174,7 +174,7 @@ enforced, not in report-only mode. Test under a policy that asks for a choice,
 such as an EU opt-in policy.
 
 1. The banner renders with its theme colors, and the console shows no
-   `Refused to` error that mentions a Inth element, your backend or a vendor.
+   `Refused to` error that mentions an Inth element, your backend or a vendor.
 2. In the Elements panel, `<style id="inth-theme">` and the
    `<meta property="csp-nonce">` tag carry the same nonce as the response's
    `Content-Security-Policy` header. Browsers hide the `nonce` attribute from

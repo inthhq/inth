@@ -13,7 +13,7 @@ not load it. HubSpot can connect browsing history to CRM contacts and use
 tracking data for partner profiling, so the default gates the whole loader on
 marketing consent.
 
-After consent, the helper disables HubSpot's banner and sends inth's categories
+After consent, the helper disables HubSpot's banner and sends Inth's categories
 to HubSpot before inserting the loader. Inth remains the consent interface.
 
 ## Configure HubSpot
@@ -106,7 +106,7 @@ override another active owner's denial. Initially denied owners restrict the
 controller too, even if their registrations have never loaded. Startup requires
 at least one owner and every owner's loader gate to pass.
 
-inth's `necessary` and `experience` categories have no corresponding field in
+Inth's `necessary` and `experience` categories have no corresponding field in
 this helper. HubSpot manages its necessary cookies separately.
 
 The helper forwards these values through `_hsp.push(['setHubSpotConsent', ...])`
@@ -230,7 +230,7 @@ can itself trigger a revocation request. It does not remove every browser
 storage entry or unload the child scripts.
 
 The helper retains its loader through consent withdrawal and provider
-remounts to avoid running HubSpot's bootstrap again. Keep inth's default
+remounts to avoid running HubSpot's bootstrap again. Keep Inth's default
 `reloadOnConsentRevoked` enabled. Reload ends the running page, and the saved
 denial prevents a fresh load. With reload disabled, previously loaded HubSpot
 code and child requests can continue despite the denied consent signal.

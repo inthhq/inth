@@ -132,7 +132,7 @@ and metrics.
 | Option | Default | Behavior |
 | --- | --- | --- |
 | `dsn` | Required to load Sentry | Your project's DSN. Inth loads the SDK and calls `Sentry.init`. A blank DSN logs an error and the script does not load. |
-| `initOptions` | `{}` | Passed to `Sentry.init` with inth's consent integration first. CDN `integrations` callbacks can access `window.Sentry`. |
+| `initOptions` | `{}` | Passed to `Sentry.init` with Inth's consent integration first. CDN `integrations` callbacks can access `window.Sentry`. |
 | `version` | `'11.4.0'` | SDK version to load. Another version loads without subresource integrity. |
 | `tracing` | `true` when traces are sampled | Loads the tracing bundle and adds `browserTracingIntegration()`. |
 | `replay` | Loads CDN Replay when sampled | CDN: `{ category, options }` or `false`. SDK: `{ category, load }`. |
@@ -312,7 +312,7 @@ recipe. In the checked SDK, that experimental workaround can restart buffering
 on foreground independently of the consent-controlled stop command.
 If your app initializes Sentry natively first, disable native replay sampling
 there too. Expo needs a build containing both SDKs; Expo Go cannot provide
-inth's native engine.
+Inth's native engine.
 
 Copy this function into `sentry-replay-consent.ts`:
 

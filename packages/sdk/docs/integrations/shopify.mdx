@@ -36,8 +36,8 @@ your shop's details. Render `ShopifyConsentSync` inside `ConsentRoot`:
 
 ## Declare the categories
 
-inth's dialog offers only the categories that something on the page uses.
-Shopify's scripts load through `ShopifyScripts`, not through inth's `scripts`
+Inth's dialog offers only the categories that something on the page uses.
+Shopify's scripts load through `ShopifyScripts`, not through Inth's `scripts`
 option, so Inth cannot find them. Declare the categories the bridge maps, or
 the dialog shows only Necessary and Shopify receives a denial for everything:
 
@@ -132,7 +132,7 @@ policy turns pending meanwhile, the bridge drops those retries.
 | `onError` | Logs to the console | Called when Shopify rejects a choice or `onSync` throws. |
 
 The bridge returns `update(snapshot)`, `connect(source)` and `setup()`.
-`connect` follows anything with `getSnapshot` and `subscribe`, such as a Inth
+`connect` follows anything with `getSnapshot` and `subscribe`, such as an Inth
 kernel, and returns a function that stops following it.
 
 ## Limits

@@ -62,7 +62,7 @@ mode, not the plugin:
 | --- | --- |
 | `hosted()` | `projectUrl`, by default the one `consentManifest()` read from `VITE_INTH_PROJECT_URL`. `headers`, `fetch`, `domain`. |
 | `manifest()` | `projectUrl` and the build snapshot default to what `consentManifest()` downloaded. `source: 'runtime'` fetches the manifest when the app starts; `manifestUrl` fetches it from that URL instead of using the snapshot; `snapshot` takes one you supply. `geoUrl`, `inputs`, `initFallback`, `headers`, `credentials`, `fetch`, `domain`. |
-| `testing()` | From `@inth/vue/testing`, for tests. `policy`: the rules to resolve; omitted, inth's recommended rules. Throws in production builds. |
+| `testing()` | From `@inth/vue/testing`, for tests. `policy`: the rules to resolve; omitted, Inth's recommended rules. Throws in production builds. |
 
 `hosted()` and `manifest()` throw when they have no backend URL: add
 `consentManifest()` to `vite.config.ts` and set `VITE_INTH_PROJECT_URL`, or pass `projectUrl`.

@@ -273,7 +273,7 @@ another optional category that covers the events you collect.
 Install PostHog using its [iOS](https://posthog.com/docs/libraries/ios),
 [Android](https://posthog.com/docs/libraries/android) or
 [React Native](https://posthog.com/docs/libraries/react-native) guide. This
-page connects the same configured client your app uses for capture. inth's
+page connects the same configured client your app uses for capture. Inth's
 mobile packages remain a private prerelease; see
 [mobile availability](/docs/guides/mobile-status) for access.
 
@@ -307,7 +307,7 @@ For native SDKs, put the first setup behind a
 hooks cannot prevent a native SDK that has already initialized. For Expo,
 install PostHog using its Expo instructions and rebuild the app's native
 binary. Inth does not add the vendor module or its configuration, and Expo Go
-does not load inth's native engine.
+does not load Inth's native engine.
 
 ### Connect a Swift app
 
@@ -482,7 +482,7 @@ uploads run on your build machine and send no data from users' devices.
 
 ### Reapply permission after reset
 
-PostHog's own reset can change its capture settings while inth's saved choice
+PostHog's own reset can change its capture settings while Inth's saved choice
 stays unchanged. After the reset completes, use `syncAfterReset()` on the
 Swift owner, `sync()` on the Kotlin helper or
 `await posthogConsent.sync()` in React Native. This reapplies current native

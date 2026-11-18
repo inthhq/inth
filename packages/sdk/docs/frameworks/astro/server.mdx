@@ -180,7 +180,7 @@ them from `Astro.locals.inth.options`, or with `resolveOptions()` from
 `@inth/astro`. Pass `prerendered: true` only for output that every visitor
 shares. It drops the request's cookie and location.
 
-To run inth's middleware inside your own, set `middleware: false` and
+To run Inth's middleware inside your own, set `middleware: false` and
 register `onRequest` from `@inth/astro/middleware` with Astro's `sequence()` in
 `src/middleware.ts`. Put it before anything that renders consent components.
 

@@ -11,7 +11,7 @@ The policy comes from a `Content-Security-Policy` header, or a
 browser-only Angular app served as static files cannot put a fresh nonce in
 each response, so allow each vendor's script host in `script-src`, and set
 `styles: false` in `provideInth()` with `@inth/angular/styles.css` in the
-`styles` array of `angular.json`. `'self'` then covers inth's stylesheet.
+`styles` array of `angular.json`. `'self'` then covers Inth's stylesheet.
 
 A server-rendered app can create a nonce per response. Angular reads it from
 the `ngCspNonce` attribute on your root element, or from the `CSP_NONCE`
@@ -42,7 +42,7 @@ and a production policy does not need to allow it.
 
 ## Pass the nonce to Inth
 
-inth's `<style>` and `<script>` elements use the `nonce` option of
+Inth's `<style>` and `<script>` elements use the `nonce` option of
 `provideInth()`, and fall back to Angular's `CSP_NONCE`. An app that already
 sets `ngCspNonce` on its root element needs no more setup. If the nonce comes
 from somewhere else, provide `CSP_NONCE` yourself, and Angular and Inth both

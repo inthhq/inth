@@ -1,13 +1,13 @@
 ---
 title: Theme tokens
-description: Change inth's colors, type, radius, spacing, shadows and motion with theme tokens, and see every --inth-* variable with its default.
+description: Change Inth's colors, type, radius, spacing, shadows and motion with theme tokens, and see every --inth-* variable with its default.
 group: customization
 ---
 
 ## Where tokens come from
 
-inth's components take their colors from `--inth-*` CSS variables, and most
-of their fonts, radii, spacing, shadows and motion too. inth's rules set the
+Inth's components take their colors from `--inth-*` CSS variables, and most
+of their fonts, radii, spacing, shadows and motion too. Inth's rules set the
 defaults. You change them with a theme object or with CSS, and every part
 that reads a token changes with it. Some values are still fixed for one
 component, such as button padding, the radius of the "Secured by" tag and
@@ -59,9 +59,9 @@ setup.
 ## Combine a generated theme with your own CSS
 
 `generateThemeCSS` writes its variables on `:root:root` and
-`.inth-theme-root.inth-theme-root`, more specific than inth's defaults. The
+`.inth-theme-root.inth-theme-root`, more specific than Inth's defaults. The
 theme therefore overrides the defaults whether its
-`<style>` element comes before or after inth's rules. The same output backs
+`<style>` element comes before or after Inth's rules. The same output backs
 `ConsentTheme` in React, Next.js and TanStack Start, Astro's `theme` option and
 the script tag's `ui.theme`.
 
@@ -175,7 +175,7 @@ banner does not reach the dialog's tag.
 | `--consent-branding-tag-background-color` | `var(--inth-primary)` | Tag background |
 | `--consent-branding-tag-border-color` | `--inth-primary` mixed 14% toward black | Tag border |
 | `--consent-branding-tag-text-color` | `var(--inth-text-on-primary, #fff)` | "Secured by" and the wordmark |
-| `--consent-branding-tag-mark-color` | The text color | c15t mark or inth logo |
+| `--consent-branding-tag-mark-color` | The text color | c15t mark or Inth logo |
 | `--consent-branding-tag-shadow` | Inset highlight and a 1px drop shadow | Tag shadow |
 | `--consent-branding-tag-attached-edge-width` | `0px` | Border on the edge that meets the card |
 

@@ -50,7 +50,7 @@ match the visitor's state.
 | `dismissButtonText` | `string` | `common.acknowledge` | Label of the button that acknowledges a notice |
 | `legalLinks` | `('privacyPolicy' \| 'cookiePolicy' \| 'termsOfService')[] \| null` | None | Which links from the integration's `legalLinks` render after the description |
 | `hideBranding` | `boolean` | `false` | Removes the "Secured by" tag |
-| `noStyle` | `boolean` | `false` | Renders the markup without inth's class names or button styles |
+| `noStyle` | `boolean` | `false` | Renders the markup without Inth's class names or button styles |
 | `class` | `string` | None | Extra class on the banner root, kept with `noStyle` |
 | `force` | `boolean` | `false` | Renders the banner even when the server decided to hide it, for visual tests |
 | `nonce` | `string` | `Astro.locals.inth.nonce` | Content Security Policy nonce for this banner's inline scripts and style. See [Content Security Policy](/docs/frameworks/astro/content-security-policy#allow-inth-with-a-nonce) |
@@ -156,8 +156,8 @@ To write your own CSS, target the attributes. They stay with `noStyle`:
 | Each rights button | `data-action="right"`, `data-right` (`opt-out` or `preferences`) |
 | Each legal link | `data-testid="consent-banner-legal-link-<key>"` |
 
-Keep inth's rules loaded when you restyle the banner. The browser hides the
-banner with the `hidden` attribute, and inth's rules make `hidden` win over
+Keep Inth's rules loaded when you restyle the banner. The browser hides the
+banner with the `hidden` attribute, and Inth's rules make `hidden` win over
 the banner's `display` rule.
 
 ## Next steps
