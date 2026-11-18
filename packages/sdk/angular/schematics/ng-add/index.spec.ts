@@ -276,7 +276,7 @@ describe('ng-add', () => {
 				.readText(config)
 				.replace(
 					'provideRouter(routes)',
-					"provideRouter(routes), inth.provideInth({ mode: c15t.hosted({ projectUrl: '/api/inth' }) })"
+					"provideRouter(routes), inth.provideInth({ mode: inth.hosted({ projectUrl: '/api/inth' }) })"
 				)}`
 		);
 		const before = app.readText(config);

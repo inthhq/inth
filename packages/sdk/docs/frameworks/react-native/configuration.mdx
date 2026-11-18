@@ -136,7 +136,7 @@ Use these keys when configuring the same engine without Expo:
 | `vendors` | `com.inth.vendors` | `com.inth.VENDORS`, comma-separated |
 | `policyResource` | `com.inth.policy.resource` | `com.inth.POLICY_RESOURCE` |
 | `forceGPC` | `com.inth.forceGPC` | `com.inth.FORCE_GPC` |
-| `iab` | `com.c15t.iab.*`, see below | `com.inth.IAB_*`, see below |
+| `iab` | `com.inth.iab.*`, see below | `com.inth.IAB_*`, see below |
 | `autoBootstrap: false` | `com.inth.reactnative.AutoBootstrap` | `com.inth.reactnative.AUTO_BOOTSTRAP` |
 
 The project URL follows the [same rule](#set-your-inth-project-url) as the
@@ -179,10 +179,10 @@ presenter can save IAB choices. Leave `iab` out to keep IAB TCF off.
 
 | Expo `iab` field | iOS `Info.plist` key | Android metadata | Value |
 | --- | --- | --- | --- |
-| `cmpId` | `com.c15t.iab.cmpId`, integer | `com.inth.IAB_CMP_ID` | Required. The CMP ID IAB Europe registered for your CMP, 2 to 4095. There is no default. |
-| `cmpVersion` | `com.c15t.iab.cmpVersion`, integer | `com.inth.IAB_CMP_VERSION` | Required. Your internal CMP version, 0 to 4095. |
-| `publisherCountryCode` | `com.c15t.iab.publisherCountryCode` | `com.inth.IAB_PUBLISHER_COUNTRY_CODE` | Required. Two letters, such as `DE`. |
-| `consentScreen` | `com.c15t.iab.consentScreen`, integer | `com.inth.IAB_CONSENT_SCREEN` | Optional. 0 to 63. Defaults to 1. |
+| `cmpId` | `com.inth.iab.cmpId`, integer | `com.inth.IAB_CMP_ID` | Required. The CMP ID IAB Europe registered for your CMP, 2 to 4095. There is no default. |
+| `cmpVersion` | `com.inth.iab.cmpVersion`, integer | `com.inth.IAB_CMP_VERSION` | Required. Your internal CMP version, 0 to 4095. |
+| `publisherCountryCode` | `com.inth.iab.publisherCountryCode` | `com.inth.IAB_PUBLISHER_COUNTRY_CODE` | Required. Two letters, such as `DE`. |
+| `consentScreen` | `com.inth.iab.consentScreen`, integer | `com.inth.IAB_CONSENT_SCREEN` | Optional. 0 to 63. Defaults to 1. |
 
 The Expo plugin stops prebuild when a value is missing or out of range. Native
 startup checks the same ranges. If any `iab` key is present but the set is

@@ -85,7 +85,7 @@ loaded, it returns a stand-in with the client's methods instead, and
 [how c15t.js loads c15t.hosted.js](/docs/frameworks/html/attributes-and-api#how-inthjs-loads-inthhostedjs).
 A second call returns the same client. Until `init()`,
 queued actions and `subscribe` wait, and direct calls to methods that read or
-change consent throw `call c15t.init() first`.
+change consent throw `call inth.init() first`.
 
 After `inth.dispose()`, a new `c15t.init()` starts a fresh client with the
 same attributes and queued `config` calls.

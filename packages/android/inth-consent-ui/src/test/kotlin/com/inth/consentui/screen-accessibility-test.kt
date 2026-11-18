@@ -176,7 +176,7 @@ class ScreenAccessibilityTest {
             compose.setContent {
                 InthConsent(presenter, "https://app.test/privacy")
             }
-            val prefix = if (presenter.iab) "c15t.iab" else "inth.prefs"
+            val prefix = if (presenter.iab) "inth.iab" else "inth.prefs"
             compose.onNodeWithTag("$prefix.reject-all").assertIsDisplayed()
             store.refuseNext = true
             compose.onNodeWithTag("$prefix.reject-all").performClick()

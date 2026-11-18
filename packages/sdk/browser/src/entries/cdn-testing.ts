@@ -6,7 +6,7 @@
  * contain this transport or the policy pack. Load this file only in a
  * test page. Its policy comes from `data-policy` (preset names such as
  * `europeOptIn`), `c15t.init({ policy })`, `c15t.init({ mode:
- * c15t.testing({ policy }) })`, or the recommended pack, picked by the
+ * inth.testing({ policy }) })`, or the recommended pack, picked by the
  * tag's `data-country` and `data-region`.
  */
 

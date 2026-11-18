@@ -107,57 +107,57 @@
 			"description": "Keep editing"
 		},
 		{
-			"id": "c15t.iab",
+			"id": "inth.iab",
 			"screen": "iab-preferences",
 			"description": "IAB preferences list"
 		},
 		{
-			"id": "c15t.iab.accept-all",
+			"id": "inth.iab.accept-all",
 			"screen": "iab-preferences",
 			"description": "Accept all"
 		},
 		{
-			"id": "c15t.iab.reject-all",
+			"id": "inth.iab.reject-all",
 			"screen": "iab-preferences",
 			"description": "Reject all"
 		},
 		{
-			"id": "c15t.iab.save",
+			"id": "inth.iab.save",
 			"screen": "iab-preferences",
 			"description": "Save choices"
 		},
 		{
-			"id": "c15t.iab.purpose.<purpose>.consent",
+			"id": "inth.iab.purpose.<purpose>.consent",
 			"screen": "iab-preferences",
 			"description": "Consent switch for an IAB purpose, by purpose ID"
 		},
 		{
-			"id": "c15t.iab.special-feature.<feature>.switch",
+			"id": "inth.iab.special-feature.<feature>.switch",
 			"screen": "iab-preferences",
 			"description": "Opt-in switch for a special feature"
 		},
 		{
-			"id": "c15t.iab.partners",
+			"id": "inth.iab.partners",
 			"screen": "iab-preferences",
 			"description": "Opens the IAB partner list"
 		},
 		{
-			"id": "c15t.iab.vendors",
+			"id": "inth.iab.vendors",
 			"screen": "iab-partners",
 			"description": "The IAB partner list"
 		},
 		{
-			"id": "c15t.iab.vendors.search",
+			"id": "inth.iab.vendors.search",
 			"screen": "iab-partners",
 			"description": "Partner search field"
 		},
 		{
-			"id": "c15t.iab.vendors.vendor.<vendor>",
+			"id": "inth.iab.vendors.vendor.<vendor>",
 			"screen": "iab-partners",
 			"description": "One partner row, by GVL vendor ID"
 		},
 		{
-			"id": "c15t.iab.vendors.back",
+			"id": "inth.iab.vendors.back",
 			"screen": "iab-partners",
 			"description": "Back to IAB preferences"
 		},

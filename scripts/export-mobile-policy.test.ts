@@ -138,7 +138,7 @@ describe('exporter dependencies outside Vitest', () => {
 		'%s can resolve every package it imports',
 		(file) => {
 			const url = new URL(
-				`../packages/cli/vendor/inth-mobile/src/mobile/${file}`,
+				`../packages/cli/vendor/c15t-mobile/src/mobile/${file}`,
 				import.meta.url
 			);
 			const packages = [

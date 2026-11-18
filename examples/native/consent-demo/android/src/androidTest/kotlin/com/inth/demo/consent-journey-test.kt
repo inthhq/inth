@@ -63,7 +63,7 @@ class ConsentJourneyTest {
         return compose.onNodeWithTag(id)
     }
     private fun awaitClosed() {
-        compose.waitUntil(10000) { listOf("inth.first-layer.accept-all", "inth.prefs.save", "c15t.iab.save").all { compose.onAllNodesWithTag(it).fetchSemanticsNodes().isEmpty() } }
+        compose.waitUntil(10000) { listOf("inth.first-layer.accept-all", "inth.prefs.save", "inth.iab.save").all { compose.onAllNodesWithTag(it).fetchSemanticsNodes().isEmpty() } }
     }
     /** The preferences page composes rows lazily; scroll the page itself until the row exists. */
     private fun scrollPage(page: String, id: String): SemanticsNodeInteraction {
@@ -202,8 +202,8 @@ class ConsentJourneyTest {
     @Test fun nativePartnerSearchSupportsAccessibleEditingAndFiltering() {
         launch("fresh-online-iab")
         waitFor("inth.first-layer.customize").performClick()
-        scrollPage("c15t.iab", "c15t.iab.partners").performClick()
-        val id = "c15t.iab.vendors.search"
+        scrollPage("inth.iab", "inth.iab.partners").performClick()
+        val id = "inth.iab.vendors.search"
         val edit = nativeSearch(id)
         Assert.assertTrue(edit.isFocusable)
         Assert.assertFalse("Search must not take focus before it is touched", edit.isFocused)
@@ -225,19 +225,19 @@ class ConsentJourneyTest {
         if (android.os.Build.VERSION.SDK_INT >= 26) Assert.assertEquals("Search partners", accessible.hintText?.toString())
 
         enterSearch(id, "no-matching-partner")
-        waitFor("c15t.iab.vendors.empty").assertIsDisplayed()
+        waitFor("inth.iab.vendors.empty").assertIsDisplayed()
         enterSearch(id, "elan")
         capture("android-native-search-filtered")
-        waitFor("c15t.iab.vendors.vendor.1").assertIsDisplayed()
-        compose.onNodeWithTag("c15t.iab.vendors.vendor.2").assertDoesNotExist()
+        waitFor("inth.iab.vendors.vendor.1").assertIsDisplayed()
+        compose.onNodeWithTag("inth.iab.vendors.vendor.2").assertDoesNotExist()
         device.pressKeyCode(android.view.KeyEvent.KEYCODE_MOVE_END)
         device.pressKeyCode(android.view.KeyEvent.KEYCODE_DEL)
         compose.waitUntil(5_000) { device.findObject(By.clazz("android.widget.EditText"))?.text == "ela" }
         device.pressKeyCode(android.view.KeyEvent.KEYCODE_N)
         compose.waitUntil(5_000) { device.findObject(By.clazz("android.widget.EditText"))?.text == "elan" }
         enterSearch(id, "")
-        waitFor("c15t.iab.vendors.vendor.1").assertIsDisplayed()
-        waitFor("c15t.iab.vendors.vendor.2").assertIsDisplayed()
+        waitFor("inth.iab.vendors.vendor.1").assertIsDisplayed()
+        waitFor("inth.iab.vendors.vendor.2").assertIsDisplayed()
         device.pressBack()
         waitFor(id).assertIsDisplayed()
     }
@@ -254,39 +254,39 @@ class ConsentJourneyTest {
         compose.onNodeWithTag("fixture.state.explicit-choice").assertTextEquals("none")
         compose.onNodeWithTag("inth.first-layer.customize").performClick()
         // One purpose consent on, so a partner consent later shows as Partly on rather than Off.
-        compose.onNodeWithTag("c15t.iab").performScrollToNode(hasTestTag("c15t.iab.purpose.1.consent"))
-        compose.onNodeWithTag("c15t.iab.purpose.1.consent").performScrollTo().performClick().assertIsOn()
-        compose.onNodeWithTag("c15t.iab").performScrollToNode(hasTestTag("c15t.iab.purpose.7.consent"))
-        val purpose = waitFor("c15t.iab.purpose.7.consent")
+        compose.onNodeWithTag("inth.iab").performScrollToNode(hasTestTag("inth.iab.purpose.1.consent"))
+        compose.onNodeWithTag("inth.iab.purpose.1.consent").performScrollTo().performClick().assertIsOn()
+        compose.onNodeWithTag("inth.iab").performScrollToNode(hasTestTag("inth.iab.purpose.7.consent"))
+        val purpose = waitFor("inth.iab.purpose.7.consent")
         purpose.performScrollTo(); capture("android-iab-centre")
-        compose.onNodeWithTag("c15t.iab.purpose.7.details").performScrollTo().performClick()
-        val li = compose.onNodeWithTag("c15t.iab.purpose.7.li")
+        compose.onNodeWithTag("inth.iab.purpose.7.details").performScrollTo().performClick()
+        val li = compose.onNodeWithTag("inth.iab.purpose.7.li")
         li.performScrollTo().assertIsOn().performClick().assertIsOff() // Starts not objected to; one tap objects.
-        compose.onNodeWithTag("c15t.iab.purpose.1.li").assertDoesNotExist()
-        compose.onNodeWithTag("c15t.iab").performScrollToNode(hasTestTag("c15t.iab.partners"))
-        compose.onNodeWithTag("c15t.iab.partners").performScrollTo().performClick()
-        enterSearch("c15t.iab.vendors.search", "elan")
-        waitFor("c15t.iab.vendors.vendor.1").assertIsDisplayed(); capture("android-partner-search")
-        compose.onNodeWithTag("c15t.iab.vendors.vendor.1").performClick()
-        waitFor("c15t.iab.vendor.1.consent").performClick()
-        compose.onNodeWithTag("c15t.iab.vendor.1.li").performScrollTo().assertIsOn().performClick().assertIsOff()
+        compose.onNodeWithTag("inth.iab.purpose.1.li").assertDoesNotExist()
+        compose.onNodeWithTag("inth.iab").performScrollToNode(hasTestTag("inth.iab.partners"))
+        compose.onNodeWithTag("inth.iab.partners").performScrollTo().performClick()
+        enterSearch("inth.iab.vendors.search", "elan")
+        waitFor("inth.iab.vendors.vendor.1").assertIsDisplayed(); capture("android-partner-search")
+        compose.onNodeWithTag("inth.iab.vendors.vendor.1").performClick()
+        waitFor("inth.iab.vendor.1.consent").performClick()
+        compose.onNodeWithTag("inth.iab.vendor.1.li").performScrollTo().assertIsOn().performClick().assertIsOff()
         capture("android-partner-details")
         device.pressBack()
         // The tag sits inside the clickable row, which merges its children's semantics.
-        compose.waitUntil(15000) { compose.onAllNodesWithTag("c15t.iab.vendors.vendor.1.status", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty() }
-        compose.onNodeWithTag("c15t.iab.vendors.vendor.1.status", useUnmergedTree = true).assertTextEquals("Partly on"); capture("android-partner-status")
+        compose.waitUntil(15000) { compose.onAllNodesWithTag("inth.iab.vendors.vendor.1.status", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("inth.iab.vendors.vendor.1.status", useUnmergedTree = true).assertTextEquals("Partly on"); capture("android-partner-status")
         device.pressBack()
-        compose.onNodeWithTag("c15t.iab").performScrollToNode(hasTestTag("c15t.iab.features-standard-text"))
-        compose.onNodeWithTag("c15t.iab.features-standard-text").performScrollTo().assertTextContains("Features have no separate choice.", substring = true)
-        compose.onNodeWithTag("c15t.iab").performScrollToNode(hasTestTag("c15t.iab.other-partners"))
-        compose.onNodeWithTag("c15t.iab.other-partners").performScrollTo().performClick()
+        compose.onNodeWithTag("inth.iab").performScrollToNode(hasTestTag("inth.iab.features-standard-text"))
+        compose.onNodeWithTag("inth.iab.features-standard-text").performScrollTo().assertTextContains("Features have no separate choice.", substring = true)
+        compose.onNodeWithTag("inth.iab").performScrollToNode(hasTestTag("inth.iab.other-partners"))
+        compose.onNodeWithTag("inth.iab.other-partners").performScrollTo().performClick()
         enterSearch("inth.ac.search", "no-matching-partner")
         waitFor("inth.ac.empty").assertIsDisplayed()
         enterSearch("inth.ac.search", "")
         device.pressBack()
         waitFor("inth.ac.provider.10.switch").performScrollTo().performClick(); capture("android-additional-consent")
         compose.onNodeWithTag("inth.ac.intro").assertTextContains("Google works with these ad tech providers", substring = true)
-        device.pressBack(); compose.onNodeWithTag("c15t.iab.save").performClick(); awaitClosed()
+        device.pressBack(); compose.onNodeWithTag("inth.iab.save").performClick(); awaitClosed()
         val summary = state("fixture.state.iab", "purposeObjections=[7]")
         summary.performScrollTo().assertTextContains("purposeObjections=[7]",substring = true).assertTextContains("vendorObjections=[1]",substring = true).assertTextContains("ac=2~~dv.10.20",substring = true)
     }
@@ -295,7 +295,7 @@ class ConsentJourneyTest {
         waitFor("inth.first-layer.accept-all").performClick(); awaitClosed()
         state("fixture.state.iab", "ac=2~10.20~dv.").performScrollTo().assertTextContains("ac=2~10.20~dv.",substring = true)
         compose.onNodeWithTag("fixture.open-preferences").performScrollTo().performClick()
-        waitFor("c15t.iab.reject-all").performClick(); awaitClosed()
+        waitFor("inth.iab.reject-all").performClick(); awaitClosed()
         waitFor("fixture.state.permission.marketing").assertTextEquals("marketing: false")
     }
     @Test fun darkLargeTextKeepsDecisionsEqual() {
@@ -328,35 +328,35 @@ class ConsentJourneyTest {
             Assert.assertEquals(r.width, a.width, 1f); Assert.assertTrue(r.bottom <= a.top + 1f)
             capture("android-2.0-iab-first-layer")
             customize.performScrollTo().performClick()
-            val save = waitFor("c15t.iab.save")
+            val save = waitFor("inth.iab.save")
             save.assertIsDisplayed()
             compose.onAllNodes(hasTestTag("inth.footer") and hasScrollAction()).assertCountEquals(0)
             Assert.assertTrue(bounds("inth.footer").top >= screenHeight * 0.7f)
-            scrollPage("c15t.iab", "c15t.iab.reject-all").assertIsDisplayed()
+            scrollPage("inth.iab", "inth.iab.reject-all").assertIsDisplayed()
             capture("android-2.0-iab-preferences")
-            scrollPage("c15t.iab", "c15t.iab.purpose.7.consent").performClick().assertIsOn()
-            scrollPage("c15t.iab", "c15t.iab.purpose.7.details").performClick()
-            scrollPage("c15t.iab", "c15t.iab.purpose.7.view-partners").assertIsDisplayed()
+            scrollPage("inth.iab", "inth.iab.purpose.7.consent").performClick().assertIsOn()
+            scrollPage("inth.iab", "inth.iab.purpose.7.details").performClick()
+            scrollPage("inth.iab", "inth.iab.purpose.7.view-partners").assertIsDisplayed()
             capture("android-2.0-iab-purpose-details")
-            compose.onNodeWithTag("c15t.iab.purpose.7.view-partners").performClick()
-            waitFor("c15t.iab.vendors.filter.purpose.clear").assertIsDisplayed()
+            compose.onNodeWithTag("inth.iab.purpose.7.view-partners").performClick()
+            waitFor("inth.iab.vendors.filter.purpose.clear").assertIsDisplayed()
             capture("android-2.0-partner-list")
-            enterSearch("c15t.iab.vendors.search", "elan")
-            waitFor("c15t.iab.vendors.vendor.1").assertIsDisplayed(); capture("android-2.0-partner-search")
-            compose.onNodeWithTag("c15t.iab.vendors.vendor.1").performClick()
-            waitFor("c15t.iab.vendor.1.consent").performScrollTo().performClick().assertIsOn()
+            enterSearch("inth.iab.vendors.search", "elan")
+            waitFor("inth.iab.vendors.vendor.1").assertIsDisplayed(); capture("android-2.0-partner-search")
+            compose.onNodeWithTag("inth.iab.vendors.vendor.1").performClick()
+            waitFor("inth.iab.vendor.1.consent").performScrollTo().performClick().assertIsOn()
             capture("android-2.0-partner-details")
             device.pressBack()
-            compose.waitUntil(15000) { compose.onAllNodesWithTag("c15t.iab.vendors.vendor.1.status", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty() }
+            compose.waitUntil(15000) { compose.onAllNodesWithTag("inth.iab.vendors.vendor.1.status", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty() }
             device.pressBack()
-            scrollPage("c15t.iab", "c15t.iab.other-partners").performClick()
+            scrollPage("inth.iab", "inth.iab.other-partners").performClick()
             waitFor("inth.ac.search")
             // The provider list is lazy and its intro fills the screen at this size; scroll the list itself.
             compose.onNode(hasAnyAncestor(hasTestTag("inth.ac")) and hasScrollToIndexAction()).performScrollToNode(hasTestTag("inth.ac.provider.10.switch"))
             compose.onNodeWithTag("inth.ac.provider.10.switch").performClick().assertIsOn()
             capture("android-2.0-additional-consent")
             device.pressBack()
-            waitFor("c15t.iab.save").assertIsDisplayed().performClick(); awaitClosed()
+            waitFor("inth.iab.save").assertIsDisplayed().performClick(); awaitClosed()
             // The host's state list is lazy too; at this size its IAB row is below the fold on a short screen.
             waitFor("fixture.state").performScrollToNode(hasTestTag("fixture.state.iab"))
             state("fixture.state.iab", "vendors=[1]").assertTextContains("vendors=[1]", substring = true)
@@ -402,10 +402,10 @@ class ConsentJourneyTest {
         Assert.assertEquals(r.width, a.width, 1f); Assert.assertEquals(r.height, a.height, 1f)
         capture("android-brand-first-layer")
         compose.onNodeWithTag("inth.first-layer.customize").performClick()
-        waitFor("c15t.iab.save"); capture("android-brand-preferences")
-        compose.onNodeWithTag("c15t.iab").performScrollToNode(hasTestTag("c15t.iab.partners"))
-        compose.onNodeWithTag("c15t.iab.partners").performClick()
-        waitFor("c15t.iab.vendors.vendor.1"); capture("android-brand-partners")
+        waitFor("inth.iab.save"); capture("android-brand-preferences")
+        compose.onNodeWithTag("inth.iab").performScrollToNode(hasTestTag("inth.iab.partners"))
+        compose.onNodeWithTag("inth.iab.partners").performClick()
+        waitFor("inth.iab.vendors.vendor.1"); capture("android-brand-partners")
         device.pressBack()
         waitFor("inth.prefs.cancel").performClick()
         waitFor("inth.first-layer.accept-all").performClick(); awaitClosed()
@@ -448,13 +448,13 @@ class ConsentJourneyTest {
         launch("fresh-online-iab", theme = "stock")
         waitFor("inth.first-layer.partner-count").performScrollTo().assertIsDisplayed()
         waitFor("inth.first-layer.customize").performClick()
-        val save = waitFor("c15t.iab.save").assertIsDisplayed()
+        val save = waitFor("inth.iab.save").assertIsDisplayed()
         // One Save, above the list; Reject All and Accept All stay equal in the footer.
-        val reject = compose.onNodeWithTag("c15t.iab.reject-all").fetchSemanticsNode().boundsInRoot
-        val accept = compose.onNodeWithTag("c15t.iab.accept-all").fetchSemanticsNode().boundsInRoot
+        val reject = compose.onNodeWithTag("inth.iab.reject-all").fetchSemanticsNode().boundsInRoot
+        val accept = compose.onNodeWithTag("inth.iab.accept-all").fetchSemanticsNode().boundsInRoot
         org.junit.Assert.assertTrue(save.fetchSemanticsNode().boundsInRoot.bottom <= reject.top)
         org.junit.Assert.assertEquals(reject.width, accept.width, 1f)
-        scrollPage("c15t.iab", "c15t.iab.purpose.1.consent").performClick()
+        scrollPage("inth.iab", "inth.iab.purpose.1.consent").performClick()
         save.performClick()
         waitFor("fixture.open-preferences")
         state("fixture.state.iab", "purposes=[1]")

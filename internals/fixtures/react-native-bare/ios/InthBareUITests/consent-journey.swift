@@ -457,8 +457,8 @@ final class ConsentJourney: XCTestCase {
 
   private func reveal(_ control: XCUIElement) {
     for _ in 0..<18 {
-      let save = app.buttons["c15t.iab.save"].exists ? app.buttons["c15t.iab.save"] : app.buttons["inth.prefs.save"]
-      let reject = app.buttons["c15t.iab.reject-all"].exists ? app.buttons["c15t.iab.reject-all"] : app.buttons["inth.prefs.reject-all"]
+      let save = app.buttons["inth.iab.save"].exists ? app.buttons["inth.iab.save"] : app.buttons["inth.prefs.save"]
+      let reject = app.buttons["inth.iab.reject-all"].exists ? app.buttons["inth.iab.reject-all"] : app.buttons["inth.prefs.reject-all"]
       let bottom = reject.exists ? reject.frame.minY - 12 : save.exists ? save.frame.minY - 12 : app.frame.maxY - 40
       let top: CGFloat = 150
       if control.exists && control.isHittable && control.frame.midY > top && control.frame.midY < bottom { return }
@@ -486,19 +486,19 @@ final class ConsentJourney: XCTestCase {
     capture("08-native-iab-blocked-js")
     tap("inth.prefs.category.measurement.switch")
     for id in [1, 3, 4, 7] {
-      let control = app.switches["c15t.iab.purpose.\(id).consent"]; reveal(control); control.tap()
+      let control = app.switches["inth.iab.purpose.\(id).consent"]; reveal(control); control.tap()
     }
-    let details = app.buttons["c15t.iab.purpose.7.details"]; reveal(details); details.tap()
-    let li = app.switches["c15t.iab.purpose.7.li"]; reveal(li); li.tap(); li.tap()
-    let partners = app.buttons["c15t.iab.partners"]; reveal(partners); partners.tap()
-    let search = app.textFields["c15t.iab.vendors.search"]; XCTAssertTrue(search.waitForExistence(timeout: 5)); search.tap(); search.typeText("elan")
+    let details = app.buttons["inth.iab.purpose.7.details"]; reveal(details); details.tap()
+    let li = app.switches["inth.iab.purpose.7.li"]; reveal(li); li.tap(); li.tap()
+    let partners = app.buttons["inth.iab.partners"]; reveal(partners); partners.tap()
+    let search = app.textFields["inth.iab.vendors.search"]; XCTAssertTrue(search.waitForExistence(timeout: 5)); search.tap(); search.typeText("elan")
     capture("09-native-partner-search")
-    tap("c15t.iab.vendors.vendor.1")
-    tap("c15t.iab.vendor.1.consent")
-    tap("c15t.iab.vendor.1.li"); tap("c15t.iab.vendor.1.li")
+    tap("inth.iab.vendors.vendor.1")
+    tap("inth.iab.vendor.1.consent")
+    tap("inth.iab.vendor.1.li"); tap("inth.iab.vendor.1.li")
     capture("10-native-partner-details")
-    tap("c15t.iab.vendor.back"); tap("c15t.iab.vendors.back")
-    let ac = app.buttons["c15t.iab.other-partners"]; reveal(ac); ac.tap()
+    tap("inth.iab.vendor.back"); tap("inth.iab.vendors.back")
+    let ac = app.buttons["inth.iab.other-partners"]; reveal(ac); ac.tap()
     let acSearch = app.textFields["inth.ac.search"]; XCTAssertTrue(acSearch.waitForExistence(timeout: 5)); acSearch.tap(); acSearch.typeText("Harbour")
     let provider = app.switches["inth.ac.provider.10.switch"]; reveal(provider)
     XCTAssertEqual(provider.value as? String, "0")
@@ -506,7 +506,7 @@ final class ConsentJourney: XCTestCase {
     XCTAssertEqual(provider.value as? String, "1")
     capture("11-native-additional-consent")
     tap("inth.ac.back")
-    tap("c15t.iab.save")
+    tap("inth.iab.save")
     let deadline = Date().addingTimeInterval(8)
     var observed: [String: Any] = [:]
     repeat {

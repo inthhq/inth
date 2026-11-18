@@ -71,21 +71,21 @@ export const IOS_PLIST_KEY = {
 	/** Staged-build switch that forces GPC on, as a real Boolean. */
 	forceGPC: 'com.inth.forceGPC',
 	/** `true` turns on the IAB GPP string, as a real Boolean. */
-	gpp: 'com.c15t.gpp',
+	gpp: 'com.inth.gpp',
 	/** MSPA mode, `opt-out-option` or `service-provider`. */
-	gppMspaMode: 'com.c15t.gpp.mspaMode',
+	gppMspaMode: 'com.inth.gpp.mspaMode',
 	/** Category id array whose refusal reports a GPP opt-out. */
-	gppOptOutCategories: 'com.c15t.gpp.optOutCategories',
+	gppOptOutCategories: 'com.inth.gpp.optOutCategories',
 	/** `false` leaves the TCF EU section out of the GPP string, as a real Boolean. */
-	gppTCF: 'com.c15t.gpp.tcf',
+	gppTCF: 'com.inth.gpp.tcf',
 	/** Registered IAB CMP ID, as a plist integer. */
-	iabCmpId: 'com.c15t.iab.cmpId',
+	iabCmpId: 'com.inth.iab.cmpId',
 	/** CMP version, as a plist integer. */
-	iabCmpVersion: 'com.c15t.iab.cmpVersion',
+	iabCmpVersion: 'com.inth.iab.cmpVersion',
 	/** Optional TCF consent screen number, as a plist integer. */
-	iabConsentScreen: 'com.c15t.iab.consentScreen',
+	iabConsentScreen: 'com.inth.iab.consentScreen',
 	/** Two-letter publisher country code. */
-	iabPublisherCountryCode: 'com.c15t.iab.publisherCountryCode',
+	iabPublisherCountryCode: 'com.inth.iab.publisherCountryCode',
 	policyResource: 'com.inth.policy.resource',
 	/** Bundle filename of the in-code policy. */
 	policyRules: 'com.inth.policy.rules',

@@ -152,7 +152,7 @@ describe('c15t.js before the engine', () => {
 
 	it('starts a plain script once across the handoff, with one /init and one save', async () => {
 		const win = await open({ 'hosted-delay': 1500, manual: true });
-		const init = win.c15t.init as (options: {
+		const init = win.inth.init as (options: {
 			scripts: { category: string; id: string; src: string }[];
 		}) => PageWindow['inth'];
 		init({
@@ -213,7 +213,7 @@ describe('c15t.js before the engine', () => {
 	it('replays calls made before the engine, in order', async () => {
 		const win = await open({ 'hosted-delay': 1000, manual: true, queue: true });
 		// The page inits itself, then calls the API before the engine.
-		const init = win.c15t.init as (
+		const init = win.inth.init as (
 			options: Record<string, never>
 		) => PageWindow['inth'];
 		const client = init({});
@@ -286,7 +286,7 @@ describe('c15t.js before the engine', () => {
 		expect(win.inth.client).toBeNull();
 		expect(bannerOf(win)).toBeNull();
 
-		(win.c15t.init as () => unknown)();
+		(win.inth.init as () => unknown)();
 		await expect.poll(() => win.inth.client).not.toBeNull();
 		await expect.poll(() => bannerOf(win), { timeout: 5000 }).not.toBeNull();
 	});
@@ -443,7 +443,7 @@ describe('c15t.commit.js and c15t.records.js', () => {
 	it('hands the tap to the engine, which records it once, when the outbox cannot keep its save', async () => {
 		const win = await open({ 'hosted-delay': 800, manual: true });
 		const recorded: unknown[] = [];
-		const init = win.c15t.init as (options: unknown) => unknown;
+		const init = win.inth.init as (options: unknown) => unknown;
 		init({
 			callbacks: {
 				onChoiceRecorded: (event: unknown) => recorded.push(event),

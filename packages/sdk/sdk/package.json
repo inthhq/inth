@@ -93,7 +93,7 @@
 			"default": "./lib/browser/dist/iab.js"
 		},
 		"./c15t.iab.js": "./lib/browser/dist/c15t.iab.js",
-		"./iab/styles.css": "./lib/browser/dist/c15t.iab.css",
+		"./iab/styles.css": "./lib/browser/dist/inth.iab.css",
 		"./postcss-tailwind3": {
 			"types": "./lib/browser/dist-types/postcss-tailwind3.d.ts",
 			"import": "./lib/browser/dist/postcss-tailwind3.js",

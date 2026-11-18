@@ -32,7 +32,7 @@ Pick the path for your app. Each one turns GPP on with the defaults below.
 ["@inth/react-native", { "projectUrl": "https://your-project.inth.app", "gpp": true }]
 ```
 
-**Bare React Native.** Add `com.c15t.gpp` as a Boolean `true` to
+**Bare React Native.** Add `com.inth.gpp` as a Boolean `true` to
 `Info.plist`, and `<meta-data android:name="com.inth.GPP" android:value="true" />`
 to the `<application>` element of `AndroidManifest.xml`.
 
@@ -61,10 +61,10 @@ Replace `https://your-project.inth.app` with the URL from your Inth project.
 
 | Option | Default | Expo field | iOS `Info.plist` key | Android metadata |
 | --- | --- | --- | --- | --- |
-| Turn GPP on | off | `gpp: true` or an object | `com.c15t.gpp`, Boolean | `com.inth.GPP` |
-| `mspaMode` | unset | `gpp.mspaMode` | `com.c15t.gpp.mspaMode` | `com.inth.GPP_MSPA_MODE` |
-| `optOutCategories` | `marketing` | `gpp.optOutCategories` | `com.c15t.gpp.optOutCategories`, array | `com.inth.GPP_OPT_OUT_CATEGORIES`, comma-separated |
-| `tcf` | `true` | `gpp.tcf` | `com.c15t.gpp.tcf`, Boolean | `com.inth.GPP_TCF` |
+| Turn GPP on | off | `gpp: true` or an object | `com.inth.gpp`, Boolean | `com.inth.GPP` |
+| `mspaMode` | unset | `gpp.mspaMode` | `com.inth.gpp.mspaMode` | `com.inth.GPP_MSPA_MODE` |
+| `optOutCategories` | `marketing` | `gpp.optOutCategories` | `com.inth.gpp.optOutCategories`, array | `com.inth.GPP_OPT_OUT_CATEGORIES`, comma-separated |
+| `tcf` | `true` | `gpp.tcf` | `com.inth.gpp.tcf`, Boolean | `com.inth.GPP_TCF` |
 
 - `mspaMode` is `opt-out-option` or `service-provider`. Set it only if you
   signed the IAB Multi-State Privacy Agreement; the transaction is then
@@ -76,7 +76,7 @@ Replace `https://your-project.inth.app` with the URL from your Inth project.
   empty list means no category drives the opt-outs, so they always report
   "did not opt out", as `optOutCategories: []` does on web. Write the empty
   list as `optOutCategories: []` in Expo, an empty array (`<array/>`) under
-  `com.c15t.gpp.optOutCategories` in `Info.plist`, and the value `none` for
+  `com.inth.gpp.optOutCategories` in `Info.plist`, and the value `none` for
   `com.inth.GPP_OPT_OUT_CATEGORIES` on Android. `necessary` is always granted,
   so it never drives them.
 - `tcf: false` leaves the TCF EU section out under an `iab` policy.

@@ -3,7 +3,7 @@
 import Foundation
 import XCTest
 
-/// The `com.c15t.iab.*` keys are how an RN or Expo app turns IAB TCF on without
+/// The `com.inth.iab.*` keys are how an RN or Expo app turns IAB TCF on without
 /// installing the core itself. These tests read the plist the way the launch hook does.
 final class InthBridgeIABConfigurationTests: XCTestCase {
     private typealias Key = InthBridgeConfiguration.InfoPlistKey

@@ -478,7 +478,7 @@ export const createGlobalWith = function createGlobalWith(
 	const require = function require(): ConsentClient {
 		if (!client) {
 			throw new Error(
-				'@inth/sdk: call c15t.init() first, or wait for inth.ready().'
+				'@inth/sdk: call inth.init() first, or wait for inth.ready().'
 			);
 		}
 		return client;

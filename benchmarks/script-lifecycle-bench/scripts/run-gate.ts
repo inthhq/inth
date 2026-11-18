@@ -14,7 +14,7 @@ import {
 
 /**
  * Script-tag consent gate. CookieBench's script fixture loads
- * `@inth/sdk`'s `c15t.js` with `data-manual` and calls `c15t.init` in
+ * `@inth/sdk`'s `c15t.js` with `data-manual` and calls `inth.init` in
  * hosted mode from a module script; this page does the same, served by the
  * gate proxy with the checkout's own `packages/sdk/browser/dist` and the gate's
  * fixture backend. The bridge below is `updateGateBridge` from
@@ -59,7 +59,7 @@ const update = (snapshot) => {
 };`;
 
 const gatePage = `<!doctype html><html lang="en"><head>${head}</head><body><div id="content">${gatePageHTML}</div><a href="#inth-preferences" data-testid="consent-dialog-link">Privacy settings</a><script src="/__gate/browser/c15t.js" data-manual></script><script type="module">${bridge}
-const client = window.c15t.init(${JSON.stringify({
+const client = window.inth.init(${JSON.stringify({
 	consentCategories: gateConsentCategories,
 	mode: 'hosted',
 	projectUrl: '/__gate/api',
@@ -79,7 +79,7 @@ try {
 		},
 		framework: 'script-tag',
 		notes: [
-			"@inth/sdk c15t.js with data-manual and c15t.init in hosted mode, as CookieBench's script fixture loads it.",
+			"@inth/sdk c15t.js with data-manual and inth.init in hosted mode, as CookieBench's script fixture loads it.",
 		],
 		packageName: '@inth/script-lifecycle-bench',
 		pages: { '/gate': gatePage, '/gate/control': controlPage },

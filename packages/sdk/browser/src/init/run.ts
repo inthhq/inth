@@ -122,7 +122,7 @@ const PAGE_ACTIONS: Record<string, string> = {
 };
 
 const notReady = (): Error =>
-	new Error('@inth/sdk: call c15t.init() first, or wait for inth.ready().');
+	new Error('@inth/sdk: call inth.init() first, or wait for inth.ready().');
 
 /** A queued call whose result the caller waits for (see `runQueued`). */
 type SettledCall = QueuedCall & {

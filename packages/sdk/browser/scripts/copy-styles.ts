@@ -1,6 +1,6 @@
 /**
  * Writes the stylesheets the script-tag build inlines into `dist/inth.css`
- * and `dist/c15t.iab.css`.
+ * and `dist/inth.iab.css`.
  *
  * Bundler users who mount the UI into the light DOM (`shadow: false`)
  * import `@inth/sdk-browser/styles.css`; it is the same sheet the script-tag

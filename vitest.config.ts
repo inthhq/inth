@@ -20,7 +20,7 @@ export default defineConfig({
       "packages/swift/**",
       "packages/android/**",
       "packages/native-protocol/**",
-      "packages/cli/vendor/inth-mobile/**",
+      "packages/cli/vendor/c15t-mobile/**",
     ],
   },
 });

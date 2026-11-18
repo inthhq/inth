@@ -12,7 +12,7 @@ packages:
   - scripts
   # The inth CLI's mobile code, parked under the CLI. scripts/export-mobile-policy.ts
   # imports its exporter, which needs @inth/sdk/schema. @inth/cli does not use it.
-  - packages/cli/vendor/inth-mobile
+  - packages/cli/vendor/c15t-mobile
   - "!**/dist/**"
   - "!**/.next/**"
   - "!**/.nuxt/**"

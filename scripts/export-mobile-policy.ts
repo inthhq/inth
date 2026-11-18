@@ -6,7 +6,7 @@ import { writeFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 
-import { exportMobilePolicy } from '../packages/cli/vendor/inth-mobile/src/mobile/export-manifest';
+import { exportMobilePolicy } from '../packages/cli/vendor/c15t-mobile/src/mobile/export-manifest';
 
 export { exportMobilePolicy };
 

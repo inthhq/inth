@@ -98,7 +98,7 @@ describe('notice banner', () => {
 		const optOut = required(
 			query('[data-testid="consent-banner-right-link-opt-out"]')
 		);
-		expect(optOut.getAttribute('data-c15t-rights')?.split(' ')).toContain(
+		expect(optOut.getAttribute('data-inth-rights')?.split(' ')).toContain(
 			'opt-out'
 		);
 		await fireEvent.click(optOut);

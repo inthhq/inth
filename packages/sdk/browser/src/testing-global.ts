@@ -23,7 +23,7 @@ const ENTRY = '@inth/sdk/testing';
 
 /** The global API installed by `c15t.testing.js`. */
 export interface TestingInthGlobal extends InthGlobalBase {
-	/** The testing mode, for `init({ mode: c15t.testing({ policy }) })`. */
+	/** The testing mode, for `init({ mode: inth.testing({ policy }) })`. */
 	testing: (
 		options?: TestingModeOptions
 	) => ReturnType<typeof createTestingMode>;

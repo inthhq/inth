@@ -1,7 +1,7 @@
 /**
  * `c15t.hosted()` before the engine has loaded.
  *
- * `init({ mode: c15t.hosted({ projectUrl }) })` is the documented way to
+ * `init({ mode: inth.hosted({ projectUrl }) })` is the documented way to
  * pick the hosted transport on a script-tag page, but the transport is
  * engine code. The init script's `c15t.hosted()` returns a marker carrying
  * the options instead, and the engine builds the real factory from it.
@@ -36,7 +36,7 @@ export const hostedMarker = function hostedMarker(
 ): HostedMarker {
 	const marker = (() => {
 		throw new Error(
-			'@inth/sdk: c15t.hosted() from c15t.js runs once c15t.hosted.js has loaded.'
+			'@inth/sdk: inth.hosted() from c15t.js runs once c15t.hosted.js has loaded.'
 		);
 	}) as unknown as HostedMarker;
 	marker.kind = 'hosted';
