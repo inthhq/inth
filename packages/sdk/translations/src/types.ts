@@ -168,7 +168,6 @@ export interface IABPreferenceCenterTranslations {
 	};
 	/** Informational Features section (TCF Policies v5.0.b). */
 	features?: {
-		/** Section heading. */
 		title: string;
 		/**
 		 * Explains that Features only serve the purposes the user chooses.
@@ -268,10 +267,6 @@ export interface IABTranslations {
 	common: IABCommonTranslations;
 }
 
-/**
- * Maps consent type names to their respective translations.
- * Uses the name property from ConsentType to ensure type safety.
- */
 export type ConsentTypesTranslations = {
 	[key in AllConsentNames]: ConsentTypeTranslations;
 };
@@ -315,7 +310,6 @@ export interface Translations {
 	trigger?: Partial<TriggerTranslations>;
 }
 
-// Helper type for deep partial
 type DeepPartial<T> = {
 	[P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
 };
@@ -327,7 +321,7 @@ export interface TranslationConfig {
 }
 
 /**
- * Preferred i18n configuration shape for Inth v2.
+ * Preferred i18n configuration shape, added in v2.
  *
  * @remarks
  * This maps to the legacy {@link TranslationConfig} as follows:

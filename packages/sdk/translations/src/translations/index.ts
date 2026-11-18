@@ -60,7 +60,7 @@ import { translations as zh } from './zh';
  *
  * @example
  * ```typescript
- * import { baseTranslations } from '@inth/sdk-translations/all';
+ * import { baseTranslations } from '@inth/sdk/translations/all';
  * const english = baseTranslations.en;
  * const german = baseTranslations.de;
  * ```
@@ -122,14 +122,11 @@ const baseTranslations = {
 } as const;
 
 /**
- * Type alias for the base translations object.
- *
- * Represents the readonly type of {@link baseTranslations}, providing type-safe
- * access to all available language translations.
+ * The readonly type of {@link baseTranslations}.
  *
  * @example
  * ```ts
- * import type { BaseTranslations } from '@inth/sdk-translations/all';
+ * import type { BaseTranslations } from '@inth/sdk/translations/all';
  *
  * function processTranslations(translations: BaseTranslations) {
  *   // Type-safe access to translations
