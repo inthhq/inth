@@ -49,7 +49,7 @@ describe('rb2b', () => {
 			'inthfake/nested/?file=loader.js#loader.js',
 			'inthfake/./',
 			'inthfake/loader/..',
-			'%6315tfake/',
+			'%69nthfake/',
 		])('skips an account path without a script filename: %s', (suffix) => {
 			expectSkippedScript(
 				() => rb2b({ accountKey: 'inthfake', scriptUrl: `${prefix}${suffix}` }),
@@ -81,7 +81,7 @@ describe('rb2b', () => {
 			'OTHER/b/inthfake/custom.js',
 			'inthfake?next=/b/inthfake/',
 			'INTHFAKE/custom.js',
-			'%4315tfake/custom.js',
+			'%49nthfake/custom.js',
 			'inthfake-extra/custom.js',
 			'inthfake%2Fextra/custom.js',
 			'inthfake%/custom.js',
@@ -100,7 +100,7 @@ describe('rb2b', () => {
 		});
 		it.each([
 			['INTHFAKE', 'INTHFAKE'],
-			['inthfake', '%6315tfake'],
+			['inthfake', '%69nthfake'],
 			['a/b?c', '%61%2Fb%3Fc'],
 			['a/b?c', 'a%2fb%3fc'],
 			['a%2Fb', 'a%252Fb'],
