@@ -79,9 +79,8 @@ export const scanImports = (content: string): string[] => {
  *
  * @param content - The React source.
  * @param file - The source path, for error messages.
- * @param framework - The framework the copy is for.
  * @returns The source with `@inth/react` imports pointing at the framework's entry point.
- * @throws {Error} When the source imports a Inth entry point other than {@link uiInthImports}, which the other frameworks have no twin for.
+ * @throws {Error} When the source imports an Inth entry point other than {@link uiInthImports}, which the other frameworks have no twin for.
  */
 export const toFrameworkSource = (
 	content: string,
@@ -279,7 +278,6 @@ const buildItem = (
  * their file paths and cross-item URLs change.
  *
  * @param options - The app directory to read sources from and the URL the output is served at.
- * @returns Output files keyed by path under `dist/r`.
  * @throws {Error} When a source imports something the registry can't express, or an item fails shadcn's schema.
  */
 export const buildRegistry = (options: BuildOptions): RegistryOutput => {
