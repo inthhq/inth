@@ -310,6 +310,44 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		);
 	};
 
+	// A held script loads nothing, but one that observes consent before it
+	// loads can control an SDK already on the page, so it still hears of a
+	// denial. It never hears of a grant, which would start it.
+	const notifyHeldDenials = (
+		snapshot: ConsentSnapshot,
+		pass: ReturnType<typeof buildReconcilePass>
+	): void => {
+		if (typeof document === 'undefined') {
+			return;
+		}
+		for (const entry of normalizeScripts(
+			held.map(({ script }) => script),
+			isVendorId
+		)) {
+			const { script } = entry;
+			if (
+				!isCurrentPass() ||
+				!script.observeConsentBeforeLoad ||
+				typeof script.onConsentChange !== 'function' ||
+				hasScriptConsent(entry, pass)
+			) {
+				continue;
+			}
+			invokeCallback(
+				script,
+				'onConsentChange',
+				buildCallbackInfo(
+					callbackTools,
+					script,
+					snapshot,
+					false,
+					elementIds.resolve(script)
+				),
+				emit
+			);
+		}
+	};
+
 	const reconcile = function reconcile(force = false): void {
 		let snapshot: ConsentSnapshot = kernel.getSnapshot();
 		if (snapshot.vendors !== lastVendors) {
@@ -375,6 +413,7 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 				break;
 			}
 		}
+		notifyHeldDenials(snapshot, pass);
 
 		flushPendingMounts(mountDeps, batch, isCurrentPass);
 		diagnostics?.notify();

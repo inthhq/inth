@@ -1046,6 +1046,59 @@ describe('experimentalScriptRegistry', () => {
 		runtime.dispose();
 	});
 
+	test.each(['listed with null', 'pending'] as const)(
+		'tells a held script that observes consent of a withdrawal, while %s',
+		async (state) => {
+			const onConsentChange = vi.fn();
+			const onBeforeLoad = vi.fn();
+			const runtime = startWith({
+				mode: initMode(() =>
+					state === 'pending'
+						? Promise.withResolvers<never>().promise
+						: Promise.resolve({
+								policyResolution: {
+									...matchedResolution(optInRule({ id: 'opt-in' })),
+									version: 1,
+								},
+								scriptRegistry: { sources: { vendor: null } },
+							})
+				),
+				reloadOnConsentRevoked: false,
+				// An SDK already running on the page, which this registration
+				// controls through its callbacks.
+				scripts: [
+					integrationScript({
+						category: 'measurement',
+						observeConsentBeforeLoad: true,
+						onBeforeLoad,
+						onConsentChange,
+					}),
+				],
+			});
+			await vi.waitFor(() =>
+				expect(runtime.kernel.getSnapshot().policyPending).toBe(
+					state === 'pending'
+				)
+			);
+
+			await runtime.kernel.commands.save({ measurement: true });
+			onConsentChange.mockClear();
+			await runtime.kernel.commands.save({ measurement: false });
+
+			await vi.waitFor(() =>
+				expect(onConsentChange).toHaveBeenCalledWith(
+					expect.objectContaining({ hasConsent: false, id: 'vendor' })
+				)
+			);
+			expect(onConsentChange).not.toHaveBeenCalledWith(
+				expect.objectContaining({ hasConsent: true })
+			);
+			expect(onBeforeLoad).not.toHaveBeenCalled();
+			expect(element('vendor')).toBeNull();
+			runtime.dispose();
+		}
+	);
+
 	test('reads null attributes on an entry as none', async () => {
 		const runtime = startWith({
 			mode: listed({
