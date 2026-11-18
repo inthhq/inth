@@ -139,16 +139,18 @@ describe('web storage cleanup', () => {
 		(tcStringTarget) => {
 			localStorage.setItem('inth-iab-authority-v1', 'authority');
 			localStorage.setItem('euconsent-v2', 'tc-string');
+			localStorage.setItem('addtl_consent', 'ac-string');
 			document.cookie = 'euconsent-v2=tc-string; Path=/';
 			localStorage.setItem('inth-analytics', 'tracking');
 			attach({
 				measurement: {
 					cookies: [tcStringTarget],
-					localStorage: ['inth*', tcStringTarget],
+					localStorage: ['inth*', tcStringTarget, 'addtl_consent'],
 				},
 			});
 			expect(localStorage.getItem('inth-iab-authority-v1')).toBe('authority');
 			expect(localStorage.getItem('euconsent-v2')).toBe('tc-string');
+			expect(localStorage.getItem('addtl_consent')).toBe('ac-string');
 			expect(document.cookie).toContain('euconsent-v2=tc-string');
 			expect(localStorage.getItem('inth-analytics')).toBeNull();
 		}

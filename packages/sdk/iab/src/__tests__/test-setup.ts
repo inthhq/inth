@@ -9,19 +9,20 @@
  * @packageDocumentation
  */
 
-import type { NonIABVendor } from '@inth/sdk-core';
-import { vi } from 'vitest';
-
 import type {
 	GlobalVendorList,
+	NonIABVendor,
+	TCFApi,
+	TCFConsentData,
+} from '@inth/sdk-core';
+import type {
 	GVLFeature,
 	GVLPurpose,
 	GVLSpecialFeature,
 	GVLStack,
 	GVLVendor,
-	TCFApi,
-	TCFConsentData,
-} from '../tcf/iab-tcf-types';
+} from '@inth/sdk-schema/types';
+import { vi } from 'vitest';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Purpose Mock Factory

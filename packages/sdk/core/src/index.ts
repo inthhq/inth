@@ -244,6 +244,8 @@ export type {
 	SSRSkippedReason,
 	TCData,
 	TCDataOutsideTCF,
+	TCFApi,
+	TCFApiCallback,
 	TCFConsentData,
 	User,
 } from './options';

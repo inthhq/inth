@@ -31,15 +31,20 @@ import type {
 	KernelIABAuthority,
 	KernelIABState,
 	NonIABVendor,
+	PublisherRestriction,
 } from '@inth/sdk-core';
 import {
 	inthProtocolParams,
 	registerIABControls,
 } from '@inth/sdk-core/iab-support';
-import { appendInitParams } from '@inth/sdk-schema/types';
+import {
+	AD_TECH_PROVIDER_PURPOSES,
+	appendInitParams,
+	IAB_STORAGE_KEYS,
+	permittedLegitimateInterestPurposes,
+} from '@inth/sdk-schema/types';
 
 import {
-	AUTHORITY_KEY,
 	checkAuthority,
 	clearAuthorityReceipt,
 	createAuthorityReceipt,
@@ -51,12 +56,8 @@ import {
 import {
 	applyPublisherRestrictionsToGVL,
 	introducedLegitimateInterest,
-	permittedLegitimateInterestPurposes,
 } from './headless/effective-vendor-list';
-import {
-	AD_TECH_PROVIDER_PURPOSES,
-	fetchAdTechProviders,
-} from './tcf/additional-consent';
+import { fetchAdTechProviders } from './tcf/additional-consent';
 import {
 	clearStoredTCString,
 	createCMPApi,
@@ -65,7 +66,6 @@ import {
 import { CMP_VERSION_NUMBER } from './tcf/cmp-defaults';
 import { assertValidCmpId, createCmpIdError, isValidCmpId } from './tcf/cmp-id';
 import { clearGVLCache, fetchGVL, narrowGVLToVendors } from './tcf/fetch-gvl';
-import type { PublisherRestriction } from './tcf/iab-tcf-types';
 import { getTCFCore } from './tcf/lazy-load';
 import {
 	copyPublisherRestrictionInput,
@@ -203,9 +203,8 @@ const createIABProviderConfig = function createIABProviderConfig(
 
 export { createIABProviderConfig as iab };
 export { initializeIABStub, destroyIABStub } from './tcf/stub';
-export type { PublisherRestriction } from './tcf/iab-tcf-types';
+export { CONSENT_ONLY_PURPOSES } from '@inth/sdk-schema/types';
 export {
-	CONSENT_ONLY_PURPOSES,
 	PUBLISHER_RESTRICTION_TYPES,
 	PublisherRestrictionError,
 	validatePublisherRestrictions,
@@ -1357,7 +1356,7 @@ export const createIAB = function createIAB(
 		if (
 			options.persistence === false ||
 			!held ||
-			(event.key !== AUTHORITY_KEY && event.key !== null)
+			(event.key !== IAB_STORAGE_KEYS.authority && event.key !== null)
 		) {
 			return;
 		}
@@ -1658,44 +1657,40 @@ export const createIAB = function createIAB(
 				withdrawn,
 				retainedCheck.restrictionsChanged
 			);
-			try {
-				cmpApi ??= createCMPApi({
-					cmpId,
-					cmpVersion,
-					gdprApplies: policyUsesIAB(kernel.getSnapshot()),
-					// The AC string confirmed with the published TC string.
-					getAddtlConsent: (tcString) => {
-						const authority = kernel.getSnapshot().iab?.authority;
-						return authority?.tcString === tcString
-							? authority.addtlConsent
-							: undefined;
-					},
-					gvl,
-				});
-				const current = kernel.getSnapshot();
-				if (existingApi && current === beforeUpdate) {
-					// Changed snapshots already publish through the kernel subscription.
-					existingApi.updateConsent(
-						readIAB(kernel).authority?.tcString ?? '',
-						undefined,
-						policyUsesIAB(current)
-					);
-				} else if (!existingApi && publishedTcString()) {
-					// A handle mounted on a kernel that already holds authority, such
-					// as a remount: the list's notification ran before this API
-					// existed, so it would otherwise report no consent at all.
-					cmpApi.updateConsent(
-						publishedTcString(),
-						undefined,
-						policyUsesIAB(current)
-					);
-				}
-				cmpApi.setDisplayStatus(cmpDisplayStatus(current));
-				if (mayHydrate) {
-					void restoreAuthority();
-				}
-			} catch {
-				// Kernel metadata remains available if installing the CMP API fails.
+			cmpApi ??= createCMPApi({
+				cmpId,
+				cmpVersion,
+				gdprApplies: policyUsesIAB(kernel.getSnapshot()),
+				// The AC string confirmed with the published TC string.
+				getAddtlConsent: (tcString) => {
+					const authority = kernel.getSnapshot().iab?.authority;
+					return authority?.tcString === tcString
+						? authority.addtlConsent
+						: undefined;
+				},
+				gvl,
+			});
+			const current = kernel.getSnapshot();
+			if (existingApi && current === beforeUpdate) {
+				// Changed snapshots already publish through the kernel subscription.
+				existingApi.updateConsent(
+					readIAB(kernel).authority?.tcString ?? '',
+					undefined,
+					policyUsesIAB(current)
+				);
+			} else if (!existingApi && publishedTcString()) {
+				// A handle mounted on a kernel that already holds authority, such
+				// as a remount: the list's notification ran before this API
+				// existed, so it would otherwise report no consent at all.
+				cmpApi.updateConsent(
+					publishedTcString(),
+					undefined,
+					policyUsesIAB(current)
+				);
+			}
+			cmpApi.setDisplayStatus(cmpDisplayStatus(current));
+			if (mayHydrate) {
+				void restoreAuthority();
 			}
 		} catch (error) {
 			if (generation === listGeneration) {
@@ -2328,7 +2323,12 @@ export const createIAB = function createIAB(
 	return handle;
 };
 
-export type { CMPApi, GlobalVendorList, NonIABVendor } from '@inth/sdk-core';
+export type {
+	CMPApi,
+	GlobalVendorList,
+	NonIABVendor,
+	PublisherRestriction,
+} from '@inth/sdk-core';
 export {
 	type HeadlessIABBannerAction,
 	type HeadlessIABBannerState,
@@ -2350,7 +2350,6 @@ export {
 	type ProcessedStack,
 	type ProcessedVendor,
 	processGVLForDialog,
-	resolveIABBannerSummary,
 } from './headless';
 /**
  * Convenience re-exports so consumers writing custom IAB flows don't

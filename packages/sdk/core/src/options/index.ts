@@ -21,6 +21,8 @@ export type {
 	PublisherRestriction,
 	TCData,
 	TCDataOutsideTCF,
+	TCFApi,
+	TCFApiCallback,
 	TCFConsentData,
 } from './iab-tcf';
 export type { LegalLink, LegalLinks } from './legal-links';

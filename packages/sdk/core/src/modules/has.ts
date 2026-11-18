@@ -3,6 +3,8 @@
  * receipts before installing authority; ordinary gates never load a codec.
  */
 
+import { CONSENT_ONLY_PURPOSES } from '@inth/sdk-schema/types';
+
 import type { AllConsentNames } from '../consent/consent-types';
 import { extractConsentNamesFromCondition, has } from '../libs/has';
 import type { HasCondition } from '../libs/has';
@@ -60,9 +62,6 @@ const registeredVendorId = function registeredVendorId(
 		: null;
 };
 
-/** Purposes TCF allows only with consent (policy version 4 and later). */
-const CONSENT_ONLY_PURPOSES = new Set([1, 3, 4, 5, 6]);
-
 interface LegalBases {
 	consent: number[];
 	legitimateInterest: number[];
@@ -108,7 +107,7 @@ const restrictLegalBases = function restrictLegalBases(
 			return null;
 		}
 		if (type === 2) {
-			if (!flexible(purposeId) || CONSENT_ONLY_PURPOSES.has(purposeId)) {
+			if (!flexible(purposeId) || CONSENT_ONLY_PURPOSES.includes(purposeId)) {
 				return null;
 			}
 			bases.legitimateInterest.push(purposeId);

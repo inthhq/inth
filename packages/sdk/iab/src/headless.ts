@@ -10,14 +10,14 @@
 export {
 	IAB_BANNER_MAX_DISPLAY_ITEMS,
 	resolveIABBannerSummary,
-} from './headless/banner-summary';
-export type { ResolveIABBannerSummaryOptions } from './headless/banner-summary';
+} from '@inth/sdk-core/iab-support';
+export type { ResolveIABBannerSummaryOptions } from '@inth/sdk-core/iab-support';
 export {
 	applyPublisherRestrictionsToGVL,
 	introducedLegitimateInterest,
 	type IntroducedLegitimateInterest,
-	permittedLegitimateInterestPurposes,
 } from './headless/effective-vendor-list';
+export { permittedLegitimateInterestPurposes } from '@inth/sdk-schema/types';
 export {
 	type HeadlessIABDialogDisplayModel,
 	type HeadlessIABDisplayConsentRow,

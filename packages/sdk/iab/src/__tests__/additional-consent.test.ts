@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { createConsentKernel } from '@inth/sdk-core';
-import type { ConsentKernel } from '@inth/sdk-core';
+import type { ConsentKernel, TCData } from '@inth/sdk-core';
 import {
 	AD_TECH_PROVIDER_FETCH_TIMEOUT_MS,
 	createPolicyRuleFingerprints,
@@ -17,7 +17,6 @@ import {
 	encodeAdditionalConsent,
 	fetchAdTechProviders,
 } from '../tcf/additional-consent';
-import type { TCData } from '../tcf/iab-tcf-types';
 import { completeGVL } from './fixtures/gvl-sample';
 
 describe('ACv2 string', () => {

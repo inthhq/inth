@@ -23,7 +23,6 @@ import type { Browser, Response } from 'playwright';
 
 import { getBuiltInScriptIntegrationByVendor } from '../src/registry';
 import { evaluateDeniedConsentProbe } from './denied-consent';
-import { forEachSequential } from './for-each-sequential';
 import {
 	captureBrowserLoaderBody,
 	captureStreamLoaderBody,
@@ -799,16 +798,15 @@ const main = async function main(): Promise<void> {
 	const results: LiveVendorResult[] = [];
 
 	try {
-		await forEachSequential(configs, {
-			run: async (config) => {
-				const result =
-					config.tier === 'skip'
-						? buildSkippedResult(config)
-						: await probeVendor(browser, baseUrl, config);
-				results.push(result);
-				console.log(summarizeResult(result));
-			},
-		});
+		for (const config of configs) {
+			const result =
+				config.tier === 'skip'
+					? buildSkippedResult(config)
+					: // oxlint-disable-next-line no-await-in-loop -- One browser page probes one vendor at a time.
+						await probeVendor(browser, baseUrl, config);
+			results.push(result);
+			console.log(summarizeResult(result));
+		}
 	} finally {
 		await browser.close();
 		server.stop(true);

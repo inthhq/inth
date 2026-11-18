@@ -6,6 +6,7 @@
 		"paths": {
 			"@inth/sdk-core": ["../core/dist-types/index.d.ts"],
 			"@inth/sdk-core/*": ["../core/dist-types/*"],
+			"@inth/sdk-schema/types": ["../schema/dist-types/types.d.ts"],
 			"~/*": ["./src/*"]
 		}
 	},

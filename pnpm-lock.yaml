@@ -4467,6 +4467,9 @@ importers:
       '@inth/sdk-core':
         specifier: workspace:*
         version: link:../core
+      '@inth/sdk-schema':
+        specifier: workspace:*
+        version: link:../schema
     devDependencies:
       '@inth/typescript-config':
         specifier: workspace:*
@@ -4480,9 +4483,6 @@ importers:
       '@vitest/coverage-istanbul':
         specifier: 4.1.10
         version: 4.1.10(supports-color@10.2.2)(vitest@4.1.10)
-      genversion:
-        specifier: 3.2.0
-        version: 3.2.0
       jsdom:
         specifier: ^25.0.0
         version: 25.0.1(supports-color@10.2.2)

@@ -1,7 +1,10 @@
 /** @vitest-environment jsdom */
+import type { PingData } from '@inth/sdk-core';
 import { afterEach, expect, test, vi } from 'vitest';
 
 import { createCMPApi } from '../tcf/cmp-api';
+import { CMP_VERSION_NUMBER } from '../tcf/cmp-defaults';
+import { destroyIABStub, initializeIABStub } from '../tcf/stub';
 import { generateTCString } from '../tcf/tc-string';
 import { completeGVL } from './fixtures/gvl-sample';
 
@@ -210,4 +213,27 @@ test('withholds a cached TC string when the policy stops using TCF', async () =>
 	const [data] = callback.mock.calls[0] ?? [];
 	expect(data.gdprApplies).toBe(false);
 	expect(data).not.toHaveProperty('tcString');
+});
+
+test('the stub and the loaded CMP answer ping with the same versions', () => {
+	const ping = (): PingData => {
+		let data: PingData | undefined;
+		window.__tcfapi?.('ping', 2, (result: PingData) => {
+			data = result;
+		});
+		if (!data) {
+			throw new Error('no ping');
+		}
+		return data;
+	};
+	initializeIABStub();
+	disposers.push(destroyIABStub);
+	const beforeLoad = ping();
+	const api = createCMPApi({ cmpId: 28, gvl: completeGVL });
+	disposers.push(api.destroy);
+	const afterLoad = ping();
+	expect(afterLoad.cmpStatus).not.toBe('stub');
+	expect(beforeLoad.cmpVersion).toBe(String(CMP_VERSION_NUMBER));
+	expect(afterLoad.cmpVersion).toBe(beforeLoad.cmpVersion);
+	expect(afterLoad.apiVersion).toBe(beforeLoad.apiVersion);
 });

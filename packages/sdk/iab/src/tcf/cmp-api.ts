@@ -6,22 +6,23 @@
  * @packageDocumentation
  */
 
-import type { CMPApi, CMPApiConfig, GlobalVendorList } from '@inth/sdk-core';
-
-import { forEachSequential } from '../for-each-sequential';
-import { CMP_VERSION_NUMBER } from './cmp-defaults';
-import { assertValidCmpId } from './cmp-id';
-import { IAB_STORAGE_KEYS } from './constants';
 import type {
+	CMPApi,
+	CMPApiConfig,
 	CMPStatus,
 	DisplayStatus,
 	EventStatus,
+	GlobalVendorList,
 	PingData,
 	TCData,
 	TCDataOutsideTCF,
 	TCFApiCallback,
 	TCFConsentData,
-} from './iab-tcf-types';
+} from '@inth/sdk-core';
+import { IAB_STORAGE_KEYS } from '@inth/sdk-schema/types';
+
+import { CMP_VERSION_NUMBER, createPingData } from './cmp-defaults';
+import { assertValidCmpId } from './cmp-id';
 import { toTCDataRestrictions } from './publisher-restrictions';
 import { clearStubQueue, getStubQueue } from './stub';
 import { decodeTCString, getDisclosedVendorIds } from './tc-string';
@@ -76,18 +77,18 @@ export const clearStoredTCString = function clearStoredTCString(
 	try {
 		if (
 			typeof document !== 'undefined' &&
-			getCookie(IAB_STORAGE_KEYS.TC_STRING_COOKIE) === tcString
+			getCookie(IAB_STORAGE_KEYS.tcString) === tcString
 		) {
-			document.cookie = `${IAB_STORAGE_KEYS.TC_STRING_COOKIE}=; max-age=0; path=/; SameSite=Lax`;
-			document.cookie = `${IAB_STORAGE_KEYS.AC_STRING_COOKIE}=; max-age=0; path=/; SameSite=Lax`;
+			document.cookie = `${IAB_STORAGE_KEYS.tcString}=; max-age=0; path=/; SameSite=Lax`;
+			document.cookie = `${IAB_STORAGE_KEYS.additionalConsent}=; max-age=0; path=/; SameSite=Lax`;
 		}
 	} catch {
 		// The cookie value can be malformed.
 	}
 	try {
-		if (localStorage.getItem(IAB_STORAGE_KEYS.TC_STRING_LOCAL) === tcString) {
-			localStorage.removeItem(IAB_STORAGE_KEYS.TC_STRING_LOCAL);
-			localStorage.removeItem(IAB_STORAGE_KEYS.AC_STRING_LOCAL);
+		if (localStorage.getItem(IAB_STORAGE_KEYS.tcString) === tcString) {
+			localStorage.removeItem(IAB_STORAGE_KEYS.tcString);
+			localStorage.removeItem(IAB_STORAGE_KEYS.additionalConsent);
 		}
 	} catch {
 		// Storage can be unavailable.
@@ -113,12 +114,12 @@ export const syncStoredAdditionalConsent = function syncStoredAdditionalConsent(
 	try {
 		if (
 			typeof document !== 'undefined' &&
-			getCookie(IAB_STORAGE_KEYS.TC_STRING_COOKIE) === tcString &&
-			(getCookie(IAB_STORAGE_KEYS.AC_STRING_COOKIE) ?? undefined) !==
+			getCookie(IAB_STORAGE_KEYS.tcString) === tcString &&
+			(getCookie(IAB_STORAGE_KEYS.additionalConsent) ?? undefined) !==
 				addtlConsent
 		) {
 			setCookie(
-				IAB_STORAGE_KEYS.AC_STRING_COOKIE,
+				IAB_STORAGE_KEYS.additionalConsent,
 				addtlConsent ?? '',
 				addtlConsent ? 395 : 0
 			);
@@ -128,14 +129,14 @@ export const syncStoredAdditionalConsent = function syncStoredAdditionalConsent(
 	}
 	try {
 		if (
-			localStorage.getItem(IAB_STORAGE_KEYS.TC_STRING_LOCAL) === tcString &&
-			(localStorage.getItem(IAB_STORAGE_KEYS.AC_STRING_LOCAL) ?? undefined) !==
-				addtlConsent
+			localStorage.getItem(IAB_STORAGE_KEYS.tcString) === tcString &&
+			(localStorage.getItem(IAB_STORAGE_KEYS.additionalConsent) ??
+				undefined) !== addtlConsent
 		) {
 			if (addtlConsent) {
-				localStorage.setItem(IAB_STORAGE_KEYS.AC_STRING_LOCAL, addtlConsent);
+				localStorage.setItem(IAB_STORAGE_KEYS.additionalConsent, addtlConsent);
 			} else {
-				localStorage.removeItem(IAB_STORAGE_KEYS.AC_STRING_LOCAL);
+				localStorage.removeItem(IAB_STORAGE_KEYS.additionalConsent);
 			}
 		}
 	} catch {
@@ -417,20 +418,18 @@ export const createCMPApi = function createCMPApi(
 	const handlePing = function handlePing(
 		handler: TCFApiCallback<PingData>
 	): void {
-		const pingData: PingData = {
-			apiVersion: '2.3',
-			cmpId,
-			cmpLoaded: cmpStatus === 'loaded',
-			cmpStatus,
-			cmpVersion:
-				typeof cmpVersion === 'string' ? cmpVersion : String(cmpVersion),
-			displayStatus,
-			gdprApplies: tcfApplies,
-			gvlVersion: gvl.vendorListVersion,
-			tcfPolicyVersion: gvl.tcfPolicyVersion,
-		};
-
-		handler(pingData, true);
+		handler(
+			createPingData({
+				cmpId,
+				cmpStatus,
+				cmpVersion,
+				displayStatus,
+				gdprApplies: tcfApplies,
+				gvlVersion: gvl.vendorListVersion,
+				tcfPolicyVersion: gvl.tcfPolicyVersion,
+			}),
+			true
+		);
 	};
 
 	/**
@@ -516,10 +515,10 @@ export const createCMPApi = function createCMPApi(
 	const notifyEventListeners = async function notifyEventListeners(
 		eventStatus: EventStatus | undefined
 	): Promise<void> {
-		await forEachSequential(eventListeners, {
-			run: ([listenerId, listener]) =>
-				sendCurrentTCData(listener, () => eventStatus, listenerId),
-		});
+		for (const [listenerId, listener] of eventListeners) {
+			// oxlint-disable-next-line no-await-in-loop -- Listeners hear each change in registration order.
+			await sendCurrentTCData(listener, () => eventStatus, listenerId);
+		}
 	};
 
 	const initializeAPI = function initializeAPI(): void {
@@ -603,7 +602,7 @@ export const createCMPApi = function createCMPApi(
 
 		loadFromStorage: (): string | null => {
 			// Try cookie first (per TCF spec)
-			const cookieValue = getCookie(IAB_STORAGE_KEYS.TC_STRING_COOKIE);
+			const cookieValue = getCookie(IAB_STORAGE_KEYS.tcString);
 			if (cookieValue) {
 				tcString = cookieValue;
 				addtlConsent = addtlConsentFor(cookieValue);
@@ -616,9 +615,7 @@ export const createCMPApi = function createCMPApi(
 			// Fallback to localStorage
 			if (typeof localStorage !== 'undefined') {
 				try {
-					const localValue = localStorage.getItem(
-						IAB_STORAGE_KEYS.TC_STRING_LOCAL
-					);
+					const localValue = localStorage.getItem(IAB_STORAGE_KEYS.tcString);
 					if (localValue) {
 						tcString = localValue;
 						addtlConsent = addtlConsentFor(localValue);
@@ -638,23 +635,26 @@ export const createCMPApi = function createCMPApi(
 		saveToStorage: (newTcString: string) => {
 			const additional = addtlConsentFor(newTcString);
 			// Save to cookie (per TCF spec, 13 month expiry)
-			setCookie(IAB_STORAGE_KEYS.TC_STRING_COOKIE, newTcString, 395);
+			setCookie(IAB_STORAGE_KEYS.tcString, newTcString, 395);
 			// The AC string is stored beside its TC string, or removed so an
 			// older one is never read with the new TC string.
 			if (additional) {
-				setCookie(IAB_STORAGE_KEYS.AC_STRING_COOKIE, additional, 395);
+				setCookie(IAB_STORAGE_KEYS.additionalConsent, additional, 395);
 			} else {
-				setCookie(IAB_STORAGE_KEYS.AC_STRING_COOKIE, '', 0);
+				setCookie(IAB_STORAGE_KEYS.additionalConsent, '', 0);
 			}
 
 			// Also save to localStorage as backup
 			if (typeof localStorage !== 'undefined') {
 				try {
-					localStorage.setItem(IAB_STORAGE_KEYS.TC_STRING_LOCAL, newTcString);
+					localStorage.setItem(IAB_STORAGE_KEYS.tcString, newTcString);
 					if (additional) {
-						localStorage.setItem(IAB_STORAGE_KEYS.AC_STRING_LOCAL, additional);
+						localStorage.setItem(
+							IAB_STORAGE_KEYS.additionalConsent,
+							additional
+						);
 					} else {
-						localStorage.removeItem(IAB_STORAGE_KEYS.AC_STRING_LOCAL);
+						localStorage.removeItem(IAB_STORAGE_KEYS.additionalConsent);
 					}
 				} catch {
 					// Storage full or disabled

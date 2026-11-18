@@ -6,7 +6,7 @@
  * @packageDocumentation
  */
 
-import type { GlobalVendorList } from '../../tcf/iab-tcf-types';
+import type { GlobalVendorList } from '@inth/sdk-core';
 
 /**
  * A minimal GVL for fast tests.

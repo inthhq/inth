@@ -4,9 +4,8 @@ import type {
 	ConsentState,
 	HydrationRecords,
 } from '@inth/sdk-core';
-
-import { resolvePolicyRules } from '../../../../schema/src/types';
-import type { PolicyRule } from '../../../../schema/src/types';
+import { resolvePolicyRules } from '@inth/sdk-schema/types';
+import type { PolicyRule } from '@inth/sdk-schema/types';
 
 export const choiceRecords = (
 	values: Partial<ConsentState>,
