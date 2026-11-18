@@ -1,15 +1,5 @@
 /**
  * @vitest-environment jsdom
- *
- * Tests for @inth/sdk/modules/persistence.
- *
- * Covers:
- * - Hydration from cookie / localStorage through the kernel boundary
- * - Writing only on explicit kernel events (choice, notice, vendors)
- * - skipHydration option
- * - clear() removes every record and resets the kernel, keeping the
- *   subject ID
- * - dispose stops further writes
  */
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 

@@ -8,7 +8,6 @@ const MANIFEST_PATH = '/manifest';
  * file on a CDN, names no backend.
  *
  * @param manifestUrl - Absolute or relative `http(s)` manifest URL.
- * @returns The backend URL, or `undefined`.
  * @internal
  */
 export const projectUrlOfManifest = function projectUrlOfManifest(

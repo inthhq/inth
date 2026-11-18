@@ -6,7 +6,7 @@
  * the epoch too. A decision confirmed before the epoch was made before the
  * clear, so it is void wherever it turns up: in a record another runtime
  * that missed the clear writes back, in the memory of such a runtime, or
- * in a record an older version of Inth stored. Epoch `0` means no clear
+ * in a record an older version of c15t stored. Epoch `0` means no clear
  * was ever recorded, which is how every legacy, v2 and pre-epoch record
  * reads.
  *
@@ -42,10 +42,8 @@ import type { VendorChoice } from '../../types';
  * clear. Anywhere else (a runtime that missed the clear, a record from an
  * older writer) it may predate the clear, so it is void.
  *
- * @param choice - The choice to filter.
  * @param epoch - The clear epoch in force; `0` voids nothing.
  * @param knowsClear - Whether the choice's writer had seen this clear.
- * @returns The surviving choice, or `null`.
  */
 export const choiceSinceEpoch = function choiceSinceEpoch(
 	choice: ExplicitChoice | null,

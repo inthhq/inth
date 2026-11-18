@@ -60,7 +60,6 @@ export type ConsentInputHeaderTarget =
  * unset are left out.
  *
  * @param target - A `Headers` object or a plain header record.
- * @param inputs - The resolved inputs.
  * @returns The target.
  * @throws {TypeError} When `target` is an immutable `Headers` object.
  */

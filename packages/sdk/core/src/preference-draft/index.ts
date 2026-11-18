@@ -295,7 +295,6 @@ const prune = function prune<KeyType extends string>(
  *
  * @param kernel - The kernel to read the record from and save into.
  * @param options - Presentation defaults.
- * @returns The draft.
  * @example
  * ```ts
  * import { createPreferenceDraft } from '@inth/sdk-core/preference-draft';

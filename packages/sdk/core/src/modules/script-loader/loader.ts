@@ -47,9 +47,6 @@ const validateScripts = (scripts: Script[]): void => {
 /**
  * Create a script loader from the tools it calls.
  *
- * @param options - The kernel and the scripts.
- * @param tools - The shared consent and vendor functions.
- * @returns The loader handle.
  * @internal
  */
 export const createScriptLoaderWith = function createScriptLoaderWith(

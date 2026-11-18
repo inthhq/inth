@@ -217,7 +217,6 @@ export const encodeStoredConsentEnvelopeCompact =
 // Notice dismissal
 // ---------------------------------------------------------------------------
 
-/** Serializes a notice dismissal for localStorage. */
 export const encodeNoticeDismissal = function encodeNoticeDismissal(
 	record: StoredNoticeDismissal
 ): string {
@@ -259,7 +258,6 @@ export const encodeNoticeSubjectCompact = function encodeNoticeSubjectCompact(
 // Vendor denial list
 // ---------------------------------------------------------------------------
 
-/** Serializes the vendor denial list for localStorage. */
 export const encodeVendorChoice = function encodeVendorChoice(
 	record: StoredVendorChoice
 ): string {

@@ -70,8 +70,6 @@ const locationFreeOutcomes = new WeakMap<
  * the same experience; `null` when any two differ or any location fails
  * to match. Computed once per manifest object.
  *
- * @param manifest - The manifest.
- * @returns The shared resolution, or `null`.
  * @internal
  */
 export const locationFreeOutcome = function locationFreeOutcome(
@@ -119,7 +117,6 @@ export const locationFreeOutcome = function locationFreeOutcome(
  * else: only the policy id differs. A manifest where some location gets a
  * different banner, or none, or matches no pack, needs a location.
  *
- * @param manifest - The manifest.
  * @returns `true` when a country is required for a faithful answer.
  */
 export const manifestNeedsLocation = function manifestNeedsLocation(

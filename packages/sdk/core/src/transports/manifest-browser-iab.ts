@@ -19,7 +19,6 @@ import { fetchCachedGvl } from './gvl-cache';
  *
  * @param output - The init output, changed in place.
  * @param manifest - The manifest it resolved from.
- * @param fetchImpl - Fetch implementation for the vendor list request.
  * @internal
  */
 export const attachVendorList = async function attachVendorList(

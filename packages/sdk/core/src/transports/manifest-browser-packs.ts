@@ -47,7 +47,6 @@ export const experienceKey = function experienceKey({
  * same experience and a default pack catches unlisted countries. `false`
  * means some location certainly gets another banner, or none.
  *
- * @param manifest - The manifest.
  * @returns Whether the exact check in the resolver chunk is worth loading.
  * @internal
  */

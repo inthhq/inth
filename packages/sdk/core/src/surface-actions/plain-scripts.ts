@@ -64,7 +64,6 @@ const allows = function allows(
  * effective permissions. Vendor and IAB checks are left to the loader;
  * a deferred page never stands in for an IAB visitor.
  *
- * @param script - A script passed to the loader.
  * @param snapshot - The snapshot the page reads.
  * @returns `true` when waiting for the engine would hold the script back.
  * @internal
@@ -130,7 +129,6 @@ export const LOADER_FIELDS = [
  * Callbacks, vendor and IAB checks, inline code and setup stay with the
  * loader.
  *
- * @param script - A script passed to the loader.
  * @returns `true` for a plain external script.
  * @internal
  */
@@ -151,7 +149,6 @@ export const isPlainScript = function isPlainScript(script: Script): boolean {
  * Integrations use that call to switch a shared SDK off, so only the
  * engine can serve such a script, whether it may run or not.
  *
- * @param script - A script passed to the loader.
  * @returns `true` when the script observes consent before it loads.
  * @internal
  */
@@ -455,8 +452,6 @@ export const claimPlainScripts = function claimPlainScripts(
  * there, since a function's identity holds only in the process that made
  * it, and another request or server worker makes its own.
  *
- * @param script - A script the server starts.
- * @returns Its declaration.
  * @internal
  */
 export const portableDeclaration = (script: Script): string =>
@@ -466,7 +461,6 @@ export const portableDeclaration = (script: Script): string =>
  * An owner's declarations by resource key, to compare later with
  * {@link obsoletePlainScripts}.
  *
- * @param scripts - The scripts the owner passes.
  * @returns Each key's declaration.
  * @internal
  */
@@ -505,7 +499,6 @@ export const obsoletePlainScripts = function obsoletePlainScripts(
  *
  * @param scripts - The scripts the owner passes now.
  * @param owned - The keys it holds, with their declarations.
- * @returns The changed keys.
  * @internal
  */
 export const changedPlainScripts = function changedPlainScripts(

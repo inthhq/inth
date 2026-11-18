@@ -110,8 +110,6 @@ const resolveWithLanguage = async function resolveWithLanguage(
  * Resolve init in the browser: the policy, the visitor's language and, for
  * an IAB policy, the vendor list.
  *
- * @param manifest - The manifest.
- * @param inputs - The visitor's decision inputs.
  * @param fetchImpl - Fetch implementation for the vendor list.
  * @returns The init response the kernel applies.
  * @internal
@@ -140,7 +138,6 @@ export const resolveLocally = async function resolveLocally(
  * Whether every location gets the same banner from this manifest, so the
  * browser can answer for a visitor whose location it doesn't know.
  *
- * @param manifest - The manifest.
  * @returns `true` when the location changes nothing the visitor sees.
  * @internal
  */

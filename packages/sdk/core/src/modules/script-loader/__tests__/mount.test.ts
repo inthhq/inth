@@ -294,9 +294,7 @@ describe('mountScript', () => {
 		};
 		mountScript(deps, script, snap, true, batch);
 		expect(batch).toHaveLength(1);
-		// DOM not touched yet.
 		expect(document.head.querySelector('script')).toBeNull();
-		// Not registered until flush.
 		expect(deps.loadedElements.has('s')).toBe(false);
 	});
 
@@ -828,9 +826,7 @@ describe('unmountScript', () => {
 		mountScript(deps, script, snap, true, null);
 		expect(document.head.querySelector('script')).not.toBeNull();
 		unmountScript(deps, script, snap, false);
-		// DOM stays.
 		expect(document.head.querySelector('script')).not.toBeNull();
-		// Registry reference is gone.
 		expect(deps.loadedElements.has('s')).toBe(false);
 	});
 

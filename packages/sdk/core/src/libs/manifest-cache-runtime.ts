@@ -52,7 +52,6 @@ export interface CachedManifestResponse {
  * time it has spent in this cache. Forward it as `Age` so a downstream CDN
  * counts the remaining lifetime instead of restarting the TTL.
  *
- * @param entry - A cached manifest response.
  * @param now - Current time in epoch milliseconds. Defaults to `Date.now()`.
  * @returns The age in whole seconds.
  */
@@ -100,7 +99,6 @@ const DEFAULT_MAX_ENTRIES = 128;
  * a manifest read on every request stays put while keys minted once (a
  * `?language=` a visitor made up) age out.
  *
- * @param options - Size bound.
  * @returns A cache instance for {@link fetchCachedManifest}.
  */
 export const createManifestCache = function createManifestCache(
@@ -450,7 +448,6 @@ const normalizeHeaders = function normalizeHeaders(
 /**
  * Reads the `s-maxage` directive from a `Cache-Control` header.
  *
- * @param cacheControl - The header value, if any.
  * @returns The directive in seconds, or `0` when absent or invalid.
  */
 export const getManifestSMaxAge = function getManifestSMaxAge(
@@ -462,7 +459,6 @@ export const getManifestSMaxAge = function getManifestSMaxAge(
 /**
  * Reads the `stale-while-revalidate` directive from a `Cache-Control` header.
  *
- * @param cacheControl - The header value, if any.
  * @returns The directive in seconds, or `0` when absent or invalid.
  */
 export const getManifestStaleWhileRevalidate =
@@ -565,8 +561,6 @@ export interface ManifestSourceOptions {
 /**
  * Resolves the upstream manifest URL from adapter configuration.
  *
- * @param options - Backend or explicit manifest URL.
- * @returns The URL to fetch the manifest from.
  * @throws {Error} When neither `manifestUrl` nor `projectUrl` is set.
  */
 export const resolveManifestSourceUrl = function resolveManifestSourceUrl(
@@ -1064,7 +1058,6 @@ const waitForFill = function waitForFill(
  * rejects with a {@link ManifestUnavailableError} (`reason: 'timeout'`) once
  * `timeoutMs` has passed. The task itself is not cancelled.
  *
- * @param task - The resolution to bound.
  * @param timeoutMs - Budget in milliseconds. `undefined` or a non-finite
  * value returns the task unchanged.
  * @returns The task's result, if it settles in time.
@@ -1118,7 +1111,6 @@ export const withResolutionBudget = function withResolutionBudget<Value>(
  * in between reject at once. With `timeoutMs`, a call stops waiting for the
  * upstream after that long and the request finishes in the background.
  *
- * @param options - Source URL, fetch, query, clock, budget, and cache overrides.
  * @returns The cached or freshly fetched manifest with its upstream headers.
  * @throws {ManifestUnavailableError} When `timeoutMs` runs out, or the key is
  * inside its retry floor after a failure.

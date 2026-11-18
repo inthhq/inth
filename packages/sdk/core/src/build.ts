@@ -64,7 +64,6 @@ const resolveBuildManifestUrl = (
  * Loads a snapshot from an absolute upstream URL during framework setup.
  * @param options - Manifest URL, or backend URL whose `/manifest` is read.
  * @param label - Framework name for errors.
- * @returns The deployment's manifest.
  * @throws {Error} When the source is relative, missing or cannot be fetched.
  * @internal
  */
@@ -278,7 +277,6 @@ const isBuildErrorMode = (value: unknown): value is ManifestBuildErrorMode =>
  * Decides what a failed manifest fetch does. `INTH_ON_BUILD_ERROR` wins over
  * `onBuildError`. Without either, the build and dev fall back to runtime
  * fetching with a warning.
- * @param onBuildError - The configured option, if any.
  * @param label - Framework name for errors.
  * @param source - Where to read the variable besides the process
  * environment.
@@ -320,9 +318,7 @@ export interface ManifestBuildLogger {
 /**
  * Prefixes every message with the framework label, for loggers that do not
  * add one themselves.
- * @param label - Framework name.
  * @param logger - Where messages go. Defaults to the console.
- * @returns The labelled logger.
  * @internal
  */
 export const labelledBuildLogger = (
@@ -345,7 +341,6 @@ export interface ManifestBuildPolicy {
 	label: string;
 	/** Receives skip notices and warnings, without the label. */
 	logger: ManifestBuildLogger;
-	/** The configured `onBuildError`. */
 	onBuildError?: unknown;
 	/**
 	 * Why the framework cannot use a snapshot, such as a static export. The
@@ -657,10 +652,8 @@ export const MANIFEST_CACHE_DIR = 'node_modules/.cache/inth';
  * imports `server-only`, so a bundler that knows the marker (Next.js) fails
  * the build when client code imports it. With `clientStub`, `snapshot` is
  * `undefined` whatever the build fetched.
- * @param module - Backend URL and snapshot.
  * @param options - Whether to leave the snapshot out, and whether to add
  * the `server-only` import.
- * @returns JavaScript source.
  * @internal
  */
 export const renderGeneratedModule = (
@@ -676,7 +669,7 @@ export const renderGeneratedModule = (
 			'// The build has no snapshot, so the policy is read at runtime.\nexport const snapshot = undefined;';
 	}
 	return [
-		'// Written by the inth build integration. Do not edit.',
+		'// Written by the Inth build integration. Do not edit.',
 		...(options.serverOnly ? ["import 'server-only';"] : []),
 		`export const projectUrl = ${JSON.stringify(module.projectUrl) ?? 'undefined'};`,
 		snapshot,
@@ -743,7 +736,6 @@ export interface ManifestCacheFiles {
  * `'fail'` mode leaves the files untouched. An unchanged file is not
  * rewritten.
  *
- * @param options - Backend URL and `onBuildError`.
  * @param defaults - Framework label, type import, app root, command,
  * backend URL variables, and why the framework cannot use a snapshot.
  * @param logger - Receives skip notices and warnings, without the label.
@@ -885,12 +877,12 @@ const INTH_MODULE = /[\\/]node_modules[\\/]@inth[\\/](?!cli[\\/])/u;
 
 /**
  * Puts the Inth modules a page's entry imports statically into one chunk.
- * Rolldown otherwise splits the modules a page shares with inth's lazy
+ * Rolldown otherwise splits the modules a page shares with Inth's lazy
  * chunks into many small ones, and each costs a request: on a slow mobile
  * connection with a warm cache, a revalidation round trip apiece before the
  * page renders. Only modules Inth ships; their dependencies (React) stay
  * where Rolldown puts them, so a page without Inth loads none of it. One
- * chunk for every entry (`entriesAware` would count inth's lazy chunks as
+ * chunk for every entry (`entriesAware` would count Inth's lazy chunks as
  * entries and split it again): an app with several entries that use
  * different parts of Inth loads all of them on each.
  */
@@ -1140,13 +1132,11 @@ const dropConsentChunkGroup = function dropConsentChunkGroup(
  * `projectUrl` is public and reaches every environment.
  *
  * The plugin keeps the virtual module out of dependency pre-bundling and
- * bundles the Inth packages in server builds, so a Inth package can import
+ * bundles the Inth packages in server builds, so an Inth package can import
  * `@inth/sdk/generated` as app code does.
  *
- * @param options - Backend URL and `onBuildError`.
  * @param defaults - Framework label, backend URL variables, and whether the
  * framework renders on the server (a function receives the resolved config).
- * @returns The Vite plugin.
  * @internal
  */
 export const createConsentManifestPlugin = (
@@ -1479,7 +1469,7 @@ export const createConsentManifestPlugin = (
 					"// source: 'runtime': the app reads the manifest at runtime.\nexport const snapshot = undefined;";
 			}
 			const lines = [
-				'// Written by the inth build integration. Do not edit.',
+				'// Written by the Inth build integration. Do not edit.',
 				'// The build fills in what the bundle still reads after tree-shaking.',
 				`export const projectUrl = ${
 					projectUrl === undefined

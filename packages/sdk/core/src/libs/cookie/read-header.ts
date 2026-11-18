@@ -6,7 +6,6 @@
  * `document.cookie` string.
  *
  * @param cookieHeader - Raw `Cookie` header value, or `document.cookie`.
- * @param name - Cookie name to find
  * @returns The raw value exactly as stored, or `undefined` when the cookie
  * is absent. No decoding or parsing happens here.
  *

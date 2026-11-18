@@ -53,8 +53,6 @@ export interface Callbacks {
 	onSurfaceShown?: Callback<OnSurfaceShownPayload>;
 	/**
 	 * Called when an error occurs.
-	 *
-	 * @param payload - The payload containing the error information
 	 */
 	onError?: Callback<OnErrorPayload>;
 

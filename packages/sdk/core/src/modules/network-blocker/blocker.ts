@@ -9,17 +9,6 @@
  * first-load graph has, so it can load on demand as one chunk. `index.ts`
  * is the public entry and passes the shared implementations.
  *
- * Concerns are split across siblings:
- * - `types.ts`         — public + internal type definitions.
- * - `url.ts`           — pure URL / method matching helpers.
- * - `decide.ts`        — pure per-request block evaluation.
- * - `patch-fetch.ts`   — `window.fetch` install + uninstall.
- * - `patch-xhr.ts`     — XHR prototype install + uninstall.
- * - `blocker.ts`       — this file: wiring + lifecycle.
- * - `index.ts`         — the public entry.
- *
- * v2 parity: `packages/sdk/core/src/libs/network-blocker/{core,store,types}.ts`.
- *
  * Invariants:
  * - Idempotent init: safe to call twice; the second instance shares the
  *   teardown lock with the first.
@@ -55,9 +44,6 @@ import type {
 /**
  * Create a network blocker from the tools it calls.
  *
- * @param options - The kernel, rules and hold.
- * @param tools - The shared consent, vendor and hold functions.
- * @returns The blocker handle.
  * @internal
  */
 export const createNetworkBlockerWith = function createNetworkBlockerWith(

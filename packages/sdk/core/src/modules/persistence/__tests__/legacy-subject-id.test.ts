@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  * @vitest-environment-options {"url":"https://a.app.example.com/pricing"}
  *
- * Inth 3.2 stored the subject ID in `<key>-sid` before any choice, under
+ * c15t 3.2 stored the subject ID in `<key>-sid` before any choice, under
  * whichever cookie scope its server adapter or browser runtime used. Startup
  * and `clear()` remove every copy, whatever the current configuration. A
  * visitor whose stored records carry no ID keeps the one 3.2 gave them.

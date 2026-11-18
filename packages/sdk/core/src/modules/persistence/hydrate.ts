@@ -215,7 +215,6 @@ const hasUndecodableChoice = function hasUndecodableChoice(
 	);
 };
 
-/** Which records could not be read. */
 interface Unreadable {
 	choice: boolean;
 	notice: boolean;
@@ -319,7 +318,6 @@ export const readStoredRecordsForReconcile =
 		return readRecords(storageConfig, now, true);
 	};
 
-/** Every cookie-carried record from a `Cookie` header, composed. */
 const composeFromCookieHeader = function composeFromCookieHeader(
 	cookieHeader: string | undefined,
 	storageConfig: StorageConfig | undefined,

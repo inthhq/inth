@@ -48,11 +48,8 @@ import {
 } from './write';
 
 /**
- * Create the write half of one persistence handle.
- *
- * @param context - The handle's kernel, storage, clock and event state.
- * @param tools - First-load functions the writer calls.
- * @returns The writer. It writes nothing until asked.
+ * Create the write half of one persistence handle. It writes nothing until
+ * asked.
  */
 export const createPersistenceWriter = function createPersistenceWriter(
 	{ kernel, now, state, storageConfig }: PersistenceContext,

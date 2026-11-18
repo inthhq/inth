@@ -138,7 +138,6 @@ export interface ConsentRequestFacts {
 	 * its origin. Without it, the `host` header decides.
 	 */
 	url?: string | URL;
-	/** The request headers. */
 	headers?: RequestHeaderSource;
 	/**
 	 * The `Cookie` header, when the framework reads cookies apart from the
@@ -400,7 +399,6 @@ const readInputs = function readInputs(
  * from the consent cookie, and geo, language and GPC from the headers, with
  * no network work. A shared render reads none of it.
  *
- * @param options - The request facts, overrides, storage key and clock.
  * @returns The request-only state and the inputs it was derived from.
  * @example
  * ```ts
@@ -477,8 +475,6 @@ const resolveMode = function resolveMode(
  * The consent journey a render starts, or `undefined` for none. See
  * {@link ResolveRequestConsentOptions.journey}.
  *
- * @param options - The resolution options.
- * @param mode - How the policy is resolved.
  * @param base - The request-only state, for the stored choice.
  * @param read - The request facts, read only when a journey may start.
  * @returns The journey, with the site's hostname when known; `null` when
@@ -577,7 +573,6 @@ interface Target {
  * app's own consent routes, a failed or slow upstream all return the
  * request-only state, and `onError` hears about it.
  *
- * @param options - The request facts and how to resolve the policy.
  * @returns The JSON-serializable state the client hydrates from.
  * @example
  * ```ts

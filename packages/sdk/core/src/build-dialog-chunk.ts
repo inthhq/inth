@@ -41,10 +41,10 @@ const ENGINE_BANNER =
 	/[\\/](?:@inth|packages(?:[\\/]sdk)?)[\\/](?:react[\\/]dist[\\/]components[\\/]prompt[\\/]index\.js|vue[\\/]dist[\\/]runtime[\\/]components[\\/]prompt\.vue)$/u;
 
 /**
- * inth's chunks that load only when a visitor asks for them: the standalone
+ * Inth's chunks that load only when a visitor asks for them: the standalone
  * preference widget, the IAB preference center, the deferred dialog's
  * wrapper and the save path outside a preference surface. They may import
- * the dialog's files and decide nothing. Any other chunk outside inth's
+ * the dialog's files and decide nothing. Any other chunk outside Inth's
  * loaders counts as loaded with the page.
  */
 const ON_DEMAND =
@@ -292,7 +292,7 @@ const resolveSpecifier = function resolveSpecifier(
 	if (inPackage.length <= 1) {
 		return inPackage[0];
 	}
-	// Several files of one package: inth's packages publish `dist/<subpath>`
+	// Several files of one package: Inth's packages publish `dist/<subpath>`
 	// for `<name>/<subpath>`, and `dist/index` for the package itself.
 	const subpath = specifier.slice(name.length + 1);
 	const files =
@@ -462,7 +462,7 @@ const hashOf = function hashOf(text: string): string {
 	return hash.toString(36);
 };
 
-/** Who loads a module: the page, or one of inth's on-demand loaders. */
+/** Who loads a module: the page, or one of Inth's on-demand loaders. */
 type Loader = 'page' | 'dialog' | 'engine' | 'tap';
 
 /** The on-demand loaders a group may serve, in group-name order. */
@@ -510,7 +510,6 @@ const GROUP_NAMES: Record<string, string> = {
  * dependency of the dialog, the first load's included, into the group, and
  * the page's entry would import the dialog's chunk.
  *
- * @returns The group.
  * @internal
  */
 export const createDialogChunkGroup =
@@ -725,8 +724,6 @@ export interface DialogChunkPlugin {
  * `advancedChunks` or turn code splitting off are left alone; groups the app
  * sets in `codeSplitting` come first.
  *
- * @param environment - The Vite environment that builds for the browser.
- * @returns The Vite plugin.
  * @internal
  */
 export const createDialogChunkPlugin = function createDialogChunkPlugin(

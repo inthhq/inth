@@ -148,9 +148,6 @@ const warnSaveFailed = function warnSaveFailed(
 	}
 };
 
-/**
- * Create the save outbox of one kernel.
- */
 export const createSaveOutbox = function createSaveOutbox({
 	runtime,
 	transport,

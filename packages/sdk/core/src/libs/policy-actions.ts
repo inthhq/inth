@@ -284,7 +284,6 @@ const resolveBlocking = (
 	return blocking;
 };
 
-/** Whether a position is valid for a variant. */
 const isValidPromptPosition = function isValidPromptPosition(
 	variant: PromptVariant,
 	position: PromptPosition

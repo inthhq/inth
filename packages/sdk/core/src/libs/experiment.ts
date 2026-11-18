@@ -123,7 +123,6 @@ export interface ConsentExperiment<Arm extends string = string> {
  * or `split` key is a type error. Returns its argument.
  *
  * @typeParam Arm - The arm names, inferred from `arms`.
- * @param experiment - The experiment definition.
  * @returns `experiment`, unchanged.
  *
  * @example
@@ -228,9 +227,6 @@ export const hostExperiment = function hostExperiment(
 /**
  * The `{ id, arm }` a server sends with `/init`: the arm alone, never the
  * presentation each arm carries.
- *
- * @param experiment - The experiment the server resolved.
- * @returns The id and arm.
  */
 export const experimentArmRef = function experimentArmRef(
 	experiment: ServerExperiment
@@ -284,7 +280,6 @@ export type ExperimentGate = (snapshot: ConsentSnapshot) => boolean;
  * an `arms` entry named `control`, an undeclared `arm`, or a `split` that
  * names an unknown arm or gives no arm a positive weight.
  *
- * @param experiment - The experiment definition.
  * @returns A message naming the problem, or `null`.
  */
 export const experimentConfigError = function experimentConfigError(
@@ -397,7 +392,6 @@ const knownArm = function knownArm(
  * {@link pickExperimentArm}. Recorded for the runtime, which runs the same
  * arm. The inline prefetch script does the same.
  *
- * @param experiment - The experiment definition.
  * @returns The arm, or `undefined` for an invalid definition or outside a
  * browser.
  * @internal
@@ -503,7 +497,6 @@ export interface StartExperimentOptions {
  * A failed load runs no experiment and still releases the prompt, so a
  * visitor is never left without a banner.
  *
- * @param options - The experiment, kernel and host presentation.
  * @returns Detach the controller.
  * @internal
  */

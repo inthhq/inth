@@ -1,9 +1,6 @@
 /**
  * @packageDocumentation
  * Low-level cookie operations.
- *
- * @remarks
- * This module provides basic cookie CRUD operations (create, read, delete).
  */
 
 import { getDefaultCookieOptions, getRootDomain } from './domain-utils';
@@ -41,11 +38,8 @@ const serializeCookieValue = function serializeCookieValue(
 	if (typeof value === 'string') {
 		return value;
 	}
-	// 1. Flatten the nested object
 	const flattened = flattenObject(value as Record<string, unknown>);
-	// 2. Shorten keys for compression
 	const shortened = shortenFlatKeys(flattened);
-	// 3. Convert to compact string format
 	return flatToString(shortened);
 };
 
@@ -70,7 +64,6 @@ export const writeCookie = function writeCookie(
 
 	const opts = { ...getDefaultCookieOptions(config), ...options };
 
-	// Handle crossSubdomain flag: convert to domain if not explicitly set
 	if (opts.crossSubdomain && !options?.domain) {
 		opts.domain = getRootDomain();
 	}
@@ -79,12 +72,10 @@ export const writeCookie = function writeCookie(
 	try {
 		cookieValue = serializeCookieValue(value);
 
-		// Calculate expiry date
 		const date = new Date();
 		date.setTime(date.getTime() + opts.expiryDays * 24 * 60 * 60 * 1000);
 		const expires = `expires=${date.toUTCString()}`;
 
-		// Build cookie string
 		const parts = [`${name}=${cookieValue}`, expires, `path=${opts.path}`];
 
 		if (opts.domain) {
@@ -114,14 +105,7 @@ export const writeCookie = function writeCookie(
 };
 
 /**
- * Sets a cookie with the specified name, value, and options.
- *
- * @param name - Cookie name
  * @param value - Cookie value (will be flattened to compact string format)
- * @param options - Cookie configuration options
- * @param config - Storage configuration
- *
- * @throws {Error} When cookie cannot be set
  *
  * @remarks
  * Uses a flat key:value,key:value format without JSON special characters.
@@ -153,18 +137,13 @@ export const parseCookieValue = function parseCookieValue<ReturnType = unknown>(
 	cookieValue: string
 ): ReturnType | null {
 	try {
-		// Check if it's the flat format (contains colons)
 		if (cookieValue.includes(':')) {
-			// 1. Parse flat string to object
 			const shortened = stringToFlat(cookieValue);
-			// 2. Expand shortened keys back to full keys
 			const expanded = expandFlatKeys(shortened);
-			// 3. Unflatten to nested object
 			const nested = unflattenObject(expanded);
 			return nested as ReturnType;
 		}
 
-		// Plain string value
 		return cookieValue as ReturnType;
 	} catch (error) {
 		console.warn('Failed to parse cookie value:', error);
@@ -175,7 +154,6 @@ export const parseCookieValue = function parseCookieValue<ReturnType = unknown>(
 /**
  * Reads one cookie's raw value from `document.cookie` without parsing it.
  *
- * @param name - Cookie name to read
  * @param onUnavailable - Called when browser cookies cannot be read.
  * @returns The raw value, or `null` outside the browser, when the cookie
  * is absent, or when `document.cookie` cannot be read.
@@ -205,15 +183,7 @@ export const getRawCookieValue = function getRawCookieValue(
 };
 
 /**
- * Retrieves a cookie value by name.
- *
- * @typeParam ReturnType - The expected type of the parsed cookie value
- *
- * @param name - Cookie name to retrieve
  * @returns Parsed cookie value or null if not found
- *
- * @remarks
- * Parses flat key:value format and reconstructs nested objects.
  *
  * @internal
  */
@@ -248,11 +218,7 @@ export const getCookie = function getCookie<ReturnType = unknown>(
 };
 
 /**
- * Deletes a cookie by name.
- *
- * @param name - Cookie name to delete
  * @param options - Cookie configuration options (domain and path should match the original cookie)
- * @param config - Storage configuration
  *
  * @internal
  */
@@ -267,7 +233,6 @@ export const deleteCookie = function deleteCookie(
 
 	const opts = { ...getDefaultCookieOptions(config), ...options };
 
-	// Handle crossSubdomain flag
 	if (opts.crossSubdomain && !options?.domain) {
 		opts.domain = getRootDomain();
 	}

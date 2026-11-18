@@ -51,7 +51,6 @@ export class IABUnavailableError extends Error {
  * Offline mode without IAB resolves `iab` rules with no vendor list, so it
  * never needs one either.
  *
- * @param snapshot - The kernel snapshot.
  * @returns `true` when the page must mount a CMP for this visitor.
  * @example
  * ```ts

@@ -66,7 +66,6 @@ const parseEntry = (entry: unknown): ScriptSource | null => {
  * Check the registry's sources as init carries them:
  * `{ "<script id>": { "src", "integrity", "attributes"? } }`.
  *
- * @param sources - The unchecked sources.
  * @returns The sources by script `id`, with `null` for an entry the loader
  * cannot use, or `null` when `sources` is not an object.
  * @internal
@@ -93,7 +92,6 @@ export const parseRegistrySources = function parseRegistrySources(
  *
  * @param snapshot - The kernel's snapshot, or the same fields of a
  * prefetch.
- * @returns The registry's state for the script loader.
  * @internal
  */
 export const readScriptRegistry = function readScriptRegistry(snapshot: {

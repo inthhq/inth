@@ -54,7 +54,6 @@ export type WriteStoredConsentResult =
 	| { ok: true; written: WriteReport; envelope: StoredConsentEnvelope }
 	| { ok: false; issues: StorageIssue[] };
 
-/** Report of one auxiliary write. */
 export type AuxiliaryWriteReport = WriteReport;
 
 /** The record writes, bound to the first-load functions they call. */
@@ -159,16 +158,10 @@ const cookieText = function cookieText(encode: () => string): string | null {
 /** A cookie write that did not run: the record has no cookie text. */
 const NO_COOKIE_TEXT: CookieWriteReport = { attempted: false, verified: false };
 
-/**
- * Bind the record writes to the first-load functions they call.
- *
- * @param tools - Storage keys, validators, cookie reads and writes.
- * @returns The record writes.
- */
+/** Bind the record writes to the first-load functions they call. */
 export const createRecordStore = function createRecordStore(
 	tools: RecordStoreTools
 ): RecordStore {
-	/** Write a cookie, unless the record has no cookie text. */
 	const writeCookieText = function writeCookieText(
 		key: string,
 		text: string | null,
@@ -180,7 +173,6 @@ export const createRecordStore = function createRecordStore(
 			: tools.writeCookie(key, text, cookie, config);
 	};
 
-	/** Write one record's localStorage copy and cookie projection. */
 	const writeBoth = function writeBoth(
 		key: string,
 		local: string,

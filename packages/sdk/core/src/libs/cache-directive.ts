@@ -8,7 +8,6 @@
  * Reads a numeric directive such as `s-maxage` from a `Cache-Control`
  * header.
  *
- * @param cacheControl - The header value, if any.
  * @param directive - The directive name, lower-case.
  * @returns The directive in seconds, or `undefined` when absent or invalid.
  * @internal

@@ -129,7 +129,6 @@ export const resolveFetch = function resolveFetch(
  * Build the record half of a hosted transport. Plain object, no listeners,
  * no caches. Safe to create per request.
  *
- * @param options - Backend connection options.
  * @param decision - Where saves find a remembered decision. Omit it when
  *   every save carries its own decision inputs.
  * @returns Save, identify and subject-read methods.

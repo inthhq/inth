@@ -115,7 +115,10 @@ test('metadata patches preserve expiry boundaries and re-evaluate a backwards cl
 	});
 	expect(before.effectivePermissions.marketing).toBe(true);
 	expect(before.promptRequirement.kind).toBe('none');
-	const expired = buildNextSnapshot(before, { branding: 'inth', now: deadline });
+	const expired = buildNextSnapshot(before, {
+		branding: 'inth',
+		now: deadline,
+	});
 	expect(expired.effectivePermissions.marketing).toBe(false);
 	expect(expired.promptRequirement).toEqual({
 		kind: 'choice',

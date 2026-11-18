@@ -103,7 +103,6 @@ export type DecodeResult<RecordType> =
 	| { ok: true; record: RecordType }
 	| { ok: false; issues: StorageIssue[] };
 
-/** Prefix every compact v3 cookie value starts with. */
 export const COMPACT_ENVELOPE_PREFIX = 'v=3';
 
 const FIELD_SEPARATOR = '&';
@@ -403,7 +402,6 @@ export const validateStoredConsentEnvelope =
 		);
 	};
 
-/** Whether a raw cookie value is a compact v3 envelope. */
 export const isCompactStoredConsentEnvelope =
 	function isCompactStoredConsentEnvelope(rawValue: string): boolean {
 		return (
@@ -680,7 +678,6 @@ export const decodeNoticeDismissal = function decodeNoticeDismissal(
 // Compact cookie projection for notice dismissal
 // ---------------------------------------------------------------------------
 
-/** Prefix of the compact notice-dismissal cookie projection. */
 export const COMPACT_NOTICE_PREFIX = 'v=1';
 
 const parseCompactInteger = function parseCompactInteger(
@@ -738,7 +735,6 @@ export const decodeNoticeDismissalCompact =
 // Vendor denial list (local-only, JSON + compact cookie projection)
 // ---------------------------------------------------------------------------
 
-/** Prefix of the compact vendor-choice cookie projection. */
 export const COMPACT_VENDORS_PREFIX = 'v=1';
 
 const VENDOR_CHOICE_KEYS = [

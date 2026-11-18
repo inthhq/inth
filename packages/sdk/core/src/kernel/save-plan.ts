@@ -243,7 +243,6 @@ export interface SavePayloadInput {
  *
  * @param after - The snapshot the action committed.
  * @param input - What the action recorded.
- * @returns The transport payload.
  * @internal
  */
 export const buildSavePayload = function buildSavePayload(

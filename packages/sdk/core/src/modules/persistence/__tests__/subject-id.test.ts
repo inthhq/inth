@@ -3,7 +3,7 @@
  *
  * The subject ID persistence gives a browser runtime at startup, before
  * the visitor decides anything. It lives in memory until a save records
- * it; the `<key>-sid` copy Inth 3.2 stored is removed.
+ * it; the `<key>-sid` copy c15t 3.2 stored is removed.
  */
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
@@ -133,7 +133,7 @@ test.each([
 	['cookie', true, false],
 	['localStorage', false, true],
 ] as const)(
-	'startup removes a %s copy inth 3.2 stored and does not take its ID',
+	'startup removes a %s copy c15t 3.2 stored and does not take its ID',
 	(_, inCookie, inLocal) => {
 		if (inCookie) {
 			document.cookie = `${SID_KEY}=sub_legacy; path=/`;
@@ -150,7 +150,7 @@ test.each([
 	}
 );
 
-test('startup leaves storage alone when no inth 3.2 copy exists', () => {
+test('startup leaves storage alone when no c15t 3.2 copy exists', () => {
 	const setCookie = vi.spyOn(document, 'cookie', 'set');
 	const setItem = vi.spyOn(Storage.prototype, 'setItem');
 	const removeItem = vi.spyOn(Storage.prototype, 'removeItem');
@@ -166,7 +166,7 @@ test('startup leaves storage alone when no inth 3.2 copy exists', () => {
 	}
 });
 
-test('a clear keeps the ID in memory, removes a inth 3.2 copy, and a reload starts over', async () => {
+test('a clear keeps the ID in memory, removes a c15t 3.2 copy, and a reload starts over', async () => {
 	const first = boot();
 	const subjectId = subjectIdOf(first.kernel);
 	await first.kernel.commands.save({ measurement: true });
@@ -382,7 +382,7 @@ test('a runtime that keeps its subject neither creates nor stores one', () => {
 	expect(storedSid()).toEqual({ cookie: null, local: null });
 });
 
-test('a runtime that keeps its subject neither takes nor removes a inth 3.2 copy', () => {
+test('a runtime that keeps its subject neither takes nor removes a c15t 3.2 copy', () => {
 	localStorage.setItem(SID_KEY, 'sub_stored');
 	document.cookie = `${SID_KEY}=sub_stored; path=/`;
 	const kernel = createConsentKernel({ now: NOW });

@@ -67,7 +67,6 @@ export interface JourneyController {
  * written before `start()`.
  *
  * @param options - The `journey` option, the server's id and the storage.
- * @returns The controller.
  * @internal
  */
 export const createJourneyController = function createJourneyController(
@@ -259,9 +258,6 @@ export const createJourneyController = function createJourneyController(
  * so a host that swaps one in place (React's early `/init`) still reaches
  * the swapped method. Methods the transport lacks stay absent.
  *
- * @param transport - The transport the runtime's `mode` built.
- * @param journey - The runtime's journey.
- * @returns The wrapped transport.
  * @internal
  */
 export const withJourney = function withJourney(

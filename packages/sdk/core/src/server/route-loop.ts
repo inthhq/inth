@@ -77,7 +77,6 @@ export const readUpstreams = function readUpstreams(options: {
  * The relative upstream URL on or beneath the route's mount, when the
  * adapter knows the mount at setup.
  *
- * @param upstreams - The configured upstream URLs.
  * @param mount - Where the route is mounted, such as `/api/inth`.
  * @returns A message naming the option, or `undefined`.
  */
@@ -99,8 +98,6 @@ export const relativeLoop = function relativeLoop(
  * relative one on or beneath the mount, or an absolute one on the request's
  * own site and beneath the mount.
  *
- * @param upstreams - The configured upstream URLs.
- * @param mount - Where the route is mounted.
  * @param site - The request's site as the route sees it.
  * @returns A message naming the option, or `undefined`.
  */
@@ -127,7 +124,6 @@ export const requestLoop = function requestLoop(
  * below the route (`context.path`). `undefined` for a route mounted at the
  * site root, which the check leaves alone.
  *
- * @param pathname - The request path.
  * @param below - The path below the route.
  * @returns The mount, such as `/api/inth`.
  */

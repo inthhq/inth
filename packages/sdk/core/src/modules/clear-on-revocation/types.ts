@@ -55,7 +55,6 @@ export interface ClearOnRevocationHandle {
 export interface ClearOnRevocationTools {
 	/** `cookieDomainsOf`: the domains a cookie may be scoped to. */
 	cookieDomainsOf: typeof cookieDomainsOf;
-	/** `getEffectiveGateState`. */
 	gateState: typeof getEffectiveGateState;
 	optionalConsentCategories: readonly OptionalConsentCategory[];
 	/** `ownedStorageKeys`: the names cleanup never deletes. */

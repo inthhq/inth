@@ -64,9 +64,7 @@ const mergeSurface = function mergeSurface<
  * category. `control`, or an arm that no longer exists, returns `base`.
  *
  * @param base - The host's `presentation` option.
- * @param experiment - The experiment definition.
  * @param assignment - The arm the subject runs.
- * @returns The presentation to render.
  */
 export const resolveExperimentPresentation =
 	function resolveExperimentPresentation(
@@ -97,7 +95,6 @@ export const resolveExperimentPresentation =
  * @param base - The host's `presentation` option.
  * @param experiment - The `experiment` option, if any.
  * @param assignment - `snapshot.experiment`.
- * @returns The presentation to render.
  */
 export const applyExperimentAssignment = function applyExperimentAssignment(
 	base: ConsentPresentation | undefined,
@@ -128,9 +125,7 @@ const isTokenGroup = function isTokenGroup(
  * @typeParam ThemeType - The host theme type, for example `Theme` from
  * `@inth/sdk/ui/theme`.
  * @param base - The host's `theme` option.
- * @param experiment - The experiment definition.
  * @param assignment - The arm the subject runs.
- * @returns The theme to render.
  */
 export const resolveExperimentTheme = function resolveExperimentTheme<
 	ThemeType extends object,
@@ -170,7 +165,6 @@ export const resolveExperimentTheme = function resolveExperimentTheme<
  * @param base - The host's `theme` option.
  * @param experiment - The `experiment` option, if any.
  * @param assignment - `snapshot.experiment`.
- * @returns The theme to render.
  */
 export const applyExperimentTheme = function applyExperimentTheme<
 	ThemeType extends object,

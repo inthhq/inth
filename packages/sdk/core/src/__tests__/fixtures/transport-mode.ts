@@ -8,7 +8,6 @@ import type { KernelTransport } from '../../types';
  * A transport factory that hands the runtime `transport`, for tests that
  * stand in for the backend with a fake.
  *
- * @param transport - The fake transport.
  * @param kind - The kind `window.__inthDebug.mode` reports.
  * @returns A factory for the runtime's `mode`.
  */

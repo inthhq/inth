@@ -223,8 +223,6 @@ const settle = function settle(
  * some on demand.
  *
  * @param options - The provider's options at mount.
- * @param modules - The module factories to mount.
- * @returns The provider runtime.
  * @throws {Error} When the options select no transport factory.
  *
  * @example

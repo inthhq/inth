@@ -59,9 +59,6 @@ type PreloadScriptLoader = NonNullable<
  * `options.scripts` straight away. Anything that throws reads as no.
  *
  * @param kernel - The runtime's kernel, before `start()`.
- * @param options - The runtime's options.
- * @param createKernel - The runtime's kernel factory.
- * @param createPersistence - The runtime's persistence module.
  * @param streamed - What a streamed prefetch resolved to, once it has.
  * @returns `true` when a script would mount once the loader loads; a
  * promise of it when `streamed` carries records, which the kernel folds in

@@ -73,9 +73,7 @@ export interface SaveOutboxStore {
 /**
  * A save as the outbox queues it.
  *
- * @param payload - The save.
  * @param now - When it was queued.
- * @returns The queue entry.
  * @internal
  */
 export const pendingSave = (
@@ -88,8 +86,6 @@ export const pendingSave = (
  * to send. The replay validates and orders every entry, so this one
  * appends without loading the queue's code.
  *
- * @param store - The outbox store.
- * @param payload - The save.
  * @param now - When it was queued.
  * @returns Whether the store kept it.
  * @internal

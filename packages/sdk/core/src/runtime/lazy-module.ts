@@ -77,7 +77,6 @@ const LOADED = Symbol('inth-lazy-module-loaded');
  * a module it waits for did not load.
  *
  * @param handle - A module handle, lazy or not.
- * @param next - What to run after it.
  * @internal
  */
 export const afterModuleLoaded = function afterModuleLoaded(

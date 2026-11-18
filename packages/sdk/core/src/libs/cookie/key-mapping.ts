@@ -15,21 +15,14 @@
  */
 export const COOKIE_KEY_MAP = {
 	consentInfo: 'i',
-	// Top-level keys
-	// New in v2.0: client-generated subject ID
 	consents: 'c',
 	externalId: 'eid',
 	iabCustomVendorConsents: 'icv',
 	iabCustomVendorLegitimateInterests: 'icvli',
-	// Material active-policy fingerprint
 	id: 'id',
-	// The identity provider (e.g., 'clerk', 'auth0')
 	identityProvider: 'idp',
-	// The external user ID
-	// Legacy: consentId (deprecated in v2.0)
 	materialPolicyFingerprint: 'mpf',
 	subjectId: 'sid',
-	// ConsentInfo keys
 	time: 't',
 	timestamp: 'ts',
 	type: 'y',

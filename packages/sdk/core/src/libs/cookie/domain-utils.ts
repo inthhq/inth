@@ -1,10 +1,6 @@
 /**
  * @packageDocumentation
  * Domain and configuration utilities for cookie storage.
- *
- * @remarks
- * This module provides helpers for working with cookie domains and
- * default configuration options.
  */
 
 import type { CookieOptions, StorageConfig } from './types';
@@ -12,7 +8,6 @@ import type { CookieOptions, StorageConfig } from './types';
 /**
  * Gets default cookie options (respects config)
  *
- * @param config - Optional storage configuration
  * @returns Complete cookie options with all defaults filled in
  *
  * @internal

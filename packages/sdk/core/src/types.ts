@@ -81,7 +81,7 @@ export type KernelBranding = 'c15t' | 'consent' | 'inth' | 'none';
 export const DEFAULT_BRANDING: KernelBranding = 'inth';
 
 /**
- * Who runs the backend that served `/init`: inth's hosted platform or a
+ * Who runs the backend that served `/init`: Inth's hosted platform or a
  * site's own `@c15t/backend`. Reported, not verified, and independent of
  * branding.
  */
@@ -254,11 +254,9 @@ export interface KernelIABState {
 	cmpId: number | null;
 	/** Per-vendor consent (vendorId → boolean). */
 	vendorConsents: Record<string, boolean>;
-	/** Per-vendor legitimate interest. */
 	vendorLegitimateInterests: Record<string, boolean>;
 	/** Per-purpose consent (purposeId 1–11 → boolean). */
 	purposeConsents: Record<number, boolean>;
-	/** Per-purpose legitimate interest. */
 	purposeLegitimateInterests: Record<number, boolean>;
 	/** Special features (1 = geolocation, 2 = device ID). */
 	specialFeatureOptIns: Record<number, boolean>;
@@ -524,7 +522,6 @@ export interface KernelConfig {
 	>;
 	/** Initial location (e.g. from prefetch). */
 	initialLocation?: LocationResponse;
-	/** Initial branding. */
 	initialBranding?: KernelBranding;
 	/** Initial backend hosting (e.g. from prefetch). */
 	initialHosting?: KernelHosting;
@@ -560,7 +557,6 @@ export interface KernelConfig {
 		| false;
 	/** Initial policy decision. */
 
-	/** Initial policy snapshot token. */
 	initialPolicySnapshotToken?: string;
 	/**
 	 * Impressions a stand-in recorded before this kernel: the epoch
@@ -570,7 +566,6 @@ export interface KernelConfig {
 	 * stand-in announced that impression itself.
 	 */
 	initialSurfaceShownAt?: Partial<Record<PromptSurface, number | null>>;
-	/** Initial IAB slice. */
 	initialIab?: Partial<KernelIABState>;
 	/** Vendors declared in code, already resolved. Presentation data only. */
 	initialVendors?: KernelVendorsState;
@@ -642,7 +637,6 @@ export interface InitResponse {
 	location?: LocationResponse;
 	/** Resolved translation bundle. */
 	translations?: KernelTranslations;
-	/** Branding preference. */
 	branding?: KernelBranding;
 	/** Who runs the backend that answered. */
 	hosting?: KernelHosting;

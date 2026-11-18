@@ -121,7 +121,6 @@ export const openJourney = function openJourney(options: {
  * check.
  *
  * @param storage - Where a `'tab'` journey is kept.
- * @returns The option to start the early journey with.
  * @internal
  */
 export const detectJourneyOption = function detectJourneyOption(
@@ -147,7 +146,6 @@ type JourneyWindow = Window & { [JOURNEY_WINDOW_KEY]?: unknown };
 /**
  * The journey an early request of this page started, if it is well formed.
  *
- * @returns The journey, or `undefined`.
  * @internal
  */
 export const readEarlyJourney = function readEarlyJourney():

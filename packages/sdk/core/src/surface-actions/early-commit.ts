@@ -116,7 +116,6 @@ export interface EarlyCommitInput {
  * denied vendors, an acknowledgement record, or nothing to confirm.
  *
  * @param input - The rendered snapshot and the tap.
- * @returns The commit, or `null`.
  * @internal
  */
 export const planEarlyCommit = function planEarlyCommit(

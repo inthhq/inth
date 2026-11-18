@@ -41,7 +41,7 @@ export const dispatchScriptDebugEvent = function dispatchScriptDebugEvent(
 		try {
 			listener(event);
 		} catch (error) {
-			console.error('Failed to handle inth script debug event listener', error);
+			console.error('Failed to handle Inth script debug event listener', error);
 		}
 	}
 };

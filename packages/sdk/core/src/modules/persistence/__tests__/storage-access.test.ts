@@ -264,7 +264,7 @@ test('focus keeps a used subject ID when cookies cannot be read', async () => {
 	await kernel.commands.save({ measurement: false });
 	vi.advanceTimersByTime(0);
 	const own = kernel.getSnapshot().subject?.subjectId;
-	// A `inth-sid` copy an older Inth runtime in another tab wrote is not
+	// An `inth-sid` copy an older c15t runtime in another tab wrote is not
 	// read.
 	localStorage.setItem('inth-sid', 'sub_other_tab');
 	vi.spyOn(document, 'cookie', 'get').mockImplementation(() => {

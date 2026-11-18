@@ -83,7 +83,6 @@ export const registerScriptDiagnostics = (
 
 /**
  * Reads scripts belonging to loaders attached to this kernel.
- * @param kernel - The consent provider's kernel.
  * @returns Script metadata and current loading status, without callbacks or nonces.
  */
 export const getScriptDiagnostics = (
@@ -95,9 +94,7 @@ export const getScriptDiagnostics = (
 
 /**
  * Observes loader registration, configuration, and lifecycle changes.
- * @param kernel - The consent provider's kernel.
  * @param listener - Called synchronously when script diagnostics change.
- * @returns A function that releases the subscription.
  */
 export const subscribeScriptDiagnostics = (
 	kernel: ConsentKernel,

@@ -26,9 +26,6 @@ export const DEFAULT_INIT_CREDENTIALS: RequestCredentials = 'same-origin';
  * In its own module so code that only builds the init request does not pull
  * in the rest of `request-context` (URL canonicalization, prefetch
  * matching, GPC detection).
- *
- * @param overrides - Country, region, language and GPC overrides.
- * @returns Header record of the overrides.
  */
 export const buildRequestContextHeaders = function buildRequestContextHeaders(
 	overrides?: Pick<Overrides, 'country' | 'region' | 'language' | 'gpc'>
@@ -61,7 +58,6 @@ export const buildRequestContextHeaders = function buildRequestContextHeaders(
  * country, region and GPC. Language stays on `Accept-Language`, which is
  * CORS-safelisted (see {@link buildRequestContextSentHeaders}).
  *
- * @param overrides - Country, region and GPC overrides.
  * @returns The parameters for `appendInitParams`.
  */
 export const buildRequestContextParams = function buildRequestContextParams(
@@ -79,7 +75,6 @@ export const buildRequestContextParams = function buildRequestContextParams(
  * `Accept-Language`, which is CORS-safelisted and which every backend
  * already reads.
  *
- * @param overrides - The language override.
  * @returns Header record to spread into the init request.
  */
 export const buildRequestContextSentHeaders =

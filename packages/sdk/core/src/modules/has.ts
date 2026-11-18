@@ -186,7 +186,6 @@ export interface IABTarget {
  * @param target - IAB metadata of the script, rule or iframe.
  * @param iab - Confirmed IAB signals and publisher restrictions.
  * @param declaration - The target vendor's vendor list entry, if any.
- * @returns Whether the target may run.
  */
 export const hasIABConsent = function hasIABConsent(
 	target: IABTarget,
@@ -303,7 +302,6 @@ const hasCurrentIABAuthority = function hasCurrentIABAuthority(
  * Outside IAB mode a target whose `vendor` the subject turned off is denied
  * after its category condition passes, so an unknown category still throws.
  * @param target - Category condition, optional IAB metadata and optional vendor.
- * @param snapshot - Immutable kernel snapshot.
  * @param now - Gate clock in epoch milliseconds.
  * @returns Whether the target may run at this time.
  */
@@ -368,7 +366,6 @@ export const evaluateConsent = function evaluateConsent<
  * This reader is stricter than the gates. A script, iframe or network rule
  * whose `vendor` slug is undeclared still follows its category alone.
  *
- * @param snapshot - Immutable kernel snapshot.
  * @param vendorId - Vendor id as declared in `vendors`, on a script or by
  * the backend.
  * @param now - Gate clock in epoch milliseconds. Defaults to `Date.now()`.

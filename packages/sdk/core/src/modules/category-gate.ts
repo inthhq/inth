@@ -22,7 +22,6 @@ export { deniedVendorIds, isVendorDenied } from './vendor-denial';
 /**
  * Reads permissions at the gate's clock without changing the kernel.
  * Reuses evaluated fields until the next semantic deadline.
- * @param snapshot - Immutable kernel snapshot.
  * @param now - Current epoch milliseconds.
  * @returns Effective category permissions and independent restrictions.
  */
@@ -51,7 +50,6 @@ export const getEffectiveGateState = function getEffectiveGateState(
  * the gate's clock, then, outside `model === 'iab'`, its vendor not turned
  * off. The same answer `evaluateConsent` gives such a target.
  * @param target - Category condition and optional vendor slug.
- * @param snapshot - Immutable kernel snapshot.
  * @param now - Gate clock in epoch milliseconds.
  * @returns Whether the target may run at this time.
  * @throws {Error} For an unknown category, as `has` does.

@@ -16,7 +16,6 @@ import { lazyRuntimeModule } from './lazy-module';
  * loads on demand. One of {@link onDemandRuntimeModules}; exported on its
  * own from `@inth/sdk/runtime/on-demand-factories`.
  *
- * @param options - The data clearing options the runtime passes.
  * @returns A handle that queues calls until the module has loaded.
  */
 export const clearOnRevocationOnDemand = function clearOnRevocationOnDemand(

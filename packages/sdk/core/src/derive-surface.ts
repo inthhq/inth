@@ -17,7 +17,6 @@ import type { KernelActiveUI } from './types';
  * pending policy and a failed resolution keep the first layer hidden.
  * Adapters resolve the host presentation for a required prompt.
  *
- * @param input - The snapshot fields the rule reads.
  * @returns `'banner'` while a choice or notice is owed and nothing hides it,
  * otherwise `'none'`.
  */

@@ -22,7 +22,6 @@ export type {
  * Create a network blocker.
  *
  * @param options - The kernel, the rules and, from a runtime, its hold.
- * @returns The blocker handle.
  */
 export const createNetworkBlocker = function createNetworkBlocker(
 	options: NetworkBlockerOptions

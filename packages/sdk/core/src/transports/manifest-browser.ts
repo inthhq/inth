@@ -427,9 +427,7 @@ const transportFrom = function transportFrom(
  * the runtime: its US sections need the visitor's country, and an answer
  * for an unknown location reports none.
  *
- * @param options - Manifest source and backend.
  * @param context - The provider's transport context, for `gppEnabled`.
- * @returns A kernel transport.
  * @throws {Error} When none of `snapshot`, `manifestUrl` and `projectUrl`
  * is given, or a backend can't be derived and `projectUrl` is omitted.
  */
@@ -488,7 +486,6 @@ export const withBuildDefaults = function withBuildDefaults(
  * has no `resolve` option. Server-framework packages take the data
  * `manifest()` from `@inth/sdk/modes` instead.
  *
- * @param options - Manifest source and backend.
  * @returns A transport factory for `mode`, carrying its options. Each call
  * builds a transport of its own over one shared manifest.
  * @throws {Error} When none of `snapshot`, `manifestUrl` and `projectUrl`

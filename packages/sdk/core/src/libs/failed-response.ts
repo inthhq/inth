@@ -2,7 +2,7 @@
  * Errors for a backend response that is not ok.
  *
  * A backend that refuses a request usually says why in a JSON body:
- * `{ message, code }`, or inth's own `{ message, cause: { code, reason } }`.
+ * `{ message, code }`, or Inth's own `{ message, cause: { code, reason } }`.
  * These helpers read that body so the error says what the backend said,
  * not only the status. Over HTTP/2 `statusText` is empty, so without the
  * body an error reads `responded 429 ` and nothing more.
@@ -152,9 +152,7 @@ export const readFailedResponse = async function readFailedResponse(
  *
  * @param prefix - Names the caller and route, such as
  * `inth hosted transport: /init`.
- * @param response - The response that is not ok.
  * @param detail - What {@link readFailedResponse} read from its body.
- * @returns The message.
  * @internal
  */
 export const describeFailedResponse = function describeFailedResponse(

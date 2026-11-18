@@ -88,7 +88,6 @@ const isRecordSeed = function isRecordSeed(
  * Build a runtime from options and module factories.
  *
  * @param options - The runtime configuration, read when used.
- * @param modules - The module factories to mount.
  * @returns The runtime and its `stop()`.
  * @throws {Error} When the options select no transport factory.
  * @internal
@@ -284,7 +283,7 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 					persistenceHandle = null;
 				});
 			} else {
-				// Persistence removes a `<key>-sid` copy Inth 3.2 left. Without
+				// Persistence removes a `<key>-sid` copy c15t 3.2 left. Without
 				// it, a 3.2 server adapter's copy would stay until it expires.
 				// The key comes from the nested storage options even with a
 				// consent source, which `storageFor` leaves out.

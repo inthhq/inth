@@ -50,7 +50,6 @@ export interface ValidateExperimentOptions {
  * Resolve every arm under `policy` and collect presentation diagnostics,
  * without deciding whether they are acceptable.
  *
- * @param experiment - The experiment definition.
  * @param policy - The resolved policy rule the arms will render under.
  * @param options - Base presentation and appearance tokens.
  * @returns Diagnostics keyed by arm name. Empty when every arm is clean.
@@ -129,7 +128,6 @@ export const describeRejectedArms = function describeRejectedArms(
  * this: it runs the base presentation instead of an arm the visitor's policy
  * rejects. Use it in a test to fail a build on a misconfigured experiment.
  *
- * @param experiment - The experiment definition.
  * @param policy - The resolved policy rule the arms will render under.
  * @param options - Base presentation and appearance tokens.
  * @returns Diagnostics keyed by arm name. Empty when every arm is clean.

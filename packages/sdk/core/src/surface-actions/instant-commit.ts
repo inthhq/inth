@@ -178,7 +178,6 @@ const selectionValues = function selectionValues(
  *
  * @param before - The snapshot the page renders from.
  * @param actionAt - Epoch milliseconds of the tap.
- * @param now - The clock now.
  * @returns `true` when an instant commit can apply.
  * @internal
  */
@@ -317,7 +316,6 @@ const recordedSubject = function recordedSubject(
  * is generated here when the visitor has none.
  *
  * @param input - The rendered snapshot and the tap.
- * @returns The commit, or `null`.
  * @internal
  */
 export const planInstantCommit = function planInstantCommit(

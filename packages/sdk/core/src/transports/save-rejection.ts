@@ -129,9 +129,7 @@ export const isSubjectConflict = function isSubjectConflict(
  * anything, and resending the save on every page load will not change
  * that.
  *
- * @param response - The non-2xx response.
  * @param label - Prefix for the error message, naming the transport.
- * @returns The error to throw.
  * @internal
  */
 export const saveFailure = async function saveFailure(

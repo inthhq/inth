@@ -64,9 +64,7 @@ export interface StaticManifestModuleOptions {
 }
 
 /** Fetches a manifest for build-time code generation.
- * @param options - Manifest URL and optional fetch implementation.
  * @param label - Framework name used in errors.
- * @returns The backend manifest.
  * @throws {Error} When fetch is unavailable or the response is not a valid manifest.
  */
 export const loadStaticManifest = async (
@@ -100,8 +98,6 @@ export const loadStaticManifest = async (
 
 /**
  * Validates the identifiers a generated manifest module uses.
- * @param options - Requested export name and type import source.
- * @param defaults - Framework import source and error label.
  * @returns The export name and import source to write.
  * @throws {Error} When either identifier is invalid.
  * @internal
@@ -132,7 +128,6 @@ export const resolveStaticManifestModuleNames = (
  * Renders a generated manifest module. Without a manifest, the export is
  * `undefined` with the same `ConsentManifest` type, so imports still compile
  * and the server fetches the manifest at runtime.
- * @param names - Validated export name and type import source.
  * @param manifest - The snapshot, or `undefined` when the build has none.
  * @returns TypeScript source for the module.
  * @internal
@@ -156,8 +151,6 @@ export const renderStaticManifestModule = (
 	].join('\n');
 
 /** Generates a typed module with validated export and import names.
- * @param options - Manifest fetch options and generated identifiers.
- * @param defaults - Framework import source and error label.
  * @returns TypeScript source containing the manifest.
  * @throws {Error} When a generated identifier is invalid or the fetch fails.
  */

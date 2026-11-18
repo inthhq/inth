@@ -29,10 +29,6 @@ const policies = { buildEvaluationPolicy, resolveEffectivePolicy };
  * Merge a patch over the current snapshot and re-derive every dependent
  * field. Returns an unfrozen candidate at `revision + 1`; the kernel
  * decides whether anything changed before adopting it.
- *
- * @param current - The kernel's snapshot.
- * @param patch - The fields that change.
- * @returns The next snapshot.
  */
 export const buildNextSnapshot = function buildNextSnapshot(
 	current: ConsentSnapshot,

@@ -45,7 +45,6 @@ import type { SavePayload } from '../types';
  *
  * @param base - Backend URL without a trailing slash.
  * @param journey - The journey the runtime added to the save.
- * @returns The URL to post the save to.
  * @internal
  */
 export const subjectsURL = function subjectsURL(

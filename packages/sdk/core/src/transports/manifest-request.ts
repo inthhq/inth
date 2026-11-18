@@ -8,8 +8,6 @@ import { inthProtocolHeaders } from './version-header';
 /**
  * Builds the fetch options for the browser's manifest request.
  *
- * @param options - Credentials mode and extra headers.
- * @returns The fetch options.
  * @internal
  */
 export const createManifestRequestInit = function createManifestRequestInit(

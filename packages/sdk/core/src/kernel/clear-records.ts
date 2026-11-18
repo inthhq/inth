@@ -23,7 +23,6 @@ export const subjectAfterClear = function subjectAfterClear(
  * cleared subject, with or without persistence. Persistence wraps this with its storage clear; the runtime
  * calls it directly when nothing is persisted.
  *
- * @param kernel - The kernel whose records to clear.
  * @param now - The clock to evaluate the cleared records at; the kernel's
  * own clock when omitted.
  * @internal

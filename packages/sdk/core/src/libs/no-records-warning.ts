@@ -8,7 +8,7 @@ const WARNED = Symbol.for('inth.noRecordsWarned');
 
 /** What local mode logs once per page until `acknowledgeNoRecords` is set. */
 export const NO_RECORDS_WARNING =
-	'[inth] Local mode keeps consent only in this browser. inth keeps no server-side record of consent. Local mode also has no geolocation, so every visitor gets the same policy. Use it for development and tests. For production, see https://c15t.com/docs/concepts/modes\nSet acknowledgeNoRecords: true to hide this message.';
+	'[inth] Local mode keeps consent only in this browser. Inth keeps no server-side record of consent. Local mode also has no geolocation, so every visitor gets the same policy. Use it for development and tests. For production, see https://c15t.com/docs/concepts/modes\nSet acknowledgeNoRecords: true to hide this message.';
 
 /**
  * Log {@link NO_RECORDS_WARNING} once per page. Stays silent on the server,

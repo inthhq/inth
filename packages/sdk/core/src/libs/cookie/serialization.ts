@@ -1,10 +1,6 @@
 /**
  * @packageDocumentation
  * Serialization utilities for cookie storage.
- *
- * @remarks
- * This module handles flattening/unflattening of nested objects and
- * conversion to/from compact string format for cookie storage.
  */
 
 /**
@@ -12,7 +8,6 @@
  * Converts all values to strings for cookie storage.
  * Boolean true values are converted to '1', false values are omitted for compression.
  *
- * @param obj - Object to flatten
  * @param prefix - Key prefix for recursion
  * @returns Flattened object with dot-notation keys
  *
@@ -46,9 +41,7 @@ export const flattenObject = function flattenObject(
 			if (value) {
 				flattened[newKey] = '1';
 			}
-			// false values are intentionally skipped
 		} else if (typeof value === 'object' && !Array.isArray(value)) {
-			// Recursively flatten nested objects
 			Object.assign(
 				flattened,
 				flattenObject(value as Record<string, unknown>, newKey)
@@ -66,7 +59,6 @@ export const flattenObject = function flattenObject(
  * Converts string values back to appropriate types.
  *
  * @param flattened - Flattened object with dot-notation keys
- * @returns Reconstructed nested object
  *
  * @remarks
  * Backward compatibility: Still handles '0' values from legacy cookies.
@@ -125,7 +117,6 @@ export const unflattenObject = function unflattenObject(
 			continue;
 		}
 
-		// Convert back to appropriate types
 		if (value === '1') {
 			current[lastKey] = true;
 		} else if (value === '0') {
@@ -134,7 +125,6 @@ export const unflattenObject = function unflattenObject(
 		} else if (value === '') {
 			current[lastKey] = null;
 		} else if (!Number.isNaN(Number(value)) && value !== '') {
-			// Try to convert to number if it looks like one
 			current[lastKey] = Number(value);
 		} else {
 			current[lastKey] = value;
@@ -148,12 +138,10 @@ export const unflattenObject = function unflattenObject(
  * Converts a flattened object to a compact string format.
  * Format: "key1:value1,key2:value2,key3:value3"
  *
- * @param flattened - Flattened object
  * @returns Compact string representation
  *
  * @remarks
  * Works with the optimized format where false boolean values are omitted.
- * Only processes the keys that are present in the flattened object.
  *
  * @internal
  *
@@ -181,7 +169,6 @@ export const flatToString = function flatToString(
  * Format: "key1:value1,key2:value2,key3:value3"
  *
  * @param str - Compact string representation
- * @returns Flattened object
  *
  * @remarks
  * Handles both optimized format (without false values) and legacy format.

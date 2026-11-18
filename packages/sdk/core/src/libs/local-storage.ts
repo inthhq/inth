@@ -2,7 +2,6 @@
  * The page's localStorage, or `null` on a server or where reading it
  * throws, as blocked storage does.
  *
- * @returns The storage, or `null`.
  * @internal
  */
 export const localStorageOf = function localStorageOf(): Storage | null {

@@ -56,7 +56,6 @@ const normalizeIABOptions = function normalizeIABOptions(
 /**
  * Mount the IAB CMP once the kernel carries enough to configure it.
  *
- * @param options - See {@link RuntimeIABMountOptions}.
  * @returns Stops watching and disposes the CMP.
  */
 export const mountRuntimeIAB = function mountRuntimeIAB({

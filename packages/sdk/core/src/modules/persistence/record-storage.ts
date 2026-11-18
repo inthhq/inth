@@ -560,9 +560,6 @@ const categoriesSinceEpoch = function categoriesSinceEpoch(
  * same millisecond as a grant counts as newer: two conflicting decisions
  * that cannot be ordered fall back to the restrictive one.
  *
- * @param decision - The candidate decision.
- * @param current - The decision it would replace.
- * @returns Whether to apply `decision` over `current`.
  * @internal
  */
 export const isNewerDenial = function isNewerDenial(
@@ -859,10 +856,8 @@ const readNoticeDismissalOf = function readNoticeDismissalOf(
 		(value) => decodeNoticeDismissal(value, now),
 		onUnavailable
 	);
-	// The newer dismissal wins; same-acknowledgement identity is resolved below.
-	// A dismissal only hides
-	// the notice for the fingerprint it names, which the evaluator checks,
-	// and it never grants a category.
+	// A dismissal only hides the notice for the fingerprint it names, which
+	// the evaluator checks, and it never grants a category.
 	if (fromCookie?.ok && fromLocal?.ok) {
 		if (fromLocal.record.dismissedAt > fromCookie.record.dismissedAt) {
 			return fromLocal;
@@ -905,7 +900,6 @@ export const readStoredNoticeDismissal = function readStoredNoticeDismissal(
 	);
 };
 
-/** Server read of the notice cookie projection from a `Cookie` header. */
 export const readStoredNoticeDismissalFromCookieHeader =
 	function readStoredNoticeDismissalFromCookieHeader(
 		cookieHeader: string | undefined,
@@ -966,7 +960,6 @@ export const readStoredClearEpoch = function readStoredClearEpoch(
 	return newerEpoch(fromLocal, newerEpoch(fromCookie, 0));
 };
 
-/** Server read of the clear epoch cookie from a request `Cookie` header. */
 export const readStoredClearEpochFromCookieHeader =
 	function readStoredClearEpochFromCookieHeader(
 		cookieHeader: string | undefined,
@@ -1037,7 +1030,6 @@ export const readStoredVendorChoice = function readStoredVendorChoice(
 	});
 };
 
-/** Server read of the vendor cookie projection from a `Cookie` header. */
 export const readStoredVendorChoiceFromCookieHeader =
 	function readStoredVendorChoiceFromCookieHeader(
 		cookieHeader: string | undefined,

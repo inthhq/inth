@@ -6,9 +6,6 @@ export type RequestHeaderSource =
 /**
  * The first value of header `name`, matched without regard to case.
  *
- * @param headers - The request's headers.
- * @param name - The header name.
- * @returns Its value, or `undefined`.
  * @internal
  */
 export const readHeader = function readHeader(
@@ -33,8 +30,6 @@ export const readHeader = function readHeader(
 /**
  * `headers` as a `Headers` object, keeping the first value of each.
  *
- * @param headers - The request's headers.
- * @returns The headers.
  * @internal
  */
 export const toHeaders = function toHeaders(

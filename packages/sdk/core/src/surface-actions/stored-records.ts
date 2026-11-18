@@ -25,7 +25,6 @@ import type { ConsentRuntimeOptions } from '../runtime/types';
  * runtime would not persist: disabled, under a `consentSource`, or with
  * `persistence: false`.
  *
- * @param options - The runtime's options.
  * @param at - When the clear happened.
  * @param outbox - The save outbox to empty. Defaults to the browser's.
  * @returns Whether storage was cleared.

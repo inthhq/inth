@@ -88,7 +88,6 @@ export interface CMPApi {
 	 * Update public vendor metadata while retaining registered TCF listeners.
 	 * Publish confirmed data with updateConsent after replacing the list.
 	 * @param gvl - The new list, or null to mark a replacement as loading.
-	 * @returns Nothing.
 	 */
 	updateVendorList: (gvl: GlobalVendorList | null) => void;
 	/**

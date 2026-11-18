@@ -116,7 +116,6 @@ export interface ConsentType {
 	/** GDPR category identifier (1-5) */
 	gdprType: number;
 
-	/** The consent category name */
 	name: AllConsentNames;
 }
 

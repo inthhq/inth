@@ -31,7 +31,6 @@ export interface ConsentEvaluationInput {
 	policy: EvaluationPolicy;
 	/** Validated explicit choice, or `null` when none is usable. */
 	choice: ExplicitChoice | null;
-	/** Validated notice dismissal, or `null`. */
 	noticeDismissal: NoticeDismissal | null;
 	/** Detected GPC signal. Only a strict `true` counts. */
 	gpc?: boolean;

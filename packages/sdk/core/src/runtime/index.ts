@@ -159,8 +159,6 @@ export const defaultRuntimeModules: ConsentRuntimeModules = {
  *
  * Nothing else happens until {@link ConsentRuntime.start} is called.
  *
- * @param options - The runtime configuration.
- * @returns The runtime handle.
  * @throws {Error} When the options select no transport factory.
  *
  * @example

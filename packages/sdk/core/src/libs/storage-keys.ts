@@ -99,7 +99,6 @@ const familyOf = function familyOf(consent: string): StorageKeyFamily {
  * The storage keys `config` resolves to. Every reader, writer, watcher,
  * clearer and inline script takes its names from here.
  *
- * @param config - The storage configuration.
  * @returns The configured family and the legacy families read after it.
  */
 export const resolveStorageKeys = function resolveStorageKeys(
@@ -117,7 +116,6 @@ export const resolveStorageKeys = function resolveStorageKeys(
  * The configured family, then the legacy ones: the order every reader
  * tries them in.
  *
- * @param keys - Resolved storage keys.
  * @returns Every family `keys` reads.
  */
 export const storageKeyFamilies = function storageKeyFamilies(
@@ -131,7 +129,6 @@ export const storageKeyFamilies = function storageKeyFamilies(
  * Every name Inth stores under for `config`, the legacy families and the
  * fixed keys included: what revocation cleanup never deletes.
  *
- * @param config - The storage configuration.
  * @returns Cookie and localStorage names.
  */
 export const ownedStorageKeys = function ownedStorageKeys(
@@ -155,7 +152,6 @@ export const ownedStorageKeys = function ownedStorageKeys(
  * is stored, configured family first. For the checks that run before any
  * record is decoded, which test them with {@link STORED_NAMES_CHECK}.
  *
- * @param config - The storage configuration.
  * @returns The consent record names and the notice dismissal names.
  */
 export const storedChoiceNames = function storedChoiceNames(

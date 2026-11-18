@@ -45,7 +45,6 @@ export const prefetchScriptOffset = function prefetchScriptOffset(
  * one, or first when none does.
  *
  * @param chunks - The head chunks, edited in place.
- * @param tag - The `<script>` element.
  */
 export const insertPrefetchScript = function insertPrefetchScript(
 	chunks: string[],

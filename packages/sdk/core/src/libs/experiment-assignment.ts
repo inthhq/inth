@@ -113,9 +113,7 @@ const warnWhenNothingToChoose = function warnWhenNothingToChoose(
  * gate releases the held prompt. The arm is stored the first time the
  * banner shows it, and only when Inth picked it.
  *
- * @param options - Experiment, kernel, host presentation and reporting.
  * @param rememberArm - Stores the arm: `writeStoredExperimentArm`.
- * @returns The controller.
  * @internal
  */
 export const createExperimentControllerWith =

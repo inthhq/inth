@@ -33,7 +33,6 @@ const hasNegation = function hasNegation(
  * decide what a draft was staged against, so an invisible declaration
  * cannot stale a draft.
  *
- * @param vendor - A declared vendor.
  * @returns Whether some category row can list it.
  * @public
  */
@@ -52,7 +51,6 @@ export const vendorRenders = function vendorRenders(
  * vendor is declared, helpers are listed by name alongside it.
  * A helper with a saved denial stays visible so the visitor can change it.
  *
- * @param declared - The kernel's declared vendors.
  * @param denied - Vendor denials honored by the kernel's gates.
  * @returns The vendors that render, in declared order.
  * @internal
@@ -77,7 +75,6 @@ export const listedVendors = function listedVendors(
  * Every framework's preference center uses this one filter so their rows
  * agree.
  *
- * @param declared - The kernel's declared vendors.
  * @param category - The category row being rendered.
  * @param denied - Vendor denials honored by the kernel's gates.
  * @returns The vendors to list, in declared order.

@@ -53,7 +53,6 @@ export interface StreamedInitOptions {
 	onResolved: (config: KernelConfig) => void;
 	/** The runtime's own overrides, which win over the server's. */
 	overrides: KernelOverrides | undefined;
-	/** The pending prefetch. */
 	prefetch: PromiseLike<RuntimePrefetch>;
 	/**
 	 * The kernel's records generation when `init()` started. Prefetched
@@ -74,7 +73,6 @@ export interface StreamedInitOptions {
 /**
  * Wait for a streamed prefetch and turn it into the first init response.
  *
- * @param options - See {@link StreamedInitOptions}.
  * @returns The init response the kernel applies.
  * @internal
  */

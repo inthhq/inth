@@ -31,7 +31,6 @@ export interface PromptCopy {
  * back to its own choice copy before English.
  *
  * @param translations - The active language bundle. Missing keys use English.
- * @param prompt - The prompt of the active policy rule.
  * @returns The title and description to render.
  *
  * @example
@@ -69,7 +68,6 @@ export const resolvePromptCopy = function resolvePromptCopy(
  * reads `common.acknowledge`, then `common.dismiss`.
  *
  * @param translations - The active language bundle. Missing keys use English.
- * @returns A label for each action.
  *
  * @example
  * ```ts
@@ -100,7 +98,6 @@ export const resolveActionLabels = function resolveActionLabels(
  * translate it rather than reusing the preferences label.
  *
  * @param translations - The active language bundle. Missing keys use English.
- * @returns A label for each preference control.
  *
  * @example
  * ```ts
@@ -127,10 +124,6 @@ export const resolvePreferenceControlLabels =
  * Reads the active language, then English, then title-cases the name, so a
  * custom category without a translation still reads as words
  * (`product_updates` becomes "Product Updates").
- *
- * @param translations - The active language bundle.
- * @param name - The category name.
- * @returns The title to render.
  *
  * @example
  * ```ts
@@ -201,7 +194,6 @@ export type ResolvedIABCopy = Filled<IABTranslations>;
  * Language bundles and backend copy may leave IAB keys out; each missing
  * key reads English.
  *
- * @param translations - The active language bundle.
  * @returns The complete IAB copy.
  *
  * @example

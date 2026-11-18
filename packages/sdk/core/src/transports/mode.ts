@@ -57,9 +57,6 @@ export type ProviderTransportKind =
  * `projectUrl`, or the one its `mode` carries (`manifest()`, `testing()`).
  * `kind` lets adapters report the selected transport through
  * `window.__inthDebug.mode` without importing every transport implementation.
- *
- * @param context - Provider values needed to create the transport.
- * @returns A transport for the consent kernel.
  */
 export interface ProviderTransportFactory {
 	(context: ProviderTransportContext): KernelTransport;
@@ -124,7 +121,6 @@ export type HostedModeFactory = ProviderTransportFactory &
  * `projectUrl`. Apps set `projectUrl` on the provider; adapters and tests
  * that need the hosted transport's other options call this.
  *
- * @param options - Hosted backend connection options.
  * @returns A hosted provider transport factory carrying its options.
  * @example
  * ```ts

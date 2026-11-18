@@ -13,7 +13,6 @@ const warned = new Set<string>();
  * backend's `/init` because the manifest could not be read.
  *
  * @param source - The manifest URL, or another name for where it was read.
- * @param cause - Why the read failed.
  * @internal
  */
 export const warnManifestFallback = function warnManifestFallback(

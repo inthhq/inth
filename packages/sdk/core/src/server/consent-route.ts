@@ -562,7 +562,6 @@ interface ResolvedTarget {
  * the socket passes its address as `peer`: the client without trusted
  * headers, else the last hop, appended to the trusted chain.
  *
- * @param request - The incoming request.
  * @param trustForwardedHeaders - Believe `x-forwarded-*` headers.
  * @param peer - The socket's remote address, when the adapter has one.
  * @returns The forwarding the proxy sends on.

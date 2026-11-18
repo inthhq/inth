@@ -542,7 +542,6 @@ export interface ConsentRuntimeOptions {
 	 * `<style>` element. A per-script `nonce` takes precedence.
 	 */
 	nonce?: string;
-	/** Script-loader tuning. */
 	scriptLoader?: RuntimeScriptLoaderOptions;
 	/** Consent-gate outbound requests. Omitted or `false` disables it. */
 	networkBlocker?: RuntimeNetworkBlockerOptions | false;
@@ -736,7 +735,7 @@ export interface ConsentRuntime {
 	 * changed, such as a denial saved or records cleared in another tab.
 	 *
 	 * With persistence on, the runtime already does this when another tab
-	 * changes inth's localStorage keys, when the page becomes visible and
+	 * changes Inth's localStorage keys, when the page becomes visible and
 	 * when the window regains focus (see `persistence.sync`). Call it
 	 * yourself after a change no browser event reports: a second runtime
 	 * on the same page, or cookies rewritten without a localStorage change.

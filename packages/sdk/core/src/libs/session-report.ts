@@ -95,7 +95,6 @@ export const resolveSessionReportProjectUrl =
  * The shared check from `@inth/sdk/schema`, accepting any header shape a server
  * runtime hands over.
  *
- * @param headers - The incoming request's headers.
  * @returns `true` for a speculative request.
  */
 export const isSpeculativeRequest = function isSpeculativeRequest(
@@ -114,7 +113,6 @@ export const isSpeculativeRequest = function isSpeculativeRequest(
  * route, and honouring it would let them choose the address the backend
  * attributes to them.
  *
- * @param headers - The incoming request's headers.
  * @returns The user agent and client IP that were present.
  */
 export const forwardSessionReportHeaders = function forwardSessionReportHeaders(

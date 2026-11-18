@@ -173,7 +173,6 @@ const serverManifestUrl = function serverManifestUrl(
  * without its `kind`; anything else is rejected.
  *
  * @param adapter - Package name for the error.
- * @param mode - The configured mode.
  * @returns The mode's data, `manifest()` for `undefined`.
  * @throws {TypeError} When the mode carries no known `type`.
  */
@@ -378,7 +377,6 @@ const browserModeOf = function browserModeOf(mode: ConsentMode): ConsentMode {
  * Resolves an adapter's configured mode for the server render, the consent
  * route and the browser. See the module comment for the rule per mode.
  *
- * @param options - The adapter, its mode, backend, route and build snapshot.
  * @returns The `resolveRequestConsent` options, the route's manifest
  * source, and the browser's copy of the mode and backend.
  * @throws {TypeError} When the mode is not mode data, `proxy` is set

@@ -70,10 +70,8 @@ export interface ScriptCallbackInfo {
 	/** The actual DOM element ID used (anonymized if enabled) */
 	elementId: string;
 
-	/** Has consent  */
 	hasConsent: boolean;
 
-	/** The current consent state */
 	consents: ConsentState;
 
 	/**
@@ -296,19 +294,16 @@ export interface Script {
 	/**
 	 * Callback executed before a loading attempt. Can repeat with updated consent
 	 * and a new element if a callback invalidates the attempt before loading.
-	 * @param info - Information about the script and current consent state
 	 */
 	onBeforeLoad?: (info: ScriptCallbackInfo) => void;
 
 	/**
 	 * Callback executed when the script loads successfully
-	 * @param info - Information about the script and current consent state
 	 */
 	onLoad?: (info: ScriptCallbackInfo) => void;
 
 	/**
 	 * Callback executed if the script fails to load
-	 * @param info - Information about the script, error, and current consent state
 	 */
 	onError?: (info: ScriptCallbackInfo) => void;
 
@@ -324,8 +319,6 @@ export interface Script {
 	 * Callback executed whenever the consent store is changed.
 	 * This callback applies to loaded scripts unless `observeConsentBeforeLoad`
 	 * is enabled, which also reports initial and subsequent denial before loading.
-	 *
-	 * @param info - Information about the script and current consent state
 	 *
 	 * @example
 	 * ```ts
@@ -354,7 +347,6 @@ export interface Script {
 	 * Consent revocation alone does not call this hook. It does not revoke vendor
 	 * consent or undo code that has already executed. Must be safe to call before
 	 * onLoad, including during server rendering.
-	 * @param info - The current consent state and script identity.
 	 */
 	onDispose?: (info: ScriptCallbackInfo) => void;
 

@@ -48,7 +48,7 @@ describe('the offline transport warning', () => {
 
 	test('names what is missing without blocking anything', () => {
 		expect(NO_RECORDS_WARNING).toContain(
-			'inth keeps no server-side record of consent'
+			'Inth keeps no server-side record of consent'
 		);
 		expect(NO_RECORDS_WARNING).toContain('acknowledgeNoRecords: true');
 	});

@@ -58,7 +58,6 @@ export const clearStoredConsentRecords = function clearStoredConsentRecords(
 		family.privacy,
 		family.vendors,
 	]);
-	// localStorage first, then the cookies.
 	for (const key of [
 		...both,
 		...families.flatMap((family) => [
@@ -123,8 +122,6 @@ export const writeStoredClearEpoch = function writeStoredClearEpoch(
  * Remove every stored record and store the clear epoch for a clear made at
  * `at`. A no-op without a document.
  *
- * @param config - Where the records live.
- * @param at - When the clear happened.
  * @param knownEpoch - The newest epoch the caller has read, so the new one
  * is past it even when storage lost it.
  * @internal

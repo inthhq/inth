@@ -182,7 +182,6 @@ export const reconcileIframe = function reconcileIframe(
 		return;
 	}
 
-	// Not allowed. Clear src if present.
 	const src = iframe.getAttribute('src');
 	if (!src) {
 		return;

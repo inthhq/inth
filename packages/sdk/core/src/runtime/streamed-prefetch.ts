@@ -20,8 +20,6 @@ import type { ConsentProviderRuntimeOptions, RuntimePrefetch } from './types';
  * `@inth/sdk/runtime/provider` does the same and loads this code only for
  * a runtime whose prefetch is a promise.
  *
- * @param mode - The runtime's transport factory.
- * @param prefetch - The pending prefetch.
  * @param options - The runtime's `overrides` and `experiment`.
  * @param getKernel - The kernel being initialized, once it exists.
  * @returns A transport factory of the same kind.

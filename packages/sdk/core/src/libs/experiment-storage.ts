@@ -11,7 +11,6 @@ import { EXPERIMENT_STORAGE_KEY } from './storage-keys';
 
 /** What the browser keeps between visits: the arm the banner showed. */
 export interface StoredExperimentArm {
-	/** The experiment id. */
 	id: string;
 	/** The arm the banner rendered. */
 	arm: string;
@@ -40,8 +39,6 @@ const parseStored = function parseStored(
 /**
  * Read the stored arm, from localStorage first and the cookie fallback
  * second. Never throws; unreadable storage reads as no record.
- *
- * @returns The stored arm, or `null`.
  */
 export const readStoredExperimentArm =
 	function readStoredExperimentArm(): StoredExperimentArm | null {
@@ -76,7 +73,6 @@ export const EXPERIMENT_WINDOW_KEY = '__inthExperiment';
 /**
  * The arm an early request of this page picked, if it is well formed.
  *
- * @returns The arm, or `null`.
  * @internal
  */
 export const readEarlyExperimentArm =
@@ -95,7 +91,6 @@ export const readEarlyExperimentArm =
 /**
  * Record the arm an early request picked, for the runtime to run.
  *
- * @param record - The experiment id and arm.
  * @internal
  */
 export const writeEarlyExperimentArm = function writeEarlyExperimentArm(
@@ -115,7 +110,6 @@ export const writeEarlyExperimentArm = function writeEarlyExperimentArm(
  * drops any fallback cookie a previous visit left, so a later read that has
  * to fall back to the cookie cannot restore an older arm. Never throws.
  *
- * @param record - The experiment id and arm.
  * @param storageConfig - Cookie domain and path for the fallback.
  */
 export const writeStoredExperimentArm = function writeStoredExperimentArm(

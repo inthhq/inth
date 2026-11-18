@@ -4,13 +4,11 @@ import { deleteCookie, getCookie, getRootDomain, setCookie } from '..';
 
 describe('Cookie Storage', () => {
 	beforeEach(() => {
-		// Clear all cookies and localStorage before each test
 		document.cookie = '';
 		window.localStorage.clear();
 	});
 
 	afterEach(() => {
-		// Clean up after each test
 		vi.restoreAllMocks();
 		vi.useRealTimers();
 		document.cookie = '';
@@ -54,7 +52,6 @@ describe('Cookie Storage', () => {
 
 			expect(() => setCookie('test-cookie', 'value')).not.toThrow();
 
-			// Restore document
 			globalThis.document = originalDocument;
 			consoleWarnSpy.mockRestore();
 		});
@@ -112,19 +109,15 @@ describe('Cookie Storage', () => {
 
 			setCookie('test-timestamp', dataWithTimestamp);
 
-			// Extract flat cookie value
 			const cookieValue =
 				document.cookie.split('test-timestamp=')[1]?.split(';')[0] || '';
 
-			// Verify cookie uses 'ts' for timestamp in flat format
 			expect(cookieValue).toContain('ts:');
 
-			// Should use flat format
 			expect(cookieValue).toContain(':');
 			expect(cookieValue).toContain(',');
 			expect(cookieValue).not.toContain('{');
 
-			// Verify retrieval expands it back
 			const retrieved = getCookie<typeof dataWithTimestamp>('test-timestamp');
 			expect(retrieved?.timestamp).toBe(dataWithTimestamp.timestamp);
 			expect(retrieved?.preferences).toEqual(dataWithTimestamp.preferences);
@@ -132,7 +125,6 @@ describe('Cookie Storage', () => {
 	});
 	describe('Cross-subdomain support', () => {
 		it('should provide getRootDomain helper for cross-subdomain cookies', () => {
-			// Mock window.location.hostname
 			Object.defineProperty(window, 'location', {
 				configurable: true,
 				value: { hostname: 'app.example.com' },
@@ -179,7 +171,6 @@ describe('Cookie Storage', () => {
 
 	describe('SSR compatibility', () => {
 		it('should handle missing document object gracefully', () => {
-			// Save current state
 			const originalDocument = globalThis.document;
 			const originalWindow = globalThis.window;
 
@@ -188,7 +179,6 @@ describe('Cookie Storage', () => {
 			const value = getCookie('test');
 			expect(value).toBeNull();
 
-			// Restore
 			globalThis.document = originalDocument;
 			globalThis.window = originalWindow;
 		});

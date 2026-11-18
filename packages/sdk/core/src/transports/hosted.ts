@@ -1,5 +1,5 @@
 /**
- * Hosted transport — talks to a Inth backend's `/init` and `/subjects`
+ * Hosted transport — talks to an Inth backend's `/init` and `/subjects`
  * endpoints.
  *
  * Isomorphic: works in Node, RSC, edge, and browser. No top-level

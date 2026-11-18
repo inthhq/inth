@@ -104,7 +104,6 @@ export const hasRevokedPermission = function hasRevokedPermission(
  * request is not cancelled, and runs in a later macrotask so stored records
  * and synchronous consent callbacks finish first.
  * Framework adapters call this; applications set `reloadOnConsentRevoked`.
- * @param options - Kernel, enablement and callback accessors.
  * @returns A disposer that stops watching and cancels a pending reload.
  * @internal
  */

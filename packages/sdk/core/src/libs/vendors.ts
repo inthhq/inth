@@ -656,7 +656,6 @@ export const forgetOwnedVendors = function forgetOwnedVendors(
  * Whether `snapshot` decides vendors one by one. Under the IAB model the
  * vendor axis is inert: IAB vendor consent lives in the TC string, and
  * the Inth vendor choice neither gates nor saves.
- * @param snapshot - Immutable kernel snapshot.
  * @returns `true` outside the IAB model.
  */
 export const vendorAxisActive = (

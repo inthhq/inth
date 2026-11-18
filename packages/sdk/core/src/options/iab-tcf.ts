@@ -8,7 +8,6 @@
  * @packageDocumentation
  */
 
-// GVL types are defined in @inth/sdk/schema — re-export for internal consumers
 import type { GlobalVendorList } from '@inth/sdk-schema/types';
 
 export type {
@@ -33,13 +32,11 @@ export interface TCFConsentData {
 	/** Per-purpose consent state (keyed by purpose ID 1-11) */
 	purposeConsents: Record<number, boolean>;
 
-	/** Per-purpose legitimate interest state */
 	purposeLegitimateInterests: Record<number, boolean>;
 
 	/** Per-vendor consent state (keyed by vendor ID) */
 	vendorConsents: Record<string, boolean>;
 
-	/** Per-vendor legitimate interest state */
 	vendorLegitimateInterests: Record<string, boolean>;
 
 	/** Special feature opt-ins (keyed by special feature ID 1-2) */
@@ -53,7 +50,6 @@ export interface TCFConsentData {
 	 */
 	vendorsDisclosed: Record<number, boolean>;
 
-	/** Publisher restrictions (optional) */
 	publisherRestrictions?: PublisherRestriction[];
 }
 
@@ -127,28 +123,22 @@ export interface PingData {
 	/** True if using a registered CMP */
 	gdprApplies: boolean | undefined;
 
-	/** CMP loading status */
 	cmpLoaded: boolean;
 
-	/** CMP status string */
 	cmpStatus: CMPStatus;
 
 	/** Display status of CMP UI */
 	displayStatus: DisplayStatus;
 
-	/** TCF API version */
 	apiVersion: string;
 
-	/** CMP version */
 	cmpVersion: string;
 
 	/** CMP ID registered with IAB */
 	cmpId: number;
 
-	/** GVL version loaded */
 	gvlVersion: number;
 
-	/** TCF policy version */
 	tcfPolicyVersion: number;
 }
 
@@ -158,7 +148,6 @@ export interface PingData {
  * @public
  */
 export interface TCData {
-	/** TC String */
 	tcString: string;
 
 	/**
@@ -173,7 +162,6 @@ export interface TCData {
 	/** CMP ID registered with IAB */
 	cmpId?: number;
 
-	/** CMP version */
 	cmpVersion?: number;
 
 	/**
@@ -185,10 +173,8 @@ export interface TCData {
 	/** Listener ID if from addEventListener */
 	listenerId?: number;
 
-	/** Event status */
 	eventStatus?: EventStatus;
 
-	/** CMP status */
 	cmpStatus: CMPStatus;
 
 	/** Always `true`: TCF requires IsServiceSpecific=1. */
@@ -203,13 +189,11 @@ export interface TCData {
 	/** Purpose one treatment (0 = no special treatment, 1 = consent not given) */
 	purposeOneTreatment: boolean;
 
-	/** Purpose consents */
 	purpose: {
 		consents: Record<number, boolean>;
 		legitimateInterests: Record<number, boolean>;
 	};
 
-	/** Vendor consents */
 	vendor: {
 		consents: Record<number, boolean>;
 		legitimateInterests: Record<number, boolean>;
@@ -223,7 +207,6 @@ export interface TCData {
 	/** Special feature opt-ins */
 	specialFeatureOptins: Record<number, boolean>;
 
-	/** Publisher data */
 	publisher: {
 		consents: Record<number, boolean>;
 		legitimateInterests: Record<number, boolean>;
@@ -256,13 +239,10 @@ export interface TCDataOutsideTCF {
 	/** CMP ID registered with IAB */
 	cmpId: number;
 
-	/** CMP version */
 	cmpVersion: number;
 
-	/** CMP status */
 	cmpStatus: CMPStatus;
 
-	/** Event status */
 	eventStatus?: EventStatus;
 
 	/** Listener ID if from addEventListener */

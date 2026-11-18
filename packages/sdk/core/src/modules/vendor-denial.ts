@@ -17,7 +17,6 @@ import type { ConsentSnapshot } from '../types';
  * a denial recorded earlier would block it with no way back short of a bulk
  * action. A vendor removed from every declaration therefore follows its
  * category again, the same as one never declared.
- * @param snapshot - Immutable kernel snapshot.
  * @returns Denied vendor ids, or `null`.
  */
 export const deniedVendorIds = function deniedVendorIds(
@@ -45,8 +44,6 @@ export const deniedVendorIds = function deniedVendorIds(
 /**
  * Whether the subject turned a vendor off. Unknown ids are granted: a
  * denial only counts for a vendor the subject can still see and switch.
- * @param snapshot - Immutable kernel snapshot.
- * @param vendor - Vendor slug.
  * @returns `true` while the vendor is denied.
  */
 export const isVendorDenied = function isVendorDenied(

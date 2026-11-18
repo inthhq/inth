@@ -3,15 +3,11 @@
  *
  * Client-only debug and adapter identification module. Installs a tiny,
  * read-only `window.__inthDebug` object for browser inspection after a framework
- * adapter has mounted. This is the v3 successor to v2's `window.inthStore`
+ * adapter has mounted. This is the v3 successor to v2's `window.c15tStore`
  * exposure, but intentionally exposes only public metadata (`version`,
  * `pkg`, `mode`, `hosting`) instead of the mutable store. `window.inth`
  * is the script-tag API's (`@inth/sdk`), so the two never replace each
  * other.
- *
- * Concerns are split across siblings:
- * - `types.ts` — public type definitions.
- * - `index.ts` — this file: installation + lifecycle.
  *
  * Invariants:
  * - Isomorphic-safe: in non-browser environments the handle is inert.

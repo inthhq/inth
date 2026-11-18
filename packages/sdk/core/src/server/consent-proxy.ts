@@ -215,7 +215,6 @@ const trimTrailingSlashes = function trimTrailingSlashes(
 /**
  * Normalizes an adapter's `proxy: boolean | ConsentProxyOptions` option.
  *
- * @param proxy - The adapter's `proxy` option.
  * @returns The resolved options, or `undefined` when the proxy is off.
  * @example
  * ```ts
@@ -299,8 +298,6 @@ const isUnsafeSegment = function isUnsafeSegment(segment: string): boolean {
  * are rejected the same as a literal `..`.
  *
  * @param path - Path below the route prefix, for example `subjects/sub_1`.
- * @param allowed - Allowlist patterns.
- * @returns `true` when the path is allowed.
  */
 export const isConsentProxyPathAllowed = function isConsentProxyPathAllowed(
 	path: string,
@@ -320,7 +317,6 @@ export const isConsentProxyPathAllowed = function isConsentProxyPathAllowed(
 /**
  * Whether a URL is `http:` to a host other than loopback.
  *
- * @param url - The target URL.
  * @returns `true` for a cleartext remote target.
  */
 export const isCleartextRemoteURL = function isCleartextRemoteURL(
@@ -361,8 +357,6 @@ export const stripIdentityForCleartext = function stripIdentityForCleartext(
 /**
  * Keeps only the named cookies from a `Cookie` request header.
  *
- * @param cookieHeader - The incoming `Cookie` header value.
- * @param names - Cookie names to keep.
  * @returns The filtered header, or `undefined` when nothing remains.
  */
 export const filterCookieHeader = function filterCookieHeader(
@@ -422,7 +416,6 @@ export interface BuildConsentProxyRequestHeadersInput {
  * forwarding trio, then the Inth version header and `x-c15t-proxy`.
  *
  * @param input - Request, allowlists, forwarding values and adapter name.
- * @returns The headers for the upstream request.
  */
 export const buildConsentProxyRequestHeaders =
 	function buildConsentProxyRequestHeaders({
@@ -469,7 +462,6 @@ export const buildConsentProxyRequestHeaders =
  * Drops the `Domain=` attribute so a cookie the backend scoped to its own
  * host becomes host-only for the app origin.
  *
- * @param value - One `Set-Cookie` value.
  * @returns The value without its `Domain` attribute.
  */
 export const rewriteProxySetCookie = function rewriteProxySetCookie(
@@ -498,7 +490,6 @@ const readSetCookies = function readSetCookies(headers: Headers): string[] {
  * value names), body-encoding, and CORS headers, and re-appends each
  * `set-cookie` without its `Domain` attribute.
  *
- * @param upstream - The backend's response headers.
  * @returns Headers to send to the browser.
  */
 export const buildConsentProxyResponseHeaders =
@@ -535,7 +526,6 @@ export interface ForwardConsentRequestInput {
 	path: string;
 	/** Absolute backend base URL. */
 	projectUrl: string;
-	/** Resolved proxy options. */
 	options: ResolvedConsentProxyOptions;
 	/** Hop-chain values the adapter vouches for. */
 	forwarding: ConsentProxyForwarding;

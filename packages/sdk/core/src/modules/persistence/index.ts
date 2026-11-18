@@ -4,20 +4,6 @@
  * Kernel-consuming persistence module. Reads stored records on mount
  * (`hydrate`) and writes back on explicit kernel events.
  *
- * Concerns are split across siblings:
- * - `types.ts`          — public type definitions.
- * - `record-codec.ts`   — versioned decoders for every stored record.
- * - `record-storage.ts` — raw candidate reads and selection.
- * - `hydrate.ts`        — read path and the SSR seed reader.
- * - `clear.ts`          — removing every record and storing the clear epoch.
- * - `index.ts`          — this file: the public entry.
- * - `mount.ts`          — hydration, event wiring, lifecycle.
- * - `writer-loader.ts`  — loads and preloads the write code.
- * - `writer/`           — everything else that runs after a choice or a
- *                         later event: encoders, storage writes, the write
- *                         scheduler and reconciliation. Loaded on demand;
- *                         `tools.ts` passes it what it calls here.
- *
  * Invariants:
  * - Hydration runs synchronously inside `createPersistence` so the
  *   caller can block first paint until stored records are applied. It
@@ -36,7 +22,7 @@
  *   the records another tab stores carry. `clear()` keeps the ID in memory.
  *   Only `set.subjectId(null)` replaces it with a new one. `keepSubject`
  *   and external permissions turn all of this off.
- * - Startup removes a `<key>-sid` copy that Inth 3.2 stored before any
+ * - Startup removes a `<key>-sid` copy that c15t 3.2 stored before any
  *   choice. It is the only startup write, and only when such a copy exists.
  * - Choice envelope writes follow `choice:recorded` and `subject:resolved`.
  *   Vendor and notice records follow `subject:resolved` too, since they
@@ -134,9 +120,6 @@ export const CONSENT_STORAGE_KEY = STORAGE_KEY_V2;
 /**
  * Mount persistence on a kernel: hydrate it from storage now, and store its
  * records after the kernel's events from then on.
- *
- * @param options - Kernel, storage configuration, clock and sync.
- * @returns The handle.
  */
 export const createPersistence: (
 	options: PersistenceOptions

@@ -15,10 +15,6 @@ import { createManifestRequestInit } from './manifest-request';
 /**
  * Fetch the backend's consent manifest.
  *
- * @param manifestUrl - Where the manifest lives.
- * @param fetchImpl - Fetch implementation.
- * @param options - Request headers and credentials mode.
- * @returns The manifest.
  * @throws {Error} When the backend answers with an error status.
  * @internal
  */
@@ -54,8 +50,6 @@ const normalizeGeoValue = function normalizeGeoValue(
 /**
  * Ask a same-origin route for the visitor's `{ country, region }`.
  *
- * @param geoUrl - The route.
- * @param fetchImpl - Fetch implementation.
  * @returns The location, or `undefined` when the route fails; the `/init`
  * fallback still answers then.
  * @internal

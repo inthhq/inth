@@ -18,7 +18,7 @@ afterEach(() => {
 test.each([
 	['persistence: false', { persistence: false }],
 	['enabled: false', { enabled: false }],
-] as const)('a runtime with %s removes a inth 3.2 copy', (_, extra) => {
+] as const)('a runtime with %s removes a c15t 3.2 copy', (_, extra) => {
 	document.cookie = 'inth-sid=sub_legacy; path=/';
 	localStorage.setItem('inth-sid', 'sub_legacy');
 	const runtime = createConsentRuntime({

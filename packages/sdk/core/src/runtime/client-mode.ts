@@ -108,7 +108,6 @@ const loadManifestBrowserModule: LoadManifestBrowserModule = () =>
  *
  * @param records - Record transport used until init starts.
  * @param load - Loads the transport that runs init.
- * @returns A kernel transport.
  */
 export const createLazyInitTransport = function createLazyInitTransport(
 	records: KernelTransport,
@@ -286,7 +285,6 @@ const startEarlyInit = function startEarlyInit(
  *
  * @param options - Backend URL and, for same-origin init, `initUrl`.
  * @param load - Loads the hosted transport's module.
- * @returns A provider transport factory.
  */
 export const lazyHosted = function lazyHosted(
 	options: LazyHostedOptions,
@@ -337,7 +335,6 @@ export const lazyHosted = function lazyHosted(
  *
  * @param entry - The testing entry named in the production error.
  * @param options - `iab` picks the pack's IAB TCF variant.
- * @param load - Loads the transport's module.
  * @returns A provider transport factory reporting `kind: 'offline'`.
  */
 export const lazyTesting = function lazyTesting(
@@ -399,7 +396,6 @@ const hasPolicy = function hasPolicy(
  * start once it arrives without one. Saves before the first init go out
  * through the record transport.
  *
- * @param options - Manifest source and backend.
  * @param load - Loads the browser resolver's module.
  * @returns A provider transport factory reporting `kind: 'manifest'`.
  */

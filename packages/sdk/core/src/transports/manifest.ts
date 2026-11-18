@@ -306,7 +306,6 @@ const defaultFetchGvl = function defaultFetchGvl(input: {
  * id, fingerprint, geo, language, and GPC signal so the backend can reject
  * a consent recorded against a stale policy.
  *
- * @param options - Manifest source, backend URL, and resolver inputs.
  * @returns A kernel transport backed by local manifest resolution.
  * @throws {Error} When neither `snapshot` nor `manifestUrl` is provided, or no
  * `fetch` implementation is available.

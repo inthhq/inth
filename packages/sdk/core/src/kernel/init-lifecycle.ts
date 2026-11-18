@@ -275,7 +275,6 @@ const foldInitResponse = function foldInitResponse(
 			? (response.policySnapshotToken ?? null)
 			: null;
 
-	// IAB passthrough: fold gvl / customVendors / cmpId into the iab slice.
 	let nextIab: KernelIABState | null | undefined;
 	if (
 		response.gvlReference !== undefined ||

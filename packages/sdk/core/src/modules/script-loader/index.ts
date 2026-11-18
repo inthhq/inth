@@ -8,18 +8,8 @@ import { createScriptLoaderWith } from './loader';
  * `onConsentChange` callbacks, honors `alwaysLoad` /
  * `persistAfterConsentRevoked` / `callbackOnly` / `anonymizeId`.
  *
- * Concerns are split across siblings:
- * - `types.ts`        — public + internal type definitions.
- * - `normalize.ts`    — script normalization + element-ID resolution.
- * - `eligibility.ts`  — consent-gate evaluation.
- * - `callbacks.ts`    — lifecycle callback dispatch.
- * - `debug.ts`        — debug-event emission (consumer + v2 compat).
- * - `mount.ts`        — DOM mount / unmount / batched append.
- * - `loader.ts`       — wiring + reconcile loop, written against the
- *   tools `index.ts` passes in, so it can load on demand as one chunk.
- * - `index.ts`        — this file: the public entry.
- *
- * v2 parity: `packages/sdk/core/src/libs/script-loader/{core,utils,store,types}.ts`.
+ * `loader.ts` is written against the tools `index.ts` passes in, so it
+ * can load on demand as one chunk.
  *
  * Invariants:
  * - Idempotent by resolved element ID: calling `createScriptLoader` twice
@@ -53,9 +43,6 @@ export type {
 /**
  * Create a script loader: mounts each script whose consent condition
  * passes and unmounts it when consent is withdrawn.
- *
- * @param options - The kernel and the scripts.
- * @returns The loader handle.
  */
 export const createScriptLoader = function createScriptLoader(
 	options: ScriptLoaderOptions

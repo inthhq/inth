@@ -24,9 +24,6 @@ export type {
 /**
  * Check the kernel's arm against each policy and remember a inth-picked arm
  * under the experiment storage key once the banner has shown it.
- *
- * @param options - Experiment, kernel, host presentation and reporting.
- * @returns The controller.
  */
 export const createExperimentController = function createExperimentController(
 	options: ExperimentControllerOptions

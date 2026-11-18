@@ -11,8 +11,6 @@ import type { ConsentRuntimeModules } from './types';
  * the chunk fails to load. One of {@link onDemandRuntimeModules}; exported
  * on its own from `@inth/sdk/runtime/on-demand-factories`.
  *
- * @param kernel - The kernel the source drives.
- * @param source - The external consent source.
  * @returns A disposer that disconnects, or cancels a pending connection.
  */
 export const connectConsentSourceOnDemand: ConsentRuntimeModules['connectConsentSource'] =

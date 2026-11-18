@@ -18,7 +18,6 @@ import { lazyRuntimeModule } from './lazy-module';
  * {@link onDemandRuntimeModules} loads the loader and the blocker as one
  * chunk instead. Exported from `@inth/sdk/runtime/on-demand-factories`.
  *
- * @param options - The network blocker options the runtime passes.
  * @returns A handle that queues calls until the module has loaded.
  */
 export const networkBlockerOnDemand = function networkBlockerOnDemand(

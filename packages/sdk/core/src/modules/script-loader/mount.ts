@@ -120,7 +120,7 @@ const elementObservers = new WeakMap<
 // Keep physical completion when another registration joins after the event.
 const elementCompletions = new WeakMap<HTMLScriptElement, ElementCompletion>();
 
-// inth-created resources released without removal can be owned again on adoption.
+// Inth-created resources released without removal can be owned again on adoption.
 const retainedResources = new WeakSet<HTMLScriptElement>();
 const retainedCompletions = new WeakSet<HTMLScriptElement>();
 

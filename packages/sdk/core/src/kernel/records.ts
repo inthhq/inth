@@ -89,9 +89,6 @@ export interface RecordsBoundary {
 	noteRecordedSubject: (id: string | undefined) => void;
 }
 
-/**
- * Create the records boundary of one kernel.
- */
 export const createRecordsBoundary = function createRecordsBoundary({
 	runtime,
 	transport,

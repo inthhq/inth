@@ -37,7 +37,6 @@ const warnUndeclaredVendor = function warnUndeclaredVendor(
  * The rule `isVendorAllowed` applies: declared, not turned off outside
  * IAB, and its category condition holds under `permissions`.
  *
- * @param snapshot - Immutable kernel snapshot.
  * @param vendorId - Vendor id as declared.
  * @param permissions - Reads the category permissions to check against;
  * only called for a declared vendor that is not turned off.
@@ -73,7 +72,6 @@ export const vendorAllowedUnder = function vendorAllowedUnder(
  * permissions the snapshot already holds, with no re-evaluation. The
  * answer `isVendorAllowed(snapshot, vendorId, snapshot.evaluatedAt)` gives.
  *
- * @param snapshot - Immutable kernel snapshot.
  * @param vendorId - Vendor id as declared.
  * @returns `true` when the vendor is declared and allowed in `snapshot`.
  * @internal

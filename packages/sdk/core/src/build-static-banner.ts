@@ -72,9 +72,6 @@ const BANNER_MODULE =
  * The `-deferred` twin of a sheet `@inth/react` imports, or `undefined` for
  * any other import.
  *
- * @param id - The import specifier.
- * @param importer - The importing module's path.
- * @returns The specifier to resolve instead.
  * @internal
  */
 export const deferredSheetSpecifier = function deferredSheetSpecifier(
@@ -96,8 +93,6 @@ const CONSENT_BANNER_IMPORT = '#consent-banner';
  * one until its client loads, so the banner's code need not be in the
  * page's first-load JavaScript. Any other import is `undefined`.
  *
- * @param id - The import specifier.
- * @param importer - The importing module's path.
  * @returns The gate's path in the importer's `@inth/react`.
  * @internal
  */
@@ -134,9 +129,6 @@ export interface StaticBannerChunk {
  * a lazy chunk of its own, or no Inth at all, such as a second entry, gets
  * nothing.
  *
- * @param chunk - The page's entry chunk.
- * @param bundle - Every output, by file name.
- * @returns The package directory.
  * @internal
  */
 export const findPageBanner = function findPageBanner(
@@ -170,7 +162,6 @@ export const findPageBanner = function findPageBanner(
 /**
  * Loads `@inth/react/static-banner` from the installed package.
  *
- * @param reactRoot - The package directory.
  * @returns Its exports, or `undefined` when this version has none.
  * @internal
  */
@@ -240,7 +231,6 @@ export interface StaticBanner {
  * shows it when the page's `/init` answers with the same policy.
  *
  * @param renderer - `@inth/react/static-banner`.
- * @param manifest - The deployment's manifest.
  * @param options - Language to render, and the consent storage key.
  * @returns The banner, or `undefined` when no pack shows a choice banner.
  * @internal
@@ -292,7 +282,6 @@ export const renderStaticBannerHtml = function renderStaticBannerHtml(
  * loading a deferred sheet.
  *
  * @param sheets - The stylesheets, in cascade order.
- * @returns `<style>` elements.
  * @internal
  */
 export const renderStaticBannerSheets = function renderStaticBannerSheets(
@@ -311,8 +300,6 @@ export const renderStaticBannerSheets = function renderStaticBannerSheets(
  * the banner at the start of `<body>`, so it paints with the first frame
  * that shows it.
  *
- * @param html - The page.
- * @param parts - The sheets, and the banner if any.
  * @returns The page with both, or `html` when it has no `</head>`.
  * @internal
  */

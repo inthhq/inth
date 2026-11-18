@@ -64,25 +64,18 @@ export interface ScriptLoaderTools {
 		script: Script
 	) => ScriptCallbackInfo['reportLoadError'];
 
-	/** `extractConsentNamesFromCondition`. */
 	categoriesOf: typeof extractConsentNamesFromCondition;
 	/** Hands a debug event to the page's script debug listeners. */
 	debug: typeof dispatchScriptDebugEvent;
 	vendorAxisActive: typeof vendorAxisActive;
-	/** `declareOwnedVendors`. */
 	declareOwners: typeof declareOwnedVendors;
-	/** `deniedVendorIds`. */
 	deniedVendors: typeof deniedVendorIds;
-	/** `evaluateConsent`. */
 	evaluate: typeof evaluateConsent;
-	/** `forgetOwnedVendors`. */
 	forgetOwners: typeof forgetOwnedVendors;
 	/** Project declarations after this loader leaves, without mutations. */
 	withoutOwners: typeof withoutOwnedVendors;
-	/** `getEffectiveGateState`. */
 	gateState: typeof getEffectiveGateState;
 	has: typeof has;
-	/** `isValidVendorId`. */
 	isVendorId: typeof isValidVendorId;
 }
 
@@ -163,7 +156,6 @@ export interface ScriptLoaderHandle {
 	dispose: () => void;
 	/** Swap the script configuration. Reconciles DOM immediately. */
 	updateScripts: (next: Script[]) => void;
-	/** Current set of loaded script IDs. */
 	getLoadedScriptIds: () => string[];
 }
 

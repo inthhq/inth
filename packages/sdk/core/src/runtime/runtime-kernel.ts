@@ -5,7 +5,6 @@
  * same kernel a browser runtime would and serializes its snapshot, so every
  * rule here (vendor merging, inferred categories, the disabled policy, the
  * experiment seed) applies identically on both sides.
- *
  */
 import { deepMergeTranslations } from '@inth/sdk-translations';
 import type { I18nConfig } from '@inth/sdk-translations';
@@ -49,7 +48,6 @@ const DEFAULT_TRANSLATIONS: KernelTranslations = {
  * v2 callers pass `{ id, identityProvider }`; v3 callers pass
  * `{ externalId, identityProvider }`.
  *
- * @param user - The configured subject, if any.
  * @returns The kernel-shaped user, or `undefined` when none was supplied.
  */
 export const normalizeKernelUser = function normalizeKernelUser(
@@ -155,7 +153,6 @@ const runtimeOwner = function runtimeOwner(pkg: string): string {
  * The transport factory the runtime's options select: `mode` when it is a
  * factory or a `testing()` value, else the hosted backend at `projectUrl`.
  *
- * @param options - The runtime options.
  * @param hostedMode - Builds the factory for `projectUrl`.
  * @returns The factory, or `undefined` when the options select none.
  * @internal
@@ -267,7 +264,6 @@ export const inferConsentCategories = function inferConsentCategories(
  * Exported so servers can construct the same kernel a browser runtime
  * would and serialize its snapshot.
  *
- * @param options - The runtime options.
  * @param wrapTransport - Wraps the transport `mode` builds before the kernel
  *   gets it. The browser runtime adds its consent journey this way.
  * @param mode - The transport factory. Defaults to the one the options

@@ -1059,7 +1059,7 @@ test.each([
 );
 
 // A linked account a notice acknowledgement carries goes with it when an
-// older Inth runtime, which knows nothing of the subject companion, removes
+// older c15t runtime, which knows nothing of the subject companion, removes
 // the acknowledgement or writes it again without a subject. A consent or
 // vendor record stored without a subject does not keep it either. The ID
 // stays, as a reload finds it.
@@ -1125,7 +1125,7 @@ test.each([
 			undefined,
 			now
 		);
-		// A copy Inth 3.2 stored before any choice. Nothing reads it now.
+		// A copy c15t 3.2 stored before any choice. Nothing reads it now.
 		localStorage.setItem(keys.subject, 'sub_a');
 		document.cookie = `${keys.subject}=sub_a; path=/`;
 		const sent: unknown[] = [];

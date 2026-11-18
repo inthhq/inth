@@ -73,8 +73,6 @@ export const inthProtocolParams: Readonly<
  * A policy contract header value as {@link readProducerPolicyContract}
  * reads it: `undefined` when absent, `null` when malformed.
  *
- * @param value - The header value.
- * @returns The contract version.
  * @internal
  */
 export const parsePolicyContract = function parsePolicyContract(

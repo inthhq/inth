@@ -6,7 +6,6 @@ import type { ConsentRuntimeOptions } from './types';
  * `undefined` when `experimentalScriptRegistry` is off or there is no
  * document to load scripts into.
  *
- * @param options - The runtime's options.
  * @param callsInit - Whether the runtime asks `/init`. One that never
  * does, such as with `enabled: false` or a `consentSource`, has only the
  * list its prefetch carries.

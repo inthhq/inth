@@ -17,7 +17,6 @@ describe('hasGlobalPrivacyControlSignal', () => {
 	});
 
 	afterEach(() => {
-		// Restore the original window reference after each test
 		if (originalWindow === undefined) {
 			// Clean up a window created by the test.
 			Reflect.deleteProperty(globalThis, 'window');
@@ -40,7 +39,6 @@ describe('hasGlobalPrivacyControlSignal', () => {
 			globalPrivacyControl: true,
 		} as Navigator & { globalPrivacyControl?: boolean | string };
 
-		// Provide a minimal window implementation with the mocked navigator
 		const mockWindow = { navigator: mockNavigator } as unknown as Window;
 
 		// @ts-expect-error - We intentionally override the global window

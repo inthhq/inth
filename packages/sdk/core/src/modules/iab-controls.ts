@@ -47,7 +47,6 @@ const notify = (registration: Registration): void => {
 
 /**
  * Connects an IAB module to inspection tools without a second CMP instance.
- * @param kernel - The module's consent kernel.
  * @param controls - Operations owned by the module.
  * @returns Cleanup that removes only this registration.
  * @internal
@@ -69,7 +68,6 @@ export const registerIABControls = (
 
 /**
  * Reads the IAB operations already attached to a kernel.
- * @param kernel - The provider's kernel.
  * @returns Its controls, or undefined before initialization/after disposal.
  */
 export const getIABControls = (
@@ -78,9 +76,7 @@ export const getIABControls = (
 
 /**
  * Observes IAB module registration and disposal, including lazy initialization.
- * @param kernel - The provider's kernel.
  * @param listener - Called when the available controls change.
- * @returns Subscription cleanup.
  */
 export const subscribeIABControls = (
 	kernel: ConsentKernel,

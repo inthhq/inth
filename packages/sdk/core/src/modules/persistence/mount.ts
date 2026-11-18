@@ -134,9 +134,6 @@ const withHolderSubject = function withHolderSubject(
  * `createPersistence`, with the place the write code comes from. Tests
  * pass their own loader.
  *
- * @param options - Kernel, storage configuration, clock and sync.
- * @param loader - Where the write code comes from.
- * @returns The handle.
  * @internal
  */
 export const mountPersistence = function mountPersistence(
@@ -151,7 +148,6 @@ export const mountPersistence = function mountPersistence(
 		vendorsRecorded: false,
 	};
 	const browser = typeof document !== 'undefined';
-	// A browser page this module can listen to.
 	const listenable =
 		browser &&
 		typeof window !== 'undefined' &&
@@ -265,7 +261,6 @@ export const mountPersistence = function mountPersistence(
 		land(module);
 	};
 
-	/** Write `kinds` now through the writer, or once it has landed. */
 	const request = function request(...kinds: WriteKind[]): void {
 		const landed = landedWriter();
 		// A write stored from this kernel, which started from any queued
@@ -300,7 +295,6 @@ export const mountPersistence = function mountPersistence(
 	// Set from a save's start to its completion. The records it commits are
 	// announced in between, synchronously.
 	let saving = false;
-	// The notice acknowledgement when the latest save started.
 	let noticeBeforeSave: ConsentSnapshot['noticeDismissal'] = null;
 
 	const noteGeneratedSubject = function noteGeneratedSubject(
@@ -515,7 +509,6 @@ export const mountPersistence = function mountPersistence(
 		if (landed) {
 			landed.flush();
 		} else if (requested.size > 0) {
-			// Its write code has not landed yet: hydrate once it has.
 			hydrateRequested = true;
 			void withWriter();
 			return null;
@@ -791,7 +784,6 @@ export const mountPersistence = function mountPersistence(
 			return () => undefined;
 		}
 		const listeners: [EventTarget, string, (event: Event) => void][] = [
-			// Leaving the page: a write still waiting for its macrotask runs now.
 			[window, 'pagehide', () => writer?.flush()],
 		];
 		if (options.sync !== false) {
@@ -843,7 +835,7 @@ export const mountPersistence = function mountPersistence(
 	};
 
 	if (browser) {
-		// Inth 3.2 stored the subject ID before any choice. It is read once,
+		// c15t 3.2 stored the subject ID before any choice. It is read once,
 		// for records an older version stored without an ID, then removed.
 		// Only a handle that owns the subject adopts it, and a throwaway one
 		// that only reads (`keepSubject`, such as the script-loader
@@ -963,7 +955,6 @@ export const mountPersistence = function mountPersistence(
 			if (landed) {
 				return landed.reconcile();
 			}
-			// Runs once the write code has landed.
 			reconcileRequested = true;
 			void withWriter();
 			return false;
