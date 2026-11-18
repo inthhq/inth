@@ -6,7 +6,7 @@
 	 */
 	import BenchmarkProbe from '$lib/benchmark-probe.svelte';
 	import type { SvelteBenchScenario } from '$lib/benchmark-probe.svelte';
-	import { ConsentBanner, ConsentDialog } from '@c15t/svelte';
+	import { ConsentBanner, ConsentDialog } from '@inth/svelte';
 	import type { Snippet } from 'svelte';
 
 	let {

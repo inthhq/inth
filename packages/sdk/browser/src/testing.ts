@@ -1,8 +1,8 @@
 /**
- * `@c15t/browser/testing` — run the consent flow in tests with no backend.
+ * `@inth/sdk/testing` — run the consent flow in tests with no backend.
  *
- * Pass `testing()` as the `mode` of `init()` from `@c15t/browser`,
- * `@c15t/browser/headless` or `@c15t/browser/iab`. It needs no
+ * Pass `testing()` as the `mode` of `init()` from `@inth/sdk`,
+ * `@inth/sdk/headless` or `@inth/sdk/iab-client`. It needs no
  * `projectUrl`. It resolves the recommended policy pack in the browser and
  * sends nothing; set `overrides.country` (and `overrides.region`) to pick
  * the policy:
@@ -20,18 +20,24 @@
  *
  * @example
  * ```ts
- * import { init } from '@c15t/browser';
- * import { testing } from '@c15t/browser/testing';
+ * import { init } from '@inth/sdk-browser';
+ * import { testing } from '@inth/sdk-browser/testing';
  *
  * init({ overrides: { country: 'DE' }, mode: testing() });
  * ```
  *
  * @packageDocumentation
  */
-import { createTestingMode } from '@c15t/core/testing';
-import type { ConsentTesting, TestingModeOptions } from '@c15t/core/testing';
+import { createTestingMode } from '@inth/sdk-core/testing';
+import type {
+	ConsentTesting,
+	TestingModeOptions,
+} from '@inth/sdk-core/testing';
 
-export type { ConsentTesting, TestingModeOptions } from '@c15t/core/testing';
+export type {
+	ConsentTesting,
+	TestingModeOptions,
+} from '@inth/sdk-core/testing';
 
 /**
  * A `mode` for tests that resolves `policy`, or the recommended policy
@@ -45,5 +51,5 @@ export type { ConsentTesting, TestingModeOptions } from '@c15t/core/testing';
 export const testing = function testing(
 	options: TestingModeOptions = {}
 ): ConsentTesting {
-	return createTestingMode('@c15t/browser/testing', options);
+	return createTestingMode('@inth/sdk/testing', options);
 };

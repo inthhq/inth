@@ -10,7 +10,7 @@ import {
 	clearBrowserConsentStorage,
 } from '@c15t/conformance/suite';
 import type { SuiteApi } from '@c15t/conformance/suite';
-import type { ConsentPresentation, GlobalVendorList } from '@c15t/core';
+import type { ConsentPresentation, GlobalVendorList } from '@inth/sdk-core';
 import { afterEach, describe, expect, test } from 'vitest';
 
 import type { ConsentClient } from '../types';

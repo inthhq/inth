@@ -3,7 +3,7 @@
  * has to choose. On a slow connection the engine's chunks share bandwidth
  * with the page's largest image; started after it, they no longer delay
  * Largest Contentful Paint. The same rule as the server script start
- * (`AFTER_PRIORITY_IMAGES` in `@c15t/core/runtime/script-server-start`).
+ * (`AFTER_PRIORITY_IMAGES` in `@inth/sdk/runtime/script-server-start`).
  *
  * @packageDocumentation
  * @internal
@@ -29,7 +29,7 @@ export const importDialog = (): Promise<typeof DialogModule> =>
 
 /**
  * `EARLY_TAPS_WINDOW_KEY` and `EARLY_TAP_ROOT` from
- * `@c15t/core/surface-actions/early-tap-script`, copied: that module also
+ * `@inth/sdk/surface-actions/early-tap-script`, copied: that module also
  * holds the inline script's text, which the first-load chunk can do
  * without. A test keeps them equal.
  */

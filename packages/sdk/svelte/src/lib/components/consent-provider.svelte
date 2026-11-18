@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ConsentProviderRuntime } from '@c15t/core/runtime/provider';
+	import type { ConsentProviderRuntime } from '@inth/sdk/runtime/provider';
 	import { untrack } from 'svelte';
 
 	import { modulePreloadMarker } from '../module-preload';

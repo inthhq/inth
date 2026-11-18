@@ -1,6 +1,6 @@
-import { createConsentRuntime } from '@c15t/core/runtime';
-import type { ConsentRuntime } from '@c15t/core/runtime';
-import { resolvePolicyRules } from '@c15t/schema/types';
+import { createConsentRuntime } from '@inth/sdk/runtime';
+import type { ConsentRuntime } from '@inth/sdk/runtime';
+import { resolvePolicyRules } from '@inth/sdk/schema/types';
 import { mount } from '@vue/test-utils';
 import { describe, expect, test, vi } from 'vitest';
 import { defineComponent, h, inject } from 'vue';

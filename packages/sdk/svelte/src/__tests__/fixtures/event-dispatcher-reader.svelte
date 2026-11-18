@@ -2,7 +2,7 @@
 	import type {
 		EventDispatcher,
 		RuntimeEventDispatcherOptions,
-	} from '@c15t/core/events';
+	} from '@inth/sdk/events';
 	import { untrack } from 'svelte';
 
 	import { getEventDispatcher } from '../../lib/event-dispatcher';

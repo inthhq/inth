@@ -1,5 +1,5 @@
-import { getIABControls } from '@c15t/core';
-import type { ConsentKernel, KernelIABControls } from '@c15t/core';
+import { getIABControls } from '@inth/sdk-core';
+import type { ConsentKernel, KernelIABControls } from '@inth/sdk-core';
 
 import type { RunAction } from './action-runner';
 import {
@@ -32,7 +32,7 @@ const PAGE_SIZE = 20;
 /**
  * Purposes TCF Policies Appendix A allows only with consent. A custom vendor
  * may still declare them for legitimate interest, so the panel must not
- * offer that switch. Mirrors `CONSENT_ONLY_PURPOSES` in `@c15t/iab`.
+ * offer that switch. Mirrors `CONSENT_ONLY_PURPOSES` in `@inth/sdk/iab`.
  */
 const CONSENT_ONLY_PURPOSES: readonly number[] = [1, 3, 4, 5, 6];
 

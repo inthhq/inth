@@ -4,7 +4,7 @@ import {
 	ConsentDialog,
 	ConsentDialogLink,
 	ConsentRoot,
-} from 'c15t/next';
+} from '@inth/nextjs';
 import type { ReactNode } from 'react';
 
 import './globals.css';

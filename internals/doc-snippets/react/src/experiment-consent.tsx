@@ -1,12 +1,12 @@
 // #region docs:experiment-consent title="src/consent.tsx"
-import { defineExperiment } from 'c15t';
 import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogLink,
 	ConsentProvider,
-} from 'c15t/react';
-import type { ConsentProviderCallbacks } from 'c15t/react';
+} from '@inth/react';
+import type { ConsentProviderCallbacks } from '@inth/react';
+import { defineExperiment } from '@inth/sdk/engine';
 import type { ReactNode } from 'react';
 
 import { scripts } from './scripts';

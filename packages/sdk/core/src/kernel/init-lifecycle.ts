@@ -23,10 +23,10 @@
  * - `dispose()` stops retries, the timer and the listeners. An explicit
  *   `init()` re-arms everything; `hydrate()` re-arms the timer only.
  */
-import { readPolicyResolutionWire } from '@c15t/schema/types';
-import type { PolicyResolution } from '@c15t/schema/types';
-import type { Translations } from '@c15t/translations';
-import { deepMergeTranslations } from '@c15t/translations';
+import { readPolicyResolutionWire } from '@inth/sdk-schema/types';
+import type { PolicyResolution } from '@inth/sdk-schema/types';
+import type { Translations } from '@inth/sdk-translations';
+import { deepMergeTranslations } from '@inth/sdk-translations';
 
 import type { RecordIssue } from '../consent-record/validation';
 import { isProductionBuild } from '../libs/is-production';

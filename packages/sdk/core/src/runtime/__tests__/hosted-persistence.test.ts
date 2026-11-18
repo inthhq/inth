@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
-import { writePolicyResolutionWire } from '@c15t/schema/types';
-import { translations } from '@c15t/translations/en';
+import { writePolicyResolutionWire } from '@inth/sdk-schema/types';
+import { translations } from '@inth/sdk-translations/en';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 import {

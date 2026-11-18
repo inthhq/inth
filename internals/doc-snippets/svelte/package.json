@@ -6,8 +6,8 @@
 		"check-types": "svelte-check --tsconfig ./tsconfig.json"
 	},
 	"dependencies": {
-		"@c15t/integrations": "workspace:*",
-		"c15t": "workspace:*",
+		"@inth/integrations": "workspace:*",
+		"@inth/svelte": "workspace:*",
 		"svelte": "^5.56.4"
 	},
 	"devDependencies": {

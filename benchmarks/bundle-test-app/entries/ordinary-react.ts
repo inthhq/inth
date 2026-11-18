@@ -11,4 +11,4 @@ export {
 	useConsent,
 	useSaveConsents,
 	useScriptLoader,
-} from '@c15t/react';
+} from '@inth/react';

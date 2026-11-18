@@ -1,6 +1,9 @@
-import { getDataDisabled } from '@c15t/ui/primitives/data-state';
-import { getSwitchState, toggleSwitchValue } from '@c15t/ui/primitives/switch';
-import styles from '@c15t/ui/styles/components/switch';
+import { getDataDisabled } from '@inth/sdk/ui/primitives/data-state';
+import {
+	getSwitchState,
+	toggleSwitchValue,
+} from '@inth/sdk/ui/primitives/switch';
+import styles from '@inth/sdk/ui/styles/components/switch';
 import { forwardRef as createForwardRef } from 'react';
 import type { ButtonHTMLAttributes, KeyboardEvent } from 'react';
 

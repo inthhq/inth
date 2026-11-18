@@ -1,9 +1,9 @@
 /**
- * `@c15t/nextjs/server` server-only helpers.
+ * `@inth/nextjs/server` server-only helpers.
  *
  * `resolveConsent()` reads the incoming Next.js request (cookies + headers
  * via `next/headers`) and hands the facts to `resolveRequestConsent` from
- * `@c15t/core/server`, which owns the request read, the policy prefetch, the
+ * `@inth/sdk/server`, which owns the request read, the policy prefetch, the
  * forwarding rule, the budget and the merge. A Server Component passes the
  * result as a plain prop to the client `ConsentRoot`, which creates one
  * kernel per mount so concurrent requests do not share runtime state.
@@ -12,8 +12,8 @@
  * Component or route handler. It is NOT marked `'use server'` because it
  * is a plain async function, not an action.
  */
-import type { ConsentJourneyOption, ServerExperiment } from '@c15t/core';
-import { resolveRequestConsent } from '@c15t/core/server';
+import type { ConsentJourneyOption, ServerExperiment } from '@inth/sdk/engine';
+import { resolveRequestConsent } from '@inth/sdk/server';
 import * as React from 'react';
 
 import { createManifestFetchInit } from './api';
@@ -28,7 +28,7 @@ type Awaitable<Value> = Promise<Value> | Value;
  *
  * The default implementation calls `next/headers`, which only exists in the
  * App Router. Pass your own when the request arrives another way, such as
- * `getServerSideProps` in the Pages Router (see `@c15t/nextjs/pages`, which
+ * `getServerSideProps` in the Pages Router (see `@inth/nextjs/pages`, which
  * builds this adapter for you) or a test harness.
  *
  * @example
@@ -126,16 +126,16 @@ export interface ConsentRequestOptions {
 	/**
 	 * Request context adapter. Defaults to `next/headers`, so set this
 	 * wherever that module is unavailable: the Pages Router, custom
-	 * servers, or tests. `@c15t/nextjs/pages` derives it from the Node
+	 * servers, or tests. `@inth/nextjs/pages` derives it from the Node
 	 * request for you.
 	 */
 	request?: NextRequestContext;
 }
 
 /**
- * Type alias re-exported so consumers can stay within `@c15t/nextjs`.
+ * Type alias re-exported so consumers can stay within `@inth/nextjs`.
  */
-export type { KernelConfig } from '@c15t/core';
+export type { KernelConfig } from '@inth/sdk/engine';
 export type { ConsentState } from './types';
 export type { ConsentConfig } from './config';
 export { defineConsentConfig } from './config';
@@ -280,8 +280,8 @@ const reportPrefetchError = function reportPrefetchError(
  * @returns The visitor's JSON-serializable state for `ConsentRoot`
  * @example
  * ```tsx
- * import { ConsentRoot } from 'c15t/next';
- * import { resolveConsent } from 'c15t/next/server';
+ * import { ConsentRoot } from '@inth/nextjs';
+ * import { resolveConsent } from '@inth/nextjs/server';
  *
  * // In a Server Component. Not awaited: the page renders while consent
  * // resolves.
@@ -297,7 +297,7 @@ export const resolveConsent = async function resolveConsent(
 		: await readAppRouterRequest();
 	const { routePrefix } = source;
 	return (await resolveRequestConsent({
-		adapter: '@c15t/nextjs',
+		adapter: '@inth/nextjs',
 		experiment: options.experiment,
 		fetch: options.fetch,
 		forwardHeaders: options.forwardHeaders,

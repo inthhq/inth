@@ -19,7 +19,7 @@ import { InthPluginError } from './errors';
  * Colour fields of the `theme` prop that the native consent screens draw.
  *
  * Fields that have a web counterpart take its name from `Theme['colors']` in
- * `@c15t/ui`, which is also the `--c15t-*` custom property the web components
+ * `@inth/sdk/ui`, which is also the `--c15t-*` custom property the web components
  * read: `primary` is `--c15t-primary`, `textMuted` is `--c15t-text-muted`. The
  * remaining fields are surfaces the native screens draw and the web components
  * do not, so they keep the native name. Each value is `#RRGGBB`.
@@ -53,7 +53,7 @@ export type InthThemeColorName = keyof InthThemeColors;
  *
  * It is the same type `createConsentTheme` takes, so one object can style the
  * native consent screens here and the React Native components at runtime. Its
- * shape follows the web `Theme` from `@c15t/ui`: `colors` holds the light
+ * shape follows the web `Theme` from `@inth/sdk/ui`: `colors` holds the light
  * values and `dark` overrides them in the dark appearance. The plugin writes
  * the values the native screens draw into the native theme keys at prebuild.
  * Values only the React Native components draw, such as `motion`,

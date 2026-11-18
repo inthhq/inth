@@ -1,20 +1,20 @@
-import { hosted } from '@c15t/core';
-import { createManifestTransport } from '@c15t/core/transports/manifest';
 // Vite resolves this through the adapter's own React dependency, preserving
 // the dependency graph used by baseline comparisons.
-import { IABProvider, IABConsentBanner } from '@c15t/react/iab';
+import { IABProvider, IABConsentBanner } from '@inth/react/iab';
+import { hosted } from '@inth/sdk/engine';
+import { createManifestTransport } from '@inth/sdk/transports/manifest';
 import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentProvider,
 	ConsentRoot,
-} from '@c15t/tanstack-start';
+} from '@inth/tanstack-start';
 import type {
 	ConsentProviderOptions,
 	WithProjectUrl,
 	ConsentRootProps,
-} from '@c15t/tanstack-start';
-import type { ConsentState } from '@c15t/tanstack-start/server';
+} from '@inth/tanstack-start';
+import type { ConsentState } from '@inth/tanstack-start/server';
 import { useMemo } from 'react';
 import type { ReactNode } from 'react';
 

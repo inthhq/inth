@@ -6,7 +6,7 @@
  * @packageDocumentation
  */
 
-import styles from '@c15t/ui/styles/components/consent-dialog-trigger';
+import styles from '@inth/sdk/ui/styles/components/consent-dialog-trigger';
 import type { ReactNode } from 'react';
 
 import { useTheme } from '~/hooks/use-theme';

@@ -40,7 +40,7 @@ export const generateDistributionCss = (packageRoot: string): void => {
 
 		attemptedUiCssGeneration = true;
 		console.log(
-			`Missing UI CSS asset ${missingPath}; generating @c15t/ui CSS entrypoints...`
+			`Missing UI CSS asset ${missingPath}; generating @inth/sdk/ui CSS entrypoints...`
 		);
 
 		const result = spawnSync('bun', ['scripts/generate-css-entrypoints.ts'], {
@@ -50,7 +50,7 @@ export const generateDistributionCss = (packageRoot: string): void => {
 
 		if (result.error) {
 			throw new Error(
-				`Failed to start @c15t/ui CSS generator: ${result.error.message}`
+				`Failed to start @inth/sdk/ui CSS generator: ${result.error.message}`
 			);
 		}
 
@@ -61,7 +61,7 @@ export const generateDistributionCss = (packageRoot: string): void => {
 					: `signal ${result.signal}`;
 
 			throw new Error(
-				`Failed to generate @c15t/ui CSS entrypoints with ${exitReason}.${formatCommandOutput(
+				`Failed to generate @inth/sdk/ui CSS entrypoints with ${exitReason}.${formatCommandOutput(
 					'stdout',
 					result.stdout
 				)}${formatCommandOutput('stderr', result.stderr)}`
@@ -83,7 +83,7 @@ export const generateDistributionCss = (packageRoot: string): void => {
 		}
 
 		throw new Error(
-			`@c15t/ui CSS generator completed but did not produce ${sourcePath}`
+			`@inth/sdk/ui CSS generator completed but did not produce ${sourcePath}`
 		);
 	};
 
@@ -109,7 +109,7 @@ export const generateDistributionCss = (packageRoot: string): void => {
 			'/**',
 			` * ${packageName} - Tailwind 3-compatible prebuilt component styles.`,
 			' *',
-			' * This file inlines @c15t/ui CSS so bundlers that do not follow',
+			' * This file inlines @inth/sdk/ui CSS so bundlers that do not follow',
 			' * nested package CSS imports still include the complete stylesheet.',
 			' */',
 			'',

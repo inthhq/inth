@@ -23,7 +23,7 @@ export default defineConfig({
 				// real sources here.
 				if (
 					source === '../packages/sdk/schema/dist/index.js' ||
-					source === '@c15t/schema'
+					source === '@inth/sdk/schema'
 				) {
 					return fileURLToPath(
 						new URL('../packages/sdk/schema/src/index.ts', import.meta.url)
@@ -31,7 +31,7 @@ export default defineConfig({
 				}
 				if (
 					source === '../packages/sdk/translations/dist/index.js' ||
-					source === '@c15t/translations'
+					source === '@inth/sdk/translations'
 				) {
 					return fileURLToPath(
 						new URL(
@@ -40,7 +40,7 @@ export default defineConfig({
 						)
 					);
 				}
-				if (source === '@c15t/translations/en') {
+				if (source === '@inth/sdk/translations/en') {
 					return fileURLToPath(
 						new URL(
 							'../packages/sdk/translations/src/translations/en.ts',
@@ -51,7 +51,7 @@ export default defineConfig({
 				// The manifest runtime only imports core's debug emitter at runtime.
 				// Resolve that real implementation without requiring a core build.
 				if (
-					source === '@c15t/core' &&
+					source === '@inth/sdk/engine' &&
 					importer?.endsWith('/packages/sdk/integrations/src/engine/runtime.ts')
 				) {
 					return fileURLToPath(
@@ -90,7 +90,7 @@ export default defineConfig({
 				['microsoft-clarity', 'analytics/microsoft-clarity'],
 				['tiktok-pixel', 'ads-and-pixels/tiktok-pixel'],
 			].map(([entry, source]) => [
-				`@c15t/integrations/${entry}`,
+				`@inth/integrations/${entry}`,
 				fileURLToPath(
 					new URL(
 						`../packages/sdk/integrations/src/vendors/${source}.ts`,

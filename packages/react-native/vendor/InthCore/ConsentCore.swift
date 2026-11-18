@@ -2293,7 +2293,7 @@ public final class ConsentCore: @unchecked Sendable {
             var draft = ConsentSnapshot.Draft(current: currentSnapshot)
             // The overrides a decision was actually made against, which is what the
             // backend recomputes before it accepts a save. `mapResolvedOverrides`
-            // and the merge in `@c15t/core` fold the served location and translation
+            // and the merge in `@inth/sdk/engine` fold the served location and translation
             // language over the app's own overrides, so a device that pinned nothing
             // still reports the country and region it was matched on. `gpc` survives
             // from the app because `/init` never derives it.

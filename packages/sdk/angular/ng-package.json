@@ -21,13 +21,5 @@
 	"lib": {
 		"entryFile": "src/public-api.ts"
 	},
-	"allowedNonPeerDependencies": [
-		"@c15t/core",
-		"@c15t/dev-tools",
-		"@c15t/iab",
-		"@c15t/schema",
-		"@c15t/translations",
-		"@c15t/ui",
-		"tslib"
-	]
+	"allowedNonPeerDependencies": ["@inth/sdk", "tslib"]
 }

@@ -30,7 +30,7 @@
  * The script carries the backend URL and protocol headers, nothing from the
  * request, so prerendered and cached shells can hold it.
  */
-import { buildPrefetchScript } from '@c15t/core';
+import { buildPrefetchScript } from '@inth/sdk/engine';
 
 import type { RuntimeConsentConfig } from '../kernel';
 import { readNuxtMode } from '../nuxt-mode';

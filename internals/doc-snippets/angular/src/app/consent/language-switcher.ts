@@ -1,6 +1,6 @@
 // #region docs:language-switcher
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { ConsentManager } from '@c15t/angular';
+import { ConsentManager } from '@inth/angular';
 
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,

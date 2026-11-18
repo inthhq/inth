@@ -1,8 +1,8 @@
-import { defaultTranslationConfig } from '@c15t/core';
+import { defaultTranslationConfig } from '@inth/sdk/engine';
 import {
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,
-} from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
 import { useEffect } from 'react';
 import type { ReactElement } from 'react';
 import { hydrateRoot } from 'react-dom/client';

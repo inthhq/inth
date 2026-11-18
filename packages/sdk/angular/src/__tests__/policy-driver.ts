@@ -13,20 +13,23 @@ import type {
 	ConsentKernel,
 	ConsentPresentation,
 	InitResponse,
-} from '@c15t/core';
-import { createConsentKernel, evaluateConsent } from '@c15t/core';
-import { createNetworkBlocker } from '@c15t/core/modules/network-blocker';
+} from '@inth/sdk/engine';
+import { createConsentKernel, evaluateConsent } from '@inth/sdk/engine';
+import { createIAB } from '@inth/sdk/iab';
+import type { IABHandle } from '@inth/sdk/iab';
+import { createNetworkBlocker } from '@inth/sdk/modules/network-blocker';
 import {
 	createPersistence,
 	readStoredRecords,
 	readStoredRecordsFromCookieHeader,
 	resolveStorageKeys,
-} from '@c15t/core/modules/persistence';
-import type { PersistenceHandle } from '@c15t/core/modules/persistence';
-import { createScriptLoader } from '@c15t/core/modules/script-loader';
-import { createIAB } from '@c15t/iab';
-import type { IABHandle } from '@c15t/iab';
-import type { GlobalVendorList, PolicyResolution } from '@c15t/schema/types';
+} from '@inth/sdk/modules/persistence';
+import type { PersistenceHandle } from '@inth/sdk/modules/persistence';
+import { createScriptLoader } from '@inth/sdk/modules/script-loader';
+import type {
+	GlobalVendorList,
+	PolicyResolution,
+} from '@inth/sdk/schema/types';
 import {
 	inspectPolicyRules,
 	canonicalizePolicySet,
@@ -36,7 +39,7 @@ import {
 	normalizePolicyRule,
 	createPolicyRuleFingerprints,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
 import { vi } from 'vitest';
 
 import { preloadPersistenceWriter } from '../../../core/src/modules/persistence/mount';

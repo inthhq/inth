@@ -8,16 +8,16 @@
  * without a stylesheet `<link>` that holds the paint back. In the browser,
  * the surfaces find these elements and add no second copy.
  */
-import * as banner from '@c15t/ui/styles/sheets/banner';
-import * as button from '@c15t/ui/styles/sheets/button';
-import * as consentGate from '@c15t/ui/styles/sheets/consent-gate';
-import * as dialog from '@c15t/ui/styles/sheets/dialog';
-import * as firstPaint from '@c15t/ui/styles/sheets/first-paint';
-import * as iabDialog from '@c15t/ui/styles/sheets/iab-dialog';
-import * as iabFirstPaint from '@c15t/ui/styles/sheets/iab-first-paint';
-import * as primitives from '@c15t/ui/styles/sheets/primitives';
-import * as tokens from '@c15t/ui/styles/sheets/tokens';
-import * as trigger from '@c15t/ui/styles/sheets/trigger';
+import * as banner from '@inth/sdk/ui/styles/sheets/banner';
+import * as button from '@inth/sdk/ui/styles/sheets/button';
+import * as consentGate from '@inth/sdk/ui/styles/sheets/consent-gate';
+import * as dialog from '@inth/sdk/ui/styles/sheets/dialog';
+import * as firstPaint from '@inth/sdk/ui/styles/sheets/first-paint';
+import * as iabDialog from '@inth/sdk/ui/styles/sheets/iab-dialog';
+import * as iabFirstPaint from '@inth/sdk/ui/styles/sheets/iab-first-paint';
+import * as primitives from '@inth/sdk/ui/styles/sheets/primitives';
+import * as tokens from '@inth/sdk/ui/styles/sheets/tokens';
+import * as trigger from '@inth/sdk/ui/styles/sheets/trigger';
 
 import { STYLE_ATTRIBUTE, STYLES_MARKER } from '../surface-styles';
 import type { SurfaceStyleSheet } from '../surface-styles';

@@ -1,6 +1,16 @@
 // oxlint-disable no-use-before-define -- TanStack Router's file-route shape: the component reads its own route's loader data.
 // #region docs:root
-import { posthog } from '@c15t/integrations/posthog';
+import { posthog } from '@inth/integrations/posthog';
+import {
+	ConsentBanner,
+	ConsentDialog,
+	ConsentDialogLink,
+	ConsentRoot,
+} from '@inth/tanstack-start';
+import {
+	consentLoaderOptions,
+	createConsentStateHandler,
+} from '@inth/tanstack-start/server';
 import {
 	createRootRoute,
 	HeadContent,
@@ -8,16 +18,6 @@ import {
 	Scripts,
 } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
-import {
-	ConsentBanner,
-	ConsentDialog,
-	ConsentDialogLink,
-	ConsentRoot,
-} from 'c15t/tanstack-start';
-import {
-	consentLoaderOptions,
-	createConsentStateHandler,
-} from 'c15t/tanstack-start/server';
 
 // Start's compiler keeps the handler and the bundled policy on the server.
 const getConsentState = createServerFn({ method: 'GET' }).handler(

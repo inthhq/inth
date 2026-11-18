@@ -1,5 +1,5 @@
 /**
- * The page's consent engine: the runtime behind `@c15t/astro/client`.
+ * The page's consent engine: the runtime behind `@inth/astro/client`.
  *
  * Astro is an MPA and islands do not share a component tree, so there is
  * nothing for a provider to hang off. Instead the integration injects a
@@ -19,38 +19,38 @@
  * @internal
  */
 
-import { isVendorAllowed, watchRevocationReload } from '@c15t/core';
+import { isVendorAllowed, watchRevocationReload } from '@inth/sdk/engine';
 import type {
 	ConsentKernel,
 	ConsentSnapshot,
 	KernelConfig,
 	KernelUser,
 	ResolvedVendor,
-} from '@c15t/core';
-import { getEventDispatcher as getRuntimeEventDispatcher } from '@c15t/core/events';
-import type { RuntimeEventDispatcherOptions } from '@c15t/core/events';
-import { createIframeBlocker } from '@c15t/core/modules/iframe-blocker';
-import { createPersistence } from '@c15t/core/modules/persistence';
-import { createWindowDebug } from '@c15t/core/modules/window-debug';
-import { isIABConfigured } from '@c15t/core/runtime';
+} from '@inth/sdk/engine';
+import { getEventDispatcher as getRuntimeEventDispatcher } from '@inth/sdk/events';
+import type { RuntimeEventDispatcherOptions } from '@inth/sdk/events';
+import { createIframeBlocker } from '@inth/sdk/modules/iframe-blocker';
+import { createPersistence } from '@inth/sdk/modules/persistence';
+import { createWindowDebug } from '@inth/sdk/modules/window-debug';
+import { isIABConfigured } from '@inth/sdk/runtime';
 import type {
 	ConsentRuntimeIABFactory,
 	ConsentRuntimeOptions,
 	RuntimeIABOptions,
-} from '@c15t/core/runtime';
-import { createConsentRuntimeWith } from '@c15t/core/runtime/on-demand';
-import { clearOnRevocationOnDemand } from '@c15t/core/runtime/on-demand-factories';
-import type { ConsentRuntimeModules } from '@c15t/core/runtime/provider';
+} from '@inth/sdk/runtime';
+import { createConsentRuntimeWith } from '@inth/sdk/runtime/on-demand';
+import { clearOnRevocationOnDemand } from '@inth/sdk/runtime/on-demand-factories';
+import type { ConsentRuntimeModules } from '@inth/sdk/runtime/provider';
 import {
 	hasConsentPreferences,
 	hasConsentUI,
 	saveConsentBlanket,
 	saveConsentSurface,
 	showConsentSurface,
-} from '@c15t/core/surface-actions';
-import { setupColorScheme } from '@c15t/ui/utils/color-scheme';
-import { setupFocusTrap, setupScrollLock } from '@c15t/ui/utils/dom';
-import { isLateEntry } from '@c15t/ui/utils/late-entry';
+} from '@inth/sdk/surface-actions';
+import { setupColorScheme } from '@inth/sdk/ui/utils/color-scheme';
+import { setupFocusTrap, setupScrollLock } from '@inth/sdk/ui/utils/dom';
+import { isLateEntry } from '@inth/sdk/ui/utils/late-entry';
 
 import {
 	IAB_PROMPT_SLOT_ATTRIBUTE,
@@ -194,7 +194,7 @@ const adoptPageNonce = function adoptPageNonce(incoming: Document): void {
 	const nonces = new Set(configScripts(incoming).map(nonceOf));
 	if (nonces.size > 1) {
 		console.warn(
-			'@c15t/astro: the next page has config scripts with different CSP nonces, so c15t did not move it onto the live nonce. Look for markup injected into that page.'
+			'@inth/astro: the next page has config scripts with different CSP nonces, so c15t did not move it onto the live nonce. Look for markup injected into that page.'
 		);
 		return;
 	}
@@ -419,7 +419,7 @@ const NO_VENDORS: readonly ResolvedVendor[] = [];
  */
 const notRegistered = function notRegistered(option: string): never {
 	throw new Error(
-		`@c15t/astro: \`${option}\` needs the module the integration's engine module registers.`
+		`@inth/astro: \`${option}\` needs the module the integration's engine module registers.`
 	);
 };
 
@@ -454,9 +454,9 @@ let pageRuntimeModules: ConsentRuntimeModules = {
 export interface PageIAB {
 	/** The `createIAB` the runtime calls synchronously. */
 	create: ConsentRuntimeIABFactory;
-	/** Resolves once every pending `@c15t/iab` load has settled. */
+	/** Resolves once every pending `@inth/sdk/iab` load has settled. */
 	whenReady: () => Promise<void>;
-	/** `mountRuntimeIAB` from `@c15t/core/runtime`. */
+	/** `mountRuntimeIAB` from `@inth/sdk/runtime`. */
 	mount: NonNullable<ConsentRuntimeModules['mountIAB']>;
 }
 
@@ -468,7 +468,7 @@ let pageIAB: PageIAB | null = null;
  *
  * The integration's engine module calls this only when the site sets `iab`,
  * so a site without IAB ships neither the mount nor the lazy factory, and
- * never fetches `@c15t/iab`. Call before {@link boot}.
+ * never fetches `@inth/sdk/iab`. Call before {@link boot}.
  *
  * @param iab - The lazy factory and the mount.
  * @internal
@@ -654,11 +654,11 @@ const createClient = function createClient(
 					? false
 					: (options.iab as RuntimeIABOptions | undefined),
 			// Called only when `gpp` is set, so other sites never fetch the chunk.
-			loadGPP: () => import('@c15t/iab/gpp'),
+			loadGPP: () => import('@inth/sdk/iab/gpp'),
 			mode: (pageTransport ?? notRegistered('mode'))(options),
 			networkBlocker: extension.networkBlocker ?? options.networkBlocker,
 			nonce: pageNonce,
-			pkg: '@c15t/astro',
+			pkg: '@inth/astro',
 			prefetch: config,
 			presentation: options.presentation,
 			reloadOnConsentRevoked: options.reloadOnConsentRevoked,
@@ -798,7 +798,7 @@ const createClient = function createClient(
 					}
 					if (kind === 'iab') {
 						// The IAB surface renders against `runtime.iab`, which is
-						// a lazy proxy until `@c15t/iab` lands.
+						// a lazy proxy until `@inth/sdk/iab` lands.
 						await iab?.whenReady();
 						if (disposed) {
 							return;
@@ -1012,7 +1012,7 @@ const renderPrompt = async function renderPrompt(
 		return true;
 	} catch (error) {
 		// Usually a network failure. The caller retries with a back-off.
-		console.warn('@c15t/astro: the consent banner failed to load.', error);
+		console.warn('@inth/astro: the consent banner failed to load.', error);
 		return false;
 	}
 };
@@ -1123,7 +1123,7 @@ export const boot = function boot(
 ): AstroEngineClient {
 	const browserWindow = getWindow();
 	if (!browserWindow) {
-		throw new Error('@c15t/astro: boot() requires a browser environment.');
+		throw new Error('@inth/astro: boot() requires a browser environment.');
 	}
 	const existing = browserWindow[GLOBAL_KEY];
 	if (existing && !handoff) {

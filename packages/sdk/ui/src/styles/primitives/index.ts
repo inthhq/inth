@@ -8,7 +8,7 @@
  *
  * @example
  * ```ts
- * import { buttonVariants, switchVariants, accordionVariants } from '@c15t/ui/styles/primitives';
+ * import { buttonVariants, switchVariants, accordionVariants } from '@inth/sdk-ui/styles/primitives';
  *
  * // Generate button classes
  * const btnClasses = buttonVariants({ variant: 'primary', mode: 'filled', size: 'medium' });

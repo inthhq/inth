@@ -1,7 +1,7 @@
-import type { ConsentPresentation } from '@c15t/core';
-import { ConsentBanner, ConsentProvider } from '@c15t/react';
-import type { PolicyRule } from '@c15t/schema/types';
-import type { Theme } from '@c15t/ui/theme';
+import { ConsentBanner, ConsentProvider } from '@inth/react';
+import type { ConsentPresentation } from '@inth/sdk/engine';
+import type { PolicyRule } from '@inth/sdk/schema/types';
+import type { Theme } from '@inth/sdk/ui/theme';
 import { act, createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';

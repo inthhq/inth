@@ -4,7 +4,7 @@
  * on a wide screen must get the narrow layout, with every action inside the
  * card, and the default card must keep its single row.
  */
-import '@c15t/ui/styles.css';
+import '@inth/sdk/ui/styles.css';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 import { page } from 'vitest/browser';

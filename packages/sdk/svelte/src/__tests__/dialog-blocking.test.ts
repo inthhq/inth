@@ -1,4 +1,4 @@
-import type { ConsentPresentation } from '@c15t/core';
+import type { ConsentPresentation } from '@inth/sdk/engine';
 import { render, waitFor } from '@testing-library/svelte';
 import { describe, expect, test } from 'vitest';
 

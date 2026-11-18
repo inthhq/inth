@@ -1,6 +1,9 @@
-import { resolveConsentPresentation } from '@c15t/core';
-import type { PreferencesPresentation, PromptPresentation } from '@c15t/core';
-import { DEFAULT_BANNER_POSITION } from '@c15t/schema/config';
+import { resolveConsentPresentation } from '@inth/sdk/engine';
+import type {
+	PreferencesPresentation,
+	PromptPresentation,
+} from '@inth/sdk/engine';
+import { DEFAULT_BANNER_POSITION } from '@inth/sdk/schema/config';
 import { computed, toValue, watch } from 'vue';
 import type { MaybeRefOrGetter } from 'vue';
 

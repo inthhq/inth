@@ -15,8 +15,8 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { decisionInputsMatchOverrides } from '@c15t/core';
-import type { RememberedDecisionInputs } from '@c15t/core';
+import { decisionInputsMatchOverrides } from '@inth/sdk/engine';
+import type { RememberedDecisionInputs } from '@inth/sdk/engine';
 import { describe, expect, test } from 'vitest';
 
 import type {
@@ -696,7 +696,7 @@ describe('protocol fixtures', () => {
 
 /**
  * Dropping the `gpc` override is not cosmetic. `decisionInputsMatchOverrides` in
- * `@c15t/core` compares the override against the inputs remembered from the last
+ * `@inth/sdk/engine` compares the override against the inputs remembered from the last
  * init, and a save whose inputs no longer match is rejected as stale, so a
  * native save body without the field cannot pass the backend's check.
  *

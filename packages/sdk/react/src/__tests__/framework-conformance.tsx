@@ -15,23 +15,23 @@ import type {
 	CreatePolicySession,
 	ProbePolicyContract,
 } from '@c15t/conformance/contract/policy-driver';
-import { deferInitGvl } from '@c15t/core';
+import { ConsentDialog, ConsentWidget, ConsentBanner } from '@inth/react';
+import type { ConsentProviderOptions } from '@inth/react';
+import { KernelContext } from '@inth/react/context';
+import {
+	IABProvider,
+	IABConsentBanner,
+	IABConsentDialog,
+} from '@inth/react/iab';
+import { deferInitGvl } from '@inth/sdk/engine';
 import type {
 	AllConsentNames,
 	ConsentKernel,
 	KernelActiveUI,
 	TranslationsResponse,
-} from '@c15t/core';
-import { ConsentDialog, ConsentWidget, ConsentBanner } from '@c15t/react';
-import type { ConsentProviderOptions } from '@c15t/react';
-import { KernelContext } from '@c15t/react/context';
-import {
-	IABProvider,
-	IABConsentBanner,
-	IABConsentDialog,
-} from '@c15t/react/iab';
-import { writePolicyResolutionWire } from '@c15t/schema/types';
-import type { GlobalVendorList } from '@c15t/schema/types';
+} from '@inth/sdk/engine';
+import { writePolicyResolutionWire } from '@inth/sdk/schema/types';
+import type { GlobalVendorList } from '@inth/sdk/schema/types';
 import { useContext, useEffect } from 'react';
 import type { ReactElement } from 'react';
 import { createRoot } from 'react-dom/client';

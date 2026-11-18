@@ -1,5 +1,5 @@
 // #region docs:optional-feature
-import { useConsent } from 'c15t/react';
+import { useConsent } from '@inth/react';
 
 export const OptionalFeature = () => {
 	const allowed = useConsent('marketing');

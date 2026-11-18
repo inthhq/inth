@@ -8,8 +8,8 @@
  * @internal
  */
 
-import type { ConsentSnapshot } from '@c15t/core';
-import type { RuntimePrefetch, StreamedPrefetch } from '@c15t/core/runtime';
+import type { ConsentSnapshot } from '@inth/sdk/engine';
+import type { RuntimePrefetch, StreamedPrefetch } from '@inth/sdk/runtime';
 import * as React from 'react';
 import { useContext } from 'react';
 
@@ -49,7 +49,7 @@ const useSettled = function useSettled<Value>(
 export interface ConsentBootDataProps {
 	/**
 	 * The server render's id, which its inline scripts wrote their page
-	 * object under (`newRenderId` in `@c15t/core/runtime/script-server-start`).
+	 * object under (`newRenderId` in `@inth/sdk/runtime/script-server-start`).
 	 * The browser reads that object only for the boot data with this id.
 	 */
 	renderId?: string;

@@ -1,10 +1,10 @@
-import type { TranslationConfig, Translations } from '@c15t/translations';
+import type { TranslationConfig, Translations } from '@inth/sdk-translations';
 import {
 	deepMergeTranslations,
 	enTranslations,
 	getStockTranslations,
 	migrateLegacyTranslationKeys,
-} from '@c15t/translations';
+} from '@inth/sdk-translations';
 
 import type { KernelTranslations } from '../types';
 
@@ -125,7 +125,7 @@ const findStockTranslations = function findStockTranslations(
  * does not supply it. A key equal to the built-in text leaves the base alone,
  * so an app passing a stock bundle to enable a language still shows backend
  * edits, while a genuine customization wins. Built-in copy is known for
- * English and, once `@c15t/translations/all` loads, every bundled language;
+ * English and, once `@inth/sdk/translations/all` loads, every bundled language;
  * without it every app key counts as a customization. Overrides for other
  * languages are ignored: mixing languages is worse than showing the base.
  *
@@ -192,7 +192,7 @@ export const applyTranslationOverrides = function applyTranslationOverrides(
  *
  * Both fall back to the primary subtag, so `de-AT` uses German copy. English
  * built-in copy is always available; every other bundled language is once
- * `@c15t/translations/all` has loaded. App overrides for a language without
+ * `@inth/sdk/translations/all` has loaded. App overrides for a language without
  * built-in copy apply over English.
  *
  * Used where no backend answers, such as offline mode switching language. A

@@ -5,9 +5,9 @@ import type {
 	GlobalVendorList,
 	KernelIABState,
 	NonIABVendor,
-} from '@c15t/core';
-import { createIAB } from '@c15t/iab';
-import type { CreateIABOptions, IABHandle } from '@c15t/iab';
+} from '@inth/sdk/engine';
+import { createIAB } from '@inth/sdk/iab';
+import type { CreateIABOptions, IABHandle } from '@inth/sdk/iab';
 import {
 	useCallback,
 	useContext,
@@ -268,7 +268,7 @@ export const useIAB = function useIAB(): ReactIABState | null {
 	const iabContext = useContext(IABContext);
 	if (!kernel) {
 		throw new Error(
-			'useIAB must be used within <ConsentProvider options={...}> from @c15t/react'
+			'useIAB must be used within <ConsentProvider options={...}> from @inth/react'
 		);
 	}
 

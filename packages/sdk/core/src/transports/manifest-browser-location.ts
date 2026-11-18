@@ -6,8 +6,8 @@
  *
  * @internal
  */
-import { resolvePolicyResolutionFromManifest } from '@c15t/schema/types';
-import type { ConsentManifest, PolicyResolution } from '@c15t/schema/types';
+import { resolvePolicyResolutionFromManifest } from '@inth/sdk-schema/types';
+import type { ConsentManifest, PolicyResolution } from '@inth/sdk-schema/types';
 
 import { experienceKey, hasLocationMatchers } from './manifest-browser-packs';
 

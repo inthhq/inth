@@ -828,7 +828,7 @@ export interface ConsentGateOptions extends Pick<
 	'pages' | 'directories' | 'backendPrefix'
 > {
 	target: ConsentGateTarget;
-	/** Result `package`; Nuxt reports as `@c15t/vue` like its other results. */
+	/** Result `package`; Nuxt reports as `@inth/vue` like its other results. */
 	packageName: string;
 	framework: BenchmarkResult['framework'];
 	/** Gate page and control page paths on the framework server. */

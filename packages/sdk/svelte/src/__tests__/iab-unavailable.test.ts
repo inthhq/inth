@@ -7,10 +7,10 @@
  * covers the server render.
  */
 import { MINIMAL_GVL } from '@c15t/conformance/fixtures/gvl';
-import { deferInitGvl, IAB_UNAVAILABLE_ERROR_CODE } from '@c15t/core';
-import type { GlobalVendorList } from '@c15t/core';
-import { writePolicyResolutionWire } from '@c15t/schema/types';
-import type { PolicyResolution } from '@c15t/schema/types';
+import { deferInitGvl, IAB_UNAVAILABLE_ERROR_CODE } from '@inth/sdk/engine';
+import type { GlobalVendorList } from '@inth/sdk/engine';
+import { writePolicyResolutionWire } from '@inth/sdk/schema/types';
+import type { PolicyResolution } from '@inth/sdk/schema/types';
 import { render } from '@testing-library/svelte';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 

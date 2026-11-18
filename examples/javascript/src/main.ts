@@ -1,6 +1,6 @@
 // #region docs:init
-import { init, manifest } from '@c15t/browser';
-import { posthog } from '@c15t/integrations/posthog';
+import { posthog } from '@inth/integrations/posthog';
+import { init, manifest } from '@inth/sdk';
 
 init({
 	mode: manifest(),

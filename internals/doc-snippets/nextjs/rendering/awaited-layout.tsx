@@ -4,8 +4,8 @@ import {
 	ConsentDialog,
 	ConsentDialogLink,
 	ConsentRoot,
-} from 'c15t/next';
-import { resolveConsent } from 'c15t/next/server';
+} from '@inth/nextjs';
+import { resolveConsent } from '@inth/nextjs/server';
 import { Suspense } from 'react';
 import type { ReactNode } from 'react';
 

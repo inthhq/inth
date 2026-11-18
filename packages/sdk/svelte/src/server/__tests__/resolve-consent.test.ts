@@ -1,6 +1,6 @@
 /**
- * Wiring tests for `resolveConsent` from `@c15t/svelte/server` on top of
- * `resolveRequestConsent` in `@c15t/core/server`, whose suite pins the
+ * Wiring tests for `resolveConsent` from `@inth/svelte/server` on top of
+ * `resolveRequestConsent` in `@inth/sdk/server`, whose suite pins the
  * rules (GPC source, forwarding, self-route guard, budget, merge). These
  * check what this entry passes: the headers, the request URL, the cookie
  * header and the framework fetch.
@@ -8,7 +8,7 @@
 import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
 import { describe, expect, test, vi } from 'vitest';
 
 import { MANIFEST_FIXTURE } from '../../lib/kit/__tests__/manifest-fixture';
@@ -43,7 +43,7 @@ const backend = () =>
 		)
 	);
 
-describe('@c15t/svelte/server resolveConsent', () => {
+describe('@inth/svelte/server resolveConsent', () => {
 	test('hands a snapshot session report to the caller before it finishes', async () => {
 		let finish: ((response: Response) => void) | undefined;
 		const fetch = vi.fn<typeof globalThis.fetch>(

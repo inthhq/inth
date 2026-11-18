@@ -1,5 +1,5 @@
 /**
- * `@c15t/react/testing` — render the banner and the consent flow in tests
+ * `@inth/react/testing` — render the banner and the consent flow in tests
  * with no backend.
  *
  * Pass `testing()` as the provider's `mode`; it needs no `projectUrl`. It
@@ -22,8 +22,8 @@
  *
  * @example
  * ```tsx
- * import { ConsentBanner, ConsentProvider } from '@c15t/react';
- * import { testing } from '@c15t/react/testing';
+ * import { ConsentBanner, ConsentProvider } from '@inth/react';
+ * import { testing } from '@inth/react/testing';
  *
  * <ConsentProvider
  *   options={{ overrides: { country: 'DE' }, mode: testing() }}
@@ -34,10 +34,10 @@
  *
  * @packageDocumentation
  */
-import { createTestingMode } from '@c15t/core/testing';
-import type { ConsentTesting, TestingModeOptions } from '@c15t/core/testing';
+import { createTestingMode } from '@inth/sdk/testing';
+import type { ConsentTesting, TestingModeOptions } from '@inth/sdk/testing';
 
-export type { ConsentTesting, TestingModeOptions } from '@c15t/core/testing';
+export type { ConsentTesting, TestingModeOptions } from '@inth/sdk/testing';
 
 /**
  * A `mode` for tests that resolves `policy`, or the recommended policy
@@ -51,5 +51,5 @@ export type { ConsentTesting, TestingModeOptions } from '@c15t/core/testing';
 export const testing = function testing(
 	options: TestingModeOptions = {}
 ): ConsentTesting {
-	return createTestingMode('@c15t/react/testing', options);
+	return createTestingMode('@inth/react/testing', options);
 };

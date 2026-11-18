@@ -7,7 +7,7 @@
  * @packageDocumentation
  */
 
-import type { GlobalVendorList } from '@c15t/core';
+import type { GlobalVendorList } from '@inth/sdk-core';
 
 import { GVL_ENDPOINT } from './constants';
 

@@ -18,6 +18,6 @@ export default defineNuxtConfig({
 		// #endregion docs:iab-opt-in
 	},
 	compatibilityDate: '2026-07-04',
-	modules: ['c15t/vue'],
+	modules: ['@inth/vue'],
 	typescript: { strict: true },
 });

@@ -2,7 +2,7 @@
  * The Nuxt module's options, as they reach the app through the public
  * runtime config.
  */
-import { createConsentManifestPolicyPack } from '@c15t/schema/types';
+import { createConsentManifestPolicyPack } from '@inth/sdk/schema/types';
 import { logger, runWithNuxtContext } from '@nuxt/kit';
 import { beforeAll, describe, expect, test, vi } from 'vitest';
 
@@ -155,7 +155,7 @@ const importTemplate = function importTemplate(
 const importServerManifestSnapshot = function importServerManifestSnapshot(
 	nuxt: Nuxt
 ): Promise<unknown> {
-	return importTemplate(nuxt, '#c15t/server-manifest-snapshot');
+	return importTemplate(nuxt, '#@inth/sdk/server-manifest-snapshot');
 };
 
 /** The module's template for the browser's snapshot, evaluated. */
@@ -296,7 +296,7 @@ describe('the build snapshot in manifest() mode', () => {
 				unreachable()
 			)
 		).rejects.toThrow(
-			"@c15t/vue: could not fetch the consent manifest from https://consent.example.com/manifest during the build (getaddrinfo ENOTFOUND). Set `C15T_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to deploy with runtime fetching."
+			"@inth/vue: could not fetch the consent manifest from https://consent.example.com/manifest during the build (getaddrinfo ENOTFOUND). Set `C15T_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to deploy with runtime fetching."
 		);
 	});
 
@@ -592,7 +592,7 @@ describe('mode and routePrefix', () => {
 		await expect(
 			setUpModule({ projectUrl: '/api/self-host', routePrefix: '/' })
 		).rejects.toThrow(
-			"@c15t/vue: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'."
+			"@inth/vue: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'."
 		);
 	});
 
@@ -658,7 +658,7 @@ describe('mode and routePrefix', () => {
 			expect(
 				plugins.filter((plugin) => plugin.includes('build-options.nuxt'))
 			).toHaveLength(1);
-			const source = virtual['#c15t/build-options'];
+			const source = virtual['#@inth/sdk/build-options'];
 			expect(typeof source === 'function' ? source() : source).toBe(
 				`export default ${JSON.stringify({ mode, routePrefix })};\n`
 			);
@@ -677,7 +677,7 @@ describe('mode and routePrefix', () => {
 		const transport = Object.assign(() => ({}), { kind: 'hosted' });
 		await expect(
 			setUpModule({ mode: transport, projectUrl: '/api/self-host' })
-		).rejects.toThrow("Import `manifest` or `hosted` from 'c15t/vue'");
+		).rejects.toThrow("Import `manifest` or `hosted` from '@inth/vue'");
 	});
 
 	test('nuxt generate warns that the server cannot resolve the policy', async () => {
@@ -739,7 +739,7 @@ describe('the early /init script for ssr: false pages', () => {
 	});
 
 	describe('the app config the server plugin reads', () => {
-		/** The `#c15t/server-app-config` source for a Nitro config. */
+		/** The `#@inth/sdk/server-app-config` source for a Nitro config. */
 		const serverAppConfig = async function serverAppConfig(
 			virtual: Record<string, unknown>,
 			imports: false | Record<string, unknown> = {}
@@ -759,7 +759,7 @@ describe('the early /init script for ssr: false pages', () => {
 			for (const extendConfig of nitroConfigHooks) {
 				extendConfig(nitroConfig);
 			}
-			return nitroConfig.virtual['#c15t/server-app-config'];
+			return nitroConfig.virtual['#@inth/sdk/server-app-config'];
 		};
 
 		// Nuxt 5 turns off Nitro auto-imports, so the plugin cannot use

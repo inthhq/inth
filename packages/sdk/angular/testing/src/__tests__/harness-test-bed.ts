@@ -2,8 +2,8 @@ import type { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
-import { provideC15t } from '@c15t/angular';
-import type { C15tProviderOptions } from '@c15t/angular';
+import { provideC15t } from '@inth/angular';
+import type { C15tProviderOptions } from '@inth/angular';
 import { expect, vi } from 'vitest';
 
 import { completeGVL } from '../../../../iab/src/__tests__/fixtures/gvl-sample';

@@ -1,35 +1,35 @@
 'use client';
 
-import type {
-	PolicyOptionalCategory,
-	PolicyPrompt,
-	PolicyRule,
-	PolicyRuleModel,
-} from '@c15t/schema/types';
-import { POLICY_OPTIONAL_CATEGORIES } from '@c15t/schema/types';
-import type {
-	ConsentSnapshot,
-	KernelEvent,
-	PromptPosition,
-	PromptVariant,
-} from 'c15t';
-import { readStoredRecords } from 'c15t/modules/persistence';
-import type { StoredRecords } from 'c15t/modules/persistence';
 import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogTriggerToolbar,
 	ConsentProvider,
 	useSnapshot,
-} from 'c15t/react';
-import { KernelContext, ProviderServicesContext } from 'c15t/react/context';
-import { useHeadlessConsentUI } from 'c15t/react/headless';
+} from '@inth/react';
+import { KernelContext, ProviderServicesContext } from '@inth/react/context';
+import { useHeadlessConsentUI } from '@inth/react/headless';
 import {
 	IABConsentBanner,
 	IABConsentDialog,
 	IABProvider,
-} from 'c15t/react/iab';
-import { testing } from 'c15t/react/testing';
+} from '@inth/react/iab';
+import { testing } from '@inth/react/testing';
+import type {
+	ConsentSnapshot,
+	KernelEvent,
+	PromptPosition,
+	PromptVariant,
+} from '@inth/sdk/engine';
+import { readStoredRecords } from '@inth/sdk/modules/persistence';
+import type { StoredRecords } from '@inth/sdk/modules/persistence';
+import type {
+	PolicyOptionalCategory,
+	PolicyPrompt,
+	PolicyRule,
+	PolicyRuleModel,
+} from '@inth/sdk/schema/types';
+import { POLICY_OPTIONAL_CATEGORIES } from '@inth/sdk/schema/types';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import * as React from 'react';

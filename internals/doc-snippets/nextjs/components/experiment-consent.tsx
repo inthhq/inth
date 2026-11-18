@@ -1,7 +1,7 @@
 'use client';
 
-import { ConsentBanner, ConsentDialog, ConsentRoot } from 'c15t/next';
-import type { ConsentRootProps } from 'c15t/next';
+import { ConsentBanner, ConsentDialog, ConsentRoot } from '@inth/nextjs';
+import type { ConsentRootProps } from '@inth/nextjs';
 import type { ReactNode } from 'react';
 
 import { experimentCallbacks } from '@/lib/experiment';

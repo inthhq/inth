@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/ui",
+	"name": "@inth/sdk-ui",
 	"version": "3.0.2-canary.0",
 	"description": "Framework-agnostic UI primitives, CSS and theme tokens behind the c15t React, Vue, Svelte and Astro components.",
 	"keywords": [
@@ -283,8 +283,8 @@
 		"test": "vitest run"
 	},
 	"dependencies": {
-		"@c15t/core": "workspace:*",
-		"@c15t/translations": "workspace:*"
+		"@inth/sdk-core": "workspace:*",
+		"@inth/sdk-translations": "workspace:*"
 	},
 	"devDependencies": {
 		"@c15t/typescript-config": "workspace:*",

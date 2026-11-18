@@ -5,7 +5,7 @@
 
 	```svelte
 	<script lang="ts">
-		import { ConsentBanner, ConsentRoot } from '@c15t/svelte';
+		import { ConsentBanner, ConsentRoot } from '@inth/svelte';
 
 		let { children, data } = $props();
 	</script>
@@ -32,8 +32,8 @@
 	(`ssr = false`) renders the children once the engine has loaded.
 -->
 <script lang="ts">
-	import type { ProviderTransportFactory } from '@c15t/core';
-	import type { ConsentProviderRuntime } from '@c15t/core/runtime/provider';
+	import type { ProviderTransportFactory } from '@inth/sdk/engine';
+	import type { ConsentProviderRuntime } from '@inth/sdk/runtime/provider';
 	import { BROWSER } from 'esm-env';
 	import type { Snippet } from 'svelte';
 	import { onDestroy, untrack } from 'svelte';

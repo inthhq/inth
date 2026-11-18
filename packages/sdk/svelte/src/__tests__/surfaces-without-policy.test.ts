@@ -1,9 +1,9 @@
-import type { InitResponse } from '@c15t/core';
-import type { PolicyRule } from '@c15t/schema/types';
+import type { InitResponse } from '@inth/sdk/engine';
+import type { PolicyRule } from '@inth/sdk/schema/types';
 import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
 import { render, waitFor } from '@testing-library/svelte';
 import { describe, expect, test } from 'vitest';
 

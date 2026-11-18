@@ -2,8 +2,8 @@
  * @vitest-environment jsdom
  */
 
-import { createConsentKernel } from '@c15t/core';
-import { resolvePolicyRules } from '@c15t/schema/types';
+import { createConsentKernel } from '@inth/sdk-core';
+import { resolvePolicyRules } from '@inth/sdk-schema/types';
 import { describe, expect, test, vi } from 'vitest';
 
 import { createIAB } from '../index';
@@ -31,7 +31,7 @@ const readTCData = (): Promise<TCData> =>
 		});
 	});
 
-describe('@c15t/iab TC string encode/decode', () => {
+describe('@inth/sdk/iab TC string encode/decode', () => {
 	test.each([undefined, false])(
 		'controls TC storage with persistence=%s',
 		async (persistence) => {
@@ -250,7 +250,7 @@ describe('@c15t/iab TC string encode/decode', () => {
 	});
 });
 
-describe('@c15t/iab TCF 2.4 encoding rules', () => {
+describe('@inth/sdk/iab TCF 2.4 encoding rules', () => {
 	test('clears the vendor LI bit for a vendor that declares only special purposes', async () => {
 		// TCF 2.4 removed the rule that set this bit. The vendor has no
 		// purpose on legitimate interest, so the bit must be 0.
@@ -292,7 +292,7 @@ describe('@c15t/iab TCF 2.4 encoding rules', () => {
 	});
 });
 
-describe('@c15t/iab CMP API disclosed vendors', () => {
+describe('@inth/sdk/iab CMP API disclosed vendors', () => {
 	test('getTCData lists the vendors encoded in the disclosed vendors segment', async () => {
 		const gvl = createMockGVL();
 		const consentData = createMockTCFConsent({

@@ -1,8 +1,8 @@
 /**
- * `@c15t/react` — React adapter for the c15t consent kernel.
+ * `@inth/react` — React adapter for the c15t consent kernel.
  *
  * Pattern:
- *   import { ConsentProvider, useConsent, useSaveConsents } from '@c15t/react';
+ *   import { ConsentProvider, useConsent, useSaveConsents } from '@inth/react';
  *
  *   function App({ children }) {
  *     return (
@@ -53,10 +53,10 @@ export type {
 	SavePayload,
 	SaveResult,
 	Unsubscribe,
-} from '@c15t/core';
-export type { ConsentTesting } from '@c15t/core/testing';
-export type { WithProjectUrl } from '@c15t/core/runtime';
-export { hosted } from '@c15t/core/modes';
+} from '@inth/sdk/engine';
+export type { ConsentTesting } from '@inth/sdk/testing';
+export type { WithProjectUrl } from '@inth/sdk/runtime';
+export { hosted } from '@inth/sdk/modes';
 export type {
 	ConsentBannerButton,
 	ConsentBannerLayout,
@@ -122,7 +122,7 @@ export type {
 	PromptPosition,
 	PromptVariant,
 	ResolvedConsentPresentation,
-} from '@c15t/core';
+} from '@inth/sdk/engine';
 
 // Values, one group per file; see `index-parts/core.ts` for why.
 // oxlint-disable oxc/no-barrel-file -- The package entry; star exports keep unused groups out of esbuild's first chunk.

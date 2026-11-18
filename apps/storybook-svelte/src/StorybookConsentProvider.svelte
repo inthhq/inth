@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ConsentProvider } from '@c15t/svelte';
+	import { ConsentProvider } from '@inth/svelte';
 	import { untrack } from 'svelte';
 	import type { Snippet } from 'svelte';
 

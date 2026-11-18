@@ -1,7 +1,7 @@
 'use client';
 
-import { processGVLForDialog } from '@c15t/iab/headless';
-import type { HeadlessIABDialogData } from '@c15t/iab/headless';
+import { processGVLForDialog } from '@inth/sdk/iab/headless';
+import type { HeadlessIABDialogData } from '@inth/sdk/iab/headless';
 import { useMemo } from 'react';
 
 import { useTranslations } from '~/hooks';
@@ -18,7 +18,7 @@ export type GVLData = HeadlessIABDialogData;
  *
  * @remarks
  * React wrapper around the framework-agnostic headless processor from
- * `@c15t/iab/headless`.
+ * `@inth/sdk/iab/headless`.
  *
  * @returns Processed GVL data ready for UI rendering
  * @public

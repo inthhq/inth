@@ -1,5 +1,5 @@
-import { isVendorAllowed } from '@c15t/core';
-import type { CONSENT_CATEGORY } from '@c15t/core/consent-record';
+import type { CONSENT_CATEGORY } from '@inth/sdk/consent-record';
+import { isVendorAllowed } from '@inth/sdk/engine';
 import { computed } from 'vue';
 import type { ComputedRef } from 'vue';
 

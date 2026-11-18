@@ -1,15 +1,15 @@
-import { buildPrefetchScript, createConsentKernel } from '@c15t/core';
-import type { ConsentSnapshot, KernelConfig } from '@c15t/core';
-import { hosted } from '@c15t/core/modes';
-import { createPersistence } from '@c15t/core/modules/persistence';
 import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogTrigger,
 	useSnapshot,
-} from '@c15t/react';
-import { writePolicyResolutionWire } from '@c15t/schema/types';
-import type { PolicyRule } from '@c15t/schema/types';
+} from '@inth/react';
+import { buildPrefetchScript, createConsentKernel } from '@inth/sdk/engine';
+import type { ConsentSnapshot, KernelConfig } from '@inth/sdk/engine';
+import { hosted } from '@inth/sdk/modes';
+import { createPersistence } from '@inth/sdk/modules/persistence';
+import { writePolicyResolutionWire } from '@inth/sdk/schema/types';
+import type { PolicyRule } from '@inth/sdk/schema/types';
 import { createRoot, hydrateRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';

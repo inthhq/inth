@@ -1,4 +1,4 @@
-import { useExperiment } from 'c15t/react';
+import { useExperiment } from '@inth/react';
 import { useSyncExternalStore } from 'react';
 
 /** One experiment event `experiment-consent.tsx` pushed to the data layer. */

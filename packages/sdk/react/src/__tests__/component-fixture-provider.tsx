@@ -1,5 +1,5 @@
-import type { KernelActiveUI } from '@c15t/core';
-import { CONSENT_STORAGE_KEY } from '@c15t/core/modules/persistence';
+import type { KernelActiveUI } from '@inth/sdk/engine';
+import { CONSENT_STORAGE_KEY } from '@inth/sdk/modules/persistence';
 import type { ReactNode } from 'react';
 import { useContext, useEffect, useId } from 'react';
 

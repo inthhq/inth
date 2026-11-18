@@ -11,9 +11,9 @@ import {
 	signal,
 } from '@angular/core';
 import type { Signal } from '@angular/core';
-import type { LegalLinks } from '@c15t/core';
-import type { Theme, UIOptions } from '@c15t/ui/theme';
-import { setupColorScheme } from '@c15t/ui/utils';
+import type { LegalLinks } from '@inth/sdk/engine';
+import type { Theme, UIOptions } from '@inth/sdk/ui/theme';
+import { setupColorScheme } from '@inth/sdk/ui/utils';
 
 import { ConsentManager } from './consent-manager';
 import type { DialogPreload } from './dialog-warming';

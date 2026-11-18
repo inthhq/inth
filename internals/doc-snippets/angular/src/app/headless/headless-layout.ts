@@ -1,8 +1,8 @@
 // #region docs:headless-layout
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { ConsentDialogLink } from '@c15t/angular';
-import { ConsentDialog } from '@c15t/angular/consent-dialog';
+import { ConsentDialogLink } from '@inth/angular';
+import { ConsentDialog } from '@inth/angular/consent-dialog';
 
 import { CustomConsentBanner } from './custom-consent-banner';
 

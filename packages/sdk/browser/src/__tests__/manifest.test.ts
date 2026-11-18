@@ -1,10 +1,10 @@
-import type { ProviderTransportContext } from '@c15t/core';
-import type { ConsentManifest } from '@c15t/schema/types';
+import type { ProviderTransportContext } from '@inth/sdk-core';
+import type { ConsentManifest } from '@inth/sdk-schema/types';
 import {
 	createConsentManifestPolicyPack,
 	policyRulePresets,
 	resolveInitFromManifest,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { mountGPP } from '../gpp';

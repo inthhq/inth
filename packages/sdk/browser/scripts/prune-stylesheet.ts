@@ -1,13 +1,13 @@
 /**
- * Drops the `@c15t/ui` rules this package's surfaces can never match.
+ * Drops the `@inth/sdk-ui` rules this package's surfaces can never match.
  *
- * `@c15t/ui/styles.css` styles every framework's surfaces: the headless
+ * `@inth/sdk-ui/styles.css` styles every framework's surfaces: the headless
  * primitives, the tabbed and collapsible parts, the ConsentGate
  * placeholder. The vanilla banner, dialog and trigger render a
  * fixed set of class maps, so a rule that needs a class outside them only
  * costs bytes in `c15t.js` and selector matching in the shadow root.
  *
- * Only `@c15t/ui`'s hashed CSS-module classes (`c15t-ui-<name>-<hash>`) decide
+ * Only `@inth/sdk-ui`'s hashed CSS-module classes (`c15t-ui-<name>-<hash>`) decide
  * anything. A selector keeps its rule unless it requires one of those classes
  * and no class map this package renders contains it. Classes inside `:not()`
  * never make a selector unmatchable, and plain classes such as `c15t-dark` or
@@ -20,7 +20,7 @@
 import { parse } from 'postcss';
 import type { AtRule, Root } from 'postcss';
 
-/** Class names `@c15t/ui` generates for its CSS modules. */
+/** Class names `@inth/sdk-ui` generates for its CSS modules. */
 const HASHED_CLASS = /^c15t-ui-[\w-]+-[\w-]{5}$/u;
 
 const NEGATION = /:not\((?:[^()]|\([^()]*\))*\)/gu;
@@ -185,8 +185,8 @@ export const pruneStylesheet = function pruneStylesheet(
 /**
  * Drop the comments and the whitespace between rules and declarations.
  *
- * `@c15t/ui` ships a readable sheet: a comment above each section (one
- * names `@c15t/ui/postcss-tailwind3` so Tailwind 3's build error shows the
+ * `@inth/sdk-ui` ships a readable sheet: a comment above each section (one
+ * names `@inth/sdk-ui/postcss-tailwind3` so Tailwind 3's build error shows the
  * fix) and line breaks between blocks. In the shadow root they only add
  * bytes to `c15t.js`. Selectors, at-rule params and declaration values
  * are left as written, so every rule still means the same thing.

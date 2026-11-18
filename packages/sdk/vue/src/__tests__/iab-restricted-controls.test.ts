@@ -5,12 +5,12 @@
  *
  * @vitest-environment jsdom
  */
-import { createConsentKernel, evaluateConsent } from '@c15t/core';
-import type { ConsentKernel } from '@c15t/core';
+import { createConsentKernel, evaluateConsent } from '@inth/sdk/engine';
+import type { ConsentKernel } from '@inth/sdk/engine';
 import {
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,
-} from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
 import { mount } from '@vue/test-utils';
 import type { VueWrapper } from '@vue/test-utils';
 import { afterEach, describe, expect, test } from 'vitest';

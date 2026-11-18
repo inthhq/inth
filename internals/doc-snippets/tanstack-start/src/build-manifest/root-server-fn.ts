@@ -1,9 +1,9 @@
 // #region docs:build-manifest-server-fn title="src/routes/__root.tsx"
-import { createServerFn } from '@tanstack/react-start';
 // #hide docs
-import { createConsentRoute } from 'c15t/tanstack-start/api';
+import { createConsentRoute } from '@inth/tanstack-start/api';
 // #endhide docs
-import { createConsentStateHandler } from 'c15t/tanstack-start/server';
+import { createConsentStateHandler } from '@inth/tanstack-start/server';
+import { createServerFn } from '@tanstack/react-start';
 
 // Reads the backend URL and the policy consentManifest() downloaded.
 const getConsentState = createServerFn({ method: 'GET' }).handler(

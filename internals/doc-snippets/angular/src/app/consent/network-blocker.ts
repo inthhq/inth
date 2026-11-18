@@ -1,5 +1,5 @@
 // #region docs:network-blocker
-import type { NetworkBlockerOptions } from '@c15t/angular';
+import type { NetworkBlockerOptions } from '@inth/angular';
 
 // Pass as `networkBlocker` to provideC15t() in app.config.ts.
 export const networkBlocker: NetworkBlockerOptions = {

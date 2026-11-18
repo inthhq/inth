@@ -1,7 +1,7 @@
 'use client';
 
-import actionStyles from '@c15t/ui/styles/components/consent-actions';
-import styles from '@c15t/ui/styles/components/iab-consent-dialog';
+import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
+import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 import { forwardRef as createForwardRef } from 'react';
 import type { HTMLAttributes, ReactNode } from 'react';
 

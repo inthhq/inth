@@ -15,7 +15,7 @@
  *   until the browser inserts the rest, and only with JavaScript.
  * - The banner's sheets stay under a compressed byte budget.
  *
- * These read the built artifacts: build `@c15t/ui` first.
+ * These read the built artifacts: build `@inth/sdk/ui` first.
  */
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -49,7 +49,7 @@ const importSheet = async function importSheet(name: string): Promise<Sheet> {
 	const path = join(SHEETS_DIR, `${name}.js`);
 	if (!existsSync(path)) {
 		throw new Error(
-			`Missing ${path}. Build @c15t/ui first: bun run --cwd packages/sdk/ui build`
+			`Missing ${path}. Build @inth/sdk/ui first: bun run --cwd packages/sdk/ui build`
 		);
 	}
 	return (await import(pathToFileURL(path).href)) as Sheet;
@@ -262,7 +262,7 @@ describe('per-surface sheets', async () => {
 	});
 
 	test('the IAB sheets read nothing only first-paint declares', async () => {
-		// `@c15t/react` renders the IAB banner over `tokens`, `button` and
+		// `@inth/react` renders the IAB banner over `tokens`, `button` and
 		// `banner`, and the IAB dialog over those and `dialog`, not over
 		// `first-paint`: carrying it next to the banner's sheets shipped every
 		// first-paint rule twice. So an IAB rule may read theme tokens, the

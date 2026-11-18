@@ -8,8 +8,8 @@
 		"noImplicitOverride": true,
 		"noPropertyAccessFromIndexSignature": false,
 		"paths": {
-			"@c15t/angular": ["./src/public-api.ts"],
-			"@c15t/angular/*": ["./*/src/public-api.ts"]
+			"@inth/angular": ["./src/public-api.ts"],
+			"@inth/angular/*": ["./*/src/public-api.ts"]
 		},
 		"useDefineForClassFields": false
 	},

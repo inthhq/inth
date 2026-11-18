@@ -5,13 +5,13 @@
  * server can run their setup and insert their tags from the HTML, instead
  * of after hydration and the script loader's own chunk. The code goes into
  * a `<script>` at the end of `<body>`, which runs before the app's module
- * scripts. It comes from `serverScriptStart` in `@c15t/core`, never from
+ * scripts. It comes from `serverScriptStart` in `@inth/sdk/engine`, never from
  * page markup, so nothing a page renders becomes a script that carries the
  * nonce.
  */
-import type { C15tProviderOptions } from '@c15t/angular';
-import type { RuntimePrefetch } from '@c15t/core/runtime';
-import type { serverScriptStart } from '@c15t/core/runtime/script-server-start';
+import type { C15tProviderOptions } from '@inth/angular';
+import type { RuntimePrefetch } from '@inth/sdk/runtime';
+import type { serverScriptStart } from '@inth/sdk/runtime/script-server-start';
 
 const NONCE = /^[\w+/=-]+$/u;
 
@@ -37,7 +37,7 @@ export const startScriptsOnServer = async function startScriptsOnServer(
 ): Promise<void> {
 	let code: string | undefined;
 	try {
-		const loaded = await import('@c15t/core/runtime/script-server-start');
+		const loaded = await import('@inth/sdk/runtime/script-server-start');
 		code = loaded.serverScriptStart({
 			...options,
 			prefetch: state,

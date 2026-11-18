@@ -1,6 +1,6 @@
 <!-- #region docs:language-switcher title="src/LanguageSwitcher.vue" -->
 <script setup lang="ts">
-import { useConsentKernel, useConsentLanguage } from 'c15t/vue/vue-plugin';
+import { useConsentKernel, useConsentLanguage } from '@inth/vue/vue-plugin';
 
 const language = useConsentLanguage();
 const kernel = useConsentKernel();

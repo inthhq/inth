@@ -1,6 +1,6 @@
+import { ConsentBanner } from '@inth/react';
+import type { ConsentProviderOptions } from '@inth/react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { ConsentBanner } from 'c15t/react';
-import type { ConsentProviderOptions } from 'c15t/react';
 import { expect, waitFor, within } from 'storybook/test';
 
 import { RecipePage } from './docs-recipe-page';

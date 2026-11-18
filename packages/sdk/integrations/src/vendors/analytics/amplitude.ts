@@ -1,4 +1,4 @@
-import type { Script } from '@c15t/core';
+import type { Script } from '@inth/sdk/engine';
 
 import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
@@ -305,7 +305,7 @@ export interface AmplitudeOptions {
  *
  * @example
  * ```ts
- * import { amplitude } from '@c15t/integrations/amplitude';
+ * import { amplitude } from '@inth/integrations/amplitude';
  *
  * const script = amplitude({
  * 	apiKey: 'AMPLITUDE_API_KEY',

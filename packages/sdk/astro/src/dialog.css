@@ -1,9 +1,9 @@
 /**
- * @c15t/astro — deprecated and empty.
+ * @inth/astro — deprecated and empty.
  *
- * `@c15t/astro/styles.css` includes the preference dialog's rules. This file
- * stays so existing `@import "@c15t/astro/dialog.css";` lines keep
- * resolving; remove them. It points at `@c15t/ui/styles/dialog.css`, which
+ * `@inth/astro/styles.css` includes the preference dialog's rules. This file
+ * stays so existing `@import "@inth/astro/dialog.css";` lines keep
+ * resolving; remove them. It points at `@inth/sdk/ui/styles/dialog.css`, which
  * is empty for the same reason.
  */
-@import '@c15t/ui/styles/dialog.css';
+@import '@inth/sdk/ui/styles/dialog.css';

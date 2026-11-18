@@ -14,9 +14,9 @@
  *                  an empty 204 so no real analytics data is sent.
  *
  * Usage:
- *   bun run --filter @c15t/integrations test:live-vendors
- *   bun run --filter @c15t/integrations test:live-vendors -- --vendor microsoft-clarity
- *   bun run --filter @c15t/integrations test:live-vendors -- --report ./report.json
+ *   bun run --filter @inth/integrations test:live-vendors
+ *   bun run --filter @inth/integrations test:live-vendors -- --vendor microsoft-clarity
+ *   bun run --filter @inth/integrations test:live-vendors -- --report ./report.json
  */
 import { chromium } from 'playwright';
 import type { Browser, Response } from 'playwright';

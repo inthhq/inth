@@ -1,19 +1,19 @@
-import { projectUrl as builtProjectUrl, snapshot } from '@c15t/core/generated';
-import {
-	manifest as browserManifest,
-	withEarlyInit,
-} from '@c15t/core/transports/manifest-browser';
-import type {
-	BrowserManifestModeFactory,
-	BrowserManifestOptions,
-} from '@c15t/core/transports/manifest-browser';
+import { projectUrl as builtProjectUrl, snapshot } from '@inth/sdk/generated';
 /**
  * Manifest mode for the React provider: core's browser resolver, with the
  * policy and backend URL the build integration downloaded as defaults.
  */
-import type { ConsentManifest } from '@c15t/schema/types';
+import type { ConsentManifest } from '@inth/sdk/schema/types';
+import {
+	manifest as browserManifest,
+	withEarlyInit,
+} from '@inth/sdk/transports/manifest-browser';
+import type {
+	BrowserManifestModeFactory,
+	BrowserManifestOptions,
+} from '@inth/sdk/transports/manifest-browser';
 
-/** What a build integration downloaded, as `@c15t/core/generated` exports it. */
+/** What a build integration downloaded, as `@inth/sdk/generated` exports it. */
 export interface BuildOutput {
 	projectUrl?: string;
 	snapshot?: ConsentManifest;
@@ -55,10 +55,10 @@ export const withBuildDefaults = function withBuildDefaults(
 /**
  * Resolve the policy in the browser from the backend's consent manifest.
  *
- * Without options it uses what `consentManifest()` from `c15t/build`
+ * Without options it uses what `consentManifest()` from `@inth/sdk/build`
  * downloaded: the snapshot and the backend URL from
  * `VITE_C15T_BACKEND_URL` or `VITE_INTH_PROJECT_URL`, both served as
- * `c15t/generated`. Without a
+ * `@inth/sdk/generated`. Without a
  * snapshot, such as in dev after a failed fetch, it fetches
  * `${projectUrl}/manifest` at runtime. Saves go to the backend either way.
  * With `manifestUrl` or `source: 'runtime'`, also pass `source: 'runtime'`
@@ -71,7 +71,7 @@ export const withBuildDefaults = function withBuildDefaults(
  * @throws {Error} When no snapshot, manifest URL or backend URL is known.
  * @example
  * ```tsx
- * import { ConsentProvider, manifest } from 'c15t/react';
+ * import { ConsentProvider, manifest } from '@inth/react';
  *
  * <ConsentProvider options={{ mode: manifest() }}>{children}</ConsentProvider>;
  * ```
@@ -91,4 +91,4 @@ export const manifest = function manifest(
 export type {
 	BrowserManifestModeFactory,
 	BrowserManifestOptions as ManifestModeOptions,
-} from '@c15t/core/transports/manifest-browser';
+} from '@inth/sdk/transports/manifest-browser';

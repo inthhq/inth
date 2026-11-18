@@ -1,10 +1,10 @@
 'use client';
 
-import { getEventDispatcher } from '@c15t/core/events';
+import { getEventDispatcher } from '@inth/sdk/events';
 import type {
 	EventDispatcher,
 	RuntimeEventDispatcherOptions,
-} from '@c15t/core/events';
+} from '@inth/sdk/events';
 import { useContext, useMemo } from 'react';
 
 import { ProviderServicesContext } from './context';
@@ -36,7 +36,7 @@ export const useEventDispatcher = function useEventDispatcher(
 	const services = useContext(ProviderServicesContext);
 	if (!services) {
 		throw new Error(
-			'c15t: useEventDispatcher() needs <ConsentProvider> from @c15t/react.'
+			'c15t: useEventDispatcher() needs <ConsentProvider> from @inth/react.'
 		);
 	}
 	const latest = useCommittedRef(options);
@@ -67,5 +67,5 @@ export const useEventDispatcher = function useEventDispatcher(
 	}, [current, latest]);
 };
 
-export type { EventDispatcher, EventProperties } from '@c15t/core/events';
+export type { EventDispatcher, EventProperties } from '@inth/sdk/events';
 export type { RuntimeEventDispatcherOptions as UseEventDispatcherOptions };

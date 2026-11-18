@@ -1,4 +1,4 @@
-import type { ConsentSnapshot, KernelEvent, SaveResult } from '@c15t/core';
+import type { ConsentSnapshot, KernelEvent, SaveResult } from '@inth/sdk-core';
 
 import { serializeDiagnostic } from './serialization';
 import type { DevToolsEvent } from './state-manager';

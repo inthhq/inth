@@ -1,7 +1,7 @@
 /**
- * `@c15t/iab` — IAB TCF 2.4 module for the c15t consent kernel.
+ * `@inth/sdk/iab` — IAB TCF 2.4 module for the c15t consent kernel.
  *
- * Consumes the `@c15t/core` kernel and provides CMP-compliant IAB TCF
+ * Consumes the `@inth/sdk/engine` kernel and provides CMP-compliant IAB TCF
  * functionality:
  * - Installs `window.__tcfapi` global (synchronous stub + async real
  *   implementation) so third-party vendors can discover the CMP.
@@ -14,7 +14,7 @@
  *   `kernel.set.iab()`, preserving the framework-neutral kernel
  *   contract.
  *
- * Same public shape as v2's `@c15t/iab` but adapted to consume the
+ * Same public shape as v2's `@inth/sdk/iab` but adapted to consume the
  * kernel rather than the Zustand store. Re-uses every pure utility
  * from v2: GVL fetcher, TC string encoder, purpose mapper, CMP API
  * (`createCMPApi`), stub installer (`initializeIABStub`).
@@ -31,12 +31,12 @@ import type {
 	KernelIABAuthority,
 	KernelIABState,
 	NonIABVendor,
-} from '@c15t/core';
+} from '@inth/sdk-core';
 import {
 	c15tProtocolParams,
 	registerIABControls,
-} from '@c15t/core/iab-support';
-import { appendInitParams } from '@c15t/schema/types';
+} from '@inth/sdk-core/iab-support';
+import { appendInitParams } from '@inth/sdk-schema/types';
 
 import {
 	AUTHORITY_KEY,
@@ -95,7 +95,7 @@ export interface CreateIABOptions {
 	cmpId: number;
 	/**
 	 * CMP version reported in the TC String and `__tcfapi`. Defaults to the
-	 * major of the `@c15t/iab` package version.
+	 * major of the `@inth/sdk/iab` package version.
 	 */
 	cmpVersion?: number;
 	/** Filter GVL to a specific vendor allowlist (optional). */
@@ -177,7 +177,7 @@ export interface IABProviderConfig extends IABUserConfig {
  *
  * @example
  * ```tsx
- * import { iab } from '@c15t/iab';
+ * import { iab } from '@inth/sdk-iab';
  *
  * <ConsentProvider options={{
  *   mode: hosted({ projectUrl: '/api/c15t' }),
@@ -2328,7 +2328,7 @@ export const createIAB = function createIAB(
 	return handle;
 };
 
-export type { CMPApi, GlobalVendorList, NonIABVendor } from '@c15t/core';
+export type { CMPApi, GlobalVendorList, NonIABVendor } from '@inth/sdk-core';
 export {
 	type HeadlessIABBannerAction,
 	type HeadlessIABBannerState,
@@ -2354,7 +2354,7 @@ export {
 } from './headless';
 /**
  * Convenience re-exports so consumers writing custom IAB flows don't
- * need to thread through `@c15t/iab`'s internal subpaths.
+ * need to thread through `@inth/sdk/iab`'s internal subpaths.
  */
 export {
 	c15tConsentsToIabPurposes,

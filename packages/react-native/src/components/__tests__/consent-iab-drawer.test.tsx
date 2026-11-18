@@ -12,7 +12,7 @@
  * ends: Save reports exactly once with everything in it, and Close reports never.
  */
 
-import { resolveIABDialogDisplayModel } from '@c15t/iab/headless';
+import { resolveIABDialogDisplayModel } from '@inth/sdk/iab/headless';
 import { afterEach, describe, expect, test } from 'vitest';
 
 import { IAB_DEMO_DISPLAY_MODEL } from '../../../../../internals/fixtures/react-native-bare/src/fixtures/iab-display-model';

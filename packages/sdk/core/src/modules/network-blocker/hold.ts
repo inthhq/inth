@@ -1,5 +1,5 @@
 /**
- * `@c15t/core/modules/network-hold`
+ * `@inth/sdk/modules/network-hold`
  *
  * Holds requests that match network-blocker rules from the moment an
  * adapter knows the rules until `createNetworkBlocker()` installs. The

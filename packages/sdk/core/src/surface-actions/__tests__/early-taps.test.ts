@@ -3,8 +3,8 @@
  * A tap on a server-rendered banner before the page hydrated: the inline
  * script holds it, and the runtime records it once it can.
  */
-import { writePolicyResolutionWire } from '@c15t/schema/types';
-import { translations } from '@c15t/translations/en';
+import { writePolicyResolutionWire } from '@inth/sdk-schema/types';
+import { translations } from '@inth/sdk-translations/en';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {

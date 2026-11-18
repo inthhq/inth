@@ -1,11 +1,15 @@
-import { consentTypes, deniedVendorIds, vendorsListedUnder } from '@c15t/core';
+import {
+	consentTypes,
+	deniedVendorIds,
+	vendorsListedUnder,
+} from '@inth/sdk-core';
 import type {
 	AllConsentNames,
 	ConsentSnapshot,
 	PresentationAction,
-} from '@c15t/core';
-import { createPreferenceDraft } from '@c15t/core/preference-draft';
-import type { CompleteTranslations } from '@c15t/translations';
+} from '@inth/sdk-core';
+import { createPreferenceDraft } from '@inth/sdk-core/preference-draft';
+import type { CompleteTranslations } from '@inth/sdk-translations';
 
 import { classes } from '../generated/styles';
 import { renderActionFooter, resolveActions } from './actions';
@@ -175,7 +179,7 @@ const patchOpen = function patchOpen(row: Row, open: boolean): void {
 /**
  * The category list the preference centre renders.
  *
- * Toggles stage into a `@c15t/core/preference-draft` draft until the
+ * Toggles stage into a `@inth/sdk/preference-draft` draft until the
  * visitor saves, the way every other adapter treats them; "Accept all" and
  * "Reject all" discard it. Each category lists its declared vendors with a
  * switch per vendor: vendor switches stage into the same draft, are

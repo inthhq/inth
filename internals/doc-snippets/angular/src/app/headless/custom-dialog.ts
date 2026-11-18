@@ -5,7 +5,7 @@ import {
 	computed,
 	inject,
 } from '@angular/core';
-import { ConsentManager, Portal } from '@c15t/angular';
+import { ConsentManager, Portal } from '@inth/angular';
 import {
 	DialogBackdrop,
 	DialogClose,
@@ -17,7 +17,7 @@ import {
 	SwitchControl,
 	Switch,
 	SwitchThumb,
-} from '@c15t/angular/primitives';
+} from '@inth/angular/primitives';
 
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,

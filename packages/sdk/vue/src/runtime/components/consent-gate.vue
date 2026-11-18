@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { evaluateConsent } from '@c15t/core';
-import type { AllConsentNames } from '@c15t/core';
-import gateStyles from '@c15t/ui/styles/components/consent-gate';
+import { evaluateConsent } from '@inth/sdk/engine';
+import type { AllConsentNames } from '@inth/sdk/engine';
+import gateStyles from '@inth/sdk/ui/styles/components/consent-gate';
 
-import '@c15t/ui/styles/components/consent-gate.css';
+import '@inth/sdk/ui/styles/components/consent-gate.css';
 import { computed, watch } from 'vue';
 
 import {

@@ -1,7 +1,7 @@
-import { createConsentManifestPolicyPack } from '@c15t/schema/types';
-import type { ConsentManifest } from '@c15t/schema/types';
+import { createConsentManifestPolicyPack } from '@inth/sdk/schema/types';
+import type { ConsentManifest } from '@inth/sdk/schema/types';
 
-/** Shared manifest fixture for the `@c15t/angular/ssr` tests. */
+/** Shared manifest fixture for the `@inth/angular/ssr` tests. */
 export const MANIFEST_FIXTURE = {
 	branding: 'c15t',
 	policyPacks: [

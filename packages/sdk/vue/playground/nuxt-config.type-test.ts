@@ -1,7 +1,7 @@
 // Type test for the options a Nuxt app passes to c15t. `check-types:nuxt`
 // checks it through the playground, where Nuxt applies the module's type
 // augmentations the same way it does in an application.
-import type { BlockedRequestInfo } from '@c15t/core/modules/network-blocker';
+import type { BlockedRequestInfo } from '@inth/sdk/modules/network-blocker';
 import type { NitroRouteConfig } from 'nitropack/types';
 import { expectTypeOf } from 'vitest';
 

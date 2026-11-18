@@ -1,4 +1,4 @@
-import { hosted } from '@c15t/core/transports';
+import { hosted } from '@inth/sdk-core/transports';
 
 import type { CreateConsentClientContext } from './client-base';
 import { createGlobalWith } from './global-base';
@@ -24,7 +24,7 @@ export const createHostedGlobal = function createHostedGlobal(
 ): HostedC15tGlobal {
 	return Object.assign(
 		createGlobalWith(
-			{ ...context, pkg: context.pkg ?? '@c15t/browser/hosted' },
+			{ ...context, pkg: context.pkg ?? '@inth/sdk/hosted' },
 			createHostedConsentClient,
 			'hosted'
 		),

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getDataDisabled, getOpenState } from '@c15t/ui/primitives';
+	import { getDataDisabled, getOpenState } from '@inth/sdk/ui/primitives';
 	import type { Snippet } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
 

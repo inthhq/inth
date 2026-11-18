@@ -1,5 +1,5 @@
+import { useConsent } from '@inth/tanstack-start';
 import { createFileRoute } from '@tanstack/react-router';
-import { useConsent } from 'c15t/tanstack-start';
 
 const HomePage = () => {
 	const measurement = useConsent('measurement');

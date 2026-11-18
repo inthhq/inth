@@ -5,8 +5,8 @@ import {
 	useConsent,
 	useEffectivePermissions,
 	useSaveConsents,
-} from '@c15t/react/hooks';
-import { ConsentProvider } from '@c15t/react/provider';
+} from '@inth/react/hooks';
+import { ConsentProvider } from '@inth/react/provider';
 
 const TestComponent = () => {
 	const consents = useEffectivePermissions();

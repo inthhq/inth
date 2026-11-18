@@ -4,7 +4,7 @@ import {
 	useConsent,
 	useConsentActiveUI,
 	useExplicitChoice,
-} from 'c15t/vue/vue-plugin';
+} from '@inth/vue/vue-plugin';
 
 // May measurement code run right now?
 const permissions = useConsent();

@@ -14,12 +14,12 @@
  * @internal
  */
 
-import type { ProviderTransportFactory } from '@c15t/core';
-import { clientMode } from '@c15t/core/runtime/client-mode';
+import type { ProviderTransportFactory } from '@inth/sdk/engine';
+import { clientMode } from '@inth/sdk/runtime/client-mode';
 import type {
 	ConsentProviderRuntime,
 	ConsentProviderRuntimeOptions,
-} from '@c15t/core/runtime/provider';
+} from '@inth/sdk/runtime/provider';
 
 import { modulePreloadMarker } from '../module-preload';
 import { createOwnedRuntime } from '../owned-runtime';
@@ -61,7 +61,7 @@ export const createServerRoot = function createServerRoot(input: {
 	const transport = clientMode(
 		input.mode ?? stateMode,
 		input.state,
-		'@c15t/svelte/testing'
+		'@inth/svelte/testing'
 	);
 	const runtime = createOwnedRuntime(input.runtimeOptions(transport));
 	const planned = planServerBoot(runtime, input.options);

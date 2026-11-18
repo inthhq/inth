@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 
-import type { ConsentSnapshot } from '@c15t/core';
-import { onDemandRuntimeModules } from '@c15t/core/runtime/on-demand';
+import type { ConsentSnapshot } from '@inth/sdk/engine';
+import { onDemandRuntimeModules } from '@inth/sdk/runtime/on-demand';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { resetDialogStylesForTest } from '../browser/dialog-styles';

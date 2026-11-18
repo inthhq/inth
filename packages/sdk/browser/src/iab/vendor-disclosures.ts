@@ -2,7 +2,7 @@ import type {
 	ConsentSnapshot,
 	GlobalVendorList,
 	NonIABVendor,
-} from '@c15t/core';
+} from '@inth/sdk-core';
 
 import type { SurfaceCopy } from '../ui/copy';
 import { h } from '../ui/dom';

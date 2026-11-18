@@ -3,14 +3,14 @@ import type {
 	PresentationAction,
 	PromptPosition,
 	PromptVariant,
-} from '@c15t/core';
-import { replayEarlyConsentTaps } from '@c15t/core/surface-actions';
-import type { PolicyRight } from '@c15t/schema/types';
-import type { CompleteTranslations } from '@c15t/translations';
+} from '@inth/sdk/engine';
+import type { PolicyRight } from '@inth/sdk/schema/types';
+import { replayEarlyConsentTaps } from '@inth/sdk/surface-actions';
+import type { CompleteTranslations } from '@inth/sdk/translations';
 
-import '@c15t/ui/styles/components/consent-banner.css';
-import bannerStyles from '@c15t/ui/styles/components/consent-banner';
-import { getTextDirection } from '@c15t/ui/utils';
+import '@inth/sdk/ui/styles/components/consent-banner.css';
+import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
+import { getTextDirection } from '@inth/sdk/ui/utils';
 import {
 	computed,
 	mergeProps,

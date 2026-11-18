@@ -1,4 +1,4 @@
-import { defineTheme } from 'c15t/next';
+import { defineTheme } from '@inth/nextjs';
 
 // Northwind's colors for the IAB banner and preference center. No
 // 'use client', so the server layout can render it as CSS and the client

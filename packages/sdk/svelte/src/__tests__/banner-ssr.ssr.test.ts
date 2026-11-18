@@ -1,4 +1,4 @@
-import { createConsentKernel } from '@c15t/core';
+import { createConsentKernel } from '@inth/sdk/engine';
 /**
  * Server-render contract for the consent banner.
  *
@@ -7,10 +7,10 @@ import { createConsentKernel } from '@c15t/core';
  * server-compiled components. The client project resolves `browser` and
  * would hand it client-compiled output, which throws `effect_orphan`.
  */
-import type { ConsentPresentation, KernelConfig } from '@c15t/core';
-import { EARLY_CONSENT_TAP_SCRIPT } from '@c15t/core/surface-actions';
-import { resolvePolicyRules } from '@c15t/schema/types';
-import bannerStyles from '@c15t/ui/styles/components/consent-banner';
+import type { ConsentPresentation, KernelConfig } from '@inth/sdk/engine';
+import { resolvePolicyRules } from '@inth/sdk/schema/types';
+import { EARLY_CONSENT_TAP_SCRIPT } from '@inth/sdk/surface-actions';
+import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
 import { render } from 'svelte/server';
 import { describe, expect, test } from 'vitest';
 

@@ -1,4 +1,4 @@
-import type { Script } from '@c15t/core';
+import type { Script } from '@inth/sdk/engine';
 
 import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
@@ -209,7 +209,7 @@ export interface PlausibleAnalyticsOptions {
  *
  * @example
  * ```ts
- * import { plausibleAnalytics } from '@c15t/integrations/plausible-analytics';
+ * import { plausibleAnalytics } from '@inth/integrations/plausible-analytics';
  *
  * plausibleAnalytics({
  *   domain: 'example.com',

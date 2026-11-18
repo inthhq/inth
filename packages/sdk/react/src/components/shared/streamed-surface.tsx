@@ -1,6 +1,6 @@
 'use client';
 
-import type { StreamedPrefetch } from '@c15t/core/runtime';
+import type { StreamedPrefetch } from '@inth/sdk/runtime';
 import * as React from 'react';
 import { Suspense, useContext, useEffect, useLayoutEffect } from 'react';
 import type { ReactNode } from 'react';
@@ -99,7 +99,7 @@ export interface StreamedConsentSurfaceProps {
  * import {
  *   StreamedConsentSurface,
  *   useHeadlessConsentUI,
- * } from 'c15t/next/headless';
+ * } from '@inth/nextjs/headless';
  *
  * function BannerContent() {
  *   const { banner, performAction } = useHeadlessConsentUI();

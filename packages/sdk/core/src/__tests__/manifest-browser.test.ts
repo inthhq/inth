@@ -5,10 +5,10 @@
 import {
 	createConsentManifestPolicyPack,
 	policyRulePresets,
-} from '@c15t/schema/types';
-import type { ConsentManifest } from '@c15t/schema/types';
-import { baseTranslations } from '@c15t/translations/all';
-import { translations as germanCopy } from '@c15t/translations/de';
+} from '@inth/sdk-schema/types';
+import type { ConsentManifest } from '@inth/sdk-schema/types';
+import { baseTranslations } from '@inth/sdk-translations/all';
+import { translations as germanCopy } from '@inth/sdk-translations/de';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import type { ConsentMode } from '../modes';

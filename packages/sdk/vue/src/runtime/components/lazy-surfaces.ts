@@ -11,7 +11,7 @@
  * - IAB surfaces: load only when the resolved policy is IAB (`init.gvl`)
  * - dialog trigger: mounted only in the browser, when `showTrigger` is set
  *
- * Measured motivation: with all surfaces static, @c15t/vue's mobile consent
+ * Measured motivation: with all surfaces static, @inth/vue's mobile consent
  * tax was ~345-530ms; the weight was parse/hydration
  * of surfaces most visitors never see.
  */

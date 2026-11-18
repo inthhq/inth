@@ -1,5 +1,5 @@
-import type { ConsentRuntime } from '@c15t/core/runtime';
-import { createConsentRuntime } from '@c15t/core/runtime';
+import type { ConsentRuntime } from '@inth/sdk/runtime';
+import { createConsentRuntime } from '@inth/sdk/runtime';
 import {
 	Activity,
 	StrictMode,

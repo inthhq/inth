@@ -9,8 +9,8 @@ import {
 	HeadlessConsent,
 	resolveActionLabels,
 	resolvePromptCopy,
-} from '@c15t/angular';
-import type { AllConsentNames } from '@c15t/angular';
+} from '@inth/angular';
+import type { AllConsentNames } from '@inth/angular';
 
 import { ExamplePage } from './example-page';
 

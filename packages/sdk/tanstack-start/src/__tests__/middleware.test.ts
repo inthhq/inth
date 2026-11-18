@@ -1,4 +1,4 @@
-import { clearManifestCache } from '@c15t/core/server';
+import { clearManifestCache } from '@inth/sdk/server';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { createConsentRoute } from '../api';

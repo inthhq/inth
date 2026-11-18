@@ -6,9 +6,9 @@
  * @internal
  */
 
-import type { ConsentSnapshot, KernelConfig } from '@c15t/core';
-import { isIABConfigured } from '@c15t/core/runtime';
-import { planInstantCommit } from '@c15t/core/surface-actions/instant-commit';
+import type { ConsentSnapshot, KernelConfig } from '@inth/sdk/engine';
+import { isIABConfigured } from '@inth/sdk/runtime';
+import { planInstantCommit } from '@inth/sdk/surface-actions/instant-commit';
 
 import { declaresVendor, isRunnableNow } from '../browser/deferred-scripts';
 import type { C15tLocals, C15tResolvedOptions } from '../types';

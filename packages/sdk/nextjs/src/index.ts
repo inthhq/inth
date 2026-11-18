@@ -1,14 +1,14 @@
 /**
- * `@c15t/nextjs` Next.js adapter.
+ * `@inth/nextjs` Next.js adapter.
  *
  * Pattern:
  *   // c15t.config.ts, found by withConsentManifest in next.config.ts
- *   import { defineConsentConfig } from '@c15t/nextjs';
+ *   import { defineConsentConfig } from '@inth/nextjs';
  *   export default defineConsentConfig({ scripts: [...] });
  *
  *   // app/layout.tsx (Server Component)
- *   import { ConsentBanner, ConsentRoot } from '@c15t/nextjs';
- *   import { resolveConsent } from '@c15t/nextjs/server';
+ *   import { ConsentBanner, ConsentRoot } from '@inth/nextjs';
+ *   import { resolveConsent } from '@inth/nextjs/server';
  *
  *   export default function RootLayout({ children }) {
  *     return (
@@ -24,7 +24,7 @@
  *   }
  *
  *   // any client component
- *   import { useConsent } from '@c15t/react';
+ *   import { useConsent } from '@inth/react';
  *   const allowed = useConsent('marketing');
  *
  * Server helpers return serializable data and avoid module-level runtime
@@ -34,23 +34,23 @@
  */
 
 // oxlint-disable-next-line oxc/no-barrel-file -- Preserve declaration order, interface shape, and public compatibility.
-export * from '@c15t/react';
+export * from '@inth/react';
 // Their code loads with the deferred root's engine; see `./root`.
 export {
 	DeferredConsentBanner as ConsentBanner,
 	DeferredConsentDialog as ConsentDialog,
-} from '@c15t/react/deferred';
+} from '@inth/react/deferred';
 export type { ConsentRootProps } from './root';
 export { ConsentRoot } from './root';
 export type { ConsentClientOptions, ConsentState } from './types';
 export type { ConsentConfig } from './config';
 export { defineConsentConfig } from './config';
-// The data factories, in place of `@c15t/react`'s transports.
+// The data factories, in place of `@inth/react`'s transports.
 export type {
 	ConsentMode,
 	HostedMode,
 	ManifestMode,
 	ManifestModeOptions,
 	TestingMode,
-} from '@c15t/core/modes';
-export { hosted, manifest } from '@c15t/core/modes';
+} from '@inth/sdk/modes';
+export { hosted, manifest } from '@inth/sdk/modes';

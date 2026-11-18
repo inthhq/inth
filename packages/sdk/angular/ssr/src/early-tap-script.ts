@@ -3,7 +3,7 @@
  *
  * A server-rendered banner paints long before Angular attaches its
  * handlers; on a slow phone a tap in that gap lands on a plain `<button>`.
- * The script from `@c15t/core/surface-actions` records the tap and hides
+ * The script from `@inth/sdk/surface-actions` records the tap and hides
  * the banner, and `<c15t-consent-banner>` records the choice once it
  * hydrates.
  *
@@ -14,7 +14,7 @@
 import {
 	EARLY_CONSENT_TAP_SCRIPT,
 	EARLY_TAP_ROOT,
-} from '@c15t/core/surface-actions';
+} from '@inth/sdk/surface-actions';
 
 const NONCE = /^[\w+/=-]+$/u;
 

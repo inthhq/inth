@@ -9,11 +9,11 @@
  * renders the banner and the dialog, as the Svelte fixture does.
  */
 import type { Type } from '@angular/core';
-import { ConsentDialog } from '@c15t/angular/consent-dialog';
-import { ConsentDialogTrigger } from '@c15t/angular/consent-dialog-trigger';
-import { ConsentWidget } from '@c15t/angular/consent-widget';
-import { IABConsentBanner, IABConsentDialog } from '@c15t/angular/iab';
 import type { MountableComponent } from '@c15t/conformance';
+import { ConsentDialog } from '@inth/angular/consent-dialog';
+import { ConsentDialogTrigger } from '@inth/angular/consent-dialog-trigger';
+import { ConsentWidget } from '@inth/angular/consent-widget';
+import { IABConsentBanner, IABConsentDialog } from '@inth/angular/iab';
 
 import { ConsentBanner } from '../lib/banner/consent-banner';
 import { PolicyGateProbe } from './policy-gate-probe';

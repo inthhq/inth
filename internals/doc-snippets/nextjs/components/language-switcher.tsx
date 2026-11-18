@@ -1,7 +1,7 @@
 // #region docs:language-switcher
 'use client';
 
-import { useInit, useSetLanguage, useSnapshot } from 'c15t/next';
+import { useInit, useSetLanguage, useSnapshot } from '@inth/nextjs';
 
 const languages = [
 	{ code: 'en', label: 'English' },

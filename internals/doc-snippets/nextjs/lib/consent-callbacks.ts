@@ -1,5 +1,5 @@
 // #region docs:callbacks
-import type { ConsentProviderCallbacks } from 'c15t/next';
+import type { ConsentProviderCallbacks } from '@inth/nextjs';
 
 export const callbacks = {
 	// Right before the page reloads because a save withdrew a permission.

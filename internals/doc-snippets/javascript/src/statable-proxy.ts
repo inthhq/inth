@@ -1,5 +1,5 @@
 // #region docs:statable-proxy-scripts title="src/consent-scripts.ts"
-import { statableAnalytics } from '@c15t/integrations/statable-analytics';
+import { statableAnalytics } from '@inth/integrations/statable-analytics';
 
 export const scripts = [
 	statableAnalytics({

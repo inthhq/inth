@@ -1,11 +1,11 @@
+import { createConsentManifestPolicyPack } from '@inth/sdk/schema/types';
+import type { ConsentManifest } from '@inth/sdk/schema/types';
 /**
  * A deferred IAB vendor list must point at the catch-all's `init` path,
  * which is the only path that serves it, as the Next.js and TanStack Start
  * adapters do.
  */
-import { clearManifestCache } from '@c15t/core/server';
-import { createConsentManifestPolicyPack } from '@c15t/schema/types';
-import type { ConsentManifest } from '@c15t/schema/types';
+import { clearManifestCache } from '@inth/sdk/server';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { c15tHandle } from '../handle';

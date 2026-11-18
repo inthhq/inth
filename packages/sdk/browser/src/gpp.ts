@@ -1,12 +1,12 @@
 /**
- * `@c15t/browser/gpp` — IAB GPP for a bundled `@c15t/browser` client, the
- * way `@c15t/browser/devtools` mounts the DevTools panel. Script-tag pages
+ * `@inth/sdk/gpp` — IAB GPP for a bundled `@inth/sdk` client, the
+ * way `@inth/sdk/devtools` mounts the DevTools panel. Script-tag pages
  * load `c15t.gpp.js` instead.
  *
  * @example
  * ```ts
- * import { hosted, init } from '@c15t/browser';
- * import { mountGPP } from '@c15t/browser/gpp';
+ * import { hosted, init } from '@inth/sdk-browser';
+ * import { mountGPP } from '@inth/sdk-browser/gpp';
  *
  * const client = init({
  *   mode: hosted({ projectUrl: 'https://your-instance.c15t.dev' }),
@@ -15,9 +15,9 @@
  * ```
  */
 
-import type { RuntimeGPPOptions } from '@c15t/core/runtime';
-import { createGPP } from '@c15t/iab/gpp';
-import type { GPPHandle } from '@c15t/iab/gpp';
+import type { RuntimeGPPOptions } from '@inth/sdk-core/runtime';
+import { createGPP } from '@inth/sdk-iab/gpp';
+import type { GPPHandle } from '@inth/sdk-iab/gpp';
 
 import type { ConsentClient } from './types';
 
@@ -38,5 +38,5 @@ export const mountGPP = function mountGPP(
 	return createGPP({ ...options, kernel: client.kernel });
 };
 
-export type { GPPHandle, GPPPingData } from '@c15t/iab/gpp';
-export type { RuntimeGPPOptions } from '@c15t/core/runtime';
+export type { GPPHandle, GPPPingData } from '@inth/sdk-iab/gpp';
+export type { RuntimeGPPOptions } from '@inth/sdk-core/runtime';

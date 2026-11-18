@@ -1,4 +1,4 @@
-import type { Script } from '@c15t/core';
+import type { Script } from '@inth/sdk/engine';
 
 import type { VendorManifest } from '../../types';
 

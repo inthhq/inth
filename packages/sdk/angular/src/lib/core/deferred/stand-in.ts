@@ -9,8 +9,8 @@
  * object stays the same throughout, so a component or script loader that
  * took it at setup keeps working.
  *
- * The same stand-in as `@c15t/svelte`'s `ConsentRoot` and `@c15t/vue`'s
- * Nuxt module, which are modelled on `@c15t/react`'s.
+ * The same stand-in as `@inth/svelte`'s `ConsentRoot` and `@inth/vue`'s
+ * Nuxt module, which are modelled on `@inth/react`'s.
  *
  * @packageDocumentation
  * @internal
@@ -21,7 +21,7 @@ import type {
 	ConsentSnapshot,
 	KernelActiveUI,
 	KernelEvent,
-} from '@c15t/core';
+} from '@inth/sdk/engine';
 
 /** @internal */
 export interface StandInOptions {

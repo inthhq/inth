@@ -1,5 +1,5 @@
 // #region docs:client-side-config title="c15t.config.ts"
-import { defineConsentConfig, hosted } from 'c15t/next';
+import { defineConsentConfig, hosted } from '@inth/nextjs';
 
 // The browser asks the backend's /init. The backend URL comes from
 // NEXT_PUBLIC_C15T_BACKEND_URL.

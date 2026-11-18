@@ -1,4 +1,4 @@
-import { CONSENT_COMPONENT_SLOT_KEYS } from '@c15t/schema/config';
+import { CONSENT_COMPONENT_SLOT_KEYS } from '@inth/sdk/schema/config';
 import { describe, expect, test } from 'vitest';
 
 // Raw source text of every v3 component/primitive module, inlined by Vite so

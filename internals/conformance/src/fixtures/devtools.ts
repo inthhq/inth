@@ -2,13 +2,13 @@ import type {
 	ConsentPresentation,
 	KernelConfig,
 	KernelTransport,
-} from '@c15t/core';
-import type { Script } from '@c15t/core/modules/script-loader';
+} from '@inth/sdk-core';
+import type { Script } from '@inth/sdk-core/modules/script-loader';
 import {
 	readPolicyResolutionWire,
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 
 /** A transport factory that hands the provider `transport`. */
 const customMode = <Transport>(transport: Transport) =>

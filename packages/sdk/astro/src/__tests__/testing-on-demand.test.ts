@@ -4,7 +4,7 @@
  * `testing()` carries the recommended policy-rule pack, and the hosted
  * transport's init path is only needed when a page inits again. A page the
  * server resolved runs neither, so the browser client must not import them
- * statically. `@c15t/core/runtime/client-mode` loads the hosted init path
+ * statically. `@inth/sdk/runtime/client-mode` loads the hosted init path
  * with `import()`, and its own tests pin that; a test page's init must still
  * resolve its rules.
  *
@@ -14,7 +14,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import type { ProviderTransportContext } from '@c15t/core';
+import type { ProviderTransportContext } from '@inth/sdk/engine';
 import { describe, expect, it, vi } from 'vitest';
 
 import { hosted as hostedMode } from '../mode';

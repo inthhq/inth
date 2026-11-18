@@ -183,7 +183,7 @@ public struct IABBannerSummary: Sendable, Equatable {
 }
 
 extension GlobalVendorList {
-    /// `AD_TECH_PROVIDER_PURPOSES` in `@c15t/schema`: Accept All grants these for providers.
+    /// `AD_TECH_PROVIDER_PURPOSES` in `@inth/sdk/schema`: Accept All grants these for providers.
     static let adTechProviderPurposeIds: Set<Int> = [1, 3, 4]
 
     var activeVendors: [GVLVendor] { vendors.values.filter { $0.deletedDate?.isEmpty != false } }

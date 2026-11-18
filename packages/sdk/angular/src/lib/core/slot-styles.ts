@@ -9,8 +9,8 @@ import type {
 	ClassNameStyle,
 	Theme,
 	ThemeValue,
-} from '@c15t/ui/theme';
-import { resolveStyles, toStyleAttributeValue } from '@c15t/ui/utils';
+} from '@inth/sdk/ui/theme';
+import { resolveStyles, toStyleAttributeValue } from '@inth/sdk/ui/utils';
 
 /**
  * Resolves a surface part's class and style: the theme's slot for

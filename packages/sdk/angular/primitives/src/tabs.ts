@@ -6,13 +6,13 @@ import {
 	input,
 	model,
 } from '@angular/core';
-import type { TabsOrientation } from '@c15t/ui/primitives';
+import type { TabsOrientation } from '@inth/sdk/ui/primitives';
 import {
 	getDataDisabled,
 	getNextTabValue,
 	getTabPanelState,
 	getTabState,
-} from '@c15t/ui/primitives';
+} from '@inth/sdk/ui/primitives';
 
 import { uniqueId } from './unique-id';
 

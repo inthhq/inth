@@ -29,7 +29,7 @@ export const vueDialogAdapter: ConsentDialogAdapter = {
 	async mount(context: ConsentDialogContext): Promise<ConsentDialogHandle> {
 		const [{ createApp }, { c15tVue }, surface] = await Promise.all([
 			import('vue'),
-			import('@c15t/vue/vue-plugin'),
+			import('@inth/vue/vue-plugin'),
 			requireDialogSurface('vue')(),
 		]);
 
@@ -65,7 +65,7 @@ export const vueDialogAdapter: ConsentDialogAdapter = {
 	async preload() {
 		await Promise.all([
 			import('vue'),
-			import('@c15t/vue/vue-plugin'),
+			import('@inth/vue/vue-plugin'),
 			requireDialogSurface('vue')(),
 		]);
 	},

@@ -1,8 +1,8 @@
 'use client';
 
-import type { NetworkBlockerRule } from '@c15t/core/modules/network-blocker';
-import { holdNetworkRequests, NOT_HELD } from '@c15t/core/modules/network-hold';
-import type { NetworkHold } from '@c15t/core/modules/network-hold';
+import type { NetworkBlockerRule } from '@inth/sdk/modules/network-blocker';
+import { holdNetworkRequests, NOT_HELD } from '@inth/sdk/modules/network-hold';
+import type { NetworkHold } from '@inth/sdk/modules/network-hold';
 import { useState } from 'react';
 
 /**

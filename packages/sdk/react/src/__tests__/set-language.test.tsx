@@ -4,8 +4,12 @@
  * in offline mode. A language a server prefetch detected from
  * `Accept-Language` does not switch offline copy.
  */
-import type { ConsentKernel, InitContext, KernelConfig } from '@c15t/core';
-import { writePolicyResolutionWire } from '@c15t/schema/types';
+import type {
+	ConsentKernel,
+	InitContext,
+	KernelConfig,
+} from '@inth/sdk/engine';
+import { writePolicyResolutionWire } from '@inth/sdk/schema/types';
 import { useContext, useEffect } from 'react';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';

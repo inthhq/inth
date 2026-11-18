@@ -1,4 +1,4 @@
-import { resolveConsent } from '@c15t/nextjs/server';
+import { resolveConsent } from '@inth/nextjs/server';
 import type { ReactNode } from 'react';
 
 import { TypicalInstallConsent } from '../_bench/typical-install';

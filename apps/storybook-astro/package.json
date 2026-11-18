@@ -11,13 +11,12 @@
 		"test-storybook": "test-storybook --url ${STORYBOOK_URL:-http://127.0.0.1:6010}"
 	},
 	"dependencies": {
-		"@c15t/astro": "workspace:*",
 		"@c15t/conformance": "workspace:*",
-		"@c15t/core": "workspace:*",
-		"@c15t/react": "workspace:*",
-		"@c15t/svelte": "workspace:*",
-		"@c15t/ui": "workspace:*",
-		"@c15t/vue": "workspace:*",
+		"@inth/astro": "workspace:*",
+		"@inth/react": "workspace:*",
+		"@inth/sdk": "workspace:*",
+		"@inth/svelte": "workspace:*",
+		"@inth/vue": "workspace:*",
 		"react": "^19.2.0",
 		"react-dom": "^19.2.0",
 		"svelte": "^5.56.4",

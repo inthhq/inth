@@ -1,5 +1,5 @@
-import { createTestingMode } from '@c15t/core/testing';
-import type { ConsentTesting, TestingModeOptions } from '@c15t/core/testing';
+import { createTestingMode } from '@inth/sdk/testing';
+import type { ConsentTesting, TestingModeOptions } from '@inth/sdk/testing';
 
 /**
  * A `mode` for `provideC15t()` in tests. It needs no `projectUrl`. It
@@ -25,8 +25,8 @@ import type { ConsentTesting, TestingModeOptions } from '@c15t/core/testing';
  * @throws {Error} When the transport is built in a production build.
  * @example
  * ```ts
- * import { provideC15t } from '@c15t/angular';
- * import { testing } from '@c15t/angular/testing';
+ * import { provideC15t } from '@inth/angular';
+ * import { testing } from '@inth/angular/testing';
  *
  * TestBed.configureTestingModule({
  *   providers: [
@@ -38,7 +38,7 @@ import type { ConsentTesting, TestingModeOptions } from '@c15t/core/testing';
 export const testing = function testing(
 	options: TestingModeOptions = {}
 ): ConsentTesting {
-	return createTestingMode('@c15t/angular/testing', options);
+	return createTestingMode('@inth/angular/testing', options);
 };
 
 export type { ConsentTesting, TestingModeOptions };

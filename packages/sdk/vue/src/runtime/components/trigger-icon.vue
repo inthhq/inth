@@ -3,7 +3,7 @@
  * The consent trigger's icon, shared by the single button and the toolbar's
  * preferences item. Decorative; the control carries the accessible name.
  */
-import type { ConsentDialogTriggerIcon } from '@c15t/schema/config';
+import type { ConsentDialogTriggerIcon } from '@inth/sdk/schema/config';
 
 import ConsentBrandingIcon from './branding-icon.vue';
 

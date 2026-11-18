@@ -54,7 +54,7 @@ test('the package bundles cover every web framework quickstart', () => {
 
 test('package skills link only to pages in the bundle', () => {
 	const skill = renderPackageSkill(
-		'@c15t/vue',
+		'@inth/vue',
 		{ install: '`npm install c15t`', topic: 'the project is a Vue app' },
 		new Set([
 			'concepts/choose-your-setup.md',
@@ -74,7 +74,7 @@ test('package skills link only to pages in the bundle', () => {
 
 test('skills fit the package they ship in', () => {
 	const browser = renderPackageSkill(
-		'@c15t/browser',
+		'@inth/sdk',
 		{ install: 'a script tag', topic: 'the site is plain HTML' },
 		new Set(['frameworks/html/quickstart.md', 'frameworks/html/customize.md'])
 	);

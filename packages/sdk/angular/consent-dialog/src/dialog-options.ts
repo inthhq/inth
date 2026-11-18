@@ -2,8 +2,8 @@ import type {
 	ConsentDialogTriggerPosition,
 	ConsentDialogTriggerSize,
 	ConsentDialogTriggerVisibility,
-} from '@c15t/angular/consent-dialog-trigger';
-import type { LegalLinks, Model } from '@c15t/core';
+} from '@inth/angular/consent-dialog-trigger';
+import type { LegalLinks, Model } from '@inth/sdk/engine';
 
 /**
  * The trigger `<c15t-consent-dialog>` renders when `showTrigger` is an

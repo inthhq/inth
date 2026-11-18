@@ -3,7 +3,7 @@
  * consent-route suite; these check the Next.js wiring: catch-all params,
  * 404s, proxying, and the config.
  */
-import { clearManifestCache } from '@c15t/core/server';
+import { clearManifestCache } from '@inth/sdk/server';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { createConsentRoute } from '../api';
@@ -128,7 +128,7 @@ describe('createConsentRoute', () => {
 				projectUrl: 'https://consent.example.com',
 			})
 		).toThrow(
-			"@c15t/nextjs: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'."
+			"@inth/nextjs: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'."
 		);
 		expect(() =>
 			createPagesConsentRoute({
@@ -136,7 +136,7 @@ describe('createConsentRoute', () => {
 				projectUrl: 'https://consent.example.com',
 			})
 		).toThrow(
-			"@c15t/nextjs: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'."
+			"@inth/nextjs: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'."
 		);
 	});
 });

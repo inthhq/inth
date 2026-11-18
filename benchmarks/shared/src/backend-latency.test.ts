@@ -124,10 +124,10 @@ describe('bench condition in result keys', () => {
 				.filter((entry) => entry.suite === 'browser-runtime')
 				.map((entry) => entry.key);
 		expect(browserKeys(expectedBenchmarkResults)).toContain(
-			'@c15t/vue:ssr:profile-none:latency-200ms:browser-runtime'
+			'@inth/vue:ssr:profile-none:latency-200ms:browser-runtime'
 		);
 		expect(browserKeys(zero)).toContain(
-			'@c15t/vue:ssr:profile-none:latency-0ms:browser-runtime'
+			'@inth/vue:ssr:profile-none:latency-0ms:browser-runtime'
 		);
 		for (const key of browserKeys(expectedBenchmarkResults)) {
 			expect(key).toMatch(/:profile-none:latency-200ms:browser-runtime$/u);
@@ -138,7 +138,7 @@ describe('bench condition in result keys', () => {
 			zero
 				.filter((entry) => entry.suite === 'consent-gate')
 				.map((entry) => entry.key)
-		).toContain('@c15t/vue:consent-gate:latency-0ms:consent-gate');
+		).toContain('@inth/vue:consent-gate:latency-0ms:consent-gate');
 		const others = (results: typeof zero) =>
 			results
 				.filter(

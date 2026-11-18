@@ -14,7 +14,7 @@
  * @internal
  */
 
-import type { ConsentSnapshot } from '@c15t/core';
+import type { ConsentSnapshot } from '@inth/sdk-core';
 
 import type { ConsentClient } from '../types';
 

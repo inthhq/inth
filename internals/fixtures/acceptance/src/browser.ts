@@ -170,7 +170,7 @@ export const privacySettings = (page: Page) =>
  * then does nothing. Every framework adapter starts its runtime after
  * mount, and starting installs the `window.c15t` object. The script-tag
  * build replaces the array a page may queue calls on with its API.
- * `@c15t/browser` from npm installs no global; its pages are not hydrated,
+ * `@inth/sdk` from npm installs no global; its pages are not hydrated,
  * so callers skip this wait there.
  */
 export const waitForConsentRuntime = async function waitForConsentRuntime(
@@ -186,7 +186,7 @@ export const waitForConsentRuntime = async function waitForConsentRuntime(
  * Opens the preference dialog from the Privacy settings control.
  *
  * @param waitForRuntime - Wait for {@link waitForConsentRuntime} first.
- * Pass `false` for `@c15t/browser` from npm, which installs no global.
+ * Pass `false` for `@inth/sdk` from npm, which installs no global.
  */
 export const openPreferences = async function openPreferences(
 	page: Page,

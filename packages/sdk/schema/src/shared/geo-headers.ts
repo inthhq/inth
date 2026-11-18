@@ -13,7 +13,7 @@
  * generic proxies). Infra order after that: Cloudflare → Vercel →
  * CloudFront → generic.
  */
-import { parseAcceptLanguage } from '@c15t/translations';
+import { parseAcceptLanguage } from '@inth/sdk-translations';
 
 /** Country headers, highest priority first. `x-c15t-country` always wins. */
 export const COUNTRY_HEADERS = [
@@ -62,7 +62,7 @@ export interface ConsentRequestHeaderInputs {
 	 * Primary language subtag, lowercase (`de`, not `de-DE`) — the shape
 	 * translation selection and the backend resolver operate on. Derived
 	 * from the full q-value-aware Accept-Language negotiation in
-	 * `@c15t/translations`, not a naive first-token split.
+	 * `@inth/sdk/translations`, not a naive first-token split.
 	 */
 	language?: string;
 	gpc?: boolean;

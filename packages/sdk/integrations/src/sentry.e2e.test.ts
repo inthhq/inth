@@ -1,9 +1,9 @@
 /** @vitest-environment jsdom */
-import { createConsentKernel, vendorsListedUnder } from '@c15t/core';
-import type { AllConsentNames, HasCondition, Script } from '@c15t/core';
-import { createScriptLoader } from '@c15t/core/modules/script-loader';
-import { createConsentRuntime } from '@c15t/core/runtime';
-import { testing } from '@c15t/core/testing';
+import { createConsentKernel, vendorsListedUnder } from '@inth/sdk/engine';
+import type { AllConsentNames, HasCondition, Script } from '@inth/sdk/engine';
+import { createScriptLoader } from '@inth/sdk/modules/script-loader';
+import { createConsentRuntime } from '@inth/sdk/runtime';
+import { testing } from '@inth/sdk/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { scripts as sentryExampleScripts } from '../../../../internals/doc-snippets/javascript/src/sentry';

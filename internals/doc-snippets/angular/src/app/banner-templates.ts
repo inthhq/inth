@@ -6,7 +6,7 @@ import {
 	ConsentBannerTitle,
 	ConsentBanner,
 	ConsentButton,
-} from '@c15t/angular';
+} from '@inth/angular';
 
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,

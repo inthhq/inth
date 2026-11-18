@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { PromptPosition, PromptVariant } from '@c15t/core';
-	import { ConsentBanner, ConsentDialog } from '@c15t/svelte';
+	import type { PromptPosition, PromptVariant } from '@inth/sdk/engine';
+	import { ConsentBanner, ConsentDialog } from '@inth/svelte';
 
 	import {
 		storybookMode,

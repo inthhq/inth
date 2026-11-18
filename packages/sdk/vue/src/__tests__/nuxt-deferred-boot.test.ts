@@ -2,14 +2,14 @@
  * Which visitors the Nuxt plugin starts from the server's snapshot, and the
  * names the first-load chunk copies from core and the build.
  */
-import type { ConsentSnapshot } from '@c15t/core';
-import { EARLY_CONSENT_TAP_SCRIPT } from '@c15t/core/surface-actions';
-import type { InitOutput, PolicyRule } from '@c15t/schema/types';
+import type { ConsentSnapshot } from '@inth/sdk/engine';
+import type { InitOutput, PolicyRule } from '@inth/sdk/schema/types';
 import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
-import { translations } from '@c15t/translations/en';
+} from '@inth/sdk/schema/types';
+import { EARLY_CONSENT_TAP_SCRIPT } from '@inth/sdk/surface-actions';
+import { translations } from '@inth/sdk/translations/en';
 import { describe, expect, test } from 'vitest';
 
 import {
@@ -161,9 +161,9 @@ test('the first-load chunk’s copies of the early-tap script’s names match', 
 
 describe('preloadDeferredEngine', () => {
 	const ENGINE =
-		'node_modules/@c15t/vue/dist/runtime/deferred/engine.js' as const;
+		'node_modules/@inth/vue/dist/runtime/deferred/engine.js' as const;
 	const BANNER =
-		'node_modules/@c15t/vue/dist/runtime/components/prompt.vue' as const;
+		'node_modules/@inth/vue/dist/runtime/components/prompt.vue' as const;
 	const manifest = (): Record<string, ClientManifestChunk> => ({
 		[BANNER]: { file: 'banner.js', isDynamicEntry: true, src: BANNER },
 		[ENGINE]: {
@@ -208,7 +208,7 @@ describe('preloadDeferredEngine', () => {
 describe('isDeferredBannerModule', () => {
 	test('matches the banner from an installed, a workspace and a source build', () => {
 		for (const id of [
-			'../node_modules/.pnpm/@c15t+vue@3.3.0/node_modules/@c15t/vue/dist/runtime/components/prompt.vue',
+			'../node_modules/.pnpm/@c15t+vue@3.3.0/node_modules/@inth/vue/dist/runtime/components/prompt.vue',
 			// A workspace or linked install: Vite names the real path.
 			'../../../packages/sdk/vue/dist/runtime/components/prompt.vue',
 			'/repo/packages/sdk/vue/src/runtime/components/button.vue',
@@ -220,7 +220,7 @@ describe('isDeferredBannerModule', () => {
 	test('leaves the global components and other packages alone', () => {
 		for (const id of [
 			'../../../packages/sdk/vue/dist/runtime/components/nuxt-root.vue',
-			'../node_modules/@c15t/vue/dist/runtime/components/consent-gate.vue',
+			'../node_modules/@inth/vue/dist/runtime/components/consent-gate.vue',
 			'../../../packages/sdk/react/dist/components/prompt.js',
 			'app/components/prompt.vue',
 		]) {

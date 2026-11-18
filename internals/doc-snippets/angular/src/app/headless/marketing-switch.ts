@@ -6,7 +6,7 @@ import {
 	Switch,
 	SwitchHiddenInput,
 	SwitchThumb,
-} from '@c15t/angular/primitives';
+} from '@inth/angular/primitives';
 
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,

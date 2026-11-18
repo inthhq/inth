@@ -9,13 +9,16 @@
  * imports no stylesheet of its own.
  */
 
-import { applyExperimentAssignment, applyExperimentTheme } from '@c15t/core';
+import {
+	applyExperimentAssignment,
+	applyExperimentTheme,
+} from '@inth/sdk/engine';
 import type {
 	ConsentExperiment,
 	ConsentPresentation,
 	ConsentSnapshot,
-} from '@c15t/core';
-import type { Theme } from '@c15t/ui/theme';
+} from '@inth/sdk/engine';
+import type { Theme } from '@inth/sdk/ui/theme';
 
 import type { IABPromptClassNames } from '../banner/class-names';
 import { resolveIABPromptModel } from '../banner/iab-prompt-model';

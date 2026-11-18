@@ -38,8 +38,8 @@ describe('client boundary', () => {
 			return [...dynamicImports(source), ...staticImports(source)]
 				.filter(
 					(specifier) =>
-						specifier === '@c15t/translations/all' ||
-						specifier === '@c15t/core/transports/manifest'
+						specifier === '@inth/sdk/translations/all' ||
+						specifier === '@inth/sdk/transports/manifest'
 				)
 				.map((specifier) => `${file}: ${specifier}`);
 		});
@@ -51,10 +51,10 @@ describe('client boundary', () => {
 		for (const file of ['kernel.ts', 'plugin.nuxt.ts']) {
 			const source = readFileSync(join(runtimeDir, file), 'utf8');
 			expect(staticImports(source)).not.toContain(
-				'@c15t/core/transports/manifest-browser'
+				'@inth/sdk/transports/manifest-browser'
 			);
 			expect(dynamicImports(source)).not.toContain(
-				'@c15t/core/transports/manifest-browser'
+				'@inth/sdk/transports/manifest-browser'
 			);
 			expect(source).not.toMatch(/\bcreateHostedTransport\b/u);
 			expect(source).not.toContain('manifest transport:');

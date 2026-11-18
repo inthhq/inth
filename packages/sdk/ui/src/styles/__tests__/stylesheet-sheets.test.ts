@@ -1,5 +1,5 @@
 /**
- * Guards `@c15t/ui/styles/sheets/*`: the stylesheets React and Svelte
+ * Guards `@inth/sdk/ui/styles/sheets/*`: the stylesheets React and Svelte
  * surfaces render themselves, and Astro inlines or links.
  *
  * Rendered in order, `first-paint` then `dialog` must apply exactly what
@@ -9,7 +9,7 @@
  * `styles.css`. `first-paint` must hold no dialog rule, so the dialog's
  * rules load only with the dialog.
  *
- * These read the built artifacts: build `@c15t/ui` first.
+ * These read the built artifacts: build `@inth/sdk/ui` first.
  */
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -27,7 +27,7 @@ const SHEETS_DIR = join(DIST_DIR, 'styles', 'sheets');
 const readDist = function readDist(path: string): string {
 	if (!existsSync(path)) {
 		throw new Error(
-			`Missing ${path}. Build @c15t/ui first: bun run --cwd packages/sdk/ui build`
+			`Missing ${path}. Build @inth/sdk/ui first: bun run --cwd packages/sdk/ui build`
 		);
 	}
 	return readFileSync(path, 'utf8');

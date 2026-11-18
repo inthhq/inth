@@ -1,6 +1,6 @@
-import type { LegalLinks as LegalLinksType } from '@c15t/core';
-import styles from '@c15t/ui/styles/components/legal-links';
-import { resolveTranslations } from '@c15t/ui/utils';
+import type { LegalLinks as LegalLinksType } from '@inth/sdk/engine';
+import styles from '@inth/sdk/ui/styles/components/legal-links';
+import { resolveTranslations } from '@inth/sdk/ui/utils';
 import { useContext, useMemo, useSyncExternalStore } from 'react';
 
 import { KernelContext } from '~/context';

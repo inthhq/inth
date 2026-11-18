@@ -7,8 +7,8 @@
  * every other site downloads does not carry it.
  */
 
-import { ConsentDraftProvider } from '@c15t/react';
-import { IABConsentDialog } from '@c15t/react/iab';
+import { ConsentDraftProvider } from '@inth/react';
+import { IABConsentDialog } from '@inth/react/iab';
 
 /** Props the dialog island passes down. */
 export interface IABDialogSurfaceProps {

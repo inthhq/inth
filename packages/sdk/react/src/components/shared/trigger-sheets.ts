@@ -1,5 +1,5 @@
-import * as tokens from '@c15t/ui/styles/sheets/tokens';
-import * as trigger from '@c15t/ui/styles/sheets/trigger';
+import * as tokens from '@inth/sdk/ui/styles/sheets/tokens';
+import * as trigger from '@inth/sdk/ui/styles/sheets/trigger';
 
 import type { SurfaceStyleSheet } from './surface-styles';
 

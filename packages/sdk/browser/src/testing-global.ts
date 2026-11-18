@@ -4,8 +4,8 @@
  *
  * @internal
  */
-import { createTestingMode } from '@c15t/core/testing';
-import type { TestingModeOptions } from '@c15t/core/testing';
+import { createTestingMode } from '@inth/sdk-core/testing';
+import type { TestingModeOptions } from '@inth/sdk-core/testing';
 
 import { readList, readScriptOptions } from './auto-init';
 import { createConsentClientWith } from './client-base';
@@ -19,7 +19,7 @@ import type {
 	TestingScriptTagOptions,
 } from './types';
 
-const ENTRY = '@c15t/browser/testing';
+const ENTRY = '@inth/sdk/testing';
 
 /** The global API installed by `c15t.testing.js`. */
 export interface TestingC15tGlobal extends C15tGlobalBase {

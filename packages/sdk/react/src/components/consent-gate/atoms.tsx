@@ -1,5 +1,5 @@
-import type { AllConsentNames } from '@c15t/core';
-import styles from '@c15t/ui/styles/components/consent-gate';
+import type { AllConsentNames } from '@inth/sdk/engine';
+import styles from '@inth/sdk/ui/styles/components/consent-gate';
 import { forwardRef as createForwardRef } from 'react';
 import type { Ref } from 'react';
 

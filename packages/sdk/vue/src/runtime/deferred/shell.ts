@@ -21,17 +21,21 @@
  * @internal
  */
 
-import type { ConsentSnapshot, SaveResult, SaveUISource } from '@c15t/core';
-import type { Script } from '@c15t/core/modules/script-loader';
-import type { ConsentRuntime } from '@c15t/core/runtime/provider';
-import { showConsentSurface } from '@c15t/core/surface-actions';
+import type {
+	ConsentSnapshot,
+	SaveResult,
+	SaveUISource,
+} from '@inth/sdk/engine';
+import type { Script } from '@inth/sdk/modules/script-loader';
+import type { ConsentRuntime } from '@inth/sdk/runtime/provider';
+import type { ConsentActiveUI } from '@inth/sdk/schema/config';
+import { showConsentSurface } from '@inth/sdk/surface-actions';
 import {
 	generateSubjectId,
 	hasStoredClearEpoch,
 	planInstantCommit,
-} from '@c15t/core/surface-actions/instant-commit';
-import type { InstantCommit } from '@c15t/core/surface-actions/instant-commit';
-import type { ConsentActiveUI } from '@c15t/schema/config';
+} from '@inth/sdk/surface-actions/instant-commit';
+import type { InstantCommit } from '@inth/sdk/surface-actions/instant-commit';
 import { computed, ref, shallowRef } from 'vue';
 import type { Ref } from 'vue';
 

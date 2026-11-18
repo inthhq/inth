@@ -16,7 +16,7 @@ try {
 	await runConsentGate({
 		framework: 'svelte',
 		notes: [
-			'@c15t/svelte/kit c15tHandle in manifest() mode with loadConsent; ConsentRoot server-renders the banner.',
+			'@inth/svelte/kit c15tHandle in manifest() mode with loadConsent; ConsentRoot server-renders the banner.',
 		],
 		packageName: '@c15t/sveltekit-browser-bench',
 		paths: { control: '/gate-control', gate: '/gate' },

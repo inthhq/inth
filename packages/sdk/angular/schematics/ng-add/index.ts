@@ -1,5 +1,5 @@
 /**
- * `ng add @c15t/angular`: adds `provideC15t()` to the app's root providers
+ * `ng add @inth/angular`: adds `provideC15t()` to the app's root providers
  * and, unless `components` is false, the consent banner and dialog to the
  * root component. It edits source files once and adds no build steps.
  *
@@ -52,7 +52,7 @@ interface Template {
 	append: (tags: string[], recorder: UpdateRecorder) => void;
 }
 
-const PACKAGE_NAME = '@c15t/angular';
+const PACKAGE_NAME = '@inth/angular';
 const PLACEHOLDER_URL = 'https://your-project.inth.app';
 const PLACEHOLDER_COMMENT =
 	'// Replace with the backend URL of your Inth project.';
@@ -436,7 +436,7 @@ const STUB_TEXT = new Map(
 
 /**
  * A type-checked program over `files`, with imports resolved by `resolve`
- * and the `@c15t/angular` entry points mapped to their stand-ins.
+ * and the `@inth/angular` entry points mapped to their stand-ins.
  */
 const createAppProgram = (
 	tree: Tree,
@@ -521,7 +521,7 @@ const resolvesTo = (
 };
 
 /**
- * The first of `files` that calls `@c15t/angular`'s `provideC15t`.
+ * The first of `files` that calls `@inth/angular`'s `provideC15t`.
  *
  * The type checker resolves each call's callee through imports, aliases,
  * namespaces and local re-exports, so a barrel or `provideC15t as consent`
@@ -813,7 +813,7 @@ const propertyName = (name: ts.PropertyName): string | undefined =>
 		: undefined;
 
 /**
- * Whether the root injector gets `@c15t/angular`'s `provideC15t()`. From
+ * Whether the root injector gets `@inth/angular`'s `provideC15t()`. From
  * `bootstrapApplication(App, config)`, it follows `config` (inline, a name
  * of one through imports and `const` aliases, spreads of others, and each
  * config `mergeApplicationConfig` merges) to its `providers` (a property,

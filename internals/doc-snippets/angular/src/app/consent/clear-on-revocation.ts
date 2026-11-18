@@ -1,5 +1,5 @@
 // #region docs:clear-on-revocation
-import type { ClearOnRevocationConfig } from '@c15t/angular';
+import type { ClearOnRevocationConfig } from '@inth/angular';
 
 // Pass as `clearOnRevocation` to provideC15t() in app.config.ts.
 export const clearOnRevocation: ClearOnRevocationConfig = {

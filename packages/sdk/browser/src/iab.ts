@@ -1,6 +1,6 @@
-import type { WithProjectUrl } from '@c15t/core/runtime';
+import type { WithProjectUrl } from '@inth/sdk-core/runtime';
 /** Optional browser entry with the CMP, TC codec, and IAB preference UI. */
-import { createIAB, initializeIABStub, destroyIABStub } from '@c15t/iab';
+import { createIAB, initializeIABStub, destroyIABStub } from '@inth/sdk-iab';
 
 import { createConsentClient as createClient } from './client';
 import { mountIABConsentUI } from './iab/mount';
@@ -23,7 +23,7 @@ export const createConsentClient = (
 			}
 			return destroyIABStub;
 		},
-		pkg: '@c15t/browser/iab',
+		pkg: '@inth/sdk/iab-client',
 	});
 
 /**
@@ -39,7 +39,7 @@ export const init = (
 	return client;
 };
 
-export { hosted } from '@c15t/core/modes';
+export { hosted } from '@inth/sdk-core/modes';
 export { manifest } from './transports/manifest';
 export { mountIABConsentUI } from './iab/mount';
 export type {
@@ -47,5 +47,5 @@ export type {
 	ConsentClientOptions,
 	ConsentUIOptions,
 } from './types';
-export { iab } from '@c15t/iab';
+export { iab } from '@inth/sdk-iab';
 export { version } from './version';

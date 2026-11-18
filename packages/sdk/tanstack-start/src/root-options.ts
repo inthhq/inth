@@ -1,18 +1,18 @@
+import type {
+	UseNetworkBlockerOptions,
+	UsePersistenceOptions,
+	UseScriptLoaderOptions,
+} from '@inth/react/module-hooks';
+import type { ConsentProviderOptions } from '@inth/react/provider';
 /**
  * `ConsentRoot`'s props and the checks on its state, shared by the
  * first-load shell (`./root`) and the engine it loads (`./root-engine`).
  *
  * @internal
  */
-import type { ProviderTransportFactory, Vendor } from '@c15t/core';
-import type { ConsentMode } from '@c15t/core/modes';
-import type { Script } from '@c15t/core/modules/script-loader';
-import type {
-	UseNetworkBlockerOptions,
-	UsePersistenceOptions,
-	UseScriptLoaderOptions,
-} from '@c15t/react/module-hooks';
-import type { ConsentProviderOptions } from '@c15t/react/provider';
+import type { ProviderTransportFactory, Vendor } from '@inth/sdk/engine';
+import type { ConsentMode } from '@inth/sdk/modes';
+import type { Script } from '@inth/sdk/modules/script-loader';
 import type { ReactNode } from 'react';
 
 import type { ConsentState } from './server';
@@ -20,7 +20,7 @@ import type { ConsentState } from './server';
 export interface ConsentRootProps {
 	/**
 	 * The visitor's consent state produced server-side by `resolveConsent()`
-	 * (or `createConsentStateHandler()`) from `@c15t/tanstack-start/server`,
+	 * (or `createConsentStateHandler()`) from `@inth/tanstack-start/server`,
 	 * usually read back with `Route.useLoaderData()`. Serializable JSON. It
 	 * carries the backend URL, mode and route prefix the server helper was
 	 * given, so the root needs no transport options of its own.
@@ -93,8 +93,8 @@ export interface ConsentRootProps {
 	> & {
 		/**
 		 * Replaces the mode the state carries: `manifest()` or `hosted()`
-		 * from `@c15t/tanstack-start`, `testing()` from
-		 * `@c15t/tanstack-start/testing`, or a transport factory.
+		 * from `@inth/tanstack-start`, `testing()` from
+		 * `@inth/tanstack-start/testing`, or a transport factory.
 		 */
 		mode?: ConsentMode | ProviderTransportFactory;
 	};

@@ -1,11 +1,11 @@
 'use client';
 
-import { getTextDirection, setupTextDirection } from '@c15t/ui/utils';
+import { getTextDirection, setupTextDirection } from '@inth/sdk/ui/utils';
 import { useEffect, useMemo } from 'react';
 
 /**
  * Manage text direction based on the language.
- * React wrapper for `@c15t/ui` text direction utilities.
+ * React wrapper for `@inth/sdk/ui` text direction utilities.
  */
 export const useTextDirection = function useTextDirection(language?: string) {
 	const textDirection = useMemo(() => getTextDirection(language), [language]);

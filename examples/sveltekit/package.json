@@ -9,8 +9,8 @@
 		"start": "vite preview"
 	},
 	"dependencies": {
-		"@c15t/integrations": "workspace:*",
-		"c15t": "workspace:*"
+		"@inth/integrations": "workspace:*",
+		"@inth/svelte": "workspace:*"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "8.0.0",

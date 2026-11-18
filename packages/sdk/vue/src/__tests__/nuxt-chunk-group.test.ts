@@ -23,7 +23,7 @@ describe('nuxtConsentChunkGroup', () => {
 	test('matches an installed c15t package', () => {
 		expect(
 			group.test.test(
-				'/app/node_modules/.pnpm/@c15t+core@3/node_modules/@c15t/core/dist/libs/has.js'
+				'/app/node_modules/.pnpm/@c15t+core@3/node_modules/@inth/sdk/lib/core/dist/libs/has.js'
 			)
 		).toBe(true);
 	});
@@ -46,15 +46,15 @@ describe('nuxtConsentConfigChunkGroup', () => {
 	const group = nuxtConsentConfigChunkGroup(['/repo/packages/sdk/schema']);
 
 	test.each([
-		'/app/node_modules/@c15t/vue/dist/runtime/composables/config.js',
-		'/app/node_modules/.pnpm/@c15t+ui@3/node_modules/@c15t/ui/dist/utils/theme-slots.js',
+		'/app/node_modules/@inth/vue/dist/runtime/composables/config.js',
+		'/app/node_modules/.pnpm/@c15t+ui@3/node_modules/@inth/sdk/lib/ui/dist/utils/theme-slots.js',
 		'/repo/packages/sdk/schema/dist/config/defaults.js',
 	])('matches %s', (id) => {
 		expect(group.test.test(id)).toBe(true);
 	});
 
 	test.each([
-		'/app/node_modules/@c15t/vue/dist/runtime/composables/consent.js',
+		'/app/node_modules/@inth/vue/dist/runtime/composables/consent.js',
 		'/app/src/composables/config.js',
 		'/other/packages/sdk/schema/dist/config/defaults.js',
 	])('leaves %s alone', (id) => {
@@ -62,7 +62,7 @@ describe('nuxtConsentConfigChunkGroup', () => {
 	});
 });
 
-test('consentPackageDirs finds the c15t packages next to @c15t/vue', () => {
+test('consentPackageDirs finds the c15t packages next to @inth/vue', () => {
 	const dirs = consentPackageDirs(join(import.meta.dirname, '..', 'module.ts'));
 	expect(dirs).toContain(realpathSync(join(import.meta.dirname, '..', '..')));
 	expect(dirs.length).toBeGreaterThan(1);

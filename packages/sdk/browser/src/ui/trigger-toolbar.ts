@@ -1,4 +1,4 @@
-import type { CornerPosition } from '@c15t/ui/utils';
+import type { CornerPosition } from '@inth/sdk-ui/utils';
 
 import { classes } from '../generated/styles';
 import { h, svg } from './dom';

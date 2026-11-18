@@ -26,7 +26,7 @@ const ENTRYPOINTS = ['styles.css', join('iab', 'styles.css')];
 const read = function read(path: string): string {
 	if (!existsSync(path)) {
 		throw new Error(
-			`Missing ${path}. Build @c15t/ui first: bun run --cwd packages/sdk/ui build`
+			`Missing ${path}. Build @inth/sdk/ui first: bun run --cwd packages/sdk/ui build`
 		);
 	}
 

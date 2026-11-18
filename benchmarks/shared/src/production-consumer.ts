@@ -200,14 +200,14 @@ export const consumerPackageJson = function consumerPackageJson(
 export type ConsumerStyleDelivery = 'automatic' | 'external';
 
 /**
- * A built `@c15t/react` module that exists only in versions whose components
+ * A built `@inth/react` module that exists only in versions whose components
  * deliver their own styles, relative to the package directory.
  */
 export const AUTOMATIC_STYLES_MODULE =
 	'dist/components/shared/surface-styles.js';
 
 /** The aggregate stylesheet an arm without automatic styles imports. */
-export const CONSUMER_EXTERNAL_STYLESHEET = 'c15t/react/styles.css';
+export const CONSUMER_EXTERNAL_STYLESHEET = '@inth/react/styles.css';
 
 /**
  * The consumer's global stylesheet for one arm. The template imports nothing

@@ -1,8 +1,5 @@
-import type { ConsentSnapshot } from '@c15t/core';
-import {
-	hasConsentPreferences,
-	hasConsentUI,
-} from '@c15t/core/surface-actions';
+import type { ConsentSnapshot } from '@inth/sdk/engine';
+import { hasConsentPreferences, hasConsentUI } from '@inth/sdk/surface-actions';
 import { computed, inject } from 'vue';
 
 import {

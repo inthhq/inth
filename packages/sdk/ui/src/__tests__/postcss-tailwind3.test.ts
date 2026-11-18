@@ -40,10 +40,10 @@ const processCss = async function processCss(from: string) {
 	return result.css;
 };
 
-describe('@c15t/ui/postcss-tailwind3', () => {
-	test('unwraps @layer blocks for built @c15t/ui stylesheets in node_modules', async () => {
+describe('@inth/sdk/ui/postcss-tailwind3', () => {
+	test('unwraps @layer blocks for built @inth/sdk/ui stylesheets in node_modules', async () => {
 		const css = await processCss(
-			'/app/node_modules/@c15t/ui/dist/styles/components/button.css'
+			'/app/node_modules/@inth/sdk/lib/ui/dist/styles/components/button.css'
 		);
 
 		expect(css).toContain('.c15t-ui-button-a1b2c');
@@ -51,7 +51,7 @@ describe('@c15t/ui/postcss-tailwind3', () => {
 		expect(css).not.toMatch(/@layer\b/u);
 	});
 
-	test('unwraps @layer blocks for built @c15t/ui stylesheets in the monorepo', async () => {
+	test('unwraps @layer blocks for built @inth/sdk/ui stylesheets in the monorepo', async () => {
 		const css = await processCss(
 			join(PACKAGES_DIR, 'ui', 'dist', 'styles', 'components', 'button.css')
 		);
@@ -86,7 +86,9 @@ describe('@c15t/ui/postcss-tailwind3', () => {
 	test('removes bare @layer order statements for scoped c15t files', async () => {
 		const css = await postcss([tailwind3Plugin]).process(
 			'@layer properties, theme, base, components, utilities;',
-			{ from: '/app/node_modules/@c15t/ui/dist/styles/components/button.css' }
+			{
+				from: '/app/node_modules/@inth/sdk/lib/ui/dist/styles/components/button.css',
+			}
 		);
 
 		expect(css.css.trim()).toBe('');
@@ -122,7 +124,7 @@ describe('@c15t/ui/postcss-tailwind3', () => {
 			{ from: '/app/src/index.css' }
 		);
 		const inlined = parse(layeredCss, {
-			from: '/app/node_modules/@c15t/ui/dist/styles.css',
+			from: '/app/node_modules/@inth/sdk/lib/ui/dist/styles.css',
 		});
 		app.append(inlined.nodes);
 
@@ -145,7 +147,7 @@ describe('@c15t/ui/postcss-tailwind3', () => {
 		const result = await postcss([
 			pluginModule as unknown as AcceptedPlugin,
 		]).process(layeredCss, {
-			from: '/app/node_modules/@c15t/ui/dist/styles/components/button.css',
+			from: '/app/node_modules/@inth/sdk/lib/ui/dist/styles/components/button.css',
 		});
 
 		expect(result.css).toContain('.c15t-ui-button-a1b2c');
@@ -156,7 +158,7 @@ describe('@c15t/ui/postcss-tailwind3', () => {
 		// Next.js `require()`s string plugin names from postcss.config.* and
 		// receives the ESM namespace via require(esm). Drive that path for
 		// real: a plain-Node subprocess (outside Vitest's Vite pipeline)
-		// requires `@c15t/ui/postcss-tailwind3` against the built dist — the
+		// requires `@inth/sdk/ui/postcss-tailwind3` against the built dist — the
 		// turbo test task depends on build, so dist exists — and feeds the
 		// result to postcss.
 		const raw = execFileSync(
@@ -164,7 +166,7 @@ describe('@c15t/ui/postcss-tailwind3', () => {
 			[
 				join(TEST_DIR, 'postcss-require-probe.mjs'),
 				layeredCss,
-				'/app/node_modules/@c15t/ui/dist/styles/components/button.css',
+				'/app/node_modules/@inth/sdk/lib/ui/dist/styles/components/button.css',
 			],
 			{ encoding: 'utf8' }
 		);
@@ -176,7 +178,7 @@ describe('@c15t/ui/postcss-tailwind3', () => {
 	});
 
 	test('unwraps c15t layers that an @import inlined into an app stylesheet', async () => {
-		// Vite and postcss-import inline `@import '@c15t/svelte/styles.css'`
+		// Vite and postcss-import inline `@import '@inth/svelte/styles.css'`
 		// before Tailwind runs, so the root is the app's file and only the
 		// inlined nodes remember that they came from c15t. Left layered,
 		// Tailwind 3 adopts them as its own components layer and purges them.
@@ -186,7 +188,7 @@ describe('@c15t/ui/postcss-tailwind3', () => {
 		);
 		root.prepend(
 			parse(layeredCss, {
-				from: '/app/node_modules/@c15t/ui/dist/styles.css',
+				from: '/app/node_modules/@inth/sdk/lib/ui/dist/styles.css',
 			}).nodes
 		);
 
@@ -200,17 +202,17 @@ describe('@c15t/ui/postcss-tailwind3', () => {
 		expect(css).toMatch(/@layer components \{ \.app-card/u);
 	});
 
-	test('unwraps c15t layers inside an adapter stylesheet that imports @c15t/ui', async () => {
-		// Astro injects `@c15t/astro/styles.css`, which opens with the layer
-		// order and then imports `@c15t/ui/styles.css`.
-		const from = '/app/node_modules/@c15t/astro/dist/styles.css';
+	test('unwraps c15t layers inside an adapter stylesheet that imports @inth/sdk/ui', async () => {
+		// Astro injects `@inth/astro/styles.css`, which opens with the layer
+		// order and then imports `@inth/sdk/ui/styles.css`.
+		const from = '/app/node_modules/@inth/astro/dist/styles.css';
 		const root = parse(
 			'@layer properties, theme, base, components, utilities;',
 			{ from }
 		);
 		root.append(
 			parse(layeredCss, {
-				from: '/app/node_modules/@c15t/ui/dist/styles.css',
+				from: '/app/node_modules/@inth/sdk/lib/ui/dist/styles.css',
 			}).nodes
 		);
 
@@ -222,15 +224,15 @@ describe('@c15t/ui/postcss-tailwind3', () => {
 
 	test('matches realistic package paths only', () => {
 		for (const path of [
-			'/app/node_modules/@c15t/ui/dist/styles.css',
-			'/app/node_modules/.pnpm/@c15t+ui@3.0.0/node_modules/@c15t/ui/dist/styles/dialog.css',
-			'/app/node_modules/@c15t/svelte/dist/styles.css',
-			'/app/node_modules/@c15t/astro/dist/styles.css',
-			'/app/node_modules/@c15t/browser/dist/c15t.css',
+			'/app/node_modules/@inth/sdk/lib/ui/dist/styles.css',
+			'/app/node_modules/.pnpm/@c15t+ui@3.0.0/node_modules/@inth/sdk/lib/ui/dist/styles/dialog.css',
+			'/app/node_modules/@inth/svelte/dist/styles.css',
+			'/app/node_modules/@inth/astro/dist/styles.css',
+			'/app/node_modules/@inth/sdk/lib/browser/dist/c15t.css',
 			'/app/node_modules/c15t/dist/react/styles.css',
 			join(PACKAGES_DIR, 'svelte', 'dist', 'styles.css'),
 			// Astro's Vite pipeline processes the dialog sheet with a query.
-			'/app/node_modules/@c15t/ui/dist/styles/dialog.css?transform-only',
+			'/app/node_modules/@inth/sdk/lib/ui/dist/styles/dialog.css?transform-only',
 		]) {
 			expect(isC15tUiStylesheetPath(path)).toBe(true);
 		}
@@ -246,10 +248,10 @@ describe('@c15t/ui/postcss-tailwind3', () => {
 		}
 	});
 
-	test('matches realistic @c15t/ui paths', () => {
+	test('matches realistic @inth/sdk/ui paths', () => {
 		expect(
 			isC15tUiStylesheetPath(
-				'/app/node_modules/@c15t/ui/dist/styles/components/button.css'
+				'/app/node_modules/@inth/sdk/lib/ui/dist/styles/components/button.css'
 			)
 		).toBe(true);
 		expect(
@@ -258,30 +260,38 @@ describe('@c15t/ui/postcss-tailwind3', () => {
 			)
 		).toBe(true);
 		expect(
-			isC15tUiStylesheetPath('/app/node_modules/@c15t/ui/dist/styles.css')
-		).toBe(true);
-		expect(
 			isC15tUiStylesheetPath(
-				'C:\\app\\node_modules\\@c15t\\ui\\dist\\iab\\styles.css'
+				'/app/node_modules/@inth/sdk/lib/ui/dist/styles.css'
 			)
 		).toBe(true);
 		expect(
-			isC15tUiStylesheetPath('/app/node_modules/@c15t/ui/dist/styles.tw3.css')
+			isC15tUiStylesheetPath(
+				'C:\\app\\node_modules\\@inth\\sdk\\lib\\ui\\dist\\iab\\styles.css'
+			)
+		).toBe(true);
+		expect(
+			isC15tUiStylesheetPath(
+				'/app/node_modules/@inth/sdk/lib/ui/dist/styles.tw3.css'
+			)
 		).toBe(true);
 		expect(
 			isC15tUiStylesheetPath('/app/dist/styles/components/button.css')
 		).toBe(false);
 		expect(isC15tUiStylesheetPath('/app/dist/styles.css')).toBe(false);
 		expect(
-			isC15tUiStylesheetPath('/app/node_modules/@c15t/browser/dist/c15t.css')
-		).toBe(true);
-		expect(
 			isC15tUiStylesheetPath(
-				'/app/node_modules/@c15t/browser/dist/c15t.iab.css'
+				'/app/node_modules/@inth/sdk/lib/browser/dist/c15t.css'
 			)
 		).toBe(true);
 		expect(
-			isC15tUiStylesheetPath('/app/node_modules/@c15t/browser/dist/c15t.js')
+			isC15tUiStylesheetPath(
+				'/app/node_modules/@inth/sdk/lib/browser/dist/c15t.iab.css'
+			)
+		).toBe(true);
+		expect(
+			isC15tUiStylesheetPath(
+				'/app/node_modules/@inth/sdk/lib/browser/dist/c15t.js'
+			)
 		).toBe(false);
 		expect(
 			isC15tUiStylesheetPath('/app/node_modules/other-ui/dist/styles.css')

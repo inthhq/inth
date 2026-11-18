@@ -1,4 +1,4 @@
-import type { ConsentProviderOptions } from 'c15t/react';
+import type { ConsentProviderOptions } from '@inth/react';
 
 // Keys you leave out keep the copy from your Inth project.
 export const i18n = {

@@ -1,6 +1,6 @@
 'use client';
 
-import { resolvePromptCopy } from '@c15t/core';
+import { resolvePromptCopy } from '@inth/sdk/engine';
 import { useMemo } from 'react';
 
 import { useTranslations } from '~/component-hooks/use-translations';

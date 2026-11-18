@@ -1,7 +1,7 @@
 // #region docs:nuxt-scripts-registry title="app/consent-scripts.ts"
-import { gtag } from '@c15t/integrations/google-tag';
-import { googleTagManager } from '@c15t/integrations/google-tag-manager';
-import { metaPixel } from '@c15t/integrations/meta-pixel';
+import { gtag } from '@inth/integrations/google-tag';
+import { googleTagManager } from '@inth/integrations/google-tag-manager';
+import { metaPixel } from '@inth/integrations/meta-pixel';
 
 export const scripts = [
 	// Was useScriptGoogleAnalytics({ id: 'G-XXXXXXXXXX' })

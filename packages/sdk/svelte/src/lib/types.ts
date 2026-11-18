@@ -4,18 +4,18 @@ import type {
 	KernelConfig,
 	LegalLinks,
 	ProviderTransportFactory,
-} from '@c15t/core';
-import type { HostedMode } from '@c15t/core/modes';
+} from '@inth/sdk/engine';
+import type { CreateIABOptions } from '@inth/sdk/iab';
+import type { HostedMode } from '@inth/sdk/modes';
 import type {
 	ConsentRuntimeOptions,
 	RuntimeGPPOptions,
 	RuntimeNetworkBlockerOptions,
 	RuntimePersistenceOptions,
 	RuntimeScriptLoaderOptions,
-} from '@c15t/core/runtime';
-import type { ConsentTesting } from '@c15t/core/testing';
-import type { CreateIABOptions } from '@c15t/iab';
-import type { Theme, UIOptions } from '@c15t/ui/theme';
+} from '@inth/sdk/runtime';
+import type { ConsentTesting } from '@inth/sdk/testing';
+import type { Theme, UIOptions } from '@inth/sdk/ui/theme';
 
 import type { DialogPreload } from './dialog-warming';
 import type { KitMode } from './kit/types';
@@ -58,9 +58,9 @@ export type UsePersistenceOptions = RuntimePersistenceOptions;
  *
  * Everything except the fields below is the framework-agnostic
  * {@link ConsentRuntimeOptions} contract, forwarded untouched to
- * `createConsentRuntime()` from `@c15t/core/runtime`. `createIAB` and
+ * `createConsentRuntime()` from `@inth/sdk/runtime`. `createIAB` and
  * `loadGPP` are supplied by this package, and `pkg` is fixed to
- * `'@c15t/svelte'`.
+ * `'@inth/svelte'`.
  */
 export interface ConsentManagerOptions
 	extends
@@ -86,7 +86,7 @@ export interface ConsentManagerOptions
 	/**
 	 * Backend URL, relative (`/api/c15t`) or absolute. Setting it is how the
 	 * provider talks to the hosted backend. Defaults to the URL
-	 * `consentManifest()` from `c15t/svelte/vite` read from
+	 * `consentManifest()` from `@inth/svelte/vite` read from
 	 * `VITE_C15T_BACKEND_URL` or `VITE_INTH_PROJECT_URL`. Initial-only:
 	 * remount the provider to change it.
 	 *
@@ -101,12 +101,12 @@ export interface ConsentManagerOptions
 	/**
 	 * How the visitor's policy is resolved. Initial-only.
 	 *
-	 * - Omitted, or `hosted()` from `@c15t/svelte`: ask
+	 * - Omitted, or `hosted()` from `@inth/svelte`: ask
 	 *   `${projectUrl}/init`.
-	 * - `manifest()` from `@c15t/svelte`: resolve from the backend's
+	 * - `manifest()` from `@inth/svelte`: resolve from the backend's
 	 *   consent manifest in the browser, falling back to `/init` with a
 	 *   warning when it is unavailable.
-	 * - `testing()` from `@c15t/svelte/testing`: resolve a policy with no
+	 * - `testing()` from `@inth/svelte/testing`: resolve a policy with no
 	 *   backend, for tests. It throws in production builds. To keep consent
 	 *   out of the way in an app's own tests instead, set `enabled: false`.
 	 */
@@ -118,7 +118,7 @@ export interface ConsentManagerOptions
 	 * the provider mounts and keeps the GPP string in step with the
 	 * visitor's choices. `true` or `{}` uses the defaults; omitted or
 	 * `false` leaves GPP off. The GPP code loads through a dynamic import
-	 * of `@c15t/iab/gpp`, so apps that leave it off never download it.
+	 * of `@inth/sdk/iab/gpp`, so apps that leave it off never download it.
 	 *
 	 * Ignored when you pass your own `runtime`: set `gpp` and `loadGPP` on
 	 * that runtime instead. A load failure, or another CMP that already
@@ -157,9 +157,9 @@ export interface ConsentManagerOptions
 	 * `c15tHandle` writes the banner's rules into the HTML. No c15t
 	 * stylesheet `<link>` then holds back the page's first paint.
 	 *
-	 * Set `false` when the app imports `@c15t/svelte/styles.css` itself, for
+	 * Set `false` when the app imports `@inth/svelte/styles.css` itself, for
 	 * example to run it through Tailwind CSS 3 or to put it in a named
-	 * cascade layer. IAB components also need `@c15t/svelte/iab/styles.css`.
+	 * cascade layer. IAB components also need `@inth/svelte/iab/styles.css`.
 	 *
 	 * @default true
 	 */
@@ -167,7 +167,7 @@ export interface ConsentManagerOptions
 	/**
 	 * Slot styles and consent-action variants. Design tokens (colors, dark,
 	 * typography, spacing, radius, shadows, motion) are not applied in the
-	 * browser: render `generateThemeCSS(theme)` from `@c15t/ui/theme` in a
+	 * browser: render `generateThemeCSS(theme)` from `@inth/sdk/ui/theme` in a
 	 * server `load` as `<style id="c15t-theme">` in `<svelte:head>`, or put
 	 * its output in a stylesheet. In development the provider warns when
 	 * `theme` has tokens and the page has no `#c15t-theme` element.
@@ -183,7 +183,7 @@ export type ConsentProviderCallbacks = NonNullable<
 >;
 
 /**
- * What `loadConsent` from `@c15t/svelte/kit` returns as `consent`, for
+ * What `loadConsent` from `@inth/svelte/kit` returns as `consent`, for
  * `<ConsentRoot state>`. Every field is serializable, so a SvelteKit
  * `load` can return it.
  */

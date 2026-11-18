@@ -1,5 +1,5 @@
-import { has } from '@c15t/core';
-import type { Script, ScriptCallbackInfo } from '@c15t/core';
+import { has } from '@inth/sdk/engine';
+import type { Script, ScriptCallbackInfo } from '@inth/sdk/engine';
 
 import { resolveManifest } from '../../resolve';
 import { runtimeTimestampValue, vendorManifestContract } from '../../types';

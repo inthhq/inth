@@ -1,10 +1,10 @@
+import { KernelContext } from '@inth/react/context';
 /**
  * A React consumer that finds the kernel through `KernelContext` from
- * `c15t/react/context`, the way a component library built on top of c15t
+ * `@inth/react/context`, the way a component library built on top of c15t
  * would, and subscribes with `useSyncExternalStore`.
  */
-import type { AllConsentNames, ConsentSnapshot } from 'c15t';
-import { KernelContext } from 'c15t/react/context';
+import type { AllConsentNames, ConsentSnapshot } from '@inth/sdk/engine';
 import { useCallback, useContext, useSyncExternalStore } from 'react';
 
 const detached = function detached(): void {

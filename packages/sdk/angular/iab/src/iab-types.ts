@@ -3,22 +3,22 @@
  *
  * The derivation itself — which purposes a stack absorbs, which rows a
  * preference centre lists, what each row's test-id is — lives in
- * `@c15t/iab/headless` so React, Svelte, Vue, Angular and the Astro server render
+ * `@inth/sdk/iab/headless` so React, Svelte, Vue, Angular and the Astro server render
  * cannot drift apart. This module is the thin naming layer that was left
  * behind: the local type aliases the components already import, and two
  * wrappers keeping the argument shapes they already call with.
  *
- * `@c15t/iab/headless` is pure derivation with no TCF encoder behind it,
+ * `@inth/sdk/iab/headless` is pure derivation with no TCF encoder behind it,
  * so importing it here does not pull the CMP API into an app that never
  * mounts an IAB surface — the components that import this module are
  * themselves only reachable from `<c15t-iab-consent-banner>`/`<c15t-iab-consent-dialog>`.
  */
 
-import type { GlobalVendorList } from '@c15t/core';
+import type { GlobalVendorList } from '@inth/sdk/engine';
 import {
 	processGVLForDialog,
 	resolveIABBannerSummary,
-} from '@c15t/iab/headless';
+} from '@inth/sdk/iab/headless';
 import type {
 	HeadlessIABDialogData,
 	HeadlessIABProcessedFeature,
@@ -27,7 +27,7 @@ import type {
 	HeadlessIABProcessedStack,
 	HeadlessIABProcessedVendor,
 	HeadlessIABVendorId,
-} from '@c15t/iab/headless';
+} from '@inth/sdk/iab/headless';
 
 export type VendorId = HeadlessIABVendorId;
 export type ProcessedVendor = HeadlessIABProcessedVendor;
@@ -41,8 +41,8 @@ export type {
 	HeadlessIABDisplayConsentRow as IABDisplayConsentRow,
 	HeadlessIABDisplayRow as IABDisplayRow,
 	HeadlessIABDisplayStackRow as IABDisplayStackRow,
-} from '@c15t/iab/headless';
-export { resolveIABDialogDisplayModel } from '@c15t/iab/headless';
+} from '@inth/sdk/iab/headless';
+export { resolveIABDialogDisplayModel } from '@inth/sdk/iab/headless';
 
 /** Custom vendor not registered with IAB. */
 export interface NonIABVendor {

@@ -1,6 +1,6 @@
 /**
  * The static banner `consentManifest()` puts in a client-rendered page's
- * `index.html` (`@c15t/react/static-banner`). The app's banner takes its
+ * `index.html` (`@inth/react/static-banner`). The app's banner takes its
  * place when it renders.
  *
  * @packageDocumentation
@@ -9,7 +9,7 @@
 
 /**
  * Attribute on the static banner's wrapper; `STATIC_BANNER_ATTR` in
- * `@c15t/core`, copied so the banner's chunk does not import the build's
+ * `@inth/sdk/engine`, copied so the banner's chunk does not import the build's
  * script text. A test keeps them equal.
  *
  * @internal

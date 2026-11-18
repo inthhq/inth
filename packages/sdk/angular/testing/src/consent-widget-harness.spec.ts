@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { ConsentManager } from '@c15t/angular';
-import { ConsentWidget } from '@c15t/angular/consent-widget';
+import { ConsentManager } from '@inth/angular';
+import { ConsentWidget } from '@inth/angular/consent-widget';
 import { afterEach, describe, expect, test } from 'vitest';
 
 import { ALL_CATEGORIES } from '../../src/__tests__/test-local';

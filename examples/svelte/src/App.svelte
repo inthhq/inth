@@ -1,13 +1,13 @@
 <!-- #region docs:app -->
 <script lang="ts">
-	import { posthog } from '@c15t/integrations/posthog';
+	import { posthog } from '@inth/integrations/posthog';
 	import {
 		ConsentBanner,
 		ConsentDialog,
 		ConsentDialogLink,
 		ConsentProvider,
 		hosted,
-	} from 'c15t/svelte';
+	} from '@inth/svelte';
 
 	const scripts = [
 		posthog({

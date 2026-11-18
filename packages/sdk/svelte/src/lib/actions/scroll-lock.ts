@@ -1,8 +1,8 @@
-import { setupScrollLock } from '@c15t/ui/utils';
+import { setupScrollLock } from '@inth/sdk/ui/utils';
 
 /**
  * Svelte action that locks document scrolling when enabled.
- * Wraps @c15t/ui's framework-agnostic setupScrollLock.
+ * Wraps @inth/sdk/ui's framework-agnostic setupScrollLock.
  */
 export const scrollLock = function scrollLock(
 	_node: HTMLElement,

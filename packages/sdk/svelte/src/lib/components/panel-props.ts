@@ -1,4 +1,4 @@
-import type { LegalLinks, Model } from '@c15t/core';
+import type { LegalLinks, Model } from '@inth/sdk/engine';
 
 /** Props for the trigger `ConsentDialog` renders when `showTrigger` is set. */
 export interface ConsentDialogTriggerProps {

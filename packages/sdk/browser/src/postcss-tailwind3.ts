@@ -1,8 +1,8 @@
 /**
  * Tailwind 3 PostCSS plugin for c15t stylesheets, re-exported from
- * `@c15t/ui/postcss-tailwind3` so an app that installs `@c15t/browser` can list
- * `@c15t/browser/postcss-tailwind3` without installing `@c15t/ui`.
- * See `@c15t/ui/postcss-tailwind3` for what the plugin does. It must come
+ * `@inth/sdk/ui/postcss-tailwind3` so an app that installs `@inth/sdk` can list
+ * `@inth/sdk/postcss-tailwind3` without installing `@inth/sdk/ui`.
+ * See `@inth/sdk/ui/postcss-tailwind3` for what the plugin does. It must come
  * before `tailwindcss`.
  *
  * @example
@@ -10,12 +10,12 @@
  * // postcss.config.mjs
  * export default {
  * 	plugins: {
- * 		'@c15t/browser/postcss-tailwind3': {},
+ * 		'@inth/sdk/postcss-tailwind3': {},
  * 		tailwindcss: {},
  * 		autoprefixer: {},
  * 	},
  * };
  * ```
  */
-export * from '@c15t/ui/postcss-tailwind3';
-export { default } from '@c15t/ui/postcss-tailwind3';
+export * from '@inth/sdk-ui/postcss-tailwind3';
+export { default } from '@inth/sdk-ui/postcss-tailwind3';

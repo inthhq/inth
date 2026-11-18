@@ -1,4 +1,4 @@
-import type { ConsentSnapshot } from '@c15t/core';
+import type { ConsentSnapshot } from '@inth/sdk/engine';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {

@@ -1,5 +1,5 @@
 // #region docs:adobe-target-atjs title="src/consent-scripts.ts"
-import { adobeTarget } from '@c15t/integrations/adobe-target';
+import { adobeTarget } from '@inth/integrations/adobe-target';
 
 export const scripts = [
 	adobeTarget({

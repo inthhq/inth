@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { AccordionType } from '@c15t/ui/primitives';
-	import { toggleAccordionValue } from '@c15t/ui/primitives';
+	import type { AccordionType } from '@inth/sdk/ui/primitives';
+	import { toggleAccordionValue } from '@inth/sdk/ui/primitives';
 	import type { Snippet } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
 

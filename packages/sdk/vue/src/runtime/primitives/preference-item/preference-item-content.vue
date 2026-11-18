@@ -3,7 +3,7 @@ import {
 	getPreferenceItemState,
 	PREFERENCE_ITEM_INTERNAL_SLOTS,
 	PREFERENCE_ITEM_SLOTS,
-} from '@c15t/ui/primitives';
+} from '@inth/sdk/ui/primitives';
 import { computed, ref, watch } from 'vue';
 
 import { usePreferenceItemContext } from './context';

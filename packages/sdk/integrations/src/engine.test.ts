@@ -1,5 +1,5 @@
-import { subscribeToScriptDebugEvents } from '@c15t/core';
-import type { ScriptDebugEvent } from '@c15t/core';
+import { subscribeToScriptDebugEvents } from '@inth/sdk/engine';
+import type { ScriptDebugEvent } from '@inth/sdk/engine';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {

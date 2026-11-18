@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import type { PresentationAction } from '@c15t/core';
-import { saveIABConsentSurface } from '@c15t/core/surface-actions';
-import { resolveIABBannerSummary } from '@c15t/iab/headless';
-import bannerStyles from '@c15t/ui/styles/components/iab-consent-banner';
+import type { PresentationAction } from '@inth/sdk/engine';
+import { resolveIABBannerSummary } from '@inth/sdk/iab/headless';
+import { saveIABConsentSurface } from '@inth/sdk/surface-actions';
+import bannerStyles from '@inth/sdk/ui/styles/components/iab-consent-banner';
 
-import '@c15t/ui/styles/components/iab-consent-banner.css';
-import { getTextDirection } from '@c15t/ui/utils';
+import '@inth/sdk/ui/styles/components/iab-consent-banner.css';
+import { getTextDirection } from '@inth/sdk/ui/utils';
 import { computed, ref, Teleport, Transition, toValue } from 'vue';
 
 import {
@@ -104,7 +104,7 @@ const labels = computed(() => ({
 
 // The summary — which purposes, stacks and special features the banner
 // names, and how many it leaves out — comes from the shared model in
-// `@c15t/iab/headless`, so the four banners list the same things.
+// `@inth/sdk/iab/headless`, so the four banners list the same things.
 const bannerSummary = computed(() =>
 	resolveIABBannerSummary({
 		adTechProviders: snapshot.value.iab?.adTechProviders,

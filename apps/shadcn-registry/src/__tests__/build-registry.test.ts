@@ -29,15 +29,15 @@ interface BuiltItem {
 
 describe('toFrameworkSource', () => {
 	const source = [
-		'import { useConsentDraft } from "c15t/react"',
-		'import { useTranslations } from "c15t/react/headless"',
+		'import { useConsentDraft } from "@inth/react"',
+		'import { useTranslations } from "@inth/react/headless"',
 		'import { Button } from "@/components/ui/button"',
 	].join('\n');
 
 	it.each([
-		['next', 'c15t/next'],
-		['react', 'c15t/react'],
-		['tanstack-start', 'c15t/tanstack-start'],
+		['next', '@inth/nextjs'],
+		['react', '@inth/react'],
+		['tanstack-start', '@inth/tanstack-start'],
 	] as const)(
 		'points %s copies at %s and its headless entry',
 		(framework, entry) => {
@@ -52,10 +52,10 @@ describe('toFrameworkSource', () => {
 	);
 
 	it.each([
-		'c15t/react/iab',
-		'@c15t/react',
-		'c15t/next',
-		'c15t/tanstack-start/server',
+		'@inth/react/iab',
+		'@inth/react',
+		'@inth/nextjs',
+		'@inth/tanstack-start/server',
 	])('rejects %s, which some framework has no twin for', (spec) => {
 		for (const framework of frameworks) {
 			expect(() =>
@@ -127,7 +127,7 @@ describe('buildRegistry', () => {
 	it('gives each framework UI files that import only its own c15t entry', () => {
 		for (const framework of frameworks) {
 			const allowed = uiC15tImports.map((spec) =>
-				spec.replace('c15t/react', c15tEntryByFramework[framework])
+				spec.replace('@inth/react', c15tEntryByFramework[framework])
 			);
 			for (const { name } of uiItems) {
 				const built = item('radix-nova', itemName(framework, name));

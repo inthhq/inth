@@ -1,5 +1,5 @@
-import { EXPERIMENT_STORAGE_KEY } from '@c15t/core';
-import type { ConsentExperiment, ConsentKernel } from '@c15t/core';
+import { EXPERIMENT_STORAGE_KEY } from '@inth/sdk/engine';
+import type { ConsentExperiment, ConsentKernel } from '@inth/sdk/engine';
 import { render } from '@testing-library/svelte';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 

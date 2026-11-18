@@ -23,15 +23,15 @@ import {
 	ɵOverlay as Overlay,
 	ɵresolveNoStyle as resolveNoStyle,
 	ɵshouldShowBranding as shouldShowBranding,
-} from '@c15t/angular';
-import type { Model } from '@c15t/core';
-import { resolveIABBannerSummary } from '@c15t/core/iab-support';
-import { saveIABConsentSurface } from '@c15t/core/surface-actions';
-import { resolveConsentPresentation } from '@c15t/core/surface-state';
-import buttonStyles from '@c15t/ui/styles/components/button';
-import actionStyles from '@c15t/ui/styles/components/consent-actions';
-import styles from '@c15t/ui/styles/components/iab-consent-banner';
-import { getTextDirection } from '@c15t/ui/utils';
+} from '@inth/angular';
+import type { Model } from '@inth/sdk/engine';
+import { resolveIABBannerSummary } from '@inth/sdk/iab-support';
+import { saveIABConsentSurface } from '@inth/sdk/surface-actions';
+import { resolveConsentPresentation } from '@inth/sdk/surface-state';
+import buttonStyles from '@inth/sdk/ui/styles/components/button';
+import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
+import styles from '@inth/sdk/ui/styles/components/iab-consent-banner';
+import { getTextDirection } from '@inth/sdk/ui/utils';
 
 import { IAB_FIRST_PAINT_SHEETS } from './iab-first-paint-sheets';
 import { getIABTranslations } from './iab-translations';

@@ -1,4 +1,4 @@
-import type { ConsentProviderCallbacks } from 'c15t/react';
+import type { ConsentProviderCallbacks } from '@inth/react';
 
 export const callbacks = {
 	// Right before the page reloads because a save withdrew a permission.

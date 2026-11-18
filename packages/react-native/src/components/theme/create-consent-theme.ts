@@ -302,7 +302,7 @@ export type ConsentFontName =
  * the Expo plugin's `theme` option takes, so one object styles the components
  * in this package and the native presenter.
  *
- * Its fields follow the web `Theme` from `@c15t/ui`. `slots`, `brand` and
+ * Its fields follow the web `Theme` from `@inth/sdk/ui`. `slots`, `brand` and
  * `branding` style the native presenter only; `motion` and the colours in
  * {@link ConsentThemeColors} that the native presenter does not draw style
  * these components only.

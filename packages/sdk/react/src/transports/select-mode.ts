@@ -13,10 +13,10 @@ import type {
 	HostedMode,
 	HostedModeFactory,
 	ProviderTransportFactory,
-} from '@c15t/core';
-import type { ConsentTesting } from '@c15t/core/testing';
-import { createHostedTransport } from '@c15t/core/transports';
-import { createHostedModeFactory } from '@c15t/core/transports/hosted-factory';
+} from '@inth/sdk/engine';
+import type { ConsentTesting } from '@inth/sdk/testing';
+import { createHostedTransport } from '@inth/sdk/transports';
+import { createHostedModeFactory } from '@inth/sdk/transports/hosted-factory';
 
 /** One factory per backend URL, so each render hands the provider the same. */
 const hostedByURL = new Map<string, HostedModeFactory>();

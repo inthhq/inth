@@ -30,7 +30,7 @@
  *
  * Each factory is also exported on its own (`scriptLoaderOnDemand`,
  * `networkBlockerOnDemand`, `clearOnRevocationOnDemand`,
- * `connectConsentSourceOnDemand`) from `@c15t/core/runtime/on-demand-factories`,
+ * `connectConsentSourceOnDemand`) from `@inth/sdk/runtime/on-demand-factories`,
  * each from its own file and, for the loader and the blocker, with a chunk
  * of its own. A host that imports some modules statically and others on
  * demand takes only the factories it loads on demand: an `import()` of a

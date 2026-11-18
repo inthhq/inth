@@ -1,20 +1,20 @@
+import type { ConsentManifest } from '@inth/sdk/schema/types';
 import {
 	createStaticManifestModule as createModule,
 	loadStaticManifest as loadManifest,
-} from '@c15t/core/server';
-import type { ConsentManifest } from '@c15t/schema/types';
+} from '@inth/sdk/server';
 
 /** The manifest shape generated static modules are typed against. */
-export type { ConsentManifest } from '@c15t/schema/types';
+export type { ConsentManifest } from '@inth/sdk/schema/types';
 export type {
 	StaticConsentResolution,
 	StaticConsentResolverOptions,
 	StaticGeoResult,
-} from '@c15t/core/static';
+} from '@inth/sdk/static';
 export {
 	createStaticConsentResolver,
 	resolveUnknownLocationInit,
-} from '@c15t/core/static';
+} from '@inth/sdk/static';
 
 export interface StaticManifestModuleOptions {
 	manifestUrl: string;
@@ -24,9 +24,9 @@ export interface StaticManifestModuleOptions {
 	 * Module the generated file imports its `ConsentManifest` type from.
 	 * Use the entry the application itself depends on, so the import
 	 * resolves under strict dependency layouts (pnpm): apps that install
-	 * the umbrella package pass `'c15t/tanstack-start/static'`.
+	 * the umbrella package pass `'@inth/tanstack-start/static'`.
 	 *
-	 * @default '@c15t/tanstack-start/static'
+	 * @default '@inth/tanstack-start/static'
 	 */
 	importSource?: string;
 }
@@ -35,13 +35,13 @@ export interface StaticManifestModuleOptions {
 export const loadStaticManifest = (
 	options: Omit<StaticManifestModuleOptions, 'exportName'>
 ): Promise<ConsentManifest> =>
-	loadManifest(options, '@c15t/tanstack-start/static');
+	loadManifest(options, '@inth/tanstack-start/static');
 
 /** Generates a typed manifest module for a static build. */
 export const createStaticManifestModule = (
 	options: StaticManifestModuleOptions
 ): Promise<string> =>
 	createModule(options, {
-		importSource: '@c15t/tanstack-start/static',
-		label: '@c15t/tanstack-start/static',
+		importSource: '@inth/tanstack-start/static',
+		label: '@inth/tanstack-start/static',
 	});

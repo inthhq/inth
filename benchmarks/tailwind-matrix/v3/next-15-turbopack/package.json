@@ -4,7 +4,8 @@
 	"description": "Next.js 15 with Turbopack for the Tailwind 3 matrix fixture. The v3 workspace builds it; the package only pins its dependencies apart from the Next.js 16 fixtures.",
 	"type": "module",
 	"dependencies": {
-		"c15t": "workspace:*",
+		"@inth/nextjs": "workspace:*",
+		"@inth/react": "workspace:*",
 		"next": "15.5.25",
 		"react": "19.2.7",
 		"react-dom": "19.2.7"

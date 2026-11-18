@@ -26,20 +26,20 @@ import type {
 	SuiteApi,
 	TestDriver,
 } from '@c15t/conformance';
-import { deferInitGvl } from '@c15t/core';
+import { deferInitGvl } from '@inth/sdk/engine';
 import type {
 	AllConsentNames,
 	ConsentKernel,
 	KernelActiveUI,
 	KernelConfig,
 	InitResponse,
-} from '@c15t/core';
+} from '@inth/sdk/engine';
 import {
 	normalizePolicyRule,
 	createPolicyRuleFingerprints,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
-import type { GlobalVendorList } from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
+import type { GlobalVendorList } from '@inth/sdk/schema/types';
 import { mount, unmount } from 'svelte';
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 
@@ -120,7 +120,7 @@ const buildProviderOptions = function buildProviderOptions(
 		...(provided.prefetch ?? {}),
 		initialBranding: 'c15t',
 		// A server that resolved an IAB policy ships the vendor list in the
-		// state; the lazy `@c15t/iab` factory only seeds it on the client.
+		// state; the lazy `@inth/sdk/iab` factory only seeds it on the client.
 		initialIab:
 			isIabComponent(opts.component) && authoritative
 				? {
@@ -241,7 +241,7 @@ const driver: TestDriver = {
 		});
 
 		if (isIabComponent(opts.component)) {
-			// `@c15t/iab` is loaded on demand, so an IAB surface only has a
+			// `@inth/sdk/iab` is loaded on demand, so an IAB surface only has a
 			// live handle once that import has settled — the same wait an
 			// embedding app does before opening a TCF dialog.
 			await whenIABReady();

@@ -1,16 +1,16 @@
+import type { ConsentManifest } from '@inth/sdk/schema/types';
 /**
  * The Nitro consent route for `manifest()` mode: one h3 handler, mounted at
  * `${routePrefix}/**`, around the consent route handler in
- * `@c15t/core/server`. Core owns the `/manifest` and `/init` behaviour for
+ * `@inth/sdk/server`. Core owns the `/manifest` and `/init` behaviour for
  * every adapter (including the fallback to the backend's own `/init` and
  * the render budget the SSR plugin sends in `x-c15t-timeout-ms`). This
  * module only converts between h3 and the Web `Request`/`Response`, reads
  * the c15t runtime config, sends relative backend URLs through Nitro's
  * in-process fetch, and hands detached work to the preset's `waitUntil`.
  */
-import { createConsentRouteHandler, readWaitUntil } from '@c15t/core/server';
-import type { ConsentRouteHandler, ManifestFetch } from '@c15t/core/server';
-import type { ConsentManifest } from '@c15t/schema/types';
+import { createConsentRouteHandler, readWaitUntil } from '@inth/sdk/server';
+import type { ConsentRouteHandler, ManifestFetch } from '@inth/sdk/server';
 import { defineEventHandler, sendWebResponse, toWebRequest } from 'h3';
 import type { EventHandlerRequest, H3Event } from 'h3';
 
@@ -143,7 +143,7 @@ export const createConsentRoute = function createConsentRoute(
 		const config = readConsentConfig(runtimeConfig);
 		const mode = readNuxtMode(config);
 		const handle = createConsentRouteHandler({
-			adapter: '@c15t/vue',
+			adapter: '@inth/vue',
 			fetch: dependencies.fetch,
 			manifest: dependencies.manifest,
 			// With browser resolution, `manifestUrl` is what the browser

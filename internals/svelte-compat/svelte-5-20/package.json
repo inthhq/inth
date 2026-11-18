@@ -2,7 +2,7 @@
 	"name": "@c15t/svelte-compat-5-20",
 	"version": "0.0.0",
 	"private": true,
-	"description": "Compatibility fixture: the oldest Svelte and SvelteKit versions @c15t/svelte supports.",
+	"description": "Compatibility fixture: the oldest Svelte and SvelteKit versions @inth/svelte supports.",
 	"type": "module",
 	"scripts": {
 		"build": "vite build",
@@ -10,8 +10,8 @@
 		"start": "node build"
 	},
 	"dependencies": {
-		"@c15t/integrations": "workspace:*",
-		"@c15t/svelte": "workspace:*"
+		"@inth/integrations": "workspace:*",
+		"@inth/svelte": "workspace:*"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-node": "5.5.7",

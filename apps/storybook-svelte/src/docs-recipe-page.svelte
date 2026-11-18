@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ConsentDialogLink } from '@c15t/svelte';
+	import { ConsentDialogLink } from '@inth/svelte';
 	import type { Snippet } from 'svelte';
 
 	import '../../docs-recipe-page.css';

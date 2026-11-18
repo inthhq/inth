@@ -1,5 +1,5 @@
-import type { ConsentComponentSlotKey } from '@c15t/schema/config';
-import type { ClassValue } from '@c15t/ui/utils';
+import type { ConsentComponentSlotKey } from '@inth/sdk/schema/config';
+import type { ClassValue } from '@inth/sdk/ui/utils';
 
 import type { ReactComponentSlots, ReactSlotProps } from '~/types/slots';
 import type { CSSPropertiesWithVars } from '~/types/theme';

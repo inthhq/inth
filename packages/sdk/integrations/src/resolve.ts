@@ -1,4 +1,4 @@
-import type { Script } from '@c15t/core';
+import type { Script } from '@inth/sdk/engine';
 
 import { compileManifest } from './engine/compile';
 import { resolvedManifestToScript } from './engine/runtime';

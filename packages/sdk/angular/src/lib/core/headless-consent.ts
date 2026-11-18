@@ -1,7 +1,7 @@
 import { computed, inject, Injectable } from '@angular/core';
 import type { Signal } from '@angular/core';
-import type { ActiveUI, ResolvedConsentPresentation } from '@c15t/core';
-import { resolveConsentPresentation } from '@c15t/core/surface-state';
+import type { ActiveUI, ResolvedConsentPresentation } from '@inth/sdk/engine';
+import { resolveConsentPresentation } from '@inth/sdk/surface-state';
 
 import { ConsentManager } from './consent-manager';
 

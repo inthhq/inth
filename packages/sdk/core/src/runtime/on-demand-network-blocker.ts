@@ -16,7 +16,7 @@ import { lazyRuntimeModule } from './lazy-module';
  * until its chunk lands and decides them. The chunk holds only the
  * blocker: for a host that imports the script loader statically.
  * {@link onDemandRuntimeModules} loads the loader and the blocker as one
- * chunk instead. Exported from `@c15t/core/runtime/on-demand-factories`.
+ * chunk instead. Exported from `@inth/sdk/runtime/on-demand-factories`.
  *
  * @param options - The network blocker options the runtime passes.
  * @returns A handle that queues calls until the module has loaded.

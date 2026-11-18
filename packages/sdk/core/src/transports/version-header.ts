@@ -33,8 +33,8 @@
 import {
 	POLICY_CONTRACT_HEADER,
 	POLICY_CONTRACT_VERSION,
-} from '@c15t/schema/types';
-import type { InitRequestParams } from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
+import type { InitRequestParams } from '@inth/sdk-schema/types';
 
 import { version } from '../version';
 

@@ -1,7 +1,7 @@
 <script lang="ts">
-	import type { LegalLinks as LegalLinksType } from '@c15t/core';
-	import legalLinkStyles from '@c15t/ui/styles/components/legal-links';
-	import { resolveTranslations } from '@c15t/ui/utils';
+	import type { LegalLinks as LegalLinksType } from '@inth/sdk/engine';
+	import legalLinkStyles from '@inth/sdk/ui/styles/components/legal-links';
+	import { resolveTranslations } from '@inth/sdk/ui/utils';
 
 	import { getConsentContext, getThemeContext } from '../context.svelte';
 	import { fallbackTranslations } from '../translation-defaults';

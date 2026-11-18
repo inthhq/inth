@@ -12,8 +12,8 @@
  * Pure. No DOM, no kernel access.
  */
 
-import { compareCanonical } from '@c15t/schema/canonical-order';
-import type { Vendor } from '@c15t/schema/types';
+import { compareCanonical } from '@inth/sdk-schema/canonical-order';
+import type { Vendor } from '@inth/sdk-schema/types';
 
 import type { AllConsentNames } from '../consent/consent-types';
 import type { ConsentKernel, ResolvedVendor, VendorSource } from '../types';

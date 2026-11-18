@@ -2,7 +2,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { baseConfig } from '@c15t/vitest-config/base';
-// Compiles the Vue dialog island and the `@c15t/vue` components it renders,
+// Compiles the Vue dialog island and the `@inth/vue` components it renders,
 // so a test can mount the real surface.
 import vue from '@vitejs/plugin-vue';
 import { getViteConfig } from 'astro/config';
@@ -41,7 +41,7 @@ export default getViteConfig(
 		plugins: [virtualOptionsPlugin, vue()],
 		resolve: {
 			alias: {
-				'@c15t/astro/server': resolve(__dirname, './src/server.ts'),
+				'@inth/astro/server': resolve(__dirname, './src/server.ts'),
 				'~': resolve(__dirname, './src'),
 			},
 		},

@@ -1,4 +1,4 @@
-import { withConsentProps } from 'c15t/next/pages';
+import { withConsentProps } from '@inth/nextjs/pages';
 
 import consentConfig from '@/c15t.config';
 

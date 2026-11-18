@@ -32,14 +32,14 @@ const bundle = await Bun.build({
 		{
 			name: 'workspace-sources',
 			setup(build) {
-				build.onResolve({ filter: /^@c15t\/schema\/types$/u }, () => ({
+				build.onResolve({ filter: /^@inth\/sdk-schema\/types$/u }, () => ({
 					path: source('schema/src/types.ts'),
 				}));
-				build.onResolve({ filter: /^@c15t\/translations$/u }, () => ({
+				build.onResolve({ filter: /^@inth\/sdk-translations$/u }, () => ({
 					path: source('translations/src/index.ts'),
 				}));
 				build.onResolve(
-					{ filter: /^@c15t\/translations\/[\w-]+$/u },
+					{ filter: /^@inth\/sdk-translations\/[\w-]+$/u },
 					(args) => ({
 						path: source(
 							`translations/src/translations/${args.path.split('/').at(-1)}.ts`

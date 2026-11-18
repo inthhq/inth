@@ -1,5 +1,8 @@
-import { defaultTranslationConfig } from '@c15t/core';
-import type { CompleteTranslations, Translations } from '@c15t/translations';
+import { defaultTranslationConfig } from '@inth/sdk/engine';
+import type {
+	CompleteTranslations,
+	Translations,
+} from '@inth/sdk/translations';
 import { computed } from 'vue';
 import type { ComputedRef } from 'vue';
 

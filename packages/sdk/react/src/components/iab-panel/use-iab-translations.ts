@@ -3,7 +3,7 @@ import { defaultTranslationConfig } from '~/utils/default-translation-config';
 
 /**
  * IAB translations interface.
- * This matches the structure in @c15t/translations but is defined locally
+ * This matches the structure in @inth/sdk/translations but is defined locally
  * to avoid cross-package type dependencies.
  */
 interface IABTranslations {

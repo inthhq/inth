@@ -139,7 +139,7 @@ export const resolveFetch = function resolveFetch(
  * @returns Save, identify and subject-read methods.
  * @example
  * ```ts
- * import { createHostedRecordTransport } from '@c15t/core';
+ * import { createHostedRecordTransport } from '@inth/sdk-core';
  *
  * const records = createHostedRecordTransport({ projectUrl: '/api/c15t' });
  * await records.save(payload);

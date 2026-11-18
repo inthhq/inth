@@ -12,9 +12,9 @@
  * @internal
  */
 
-import type { ConsentSnapshot } from '@c15t/core';
-import type { CompleteTranslations } from '@c15t/translations';
-import { getTextDirection } from '@c15t/ui/utils';
+import type { ConsentSnapshot } from '@inth/sdk-core';
+import type { CompleteTranslations } from '@inth/sdk-translations';
+import { getTextDirection } from '@inth/sdk-ui/utils';
 
 import type { SurfaceCopy } from '../ui/copy';
 

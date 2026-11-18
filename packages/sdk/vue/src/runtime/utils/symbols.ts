@@ -1,5 +1,5 @@
-import type { ConsentKernel, ConsentSnapshot } from '@c15t/core';
-import type { ConsentActiveUI } from '@c15t/schema/config';
+import type { ConsentKernel, ConsentSnapshot } from '@inth/sdk/engine';
+import type { ConsentActiveUI } from '@inth/sdk/schema/config';
 import type { InjectionKey, MaybeRefOrGetter, Ref } from 'vue';
 
 import type { ConsentConfig } from '../config';

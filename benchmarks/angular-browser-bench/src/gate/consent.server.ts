@@ -1,4 +1,4 @@
-import { createConsentRoute } from '@c15t/angular/ssr';
+import { createConsentRoute } from '@inth/angular/ssr';
 
 /**
  * The consent route at `/api/c15t`, as in the rendering guide. It resolves

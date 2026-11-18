@@ -5,7 +5,7 @@
 import {
 	css as iabFirstPaintCSS,
 	id as iabFirstPaintID,
-} from '@c15t/ui/styles/sheets/iab-first-paint';
+} from '@inth/sdk/ui/styles/sheets/iab-first-paint';
 
 export {
 	INLINE_STYLES_CSS,

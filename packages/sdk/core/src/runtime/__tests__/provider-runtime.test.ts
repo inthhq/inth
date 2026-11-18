@@ -5,7 +5,7 @@
  * the runtime. Live option updates, the `enabled` toggle and a streamed
  * prefetch, with the semantics React's provider has today.
  */
-import { policyRulePresets, resolvePolicyRules } from '@c15t/schema/types';
+import { policyRulePresets, resolvePolicyRules } from '@inth/sdk-schema/types';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { choiceRecords, NOW } from '../../__tests__/fixtures/kernel-fixtures';

@@ -4,8 +4,8 @@ import type {
 	HasCondition,
 	Script,
 	ScriptCallbackInfo,
-} from '@c15t/core';
-import { has } from '@c15t/core';
+} from '@inth/sdk/engine';
+import { has } from '@inth/sdk/engine';
 
 import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';

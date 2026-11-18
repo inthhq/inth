@@ -1,4 +1,4 @@
-import type { AllConsentNames, ConsentSnapshot } from '@c15t/core';
+import type { AllConsentNames, ConsentSnapshot } from '@inth/sdk/engine';
 
 /** The consent choices Shopify's Customer Privacy API accepts. */
 export interface ShopifyConsentPreferences {

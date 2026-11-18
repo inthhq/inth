@@ -1,5 +1,5 @@
 // The quickstart's script list, which the snippets in this folder import.
-import { posthog } from '@c15t/integrations/posthog';
+import { posthog } from '@inth/integrations/posthog';
 
 export const scripts = [
 	posthog({

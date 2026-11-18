@@ -2,7 +2,7 @@ import {
 	startsClosedByDefault,
 	toggleOpenClose,
 } from '@c15t/conformance/play/collapsible';
-import { enTranslations } from '@c15t/translations';
+import { enTranslations } from '@inth/sdk/translations';
 import type { Meta, StoryObj } from '@storybook/svelte-vite';
 
 import CollapsibleDemo from './CollapsibleDemo.svelte';

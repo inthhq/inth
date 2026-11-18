@@ -1,5 +1,5 @@
 /**
- * `@c15t/core/iab-support` — what `@c15t/iab` and the IAB surfaces need
+ * `@inth/sdk/iab-support` — what `@inth/sdk/iab` and the IAB surfaces need
  * from core: the banner summary, the IAB controls registry and the
  * protocol parameters of the GVL request.
  *

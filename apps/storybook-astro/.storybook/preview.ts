@@ -3,8 +3,8 @@ import type { Preview } from '@storybook/html-vite';
 // The shipped stylesheet, the same one an Astro site imports. It now
 // carries the default theme tokens, so nothing has to inject a theme at
 // runtime — which is the whole point of a server-rendered banner.
-import '@c15t/astro/styles.css';
-import '@c15t/ui/iab/styles.css';
+import '@inth/astro/styles.css';
+import '@inth/sdk/ui/iab/styles.css';
 
 const storybookCanvasStyleId = 'c15t-storybook-canvas';
 const canvasCSS = `

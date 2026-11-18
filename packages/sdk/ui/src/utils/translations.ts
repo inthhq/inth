@@ -1,4 +1,4 @@
-import type { TranslationConfig, Translations } from '@c15t/core';
+import type { TranslationConfig, Translations } from '@inth/sdk-core';
 
 /**
  * Type guard to check if a value is a valid Translations object.

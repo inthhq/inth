@@ -1,12 +1,12 @@
 ---
-import { isIABConfigured } from '@c15t/core/runtime';
+import { isIABConfigured } from '@inth/sdk/runtime';
 import {
 	INLINE_IAB_STYLES_CSS,
 	INLINE_IAB_STYLES_ID,
 	INLINE_STYLES_CSS,
 	INLINE_STYLES_ID,
 	markStylesEmitted,
-} from '@c15t/astro/server';
+} from '@inth/astro/server';
 
 interface Props {
 	/** The outer document's nonce when rendered through a server island. */

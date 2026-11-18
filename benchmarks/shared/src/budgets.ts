@@ -2,7 +2,7 @@ import type { PolicyBenchFixture } from './policy-fixtures';
 import type { MetricBudget, MetricBudgetResult } from './schema';
 
 /**
- * v3 budget constants for `c15t`, `@c15t/react`, and `@c15t/nextjs`.
+ * v3 budget constants for `c15t`, `@inth/react`, and `@inth/nextjs`.
  *
  * These use `percent-lte` with NEGATIVE thresholds, meaning the v3 measurement
  * must IMPROVE by at least |threshold|% against the base branch. The base
@@ -100,22 +100,22 @@ export const artifactV3Budgets: MetricBudget[] = [
 	{
 		comparator: 'percent-lte',
 		description:
-			'v3 @c15t/core tarball must be at least 30% smaller than the v2 core package (published as c15t).',
-		metric: '@c15t/core',
+			'v3 @inth/sdk/engine tarball must be at least 30% smaller than the v2 core package (published as c15t).',
+		metric: '@inth/sdk/engine',
 		threshold: -30,
 	},
 	{
 		comparator: 'percent-lte',
 		description:
-			'v3 @c15t/react package tarball must be at least 30% smaller than v2.',
-		metric: '@c15t/react',
+			'v3 @inth/react package tarball must be at least 30% smaller than v2.',
+		metric: '@inth/react',
 		threshold: -30,
 	},
 	{
 		comparator: 'percent-lte',
 		description:
-			'v3 @c15t/nextjs package tarball must be at least 30% smaller than v2.',
-		metric: '@c15t/nextjs',
+			'v3 @inth/nextjs package tarball must be at least 30% smaller than v2.',
+		metric: '@inth/nextjs',
 		threshold: -30,
 	},
 ];
@@ -174,7 +174,7 @@ const VENDOR_CONSENT_TARBALL_BYTES = 8192;
 /**
  * The stock surfaces render their own styles: the first-paint rules moved
  * from the stylesheet the app imported into the banner's JavaScript
- * (`@c15t/ui/styles/sheets/first-paint`, about 8.8 kB gzip), and the
+ * (`@inth/sdk/ui/styles/sheets/first-paint`, about 8.8 kB gzip), and the
  * dialog's rules into the dialog's lazy chunk (about 5.3 kB gzip). A route
  * that drops its `styles.css` import loses about 13.5 kB gzip of
  * render-blocking CSS in exchange. Measured on the PR that moved them; the
@@ -195,7 +195,7 @@ const IAB_STYLES_DEFERRED_GZIP_BYTES = 7168;
 const SURFACE_ENTRIES = new Set(['iab-lazy', 'ordinary-react']);
 
 /**
- * `@c15t/browser` exports `manifest()`, whose browser resolver loads each
+ * `@inth/sdk` exports `manifest()`, whose browser resolver loads each
  * non-English language's base copy through its own `import()`. esbuild
  * emits a chunk for every `import()` in a file it scans, so an entry that
  * only calls `init()` still emits the resolver chunks and 34 language
@@ -207,7 +207,7 @@ const SURFACE_ENTRIES = new Set(['iab-lazy', 'ordinary-react']);
  */
 const BROWSER_LANGUAGE_CHUNKS_GZIP_BYTES = 87_040;
 
-/** Bundle entries that import `manifest()` from `@c15t/browser`. */
+/** Bundle entries that import `manifest()` from `@inth/sdk`. */
 const BROWSER_MANIFEST_ENTRIES = new Set(['browser-full', 'browser-headless']);
 
 /**
@@ -288,7 +288,7 @@ const DEFERRED_ENGINE_GZIP_BYTES: Record<
 };
 
 /**
- * The same change in the `@c15t/react` tarball: the `deferred/` modules
+ * The same change in the `@inth/react` tarball: the `deferred/` modules
  * (shell, deferred kernel, commit path, engine host, registry, session,
  * surfaces and their types), `static-banner` and the presentation hooks.
  * 27,111 packed bytes (15.44%) over the base tarball of 175,651 bytes,
@@ -346,8 +346,8 @@ export const artifactBudgets: MetricBudget[] = [
 	{
 		comparator: 'absolute-and-percent-lte',
 		description:
-			'@c15t/core tarball growth, excluding bundled docs, must stay below 15kB and 10%, plus the vendor consent and clientMode() bundle allowances.',
-		metric: '@c15t/core',
+			'@inth/sdk/engine tarball growth, excluding bundled docs, must stay below 15kB and 10%, plus the vendor consent and clientMode() bundle allowances.',
+		metric: '@inth/sdk/engine',
 		secondaryThreshold: 10 + CLIENT_MODE_BUNDLES_TARBALL_PERCENT,
 		threshold:
 			15360 + VENDOR_CONSENT_TARBALL_BYTES + CLIENT_MODE_BUNDLES_TARBALL_BYTES,
@@ -356,7 +356,7 @@ export const artifactBudgets: MetricBudget[] = [
 		comparator: 'absolute-and-percent-lte',
 		description:
 			'React package tarball growth, excluding bundled docs, must stay below 15kB and 10%, plus the deferred root allowance.',
-		metric: '@c15t/react',
+		metric: '@inth/react',
 		secondaryThreshold: 10 + DEFERRED_ROOT_TARBALL_PERCENT,
 		threshold: 15360 + DEFERRED_ROOT_TARBALL_BYTES,
 	},
@@ -364,7 +364,7 @@ export const artifactBudgets: MetricBudget[] = [
 		comparator: 'absolute-and-percent-lte',
 		description:
 			'Next.js package tarball growth, excluding bundled docs, must stay below 15kB and 10%.',
-		metric: '@c15t/nextjs',
+		metric: '@inth/nextjs',
 		secondaryThreshold: 10,
 		threshold: 15360,
 	},
@@ -807,13 +807,13 @@ export const importBoundaryBudgets: MetricBudget[] = [
 	})),
 	{
 		comparator: 'count-eq',
-		description: 'Ordinary route bundles no @c15t/iab module bytes.',
+		description: 'Ordinary route bundles no @inth/sdk/iab module bytes.',
 		metric: 'iabInputBytes',
 		threshold: 0,
 	},
 	{
 		comparator: 'count-eq',
-		description: 'Ordinary route bundles no @c15t/dev-tools module bytes.',
+		description: 'Ordinary route bundles no @inth/sdk/devtools module bytes.',
 		metric: 'devtoolsInputBytes',
 		threshold: 0,
 	},
@@ -1015,7 +1015,7 @@ export const nextjsBrowserBudgetsForScenario =
 	};
 
 /**
- * Budgets for one `@c15t/vue` Nuxt browser scenario. The baseline arm
+ * Budgets for one `@inth/vue` Nuxt browser scenario. The baseline arm
  * renders no consent provider and so carries no init-request invariant.
  */
 export const nuxtBrowserBudgetsForScenario =

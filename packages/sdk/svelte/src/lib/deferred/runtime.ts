@@ -18,31 +18,31 @@
  * backend save; then the engine loads, starts from the record and sends
  * the save without recording it again.
  *
- * The same design as `@c15t/vue`'s Nuxt module (`runtime/deferred/
+ * The same design as `@inth/vue`'s Nuxt module (`runtime/deferred/
  * shell.ts`), shaped as the runtime `ConsentProvider` renders.
  *
  * @packageDocumentation
  * @internal
  */
 
-import { allConsentNames } from '@c15t/core';
+import { allConsentNames } from '@inth/sdk/engine';
 import type {
 	ConsentExperiment,
 	ConsentKernel,
 	SaveResult,
 	SaveUISource,
-} from '@c15t/core';
-import type { ConsentRuntimeIABHandle } from '@c15t/core/runtime';
+} from '@inth/sdk/engine';
+import type { ConsentRuntimeIABHandle } from '@inth/sdk/runtime';
 import type {
 	ConsentProviderRuntime,
 	ConsentRuntimeUpdate,
-} from '@c15t/core/runtime/provider';
+} from '@inth/sdk/runtime/provider';
 import {
 	generateSubjectId,
 	hasStoredClearEpoch,
 	planInstantCommit,
-} from '@c15t/core/surface-actions/instant-commit';
-import type { InstantCommit } from '@c15t/core/surface-actions/instant-commit';
+} from '@inth/sdk/surface-actions/instant-commit';
+import type { InstantCommit } from '@inth/sdk/surface-actions/instant-commit';
 
 import type { ProviderOptionsInput } from '../provider-options';
 import type { ConsentRootBoot } from './boot';

@@ -10,11 +10,11 @@ import {
 	defaultTranslationConfig,
 	resolveConsentPresentation,
 	resolveIABBannerSummary,
-} from '@c15t/core';
-import type { ConsentPresentation, ConsentSnapshot } from '@c15t/core';
-import type { Translations } from '@c15t/translations';
-import type { AllThemeKeys, Theme } from '@c15t/ui/theme';
-import { getTextDirection } from '@c15t/ui/utils';
+} from '@inth/sdk/engine';
+import type { ConsentPresentation, ConsentSnapshot } from '@inth/sdk/engine';
+import type { Translations } from '@inth/sdk/translations';
+import type { AllThemeKeys, Theme } from '@inth/sdk/ui/theme';
+import { getTextDirection } from '@inth/sdk/ui/utils';
 
 import type { IABPromptClassNames } from './class-names';
 import { joinClasses } from './prompt-model';

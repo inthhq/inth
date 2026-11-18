@@ -126,7 +126,7 @@ const isTokenGroup = function isTokenGroup(
  * exist.
  *
  * @typeParam ThemeType - The host theme type, for example `Theme` from
- * `@c15t/ui/theme`.
+ * `@inth/sdk/ui/theme`.
  * @param base - The host's `theme` option.
  * @param experiment - The experiment definition.
  * @param assignment - The arm the subject runs.

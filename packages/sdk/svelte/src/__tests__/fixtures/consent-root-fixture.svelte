@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { KernelConfig } from '@c15t/core';
-	import type { Script } from '@c15t/core/modules/script-loader';
+	import type { KernelConfig } from '@inth/sdk/engine';
+	import type { Script } from '@inth/sdk/modules/script-loader';
 
 	import ConsentRoot from '../../lib/components/consent-root.svelte';
 	import ConsentDialog from '../../lib/components/deferred-panel.svelte';

@@ -1,2 +1,2 @@
-export { ConsentProvider, ConsentBanner } from '@c15t/react';
-export const loadIab = () => import('@c15t/react/iab');
+export { ConsentProvider, ConsentBanner } from '@inth/react';
+export const loadIab = () => import('@inth/react/iab');

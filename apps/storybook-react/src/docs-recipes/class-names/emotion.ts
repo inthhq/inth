@@ -1,6 +1,6 @@
 // #region docs:class-names-emotion title="src/consent-components.ts"
 import { css } from '@emotion/css';
-import type { ConsentProviderOptions } from 'c15t/react';
+import type { ConsentProviderOptions } from '@inth/react';
 
 const card = css({
 	border: '3px solid rgb(234 88 12)',

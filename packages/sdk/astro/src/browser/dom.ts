@@ -2,8 +2,8 @@
  * DOM helpers shared by the browser-rendered banners.
  */
 
-import type { ConsentSnapshot } from '@c15t/core';
-import type { AllThemeKeys, Theme } from '@c15t/ui/theme';
+import type { ConsentSnapshot } from '@inth/sdk/engine';
+import type { AllThemeKeys, Theme } from '@inth/sdk/ui/theme';
 
 import {
 	C15T_MARK_SVG,

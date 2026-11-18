@@ -2,7 +2,7 @@ import type {
 	ConsentExperiment,
 	OnChoiceRecordedPayload,
 	OnSurfaceShownPayload,
-} from 'c15t';
+} from '@inth/sdk/engine';
 import { createContext, useContext, useMemo, useState } from 'react';
 
 /** One experiment event the page lists. */

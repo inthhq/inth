@@ -37,7 +37,7 @@ import {
 	readJourneyParams,
 	readPolicyResolutionWire,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 import type {
 	AdTechProvider,
 	ConsentManifest,
@@ -48,7 +48,7 @@ import type {
 	InitOutput,
 	ResolveInitFromManifestInputs,
 	SessionJourney,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 
 import {
 	fetchCachedManifest,
@@ -142,7 +142,7 @@ export type ConsentRouteFetchGvl = (input: {
 /** Configuration for {@link createConsentRouteHandler}. */
 export interface ConsentRouteHandlerOptions {
 	/**
-	 * Package name of the adapter, such as `@c15t/nextjs`. Prefixes errors,
+	 * Package name of the adapter, such as `@inth/nextjs`. Prefixes errors,
 	 * names the adapter in session reports, and is sent as `x-c15t-proxy`.
 	 */
 	adapter: string;

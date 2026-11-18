@@ -1,3 +1,8 @@
+import { ConsentRoot as NextConsentRoot } from '@inth/nextjs';
+import type { ConsentState as NextConsentState } from '@inth/nextjs';
+import { resolveConsent as resolveNextConsent } from '@inth/nextjs/server';
+import type { ConsentSnapshot } from '@inth/sdk/engine';
+import { createConsentRuntime } from '@inth/sdk/runtime';
 // @vitest-environment jsdom
 /**
  * Two visitors with opposite stored consent hit the server at the same time.
@@ -5,18 +10,13 @@
  * server helpers resolve both requests concurrently against one manifest,
  * and each resulting state is rendered to prove the permissions it grants.
  */
-import { createConsentManifestPolicyPack } from '@c15t/schema/types';
-import type { ConsentManifest } from '@c15t/schema/types';
-import type { ConsentSnapshot } from 'c15t';
-import { ConsentRoot as NextConsentRoot } from 'c15t/next';
-import type { ConsentState as NextConsentState } from 'c15t/next';
-import { resolveConsent as resolveNextConsent } from 'c15t/next/server';
-import { createConsentRuntime } from 'c15t/runtime';
-import { clearManifestCache } from 'c15t/server';
-import { ConsentRoot as TanStackConsentRoot } from 'c15t/tanstack-start';
-import { resolveConsent as resolveTanStackConsent } from 'c15t/tanstack-start/server';
-import type { ConsentState as TanStackConsentState } from 'c15t/tanstack-start/server';
-import { createOfflineTransport } from 'c15t/transports';
+import { createConsentManifestPolicyPack } from '@inth/sdk/schema/types';
+import type { ConsentManifest } from '@inth/sdk/schema/types';
+import { clearManifestCache } from '@inth/sdk/server';
+import { createOfflineTransport } from '@inth/sdk/transports';
+import { ConsentRoot as TanStackConsentRoot } from '@inth/tanstack-start';
+import { resolveConsent as resolveTanStackConsent } from '@inth/tanstack-start/server';
+import type { ConsentState as TanStackConsentState } from '@inth/tanstack-start/server';
 import { act } from 'react';
 import type { ReactNode } from 'react';
 import { renderToString } from 'react-dom/server';

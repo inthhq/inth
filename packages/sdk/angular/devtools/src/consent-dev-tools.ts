@@ -20,13 +20,13 @@ import {
 	untracked,
 } from '@angular/core';
 import type { EnvironmentProviders, Signal } from '@angular/core';
-import { ConsentManager } from '@c15t/angular';
-import { createDevTools } from '@c15t/dev-tools';
-import type { DevToolsOptions } from '@c15t/dev-tools';
-import { publishDevToolsLauncher } from '@c15t/ui/utils/devtools-launcher';
+import { ConsentManager } from '@inth/angular';
+import { createDevTools } from '@inth/sdk/devtools';
+import type { DevToolsOptions } from '@inth/sdk/devtools';
+import { publishDevToolsLauncher } from '@inth/sdk/ui/utils/devtools-launcher';
 
 /**
- * DevTools options: everything `createDevTools()` from `@c15t/dev-tools`
+ * DevTools options: everything `createDevTools()` from `@inth/sdk/devtools`
  * takes, except the kernel and container, which come from the app.
  *
  * Without `clearRecords`, `getPresentation` or `getConsentCategories`,
@@ -146,7 +146,7 @@ const optionalBoolean = (value: unknown): boolean | undefined =>
  * @example
  * ```ts
  * import { Component, isDevMode } from '@angular/core';
- * import { ConsentDevTools } from '@c15t/angular/devtools';
+ * import { ConsentDevTools } from '@inth/angular/devtools';
  *
  * @Component({
  *   selector: 'app-root',
@@ -224,8 +224,8 @@ export class ConsentDevTools {
  * @example
  * ```ts
  * // app.config.development.ts
- * import { hosted, provideC15t } from '@c15t/angular';
- * import { provideC15tDevTools } from '@c15t/angular/devtools';
+ * import { hosted, provideC15t } from '@inth/angular';
+ * import { provideC15tDevTools } from '@inth/angular/devtools';
  *
  * export const appConfig: ApplicationConfig = {
  *   providers: [

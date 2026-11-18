@@ -3,8 +3,8 @@
  * uses. The init paths load on demand; these tests inject the loaders and
  * check what each mode sends, and when.
  */
-import { createConsentManifestPolicyPack } from '@c15t/schema/types';
-import type { ConsentManifest } from '@c15t/schema/types';
+import { createConsentManifestPolicyPack } from '@inth/sdk-schema/types';
+import type { ConsentManifest } from '@inth/sdk-schema/types';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { optInRule } from '../../__tests__/fixtures/kernel-fixtures';
@@ -394,23 +394,23 @@ describe('lazyTesting()', () => {
 				>['testingTransport'],
 			})
 		);
-		const transport = lazyTesting('@c15t/nextjs/testing', {}, load)(context);
+		const transport = lazyTesting('@inth/nextjs/testing', {}, load)(context);
 
 		expect(load).not.toHaveBeenCalled();
 		await transport.init?.(initContext());
 		await transport.init?.(initContext());
 
 		expect(load).toHaveBeenCalledTimes(1);
-		expect(build).toHaveBeenCalledWith('@c15t/nextjs/testing', {});
+		expect(build).toHaveBeenCalledWith('@inth/nextjs/testing', {});
 		expect(transportInit).toHaveBeenCalledTimes(2);
 	});
 
 	test('the loaded transport throws in a production build', async () => {
 		vi.stubEnv('NODE_ENV', 'production');
-		const transport = lazyTesting('@c15t/nextjs/testing')(context);
+		const transport = lazyTesting('@inth/nextjs/testing')(context);
 
 		await expect(transport.init?.(initContext())).rejects.toThrow(
-			'testing() from @c15t/nextjs/testing is for tests and does not run in production'
+			'testing() from @inth/nextjs/testing is for tests and does not run in production'
 		);
 		vi.unstubAllEnvs();
 	});

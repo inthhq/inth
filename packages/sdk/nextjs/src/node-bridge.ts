@@ -1,10 +1,10 @@
 /**
  * Bridges Node's `http` request and response objects to the Web `Request`,
  * `Response`, and `Headers` types the server helpers and route handlers
- * speak. Typed structurally so the public `@c15t/nextjs/pages` surface does
+ * speak. Typed structurally so the public `@inth/nextjs/pages` surface does
  * not depend on `@types/node`.
  */
-import { resolveRequestOrigin } from '@c15t/core/server';
+import { resolveRequestOrigin } from '@inth/sdk/server';
 
 /**
  * Node-style incoming headers: lowercase names, arrays for repeated headers.

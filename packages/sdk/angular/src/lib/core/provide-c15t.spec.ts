@@ -1,5 +1,5 @@
 /**
- * Runtime options pass through `provideC15t()` to `@c15t/core/runtime`:
+ * Runtime options pass through `provideC15t()` to `@inth/sdk/runtime`:
  * scripts, the network blocker, persistence, clear-on-revocation,
  * callbacks and GPP. Ports of the Vue adapter's script-loader,
  * plugin-network-blocker, policy-runtime and gpp tests.
@@ -282,7 +282,7 @@ describe('gpp', () => {
 
 	beforeAll(async () => {
 		// Load the chunk once so the negative case can't pass on a slow import.
-		await import('@c15t/iab/gpp');
+		await import('@inth/sdk/iab/gpp');
 	}, 30_000);
 
 	afterEach(() => {

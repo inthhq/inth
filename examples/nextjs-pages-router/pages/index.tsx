@@ -1,5 +1,5 @@
 // #region docs:pages-ssr title="pages/index.tsx (partial)"
-import { withConsentProps } from 'c15t/next/pages';
+import { withConsentProps } from '@inth/nextjs/pages';
 
 export const getServerSideProps = withConsentProps();
 // #endregion docs:pages-ssr

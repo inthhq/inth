@@ -3,7 +3,7 @@
  * wait for the engine and run on it, and once attached every read goes to
  * the engine while subscribers stay subscribed.
  */
-import type { ConsentKernel, ConsentSnapshot } from '@c15t/core';
+import type { ConsentKernel, ConsentSnapshot } from '@inth/sdk/engine';
 import { describe, expect, test, vi } from 'vitest';
 
 import {

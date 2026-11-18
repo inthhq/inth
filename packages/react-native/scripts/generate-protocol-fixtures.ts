@@ -1,7 +1,7 @@
 /**
  * Generates the conformance fixtures in `packages/native-protocol/`.
  *
- * Every expectation comes from the real `@c15t/core` kernel, so the Swift and
+ * Every expectation comes from the real `@inth/sdk/engine` kernel, so the Swift and
  * Kotlin cores are tested against the JavaScript implementation rather than
  * against a hand-written idea of it. Run it with:
  *
@@ -94,7 +94,7 @@ import {
 	readPolicyResolutionWire,
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-} from '@c15t/core';
+} from '@inth/sdk/engine';
 import type {
 	ConsentSnapshot as KernelSnapshot,
 	AllConsentNames,
@@ -121,7 +121,7 @@ import type {
 	RestrictionReason,
 	SaveInput,
 	SavePayload,
-} from '@c15t/core';
+} from '@inth/sdk/engine';
 
 import type { CommitIntent } from '../src/protocol/commit';
 import { DEFAULT_NATIVE_LANGUAGE } from '../src/protocol/overrides';

@@ -3,7 +3,7 @@
  * the engine loaded, recorded without it.
  *
  * Loaded on that tap, in a chunk of its own, instead of the engine. It
- * records the choice with core's save code (`@c15t/core/surface-actions/
+ * records the choice with core's save code (`@inth/sdk/surface-actions/
  * early-commit`): the stand-in kernel reads the committed snapshot, the
  * record is stored, the save is queued, the root's callbacks hear it and
  * the root's `scripts` start. The engine loads next, starts from the
@@ -13,15 +13,15 @@
  * @internal
  */
 
-import type { KernelEvent, SaveResult, SaveUISource } from '@c15t/core';
-import type { ScriptLoaderHandle } from '@c15t/core/modules/script-loader';
+import type { KernelEvent, SaveResult, SaveUISource } from '@inth/sdk/engine';
+import type { ScriptLoaderHandle } from '@inth/sdk/modules/script-loader';
 import {
 	hasStoredClearEpoch,
 	planEarlyCommit,
 	storeEarlyCommit,
-} from '@c15t/core/surface-actions/early-commit';
-import type { EarlyCommit } from '@c15t/core/surface-actions/early-commit';
-import type { InstantCommit } from '@c15t/core/surface-actions/instant-commit';
+} from '@inth/sdk/surface-actions/early-commit';
+import type { EarlyCommit } from '@inth/sdk/surface-actions/early-commit';
+import type { InstantCommit } from '@inth/sdk/surface-actions/instant-commit';
 
 import type { DeferredCommitConfig, DeferredCommitted } from './committed';
 import type { DeferredKernelHandle } from './deferred-kernel';

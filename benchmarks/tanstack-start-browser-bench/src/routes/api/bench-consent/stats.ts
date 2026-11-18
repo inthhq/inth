@@ -1,4 +1,4 @@
-import { clearManifestCache } from '@c15t/core/server';
+import { clearManifestCache } from '@inth/sdk/server';
 import { createFileRoute } from '@tanstack/react-router';
 
 import {

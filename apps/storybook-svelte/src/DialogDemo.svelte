@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { Dialog, buttonVariants, Switch, switchVariants } from '@c15t/svelte';
-	import { enTranslations } from '@c15t/translations';
+	import { enTranslations } from '@inth/sdk/translations';
+	import { Dialog, buttonVariants, Switch, switchVariants } from '@inth/svelte';
 
 	const { common, consentManagerDialog, consentTypes } = enTranslations;
 

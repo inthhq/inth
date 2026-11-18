@@ -11,7 +11,7 @@
  *
  * The summary — which purposes, stacks and special features the banner
  * names, how many it leaves out, how many vendors there are — comes from
- * the shared model in `@c15t/core`, the same one the React, Svelte and Vue
+ * the shared model in `@inth/sdk/engine`, the same one the React, Svelte and Vue
  * banners read. Same DOM shape and the same `data-testid`s, so the
  * cross-framework parity gate compares like with like.
  *
@@ -23,14 +23,14 @@
  *
  * ```astro
  * ---
- * import IABConsentBanner from '@c15t/astro/components/iab-consent-banner.astro';
- * import IABConsentDialog from '@c15t/astro/components/iab-consent-dialog.astro';
+ * import IABConsentBanner from '@inth/astro/components/iab-consent-banner.astro';
+ * import IABConsentDialog from '@inth/astro/components/iab-consent-dialog.astro';
  * ---
  * <IABConsentBanner />
  * <IABConsentDialog />
  * ```
  */
-import { applyExperimentAssignment, applyExperimentTheme } from '@c15t/core';
+import { applyExperimentAssignment, applyExperimentTheme } from '@inth/sdk/engine';
 import {
 	buildBannerRevealScript,
 	buildColorSchemeScript,
@@ -41,8 +41,8 @@ import {
 	iabPromptClassNames,
 	markConfigEmitted,
 	resolveIABPromptModel,
-} from '@c15t/astro/server';
-import type { IABPromptProps } from '@c15t/astro/server';
+} from '@inth/astro/server';
+import type { IABPromptProps } from '@inth/astro/server';
 import Branding from './branding.astro';
 import ComponentStyles from './component-styles.astro';
 
@@ -60,7 +60,7 @@ const { c15t } = Astro.locals;
 
 if (!c15t) {
 	throw new Error(
-		'@c15t/astro: `Astro.locals.c15t` is missing. The c15t() integration registers the middleware that populates it — check it is listed in astro.config, and that you have not set `middleware: false`.'
+		'@inth/astro: `Astro.locals.c15t` is missing. The c15t() integration registers the middleware that populates it — check it is listed in astro.config, and that you have not set `middleware: false`.'
 	);
 }
 
@@ -309,7 +309,7 @@ const hidden = c15t.prerendered && !force;
 <script>
 	// One delegated listener, shared with `<ConsentBanner />` and every
 	// dialog trigger on the site. Astro bundles and dedupes it across pages.
-	import { attachBannerActions } from '@c15t/astro/client';
+	import { attachBannerActions } from '@inth/astro/client';
 
 	attachBannerActions();
 </script>

@@ -7,7 +7,7 @@ import {
 	TemplateRef,
 	ViewContainerRef,
 } from '@angular/core';
-import type { AllConsentNames, HasCondition } from '@c15t/core';
+import type { AllConsentNames, HasCondition } from '@inth/sdk/engine';
 
 import { ConsentManager } from './consent-manager';
 

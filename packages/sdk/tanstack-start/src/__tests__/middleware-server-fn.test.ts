@@ -8,7 +8,7 @@ import { realpathSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-import { manifest } from '@c15t/core/modes';
+import { manifest } from '@inth/sdk/modes';
 import { createServerFn } from '@tanstack/react-start';
 import { createElement } from 'react';
 import { renderToReadableStream } from 'react-dom/server';

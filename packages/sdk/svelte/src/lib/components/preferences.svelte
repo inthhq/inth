@@ -1,14 +1,14 @@
 <script lang="ts">
-	import type { AllConsentNames } from '@c15t/core';
+	import type { AllConsentNames } from '@inth/sdk/engine';
 	import {
 		defaultTranslationConfig,
 		resolveConsentPresentation,
-	} from '@c15t/core';
-	import { createPreferenceDraft } from '@c15t/core/preference-draft';
-	import accordionStyles from '@c15t/ui/styles/components/accordion';
-	import managerStyles from '@c15t/ui/styles/components/consent-manager';
-	import switchStyles from '@c15t/ui/styles/components/switch';
-	import { getTextDirection, resolveTranslations } from '@c15t/ui/utils';
+	} from '@inth/sdk/engine';
+	import { createPreferenceDraft } from '@inth/sdk/preference-draft';
+	import accordionStyles from '@inth/sdk/ui/styles/components/accordion';
+	import managerStyles from '@inth/sdk/ui/styles/components/consent-manager';
+	import switchStyles from '@inth/sdk/ui/styles/components/switch';
+	import { getTextDirection, resolveTranslations } from '@inth/sdk/ui/utils';
 
 	import { getConsentContext, getThemeContext } from '../context.svelte';
 	import { DIALOG_SHEETS } from '../dialog-sheets';

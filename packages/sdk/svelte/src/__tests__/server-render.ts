@@ -3,7 +3,7 @@ import type { ChildProcessWithoutNullStreams } from 'node:child_process';
 import { resolve as resolvePath } from 'node:path';
 import { createInterface } from 'node:readline';
 
-import type { ConsentSnapshot } from '@c15t/core';
+import type { ConsentSnapshot } from '@inth/sdk/engine';
 
 export interface SsrRenderResult {
 	html: string;

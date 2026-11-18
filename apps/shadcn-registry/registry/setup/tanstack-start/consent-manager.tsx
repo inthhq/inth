@@ -1,10 +1,10 @@
 import type { ReactNode } from "react"
 import { createServerFn } from "@tanstack/react-start"
-import { ConsentRoot } from "c15t/tanstack-start"
+import { ConsentRoot } from "@inth/tanstack-start"
 import {
   createConsentStateHandler,
   type ConsentState,
-} from "c15t/tanstack-start/server"
+} from "@inth/tanstack-start/server"
 
 import { ConsentBanner } from "@/components/c15t/consent-banner"
 import { ConsentDialog } from "@/components/c15t/consent-dialog"

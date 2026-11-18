@@ -6,7 +6,7 @@
  * @internal
  */
 
-import { setupFocusTrap, setupScrollLock } from '@c15t/ui/utils';
+import { setupFocusTrap, setupScrollLock } from '@inth/sdk-ui/utils';
 
 import { LOCKS_KEY } from './locks-shared';
 import type { SharedLocks } from './locks-shared';

@@ -1,12 +1,12 @@
+import { GppModel } from '@iabgpp/cmpapi';
 /** @vitest-environment jsdom */
-import { createConsentKernel } from '@c15t/core';
-import type { ConsentKernel, KernelConfig } from '@c15t/core';
+import { createConsentKernel } from '@inth/sdk-core';
+import type { ConsentKernel, KernelConfig } from '@inth/sdk-core';
 import {
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,
-} from '@c15t/schema/types';
-import type { PolicyRule } from '@c15t/schema/types';
-import { GppModel } from '@iabgpp/cmpapi';
+} from '@inth/sdk-schema/types';
+import type { PolicyRule } from '@inth/sdk-schema/types';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { createGPP, destroyGPPStub, initializeGPPStub } from '../gpp';

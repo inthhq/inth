@@ -5,12 +5,8 @@
 		"moduleResolution": "bundler",
 		"types": ["@vitest/browser/matchers"],
 		"paths": {
-			"@c15t/react": ["../react/dist-types/index.d.ts"],
-			"@c15t/react/*": ["../react/dist-types/*"],
-			"@c15t/schema": ["../schema/dist-types/index.d.ts"],
-			"@c15t/schema/*": ["../schema/dist-types/*"],
-			"@c15t/core": ["../core/dist-types/index.d.ts"],
-			"@c15t/core/*": ["../core/dist-types/*"],
+			"@inth/react": ["../react/dist-types/index.d.ts"],
+			"@inth/react/*": ["../react/dist-types/*"],
 			"~/*": ["./src/*"]
 		}
 	},

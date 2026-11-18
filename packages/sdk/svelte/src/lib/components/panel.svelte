@@ -1,12 +1,12 @@
 <script lang="ts">
-	import type { Model } from '@c15t/core';
+	import type { Model } from '@inth/sdk/engine';
 	import {
 		defaultTranslationConfig,
 		resolveConsentPresentation,
-	} from '@c15t/core';
-	import { isDialogDismissKey } from '@c15t/ui/primitives';
-	import styles from '@c15t/ui/styles/components/consent-dialog';
-	import { getTextDirection, resolveTranslations } from '@c15t/ui/utils';
+	} from '@inth/sdk/engine';
+	import { isDialogDismissKey } from '@inth/sdk/ui/primitives';
+	import styles from '@inth/sdk/ui/styles/components/consent-dialog';
+	import { getTextDirection, resolveTranslations } from '@inth/sdk/ui/utils';
 
 	import { getConsentContext, getThemeContext } from '../context.svelte';
 	import { DIALOG_SHEETS } from '../dialog-sheets';

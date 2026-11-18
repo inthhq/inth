@@ -1,4 +1,4 @@
-import type { PresentationAction } from '@c15t/core';
+import type { PresentationAction } from '@inth/sdk/engine';
 import type { InjectionKey } from 'vue';
 
 import type { ConsentDraft } from '../composables/draft';

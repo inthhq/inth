@@ -1,4 +1,4 @@
-import { normalizePolicyRule } from '@c15t/core';
+import { normalizePolicyRule } from '@inth/sdk-core';
 import { describe, expect, test } from 'vitest';
 
 import { resolveConsentPresentation } from '../policy-actions';

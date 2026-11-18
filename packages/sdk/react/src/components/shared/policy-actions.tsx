@@ -1,6 +1,6 @@
 'use client';
 
-import actionStyles from '@c15t/ui/styles/components/consent-actions';
+import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
 import { Fragment } from 'react';
 import type { ComponentType, ReactNode } from 'react';
 

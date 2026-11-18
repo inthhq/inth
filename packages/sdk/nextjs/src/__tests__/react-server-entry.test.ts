@@ -1,15 +1,15 @@
 /// <reference types="vite/client" />
 /**
- * What a Server Component gets from `c15t/next`: the `react-server` entry
+ * What a Server Component gets from `@inth/nextjs`: the `react-server` entry
  * names one `'use client'` module for the quickstart components, plus the
  * config helpers as plain functions.
  */
-import { ConsentDialogLink } from '@c15t/react/components/consent-dialog-link';
+import { ConsentDialogLink } from '@inth/react/components/consent-dialog-link';
 // The banner and dialog whose code loads with ConsentRoot's engine.
 import {
 	DeferredConsentBanner as ConsentBanner,
 	DeferredConsentDialog as ConsentDialog,
-} from '@c15t/react/deferred';
+} from '@inth/react/deferred';
 import { describe, expect, test } from 'vitest';
 
 import packageJson from '../../package.json';
@@ -19,7 +19,7 @@ import { defineConsentConfig } from '../config';
 import * as reactServer from '../index.react-server';
 import { ConsentRoot } from '../root';
 
-describe('@c15t/nextjs react-server entry', () => {
+describe('@inth/nextjs react-server entry', () => {
 	test('resolves under the react-server condition', () => {
 		expect(packageJson.exports['.']).toMatchObject({
 			'react-server': './dist/index.react-server.js',

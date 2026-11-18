@@ -3,7 +3,7 @@
  * server and in the browser. Both come from `nuxt.config.ts` only, so the
  * build and every runtime agree on them.
  */
-import type { ConsentMode, HostedMode } from '@c15t/core/modes';
+import type { ConsentMode, HostedMode } from '@inth/sdk/modes';
 
 /** Where the module serves its consent route unless `routePrefix` says otherwise. */
 export const DEFAULT_NUXT_ROUTE_PREFIX = '/api/c15t';
@@ -20,13 +20,13 @@ export interface NuxtConsentModeConfig {
 	 * How the visitor's policy is resolved. Plain data, read from
 	 * `nuxt.config.ts` only.
 	 *
-	 * - Omitted, or `manifest()` from `c15t/vue`: resolve from the
+	 * - Omitted, or `manifest()` from `@inth/vue`: resolve from the
 	 *   backend's consent manifest, which the build downloads. When it is
 	 *   unavailable, the server and the consent route ask the backend's
 	 *   `/init` and log a warning.
-	 * - `hosted()` from `c15t/vue`: ask the backend's `/init` for every
+	 * - `hosted()` from `@inth/vue`: ask the backend's `/init` for every
 	 *   visitor.
-	 * - `testing()` from `c15t/vue/testing`: the browser resolves a policy
+	 * - `testing()` from `@inth/vue/testing`: the browser resolves a policy
 	 *   with no network, for tests. Needs no `projectUrl`, and throws in
 	 *   production builds.
 	 *

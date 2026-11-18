@@ -10,7 +10,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { createConsentManifestPolicyPack } from '@c15t/schema/types';
+import { createConsentManifestPolicyPack } from '@inth/sdk/schema/types';
 import { build } from 'vite';
 import type { Rollup } from 'vite';
 import { describe, expect, it, vi } from 'vitest';
@@ -39,7 +39,7 @@ describe('Vue manifest module', () => {
 			await plugin.configResolved({ command: 'serve', root });
 			const source = await plugin.load.call(
 				{ environment: { config: { consumer: 'client' } } },
-				plugin.resolveId('c15t/generated') as string
+				plugin.resolveId('@inth/sdk/generated') as string
 			);
 			expect(source).toContain('vue-build');
 			expect(existsSync(join(root, 'src/c15t-manifest.ts'))).toBe(false);
@@ -136,11 +136,11 @@ describe('location advice', () => {
 		});
 		const source = await plugin.load.call(
 			undefined,
-			plugin.resolveId('c15t/generated') as string
+			plugin.resolveId('@inth/sdk/generated') as string
 		);
 		await plugin.renderChunk(source as string);
 		expect(warn).toHaveBeenCalledWith(
-			expect.stringMatching(/^@c15t\/vue\/vite: .*location.*projectUrl/u)
+			expect.stringMatching(/^@inth\/vue\/vite: .*location.*projectUrl/u)
 		);
 	});
 });
@@ -154,7 +154,7 @@ describe('consentManifest()', () => {
 		const { optimizeDeps } = consentManifest().config();
 
 		expect(optimizeDeps.exclude).toEqual(
-			expect.arrayContaining(['@c15t/core/generated', '@c15t/vue', 'c15t'])
+			expect.arrayContaining(['@inth/sdk/generated', '@inth/vue', 'c15t'])
 		);
 	});
 });
@@ -206,7 +206,7 @@ describe('Vue backend URL variables', () => {
 			const source = String(
 				await plugin.load.call(
 					{ environment: { config: { consumer: 'server' } } },
-					plugin.resolveId('@c15t/core/generated') as string
+					plugin.resolveId('@inth/sdk/generated') as string
 				)
 			);
 			return {

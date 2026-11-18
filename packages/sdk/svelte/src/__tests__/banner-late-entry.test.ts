@@ -1,4 +1,4 @@
-import type { ConsentKernel } from '@c15t/core';
+import type { ConsentKernel } from '@inth/sdk/engine';
 import { mount, unmount } from 'svelte';
 import { afterEach, expect, onTestFinished, test, vi } from 'vitest';
 

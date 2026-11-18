@@ -10,24 +10,24 @@
 	@internal
 -->
 <script lang="ts">
-	import type { ConsentKernel, ConsentSnapshot } from '@c15t/core';
+	import type { ConsentKernel, ConsentSnapshot } from '@inth/sdk/engine';
 	import {
 		applyExperimentAssignment,
 		applyExperimentTheme,
 		IABUnavailableError,
 		policyNeedsIAB,
-	} from '@c15t/core';
+	} from '@inth/sdk/engine';
+	import type { IABHandle } from '@inth/sdk/iab';
 	import type {
 		createPreferenceDraft,
 		PreferenceDraft,
 		PreferenceDraftState,
-	} from '@c15t/core/preference-draft';
+	} from '@inth/sdk/preference-draft';
 	import type {
 		ConsentProviderRuntime,
 		ConsentRuntime,
-	} from '@c15t/core/runtime/provider';
-	import type { IABHandle } from '@c15t/iab';
-	import { setupColorScheme } from '@c15t/ui/utils';
+	} from '@inth/sdk/runtime/provider';
+	import { setupColorScheme } from '@inth/sdk/ui/utils';
 	import { BROWSER } from 'esm-env';
 	import type { Snippet } from 'svelte';
 	import { onDestroy, onMount, untrack } from 'svelte';
@@ -107,7 +107,7 @@
 	// One draft per provider, so the headless state API and the dialog stage
 	// into the same one. It follows the rendered kernel.
 	//
-	// `@c15t/core/preference-draft` is not on first load. `ConsentWidget`
+	// `@inth/sdk/preference-draft` is not on first load. `ConsentWidget`
 	// (and so the dialog chunk) imports it and hands it over while it
 	// renders, on the server too. Without one, the first read or write of
 	// the draft loads it; until it lands, `values` and `vendors` are empty,
@@ -150,7 +150,7 @@
 	};
 	const importDraft = async function importDraft(): Promise<PreferenceDraft> {
 		try {
-			const module = await import('@c15t/core/preference-draft');
+			const module = await import('@inth/sdk/preference-draft');
 			return provideDraft(module.createPreferenceDraft);
 		} catch (error) {
 			// The next read or write retries.
@@ -246,7 +246,7 @@
 			return null;
 		}
 		// Rendering keys on the kernel state so a server-resolved GVL puts the
-		// IAB surfaces in the first HTML. Until `@c15t/iab` lands the lazy
+		// IAB surfaces in the first HTML. Until `@inth/sdk/iab` lands the lazy
 		// handle queues calls and replays them, so an early Accept still
 		// records consent; without any handle the actions are no-ops.
 		const readyHandle = iabHandle;
@@ -322,7 +322,7 @@
 		);
 	};
 
-	// The lazy handle queues calls until `@c15t/iab` lands and replays them,
+	// The lazy handle queues calls until `@inth/sdk/iab` lands and replays them,
 	// so the surfaces render against it as soon as it exists.
 	const unsubscribeIAB = runtime.subscribe(() => {
 		iabHandle = runtime.iab as IABHandle | null;

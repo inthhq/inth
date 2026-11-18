@@ -1,5 +1,5 @@
-import type { SavePayload } from '@c15t/core';
-import { resolvePolicyRules } from '@c15t/schema/types';
+import type { SavePayload } from '@inth/sdk/engine';
+import { resolvePolicyRules } from '@inth/sdk/schema/types';
 import { createRoot } from 'react-dom/client';
 import { expect, test, vi } from 'vitest';
 

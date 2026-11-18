@@ -1,5 +1,5 @@
-import { defineExperiment } from 'c15t';
-import type { ExperimentArmName } from 'c15t';
+import { defineExperiment } from '@inth/sdk/engine';
+import type { ExperimentArmName } from '@inth/sdk/engine';
 
 /**
  * Does a full-width bar at the bottom of the page get as many opt-ins as

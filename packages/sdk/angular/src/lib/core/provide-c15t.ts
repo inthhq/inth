@@ -40,7 +40,7 @@ import type { C15tProviderOptions } from './options';
  * @example
  * ```ts
  * import { ApplicationConfig, provideZonelessChangeDetection } from '@angular/core';
- * import { provideC15t } from '@c15t/angular';
+ * import { provideC15t } from '@inth/angular';
  *
  * export const appConfig: ApplicationConfig = {
  *   providers: [

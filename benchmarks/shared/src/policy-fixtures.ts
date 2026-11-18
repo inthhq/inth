@@ -11,8 +11,8 @@
  * hand-writes a policy, so the base and head payloads differ only by what
  * the source emits.
  */
-import * as schema from '@c15t/schema/types';
-import type { ConsentManifestConfig } from '@c15t/schema/types';
+import * as schema from '@inth/sdk/schema/types';
+import type { ConsentManifestConfig } from '@inth/sdk/schema/types';
 
 export type PolicyBenchFixtureName =
 	| 'optin-choice-eu'
@@ -140,7 +140,7 @@ export const resolvePolicyBenchPack = function resolvePolicyBenchPack(
 	const legacyFamily = readPresetFamily('policyPackPresets');
 	if (!legacyFamily) {
 		throw new Error(
-			'@c15t/schema/types exports neither policyRulePresets nor policyPackPresets'
+			'@inth/sdk/schema/types exports neither policyRulePresets nor policyPackPresets'
 		);
 	}
 	const pack = fixture.presets.map((name) => {
@@ -194,7 +194,7 @@ export const createSyncPolicyResolution = function createSyncPolicyResolution(
 	}
 	const resolver = exports.resolvePolicySync;
 	if (typeof resolver !== 'function') {
-		throw new Error('@c15t/schema/types does not export resolvePolicySync');
+		throw new Error('@inth/sdk/schema/types does not export resolvePolicySync');
 	}
 	return {
 		resolver: 'resolvePolicySync',

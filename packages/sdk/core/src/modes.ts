@@ -1,5 +1,5 @@
 /**
- * `@c15t/core/modes` — consent modes as plain data.
+ * `@inth/sdk/modes` — consent modes as plain data.
  *
  * A provider's optional `mode` picks how the visitor's policy is resolved:
  *
@@ -16,18 +16,18 @@
  * browser, and Nuxt and Astro serialize it. A transport factory can't
  * cross that boundary, so these factories return a serializable
  * `{ type, …options }` object. Each framework's client turns it into a
- * transport with `@c15t/core/runtime/client-mode`, which loads every
+ * transport with `@inth/sdk/runtime/client-mode`, which loads every
  * non-default mode with `import()`.
  *
  * This module has no runtime imports, so importing it adds only these
  * functions to a bundle.
  *
  * Single-page apps use the implementation factory for manifest mode
- * (`manifest()` from `@c15t/core/transports/manifest-browser`). It carries
+ * (`manifest()` from `@inth/sdk/transports/manifest-browser`). It carries
  * the same `type` and options, so either kind satisfies
  * {@link ConsentMode}.
  */
-import type { ConsentManifest, PolicyRule } from '@c15t/schema/types';
+import type { ConsentManifest, PolicyRule } from '@inth/sdk-schema/types';
 
 /** A visitor location known before init, such as one an edge worker injected. */
 export interface ManifestModeInputs {
@@ -79,7 +79,7 @@ export type ManifestModeSourceOptions =
 			source?: never;
 	  };
 
-/** Options for the data `manifest()` from `@c15t/core/modes`. */
+/** Options for the data `manifest()` from `@inth/sdk/modes`. */
 export type ManifestModeOptions = ManifestModeBaseOptions &
 	ManifestModeSourceOptions & {
 		/**
@@ -159,7 +159,7 @@ export type ConsentModeType = ConsentMode['type'];
  * @returns A serializable hosted mode.
  * @example
  * ```ts
- * import { hosted } from '@c15t/core/modes';
+ * import { hosted } from '@inth/sdk-core/modes';
  *
  * const mode = hosted();
  * ```
@@ -179,7 +179,7 @@ export const hosted = function hosted(): HostedMode {
  * @returns A serializable manifest mode.
  * @example
  * ```ts
- * import { manifest } from '@c15t/core/modes';
+ * import { manifest } from '@inth/sdk-core/modes';
  *
  * const mode = manifest();
  * const staticPages = manifest({ resolve: 'browser' });

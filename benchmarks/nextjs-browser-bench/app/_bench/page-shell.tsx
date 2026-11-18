@@ -1,6 +1,6 @@
 'use client';
 
-import { useSetActiveUI } from '@c15t/nextjs';
+import { useSetActiveUI } from '@inth/nextjs';
 import Link from 'next/link';
 
 import type { NextjsBenchScenario } from './state';

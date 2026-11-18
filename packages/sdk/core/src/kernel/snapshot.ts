@@ -8,7 +8,7 @@
  * snapshot.
  */
 
-import type { PolicyResolution } from '@c15t/schema/types';
+import type { PolicyResolution } from '@inth/sdk-schema/types';
 
 import { evaluateConsentRecord } from '../consent-record/evaluate';
 import { OPTIONAL_CONSENT_CATEGORIES } from '../consent-record/types';

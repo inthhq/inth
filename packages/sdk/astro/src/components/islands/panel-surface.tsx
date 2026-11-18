@@ -16,13 +16,13 @@
  * copy: the switch would flip, and the save would commit nothing.
  */
 
-import type { LegalLinks } from '@c15t/core';
-import type { ConsentRuntime } from '@c15t/core/runtime';
 import {
 	ConsentDialog,
 	ConsentDraftProvider,
 	ConsentProvider,
-} from '@c15t/react';
+} from '@inth/react';
+import type { LegalLinks } from '@inth/sdk/engine';
+import type { ConsentRuntime } from '@inth/sdk/runtime';
 import { useEffect, useState } from 'react';
 import type { ComponentType } from 'react';
 

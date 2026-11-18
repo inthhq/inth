@@ -1,5 +1,5 @@
 // #region docs:gainsight-px-scripts title="src/consent-scripts.ts"
-import { gainsightPx } from '@c15t/integrations/gainsight-px';
+import { gainsightPx } from '@inth/integrations/gainsight-px';
 
 export const scripts = [
 	gainsightPx({

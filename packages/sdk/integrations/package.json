@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/integrations",
+	"name": "@inth/integrations",
 	"version": "3.2.0-canary.0",
 	"description": "Consent-aware integrations for c15t: 40+ analytics, advertising and chat tools, including GTM, GA4 and Meta Pixel, with Google Consent Mode v2 and script gating.",
 	"keywords": [
@@ -464,7 +464,7 @@
 	},
 	"scripts": {
 		"build": "rslib build && node ../../../scripts/normalize-dist-types.mjs",
-		"build:docs": "bun ../../../scripts/generate-package-docs.ts @c15t/integrations",
+		"build:docs": "bun ../../../scripts/generate-package-docs.ts @inth/integrations",
 		"check-types": "tsc --noEmit && tsc -p live-vendors --noEmit",
 		"dev": "sh -c 'rslib build --no-dts --no-clean && rslib build --watch --no-dts --no-clean'",
 		"fmt": "oxfmt -c ../../../oxfmt.sdk.config.ts .",
@@ -475,7 +475,7 @@
 		"test:watch": "vitest"
 	},
 	"dependencies": {
-		"@c15t/core": "workspace:*"
+		"@inth/sdk": "workspace:*"
 	},
 	"devDependencies": {
 		"@c15t/typescript-config": "workspace:*",

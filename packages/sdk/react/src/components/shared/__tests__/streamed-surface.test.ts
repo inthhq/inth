@@ -7,7 +7,7 @@ import {
 	createConsentProviderRuntime,
 	defaultRuntimeModules,
 	streamPrefetch,
-} from '@c15t/core/runtime';
+} from '@inth/sdk/runtime';
 import { expect, test } from 'vitest';
 
 import { transportMode } from '../../../__tests__/fixtures/transport-mode';

@@ -5,7 +5,7 @@
  * vendor.
  */
 
-import type { Vendor } from '@c15t/core';
+import type { Vendor } from '@inth/sdk/engine';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { activateGatedScripts } from '../browser/inline-scripts';

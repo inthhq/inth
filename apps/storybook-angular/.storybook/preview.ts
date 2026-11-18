@@ -3,7 +3,7 @@ import type { Preview } from '@analogjs/storybook-angular';
 // The same stylesheet set every other Storybook loads: the parity runner
 // compares computed CSS custom properties per element, so the IAB sheet is
 // loaded even for non-IAB stories. The stock surfaces also insert the rules
-// they use themselves; those are the same `@c15t/ui` rules.
+// they use themselves; those are the same `@inth/sdk/ui` rules.
 import '../../../packages/sdk/angular/src/styles.css';
 import '../../../packages/sdk/angular/src/iab/styles.css';
 

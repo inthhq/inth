@@ -6,7 +6,7 @@
  * first-load JavaScript is checked on the built package in
  * `client-chunks.test.ts`.
  */
-import { useActiveUI, useModel } from '@c15t/react';
+import { useActiveUI, useModel } from '@inth/react';
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 

@@ -1,6 +1,6 @@
-import type { ConsentKernel } from '@c15t/core';
-import { resolveStorageKeys } from '@c15t/core/modules/persistence';
-import { writePolicyResolutionWire } from '@c15t/schema/types';
+import type { ConsentKernel } from '@inth/sdk/engine';
+import { resolveStorageKeys } from '@inth/sdk/modules/persistence';
+import { writePolicyResolutionWire } from '@inth/sdk/schema/types';
 import { useContext, useEffect, StrictMode } from 'react';
 import { afterEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
@@ -87,7 +87,7 @@ test('exposes only the window.c15t debug object, not the kernel', async () => {
 		.toBeVisible();
 	expect((window as Window & { c15t?: unknown }).c15t).toMatchObject({
 		mode: 'offline',
-		pkg: '@c15t/react',
+		pkg: '@inth/react',
 	});
 	expect('c15tKernel' in window).toBe(false);
 });

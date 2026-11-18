@@ -94,7 +94,7 @@ export interface PostcssTailwind3PluginCreator {
 
 /**
  * Whether a file is a built stylesheet from a c15t package, the files whose
- * `@layer` blocks `@c15t/ui/postcss-tailwind3` unwraps.
+ * `@layer` blocks `@inth/sdk/ui/postcss-tailwind3` unwraps.
  *
  * Installed packages match by path. A workspace path such as
  * `packages/sdk/react/dist/styles.css` matches only when the package's own
@@ -130,8 +130,8 @@ export const isC15tUiStylesheetPath = function isC15tUiStylesheetPath(
  *
  * Each block is judged by the file it was written in, not the file being
  * processed. Vite and `postcss-import` inline an app's
- * `@import '@c15t/svelte/styles.css'` into the app's stylesheet, and Astro
- * processes `@c15t/astro/styles.css`, which imports `@c15t/ui/styles.css`;
+ * `@import '@inth/svelte/styles.css'` into the app's stylesheet, and Astro
+ * processes `@inth/astro/styles.css`, which imports `@inth/sdk/ui/styles.css`;
  * in both, the root is not a c15t file but the layered rules are.
  */
 const c15tTailwind3: PostcssTailwind3PluginCreator = Object.assign(
@@ -169,7 +169,7 @@ export default c15tTailwind3;
  * `postcss.config.*` and receives the module namespace, not the default
  * export. Both Next's plugin wrapper and PostCSS itself unwrap a `postcss`
  * property before giving up, so exporting the instantiated plugin under that
- * name keeps `plugins: ['@c15t/ui/postcss-tailwind3']` working without a
+ * name keeps `plugins: ['@inth/sdk/ui/postcss-tailwind3']` working without a
  * CommonJS build. The plugin takes no options, so a shared instance is
  * equivalent to calling the creator.
  */

@@ -1,6 +1,6 @@
 'use client';
 
-import type { DevToolsProps } from 'c15t/next/devtools';
+import type { DevToolsProps } from '@inth/nextjs/devtools';
 import dynamic from 'next/dynamic';
 import type { ComponentType } from 'react';
 
@@ -8,7 +8,7 @@ import type { ComponentType } from 'react';
 // or loaded. The dynamic import keeps it out of the production bundle.
 const DevTools: ComponentType<DevToolsProps> =
 	process.env.NODE_ENV === 'development'
-		? dynamic(async () => (await import('c15t/next/devtools')).DevTools, {
+		? dynamic(async () => (await import('@inth/nextjs/devtools')).DevTools, {
 				ssr: false,
 			})
 		: () => null;

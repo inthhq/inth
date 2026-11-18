@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { SurfacePresentation } from '@c15t/core';
-	import actionStyles from '@c15t/ui/styles/components/consent-actions';
+	import type { SurfacePresentation } from '@inth/sdk/engine';
+	import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
 	import type { Snippet } from 'svelte';
 
 	/**

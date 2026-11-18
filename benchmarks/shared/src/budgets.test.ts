@@ -66,8 +66,10 @@ it.each([
 	}
 );
 
-it('caps @c15t/core tarball growth at 79,872 bytes over the v3 tarball', () => {
-	const budget = artifactBudgets.find((entry) => entry.metric === '@c15t/core');
+it('caps @inth/sdk/engine tarball growth at 79,872 bytes over the v3 tarball', () => {
+	const budget = artifactBudgets.find(
+		(entry) => entry.metric === '@inth/sdk/engine'
+	);
 	expect.assert(budget);
 	const base = summarizeMetric(budget.metric, 'bytes', [323_549]);
 	const grownBy = (bytes: number) =>
@@ -80,9 +82,9 @@ it('caps @c15t/core tarball growth at 79,872 bytes over the v3 tarball', () => {
 	expect(grownBy(79_873)).toBe(false);
 });
 
-it('caps @c15t/react tarball growth at 27,648 bytes and 16% over the base tarball', () => {
+it('caps @inth/react tarball growth at 27,648 bytes and 16% over the base tarball', () => {
 	const budget = artifactBudgets.find(
-		(entry) => entry.metric === '@c15t/react'
+		(entry) => entry.metric === '@inth/react'
 	);
 	expect.assert(budget);
 	const base = summarizeMetric(budget.metric, 'bytes', [175_651]);

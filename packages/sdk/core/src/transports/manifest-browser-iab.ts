@@ -5,7 +5,7 @@
  *
  * @internal
  */
-import type { ConsentManifest, InitOutput } from '@c15t/schema/types';
+import type { ConsentManifest, InitOutput } from '@inth/sdk-schema/types';
 
 import {
 	fetchCachedAdTechProviders,

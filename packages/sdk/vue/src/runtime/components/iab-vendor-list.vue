@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import type { AdTechProvider } from '@c15t/core';
+import type { AdTechProvider } from '@inth/sdk/engine';
 import {
 	permittedLegitimateInterestPurposes,
 	resolveIABVendorUrls,
-} from '@c15t/iab/headless';
-import type { GlobalVendorList, NonIABVendor } from '@c15t/schema/types';
-import dialogStyles from '@c15t/ui/styles/components/iab-consent-dialog';
+} from '@inth/sdk/iab/headless';
+import type { GlobalVendorList, NonIABVendor } from '@inth/sdk/schema/types';
+import dialogStyles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 
-import '@c15t/ui/styles/components/iab-consent-dialog.css';
+import '@inth/sdk/ui/styles/components/iab-consent-dialog.css';
 import { computed, ref, toValue, watch } from 'vue';
 
 import {

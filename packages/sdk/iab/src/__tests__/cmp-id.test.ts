@@ -9,7 +9,7 @@
  * placeholder CMP ID, and only throws when the user tries to save.
  */
 
-import { createConsentKernel } from '@c15t/core';
+import { createConsentKernel } from '@inth/sdk-core';
 import { beforeEach, describe, expect, test } from 'vitest';
 
 import { createIAB, iab } from '../index';

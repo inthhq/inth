@@ -11,7 +11,7 @@
  * needs it (`../ui/dialog-import-script.ts`).
  */
 
-import { publishDevToolsLauncher } from '@c15t/ui/utils/devtools-launcher';
+import { publishDevToolsLauncher } from '@inth/sdk-ui/utils/devtools-launcher';
 
 import { autoInit, installGlobal } from '../global-base';
 import { createHostedGlobal } from '../hosted-global';
@@ -24,7 +24,7 @@ shareLocks();
 const api = installGlobal(
 	createHostedGlobal({
 		mountUI: mountConsentUI,
-		pkg: '@c15t/browser',
+		pkg: '@inth/sdk',
 		publishDevToolsLauncher,
 	})
 );

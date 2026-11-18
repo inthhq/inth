@@ -2,7 +2,7 @@
 	"name": "@c15t/next-compat-shared",
 	"version": "0.0.0",
 	"private": true,
-	"description": "Shared fixture routes, probe, and Vitest suites for the @c15t/nextjs compatibility matrix.",
+	"description": "Shared fixture routes, probe, and Vitest suites for the @inth/nextjs compatibility matrix.",
 	"type": "module",
 	"exports": {
 		"./config": "./src/config.ts",
@@ -20,8 +20,8 @@
 		"lint": "oxlint -c ../../../oxlint.sdk.config.ts ."
 	},
 	"dependencies": {
-		"@c15t/core": "workspace:*",
-		"@c15t/nextjs": "workspace:*"
+		"@inth/nextjs": "workspace:*",
+		"@inth/sdk": "workspace:*"
 	},
 	"devDependencies": {
 		"@c15t/typescript-config": "workspace:*",

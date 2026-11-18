@@ -1,5 +1,5 @@
-import { css as dialogCSS } from '@c15t/ui/styles/sheets/dialog';
-import { css as firstPaintCSS } from '@c15t/ui/styles/sheets/first-paint';
+import { css as dialogCSS } from '@inth/sdk/ui/styles/sheets/dialog';
+import { css as firstPaintCSS } from '@inth/sdk/ui/styles/sheets/first-paint';
 import { describe, expect, test } from 'vitest';
 
 import { injectSurfaceStyles, nonceEarlyTapScript } from '../surface-styles';

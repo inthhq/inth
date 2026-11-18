@@ -1,4 +1,4 @@
-import { defineConsentConfig, hosted } from '@c15t/nextjs';
+import { defineConsentConfig, hosted } from '@inth/nextjs';
 
 /**
  * Backend URL every fixture app proxies to its in-process stub.
@@ -11,8 +11,8 @@ import { defineConsentConfig, hosted } from '@c15t/nextjs';
 export const COMPAT_BACKEND_URL = '/api/c15t';
 
 /**
- * Where each app mounts the consent route from `@c15t/nextjs/api` (or
- * `@c15t/nextjs/pages`), which serves `manifest` and `init`.
+ * Where each app mounts the consent route from `@inth/nextjs/api` (or
+ * `@inth/nextjs/pages`), which serves `manifest` and `init`.
  */
 export const COMPAT_ROUTE_PREFIX = '/api/consent';
 

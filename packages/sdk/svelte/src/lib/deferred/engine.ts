@@ -8,19 +8,19 @@
  * @internal
  */
 
-import type { ProviderTransportFactory } from '@c15t/core';
-import type { RuntimePrefetch } from '@c15t/core/runtime';
-import { clientMode } from '@c15t/core/runtime/client-mode';
+import type { ProviderTransportFactory } from '@inth/sdk/engine';
+import type { RuntimePrefetch } from '@inth/sdk/runtime';
+import { clientMode } from '@inth/sdk/runtime/client-mode';
 import type {
 	ConsentProviderRuntime,
 	ConsentProviderRuntimeOptions,
-} from '@c15t/core/runtime/provider';
+} from '@inth/sdk/runtime/provider';
 
 import { createOwnedRuntime } from '../owned-runtime';
 import type { ConsentRootState } from '../types';
 import type { DeferredCommitted } from './commit';
 
-export { preloadSavePath } from '@c15t/core/runtime/save-preload';
+export { preloadSavePath } from '@inth/sdk/runtime/save-preload';
 
 /** What `ConsentRoot` read before it loaded the engine. @internal */
 export interface RootEngineInput {
@@ -108,7 +108,7 @@ export const createRootEngine = function createRootEngine(
 	const transport = clientMode(
 		input.mode ?? stateMode,
 		input.state,
-		'@c15t/svelte/testing'
+		'@inth/svelte/testing'
 	);
 	const options = input.committed
 		? committedOptions(input.options, input.committed)

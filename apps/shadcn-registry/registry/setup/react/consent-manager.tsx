@@ -1,8 +1,8 @@
 "use client"
 
 import type { ReactNode } from "react"
-import type { ConsentProviderOptions, WithProjectUrl } from "c15t/react"
-import { ConsentProvider } from "c15t/react"
+import type { ConsentProviderOptions, WithProjectUrl } from "@inth/react"
+import { ConsentProvider } from "@inth/react"
 
 import { ConsentBanner } from "@/components/c15t/consent-banner"
 import { ConsentDialog } from "@/components/c15t/consent-dialog"

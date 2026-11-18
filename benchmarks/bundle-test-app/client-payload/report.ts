@@ -8,9 +8,9 @@ export interface AssetResult {
 	gzip: number;
 	/** Whether a source map was found and used for attribution. */
 	mapped: boolean;
-	/** Raw bytes per module path (`@c15t/react/dist/provider.js`). */
+	/** Raw bytes per module path (`@inth/react/dist/provider.js`). */
 	modules: Record<string, number>;
-	/** Raw bytes per package (`@c15t/react`, `(app)`, ...). */
+	/** Raw bytes per package (`@inth/react`, `(app)`, ...). */
 	packages: Record<string, number>;
 	path: string;
 	/**
@@ -65,17 +65,17 @@ export interface Share {
  * against the module path inside `node_modules`.
  */
 export const BOUNDARY_CHECKS: Record<string, RegExp> = {
-	'dev-tools': /^@c15t\/dev-tools\//u,
-	iab: /^@c15t\/iab\/|^@iabtechlabtcf\/|\/iab[/.-]/u,
+	'dev-tools': /^@inth\/sdk\/devtools\//u,
+	iab: /^@inth\/sdk\/iab\/|^@iabtechlabtcf\/|\/iab[/.-]/u,
 	'manifest/server fetch': /manifest-cache|transports\/manifest|node-bridge/u,
 	'offline policy presets':
 		/policy-rule-presets|legacy-preset-material|\/transports\/offline/u,
 	'server-oriented':
 		/\/(?:server|api|middleware|proxy|pages|headers|static)(?:\/|\.js$)|^next\/dist\/server\//u,
 	'theme runtime':
-		/^@c15t\/ui\/dist\/theme\/|^@c15t\/react\/dist\/theme-provider/u,
+		/^@inth\/sdk\/ui\/dist\/theme\/|^@inth\/react\/dist\/theme-provider/u,
 	'translations (non-en)':
-		/^@c15t\/translations\/dist\/(?:all\.js|translations\/(?!en\.js)[^/]+\.js)/u,
+		/^@inth\/sdk\/translations\/dist\/(?:all\.js|translations\/(?!en\.js)[^/]+\.js)/u,
 	transport: /\/transports?\/|\/fetch|\/hosted|\/client\/|api-client/u,
 };
 
@@ -423,7 +423,7 @@ export const renderReport = function renderReport(
 	const lines = [
 		'# Client payload attribution',
 		'',
-		`Generated ${result.generatedAt}. Repo ${result.repoSha ?? 'unknown'}. v3 source: ${result.v3Source}. v2: @c15t/nextjs ${result.v2Version}.`,
+		`Generated ${result.generatedAt}. Repo ${result.repoSha ?? 'unknown'}. v3 source: ${result.v3Source}. v2: @inth/nextjs ${result.v2Version}.`,
 		'',
 		result.method,
 		'',

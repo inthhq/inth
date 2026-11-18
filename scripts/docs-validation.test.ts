@@ -187,7 +187,7 @@ test('installation tabs flatten to usable umbrella-package commands', async () =
 	expect(markdown).toContain('npm install c15t');
 	expect(markdown).toContain('pnpm add c15t');
 	expect(markdown).toContain('bun add c15t');
-	expect(markdown).toContain("from 'c15t/react'");
+	expect(markdown).toContain("from '@inth/react'");
 	expect(markdown).not.toContain('CommandTabs');
 	expect(markdown).not.toContain('package-install');
 });
@@ -252,10 +252,10 @@ test('vendor registration tabs survive package Markdown conversion', async () =>
 		resolve(docsRoot, 'integrations/posthog.mdx'),
 		[remarkInclude, ...defaultRemarkPlugins]
 	);
-	expect(markdown).toContain('npm install @c15t/integrations');
+	expect(markdown).toContain('npm install @inth/integrations');
 	expect(markdown).toContain('<ConsentProvider options={{ mode, scripts }}>');
-	expect(markdown).toContain('c15t/next');
-	expect(markdown).toContain('c15t/modules/script-loader');
+	expect(markdown).toContain('@inth/nextjs');
+	expect(markdown).toContain('@inth/sdk/modules/script-loader');
 	expect(markdown).toContain("loadMode: 'after-consent'");
 	expect(markdown).toContain("'always'");
 	expect(markdown).not.toMatch(/<(?:include|Tabs|Tab|CommandTabs)\b/u);

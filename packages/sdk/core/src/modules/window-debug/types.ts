@@ -13,7 +13,7 @@ export type WindowDebugMode = 'hosted' | 'offline' | 'manifest' | 'custom';
  * Options for {@link createWindowDebug}.
  */
 export interface WindowDebugOptions {
-	/** Adapter package name, e.g. `@c15t/react`. */
+	/** Adapter package name, e.g. `@inth/react`. */
 	pkg: string;
 	/** Resolved transport kind the adapter is running with. */
 	mode: WindowDebugMode;
@@ -44,7 +44,7 @@ export interface WindowDebugHandle {
 export interface C15tWindowDebug {
 	/** The `c15t` core package version. */
 	readonly version: string;
-	/** The installed adapter package name, e.g. `@c15t/nextjs`. */
+	/** The installed adapter package name, e.g. `@inth/nextjs`. */
 	readonly pkg: string;
 	/** The resolved transport kind. */
 	readonly mode: WindowDebugMode;

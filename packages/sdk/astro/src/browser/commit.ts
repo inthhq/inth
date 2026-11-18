@@ -6,7 +6,7 @@
  * (`planInstantCommit`), hid the banner and started the plain scripts the
  * choice allows. This chunk, loaded one task later, does what
  * `commands.save` would do next with core's save code
- * (`@c15t/core/surface-actions/early-commit`): it stores the record, queues
+ * (`@inth/sdk/surface-actions/early-commit`): it stores the record, queues
  * the backend save, calls the site's callbacks and activates the page's
  * inline gated scripts. The engine loads after it, starts from the records
  * and sends the queued save; it records nothing again.
@@ -18,16 +18,16 @@ import type {
 	ConsentSnapshot,
 	HydrationRecords,
 	KernelEvent,
-} from '@c15t/core';
-import type { StorageConfig } from '@c15t/core/modules/persistence';
-import type { ConsentRuntimeOptions } from '@c15t/core/runtime';
+} from '@inth/sdk/engine';
+import type { StorageConfig } from '@inth/sdk/modules/persistence';
+import type { ConsentRuntimeOptions } from '@inth/sdk/runtime';
 import {
 	hasStoredClearEpoch,
 	planEarlyCommit,
 	storeEarlyCommit,
-} from '@c15t/core/surface-actions/early-commit';
-import type { EarlyCommitInput } from '@c15t/core/surface-actions/early-commit';
-import type { InstantCommit } from '@c15t/core/surface-actions/instant-commit';
+} from '@inth/sdk/surface-actions/early-commit';
+import type { EarlyCommitInput } from '@inth/sdk/surface-actions/early-commit';
+import type { InstantCommit } from '@inth/sdk/surface-actions/instant-commit';
 
 import { activateGatedScripts } from './inline-scripts';
 

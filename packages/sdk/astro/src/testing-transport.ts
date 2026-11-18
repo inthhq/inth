@@ -4,4 +4,4 @@
  *
  * @internal
  */
-export { createTestingMode } from '@c15t/core/testing';
+export { createTestingMode } from '@inth/sdk/testing';

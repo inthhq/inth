@@ -1,5 +1,5 @@
-import type { Branding } from '@c15t/core';
-import styles from '@c15t/ui/styles/components/branding';
+import type { Branding } from '@inth/sdk/engine';
+import styles from '@inth/sdk/ui/styles/components/branding';
 import type { SVGProps } from 'react';
 
 import { useTranslations } from '~/component-hooks/use-translations';

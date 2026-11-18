@@ -1,4 +1,4 @@
-import type { InitOutput, PolicyRule } from '@c15t/schema/types';
+import type { InitOutput, PolicyRule } from '@inth/sdk/schema/types';
 import type { App } from 'vue';
 import { onUnmounted, provide } from 'vue';
 

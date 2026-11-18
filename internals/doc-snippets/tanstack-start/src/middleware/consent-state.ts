@@ -1,7 +1,7 @@
 // #region docs:server-function-middleware title="src/consent-state.ts"
+import { consentRequestMiddleware } from '@inth/tanstack-start/middleware';
+import { createConsentStateHandler } from '@inth/tanstack-start/server';
 import { createServerFn } from '@tanstack/react-start';
-import { consentRequestMiddleware } from 'c15t/tanstack-start/middleware';
-import { createConsentStateHandler } from 'c15t/tanstack-start/server';
 
 export const getConsentState = createServerFn({ method: 'GET' })
 	.middleware([consentRequestMiddleware()])

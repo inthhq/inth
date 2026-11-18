@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { PreferenceItem, Switch } from '@c15t/svelte';
-	import { enTranslations } from '@c15t/translations';
+	import { enTranslations } from '@inth/sdk/translations';
+	import { PreferenceItem, Switch } from '@inth/svelte';
 
 	interface Props {
 		checked?: boolean;

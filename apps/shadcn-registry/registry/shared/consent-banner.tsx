@@ -1,7 +1,7 @@
 "use client"
 
 import { useId, useRef } from "react"
-import { useModel } from "c15t/react"
+import { useModel } from "@inth/react"
 import {
   StreamedConsentSurface,
   useBannerCopy,
@@ -11,8 +11,8 @@ import {
   useHeadlessConsentUI,
   useIABPolicyGuard,
   useScrollLock,
-} from "c15t/react/headless"
-import type { HeadlessConsentBannerState } from "c15t/react/headless"
+} from "@inth/react/headless"
+import type { HeadlessConsentBannerState } from "@inth/react/headless"
 
 import { cn } from "@/lib/utils"
 import { ConsentBranding } from "@/components/c15t/consent-branding"

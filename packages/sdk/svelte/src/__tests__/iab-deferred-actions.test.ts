@@ -1,13 +1,13 @@
-import { deferInitGvl } from '@c15t/core';
-import type { ConsentKernel } from '@c15t/core';
-import { resolvePolicyRules } from '@c15t/schema/types';
+import { deferInitGvl } from '@inth/sdk/engine';
+import type { ConsentKernel } from '@inth/sdk/engine';
+import { resolvePolicyRules } from '@inth/sdk/schema/types';
 import { mount, unmount } from 'svelte';
 import { expect, onTestFinished, test, vi } from 'vitest';
 // The IAB components load this package lazily before they fetch the vendor
 // list. Importing it here makes Vite transform it while it collects this file.
 // Otherwise the first test transforms it inside `vi.waitFor`'s one-second
 // limit, which a busy full-suite run exceeded.
-import '@c15t/iab';
+import '@inth/sdk/iab';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import ConformanceFixture from './fixtures/conformance-fixture.svelte';

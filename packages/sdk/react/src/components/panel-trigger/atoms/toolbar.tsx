@@ -6,9 +6,9 @@
  * @packageDocumentation
  */
 
-import type { PolicyRight } from '@c15t/schema/types';
-import styles from '@c15t/ui/styles/components/consent-dialog-trigger';
-import { followDevToolsDock } from '@c15t/ui/utils/devtools-launcher';
+import type { PolicyRight } from '@inth/sdk/schema/types';
+import styles from '@inth/sdk/ui/styles/components/consent-dialog-trigger';
+import { followDevToolsDock } from '@inth/sdk/ui/utils/devtools-launcher';
 import type { KeyboardEvent, MouseEvent, ReactNode } from 'react';
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 

@@ -1,4 +1,4 @@
-import type { Script } from '@c15t/core';
+import type { Script } from '@inth/sdk/engine';
 
 import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
@@ -77,7 +77,7 @@ export interface CloudflareWebAnalyticsOptions {
  *
  * @example
  * ```ts
- * import { cloudflareWebAnalytics } from '@c15t/integrations/cloudflare-web-analytics';
+ * import { cloudflareWebAnalytics } from '@inth/integrations/cloudflare-web-analytics';
  *
  * cloudflareWebAnalytics({
  *   token: 'abc123...',

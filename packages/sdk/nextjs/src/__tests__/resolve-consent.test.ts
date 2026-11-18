@@ -1,17 +1,17 @@
 /**
  * Wiring tests for `resolveConsent` on top of `resolveRequestConsent` from
- * `@c15t/core/server`. The resolution rules themselves (forwarding, budget,
+ * `@inth/sdk/server`. The resolution rules themselves (forwarding, budget,
  * self-route guard, deferral, experiment, shared renders) are pinned once in
  * the core suite; these check what the Next.js adapter supplies: the
  * request adapter's headers and cookies, the config's mode and route
  * prefix, and the development warning.
  */
-import { hosted, manifest } from '@c15t/core/modes';
-import { clearManifestCache } from '@c15t/core/server';
+import { hosted, manifest } from '@inth/sdk/modes';
 import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
+import { clearManifestCache } from '@inth/sdk/server';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { defineConsentConfig } from '../config';
@@ -266,7 +266,7 @@ describe('resolveConsent wiring', () => {
 				request: requestOf({}),
 			})
 		).rejects.toThrow(
-			"@c15t/nextjs: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'."
+			"@inth/nextjs: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'."
 		);
 	});
 
@@ -278,7 +278,7 @@ describe('resolveConsent wiring', () => {
 				request: requestOf({}),
 			})
 		).rejects.toThrow(
-			'@c15t/nextjs: defineConsentConfig `routePrefix` must be an absolute http(s) URL or a `/`-relative path, received "api/c15t".'
+			'@inth/nextjs: defineConsentConfig `routePrefix` must be an absolute http(s) URL or a `/`-relative path, received "api/c15t".'
 		);
 	});
 

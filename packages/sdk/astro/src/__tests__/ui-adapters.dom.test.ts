@@ -7,8 +7,8 @@
  * the kernel rather than the DOM, and leaves nothing behind on destroy.
  */
 
-import { createConsentRuntime } from '@c15t/core/runtime';
-import type { ConsentRuntime } from '@c15t/core/runtime';
+import { createConsentRuntime } from '@inth/sdk/runtime';
+import type { ConsentRuntime } from '@inth/sdk/runtime';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { C15tResolvedOptions } from '../types';
@@ -19,7 +19,7 @@ import { vueDialogAdapter } from '../ui/vue';
 // The Vue adapter imports its plugin on first mount. Vite compiles it on that
 // first import, which takes seconds on a busy machine; importing it here does
 // that while this file loads, outside any test timeout.
-import '@c15t/vue/vue-plugin';
+import '@inth/vue/vue-plugin';
 
 const OPTIONS = {
 	consentCategories: ['necessary', 'marketing'],

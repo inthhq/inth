@@ -1,10 +1,10 @@
-import type { ClassValue } from '@c15t/ui/utils';
-import { cn as baseCn } from '@c15t/ui/utils';
+import type { ClassValue } from '@inth/sdk/ui/utils';
+import { cn as baseCn } from '@inth/sdk/ui/utils';
 
 export type { ClassValue };
 
 /**
- * Utilizes framework-agnostic `cn` from @c15t/ui.
+ * Utilizes framework-agnostic `cn` from @inth/sdk/ui.
  */
 export const cnExt = function cnExt(...classes: ClassValue[]) {
 	return baseCn(...classes);

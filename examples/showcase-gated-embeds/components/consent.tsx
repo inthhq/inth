@@ -1,7 +1,7 @@
 'use client';
 
-import { crisp } from '@c15t/integrations/crisp';
-import { ConsentBanner, ConsentDialog, ConsentRoot } from 'c15t/next';
+import { crisp } from '@inth/integrations/crisp';
+import { ConsentBanner, ConsentDialog, ConsentRoot } from '@inth/nextjs';
 import type { ReactNode } from 'react';
 
 import { brandTheme } from '@/lib/consent-theme';

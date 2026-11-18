@@ -8,6 +8,7 @@
 		PUBLIC_TIKTOK_PIXEL_ID,
 	} from '$app/env/public';
 	import { page } from '$app/state';
+	import { baseTranslations } from '@inth/sdk/translations/all';
 	import {
 		ConsentBanner,
 		ConsentDialog,
@@ -16,17 +17,16 @@
 		ConsentRoot,
 		IABConsentBanner,
 		IABConsentDialog,
-	} from '@c15t/svelte';
-	import type { ConsentManagerOptions } from '@c15t/svelte';
-	import { testing } from '@c15t/svelte/testing';
-	import { baseTranslations } from '@c15t/translations/all';
+	} from '@inth/svelte';
+	import type { ConsentManagerOptions } from '@inth/svelte';
+	import { testing } from '@inth/svelte/testing';
 
 	import { createDemoScripts } from '#lib/consent-manager/demo-scripts.js';
 	import { themePresetStore } from '#lib/consent-manager/theme-store.svelte.js';
 	import ThemeTokens from '#lib/consent-manager/ThemeTokens.svelte';
 
 	let { children, data } = $props();
-	const devTools = dev ? import('@c15t/svelte/devtools') : null;
+	const devTools = dev ? import('@inth/svelte/devtools') : null;
 	// The theme showcase renders its own provider and theme tokens.
 	const isThemeShowcase = $derived(page.url.pathname === '/theme');
 	const isIabPlayground = dev && PUBLIC_DEVTOOLS_IAB === 'true';

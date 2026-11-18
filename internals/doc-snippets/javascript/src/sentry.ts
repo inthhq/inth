@@ -1,7 +1,7 @@
 // Reference setup compiled with the JavaScript docs snippets and exercised by
 // packages/sdk/integrations/src/sentry.e2e.test.ts.
 // #region docs:sentry-scripts title="src/consent-scripts.ts"
-import { sentry } from '@c15t/integrations/sentry';
+import { sentry } from '@inth/integrations/sentry';
 
 export const scripts = [
 	sentry({

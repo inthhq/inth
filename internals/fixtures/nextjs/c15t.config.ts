@@ -1,4 +1,4 @@
-import { defineConsentConfig, manifest } from 'c15t/next';
+import { defineConsentConfig, manifest } from '@inth/nextjs';
 
 import { testBackend } from './lib/test-backend';
 

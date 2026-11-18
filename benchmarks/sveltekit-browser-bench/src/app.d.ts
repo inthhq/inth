@@ -1,3 +1,3 @@
-/// <reference types="@c15t/svelte/kit/locals" />
+/// <reference types="@inth/svelte/kit/locals" />
 
 export {};

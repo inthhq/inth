@@ -2,7 +2,7 @@
 import { mergeApplicationConfig } from '@angular/core';
 import type { ApplicationConfig } from '@angular/core';
 import { provideServerRendering, withRoutes } from '@angular/ssr';
-import { provideC15tServer } from '@c15t/angular/ssr';
+import { provideC15tServer } from '@inth/angular/ssr';
 
 import { consentRoute } from '../consent.server';
 import { appConfig } from './app.config';

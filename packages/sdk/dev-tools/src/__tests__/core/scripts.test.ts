@@ -1,9 +1,9 @@
-import { createConsentKernel } from '@c15t/core';
+import { createConsentKernel } from '@inth/sdk-core';
 import {
 	createScriptLoader,
 	getScriptDiagnostics,
 	subscribeScriptDiagnostics,
-} from '@c15t/core/modules/script-loader';
+} from '@inth/sdk-core/modules/script-loader';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createDevTools } from '../../index';

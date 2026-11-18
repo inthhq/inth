@@ -1,6 +1,6 @@
 'use client';
 
-import { ConsentDialogLink } from 'c15t/next';
+import { ConsentDialogLink } from '@inth/nextjs';
 
 import styles from './site-chrome.module.css';
 

@@ -1,4 +1,4 @@
-import type { ConsentState } from '@c15t/core';
+import type { ConsentState } from '@inth/sdk/engine';
 
 /**
  * Turns c15t consent into a vendor's consent types.

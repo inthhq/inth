@@ -1,7 +1,7 @@
 import Foundation
 
 /// Every category the runtime knows about, in the same stable order as
-/// `CONSENT_CATEGORIES` in `@c15t/core`. Order is load-bearing: the save body
+/// `CONSENT_CATEGORIES` in `@inth/sdk/engine`. Order is load-bearing: the save body
 /// and the choice wire both enumerate categories in this order.
 public enum ConsentCategory: String, Sendable, Codable, CaseIterable, Hashable {
     case necessary
@@ -36,7 +36,7 @@ public enum OptionalConsentCategory: String, Sendable, Codable, CaseIterable, Ha
 }
 
 /// Why a category is restricted regardless of what the subject granted.
-/// Mirrors `RestrictionReason` in `@c15t/core`.
+/// Mirrors `RestrictionReason` in `@inth/sdk/engine`.
 public enum RestrictionReason: String, Sendable, Codable, Hashable {
     case explicitDenial = "explicit-denial"
     case strictScope = "strict-scope"
@@ -72,7 +72,7 @@ public struct ConsentState: Sendable, Codable, Equatable {
     /// The fail-closed baseline: every optional category off.
     ///
     /// `necessary` stays on because it is a legal basis rather than a choice, and
-    /// `@c15t/core` grants it before any evaluation (`DEFAULT_CONSENTS`) and never
+    /// `@inth/sdk/engine` grants it before any evaluation (`DEFAULT_CONSENTS`) and never
     /// lets an evaluator take it away. Restrictions are keyed by optional category
     /// only, so no path in the kernel can switch it off either.
     public static let necessaryOnly = ConsentState()
@@ -159,7 +159,7 @@ public struct ConsentState: Sendable, Codable, Equatable {
 /// The permission model the policy enforces, as the wire names it.
 ///
 /// `iab` is a rule this core reads and evaluates: the categories it governs stay denied
-/// until a valid explicit choice grants them, which is what the evaluator in `@c15t/core`
+/// until a valid explicit choice grants them, which is what the evaluator in `@inth/sdk/engine`
 /// already does for `iab` and for `opt-in` alike. See ``runtimeModel`` for what the
 /// snapshot reports while one is in force.
 public enum ConsentModel: String, Sendable, Codable, CaseIterable {
@@ -172,7 +172,7 @@ public enum ConsentModel: String, Sendable, Codable, CaseIterable {
     ///
     /// Port of `deriveModel` in `packages/sdk/core/src/policy.ts`, with the web's `iabEnabled`
     /// argument answered for good: an IAB rule runs as `iab` on the web only once
-    /// `@c15t/iab` is installed, and a device has nothing to install in that place. It has
+    /// `@inth/sdk/iab` is installed, and a device has nothing to install in that place. It has
     /// no registered CMP ID to put in a TC String, no per-vendor vector to assert, and no
     /// `IABTCF_*` bus to publish, so a snapshot reading `iab` would promise the vendor-side
     /// record this build cannot produce. The web's own answer for that situation is the

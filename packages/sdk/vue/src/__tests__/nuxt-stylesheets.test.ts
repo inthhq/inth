@@ -17,9 +17,9 @@ import {
 import type { StyleSourceIndex } from '../stylesheets';
 
 const ui = (file: string) =>
-	`/repo/node_modules/@c15t/ui/dist/styles/components/${file}`;
+	`/repo/node_modules/@inth/sdk/lib/ui/dist/styles/components/${file}`;
 const vue = (file: string) =>
-	`/repo/node_modules/@c15t/vue/dist/runtime/${file}`;
+	`/repo/node_modules/@inth/vue/dist/runtime/${file}`;
 
 const isConsentFile = (file: string) => file.includes('/@c15t/');
 const inlineVueStyles = (id?: string) => !!id && id.includes('.vue');
@@ -72,11 +72,11 @@ const createManifest = (): Record<string, ClientManifestChunk> => ({
 	'_dialog-shared.js': { css: ['switch.css'] },
 	'_entry-shared.js': { css: ['entry-shared.css'] },
 	'_unknown.js': { css: ['unknown.css'] },
-	'node_modules/@c15t/vue/dist/runtime/components/prompt.vue': {
+	'node_modules/@inth/vue/dist/runtime/components/prompt.vue': {
 		css: ['button.css'],
 		imports: ['_banner-shared.js', '_dialog-shared.js', '_unknown.js'],
 		isDynamicEntry: true,
-		src: 'node_modules/@c15t/vue/dist/runtime/components/prompt.vue',
+		src: 'node_modules/@inth/vue/dist/runtime/components/prompt.vue',
 	},
 	'node_modules/nuxt/dist/app/entry.js': {
 		imports: ['_entry-shared.js'],
@@ -127,7 +127,7 @@ describe('preloadInlinedConsentStyles', () => {
 			isConsentFile
 		);
 		const own =
-			manifest['node_modules/@c15t/vue/dist/runtime/components/prompt.vue'];
+			manifest['node_modules/@inth/vue/dist/runtime/components/prompt.vue'];
 
 		expect(own?.css).toEqual([]);
 		expect(own?.assets).toEqual(['button.css']);
@@ -136,7 +136,7 @@ describe('preloadInlinedConsentStyles', () => {
 	test("keeps a stylesheet in a component's own chunk that is not c15t's", () => {
 		const manifest = createManifest();
 		const own =
-			manifest['node_modules/@c15t/vue/dist/runtime/components/prompt.vue'];
+			manifest['node_modules/@inth/vue/dist/runtime/components/prompt.vue'];
 		if (!own) {
 			throw new Error('expected the prompt component in the manifest');
 		}

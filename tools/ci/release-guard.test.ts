@@ -9,7 +9,7 @@ const root = fileURLToPath(new URL("../../", import.meta.url));
 const products: ReleaseProduct[] = ["android", "react-native", "sdk", "swift"];
 
 test("each product finds what it would publish", () => {
-  expect(releaseNames(root, "sdk")).toContain("@c15t/core");
+  expect(releaseNames(root, "sdk")).toContain("@inth/sdk/engine");
   expect(releaseNames(root, "sdk")).not.toContain("@c15t/build-shared");
   expect(releaseNames(root, "react-native")).toEqual(["@inth/react-native"]);
   expect(releaseNames(root, "android")).toEqual(["com.inth"]);

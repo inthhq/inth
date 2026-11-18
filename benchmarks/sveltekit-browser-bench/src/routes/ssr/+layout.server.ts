@@ -5,4 +5,4 @@
  * mode is measured against. The backend URL is same-origin, so
  * `event.fetch` answers it in-process.
  */
-export { loadConsent as load } from '@c15t/svelte/kit';
+export { loadConsent as load } from '@inth/svelte/kit';

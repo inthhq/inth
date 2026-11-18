@@ -1,6 +1,6 @@
 import { MINIMAL_GVL } from '@c15t/conformance/fixtures/gvl';
-import iabBannerClasses from '@c15t/ui/styles/components/iab-consent-banner';
-import iabDialogClasses from '@c15t/ui/styles/components/iab-consent-dialog';
+import iabBannerClasses from '@inth/sdk/ui/styles/components/iab-consent-banner';
+import iabDialogClasses from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { beforeAll, describe, expect, it } from 'vitest';
 

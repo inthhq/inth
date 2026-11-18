@@ -1,7 +1,7 @@
 /**
  * The row model an IAB disclosure surface draws, in the shape the web draws it.
  *
- * `@c15t/iab` publishes one display model -- `resolveIABDialogDisplayModel` in
+ * `@inth/sdk/iab` publishes one display model -- `resolveIABDialogDisplayModel` in
  * `packages/sdk/iab/src/headless/display-model.ts` -- and every web adapter reads
  * its rows from there rather than deriving its own. That is what keeps four
  * preference centres listing the same purposes the same number of times. A
@@ -20,7 +20,7 @@
  *
  * Two rules hold the boundary:
  *
- * - This file imports nothing at runtime. It cannot: `@c15t/core`, `c15t`, and
+ * - This file imports nothing at runtime. It cannot: `@inth/sdk/engine`, `c15t`, and
  *   `@iabtechlabtcf/core` are all absent from the package outside its tests.
  * - When the web model and this mirror disagree, the web model wins. Fix the
  *   mirror; never fix the assertion.

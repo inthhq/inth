@@ -5,7 +5,7 @@
  * server build, so the Svelte case checks the props the adapter hands it.
  */
 
-import type { Theme } from '@c15t/ui/theme';
+import type { Theme } from '@inth/sdk/ui/theme';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { boot } from '../client';
@@ -24,7 +24,7 @@ import { reactDialogAdapter } from '../ui/react';
 import { vueDialogAdapter } from '../ui/vue';
 // The Vue adapter imports its plugin on first mount. Importing it here
 // compiles it while this file loads, outside any test timeout.
-import '@c15t/vue/vue-plugin';
+import '@inth/vue/vue-plugin';
 
 import { testRule } from './policy-fixture';
 import { ISLAND_RENDER_TIMEOUT } from './react-dialog-island';

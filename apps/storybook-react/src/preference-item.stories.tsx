@@ -2,7 +2,7 @@ import {
 	switchIndependentOfTrigger,
 	triggerExpandsContent,
 } from '@c15t/conformance/play/preference-item';
-import { PreferenceItem, Switch } from '@c15t/react/primitives';
+import { PreferenceItem, Switch } from '@inth/react/primitives';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import type React from 'react';
 import { useState } from 'react';

@@ -2,7 +2,7 @@
 // #region docs:video-embed
 'use client';
 
-import { ConsentGate } from 'c15t/next';
+import { ConsentGate } from '@inth/nextjs';
 
 export const VideoEmbed = () => (
 	<ConsentGate category="measurement">

@@ -8,7 +8,7 @@
  * second `kernel.commands.init()`.
  */
 
-import type { KernelTransport } from '@c15t/core';
+import type { KernelTransport } from '@inth/sdk/engine';
 import { render } from '@testing-library/svelte';
 import { tick } from 'svelte';
 import { beforeEach, describe, expect, test, vi } from 'vitest';

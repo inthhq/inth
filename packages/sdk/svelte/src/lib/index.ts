@@ -4,7 +4,7 @@ export {
 	mergeTranslationConfigs,
 	policyRulePresets,
 	prepareTranslationConfig,
-} from '@c15t/core';
+} from '@inth/sdk/engine';
 export type {
 	AllConsentNames,
 	ClearOnRevocationConfig,
@@ -40,16 +40,16 @@ export type {
 	SavePayload,
 	SaveResult,
 	TranslationsResponse,
-} from '@c15t/core';
-export { createConsentRuntime } from '@c15t/core/runtime';
+} from '@inth/sdk/engine';
+export { createConsentRuntime } from '@inth/sdk/runtime';
 export type {
 	ConsentRuntime,
 	ConsentRuntimeIABFactory,
 	ConsentRuntimeIABHandle,
 	ConsentRuntimeOptions,
-} from '@c15t/core/runtime';
-export * from '@c15t/ui/primitives';
-export * from '@c15t/ui/styles/primitives';
+} from '@inth/sdk/runtime';
+export * from '@inth/sdk/ui/primitives';
+export * from '@inth/sdk/ui/styles/primitives';
 export type {
 	ColorTokens,
 	ComponentSlots,
@@ -60,7 +60,7 @@ export type {
 	SpacingTokens,
 	Theme,
 	TypographyTokens,
-} from '@c15t/ui/theme';
+} from '@inth/sdk/ui/theme';
 export { focusTrap } from './actions/focus-trap';
 export { portal } from './actions/portal';
 export { scrollLock } from './actions/scroll-lock';
@@ -110,11 +110,11 @@ export type {
 	UseScriptLoaderOptions,
 } from './types';
 export type { DialogPreload } from './dialog-warming';
-export type { ConsentTesting } from '@c15t/core/testing';
+export type { ConsentTesting } from '@inth/sdk/testing';
 export type { ManifestModeOptions } from './transports/manifest';
 export { manifest } from './transports/manifest';
-export { hosted, type HostedMode } from '@c15t/core/modes';
-export type { BrowserManifestModeFactory } from '@c15t/core/transports/manifest-browser';
+export { hosted, type HostedMode } from '@inth/sdk/modes';
+export type { BrowserManifestModeFactory } from '@inth/sdk/transports/manifest-browser';
 
 export type { ConsentManagerState, ConsentDraftState } from './context.svelte';
 export {
@@ -122,11 +122,11 @@ export {
 	resolveConsentPresentation,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
-} from '@c15t/core';
+} from '@inth/sdk/engine';
 export type {
 	ConsentPresentation,
 	PreferenceControl,
 	PresentationAction,
 	PromptCopy,
 	ResolvedConsentPresentation,
-} from '@c15t/core';
+} from '@inth/sdk/engine';

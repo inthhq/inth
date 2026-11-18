@@ -16,7 +16,7 @@ import {
 	hosted,
 	useScriptLoader,
 	useSnapshot,
-} from '@c15t/react';
+} from '@inth/react';
 import { useEffect } from 'react';
 
 const scripts = gateScripts();

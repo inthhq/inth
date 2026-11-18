@@ -4,8 +4,8 @@
  * `data-mode`. ES module entries take `hosted()` or a factory instead
  * (`./client`).
  */
-import { hosted } from '@c15t/core/transports';
-import { manifest } from '@c15t/core/transports/manifest-browser';
+import { hosted } from '@inth/sdk-core/transports';
+import { manifest } from '@inth/sdk-core/transports/manifest-browser';
 
 import { createConsentClientWith } from './client-base';
 import type { CreateConsentClientContext, ResolvedMode } from './client-base';
@@ -35,7 +35,7 @@ const resolveMode = function resolveMode(
 	if (name === 'hosted') {
 		if (!options.projectUrl) {
 			throw new Error(
-				'@c15t/browser: `projectUrl` is required (data-project-url on the script tag). Tests load c15t.testing.js instead.'
+				'@inth/sdk: `projectUrl` is required (data-project-url on the script tag). Tests load c15t.testing.js instead.'
 			);
 		}
 		return { factory: hosted({ projectUrl: options.projectUrl }), name };

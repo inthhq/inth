@@ -1,5 +1,5 @@
 /**
- * `@c15t/nextjs/testing` — run the consent flow in tests with no backend.
+ * `@inth/nextjs/testing` — run the consent flow in tests with no backend.
  *
  * Set `mode: testing()` in `c15t.config.ts`, or pass it as
  * `ConsentRoot`'s `options.mode`. It needs no `projectUrl`. The server
@@ -22,17 +22,17 @@
  * @example
  * ```ts
  * // c15t.config.ts, in a test build
- * import { defineConsentConfig } from 'c15t/next';
- * import { testing } from 'c15t/next/testing';
+ * import { defineConsentConfig } from '@inth/nextjs';
+ * import { testing } from '@inth/nextjs/testing';
  *
  * export default defineConsentConfig({ mode: testing() });
  * ```
  *
  * @packageDocumentation
  */
-import type { TestingMode, TestingModeOptions } from '@c15t/core/modes';
+import type { TestingMode, TestingModeOptions } from '@inth/sdk/modes';
 
-export type { TestingMode, TestingModeOptions } from '@c15t/core/modes';
+export type { TestingMode, TestingModeOptions } from '@inth/sdk/modes';
 
 /**
  * A `mode` for tests that resolves `policy`, or the recommended policy

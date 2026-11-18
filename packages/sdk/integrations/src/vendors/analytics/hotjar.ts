@@ -1,4 +1,4 @@
-import type { Script } from '@c15t/core';
+import type { Script } from '@inth/sdk/engine';
 
 import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
@@ -89,7 +89,7 @@ export interface HotjarOptions {
  *
  * @example
  * ```ts
- * import { hotjar } from '@c15t/integrations/hotjar';
+ * import { hotjar } from '@inth/integrations/hotjar';
  *
  * hotjar({ siteId: 1234567 });
  * ```

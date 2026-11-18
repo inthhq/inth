@@ -12,7 +12,10 @@
 		"test": "vitest run"
 	},
 	"dependencies": {
-		"c15t": "workspace:*"
+		"@inth/nextjs": "workspace:*",
+		"@inth/react": "workspace:*",
+		"@inth/sdk": "workspace:*",
+		"@inth/tanstack-start": "workspace:*"
 	},
 	"devDependencies": {
 		"@base-ui/react": "^1.9.0",

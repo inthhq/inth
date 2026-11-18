@@ -1,4 +1,4 @@
-import { getIABControls } from '@c15t/core';
+import { getIABControls } from '@inth/sdk/engine';
 import { computed } from 'vue';
 import type { Ref } from 'vue';
 

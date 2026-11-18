@@ -1,4 +1,4 @@
-import { normalizePolicyRule } from '@c15t/schema/types';
+import { normalizePolicyRule } from '@inth/sdk-schema/types';
 import { describe, expect, expectTypeOf, it } from 'vitest';
 
 import { defineExperiment } from '../../index';

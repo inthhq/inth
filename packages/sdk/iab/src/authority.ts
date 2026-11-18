@@ -1,4 +1,4 @@
-import type { ConsentSnapshot, KernelIABAuthority } from '@c15t/core';
+import type { ConsentSnapshot, KernelIABAuthority } from '@inth/sdk-core';
 
 import { permittedLegitimateInterestPurposes } from './headless/effective-vendor-list';
 import { additionalConsentFor } from './tcf/additional-consent';

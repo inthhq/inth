@@ -10,8 +10,8 @@ import type {
 	ResolvedVendor,
 	Unsubscribe,
 	VendorChoice,
-} from '@c15t/core';
-import type { ConsentRuntime } from '@c15t/core/runtime';
+} from '@inth/sdk/engine';
+import type { ConsentRuntime } from '@inth/sdk/runtime';
 
 import type { C15tResolvedOptions } from './types';
 import type { ConsentDialogKind } from './ui/adapter';

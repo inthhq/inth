@@ -1,14 +1,14 @@
-import { hosted } from '@c15t/core/transports';
 /**
  * Wrapping the app in `ConsentRoot`, the way a React provider wraps it,
  * keeps the app: the root renders its default slot next to the consent
  * surfaces, in the browser and in the server HTML, and hydrates it.
  */
-import type { InitOutput } from '@c15t/schema/types';
+import type { InitOutput } from '@inth/sdk/schema/types';
 import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
+import { hosted } from '@inth/sdk/transports';
 import { flushPromises, mount } from '@vue/test-utils';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import type { App, Component } from 'vue';

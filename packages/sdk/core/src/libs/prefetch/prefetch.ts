@@ -5,8 +5,8 @@ import {
 	CONSENT_JOURNEY_SCOPE_PARAM,
 	CONSENT_JOURNEY_STORED_PARAM,
 	INIT_EXPERIMENT_PARAM,
-} from '@c15t/schema/types';
-import type { InitOutput } from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
+import type { InitOutput } from '@inth/sdk-schema/types';
 
 import type { SSRInitialData } from '../../options/ssr';
 import { c15tProtocolParams } from '../../transports/version-header';

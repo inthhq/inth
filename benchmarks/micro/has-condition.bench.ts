@@ -1,4 +1,4 @@
-import { createConsentKernel, has } from '@c15t/core';
+import { createConsentKernel, has } from '@inth/sdk/engine';
 
 import { bench, runMicroBenchmarkSuite } from './wrapper';
 

@@ -319,7 +319,7 @@ const hasMarketingCategory = function hasMarketingCategory(init) {
 };
 
 /**
- * Direct HTTP assertions against the Nitro server routes the @c15t/vue
+ * Direct HTTP assertions against the Nitro server routes the @inth/vue
  * Nuxt module registers (packages/sdk/vue/src/module.ts →
  * runtime/server/{init,manifest}.get.ts). Runs against the already-booted
  * Nuxt server — no browser involved.

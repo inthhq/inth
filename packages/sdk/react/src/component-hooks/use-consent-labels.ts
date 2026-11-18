@@ -1,10 +1,10 @@
 'use client';
 
-import type { PreferenceControl, PresentationAction } from '@c15t/core';
+import type { PreferenceControl, PresentationAction } from '@inth/sdk/engine';
 import {
 	resolveActionLabels,
 	resolvePreferenceControlLabels,
-} from '@c15t/core';
+} from '@inth/sdk/engine';
 import { useMemo } from 'react';
 
 import { useTranslations } from './use-translations';

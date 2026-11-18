@@ -1,6 +1,6 @@
-import type { StorageConfig } from '@c15t/core';
-import { extractConsentRequestInputs } from '@c15t/schema/types';
-import type { ConsentRequestHeaderInputs as ConsentRequestInputs } from '@c15t/schema/types';
+import type { StorageConfig } from '@inth/sdk/engine';
+import { extractConsentRequestInputs } from '@inth/sdk/schema/types';
+import type { ConsentRequestHeaderInputs as ConsentRequestInputs } from '@inth/sdk/schema/types';
 import { createMiddleware } from '@tanstack/react-start';
 
 import {
@@ -220,7 +220,7 @@ const keepVisitorRenderPrivate = function keepVisitorRenderPrivate<
  * ```ts
  * // src/start.ts
  * import { createStart } from '@tanstack/react-start';
- * import { consentRequestMiddleware } from '@c15t/tanstack-start/middleware';
+ * import { consentRequestMiddleware } from '@inth/tanstack-start/middleware';
  *
  * export const startInstance = createStart(() => ({
  *   requestMiddleware: [consentRequestMiddleware()],

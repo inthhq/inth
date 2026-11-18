@@ -7,7 +7,7 @@
  * Rolldown keeps a module that lazy chunks share with the route in the
  * route's chunk only while its chunk graph has no static cycle, and its
  * cycle check counts every import record, used or not. One unused
- * re-export (`@c15t/ui/utils/dom` re-exporting `setupColorScheme`) was
+ * re-export (`@inth/sdk/ui/utils/dom` re-exporting `setupColorScheme`) was
  * enough to split every shared module into its own file.
  *
  * `ConsentRoot` loads its engine with `import()`: the first-load files
@@ -23,7 +23,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { brotliCompressSync } from 'node:zlib';
 
-import { createDialogChunkPlugin } from '@c15t/core/build';
+import { createDialogChunkPlugin } from '@inth/sdk/build';
 import { build } from 'vite';
 import { describe, expect, test } from 'vitest';
 
@@ -37,10 +37,10 @@ const fixture: Record<string, string> = {
 	entry:
 		"globalThis.routes = [() => import('fixture:root-route'), () => import('fixture:provider-route')];",
 	'provider-route': `import { createElement as h } from 'react';
-import { ConsentBanner, ConsentDialog, ConsentProvider } from '@c15t/tanstack-start';
+import { ConsentBanner, ConsentDialog, ConsentProvider } from '@inth/tanstack-start';
 export default () => h(ConsentProvider, { options: { projectUrl: '/api/c15t' } }, h(ConsentBanner), h(ConsentDialog));`,
 	'root-route': `import { createElement as h } from 'react';
-import { ConsentBanner, ConsentDialog, ConsentRoot } from '@c15t/tanstack-start';
+import { ConsentBanner, ConsentDialog, ConsentRoot } from '@inth/tanstack-start';
 export default () => h(ConsentRoot, { state: { projectUrl: '/api/c15t' } }, h(ConsentBanner), h(ConsentDialog));`,
 };
 
@@ -90,7 +90,7 @@ const routeFirstLoad = async function routeFirstLoad(
 		resolve: {
 			alias: [
 				{
-					find: /^@c15t\/tanstack-start$/u,
+					find: /^@inth\/tanstack-start$/u,
 					replacement: join(packageRoot, 'dist/index.js'),
 				},
 			],

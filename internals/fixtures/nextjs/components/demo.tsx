@@ -1,7 +1,7 @@
 'use client';
 
-import { ConsentDialogTrigger, useConsent } from 'c15t/next';
-import { ConsentDevTools } from 'c15t/next/devtools';
+import { ConsentDialogTrigger, useConsent } from '@inth/nextjs';
+import { ConsentDevTools } from '@inth/nextjs/devtools';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';

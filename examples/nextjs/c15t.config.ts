@@ -1,6 +1,6 @@
 // #region docs:quickstart-config title="c15t.config.ts"
-import { posthog } from '@c15t/integrations/posthog';
-import { defineConsentConfig } from 'c15t/next';
+import { posthog } from '@inth/integrations/posthog';
+import { defineConsentConfig } from '@inth/nextjs';
 
 export default defineConsentConfig({
 	scripts: [

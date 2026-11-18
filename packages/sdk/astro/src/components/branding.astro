@@ -11,15 +11,15 @@
  * consent snapshot, not from a prop. The browser-rendered banner builds the
  * same markup from the same model.
  */
-import type { ConsentSnapshot } from '@c15t/core';
-import type { AllThemeKeys, Theme } from '@c15t/ui/theme';
+import type { ConsentSnapshot } from '@inth/sdk/engine';
+import type { AllThemeKeys, Theme } from '@inth/sdk/ui/theme';
 import {
 	C15T_MARK_SVG,
 	INTH_LOGO_SVG,
 	promptClassNames,
 	resolveBrandingModel,
-} from '@c15t/astro/server';
-import type { BrandingVariant } from '@c15t/astro/server';
+} from '@inth/astro/server';
+import type { BrandingVariant } from '@inth/astro/server';
 
 interface Props {
 	/** Render nothing. */

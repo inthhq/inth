@@ -25,8 +25,8 @@
  * @internal
  */
 
-import { applyExperimentTheme } from '@c15t/core';
-import { isIABConfigured } from '@c15t/core/runtime';
+import { applyExperimentTheme } from '@inth/sdk/engine';
+import { isIABConfigured } from '@inth/sdk/runtime';
 
 import { INLINE_IAB_STYLES_CSS, INLINE_STYLES_CSS } from './inline-styles';
 import { hashSource } from './libs/csp-hash';

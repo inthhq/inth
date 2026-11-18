@@ -1,4 +1,4 @@
-import { isLateEntry } from '@c15t/ui/utils/late-entry';
+import { isLateEntry } from '@inth/sdk-ui/utils/late-entry';
 
 /** Anything `h()` accepts as a child. */
 export type Child = Node | string | number | null | undefined | false;

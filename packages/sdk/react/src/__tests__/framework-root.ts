@@ -1,5 +1,5 @@
-import type { KernelConfig } from '@c15t/core';
-import type { ConsentProviderOptions } from '@c15t/react';
+import type { ConsentProviderOptions } from '@inth/react';
+import type { KernelConfig } from '@inth/sdk/engine';
 import type { ComponentType, ReactNode } from 'react';
 
 /**

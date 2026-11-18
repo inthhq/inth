@@ -1,4 +1,4 @@
-import { defineConsentConfig, manifest } from 'c15t/next';
+import { defineConsentConfig, manifest } from '@inth/nextjs';
 
 /**
  * The App Router guide's shared config, pointed at the local mock backend.

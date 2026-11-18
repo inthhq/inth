@@ -14,7 +14,7 @@ export type {
 	DevToolsOptions,
 	DevToolsPosition,
 	DevToolsTab,
-} from '@c15t/dev-tools';
+} from '@inth/sdk/devtools';
 export type {
 	C15TDevToolsProps,
 	ConsentDevToolsProps,

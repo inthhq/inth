@@ -1,6 +1,6 @@
 /**
  * Canonical data-testid contract. Every test-id emitted by prebuilt UI in any
- * framework (@c15t/react, @c15t/svelte, @c15t/vue, @c15t/solid) MUST appear in
+ * framework (@inth/react, @inth/svelte, @inth/vue, @c15t/solid) MUST appear in
  * this file. The `testid-lint` rule enforces this at build time.
  *
  * Naming rules:
@@ -149,7 +149,7 @@ export const TEST_ID_PATTERNS = [
 	/^purpose-item-[a-z0-9][a-z0-9-]*$/u,
 	// A GVL numbers purposes, special purposes, features and special
 	// features independently, so `1` names four different rows. The
-	// display model in `@c15t/iab/headless` namespaces them; these are the
+	// display model in `@inth/sdk/iab/headless` namespaces them; these are the
 	// three namespaces `purpose-item-*` does not already cover.
 	/^special-purpose-item-[a-z0-9][a-z0-9-]*$/u,
 	/^special-feature-item-[a-z0-9][a-z0-9-]*$/u,

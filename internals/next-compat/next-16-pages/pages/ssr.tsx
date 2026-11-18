@@ -1,7 +1,7 @@
 import { COMPAT_HOSTED_CONFIG } from '@c15t/next-compat-shared/config';
 import { ConsentShell } from '@c15t/next-compat-shared/consent-shell';
-import type { ConsentPageProps } from '@c15t/nextjs/pages';
-import { withConsentProps } from '@c15t/nextjs/pages';
+import type { ConsentPageProps } from '@inth/nextjs/pages';
+import { withConsentProps } from '@inth/nextjs/pages';
 
 /**
  * Pages Router SSR. `withConsentProps` reads the request from the

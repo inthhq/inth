@@ -1,5 +1,5 @@
 /**
- * Tests for @c15t/core/modules/window-debug.
+ * Tests for @inth/sdk/modules/window-debug.
  */
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
@@ -33,7 +33,7 @@ describe('window-debug', () => {
 	test('installs a frozen window.c15t object with static metadata', () => {
 		const handle = createWindowDebug({
 			mode: 'hosted',
-			pkg: '@c15t/react',
+			pkg: '@inth/react',
 		});
 
 		const debug = (window as WindowWithC15t).c15t;
@@ -41,7 +41,7 @@ describe('window-debug', () => {
 		expect(debug).toEqual({
 			hosting: null,
 			mode: 'hosted',
-			pkg: '@c15t/react',
+			pkg: '@inth/react',
 			version,
 		});
 		expect(Object.isFrozen(debug)).toBe(true);
@@ -54,7 +54,7 @@ describe('window-debug', () => {
 		const handle = createWindowDebug({
 			getHosting: () => hosting,
 			mode: 'hosted',
-			pkg: '@c15t/react',
+			pkg: '@inth/react',
 		});
 		const debug = (window as WindowWithC15t).c15t;
 
@@ -69,7 +69,7 @@ describe('window-debug', () => {
 	test('dispose removes the installed object', () => {
 		const handle = createWindowDebug({
 			mode: 'offline',
-			pkg: '@c15t/svelte',
+			pkg: '@inth/svelte',
 		});
 
 		expect((window as WindowWithC15t).c15t).toBeTruthy();
@@ -80,18 +80,18 @@ describe('window-debug', () => {
 	test('dispose does not remove a newer install', () => {
 		const first = createWindowDebug({
 			mode: 'hosted',
-			pkg: '@c15t/react',
+			pkg: '@inth/react',
 		});
 		const second = createWindowDebug({
 			mode: 'hosted',
-			pkg: '@c15t/nextjs',
+			pkg: '@inth/nextjs',
 		});
 		const latest = (window as WindowWithC15t).c15t;
 
 		first.dispose();
 
 		expect((window as WindowWithC15t).c15t).toBe(latest);
-		expect((window as WindowWithC15t).c15t?.pkg).toBe('@c15t/nextjs');
+		expect((window as WindowWithC15t).c15t?.pkg).toBe('@inth/nextjs');
 
 		second.dispose();
 	});
@@ -106,7 +106,7 @@ describe('window-debug', () => {
 		try {
 			let handle: { dispose: () => void } | undefined;
 			expect(() => {
-				handle = createWindowDebug({ mode: 'hosted', pkg: '@c15t/vue' });
+				handle = createWindowDebug({ mode: 'hosted', pkg: '@inth/vue' });
 			}).not.toThrow();
 			expect((window as WindowWithC15t).c15t).toBe('host-owned');
 			expect(() => handle?.dispose()).not.toThrow();
@@ -129,7 +129,7 @@ describe('window-debug', () => {
 		try {
 			const handle = createWindowDebug({
 				mode: 'offline',
-				pkg: '@c15t/react',
+				pkg: '@inth/react',
 			});
 
 			expect(() => handle.dispose()).not.toThrow();

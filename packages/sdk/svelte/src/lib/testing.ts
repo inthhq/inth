@@ -1,5 +1,5 @@
 /**
- * `@c15t/svelte/testing` — render the banner and the consent flow in tests
+ * `@inth/svelte/testing` — render the banner and the consent flow in tests
  * with no backend.
  *
  * Pass `testing()` as `<ConsentProvider mode>`, or as
@@ -22,8 +22,8 @@
  * @example
  * ```svelte
  * <script lang="ts">
- *   import { ConsentBanner, ConsentProvider } from '@c15t/svelte';
- *   import { testing } from '@c15t/svelte/testing';
+ *   import { ConsentBanner, ConsentProvider } from '@inth/svelte';
+ *   import { testing } from '@inth/svelte/testing';
  * </script>
  *
  * <ConsentProvider overrides={{ country: 'DE' }} mode={testing()}>
@@ -33,10 +33,10 @@
  *
  * @packageDocumentation
  */
-import { createTestingMode } from '@c15t/core/testing';
-import type { ConsentTesting, TestingModeOptions } from '@c15t/core/testing';
+import { createTestingMode } from '@inth/sdk/testing';
+import type { ConsentTesting, TestingModeOptions } from '@inth/sdk/testing';
 
-export type { ConsentTesting, TestingModeOptions } from '@c15t/core/testing';
+export type { ConsentTesting, TestingModeOptions } from '@inth/sdk/testing';
 
 /**
  * A `mode` for tests that resolves `policy`, or the recommended policy
@@ -50,5 +50,5 @@ export type { ConsentTesting, TestingModeOptions } from '@c15t/core/testing';
 export const testing = function testing(
 	options: TestingModeOptions = {}
 ): ConsentTesting {
-	return createTestingMode('@c15t/svelte/testing', options);
+	return createTestingMode('@inth/svelte/testing', options);
 };

@@ -1,5 +1,5 @@
 /**
- * React's wrapper around `@c15t/core/preference-draft`. The draft rules
+ * React's wrapper around `@inth/sdk/preference-draft`. The draft rules
  * (seeding, staging, stale, baseline merge, displayed categories) are pinned
  * by the core suite; these tests cover what React adds: subscription through
  * `useSyncExternalStore`, the shared `ConsentDraftProvider`, and the save

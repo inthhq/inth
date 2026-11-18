@@ -1,5 +1,5 @@
 /**
- * The middleware factory behind `@c15t/astro/middleware`.
+ * The middleware factory behind `@inth/astro/middleware`.
  *
  * Kept separate from the entrypoint so it can be constructed with explicit
  * options — the entrypoint binds it to the build-time virtual module, and

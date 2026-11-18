@@ -1,5 +1,5 @@
 // #region docs:class-names-css-modules title="src/consent-components.ts"
-import type { ConsentProviderOptions } from 'c15t/react';
+import type { ConsentProviderOptions } from '@inth/react';
 
 import styles from './banner.module.css';
 

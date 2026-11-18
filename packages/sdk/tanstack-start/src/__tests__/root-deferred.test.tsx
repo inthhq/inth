@@ -1,3 +1,7 @@
+import { useScriptLoader } from '@inth/react';
+import { ServerBootData } from '@inth/react/deferred/engine';
+import { useSaveConsents, useSnapshot } from '@inth/react/hooks';
+import { ConsentProvider } from '@inth/react/provider';
 /**
  * In the browser, `ConsentRoot` reads the snapshot the server left in the
  * page and decides when its engine loads: after the page's priority images
@@ -5,19 +9,15 @@
  * stored choice is current; at once for one it must serve.
  * The engine marks its arrival by rendering the boot data's slot.
  *
- * The banner tap before the engine is covered by `@c15t/react`'s
+ * The banner tap before the engine is covered by `@inth/react`'s
  * `deferred/__tests__/commit-path.test.tsx` and the example app journeys.
  */
-import type { Callbacks } from '@c15t/core';
-import type { Script } from '@c15t/core/modules/script-loader';
+import type { Callbacks } from '@inth/sdk/engine';
+import type { Script } from '@inth/sdk/modules/script-loader';
 import {
 	serverScriptStart,
 	storedChoiceCheckScript,
-} from '@c15t/core/runtime/script-server-start';
-import { useScriptLoader } from '@c15t/react';
-import { ServerBootData } from '@c15t/react/deferred/engine';
-import { useSaveConsents, useSnapshot } from '@c15t/react/hooks';
-import { ConsentProvider } from '@c15t/react/provider';
+} from '@inth/sdk/runtime/script-server-start';
 import { act, StrictMode, useLayoutEffect, useSyncExternalStore } from 'react';
 import type { ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';

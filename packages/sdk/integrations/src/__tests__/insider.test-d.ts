@@ -1,4 +1,4 @@
-import type { Script } from '@c15t/core';
+import type { Script } from '@inth/sdk/engine';
 import { expectTypeOf, test } from 'vitest';
 
 import { insiderTag } from '../vendors/email-and-sms/insider';

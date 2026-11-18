@@ -4,11 +4,11 @@
  * the configured list sets the order, so the rows match React's, which the
  * parity suite compares.
  */
-import type { InitOutput, PolicyRule } from '@c15t/schema/types';
+import type { InitOutput, PolicyRule } from '@inth/sdk/schema/types';
 import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
 import { flushPromises, mount } from '@vue/test-utils';
 import { expect, test } from 'vitest';
 

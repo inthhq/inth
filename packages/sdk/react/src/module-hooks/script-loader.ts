@@ -4,12 +4,12 @@ import type {
 	Script,
 	ScriptLoaderDebugEvent,
 	ScriptLoaderHandle,
-} from '@c15t/core/modules/script-loader';
+} from '@inth/sdk/modules/script-loader';
 import {
 	changedPlainScripts,
 	claimPlainScripts,
 	releasePlainScripts,
-} from '@c15t/core/surface-actions/plain-scripts';
+} from '@inth/sdk/surface-actions/plain-scripts';
 import { useEffect, useRef, useState } from 'react';
 
 import {
@@ -61,7 +61,7 @@ export interface UseScriptLoaderOptions {
 	onDebug?: (event: ScriptLoaderDebugEvent) => void;
 	/**
 	 * Set `false` to start every `scripts` entry after hydration. By default
-	 * `ConsentRoot` in `c15t/next` and `c15t/tanstack-start` starts the
+	 * `ConsentRoot` in `@inth/nextjs` and `@inth/tanstack-start` starts the
 	 * entries the visitor's consent already allows from the server HTML,
 	 * before the page hydrates.
 	 *

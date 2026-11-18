@@ -2,8 +2,8 @@ import {
 	IABConsentBanner,
 	IABConsentDialog,
 	IABProvider,
-} from 'c15t/react/iab';
-import { useModel } from 'c15t/tanstack-start';
+} from '@inth/react/iab';
+import { useModel } from '@inth/tanstack-start';
 
 /**
  * IAB TCF banner and dialog for visitors the backend

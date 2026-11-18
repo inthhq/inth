@@ -207,17 +207,17 @@ const ensureBaselineWorkspaceBuild = function ensureBaselineWorkspaceBuild() {
 		sourcePath: resolve(WORKTREE_DIR, 'packages/sdk/core'),
 	});
 	linkWorkspacePackage({
-		packageName: '@c15t/schema',
+		packageName: '@inth/sdk/schema',
 		root: WORKTREE_DIR,
 		sourcePath: resolve(WORKTREE_DIR, 'packages/sdk/schema'),
 	});
 	linkWorkspacePackage({
-		packageName: '@c15t/translations',
+		packageName: '@inth/sdk/translations',
 		root: WORKTREE_DIR,
 		sourcePath: resolve(WORKTREE_DIR, 'packages/sdk/translations'),
 	});
 	linkWorkspacePackage({
-		packageName: '@c15t/ui',
+		packageName: '@inth/sdk/ui',
 		root: WORKTREE_DIR,
 		sourcePath: resolve(WORKTREE_DIR, 'packages/sdk/ui'),
 	});

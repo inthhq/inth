@@ -1,5 +1,5 @@
 /**
- * Mounting the IAB GPP CMP API for a runtime: load `@c15t/iab/gpp` through
+ * Mounting the IAB GPP CMP API for a runtime: load `@inth/sdk/iab/gpp` through
  * the host's loader, then mount it on the kernel. The loader keeps the GPP
  * code out of every page that does not turn GPP on.
  */

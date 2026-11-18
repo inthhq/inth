@@ -2,7 +2,7 @@
  * One consent vocabulary, three implementations, no shared compiler.
  *
  * `src/protocol/vocabulary.ts` owns the category names and wire spellings this
- * package renders, and `vocabulary.type-test.ts` holds them against `@c15t/core`
+ * package renders, and `vocabulary.type-test.ts` holds them against `@inth/sdk/engine`
  * at compile time. That leaves the half a type checker cannot see: Swift and
  * Kotlin declare the same names in languages nothing here compiles together, and
  * a category that exists on one platform and not another is a subject's decision
@@ -10,7 +10,7 @@
  *
  * So the three spellings are read off the three sources and compared here, with
  * the JavaScript kernel as the oracle, which is what `packages/native-protocol/CONTRACT.md` rule 4
- * says decides a disagreement. `@c15t/core` is a devDependency for exactly this:
+ * says decides a disagreement. `@inth/sdk/engine` is a devDependency for exactly this:
  * the kernel is the reference, never a runtime dependency of a phone app.
  *
  * Order is compared where the contract compares order. Categories are the order a
@@ -27,7 +27,7 @@ import { fileURLToPath } from 'node:url';
 import {
 	CONSENT_CATEGORIES as KERNEL_CONSENT_CATEGORIES,
 	OPTIONAL_CONSENT_CATEGORIES as KERNEL_OPTIONAL_CONSENT_CATEGORIES,
-} from '@c15t/core/consent-categories';
+} from '@inth/sdk/consent-categories';
 import { describe, expect, test } from 'vitest';
 
 import {

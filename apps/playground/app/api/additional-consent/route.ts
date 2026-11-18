@@ -1,6 +1,6 @@
 /**
  * Google Additional Consent provider list as JSON, filtered by
- * `?providerIds=1,2,3`, in the shape `@c15t/iab` reads from
+ * `?providerIds=1,2,3`, in the shape `@inth/sdk/iab` reads from
  * `https://gvl.inth.app/additional-consent`. See `lib/additional-consent.ts`.
  */
 

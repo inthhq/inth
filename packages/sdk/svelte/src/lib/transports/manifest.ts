@@ -1,15 +1,15 @@
 // After the resolver, so bundlers place the snapshot next to the code and
 // the English copy it shares the most strings with.
-import { projectUrl, snapshot } from '@c15t/core/generated';
+import { projectUrl, snapshot } from '@inth/sdk/generated';
 /**
  * The single-page app `manifest()`: resolve init in the browser from the
  * consent manifest the build downloaded.
  */
-import { manifest as browserManifest } from '@c15t/core/transports/manifest-browser';
+import { manifest as browserManifest } from '@inth/sdk/transports/manifest-browser';
 import type {
 	BrowserManifestModeFactory,
 	BrowserManifestOptions,
-} from '@c15t/core/transports/manifest-browser';
+} from '@inth/sdk/transports/manifest-browser';
 
 /** Options for {@link manifest}. Every one is optional. */
 export type ManifestModeOptions = BrowserManifestOptions;
@@ -18,7 +18,7 @@ export type ManifestModeOptions = BrowserManifestOptions;
  * Resolve init in the browser from the backend's consent manifest.
  *
  * With no options it uses what `consentManifest()` from
- * `@c15t/svelte/vite` downloaded: the snapshot, and the backend URL it
+ * `@inth/svelte/vite` downloaded: the snapshot, and the backend URL it
  * read from `VITE_C15T_BACKEND_URL` or `VITE_INTH_PROJECT_URL`. Saves
  * still go to that backend.
  * With `manifestUrl`, that URL is fetched when the page loads and the
@@ -40,7 +40,7 @@ export type ManifestModeOptions = BrowserManifestOptions;
  * @example
  * ```svelte
  * <script lang="ts">
- *   import { ConsentBanner, ConsentProvider, manifest } from '@c15t/svelte';
+ *   import { ConsentBanner, ConsentProvider, manifest } from '@inth/svelte';
  * </script>
  *
  * <ConsentProvider mode={manifest()}>

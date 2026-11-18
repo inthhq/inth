@@ -8,7 +8,7 @@
  * rather than a DOM detail.
  */
 
-import type { KernelTranslations } from '@c15t/core';
+import type { KernelTranslations } from '@inth/sdk/engine';
 import type { ReactNode } from 'react';
 import { Profiler } from 'react';
 

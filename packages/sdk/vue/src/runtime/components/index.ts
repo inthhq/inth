@@ -1,6 +1,6 @@
-// oxlint-disable oxc/no-barrel-file -- The components `c15t/vue/vue-plugin` exports.
+// oxlint-disable oxc/no-barrel-file -- The components `@inth/vue/vue-plugin` exports.
 /**
- * Every public component. `c15t/vue/vue-plugin` re-exports them; the
+ * Every public component. `@inth/vue/vue-plugin` re-exports them; the
  * package is side-effect free outside its stylesheets, so a bundler keeps
  * only the components an app imports.
  */

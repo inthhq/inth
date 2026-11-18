@@ -1,6 +1,6 @@
 /* oxlint-disable react/iframe-missing-sandbox -- The cross-origin YouTube player requires scripts and its own origin. */
 // #region docs:video-embed
-import { ConsentDialogLink, ConsentGate } from 'c15t/tanstack-start';
+import { ConsentDialogLink, ConsentGate } from '@inth/tanstack-start';
 
 export const VideoEmbed = () => (
 	<ConsentGate

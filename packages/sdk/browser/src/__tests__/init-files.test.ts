@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { runInitScript } from '../init/run';
 import { version } from '../version';
 
-const OWN_SRC = 'https://cdn.example/npm/@c15t/browser/dist/c15t.js';
+const OWN_SRC = 'https://cdn.example/npm/@inth/sdk/lib/browser/dist/c15t.js';
 
 const tagWith = (attributes: Record<string, string> = {}) => {
 	const script = document.createElement('script');
@@ -60,7 +60,7 @@ describe('c15t.records.js', () => {
 		localStorage.setItem('c15t', 'stored');
 		runInitScript(tagWith());
 		expect(loaded('c15t.records.js')).toEqual([
-			`https://cdn.example/npm/@c15t/browser/dist/c15t.records.js?v=${version}`,
+			`https://cdn.example/npm/@inth/sdk/lib/browser/dist/c15t.records.js?v=${version}`,
 		]);
 	});
 

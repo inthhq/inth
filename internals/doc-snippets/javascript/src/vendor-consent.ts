@@ -1,7 +1,7 @@
 // #region docs:vendor-consent title="src/vendor-consent.ts"
-import { isVendorAllowed } from 'c15t';
-import type { SaveResult, Vendor } from 'c15t';
-import type { ConsentRuntime } from 'c15t/runtime';
+import { isVendorAllowed } from '@inth/sdk/engine';
+import type { SaveResult, Vendor } from '@inth/sdk/engine';
+import type { ConsentRuntime } from '@inth/sdk/runtime';
 
 export const vendors: Vendor[] = [
 	{

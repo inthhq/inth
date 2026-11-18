@@ -1,6 +1,10 @@
-import { allConsentNames } from '@c15t/core';
-import type { AllConsentNames, ConsentSnapshot, VendorOwner } from '@c15t/core';
-import { evaluateCategoryGate } from '@c15t/core/surface-actions/plain-scripts';
+import { allConsentNames } from '@inth/sdk-core';
+import type {
+	AllConsentNames,
+	ConsentSnapshot,
+	VendorOwner,
+} from '@inth/sdk-core';
+import { evaluateCategoryGate } from '@inth/sdk-core/surface-actions/plain-scripts';
 
 /** Attribute that names the category an inert `<script>` waits on. */
 export const CATEGORY_ATTRIBUTE = 'data-c15t-category';
@@ -38,7 +42,7 @@ const isTrusted = function isTrusted(
 	}
 	// oxlint-disable-next-line no-console -- Security diagnostic for the page author.
 	console.warn(
-		`@c15t/browser: skipped a ${CATEGORY_ATTRIBUTE} script without the configured nonce. Add nonce="..." to your own gated tags.`,
+		`@inth/sdk: skipped a ${CATEGORY_ATTRIBUTE} script without the configured nonce. Add nonce="..." to your own gated tags.`,
 		element
 	);
 	element.setAttribute(ACTIVATED_ATTRIBUTE, 'untrusted');
@@ -96,7 +100,7 @@ const isAllowed = function isAllowed(
 	if (!allConsentNames.includes(category as AllConsentNames)) {
 		// oxlint-disable-next-line no-console -- Authoring-time diagnostic.
 		console.warn(
-			`@c15t/browser: unknown ${CATEGORY_ATTRIBUTE} "${category}". Expected one of ${allConsentNames.join(', ')}.`
+			`@inth/sdk: unknown ${CATEGORY_ATTRIBUTE} "${category}". Expected one of ${allConsentNames.join(', ')}.`
 		);
 		element.setAttribute(ACTIVATED_ATTRIBUTE, 'invalid');
 		return false;

@@ -81,7 +81,7 @@ export interface HostedModeOptions {
 	 *
 	 * Point this at a same-origin server route that resolves init from a
 	 * manifest (for example with `resolveManifestInit` from
-	 * `@c15t/core/transports/manifest-cache`) while consent saves keep going
+	 * `@inth/sdk/transports/manifest-cache`) while consent saves keep going
 	 * to `${projectUrl}/subjects`. Manifest resolution never issues a
 	 * `policySnapshotToken`, so setting `initUrl` also turns on
 	 * `assertDecisionInputs`.
@@ -128,7 +128,7 @@ export type HostedModeFactory = ProviderTransportFactory &
  * @returns A hosted provider transport factory carrying its options.
  * @example
  * ```ts
- * import { hosted } from '@c15t/core/transports';
+ * import { hosted } from '@inth/sdk-core/transports';
  *
  * const mode = hosted({ projectUrl: '/api/c15t' });
  *

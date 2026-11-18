@@ -66,7 +66,7 @@ export const SNAPSHOT_KEYS = [
 /**
  * Keys a native bridge adds to the kernel's snapshot wire.
  *
- * They are native bookkeeping rather than kernel state, so `@c15t/core` has no such
+ * They are native bookkeeping rather than kernel state, so `@inth/sdk/engine` has no such
  * field and the protocol fixtures, which {@link SNAPSHOT_KEYS} is checked against, do
  * not carry them. `promptOwedSince` is the revision at which the prompt owed now
  * became owed. The native presenters key their auto-present on it; JavaScript only
@@ -180,7 +180,7 @@ export const withAdditiveIABDefaults = function withAdditiveIABDefaults(
 };
 
 /**
- * The five objects whose key names come from `@c15t/core` and are not a native
+ * The five objects whose key names come from `@inth/sdk/engine` and are not a native
  * implementation detail. Names inside a core, and names inside a stored envelope,
  * stay the core's own business.
  *

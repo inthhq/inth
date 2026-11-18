@@ -3,14 +3,14 @@
  * colours live in the banner stylesheet (`.description[data-context='manager']`
  * in prompt.module.css), so only `context="dialog"` takes the dialog's class.
  */
-import type { InitOutput, PolicyRule } from '@c15t/schema/types';
+import type { InitOutput, PolicyRule } from '@inth/sdk/schema/types';
 import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
-import { translations } from '@c15t/translations/en';
-import bannerStyles from '@c15t/ui/styles/components/consent-banner';
-import dialogStyles from '@c15t/ui/styles/components/consent-dialog';
+} from '@inth/sdk/schema/types';
+import { translations } from '@inth/sdk/translations/en';
+import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
+import dialogStyles from '@inth/sdk/ui/styles/components/consent-dialog';
 import { mount } from '@vue/test-utils';
 import { expect, test } from 'vitest';
 

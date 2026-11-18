@@ -2,7 +2,7 @@ import type {
 	KernelTransport,
 	ProviderTransportFactory,
 	ProviderTransportKind,
-} from '@c15t/core';
+} from '@inth/sdk/engine';
 
 /**
  * A transport factory that hands the provider `transport`, for tests that

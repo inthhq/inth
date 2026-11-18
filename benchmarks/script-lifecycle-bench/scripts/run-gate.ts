@@ -14,7 +14,7 @@ import {
 
 /**
  * Script-tag consent gate. CookieBench's script fixture loads
- * `@c15t/browser`'s `c15t.js` with `data-manual` and calls `c15t.init` in
+ * `@inth/sdk`'s `c15t.js` with `data-manual` and calls `c15t.init` in
  * hosted mode from a module script; this page does the same, served by the
  * gate proxy with the checkout's own `packages/sdk/browser/dist` and the gate's
  * fixture backend. The bridge below is `updateGateBridge` from
@@ -22,7 +22,7 @@ import {
  */
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 
-// The bench's own build graph does not include @c15t/browser; build it here
+// The bench's own build graph does not include @inth/sdk; build it here
 // (a Turbo cache hit when nothing changed) so each revision serves its own.
 execFileSync(
 	'bun',
@@ -30,7 +30,7 @@ execFileSync(
 		'turbo',
 		'run',
 		'build',
-		'--filter=@c15t/browser',
+		'--filter=@inth/sdk-browser',
 		'--output-logs=errors-only',
 	],
 	{ cwd: root, stdio: 'inherit' }
@@ -79,7 +79,7 @@ try {
 		},
 		framework: 'script-tag',
 		notes: [
-			"@c15t/browser c15t.js with data-manual and c15t.init in hosted mode, as CookieBench's script fixture loads it.",
+			"@inth/sdk c15t.js with data-manual and c15t.init in hosted mode, as CookieBench's script fixture loads it.",
 		],
 		packageName: '@c15t/script-lifecycle-bench',
 		pages: { '/gate': gatePage, '/gate/control': controlPage },

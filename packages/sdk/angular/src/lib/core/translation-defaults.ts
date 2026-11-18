@@ -1,7 +1,7 @@
 /**
  * The English copy the stock surfaces fall back to.
  *
- * It ships with the first load, from `@c15t/translations/en`, so a surface
+ * It ships with the first load, from `@inth/sdk/translations/en`, so a surface
  * renders its copy on its first render even before the consent engine's
  * chunk has loaded. The owned runtime also registers core's
  * `defaultTranslationConfig` under a global key when it is created
@@ -12,8 +12,8 @@
  * @internal
  */
 
-import type { TranslationConfig } from '@c15t/core';
-import { translations as english } from '@c15t/translations/en';
+import type { TranslationConfig } from '@inth/sdk/engine';
+import { translations as english } from '@inth/sdk/translations/en';
 
 /** Global key the owned runtime registers the defaults under. @internal */
 export const DEFAULT_TRANSLATIONS_KEY = Symbol.for(

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { CONSENT_CATEGORY } from '@inth/sdk/consent-record';
 /**
  * Inline consent-management widget for settings and privacy pages.
  *
@@ -10,22 +11,21 @@
  * Svelte `ConsentWidget` implementations so the cross-framework parity
  * runner sees identical DOM.
  */
-import type { PresentationAction } from '@c15t/core';
-import { deniedVendorIds, vendorsListedUnder } from '@c15t/core';
-import type { CONSENT_CATEGORY } from '@c15t/core/consent-record';
-import accordionStyles from '@c15t/ui/styles/components/accordion';
+import type { PresentationAction } from '@inth/sdk/engine';
+import { deniedVendorIds, vendorsListedUnder } from '@inth/sdk/engine';
+import accordionStyles from '@inth/sdk/ui/styles/components/accordion';
 
-import '@c15t/ui/styles/components/accordion.css';
-import buttonStyles from '@c15t/ui/styles/components/button';
+import '@inth/sdk/ui/styles/components/accordion.css';
+import buttonStyles from '@inth/sdk/ui/styles/components/button';
 
-import '@c15t/ui/styles/components/button.css';
-import actionStyles from '@c15t/ui/styles/components/consent-actions';
+import '@inth/sdk/ui/styles/components/button.css';
+import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
 
-import '@c15t/ui/styles/components/consent-actions.css';
-import managerStyles from '@c15t/ui/styles/components/consent-manager';
+import '@inth/sdk/ui/styles/components/consent-actions.css';
+import managerStyles from '@inth/sdk/ui/styles/components/consent-manager';
 
-import '@c15t/ui/styles/components/consent-manager.css';
-import { getTextDirection } from '@c15t/ui/utils/dom';
+import '@inth/sdk/ui/styles/components/consent-manager.css';
+import { getTextDirection } from '@inth/sdk/ui/utils/dom';
 import { computed, inject, mergeProps, ref, useId } from 'vue';
 
 import {

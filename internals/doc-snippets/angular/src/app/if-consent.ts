@@ -1,6 +1,6 @@
 // #region docs:if-consent
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { IfConsent } from '@c15t/angular';
+import { IfConsent } from '@inth/angular';
 
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,

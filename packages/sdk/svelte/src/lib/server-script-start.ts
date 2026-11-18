@@ -17,7 +17,7 @@
  * A registered symbol, not a module variable: the handle and the provider
  * can each load their own copy of this package.
  */
-import type { serverScriptStart } from '@c15t/core/runtime/script-server-start';
+import type { serverScriptStart } from '@inth/sdk/runtime/script-server-start';
 
 /** The provider's runtime options, with its `prefetch` and `nonce`. */
 export type ServerStartOptions = Parameters<typeof serverScriptStart>[0] & {

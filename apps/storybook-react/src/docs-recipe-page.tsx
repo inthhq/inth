@@ -1,4 +1,4 @@
-import { ConsentDialogLink } from 'c15t/react';
+import { ConsentDialogLink } from '@inth/react';
 
 import '../../docs-recipe-page.css';
 import type { ReactNode } from 'react';

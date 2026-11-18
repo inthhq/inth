@@ -3,9 +3,9 @@ import {
 	deferInitGvl,
 	createConsentKernel,
 	resolveIABBannerSummary,
-} from '@c15t/core';
-import type { ConsentKernel } from '@c15t/core';
-import type { GlobalVendorList } from '@c15t/schema/types';
+} from '@inth/sdk/engine';
+import type { ConsentKernel } from '@inth/sdk/engine';
+import type { GlobalVendorList } from '@inth/sdk/schema/types';
 import { useContext, useEffect } from 'react';
 import { renderToString } from 'react-dom/server';
 import { describe, expect, it, onTestFinished, vi } from 'vitest';

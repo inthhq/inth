@@ -1,5 +1,5 @@
-import type { StorageConfig } from '@c15t/core';
-import { extractConsentRequestInputs } from '@c15t/schema/types';
+import type { StorageConfig } from '@inth/sdk/engine';
+import { extractConsentRequestInputs } from '@inth/sdk/schema/types';
 import { NextResponse } from 'next/server.js';
 import type { NextRequest } from 'next/server.js';
 
@@ -41,13 +41,13 @@ const DEFAULT_REGION_COOKIE = 'c15t-region';
  * Use from `proxy.ts` (Next 16) or `middleware.ts` (Next 15). It forwards
  * geo the deployment platform exposes to the proxy but strips before Server
  * Components or Route Handlers. It sets no cookie unless `cookie` asks for
- * the geo cookies. `@c15t/nextjs/middleware` exports the same function as
+ * the geo cookies. `@inth/nextjs/middleware` exports the same function as
  * `c15tMiddleware`.
  *
  * @example
  * ```ts
  * // proxy.ts
- * import { c15tProxy } from '@c15t/nextjs/proxy';
+ * import { c15tProxy } from '@inth/nextjs/proxy';
  * import type { NextRequest } from 'next/server';
  *
  * export const proxy = (request: NextRequest) => c15tProxy(request);

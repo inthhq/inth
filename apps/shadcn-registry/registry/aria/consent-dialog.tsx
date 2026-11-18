@@ -1,13 +1,13 @@
 "use client"
 
 import * as React from "react"
-import { ConsentDraftProvider, useModel } from "c15t/react"
+import { ConsentDraftProvider, useModel } from "@inth/react"
 import {
   useConsentTextDirection,
   useHeadlessConsentUI,
   useIABPolicyGuard,
   useTranslations,
-} from "c15t/react/headless"
+} from "@inth/react/headless"
 import { XIcon } from "lucide-react"
 import { DialogContext } from "react-aria-components"
 

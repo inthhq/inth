@@ -8,13 +8,13 @@ import {
   useConsentDraft,
   useExplicitChoice,
   useRestrictions,
-} from "c15t/react"
+} from "@inth/react"
 import {
   useConsentLabels,
   useHeadlessConsentUI,
   useTranslations,
   useVendorsListedUnder,
-} from "c15t/react/headless"
+} from "@inth/react/headless"
 
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"

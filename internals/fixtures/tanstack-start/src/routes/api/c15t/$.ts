@@ -1,5 +1,5 @@
+import { createConsentRoute } from '@inth/tanstack-start/api';
 import { createFileRoute } from '@tanstack/react-router';
-import { createConsentRoute } from 'c15t/tanstack-start/api';
 
 import { testBackend } from '../../../test-backend';
 

@@ -1,6 +1,6 @@
 'use client';
 
-import type { TCData, TCDataOutsideTCF } from 'c15t';
+import type { TCData, TCDataOutsideTCF } from '@inth/sdk/engine';
 import { useEffect, useState } from 'react';
 
 import type { AdPartner } from '@/lib/ad-partners';

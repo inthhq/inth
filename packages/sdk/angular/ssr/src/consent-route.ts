@@ -1,7 +1,8 @@
+import type { ConsentManifest } from '@inth/sdk/schema/types';
 /**
  * The same-origin consent route for an Angular server.
  *
- * The route logic lives in `@c15t/core/server` (`createConsentRouteHandler`),
+ * The route logic lives in `@inth/sdk/server` (`createConsentRouteHandler`),
  * shared with every other adapter. This module mounts it under a path
  * prefix in front of `AngularAppEngine` or `AngularNodeAppEngine`, and lets
  * `provideC15tServer()` reach it in-process.
@@ -11,19 +12,18 @@ import {
 	normalizeRoutePrefix,
 	readRequestForwarding,
 	resolveRequestOrigin,
-} from '@c15t/core/server';
+} from '@inth/sdk/server';
 import type {
 	ConsentProxyForwarding,
 	ConsentProxyOptions,
 	ConsentRouteFetchGvl,
 	ConsentRouteRequestContext,
 	ManifestFetch,
-} from '@c15t/core/server';
-import type { ConsentManifest } from '@c15t/schema/types';
+} from '@inth/sdk/server';
 
-export type { ConsentProxyOptions } from '@c15t/core/server';
+export type { ConsentProxyOptions } from '@inth/sdk/server';
 
-const ADAPTER = '@c15t/angular';
+const ADAPTER = '@inth/angular';
 
 /** Options for {@link createConsentRoute}. */
 export interface ConsentRouteOptions {
@@ -245,7 +245,7 @@ const upstreamLoops = function upstreamLoops(
  * @example
  * ```ts
  * // server.ts (Express, `AngularNodeAppEngine`)
- * import { createConsentRoute } from '@c15t/angular/ssr';
+ * import { createConsentRoute } from '@inth/angular/ssr';
  *
  * export const consentRoute = createConsentRoute({
  *   projectUrl: process.env['C15T_BACKEND_URL'],

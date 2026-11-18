@@ -1,11 +1,11 @@
 // #region docs:youtube-embed
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { ConsentDialogLink } from '@c15t/angular';
+import { ConsentDialogLink } from '@inth/angular';
 import {
 	ConsentGate,
 	ConsentGateContent,
 	ConsentGatePlaceholder,
-} from '@c15t/angular/consent-gate';
+} from '@inth/angular/consent-gate';
 
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,

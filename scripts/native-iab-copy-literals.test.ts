@@ -19,7 +19,7 @@ import {
  * The native consent screens must take their copy from the generated
  * IABCopy / IabCopy and ConsentCopy tables, so every language and the web
  * stay in step. A sentence or label typed into a view as a literal would
- * drift from `@c15t/translations` and skip every other language.
+ * drift from `@inth/sdk/translations` and skip every other language.
  */
 
 const REPO_ROOT = fileURLToPath(new URL('..', import.meta.url));

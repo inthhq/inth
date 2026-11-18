@@ -1,8 +1,8 @@
-import type { InitOutput, TranslationsResponse } from '@c15t/schema/types';
+import type { InitOutput, TranslationsResponse } from '@inth/sdk/schema/types';
 import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
 import { flushPromises, mount } from '@vue/test-utils';
 import { afterEach, expect, test, vi } from 'vitest';
 import { nextTick } from 'vue';

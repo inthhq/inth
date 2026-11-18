@@ -7,8 +7,8 @@
  * A module of its own, so only the dialog's and widget's code carries the
  * dialog rules.
  */
-import * as dialog from '@c15t/ui/styles/sheets/dialog';
-import * as primitives from '@c15t/ui/styles/sheets/primitives';
+import * as dialog from '@inth/sdk/ui/styles/sheets/dialog';
+import * as primitives from '@inth/sdk/ui/styles/sheets/primitives';
 
 import { BANNER_SHEETS } from './surface-styles';
 import type { SurfaceStyleSheet } from './surface-styles';

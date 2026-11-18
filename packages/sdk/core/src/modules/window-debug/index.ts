@@ -1,5 +1,5 @@
 /**
- * `@c15t/core/modules/window-debug`
+ * `@inth/sdk/modules/window-debug`
  *
  * Client-only debug and adapter identification module. Installs a tiny,
  * read-only `window.c15t` object for browser inspection after a framework
@@ -78,8 +78,8 @@ const inertHandle: WindowDebugHandle = {
  *
  * @example
  * ```ts
- * const handle = createWindowDebug({ pkg: '@c15t/react', mode: 'hosted' });
- * // window.c15t -> { version: '2.1.0', pkg: '@c15t/react', mode: 'hosted', hosting: null }
+ * const handle = createWindowDebug({ pkg: '@inth/react', mode: 'hosted' });
+ * // window.c15t -> { version: '2.1.0', pkg: '@inth/react', mode: 'hosted', hosting: null }
  * handle.dispose();
  * ```
  */

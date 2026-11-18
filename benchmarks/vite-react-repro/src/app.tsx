@@ -4,7 +4,7 @@ import {
 	ConsentDialog,
 	ConsentDialogTrigger,
 	ConsentProvider,
-} from '@c15t/react';
+} from '@inth/react';
 
 export const App = () => (
 	<ConsentProvider
@@ -25,9 +25,9 @@ export const App = () => (
 		<main className="app-shell">
 			<div className="copy">
 				<p className="eyebrow">Vite Repro</p>
-				<h1>@c15t/react bundle inspection</h1>
+				<h1>@inth/react bundle inspection</h1>
 				<p>
-					This app intentionally imports the root `@c15t/react` entrypoint so
+					This app intentionally imports the root `@inth/react` entrypoint so
 					the production bundle can be inspected with the Rollup visualizer.
 				</p>
 			</div>

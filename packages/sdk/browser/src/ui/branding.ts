@@ -1,4 +1,4 @@
-import type { ConsentSnapshot } from '@c15t/core';
+import type { ConsentSnapshot } from '@inth/sdk-core';
 
 import { classes } from '../generated/styles';
 import { cx, h, svg } from './dom';

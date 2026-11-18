@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/astro",
+	"name": "@inth/astro",
 	"version": "3.2.0-canary.0",
 	"description": "Astro cookie consent banner for c15t, with server-rendered markup, preference center islands and geo-aware middleware.",
 	"keywords": [
@@ -141,7 +141,7 @@
 	},
 	"scripts": {
 		"build": "rslib build && node ../../../scripts/normalize-dist-types.mjs",
-		"build:docs": "bun ../../../scripts/generate-package-docs.ts @c15t/astro",
+		"build:docs": "bun ../../../scripts/generate-package-docs.ts @inth/astro",
 		"check-types": "tsc --noEmit",
 		"dev": "sh -c 'rslib build --no-dts --no-clean && rslib build --watch --no-dts --no-clean'",
 		"fmt": "oxfmt -c ../../../oxfmt.sdk.config.ts .",
@@ -151,12 +151,8 @@
 		"test:watch": "vitest"
 	},
 	"dependencies": {
-		"@c15t/core": "workspace:*",
-		"@c15t/iab": "workspace:*",
-		"@c15t/schema": "workspace:*",
-		"@c15t/svelte": "workspace:*",
-		"@c15t/translations": "workspace:*",
-		"@c15t/ui": "workspace:*"
+		"@inth/sdk": "workspace:*",
+		"@inth/svelte": "workspace:*"
 	},
 	"devDependencies": {
 		"@astrojs/react": "^6.0.6",
@@ -184,8 +180,8 @@
 		"vue": "^3.5.0"
 	},
 	"peerDependencies": {
-		"@c15t/react": "workspace:^",
-		"@c15t/vue": "workspace:^",
+		"@inth/react": "workspace:^",
+		"@inth/vue": "workspace:^",
 		"astro": "^5.0.0 || ^6.0.0 || ^7.0.0",
 		"react": "^18.0.0 || ^19.0.0",
 		"react-dom": "^18.0.0 || ^19.0.0",
@@ -196,10 +192,10 @@
 		"astro": {
 			"optional": true
 		},
-		"@c15t/react": {
+		"@inth/react": {
 			"optional": true
 		},
-		"@c15t/vue": {
+		"@inth/vue": {
 			"optional": true
 		},
 		"react": {

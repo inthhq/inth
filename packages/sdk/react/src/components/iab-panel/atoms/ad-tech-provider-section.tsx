@@ -1,7 +1,7 @@
 'use client';
 
-import type { AdTechProvider } from '@c15t/core';
-import styles from '@c15t/ui/styles/components/iab-consent-dialog';
+import type { AdTechProvider } from '@inth/sdk/engine';
+import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 import type { FC } from 'react';
 
 import * as Switch from '~/components/shared/ui/switch';

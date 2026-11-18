@@ -3,7 +3,7 @@ import {
 	useBannerCopy,
 	useConsentLabels,
 	useHeadlessConsentUI,
-} from 'c15t/react/headless';
+} from '@inth/react/headless';
 
 export const Banner = () => {
 	const { banner, performAction, openDialog } = useHeadlessConsentUI();

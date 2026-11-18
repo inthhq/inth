@@ -6,12 +6,12 @@ import {
 	CONSENT_CHUNK_GROUP,
 	consentChunkGroupsConfig,
 	shouldGroupConsentChunks,
-} from '@c15t/core/build';
+} from '@inth/sdk/build';
 import type {
 	ConsentChunkGroup,
 	ConsentManifestConfigContext,
 	ConsentManifestUserConfig,
-} from '@c15t/core/build';
+} from '@inth/sdk/build';
 import type { Plugin, UserConfig } from 'vite';
 
 /**
@@ -19,13 +19,13 @@ import type { Plugin, UserConfig } from 'vite';
  * specifier that resolves (none exports its `package.json`).
  */
 const CONSENT_PACKAGES = [
-	['@c15t/core', '@c15t/core'],
-	['@c15t/dev-tools', '@c15t/dev-tools'],
-	['@c15t/iab', '@c15t/iab'],
-	['@c15t/schema', '@c15t/schema'],
-	['@c15t/translations', '@c15t/translations'],
-	['@c15t/ui', '@c15t/ui/styles.css'],
-	['@c15t/vue', '@c15t/vue'],
+	['@inth/sdk/engine', '@inth/sdk/engine'],
+	['@inth/sdk/devtools', '@inth/sdk/devtools'],
+	['@inth/sdk/iab', '@inth/sdk/iab'],
+	['@inth/sdk/schema', '@inth/sdk/schema'],
+	['@inth/sdk/translations', '@inth/sdk/translations'],
+	['@inth/sdk/ui', '@inth/sdk/ui/styles.css'],
+	['@inth/vue', '@inth/vue'],
 ] as const;
 
 /** The directory of the nearest `package.json` named `name` above `file`. */
@@ -61,7 +61,7 @@ const escapeRegExp = (value: string): string =>
  * Vite names their modules. A workspace or linked install resolves outside
  * `node_modules`, where core's group test would not find them.
  *
- * @param from - A file inside `@c15t/vue`.
+ * @param from - A file inside `@inth/vue`.
  * @returns One directory per package that resolves.
  * @internal
  */
@@ -185,6 +185,6 @@ export const groupConsentChunks = function groupConsentChunks(
 				nuxtConsentConfigChunkGroup(dirs),
 			]) as unknown as UserConfig;
 		},
-		name: '@c15t/vue:chunk-group',
+		name: '@inth/vue:chunk-group',
 	};
 };

@@ -31,7 +31,7 @@ const codeLanguages = new Set([
 ]);
 
 const c15tImport =
-	/(?:from\s+|import\s*\(?\s*|require\(\s*)["'](?:c15t|@c15t\/[^"'/]+)(?:\/[^"']*)?["']|<script[^>]*src="[^"]*@c15t\/browser/u;
+	/(?:from\s+|import\s*\(?\s*|require\(\s*)["'](?:c15t|@c15t\/[^"'/]+)(?:\/[^"']*)?["']|<script[^>]*src="[^"]*@inth\/sdk/u;
 
 /** Counts hand-written fences that import c15t in one MDX document. */
 export const countInDocument = (content: string): number => {

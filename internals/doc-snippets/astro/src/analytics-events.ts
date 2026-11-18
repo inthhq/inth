@@ -1,5 +1,5 @@
 // #region docs:analytics-events
-import { getEventDispatcher } from 'c15t/astro/client';
+import { getEventDispatcher } from '@inth/astro/client';
 
 // One dispatcher for the page. It sends to the scripts in c15t.client.ts
 // and checks consent each time an event goes out.

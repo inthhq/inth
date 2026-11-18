@@ -76,7 +76,7 @@ const OUTPUT_URL = new URL(
  * Read the path and its viewBox out of the web source.
  *
  * Text rather than an import: `branding.ts` is browser code that pulls in
- * `@c15t/core` and the DOM helpers, none of which this script needs or could run
+ * `@inth/sdk/engine` and the DOM helpers, none of which this script needs or could run
  * under Bun.
  *
  * @param source - Contents of `packages/sdk/browser/src/ui/branding.ts`.

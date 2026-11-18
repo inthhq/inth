@@ -1,5 +1,3 @@
-import type { KernelConfig } from '@c15t/core';
-import { manifest } from '@c15t/core/modes';
 /**
  * End-to-end tests for the Next.js adapter.
  *
@@ -10,12 +8,14 @@ import { manifest } from '@c15t/core/modes';
  * 4. Prefetched banner visibility reaches the snapshot before the client
  *    roundtrip completes.
  */
-import { useConsent, useSaveConsents, useSnapshot } from '@c15t/react';
+import { useConsent, useSaveConsents, useSnapshot } from '@inth/react';
+import type { KernelConfig } from '@inth/sdk/engine';
+import { manifest } from '@inth/sdk/modes';
 import {
 	readJourneyParams,
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
@@ -78,7 +78,7 @@ describe('ConsentRoot: projectUrl triggers auto-init', () => {
 				// The default mode is manifest().
 				expect((window as WindowWithC15t).c15t).toMatchObject({
 					mode: 'manifest',
-					pkg: '@c15t/nextjs',
+					pkg: '@inth/nextjs',
 				});
 			});
 			expect(typeof (window as WindowWithC15t).c15t?.version).toBe('string');

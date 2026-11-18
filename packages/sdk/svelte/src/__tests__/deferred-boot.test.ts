@@ -2,7 +2,7 @@
  * The boot data `ConsentRoot` leaves for the browser, and the rule for when
  * the engine may wait.
  */
-import { defaultTranslationConfig } from '@c15t/core';
+import { defaultTranslationConfig } from '@inth/sdk/engine';
 import { afterEach, describe, expect, test } from 'vitest';
 
 import { readConsentBoot } from '../lib/deferred/boot';

@@ -4,17 +4,17 @@
  * before the engine arrives. The built files run in Chromium in
  * `init-script.browser.test.ts`.
  */
-import type { SaveResult } from '@c15t/core';
+import type { SaveResult } from '@inth/sdk-core';
 import {
 	planEarlyCommit,
 	storeEarlyCommit,
-} from '@c15t/core/surface-actions/early-commit';
+} from '@inth/sdk-core/surface-actions/early-commit';
 import {
 	policyRulePresets,
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
-import { enTranslations } from '@c15t/translations';
+} from '@inth/sdk-schema/types';
+import { enTranslations } from '@inth/sdk-translations';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PREFETCH_WINDOW_KEY } from '../../../core/src/libs/prefetch/window-key';
@@ -27,7 +27,7 @@ import { runInitScript } from '../init/run';
 import { ENGINE_TIMEOUT_MS } from '../init/schedule';
 import { version } from '../version';
 
-const OWN_SRC = 'https://cdn.example/npm/@c15t/browser/dist/c15t.js';
+const OWN_SRC = 'https://cdn.example/npm/@inth/sdk/lib/browser/dist/c15t.js';
 const BACKEND_URL = 'https://consent.example';
 
 type StandIn = C15tGlobalBase & { __c15tBoot: InitBoot };
@@ -354,7 +354,7 @@ describe('dispose() before the engine', () => {
 		const standIn = start();
 		standIn.dispose();
 
-		const api = installGlobal(createGlobal({ pkg: '@c15t/browser' }));
+		const api = installGlobal(createGlobal({ pkg: '@inth/sdk' }));
 		// Waits for the init script's `/init` to settle, as the engine does.
 		expect(autoInit(api)).toBeNull();
 		answerInit.reject();

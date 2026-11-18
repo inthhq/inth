@@ -9,9 +9,9 @@
  * browser.
  */
 
-import type { ConsentJourneyOption } from '@c15t/core';
-import type { ConsentMode } from '@c15t/core/modes';
-import { normalizeRoutePrefix } from '@c15t/core/server';
+import type { ConsentJourneyOption } from '@inth/sdk/engine';
+import type { ConsentMode } from '@inth/sdk/modes';
+import { normalizeRoutePrefix } from '@inth/sdk/server';
 
 import type { ConsentClientOptions } from './types';
 
@@ -68,13 +68,13 @@ export interface ConsentConfig extends ConsentClientOptions {
 	 * How the visitor's policy is resolved. Plain data, so the browser only
 	 * loads the code it runs.
 	 *
-	 * - Omitted, or `manifest()` from `c15t/next`: resolve from the
+	 * - Omitted, or `manifest()` from `@inth/nextjs`: resolve from the
 	 *   backend's consent manifest, which the build downloads. When it is
 	 *   unavailable, the server and the consent route ask the backend's
 	 *   `/init` instead and log a warning.
-	 * - `hosted()` from `c15t/next`: ask the backend's `/init` for every
+	 * - `hosted()` from `@inth/nextjs`: ask the backend's `/init` for every
 	 *   visitor.
-	 * - `testing()` from `c15t/next/testing`: the browser resolves a policy
+	 * - `testing()` from `@inth/nextjs/testing`: the browser resolves a policy
 	 *   with no network, for tests. Needs no `projectUrl`, and throws in
 	 *   production builds.
 	 *
@@ -145,7 +145,7 @@ const assertConsentURL = function assertConsentURL(
 	}
 	if (typeof value !== 'string' || !isConsentURL(value)) {
 		throw new TypeError(
-			`@c15t/nextjs: defineConsentConfig \`${field}\` must be an absolute http(s) URL or a \`/\`-relative path, received ${JSON.stringify(value)}.`
+			`@inth/nextjs: defineConsentConfig \`${field}\` must be an absolute http(s) URL or a \`/\`-relative path, received ${JSON.stringify(value)}.`
 		);
 	}
 };
@@ -165,7 +165,7 @@ export const checkRoutePrefix = function checkRoutePrefix(
 	routePrefix: string
 ): string {
 	if (typeof routePrefix === 'string' && routePrefix.startsWith('/')) {
-		return normalizeRoutePrefix('@c15t/nextjs', routePrefix);
+		return normalizeRoutePrefix('@inth/nextjs', routePrefix);
 	}
 	assertConsentURL('routePrefix', routePrefix);
 	return routePrefix.replace(/\/+$/u, '');
@@ -182,18 +182,18 @@ const assertConsentConfig = function assertConsentConfig(
 	config: ConsentConfig
 ): void {
 	if (typeof config !== 'object' || config === null) {
-		throw new TypeError('@c15t/nextjs: defineConsentConfig expects an object.');
+		throw new TypeError('@inth/nextjs: defineConsentConfig expects an object.');
 	}
 	const projectUrl = config.projectUrl ?? readProjectUrlFromEnv();
 	const { mode } = config;
 	if (mode !== undefined && !MODE_TYPES.has(mode.type)) {
 		throw new TypeError(
-			'@c15t/nextjs: defineConsentConfig `mode` must be manifest() or hosted() from c15t/next, or testing() from c15t/next/testing. Pass a transport through ConsentRoot `options.mode`.'
+			'@inth/nextjs: defineConsentConfig `mode` must be manifest() or hosted() from @inth/nextjs, or testing() from @inth/nextjs/testing. Pass a transport through ConsentRoot `options.mode`.'
 		);
 	}
 	if (projectUrl === undefined && mode?.type !== 'testing') {
 		throw new TypeError(
-			`@c15t/nextjs: defineConsentConfig needs \`projectUrl\`, or ${BACKEND_URL_ENV} (or NEXT_PUBLIC_INTH_PROJECT_URL) set at build time.`
+			`@inth/nextjs: defineConsentConfig needs \`projectUrl\`, or ${BACKEND_URL_ENV} (or NEXT_PUBLIC_INTH_PROJECT_URL) set at build time.`
 		);
 	}
 	assertConsentURL('projectUrl', projectUrl);
@@ -202,7 +202,7 @@ const assertConsentConfig = function assertConsentConfig(
 	}
 	if (config.proxy && config.routePrefix === undefined) {
 		throw new TypeError(
-			'@c15t/nextjs: `proxy` sends saves through the consent route, so it needs `routePrefix`.'
+			'@inth/nextjs: `proxy` sends saves through the consent route, so it needs `routePrefix`.'
 		);
 	}
 	if (mode?.type === 'manifest') {
@@ -216,7 +216,7 @@ const assertConsentConfig = function assertConsentConfig(
 		config.journey !== 'tab'
 	) {
 		throw new TypeError(
-			"@c15t/nextjs: defineConsentConfig `journey` must be 'page', 'tab' or false."
+			"@inth/nextjs: defineConsentConfig `journey` must be 'page', 'tab' or false."
 		);
 	}
 };
@@ -244,8 +244,8 @@ const assertConsentConfig = function assertConsentConfig(
  * @example
  * ```ts
  * // c15t.config.ts
- * import { posthog } from '@c15t/integrations/posthog';
- * import { defineConsentConfig } from 'c15t/next';
+ * import { posthog } from '@inth/integrations/posthog';
+ * import { defineConsentConfig } from '@inth/nextjs';
  *
  * export default defineConsentConfig({
  *   scripts: [posthog({ id: 'phc_your_project_key' })],

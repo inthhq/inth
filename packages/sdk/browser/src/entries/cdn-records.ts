@@ -6,7 +6,7 @@
  * never fetches it. See `../init/run.ts`.
  */
 
-import { readStoredRecords } from '@c15t/core/modules/persistence';
+import { readStoredRecords } from '@inth/sdk-core/modules/persistence';
 
 import { readBoot } from '../init/boot';
 import { version } from '../version';

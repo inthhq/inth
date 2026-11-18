@@ -1,4 +1,6 @@
-import { clientMode } from '@c15t/core/runtime/client-mode';
+import { clientMode } from '@inth/sdk/runtime/client-mode';
+import type { ConsentManifest } from '@inth/sdk/schema/types';
+import { createConsentManifestPolicyPack } from '@inth/sdk/schema/types';
 /**
  * Wiring of the Nitro consent route onto the core consent route handler:
  * one catch-all at `${routePrefix}/**`, h3 to Web `Request` and back,
@@ -8,9 +10,7 @@ import { clientMode } from '@c15t/core/runtime/client-mode';
 import {
 	clearManifestCache,
 	CONSENT_ROUTE_TIMEOUT_HEADER,
-} from '@c15t/core/server';
-import type { ConsentManifest } from '@c15t/schema/types';
-import { createConsentManifestPolicyPack } from '@c15t/schema/types';
+} from '@inth/sdk/server';
 import { createApp, createRouter, toWebHandler } from 'h3';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 

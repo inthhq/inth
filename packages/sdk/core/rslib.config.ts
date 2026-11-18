@@ -35,12 +35,13 @@ const bundledPackages = function bundledPackages(
 ) {
 	return {
 		...alias,
-		'@c15t/schema/canonical-order$':
-			require.resolve('@c15t/schema/canonical-order'),
-		'@c15t/schema/types$': require.resolve('@c15t/schema/types'),
-		'@c15t/translations$': require.resolve('@c15t/translations'),
-		'@c15t/translations/all$': require.resolve('@c15t/translations/all'),
-		'@c15t/translations/en$': require.resolve('@c15t/translations/en'),
+		'@inth/sdk-schema/canonical-order$':
+			require.resolve('@inth/sdk-schema/canonical-order'),
+		'@inth/sdk-schema/types$': require.resolve('@inth/sdk-schema/types'),
+		'@inth/sdk-translations$': require.resolve('@inth/sdk-translations'),
+		'@inth/sdk-translations/all$':
+			require.resolve('@inth/sdk-translations/all'),
+		'@inth/sdk-translations/en$': require.resolve('@inth/sdk-translations/en'),
 	};
 };
 
@@ -62,7 +63,7 @@ const selfContainedLib = function selfContainedLib(
 			// build's output.
 			cleanDistPath: false,
 			distPath: { root: './dist' },
-			externals: [/^@c15t\/translations\/(?!en$)[a-z]{2}$/u],
+			externals: [/^@inth\/sdk-translations\/(?!en$)[a-z]{2}$/u],
 			filename: { js: '[name].js' },
 		},
 		resolve: {

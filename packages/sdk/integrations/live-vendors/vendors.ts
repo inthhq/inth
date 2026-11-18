@@ -1,5 +1,5 @@
 /**
- * Live probe definitions for built-in `@c15t/integrations` integrations.
+ * Live probe definitions for built-in `@inth/integrations` integrations.
  *
  * Each entry pairs a registry vendor with probe configuration and
  * the checks used by the live monitor. This module is imported by the Node

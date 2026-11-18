@@ -112,7 +112,7 @@ import {
   Scripts,
   createRootRoute,
 } from "@tanstack/react-router"
-import { consentLoaderOptions } from "c15t/tanstack-start/server"
+import { consentLoaderOptions } from "@inth/tanstack-start/server"
 
 import {
   ConsentManager,
@@ -356,7 +356,7 @@ const wire = (framework: Framework, dir: string) => {
 		edit(
 			config,
 			'import type { NextConfig } from "next"',
-			'import type { NextConfig } from "next"\nimport { withConsentManifest } from "c15t/next/build"'
+			'import type { NextConfig } from "next"\nimport { withConsentManifest } from "@inth/nextjs/build"'
 		);
 		edit(
 			config,
@@ -383,7 +383,7 @@ const wire = (framework: Framework, dir: string) => {
 		edit(
 			config,
 			'import { defineConfig } from "vite"',
-			'import { consentManifest } from "c15t/build"\nimport { defineConfig } from "vite"'
+			'import { consentManifest } from "@inth/sdk/build"\nimport { defineConfig } from "vite"'
 		);
 		edit(
 			config,
@@ -397,7 +397,7 @@ const wire = (framework: Framework, dir: string) => {
 	edit(
 		config,
 		'import { defineConfig } from "vite"',
-		'import { defineConfig } from "vite"\nimport { consentManifest } from "c15t/tanstack-start/build"'
+		'import { defineConfig } from "vite"\nimport { consentManifest } from "@inth/tanstack-start/build"'
 	);
 	edit(
 		config,

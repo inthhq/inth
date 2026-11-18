@@ -7,7 +7,7 @@
  * other vendor in that category loading. A category that is off in the
  * draft disables its vendor switches. Accept all clears the denial.
  */
-import type { Vendor } from '@c15t/core';
+import type { Vendor } from '@inth/sdk/engine';
 import { useEffect } from 'react';
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
@@ -361,7 +361,7 @@ describe('consent widget vendor rows', () => {
 });
 
 describe('vendor switches are opt-in', () => {
-	// What an `@c15t/integrations` helper puts on its script: a vendor slug
+	// What an `@inth/integrations` helper puts on its script: a vendor slug
 	// and the vendor's name and privacy policy.
 	const helperScript = {
 		category: 'measurement' as const,

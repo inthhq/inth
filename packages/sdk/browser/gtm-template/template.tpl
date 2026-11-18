@@ -53,9 +53,9 @@ ___TEMPLATE_PARAMETERS___
       {
         "type": "REGEX",
         "args": [
-          "^https://([a-z0-9-]+\\.inth\\.app/c15t(\\.headless|\\.iab)?|cdn\\.jsdelivr\\.net/npm/@c15t/browser@[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?/dist/c15t(\\.local|\\.offline|\\.headless|\\.iab)?)\\.js$"
+          "^https://([a-z0-9-]+\\.inth\\.app/c15t(\\.headless|\\.iab)?|cdn\\.jsdelivr\\.net/npm/@inth/sdk@[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?/dist/c15t(\\.local|\\.offline|\\.headless|\\.iab)?)\\.js$"
         ],
-        "errorMessage": "Use your Inth project URL with /c15t.js on the end, or a jsDelivr URL for an exact @c15t/browser version, such as 3.1.0, and c15t.js, c15t.local.js, c15t.headless.js or c15t.iab.js."
+        "errorMessage": "Use your Inth project URL with /c15t.js on the end, or a jsDelivr URL for an exact @inth/sdk version, such as 3.1.0, and c15t.js, c15t.local.js, c15t.headless.js or c15t.iab.js."
       }
     ],
     "enablingConditions": [
@@ -65,7 +65,7 @@ ___TEMPLATE_PARAMETERS___
         "type": "EQUALS"
       }
     ],
-    "help": "Your Inth project URL with /c15t.js on the end, such as https://your-project.inth.app/c15t.js. You can also load an exact version from jsDelivr, such as https://cdn.jsdelivr.net/npm/@c15t/browser@3.1.0/dist/c15t.js. Tags such as latest and ranges such as 3.1 are not accepted, because jsDelivr would serve new releases without a container change. A self-hosted backend is not supported here; add its script tag to your page instead."
+    "help": "Your Inth project URL with /c15t.js on the end, such as https://your-project.inth.app/c15t.js. You can also load an exact version from jsDelivr, such as https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/c15t.js. Tags such as latest and ranges such as 3.1 are not accepted, because jsDelivr would serve new releases without a container change. A self-hosted backend is not supported here; add its script tag to your page instead."
   },
   {
     "type": "TEXT",
@@ -285,7 +285,7 @@ ___SANDBOXED_JS_FOR_WEB_TEMPLATE___
 
 // c15t Consent Management for Google Tag Manager.
 //
-// Sets the Google Consent Mode v2 default, loads the @c15t/browser script tag
+// Sets the Google Consent Mode v2 default, loads the @inth/sdk script tag
 // build, and turns each c15t permission change into a consent update. It talks
 // to c15t only through the documented `window.c15t` queue, so it works whether
 // this tag or the page loads c15t, and in either order.
@@ -314,7 +314,7 @@ const CONSENT_TYPES = [
 ];
 
 // c15t category -> Google consent types. Matches the default mapping of the
-// googleTagManager() helper in @c15t/integrations.
+// googleTagManager() helper in @inth/integrations.
 const CONSENT_MAPPING = {
   necessary: ['security_storage'],
   functionality: ['functionality_storage'],
@@ -332,7 +332,7 @@ const CATEGORY_FIELDS = {
 };
 
 const INTH_HOST_SUFFIX = '.inth.app';
-const JSDELIVR_PREFIX = 'cdn.jsdelivr.net/npm/@c15t/browser@';
+const JSDELIVR_PREFIX = 'cdn.jsdelivr.net/npm/@inth/sdk@';
 const DIGITS = '0123456789';
 const PRERELEASE_CHARS =
   DIGITS + 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.-';
@@ -382,7 +382,7 @@ const isExactVersion = (version) => {
 };
 
 // Matches the script URL field's validator: an Inth project's bundle, or
-// one from an exact @c15t/browser version on jsDelivr.
+// one from an exact @inth/sdk version on jsDelivr.
 const isAllowedScriptUrl = (url) => {
   if (typeof url !== 'string' || url.indexOf('https://') !== 0) return false;
   if (url.indexOf('?') !== -1 || url.indexOf('#') !== -1) return false;
@@ -549,7 +549,7 @@ const projectUrl =
 
 if (inject && !isAllowedScriptUrl(scriptUrl)) {
   log('c15t: "c15t script URL" must be an Inth project /c15t.js URL or a ' +
-      'jsDelivr URL for an exact @c15t/browser version and c15t.js, ' +
+      'jsDelivr URL for an exact @inth/sdk version and c15t.js, ' +
       'c15t.local.js, c15t.headless.js or c15t.iab.js. Got: ' + scriptUrl);
   data.gtmOnFailure();
 } else if (inject && projectUrlProblem(scriptUrl, projectUrl) !== '') {
@@ -628,7 +628,7 @@ ___WEB_PERMISSIONS___
               },
               {
                 "type": 1,
-                "string": "https://cdn.jsdelivr.net/npm/@c15t/browser@*"
+                "string": "https://cdn.jsdelivr.net/npm/@inth/sdk@*"
               }
             ]
           }
@@ -971,7 +971,7 @@ scenarios:
 
     runCode({
       loadScript: true,
-      scriptUrl: 'https://cdn.jsdelivr.net/npm/@c15t/browser@3.1.0/dist/c15t.js',
+      scriptUrl: 'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/c15t.js',
       projectUrl: 'https://your-project.inth.app',
       waitForUpdate: '500'
     });
@@ -980,7 +980,7 @@ scenarios:
     assertThat(calls[1][1]).isEqualTo('ready');
     assertThat(calls[2][1]).isEqualTo('consent');
     assertThat(injected).isEqualTo(
-      'https://cdn.jsdelivr.net/npm/@c15t/browser@3.1.0/dist/c15t.js');
+      'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/c15t.js');
     assertApi('gtmOnSuccess').wasCalled();
 - name: The tag queues the ticked categories with the backend URL
   code: |-
@@ -1022,7 +1022,7 @@ scenarios:
   code: |-
     mockObject('templateStorage', freshStorage());
     mock('createQueue', () => () => {});
-    mock('copyFromWindow', (key) => key === 'c15t.pkg' ? '@c15t/browser' : undefined);
+    mock('copyFromWindow', (key) => key === 'c15t.pkg' ? '@inth/sdk' : undefined);
 
     runCode({
       loadScript: true,
@@ -1055,7 +1055,7 @@ scenarios:
 
     runCode({
       loadScript: true,
-      scriptUrl: 'https://cdn.jsdelivr.net/npm/@c15t/browser@3.1.0/dist/c15t.js',
+      scriptUrl: 'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/c15t.js',
       projectUrl: '',
       waitForUpdate: '500'
     });
@@ -1071,7 +1071,7 @@ scenarios:
 
     runCode({
       loadScript: true,
-      scriptUrl: 'https://cdn.jsdelivr.net/npm/@c15t/browser@3.1.0/dist/c15t.offline.js',
+      scriptUrl: 'https://cdn.jsdelivr.net/npm/@inth/sdk@3.1.0/dist/c15t.offline.js',
       projectUrl: 'https://your-project.inth.app',
       waitForUpdate: '500'
     });

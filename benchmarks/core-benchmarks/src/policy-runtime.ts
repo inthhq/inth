@@ -47,17 +47,20 @@ import {
 	summarizeMetric,
 	writeJson,
 } from '@c15t/benchmarking/utils';
-import { createConsentKernel, mapInitOutputToInitResponse } from '@c15t/core';
-import type { InitResponse, KernelTransport } from '@c15t/core';
+import {
+	createConsentKernel,
+	mapInitOutputToInitResponse,
+} from '@inth/sdk/engine';
+import type { InitResponse, KernelTransport } from '@inth/sdk/engine';
 import {
 	buildConsentManifestFromConfig,
 	resolveInitFromManifest,
-} from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
 import type {
 	InitOutput,
 	ResolveInitFromManifestOptions,
-} from '@c15t/schema/types';
-import { enTranslations } from '@c15t/translations';
+} from '@inth/sdk/schema/types';
+import { enTranslations } from '@inth/sdk/translations';
 
 const ITERATIONS = benchmarkCount(
 	process.env.C15T_CORE_BENCH_ITERATIONS ?? process.env.BENCH_ITERATIONS,

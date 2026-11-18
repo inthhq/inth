@@ -5,7 +5,7 @@
  * runtime ends like a page that runs only the runtime: the same number of
  * vendor elements, never two, and the vendor last told the same consent.
  */
-import type { PolicyRule } from '@c15t/schema/types';
+import type { PolicyRule } from '@inth/sdk-schema/types';
 import { afterEach, expect, test, vi } from 'vitest';
 
 import {

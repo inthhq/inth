@@ -1,9 +1,9 @@
 /**
  * Where the injected routes read the manifest from. The server render
- * resolves through `resolveRequestConsent` in `@c15t/core/server` instead.
+ * resolves through `resolveRequestConsent` in `@inth/sdk/server` instead.
  */
-import { resolveRequestProjectUrl } from '@c15t/core/server';
-import type { ConsentRouteFetchGvl } from '@c15t/core/server';
+import { resolveRequestProjectUrl } from '@inth/sdk/server';
+import type { ConsentRouteFetchGvl } from '@inth/sdk/server';
 
 import type { C15tResolvedOptions } from '../types';
 
@@ -51,21 +51,21 @@ export const resolveManifestSourceFrom = function resolveManifestSourceFrom(
 			requestUrl: source.url,
 		});
 		if (!resolved) {
-			throw new Error('@c15t/astro: invalid manifest URL.');
+			throw new Error('@inth/astro: invalid manifest URL.');
 		}
 		return resolved;
 	}
 
 	const { projectUrl } = options;
 	if (!projectUrl) {
-		throw new Error('@c15t/astro: pass projectUrl or manifestUrl.');
+		throw new Error('@inth/astro: pass projectUrl or manifestUrl.');
 	}
 	const resolved = resolveRequestProjectUrl(projectUrl, {
 		headers: source.headers,
 		requestUrl: source.url,
 	});
 	if (!resolved) {
-		throw new Error('@c15t/astro: invalid backend URL.');
+		throw new Error('@inth/astro: invalid backend URL.');
 	}
 	return `${trimSlash(resolved)}${MANIFEST_ROUTE_SUFFIX}`;
 };

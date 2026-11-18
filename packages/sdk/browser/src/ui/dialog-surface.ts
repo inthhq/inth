@@ -1,7 +1,7 @@
 // Promise chains, not async functions: this module is on first load, and
 // the async form costs about 40 bytes gzip there.
 /* oxlint-disable promise/prefer-await-to-then, promise/prefer-await-to-callbacks, promise/prefer-catch */
-import type { ConsentSnapshot } from '@c15t/core';
+import type { ConsentSnapshot } from '@inth/sdk-core';
 
 import type { ConsentDialogOptions } from '../types';
 import type { createDialog as createDialogNow } from './dialog';
@@ -107,7 +107,7 @@ export const createDialog = function createDialog(
 			(error: unknown) => {
 				requested = false;
 				console.error(
-					'@c15t/browser: the preference centre failed to load.',
+					'@inth/sdk: the preference centre failed to load.',
 					error
 				);
 			}

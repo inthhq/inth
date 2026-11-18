@@ -1,5 +1,5 @@
-import type { ConsentComponentSlotKey } from '@c15t/schema/config';
-import type { ButtonMode } from '@c15t/ui/styles/primitives';
+import type { ConsentComponentSlotKey } from '@inth/sdk/schema/config';
+import type { ButtonMode } from '@inth/sdk/ui/styles/primitives';
 import type { ComponentRef, HTMLAttributes, MouseEvent } from 'react';
 
 import type { CSSVariables, ExtendThemeKeys } from '~/types/theme';

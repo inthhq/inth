@@ -1,4 +1,4 @@
-import type { Script } from '@c15t/core';
+import type { Script } from '@inth/sdk/engine';
 
 import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
@@ -76,7 +76,7 @@ export interface ClearbitOptions {
  *
  * @example
  * ```ts
- * import { clearbit } from '@c15t/integrations/clearbit';
+ * import { clearbit } from '@inth/integrations/clearbit';
  *
  * clearbit({
  *   publishableKey: 'YOUR_PUBLISHABLE_KEY',

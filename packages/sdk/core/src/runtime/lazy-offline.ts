@@ -3,7 +3,7 @@
  * first init.
  *
  * Bundled with everything it imports, for the reason `lazy-hosted.ts`
- * gives: it shares `@c15t/schema`'s policy wire helpers with a page's
+ * gives: it shares `@inth/sdk/schema`'s policy wire helpers with a page's
  * first load, and Rolldown splits shared modules out of the page's chunk.
  *
  * @internal

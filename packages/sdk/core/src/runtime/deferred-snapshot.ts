@@ -1,5 +1,5 @@
 /**
- * `@c15t/core/runtime/deferred-snapshot`: what a client-rendered provider
+ * `@inth/sdk/runtime/deferred-snapshot`: what a client-rendered provider
  * needs to show the banner before the consent engine has loaded.
  *
  * A page that ran the inline `/init` prefetch already has the policy and
@@ -16,8 +16,8 @@
 import {
 	POLICY_CONTRACT_VERSION,
 	readPolicyResolutionWire,
-} from '@c15t/schema/types';
-import type { InitOutput, PolicyResolutionWire } from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
+import type { InitOutput, PolicyResolutionWire } from '@inth/sdk-schema/types';
 
 import { buildInitialSnapshot } from '../kernel/snapshot';
 import type { PrefetchedInitialData } from '../libs/prefetch/prefetch';

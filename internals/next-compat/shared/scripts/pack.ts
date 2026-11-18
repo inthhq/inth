@@ -1,5 +1,5 @@
 /**
- * Installs the `@c15t/nextjs` dependency closure into one cell's
+ * Installs the `@inth/nextjs` dependency closure into one cell's
  * `node_modules` the way npm would: packed tarballs extracted as real
  * directories, third-party dependencies linked beside them. The shared
  * fixture source is copied into the cell as first-party code, so its imports
@@ -38,7 +38,7 @@ import { fileURLToPath } from 'node:url';
 const sharedDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const repoRoot = resolve(sharedDir, '../../..');
 const packagesDir = join(repoRoot, 'packages', 'sdk');
-const ROOT_PACKAGE = '@c15t/nextjs';
+const ROOT_PACKAGE = '@inth/nextjs';
 const SHARED_PACKAGE = '@c15t/next-compat-shared';
 
 interface PackageManifest {

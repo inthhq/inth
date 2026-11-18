@@ -1,5 +1,5 @@
 // #region docs:shopify-config
-import { defineConsentConfig } from 'c15t/next';
+import { defineConsentConfig } from '@inth/nextjs';
 
 export default defineConsentConfig({
 	options: {

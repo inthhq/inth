@@ -1,5 +1,5 @@
 /**
- * `@c15t/core/transports/offline` — pure client-side transport.
+ * `@inth/sdk/transports/offline` — pure client-side transport.
  *
  * Synthesizes an `InitResponse` from local policy rules + translations.
  * No network. Same response shape as `createHostedTransport`, so
@@ -20,12 +20,12 @@ import type {
 	PolicyResolution,
 	PolicyRule,
 	TranslationsResponse,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 import {
 	recommendedPolicyRules,
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 
 import { warnNoConsentRecordsInDevelopment } from '../libs/no-records-warning';
 import type {
@@ -58,7 +58,7 @@ export interface OfflineTransportOptions {
 
 	/**
 	 * Translations to serve. Optional — defaults to en with empty
-	 * strings. Bundled translations ship in `@c15t/translations`.
+	 * strings. Bundled translations ship in `@inth/sdk/translations`.
 	 */
 	translations?: KernelTranslations | TranslationsResponse;
 
@@ -251,7 +251,7 @@ export interface OfflineModeOptions {
 
 /**
  * A transport factory that resolves `policyRules` in the browser, kept on
- * `@c15t/core/transports` only for `@inth/react-native`'s web tests.
+ * `@inth/sdk/transports` only for `@inth/react-native`'s web tests.
  * Providers take `mode: testing()` from a `/testing` entry.
  *
  * @deprecated Remove once `@inth/react-native` no longer imports it.

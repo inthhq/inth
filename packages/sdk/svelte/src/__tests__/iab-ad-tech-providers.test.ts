@@ -4,14 +4,14 @@
  * CMP handle's provider choice, and saving encodes it in the Additional
  * Consent string.
  */
-import type { ConsentKernel } from '@c15t/core';
-import { resolvePolicyRules } from '@c15t/schema/types';
+import type { ConsentKernel } from '@inth/sdk/engine';
+import { resolvePolicyRules } from '@inth/sdk/schema/types';
 import { render } from '@testing-library/svelte';
 import { mount, unmount } from 'svelte';
 import { expect, onTestFinished, test, vi } from 'vitest';
 // The IAB components load this package lazily. Importing it here makes Vite
 // transform it while it collects this file, not inside `vi.waitFor`.
-import '@c15t/iab';
+import '@inth/sdk/iab';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import IABVendorList from '../lib/components/iab-vendor-list.svelte';

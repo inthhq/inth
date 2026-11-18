@@ -2,7 +2,7 @@
  * Shared in-process GVL cache. Honors upstream lifetime and reuse directives,
  * coalesces concurrent requests, and invalidates pending fills when cleared.
  */
-import type { GlobalVendorList } from '@c15t/schema/types';
+import type { GlobalVendorList } from '@inth/sdk-schema/types';
 
 import { parseCacheDirectiveSeconds } from '../libs/cache-directive';
 import { failedResponseError } from '../libs/failed-response';

@@ -1,4 +1,4 @@
-import type { PrefetchOptions } from '@c15t/core';
+import type { PrefetchOptions } from '@inth/sdk/engine';
 
 /**
  * Options for {@link consentPrefetchHead}.

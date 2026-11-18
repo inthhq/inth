@@ -4,7 +4,7 @@
  * their own transport should import from `./contract` (re-exports below)
  * for the typed surface.
  *
- * Public subpath: `@c15t/core/transports`.
+ * Public subpath: `@inth/sdk/transports`.
  */
 
 export type {

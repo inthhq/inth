@@ -1,4 +1,4 @@
-import { createConsentRoute } from 'c15t/next/api';
+import { createConsentRoute } from '@inth/nextjs/api';
 import { after } from 'next/server';
 
 /**

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import BenchShell from '$lib/bench-shell.svelte';
 	import { benchConsentCategories } from '$lib/fixture';
-	import { ConsentProvider, hosted } from '@c15t/svelte';
+	import { ConsentProvider, hosted } from '@inth/svelte';
 
 	let { children } = $props();
 </script>

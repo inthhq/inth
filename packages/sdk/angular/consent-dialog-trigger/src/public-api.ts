@@ -1,5 +1,5 @@
 /**
- * `@c15t/angular/consent-dialog-trigger`: the floating button that opens
+ * `@inth/angular/consent-dialog-trigger`: the floating button that opens
  * the consent dialog.
  *
  * @packageDocumentation

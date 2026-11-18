@@ -8,7 +8,7 @@
  * object stays the same throughout, so a component or script loader that
  * took it at setup keeps working.
  *
- * Modelled on `@c15t/react`'s deferred stand-in; Vue has no context value
+ * Modelled on `@inth/react`'s deferred stand-in; Vue has no context value
  * identity to protect, so it carries no services.
  *
  * @packageDocumentation
@@ -20,7 +20,7 @@ import type {
 	ConsentSnapshot,
 	KernelActiveUI,
 	KernelEvent,
-} from '@c15t/core';
+} from '@inth/sdk/engine';
 
 /** @internal */
 export interface StandInOptions {

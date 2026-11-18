@@ -3,7 +3,7 @@
  *
  * The `.web` twin of `client.ts`. Bundlers for React Native web resolve it in
  * place of the native file, so `ConsentProvider`, the hooks and the
- * integrations run against the browser engine from `@c15t/core` instead of a
+ * integrations run against the browser engine from `@inth/sdk/engine` instead of a
  * TurboModule, and an iOS or Android bundle reads exactly the code it read
  * before. Keep the export list equal to `client.ts`.
  *

@@ -22,11 +22,11 @@ describe('c15t umbrella dependencies', () => {
 	) as { dependencies?: Record<string, string>; peerDependencies?: unknown };
 
 	it.each([
-		'@c15t/core',
-		'@c15t/react',
-		'@c15t/nextjs',
-		'@c15t/vue',
-		'@c15t/ui',
+		'@inth/sdk/engine',
+		'@inth/react',
+		'@inth/nextjs',
+		'@inth/vue',
+		'@inth/sdk/ui',
 	])(
 		'depends on %s via workspace:* so publish pins the exact version',
 		(dependency) => {

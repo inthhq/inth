@@ -126,8 +126,8 @@ describe('stopPrefetchingConsentChunks', () => {
 		});
 
 		expect(prefetched(manifest)).toEqual([
-			'@c15t/iab/dist/index.js',
-			'@c15t/vue/dist/runtime/components/iab-prompt.vue',
+			'@inth/sdk/lib/iab/dist/index.js',
+			'@inth/vue/dist/runtime/components/iab-prompt.vue',
 			'_shared-kernel.js',
 			'_vue.js',
 			'node_modules/nuxt/dist/app/components/error-404.vue',
@@ -185,7 +185,7 @@ describe('stopPrefetchingConsentChunks', () => {
 				src: 'runtime/components/manager.vue',
 			},
 		};
-		// This package (`@c15t/vue`) owns the source; Vite roots it at `src`.
+		// This package (`@inth/vue`) owns the source; Vite roots it at `src`.
 		stopPrefetchingConsentChunks(manifest, join(__dirname, '..'));
 
 		expect(manifest['src/runtime/components/manager.vue']?.prefetch).toBe(

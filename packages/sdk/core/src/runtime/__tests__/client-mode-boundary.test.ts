@@ -28,13 +28,13 @@ const SOURCE_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 /** Strings that only appear in one piece of code each. */
 const MARKERS = {
-	// English base copy (`@c15t/translations`).
+	// English base copy (`@inth/sdk/translations`).
 	englishCopy: 'Customize your privacy settings here.',
-	// German base copy (`@c15t/translations/de`).
+	// German base copy (`@inth/sdk/translations/de`).
 	germanCopy: 'Anbieter ({count})',
 	// A rule id in `recommendedPolicyRules()`, the offline default pack.
 	offlinePolicy: 'quebec_opt_in',
-	// An error the manifest resolver throws (`@c15t/schema`).
+	// An error the manifest resolver throws (`@inth/sdk/schema`).
 	resolver: 'Unsupported pack field',
 	// The production error of `testing()`.
 	testingCheck: 'is for tests and does not run in production',

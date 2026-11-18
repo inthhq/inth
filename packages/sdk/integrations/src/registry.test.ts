@@ -1,4 +1,4 @@
-import type { AllConsentNames } from '@c15t/core';
+import type { AllConsentNames } from '@inth/sdk/engine';
 import { describe, expect, it } from 'vitest';
 
 import packageJson from '../package.json' with { type: 'json' };

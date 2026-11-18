@@ -1,4 +1,4 @@
-import { policyRulePresets } from '@c15t/schema/types';
+import { policyRulePresets } from '@inth/sdk/schema/types';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -368,10 +368,10 @@ describe('policy playground helpers', () => {
 			toolbar: true,
 		});
 		expect(withToolbar).toContain(
-			"import { ConsentBanner, ConsentDialog, ConsentDialogTriggerToolbar, ConsentProvider } from 'c15t/react';"
+			"import { ConsentBanner, ConsentDialog, ConsentDialogTriggerToolbar, ConsentProvider } from '@inth/react';"
 		);
 		expect(withToolbar).toContain(
-			"import { testing } from 'c15t/react/testing';"
+			"import { testing } from '@inth/react/testing';"
 		);
 		expect(withToolbar).toContain(
 			'    <ConsentDialogTriggerToolbar showWhen="after-prompt" />\n'

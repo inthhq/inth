@@ -1,5 +1,5 @@
-import { createLazyIABFactory } from '@c15t/core/runtime';
-import { mountRuntimeIAB } from '@c15t/core/runtime/on-demand';
+import { createLazyIABFactory } from '@inth/sdk/runtime';
+import { mountRuntimeIAB } from '@inth/sdk/runtime/on-demand';
 
 import type { PageIAB } from '../client';
 
@@ -12,7 +12,7 @@ import type { PageIAB } from '../client';
  */
 export const createTestPageIAB = function createTestPageIAB(): PageIAB {
 	return {
-		...createLazyIABFactory(() => import('@c15t/iab')),
+		...createLazyIABFactory(() => import('@inth/sdk/iab')),
 		mount: mountRuntimeIAB,
 	};
 };

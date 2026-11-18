@@ -1,6 +1,6 @@
 'use client';
 
-import styles from '@c15t/ui/styles/components/iab-consent-banner';
+import styles from '@inth/sdk/ui/styles/components/iab-consent-banner';
 import { useCallback, useRef, forwardRef as createForwardRef } from 'react';
 import type { HTMLAttributes, ReactNode } from 'react';
 

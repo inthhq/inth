@@ -1,5 +1,5 @@
-import { clearGVLCache } from '@c15t/iab';
-import { iabDisplayTestId } from '@c15t/iab/headless';
+import { clearGVLCache } from '@inth/sdk-iab';
+import { iabDisplayTestId } from '@inth/sdk-iab/headless';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';

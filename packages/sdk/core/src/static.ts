@@ -1,22 +1,22 @@
 /**
- * `@c15t/core/static` — consent resolution for statically rendered pages.
+ * `@inth/sdk/static` — consent resolution for statically rendered pages.
  *
  * A static page has no request, so no location headers. It resolves the
  * policy from a manifest bundled at build time: the manifest's
  * unknown-location policy for first paint, then optionally the visitor's
  * regional policy once a geo endpoint answers. Framework static entries
- * (`@c15t/nextjs/static`, `@c15t/tanstack-start/static`) re-export these.
+ * (`@inth/nextjs/static`, `@inth/tanstack-start/static`) re-export these.
  */
 import type {
 	ConsentManifest,
 	InitOutput,
 	ResolveInitFromManifestInputs,
-} from '@c15t/schema/types';
-import { resolveInitFromManifest } from '@c15t/schema/types';
-import { baseTranslations } from '@c15t/translations/all';
+} from '@inth/sdk-schema/types';
+import { resolveInitFromManifest } from '@inth/sdk-schema/types';
+import { baseTranslations } from '@inth/sdk-translations/all';
 
 /** The manifest shape static resolvers and generated modules use. */
-export type { ConsentManifest } from '@c15t/schema/types';
+export type { ConsentManifest } from '@inth/sdk-schema/types';
 
 /** Location returned by a geo endpoint. Either key spelling is accepted. */
 export interface StaticGeoResult {
@@ -136,7 +136,7 @@ const fetchStaticGeo = async function fetchStaticGeo(
  *
  * @example
  * ```ts
- * import { resolveUnknownLocationInit } from '@c15t/core/static';
+ * import { resolveUnknownLocationInit } from '@inth/sdk-core/static';
  *
  * const init = resolveUnknownLocationInit(consentManifest, { language: 'en' });
  * ```
@@ -165,7 +165,7 @@ export const resolveUnknownLocationInit = function resolveUnknownLocationInit(
  *
  * @example
  * ```ts
- * import { createStaticConsentResolver } from '@c15t/core/static';
+ * import { createStaticConsentResolver } from '@inth/sdk-core/static';
  *
  * const { initial, resolved } = createStaticConsentResolver({
  * 	manifest: consentManifest,

@@ -22,7 +22,7 @@ import { transportMode } from './fixtures/transport-mode';
 // A server process renders with the start module loaded; the first render
 // in a process, before it loads, is `root-sync-render.test.tsx`'s case.
 beforeAll(async () => {
-	await import('@c15t/core/runtime/script-server-start');
+	await import('@inth/sdk/runtime/script-server-start');
 	await new Promise((resolve) => {
 		setTimeout(resolve, 0);
 	});

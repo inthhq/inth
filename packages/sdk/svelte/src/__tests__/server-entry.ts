@@ -1,4 +1,4 @@
-import type { ConsentKernel, ConsentSnapshot } from '@c15t/core';
+import type { ConsentKernel, ConsentSnapshot } from '@inth/sdk/engine';
 import type { ComponentProps } from 'svelte';
 import { render } from 'svelte/server';
 

@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
-import { createConsentKernel } from '@c15t/core';
-import { createScriptLoader } from '@c15t/core/modules/script-loader';
-import { createOfflineTransport } from '@c15t/core/transports';
+import { createConsentKernel } from '@inth/sdk/engine';
+import { createScriptLoader } from '@inth/sdk/modules/script-loader';
+import { createOfflineTransport } from '@inth/sdk/transports';
 import { afterEach, expect, test, vi } from 'vitest';
 
 import { gtag } from './vendors/analytics/google-tag';

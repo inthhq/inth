@@ -2,10 +2,10 @@
  * The package's lazy IAB factory.
  *
  * `<ConsentProvider>` is imported by every app, IAB or not, so it
- * cannot import `@c15t/iab` statically — that put the CMP API and the
+ * cannot import `@inth/sdk/iab` statically — that put the CMP API and the
  * `__tcfapi` bridge in the layout chunk of apps that never turn IAB on
  * (3.3 KB gzipped on the SvelteKit bench, with the TC-string encoder
- * behind its own dynamic import inside `@c15t/iab`). The runtime calls
+ * behind its own dynamic import inside `@inth/sdk/iab`). The runtime calls
  * `createIAB` synchronously, so the deferral happens here:
  * {@link lazyCreateIAB} hands back a handle immediately and forwards to
  * the real one once the dynamic import resolves.
@@ -14,24 +14,24 @@
  * first, so they never read methods that have not arrived.
  */
 
-import { createLazyIABFactory } from '@c15t/core/runtime';
-import type { GPPModuleLoader } from '@c15t/core/runtime';
+import { createLazyIABFactory } from '@inth/sdk/runtime';
+import type { GPPModuleLoader } from '@inth/sdk/runtime';
 
 import type { ProviderIABOptions } from './types';
 
-const factory = createLazyIABFactory(() => import('@c15t/iab'));
+const factory = createLazyIABFactory(() => import('@inth/sdk/iab'));
 
 /** The `createIAB` the provider hands the runtime. */
 export const lazyCreateIAB = factory.create;
 
-/** Resolves once every pending `@c15t/iab` load has settled. */
+/** Resolves once every pending `@inth/sdk/iab` load has settled. */
 export const whenIABReady = factory.whenReady;
 
 /**
- * Loads `@c15t/iab/gpp`. One function for every render, so passing it to
+ * Loads `@inth/sdk/iab/gpp`. One function for every render, so passing it to
  * the runtime's `update()` never reads as a changed option.
  */
-export const loadGPP: GPPModuleLoader = () => import('@c15t/iab/gpp');
+export const loadGPP: GPPModuleLoader = () => import('@inth/sdk/iab/gpp');
 
 /**
  * Whether IAB is configured for this provider.

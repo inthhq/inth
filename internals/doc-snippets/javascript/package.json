@@ -6,11 +6,8 @@
 		"check-types": "tsc --noEmit"
 	},
 	"dependencies": {
-		"@c15t/browser": "workspace:*",
-		"@c15t/dev-tools": "workspace:*",
-		"@c15t/iab": "workspace:*",
-		"@c15t/integrations": "workspace:*",
-		"c15t": "workspace:*"
+		"@inth/integrations": "workspace:*",
+		"@inth/sdk": "workspace:*"
 	},
 	"devDependencies": {
 		"typescript": "6.0.3"

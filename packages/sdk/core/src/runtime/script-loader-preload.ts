@@ -40,7 +40,7 @@
  * group apart once another module imports one of its members, and every
  * page that uses the group pays for it.
  */
-import { writePolicyResolutionWire } from '@c15t/schema/types';
+import { writePolicyResolutionWire } from '@inth/sdk-schema/types';
 
 import { evaluateConsent } from '../modules/has';
 import type { ConsentKernel } from '../types';
@@ -186,7 +186,7 @@ export const scriptLoaderRunsAtStart = function scriptLoaderRunsAtStart(
  * @example
  * ```ts
  * const loadScriptLoader = async () =>
- *   (await import('@c15t/core/modules/script-loader')).createScriptLoader;
+ *   (await import('@inth/sdk-core/modules/script-loader')).createScriptLoader;
  * createConsentProviderRuntime(options, {
  *   ...modules,
  *   createScriptLoader: lazyRuntimeModule(loadScriptLoader),

@@ -1,6 +1,6 @@
-import { resolvePolicyRules } from '@c15t/schema/types';
-import { enTranslations } from '@c15t/translations';
-import { baseTranslations } from '@c15t/translations/all';
+import { resolvePolicyRules } from '@inth/sdk-schema/types';
+import { enTranslations } from '@inth/sdk-translations';
+import { baseTranslations } from '@inth/sdk-translations/all';
 /**
  * @vitest-environment jsdom
  *
@@ -136,14 +136,14 @@ describe('createRuntimeKernel', () => {
 	});
 
 	test.each([
-		[undefined, '@c15t/core createConsentRuntime()'],
-		['@c15t/react', '@c15t/react ConsentProvider'],
-		['@c15t/svelte', '@c15t/svelte ConsentProvider'],
-		['@c15t/vue', '@c15t/vue the c15tVue plugin'],
-		['@c15t/browser', '@c15t/browser init()'],
-		['@c15t/browser/hosted', '@c15t/browser/hosted init()'],
-		['@c15t/nextjs', '@c15t/nextjs ConsentRoot'],
-		['@c15t/tanstack-start', '@c15t/tanstack-start ConsentRoot'],
+		[undefined, '@inth/sdk/engine createConsentRuntime()'],
+		['@inth/react', '@inth/react ConsentProvider'],
+		['@inth/svelte', '@inth/svelte ConsentProvider'],
+		['@inth/vue', '@inth/vue the c15tVue plugin'],
+		['@inth/sdk', '@inth/sdk init()'],
+		['@inth/sdk/hosted', '@inth/sdk/hosted init()'],
+		['@inth/nextjs', '@inth/nextjs ConsentRoot'],
+		['@inth/tanstack-start', '@inth/tanstack-start ConsentRoot'],
 	])('the missing-backend error from %s names %s', (pkg, owner) => {
 		expect(() => createRuntimeKernel({ pkg })).toThrowError(
 			`${owner}: \`projectUrl\` is required.`
@@ -156,8 +156,8 @@ describe('createRuntimeKernel', () => {
 	test('the production missing-backend error names the package only', () => {
 		vi.stubEnv('NODE_ENV', 'production');
 		try {
-			expect(() => createRuntimeKernel({ pkg: '@c15t/react' })).toThrowError(
-				'@c15t/react: `projectUrl` is required.'
+			expect(() => createRuntimeKernel({ pkg: '@inth/react' })).toThrowError(
+				'@inth/react: `projectUrl` is required.'
 			);
 		} finally {
 			vi.unstubAllEnvs();
@@ -593,12 +593,12 @@ describe('createConsentRuntime', () => {
 	test('`start()` publishes the window debug handle under the given pkg', () => {
 		const runtime = createConsentRuntime({
 			mode: transportMode(createTransport()),
-			pkg: '@c15t/svelte',
+			pkg: '@inth/svelte',
 		});
 
 		runtime.start();
 		expect((window as { c15t?: { pkg?: string } }).c15t?.pkg).toBe(
-			'@c15t/svelte'
+			'@inth/svelte'
 		);
 
 		runtime.dispose();
@@ -895,7 +895,7 @@ describe('createConsentRuntime', () => {
 			mode: transportMode(createTransport()),
 		});
 
-		// `@c15t/core` bundles English only, so the copy stays English until
+		// `@inth/sdk/engine` bundles English only, so the copy stays English until
 		// the backend or a `messages` override supplies German. The language
 		// is what travels to `/init`, and it has to be the one asked for.
 		const { translations } = runtime.kernel.getSnapshot();

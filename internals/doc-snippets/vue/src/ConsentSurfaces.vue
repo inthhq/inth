@@ -4,7 +4,7 @@ import {
 	ConsentBanner,
 	ConsentDialogTrigger,
 	ConsentManager,
-} from 'c15t/vue/vue-plugin';
+} from '@inth/vue/vue-plugin';
 </script>
 
 <template>

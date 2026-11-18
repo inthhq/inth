@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
-import { createConsentManifestPolicyPack } from '@c15t/schema/types';
+import { createConsentManifestPolicyPack } from '@inth/sdk-schema/types';
 import { build } from 'vite';
 import type { Rollup } from 'vite';
 import { afterEach, describe, expect, test, vi } from 'vitest';
@@ -26,15 +26,15 @@ const write = async (path: string, source: string): Promise<void> => {
 const EAGER_CSS = '.banner{color:rebeccapurple}';
 
 /**
- * An app root with stand-ins for the installed `@c15t/react` and `@c15t/ui`:
+ * An app root with stand-ins for the installed `@inth/react` and `@inth/sdk/ui`:
  * the stock banner's root module imports the banner sheet, and
- * `@c15t/react/static-banner` renders the title from the `/init` answer it
+ * `@inth/react/static-banner` renders the title from the `/init` answer it
  * is given.
  */
 const createApp = async (): Promise<string> => {
 	const root = await mkdtemp(join(tmpdir(), 'c15t-static-banner-'));
 	directories.push(root);
-	const react = join(root, 'node_modules/@c15t/react');
+	const react = join(root, 'node_modules/@inth/react');
 	await write(
 		join(react, 'package.json'),
 		JSON.stringify({
@@ -46,13 +46,13 @@ const createApp = async (): Promise<string> => {
 			imports: {
 				'#consent-banner': './dist/components/prompt/atoms/root.js',
 			},
-			name: '@c15t/react',
+			name: '@inth/react',
 			type: 'module',
 		})
 	);
 	await write(
 		join(react, 'dist/components/prompt/atoms/root.js'),
-		"import * as sheet from '@c15t/ui/styles/sheets/banner';\nexport const banner = () => sheet.id + sheet.css;\n"
+		"import * as sheet from '@inth/sdk/ui/styles/sheets/banner';\nexport const banner = () => sheet.id + sheet.css;\n"
 	);
 	// `ConsentBanner`'s index part, and the gate a static-banner build
 	// resolves its `#consent-banner` to: the banner's code in a lazy chunk.
@@ -76,12 +76,12 @@ const createApp = async (): Promise<string> => {
 			'',
 		].join('\n')
 	);
-	const ui = join(react, 'node_modules/@c15t/ui');
+	const ui = join(react, 'node_modules/@inth/sdk/ui');
 	await write(
 		join(ui, 'package.json'),
 		JSON.stringify({
 			exports: { './styles/sheets/*': './dist/styles/sheets/*.js' },
-			name: '@c15t/ui',
+			name: '@inth/sdk/ui',
 			type: 'module',
 		})
 	);
@@ -99,7 +99,7 @@ const createApp = async (): Promise<string> => {
 	await write(join(root, 'baseline.html'), page('/src/baseline.js'));
 	await write(
 		join(root, 'src/app.js'),
-		"import { banner } from '@c15t/react/banner';\nimport { projectUrl } from '@c15t/core/generated';\nconsole.log(banner(), projectUrl);\n"
+		"import { banner } from '@inth/react/banner';\nimport { projectUrl } from '@inth/sdk/generated';\nconsole.log(banner(), projectUrl);\n"
 	);
 	await write(join(root, 'src/baseline.js'), "console.log('no consent');\n");
 	return root;
@@ -221,7 +221,7 @@ describe('consentManifest staticBanner', () => {
 		const root = await createApp();
 		await write(
 			join(root, 'src/app.js'),
-			"import { banner } from '@c15t/react/part';\nimport { projectUrl } from '@c15t/core/generated';\nconsole.log(banner, projectUrl);\n"
+			"import { banner } from '@inth/react/part';\nimport { projectUrl } from '@inth/sdk/generated';\nconsole.log(banner, projectUrl);\n"
 		);
 		const { code, pages } = await buildApp(
 			root,
@@ -243,7 +243,7 @@ describe('consentManifest staticBanner', () => {
 		const root = await createApp();
 		await write(
 			join(root, 'src/app.js'),
-			"import { banner } from '@c15t/react/part';\nimport { projectUrl } from '@c15t/core/generated';\nconsole.log(banner(), projectUrl);\n"
+			"import { banner } from '@inth/react/part';\nimport { projectUrl } from '@inth/sdk/generated';\nconsole.log(banner(), projectUrl);\n"
 		);
 		const { code } = await buildApp(
 			root,

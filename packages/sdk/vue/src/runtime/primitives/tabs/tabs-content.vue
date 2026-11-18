@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { getTabPanelState } from '@c15t/ui/primitives';
+import { getTabPanelState } from '@inth/sdk/ui/primitives';
 import { computed } from 'vue';
 
 import { useTabsRootContext } from './context';

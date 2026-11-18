@@ -1,5 +1,5 @@
 import { ConsentShell } from '@c15t/next-compat-shared/consent-shell';
-import { resolveConsent } from '@c15t/nextjs/server';
+import { resolveConsent } from '@inth/nextjs/server';
 import { Suspense } from 'react';
 
 const ResolvedConsent = async () => {

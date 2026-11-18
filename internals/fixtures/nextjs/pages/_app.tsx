@@ -1,4 +1,4 @@
-import type { ConsentPageProps } from 'c15t/next/pages';
+import type { ConsentPageProps } from '@inth/nextjs/pages';
 import type { AppProps } from 'next/app';
 
 import { Consent } from '@/components/consent';

@@ -1,4 +1,4 @@
-import { loadConsent } from '@c15t/svelte/kit';
+import { loadConsent } from '@inth/svelte/kit';
 
 import type { LayoutServerLoad } from './$types';
 

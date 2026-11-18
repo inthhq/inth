@@ -1,13 +1,13 @@
 'use client';
 
 import { benchPolicy } from '@c15t/benchmarking/bench-policy';
-import { ConsentProvider } from '@c15t/react/provider';
+import { ConsentProvider } from '@inth/react/provider';
 import dynamic from 'next/dynamic';
 import { useState } from 'react';
 
 const LazyIABConsentDialog = dynamic(
 	async () => {
-		const mod = await import('@c15t/react/iab');
+		const mod = await import('@inth/react/iab');
 		return mod.IABConsentDialog;
 	},
 	{ ssr: false }

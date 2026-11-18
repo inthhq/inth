@@ -6,11 +6,15 @@
 		"build": "bun ../build-fixtures.ts"
 	},
 	"dependencies": {
-		"@c15t/browser": "workspace:*",
-		"@c15t/svelte": "workspace:*",
+		"@inth/astro": "workspace:*",
+		"@inth/nextjs": "workspace:*",
+		"@inth/react": "workspace:*",
+		"@inth/sdk": "workspace:*",
+		"@inth/svelte": "workspace:*",
+		"@inth/tanstack-start": "workspace:*",
+		"@inth/vue": "workspace:*",
 		"@tanstack/react-router": "1.170.44",
 		"@tanstack/react-start": "1.169.1",
-		"c15t": "workspace:*",
 		"next": "16.3.4",
 		"nuxt": "4.5.1",
 		"react": "19.2.7",

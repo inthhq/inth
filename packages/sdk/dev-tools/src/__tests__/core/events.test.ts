@@ -1,5 +1,5 @@
-import type { KernelEvent } from '@c15t/core';
-import { createConsentKernel } from '@c15t/core';
+import type { KernelEvent } from '@inth/sdk-core';
+import { createConsentKernel } from '@inth/sdk-core';
 import { describe, expect, it, vi } from 'vitest';
 
 import {

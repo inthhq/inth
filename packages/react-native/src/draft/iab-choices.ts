@@ -241,7 +241,7 @@ export const acceptAllIAB = function acceptAllIAB(
 };
 
 /**
- * Withdraw every consent grant, as `@c15t/iab`'s `rejectAll` does. Legitimate
+ * Withdraw every consent grant, as `@inth/sdk/iab`'s `rejectAll` does. Legitimate
  * interest stays as it was; object to it per purpose or vendor.
  *
  * @param choices - Current selection.

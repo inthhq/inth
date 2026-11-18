@@ -4,10 +4,10 @@
 		"rootDir": "src",
 		"moduleResolution": "bundler",
 		"paths": {
-			"@c15t/translations": ["../translations/dist-types/index.d.ts"],
-			"@c15t/translations/*": ["../translations/dist-types/*"],
-			"@c15t/core": ["../core/dist-types/index.d.ts"],
-			"@c15t/core/*": ["../core/dist-types/*"],
+			"@inth/sdk-translations": ["../translations/dist-types/index.d.ts"],
+			"@inth/sdk-translations/*": ["../translations/dist-types/*"],
+			"@inth/sdk-core": ["../core/dist-types/index.d.ts"],
+			"@inth/sdk-core/*": ["../core/dist-types/*"],
 			"~/*": ["./src/*"]
 		}
 	},

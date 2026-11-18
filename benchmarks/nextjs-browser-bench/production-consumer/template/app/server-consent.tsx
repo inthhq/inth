@@ -1,4 +1,4 @@
-import { resolveConsent } from 'c15t/next/server';
+import { resolveConsent } from '@inth/nextjs/server';
 import { headers } from 'next/headers';
 import { after } from 'next/server';
 import type { ReactNode } from 'react';

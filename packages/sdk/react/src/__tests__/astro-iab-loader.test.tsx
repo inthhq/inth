@@ -1,5 +1,5 @@
-import { createConsentRuntime } from '@c15t/core/runtime';
-import { createIAB } from '@c15t/iab';
+import { createIAB } from '@inth/sdk/iab';
+import { createConsentRuntime } from '@inth/sdk/runtime';
 import { createRoot } from 'react-dom/client';
 import { expect, test, vi } from 'vitest';
 

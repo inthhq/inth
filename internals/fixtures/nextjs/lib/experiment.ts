@@ -1,5 +1,8 @@
-import { defineExperiment } from 'c15t';
-import type { OnChoiceRecordedPayload, OnSurfaceShownPayload } from 'c15t';
+import { defineExperiment } from '@inth/sdk/engine';
+import type {
+	OnChoiceRecordedPayload,
+	OnSurfaceShownPayload,
+} from '@inth/sdk/engine';
 
 /**
  * The banner-shape experiment. `control` is the default banner; the `wall`

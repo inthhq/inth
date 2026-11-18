@@ -7,7 +7,7 @@
  * - Kernel is per-mount (two mounts → two kernels).
  * - Selector hooks work downstream.
  */
-import { useConsent, useOverrides } from '@c15t/react';
+import { useConsent, useOverrides } from '@inth/react';
 import { describe, expect, test } from 'vitest';
 import { render } from 'vitest-browser-react';
 

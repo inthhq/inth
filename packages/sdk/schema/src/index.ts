@@ -2,7 +2,7 @@
  * @packageDocumentation
  * Framework-agnostic Valibot schemas for c15t consent management.
  *
- * For pure TypeScript types without Valibot runtime, import from '@c15t/schema/types'
+ * For pure TypeScript types without Valibot runtime, import from '@inth/sdk-schema/types'
  */
 
 // API schemas

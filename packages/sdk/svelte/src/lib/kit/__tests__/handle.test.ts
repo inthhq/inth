@@ -1,5 +1,5 @@
-import { clearManifestCache } from '@c15t/core/server';
-import { manifest as browserManifest } from '@c15t/core/transports/manifest-browser';
+import { clearManifestCache } from '@inth/sdk/server';
+import { manifest as browserManifest } from '@inth/sdk/transports/manifest-browser';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { transportMode } from '../../../__tests__/fixtures/transport-mode';
@@ -200,7 +200,7 @@ describe('c15tHandle mode', () => {
 
 	test('rejects a route prefix of / when the hook is created', () => {
 		expect(() => c15tHandle({ routePrefix: '/' })).toThrow(
-			"@c15t/svelte: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'."
+			"@inth/svelte: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'."
 		);
 	});
 

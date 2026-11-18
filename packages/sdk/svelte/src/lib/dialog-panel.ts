@@ -1,5 +1,5 @@
 /**
- * `@c15t/svelte/dialog-panel`: the preference dialog without the deferred
+ * `@inth/svelte/dialog-panel`: the preference dialog without the deferred
  * wrapper.
  *
  * `ConsentDialog` from the package root imports this component the first

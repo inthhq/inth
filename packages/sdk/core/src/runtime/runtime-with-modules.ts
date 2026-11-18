@@ -2,7 +2,7 @@
  * A configure-once runtime that mounts the module factories its host
  * chooses, for hosts that load some modules on demand.
  *
- * `createConsentRuntime` from `@c15t/core/runtime` mounts
+ * `createConsentRuntime` from `@inth/sdk/runtime` mounts
  * `defaultRuntimeModules`, which imports the script loader statically. A
  * page-level host (the script tag, an Astro page) that wants
  * `onDemandRuntimeModules` instead builds its runtime here, so its first
@@ -27,14 +27,14 @@ import type {
  *
  * @example
  * ```ts
- * import { watchRevocationReload } from '@c15t/core';
- * import { createIframeBlocker } from '@c15t/core/modules/iframe-blocker';
- * import { createPersistence } from '@c15t/core/modules/persistence';
- * import { createWindowDebug } from '@c15t/core/modules/window-debug';
+ * import { watchRevocationReload } from '@inth/sdk-core';
+ * import { createIframeBlocker } from '@inth/sdk-core/modules/iframe-blocker';
+ * import { createPersistence } from '@inth/sdk-core/modules/persistence';
+ * import { createWindowDebug } from '@inth/sdk-core/modules/window-debug';
  * import {
  *   createConsentRuntimeWith,
  *   onDemandRuntimeModules,
- * } from '@c15t/core/runtime/provider';
+ * } from '@inth/sdk-core/runtime/provider';
  *
  * const runtime = createConsentRuntimeWith(options, {
  *   ...onDemandRuntimeModules,

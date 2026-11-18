@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { IABConsentDialog } from '@c15t/svelte';
+	import { IABConsentDialog } from '@inth/svelte';
 
 	import StorybookIABProvider from './StorybookIABProvider.svelte';
 

@@ -11,16 +11,16 @@ import type {
 	InitOutput,
 	PolicyRule,
 	TranslationsResponse,
-} from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
 import {
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
-import accordionStyles from '@c15t/ui/styles/components/accordion';
-import preferenceItemStyles from '@c15t/ui/styles/components/preference-item';
-import switchStyles from '@c15t/ui/styles/components/switch';
+} from '@inth/sdk/schema/types';
+import accordionStyles from '@inth/sdk/ui/styles/components/accordion';
+import preferenceItemStyles from '@inth/sdk/ui/styles/components/preference-item';
+import switchStyles from '@inth/sdk/ui/styles/components/switch';
 import { flushPromises, mount } from '@vue/test-utils';
 import type { VueWrapper } from '@vue/test-utils';
 import { describe, expect, test } from 'vitest';
@@ -421,10 +421,10 @@ describe('Vue consent widget vendor rows', () => {
 	});
 
 	test('the switches and vendor cards use the class maps that ship their CSS', async () => {
-		// `@c15t/ui/styles/components/*` entries import their stylesheet as a
+		// `@inth/sdk/ui/styles/components/*` entries import their stylesheet as a
 		// side effect, so a Nuxt app that never loads the aggregated
 		// stylesheet still gets a sized switch and a collapsing card. The
-		// `@c15t/ui/styles/primitives` variants map to CSS that only ships in
+		// `@inth/sdk/ui/styles/primitives` variants map to CSS that only ships in
 		// that aggregate, which left both unstyled in Nuxt.
 		const { context, wrapper } = await renderWidget({
 			marketing: true,

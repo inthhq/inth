@@ -8,8 +8,12 @@ import {
 	resolveConsentPresentation,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
-} from 'c15t';
-import type { ConsentSnapshot, ConsentState, PresentationAction } from 'c15t';
+} from '@inth/sdk/engine';
+import type {
+	ConsentSnapshot,
+	ConsentState,
+	PresentationAction,
+} from '@inth/sdk/engine';
 
 import { runtime } from './consent-runtime';
 

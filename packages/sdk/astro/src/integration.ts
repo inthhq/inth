@@ -18,10 +18,10 @@
  * 5. The component stylesheet, on every page.
  */
 
-import { readBuildEnv } from '@c15t/core/build';
-import type { ConsentMode } from '@c15t/core/modes';
-import { isIABConfigured } from '@c15t/core/runtime';
-import { normalizeRoutePrefix } from '@c15t/core/server';
+import { readBuildEnv } from '@inth/sdk/build';
+import type { ConsentMode } from '@inth/sdk/modes';
+import { isIABConfigured } from '@inth/sdk/runtime';
+import { normalizeRoutePrefix } from '@inth/sdk/server';
 import type { AstroIntegration } from 'astro';
 
 import { createClassMapPlugin } from './libs/class-map-plugin';
@@ -53,15 +53,15 @@ const CLIENT_ENTRYPOINT_CANDIDATES = [
 	'src/c15t.client.mjs',
 ];
 
-/** Maps an `@c15t/astro/...` specifier to what Astro should load. */
+/** Maps an `@inth/astro/...` specifier to what Astro should load. */
 export type EntryResolver = (specifier: string) => string;
 
 /**
  * Create a resolver for this package's own entry points.
  *
  * Astro and Vite resolve what the integration hands them from the site's
- * root. A site that installed the `c15t` package rather than `@c15t/astro`
- * cannot see `@c15t/astro` from there under a strict package manager such
+ * root. A site that installed the `c15t` package rather than `@inth/astro`
+ * cannot see `@inth/astro` from there under a strict package manager such
  * as pnpm, so a bare specifier would fail to resolve. A file path always
  * does. `createRequire` resolves the package's own exports on every Node
  * version Astro supports. It is loaded here, from the async setup hook,
@@ -89,8 +89,8 @@ export const createOwnEntryResolver =
 	};
 
 /** The dialog and preference-widget rules, which no first paint needs. */
-const DIALOG_STYLESHEET = '@c15t/ui/styles/sheets/dialog.css';
-const IAB_DIALOG_STYLESHEET = '@c15t/ui/styles/sheets/iab-dialog.css';
+const DIALOG_STYLESHEET = '@inth/sdk/ui/styles/sheets/dialog.css';
+const IAB_DIALOG_STYLESHEET = '@inth/sdk/ui/styles/sheets/iab-dialog.css';
 
 /**
  * What each `ui` adapter needs from the app, keyed by adapter name.
@@ -117,29 +117,29 @@ const UI_ADAPTERS: Record<
 > = {
 	react: {
 		adapterExport: 'reactDialogAdapter',
-		adapterModule: '@c15t/astro/ui/react',
+		adapterModule: '@inth/astro/ui/react',
 		astroIntegration: '@astrojs/react',
 		dialogStyles: [DIALOG_STYLESHEET],
-		packages: ['@astrojs/react', '@c15t/react', 'react', 'react-dom'],
-		surfaceModule: '@c15t/astro/islands/panel-surface.tsx',
+		packages: ['@astrojs/react', '@inth/react', 'react', 'react-dom'],
+		surfaceModule: '@inth/astro/islands/panel-surface.tsx',
 	},
 	svelte: {
 		adapterExport: 'svelteDialogAdapter',
-		adapterModule: '@c15t/astro/ui/svelte',
+		adapterModule: '@inth/astro/ui/svelte',
 		astroIntegration: '@astrojs/svelte',
-		// The Svelte components also read the `@c15t/ui/styles/primitives`
+		// The Svelte components also read the `@inth/sdk/ui/styles/primitives`
 		// class maps, whose rules live in their own stylesheet.
-		dialogStyles: [DIALOG_STYLESHEET, '@c15t/ui/styles/primitives.css'],
+		dialogStyles: [DIALOG_STYLESHEET, '@inth/sdk/ui/styles/primitives.css'],
 		packages: ['@astrojs/svelte', 'svelte'],
-		surfaceModule: '@c15t/astro/islands/panel-surface.svelte',
+		surfaceModule: '@inth/astro/islands/panel-surface.svelte',
 	},
 	vue: {
 		adapterExport: 'vueDialogAdapter',
-		adapterModule: '@c15t/astro/ui/vue',
+		adapterModule: '@inth/astro/ui/vue',
 		astroIntegration: '@astrojs/vue',
 		dialogStyles: [DIALOG_STYLESHEET],
-		packages: ['@astrojs/vue', '@c15t/vue', 'vue'],
-		surfaceModule: '@c15t/astro/islands/panel-surface.vue',
+		packages: ['@astrojs/vue', '@inth/vue', 'vue'],
+		surfaceModule: '@inth/astro/islands/panel-surface.vue',
 	},
 };
 
@@ -206,10 +206,10 @@ const resolveRoutePrefix = function resolveRoutePrefix(
 	const prefix = routePrefix ?? DEFAULT_ROUTE_PREFIX;
 	if (typeof prefix !== 'string' || !prefix.startsWith('/')) {
 		throw new Error(
-			`@c15t/astro: \`routePrefix\` must be a path that starts with "/", such as '/api/c15t', or false. Got ${JSON.stringify(prefix)}.`
+			`@inth/astro: \`routePrefix\` must be a path that starts with "/", such as '/api/c15t', or false. Got ${JSON.stringify(prefix)}.`
 		);
 	}
-	return normalizeRoutePrefix('@c15t/astro', prefix);
+	return normalizeRoutePrefix('@inth/astro', prefix);
 };
 
 /** Every `type` a mode can carry. */
@@ -245,27 +245,27 @@ const resolveMode = function resolveMode(
 		!MODE_TYPES.has((mode as { type?: unknown }).type as string)
 	) {
 		throw new Error(
-			'@c15t/astro: `mode` must be manifest() or hosted() from c15t/astro, or testing() from c15t/astro/testing. A transport function cannot be serialized into the page.'
+			'@inth/astro: `mode` must be manifest() or hosted() from @inth/astro, or testing() from @inth/astro/testing. A transport function cannot be serialized into the page.'
 		);
 	}
 	const envHint =
 		'Set PUBLIC_C15T_BACKEND_URL (or PUBLIC_INTH_PROJECT_URL) in .env, or pass `projectUrl` to c15t().';
 	if (mode.type === 'hosted' && projectUrl === undefined) {
 		throw new Error(
-			`@c15t/astro: hosted() needs a backend URL to ask for each visitor's policy. ${envHint}`
+			`@inth/astro: hosted() needs a backend URL to ask for each visitor's policy. ${envHint}`
 		);
 	}
 	if (mode.type === 'manifest' && projectUrl === undefined) {
 		throw new Error(
 			mode.snapshot
-				? `@c15t/astro: manifest({ snapshot }) still needs a backend URL: the snapshot replaces the manifest fetch, but the browser saves consent with POST \${projectUrl}/subjects, and the consent route only answers GET. ${envHint}`
-				: `@c15t/astro: manifest() needs a backend URL: the server reads its policy from \${projectUrl}/manifest, and the browser saves consent there with POST /subjects. ${envHint}`
+				? `@inth/astro: manifest({ snapshot }) still needs a backend URL: the snapshot replaces the manifest fetch, but the browser saves consent with POST \${projectUrl}/subjects, and the consent route only answers GET. ${envHint}`
+				: `@inth/astro: manifest() needs a backend URL: the server reads its policy from \${projectUrl}/manifest, and the browser saves consent there with POST /subjects. ${envHint}`
 		);
 	}
 	if (mode.type === 'manifest' && !mode.snapshot) {
 		if (projectUrl === '' && !mode.manifestUrl) {
 			throw new Error(
-				"@c15t/astro: `projectUrl: ''` saves consent on this origin but gives the server no manifest to fetch. Pass manifest({ manifestUrl }) or manifest({ snapshot })."
+				"@inth/astro: `projectUrl: ''` saves consent on this origin but gives the server no manifest to fetch. Pass manifest({ manifestUrl }) or manifest({ snapshot })."
 			);
 		}
 	}
@@ -324,7 +324,7 @@ const assertSerializable = function assertSerializable(
 	const found = findFunction(serialized, 'c15t()', new Set());
 	if (found) {
 		throw new Error(
-			`@c15t/astro: ${found} is a function. c15t() options are serialized into the page as JSON, which drops functions. Move it to src/c15t.client.ts, whose default export (a C15tClientOptionsExtension) can hold scripts with callbacks, \`callbacks\` and \`networkBlocker.onRequestBlocked\`.`
+			`@inth/astro: ${found} is a function. c15t() options are serialized into the page as JSON, which drops functions. Move it to src/c15t.client.ts, whose default export (a C15tClientOptionsExtension) can hold scripts with callbacks, \`callbacks\` and \`networkBlocker.onRequestBlocked\`.`
 		);
 	}
 };
@@ -350,7 +350,7 @@ export const resolveOptions = function resolveOptions(
 	// undefined adapter entry. Name the supported values instead.
 	if (options.ui !== undefined && !Object.hasOwn(UI_ADAPTERS, options.ui)) {
 		throw new Error(
-			`@c15t/astro: unknown \`ui\` ${JSON.stringify(options.ui)}. Supported adapters: ${UI_ADAPTER_NAMES.join(', ')}.`
+			`@inth/astro: unknown \`ui\` ${JSON.stringify(options.ui)}. Supported adapters: ${UI_ADAPTER_NAMES.join(', ')}.`
 		);
 	}
 	// The banner is server-rendered HTML that the browser only shows or
@@ -364,7 +364,7 @@ export const resolveOptions = function resolveOptions(
 			options.middleware.enabled !== false)
 	) {
 		throw new Error(
-			'@c15t/astro: `experiment` needs an arm resolved on the server. ' +
+			'@inth/astro: `experiment` needs an arm resolved on the server. ' +
 				'Set `middleware: false` and export `consentMiddleware({ experimentArm })` ' +
 				'from src/middleware.ts to pick one per request, or pass a fixed `experiment.arm`.'
 		);
@@ -460,7 +460,7 @@ export const resolveClientEntrypoint = async function resolveClientEntrypoint(
 	const path = fromRoot(configured);
 	if (!existsSync(path)) {
 		throw new Error(
-			`@c15t/astro: clientEntrypoint ${JSON.stringify(configured)} resolves to ${path}, which does not exist. Relative paths start from the project root.`
+			`@inth/astro: clientEntrypoint ${JSON.stringify(configured)} resolves to ${path}, which does not exist. Relative paths start from the project root.`
 		);
 	}
 	return path;
@@ -588,32 +588,32 @@ const pageRuntimeModules = function pageRuntimeModules(
 	if ((resolved.scripts?.length ?? 0) > 0 || resolved.clientEntrypoint) {
 		modules.push({
 			name: 'createScriptLoader',
-			specifier: '@c15t/core/modules/script-loader',
+			specifier: '@inth/sdk/modules/script-loader',
 		});
 	}
 	if (resolved.networkBlocker) {
 		modules.push({
 			name: 'createNetworkBlocker',
-			specifier: '@c15t/core/modules/network-blocker',
+			specifier: '@inth/sdk/modules/network-blocker',
 		});
 	} else if (resolved.clientEntrypoint) {
 		modules.push({
 			exportName: 'networkBlockerOnDemand',
 			name: 'createNetworkBlocker',
-			specifier: '@c15t/core/runtime/on-demand-factories',
+			specifier: '@inth/sdk/runtime/on-demand-factories',
 		});
 	}
 	if (resolved.clientEntrypoint) {
 		modules.push({
 			name: 'connectConsentSource',
-			specifier: '@c15t/core/runtime/controls',
+			specifier: '@inth/sdk/runtime/controls',
 		});
 	}
 	return modules;
 };
 
 /**
- * The transport export of `@c15t/astro/client` the page registers, so it
+ * The transport export of `@inth/astro/client` the page registers, so it
  * ships only the code its mode runs.
  *
  * - `testing()` loads its transport on the first init.
@@ -661,7 +661,7 @@ export interface BootScripts {
  * The adapter and island specifiers are written here, not in `adapter.ts`
  * or the `.astro` components, because this is the one place that knows
  * `ui` before the app's bundler runs. A static reference to all three
- * would make a Svelte-only site's build resolve `@c15t/react` and `vue`.
+ * would make a Svelte-only site's build resolve `@inth/react` and `vue`.
  * Both specifiers stay behind `import()`, so nothing loads until someone
  * opens a dialog. They are registered in the page script so that a tap on
  * Customize starts the adapter, the island and the engine together.
@@ -681,7 +681,7 @@ export const buildBootScript = function buildBootScript(
 	const serializedUI = JSON.stringify(ui);
 	const quote = (specifier: string): string =>
 		JSON.stringify(resolveEntry(specifier));
-	const client = quote('@c15t/astro/client');
+	const client = quote('@inth/astro/client');
 	const page = [
 		`import options from '${VIRTUAL_ID}';`,
 		`import { registerDialogAdapter, registerDialogStyles, registerDialogSurface, startDeferredClient } from ${client};`,
@@ -738,13 +738,13 @@ export const buildBootScript = function buildBootScript(
 		);
 	}
 	// Only a site that sets `iab` ships the CMP mount and the lazy factory,
-	// and `@c15t/iab` itself stays behind the factory's `import()`.
+	// and `@inth/sdk/iab` itself stays behind the factory's `import()`.
 	if (isIABConfigured(resolved.iab)) {
 		engine.push(
 			`import { registerIAB } from ${client};`,
-			`import { createLazyIABFactory } from ${quote('@c15t/core/runtime')};`,
-			`import { mountRuntimeIAB } from ${quote('@c15t/core/runtime/on-demand')};`,
-			`registerIAB({ ...createLazyIABFactory(() => import(${quote('@c15t/iab')})), mount: mountRuntimeIAB });`
+			`import { createLazyIABFactory } from ${quote('@inth/sdk/runtime')};`,
+			`import { mountRuntimeIAB } from ${quote('@inth/sdk/runtime/on-demand')};`,
+			`registerIAB({ ...createLazyIABFactory(() => import(${quote('@inth/sdk/iab')})), mount: mountRuntimeIAB });`
 		);
 	}
 	engine.push('export { boot };');
@@ -777,10 +777,10 @@ export const buildStylesImport = function buildStylesImport(
 	// whole stylesheet, linked as before.
 	const lines: string[] = [];
 	if (!resolved.inlineStyles) {
-		lines.push(`import ${quote('@c15t/astro/styles.css')};`);
+		lines.push(`import ${quote('@inth/astro/styles.css')};`);
 	}
 	if (!resolved.inlineStyles && isIABConfigured(resolved.iab)) {
-		lines.push(`import ${quote('@c15t/astro/iab/styles.css')};`);
+		lines.push(`import ${quote('@inth/astro/iab/styles.css')};`);
 	}
 	return lines.join('\n');
 };
@@ -788,7 +788,7 @@ export const buildStylesImport = function buildStylesImport(
 /**
  * The Vite plugins the app needs for the configured `ui`.
  *
- * `@c15t/vue` resolves its own runtime specifiers (`#imports`,
+ * `@inth/vue` resolves its own runtime specifiers (`#imports`,
  * `#c15t/composables`) through its package `imports`, but ships `.vue`
  * files, which Vite's dependency pre-bundling cannot load, so the `vue`
  * adapter keeps it out of pre-bundling.
@@ -819,9 +819,9 @@ export const buildVitePlugins = function buildVitePlugins(
 	if (resolved.ui === 'vue') {
 		plugins.push({
 			config: () => ({
-				optimizeDeps: { exclude: ['@c15t/vue', 'c15t'] },
+				optimizeDeps: { exclude: ['@inth/vue'] },
 			}),
-			name: '@c15t/vue',
+			name: '@inth/vue',
 		} as VitePluginLike);
 	}
 	return plugins;
@@ -864,7 +864,7 @@ const injectsRoute = function injectsRoute(
 const missingAdapterMessage = function missingAdapterMessage(
 	routePrefix: string
 ): string {
-	return `@c15t/astro: manifest() resolves each visitor on the server and injects an on-demand route at ${routePrefix}/[...path], which needs a server adapter to build. For a static site, use hosted() or manifest({ resolve: 'browser' }), or set \`routePrefix: false\`.`;
+	return `@inth/astro: manifest() resolves each visitor on the server and injects an on-demand route at ${routePrefix}/[...path], which needs a server adapter to build. For a static site, use hosted() or manifest({ resolve: 'browser' }), or set \`routePrefix: false\`.`;
 };
 
 /**
@@ -887,13 +887,13 @@ const bundleBuildManifest = async function bundleBuildManifest(
 	if (mode.type !== 'manifest' || mode.snapshot || mode.source === 'runtime') {
 		return;
 	}
-	const { loadManifestForBuild } = await import('@c15t/core/build');
+	const { loadManifestForBuild } = await import('@inth/sdk/build');
 	const snapshot = await loadManifestForBuild(
 		{ manifestUrl: mode.manifestUrl, projectUrl: resolved.projectUrl },
 		{
 			command,
 			envNames: BACKEND_URL_ENVS,
-			label: '@c15t/astro',
+			label: '@inth/astro',
 			logger,
 			onBuildError: resolved.onBuildError,
 		}
@@ -910,7 +910,7 @@ const bundleBuildManifest = async function bundleBuildManifest(
  * so a site types `Astro.locals.c15t` without an `env.d.ts` line.
  *
  * It names the package the site itself depends on: under a strict package
- * manager, a site that installed `c15t` cannot see `@c15t/astro`.
+ * manager, a site that installed `c15t` cannot see `@inth/astro`.
  *
  * @param root - The Astro project root.
  * @returns The declaration file's content.
@@ -919,16 +919,16 @@ const bundleBuildManifest = async function bundleBuildManifest(
 export const buildLocalsTypes = async function buildLocalsTypes(
 	root: URL | undefined
 ): Promise<string> {
-	let source = '@c15t/astro';
+	let source = '@inth/astro';
 	try {
 		const { createRequire } = await import('node:module');
 		const require = createRequire(
 			new URL('package.json', root ?? `file://${process.cwd()}/`)
 		);
-		require.resolve('c15t/astro');
-		source = 'c15t/astro';
+		require.resolve('@inth/astro');
+		source = '@inth/astro';
 	} catch {
-		// `@c15t/astro` is installed directly.
+		// `@inth/astro` is installed directly.
 	}
 	return [
 		'declare namespace App {',
@@ -1001,7 +1001,7 @@ const resolveSiteOptions = async function resolveSiteOptions(
  * import node from '@astrojs/node';
  * import svelte from '@astrojs/svelte';
  * import { defineConfig } from 'astro/config';
- * import c15t from 'c15t/astro';
+ * import c15t from '@inth/astro';
  *
  * // Reads PUBLIC_C15T_BACKEND_URL from .env.
  * export default defineConfig({
@@ -1057,7 +1057,7 @@ export const c15t = function c15t(
 					`the preference-centre and IAB dialogs render as ${resolved.ui} islands, so ${adapter.astroIntegration} must be installed and listed in astro.config before c15t(). Install ${adapter.packages.join(', ')} and run \`npx astro add ${resolved.ui}\`, or pass \`requireUIIntegration: false\` if you only use the server-rendered banner.`
 				);
 				throw new Error(
-					`@c15t/astro: ui: ${JSON.stringify(resolved.ui)} needs ${adapter.astroIntegration}. Install it, or set \`requireUIIntegration: false\` for a banner-only site.`
+					`@inth/astro: ui: ${JSON.stringify(resolved.ui)} needs ${adapter.astroIntegration}. Install it, or set \`requireUIIntegration: false\` for a banner-only site.`
 				);
 			},
 
@@ -1079,7 +1079,7 @@ export const c15t = function c15t(
 				}
 				const resolveEntry = await createOwnEntryResolver();
 				// Tailwind 3 unwraps c15t's cascade layer in the stylesheets it
-				// builds (`c15t/postcss-tailwind3`). Inlined rules skip that
+				// builds (`@inth/react/postcss-tailwind3`). Inlined rules skip that
 				// build and would lose to its preflight.
 				if (site.inlineStyles && (await usesTailwind3(root))) {
 					site.inlineStyles = false;
@@ -1107,7 +1107,7 @@ export const c15t = function c15t(
 
 				if (site.middleware.enabled) {
 					addMiddleware({
-						entrypoint: resolveEntry('@c15t/astro/middleware'),
+						entrypoint: resolveEntry('@inth/astro/middleware'),
 						order: 'pre',
 					});
 				}
@@ -1126,14 +1126,14 @@ export const c15t = function c15t(
 
 				if (injectsRoute(site)) {
 					injectRoute({
-						entrypoint: resolveEntry('@c15t/astro/api'),
+						entrypoint: resolveEntry('@inth/astro/api'),
 						pattern: `${site.routePrefix}/[...path]`,
 						prerender: routeIsPrerendered(site, Boolean(config?.adapter)),
 					});
 				}
 			},
 		},
-		name: '@c15t/astro',
+		name: '@inth/astro',
 	};
 };
 

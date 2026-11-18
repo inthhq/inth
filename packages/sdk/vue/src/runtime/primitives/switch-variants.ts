@@ -5,9 +5,9 @@
  * the switch rules through the explicit stylesheet import below instead of
  * the aggregated stylesheet; the class map itself carries no CSS.
  */
-import styles from '@c15t/ui/styles/components/switch';
+import styles from '@inth/sdk/ui/styles/components/switch';
 
-import '@c15t/ui/styles/components/switch.css';
+import '@inth/sdk/ui/styles/components/switch.css';
 
 const withClass = (base: string, options?: { class?: string }) =>
 	[base, options?.class].filter(Boolean).join(' ');

@@ -13,15 +13,15 @@
  * as `//init`, a protocol-relative URL.
  *
  * @param adapter - The package name the error starts with, such as
- * `@c15t/nextjs`.
+ * `@inth/nextjs`.
  * @param routePrefix - The configured prefix.
  * @returns The prefix without trailing slashes, such as `/api/c15t`.
  * @throws {TypeError} When the prefix is not a string that starts with one
  * `/`, or is `/` itself.
  * @example
  * ```ts
- * normalizeRoutePrefix('@c15t/nextjs', '/api/c15t/'); // '/api/c15t'
- * normalizeRoutePrefix('@c15t/nextjs', '/'); // throws
+ * normalizeRoutePrefix('@inth/nextjs', '/api/c15t/'); // '/api/c15t'
+ * normalizeRoutePrefix('@inth/nextjs', '/'); // throws
  * ```
  */
 export const normalizeRoutePrefix = function normalizeRoutePrefix(

@@ -3,7 +3,7 @@ import {
 	recipeRejects,
 	recipeRenders,
 } from '@c15t/conformance/play/docs-recipes';
-import { ConsentBanner } from '@c15t/svelte';
+import { ConsentBanner } from '@inth/svelte';
 import type { Meta, StoryObj } from '@storybook/svelte-vite';
 
 import BottomBar from './docs-recipes/bottom-bar.svelte';

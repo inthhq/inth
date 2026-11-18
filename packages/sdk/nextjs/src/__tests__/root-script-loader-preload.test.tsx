@@ -7,8 +7,8 @@
  * commits and no effect runs: the module loads only if the root's render
  * asked for it.
  */
-import type * as ScriptLoaderModule from '@c15t/core/modules/script-loader';
-import type { Script } from '@c15t/core/modules/script-loader';
+import type * as ScriptLoaderModule from '@inth/sdk/modules/script-loader';
+import type { Script } from '@inth/sdk/modules/script-loader';
 import { createRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';
 import { afterEach, describe, expect, test, vi } from 'vitest';
@@ -26,7 +26,7 @@ const OFFLINE_CONFIG = { mode: testing() };
 const loads = vi.hoisted(() => ({ created: 0, evaluated: 0 }));
 
 // oxlint-disable-next-line anti-slop/no-module-mocking -- The property under test is when this module loads; counting its evaluation is the only view of that from a test.
-vi.mock('@c15t/core/modules/script-loader', async (importOriginal) => {
+vi.mock('@inth/sdk/modules/script-loader', async (importOriginal) => {
 	loads.evaluated += 1;
 	const module = await importOriginal<typeof ScriptLoaderModule>();
 	return {

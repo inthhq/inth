@@ -1,6 +1,6 @@
 'use client';
 
-import type { PromptPosition, PromptVariant } from '@c15t/core';
+import type { PromptPosition, PromptVariant } from '@inth/sdk/engine';
 import { createContext, useContext } from 'react';
 
 /**

@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/iab",
+	"name": "@inth/sdk-iab",
 	"version": "3.2.0-canary.0",
 	"description": "IAB TCF CMP addon for c15t (TCF 2.4). Generates TC Strings and GPP strings, loads the Global Vendor List (GVL) and collects consent for programmatic advertising.",
 	"keywords": [
@@ -68,9 +68,9 @@
 		"test:watch": "vitest"
 	},
 	"dependencies": {
-		"@c15t/core": "workspace:*",
-		"@c15t/schema": "workspace:*",
-		"@iabtechlabtcf/core": "^1.5.22"
+		"@iabtechlabtcf/core": "^1.5.22",
+		"@inth/sdk-core": "workspace:*",
+		"@inth/sdk-schema": "workspace:*"
 	},
 	"devDependencies": {
 		"@c15t/conformance": "workspace:*",

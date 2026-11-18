@@ -1,7 +1,7 @@
 'use client';
 
-import { setupFocusTrap } from '@c15t/ui/utils/dom';
-import type { FocusTrapOptions } from '@c15t/ui/utils/dom';
+import { setupFocusTrap } from '@inth/sdk/ui/utils/dom';
+import type { FocusTrapOptions } from '@inth/sdk/ui/utils/dom';
 import { useEffect } from 'react';
 import type { RefObject } from 'react';
 

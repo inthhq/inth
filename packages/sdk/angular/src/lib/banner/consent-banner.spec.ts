@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { EARLY_CONSENT_TAP_SCRIPT } from '@c15t/core/surface-actions';
+import { EARLY_CONSENT_TAP_SCRIPT } from '@inth/sdk/surface-actions';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { ConsentRoot } from '../../../consent-root/src/consent-root';
@@ -94,7 +94,7 @@ describe('<c15t-consent-banner> lifecycle', () => {
 		expect(byTestId('consent-banner-root')).not.toBeNull();
 		await consent.saveConsents('all');
 		fixture.detectChanges();
-		// No exit fade holding the banner's area, as with @c15t/react.
+		// No exit fade holding the banner's area, as with @inth/react.
 		expect(byTestId('consent-banner-root')).toBeNull();
 	});
 

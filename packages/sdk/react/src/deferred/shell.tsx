@@ -10,15 +10,15 @@
  * records taps and hides it.
  *
  * Used by adapters whose server render leaves `ConsentBootData` in the
- * HTML, such as `ConsentRoot` in `c15t/next`.
+ * HTML, such as `ConsentRoot` in `@inth/nextjs`.
  *
  * @packageDocumentation
  * @internal
  */
 
-import type { SaveResult, SaveUISource } from '@c15t/core';
-import type { Script } from '@c15t/core/modules/script-loader';
-import type { RuntimePrefetch } from '@c15t/core/runtime';
+import type { SaveResult, SaveUISource } from '@inth/sdk/engine';
+import type { Script } from '@inth/sdk/modules/script-loader';
+import type { RuntimePrefetch } from '@inth/sdk/runtime';
 import {
 	changedPlainScripts,
 	obsoletePlainScripts,
@@ -26,8 +26,8 @@ import {
 	claimPlainScripts,
 	releasePlainScripts,
 	releaseServerStartedScripts,
-} from '@c15t/core/surface-actions/plain-scripts';
-import { applyThemeSlots } from '@c15t/ui/utils/theme-slots';
+} from '@inth/sdk/surface-actions/plain-scripts';
+import { applyThemeSlots } from '@inth/sdk/ui/utils/theme-slots';
 import type { ReactNode } from 'react';
 import {
 	Suspense,

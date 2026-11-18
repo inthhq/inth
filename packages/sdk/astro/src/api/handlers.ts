@@ -1,7 +1,7 @@
 /**
  * Route handlers for `${routePrefix}/init` and `${routePrefix}/manifest`.
  *
- * The routes themselves live in `@c15t/core/server`
+ * The routes themselves live in `@inth/sdk/server`
  * (`createConsentRouteHandler`), shared with the Next.js, Nuxt, SvelteKit
  * and TanStack Start adapters. This module mounts them for Astro: it maps
  * the integration's resolved options onto the handler, applies the
@@ -9,9 +9,9 @@
  * `waitUntil` from `locals`.
  */
 
-import { createConsentRouteHandler, readWaitUntil } from '@c15t/core/server';
-import type { ManifestFetch } from '@c15t/core/server';
-import { extractConsentRequestInputs } from '@c15t/schema/types';
+import { extractConsentRequestInputs } from '@inth/sdk/schema/types';
+import { createConsentRouteHandler, readWaitUntil } from '@inth/sdk/server';
+import type { ManifestFetch } from '@inth/sdk/server';
 
 import type { C15tResolvedOptions } from '../types';
 import { resolveManifestSourceFrom } from './manifest-init';
@@ -115,7 +115,7 @@ export const resolveManifestSourceUrl = function resolveManifestSourceUrl(
  * // src/pages/api/c15t/[...path].ts, with routePrefix: false and
  * // mode: manifest({ resolve: 'browser', manifestUrl: '/api/c15t/manifest' })
  * import options from 'virtual:c15t/options';
- * import { createConsentRouteHandlers } from 'c15t/astro/server';
+ * import { createConsentRouteHandlers } from '@inth/astro/server';
  *
  * const handlers = createConsentRouteHandlers({ options });
  * export const GET = ({ locals, request }) => handlers.GET(request, { locals });
@@ -126,7 +126,7 @@ export const createConsentRouteHandlers = function createConsentRouteHandlers(
 ) {
 	const { mode, i18n } = handlerOptions.options;
 	const handle = createConsentRouteHandler({
-		adapter: '@c15t/astro',
+		adapter: '@inth/astro',
 		fetch: handlerOptions.fetch,
 		fetchGvl: handlerOptions.fetchGvl,
 		manifest: mode.type === 'manifest' ? mode.snapshot : undefined,

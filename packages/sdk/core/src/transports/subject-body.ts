@@ -25,8 +25,11 @@
  * complete granted-or-denied map with one confirmation time, so the backend
  * stores the vendor decision without knowing the vendor list.
  */
-import { appendJourneyParams } from '@c15t/schema/types';
-import type { SubjectChoiceWire, VendorChoiceWire } from '@c15t/schema/types';
+import { appendJourneyParams } from '@inth/sdk-schema/types';
+import type {
+	SubjectChoiceWire,
+	VendorChoiceWire,
+} from '@inth/sdk-schema/types';
 
 import { OPTIONAL_CONSENT_CATEGORIES } from '../consent-record/types';
 import type {

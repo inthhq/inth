@@ -20,8 +20,8 @@
 </script>
 
 <script lang="ts">
-	import type { LegalLinks } from '@c15t/core';
-	import type { ConsentRuntime } from '@c15t/core/runtime';
+	import type { LegalLinks } from '@inth/sdk/engine';
+	import type { ConsentRuntime } from '@inth/sdk/runtime';
 	// The dialog itself, not the root's `ConsentDialog`, which would import
 	// it only once the dialog shows: this island is already loaded on
 	// demand, so the dialog arrives in the island's own download. The
@@ -30,12 +30,12 @@
 	import {
 		ConsentDialogPanel,
 		ConsentRuntimeProvider,
-	} from '@c15t/svelte/dialog-panel';
+	} from '@inth/svelte/dialog-panel';
 	import type { Component } from 'svelte';
 
 	// The injected stylesheet covers the banner and the dialog. The Svelte
 	// primitives the dialog renders need these rules too.
-	import '@c15t/ui/styles/primitives.css';
+	import '@inth/sdk/ui/styles/primitives.css';
 
 	let {
 		options,

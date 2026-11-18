@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { policyRulePresets, resolvePolicyRules } from '@inth/sdk/engine';
+	import { baseTranslations } from '@inth/sdk/translations/all';
 	import {
 		ConsentBanner,
 		ConsentDialog,
@@ -6,10 +8,8 @@
 		ConsentProvider,
 		IABConsentBanner,
 		IABConsentDialog,
-	} from '@c15t/svelte';
-	import { testing } from '@c15t/svelte/testing';
-	import { baseTranslations } from '@c15t/translations/all';
-	import { policyRulePresets, resolvePolicyRules } from 'c15t';
+	} from '@inth/svelte';
+	import { testing } from '@inth/svelte/testing';
 
 	let { children } = $props();
 	const rules = [policyRulePresets.europeOptIn()];

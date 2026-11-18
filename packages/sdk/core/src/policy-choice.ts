@@ -3,7 +3,7 @@
  * the selection a save confirms. Pure, and free of the policy resolution
  * code in `./policy.ts`, which re-exports them.
  */
-import type { ResolvedPolicyRule } from '@c15t/schema/types';
+import type { ResolvedPolicyRule } from '@inth/sdk-schema/types';
 
 import type {
 	ExplicitChoice,

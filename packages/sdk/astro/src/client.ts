@@ -1,5 +1,5 @@
 /**
- * `@c15t/astro/client` — the page-level consent client.
+ * `@inth/astro/client` — the page-level consent client.
  *
  * Astro is an MPA and islands do not share a component tree, so there is
  * nothing for a provider to hang off. Instead the integration injects a
@@ -12,7 +12,7 @@
  * `client.runtime` is set once `client.ready` resolves.
  *
  * ```ts
- * import { getConsentClient } from '@c15t/astro/client';
+ * import { getConsentClient } from '@inth/astro/client';
  *
  * const c15t = getConsentClient();
  * c15t?.subscribe((snapshot) => console.log(snapshot.effectivePermissions));
@@ -24,11 +24,11 @@
  * load.
  */
 
-import type { ConsentSnapshot, Unsubscribe } from '@c15t/core';
+import type { ConsentSnapshot, Unsubscribe } from '@inth/sdk/engine';
 import type {
 	EventDispatcher,
 	RuntimeEventDispatcherOptions,
-} from '@c15t/core/events';
+} from '@inth/sdk/events';
 
 import { preloadDialogChunks } from './browser/dialog-loading';
 import { GLOBAL_KEY, getWindow, readPageNonce } from './browser/page-state';
@@ -108,7 +108,7 @@ type WithEvents = AstroConsentClient & {
  * @returns A dispatcher with `track` and `pageview`.
  * @example
  * ```ts
- * import { getEventDispatcher } from 'c15t/astro/client';
+ * import { getEventDispatcher } from '@inth/astro/client';
  *
  * const events = getEventDispatcher({ pageviews: ['posthog'] });
  * // Fires on the first load and after each ClientRouter navigation.
@@ -193,13 +193,13 @@ export {
 	syncSurfaceVisibility,
 } from './client-engine';
 export type { PageIAB } from './client-engine';
-export type { ConsentRuntime } from '@c15t/core/runtime';
+export type { ConsentRuntime } from '@inth/sdk/runtime';
 export type {
 	EventDispatcher,
 	EventProperties,
 	RuntimeEventDispatcherOptions as GetEventDispatcherOptions,
-} from '@c15t/core/events';
-export type { ResolvedVendor, VendorChoice } from '@c15t/core';
+} from '@inth/sdk/events';
+export type { ResolvedVendor, VendorChoice } from '@inth/sdk/engine';
 export type { ConsentDialogKind } from './ui/adapter';
 export { registerDialogAdapter, registerDialogSurface } from './ui/adapter';
 export { registerDialogStyles } from './browser/dialog-styles';

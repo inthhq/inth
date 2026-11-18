@@ -1,4 +1,4 @@
-import { ConsentGate } from '@c15t/nextjs';
+import { ConsentGate } from '@inth/nextjs';
 
 /** Path of the stub's counted embed document. */
 export const GATED_EMBED_PATH = '/api/c15t/__compat/embed';

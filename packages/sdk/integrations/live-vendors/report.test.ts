@@ -110,14 +110,14 @@ describe('buildMonitorIssueBody', () => {
 		const body = buildMonitorIssueBody(result, makeReport([result]));
 
 		expect(body).toContain('`microsoft-clarity`');
-		expect(body).toContain('@c15t/integrations/microsoft-clarity');
+		expect(body).toContain('@inth/integrations/microsoft-clarity');
 		expect(body).toContain('**Failed phase(s)**: load');
 		expect(body).toContain('https://www.clarity.ms/tag/c15tfake00');
 		expect(body).toContain('HTTP 500');
 		expect(body).toContain('abc1234');
 		expect(body).toContain('https://github.com/c15t/c15t/actions/runs/1');
 		expect(body).toContain(
-			'bun run --filter @c15t/integrations test:live-vendors -- --vendor microsoft-clarity'
+			'bun run --filter @inth/integrations test:live-vendors -- --vendor microsoft-clarity'
 		);
 		expect(body).toContain('Console errors');
 	});

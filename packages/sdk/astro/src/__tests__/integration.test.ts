@@ -13,7 +13,7 @@ import { parse } from '@babel/parser';
 import {
 	buildConsentManifestFromConfig,
 	policyRulePresets,
-} from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { buildInlineCodeHashes } from '../csp';
@@ -126,17 +126,17 @@ const runDone = async function runDone(
 };
 
 describe('createOwnEntryResolver', () => {
-	it('resolves an entry point to a file, for sites that cannot see @c15t/astro', () => {
-		// Under pnpm, a site that installed `c15t` has no `@c15t/astro` at its
+	it('resolves an entry point to a file, for sites that cannot see @inth/astro', () => {
+		// Under pnpm, a site that installed `c15t` has no `@inth/astro` at its
 		// root, so Astro could not resolve the bare specifier from there.
-		const path = resolveOwnEntry('@c15t/astro/middleware');
+		const path = resolveOwnEntry('@inth/astro/middleware');
 		expect(isAbsolute(path)).toBe(true);
 		expect(existsSync(path)).toBe(true);
 	});
 
 	it('keeps a specifier it cannot resolve', () => {
-		expect(resolveOwnEntry('@c15t/astro/not-an-entry')).toBe(
-			'@c15t/astro/not-an-entry'
+		expect(resolveOwnEntry('@inth/astro/not-an-entry')).toBe(
+			'@inth/astro/not-an-entry'
 		);
 	});
 });
@@ -271,7 +271,7 @@ describe('resolveOptions', () => {
 		expect(calls.logger.warn).toHaveBeenCalledWith(
 			expect.stringContaining('during dev (/manifest responded 503')
 		);
-		expect(calls.logger.warn.mock.calls[0]?.[0]).not.toContain('@c15t/astro');
+		expect(calls.logger.warn.mock.calls[0]?.[0]).not.toContain('@inth/astro');
 		expect(serverOptionsSource(calls)).not.toContain('"schemaVersion"');
 	});
 
@@ -304,7 +304,7 @@ describe('resolveOptions', () => {
 				projectUrl: 'https://consent.example.com',
 			})
 		).rejects.toThrow(
-			"@c15t/astro: could not fetch the consent manifest from https://consent.example.com/manifest during the build (/manifest responded 503 ). Set `C15T_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to deploy with runtime fetching."
+			"@inth/astro: could not fetch the consent manifest from https://consent.example.com/manifest during the build (/manifest responded 503 ). Set `C15T_ON_BUILD_ERROR=runtime` (or `onBuildError: 'runtime'`) to deploy with runtime fetching."
 		);
 	});
 
@@ -484,7 +484,7 @@ describe('resolveOptions', () => {
 
 	it.each(['/', '//'])('rejects a routePrefix of %s', (routePrefix) => {
 		expect(() => resolveOptions({ mode: testingMode(), routePrefix })).toThrow(
-			"@c15t/astro: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'."
+			"@inth/astro: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/c15t'."
 		);
 	});
 
@@ -543,7 +543,7 @@ describe('resolveOptions', () => {
 		expect(() =>
 			resolveOptions({ mode: transport as unknown as C15tAstroOptions['mode'] })
 		).toThrowError(
-			/`mode` must be manifest\(\) or hosted\(\) from c15t\/astro, or testing\(\)/u
+			/`mode` must be manifest\(\) or hosted\(\) from @inth\/astro, or testing\(\)/u
 		);
 	});
 
@@ -766,7 +766,7 @@ describe('astro:config:setup', () => {
 			projectUrl: '/api/c15t',
 		});
 		expect(calls.addMiddleware).toHaveBeenCalledWith({
-			entrypoint: resolveOwnEntry('@c15t/astro/middleware'),
+			entrypoint: resolveOwnEntry('@inth/astro/middleware'),
 			order: 'pre',
 		});
 	});
@@ -783,7 +783,7 @@ describe('astro:config:setup', () => {
 		// It lands ahead of a site's Tailwind stylesheet, and layers rank by
 		// first mention. Declaring `components` alone would rank it below
 		// `base`, where preflight strips the banner's padding and borders.
-		const css = readFileSync(resolveOwnEntry('@c15t/astro/styles.css'), 'utf8');
+		const css = readFileSync(resolveOwnEntry('@inth/astro/styles.css'), 'utf8');
 		const firstStatement = css.replace(/\/\*[\s\S]*?\*\//gu, '').trim();
 
 		expect(firstStatement.split('\n')[0]).toBe(
@@ -801,7 +801,7 @@ describe('astro:config:setup', () => {
 		).toBe(false);
 		const [, boot] = calls.injectScript.mock.calls[0] as [string, string];
 		expect(boot).toContain(
-			`import iabDialogStyle from ${JSON.stringify(`${resolveOwnEntry('@c15t/ui/styles/sheets/iab-dialog.css')}?url`)};`
+			`import iabDialogStyle from ${JSON.stringify(`${resolveOwnEntry('@inth/sdk/ui/styles/sheets/iab-dialog.css')}?url`)};`
 		);
 		expect(boot).toContain("registerDialogStyles([iabDialogStyle], 'iab');");
 	});
@@ -820,11 +820,14 @@ describe('astro:config:setup', () => {
 	);
 
 	it.each([
-		['react', ['@c15t/ui/styles/sheets/dialog.css']],
-		['vue', ['@c15t/ui/styles/sheets/dialog.css']],
+		['react', ['@inth/sdk/ui/styles/sheets/dialog.css']],
+		['vue', ['@inth/sdk/ui/styles/sheets/dialog.css']],
 		[
 			'svelte',
-			['@c15t/ui/styles/sheets/dialog.css', '@c15t/ui/styles/primitives.css'],
+			[
+				'@inth/sdk/ui/styles/sheets/dialog.css',
+				'@inth/sdk/ui/styles/primitives.css',
+			],
 		],
 	] as const)(
 		'registers the %s dialog stylesheets for the client to link',
@@ -869,7 +872,7 @@ describe('astro:config:setup', () => {
 
 			expect(calls.injectScript).toHaveBeenCalledWith(
 				'page-ssr',
-				`import ${specifier('@c15t/astro/styles.css')};`
+				`import ${specifier('@inth/astro/styles.css')};`
 			);
 			expect(boot).not.toContain('sheets/dialog.css');
 			expect(boot).toContain('primitives.css');
@@ -893,8 +896,8 @@ describe('astro:config:setup', () => {
 			expect(calls.injectScript).toHaveBeenCalledWith(
 				'page-ssr',
 				[
-					`import ${specifier('@c15t/astro/styles.css')};`,
-					`import ${specifier('@c15t/astro/iab/styles.css')};`,
+					`import ${specifier('@inth/astro/styles.css')};`,
+					`import ${specifier('@inth/astro/iab/styles.css')};`,
 				].join('\n')
 			);
 			const [, boot] = calls.injectScript.mock.calls[0] as [string, string];
@@ -925,7 +928,7 @@ describe('astro:config:setup', () => {
 		const [stage, code] = calls.injectScript.mock.calls[0] as [string, string];
 		expect(stage).toBe('page');
 		expect(code).toContain("import options from 'virtual:c15t/options'");
-		expect(code).toContain(`from ${specifier('@c15t/astro/client')}`);
+		expect(code).toContain(`from ${specifier('@inth/astro/client')}`);
 		expect(code).toContain(
 			"startDeferredClient(options, () => import('virtual:c15t/engine'));"
 		);
@@ -937,14 +940,14 @@ describe('astro:config:setup', () => {
 	it('serves the engine as virtual:c15t/engine', async () => {
 		const { calls } = await runSetup({ mode: testingMode() });
 		const engine = engineSource(calls);
-		expect(engine).toContain(`from ${specifier('@c15t/astro/client')};`);
+		expect(engine).toContain(`from ${specifier('@inth/astro/client')};`);
 		expect(engine).toContain('export { boot };');
 	});
 
 	it.each([
-		['svelte', '@c15t/astro/ui/svelte', 'panel-surface.svelte'],
-		['react', '@c15t/astro/ui/react', 'panel-surface.tsx'],
-		['vue', '@c15t/astro/ui/vue', 'panel-surface.vue'],
+		['svelte', '@inth/astro/ui/svelte', 'panel-surface.svelte'],
+		['react', '@inth/astro/ui/react', 'panel-surface.tsx'],
+		['vue', '@inth/astro/ui/vue', 'panel-surface.vue'],
 	] as const)(
 		'registers only the %s adapter and island',
 		async (ui, adapterModule, surfaceFile) => {
@@ -954,7 +957,7 @@ describe('astro:config:setup', () => {
 			expect(code).toContain(`registerDialogAdapter(${JSON.stringify(ui)}`);
 			expect(code).toContain(`import(${specifier(adapterModule)})`);
 			expect(code).toContain(
-				`import(${specifier(`@c15t/astro/islands/${surfaceFile}`)})`
+				`import(${specifier(`@inth/astro/islands/${surfaceFile}`)})`
 			);
 
 			// The point of injecting these: a build must never see a specifier
@@ -962,7 +965,7 @@ describe('astro:config:setup', () => {
 			for (const other of ['svelte', 'react', 'vue'].filter(
 				(name) => name !== ui
 			)) {
-				expect(code).not.toContain(resolveOwnEntry(`@c15t/astro/ui/${other}`));
+				expect(code).not.toContain(resolveOwnEntry(`@inth/astro/ui/${other}`));
 			}
 		}
 	);
@@ -996,7 +999,7 @@ describe('astro:config:setup', () => {
 			const { calls } = await runSetup(options, config);
 			const code = engineSource(calls);
 			expect(code).toContain(
-				`registerTransport, ${transport} } from ${specifier('@c15t/astro/client')};`
+				`registerTransport, ${transport} } from ${specifier('@inth/astro/client')};`
 			);
 			expect(code).toContain(`registerTransport(${transport});`);
 			const [, page] = calls.injectScript.mock.calls[0] as [string, string];
@@ -1007,14 +1010,14 @@ describe('astro:config:setup', () => {
 	it('keeps both island specifiers behind import()', async () => {
 		const { calls } = await runSetup({ mode: testingMode(), ui: 'react' });
 		const [, code] = calls.injectScript.mock.calls[0] as [string, string];
-		expect(code).not.toMatch(/^import\s[^;]*@c15t\/astro\/(?:ui|islands)\//mu);
+		expect(code).not.toMatch(/^import\s[^;]*@inth\/astro\/(?:ui|islands)\//mu);
 	});
 
 	it('loads the script loader on demand for a site without scripts', async () => {
 		const { calls } = await runSetup({ mode: testingMode() });
 		const code = engineSource(calls);
-		expect(code).not.toContain('@c15t/core/modules/script-loader');
-		expect(code).not.toContain('@c15t/core/modules/network-blocker');
+		expect(code).not.toContain('@inth/sdk/modules/script-loader');
+		expect(code).not.toContain('@inth/sdk/modules/network-blocker');
 		expect(code).not.toContain('registerRuntimeModules({');
 	});
 
@@ -1030,17 +1033,17 @@ describe('astro:config:setup', () => {
 		});
 		const code = engineSource(calls);
 		expect(code).toContain(
-			`import { createScriptLoader } from ${specifier('@c15t/core/modules/script-loader')};`
+			`import { createScriptLoader } from ${specifier('@inth/sdk/modules/script-loader')};`
 		);
 		expect(code).toContain(
-			`import { createNetworkBlocker } from ${specifier('@c15t/core/modules/network-blocker')};`
+			`import { createNetworkBlocker } from ${specifier('@inth/sdk/modules/network-blocker')};`
 		);
 		expect(code).toContain(
 			'registerRuntimeModules({ createScriptLoader, createNetworkBlocker });'
 		);
 		// The first load carries neither.
 		const [, page] = calls.injectScript.mock.calls[0] as [string, string];
-		expect(page).not.toContain('@c15t/core/modules/');
+		expect(page).not.toContain('@inth/sdk/modules/');
 	});
 
 	it.each([
@@ -1050,12 +1053,12 @@ describe('astro:config:setup', () => {
 	] as const)('ships no IAB wiring with %s', async (_label, iabOptions) => {
 		// The Nuxt module once mounted the CMP for a site that never set `iab`.
 		// Here a site without it must not even reach the mount or the
-		// `import()` that fetches `@c15t/iab`.
+		// `import()` that fetches `@inth/sdk/iab`.
 		const { calls } = await runSetup({ mode: testingMode(), ...iabOptions });
 		const [, page] = calls.injectScript.mock.calls[0] as [string, string];
 		const code = `${page}\n${engineSource(calls)}`;
 		expect(code).not.toContain('registerIAB(');
-		expect(code).not.toContain(resolveOwnEntry('@c15t/iab'));
+		expect(code).not.toContain(resolveOwnEntry('@inth/sdk/iab'));
 		expect(code).not.toContain('mountRuntimeIAB');
 	});
 
@@ -1066,17 +1069,19 @@ describe('astro:config:setup', () => {
 		});
 		const code = engineSource(calls);
 		expect(code).toContain(
-			`import { mountRuntimeIAB } from ${specifier('@c15t/core/runtime/on-demand')};`
+			`import { mountRuntimeIAB } from ${specifier('@inth/sdk/runtime/on-demand')};`
 		);
 		expect(code).toContain(
-			`registerIAB({ ...createLazyIABFactory(() => import(${specifier('@c15t/iab')})), mount: mountRuntimeIAB });`
+			`registerIAB({ ...createLazyIABFactory(() => import(${specifier('@inth/sdk/iab')})), mount: mountRuntimeIAB });`
 		);
-		// `@c15t/iab` stays behind `import()`.
+		// `@inth/sdk/iab` stays behind `import()`.
 		const staticImports = code
 			.split('\n')
 			.filter((line) => line.startsWith('import '));
 		expect(
-			staticImports.some((line) => line.includes(resolveOwnEntry('@c15t/iab')))
+			staticImports.some((line) =>
+				line.includes(resolveOwnEntry('@inth/sdk/iab'))
+			)
 		).toBe(false);
 	});
 
@@ -1092,9 +1097,9 @@ describe('astro:config:setup', () => {
 		// Its blocker rules are not known at build time: on demand, imported
 		// on its own so the boot chunk names no other module's chunk.
 		expect(code).toContain(
-			`import { networkBlockerOnDemand as createNetworkBlocker } from ${specifier('@c15t/core/runtime/on-demand-factories')};`
+			`import { networkBlockerOnDemand as createNetworkBlocker } from ${specifier('@inth/sdk/runtime/on-demand-factories')};`
 		);
-		expect(code).not.toContain('@c15t/core/modules/network-blocker');
+		expect(code).not.toContain('@inth/sdk/modules/network-blocker');
 	});
 
 	it('threads a client entrypoint into the boot script', async () => {
@@ -1225,7 +1230,7 @@ describe('astro:config:setup', () => {
 			'c15t:options',
 			'c15t:engine',
 			'c15t:class-maps-without-css',
-			'@c15t/vue',
+			'@inth/vue',
 		]);
 
 		const withSvelte = await runSetup({ mode: testingMode() });
@@ -1247,7 +1252,7 @@ describe('astro:config:setup', () => {
 		});
 		expect(calls.injectRoute).toHaveBeenCalledTimes(1);
 		expect(calls.injectRoute).toHaveBeenCalledWith({
-			entrypoint: resolveOwnEntry('@c15t/astro/api'),
+			entrypoint: resolveOwnEntry('@inth/astro/api'),
 			pattern: '/consent/[...path]',
 			prerender: false,
 		});
@@ -1325,7 +1330,7 @@ describe('astro:config:done', () => {
 		await done();
 		expect(done.injectTypes).toHaveBeenCalledWith({
 			content: expect.stringMatching(
-				/c15t: import\('(?:c15t\/astro|@c15t\/astro)'\)\.C15tLocals;/u
+				/c15t: import\('(?:@inth\/astro|@inth\/astro)'\)\.C15tLocals;/u
 			),
 			filename: 'locals.d.ts',
 		});
@@ -1374,7 +1379,7 @@ describe('astro:config:done', () => {
 		const run = await runDone({ mode: testingMode(), ui: 'react' }, []);
 		await expect(run()).rejects.toThrow();
 		expect(run.logger.error).toHaveBeenCalledWith(
-			expect.stringContaining('@astrojs/react, @c15t/react, react, react-dom')
+			expect.stringContaining('@astrojs/react, @inth/react, react, react-dom')
 		);
 	});
 
@@ -1418,7 +1423,7 @@ describe('astro:config:done', () => {
 		);
 		const [, code] = calls.injectScript.mock.calls[0] as [string, string];
 		expect(code).toContain('registerDialogAdapter("react"');
-		expect(code).not.toContain(resolveOwnEntry('@c15t/astro/ui/svelte'));
+		expect(code).not.toContain(resolveOwnEntry('@inth/astro/ui/svelte'));
 
 		const explicit = await runSetup(
 			{ mode: testingMode(), ui: 'svelte' },

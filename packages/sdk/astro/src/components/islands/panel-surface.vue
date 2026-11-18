@@ -11,7 +11,7 @@
 	`start()`/`dispose()` to the owner.
 -->
 <script setup lang="ts">
-import ConsentManager from '@c15t/vue/runtime/components/consent-manager.vue';
+import ConsentManager from '@inth/vue/runtime/components/consent-manager.vue';
 import { defineAsyncComponent } from 'vue';
 
 withDefaults(

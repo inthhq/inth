@@ -6,7 +6,7 @@
  * them. The runtime loads this module, through
  * {@link ./experiment-assignment}, when the `experiment` option is set.
  */
-import type { ResolvedPolicyRule } from '@c15t/schema/types';
+import type { ResolvedPolicyRule } from '@inth/sdk-schema/types';
 
 import {
 	actionAppearanceFromTheme,
@@ -139,7 +139,7 @@ export const describeRejectedArms = function describeRejectedArms(
  *
  * @example
  * ```ts
- * import { validateExperiment } from 'c15t/experiment';
+ * import { validateExperiment } from '@inth/sdk/experiment';
  *
  * test('banner-shape arms are compliant under the EU policy', () => {
  *   validateExperiment(experiment, euPolicy, { presentation });

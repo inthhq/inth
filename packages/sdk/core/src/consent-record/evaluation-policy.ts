@@ -10,7 +10,7 @@
  * @internal
  */
 
-import { compareCanonical } from '@c15t/schema/types';
+import { compareCanonical } from '@inth/sdk-schema/types';
 
 import type {
 	EvaluationPolicy,

@@ -1,6 +1,6 @@
 <!-- #region docs:iab-surfaces title="src/IabSurfaces.vue" -->
 <script setup lang="ts">
-import { IABConsentBanner, IABConsentDialog } from 'c15t/vue/vue-plugin';
+import { IABConsentBanner, IABConsentDialog } from '@inth/vue/vue-plugin';
 </script>
 
 <template>

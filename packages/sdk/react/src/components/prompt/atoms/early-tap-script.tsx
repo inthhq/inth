@@ -3,7 +3,7 @@
 import {
 	EARLY_CONSENT_TAP_SCRIPT,
 	replayEarlyConsentTaps,
-} from '@c15t/core/surface-actions';
+} from '@inth/sdk/surface-actions';
 import {
 	useContext,
 	useEffect,
@@ -33,7 +33,7 @@ const useBrowserLayoutEffect =
  * The inline script records an accept, reject, dismiss or customize tap in
  * that gap and hides the banner. Once this component mounts, the banner's
  * own handlers work: it stops the script and records the tap when the
- * runtime has started. See `@c15t/core/surface-actions`.
+ * runtime has started. See `@inth/sdk/surface-actions`.
  *
  * The script is in the server HTML. A banner that hydrates keeps it, inert
  * once claimed, so hydration changes nothing in the markup. A banner React

@@ -5,7 +5,7 @@
  * Every runtime here shares one document's cookies and localStorage, the
  * way two tabs of one site share them.
  */
-import { writePolicyResolutionWire } from '@c15t/schema/types';
+import { writePolicyResolutionWire } from '@inth/sdk-schema/types';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 import {

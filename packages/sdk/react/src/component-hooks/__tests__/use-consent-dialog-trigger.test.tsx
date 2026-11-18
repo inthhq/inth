@@ -1,4 +1,4 @@
-import type { ConsentKernel, KernelActiveUI } from '@c15t/core';
+import type { ConsentKernel, KernelActiveUI } from '@inth/sdk/engine';
 import { useContext } from 'react';
 import { describe, expect, test, vi } from 'vitest';
 import { renderHook } from 'vitest-browser-react';

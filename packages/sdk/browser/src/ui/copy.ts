@@ -1,7 +1,10 @@
-import { deepMergeTranslations, defaultTranslationConfig } from '@c15t/core';
-import type { ConsentSnapshot, Translations } from '@c15t/core';
-import type { CompleteTranslations } from '@c15t/translations';
-import { getTextDirection } from '@c15t/ui/utils';
+import {
+	deepMergeTranslations,
+	defaultTranslationConfig,
+} from '@inth/sdk-core';
+import type { ConsentSnapshot, Translations } from '@inth/sdk-core';
+import type { CompleteTranslations } from '@inth/sdk-translations';
+import { getTextDirection } from '@inth/sdk-ui/utils';
 
 /** The copy a surface renders from. */
 export interface SurfaceCopy {

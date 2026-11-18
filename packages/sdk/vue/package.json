@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/vue",
+	"name": "@inth/vue",
 	"version": "3.2.0-canary.0",
 	"description": "Vue cookie consent banner and Nuxt cookie consent module for c15t, with a consent dialog and preference center.",
 	"keywords": [
@@ -216,7 +216,7 @@
 	},
 	"scripts": {
 		"build": "nuxt-module-build build",
-		"build:docs": "bun ../../../scripts/generate-package-docs.ts @c15t/vue",
+		"build:docs": "bun ../../../scripts/generate-package-docs.ts @inth/vue",
 		"check-types": "pnpm run check-types:nuxt && pnpm run check-types:vue",
 		"check-types:nuxt": "nuxt typecheck playground",
 		"check-types:vue": "vue-tsc -p tsconfig.vue.json --noEmit",
@@ -227,12 +227,7 @@
 		"test": "vitest run"
 	},
 	"dependencies": {
-		"@c15t/core": "workspace:*",
-		"@c15t/dev-tools": "workspace:*",
-		"@c15t/iab": "workspace:*",
-		"@c15t/schema": "workspace:*",
-		"@c15t/translations": "workspace:*",
-		"@c15t/ui": "workspace:*",
+		"@inth/sdk": "workspace:*",
 		"@nuxt/kit": "^3.0.0 || ^4.0.0",
 		"defu": "^6.1.4",
 		"ufo": "^1.6.1"

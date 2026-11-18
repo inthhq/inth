@@ -1,13 +1,13 @@
+import {
+	gateScripts,
+	initializeGateBridge,
+} from '@c15t/benchmarking/consent-gate-page';
 /**
  * `clientEntrypoint` of the `gate` build: registers the consent gate's two
  * gated scripts, as CookieBench's Astro fixture registers its controlled
  * workload from `src/consent-client.ts`.
  */
-import type { C15tClientOptionsExtension } from '@c15t/astro';
-import {
-	gateScripts,
-	initializeGateBridge,
-} from '@c15t/benchmarking/consent-gate-page';
+import type { C15tClientOptionsExtension } from '@inth/astro';
 
 initializeGateBridge();
 

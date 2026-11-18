@@ -3,7 +3,7 @@
  * Demo page content shared by every variant: design links, live status and
  * the gated video. The consent setup is in `main.ts` and `App.vue`.
  */
-import { useConsentSnapshot } from 'c15t/vue/vue-plugin';
+import { useConsentSnapshot } from '@inth/vue/vue-plugin';
 
 import ConsentDevTools from './ConsentDevTools.vue';
 import ExperimentReadout from './ExperimentReadout.vue';

@@ -1,5 +1,5 @@
 // #region docs:compose-banner title="src/components/cookie-banner.tsx"
-import { ConsentBanner, useTranslations } from 'c15t/tanstack-start';
+import { ConsentBanner, useTranslations } from '@inth/tanstack-start';
 
 import { BrandButton } from './brand-button';
 

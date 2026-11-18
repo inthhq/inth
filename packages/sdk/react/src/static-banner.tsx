@@ -1,8 +1,8 @@
 /**
- * `@c15t/react/static-banner`: the stock banner as HTML, for a build that
+ * `@inth/react/static-banner`: the stock banner as HTML, for a build that
  * puts it in a client-rendered page's `index.html`.
  *
- * `consentManifest()` from `@c15t/core/build` (`c15t/build`) loads this
+ * `consentManifest()` from `@inth/sdk/build` (`@inth/sdk/build`) loads this
  * module in Node during `vite build`. It renders `<ConsentBanner />` the way
  * the client-rendered `ConsentProvider` renders it once the page's `/init`
  * answers: the same stand-in kernel, the same snapshot from the same answer.
@@ -13,7 +13,7 @@
  * @internal
  */
 
-import { snapshotFromPrefetchedInit } from '@c15t/core/runtime/deferred-snapshot';
+import { snapshotFromPrefetchedInit } from '@inth/sdk/runtime/deferred-snapshot';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { ConsentBanner } from './components/prompt';

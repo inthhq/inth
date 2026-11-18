@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Model } from '@c15t/core';
+	import type { Model } from '@inth/sdk/engine';
 
 	import ConsentProvider from '../../lib/components/consent-provider.svelte';
 	import ConsentBanner from '../../lib/components/prompt.svelte';

@@ -6,7 +6,7 @@ declare const process: { env: { NODE_ENV?: string } };
  * Whether this is a production build, for gating development warnings.
  *
  * Bundlers replace the literal `process.env.NODE_ENV` at build time, the
- * same check `@c15t/react` uses, so a production build skips the warnings
+ * same check `@inth/react` uses, so a production build skips the warnings
  * even in the browser, which has no `process`. Reading it through
  * `globalThis.process` hides it from that replacement and the warnings
  * print in production. Without a bundler and without `process`, such as an

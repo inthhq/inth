@@ -10,8 +10,8 @@ import type {
 	PolicyResolution,
 	PolicyResolutionMatched,
 	ResolvedPolicyRule,
-} from '@c15t/schema/types';
-import { safeFallbackPolicyInput } from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
+import { safeFallbackPolicyInput } from '@inth/sdk-schema/types';
 
 import { createEvaluationPolicy } from './consent-record/evaluation-policy';
 import type {

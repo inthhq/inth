@@ -448,7 +448,7 @@ export interface PolicyRulePresets {
  *
  * @example
  * ```ts
- * import { policyRulePresets } from '@c15t/schema';
+ * import { policyRulePresets } from '@inth/sdk-schema';
  *
  * const rules = [
  *   policyRulePresets.europeOptIn(),
@@ -791,7 +791,7 @@ export interface RecommendedPolicyRulesOptions {
  *
  * @example
  * ```ts
- * import { recommendedPolicyRules } from '@c15t/schema';
+ * import { recommendedPolicyRules } from '@inth/sdk-schema';
  *
  * const rules = recommendedPolicyRules({ iab: true });
  * ```

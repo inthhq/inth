@@ -2,7 +2,7 @@
  * The Svelte provider's transport: a backend URL alone is the hosted
  * backend, defaulting to the URL `consentManifest()` read, as Vue's does.
  */
-import { hosted } from '@c15t/core/modes';
+import { hosted } from '@inth/sdk/modes';
 import { afterEach, describe, expect, test } from 'vitest';
 
 import { selectedMode } from '../select-mode';

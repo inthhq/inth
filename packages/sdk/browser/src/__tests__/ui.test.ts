@@ -1,4 +1,4 @@
-import { policyRulePresets } from '@c15t/core';
+import { policyRulePresets } from '@inth/sdk-core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { classes } from '../generated/styles';
@@ -45,7 +45,7 @@ const mount = async function mount(
 			ui: { disableAnimation: true, styles: false, ...ui },
 			...options,
 		},
-		{ mountUI: mountConsentUI, pkg: '@c15t/browser/test' }
+		{ mountUI: mountConsentUI, pkg: '@inth/sdk/test' }
 	);
 	clients.push(client);
 	client.start();

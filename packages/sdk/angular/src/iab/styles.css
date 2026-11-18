@@ -1,11 +1,11 @@
 /**
- * @c15t/angular: IAB TCF stock component styles.
+ * @inth/angular: IAB TCF stock component styles.
  *
- * Import this stylesheet in addition to `@c15t/angular/styles.css` when
+ * Import this stylesheet in addition to `@inth/angular/styles.css` when
  * using the stock IAB consent UI with `styles: false`.
  *
  * Usage (src/styles.css):
- *   @import "@c15t/angular/styles.css";
- *   @import "@c15t/angular/iab/styles.css";
+ *   @import "@inth/angular/styles.css";
+ *   @import "@inth/angular/iab/styles.css";
  */
-@import '@c15t/ui/iab/styles.css';
+@import '@inth/sdk/ui/iab/styles.css';

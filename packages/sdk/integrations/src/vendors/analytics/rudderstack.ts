@@ -1,4 +1,4 @@
-import type { Script } from '@c15t/core';
+import type { Script } from '@inth/sdk/engine';
 
 import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
@@ -538,7 +538,7 @@ const isHttpsUrl = function isHttpsUrl(value: string): boolean {
  *
  * @example
  * ```ts
- * import { rudderstack } from '@c15t/integrations/rudderstack';
+ * import { rudderstack } from '@inth/integrations/rudderstack';
  *
  * rudderstack({
  * 	writeKey: 'WRITE_KEY',

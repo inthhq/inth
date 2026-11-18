@@ -1,6 +1,6 @@
 'use client';
 
-import { ConsentBanner } from 'c15t/next';
+import { ConsentBanner } from '@inth/nextjs';
 import { usePathname, useRouter } from 'next/navigation';
 
 export const PRIVACY_SETTINGS_PATH = '/account/privacy';

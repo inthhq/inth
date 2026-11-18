@@ -7,11 +7,11 @@
 	 * `ConsentWidgetVendorList` so the cross-framework parity runner sees
 	 * identical DOM.
 	 */
-	import type { AllConsentNames, ResolvedVendor } from '@c15t/core';
-	import { defaultTranslationConfig } from '@c15t/core';
-	import switchStyles from '@c15t/ui/styles/components/switch';
-	import vendorListStyles from '@c15t/ui/styles/components/vendor-list';
-	import { resolveTranslations } from '@c15t/ui/utils';
+	import type { AllConsentNames, ResolvedVendor } from '@inth/sdk/engine';
+	import { defaultTranslationConfig } from '@inth/sdk/engine';
+	import switchStyles from '@inth/sdk/ui/styles/components/switch';
+	import vendorListStyles from '@inth/sdk/ui/styles/components/vendor-list';
+	import { resolveTranslations } from '@inth/sdk/ui/utils';
 
 	import { getConsentContext } from '../context.svelte';
 	import { PreferenceItem, Switch } from '../primitives';

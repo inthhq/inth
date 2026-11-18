@@ -279,7 +279,7 @@ try {
 			BENCHMARK_EXPECTED_PACKAGES: expectedPackages.join(','),
 			BENCHMARK_EXPECTED_SUITES: suites.join(','),
 			BENCHMARK_HEAD_DIR: join(report, 'head'),
-			// Result packages, so the Nuxt bench maps to `@c15t/vue`.
+			// Result packages, so the Nuxt bench maps to `@inth/vue`.
 			BENCHMARK_NEW_ON_HEAD: baseMissing
 				.map((name) => expectedPackages[packages.indexOf(name)])
 				.join(','),

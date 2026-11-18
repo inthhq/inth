@@ -42,7 +42,7 @@
       ],
       "env": ["WITH_RSDOCTOR"]
     },
-    "@c15t/core#build": {
+    "@inth/sdk-core#build": {
       "dependsOn": ["^build"],
       "inputs": [
         "$TURBO_DEFAULT$",
@@ -62,7 +62,7 @@
       "outputs": ["dist/**", "dist-types/**", "src/version.ts"],
       "env": ["WITH_RSDOCTOR"]
     },
-    "@c15t/schema#build": {
+    "@inth/sdk-schema#build": {
       "dependsOn": ["^build"],
       "inputs": [
         "$TURBO_DEFAULT$",
@@ -80,7 +80,7 @@
       "outputs": ["dist/**", "dist-types/**"],
       "env": ["WITH_RSDOCTOR"]
     },
-    "@c15t/react#build": {
+    "@inth/react#build": {
       "dependsOn": ["^build"],
       "inputs": [
         "$TURBO_DEFAULT$",
@@ -96,7 +96,7 @@
       "outputs": ["dist/**", "dist-types/**", "src/version.ts"],
       "env": ["WITH_RSDOCTOR"]
     },
-    "@c15t/nextjs#build": {
+    "@inth/nextjs#build": {
       "dependsOn": ["^build"],
       "inputs": [
         "$TURBO_DEFAULT$",
@@ -112,7 +112,7 @@
       "outputs": ["dist/**", "dist-types/**", "src/version.ts"],
       "env": ["WITH_RSDOCTOR"]
     },
-    "@c15t/tanstack-start#build": {
+    "@inth/tanstack-start#build": {
       "dependsOn": ["^build"],
       "inputs": [
         "$TURBO_DEFAULT$",
@@ -188,7 +188,7 @@
         "!readme.json"
       ]
     },
-    "@c15t/svelte#build": {
+    "@inth/svelte#build": {
       "dependsOn": ["^build"],
       "inputs": [
         "$TURBO_DEFAULT$",
@@ -203,7 +203,7 @@
       ],
       "outputs": ["dist/**", "src/lib/version.ts"]
     },
-    "@c15t/vue#build": {
+    "@inth/vue#build": {
       "dependsOn": ["^build"],
       "inputs": [
         "$TURBO_DEFAULT$",
@@ -240,14 +240,14 @@
       "interruptible": true,
       "dependsOn": ["^build"],
       "with": [
-        "@c15t/core#dev",
-        "@c15t/iab#dev",
-        "@c15t/nextjs#dev",
-        "@c15t/react#dev",
-        "@c15t/schema#dev",
-        "@c15t/integrations#dev",
-        "@c15t/translations#dev",
-        "@c15t/ui#dev"
+        "@inth/sdk-core#dev",
+        "@inth/sdk-iab#dev",
+        "@inth/nextjs#dev",
+        "@inth/react#dev",
+        "@inth/sdk-schema#dev",
+        "@inth/integrations#dev",
+        "@inth/sdk-translations#dev",
+        "@inth/sdk-ui#dev"
       ]
     },
     "@c15t/fixture-nuxt#dev": {
@@ -256,10 +256,10 @@
       "interruptible": true,
       "dependsOn": ["^build"],
       "with": [
-        "@c15t/core#dev",
-        "@c15t/schema#dev",
-        "@c15t/translations#dev",
-        "@c15t/ui#dev"
+        "@inth/sdk-core#dev",
+        "@inth/sdk-schema#dev",
+        "@inth/sdk-translations#dev",
+        "@inth/sdk-ui#dev"
       ]
     },
     "@c15t/fixture-tanstack-start#dev": {
@@ -268,12 +268,12 @@
       "interruptible": true,
       "dependsOn": ["^build"],
       "with": [
-        "@c15t/core#dev",
-        "@c15t/react#dev",
-        "@c15t/schema#dev",
-        "@c15t/tanstack-start#dev",
-        "@c15t/translations#dev",
-        "@c15t/ui#dev"
+        "@inth/sdk-core#dev",
+        "@inth/react#dev",
+        "@inth/sdk-schema#dev",
+        "@inth/tanstack-start#dev",
+        "@inth/sdk-translations#dev",
+        "@inth/sdk-ui#dev"
       ]
     },
     "astro-demo#dev": {
@@ -282,13 +282,13 @@
       "interruptible": true,
       "dependsOn": ["^build"],
       "with": [
-        "@c15t/astro#dev",
-        "@c15t/core#dev",
-        "@c15t/iab#dev",
-        "@c15t/schema#dev",
-        "@c15t/svelte#dev",
-        "@c15t/translations#dev",
-        "@c15t/ui#dev"
+        "@inth/astro#dev",
+        "@inth/sdk-core#dev",
+        "@inth/sdk-iab#dev",
+        "@inth/sdk-schema#dev",
+        "@inth/svelte#dev",
+        "@inth/sdk-translations#dev",
+        "@inth/sdk-ui#dev"
       ]
     },
     "sveltekit-demo#dev": {
@@ -297,12 +297,12 @@
       "interruptible": true,
       "dependsOn": ["^build"],
       "with": [
-        "@c15t/core#dev",
-        "@c15t/iab#dev",
-        "@c15t/schema#dev",
-        "@c15t/svelte#dev",
-        "@c15t/translations#dev",
-        "@c15t/ui#dev"
+        "@inth/sdk-core#dev",
+        "@inth/sdk-iab#dev",
+        "@inth/sdk-schema#dev",
+        "@inth/svelte#dev",
+        "@inth/sdk-translations#dev",
+        "@inth/sdk-ui#dev"
       ]
     },
     "@c15t/nextjs-browser-bench#dev": {
@@ -310,12 +310,12 @@
       "persistent": true,
       "interruptible": true,
       "with": [
-        "@c15t/core#dev",
-        "@c15t/nextjs#dev",
-        "@c15t/react#dev",
-        "@c15t/schema#dev",
-        "@c15t/translations#dev",
-        "@c15t/ui#dev"
+        "@inth/sdk-core#dev",
+        "@inth/nextjs#dev",
+        "@inth/react#dev",
+        "@inth/sdk-schema#dev",
+        "@inth/sdk-translations#dev",
+        "@inth/sdk-ui#dev"
       ]
     },
     "@c15t/tanstack-start-browser-bench#dev": {
@@ -323,12 +323,12 @@
       "persistent": true,
       "interruptible": true,
       "with": [
-        "@c15t/core#dev",
-        "@c15t/react#dev",
-        "@c15t/schema#dev",
-        "@c15t/tanstack-start#dev",
-        "@c15t/translations#dev",
-        "@c15t/ui#dev"
+        "@inth/sdk-core#dev",
+        "@inth/react#dev",
+        "@inth/sdk-schema#dev",
+        "@inth/tanstack-start#dev",
+        "@inth/sdk-translations#dev",
+        "@inth/sdk-ui#dev"
       ]
     },
     "@c15t/astro-browser-bench#build": {
@@ -354,11 +354,11 @@
       "interruptible": true,
       "persistent": true,
       "with": [
-        "@c15t/astro#dev",
-        "@c15t/core#dev",
-        "@c15t/schema#dev",
-        "@c15t/svelte#dev",
-        "@c15t/translations#dev"
+        "@inth/astro#dev",
+        "@inth/sdk-core#dev",
+        "@inth/sdk-schema#dev",
+        "@inth/svelte#dev",
+        "@inth/sdk-translations#dev"
       ]
     },
     "@c15t/nuxt-browser-bench#dev": {
@@ -366,10 +366,10 @@
       "persistent": true,
       "interruptible": true,
       "with": [
-        "@c15t/core#dev",
-        "@c15t/schema#dev",
-        "@c15t/translations#dev",
-        "@c15t/vue#dev"
+        "@inth/sdk-core#dev",
+        "@inth/sdk-schema#dev",
+        "@inth/sdk-translations#dev",
+        "@inth/vue#dev"
       ]
     },
     "@c15t/sveltekit-browser-bench#build": {
@@ -390,10 +390,10 @@
       "interruptible": true,
       "persistent": true,
       "with": [
-        "@c15t/core#dev",
-        "@c15t/schema#dev",
-        "@c15t/svelte#dev",
-        "@c15t/translations#dev"
+        "@inth/sdk-core#dev",
+        "@inth/sdk-schema#dev",
+        "@inth/svelte#dev",
+        "@inth/sdk-translations#dev"
       ]
     },
     "@c15t/css-layer-preview#dev": {
@@ -401,12 +401,12 @@
       "persistent": true,
       "interruptible": true,
       "with": [
-        "@c15t/core#dev",
-        "@c15t/nextjs#dev",
-        "@c15t/react#dev",
-        "@c15t/schema#dev",
-        "@c15t/translations#dev",
-        "@c15t/ui#dev"
+        "@inth/sdk-core#dev",
+        "@inth/nextjs#dev",
+        "@inth/react#dev",
+        "@inth/sdk-schema#dev",
+        "@inth/sdk-translations#dev",
+        "@inth/sdk-ui#dev"
       ]
     },
     "@c15t/tw3-css-test#dev": {
@@ -414,12 +414,12 @@
       "persistent": true,
       "interruptible": true,
       "with": [
-        "@c15t/core#dev",
-        "@c15t/nextjs#dev",
-        "@c15t/react#dev",
-        "@c15t/schema#dev",
-        "@c15t/translations#dev",
-        "@c15t/ui#dev"
+        "@inth/sdk-core#dev",
+        "@inth/nextjs#dev",
+        "@inth/react#dev",
+        "@inth/sdk-schema#dev",
+        "@inth/sdk-translations#dev",
+        "@inth/sdk-ui#dev"
       ]
     },
     "@c15t/tw4-css-test#dev": {
@@ -427,12 +427,12 @@
       "persistent": true,
       "interruptible": true,
       "with": [
-        "@c15t/core#dev",
-        "@c15t/nextjs#dev",
-        "@c15t/react#dev",
-        "@c15t/schema#dev",
-        "@c15t/translations#dev",
-        "@c15t/ui#dev"
+        "@inth/sdk-core#dev",
+        "@inth/nextjs#dev",
+        "@inth/react#dev",
+        "@inth/sdk-schema#dev",
+        "@inth/sdk-translations#dev",
+        "@inth/sdk-ui#dev"
       ]
     },
     "@c15t/no-tw-css-test#dev": {
@@ -440,12 +440,12 @@
       "persistent": true,
       "interruptible": true,
       "with": [
-        "@c15t/core#dev",
-        "@c15t/nextjs#dev",
-        "@c15t/react#dev",
-        "@c15t/schema#dev",
-        "@c15t/translations#dev",
-        "@c15t/ui#dev"
+        "@inth/sdk-core#dev",
+        "@inth/nextjs#dev",
+        "@inth/react#dev",
+        "@inth/sdk-schema#dev",
+        "@inth/sdk-translations#dev",
+        "@inth/sdk-ui#dev"
       ]
     },
     "storybook": {
@@ -563,7 +563,7 @@
       ],
       "outputs": []
     },
-    "@c15t/integrations#test": {
+    "@inth/integrations#test": {
       "dependsOn": ["build", "^build", "transit"],
       "outputs": [
         "coverage/coverage-summary.json",
@@ -574,7 +574,7 @@
     "transit": {
       "dependsOn": ["^transit"]
     },
-    "@c15t/integrations#build": {
+    "@inth/integrations#build": {
       "dependsOn": ["^build"],
       "inputs": [
         "$TURBO_DEFAULT$",
@@ -621,8 +621,8 @@
       "dependsOn": ["build", "^build", "transit"],
       "outputs": []
     },
-    "@c15t/dev-tools#test": {
-      "dependsOn": ["build", "^build", "transit", "@c15t/iab#build"],
+    "@inth/sdk-dev-tools#test": {
+      "dependsOn": ["build", "^build", "transit", "@inth/sdk-iab#build"],
       "outputs": []
     },
     "@c15t/benchmarking#test": {

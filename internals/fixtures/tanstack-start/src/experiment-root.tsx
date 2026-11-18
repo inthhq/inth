@@ -1,3 +1,13 @@
+import {
+	ConsentBanner,
+	ConsentDialog,
+	ConsentDialogLink,
+	ConsentRoot,
+} from '@inth/tanstack-start';
+import {
+	consentLoaderOptions,
+	resolveConsent,
+} from '@inth/tanstack-start/server';
 // oxlint-disable no-use-before-define -- TanStack Router's file-route shape: the component reads its own route's loader data.
 /**
  * `src/routes/__root.tsx` with the banner-shape experiment. `vite.config.ts`
@@ -16,16 +26,6 @@ import {
 	Scripts,
 } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
-import {
-	ConsentBanner,
-	ConsentDialog,
-	ConsentDialogLink,
-	ConsentRoot,
-} from 'c15t/tanstack-start';
-import {
-	consentLoaderOptions,
-	resolveConsent,
-} from 'c15t/tanstack-start/server';
 import { useMemo } from 'react';
 
 import {

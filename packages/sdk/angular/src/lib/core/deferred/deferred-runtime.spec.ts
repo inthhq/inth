@@ -1,10 +1,10 @@
-import type { ConsentSnapshot } from '@c15t/core';
+import type { ConsentSnapshot } from '@inth/sdk/engine';
 import {
 	createConsentProviderRuntime,
 	defaultRuntimeModules,
-} from '@c15t/core/runtime';
-import type { ConsentProviderRuntime } from '@c15t/core/runtime/provider';
-import { pendingBootSnapshot } from '@c15t/core/surface-state';
+} from '@inth/sdk/runtime';
+import type { ConsentProviderRuntime } from '@inth/sdk/runtime/provider';
+import { pendingBootSnapshot } from '@inth/sdk/surface-state';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { testLocal } from '../../../__tests__/test-local';

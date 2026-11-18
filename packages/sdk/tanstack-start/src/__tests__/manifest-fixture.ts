@@ -1,5 +1,5 @@
-import type { ConsentManifest } from '@c15t/schema/types';
-import { createConsentManifestPolicyPack } from '@c15t/schema/types';
+import type { ConsentManifest } from '@inth/sdk/schema/types';
+import { createConsentManifestPolicyPack } from '@inth/sdk/schema/types';
 
 /** Shared manifest fixture for the promoted Next.js adapter tests. */
 export const MANIFEST_FIXTURE = {

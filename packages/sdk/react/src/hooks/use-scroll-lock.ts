@@ -1,6 +1,6 @@
 'use client';
 
-import { setupScrollLock } from '@c15t/ui/utils/dom';
+import { setupScrollLock } from '@inth/sdk/ui/utils/dom';
 import { useEffect } from 'react';
 
 /**

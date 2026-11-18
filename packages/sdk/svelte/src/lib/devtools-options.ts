@@ -1,4 +1,4 @@
-import type { DevToolsOptions } from '@c15t/dev-tools';
+import type { DevToolsOptions } from '@inth/sdk/devtools';
 
 /** Props for the kernel-bound Svelte DevTools adapter. */
 export type ConsentDevToolsProps = Omit<

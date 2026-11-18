@@ -1,4 +1,4 @@
-import { CONSENT_REQUEST_HEADER_NAMES } from '@c15t/schema/types';
+import { CONSENT_REQUEST_HEADER_NAMES } from '@inth/sdk/schema/types';
 
 /** The request headers `/init` and the manifest inputs read. */
 export const INIT_HEADER_NAMES = [...CONSENT_REQUEST_HEADER_NAMES] as const;

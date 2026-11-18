@@ -8,8 +8,8 @@
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { manifest as browserManifest } from '@c15t/core/transports/manifest-browser';
-import type { ConsentManifest } from '@c15t/schema/types';
+import { manifest as browserManifest } from '@inth/sdk-core/transports/manifest-browser';
+import type { ConsentManifest } from '@inth/sdk-schema/types';
 import { build } from 'esbuild';
 import { describe, expect, it } from 'vitest';
 
@@ -27,7 +27,7 @@ const buildOutput = {
 	snapshot: builtManifest,
 };
 
-describe('init() from @c15t/browser', () => {
+describe('init() from @inth/sdk', () => {
 	it('throws for a mode name', () => {
 		expect(() =>
 			createConsentClient({
@@ -46,7 +46,7 @@ describe('init() from @c15t/browser', () => {
 				options as unknown as Parameters<typeof createConsentClient>[0]
 			)
 		).toThrow(
-			'@c15t/browser: `projectUrl` is required. Set it to your Inth project URL, or use `mode: testing()` from @c15t/browser/testing in tests.'
+			'@inth/sdk: `projectUrl` is required. Set it to your Inth project URL, or use `mode: testing()` from @inth/sdk/testing in tests.'
 		);
 	});
 
@@ -72,7 +72,7 @@ describe('init() from @c15t/browser', () => {
 	});
 });
 
-describe('manifest() from @c15t/browser', () => {
+describe('manifest() from @inth/sdk', () => {
 	it('uses the snapshot and backend URL the build downloaded', () => {
 		expect(withBuildDefaults({}, buildOutput)).toEqual(buildOutput);
 	});
@@ -135,10 +135,10 @@ const bundle = async function bundle(contents: string): Promise<string> {
 const TESTING_POLICY = 'quebec_opt_in';
 /** The error `testing()` throws in a production build. */
 const TESTING_ERROR = 'is for tests and does not run in production';
-/** An error the manifest resolver throws (`@c15t/schema`). */
+/** An error the manifest resolver throws (`@inth/sdk/schema`). */
 const RESOLVER = 'Unsupported pack field';
 
-describe('first-load JavaScript of @c15t/browser', () => {
+describe('first-load JavaScript of @inth/sdk', () => {
 	it.each([
 		['no mode', "import { init } from './index';\ninit({ projectUrl: '/c' });"],
 		[

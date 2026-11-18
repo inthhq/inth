@@ -18,9 +18,9 @@
  * the dialog's type scale, which put a 14 semibold heading over 16 body copy
  * where the web banner leads with 16 medium over 14.
  *
- * `@c15t/ui` is deliberately not imported. It is not a dependency of this
+ * `@inth/sdk/ui` is deliberately not imported. It is not a dependency of this
  * package, runtime or otherwise, and a parity test is not a reason to give an
- * app a stylesheet it will never load. The same reason keeps `@c15t/core` out
+ * app a stylesheet it will never load. The same reason keeps `@inth/sdk/engine` out
  * of everything but `src/protocol/__tests__`.
  */
 

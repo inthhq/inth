@@ -1,12 +1,12 @@
-import { readHostedMode } from '@c15t/core/runtime/provider';
+import { readHostedMode } from '@inth/sdk/runtime/provider';
+import type { ConsentManifest } from '@inth/sdk/schema/types';
 /**
- * `manifest()` from `c15t/react` defaults to what the build integration
- * downloaded, served as `@c15t/core/generated`. Without a build
+ * `manifest()` from `@inth/react` defaults to what the build integration
+ * downloaded, served as `@inth/sdk/generated`. Without a build
  * integration that module exports `undefined`, so it needs its source
  * passed in. A provider with only `projectUrl` uses the hosted backend.
  */
-import { manifest as browserManifest } from '@c15t/core/transports/manifest-browser';
-import type { ConsentManifest } from '@c15t/schema/types';
+import { manifest as browserManifest } from '@inth/sdk/transports/manifest-browser';
 import { describe, expect, test } from 'vitest';
 
 import { manifest } from '../modes';
@@ -21,7 +21,7 @@ const built: ConsentManifest = {
 };
 const build = { projectUrl: 'https://built.example', snapshot: built };
 
-describe('manifest() from c15t/react', () => {
+describe('manifest() from @inth/react', () => {
 	test('uses the snapshot and backend URL the build downloaded', () => {
 		expect(withBuildDefaults({}, build)).toEqual({
 			projectUrl: 'https://built.example',

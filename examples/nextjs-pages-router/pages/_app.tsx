@@ -4,8 +4,8 @@ import {
 	ConsentDialog,
 	ConsentDialogLink,
 	ConsentRoot,
-} from 'c15t/next';
-import type { ConsentPageProps } from 'c15t/next/pages';
+} from '@inth/nextjs';
+import type { ConsentPageProps } from '@inth/nextjs/pages';
 import type { AppProps } from 'next/app';
 
 import '@/styles/globals.css';

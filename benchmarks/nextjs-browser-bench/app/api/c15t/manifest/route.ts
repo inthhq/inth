@@ -1,4 +1,4 @@
-import { createConsentRoute } from '@c15t/nextjs/api';
+import { createConsentRoute } from '@inth/nextjs/api';
 
 const getBenchManifestUrl = function getBenchManifestUrl() {
 	const token = process.env.C15T_BENCH_COLD_MANIFEST_TOKEN;

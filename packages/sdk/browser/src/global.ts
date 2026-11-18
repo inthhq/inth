@@ -1,5 +1,5 @@
-import { hosted } from '@c15t/core/transports';
-import { manifest } from '@c15t/core/transports/manifest-browser';
+import { hosted } from '@inth/sdk-core/transports';
+import { manifest } from '@inth/sdk-core/transports/manifest-browser';
 
 import type { CreateConsentClientContext } from './client-base';
 import { createGlobalWith } from './global-base';

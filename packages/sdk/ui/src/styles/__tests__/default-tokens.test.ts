@@ -9,7 +9,7 @@
  * the stylesheet without passing a `theme` renders the banner unstyled.
  *
  * These read the built artifacts, so `bun run --cwd packages/sdk/ui build` (or
- * `turbo run build --filter=@c15t/ui`, which `test` depends on) must have run.
+ * `turbo run build --filter=@inth/sdk-ui`, which `test` depends on) must have run.
  */
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -34,7 +34,7 @@ const readEntrypoint = function readEntrypoint(relativePath: string): string {
 
 	if (!existsSync(path)) {
 		throw new Error(
-			`Missing ${path}. Build @c15t/ui first: bun run --cwd packages/sdk/ui build`
+			`Missing ${path}. Build @inth/sdk/ui first: bun run --cwd packages/sdk/ui build`
 		);
 	}
 

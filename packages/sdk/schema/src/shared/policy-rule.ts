@@ -19,7 +19,7 @@ import type { LegacyMaterialCompatibility } from './legacy-material-policy';
  * `collectResolvedPolicyRuleIssues` holds the semantic invariants shared by
  * authored normalization, the client wire reader and the valibot schema.
  *
- * No valibot here so `@c15t/schema/types` consumers can validate without the
+ * No valibot here so `@inth/sdk/schema/types` consumers can validate without the
  * runtime. The valibot mirror lives in `policy-wire-schema.ts`.
  */
 import {

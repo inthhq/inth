@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Dialog, buttonVariants } from '@c15t/svelte';
+	import { Dialog, buttonVariants } from '@inth/svelte';
 
 	const button = buttonVariants();
 

@@ -1,4 +1,4 @@
-import * as iabFirstPaint from '@c15t/ui/styles/sheets/iab-first-paint';
+import * as iabFirstPaint from '@inth/sdk/ui/styles/sheets/iab-first-paint';
 
 import { BANNER_SHEETS } from './first-paint-sheets';
 import type { SurfaceStyleSheet } from './surface-styles';

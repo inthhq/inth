@@ -19,7 +19,7 @@
  *   `enabled: false`, no server state) waits for the engine before it
  *   hydrates, as a statically imported root would.
  */
-import userConfig from '@c15t/nextjs/user-config';
+import userConfig from '@inth/nextjs/user-config';
 import {
 	DeferredConsentShell,
 	canDeferEngine,
@@ -34,12 +34,12 @@ import {
 	startsScriptsWithoutEngine,
 	useConsentBootPlan,
 	whenIABProviderLoads,
-} from '@c15t/react/deferred';
+} from '@inth/react/deferred';
 import type {
 	ConsentBoot,
 	DeferredCommitConfig,
 	Recorded,
-} from '@c15t/react/deferred';
+} from '@inth/react/deferred';
 
 import { engineNow } from '#engine-now';
 
@@ -103,7 +103,7 @@ if (typeof document === 'undefined') {
 
 /**
  * What a banner choice tapped before the engine loads is recorded with, so
- * it needs no engine (see `@c15t/react/deferred`). None when the engine has
+ * it needs no engine (see `@inth/react/deferred`). None when the engine has
  * to record it: persistence off, or a consent source.
  */
 const commitConfig = function commitConfig(
@@ -233,8 +233,8 @@ const ClientConsentRoot = (props: ConsentRootProps) => {
  * @example
  * ```tsx
  * // app/layout.tsx (Server Component)
- * import { ConsentBanner, ConsentDialog, ConsentRoot } from 'c15t/next';
- * import { resolveConsent } from 'c15t/next/server';
+ * import { ConsentBanner, ConsentDialog, ConsentRoot } from '@inth/nextjs';
+ * import { resolveConsent } from '@inth/nextjs/server';
  *
  * export default function RootLayout({ children }) {
  *   return (

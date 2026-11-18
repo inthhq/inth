@@ -299,7 +299,7 @@ export const createPlan = (files: string[], workspaces: Workspace[]): Plan => {
     }
   }
   // Follow the graph from each changed workspace. A web SDK change can reach
-  // @inth/react-native through @c15t/core, but the mobile jobs run only for
+  // @inth/react-native through @inth/sdk/engine, but the mobile jobs run only for
   // mobile changes, so those workspaces are reported and not run.
   const mobileOwners = [...owners].filter((name) =>
     workspaces.some(

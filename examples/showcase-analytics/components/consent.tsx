@@ -1,7 +1,7 @@
 'use client';
 
-import { ConsentBanner, ConsentDialog, ConsentRoot } from 'c15t/next';
-import type { ClearOnRevocationConfig, ConsentRootProps } from 'c15t/next';
+import { ConsentBanner, ConsentDialog, ConsentRoot } from '@inth/nextjs';
+import type { ClearOnRevocationConfig, ConsentRootProps } from '@inth/nextjs';
 import type { ReactNode } from 'react';
 
 import { brandTheme } from '@/lib/consent-theme';

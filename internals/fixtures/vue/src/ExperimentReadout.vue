@@ -3,7 +3,7 @@
  * Demo only: the assigned arm and the events logged under it. Renders
  * only when the plugin has an `experiment` (`?experiment=1`).
  */
-import { useConsentConfig, useExperiment } from 'c15t/vue/vue-plugin';
+import { useConsentConfig, useExperiment } from '@inth/vue/vue-plugin';
 
 import { experimentEvents } from './experiment';
 

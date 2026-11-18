@@ -7,7 +7,7 @@
  * @internal
  */
 
-import type { ConsentSnapshot } from '@c15t/core';
+import type { ConsentSnapshot } from '@inth/sdk/engine';
 
 /** Attribute on the `<script type="application/json">` element. @internal */
 export const CONSENT_BOOT_ATTRIBUTE = 'data-c15t-boot';
@@ -53,7 +53,7 @@ export const readConsentBoot = function readConsentBoot(
 
 /**
  * What a server render's inline scripts leave for its deferred root
- * (`PAGE_RENDER_KEY` in `@c15t/core/runtime/script-server-start`, copied).
+ * (`PAGE_RENDER_KEY` in `@inth/sdk/runtime/script-server-start`, copied).
  * @internal
  */
 export interface PageRender {
@@ -89,7 +89,7 @@ export const pageRender = function pageRender(
 
 /**
  * How many ended render ids the page keeps (`ENDED_RENDERS_LIMIT` in
- * `@c15t/core/runtime/script-server-start`, copied). An evicted id would
+ * `@inth/sdk/runtime/script-server-start`, copied). An evicted id would
  * let that render's late start run, so the bound is far above the renders
  * one page sees; it only stops a page that never reloads from growing the
  * list without end. Each id is a short string.
@@ -99,7 +99,7 @@ const ENDED_RENDERS_LIMIT = 1000;
 /**
  * Ends this document's render for its inline scripts. It records the id
  * among the ended renders (`ENDED_RENDERS_KEY` in
- * `@c15t/core/runtime/script-server-start`), which a newer render's page
+ * `@inth/sdk/runtime/script-server-start`), which a newer render's page
  * object never replaces, so a start script of this render that streams in
  * later installs nothing. It also renames the page object, so a server
  * start still waiting to run, or to insert a script after the page's
@@ -192,7 +192,7 @@ export const canDeferEngineAfterChoice = function canDeferEngineAfterChoice(
 /**
  * Whether the browser's stored records agree, now, with the state the
  * server read: runs the check the server's inline script left
- * (`storedChoiceCheckScript` in `@c15t/core/runtime/script-server-start`)
+ * (`storedChoiceCheckScript` in `@inth/sdk/runtime/script-server-start`)
  * again, so a decision that expired or a denial another tab stored since
  * the page parsed counts. `false` when the script did not run or found a
  * difference. Reads render `renderId`'s page object ({@link pageRender}).
@@ -419,11 +419,11 @@ export const liveRootKey = function liveRootKey(root: LiveRootInputs): string {
 };
 
 // The rule lives in core, where the server's stored-choice check reads it.
-export { rootNeedsEngine } from '@c15t/core/surface-actions/plain-scripts';
-export type { RootEngineInputs } from '@c15t/core/surface-actions/plain-scripts';
+export { rootNeedsEngine } from '@inth/sdk/surface-actions/plain-scripts';
+export type { RootEngineInputs } from '@inth/sdk/surface-actions/plain-scripts';
 
 /**
- * Whether `@c15t/react/iab` (`IABProvider`) has loaded. Its module marks a
+ * Whether `@inth/react/iab` (`IABProvider`) has loaded. Its module marks a
  * registry symbol when it evaluates, which happens before a root that
  * renders it. The key is the one `markIABProviderLoaded` sets; a test keeps
  * them equal.
@@ -440,7 +440,7 @@ export const iabProviderLoaded = function iabProviderLoaded(): boolean {
 };
 
 /**
- * Runs `run` once `@c15t/react/iab` has loaded: at once when it has,
+ * Runs `run` once `@inth/react/iab` has loaded: at once when it has,
  * or when its module evaluates, which may come after the root's chunk. The
  * registry key is the one `markIABProviderLoaded` drains.
  *

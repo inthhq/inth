@@ -1,6 +1,6 @@
 // The provider's category, cleanup and policy options are typed from the
-// same entry point that exports the provider, so `c15t/react` and
-// `c15t/next` users never import from `c15t` for them.
+// same entry point that exports the provider, so `@inth/react` and
+// `@inth/nextjs` users never import from `@inth/sdk/engine` for them.
 import type {
 	AllConsentNames,
 	ClearOnRevocationConfig,

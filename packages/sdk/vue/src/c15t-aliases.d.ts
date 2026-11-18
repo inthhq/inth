@@ -26,7 +26,7 @@ declare module '#c15t/composables' {
 }
 
 /** A Nitro virtual the module registers for its server plugin. */
-declare module '#c15t/server-app-config' {
+declare module '#@inth/sdk/server-app-config' {
 	/**
 	 * The app's merged `app.config.ts`, or `undefined` when Nitro cannot load
 	 * it because server auto-imports are off.
@@ -38,7 +38,7 @@ declare module '#c15t/server-app-config' {
 
 /** A Nitro virtual the module registers for its consent route. */
 declare module '#c15t/manifest-snapshot' {
-	import type { ConsentManifest } from '@c15t/schema/types';
+	import type { ConsentManifest } from '@inth/sdk/schema/types';
 
 	/** The server snapshot, or `undefined` without one. */
 	const manifest: ConsentManifest | undefined;
@@ -46,8 +46,8 @@ declare module '#c15t/manifest-snapshot' {
 }
 
 /** A Nuxt template the server render reads without a consent route. */
-declare module '#c15t/server-manifest-snapshot' {
-	import type { ConsentManifest } from '@c15t/schema/types';
+declare module '#@inth/sdk/server-manifest-snapshot' {
+	import type { ConsentManifest } from '@inth/sdk/schema/types';
 
 	/** The server snapshot, or `undefined` without one. */
 	const manifest: ConsentManifest | undefined;
@@ -56,7 +56,7 @@ declare module '#c15t/server-manifest-snapshot' {
 
 /** A Nuxt template the browser reads in `manifest({ resolve: 'browser' })`. */
 declare module '#c15t/client-manifest-snapshot' {
-	import type { ConsentManifest } from '@c15t/schema/types';
+	import type { ConsentManifest } from '@inth/sdk/schema/types';
 
 	/** The snapshot for browser resolution; `undefined` in every other mode. */
 	const manifest: ConsentManifest | undefined;
@@ -64,7 +64,7 @@ declare module '#c15t/client-manifest-snapshot' {
 }
 
 /** A Nitro virtual the module registers for its build options plugin. */
-declare module '#c15t/build-options' {
+declare module '#@inth/sdk/build-options' {
 	import type { BuiltOptions } from './runtime/server/build-options';
 
 	/** The `mode` and `routePrefix` the build used. */

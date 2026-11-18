@@ -1,10 +1,10 @@
-import accordionStyles from '@c15t/ui/styles/components/accordion';
-import bannerStyles from '@c15t/ui/styles/components/consent-banner';
-import dialogStyles from '@c15t/ui/styles/components/consent-dialog';
-import triggerStyles from '@c15t/ui/styles/components/consent-dialog-trigger';
-import iabBannerStyles from '@c15t/ui/styles/components/iab-consent-banner';
-import iabDialogStyles from '@c15t/ui/styles/components/iab-consent-dialog';
-import switchStyles from '@c15t/ui/styles/components/switch';
+import accordionStyles from '@inth/sdk/ui/styles/components/accordion';
+import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
+import dialogStyles from '@inth/sdk/ui/styles/components/consent-dialog';
+import triggerStyles from '@inth/sdk/ui/styles/components/consent-dialog-trigger';
+import iabBannerStyles from '@inth/sdk/ui/styles/components/iab-consent-banner';
+import iabDialogStyles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
+import switchStyles from '@inth/sdk/ui/styles/components/switch';
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 

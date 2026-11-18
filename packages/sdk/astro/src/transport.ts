@@ -4,7 +4,7 @@
  *
  * The integration knows the mode and whether the site has an adapter when
  * it writes the boot script, so the boot script imports exactly one of
- * these from `@c15t/astro/client` and registers it with
+ * these from `@inth/astro/client` and registers it with
  * `registerTransport()`. Each page ships only the code its mode runs.
  *
  * @internal
@@ -14,10 +14,10 @@ import type {
 	KernelTransport,
 	ProviderTransportContext,
 	ProviderTransportFactory,
-} from '@c15t/core';
-import { createHostedTransport } from '@c15t/core';
-import { testingOptionsOf } from '@c15t/core/modes';
-import { clientMode } from '@c15t/core/runtime/client-mode';
+} from '@inth/sdk/engine';
+import { createHostedTransport } from '@inth/sdk/engine';
+import { testingOptionsOf } from '@inth/sdk/modes';
+import { clientMode } from '@inth/sdk/runtime/client-mode';
 
 import type { C15tResolvedOptions } from './types';
 
@@ -59,7 +59,7 @@ export const testingTransport: ResolveTransport = ({ mode }) =>
 					try {
 						const { createTestingMode } = await import('./testing-transport');
 						return createTestingMode(
-							'@c15t/astro/testing',
+							'@inth/astro/testing',
 							mode.type === 'testing' ? testingOptionsOf(mode) : {}
 						).transport(context);
 					} catch (error) {

@@ -1,5 +1,5 @@
 // #region docs:callbacks
-import type { ConsentProviderCallbacks } from 'c15t/tanstack-start';
+import type { ConsentProviderCallbacks } from '@inth/tanstack-start';
 
 export const callbacks = {
 	// Right before the page reloads because a save withdrew a permission.

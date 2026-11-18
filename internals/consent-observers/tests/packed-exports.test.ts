@@ -52,10 +52,10 @@ const splitSpecifier = function splitSpecifier(specifier: string) {
 
 describe('packed public exports', () => {
 	test('the fixture imports c15t packages', () => {
-		expect(specifiers).toContain('c15t/runtime');
-		expect(specifiers).toContain('c15t/react/context');
-		expect(specifiers).toContain('c15t/next/server');
-		expect(specifiers).toContain('c15t/tanstack-start/server');
+		expect(specifiers).toContain('@inth/sdk/runtime');
+		expect(specifiers).toContain('@inth/react/context');
+		expect(specifiers).toContain('@inth/nextjs/server');
+		expect(specifiers).toContain('@inth/tanstack-start/server');
 	});
 
 	test.each(specifiers)('%s is a published export', (specifier) => {

@@ -14,8 +14,8 @@ import { lowerBannerPreloads } from '../runtime/server/banner-preload-priority';
 
 const SRC = '/app';
 const isConsentFile = (file: string) => file.includes('/@c15t/');
-const ENGINE = 'node_modules/@c15t/vue/dist/runtime/deferred/engine.js';
-const BANNER = 'node_modules/@c15t/vue/dist/runtime/components/prompt.vue';
+const ENGINE = 'node_modules/@inth/vue/dist/runtime/deferred/engine.js';
+const BANNER = 'node_modules/@inth/vue/dist/runtime/components/prompt.vue';
 
 /** A built manifest, before the module's edits. */
 const manifest = (): Record<string, ClientManifestChunk> => ({
@@ -78,7 +78,7 @@ describe('bannerOnlyFiles', () => {
 
 	test('keeps what the IAB banner also imports when the build turns IAB on', () => {
 		const iabPrompt =
-			'node_modules/@c15t/vue/dist/runtime/components/iab-prompt.vue';
+			'node_modules/@inth/vue/dist/runtime/components/iab-prompt.vue';
 		const withIab = built();
 		withIab[iabPrompt] = {
 			file: 'IabPrompt.js',
@@ -96,9 +96,9 @@ describe('bannerOnlyFiles', () => {
 
 	test('keeps what the experiment controller or browser resolver also imports', () => {
 		const controller =
-			'node_modules/@c15t/vue/dist/libs/experiment-assignment.js';
+			'node_modules/@inth/vue/dist/libs/experiment-assignment.js';
 		const resolver =
-			'node_modules/@c15t/core/dist/transports/manifest-browser.js';
+			'node_modules/@inth/sdk/lib/core/dist/transports/manifest-browser.js';
 		const startup = built();
 		startup[controller] = {
 			file: 'Experiment.js',
@@ -126,7 +126,7 @@ describe('bannerOnlyFiles', () => {
 	test.each(GLOBAL_COMPONENTS)(
 		'keeps what %s, which a page can render, also imports',
 		(_name, file) => {
-			const component = `node_modules/@c15t/vue/dist/runtime/components/${file}.vue`;
+			const component = `node_modules/@inth/vue/dist/runtime/components/${file}.vue`;
 			const withComponent = built();
 			withComponent[component] = {
 				file: 'Component.js',

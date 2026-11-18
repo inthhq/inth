@@ -18,15 +18,15 @@ import {
 	hasStoredClearEpoch,
 	isShortCase,
 	planInstantCommit,
-} from '@c15t/core/surface-actions/instant-commit';
-import type { InstantCommit } from '@c15t/core/surface-actions/instant-commit';
-import { startPlainScripts } from '@c15t/core/surface-actions/plain-scripts';
+} from '@inth/sdk/surface-actions/instant-commit';
+import type { InstantCommit } from '@inth/sdk/surface-actions/instant-commit';
+import { startPlainScripts } from '@inth/sdk/surface-actions/plain-scripts';
 
 import type { DeferredCommitConfig } from './committed';
 import type { DeferredKernelHandle } from './deferred-kernel';
 import { claimDeferredScripts, deferredScripts } from './registry';
 
-export { startPlainScripts } from '@c15t/core/surface-actions/plain-scripts';
+export { startPlainScripts } from '@inth/sdk/surface-actions/plain-scripts';
 
 /**
  * Whether setters queued for the engine leave the snapshot as a commit

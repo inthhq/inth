@@ -143,25 +143,25 @@ describe('getBlockedReason', () => {
 		expect(getBlockedReason('c15t', 'shims/index.cjs')).toBe(
 			'CommonJS artifact in ESM-only package'
 		);
-		expect(getBlockedReason('@c15t/core', 'index.cjs')).toBe(
+		expect(getBlockedReason('@inth/sdk/engine', 'index.cjs')).toBe(
 			'CommonJS artifact in ESM-only package'
 		);
 	});
 
 	it('rejects CommonJS artifacts under dist', () => {
-		expect(getBlockedReason('@c15t/core', 'dist/index.cjs')).toBe(
+		expect(getBlockedReason('@inth/sdk/engine', 'dist/index.cjs')).toBe(
 			'CommonJS artifact in ESM-only package'
 		);
 	});
 
 	it('allows ESM runtime output and shims', () => {
-		expect(getBlockedReason('@c15t/core', 'dist/index.js')).toBeNull();
+		expect(getBlockedReason('@inth/sdk/engine', 'dist/index.js')).toBeNull();
 		expect(getBlockedReason('c15t', 'shims/index.js')).toBeNull();
 		expect(getBlockedReason('c15t', 'shims/index.d.ts')).toBeNull();
 	});
 
 	it('still rejects test artifacts in dist', () => {
-		expect(getBlockedReason('@c15t/core', 'dist/foo.test.js')).toBe(
+		expect(getBlockedReason('@inth/sdk/engine', 'dist/foo.test.js')).toBe(
 			'test file'
 		);
 	});
@@ -173,13 +173,15 @@ describe('getBlockedReason', () => {
 		expect(
 			getBlockedReason('@inth/react-native', 'dist/expo-plugin/index.cjs')
 		).toBeNull();
-		expect(getBlockedReason('@c15t/ui', 'dist/expo-plugin/index.cjs')).toBe(
+		expect(getBlockedReason('@inth/sdk/ui', 'dist/expo-plugin/index.cjs')).toBe(
 			'CommonJS artifact in ESM-only package'
 		);
 	});
-	it('allows the declaration for the @c15t/ui/styles/dialog export', () => {
-		expect(getBlockedReason('@c15t/ui', 'dist/styles/dialog.d.ts')).toBeNull();
-		expect(getBlockedReason('@c15t/ui', 'dist/styles/other.d.ts')).toBe(
+	it('allows the declaration for the @inth/sdk/ui/styles/dialog export', () => {
+		expect(
+			getBlockedReason('@inth/sdk/ui', 'dist/styles/dialog.d.ts')
+		).toBeNull();
+		expect(getBlockedReason('@inth/sdk/ui', 'dist/styles/other.d.ts')).toBe(
 			'declaration file in runtime dist'
 		);
 	});
@@ -713,12 +715,12 @@ describe('packages that must stay clear of the consent kernel', () => {
 		const packageDir = kernelFreeFixture(
 			'dependency',
 			{ 'dist/index.js': 'export const x = 1;\n' },
-			{ '@c15t/core': '^3.0.0' }
+			{ '@inth/sdk/engine': '^3.0.0' }
 		);
 
 		expect(scan(packageDir, ['dist/index.js', 'package.json'])).toEqual([
 			{
-				path: 'dependencies.@c15t/core',
+				path: 'dependencies.@inth/sdk/engine',
 				reason: expect.stringContaining('published dependency'),
 				size: 0,
 			},
@@ -733,20 +735,20 @@ describe('packages that must stay clear of the consent kernel', () => {
 			{ 'dist/index.js': 'export const x = 1;\n' },
 			{},
 			{
-				peerDependencies: { '@c15t/core': '^3.2.0' },
-				peerDependenciesMeta: { '@c15t/core': { optional: true } },
+				peerDependencies: { '@inth/sdk/engine': '^3.2.0' },
+				peerDependenciesMeta: { '@inth/sdk/engine': { optional: true } },
 			}
 		);
 		const required = kernelFreeFixture(
 			'required-peer',
 			{ 'dist/index.js': 'export const x = 1;\n' },
 			{},
-			{ peerDependencies: { '@c15t/core': '^3.2.0' } }
+			{ peerDependencies: { '@inth/sdk/engine': '^3.2.0' } }
 		);
 
 		expect(scan(optional, ['dist/index.js'])).toStrictEqual([]);
 		expect(scan(required, ['dist/index.js']).map(({ path }) => path)).toEqual([
-			'peerDependencies.@c15t/core',
+			'peerDependencies.@inth/sdk/engine',
 		]);
 	});
 
@@ -754,9 +756,9 @@ describe('packages that must stay clear of the consent kernel', () => {
 		const packageDir = kernelFreeFixture('web-twin', {
 			'dist/native/client.js': "export * from '../protocol/vocabulary';\n",
 			'dist/native/client.web.js':
-				"import { createConsentRuntime } from '@c15t/core/runtime';\nexport const run = createConsentRuntime;\n",
+				"import { createConsentRuntime } from '@inth/sdk/runtime';\nexport const run = createConsentRuntime;\n",
 			'dist/web/engine.js':
-				"import { createConsentRuntime } from '@c15t/core/runtime';\nexport const run = createConsentRuntime;\n",
+				"import { createConsentRuntime } from '@inth/sdk/runtime';\nexport const run = createConsentRuntime;\n",
 		});
 
 		expect(
@@ -771,7 +773,7 @@ describe('packages that must stay clear of the consent kernel', () => {
 	it('reds a runtime import of the kernel under dist', () => {
 		const packageDir = kernelFreeFixture('runtime', {
 			'dist/index.js':
-				"import { CONSENT_CATEGORIES } from '@c15t/core/consent-categories';\nexport const order = CONSENT_CATEGORIES;\n",
+				"import { CONSENT_CATEGORIES } from '@inth/sdk/consent-categories';\nexport const order = CONSENT_CATEGORIES;\n",
 		});
 
 		const issues = scan(packageDir, ['dist/index.js']);
@@ -786,7 +788,7 @@ describe('packages that must stay clear of the consent kernel', () => {
 	it('reds a declaration that re-exports the kernel', () => {
 		const packageDir = kernelFreeFixture('declarations', {
 			'dist-types/index.d.ts':
-				"export type { ConsentState } from '@c15t/core';\nexport type { ConsentSnapshot } from './protocol/snapshot';\n",
+				"export type { ConsentState } from '@inth/sdk/engine';\nexport type { ConsentSnapshot } from './protocol/snapshot';\n",
 			'dist/index.js': 'export const x = 1;\n',
 		});
 
@@ -803,7 +805,7 @@ describe('packages that must stay clear of the consent kernel', () => {
 	it('leaves prose about the kernel alone', () => {
 		const packageDir = kernelFreeFixture('prose', {
 			'dist-types/protocol/vocabulary.d.ts':
-				"/**\n * Mirrors `CONSENT_CATEGORIES` in `@c15t/core`.\n *\n * @example\n * ```ts\n * // import { CONSENT_CATEGORIES } from '@c15t/core/consent-categories';\n * ```\n */\nexport declare const CONSENT_CATEGORIES: readonly string[];\n",
+				"/**\n * Mirrors `CONSENT_CATEGORIES` in `@inth/sdk/engine`.\n *\n * @example\n * ```ts\n * // import { CONSENT_CATEGORIES } from '@inth/sdk/consent-categories';\n * ```\n */\nexport declare const CONSENT_CATEGORIES: readonly string[];\n",
 		});
 
 		expect(
@@ -816,7 +818,7 @@ describe('packages that must stay clear of the consent kernel', () => {
 	it('reds the bundled entry by package name, where no specifier survives', () => {
 		const packageDir = kernelFreeFixture('bundled', {
 			'dist/expo-plugin/index.cjs':
-				'"use strict";\nconst __module = "@c15t/core";\nmodule.exports = __module;\n',
+				'"use strict";\nconst __module = "@inth/sdk/engine";\nmodule.exports = __module;\n',
 		});
 
 		expect(
@@ -829,8 +831,8 @@ describe('packages that must stay clear of the consent kernel', () => {
 
 		makeTree(packageDir, {
 			'package.json': JSON.stringify({
-				dependencies: { '@c15t/core': 'workspace:*' },
-				name: '@c15t/react',
+				dependencies: { '@inth/sdk/engine': 'workspace:*' },
+				name: '@inth/react',
 				version: '0.0.0',
 			}),
 		});
@@ -842,7 +844,7 @@ describe('packages that must stay clear of the consent kernel', () => {
 		expect(
 			scanKernelFreePackage(
 				packageDir,
-				'@c15t/react',
+				'@inth/react',
 				manifest,
 				new Set(['dist/index.js'])
 			)
@@ -886,17 +888,18 @@ describe('packages that must stay clear of the consent kernel', () => {
 			for (const field of ['dependencies', 'optionalDependencies'] as const) {
 				expect(
 					manifest[field] ?? {},
-					`@c15t/core must not appear in ${field} of ${packageName}`
-				).not.toHaveProperty('@c15t/core');
+					`@inth/sdk/engine must not appear in ${field} of ${packageName}`
+				).not.toHaveProperty('@inth/sdk/engine');
 			}
 			// Web runs the browser engine; a native install never pulls it in.
 			expect(
-				manifest.peerDependencies?.['@c15t/core'] === undefined ||
-					manifest.peerDependenciesMeta?.['@c15t/core']?.optional === true,
-				`@c15t/core may only be an optional peer of ${packageName}`
+				manifest.peerDependencies?.['@inth/sdk/engine'] === undefined ||
+					manifest.peerDependenciesMeta?.['@inth/sdk/engine']?.optional ===
+						true,
+				`@inth/sdk/engine may only be an optional peer of ${packageName}`
 			).toBe(true);
 
-			expect(manifest.devDependencies).toHaveProperty('@c15t/core');
+			expect(manifest.devDependencies).toHaveProperty('@inth/sdk/engine');
 		}
 	});
 });
@@ -946,9 +949,9 @@ describe('scanUiComponentStyleArtifacts', () => {
 			'const styles = { root: "c15t-ui-root-abc" };\nexport default styles;\n'
 		);
 
-		expect(scanUiComponentStyleArtifacts(dir, '@c15t/ui', packedFiles)).toEqual(
-			[]
-		);
+		expect(
+			scanUiComponentStyleArtifacts(dir, '@inth/sdk/ui', packedFiles)
+		).toEqual([]);
 	});
 
 	it('rejects class maps that import their stylesheet', () => {
@@ -958,13 +961,13 @@ describe('scanUiComponentStyleArtifacts', () => {
 			'import "./prompt.css";\nconst styles = { root: "c15t-ui-root-abc" };\nexport default styles;\n'
 		);
 
-		expect(scanUiComponentStyleArtifacts(dir, '@c15t/ui', packedFiles)).toEqual(
-			[
-				expect.objectContaining({
-					path: 'dist/styles/components/prompt.js',
-					reason: 'component ESM class map must not import CSS',
-				}),
-			]
-		);
+		expect(
+			scanUiComponentStyleArtifacts(dir, '@inth/sdk/ui', packedFiles)
+		).toEqual([
+			expect.objectContaining({
+				path: 'dist/styles/components/prompt.js',
+				reason: 'component ESM class map must not import CSS',
+			}),
+		]);
 	});
 });

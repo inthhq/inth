@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ConsentSnapshot } from '@c15t/vue';
+import type { ConsentSnapshot } from '@inth/vue';
 import { nextTick, onBeforeUpdate, onMounted, watch } from 'vue';
 
 import {

@@ -50,7 +50,7 @@ const UNSAFE_HOST_CHARACTER = /[\s/\\?#@]/u;
 /**
  * `http` for `localhost`, IP-literal and single-label hosts, which rarely
  * serve TLS; `https` for domain names. Mirrors `resolveRequestOrigin` in
- * `@c15t/core/server`.
+ * `@inth/sdk/server`.
  */
 const defaultProtocolForHost = function defaultProtocolForHost(
 	host: string
@@ -95,7 +95,7 @@ export interface ResolveProjectUrlOptions {
  * `trustForwardedHeaders` is set. Invalid inputs return `null`; this helper
  * never throws.
  *
- * @deprecated Use `resolveRequestProjectUrl` from `@c15t/core/server`,
+ * @deprecated Use `resolveRequestProjectUrl` from `@inth/sdk/server`,
  * which also resolves against the framework's own request URL. This helper
  * sees only headers, and every header it can read is sent by the client.
  *

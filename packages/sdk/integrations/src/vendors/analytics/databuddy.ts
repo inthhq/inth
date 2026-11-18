@@ -1,4 +1,4 @@
-import type { Script, ScriptCallbackInfo } from '@c15t/core';
+import type { Script, ScriptCallbackInfo } from '@inth/sdk/engine';
 
 import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
@@ -471,9 +471,9 @@ const reuseDatabuddyReplay = createScriptReuse<DatabuddyConsentOptions>();
  *
  * @example
  * ```ts
- * import { createConsentKernel } from 'c15t';
- * import { createScriptLoader } from 'c15t/modules/script-loader';
- * import { databuddy } from '@c15t/integrations/databuddy';
+ * import { createConsentKernel } from '@inth/sdk/engine';
+ * import { createScriptLoader } from '@inth/sdk/modules/script-loader';
+ * import { databuddy } from '@inth/integrations/databuddy';
  *
  * const kernel = createConsentKernel();
  * const loader = createScriptLoader({

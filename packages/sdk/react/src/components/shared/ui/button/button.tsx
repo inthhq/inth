@@ -1,4 +1,4 @@
-import styles from '@c15t/ui/styles/components/button';
+import styles from '@inth/sdk/ui/styles/components/button';
 import { forwardRef as createForwardRef, useId } from 'react';
 import type { ButtonHTMLAttributes, ElementType, ReactElement } from 'react';
 

@@ -16,7 +16,7 @@ import {
 	useConsent,
 	useModel,
 	useSaveConsents,
-} from '@c15t/react';
+} from '@inth/react';
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 

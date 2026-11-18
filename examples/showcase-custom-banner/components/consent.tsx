@@ -1,7 +1,7 @@
 'use client';
 
-import { ConsentRoot } from 'c15t/next';
-import type { ConsentPresentation } from 'c15t/next';
+import { ConsentRoot } from '@inth/nextjs';
+import type { ConsentPresentation } from '@inth/nextjs';
 import type { ReactNode } from 'react';
 
 import { scripts } from '@/lib/scripts';

@@ -5,7 +5,7 @@
  * scripts c15t started meanwhile, which a preload then fetched on later
  * visits, even after the visitor rejected them.
  */
-import { manifest } from '@c15t/core/modes';
+import { manifest } from '@inth/sdk/modes';
 import { createElement } from 'react';
 import { renderToReadableStream } from 'react-dom/server';
 import { expect, test } from 'vitest';

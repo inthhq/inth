@@ -25,7 +25,7 @@ import {
 
 /**
  * What a shipped file may name of the web packages: nothing, except that a
- * `.web` file, which only a web bundle reads, runs on `@c15t/core`.
+ * `.web` file, which only a web bundle reads, runs on `@inth/sdk/engine`.
  */
 const forbiddenIn = function forbiddenIn(
 	file: string,
@@ -55,12 +55,12 @@ const files = function files(directory: string): string[] {
 
 test('module boundary sees lazy, CommonJS, type and subpath imports', () => {
 	const imports = moduleReferences(`
-		import type { A } from 'c15t/react';
-		export type { B } from '@c15t/core';
+		import type { A } from '@inth/react';
+		export type { B } from '@inth/sdk/engine';
 		const lazy = import('@c15t/backend');
 		const codec = require('@iabtechlabtcf/core');
-		type C = import('@c15t/schema').C;
-		import D = require('@c15t/iab');
+		type C = import('@inth/sdk/schema').C;
+		import D = require('@inth/sdk/iab');
 	`);
 	expect(imports).toHaveLength(6);
 	expect(imports.every(isForbiddenModule)).toBe(true);
@@ -70,13 +70,13 @@ test('module boundary sees lazy, CommonJS, type and subpath imports', () => {
 test('module boundary sees static require.resolve calls', () => {
 	expect(
 		moduleReferences(`
-			const core = require.resolve('@c15t/core');
+			const core = require.resolve('@inth/sdk/engine');
 			const codec = require['resolve']('@iabtechlabtcf/core');
 			const other = loader.resolve('@c15t/backend');
-			const cached = require.cache('@c15t/iab');
+			const cached = require.cache('@inth/sdk/iab');
 			const dynamic = require[resolve]('c15t');
 		`)
-	).toEqual(['@c15t/core', '@iabtechlabtcf/core']);
+	).toEqual(['@inth/sdk/engine', '@iabtechlabtcf/core']);
 });
 
 test('packed runtime, declarations and consumer stay independent of web consent packages', () => {
@@ -417,11 +417,11 @@ test('the actual local mobile tarball contains useful generated docs and no web 
 			// Only web needs the browser engine, so it is an optional peer and
 			// nothing a native app installs.
 			expect(Object.keys(dependencies).filter(isForbiddenModule)).toEqual(
-				index === 2 ? ['@c15t/core'] : []
+				index === 2 ? ['@inth/sdk/engine'] : []
 			);
 		}
 		expect(read('package.json')).toMatch(
-			/"peerDependenciesMeta":\s*\{\s*"@c15t\/core":\s*\{\s*"optional":\s*true/u
+			/"peerDependenciesMeta":\s*\{\s*"@inth\/sdk\/engine":\s*\{\s*"optional":\s*true/u
 		);
 		expect(read('package.json')).not.toContain('workspace:');
 		expect(read('docs/frameworks/react-native/quickstart.md')).toContain(

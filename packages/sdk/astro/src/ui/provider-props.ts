@@ -7,8 +7,8 @@
  * and theme tokens the banner and dialog both read.
  */
 
-import { applyExperimentTheme } from '@c15t/core';
-import type { ConsentRuntime } from '@c15t/core/runtime';
+import { applyExperimentTheme } from '@inth/sdk/engine';
+import type { ConsentRuntime } from '@inth/sdk/runtime';
 
 import type { C15tResolvedOptions } from '../types';
 

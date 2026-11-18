@@ -1,6 +1,6 @@
-import { applyExperimentTheme } from '@c15t/core';
-import { generateThemeCSS } from '@c15t/ui/theme';
-import type { Theme } from '@c15t/ui/theme';
+import { applyExperimentTheme } from '@inth/sdk-core';
+import { generateThemeCSS } from '@inth/sdk-ui/theme';
+import type { Theme } from '@inth/sdk-ui/theme';
 
 import { stylesheet } from '../generated/styles';
 import { takeInitUI } from '../init/adopt';
@@ -26,7 +26,7 @@ const resolveContainer = function resolveContainer(
 		const found = document.querySelector<HTMLElement>(container);
 		if (!found) {
 			throw new Error(
-				`@c15t/browser: UI container ${JSON.stringify(container)} not found.`
+				`@inth/sdk: UI container ${JSON.stringify(container)} not found.`
 			);
 		}
 		return found;
@@ -158,7 +158,7 @@ const mountRoot = function mountRoot(
  * Mount the banner, preference centre and trigger for a client.
  *
  * By default everything renders inside a shadow root on a host element
- * appended to `<body>`, carrying its own copy of the `@c15t/ui`
+ * appended to `<body>`, carrying its own copy of the `@inth/sdk/ui`
  * stylesheet, so a Framer or WordPress theme's global `button {}` rules
  * cannot reach it. Pass `shadow: false` to render into the page and style
  * it yourself.

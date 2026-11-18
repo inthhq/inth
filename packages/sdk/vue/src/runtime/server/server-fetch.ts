@@ -1,4 +1,4 @@
-import type { ManifestFetch } from '@c15t/core/server';
+import type { ManifestFetch } from '@inth/sdk/server';
 
 interface NitroAppWithLocalFetch {
 	localFetch: ManifestFetch;

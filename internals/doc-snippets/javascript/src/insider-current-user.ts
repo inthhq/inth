@@ -1,6 +1,6 @@
 // #region docs:insider-current-user title="src/consent-scripts.ts"
-import { insiderTag } from '@c15t/integrations/insider';
-import type { InsiderPageType } from '@c15t/integrations/insider';
+import { insiderTag } from '@inth/integrations/insider';
+import type { InsiderPageType } from '@inth/integrations/insider';
 
 export const createInsiderScripts = function createInsiderScripts(
 	currentUser: Record<string, unknown>,

@@ -5,8 +5,8 @@
  * the integration's lifecycle, not execution of Ada's remote runtime.
  */
 
-import { createConsentKernel } from '@c15t/core';
-import { createScriptLoader } from '@c15t/core/modules/script-loader';
+import { createConsentKernel } from '@inth/sdk/engine';
+import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {

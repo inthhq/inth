@@ -1,6 +1,6 @@
-import * as banner from '@c15t/ui/styles/sheets/banner';
-import * as button from '@c15t/ui/styles/sheets/button';
-import * as tokens from '@c15t/ui/styles/sheets/tokens';
+import * as banner from '@inth/sdk/ui/styles/sheets/banner';
+import * as button from '@inth/sdk/ui/styles/sheets/button';
+import * as tokens from '@inth/sdk/ui/styles/sheets/tokens';
 
 import type { SurfaceStyleSheet } from './surface-styles';
 

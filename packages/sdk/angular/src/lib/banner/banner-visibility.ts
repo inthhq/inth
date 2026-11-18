@@ -1,7 +1,7 @@
 import { isPlatformBrowser } from '@angular/common';
 import { effect, inject, PLATFORM_ID, signal, untracked } from '@angular/core';
 import type { Signal } from '@angular/core';
-import { isLateEntry } from '@c15t/ui/utils/late-entry';
+import { isLateEntry } from '@inth/sdk/ui/utils/late-entry';
 
 /** The banner's mount and visibility state. @internal */
 export interface BannerVisibility {
@@ -19,7 +19,7 @@ export interface BannerVisibility {
  *
  * - On show: mounts in the visible state, so it shows on its first frame.
  *   A mount after the page has painted reports `lateEntry`.
- * - On hide: unmounts at once, as `@c15t/react`'s banner does. A choice
+ * - On hide: unmounts at once, as `@inth/react`'s banner does. A choice
  *   frees the page in the next frame, which is what CookieBench's
  *   `action.dismissed` times; a fade-out would hold the banner's area for
  *   its duration.

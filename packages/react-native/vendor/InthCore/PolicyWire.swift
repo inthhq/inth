@@ -2,7 +2,7 @@ import Foundation
 
 /// Why a policy wire could not be used.
 ///
-/// These are the two client-side wire problems from `@c15t/schema`. They are not
+/// These are the two client-side wire problems from `@inth/sdk/schema`. They are not
 /// interchangeable: `unsupportedContract` means the producer claims a contract
 /// this build cannot represent, which the contract calls a hard configuration
 /// error, while `invalidPayload` means the bytes are simply not a wire.
@@ -18,7 +18,7 @@ private struct WireProblem: Error {
 }
 
 /// The policy contract version this build reads. Mirrors
-/// `POLICY_CONTRACT_VERSION` in `@c15t/schema`.
+/// `POLICY_CONTRACT_VERSION` in `@inth/sdk/schema`.
 public let inthPolicyContractVersion = 1
 
 /// A persistent right the matched rule keeps reachable: `PolicyRight` in
@@ -110,11 +110,11 @@ package struct ResolvedPolicy: Sendable, Equatable {
 }
 
 extension ResolvedPolicy {
-    /// `SAFE_FALLBACK_POLICY_ID` in `@c15t/schema`. Never reported as a matched
+    /// `SAFE_FALLBACK_POLICY_ID` in `@inth/sdk/schema`. Never reported as a matched
     /// policy, but it is what every non-matched outcome evaluates against.
     static let safeFallbackPolicyId = "c15t_safe_fallback"
 
-    /// Constants, not runtime hashes: the same values `@c15t/schema` ships, so a
+    /// Constants, not runtime hashes: the same values `@inth/sdk/schema` ships, so a
     /// subject who chose on the web is not asked again on mobile under the same
     /// fallback.
     static let safeFallbackChoiceFingerprint =
@@ -450,7 +450,7 @@ enum PolicyWireReader {
         guard Set(preselected).isSubset(of: Set(scope)) else {
             throw problem(.invalidPayload, "preselectedCategories must be inside scope")
         }
-        // `collectScopeErrors` in `@c15t/schema` refuses an author who sets
+        // `collectScopeErrors` in `@inth/sdk/schema` refuses an author who sets
         // `preselectedCategories` on an `iab` or `none` rule, and `resolvePreselected`
         // answers empty for both, so a resolved rule carrying a preselection beside either
         // one was not produced by that resolver. Neither model has a displayed default to
@@ -607,11 +607,11 @@ enum PolicyWireReader {
 
     // MARK: - Valid tables
 
-    /// `POLICY_MODEL_PROMPTS` in `@c15t/schema`.
+    /// `POLICY_MODEL_PROMPTS` in `@inth/sdk/schema`.
     private static func validPrompt(for model: ConsentModel, _ prompt: PolicyPrompt) -> Bool {
         switch model {
         case .optIn: return prompt == .choice
-        // An IAB rule always asks. `assertPromptForModel` in `@c15t/core` keeps every model
+        // An IAB rule always asks. `assertPromptForModel` in `@inth/sdk/engine` keeps every model
         // but `opt-out` on `choice`, and the schema's table narrows `iab` to that one value,
         // so a notice-only or silent IAB rule is a rule that was never resolved.
         case .iab: return prompt == .choice
@@ -620,11 +620,11 @@ enum PolicyWireReader {
         }
     }
 
-    /// `requiredPolicyRights` in `@c15t/schema`.
+    /// `requiredPolicyRights` in `@inth/sdk/schema`.
     private static func requiredRights(for model: ConsentModel) -> Set<String> {
         switch model {
         case .optIn: return ["disclosure", "preferences"]
-        // `requiredPolicyRights` in `@c15t/schema`: every model but `none` owes disclosure
+        // `requiredPolicyRights` in `@inth/sdk/schema`: every model but `none` owes disclosure
         // and preferences, and only `opt-out` adds a standing opt-out right. An IAB subject
         // withdraws a purpose through the TC String, not through a CCPA-style directive.
         case .iab: return ["disclosure", "preferences"]
@@ -668,7 +668,7 @@ enum PolicyWireReader {
         return fields
     }
 
-    /// An array of distinct member strings, or a refusal. `@c15t/schema` sorts
+    /// An array of distinct member strings, or a refusal. `@inth/sdk/schema` sorts
     /// the result, so callers sort too.
     private static func stringSet(
         _ value: JSONValue?,

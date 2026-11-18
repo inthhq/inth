@@ -1,5 +1,5 @@
-import type { TranslationConfig } from '@c15t/translations';
-import { translations as enTranslations } from '@c15t/translations/en';
+import type { TranslationConfig } from '@inth/sdk/translations';
+import { translations as enTranslations } from '@inth/sdk/translations/en';
 
 export const defaultTranslationConfig = {
 	defaultLanguage: 'en',

@@ -5,8 +5,8 @@ import {
 	withEventReplay,
 } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
-import { hosted, provideC15t } from '@c15t/angular';
-import { posthog } from '@c15t/integrations/posthog';
+import { hosted, provideC15t } from '@inth/angular';
+import { posthog } from '@inth/integrations/posthog';
 
 export const appConfig: ApplicationConfig = {
 	providers: [

@@ -1,4 +1,4 @@
-import type { Script } from '@c15t/core';
+import type { Script } from '@inth/sdk/engine';
 
 import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
@@ -151,7 +151,7 @@ const getPirschScriptUrl = function getPirschScriptUrl(
  *
  * @example
  * ```ts
- * import { pirsch } from '@c15t/integrations/pirsch';
+ * import { pirsch } from '@inth/integrations/pirsch';
  *
  * pirsch({
  *   identificationCode: 'YOUR_IDENTIFICATION_CODE',

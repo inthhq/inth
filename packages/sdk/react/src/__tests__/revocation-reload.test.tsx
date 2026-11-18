@@ -1,5 +1,5 @@
-import type * as Core from '@c15t/core';
-import type { ConsentKernel, RevocationReloadOptions } from '@c15t/core';
+import type * as Core from '@inth/sdk/engine';
+import type { ConsentKernel, RevocationReloadOptions } from '@inth/sdk/engine';
 import { useContext, useEffect } from 'react';
 import { expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
@@ -11,7 +11,7 @@ import { policyFixture } from './policy-fixture';
 
 const reload = vi.hoisted(() => vi.fn());
 // oxlint-disable-next-line anti-slop/no-module-mocking -- `window.location.reload` cannot be replaced in a real browser, and reloading restarts the test iframe. The factory returns the real module and records the reload instead.
-vi.mock('@c15t/core', async (importOriginal) => {
+vi.mock('@inth/sdk/engine', async (importOriginal) => {
 	const actual = await importOriginal<typeof Core>();
 	return {
 		...actual,

@@ -8,7 +8,7 @@
 		"start": "bun serve.ts"
 	},
 	"dependencies": {
-		"@c15t/browser": "workspace:*"
+		"@inth/sdk": "workspace:*"
 	},
 	"devDependencies": {
 		"@types/bun": "1.3.9",

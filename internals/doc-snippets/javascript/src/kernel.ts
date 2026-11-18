@@ -1,7 +1,7 @@
 // #region docs:kernel title="src/consent.ts"
-import { createConsentKernel, createHostedTransport } from 'c15t';
-import { createPersistence } from 'c15t/modules/persistence';
-import { createScriptLoader } from 'c15t/modules/script-loader';
+import { createConsentKernel, createHostedTransport } from '@inth/sdk/engine';
+import { createPersistence } from '@inth/sdk/modules/persistence';
+import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 
 import { scripts } from './scripts';
 

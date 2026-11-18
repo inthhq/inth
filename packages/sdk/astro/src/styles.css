@@ -1,5 +1,5 @@
 /**
- * @c15t/astro — prebuilt component styles.
+ * @inth/astro — prebuilt component styles.
  *
  * For sites that set `styles: false` and load c15t's styles themselves.
  * By default the integration inlines the first-paint rules and links the
@@ -8,7 +8,7 @@
  * preference dialog. The Svelte dialog also needs `primitives.css`.
  *
  * Usage with `styles: false` (src/styles/global.css):
- *   @import "@c15t/astro/styles.css";
+ *   @import "@inth/astro/styles.css";
  *
  * A site may import this ahead of its own CSS, so it declares Tailwind 4's
  * layer order before anything else. Layers rank by first
@@ -16,7 +16,7 @@
  * preflight would strip the banner's padding and borders.
  */
 @layer properties, theme, base, components, utilities;
-@import '@c15t/ui/styles.css';
+@import '@inth/sdk/ui/styles.css';
 
 /*
  * The browser runtime shows and hides the banner with the `hidden`

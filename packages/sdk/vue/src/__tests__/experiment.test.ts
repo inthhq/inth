@@ -1,10 +1,10 @@
-import { EXPERIMENT_STORAGE_KEY } from '@c15t/core';
-import type { ConsentExperiment } from '@c15t/core';
+import { EXPERIMENT_STORAGE_KEY } from '@inth/sdk/engine';
+import type { ConsentExperiment } from '@inth/sdk/engine';
 import {
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,
-} from '@c15t/schema/types';
-import type { PolicyResolution } from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
+import type { PolicyResolution } from '@inth/sdk/schema/types';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { createApp, defineComponent, h, nextTick, shallowRef } from 'vue';
 

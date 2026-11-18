@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/dev-tools",
+	"name": "@inth/sdk-dev-tools",
 	"version": "3.2.0-canary.0",
 	"description": "Developer tools for debugging c15t. Inspect consent state, resolved policy, location, IAB TCF state and kernel events.",
 	"keywords": [
@@ -50,7 +50,7 @@
 		"test": "pnpm run prebuild && vitest run"
 	},
 	"dependencies": {
-		"@c15t/core": "workspace:*"
+		"@inth/sdk-core": "workspace:*"
 	},
 	"devDependencies": {
 		"@c15t/typescript-config": "workspace:*",

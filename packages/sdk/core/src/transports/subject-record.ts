@@ -25,7 +25,7 @@ import type {
 	GetSubjectOutput,
 	SubjectChoiceWire,
 	VendorChoiceWire,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 
 import { OPTIONAL_CONSENT_CATEGORIES } from '../consent-record/types';
 import type {

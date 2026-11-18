@@ -83,7 +83,7 @@ describe('hosted record transport graph', () => {
 		expect(files).not.toContain('libs/request-context.ts');
 		expect(files).not.toContain('libs/prefetch/prefetch.ts');
 		expect(packageImports).not.toContain(
-			'@c15t/schema/types#extractConsentRequestInputs'
+			'@inth/sdk/schema/types#extractConsentRequestInputs'
 		);
 	});
 
@@ -98,7 +98,7 @@ describe('hosted record transport graph', () => {
 			expect(files).not.toContain('libs/request-context.ts');
 			expect(files).not.toContain('libs/prefetch/prefetch.ts');
 			expect(packageImports).not.toContain(
-				'@c15t/schema/types#extractConsentRequestInputs'
+				'@inth/sdk/schema/types#extractConsentRequestInputs'
 			);
 		}
 	});

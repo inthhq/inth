@@ -321,7 +321,7 @@ export const captureDomSnapshot = function captureDomSnapshot(
 		// dash-case) renders `c15t-consent-button=""`, and
 		// `<button c15tConsentDialogLink>` (a directive, camelCase) renders
 		// `c15tconsentdialoglink=""`. The marker carries no state. Every
-		// @c15t/angular attribute selector starts with `c15t`, and no other
+		// @inth/angular attribute selector starts with `c15t`, and no other
 		// adapter renders an attribute named that way (theirs are
 		// `data-c15t-*`), so the rule applies only on an Angular page and only
 		// to empty values.

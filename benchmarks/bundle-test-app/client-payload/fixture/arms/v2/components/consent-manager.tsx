@@ -5,7 +5,7 @@ import {
 	ConsentDialog,
 	ConsentDialogLink,
 	ConsentManagerProvider,
-} from '@c15t/nextjs';
+} from '@inth/nextjs';
 import type { ReactNode } from 'react';
 
 import { theme } from './theme';

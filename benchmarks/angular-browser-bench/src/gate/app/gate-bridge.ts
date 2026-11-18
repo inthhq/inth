@@ -1,7 +1,7 @@
 import { isPlatformBrowser } from '@angular/common';
 import { Directive, effect, inject, PLATFORM_ID } from '@angular/core';
-import { ConsentManager } from '@c15t/angular';
 import { updateGateBridge } from '@c15t/benchmarking/consent-gate-page';
+import { ConsentManager } from '@inth/angular';
 
 /**
  * Publishes the consent snapshot to the gate bridge whenever it changes, as

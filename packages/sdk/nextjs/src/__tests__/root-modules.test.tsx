@@ -4,8 +4,8 @@
  * Verifies that passing curated module props causes the corresponding
  * modules to mount and react to kernel state.
  */
-import { useDeclaredVendors, useVendorAllowed } from '@c15t/react';
-import { ConsentGPP } from '@c15t/react/gpp';
+import { useDeclaredVendors, useVendorAllowed } from '@inth/react';
+import { ConsentGPP } from '@inth/react/gpp';
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 

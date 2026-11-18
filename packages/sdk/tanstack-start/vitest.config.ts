@@ -11,158 +11,161 @@ const alias = {
 	// The browser build; the node project overrides it with the server's,
 	// which imports the engine statically.
 	'#engine-now': resolve(__dirname, './src/engine-now-browser.ts'),
-	'@c15t/core/modules/clear-on-revocation': resolve(
+	'@inth/sdk/modules/clear-on-revocation': resolve(
 		__dirname,
 		'../core/src/modules/clear-on-revocation/index.ts'
 	),
-	'@c15t/core/modules/script-loader': resolve(
+	'@inth/sdk/modules/script-loader': resolve(
 		__dirname,
 		'../core/src/modules/script-loader/index.ts'
 	),
-	'@c15t/core/modules/network-blocker': resolve(
+	'@inth/sdk/modules/network-blocker': resolve(
 		__dirname,
 		'../core/src/modules/network-blocker/index.ts'
 	),
-	'@c15t/core/modules/network-hold': resolve(
+	'@inth/sdk/modules/network-hold': resolve(
 		__dirname,
 		'../core/src/modules/network-blocker/hold.ts'
 	),
-	'@c15t/core/modules/iframe-blocker': resolve(
+	'@inth/sdk/modules/iframe-blocker': resolve(
 		__dirname,
 		'../core/src/modules/iframe-blocker/index.ts'
 	),
-	'@c15t/core/modules/persistence': resolve(
+	'@inth/sdk/modules/persistence': resolve(
 		__dirname,
 		'../core/src/modules/persistence/index.ts'
 	),
-	'@c15t/core/modules/window-debug': resolve(
+	'@inth/sdk/modules/window-debug': resolve(
 		__dirname,
 		'../core/src/modules/window-debug/index.ts'
 	),
-	'@c15t/core/runtime/deferred-boot': resolve(
+	'@inth/sdk/runtime/deferred-boot': resolve(
 		__dirname,
 		'../core/src/runtime/deferred-boot.ts'
 	),
-	'@c15t/core/runtime/deferred-snapshot': resolve(
+	'@inth/sdk/runtime/deferred-snapshot': resolve(
 		__dirname,
 		'../core/src/runtime/deferred-snapshot.ts'
 	),
-	'@c15t/core/surface-actions/early-commit': resolve(
+	'@inth/sdk/surface-actions/early-commit': resolve(
 		__dirname,
 		'../core/src/surface-actions/early-commit.ts'
 	),
-	'@c15t/core/surface-actions/instant-commit': resolve(
+	'@inth/sdk/surface-actions/instant-commit': resolve(
 		__dirname,
 		'../core/src/surface-actions/instant-commit.ts'
 	),
-	'@c15t/core/surface-actions/plain-scripts': resolve(
+	'@inth/sdk/surface-actions/plain-scripts': resolve(
 		__dirname,
 		'../core/src/surface-actions/plain-scripts.ts'
 	),
-	'@c15t/core/transports/hosted-factory': resolve(
+	'@inth/sdk/transports/hosted-factory': resolve(
 		__dirname,
 		'../core/src/transports/hosted-factory.ts'
 	),
-	'@c15t/core/transports/manifest-browser': resolve(
+	'@inth/sdk/transports/manifest-browser': resolve(
 		__dirname,
 		'../core/src/transports/manifest-browser.ts'
 	),
-	'@c15t/core/transports/manifest-cache': resolve(
+	'@inth/sdk/transports/manifest-cache': resolve(
 		__dirname,
 		'../core/src/transports/manifest-cache.ts'
 	),
-	'@c15t/core/transports/manifest': resolve(
+	'@inth/sdk/transports/manifest': resolve(
 		__dirname,
 		'../core/src/transports/manifest.ts'
 	),
-	'@c15t/core/transports': resolve(
-		__dirname,
-		'../core/src/transports/index.ts'
-	),
-	'@c15t/core/consent-record': resolve(
+	'@inth/sdk/transports': resolve(__dirname, '../core/src/transports/index.ts'),
+	'@inth/sdk/consent-record': resolve(
 		__dirname,
 		'../core/src/consent-record/index.ts'
 	),
-	'@c15t/core/events': resolve(__dirname, '../core/src/events.ts'),
-	'@c15t/core/server': resolve(__dirname, '../core/src/server/index.ts'),
-	'@c15t/core/static': resolve(__dirname, '../core/src/static.ts'),
-	'@c15t/core/build': resolve(__dirname, '../core/src/build.ts'),
-	'@c15t/core/iab-support': resolve(__dirname, '../core/src/iab-support.ts'),
-	'@c15t/core/surface-actions': resolve(
+	'@inth/sdk/events': resolve(__dirname, '../core/src/events.ts'),
+	'@inth/sdk/server': resolve(__dirname, '../core/src/server/index.ts'),
+	'@inth/sdk/static': resolve(__dirname, '../core/src/static.ts'),
+	'@inth/sdk/build': resolve(__dirname, '../core/src/build.ts'),
+	'@inth/sdk/iab-support': resolve(__dirname, '../core/src/iab-support.ts'),
+	'@inth/sdk/surface-actions': resolve(
 		__dirname,
 		'../core/src/surface-actions/index.ts'
 	),
-	'@c15t/core/runtime/controls': resolve(
+	'@inth/sdk/runtime/controls': resolve(
 		__dirname,
 		'../core/src/runtime/controls.ts'
 	),
-	'@c15t/core/preference-draft': resolve(
+	'@inth/sdk/preference-draft': resolve(
 		__dirname,
 		'../core/src/preference-draft/index.ts'
 	),
-	'@c15t/core/runtime/provider': resolve(
+	'@inth/sdk/runtime/provider': resolve(
 		__dirname,
 		'../core/src/runtime/provider.ts'
 	),
-	'@c15t/core/runtime/script-loader-preload': resolve(
+	'@inth/sdk/runtime/script-loader-preload': resolve(
 		__dirname,
 		'../core/src/runtime/script-loader-preload.ts'
 	),
-	'@c15t/core/runtime/script-server-start': resolve(
+	'@inth/sdk/runtime/script-server-start': resolve(
 		__dirname,
 		'../core/src/runtime/script-server-start.ts'
 	),
-	'@c15t/core/runtime/streamed-init': resolve(
+	'@inth/sdk/runtime/streamed-init': resolve(
 		__dirname,
 		'../core/src/runtime/streamed-init.ts'
 	),
-	'@c15t/core/runtime/client-mode': resolve(
+	'@inth/sdk/runtime/client-mode': resolve(
 		__dirname,
 		'../core/src/runtime/client-mode.ts'
 	),
-	'@c15t/core/runtime': resolve(__dirname, '../core/src/runtime/index.ts'),
-	'@c15t/core/generated': resolve(__dirname, '../core/src/generated.ts'),
-	'@c15t/core/modes': resolve(__dirname, '../core/src/modes.ts'),
-	'@c15t/core/testing': resolve(__dirname, '../core/src/testing.ts'),
-	'@c15t/core': resolve(__dirname, '../core/src/index.ts'),
-	'@c15t/react/deferred/engine': resolve(
+	'@inth/sdk/runtime': resolve(__dirname, '../core/src/runtime/index.ts'),
+	'@inth/sdk/generated': resolve(__dirname, '../core/src/generated.ts'),
+	'@inth/sdk/modes': resolve(__dirname, '../core/src/modes.ts'),
+	'@inth/sdk/testing': resolve(__dirname, '../core/src/testing.ts'),
+	'@inth/sdk/engine': resolve(__dirname, '../core/src/index.ts'),
+	'@inth/react/deferred/engine': resolve(
 		__dirname,
 		'../react/dist/deferred/engine.js'
 	),
-	'@c15t/react/deferred': resolve(__dirname, '../react/dist/deferred/index.js'),
-	'@c15t/react/context': resolve(__dirname, '../react/dist/context.js'),
-	'@c15t/react/gpp': resolve(__dirname, '../react/dist/gpp.js'),
-	'@c15t/react/iab': resolve(__dirname, '../react/dist/iab.js'),
-	'@c15t/react/provider': resolve(__dirname, '../react/dist/provider.js'),
-	'@c15t/react/hooks': resolve(__dirname, '../react/dist/hooks.js'),
-	'@c15t/react/module-hooks': resolve(
+	'@inth/react/deferred': resolve(__dirname, '../react/dist/deferred/index.js'),
+	'@inth/react/context': resolve(__dirname, '../react/dist/context.js'),
+	'@inth/react/gpp': resolve(__dirname, '../react/dist/gpp.js'),
+	'@inth/react/iab': resolve(__dirname, '../react/dist/iab.js'),
+	'@inth/react/provider': resolve(__dirname, '../react/dist/provider.js'),
+	'@inth/react/hooks': resolve(__dirname, '../react/dist/hooks.js'),
+	'@inth/react/module-hooks': resolve(
 		__dirname,
 		'../react/dist/module-hooks.js'
 	),
-	'@c15t/react/server': resolve(__dirname, '../react/dist/server/index.js'),
-	'@c15t/react/headless': resolve(__dirname, '../react/dist/headless.js'),
-	'@c15t/react/components/consent-dialog-link': resolve(
+	'@inth/react/server': resolve(__dirname, '../react/dist/server/index.js'),
+	'@inth/react/headless': resolve(__dirname, '../react/dist/headless.js'),
+	'@inth/react/components/consent-dialog-link': resolve(
 		__dirname,
 		'../react/dist/components/panel-link/index.js'
 	),
-	'@c15t/react/postcss-tailwind3': resolve(
+	'@inth/react/postcss-tailwind3': resolve(
 		__dirname,
 		'../react/dist/postcss-tailwind3.js'
 	),
-	'@c15t/react': resolve(__dirname, '../react/dist/index.js'),
-	'@c15t/translations/all': resolve(__dirname, '../translations/src/all.ts'),
-	'@c15t/translations/en': resolve(
+	'@inth/react': resolve(__dirname, '../react/dist/index.js'),
+	'@inth/sdk/translations/all': resolve(
+		__dirname,
+		'../translations/src/all.ts'
+	),
+	'@inth/sdk/translations/en': resolve(
 		__dirname,
 		'../translations/src/translations/en.ts'
 	),
-	'@c15t/translations': resolve(__dirname, '../translations/src/index.ts'),
-	'@c15t/schema/geo': resolve(__dirname, '../schema/src/shared/geo-headers.ts'),
-	'@c15t/schema/types': resolve(__dirname, '../schema/src/types.ts'),
-	'@c15t/schema/canonical-order': resolve(
+	'@inth/sdk/translations': resolve(__dirname, '../translations/src/index.ts'),
+	'@inth/sdk/schema/geo': resolve(
+		__dirname,
+		'../schema/src/shared/geo-headers.ts'
+	),
+	'@inth/sdk/schema/types': resolve(__dirname, '../schema/src/types.ts'),
+	'@inth/sdk/schema/canonical-order': resolve(
 		__dirname,
 		'../schema/src/shared/canonical-order.ts'
 	),
-	'@c15t/schema': resolve(__dirname, '../schema/src/index.ts'),
+	'@inth/sdk/schema': resolve(__dirname, '../schema/src/index.ts'),
 };
 
 /** `vitest run` is run mode; a bare `vitest` or `--watch` is watch mode. */

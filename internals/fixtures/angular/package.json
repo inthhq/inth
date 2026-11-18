@@ -16,9 +16,9 @@
 		"@angular/platform-server": "22.2.5",
 		"@angular/router": "22.2.5",
 		"@angular/ssr": "22.2.6",
-		"@c15t/angular": "workspace:*",
-		"@c15t/dev-tools": "workspace:*",
-		"@c15t/integrations": "workspace:*",
+		"@inth/angular": "workspace:*",
+		"@inth/integrations": "workspace:*",
+		"@inth/sdk": "workspace:*",
 		"express": "5.1.0",
 		"rxjs": "7.8.2",
 		"tslib": "^2.8.1"

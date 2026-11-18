@@ -5,10 +5,10 @@
  * (and that hold) behind, and a replayed StrictMode mount must not start a
  * second one.
  */
-import type { InitContext, InitResponse } from '@c15t/core';
-import type { NetworkBlockerRule } from '@c15t/core/modules/network-blocker';
-import { releaseNetworkRequests } from '@c15t/core/modules/network-hold';
-import { writePolicyResolutionWire } from '@c15t/schema/types';
+import type { InitContext, InitResponse } from '@inth/sdk/engine';
+import type { NetworkBlockerRule } from '@inth/sdk/modules/network-blocker';
+import { releaseNetworkRequests } from '@inth/sdk/modules/network-hold';
+import { writePolicyResolutionWire } from '@inth/sdk/schema/types';
 import { StrictMode, Suspense } from 'react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';

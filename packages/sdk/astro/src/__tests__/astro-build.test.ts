@@ -13,10 +13,10 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
-import iabBannerClasses from '@c15t/ui/styles/components/iab-consent-banner';
-import iabPanelClasses from '@c15t/ui/styles/components/iab-consent-dialog';
-import panelClasses from '@c15t/ui/styles/components/panel';
-import { preferenceItemVariants } from '@c15t/ui/styles/primitives';
+import iabBannerClasses from '@inth/sdk/ui/styles/components/iab-consent-banner';
+import iabPanelClasses from '@inth/sdk/ui/styles/components/iab-consent-dialog';
+import panelClasses from '@inth/sdk/ui/styles/components/panel';
+import { preferenceItemVariants } from '@inth/sdk/ui/styles/primitives';
 import { afterAll, describe, expect, it } from 'vitest';
 
 const FIXTURE = fileURLToPath(
@@ -25,7 +25,7 @@ const FIXTURE = fileURLToPath(
 
 // The CLI rather than `build()` from `astro`: under this suite's Vite
 // config, `astro` resolves to its browser stub. The fixture's config loads
-// the built `@c15t/astro`, so run `build` before this file.
+// the built `@inth/astro`, so run `build` before this file.
 const ASTRO_CLI = join(
 	dirname(createRequire(import.meta.url).resolve('astro/package.json')),
 	'bin/astro.mjs'

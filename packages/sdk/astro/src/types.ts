@@ -1,5 +1,5 @@
 /**
- * Public option and locals types for `@c15t/astro`.
+ * Public option and locals types for `@inth/astro`.
  *
  * Everything the integration accepts must survive `JSON.stringify`: the
  * options are serialized once at build time into a virtual module that the
@@ -21,15 +21,18 @@ import type {
 	Script,
 	StorageConfig,
 	Vendor,
-} from '@c15t/core';
-import type { ConsentMode } from '@c15t/core/modes';
+} from '@inth/sdk/engine';
+import type { ConsentMode } from '@inth/sdk/modes';
 import type {
 	ConsentRuntimeOptions,
 	RuntimeGPPOptions,
 	RuntimeNetworkBlockerOptions,
-} from '@c15t/core/runtime';
-import type { PolicyResolution, GlobalVendorList } from '@c15t/schema/types';
-import type { Theme } from '@c15t/ui/theme';
+} from '@inth/sdk/runtime';
+import type {
+	PolicyResolution,
+	GlobalVendorList,
+} from '@inth/sdk/schema/types';
+import type { Theme } from '@inth/sdk/ui/theme';
 
 /**
  * Which framework renders the on-demand dialog islands.
@@ -56,7 +59,7 @@ export type C15tColorScheme = 'light' | 'dark' | 'system' | 'none';
 /** How the integration registers its `pre`-order middleware. */
 export interface C15tMiddlewareOptions {
 	/**
-	 * Register `@c15t/astro/middleware` at all.
+	 * Register `@inth/astro/middleware` at all.
 	 *
 	 * @default true
 	 */
@@ -117,7 +120,7 @@ export interface C15tAstroOptions {
 	projectUrl?: string;
 	/**
 	 * Where the visitor's policy comes from: `manifest()` or `hosted()`
-	 * from `c15t/astro`, or `testing()` from `c15t/astro/testing`.
+	 * from `@inth/astro`, or `testing()` from `@inth/astro/testing`.
 	 *
 	 * `manifest()` downloads your project's policy when `astro build` or
 	 * `astro dev` starts and resolves each visitor on the server. When the
@@ -320,7 +323,7 @@ export interface C15tAstroOptions {
 	 * A Tailwind CSS 3 site links the full base and IAB stylesheets through
 	 * the host's CSS pipeline instead of inlining the rules.
 	 *
-	 * Set to `false` to import `@c15t/astro/styles.css` (and the IAB
+	 * Set to `false` to import `@inth/astro/styles.css` (and the IAB
 	 * stylesheet) yourself, for example from a global stylesheet with your
 	 * own cascade layers, or to style the surfaces from scratch.
 	 *
@@ -332,7 +335,7 @@ export interface C15tAstroOptions {
 	 * Module whose default export is a {@link C15tClientOptionsExtension},
 	 * for anything that cannot be serialized: callbacks, a custom GVL
 	 * fetcher, scripts with lifecycle hooks such as the
-	 * `@c15t/integrations` helpers.
+	 * `@inth/integrations` helpers.
 	 *
 	 * A relative path resolves from the project root. Unset, the integration
 	 * uses `src/c15t.client.ts`, `.js` or `.mjs` when the file exists.
@@ -409,13 +412,13 @@ export interface C15tIABOptions {
 	/**
 	 * Publisher restrictions to encode into the TC string and apply to IAB
 	 * gates. Plain data, so it travels to the browser with the rest of these
-	 * options. `@c15t/iab` rejects restrictions the vendor list does not allow.
+	 * options. `@inth/sdk/iab` rejects restrictions the vendor list does not allow.
 	 */
 	publisherRestrictions?: PublisherRestriction[];
 	/**
 	 * Fetch the vendor list from this URL on the server.
 	 *
-	 * Goes through the shared in-process cache in `@c15t/core/server`, so
+	 * Goes through the shared in-process cache in `@inth/sdk/server`, so
 	 * concurrent renders collapse onto one download. Ignored when
 	 * {@link C15tIABOptions.gvl} is set.
 	 */
@@ -502,7 +505,7 @@ export interface C15tResolvedOptions extends Omit<
 	 * Whether the components inline the first-paint rules and the client
 	 * links the dialog's when it opens. `false` with `styles: false`, and on
 	 * a Tailwind CSS 3 site, whose PostCSS build has to process c15t's rules:
-	 * the integration then adds `@c15t/astro/styles.css` to every page.
+	 * the integration then adds `@inth/astro/styles.css` to every page.
 	 */
 	inlineStyles: boolean;
 	/**

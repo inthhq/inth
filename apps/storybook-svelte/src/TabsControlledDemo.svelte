@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Tabs, tabsVariants } from '@c15t/svelte';
+	import { Tabs, tabsVariants } from '@inth/svelte';
 
 	let activeTab = $state('vendors');
 	const classes = tabsVariants();

@@ -9,14 +9,14 @@
  *
  * Nothing framework-specific is named here, and the registry starts empty
  * on purpose. A built-in entry pointing at the React adapter would make
- * every build resolve `@c15t/react` and `react-dom`, which a Svelte-only
+ * every build resolve `@inth/react` and `react-dom`, which a Svelte-only
  * site does not install. The integration knows `ui` at config time, so it
  * registers the one adapter and the one surface into the page boot script;
  * that is the only place a framework specifier appears.
  */
 
-import type { LegalLinks } from '@c15t/core';
-import type { ConsentRuntime } from '@c15t/core/runtime';
+import type { LegalLinks } from '@inth/sdk/engine';
+import type { ConsentRuntime } from '@inth/sdk/runtime';
 
 import type { C15tResolvedOptions, C15tUIAdapterName } from '../types';
 
@@ -66,7 +66,7 @@ const surfaces = new Map<C15tUIAdapterName, ConsentDialogSurfaceLoader>();
  * @example
  * ```ts
  * registerDialogSurface('svelte', () =>
- *   import('@c15t/astro/islands/panel-surface.svelte')
+ *   import('@inth/astro/islands/panel-surface.svelte')
  * );
  * ```
  */
@@ -90,7 +90,7 @@ export const requireDialogSurface = function requireDialogSurface(
 	const load = surfaces.get(name);
 	if (!load) {
 		throw new Error(
-			`@c15t/astro: no ${name} dialog surface registered. The integration registers it from the injected page script, so this usually means c15t() is missing from astro.config, or the page was rendered with \`middleware: false\` and no boot script.`
+			`@inth/astro: no ${name} dialog surface registered. The integration registers it from the injected page script, so this usually means c15t() is missing from astro.config, or the page was rendered with \`middleware: false\` and no boot script.`
 		);
 	}
 	return load;
@@ -184,7 +184,7 @@ export const loadDialogAdapter = async function loadDialogAdapter(
 	const load = registry.get(name);
 	if (!load) {
 		throw new Error(
-			`@c15t/astro: no dialog adapter registered for ui: ${JSON.stringify(name)}. The integration registers the configured adapter from the injected page script; register your own with registerDialogAdapter().`
+			`@inth/astro: no dialog adapter registered for ui: ${JSON.stringify(name)}. The integration registers the configured adapter from the injected page script; register your own with registerDialogAdapter().`
 		);
 	}
 	// `registerDialogAdapter` promises the loader runs at most once, and

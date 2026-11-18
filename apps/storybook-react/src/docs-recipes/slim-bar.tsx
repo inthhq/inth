@@ -1,5 +1,5 @@
 // #region docs:slim-bar title="src/cookie-banner.tsx"
-import { ConsentBanner } from 'c15t/react';
+import { ConsentBanner } from '@inth/react';
 
 import './slim-bar.css';
 

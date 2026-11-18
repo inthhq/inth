@@ -1,5 +1,5 @@
-import { policyRulePresets } from '@c15t/core';
-import { resolvePolicyRules } from '@c15t/schema/types';
+import { policyRulePresets } from '@inth/sdk-core';
+import { resolvePolicyRules } from '@inth/sdk-schema/types';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createTestingConsentClient as createConsentClient } from '../testing-global';

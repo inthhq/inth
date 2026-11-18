@@ -21,8 +21,11 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
-import type { HydrationRecords, KernelUser } from '@c15t/core';
-import { createConsentKernel, mapInitOutputToInitResponse } from '@c15t/core';
+import type { HydrationRecords, KernelUser } from '@inth/sdk/engine';
+import {
+	createConsentKernel,
+	mapInitOutputToInitResponse,
+} from '@inth/sdk/engine';
 
 import { REPO_ROOT } from './native';
 

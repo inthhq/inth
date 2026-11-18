@@ -1,17 +1,17 @@
 /**
- * `@c15t/core/transports/manifest` — server-only manifest transport.
+ * `@inth/sdk/transports/manifest` — server-only manifest transport.
  *
- * This module resolves `/init` with `@c15t/schema` and imports every
+ * This module resolves `/init` with `@inth/sdk/schema` and imports every
  * translation language. Import it only in server code: route handlers,
  * Server Components, server load functions and edge middleware. Client code
- * resolves with `@c15t/core/transports/manifest-browser`, which bundles
+ * resolves with `@inth/sdk/transports/manifest-browser`, which bundles
  * English only and loads other languages on demand.
  */
 
 import {
 	POLICY_CONTRACT_VERSION,
 	resolveInitFromManifest,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 import type {
 	ConsentManifest,
 	ConsentManifestGVLReference,
@@ -19,9 +19,9 @@ import type {
 	GlobalVendorList,
 	InitOutput,
 	ResolveInitFromManifestInputs,
-} from '@c15t/schema/types';
-import { baseTranslations } from '@c15t/translations/all';
-import type { BaseTranslations } from '@c15t/translations/all';
+} from '@inth/sdk-schema/types';
+import { baseTranslations } from '@inth/sdk-translations/all';
+import type { BaseTranslations } from '@inth/sdk-translations/all';
 
 import { failedResponseError } from '../libs/failed-response';
 import { isValidSubjectId } from '../libs/generate-subject-id';
@@ -78,7 +78,7 @@ export interface ManifestTransportOptions {
 	gvlRoute?: string;
 	/**
 	 * Base translations used for local manifest resolution. Defaults to every
-	 * language bundled by `@c15t/translations`.
+	 * language bundled by `@inth/sdk/translations`.
 	 */
 	baseTranslations?: BaseTranslations;
 
@@ -167,7 +167,7 @@ export interface ManifestTransportReportOptions {
 	 * and nothing is inferred from the manifest URL.
 	 */
 	projectUrl?: string;
-	/** Package that resolved init, for example `@c15t/nextjs`. */
+	/** Package that resolved init, for example `@inth/nextjs`. */
 	adapter?: string;
 	/**
 	 * The visitor's request headers. Only the client IP chain and user agent
@@ -328,11 +328,11 @@ const defaultFetchGvl = function defaultFetchGvl(input: {
  * Build a transport that resolves `/init` locally from a consent manifest
  * and posts saves to the backend.
  *
- * Server-only: resolution pulls in `@c15t/schema` and every translation
- * language, so import it from `@c15t/core/transports/manifest` in server
- * code (route handlers, RSC, edge) only. `@c15t/core` deliberately does not
+ * Server-only: resolution pulls in `@inth/sdk/schema` and every translation
+ * language, so import it from `@inth/sdk/transports/manifest` in server
+ * code (route handlers, RSC, edge) only. `@inth/sdk/engine` deliberately does not
  * re-export it. Browser code uses `createBrowserManifestTransport` from
- * `@c15t/core/transports/manifest-browser`.
+ * `@inth/sdk/transports/manifest-browser`.
  *
  * Saves without a signed `policySnapshotToken` carry the resolved policy
  * id, fingerprint, geo, language, and GPC signal so the backend can reject
@@ -344,7 +344,7 @@ const defaultFetchGvl = function defaultFetchGvl(input: {
  * `fetch` implementation is available.
  * @example
  * ```ts
- * import { createManifestTransport } from '@c15t/core/transports/manifest';
+ * import { createManifestTransport } from '@inth/sdk-core/transports/manifest';
  *
  * const transport = createManifestTransport({
  *   manifestUrl: 'https://api.example.com/c15t/manifest',

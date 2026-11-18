@@ -6,8 +6,8 @@
 		"check-types": "vue-tsc --noEmit"
 	},
 	"dependencies": {
-		"@c15t/integrations": "workspace:*",
-		"c15t": "workspace:*",
+		"@inth/integrations": "workspace:*",
+		"@inth/vue": "workspace:*",
 		"vue": "^3.5.39"
 	},
 	"devDependencies": {

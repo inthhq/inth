@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import type { PresentationAction } from '@c15t/core';
-import { saveConsentSurface } from '@c15t/core/surface-actions';
-import dialogStyles from '@c15t/ui/styles/components/consent-dialog';
+import type { PresentationAction } from '@inth/sdk/engine';
+import { saveConsentSurface } from '@inth/sdk/surface-actions';
+import dialogStyles from '@inth/sdk/ui/styles/components/consent-dialog';
 
-import '@c15t/ui/styles/components/consent-dialog.css';
-import { getTextDirection } from '@c15t/ui/utils';
+import '@inth/sdk/ui/styles/components/consent-dialog.css';
+import { getTextDirection } from '@inth/sdk/ui/utils';
 import { computed, nextTick, onUnmounted, provide, ref, watch } from 'vue';
 import type { HTMLAttributes } from 'vue';
 

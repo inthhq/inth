@@ -1,5 +1,5 @@
-import { policyRulePresets } from '@c15t/core';
-import { resolvePolicyRules } from '@c15t/schema/types';
+import { policyRulePresets } from '@inth/sdk-core';
+import { resolvePolicyRules } from '@inth/sdk-schema/types';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { installGlobal } from '../global';
@@ -39,7 +39,7 @@ const persistGrant = async (): Promise<void> => {
 };
 
 const install = (): C15tGlobal =>
-	installGlobal(createGlobal({ pkg: '@c15t/browser/test' }));
+	installGlobal(createGlobal({ pkg: '@inth/sdk/test' }));
 
 const trackObservers = (): void => {
 	const { observe, disconnect } = MutationObserver.prototype;

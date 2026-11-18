@@ -1,6 +1,6 @@
 // #region docs:class-names-vanilla-extract title="src/consent-components.css.ts"
+import type { ConsentProviderOptions } from '@inth/react';
 import { style } from '@vanilla-extract/css';
-import type { ConsentProviderOptions } from 'c15t/react';
 
 const card = style({
 	border: '3px solid rgb(37 99 235)',

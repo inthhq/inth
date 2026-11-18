@@ -1,7 +1,7 @@
 // #region docs:analytics-events title="components/pageviews.tsx"
 'use client';
 
-import { useEventDispatcher } from 'c15t/next';
+import { useEventDispatcher } from '@inth/nextjs';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
 

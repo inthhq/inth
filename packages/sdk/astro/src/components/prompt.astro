@@ -27,12 +27,12 @@
  *
  * ```astro
  * ---
- * import ConsentBanner from '@c15t/astro/components/consent-banner.astro';
+ * import ConsentBanner from '@inth/astro/components/consent-banner.astro';
  * ---
  * <ConsentBanner />
  * ```
  */
-import { applyExperimentAssignment, applyExperimentTheme } from '@c15t/core';
+import { applyExperimentAssignment, applyExperimentTheme } from '@inth/sdk/engine';
 import {
 	buildBannerRevealScript,
 	buildColorSchemeScript,
@@ -45,8 +45,8 @@ import {
 	PROMPT_SLOT_ATTRIBUTE,
 	promptClassNames,
 	resolvePromptModel,
-} from '@c15t/astro/server';
-import type { PromptProps } from '@c15t/astro/server';
+} from '@inth/astro/server';
+import type { PromptProps } from '@inth/astro/server';
 import Branding from './branding.astro';
 import ComponentStyles from './component-styles.astro';
 
@@ -78,7 +78,7 @@ const { c15t } = Astro.locals;
 
 if (!c15t) {
 	throw new Error(
-		'@c15t/astro: `Astro.locals.c15t` is missing. The c15t() integration registers the middleware that populates it — check it is listed in astro.config, and that you have not set `middleware: false`.'
+		'@inth/astro: `Astro.locals.c15t` is missing. The c15t() integration registers the middleware that populates it — check it is listed in astro.config, and that you have not set `middleware: false`.'
 	);
 }
 
@@ -388,7 +388,7 @@ const earlyTaps =
 	// The banner's only client-side code: one delegated listener, shared by
 	// every banner and dialog trigger on the site. Astro bundles and dedupes
 	// this module across pages.
-	import { attachBannerActions } from '@c15t/astro/client';
+	import { attachBannerActions } from '@inth/astro/client';
 
 	attachBannerActions();
 </script>

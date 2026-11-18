@@ -1,4 +1,4 @@
-import type { Script } from '@c15t/core';
+import type { Script } from '@inth/sdk/engine';
 /**
  * The server start script waits for the page's stylesheets before it runs.
  * Rendered ahead of the page it holds the parser back and delays first
@@ -141,7 +141,7 @@ test('renders the empty script the browser hydrates when the start module fails 
 	// the server would fail hydration.
 	vi.resetModules();
 	// oxlint-disable-next-line anti-slop/no-module-mocking -- The property under test is a failed load of this module; no interface stands in for a dynamic import.
-	vi.doMock('@c15t/core/runtime/script-server-start', () => {
+	vi.doMock('@inth/sdk/runtime/script-server-start', () => {
 		throw new Error('chunk missing');
 	});
 	try {
@@ -166,7 +166,7 @@ test('renders the empty script the browser hydrates when the start module fails 
 		);
 		expect(html).not.toContain(JSON.stringify(pixel.src));
 	} finally {
-		vi.doUnmock('@c15t/core/runtime/script-server-start');
+		vi.doUnmock('@inth/sdk/runtime/script-server-start');
 		vi.resetModules();
 	}
 });
@@ -181,13 +181,10 @@ test('a render whose start module loads late names the start script’s render i
 	});
 	vi.resetModules();
 	// oxlint-disable-next-line anti-slop/no-module-mocking -- The property under test is a late load of this module; no interface stands in for a dynamic import.
-	vi.doMock(
-		'@c15t/core/runtime/script-server-start',
-		async (importOriginal) => {
-			await gate;
-			return importOriginal();
-		}
-	);
+	vi.doMock('@inth/sdk/runtime/script-server-start', async (importOriginal) => {
+		await gate;
+		return importOriginal();
+	});
 	try {
 		const { ConsentRoot: FreshRoot } = await import('../root');
 		const stream = await renderToReadableStream(
@@ -216,7 +213,7 @@ test('a render whose start module loads late names the start script’s render i
 		expect(bootId).toBeDefined();
 		expect(startId && JSON.parse(startId)).toBe(bootId);
 	} finally {
-		vi.doUnmock('@c15t/core/runtime/script-server-start');
+		vi.doUnmock('@inth/sdk/runtime/script-server-start');
 		vi.resetModules();
 	}
 });
@@ -267,7 +264,7 @@ test('finishes the render on React 18 when the start module fails to load', asyn
 	// Without `use`, the retry calls the loader again. A new import there
 	// would suspend the render again, on every retry.
 	// oxlint-disable-next-line anti-slop/no-module-mocking -- The property under test is a failed load of this module; no interface stands in for a dynamic import.
-	vi.doMock('@c15t/core/runtime/script-server-start', () => {
+	vi.doMock('@inth/sdk/runtime/script-server-start', () => {
 		throw new Error('chunk missing');
 	});
 	try {
@@ -288,7 +285,7 @@ test('finishes the render on React 18 when the start module fails to load', asyn
 			/<\/main><!--\$--><script[^>]*><\/script><script data-c15t-boot[^>]*>[^<]*<\/script><script[^>]*>[^<]*c15t-engine-chunks[^<]*<\/script><!--\$--><script[^>]*><\/script><!--\/\$-->/u
 		);
 	} finally {
-		vi.doUnmock('@c15t/core/runtime/script-server-start');
+		vi.doUnmock('@inth/sdk/runtime/script-server-start');
 		vi.doUnmock('react');
 		vi.resetModules();
 	}
@@ -303,7 +300,7 @@ test('finishes concurrent React 18 renders while a failed start module reloads',
 		release = resolve;
 	});
 	// oxlint-disable-next-line anti-slop/no-module-mocking -- The property under test is a failed load of this module; no interface stands in for a dynamic import.
-	vi.doMock('@c15t/core/runtime/script-server-start', async () => {
+	vi.doMock('@inth/sdk/runtime/script-server-start', async () => {
 		loads += 1;
 		if (loads > 1) {
 			await released;
@@ -341,7 +338,7 @@ test('finishes concurrent React 18 renders while a failed start module reloads',
 		}
 	} finally {
 		release();
-		vi.doUnmock('@c15t/core/runtime/script-server-start');
+		vi.doUnmock('@inth/sdk/runtime/script-server-start');
 		vi.doUnmock('react');
 		vi.resetModules();
 	}

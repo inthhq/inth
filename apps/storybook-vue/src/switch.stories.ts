@@ -1,6 +1,6 @@
 import { controlledToggle, toggleOnOff } from '@c15t/conformance/play/switch';
-import { getSwitchState, toggleSwitchValue } from '@c15t/ui/primitives';
-import { switchVariants } from '@c15t/ui/styles/primitives';
+import { getSwitchState, toggleSwitchValue } from '@inth/sdk/ui/primitives';
+import { switchVariants } from '@inth/sdk/ui/styles/primitives';
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 import { computed, ref } from 'vue';
 

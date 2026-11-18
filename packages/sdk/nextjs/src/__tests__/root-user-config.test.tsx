@@ -1,10 +1,10 @@
 /**
- * `ConsentRoot` reads `c15t.config.ts` through the `@c15t/nextjs/user-config`
+ * `ConsentRoot` reads `c15t.config.ts` through the `@inth/nextjs/user-config`
  * alias `withConsentManifest` sets, so a Server Component layout renders it
  * with nothing but `state`.
  */
-import { useSaveConsents } from '@c15t/react';
-import { writePolicyResolutionWire } from '@c15t/schema/types';
+import { useSaveConsents } from '@inth/react';
+import { writePolicyResolutionWire } from '@inth/sdk/schema/types';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
@@ -12,7 +12,7 @@ import { ConsentRoot } from '../root';
 import { policyFixture } from './policy-fixture';
 
 // oxlint-disable-next-line anti-slop/no-module-mocking -- In an app build, the bundler alias `withConsentManifest` sets swaps this module for the app's c15t.config.ts. The mock is that alias; ConsentRoot is real.
-vi.mock('@c15t/nextjs/user-config', () => ({
+vi.mock('@inth/nextjs/user-config', () => ({
 	default: {
 		// Manifest mode, so the browser inits through the route prefix.
 		mode: { type: 'manifest' },

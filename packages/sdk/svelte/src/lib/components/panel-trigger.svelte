@@ -1,23 +1,23 @@
 <script lang="ts">
-	import styles from '@c15t/ui/styles/components/consent-dialog-trigger';
+	import styles from '@inth/sdk/ui/styles/components/consent-dialog-trigger';
 	import {
 		calculateCornerFromDrag,
 		createInitialDragState,
 		getPersistedPosition,
 		persistPosition as persistToStorage,
-	} from '@c15t/ui/utils';
-	import type { CornerPosition, DragState } from '@c15t/ui/utils';
+	} from '@inth/sdk/ui/utils';
+	import type { CornerPosition, DragState } from '@inth/sdk/ui/utils';
 	import {
 		claimDevToolsLauncher,
 		EMPTY_DEVTOOLS_LAUNCHER_SNAPSHOT,
 		followDevToolsDock,
 		getDevToolsLauncherSnapshot,
 		subscribeDevToolsLauncher,
-	} from '@c15t/ui/utils/devtools-launcher';
+	} from '@inth/sdk/ui/utils/devtools-launcher';
 	import type {
 		DevToolsLauncherSnapshot,
 		DevToolsLauncherTarget,
-	} from '@c15t/ui/utils/devtools-launcher';
+	} from '@inth/sdk/ui/utils/devtools-launcher';
 	import { onMount, untrack } from 'svelte';
 
 	import { portal } from '../actions/portal';

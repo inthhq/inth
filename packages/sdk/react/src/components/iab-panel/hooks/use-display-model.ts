@@ -1,7 +1,7 @@
 'use client';
 
-import { resolveIABDialogDisplayModel } from '@c15t/iab/headless';
-import type { HeadlessIABDialogDisplayModel } from '@c15t/iab/headless';
+import { resolveIABDialogDisplayModel } from '@inth/sdk/iab/headless';
+import type { HeadlessIABDialogDisplayModel } from '@inth/sdk/iab/headless';
 import { useMemo } from 'react';
 
 import { useIAB } from '~/iab-context';
@@ -17,7 +17,7 @@ export type IABDisplayModel = HeadlessIABDialogDisplayModel;
  *
  * @remarks
  * React wrapper around `resolveIABDialogDisplayModel` from
- * `@c15t/iab/headless`, so React, Svelte, Vue and the Astro server render
+ * `@inth/sdk/iab/headless`, so React, Svelte, Vue and the Astro server render
  * agree on which rows a preference centre shows and in what order.
  *
  * @returns The ordered rows plus the tab counts.

@@ -1,17 +1,17 @@
-import { policyRulePresets } from '@c15t/core';
+import { policyRulePresets } from '@inth/sdk-core';
 import type {
 	KernelTransport,
 	PolicyRule,
 	ProviderTransportFactory,
-} from '@c15t/core';
-import { hosted as hostedTransport } from '@c15t/core/transports';
+} from '@inth/sdk-core';
+import { hosted as hostedTransport } from '@inth/sdk-core/transports';
 import {
 	POLICY_CONTRACT_HEADER,
 	POLICY_CONTRACT_VERSION,
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
-import { translations } from '@c15t/translations/en';
+} from '@inth/sdk-schema/types';
+import { translations } from '@inth/sdk-translations/en';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createConsentClient as createHostedClient } from '../hosted';
@@ -57,7 +57,7 @@ const pathOf = (url: unknown): string => {
 
 const clients: ConsentClient[] = [];
 
-/** `@c15t/browser` with `testing()`, resolving `policy`. */
+/** `@inth/sdk` with `testing()`, resolving `policy`. */
 const createTestingClient = ({
 	mode,
 	policy,
@@ -525,7 +525,7 @@ describe('mode-specific JavaScript configuration', () => {
 			const fetchSpy = vi.fn<typeof fetch>();
 			vi.stubGlobal('fetch', fetchSpy);
 			expect(() => createHostedConsentClient(options)).toThrow(
-				/@c15t\/browser\/hosted/u
+				/@inth\/sdk\/hosted/u
 			);
 			expect(fetchSpy).not.toHaveBeenCalled();
 			expect(document.querySelector('[data-c15t-ui]')).toBeNull();
@@ -538,7 +538,7 @@ describe('mode-specific JavaScript configuration', () => {
 			const fetchSpy = vi.fn<typeof fetch>();
 			vi.stubGlobal('fetch', fetchSpy);
 			expect(() => createTestingConsentClient(options, {})).toThrow(
-				/@c15t\/browser\/testing/u
+				/@inth\/sdk\/testing/u
 			);
 			expect(fetchSpy).not.toHaveBeenCalled();
 			expect(document.querySelector('[data-c15t-ui]')).toBeNull();

@@ -3,14 +3,14 @@
  * load them for a page that left them out (see `ensureFirstPaintStyles`
  * in `../client-engine`) without the IAB rules.
  *
- * `@c15t/ui`'s first-paint sheet, plus the rule from `styles.css` that lets
+ * `@inth/sdk/ui`'s first-paint sheet, plus the rule from `styles.css` that lets
  * the `hidden` attribute hide the banner: the browser runtime shows and
  * hides the banner with that attribute, and the banner's own `display`
  * would otherwise beat the user-agent rule for `[hidden]`.
  *
  * @internal
  */
-import { css as firstPaintCSS } from '@c15t/ui/styles/sheets/first-paint';
+import { css as firstPaintCSS } from '@inth/sdk/ui/styles/sheets/first-paint';
 
 /** Marks the inlined `<style>`, as the React and Svelte surfaces do. */
 export const INLINE_STYLES_ID = 'c15t-first-paint';

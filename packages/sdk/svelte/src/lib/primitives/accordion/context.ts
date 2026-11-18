@@ -1,4 +1,4 @@
-import type { AccordionType } from '@c15t/ui/primitives';
+import type { AccordionType } from '@inth/sdk/ui/primitives';
 import { getContext, setContext } from 'svelte';
 
 const ACCORDION_ROOT_CONTEXT_KEY = Symbol('c15t-svelte-accordion-root');

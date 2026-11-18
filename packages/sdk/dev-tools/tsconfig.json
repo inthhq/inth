@@ -4,8 +4,8 @@
 		"rootDir": "src",
 		"lib": ["dom", "esnext"],
 		"paths": {
-			"@c15t/core": ["../core/dist-types/index.d.ts"],
-			"@c15t/core/*": ["../core/dist-types/*"],
+			"@inth/sdk-core": ["../core/dist-types/index.d.ts"],
+			"@inth/sdk-core/*": ["../core/dist-types/*"],
 			"~/*": ["./src/*"]
 		}
 	},

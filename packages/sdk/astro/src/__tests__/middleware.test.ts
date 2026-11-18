@@ -1,9 +1,9 @@
 import {
 	buildConsentManifestFromConfig,
 	policyRulePresets,
-} from '@c15t/schema/types';
-import { enTranslations } from '@c15t/translations';
-import { baseTranslations } from '@c15t/translations/all';
+} from '@inth/sdk/schema/types';
+import { enTranslations } from '@inth/sdk/translations';
+import { baseTranslations } from '@inth/sdk/translations/all';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';

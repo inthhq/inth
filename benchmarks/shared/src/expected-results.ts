@@ -196,7 +196,7 @@ export const consentGatePackages: Record<ConsentGateTarget, string> = {
 	angular: '@c15t/angular-browser-bench',
 	astro: '@c15t/astro-browser-bench',
 	nextjs: '@c15t/nextjs-browser-bench',
-	nuxt: '@c15t/vue',
+	nuxt: '@inth/vue',
 	react: '@c15t/react-browser-bench',
 	'script-tag': '@c15t/script-lifecycle-bench',
 	sveltekit: '@c15t/sveltekit-browser-bench',
@@ -305,7 +305,7 @@ export const expectedBenchmarkResultsFor = function expectedBenchmarkResultsFor(
 		),
 		...nuxtBrowserScenarios.map((scenario) =>
 			expect(
-				'@c15t/vue',
+				'@inth/vue',
 				browser(scenario),
 				'browser-runtime',
 				nuxtBrowserBudgetsForScenario(scenario)

@@ -1,5 +1,5 @@
 // #region docs:brand-theme title="src/consent-theme.ts"
-import { defineTheme } from 'c15t/react';
+import { defineTheme } from '@inth/react';
 
 export const brandTheme = defineTheme({
 	colors: {

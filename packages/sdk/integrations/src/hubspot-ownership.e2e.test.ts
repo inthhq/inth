@@ -1,10 +1,10 @@
 /**
  * @vitest-environment jsdom
  */
-import { createConsentKernel } from '@c15t/core';
-import type { ConsentKernel, ConsentState, Script } from '@c15t/core';
-import { createScriptLoader } from '@c15t/core/modules/script-loader';
-import type { ScriptLoaderHandle } from '@c15t/core/modules/script-loader';
+import { createConsentKernel } from '@inth/sdk/engine';
+import type { ConsentKernel, ConsentState, Script } from '@inth/sdk/engine';
+import { createScriptLoader } from '@inth/sdk/modules/script-loader';
+import type { ScriptLoaderHandle } from '@inth/sdk/modules/script-loader';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { hubspot } from './vendors/analytics/hubspot';

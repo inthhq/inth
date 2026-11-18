@@ -33,7 +33,7 @@
  *
  * @packageDocumentation
  */
-import { compareCanonical } from '@c15t/schema/canonical-order';
+import { compareCanonical } from '@inth/sdk-schema/canonical-order';
 
 import { displayedCategories as listDisplayed } from '../consent/consent-types';
 import type { AllConsentNames } from '../consent/consent-types';
@@ -297,7 +297,7 @@ const prune = function prune<KeyType extends string>(
  * @returns The draft.
  * @example
  * ```ts
- * import { createPreferenceDraft } from '@c15t/core/preference-draft';
+ * import { createPreferenceDraft } from '@inth/sdk-core/preference-draft';
  *
  * const draft = createPreferenceDraft(runtime.kernel);
  * const stop = draft.subscribe(() => render(draft.getState()));

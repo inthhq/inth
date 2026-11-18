@@ -1,4 +1,4 @@
-import type { ConsentPresentation } from '@c15t/core';
+import type { ConsentPresentation } from '@inth/sdk/engine';
 import type { ComponentProps } from 'react';
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';

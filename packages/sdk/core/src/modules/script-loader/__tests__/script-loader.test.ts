@@ -1,5 +1,5 @@
 /**
- * Tests for @c15t/core/modules/script-loader.
+ * Tests for @inth/sdk/modules/script-loader.
  *
  * Verifies the public script-loader contract:
  * - load/unload based on consent

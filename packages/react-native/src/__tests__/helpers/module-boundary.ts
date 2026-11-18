@@ -92,13 +92,13 @@ export const isForbiddenModule = function isForbiddenModule(
 /**
  * Whether a module is the browser consent engine the web twins run on.
  *
- * `@c15t/core` is the one web package a `.web` file may reach. The IAB codec,
+ * `@inth/sdk/engine` is the one web package a `.web` file may reach. The IAB codec,
  * the backend and the umbrella package stay forbidden everywhere.
  */
 export const isWebEngineModule = function isWebEngineModule(
 	specifier: string
 ): boolean {
-	return specifier === '@c15t/core' || specifier.startsWith('@c15t/core/');
+	return specifier === '@inth/sdk/engine' || specifier.startsWith('@inth/sdk/');
 };
 
 /**

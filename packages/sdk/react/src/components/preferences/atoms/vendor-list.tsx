@@ -1,5 +1,5 @@
-import type { AllConsentNames, ResolvedVendor } from '@c15t/core';
-import vendorListStyles from '@c15t/ui/styles/components/vendor-list';
+import type { AllConsentNames, ResolvedVendor } from '@inth/sdk/engine';
+import vendorListStyles from '@inth/sdk/ui/styles/components/vendor-list';
 import { useId, useState } from 'react';
 
 import { useTranslations } from '~/component-hooks/use-translations';

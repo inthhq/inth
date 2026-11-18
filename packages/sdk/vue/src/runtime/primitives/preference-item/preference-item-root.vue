@@ -4,7 +4,7 @@ import {
 	getPreferenceItemState,
 	PREFERENCE_ITEM_SLOTS,
 	togglePreferenceItemValue,
-} from '@c15t/ui/primitives';
+} from '@inth/sdk/ui/primitives';
 import { computed, ref, useId, watch } from 'vue';
 
 import { providePreferenceItemContext } from './context';

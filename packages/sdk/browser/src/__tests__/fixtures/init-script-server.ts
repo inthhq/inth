@@ -34,8 +34,8 @@ import {
 	policyRulePresets,
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
-import { enTranslations } from '@c15t/translations';
+} from '@inth/sdk-schema/types';
+import { enTranslations } from '@inth/sdk-translations';
 
 const initBody = () =>
 	JSON.stringify({

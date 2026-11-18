@@ -1,15 +1,15 @@
 /**
- * `@c15t/tanstack-start` client entry.
+ * `@inth/tanstack-start` client entry.
  *
  * Pattern:
  *   // src/routes/__root.tsx
  *   import { createRootRoute, Outlet } from '@tanstack/react-router';
  *   import { createServerFn } from '@tanstack/react-start';
- *   import { ConsentRoot } from '@c15t/tanstack-start';
+ *   import { ConsentRoot } from '@inth/tanstack-start';
  *   import {
  *     consentLoaderOptions,
  *     createConsentStateHandler,
- *   } from '@c15t/tanstack-start/server';
+ *   } from '@inth/tanstack-start/server';
  *
  *   // Declared in your module: the Start compiler splits server code at
  *   // this `createServerFn().handler()` call site.
@@ -33,7 +33,7 @@
  *   }
  *
  *   // any component
- *   import { useConsent } from '@c15t/tanstack-start';
+ *   import { useConsent } from '@inth/tanstack-start';
  *   const allowed = useConsent('marketing');
  *
  * The backend URL comes from `consentManifest()` in `vite.config.ts`, and
@@ -54,7 +54,7 @@
  * caches, so concurrent requests never share a kernel.
  */
 
-export { buildPrefetchScript, type PrefetchOptions } from '@c15t/core';
+export { buildPrefetchScript, type PrefetchOptions } from '@inth/sdk/engine';
 export type {
 	ConsentMode,
 	ConsentModeType,
@@ -63,17 +63,17 @@ export type {
 	ManifestModeInputs,
 	ManifestModeOptions,
 	TestingMode,
-} from '@c15t/core/modes';
+} from '@inth/sdk/modes';
 // The data `manifest()` replaces the transport implementation of the same
-// name that the re-export of `@c15t/react` below would otherwise provide.
-export { hosted, manifest } from '@c15t/core/modes';
+// name that the re-export of `@inth/react` below would otherwise provide.
+export { hosted, manifest } from '@inth/sdk/modes';
 // oxlint-disable-next-line oxc/no-barrel-file -- Preserve declaration order, interface shape, and public compatibility.
-export * from '@c15t/react';
+export * from '@inth/react';
 // Their code loads with the deferred root's engine; see `./root`.
 export {
 	DeferredConsentBanner as ConsentBanner,
 	DeferredConsentDialog as ConsentDialog,
-} from '@c15t/react/deferred';
+} from '@inth/react/deferred';
 export { consentPrefetchHead } from './libs/prefetch-head';
 export type { ConsentRootProps } from './root';
 export { ConsentRoot } from './root';

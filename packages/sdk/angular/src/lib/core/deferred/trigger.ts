@@ -3,9 +3,9 @@
  * has to choose. On a slow connection the engine's chunks share bandwidth with
  * the page's largest image; started after it, they no longer delay Largest
  * Contentful Paint. The same rule as the server script start
- * (`AFTER_PRIORITY_IMAGES` in `@c15t/core/runtime/script-server-start`),
- * `@c15t/react`'s deferred root, `@c15t/svelte`'s `ConsentRoot` and
- * `@c15t/vue`'s Nuxt module.
+ * (`AFTER_PRIORITY_IMAGES` in `@inth/sdk/runtime/script-server-start`),
+ * `@inth/react`'s deferred root, `@inth/svelte`'s `ConsentRoot` and
+ * `@inth/vue`'s Nuxt module.
  *
  * @packageDocumentation
  * @internal

@@ -98,8 +98,8 @@ beforeAll(async () => {
 				sourceRoot,
 				'packages/sdk/integrations/src/engine/inline-start-browser.ts'
 			),
-			'@c15t/core': resolve(sourceRoot, 'packages/sdk/core/src/index.ts'),
-			'@c15t/core/modules/script-loader': resolve(
+			'@inth/sdk/engine': resolve(sourceRoot, 'packages/sdk/core/src/index.ts'),
+			'@inth/sdk/modules/script-loader': resolve(
 				sourceRoot,
 				'packages/sdk/core/src/modules/script-loader/index.ts'
 			),

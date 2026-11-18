@@ -7,10 +7,10 @@
  * - The client demo in offline mode (`testing({ policyRules })`)
  */
 
-import type { Translations } from '@c15t/translations';
-import { baseTranslations } from '@c15t/translations/all';
-import { policyRulePresets, recommendedPolicyRules } from 'c15t';
-import type { ConsentPresentation, PolicyRule } from 'c15t';
+import { policyRulePresets, recommendedPolicyRules } from '@inth/sdk/engine';
+import type { ConsentPresentation, PolicyRule } from '@inth/sdk/engine';
+import type { Translations } from '@inth/sdk/translations';
+import { baseTranslations } from '@inth/sdk/translations/all';
 
 import { presentationForRule } from './policy-playground';
 
@@ -77,7 +77,7 @@ export const DEMO_LANGUAGES = ['en', 'fr', 'de', 'es', 'pt'] as const;
 
 /**
  * Builds a message profile containing every picker language. Each language
- * starts from the full pack that ships with `@c15t/translations` (so all
+ * starts from the full pack that ships with `@inth/sdk/translations` (so all
  * surfaces — banner, dialog, IAB UI — stay translated), with demo-specific
  * copy layered on top only where a profile customizes it. This also means
  * switching to any picker language works in every scenario instead of

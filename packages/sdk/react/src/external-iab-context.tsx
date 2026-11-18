@@ -9,14 +9,14 @@
  * calling `createIAB()` a second time, which would install a second
  * `__tcfapi` on the page.
  *
- * It deliberately imports nothing from `@c15t/iab`: the module is a peer of
+ * It deliberately imports nothing from `@inth/sdk/iab`: the module is a peer of
  * the runtime, not of the component tree, and a preference-centre chunk
  * that pulled in the TCF encoder would cost every visitor bytes only an IAB
  * site needs.
  */
 
-import type { ConsentRuntime } from '@c15t/core/runtime';
-import type { IABHandle } from '@c15t/iab';
+import type { IABHandle } from '@inth/sdk/iab';
+import type { ConsentRuntime } from '@inth/sdk/runtime';
 import {
 	useCallback,
 	useEffect,

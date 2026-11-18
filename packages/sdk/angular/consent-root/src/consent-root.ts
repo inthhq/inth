@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import type { ɵLegalLinkSelection as LegalLinkSelection } from '@c15t/angular';
-import { ConsentBanner } from '@c15t/angular';
-import { ConsentDialog } from '@c15t/angular/consent-dialog';
-import type { ConsentDialogTriggerOptions } from '@c15t/angular/consent-dialog';
+import type { ɵLegalLinkSelection as LegalLinkSelection } from '@inth/angular';
+import { ConsentBanner } from '@inth/angular';
+import { ConsentDialog } from '@inth/angular/consent-dialog';
+import type { ConsentDialogTriggerOptions } from '@inth/angular/consent-dialog';
 
 /**
  * The stock consent UI in one tag: the cookie banner and the preference

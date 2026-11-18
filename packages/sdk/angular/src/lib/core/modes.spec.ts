@@ -1,4 +1,4 @@
-import { hosted } from '@c15t/core/modes';
+import { hosted } from '@inth/sdk/modes';
 import { describe, expect, test, vi } from 'vitest';
 
 import { testing } from '../../../testing/src/testing-mode';
@@ -65,13 +65,13 @@ describe('the transports provideC15t() selects', () => {
 	test.each([
 		[
 			'hosted',
-			'@c15t/core/transports',
+			'@inth/sdk/transports',
 			(init: () => unknown) => ({ createHostedTransport: () => ({ init }) }),
 			() => hostedFor('/api/chunk'),
 		],
 		[
 			'manifest',
-			'@c15t/core/transports/manifest-browser',
+			'@inth/sdk/transports/manifest-browser',
 			(init: () => unknown) => ({ manifest: () => () => ({ init }) }),
 			() => manifest({ url: '/manifest.json' } as never),
 		],

@@ -1,5 +1,5 @@
 /**
- * Tests for @c15t/core/modules/iframe-blocker.
+ * Tests for @inth/sdk/modules/iframe-blocker.
  *
  * Verifies feature parity with v2:
  * - iframes without data-category are untouched

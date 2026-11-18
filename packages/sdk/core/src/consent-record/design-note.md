@@ -1,6 +1,6 @@
 # Internal consent records
 
-These helpers implement the record model used by the kernel, persistence, transports and framework adapters. The record API is exported from `@c15t/core/consent-record`. The kernel exposes explicit choices, effective permissions, prompt requirements and notice dismissals as separate facts. GPC is a live signal read on each evaluation and is never stored.
+These helpers implement the record model used by the kernel, persistence, transports and framework adapters. The record API is exported from `@inth/sdk/consent-record`. The kernel exposes explicit choices, effective permissions, prompt requirements and notice dismissals as separate facts. GPC is a live signal read on each evaluation and is never stored.
 
 ## Files
 

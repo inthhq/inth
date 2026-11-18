@@ -61,7 +61,7 @@ const getMutableBenchConsentFixtureVersionHeaders =
 
 /**
  * Records the `x-c15t-version` request header the fixture endpoint
- * received. The @c15t/vue Nitro manifest proxy (and the core transports)
+ * received. The @inth/vue Nitro manifest proxy (and the core transports)
  * send it on every c15t-bound request — the e2e suite asserts the value
  * observed upstream matches the built c15t version.
  */

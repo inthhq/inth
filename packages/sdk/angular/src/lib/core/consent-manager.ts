@@ -31,20 +31,21 @@ import type {
 	Model,
 	ResolvedVendor,
 	TranslationConfig,
-} from '@c15t/core';
+} from '@inth/sdk/engine';
+import type { IABHandle } from '@inth/sdk/iab';
 import type {
 	createPreferenceDraft,
 	PreferenceDraft,
 	PreferenceDraftState,
-} from '@c15t/core/preference-draft';
-import type { ConsentRuntime } from '@c15t/core/runtime/provider';
+} from '@inth/sdk/preference-draft';
+import type { ConsentRuntime } from '@inth/sdk/runtime/provider';
 import {
 	hasConsentPreferences,
 	hasConsentUI,
 	isSnapshotVendorAllowed,
 	saveConsentSurface,
 	showConsentSurface,
-} from '@c15t/core/surface-actions';
+} from '@inth/sdk/surface-actions';
 import {
 	allConsentNames,
 	applyExperimentAssignment,
@@ -57,9 +58,8 @@ import {
 	pendingBootSnapshot,
 	policyNeedsIAB,
 	vendorsListedUnder,
-} from '@c15t/core/surface-state';
-import type { IABHandle } from '@c15t/iab';
-import type { Theme } from '@c15t/ui/theme';
+} from '@inth/sdk/surface-state';
+import type { Theme } from '@inth/sdk/ui/theme';
 
 import { C15T_BOOT, restoreBoot } from './deferred/boot';
 import type { ConsentBoot } from './deferred/boot';
@@ -97,7 +97,7 @@ export type SaveType = 'all' | 'custom' | 'necessary';
  * The IAB TCF state the surfaces render: the kernel's IAB slice with the
  * actions of the lazily loaded CMP handle.
  *
- * The actions are safe to call before `@c15t/iab` has loaded: the lazy
+ * The actions are safe to call before `@inth/sdk/iab` has loaded: the lazy
  * handle queues them and replays them once it lands.
  */
 export interface AngularIABState extends KernelIABState {
@@ -128,7 +128,7 @@ export interface AngularIABState extends KernelIABState {
  * The preference draft: the choices a preference surface stages before
  * they are saved.
  *
- * `@c15t/core/preference-draft` is not part of the first load. The first
+ * `@inth/sdk/preference-draft` is not part of the first load. The first
  * read of `values`, `vendors` or `isStale` in the browser loads it; until it
  * lands they read empty and `false`, and writes wait in order for it.
  */
@@ -511,7 +511,7 @@ export class ConsentManager {
 			if (attached && attached !== untracked(engine)) {
 				engine.set(attached);
 			}
-			// The lazy handle queues calls until `@c15t/iab` lands and replays
+			// The lazy handle queues calls until `@inth/sdk/iab` lands and replays
 			// them, so the surfaces render against it as soon as it exists.
 			this.#iabHandle.set(runtime.iab as IABHandle | null);
 			// Turning `enabled` off swaps in a permissive kernel, in an owned
@@ -768,7 +768,7 @@ export class ConsentManager {
 	 * Start the draft with the draft module a preference surface imported, so
 	 * it renders seeded values in its first render.
 	 *
-	 * @param create - `createPreferenceDraft` from `@c15t/core/preference-draft`.
+	 * @param create - `createPreferenceDraft` from `@inth/sdk/preference-draft`.
 	 * @returns The started draft.
 	 * @internal
 	 */
@@ -934,7 +934,7 @@ export class ConsentManager {
 
 	async #importDraft(): Promise<PreferenceDraft> {
 		try {
-			const module = await import('@c15t/core/preference-draft');
+			const module = await import('@inth/sdk/preference-draft');
 			return this.provideDraft(module.createPreferenceDraft);
 		} catch (error) {
 			// The next read or write retries.
@@ -1037,7 +1037,7 @@ export class ConsentManager {
 			return null;
 		}
 		// Rendering keys on the kernel state so a server-resolved GVL puts the
-		// IAB surfaces in the first HTML. Until `@c15t/iab` lands the lazy
+		// IAB surfaces in the first HTML. Until `@inth/sdk/iab` lands the lazy
 		// handle queues calls and replays them; without a handle the actions
 		// are no-ops.
 		const handle = this.#iabHandle();

@@ -1,6 +1,6 @@
 'use client';
 
-import type { AllConsentNames } from '@c15t/core';
+import type { AllConsentNames } from '@inth/sdk/engine';
 import { forwardRef as createForwardRef } from 'react';
 
 import { useConsentGate } from '~/component-hooks/use-consent-gate';

@@ -10,7 +10,7 @@
  * first.
  *
  * These read the built artifacts, so `bun run --cwd packages/sdk/ui build` (or
- * `turbo run build --filter=@c15t/ui`, which `test` depends on) must have run.
+ * `turbo run build --filter=@inth/sdk-ui`, which `test` depends on) must have run.
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -42,7 +42,7 @@ const readEntrypoint = function readEntrypoint(relativePath: string): string {
 	const path = join(DIST_DIR, relativePath);
 	if (!existsSync(path)) {
 		throw new Error(
-			`Missing ${path}. Build @c15t/ui first: bun run --cwd packages/sdk/ui build`
+			`Missing ${path}. Build @inth/sdk/ui first: bun run --cwd packages/sdk/ui build`
 		);
 	}
 	return readFileSync(path, 'utf8');

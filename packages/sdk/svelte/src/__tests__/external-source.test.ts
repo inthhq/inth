@@ -1,4 +1,4 @@
-import type { ConsentState } from '@c15t/core';
+import type { ConsentState } from '@inth/sdk/engine';
 import { render, fireEvent } from '@testing-library/svelte';
 import { expect, test, vi } from 'vitest';
 

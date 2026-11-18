@@ -1,6 +1,6 @@
-import type { ProviderTransportFactory } from '@c15t/core';
-import { getIABControls } from '@c15t/core';
-import { clearGVLCache } from '@c15t/iab';
+import type { ProviderTransportFactory } from '@inth/sdk-core';
+import { getIABControls } from '@inth/sdk-core';
+import { clearGVLCache } from '@inth/sdk-iab';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';

@@ -1,5 +1,5 @@
 // #region docs:iab-opt-in title="src/main.ts"
-import { c15tVue, hosted } from 'c15t/vue/vue-plugin';
+import { c15tVue, hosted } from '@inth/vue/vue-plugin';
 import { createApp } from 'vue';
 
 import App from './App.vue';

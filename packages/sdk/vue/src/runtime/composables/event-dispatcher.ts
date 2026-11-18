@@ -1,8 +1,8 @@
-import { getEventDispatcher } from '@c15t/core/events';
+import { getEventDispatcher } from '@inth/sdk/events';
 import type {
 	EventDispatcher,
 	RuntimeEventDispatcherOptions,
-} from '@c15t/core/events';
+} from '@inth/sdk/events';
 import { toValue } from 'vue';
 import type { MaybeRefOrGetter } from 'vue';
 
@@ -55,5 +55,5 @@ export const useEventDispatcher = function useEventDispatcher(
 	};
 };
 
-export type { EventDispatcher, EventProperties } from '@c15t/core/events';
+export type { EventDispatcher, EventProperties } from '@inth/sdk/events';
 export type { RuntimeEventDispatcherOptions as UseEventDispatcherOptions };

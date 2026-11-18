@@ -4,7 +4,7 @@ import type {
 	ConsentExperiment,
 	ConsentPresentation,
 	LegalLinks,
-} from '@c15t/core';
+} from '@inth/sdk/engine';
 import { createContext, useContext } from 'react';
 
 import type { DialogPreload } from '~/chunk-warming';

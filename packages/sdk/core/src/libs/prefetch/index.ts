@@ -5,7 +5,7 @@
  * (before hydration) so the runtime can consume matching data automatically.
  *
  * @remarks
- * Framework adapters like `@c15t/nextjs` provide thin wrappers
+ * Framework adapters like `@inth/nextjs` provide thin wrappers
  * (e.g. `C15tPrefetch`) that use these building blocks with
  * framework-specific script injection.
  */

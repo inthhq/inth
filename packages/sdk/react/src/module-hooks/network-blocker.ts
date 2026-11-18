@@ -4,14 +4,14 @@ import type {
 	BlockedRequestInfo,
 	NetworkBlockerHandle,
 	NetworkBlockerRule,
-} from '@c15t/core/modules/network-blocker';
+} from '@inth/sdk/modules/network-blocker';
 import { useEffect, useRef, useState } from 'react';
 
 import { useEarlyNetworkHold } from './network-hold';
 import { useRequiredKernel } from './shared';
 
 const loadNetworkBlockerModule = () =>
-	import('@c15t/core/modules/network-blocker');
+	import('@inth/sdk/modules/network-blocker');
 
 export interface UseNetworkBlockerOptions {
 	rules: NetworkBlockerRule[];

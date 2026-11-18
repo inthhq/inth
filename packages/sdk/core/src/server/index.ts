@@ -1,5 +1,5 @@
 /**
- * `@c15t/core/server` — server-only helpers shared by host framework layers.
+ * `@inth/sdk/server` — server-only helpers shared by host framework layers.
  *
  * Nothing here touches the DOM or the kernel. The consent route handler
  * (`createConsentRouteHandler`) answers `/manifest` and `/init` for every
@@ -8,7 +8,7 @@
  * server render hands the client, and `fetchCachedManifest` is the one
  * process cache for the backend's manifest. Resolving `/init` from a
  * manifest, which imports every translation, is at
- * `@c15t/core/transports/manifest-cache`.
+ * `@inth/sdk/transports/manifest-cache`.
  *
  * Each export is its own module, so a bundle that imports only
  * `resolveRequestProjectUrl` does not pull in the init resolver.

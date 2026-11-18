@@ -8,19 +8,19 @@
  * @internal
  */
 
-import type { ConsentSnapshot } from '@c15t/core';
-import type { RuntimePrefetch } from '@c15t/core/runtime';
+import type { ConsentSnapshot } from '@inth/sdk/engine';
+import type { RuntimePrefetch } from '@inth/sdk/runtime';
 import type {
 	ConsentProviderRuntime,
 	ConsentProviderRuntimeOptions,
-} from '@c15t/core/runtime/provider';
-import { createHostedTransport } from '@c15t/core/transports';
+} from '@inth/sdk/runtime/provider';
+import { createHostedTransport } from '@inth/sdk/transports';
 
 import { provideModeTransports } from '../modes';
 import { createOwnedRuntime } from '../owned-runtime';
 import type { DeferredCommitted } from './commit';
 
-export { preloadSavePath } from '@c15t/core/runtime/save-preload';
+export { preloadSavePath } from '@inth/sdk/runtime/save-preload';
 
 type Permissions = ConsentSnapshot['effectivePermissions'];
 

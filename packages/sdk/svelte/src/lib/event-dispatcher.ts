@@ -1,8 +1,8 @@
-import { getEventDispatcher as getRuntimeEventDispatcher } from '@c15t/core/events';
+import { getEventDispatcher as getRuntimeEventDispatcher } from '@inth/sdk/events';
 import type {
 	EventDispatcher,
 	RuntimeEventDispatcherOptions,
-} from '@c15t/core/events';
+} from '@inth/sdk/events';
 
 import { getConsentContext } from './context.svelte';
 
@@ -23,7 +23,7 @@ import { getConsentContext } from './context.svelte';
  * ```svelte
  * <script lang="ts">
  * 	import { page } from '$app/state';
- * 	import { getEventDispatcher } from '@c15t/svelte';
+ * 	import { getEventDispatcher } from '@inth/svelte';
  *
  * 	const events = getEventDispatcher({ pageviews: ['posthog'] });
  * 	$effect(() => events.pageview(page.url.pathname));
@@ -47,5 +47,5 @@ export const getEventDispatcher = function getEventDispatcher(
 	};
 };
 
-export type { EventDispatcher, EventProperties } from '@c15t/core/events';
+export type { EventDispatcher, EventProperties } from '@inth/sdk/events';
 export type { RuntimeEventDispatcherOptions as GetEventDispatcherOptions };

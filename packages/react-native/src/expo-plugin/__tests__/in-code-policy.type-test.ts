@@ -6,7 +6,7 @@
  * under the same names. `tsc -p tsconfig.type-tests.json` runs this file.
  */
 
-import type { PolicyRule } from '@c15t/core';
+import type { PolicyRule } from '@inth/sdk/engine';
 import { expectTypeOf } from 'vitest';
 
 import type { InthPolicyRule } from '../params';

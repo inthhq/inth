@@ -10,15 +10,15 @@ import {
 	model,
 	TemplateRef,
 } from '@angular/core';
-import { ɵresolveNoStyle as resolveNoStyle } from '@c15t/angular';
+import { ɵresolveNoStyle as resolveNoStyle } from '@inth/angular';
 import {
 	getDataDisabled,
 	getPreferenceItemState,
 	PREFERENCE_ITEM_INTERNAL_SLOTS,
 	PREFERENCE_ITEM_SLOTS,
 	togglePreferenceItemValue,
-} from '@c15t/ui/primitives';
-import { preferenceItemVariants } from '@c15t/ui/styles/primitives';
+} from '@inth/sdk/ui/primitives';
+import { preferenceItemVariants } from '@inth/sdk/ui/styles/primitives';
 
 import { uniqueId } from './unique-id';
 
@@ -28,7 +28,7 @@ const variants = preferenceItemVariants();
  * One row of a preference list: a header with a trigger and controls, and
  * collapsible content. Bind `[(open)]` to control the content.
  *
- * The parts carry the stock `@c15t/ui` classes unless `noStyle` is set
+ * The parts carry the stock `@inth/sdk/ui` classes unless `noStyle` is set
  * here or on the provider. Your own `class` attributes are kept either way.
  *
  * @example

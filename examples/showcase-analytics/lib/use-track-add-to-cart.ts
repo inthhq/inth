@@ -1,7 +1,11 @@
 'use client';
 
-import { metaPixelEvent } from '@c15t/integrations/meta-pixel';
-import { useEventDispatcher, useSnapshot, useVendorAllowed } from 'c15t/next';
+import { metaPixelEvent } from '@inth/integrations/meta-pixel';
+import {
+	useEventDispatcher,
+	useSnapshot,
+	useVendorAllowed,
+} from '@inth/nextjs';
 import { useCallback } from 'react';
 
 import type { Product } from './products';

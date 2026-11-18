@@ -9,7 +9,7 @@
  * @packageDocumentation
  */
 
-import type { AdTechProvider } from '@c15t/core';
+import type { AdTechProvider } from '@inth/sdk-core';
 import {
 	AD_TECH_PROVIDER_PURPOSES,
 	AD_TECH_PROVIDERS_URL,
@@ -17,7 +17,7 @@ import {
 	adTechProviderListUrl,
 	normalizeAdTechProviderIds,
 	parseAdTechProviderList,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 
 import {
 	encodeAdditionalConsent,

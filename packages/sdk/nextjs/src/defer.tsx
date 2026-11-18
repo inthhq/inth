@@ -174,7 +174,7 @@ const replayQueued = (): void => {
  * ```tsx
  * // app/consent-island.tsx
  * 'use client';
- * import { deferConsent } from 'c15t/next/defer';
+ * import { deferConsent } from '@inth/nextjs/defer';
  *
  * export const ConsentIsland = deferConsent(async () => ({
  *   default: (await import('./consent')).Consent,

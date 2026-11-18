@@ -1,6 +1,6 @@
 'use client';
 
-import { useActiveUI, useSnapshot } from '@c15t/nextjs';
+import { useActiveUI, useSnapshot } from '@inth/nextjs';
 import { useEffect } from 'react';
 
 /**

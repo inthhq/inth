@@ -117,11 +117,10 @@
 	"devDependencies": {
 		"@babel/core": "7.29.7",
 		"@babel/parser": "7.28.5",
-		"@c15t/core": "workspace:*",
-		"@c15t/iab": "workspace:*",
 		"@c15t/typescript-config": "workspace:*",
 		"@c15t/vitest-config": "workspace:*",
 		"@iabtechlabtcf/core": "1.5.22",
+		"@inth/sdk": "workspace:*",
 		"@react-native/codegen": "0.87.1",
 		"@rsbuild/plugin-react": "1.4.6",
 		"@rslib/core": "0.23.2",
@@ -144,13 +143,13 @@
 		"vitest": "4.1.10"
 	},
 	"peerDependencies": {
-		"@c15t/core": "workspace:^",
+		"@inth/sdk": "workspace:^",
 		"expo": ">=55.0.0 <59.0.0",
 		"react": ">=19.2.0 <19.4.0",
 		"react-native": ">=0.83.0 <0.89.0"
 	},
 	"peerDependenciesMeta": {
-		"@c15t/core": {
+		"@inth/sdk": {
 			"optional": true
 		},
 		"expo": {

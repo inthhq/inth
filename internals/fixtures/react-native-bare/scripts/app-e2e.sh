@@ -112,7 +112,7 @@ git rev-parse HEAD > "${OUT}/source-head.txt"
 git diff --stat > "${OUT}/source-diff.txt"
 git diff --binary > "${OUT}/source.patch"
 bun --version > "${OUT}/bun-version.txt"
-bun turbo run build --filter=@inth/react-native --filter=@c15t/schema > "${OUT}/dependencies.log" 2>&1
+bun turbo run build --filter=@inth/react-native --filter=@inth/sdk-schema > "${OUT}/dependencies.log" 2>&1
 
 [[ "${PLATFORM}" != android ]] || export C15T_E2E_URL=http://localhost:3000
 mkdir -p "${OUT}/policy-assets"

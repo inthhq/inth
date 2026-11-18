@@ -176,7 +176,7 @@ export const createGPPCmpApi = function createGPPCmpApi(
 ): GPPCmpApi {
 	if (typeof window !== 'undefined' && isLoadedForeignCmp(window.__gpp)) {
 		throw new Error(
-			'@c15t/iab/gpp: another CMP already provides window.__gpp. Remove it, or do not mount createGPP() on this page.'
+			'@inth/sdk/iab/gpp: another CMP already provides window.__gpp. Remove it, or do not mount createGPP() on this page.'
 		);
 	}
 	let state = config.initial;

@@ -1,7 +1,7 @@
-import * as Accordion from '@c15t/react/primitives/accordion';
-import * as Button from '@c15t/react/primitives/button';
-import * as Dialog from '@c15t/react/primitives/dialog';
-import * as Switch from '@c15t/react/primitives/switch';
+import * as Accordion from '@inth/react/primitives/accordion';
+import * as Button from '@inth/react/primitives/button';
+import * as Dialog from '@inth/react/primitives/dialog';
+import * as Switch from '@inth/react/primitives/switch';
 import { createElement } from 'react';
 
 export const PrimitiveBench = () => (

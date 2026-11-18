@@ -1,10 +1,10 @@
 import { isPlatformBrowser } from '@angular/common';
 import { Directive, effect, inject, input, PLATFORM_ID } from '@angular/core';
-import { setupScrollLock } from '@c15t/ui/utils';
+import { setupScrollLock } from '@inth/sdk/ui/utils';
 
 /**
  * Locks document scrolling while enabled and the host is rendered. Wraps
- * `setupScrollLock` from `@c15t/ui`. Does nothing on the server.
+ * `setupScrollLock` from `@inth/sdk/ui`. Does nothing on the server.
  *
  * @example
  * ```html

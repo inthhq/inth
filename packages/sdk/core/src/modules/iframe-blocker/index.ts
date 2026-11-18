@@ -1,5 +1,5 @@
 /**
- * `@c15t/core/modules/iframe-blocker`
+ * `@inth/sdk/modules/iframe-blocker`
  *
  * Kernel-consuming iframe blocker. Subscribes to the kernel snapshot,
  * observes the DOM for iframes carrying a `data-category` or

@@ -1,7 +1,7 @@
-import type { AllConsentNames } from '@c15t/core';
-import type { PolicyRule } from '@c15t/schema/types';
-import { resolvePolicyRules } from '@c15t/schema/types';
-import gateStyles from '@c15t/ui/styles/components/consent-gate';
+import type { AllConsentNames } from '@inth/sdk/engine';
+import type { PolicyRule } from '@inth/sdk/schema/types';
+import { resolvePolicyRules } from '@inth/sdk/schema/types';
+import gateStyles from '@inth/sdk/ui/styles/components/consent-gate';
 import { flushPromises, mount } from '@vue/test-utils';
 import type { VueWrapper } from '@vue/test-utils';
 import { afterEach, describe, expect, test } from 'vitest';

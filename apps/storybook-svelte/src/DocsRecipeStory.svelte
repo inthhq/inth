@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { ConsentDialog } from '@c15t/svelte';
-	import type { ConsentManagerOptions } from '@c15t/svelte';
+	import { ConsentDialog } from '@inth/svelte';
+	import type { ConsentManagerOptions } from '@inth/svelte';
 	import type { Component } from 'svelte';
 
 	import RecipePage from './docs-recipe-page.svelte';

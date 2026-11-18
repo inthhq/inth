@@ -10,8 +10,8 @@ import type {
 	ResolvedPolicyRule,
 	TranslationsResponse,
 	Vendor,
-} from '@c15t/schema/types';
-import type { Translations } from '@c15t/translations';
+} from '@inth/sdk-schema/types';
+import type { Translations } from '@inth/sdk-translations';
 /**
  * Kernel public types.
  *
@@ -44,7 +44,7 @@ import type { VendorDetails } from './libs/script-loader/types';
 import type { PublisherRestriction } from './options/iab-tcf';
 
 // Re-export schema types that consumers need so they don't have to
-// import from @c15t/schema directly for routine work.
+// import from @inth/sdk/schema directly for routine work.
 export type {
 	AdTechProvider,
 	GlobalVendorList,
@@ -945,7 +945,7 @@ export interface ConsentKernel {
 	 * A number that changes whenever the stored records are replaced:
 	 * hydrated, cleared or swapped for another subject's. An addon that
 	 * starts asynchronous work from the current records reads it first and
-	 * drops the result if it changed meanwhile, as `@c15t/iab` does.
+	 * drops the result if it changed meanwhile, as `@inth/sdk/iab` does.
 	 */
 	getRecordsGeneration: () => number;
 

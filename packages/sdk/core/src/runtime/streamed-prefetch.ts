@@ -17,7 +17,7 @@ import type { ConsentProviderRuntimeOptions, RuntimePrefetch } from './types';
  *
  * Pass it as `streamPrefetch` in `createConsentProviderRuntime`'s modules to
  * accept a `prefetch` that is still a promise. `lazyStreamPrefetch` from
- * `@c15t/core/runtime/provider` does the same and loads this code only for
+ * `@inth/sdk/runtime/provider` does the same and loads this code only for
  * a runtime whose prefetch is a promise.
  *
  * @param mode - The runtime's transport factory.

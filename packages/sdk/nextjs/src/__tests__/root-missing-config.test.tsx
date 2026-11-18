@@ -64,7 +64,7 @@ test('throws with no config and no NEXT_PUBLIC_C15T_BACKEND_URL', () => {
 			</ConsentRoot>
 		)
 	).toThrow(
-		'@c15t/nextjs: `projectUrl` is required. Set NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL), or `projectUrl` in c15t.config.ts.'
+		'@inth/nextjs: `projectUrl` is required. Set NEXT_PUBLIC_C15T_BACKEND_URL (or NEXT_PUBLIC_INTH_PROJECT_URL), or `projectUrl` in c15t.config.ts.'
 	);
 });
 

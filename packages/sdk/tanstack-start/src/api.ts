@@ -1,12 +1,12 @@
 /**
- * `@c15t/tanstack-start/api` same-origin consent routes.
+ * `@inth/tanstack-start/api` same-origin consent routes.
  *
  * Mount one splat server route and both endpoints exist:
  *
  * ```ts
  * // src/routes/api/c15t/$.ts
  * import { createFileRoute } from '@tanstack/react-router';
- * import { createConsentRoute } from '@c15t/tanstack-start/api';
+ * import { createConsentRoute } from '@inth/tanstack-start/api';
  *
  * export const Route = createFileRoute('/api/c15t/$')({
  *   server: { handlers: createConsentRoute() },
@@ -31,15 +31,15 @@
 import {
 	projectUrl as generatedProjectUrl,
 	snapshot as generatedSnapshot,
-} from '@c15t/core/generated';
-import { createConsentRouteHandler } from '@c15t/core/server';
+} from '@inth/sdk/generated';
+import type { ConsentManifest } from '@inth/sdk/schema/types';
+import { createConsentRouteHandler } from '@inth/sdk/server';
 import type {
 	ConsentProxyOptions,
 	ConsentRouteFetchGvl,
 	ConsentRouteRequestContext,
 	ManifestCache,
-} from '@c15t/core/server';
-import type { ConsentManifest } from '@c15t/schema/types';
+} from '@inth/sdk/server';
 
 import { handledRequestFor } from './libs/handled-request';
 import {
@@ -47,7 +47,7 @@ import {
 	rememberConsentRouteRequest,
 } from './libs/request-inputs';
 
-export type { ConsentProxyOptions } from '@c15t/core/server';
+export type { ConsentProxyOptions } from '@inth/sdk/server';
 
 /** Options for {@link createConsentRoute}. */
 export interface ConsentRouteOptions {
@@ -131,7 +131,7 @@ export interface ConsentRouteOptions {
 	 * `trustForwardedHeaders` (a client-controlled chain would let a visitor
 	 * choose the address the backend sees), and adds
 	 * `x-forwarded-host`, `x-forwarded-proto`, the c15t version header, and
-	 * `x-c15t-proxy: @c15t/tanstack-start`. The hosted backend sits behind
+	 * `x-c15t-proxy: @inth/tanstack-start`. The hosted backend sits behind
 	 * Vercel Firewall or Cloudflare, and a bare server-to-server fetch (server
 	 * TLS fingerprint, no user agent, one egress IP for every visitor) scores
 	 * as a bot. Forwarding those headers gives the WAF the same signals a
@@ -224,7 +224,7 @@ export const createConsentRoute = function createConsentRoute<
 >(options?: Options): ConsentRouteHandlersFor<Options> {
 	const resolved: ConsentRouteOptions = options ?? {};
 	const handle = createConsentRouteHandler({
-		adapter: '@c15t/tanstack-start',
+		adapter: '@inth/tanstack-start',
 		cache: resolved.cache,
 		fetch: resolved.fetch,
 		fetchGvl: resolved.fetchGvl,

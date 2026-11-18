@@ -1,4 +1,4 @@
-import type { ConsentKernel, ConsentState } from '@c15t/core';
+import type { ConsentKernel, ConsentState } from '@inth/sdk/engine';
 import { mount } from '@vue/test-utils';
 import { expect, test, vi } from 'vitest';
 import { defineComponent, h, inject, nextTick } from 'vue';

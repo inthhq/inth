@@ -1,5 +1,5 @@
-import { policyRulePresets } from '@c15t/core';
-import { resolvePolicyRules } from '@c15t/schema/types';
+import { policyRulePresets } from '@inth/sdk-core';
+import { resolvePolicyRules } from '@inth/sdk-schema/types';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { installGlobal } from '../global';
@@ -27,7 +27,7 @@ const options: ConsentClientOptions = {
 /** Install over whatever the page queued, then init the way the tag does. */
 const loadTag = function loadTag(queue: unknown[]): C15tGlobal {
 	testWindow.c15t = queue;
-	const api = installGlobal(createGlobal({ pkg: '@c15t/browser/test' }));
+	const api = installGlobal(createGlobal({ pkg: '@inth/sdk/test' }));
 	api.init();
 	return api;
 };
@@ -144,7 +144,7 @@ describe('queued calls before the tag loads', () => {
 
 	it('waits for a manual init before running queued actions', async () => {
 		testWindow.c15t = [['config', options], ['openDialog']];
-		const api = installGlobal(createGlobal({ pkg: '@c15t/browser/test' }));
+		const api = installGlobal(createGlobal({ pkg: '@inth/sdk/test' }));
 		await Promise.resolve();
 		expect(api.client).toBeNull();
 
@@ -224,7 +224,7 @@ describe('c15t.push after the tag loads', () => {
 
 	it('runs a batch before actions pushed by a ready listener during its init', async () => {
 		testWindow.c15t = [];
-		const api = installGlobal(createGlobal({ pkg: '@c15t/browser/test' }));
+		const api = installGlobal(createGlobal({ pkg: '@inth/sdk/test' }));
 		const onConsent = vi.fn();
 
 		api.push(
@@ -249,7 +249,7 @@ describe('c15t.push after the tag loads', () => {
 
 	it('runs actions pushed after a dispose that interrupted a wait for init', async () => {
 		testWindow.c15t = [['config', options]];
-		const api = installGlobal(createGlobal({ pkg: '@c15t/browser/test' }));
+		const api = installGlobal(createGlobal({ pkg: '@inth/sdk/test' }));
 		const acceptAll = vi.spyOn(api, 'acceptAll');
 
 		api.push(['acceptAll']);

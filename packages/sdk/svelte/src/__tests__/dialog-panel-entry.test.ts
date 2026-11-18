@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest';
 import manifest from '../../package.json';
 import * as entry from '../lib/dialog-panel';
 
-describe('@c15t/svelte/dialog-panel', () => {
+describe('@inth/svelte/dialog-panel', () => {
 	test('exports the dialog the root ConsentDialog loads on first open', async () => {
 		expect(manifest.exports['./dialog-panel']).toEqual({
 			default: './dist/dialog-panel.js',

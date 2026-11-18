@@ -2,7 +2,7 @@
  * `provideC15tServer()` on a real server render: the request reaches it
  * through `REQUEST`, the mode comes from `provideC15t()`, and the state
  * reaches the browser's `ConsentManager` through `TransferState`. The
- * resolution rules themselves are pinned in `@c15t/core/server`.
+ * resolution rules themselves are pinned in `@inth/sdk/server`.
  */
 import {
 	APP_ID,
@@ -20,12 +20,12 @@ import {
 	provideServerRendering,
 	renderApplication,
 } from '@angular/platform-server';
-import { ConsentBanner, ConsentManager, provideC15t } from '@c15t/angular';
-import type { C15tProviderOptions } from '@c15t/angular';
-import type { RuntimePrefetch } from '@c15t/core/runtime';
-import { clearManifestCache } from '@c15t/core/server';
-import { EARLY_CONSENT_TAP_SCRIPT } from '@c15t/core/surface-actions';
-import { hosted } from '@c15t/core/transports';
+import { ConsentBanner, ConsentManager, provideC15t } from '@inth/angular';
+import type { C15tProviderOptions } from '@inth/angular';
+import type { RuntimePrefetch } from '@inth/sdk/runtime';
+import { clearManifestCache } from '@inth/sdk/server';
+import { EARLY_CONSENT_TAP_SCRIPT } from '@inth/sdk/surface-actions';
+import { hosted } from '@inth/sdk/transports';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { testing } from '../../testing/src/testing-mode';

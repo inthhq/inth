@@ -7,7 +7,7 @@
  * used to inline its own tablist, so it carried none of that.
  */
 
-import type { TabsOrientation } from '@c15t/ui/primitives';
+import type { TabsOrientation } from '@inth/sdk/ui/primitives';
 import type { ComputedRef, InjectionKey, Ref } from 'vue';
 import { inject, provide } from 'vue';
 

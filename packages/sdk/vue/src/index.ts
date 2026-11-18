@@ -1,7 +1,7 @@
-import type { ProviderTransportFactory } from '@c15t/core';
-import type { HostedMode } from '@c15t/core/modes';
-import type { ConsentRuntime } from '@c15t/core/runtime';
-import type { ConsentTesting } from '@c15t/core/testing';
+import type { ProviderTransportFactory } from '@inth/sdk/engine';
+import type { HostedMode } from '@inth/sdk/modes';
+import type { ConsentRuntime } from '@inth/sdk/runtime';
+import type { ConsentTesting } from '@inth/sdk/testing';
 // oxlint-disable oxc/no-barrel-file -- Public framework entry point intentionally re-exports the supported API.
 import { getCurrentInstance } from 'vue';
 import type { App, Plugin } from 'vue';
@@ -16,19 +16,22 @@ import type { RuntimeConsentConfig } from './runtime/kernel';
 import { selectedMode } from './runtime/modes';
 import { mountTokensStyle } from './runtime/theme-tokens';
 
-export type { AllConsentNames, ClearOnRevocationConfig } from '@c15t/core';
+export type {
+	AllConsentNames,
+	ClearOnRevocationConfig,
+} from '@inth/sdk/engine';
 export {
 	resolveActionLabels,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
-} from '@c15t/core';
+} from '@inth/sdk/engine';
 export type {
 	PreferenceControl,
 	PresentationAction,
 	PromptCopy,
-} from '@c15t/core';
-export type * from '@c15t/schema/config';
-export { defineTheme, type Theme } from '@c15t/ui/theme';
+} from '@inth/sdk/engine';
+export type * from '@inth/sdk/schema/config';
+export { defineTheme, type Theme } from '@inth/sdk/ui/theme';
 export * from './runtime/components/index';
 export * from './runtime/composables';
 export type {
@@ -45,8 +48,8 @@ export {
 	type HostedModeFactory,
 	type ProviderTransportFactory,
 } from './runtime/modes';
-export type { ConsentTesting } from '@c15t/core/testing';
-export { hosted, type HostedMode } from '@c15t/core/modes';
+export type { ConsentTesting } from '@inth/sdk/testing';
+export { hosted, type HostedMode } from '@inth/sdk/modes';
 export {
 	generateTokensCSS,
 	type TokensCSSOptions,
@@ -73,7 +76,7 @@ export type C15tVuePluginOptions = C15tVuePluginConfig &
 				/**
 				 * Backend URL. Setting it is how the app talks to the hosted
 				 * backend. Defaults to the URL `consentManifest()` from
-				 * `c15t/vue/vite` read from `VITE_C15T_BACKEND_URL` or
+				 * `@inth/vue/vite` read from `VITE_C15T_BACKEND_URL` or
 				 * `VITE_INTH_PROJECT_URL`.
 				 *
 				 * @example
@@ -86,17 +89,17 @@ export type C15tVuePluginOptions = C15tVuePluginConfig &
 				 * How the visitor's policy is resolved.
 				 *
 				 * - Omitted, or `hosted()`: ask `${projectUrl}/init`.
-				 * - `manifest()` from `c15t/vue/vue-plugin`: resolve from the
+				 * - `manifest()` from `@inth/vue/vue-plugin`: resolve from the
 				 *   backend's consent manifest in the browser, falling back to
 				 *   `/init` with a warning when it is unavailable.
-				 * - `testing()` from `c15t/vue/testing`: resolve a policy with
+				 * - `testing()` from `@inth/vue/testing`: resolve a policy with
 				 *   no backend, for tests. It throws in production builds. To
 				 *   keep consent out of the way in an app's own tests instead,
 				 *   set `enabled: false`.
 				 *
 				 * @example
 				 * ```ts
-				 * import { c15tVue, manifest } from 'c15t/vue/vue-plugin';
+				 * import { c15tVue, manifest } from '@inth/vue/vue-plugin';
 				 *
 				 * app.use(c15tVue, { mode: manifest() });
 				 * ```
@@ -120,7 +123,7 @@ export type C15tVuePluginOptions = C15tVuePluginConfig &
 				 * @example
 				 * ```ts
 				 * import { createApp } from 'vue';
-				 * import { c15tVue } from 'c15t/vue/vue-plugin';
+				 * import { c15tVue } from '@inth/vue/vue-plugin';
 				 *
 				 * createApp(Dialog).use(c15tVue, { runtime }).mount(target);
 				 * ```
@@ -135,7 +138,7 @@ export type C15tVuePluginOptions = C15tVuePluginConfig &
  *
  * @example
  * ```ts
- * import { c15tVue, manifest } from 'c15t/vue/vue-plugin';
+ * import { c15tVue, manifest } from '@inth/vue/vue-plugin';
  * import { createApp } from 'vue';
  *
  * createApp(App).use(c15tVue, { projectUrl: '/api/c15t' }).mount('#app');

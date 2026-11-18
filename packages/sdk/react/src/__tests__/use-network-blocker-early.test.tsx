@@ -1,8 +1,8 @@
-import type { NetworkBlockerRule } from '@c15t/core/modules/network-blocker';
+import type { NetworkBlockerRule } from '@inth/sdk/modules/network-blocker';
 import {
 	holdNetworkRequests,
 	releaseNetworkRequests,
-} from '@c15t/core/modules/network-hold';
+} from '@inth/sdk/modules/network-hold';
 import { StrictMode, Suspense, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';

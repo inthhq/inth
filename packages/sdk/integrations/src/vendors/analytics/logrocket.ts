@@ -1,4 +1,4 @@
-import type { Script } from '@c15t/core';
+import type { Script } from '@inth/sdk/engine';
 
 import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
@@ -128,7 +128,7 @@ export interface LogRocketOptions {
  *
  * @example
  * ```ts
- * import { logRocket } from '@c15t/integrations/logrocket';
+ * import { logRocket } from '@inth/integrations/logrocket';
  *
  * logRocket({
  * 	appId: 'org-slug/app-slug',

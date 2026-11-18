@@ -1,7 +1,7 @@
 // #region docs:bottom-bar
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { ConsentBanner } from '@c15t/angular';
-import { ConsentDialog } from '@c15t/angular/consent-dialog';
+import { ConsentBanner } from '@inth/angular';
+import { ConsentDialog } from '@inth/angular/consent-dialog';
 
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,

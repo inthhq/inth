@@ -1,4 +1,4 @@
-import type { Theme } from '@c15t/ui';
+import type { Theme } from '@inth/sdk/ui';
 
 /**
  * Theme presets for the demo.

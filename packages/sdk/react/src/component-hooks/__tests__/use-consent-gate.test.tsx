@@ -3,8 +3,8 @@ import type {
 	ConsentKernel,
 	ConsentState,
 	KernelConfig,
-} from '@c15t/core';
-import type { PolicyRule } from '@c15t/schema/types';
+} from '@inth/sdk/engine';
+import type { PolicyRule } from '@inth/sdk/schema/types';
 import { useContext, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { hydrateRoot } from 'react-dom/client';

@@ -1,4 +1,4 @@
-import type { AllConsentNames, Script } from '@c15t/core';
+import type { AllConsentNames, Script } from '@inth/sdk/engine';
 
 import { resolveManifest } from '../../resolve';
 import { runtimeDateValue, vendorManifestContract } from '../../types';

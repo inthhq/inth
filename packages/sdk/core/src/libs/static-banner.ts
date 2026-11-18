@@ -14,7 +14,7 @@
  * @internal
  */
 
-import { POLICY_CONTRACT_VERSION } from '@c15t/schema/types';
+import { POLICY_CONTRACT_VERSION } from '@inth/sdk-schema/types';
 
 import { PREFETCH_WINDOW_KEY } from './prefetch/window-key';
 

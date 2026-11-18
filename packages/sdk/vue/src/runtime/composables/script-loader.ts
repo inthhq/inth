@@ -1,4 +1,4 @@
-import type { Script } from '@c15t/core/modules/script-loader';
+import type { Script } from '@inth/sdk/modules/script-loader';
 import { onScopeDispose, toValue, watch } from 'vue';
 import type { MaybeRefOrGetter } from 'vue';
 
@@ -64,4 +64,4 @@ export const useScriptLoader = function useScriptLoader(
 	};
 };
 
-export type { Script } from '@c15t/core/modules/script-loader';
+export type { Script } from '@inth/sdk/modules/script-loader';

@@ -1,17 +1,17 @@
-import type { ConsentSnapshot } from '@c15t/core';
+import type { ConsentSnapshot } from '@inth/sdk-core';
 import {
 	calculateCornerFromDrag,
 	getPersistedPosition,
 	persistPosition,
-} from '@c15t/ui/utils';
-import type { CornerPosition } from '@c15t/ui/utils';
+} from '@inth/sdk-ui/utils';
+import type { CornerPosition } from '@inth/sdk-ui/utils';
 import {
 	claimDevToolsLauncher,
 	followDevToolsDock,
 	getDevToolsLauncherSnapshot,
 	subscribeDevToolsLauncher,
-} from '@c15t/ui/utils/devtools-launcher';
-import type { DevToolsLauncherTarget } from '@c15t/ui/utils/devtools-launcher';
+} from '@inth/sdk-ui/utils/devtools-launcher';
+import type { DevToolsLauncherTarget } from '@inth/sdk-ui/utils/devtools-launcher';
 
 import { classes } from '../generated/styles';
 import { hasDecided } from '../has-decided';

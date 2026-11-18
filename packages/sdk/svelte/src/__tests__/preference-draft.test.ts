@@ -1,9 +1,9 @@
 /**
- * Svelte's wrapper around `@c15t/core/preference-draft`: one draft per
+ * Svelte's wrapper around `@inth/sdk/preference-draft`: one draft per
  * provider, read through the state API. The draft rules are pinned by the
  * core suite; this covers the runes wiring and the provider's contract.
  */
-import type { ConsentKernel } from '@c15t/core';
+import type { ConsentKernel } from '@inth/sdk/engine';
 import { render } from '@testing-library/svelte';
 import { tick } from 'svelte';
 import { expect, test, vi } from 'vitest';

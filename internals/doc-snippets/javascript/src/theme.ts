@@ -1,4 +1,4 @@
-import { hosted, init } from '@c15t/browser';
+import { hosted, init } from '@inth/sdk';
 
 import { scripts } from './scripts';
 

@@ -2,7 +2,7 @@
  * Valibot mirrors of the v3 policy wire contract.
  *
  * Backends validate and document `/init` with these. Clients use the plain
- * reader in `policy-resolution-wire.ts` so `@c15t/schema/types` stays free of the
+ * reader in `policy-resolution-wire.ts` so `@inth/sdk/schema/types` stays free of the
  * valibot runtime. A test keeps the two in agreement.
  */
 

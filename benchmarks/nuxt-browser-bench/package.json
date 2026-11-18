@@ -14,8 +14,8 @@
 	},
 	"dependencies": {
 		"@c15t/benchmarking": "workspace:*",
-		"@c15t/core": "workspace:*",
-		"@c15t/vue": "workspace:*",
+		"@inth/sdk": "workspace:*",
+		"@inth/vue": "workspace:*",
 		"nuxt": "4.6.0",
 		"vue": "3.5.43"
 	},

@@ -8,12 +8,12 @@
  * @internal
  */
 
-import { defaultTranslationConfig } from '@c15t/core';
-import type { ConsentSnapshot } from '@c15t/core';
-import type { ConsentProviderRuntime } from '@c15t/core/runtime/provider';
-import { planInstantCommit } from '@c15t/core/surface-actions/instant-commit';
-import { deepMergeTranslations } from '@c15t/translations';
-import type { Translations } from '@c15t/translations';
+import { defaultTranslationConfig } from '@inth/sdk/engine';
+import type { ConsentSnapshot } from '@inth/sdk/engine';
+import type { ConsentProviderRuntime } from '@inth/sdk/runtime/provider';
+import { planInstantCommit } from '@inth/sdk/surface-actions/instant-commit';
+import { deepMergeTranslations } from '@inth/sdk/translations';
+import type { Translations } from '@inth/sdk/translations';
 
 import { isIABConfigured } from '../iab-loader';
 import type { ProviderOptionsInput } from '../provider-options';
@@ -29,7 +29,7 @@ import { isRunnableNow } from './scripts';
  * yet, and no option needs the engine at once (IAB, an experiment, a
  * consent source, GPP, the network blocker, `enabled: false`,
  * `persistence: false`, or a configured script that may run now and the
- * server did not start). The same rule as `@c15t/vue`'s Nuxt module.
+ * server did not start). The same rule as `@inth/vue`'s Nuxt module.
  *
  * @param snapshot - The snapshot the server rendered with.
  * @param options - The root's options.

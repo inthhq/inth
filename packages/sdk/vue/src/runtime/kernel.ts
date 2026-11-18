@@ -1,7 +1,7 @@
 /**
  * The Vue side of the consent runtime.
  *
- * `@c15t/core`'s provider runtime owns behaviour: the kernel, persistence,
+ * `@inth/sdk/engine`'s provider runtime owns behaviour: the kernel, persistence,
  * the script loader, the blockers, IAB, callbacks, the prefetch adoption
  * and teardown. This module owns expression: it turns the Vue and Nuxt
  * config into runtime options, takes the transport factory the plugin
@@ -15,7 +15,7 @@ import {
 	initOutputToKernelConfig,
 	policyNeedsIAB,
 	watchRevocationReload,
-} from '@c15t/core';
+} from '@inth/sdk/engine';
 import type {
 	ConsentExperiment,
 	ConsentKernel,
@@ -23,42 +23,42 @@ import type {
 	HydrationRecords,
 	KernelConfig,
 	ProviderTransportFactory,
-} from '@c15t/core';
-import { createIframeBlocker } from '@c15t/core/modules/iframe-blocker';
-import type { IframeBlockerOptions } from '@c15t/core/modules/iframe-blocker';
+} from '@inth/sdk/engine';
+import { createIframeBlocker } from '@inth/sdk/modules/iframe-blocker';
+import type { IframeBlockerOptions } from '@inth/sdk/modules/iframe-blocker';
 import type {
 	BlockedRequestInfo,
 	NetworkBlockerRule,
-} from '@c15t/core/modules/network-blocker';
-import { createPersistence } from '@c15t/core/modules/persistence';
-import type { StorageConfig } from '@c15t/core/modules/persistence';
+} from '@inth/sdk/modules/network-blocker';
+import { createPersistence } from '@inth/sdk/modules/persistence';
+import type { StorageConfig } from '@inth/sdk/modules/persistence';
 import type {
 	Script,
 	ScriptLoaderHandle,
-} from '@c15t/core/modules/script-loader';
-import { createWindowDebug } from '@c15t/core/modules/window-debug';
+} from '@inth/sdk/modules/script-loader';
+import { createWindowDebug } from '@inth/sdk/modules/window-debug';
 import {
 	createLazyIABFactory,
 	isIABConfigured,
 	mountRuntimeIAB,
-} from '@c15t/core/runtime';
+} from '@inth/sdk/runtime';
 import type {
 	ConsentRuntimeIABHandle,
 	GPPModuleLoader,
 	RuntimeGPPOptions,
-} from '@c15t/core/runtime';
-import { onDemandRuntimeModules } from '@c15t/core/runtime/on-demand';
-import { createConsentProviderRuntime } from '@c15t/core/runtime/provider';
+} from '@inth/sdk/runtime';
+import { onDemandRuntimeModules } from '@inth/sdk/runtime/on-demand';
+import { createConsentProviderRuntime } from '@inth/sdk/runtime/provider';
 import type {
 	ConsentProviderRuntime,
 	ConsentRuntime,
 	ConsentRuntimeModules,
 	ConsentRuntimeUpdate,
 	RuntimePrefetch,
-} from '@c15t/core/runtime/provider';
-import { showConsentSurface } from '@c15t/core/surface-actions';
-import type { ConsentActiveUI } from '@c15t/schema/config';
-import type { InitOutput } from '@c15t/schema/types';
+} from '@inth/sdk/runtime/provider';
+import type { ConsentActiveUI } from '@inth/sdk/schema/config';
+import type { InitOutput } from '@inth/sdk/schema/types';
+import { showConsentSurface } from '@inth/sdk/surface-actions';
 import { computed, shallowRef } from 'vue';
 import type { Ref } from 'vue';
 
@@ -194,7 +194,7 @@ export interface VueConsentKernelContext {
 
 /**
  * Network-blocker options, mirroring `UseNetworkBlockerOptions` in
- * `@c15t/react` (v3 provider) and `@c15t/svelte`.
+ * `@inth/react` (v3 provider) and `@inth/svelte`.
  */
 export interface UseNetworkBlockerOptions {
 	rules: NetworkBlockerRule[];
@@ -225,7 +225,7 @@ export type RuntimeConsentConfig = ConsentConfig & {
 	networkBlocker?: UseNetworkBlockerOptions | false;
 	/**
 	 * Consent-gate iframes (YouTube, maps, social embeds). Enabled by default
-	 * to match `@c15t/svelte`; pass `false` to opt out or an options object to
+	 * to match `@inth/svelte`; pass `false` to opt out or an options object to
 	 * tune automatic blocking.
 	 */
 	iframeBlocker?: Omit<IframeBlockerOptions, 'kernel'> | false;
@@ -259,7 +259,7 @@ const resolveTransportFactory = function resolveTransportFactory(
 	}
 	if (!mode) {
 		throw new Error(
-			"c15t: pass `projectUrl`, such as `app.use(c15tVue, { projectUrl: '/api/c15t' })`, or `mode: manifest()` with `manifest` from `c15t/vue/vue-plugin`."
+			"c15t: pass `projectUrl`, such as `app.use(c15tVue, { projectUrl: '/api/c15t' })`, or `mode: manifest()` with `manifest` from `@inth/vue/vue-plugin`."
 		);
 	}
 	return mode;
@@ -348,10 +348,10 @@ const createVueRuntimeModules =
  * can go through `update()` unchanged.
  */
 /**
- * Loads `@c15t/iab/gpp`, only when `gpp` is set. One function for every
+ * Loads `@inth/sdk/iab/gpp`, only when `gpp` is set. One function for every
  * call, so passing it to the runtime's `update()` never reads as a change.
  */
-const loadGPP: GPPModuleLoader = () => import('@c15t/iab/gpp');
+const loadGPP: GPPModuleLoader = () => import('@inth/sdk/iab/gpp');
 
 const toRuntimeOptions = function toRuntimeOptions(
 	config: RuntimeConsentConfig
@@ -370,7 +370,7 @@ const toRuntimeOptions = function toRuntimeOptions(
 		loadGPP,
 		networkBlocker: config.networkBlocker,
 		nonce: config.nonce,
-		pkg: '@c15t/vue',
+		pkg: '@inth/vue',
 		presentation: config.presentation,
 		reloadOnConsentRevoked: config.reloadOnConsentRevoked,
 		scripts: config.scripts,
@@ -453,7 +453,7 @@ export interface VueConsentContextOptions {
 	config: RuntimeConsentConfig;
 	/**
 	 * Where the policy comes from: a transport factory such as `manifest()`
-	 * or `hosted()` from `@c15t/vue/vue-plugin`, or the one the Nuxt plugin
+	 * or `hosted()` from `@inth/vue/vue-plugin`, or the one the Nuxt plugin
 	 * builds from its `mode` data. Required unless `runtime` or a test
 	 * `transport` is given.
 	 */
@@ -554,10 +554,10 @@ export const createVueConsentKernelContext =
 					initialConfig.now,
 			};
 			const runtimeOptions = toRuntimeOptions(config);
-			// IAB is opt-in. A configured CMP loads `@c15t/iab` on demand, once
+			// IAB is opt-in. A configured CMP loads `@inth/sdk/iab` on demand, once
 			// a policy uses the `iab` model; without `iab` nothing imports it.
 			createIAB = isIABConfigured(runtimeOptions.iab)
-				? createLazyIABFactory(() => import('@c15t/iab')).create
+				? createLazyIABFactory(() => import('@inth/sdk/iab')).create
 				: undefined;
 			owned = createConsentProviderRuntime(
 				{
@@ -644,7 +644,7 @@ export const createVueConsentKernelContext =
 			borrowedLoading = (async () => {
 				try {
 					const { createScriptLoader } =
-						await import('@c15t/core/modules/script-loader');
+						await import('@inth/sdk/modules/script-loader');
 					// The host starts its runtime: persistence and privacy signals
 					// apply then. A loader on the kernel before that would read a
 					// snapshot a stored denial has not reached.

@@ -129,7 +129,7 @@ describe('native build policy export', () => {
 	});
 });
 
-// This config aliases @c15t/schema and @c15t/translations to their sources,
+// This config aliases @inth/sdk/schema and @inth/sdk/translations to their sources,
 // which hides whether the exporter can find them outside Vitest. The Android
 // emulator jobs run this script with tsx, where Node resolves each bare import
 // from the importing file's own folder.

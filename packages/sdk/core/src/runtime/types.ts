@@ -1,5 +1,5 @@
 /**
- * Public option and handle types for `@c15t/core/runtime`.
+ * Public option and handle types for `@inth/sdk/runtime`.
  *
  * These describe the framework-agnostic consent runtime: everything a
  * provider used to assemble by hand (kernel, persistence, script loader,
@@ -7,8 +7,8 @@
  * lifecycle handle. Framework packages extend {@link ConsentRuntimeOptions}
  * with their own UI-only fields rather than restating the shared ones.
  */
-import type { Vendor } from '@c15t/schema/types';
-import type { I18nConfig } from '@c15t/translations';
+import type { Vendor } from '@inth/sdk-schema/types';
+import type { I18nConfig } from '@inth/sdk-translations';
 
 import type { AllConsentNames } from '../consent/consent-types';
 import type { StorageConfig } from '../libs/cookie';
@@ -115,8 +115,8 @@ export type RuntimeIABOptions =
 /**
  * Fully resolved IAB options the runtime hands to {@link ConsentRuntimeIABFactory}.
  *
- * Structurally identical to `CreateIABOptions` in `@c15t/iab`, which
- * `@c15t/core` cannot import: `@c15t/iab` depends on `@c15t/core`.
+ * Structurally identical to `CreateIABOptions` in `@inth/sdk/iab`, which
+ * `@inth/sdk/engine` cannot import: `@inth/sdk/iab` depends on `@inth/sdk/engine`.
  */
 export interface ConsentRuntimeIABFactoryOptions {
 	/** The kernel the CMP binds to. */
@@ -152,7 +152,7 @@ export interface ConsentRuntimeIABFactoryOptions {
 /**
  * The IAB CMP handle the runtime keeps on {@link ConsentRuntime.iab}.
  *
- * A structural subset of `IABHandle` from `@c15t/iab` — that package's
+ * A structural subset of `IABHandle` from `@inth/sdk/iab` — that package's
  * handle is assignable to this one, so consumers can pass `createIAB`
  * straight through.
  */
@@ -197,8 +197,8 @@ export interface ConsentRuntimeIABHandle {
 /**
  * Creates an IAB CMP bound to the runtime's kernel.
  *
- * `createIAB` from `@c15t/iab` satisfies this signature. It is injected
- * rather than imported because `@c15t/iab` depends on `@c15t/core`.
+ * `createIAB` from `@inth/sdk/iab` satisfies this signature. It is injected
+ * rather than imported because `@inth/sdk/iab` depends on `@inth/sdk/engine`.
  */
 export type ConsentRuntimeIABFactory = (
 	options: ConsentRuntimeIABFactoryOptions
@@ -209,8 +209,8 @@ export type ConsentRuntimeIABFactory = (
  * {@link ConsentRuntimeOptions}. Every field is optional; `true` or `{}`
  * mounts `__gpp` with the defaults, and `false` turns it off.
  *
- * Structurally identical to `CreateGPPOptions` in `@c15t/iab/gpp` without
- * `kernel`, which `@c15t/core` cannot import.
+ * Structurally identical to `CreateGPPOptions` in `@inth/sdk/iab/gpp` without
+ * `kernel`, which `@inth/sdk/engine` cannot import.
  */
 export interface RuntimeGPPOptions {
 	/**
@@ -257,7 +257,7 @@ export interface ConsentRuntimeGPPHandle {
 }
 
 /**
- * Mounts the GPP CMP API. `createGPP` from `@c15t/iab/gpp` satisfies this
+ * Mounts the GPP CMP API. `createGPP` from `@inth/sdk/iab/gpp` satisfies this
  * signature.
  */
 export type ConsentRuntimeGPPFactory = (
@@ -266,9 +266,9 @@ export type ConsentRuntimeGPPFactory = (
 
 /**
  * Resolves the module exporting `createGPP`, normally
- * `() => import('@c15t/iab/gpp')`. A loader rather than the factory, so the
+ * `() => import('@inth/sdk/iab/gpp')`. A loader rather than the factory, so the
  * GPP code only downloads for sites that turn GPP on, and because
- * `@c15t/iab` depends on `@c15t/core`.
+ * `@inth/sdk/iab` depends on `@inth/sdk/engine`.
  */
 export type GPPModuleLoader = () => Promise<{
 	createGPP: ConsentRuntimeGPPFactory;
@@ -328,7 +328,7 @@ export interface ConsentRuntimeModules {
 	createWindowDebug: (options: WindowDebugOptions) => WindowDebugHandle;
 	/**
 	 * Connects a `consentSource` on `start()` while enabled. Pass
-	 * `connectConsentSource` from `@c15t/core/runtime/controls`, or a
+	 * `connectConsentSource` from `@inth/sdk/runtime/controls`, or a
 	 * wrapper that imports it on demand: until it connects, the kernel
 	 * grants no optional category.
 	 */
@@ -338,14 +338,14 @@ export interface ConsentRuntimeModules {
 	) => Unsubscribe;
 	/**
 	 * Mounts the IAB CMP on `start()` while enabled, when the options set
-	 * `iab` and `createIAB`. Pass `mountRuntimeIAB` from `@c15t/core/runtime`
+	 * `iab` and `createIAB`. Pass `mountRuntimeIAB` from `@inth/sdk/runtime`
 	 * (`defaultRuntimeModules` does). Without it `iab` is ignored, so a host
 	 * that renders IAB another way ships none of the mounting code.
 	 */
 	mountIAB?: (options: RuntimeIABMountOptions) => () => void;
 	/**
 	 * Builds the transport factory for the options' `projectUrl`. Pass
-	 * `hosted()`'s builder from `@c15t/core/transports`
+	 * `hosted()`'s builder from `@inth/sdk/transports`
 	 * (`defaultRuntimeModules` does). A host that builds its own transport
 	 * for `projectUrl` passes that instead, or passes `mode` and leaves this
 	 * out.
@@ -353,7 +353,7 @@ export interface ConsentRuntimeModules {
 	hostedMode?: (projectUrl: string) => ProviderTransportFactory;
 	/**
 	 * Lets the provider runtime accept a `prefetch` that is still a promise.
-	 * Pass `streamPrefetch` from `@c15t/core/runtime`. Without it a pending
+	 * Pass `streamPrefetch` from `@inth/sdk/runtime`. Without it a pending
 	 * prefetch is ignored (with a warning outside production) and the runtime
 	 * requests the policy itself, so hosts that never stream ship none of it.
 	 */
@@ -367,7 +367,7 @@ export interface ConsentRuntimeModules {
 	 * Lets the provider runtime start loading the script loader before
 	 * `start()` mounts it, when consent already lets a script run. Pass
 	 * `preloadScriptLoaderWith(load)` from
-	 * `@c15t/core/runtime/script-loader-preload`, with the load behind
+	 * `@inth/sdk/runtime/script-loader-preload`, with the load behind
 	 * `createScriptLoader`. Without it the loader loads when `start()`
 	 * mounts it, and the runtime ships none of the decision.
 	 *
@@ -412,11 +412,11 @@ export interface ConsentRuntimeOptions {
 	/**
 	 * How the visitor's policy is resolved. Initial-only.
 	 *
-	 * - Omitted, or `hosted()` from `@c15t/core`: ask `${projectUrl}/init`.
-	 * - `manifest()` from `@c15t/core/transports/manifest-browser`: resolve
+	 * - Omitted, or `hosted()` from `@inth/sdk/engine`: ask `${projectUrl}/init`.
+	 * - `manifest()` from `@inth/sdk/transports/manifest-browser`: resolve
 	 *   from the backend's consent manifest in the browser, falling back to
 	 *   `/init` with a warning when the manifest is unavailable.
-	 * - `testing()` from `@c15t/core/testing`: resolve a policy with no
+	 * - `testing()` from `@inth/sdk/testing`: resolve a policy with no
 	 *   backend, for tests. It throws in production builds.
 	 *
 	 * To keep consent out of the way in an app's own tests instead, set
@@ -518,7 +518,7 @@ export interface ConsentRuntimeOptions {
 	/** IAB TCF configuration. Requires {@link ConsentRuntimeOptions.createIAB}. */
 	iab?: RuntimeIABOptions;
 	/**
-	 * `createIAB` from `@c15t/iab`. Injected so `@c15t/core` does not depend
+	 * `createIAB` from `@inth/sdk/iab`. Injected so `@inth/sdk/engine` does not depend
 	 * on its own dependent. Without it `iab` is ignored.
 	 */
 	createIAB?: ConsentRuntimeIABFactory;
@@ -530,7 +530,7 @@ export interface ConsentRuntimeOptions {
 	 * reported to `callbacks.onError`.
 	 */
 	gpp?: RuntimeGPPOptions | boolean;
-	/** Loads `@c15t/iab/gpp`. Without it `gpp` is ignored. */
+	/** Loads `@inth/sdk/iab/gpp`. Without it `gpp` is ignored. */
 	loadGPP?: GPPModuleLoader;
 	/**
 	 * Storage persistence. `true`/omitted hydrates from cookie +
@@ -551,7 +551,7 @@ export interface ConsentRuntimeOptions {
 	windowDebug?: boolean;
 	/**
 	 * Package name reported through `window.c15t` — for example
-	 * `'@c15t/svelte'`. Defaults to `'@c15t/core'`.
+	 * `'@inth/svelte'`. Defaults to `'@inth/sdk/engine'`.
 	 */
 	pkg?: string;
 }

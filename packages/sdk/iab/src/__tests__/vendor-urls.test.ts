@@ -1,4 +1,4 @@
-import type { GlobalVendorList } from '@c15t/core';
+import type { GlobalVendorList } from '@inth/sdk-core';
 import { expect, test } from 'vitest';
 
 import { resolveIABVendorUrls } from '../headless';

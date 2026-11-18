@@ -3,10 +3,10 @@
 import {
 	isAccordionItemOpen,
 	toggleAccordionValue,
-} from '@c15t/ui/primitives/accordion';
-import type { AccordionType } from '@c15t/ui/primitives/accordion';
-import { getDataDisabled } from '@c15t/ui/primitives/data-state';
-import styles from '@c15t/ui/styles/components/accordion';
+} from '@inth/sdk/ui/primitives/accordion';
+import type { AccordionType } from '@inth/sdk/ui/primitives/accordion';
+import { getDataDisabled } from '@inth/sdk/ui/primitives/data-state';
+import styles from '@inth/sdk/ui/styles/components/accordion';
 import {
 	createContext,
 	forwardRef as createForwardRef,

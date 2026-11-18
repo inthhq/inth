@@ -1,8 +1,8 @@
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { ConsentBanner, ConsentManager } from '@c15t/angular';
-import { ConsentDialog } from '@c15t/angular/consent-dialog';
+import { ConsentBanner, ConsentManager } from '@inth/angular';
+import { ConsentDialog } from '@inth/angular/consent-dialog';
 import { afterEach, describe, expect, test } from 'vitest';
 
 import {

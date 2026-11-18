@@ -1,5 +1,8 @@
-import { resolvePolicyRules } from '@c15t/schema/types';
-import { createConsentKernel, resolveConsentPresentation } from 'c15t';
+import {
+	createConsentKernel,
+	resolveConsentPresentation,
+} from '@inth/sdk/engine';
+import { resolvePolicyRules } from '@inth/sdk/schema/types';
 import { describe, expect, it } from 'vitest';
 
 import { playgroundPresets, presentationForRule } from './policy-playground';

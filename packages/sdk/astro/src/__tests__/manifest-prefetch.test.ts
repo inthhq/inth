@@ -1,8 +1,8 @@
-import { clearGvlCache } from '@c15t/core/server';
 import {
 	buildConsentManifestFromConfig,
 	policyRulePresets,
-} from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
+import { clearGvlCache } from '@inth/sdk/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
@@ -108,7 +108,7 @@ describe('manifest-mode server prefetch', () => {
 			'203.0.113.42'
 		);
 		expect(JSON.parse(init.body as string)).toMatchObject({
-			adapter: '@c15t/astro',
+			adapter: '@inth/astro',
 			country: 'DE',
 			policy: { id: expect.any(String) },
 			source: 'render',

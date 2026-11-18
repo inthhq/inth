@@ -4,7 +4,7 @@
  * only the callbacks it names. Passing `options={{ nonce }}` must not drop
  * the config's callbacks, translations or mode.
  */
-import { ConsentBanner } from '@c15t/react';
+import { ConsentBanner } from '@inth/react';
 import { afterEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
@@ -18,7 +18,7 @@ const configured = vi.hoisted(() => ({
 }));
 
 // oxlint-disable-next-line anti-slop/no-module-mocking -- In an app build, the bundler alias `withConsentManifest` sets swaps this module for the app's c15t.config.ts. The mock is that alias; ConsentRoot is real.
-vi.mock('@c15t/nextjs/user-config', () => ({
+vi.mock('@inth/nextjs/user-config', () => ({
 	default: {
 		options: {
 			callbacks: {

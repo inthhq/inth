@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from '@analogjs/storybook-angular';
-import { ConsentWidget } from '@c15t/angular/consent-widget';
 import {
 	expandedCategories,
 	expandedVendors,
 } from '@c15t/conformance/play/consent-widget';
+import { ConsentWidget } from '@inth/angular/consent-widget';
 
 import {
 	storybookVendors,

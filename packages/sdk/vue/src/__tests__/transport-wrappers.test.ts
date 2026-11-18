@@ -1,12 +1,12 @@
-import type { HydrationRecords, HydrationResult } from '@c15t/core';
-import { clientMode } from '@c15t/core/runtime/client-mode';
-import { hosted } from '@c15t/core/transports';
+import type { HydrationRecords, HydrationResult } from '@inth/sdk/engine';
+import { clientMode } from '@inth/sdk/runtime/client-mode';
 import {
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
-import { translations } from '@c15t/translations/en';
+} from '@inth/sdk/schema/types';
+import { translations } from '@inth/sdk/translations/en';
+import { hosted } from '@inth/sdk/transports';
 import { afterEach, expect, test, vi } from 'vitest';
 
 import { createVueConsentKernelContext } from '../runtime/kernel';

@@ -8,16 +8,16 @@
  * @internal
  */
 
-import type { ConsentSnapshot } from '@c15t/core';
-import { defaultTranslationConfig } from '@c15t/core/runtime/provider';
-import type { ConsentProviderRuntime } from '@c15t/core/runtime/provider';
-import { planInstantCommit } from '@c15t/core/surface-actions/instant-commit';
+import type { ConsentSnapshot } from '@inth/sdk/engine';
+import { defaultTranslationConfig } from '@inth/sdk/runtime/provider';
+import type { ConsentProviderRuntime } from '@inth/sdk/runtime/provider';
+import { planInstantCommit } from '@inth/sdk/surface-actions/instant-commit';
 import {
 	isPlainScript,
 	isRunnableNow,
-} from '@c15t/core/surface-actions/plain-scripts';
-import { deepMergeTranslations } from '@c15t/translations';
-import type { Translations } from '@c15t/translations';
+} from '@inth/sdk/surface-actions/plain-scripts';
+import { deepMergeTranslations } from '@inth/sdk/translations';
+import type { Translations } from '@inth/sdk/translations';
 
 import { isIABConfigured } from '../iab-loader';
 import type { C15tResolvedOptions } from '../options';
@@ -86,7 +86,7 @@ const canDeferAnswered = function canDeferAnswered(
  * asks for a choice, an accept and a reject are both something the
  * first-load chunk can record on its own (`planInstantCommit`), nothing
  * optional is granted yet and no script may run now that the server did
- * not start (the rule of `@c15t/svelte`'s `ConsentRoot` and `@c15t/vue`'s
+ * not start (the rule of `@inth/svelte`'s `ConsentRoot` and `@inth/vue`'s
  * Nuxt module); or nothing is shown and every script that may run is one
  * the first-load chunk or the server starts (`canDeferAnswered`).
  *

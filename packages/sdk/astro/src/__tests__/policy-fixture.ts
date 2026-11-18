@@ -1,8 +1,8 @@
 import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
-import type { PolicyRule } from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
+import type { PolicyRule } from '@inth/sdk/schema/types';
 
 export const testRule: PolicyRule = {
 	categories: ['marketing', 'measurement'],

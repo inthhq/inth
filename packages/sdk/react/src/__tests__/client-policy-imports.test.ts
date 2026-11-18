@@ -35,7 +35,7 @@ const RESOLVER_EXPORTS = [
 ];
 
 const SCHEMA_VALUE_IMPORT =
-	/^import\s+(?!type\b)\{(?<names>[^}]*)\}\s*from\s+'@c15t\/schema\/types';/gmu;
+	/^import\s+(?!type\b)\{(?<names>[^}]*)\}\s*from\s+'@inth\/sdk\/schema\/types';/gmu;
 
 describe('client policy imports', () => {
 	test('scans the provider', () => {

@@ -1,8 +1,8 @@
 /**
- * `@c15t/nextjs` under the `react-server` condition: what a Server
- * Component, route handler or `c15t.config.ts` gets from `c15t/next`.
+ * `@inth/nextjs` under the `react-server` condition: what a Server
+ * Component, route handler or `c15t.config.ts` gets from `@inth/nextjs`.
  *
- * The full entry re-exports all of `@c15t/react`, whose hooks import
+ * The full entry re-exports all of `@inth/react`, whose hooks import
  * client-only React APIs that webpack rejects in the server graph. Here
  * each component comes from a `'use client'` module, so the server graph
  * holds client references and never runs component code. Hooks are not
@@ -24,16 +24,16 @@ export type {
 	ManifestMode,
 	ManifestModeOptions,
 	TestingMode,
-} from '@c15t/core/modes';
-export { hosted, manifest } from '@c15t/core/modes';
+} from '@inth/sdk/modes';
+export { hosted, manifest } from '@inth/sdk/modes';
 // More components, each its own client module, and the theme helpers,
 // which render on the server.
 export {
 	ConsentDialogTrigger,
 	ConsentDialogTriggerToolbar,
-} from '@c15t/react/components/consent-dialog-trigger';
-export { ConsentGate } from '@c15t/react/components/consent-gate';
-export { ConsentWidget } from '@c15t/react/consent-widget';
-export { ConsentDraftProvider } from '@c15t/react/draft';
-export { ConsentProvider } from '@c15t/react/provider';
-export { ConsentTheme, defineTheme } from '@c15t/react/theme';
+} from '@inth/react/components/consent-dialog-trigger';
+export { ConsentGate } from '@inth/react/components/consent-gate';
+export { ConsentWidget } from '@inth/react/consent-widget';
+export { ConsentDraftProvider } from '@inth/react/draft';
+export { ConsentProvider } from '@inth/react/provider';
+export { ConsentTheme, defineTheme } from '@inth/react/theme';

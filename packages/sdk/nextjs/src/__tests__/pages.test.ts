@@ -1,11 +1,11 @@
 /**
- * Tests for `@c15t/nextjs/pages`: the Node req/res bridge that lets
+ * Tests for `@inth/nextjs/pages`: the Node req/res bridge that lets
  * `getServerSideProps` and `pages/api` routes use the server helpers and
  * route handlers built for the App Router.
  */
-import { hosted, manifest as manifestMode } from '@c15t/core/modes';
-import { clearManifestCache } from '@c15t/core/server';
-import { writePolicyResolutionWire } from '@c15t/schema/types';
+import { hosted, manifest as manifestMode } from '@inth/sdk/modes';
+import { writePolicyResolutionWire } from '@inth/sdk/schema/types';
+import { clearManifestCache } from '@inth/sdk/server';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { defineConsentConfig } from '../config';
@@ -165,7 +165,7 @@ describe('Pages Router build-time manifest', () => {
 	});
 });
 
-describe('@c15t/nextjs/pages: header conversion', () => {
+describe('@inth/nextjs/pages: header conversion', () => {
 	test('toWebHeaders joins repeated headers and skips undefined', () => {
 		const headers = toWebHeaders({
 			'accept-language': ['de-DE,de;q=0.9', 'en'],
@@ -196,7 +196,7 @@ describe('@c15t/nextjs/pages: header conversion', () => {
 	});
 });
 
-describe('@c15t/nextjs/pages: cookies', () => {
+describe('@inth/nextjs/pages: cookies', () => {
 	test('resolveConsent parses the consent cookie from req.headers.cookie', async () => {
 		const config = await resolveConsent({
 			req: {
@@ -234,7 +234,7 @@ describe('@c15t/nextjs/pages: cookies', () => {
 	});
 });
 
-describe('@c15t/nextjs/pages: resolveConsent with a backend', () => {
+describe('@inth/nextjs/pages: resolveConsent with a backend', () => {
 	test('resolves the backend URL from req and forwards cookies', async () => {
 		const fetchSpy = vi.fn().mockResolvedValue(
 			new Response(
@@ -344,7 +344,7 @@ describe('@c15t/nextjs/pages: resolveConsent with a backend', () => {
 	});
 });
 
-describe('@c15t/nextjs/pages: API bridge', () => {
+describe('@inth/nextjs/pages: API bridge', () => {
 	test('API handlers resolve a relative projectUrl against host, not x-forwarded-host', async () => {
 		const fetchSpy = vi.fn().mockResolvedValue(
 			new Response(JSON.stringify(MANIFEST_FIXTURE), {
@@ -554,7 +554,7 @@ describe('@c15t/nextjs/pages: API bridge', () => {
 		const [url, init] = fetchSpy.mock.calls[0] ?? [];
 		expect(String(url)).toBe('https://consent.example.com/subjects');
 		expect(init?.method).toBe('POST');
-		expect(new Headers(init?.headers).get('x-c15t-proxy')).toBe('@c15t/nextjs');
+		expect(new Headers(init?.headers).get('x-c15t-proxy')).toBe('@inth/nextjs');
 		expect(await new Response(init?.body).json()).toEqual({
 			consents: { marketing: true },
 		});

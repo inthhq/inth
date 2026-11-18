@@ -5,8 +5,8 @@
  * if the dialog's rules leave `styles.css`, which would leave the dialog
  * unstyled in an app that imports only that file.
  */
-import '@c15t/ui/styles.css';
-import panelStyles from '@c15t/ui/styles/components/consent-dialog';
+import '@inth/sdk/ui/styles.css';
+import panelStyles from '@inth/sdk/ui/styles/components/consent-dialog';
 import { createRoot } from 'react-dom/client';
 import { expect, test, vi } from 'vitest';
 

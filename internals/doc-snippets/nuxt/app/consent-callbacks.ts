@@ -1,5 +1,5 @@
 // #region docs:callbacks title="app/consent-callbacks.ts"
-import type { C15tNuxtConfig } from 'c15t/vue';
+import type { C15tNuxtConfig } from '@inth/vue';
 
 export const callbacks = {
 	// The visitor clicked Accept all, Reject all or Save.

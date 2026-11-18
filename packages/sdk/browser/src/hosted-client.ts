@@ -1,5 +1,5 @@
-import type { ProviderTransportFactory } from '@c15t/core';
-import { hosted } from '@c15t/core/transports';
+import type { ProviderTransportFactory } from '@inth/sdk-core';
+import { hosted } from '@inth/sdk-core/transports';
 
 import { createConsentClientWith } from './client-base';
 import type { CreateConsentClientContext } from './client-base';
@@ -15,7 +15,7 @@ const defaultHostedFactory = function defaultHostedFactory(
 ): ProviderTransportFactory {
 	if (!projectUrl) {
 		throw new Error(
-			'@c15t/browser/hosted: `projectUrl` is required (data-project-url on the script tag).'
+			'@inth/sdk/hosted: `projectUrl` is required (data-project-url on the script tag).'
 		);
 	}
 	return hosted({ projectUrl });
@@ -35,11 +35,9 @@ export const createHostedConsentClient = function createHostedConsentClient(
 	context: CreateConsentClientContext = {}
 ): ConsentClient {
 	if (options.manifest !== undefined || options.manifestUrl !== undefined) {
-		throw new Error(
-			'@c15t/browser/hosted: manifest inputs need manifest mode.'
-		);
+		throw new Error('@inth/sdk/hosted: manifest inputs need manifest mode.');
 	}
-	// `hosted()` from `@c15t/browser/hosted` is data; read it as the name.
+	// `hosted()` from `@inth/sdk/hosted` is data; read it as the name.
 	const { mode: given } = options;
 	const mode =
 		typeof given === 'object' &&
@@ -52,7 +50,7 @@ export const createHostedConsentClient = function createHostedConsentClient(
 		mode !== 'hosted' &&
 		!(typeof mode === 'function' && mode.kind === 'hosted')
 	) {
-		throw new Error('@c15t/browser/hosted: only hosted mode is supported.');
+		throw new Error('@inth/sdk/hosted: only hosted mode is supported.');
 	}
 	// `c15t.hosted()` called on the init script's stand-in.
 	const marked = readHostedMarker(mode);

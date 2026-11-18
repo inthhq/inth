@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ConsentDialogLink, ConsentGate } from '@c15t/svelte';
+	import { ConsentDialogLink, ConsentGate } from '@inth/svelte';
 </script>
 
 <!-- The iframe mounts only while measurement is allowed. -->

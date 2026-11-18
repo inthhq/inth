@@ -1,6 +1,6 @@
 /** Shared manifest HTTP cache. Does not load translations or resolve policy. */
-import type { ConsentManifest } from '@c15t/schema/types';
-import { CONSENT_REQUEST_HEADER_NAMES } from '@c15t/schema/types';
+import type { ConsentManifest } from '@inth/sdk-schema/types';
+import { CONSENT_REQUEST_HEADER_NAMES } from '@inth/sdk-schema/types';
 
 import { c15tProtocolHeaders } from '../transports/version-header';
 import { parseCacheDirectiveSeconds } from './cache-directive';

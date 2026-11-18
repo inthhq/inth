@@ -3,4 +3,4 @@
  * navigating, so the server resolves "already consented" and renders no
  * banner at all.
  */
-export { loadConsent as load } from '@c15t/svelte/kit';
+export { loadConsent as load } from '@inth/svelte/kit';

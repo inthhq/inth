@@ -1,8 +1,8 @@
 import node from '@astrojs/node';
 import svelte from '@astrojs/svelte';
+import c15t from '@inth/astro';
+import { testing } from '@inth/astro/testing';
 import { defineConfig } from 'astro/config';
-import c15t from 'c15t/astro';
-import { testing } from 'c15t/astro/testing';
 
 export default defineConfig({
 	adapter: node({ mode: 'standalone' }),

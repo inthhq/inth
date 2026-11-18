@@ -3,7 +3,7 @@
  * an app adds a language without pulling in every other one. Its own file,
  * since importing the entry registers Italian for the whole module graph.
  */
-import { translations as italian } from '@c15t/translations/it';
+import { translations as italian } from '@inth/sdk-translations/it';
 import { describe, expect, test } from 'vitest';
 
 import { createConsentRuntime } from '../runtime';

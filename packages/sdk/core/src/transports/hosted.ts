@@ -40,8 +40,8 @@
 import {
 	CONSENT_REQUEST_HEADER_NAMES,
 	extractConsentRequestInputs,
-} from '@c15t/schema/types';
-import type { InitOutput } from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
+import type { InitOutput } from '@inth/sdk-schema/types';
 
 import { failedResponseError } from '../libs/failed-response';
 import { consumePrefetchedInitialData } from '../libs/prefetch/prefetch';

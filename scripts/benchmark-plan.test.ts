@@ -13,7 +13,7 @@ describe('benchmark package selection', () => {
 		expect(
 			createBenchmarkPlan('full', '@c15t/nuxt-browser-bench')
 		).toMatchObject({
-			expectedPackages: ['@c15t/vue'],
+			expectedPackages: ['@inth/vue'],
 			packages: ['@c15t/nuxt-browser-bench'],
 		});
 	});
@@ -84,7 +84,7 @@ describe('benchmark package selection', () => {
 		expect(
 			createBenchmarkPlan('gate', 'gate-nuxt-browser-bench')
 		).toMatchObject({
-			expectedPackages: ['@c15t/vue'],
+			expectedPackages: ['@inth/vue'],
 			packages: ['@c15t/nuxt-browser-bench'],
 			suites: ['consent-gate'],
 		});

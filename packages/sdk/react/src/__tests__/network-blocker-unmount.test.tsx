@@ -10,11 +10,11 @@
  * The blocker chunk is held back until the end of the test, so the unmount
  * lands before it loads.
  */
-import type { NetworkBlockerRule } from '@c15t/core/modules/network-blocker';
+import type { NetworkBlockerRule } from '@inth/sdk/modules/network-blocker';
 import {
 	holdNetworkRequests,
 	releaseNetworkRequests,
-} from '@c15t/core/modules/network-hold';
+} from '@inth/sdk/modules/network-hold';
 import { useEffect } from 'react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
@@ -34,7 +34,7 @@ const chunk = vi.hoisted(() => {
 });
 
 // oxlint-disable-next-line anti-slop/no-module-mocking -- The property under test is what happens before this module loads. The factory holds the chunk back until the file is done, then returns the real module.
-vi.mock('@c15t/core/modules/network-blocker', async (importOriginal) => {
+vi.mock('@inth/sdk/modules/network-blocker', async (importOriginal) => {
 	await chunk.gate;
 	return await importOriginal();
 });
@@ -111,6 +111,6 @@ test('unmounting before the blocker loads fails held requests closed', async () 
 	// Let the chunk finish loading before the browser closes. The provider
 	// is gone, so it installs nothing and the answer above stands.
 	chunk.open();
-	await import('@c15t/core/modules/network-blocker');
+	await import('@inth/sdk/modules/network-blocker');
 	expect((await requests[0])?.status).toBe(451);
 });

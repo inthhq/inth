@@ -4,7 +4,7 @@
  * document-start script first in `<head>`, as `WKUserScript` and
  * `addDocumentStartJavaScript` would.
  */
-import { webViewConsentSource } from '@c15t/core';
+import { webViewConsentSource } from '@inth/sdk-core';
 
 import { createTestingConsentClient as createConsentClient } from '../../testing-global';
 import type { ConsentClient } from '../../types';

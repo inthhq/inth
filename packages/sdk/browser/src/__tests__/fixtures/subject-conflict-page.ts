@@ -8,8 +8,8 @@
  * saves are held from the start, including the replay the page runs as it
  * starts.
  */
-import { ConsentSaveRejectedError } from '@c15t/core';
-import type { ProviderTransportFactory, SavePayload } from '@c15t/core';
+import { ConsentSaveRejectedError } from '@inth/sdk-core';
+import type { ProviderTransportFactory, SavePayload } from '@inth/sdk-core';
 
 import { createScriptTagConsentClient as createConsentClient } from '../../script-tag-client';
 import { testing } from '../../testing';

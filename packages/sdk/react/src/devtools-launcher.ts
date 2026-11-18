@@ -1,24 +1,24 @@
 'use client';
 
 /**
- * React bindings for the DevTools launcher slot in `@c15t/ui`, which lets a
+ * React bindings for the DevTools launcher slot in `@inth/sdk/ui`, which lets a
  * mounted `<ConsentDevTools>` hand its launcher to the consent trigger.
  *
  * @internal
  * @packageDocumentation
  */
 
-import type { ConsentKernel } from '@c15t/core';
+import type { ConsentKernel } from '@inth/sdk/engine';
 import {
 	claimDevToolsLauncher,
 	EMPTY_DEVTOOLS_LAUNCHER_SNAPSHOT,
 	getDevToolsLauncherSnapshot,
 	subscribeDevToolsLauncher,
-} from '@c15t/ui/utils/devtools-launcher';
+} from '@inth/sdk/ui/utils/devtools-launcher';
 import type {
 	DevToolsDock,
 	DevToolsLauncherSnapshot,
-} from '@c15t/ui/utils/devtools-launcher';
+} from '@inth/sdk/ui/utils/devtools-launcher';
 import {
 	useCallback,
 	useContext,
@@ -30,8 +30,8 @@ import {
 
 import { KernelContext } from './context';
 
-export { publishDevToolsLauncher } from '@c15t/ui/utils/devtools-launcher';
-export type { DevToolsDock } from '@c15t/ui/utils/devtools-launcher';
+export { publishDevToolsLauncher } from '@inth/sdk/ui/utils/devtools-launcher';
+export type { DevToolsDock } from '@inth/sdk/ui/utils/devtools-launcher';
 
 /** Controls for the DevTools button a consent trigger renders. */
 export interface DevToolsLauncherControls {

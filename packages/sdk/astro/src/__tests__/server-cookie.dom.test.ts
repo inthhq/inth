@@ -1,5 +1,5 @@
-import { createConsentKernel } from '@c15t/core';
-import { createPersistence } from '@c15t/core/modules/persistence';
+import { createConsentKernel } from '@inth/sdk/engine';
+import { createPersistence } from '@inth/sdk/modules/persistence';
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 
 import { resolveOptions } from '../integration';

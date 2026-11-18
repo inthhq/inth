@@ -1,4 +1,4 @@
-import { defineTheme } from 'c15t/next';
+import { defineTheme } from '@inth/nextjs';
 
 // No 'use client': the root layout renders these tokens on the server with
 // ConsentTheme, and the consent wrapper passes the same theme to ConsentRoot

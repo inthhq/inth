@@ -9,7 +9,10 @@
  * Pure: takes the current snapshot + a patch, returns the next snapshot.
  * Does not notify subscribers.
  */
-import type { LocationResponse, PolicyResolution } from '@c15t/schema/types';
+import type {
+	LocationResponse,
+	PolicyResolution,
+} from '@inth/sdk-schema/types';
 
 import { evaluateConsentRecord } from '../consent-record/evaluate';
 import { OPTIONAL_CONSENT_CATEGORIES } from '../consent-record/types';

@@ -4,14 +4,14 @@
  * hydrates. Nothing starts while the policy asks the visitor to choose, or
  * from HTML shared by every visitor.
  */
-import { C15T_POLICY_CONTRACT_HEADER } from '@c15t/core';
-import type { Script } from '@c15t/core';
-import type { InitOutput, PolicyRule } from '@c15t/schema/types';
+import { C15T_POLICY_CONTRACT_HEADER } from '@inth/sdk/engine';
+import type { Script } from '@inth/sdk/engine';
+import type { InitOutput, PolicyRule } from '@inth/sdk/schema/types';
 import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
-import { translations } from '@c15t/translations/en';
+} from '@inth/sdk/schema/types';
+import { translations } from '@inth/sdk/translations/en';
 import { afterEach, expect, test, vi } from 'vitest';
 import { createSSRApp, defineComponent, h } from 'vue';
 import type { App, ShallowRef } from 'vue';

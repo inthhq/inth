@@ -1,5 +1,5 @@
 /**
- * `@c15t/react/deferred/engine`: the side of a deferred root that loads
+ * `@inth/react/deferred/engine`: the side of a deferred root that loads
  * on demand, and the server's boot data.
  *
  * @packageDocumentation

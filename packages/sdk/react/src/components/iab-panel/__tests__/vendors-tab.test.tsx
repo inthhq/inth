@@ -4,8 +4,8 @@
  * Tests for the vendors tab in IAB Consent Dialog.
  */
 
-import { evaluateConsent } from '@c15t/core';
-import type { ConsentKernel } from '@c15t/core';
+import { evaluateConsent } from '@inth/sdk/engine';
+import type { ConsentKernel } from '@inth/sdk/engine';
 import { useContext, useEffect } from 'react';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';

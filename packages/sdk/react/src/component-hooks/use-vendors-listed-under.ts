@@ -1,7 +1,7 @@
 'use client';
 
-import type { AllConsentNames, ResolvedVendor } from '@c15t/core';
-import { deniedVendorIds, vendorsListedUnder } from '@c15t/core';
+import type { AllConsentNames, ResolvedVendor } from '@inth/sdk/engine';
+import { deniedVendorIds, vendorsListedUnder } from '@inth/sdk/engine';
 import { useMemo } from 'react';
 
 import { useDeclaredVendors, useVendorChoice } from '~/hooks';

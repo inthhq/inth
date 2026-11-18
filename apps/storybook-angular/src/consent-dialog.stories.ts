@@ -1,11 +1,11 @@
 import type { Meta, StoryObj } from '@analogjs/storybook-angular';
-import { ConsentBanner } from '@c15t/angular';
-import { ConsentDialog } from '@c15t/angular/consent-dialog';
 import {
 	dialogContract,
 	dialogEscapeCloses,
 	saveFlow,
 } from '@c15t/conformance/play/consent-dialog';
+import { ConsentBanner } from '@inth/angular';
+import { ConsentDialog } from '@inth/angular/consent-dialog';
 
 import {
 	consentApplication,

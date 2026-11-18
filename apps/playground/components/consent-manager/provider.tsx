@@ -6,12 +6,12 @@ import {
 	ConsentDialogTrigger,
 	ConsentProvider,
 	hosted,
-} from 'c15t/react';
+} from '@inth/react';
 import {
 	IABConsentBanner,
 	IABConsentDialog,
 	IABProvider,
-} from 'c15t/react/iab';
+} from '@inth/react/iab';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
@@ -66,7 +66,7 @@ const resolveGeoOverrides = function resolveGeoOverrides(
 /**
  * Client-side consent wrapper for the demo's App Router pages.
  *
- * Renders `ConsentProvider` from `c15t/react` in hosted mode, with the
+ * Renders `ConsentProvider` from `@inth/react` in hosted mode, with the
  * standard banner, dialog and trigger plus the IAB banner and dialog. The
  * visitor's country and region come from the `country` and `region` query
  * parameters, so the demo can switch jurisdiction without a geo lookup.
@@ -81,7 +81,7 @@ const resolveGeoOverrides = function resolveGeoOverrides(
  *
  * @remarks
  * This is a client component. It resolves consent in the browser and does
- * not use the server-rendered setup from `c15t/next`; see the Next.js
+ * not use the server-rendered setup from `@inth/nextjs`; see the Next.js
  * quickstart for that.
  *
  * @example

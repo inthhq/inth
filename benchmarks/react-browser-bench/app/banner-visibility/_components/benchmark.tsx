@@ -1,9 +1,9 @@
 'use client';
 
 import { benchPolicy } from '@c15t/benchmarking/bench-policy';
-import { ConsentBanner } from '@c15t/react/consent-banner';
-import { useActiveUI } from '@c15t/react/hooks';
-import { ConsentProvider } from '@c15t/react/provider';
+import { ConsentBanner } from '@inth/react/consent-banner';
+import { useActiveUI } from '@inth/react/hooks';
+import { ConsentProvider } from '@inth/react/provider';
 import { useEffect, useRef } from 'react';
 
 import { getBenchState, observeBannerVisibility } from './state';

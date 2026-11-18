@@ -99,12 +99,12 @@ const distBlockedPathPatterns: { reason: string; pattern: RegExp }[] = [
 /**
  * The consent kernel a mobile app must never be asked to install.
  *
- * `@c15t/core` is the browser engine: it owns consent state, storage, script
+ * `@inth/sdk/engine` is the browser engine: it owns consent state, storage, script
  * gating, and callbacks in JavaScript. `@inth/react-native` renders the state the
  * Swift and Kotlin cores own instead, so the kernel is the oracle its tests and
  * fixture generator run against, not a package a phone build resolves.
  */
-const KERNEL_PACKAGE = '@c15t/core';
+const KERNEL_PACKAGE = '@inth/sdk/engine';
 
 /**
  * Packages that must publish a surface free of the JavaScript consent kernel.
@@ -313,9 +313,9 @@ export const scanKernelFreePackage = function scanKernelFreePackage(
 };
 
 const requiredPackedFilesByPackage: Record<string, string[]> = {
-	'@c15t/core': ['AGENTS.md', 'docs/README.md'],
-	'@c15t/integrations': ['AGENTS.md', 'docs/README.md'],
-	'@c15t/nextjs': [
+	'@inth/sdk/engine': ['AGENTS.md', 'docs/README.md'],
+	'@inth/integrations': ['AGENTS.md', 'docs/README.md'],
+	'@inth/nextjs': [
 		'AGENTS.md',
 		'docs/README.md',
 		'styles.css',
@@ -331,7 +331,7 @@ const requiredPackedFilesByPackage: Record<string, string[]> = {
 		'src/iab/styles.css',
 		'src/iab/styles.tw3.css',
 	],
-	'@c15t/react': [
+	'@inth/react': [
 		'AGENTS.md',
 		'docs/README.md',
 		'styles.css',
@@ -345,7 +345,7 @@ const requiredPackedFilesByPackage: Record<string, string[]> = {
 		'src/styles.tw3.css',
 		'src/iab/styles.tw3.css',
 	],
-	'@c15t/ui': [
+	'@inth/sdk/ui': [
 		'styles.css',
 		'styles.tw3.css',
 		'iab/styles.css',
@@ -387,9 +387,9 @@ const requiredPackedFilesByPackage: Record<string, string[]> = {
 };
 
 const styleEntrypointPackages = new Set([
-	'@c15t/ui',
-	'@c15t/react',
-	'@c15t/nextjs',
+	'@inth/sdk/ui',
+	'@inth/react',
+	'@inth/nextjs',
 ]);
 
 const rootTw3ProxyContents: Record<string, string> = {
@@ -627,7 +627,7 @@ export const getBlockedReason = function getBlockedReason(
 			// The generated style entrypoints ship their declarations next to
 			// the JavaScript they describe.
 			if (
-				packageName === '@c15t/ui' &&
+				packageName === '@inth/sdk/ui' &&
 				(/^dist\/styles\/components\/[^/]+\.d\.ts$/u.test(path) ||
 					path === 'dist/styles/dialog.d.ts')
 			) {
@@ -637,9 +637,9 @@ export const getBlockedReason = function getBlockedReason(
 			// Format, `dist/types/`) ship declarations inside dist/ by design (no
 			// dist-types/ directory).
 			if (
-				packageName === '@c15t/svelte' ||
-				packageName === '@c15t/vue' ||
-				packageName === '@c15t/angular'
+				packageName === '@inth/svelte' ||
+				packageName === '@inth/vue' ||
+				packageName === '@inth/angular'
 			) {
 				return null;
 			}
@@ -724,7 +724,7 @@ export const scanUiComponentStyleArtifacts =
 		packageName: string,
 		packedFilePaths: Set<string>
 	): { path: string; size: number; reason: string }[] {
-		if (packageName !== '@c15t/ui') {
+		if (packageName !== '@inth/sdk/ui') {
 			return [];
 		}
 

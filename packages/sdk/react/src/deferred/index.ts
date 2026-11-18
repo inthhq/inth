@@ -1,7 +1,7 @@
 /**
- * `@c15t/react/deferred`: a consent root whose engine loads after the
+ * `@inth/react/deferred`: a consent root whose engine loads after the
  * page, for adapters that server-render. The engine side is in
- * `@c15t/react/deferred/engine`, so this entry stays small.
+ * `@inth/react/deferred/engine`, so this entry stays small.
  *
  * @packageDocumentation
  * @internal

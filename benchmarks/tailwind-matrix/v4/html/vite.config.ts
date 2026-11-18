@@ -12,7 +12,7 @@ import type { Plugin } from 'vite';
 const SCRIPT_FILES = ['c15t.js', 'c15t.hosted.js', 'c15t.dialog.js'];
 
 /**
- * Stands in for the CDN: emits `@c15t/browser`'s script-tag build next to
+ * Stands in for the CDN: emits `@inth/sdk`'s script-tag build next to
  * the page. Vite only builds the page's Tailwind stylesheet here.
  */
 const c15tScript = (): Plugin => ({
@@ -21,7 +21,7 @@ const c15tScript = (): Plugin => ({
 			this.emitFile({
 				fileName,
 				source: readFileSync(
-					fileURLToPath(import.meta.resolve(`@c15t/browser/${fileName}`)),
+					fileURLToPath(import.meta.resolve(`@inth/sdk/${fileName}`)),
 					'utf8'
 				),
 				type: 'asset',

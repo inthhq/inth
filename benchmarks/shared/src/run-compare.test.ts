@@ -160,9 +160,9 @@ const tarballResult = (
 	...makeResult('tarballs', {}, artifactBudgets),
 	metadata: { nextjsIncludesDialogRules: includesDialogRules },
 	metrics: Object.entries({
-		'@c15t/core': 10_000,
-		'@c15t/nextjs': nextjsBytes,
-		'@c15t/react': reactBytes,
+		'@inth/sdk/engine': 10_000,
+		'@inth/nextjs': nextjsBytes,
+		'@inth/react': reactBytes,
 	}).map(([name, value]) => summarizeMetric(name, 'bytes', [value])),
 	package: '@c15t/next-bundle-bench',
 	suite: 'artifact',
@@ -189,12 +189,12 @@ describe('dialog CSS tarball allowance', () => {
 			delta: 4487,
 			deltaPercent: 12.074,
 			headMedian: 41_651,
-			name: '@c15t/nextjs',
+			name: '@inth/nextjs',
 			unit: 'bytes',
 		});
 		expect(
 			run.comparison?.results[0]?.budgets.find(
-				(budget) => budget.metric === '@c15t/nextjs'
+				(budget) => budget.metric === '@inth/nextjs'
 			)?.message
 		).toContain('4487-byte dialog CSS allowance');
 	});
@@ -569,7 +569,7 @@ it('reports unselected packages as unexpected without evaluating their failures'
 
 it('uses sample uncertainty for browser timings while retaining confirmed regressions', () => {
 	const expected = expectedBenchmarkResults.find((entry) =>
-		entry.key.startsWith('@c15t/vue:baseline:')
+		entry.key.startsWith('@inth/vue:baseline:')
 	);
 	expect.assert(expected);
 	const browserResult = (timingSamples: number[]): BenchmarkResult => ({
@@ -583,7 +583,7 @@ it('uses sample uncertainty for browser timings while retaining confirmed regres
 				invariant ? [budget.threshold] : timingSamples
 			);
 		}),
-		package: '@c15t/vue',
+		package: '@inth/vue',
 		suite: 'browser-runtime',
 	});
 	const baseDir = writeResults([browserResult(Array<number>(30).fill(100))]);
@@ -591,7 +591,7 @@ it('uses sample uncertainty for browser timings while retaining confirmed regres
 		runCompare({
 			BENCHMARK_ARM_MAP: emptyArmMap(),
 			BENCHMARK_BASE_DIR: baseDir,
-			BENCHMARK_EXPECTED_PACKAGES: '@c15t/vue',
+			BENCHMARK_EXPECTED_PACKAGES: '@inth/vue',
 			BENCHMARK_EXPECTED_SUITES: 'browser-runtime',
 			BENCHMARK_HEAD_DIR: writeResults([browserResult(samples)]),
 			BENCHMARK_PROFILE: 'regression',

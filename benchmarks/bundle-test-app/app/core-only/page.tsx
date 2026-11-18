@@ -1,6 +1,6 @@
 'use client';
 
-import { createConsentKernel, createHostedTransport } from '@c15t/core';
+import { createConsentKernel, createHostedTransport } from '@inth/sdk/engine';
 import { useMemo } from 'react';
 
 /**

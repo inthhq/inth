@@ -1,5 +1,5 @@
-import { setupFocusTrap } from '@c15t/ui/utils';
-import type { FocusTrapOptions } from '@c15t/ui/utils';
+import { setupFocusTrap } from '@inth/sdk/ui/utils';
+import type { FocusTrapOptions } from '@inth/sdk/ui/utils';
 
 /** `true`/`false`, or an object that also says where focus starts. */
 export type FocusTrapParams =
@@ -17,7 +17,7 @@ const resolve = function resolve(params: FocusTrapParams) {
 
 /**
  * Svelte action that traps keyboard focus within a container.
- * Wraps @c15t/ui's framework-agnostic setupFocusTrap.
+ * Wraps @inth/sdk/ui's framework-agnostic setupFocusTrap.
  */
 export const focusTrap = function focusTrap(
 	node: HTMLElement,

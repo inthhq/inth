@@ -1,5 +1,5 @@
 /**
- * `@c15t/core/surface-state` — what a consent surface reads from a
+ * `@inth/sdk/surface-state` — what a consent surface reads from a
  * snapshot before the consent engine has loaded: category names and
  * metadata, consent conditions, vendor listings, the IAB requirement, the
  * prompt presentation, experiment arms, the GPC signal and the pending

@@ -1,6 +1,6 @@
 <!-- #region docs:nuxt-scripts-events title="app/components/PurchaseButton.vue" -->
 <script setup lang="ts">
-import { metaPixelEvent } from '@c15t/integrations/meta-pixel';
+import { metaPixelEvent } from '@inth/integrations/meta-pixel';
 
 const props = defineProps<{ value: number }>();
 const consent = useConsent();

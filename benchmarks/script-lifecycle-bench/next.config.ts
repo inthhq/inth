@@ -8,9 +8,9 @@ const monorepoRoot = resolve(projectDir, '../..');
 
 const transpilePackages = [
 	'@c15t/benchmarking',
-	'@c15t/react',
-	'@c15t/nextjs',
-	'@c15t/core',
+	'@inth/react',
+	'@inth/nextjs',
+	'@inth/sdk',
 ];
 
 const config: NextConfig = {

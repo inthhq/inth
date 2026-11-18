@@ -1,6 +1,6 @@
 // #region docs:privacy-page
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { ConsentWidget } from '@c15t/angular/consent-widget';
+import { ConsentWidget } from '@inth/angular/consent-widget';
 
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,

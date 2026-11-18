@@ -7,11 +7,11 @@
  * @internal
  */
 
-import type { ConsentSnapshot, HydrationRecords } from '@c15t/core';
+import type { ConsentSnapshot, HydrationRecords } from '@inth/sdk/engine';
 import type {
 	Script,
 	ScriptLoaderOptions,
-} from '@c15t/core/modules/script-loader';
+} from '@inth/sdk/modules/script-loader';
 
 import type { ConsentProviderOptions } from '../provider';
 

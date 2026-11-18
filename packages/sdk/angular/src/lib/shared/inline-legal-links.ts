@@ -5,8 +5,8 @@ import {
 	inject,
 	input,
 } from '@angular/core';
-import type { LegalLinks } from '@c15t/core';
-import legalLinkStyles from '@c15t/ui/styles/components/legal-links';
+import type { LegalLinks } from '@inth/sdk/engine';
+import legalLinkStyles from '@inth/sdk/ui/styles/components/legal-links';
 
 import { ConsentManager } from '../core/consent-manager';
 import { resolveNoStyle } from '../core/no-style';

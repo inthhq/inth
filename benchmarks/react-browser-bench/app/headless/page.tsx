@@ -7,8 +7,8 @@ import {
 	useConsent,
 	useSaveConsents,
 	useSetActiveUI,
-} from '@c15t/react';
-import type { ConsentProviderOptions } from '@c15t/react';
+} from '@inth/react';
+import type { ConsentProviderOptions } from '@inth/react';
 import { useEffect } from 'react';
 
 import { getBenchState, markInteraction } from '../_bench/state';

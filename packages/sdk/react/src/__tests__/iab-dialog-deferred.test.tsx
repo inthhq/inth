@@ -1,5 +1,5 @@
 import { MINIMAL_GVL } from '@c15t/conformance';
-import type { GlobalVendorList } from '@c15t/schema/types';
+import type { GlobalVendorList } from '@inth/sdk/schema/types';
 import { createRef } from 'react';
 import { hydrateRoot } from 'react-dom/client';
 import { renderToReadableStream } from 'react-dom/server';

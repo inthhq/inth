@@ -29,33 +29,33 @@
  *
  * @example
  * ```ts
- * import { watchRevocationReload } from '@c15t/core';
- * import { createPersistence } from '@c15t/core/modules/persistence';
- * import { createWindowDebug } from '@c15t/core/modules/window-debug';
+ * import { watchRevocationReload } from '@inth/sdk-core';
+ * import { createPersistence } from '@inth/sdk-core/modules/persistence';
+ * import { createWindowDebug } from '@inth/sdk-core/modules/window-debug';
  * import {
  *   createConsentProviderRuntime,
  *   lazyRuntimeModule,
- * } from '@c15t/core/runtime';
+ * } from '@inth/sdk-core/runtime';
  *
  * const runtime = createConsentProviderRuntime(options, {
  *   createClearOnRevocation: lazyRuntimeModule(() =>
- *     import('@c15t/core/modules/clear-on-revocation').then(
+ *     import('@inth/sdk-core/modules/clear-on-revocation').then(
  *       (module) => module.createClearOnRevocation
  *     )
  *   ),
  *   createIframeBlocker: lazyRuntimeModule(() =>
- *     import('@c15t/core/modules/iframe-blocker').then(
+ *     import('@inth/sdk-core/modules/iframe-blocker').then(
  *       (module) => module.createIframeBlocker
  *     )
  *   ),
  *   createNetworkBlocker: lazyRuntimeModule(() =>
- *     import('@c15t/core/modules/network-blocker').then(
+ *     import('@inth/sdk-core/modules/network-blocker').then(
  *       (module) => module.createNetworkBlocker
  *     )
  *   ),
  *   createPersistence,
  *   createScriptLoader: lazyRuntimeModule(() =>
- *     import('@c15t/core/modules/script-loader').then(
+ *     import('@inth/sdk-core/modules/script-loader').then(
  *       (module) => module.createScriptLoader
  *     )
  *   ),

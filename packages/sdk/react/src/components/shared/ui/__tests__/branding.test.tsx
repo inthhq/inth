@@ -1,4 +1,4 @@
-import { defaultTranslationConfig } from '@c15t/core';
+import { defaultTranslationConfig } from '@inth/sdk/engine';
 import type { ComponentProps, ReactElement } from 'react';
 import { renderToString } from 'react-dom/server';
 import { describe, expect, test, vi } from 'vitest';

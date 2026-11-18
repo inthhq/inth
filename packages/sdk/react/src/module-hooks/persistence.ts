@@ -1,10 +1,10 @@
 'use client';
 
-import { createPersistence } from '@c15t/core/modules/persistence';
+import { createPersistence } from '@inth/sdk/modules/persistence';
 import type {
 	PersistenceHandle,
 	PersistenceOptions,
-} from '@c15t/core/modules/persistence';
+} from '@inth/sdk/modules/persistence';
 import { useEffect, useRef, useState } from 'react';
 
 import { deferredModules } from '../deferred/registry';

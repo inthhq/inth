@@ -9,7 +9,7 @@
 		"start": "node .output/server/index.mjs"
 	},
 	"dependencies": {
-		"c15t": "workspace:*",
+		"@inth/vue": "workspace:*",
 		"nuxt": "^4.5.1"
 	},
 	"devDependencies": {

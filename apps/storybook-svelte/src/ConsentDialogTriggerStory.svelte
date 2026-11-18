@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ConsentDialog, ConsentDialogTrigger } from '@c15t/svelte';
+	import { ConsentDialog, ConsentDialogTrigger } from '@inth/svelte';
 
 	import {
 		editableConsentOptions,

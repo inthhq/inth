@@ -5,12 +5,12 @@
  */
 
 import { assertInInjectionContext, inject } from '@angular/core';
-import { ConsentManager } from '@c15t/angular';
-import { getEventDispatcher as getRuntimeEventDispatcher } from '@c15t/core/events';
+import { ConsentManager } from '@inth/angular';
+import { getEventDispatcher as getRuntimeEventDispatcher } from '@inth/sdk/events';
 import type {
 	EventDispatcher,
 	RuntimeEventDispatcherOptions,
-} from '@c15t/core/events';
+} from '@inth/sdk/events';
 
 /**
  * Get the app's event dispatcher. Call it in an injection context, such as
@@ -31,7 +31,7 @@ import type {
  * ```ts
  * import { Component, inject } from '@angular/core';
  * import { NavigationEnd, Router } from '@angular/router';
- * import { injectEventDispatcher } from '@c15t/angular/consent-gate';
+ * import { injectEventDispatcher } from '@inth/angular/consent-gate';
  *
  * @Component({ selector: 'app-root', template: '<router-outlet />' })
  * export class App {
@@ -65,5 +65,5 @@ export const injectEventDispatcher = function injectEventDispatcher(
 	};
 };
 
-export type { EventDispatcher, EventProperties } from '@c15t/core/events';
+export type { EventDispatcher, EventProperties } from '@inth/sdk/events';
 export type { RuntimeEventDispatcherOptions as InjectEventDispatcherOptions };

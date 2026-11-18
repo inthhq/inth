@@ -7,12 +7,12 @@ import type {
 	KernelActiveUI,
 	KernelOverrides,
 	SaveResult,
-} from '@c15t/core';
-import { CONSENT_CATEGORIES } from '@c15t/core';
+} from '@inth/sdk-core';
+import { CONSENT_CATEGORIES } from '@inth/sdk-core';
 import {
 	getScriptDiagnostics,
 	subscribeScriptDiagnostics,
-} from '@c15t/core/modules/script-loader';
+} from '@inth/sdk-core/modules/script-loader';
 
 import { KERNEL_EVENT_TYPES, kernelEventToDevToolsEvent } from './events';
 import { readSelection } from './selection';

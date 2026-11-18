@@ -1,10 +1,10 @@
 'use client';
 
-import { hosted } from '@c15t/react';
-import type { WithProjectUrl } from '@c15t/react';
-import { ConsentBanner } from '@c15t/react/consent-banner';
-import { ConsentProvider } from '@c15t/react/provider';
-import type { ConsentProviderOptions } from '@c15t/react/provider';
+import { hosted } from '@inth/react';
+import type { WithProjectUrl } from '@inth/react';
+import { ConsentBanner } from '@inth/react/consent-banner';
+import { ConsentProvider } from '@inth/react/provider';
+import type { ConsentProviderOptions } from '@inth/react/provider';
 
 import { ReactBenchmarkProbe } from '../_bench/probe';
 import { getBenchState } from '../_bench/state';

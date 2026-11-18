@@ -12,7 +12,7 @@
  * @internal
  */
 
-import type { Script } from '@c15t/core';
+import type { Script } from '@inth/sdk/engine';
 
 import { hashSource } from '../libs/csp-hash';
 import type { C15tBrowserCsp } from '../types';
@@ -50,7 +50,7 @@ export const reportUnhashedScripts = async function reportUnhashedScripts(
 			return;
 		}
 		console.error(
-			`@c15t/astro: Astro's Content Security Policy will block the inline script '${script.id}' from clientEntrypoint. Add '${hash}' to scriptDirective.hashes in the csp config, or move the script into the integration's \`scripts\` option, which c15t hashes for you.`
+			`@inth/astro: Astro's Content Security Policy will block the inline script '${script.id}' from clientEntrypoint. Add '${hash}' to scriptDirective.hashes in the csp config, or move the script into the integration's \`scripts\` option, which c15t hashes for you.`
 		);
 	});
 };

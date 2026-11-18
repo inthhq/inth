@@ -1,5 +1,5 @@
 /**
- * `@c15t/astro/testing` — run the consent flow in tests with no backend.
+ * `@inth/astro/testing` — run the consent flow in tests with no backend.
  *
  * Pass `mode: testing()` to the `c15t()` integration. It needs no
  * `projectUrl`. The server and the browser resolve the recommended policy
@@ -21,8 +21,8 @@
  * @example
  * ```ts
  * // astro.config.mjs, in a test build
- * import c15t from '@c15t/astro';
- * import { testing } from '@c15t/astro/testing';
+ * import c15t from '@inth/astro';
+ * import { testing } from '@inth/astro/testing';
  *
  * export default defineConfig({
  *   integrations: [c15t({ mode: testing() })],
@@ -31,9 +31,9 @@
  *
  * @packageDocumentation
  */
-import type { TestingMode, TestingModeOptions } from '@c15t/core/modes';
+import type { TestingMode, TestingModeOptions } from '@inth/sdk/modes';
 
-export type { TestingMode, TestingModeOptions } from '@c15t/core/modes';
+export type { TestingMode, TestingModeOptions } from '@inth/sdk/modes';
 
 /**
  * A `mode` for tests that resolves `policy`, or the recommended policy

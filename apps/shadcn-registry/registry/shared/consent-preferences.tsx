@@ -2,18 +2,18 @@
 
 import { useId } from "react"
 import { ChevronDownIcon } from "lucide-react"
-import type { AllConsentNames, PresentationAction } from "c15t/react"
+import type { AllConsentNames, PresentationAction } from "@inth/react"
 import {
   useConsentDraft,
   useExplicitChoice,
   useRestrictions,
   useTranslations,
-} from "c15t/react"
+} from "@inth/react"
 import {
   useConsentLabels,
   useHeadlessConsentUI,
   useVendorsListedUnder,
-} from "c15t/react/headless"
+} from "@inth/react/headless"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"

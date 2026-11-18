@@ -231,7 +231,7 @@ const settle = function settle(
  * import {
  *   createConsentProviderRuntime,
  *   defaultRuntimeModules,
- * } from '@c15t/core/runtime';
+ * } from '@inth/sdk-core/runtime';
  *
  * const runtime = createConsentProviderRuntime(props.options, defaultRuntimeModules);
  * onMount(() => {

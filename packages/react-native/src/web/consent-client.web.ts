@@ -1,9 +1,9 @@
 /**
- * The consent client on web, over the browser engine from `@c15t/core`.
+ * The consent client on web, over the browser engine from `@inth/sdk/engine`.
  *
  * iOS and Android run consent in the native core, and the client in
  * `native/client.ts` only reads its snapshot. A web build has no native core,
- * so this file runs the same engine the Inth web SDKs run: a `@c15t/core`
+ * so this file runs the same engine the Inth web SDKs run: a `@inth/sdk/engine`
  * runtime with persistence, talking to the same Inth project. It implements
  * the {@link ConsentClient} contract, so the provider, the hooks, the headless
  * components and the drawn components are the same code on all three
@@ -17,7 +17,7 @@
  * App Tracking Transparency is `unsupported`, as on Android, and there are no
  * native consent screens, as in a build with `nativeUI: false`.
  *
- * Only `*.web.ts` files may import `@c15t/core`, and only web bundles reach
+ * Only `*.web.ts` files may import `@inth/sdk/engine`, and only web bundles reach
  * them; `src/__tests__/dependency-boundary.test.ts` holds both rules.
  */
 
@@ -25,10 +25,10 @@ import type {
 	ConsentSnapshot as KernelSnapshot,
 	KernelTransport,
 	ProviderTransportFactory,
-} from '@c15t/core';
-import { createConsentRuntime } from '@c15t/core/runtime';
-import type { ConsentRuntime, ConsentRuntimeOptions } from '@c15t/core/runtime';
-import { createHostedTransport, custom, hosted } from '@c15t/core/transports';
+} from '@inth/sdk/engine';
+import { createConsentRuntime } from '@inth/sdk/runtime';
+import type { ConsentRuntime, ConsentRuntimeOptions } from '@inth/sdk/runtime';
+import { createHostedTransport, custom, hosted } from '@inth/sdk/transports';
 
 import { normalizeProjectUrl } from '../expo-plugin/project-url';
 import { denyAllSnapshot } from '../lib/deny-all-snapshot';
@@ -71,7 +71,7 @@ import type { WebConsentOptions } from './expo-extra.web';
  * Whether this is a production bundle.
  *
  * Reads the literal `process.env.NODE_ENV`, which Expo's bundler replaces
- * at build time, as `isProductionBuild` in `@c15t/core` does. A browser has
+ * at build time, as `isProductionBuild` in `@inth/sdk/engine` does. A browser has
  * no `process`, so reading it through `globalThis.process` would hide the
  * value from that replacement and let `dryRun` run in a release. Without a
  * bundler the read throws and counts as development.

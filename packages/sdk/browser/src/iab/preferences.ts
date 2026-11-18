@@ -1,12 +1,12 @@
-import type { ConsentSnapshot } from '@c15t/core';
+import type { ConsentSnapshot } from '@inth/sdk-core';
 import {
 	applyPublisherRestrictionsToGVL,
 	countIABPartners,
 	introducedLegitimateInterest,
 	permittedLegitimateInterestPurposes,
 	resolveIABDialogDisplayModel,
-} from '@c15t/iab/headless';
-import type { HeadlessIABDisplayRow } from '@c15t/iab/headless';
+} from '@inth/sdk-iab/headless';
+import type { HeadlessIABDisplayRow } from '@inth/sdk-iab/headless';
 
 import { classes } from '../generated/iab-styles';
 import { classes as shared } from '../generated/styles';

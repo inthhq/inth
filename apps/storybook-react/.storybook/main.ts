@@ -51,14 +51,14 @@ const config: StorybookConfig = {
 						),
 					},
 					{
-						find: '@c15t/react/primitives',
+						find: '@inth/react/primitives',
 						replacement: workspace('packages/sdk/react/src/primitives.ts'),
 					},
 					{
-						find: /^@c15t\/react$/u,
+						find: /^@inth\/react$/u,
 						replacement: workspace('packages/sdk/react/src/index.ts'),
 					},
-					// `@c15t/react`'s index reaches its provider and banner through the
+					// `@inth/react`'s index reaches its provider and banner through the
 					// package's `imports` map, which Vite resolves to `dist`: a second
 					// copy of the package next to the sources above, whose surfaces
 					// would then find no kernel in context.
@@ -73,24 +73,24 @@ const config: StorybookConfig = {
 						),
 					},
 					{
-						find: /^@c15t\/iab$/u,
+						find: /^@inth\/sdk\/iab$/u,
 						replacement: workspace('packages/sdk/iab/src/index.ts'),
 					},
 					{
-						find: /^@c15t\/schema\/types$/u,
+						find: /^@inth\/sdk\/schema\/types$/u,
 						replacement: workspace('packages/sdk/schema/src/types.ts'),
 					},
 					{
-						find: /^@c15t\/schema$/u,
+						find: /^@inth\/sdk\/schema$/u,
 						replacement: workspace('packages/sdk/schema/src/index.ts'),
 					},
 					// Docs recipes import the umbrella paths readers install.
 					{
-						find: /^c15t\/react\/headless$/u,
+						find: /^@inth\/react\/headless$/u,
 						replacement: workspace('packages/sdk/react/src/headless.ts'),
 					},
 					{
-						find: /^c15t\/react$/u,
+						find: /^@inth\/react$/u,
 						replacement: workspace('packages/sdk/react/src/index.ts'),
 					},
 					{
@@ -107,53 +107,53 @@ const config: StorybookConfig = {
 						find: /^~\/(?<capture1>.*)$/u,
 						replacement: workspace('packages/sdk/react/src/$1'),
 					},
-					// @c15t/ui — resolve all subpath imports to source
+					// @inth/sdk/ui — resolve all subpath imports to source
 					{
-						find: /^@c15t\/ui\/primitives\/data-state$/u,
+						find: /^@inth\/sdk\/ui\/primitives\/data-state$/u,
 						replacement: ui('primitives', 'data-state.ts'),
 					},
 					{
 						// oxlint-disable-next-line prefer-named-capture-group -- Preserve declaration order, interface shape, and public compatibility.
-						find: /^@c15t\/ui\/primitives\/(.+)$/u,
+						find: /^@inth\/sdk\/ui\/primitives\/(.+)$/u,
 						replacement: ui('primitives', '$1', 'index.ts'),
 					},
 					{
-						find: /^@c15t\/ui\/primitives$/u,
+						find: /^@inth\/sdk\/ui\/primitives$/u,
 						replacement: ui('primitives', 'index.ts'),
 					},
 					{
 						// oxlint-disable-next-line prefer-named-capture-group -- Preserve declaration order, interface shape, and public compatibility.
-						find: /^@c15t\/ui\/styles\/primitives\/(.+)\.module\.js$/u,
+						find: /^@inth\/sdk\/ui\/styles\/primitives\/(.+)\.module\.js$/u,
 						replacement: ui('styles', 'primitives', '$1.module.css'),
 					},
 					{
 						// oxlint-disable-next-line prefer-named-capture-group -- Preserve declaration order, interface shape, and public compatibility.
-						find: /^@c15t\/ui\/styles\/primitives\/(.+)$/u,
+						find: /^@inth\/sdk\/ui\/styles\/primitives\/(.+)$/u,
 						replacement: ui('styles', 'primitives', '$1.ts'),
 					},
 					{
-						find: /^@c15t\/ui\/styles\/primitives$/u,
+						find: /^@inth\/sdk\/ui\/styles\/primitives$/u,
 						replacement: ui('styles', 'primitives', 'index.ts'),
 					},
 					{
-						find: /^@c15t\/ui\/theme$/u,
+						find: /^@inth\/sdk\/ui\/theme$/u,
 						replacement: ui('theme', 'index.ts'),
 					},
 					{
-						find: /^@c15t\/ui\/utils$/u,
+						find: /^@inth\/sdk\/ui\/utils$/u,
 						replacement: ui('utils', 'index.ts'),
 					},
 					{
 						// oxlint-disable-next-line prefer-named-capture-group -- Preserve declaration order, interface shape, and public compatibility.
-						find: /^@c15t\/ui\/utils\/(.+)$/u,
+						find: /^@inth\/sdk\/ui\/utils\/(.+)$/u,
 						replacement: ui('utils', '$1.ts'),
 					},
 					{
-						find: '@c15t/translations/all',
+						find: '@inth/sdk/translations/all',
 						replacement: workspace('packages/sdk/translations/src/all.ts'),
 					},
 					{
-						find: /^@c15t\/translations$/u,
+						find: /^@inth\/sdk\/translations$/u,
 						replacement: workspace('packages/sdk/translations/src/index.ts'),
 					},
 				],

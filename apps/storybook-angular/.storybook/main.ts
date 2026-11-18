@@ -15,15 +15,15 @@ const workspace = (...segments: string[]) =>
  * needs no Angular CLI workspace. Storybook builds each story's wrapper
  * component at runtime, so everything compiles JIT (Analog's default).
  *
- * `@c15t/angular` and its component entry points resolve to their source,
+ * `@inth/angular` and its component entry points resolve to their source,
  * so a component change shows up without an `ng-packagr` build. Its other `@c15t/*` imports resolve to
  * their built `dist`: the class maps and the stylesheets the stock surfaces
- * insert come from the same `@c15t/ui` build, as they do in an app.
+ * insert come from the same `@inth/sdk/ui` build, as they do in an app.
  */
 /**
  * `@analogjs/vite-plugin-angular` adds the `style` resolve condition to
- * every import, which `@c15t/ui`'s exports list before `import`. The class
- * maps the components import (`@c15t/ui/styles/components/button`) would
+ * every import, which `@inth/sdk/ui`'s exports list before `import`. The class
+ * maps the components import (`@inth/sdk/ui/styles/components/button`) would
  * then resolve to the stylesheet, which has no default export. The Angular
  * CLI applies `style` to stylesheet imports only; this restores that.
  */
@@ -73,11 +73,11 @@ const config: StorybookConfig = {
 						replacement: workspace('internals/conformance/src/$1'),
 					},
 					{
-						find: /^@c15t\/angular$/u,
+						find: /^@inth\/angular$/u,
 						replacement: workspace('packages/sdk/angular/src/public-api.ts'),
 					},
 					{
-						find: /^@c15t\/angular\/(?<entry>consent-dialog|consent-dialog-trigger|consent-gate|consent-root|consent-widget|devtools|iab|primitives)$/u,
+						find: /^@inth\/angular\/(?<entry>consent-dialog|consent-dialog-trigger|consent-gate|consent-root|consent-widget|devtools|iab|primitives)$/u,
 						replacement: workspace('packages/sdk/angular/$1/src/public-api.ts'),
 					},
 				],

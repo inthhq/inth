@@ -95,7 +95,7 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			'customization/**/*.mdx',
 			'integrations/**/*.mdx',
 		],
-		name: '@c15t/core',
+		name: '@inth/sdk/engine',
 		outDir: 'packages/sdk/core',
 		skill: {
 			install: '`npm install c15t`',
@@ -113,10 +113,10 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			'customization/**/*.mdx',
 			'integrations/**/*.mdx',
 		],
-		name: '@c15t/react',
+		name: '@inth/react',
 		outDir: 'packages/sdk/react',
 		skill: {
-			install: '`npm install c15t` and import `c15t/react`',
+			install: '`npm install c15t` and import `@inth/react`',
 			topic: 'the project is a React app, such as Vite or React Router',
 		},
 		summary:
@@ -130,10 +130,10 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			'customization/**/*.mdx',
 			'integrations/**/*.mdx',
 		],
-		name: '@c15t/nextjs',
+		name: '@inth/nextjs',
 		outDir: 'packages/sdk/nextjs',
 		skill: {
-			install: '`npm install c15t` and import `c15t/next`',
+			install: '`npm install c15t` and import `@inth/nextjs`',
 			topic:
 				'the project is a Next.js app with the App Router, Pages Router or static export',
 		},
@@ -149,10 +149,10 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			'customization/**/*.mdx',
 			'integrations/**/*.mdx',
 		],
-		name: '@c15t/vue',
+		name: '@inth/vue',
 		outDir: 'packages/sdk/vue',
 		skill: {
-			install: '`npm install c15t` and import `c15t/vue`',
+			install: '`npm install c15t` and import `@inth/vue`',
 			topic: 'the project is a Vue or Nuxt app',
 		},
 		summary:
@@ -167,10 +167,10 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			'customization/**/*.mdx',
 			'integrations/**/*.mdx',
 		],
-		name: '@c15t/svelte',
+		name: '@inth/svelte',
 		outDir: 'packages/sdk/svelte',
 		skill: {
-			install: '`npm install c15t` and import `c15t/svelte`',
+			install: '`npm install c15t` and import `@inth/svelte`',
 			topic: 'the project is a Svelte or SvelteKit app',
 		},
 		summary:
@@ -184,10 +184,10 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			'customization/**/*.mdx',
 			'integrations/**/*.mdx',
 		],
-		name: '@c15t/angular',
+		name: '@inth/angular',
 		outDir: 'packages/sdk/angular',
 		skill: {
-			install: '`npm install @c15t/angular`',
+			install: '`npm install @inth/angular`',
 			topic:
 				'the project is an Angular 20, 21 or 22 app, with or without `@angular/ssr`',
 		},
@@ -202,10 +202,10 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			'customization/**/*.mdx',
 			'integrations/**/*.mdx',
 		],
-		name: '@c15t/astro',
+		name: '@inth/astro',
 		outDir: 'packages/sdk/astro',
 		skill: {
-			install: '`npm install c15t` and import `c15t/astro`',
+			install: '`npm install c15t` and import `@inth/astro`',
 			topic: 'the project is an Astro site',
 		},
 		summary:
@@ -219,10 +219,10 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			'customization/**/*.mdx',
 			'integrations/**/*.mdx',
 		],
-		name: '@c15t/tanstack-start',
+		name: '@inth/tanstack-start',
 		outDir: 'packages/sdk/tanstack-start',
 		skill: {
-			install: '`npm install c15t` and import `c15t/tanstack-start`',
+			install: '`npm install c15t` and import `@inth/tanstack-start`',
 			topic: 'the project is a TanStack Start app',
 		},
 		summary:
@@ -239,10 +239,10 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			'customization/**/*.mdx',
 			'integrations/**/*.mdx',
 		],
-		name: '@c15t/integrations',
+		name: '@inth/integrations',
 		outDir: 'packages/sdk/integrations',
 		skill: {
-			install: '`npm install @c15t/integrations` alongside `c15t`',
+			install: '`npm install @inth/integrations` alongside `c15t`',
 			topic:
 				'the project loads analytics, pixels, tag managers or embeds that must wait for consent',
 		},
@@ -257,11 +257,11 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			'frameworks/javascript/**/*.mdx',
 			'integrations/**/*.mdx',
 		],
-		name: '@c15t/browser',
+		name: '@inth/sdk',
 		outDir: 'packages/sdk/browser',
 		skill: {
 			install:
-				'a `<script>` tag for `@c15t/browser` from jsDelivr, or `npm install @c15t/browser`',
+				'a `<script>` tag for `@inth/sdk` from jsDelivr, or `npm install @inth/sdk`',
 			topic:
 				'the site is plain HTML, a CMS, a page builder or a static site generator, or a bundled app without a UI framework',
 		},

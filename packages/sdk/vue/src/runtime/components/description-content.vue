@@ -6,7 +6,7 @@
 	public component and picks the class by context.
 -->
 <script setup lang="ts">
-import type { CompleteTranslations } from '@c15t/translations';
+import type { CompleteTranslations } from '@inth/sdk/translations';
 import { computed } from 'vue';
 
 import { useConsentConfig, useConsentInit } from '#c15t/composables';

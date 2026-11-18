@@ -5,7 +5,7 @@
  * @internal
  */
 
-import type { KernelConfig } from '@c15t/core';
+import type { KernelConfig } from '@inth/sdk/engine';
 
 import type { AstroConsentClient } from '../client-types';
 

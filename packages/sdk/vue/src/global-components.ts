@@ -11,7 +11,7 @@ export const GLOBAL_COMPONENTS = [
 	// too: ConsentRoot is the documented mount-anywhere entry.
 	['ConsentRoot', 'nuxt-root'],
 	// Inline consent widget for settings and privacy pages, with the same DOM
-	// contract as @c15t/react and @c15t/svelte ConsentWidget.
+	// contract as @inth/react and @inth/svelte ConsentWidget.
 	['ConsentWidget', 'preferences'],
 	['ConsentDialogLink', 'consent-dialog-link'],
 	['ConsentDialogTrigger', 'panel-trigger'],

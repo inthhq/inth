@@ -20,7 +20,7 @@ const graph: Record<
 	{ code: string; imports?: string[]; dynamic?: string[] }
 > = {
 	[ENTRY]: {
-		code: `import { useConsent } from '@c15t/react'; import { has } from '@c15t/core'; import '@c15t/react/components/prompt'; useConsent(has);`,
+		code: `import { useConsent } from '@inth/react'; import { has } from '@inth/sdk/engine'; import '@inth/react/components/prompt'; useConsent(has);`,
 		dynamic: [ROUTE],
 		imports: [
 			`${C15T}react/dist/index.js`,
@@ -30,7 +30,7 @@ const graph: Record<
 	},
 	// An app route: loads with the page it renders.
 	[ROUTE]: {
-		code: `import { storageKeys } from '@c15t/core';`,
+		code: `import { storageKeys } from '@inth/sdk/engine';`,
 		imports: [`${C15T}core/dist/index.js`],
 	},
 	[`${C15T}react/dist/index.js`]: {
@@ -41,7 +41,7 @@ const graph: Record<
 		code: 'export const useConsent = () => 1;',
 	},
 	[`${C15T}react/dist/shell.js`]: {
-		code: `export const importDialog = () => import('./deferred/dialog.js'); export const importEngine = () => import('./deferred/client-engine.js'); export const importLoader = () => import('@c15t/core/modules/script-loader');`,
+		code: `export const importDialog = () => import('./deferred/dialog.js'); export const importEngine = () => import('./deferred/client-engine.js'); export const importLoader = () => import('@inth/sdk/modules/script-loader');`,
 		dynamic: [
 			`${C15T}react/dist/deferred/dialog.js`,
 			`${C15T}react/dist/deferred/client-engine.js`,
@@ -49,7 +49,7 @@ const graph: Record<
 		],
 	},
 	[`${C15T}react/dist/components/prompt.js`]: {
-		code: `import '@c15t/ui/styles/components/button.module.css';`,
+		code: `import '@inth/sdk/ui/styles/components/button.module.css';`,
 		imports: [`${C15T}ui/dist/styles/components/button.module.css`],
 	},
 	// Re-exports only: a module counts when something asks for its names.
@@ -81,7 +81,7 @@ const graph: Record<
 		imports: [`${C15T}react/dist/components/panel/index.js`],
 	},
 	[`${C15T}react/dist/components/panel/index.js`]: {
-		code: `import { has, policyActions, vendors, evaluate, consentTypes, storageKeys } from '@c15t/core'; import { dom } from '@c15t/ui/utils/dom'; import '@c15t/ui/styles/components/panel.module.css'; import '@c15t/ui/styles/components/button.module.css'; export const Panel = () => import('../panel-trigger/index.js');`,
+		code: `import { has, policyActions, vendors, evaluate, consentTypes, storageKeys } from '@inth/sdk/engine'; import { dom } from '@inth/sdk/ui/utils/dom'; import '@inth/sdk/ui/styles/components/panel.module.css'; import '@inth/sdk/ui/styles/components/button.module.css'; export const Panel = () => import('../panel-trigger/index.js');`,
 		dynamic: [`${C15T}react/dist/components/panel-trigger/index.js`],
 		imports: [
 			`${C15T}core/dist/index.js`,
@@ -92,7 +92,7 @@ const graph: Record<
 	},
 	// A lazy part of the dialog: loads after it.
 	[`${C15T}react/dist/components/panel-trigger/index.js`]: {
-		code: `import { dom } from '@c15t/ui/utils/dom'; import { drag } from './drag.js';`,
+		code: `import { dom } from '@inth/sdk/ui/utils/dom'; import { drag } from './drag.js';`,
 		imports: [
 			`${C15T}ui/dist/utils/dom.js`,
 			`${C15T}react/dist/components/panel-trigger/drag.js`,
@@ -105,7 +105,7 @@ const graph: Record<
 	[`${C15T}ui/dist/styles/components/panel.module.css`]: { code: '' },
 	[`${C15T}ui/dist/styles/components/button.module.css`]: { code: '' },
 	[`${C15T}react/dist/deferred/client-engine.js`]: {
-		code: `import { evaluate, vendors } from '@c15t/core';`,
+		code: `import { evaluate, vendors } from '@inth/sdk/engine';`,
 		imports: [`${C15T}core/dist/index.js`],
 	},
 	[`${C15T}core/dist/modules/script-loader/index.js`]: {

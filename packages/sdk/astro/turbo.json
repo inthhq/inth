@@ -3,7 +3,7 @@
 	"extends": ["//"],
 	"tasks": {
 		"build": {
-			"dependsOn": ["^build", "@c15t/react#build", "@c15t/vue#build"]
+			"dependsOn": ["^build", "@inth/react#build", "@inth/vue#build"]
 		}
 	}
 }

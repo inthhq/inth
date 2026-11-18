@@ -5,7 +5,7 @@ import {
 	tabKeySkipsInactiveTabs,
 	tabSwitching,
 } from '@c15t/conformance/play/tabs';
-import { Tabs } from '@c15t/react/primitives';
+import { Tabs } from '@inth/react/primitives';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import type React from 'react';
 import { useState } from 'react';

@@ -1,7 +1,6 @@
 'use client';
 
 import { benchPolicy } from '@c15t/benchmarking/bench-policy';
-import type { AllConsentNames } from '@c15t/core';
 import {
 	ConsentBanner,
 	ConsentDialog,
@@ -12,7 +11,8 @@ import {
 	useEffectivePermissions,
 	useExplicitChoice,
 	useSaveConsents,
-} from '@c15t/react';
+} from '@inth/react';
+import type { AllConsentNames } from '@inth/sdk/engine';
 
 const CATEGORIES: AllConsentNames[] = [
 	'necessary',
@@ -75,7 +75,7 @@ const ReactFullPage = () => (
 		<ConsentDraftProvider>
 			<main style={{ fontFamily: 'system-ui', padding: '2rem' }}>
 				<h1>React Full Aggregate Benchmark</h1>
-				<p>This route imports the UI experience from @c15t/react.</p>
+				<p>This route imports the UI experience from @inth/react.</p>
 				<TestComponent />
 			</main>
 			<ConsentBanner />

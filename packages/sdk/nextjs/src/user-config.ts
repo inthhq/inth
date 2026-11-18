@@ -1,5 +1,5 @@
 /**
- * `@c15t/nextjs/user-config` — the app's `c15t.config.ts`, found
+ * `@inth/nextjs/user-config` — the app's `c15t.config.ts`, found
  * automatically.
  *
  * `withConsentManifest` aliases this specifier to `<root>/c15t.config.ts`
@@ -10,7 +10,7 @@
  * `undefined`.
  *
  * Read the default export when it is needed (inside a function or a
- * render), never at module top level: `c15t.config.ts` imports `c15t/next`,
+ * render), never at module top level: `c15t.config.ts` imports `@inth/nextjs`,
  * so the browser graph has a cycle through this module.
  *
  * @internal

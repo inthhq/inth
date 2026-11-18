@@ -3,7 +3,7 @@ import type { AllConsentNames } from '../protocol/vocabulary';
 /**
  * Every Google Consent Mode v2 consent type, in Google's documented order.
  *
- * Mirrors `GOOGLE_CONSENT_TYPES` in `@c15t/integrations`.
+ * Mirrors `GOOGLE_CONSENT_TYPES` in `@inth/integrations`.
  */
 export const GOOGLE_CONSENT_TYPES = [
 	'ad_storage',

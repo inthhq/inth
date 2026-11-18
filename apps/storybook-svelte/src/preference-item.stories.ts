@@ -2,7 +2,7 @@ import {
 	switchIndependentOfTrigger,
 	triggerExpandsContent,
 } from '@c15t/conformance/play/preference-item';
-import { enTranslations } from '@c15t/translations';
+import { enTranslations } from '@inth/sdk/translations';
 import type { Meta, StoryObj } from '@storybook/svelte-vite';
 
 import PreferenceItemDemo from './PreferenceItemDemo.svelte';

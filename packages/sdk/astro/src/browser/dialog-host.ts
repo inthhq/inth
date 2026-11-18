@@ -6,7 +6,7 @@
  * @internal
  */
 
-import type { LegalLinks } from '@c15t/core';
+import type { LegalLinks } from '@inth/sdk/engine';
 
 import type { ConsentDialogKind } from '../ui/adapter';
 

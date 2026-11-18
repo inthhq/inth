@@ -27,7 +27,7 @@ const serverStart = vi.hoisted(() => {
 	return { held, release: () => release() };
 });
 // oxlint-disable-next-line anti-slop/no-module-mocking -- The property under test is a render before this chunk loads; nothing else can hold a dynamic import pending. The factory returns the real module once the test ends.
-vi.mock('@c15t/core/runtime/script-server-start', async (importOriginal) => {
+vi.mock('@inth/sdk/runtime/script-server-start', async (importOriginal) => {
 	await serverStart.held;
 	return importOriginal();
 });

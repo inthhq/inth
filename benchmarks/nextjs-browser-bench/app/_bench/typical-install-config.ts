@@ -1,4 +1,4 @@
-import { defineConsentConfig, manifest } from '@c15t/nextjs';
+import { defineConsentConfig, manifest } from '@inth/nextjs';
 
 /**
  * The `typical-install` arm's consent config, shaped like the Next.js

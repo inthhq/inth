@@ -24,7 +24,7 @@ const angularRunner = new SchematicTestRunner(
 	)
 );
 const runner = new SchematicTestRunner(
-	'@c15t/angular',
+	'@inth/angular',
 	join(__dirname, '..', 'collection.json')
 );
 
@@ -102,7 +102,7 @@ describe('ng-add', () => {
 		});
 
 		const config = tree.readText(`${root}/app/app.config.ts`);
-		expect(config).toContain("import { provideC15t } from '@c15t/angular';");
+		expect(config).toContain("import { provideC15t } from '@inth/angular';");
 		expect(config).toMatch(
 			/provideRouter\(routes\),\n {4}provideC15t\(\{\n {6}projectUrl: 'https:\/\/acme\.inth\.app',\n {4}\}\)\n/u
 		);
@@ -110,7 +110,7 @@ describe('ng-add', () => {
 
 		const component = tree.readText(`${root}/app/app.ts`);
 		expect(component).toContain(
-			"import { ConsentBanner } from '@c15t/angular';\nimport { ConsentDialog } from '@c15t/angular/consent-dialog';"
+			"import { ConsentBanner } from '@inth/angular';\nimport { ConsentDialog } from '@inth/angular/consent-dialog';"
 		);
 		expect(component).toMatch(
 			/imports: \[RouterOutlet, ConsentBanner, ConsentDialog\]/u
@@ -168,7 +168,7 @@ describe('ng-add', () => {
 		const { tree } = await run(app);
 
 		const main = tree.readText(`${root}/main.ts`);
-		expect(main).toContain("import { provideC15t } from '@c15t/angular';");
+		expect(main).toContain("import { provideC15t } from '@inth/angular';");
 		expect(main).toContain(
 			"  providers: [provideC15t({\n    // Replace with the backend URL of your Inth project.\n    projectUrl: 'https://your-project.inth.app',\n  })]"
 		);
@@ -212,7 +212,7 @@ describe('ng-add', () => {
 		const providers = `${root}/app/consent.providers.ts`;
 		app.create(
 			providers,
-			"import { hosted, provideC15t } from '@c15t/angular';\n\nexport const consentProviders = [\n\tprovideC15t({ mode: hosted({ projectUrl: '/api/c15t' }) }),\n];\n"
+			"import { hosted, provideC15t } from '@inth/angular';\n\nexport const consentProviders = [\n\tprovideC15t({ mode: hosted({ projectUrl: '/api/c15t' }) }),\n];\n"
 		);
 		app.overwrite(
 			config,
@@ -244,7 +244,7 @@ describe('ng-add', () => {
 		const { tree } = await run(app);
 
 		expect(tree.readText(config)).toContain(
-			"import { provideC15t } from '@c15t/angular';"
+			"import { provideC15t } from '@inth/angular';"
 		);
 		expect(tree.readText(config)).toMatch(/\n {4}provideC15t\(\{\n/u);
 	});
@@ -254,7 +254,7 @@ describe('ng-add', () => {
 		const config = `${root}/app/app.config.ts`;
 		app.overwrite(
 			config,
-			`import { hosted, provideC15t as consent } from '@c15t/angular';\n${app
+			`import { hosted, provideC15t as consent } from '@inth/angular';\n${app
 				.readText(config)
 				.replace(
 					'provideRouter(routes)',
@@ -272,7 +272,7 @@ describe('ng-add', () => {
 		const config = `${root}/app/app.config.ts`;
 		app.overwrite(
 			config,
-			`import * as c15t from '@c15t/angular';\n${app
+			`import * as c15t from '@inth/angular';\n${app
 				.readText(config)
 				.replace(
 					'provideRouter(routes)',
@@ -295,7 +295,7 @@ describe('ng-add', () => {
 			const config = `${root}/app/app.config.ts`;
 			app.create(
 				`${root}/app/consent/index.ts`,
-				`export { hosted, ${exported} } from '@c15t/angular';\n`
+				`export { hosted, ${exported} } from '@inth/angular';\n`
 			);
 			app.overwrite(
 				config,
@@ -352,7 +352,7 @@ describe('ng-add', () => {
 			}
 			app.create(
 				`${root}/app/consent/providers.ts`,
-				"import { hosted, provideC15t } from '@c15t/angular';\n\nexport const consentProviders = [\n\tprovideC15t({ mode: hosted({ projectUrl: '/api/c15t' }) }),\n];\n"
+				"import { hosted, provideC15t } from '@inth/angular';\n\nexport const consentProviders = [\n\tprovideC15t({ mode: hosted({ projectUrl: '/api/c15t' }) }),\n];\n"
 			);
 			const config = `${root}/app/app.config.ts`;
 			app.overwrite(
@@ -393,7 +393,7 @@ describe('ng-add', () => {
 
 		expect(text).toContain("import { ConsentBanner } from './my-banner';");
 		expect(text).toContain(
-			"import { ConsentBanner as C15tConsentBanner } from '@c15t/angular';"
+			"import { ConsentBanner as C15tConsentBanner } from '@inth/angular';"
 		);
 		expect(text).toMatch(
 			/imports: \[RouterOutlet, C15tConsentBanner, ConsentDialog\]/u
@@ -405,7 +405,7 @@ describe('ng-add', () => {
 		const component = `${root}/app/app.ts`;
 		app.create(
 			`${root}/app/consent/index.ts`,
-			"export { ConsentBanner } from '@c15t/angular';\n"
+			"export { ConsentBanner } from '@inth/angular';\n"
 		);
 		app.overwrite(
 			component,
@@ -420,7 +420,7 @@ describe('ng-add', () => {
 		const text = tree.readText(component);
 
 		expect(text).not.toMatch(
-			/import \{[^}]*ConsentBanner[^}]*\} from '@c15t\/angular'/u
+			/import \{[^}]*ConsentBanner[^}]*\} from '@inth\/angular'/u
 		);
 		expect(text.match(/ConsentBanner/gu)).toHaveLength(2);
 		expect(text).toMatch(
@@ -476,7 +476,7 @@ describe('ng-add', () => {
 		const text = tree.readText(main);
 
 		expect(warnings).toEqual([]);
-		expect(text).toContain("import { ConsentBanner } from '@c15t/angular';");
+		expect(text).toContain("import { ConsentBanner } from '@inth/angular';");
 		expect(text).toMatch(/imports: \[\s*ConsentBanner, ConsentDialog\s*\]/u);
 		expect(text).toContain('<c15t-consent-banner />');
 	});
@@ -484,11 +484,11 @@ describe('ng-add', () => {
 	it.each([
 		[
 			'import type { ConsentBanner }',
-			"import type { ConsentBanner } from '@c15t/angular';",
+			"import type { ConsentBanner } from '@inth/angular';",
 		],
 		[
 			'import { type ConsentBanner }',
-			"import { type ConsentBanner } from '@c15t/angular';",
+			"import { type ConsentBanner } from '@inth/angular';",
 		],
 	])(
 		'turns a type-only binding into a value import (%s)',
@@ -509,7 +509,7 @@ describe('ng-add', () => {
 
 			expect(text).not.toMatch(/\btype \{|\btype ConsentBanner\b/u);
 			expect(text).toMatch(
-				/^import \{[^}]*\bConsentBanner\b[^}]*\} from '@c15t\/angular';$/mu
+				/^import \{[^}]*\bConsentBanner\b[^}]*\} from '@inth\/angular';$/mu
 			);
 			expect(text).toMatch(
 				/imports: \[RouterOutlet, ConsentBanner, ConsentDialog\]/u
@@ -520,7 +520,7 @@ describe('ng-add', () => {
 	it('imports the value under a free name beside a shared import type', async () => {
 		const app = await createApp();
 		const component = `${root}/app/app.ts`;
-		const line = "import type { ConsentBanner, Theme } from '@c15t/angular';";
+		const line = "import type { ConsentBanner, Theme } from '@inth/angular';";
 		app.overwrite(
 			component,
 			app
@@ -535,7 +535,7 @@ describe('ng-add', () => {
 
 		expect(text).toContain(line);
 		expect(text).toContain(
-			"import { ConsentBanner as C15tConsentBanner } from '@c15t/angular';"
+			"import { ConsentBanner as C15tConsentBanner } from '@inth/angular';"
 		);
 		expect(text).toMatch(
 			/imports: \[RouterOutlet, C15tConsentBanner, ConsentDialog\]/u
@@ -645,7 +645,7 @@ describe('ng-add', () => {
 		// adds neither and says what to add.
 		expect(warnings).toEqual([
 			expect.stringContaining('Could not add provideC15t()'),
-			expect.stringContaining('Add ConsentBanner from @c15t/angular'),
+			expect.stringContaining('Add ConsentBanner from @inth/angular'),
 		]);
 		expect(tree.readText(`${root}/app/app.ts`)).toBe(component);
 	});
@@ -657,7 +657,7 @@ describe('ng-add', () => {
 			routes,
 			[
 				"import { Routes } from '@angular/router';",
-				"import { hosted, provideC15t } from '@c15t/angular';",
+				"import { hosted, provideC15t } from '@inth/angular';",
 				'',
 				'export const routes: Routes = [',
 				'\t{',
@@ -688,7 +688,7 @@ describe('ng-add', () => {
 			const config = `${root}/app/app.config.ts`;
 			app.create(
 				`${root}/app/consent.providers.ts`,
-				"import { hosted, provideC15t } from '@c15t/angular';\n\nexport const consentProviders = [\n\tprovideC15t({ mode: hosted({ projectUrl: '/api/c15t' }) }),\n];\n"
+				"import { hosted, provideC15t } from '@inth/angular';\n\nexport const consentProviders = [\n\tprovideC15t({ mode: hosted({ projectUrl: '/api/c15t' }) }),\n];\n"
 			);
 			app.overwrite(
 				config,
@@ -711,7 +711,7 @@ describe('ng-add', () => {
 			[
 				"import { mergeApplicationConfig } from '@angular/core';",
 				"import { bootstrapApplication } from '@angular/platform-browser';",
-				"import { hosted, provideC15t } from '@c15t/angular';",
+				"import { hosted, provideC15t } from '@inth/angular';",
 				"import { appConfig } from './app/app.config';",
 				"import { App } from './app/app';",
 				'',
@@ -736,7 +736,7 @@ describe('ng-add', () => {
 		const config = `${root}/app/app.config.ts`;
 		app.overwrite(
 			config,
-			`import { hosted, provideC15t } from '@c15t/angular';\n${app
+			`import { hosted, provideC15t } from '@inth/angular';\n${app
 				.readText(config)
 				.replace(
 					'provideRouter(routes)',
@@ -781,7 +781,7 @@ describe('ng-add', () => {
 		const header = [
 			"import { ApplicationConfig, importProvidersFrom, makeEnvironmentProviders, mergeApplicationConfig } from '@angular/core';",
 			"import { provideRouter } from '@angular/router';",
-			"import { hosted, provideC15t } from '@c15t/angular';",
+			"import { hosted, provideC15t } from '@inth/angular';",
 			"import { routes } from './app.routes';",
 			'',
 			"const c15t = provideC15t({ mode: hosted({ projectUrl: '/api/c15t' }) });",
@@ -925,7 +925,7 @@ describe('ng-add', () => {
 			// adds them once they have checked the providers.
 			expect(warnings).toEqual([
 				expect.stringContaining('Could not tell whether the root providers'),
-				expect.stringContaining('Add ConsentBanner from @c15t/angular'),
+				expect.stringContaining('Add ConsentBanner from @inth/angular'),
 			]);
 			expect(tree.readText(`${root}/app/app.ts`)).toBe(component);
 		});
@@ -940,7 +940,7 @@ describe('ng-add', () => {
 				.readText(component)
 				.replace(
 					"import { RouterOutlet } from '@angular/router';",
-					"import { RouterOutlet } from '@angular/router';\nimport { ConsentBanner } from '@c15t/angular';"
+					"import { RouterOutlet } from '@angular/router';\nimport { ConsentBanner } from '@inth/angular';"
 				)
 				.replace('[RouterOutlet]', '[RouterOutlet, ConsentBanner]')
 		);
@@ -951,7 +951,7 @@ describe('ng-add', () => {
 		const { tree } = await run(app);
 
 		expect(tree.readText(component)).toContain(
-			"import { ConsentBanner } from '@c15t/angular';\nimport { ConsentDialog } from '@c15t/angular/consent-dialog';"
+			"import { ConsentBanner } from '@inth/angular';\nimport { ConsentDialog } from '@inth/angular/consent-dialog';"
 		);
 		expect(tree.readText(component)).toContain(
 			'[RouterOutlet, ConsentBanner, ConsentDialog]'
@@ -984,7 +984,7 @@ describe('ng-add', () => {
 		);
 		expect(warnings).toEqual([
 			expect.stringContaining('Replace https://your-project.inth.app'),
-			expect.stringContaining('Add ConsentBanner from @c15t/angular'),
+			expect.stringContaining('Add ConsentBanner from @inth/angular'),
 		]);
 	});
 });

@@ -1,5 +1,5 @@
 // #region docs:consent-i18n
-import type { I18nConfig } from '@c15t/angular';
+import type { I18nConfig } from '@inth/angular';
 
 // Pass as `i18n` to provideC15t() in app.config.ts. Messages merge over
 // the copy for the same language, so list only the keys you change.

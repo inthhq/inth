@@ -1,9 +1,9 @@
-import type { KernelConfig, ConsentState } from '@c15t/core';
+import type { KernelConfig, ConsentState } from '@inth/sdk/engine';
 import {
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,
-} from '@c15t/schema/types';
-import type { PolicyRule } from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
+import type { PolicyRule } from '@inth/sdk/schema/types';
 
 /** Prepared public policy and receipts for adapter tests. */
 export const policyFixture = (

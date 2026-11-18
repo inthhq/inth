@@ -1,8 +1,5 @@
 'use client';
 
-import type { PolicyRule } from '@c15t/schema/types';
-import { policyRulePresets } from 'c15t';
-import type { PresentationAction, PromptPosition, PromptVariant } from 'c15t';
 import {
 	ConsentBanner,
 	ConsentDialog,
@@ -10,9 +7,16 @@ import {
 	ConsentWidget,
 	useConsentDraft,
 	useSnapshot,
-} from 'c15t/react';
-import { useHeadlessConsentUI, useTranslations } from 'c15t/react/headless';
-import { testing } from 'c15t/react/testing';
+} from '@inth/react';
+import { useHeadlessConsentUI, useTranslations } from '@inth/react/headless';
+import { testing } from '@inth/react/testing';
+import { policyRulePresets } from '@inth/sdk/engine';
+import type {
+	PresentationAction,
+	PromptPosition,
+	PromptVariant,
+} from '@inth/sdk/engine';
+import type { PolicyRule } from '@inth/sdk/schema/types';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import * as React from 'react';
 

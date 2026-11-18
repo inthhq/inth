@@ -15,7 +15,7 @@ import type {
 
 /** Options for {@link mountRuntimeIAB}. */
 export interface RuntimeIABMountOptions {
-	/** `createIAB` from `@c15t/iab`, or a lazy factory around it. */
+	/** `createIAB` from `@inth/sdk/iab`, or a lazy factory around it. */
 	createIAB: ConsentRuntimeIABFactory;
 	/** The runtime's `iab` option. */
 	iab: Exclude<RuntimeIABOptions, false>;

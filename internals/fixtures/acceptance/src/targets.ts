@@ -36,7 +36,7 @@ export const targets: ExampleTarget[] = [
 		start: preview,
 	})),
 	{
-		// Stock UI from `@c15t/browser` on `/`, and custom HTML on the
+		// Stock UI from `@inth/sdk` on `/`, and custom HTML on the
 		// headless runtime at `/headless/`.
 		directory: 'javascript',
 		failureRoute: '/',
@@ -45,7 +45,7 @@ export const targets: ExampleTarget[] = [
 		start: preview,
 	},
 	{
-		// The `@c15t/browser` script tag on a plain HTML page. The server swaps
+		// The `@inth/sdk` script tag on a plain HTML page. The server swaps
 		// the page's jsDelivr URL for this checkout's build.
 		directory: 'script-tag',
 		failureRoute: '/consent-example',

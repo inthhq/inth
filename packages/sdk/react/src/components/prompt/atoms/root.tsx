@@ -1,8 +1,8 @@
 'use client';
 
-import type * as C15tCoreTypes from '@c15t/core';
-import type { PromptPosition, PromptVariant } from '@c15t/core';
-import styles from '@c15t/ui/styles/components/consent-banner';
+import type * as C15tCoreTypes from '@inth/sdk/engine';
+import type { PromptPosition, PromptVariant } from '@inth/sdk/engine';
+import styles from '@inth/sdk/ui/styles/components/consent-banner';
 import {
 	forwardRef as createForwardRef,
 	useEffect,

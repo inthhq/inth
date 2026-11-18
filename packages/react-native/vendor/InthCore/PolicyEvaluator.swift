@@ -171,7 +171,7 @@ package enum PolicyEvaluator {
     ///
     /// A `legacy-v2` receipt is grandfathered here: comparing it needs the
     /// policy's legacy material fingerprint, which a mobile core does not hold.
-    /// `@c15t/core` treats a missing comparator the same way rather than guessing.
+    /// `@inth/sdk/engine` treats a missing comparator the same way rather than guessing.
     private static func authority(
         of decision: CategoryDecision?,
         against choiceFingerprint: String

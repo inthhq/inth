@@ -1,5 +1,5 @@
-import { defaultTranslationConfig } from '@c15t/core';
-import type { IABTranslations } from '@c15t/translations';
+import { defaultTranslationConfig } from '@inth/sdk/engine';
+import type { IABTranslations } from '@inth/sdk/translations';
 import { computed, toValue } from 'vue';
 import type { ComputedRef } from 'vue';
 

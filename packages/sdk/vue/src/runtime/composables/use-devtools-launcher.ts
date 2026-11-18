@@ -1,19 +1,19 @@
 /**
- * Vue bindings for the DevTools launcher slot in `@c15t/ui`, which lets a
+ * Vue bindings for the DevTools launcher slot in `@inth/sdk/ui`, which lets a
  * mounted `<ConsentDevTools>` hand its launcher to the consent trigger.
  *
  * @internal
  * @packageDocumentation
  */
 
-import type { ConsentKernel } from '@c15t/core';
+import type { ConsentKernel } from '@inth/sdk/engine';
 import {
 	claimDevToolsLauncher,
 	EMPTY_DEVTOOLS_LAUNCHER_SNAPSHOT,
 	getDevToolsLauncherSnapshot,
 	subscribeDevToolsLauncher,
-} from '@c15t/ui/utils/devtools-launcher';
-import type { DevToolsLauncherTarget } from '@c15t/ui/utils/devtools-launcher';
+} from '@inth/sdk/ui/utils/devtools-launcher';
+import type { DevToolsLauncherTarget } from '@inth/sdk/ui/utils/devtools-launcher';
 import {
 	computed,
 	getCurrentScope,

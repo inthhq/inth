@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ConsentBanner, ConsentDialog } from '@c15t/svelte';
+	import { ConsentBanner, ConsentDialog } from '@inth/svelte';
 
 	import {
 		editableConsentOptions,

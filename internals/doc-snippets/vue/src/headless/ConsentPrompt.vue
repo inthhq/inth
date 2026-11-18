@@ -4,7 +4,7 @@ import {
 	useConsentActiveUI,
 	useConsentDraft,
 	useConsentSave,
-} from 'c15t/vue/vue-plugin';
+} from '@inth/vue/vue-plugin';
 
 const activeUI = useConsentActiveUI();
 const saveConsent = useConsentSave();

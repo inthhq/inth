@@ -4,13 +4,13 @@
  * Reference it once from `src/app.d.ts`:
  *
  * ```ts
- * /// <reference types="@c15t/svelte/kit/locals" />
+ * /// <reference types="@inth/svelte/kit/locals" />
  * ```
  *
  * Prefer the explicit form if you already own an `App.Locals` block:
  *
  * ```ts
- * import type { C15tLocals } from '@c15t/svelte/kit';
+ * import type { C15tLocals } from '@inth/svelte/kit';
  *
  * declare global {
  *   namespace App {

@@ -1,13 +1,13 @@
 'use client';
 
-import type * as C15tCoreTypes from '@c15t/core';
+import type * as C15tCoreTypes from '@inth/sdk/engine';
 /**
  * @packageDocumentation
  * Provides the IAB TCF 2.4 compliant cookie banner component.
  * Implements an accessible, pre-built banner following IAB requirements.
  */
-import actionStyles from '@c15t/ui/styles/components/consent-actions';
-import styles from '@c15t/ui/styles/components/iab-consent-banner';
+import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
+import styles from '@inth/sdk/ui/styles/components/iab-consent-banner';
 import type { FC } from 'react';
 
 import { warmDialogChunk } from '~/chunk-warming';

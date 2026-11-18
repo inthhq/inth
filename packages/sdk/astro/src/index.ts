@@ -1,18 +1,18 @@
 /**
- * `@c15t/astro` — consent management for Astro.
+ * `@inth/astro` — consent management for Astro.
  *
  * The banner is a server-rendered `.astro` component with no framework
  * JavaScript; the preference centre and the IAB dialog are Svelte, React or
  * Vue islands mounted only when someone opens them; and because Astro
  * islands never share a component tree, the kernel is a page-level
  * singleton created by the script this integration injects rather than a
- * provider. The components are in `c15t/astro/components`.
+ * provider. The components are in `@inth/astro/components`.
  *
  * ```js
  * // astro.config.mjs, with PUBLIC_C15T_BACKEND_URL in .env
  * import svelte from '@astrojs/svelte';
  * import { defineConfig } from 'astro/config';
- * import c15t from 'c15t/astro';
+ * import c15t from '@inth/astro';
  *
  * export default defineConfig({
  *   integrations: [svelte(), c15t()],
@@ -30,7 +30,7 @@ export type {
 	ManifestMode,
 	ManifestModeOptions,
 	TestingMode,
-} from '@c15t/core/modes';
+} from '@inth/sdk/modes';
 export type {
 	C15tAstroOptions,
 	C15tClientOptionsExtension,
@@ -50,9 +50,9 @@ export type {
 	ConsentDialogSurfaceLoader,
 } from './ui/adapter';
 export { registerDialogAdapter, registerDialogSurface } from './ui/adapter';
-export type { ConsentRuntime, ConsentRuntimeOptions } from '@c15t/core/runtime';
+export type { ConsentRuntime, ConsentRuntimeOptions } from '@inth/sdk/runtime';
 
-// Re-exported so an app can stay inside `@c15t/astro` for the common types.
+// Re-exported so an app can stay inside `@inth/astro` for the common types.
 export type {
 	AllConsentNames,
 	ClearOnRevocationConfig,
@@ -66,6 +66,6 @@ export type {
 	StorageConfig,
 	Vendor,
 	VendorChoice,
-} from '@c15t/core';
-export { policyRulePresets } from '@c15t/core';
-export type { Theme } from '@c15t/ui/theme';
+} from '@inth/sdk/engine';
+export { policyRulePresets } from '@inth/sdk/engine';
+export type { Theme } from '@inth/sdk/ui/theme';

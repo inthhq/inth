@@ -143,7 +143,7 @@ const savedConsentScenario = {
 
 /**
  * The quickstart install with three consent-gated vendors through
- * `@c15t/integrations`. One selection runs its first visit plus the two
+ * `@inth/integrations`. One selection runs its first visit plus the two
  * returning visits that follow it.
  */
 const typicalInstallScenario = {
@@ -583,7 +583,7 @@ const consentGatedVendors = typicalVendors.filter(
 );
 
 const typicalInstallGlossary = [
-	'typical-install: the Next.js quickstart (ConsentRoot with config, streamed resolveConsent over the cached manifest, stock banner and dialog) plus gtag, Meta Pixel and TikTok Pixel from @c15t/integrations, each pointed at a local stand-in script.',
+	'typical-install: the Next.js quickstart (ConsentRoot with config, streamed resolveConsent over the cached manifest, stock banner and dialog) plus gtag, Meta Pixel and TikTok Pixel from @inth/integrations, each pointed at a local stand-in script.',
 	'<vendor>StartMs / <vendor>ExecutedMs: navigation start to the stand-in request starting (resource timing) and to it running. consentTo<Vendor>StartMs / ExecutedMs: from the accept click instead.',
 	'scriptsStartedMs / scriptsExecutedMs: the last vendor to start or run (consentToScripts* on the first visit covers the two marketing vendors). firstPartyJs*ByIdle: scripts other than the stand-ins once no script request started for 1 s after load (idle preloads included); firstPartyJs*AtLoad: those that started before the load event.',
 	'typical-install-repeat reloads in the context that accepted (warm HTTP cache); typical-install-returning opens a new context with its cookies and localStorage (cold HTTP cache).',

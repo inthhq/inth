@@ -1,6 +1,6 @@
 'use client';
 
-import { ConsentDialog, ConsentRoot } from 'c15t/next';
+import { ConsentDialog, ConsentRoot } from '@inth/nextjs';
 import type { ReactNode } from 'react';
 
 import { northwindTheme } from '@/lib/theme';

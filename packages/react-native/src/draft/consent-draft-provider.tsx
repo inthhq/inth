@@ -1,5 +1,5 @@
 /**
- * React bindings for {@link ConsentDraft}, with the names `@c15t/react` uses.
+ * React bindings for {@link ConsentDraft}, with the names `@inth/react` uses.
  */
 
 import {

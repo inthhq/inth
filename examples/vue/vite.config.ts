@@ -1,6 +1,6 @@
 // #region docs:vite-config
+import { consentManifest } from '@inth/vue/vite';
 import vue from '@vitejs/plugin-vue';
-import { consentManifest } from 'c15t/vue/vite';
 import { defineConfig } from 'vite';
 
 export default defineConfig({

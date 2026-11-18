@@ -1,5 +1,5 @@
 // #region docs:analytics-events title="src/analytics-events.tsx"
-import { useEventDispatcher } from 'c15t/react';
+import { useEventDispatcher } from '@inth/react';
 import { useEffect } from 'react';
 
 /**

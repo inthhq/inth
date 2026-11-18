@@ -11,7 +11,7 @@
 	.benchmarks/drift/current-static-root.
 
 	Baseline builds alias `#bench-consent-mount` to consent-mount-baseline.vue
-	so they never reference @c15t/vue.
+	so they never reference @inth/vue.
 -->
 <template>
 	<ConsentRoot />

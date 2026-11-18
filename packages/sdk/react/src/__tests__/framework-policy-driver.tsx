@@ -9,31 +9,34 @@ import type {
 	ProbePolicyContract,
 } from '@c15t/conformance/contract/policy-driver';
 import type { ScenarioPolicy } from '@c15t/conformance/contract/policy-scenarios';
-import type {
-	ConsentKernel,
-	KernelConfig,
-	ConsentPresentation,
-	InitResponse,
-} from '@c15t/core';
-import { createConsentKernel, evaluateConsent } from '@c15t/core';
-import { createNetworkBlocker } from '@c15t/core/modules/network-blocker';
-import {
-	createPersistence,
-	readStoredRecords,
-	readStoredRecordsFromCookieHeader,
-	resolveStorageKeys,
-} from '@c15t/core/modules/persistence';
-import type { PersistenceHandle } from '@c15t/core/modules/persistence';
-import { createScriptLoader } from '@c15t/core/modules/script-loader';
 import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogLink,
 	ConsentDialogTrigger,
 	ConsentGate,
-} from '@c15t/react';
-import { KernelContext } from '@c15t/react/context';
-import type { GlobalVendorList, PolicyResolution } from '@c15t/schema/types';
+} from '@inth/react';
+import { KernelContext } from '@inth/react/context';
+import type {
+	ConsentKernel,
+	KernelConfig,
+	ConsentPresentation,
+	InitResponse,
+} from '@inth/sdk/engine';
+import { createConsentKernel, evaluateConsent } from '@inth/sdk/engine';
+import { createNetworkBlocker } from '@inth/sdk/modules/network-blocker';
+import {
+	createPersistence,
+	readStoredRecords,
+	readStoredRecordsFromCookieHeader,
+	resolveStorageKeys,
+} from '@inth/sdk/modules/persistence';
+import type { PersistenceHandle } from '@inth/sdk/modules/persistence';
+import { createScriptLoader } from '@inth/sdk/modules/script-loader';
+import type {
+	GlobalVendorList,
+	PolicyResolution,
+} from '@inth/sdk/schema/types';
 import {
 	inspectPolicyRules,
 	canonicalizePolicySet,
@@ -43,7 +46,7 @@ import {
 	normalizePolicyRule,
 	createPolicyRuleFingerprints,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
 import { useContext, useEffect } from 'react';
 import { createRoot, hydrateRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';

@@ -1,5 +1,5 @@
-import { createConsentRuntime } from '@c15t/core/runtime';
-import type { ConsentRuntime } from '@c15t/core/runtime';
+import { createConsentRuntime } from '@inth/sdk/runtime';
+import type { ConsentRuntime } from '@inth/sdk/runtime';
 import { useContext, useLayoutEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { describe, expect, test, vi } from 'vitest';

@@ -1,5 +1,5 @@
 /**
- * `@c15t/core/modules/persistence`
+ * `@inth/sdk/modules/persistence`
  *
  * Kernel-consuming persistence module. Reads stored records on mount
  * (`hydrate`) and writes back on explicit kernel events.

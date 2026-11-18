@@ -2,12 +2,12 @@
  * `useVendorAllowed` in Vue: a declared vendor follows its category and the
  * visitor's vendor switch, and an id nothing declares reads as not allowed.
  */
-import type { AllConsentNames } from '@c15t/core';
-import type { PolicyResolution, PolicyRule } from '@c15t/schema/types';
+import type { AllConsentNames } from '@inth/sdk/engine';
+import type { PolicyResolution, PolicyRule } from '@inth/sdk/schema/types';
 import {
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,
-} from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
 import { afterEach, expect, test, vi } from 'vitest';
 import { createApp, defineComponent, h } from 'vue';
 import type { ComputedRef } from 'vue';

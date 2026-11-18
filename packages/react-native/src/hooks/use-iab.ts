@@ -1,5 +1,5 @@
 /**
- * Headless TCF: the hooks `@c15t/react` exports for IAB, reading the native
+ * Headless TCF: the hooks `@inth/react` exports for IAB, reading the native
  * snapshot and the shared consent draft.
  *
  * The committed decision stays native authority. These hooks show it and stage
@@ -150,7 +150,7 @@ export interface IABDraftHandle {
 	/** Whether the policy or vendor list changed under an unsaved edit. */
 	readonly isStale: boolean;
 	/**
-	 * A registered or custom (non-IAB) vendor, as `@c15t/react`'s `useIAB()`
+	 * A registered or custom (non-IAB) vendor, as `@inth/react`'s `useIAB()`
 	 * takes either. A custom vendor's ID is the `id` in
 	 * `useIABSnapshot()?.customVendors`.
 	 */
@@ -202,7 +202,7 @@ export interface IABDraftHandle {
 
 /**
  * Stage and save a TCF decision from your own IAB screen, with the commands
- * `@c15t/react`'s `useIAB()` exposes. It shares the consent draft, so
+ * `@inth/react`'s `useIAB()` exposes. It shares the consent draft, so
  * `useSaveConsents()()` and `useConsentDraft().save()` save the same selection.
  *
  * @example

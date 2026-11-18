@@ -1,4 +1,4 @@
-import type { Script, ScriptCallbackInfo } from '@c15t/core';
+import type { Script, ScriptCallbackInfo } from '@inth/sdk/engine';
 
 import { resolveManifest } from '../../resolve';
 import { vendorManifestContract } from '../../types';
@@ -149,7 +149,7 @@ const getSampleRateAttribute = function getSampleRateAttribute(
  *
  * @example
  * ```ts
- * import { vercelSpeedInsights } from '@c15t/integrations/vercel-speed-insights';
+ * import { vercelSpeedInsights } from '@inth/integrations/vercel-speed-insights';
  *
  * vercelSpeedInsights({ sampleRate: 0.5 });
  * ```

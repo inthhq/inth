@@ -1,12 +1,12 @@
 /**
  * The mobile vocabulary against the JavaScript kernel's, type by type.
  *
- * `src/protocol/vocabulary.ts` copies the consent vocabulary out of `@c15t/core`
+ * `src/protocol/vocabulary.ts` copies the consent vocabulary out of `@inth/sdk/engine`
  * so a phone app never installs the web kernel. A copy is only safe while it is
  * still a copy, and a consent category that quietly disappears from one side is a
  * subject's decision going unrecorded, not a type error.
  *
- * `@c15t/core` is the oracle here, exactly as `packages/native-protocol/CONTRACT.md` rule 4 makes it
+ * `@inth/sdk/engine` is the oracle here, exactly as `packages/native-protocol/CONTRACT.md` rule 4 makes it
  * the oracle for the Swift and Kotlin cores. Vitest does not check types, so this
  * file runs through `tsc -p tsconfig.type-tests.json`, which the package's
  * `check-types` script calls, and a drift is a compile error naming the pair.
@@ -35,7 +35,7 @@ import type {
 	PromptRequirement as KernelPromptRequirement,
 	RestrictionReason as KernelRestrictionReason,
 	SavePayload as KernelSavePayload,
-} from '@c15t/core';
+} from '@inth/sdk/engine';
 import { expectTypeOf } from 'vitest';
 
 import type { KernelCommonCopy } from '../../index';

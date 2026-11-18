@@ -2,11 +2,11 @@
  * The script loader and the network blocker as on-demand runtime modules
  * that share one chunk, for {@link onDemandRuntimeModules}.
  *
- * No file `@c15t/core/runtime/on-demand` reaches may hold an `import()` of
+ * No file `@inth/sdk/runtime/on-demand` reaches may hold an `import()` of
  * either module alone: esbuild emits a chunk for every `import()` in a
  * file it reaches, used or not, and two chunks that start from the same
  * module make it split that module out of both. The single-module
- * factories live behind `@c15t/core/runtime/on-demand-factories` for that
+ * factories live behind `@inth/sdk/runtime/on-demand-factories` for that
  * reason.
  */
 import { networkBlockerTools } from '../modules/network-blocker/tools';

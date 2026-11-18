@@ -1,5 +1,5 @@
-import { css as iabDialogCSS } from '@c15t/ui/styles/sheets/iab-dialog';
-import { css as iabFirstPaintCSS } from '@c15t/ui/styles/sheets/iab-first-paint';
+import { css as iabDialogCSS } from '@inth/sdk/ui/styles/sheets/iab-dialog';
+import { css as iabFirstPaintCSS } from '@inth/sdk/ui/styles/sheets/iab-first-paint';
 import { render } from 'svelte/server';
 import { describe, expect, test } from 'vitest';
 

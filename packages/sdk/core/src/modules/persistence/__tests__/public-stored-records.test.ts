@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  *
- * `StoredRecords` is exported from `@c15t/core/modules/persistence`. A record
+ * `StoredRecords` is exported from `@inth/sdk/modules/persistence`. A record
  * built by hand with the fields it had in 3.1.0, such as a typed mock, still
  * type-checks, and a read always sets the subject metadata.
  */

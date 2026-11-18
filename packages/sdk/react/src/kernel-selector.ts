@@ -8,7 +8,7 @@
  * @internal
  */
 
-import type { ConsentKernel, ConsentSnapshot } from '@c15t/core';
+import type { ConsentKernel, ConsentSnapshot } from '@inth/sdk/engine';
 import { useContext, useSyncExternalStore } from 'react';
 
 import { HydrationSnapshotContext, KernelContext } from './context';
@@ -24,7 +24,7 @@ export const useKernel = function useKernel(): ConsentKernel {
 	const kernel = useContext(KernelContext);
 	if (!kernel) {
 		throw new Error(
-			'c15t: no kernel in context. Wrap your app with <ConsentProvider options={...}> from @c15t/react.'
+			'c15t: no kernel in context. Wrap your app with <ConsentProvider options={...}> from @inth/react.'
 		);
 	}
 	return kernel;

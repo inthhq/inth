@@ -21,7 +21,7 @@
  * them in as {@link ConsentProxyForwarding}.
  */
 
-import { CONSENT_REQUEST_HEADER_NAMES } from '@c15t/schema/types';
+import { CONSENT_REQUEST_HEADER_NAMES } from '@inth/sdk-schema/types';
 
 import { c15tVersionHeaders } from '../transports/version-header';
 
@@ -422,7 +422,7 @@ export interface BuildConsentProxyRequestHeadersInput {
 	cookieNames?: readonly string[];
 	/** Hop-chain values the adapter vouches for. */
 	forwarding: ConsentProxyForwarding;
-	/** Package name sent as `x-c15t-proxy`, for example `@c15t/svelte`. */
+	/** Package name sent as `x-c15t-proxy`, for example `@inth/svelte`. */
 	adapter: string;
 }
 
@@ -548,7 +548,7 @@ export interface ForwardConsentRequestInput {
 	options: ResolvedConsentProxyOptions;
 	/** Hop-chain values the adapter vouches for. */
 	forwarding: ConsentProxyForwarding;
-	/** Package name sent as `x-c15t-proxy`, for example `@c15t/svelte`. */
+	/** Package name sent as `x-c15t-proxy`, for example `@inth/svelte`. */
 	adapter: string;
 	/** Fetch implementation. Defaults to `globalThis.fetch`. */
 	fetch?: typeof globalThis.fetch;

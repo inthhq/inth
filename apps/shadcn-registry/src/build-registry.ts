@@ -29,7 +29,7 @@ export interface BuildOptions {
 export type RegistryOutput = Map<string, unknown>;
 
 // Named so the docs and tests can say which specifiers a UI item may use.
-export const uiC15tImports = ['c15t/react', 'c15t/react/headless'];
+export const uiC15tImports = ['@inth/react', '@inth/react/headless'];
 
 const fromPattern = /(?<start>\bfrom\s+["'])(?<spec>[^"']+)(?<end>["'])/gu;
 const sideEffectPattern = /^\s*import\s+["'](?<spec>[^"']+)["']/gmu;
@@ -74,7 +74,7 @@ export const scanImports = (content: string): string[] => {
  * @param content - The React source.
  * @param file - The source path, for error messages.
  * @param framework - The framework the copy is for.
- * @returns The source with `c15t/react` imports pointing at the framework's entry point.
+ * @returns The source with `@inth/react` imports pointing at the framework's entry point.
  * @throws {Error} When the source imports a c15t entry point other than {@link uiC15tImports}, which the other frameworks have no twin for.
  */
 export const toFrameworkSource = (
@@ -87,7 +87,7 @@ export const toFrameworkSource = (
 		(match: string, start: string, spec: string, end: string) => {
 			if (uiC15tImports.includes(spec)) {
 				const entry = c15tEntryByFramework[framework];
-				return `${start}${spec.replace('c15t/react', entry)}${end}`;
+				return `${start}${spec.replace('@inth/react', entry)}${end}`;
 			}
 			if (isC15tSpecifier(spec)) {
 				throw new Error(

@@ -1,4 +1,8 @@
-import type { AllConsentNames, HasCondition, VendorDetails } from '@c15t/core';
+import type {
+	AllConsentNames,
+	HasCondition,
+	VendorDetails,
+} from '@inth/sdk/engine';
 
 export const VENDOR_MANIFEST_KIND = 'c15t.vendor-manifest';
 export const VENDOR_MANIFEST_SCHEMA_VERSION = 1;

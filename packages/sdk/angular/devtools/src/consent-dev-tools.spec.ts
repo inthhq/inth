@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { ConsentManager, provideC15t } from '@c15t/angular';
-import type { AllConsentNames } from '@c15t/core';
+import { ConsentManager, provideC15t } from '@inth/angular';
+import type { AllConsentNames } from '@inth/sdk/engine';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { CONSENT_ENGINE_MODULE } from '../../src/lib/core/consent-manager';
@@ -88,7 +88,7 @@ afterEach(() => {
 	TestBed.resetTestingModule();
 });
 
-describe('@c15t/angular/devtools', () => {
+describe('@inth/angular/devtools', () => {
 	test('keeps a new clearRecords live without remounting, and unmounts with the component', async () => {
 		configure();
 		const fixture = TestBed.createComponent(DevToolsHost);

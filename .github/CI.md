@@ -28,7 +28,7 @@ The browser integration groups come from c15t's planner (`tools/ci/browser-group
 
 The React Native compatibility matrix packs `@inth/react-native` and installs it in a fresh app for each React Native and Expo release in `scripts/mobile-compatibility.json`, then checks types, Codegen and Expo prebuild.
 
-A web SDK change never runs the mobile jobs, even when it reaches `@inth/react-native` through `@c15t/core` or `@c15t/iab`. The planner lists those workspaces as `mobileReached` in the job summary. The React Native release runs their checks before it publishes.
+A web SDK change never runs the mobile jobs, even when it reaches `@inth/react-native` through `@inth/sdk/engine` or `@inth/sdk/iab`. The planner lists those workspaces as `mobileReached` in the job summary. The React Native release runs their checks before it publishes.
 
 The six CLI jobs are required checks on `main` under their exact names. They always run. When a change has no CLI work, each one prints a line and reports success, so a required check never waits forever.
 

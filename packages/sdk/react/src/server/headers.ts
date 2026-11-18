@@ -1,7 +1,7 @@
 import {
 	CONSENT_REQUEST_HEADER_NAMES,
 	extractConsentRequestInputs,
-} from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
 
 const REACT_EXTRA_HEADERS = [
 	'x-c15t-version',
@@ -56,7 +56,7 @@ type RelevantHeaders = Partial<Record<ForwardedHeader, string>>;
  *
  * @example
  * ```ts
- * import { extractRelevantHeaders } from '@c15t/react/server';
+ * import { extractRelevantHeaders } from '@inth/react/server';
  *
  * // In your framework's request handler
  * const relevantHeaders = extractRelevantHeaders(request.headers);

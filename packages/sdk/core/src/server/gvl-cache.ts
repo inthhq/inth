@@ -2,13 +2,13 @@
  * Server entry point for the GVL cache.
  *
  * Reads and fills the same process cache as `fetchCachedGvl` from
- * `@c15t/core` and `@c15t/core/transports/manifest-cache`, so a route, a
+ * `@inth/sdk/engine` and `@inth/sdk/transports/manifest-cache`, so a route, a
  * server render and a transport in one process never download one list
  * twice. On top of that it supplies what a server needs and a browser
  * bundle should not carry: a default `fetch` and a deadline on the
  * upstream request.
  */
-import type { GlobalVendorList } from '@c15t/schema/types';
+import type { GlobalVendorList } from '@inth/sdk-schema/types';
 
 import type { ManifestFetch } from '../libs/manifest-cache-runtime';
 import {
@@ -75,13 +75,13 @@ export const fetchCachedGvl = function fetchCachedGvl(
 	const fetchImpl = input.fetch ?? globalThis.fetch?.bind(globalThis);
 	if (!fetchImpl) {
 		return Promise.reject(
-			new Error('@c15t/core/server: no fetch implementation available.')
+			new Error('@inth/sdk/server: no fetch implementation available.')
 		);
 	}
 	return fetchThroughGvlCache({
 		...input,
 		fetch: withDeadline(fetchImpl),
-		label: input.label ?? '@c15t/core/server',
+		label: input.label ?? '@inth/sdk/server',
 	});
 };
 

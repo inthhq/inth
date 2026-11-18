@@ -7,7 +7,7 @@
 	every other site downloads does not carry it.
 -->
 <script lang="ts">
-	import { IABConsentDialog } from '@c15t/svelte';
+	import { IABConsentDialog } from '@inth/svelte';
 
 	let { tab }: { tab?: 'purposes' | 'vendors' } = $props();
 </script>

@@ -1,4 +1,4 @@
 /**
- * Adapter over the current `@c15t/nextjs/server` API. See `./root.tsx`.
+ * Adapter over the current `@inth/nextjs/server` API. See `./root.tsx`.
  */
-export { resolveConsent as resolve } from '@c15t/nextjs/server';
+export { resolveConsent as resolve } from '@inth/nextjs/server';

@@ -4,11 +4,11 @@
  * waiting for the page's priority images or a tap. A gated script the
  * visitor has not allowed does not.
  */
-import { createConsentKernel } from '@c15t/core';
-import type { ConsentSnapshot } from '@c15t/core';
-import { createScriptLoader } from '@c15t/core/modules/script-loader';
-import type { Script } from '@c15t/core/modules/script-loader';
-import { startPlainScripts } from '@c15t/core/surface-actions/plain-scripts';
+import { createConsentKernel } from '@inth/sdk/engine';
+import type { ConsentSnapshot } from '@inth/sdk/engine';
+import { createScriptLoader } from '@inth/sdk/modules/script-loader';
+import type { Script } from '@inth/sdk/modules/script-loader';
+import { startPlainScripts } from '@inth/sdk/surface-actions/plain-scripts';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 

@@ -1,6 +1,6 @@
 'use client';
 
-import type { ConsentComponentSlotKey } from '@c15t/schema/config';
+import type { ConsentComponentSlotKey } from '@inth/sdk/schema/config';
 import { forwardRef as createForwardRef } from 'react';
 import type { HTMLAttributes } from 'react';
 

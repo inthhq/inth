@@ -110,7 +110,7 @@ export interface MountOptions {
 	/**
 	 * Options passed to the framework provider. The shape mirrors each
 	 * framework's provider options (built on `KernelConfig` from
-	 * `@c15t/core`) — we reference it loosely (`unknown`) so this package
+	 * `@inth/sdk/engine`) — we reference it loosely (`unknown`) so this package
 	 * stays zero-import on runtime framework code.
 	 */
 	providerOptions?: unknown;

@@ -26,7 +26,7 @@ const DocsPage = () => (
 			))}
 		</ol>
 		<pre>
-			<code>{`import { resolveConsent } from 'c15t/next/server';
+			<code>{`import { resolveConsent } from '@inth/nextjs/server';
 
 const state = await resolveConsent({
   projectUrl: 'https://consent.example.com',

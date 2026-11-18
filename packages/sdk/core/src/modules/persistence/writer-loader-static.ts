@@ -1,6 +1,6 @@
 /**
  * The write code as a static import, for builds with no chunk to load it
- * from, such as `@c15t/browser`'s script-tag files, which swap it in for
+ * from, such as `@inth/sdk`'s script-tag files, which swap it in for
  * `writer-loader.ts`. Every handle has its writer from the start, so there
  * is nothing to preload.
  *

@@ -3,7 +3,7 @@
  * `entry.ts` for `?experiment=1`. `&arm=wall` sets the arm the way a flag
  * provider would. See `experiment.ts`.
  */
-import { c15tVue } from 'c15t/vue/vue-plugin';
+import { c15tVue } from '@inth/vue/vue-plugin';
 import { createApp } from 'vue';
 
 import App from './App.vue';

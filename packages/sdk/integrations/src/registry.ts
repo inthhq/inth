@@ -29,7 +29,7 @@ export type IntegrationConsentCategory =
  *
  * Usually a single category. Vendors whose one script serves several purposes
  * use a compound condition, such as `{ and: ['marketing', 'measurement'] }`.
- * The shape mirrors `HasCondition` from `@c15t/core`.
+ * The shape mirrors `HasCondition` from `@inth/sdk/engine`.
  */
 export type IntegrationConsentCondition =
 	| IntegrationConsentCategory
@@ -70,7 +70,7 @@ export interface IntegrationRegistryEntry {
 	hint?: string;
 	/** Docs route slug for this integration. */
 	docsSlug: string;
-	/** Package subpath, e.g. `meta-pixel` for `@c15t/integrations/meta-pixel`. */
+	/** Package subpath, e.g. `meta-pixel` for `@inth/integrations/meta-pixel`. */
 	packageSubpath: string;
 	/** Product area used for grouping and discovery. */
 	integrationCategory: IntegrationCategory;
@@ -108,7 +108,7 @@ export const BUILT_IN_INTEGRATION_CATEGORIES = [
 ] as const satisfies readonly IntegrationCategoryEntry[];
 
 /**
- * Canonical identity catalog for built-in `@c15t/integrations` integrations.
+ * Canonical identity catalog for built-in `@inth/integrations` integrations.
  *
  * Adding a new built-in integration should add one row here so docs, tests, and
  * the CLI can discover it from the same source.

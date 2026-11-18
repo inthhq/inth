@@ -7,8 +7,8 @@ import {
 	normalizePolicyRule,
 	policyRulePresets,
 	resolvePolicyRules,
-} from '@c15t/schema/types';
-import type { PolicyResolution, PolicyRule } from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
+import type { PolicyResolution, PolicyRule } from '@inth/sdk-schema/types';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {

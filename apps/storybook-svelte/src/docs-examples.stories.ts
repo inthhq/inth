@@ -1,4 +1,4 @@
-import { ConsentBanner } from '@c15t/svelte';
+import { ConsentBanner } from '@inth/svelte';
 import type { Meta, StoryObj } from '@storybook/svelte-vite';
 import { expect, spyOn, userEvent, waitFor, within } from 'storybook/test';
 import type { PlayFunction } from 'storybook/types';

@@ -21,7 +21,7 @@ export const IAB_UNAVAILABLE_ERROR_CODE = 'C15T_IAB_UNAVAILABLE';
  * ```ts
  * throw new IABUnavailableError(
  *   'no <IABProvider> is mounted',
- *   "Wrap your IAB consent UI in <IABProvider> from '@c15t/react/iab'"
+ *   "Wrap your IAB consent UI in <IABProvider> from '@inth/react/iab'"
  * );
  * ```
  */

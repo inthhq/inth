@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { ConsentBanner } from '@c15t/svelte';
-	import type { ConsentManagerOptions } from '@c15t/svelte';
+	import { ConsentBanner } from '@inth/svelte';
+	import type { ConsentManagerOptions } from '@inth/svelte';
 	import type { Component } from 'svelte';
 
 	import { editableConsentOptions } from './storybook-consent-fixtures';

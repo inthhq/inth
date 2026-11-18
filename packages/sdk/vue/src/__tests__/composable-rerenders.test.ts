@@ -7,12 +7,12 @@
  * re-rendered all of them. Field composables such as `useConsent()` already
  * kept their value, because the kernel keeps unchanged fields' references.
  */
-import type { InitOutput } from '@c15t/schema/types';
+import type { InitOutput } from '@inth/sdk/schema/types';
 import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
-import { translations as enTranslations } from '@c15t/translations/en';
+} from '@inth/sdk/schema/types';
+import { translations as enTranslations } from '@inth/sdk/translations/en';
 import { flushPromises, mount } from '@vue/test-utils';
 import { describe, expect, test } from 'vitest';
 import { defineComponent, h, onUpdated } from 'vue';

@@ -28,7 +28,7 @@ import { buildProviderProps } from '../ui/provider-props';
 import { vueDialogAdapter } from '../ui/vue';
 // The Vue adapter imports its plugin on first mount. Importing it here
 // compiles it while this file loads, outside any test timeout.
-import '@c15t/vue/vue-plugin';
+import '@inth/vue/vue-plugin';
 
 import { testRule } from './policy-fixture';
 

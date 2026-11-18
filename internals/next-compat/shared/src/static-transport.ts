@@ -1,15 +1,15 @@
+import { createStaticConsentResolver } from '@inth/nextjs/static';
+import type { StaticConsentResolverOptions } from '@inth/nextjs/static';
 import {
 	buildSubjectPostBody,
 	c15tVersionHeaders,
 	mapInitOutputToInitResponse,
-} from '@c15t/core/transports';
-import type { KernelTransport } from '@c15t/core/transports';
-import { createStaticConsentResolver } from '@c15t/nextjs/static';
-import type { StaticConsentResolverOptions } from '@c15t/nextjs/static';
+} from '@inth/sdk/transports';
+import type { KernelTransport } from '@inth/sdk/transports';
 
 /**
- * The manifest shape `@c15t/nextjs/static` resolves from. Taken from the
- * package so the fixture needs no direct `@c15t/schema` dependency.
+ * The manifest shape `@inth/nextjs/static` resolves from. Taken from the
+ * package so the fixture needs no direct `@inth/sdk/schema` dependency.
  */
 export type CompatManifest = StaticConsentResolverOptions['manifest'];
 

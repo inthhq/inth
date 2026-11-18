@@ -1,5 +1,5 @@
-import type { AllConsentNames, ConsentType } from '@c15t/core';
-import accordionStyles from '@c15t/ui/styles/components/accordion';
+import type { AllConsentNames, ConsentType } from '@inth/sdk/engine';
+import accordionStyles from '@inth/sdk/ui/styles/components/accordion';
 import {
 	createContext,
 	forwardRef as createForwardRef,

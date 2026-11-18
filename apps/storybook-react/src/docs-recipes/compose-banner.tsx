@@ -1,5 +1,5 @@
 // #region docs:compose-banner title="src/cookie-banner.tsx"
-import { ConsentBanner, useTranslations } from 'c15t/react';
+import { ConsentBanner, useTranslations } from '@inth/react';
 
 import { BrandButton } from './brand-button';
 

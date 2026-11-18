@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/schema",
+	"name": "@inth/sdk-schema",
 	"version": "3.1.1-canary.0",
 	"description": "Valibot schemas and TypeScript types for the c15t consent API, shared by the backend, frontends and Node.js SDK.",
 	"keywords": [
@@ -70,7 +70,7 @@
 		"test:watch": "vitest"
 	},
 	"dependencies": {
-		"@c15t/translations": "workspace:*",
+		"@inth/sdk-translations": "workspace:*",
 		"base-x": "5.0.1",
 		"valibot": "1.4.2"
 	},

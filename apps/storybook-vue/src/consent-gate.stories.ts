@@ -1,4 +1,4 @@
-import type { HydrationRecords, HydrationResult } from '@c15t/core';
+import type { HydrationRecords, HydrationResult } from '@inth/sdk/engine';
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 
 import ConsentGate from '../../../packages/sdk/vue/src/runtime/components/consent-gate.vue';

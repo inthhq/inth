@@ -1,5 +1,5 @@
-import type { AllConsentNames, ResolvedVendor } from '@c15t/core';
-import type { VendorListTranslations } from '@c15t/translations';
+import type { AllConsentNames, ResolvedVendor } from '@inth/sdk-core';
+import type { VendorListTranslations } from '@inth/sdk-translations';
 
 import { classes } from '../generated/styles';
 import { cx, h } from './dom';

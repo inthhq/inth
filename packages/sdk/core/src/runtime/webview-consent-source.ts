@@ -149,7 +149,7 @@ const readInjected = (): InjectedConsent | null => {
  *
  * @example
  * ```ts
- * import { webViewConsentSource } from 'c15t';
+ * import { webViewConsentSource } from '@inth/sdk/engine';
  *
  * const options = {
  * 	mode: hosted({ projectUrl: '/api/c15t' }),

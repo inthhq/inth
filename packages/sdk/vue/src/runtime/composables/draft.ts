@@ -1,5 +1,5 @@
-import type { ConsentState, SaveResult } from '@c15t/core';
-import { createPreferenceDraft } from '@c15t/core/preference-draft';
+import type { ConsentState, SaveResult } from '@inth/sdk/engine';
+import { createPreferenceDraft } from '@inth/sdk/preference-draft';
 import { computed, onScopeDispose, ref, shallowRef, watch } from 'vue';
 
 import { useResolvedPresentation } from './experiment';
@@ -7,7 +7,7 @@ import { useConsentKernelContext } from './kernel';
 
 /**
  * Editable, unmasked choices scoped to the categories the visitor reviewed,
- * over `@c15t/core/preference-draft`. The draft follows the record on its
+ * over `@inth/sdk/preference-draft`. The draft follows the record on its
  * own: values the record changes move unless the visitor staged them, and a
  * policy or vendor-list change under a staged edit makes it stale.
  *

@@ -9,12 +9,12 @@ import type {
 	PolicyMatchedBy,
 	PolicyResolution,
 	PolicyRule,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 import {
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,
 	SAFE_FALLBACK_POLICY_FINGERPRINTS,
-} from '@c15t/schema/types';
+} from '@inth/sdk-schema/types';
 
 import type {
 	ExplicitChoice,

@@ -5,7 +5,7 @@
  * standard banner does not handle the model, so a site without `iab` would
  * ship no working consent UI. The server render throws instead.
  */
-import { IAB_UNAVAILABLE_ERROR_CODE } from '@c15t/core';
+import { IAB_UNAVAILABLE_ERROR_CODE } from '@inth/sdk/engine';
 import { describe, expect, it, vi } from 'vitest';
 
 import { resolveOptions } from '../integration';

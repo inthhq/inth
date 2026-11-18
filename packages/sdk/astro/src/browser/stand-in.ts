@@ -12,20 +12,20 @@
  * the island that took them at mount keeps working.
  *
  * Loaded beside the dialog's chunks, never on first load. The same idea as
- * `@c15t/svelte`'s and `@c15t/vue`'s deferred stand-in kernels.
+ * `@inth/svelte`'s and `@inth/vue`'s deferred stand-in kernels.
  *
  * @internal
  */
 
-import { allConsentNames } from '@c15t/core';
+import { allConsentNames } from '@inth/sdk/engine';
 import type {
 	AllConsentNames,
 	ConsentKernel,
 	ConsentSnapshot,
 	KernelActiveUI,
 	KernelEvent,
-} from '@c15t/core';
-import type { ConsentRuntime } from '@c15t/core/runtime';
+} from '@inth/sdk/engine';
+import type { ConsentRuntime } from '@inth/sdk/runtime';
 
 /** @internal */
 export interface DialogStandInOptions {

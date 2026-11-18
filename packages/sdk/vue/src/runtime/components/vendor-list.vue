@@ -6,10 +6,10 @@
  * `data-slot`s and ARIA attributes mirror the React `ConsentWidgetVendorList`
  * so the cross-framework parity runner sees identical DOM.
  */
-import type { AllConsentNames, ResolvedVendor } from '@c15t/core';
-import vendorListStyles from '@c15t/ui/styles/components/vendor-list';
+import type { AllConsentNames, ResolvedVendor } from '@inth/sdk/engine';
+import vendorListStyles from '@inth/sdk/ui/styles/components/vendor-list';
 
-import '@c15t/ui/styles/components/vendor-list.css';
+import '@inth/sdk/ui/styles/components/vendor-list.css';
 import { computed, ref, useId } from 'vue';
 
 import { useConsentConfig, useConsentInit } from '../composables';

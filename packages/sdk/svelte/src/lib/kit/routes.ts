@@ -5,7 +5,7 @@
  * it. With this route, it does so through the app's own origin: the route
  * resolves `/init` from the snapshot the build downloaded, and serves the
  * manifest for browser resolution. The routes themselves live in
- * `@c15t/core/server` (`createConsentRouteHandler`), shared with the
+ * `@inth/sdk/server` (`createConsentRouteHandler`), shared with the
  * Next.js, Nuxt, Astro and TanStack Start adapters; this module mounts them
  * as a SvelteKit `RequestHandler`. What it adds is SvelteKit's: the rest
  * parameter picks the route, `event.fetch` answers a relative backend
@@ -16,8 +16,9 @@
 import {
 	projectUrl as builtProjectUrl,
 	snapshot as builtSnapshot,
-} from '@c15t/core/generated';
-import { createConsentRouteHandler, readWaitUntil } from '@c15t/core/server';
+} from '@inth/sdk/generated';
+import type { ConsentManifest } from '@inth/sdk/schema/types';
+import { createConsentRouteHandler, readWaitUntil } from '@inth/sdk/server';
 import type {
 	ConsentProxyForwarding,
 	ConsentProxyOptions,
@@ -25,13 +26,12 @@ import type {
 	ConsentRouteHandler,
 	ConsentRouteRequestContext,
 	ManifestFetch,
-} from '@c15t/core/server';
-import type { ConsentManifest } from '@c15t/schema/types';
+} from '@inth/sdk/server';
 import type { RequestEvent, RequestHandler } from '@sveltejs/kit';
 
 import type { C15tLocals } from './types';
 
-export type { ConsentProxyOptions } from '@c15t/core/server';
+export type { ConsentProxyOptions } from '@inth/sdk/server';
 
 /**
  * Hands a promise to the `waitUntil` a SvelteKit adapter exposes on
@@ -178,7 +178,7 @@ export interface ConsentRouteOptions {
 	 * cookies only when {@link ConsentProxyOptions.cookieNames} names them,
 	 * and sets `x-forwarded-for` from `event.getClientAddress()`,
 	 * `x-forwarded-host` and `x-forwarded-proto` from `event.url`, the c15t
-	 * version header, and `x-c15t-proxy: @c15t/svelte`. The hosted backend
+	 * version header, and `x-c15t-proxy: @inth/svelte`. The hosted backend
 	 * sits behind a firewall that scores a bare server-to-server request as a
 	 * bot; these give it the signals a direct browser request carries, and a
 	 * stable key for a bypass rule. It needs `projectUrl`, not a
@@ -328,7 +328,7 @@ const readRouteSource = function readRouteSource(
  *
  * ```ts
  * // src/routes/api/c15t/[...path]/+server.ts
- * import { createConsentRoute } from '@c15t/svelte/kit';
+ * import { createConsentRoute } from '@inth/svelte/kit';
  *
  * export const { GET } = createConsentRoute();
  * ```
@@ -373,7 +373,7 @@ export const createConsentRoute = function createConsentRoute<
 			return built.handle;
 		}
 		const handle = createConsentRouteHandler({
-			adapter: '@c15t/svelte',
+			adapter: '@inth/svelte',
 			fetch: options.fetch,
 			fetchGvl: options.fetchGvl,
 			manifest: source.snapshot,

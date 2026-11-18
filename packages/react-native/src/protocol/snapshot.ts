@@ -2,7 +2,7 @@
  * The mobile consent snapshot: the one immutable value the native cores own
  * and the JavaScript layer renders.
  *
- * This is the shape on the wire. It is the kernel snapshot from `@c15t/core`
+ * This is the shape on the wire. It is the kernel snapshot from `@inth/sdk/engine`
  * restricted to the fields that matter on device, plus the lifecycle flags a
  * native gate needs (`ready`, `policyPending`) and the IAB slot, which carries
  * the vendor list a device was served. The native cores serialize exactly this
@@ -70,7 +70,7 @@ export type PolicyResolutionFailure =
 /**
  * Privacy signals the native cores honor.
  *
- * Mirrors `KernelPrivacySignals` in `@c15t/core`. The three members are not
+ * Mirrors `KernelPrivacySignals` in `@inth/sdk/engine`. The three members are not
  * interchangeable and a gate must read `active`:
  *
  * - `detected` is what the device reported. On mobile there is no user-agent
@@ -168,7 +168,7 @@ export interface NativeIABState {
 }
 
 /**
- * A custom (non-IAB) vendor: `NonIABVendor` in `@c15t/schema`, with `id` always
+ * A custom (non-IAB) vendor: `NonIABVendor` in `@inth/sdk/schema`, with `id` always
  * a string, as the web keys its consent maps (`String(vendor.id)`).
  */
 export interface NativeIABCustomVendor {
@@ -413,7 +413,7 @@ export interface ConsentSnapshot {
 	/**
 	 * Under an IAB TCF policy, whether the committed TC String grants the
 	 * `marketing` category: every TCF purpose it maps to that some vendor asks
-	 * consent for, as `iabPurposesToC15tConsents` in `@c15t/iab` derives it.
+	 * consent for, as `iabPurposesToC15tConsents` in `@inth/sdk/iab` derives it.
 	 * `null` outside IAB, before a TC String is saved, and on a binary that
 	 * predates the field. The ATT sequence reads it; purpose vectors stay in
 	 * native authority.

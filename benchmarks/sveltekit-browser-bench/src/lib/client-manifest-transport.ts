@@ -7,13 +7,13 @@
  * manifest once and resolve `/init` in the page, trading an `/init`
  * round-trip for the resolver plus the translation catalogue.
  *
- * It mirrors what `@c15t/vue` does for `manifest: 'client'` — the resolver,
+ * It mirrors what `@inth/vue` does for `manifest: 'client'` — the resolver,
  * the catalogue and the manifest all load lazily and in parallel with
  * hydration, so the import cost is not serialized behind it.
  */
-import { createHostedTransport } from '@c15t/core';
-import type { KernelTransport } from '@c15t/core';
-import type { ConsentManifest } from '@c15t/schema/types';
+import { createHostedTransport } from '@inth/sdk/engine';
+import type { KernelTransport } from '@inth/sdk/engine';
+import type { ConsentManifest } from '@inth/sdk/schema/types';
 
 const BACKEND_URL = '/api/bench-consent';
 const MANIFEST_URL = '/api/bench-consent/manifest';
@@ -61,8 +61,8 @@ export const createBrowserManifestTransport =
 		const loadResources = () =>
 			settle(
 				Promise.all([
-					import('@c15t/core/transports/manifest'),
-					import('@c15t/translations/all'),
+					import('@inth/sdk/transports/manifest'),
+					import('@inth/sdk/translations/all'),
 					fetchManifest(),
 				])
 			);

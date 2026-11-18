@@ -5,7 +5,7 @@ import {
 	ConsentDialog,
 	ConsentRoot,
 	useSetLanguage,
-} from 'c15t/next';
+} from '@inth/nextjs';
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
 

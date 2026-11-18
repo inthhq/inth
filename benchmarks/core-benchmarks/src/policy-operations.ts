@@ -1,11 +1,11 @@
-import { createConsentKernel } from '@c15t/core';
+import { createConsentKernel } from '@inth/sdk/engine';
 import type {
 	HydrationRecords,
 	HydrationResult,
 	InitResponse,
 	KernelTransport,
-} from '@c15t/core';
-import { policyRulePresets, resolvePolicyRules } from '@c15t/schema/types';
+} from '@inth/sdk/engine';
+import { policyRulePresets, resolvePolicyRules } from '@inth/sdk/schema/types';
 
 /**
  * `hydrate` applies stored records the way persistence does. It is a verb

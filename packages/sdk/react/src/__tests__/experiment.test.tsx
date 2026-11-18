@@ -1,9 +1,9 @@
-import { EXPERIMENT_STORAGE_KEY } from '@c15t/core';
-import type { ExperimentArmTheme, SavePayload } from '@c15t/core';
-import { createConsentRuntime } from '@c15t/core/runtime';
-import { createOfflineTransport } from '@c15t/core/transports';
-import { resolvePolicyRules } from '@c15t/schema/types';
-import type { Theme } from '@c15t/ui/theme';
+import { EXPERIMENT_STORAGE_KEY } from '@inth/sdk/engine';
+import type { ExperimentArmTheme, SavePayload } from '@inth/sdk/engine';
+import { createConsentRuntime } from '@inth/sdk/runtime';
+import { resolvePolicyRules } from '@inth/sdk/schema/types';
+import { createOfflineTransport } from '@inth/sdk/transports';
+import type { Theme } from '@inth/sdk/ui/theme';
 import { createRoot } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
 import { afterEach, beforeEach, expect, expectTypeOf, test, vi } from 'vitest';
@@ -537,7 +537,7 @@ test('a disabled provider builds no experiment controller', async () => {
 	}
 });
 
-test('a @c15t/ui Theme is a valid experiment arm theme', () => {
+test('a @inth/sdk/ui Theme is a valid experiment arm theme', () => {
 	expectTypeOf<Theme>().toMatchTypeOf<ExperimentArmTheme>();
 });
 

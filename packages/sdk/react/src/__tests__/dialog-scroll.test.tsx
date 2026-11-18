@@ -5,8 +5,8 @@
  * `overflow: hidden`, a common way to clip them to rounded corners. App CSS
  * sits outside c15t's cascade layer, so it beats c15t's normal rules.
  */
-import '@c15t/ui/styles.css';
-import type { Vendor } from '@c15t/core';
+import '@inth/sdk/ui/styles.css';
+import type { Vendor } from '@inth/sdk/engine';
 import { afterEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 import { page } from 'vitest/browser';

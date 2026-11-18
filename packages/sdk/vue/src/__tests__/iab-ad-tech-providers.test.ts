@@ -9,8 +9,8 @@ import {
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
-import type { InitOutput } from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
+import type { InitOutput } from '@inth/sdk/schema/types';
 import { mount } from '@vue/test-utils';
 import { afterEach, expect, onTestFinished, test, vi } from 'vitest';
 import { createApp, ref } from 'vue';

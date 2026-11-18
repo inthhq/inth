@@ -1,4 +1,4 @@
-import type { KernelTransport, ProviderTransportFactory } from '@c15t/core';
+import type { KernelTransport, ProviderTransportFactory } from '@inth/sdk-core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { readPageOptions, readScriptOptions } from '../auto-init';
@@ -248,10 +248,10 @@ describe('readPageOptions', () => {
 
 describe('window.c15t', () => {
 	it('reuses the installed client when the script tag loads twice', async () => {
-		const first = installGlobal(createGlobal({ pkg: '@c15t/browser' }));
+		const first = installGlobal(createGlobal({ pkg: '@inth/sdk' }));
 		first.init({ ui: false });
 		await first.ready();
-		const second = installGlobal(createGlobal({ pkg: '@c15t/browser' }));
+		const second = installGlobal(createGlobal({ pkg: '@inth/sdk' }));
 		expect(second).toBe(first);
 		expect(second.init()).toBe(first.client);
 	});
@@ -275,7 +275,7 @@ describe('window.c15t', () => {
 		}
 	});
 	it('waits for init before ready() and on() fire', async () => {
-		const api = createGlobal({ pkg: '@c15t/browser/test' });
+		const api = createGlobal({ pkg: '@inth/sdk/test' });
 		installGlobal(api);
 		const onReady = vi.fn();
 		api.on('ready', onReady);
@@ -308,7 +308,7 @@ describe('window.c15t', () => {
 			],
 			['on', 'consent', onConsent],
 		];
-		const api = createGlobal({ pkg: '@c15t/browser/test' });
+		const api = createGlobal({ pkg: '@inth/sdk/test' });
 
 		installGlobal(api);
 		const client = api.init();
@@ -323,7 +323,7 @@ describe('window.c15t', () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {
 			/* silenced */
 		});
-		const api = createGlobal({ pkg: '@c15t/browser/test' });
+		const api = createGlobal({ pkg: '@inth/sdk/test' });
 		installGlobal(api);
 		api.config({ consentCategories: ['marketing'], ui: false });
 
@@ -339,7 +339,7 @@ describe('window.c15t', () => {
 	});
 
 	it('answers ready() and on() from the new client after dispose and init', async () => {
-		const api = createGlobal({ pkg: '@c15t/browser/test' });
+		const api = createGlobal({ pkg: '@inth/sdk/test' });
 		installGlobal(api);
 		const first = api.init({
 			consentCategories: ['measurement'],
@@ -365,18 +365,18 @@ describe('window.c15t', () => {
 	});
 
 	it('stays on window.c15t after the runtime starts', () => {
-		const api = createGlobal({ pkg: '@c15t/browser/test' });
+		const api = createGlobal({ pkg: '@inth/sdk/test' });
 		installGlobal(api);
 
 		api.init({ ui: false });
 
-		// `@c15t/core` writes its own frozen debug object there on start.
+		// `@inth/sdk/engine` writes its own frozen debug object there on start.
 		expect(testWindow.c15t).toBe(api);
 		expect(api.init({ ui: false })).toBe(api.client);
 	});
 
 	it('reports the hosting the backend named once init resolves', async () => {
-		const api = createGlobal({ pkg: '@c15t/browser/test' });
+		const api = createGlobal({ pkg: '@inth/sdk/test' });
 		installGlobal(api);
 		expect(api.hosting).toBeNull();
 

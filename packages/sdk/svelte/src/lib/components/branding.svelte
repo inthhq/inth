@@ -1,6 +1,6 @@
 <script lang="ts">
-	import styles from '@c15t/ui/styles/components/branding';
-	import { resolveTranslations } from '@c15t/ui/utils';
+	import styles from '@inth/sdk/ui/styles/components/branding';
+	import { resolveTranslations } from '@inth/sdk/ui/utils';
 	import { onMount } from 'svelte';
 
 	import { getConsentContext, getThemeContext } from '../context.svelte';

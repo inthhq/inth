@@ -1,4 +1,4 @@
-import type { PolicyRule } from '@c15t/schema/types';
+import type { PolicyRule } from '@inth/sdk/schema/types';
 import type { ReactNode } from 'react';
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';

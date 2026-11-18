@@ -1,5 +1,5 @@
-import { createConsentKernel } from 'c15t';
-import type { ConsentKernel, ExperimentAssignment } from 'c15t';
+import { createConsentKernel } from '@inth/sdk/engine';
+import type { ConsentKernel, ExperimentAssignment } from '@inth/sdk/engine';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { callbacks } from './consent-callbacks';

@@ -1,10 +1,10 @@
-import { C15T_POLICY_CONTRACT_HEADER } from '@c15t/core';
-import type { InitOutput } from '@c15t/schema/types';
+import { C15T_POLICY_CONTRACT_HEADER } from '@inth/sdk/engine';
+import type { InitOutput } from '@inth/sdk/schema/types';
 import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-} from '@c15t/schema/types';
-import { translations } from '@c15t/translations/en';
+} from '@inth/sdk/schema/types';
+import { translations } from '@inth/sdk/translations/en';
 import { afterEach, expect, test, vi } from 'vitest';
 import { createSSRApp, defineComponent, h, nextTick, shallowRef } from 'vue';
 import type { App, ShallowRef } from 'vue';

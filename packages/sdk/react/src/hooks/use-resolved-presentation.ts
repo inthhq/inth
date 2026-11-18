@@ -2,8 +2,11 @@ import type {
 	ConsentPresentation,
 	PreferencesPresentation,
 	PromptPresentation,
-} from '@c15t/core';
-import { applyExperimentAssignment, applyExperimentTheme } from '@c15t/core';
+} from '@inth/sdk/engine';
+import {
+	applyExperimentAssignment,
+	applyExperimentTheme,
+} from '@inth/sdk/engine';
 import { useMemo } from 'react';
 
 import { useKernelSelector } from '../kernel-selector';

@@ -1,4 +1,4 @@
-import { useActiveUI, useSnapshot } from '@c15t/tanstack-start';
+import { useActiveUI, useSnapshot } from '@inth/tanstack-start';
 import { useEffect, useRef } from 'react';
 
 import {

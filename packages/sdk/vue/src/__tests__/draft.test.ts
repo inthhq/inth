@@ -1,16 +1,16 @@
 /**
- * Vue's wrapper around `@c15t/core/preference-draft`. The draft rules are
+ * Vue's wrapper around `@inth/sdk/preference-draft`. The draft rules are
  * pinned by the core suite; these tests cover what Vue adds: `values` as a
  * ref a `v-model` writes into and refs that follow the kernel.
  *
  * @vitest-environment jsdom
  */
-import type { AllConsentNames } from '@c15t/core';
+import type { AllConsentNames } from '@inth/sdk/engine';
 import {
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,
-} from '@c15t/schema/types';
-import type { PolicyResolution } from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
+import type { PolicyResolution } from '@inth/sdk/schema/types';
 import { afterEach, expect, test } from 'vitest';
 import { createApp, defineComponent, h, nextTick } from 'vue';
 

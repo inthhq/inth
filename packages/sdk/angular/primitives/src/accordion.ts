@@ -7,13 +7,13 @@ import {
 	model,
 } from '@angular/core';
 import type { Signal } from '@angular/core';
-import type { AccordionType } from '@c15t/ui/primitives';
+import type { AccordionType } from '@inth/sdk/ui/primitives';
 import {
 	getDataDisabled,
 	getOpenState,
 	isAccordionItemOpen,
 	toggleAccordionValue,
-} from '@c15t/ui/primitives';
+} from '@inth/sdk/ui/primitives';
 
 import { uniqueId } from './unique-id';
 

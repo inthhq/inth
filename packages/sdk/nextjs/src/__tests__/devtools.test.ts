@@ -3,7 +3,7 @@ import {
 	ConsentDevTools as ReactConsentDevTools,
 	DevTools as ReactDevTools,
 	c15tDevtools as reactC15tDevtools,
-} from '@c15t/react/devtools';
+} from '@inth/react/devtools';
 import { describe, expect, test } from 'vitest';
 
 import {
@@ -13,7 +13,7 @@ import {
 	DevTools,
 } from '../devtools';
 
-describe('@c15t/nextjs/v3/devtools', () => {
+describe('@inth/nextjs/v3/devtools', () => {
 	test('re-exports the React v3 adapter without wrapping it', () => {
 		expect(ConsentDevTools).toBe(ReactConsentDevTools);
 		expect(DevTools).toBe(ReactDevTools);

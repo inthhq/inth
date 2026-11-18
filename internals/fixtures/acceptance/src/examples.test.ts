@@ -64,7 +64,7 @@ for (const target of selectedTargets()) {
 		let context: BrowserContext | undefined;
 		let page: Page;
 		let requests: Requests;
-		// `@c15t/browser` from npm installs no `window.c15t`, and its page is
+		// `@inth/sdk` from npm installs no `window.c15t`, and its page is
 		// not hydrated, so opening preferences does not wait for it.
 		const hasRuntimeGlobal = target.id !== 'javascript';
 
@@ -390,7 +390,7 @@ for (const target of selectedTargets()) {
 				await expect.poll(() => requests.posthog).toBe(1);
 				// Plain HTML loads PostHog's own snippet only after consent, so no
 				// helper calls PostHog's opt-in API. The other examples use
-				// `@c15t/integrations`, which does.
+				// `@inth/integrations`, which does.
 				if (target.id !== 'html') {
 					await expect
 						.poll(() =>

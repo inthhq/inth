@@ -1,5 +1,5 @@
 // #region docs:theme
-import type { Theme } from '@c15t/angular';
+import type { Theme } from '@inth/angular';
 
 // Pass as `theme` to provideC15t() in app.config.ts. Slots and
 // consentActions apply in the browser; color and other tokens do not.

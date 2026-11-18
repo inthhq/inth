@@ -12,8 +12,8 @@ import {
 	ConsentRoot,
 	useScriptLoader,
 	useSnapshot,
-} from '@c15t/nextjs';
-import type { ConsentRootProps } from '@c15t/nextjs';
+} from '@inth/nextjs';
+import type { ConsentRootProps } from '@inth/nextjs';
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
 

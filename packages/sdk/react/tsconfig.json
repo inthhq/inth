@@ -5,26 +5,6 @@
 		"moduleResolution": "bundler",
 		"types": ["@vitest/browser/matchers", "google.maps"],
 		"paths": {
-			"@c15t/ui/styles/primitives": [
-				"../ui/dist-types/styles/primitives/index.d.ts"
-			],
-			"@c15t/ui/styles/primitives/*": [
-				"../ui/dist-types/styles/primitives/*.d.ts"
-			],
-			"@c15t/ui/primitives": ["../ui/dist-types/primitives/index.d.ts"],
-			"@c15t/ui/primitives/data-state": [
-				"../ui/dist-types/primitives/data-state.d.ts"
-			],
-			"@c15t/ui/primitives/*": [
-				"../ui/dist-types/primitives/*/index.d.ts",
-				"../ui/dist-types/primitives/*.d.ts"
-			],
-			"@c15t/ui/theme": ["../ui/dist-types/theme/index.d.ts"],
-			"@c15t/ui/utils": ["../ui/dist-types/utils/index.d.ts"],
-			"@c15t/schema": ["../schema/dist-types/index.d.ts"],
-			"@c15t/schema/config": ["../schema/dist-types/config/index.d.ts"],
-			"@c15t/core": ["../core/dist-types/index.d.ts"],
-			"@c15t/core/*": ["../core/dist-types/*"],
 			"~/*": ["./src/*"]
 		}
 	},

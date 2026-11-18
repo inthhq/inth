@@ -1,6 +1,6 @@
 /**
- * `@c15t/core/runtime/deferred-boot`: the part of
- * `@c15t/core/runtime/deferred-snapshot` a client-rendered provider needs
+ * `@inth/sdk/runtime/deferred-boot`: the part of
+ * `@inth/sdk/runtime/deferred-snapshot` a client-rendered provider needs
  * for its first render, before the `/init` answer is read.
  *
  * It finds or starts the `/init` request, tells a returning visitor apart,

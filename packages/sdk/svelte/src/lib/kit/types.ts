@@ -1,9 +1,9 @@
-import type { StorageConfig } from '@c15t/core';
-import type { ConsentMode } from '@c15t/core/modes';
+import type { StorageConfig } from '@inth/sdk/engine';
+import type { ConsentMode } from '@inth/sdk/modes';
 import type {
 	ConsentManifest,
 	ConsentRequestHeaderInputs,
-} from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
 
 import type { ConsentState } from '../server/types';
 

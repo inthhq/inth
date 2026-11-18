@@ -1,5 +1,5 @@
 /**
- * Post-build script for @c15t/ui:
+ * Post-build script for @inth/sdk-ui:
  * 1. Renames primitive `*_module.css` files to `*.module.css` (rslib emits
  *    underscores) and fixes the matching references in `.module.js` files
  * 2. Generates aggregated CSS entrypoints from `dist/styles/primitives` and
@@ -15,14 +15,14 @@
  *      with Tailwind 4's layer order statement so `components` never ranks
  *      below `base`
  *    - `styles.tw3.css` / `iab/styles.tw3.css` emit the same component rules
- *      flat. They predate `@c15t/ui/postcss-tailwind3` covering the
+ *      flat. They predate `@inth/sdk-ui/postcss-tailwind3` covering the
  *      entrypoints and stay for apps that already import them; new Tailwind 3
  *      setups import `styles.css` and run the plugin
  *
  * | File | Holds | Loaded by |
  * | --- | --- | --- |
  * | `styles.css`, `styles.tw3.css` | default tokens, every `:root` variable and `@keyframes`, rules for the banner, dialog trigger, ConsentGate, dialog and preference widget | the app, once |
- * | `styles/primitives.css` | rules for the `@c15t/ui/styles/primitives` class maps | Svelte's `styles.css` and hosts that render those class maps |
+ * | `styles/primitives.css` | rules for the `@inth/sdk-ui/styles/primitives` class maps | Svelte's `styles.css` and hosts that render those class maps |
  * | `iab/styles.css`, `iab/styles.tw3.css` | IAB variables and rules only | the app, next to `styles.css` |
  * | `styles/dialog.css`, `styles/dialog.js` | nothing; kept so existing imports resolve | — |
  * | `styles/sheets/first-paint.js` | `styles.css` up to its dialog rules, as a string | Svelte surfaces, IAB banners and Astro, which render it as a `<style>` |
@@ -393,17 +393,17 @@ const DEFAULT_THEME_CSS = [
 
 /**
  * Sits directly above each layer block. Tailwind 3 without
- * `@c15t/ui/postcss-tailwind3` fails on that block, and bundlers print the
+ * `@inth/sdk-ui/postcss-tailwind3` fails on that block, and bundlers print the
  * lines above the failing one, so the fix shows up in the build error.
  * Avoids the word "layer" after an at-sign so layer scans skip it.
  */
 const TAILWIND3_HINT =
-	"/* Tailwind 3 cannot build the next block on its own. Add '@c15t/ui/postcss-tailwind3' before 'tailwindcss' in your PostCSS plugins. */";
+	"/* Tailwind 3 cannot build the next block on its own. Add '@inth/sdk-ui/postcss-tailwind3' before 'tailwindcss' in your PostCSS plugins. */";
 
 /**
  * Wrap component rules in `@layer components`. Tailwind 4 declares that layer
  * before its utilities, so bare utilities override c15t without
- * `!important`. Tailwind 3 hosts run `@c15t/ui/postcss-tailwind3`, which
+ * `!important`. Tailwind 3 hosts run `@inth/sdk-ui/postcss-tailwind3`, which
  * unwraps the layer in every built stylesheet.
  */
 const layered = function layered(ruleParts: string[]): string {
@@ -540,17 +540,17 @@ writeDist(
 	joinParts([DEFAULT_THEME_CSS, rootCss, componentRules.join('\n\n')])
 );
 
-// dist/styles/dialog.css and dist/styles/dialog.js (`@c15t/ui/styles/dialog`)
+// dist/styles/dialog.css and dist/styles/dialog.js (`@inth/sdk-ui/styles/dialog`)
 // once carried the dialog's rules separately, and React's dialog modules
 // imported them. styles.css holds those rules now. Both files stay empty so
 // existing imports keep resolving without loading a rule twice.
 writeDist(
 	'styles/dialog.css',
-	'/* Deprecated and empty: @c15t/ui/styles.css includes the dialog rules. */\n'
+	'/* Deprecated and empty: @inth/sdk-ui/styles.css includes the dialog rules. */\n'
 );
 writeDist(
 	'styles/dialog.js',
-	'// Deprecated and empty: @c15t/ui/styles.css includes the dialog rules.\nexport {};\n'
+	'// Deprecated and empty: @inth/sdk-ui/styles.css includes the dialog rules.\nexport {};\n'
 );
 writeDist('styles/dialog.d.ts', 'export {};\n');
 
@@ -565,7 +565,7 @@ writeDist(
 	'styles/primitives.css',
 	joinParts([
 		LAYER_ORDER,
-		'/* @c15t/ui primitive styles. Needs @c15t/ui/styles.css for tokens and variables. */',
+		'/* @inth/sdk-ui primitive styles. Needs @inth/sdk-ui/styles.css for tokens and variables. */',
 		layered(primitiveRules),
 	])
 );
@@ -770,7 +770,7 @@ if (IAB_COMPONENTS.length > 0) {
 		rulesFor(iab.ruleParts, name, 'iab/styles.css')
 	);
 	const iabBanner =
-		'/* @c15t/ui IAB TCF styles. Load after @c15t/ui/styles.css, which holds the tokens. */';
+		'/* @inth/sdk-ui IAB TCF styles. Load after @inth/sdk-ui/styles.css, which holds the tokens. */';
 	const iabRoot = iab.rootParts.join('\n\n');
 
 	// dist/iab/styles.css — @layer components

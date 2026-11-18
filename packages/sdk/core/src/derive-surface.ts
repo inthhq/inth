@@ -6,7 +6,7 @@
  * that group modules by who imports them (Turbopack) keep the kernel's
  * policy code where it was when adapters reach only this rule.
  */
-import type { PolicyResolution } from '@c15t/schema/types';
+import type { PolicyResolution } from '@inth/sdk-schema/types';
 
 import type { PromptRequirement } from './consent-record/types';
 import type { KernelActiveUI } from './types';

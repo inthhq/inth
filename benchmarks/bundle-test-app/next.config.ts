@@ -11,14 +11,14 @@ const repositoryRoot = resolve(projectDir, '../..');
 /**
  * The bundle benchmark builds this fixture against both the base and the
  * head revision with the same fixture files. When a PR renames the
- * `@c15t/nextjs` API, one side cannot compile the other's imports, so the
+ * `@inth/nextjs` API, one side cannot compile the other's imports, so the
  * fixture imports a thin adapter and this overwrites it with the variant
  * the installed package exports. The tracked adapter is the `current`
  * copy so type-checking works without a build. Drop `legacy/` once every
  * measured base ships `ConsentRoot`.
  */
 const selectConsentApi = function selectConsentApi(): void {
-	// Read the workspace package directly: `@c15t/nextjs` resolves to it on
+	// Read the workspace package directly: `@inth/nextjs` resolves to it on
 	// both revisions, and its `exports` map has no `./package.json` entry to
 	// resolve through. Turbo builds it before this fixture.
 	const types = join(
@@ -44,9 +44,9 @@ const withBundleAnalyzer = bundleAnalyzer({
 
 const transpilePackages = [
 	'@c15t/benchmarking',
-	'@c15t/react',
-	'@c15t/nextjs',
-	'@c15t/core',
+	'@inth/react',
+	'@inth/nextjs',
+	'@inth/sdk',
 ];
 
 const config = {

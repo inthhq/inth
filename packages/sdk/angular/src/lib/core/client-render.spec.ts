@@ -12,11 +12,11 @@ import {
 } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { createApplication } from '@angular/platform-browser';
-import type { RuntimePrefetch } from '@c15t/core/runtime';
+import type { RuntimePrefetch } from '@inth/sdk/runtime';
 import {
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,
-} from '@c15t/schema/types';
+} from '@inth/sdk/schema/types';
 import { afterEach, describe, expect, test } from 'vitest';
 
 import { testOptions } from '../../__tests__/test-local';

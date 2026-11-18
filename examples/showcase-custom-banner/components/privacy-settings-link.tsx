@@ -1,7 +1,7 @@
 'use client';
 
-import { useConsent } from 'c15t/next';
-import { useHeadlessConsentUI } from 'c15t/next/headless';
+import { useConsent } from '@inth/nextjs';
+import { useHeadlessConsentUI } from '@inth/nextjs/headless';
 
 import styles from './site-chrome.module.css';
 

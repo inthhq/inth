@@ -7,7 +7,7 @@ import {
 } from '../static';
 import { MANIFEST_FIXTURE } from './manifest-fixture';
 
-describe('@c15t/nextjs/static', () => {
+describe('@inth/nextjs/static', () => {
 	test('unknown geography uses the configured fallback without rewriting matchers', () => {
 		const payload = resolveUnknownLocationInit(MANIFEST_FIXTURE, {
 			language: 'en',
@@ -99,7 +99,7 @@ describe('@c15t/nextjs/static', () => {
 		});
 
 		expect(source).toContain(
-			"import type { ConsentManifest } from '@c15t/nextjs/static';"
+			"import type { ConsentManifest } from '@inth/nextjs/static';"
 		);
 		expect(source).toContain('export const testManifest = {');
 		expect(source).toContain('satisfies ConsentManifest');
@@ -125,8 +125,8 @@ test('supports importing manifest types through the umbrella package', async () 
 		fetch: vi
 			.fn<typeof globalThis.fetch>()
 			.mockResolvedValue(Response.json(MANIFEST_FIXTURE)),
-		importSource: 'c15t/next/static',
+		importSource: '@inth/nextjs/static',
 		manifestUrl: 'https://api.test/manifest',
 	});
-	expect(source).toContain("from 'c15t/next/static'");
+	expect(source).toContain("from '@inth/nextjs/static'");
 });

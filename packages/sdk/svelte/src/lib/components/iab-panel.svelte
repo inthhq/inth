@@ -3,15 +3,15 @@
 		defaultTranslationConfig,
 		resolveConsentPresentation,
 		resolveIABBannerSummary,
-	} from '@c15t/core';
-	import type { Model } from '@c15t/core';
-	import { saveIABConsentSurface } from '@c15t/core/surface-actions';
-	import { applyPublisherRestrictionsToGVL } from '@c15t/iab/headless';
-	import { isDialogDismissKey } from '@c15t/ui/primitives/dialog';
-	import actionStyles from '@c15t/ui/styles/components/consent-actions';
-	import styles from '@c15t/ui/styles/components/iab-consent-dialog';
-	import { buttonVariants } from '@c15t/ui/styles/primitives';
-	import { getTextDirection, resolveTranslations } from '@c15t/ui/utils';
+	} from '@inth/sdk/engine';
+	import type { Model } from '@inth/sdk/engine';
+	import { applyPublisherRestrictionsToGVL } from '@inth/sdk/iab/headless';
+	import { saveIABConsentSurface } from '@inth/sdk/surface-actions';
+	import { isDialogDismissKey } from '@inth/sdk/ui/primitives/dialog';
+	import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
+	import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
+	import { buttonVariants } from '@inth/sdk/ui/styles/primitives';
+	import { getTextDirection, resolveTranslations } from '@inth/sdk/ui/utils';
 
 	import { focusTrap } from '../actions/focus-trap';
 	import { portal } from '../actions/portal';

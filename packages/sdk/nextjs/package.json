@@ -1,5 +1,5 @@
 {
-	"name": "@c15t/nextjs",
+	"name": "@inth/nextjs",
 	"version": "3.2.0-canary.0",
 	"description": "Next.js cookie consent banner and consent management platform for c15t. Server-rendered for the App Router and Pages Router, with a consent dialog and preference center.",
 	"keywords": [
@@ -173,7 +173,7 @@
 	},
 	"scripts": {
 		"build": "pnpm run prebuild && rslib build && node ../../../scripts/normalize-dist-types.mjs && bun scripts/generate-distribution-css.ts && node ../shared/restore-client-directives.mjs src dist",
-		"build:docs": "bun ../../../scripts/generate-package-docs.ts @c15t/nextjs",
+		"build:docs": "bun ../../../scripts/generate-package-docs.ts @inth/nextjs",
 		"check-types": "pnpm run prebuild && tsc --noEmit",
 		"dev": "sh -c 'pnpm run prebuild && rslib build --no-dts --no-clean && bun scripts/generate-distribution-css.ts && rslib build --watch --no-dts --no-clean'",
 		"fmt": "oxfmt -c ../../../oxfmt.sdk.config.ts .",
@@ -184,10 +184,8 @@
 		"test:watch": "pnpm run prebuild && vitest --passWithNoTests"
 	},
 	"dependencies": {
-		"@c15t/core": "workspace:*",
-		"@c15t/react": "workspace:*",
-		"@c15t/schema": "workspace:*",
-		"@c15t/translations": "workspace:*"
+		"@inth/react": "workspace:*",
+		"@inth/sdk": "workspace:*"
 	},
 	"devDependencies": {
 		"@c15t/conformance": "workspace:*",
