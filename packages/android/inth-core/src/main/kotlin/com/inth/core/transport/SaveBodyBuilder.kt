@@ -18,10 +18,9 @@ import kotlinx.serialization.json.putJsonObject
  * The act travels in two parts:
  *
  * - `answer.categories` holds every receipt the subject has after the act, each with the
- *   time and the policy basis it was confirmed under. It is never the effective
- *   permissions: a GPC mask or a strict scope can deny a category the subject granted,
- *   and recording the masked value would rewrite what the subject chose. `necessary` is
- *   left out.
+ *   time it was confirmed and the policy basis. It is never the effective permissions: a
+ *   GPC mask or a strict scope can deny a category the subject granted, and recording
+ *   the masked value would rewrite what the subject chose. `necessary` is left out.
  * - `confirmed` names the categories this act confirmed, in canonical order. It is empty
  *   for an acknowledgement.
  *
@@ -80,7 +79,7 @@ object SaveBodyBuilder {
 				val value = choice.consents[category] ?: continue
 				categories[category] = buildJsonObject {
 					put("basis", basis(choice.fingerprint))
-					put("confirmedAt", choice.actionAt)
+					put("confirmedAt", choice.confirmedAtOf(category))
 					put("value", value)
 				}
 			}

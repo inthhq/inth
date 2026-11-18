@@ -49,6 +49,28 @@ class CanonicalSubjectTest {
 	}
 
 	@Test
+	fun `nothing changes when the identity slot cannot be written durably`() {
+		val delegate = InMemoryKeyValueStore()
+		val refusingSubject = object : com.inth.core.spi.KeyValueStore by delegate {
+			override fun writeDurably(key: String, value: String?): Boolean =
+				key != InthStoreKeys.SUBJECT && delegate.writeDurably(key, value)
+		}
+		val store = InthStore(refusingSubject)
+		val core = testKernel(
+			store = store,
+			transport = RecordingTransport().respondInit(initSuccess()).respondSave(SaveOutcome.Delivered(CANONICAL)),
+		)
+		core.bootstrap()
+		val original = assertNotNull(core.snapshot().subject).id
+
+		assertTrue(core.save(CommitIntent.All).ok)
+
+		assertEquals(original, core.snapshot().subject?.id)
+		assertEquals(original, store.readSubject()?.id)
+		assertEquals(original, store.readEnvelope()?.snapshot?.subject?.id)
+	}
+
+	@Test
 	fun `a subject id that is not a UUIDv7 is ignored`() {
 		for (named in listOf("sub_4ZrjtiRsJnoW34Px8dAvhPTKJiWc", CANONICAL.uppercase(), "not-an-id")) {
 			val store = InthStore(InMemoryKeyValueStore())

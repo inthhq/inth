@@ -1,6 +1,10 @@
+@file:OptIn(ExperimentalSerializationApi::class)
+
 package com.inth.core.model
 
 import com.inth.core.tc.GlobalVendorList
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -215,6 +219,10 @@ data class KernelError(
  * undecided and the evaluator fills them from the policy default. [fingerprint]
  * is the choice-prompt fingerprint the choice was made against, so a policy
  * change invalidates it instead of silently reusing an old grant.
+ *
+ * [confirmedAt] holds the time of each category an earlier action confirmed and this
+ * one kept. Every other category was confirmed at [actionAt]. Kept categories share
+ * [fingerprint], because a commit keeps earlier values only under the same one.
  */
 @Serializable
 data class ExplicitChoice(
@@ -223,9 +231,14 @@ data class ExplicitChoice(
 	val actionAt: Long,
 	val fingerprint: String? = null,
 	val version: Int = 3,
+	@EncodeDefault(EncodeDefault.Mode.NEVER)
+	val confirmedAt: Map<String, Long> = emptyMap(),
 ) {
 	/** Read the explicit value for [category], `null` when undecided. */
 	fun valueOf(category: ConsentCategory): Boolean? = consents[category.wireName]
+
+	/** When [category], a wire name, was last confirmed. */
+	fun confirmedAtOf(category: String): Long = confirmedAt[category] ?: actionAt
 
 	/** `true` when the choice was made against [currentFingerprint]. */
 	fun matchesFingerprint(currentFingerprint: String?): Boolean {

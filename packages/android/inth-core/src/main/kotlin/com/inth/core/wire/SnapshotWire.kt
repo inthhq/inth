@@ -213,9 +213,10 @@ object SnapshotWire {
 	/**
 	 * One receipt per category, which is what the kernel's `ExplicitChoice` holds.
 	 *
-	 * This core records one action time and one fingerprint for the whole commit, so
-	 * every category in it repeats both. `action` has no counterpart and is dropped: the
-	 * save body is where an all/necessary/custom answer travels.
+	 * Each category carries the time it was last confirmed. This core records one
+	 * fingerprint for the whole choice, so every category repeats it. `action` has no
+	 * counterpart and is dropped: the save body is where an all/necessary/custom answer
+	 * travels.
 	 */
 	private fun choiceOf(choice: ExplicitChoice?): JsonElement {
 		if (choice == null) {
@@ -227,7 +228,7 @@ object SnapshotWire {
 				choice.consents.toSortedMap().forEach { (category, value) ->
 					put(category, buildJsonObject {
 						put(VALUE, JsonPrimitive(value))
-						put(CONFIRMED_AT, JsonPrimitive(choice.actionAt))
+						put(CONFIRMED_AT, JsonPrimitive(choice.confirmedAtOf(category)))
 						put(BASIS, basisOf(choice.fingerprint))
 					})
 				}

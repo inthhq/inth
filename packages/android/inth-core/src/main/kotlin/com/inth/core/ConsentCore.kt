@@ -1001,6 +1001,8 @@ class ConsentCore @InthInternalApi constructor(
 					action = action,
 					actionAt = actionAt,
 					fingerprint = policy?.choiceFingerprint,
+					confirmedAt = prior.keys.filterNot { it in confirmed }
+						.associateWith { current.explicitChoice!!.confirmedAtOf(it) },
 				)
 			}
 			published = PolicyEvaluator.evaluate(
@@ -1280,8 +1282,10 @@ class ConsentCore @InthInternalApi constructor(
 	 * Only a UUIDv7 that differs from [sentId] is adopted, and only while the core still
 	 * holds [sentId]. The identity slot and the envelope change together, as one identity
 	 * change: one revision, one publication, the same decision. The identity slot is
-	 * written first, so an app stopped between the two writes relaunches with an envelope
-	 * under a previous id, which [ConsentSubject.owns] reads as the same subject.
+	 * written first, durably, and nothing changes when that write fails. So an app stopped
+	 * between the two writes relaunches with an envelope under a previous id, which
+	 * [ConsentSubject.owns] reads as the same subject, and never with an envelope under an
+	 * id the slot does not know.
 	 *
 	 * Queued bodies and the stored IAB record are never rewritten. [sentId] becomes one of
 	 * [ConsentSubject.previousIds], so they stay this subject's: replay still sends them,
@@ -1290,13 +1294,14 @@ class ConsentCore @InthInternalApi constructor(
 	private fun adoptCanonicalSubject(sentId: String, canonical: String?) {
 		if (canonical == null || canonical == sentId || !SubjectIdGenerator.isUuidV7(canonical)) return
 		mutate { mutation ->
-			val published = synchronized(mutationLock) {
+			val replaced = synchronized(mutationLock) {
+				state.get().subject?.takeIf { it.id == sentId }?.replacingId(canonical)
+			} ?: return@mutate
+			if (!store.writeSubjectDurably(replaced)) return@mutate
+			synchronized(mutationLock) {
 				val current = state.get()
-				val subject = current.subject?.takeIf { it.id == sentId } ?: return@mutate
-				current.copy(subject = subject.replacingId(canonical), revision = current.revision + 1)
-					.also(::installSnapshot)
+				installSnapshot(current.copy(subject = replaced, revision = current.revision + 1))
 			}
-			store.writeSubject(published.subject!!)
 			persist()
 			mutation.release()
 			notifySnapshot()
