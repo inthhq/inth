@@ -645,6 +645,7 @@ const createClient = function createClient(
 			// one, no experiment runs: browser assignment would hold a banner
 			// the server already rendered.
 			experiment: config.initialExperiment ? options.experiment : undefined,
+			experimentalScriptRegistry: options.experimentalScriptRegistry,
 			gpp: options.gpp,
 			i18n: options.i18n as ConsentRuntimeOptions['i18n'],
 			// `RuntimeIABOptions` is the runtime's open-ended shape; the
