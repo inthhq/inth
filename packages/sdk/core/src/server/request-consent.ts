@@ -104,12 +104,12 @@ import {
 	resolveRequestOrigin,
 } from './request-origin';
 import type { RequestHeaderSource } from './request-origin';
-
-/**
- * Where every adapter mounts its consent routes unless told otherwise. A
- * render treats URLs under it on its own origin as its own routes.
- */
-export const DEFAULT_CONSENT_ROUTE_PREFIX = '/api/inth';
+import {
+	DEFAULT_CONSENT_ROUTE_PREFIX,
+	IN_PROCESS_ORIGIN,
+	toPathFetch,
+	writeConsentInputHeaders,
+} from './shared';
 
 /**
  * Marks a hosted request a render sends to its own origin. If a page answers
@@ -595,22 +595,6 @@ const isBelow = function isBelow(pathname: string, prefix: string): boolean {
 	);
 };
 
-/**
- * Origin an in-process path is placed on so the manifest cache can key it.
- * Never contacted; loopback so the cleartext rules treat it as local.
- */
-const IN_PROCESS_ORIGIN = 'http://localhost';
-
-/** Sends {@link IN_PROCESS_ORIGIN} URLs to an in-process fetch as paths. */
-const toPathFetch = function toPathFetch(
-	localFetch: ManifestFetch
-): ManifestFetch {
-	return (input, init) => {
-		const url = new URL(input instanceof Request ? input.url : input);
-		return localFetch(`${url.pathname}${url.search}`, init);
-	};
-};
-
 /** A resolved upstream target and the fetch that reaches it. */
 interface Target {
 	/** Absolute URL, or the path for an in-process target. */
@@ -793,24 +777,6 @@ export const resolveRequestConsent = async function resolveRequestConsent(
 			}
 		}
 		return named;
-	};
-
-	/** The resolved inputs as the canonical consent request headers. */
-	const inputHeaders = function inputHeaders(): Record<string, string> {
-		const headers: Record<string, string> = {};
-		if (inputs.country) {
-			headers['x-c15t-country'] = inputs.country;
-		}
-		if (inputs.region) {
-			headers['x-c15t-region'] = inputs.region;
-		}
-		if (inputs.language) {
-			headers['accept-language'] = inputs.language;
-		}
-		if (inputs.gpc !== undefined) {
-			headers['sec-gpc'] = inputs.gpc ? '1' : '0';
-		}
-		return headers;
 	};
 
 	const resolverInputs = (): ResolveInitFromManifestInputs => ({
@@ -1039,7 +1005,7 @@ export const resolveRequestConsent = async function resolveRequestConsent(
 					(name) => name !== 'cookie' && name !== 'x-forwarded-for'
 				);
 			Object.assign(headers, identity);
-			Object.assign(headers, inputHeaders());
+			writeConsentInputHeaders(headers, inputs);
 			for (const [name, value] of Object.entries(options.initHeaders ?? {})) {
 				const lower = name.toLowerCase();
 				if (

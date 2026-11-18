@@ -39,17 +39,10 @@ export type {
 	ResolveRequestConsentOptions,
 } from './request-consent';
 export {
-	DEFAULT_CONSENT_ROUTE_PREFIX,
 	readRequestConsent,
 	resolveRenderBudgetMs,
 	resolveRequestConsent,
 } from './request-consent';
-export type {
-	RequestSubject,
-	ResolveRequestSubjectOptions,
-	SubjectCookie,
-} from './request-subject';
-export { resolveRequestSubject } from './request-subject';
 export type { FetchCachedGvlOptions } from './gvl-cache';
 export { clearGvlCache, fetchCachedGvl } from './gvl-cache';
 export type {
@@ -74,6 +67,25 @@ export {
 	resolveManifestSourceUrl,
 } from '../libs/manifest-cache-runtime';
 export { normalizeRoutePrefix } from './route-prefix';
+export type {
+	ServerMode,
+	ServerModeInput,
+	ServerModeOptions,
+} from './server-mode';
+export {
+	buildSnapshotSkipReason,
+	needsBuildSnapshot,
+	readModeData,
+	resolveServerMode,
+} from './server-mode';
+export type { ConsentInputHeaderTarget } from './shared';
+export {
+	DEFAULT_CONSENT_ROUTE_PREFIX,
+	IN_PROCESS_ORIGIN,
+	SAFE_NONCE,
+	trimPathSlashes,
+	writeConsentInputHeaders,
+} from './shared';
 export {
 	createStaticManifestModule,
 	loadStaticManifest,

@@ -19,6 +19,8 @@ import {
 import type { StaticBannerChunk } from './build-static-banner';
 import { buildPrefetchScript } from './libs/prefetch/prefetch';
 import type { PrefetchOptions } from './libs/prefetch/types';
+import type { ConsentMode } from './modes';
+import { buildSnapshotSkipReason } from './server/server-mode';
 import { loadStaticManifest } from './server/static-manifest';
 import { manifestNeedsLocation } from './transports/manifest-browser-location';
 
@@ -345,8 +347,20 @@ export interface ManifestBuildPolicy {
 	 * fetch is skipped and never fails.
 	 */
 	skipReason?: string;
+	/**
+	 * The app's mode, when the integration can read it. A mode that reads
+	 * no build snapshot (see `needsBuildSnapshot` in `@inth/sdk/server`)
+	 * skips the fetch, as `skipReason` does.
+	 */
+	mode?: ConsentMode;
 	/** Appended to the error a failed fetch throws, naming another fix. */
 	failureHint?: string;
+	/**
+	 * For a fetch the build can do without: a failure only warns, with the
+	 * message this returns for the failure's reason, whatever
+	 * `onBuildError` says.
+	 */
+	bestEffort?: (reason: string) => string;
 }
 
 const describeFailure = (error: unknown, label: string): string => {
@@ -365,6 +379,21 @@ const describeFailure = (error: unknown, label: string): string => {
 	}
 	return reason;
 };
+
+/**
+ * What a failed fetch does under this policy. A best-effort fetch only
+ * warns, as an explicit `'runtime'` would.
+ */
+const failureModeFor = (
+	policy: ManifestBuildPolicy
+): { explicit: boolean; mode: ManifestBuildErrorMode } =>
+	policy.bestEffort
+		? { explicit: true, mode: 'runtime' }
+		: resolveManifestBuildErrorMode(
+				policy.onBuildError,
+				policy.label,
+				policy.envSource
+			);
 
 /**
  * Applies the build policy to a missing backend URL, which counts as a
@@ -391,6 +420,38 @@ const reportMissingSource = (
 	}
 	logger.warn(
 		`${missing} The server fetches it at runtime, or asks the backend's /init.`
+	);
+};
+
+/**
+ * Applies the build policy to a failed fetch: a best-effort fetch warns
+ * with its own message, `'fail'` throws, and `'runtime'` warns.
+ */
+const reportFetchFailure = (
+	policy: ManifestBuildPolicy,
+	resolved: { explicit: boolean; mode: ManifestBuildErrorMode },
+	url: string,
+	error: unknown
+): void => {
+	const { command, label, logger } = policy;
+	const reason = describeFailure(error, label);
+	if (policy.bestEffort) {
+		logger.warn(policy.bestEffort(reason));
+		return;
+	}
+	const failure = `could not fetch the consent manifest from ${url} during ${command === 'build' ? 'the build' : 'dev'} (${reason}).`;
+	if (resolved.mode === 'fail') {
+		throw new Error(
+			`${label}: ${failure} Set \`${MANIFEST_BUILD_ERROR_ENV}=runtime\` (or \`onBuildError: 'runtime'\`) to ${command === 'build' ? 'deploy' : 'run dev'} with runtime fetching.${policy.failureHint ?? ''}`,
+			{ cause: error }
+		);
+	}
+	logger.warn(
+		`${failure} The server fetches it at runtime instead, and asks the backend's /init while it is unavailable.${
+			resolved.explicit
+				? ''
+				: ` Set \`${MANIFEST_BUILD_ERROR_ENV}=fail\` (or \`onBuildError: 'fail'\`) to stop the build on this error.`
+		}`
 	);
 };
 
@@ -424,16 +485,11 @@ export const loadManifestForBuild = async (
 	},
 	policy: ManifestBuildPolicy
 ): Promise<ConsentManifest | undefined> => {
-	const { command, label, logger } = policy;
-	const { explicit, mode } = resolveManifestBuildErrorMode(
-		policy.onBuildError,
-		label,
-		policy.envSource
-	);
-	if (policy.skipReason) {
-		logger.info(
-			`skipped the consent manifest fetch because ${policy.skipReason}.`
-		);
+	const { label, logger } = policy;
+	const { explicit, mode } = failureModeFor(policy);
+	const skipReason = policy.skipReason ?? buildSnapshotSkipReason(policy.mode);
+	if (skipReason) {
+		logger.info(`skipped the consent manifest fetch because ${skipReason}.`);
 		return undefined;
 	}
 	const envHint = policy.envNames?.length
@@ -461,7 +517,6 @@ export const loadManifestForBuild = async (
 	}
 	const fetchImpl = source.fetch ?? globalThis.fetch?.bind(globalThis);
 	const url = resolveBuildManifestUrl(source, label);
-	const phase = command === 'build' ? 'the build' : 'dev';
 	try {
 		return await loadBuildManifest(
 			{
@@ -477,20 +532,7 @@ export const loadManifestForBuild = async (
 			label
 		);
 	} catch (error) {
-		const failure = `could not fetch the consent manifest from ${url} during ${phase} (${describeFailure(error, label)}).`;
-		if (mode === 'fail') {
-			throw new Error(
-				`${label}: ${failure} Set \`${MANIFEST_BUILD_ERROR_ENV}=runtime\` (or \`onBuildError: 'runtime'\`) to ${command === 'build' ? 'deploy' : 'run dev'} with runtime fetching.${policy.failureHint ?? ''}`,
-				{ cause: error }
-			);
-		}
-		logger.warn(
-			`${failure} The server fetches it at runtime instead, and asks the backend's /init while it is unavailable.${
-				explicit
-					? ''
-					: ` Set \`${MANIFEST_BUILD_ERROR_ENV}=fail\` (or \`onBuildError: 'fail'\`) to stop the build on this error.`
-			}`
-		);
+		reportFetchFailure(policy, { explicit, mode }, url, error);
 		return undefined;
 	}
 };
@@ -522,10 +564,12 @@ export interface ConsentManifestPluginOptions extends ManifestBuildOptions {
 	/**
 	 * `'runtime'` never downloads a snapshot: `@inth/sdk/generated`
 	 * exports `snapshot: undefined` and the app reads the manifest at
-	 * runtime. Set it when the app's `manifest()` passes `manifestUrl` or
-	 * `source: 'runtime'`. Those discard the build's snapshot, but the
-	 * bundle still imports it, so without this option the build fetches
-	 * `${projectUrl}/manifest` and fails when that fetch fails.
+	 * runtime. Set it when the app's `manifest()` passes an absolute
+	 * `manifestUrl` or `source: 'runtime'` (the modes `needsBuildSnapshot`
+	 * in `@inth/sdk/server` says read none). Those discard the build's
+	 * snapshot, but the bundle still imports it, so without this option the
+	 * build fetches `${projectUrl}/manifest` and fails when that fetch
+	 * fails.
 	 *
 	 * @default 'build'
 	 */
@@ -716,6 +760,7 @@ export const writeManifestCacheModule = async (
 		envNames?: readonly string[];
 		importSource: string;
 		label: string;
+		mode?: ConsentMode;
 		rootDir?: string;
 		skipReason?: string;
 	},
@@ -733,6 +778,7 @@ export const writeManifestCacheModule = async (
 			},
 			label: defaults.label,
 			logger,
+			mode: defaults.mode,
 			onBuildError: options.onBuildError,
 			skipReason: defaults.skipReason,
 		}
@@ -1148,7 +1194,7 @@ export const createConsentManifestPlugin = (
 		envSource: envSource(),
 		// The mode is set in app code, which the plugin can't read.
 		failureHint:
-			" If the app passes manifest({ manifestUrl }) or manifest({ source: 'runtime' }), pass `source: 'runtime'` to this plugin so the build skips this download.",
+			" If the app passes manifest({ source: 'runtime' }) or an absolute manifest({ manifestUrl }), pass `source: 'runtime'` to this plugin so the build skips this download.",
 		label: defaults.label,
 		logger: logger(),
 		onBuildError: options.onBuildError,
@@ -1271,29 +1317,14 @@ export const createConsentManifestPlugin = (
 	};
 	let manifestForBanner: Promise<ConsentManifest | undefined> | undefined;
 	const loadManifestForBanner = (): Promise<ConsentManifest | undefined> => {
-		const fetchImpl = options.fetch ?? globalThis.fetch?.bind(globalThis);
-		manifestForBanner ??= (async () => {
-			try {
-				return await loadBuildManifest(
-					{
-						fetch:
-							fetchImpl &&
-							((input, init) =>
-								fetchImpl(input, {
-									...init,
-									signal: AbortSignal.timeout(BUILD_MANIFEST_TIMEOUT_MS),
-								})),
-						projectUrl,
-					},
-					defaults.label
-				);
-			} catch (error) {
-				logger().warn(
-					`staticBanner: could not fetch the consent manifest (${describeFailure(error, defaults.label)}), so index.html gets no static banner. The app renders its banner as before.`
-				);
-				return undefined;
+		manifestForBanner ??= loadManifestForBuild(
+			{ fetch: options.fetch, projectUrl },
+			{
+				...policy(),
+				bestEffort: (reason) =>
+					`staticBanner: could not fetch the consent manifest (${reason}), so index.html gets no static banner. The app renders its banner as before.`,
 			}
-		})();
+		);
 		return manifestForBanner;
 	};
 	/**
@@ -1550,9 +1581,9 @@ export const createConsentManifestPlugin = (
  * change that. When the policy depends on the visitor's location, it warns
  * and suggests the hosted backend, since the browser's `manifest()` then still asks
  * the backend's `/init` unless the page passes `inputs` or `geoUrl`. With
- * `manifest({ manifestUrl })` or `manifest({ source: 'runtime' })`, pass
- * `source: 'runtime'` here too, so the build never fetches a snapshot the
- * app would discard.
+ * an absolute `manifest({ manifestUrl })` or
+ * `manifest({ source: 'runtime' })`, pass `source: 'runtime'` here too, so
+ * the build never fetches a snapshot the app would discard.
  *
  * @param options - Backend URL, `onBuildError` and `source`. `projectUrl`
  * defaults to `VITE_INTH_PROJECT_URL`.

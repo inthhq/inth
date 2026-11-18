@@ -26,7 +26,6 @@ import { CONSENT_ROUTE_TIMEOUT_HEADER } from '../consent-route';
 import { clearGvlCache } from '../gvl-cache';
 import { readRequestConsent, resolveRequestConsent } from '../request-consent';
 import type { ResolveRequestConsentOptions } from '../request-consent';
-import { resolveRequestSubject } from '../request-subject';
 
 const BACKEND = 'https://consent.example.com';
 const APP = 'https://app.example.com';
@@ -200,7 +199,7 @@ describe('request read', () => {
 	});
 
 	// Header names are case-insensitive, and some runtimes keep the casing
-	// the client sent. The subject resolver reads the same record.
+	// the client sent.
 	test.each(['Cookie', 'COOKIE'])(
 		'a Node header record with a %s header reads the stored records',
 		(name) => {
@@ -214,9 +213,6 @@ describe('request read', () => {
 			});
 			expect(state.initialRecords?.choice).not.toBeNull();
 			expect(state.initialRecords?.subject?.subjectId).toBe('sub_recorded');
-			expect(
-				resolveRequestSubject({ now: NOW, request: { headers } })
-			).toMatchObject({ setCookie: null, subjectId: 'sub_recorded' });
 		}
 	);
 

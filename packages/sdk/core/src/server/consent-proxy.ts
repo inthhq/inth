@@ -24,6 +24,7 @@
 import { CONSENT_REQUEST_HEADER_NAMES } from '@inth/sdk-schema/types';
 
 import { inthVersionHeaders } from '../transports/version-header';
+import { trimPathSlashes } from './shared';
 
 /** Paths the proxy forwards when no extra `paths` are configured. */
 export const CONSENT_PROXY_DEFAULT_PATHS: readonly string[] = [
@@ -209,16 +210,6 @@ const trimTrailingSlashes = function trimTrailingSlashes(
 		end -= 1;
 	}
 	return value.slice(0, end);
-};
-
-/** Removes surrounding slashes, preserving interior path segments. */
-const trimPathSlashes = function trimPathSlashes(value: string): string {
-	const trimmed = trimTrailingSlashes(value);
-	let start = 0;
-	while (start < trimmed.length && trimmed[start] === '/') {
-		start += 1;
-	}
-	return trimmed.slice(start);
 };
 
 /**

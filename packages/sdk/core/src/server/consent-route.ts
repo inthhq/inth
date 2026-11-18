@@ -98,6 +98,7 @@ import {
 	resolveRequestProjectUrl,
 	resolveRequestOrigin,
 } from './request-origin';
+import { IN_PROCESS_ORIGIN, toPathFetch, trimPathSlashes } from './shared';
 
 /**
  * Request header a server render sets on its call to the init route: the
@@ -111,14 +112,6 @@ export const CONSENT_ROUTE_TIMEOUT_HEADER = 'x-c15t-timeout-ms';
 const MAX_ROUTE_TIMEOUT_MS = 10_000;
 
 const INIT_CACHE_CONTROL = 'private, no-store';
-
-/**
- * Origin a `/`-relative URL is placed on when the adapter can answer its
- * own routes in-process. It is never contacted: requests to it go to
- * {@link ConsentRouteRequestContext.localFetch} as a path. Loopback, so the
- * cleartext rules treat the in-process hop as local.
- */
-const IN_PROCESS_ORIGIN = 'http://localhost';
 
 /** A conservative BCP 47 shape: primary subtag plus up to two subtags. */
 const LANGUAGE_TAG = /^[a-z]{2,3}(?:-[a-z0-9]{2,8}){0,2}$/u;
@@ -469,18 +462,6 @@ const keepAlive = function keepAlive(
 	}
 };
 
-const trimPathSlashes = function trimPathSlashes(value: string): string {
-	let start = 0;
-	let end = value.length;
-	while (end > 0 && value[end - 1] === '/') {
-		end -= 1;
-	}
-	while (start < end && value[start] === '/') {
-		start += 1;
-	}
-	return value.slice(start, end);
-};
-
 const lastSegment = function lastSegment(pathname: string): string {
 	const trimmed = trimPathSlashes(pathname);
 	return trimmed.slice(trimmed.lastIndexOf('/') + 1);
@@ -552,16 +533,6 @@ interface ResolvedTarget {
 	/** Set when `url` is an {@link IN_PROCESS_ORIGIN} URL for `localFetch`. */
 	inProcess?: true;
 }
-
-/** Sends {@link IN_PROCESS_ORIGIN} URLs to `localFetch` as paths. */
-const toPathFetch = function toPathFetch(
-	localFetch: ManifestFetch
-): ManifestFetch {
-	return (input, init) => {
-		const url = new URL(input instanceof Request ? input.url : input);
-		return localFetch(`${url.pathname}${url.search}`, init);
-	};
-};
 
 /**
  * The hop chain for a proxied request when the adapter supplies none.
