@@ -32,7 +32,6 @@ class InthReactNativeBootstrapTest {
 		assertEquals("android->9.9.9", InthProtocol.protocolHeaders(config.sdkVersion, config.platform)[InthProtocol.PLATFORM_HEADER])
 		val bound = config.withDeviceLanguage("de").forReactNative()
 		val headers = InthProtocol.protocolHeaders(bound.sdkVersion, bound.platform)
-		assertEquals("rn->9.9.9", headers[InthProtocol.PLATFORM_HEADER])
-		assertEquals("9.9.9", headers[InthProtocol.VERSION_HEADER])
+		assertEquals(mapOf(InthProtocol.PLATFORM_HEADER to "rn->9.9.9"), headers)
 	}
 }
