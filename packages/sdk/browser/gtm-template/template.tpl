@@ -53,7 +53,7 @@ ___TEMPLATE_PARAMETERS___
       {
         "type": "REGEX",
         "args": [
-          "^https://([a-z0-9-]+\\.inth\\.app/inth(\\.headless|\\.iab)?|cdn\\.jsdelivr\\.net/npm/@inth/sdk@[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?/dist/inth(\\.local|\\.offline|\\.headless|\\.iab)?)\\.js$"
+          "^https://([a-z0-9-]+\\.inth\\.app/c15t(\\.headless|\\.iab)?|cdn\\.jsdelivr\\.net/npm/@inth/sdk@[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?/dist/c15t(\\.local|\\.offline|\\.headless|\\.iab)?)\\.js$"
         ],
         "errorMessage": "Use your Inth project URL with /c15t.js on the end, or a jsDelivr URL for an exact @inth/sdk version, such as 3.1.0, and c15t.js, c15t.local.js, c15t.headless.js or c15t.iab.js."
       }
@@ -624,7 +624,7 @@ ___WEB_PERMISSIONS___
             "listItem": [
               {
                 "type": 1,
-                "string": "https://*.inth.app/inth*"
+                "string": "https://*.inth.app/c15t*"
               },
               {
                 "type": 1,
