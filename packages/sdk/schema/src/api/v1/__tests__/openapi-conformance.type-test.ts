@@ -133,7 +133,12 @@ type Found =
 	| WireDiff<
 			Out<typeof v1DocumentParamsSchema>,
 			PathParams<'getV1DocumentsByTypeCurrent'>,
-			'document path'
+			'current path'
+	  >
+	| WireDiff<
+			Out<typeof v1DocumentParamsSchema>,
+			PathParams<'putV1DocumentsByTypeCurrent'>,
+			'publish path'
 	  >
 	| WireDiff<
 			v.InferInput<typeof v1DocumentPublishInputSchema>,
