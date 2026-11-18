@@ -122,7 +122,7 @@ and region. Code that reads the visitor's country should supply it through
 GPP is on, through the runtime's `gpp` option, `<ConsentGPP>` or `mountGPP()`,
 an unknown location goes to `/init` even when every location gets the same
 banner. The script-tag build counts GPP as on, because `c15t.gpp.js` can load
-after `init()`; pass `gpp: false` to `c15t.init()` to resolve in the browser on
+after `init()`; pass `gpp: false` to `inth.init()` to resolve in the browser on
 pages that do not load it.
 
 `createManifestTransport` from `@inth/sdk/transports/manifest` is for server code

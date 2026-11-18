@@ -88,7 +88,7 @@ shows.
 
 **Check.** Something called a `window.inth` method directly before the client
 existed, for example from an inline script that ran before the tag, or on a
-page whose tag has `data-manual` before anything called `c15t.init()`.
+page whose tag has `data-manual` before anything called `inth.init()`.
 
 **Fix.** Queue the call with `inth.push()`, move it into an `on('ready', ...)`
 listener, or wait for `inth.ready()`. See
@@ -113,7 +113,7 @@ everywhere.
 **Check.** Look for a `config` call made after the bundle ran. It does nothing.
 
 **Fix.** Run the `config` call before the tag, or pass the configuration to
-`c15t.init()` with `data-manual`.
+`inth.init()` with `data-manual`.
 
 ## Why does the page throw "Load c15t.iab.js instead of c15t.js"?
 

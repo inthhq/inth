@@ -21,7 +21,7 @@ Add the DevTools tag next to the Inth tag while you debug:
 
 Tag order does not matter. Loaded first, the DevTools tag queues itself on
 `window.inth` and mounts once the client starts. Loaded after, it mounts at
-once. With `data-manual` on the Inth tag, it waits for `c15t.init()`.
+once. With `data-manual` on the Inth tag, it waits for `inth.init()`.
 
 | Attribute | What it does |
 | --- | --- |
@@ -62,8 +62,8 @@ that a request was sent or held back; check the Network tab for that.
 
 ## Use it from the console
 
-Once mounted, the panel is `c15t.devtools` in the console. Call
-`c15t.devtools.destroy()` to remove it. `inth.dispose()` removes it too.
+Once mounted, the panel is `inth.devtools` in the console. Call
+`inth.devtools.destroy()` to remove it. `inth.dispose()` removes it too.
 
 ## Test another country
 
@@ -84,4 +84,4 @@ blocks.
 1. Add the tag and reload. The panel opens on the tab you chose.
 2. Click **Accept All** in the banner. The Events tab lists the save, and
    the Consents tab shows each category allowed.
-3. Remove the tag and reload. No panel appears and `c15t.devtools` is `null`.
+3. Remove the tag and reload. No panel appears and `inth.devtools` is `null`.

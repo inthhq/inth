@@ -51,11 +51,11 @@ second client.
 engine arrives it:
 
 1. Puts a stand-in `window.inth` on the page. Calls you make on it, such as
-   `c15t.init()`, `inth.on()`, `inth.subscribe()` or `inth.openDialog()`, are
+   `inth.init()`, `inth.on()`, `inth.subscribe()` or `inth.openDialog()`, are
    queued and run in order once the engine has loaded. `inth.getSnapshot()`
    and `inth.has()` answer from what `c15t.js` knows so far.
 2. Sends the visitor's `/init` request at once, or when your page calls
-   `c15t.init()` if the tag has `data-manual`.
+   `inth.init()` if the tag has `data-manual`.
 3. Shows the stock banner when `/init` answers, with only the banner's
    styles.
 4. Records an Accept or Reject tapped on the banner, or on a
@@ -112,7 +112,7 @@ headers or `fetch`. Accepts and rejects it cannot record itself, such as one fro
 who already has a stored choice or under a policy that declares vendors, wait
 for the engine.
 
-Until the engine has loaded, `c15t.init()` returns the stand-in, not the
+Until the engine has loaded, `inth.init()` returns the stand-in, not the
 client: its `getSnapshot()`, `subscribe()`, `on()` and consent methods work,
 and `inth.client` is `null`. Use `inth.onInit((client) => …)` for the client
 itself. `inth.isVendorAllowed()` throws until the engine has loaded.
@@ -183,7 +183,7 @@ the call queue, `data-manual` and the page hooks described below.
 | `data-shadow="false"` | Render the UI into the page instead of a shadow root, so your stylesheet applies. See [customize](/docs/frameworks/html/customize#style-it-with-your-own-stylesheet). |
 | `data-no-ui` | Start the runtime without the stock UI. `c15t.hosted.js` still downloads the UI code and CSS; load `c15t.headless.js` to skip them. The UI attributes above are ignored. |
 | `data-hosted-src` | On `c15t.js`: where to load `c15t.hosted.js` from, when it is not next to `c15t.js`. |
-| `data-manual` | Do not start. Your page calls `c15t.init()` later. See [start Inth yourself](/docs/frameworks/html/api#start-inth-yourself). |
+| `data-manual` | Do not start. Your page calls `inth.init()` later. See [start Inth yourself](/docs/frameworks/html/api#start-inth-yourself). |
 | `data-nonce` | The Content Security Policy nonce for the stock UI's `<style>` element and the scripts Inth loads. Without it, Inth uses the tag's own `nonce` attribute. See [Content Security Policy](/docs/frameworks/html/content-security-policy). |
 
 Flag attributes such as `data-trigger` are on when present, unless their value
