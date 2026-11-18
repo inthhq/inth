@@ -596,11 +596,11 @@ describe('webOptionsFromManifest', () => {
 					extra: {
 						inth: {
 							consentCategories: ['measurement'],
-							domain: null,
 							dryRun: false,
 							enableAppTrackingTransparency: true,
 							forceGPC: false,
 							projectUrl: PROJECT,
+							property: null,
 						},
 					},
 					name: 'App',
@@ -608,10 +608,10 @@ describe('webOptionsFromManifest', () => {
 			)
 		).toEqual({
 			consentCategories: ['measurement'],
-			domain: null,
 			dryRun: false,
 			forceGPC: false,
 			projectUrl: PROJECT,
+			property: null,
 		});
 	});
 

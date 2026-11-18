@@ -27,8 +27,11 @@ export interface WebConsentOptions {
 	 * @default false
 	 */
 	readonly dryRun?: boolean;
-	/** The `domain` sent with subject writes. */
-	readonly domain?: string | null;
+	/**
+	 * The `property` the plugin was given, or `null`. The browser engine sends
+	 * it as the consent record's site name, and defaults to the page's host.
+	 */
+	readonly property?: string | null;
 	/**
 	 * The categories the app declares. They narrow the policy's scope and grant
 	 * nothing. Omit them to use the policy's scope.
@@ -67,7 +70,7 @@ export const webOptionsFromManifest = function webOptionsFromManifest(
 	if (typeof inth !== 'object' || inth === null) {
 		return null;
 	}
-	const { projectUrl, consentCategories, domain, dryRun, forceGPC } =
+	const { projectUrl, consentCategories, property, dryRun, forceGPC } =
 		inth as Record<string, unknown>;
 	if (typeof projectUrl !== 'string') {
 		return null;
@@ -76,9 +79,9 @@ export const webOptionsFromManifest = function webOptionsFromManifest(
 		consentCategories: Array.isArray(consentCategories)
 			? (consentCategories as WebConsentOptions['consentCategories'])
 			: null,
-		domain: typeof domain === 'string' ? domain : null,
 		dryRun: dryRun === true,
 		forceGPC: forceGPC === true,
 		projectUrl,
+		property: typeof property === 'string' ? property : null,
 	};
 };

@@ -61,11 +61,11 @@ describe('withInth standard install', () => {
 		expect(config.extra).toStrictEqual({
 			inth: {
 				consentCategories: null,
-				domain: null,
 				dryRun: false,
 				enableAppTrackingTransparency: false,
 				forceGPC: false,
 				projectUrl: BACKEND,
+				property: null,
 				protocol: {
 					maxSupportedProtocolVersion: 1,
 					minSupportedProtocolVersion: 1,
@@ -342,7 +342,7 @@ describe('withInth standard install', () => {
 	it('is a no-op the second time it runs', async () => {
 		const params = resolveParams({
 			...STANDARD_PROPS,
-			domain: 'app.example.com',
+			property: 'com.acme.app',
 		});
 		const once = applyAndroidManifest(params, await readFixtureManifest());
 		const twice = applyAndroidManifest(params, once);

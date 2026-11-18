@@ -118,7 +118,7 @@ Read by `InthBridgeConfiguration.from(infoPlist:)`. Expo apps set these through
 | `com.inth.reactnative.AutoBootstrap` | `false` opts out of the pre-RN start. |
 | `com.inth.backend.url` | The project URL from your Inth dashboard, such as `https://your-project.inth.app`. Required. Any other host is refused. |
 | `com.inth.dryRun` | `true` drops consent records instead of queueing and sending them. Development and CI only: a release build refuses to start with it. In a debug build it also accepts any `https` URL, or `http` on `localhost`. |
-| `com.inth.backend.domain` | The `property` each consent record names. Defaults to the bundle identifier. Sent lowercase. |
+| `com.inth.backend.property` | The `property` each consent record names. Defaults to the bundle identifier. Sent lowercase. |
 | `com.inth.storage` | `keychain` (default) or `file`. |
 | `com.inth.keychain.service` | Keychain service name, default `com.inth.core`. |
 | `com.inth.country`, `com.inth.region`, `com.inth.language` | Override geo/locale detection. |

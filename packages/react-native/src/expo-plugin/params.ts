@@ -220,8 +220,11 @@ export interface InthPluginProps {
 	 * @defaultValue false
 	 */
 	dryRun?: boolean;
-	/** Value sent as the `domain` field of `POST /subjects`. */
-	domain?: string;
+	/**
+	 * The `property` each consent record names. Defaults to the iOS bundle
+	 * identifier and the Android application ID. Sent lowercase.
+	 */
+	property?: string;
 	/**
 	 * The consent categories this app offers, the mobile spelling of the
 	 * `consentCategories` a web host passes to its provider.
@@ -387,8 +390,8 @@ export interface ResolvedInthParams {
 	readonly backendHost: string;
 	/** Whether consent records are dropped instead of sent. */
 	readonly dryRun: boolean;
-	/** `domain` sent on subject writes, or `null` to let the core derive it. */
-	readonly domain: string | null;
+	/** `property` for consent records, or `null` to let the core derive it. */
+	readonly property: string | null;
 	/**
 	 * Category ids the app declares, de-duplicated; empty means no declaration.
 	 *
@@ -1538,7 +1541,6 @@ export const resolveParams = function resolveParams(
 		backendHost,
 		bundleManifest: normalizeBundleManifest(props),
 		consentCategories: normalizeConsentCategories(props.consentCategories),
-		domain: normalizeOptionalText(props.domain, 'domain'),
 		dryRun,
 		forceGPC: props.forceGPC ?? false,
 		gpp: normalizeGpp(props.gpp),
@@ -1552,6 +1554,7 @@ export const resolveParams = function resolveParams(
 		policyRules: normalizePolicy(props.policy),
 		privacyTrackingDomains,
 		projectUrl,
+		property: normalizeOptionalText(props.property, 'property'),
 		skipNativeBuildCheck: props.skipNativeBuildCheck ?? false,
 		vendors: normalizeVendors(props.vendors),
 	};

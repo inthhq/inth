@@ -23,8 +23,6 @@ export const ANDROID_META = {
 	backendUrl: 'com.inth.BACKEND_URL',
 	/** Comma-separated category ids the app offers, read by `InthAndroid`. */
 	categories: 'com.inth.CATEGORIES',
-	/** Value sent as the `domain` field of `POST /subjects`. */
-	domain: 'com.inth.BACKEND_DOMAIN',
 	/** `true` drops consent records instead of sending them. Debug builds only. */
 	dryRun: 'com.inth.DRY_RUN',
 	/** Staged-build switch that forces GPC on. */
@@ -48,6 +46,8 @@ export const ANDROID_META = {
 	policyResource: 'com.inth.POLICY_RESOURCE',
 	/** Asset path of the in-code policy. */
 	policyRules: 'com.inth.POLICY_RULES',
+	/** The `property` each consent record names, in place of the application ID. */
+	property: 'com.inth.BACKEND_PROPERTY',
 	/**
 	 * Comma-separated IAB vendor ids the app may disclose, read by `InthAndroid`.
 	 *
@@ -64,8 +64,6 @@ export const IOS_PLIST_KEY = {
 	autoBootstrap: 'com.inth.reactnative.AutoBootstrap',
 	/** Category id array the app offers, read by the iOS bridge. */
 	categories: 'com.inth.categories',
-	/** Value sent as the `domain` field of `POST /subjects`. */
-	domain: 'com.inth.backend.domain',
 	/** `true` drops consent records instead of sending them, as a real Boolean. */
 	dryRun: 'com.inth.dryRun',
 	/** Staged-build switch that forces GPC on, as a real Boolean. */
@@ -91,6 +89,8 @@ export const IOS_PLIST_KEY = {
 	policyRules: 'com.inth.policy.rules',
 	/** Inth project URL. */
 	projectUrl: 'com.inth.backend.url',
+	/** The `property` each consent record names, in place of the bundle identifier. */
+	property: 'com.inth.backend.property',
 	/**
 	 * Comma-separated IAB vendor ids the app may disclose, read by the iOS bridge.
 	 *
