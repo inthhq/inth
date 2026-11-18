@@ -68,7 +68,7 @@ public abstract class NativeInthSpec extends ReactContextBaseJavaModule implemen
 	public abstract void refresh(Promise promise);
 
 	@ReactMethod
-	public abstract void identify(String externalId, Promise promise);
+	public abstract void identify(String externalId, @Nullable String identityToken, Promise promise);
 
 	@ReactMethod
 	public abstract void logout(Promise promise);
