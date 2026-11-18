@@ -29,7 +29,8 @@ export interface RequestLifetime {
 	locals?: unknown;
 	/**
 	 * The path below the route, from its rest parameter (`params.path` for
-	 * `[...path]`). Defaults to the last URL segment.
+	 * `[...path]`). Without it the route is a fixed mount: a `GET` that
+	 * does not end in `/manifest` is init.
 	 */
 	path?: string;
 }
@@ -122,6 +123,7 @@ export const createConsentRouteHandlers = function createConsentRouteHandlers(
 		adapter: '@inth/astro',
 		fetch: handlerOptions.fetch,
 		fetchGvl: handlerOptions.fetchGvl,
+		routePrefix,
 	});
 	const locale = i18n?.locale;
 	// The same override the SSR path applies, so both resolve one language,
@@ -187,8 +189,7 @@ export const createConsentRouteHandlers = function createConsentRouteHandlers(
 	): Promise<Response> {
 		return handle(request, {
 			inputs: inputsFor(request),
-			// A catch-all mount: without its rest parameter, the last segment.
-			path: lifetime?.path ?? new URL(request.url).pathname.split('/').pop(),
+			path: lifetime?.path,
 			waitUntil: waitUntilFor(lifetime),
 		});
 	};

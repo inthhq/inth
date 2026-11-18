@@ -111,17 +111,27 @@ describe('createConsentRouteHandlers', () => {
 		expect(payload.translations.language).toBe('de');
 	});
 
-	it('GET dispatches the catch-all route by its last segment', async () => {
+	it('GET dispatches the catch-all route by its rest parameter', async () => {
 		const handlers = createConsentRouteHandlers({
 			fetch: upstream(),
 			options: options(),
 		});
-		const manifest = await handlers.GET(request('/api/inth/manifest'));
-		const init = await handlers.GET(request('/api/inth/init'));
-		const other = await handlers.GET(request('/api/inth/subjects'));
+		const get = (path: string) =>
+			handlers.GET(request(`/api/inth/${path}`), { path });
+		const manifest = await get('manifest');
+		const init = await get('init');
+		const other = await get('subjects');
 		expect(manifest.headers.get('cache-control')).toBe('s-maxage=60');
 		expect(init.headers.get('cache-control')).toBe('private, no-store');
 		expect(other.status).toBe(404);
+	});
+
+	it('rejects a backend under its own route prefix when it is built', () => {
+		expect(() =>
+			createConsentRouteHandlers({
+				options: options({ projectUrl: '/api/inth/backend' }),
+			})
+		).toThrow(/beneath the consent route|names the consent route/u);
 	});
 
 	it('registers detached work with the waitUntil on locals', async () => {
