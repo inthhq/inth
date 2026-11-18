@@ -160,7 +160,7 @@ describe('fetchServerGvl', () => {
 		expect(calls).toBe(1);
 	});
 
-	test('throws on a non-2xx, and caches nothing', async () => {
+	test('throws on a non-2xx, and asks again only after the backoff', async () => {
 		let calls = 0;
 		const fetchImpl = () => {
 			calls += 1;
@@ -168,14 +168,13 @@ describe('fetchServerGvl', () => {
 				new Response('nope', { status: 500, statusText: 'Server Error' })
 			);
 		};
+		const read = (now: number) =>
+			fetchServerGvl({ fetch: fetchImpl, language: 'en', now, url: GVL_URL });
 
-		await expect(
-			fetchServerGvl({ fetch: fetchImpl, language: 'en', url: GVL_URL })
-		).rejects.toThrow(/GVL responded 500/u);
-		await expect(
-			fetchServerGvl({ fetch: fetchImpl, language: 'en', url: GVL_URL })
-		).rejects.toThrow(/GVL responded 500/u);
-
+		await expect(read(0)).rejects.toThrow(/GVL responded 500/u);
+		await expect(read(1000)).rejects.toThrow(/GVL responded 500/u);
+		expect(calls).toBe(1);
+		await expect(read(60_000)).rejects.toThrow(/GVL responded 500/u);
 		expect(calls).toBe(2);
 	});
 });

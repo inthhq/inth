@@ -1,7 +1,7 @@
 /**
- * `Cache-Control` parsing, in a module of its own so the browser's vendor
- * list cache can read lifetimes without importing the server manifest
- * cache, which pulls in the request-header schema.
+ * `Cache-Control` and `Age` parsing, in a module of its own so the
+ * browser's vendor list cache can read lifetimes without importing the
+ * server manifest cache, which pulls in the request-header schema.
  */
 
 /**
@@ -32,4 +32,37 @@ export const parseCacheDirectiveSeconds = function parseCacheDirectiveSeconds(
 		return Number.isSafeInteger(seconds) ? seconds : undefined;
 	}
 	return undefined;
+};
+
+/**
+ * `true` when a `Cache-Control` header forbids reusing the response:
+ * `no-store`, `no-cache` or `private`.
+ *
+ * @internal
+ */
+export const forbidsReuse = function forbidsReuse(
+	cacheControl: string | null | undefined
+): boolean {
+	return (
+		cacheControl
+			?.split(',')
+			.some((part) =>
+				['no-store', 'no-cache', 'private'].includes(
+					part.trim().split('=')[0]?.toLowerCase() ?? ''
+				)
+			) ?? false
+	);
+};
+
+/**
+ * Reads an upstream `Age` header in seconds.
+ *
+ * @returns The age, or `0` when absent or invalid.
+ * @internal
+ */
+export const readUpstreamAge = function readUpstreamAge(
+	age: string | null | undefined
+): number {
+	const parsed = Number.parseInt(age ?? '', 10);
+	return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
 };

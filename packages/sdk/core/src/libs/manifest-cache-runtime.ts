@@ -3,7 +3,12 @@ import type { ConsentManifest } from '@inth/sdk-schema/types';
 import { CONSENT_REQUEST_HEADER_NAMES } from '@inth/sdk-schema/types';
 
 import { inthProtocolHeaders } from '../transports/version-header';
-import { parseCacheDirectiveSeconds } from './cache-directive';
+import { boundedSet, mapFor } from './bounded-map';
+import {
+	forbidsReuse,
+	parseCacheDirectiveSeconds,
+	readUpstreamAge,
+} from './cache-directive';
 import { failedResponseError } from './failed-response';
 import { trimSlash } from './url';
 
@@ -167,17 +172,6 @@ interface InflightFill {
 /** In-flight upstream requests, so concurrent misses share one fetch. */
 const inflightByCache = new WeakMap<ManifestCache, Map<string, InflightFill>>();
 
-const getInflight = function getInflight(
-	cache: ManifestCache
-): Map<string, InflightFill> {
-	let inflight = inflightByCache.get(cache);
-	if (!inflight) {
-		inflight = new Map();
-		inflightByCache.set(cache, inflight);
-	}
-	return inflight;
-};
-
 /**
  * Most revalidation floors held per cache. A floor exists only while a key
  * is being served stale after a failed or already-stale refresh, so a
@@ -221,32 +215,17 @@ export const readRevalidationFloors = function readRevalidationFloors(
 	return floors ? new Map(floors) : new Map();
 };
 
-const getRevalidateAfter = function getRevalidateAfter(
-	cache: ManifestCache
-): Map<string, number> {
-	let revalidateAfter = revalidateAfterByCache.get(cache);
-	if (!revalidateAfter) {
-		revalidateAfter = new Map();
-		revalidateAfterByCache.set(cache, revalidateAfter);
-	}
-	return revalidateAfter;
-};
-
 const setRevalidationFloor = function setRevalidationFloor(
 	cache: ManifestCache,
 	cacheKey: string,
 	deadline: number
 ): void {
-	const revalidateAfter = getRevalidateAfter(cache);
-	revalidateAfter.delete(cacheKey);
-	while (revalidateAfter.size >= MAX_REVALIDATION_FLOORS) {
-		const oldest = revalidateAfter.keys().next();
-		if (oldest.done) {
-			break;
-		}
-		revalidateAfter.delete(oldest.value);
-	}
-	revalidateAfter.set(cacheKey, deadline);
+	boundedSet(
+		mapFor(revalidateAfterByCache, cache),
+		cacheKey,
+		deadline,
+		MAX_REVALIDATION_FLOORS
+	);
 };
 
 /**
@@ -327,43 +306,25 @@ interface FillFailure {
  */
 const failuresByCache = new WeakMap<ManifestCache, Map<string, FillFailure>>();
 
-const getFailures = function getFailures(
-	cache: ManifestCache
-): Map<string, FillFailure> {
-	let failures = failuresByCache.get(cache);
-	if (!failures) {
-		failures = new Map();
-		failuresByCache.set(cache, failures);
-	}
-	return failures;
-};
-
 const recordFillFailure = function recordFillFailure(
 	cache: ManifestCache,
 	cacheKey: string,
 	error: unknown,
 	settledAt: number
 ): void {
-	const failures = getFailures(cache);
+	const failures = mapFor(failuresByCache, cache);
 	const previous = failures.get(cacheKey);
 	const count = (previous?.failures ?? 0) + 1;
 	const floor = Math.min(
 		MANIFEST_FAILURE_RETRY_MIN_MS * 2 ** (count - 1),
 		MANIFEST_FAILURE_RETRY_MAX_MS
 	);
-	failures.delete(cacheKey);
-	while (failures.size >= MAX_REVALIDATION_FLOORS) {
-		const oldest = failures.keys().next();
-		if (oldest.done) {
-			break;
-		}
-		failures.delete(oldest.value);
-	}
-	failures.set(cacheKey, {
-		error,
-		failures: count,
-		retryAt: settledAt + floor,
-	});
+	boundedSet(
+		failures,
+		cacheKey,
+		{ error, failures: count, retryAt: settledAt + floor },
+		MAX_REVALIDATION_FLOORS
+	);
 };
 
 /**
@@ -469,30 +430,6 @@ export const getManifestStaleWhileRevalidate =
 			parseCacheDirectiveSeconds(cacheControl, 'stale-while-revalidate') ?? 0
 		);
 	};
-
-/** Reads the upstream `Age` header in seconds, `0` when absent or invalid. */
-const readUpstreamAge = function readUpstreamAge(
-	headers: Record<string, string>
-): number {
-	const parsed = Number.parseInt(headers.age ?? '', 10);
-	return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
-};
-
-/** `true` when the backend explicitly forbids reusing the response. */
-const forbidsReuse = function forbidsReuse(
-	cacheControl: string | undefined
-): boolean {
-	if (!cacheControl) {
-		return false;
-	}
-	return cacheControl
-		.split(',')
-		.some((part) =>
-			['no-store', 'no-cache', 'private'].includes(
-				part.trim().split('=')[0]?.toLowerCase() ?? ''
-			)
-		);
-};
 
 /** `true` when the backend sent an `s-maxage` directive, including `0`. */
 const hasSharedMaxAge = function hasSharedMaxAge(
@@ -888,7 +825,7 @@ const revalidateManifest = async function revalidateManifest(input: {
 			...normalizeHeaders(response.headers),
 		};
 		const sMaxAge = getManifestSMaxAge(responseHeaders['cache-control']);
-		const upstreamAge = readUpstreamAge(responseHeaders);
+		const upstreamAge = readUpstreamAge(responseHeaders.age);
 		const { expiresAt, staleUntil } = resolveEntryLifetime({
 			cacheControl: responseHeaders['cache-control'],
 			now,
@@ -930,7 +867,7 @@ const revalidateManifest = async function revalidateManifest(input: {
 	// CDN is itself serving stale arrives with `Age` past `s-maxage` and is
 	// stored as already stale, so it is served while the next revalidation
 	// runs instead of costing every request an upstream round trip.
-	const upstreamAge = readUpstreamAge(responseHeaders);
+	const upstreamAge = readUpstreamAge(responseHeaders.age);
 	const { expiresAt, staleUntil } = resolveEntryLifetime({
 		cacheControl: responseHeaders['cache-control'],
 		now,
@@ -1151,7 +1088,7 @@ export const fetchCachedManifest = async function fetchCachedManifest(
 		return cached;
 	}
 
-	const inflight = getInflight(cache);
+	const inflight = mapFor(inflightByCache, cache);
 	const pending = inflight.get(cacheKey);
 	/**
 	 * Starts one upstream fill and registers it as in flight. A background
@@ -1227,7 +1164,7 @@ export const fetchCachedManifest = async function fetchCachedManifest(
 		// and no sooner than the dedupe floor after the last one settled, so a
 		// source that keeps answering stale or keeps failing is not re-asked
 		// on every request.
-		const revalidateAfter = getRevalidateAfter(cache);
+		const revalidateAfter = mapFor(revalidateAfterByCache, cache);
 		if (!pending && (revalidateAfter.get(cacheKey) ?? 0) <= now) {
 			// Claim the slot before the first await so concurrent stale reads
 			// in the same tick do not each start a fill.
