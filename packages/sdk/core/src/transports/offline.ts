@@ -36,6 +36,7 @@ import type {
 	SavePayload,
 	SaveResult,
 } from '../types';
+import { DEFAULT_BRANDING } from '../types';
 import type { TransportInitResponse } from './init-output';
 import type { ProviderTransportFactory } from './mode';
 
@@ -184,7 +185,7 @@ export const createOfflineTransport = function createOfflineTransport(
 	options: OfflineTransportOptions = {}
 ): OfflineKernelTransport {
 	const defaultLanguage = options.defaultLanguage ?? 'en';
-	const branding: KernelBranding = options.branding ?? 'c15t';
+	const branding: KernelBranding = options.branding ?? DEFAULT_BRANDING;
 	const iabEnabled = options.iabEnabled === true;
 	const translations = normalizeTranslations(
 		options.translations,

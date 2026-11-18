@@ -24,7 +24,6 @@ import type { PrefetchedInitialData } from '../libs/prefetch/prefetch';
 import type {
 	ConsentSnapshot,
 	HydrationRecords,
-	KernelBranding,
 	KernelConfig,
 	KernelOverrides,
 } from '../types';
@@ -159,10 +158,7 @@ export const configFromPrefetchedInit = function configFromPrefetchedInit(
 	}
 	try {
 		return {
-			initialBranding:
-				payload.branding && payload.branding !== 'none'
-					? (payload.branding as KernelBranding)
-					: undefined,
+			initialBranding: payload.branding,
 			initialHosting: payload.hosting,
 			initialLocation: payload.location,
 			initialOverrides: overridesFromInit(overrides, payload),

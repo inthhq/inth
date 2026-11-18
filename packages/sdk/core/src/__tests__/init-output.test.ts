@@ -5,6 +5,7 @@
 import { enTranslations } from '@inth/sdk-translations';
 import { describe, expect, test } from 'vitest';
 
+import { buildInitialSnapshot } from '../kernel/snapshot';
 import {
 	initOutputToKernelConfig,
 	kernelConfigToInitResponse,
@@ -93,17 +94,18 @@ describe('mergeInitResponseIntoKernelConfig', () => {
 		expect(merged).not.toHaveProperty('initialHasConsented');
 	});
 
-	test("branding 'none' is filtered — KernelBranding has no 'none'", () => {
-		const merged = mergeInitResponseIntoKernelConfig(
-			{},
-			// oxlint-disable-next-line typescript/no-explicit-any -- backend can send 'none'
-			{ branding: 'none' as any }
-		);
-		expect(merged.initialBranding).toBeUndefined();
+	test("branding 'none' reaches the snapshot, so stock UI can hide its tag", () => {
+		const merged = mergeInitResponseIntoKernelConfig({}, { branding: 'none' });
+		expect(merged.initialBranding).toBe('none');
+		expect(buildInitialSnapshot(merged).branding).toBe('none');
 		expect(
 			mergeInitResponseIntoKernelConfig({}, { branding: 'inth' })
 				.initialBranding
 		).toBe('inth');
+	});
+
+	test('a snapshot no init has answered carries the inth branding', () => {
+		expect(buildInitialSnapshot({}).branding).toBe('inth');
 	});
 
 	test('hosting survives a prefetch round trip', () => {

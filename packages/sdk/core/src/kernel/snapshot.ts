@@ -36,6 +36,7 @@ import type {
 	ResolvedVendor,
 	PromptSurface,
 } from '../types';
+import { DEFAULT_BRANDING } from '../types';
 import {
 	evaluateExternalPermissions,
 	normalizeExternalPermissions,
@@ -382,7 +383,7 @@ export const buildInitialSnapshot = function buildInitialSnapshot(
 					promptRequirement: evaluation.promptRequirement,
 					resolution,
 				}),
-		branding: config.initialBranding ?? null,
+		branding: config.initialBranding ?? DEFAULT_BRANDING,
 		consentCategories,
 		effectivePermissions: evaluation.permissions,
 		evaluatedAt: now,

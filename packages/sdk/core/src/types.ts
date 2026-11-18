@@ -72,9 +72,13 @@ export type {
 
 /**
  * Brand palette served by `/init` (or chosen offline). Drives default
- * UI theme but has no effect on consent semantics.
+ * UI theme but has no effect on consent semantics. `none` hides the
+ * "Secured by" tag.
  */
-export type KernelBranding = 'c15t' | 'consent' | 'inth';
+export type KernelBranding = 'c15t' | 'consent' | 'inth' | 'none';
+
+/** The branding a snapshot carries until `/init` or a transport names one. */
+export const DEFAULT_BRANDING: KernelBranding = 'inth';
 
 /**
  * Who runs the backend that served `/init`: inth's hosted platform or a
@@ -406,8 +410,8 @@ export interface ConsentSnapshot {
 	readonly location: Readonly<LocationResponse> | null;
 	/** Resolved translation bundle. */
 	readonly translations: Readonly<KernelTranslations> | null;
-	/** Branding identifier. */
-	readonly branding: KernelBranding | null;
+	/** Branding identifier. {@link DEFAULT_BRANDING} until init names one. */
+	readonly branding: KernelBranding;
 	/**
 	 * Who runs the backend, as `/init` reported it. `null` until init
 	 * resolves, and for transports or older backends that do not say.
