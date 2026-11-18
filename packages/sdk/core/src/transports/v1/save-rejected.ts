@@ -51,7 +51,7 @@ const PERMANENT_SAVE_CODES: ReadonlySet<string> = new Set<V1ErrorCode>([
 /**
  * The error for a failed `POST /v1/consent/records`: an
  * {@link InthConsentSaveRejectedError} when a replay would be refused the
- * same way (`402`, `413`, and the `409` codes above), else an
+ * same way (`413`, and the `409` codes above), else an
  * {@link InthApiError} the kernel queues and retries.
  *
  * @param label - Names the caller and route.
@@ -65,7 +65,6 @@ export const readSaveFailure = async function readSaveFailure(
 	const detail = await readInthApiErrorDetail(response);
 	const message = describeInthApiError(label, detail);
 	const permanent =
-		response.status === 402 ||
 		response.status === 413 ||
 		(response.status === 409 && PERMANENT_SAVE_CODES.has(detail.code));
 	return permanent

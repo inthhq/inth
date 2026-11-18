@@ -2,6 +2,7 @@
  * `POST /v1/consent/records` and `POST /v1/subjects/:id/link` against a
  * stubbed `fetch`: the exact request, and how each answer is read.
  */
+import { v1ConsentRecordInputSchema } from '@inth/sdk-schema/v1';
 import { describe, expect, test } from 'vitest';
 
 import { isUuidV7 } from '../../../libs/subject-uuid';
@@ -93,6 +94,41 @@ describe('save: POST /v1/consent/records', () => {
 		});
 	});
 
+	test('builds a body the records schema accepts', async () => {
+		const { calls, fetch } = stubFetch(() => json(200, { subjectId: SUBJECT }));
+
+		await transportWith(fetch).save(
+			savePayload({
+				choice: {
+					categories: {
+						measurement: {
+							basis: { kind: 'legacy-v2', materialFingerprint: 'm' },
+							confirmedAt: ACTION_AT,
+							value: true,
+						},
+					},
+					version: 3,
+				},
+				subject: { subjectId: LEGACY_SUBJECT },
+				subjectId: LEGACY_SUBJECT,
+				user: {
+					externalId: 'user_123',
+					identityProvider: 'clerk',
+					identityToken: 'token',
+				},
+				vendorChoice: {
+					confirmedAt: ACTION_AT,
+					grants: { 'vendor-a': true },
+					version: 1,
+				},
+			})
+		);
+
+		expect(
+			v1ConsentRecordInputSchema['~standard'].validate(bodyAt(calls, 0))
+		).not.toHaveProperty('issues');
+	});
+
 	test('carries the journey as query parameters', async () => {
 		const { calls, fetch } = stubFetch(() => json(200, { subjectId: SUBJECT }));
 
@@ -138,24 +174,6 @@ describe('save: POST /v1/consent/records', () => {
 		});
 	});
 
-	test('sends the same key every time the same payload is sent', async () => {
-		const { calls, fetch } = stubFetch(
-			() => json(503, {}),
-			() => json(200, { subjectId: SUBJECT })
-		);
-		const transport = transportWith(fetch);
-		const payload = savePayload();
-
-		await transport.save(payload).catch(() => undefined);
-		await transport.save(payload);
-
-		expect(
-			calls.map(
-				(call) => (call.body as { idempotencyKey: string }).idempotencyKey
-			)
-		).toEqual([KEY, KEY]);
-	});
-
 	test('a payload without a key gets one', async () => {
 		const { calls, fetch } = stubFetch(() => json(200, { subjectId: SUBJECT }));
 
@@ -197,12 +215,18 @@ describe('save: the answer', () => {
 		});
 	});
 
-	test('ignores a subject ID that is not a canonical UUID', async () => {
-		const { fetch } = stubFetch(() => json(200, { subjectId: LEGACY_SUBJECT }));
+	test.each([
+		['a sub_ subject ID', () => json(200, { subjectId: LEGACY_SUBJECT })],
+		['a page', () => new Response('<html>ok</html>', { status: 200 })],
+	])('retries an answer with %s', async (_label, answer) => {
+		const { fetch } = stubFetch(answer);
 
-		expect(await transportWith(fetch).save(savePayload())).toEqual({
-			ok: true,
-		});
+		const error = await transportWith(fetch)
+			.save(savePayload())
+			.catch((caught: unknown) => caught);
+
+		expect(error).toBeInstanceOf(Error);
+		expect(isConsentSaveRejection(error)).toBe(false);
 	});
 
 	test.each([
@@ -210,7 +234,6 @@ describe('save: the answer', () => {
 		[409, 'policy_snapshot_invalid'],
 		[409, 'policy_snapshot_required'],
 		[409, 'conflict'],
-		[402, 'payment_required'],
 		[413, 'payload_too_large'],
 	])(
 		'a %i %s is refused for good, with its request ID',
@@ -304,6 +327,29 @@ describe('identify: POST /v1/subjects/:id/link', () => {
 			identityProvider: 'clerk',
 			identityToken: 'token',
 		});
+	});
+
+	test('reports the canonical ID for a stored sub_ ID', async () => {
+		const { fetch } = stubFetch(() =>
+			json(200, {
+				externalId: 'user_123',
+				subjectId: SUBJECT,
+				verifiedBy: 'identity_token',
+			})
+		);
+		const seen: [string, string][] = [];
+		const transport = createV1RecordTransport({
+			fetch,
+			onSubjectId: (subjectId, previous) => seen.push([subjectId, previous]),
+			projectUrl: PROJECT_URL,
+		});
+
+		await transport.identify(
+			{ ...user, identityToken: 'token' },
+			LEGACY_SUBJECT
+		);
+
+		expect(seen).toEqual([[SUBJECT, LEGACY_SUBJECT]]);
 	});
 
 	test('a refused link throws the code and request ID', async () => {

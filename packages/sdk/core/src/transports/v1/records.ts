@@ -46,6 +46,12 @@ export interface V1RecordTransportOptions {
 	 * name, else the project URL's.
 	 */
 	property?: string;
+	/**
+	 * Called when a link answers with a subject ID other than the one it was
+	 * sent, such as the UUID for a stored `sub_` ID. A save hands the kernel
+	 * its canonical ID in its result; a link has no such path.
+	 */
+	onSubjectId?: (subjectId: string, previous: string) => void;
 }
 
 /** A save result with the backend's answer about the identity link. */
@@ -76,16 +82,18 @@ const readLink = function readLink(
 	return undefined;
 };
 
-/** Success is the HTTP status. Only a canonical subject ID is adopted. */
-const toSaveResult = function toSaveResult(data: unknown): V1SaveResult {
+/** The save result, or `undefined` for an answer without a canonical subject ID. */
+const toSaveResult = function toSaveResult(
+	data: unknown
+): V1SaveResult | undefined {
 	const body =
 		typeof data === 'object' && data !== null
 			? (data as { link?: unknown; subjectId?: unknown })
 			: {};
-	const result: V1SaveResult = { ok: true };
-	if (typeof body.subjectId === 'string' && isUuidV7(body.subjectId)) {
-		result.subjectId = body.subjectId;
+	if (typeof body.subjectId !== 'string' || !isUuidV7(body.subjectId)) {
+		return undefined;
 	}
+	const result: V1SaveResult = { ok: true, subjectId: body.subjectId };
 	const link = readLink(body.link);
 	if (link) {
 		result.link = link;
@@ -150,7 +158,17 @@ export const createV1RecordTransport = function createV1RecordTransport(
 					response
 				);
 			}
-			await response.body?.cancel();
+			const answer = (await readJson(response)) as
+				| { subjectId?: unknown }
+				| undefined;
+			const canonical = answer?.subjectId;
+			if (
+				typeof canonical === 'string' &&
+				isUuidV7(canonical) &&
+				canonical !== subjectId
+			) {
+				options.onSubjectId?.(canonical, subjectId);
+			}
 		},
 
 		async save(payload): Promise<V1SaveResult> {
@@ -173,7 +191,15 @@ export const createV1RecordTransport = function createV1RecordTransport(
 					response
 				);
 			}
-			return toSaveResult(await readJson(response));
+			const result = toSaveResult(await readJson(response));
+			if (!result) {
+				// Not the backend's answer, such as a proxy's page: retry with the
+				// same key rather than count the save as recorded.
+				throw new Error(
+					`Inth transport: ${V1_ROUTES.records} answered ${response.status} without a canonical subject ID`
+				);
+			}
+			return result;
 		},
 	};
 };
