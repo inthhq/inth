@@ -1,5 +1,6 @@
 import type { HydrationRecords } from '@inth/sdk/engine';
 import type { RequestConsentState } from '@inth/sdk/server';
+import { buildColorSchemeScript } from '@inth/sdk/ui/utils/color-scheme';
 import { defu } from 'defu';
 import { computed, markRaw, shallowRef, toRaw, watch } from 'vue';
 
@@ -15,11 +16,7 @@ import {
 	useState as useNuxtState,
 } from '#imports';
 
-import {
-	applyColorScheme,
-	buildColorSchemeScript,
-	COLOR_SCHEME_SCRIPT_KEY,
-} from './color-scheme';
+import { applyColorScheme, COLOR_SCHEME_SCRIPT_KEY } from './color-scheme';
 import { loadConsentBanner } from './components/lazy-surfaces';
 import type { NuxtConsentBoot } from './deferred/boot';
 import type { NuxtEngineInput } from './deferred/engine';

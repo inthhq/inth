@@ -22,17 +22,17 @@ const provides = function provides(branding: InitOutput['branding']) {
 	};
 };
 
-const mountTag = function mountTag(branding: InitOutput['branding'] = 'inth') {
+const mountTag = function mountTag(branding: InitOutput['branding'] = 'c15t') {
 	return mount(ConsentTag, {
 		global: { provide: provides(branding) },
-		props: { context: 'banner' as const },
+		props: { surface: 'banner' as const },
 	});
 };
 
 const renderTagOnServer = function renderTagOnServer(
-	branding: InitOutput['branding'] = 'inth'
+	branding: InitOutput['branding'] = 'c15t'
 ) {
-	const app = createSSRApp(ConsentTag, { context: 'banner' });
+	const app = createSSRApp(ConsentTag, { surface: 'banner' });
 	const injected = provides(branding);
 	// `Object.entries` drops symbol keys, and every injection key here is one.
 	for (const key of Reflect.ownKeys(injected)) {
@@ -57,7 +57,7 @@ describe('consent tag branding link', () => {
 					},
 				},
 			},
-			props: { context: 'banner' },
+			props: { surface: 'banner' },
 		});
 		expect(configured.get('a').attributes('target')).toBe('_blank');
 		expect(configured.get('a').attributes('rel')).toBe('noopener');
@@ -103,6 +103,33 @@ describe('consent tag branding link', () => {
 			`https://inth.com?ref=${window.location.hostname}`
 		);
 
+		wrapper.unmount();
+	});
+
+	test('the widget tag takes the widget slot and test id', () => {
+		const wrapper = mount(ConsentTag, {
+			global: {
+				provide: {
+					...provides('inth'),
+					[consentConfigKey as symbol]: computed(
+						() =>
+							({
+								components: {
+									tag: {
+										dialog: { class: 'dialog-tag' },
+										manager: { class: 'widget-tag' },
+									},
+								},
+							}) as ConsentConfig
+					),
+				},
+			},
+			props: { surface: 'widget' },
+		});
+		const link = wrapper.get('a');
+		expect(link.attributes('data-testid')).toBe('consent-widget-branding');
+		expect(link.classes()).toContain('widget-tag');
+		expect(link.classes()).not.toContain('dialog-tag');
 		wrapper.unmount();
 	});
 

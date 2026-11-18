@@ -45,8 +45,10 @@ export const useConsentConfig =
 				config.components,
 				'class'
 			);
-			return components === config.components
+			// The returned `theme` carries the arm's overrides too, so the
+			// buttons read the arm's `consentActions`.
+			return components === config.components && theme === config.theme
 				? config
-				: { ...config, components };
+				: { ...config, components, theme };
 		});
 	};

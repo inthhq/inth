@@ -290,7 +290,7 @@ const onAction = function onAction(action: PresentationAction) {
 				>
 					<ConsentTag
 						v-if="!(config.bannerHideBranding ?? config.hideBranding)"
-						context="banner"
+						surface="banner"
 					/>
 					<div
 						ref="card"

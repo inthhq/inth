@@ -90,7 +90,7 @@ const extractDynamicContextSlotPaths = function extractDynamicContextSlotPaths(
 ) {
 	const paths = new Set<string>();
 	const dynamicContextPattern =
-		/config(?:\.value)?\.components\?\.(?<capture1>description|tag|link)\?\.\[context\]/gu;
+		/config(?:\.value)?\.components\?\.(?<capture1>description|tag|link)\?\.\[(?:context|tag\.componentKey)\]/gu;
 	let match = dynamicContextPattern.exec(source);
 
 	while (match) {
