@@ -88,7 +88,7 @@ public struct InthBridgeConfiguration: Sendable, Equatable {
     /// `com.inth.dryRun`. Development and CI only: consent records are dropped, not
     /// queued or sent. A release build refuses to start with it.
     public var dryRun: Bool
-    /// The `property` each consent record names, from `com.inth.backend.property`.
+    /// The `property` each consent record names, from `com.inth.backend.domain`, the key the Expo plugin writes.
     /// `nil` names the app's bundle identifier. Sent lowercase.
     public var property: String?
     public var storageMode: StorageMode
@@ -136,7 +136,7 @@ public struct InthBridgeConfiguration: Sendable, Equatable {
         public static let backendURL = "com.inth.backend.url"
         /// `true` drops consent records. Development and CI only.
         public static let dryRun = "com.inth.dryRun"
-        public static let property = "com.inth.backend.property"
+        public static let domain = "com.inth.backend.domain"
         public static let storageMode = "com.inth.storage"
         public static let keychainService = "com.inth.keychain.service"
         public static let country = "com.inth.country"
@@ -295,7 +295,7 @@ public struct InthBridgeConfiguration: Sendable, Equatable {
             autoBootstrap: (infoPlist[InfoPlistKey.autoBootstrap] as? Bool) ?? true,
             backendURL: backendURL,
             dryRun: (infoPlist[InfoPlistKey.dryRun] as? Bool) ?? false,
-            property: infoPlist[InfoPlistKey.property] as? String,
+            property: infoPlist[InfoPlistKey.domain] as? String,
             storageMode: (infoPlist[InfoPlistKey.storageMode] as? String)
                 .flatMap(StorageMode.parse(_:)) ?? .keychain,
             keychainService: (infoPlist[InfoPlistKey.keychainService] as? String)
