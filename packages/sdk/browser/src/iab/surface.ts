@@ -286,11 +286,10 @@ export const createIABSurface = (
 		const branding = slot(
 			renderBranding({
 				branding: snapshot.branding,
-				hide: dialog && (dialogOptions.hideBranding ?? false),
+				hide: surfaceOptions.hideBranding ?? false,
 				noStyle,
 				securedBy: all.common.securedBy,
-				testId: `${prefix}-branding`,
-				variant: dialog ? 'dialog-tag' : 'banner-tag',
+				surface: dialog ? 'iab-dialog' : 'iab-banner',
 			}),
 			dialog ? 'iabConsentDialogTag' : 'iabConsentBannerTag'
 		);

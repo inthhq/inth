@@ -94,9 +94,9 @@ describe('trigger with DevTools', () => {
 		const mark = (scope: Element | null) =>
 			scope?.querySelector('svg')?.getAttribute('viewBox');
 
-		expect(mark(root.querySelector('[data-inth-trigger]'))).toBe('0 0 446 445');
+		expect(mark(root.querySelector('[data-inth-trigger]'))).toBe('0 0 88 90');
 		devTools(client);
-		expect(mark(action(root, 'preferences'))).toBe('0 0 446 445');
+		expect(mark(action(root, 'preferences'))).toBe('0 0 88 90');
 	});
 
 	it('becomes a toolbar that docks DevTools mounted after it', async () => {

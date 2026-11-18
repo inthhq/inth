@@ -151,8 +151,7 @@ export const createDialog = function createDialog(
 								hide: options.hideBranding ?? false,
 								noStyle,
 								securedBy: t.common.securedBy,
-								testId: 'consent-dialog-branding',
-								variant: 'dialog-tag',
+								surface: 'dialog',
 							}),
 							'consentDialogTag'
 						)

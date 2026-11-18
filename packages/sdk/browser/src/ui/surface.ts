@@ -1,5 +1,6 @@
 import type { ConsentSnapshot, LegalLinks } from '@inth/sdk-core';
 import type { LegalLinksTranslations } from '@inth/sdk-translations';
+import { resolveLegalLinkEntries } from '@inth/sdk-ui/utils/legal-links';
 
 import { classes } from '../generated/styles';
 import type { ConsentClient } from '../types';
@@ -56,43 +57,37 @@ export interface LegalLinksParams {
 export const renderLegalLinks = function renderLegalLinks(
 	params: LegalLinksParams
 ): HTMLElement[] {
-	const { keys, legalLinks, noStyle } = params;
-	if (!(keys && legalLinks)) {
-		return [];
-	}
-	const entries = keys.flatMap((key) => {
-		const link = legalLinks[key];
-		return link?.href ? [{ key, link }] : [];
-	});
+	const entries = resolveLegalLinkEntries(
+		params.legalLinks,
+		params.keys,
+		params.labels
+	);
 	if (entries.length === 0) {
 		return [];
 	}
-	const last = entries.length - 1;
 	return [
 		h(
 			'span',
 			{},
 			' ',
-			...entries.map(({ key, link }, index) => {
-				const target = link.target ?? '_blank';
-				const label = link.label ?? params.labels[key] ?? key;
-				return h(
+			...entries.map((link) =>
+				h(
 					'span',
 					{},
 					h(
 						'a',
 						{
-							class: noStyle ? '' : classes.legalLinks.legalLink,
-							'data-testid': `${params.testIdPrefix}-${key}`,
+							class: params.noStyle ? '' : classes.legalLinks.legalLink,
+							'data-testid': `${params.testIdPrefix}-${link.key}`,
 							href: link.href,
-							rel: link.rel ?? (target === '_blank' ? 'noreferrer' : undefined),
-							target,
+							rel: link.rel,
+							target: link.target,
 						},
-						index < last ? `${label},` : label
+						link.separated ? `${link.label},` : link.label
 					),
-					index < last ? ' ' : null
-				);
-			})
+					link.separated ? ' ' : null
+				)
+			)
 		),
 	];
 };

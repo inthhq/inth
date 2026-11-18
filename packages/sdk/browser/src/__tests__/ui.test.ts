@@ -265,6 +265,23 @@ describe('mountConsentUI', () => {
 		expect(document.body.style.overflow).toBe('hidden');
 	});
 
+	it('styles the action buttons from theme.consentActions', async () => {
+		const { root } = await mount({
+			theme: {
+				consentActions: {
+					accept: { mode: 'filled' },
+					primary: { mode: 'ghost' },
+				},
+			},
+		});
+		const button = (action: string) =>
+			query(root, `consent-banner-${action}-button`);
+		expect(button('accept').dataset.mode).toBe('filled');
+		expect(button('customize').dataset.mode).toBe('ghost');
+		expect(button('customize').dataset.variant).toBe('primary');
+		expect(button('reject').dataset.mode).toBe('stroke');
+	});
+
 	it('keeps the default corner for right-to-left text', async () => {
 		const { root } = await mount(
 			{},
@@ -318,9 +335,10 @@ describe('mountConsentUI', () => {
 				'data-variant'
 			)
 		).toBe('primary');
+		// No branding from the backend: the tag links to inth.com.
 		expect(
 			query(root, 'consent-banner-branding').getAttribute('href')
-		).toContain('c15t.com');
+		).toContain('inth.com');
 		expect(
 			root.querySelector('[data-testid="consent-dialog-root"]')
 		).toBeNull();

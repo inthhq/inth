@@ -72,7 +72,7 @@ export interface ConsentBannerOptions {
 	rejectButtonText?: string;
 	/** "Customize" label. */
 	customizeButtonText?: string;
-	/** Drop the "Secured by c15t" tag. The IAB banner always retains its tag. */
+	/** Drop the "Secured by" tag. */
 	hideBranding?: boolean;
 	/** Which legal links to render inline. `null` renders none. */
 	legalLinks?: (keyof LegalLinks)[] | null;
@@ -86,7 +86,7 @@ export interface ConsentBannerOptions {
 
 /** Overrides for the preference centre dialog. */
 export interface ConsentDialogOptions {
-	/** Drop the "Secured by c15t" tag. */
+	/** Drop the "Secured by" tag. */
 	hideBranding?: boolean;
 	/** Which legal links to render inline. `null` renders none. */
 	legalLinks?: (keyof LegalLinks)[] | null;
