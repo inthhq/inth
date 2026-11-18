@@ -9,6 +9,7 @@ import com.inth.core.spi.HttpResponse
 import com.inth.core.store.InthJson
 import com.inth.core.store.InthStore
 import com.inth.core.store.InthStoreKeys
+import com.inth.core.spi.TaskExecutor
 import com.inth.core.transport.HostedTransport
 import com.inth.core.transport.LinkOutcome
 import com.inth.core.transport.SaveOutcome
@@ -225,6 +226,26 @@ class CanonicalSubjectTest {
 		assertNull(anonymous["identityProvider"], "logout drops the provider with the external id")
 	}
 
+	@Test
+	fun `a link answered after identify moved to another person keeps the local id`() {
+		val store = InthStore(InMemoryKeyValueStore())
+		val transport = RecordingTransport().respondInit(initSuccess()).respondLink(LinkOutcome.Linked(CANONICAL))
+		val pending = ArrayDeque<() -> Unit>()
+		val core = testKernel(store = store, transport = transport, executor = TaskExecutor { pending += it })
+		fun drain() { while (pending.isNotEmpty()) pending.removeFirst()() }
+		core.bootstrap()
+		drain()
+		val original = assertNotNull(core.snapshot().subject).id
+
+		core.identify(KernelUser("user-1"), identityToken = "token-1")
+		core.identify(KernelUser("user-2"))
+		drain()
+
+		assertEquals(listOf(Triple(original, "user-1", "token-1")), transport.linkRequests)
+		assertEquals(original, core.snapshot().subject?.id, "user-1's canonical id is not installed under user-2")
+		assertEquals("user-2", core.snapshot().subject?.externalId)
+		assertEquals(original, store.readSubject()?.id)
+	}
 
 	@Test
 	fun `a save is sent even when a snapshot observer throws`() {

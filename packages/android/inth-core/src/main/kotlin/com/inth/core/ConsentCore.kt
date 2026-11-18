@@ -1274,7 +1274,7 @@ class ConsentCore @InthInternalApi constructor(
 			LinkOutcome.Unavailable("Inth transport: ${error.message ?: error.javaClass.simpleName}")
 		}
 		when (outcome) {
-			is LinkOutcome.Linked -> adoptCanonicalSubject(subject.id, outcome.subjectId)
+			is LinkOutcome.Linked -> adoptCanonicalSubject(subject.id, outcome.subjectId, linkedExternalId = user.externalId)
 			is LinkOutcome.Rejected -> emitError(
 				KernelError(
 					code = outcome.failure.code ?: IDENTITY_LINK_FAILED,
@@ -1308,12 +1308,18 @@ class ConsentCore @InthInternalApi constructor(
 	 * Queued bodies and the stored IAB record are never rewritten. [sentId] becomes one of
 	 * [ConsentSubject.previousIds], so they stay this subject's: replay still sends them,
 	 * and the backend maps the old id.
+	 *
+	 * A link names the canonical id of the person it linked, so with [linkedExternalId] the
+	 * id is adopted only while the subject still carries that external id. An `identify`
+	 * for another person while the link was in flight keeps the local id.
 	 */
-	private fun adoptCanonicalSubject(sentId: String, canonical: String?) {
+	private fun adoptCanonicalSubject(sentId: String, canonical: String?, linkedExternalId: String? = null) {
 		if (canonical == null || canonical == sentId || !SubjectIdGenerator.isUuidV7(canonical)) return
 		mutate { mutation ->
 			val replaced = synchronized(mutationLock) {
-				state.get().subject?.takeIf { it.id == sentId }?.replacingId(canonical)
+				state.get().subject
+					?.takeIf { it.id == sentId && (linkedExternalId == null || it.externalId == linkedExternalId) }
+					?.replacingId(canonical)
 			} ?: return@mutate
 			if (!store.writeSubjectDurably(replaced)) return@mutate
 			synchronized(mutationLock) {
