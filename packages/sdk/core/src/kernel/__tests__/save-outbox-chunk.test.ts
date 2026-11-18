@@ -23,10 +23,12 @@ const valueImports = function valueImports(file: string): string[] {
 };
 
 test('the stored queue imports values only from modules first load does not have', () => {
-	// `libs/experiment-record` is read by the queue alone.
+	// `libs/experiment-record` and `stored-key` are read by the queue alone.
 	expect(valueImports(join(here, '../save-outbox/queue.ts'))).toEqual([
 		'../../libs/experiment-record',
+		'./stored-key',
 	]);
+	expect(valueImports(join(here, '../save-outbox/stored-key.ts'))).toEqual([]);
 	expect(valueImports(join(here, '../../libs/experiment-record.ts'))).toEqual(
 		[]
 	);

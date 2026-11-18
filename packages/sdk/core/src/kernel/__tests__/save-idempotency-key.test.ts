@@ -35,6 +35,69 @@ const queued = function queued(): Promise<QueuedEntry[]> {
 	return store.transact((tx) => (tx.read('saves') ?? []) as QueuedEntry[]);
 };
 
+const UUID_PATTERN =
+	/^[\da-f]{8}-[\da-f]{4}-[1-8][\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/u;
+
+/** A save a c15t client queued: no idempotency key. */
+const keylessEntry = function keylessEntry(): QueuedEntry {
+	return {
+		attempts: 0,
+		payload: {
+			choice: {
+				categories: {
+					marketing: {
+						basis: { fingerprint: 'fp', kind: 'choice-v1' },
+						confirmedAt: 1_700_000_000_000,
+						value: true,
+					},
+				},
+				version: 3,
+			},
+			confirmed: {
+				actionAt: 1_700_000_000_000,
+				categories: { marketing: true },
+			},
+			consentAction: 'custom',
+			consents: { marketing: true, necessary: true },
+			givenAt: 1_700_000_000_000,
+			model: 'opt-in',
+			overrides: {},
+			policySnapshotToken: null,
+			subject: { subjectId: 'sub_legacy' },
+			subjectId: 'sub_legacy',
+			tcString: null,
+			uiSource: 'banner',
+			user: null,
+		} as SavePayload,
+		queuedAt: Date.now() - 60_000,
+	};
+};
+
+/** `inner`, refusing every write, as a full localStorage does. */
+const refusingWrites = function refusingWrites(
+	inner: SaveOutboxStore
+): SaveOutboxStore {
+	return {
+		clear: () => {},
+		transact: (run) =>
+			inner.transact((tx) => run({ read: tx.read, write: () => false })),
+	};
+};
+
+/** Replay the stored queue from a new page, sending through `save`. */
+const replayOnNewPage = async function replayOnNewPage(
+	outboxStore: SaveOutboxStore,
+	save: (payload: SavePayload) => Promise<{ ok: boolean }>
+): Promise<void> {
+	const kernel = createKernel(
+		{ transport: { init: vi.fn().mockResolvedValue({}), save } },
+		{ outboxStore }
+	);
+	await kernel.commands.init();
+	await vi.waitFor(() => expect(save).toHaveBeenCalled());
+	kernel.dispose();
+};
+
 describe('save idempotency key', () => {
 	test('each action gets a key of its own', async () => {
 		const saveSpy = vi.fn((payload: SavePayload) =>
@@ -149,5 +212,44 @@ describe('save idempotency key', () => {
 		await vi.waitFor(async () => expect(await queued()).toEqual([]));
 		expect(replay).not.toHaveBeenCalled();
 		next.dispose();
+	});
+
+	test('a stored save without a key is sent with the same key on every attempt', async () => {
+		await store.transact((tx) => {
+			tx.write('saves', [keylessEntry()]);
+		});
+		const failed = vi.fn((_payload: SavePayload): Promise<{ ok: boolean }> =>
+			Promise.reject(new Error('save offline'))
+		);
+		await replayOnNewPage(store, failed);
+		const sent = vi.fn((_payload: SavePayload) =>
+			Promise.resolve({ ok: true })
+		);
+		await replayOnNewPage(store, sent);
+
+		const key = failed.mock.calls[0]?.[0].idempotencyKey;
+		expect(key).toMatch(UUID_PATTERN);
+		expect(sent.mock.calls[0]?.[0].idempotencyKey).toBe(key);
+		await vi.waitFor(async () => expect(await queued()).toEqual([]));
+	});
+
+	test('the key is the same when storage refuses to keep it', async () => {
+		await store.transact((tx) => {
+			tx.write('saves', [keylessEntry()]);
+		});
+		const full = refusingWrites(store);
+		const first = vi.fn((_payload: SavePayload) =>
+			Promise.resolve({ ok: false })
+		);
+		await replayOnNewPage(full, first);
+		const second = vi.fn((_payload: SavePayload) =>
+			Promise.resolve({ ok: true })
+		);
+		await replayOnNewPage(full, second);
+
+		const key = first.mock.calls[0]?.[0].idempotencyKey;
+		expect(key).toMatch(UUID_PATTERN);
+		expect(second.mock.calls[0]?.[0].idempotencyKey).toBe(key);
+		expect((await queued())[0]?.payload.idempotencyKey).toBeUndefined();
 	});
 });
