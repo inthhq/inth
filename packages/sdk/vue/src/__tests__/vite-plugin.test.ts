@@ -10,6 +10,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { CONSENT_CHUNK_GROUP } from '@inth/sdk/build';
 import { createConsentManifestPolicyPack } from '@inth/sdk/schema/types';
 import { build } from 'vite';
 import type { Rollup } from 'vite';
@@ -156,6 +157,18 @@ describe('consentManifest()', () => {
 		expect(optimizeDeps.exclude).toEqual(
 			expect.arrayContaining(['@inth/sdk/generated', '@inth/vue'])
 		);
+	});
+
+	it('groups the consent modules into one chunk in a single-page app build', () => {
+		const { build } = consentManifest().config.call(
+			{ meta: { rolldownVersion: '1.2.0' } },
+			{},
+			{ isSsrBuild: false }
+		);
+
+		expect(build?.rolldownOptions.output.codeSplitting.groups).toEqual([
+			CONSENT_CHUNK_GROUP,
+		]);
 	});
 });
 

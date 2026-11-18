@@ -14,17 +14,6 @@ export type {
 } from '@inth/sdk/build';
 
 /**
- * Packages that ship `.vue` files. Vite's dependency pre-bundling cannot
- * load them, so they stay out of it.
- */
-const VUE_SOURCE_PACKAGES = ['@inth/vue'];
-
-/** What {@link consentManifest} returns: one Vite plugin. */
-export type VueConsentManifestPlugin = Omit<ConsentManifestPlugin, 'config'> & {
-	config: () => ReturnType<ConsentManifestPlugin['config']>;
-};
-
-/**
  * The Inth Vite plugin for a plain Vue app. It serves the deployment's
  * consent manifest and backend URL as the virtual module
  * `@inth/sdk/generated`, which `manifest()` and
@@ -66,23 +55,11 @@ export type VueConsentManifestPlugin = Omit<ConsentManifestPlugin, 'config'> & {
  */
 export const consentManifest = (
 	options: ConsentManifestPluginOptions = {}
-): VueConsentManifestPlugin => {
-	const plugin = createConsentManifestPlugin(options, {
+): ConsentManifestPlugin =>
+	createConsentManifestPlugin(options, {
 		adviseHostedForLocation: true,
 		envNames: [VITE_PROJECT_URL_ENV],
 		label: '@inth/vue/vite',
 		packages: ['@inth/vue'],
+		sourcePackages: ['@inth/vue'],
 	});
-	return {
-		...plugin,
-		config: () => {
-			const config = plugin.config();
-			return {
-				...config,
-				optimizeDeps: {
-					exclude: [...config.optimizeDeps.exclude, ...VUE_SOURCE_PACKAGES],
-				},
-			};
-		},
-	};
-};

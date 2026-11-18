@@ -1161,6 +1161,11 @@ export const createConsentManifestPlugin = (
 		 */
 		packages?: readonly string[];
 		/**
+		 * Packages that ship framework source files, such as `.vue`, which
+		 * Vite's dependency pre-bundling cannot load. They stay out of it.
+		 */
+		sourcePackages?: readonly string[];
+		/**
 		 * Warn when the snapshot's policy depends on the visitor's location,
 		 * which a single-page app's `manifest()` can't resolve on its own.
 		 */
@@ -1376,7 +1381,9 @@ export const createConsentManifestPlugin = (
 		},
 		config(this, userConfig, env) {
 			const base = {
-				optimizeDeps: { exclude: [...generatedIds] },
+				optimizeDeps: {
+					exclude: [...generatedIds, ...(defaults.sourcePackages ?? [])],
+				},
 				ssr: { noExternal: [...importers] },
 			};
 			// Server-rendered adapters keep their framework's chunking.
