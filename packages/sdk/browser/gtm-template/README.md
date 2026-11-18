@@ -28,7 +28,7 @@ the real sandbox.
 
 The gallery reads templates from a public GitHub repository with
 `template.tpl`, `metadata.yaml` and a `LICENSE` at its root.
-[`inthhq/inth-gtm-template`](https://github.com/inthhq/inth-gtm-template) is
+[`inthhq/c15t-gtm-template`](https://github.com/inthhq/c15t-gtm-template) is
 that repository. Keep it as a copy of this directory:
 
 1. Copy `template.tpl` and the root `LICENSE` into the mirror repository and

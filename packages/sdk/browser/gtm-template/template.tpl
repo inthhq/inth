@@ -19,7 +19,7 @@ ___INFO___
     "UTILITY"
   ],
   "brand": {
-    "id": "github.com_inth",
+    "id": "github.com_c15t",
     "displayName": "Inth"
   },
   "description": "Load the Inth consent banner and set Google Consent Mode v2 from the visitor's choice. Fire it on the Consent Initialization - All Pages trigger.",
