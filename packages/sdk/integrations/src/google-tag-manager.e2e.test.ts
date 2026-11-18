@@ -21,6 +21,34 @@ import { googleTagManager } from './vendors/tag-managers/google-tag-manager';
 describe('googleTagManager contract', () => {
 	registerVendorContractCleanup();
 
+	it('runs a custom dataLayer and its own gtag', () => {
+		loadScripts(
+			[googleTagManager({ dataLayer: 'shopLayer', id: 'GTM-LAYER' })],
+			grantedMarketingConsents
+		);
+
+		const win = window as TestWindow & Record<string, unknown>;
+		const layer = win.shopLayer as unknown[];
+		expect(win.dataLayer).toBeUndefined();
+		expect(typeof win.shopLayerGtag).toBe('function');
+		expect(toArgs(layer[0]).slice(0, 2)).toEqual(['consent', 'default']);
+		expect(layer).toContainEqual(expect.objectContaining({ event: 'gtm.js' }));
+		const src = document
+			.querySelector('script[src*="gtm.js"]')
+			?.getAttribute('src');
+		expect(src).toBe(
+			'https://www.googletagmanager.com/gtm.js?id=GTM-LAYER&l=shopLayer'
+		);
+
+		updateScripts(
+			[googleTagManager({ dataLayer: 'shopLayer', id: 'GTM-LAYER' })],
+			grantedMeasurementConsents
+		);
+		expect(layer.map((entry) => toArgs(entry)[1])).toContain('update');
+		Reflect.deleteProperty(win, 'shopLayer');
+		Reflect.deleteProperty(win, 'shopLayerGtag');
+	});
+
 	it('acknowledges the consent default before container boot', () => {
 		installHeadProbe((node, win) => {
 			if (!node.src.includes('googletagmanager.com/gtm.js')) {

@@ -5,45 +5,27 @@ import { runtimeTimestampValue, vendorManifestContract } from '../../types';
 import type { VendorManifest } from '../../types';
 import {
 	GOOGLE_CONSENT_MODE_V2_DEFAULT_MAPPING,
+	GTAG_BOOTSTRAP,
 	withOptionalConsentMapping,
 } from '../_shared/google-consent';
 import { readId, skipMissingId } from '../_shared/required-id';
 
-declare global {
-	interface Window {
-		dataLayer: unknown[];
-		gtag: (...args: unknown[]) => void;
-	}
-}
-
 /**
- * Google Tag Manager vendor manifest.
+ * Google Tag Manager vendor manifest. `dataLayer` and `gtag` name the
+ * container's queue and its gtag function, and `layerQuery` is the `&l=`
+ * query `gtm.js` needs for a queue not named `dataLayer`.
  */
 export const googleTagManagerManifest = {
 	...vendorManifestContract,
 	alwaysLoad: true,
-	bootstrap: [
-		{
-			ifUndefined: true,
-
-			name: 'dataLayer',
-			type: 'setGlobal',
-			value: [],
-		},
-		{
-			ifUndefined: true,
-
-			name: 'gtag',
-			queue: 'dataLayer',
-			type: 'defineQueueFunction',
-		},
-	],
+	bootstrap: GTAG_BOOTSTRAP,
 	category: 'necessary',
 	consentMapping: GOOGLE_CONSENT_MODE_V2_DEFAULT_MAPPING,
 	consentSignal: 'gtag',
+	consentSignalTarget: '{{gtag}}',
 	install: [
 		{
-			queue: 'dataLayer',
+			queue: '{{dataLayer}}',
 			type: 'pushToQueue',
 			value: {
 				event: 'gtm.js',
@@ -54,7 +36,7 @@ export const googleTagManagerManifest = {
 		{
 			async: true,
 
-			src: 'https://www.googletagmanager.com/gtm.js?id={{id}}',
+			src: 'https://www.googletagmanager.com/gtm.js?id={{id}}{{layerQuery}}',
 			type: 'loadScript',
 		},
 	],
@@ -62,7 +44,7 @@ export const googleTagManagerManifest = {
 		{
 			args: ['event', '{{updateEventName}}'],
 
-			global: 'gtag',
+			global: '{{gtag}}',
 			type: 'callGlobal',
 		},
 	],
@@ -216,35 +198,17 @@ export const googleTagManager = function googleTagManager({
 		});
 	}
 
-	let manifest: VendorManifest = withOptionalConsentMapping(
-		googleTagManagerManifest,
-		consentMapping
+	const custom = dataLayer !== 'dataLayer';
+	const resolved = resolveManifest(
+		withOptionalConsentMapping(googleTagManagerManifest, consentMapping),
+		{
+			dataLayer,
+			gtag: custom ? `${dataLayer}Gtag` : 'gtag',
+			id: normalizedId,
+			layerQuery: custom ? `&l=${encodeURIComponent(dataLayer)}` : '',
+			updateEventName: updateEventName ?? 'consent-update',
+		}
 	);
-
-	if (dataLayer !== 'dataLayer') {
-		// Manifest values are JSON; substitute only exact queue/signal tokens.
-		manifest = JSON.parse(
-			JSON.stringify(manifest)
-				.replace(/"(?:dataLayer|gtag)"/gu, (token) =>
-					JSON.stringify(
-						token === '"dataLayer"' ? dataLayer : `${dataLayer}Gtag`
-					)
-				)
-				.replace(
-					'gtm.js?id={{id}}',
-					`gtm.js?id={{id}}&l=${encodeURIComponent(dataLayer)}`
-				)
-		);
-		manifest = {
-			...manifest,
-			consentSignal: 'gtag',
-			consentSignalTarget: `${dataLayer}Gtag`,
-		};
-	}
-	const resolved = resolveManifest(manifest, {
-		id: normalizedId,
-		updateEventName: updateEventName ?? 'consent-update',
-	});
 
 	const gtmScript: Script = {
 		...resolved,

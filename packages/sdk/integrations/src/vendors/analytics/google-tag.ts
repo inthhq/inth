@@ -5,16 +5,10 @@ import { runtimeDateValue, vendorManifestContract } from '../../types';
 import type { VendorManifest } from '../../types';
 import {
 	GOOGLE_CONSENT_MODE_V2_DEFAULT_MAPPING,
+	GTAG_BOOTSTRAP,
 	withOptionalConsentMapping,
 } from '../_shared/google-consent';
 import { readId, skipMissingId } from '../_shared/required-id';
-
-declare global {
-	interface Window {
-		dataLayer: unknown[];
-		gtag: (...args: unknown[]) => void;
-	}
-}
 
 /**
  * Google Tag (gtag.js) vendor manifest.
@@ -25,22 +19,7 @@ declare global {
 export const gtagManifest = {
 	...vendorManifestContract,
 	alwaysLoad: true,
-	bootstrap: [
-		{
-			ifUndefined: true,
-
-			name: 'dataLayer',
-			type: 'setGlobal',
-			value: [],
-		},
-		{
-			ifUndefined: true,
-
-			name: 'gtag',
-			queue: 'dataLayer',
-			type: 'defineQueueFunction',
-		},
-	],
+	bootstrap: GTAG_BOOTSTRAP,
 	category: '{{category}}',
 	consentMapping: GOOGLE_CONSENT_MODE_V2_DEFAULT_MAPPING,
 	consentSignal: 'gtag',
@@ -207,6 +186,8 @@ export const gtag = function gtag({
 	const resolved = resolveManifest(manifest, {
 		category,
 		config,
+		dataLayer: 'dataLayer',
+		gtag: 'gtag',
 		id: normalizedId,
 	});
 

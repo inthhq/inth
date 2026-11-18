@@ -1,3 +1,32 @@
+import type { ManifestStep } from '../../types';
+
+declare global {
+	interface Window {
+		dataLayer: unknown[];
+		gtag: (...args: unknown[]) => void;
+	}
+}
+
+/**
+ * The gtag.js snippet: a `{{dataLayer}}` queue and a `{{gtag}}` function
+ * that pushes onto it, each defined only when the page has none. A
+ * manifest that uses it passes `dataLayer` and `gtag`, the global names.
+ */
+export const GTAG_BOOTSTRAP: ManifestStep[] = [
+	{
+		ifUndefined: true,
+		name: '{{dataLayer}}',
+		type: 'setGlobal',
+		value: [],
+	},
+	{
+		ifUndefined: true,
+		name: '{{gtag}}',
+		queue: '{{dataLayer}}',
+		type: 'defineQueueFunction',
+	},
+];
+
 /**
  * Every Google Consent Mode v2 consent type, in Google's documented order.
  *
