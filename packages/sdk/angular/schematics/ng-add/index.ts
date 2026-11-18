@@ -221,7 +221,7 @@ const resolveProject = async (
 		return only;
 	}
 	throw new SchematicsException(
-		'Pass --project with the application to add inth to.'
+		'Pass --project with the application to add Inth to.'
 	);
 };
 
@@ -327,7 +327,6 @@ interface Subscribable<Value> {
  * `lastValueFrom` without RxJS: the peer range includes RxJS 6, which has
  * no `lastValueFrom`.
  *
- * @param observable - What to wait for.
  * @returns Its last value, or `undefined` when it emits none.
  * @throws {unknown} What the Observable errors with.
  * @internal
@@ -528,10 +527,7 @@ const resolvesTo = (
  * counts, and a local function of that name or the text in a comment does
  * not.
  *
- * @param tree - The workspace.
  * @param files - The reachable files, in search order.
- * @param resolve - Resolves the files' imports.
- * @returns The file, or `undefined`.
  */
 const findProvideInthCall = (
 	tree: Tree,
@@ -550,9 +546,6 @@ const findProvideInthCall = (
 	});
 };
 
-/**
- * The names `source` binds at its top level: imports and declarations.
- */
 /** A name `source` binds at its top level. */
 interface TopLevelBinding {
 	readonly name: ts.Identifier;
@@ -963,7 +956,7 @@ const rootProvidesInth = (
 					]);
 				}
 				// The app's own function could return anything; a library's
-				// provider function, such as `provideRouter()`, is not inth's.
+				// provider function, such as `provideRouter()`, is not Inth's.
 				return callsLocalCode(expression) ? 'unknown' : 'absent';
 			},
 			'absent'
@@ -1291,7 +1284,6 @@ const addComponents = (
  * Adds Inth to an Angular application.
  *
  * @param options - Options from the prompts or command line.
- * @returns The rule the Angular CLI runs.
  */
 export const ngAdd =
 	(options: NgAddOptions): Rule =>

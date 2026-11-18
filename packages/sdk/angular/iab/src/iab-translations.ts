@@ -14,7 +14,6 @@ export type IABTranslations = ResolvedIABCopy;
  * English.
  *
  * @param translationConfig - `ConsentManager.translationConfig()`.
- * @returns The complete IAB copy.
  */
 export const getIABTranslations = function getIABTranslations(
 	translationConfig?: TranslationConfig

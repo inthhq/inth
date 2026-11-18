@@ -128,7 +128,6 @@ describe('<inth-consent-banner> templates', () => {
 		await vi.waitFor(() => {
 			expect(consent.has('marketing')).toBe(true);
 		});
-		// The banner animates out, then unmounts.
 		await vi.waitFor(async () => {
 			await fixture.whenStable();
 			expect(byTestId('consent-banner-root')).toBeNull();

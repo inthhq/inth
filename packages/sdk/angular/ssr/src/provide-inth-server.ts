@@ -117,11 +117,6 @@ const serverResolution = function serverResolution(
 	}).consent;
 };
 
-/**
- * Resolves the visitor's consent for one request.
- *
- * @internal
- */
 const resolveServerState = function resolveServerState(
 	options: InthServerOptions,
 	provider: InthProviderOptions,
@@ -173,10 +168,6 @@ const resolveServerState = function resolveServerState(
  * When the page has the stock banner, a small script in `<head>` holds a
  * tap on it made before the app hydrates; the banner records that choice
  * once it hydrates.
- *
- * @param options - The consent route, request overrides and upstream
- * settings. Every one is optional.
- * @returns Providers for the server application config.
  *
  * @example
  * ```ts

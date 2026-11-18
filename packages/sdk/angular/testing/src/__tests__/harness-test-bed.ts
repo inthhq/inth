@@ -24,9 +24,7 @@ export interface HarnessTest<ComponentType> {
  * rule, every category and no animation, and waits for the first stable
  * render.
  *
- * @param host - The component to render.
  * @param options - Provider options merged over the defaults.
- * @returns The fixture and its loaders.
  */
 export const bootHarnessTest = async function bootHarnessTest<ComponentType>(
 	host: new () => ComponentType,
@@ -81,7 +79,6 @@ export const iabTestOptions =
  * such as the IAB module and vendor list loading.
  *
  * @param find - Looks the harness up, or returns `null`.
- * @returns The harness.
  */
 export const waitForHarness = async function waitForHarness<HarnessType>(
 	find: () => Promise<HarnessType | null>

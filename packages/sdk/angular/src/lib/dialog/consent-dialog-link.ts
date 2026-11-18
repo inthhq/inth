@@ -68,7 +68,6 @@ export class ConsentDialogLink {
 	/**
 	 * Opens the dialog, unless a handler before it called `preventDefault()`.
 	 *
-	 * @param event - The click.
 	 * @internal
 	 */
 	protected open(event: Event): void {

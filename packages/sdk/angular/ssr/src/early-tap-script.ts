@@ -23,7 +23,6 @@ export const EARLY_TAP_SCRIPT_ATTRIBUTE = 'data-inth-early-tap';
 /**
  * Adds the early-tap script to `<head>` when the render has a stock banner.
  *
- * @param document - The document the server rendered.
  * @param nonce - CSP nonce for the script. The script copies it to the
  * `<style>` that hides the banner.
  * @internal

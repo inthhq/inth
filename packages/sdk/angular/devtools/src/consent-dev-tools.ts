@@ -219,7 +219,6 @@ export class ConsentDevTools {
  * development-only config, such as one swapped in with `fileReplacements`,
  * or use {@link ConsentDevTools} inside `@defer`.
  *
- * @param options - Panel options.
  * @returns Providers for `bootstrapApplication` or an `ApplicationConfig`.
  * @example
  * ```ts

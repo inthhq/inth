@@ -72,7 +72,6 @@ export type ConsentDialogTriggerPosition = CornerPosition;
 
 export type { ConsentDialogTriggerVisibility } from '@inth/sdk/schema/config';
 
-/** The trigger's size. */
 export type ConsentDialogTriggerSize = 'sm' | 'md' | 'lg';
 
 /** Moves under this many pixels count as a click, not a drag. */
@@ -244,7 +243,6 @@ export class ConsentDialogTrigger {
 	 * `'after-consent'` once no prompt is owed, and `'never'` hides it.
 	 */
 	readonly showWhen = input<ConsentDialogTriggerVisibility>('always');
-	/** The trigger's size. */
 	readonly size = input<ConsentDialogTriggerSize>('md');
 	/**
 	 * The button's accessible name. Defaults to the `trigger.label`

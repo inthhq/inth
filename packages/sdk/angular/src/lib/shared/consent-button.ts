@@ -46,7 +46,6 @@ export type ConsentButtonVariant = 'primary' | 'neutral';
 /** The button's fill. */
 export type ConsentButtonMode = 'filled' | 'stroke' | 'lighter' | 'ghost';
 
-/** The button's size. */
 export type ConsentButtonSize = 'medium' | 'small' | 'xsmall' | 'xxsmall';
 
 /**
@@ -91,7 +90,6 @@ export class ConsentButton {
 	readonly variant = input<ConsentButtonVariant>('neutral');
 	/** The button's fill. */
 	readonly mode = input<ConsentButtonMode>('stroke');
-	/** The button's size. */
 	readonly size = input<ConsentButtonSize>('small');
 	/** Drop the stock classes. Defaults to the provider's `noStyle`. */
 	readonly noStyle = input<boolean | undefined>(undefined);
@@ -144,7 +142,6 @@ export class ConsentButton {
 	 * Performs the action, unless an earlier handler called
 	 * `preventDefault()`.
 	 *
-	 * @param event - The click.
 	 * @internal
 	 */
 	protected async run(event: Event): Promise<void> {

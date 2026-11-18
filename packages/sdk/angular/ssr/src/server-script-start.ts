@@ -22,7 +22,6 @@ type ServerStartOptions = Parameters<typeof serverScriptStart>[0];
  * when no script may start; a failed import leaves the start to the loader
  * after hydration.
  *
- * @param document - The document the server renders.
  * @param options - The provider's options, with its `scripts`.
  * @param state - The state resolved for this request.
  * @param nonce - CSP nonce for the script.

@@ -203,8 +203,6 @@ export type InthResolvedOptions = Omit<InthSharedOptions, never> & {
  * The options the provider hands the runtime: its own, with the lazy IAB
  * and GPP loaders and the package name.
  *
- * @param options - The provider's options.
- * @returns The runtime options.
  * @internal
  */
 export const runtimeOptionsFor = function runtimeOptionsFor(

@@ -138,7 +138,6 @@ const afterPageLoadIdle = function afterPageLoadIdle(
  * period after the page's load event. It does not run when idle loading is
  * off for the visitor's connection.
  *
- * @param run - What to load.
  * @returns Cancels it, if it has not run.
  * @internal
  */

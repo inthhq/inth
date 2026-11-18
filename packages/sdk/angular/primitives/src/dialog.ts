@@ -48,7 +48,6 @@ export type DialogCloseReason = 'backdrop' | 'close-trigger' | 'escape';
  */
 @Directive({ exportAs: 'inthDialog', selector: '[inthDialog]' })
 export class Dialog {
-	/** Whether the dialog is open. */
 	readonly open = model(false);
 	/** Whether Escape closes it. */
 	readonly closeOnEscape = input(true);
@@ -115,8 +114,6 @@ export class Dialog {
 
 	/**
 	 * Close the dialog for a reason, unless the options forbid that reason.
-	 *
-	 * @param reason - What asked it to close.
 	 */
 	requestClose(reason: DialogCloseReason): void {
 		if (reason === 'escape' && !this.closeOnEscape()) {
@@ -266,7 +263,6 @@ export class DialogClose {
 	protected readonly dialog = inject(Dialog);
 	/** Whether the button ignores clicks. */
 	readonly disabled = input(false);
-	/** The button's `type`. */
 	readonly type = input<'button' | 'submit' | 'reset'>('button');
 
 	/** @internal */

@@ -82,7 +82,6 @@ export interface DeferredRuntimeOptions {
 	boot: ConsentBoot;
 	/** The provider's current options. */
 	options: () => InthResolvedOptions;
-	/** Loads the engine chunk. */
 	loadEngine: () => Promise<EngineFactory>;
 	/** Completes a commit; loads `commit.ts` by default. A test seam. */
 	completeCommit?: (
@@ -174,8 +173,6 @@ const displayedCategoriesOf = (
  * Creates the deferred runtime. Render it like the engine's runtime: the
  * provider calls `start()` once mounted.
  *
- * @param options - The boot, the provider's options and the engine loader.
- * @returns The runtime the consent manager renders.
  * @internal
  */
 // oxlint-disable-next-line max-lines-per-function, max-statements -- One runtime, its tap routing and its engine handover.
@@ -241,7 +238,6 @@ export const createDeferredRuntime = function createDeferredRuntime(
 	/** The load in flight. A failed one clears, so the next request retries. */
 	let loading: Promise<ConsentProviderRuntime | undefined> | undefined;
 
-	/** One attempt: import, build, start and attach the engine. */
 	const buildEngine = async (): Promise<ConsentProviderRuntime | undefined> => {
 		const create = await options.loadEngine();
 		// A commit started while the chunk loaded: the engine starts from it.
@@ -305,7 +301,6 @@ export const createDeferredRuntime = function createDeferredRuntime(
 		}
 	};
 
-	/** Loads and attaches the engine, or joins the load in flight. */
 	const loadEngine = (): Promise<ConsentProviderRuntime | undefined> => {
 		if (engine) {
 			return Promise.resolve(engine.runtime);

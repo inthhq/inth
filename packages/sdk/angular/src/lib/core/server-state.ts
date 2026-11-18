@@ -28,7 +28,6 @@ export const INTH_SERVER_STATE = makeStateKey<RuntimePrefetch>('inth');
 export class ServerStateGate {
 	/** Resolves once the gate opens. */
 	readonly ready: Promise<void>;
-	/** Opens the gate. */
 	readonly open: () => void;
 
 	constructor() {

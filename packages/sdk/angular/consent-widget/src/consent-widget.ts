@@ -303,7 +303,7 @@ export class ConsentWidgetRoot {
 	readonly #styles = inject(ConsentStyles);
 	readonly #id = uniqueId('inth-consent-widget');
 
-	/** Hide the "Secured by c15t" attribution. */
+	/** Hide the "Secured by" attribution. */
 	readonly hideBranding = input(true);
 	/** Drop the stock classes. Defaults to the provider's `noStyle`. */
 	readonly noStyle = input<boolean | undefined>(undefined);
@@ -524,7 +524,7 @@ export class ConsentWidget {
 	/** @internal */
 	protected readonly consent = inject(ConsentManager);
 
-	/** Hide the "Secured by c15t" attribution. */
+	/** Hide the "Secured by" attribution. */
 	readonly hideBranding = input(true);
 	/** Drop the stock classes. Defaults to the provider's `noStyle`. */
 	readonly noStyle = input<boolean | undefined>(undefined);

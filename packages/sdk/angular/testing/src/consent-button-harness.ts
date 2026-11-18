@@ -37,12 +37,7 @@ export class ConsentButtonHarness extends ComponentHarness {
 	/** Matches every `button[inth-consent-button]`. */
 	static hostSelector = 'button[inth-consent-button]';
 
-	/**
-	 * A predicate for a button that matches `options`.
-	 *
-	 * @param options - Text, action and selector filters.
-	 * @returns A predicate to pass to a loader.
-	 */
+	/** A predicate for a button that matches `options`. */
 	static with(
 		options: ConsentButtonHarnessFilters = {}
 	): HarnessPredicate<ConsentButtonHarness> {

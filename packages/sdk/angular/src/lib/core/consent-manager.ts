@@ -145,7 +145,6 @@ export interface ConsentDraftState {
 	/**
 	 * Stage one category.
 	 *
-	 * @param name - The category.
 	 * @param value - Whether it is granted once the draft is saved.
 	 */
 	set: (name: AllConsentNames, value: boolean) => void;
@@ -283,7 +282,6 @@ export class ConsentManager {
 	 */
 	readonly kernel: Signal<ConsentKernel>;
 
-	/** The kernel's latest snapshot. */
 	readonly snapshot: Signal<ConsentSnapshot>;
 
 	/** Which consent surface is open. */
@@ -326,7 +324,6 @@ export class ConsentManager {
 	 * when this turns `true`.
 	 */
 	readonly iabUnavailable: Signal<boolean>;
-	/** The preference draft. */
 	readonly draft: ConsentDraftState;
 	/** Staged values of the draft. Same as `draft.values`. */
 	readonly selectedConsents: Signal<Partial<ConsentState>>;
@@ -349,13 +346,11 @@ export class ConsentManager {
 	readonly privacySignals: Signal<ConsentSnapshot['privacySignals']>;
 	/** How the policy was resolved. */
 	readonly resolution: Signal<ConsentSnapshot['resolution']>;
-	/** The resolved policy rule. */
 	readonly policyRule: Signal<ConsentSnapshot['policyRule']>;
 	/** Restrictions the policy applies. */
 	readonly restrictions: Signal<ConsentSnapshot['restrictions']>;
 	/** When the state next changes on its own. */
 	readonly nextDeadline: Signal<ConsentSnapshot['nextDeadline']>;
-	/** The consent subject. */
 	readonly subject: Signal<ConsentSnapshot['subject']>;
 	/** The clock the snapshot was evaluated at. */
 	readonly evaluatedAt: Signal<ConsentSnapshot['evaluatedAt']>;
@@ -367,13 +362,9 @@ export class ConsentManager {
 	readonly location: Signal<ConsentSnapshot['location']>;
 	/** Overrides in effect. */
 	readonly overrides: Signal<ConsentSnapshot['overrides']>;
-	/** The snapshot revision. */
 	readonly revision: Signal<ConsentSnapshot['revision']>;
-	/** The resolved translations. */
 	readonly translations: Signal<ConsentSnapshot['translations']>;
-	/** The identified user. */
 	readonly user: Signal<ConsentSnapshot['user']>;
-	/** Declared vendors. */
 	readonly vendors: Signal<ConsentSnapshot['vendors']>;
 	/** The visitor's vendor choices. */
 	readonly vendorChoice: Signal<ConsentSnapshot['vendorChoice']>;
@@ -651,8 +642,6 @@ export class ConsentManager {
 
 	/**
 	 * Record that the visitor dismissed a notice.
-	 *
-	 * @returns The kernel command's result.
 	 */
 	dismissNotice(): Promise<unknown> {
 		return untracked(this.#kernel).commands.dismissNotice();
@@ -665,7 +654,6 @@ export class ConsentManager {
 	 * scope; `'custom'` records the draft. The surface closes in this task
 	 * once the kernel has recorded the choice.
 	 *
-	 * @param type - What to record.
 	 * @throws {Error} When the save fails, or a custom save finds the draft
 	 * stale.
 	 */
@@ -693,8 +681,6 @@ export class ConsentManager {
 
 	/**
 	 * Open or close a consent surface.
-	 *
-	 * @param ui - The surface to show, or `'none'`.
 	 */
 	setActiveUI(ui: ActiveUI): void {
 		showConsentSurface(untracked(this.#kernel), ui as KernelActiveUI);
@@ -703,7 +689,6 @@ export class ConsentManager {
 	/**
 	 * Stage one category on the draft. Same as `draft.set`.
 	 *
-	 * @param name - The category.
 	 * @param value - Whether it is granted once the draft is saved.
 	 */
 	setConsent(name: AllConsentNames, value: boolean): void {
@@ -713,7 +698,6 @@ export class ConsentManager {
 	/**
 	 * Stage one category on the draft. Same as `draft.set`.
 	 *
-	 * @param name - The category.
 	 * @param value - Whether it is granted once the draft is saved.
 	 */
 	setSelectedConsent(name: AllConsentNames, value: boolean): void {
@@ -732,8 +716,6 @@ export class ConsentManager {
 
 	/**
 	 * Show the consent copy in another language.
-	 *
-	 * @param code - The language code.
 	 */
 	setLanguage(code: string): void {
 		this.runtime.setLanguage(code);
@@ -769,7 +751,6 @@ export class ConsentManager {
 	 * it renders seeded values in its first render.
 	 *
 	 * @param create - `createPreferenceDraft` from `@inth/sdk/preference-draft`.
-	 * @returns The started draft.
 	 * @internal
 	 */
 	provideDraft(create: typeof createPreferenceDraft): PreferenceDraft {

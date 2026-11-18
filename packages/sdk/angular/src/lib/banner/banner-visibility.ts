@@ -26,8 +26,6 @@ export interface BannerVisibility {
  * - Server render: when the first evaluation already says "show", the
  *   banner starts mounted and visible, so it is part of the first paint.
  *
- * @param shouldShow - Whether the banner should show.
- * @returns The visibility signals.
  * @internal
  */
 export const bannerVisibility = function bannerVisibility(

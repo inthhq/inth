@@ -60,7 +60,6 @@ export class HeadlessConsent {
 		this.#resolve('dialog')
 	);
 
-	/** Open the banner. */
 	openBanner(): void {
 		this.#consent.setActiveUI('banner');
 	}
@@ -80,7 +79,6 @@ export class HeadlessConsent {
 	 * `save` records the draft, `dismiss` dismisses a notice, and `customize`
 	 * opens the dialog.
 	 *
-	 * @param action - The action.
 	 * @throws {Error} When the save fails.
 	 */
 	async performAction(action: HeadlessConsentAction): Promise<void> {

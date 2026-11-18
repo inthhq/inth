@@ -6,7 +6,7 @@
 	"properties": {
 		"project": {
 			"type": "string",
-			"description": "The application project to add inth to.",
+			"description": "The application project to add Inth to.",
 			"$default": {
 				"$source": "projectName"
 			}

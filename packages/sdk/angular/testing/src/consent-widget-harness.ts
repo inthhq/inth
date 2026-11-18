@@ -37,9 +37,6 @@ export class ConsentWidgetHarness extends ComponentHarness {
 
 	/**
 	 * A predicate for a widget that matches `options`.
-	 *
-	 * @param options - Selector and ancestor filters.
-	 * @returns A predicate to pass to a loader.
 	 */
 	static with(
 		options: ConsentWidgetHarnessFilters = {}
@@ -130,7 +127,6 @@ export class ConsentWidgetHarness extends ComponentHarness {
 	 * {@link ConsentWidgetHarness.save}.
 	 *
 	 * @param category - The category, such as `'marketing'`.
-	 * @param allowed - Whether the switch should be on.
 	 */
 	async setCategory(
 		category: AllConsentNames,

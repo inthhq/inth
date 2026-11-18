@@ -25,7 +25,6 @@ export class NoStyleScope {
 			this.#own()() ?? this.#outer?.value() ?? this.#theme?.noStyle() ?? false
 	);
 
-	/** @param own - The surface's `noStyle` input. */
 	bind(own: Signal<boolean | undefined>): void {
 		this.#own.set(own);
 	}
@@ -38,8 +37,6 @@ export class NoStyleScope {
  *
  * Call it in an injection context, such as a field initializer.
  *
- * @param own - The component's `noStyle` input.
- * @returns The resolved value.
  * @internal
  */
 export const resolveNoStyle = function resolveNoStyle(

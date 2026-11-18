@@ -124,7 +124,6 @@ export interface ConsentRoute {
 	 * `provideInthServer({ route })` uses it with Angular's `REQUEST`.
 	 *
 	 * @param request - The request being rendered, or `null` for none.
-	 * @returns The fetch.
 	 */
 	readonly localFetchFor: (
 		request: Pick<Request, 'headers' | 'url'> | null
@@ -185,9 +184,6 @@ const FORWARDING_HEADERS = [
  *   (await consentRoute.fetch(request)) ?? (await angularApp.handle(request));
  * ```
  *
- * @param options - Mount point, manifest source and proxy settings.
- * @returns The route, as a fetch handler, an in-process fetch, and Node
- * middleware.
  * @throws {TypeError} When `routePrefix` is `/` or not a path, or a
  * relative `projectUrl` or `manifestUrl` is the route or beneath it.
  */
