@@ -10,7 +10,12 @@
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { createConsentManifestPlugin } from '@inth/sdk/build';
+import {
+	CORE_CHUNK_MODULES,
+	CORE_FIRST_LOAD_MODULES,
+	coreModulePattern,
+	createConsentManifestPlugin,
+} from '@inth/sdk/build';
 import type {
 	ConsentManifestPlugin,
 	ConsentManifestPluginOptions,
@@ -79,8 +84,10 @@ export const createServerGeneratedPlugin =
 const CHUNK_MODULES: Readonly<Record<PreloadChunkName, RegExp>> = {
 	engine:
 		/[\\/](?:@inth[\\/]svelte|packages[\\/](?:sdk[\\/])?svelte)[\\/](?:dist|src[\\/]lib)[\\/]deferred[\\/]engine\.[cm]?[jt]s$/u,
-	'loader-and-blocker':
-		/[\\/](?:@inth[\\/]sdk[\\/]lib[\\/]core|packages[\\/]sdk[\\/]sdk[\\/]lib[\\/]core|packages[\\/](?:sdk[\\/])?core)[\\/](?:dist|src)[\\/]modules[\\/]loader-and-blocker\.[cm]?[jt]s$/u,
+	'loader-and-blocker': new RegExp(
+		`[\\\\/](?:@inth[\\\\/]sdk[\\\\/]lib|packages[\\\\/]sdk[\\\\/]sdk[\\\\/]lib|packages(?:[\\\\/]sdk)?)[\\\\/]${coreModulePattern([CORE_CHUNK_MODULES.loaderAndBlocker])}`,
+		'u'
+	),
 };
 
 const CHUNK_NAMES = Object.keys(CHUNK_MODULES) as PreloadChunkName[];
@@ -278,8 +285,10 @@ export const createModulePreloadPlugin =
  * it, and it rode in this chunk before through `experiment`. On its own
  * it costs the page one more request.
  */
-const FIRST_LOAD_SHARED =
-	/^\0vite[\\/]preload-helper\.js$|[\\/]node_modules[\\/]@inth[\\/]sdk[\\/]lib[\\/](?:core[\\/]dist[\\/](?:libs[\\/](?:has|experiment-presentation|vendor-listing|policy-actions|is-production|storage-keys|generate-subject-id)|consent[\\/]consent-types|modules[\\/]vendor-(?:allowed|denial)|consent-record[\\/]types|surface-actions[\\/]instant-commit|derive-surface|translations[\\/]defaults)|translations[\\/]dist[\\/]translations[\\/]en|ui[\\/]dist[\\/]utils[\\/]text-direction)\.js$/u;
+const FIRST_LOAD_SHARED = new RegExp(
+	`^\\0vite[\\\\/]preload-helper\\.js$|[\\\\/]node_modules[\\\\/]@inth[\\\\/]sdk[\\\\/]lib[\\\\/](?:${coreModulePattern(CORE_FIRST_LOAD_MODULES)}|(?:translations[\\\\/]dist[\\\\/]translations[\\\\/]en|ui[\\\\/]dist[\\\\/]utils[\\\\/]text-direction)\\.js$)`,
+	'u'
+);
 
 /** The slice of Rolldown's output options {@link FirstLoadChunkPlugin} edits. */
 interface OutputOptionsLike {

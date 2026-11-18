@@ -30,6 +30,13 @@ import { manifestNeedsLocation } from './transports/manifest-browser-location';
 
 export type { ConsentManifest } from '@inth/sdk-schema/types';
 export { createDialogChunkPlugin } from './build-dialog-chunk';
+export {
+	CORE_CHUNK_MODULES,
+	CORE_FIRST_LOAD_MODULES,
+	CORE_SURFACE_CONFIG_MODULES,
+	coreModuleFile,
+	coreModulePattern,
+} from './chunk-modules';
 export { DEFERRED_SHEET_SPECIFIERS } from './build-static-banner';
 export type { DialogChunkPlugin } from './build-dialog-chunk';
 

@@ -4,7 +4,9 @@ import { basename, dirname, join } from 'node:path';
 
 import {
 	CONSENT_CHUNK_GROUP,
+	CORE_SURFACE_CONFIG_MODULES,
 	consentChunkGroupsConfig,
+	coreModulePattern,
 	shouldGroupConsentChunks,
 } from '@inth/sdk/build';
 import type {
@@ -106,8 +108,7 @@ export const nuxtConsentChunkGroup = function nuxtConsentChunkGroup(
  * (the config composable, theme slots, slot attributes, the schema
  * defaults and the experiment theme merge) and the policy actions.
  */
-const CONFIG_MODULES =
-	'(?:vue/dist/runtime/composables/config|vue/dist/runtime/utils/slot-attrs|ui/dist/utils/theme-slots|schema/dist/config/defaults|core/dist/libs/experiment-presentation|core/dist/libs/policy-actions)\\.js$';
+const CONFIG_MODULES = `(?:(?:vue/dist/runtime/composables/config|vue/dist/runtime/utils/slot-attrs|ui/dist/utils/theme-slots|schema/dist/config/defaults)\\.js$|${coreModulePattern(CORE_SURFACE_CONFIG_MODULES)})`;
 
 /**
  * Keeps the modules every stock surface reads in one chunk. They leave the

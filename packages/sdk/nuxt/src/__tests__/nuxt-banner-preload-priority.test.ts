@@ -96,7 +96,7 @@ describe('bannerOnlyFiles', () => {
 
 	test('keeps what the experiment controller or browser resolver also imports', () => {
 		const controller =
-			'node_modules/@inth/vue/dist/libs/experiment-assignment.js';
+			'node_modules/@inth/sdk/lib/core/dist/libs/experiment-assignment.js';
 		const resolver =
 			'node_modules/@inth/sdk/lib/core/dist/transports/manifest-browser.js';
 		const startup = built();
