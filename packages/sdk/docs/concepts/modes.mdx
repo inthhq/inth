@@ -78,7 +78,7 @@ holds your policy rules and copy, and no visitor data.
 | `source` | `'build'` | `'build'` uses the snapshot the build integration downloaded. Without one, such as after a failed download, it fetches the manifest at runtime. `'runtime'` always fetches at runtime, so policy edits apply without a rebuild. |
 | `snapshot` | none | A manifest you supply. You can pass `snapshot` or `source`, not both. |
 | `resolve` | `'server'` | `'server'` resolves each visitor on the server and ships no resolver to the browser. `'browser'` resolves in the browser, for pages the server does not render per visitor. Server-rendered frameworks only. |
-| `manifestUrl` | see below | Where to fetch the manifest at runtime. On the server, `${projectUrl}/manifest`. In the browser, `${routePrefix}/manifest`, else `${projectUrl}/manifest`. |
+| `manifestUrl` | see below | Where to fetch the manifest at runtime. In the browser it defaults to `${routePrefix}/manifest`, else `${projectUrl}/manifest`. On the server it defaults to `${projectUrl}/manifest`. An absolute URL is read at runtime on the server too, so the build downloads no snapshot for it. A `/`-relative URL keeps the build's snapshot; without one the server reads that URL, except a URL on the app's own consent route, where the server reads `${projectUrl}/manifest` as the route does. With `resolve: 'browser'` only the browser reads it. |
 | `geoUrl` | none | A same-origin route that answers with the visitor's `{ country, region }`. Browser resolution only. |
 | `inputs` | none | `{ country, region }` when the page already knows the visitor's location, for example from an edge worker. Browser resolution only. |
 

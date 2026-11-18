@@ -154,8 +154,9 @@ The handlers the injected route uses are exported as
 `createConsentRouteHandlers({ options })` from `@inth/astro/server`. Mount
 them yourself for other clients, or for browser resolution: with
 `mode: manifest({ resolve: 'browser', manifestUrl: '/api/inth/manifest' })`,
-the browser fetches the manifest from your route. `GET(request, { locals })`
-dispatches by the last path segment.
+the browser fetches the manifest from your route, and the route reads
+`${projectUrl}/manifest`. `GET(request, { locals, path })` dispatches by
+the route's rest parameter, or by the last path segment without one.
 
 ## Helpers in `@inth/astro/server`
 

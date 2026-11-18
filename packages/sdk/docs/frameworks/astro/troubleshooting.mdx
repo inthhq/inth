@@ -210,7 +210,7 @@ layout that imports `consent-dialog-trigger.astro` fails to resolve it.
 | `buildManifest: true` | `onBuildError: 'fail'` |
 | `ConsentDialogTrigger` from `consent-dialog-trigger.astro` | `ConsentDialogLink` from `@inth/astro/components` |
 | `hosted({ domain })` | The top-level `projectUrl` |
-| The `@inth/astro/api/init` and `@inth/astro/api/manifest` entries, and route handlers from `@inth/astro/api` | `routePrefix`, and `createConsentRouteHandlers` and the manifest cache helpers from `@inth/astro/server` |
+| The `@inth/astro/api/init` and `@inth/astro/api/manifest` entries, and route handlers from `@inth/astro/api` | `routePrefix`, and `createConsentRouteHandlers` from `@inth/astro/server`. The manifest cache helpers are in `@inth/sdk/server` |
 | `resolveTransportFactory`, `custom`, and the `InthModeDescriptor`, `InthHostedDescriptor`, `InthManifestDescriptor`, `InthOfflineDescriptor` and `InthEndpointOptions` types | `ConsentMode` from `@inth/astro` |
 | `/// <reference types="@inth/astro/middleware" />` in `src/env.d.ts` | Nothing. The integration adds the `Astro.locals.inth` type. |
 
