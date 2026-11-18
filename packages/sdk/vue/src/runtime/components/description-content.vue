@@ -6,12 +6,13 @@
 	public component and picks the class by context.
 -->
 <script setup lang="ts">
-import type { CompleteTranslations } from '@inth/sdk/translations';
+import { resolvePromptCopy } from '@inth/sdk/surface-state';
 import { computed } from 'vue';
 
-import { useConsentConfig, useConsentInit } from '#inth/composables';
+import { useConsentConfig } from '#inth/composables';
 
 import { useConsentSnapshot } from '../composables/kernel';
+import { useSurfaceTranslations } from '../composables/use-surface-translations';
 import { slotAttrs } from '../utils/slot-attrs';
 import ConsentLegalLinks from './legal-links.vue';
 
@@ -21,7 +22,7 @@ const props = defineProps<{
 	descriptionClass?: string;
 }>();
 
-const init = useConsentInit();
+const translations = useSurfaceTranslations();
 const config = useConsentConfig();
 const snapshot = useConsentSnapshot();
 
@@ -29,17 +30,19 @@ const snapshot = useConsentSnapshot();
  * A notice prompt explains and points at the opt-out instead of asking;
  * it reads the notice copy and falls back to the choice copy.
  */
-const bannerDescription = computed(() => {
-	const cookieBanner = (
-		init.value?.translations?.translations as
-			| Partial<CompleteTranslations>
-			| undefined
-	)?.cookieBanner;
-	if (snapshot.value.policyRule.prompt === 'notice') {
-		return cookieBanner?.noticeDescription ?? cookieBanner?.description;
-	}
-	return cookieBanner?.description;
-});
+const bannerDescription = computed(
+	() =>
+		resolvePromptCopy(
+			translations.value.bundle,
+			snapshot.value.policyRule.prompt
+		).description
+);
+
+const dialogDescription = computed(
+	() =>
+		translations.value.bundle?.consentManagerDialog?.description ??
+		translations.value.english.consentManagerDialog.description
+);
 
 const legalLinks = computed(() => {
 	if (props.context === 'banner') {
@@ -79,9 +82,7 @@ const testId = computed(() =>
 				{{ bannerDescription }}
 			</template>
 			<template v-else>
-				{{
-					init?.translations?.translations?.consentManagerDialog?.description
-				}}
+				{{ dialogDescription }}
 			</template>
 		</slot>
 		<ConsentLegalLinks

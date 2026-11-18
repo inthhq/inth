@@ -1,4 +1,4 @@
-import { defaultTranslationConfig } from '@inth/sdk/engine';
+import { defaultTranslationConfig } from '@inth/sdk/surface-state';
 import type {
 	CompleteTranslations,
 	Translations,

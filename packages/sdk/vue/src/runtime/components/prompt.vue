@@ -4,9 +4,12 @@ import type {
 	PromptPosition,
 	PromptVariant,
 } from '@inth/sdk/engine';
-import type { PolicyRight } from '@inth/sdk/schema/types';
 import { replayEarlyConsentTaps } from '@inth/sdk/surface-actions';
-import type { CompleteTranslations } from '@inth/sdk/translations';
+import {
+	resolveActionLabels,
+	resolvePreferenceControlLabels,
+	resolvePromptCopy,
+} from '@inth/sdk/surface-state';
 
 import '@inth/sdk/ui/styles/components/consent-banner.css';
 import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
@@ -35,6 +38,7 @@ import { useConsentPolicyActions } from '../composables/use-consent-policy-actio
 import { useConsentScrollLock } from '../composables/use-consent-scroll-lock';
 import { useLateEntry } from '../composables/use-late-entry';
 import { useMounted } from '../composables/use-mounted';
+import { useSurfaceTranslations } from '../composables/use-surface-translations';
 import type { RuntimeConsentConfig } from '../kernel';
 import { useFocusTrap } from '../primitives/use-focus-trap';
 import { slotAttrs } from '../utils/slot-attrs';
@@ -114,19 +118,9 @@ const {
 	variant: props.variant,
 }));
 
-/**
- * The wire type lags the translations package, so the newer keys (notice
- * copy, dismiss, rights) are read through the package's own type.
- */
-const bundle = computed(
-	() =>
-		init.value?.translations?.translations as
-			| Partial<CompleteTranslations>
-			| undefined
-);
-
+const translations = useSurfaceTranslations();
+const bundle = computed(() => translations.value.bundle);
 const promptKind = computed(() => snapshot.value.policyRule.prompt);
-const isNotice = computed(() => promptKind.value === 'notice');
 
 const hasConsentUi = useHasConsentUi();
 const isOpen = computed(() => {
@@ -164,35 +158,18 @@ const shouldTrapFocus = computed(() =>
 const card = ref<HTMLElement | null>(null);
 useFocusTrap(card, () => shouldTrapFocus.value);
 
-const bannerTitle = computed(() => {
-	const cookieBanner = bundle.value?.cookieBanner;
-	if (isNotice.value) {
-		return cookieBanner?.noticeTitle ?? cookieBanner?.title ?? 'Privacy notice';
-	}
-	return cookieBanner?.title ?? 'Cookie choices';
-});
+const bannerTitle = computed(
+	() => resolvePromptCopy(bundle.value, promptKind.value).title
+);
 
 /**
  * Notice acknowledgement leaves category choices and permissions unchanged.
  */
-const labels = computed(() => {
-	const common = bundle.value?.common;
-	return {
-		accept: common?.acceptAll ?? 'Accept all',
-		customize: common?.customize ?? 'Customize',
-		dismiss: common?.acknowledge ?? common?.dismiss ?? 'OK',
-		reject: common?.rejectAll ?? 'Reject all',
-	} as const;
-});
+const labels = computed(() => resolveActionLabels(bundle.value));
 
-const rightLabels = computed<Record<PolicyRight, string>>(() => {
-	const rights = bundle.value?.rights;
-	return {
-		disclosure: '',
-		'opt-out': rights?.optOut ?? 'Do not sell or share my data',
-		preferences: rights?.preferences ?? 'Manage preferences',
-	};
-});
+const rightLabels = computed(() =>
+	resolvePreferenceControlLabels(bundle.value)
+);
 
 /** Additional buttons open preferences and use underlined text styling. */
 const onRight = function onRight() {

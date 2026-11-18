@@ -136,9 +136,9 @@ const specialPurposesExpanded = ref(false);
 const iabT = useIabTranslations();
 
 const labels = computed(() => ({
-	accept: iabT.value?.common?.acceptAll ?? 'Accept all',
-	reject: iabT.value?.common?.rejectAll ?? 'Reject all',
-	save: iabT.value?.common?.saveSettings ?? 'Save settings',
+	accept: iabT.value.common.acceptAll,
+	reject: iabT.value.common.rejectAll,
+	save: iabT.value.common.saveSettings,
 }));
 
 // Which rows this surface renders, and in what order, comes from the

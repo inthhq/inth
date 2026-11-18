@@ -253,4 +253,26 @@ describe('ConsentBanner under a choice prompt', () => {
 			'preferences',
 		]);
 	});
+
+	test('fills copy the bundle leaves out from the English bundle', async () => {
+		await renderBanner(
+			buildInit(choiceRule, {
+				...translations,
+				common: {},
+				cookieBanner: {},
+			} as unknown as typeof translations)
+		);
+		expect(query('consent-banner-title')?.textContent?.trim()).toBe(
+			enTranslations.cookieBanner.title
+		);
+		expect(query('consent-banner-description')?.textContent?.trim()).toBe(
+			enTranslations.cookieBanner.description
+		);
+		expect(query('consent-banner-accept-button')?.textContent?.trim()).toBe(
+			enTranslations.common.acceptAll
+		);
+		expect(query('consent-banner-reject-button')?.textContent?.trim()).toBe(
+			enTranslations.common.rejectAll
+		);
+	});
 });
