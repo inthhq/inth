@@ -430,12 +430,12 @@ const centralCredentials = function centralCredentials(
 	options: MavenDeploymentOptions
 ) {
 	const credentials = options.credentials ?? {
-		token: process.env.INTH_CENTRAL_TOKEN ?? '',
-		username: process.env.INTH_CENTRAL_USERNAME ?? '',
+		token: process.env.C15T_CENTRAL_TOKEN ?? '',
+		username: process.env.C15T_CENTRAL_USERNAME ?? '',
 	};
 	if (!credentials.username || !credentials.token) {
 		throw new Error(
-			'Set INTH_CENTRAL_USERNAME and INTH_CENTRAL_TOKEN securely.'
+			'Set C15T_CENTRAL_USERNAME and C15T_CENTRAL_TOKEN securely.'
 		);
 	}
 	return credentials;
