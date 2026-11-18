@@ -23,7 +23,7 @@
  */
 import {
 	DeferredConsentShell,
-	canDeferEngine,
+	awaitsChoice,
 	engineNeededAtLoad,
 	iabProviderLoaded,
 	liveRootKey,
@@ -156,7 +156,7 @@ const planRoot = function planRoot(
 		// The shell starts the root's plain `scripts` itself only with a
 		// commit path to read them from.
 		defer:
-			(canDeferEngine(snapshot) || startScripts) &&
+			(awaitsChoice(snapshot) || startScripts) &&
 			!scriptsNeedEngine(
 				props.scripts,
 				snapshot,

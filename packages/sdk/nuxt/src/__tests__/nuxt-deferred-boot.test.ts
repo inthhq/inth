@@ -11,11 +11,9 @@ import {
 import { translations } from '@inth/sdk/translations/en';
 import { describe, expect, test } from 'vitest';
 
+import { canDeferEngine } from '../../../core/src/surface-actions/defer-engine';
 import { createVueConsentKernelContext } from '../../../vue/src/__tests__/test-kernel';
-import {
-	canDeferEngine,
-	DEFERRED_ENGINE_MANIFEST_KEY,
-} from '../../../vue/src/runtime/deferred/boot';
+import { DEFERRED_ENGINE_MANIFEST_KEY } from '../../../vue/src/runtime/deferred/boot';
 import { isDeferredBannerModule } from '../../../vue/src/runtime/deferred/lazy-modules';
 import type { RuntimeConsentConfig } from '../../../vue/src/runtime/kernel';
 import {

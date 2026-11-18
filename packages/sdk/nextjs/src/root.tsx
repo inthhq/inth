@@ -22,7 +22,7 @@
 import userConfig from '@inth/nextjs/user-config';
 import {
 	DeferredConsentShell,
-	canDeferEngine,
+	awaitsChoice,
 	engineNeededAtLoad,
 	iabProviderLoaded,
 	liveRootKey,
@@ -175,7 +175,7 @@ const planRoot = function planRoot(
 		// shell starts the root's plain `scripts` itself only with a commit
 		// path to read them from.
 		defer:
-			(canDeferEngine(snapshot) || startScripts) &&
+			(awaitsChoice(snapshot) || startScripts) &&
 			!scriptsNeedEngine(
 				merged.scripts,
 				snapshot,

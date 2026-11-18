@@ -264,6 +264,38 @@ export const rootNeedsEngine = function rootNeedsEngine({
 	);
 };
 
+/**
+ * Whether a visitor in this state loses nothing when the engine loads
+ * late: the stock banner asks them to choose and no optional category the
+ * page uses may run. Until they tap, nothing the engine does is visible or
+ * allowed. The page's categories are the configured and discovered ones
+ * when there are any; a category outside the policy's scope counts as
+ * allowed, so a page that names none defers only when nothing is.
+ * A server render decides with `canDeferEngine`, which adds the options.
+ *
+ * @param snapshot - The snapshot the visitor's page renders from.
+ * @returns `true` when the engine can wait for the visitor's tap.
+ * @internal
+ */
+export const awaitsChoice = function awaitsChoice(
+	snapshot: ConsentSnapshot
+): boolean {
+	const permissions = snapshot.effectivePermissions as Record<
+		string,
+		boolean | undefined
+	>;
+	return (
+		snapshot.activeUI === 'banner' &&
+		snapshot.model !== 'iab' &&
+		!snapshot.externalPermissions &&
+		!snapshot.experimentPending &&
+		!snapshot.experiment &&
+		!(snapshot.consentCategories ?? Object.keys(permissions)).some(
+			(category) => category !== 'necessary' && permissions[category]
+		)
+	);
+};
+
 const predicateIds = new WeakMap<WeakKey, number>();
 let lastPredicateId = 0;
 

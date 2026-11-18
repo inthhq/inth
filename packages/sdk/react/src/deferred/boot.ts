@@ -13,6 +13,7 @@ import {
 	ENDED_RENDERS_LIMIT,
 	PAGE_RENDER_KEY,
 } from '@inth/sdk/runtime/page-globals';
+import { awaitsChoice } from '@inth/sdk/surface-actions/plain-scripts';
 
 /** Attribute on the `<script type="application/json">` element. @internal */
 export const CONSENT_BOOT_ATTRIBUTE = 'data-inth-boot';
@@ -127,38 +128,6 @@ export const endPageRender = function endPageRender(
 };
 
 /**
- * Whether a visitor in this state loses nothing when the engine loads
- * late: the banner asks them to choose and no optional category the page
- * uses may run. Until they tap, nothing the engine does is visible or
- * allowed. The page's categories are the configured and discovered ones
- * when there are any; a category outside the policy's scope counts as
- * allowed, so a page that names none defers only when nothing is.
- *
- * @param snapshot - The snapshot the visitor's page renders from.
- * @returns `true` when the engine can wait.
- * @internal
- */
-export const canDeferEngine = function canDeferEngine(
-	snapshot: ConsentSnapshot
-): boolean {
-	return (
-		snapshot.activeUI === 'banner' &&
-		snapshot.model !== 'iab' &&
-		!snapshot.externalPermissions &&
-		!snapshot.experimentPending &&
-		!snapshot.experiment &&
-		(snapshot.consentCategories ?? Object.keys(snapshot.effectivePermissions))
-			.filter((category) => category !== 'necessary')
-			.every(
-				(category) =>
-					!snapshot.effectivePermissions[
-						category as keyof typeof snapshot.effectivePermissions
-					]
-			)
-	);
-};
-
-/**
  * Whether a visitor in this state already chose, sees no consent surface,
  * and needs nothing from the engine that shows: a returning visitor whose
  * stored choice the server read. The page renders from the server's
@@ -227,7 +196,7 @@ export const startsScriptsWithoutEngine = function startsScriptsWithoutEngine(
 	snapshot: ConsentSnapshot
 ): boolean {
 	return (
-		!canDeferEngine(snapshot) &&
+		!awaitsChoice(snapshot) &&
 		canDeferEngineAfterChoice(snapshot) &&
 		storedChoiceCurrent()
 	);
@@ -412,7 +381,10 @@ export const liveRootKey = function liveRootKey(root: LiveRootInputs): string {
 };
 
 // The rule lives in core, where the server's stored-choice check reads it.
-export { rootNeedsEngine } from '@inth/sdk/surface-actions/plain-scripts';
+export {
+	awaitsChoice,
+	rootNeedsEngine,
+} from '@inth/sdk/surface-actions/plain-scripts';
 export type { RootEngineInputs } from '@inth/sdk/surface-actions/plain-scripts';
 
 /**
@@ -471,8 +443,6 @@ export const engineNeededAtLoad = function engineNeededAtLoad(
 	const boot = readConsentBoot(root);
 	const snapshot = boot && (boot.r ?? boot.s);
 	return Boolean(
-		snapshot &&
-		!canDeferEngine(snapshot) &&
-		!startsScriptsWithoutEngine(snapshot)
+		snapshot && !awaitsChoice(snapshot) && !startsScriptsWithoutEngine(snapshot)
 	);
 };

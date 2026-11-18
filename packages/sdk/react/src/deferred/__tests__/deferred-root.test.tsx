@@ -25,7 +25,7 @@ import { useSaveConsents, useSnapshot } from '../../hooks';
 import { ConsentProvider } from '../../index';
 import { useScriptLoader } from '../../module-hooks/script-loader';
 import {
-	canDeferEngine,
+	awaitsChoice,
 	canDeferEngineAfterChoice,
 	endPageRender,
 	engineNeededAtLoad,
@@ -318,7 +318,7 @@ test('a fresh visitor: the page hydrates at once, the banner keeps its server HT
 	// The children rendered before the state resolved; the banner after.
 	expect(boot.s.activeUI).toBe('none');
 	expect(boot.r?.activeUI).toBe('banner');
-	expect(canDeferEngine(boot.r ?? boot.s)).toBe(true);
+	expect(awaitsChoice(boot.r ?? boot.s)).toBe(true);
 	// The engine waits: nothing preloads it.
 	expect(hasEnginePreload(streamed.doc)).toBe(false);
 
@@ -435,7 +435,7 @@ test('the engine starts as the root chunk runs for an app that loaded IABProvide
 test('a returning visitor with consent: a preload the check can skip, and the engine loads when asked', async () => {
 	const config = policyConfig({}, { marketing: true });
 	const { boot, page: streamed } = await serve(config);
-	expect(canDeferEngine(boot.r ?? boot.s)).toBe(false);
+	expect(awaitsChoice(boot.r ?? boot.s)).toBe(false);
 	// No surface shows, so the engine can wait for the priority images:
 	// preloading it would share bandwidth with them. The preload stays in
 	// the page and runs only when the stored-choice check finds the choice

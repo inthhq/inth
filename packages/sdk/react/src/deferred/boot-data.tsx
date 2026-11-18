@@ -18,7 +18,7 @@ import { useKernel } from '../kernel-selector';
 import { useUIConfig } from '../ui-config-context';
 import {
 	CONSENT_BOOT_ATTRIBUTE,
-	canDeferEngine,
+	awaitsChoice,
 	canDeferEngineAfterChoice,
 } from './boot';
 import type { ConsentBoot } from './boot';
@@ -132,7 +132,7 @@ const BootJSON = ({
 				// oxlint-disable-next-line react/no-danger -- Inth's own constant script.
 				dangerouslySetInnerHTML={{
 					__html:
-						chunks === undefined || (!preload && canDeferEngine(snapshot))
+						chunks === undefined || (!preload && awaitsChoice(snapshot))
 							? ''
 							: enginePreloadScript(
 									chunks,

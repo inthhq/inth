@@ -12,7 +12,7 @@ export { DeferredConsentBanner, DeferredConsentDialog } from './surfaces';
 export type { ConsentBoot, RootEngineInputs } from './boot';
 export type { DeferredCommitConfig, DeferredCommitted } from './committed';
 export {
-	canDeferEngine,
+	awaitsChoice,
 	engineNeededAtLoad,
 	canDeferEngineAfterChoice,
 	iabProviderLoaded,

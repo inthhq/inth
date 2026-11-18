@@ -7,9 +7,7 @@
  */
 
 import type { ConsentSnapshot, KernelConfig } from '@inth/sdk/engine';
-import { isIABConfigured } from '@inth/sdk/runtime';
-import { planInstantCommit } from '@inth/sdk/surface-actions/instant-commit';
-import { isRunnableNow } from '@inth/sdk/surface-actions/plain-scripts';
+import { canDeferEngine as canDeferCoreEngine } from '@inth/sdk/server';
 
 import { declaresVendor } from '../browser/deferred-scripts';
 import type { InthLocals, InthResolvedOptions } from '../types';
@@ -28,47 +26,6 @@ const declaresVendors = function declaresVendors(
 		(options.vendors?.length ?? 0) > 0 ||
 		(config.initialVendors?.declared?.length ?? 0) > 0 ||
 		options.scripts?.some(declaresVendor) === true
-	);
-};
-
-/** Whether an option needs the engine as the page loads. */
-const optionNeedsEngine = function optionNeedsEngine(
-	options: DeferOptions
-): boolean {
-	return Boolean(
-		isIABConfigured(options.iab) ||
-		options.experiment ||
-		options.gpp ||
-		(options.networkBlocker && options.networkBlocker.enabled !== false)
-	);
-};
-
-/** Whether the snapshot is something other than an open choice banner. */
-const notAChoiceBanner = function notAChoiceBanner(
-	snapshot: ConsentSnapshot
-): boolean {
-	return Boolean(
-		snapshot.activeUI !== 'banner' ||
-		snapshot.model === 'iab' ||
-		snapshot.experiment ||
-		snapshot.experimentPending
-	);
-};
-
-/**
- * Whether an optional category the site uses is allowed. The site's
- * categories are the configured and discovered ones: a permissive scope
- * grants the ones outside the policy, which gate nothing here.
- */
-const grantsOptional = function grantsOptional(
-	snapshot: ConsentSnapshot
-): boolean {
-	const permissions = snapshot.effectivePermissions as Record<
-		string,
-		boolean | undefined
-	>;
-	return (snapshot.consentCategories ?? Object.keys(permissions)).some(
-		(category) => category !== 'necessary' && permissions[category]
 	);
 };
 
@@ -99,25 +56,15 @@ export const canDeferEngine = function canDeferEngine(
 	now: number = Date.now(),
 	config: Pick<KernelConfig, 'initialVendors'> = {}
 ): boolean {
-	if (
-		blocking ||
-		declaresVendors(options, config) ||
-		optionNeedsEngine(options) ||
-		notAChoiceBanner(snapshot) ||
-		grantsOptional(snapshot) ||
-		options.scripts?.some((script) => isRunnableNow(script, snapshot))
-	) {
-		return false;
-	}
-	return (['all', 'none'] as const).every(
-		(choice) =>
-			planInstantCommit({
-				actionAt: now,
-				choice,
-				now,
-				snapshot,
-				subjectId: 'boot-check',
-			}) !== null
+	return (
+		!blocking &&
+		!declaresVendors(options, config) &&
+		// Astro's server starts no script: every script waits for the engine.
+		canDeferCoreEngine(
+			snapshot,
+			{ ...options, scriptLoader: { serverStart: false } },
+			now
+		)
 	);
 };
 

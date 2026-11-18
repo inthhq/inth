@@ -118,3 +118,8 @@ export {
 	resolveRequestProjectUrl,
 	resolveRequestOrigin,
 } from './request-origin';
+export {
+	canDeferEngine,
+	engineNeededNow,
+} from '../surface-actions/defer-engine';
+export type { DeferEngineOptions } from '../surface-actions/defer-engine';

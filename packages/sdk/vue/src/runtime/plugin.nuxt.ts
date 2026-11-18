@@ -394,8 +394,11 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 		// A visitor resolved for this request, who still has to choose and
 		// whose accept or reject the browser can record without the engine,
 		// starts from the server's snapshot; the engine loads after the page.
-		const { canDeferEngine, DEFERRED_ENGINE_MANIFEST_KEY } =
-			await import('./deferred/boot');
+		const [{ DEFERRED_ENGINE_MANIFEST_KEY }, { canDeferEngine }] =
+			await Promise.all([
+				import('./deferred/boot'),
+				import('@inth/sdk/server'),
+			]);
 		const snapshot = context.kernel.getSnapshot();
 		if (request && hasPrefetch && canDeferEngine(snapshot, config.value)) {
 			boot.value = markRaw({ s: snapshot });
