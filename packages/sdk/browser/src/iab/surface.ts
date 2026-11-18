@@ -1,7 +1,10 @@
 import type { ConsentSnapshot, PresentationAction } from '@inth/sdk-core';
 import type { ConsentRuntimeIABHandle } from '@inth/sdk-core/runtime';
 import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk-core/runtime/page-globals';
-import { resolveIABBannerSummary } from '@inth/sdk-iab/headless';
+import {
+	resolveIABBannerCopy,
+	resolveIABBannerSummary,
+} from '@inth/sdk-iab/headless';
 import { setupFocusTrap, setupScrollLock } from '@inth/sdk-ui/utils';
 
 import { classes } from '../generated/iab-styles';
@@ -192,29 +195,31 @@ export const createIABSurface = (
 			);
 		} else {
 			const summary = resolveIABBannerSummary(snapshot.iab);
+			const bannerCopy = resolveIABBannerCopy(
+				t,
+				summary,
+				bannerOptions.description
+			);
+			// The link sits inside the sentence, as in the framework banners.
 			headerCopy.append(
 				h(
 					'p',
 					{ class: css(styles.description) },
-					(bannerOptions.description ?? t.banner.description).replace(
-						'{partnerCount}',
-						String(summary.vendorCount)
-					)
-				)
-			);
-			headerCopy.append(
-				h(
-					'button',
-					{
-						class: css(classes.banner.partnersLink),
-						'data-testid': 'iab-consent-banner-partners-link',
-						onclick: () => {
-							vendorsFirst = true;
-							client.openDialog();
+					bannerCopy.descriptionBefore,
+					h(
+						'button',
+						{
+							class: css(classes.banner.partnersLink),
+							'data-testid': 'iab-consent-banner-partners-link',
+							onclick: () => {
+								vendorsFirst = true;
+								client.openDialog();
+							},
+							type: 'button',
 						},
-						type: 'button',
-					},
-					t.banner.partnersLink.replace('{count}', String(summary.vendorCount))
+						bannerCopy.partnersLink
+					),
+					bannerCopy.descriptionAfter
 				)
 			);
 			headerCopy.append(
@@ -222,16 +227,7 @@ export const createIABSurface = (
 					'ul',
 					{ class: css(classes.banner.purposeList) },
 					...summary.displayItems.map((name) => h('li', {}, name)),
-					summary.remainingCount
-						? h(
-								'li',
-								{},
-								t.banner.andMore.replace(
-									'{count}',
-									String(summary.remainingCount)
-								)
-							)
-						: null
+					bannerCopy.andMore ? h('li', {}, bannerCopy.andMore) : null
 				)
 			);
 			headerCopy.append(

@@ -9,6 +9,7 @@
 import {
 	defaultTranslationConfig,
 	resolveConsentPresentation,
+	resolveIABBannerCopy,
 	resolveIABBannerSummary,
 	resolveIABCopy,
 } from '@inth/sdk/engine';
@@ -158,22 +159,9 @@ const resolveBannerCopy = function resolveBannerCopy(
 	summary: IABSummary
 ): IABPromptModel['copy'] {
 	const { banner } = iab;
-	const vendorCount = String(summary.vendorCount);
-	const description = banner.description.replace('{partnerCount}', vendorCount);
-	const partnersLink = banner.partnersLink.replace('{count}', vendorCount);
-	// The link sits inside the sentence, so the copy is split around it rather
-	// than concatenated — a translation is free to put it anywhere.
-	const [descriptionBefore = description, descriptionAfter = ''] =
-		description.split(partnersLink);
 	return {
-		andMore:
-			summary.remainingCount > 0
-				? banner.andMore.replace('{count}', String(summary.remainingCount))
-				: undefined,
-		descriptionAfter,
-		descriptionBefore,
+		...resolveIABBannerCopy(iab, summary),
 		notice: `${banner.legitimateInterestNotice} ${banner.scopeServiceSpecific}`,
-		partnersLink,
 		securedBy,
 		title: banner.title,
 	};

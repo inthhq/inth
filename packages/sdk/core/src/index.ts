@@ -36,10 +36,14 @@ export {
 export { createConsentKernel } from './kernel';
 
 export {
+	resolveIABBannerCopy,
 	resolveIABBannerSummary,
 	IAB_BANNER_MAX_DISPLAY_ITEMS,
 } from './libs/iab-banner-summary';
-export type { ResolveIABBannerSummaryOptions } from './libs/iab-banner-summary';
+export type {
+	IABBannerCopy,
+	ResolveIABBannerSummaryOptions,
+} from './libs/iab-banner-summary';
 export type {
 	ClearOnRevocationConfig,
 	ClearOnRevocationCookie,

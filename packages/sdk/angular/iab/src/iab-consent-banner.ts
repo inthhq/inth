@@ -24,6 +24,7 @@ import {
 } from '@inth/angular';
 import type { Model } from '@inth/sdk/engine';
 import { resolveIABBannerSummary } from '@inth/sdk/iab-support';
+import { resolveIABBannerCopy } from '@inth/sdk/iab/headless';
 import { saveIABConsentSurface } from '@inth/sdk/surface-actions';
 import {
 	resolveConsentPresentation,
@@ -124,28 +125,23 @@ export type IABBannerButton = 'reject' | 'accept' | 'customize';
 							>
 								<h2 [class]="cls(styles.title)">{{ iabT.banner.title }}</h2>
 								<p [class]="cls(styles.description)">
-									{{ descriptionParts()[0]
+									{{ bannerCopy().descriptionBefore
 									}}<button
 										type="button"
 										[class]="cls(styles.partnersLink)"
 										data-testid="iab-consent-banner-partners-link"
 										(click)="openVendors()"
 									>
-										{{ partnersLinkText() }}</button
-									>{{ descriptionParts()[1] ?? '' }}
+										{{ bannerCopy().partnersLink }}</button
+									>{{ bannerCopy().descriptionAfter }}
 								</p>
 								<ul [class]="cls(styles.purposeList)">
 									@for (name of summary().displayItems; track name) {
 										<li>{{ name }}</li>
 									}
-									@if (summary().remainingCount > 0) {
+									@if (bannerCopy().andMore; as andMore) {
 										<li [class]="cls(styles.purposeMore)">
-											{{
-												iabT.banner.andMore.replace(
-													'{count}',
-													'' + summary().remainingCount
-												)
-											}}
+											{{ andMore }}
 										</li>
 									}
 								</ul>
@@ -363,20 +359,8 @@ export class IABConsentBanner {
 	);
 
 	/** @internal */
-	protected readonly partnersLinkText = computed(() =>
-		(this.translations().banner.partnersLink ?? '').replace(
-			'{count}',
-			String(this.summary().vendorCount)
-		)
-	);
-	/** The description, split around the partners link. @internal */
-	protected readonly descriptionParts = computed(() =>
-		this.translations()
-			.banner.description.replace(
-				'{partnerCount}',
-				String(this.summary().vendorCount)
-			)
-			.split(this.partnersLinkText())
+	protected readonly bannerCopy = computed(() =>
+		resolveIABBannerCopy(this.translations(), this.summary())
 	);
 
 	constructor() {

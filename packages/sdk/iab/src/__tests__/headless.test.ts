@@ -8,6 +8,7 @@ import {
 	mapCustomVendor,
 	mapGvlVendor,
 	processGVLForDialog,
+	resolveIABBannerCopy,
 	resolveIABBannerSummary,
 	resolveIABDialogDisplayModel,
 } from '../headless';
@@ -520,5 +521,42 @@ describe('@inth/sdk/iab headless vendor counts with Google ad tech providers', (
 
 		expect(summary.isReady).toBe(true);
 		expect(summary.vendorCount).toBe(100 + 1 + 2);
+	});
+});
+
+describe('resolveIABBannerCopy', () => {
+	const banner = {
+		andMore: 'and {count} more',
+		description: 'We and our {partnerCount} partners process data.',
+		partnersLink: '{count} partners',
+	};
+
+	test('splits the description around the partners link', () => {
+		expect(
+			resolveIABBannerCopy({ banner } as never, {
+				remainingCount: 2,
+				vendorCount: 12,
+			})
+		).toEqual({
+			andMore: 'and 2 more',
+			descriptionAfter: ' process data.',
+			descriptionBefore: 'We and our ',
+			partnersLink: '12 partners',
+		});
+	});
+
+	test('keeps a description without the link whole, and lists everything', () => {
+		expect(
+			resolveIABBannerCopy(
+				{ banner } as never,
+				{ remainingCount: 0, vendorCount: 3 },
+				'Custom text.'
+			)
+		).toEqual({
+			andMore: undefined,
+			descriptionAfter: '',
+			descriptionBefore: 'Custom text.',
+			partnersLink: '3 partners',
+		});
 	});
 });

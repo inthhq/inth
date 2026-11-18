@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import type { PresentationAction } from '@inth/sdk/engine';
-import { resolveIABBannerSummary } from '@inth/sdk/iab/headless';
+import {
+	resolveIABBannerCopy,
+	resolveIABBannerSummary,
+} from '@inth/sdk/iab/headless';
 import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import { saveIABConsentSurface } from '@inth/sdk/surface-actions';
 
@@ -127,30 +130,9 @@ const entryAttribute = computed(() =>
 	lateEntry.value && !disableAnimation.value ? 'late' : undefined
 );
 
-const descriptionText = computed(() =>
-	(iabT.value?.banner?.description ?? '').replace(
-		'{partnerCount}',
-		String(bannerSummary.value.vendorCount)
-	)
+const bannerCopy = computed(() =>
+	resolveIABBannerCopy(iabT.value, bannerSummary.value)
 );
-
-const partnersLinkText = computed(() =>
-	(iabT.value?.banner?.partnersLink ?? '').replace(
-		'{count}',
-		String(bannerSummary.value.vendorCount)
-	)
-);
-
-const descriptionParts = computed(() => {
-	const text = descriptionText.value;
-	const link = partnersLinkText.value;
-	if (!link || !text.includes(link)) {
-		return { after: '', before: text };
-	}
-
-	const [before, after] = text.split(link);
-	return { after: after ?? '', before: before ?? text };
-});
 
 const onAction = async function onAction(action: PresentationAction) {
 	if (action === 'customize') {
@@ -287,7 +269,7 @@ useFocusTrap(bannerCard, () => shouldTrapFocus.value);
 								v-bind="config.components?.['iab-banner']?.description"
 								:class="bannerStyles.description"
 							>
-								{{ descriptionParts.before }}
+								{{ bannerCopy.descriptionBefore }}
 								<button
 									v-bind="config.components?.['iab-banner']?.partnersLink"
 									type="button"
@@ -295,9 +277,9 @@ useFocusTrap(bannerCard, () => shouldTrapFocus.value);
 									data-testid="iab-consent-banner-partners-link"
 									@click="openVendors"
 								>
-									{{ partnersLinkText }}
+									{{ bannerCopy.partnersLink }}
 								</button>
-								{{ descriptionParts.after }}
+								{{ bannerCopy.descriptionAfter }}
 							</p>
 							<ul
 								v-bind="config.components?.['iab-banner']?.purposeList"
@@ -310,16 +292,11 @@ useFocusTrap(bannerCard, () => shouldTrapFocus.value);
 									{{ name }}
 								</li>
 								<li
-									v-if="bannerSummary.remainingCount > 0"
+									v-if="bannerCopy.andMore"
 									v-bind="config.components?.['iab-banner']?.purposeMore"
 									:class="bannerStyles.purposeMore"
 								>
-									{{
-										(iabT?.banner?.andMore ?? '').replace(
-											'{count}',
-											String(bannerSummary.remainingCount)
-										)
-									}}
+									{{ bannerCopy.andMore }}
 								</li>
 							</ul>
 							<p

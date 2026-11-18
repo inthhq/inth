@@ -1,6 +1,7 @@
 'use client';
 
 import type * as InthCoreTypes from '@inth/sdk/engine';
+import { resolveIABBannerCopy } from '@inth/sdk/iab/headless';
 import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-banner';
 import type { FC } from 'react';
@@ -150,15 +151,7 @@ export const IABConsentBanner: FC<IABConsentBannerProps> = ({
 		return null;
 	}
 
-	const descriptionText = iabT.banner.description.replace(
-		'{partnerCount}',
-		String(banner.vendorCount)
-	);
-
-	const partnersLinkText = iabT.banner.partnersLink.replace(
-		'{count}',
-		String(banner.vendorCount)
-	);
+	const bannerCopy = resolveIABBannerCopy(iabT, banner);
 
 	const scopeNotice = iabT.banner.scopeServiceSpecific;
 	const titleProps = mergeSlotProps(components?.['iab-banner']?.title, {
@@ -238,7 +231,7 @@ export const IABConsentBanner: FC<IABConsentBannerProps> = ({
 					>
 						<h2 {...titleProps}>{iabT.banner.title}</h2>
 						<p {...descriptionProps}>
-							{descriptionText.split(partnersLinkText)[0]}
+							{bannerCopy.descriptionBefore}
 							<button
 								{...partnersLinkProps}
 								type="button"
@@ -253,21 +246,16 @@ export const IABConsentBanner: FC<IABConsentBannerProps> = ({
 									warmDialogChunk();
 								}}
 							>
-								{partnersLinkText}
+								{bannerCopy.partnersLink}
 							</button>
-							{descriptionText.split(partnersLinkText)[1]}
+							{bannerCopy.descriptionAfter}
 						</p>
 						<ul {...purposeListProps}>
 							{banner.displayItems.map((name, index) => (
 								<li key={index}>{name}</li>
 							))}
-							{banner.remainingCount > 0 && (
-								<li {...purposeMoreProps}>
-									{iabT.banner.andMore.replace(
-										'{count}',
-										String(banner.remainingCount)
-									)}
-								</li>
+							{bannerCopy.andMore && (
+								<li {...purposeMoreProps}>{bannerCopy.andMore}</li>
 							)}
 						</ul>
 						<p {...legitimateInterestNoticeProps}>

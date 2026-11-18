@@ -24,9 +24,13 @@ export {
 } from './libs/effective-vendor-list';
 export {
 	IAB_BANNER_MAX_DISPLAY_ITEMS,
+	resolveIABBannerCopy,
 	resolveIABBannerSummary,
 } from './libs/iab-banner-summary';
-export type { ResolveIABBannerSummaryOptions } from './libs/iab-banner-summary';
+export type {
+	IABBannerCopy,
+	ResolveIABBannerSummaryOptions,
+} from './libs/iab-banner-summary';
 export {
 	getIABControls,
 	registerIABControls,

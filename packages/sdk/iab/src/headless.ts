@@ -13,6 +13,10 @@ export {
 } from '@inth/sdk-core/iab-support';
 export type { ResolveIABBannerSummaryOptions } from '@inth/sdk-core/iab-support';
 export {
+	type IABBannerCopy,
+	resolveIABBannerCopy,
+} from '@inth/sdk-core/iab-support';
+export {
 	applyPublisherRestrictionsToGVL,
 	type IABLegitimateInterestState,
 	introducedLegitimateInterest,

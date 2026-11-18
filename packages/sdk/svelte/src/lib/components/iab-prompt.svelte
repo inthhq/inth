@@ -4,6 +4,7 @@
 		resolveConsentPresentation,
 	} from '@inth/sdk/engine';
 	import type { Model } from '@inth/sdk/engine';
+	import { resolveIABBannerCopy } from '@inth/sdk/iab/headless';
 	import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 	import { saveIABConsentSurface } from '@inth/sdk/surface-actions';
 	import { resolveIABCopy } from '@inth/sdk/surface-state';
@@ -90,7 +91,6 @@
 	);
 
 	const summary = $derived(resolveIABBannerSummary(iabState));
-	const vendorCount = $derived(summary.vendorCount);
 	const displayItems = $derived({
 		displayed: summary.displayItems,
 		isReady: summary.isReady,
@@ -193,15 +193,8 @@
 			: `${rootStyle.className || ''} ${visibility.isVisible ? `${styles.bannerVisible}${disableAnimation ? '' : ` ${styles.bannerEntering}`}` : styles.bannerHidden}`
 	);
 
-	const descriptionText = $derived(
-		iabT.banner.description.replace('{partnerCount}', String(vendorCount))
-	);
-	const partnersLinkText = $derived(
-		iabT.banner.partnersLink.replace('{count}', String(vendorCount))
-	);
+	const bannerCopy = $derived(resolveIABBannerCopy(iabT, summary));
 	const scopeNotice = $derived(iabT.banner.scopeServiceSpecific);
-
-	const descriptionParts = $derived(descriptionText.split(partnersLinkText));
 </script>
 
 {#if visibility.isMounted && visibility.shouldRender && displayItems.isReady}
@@ -255,26 +248,23 @@
 					>
 						<h2 class={noStyle ? '' : styles.title}>{iabT.banner.title}</h2>
 						<p class={noStyle ? '' : styles.description}>
-							{descriptionParts[0]}
+							{bannerCopy.descriptionBefore}
 							<button
 								type="button"
 								class={noStyle ? '' : styles.partnersLink}
 								data-testid="iab-consent-banner-partners-link"
 								onclick={handleViewVendors}
 							>
-								{partnersLinkText}
-							</button>{descriptionParts[1] ?? ''}
+								{bannerCopy.partnersLink}
+							</button>{bannerCopy.descriptionAfter}
 						</p>
 						<ul class={noStyle ? '' : styles.purposeList}>
 							{#each displayItems.displayed as name (name)}
 								<li>{name}</li>
 							{/each}
-							{#if displayItems.remainingCount > 0}
+							{#if bannerCopy.andMore}
 								<li class={noStyle ? '' : styles.purposeMore}>
-									{iabT.banner.andMore.replace(
-										'{count}',
-										String(displayItems.remainingCount)
-									)}
+									{bannerCopy.andMore}
 								</li>
 							{/if}
 						</ul>
