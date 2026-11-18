@@ -5,7 +5,7 @@ import {
 	AD_TECH_PROVIDERS_URL,
 	normalizeAdTechProviderIds,
 } from './ad-tech-provider';
-import { DEFAULT_GVL_ENDPOINT } from './constants';
+import { DEFAULT_BRANDING, DEFAULT_GVL_ENDPOINT } from './constants';
 import type { brandingValues, hostingValues } from './constants';
 import { createDeterministicFingerprintSync } from './policy-fingerprint';
 import { normalizeLanguage } from './policy-i18n-validation';
@@ -465,7 +465,7 @@ export const buildConsentManifestFromConfig =
 
 		const manifest: ConsentManifest = {
 			appName: config.appName,
-			branding: config.branding || 'c15t',
+			branding: config.branding || DEFAULT_BRANDING,
 			cmpId: config.iab?.cmpId,
 			...(config.hosting !== undefined && { hosting: config.hosting }),
 			iab: buildGvlReference(config),

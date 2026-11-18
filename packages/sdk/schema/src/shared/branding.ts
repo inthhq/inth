@@ -1,9 +1,9 @@
 import * as v from 'valibot';
 
-import { brandingValues } from './constants';
+import { brandingValues, DEFAULT_BRANDING } from './constants';
 
 export const brandingSchema = v.picklist(brandingValues);
 
 export type Branding = v.InferOutput<typeof brandingSchema>;
 
-export { brandingValues };
+export { brandingValues, DEFAULT_BRANDING };

@@ -72,6 +72,21 @@ describe('manifest hosting', () => {
 	});
 });
 
+describe('manifest branding', () => {
+	test('defaults to Inth, the branding a snapshot starts with', async () => {
+		const built = await buildConsentManifestFromConfig({});
+
+		expect(built.branding).toBe('inth');
+		expect(resolveInitFromManifest(built, {}).branding).toBe('inth');
+	});
+
+	test('keeps the branding the config names', async () => {
+		const built = await buildConsentManifestFromConfig({ branding: 'c15t' });
+
+		expect(resolveInitFromManifest(built, {}).branding).toBe('c15t');
+	});
+});
+
 describe('canonical manifest contract', () => {
 	test('serialized manifests preserve the US missing-state fallback', async () => {
 		const built = await buildConsentManifestFromConfig({
