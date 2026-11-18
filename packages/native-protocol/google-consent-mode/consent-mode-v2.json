@@ -305,7 +305,7 @@
 			"id": "functionality+experience+measurement+marketing"
 		}
 	],
-	"description": "Google Consent Mode v2: the c15t category that grants each consent type, and the signals the web sends for every combination of optional categories.",
+	"description": "Google Consent Mode v2: the Inth category that grants each consent type, and the signals the web sends for every combination of optional categories.",
 	"generatedBy": "bun scripts/generate-google-consent-mode-fixture.ts",
 	"mapping": {
 		"experience": ["personalization_storage"],

@@ -38,7 +38,7 @@ test('advertised mobile README guides have public source pages', () => {
 	);
 	const routes = [
 		...source.matchAll(
-			/https:\/\/inth\.com\/docs\/(?<route>(?:frameworks|guides|integrations)\/[a-z-/]+)/gu
+			/https:\/\/c15t\.com\/docs\/(?<route>(?:frameworks|guides|integrations)\/[a-z-/]+)/gu
 		),
 	];
 	expect(routes.map((match) => match.groups?.route)).toEqual(
