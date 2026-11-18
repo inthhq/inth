@@ -3,12 +3,6 @@ import type { SSRInitRequestContext } from '../options/ssr';
 import { hasGlobalPrivacyControlSignal } from './global-privacy-control';
 import { DEFAULT_INIT_CREDENTIALS } from './request-context-headers';
 
-export {
-	buildRequestContextHeaders,
-	buildRequestContextParams,
-	buildRequestContextSentHeaders,
-} from './request-context-headers';
-
 const ABSOLUTE_URL_REGEX = /^https?:\/\//u;
 
 const trimTrailingSlash = function trimTrailingSlash(value: string): string {

@@ -28,7 +28,7 @@ import { extractConsentNamesFromCondition, has } from '../libs/has';
 import type { HasCondition } from '../libs/has';
 import { vendorAxisActive } from '../libs/vendors';
 import { toggleableVendorIds } from '../modules/vendor-denial';
-import type { PresentedSelection } from '../policy';
+import type { PresentedSelection } from '../policy-choice';
 import type {
 	ConsentSnapshot,
 	ConsentState,

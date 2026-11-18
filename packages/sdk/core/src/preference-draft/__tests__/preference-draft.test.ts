@@ -17,7 +17,7 @@ import {
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../kernel';
-import { vendorsListedUnder } from '../../libs/vendors';
+import { vendorsListedUnder } from '../../libs/vendor-listing';
 import { deniedVendorIds } from '../../modules/has';
 import type {
 	ConsentKernel,

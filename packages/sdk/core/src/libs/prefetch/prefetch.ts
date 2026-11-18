@@ -27,13 +27,15 @@ import {
 	JOURNEY_WINDOW_KEY,
 } from '../journey';
 import {
-	buildRequestContextParams,
-	buildRequestContextSentHeaders,
 	createBrowserRequestContext,
 	createRuntimeRequestContextMatcher,
 	matchesStoredRequestContext,
 } from '../request-context';
-import { DEFAULT_INIT_CREDENTIALS } from '../request-context-headers';
+import {
+	buildRequestContextParams,
+	buildRequestContextSentHeaders,
+	DEFAULT_INIT_CREDENTIALS,
+} from '../request-context-headers';
 import {
 	EXPERIMENT_STORAGE_KEY,
 	JOURNEY_STORAGE_KEY,

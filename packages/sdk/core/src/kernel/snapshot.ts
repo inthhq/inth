@@ -18,12 +18,9 @@ import type {
 } from '../consent-record/types';
 import { deriveActiveUI } from '../derive-surface';
 import { deepFreeze, ownScriptRegistry } from '../libs/freeze-data';
-import {
-	buildEvaluationPolicy,
-	deriveModel,
-	resolveEffectivePolicy,
-} from '../policy';
-import type { PresentedSelection } from '../policy';
+import { buildEvaluationPolicy, resolveEffectivePolicy } from '../policy';
+import { deriveModel } from '../policy-choice';
+import type { PresentedSelection } from '../policy-choice';
 import { applyTranslationOverrides } from '../translations';
 import type {
 	ConsentSnapshot,

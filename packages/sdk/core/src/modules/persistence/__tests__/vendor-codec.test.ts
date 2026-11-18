@@ -12,7 +12,7 @@ import {
 	explicitChoice,
 	NOW,
 } from '../../../__tests__/fixtures/kernel-fixtures';
-import { STORAGE_KEY_V2 } from '../../../libs/storage-keys';
+import { STORAGE_KEY_V2, resolveStorageKeys } from '../../../libs/storage-keys';
 import {
 	readStoredRecords,
 	readStoredRecordsFromCookieHeader,
@@ -22,7 +22,7 @@ import {
 	decodeVendorChoiceCompact,
 	validateStoredConsentEnvelope,
 } from '../record-codec';
-import { readStoredVendorChoice, resolveStorageKeys } from '../record-storage';
+import { readStoredVendorChoice } from '../record-storage';
 import {
 	encodeStoredConsentEnvelopeCompact,
 	encodeVendorChoice,

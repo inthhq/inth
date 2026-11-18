@@ -31,11 +31,13 @@ import type {
 	GlobalVendorList,
 } from '@inth/sdk/schema/types';
 import {
+	DEFAULT_RESOLVE_TIMEOUT_MS,
 	fetchServerGvl,
 	readRequestConsent,
 	resolveRenderBudgetMs,
 	resolveRequestConsent,
 	resolveServerMode,
+	withResolutionBudget,
 } from '@inth/sdk/server';
 import type {
 	ManifestFetch,
@@ -43,10 +45,6 @@ import type {
 } from '@inth/sdk/server';
 import { hasConsentUI } from '@inth/sdk/surface-actions';
 import { baseTranslations } from '@inth/sdk/translations/all';
-import {
-	DEFAULT_RESOLVE_TIMEOUT_MS,
-	withResolutionBudget,
-} from '@inth/sdk/transports/manifest-cache';
 import { generateThemeCSS } from '@inth/sdk/ui/theme';
 import type { Theme } from '@inth/sdk/ui/theme';
 

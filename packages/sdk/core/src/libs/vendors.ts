@@ -26,12 +26,6 @@ import type { HasCondition } from './has';
 import { extractConsentNamesFromCondition } from './has';
 import type { VendorDetails } from './script-loader/types';
 
-export {
-	listedVendors,
-	vendorRenders,
-	vendorsListedUnder,
-} from './vendor-listing';
-
 /** A script or network rule that names the vendor it belongs to. */
 export interface VendorOwner {
 	vendor?: string;

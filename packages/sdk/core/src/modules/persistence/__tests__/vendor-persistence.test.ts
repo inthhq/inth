@@ -15,6 +15,7 @@ import {
 	optInRule,
 } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../../index';
+import { resolveStorageKeys } from '../../../libs/storage-keys';
 import { readRequestConsent } from '../../../server/request-consent';
 import type { HydrationRecords, KernelVendorsState } from '../../../types';
 import { watchRevocationReload } from '../../revocation-reload';
@@ -22,7 +23,6 @@ import { createPersistence } from '../index';
 import {
 	readStoredNoticeDismissal,
 	readStoredVendorChoice,
-	resolveStorageKeys,
 } from '../record-storage';
 import {
 	encodeVendorChoiceCompact,

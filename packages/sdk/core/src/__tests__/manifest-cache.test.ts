@@ -29,6 +29,7 @@ import {
 	readFillFailures,
 	readRevalidationFloors,
 	resolveManifestSourceUrl,
+	withResolutionBudget,
 } from '../libs/manifest-cache-runtime';
 import type {
 	CachedManifestResponse,
@@ -40,7 +41,6 @@ import { stripIdentityForCleartext } from '../server/consent-proxy';
 import {
 	getResolverInputsFromHeaders,
 	resolveManifestInit,
-	withResolutionBudget,
 } from '../transports/manifest-cache';
 import { INTH_VERSION_HEADER } from '../transports/version-header';
 

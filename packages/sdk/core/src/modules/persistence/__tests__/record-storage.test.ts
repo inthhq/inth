@@ -15,6 +15,7 @@ import {
 	C15T_STORAGE_KEY,
 	STORAGE_KEY,
 	STORAGE_KEY_V2,
+	resolveStorageKeys,
 } from '../../../libs/storage-keys';
 import type { StoredConsentEnvelope } from '../record-codec';
 import type { DecodedStoredConsent } from '../record-storage';
@@ -25,7 +26,6 @@ import {
 	readStoredNoticeDismissal,
 	readStoredNoticeDismissalFromCookieHeader,
 	readStoredVendorChoiceFromCookieHeader,
-	resolveStorageKeys,
 } from '../record-storage';
 import {
 	encodeNoticeDismissalCompact,

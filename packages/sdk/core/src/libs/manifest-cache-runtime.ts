@@ -16,8 +16,6 @@ import {
 } from './identity-headers';
 import { trimSlash } from './url';
 
-export { parseCacheDirectiveSeconds } from './cache-directive';
-
 /**
  * Just the call signature the manifest cache needs.
  *

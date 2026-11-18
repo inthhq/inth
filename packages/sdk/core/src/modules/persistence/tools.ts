@@ -12,6 +12,7 @@ import {
 	getRawCookieValue,
 	writeCookie,
 } from '../../libs/cookie';
+import { resolveStorageKeys } from '../../libs/storage-keys';
 import { clearStoredRecords } from './clear';
 import {
 	choiceSinceEpoch,
@@ -24,7 +25,6 @@ import {
 	decodeVendorChoice,
 	validateStoredConsentEnvelope,
 } from './record-codec';
-import { resolveStorageKeys } from './record-storage';
 import type { PersistenceTools } from './writer/types';
 
 /** @internal */

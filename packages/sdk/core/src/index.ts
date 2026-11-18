@@ -380,11 +380,8 @@ export {
 export type { RevocationReloadOptions } from './modules/revocation-reload';
 export { watchRevocationReload } from './modules/revocation-reload';
 export type { ResolveVendorsInput, VendorOwner } from './libs/vendors';
-export {
-	declareOwnedVendors,
-	forgetOwnedVendors,
-	vendorsListedUnder,
-} from './libs/vendors';
+export { declareOwnedVendors, forgetOwnedVendors } from './libs/vendors';
+export { vendorsListedUnder } from './libs/vendor-listing';
 export { deferInitGvl } from './transports/gvl-reference';
 export {
 	IAB_UNAVAILABLE_ERROR_CODE,

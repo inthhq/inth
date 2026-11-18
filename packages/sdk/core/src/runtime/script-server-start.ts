@@ -16,14 +16,13 @@
 import { writePolicyResolutionWire } from '@inth/sdk-schema/types';
 
 import type { Script } from '../libs/script-loader/types';
-import { STORED_NAMES_CHECK } from '../libs/storage-keys';
+import { resolveStorageKeys, STORED_NAMES_CHECK } from '../libs/storage-keys';
 import { vendorAxisActive } from '../libs/vendors';
 import {
 	deniedVendorIds,
 	evaluateConsent,
 	getEffectiveGateState,
 } from '../modules/has';
-import { resolveStorageKeys } from '../modules/persistence/record-storage';
 import {
 	CATEGORY_CODES,
 	SUBJECT_CODES,

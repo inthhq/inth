@@ -4,13 +4,12 @@ import { describe, expect, test, vi } from 'vitest';
 import { choiceRecords, NOW } from '../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../kernel';
 import type { ResolvedVendor } from '../../types';
+import { vendorRenders, vendorsListedUnder } from '../vendor-listing';
 import {
 	declareOwnedVendors,
 	forgetOwnedVendors,
 	mergeDeclaredVendors,
 	resolveVendors,
-	vendorRenders,
-	vendorsListedUnder,
 	withoutManifestVendors,
 	withoutOwnedVendors,
 	withoutSourceVendors,

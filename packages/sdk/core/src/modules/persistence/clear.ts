@@ -13,9 +13,12 @@ import { IAB_STORAGE_KEYS } from '@inth/sdk-schema/types';
 
 import { deleteCookie, writeCookie } from '../../libs/cookie';
 import { removeLegacySubjectId } from '../../libs/legacy-subject-id';
-import { storageKeyFamilies } from '../../libs/storage-keys';
+import {
+	storageKeyFamilies,
+	resolveStorageKeys,
+} from '../../libs/storage-keys';
 import { EPOCH_CLOCK_TOLERANCE_MS } from './record-codec';
-import { readStoredClearEpoch, resolveStorageKeys } from './record-storage';
+import { readStoredClearEpoch } from './record-storage';
 import type { StorageConfig } from './types';
 
 const removeLocalStorageKey = function removeLocalStorageKey(

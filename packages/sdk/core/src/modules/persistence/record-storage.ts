@@ -75,9 +75,6 @@ import type {
 	StoredVendorChoice,
 } from './record-codec';
 
-export { resolveStorageKeys } from '../../libs/storage-keys';
-export type { ResolvedStorageKeys } from '../../libs/storage-keys';
-
 export type { LegacyRecordEncoding as StoredRecordEncoding };
 
 /**

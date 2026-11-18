@@ -74,9 +74,9 @@ import type {
 } from '../libs/manifest-cache-runtime';
 import { warnManifestFallback } from '../libs/manifest-fallback';
 import { resolveSessionReportProjectUrl } from '../libs/session-report';
+import { resolveStorageKeys } from '../libs/storage-keys';
 import { trimSlash } from '../libs/url';
 import { readStoredRecordsFromCookieHeader } from '../modules/persistence/hydrate';
-import { resolveStorageKeys } from '../modules/persistence/record-storage';
 import { fetchCachedAdTechProviders } from '../transports/ad-tech-provider-cache';
 import { deferInitGvl, deferInitGvlToRoute } from '../transports/gvl-reference';
 import {
