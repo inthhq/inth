@@ -3,6 +3,8 @@ import { fileURLToPath } from 'node:url';
 import { transformWithOxc } from 'vite';
 import { defineConfig } from 'vitest/config';
 
+import { sdkSource } from './sdk-sources';
+
 const demoScriptPath = fileURLToPath(
 	new URL(
 		'../internals/fixtures/sveltekit-demo/src/lib/consent-manager/demo-scripts.ts',
@@ -22,37 +24,9 @@ export default defineConfig({
 				// name, and their own sources import each other by private name.
 				// Repository tests run before package builds, so exercise their
 				// real sources here.
-				if (
-					source === '../packages/sdk/schema/dist/index.js' ||
-					source === '@inth/sdk/schema' ||
-					source === '@inth/sdk-schema'
-				) {
-					return fileURLToPath(
-						new URL('../packages/sdk/schema/src/index.ts', import.meta.url)
-					);
-				}
-				if (
-					source === '../packages/sdk/translations/dist/index.js' ||
-					source === '@inth/sdk/translations' ||
-					source === '@inth/sdk-translations'
-				) {
-					return fileURLToPath(
-						new URL(
-							'../packages/sdk/translations/src/index.ts',
-							import.meta.url
-						)
-					);
-				}
-				if (
-					source === '@inth/sdk/translations/en' ||
-					source === '@inth/sdk-translations/en'
-				) {
-					return fileURLToPath(
-						new URL(
-							'../packages/sdk/translations/src/translations/en.ts',
-							import.meta.url
-						)
-					);
+				const sdkFile = sdkSource(source);
+				if (sdkFile) {
+					return sdkFile;
 				}
 				// The manifest runtime only imports core's debug emitter at runtime.
 				// Resolve that real implementation without requiring a core build.
@@ -67,19 +41,6 @@ export default defineConfig({
 						)
 					);
 				}
-				// The `imports` field points at the build; use the server runner's
-				// source instead.
-				if (
-					source === '#inline-start' &&
-					importer?.endsWith('/packages/sdk/integrations/src/engine/runtime.ts')
-				) {
-					return fileURLToPath(
-						new URL(
-							'../packages/sdk/integrations/src/engine/inline-start.ts',
-							import.meta.url
-						)
-					);
-				}
 			},
 			transform(code, id) {
 				if (id === demoScriptPath) {
@@ -89,22 +50,32 @@ export default defineConfig({
 		},
 	],
 	resolve: {
-		alias: Object.fromEntries(
-			[
-				['google-tag', 'analytics/google-tag'],
-				['meta-pixel', 'ads-and-pixels/meta-pixel'],
-				['microsoft-clarity', 'analytics/microsoft-clarity'],
-				['tiktok-pixel', 'ads-and-pixels/tiktok-pixel'],
-			].map(([entry, source]) => [
-				`@inth/integrations/${entry}`,
-				fileURLToPath(
-					new URL(
-						`../packages/sdk/integrations/src/vendors/${source}.ts`,
-						import.meta.url
-					)
-				),
-			])
-		),
+		alias: {
+			// The `imports` field points at the build; use the server runner's
+			// source instead, as the integrations package's own tests do.
+			'#inline-start': fileURLToPath(
+				new URL(
+					'../packages/sdk/integrations/src/engine/inline-start.ts',
+					import.meta.url
+				)
+			),
+			...Object.fromEntries(
+				[
+					['google-tag', 'analytics/google-tag'],
+					['meta-pixel', 'ads-and-pixels/meta-pixel'],
+					['microsoft-clarity', 'analytics/microsoft-clarity'],
+					['tiktok-pixel', 'ads-and-pixels/tiktok-pixel'],
+				].map(([entry, source]) => [
+					`@inth/integrations/${entry}`,
+					fileURLToPath(
+						new URL(
+							`../packages/sdk/integrations/src/vendors/${source}.ts`,
+							import.meta.url
+						)
+					),
+				])
+			),
+		},
 	},
 	root: fileURLToPath(new URL('.', import.meta.url)),
 	test: {

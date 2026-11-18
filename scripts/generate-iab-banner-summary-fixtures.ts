@@ -19,6 +19,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import type { resolveIABBannerSummary as ResolveIABBannerSummary } from '../packages/sdk/core/src/libs/iab-banner-summary';
+import { sdkSource } from './sdk-sources';
 
 // `packages/sdk/core` maps workspace imports to type declarations through its
 // tsconfig paths, so Bun cannot run the source as is. Bundle the one module
@@ -32,20 +33,10 @@ const bundle = await Bun.build({
 		{
 			name: 'workspace-sources',
 			setup(build) {
-				build.onResolve({ filter: /^@inth\/sdk-schema\/types$/u }, () => ({
-					path: source('schema/src/types.ts'),
-				}));
-				build.onResolve({ filter: /^@inth\/sdk-translations$/u }, () => ({
-					path: source('translations/src/index.ts'),
-				}));
-				build.onResolve(
-					{ filter: /^@inth\/sdk-translations\/[\w-]+$/u },
-					(args) => ({
-						path: source(
-							`translations/src/translations/${args.path.split('/').at(-1)}.ts`
-						),
-					})
-				);
+				build.onResolve({ filter: /^@inth\/sdk-/u }, (args) => {
+					const path = sdkSource(args.path);
+					return path ? { path } : undefined;
+				});
 			},
 		},
 	],
