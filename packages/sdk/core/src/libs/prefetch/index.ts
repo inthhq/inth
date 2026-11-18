@@ -15,4 +15,9 @@ export {
 	getMatchingPrefetchedInitialData,
 	primePrefetchedInitialData,
 } from './prefetch';
+export {
+	insertPrefetchScript,
+	PREFETCH_SCRIPT_ID,
+	prefetchScriptOffset,
+} from './placement';
 export type { PrefetchOptions } from './types';

@@ -17,6 +17,10 @@ import {
 	renderStaticBannerSheets,
 } from './build-static-banner';
 import type { StaticBannerChunk } from './build-static-banner';
+import {
+	PREFETCH_SCRIPT_ID,
+	prefetchScriptOffset,
+} from './libs/prefetch/placement';
 import { buildPrefetchScript } from './libs/prefetch/prefetch';
 import type { PrefetchOptions } from './libs/prefetch/types';
 import type { ConsentMode } from './modes';
@@ -1061,24 +1065,6 @@ export interface ManifestHtmlContext {
 const LOCATION_ADVICE =
 	"the consent policy depends on the visitor's location, which the browser doesn't know. Unless you pass `inputs` or `geoUrl` to `manifest()`, every first visit still calls the backend's /init, so the bundled policy adds bytes without saving a request. Consider leaving out `mode` and setting only `projectUrl`, which asks the hosted backend instead.";
 
-/** Id of the inline script `initPrefetch` adds to `index.html`. */
-const PREFETCH_SCRIPT_ID = 'inth-initial-data-prefetch';
-
-/**
- * Where the `/init` script goes: after `<meta charset>`, which must stay
- * in the first 1024 bytes, or else at the start of `<head>`. Either way it
- * comes before stylesheets, which would hold an inline script back until
- * they load.
- */
-const PREFETCH_ANCHORS = [
-	/<meta\s[^>]*charset[^>]*>/iu,
-	/<head(?:\s[^>]*)?>/iu,
-	// Without a `<head>`, stay after the doctype: a script before it puts
-	// the page in quirks mode.
-	/<html(?:\s[^>]*)?>/iu,
-	/<!doctype[^>]*>/iu,
-] as const;
-
 /** The resolved id of the virtual `@inth/sdk/generated` module. */
 const VIRTUAL_GENERATED_ID = '\0@inth/sdk/generated';
 
@@ -1306,16 +1292,13 @@ export const createConsentManifestPlugin = (
 		const script = `<script id="${PREFETCH_SCRIPT_ID}">${buildPrefetchScript(
 			prefetchOptions
 		)}</script>`;
-		for (const anchor of PREFETCH_ANCHORS) {
-			const match = anchor.exec(html);
-			if (match) {
-				const end = match.index + match[0].length;
-				const lineStart = html.lastIndexOf('\n', match.index) + 1;
-				const indent = /^[\t ]*/u.exec(html.slice(lineStart))?.[0] ?? '';
-				return `${html.slice(0, end)}\n${indent}${script}${html.slice(end)}`;
-			}
+		const end = prefetchScriptOffset(html);
+		if (end === undefined) {
+			return `${script}\n${html}`;
 		}
-		return `${script}\n${html}`;
+		const lineStart = html.lastIndexOf('\n', end - 1) + 1;
+		const indent = /^[\t ]*/u.exec(html.slice(lineStart))?.[0] ?? '';
+		return `${html.slice(0, end)}\n${indent}${script}${html.slice(end)}`;
 	};
 	/**
 	 * Whether this build puts the stock banner's stylesheets in its pages,

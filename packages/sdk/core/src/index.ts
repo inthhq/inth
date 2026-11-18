@@ -254,6 +254,8 @@ export type { PrefetchOptions } from './libs/prefetch';
 export {
 	buildPrefetchScript,
 	getMatchingPrefetchedInitialData,
+	insertPrefetchScript,
+	PREFETCH_SCRIPT_ID,
 	primePrefetchedInitialData,
 } from './libs/prefetch';
 

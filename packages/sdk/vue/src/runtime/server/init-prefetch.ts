@@ -99,30 +99,3 @@ export const buildInitPrefetchTag = function buildInitPrefetchTag(
 	const attributes = nonce ? ` nonce="${escapeAttribute(nonce)}"` : '';
 	return `<script${attributes}>${buildPrefetchScript({ projectUrl })}</script>`;
 };
-
-const CHARSET_RE = /<meta charset=[^>]*>/iu;
-
-/**
- * Put the tag into the head chunks Nuxt passes to `render:html`: right
- * after `<meta charset>`, which must stay within the first 1024 bytes, and
- * before any stylesheet, which would hold an inline script until it loads.
- * Without a charset tag it goes first.
- *
- * @param head - `htmlContext.head`, edited in place.
- * @param tag - The tag from {@link buildInitPrefetchTag}.
- * @internal
- */
-export const insertInitPrefetchTag = function insertInitPrefetchTag(
-	head: string[],
-	tag: string
-): void {
-	for (const [index, chunk] of head.entries()) {
-		const charset = CHARSET_RE.exec(chunk);
-		if (charset) {
-			const end = charset.index + charset[0].length;
-			head[index] = chunk.slice(0, end) + tag + chunk.slice(end);
-			return;
-		}
-	}
-	head.unshift(tag);
-};

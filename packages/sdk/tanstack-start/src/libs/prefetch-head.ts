@@ -2,12 +2,11 @@ import type { KernelOverrides } from '@inth/sdk/engine';
 import {
 	buildPrefetchScript,
 	getMatchingPrefetchedInitialData,
+	PREFETCH_SCRIPT_ID,
 } from '@inth/sdk/engine';
 
 import type { ConsentPrefetchHead, ConsentPrefetchHeadOptions } from '../types';
 import { trimTrailingSlashes } from './path';
-
-const DEFAULT_SCRIPT_ID = 'inth-initial-data-prefetch';
 
 /**
  * Base URL the head prefetch script keyed its request on: the route prefix
@@ -74,7 +73,7 @@ export const readPrefetchedInitialData =
  * ```
  */
 export const consentPrefetchHead = function consentPrefetchHead({
-	id = DEFAULT_SCRIPT_ID,
+	id = PREFETCH_SCRIPT_ID,
 	...options
 }: ConsentPrefetchHeadOptions): ConsentPrefetchHead {
 	return {

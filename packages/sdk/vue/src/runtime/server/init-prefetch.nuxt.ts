@@ -1,3 +1,4 @@
+import { insertPrefetchScript } from '@inth/sdk/engine';
 /**
  * Nitro plugin: writes the `/init` script into the HTML shell of every
  * `ssr: false` page (see `./init-prefetch`). The module registers it unless
@@ -18,7 +19,7 @@ import {
 import { useServerAppConfig } from '#@inth/sdk/server-app-config';
 
 import type { RuntimeConsentConfig } from '../kernel';
-import { buildInitPrefetchTag, insertInitPrefetchTag } from './init-prefetch';
+import { buildInitPrefetchTag } from './init-prefetch';
 import type { InitPrefetchRouteRule } from './init-prefetch';
 
 export default defineNitroPlugin((nitroApp) => {
@@ -59,7 +60,7 @@ export default defineNitroPlugin((nitroApp) => {
 				context.nuxt?.noSSR === true,
 		});
 		if (tag) {
-			insertInitPrefetchTag(html.head, tag);
+			insertPrefetchScript(html.head, tag);
 		}
 	});
 });
