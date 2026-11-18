@@ -16,7 +16,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { parseArgs } from "node:util";
 
-import { readManifest, sdkPackages } from "./sdk-release.ts";
+import { readManifest, sdkPackages, sdkRepo } from "./sdk-release.ts";
 import type { Manifest } from "./sdk-release.ts";
 
 /** The sections a consumer's install reads. */
@@ -112,6 +112,10 @@ export const settingProblems = (manifest: Manifest, source = manifest) => {
     ...(manifest.publishConfig?.access === "public"
       ? []
       : ['publishConfig.access is not "public"']),
+    // npm refuses a publish with provenance from another repository.
+    ...(manifest.repository?.url === `https://github.com/${sdkRepo}.git`
+      ? []
+      : [`repository.url does not name https://github.com/${sdkRepo}.git`]),
     ...(manifest.publishConfig?.tag === tag
       ? []
       : [
@@ -140,7 +144,7 @@ const dependencyProblems = (
         problems.push(`${field} names the private package ${name}`);
       }
       const sibling = versions.get(name);
-      if (sibling && !range.includes(sibling)) {
+      if (sibling && range.replace(/^[\^~]/u, "") !== sibling) {
         problems.push(
           `${field} asks for ${name}@${range}, which publishes ${sibling}`
         );

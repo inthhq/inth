@@ -14,11 +14,15 @@ import { github } from "tegami/plugins/github";
 
 type Dependencies = Record<string, string>;
 
+/** The repository that publishes the SDK, as GitHub and npm name it. */
+export const sdkRepo = "inthhq/inth";
+
 export interface Manifest {
   name: string;
   version?: string;
   private?: boolean;
   publishConfig?: { access?: string; tag?: string };
+  repository?: { url?: string };
   files?: string[];
   main?: string;
   module?: string;
@@ -82,7 +86,7 @@ export const createSdkRelease = (
     plugins: [
       formatManifests,
       github({
-        repo: "inthhq/inth",
+        repo: sdkRepo,
         versionPr: { base: "main", branch: "tegami/sdk-version-packages" },
       }),
     ],

@@ -16,6 +16,7 @@ const source: Manifest = {
   files: ["dist", "AGENTS.md"],
   name: "@inth/react",
   publishConfig: { access: "public", tag: "alpha" },
+  repository: { url: "https://github.com/inthhq/inth.git" },
   version: "0.0.0-alpha.0",
 };
 
@@ -60,7 +61,9 @@ test("a tarball that would install wrong is refused", () => {
             "@inth/sdk-core": "0.0.0-alpha.0",
           },
           devDependencies: { "@c15t/vitest-config": "workspace:*" },
+          peerDependencies: { "@inth/react": "<0.0.0-alpha.0" },
           publishConfig: { access: "public" },
+          repository: { url: "https://github.com/c15t/c15t.git" },
         },
         { "dist/index.js": 'import { version } from "@inth/sdk-core/version";' }
       ),
@@ -69,11 +72,13 @@ test("a tarball that would install wrong is refused", () => {
     expectations
   );
   expect(problems).toEqual([
+    "repository.url does not name https://github.com/inthhq/inth.git",
     'publishConfig.tag is not "alpha"',
     "dependencies keeps @inth/sdk@workspace:*",
     "devDependencies keeps @c15t/vitest-config@workspace:*",
     "dependencies asks for @inth/sdk@workspace:*, which publishes 0.0.0-alpha.0",
     "dependencies names the private package @inth/sdk-core",
+    "peerDependencies asks for @inth/react@<0.0.0-alpha.0, which publishes 0.0.0-alpha.0",
     "files lists AGENTS.md, which is not in the tarball",
     "entry point dist/index.d.ts is not in the tarball",
     'dist/index.js imports the private package from "@inth/sdk-core/version"',

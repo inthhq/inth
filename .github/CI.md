@@ -62,7 +62,7 @@ Tegami publishes the SDK line with npm trusted publishing. [.tegami/sdk/README.m
 | --- | --- | --- | --- |
 | `MACOS_CERTIFICATE`, `MACOS_CERTIFICATE_PASSWORD` | Secrets in the `macos-signing` environment | CLI release, macOS signing | The CLI release fails at signing, as before |
 | `SDK_RELEASE_ENABLED`, `REACT_NATIVE_RELEASE_ENABLED`, `SWIFT_RELEASE_ENABLED`, `ANDROID_RELEASE_ENABLED` | Repository variables | The disabled release workflows | The release refuses to publish |
-| npm trusted publishers for the SDK packages | npm settings, after the first publish by hand | `release-sdk.yml` | npm rejects the publish |
+| npm trusted publishers for the SDK packages, and the `npm-sdk` environment they name, limited to `main` | npm settings, after the first publish by hand; repository environments | `release-sdk.yml` | npm rejects the publish |
 | npm trusted publisher for the React Native package | npm settings | `release-react-native.yml` | Not wired yet |
 | Maven Central user token and a GPG signing key and password | Secrets | `release-android.yml` | Not wired yet |
 | `POSTHOG_E2E_PROJECT_KEY` | Depot CI secret | `.depot/workflows/android-posthog-live.yml` | The job prints a notice and skips |
